@@ -12,16 +12,22 @@ end
 function GMT_Create_Data(API::Ptr{None}, family, geometry, mode, dim=C_NULL,
 		wesn=C_NULL, inc=C_NULL, registration=0, pad=2, data::Ptr{None}=C_NULL)
 
-	if (family == GMT_IS_VECTOR)
-		ret_type = Ptr{GMT_VECTOR}
+	if (family == GMT_IS_DATASET)
+		ret_type = Ptr{GMT_DATASET}
+	elseif (family == GMT_IS_TEXTSET)
+		ret_type = Ptr{GMT_TEXTSET}
+	elseif (family == GMT_IS_GRID)
+		ret_type = Ptr{GMT_GRID}
+	elseif (family == GMT_IS_CPT)
+		ret_type = Ptr{GMT_PALETTE}
 	elseif (family == GMT_IS_IMAGE)
 		ret_type = Ptr{GMT_IMAGE}
 	elseif (family == GMT_IS_MATRIX)
 		ret_type = Ptr{GMT_MATRIX}
-	elseif (family == GMT_IS_DATASET)
-		ret_type = Ptr{GMT_DATASET}
+	elseif (family == GMT_IS_VECTOR)
+		ret_type = Ptr{GMT_VECTOR}
 	else
-		ret_type = Ptr{None}
+		ret_type = Ptr{None}			# Should be error instead
 	end
 
 	ptr = ccall( (:GMT_Create_Data, thelib), Ptr{None}, (Ptr{None}, Uint32, Uint32, Uint32, Ptr{Uint64},
@@ -36,8 +42,29 @@ function GMT_Get_Data(API::Ptr{None}, object_ID::Cint, mode::Uint32, data::Ptr{N
 end
 
 function GMT_Read_Data(API::Ptr{None}, family, method, geometry, mode, wesn, input=C_NULL, data=C_NULL)
-	ccall( (:GMT_Read_Data, thelib), Ptr{None}, (Ptr{None}, Uint32, Uint32, Uint32, Uint32, Ptr{Cdouble},
+
+	if (family == GMT_IS_DATASET)
+		ret_type = Ptr{GMT_DATASET}
+	elseif (family == GMT_IS_TEXTSET)
+		ret_type = Ptr{GMT_TEXTSET}
+	elseif (family == GMT_IS_GRID)
+		ret_type = Ptr{GMT_GRID}
+	elseif (family == GMT_IS_CPT)
+		ret_type = Ptr{GMT_PALETTE}
+	elseif (family == GMT_IS_IMAGE)
+		ret_type = Ptr{GMT_IMAGE}
+	elseif (family == GMT_IS_MATRIX)
+		ret_type = Ptr{GMT_MATRIX}
+	elseif (family == GMT_IS_VECTOR)
+		ret_type = Ptr{GMT_VECTOR}
+	else
+		ret_type = Ptr{None}			# Should be error instead
+	end
+
+	ptr = ccall( (:GMT_Read_Data, thelib), Ptr{None}, (Ptr{None}, Uint32, Uint32, Uint32, Uint32, Ptr{Cdouble},
 		Ptr{Uint8}, Ptr{None}), API, family, method, geometry, mode, wesn, input, data)
+
+	convert(ret_type, ptr)
 end
 
 function GMT_Retrieve_Data(API::Ptr{None}, object_ID::Cint)
@@ -73,9 +100,14 @@ end
 function GMT_Put_Data(API::Ptr{None}, object_ID::Cint, mode::Uint32, data::Ptr{None})
   ccall( (:GMT_Put_Data, thelib), Cint, (Ptr{None}, Cint, Uint32, Ptr{None}), API, object_ID, mode, data)
 end
-function GMT_Write_Data(API::Ptr{None}, family::Uint32, method::Uint32, geometry::Uint32, mode::Uint32, wesn::Ptr{Cdouble}, output::Ptr{Uint8}, data::Ptr{None})
-  ccall( (:GMT_Write_Data, thelib), Cint, (Ptr{None}, Uint32, Uint32, Uint32, Uint32, Ptr{Cdouble}, Ptr{Uint8}, Ptr{None}), API, family, method, geometry, mode, wesn, output, data)
+
+function GMT_Write_Data(API::Ptr{None}, family::Integer, method::Integer, geometry::Integer, mode::Integer,
+	wesn::Ptr{Cdouble}, output::String, data)
+
+	ccall( (:GMT_Write_Data, thelib), Cint, (Ptr{None}, Uint32, Uint32, Uint32, Uint32, Ptr{Cdouble},
+		Ptr{Uint8}, Ptr{None}), API, family, method, geometry, mode, wesn, output, data)
 end
+
 function GMT_Destroy_Data(API::Ptr{None}, object::Ptr{None})
   ccall( (:GMT_Destroy_Data, thelib), Cint, (Ptr{None}, Ptr{None}), API, object)
 end

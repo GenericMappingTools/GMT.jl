@@ -262,7 +262,6 @@ const GMT_GRID_REMARK_LEN160 = 160
 const GMT_GRID_NAME_LEN256 = 256
 const GMT_GRID_HEADER_SIZE = 892
 # end enum GMT_enum_grdlen
-bitstype int(WORD_SIZE/8)*sizeof(Cdouble)*4 Array_4_Cdouble__
 immutable Array_4_Cdouble
     d1::Cdouble
     d2::Cdouble
@@ -1137,7 +1136,7 @@ immutable GMT_GRID_HEADER
     nx::Uint32
     ny::Uint32
     registration::Uint32
-    wesn::Array_4_Cdouble__
+    wesn::Array_4_Cdouble
     z_min::Cdouble
     z_max::Cdouble
     inc::Array_2_Cdouble
