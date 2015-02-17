@@ -1,4 +1,3 @@
-const EXTERN_MSC = 
 const GMT_B_OPT = "-B<args>"
 const GMT_I_OPT = "-I<xinc>[<unit>][=|+][/<yinc>[<unit>][=|+]]"
 const GMT_J_OPT = "-J<args>"
@@ -55,9 +54,9 @@ const GMT_OPT_PARAMETER = 45
 const GMT_OPT_INFILE = 60
 const GMT_OPT_OUTFILE = 62
 # end enum GMT_enum_opt
-immutable GMT_OPTION
-    option::Uint8
-    arg::Ptr{Uint8}
+immutable GMT_OPTION			# Structure for a single GMT command option
+    option::Uint8				# 1-char command line -<option> (e.g. D in -D) identifying the option (* if file)
+    arg::Ptr{Uint8}				# If not NULL, contains the argument for this option
     next::Ptr{GMT_OPTION}
     previous::Ptr{GMT_OPTION}
 end
@@ -148,6 +147,12 @@ const GMT_READ_TEXT = 1
 const GMT_READ_MIXED = 2
 const GMT_FILE_BREAK = 4
 # end enum GMT_enum_read
+
+const GMT_ALLOC_EXTERNALLY = 0    # Allocated outside of GMT: We cannot reallocate or free this memory
+const GMT_ALLOC_INTERNALLY = 1    # Allocated by GMT: We may reallocate as needed and free when no longer needed
+const GMT_ALLOC_NORMAL = 0        # Normal allocation of new dataset based on shape of input dataset
+const GMT_ALLOC_VERTICAL = 4      # Allocate a single table for data set to hold all input tables by vertical concatenation */
+const GMT_ALLOC_HORIZONTAL = 8
 # begin enum GMT_enum_write
 typealias GMT_enum_write Uint32
 const GMT_WRITE_DOUBLE = 0
@@ -262,6 +267,81 @@ const GMT_GRID_REMARK_LEN160 = 160
 const GMT_GRID_NAME_LEN256 = 256
 const GMT_GRID_HEADER_SIZE = 892
 # end enum GMT_enum_grdlen
+
+typealias Gmt_api_error_code Uint32
+const GMT_OK = 0
+const GMT_WRONG_MATRIX_SHAPE = 1
+const GMT_ACCESS_NOT_ENABLED = 2
+const GMT_ARGV_LIST_NULL = 3
+const GMT_ARG_IS_NULL = 4
+const GMT_COUNTER_IS_NEGATIVE = 5
+const GMT_BAD_GEOMETRY = 6
+const GMT_BAD_PERMISSION = 7
+const GMT_CPT_READ_ERROR = 8
+const GMT_DATA_READ_ERROR = 9
+const GMT_DATA_WRITE_ERROR = 10
+const GMT_DIM_TOO_LARGE = 11
+const GMT_DIM_TOO_SMALL = 12
+const GMT_ERROR_ON_FCLOSE = 13
+const GMT_ERROR_ON_FDOPEN = 14
+const GMT_ERROR_ON_FOPEN = 15
+const GMT_FILE_NOT_FOUND = 16
+const GMT_GRID_BC_ERROR = 17
+const GMT_GRID_READ_ERROR = 18
+const GMT_GRID_WRITE_ERROR = 19
+const GMT_ID_TOO_LARGE = 20
+const GMT_IMAGE_BC_ERROR = 21
+const GMT_IMAGE_READ_ERROR = 22
+const GMT_MEMORY_ERROR = 23
+const GMT_FREE_EXTERNAL_NOT_ALLOWED = 24
+const GMT_FREE_WRONG_LEVEL = 25
+const GMT_NOT_A_SESSION = 26
+const GMT_NOT_A_VALID_ARG = 27
+const GMT_NOT_A_VALID_DIRECTION = 28
+const GMT_NOT_A_VALID_FAMILY = 29
+const GMT_NOT_A_VALID_ID = 30
+const GMT_NOT_A_VALID_IO_ACCESS = 31
+const GMT_NOT_A_VALID_IO_MODE = 32
+const GMT_NOT_A_VALID_IO_SESSION = 33
+const GMT_NOT_A_VALID_METHOD = 34
+const GMT_NOT_A_VALID_MODE = 35
+const GMT_NOT_A_VALID_MODULE = 36
+const GMT_NOT_A_VALID_TYPE = 37
+const GMT_NOT_INPUT_OBJECT = 38
+const GMT_NOT_OUTPUT_OBJECT = 39
+const GMT_NO_GRDHEADER = 40
+const GMT_NO_INPUT = 41
+const GMT_NO_OUTPUT = 42
+const GMT_NO_PARAMETERS = 43
+const GMT_NO_RESOURCES = 44
+const GMT_N_COLS_NOT_SET = 45
+const GMT_N_COLS_VARY = 46
+const GMT_N_ROWS_NOT_SET = 47
+const GMT_OBJECT_NOT_FOUND = 48
+const GMT_OGR_ONE_TABLE_ONLY = 49
+const GMT_ONLY_ONE_ALLOWED = 50
+const GMT_OPTION_EXIST = 51
+const GMT_OPTION_HISTORY_ERROR = 52
+const GMT_OPTION_IS_NULL = 53
+const GMT_OPTION_LIST_NULL = 54
+const GMT_OPTION_NOT_FOUND = 55
+const GMT_OPTION_SORT_ERROR = 56
+const GMT_OUTPUT_NOT_SET = 57
+const GMT_PADDING_NOT_ALLOWED = 58
+const GMT_PARSE_ERROR = 59
+const GMT_PROG_NOT_FOUND = 60
+const GMT_PTR_IS_NULL = 61
+const GMT_PTR_NOT_NULL = 62
+const GMT_PTR_NOT_UNIQUE = 63
+const GMT_READ_ONCE = 64
+const GMT_RUNTIME_ERROR = 65
+const GMT_SIZE_IS_ZERO = 66
+const GMT_STREAM_NOT_ALLOWED = 67
+const GMT_SUBSET_NOT_ALLOWED = 68
+const GMT_VALUE_NOT_SET = 69
+const GMT_WRITTEN_ONCE = 70
+# end enum Gmt_api_error_code
+
 immutable Array_4_Cdouble
     d1::Cdouble
     d2::Cdouble
@@ -1132,7 +1212,16 @@ immutable Array_2_Uint32
     d1::Uint32
     d2::Uint32
 end
-immutable GMT_GRID_HEADER
+immutable Array_2_Uint64
+	d1::Uint64
+	d2::Uint64
+end
+immutable Array_2_Cbool
+	d1::Bool
+	d2::Bool
+end
+
+type GMT_GRID_HEADER
     nx::Uint32
     ny::Uint32
     registration::Uint32
@@ -1197,13 +1286,13 @@ immutable GMT_GRID_HEADER
     xy_unit::Array_2_Uint32
     xy_unit_to_meter::Array_2_Cdouble
 end
-immutable GMT_GRID
+type GMT_GRID
     header::Ptr{GMT_GRID_HEADER}
     data::Ptr{Cfloat}
     id::Uint32
     alloc_level::Uint32
     alloc_mode::GMT_enum_alloc
-    extra::Ptr{None}
+    extra::Ptr{Void}
 end
 # begin enum GMT_enum_geometry
 typealias GMT_enum_geometry Uint32
@@ -1456,6 +1545,7 @@ immutable GMT_UNIVECTOR
 	f4::Ptr{Float32}
 	f8::Ptr{Float64}
 end
+
 immutable GMT_VECTOR
     n_columns::Uint64
     n_rows::Uint64
@@ -1482,20 +1572,348 @@ immutable Array_6_Cdouble
     d5::Cdouble
     d6::Cdouble
 end
-immutable GMT_MATRIX
-    n_rows::Uint64
-    n_columns::Uint64
-    n_layers::Uint64
-    shape::GMT_enum_fmt
-    registration::GMT_enum_reg
-    dim::Csize_t
-    size::Csize_t
-    _type::GMT_enum_type
-    range::Array_6_Cdouble
-    data::GMT_UNIVECTOR
-    command::Array_320_Uint8
-    remark::Array_160_Uint8
-    id::Uint64
-    alloc_level::Uint32
-    alloc_mode::GMT_enum_alloc
+
+type GMT_MATRIX
+	n_rows::Uint64
+	n_columns::Uint64
+	n_layers::Uint64
+	shape::Uint32
+	registration::Uint32
+	dim::Csize_t
+	size::Csize_t
+	_type::Uint32
+	range::Array_6_Cdouble
+#	data::GMT_UNIVECTOR
+#	data::Union(Ptr{Uint8},Ptr{Int8},Ptr{Uint16},Ptr{Int16},Ptr{Uint32},Ptr{Int32},
+#		Ptr{Uint64},Ptr{Int64},Ptr{Float32},Ptr{Float64})
+    data::Ptr{Void}
+	command::Array_320_Uint8
+	remark::Array_160_Uint8
+	id::Uint64
+	alloc_level::Uint32
+	alloc_mode::Uint32
 end
+
+#=
+immutable Gmt_libinfo
+	name::Ptr{Uint8}	# Library tag name [without leading "lib" and extension], e.g. "gmt", "gmtsuppl" */
+	path::Ptr{Uint8}	# Full path to library as given in GMT_CUSTOM_LIBS */
+	skip::Ptr{Bool}		# true if we tried to open it and it was not available the first time */
+	handle::Ptr{Void}	# Handle to the shared library, returned by dlopen or dlopen_special */
+end
+
+struct GMT_SESSION {
+	# These are parameters that is set once at the start of a GMT session and
+	# are essentially read-only constants for the duration of the session */
+	FILE *std[3];			/* Pointers for standard input, output, and error */
+	void *(*input_ascii) (struct GMT_CTRL *, FILE *, uint64_t *, int *);	/* Pointer to function reading ascii tables only */
+	int (*output_ascii) (struct GMT_CTRL *, FILE *, uint64_t, double *);	/* Pointer to function writing ascii tables only */
+	n_fonts::Uint32				# Total number of fonts returned by GMT_init_fonts */
+	n_user_media::Uint32		# Total number of user media returned by gmt_load_user_media */
+	min_meminc::Csize_t			# with -DMEMDEBUG, sets min/max memory increments */
+	max_meminc::Csize_t
+	f_NaN::Float32				# Holds the IEEE NaN for floats */
+	d_NaN::Float64				# Holds the IEEE NaN for doubles */
+	no_rgb::Array_4_Cdouble		# To hold {-1, -1, -1, 0} when needed */
+	double u2u[4][4];		/* u2u is the 4x4 conversion matrix for cm, inch, m, pt */
+	char unit_name[4][8];		/* Full name of the 4 units cm, inch, m, pt */
+	struct GMT_HASH rgb_hashnode[GMT_N_COLOR_NAMES];/* Used to translate colornames to r/g/b */
+	rgb_hashnode_init::Bool		# true once the rgb_hashnode array has been loaded; false otherwise */
+	n_shorthands::Uint32		# Length of arrray with shorthand information */
+	char *grdformat[GMT_N_GRD_FORMATS];	/* Type and description of grid format */
+	int (*readinfo[GMT_N_GRD_FORMATS]) (struct GMT_CTRL *, struct GMT_GRID_HEADER *);	/* Pointers to grid read header functions */
+	int (*updateinfo[GMT_N_GRD_FORMATS]) (struct GMT_CTRL *, struct GMT_GRID_HEADER *);	/* Pointers to grid update header functions */
+	int (*writeinfo[GMT_N_GRD_FORMATS]) (struct GMT_CTRL *, struct GMT_GRID_HEADER *);	/* Pointers to grid write header functions */
+	int (*readgrd[GMT_N_GRD_FORMATS]) (struct GMT_CTRL *, struct GMT_GRID_HEADER *, float *, double *, unsigned int *, unsigned int);	/* Pointers to grid read functions */
+	int (*writegrd[GMT_N_GRD_FORMATS]) (struct GMT_CTRL *, struct GMT_GRID_HEADER *, float *, double *, unsigned int *, unsigned int);	/* Pointers to grid read functions */
+	int (*fft1d[k_n_fft_algorithms]) (struct GMT_CTRL *, float *, unsigned int, int, unsigned int);	/* Pointers to available 1-D FFT functions (or NULL if not configured) */
+	int (*fft2d[k_n_fft_algorithms]) (struct GMT_CTRL *, float *, unsigned int, unsigned int, int, unsigned int);	/* Pointers to available 2-D FFT functions (or NULL if not configured) */
+	# This part contains pointers that may point to additional memory outside this struct
+	DCWDIR::Ptr{Uint8}				# Path to the DCW directory
+	GSHHGDIR::Ptr{Uint8}			# Path to the GSHHG directory
+	SHAREDIR::Ptr{Uint8}			# Path to the GMT share directory
+	HOMEDIR::Ptr{Uint8}				# Path to the user's home directory
+	USERDIR::Ptr{Uint8}				# Path to the user's GMT settings directory
+	DATADIR::Ptr{Uint8}				# Path to one or more directories with data sets
+	TMPDIR::Ptr{Uint8}				# Path to the directory directory for isolation mode
+	CUSTOM_LIBS::Ptr{Uint8}			# Names of one or more comma-separated GMT-compatible shared libraries
+	user_media_name::Ptr{Ptr{Uint8}}		# Length of array with custom media dimensions
+	font::Ptr{GMT_FONTSPEC}			# Array with font names and height specification
+	user_media::Ptr{GMT_MEDIA}		# Array with custom media dimensions
+	shorthand::Ptr{GMT_SHORTHAND}	# Array with info about shorthand file extension magic
+};
+
+struct GMT_COMMON {
+	/* Structure with all information given via the common GMT command-line options -R -J .. */
+	struct synopsis {	/* \0 (zero) or ^ */
+		bool active;
+		bool extended;	/* + to also show non-common options */
+	} synopsis;
+	struct B {	/* -B<params> */
+		bool active[2];	/* 0 = primary annotation, 1 = secondary annotations */
+		int mode;	/* 5 = GMT 5 syntax, 4 = GMT 4 syntax, 1 = Either, -1 = mix (error), 0 = not set yet */
+		char string[2][GMT_LEN256];
+	} B;	
+	struct API_I {	/* -I<xinc>[/<yinc>] grids only, and for API use only */
+		bool active;
+		double inc[2];
+	} API_I;	
+	struct J {	/* -J<params> */
+		bool active, zactive;
+		unsigned int id;
+		double par[6];
+		char string[GMT_LEN256];
+	} J;		
+	struct K {	/* -K */
+		bool active;
+	} K;	
+	struct O {	/* -O */
+		bool active;
+	} O;
+	struct P {	/* -P */
+		bool active;
+	} P;
+	struct R {	/* -Rw/e/s/n[/z_min/z_max][r] */
+		bool active;
+		bool oblique;	/* true when -R...r was given (oblique map, probably), else false (map borders are meridians/parallels) */
+		double wesn[6];		/* Boundaries of west, east, south, north, low-z and hi-z */
+		char string[GMT_LEN256];
+	} R;
+	struct U {	/* -U */
+		bool active;
+		unsigned int just;
+		double x, y;
+		char *label;		/* Content not counted by sizeof (struct) */
+	} U;
+	struct V {	/* -V */
+		bool active;
+	} V;
+	struct X {	/* -X */
+		bool active;
+		double off;
+		char mode;	/* r, a, or c */
+	} X;
+	struct Y {	/* -Y */
+		bool active;
+		double off;
+		char mode;	/* r, a, or c */
+	} Y;
+	struct a {	/* -a<col>=<name>[:<type>][,col>=<name>[:<type>], etc][+g<geometry>] */
+		bool active;
+		unsigned int geometry;
+		unsigned int n_aspatial;
+		bool clip;		/* true if we wish to clip lines/polygons at Dateline [false] */
+		bool output;		/* true when we wish to build OGR output */
+		int col[MAX_ASPATIAL];	/* Col id, include negative items such as GMT_IS_T (-5) */
+		int ogr[MAX_ASPATIAL];	/* Column order, or -1 if not set */
+		unsigned int type[MAX_ASPATIAL];
+		char *name[MAX_ASPATIAL];
+	} a;
+	struct b {	/* -b[i][o][s|S][d|D][#cols][cvar1/var2/...] */
+		bool active[2];		/* true if current input/output is in native binary format */
+		bool o_delay;		/* true if we dont know number of output columns until we have read at least one input record */
+		enum GMT_swap_direction swab[2];	/* k_swap_in or k_swap_out if current binary input/output must be byte-swapped, else k_swap_none */
+		uint64_t ncol[2];		/* Number of expected columns of input/output
+						   0 means it will be determined by program */
+		char type[2];			/* Default column type, if set [d for double] */
+		char varnames[GMT_BUFSIZ];	/* List of variable names to be input/output in netCDF mode [GMT4 COMPATIBILITY ONLY] */
+	} b;
+	struct c {	/* -c */
+		bool active;
+		unsigned int copies;
+	} c;
+	struct f {	# -f[i|o]<col>|<colrange>[t|T|g],.. */
+		bool active[2];	/* For GMT_IN|OUT */
+	} f;
+	struct g {	/* -g[+]x|x|y|Y|d|Y<gap>[unit]  */
+		bool active;
+		unsigned int n_methods;			/* How many different criteria to apply */
+		uint64_t n_col;				/* Largest column-number needed to be read */
+		bool match_all;			/* If true then all specified criteria must be met to be a gap [default is any of them] */
+		enum GMT_enum_gaps method[GMT_N_GAP_METHODS];	/* How distances are computed for each criteria */
+		uint64_t col[GMT_N_GAP_METHODS];	/* Which column to use (-1 for x,y distance) */
+		double gap[GMT_N_GAP_METHODS];		/* The critical distances for each criteria */
+		double (*get_dist[GMT_N_GAP_METHODS]) (struct GMT_CTRL *GMT, uint64_t);	/* Pointers to functions that compute those distances */
+	} g;
+	struct h {	/* -h[i|o][<nrecs>][+d][+c][+r<remark>][+t<title>] */
+		bool active;
+		bool add_colnames;
+		unsigned int mode;
+		unsigned int n_recs;
+		char *title;
+		char *remark;
+		char *colnames;	/* Not set by -h but maintained here */
+	} h;	
+	struct i {	/* -i<col>|<colrange>,.. */
+		bool active;
+		uint64_t n_cols;
+	} i;
+	struct n {	/* -n[b|c|l|n][+a][+b<BC>][+c][+t<threshold>] */
+		bool active;
+		bool antialias;	/* Defaults to true, if supported */
+		bool truncate;	/* Defaults to false */
+		unsigned int interpolant;	/* Defaults to BCR_BICUBIC */
+		bool bc_set;	/* true if +b was parsed */
+		char BC[4];		/* For BC settings via +bg|n[x|y]|p[x|y] */
+		double threshold;	/* Defaults to 0.5 */
+	} n;
+	struct o {	/* -o<col>|<colrange>,.. */
+		bool active;
+		uint64_t n_cols;
+	} o;
+	struct p {	/* -p<az>/<el>[+wlon0/lat0[/z0]][+vx0[cip]/y0[cip]] */
+		bool active;
+	} p;
+	struct r {	/* -r */
+		bool active;
+		unsigned int registration;
+	} r;
+	struct s {	/* -s[r] */
+		bool active;
+	} s;
+	struct t {	/* -t<transparency> */
+		bool active;
+		double value;
+	} t;
+	struct x {	/* -x+a|[-]n */
+		bool active;
+		int n_threads;
+	} x;
+	struct colon {	/* -:[i|o] */
+		bool active;
+		bool toggle[2];
+	} colon;
+};
+
+struct GMT_INIT { /* Holds misc run-time parameters */
+	n_custom_symbols::Uint32
+	module_name::Ptr{Uint8}			# Name of current module or NULL if not set */
+	module_lib::Ptr{Uint8}			# Name of current shared library or NULL if not set */
+	# The rest of the struct contains pointers that may point to memory not included by this struct */
+	runtime_bindir::Ptr{Uint8}		# Directory that contains the main exe at run-time */
+	runtime_libdir::Ptr{Uint8}		# Directory that contains the main shared lib at run-time */
+	char *history[GMT_N_UNIQUE];	# The internal gmt.history information */
+	struct GMT_CUSTOM_SYMBOL **custom_symbol; /* For custom symbol plotting in psxy[z]. */
+};
+
+struct GMT_CURRENT {
+	# These are internal parameters that need to be passed around between
+	# many GMT functions.  These values may change by user interaction. */
+	struct GMT_DEFAULTS setting;	/* Holds all GMT defaults parameters */
+	struct GMT_IO io;		/* Holds all i/o-related parameters */
+	struct GMT_PROJ proj;		/* Holds all projection-related parameters */
+	struct GMT_MAP map;		/* Holds all projection-related parameters */
+	struct GMT_PLOT plot;		/* Holds all plotting-related parameters */
+	struct GMT_TIME_CONV time;	/* Holds all time-related parameters */
+	struct GMT_PS ps;		/* Hold parameters related to PS setup */
+	struct GMT_OPTION *options;	/* Pointer to current program's options */
+	struct GMT_FFT_HIDDEN fft;	/* Structure with info that must survive between FFT calls */
+};
+
+struct GMT_INTERNAL {
+	# These are internal parameters that need to be passed around between
+	# many GMT functions.  These may change during execution but are not
+	# modified directly by user interaction.
+	func_level::Uint32		# Keeps track of what level in a nested GMT_func calling GMT_func etc we are.  0 is top function
+	mem_cols::Csize_t		# Current number of allocated columns for temp memory
+	mem_rows::Csize_t		# Current number of allocated rows for temp memory
+	mem_coord::Ptr{Ptr{Float64}}		# Columns of temp memory
+#ifdef MEMDEBUG
+	struct MEMORY_TRACKER *mem_keeper;
+#endif
+};
+
+immutable GMT_CTRL
+	# Master structure for a GMT invokation. All internal settings for GMT is accessed here
+	session::GMT_SESSION	# Structure with all values that do not change throughout a session */
+	init::GMT_INIT			# Structure with all values that do not change in a GMT_func call */
+	common::GMT_COMMON		# Structure with all the common GMT command settings (-R -J ..) */
+	current::GMT_CURRENT	# Structure with all the GMT items that can change during execution, such as defaults settings (pens, colors, fonts.. ) */
+	hidden::GMT_INTERNAL	# Internal global variables that are not to be changed directly by users */
+	PSL::Ptr{PSL_CTRL}		# Pointer to the PSL structure [or NULL] */
+	parent::Ptr{GMTAPI_CTRL}	# Owner of this structure [or NULL]; gives access to the API from functions being passed *GMT only */
+end
+
+
+type GMTAPI_CTRL
+	# Master controller which holds all GMT API related information at run-time for a single session.
+	# Users can run several GMT sessions concurrently; each session requires its own structure.
+	# Use GMTAPI_Create_Session to initialize a new session and GMTAPI_Destroy_Session to end it.
+
+	current_rec::Array_2_Uint64		# Current record number >= 0 in the combined virtual dataset (in and out)
+	n_objects::Uint32			# Number of currently active input and output data objects
+	unique_ID::Uint32			# Used to create unique IDs for duration of session
+	session_ID::Uint32			# ID of this session
+	unique_var_ID::Uint32		# Used to create unique object IDs (grid,dataset, etc) for duration of session
+	current_item::Array_2_Uint32	# Array number of current dataset being processed (in and out)
+	pad::Uint32					# Session default for number of rows/cols padding for grids [2]
+	mode::Uint32				# 1 if called via external API (Matlab, Python) [0]
+	leave_grid_scaled::Uint32	# 1 if we dont want to unpack a grid after we packed it for writing [0]
+	registered::Array_2_Cbool	# true if at least one source/destination has been registered (in and out)
+	io_enabled::Array_2_Cbool	# true if access has been allowed (in and out)
+	n_objects_alloc::Csize_t	# Allocation counter for data objects
+	error::Int32				# Error code from latest API call [GMT_OK]
+	last_error::Int32			# Error code from previous API call [GMT_OK]
+	shelf::Int32				# Place to pass hidden values within API
+	io_mode::Array_2_Uint32		# 1 if access as set, 0 if record-by-record
+	GMT::Ptr{GMT_CTRL}			# Key structure with low-level GMT internal parameters
+	object::Ptr{Ptr{GMTAPI_DATA_OBJECT}}	# List of registered data objects
+	session_tag::Ptr{Uint8}		# Name tag for this session (or NULL)
+	internal::Bool				# true if session was initiated by gmt.c
+	deep_debug::Bool			# temporary for debugging
+	#int (*print_func) (FILE *, const char *);	# Pointer to fprintf function (may be reset by external APIs like MEX)
+	pf::Ptr{Void}				# Don't know what to put here, so ley it be *void
+	do_not_exit::Uint32			# 0 by default, mieaning it is OK to call exit  (may be reset by external APIs like MEX to call return instead)
+	lib::Ptr{Gmt_libinfo}		# List of shared libs to consider
+	n_shared_libs::Uint32		# How many in lib
+end
+
+immutable GMTAPI_DATA_OBJECT
+	# Information for each input or output data entity, including information
+	# needed while reading/writing from a table (file or array)
+	n_rows::Uint64				# Number or rows in this array [GMT_DATASET and GMT_TEXTSET to/from MATRIX/VETOR only]
+	n_columns::Uint64			# Number of columns to process in this dataset [GMT_DATASET only]
+	n_expected_fields::Uint64	# Number of expected columns for this dataset [GMT_DATASET only]
+	n_alloc::Csize_t			# Number of items allocated so far if writing to memory
+	ID::Uint32					# Unique identifier which is >= 0
+	alloc_level::Uint32			# Nested module level when object was allocated
+	status::Uint32				# 0 when first registered, 1 after reading/writing has started, 2 when finished
+	selected::Cbool				# true if requested by current module, false otherwise
+	close_file::Cbool			# true if we opened source as a file and thus need to close it when done
+	region::Cbool				# true if wesn was passed, false otherwise
+	no_longer_owner::Cbool		# true if the data pointed to by the object was passed on to another object
+	messenger::Cbool			# true for output objects passed from the outside to receive data from GMT. If true we destroy data pointer before writing
+	alloc_mode::GMT_enum_alloc	# GMT_ALLOCATED_{BY_GMT|EXTERNALLY}
+	direction::GMT_io_enum		# GMT_IN or GMT_OUT
+	family::GMT_enum_family		# One of GMT_IS_{DATASET|TEXTSET|CPT|IMAGE|GRID|MATRIX|VECTOR|COORD}
+	actual_family::GMT_enum_family	# May be GMT_IS_MATRIX|VECTOR when one of the others are created via those
+	unsigned method::Uint32		# One of GMT_IS_{FILE,STREAM,FDESC,DUPLICATE,REFERENCE} or sum with enum GMT_enum_via (GMT_VIA_{NONE,VECTOR,MATRIX,OUTPUT}); using unsigned type because sum exceeds enum GMT_enum_method
+	geometry::GMT_enum_geometry	# One of GMT_IS_{POINT|LINE|POLY|PLP|SURFACE|NONE}
+	wesn::Array_4_Cdouble		# Grid domain limits
+	resource::Ptr{Void}			# Points to registered filename, memory location, etc., where data can be obtained from with GMT_Get_Data.
+	data::Ptr{Void}				# Points to GMT object that was read from a resource
+	#FILE *fp;					# Pointer to source/destination stream [For rec-by-rec procession, NULL if memory location]
+	fp::Ptr{Void}				# Pointer to source/destination stream [For rec-by-rec procession, NULL if memory location]
+	filename::Ptr{Uint8}		# Filename, stream, of file handle (otherwise NULL)
+	#void *(*import) (struct GMT_CTRL *, FILE *, uint64_t *, int *);	# Pointer to input function (for DATASET/TEXTSET only)
+	ifun::Ptr{Void} 			# Pointer to input function (for DATASET/TEXTSET only)
+#ifdef DEBUG
+	G::Ptr{Void}				# struct GMT_GRID *G;
+	D::Ptr{Void}				# struct GMT_DATASET *D;
+	T::Ptr{Void}				# struct GMT_TEXTSET *T;
+	C::Ptr{Void}				# struct GMT_PALETTE *C;
+	M::Ptr{Void}				# struct GMT_MATRIX *M;
+	V::Ptr{Void}				# struct GMT_VECTOR *V;
+#endif
+	I::Ptr{Void}				# struct GMT_IMAGE *I;
+end
+=#
+
+# Container to hold the info needed to talk in/out with gmtjl_parser
+type GMT_grd_container
+	nx::Int
+	ny::Int
+	grd::Ptr{Float32}
+	hdr::Ptr{Float64}
+end
+
