@@ -185,6 +185,8 @@ function GMT_Create_Options(API::Ptr{Void}, argc::Int, args)
 	# VERSATILIZAR PARA O CASO DE ARGS SER STRING OU ARRAY DE STRINGS
 	ccall((:GMT_Create_Options, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, Cint, Ptr{Void}), API, argc, args)
 end
+GMT_Create_Options(API::Ptr{Void}, argc::Int, args::ASCIIString) = 
+                   GMT_Create_Options(API, argc, convert(Ptr{Void},pointer(args)))
 
 function GMT_Make_Option(API::Ptr{Void}, option::Uint8, arg::Ptr{Uint8})
   ccall( (:GMT_Make_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, Uint8, Ptr{Uint8}), API, option, arg)
@@ -197,7 +199,7 @@ end
 function GMT_Append_Option(API::Ptr{Void}, current::Ptr{GMT_OPTION}, head::Ptr{GMT_OPTION})
   ccall( (:GMT_Append_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, Ptr{GMT_OPTION}, Ptr{GMT_OPTION}), API, current, head)
 end
-function GMT_Create_Args(API::Ptr{Void}, argc::Ptr{Cint}, head::Ptr{GMT_OPTION})
+function GMT_Create_Args(API::Ptr{Void}, argc::Ptr{Int}, head::Ptr{GMT_OPTION})
   ccall( (:GMT_Create_Args, thelib), Ptr{Ptr{Uint8}}, (Ptr{Void}, Ptr{Cint}, Ptr{GMT_OPTION}), API, argc, head)
 end
 function GMT_Create_Cmd(API::Ptr{Void}, head::Ptr{GMT_OPTION})

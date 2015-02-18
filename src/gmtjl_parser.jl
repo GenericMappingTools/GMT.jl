@@ -12,6 +12,31 @@ type GMTJL			# Array to hold information relating to output from GMT
 	obj					# The object (structure) registered by GMTJL_Register_IO
 end
 
+type GMTJL_GRID
+	ProjectionRefPROJ4::ASCIIString
+	ProjectionRefWKT::ASCIIString
+	hdr::Array{Float64,1}
+	range::Array{Float64,1}
+	inc::Array{Float64,1}
+	dim::Array{Int,1}
+	n_rows::Int
+	n_columns::Int
+	MinMax::Array{Float64,1}
+	NoDataValue::Float64
+	registration::Int
+	title::ASCIIString
+	remark::ASCIIString
+	command::ASCIIString
+	DataType::Int
+	LayerCount::Int
+	x::Ptr{Float64}
+	y::Ptr{Float64}
+	z::Array{Float32,2}
+	x_units::ASCIIString
+	y_units::ASCIIString
+	z_units::ASCIIString
+end
+
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_pre_process(API::Ptr{Void}, g_module::String, module_id::Int, options, args...)
 #
@@ -32,7 +57,7 @@ function GMTJL_pre_process(API::Ptr{Void}, g_module::String, module_id::Int, opt
 		end
 		if (g_module == "write" && (ind = find_option(options, GMT_OPT_INFILE)) != 0)
 			# Found a -<<file> option; this is actually the output file
-			options[ind] = options[ind][1:2] * GMT_OPT_OUTFILE
+			options[ind] = replace(options[ind], "<", ">")
 		end
 	end
 
@@ -61,8 +86,14 @@ function GMTJL_pre_process(API::Ptr{Void}, g_module::String, module_id::Int, opt
 			# Here we must add the primary input or output from prhs[0] or plhs[0]
 			# Get info about the data set
 			data_type, geometry = get_arg_dir (key[given[dir,flavor]][1], key, n_keys)
-			# Pick the next left or right side Matlab array pointer
-			ptr = (dir == GMT_IN+1) ? args[lr_pos[GMT_IN+1]] : []	# The [0] is to allow later conv pointer
+			
+			# Pick the next left or right side Julia array pointer
+			if (isempty(args))
+				ptr = []
+			else
+				ptr = (dir == GMT_IN+1) ? args[lr_pos[GMT_IN+1]] : []	# The [0] is to allow later conv pointer
+			end
+
 			# Create and thus register this container
 			ID, O = GMTJL_Register_IO (API, data_type, geometry, dir-1, ptr)	# -1 because C is zero based
 			# Keep a record or this container as a source or destination
@@ -82,14 +113,14 @@ function GMTJL_pre_process(API::Ptr{Void}, g_module::String, module_id::Int, opt
 			if (flavor == 1)	# Must add a new option
 				# Create the missing (implicit) GMT option and append it to the options list
 				t = cell(1)
-				t[1] = @sprintf("%s%s",key[given[dir,1]][1], name)	# Ghrrr, must be a more elegant way
+				t[1] = @sprintf("-%s%s",key[given[dir,1]][1], name)	# Ghrrr, must be a more elegant way
 				append!(options, t)
 			else	# Must find the option and update it, or add it if not found
 				ind = find_option(options, key[given[dir,2]][1])
 				if (ind == 0)
 					# Create the missing (implicit) GMT option and append it to options list
 					t = cell(1)
-					t[1] = @sprintf("%s%s",key[given[dir,2]][1], name)
+					t[1] = @sprintf("-%s%s",key[given[dir,2]][1], name)
 					append!(options, t)
 				else
 					options[ind] = options[ind][1:2] * name		# Just update its argument
@@ -128,14 +159,53 @@ function GMTJL_post_process(API::Ptr{Void}, X, n_items::Int)
 	for (item = 1:n_items)
 		if (X[item]._type == GMT_IS_GRID)           # We read or wrote a GMT grid, examine further
 			if (X[item].direction == GMT_OUT)       # Here, GMT_OUT means "Return this info to Julia"
+				if ((R = GMT_Retrieve_Data(API, X[item].ID)) == C_NULL)
+					error("GMTJL_PARSER:Error retrieving grid from GMT\n")
+				end
+				# Return grids via a float matrix in a struct
+				out = GMTJL_GRID("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
+				                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, C_NULL, C_NULL, zeros(Float32,1,1), "", "", "")
+
+				Rb = unsafe_load(convert(Ptr{GMT_GRID}, R))
+				#return Rb
+
+				if (Rb.data == C_NULL)
+					error("GMTMEX_post_process: programming error, output matrix is empty")
+				end
+
+				gmt_hdr = unsafe_load(Rb.header)
+				if (gmt_hdr.ProjRefPROJ4 != C_NULL)
+					out.ProjectionRefPROJ4 = bytestring(gmt_hdr.ProjRefPROJ4)
+				end
+				if (gmt_hdr.ProjRefWKT != C_NULL)
+					out.ProjectionRefWKT = bytestring(gmt_hdr.ProjectionRefWKT)
+				end
+				# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays  
+				out.range = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4])
+				out.hdr   = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4 gmt_hdr.z_min gmt_hdr.z_max gmt_hdr.registration gmt_hdr.inc.d1 gmt_hdr.inc.d2])
+				out.inc          = vec([gmt_hdr.inc.d1 gmt_hdr.inc.d2])
+				out.n_rows       = gmt_hdr.ny
+				out.n_columns    = gmt_hdr.nx
+				out.MinMax       = vec([gmt_hdr.z_min gmt_hdr.z_max])
+				out.NoDataValue  = gmt_hdr.nan_value
+				out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
+				out.registration = gmt_hdr.registration
+				out.LayerCount   = gmt_hdr.n_bands
+				out.x            = linspace(out.range[1], out.range[2], out.n_columns)
+				out.y            = linspace(out.range[3], out.range[4], out.n_rows)
+				out.z            = zeros(Float32, out.n_rows, out.n_columns)
+				t = reshape(pointer_to_array(convert(Ptr{Cfloat},Rb.data), out.n_rows * out.n_columns), out.n_rows, out.n_columns)
+
+				for (col = 1:out.n_columns)
+					for (row = 1:out.n_rows)
+						ij = col * out.n_rows - row + 1
+						out.z[row, col] = t[ij]
+					end
+				end
+
 			else
 				R = X[item].obj;
 			end
-			#
-			if ((R = GMT_Retrieve_Data(API, X[item].ID)) == C_NULL)
-				error("GMTJL_PARSER:Error retrieving grid from GMT\n")
-			end
-			convert(Ptr{GMT_GRID}, R)
 		elseif (X[item]._type == GMT_IS_DATASET)    # Return tables with double (mxDOUBLE_CLASS) matrix
 			if (X[item].direction == GMT_OUT)       # Here, GMT_OUT means "Return this info to Julia"
 				if ((R = GMT_Retrieve_Data(API, X[item].ID)) == C_NULL)
@@ -148,9 +218,10 @@ function GMTJL_post_process(API::Ptr{Void}, X, n_items::Int)
 					out = copy!(out, pointer_to_array(convert(Ptr{Cfloat},Rb.data), Rb.n_rows * Rb.n_columns))
 				else	# Must transpose
 					t = pointer_to_array(convert(Ptr{Cfloat},Rb.data), Rb.n_rows * Rb.n_columns)
-					for (row = 1:Rb.n_rows)
-						for (col = 1:Rb.n_columns)
-							out[row, col] = t[col, row]
+					for (col = 1:Rb.n_columns)
+						for (row = 1:Rb.n_rows)
+							ij = (row - 1) * Rb.n_columns + col
+							out[row, col] = t[ij]
 						end
 					end
 				end
@@ -191,18 +262,28 @@ end
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_grid_init(API::Ptr{Void}, grd_box, dir::Int=GMT_IN)
 	# ...
+
+	if (isempty(grd_box))	# Just tell GMTJL_grid_init() to allocate an empty container 
+		R = GMTJL_grid_init(API, [0.0], [0.0 0 0 0], [0.0 0], 0, dir)
+		return R
+	end
+
 	if (isa(grd_box, GMT_grd_container))
 		grd = pointer_to_array(grd_box.grd, grd_box.nx * grd_box.ny)
 		hdr = pointer_to_array(grd_box.hdr, 9)
 	else
 		error("GMTJL_PARSER:grd_init: input is not a GRID|IMAGE container type")
 	end
-	GMTJL_grid_init(API, grd, hdr[1:4], hdr[8:9], int32(hdr[7]), dir)
+	R = GMTJL_grid_init(API, grd, hdr[1:4], hdr[8:9], int32(hdr[7]), dir)
+	return R
 end
 
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_grid_init(API::Ptr{Void}, grd, wesn::Array{Float64}, inc::Array{Float64}, 
-		reg::Integer=0, dir::Int=GMT_IN, pad::Integer=2)
+	                     reg::Int=0, dir::Int=GMT_IN, pad::Integer=2)
+	# Used to Create an empty Grid container to hold a GMT grid.
+ 	# If direction is GMT_IN then we are given a Julia grid and can determine its size, etc.
+	# If direction is GMT_OUT then we allocate an empty GMT grid as a destination.
 	#dim = [size(grd,1), size(grd,2), 1]
 
 	if (dir == GMT_IN)
@@ -217,8 +298,8 @@ function GMTJL_grid_init(API::Ptr{Void}, grd, wesn::Array{Float64}, inc::Array{F
 		unsafe_store!(G, Gb)
 		GMT_Report (API, GMT_MSG_DEBUG, @sprintf("Allocate GMT Grid %s in gmtjl_parser\n", G) )
 	else	# Just allocate an empty container to hold the output grid, and pass GMT_VIA_OUTPUT
-		if ((G = GMT_Create_Data (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY | 
-				GMT_VIA_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+		if ((G = GMT_Create_Data (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
+		                          C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error ("GMTJL_PARSER:grid_init: Failure to alloc GMT blank grid container for holding output grid")
 		end
 	end
@@ -249,9 +330,9 @@ function GMTJL_matrix_init(API::Ptr{Void}, grd, dir::Int=GMT_IN, pad::Int=2)
 
 	if (dir == GMT_IN)
 		# NEED TO ADD CODE FOR THE OTHER DATA TYPES
-		if (isa(grd, Array{Float64}))
+		if (eltype(grd) == Float64)
 			Mb._type = uint32(GMT_DOUBLE)
-		elseif (isa(grd, Array{Float32}))
+		elseif (eltype(grd) == Float32)
 			Mb._type = uint32(GMT_FLOAT)
 		else
 			error("GMTJL_matrix_init: only floating point types allowed in input")
@@ -278,7 +359,6 @@ end
 function GMTJL_Register_IO (API::Ptr{Void}, data_type::Int, geometry::Int, dir::Int, ptr)
 	# Create the grid or matrix contains, register them, and return the ID
 	ID = GMT_NOTSET
-
 	if (data_type == GMT_IS_GRID)
 		# Get an empty grid, and if input we and associate it with the Julia grid pointer
 		R = GMTJL_grid_init (API, ptr, dir)
@@ -356,7 +436,8 @@ function get_key_pos (key, n_keys::Int, options, def::Array{Int})
 		end
 		if (pos == -1) continue;	end		# No, it was some other harmless option, e.g., -J, -O ,etc.
 		flavor = (options[k][2] == '<') ? 1 : 2			# Filename or option with filename ?
-		dir = (key[pos][2] == 'I') ? GMT_IN : GMT_OUT	# Input of output ?
+		# SE COMECAR A DAR MUITA MERDA ... EU TINHA key[pos][2]
+		dir = (key[pos][3] == 'I') ? GMT_IN : GMT_OUT	# Input of output ?
 		if (flavor == 1)								# File name was given on command line
 			def[dir,flavor] = GMT_FILE_EXPLICIT;
 		else		# Command option; e.g., here we have -G<file>, -G$, or -G [the last two means implicit]

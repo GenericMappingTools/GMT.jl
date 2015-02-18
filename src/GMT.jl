@@ -2,8 +2,13 @@ module GMT
 
 export
 	GMT_Call_Module,
+	GMT_Create_Args,
 	GMT_Create_Session,
+	GMT_Create_Options,
+	GMT_Create_Cmd,
 	GMT_Create_Data,
+	GMT_Destroy_Options,
+	GMT_Destroy_Args,
 	GMT_Encode_ID,
 	GMT_Get_Default,
 	GMT_Option,
