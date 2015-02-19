@@ -142,8 +142,8 @@ function GMTJL_pre_process(API::Ptr{Void}, g_module::String, module_id::Int, opt
 	else
 		error = GMT_NOERROR
 	end
-	
-	##GMT_Report (API, GMT_MSG_VERBOSE, "Args are now [%s]\n", text);
+
+	GMT_Report(API, GMT_MSG_VERBOSE, @sprintf("Args are now [%s]\n", join(options, " ")))
 
 	# Here, a command line '-F200k -G $ -L -P' has been changed to '-F200k -G@GMTAPI@-000001 @GMTAPI@-000002 -L@GMTAPI@-000003 -P'
 	# where the @GMTAPI@-00000x are encodings to registered resources or destinations
@@ -162,18 +162,19 @@ function GMTJL_post_process(API::Ptr{Void}, X, n_items::Int)
 				if ((R = GMT_Retrieve_Data(API, X[item].ID)) == C_NULL)
 					error("GMTJL_PARSER:Error retrieving grid from GMT\n")
 				end
-				# Return grids via a float matrix in a struct
-				out = GMTJL_GRID("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
-				                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, C_NULL, C_NULL, zeros(Float32,1,1), "", "", "")
-
 				Rb = unsafe_load(convert(Ptr{GMT_GRID}, R))
-				#return Rb
-
 				if (Rb.data == C_NULL)
 					error("GMTMEX_post_process: programming error, output matrix is empty")
 				end
 
 				gmt_hdr = unsafe_load(Rb.header)
+
+				ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx)
+				# Return grids via a float matrix in a struct
+				out = GMTJL_GRID("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
+				                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, C_NULL, C_NULL,
+				                 zeros(Float32,ny,nx), "", "", "")
+
 				if (gmt_hdr.ProjRefPROJ4 != C_NULL)
 					out.ProjectionRefPROJ4 = bytestring(gmt_hdr.ProjRefPROJ4)
 				end
@@ -184,17 +185,16 @@ function GMTJL_post_process(API::Ptr{Void}, X, n_items::Int)
 				out.range = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4])
 				out.hdr   = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4 gmt_hdr.z_min gmt_hdr.z_max gmt_hdr.registration gmt_hdr.inc.d1 gmt_hdr.inc.d2])
 				out.inc          = vec([gmt_hdr.inc.d1 gmt_hdr.inc.d2])
-				out.n_rows       = gmt_hdr.ny
-				out.n_columns    = gmt_hdr.nx
+				out.n_rows       = ny
+				out.n_columns    = nx
 				out.MinMax       = vec([gmt_hdr.z_min gmt_hdr.z_max])
 				out.NoDataValue  = gmt_hdr.nan_value
 				out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
 				out.registration = gmt_hdr.registration
-				out.LayerCount   = gmt_hdr.n_bands
+				out.LayerCount   = Int(gmt_hdr.n_bands)
 				out.x            = linspace(out.range[1], out.range[2], out.n_columns)
 				out.y            = linspace(out.range[3], out.range[4], out.n_rows)
-				out.z            = zeros(Float32, out.n_rows, out.n_columns)
-				t = reshape(pointer_to_array(convert(Ptr{Cfloat},Rb.data), out.n_rows * out.n_columns), out.n_rows, out.n_columns)
+				t                = pointer_to_array(Rb.data, out.n_rows * out.n_columns)
 
 				for (col = 1:out.n_columns)
 					for (row = 1:out.n_rows)
@@ -263,24 +263,32 @@ end
 function GMTJL_grid_init(API::Ptr{Void}, grd_box, dir::Int=GMT_IN)
 	# ...
 
-	if (isempty(grd_box))	# Just tell GMTJL_grid_init() to allocate an empty container 
-		R = GMTJL_grid_init(API, [0.0], [0.0 0 0 0], [0.0 0], 0, dir)
+	empty = false 		# F... F... it's a shame having to do this
+	try
+		isempty(grd_box)
+		empty = true
+	end
+
+	if (empty)			# Just tell GMTJL_grid_init() to allocate an empty container 
+		R = GMTJL_grid_init(API, [0.0], [0.0 0 0 0 0 0 0 0 0], dir)
 		return R
 	end
 
 	if (isa(grd_box, GMT_grd_container))
 		grd = pointer_to_array(grd_box.grd, grd_box.nx * grd_box.ny)
 		hdr = pointer_to_array(grd_box.hdr, 9)
+	elseif (isa(grd_box, GMTJL_GRID))
+		grd = grd_box.z
+		hdr = grd_box.hdr
 	else
 		error("GMTJL_PARSER:grd_init: input is not a GRID|IMAGE container type")
 	end
-	R = GMTJL_grid_init(API, grd, hdr[1:4], hdr[8:9], int32(hdr[7]), dir)
+	R = GMTJL_grid_init(API, grd, hdr, dir)
 	return R
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_grid_init(API::Ptr{Void}, grd, wesn::Array{Float64}, inc::Array{Float64}, 
-	                     reg::Int=0, dir::Int=GMT_IN, pad::Integer=2)
+function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Int=GMT_IN, pad::Integer=2)
 	# Used to Create an empty Grid container to hold a GMT grid.
  	# If direction is GMT_IN then we are given a Julia grid and can determine its size, etc.
 	# If direction is GMT_OUT then we allocate an empty GMT grid as a destination.
@@ -288,13 +296,28 @@ function GMTJL_grid_init(API::Ptr{Void}, grd, wesn::Array{Float64}, inc::Array{F
 
 	if (dir == GMT_IN)
 		if ((G = GMT_Create_Data (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, C_NULL,
-				wesn, inc, reg, pad)) == C_NULL)
+		                          hdr[1:4], hdr[8:9], uint32(hdr[7]), pad)) == C_NULL)
 			error ("GMTJL_PARSER:grid_init: Failure to alloc GMT source matrix for input")
 		end
 
+		n_rows = size(grd, 1);		n_cols = size(grd, 2)
+		t = zeros(Float32, n_rows, n_cols)
+
+		for (col = 1:n_cols)
+			ic = col * n_rows
+			for (row = 1:n_rows)
+				ij = ic - row + 1
+				t[row, col] = grd[ij]
+			end
+		end
+
 		Gb = unsafe_load(G)			# Gb = GMT_GRID (constructor with 1 method)
-		Gb.data = pointer(grd)
+		Gb.data = pointer(t)
 		Gb.alloc_mode = uint32(GMT_ALLOCATED_EXTERNALLY)	# Since array was allocated by Julia
+		h = unsafe_load(Gb.header)
+		h.z_min = hdr[5]			# Set the z_min, z_max
+		h.z_max = hdr[6]
+		unsafe_store!(Gb.header, h)
 		unsafe_store!(G, Gb)
 		GMT_Report (API, GMT_MSG_DEBUG, @sprintf("Allocate GMT Grid %s in gmtjl_parser\n", G) )
 	else	# Just allocate an empty container to hold the output grid, and pass GMT_VIA_OUTPUT
