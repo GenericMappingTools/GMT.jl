@@ -12,13 +12,16 @@ type _gmt_modules
 	gmtget::ASCIIString
 	gmtgravmag3d::ASCIIString
 	gmtinfo::ASCIIString
+	gmtlogo::ASCIIString
 	gmtmath::ASCIIString
+	gmtread::ASCIIString	
 	gmtselect::ASCIIString
 	gmtset::ASCIIString
 	gmtsimplify::ASCIIString
 	gmtspatial::ASCIIString
 	gmtvector::ASCIIString
 	gmtwhich::ASCIIString
+	gmtwrite::ASCIIString
 	gravfft::ASCIIString
 	grd2cpt::ASCIIString
 	grd2rgb::ASCIIString
@@ -92,7 +95,6 @@ type _gmt_modules
 	pswiggle::ASCIIString
 	psxy::ASCIIString
 	psxyz::ASCIIString
-	read::ASCIIString
 	rotconverter::ASCIIString
 	sample1d::ASCIIString
 	segy2grd::ASCIIString
@@ -106,7 +108,6 @@ type _gmt_modules
 	trend1d::ASCIIString
 	trend2d::ASCIIString
 	triangulate::ASCIIString
-	write::ASCIIString
 	x2sys_binlist::ASCIIString
 	x2sys_cross::ASCIIString
 	x2sys_datalist::ASCIIString
@@ -139,13 +140,16 @@ gmt_modules.gmtdefaults=">TO"
 gmt_modules.gmtget=">TO"
 gmt_modules.gmtgravmag3d="<DI,FDI,GGO"
 gmt_modules.gmtinfo="<DI,>DO"
+gmt_modules.gmtlogo=""
 gmt_modules.gmtmath="<DI,ADI,>DO"
+gmt_modules.gmtread="<?I,>?O"
 gmt_modules.gmtselect="<DI,CDI,FDI,LDI,>DO"
 gmt_modules.gmtset="<TI"
 gmt_modules.gmtsimplify="<DI,>DO"
 gmt_modules.gmtspatial="<DI,DDI,NDI,TDI,>DO"
 gmt_modules.gmtvector="<DI,ADI,>DO"
 gmt_modules.gmtwhich="<TI,>TO"
+gmt_modules.gmtwrite="<?I,>?O"
 gmt_modules.gravfft="<GI,GGO"
 gmt_modules.grd2cpt="<GI,>CO"
 gmt_modules.grd2rgb="<GI"
@@ -161,8 +165,7 @@ gmt_modules.grdgradient="<GI,GGO,SGo"
 gmt_modules.grdgravmag3d="<GI,FDI,GGO"
 gmt_modules.grdhisteq="<GI,GGO,DTo"
 gmt_modules.grdimage="<GI,CCI,IGI,-Xo"
-#gmt_modules.grdinfo="<GI,>TO"
-gmt_modules.grdinfo="<GI"
+gmt_modules.grdinfo="<GI,>TO"
 gmt_modules.grdlandmask="GGO"
 gmt_modules.grdmask="<DI,GGO"
 gmt_modules.grdmath="<GI,>GO"
@@ -220,7 +223,6 @@ gmt_modules.psvelo="<DI,-Xo"
 gmt_modules.pswiggle="<DI,-Xo"
 gmt_modules.psxy="<DI,CCI,-Xo"
 gmt_modules.psxyz="<DI,CCI,-Xo"
-gmt_modules.read="<?I,>?O"
 gmt_modules.rotconverter=">DO"
 gmt_modules.sample1d="<DI,NDI,>DO"
 gmt_modules.segy2grd="GGO"
@@ -234,7 +236,6 @@ gmt_modules.surface="<DI,DDI,GGO"
 gmt_modules.trend1d="<DI,>DO"
 gmt_modules.trend2d="<DI,>DO"
 gmt_modules.triangulate="<DI,>DO,GGo"
-gmt_modules.write="<?I,>?O"
 gmt_modules.x2sys_binlist=">DO"
 gmt_modules.x2sys_cross="ATI,>DO"
 gmt_modules.x2sys_datalist="LTI,ITI,>DO"

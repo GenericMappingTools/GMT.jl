@@ -17,7 +17,7 @@ function gmt(cmd::String, args...)
 	#try
 		#a=API		# Must test here if it's a valid one
 	#catch
-		API = GMT_Create_Session()
+		API = GMT_Create_Session("GMT5", 0)
 		if (API == C_NULL)
 			error("Failure to create a GMT5 Session")
 		end
@@ -30,32 +30,24 @@ function gmt(cmd::String, args...)
 	if (LL == C_NULL)
 		error("Error creating the linked list of options. Probably a bad usage.")
 	end
+
 	r = create_cmd(LL)
 	if (GMT_Destroy_Options(API, pointer([LL])) != 0)
 		warn("Failed to destroy the linked list of options")
 	end
-##
-	#r = replace(r, "> ", ">")	# TODO. Make this robust to more spaces
-	#r = replace(r, ">", "->")
-	#r = replace(r, "-->", "->")		# When the above replaced "->" by "-->"
 
 	options = cell(12)			# 12 should be enough for the max number of options
 	i = 0
 	while (~isempty(r))
 		i = i + 1
 		options[i],r = strtok(r)
-		#r = replace(r, ">", "->")
-		#r = replace(r, "-->", "->")		# When the above replaced "->" by "-->"
 	end
 	options = options[1:i]		# Remove extra allocated cells
-@show(options)
 
 	# 3. Determine the GMT module ID, or list module usages and return if module is not found
 	module_id, use_prefix = GMTJL_find_module(API, g_module)
 	if (module_id == -1)
-		println("Error: ", g_module, " is not a GMT module")
-		#GMT_Call_Module(API, C_NULL, GMT_MODULE_PURPOSE, C_NULL)
-		return
+		error(g_module, " is not a GMT module\n")
 	end
 
 	if (use_prefix != 0)
@@ -73,11 +65,6 @@ function gmt(cmd::String, args...)
 	# 6. Run GMT module; give usage message if errors arise during parsing
 	println("options = ", options)
 	options = join(options, " ")
-	#options = replace(options, "<", "-<")
-	#options = replace(options, "--<", "-<")		# When the above replaced "-<" by "--<"
-	#options = replace(options, ">", "->")
-	#options = replace(options, "-->", "->")		# When the above replaced "->" by "-->"
-#	println("options = ", options)
 	status = GMT_Call_Module(API, module_name, GMT_MODULE_CMD, options)
 	println("merda ", status)
 

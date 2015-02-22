@@ -71,14 +71,14 @@ function GMT_Insert_Data(API::Ptr{Void}, object_ID::Integer, data)
 	ccall((:GMT_Insert_Data, thelib), Cint, (Ptr{Void}, Cint, Ptr{Void}), API, object_ID, data)
 end
 
-function GMT_Get_Moduleinfo(API::Ptr{Void}, _module::Ptr{Uint8})
-	ccall((:GMT_Get_Moduleinfo, thelib), Ptr{Uint8}, (Ptr{Void}, Ptr{Uint8}), API, _module)
+function GMTAPI_get_moduleinfo(API::Ptr{Void}, _module::ASCIIString)
+	ccall((:GMTAPI_get_moduleinfo, thelib), Ptr{Uint8}, (Ptr{Void}, Ptr{Uint8}), API, _module)
 end
-function GMT_Get_Moduleinfo(API::Ptr{Void}, _module::String)
-	ccall((:GMT_Get_Moduleinfo, thelib), Ptr{Uint8}, (Ptr{Void}, Ptr{Uint8}), API, _module)
+function GMTAPI_get_moduleinfo(API::Ptr{Void}, _module::Ptr{Uint8})
+	ccall((:GMTAPI_get_moduleinfo, thelib), Ptr{Uint8}, (Ptr{Void}, Ptr{Uint8}), API, _module)
 end
 
-function GMT_Retrieve_Data(API::Ptr{Void}, object_ID::Int)
+function GMT_Retrieve_Data(API::Ptr{Void}, object_ID::Integer)
 	ccall((:GMT_Retrieve_Data, thelib), Ptr{Void}, (Ptr{Void}, Cint), API, object_ID)
 end
 
@@ -145,18 +145,18 @@ end
 function GMT_Put_Row(API::Ptr{Void}, rec_no::Cint, G::Ptr{GMT_GRID}, row::Ptr{Cfloat})
   ccall( (:GMT_Put_Row, thelib), Cint, (Ptr{Void}, Cint, Ptr{GMT_GRID}, Ptr{Cfloat}), API, rec_no, G, row)
 end
-function GMT_Set_Comment(API::Ptr{Void}, family::Uint32, mode::Uint32, arg::Ptr{Void}, data::Ptr{Void})
+function GMT_Set_Comment(API::Ptr{Void}, family::Integer, mode::Integer, arg::Ptr{Void}, data::Ptr{Void})
   ccall( (:GMT_Set_Comment, thelib), Cint, (Ptr{Void}, Uint32, Uint32, Ptr{Void}, Ptr{Void}), API, family, mode, arg, data)
 end
 
-function GMT_Get_ID(API::Ptr{Void}, family::Int, dir::Int, resource=C_NULL)
+function GMT_Get_ID(API::Ptr{Void}, family::Integer, dir::Integer, resource=C_NULL)
 	ccall((:GMT_Get_ID, thelib), Cint, (Ptr{Void}, Uint32, Uint32, Ptr{Void}), API, family, dir, resource)
 end
 
 function GMT_Get_Index(API::Ptr{Void}, header::Ptr{GMT_GRID_HEADER}, row::Cint, col::Cint)
   ccall( (:GMT_Get_Index, thelib), int64_t, (Ptr{Void}, Ptr{GMT_GRID_HEADER}, Cint, Cint), API, header, row, col)
 end
-function GMT_Get_Coord(API::Ptr{Void}, family::Uint32, dim::Uint32, container::Ptr{Void})
+function GMT_Get_Coord(API::Ptr{Void}, family::Integer, dim::Integer, container::Ptr{Void})
   ccall( (:GMT_Get_Coord, thelib), Ptr{Cdouble}, (Ptr{Void}, Uint32, Uint32, Ptr{Void}), API, family, dim, container)
 end
 
@@ -251,6 +251,72 @@ end
 function GMT_Report(API, vlevel::Int, txt::String)
 	ccall((:GMT_Report, thelib), Void, (Ptr{Void}, Cint, Ptr{Uint8}), API, vlevel, txt)
 end
+
+function GMTAPI_lib_tag(name::String)
+	ccall((:GMTAPI_lib_tag, thelib), Ptr{Uint8}, (Ptr{Uint8},), name)
+end
+function GMTAPI_lib_tag(name::Ptr{Uint8})
+	ccall((:GMTAPI_lib_tag, thelib), Ptr{Uint8}, (Ptr{Uint8},), name)
+end
+
+function GMTAPI_key_to_family(API::Ptr{Void}, key::String, family::Ptr{Int}, geometry::Ptr{Int})
+	ccall((:GMTAPI_key_to_family, thelib), Cint, (Ptr{Void}, Ptr{Uint8}, Ptr{Int}, Ptr{Int}), API, key, family, geometry)
+end
+
+function GMTAPI_get_key(API::Ptr{Void}, option::Char, keys::Ptr{Ptr{Uint8}}, n_keys::Int)
+	ccall((:GMTAPI_get_key, thelib), Cint, (Ptr{Void}, Char, Ptr{Ptr{Uint8}}, Int), API, option, keys, n_keys)
+end
+
+function GMTAPI_found_marker(text::String, marker::Char)
+	ccall((:GMTAPI_found_marker, thelib), Uint32, (Ptr{Uint8}, Char), text, marker)
+end
+function GMTAPI_found_marker(text::Ptr{Uint8}, marker::Char)
+	ccall((:GMTAPI_found_marker, thelib), Uint32, (Ptr{Uint8}, Char), text, marker)
+end
+
+#= These depend on GMT_CTRL that is not wrapped
+function GMTAPI_open_grd(GMT::Ptr{GMT_CTRL}, file::String, G::Ptr{GMT_GRID}, mode::Char, access_mode::Int)
+	ccall((:GMTAPI_open_grd, thelib), Cint, (Ptr{GMT_CTRL}, String, Ptr{GMT_GRID}, Char, Uint32), GMT, file, G, mode, access_mode)
+end
+function GMTAPI_open_grd(GMT::Ptr{GMT_CTRL}, file::Ptr{Uint8), G::Ptr{GMT_GRID}, mode::Char, access_mode::Int)
+	ccall((:GMTAPI_open_grd, thelib), Cint, (Ptr{GMT_CTRL}, String, Ptr{GMT_GRID}, Char, Uint32), GMT, file, G, mode, access_mode)
+end
+
+function GMTAPI_close_grd(GMT::Ptr{GMT_CTRL}, G::Ptr{GMT_GRID})
+	ccall((:GMTAPI_close_grd, thelib), Void, (Ptr{GMT_CTRL}, Ptr{GMT_GRID}), GMT, G)
+end
+
+function GMTAPI_update_txt_item(API::Ptr{GMTAPI_CTRL}, mode::Int, arg::Ptr{Void}, length::Int, string::String)
+	ccall((:GMTAPI_update_txt_item, thelib), Void, (Ptr{GMTAPI_CTRL}, Int, Ptr{Void}, Int, String), API, mode, arg, length, string)
+end
+=#
+
+function GMTAPI_get_key(API::Ptr{Void}, string::ASCIIString, _type::Char, n_items::Ptr{Int}, PS::Ptr{Int})
+	ccall((:GMTAPI_get_key, thelib), Ptr{Ptr{Uint8}}, (Ptr{Void}, ASCIIString, Char, Ptr{Uint32}, PS::Ptr{Uint32}),
+	       API, string, _type, n_items, PS)
+end
+function GMTAPI_get_key(API::Ptr{Void}, string::Ptr{Uint8}, _type::Char, n_items::Ptr{Int}, PS::Ptr{Int})
+	ccall((:GMTAPI_get_key, thelib), Ptr{Ptr{Uint8}}, (Ptr{Void}, String, Char, Ptr{Uint32}, PS::Ptr{Uint32}),
+	       API, string, _type, n_items, PS)
+end
+
+function GMT_Encode_Options(V_API::Ptr{Void}, _module::ASCIIString, marker::Char, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{Uint8}, Char, Ptr{Ptr{GMT_OPTION}}, Ptr{Uint32}), 
+		V_API, _module, marker, head, n)
+end
+function GMT_Encode_Options(V_API::Ptr{Void}, _module::Ptr{Uint8}, marker::Char, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{Uint8}, Char, Ptr{Ptr{GMT_OPTION}}, Ptr{Uint32}), 
+		V_API, _module, marker, head, n)
+end
+
+
+function GMT_Expand_Option(V_API::Ptr{Void}, opt::Ptr{GMT_OPTION}, marker::Char, arg::ASCIIString)
+	ccall((:GMT_Expand_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Char, Ptr{Uint8}), V_API, opt, marker, arg)
+end
+function GMT_Expand_Option(V_API::Ptr{Void}, opt::Ptr{GMT_OPTION}, marker::Char, arg::Ptr{Uint8})
+	ccall((:GMT_Expand_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Char, Ptr{Uint8}), V_API, opt, marker, arg)
+end
+
 
 function gmt_core_module_info(API, candidate::String)
 	ccall((:gmt_core_module_info, thelib), Ptr{Uint8}, (Ptr{Void}, Ptr{Uint8}), API, candidate)

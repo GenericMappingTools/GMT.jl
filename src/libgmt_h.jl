@@ -85,6 +85,7 @@ const GMT_IS_IMAGE = 4
 const GMT_IS_VECTOR = 5
 const GMT_IS_MATRIX = 6
 const GMT_IS_COORD = 7
+const GMT_IS_PS = 8
 # end enum GMT_enum_family
 # begin enum GMT_enum_comment
 typealias GMT_enum_comment Uint32
@@ -1594,7 +1595,28 @@ type GMT_MATRIX
 	alloc_mode::Uint32
 end
 
+type GMT_RESOURCE
+    family::Uint32          # GMT data family, i.e., GMT_IS_DATASET, GMT_IS_GRID, etc.
+    geometry::Uint32        # One of the recognized GMT geometries
+    direction::Uint32       # Either GMT_IN or GMT_OUT
+    option::Ptr{GMT_OPTION} # Pointer to the corresponding module option
+    object_ID::Cint         # Object ID returned by GMT_Register_IO
+    pos::Cint               # Corresponding index into external object in|out arrays
+    object::Ptr{Void}       # Pointer to the registered GMT object
+end
+
 #=
+immutable GMT_CTRL
+    # Master structure for a GMT invokation.  All internal settings for GMT is accessed here
+    session::GMT_SESSION     # Structure with all values that do not change throughout a session
+    init::GMT_INIT           # Structure with all values that do not change in a GMT_func call
+    common::GMT_COMMON       # Structure with all the common GMT command settings (-R -J ..)
+    current::GMT_CURRENT     # Structure with all the GMT items that can change during execution, such as defaults settings (pens, colors, fonts.. )
+    hidden::GMT_INTERNAL     # Internal global variables that are not to be changed directly by users
+    PSL::Ptr{PSL_CTRL}       # Pointer to the PSL structure [or NULL]
+    parent::Ptr{GMTAPI_CTRL} # Owner of this structure [or NULL]; gives access to the API from functions being passed *GMT only
+end
+
 immutable Gmt_libinfo
 	name::Ptr{Uint8}	# Library tag name [without leading "lib" and extension], e.g. "gmt", "gmtsuppl" */
 	path::Ptr{Uint8}	# Full path to library as given in GMT_CUSTOM_LIBS */

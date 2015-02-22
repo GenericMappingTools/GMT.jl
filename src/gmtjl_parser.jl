@@ -38,7 +38,7 @@ type GMTJL_GRID
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_pre_process(API::Ptr{Void}, g_module::String, module_id::Int, options, args...)
+function GMTJL_pre_process(API::Ptr{Void}, g_module::ASCIIString, module_id::Int, options, args...)
 #
 	keys = getfield(gmt_modules, module_id)		# The magick keys for this module
 	tipo = ""
@@ -55,7 +55,8 @@ function GMTJL_pre_process(API::Ptr{Void}, g_module::String, module_id::Int, opt
 		if (isempty(search("DGCIT", tipo)))
 			error("GMTJL_pre_process: No or bad data type given to read|write")
 		end
-		if (g_module == "write" && (ind = find_option(options, GMT_OPT_INFILE)) != 0)
+		ind = find_option(options, GMT_OPT_INFILE)
+		if (g_module == "gmtwrite" && (ind = find_option(options, GMT_OPT_INFILE)) != 0)
 			# Found a -<<file> option; this is actually the output file
 			options[ind] = replace(options[ind], "<", ">")
 		end
@@ -95,7 +96,8 @@ function GMTJL_pre_process(API::Ptr{Void}, g_module::String, module_id::Int, opt
 			end
 
 			# Create and thus register this container
-			ID, O = GMTJL_Register_IO (API, data_type, geometry, dir-1, ptr)	# -1 because C is zero based
+			O, ID = GMTJL_Register_IO (API, data_type, dir-1, ptr)		# -1 because C is zero based
+
 			# Keep a record or this container as a source or destination
 			info[n_items]._type = data_type
 			info[n_items].ID = ID
@@ -162,6 +164,7 @@ function GMTJL_post_process(API::Ptr{Void}, X, n_items::Int)
 				if ((R = GMT_Retrieve_Data(API, X[item].ID)) == C_NULL)
 					error("GMTJL_PARSER:Error retrieving grid from GMT\n")
 				end
+
 				Rb = unsafe_load(convert(Ptr{GMT_GRID}, R))
 				if (Rb.data == C_NULL)
 					error("GMTMEX_post_process: programming error, output matrix is empty")
@@ -260,7 +263,7 @@ function find_option(options, opt)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_grid_init(API::Ptr{Void}, grd_box, dir::Int=GMT_IN)
+function GMTJL_grid_init(API::Ptr{Void}, grd_box, dir::Integer=GMT_IN)
 	# ...
 
 	empty = false 		# F... F... it's a shame having to do this
@@ -288,7 +291,7 @@ function GMTJL_grid_init(API::Ptr{Void}, grd_box, dir::Int=GMT_IN)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Int=GMT_IN, pad::Integer=2)
+function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Integer=GMT_IN, pad::Int=0)
 	# Used to Create an empty Grid container to hold a GMT grid.
  	# If direction is GMT_IN then we are given a Julia grid and can determine its size, etc.
 	# If direction is GMT_OUT then we allocate an empty GMT grid as a destination.
@@ -330,7 +333,7 @@ function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Int=GMT_
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_matrix_init(API::Ptr{Void}, grd, dir::Int=GMT_IN, pad::Int=2)
+function GMTJL_matrix_init(API::Ptr{Void}, grd, dir::Integer=GMT_IN, pad::Int=0)
 # ...
 	if (dir == GMT_IN)
 		dim = pointer([size(grd,2), size(grd,1), 0])	# MATRIX in GMT uses (col,row)
@@ -379,25 +382,23 @@ function GMTJL_matrix_init(API::Ptr{Void}, grd, dir::Int=GMT_IN, pad::Int=2)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_Register_IO (API::Ptr{Void}, data_type::Int, geometry::Int, dir::Int, ptr)
+function GMTJL_Register_IO (API::Ptr{Void}, family::Integer, dir::Integer, ptr)
 	# Create the grid or matrix contains, register them, and return the ID
 	ID = GMT_NOTSET
-	if (data_type == GMT_IS_GRID)
+	if (family == GMT_IS_GRID)
 		# Get an empty grid, and if input we and associate it with the Julia grid pointer
 		R = GMTJL_grid_init (API, ptr, dir)
 		ID = GMT_Get_ID (API, GMT_IS_GRID, dir, R)
-		GMT_Insert_Data (API, ID, R)
 
-	elseif (data_type == GMT_IS_DATASET)
+	elseif (family == GMT_IS_DATASET)
 		# Get a matrix container, and if input and associate it with the Julia pointer
 		# MUST TEST HERE THAT ptr IS A MATRIX
 		R = GMTJL_matrix_init (API, ptr, dir)
 		ID = GMT_Get_ID (API, GMT_IS_DATASET, dir, R)
-		GMT_Insert_Data (API, ID, R)
 	else
-		error("GMTJL_PARSER:GMTJL_Register_IO: Bad data type ", data_type)
+		error("GMTJL_PARSER:GMTJL_Register_IO: Bad data type ", family)
 	end
-	return ID, R
+	return R, ID
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -552,4 +553,3 @@ function get_arg_dir (option, key, n_keys::Int)
 	io_dir = ((key[item][3] == 'i') ? GMT_IN : GMT_OUT)	# Return the direction of i/o
 	return data_type, geometry, io_dir
 end
-
