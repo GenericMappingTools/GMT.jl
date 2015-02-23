@@ -45,5 +45,6 @@ export
 
 include("libgmt_h.jl")
 include("libgmt.jl")
+include("gmt_main.jl")
 
 end # module

@@ -30,6 +30,9 @@ const GMT_USAGE = 0
 const GMT_SYNOPSIS = 1
 const GMT_STR16 = 16
 # end enum GMT_enum_api
+const GMT_SESSION_NORMAL   = 0   # Typical mode to GMT_Create_Session
+const GMT_SESSION_NOEXIT   = 1   # Call return and not exit when error
+const GMT_SESSION_EXTERNAL = 2   # Called by an external API (e.g., Matlab, Julia, Python).
 # begin enum GMT_enum_type
 typealias GMT_enum_type Uint32
 const GMT_CHAR = 0

@@ -1,4 +1,3 @@
-using GMT
 
 global API			# OK, so next times we'll use this one
 
@@ -42,7 +41,7 @@ function gmt(cmd::String, args...)
 	#try
 		#a=API		# Must test here if it's a valid one
 	#catch
-		API = GMT_Create_Session("GMT5", 0)
+		API = GMT_Create_Session("GMT5", 0, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL)
 		if (API == C_NULL)
 			error("Failure to create a GMT5 Session")
 		end
