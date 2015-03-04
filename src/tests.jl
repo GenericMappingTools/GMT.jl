@@ -86,4 +86,20 @@ function gmtsimplify()
 	t = gmt("simplify -T0.2", rand(50,2))
 end
 
-#end
+# -------------------------------------------------------------------------
+function makecpt()
+	C = gmt("makecpt -Crainbow -T5/35/5")
+	gmt("psscale -D4/4/4/0.5 -P -Baf > t.ps", C)
+end
+
+# -------------------------------------------------------------------------
+function grdinfo()
+	G = gmt("surface -R0/150/0/150 -I1", rand(100,3) * 100)
+	T = gmt("grdinfo", G)
+end
+
+# -------------------------------------------------------------------------
+function pstext()
+	lines = {"5 6 Some label", "6 7 Another label"}
+	gmt("pstext -R0/10/0/10 -JM6i -Bafg -F+f18p -P > V:/text.ps", lines)
+end
