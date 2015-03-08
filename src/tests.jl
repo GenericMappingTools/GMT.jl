@@ -89,7 +89,7 @@ end
 # -------------------------------------------------------------------------
 function makecpt()
 	C = gmt("makecpt -Crainbow -T5/35/5")
-	gmt("psscale -D4/4/4/0.5 -P -Baf > t.ps", C)
+	gmt("psscale -D4/4/4/0.5 -P -Baf > V:/t.ps", C)
 end
 
 # -------------------------------------------------------------------------
@@ -103,3 +103,23 @@ function pstext()
 	lines = {"5 6 Some label", "6 7 Another label"}
 	gmt("pstext -R0/10/0/10 -JM6i -Bafg -F+f18p -P > V:/text.ps", lines)
 end
+
+# -------------------------------------------------------------------------
+function jlogo(L)
+	# Create the Julia "Terminator" 3 colored circles triangle
+	# L is the length of the equilateral triangle
+	W = 2 * L 					# Region width
+	H = L * sind(60) 			# Triangle height
+	s_size = 0.8 * L 			# Circle diameter
+	l_thick = s_size * 0.06 	# Line thickness
+
+	com = @sprintf("psxy -Sc%fc -G191/101/95  -Jx1 -R0/%f/0/%f -W%fc,171/43/33  -P -K >  V:/Jlogo.ps", s_size, W, W, l_thick)
+	gmt(com, [L/2 L/2])
+	com = @sprintf("psxy -Sc%fc -G158/122/190 -Jx1 -R0/%f/0/%f -W%fc,130/83/171 -O -K >> V:/Jlogo.ps", s_size, W, W, l_thick)
+	gmt(com, [L+L/2 L/2])
+	com = @sprintf("psxy -Sc%fc -G128/171/93  -Jx1 -R0/%f/0/%f -W%fc,81/143/24  -O    >> V:/Jlogo.ps", s_size, W, W, l_thick)
+	gmt(com, [L L/2+H])
+end
+
+jlogo() = jlogo(5)
+# If not provided, make a logo where the triangle has a side of 5 cm.
