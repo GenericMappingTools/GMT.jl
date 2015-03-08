@@ -26,6 +26,33 @@ type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
 	z_units::ASCIIString
 end
 
+type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
+	ProjectionRefPROJ4::ASCIIString
+	ProjectionRefWKT::ASCIIString
+	hdr::Array{Float64,1}
+	range::Array{Float64,1}
+	inc::Array{Float64,1}
+	dim::Array{Int,1}
+	n_rows::Int
+	n_columns::Int
+	MinMax::Array{Float64,1}
+	NoDataValue::Float64
+	registration::Int
+	title::ASCIIString
+	remark::ASCIIString
+	command::ASCIIString
+	DataType::Int
+	LayerCount::Int
+	x::Ptr{Float64}
+	y::Ptr{Float64}
+	image::Array{Uint32,3}
+	x_units::ASCIIString
+	y_units::ASCIIString
+	z_units::ASCIIString
+	colormap::Array{Uint8,2}
+	alpha::Array{Uint8,2}
+end
+
 type GMTJL_CPT
 	colormap::Array{Float64,2}
 	alpha::Array{Float64,1}
@@ -96,7 +123,7 @@ function gmt(cmd::String, args...)
 
 	# 6. Run GMT module; give usage message if errors arise during parsing */
 	status = GMT_Call_Module(API, g_module, GMT_MODULE_OPT, LL)
-	if (status != 0) error("Something went wrong. GMT error number = ", status)	end
+	if (status != 0) error("Something went wrong when calling the module. GMT error number = ", status)	end
 
 	# 7. Hook up module GMT outputs to Julia array
 	out = []
@@ -111,18 +138,23 @@ function gmt(cmd::String, args...)
 			elseif (X[k].family == GMT_IS_DATASET)  # A GMT table; make it a matrix and the pos'th output item
 				out = get_table(API, X[k].object)
 			elseif (X[k].family == GMT_IS_TEXTSET)  # A GMT textset; make it a cell and the pos'th output item
-				#out = unsafe_load(convert(Ptr{GMT_TEXTSET}, X[k].object))
-#return out
 				out = get_textset(API, X[k].object)
 			elseif (X[k].family == GMT_IS_CPT)      # A GMT CPT; make it a colormap and the pos'th output item
 				#out = unsafe_load(convert(Ptr{GMT_PALETTE}, X[k].object))
 #return out
 				out = get_cpt(API, X[k].object)
 			elseif (X[k].family == GMT_IS_IMAGE)    # A GMT Image; make it the pos'th output item
+				out = get_image(API, X[k].object)
+			end
+		else		# Free any memory allocated outside of GMT
+			if (X[k].family == GMT_IS_TEXTSET)		# We have to free the text in table.segment.record
+				#GMTJL_Free_Textset(X[k].object)
 			end
 		end
-		if (GMT_Destroy_Data(API, pointer([X[k].object])) != GMT.GMT_NOERROR)
-			error("GMT: Failed to destroy object used in the interface bewteen GMT and Matlab")
+		if (X[k].family != GMT_IS_TEXTSET) 			# Gave up. The GMT_IS_TEXTSET will have to leak (blame the immutables)
+			if (GMT_Destroy_Data(API, pointer([X[k].object])) != GMT.GMT_NOERROR)
+				error("GMT: Failed to destroy object used in the interface bewteen GMT and Julia")
+			end
 		end
 	end
 
@@ -223,6 +255,59 @@ function get_grid(API, object)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function get_image(API, object)
+# ...
+	I = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
+	if (I.data == C_NULL)
+		error("get_image: programming error, output matrix is empty")
+	end
+
+	gmt_hdr = unsafe_load(I.header)
+
+	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx);	nz = gmt_hdr.n_bands
+	# Return grids via a float matrix in a struct
+	out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
+	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, C_NULL, C_NULL,
+	                 zeros(Uint8,ny,nx,nz), "", "", "", zeros(Uint8,ny,3), zeros(Uint8,ny,nx))
+
+	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
+		out.ProjectionRefPROJ4 = bytestring(gmt_hdr.ProjRefPROJ4)
+	end
+	if (gmt_hdr.ProjRefWKT != C_NULL)
+		out.ProjectionRefWKT = bytestring(gmt_hdr.ProjectionRefWKT)
+	end
+
+	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays  
+	out.range = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4])
+	out.hdr   = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4 gmt_hdr.z_min gmt_hdr.z_max gmt_hdr.registration gmt_hdr.inc.d1 gmt_hdr.inc.d2])
+	out.inc          = vec([gmt_hdr.inc.d1 gmt_hdr.inc.d2])
+	out.n_rows       = ny
+	out.n_columns    = nx
+	out.MinMax       = vec([gmt_hdr.z_min gmt_hdr.z_max])
+	out.NoDataValue  = gmt_hdr.nan_value
+	out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
+	out.registration = gmt_hdr.registration
+	out.LayerCount   = Int(gmt_hdr.n_bands)
+	out.x            = linspace(out.range[1], out.range[2], out.n_columns)
+	out.y            = linspace(out.range[3], out.range[4], out.n_rows)
+	t                = pointer_to_array(I.data, out.n_rows * out.n_columns)
+
+	if (I.ColorMap != C_NULL)       # Indexed image has a color map
+		out.image = t
+		out.colormap = I.ColorMap 	# PROBABLY NEEDS TRANSPOSITION
+	elseif (gmt_hdr.n_bands == 1)   # gray image
+		out.image = t
+	elseif (gmt_hdr.n_bands == 3)   # RGB image
+		out.image = t
+	elseif (gmt_hdr.n_bands == 4)   # RGBA image
+		out.image = t[:,:,1:3]
+		out.alpha = t[:,:,4]
+	end
+
+	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
 function get_cpt(API, object::Ptr{Void})
 	# Hook this Julia CPT into the k'th output item
 
@@ -272,7 +357,6 @@ function get_textset(API, object::Ptr{Void})
 	end
 
 	T = unsafe_load(convert(Ptr{GMT_TEXTSET}, object))
-
 	p = pointer_to_array(pointer_to_array(T.table,1)[1],1) 		# T.table::Ptr{Ptr{GMT.GMT_TEXTTABLE}}
 
 	# Create a cell array to hold all records
@@ -330,6 +414,9 @@ function GMTJL_register_IO (API::Ptr{Void}, family::Integer, dir::Integer, ptr)
 		# Get an empty grid, and if input we and associate it with the Julia grid pointer
 		obj = GMTJL_grid_init(API, ptr, dir)
 		ID  = GMT_Get_ID(API, GMT_IS_GRID, dir, obj)
+	elseif (family == GMT_IS_IMAGE)
+		obj = GMTJL_image_init(API, ptr, dir)
+		ID  = GMT_Get_ID(API, GMT_IS_IMAGE, dir, obj)
 	elseif (family == GMT_IS_DATASET)
 		# Get a matrix container, and if input and associate it with the Julia pointer
 		# MUST TEST HERE THAT ptr IS A MATRIX
@@ -338,7 +425,6 @@ function GMTJL_register_IO (API::Ptr{Void}, family::Integer, dir::Integer, ptr)
 	elseif (family == GMT_IS_CPT)
 		# Get a CPT container, and if input and associate it with the Julia CPT pointer
 		obj = GMTJL_CPT_init(API, ptr, dir)
-#return obj, 0
 		ID  = GMT_Get_ID(API, GMT_IS_CPT, dir, obj)
 	elseif (family == GMT_IS_TEXTSET)
 		# Get a TEXTSET container, and if input we associate it with the Julia pointer
@@ -386,8 +472,8 @@ function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Integer=
 	#dim = [size(grd,1), size(grd,2), 1]
 
 	if (dir == GMT_IN)
-		if ((G = GMT_Create_Data (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, C_NULL,
-		                          hdr[1:4], hdr[8:9], uint32(hdr[7]), pad)) == C_NULL)
+		if ((G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, C_NULL,
+		                         hdr[1:4], hdr[8:9], uint32(hdr[7]), pad)) == C_NULL)
 			error ("grid_init: Failure to alloc GMT source matrix for input")
 		end
 
@@ -421,6 +507,67 @@ function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Integer=
 end
 
 # ---------------------------------------------------------------------------------------------------
+function GMTJL_image_init(API::Ptr{Void}, img_box, dir::Integer=GMT_IN)
+	# ...
+
+	if (isempty(img_box))		# Just tell GMTJL_image_init() to allocate an empty container 
+		R = GMTJL_image_init(API, [0.0], [0.0 0 0 0 0 0 0 0 0], dir)
+		return R
+	end
+
+	if (isa(img_box, GMT_grd_container))
+		img = pointer_to_array(img_box.grd, img_box.nx * img_box.ny * img_box.n_bands)
+		hdr = pointer_to_array(img_box.hdr, 9)
+	elseif (isa(img_box, GMTJL_IMAGE))
+		img = img_box.image
+		hdr = img_box.hdr
+	else
+		error("GMTJL_PARSER:image_init: input is not a GRID|IMAGE container type")
+	end
+	R = GMTJL_image_init(API, img, hdr, dir)
+	return R
+end
+
+# ---------------------------------------------------------------------------------------------------
+function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, dir::Integer=GMT_IN, pad::Int=0)
+# ...
+
+	if (dir == GMT_IN)
+		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_ALL, C_NULL,
+		                          hdr[1:4], hdr[8:9], uint32(hdr[7]), pad)) == C_NULL)
+			error ("image_init: Failure to alloc GMT source image for input")
+		end
+		n_rows = size(img, 1);		n_cols = size(img, 2);		n_pages = size(img, 3)
+		t = zeros(Uint32, n_rows, n_cols, n_pages)
+
+		for (col = 1:n_cols)
+			ic = col * n_rows
+			for (row = 1:n_rows)
+				ij = ic - row + 1
+				t[row, col] = grd[ij]
+			end
+		end
+
+		Ib = unsafe_load(I)			# Ib = GMT_IMAGE (constructor with 1 method)
+		Ib.data = pointer(t)
+		Ib.alloc_mode = uint32(GMT.GMT_ALLOCATED_EXTERNALLY)	# Since array was allocated by Julia
+		h = unsafe_load(Ib.header)
+		h.z_min = hdr[5]			# Set the z_min, z_max
+		h.z_max = hdr[6]
+		unsafe_store!(Ib.header, h)
+		unsafe_store!(I, Ib)
+		GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Image %s in parser\n", I) )
+	else	# Just allocate an empty container to hold the output grid, and pass GMT_VIA_OUTPUT
+		if ((I = GMT_Create_Data (API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
+		                          C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+			error ("image_init: Failure to alloc GMT blank grid container for holding output grid")
+		end
+	end
+	return I
+
+end
+
+# ---------------------------------------------------------------------------------------------------
 function GMTJL_matrix_init(API::Ptr{Void}, grd, dir::Integer=GMT_IN, pad::Int=0)
 # ...
 	if (dir == GMT_IN)
@@ -449,7 +596,7 @@ function GMTJL_matrix_init(API::Ptr{Void}, grd, dir::Integer=GMT_IN, pad::Int=0)
 		elseif (eltype(grd) == Float32)
 			Mb._type = uint32(GMT.GMT_FLOAT)
 		else
-			error("GMTJL_matrix_init: only floating point types allowed in input")
+			error("GMTJL_matrix_init: only floating point types allowed in input. Others need to be added")
 		end
 		Mb.data  = pointer(grd)
 		Mb.dim = Mb.n_rows		# Data from Julia is in column major
@@ -495,28 +642,21 @@ function GMTJL_CPT_init(API::Ptr{Void}, cpt, dir::Integer)
 		end
 
 		dz = (cpt.range[2] - cpt.range[1]) / (n_colors + 1)
-		#x = 1.0; y = 5.0
-		#ccall(:memcpy, Ptr{Void}, (Ptr{Float64}, Ptr{Float64}, Csize_t), &x, &y, 8)
-		#ccall((:replace_d, "gmt_w64"), Void, (Ptr{Float64}, Float64), pointer_from_objref(x), y)
-		#xx = ccall((:point_me_d, "gmt_w64"), Ptr{Float64}, (Float64,), x)
-		#@show(xx)
 
 		Cb = unsafe_load(C)
 		for (j = 1:n_colors)
 			#for (k = 1:3)
 			#	P.range[j].rgb_low[k] = colormap[j + k * n_colors]
 			#end
-			gmt_lut = unsafe_load(Cb.range, j)
-#@show("antes ", gmt_lut.rgb_low.d1, cpt.colormap[j, 1])
-			#ccall(:memcpy, Ptr{Void}, (Ptr{Float64}, Ptr{Float64}, Csize_t), &gmt_lut.rgb_low.d1, &cpt.colormap[j, 1], 8)
-			gmt_lut.rgb_low.d1 = cpt.colormap[j, 1]
-			gmt_lut.rgb_low.d2 = cpt.colormap[j, 2]
-			gmt_lut.rgb_low.d3 = cpt.colormap[j, 3]
-			gmt_lut.rgb_low.d4 = cpt.alpha[j]
-			gmt_lut.z_low = j * dz
-			gmt_lut.z_high = (j+1) * dz
-			#
-			unsafe_store!(Cb.range, gmt_lut, j)
+			glut = unsafe_load(Cb.range, j)
+			rgb_low  = GMT.Array_4_Cdouble(cpt.colormap[j,1], cpt.colormap[j,2], cpt.colormap[j,3], cpt.alpha[j])
+			rgb_high = GMT.Array_4_Cdouble(cpt.colormap[j,1], cpt.colormap[j,2], cpt.colormap[j,3], cpt.alpha[j])
+			z_low = j * dz
+			z_high = (j+1) * dz
+			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
+			              glut.hsv_diff, glut.annot, glut.skip, glut.fill, glut.label)
+
+			unsafe_store!(Cb.range, lut, j)
 		end
 		unsafe_store!(C, Cb)
 	else 	# Just allocate an empty container to hold an output grid (signal this by passing NULLs)
@@ -589,7 +729,7 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 		Tt   = GMT_TEXTSET(T0[1].n_tables, T0[1].n_segments, dim[3], TTp2, T0[1].id, T0[1].n_alloc, T0[1].geometry,
 		                   T0[1].alloc_level, T0[1].io_mode, T0[1].alloc_mode, T0[1].file)
 		pointer_to_array(TTp2,2)	# Just to prevent the garbage man to destroy TTp? before this time
-    	#table::Ptr{Ptr{GMT_TEXTTABLE}}
+		#table::Ptr{Ptr{GMT_TEXTTABLE}}
 		unsafe_store!(T, Tt)
 
 	else 	# Just allocate an empty container to hold an output grid (signal this by passing NULLs)
@@ -600,3 +740,50 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 
 	return T
 end
+
+# ---------------------------------------------------------------------------------------------------
+function GMTJL_Free_Textset(Tp::Ptr{Void})
+	# We have to free the text in table.segment.record because it can't be freed by GMT but the containers need to
+	# ... but unfortunatelly I'm unable to program this function. There is always some immut thing that
+	# I'm unable to replace and the GMT_Destroy_Data() crashes Julia.
+
+	if (Tp == C_NULL)
+		error("GMTJL_Free_Textset: programming error, textset T is NULL or empty")
+	end
+
+	T = pointer_to_array(convert(Ptr{GMT_TEXTSET}, Tp),1)
+	p = pointer_to_array(pointer_to_array(T[1].table,1)[1],1) 		# T.table::Ptr{Ptr{GMT.GMT_TEXTTABLE}}
+
+	for (seg = 1:p[1].n_segments)
+#		S = T->table[0]->segment[seg];
+		S = pointer_to_array(pointer_to_array(p[1].segment,seg)[seg],seg)	# p[1].segment::Ptr{Ptr{GMT.GMT_TEXTSEGMENT}}
+		#pr1 = zeros(Int64, S[1].n_rows)
+		pr1 = pointer_to_array(S[1].record, S[1].n_rows)
+		for (row = 1:S[1].n_rows)
+			pr = pointer_to_array(pr1[row], 1)
+			pr1[row] = C_NULL 	# Let's hope that the gc cleans up the rest
+			unsafe_store!(pointer(pr), pr1[row])
+@show(pr)
+		end
+
+@show(pr1)
+		pr = pointer(pr1)
+@show(pr)
+		unsafe_store!(pr, C_NULL)
+@show(pr)
+@show(S[1].record)
+	end
+end
+
+
+#= ---------------------------------------------------------------------------------------------------
+import Base: isempty
+function isempty(x::Any)
+	empty = false
+	try
+		isempty(x)
+		empty = true
+	end
+	return empty
+end
+=#
