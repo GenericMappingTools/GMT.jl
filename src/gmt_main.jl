@@ -18,8 +18,8 @@ type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
 	command::ASCIIString
 	DataType::Int
 	LayerCount::Int
-	x::Ptr{Float64}
-	y::Ptr{Float64}
+	x::Array{Float64,1}
+	y::Array{Float64,1}
 	z::Array{Float32,2}
 	x_units::ASCIIString
 	y_units::ASCIIString
@@ -43,8 +43,8 @@ type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
 	command::ASCIIString
 	DataType::Int
 	LayerCount::Int
-	x::Ptr{Float64}
-	y::Ptr{Float64}
+	x::Array{Float64,1}
+	y::Array{Float64,1}
 	image::Array{Uint32,3}
 	x_units::ASCIIString
 	y_units::ASCIIString
@@ -121,7 +121,7 @@ function gmt(cmd::String, args...)
 		end
 	end
 
-	# 6. Run GMT module; give usage message if errors arise during parsing */
+	# 6. Run GMT module; give usage message if errors arise during parsing
 	status = GMT_Call_Module(API, g_module, GMT_MODULE_OPT, LL)
 	if (status != 0) error("Something went wrong when calling the module. GMT error number = ", status)	end
 
@@ -216,10 +216,10 @@ function get_grid(API, object)
 
 	gmt_hdr = unsafe_load(G.header)
 
-	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx)
+	ny = int(gmt_hdr.ny);		nx = int(gmt_hdr.nx)
 	# Return grids via a float matrix in a struct
 	out = GMTJL_GRID("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
-	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, C_NULL, C_NULL,
+	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, zeros(Float64,nx), zeros(Float64,ny),
 	                 zeros(Float32,ny,nx), "", "", "")
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
@@ -239,7 +239,7 @@ function get_grid(API, object)
 	out.NoDataValue  = gmt_hdr.nan_value
 	out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
 	out.registration = gmt_hdr.registration
-	out.LayerCount   = Int(gmt_hdr.n_bands)
+	out.LayerCount   = int(gmt_hdr.n_bands)
 	out.x            = linspace(out.range[1], out.range[2], out.n_columns)
 	out.y            = linspace(out.range[3], out.range[4], out.n_rows)
 	t                = pointer_to_array(G.data, out.n_rows * out.n_columns)
@@ -267,7 +267,7 @@ function get_image(API, object)
 	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx);	nz = gmt_hdr.n_bands
 	# Return grids via a float matrix in a struct
 	out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
-	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, C_NULL, C_NULL,
+	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, zeros(Float64,nx), zeros(Float64,ny),
 	                 zeros(Uint8,ny,nx,nz), "", "", "", zeros(Uint8,ny,3), zeros(Uint8,ny,nx))
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
@@ -473,7 +473,7 @@ function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Integer=
 
 	if (dir == GMT_IN)
 		if ((G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, C_NULL,
-		                         hdr[1:4], hdr[8:9], uint32(hdr[7]), pad)) == C_NULL)
+		                         hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)) == C_NULL)
 			error ("grid_init: Failure to alloc GMT source matrix for input")
 		end
 
@@ -490,7 +490,7 @@ function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Integer=
 
 		Gb = unsafe_load(G)			# Gb = GMT_GRID (constructor with 1 method)
 		Gb.data = pointer(t)
-		Gb.alloc_mode = uint32(GMT.GMT_ALLOCATED_EXTERNALLY)	# Since array was allocated by Julia
+		Gb.alloc_mode = UInt32(GMT.GMT_ALLOCATED_EXTERNALLY)	# Since array was allocated by Julia
 		h = unsafe_load(Gb.header)
 		h.z_min = hdr[5]			# Set the z_min, z_max
 		h.z_max = hdr[6]
@@ -534,11 +534,11 @@ function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, dir::Integer
 
 	if (dir == GMT_IN)
 		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_ALL, C_NULL,
-		                          hdr[1:4], hdr[8:9], uint32(hdr[7]), pad)) == C_NULL)
+		                          hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)) == C_NULL)
 			error ("image_init: Failure to alloc GMT source image for input")
 		end
 		n_rows = size(img, 1);		n_cols = size(img, 2);		n_pages = size(img, 3)
-		t = zeros(Uint32, n_rows, n_cols, n_pages)
+		t = zeros(UInt32, n_rows, n_cols, n_pages)
 
 		for (col = 1:n_cols)
 			ic = col * n_rows
@@ -550,7 +550,7 @@ function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, dir::Integer
 
 		Ib = unsafe_load(I)			# Ib = GMT_IMAGE (constructor with 1 method)
 		Ib.data = pointer(t)
-		Ib.alloc_mode = uint32(GMT.GMT_ALLOCATED_EXTERNALLY)	# Since array was allocated by Julia
+		Ib.alloc_mode = UInt32(GMT.GMT_ALLOCATED_EXTERNALLY)	# Since array was allocated by Julia
 		h = unsafe_load(Ib.header)
 		h.z_min = hdr[5]			# Set the z_min, z_max
 		h.z_max = hdr[6]
@@ -705,7 +705,7 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 
 		record = Ptr{Uint8}[0 for i=1:dim[3]]	# Can't use cell() because it creates an object of type Any which later fcks all
 		for (rec = 1:dim[3])
-			record[rec] = txt[rec]
+			record[rec] = pointer(txt[rec])
 		end
 		record = pointer(record)
 
