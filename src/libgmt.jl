@@ -2,7 +2,6 @@
 # Automatically generated using Clang.jl wrap_c, version 0.0.0
 
 @windows? (const thelib = "gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
-#const thelib = "gmt_w64"
 
 
 function GMT_Create_Session(tag::String="GMT5", pad=2, mode=0, print_func::Ptr{Void}=C_NULL)
@@ -176,16 +175,16 @@ function GMT_Get_Value(API::Ptr{Void}, arg::String, par::Ptr{Cdouble})
   ccall( (:GMT_Get_Value, thelib), Cint, (Ptr{Void}, Ptr{Uint8}, Ptr{Cdouble}), API, arg, par)
 end
 
-function GMT_Call_Module(API::Ptr{Void}, _module=C_NULL, mode::Int=0, args=C_NULL)
+function GMT_Call_Module(API::Ptr{Void}, _module=C_NULL, mode::Integer=0, args=C_NULL)
 	if (isa(args,ASCIIString))	args = pointer(args)	end
 	ccall((:GMT_Call_Module, thelib), Cint, (Ptr{Void}, Ptr{Uint8}, Cint, Ptr{Void}), API, _module, mode, args)
 end
 
-function GMT_Create_Options(API::Ptr{Void}, argc::Int, args)
+function GMT_Create_Options(API::Ptr{Void}, argc::Integer, args)
 	# VERSATILIZAR PARA O CASO DE ARGS SER STRING OU ARRAY DE STRINGS
 	ccall((:GMT_Create_Options, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, Cint, Ptr{Void}), API, argc, args)
 end
-GMT_Create_Options(API::Ptr{Void}, argc::Int, args::ASCIIString) = 
+GMT_Create_Options(API::Ptr{Void}, argc::Integer, args::ASCIIString) = 
                    GMT_Create_Options(API, argc, convert(Ptr{Void},pointer(args)))
 
 function GMT_Make_Option(API::Ptr{Void}, option::Uint8, arg::Ptr{Uint8})
