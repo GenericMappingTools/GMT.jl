@@ -316,10 +316,13 @@ function GMT_Expand_Option(V_API::Ptr{Void}, opt::Ptr{GMT_OPTION}, marker::Char,
 	ccall((:GMT_Expand_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Char, Ptr{Uint8}), V_API, opt, marker, arg)
 end
 
-
 function gmt_core_module_info(API, candidate::String)
 	ccall((:gmt_core_module_info, thelib), Ptr{Uint8}, (Ptr{Void}, Ptr{Uint8}), API, candidate)
 end
 function gmt_core_module_info(API, candidate::Ptr{Uint8})
 	ccall((:gmt_core_module_info, thelib), Ptr{Uint8}, (Ptr{Void}, Ptr{Uint8}), API, candidate)
+end
+
+function GMT_set_mem_layout(API, mem_layout::ASCIIString)
+	ccall((:GMT_set_mem_layout, thelib), Void, (Ptr{Void}, Ptr{Uint8}), API, mem_layout)
 end
