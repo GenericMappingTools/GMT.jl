@@ -45,7 +45,7 @@ type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
 	LayerCount::Int
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-	image::Array{Uint32,3}
+	image::Array{Uint8,3}
 	x_units::ASCIIString
 	y_units::ASCIIString
 	z_units::ASCIIString
@@ -96,6 +96,9 @@ function gmt(cmd::String, args...)
 	X = GMT_Encode_Options(API, g_module, '$', 0, pLL, n_items)	# This call also changes LL
 	# Get the pointees
 	n_items = unsafe_load(n_items)
+	if (n_items == 0)
+		warn("Very suspicious, n_items = 0")
+	end
 	#X = pointer_to_array(X,n_items)     # The array of GMT_RESOURCE structs
 	XX = Array(GMT_RESOURCE, 1, n_items)
 	for (k = 1:n_items)
@@ -264,7 +267,7 @@ function get_image(API, object)
 
 	gmt_hdr = unsafe_load(I.header)
 
-	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx);	nz = gmt_hdr.n_bands
+	ny = int(gmt_hdr.ny);		nx = int(gmt_hdr.nx);	nz = gmt_hdr.n_bands
 	# Return grids via a float matrix in a struct
 	out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
 	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, zeros(Float64,nx), zeros(Float64,ny),
@@ -287,10 +290,10 @@ function get_image(API, object)
 	out.NoDataValue  = gmt_hdr.nan_value
 	out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
 	out.registration = gmt_hdr.registration
-	out.LayerCount   = Int(gmt_hdr.n_bands)
+	out.LayerCount   = int(gmt_hdr.n_bands)
 	out.x            = linspace(out.range[1], out.range[2], out.n_columns)
 	out.y            = linspace(out.range[3], out.range[4], out.n_rows)
-	t                = pointer_to_array(I.data, out.n_rows * out.n_columns)
+	t                = pointer_to_array(I.data, out.n_rows * out.n_columns * gmt_hdr.n_bands)
 
 	if (I.ColorMap != C_NULL)       # Indexed image has a color map
 		out.image = t
@@ -298,7 +301,7 @@ function get_image(API, object)
 	elseif (gmt_hdr.n_bands == 1)   # gray image
 		out.image = t
 	elseif (gmt_hdr.n_bands == 3)   # RGB image
-		out.image = t
+		out.image = reshape(t, out.n_rows, out.n_columns, 3)
 	elseif (gmt_hdr.n_bands == 4)   # RGBA image
 		out.image = t[:,:,1:3]
 		out.alpha = t[:,:,4]
@@ -562,6 +565,7 @@ function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, dir::Integer
 		                          C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error ("image_init: Failure to alloc GMT blank grid container for holding output grid")
 		end
+		GMT_set_mem_layout(API, "TCLS")
 	end
 	return I
 
