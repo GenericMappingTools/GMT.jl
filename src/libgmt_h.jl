@@ -1271,6 +1271,7 @@ type GMT_GRID_HEADER
 	r_inc::Array_2_Cdouble
 	flags::Array_4_Uint8
 	pocket::Ptr{Uint8}
+	mem_layout::Array_4_Uint8
 	bcr_threshold::Cdouble
 	bcr_interpolant::Uint32
 	bcr_n::Uint32
