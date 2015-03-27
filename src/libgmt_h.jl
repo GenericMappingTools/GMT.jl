@@ -1531,6 +1531,7 @@ end
 immutable GMT_IMAGE
 	_type::GMT_enum_type
 	ColorMap::Ptr{Cint}
+	nIndexedColors::Cint
 	header::Ptr{GMT_GRID_HEADER}
 	data::Ptr{Cuchar}
 	id::Uint64
