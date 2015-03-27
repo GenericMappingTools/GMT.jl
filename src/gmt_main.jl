@@ -49,7 +49,7 @@ type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
 	x_units::ASCIIString
 	y_units::ASCIIString
 	z_units::ASCIIString
-	colormap::Array{Uint8,2}
+	colormap::Array{Clong,1}
 	alpha::Array{Uint8,2}
 end
 
@@ -155,9 +155,9 @@ function gmt(cmd::String, args...)
 			end
 		end
 		if (X[k].family != GMT_IS_TEXTSET) 			# Gave up. The GMT_IS_TEXTSET will have to leak (blame the immutables)
-			if (GMT_Destroy_Data(API, pointer([X[k].object])) != GMT.GMT_NOERROR)
-				error("GMT: Failed to destroy object used in the interface bewteen GMT and Julia")
-			end
+			#if (GMT_Destroy_Data(API, pointer([X[k].object])) != GMT.GMT_NOERROR)
+				#error("GMT: Failed to destroy object used in the interface bewteen GMT and Julia")
+			#end
 		end
 	end
 
@@ -266,12 +266,32 @@ function get_image(API, object)
 	end
 
 	gmt_hdr = unsafe_load(I.header)
+	ny = Int64(gmt_hdr.ny);		nx = Int64(gmt_hdr.nx);		nz = Int64(gmt_hdr.n_bands)
+	t  = reshape(pointer_to_array(I.data, ny * nx * gmt_hdr.n_bands), ny, nx, nz)
 
-	ny = int(gmt_hdr.ny);		nx = int(gmt_hdr.nx);	nz = gmt_hdr.n_bands
+	if (I.ColorMap != C_NULL)       # Indexed image has a color map (PROBABLY NEEDS TRANSPOSITION)
+		nColors = Int64(I.nIndexedColors)
+		colormap = Int32[1:nColors*4]
+		colormap = copy!(colormap, pointer_to_array(I.ColorMap, nColors * 4))
+		#alpha = Int32[1:nColors]
+		#alpha = copy!(alpha, colormap[4:4:end])	# We are not using this one!
+		colormap = deleteat!(colormap,4:4:length(colormap))
+		#colormap = reshape(colormap, 3, nColors)'
+		#colormap = colormap[:,1:3]	# WE ARE IGNORING THE POTENTIAL ALPHA IN THE 4RTH COLUMN
+	else
+		colormap = zeros(Clong,1,3)	# Because we need an array
+	end
+
 	# Return grids via a float matrix in a struct
-	out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
-	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, zeros(Float64,nx), zeros(Float64,ny),
-	                 zeros(Uint8,ny,nx,nz), "", "", "", zeros(Uint8,ny,3), zeros(Uint8,ny,nx))
+	if (gmt_hdr.n_bands <= 3)
+		out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
+	                      zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, zeros(Float64,nx), zeros(Float64,ny),
+	                      t, "", "", "", colormap, zeros(Uint8,ny,nx)) 		# <== Ver o qur fazer com o alpha
+	else 			# RGBA image
+		out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
+	                      zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, zeros(Float64,nx), zeros(Float64,ny),
+	                      t[:,:,1:3], "", "", "", colormap, t[:,:,4])
+	end
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
 		out.ProjectionRefPROJ4 = bytestring(gmt_hdr.ProjRefPROJ4)
@@ -290,22 +310,9 @@ function get_image(API, object)
 	out.NoDataValue  = gmt_hdr.nan_value
 	out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
 	out.registration = gmt_hdr.registration
-	out.LayerCount   = int(gmt_hdr.n_bands)
-	out.x            = linspace(out.range[1], out.range[2], out.n_columns)
-	out.y            = linspace(out.range[3], out.range[4], out.n_rows)
-	t                = pointer_to_array(I.data, out.n_rows * out.n_columns * gmt_hdr.n_bands)
-
-	if (I.ColorMap != C_NULL)       # Indexed image has a color map
-		out.image = t
-		out.colormap = I.ColorMap 	# PROBABLY NEEDS TRANSPOSITION
-	elseif (gmt_hdr.n_bands == 1)   # gray image
-		out.image = t
-	elseif (gmt_hdr.n_bands == 3)   # RGB image
-		out.image = reshape(t, out.n_rows, out.n_columns, 3)
-	elseif (gmt_hdr.n_bands == 4)   # RGBA image
-		out.image = t[:,:,1:3]
-		out.alpha = t[:,:,4]
-	end
+	out.LayerCount   = gmt_hdr.n_bands
+	out.x            = linspace(out.range[1], out.range[2], nx)
+	out.y            = linspace(out.range[3], out.range[4], ny)
 
 	return out
 end
@@ -565,7 +572,7 @@ function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, dir::Integer
 		                          C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error ("image_init: Failure to alloc GMT blank grid container for holding output grid")
 		end
-		GMT_set_mem_layout(API, "TCLS")
+		GMT_set_mem_layout(API, "TRLS")
 	end
 	return I
 
