@@ -50,6 +50,7 @@ type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
 	y_units::ASCIIString
 	z_units::ASCIIString
 	colormap::Array{Clong,1}
+	nColors::Int
 	alpha::Array{Uint8,2}
 end
 
@@ -218,11 +219,13 @@ function get_grid(API, object)
 	end
 
 	gmt_hdr = unsafe_load(G.header)
+	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx)
+	X  = linspace(gmt_hdr.wesn.d1, gmt_hdr.wesn.d2, nx)
+	Y  = linspace(gmt_hdr.wesn.d3, gmt_hdr.wesn.d4, ny)
 
-	ny = int(gmt_hdr.ny);		nx = int(gmt_hdr.nx)
 	# Return grids via a float matrix in a struct
 	out = GMTJL_GRID("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
-	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, zeros(Float64,nx), zeros(Float64,ny),
+	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, X, Y,
 	                 zeros(Float32,ny,nx), "", "", "")
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
@@ -243,8 +246,6 @@ function get_grid(API, object)
 	out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
 	out.registration = gmt_hdr.registration
 	out.LayerCount   = int(gmt_hdr.n_bands)
-	out.x            = linspace(out.range[1], out.range[2], out.n_columns)
-	out.y            = linspace(out.range[3], out.range[4], out.n_rows)
 	t                = pointer_to_array(G.data, out.n_rows * out.n_columns)
 
 	for (col = 1:out.n_columns)
@@ -266,31 +267,29 @@ function get_image(API, object)
 	end
 
 	gmt_hdr = unsafe_load(I.header)
-	ny = Int64(gmt_hdr.ny);		nx = Int64(gmt_hdr.nx);		nz = Int64(gmt_hdr.n_bands)
+	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx);		nz = Int(gmt_hdr.n_bands)
 	t  = reshape(pointer_to_array(I.data, ny * nx * gmt_hdr.n_bands), ny, nx, nz)
+	X  = linspace(gmt_hdr.wesn.d1, gmt_hdr.wesn.d2, nx)
+	Y  = linspace(gmt_hdr.wesn.d3, gmt_hdr.wesn.d4, ny)
 
 	if (I.ColorMap != C_NULL)       # Indexed image has a color map (PROBABLY NEEDS TRANSPOSITION)
 		nColors = Int64(I.nIndexedColors)
-		colormap = Int32[1:nColors*4]
-		colormap = copy!(colormap, pointer_to_array(I.ColorMap, nColors * 4))
-		#alpha = Int32[1:nColors]
-		#alpha = copy!(alpha, colormap[4:4:end])	# We are not using this one!
-		colormap = deleteat!(colormap,4:4:length(colormap))
-		#colormap = reshape(colormap, 3, nColors)'
-		#colormap = colormap[:,1:3]	# WE ARE IGNORING THE POTENTIAL ALPHA IN THE 4RTH COLUMN
+		colormap = pointer_to_array(I.ColorMap, nColors * 4)
+		#colormap = reshape(colormap, 4, nColors)'
 	else
-		colormap = zeros(Clong,1,3)	# Because we need an array
+		colormap = vec(zeros(Clong,1,3))	# Because we need an array
+		nColors = 0
 	end
 
 	# Return grids via a float matrix in a struct
 	if (gmt_hdr.n_bands <= 3)
 		out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
-	                      zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, zeros(Float64,nx), zeros(Float64,ny),
-	                      t, "", "", "", colormap, zeros(Uint8,ny,nx)) 		# <== Ver o qur fazer com o alpha
-	else 			# RGBA image
+	                      zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, X, Y,
+	                      t, "", "", "", colormap, nColors, zeros(Uint8,ny,nx)) 	# <== Ver o qur fazer com o alpha
+	else 			# RGB(A) image
 		out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
-	                      zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, zeros(Float64,nx), zeros(Float64,ny),
-	                      t[:,:,1:3], "", "", "", colormap, t[:,:,4])
+	                      zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, X, Y,
+	                      t[:,:,1:3], "", "", "", colormap, nColors, t[:,:,4])
 	end
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
@@ -311,8 +310,6 @@ function get_image(API, object)
 	out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
 	out.registration = gmt_hdr.registration
 	out.LayerCount   = gmt_hdr.n_bands
-	out.x            = linspace(out.range[1], out.range[2], nx)
-	out.y            = linspace(out.range[3], out.range[4], ny)
 
 	return out
 end
@@ -572,7 +569,7 @@ function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, dir::Integer
 		                          C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error ("image_init: Failure to alloc GMT blank grid container for holding output grid")
 		end
-		GMT_set_mem_layout(API, "TRLS")
+		GMT_set_mem_layout(API, "BRLS")
 	end
 	return I
 
