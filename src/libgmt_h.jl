@@ -33,6 +33,7 @@ const GMT_STR16 = 16
 const GMT_SESSION_NORMAL   = 0   # Typical mode to GMT_Create_Session
 const GMT_SESSION_NOEXIT   = 1   # Call return and not exit when error
 const GMT_SESSION_EXTERNAL = 2   # Called by an external API (e.g., Matlab, Julia, Python).
+const GMT_SESSION_COLMAJOR = 4   # External API uses column-major formats (e.g., Julai, MATLAB, Fortran). [Row-major format]
 # begin enum GMT_enum_type
 typealias GMT_enum_type Uint32
 const GMT_CHAR = 0
