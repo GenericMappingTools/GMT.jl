@@ -1,4 +1,3 @@
-
 global API			# OK, so next times we'll use this one
 
 type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
@@ -61,7 +60,8 @@ type GMTJL_CPT
 end
 
 function gmt(cmd::String, args...)
-
+	global API
+	
 	# ----------- Minimal error checking ------------------------
 	if (~isa(cmd, String))
 		error("gmt: first argument must always be a string")
@@ -72,20 +72,20 @@ function gmt(cmd::String, args...)
 	end
 	# -----------------------------------------------------------
 
-	#try
-		#a=API		# Must test here if it's a valid one
-	#catch
+	try
+		a = API		# Should test here if it's a valid one
+	catch
 		API = GMT_Create_Session("GMT5", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL 
 		                         + GMT.GMT_SESSION_COLMAJOR)
 		if (API == C_NULL)
 			error("Failure to create a GMT5 Session")
 		end
-	#end
+	end
 
 	# 2. Get arguments, if any, and extract the GMT module name
 	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
 	g_module,r = strtok(cmd)
-	
+
 	# 3. Convert mex command line arguments to a linked GMT option list
 	LL = GMT_Create_Options(API, 0, r)	# It uses also the fact that GMT parses and check options
 	if (LL == C_NULL)
@@ -95,12 +95,16 @@ function gmt(cmd::String, args...)
 	# 4. Preprocess to update GMT option lists and return info array X
 	n_items = pointer([0])
 	pLL = pointer([LL])
-	X = GMT_Encode_Options(API, g_module, '$', pLL, n_items)	# This call also changes LL
-	# Get the pointees
-	n_items = unsafe_load(n_items)
-	if (n_items == 0)
-		warn("Very suspicious, n_items = 0")
+	if ((X = GMT_Encode_Options(API, g_module, '$', pLL, n_items)) == C_NULL)	# This call also changes LL
+		# Get the pointees
+		n_items = unsafe_load(n_items)
+		if (n_items > 65000)				# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
+			n_items = 0
+		else
+			error("GMT: Failure to encode mex command options")
+		end
 	end
+
 	#X = pointer_to_array(X,n_items)     # The array of GMT_RESOURCE structs
 	XX = Array(GMT_RESOURCE, 1, n_items)
 	for (k = 1:n_items)
@@ -128,7 +132,9 @@ function gmt(cmd::String, args...)
 
 	# 6. Run GMT module; give usage message if errors arise during parsing
 	status = GMT_Call_Module(API, g_module, GMT_MODULE_OPT, LL)
-	if (status != 0) error("Something went wrong when calling the module. GMT error number = ", status)	end
+	if (!(status == GMT_NOERROR || status == GMT_SYNOPSIS))
+		error("Something went wrong when calling the module. GMT error number = ", status)
+	end
 
 	# 7. Hook up module GMT outputs to Julia array
 	out = []
