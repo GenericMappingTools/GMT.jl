@@ -75,7 +75,8 @@ function gmt(cmd::String, args...)
 	#try
 		#a=API		# Must test here if it's a valid one
 	#catch
-		API = GMT_Create_Session("GMT5", 0, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL)
+		API = GMT_Create_Session("GMT5", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL 
+		                         + GMT.GMT_SESSION_COLMAJOR)
 		if (API == C_NULL)
 			error("Failure to create a GMT5 Session")
 		end
@@ -94,7 +95,7 @@ function gmt(cmd::String, args...)
 	# 4. Preprocess to update GMT option lists and return info array X
 	n_items = pointer([0])
 	pLL = pointer([LL])
-	X = GMT_Encode_Options(API, g_module, '$', 0, pLL, n_items)	# This call also changes LL
+	X = GMT_Encode_Options(API, g_module, '$', pLL, n_items)	# This call also changes LL
 	# Get the pointees
 	n_items = unsafe_load(n_items)
 	if (n_items == 0)
@@ -144,8 +145,6 @@ function gmt(cmd::String, args...)
 			elseif (X[k].family == GMT_IS_TEXTSET)  # A GMT textset; make it a cell and the pos'th output item
 				out = get_textset(API, X[k].object)
 			elseif (X[k].family == GMT_IS_CPT)      # A GMT CPT; make it a colormap and the pos'th output item
-				#out = unsafe_load(convert(Ptr{GMT_PALETTE}, X[k].object))
-#return out
 				out = get_cpt(API, X[k].object)
 			elseif (X[k].family == GMT_IS_IMAGE)    # A GMT Image; make it the pos'th output item
 				out = get_image(API, X[k].object)
@@ -196,7 +195,7 @@ end
 function strtok(args, delim::ASCIIString=" ")
 # A Matlab like strtok function
 	tok = "";	r = ""
-	if (~is_valid_ascii(args))
+	if (~isvalid(args))
 		return tok, r
 	end
 
@@ -219,14 +218,15 @@ function get_grid(API, object)
 	end
 
 	gmt_hdr = unsafe_load(G.header)
-	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx)
+	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx);		nz = Int(gmt_hdr.n_bands)
 	X  = linspace(gmt_hdr.wesn.d1, gmt_hdr.wesn.d2, nx)
 	Y  = linspace(gmt_hdr.wesn.d3, gmt_hdr.wesn.d4, ny)
+	t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
 
 	# Return grids via a float matrix in a struct
 	out = GMTJL_GRID("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
 	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, X, Y,
-	                 zeros(Float32,ny,nx), "", "", "")
+	                 t, "", "", "")
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
 		out.ProjectionRefPROJ4 = bytestring(gmt_hdr.ProjRefPROJ4)
@@ -245,15 +245,16 @@ function get_grid(API, object)
 	out.NoDataValue  = gmt_hdr.nan_value
 	out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
 	out.registration = gmt_hdr.registration
-	out.LayerCount   = int(gmt_hdr.n_bands)
-	t                = pointer_to_array(G.data, out.n_rows * out.n_columns)
-
-	for (col = 1:out.n_columns)
-		for (row = 1:out.n_rows)
-			ij = col * out.n_rows - row + 1
+	out.LayerCount   = gmt_hdr.n_bands
+#=
+	t                = pointer_to_array(G.data, ny * nx)
+	for (col = 1:nx)
+		for (row = 1:ny)
+			ij = col * ny - row + 1
 			out.z[row, col] = t[ij]
 		end
 	end
+=#
 
 	return out
 end
@@ -268,9 +269,9 @@ function get_image(API, object)
 
 	gmt_hdr = unsafe_load(I.header)
 	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx);		nz = Int(gmt_hdr.n_bands)
-	t  = reshape(pointer_to_array(I.data, ny * nx * gmt_hdr.n_bands), ny, nx, nz)
 	X  = linspace(gmt_hdr.wesn.d1, gmt_hdr.wesn.d2, nx)
 	Y  = linspace(gmt_hdr.wesn.d3, gmt_hdr.wesn.d4, ny)
+	t  = reshape(pointer_to_array(I.data, ny * nx * nz), ny, nx, nz)
 
 	if (I.ColorMap != C_NULL)       # Indexed image has a color map (PROBABLY NEEDS TRANSPOSITION)
 		nColors = Int64(I.nIndexedColors)
@@ -327,7 +328,7 @@ function get_cpt(API, object::Ptr{Void})
 	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 	out = GMTJL_CPT(zeros(n_colors, 3), zeros(n_colors), zeros(2)*NaN)
 
-	for (j = 1:C.n_colors)       # Copy r/g/b from palette to Matlab array
+	for (j = 1:C.n_colors)       # Copy r/g/b from palette to Julia array
 		gmt_lut = unsafe_load(C.range, j)
 		out.colormap[j, 1] = gmt_lut.rgb_low.d1
 		out.colormap[j, 2] = gmt_lut.rgb_low.d2
@@ -414,7 +415,7 @@ function get_table(API, object)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_register_IO (API::Ptr{Void}, family::Integer, dir::Integer, ptr)
+function GMTJL_register_IO(API::Ptr{Void}, family::Integer, dir::Integer, ptr)
 	# Create the grid or matrix contains, register them, and return the ID
 	ID = GMT.GMT_NOTSET
 	if (family == GMT_IS_GRID)
@@ -481,7 +482,7 @@ function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Integer=
 	if (dir == GMT_IN)
 		if ((G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, C_NULL,
 		                         hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)) == C_NULL)
-			error ("grid_init: Failure to alloc GMT source matrix for input")
+			error("grid_init: Failure to alloc GMT source matrix for input")
 		end
 
 		n_rows = size(grd, 1);		n_cols = size(grd, 2)
@@ -505,9 +506,9 @@ function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Integer=
 		unsafe_store!(G, Gb)
 		GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Grid %s in parser\n", G) )
 	else	# Just allocate an empty container to hold the output grid, and pass GMT_VIA_OUTPUT
-		if ((G = GMT_Create_Data (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
+		if ((G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
 		                          C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-			error ("grid_init: Failure to alloc GMT blank grid container for holding output grid")
+			error("grid_init: Failure to alloc GMT blank grid container for holding output grid")
 		end
 	end
 	return G
@@ -542,7 +543,7 @@ function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, dir::Integer
 	if (dir == GMT_IN)
 		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_ALL, C_NULL,
 		                          hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)) == C_NULL)
-			error ("image_init: Failure to alloc GMT source image for input")
+			error("image_init: Failure to alloc GMT source image for input")
 		end
 		n_rows = size(img, 1);		n_cols = size(img, 2);		n_pages = size(img, 3)
 		t = zeros(UInt32, n_rows, n_cols, n_pages)
@@ -565,9 +566,9 @@ function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, dir::Integer
 		unsafe_store!(I, Ib)
 		GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Image %s in parser\n", I) )
 	else	# Just allocate an empty container to hold the output grid, and pass GMT_VIA_OUTPUT
-		if ((I = GMT_Create_Data (API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
+		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
 		                          C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-			error ("image_init: Failure to alloc GMT blank grid container for holding output grid")
+			error("image_init: Failure to alloc GMT blank grid container for holding output grid")
 		end
 		GMT_set_mem_layout(API, "BRLS")
 	end
@@ -600,9 +601,9 @@ function GMTJL_matrix_init(API::Ptr{Void}, grd, dir::Integer=GMT_IN, pad::Int=0)
 	if (dir == GMT_IN)
 		# NEED TO ADD CODE FOR THE OTHER DATA TYPES
 		if (eltype(grd) == Float64)
-			Mb._type = uint32(GMT.GMT_DOUBLE)
+			Mb._type = UInt32(GMT.GMT_DOUBLE)
 		elseif (eltype(grd) == Float32)
-			Mb._type = uint32(GMT.GMT_FLOAT)
+			Mb._type = UInt32(GMT.GMT_FLOAT)
 		else
 			error("GMTJL_matrix_init: only floating point types allowed in input. Others need to be added")
 		end
@@ -612,12 +613,12 @@ function GMTJL_matrix_init(API::Ptr{Void}, grd, dir::Integer=GMT_IN, pad::Int=0)
 		Mb.shape = GMT.GMT_IS_COL_FORMAT;		# Julia order is column major */
 
 	else
-		Mb._type = uint32(GMT.GMT_FLOAT)		# PROVIDE A MEAN TO CHOOSE?
+		Mb._type = UInt32(GMT.GMT_FLOAT)		# PROVIDE A MEAN TO CHOOSE?
 		if (~isempty(grd))
 			Mb.data  = pointer(grd)
 		end
 		# Data from GMT must be in row format since we may not know n_rows until later
-		Mb.shape = uint32(GMT.GMT_IS_ROW_FORMAT)
+		Mb.shape = UInt32(GMT.GMT_IS_ROW_FORMAT)
 	end
 
 	unsafe_store!(M, Mb)
@@ -782,16 +783,3 @@ function GMTJL_Free_Textset(Tp::Ptr{Void})
 @show(S[1].record)
 	end
 end
-
-
-#= ---------------------------------------------------------------------------------------------------
-import Base: isempty
-function isempty(x::Any)
-	empty = false
-	try
-		isempty(x)
-		empty = true
-	end
-	return empty
-end
-=#
