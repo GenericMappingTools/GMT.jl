@@ -77,7 +77,8 @@ function filter1d()
 	t[:,2] = rand(100,1) * 100
 	gmt("filter1d -Fg10 -E > V:/filt1.txt", t)
 	F = gmt("filter1d -Fg10 -E", t)
-	gmt ("write -Td V:/filt2.txt", F)
+	gmt("write -Td V:/filt2.txt", F)
+	return F
 end
 
 # -------------------------------------------------------------------------
@@ -100,7 +101,7 @@ end
 
 # -------------------------------------------------------------------------
 function pstext()
-	lines = {"5 6 Some label", "6 7 Another label"}
+	lines = Any["5 6 Some label", "6 7 Another label"]
 	gmt("pstext -R0/10/0/10 -JM6i -Bafg -F+f18p -P > V:/text.ps", lines)
 end
 
