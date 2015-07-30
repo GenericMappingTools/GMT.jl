@@ -103,6 +103,8 @@ function gmt(cmd::String, args...)
 		else
 			error("GMT: Failure to encode mex command options")
 		end
+	else
+		n_items = unsafe_load(n_items)
 	end
 
 	#X = pointer_to_array(X,n_items)     # The array of GMT_RESOURCE structs
