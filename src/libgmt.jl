@@ -1,6 +1,7 @@
 # Julia wrapper for header: /cmn/ext/gmt/gmt-5.1.1/src/gmt.h
 # Automatically generated using Clang.jl wrap_c, version 0.0.0
 
+#@windows? (const thelib = "V:/build/src/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
 @windows? (const thelib = "gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
 
 
@@ -299,13 +300,13 @@ function GMTAPI_get_key(API::Ptr{Void}, string::Ptr{Uint8}, _type::Char, n_items
 	       API, string, _type, n_items, PS)
 end
 
-function GMT_Encode_Options(V_API::Ptr{Void}, _module::ASCIIString, marker::Char, nleft::Integer, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
-	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{Uint8}, Char, Cint, Ptr{Ptr{GMT_OPTION}},
-	        Ptr{Uint32}), V_API, _module, marker, nleft, head, n)
+function GMT_Encode_Options(V_API::Ptr{Void}, _module::ASCIIString, marker::Char, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{Uint8}, Char, Ptr{Ptr{GMT_OPTION}},
+	        Ptr{Uint32}), V_API, _module, marker, head, n)
 end
-function GMT_Encode_Options(V_API::Ptr{Void}, _module::Ptr{Uint8}, marker::Char, nleft::Integer, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
-	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{Uint8}, Char, Cint, Ptr{Ptr{GMT_OPTION}},
-	        Ptr{Uint32}), V_API, _module, marker, nleft, head, n)
+function GMT_Encode_Options(V_API::Ptr{Void}, _module::Ptr{Uint8}, marker::Char, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{Uint8}, Char, Ptr{Ptr{GMT_OPTION}},
+	        Ptr{Uint32}), V_API, _module, marker, head, n)
 end
 
 
@@ -325,4 +326,9 @@ end
 
 function GMT_set_mem_layout(API, mem_layout::ASCIIString)
 	ccall((:GMT_set_mem_layout, thelib), Void, (Ptr{Void}, Ptr{Uint8}), API, mem_layout)
+end
+
+function GMT_grid_flip_vertical(gridp, n_cols::Integer, n_rows::Integer, n_stride::Integer=0, cell_size::Integer=1)
+	ccall((:GMT_grid_flip_vertical, thelib), Void, (Ptr{Void}, UInt32, UInt32, UInt32, Csize_t),
+	      gridp, n_cols, n_rows, n_stride, cell_size)
 end
