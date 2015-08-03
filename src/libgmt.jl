@@ -5,7 +5,7 @@
 @windows? (const thelib = "gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
 
 
-function GMT_Create_Session(tag::String="GMT5", pad=2, mode=0, print_func::Ptr{Void}=C_NULL)
+function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Void}=C_NULL)
 	ccall( (:GMT_Create_Session, thelib), Ptr{Void}, (Ptr{Uint8}, Uint32, Uint32, Ptr{Void}), tag, pad, mode, print_func)
 end
 

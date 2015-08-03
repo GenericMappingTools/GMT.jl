@@ -42,7 +42,7 @@ export
 	GMT_grid_flip_vertical,
 	gmt_core_module_info,
 	gmt,
-	GMT_RESOURCE
+	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT
 
 include("libgmt_h.jl")
 include("libgmt.jl")

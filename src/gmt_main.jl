@@ -75,7 +75,7 @@ function gmt(cmd::String, args...)
 	try
 		a = API		# Should test here if it's a valid one
 	catch
-		API = GMT_Create_Session("GMT5", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL 
+		API = GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL 
 		                         + GMT.GMT_SESSION_COLMAJOR)
 		if (API == C_NULL)
 			error("Failure to create a GMT5 Session")
@@ -119,7 +119,7 @@ function gmt(cmd::String, args...)
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : []
 		X[k].object, X[k].object_ID = GMTJL_register_IO(API, X[k].family, X[k].direction, ptr)
 		#out, X[k].object_ID = GMTJL_register_IO(API, X[k].family, X[k].direction, ptr)
-#return out
+		#return out
 		if (X[k].object == C_NULL || X[k].object_ID == GMT.GMT_NOTSET)
 			error("GMT: Failure to register the resource\n")
 		end
@@ -218,6 +218,29 @@ function strtok(args, delim::ASCIIString=" ")
 end
 
 # ---------------------------------------------------------------------------------------------------
+function GMT_IJP(hdr::GMT_GRID_HEADER, row, col)
+# Function for indecing into a GMT grid [with pad]
+# padTop (hdr.pad[GMT.GMT_YHI]) and padLeft (hdr.pad[GMT.GMT_XLO]) are normally equal
+	#ij = (row + hdr.pad.d4) * hdr.mx + col + hdr.pad.d1		# in C
+	ij = ((row-1) + hdr.pad.d4) * hdr.mx + col + hdr.pad.d1
+end
+
+# ---------------------------------------------------------------------------------------------------
+function GMT_IJP(row::Integer, col, mx, padTop, padLeft)
+# Function for indecing into a GMT grid [with pad]
+# padTop (hdr.pad[GMT.GMT_YHI]) and padLeft (hdr.pad[GMT.GMT_XLO]) are normally equal
+	#ij = (row + padTop) * mx + col + padLeft		# in C
+	ij = ((row-1) + padTop) * mx + col + padLeft
+end
+
+# ---------------------------------------------------------------------------------------------------
+function MEXG_IJ(row, col, ny)
+	# Get the ij that correspond to (row,col) [no pad involved]
+	#ij = col * ny + ny - row - 1		in C
+	ij = col * ny - row + 1
+end
+
+# ---------------------------------------------------------------------------------------------------
 function get_grid(API, object)
 # ...
 	G = unsafe_load(convert(Ptr{GMT_GRID}, object))
@@ -227,14 +250,29 @@ function get_grid(API, object)
 
 	gmt_hdr = unsafe_load(G.header)
 	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx);		nz = Int(gmt_hdr.n_bands)
+	padTop = Int(gmt_hdr.pad.d4);	padLeft = Int(gmt_hdr.pad.d1);
+	mx = Int(gmt_hdr.mx);		my = Int(gmt_hdr.my)
 	X  = linspace(gmt_hdr.wesn.d1, gmt_hdr.wesn.d2, nx)
 	Y  = linspace(gmt_hdr.wesn.d3, gmt_hdr.wesn.d4, ny)
-	t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
+
+	#API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, API))	# Get access to a minimalist API struct (no API.GMT)
+	t   = pointer_to_array(G.data, my * mx)
+	z   = zeros(Float32, ny, nx)
+
+	for (col = 1:nx)
+		for (row = 1:ny)
+			#ij = GMT_IJP(gmt_hdr, row, col)
+			ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
+			z[MEXG_IJ(row, col, ny)] = t[ij]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
+		end
+	end
+
+	#t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
 
 	# Return grids via a float matrix in a struct
 	out = GMTJL_GRID("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
 	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, X, Y,
-	                 t, "", "", "")
+	                 z, "", "", "")
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
 		out.ProjectionRefPROJ4 = bytestring(gmt_hdr.ProjRefPROJ4)
@@ -254,15 +292,6 @@ function get_grid(API, object)
 	out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
 	out.registration = gmt_hdr.registration
 	out.LayerCount   = gmt_hdr.n_bands
-#=
-	t                = pointer_to_array(G.data, ny * nx)
-	for (col = 1:nx)
-		for (row = 1:ny)
-			ij = col * ny - row + 1
-			out.z[row, col] = t[ij]
-		end
-	end
-=#
 
 	return out
 end
@@ -325,7 +354,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function get_cpt(API, object::Ptr{Void})
-	# Hook this Julia CPT into the k'th output item
+# Hook this Julia CPT into the k'th output item
 
 	C = unsafe_load(convert(Ptr{GMT_PALETTE}, object))
 
@@ -401,49 +430,94 @@ end
 # ---------------------------------------------------------------------------------------------------
 function get_table(API, object)
 # ...
-	M = unsafe_load(convert(Ptr{GMT_MATRIX}, object))
+	M = unsafe_load(convert(Ptr{GMT_VECTOR}, object))
 	if (M.data == C_NULL)
 		error("get_table: programming error, output matrix is empty")
 	end
 
-	out = zeros(Float32, M.n_rows, M.n_columns)
+	tipo = GMTJL_type(API)
+	if (tipo == DOUBLE_CLASS)
+		out = zeros(Float64, M.n_rows, M.n_columns)
+		t = pointer_to_array(convert(Ptr{Ptr{Cdouble}},M.data), M.n_columns)
+	elseif (tipo == SINGLE_CLASS)
+		out = zeros(Float32, M.n_rows, M.n_columns)
+		t = pointer_to_array(convert(Ptr{Ptr{Cfloat}},M.data), M.n_columns)
+	elseif (tipo == UINT64_CLASS)
+		out = zeros(Culonglong, M.n_rows, M.n_columns)
+		t = pointer_to_array(convert(Ptr{Ptr{Culonglong}},M.data), M.n_columns)
+	elseif (tipo == INT64_CLASS)
+		out = zeros(Clonglong, M.n_rows, M.n_columns)
+		t = pointer_to_array(convert(Ptr{Ptr{Clonglong}},M.data), M.n_columns)
+	elseif (tipo == UINT32_CLASS)
+		out = zeros(Cuint, M.n_rows, M.n_columns)
+		t = pointer_to_array(convert(Ptr{Ptr{Cuint}},M.data), M.n_columns)
+	elseif (tipo == INT32_CLASS)
+		out = zeros(Cint, M.n_rows, M.n_columns)
+		t = pointer_to_array(convert(Ptr{Ptr{Cint}},M.data), M.n_columns)
+	elseif (tipo == UINT16_CLASS)
+		out = zeros(Cushort, M.n_rows, M.n_columns)
+		t = pointer_to_array(convert(Ptr{Ptr{Cushort}},M.data), M.n_columns)
+	elseif (tipo == INT16_CLASS)
+		out = zeros(Cshort, M.n_rows, M.n_columns)
+		t = pointer_to_array(convert(Ptr{Ptr{Cshort}},M.data), M.n_columns)
+	elseif (tipo == UINT8_CLASS)
+		out = zeros(Cuchar, M.n_rows, M.n_columns)
+		t = pointer_to_array(convert(Ptr{Ptr{Cuchar}},M.data), M.n_columns)
+	elseif (tipo == INT8_CLASS)
+		out = zeros(Cchar, M.n_rows, M.n_columns)
+		t = pointer_to_array(convert(Ptr{Ptr{Cchar}},M.data), M.n_columns)
+	else
+		error("get_table: Unsupported data type in GMT matrix input.")
+	end
+
+	for (c = 1:M.n_columns)
+		tt = pointer_to_array(t[c], M.n_rows)
+		for (r = 1:M.n_rows)
+			out[r, c] = tt[r]
+		end
+	end
+
+#=
+	out = zeros(Float64, M.n_rows, M.n_columns)
 	if (M.shape == GMT.GMT_IS_COL_FORMAT)  # Easy, just copy
-		out = copy!(out, pointer_to_array(convert(Ptr{Cfloat},M.data), M.n_rows * M.n_columns))
+		out = copy!(out, t)
 	else	# Must transpose
-		t = pointer_to_array(convert(Ptr{Cfloat},M.data), M.n_rows * M.n_columns)
 		for (col = 1:M.n_columns)
 			for (row = 1:M.n_rows)
-				ij = (row - 1) * M.n_columns + col
+				#ij = (row - 1) * M.n_columns + col
+				ij = (col - 1) * M.n_rows + col
 				out[row, col] = t[ij]
 			end
 		end
 	end
+=#
 
 	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_register_IO(API::Ptr{Void}, family::Integer, dir::Integer, ptr)
-	# Create the grid or matrix contains, register them, and return the ID
+# Create the grid or matrix contains, register them, and return the ID
 	ID = GMT.GMT_NOTSET
 	if (family == GMT_IS_GRID)
-		# Get an empty grid, and if input we and associate it with the Julia grid pointer
+		# Get an empty grid, and if input associate it with the Julia grid pointer
 		obj = GMTJL_grid_init(API, ptr, dir)
 		ID  = GMT_Get_ID(API, GMT_IS_GRID, dir, obj)
 	elseif (family == GMT_IS_IMAGE)
 		obj = GMTJL_image_init(API, ptr, dir)
 		ID  = GMT_Get_ID(API, GMT_IS_IMAGE, dir, obj)
 	elseif (family == GMT_IS_DATASET)
-		# Get a matrix container, and if input and associate it with the Julia pointer
+		# Get a matrix container, and if input associate it with the Julia pointer
 		# MUST TEST HERE THAT ptr IS A MATRIX
-		obj = GMTJL_matrix_init(API, ptr, dir)
+		#obj = GMTJL_matrix_init(API, ptr, dir)
+		obj = GMTJL_dataset_init(API, ptr, dir)
 		ID  = GMT_Get_ID(API, GMT_IS_DATASET, dir, obj)
 	elseif (family == GMT_IS_CPT)
-		# Get a CPT container, and if input and associate it with the Julia CPT pointer
+		# Get a CPT container, and if input associate it with the Julia CPT pointer
 		obj = GMTJL_CPT_init(API, ptr, dir)
 		ID  = GMT_Get_ID(API, GMT_IS_CPT, dir, obj)
 	elseif (family == GMT_IS_TEXTSET)
-		# Get a TEXTSET container, and if input we associate it with the Julia pointer
+		# Get a TEXTSET container, and if input associate it with the Julia pointer
 		obj = GMTJL_Text_init(API, ptr, dir)
 		ID  = GMT_Get_ID(API, GMT_IS_TEXTSET, dir, obj)
 	else
@@ -454,7 +528,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_grid_init(API::Ptr{Void}, grd_box, dir::Integer=GMT_IN)
-	# ...
+# If GRD_BOX is empty just allocate (GMT) an empty container and return
+# If GRD_BOX is not empty it must contain either a array_container or a GMTJL_GRID type.
 
 	empty = false 		# F... F... it's a shame having to do this
 	try
@@ -467,8 +542,8 @@ function GMTJL_grid_init(API::Ptr{Void}, grd_box, dir::Integer=GMT_IN)
 		return R
 	end
 
-	if (isa(grd_box, GMT_grd_container))
-		grd = pointer_to_array(grd_box.grd, grd_box.nx * grd_box.ny)
+	if (isa(grd_box, array_container))
+		grd = pointer_to_array(grd_box.grd, (grd_box.ny, grd_box.nx))
 		hdr = pointer_to_array(grd_box.hdr, 9)
 	elseif (isa(grd_box, GMTJL_GRID))
 		grd = grd_box.z
@@ -481,11 +556,10 @@ function GMTJL_grid_init(API::Ptr{Void}, grd_box, dir::Integer=GMT_IN)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Integer=GMT_IN, pad::Int=0)
-	# Used to Create an empty Grid container to hold a GMT grid.
- 	# If direction is GMT_IN then we are given a Julia grid and can determine its size, etc.
-	# If direction is GMT_OUT then we allocate an empty GMT grid as a destination.
-	#dim = [size(grd,1), size(grd,2), 1]
+function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Integer=GMT_IN, pad::Int=2)
+# Used to Create an empty Grid container to hold a GMT grid.
+# If direction is GMT_IN then we are given a Julia grid and can determine its size, etc.
+# If direction is GMT_OUT then we allocate an empty GMT grid as a destination.
 
 	if (dir == GMT_IN)
 		if ((G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, C_NULL,
@@ -493,14 +567,13 @@ function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Integer=
 			error("grid_init: Failure to alloc GMT source matrix for input")
 		end
 
-		n_rows = size(grd, 1);		n_cols = size(grd, 2)
-		t = zeros(Float32, n_rows, n_cols)
+		n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
+		t = zeros(Float32, n_rows+2*pad, n_cols+2*pad)
 
 		for (col = 1:n_cols)
-			ic = col * n_rows
 			for (row = 1:n_rows)
-				ij = ic - row + 1
-				t[row, col] = grd[ij]
+				ij = GMT_IJP(row, col, mx, pad, pad)
+				t[ij] = grd[MEXG_IJ(row, col, n_rows)]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
 			end
 		end
 
@@ -515,7 +588,7 @@ function GMTJL_grid_init(API::Ptr{Void}, grd, hdr::Array{Float64}, dir::Integer=
 		GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Grid %s in parser\n", G) )
 	else	# Just allocate an empty container to hold the output grid, and pass GMT_VIA_OUTPUT
 		if ((G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
-		                          C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("grid_init: Failure to alloc GMT blank grid container for holding output grid")
 		end
 	end
@@ -531,8 +604,8 @@ function GMTJL_image_init(API::Ptr{Void}, img_box, dir::Integer=GMT_IN)
 		return R
 	end
 
-	if (isa(img_box, GMT_grd_container))
-		img = pointer_to_array(img_box.grd, img_box.nx * img_box.ny * img_box.n_bands)
+	if (isa(img_box, array_container))
+		img = pointer_to_array(img_box.grd, (img_box.ny, img_box.nx, img_box.n_bands))
 		hdr = pointer_to_array(img_box.hdr, 9)
 	elseif (isa(img_box, GMTJL_IMAGE))
 		img = img_box.image
@@ -550,7 +623,7 @@ function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, dir::Integer
 
 	if (dir == GMT_IN)
 		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_ALL, C_NULL,
-		                          hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)) == C_NULL)
+		                         hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)) == C_NULL)
 			error("image_init: Failure to alloc GMT source image for input")
 		end
 		n_rows = size(img, 1);		n_cols = size(img, 2);		n_pages = size(img, 3)
@@ -595,8 +668,7 @@ function GMTJL_matrix_init(API::Ptr{Void}, grd, dir::Integer=GMT_IN, pad::Int=0)
 		mode = GMT_VIA_OUTPUT;
 	end
 
-	if ((M = GMT_Create_Data(API, GMT_IS_MATRIX, GMT_IS_PLP, mode, dim, C_NULL, C_NULL, 0, 0, C_NULL))
-			== C_NULL)
+	if ((M = GMT_Create_Data(API, GMT_IS_MATRIX, GMT_IS_PLP, mode, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 		println("GMTJL_PARSER:matrix_init: Failure to alloc GMT source matrix")
 		return -1
 	end
@@ -631,6 +703,58 @@ function GMTJL_matrix_init(API::Ptr{Void}, grd, dir::Integer=GMT_IN, pad::Int=0)
 
 	unsafe_store!(M, Mb)
 	return M
+end
+
+# ---------------------------------------------------------------------------------------------------
+function GMTJL_dataset_init(API::Ptr{Void}, ptr, direction::Integer)
+# Used to create containers to hold or receive data:
+# direction == GMT_IN:  Create empty Matrix container, associate it with mex data matrix, and use as GMT input.
+# direction == GMT_OUT: Create empty Vector container, let GMT fill it out, and use for Mex output.
+# Note that in GMT these will be considered DATASETs via GMT_MATRIX or GMT_VECTOR.
+# If direction is GMT_IN then we are given a Julia matrix and can determine size, etc.
+# If output then we dont know size so all we do is specify data type.
+
+	if (direction == GMT_IN) 	# Dimensions are known, extract them and set dim array for a GMT_MATRIX resource */
+		dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
+		#if (!mxIsNumeric (ptr)) error("GMTJL_dataset_init: Expected a Matrix for input\n");
+		if ((M = GMT_Create_Data(API, GMT_IS_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+			error("GMTJL_dataset_init: Failure to alloc GMT source matrix")
+		end
+
+		GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Matrix %s in gmtjl_parser\n", M) )
+		Mb = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)
+		tipo = get_datatype(ptr)
+		Mb.n_rows    = size(ptr,1)
+		Mb.n_columns = size(ptr,2)
+
+		if (eltype(ptr)     == Float64)		Mb._type = UInt32(GMT.GMT_DOUBLE)
+		elseif (eltype(ptr) == Float32)		Mb._type = UInt32(GMT.GMT_FLOAT)
+		elseif (eltype(ptr) == UInt64)		Mb._type = UInt32(GMT.GMT_ULONG)
+		elseif (eltype(ptr) == Int64)		Mb._type = UInt32(GMT.GMT_LONG)
+		elseif (eltype(ptr) == UInt32)		Mb._type = UInt32(GMT.GMT_UINT)
+		elseif (eltype(ptr) == Int32)		Mb._type = UInt32(GMT.GMT_INT)
+		elseif (eltype(ptr) == UInt16)		Mb._type = UInt32(GMT.GMT_USHORT)
+		elseif (eltype(ptr) == Int16)		Mb._type = UInt32(GMT.GMT_SHORT)
+		elseif (eltype(ptr) == UInt8)		Mb._type = UInt32(GMT.GMT_UCHAR)
+		elseif (eltype(ptr) == Int9)		Mb._type = UInt32(GMT.GMT_CHAR)
+		else
+			error("GMTJL_matrix_init: only floating point types allowed in input. Others need to be added")
+		end
+		Mb.data = pointer(ptr)
+		Mb.dim  = Mb.n_rows		# Data from Julia is in column major
+		Mb.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# Since matrix was allocated by Julia
+		Mb.shape = GMT.GMT_IS_COL_FORMAT;		# Julia order is column major */
+		unsafe_store!(M, Mb)
+		return M
+
+	else	# To receive data from GMT we use a GMT_VECTOR resource instead
+		# There are no dimensions and we are just getting an empty container for output
+		if ((V = GMT_Create_Data(API, GMT_IS_VECTOR, GMT_IS_PLP, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+			error("GMTJL_dataset_init: Failure to alloc GMT source vector\n")
+		end
+		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("GMTJL_dataset_init: Allocated GMT Vector %s\n", V))
+		return V
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -791,3 +915,55 @@ function GMTJL_Free_Textset(Tp::Ptr{Void})
 @show(S[1].record)
 	end
 end
+
+# ---------------------------------------------------------------------------------------------------
+function GMTJL_type(API::Ptr{Void})		# Set default export type
+	value = "        "		# 8 spaces
+	GMT_Get_Default(API, "GMT_EXPORT_TYPE", value)
+	if (strncmp(value, "double", 6)) return DOUBLE_CLASS	end
+	if (strncmp(value, "single", 6)) return SINGLE_CLASS	end
+	if (strncmp(value, "long",   4)) return  INT64_CLASS	end
+	if (strncmp(value, "ulong",  5)) return UINT64_CLASS	end
+	if (strncmp(value, "int",    3)) return  INT32_CLASS	end
+	if (strncmp(value, "uint",   4)) return UINT32_CLASS	end
+	if (strncmp(value, "short",  5)) return  INT16_CLASS	end
+	if (strncmp(value, "ushort", 6)) return UINT16_CLASS	end
+	if (strncmp(value, "char",   4)) return   INT8_CLASS	end
+	if (strncmp(value, "uchar",  5)) return  UINT8_CLASS	end
+	
+	println("Unable to interpret GMT_EXPORT_TYPE - Default to double")
+	return DOUBLE_CLASS
+end
+
+# ---------------------------------------------------------------------------------------------------
+function get_datatype(var)
+# Get the data type of VAR
+	if (eltype(var) == Float64) return DOUBLE_CLASS	end
+	if (eltype(var) == Float32) return SINGLE_CLASS	end
+	if (eltype(var) == UInt64) 	return UINT64_CLASS	end
+	if (eltype(var) == Int64) 	return INT64_CLASS	end
+	if (eltype(var) == UInt32) 	return UINT32_CLASS	end
+	if (eltype(var) == Int32) 	return INT32_CLASS	end
+	if (eltype(var) == UInt16) 	return UINT16_CLASS	end
+	if (eltype(var) == Int16) 	return INT16_CLASS	end
+	if (eltype(var) == UInt8) 	return UINT8_CLASS	end
+	if (eltype(var) == Int8) 	return INT8_CLASS	end
+	
+	println("Unable to discovery this data type - Default to double")
+	return DOUBLE_CLASS
+end
+
+function strncmp(str1, str2, num)
+# Pseudo strncmp
+	a = str1[1:min(num,length(str1))] == str2
+end
+
+#=
+Em GMT_Create_Session(API, ...)
+	API->pad = pad;
+
+O GMT_begin chama indirectamente esta
+void GMT_set_pad (struct GMT_CTRL *GMT, unsigned int pad) {
+	GMT->current.io.pad[XLO] = GMT->current.io.pad[XHI] = GMT->current.io.pad[YLO] = GMT->current.io.pad[YHI] = pad;
+}
+=#
