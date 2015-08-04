@@ -1649,14 +1649,13 @@ immutable GMTAPI_DATA_OBJECT
 	filename::Ptr{Uint8}		# Filename, stream, of file handle (otherwise NULL)
 	#void *(*import) (struct GMT_CTRL *, FILE *, uint64_t *, int *);	# Pointer to input function (for DATASET/TEXTSET only)
 	ifun::Ptr{Void} 			# Pointer to input function (for DATASET/TEXTSET only)
-#ifdef DEBUG
-	#G::Ptr{Void}				# struct GMT_GRID *G;
-	#D::Ptr{Void}				# struct GMT_DATASET *D;
-	#T::Ptr{Void}				# struct GMT_TEXTSET *T;
-	#C::Ptr{Void}				# struct GMT_PALETTE *C;
-	#M::Ptr{Void}				# struct GMT_MATRIX *M;
-	#V::Ptr{Void}				# struct GMT_VECTOR *V;
-#endif
+	# Start of temporary variables for API debug - They are only set when building GMT with /DEBUG
+	G::Ptr{Void}				# struct GMT_GRID *G;
+	D::Ptr{Void}				# struct GMT_DATASET *D;
+	T::Ptr{Void}				# struct GMT_TEXTSET *T;
+	C::Ptr{Void}				# struct GMT_PALETTE *C;
+	M::Ptr{Void}				# struct GMT_MATRIX *M;
+	V::Ptr{Void}				# struct GMT_VECTOR *V;
 	I::Ptr{Void}				# struct GMT_IMAGE *I;
 end
 
