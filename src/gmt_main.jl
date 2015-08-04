@@ -163,9 +163,9 @@ function gmt(cmd::String, args...)
 			end
 		end
 		if (X[k].family != GMT_IS_TEXTSET) 			# Gave up. The GMT_IS_TEXTSET will have to leak (blame the immutables)
-			#if (GMT_Destroy_Data(API, pointer([X[k].object])) != GMT.GMT_NOERROR)
-				#error("GMT: Failed to destroy object used in the interface bewteen GMT and Julia")
-			#end
+			if (GMT_Destroy_Data(API, pointer([X[k].object])) != GMT.GMT_NOERROR)
+				error("GMT: Failed to destroy object used in the interface bewteen GMT and Julia")
+			end
 		end
 	end
 
