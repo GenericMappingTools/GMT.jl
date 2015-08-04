@@ -118,8 +118,8 @@ function gmt(cmd::String, args...)
 	for (k = 1:n_items)                 # Number of GMT containers involved in this module call */
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : []
 		X[k].object, X[k].object_ID = GMTJL_register_IO(API, X[k].family, X[k].direction, ptr)
-		#out, X[k].object_ID = GMTJL_register_IO(API, X[k].family, X[k].direction, ptr)
-		#return out
+		#out, X[k].object = GMTJL_register_IO(API, X[k].family, X[k].direction, ptr)
+		#return X[k].object
 		if (X[k].object == C_NULL || X[k].object_ID == GMT.GMT_NOTSET)
 			error("GMT: Failure to register the resource\n")
 		end
@@ -156,10 +156,6 @@ function gmt(cmd::String, args...)
 				out = get_cpt(API, X[k].object)
 			elseif (X[k].family == GMT_IS_IMAGE)    # A GMT Image; make it the pos'th output item
 				out = get_image(API, X[k].object)
-			end
-		else		# Free any memory allocated outside of GMT
-			if (X[k].family == GMT_IS_TEXTSET)		# We have to free the text in table.segment.record
-				#GMTJL_Free_Textset(X[k].object)
 			end
 		end
 		if (X[k].family != GMT_IS_TEXTSET) 			# Gave up. The GMT_IS_TEXTSET will have to leak (blame the immutables)
@@ -651,7 +647,7 @@ function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, dir::Integer
 		                          C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("image_init: Failure to alloc GMT blank grid container for holding output grid")
 		end
-		GMT_set_mem_layout(API, "BRLS")
+		GMT_Set_Default(API, "API_IMAGE_LAYOUT", "BRLS");	# State how we wish to receive images from GDAL
 	end
 	return I
 
@@ -842,6 +838,7 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, 0, pointer(dim), C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("GMTJL_Text_init: Failure to alloc GMT source TEXTSET for input")
 		end
+
 		T0 = pointer_to_array(T, 1)		# ::Array{GMT.GMT_TEXTSET,1}
 
 		record = Ptr{Uint8}[0 for i=1:dim[3]]	# Can't use cell() because it creates an object of type Any which later fcks all
@@ -867,9 +864,10 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 		pointer_to_array(TSp2,1)	# Just to prevent the garbage man to destroy TSp? before this time
 		TTp1 = pointer([TT])		# ::Ptr{GMT_TEXTTABLE}
 		TTp2 = pointer([TTp1])		# ::Ptr{Ptr{GMT_TEXTTABLE}}
+		# Actually, here it ignores all but the pointers (TTp2)
 		Tt   = GMT_TEXTSET(T0[1].n_tables, T0[1].n_segments, dim[3], TTp2, T0[1].id, T0[1].n_alloc, T0[1].geometry,
-		                   T0[1].alloc_level, T0[1].io_mode, T0[1].alloc_mode, T0[1].file)
-		pointer_to_array(TTp2,2)	# Just to prevent the garbage man to destroy TTp? before this time
+		                   T0[1].alloc_level, T0[1].io_mode, GMT.GMT_ALLOC_EXTERNALLY, T0[1].file)
+		pointer_to_array(TTp2,2)	# Just to prevent the GarbageMan to destroy TTp? before this time
 		#table::Ptr{Ptr{GMT_TEXTTABLE}}
 		unsafe_store!(T, Tt)
 
@@ -880,40 +878,6 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 	end
 
 	return T
-end
-
-# ---------------------------------------------------------------------------------------------------
-function GMTJL_Free_Textset(Tp::Ptr{Void})
-	# We have to free the text in table.segment.record because it can't be freed by GMT but the containers need to
-	# ... but unfortunatelly I'm unable to program this function. There is always some immut thing that
-	# I'm unable to replace and the GMT_Destroy_Data() crashes Julia.
-
-	if (Tp == C_NULL)
-		error("GMTJL_Free_Textset: programming error, textset T is NULL or empty")
-	end
-
-	T = pointer_to_array(convert(Ptr{GMT_TEXTSET}, Tp),1)
-	p = pointer_to_array(pointer_to_array(T[1].table,1)[1],1) 		# T.table::Ptr{Ptr{GMT.GMT_TEXTTABLE}}
-
-	for (seg = 1:p[1].n_segments)
-#		S = T->table[0]->segment[seg];
-		S = pointer_to_array(pointer_to_array(p[1].segment,seg)[seg],seg)	# p[1].segment::Ptr{Ptr{GMT.GMT_TEXTSEGMENT}}
-		#pr1 = zeros(Int64, S[1].n_rows)
-		pr1 = pointer_to_array(S[1].record, S[1].n_rows)
-		for (row = 1:S[1].n_rows)
-			pr = pointer_to_array(pr1[row], 1)
-			pr1[row] = C_NULL 	# Let's hope that the gc cleans up the rest
-			unsafe_store!(pointer(pr), pr1[row])
-@show(pr)
-		end
-
-@show(pr1)
-		pr = pointer(pr1)
-@show(pr)
-		unsafe_store!(pr, C_NULL)
-@show(pr)
-@show(S[1].record)
-	end
 end
 
 # ---------------------------------------------------------------------------------------------------
