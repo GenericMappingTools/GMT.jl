@@ -158,11 +158,11 @@ function gmt(cmd::String, args...)
 				out = get_image(API, X[k].object)
 			end
 		end
-		if (X[k].family != GMT_IS_TEXTSET) 			# Gave up. The GMT_IS_TEXTSET will have to leak (blame the immutables)
+		#if (X[k].family != GMT_IS_TEXTSET) 			# Gave up. The GMT_IS_TEXTSET will have to leak (blame the immutables)
 			if (GMT_Destroy_Data(API, pointer([X[k].object])) != GMT.GMT_NOERROR)
 				error("GMT: Failed to destroy object used in the interface bewteen GMT and Julia")
 			end
-		end
+		#end
 	end
 
 	# 8. Destroy linked option list
@@ -824,10 +824,6 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 			error("GMTJL_Text_init: Expected a Cell array for input")
 		end
 
-		#error("GMTJL_CPT_init: Could not find colormap array with CPT values")
-		#error("GMTMEX_CPT_init: Could not find range array for CPT range")
-		#error("GMTMEX_CPT_init: Could not find alpha array for CPT transparency")
-
 		dim = [1 1 0]
 		dim[3] = size(txt, 1)
 		if (dim[3] == 1)                # Check if we got a transpose arrangement or just one record
@@ -838,27 +834,32 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, 0, pointer(dim), C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("GMTJL_Text_init: Failure to alloc GMT source TEXTSET for input")
 		end
+		GMT_blind_change_struct(API, T, pointer([GMT_ALLOC_EXTERNALLY]), "API_ALLOCMODE_T")
 
 		T0 = pointer_to_array(T, 1)		# ::Array{GMT.GMT_TEXTSET,1}
 
-		record = Ptr{Uint8}[0 for i=1:dim[3]]	# Can't use cell() because it creates an object of type Any which later fcks all
+		TTABLE  = unsafe_load(unsafe_load(T0[1].table,1),1)		# ::GMT.GMT_TEXTTABLE
+		S0 = unsafe_load(unsafe_load(TTABLE.segment,1),1)		# ::GMT.GMT_TEXTSEGMENT
+
 		for (rec = 1:dim[3])
-			record[rec] = pointer(txt[rec])
+			unsafe_store!(S0.record, pointer(txt[rec]), rec)
 		end
-		record = pointer(record)
+		
+		GMT_blind_change_struct(API, unsafe_load(TTABLE.segment,1), pointer([dim[3]]), "API_STRUCT_MEMBER_TEXTSEGMENT_1")
+		#GMT_blind_change_struct(API, pointer_from_objref(S0.n_rows), pointer([2]), "API_POINTER_UINT64")
 
-		# Get the above created GMT_TEXTTABLE to use in the construction of a new (immutable) one
-		seg = 1		# There is only one segment coming from Julia
-		p  = pointer_to_array(pointer_to_array(T0[1].table,1)[1],1)         # T.table::Ptr{Ptr{GMT.GMT_TEXTTABLE}}
-		S0 = pointer_to_array(pointer_to_array(p[1].segment,1)[seg],seg)	# p[1].segment::Ptr{Ptr{GMT.GMT_TEXTSEGMENT}}
+		# This chunk is no longer need as long as it works the call to GMT_Set_alloc_mode() that sets
+		# the number of rows using very uggly tricks via C. The problem with the commented code below
+		# comes from the GMT GarbageMan that would crash Julia when attempting to free a the Julia owned TS
 
-		TS = GMT_TEXTSEGMENT(dim[3], record, S0[1].label, S0[1].header, S0[1].id, S0[1].mode, S0[1].n_alloc,
-		                     S0[1].file, S0[1].tvalue)
+#=
+		TS = GMT_TEXTSEGMENT(dim[3], S0.record, S0.label, S0.header, S0.id, S0.mode, S0.n_alloc,
+		                     S0.file, S0.tvalue)
 
 		#segment::Ptr{Ptr{GMT_TEXTSEGMENT}}
 		TSp1 = pointer([TS])		# ::Ptr{GMT_TEXTSEGMENT}
 		TSp2 = pointer([TSp1])		# ::Ptr{Ptr{GMT_TEXTSEGMENT}}
-		TT0 = p[1]                  # ::GMT_TEXTTABLE
+		TT0  = TTABLE               # ::GMT_TEXTTABLE
 		TT = GMT_TEXTTABLE(TT0.n_headers, TT0.n_segments, dim[3], TT0.header, TSp2, TT0.id, TT0.n_alloc,
 		                   TT0.mode, TT0.file)
 		pointer_to_array(TSp2,1)	# Just to prevent the garbage man to destroy TSp? before this time
@@ -868,8 +869,8 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 		Tt   = GMT_TEXTSET(T0[1].n_tables, T0[1].n_segments, dim[3], TTp2, T0[1].id, T0[1].n_alloc, T0[1].geometry,
 		                   T0[1].alloc_level, T0[1].io_mode, GMT.GMT_ALLOC_EXTERNALLY, T0[1].file)
 		pointer_to_array(TTp2,2)	# Just to prevent the GarbageMan to destroy TTp? before this time
-		#table::Ptr{Ptr{GMT_TEXTTABLE}}
 		unsafe_store!(T, Tt)
+=#
 
 	else 	# Just allocate an empty container to hold an output grid (signal this by passing NULLs)
 		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
