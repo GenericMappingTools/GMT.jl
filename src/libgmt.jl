@@ -328,7 +328,16 @@ function GMT_set_mem_layout(API, mem_layout::ASCIIString)
 	ccall((:GMT_set_mem_layout, thelib), Void, (Ptr{Void}, Ptr{Uint8}), API, mem_layout)
 end
 
+function GMT_Set_Default(API::Ptr{Void}, keyword::ASCIIString, value::ASCIIString)
+	ccall((:GMT_Set_Default, thelib), Void, (Ptr{Void}, Ptr{Uint8}, Ptr{Uint8}), API, keyword, value)
+end
+
 function GMT_grid_flip_vertical(gridp, n_cols::Integer, n_rows::Integer, n_stride::Integer=0, cell_size::Integer=1)
 	ccall((:GMT_grid_flip_vertical, thelib), Void, (Ptr{Void}, UInt32, UInt32, UInt32, Csize_t),
-	      gridp, n_cols, n_rows, n_stride, cell_size)
+	       gridp, n_cols, n_rows, n_stride, cell_size)
+end
+
+function GMT_blind_change_struct(API::Ptr{Void}, X, what, keyword::ASCIIString)
+	ccall((:GMT_blind_change_struct, thelib), Cint, (Ptr{Void}, Ptr{Void}, Ptr{Void}, Ptr{Uint8}),
+	       API, X, what, keyword)
 end
