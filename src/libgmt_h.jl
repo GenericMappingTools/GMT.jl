@@ -1932,9 +1932,7 @@ struct GMT_INTERNAL {
 	mem_cols::Csize_t		# Current number of allocated columns for temp memory
 	mem_rows::Csize_t		# Current number of allocated rows for temp memory
 	mem_coord::Ptr{Ptr{Float64}}		# Columns of temp memory
-#ifdef MEMDEBUG
-	#struct MEMORY_TRACKER *mem_keeper;
-#endif
+	struct MEMORY_TRACKER *mem_keeper;
 };
 
 immutable GMT_CTRL
