@@ -68,6 +68,15 @@ type array_container
 	hdr::Ptr{Float64}
 end
 
+"""
+Call a GMT module. Usage:
+
+    gmt("module_name `options`")
+
+Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` do:
+
+    gmt("pscoast -R-10/0/35/45 -B1 -W1 -Gbrown -JM14c -P -V > lixo.ps")
+"""
 function gmt(cmd::String, args...)
 	global API
 	
@@ -110,7 +119,7 @@ function gmt(cmd::String, args...)
 		if (n_items > 65000)				# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
 			n_items = 0
 		else
-			error("GMT: Failure to encode mex command options")
+			error("GMT: Failure to encode Julia command options")
 		end
 	else
 		n_items = unsafe_load(n_items)
