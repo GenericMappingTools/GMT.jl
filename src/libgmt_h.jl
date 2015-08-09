@@ -1946,13 +1946,3 @@ immutable GMT_CTRL
 	parent::Ptr{GMTAPI_CTRL}	# Owner of this structure [or NULL]; gives access to the API from functions being passed *GMT only */
 end
 =#
-
-# Container to hold the info needed to talk in/out with gmtjl_parser
-type array_container
-	nx::Int
-	ny::Int
-	n_bands::Int
-	grd::Ptr{Float32}
-	hdr::Ptr{Float64}
-end
-

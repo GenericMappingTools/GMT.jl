@@ -59,6 +59,15 @@ type GMTJL_CPT
 	range::Array{Float64,1}
 end
 
+# Container to hold info to allow creating grids in a simple (but limmited) maner
+type array_container
+	nx::Int
+	ny::Int
+	n_bands::Int
+	grd::Ptr{Float32}
+	hdr::Ptr{Float64}
+end
+
 function gmt(cmd::String, args...)
 	global API
 	
