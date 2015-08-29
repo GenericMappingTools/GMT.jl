@@ -56,7 +56,8 @@ end
 type GMTJL_CPT
 	colormap::Array{Float64,2}
 	alpha::Array{Float64,1}
-	range::Array{Float64,1}
+	range::Array{Float64,2}
+	rangeMinMax::Array{Float64,1}
 end
 
 # Container to hold info to allow creating grids in a simple (but limmited) maner
@@ -83,10 +84,6 @@ function gmt(cmd::String, args...)
 	# ----------- Minimal error checking ------------------------
 	if (~isa(cmd, String))
 		error("gmt: first argument must always be a string")
-	end
-	n_argin = length(args)
-	if (n_argin > 0 && isa(args[1], String))		# TO BE CORRECT, SHOULD BE any(isa('char'))
-		error("gmt: second argument when exists must be numeric")
 	end
 	# -----------------------------------------------------------
 
@@ -377,7 +374,7 @@ function get_cpt(API, object::Ptr{Void})
 	end
 
 	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
-	out = GMTJL_CPT(zeros(n_colors, 3), zeros(n_colors), zeros(2)*NaN)
+	out = GMTJL_CPT(zeros(n_colors, 3), zeros(n_colors), zeros(n_colors, 2), zeros(2)*NaN)
 
 	for (j = 1:C.n_colors)       # Copy r/g/b from palette to Julia array
 		gmt_lut = unsafe_load(C.range, j)
@@ -400,9 +397,9 @@ function get_cpt(API, object::Ptr{Void})
 		#end
 	end
 	gmt_lut = unsafe_load(C.range, 1)
-	out.range[1] = gmt_lut.z_low
+	out.rangeMinMax[1] = gmt_lut.z_low
 	gmt_lut = unsafe_load(C.range, C.n_colors)
-	out.range[2] = gmt_lut.z_high
+	out.rangeMinMax[2] = gmt_lut.z_high
 
 	return out
 end
@@ -838,8 +835,11 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 		#	error("GMTJL_Text_init: The input that was supposed to contain the TXT, is empty")
 		#end
 
+		if (!isa(txt, Array{Any}) && isa(txt, String))
+			txt = Any[txt]
+		end
 		if (!isa(txt, Array{Any}))
-			error("GMTJL_Text_init: Expected a Cell array for input")
+			error("GMTJL_Text_init: Expected a Cell array or a String for input")
 		end
 
 		dim = [1 1 0]
