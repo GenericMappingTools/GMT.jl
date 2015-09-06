@@ -85,6 +85,7 @@ function gmt(cmd::String, args...)
 	if (~isa(cmd, String))
 		error("gmt: first argument must always be a string")
 	end
+	n_argin = length(args)
 	# -----------------------------------------------------------
 
 	try
@@ -125,12 +126,15 @@ function gmt(cmd::String, args...)
 	#X = pointer_to_array(X,n_items)     # The array of GMT_RESOURCE structs
 	XX = Array(GMT_RESOURCE, 1, n_items)
 	for (k = 1:n_items)
-		XX[k] = unsafe_load(X, k)        # Cannot us pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
+		XX[k] = unsafe_load(X, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
 	end
 	X = XX
 
 	# 5. Assign input (from julia) and output (from GMT) resources
 	for (k = 1:n_items)                 # Number of GMT containers involved in this module call */
+		if (X[k].direction == GMT_IN && n_argin == 0)
+			error("GMT: Expected a Matrix for input")
+		end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : []
 		X[k].object, X[k].object_ID = GMTJL_register_IO(API, X[k].family, X[k].direction, ptr)
 		#out, X[k].object = GMTJL_register_IO(API, X[k].family, X[k].direction, ptr)
@@ -156,31 +160,39 @@ function gmt(cmd::String, args...)
 	# 7. Hook up module GMT outputs to Julia array
 	out = []
 	for (k = 1:n_items)                     # Number of GMT containers involved in this module call
-		if (X[k].direction == GMT_OUT)      # Get results from GMT into Julia arrays
-			if ((X[k].object = GMT_Retrieve_Data(API, X[k].object_ID)) == C_NULL)
-				error("GMT: Error retrieving object from GMT")
-			end
-			pos = X[k].pos                  # Short-hand for index into the plhs[] array being returned to Matlab
-			if (X[k].family == GMT_IS_GRID)         # Determine what container we got
-				out = get_grid(API, X[k].object)
-			elseif (X[k].family == GMT_IS_DATASET)  # A GMT table; make it a matrix and the pos'th output item
-				out = get_table(API, X[k].object)
-			elseif (X[k].family == GMT_IS_TEXTSET)  # A GMT textset; make it a cell and the pos'th output item
-				out = get_textset(API, X[k].object)
-			elseif (X[k].family == GMT_IS_CPT)      # A GMT CPT; make it a colormap and the pos'th output item
-				out = get_cpt(API, X[k].object)
-			elseif (X[k].family == GMT_IS_IMAGE)    # A GMT Image; make it the pos'th output item
-				out = get_image(API, X[k].object)
-			end
+		if (X[k].direction == GMT_IN) continue 	end      # ONly looking for stuff coming OUT of GMT here
+		if ((X[k].object = GMT_Retrieve_Data(API, X[k].object_ID)) == C_NULL)
+			error("GMT: Error retrieving object from GMT")
 		end
-		#if (X[k].family != GMT_IS_TEXTSET) 			# Gave up. The GMT_IS_TEXTSET will have to leak (blame the immutables)
+		pos = X[k].pos                  # Short-hand for index into the plhs[] array being returned to Matlab
+		if (X[k].family == GMT_IS_GRID)         # Determine what container we got
+			out = get_grid(API, X[k].object)
+		elseif (X[k].family == GMT_IS_DATASET)  # A GMT table; make it a matrix and the pos'th output item
+			out = get_table(API, X[k].object)
+		elseif (X[k].family == GMT_IS_TEXTSET)  # A GMT textset; make it a cell and the pos'th output item
+			out = get_textset(API, X[k].object)
+		elseif (X[k].family == GMT_IS_CPT)      # A GMT CPT; make it a colormap and the pos'th output item
+			out = get_cpt(API, X[k].object)
+		elseif (X[k].family == GMT_IS_IMAGE)    # A GMT Image; make it the pos'th output item
+			out = get_image(API, X[k].object)
+		end
+	end
+
+	# 8. Free all GMT containers involved in this module call
+	for (k = 1:n_items) 
+		#if (X[k].family != GMT_IS_TEXTSET) 		# Gave up. The GMT_IS_TEXTSET will have to leak (blame the immutables)
+			ppp = X[k].object
 			if (GMT_Destroy_Data(API, pointer([X[k].object])) != GMT.GMT_NOERROR)
 				error("GMT: Failed to destroy object used in the interface bewteen GMT and Julia")
+			else 	# Success, now make sure we dont destroy the same pointer more than once
+				for (kk = k+2:n_items)
+					if (X[kk].object == ppp) 	X[kk].object = C_NULL;		end
+				end
 			end
 		#end
 	end
 
-	# 8. Destroy linked option list
+	# 9. Destroy linked option list
 	if (GMT_Destroy_Options(API, pointer([LL])) != 0)
 		error("GMT: Failure to destroy GMT5 options")
 	end
