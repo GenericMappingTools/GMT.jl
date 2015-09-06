@@ -393,10 +393,8 @@ function get_cpt(API, object::Ptr{Void})
 		out.colormap[j, 1] = gmt_lut.rgb_low.d1
 		out.colormap[j, 2] = gmt_lut.rgb_low.d2
 		out.colormap[j, 3] = gmt_lut.rgb_low.d3
-		#for (k = 1:3)
-			#out.colormap[j+k*n_colors] = C.range[j].rgb_low[k]
-		#end
-		#out.alpha[j] = C.range[j].rgb_low[4]
+		out.range[j, 1]    = gmt_lut.z_low
+		out.range[j, 2]    = gmt_lut.z_high
 		out.alpha[j] = gmt_lut.rgb_low.d4
 	end
 	if (C.is_continuous != 0)    # Add last color
@@ -404,9 +402,6 @@ function get_cpt(API, object::Ptr{Void})
 		out.colormap[n_colors, 1] = gmt_lut.rgb_high.d1
 		out.colormap[n_colors, 2] = gmt_lut.rgb_high.d2
 		out.colormap[n_colors, 3] = gmt_lut.rgb_high.d3
-		#for (k = 1:3)
-		#	out.colormap[j+k*n_colors] = gmt_lut.rgb_high[k]
-		#end
 	end
 	gmt_lut = unsafe_load(C.range, 1)
 	out.rangeMinMax[1] = gmt_lut.z_low
