@@ -386,7 +386,7 @@ function get_cpt(API, object::Ptr{Void})
 	end
 
 	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
-	out = GMTJL_CPT(zeros(n_colors, 3), zeros(n_colors), zeros(n_colors, 2), zeros(2)*NaN)
+	out = GMTJL_CPT(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), zeros(2)*NaN)
 
 	for (j = 1:C.n_colors)       # Copy r/g/b from palette to Julia array
 		gmt_lut = unsafe_load(C.range, j)
@@ -398,7 +398,6 @@ function get_cpt(API, object::Ptr{Void})
 		out.alpha[j] = gmt_lut.rgb_low.d4
 	end
 	if (C.is_continuous != 0)    # Add last color
-		gmt_lut = unsafe_load(C.range, n_colors)
 		out.colormap[n_colors, 1] = gmt_lut.rgb_high.d1
 		out.colormap[n_colors, 2] = gmt_lut.rgb_high.d2
 		out.colormap[n_colors, 3] = gmt_lut.rgb_high.d3
