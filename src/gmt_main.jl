@@ -185,7 +185,7 @@ function gmt(cmd::String, args...)
 			if (GMT_Destroy_Data(API, pointer([X[k].object])) != GMT.GMT_NOERROR)
 				error("GMT: Failed to destroy object used in the interface bewteen GMT and Julia")
 			else 	# Success, now make sure we dont destroy the same pointer more than once
-				for (kk = k+2:n_items)
+				for (kk = k+1:n_items)
 					if (X[kk].object == ppp) 	X[kk].object = C_NULL;		end
 				end
 			end
