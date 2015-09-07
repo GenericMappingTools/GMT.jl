@@ -1524,6 +1524,7 @@ immutable GMT_PALETTE
 	id::Uint64
 	alloc_mode::Uint32
 	alloc_level::Uint32
+	auto_scale::Uint32
 	model::Uint32
 	is_gray::Uint32
 	is_bw::Uint32
