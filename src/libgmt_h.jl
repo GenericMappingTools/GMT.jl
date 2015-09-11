@@ -1448,7 +1448,7 @@ immutable GMT_TEXTSET
 	n_records::Uint64
 	table::Ptr{Ptr{GMT_TEXTTABLE}}
 	id::Uint64
-	n_alloc::Cint
+	n_alloc::Csize_t
 	geometry::Uint32
 	alloc_level::Uint32
 	io_mode::Uint32
