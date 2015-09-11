@@ -782,64 +782,69 @@ function GMTJL_CPT_init(API::Ptr{Void}, cpt, dir::Integer)
 
 	if (dir == GMT_IN)	# Dimensions are known from the input pointer
 
-		#if (isempty(cpt))
-		#	error("GMTJL_CPT_init: The input that was supposed to contain the CPT, is empty")
-		#end
-
 		if (!isa(cpt, GMTJL_CPT))
 			error("GMTJL_CPT_init: Expected a CPT structure for input")
 		end
 
 		#error("GMTJL_CPT_init: Could not find colormap array with CPT values")
-		#error("GMTMEX_CPT_init: Could not find range array for CPT range")
-		#error("GMTMEX_CPT_init: Could not find alpha array for CPT transparency")
+		#error("GMTJL_CPT_init: Could not find range array for CPT range")
+		#error("GMTJL_CPT_init: Could not find alpha array for CPT transparency")
 
-		n_colors = size(cpt.colormap, 1)
-		if ((C = GMT_Create_Data(API, GMT_IS_CPT, GMT_IS_NONE, 0, pointer([n_colors]), C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+		n_colors = size(cpt.colormap, 1)	# n_colors != n_ranges for continuous CPTs 
+		n_ranges = size(cpt.range, 1)
+		one = 1
+		if (n_colors > n_ranges)		# Continuous
+			n_ranges = n_colors;		# Actual length of colormap array
+			n_colors = n_colors - 1;	# Number of CPT slices
+		else
+			one = 0
+		end
+
+		if ((P = GMT_Create_Data(API, GMT_IS_CPT, GMT_IS_NONE, 0, pointer([n_colors]), C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("GMTJL_CPT_init: Failure to alloc GMT source CPT for input")
 		end
 
-		dz = (cpt.range[2] - cpt.range[1]) / (n_colors + 1)
+		if (one != 0)
+			mutateit(API, P, "is_continuous", one)
+		end
 
-		Cb = unsafe_load(C)
-		for (j = 1:n_colors)
-			#for (k = 1:3)
-			#	P.range[j].rgb_low[k] = colormap[j + k * n_colors]
-			#end
-			glut = unsafe_load(Cb.range, j)
+		Pb = unsafe_load(P)
+
+		#dz = (cpt.range[2] - cpt.range[1]) / Pb.n_colors
+		for (j = 1:Pb.n_colors)
+			glut = unsafe_load(Pb.range, j)
 			rgb_low  = GMT.Array_4_Cdouble(cpt.colormap[j,1], cpt.colormap[j,2], cpt.colormap[j,3], cpt.alpha[j])
-			rgb_high = GMT.Array_4_Cdouble(cpt.colormap[j,1], cpt.colormap[j,2], cpt.colormap[j,3], cpt.alpha[j])
-			z_low = j * dz
-			z_high = (j+1) * dz
+			rgb_high = GMT.Array_4_Cdouble(cpt.colormap[j+one,1], cpt.colormap[j+one,2], cpt.colormap[j+one,3], cpt.alpha[j+one])
+			z_low  = cpt.range[j,1]
+			z_high = cpt.range[j,2]
+			#z_low = j * dz
+			#z_high = (j+1) * dz
 			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
 			              glut.hsv_diff, glut.annot, glut.skip, glut.fill, glut.label)
 
-			unsafe_store!(Cb.range, lut, j)
+			unsafe_store!(Pb.range, lut, j)
 		end
-		unsafe_store!(C, Cb)
+		#Pb.is_continuous = one
+		unsafe_store!(P, Pb)
 	else 	# Just allocate an empty container to hold an output grid (signal this by passing NULLs)
-		if ((C = GMT_Create_Data(API, GMT_IS_CPT, GMT_IS_NONE, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+		if ((P = GMT_Create_Data(API, GMT_IS_CPT, GMT_IS_NONE, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("GMTJL_CPT_init: Failure to alloc GMT blank CPT container for holding output CPT")
 		end
 	end
 
-	return C
+	return P
 end
 
 
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 	# Used to Create an empty Textset container to hold a GMT TEXTSET.
- 	# If direction is GMT_IN then we are given a Matlab CPT and can determine its size, etc.
-	# If direction is GMT_OUT then we allocate an empty GMT CPT as a destination.
+ 	# If direction is GMT_IN then we are given a Julia cell array and can determine its size, etc.
+	# If direction is GMT_OUT then we allocate an empty GMT TEXTSET as a destination.
 
 	# Disclaimer: This code is absolutely diabolic. Thanks to immutables.
 
 	if (dir == GMT_IN)	# Dimensions are known from the input pointer
-
-		#if (isempty(txt))
-		#	error("GMTJL_Text_init: The input that was supposed to contain the TXT, is empty")
-		#end
 
 		if (!isa(txt, Array{Any}) && isa(txt, String))
 			txt = Any[txt]
@@ -858,7 +863,8 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, 0, pointer(dim), C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("GMTJL_Text_init: Failure to alloc GMT source TEXTSET for input")
 		end
-		GMT_blind_change_struct(API, T, pointer([GMT_ALLOC_EXTERNALLY]), "API_ALLOCMODE_T")
+		mutateit(API, T, "alloc_mode", GMT_ALLOC_EXTERNALLY)
+		#GMT_blind_change_struct_(API, T, pointer([GMT_ALLOC_EXTERNALLY]), "API_ALLOCMODE_T")
 
 		T0 = pointer_to_array(T, 1)		# ::Array{GMT.GMT_TEXTSET,1}
 
@@ -869,8 +875,8 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 			unsafe_store!(S0.record, pointer(txt[rec]), rec)
 		end
 		
-		GMT_blind_change_struct(API, unsafe_load(TTABLE.segment,1), pointer([dim[3]]), "API_STRUCT_MEMBER_TEXTSEGMENT_1")
-		#GMT_blind_change_struct(API, pointer_from_objref(S0.n_rows), pointer([2]), "API_POINTER_UINT64")
+		#GMT_blind_change_struct_(API, unsafe_load(TTABLE.segment,1), pointer([dim[3]]), "API_STRUCT_MEMBER_TEXTSEGMENT_1")
+		mutateit(API, unsafe_load(TTABLE.segment,1), "n_rows", dim[3])
 
 		# This chunk is no longer need as long as it works the call to GMT_Set_alloc_mode() that sets
 		# the number of rows using very uggly tricks via C. The problem with the commented code below
@@ -945,6 +951,29 @@ end
 function strncmp(str1, str2, num)
 # Pseudo strncmp
 	a = str1[1:min(num,length(str1))] == str2
+end
+
+function mutateit(API::Ptr{Void}, t_type, member::String, val)
+	# Mutate the member 'member' of an immutable type whose pointer is T_TYPE
+	# VAL is the new value of the MEMBER field.
+	# It's up to the user to guarantie that MEMBER and VAL have the same data type
+	# T_TYPE can actually be either a variable of a certain type or a pointer to it.
+	# In latter case, we fish the specific DataType from it.
+	if (isa(t_type, Ptr))
+		x_type = unsafe_load(t_type)
+		p_type = t_type
+	else
+		x_type = t_type
+		p_type = pointer([t_type])	# We need the pointer to type to later send to GMT_blind_change
+	end
+	dt = typeof(x_type)			# Get the specific DataType. That's what we'll need for next inquires
+	fo = fieldoffsets(dt);		ft = dt.types
+	ind = findfirst(fieldnames(dt), symbol(member))	# Find the index of the "is_continuous" member
+	# This would work too
+	# ind = ccall(:jl_field_index, Cint, (Any, Any, Cint), dt, symbol(member), 1) + 1
+	p_val = pointer([val])
+	GMT_blind_change_struct(API, p_type, p_val, @sprintf("%s",ft[ind]), fo[ind])
+	typeof(p_type); 	typeof(p_val)		# Just to be sure that GC doesn't kill them before their due time
 end
 
 #=
