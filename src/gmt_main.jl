@@ -89,7 +89,10 @@ function gmt(cmd::String, args...)
 	# -----------------------------------------------------------
 
 	try
-		a = API		# Should test here if it's a valid one
+		a = API
+		if (!isa(API, Ptr{Void}))
+			error("The 'API' is not a Ptr{Void}. Creating a new one.")
+		end
 	catch
 		API = GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL 
 		                         + GMT.GMT_SESSION_COLMAJOR)
@@ -98,9 +101,18 @@ function gmt(cmd::String, args...)
 		end
 	end
 
-	# 2. Get arguments, if any, and extract the GMT module name
+	# 1. Get arguments, if any, and extract the GMT module name
 	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
 	g_module,r = strtok(cmd)
+
+	# 2. In case this was a clean up call
+	if (g_module == "destroy")
+		if (GMT_Destroy_Session(API) != 0)
+			error("GMT: Failure to destroy GMT5 session")
+		end
+		API = NaN
+		return
+	end
 
 	# 3. Convert mex command line arguments to a linked GMT option list
 	LL = GMT_Create_Options(API, 0, r)	# It uses also the fact that GMT parses and check options
