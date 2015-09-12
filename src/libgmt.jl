@@ -338,11 +338,11 @@ function GMT_grid_flip_vertical(gridp, n_cols::Integer, n_rows::Integer, n_strid
 end
 
 function GMT_blind_change_struct(API::Ptr{Void}, X, what, keyword::ASCIIString, off::Integer)
-	ccall((:GMT_blind_change_struct_, thelib), Cint, (Ptr{Void}, Ptr{Void}, Ptr{Void}, Ptr{Uint8}, Csize_t),
+	ccall((:GMT_blind_change_struct, thelib), Cint, (Ptr{Void}, Ptr{Void}, Ptr{Void}, Ptr{Uint8}, Csize_t),
 	       API, X, what, keyword, off)
 end
 
 function GMT_blind_change_struct_(API::Ptr{Void}, X, what, keyword::ASCIIString)
-	ccall((:GMT_blind_change_struct, thelib), Cint, (Ptr{Void}, Ptr{Void}, Ptr{Void}, Ptr{Uint8}),
+	ccall((:GMT_blind_change_struct_, thelib), Cint, (Ptr{Void}, Ptr{Void}, Ptr{Void}, Ptr{Uint8}),
 	       API, X, what, keyword)
 end
