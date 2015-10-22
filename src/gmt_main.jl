@@ -44,13 +44,13 @@ type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
 	LayerCount::Int
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-	image::Array{Uint8,3}
+	image::Array{UInt8,3}
 	x_units::ASCIIString
 	y_units::ASCIIString
 	z_units::ASCIIString
 	colormap::Array{Clong,1}
 	nColors::Int
-	alpha::Array{Uint8,2}
+	alpha::Array{UInt8,2}
 end
 
 type GMTJL_CPT
@@ -78,11 +78,11 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
 
     gmt("pscoast -R-10/0/35/45 -B1 -W1 -Gbrown -JM14c -P -V > lixo.ps")
 """
-function gmt(cmd::String, args...)
+function gmt(cmd::ASCIIString, args...)
 	global API
 	
 	# ----------- Minimal error checking ------------------------
-	if (~isa(cmd, String))
+	if (~isa(cmd, ASCIIString))
 		error("gmt: first argument must always be a string")
 	end
 	n_argin = length(args)
@@ -358,7 +358,7 @@ function get_image(API, object)
 	if (gmt_hdr.n_bands <= 3)
 		out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
 	                      zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, X, Y,
-	                      t, "", "", "", colormap, nColors, zeros(Uint8,ny,nx)) 	# <== Ver o qur fazer com o alpha
+	                      t, "", "", "", colormap, nColors, zeros(UInt8,ny,nx)) 	# <== Ver o qur fazer com o alpha
 	else 			# RGB(A) image
 		out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
 	                      zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, X, Y,
@@ -858,7 +858,7 @@ function GMTJL_Text_init(API::Ptr{Void}, txt, dir::Integer)
 
 	if (dir == GMT_IN)	# Dimensions are known from the input pointer
 
-		if (!isa(txt, Array{Any}) && isa(txt, String))
+		if (!isa(txt, Array{Any}) && isa(txt, ASCIIString))
 			txt = Any[txt]
 		end
 		if (!isa(txt, Array{Any}))
@@ -965,7 +965,7 @@ function strncmp(str1, str2, num)
 	a = str1[1:min(num,length(str1))] == str2
 end
 
-function mutateit(API::Ptr{Void}, t_type, member::String, val)
+function mutateit(API::Ptr{Void}, t_type, member::ASCIIString, val)
 	# Mutate the member 'member' of an immutable type whose pointer is T_TYPE
 	# VAL is the new value of the MEMBER field.
 	# It's up to the user to guarantie that MEMBER and VAL have the same data type
