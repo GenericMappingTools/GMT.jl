@@ -105,7 +105,7 @@ end
 function do_tests()
 	tests = Any["poldecimate" "gmtspatial";
 	            "spheres" "potential";
-	            "measure","gmtspatial"]
+	            "measure" "gmtspatial"]
 
 	for (k = 1:size(tests,1))
 		gmtest(tests[k,1], tests[k,2])
