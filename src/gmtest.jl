@@ -88,23 +88,24 @@ function call_test(test, test_dir, g_root_dir, out_path, family)
 		return
 	end
 
-	#try
+	try
 		#ps, orig_path = evalfile(pato * test * ".jl")(out_path)	# Load & run the test file. Errors because UndefVarError: fileparts not defined
 		include(pato * test * ".jl")					# Load the test file
 		ps, orig_path = eval(Symbol(test))(out_path)	# and now run it
 		if (family == "scripts")
 			orig_path = orig_path[1:end-3]				# Because original PS lieve in a subdir below
 		end
-	#catch
-		#println("Error executing test script")
-	#end
+	catch
+		println("Error executing test script")
+	end
 	return ps, orig_path
 end
 
 # ---------------------------------------------------------------------------------------
 function do_tests()
 	tests = Any["poldecimate" "gmtspatial";
-	            "spheres" "potential"]
+	            "spheres" "potential";
+	            "measure","gmtspatial"]
 
 	for (k = 1:size(tests,1))
 		gmtest(tests[k,1], tests[k,2])
