@@ -146,12 +146,106 @@ function ex03(g_root_dir, out_path)
 	# We use this information first with a large -I value to find the appropriate -R
 	# to use to plot the .pg data. 
 	R = gmt("gmtinfo -I100/25", [sat_pg; ship_pg])
-	gmt("psxy " * R[1] * " -UL/-1.75i/-1.25i/\"Example 3a in Cookbook\" -BWeSn" *
+	R = chomp(R[1])			# Remove the \n and convert to string (was an Any[])
+	gmt("psxy " * R * " -UL/-1.75i/-1.25i/\"Example 3a in Cookbook\" -BWeSn" *
 		" -Bxa500f100+l\"Distance along great circle\" -Bya100f25+l\"Gravity anomaly (mGal)\"" *
 		" -JX8i/5i -X2i -Y1.5i -K -Wthick > " * ps, sat_pg)
 	gmt("psxy -R -JX -O -Sp0.03i >> " * ps, ship_pg)
 
-	return ps, d_path
+	# From this plot we see that the ship data have some "spikes" and also greatly
+	# differ from the satellite data at a point about p ~= +250 km, where both of
+	# them show a very large anomaly.
+
+	# To facilitate comparison of the two with a cross-spectral analysis using "gmt spectrum1d",
+	# we resample both data sets at intervals of 1 km.  First we find out how the data are
+	# typically spaced using $AWK to get the delta-p between points and view it with "gmt pshistogram".
+
+	ps = out_path * "example_03b.ps"
+
+	gmt("pshistogram -W0.1 -Gblack -JX3i -K -X2i -Y1.5i -B0 -B+t\"Ship\" -UL/-1.75i/-1.25i/\"Example 3b in Cookbook\"" *
+		" > " * ps, diff(ship_pg))
+	gmt("pshistogram  -W0.1 -Gblack -JX3i -O -X5i -B0 -B+t\"Sat\" >> " * ps, diff(sat_pg))
+
+	# This experience shows that the satellite values are spaced fairly evenly, with
+	# delta-p between 3.222 and 3.418.  The ship values are spaced quite unevenly, with
+	# delta-p between 0.095 and 9.017.  This means that when we want 1 km even sampling,
+	# we can use "gmt sample1d" to interpolate the sat data, but the same procedure applied
+	# to the ship data could alias information at shorter wavelengths.  So we have to use
+	# "gmt filter1d" to resample the ship data.  Also, since we observed spikes in the ship
+	# data, we use a median filter to clean up the ship values.  We will want to use "paste"
+	# to put the two sampled data sets together, so they must start and end at the same
+	# point, without NaNs.  So we want to get a starting and ending point which works for
+	# both of them.  This is a job for gmt gmtmath UPPER/LOWER.
+
+	sampr1 = gmt("gmtmath \$ -Ca -Sf -o0 UPPER CEIL =",  [ship_pg[1,:]; sat_pg[1,:]])
+	sampr2 = gmt("gmtmath \$ -Ca -Sf -o0 LOWER FLOOR =", [ship_pg[end,:]; sat_pg[end,:]])
+	
+	# Now we can use sampr1|2 in gmt gmtmath to make a sampling points file for gmt sample1d:
+	samp_x = gmt(@sprintf("gmtmath -T%d/%d/1 -N1/0 T =", sampr1[1,1], sampr2[1,1]))
+
+	# Now we can resample the gmt projected satellite data:
+	samp_sat_pg = gmt("sample1d -N", samp_x, sat_pg)
+
+	# For reasons above, we use gmt filter1d to pre-treat the ship data.  We also need to sample
+	# it because of the gaps > 1 km we found.  So we use gmt filter1d | gmt sample1d.  We also
+	# use the -E on gmt filter1d to use the data all the way out to sampr1/sampr2 :
+	t = gmt(@sprintf("filter1d -Fm1 -T%d/%d/1 -E", sampr1[1], sampr2[1]), ship_pg)
+	samp_ship_pg = gmt("sample1d -N", samp_x, t)
+
+	ps = out_path * "example_03c.ps"
+
+	# Now we plot them again to see if we have done the right thing:
+	gmt("psxy " * R * " -JX8i/5i -X2i -Y1.5i -K -Wthick" *
+		" -Bxa500f100+l\"Distance along great circle\" -Bya100f25+l\"Gravity anomaly (mGal)\"" *
+		" -BWeSn -UL/-1.75i/-1.25i/\"Example 3c in Cookbook\" > " * ps, samp_sat_pg)
+	gmt("psxy -R -JX -O -Sp0.03i >> " * ps, samp_ship_pg)
+
+	# Now to do the cross-spectra, assuming that the ship is the input and the sat is the output 
+	# data, we do this:
+	t = [samp_ship_pg[:,2] samp_sat_pg[:,2]]
+	spects = gmt("spectrum1d -S256 -D1 -W -C -N", t)
+ 
+	# Now we want to plot the spectra. The following commands will plot the ship and sat 
+	# power in one diagram and the coherency on another diagram, both on the same page.  
+	# Note the extended use of gmt pstext and gmt psxy to put labels and legends directly on the
+	# plots. For that purpose we often use -Jx1i and specify positions in inches directly:
+
+	ps = out_path * "example_03.ps"
+
+	gmt("psxy -Bxa1f3p+l\"Wavelength (km)\" -Bya0.25f0.05+l\"Coherency@+2@+\" -BWeSn+g240/255/240" *
+		" -JX-4il/3.75i -R1/1000/0/1 -P -K -X2.5i -Sc0.07i -Gpurple -Ey/0.5p -Y1.5i > " * ps, spects[:,[1,16,17]])
+	
+	gmt("pstext -R0/4/0/3.75 -Jx1i -F+f18p,Helvetica-Bold+jTR -O -K >> " * ps, "3.85 3.6 Coherency@+2@+")
+	gmt("psxy -Bxa1f3p -Bya1f3p+l\"Power (mGal@+2@+km)\" -BWeSn+t\"Ship and Satellite Gravity\"+g240/255/240" *
+		" -Gred -ST0.07i -O -R1/1000/0.1/10000 -JX-4il/3.75il -Y4.2i -K -Ey/0.5p >> " * ps, spects[:,1:3])
+	gmt("psxy -R -JX -O -K -Gblue -Sc0.07i -Ey/0.5p >> " * ps, spects[:,[1,4,5]])
+	gmt("pstext -R0/4/0/3.75 -Jx -F+f18p,Helvetica-Bold+jTR -O -K >> " * ps, "3.9 3.6 Input Power")
+	gmt("psxy -R -Jx -O -K -Gwhite -L -Wthicker >> " * ps,
+		[0.25 0.25
+		1.4  0.25
+		1.4  0.9
+		0.25 0.9])
+	gmt("psxy   -R -Jx -O -K -ST0.07i -Gred >> " * ps, [0.4 0.7])
+	gmt("pstext -R -Jx -F+f14p,Helvetica-Bold+jLM -O -K >> " * ps, "0.5 0.7 Ship")
+	gmt("psxy   -R -Jx -O -K -Sc0.07i -Gblue >> " * ps, [0.4 0.4])
+	gmt("pstext -R -Jx -F+f14p,Helvetica-Bold+jLM -O >> " * ps, "0.5 0.4 Satellite")
+
+	# Now we wonder if removing that large feature at 250 km would make any difference.
+	# We could throw away a section of data with $AWK or sed or head and tail, but we
+	# demonstrate the use of "gmt trend1d" to identify outliers instead.  We will fit a
+	# straight line to the samp_ship.pg data by an iteratively-reweighted method and
+	# save the weights on output.  Then we will plot the weights and see how things look:
+
+	ps = out_path * "example_03d.ps"
+
+	samp_ship_xw = gmt("trend1d -Fxw -Np2+r", samp_ship_pg)
+	gmt("psxy " * R * " -JX8i/4i -X2i -Y1.5i -K -Sp0.03i" *
+		" -Bxa500f100+l\"Distance along great circle\" -Bya100f25+l\"Gravity anomaly (mGal)\"" *
+		" -BWeSn -UL/-1.75i/-1.25i/\"Example 3d in Cookbook\" > " * ps, samp_ship_pg)
+	R = gmt("gmtinfo -I100/1.1", samp_ship_xw)
+	gmt("psxy " * R[1] * " -JX8i/1.1i -O -Y4.25i -Bxf100 -Bya0.5f0.1+l\"Weight\" -BWesn -Sp0.03i >> " * ps, samp_ship_xw)
+
+	return out_path * "example_03.ps", d_path
 end
 
 # -----------------------------------------------------------------------------------------------------
