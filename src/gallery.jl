@@ -2,12 +2,14 @@
 
 using GMT
 
-# Need to edit these two for you own paths
+# When calling the gallery() function directly and with only one argument, one need to edit
+# these two for own paths. Otherwise this same job is done in gmtest()
 global g_root_dir = "C:/progs_cygw/GMTdev/gmt5/branches/5.2.0/"
 global out_path = "V:/"			# Leave it empty to write files in current directory
 
 # -----------------------------------------------------------------------------------------------------
 function gallery(opt::ASCIIString)
+# If called with one input only, the other two must be in the globals below.
 	global g_root_dir, out_path
 	gallery(opt, g_root_dir, out_path)
 end
@@ -18,14 +20,14 @@ function gallery(opt::ASCIIString, g_root_dir::ASCIIString, out_path::ASCIIStrin
 # All of this because I don't know how to make an 'eval("string")' call a function.
 	if (opt == "ex01")			ps, path = ex01(g_root_dir, out_path)
 	elseif (opt == "ex02")		ps, path = ex02(g_root_dir, out_path)
-	elseif (opt == "ex03")		ps, path = ex03(g_root_dir, out_path)	# Not yet
+	elseif (opt == "ex03")		ps, path = ex03(g_root_dir, out_path)
 	elseif (opt == "ex04")		ps, path = ex04(g_root_dir, out_path)
 	elseif (opt == "ex05")		ps, path = ex05(g_root_dir, out_path)
 	elseif (opt == "ex06")		ps, path = ex06(g_root_dir, out_path)
 	elseif (opt == "ex07")		ps, path = ex07(g_root_dir, out_path)
 	elseif (opt == "ex08")		ps, path = ex08(g_root_dir, out_path)
 	elseif (opt == "ex09")		ps, path = ex09(g_root_dir, out_path)
-#	elseif (opt == "ex10")		ps, path = ex10(g_root_dir, out_path)	# Not finished
+	elseif (opt == "ex10")		ps, path = ex10(g_root_dir, out_path)
 	elseif (opt == "ex11")		ps, path = ex11(g_root_dir, out_path)	# Not yet
 	elseif (opt == "ex12")		ps, path = ex12(g_root_dir, out_path)
 	elseif (opt == "ex13")		ps, path = ex13(g_root_dir, out_path)
@@ -40,7 +42,7 @@ function gallery(opt::ASCIIString, g_root_dir::ASCIIString, out_path::ASCIIStrin
 	elseif (opt == "ex22")		ps, path = ex22(g_root_dir, out_path)
 	elseif (opt == "ex23")		ps, path = ex23(g_root_dir, out_path)
 	elseif (opt == "ex24")		ps, path = ex24(g_root_dir, out_path)
-#	elseif (opt == "ex25")		ps, path = ex25(g_root_dir, out_path)	# Crash
+	elseif (opt == "ex25")		ps, path = ex25(g_root_dir, out_path)
 	elseif (opt == "ex26")		ps, path = ex26(g_root_dir, out_path)
 	elseif (opt == "ex27")		ps, path = ex27(g_root_dir, out_path)
 	elseif (opt == "ex28")		ps, path = ex28(g_root_dir, out_path)
@@ -393,7 +395,6 @@ end
 
 # -----------------------------------------------------------------------------------------------------
 function ex10(g_root_dir, out_path)
-# Not yet finished
 	# Purpose:    Make 3-D bar graph on top of perspective map
 	# GMT progs:  pscoast, pstext, psxyz, pslegend
 
@@ -402,16 +403,13 @@ function ex10(g_root_dir, out_path)
 
 	gmt("destroy"),		gmt("gmtset -Du"),		gmt("destroy")
 	gmt("pscoast -Rd -JX8id/5id -Dc -Sazure2 -Gwheat -Wfaint -A5000 -p200/40 -K > " * ps)
-	str = readall(d_path * "languages.txt")
-	k = 1
-	while (str[k](1) == "#")	# <=============   THIS DOESN'T WORK
-		k = k + 1
-	end
-	str = str[k:end]		# Remove the comment lines
-	nl = numel(str)
+	str = readdlm(d_path * "languages.txt",'\t','\n')
+	nl  = size(str,1)
 	array = zeros(nl, 7)
-	for (k = 1:nl)
-		array[k,:] = strread(str[k], "%f", 7);
+	for (row = 1:nl)
+		for (col = 1:7)
+			array[row,col] = Float64(str[row,col])
+		end
 	end
 	t = cell(nl,1)
 	for (k = 1:nl)
@@ -956,7 +954,7 @@ function ex24(g_root_dir, out_path)
 	# Purpose:   Display distribution of antipode types
 	# GMT progs: gmtset, grdlandmask, grdmath, grd2xyz, gmtmath, grdimage, pscoast, pslegend
 
-	# Create D minutes global grid with -1 over oceans and +1 over land
+	# Highlight oceanic earthquakes within 3000 km of Hobart and > 1000 km from dateline
 	d_path = g_root_dir * "doc/examples/ex24/"
 	ps = out_path * "example_24.ps"
 
@@ -990,7 +988,9 @@ function ex25(g_root_dir, out_path)
 	# GMT progs: gmtset, grdlandmask, grdmath, grd2xyz, gmtmath, grdimage, pscoast, pslegend
 
 	# Create D minutes global grid with -1 over oceans and +1 over land
+	d_path = g_root_dir * "doc/examples/ex25/"
 	ps = out_path * "example_25.ps"
+	
 	D  = 30
 
 	gmt("destroy"),		gmt("gmtset -Du"),		gmt("destroy")
@@ -1011,10 +1011,23 @@ function ex25(g_root_dir, out_path)
 	mixed  = gmt("gmtmath -bi1f -Ca -S \$ SUM UPPER RINT =", key)
 
 	# Generate corresponding color table
-	C = gmt("makecpt -Cblue,gray -T-1.5/0.5/1")
+	C = gmt("makecpt -Cblue,gray,red -T-1.5/1.5/1")
+	# But unfortunately this palette is not correct, so lets patch it
+	C.colormap[1,1:2] = 0;		C.colormap[1,3] = 1;
+	C.colormap[3,2:3] = 0;		C.colormap[3,1] = 1;
 	# Create the final plot and overlay coastlines
-	gmt("grdimage -JKs180/9i -Bx60 -By30 -BWsNE+t\"Antipodal comparisons\" -K -C\$ -Y1.2i -nn > " * ps, Gkey, C)
+	gmt("destroy")
+	gmt("gmtset FONT_ANNOT_PRIMARY +10p FORMAT_GEO_MAP dddF PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
+	gmt("destroy")
+	gmt("grdimage -JKs180/9i -Bx60 -By30 -BWsNE+t\"Antipodal comparisons\" -K -C -Y1.2i -nn > " * ps, C, Gkey)
 	gmt("pscoast -R -J -O -K -Wthinnest -Dc -A500 >> " * ps)
+	# Place an explanatory legend below
+	gmt("pslegend -R -J -O -DJBC+w6i -Y-0.2i -F+pthick >> " * ps, Any[
+		"N 3"
+		@sprintf("S 0.15i s 0.2i red  0.25p 0.3i Terrestrial Antipodes [%d %%]", land[1])
+		@sprintf("S 0.15i s 0.2i blue 0.25p 0.3i Oceanic Antipodes [%d %%]", ocean[1])
+		@sprintf("S 0.15i s 0.2i gray 0.25p 0.3i Mixed Antipodes [%d %%]", mixed[1])])
+	
 	return ps, d_path
 end
 
@@ -1237,6 +1250,8 @@ function ex32(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex32/"
 	ps = out_path * "example_32.ps"
 
+	gmt("destroy"),		gmt("gmtset -Du"),		gmt("destroy")
+
 	# Here we get and convert the flag of Europe directly from the web through grdconvert using
 	# GDAL support. We take into account the dimension of the flag (1000x667 pixels)
 	# for a ratio of 3x2.
@@ -1254,7 +1269,6 @@ function ex32(g_root_dir, out_path)
 	# We make an gradient grid as well, which we will use to "illuminate" the flag.
 
 	# gmt grdcut W020N90.DEM $Rflag -Gtopo.nc=ns
-	gmt("destroy"),		gmt("gmtset -Du"),		gmt("destroy")
 	Gillum = gmt("grdgradient " * d_path * "topo.nc -A0/270 -G -Ne0.6")
 
 	# The color map assigns "Reflex Blue" to the lower half of the 0-255 range and
