@@ -9,12 +9,13 @@
 #	Currently only family = "scripts" is implemented (means run test from the 'scripts' dir. TEST_DIR is ignored
 #		example: gmtest("GMT_insert", "", "scripts")
 
-global g_root_dir, out_path
-include("C:/progs_cygw/GMTdev/GMT.jl/src/gallery.jl")
+global g_root_dir, out_path, GM
+include("gallery.jl")
 
-# Edit those two for your own needs
+# Edit these for your own needs
 g_root_dir = "C:/progs_cygw/GMTdev/gmt5/branches/5.2.0/"
-out_path = "V:/"		# Set this if you want to save the PS files in a prticular place
+out_path   = "V:/"		# Set this if you want to save the PS files in a prticular place
+GM         = "C:/programs/GraphicsMagick/gm"
 
 
 function run_tests(what::ASCIIString)
@@ -33,12 +34,10 @@ gmtest(test, test_dir::ASCIIString, family::ASCIIString) = gmtest(test, test_dir
 function gmtest(test, test_dir="", family="", nargin::Int=1)
 # Run an example or test and print its tested status, i.e. if it PASS or FAIL
 
-	global g_root_dir, out_path
-
-	GRAPHICSMAGICK = "C:/programs/GraphicsMagick/gm.exe"
+	global g_root_dir, out_path, GM
 
 	if ((nargin == 1) && (length(test) == 4) && startswith(test, "ex"))	# Run example from gallery
-		ps, orig_path = gallery(test)
+		ps, orig_path = gallery(test, g_root_dir, out_path)
 	else
 		ps, orig_path = call_test(test, test_dir, g_root_dir, out_path, family)
 		if (isa(ps, Bool))
@@ -58,7 +57,7 @@ function gmtest(test, test_dir="", family="", nargin::Int=1)
 	ps_orig  = orig_path * fname * ".ps"
 
 	# Compare the ps file with its original.
-	cm = `$GRAPHICSMAGICK compare -density 200 -maximum-error 0.001 -highlight-color magenta -highlight-style
+	cm = `$GM compare -density 200 -maximum-error 0.001 -highlight-color magenta -highlight-style
 		 assign -metric rmse -file $png_name $ps_orig $ps`
 
 	run(pipeline(ignorestatus(cm), stdout=DevNull, stderr="errs.txt"))
