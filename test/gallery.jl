@@ -49,12 +49,12 @@ function gallery(opt::ASCIIString, g_root_dir::ASCIIString, out_path::ASCIIStrin
 	elseif (opt == "ex29")		ps, path = ex29(g_root_dir, out_path)
 	elseif (opt == "ex30")		ps, path = ex30(g_root_dir, out_path)
 	elseif (opt == "ex31")		ps, path = ex31(g_root_dir, out_path)	# Not yet
-#	elseif (opt == "ex32")		ps, path = ex32(g_root_dir, out_path)	# Crash
+	elseif (opt == "ex32")		ps, path = ex32(g_root_dir, out_path)
 	elseif (opt == "ex33")		ps, path = ex33(g_root_dir, out_path)
 	elseif (opt == "ex34")		ps, path = ex34(g_root_dir, out_path)
 	elseif (opt == "ex35")		ps, path = ex35(g_root_dir, out_path)
 	elseif (opt == "ex36")		ps, path = ex36(g_root_dir, out_path)
-#	elseif (opt == "ex37")		ps, path = ex37(g_root_dir, out_path)	# grdfft errors
+	elseif (opt == "ex37")		ps, path = ex37(g_root_dir, out_path)
 	elseif (opt == "ex38")		ps, path = ex38(g_root_dir, out_path)
 	elseif (opt == "ex39")		ps, path = ex39(g_root_dir, out_path)
 	elseif (opt == "ex40")		ps, path = ex40(g_root_dir, out_path)
@@ -1433,7 +1433,11 @@ function ex37(g_root_dir, out_path)
 
 	z_cpt  = gmt("makecpt -Crainbow -T-5000/-3000/100 -Z")
 	g_cpt  = gmt("makecpt -Crainbow -T-50/25/5 -Z")
-	bbox   = gmt("grdinfo -Ib " * T)
+	bbox_t   = gmt("grdinfo -Ib " * T)	# Trouble here bbox_t is a cell array of text and we need it to be a matrix
+	bbox = zeros(4,2)
+	for (k = 1:4)
+		bbox[k,:] = float(split(bbox_t[k+1]))
+	end
 	GG_int = gmt("grdgradient -A0 -Nt1 -G " * G)
 	GT_int = gmt("grdgradient -A0 -Nt1 -G " * T)
 	scl    = "1.4e-5"
@@ -1444,18 +1448,19 @@ function ex37(g_root_dir, out_path)
 	gmt("psbasemap -R-84/75/-78/81 -Jx" * sclkm *"i -O -K -Ba -BWSne+t\"Satellite gravity\" >> " * ps)
 
 	cross = gmt("grdfft " * T * " " * G * " -Ewk -N192/192+d+wtmp")			# <---- ERRORS HERE
-	GG_tmp_int = gmt("grdgradient " * G[1:end-3] * "_tmp.nc -A0 -Nt1 -G")
-	GT_tmp_int = gmt("grdgradient " * T[1:end-3] * "_tmp.nc -A0 -Nt1 -G")
+	# grav.V18.par.surf.1km.sq_tmp.nc and mb.par.surf.1km.sq_tmp.nc are created by the '+wtmp' above
+	GG_tmp_int = gmt("grdgradient grav.V18.par.surf.1km.sq_tmp.nc -A0 -Nt1 -G")
+	GT_tmp_int = gmt("grdgradient mb.par.surf.1km.sq_tmp.nc -A0 -Nt1 -G")
 
 	z_cpt = gmt("makecpt -Crainbow -T-1500/1500/100 -Z")
 	g_cpt = gmt("makecpt -Crainbow -T-40/40/5 -Z")
 
-	gmt("grdimage " * T[1:end-3] * "_tmp.nc -I -Jx" * scl *"i -C -O -K -X-3.474i -Y3i >> " * ps, GT_tmp_int, z_cpt)
-	gmt("psxy -R" * T[1:end-3] * "_tmp.nc -J -O -K -L -W0.5p,- >> " * ps, bbox)
+	gmt("grdimage grav.V18.par.surf.1km.sq_tmp.nc -I -Jx" * scl *"i -C -O -K -X-3.474i -Y3i >> " * ps, GT_tmp_int, z_cpt)
+	gmt("psxy -Rgrav.V18.par.surf.1km.sq_tmp.nc -J -O -K -L -W0.5p,- >> " * ps, bbox)
 	gmt("psbasemap -R-100/91/-94/97 -Jx" * sclkm *"i -O -K -Ba -BWSne+t\"Detrended and extended\" >> " * ps)
 
-	gmt("grdimage " * G[1:end-3] * "_tmp.nc -I -Jx" * scl *"i -C -O -K -X3.25i >> " * ps, GG_tmp_int, g_cpt)
-	gmt("psxy -R" * G[1:end-3] * "_tmp.nc -J bbox -O -K -L -W0.5p,- >> " * ps)
+	gmt("grdimage grav.V18.par.surf.1km.sq_tmp.nc -I -Jx" * scl *"i -C -O -K -X3.25i >> " * ps, GG_tmp_int, g_cpt)
+	gmt("psxy -Rgrav.V18.par.surf.1km.sq_tmp.nc -J -O -K -L -W0.5p,- >> " * ps, bbox)
 	gmt("psbasemap -R-100/91/-94/97 -Jx" * sclkm *"i -O -K -Ba -BWSne+t\"Detrended and extended\" >> " * ps)
  
 	gmt("destroy")
@@ -1465,6 +1470,7 @@ function ex37(g_root_dir, out_path)
 		" -BWsNe+t\"Coherency between gravity and bathymetry\" -O -K -X-3.25i -Y3.3i -i0,15 -W0.5p >> " * ps, cross)
 	gmt("psxy -R -J -O -K -i0,15,16 -Sc0.075i -Gred -W0.25p -Ey >> " * ps, cross)
  	gmt("psxy -R -J -O -T >> " * ps)
+ 	rm("grav.V18.par.surf.1km.sq_tmp.nc"), 	rm("mb.par.surf.1km.sq_tmp.nc")
 	rm("gmt.conf")
 	return ps, d_path
 end
