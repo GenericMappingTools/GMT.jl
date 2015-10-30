@@ -767,7 +767,7 @@ function GMTJL_dataset_init(API::Ptr{Void}, ptr, direction::Integer)
 		elseif (eltype(ptr) == UInt8)		Mb._type = UInt32(GMT.GMT_UCHAR)
 		elseif (eltype(ptr) == Int8)		Mb._type = UInt32(GMT.GMT_CHAR)
 		else
-			error("GMTJL_matrix_init: only floating point types allowed in input. Others need to be added")
+			error("GMTJL_matrix_init: only integer or floating point types allowed in input. Others need to be added")
 		end
 		Mb.data = pointer(ptr)
 		Mb.dim  = Mb.n_rows		# Data from Julia is in column major
