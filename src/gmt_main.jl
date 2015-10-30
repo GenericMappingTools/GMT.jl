@@ -765,7 +765,7 @@ function GMTJL_dataset_init(API::Ptr{Void}, ptr, direction::Integer)
 		elseif (eltype(ptr) == UInt16)		Mb._type = UInt32(GMT.GMT_USHORT)
 		elseif (eltype(ptr) == Int16)		Mb._type = UInt32(GMT.GMT_SHORT)
 		elseif (eltype(ptr) == UInt8)		Mb._type = UInt32(GMT.GMT_UCHAR)
-		elseif (eltype(ptr) == Int9)		Mb._type = UInt32(GMT.GMT_CHAR)
+		elseif (eltype(ptr) == Int8)		Mb._type = UInt32(GMT.GMT_CHAR)
 		else
 			error("GMTJL_matrix_init: only floating point types allowed in input. Others need to be added")
 		end
