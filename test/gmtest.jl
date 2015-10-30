@@ -68,7 +68,11 @@ function gmtest(test, test_dir="", family="", nargin::Int=1)
 		rm(png_name)
 	else
 		ind = searchindex(t, "image")
-		println("    Test " * test * " FAIL with: " * t[ind:end-1])
+		if (ind == 0)
+			println("    Test " * test * " FAIL with:\n " * t)		# Quite likely a Ghostscript error
+		else
+			println("    Test " * test * " FAIL with: " * t[ind:end-1])
+		end
 	end
 end
 
