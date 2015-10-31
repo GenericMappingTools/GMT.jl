@@ -144,4 +144,19 @@ end
 mfilename() = mfilename("treta")	# Output only the script name
 
 # ---------------------------------------------------------------------------------------
-feval(fn_str, args...) = eval(parse(fn_str))(args...)
+feval(fn_str, args...) = eval(parse(fn_str))(args...)	# This is not a good one.
+
+# ---------------------------------------------------------------------------------------
+function strfind(str::AbstractString, sub_str)
+# To mimic Matalab's function except that it returns [0] instead of [] in case of failure
+# and it always returns a vector.
+	ind = [search(str, sub_str)]
+	ind_n = ind[1]
+	while (ind_n != 0)
+		ind_n = searchindex(str, sub_str, ind_n+1)
+		if (ind_n != 0)		# Found another
+			push!(ind, ind_n)
+		end
+	end
+	return ind
+end
