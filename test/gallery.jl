@@ -28,17 +28,17 @@ function gallery(opt::ASCIIString, g_root_dir::ASCIIString, out_path::ASCIIStrin
 	elseif (opt == "ex08")		ps, path = ex08(g_root_dir, out_path)
 	elseif (opt == "ex09")		ps, path = ex09(g_root_dir, out_path)
 	elseif (opt == "ex10")		ps, path = ex10(g_root_dir, out_path)
-	elseif (opt == "ex11")		ps, path = ex11(g_root_dir, out_path)	# Not yet
+	elseif (opt == "ex11")		ps, path = ex11(g_root_dir, out_path)	# Strange failure
 	elseif (opt == "ex12")		ps, path = ex12(g_root_dir, out_path)
 	elseif (opt == "ex13")		ps, path = ex13(g_root_dir, out_path)
 	elseif (opt == "ex14")		ps, path = ex14(g_root_dir, out_path)
 	elseif (opt == "ex15")		ps, path = ex15(g_root_dir, out_path)
-	elseif (opt == "ex16")		ps, path = ex16(g_root_dir, out_path)
+	elseif (opt == "ex16")		ps, path = ex16(g_root_dir, out_path)	# Not yet
 	elseif (opt == "ex17")		ps, path = ex17(g_root_dir, out_path)
 	elseif (opt == "ex18")		ps, path = ex18(g_root_dir, out_path)
 	elseif (opt == "ex19")		ps, path = ex19(g_root_dir, out_path)
 	elseif (opt == "ex20")		ps, path = ex20(g_root_dir, out_path)
-	elseif (opt == "ex21")		ps, path = ex21(g_root_dir, out_path)	# Not yet
+	elseif (opt == "ex21")		ps, path = ex21(g_root_dir, out_path)
 	elseif (opt == "ex22")		ps, path = ex22(g_root_dir, out_path)
 	elseif (opt == "ex23")		ps, path = ex23(g_root_dir, out_path)
 	elseif (opt == "ex24")		ps, path = ex24(g_root_dir, out_path)
@@ -436,7 +436,87 @@ function ex11(g_root_dir, out_path)
 
 	d_path = g_root_dir * "doc/examples/ex11/"
 	ps = out_path * "example_11.ps"
-	return [], []
+
+	gmt("destroy")
+	gmt("gmtset MAP_TICK_LENGTH_PRIMARY 0 FONT_ANNOT_PRIMARY 12p,Helvetica-Bold PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
+	gmt("destroy")
+
+	gmt("psxy " * d_path * "cut-here.dat -Wthinnest,. -R-51/306/0/1071 -JX3.5i/10.5i -X2.5i -Y0.5i -P -K > " * ps)
+
+	# First, create grids of ascending X and Y and constant 0.
+	# These are to be used to represent R, G and B values of the darker 3 faces of the cube.
+	x_nc = gmt("grdmath -I1 -R0/255/0/255 X =")
+	y_nc = gmt("grdmath -I1 -R Y =")
+	c_nc = gmt("grdmath -I1 -R 0 =")
+
+	gmt("grdimage -JX2.5i/-2.5i -R -K -O -X0.5i >> " * ps, x_nc, y_nc, c_nc)
+	gmt("psxy -Wthinner,white,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("pstext --FONT=white -J -R -K -O -F+f+a >> " * ps, Any[
+		"128 128 12p -45 60\\217"
+		"102  26 12p -90 0.4"
+		"204  26 12p -90 0.8"
+		"10  140 16p 180 G"])
+	gmt("psxy -N -Sv0.15i+s+e -Gwhite -W2p,white -J -R -K -O >> " * ps, [0 0 0 128])
+
+	gmt("grdimage -JX2.5i/2.5i -R -K -O -Y2.5i >> " * ps, x_nc, c_nc, y_nc)
+	gmt("psxy -Wthinner,white,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("pstext --FONT=white -J -R -K -O -F+f+a >> " * ps, Any[
+		"128 128 12p  45 300\\217"
+		"26  102 12p   0 0.4"
+		"26  204 12p   0 0.8"
+		"140  10 16p -90 R"
+		"100 100 16p -45 V"])
+
+	gmt("psxy -N -Sv0.15i+s+e -Gwhite -W2p,white -J -R -K -O >> " * ps, [0 0 128 0])
+	gmt("psxy -N -Sv0.15i+s+e -Gwhite -W2p,white -J -R -K -O >> " * ps, [0 0 90 90])
+
+	gmt("grdimage -JX-2.5i/2.5i -R -K -O -X-2.5i >> " * ps, c_nc, x_nc, y_nc)
+	gmt("psxy -Wthinner,white,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("pstext --FONT=white -J -R -K -O -F+f+a >> " * ps, Any[
+		"128 128 12p 135 180\\217"
+		"102  26 12p  90 0.4"
+		"204  26 12p  90 0.8"
+		"10  140 16p   0 B"])
+
+	gmt("psxy -N -Sv0.15i+s+e -Gwhite -W2p,white -J -R -K -O >> " * ps, [0 0 0 128])
+	gmt("psxy -N -Sv0.15i+s+e -Gwhite -W2p,white -J -R -K -O >> " * ps, [0 0 128 0])
+
+	# Second, create grids of descending X and Y and constant 255.
+	# These are to be used to represent R, G and B values of the lighter 3 faces of the cube.
+
+	x_nc = gmt("grdmath -I1 -R 255 X SUB =")
+	y_nc = gmt("grdmath -I1 -R 255 Y SUB =")
+	c_nc = gmt("grdmath -I1 -R 255       =")
+
+	gmt("grdimage -JX-2.5i/-2.5i -R -K -O -X2.5i -Y2.5i >> " * ps, x_nc, y_nc, c_nc)
+	gmt("psxy -Wthinner,black,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("pstext -J -R -K -O -F+f+a >> " * ps, Any[
+		"128 128 12p 225 240\\217"
+		"102  26 12p 270 0.4"
+		"204  26 12p 270 0.8"])
+
+	gmt("grdimage -JX2.5i/-2.5i -R -K -O -X2.5i >> " * ps, c_nc, y_nc, x_nc)
+	gmt("psxy -Wthinner,black,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("pstext -J -R -K -O -F+f+a >> " * ps, Any[
+		"128 128 12p -45 0\\217"
+		"26  102 12p   0 0.4"
+		"26  204 12p   0 0.8"
+		"100 100 16p  45 S"
+		"204  66 16p  90 H"])
+
+	gmt("psxy -N -Sv0.15i+s+e -Gblack -W2p -J -R -O -K >> " * ps, [0 0 90 90])
+	gmt("psxy -N -Sv0.15i+s+e -Gblack -W2p -J -R -O -K >> " * ps, [204 204 204 76])
+
+	gmt("grdimage -JX-2.5i/2.5i -R -K -O -X-2.5i -Y2.5i >> " * ps, x_nc, c_nc, y_nc)
+	gmt("psxy -Wthinner,black,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("pstext -J -R -O -F+f+a >> " * ps, Any[
+		"128 128 12p 135 120\\217"
+		"26  102 12p 180 0.4"
+		"26  204 12p 180 0.8"
+		"200 200 16p 225 GMT 5"])
+
+	rm("gmt.conf")
+	return ps, d_path
 end
 
 # -----------------------------------------------------------------------------------------------------
@@ -652,7 +732,7 @@ function ex18(g_root_dir, out_path)
 	# First generate gravity image w/ shading, label Pratt, and draw a circle
 	# of radius = 200 km centered on Pratt.
 
-	grav_cpt = gmt("makecpt -Crainbow -T-60/60/120 -Z");
+	grav_cpt = gmt("makecpt -Crainbow -T-60/60/0.2 -Z");
 	GAK_gulf_grav_i = gmt("grdgradient " * d_path * "AK_gulf_grav.nc -Nt1 -A45 -G");
 	gmt("grdimage " * d_path * "AK_gulf_grav.nc -I -JM5.5i -C -B2f1 -P -K -X1.5i" *
 		" -Y5.85i > " * ps, GAK_gulf_grav_i, grav_cpt)
@@ -699,8 +779,8 @@ function ex18(g_root_dir, out_path)
 		-141	53.75
 		-148.5	53.75])
 	gmt("pstext -R -J -O -F+f14p,Helvetica-Bold+jLM >> " * ps,
-		Any[@sprintf("-148 53.08 Areas: %f.2 km@+2@+", area[3])
-		 @sprintf("-148 53.42 Volumes: %d mGal\\264km@+2@+", volume[4])])
+		Any[@sprintf("-148 53.08 Areas: %.2f km@+2@+", area[2])
+		 @sprintf("-148 53.42 Volumes: %d mGal\\264km@+2@+", volume[3])])
 	rm("gmt.conf")
 	return ps, d_path
 end
@@ -719,7 +799,7 @@ function ex19(g_root_dir, out_path)
 	Glat = gmt("grdmath -Rd -I1 -r Y COSD 2 POW =")
 	Glon = gmt("grdmath -Rd -I1 -r X =")
 	fid = open("lat.cpt","w");		println(fid, "0 white 1 blue");		close(fid)
-	lon_cpt = gmt("makecpt -Crainbow -T-180/180/360 -Z")
+	lon_cpt = gmt("makecpt -Crainbow -T-180/180/2 -Z")
 	gmt("grdimage -JI0/6.5i -Clat.cpt -P -K -Y7.5i -B0 -nl > " * ps, Glat)
 	gmt("pscoast -R -J -O -K -Dc -A5000 -Gc >> " * ps)
 	gmt("grdimage -J -C -O -K -nl >> " * ps, lon_cpt, Glon)
@@ -787,7 +867,91 @@ function ex21(g_root_dir, out_path)
 
 	d_path = g_root_dir * "doc/examples/ex21/"
 	ps = out_path * "example_21.ps"
-	return [], []
+
+	# File has time stored as dd-Mon-yy so set input format to match it
+	gmt("destroy")
+	gmt("gmtset FORMAT_DATE_IN dd-o-yy FORMAT_DATE_MAP o FONT_ANNOT_PRIMARY +10p" *
+		" FORMAT_TIME_PRIMARY_MAP abbreviated PS_CHAR_ENCODING ISOLatin1+ PROJ_LENGTH_UNIT inch PS_MEDIA letter")
+	gmt("destroy")
+
+	# Pull out a suitable region string in yyy-mm-dd format
+	R = gmt("gmtinfo -fT -I50 " * d_path * "RHAT_price.csv");		# The output is a cell
+	R = chomp(R[1])
+	#R = sprintf('-R%f/%f/%f/%f', RHAT_info(1:4));
+	ind = strfind(R, '/')
+	wT = R[3:ind[1]-1]				# West and East in T time coordinates (to be used later)
+	eT = R[ind[1]+1:ind[2]-1]
+	sF = R[ind[2]+1:ind[3]-1]
+
+	# Lay down the basemap:
+	gmt("psbasemap " * R * " -JX9i/6i -K -Bsx1Y -Bpxa3Of1o -Bpy50+p\"\\044 \"" *
+		" -BWSen+t\"RedHat (RHT) Stock Price Trend since IPO\"+glightgreen > " * ps)
+
+	# Plot main window with open price as red line over yellow envelope of low/highs
+
+	gmt("destroy"),		gmt("gmtset FORMAT_DATE_OUT dd-o-yy"),	gmt("destroy")
+	RHAT1_env = gmt("gmtconvert -o0,2 -f0T " * d_path * "RHAT_price.csv")
+	RHAT2_env = gmt("gmtconvert -o0,3 -f0T -I -T " * d_path * "RHAT_price.csv")
+	RHAT_env = [RHAT1_env; RHAT2_env]
+	gmt("psxy -R -J -Gyellow -O -K >> " * ps, RHAT_env)
+	gmt("psxy -R -J " * d_path * "RHAT_price.csv -Wthin,red -O -K >> " * ps)
+
+	# Draw P Wessel's purchase price as line and label it.  Note we temporary switch
+	# back to default yyyy-mm-dd format since that is what gmt info gave us.
+	fid = open("RHAT.pw","w")
+	println(fid, "05-May-00	0")
+	println(fid, "05-May-00	300")
+	close(fid)
+	gmt("psxy -R -J RHAT.pw -Wthinner,- -O -K >> " * ps)
+	fid = open("RHAT.pw","w")
+	println(fid, "01-Jan-99	25")
+	println(fid, "01-Jan-02	25")
+	close(fid)
+	gmt("psxy -R -J RHAT.pw -Wthick,- -O -K >> " * ps)
+	gmt("destroy"),		gmt("gmtset FORMAT_DATE_IN yyyy-mm-dd"),	gmt("destroy")
+	gmt("pstext -R -J -O -K -D1.5i/0.05i -N -F+f12p,Bookman-Demi+jLB >> " * ps, wT * " 25 PW buy")
+	gmt("destroy"),		gmt("gmtset FORMAT_DATE_IN dd-o-yy"),	gmt("destroy")
+
+	# Draw P Wessel's sales price as line and label it.
+	fid = open("RHAT.pw","w")
+	println(fid, "25-Jun-07	0")
+	println(fid, "25-Jun-07	300")
+	close(fid)
+	gmt("psxy -R -J RHAT.pw -Wthinner,- -O -K >> " * ps)
+	fid = open("RHAT.pw","w")
+	println(fid, "01-Aug-06	23.8852");
+	println(fid, "01-Jan-08	23.8852");
+	close(fid);
+	gmt("psxy -R -J RHAT.pw -Wthick,- -O -K >> " * ps)
+	gmt("destroy"),		gmt("gmtset FORMAT_DATE_IN yyyy-mm-dd"),	gmt("destroy")
+	gmt("pstext -R -J -O -K -Dj0.8i/0.05i -N -F+f12p,Bookman-Demi+jRB >> " * ps, eT * " 23.8852 PW sell")
+	gmt("destroy"),		gmt("gmtset FORMAT_DATE_IN dd-o-yy"),	gmt("destroy")
+
+	# Get smaller region for insert for trend since 2004
+	R = @sprintf("-R2004T/%s/%s/40", eT, sF)
+
+	# Lay down the basemap, using Finnish annotations and place the insert in the upper right
+	gmt("psbasemap --GMT_LANGUAGE=fi " * R * " -JX6i/3i -Bpxa3Of3o -Bpy10+p\"\\044 \" -BESw+glightblue -Bsx1Y" *
+		" -O -K -X3i -Y3i >> " * ps)
+
+	# Again, plot close price as red line over yellow envelope of low/highs
+
+	gmt("psxy -R -J -Gyellow -O -K >> " * ps, RHAT_env)
+	gmt("psxy -R -J " * d_path * "RHAT_price.csv -Wthin,red -O -K >> " * ps)
+
+	# Draw P Wessel's sales price as dashed line
+	gmt("psxy -R -J RHAT.pw -Wthick,- -O -K >> " * ps)
+
+	# Mark sales date
+	fid = open("RHAT.pw","w")
+	println(fid, "25-Jun-07	0")
+	println(fid, "25-Jun-07	300")
+	close(fid)
+	gmt("psxy -R -J RHAT.pw -Wthinner,- -O >> " * ps)
+
+	rm("RHAT.pw")
+	rm("gmt.conf")
+	return ps, d_path
 end
 
 # -----------------------------------------------------------------------------------------------------
@@ -864,8 +1028,7 @@ function ex22(g_root_dir, out_path)
 	 "D 0 1p"
 	 "V 0 1p"
 	 "N 1"
-	 # Put together a reasonable legend text, and add logo and user's name:
-	 "G 0.25"
+	 "G 0.25l"
 	 "P"
 	 "T USGS/NEIS most recent earthquakes for the last seven days. The data were"
 	 "T obtained automatically from the USGS Earthquake Hazards Program page at"
@@ -873,7 +1036,6 @@ function ex22(g_root_dir, out_path)
 	 "T from the USGS."
 	 "T This script can be called daily to update the latest information."
 	 "G 0.4i"
-	 # Add USGS logo
 	 "I " * d_path * "USGS.ras 1i RT"
 	 "G -0.3i"
 	 @sprintf("L 12 6 LB %s", me)];
@@ -1068,7 +1230,7 @@ function ex27(g_root_dir, out_path)
 	Gtasman_grav_i = gmt("grdgradient " * d_path * "tasman_grav.nc -Nt1 -A45 -G");
 
 	# Make a suitable cpt file for mGal
-	grav_cpt = gmt("makecpt -T-120/120/240 -Z -Crainbow")
+	grav_cpt = gmt("makecpt -T-120/120/1 -Z -Crainbow")
 
 	# Since this is a Mercator grid we use a linear projection
 	gmt("grdimage " * d_path * "tasman_grav.nc=ns/0.1 -I -Jx0.25i -C -P -K > " * ps, Gtasman_grav_i, grav_cpt)
@@ -1147,7 +1309,7 @@ function ex29(g_root_dir, out_path)
 	# Scale to km and remove PROJ_ELLIPSOID
 	Gmars  = gmt("grdmath \$ 1000 DIV \$ SUB =", Gmars,  Gproj_ellipsoid)
 	Gmars2 = gmt("grdmath \$ 1000 DIV \$ SUB =", Gmars2, Gproj_ellipsoid)
-	mars_cpt = gmt("makecpt -Crainbow -T-7/15/22 -Z");
+	mars_cpt = gmt("makecpt -Crainbow -T-7/15/0.1 -Z");
 	Gmars2_i = gmt("grdgradient -fg -Ne0.75 -A45 -G", Gmars2)
 	gmt("grdimage -I -C -B30g30 -BWsne -JH0/7i -P -K -E200" *
 		" --FONT_ANNOT_PRIMARY=12p -X0.75i > " * ps, Gmars2_i, mars_cpt, Gmars2)
@@ -1300,7 +1462,7 @@ function ex32(g_root_dir, out_path)
 	println(fid, "04:21:00 50:51:00 Bruxelles")
 	println(fid, "07:07:03 50:43:09 Bonn")
 	close(fid)
-	t = gmt("grdtrack -G" * d_path * "topo.nc -sa cities.txt")
+	t = gmt("grdtrack -G" * d_path * "topo.nc cities.txt")
 	gmt("psxyz -i0,1,3 " * Rplot * " -J -JZ -p -Sc7p -W1p,white -Gred -K -O >> " * ps, t)
 	gmt("pstext " * Rplot * " -J -JZ -p -F+f12p,Helvetica-Bold,red+jRM -Dj0.1i/0.0i -O cities.txt >> " * ps)
 	rm("cities.txt");	rm("euflag.cpt");	rm("gmt.conf")
@@ -1357,7 +1519,7 @@ function ex34(g_root_dir, out_path)
 	gmt("pscoast -JM4.5i -R-6/20/35/52 -EFR,IT+gP300/8 -Glightgray -Baf -BWSne -P -K -X2i > " * ps)
 	# Extract a subset of ETOPO2m for this part of Europe
 	# gmt grdcut etopo2m_grd.nc -R -GFR+IT.nc=ns
-	z_cpt = gmt("makecpt -Cglobe -T-5000/5000/500 -Z")
+	z_cpt = gmt("makecpt -Cglobe -T-5000/5000/50 -Z")
 	FR_IT_int = gmt("grdgradient " * d_path * "FR+IT.nc -A15 -Ne0.75 -G")
 	gmt("grdimage " * d_path * "FR+IT.nc -I -C -J -O -K -Y4.5i" *
 		" -Baf -BWsnE+t\"Franco-Italian Union, 2042-45\" >> " * ps, FR_IT_int, z_cpt)
@@ -1378,17 +1540,16 @@ function ex35(g_root_dir, out_path)
 	# gshhs $GMTHOME/src/coast/gshhs/gshhs_c.b | $AWK '{if ($1 == ">" || NR%5 == 0) print $0}' > gshhs_c.txt
 	# Get Voronoi polygons
 	gmt("destroy"),		gmt("gmtset -Du"),		gmt("destroy")
-	tt_pol = gmt("sphtriangulate " * d_path * "gshhs_c.txt -Qv -D -Ntt.pol");
+	nodes, pol = gmt("sphtriangulate " * d_path * "gshhs_c.txt -Qv -D -N")
 	# Compute distances in km
-	Gtt = gmt("sphdistance -Rg -I1 -Q\$ -Ntt.pol -G -Lk", tt_pol)
+	Gtt = gmt("sphdistance -Rg -I1 -Q -N -G -Lk", pol, nodes)
 	t_cpt = gmt("makecpt -Chot -T0/3500/500 -Z")
 	# Make a basic image plot and overlay contours, Voronoi polygons and coastlines
 	gmt("grdimage -JG-140/30/7i -P -K -C -X0.75i -Y2i > " * ps, t_cpt, Gtt)
 	gmt("grdcontour -J -O -K -C500 -A1000+f10p,Helvetica,white -L500" *
 		" -GL0/90/203/-10,175/60/170/-30,-50/30/220/-5 -Wa0.75p,white -Wc0.25p,white >> " * ps, Gtt)
-	gmt("psxy -R -J -O -K -W0.25p,green,. >> " * ps, tt_pol)
+	gmt("psxy -R -J -O -K -W0.25p,green,. >> " * ps, pol)
 	gmt("pscoast -R -J -O -W1p -Gsteelblue -A0/1/1 -B30g30 -B+t\"Distances from GSHHG crude coastlines\" >> " * ps)
-	rm("tt.pol")
 	rm("gmt.conf")
 	return ps, d_path
 end
