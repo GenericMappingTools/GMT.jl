@@ -148,6 +148,7 @@ function gmt(cmd::ASCIIString, args...)
 			error("GMT: Expected a Matrix for input")
 		end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : []
+#@show(k,n_items,ptr)
 		X[k].object, X[k].object_ID = GMTJL_register_IO(API, X[k].family, X[k].direction, ptr)
 		#out, X[k].object = GMTJL_register_IO(API, X[k].family, X[k].direction, ptr)
 		#return X[k].object
@@ -170,23 +171,33 @@ function gmt(cmd::ASCIIString, args...)
 	end
 
 	# 7. Hook up module GMT outputs to Julia array
+	# But first cout the number of outputs
+	n_out = 0
+	for (k = 1:n_items)                     # Number of GMT containers involved in this module call
+		if (X[k].direction == GMT_IN) continue 	end
+		n_out = n_out + 1
+	end
 	out = []
+	if (n_out > 0)
+		out = cell(n_out)
+	end
+
 	for (k = 1:n_items)                     # Number of GMT containers involved in this module call
 		if (X[k].direction == GMT_IN) continue 	end      # ONly looking for stuff coming OUT of GMT here
 		if ((X[k].object = GMT_Retrieve_Data(API, X[k].object_ID)) == C_NULL)
 			error("GMT: Error retrieving object from GMT")
 		end
-		pos = X[k].pos                  # Short-hand for index into the plhs[] array being returned to Matlab
+		pos = X[k].pos + 1                      # Short-hand for index into the plhs[] array being returned to Julia
 		if (X[k].family == GMT_IS_GRID)         # Determine what container we got
-			out = get_grid(API, X[k].object)
+			out[pos] = get_grid(API, X[k].object)
 		elseif (X[k].family == GMT_IS_DATASET)  # A GMT table; make it a matrix and the pos'th output item
-			out = get_table(API, X[k].object)
+			out[pos] = get_table(API, X[k].object)
 		elseif (X[k].family == GMT_IS_TEXTSET)  # A GMT textset; make it a cell and the pos'th output item
-			out = get_textset(API, X[k].object)
+			out[pos] = get_textset(API, X[k].object)
 		elseif (X[k].family == GMT_IS_CPT)      # A GMT CPT; make it a colormap and the pos'th output item
-			out = get_cpt(API, X[k].object)
+			out[pos] = get_cpt(API, X[k].object)
 		elseif (X[k].family == GMT_IS_IMAGE)    # A GMT Image; make it the pos'th output item
-			out = get_image(API, X[k].object)
+			out[pos] = get_image(API, X[k].object)
 		end
 	end
 
@@ -209,7 +220,19 @@ function gmt(cmd::ASCIIString, args...)
 		error("GMT: Failure to destroy GMT5 options")
 	end
 
-	return out
+	# Return a variable number of outputs but don't think we even can return 3
+	if (n_out == 0)
+		return []
+	elseif (n_out == 1)
+		return out[1]
+	elseif (n_out == 2)
+		return out[1], out[2]
+	elseif (n_out == 3)
+		return out[1], out[2], out[3]
+	else
+		println("Case non-foreseen. More than 3 outputs?")
+		return out
+	end
 
 end
 
@@ -773,7 +796,7 @@ function GMTJL_dataset_init(API::Ptr{Void}, ptr, direction::Integer)
 		Mb.data = pointer(ptr)
 		Mb.dim  = Mb.n_rows		# Data from Julia is in column major
 		Mb.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# Since matrix was allocated by Julia
-		Mb.shape = GMT.GMT_IS_COL_FORMAT;		# Julia order is column major */
+		Mb.shape = GMT.GMT_IS_COL_FORMAT;			# Julia order is column major
 		unsafe_store!(M, Mb)
 		return M
 
