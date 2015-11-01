@@ -123,7 +123,7 @@ function gmt(cmd::ASCIIString, args...)
 	# 4. Preprocess to update GMT option lists and return info array X
 	n_items = pointer([0])
 	pLL = pointer([LL])
-	if ((X = GMT_Encode_Options(API, g_module, '$', pLL, n_items)) == C_NULL)	# This call also changes LL
+	if ((X = GMT_Encode_Options(API, g_module, '$', n_argin, pLL, n_items)) == C_NULL)	# This call also changes LL
 		# Get the pointees
 		n_items = unsafe_load(n_items)
 		if (n_items > 65000)				# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
@@ -148,7 +148,6 @@ function gmt(cmd::ASCIIString, args...)
 			error("GMT: Expected a Matrix for input")
 		end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : []
-#@show(k,n_items,ptr)
 		X[k].object, X[k].object_ID = GMTJL_register_IO(API, X[k].family, X[k].direction, ptr)
 		#out, X[k].object = GMTJL_register_IO(API, X[k].family, X[k].direction, ptr)
 		#return X[k].object
