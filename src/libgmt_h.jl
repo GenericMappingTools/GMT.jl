@@ -1624,6 +1624,7 @@ end
 immutable GMTAPI_DATA_OBJECT
 	# Information for each input or output data entity, including information
 	# needed while reading/writing from a table (file or array)
+	rec::UInt64                 # Current rec to read [GMT_DATASET and GMT_TEXTSET to/from MATRIX/VECTOR only]
 	n_rows::UInt64              # Number or rows in this array [GMT_DATASET and GMT_TEXTSET to/from MATRIX/VETOR only]
 	n_columns::UInt64			# Number of columns to process in this dataset [GMT_DATASET only]
 	n_expected_fields::UInt64	# Number of expected columns for this dataset [GMT_DATASET only]

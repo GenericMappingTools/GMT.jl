@@ -300,13 +300,13 @@ function GMTAPI_get_key(API::Ptr{Void}, string::Ptr{UInt8}, _type::Char, n_items
 	       API, string, _type, n_items, PS)
 end
 
-function GMT_Encode_Options(V_API::Ptr{Void}, _module::ASCIIString, marker::Char, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
-	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Ptr{Ptr{GMT_OPTION}},
-	        Ptr{UInt32}), V_API, _module, marker, head, n)
+function GMT_Encode_Options(V_API::Ptr{Void}, _module::ASCIIString, marker::Char, n_argin::Integer, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Int32, Ptr{Ptr{GMT_OPTION}},
+	        Ptr{UInt32}), V_API, _module, marker, n_argin, head, n)
 end
-function GMT_Encode_Options(V_API::Ptr{Void}, _module::Ptr{UInt8}, marker::Char, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
-	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Ptr{Ptr{GMT_OPTION}},
-	        Ptr{UInt32}), V_API, _module, marker, head, n)
+function GMT_Encode_Options(V_API::Ptr{Void}, _module::Ptr{UInt8}, marker::Char, n_argin::Integer, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Int32, Ptr{Ptr{GMT_OPTION}},
+	        Ptr{UInt32}), V_API, _module, marker, n_argin, head, n)
 end
 
 
