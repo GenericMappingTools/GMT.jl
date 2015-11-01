@@ -441,7 +441,7 @@ function ex11(g_root_dir, out_path)
 	gmt("gmtset MAP_TICK_LENGTH_PRIMARY 0 FONT_ANNOT_PRIMARY 12p,Helvetica-Bold PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
 	gmt("destroy")
 
-	gmt("psxy " * d_path * "cut-here.dat -Wthinnest,. -R-51/306/0/1071 -JX3.5i/10.5i -X2.5i -Y0.5i -P -K > " * ps)
+	gmt("psxy " * d_path * "cut-here.txt -Wthinnest,. -R-51/306/0/1071 -JX3.5i/10.5i -X2.5i -Y0.5i -P -K > " * ps)
 
 	# First, create grids of ascending X and Y and constant 0.
 	# These are to be used to represent R, G and B values of the darker 3 faces of the cube.
@@ -450,7 +450,7 @@ function ex11(g_root_dir, out_path)
 	c_nc = gmt("grdmath -I1 -R 0 =")
 
 	gmt("grdimage -JX2.5i/-2.5i -R -K -O -X0.5i >> " * ps, x_nc, y_nc, c_nc)
-	gmt("psxy -Wthinner,white,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("psxy -Wthinner,white,- " * d_path * "rays.txt -J -R -K -O >> " * ps)
 	gmt("pstext --FONT=white -J -R -K -O -F+f+a >> " * ps, Any[
 		"128 128 12p -45 60\\217"
 		"102  26 12p -90 0.4"
@@ -459,7 +459,7 @@ function ex11(g_root_dir, out_path)
 	gmt("psxy -N -Sv0.15i+s+e -Gwhite -W2p,white -J -R -K -O >> " * ps, [0 0 0 128])
 
 	gmt("grdimage -JX2.5i/2.5i -R -K -O -Y2.5i >> " * ps, x_nc, c_nc, y_nc)
-	gmt("psxy -Wthinner,white,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("psxy -Wthinner,white,- " * d_path * "rays.txt -J -R -K -O >> " * ps)
 	gmt("pstext --FONT=white -J -R -K -O -F+f+a >> " * ps, Any[
 		"128 128 12p  45 300\\217"
 		"26  102 12p   0 0.4"
@@ -471,7 +471,7 @@ function ex11(g_root_dir, out_path)
 	gmt("psxy -N -Sv0.15i+s+e -Gwhite -W2p,white -J -R -K -O >> " * ps, [0 0 90 90])
 
 	gmt("grdimage -JX-2.5i/2.5i -R -K -O -X-2.5i >> " * ps, c_nc, x_nc, y_nc)
-	gmt("psxy -Wthinner,white,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("psxy -Wthinner,white,- " * d_path * "rays.txt -J -R -K -O >> " * ps)
 	gmt("pstext --FONT=white -J -R -K -O -F+f+a >> " * ps, Any[
 		"128 128 12p 135 180\\217"
 		"102  26 12p  90 0.4"
@@ -489,14 +489,14 @@ function ex11(g_root_dir, out_path)
 	c_nc = gmt("grdmath -I1 -R 255       =")
 
 	gmt("grdimage -JX-2.5i/-2.5i -R -K -O -X2.5i -Y2.5i >> " * ps, x_nc, y_nc, c_nc)
-	gmt("psxy -Wthinner,black,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("psxy -Wthinner,black,- " * d_path * "rays.txt -J -R -K -O >> " * ps)
 	gmt("pstext -J -R -K -O -F+f+a >> " * ps, Any[
 		"128 128 12p 225 240\\217"
 		"102  26 12p 270 0.4"
 		"204  26 12p 270 0.8"])
 
 	gmt("grdimage -JX2.5i/-2.5i -R -K -O -X2.5i >> " * ps, c_nc, y_nc, x_nc)
-	gmt("psxy -Wthinner,black,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("psxy -Wthinner,black,- " * d_path * "rays.txt -J -R -K -O >> " * ps)
 	gmt("pstext -J -R -K -O -F+f+a >> " * ps, Any[
 		"128 128 12p -45 0\\217"
 		"26  102 12p   0 0.4"
@@ -508,7 +508,7 @@ function ex11(g_root_dir, out_path)
 	gmt("psxy -N -Sv0.15i+s+e -Gblack -W2p -J -R -O -K >> " * ps, [204 204 204 76])
 
 	gmt("grdimage -JX-2.5i/2.5i -R -K -O -X-2.5i -Y2.5i >> " * ps, x_nc, c_nc, y_nc)
-	gmt("psxy -Wthinner,black,- " * d_path * "rays.dat -J -R -K -O >> " * ps)
+	gmt("psxy -Wthinner,black,- " * d_path * "rays.txt -J -R -K -O >> " * ps)
 	gmt("pstext -J -R -O -F+f+a >> " * ps, Any[
 		"128 128 12p 135 120\\217"
 		"26  102 12p 180 0.4"
