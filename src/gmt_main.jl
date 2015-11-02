@@ -3,20 +3,17 @@ global API			# OK, so next times we'll use this one
 type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
 	ProjectionRefPROJ4::ASCIIString
 	ProjectionRefWKT::ASCIIString
-	hdr::Array{Float64,1}
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
-	dim::Array{Int,1}
 	n_rows::Int
 	n_columns::Int
-	MinMax::Array{Float64,1}
-	NoDataValue::Float64
+	n_bands::Int
 	registration::Int
+	NoDataValue::Float64
 	title::ASCIIString
 	remark::ASCIIString
 	command::ASCIIString
-	DataType::Int
-	LayerCount::Int
+	DataType::ASCIIString
 	x::Array{Float64,1}
 	y::Array{Float64,1}
 	z::Array{Float32,2}
@@ -28,20 +25,17 @@ end
 type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
 	ProjectionRefPROJ4::ASCIIString
 	ProjectionRefWKT::ASCIIString
-	hdr::Array{Float64,1}
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
-	dim::Array{Int,1}
 	n_rows::Int
 	n_columns::Int
-	MinMax::Array{Float64,1}
-	NoDataValue::Float64
+	n_bands::Int
 	registration::Int
+	NoDataValue::Float64
 	title::ASCIIString
 	remark::ASCIIString
 	command::ASCIIString
-	DataType::Int
-	LayerCount::Int
+	DataType::ASCIIString
 	x::Array{Float64,1}
 	y::Array{Float64,1}
 	image::Array{UInt8,3}
@@ -327,9 +321,7 @@ function get_grid(API, object)
 	#t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
 
 	# Return grids via a float matrix in a struct
-	out = GMTJL_GRID("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
-	                 zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, X, Y,
-	                 z, "", "", "")
+	out = GMTJL_GRID("", "", zeros(6)*NaN, zeros(2)*NaN, 0, 0, 0, 0, NaN, "", "", "", "", X, Y, z, "", "", "")
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
 		out.ProjectionRefPROJ4 = bytestring(gmt_hdr.ProjRefPROJ4)
@@ -339,16 +331,13 @@ function get_grid(API, object)
 	end
 
 	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays  
-	out.range = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4])
-	out.hdr   = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4 gmt_hdr.z_min gmt_hdr.z_max gmt_hdr.registration gmt_hdr.inc.d1 gmt_hdr.inc.d2])
+	out.range = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4 gmt_hdr.z_min gmt_hdr.z_max])
 	out.inc          = vec([gmt_hdr.inc.d1 gmt_hdr.inc.d2])
 	out.n_rows       = ny
 	out.n_columns    = nx
-	out.MinMax       = vec([gmt_hdr.z_min gmt_hdr.z_max])
 	out.NoDataValue  = gmt_hdr.nan_value
-	out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
 	out.registration = gmt_hdr.registration
-	out.LayerCount   = gmt_hdr.n_bands
+	out.n_bands      = gmt_hdr.n_bands
 
 	return out
 end
@@ -378,12 +367,10 @@ function get_image(API, object)
 
 	# Return grids via a float matrix in a struct
 	if (gmt_hdr.n_bands <= 3)
-		out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
-	                      zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, X, Y,
+		out = GMTJL_IMAGE("", "", zeros(6)*NaN, zeros(2)*NaN, 0, 0, 0, 0, NaN, "", "", "", "", X, Y,
 	                      t, "", "", "", colormap, nColors, zeros(UInt8,ny,nx)) 	# <== Ver o qur fazer com o alpha
 	else 			# RGB(A) image
-		out = GMTJL_IMAGE("", "", zeros(9)*NaN, zeros(4)*NaN, zeros(2)*NaN, zeros(Int,2), 0, 0,
-	                      zeros(2)*NaN, NaN, 0, "", "", "", 0, 0, X, Y,
+		out = GMTJL_IMAGE("", "", zeros(6)*NaN, zeros(2)*NaN, 0, 0, 0, 0, NaN, "", "", "", "", X, Y,
 	                      t[:,:,1:3], "", "", "", colormap, nColors, t[:,:,4])
 	end
 
@@ -395,16 +382,13 @@ function get_image(API, object)
 	end
 
 	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays  
-	out.range = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4])
-	out.hdr   = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4 gmt_hdr.z_min gmt_hdr.z_max gmt_hdr.registration gmt_hdr.inc.d1 gmt_hdr.inc.d2])
+	out.range = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4 gmt_hdr.z_min gmt_hdr.z_max])
 	out.inc          = vec([gmt_hdr.inc.d1 gmt_hdr.inc.d2])
 	out.n_rows       = ny
 	out.n_columns    = nx
-	out.MinMax       = vec([gmt_hdr.z_min gmt_hdr.z_max])
 	out.NoDataValue  = gmt_hdr.nan_value
-	out.dim          = vec([gmt_hdr.ny gmt_hdr.nx])
 	out.registration = gmt_hdr.registration
-	out.LayerCount   = gmt_hdr.n_bands
+	out.n_bands      = gmt_hdr.n_bands
 
 	return out
 end
@@ -598,7 +582,7 @@ function GMTJL_grid_init(API::Ptr{Void}, grd_box, dir::Integer=GMT_IN)
 		hdr = pointer_to_array(grd_box.hdr, 9)
 	elseif (isa(grd_box, GMTJL_GRID))
 		grd = grd_box.z
-		hdr = grd_box.hdr
+		hdr = [grd_box.range; grd_box.registration; grd_box.inc]
 	else
 		error("GMTJL_PARSER:grd_init: input is not a GRID|IMAGE container type")
 	end
@@ -660,7 +644,7 @@ function GMTJL_image_init(API::Ptr{Void}, img_box, dir::Integer=GMT_IN)
 		hdr = pointer_to_array(img_box.hdr, 9)
 	elseif (isa(img_box, GMTJL_IMAGE))
 		img = img_box.image
-		hdr = img_box.hdr
+		hdr = [img_box.range; img_box.registration; img_box.inc]
 	else
 		error("GMTJL_PARSER:image_init: input is not a GRID|IMAGE container type")
 	end
