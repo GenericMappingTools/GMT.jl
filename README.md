@@ -70,20 +70,17 @@ The  Grid type
     type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
 	   ProjectionRefPROJ4::ASCIIString
 	   ProjectionRefWKT::ASCIIString
-	   hdr::Array{Float64,1}
 	   range::Array{Float64,1}
 	   inc::Array{Float64,1}
-	   dim::Array{Int,1}
 	   n_rows::Int
 	   n_columns::Int
-	   MinMax::Array{Float64,1}
-	   NoDataValue::Float64
+	   n_bands::Int
 	   registration::Int
+	   NoDataValue::Float64
 	   title::ASCIIString
 	   remark::ASCIIString
 	   command::ASCIIString
-	   DataType::Int
-	   LayerCount::Int
+	   DataType::ASCIIString
 	   x::Array{Float64,1}
 	   y::Array{Float64,1}
 	   z::Array{Float32,2}

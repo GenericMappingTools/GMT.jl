@@ -153,6 +153,10 @@ function GMT_Get_ID(API::Ptr{Void}, family::Integer, dir::Integer, resource=C_NU
 	ccall((:GMT_Get_ID, thelib), Cint, (Ptr{Void}, UInt32, UInt32, Ptr{Void}), API, family, dir, resource)
 end
 
+function GMT_Get_Family(API::Ptr{Void}, dir::Integer, head::Ptr{GMT_OPTION})
+	ccall((:GMT_Get_Family, thelib), Cint, (Ptr{Void}, UInt32, Ptr{GMT_OPTION}), API, dir, head)
+end
+
 function GMT_Get_Index(API::Ptr{Void}, header::Ptr{GMT_GRID_HEADER}, row::Cint, col::Cint)
   ccall( (:GMT_Get_Index, thelib), int64_t, (Ptr{Void}, Ptr{GMT_GRID_HEADER}, Cint, Cint), API, header, row, col)
 end
