@@ -153,7 +153,7 @@ function GMT_Get_ID(API::Ptr{Void}, family::Integer, dir::Integer, resource=C_NU
 	ccall((:GMT_Get_ID, thelib), Cint, (Ptr{Void}, UInt32, UInt32, Ptr{Void}), API, family, dir, resource)
 end
 
-function GMT_Get_Family (API::Ptr{Void}, dir::Integer, head::Ptr{GMT_OPTION})
+function GMT_Get_Family(API::Ptr{Void}, dir::Integer, head::Ptr{GMT_OPTION})
 	ccall((:GMT_Get_Family, thelib), Cint, (Ptr{Void}, UInt32, Ptr{GMT_OPTION}), API, dir, head)
 end
 
