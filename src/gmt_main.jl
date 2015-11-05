@@ -842,12 +842,15 @@ function GMTJL_CPT_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 			z_high = cpt.range[j,2]
 			#z_low = j * dz
 			#z_high = (j+1) * dz
+
+			#mutateit(API, glut, "annot", 3)		# Enforce annotations for now. But it FAILS too
+			#annot = glut.annot
+			annot = 3						# Enforce annotations for now
 			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
-			              glut.hsv_diff, glut.annot, glut.skip, glut.fill, glut.label)
+			              glut.hsv_diff, annot, glut.skip, glut.fill, glut.label)
 
 			unsafe_store!(Pb.range, lut, j)
 		end
-		#Pb.is_continuous = one
 		unsafe_store!(P, Pb)
 	else 	# Just allocate an empty container to hold an output grid (signal this by passing NULLs)
 		if ((P = GMT_Create_Data(API, GMT_IS_CPT, GMT_IS_NONE, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
