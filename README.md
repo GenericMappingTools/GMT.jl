@@ -58,8 +58,6 @@ At the end of an **GMT** session work we call the internal functions that will d
 
     gmt("destroy")
 
-Sure, we could as well have shut down Julia but calling *gmt("destroy")* serves also another purpose that at times may be quite important. What it does is to clear up the **GMT** session and remove it. We may want to force this when we call *gmt("gmtset")*. The subtle thing about it is that if we have a session running, calling *gmtset* wont do anything because that command is ignored. Only upon starting a session will the contents of *gmt("gmtset ...")* be taken into account.
-
 So that's basically how it works. When numeric data has to be sent *in* to **GMT** we use Julia variables holding the data in matrices or structures or cell arrays depending on the case. On return we get the computed result stored in variables that we gave as output arguments. Things only complicate a little more for the cases where we can have more than one *input* or *output* arguments. The file *gallery.jl*, that reproduces the examples in the Gallery section of the GMT documentation, has many (not so trivial) examples on usage of the **GMT** wrapper.
 
 ----------
