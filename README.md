@@ -54,6 +54,16 @@ and we get back text info in cell arrays as well. Using the *G* grid computed ab
 
     info = gmt("gmtinfo", G)
 
+But since GMT is build with GDAL support we can make good use of if to read and plot images that don't even need to be stored
+locally. In the following example we will load a network image (GDAL will do that for us) and make a *creative* world map.
+Last command is used to convert the PostScript file into a transparent PNG.
+
+    gmt("grdimage -Rd -JI15c -Dr http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg -P -Xc -Bg -K > jessy.ps")
+    gmt("pscoast -R -J -W1,white -Dc -O >> jessy.ps")
+    gmt("psconvert jessy.ps -TG -A")
+
+![Screenshot](http://w3.ualg.pt/~jluis/jessy.png)
+
 At the end of an **GMT** session work we call the internal functions that will do the house keeping of freeing no longer needed memory. We do that with this command:
 
     gmt("destroy")
