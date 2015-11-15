@@ -5,12 +5,17 @@ Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
 There is no manual yet but looking into the tests.jl should give a (good) idea on how it works. Note also that this wrapper works only with the GMT5.2 developing version.
 
+Install
+=======
+
+Pkg.clone(“git://github.com/joa-quim/GMT.jl.git”)
+
 Using
 =====
 
 The Julia wrapper was designed to work in a way the closest as possible to the command line version and yet to provide all the facilities of the Julia language. In this sense, all **GMT** options are put in a single text string that is passed, plus the data itself when it applies, to the ``gmt()`` command. For example to reproduce the CookBook example of an Hemisphere map using a Azimuthal projection
 
->gmt("pscoast -Rg -JA280/30/3.5i -Bg -Dc -A1000 -Gnavy -P > GMT_lambert_az_hemi.ps")
+    gmt("pscoast -Rg -JA280/30/3.5i -Bg -Dc -A1000 -Gnavy -P > GMT_lambert_az_hemi.ps")
 
 but that is not particularly interesting as after all we could do the exact same thing on the a shell command line. Things start to get interesting when we can send data *in* and *out* from Julia to
 **GMT**. So, consider the following example
