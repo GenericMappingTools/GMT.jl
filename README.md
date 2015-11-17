@@ -3,12 +3,19 @@ GMT.jl
 
 Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
-There is no manual yet but looking into the tests.jl should give a (good) idea on how it works. Note also that this wrapper works only with the GMT5.2 developing version.
+There is no manual yet but looking into the tests.jl should give a (good) idea on how it works. Note also that this
+wrapper works only with the GMT5.2.1 or greater versions.
 
 Install
 =======
 
-Pkg.clone(“git://github.com/joa-quim/GMT.jl.git”)
+    (Pkg.init()		# If you haven't done it yet)
+    Pkg.clone(“git://github.com/joa-quim/GMT.jl.git”)
+
+On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at /user/local/lib), I had to help
+Julia finding MY *libgmt.dylib*, with (this line should than be added to the ~/.juliarc.jl file)
+
+    push!(Libdl.DL_LOAD_PATH, "/Users/j/programs/gmt5/lib")
 
 Using
 =====
