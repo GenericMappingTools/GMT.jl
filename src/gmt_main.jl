@@ -877,6 +877,8 @@ function GMTJL_Text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family
 	
 		if (!isa(txt, Array{Any}) && isa(txt, ASCIIString))
 			txt = Any[txt]
+		elseif (isa(txt, Matrix))
+			txt = num2str(txt)			# Convert the numeric matrix into a cell array of strings
 		end
 		if (!isa(txt, Array{Any}))
 			error("GMTJL_Text_init: Expected a Cell array or a String for input")
@@ -977,11 +979,13 @@ function get_datatype(var)
 	return DOUBLE_CLASS
 end
 
+# ---------------------------------------------------------------------------------------------------
 function strncmp(str1, str2, num)
 # Pseudo strncmp
 	a = str1[1:min(num,length(str1))] == str2
 end
 
+# ---------------------------------------------------------------------------------------------------
 function mutateit(API::Ptr{Void}, t_type, member::ASCIIString, val)
 	# Mutate the member 'member' of an immutable type whose pointer is T_TYPE
 	# VAL is the new value of the MEMBER field.
@@ -1003,6 +1007,17 @@ function mutateit(API::Ptr{Void}, t_type, member::ASCIIString, val)
 	p_val = pointer([val])
 	GMT_blind_change_struct(API, p_type, p_val, @sprintf("%s",ft[ind]), fo[ind])
 	typeof(p_type); 	typeof(p_val)		# Just to be sure that GC doesn't kill them before their due time
+end
+
+# ---------------------------------------------------------------------------------------------------
+function num2str(mat)
+# Pseudo num2str, but returns all in a cell array of strings and no precision control yet.
+	n_cols = size(mat, 2);		n_rows = size(mat, 1)
+	out = cell(n_rows, 1)
+	for (nr = 1:n_rows)
+		out[nr] = join([@sprintf("%s ", mat[k]) for k=1:n_cols])
+	end
+	return out
 end
 
 #=
