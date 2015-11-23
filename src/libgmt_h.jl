@@ -89,6 +89,7 @@ const GMT_IS_VECTOR = 5
 const GMT_IS_MATRIX = 6
 const GMT_IS_COORD = 7
 const GMT_IS_PS = 8
+const GMT_N_FAMILIES = 9
 # end enum GMT_enum_family
 # begin enum GMT_enum_comment
 typealias GMT_enum_comment UInt32
