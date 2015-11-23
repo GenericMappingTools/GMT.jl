@@ -13,7 +13,7 @@ global g_root_dir, out_path, GM
 include("gallery.jl")
 
 # Edit these for your own needs
-g_root_dir = "C:/progs_cygw/GMTdev/gmt5/branches/5.2.0/"
+g_root_dir = "C:/progs_cygw/GMTdev/gmt5/5.3.0/"
 out_path   = "V:/"		# Set this if you want to save the PS files in a prticular place
 GM         = "C:/programs/GraphicsMagick/gm"
 
