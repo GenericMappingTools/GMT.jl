@@ -84,27 +84,65 @@ So that's basically how it works. When numeric data has to be sent *in* to **GMT
 
 ----------
 
-The  Grid type
+The Grid type
 -------------
 
     type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
-	   ProjectionRefPROJ4::ASCIIString
-	   ProjectionRefWKT::ASCIIString
-	   range::Array{Float64,1}
-	   inc::Array{Float64,1}
-	   n_rows::Int
-	   n_columns::Int
-	   n_bands::Int
-	   registration::Int
-	   NoDataValue::Float64
-	   title::ASCIIString
-	   remark::ASCIIString
-	   command::ASCIIString
-	   DataType::ASCIIString
-	   x::Array{Float64,1}
-	   y::Array{Float64,1}
-	   z::Array{Float32,2}
-	   x_units::ASCIIString
-	   y_units::ASCIIString
-	   z_units::ASCIIString
+	   ProjectionRefPROJ4::ASCIIString    # Projection string in PROJ4 syntax (Optional)
+	   ProjectionRefWKT::ASCIIString      # Projection string in WKT syntax (Optional)
+	   range::Array{Float64,1}            # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
+	   inc::Array{Float64,1}              # 1x2 vector with [x_inc y_inc]
+	   n_rows::Int                        # Number of rows in grid
+	   n_columns::Int                     # Number of columns in grid
+	   n_bands::Int                       # Not-yet used (always == 1)
+	   registration::Int                  # Registration type: 0 -> Grid registration; 1 -> Pixel registration
+	   NoDataValue::Float64               # The value of nodata
+	   title::ASCIIString                 # Title (Optional)
+	   remark::ASCIIString                # Remark (Optional)
+	   command::ASCIIString               # Command used to create the grid (Optional)
+	   DataType::ASCIIString              # 'float' or 'double'
+	   x::Array{Float64,1}                # [1 x n_columns] vector with XX coordinates
+	   y::Array{Float64,1}                # [1 x n_rows]    vector with YY coordinates
+	   z::Array{Float32,2}                # [n_rows x n_columns] grid array
+	   x_units::ASCIIString               # Units of XX axis (Optional)
+	   y_units::ASCIIString               # Units of YY axis (Optional)
+	   z_units::ASCIIString               # Units of ZZ axis (Optional)
+    end
+
+The Image type
+--------------
+
+    type GMTJL_IMAGE     # The type holding a local header and data of a GMT image
+       ProjectionRefPROJ4::ASCIIString    # Projection string in PROJ4 syntax (Optional)
+       ProjectionRefWKT::ASCIIString      # Projection string in WKT syntax (Optional)
+       range::Array{Float64,1}            # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
+       inc::Array{Float64,1}              # 1x2 vector with [x_inc y_inc]
+       n_rows::Int                        # Number of rows in image
+       n_columns::Int                     # Number of columns in image
+       n_bands::Int                       # Number of bands in image
+       registration::Int                  # Registration type: 0 -> Grid registration; 1 -> Pixel registration
+       NoDataValue::Float64               # The value of nodata
+       title::ASCIIString                 # Title (Optional)
+       remark::ASCIIString                # Remark (Optional)
+       command::ASCIIString               # Command used to create the image (Optional)
+       DataType::ASCIIString              # 'uint8' or 'int8' (needs checking)
+       x::Array{Float64,1}                # [1 x n_columns] vector with XX coordinates
+       y::Array{Float64,1}                # [1 x n_rows]    vector with YY coordinates
+       image::Array{UInt8,3}              # [n_rows x n_columns x n_bands] image array
+       x_units::ASCIIString               # Units of XX axis (Optional)
+       y_units::ASCIIString               # Units of YY axis (Optional)
+       z_units::ASCIIString               # Units of ZZ axis (Optional) ==> MAKES NO SENSE
+       colormap::Array{Clong,1}           # 
+       nColors::Int                       # Number of colors in colormap
+       alpha::Array{UInt8,2}              # A [n_rows x n_columns] alpha array
+    end
+
+The CPT type
+------------
+
+    type GMTJL_CPT
+        colormap::Array{Float64,2}
+        alpha::Array{Float64,1}
+        range::Array{Float64,2}
+        rangeMinMax::Array{Float64,1}
     end
