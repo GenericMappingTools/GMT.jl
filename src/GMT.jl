@@ -43,7 +43,7 @@ export
 	GMTAPI_open_grd, GMTAPI_close_grd, GMTAPI_update_txt_item, GMTAPI_get_key, GMT_Encode_Options, GMT_Expand_Option,
 	GMT_grid_flip_vertical,
 	gmt_core_module_info,
-	gmt,
+	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT
 
 include("libgmt_h.jl")
