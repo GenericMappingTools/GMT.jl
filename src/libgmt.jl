@@ -177,7 +177,10 @@ function GMT_Get_Default(API::Ptr{Void}, keyword::ASCIIString, value)
 end
 
 function GMT_Get_Value(API::Ptr{Void}, arg::ASCIIString, par::Ptr{Cdouble})
-  ccall( (:GMT_Get_Value, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Cdouble}), API, arg, par)
+	ccall( (:GMT_Get_Value, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Cdouble}), API, arg, par)
+end
+function GMT_Get_Values(API::Ptr{Void}, arg::ASCIIString, par::Ptr{Cdouble}, maxpar::Integer)
+	ccall( (:GMT_Get_Values, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Cdouble}, Cint), API, arg, par, maxpar)
 end
 
 function GMT_Call_Module(API::Ptr{Void}, _module=C_NULL, mode::Integer=0, args=C_NULL)
