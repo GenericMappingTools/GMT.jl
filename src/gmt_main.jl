@@ -1020,6 +1020,34 @@ function num2str(mat)
 	return out
 end
 
+# ---------------------------------------------------------------------------------------------------
+"""
+G = grid_type(z, hdr=[])
+    Take a 2D Z array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax ref xinc yinc] header descriptor
+    and return a grid GMTJL_GRID type.
+    Optionaly, the HDR arg may be ommited and it will computed from Z alone, but than x=1:ncol, y=1:nrow
+"""
+function grid_type(z, hdr=[])
+	n_rows = size(z,1);		n_cols = size(z,2)
+	if (n_rows == 1 || n_cols == 1)
+		error("Z must be a 2D array")
+	end
+	if (isempty(hdr))
+		zmin, zmax = extrema(z)
+		hdr = [1. n_cols 1. n_rows zmin zmax 0 1 1]
+	elseif (length(hdr) != 9)
+		error("The HDR array must have 9 elements")
+	end
+	x = linspace(hdr[1], hdr[2], n_cols)
+	y = linspace(hdr[3], hdr[4], n_rows)
+	# Recompute the x|y_inc to make sure they are right.
+	one_or_zero = hdr[7] == 0 ? 1 : 0
+	x_inc = (hdr[2] - hdr[1]) / (n_cols - one_or_zero)
+	y_inc = (hdr[4] - hdr[3]) / (n_rows - one_or_zero)
+	G = GMTJL_GRID("", "", hdr[1:6], [x_inc, y_inc], n_rows, n_cols, 1, hdr[7], NaN, "", "", "", "", x, y, z, "", "", "")
+end
+
+
 #=
 Em GMT_Create_Session(API, ...)
 	API->pad = pad;
