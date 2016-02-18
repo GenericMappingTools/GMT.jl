@@ -4,7 +4,7 @@ using GMT
 
 # When calling the gallery() function directly and with only one argument, one need to edit
 # these two for own paths. Otherwise this same job is done in gmtest()
-global g_root_dir = "C:/progs_cygw/GMTdev/gmt5/5.3.0/"
+global g_root_dir = "C:/progs_cygw/GMTdev/gmt5/trunk/"
 global out_path = "V:/"			# Leave it empty to write files in current directory
 
 # -----------------------------------------------------------------------------------------------------
@@ -175,9 +175,9 @@ function ex03(g_root_dir, out_path)
 	# point, without NaNs.  So we want to get a starting and ending point which works for
 	# both of them.  This is a job for gmt gmtmath UPPER/LOWER.
 
-	sampr1 = gmt("gmtmath \$ -Ca -Sf -o0 UPPER CEIL =",  [ship_pg[1,:]; sat_pg[1,:]])
-	sampr2 = gmt("gmtmath \$ -Ca -Sf -o0 LOWER FLOOR =", [ship_pg[end,:]; sat_pg[end,:]])
-	
+	sampr1 = gmt("gmtmath \$ -Ca -Sf -o0 UPPER CEIL =",  [ship_pg[1:1,:]; sat_pg[1:1,:]])
+	sampr2 = gmt("gmtmath \$ -Ca -Sf -o0 LOWER FLOOR =", [ship_pg[end:end,:]; sat_pg[end:end,:]])
+
 	# Now we can use sampr1|2 in gmt gmtmath to make a sampling points file for gmt sample1d:
 	samp_x = gmt(@sprintf("gmtmath -T%d/%d/1 -N1/0 T =", sampr1[1,1], sampr2[1,1]))
 
