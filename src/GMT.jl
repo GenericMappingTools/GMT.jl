@@ -1,4 +1,4 @@
-VERSION >= v"0.4" && __precompile__()
+VERSION >= v"0.4" #&& __precompile__()
 
 module GMT
 
@@ -27,7 +27,7 @@ export
 	GMT_IS_CPT, GMT_IS_IMAGE, GMT_IS_VECTOR, GMT_IS_MATRIX,
 	GMT_IS_COORD, GMT_IS_POINT,	GMT_IS_MATRIX, GMT_IS_SURFACE,
 	GMT_DATASET, GMT_IS_PLP,
-	GMT_GRID, GMT_MATRIX, GMT_PALETTE,
+	GMT_GRID, GMT_MATRIX, GMT_PALETTE, GMT_PS,
 	GMT_UNIVECTOR,
 	GMT_IN, GMT_OUT, GMT_OK,
 	GMT_IS_FILE, GMT_IS_STREAM,	GMT_IS_FDESC,
@@ -39,9 +39,7 @@ export
 	GMT_GRID_DATA_ONLY, GMT_GRID_HEADER_ONLY, GMT_GRID_ALL,
 	GMT_GRID_ALL, GMT_WRITE_SET, GMT_Report,
 	array_container,
-	GMTAPI_get_moduleinfo, GMTAPI_lib_tag, GMTAPI_key_to_family, GMTAPI_get_key, GMTAPI_found_marker,
-	GMTAPI_open_grd, GMTAPI_close_grd, GMTAPI_update_txt_item, GMTAPI_get_key, GMT_Encode_Options, GMT_Expand_Option,
-	GMT_grid_flip_vertical,
+	GMT_Encode_Options, GMT_Expand_Option, GMT_grid_flip_vertical,
 	gmt_core_module_info,
 	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT

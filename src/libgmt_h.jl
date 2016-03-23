@@ -1549,6 +1549,15 @@ immutable GMT_IMAGE
 	alloc_mode::UInt32
 	ColorInterp::Ptr{UInt8}
 end
+type GMT_PS
+	n_alloc::Csize_t
+	n::Csize_t
+	mode::UInt32
+	data::Ptr{UInt8}
+	id::UInt64
+	alloc_level::UInt32
+	alloc_mode::UInt32
+end
 immutable GMT_UNIVECTOR
 	uc1::Ptr{UInt8}
 	sc1::Ptr{Int8}
