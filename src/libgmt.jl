@@ -71,13 +71,6 @@ function GMT_Insert_Data(API::Ptr{Void}, object_ID::Integer, data)
 	ccall((:GMT_Insert_Data, thelib), Cint, (Ptr{Void}, Cint, Ptr{Void}), API, object_ID, data)
 end
 
-function GMTAPI_get_moduleinfo(API::Ptr{Void}, _module::ASCIIString)
-	ccall((:GMTAPI_get_moduleinfo, thelib), Ptr{UInt8}, (Ptr{Void}, Ptr{UInt8}), API, _module)
-end
-function GMTAPI_get_moduleinfo(API::Ptr{Void}, _module::Ptr{UInt8})
-	ccall((:GMTAPI_get_moduleinfo, thelib), Ptr{UInt8}, (Ptr{Void}, Ptr{UInt8}), API, _module)
-end
-
 function GMT_Retrieve_Data(API::Ptr{Void}, object_ID::Integer)
 	ccall((:GMT_Retrieve_Data, thelib), Ptr{Void}, (Ptr{Void}, Cint), API, object_ID)
 end
@@ -259,54 +252,6 @@ function GMT_Report(API, vlevel::Int, txt::ASCIIString)
 	ccall((:GMT_Report, thelib), Void, (Ptr{Void}, Cint, Ptr{UInt8}), API, vlevel, txt)
 end
 
-function GMTAPI_lib_tag(name::ASCIIString)
-	ccall((:GMTAPI_lib_tag, thelib), Ptr{UInt8}, (Ptr{UInt8},), name)
-end
-function GMTAPI_lib_tag(name::Ptr{UInt8})
-	ccall((:GMTAPI_lib_tag, thelib), Ptr{UInt8}, (Ptr{UInt8},), name)
-end
-
-function GMTAPI_key_to_family(API::Ptr{Void}, key::ASCIIString, family::Ptr{Int}, geometry::Ptr{Int})
-	ccall((:GMTAPI_key_to_family, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Int}, Ptr{Int}), API, key, family, geometry)
-end
-
-function GMTAPI_get_key(API::Ptr{Void}, option::Char, keys::Ptr{Ptr{UInt8}}, n_keys::Int)
-	ccall((:GMTAPI_get_key, thelib), Cint, (Ptr{Void}, Char, Ptr{Ptr{UInt8}}, Int), API, option, keys, n_keys)
-end
-
-function GMTAPI_found_marker(text::ASCIIString, marker::Char)
-	ccall((:GMTAPI_found_marker, thelib), UInt32, (Ptr{UInt8}, Char), text, marker)
-end
-function GMTAPI_found_marker(text::Ptr{UInt8}, marker::Char)
-	ccall((:GMTAPI_found_marker, thelib), UInt32, (Ptr{UInt8}, Char), text, marker)
-end
-
-#= These depend on GMT_CTRL that is not wrapped
-function GMTAPI_open_grd(GMT::Ptr{GMT_CTRL}, file::ASCIIString, G::Ptr{GMT_GRID}, mode::Char, access_mode::Int)
-	ccall((:GMTAPI_open_grd, thelib), Cint, (Ptr{GMT_CTRL}, ASCIIString, Ptr{GMT_GRID}, Char, UInt32), GMT, file, G, mode, access_mode)
-end
-function GMTAPI_open_grd(GMT::Ptr{GMT_CTRL}, file::Ptr{UInt8), G::Ptr{GMT_GRID}, mode::Char, access_mode::Int)
-	ccall((:GMTAPI_open_grd, thelib), Cint, (Ptr{GMT_CTRL}, ASCIIString, Ptr{GMT_GRID}, Char, UInt32), GMT, file, G, mode, access_mode)
-end
-
-function GMTAPI_close_grd(GMT::Ptr{GMT_CTRL}, G::Ptr{GMT_GRID})
-	ccall((:GMTAPI_close_grd, thelib), Void, (Ptr{GMT_CTRL}, Ptr{GMT_GRID}), GMT, G)
-end
-
-function GMTAPI_update_txt_item(API::Ptr{GMTAPI_CTRL}, mode::Int, arg::Ptr{Void}, length::Int, string::ASCIIString)
-	ccall((:GMTAPI_update_txt_item, thelib), Void, (Ptr{GMTAPI_CTRL}, Int, Ptr{Void}, Int, ASCIIString), API, mode, arg, length, string)
-end
-=#
-
-function GMTAPI_get_key(API::Ptr{Void}, string::ASCIIString, _type::Char, n_items::Ptr{Int}, PS::Ptr{Int})
-	ccall((:GMTAPI_get_key, thelib), Ptr{Ptr{UInt8}}, (Ptr{Void}, ASCIIString, Char, Ptr{UInt32}, PS::Ptr{UInt32}),
-	       API, string, _type, n_items, PS)
-end
-function GMTAPI_get_key(API::Ptr{Void}, string::Ptr{UInt8}, _type::Char, n_items::Ptr{Int}, PS::Ptr{Int})
-	ccall((:GMTAPI_get_key, thelib), Ptr{Ptr{UInt8}}, (Ptr{Void}, ASCIIString, Char, Ptr{UInt32}, PS::Ptr{UInt32}),
-	       API, string, _type, n_items, PS)
-end
-
 function GMT_Encode_Options(V_API::Ptr{Void}, _module::ASCIIString, marker::Char, n_argin::Integer, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
 	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Int32, Ptr{Ptr{GMT_OPTION}},
 	        Ptr{UInt32}), V_API, _module, marker, n_argin, head, n)
@@ -315,7 +260,6 @@ function GMT_Encode_Options(V_API::Ptr{Void}, _module::Ptr{UInt8}, marker::Char,
 	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Int32, Ptr{Ptr{GMT_OPTION}},
 	        Ptr{UInt32}), V_API, _module, marker, n_argin, head, n)
 end
-
 
 function GMT_Expand_Option(V_API::Ptr{Void}, opt::Ptr{GMT_OPTION}, marker::Char, arg::ASCIIString)
 	ccall((:GMT_Expand_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Char, Ptr{UInt8}), V_API, opt, marker, arg)
