@@ -54,6 +54,11 @@ type GMTJL_CPT
 	rangeMinMax::Array{Float64,1}
 end
 
+type GMTJL_PS
+	ps::UTF8String		# Actual PS text
+	mode::Int 			# 1 = Has header, 2 = Has trailer, 3 = Has both
+end
+
 # Container to hold info to allow creating grids in a simple (but limmited) maner
 type array_container
 	nx::Int
@@ -137,6 +142,7 @@ function gmt(cmd::ASCIIString, args...)
 	X = XX
 
 	# 5. Assign input (from julia) and output (from GMT) resources
+	name_PS = ""
 	for (k = 1:n_items)                 # Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0)
 			error("GMT: Expected a Matrix for input")
@@ -154,6 +160,9 @@ function gmt(cmd::ASCIIString, args...)
 		end
 		if (GMT_Expand_Option(API, X[k].option, '$', name) != GMT.GMT_NOERROR)  # Replace ARG_MARKER in argument with name */
 			error("GMT: Failure to expand filename marker")
+		end
+		if (X[k].family == GMT_IS_PS)
+			name_PS = name
 		end
 	end
 
@@ -191,6 +200,10 @@ function gmt(cmd::ASCIIString, args...)
 			out[pos] = get_cpt(API, X[k].object)
 		elseif (X[k].family == GMT_IS_IMAGE)    # A GMT Image; make it the pos'th output item
 			out[pos] = get_image(API, X[k].object)
+		elseif (X[k].family == GMT_IS_PS)       # A PostScrip structure
+			out[pos] = get_PS(API, X[k].object)
+#			status = GMT_Call_Module(API, "psconvert", GMT_MODULE_CMD, "# -A -Tg")
+#			status = GMT_Call_Module(API, "psconvert", GMT_MODULE_CMD, name_PS * " -A -Tf")
 		end
 	end
 
@@ -463,6 +476,20 @@ function get_textset(API, object::Ptr{Void})
 end
 
 # ---------------------------------------------------------------------------------------------------
+function get_PS(API, object::Ptr{Void})
+	# Given a GMT Postscript structure P, build a Julia PS type
+	
+	if (object == C_NULL)
+		error("get_cpt: programming error, output textset is NULL")
+	end
+
+	P = unsafe_load(convert(Ptr{GMT_PS}, object))
+	out = GMTJL_PS(bytestring(P.data), Int(P.n))
+
+	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
 function get_table(API, object)
 # ...
 	M = unsafe_load(convert(Ptr{GMT_VECTOR}, object))
@@ -559,6 +586,9 @@ function GMTJL_register_IO(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
 		# Get a TEXTSET container, and if input associate it with the Julia pointer
 		obj = GMTJL_Text_init(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
 		ID  = GMT_Get_ID(API, GMT_IS_TEXTSET, X.direction, obj)
+	elseif (X.family == GMT_IS_PS)
+		obj = GMTJL_PS_init(API, module_input, ptr, X.direction)
+		ID  = GMT_Get_ID(API, GMT_IS_PS, X.direction, obj)
 	else
 		error("GMTJL_register_IO: Bad data type ", X.family)
 	end
@@ -940,6 +970,15 @@ function GMTJL_Text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family
 	end
 
 	return T
+end
+
+# ---------------------------------------------------------------------------------------------------
+function GMTJL_PS_init(API::Ptr{Void}, module_input, ptr, direction::Integer)
+# ...
+	if ((PS = GMT_Create_Data(API, GMT_IS_PS, GMT_IS_NONE, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+		error("GMTJL_PS_init: Failure to alloc GMT blank PS container for holding output PostScript")
+	end
+	return PS
 end
 
 # ---------------------------------------------------------------------------------------------------
