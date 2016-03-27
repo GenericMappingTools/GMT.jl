@@ -93,7 +93,7 @@ function gmt(cmd::ASCIIString, args...)
 			error("The 'API' is not a Ptr{Void}. Creating a new one.")
 		end
 	catch
-		API = GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL 
+		API = GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL
 		                         + GMT.GMT_SESSION_COLMAJOR)
 		if (API == C_NULL)
 			error("Failure to create a GMT5 Session")
@@ -102,7 +102,7 @@ function gmt(cmd::ASCIIString, args...)
 
 	# 1. Get arguments, if any, and extract the GMT module name
 	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
-	g_module,r = strtok(cmd)
+	g_module, r = strtok(cmd)
 
 	# 2. In case this was a clean up call
 	if (g_module == "destroy")
@@ -113,7 +113,16 @@ function gmt(cmd::ASCIIString, args...)
 		return
 	end
 
-	# 3. Convert mex command line arguments to a linked GMT option list
+	# 2+ Add -F to psconvert if user requested a return image but did not give -F
+	if (g_module == "psconvert" && n_argin == 0 && (isempty(r) || isempty(search(r, "-F"))))
+		if (!isempty(r))
+			r = r * " -F"
+		else
+			r = "-F"
+		end
+	end
+
+	# 3. Convert command line arguments to a linked GMT option list
 	LL = GMT_Create_Options(API, 0, r)	# It uses also the fact that GMT parses and check options
 	if (LL == C_NULL)
 		error("Error creating the linked list of options. Probably a bad usage.")
