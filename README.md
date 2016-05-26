@@ -133,7 +133,6 @@ The Image type
        y_units::ASCIIString               # Units of YY axis (Optional)
        z_units::ASCIIString               # Units of ZZ axis (Optional) ==> MAKES NO SENSE
        colormap::Array{Clong,1}           # 
-       nColors::Int                       # Number of colors in colormap
        alpha::Array{UInt8,2}              # A [n_rows x n_columns] alpha array
     end
 
