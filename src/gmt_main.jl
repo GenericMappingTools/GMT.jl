@@ -360,6 +360,10 @@ function get_grid(API, object)
 	out.NoDataValue  = gmt_hdr.nan_value
 	out.registration = gmt_hdr.registration
 	out.n_bands      = gmt_hdr.n_bands
+	out.x_units      = convert_string(gmt_hdr.x_units)
+	#out.x_units      = join([Char(gmt_hdr.x_units.(n)) for n=1:sizeof(gmt_hdr.x_units)])
+	out.y_units      = join([Char(gmt_hdr.y_units.(n)) for n=1:sizeof(gmt_hdr.y_units)])
+	#out.z_units      = bytestring(gmt_hdr.z_units)
 
 	return out
 end
@@ -616,30 +620,36 @@ function GMTJL_grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT
 	end
 
 	if (empty)			# Just tell GMTJL_grid_init() to allocate an empty container 
-		R = GMTJL_grid_init(API, module_input, [0.0], [0.0 0 0 0 0 0 0 0 0], dir)
+		R = GMTJL_grid_init(API, module_input, [], [0.0], [0.0 0 0 0 0 0 0 0 0], dir)
 		return R
 	end
 
 	if (isa(grd_box, array_container))
 		grd = pointer_to_array(grd_box.grd, (grd_box.ny, grd_box.nx))
 		hdr = pointer_to_array(grd_box.hdr, 9)
+		R = GMTJL_grid_init(API, module_input, [], grd, hdr, dir)
 	elseif (isa(grd_box, GMTJL_GRID))
-		grd = grd_box.z
-		hdr = [grd_box.range; grd_box.registration; grd_box.inc]
+		R = GMTJL_grid_init(API, module_input, grd_box, [], [], dir)
+		#grd = grd_box.z
+		#hdr = [grd_box.range; grd_box.registration; grd_box.inc]
 	else
-		error("GMTJL_PARSER:grd_init: input is not a GRID|IMAGE container type")
+		error(@sprintf("GMTJL_PARSER:grd_init: input (%s) is not a GRID|IMAGE container type", typeof(grd_box)))
 	end
-	R = GMTJL_grid_init(API, module_input, grd, hdr, dir)
 	return R
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_grid_init(API::Ptr{Void}, module_input, grd, hdr::Array{Float64}, dir::Integer=GMT_IN, pad::Int=2)
+function GMTJL_grid_init(API::Ptr{Void}, module_input, Grid, grd, hdr, dir::Integer=GMT_IN, pad::Int=2)
+#function GMTJL_grid_init(API::Ptr{Void}, module_input, grd, hdr::Array{Float64}, dir::Integer=GMT_IN, pad::Int=2)
 # Used to Create an empty Grid container to hold a GMT grid.
 # If direction is GMT_IN then we are given a Julia grid and can determine its size, etc.
 # If direction is GMT_OUT then we allocate an empty GMT grid as a destination.
 
 	if (dir == GMT_IN)
+		if (isa(Grid, GMTJL_GRID))
+			grd = Grid.z
+			hdr = [Grid.range; Grid.registration; Grid.inc]
+		end
 		if ((G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, C_NULL,
 		                         hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)) == C_NULL)
 			error("grid_init: Failure to alloc GMT source matrix for input")
@@ -661,6 +671,13 @@ function GMTJL_grid_init(API::Ptr{Void}, module_input, grd, hdr::Array{Float64},
 		h = unsafe_load(Gb.header)
 		h.z_min = hdr[5]			# Set the z_min, z_max
 		h.z_max = hdr[6]
+
+		if (isa(Grid, GMTJL_GRID))
+			#mutateit(API, h.x_units, "d1", Grid.x_units)	# It's not working for those Array_XXX_Uint8 types
+			#h.x_units = Grid.x_units
+			#h.y_units = Grid.y_units
+		end
+
 		unsafe_store!(Gb.header, h)
 		unsafe_store!(G, Gb)
 		GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Grid %s in parser\n", G) )
@@ -991,6 +1008,16 @@ function GMTJL_PS_init(API::Ptr{Void}, module_input, ptr, direction::Integer)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function convert_string(str)
+# Convert a string stored in one of those GMT.Array_XXX_Uint8 types into an ascii string
+	k = 1
+	while (str.(k) != UInt8(0))
+		k = k + 1
+	end
+	out = join([Char(str.(n)) for n=1:k])
+end
+
+# ---------------------------------------------------------------------------------------------------
 function GMTJL_type(API::Ptr{Void})		# Set default export type
 	value = "        "		# 8 spaces
 	GMT_Get_Default(API, "GMT_EXPORT_TYPE", value)
@@ -1052,7 +1079,11 @@ function mutateit(API::Ptr{Void}, t_type, member::ASCIIString, val)
 	ind = findfirst(fieldnames(dt), symbol(member))	# Find the index of the "is_continuous" member
 	# This would work too
 	# ind = ccall(:jl_field_index, Cint, (Any, Any, Cint), dt, symbol(member), 1) + 1
-	p_val = pointer([val])
+	if (isa("a", AbstractString))	# No idea why I have to do this
+		p_val = pointer(val)
+	else
+		p_val = pointer([val])
+	end
 	GMT_blind_change_struct(API, p_type, p_val, @sprintf("%s",ft[ind]), fo[ind])
 	typeof(p_type); 	typeof(p_val)		# Just to be sure that GC doesn't kill them before their due time
 end
