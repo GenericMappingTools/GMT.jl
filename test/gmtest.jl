@@ -130,7 +130,7 @@ end
 
 # ---------------------------------------------------------------------------------------
 function mfilename(arg)
-# If ARG == "fullpath" return the full path of the script being rin, otherwise only its name.
+# If ARG == "fullpath" return the full path of the script being run, otherwise only its name.
 # But the problem with this function is that it WONT WORK because it always return the path to gmtest.jl
 	t = @__FILE__
 	path, fname = fileparts(t)
