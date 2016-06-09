@@ -130,7 +130,7 @@ function gmt(cmd::ASCIIString, args...)
 
 	# 4. Preprocess to update GMT option lists and return info array X
 	n_items = pointer([0])
-	pLL = pointer([LL])
+	pLL = Ref([LL])
 	if ((X = GMT_Encode_Options(API, g_module, '$', n_argin, pLL, n_items)) == C_NULL)	# This call also changes LL
 		# Get the pointees
 		n_items = unsafe_load(n_items)
@@ -220,7 +220,7 @@ function gmt(cmd::ASCIIString, args...)
 	for (k = 1:n_items) 
 		#if (X[k].family != GMT_IS_TEXTSET) 		# Gave up. The GMT_IS_TEXTSET will have to leak (blame the immutables)
 			ppp = X[k].object
-			if (GMT_Destroy_Data(API, pointer([X[k].object])) != GMT.GMT_NOERROR)
+			if (GMT_Destroy_Data(API, Ref([X[k].object])) != GMT.GMT_NOERROR)
 				error("GMT: Failed to destroy object used in the interface bewteen GMT and Julia")
 			else 	# Success, now make sure we dont destroy the same pointer more than once
 				for (kk = k+1:n_items)
@@ -231,7 +231,7 @@ function gmt(cmd::ASCIIString, args...)
 	end
 
 	# 9. Destroy linked option list
-	if (GMT_Destroy_Options(API, pointer([LL])) != 0)
+	if (GMT_Destroy_Options(API, pLL) != 0)
 		error("GMT: Failure to destroy GMT5 options")
 	end
 
@@ -294,8 +294,8 @@ end
 function GMT_IJP(hdr::GMT_GRID_HEADER, row, col)
 # Function for indecing into a GMT grid [with pad]
 # padTop (hdr.pad[GMT.GMT_YHI]) and padLeft (hdr.pad[GMT.GMT_XLO]) are normally equal
-	#ij = (row + hdr.pad.d4) * hdr.mx + col + hdr.pad.d1		# in C
-	ij = ((row-1) + hdr.pad.d4) * hdr.mx + col + hdr.pad.d1
+	#ij = (row + hdr.pad[4]) * hdr.mx + col + hdr.pad[1]		# in C
+	ij = ((row-1) + hdr.pad[4]) * hdr.mx + col + hdr.pad[1]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -323,10 +323,10 @@ function get_grid(API, object)
 
 	gmt_hdr = unsafe_load(G.header)
 	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx);		nz = Int(gmt_hdr.n_bands)
-	padTop = Int(gmt_hdr.pad.d4);	padLeft = Int(gmt_hdr.pad.d1);
+	padTop = Int(gmt_hdr.pad[4]);	padLeft = Int(gmt_hdr.pad[1]);
 	mx = Int(gmt_hdr.mx);		my = Int(gmt_hdr.my)
-	X  = linspace(gmt_hdr.wesn.d1, gmt_hdr.wesn.d2, nx)
-	Y  = linspace(gmt_hdr.wesn.d3, gmt_hdr.wesn.d4, ny)
+	X  = linspace(gmt_hdr.wesn[1], gmt_hdr.wesn[2], nx)
+	Y  = linspace(gmt_hdr.wesn[3], gmt_hdr.wesn[4], ny)
 
 	#API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, API))	# Get access to a minimalist API struct (no API.GMT)
 	t   = pointer_to_array(G.data, my * mx)
@@ -353,17 +353,16 @@ function get_grid(API, object)
 	end
 
 	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays  
-	out.range = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4 gmt_hdr.z_min gmt_hdr.z_max])
-	out.inc          = vec([gmt_hdr.inc.d1 gmt_hdr.inc.d2])
+	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
+	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
 	out.n_rows       = ny
 	out.n_columns    = nx
 	out.NoDataValue  = gmt_hdr.nan_value
 	out.registration = gmt_hdr.registration
 	out.n_bands      = gmt_hdr.n_bands
-	out.x_units      = convert_string(gmt_hdr.x_units)
-	#out.x_units      = join([Char(gmt_hdr.x_units.(n)) for n=1:sizeof(gmt_hdr.x_units)])
-	out.y_units      = join([Char(gmt_hdr.y_units.(n)) for n=1:sizeof(gmt_hdr.y_units)])
-	#out.z_units      = bytestring(gmt_hdr.z_units)
+	out.x_units      = bytestring(UInt8[gmt_hdr.x_units...])
+	out.y_units      = bytestring(UInt8[gmt_hdr.y_units...])
+	out.z_units      = bytestring(UInt8[gmt_hdr.z_units...])
 
 	return out
 end
@@ -378,8 +377,8 @@ function get_image(API, object)
 
 	gmt_hdr = unsafe_load(I.header)
 	ny = Int(gmt_hdr.ny);		nx = Int(gmt_hdr.nx);		nz = Int(gmt_hdr.n_bands)
-	X  = linspace(gmt_hdr.wesn.d1, gmt_hdr.wesn.d2, nx)
-	Y  = linspace(gmt_hdr.wesn.d3, gmt_hdr.wesn.d4, ny)
+	X  = linspace(gmt_hdr.wesn[1], gmt_hdr.wesn[2], nx)
+	Y  = linspace(gmt_hdr.wesn[3], gmt_hdr.wesn[4], ny)
 	t  = reshape(pointer_to_array(I.data, ny * nx * nz), ny, nx, nz)
 
 	if (I.ColorMap != C_NULL)       # Indexed image has a color map (PROBABLY NEEDS TRANSPOSITION)
@@ -408,8 +407,8 @@ function get_image(API, object)
 	end
 
 	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays  
-	out.range = vec([gmt_hdr.wesn.d1 gmt_hdr.wesn.d2 gmt_hdr.wesn.d3 gmt_hdr.wesn.d4 gmt_hdr.z_min gmt_hdr.z_max])
-	out.inc          = vec([gmt_hdr.inc.d1 gmt_hdr.inc.d2])
+	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
+	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
 	out.n_rows       = ny
 	out.n_columns    = nx
 	out.NoDataValue  = gmt_hdr.nan_value
@@ -434,17 +433,17 @@ function get_cpt(API, object::Ptr{Void})
 
 	for (j = 1:C.n_colors)       # Copy r/g/b from palette to Julia array
 		gmt_lut = unsafe_load(C.range, j)
-		out.colormap[j, 1] = gmt_lut.rgb_low.d1
-		out.colormap[j, 2] = gmt_lut.rgb_low.d2
-		out.colormap[j, 3] = gmt_lut.rgb_low.d3
+		out.colormap[j, 1] = gmt_lut.rgb_low[1]
+		out.colormap[j, 2] = gmt_lut.rgb_low[2]
+		out.colormap[j, 3] = gmt_lut.rgb_low[3]
 		out.range[j, 1]    = gmt_lut.z_low
 		out.range[j, 2]    = gmt_lut.z_high
-		out.alpha[j] = gmt_lut.rgb_low.d4
+		out.alpha[j] = gmt_lut.rgb_low[4]
 	end
 	if (C.is_continuous != 0)    # Add last color
-		out.colormap[n_colors, 1] = gmt_lut.rgb_high.d1
-		out.colormap[n_colors, 2] = gmt_lut.rgb_high.d2
-		out.colormap[n_colors, 3] = gmt_lut.rgb_high.d3
+		out.colormap[n_colors, 1] = gmt_lut.rgb_high[1]
+		out.colormap[n_colors, 2] = gmt_lut.rgb_high[2]
+		out.colormap[n_colors, 3] = gmt_lut.rgb_high[3]
 	end
 	gmt_lut = unsafe_load(C.range, 1)
 	out.rangeMinMax[1] = gmt_lut.z_low
@@ -620,18 +619,19 @@ function GMTJL_grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT
 	end
 
 	if (empty)			# Just tell GMTJL_grid_init() to allocate an empty container 
-		R = GMTJL_grid_init(API, module_input, [], [0.0], [0.0 0 0 0 0 0 0 0 0], dir)
+		if ((R = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
+		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+			error("grid_init: Failure to alloc GMT blank grid container for holding output grid")
+		end
 		return R
 	end
 
 	if (isa(grd_box, array_container))
 		grd = pointer_to_array(grd_box.grd, (grd_box.ny, grd_box.nx))
 		hdr = pointer_to_array(grd_box.hdr, 9)
-		R = GMTJL_grid_init(API, module_input, [], grd, hdr, dir)
+		R = GMTJL_grid_init(API, module_input, [], grd, hdr)
 	elseif (isa(grd_box, GMTJL_GRID))
-		R = GMTJL_grid_init(API, module_input, grd_box, [], [], dir)
-		#grd = grd_box.z
-		#hdr = [grd_box.range; grd_box.registration; grd_box.inc]
+		R = GMTJL_grid_init(API, module_input, grd_box, [], [])
 	else
 		error(@sprintf("GMTJL_PARSER:grd_init: input (%s) is not a GRID|IMAGE container type", typeof(grd_box)))
 	end
@@ -639,54 +639,45 @@ function GMTJL_grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_grid_init(API::Ptr{Void}, module_input, Grid, grd, hdr, dir::Integer=GMT_IN, pad::Int=2)
-#function GMTJL_grid_init(API::Ptr{Void}, module_input, grd, hdr::Array{Float64}, dir::Integer=GMT_IN, pad::Int=2)
-# Used to Create an empty Grid container to hold a GMT grid.
-# If direction is GMT_IN then we are given a Julia grid and can determine its size, etc.
-# If direction is GMT_OUT then we allocate an empty GMT grid as a destination.
+function GMTJL_grid_init(API::Ptr{Void}, module_input, Grid, grd, hdr, pad::Int=2)
+# We are given a Julia grid and can determine its size, etc.
 
-	if (dir == GMT_IN)
-		if (isa(Grid, GMTJL_GRID))
-			grd = Grid.z
-			hdr = [Grid.range; Grid.registration; Grid.inc]
-		end
-		if ((G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, C_NULL,
-		                         hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)) == C_NULL)
-			error("grid_init: Failure to alloc GMT source matrix for input")
-		end
+	if (isa(Grid, GMTJL_GRID))
+		grd = Grid.z
+		hdr = [Grid.range; Grid.registration; Grid.inc]
+	end
+	if ((G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, C_NULL,
+	                         hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)) == C_NULL)
+		error("grid_init: Failure to alloc GMT source matrix for input")
+	end
 
-		n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
-		t = zeros(Float32, n_rows+2*pad, n_cols+2*pad)
+	n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
+	t = zeros(Float32, n_rows+2*pad, n_cols+2*pad)
 
-		for (col = 1:n_cols)
-			for (row = 1:n_rows)
-				ij = GMT_IJP(row, col, mx, pad, pad)
-				t[ij] = grd[MEXG_IJ(row, col, n_rows)]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
-			end
-		end
-
-		Gb = unsafe_load(G)			# Gb = GMT_GRID (constructor with 1 method)
-		Gb.data = pointer(t)
-		Gb.alloc_mode = UInt32(GMT.GMT_ALLOCATED_EXTERNALLY)	# Since array was allocated by Julia
-		h = unsafe_load(Gb.header)
-		h.z_min = hdr[5]			# Set the z_min, z_max
-		h.z_max = hdr[6]
-
-		if (isa(Grid, GMTJL_GRID))
-			#mutateit(API, h.x_units, "d1", Grid.x_units)	# It's not working for those Array_XXX_Uint8 types
-			#h.x_units = Grid.x_units
-			#h.y_units = Grid.y_units
-		end
-
-		unsafe_store!(Gb.header, h)
-		unsafe_store!(G, Gb)
-		GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Grid %s in parser\n", G) )
-	else	# Just allocate an empty container to hold the output grid, and pass GMT_VIA_OUTPUT
-		if ((G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
-		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-			error("grid_init: Failure to alloc GMT blank grid container for holding output grid")
+	for (col = 1:n_cols)
+		for (row = 1:n_rows)
+			ij = GMT_IJP(row, col, mx, pad, pad)
+			t[ij] = grd[MEXG_IJ(row, col, n_rows)]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
 		end
 	end
+
+	Gb = unsafe_load(G)			# Gb = GMT_GRID (constructor with 1 method)
+	Gb.data = pointer(t)
+	Gb.alloc_mode = UInt32(GMT.GMT_ALLOCATED_EXTERNALLY)	# Since array was allocated by Julia
+	h = unsafe_load(Gb.header)
+	h.z_min = hdr[5]			# Set the z_min, z_max
+	h.z_max = hdr[6]
+
+	if (isa(Grid, GMTJL_GRID))
+		h.x_units = map(UInt8, (Grid.x_units...))
+		h.y_units = map(UInt8, (Grid.y_units...))
+		h.z_units = map(UInt8, (Grid.z_units...))
+	end
+
+	unsafe_store!(Gb.header, h)
+	unsafe_store!(G, Gb)
+	GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Grid %s in parser\n", G) )
+
 	return G
 end
 
@@ -892,8 +883,8 @@ function GMTJL_CPT_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 		#dz = (cpt.range[2] - cpt.range[1]) / Pb.n_colors
 		for (j = 1:Pb.n_colors)
 			glut = unsafe_load(Pb.range, j)
-			rgb_low  = GMT.Array_4_Cdouble(cpt.colormap[j,1], cpt.colormap[j,2], cpt.colormap[j,3], cpt.alpha[j])
-			rgb_high = GMT.Array_4_Cdouble(cpt.colormap[j+one,1], cpt.colormap[j+one,2], cpt.colormap[j+one,3], cpt.alpha[j+one])
+			rgb_low  = (cpt.colormap[j,1], cpt.colormap[j,2], cpt.colormap[j,3], cpt.alpha[j])
+			rgb_high = (cpt.colormap[j+one,1], cpt.colormap[j+one,2], cpt.colormap[j+one,3], cpt.alpha[j+one])
 			z_low  = cpt.range[j,1]
 			z_high = cpt.range[j,2]
 			#z_low = j * dz
@@ -1079,7 +1070,7 @@ function mutateit(API::Ptr{Void}, t_type, member::ASCIIString, val)
 	ind = findfirst(fieldnames(dt), symbol(member))	# Find the index of the "is_continuous" member
 	# This would work too
 	# ind = ccall(:jl_field_index, Cint, (Any, Any, Cint), dt, symbol(member), 1) + 1
-	if (isa("a", AbstractString))	# No idea why I have to do this
+	if (isa(val, AbstractString))	# No idea why I have to do this
 		p_val = pointer(val)
 	else
 		p_val = pointer([val])

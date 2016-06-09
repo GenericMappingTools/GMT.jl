@@ -10,7 +10,7 @@ function GMT_Create_Session(tag::ASCIIString="GMT", pad=2, mode=0, print_func::P
 end
 
 function GMT_Create_Data(API::Ptr{Void}, family, geometry, mode, dim=C_NULL, wesn=C_NULL,
-		inc=C_NULL, registration=0, pad=2, data::Ptr{Void}=C_NULL)
+                         inc=C_NULL, registration=0, pad=2, data::Ptr{Void}=C_NULL)
 
 	if (family == GMT_IS_DATASET)
 		ret_type = Ptr{GMT_DATASET}
@@ -205,8 +205,8 @@ end
 function GMT_Create_Cmd(API::Ptr{Void}, head::Ptr{GMT_OPTION})
   ccall( (:GMT_Create_Cmd, thelib), Ptr{UInt8}, (Ptr{Void}, Ptr{GMT_OPTION}), API, head)
 end
-function GMT_Destroy_Options(API::Ptr{Void}, head::Ptr{Ptr{GMT_OPTION}})
-  ccall( (:GMT_Destroy_Options, thelib), Cint, (Ptr{Void}, Ptr{Ptr{GMT_OPTION}}), API, head)
+function GMT_Destroy_Options(API::Ptr{Void}, head::Ref{Ptr{GMT_OPTION}})
+  ccall( (:GMT_Destroy_Options, thelib), Cint, (Ptr{Void}, Ref{Ptr{GMT_OPTION}}), API, head)
 end
 function GMT_Destroy_Args(API::Ptr{Void}, argc::Cint, argv::Ptr{Ptr{Ptr{UInt8}}})
   ccall( (:GMT_Destroy_Args, thelib), Cint, (Ptr{Void}, Cint, Ptr{Ptr{Ptr{UInt8}}}), API, argc, argv)
@@ -252,12 +252,12 @@ function GMT_Report(API, vlevel::Int, txt::ASCIIString)
 	ccall((:GMT_Report, thelib), Void, (Ptr{Void}, Cint, Ptr{UInt8}), API, vlevel, txt)
 end
 
-function GMT_Encode_Options(V_API::Ptr{Void}, _module::ASCIIString, marker::Char, n_argin::Integer, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
-	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Int32, Ptr{Ptr{GMT_OPTION}},
+function GMT_Encode_Options(V_API::Ptr{Void}, _module::ASCIIString, marker::Char, n_argin::Integer, head::Ref{Ptr{GMT_OPTION}}, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Int32, Ref{Ptr{GMT_OPTION}},
 	        Ptr{UInt32}), V_API, _module, marker, n_argin, head, n)
 end
-function GMT_Encode_Options(V_API::Ptr{Void}, _module::Ptr{UInt8}, marker::Char, n_argin::Integer, head::Ptr{Ptr{GMT_OPTION}}, n::Ptr{Int})
-	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Int32, Ptr{Ptr{GMT_OPTION}},
+function GMT_Encode_Options(V_API::Ptr{Void}, _module::Ptr{UInt8}, marker::Char, n_argin::Integer, head::Ref{Ptr{GMT_OPTION}}, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Int32, Ref{Ptr{GMT_OPTION}},
 	        Ptr{UInt32}), V_API, _module, marker, n_argin, head, n)
 end
 
@@ -296,4 +296,28 @@ end
 function GMT_blind_change_struct_(API::Ptr{Void}, X, what, keyword::ASCIIString)
 	ccall((:GMT_blind_change_struct_, thelib), Cint, (Ptr{Void}, Ptr{Void}, Ptr{Void}, Ptr{UInt8}),
 	       API, X, what, keyword)
+end
+
+function GMT_Convert_Data(API::Ptr{Void}, In::Ptr{Void}, family_in::Integer, out::Ptr{Void}, family_out::Integer, flag::Ptr{Integer})
+	ccall((:GMT_Convert_Data, thelib), Ptr{Void}, (Ptr{Void}, Ptr{Void}, UInt32, Ptr{Void}, UInt32, Ptr{UInt32}), API, In,
+	       family_in, out, family_out, flag)
+end
+
+function GMT_Create_VirtualFile(API::Ptr{Void}, family::Integer, geometry::Integer, str)
+	ccall((:GMT_Create_VirtualFile, thelib), Cint, (Ptr{Void}, UInt32, UInt32, Ptr{UInt8}), API, family, geometry, str)
+end
+
+function GMT_Open_VirtualFile(API::Ptr{Void}, family::Integer, geometry::Integer, data::Ptr{Void}, str)
+	ccall((:GMT_Open_VirtualFile, thelib), Cint, (Ptr{Void}, UInt32, UInt32, Ptr{Void}, Ptr{UInt8}), API,
+	       family, geometry, data, str)
+end
+
+function GMT_Read_VirtualFile(API::Ptr{Void}, str)
+	ccall((:GMT_Read_VirtualFile, thelib), Ptr{Void}, (Ptr{Void}, Ptr{UInt8}), API, str)
+end
+
+function GMT_Read_Group(API::Ptr{Void}, family::Integer, method::Integer, geometry::Integer, mode::Integer,
+                        wesn::C_NULL, sources::Ptr{Void}, n_items::Ptr{UInt32}, data::Ptr{Void})
+	ccall((:GMT_Read_Group, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
+	       Ptr{Void}, Ptr{UInt32}, Ptr{Void}), API, family, method, geometry, mode, wesn, sources, n_items, data)
 end

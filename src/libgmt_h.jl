@@ -358,897 +358,22 @@ const UINT16_CLASS = 8
 const INT8_CLASS   = 9
 const UINT8_CLASS  = 10
 
-immutable Array_4_Cdouble
-	d1::Cdouble
-	d2::Cdouble
-	d3::Cdouble
-	d4::Cdouble
-end
-immutable Array_2_Cdouble
-	d1::Cdouble
-	d2::Cdouble
-end
-immutable Array_80_Uint8
-	d1::UInt8
-	d2::UInt8
-	d3::UInt8
-	d4::UInt8
-	d5::UInt8
-	d6::UInt8
-	d7::UInt8
-	d8::UInt8
-	d9::UInt8
-	d10::UInt8
-	d11::UInt8
-	d12::UInt8
-	d13::UInt8
-	d14::UInt8
-	d15::UInt8
-	d16::UInt8
-	d17::UInt8
-	d18::UInt8
-	d19::UInt8
-	d20::UInt8
-	d21::UInt8
-	d22::UInt8
-	d23::UInt8
-	d24::UInt8
-	d25::UInt8
-	d26::UInt8
-	d27::UInt8
-	d28::UInt8
-	d29::UInt8
-	d30::UInt8
-	d31::UInt8
-	d32::UInt8
-	d33::UInt8
-	d34::UInt8
-	d35::UInt8
-	d36::UInt8
-	d37::UInt8
-	d38::UInt8
-	d39::UInt8
-	d40::UInt8
-	d41::UInt8
-	d42::UInt8
-	d43::UInt8
-	d44::UInt8
-	d45::UInt8
-	d46::UInt8
-	d47::UInt8
-	d48::UInt8
-	d49::UInt8
-	d50::UInt8
-	d51::UInt8
-	d52::UInt8
-	d53::UInt8
-	d54::UInt8
-	d55::UInt8
-	d56::UInt8
-	d57::UInt8
-	d58::UInt8
-	d59::UInt8
-	d60::UInt8
-	d61::UInt8
-	d62::UInt8
-	d63::UInt8
-	d64::UInt8
-	d65::UInt8
-	d66::UInt8
-	d67::UInt8
-	d68::UInt8
-	d69::UInt8
-	d70::UInt8
-	d71::UInt8
-	d72::UInt8
-	d73::UInt8
-	d74::UInt8
-	d75::UInt8
-	d76::UInt8
-	d77::UInt8
-	d78::UInt8
-	d79::UInt8
-	d80::UInt8
-end
-immutable Array_320_Uint8
-	d1::UInt8
-	d2::UInt8
-	d3::UInt8
-	d4::UInt8
-	d5::UInt8
-	d6::UInt8
-	d7::UInt8
-	d8::UInt8
-	d9::UInt8
-	d10::UInt8
-	d11::UInt8
-	d12::UInt8
-	d13::UInt8
-	d14::UInt8
-	d15::UInt8
-	d16::UInt8
-	d17::UInt8
-	d18::UInt8
-	d19::UInt8
-	d20::UInt8
-	d21::UInt8
-	d22::UInt8
-	d23::UInt8
-	d24::UInt8
-	d25::UInt8
-	d26::UInt8
-	d27::UInt8
-	d28::UInt8
-	d29::UInt8
-	d30::UInt8
-	d31::UInt8
-	d32::UInt8
-	d33::UInt8
-	d34::UInt8
-	d35::UInt8
-	d36::UInt8
-	d37::UInt8
-	d38::UInt8
-	d39::UInt8
-	d40::UInt8
-	d41::UInt8
-	d42::UInt8
-	d43::UInt8
-	d44::UInt8
-	d45::UInt8
-	d46::UInt8
-	d47::UInt8
-	d48::UInt8
-	d49::UInt8
-	d50::UInt8
-	d51::UInt8
-	d52::UInt8
-	d53::UInt8
-	d54::UInt8
-	d55::UInt8
-	d56::UInt8
-	d57::UInt8
-	d58::UInt8
-	d59::UInt8
-	d60::UInt8
-	d61::UInt8
-	d62::UInt8
-	d63::UInt8
-	d64::UInt8
-	d65::UInt8
-	d66::UInt8
-	d67::UInt8
-	d68::UInt8
-	d69::UInt8
-	d70::UInt8
-	d71::UInt8
-	d72::UInt8
-	d73::UInt8
-	d74::UInt8
-	d75::UInt8
-	d76::UInt8
-	d77::UInt8
-	d78::UInt8
-	d79::UInt8
-	d80::UInt8
-	d81::UInt8
-	d82::UInt8
-	d83::UInt8
-	d84::UInt8
-	d85::UInt8
-	d86::UInt8
-	d87::UInt8
-	d88::UInt8
-	d89::UInt8
-	d90::UInt8
-	d91::UInt8
-	d92::UInt8
-	d93::UInt8
-	d94::UInt8
-	d95::UInt8
-	d96::UInt8
-	d97::UInt8
-	d98::UInt8
-	d99::UInt8
-	d100::UInt8
-	d101::UInt8
-	d102::UInt8
-	d103::UInt8
-	d104::UInt8
-	d105::UInt8
-	d106::UInt8
-	d107::UInt8
-	d108::UInt8
-	d109::UInt8
-	d110::UInt8
-	d111::UInt8
-	d112::UInt8
-	d113::UInt8
-	d114::UInt8
-	d115::UInt8
-	d116::UInt8
-	d117::UInt8
-	d118::UInt8
-	d119::UInt8
-	d120::UInt8
-	d121::UInt8
-	d122::UInt8
-	d123::UInt8
-	d124::UInt8
-	d125::UInt8
-	d126::UInt8
-	d127::UInt8
-	d128::UInt8
-	d129::UInt8
-	d130::UInt8
-	d131::UInt8
-	d132::UInt8
-	d133::UInt8
-	d134::UInt8
-	d135::UInt8
-	d136::UInt8
-	d137::UInt8
-	d138::UInt8
-	d139::UInt8
-	d140::UInt8
-	d141::UInt8
-	d142::UInt8
-	d143::UInt8
-	d144::UInt8
-	d145::UInt8
-	d146::UInt8
-	d147::UInt8
-	d148::UInt8
-	d149::UInt8
-	d150::UInt8
-	d151::UInt8
-	d152::UInt8
-	d153::UInt8
-	d154::UInt8
-	d155::UInt8
-	d156::UInt8
-	d157::UInt8
-	d158::UInt8
-	d159::UInt8
-	d160::UInt8
-	d161::UInt8
-	d162::UInt8
-	d163::UInt8
-	d164::UInt8
-	d165::UInt8
-	d166::UInt8
-	d167::UInt8
-	d168::UInt8
-	d169::UInt8
-	d170::UInt8
-	d171::UInt8
-	d172::UInt8
-	d173::UInt8
-	d174::UInt8
-	d175::UInt8
-	d176::UInt8
-	d177::UInt8
-	d178::UInt8
-	d179::UInt8
-	d180::UInt8
-	d181::UInt8
-	d182::UInt8
-	d183::UInt8
-	d184::UInt8
-	d185::UInt8
-	d186::UInt8
-	d187::UInt8
-	d188::UInt8
-	d189::UInt8
-	d190::UInt8
-	d191::UInt8
-	d192::UInt8
-	d193::UInt8
-	d194::UInt8
-	d195::UInt8
-	d196::UInt8
-	d197::UInt8
-	d198::UInt8
-	d199::UInt8
-	d200::UInt8
-	d201::UInt8
-	d202::UInt8
-	d203::UInt8
-	d204::UInt8
-	d205::UInt8
-	d206::UInt8
-	d207::UInt8
-	d208::UInt8
-	d209::UInt8
-	d210::UInt8
-	d211::UInt8
-	d212::UInt8
-	d213::UInt8
-	d214::UInt8
-	d215::UInt8
-	d216::UInt8
-	d217::UInt8
-	d218::UInt8
-	d219::UInt8
-	d220::UInt8
-	d221::UInt8
-	d222::UInt8
-	d223::UInt8
-	d224::UInt8
-	d225::UInt8
-	d226::UInt8
-	d227::UInt8
-	d228::UInt8
-	d229::UInt8
-	d230::UInt8
-	d231::UInt8
-	d232::UInt8
-	d233::UInt8
-	d234::UInt8
-	d235::UInt8
-	d236::UInt8
-	d237::UInt8
-	d238::UInt8
-	d239::UInt8
-	d240::UInt8
-	d241::UInt8
-	d242::UInt8
-	d243::UInt8
-	d244::UInt8
-	d245::UInt8
-	d246::UInt8
-	d247::UInt8
-	d248::UInt8
-	d249::UInt8
-	d250::UInt8
-	d251::UInt8
-	d252::UInt8
-	d253::UInt8
-	d254::UInt8
-	d255::UInt8
-	d256::UInt8
-	d257::UInt8
-	d258::UInt8
-	d259::UInt8
-	d260::UInt8
-	d261::UInt8
-	d262::UInt8
-	d263::UInt8
-	d264::UInt8
-	d265::UInt8
-	d266::UInt8
-	d267::UInt8
-	d268::UInt8
-	d269::UInt8
-	d270::UInt8
-	d271::UInt8
-	d272::UInt8
-	d273::UInt8
-	d274::UInt8
-	d275::UInt8
-	d276::UInt8
-	d277::UInt8
-	d278::UInt8
-	d279::UInt8
-	d280::UInt8
-	d281::UInt8
-	d282::UInt8
-	d283::UInt8
-	d284::UInt8
-	d285::UInt8
-	d286::UInt8
-	d287::UInt8
-	d288::UInt8
-	d289::UInt8
-	d290::UInt8
-	d291::UInt8
-	d292::UInt8
-	d293::UInt8
-	d294::UInt8
-	d295::UInt8
-	d296::UInt8
-	d297::UInt8
-	d298::UInt8
-	d299::UInt8
-	d300::UInt8
-	d301::UInt8
-	d302::UInt8
-	d303::UInt8
-	d304::UInt8
-	d305::UInt8
-	d306::UInt8
-	d307::UInt8
-	d308::UInt8
-	d309::UInt8
-	d310::UInt8
-	d311::UInt8
-	d312::UInt8
-	d313::UInt8
-	d314::UInt8
-	d315::UInt8
-	d316::UInt8
-	d317::UInt8
-	d318::UInt8
-	d319::UInt8
-	d320::UInt8
-end
-immutable Array_160_Uint8
-	d1::UInt8
-	d2::UInt8
-	d3::UInt8
-	d4::UInt8
-	d5::UInt8
-	d6::UInt8
-	d7::UInt8
-	d8::UInt8
-	d9::UInt8
-	d10::UInt8
-	d11::UInt8
-	d12::UInt8
-	d13::UInt8
-	d14::UInt8
-	d15::UInt8
-	d16::UInt8
-	d17::UInt8
-	d18::UInt8
-	d19::UInt8
-	d20::UInt8
-	d21::UInt8
-	d22::UInt8
-	d23::UInt8
-	d24::UInt8
-	d25::UInt8
-	d26::UInt8
-	d27::UInt8
-	d28::UInt8
-	d29::UInt8
-	d30::UInt8
-	d31::UInt8
-	d32::UInt8
-	d33::UInt8
-	d34::UInt8
-	d35::UInt8
-	d36::UInt8
-	d37::UInt8
-	d38::UInt8
-	d39::UInt8
-	d40::UInt8
-	d41::UInt8
-	d42::UInt8
-	d43::UInt8
-	d44::UInt8
-	d45::UInt8
-	d46::UInt8
-	d47::UInt8
-	d48::UInt8
-	d49::UInt8
-	d50::UInt8
-	d51::UInt8
-	d52::UInt8
-	d53::UInt8
-	d54::UInt8
-	d55::UInt8
-	d56::UInt8
-	d57::UInt8
-	d58::UInt8
-	d59::UInt8
-	d60::UInt8
-	d61::UInt8
-	d62::UInt8
-	d63::UInt8
-	d64::UInt8
-	d65::UInt8
-	d66::UInt8
-	d67::UInt8
-	d68::UInt8
-	d69::UInt8
-	d70::UInt8
-	d71::UInt8
-	d72::UInt8
-	d73::UInt8
-	d74::UInt8
-	d75::UInt8
-	d76::UInt8
-	d77::UInt8
-	d78::UInt8
-	d79::UInt8
-	d80::UInt8
-	d81::UInt8
-	d82::UInt8
-	d83::UInt8
-	d84::UInt8
-	d85::UInt8
-	d86::UInt8
-	d87::UInt8
-	d88::UInt8
-	d89::UInt8
-	d90::UInt8
-	d91::UInt8
-	d92::UInt8
-	d93::UInt8
-	d94::UInt8
-	d95::UInt8
-	d96::UInt8
-	d97::UInt8
-	d98::UInt8
-	d99::UInt8
-	d100::UInt8
-	d101::UInt8
-	d102::UInt8
-	d103::UInt8
-	d104::UInt8
-	d105::UInt8
-	d106::UInt8
-	d107::UInt8
-	d108::UInt8
-	d109::UInt8
-	d110::UInt8
-	d111::UInt8
-	d112::UInt8
-	d113::UInt8
-	d114::UInt8
-	d115::UInt8
-	d116::UInt8
-	d117::UInt8
-	d118::UInt8
-	d119::UInt8
-	d120::UInt8
-	d121::UInt8
-	d122::UInt8
-	d123::UInt8
-	d124::UInt8
-	d125::UInt8
-	d126::UInt8
-	d127::UInt8
-	d128::UInt8
-	d129::UInt8
-	d130::UInt8
-	d131::UInt8
-	d132::UInt8
-	d133::UInt8
-	d134::UInt8
-	d135::UInt8
-	d136::UInt8
-	d137::UInt8
-	d138::UInt8
-	d139::UInt8
-	d140::UInt8
-	d141::UInt8
-	d142::UInt8
-	d143::UInt8
-	d144::UInt8
-	d145::UInt8
-	d146::UInt8
-	d147::UInt8
-	d148::UInt8
-	d149::UInt8
-	d150::UInt8
-	d151::UInt8
-	d152::UInt8
-	d153::UInt8
-	d154::UInt8
-	d155::UInt8
-	d156::UInt8
-	d157::UInt8
-	d158::UInt8
-	d159::UInt8
-	d160::UInt8
-end
-immutable Array_4_Uint32
-	d1::UInt32
-	d2::UInt32
-	d3::UInt32
-	d4::UInt32
-end
-immutable Array_256_Uint8
-	d1::UInt8
-	d2::UInt8
-	d3::UInt8
-	d4::UInt8
-	d5::UInt8
-	d6::UInt8
-	d7::UInt8
-	d8::UInt8
-	d9::UInt8
-	d10::UInt8
-	d11::UInt8
-	d12::UInt8
-	d13::UInt8
-	d14::UInt8
-	d15::UInt8
-	d16::UInt8
-	d17::UInt8
-	d18::UInt8
-	d19::UInt8
-	d20::UInt8
-	d21::UInt8
-	d22::UInt8
-	d23::UInt8
-	d24::UInt8
-	d25::UInt8
-	d26::UInt8
-	d27::UInt8
-	d28::UInt8
-	d29::UInt8
-	d30::UInt8
-	d31::UInt8
-	d32::UInt8
-	d33::UInt8
-	d34::UInt8
-	d35::UInt8
-	d36::UInt8
-	d37::UInt8
-	d38::UInt8
-	d39::UInt8
-	d40::UInt8
-	d41::UInt8
-	d42::UInt8
-	d43::UInt8
-	d44::UInt8
-	d45::UInt8
-	d46::UInt8
-	d47::UInt8
-	d48::UInt8
-	d49::UInt8
-	d50::UInt8
-	d51::UInt8
-	d52::UInt8
-	d53::UInt8
-	d54::UInt8
-	d55::UInt8
-	d56::UInt8
-	d57::UInt8
-	d58::UInt8
-	d59::UInt8
-	d60::UInt8
-	d61::UInt8
-	d62::UInt8
-	d63::UInt8
-	d64::UInt8
-	d65::UInt8
-	d66::UInt8
-	d67::UInt8
-	d68::UInt8
-	d69::UInt8
-	d70::UInt8
-	d71::UInt8
-	d72::UInt8
-	d73::UInt8
-	d74::UInt8
-	d75::UInt8
-	d76::UInt8
-	d77::UInt8
-	d78::UInt8
-	d79::UInt8
-	d80::UInt8
-	d81::UInt8
-	d82::UInt8
-	d83::UInt8
-	d84::UInt8
-	d85::UInt8
-	d86::UInt8
-	d87::UInt8
-	d88::UInt8
-	d89::UInt8
-	d90::UInt8
-	d91::UInt8
-	d92::UInt8
-	d93::UInt8
-	d94::UInt8
-	d95::UInt8
-	d96::UInt8
-	d97::UInt8
-	d98::UInt8
-	d99::UInt8
-	d100::UInt8
-	d101::UInt8
-	d102::UInt8
-	d103::UInt8
-	d104::UInt8
-	d105::UInt8
-	d106::UInt8
-	d107::UInt8
-	d108::UInt8
-	d109::UInt8
-	d110::UInt8
-	d111::UInt8
-	d112::UInt8
-	d113::UInt8
-	d114::UInt8
-	d115::UInt8
-	d116::UInt8
-	d117::UInt8
-	d118::UInt8
-	d119::UInt8
-	d120::UInt8
-	d121::UInt8
-	d122::UInt8
-	d123::UInt8
-	d124::UInt8
-	d125::UInt8
-	d126::UInt8
-	d127::UInt8
-	d128::UInt8
-	d129::UInt8
-	d130::UInt8
-	d131::UInt8
-	d132::UInt8
-	d133::UInt8
-	d134::UInt8
-	d135::UInt8
-	d136::UInt8
-	d137::UInt8
-	d138::UInt8
-	d139::UInt8
-	d140::UInt8
-	d141::UInt8
-	d142::UInt8
-	d143::UInt8
-	d144::UInt8
-	d145::UInt8
-	d146::UInt8
-	d147::UInt8
-	d148::UInt8
-	d149::UInt8
-	d150::UInt8
-	d151::UInt8
-	d152::UInt8
-	d153::UInt8
-	d154::UInt8
-	d155::UInt8
-	d156::UInt8
-	d157::UInt8
-	d158::UInt8
-	d159::UInt8
-	d160::UInt8
-	d161::UInt8
-	d162::UInt8
-	d163::UInt8
-	d164::UInt8
-	d165::UInt8
-	d166::UInt8
-	d167::UInt8
-	d168::UInt8
-	d169::UInt8
-	d170::UInt8
-	d171::UInt8
-	d172::UInt8
-	d173::UInt8
-	d174::UInt8
-	d175::UInt8
-	d176::UInt8
-	d177::UInt8
-	d178::UInt8
-	d179::UInt8
-	d180::UInt8
-	d181::UInt8
-	d182::UInt8
-	d183::UInt8
-	d184::UInt8
-	d185::UInt8
-	d186::UInt8
-	d187::UInt8
-	d188::UInt8
-	d189::UInt8
-	d190::UInt8
-	d191::UInt8
-	d192::UInt8
-	d193::UInt8
-	d194::UInt8
-	d195::UInt8
-	d196::UInt8
-	d197::UInt8
-	d198::UInt8
-	d199::UInt8
-	d200::UInt8
-	d201::UInt8
-	d202::UInt8
-	d203::UInt8
-	d204::UInt8
-	d205::UInt8
-	d206::UInt8
-	d207::UInt8
-	d208::UInt8
-	d209::UInt8
-	d210::UInt8
-	d211::UInt8
-	d212::UInt8
-	d213::UInt8
-	d214::UInt8
-	d215::UInt8
-	d216::UInt8
-	d217::UInt8
-	d218::UInt8
-	d219::UInt8
-	d220::UInt8
-	d221::UInt8
-	d222::UInt8
-	d223::UInt8
-	d224::UInt8
-	d225::UInt8
-	d226::UInt8
-	d227::UInt8
-	d228::UInt8
-	d229::UInt8
-	d230::UInt8
-	d231::UInt8
-	d232::UInt8
-	d233::UInt8
-	d234::UInt8
-	d235::UInt8
-	d236::UInt8
-	d237::UInt8
-	d238::UInt8
-	d239::UInt8
-	d240::UInt8
-	d241::UInt8
-	d242::UInt8
-	d243::UInt8
-	d244::UInt8
-	d245::UInt8
-	d246::UInt8
-	d247::UInt8
-	d248::UInt8
-	d249::UInt8
-	d250::UInt8
-	d251::UInt8
-	d252::UInt8
-	d253::UInt8
-	d254::UInt8
-	d255::UInt8
-	d256::UInt8
-end
-
-immutable Array_2_Csize_t
-	d1::Csize_t
-	d2::Csize_t
-end
-immutable Array_3_Csize_t
-	d1::Csize_t
-	d2::Csize_t
-	d3::Csize_t
-end
-
-immutable Array_2_Cint
-	d1::Cint
-	d2::Cint
-end
-immutable Array_3_Cint
-	d1::Cint
-	d2::Cint
-	d3::Cint
-end
-immutable Array_4_Uint8
-	d1::UInt8
-	d2::UInt8
-	d3::UInt8
-	d4::UInt8
-end
-immutable Array_2_Uint32
-	d1::UInt32
-	d2::UInt32
-end
-immutable Array_2_Uint64
-	d1::UInt64
-	d2::UInt64
-end
-
 type GMT_GRID_HEADER
 	nx::UInt32
 	ny::UInt32
 	registration::UInt32
-	wesn::Array_4_Cdouble
+	wesn::NTuple{4, Cdouble}
 	z_min::Cdouble
 	z_max::Cdouble
-	inc::Array_2_Cdouble
+	inc::NTuple{2, Cdouble}
 	z_scale_factor::Cdouble
 	z_add_offset::Cdouble
-	x_units::Array_80_Uint8
-	y_units::Array_80_Uint8
-	z_units::Array_80_Uint8
-	title::Array_80_Uint8
-	command::Array_320_Uint8
-	remark::Array_160_Uint8
+	x_units::NTuple{80, UInt8}
+	y_units::NTuple{80, UInt8}
+	z_units::NTuple{80, UInt8}
+	title::NTuple{80, UInt8}
+	command::NTuple{320, UInt8}
+	remark::NTuple{160, UInt8}
 	# Variables "hidden" from the API. This section is flexible and considered private
 	_type::UInt32
 	bits::UInt32
@@ -1261,26 +386,26 @@ type GMT_GRID_HEADER
 	trendmode::UInt32
 	arrangement::UInt32
 	n_bands::UInt32
-	pad::Array_4_Uint32
-	BC::Array_4_Uint32
+	pad::NTuple{4, UInt32}
+	BC::NTuple{4, UInt32}
 	grdtype::UInt32
-	name::Array_256_Uint8
-	varname::Array_80_Uint8
+	name::NTuple{256, UInt8}
+	varname::NTuple{80, UInt8}
 	ProjRefPROJ4::Ptr{UInt8}
 	ProjRefWKT::Ptr{UInt8}
 	row_order::Cint
 	z_id::Cint
 	ncid::Cint
-	xy_dim::Array_2_Cint
-	t_index::Array_3_Csize_t
+	xy_dim::NTuple{2, Cint}
+	t_index::NTuple{3, Csize_t}
 	data_offset::Csize_t
 	stride::UInt32
 	nan_value::Cfloat
 	xy_off::Cdouble
-	r_inc::Array_2_Cdouble
-	flags::Array_4_Uint8
+	r_inc::NTuple{2, Cdouble}
+	flags::NTuple{4, UInt8}
 	pocket::Ptr{UInt8}
-	mem_layout::Array_4_Uint8
+	mem_layout::NTuple{4, UInt8}
 	bcr_threshold::Cdouble
 	bcr_interpolant::UInt32
 	bcr_n::UInt32
@@ -1290,15 +415,15 @@ type GMT_GRID_HEADER
 	gn::UInt32
 	gs::UInt32
 	is_netcdf4::UInt32
-	z_chunksize::Array_2_Csize_t
+	z_chunksize::NTuple{2, Csize_t}
 	z_shuffle::UInt32
 	z_deflate_level::UInt32
 	z_scale_autoadust::UInt32
 	z_offset_autoadust::UInt32
-	xy_adjust::Array_2_Uint32
-	xy_mode::Array_2_Uint32
-	xy_unit::Array_2_Uint32
-	xy_unit_to_meter::Array_2_Cdouble
+	xy_adjust::NTuple{2, UInt32}
+	xy_mode::NTuple{2, UInt32}
+	xy_unit::NTuple{2, UInt32}
+	xy_unit_to_meter::NTuple{2, Cdouble}
 end
 type GMT_GRID
 	header::Ptr{GMT_GRID_HEADER}
@@ -1336,17 +461,11 @@ const GMT_IO_GAP = 32
 const GMT_IO_LINE_BREAK = 58
 const GMT_IO_NEXT_FILE = 64
 # end enum GMT_enum_ascii_input_return
-immutable Array_4_Ptr
-	d1::Ptr{UInt8}
-	d2::Ptr{UInt8}
-	d3::Ptr{UInt8}
-	d4::Ptr{UInt8}
-end
 immutable GMT_OGR
 	geometry::UInt32
 	n_aspatial::UInt32
 	region::Ptr{UInt8}
-	proj::Array_4_Ptr
+	proj::NTuple{4, Ptr{UInt8}}
 	_type::Ptr{UInt32}
 	name::Ptr{Ptr{UInt8}}
 	pol_mode::GMT_enum_pol
@@ -1358,10 +477,6 @@ immutable GMT_OGR_SEG
 	n_aspatial::UInt32
 	tvalue::Ptr{Ptr{UInt8}}
 	dvalue::Ptr{Cdouble}
-end
-immutable Array_2_Ptr
-	d1::Ptr{UInt8}
-	d2::Ptr{UInt8}
 end
 immutable GMT_DATASEGMENT
 	n_rows::UInt64
@@ -1381,7 +496,7 @@ immutable GMT_DATASEGMENT
 	lat_limit::Cdouble
 	ogr::Ptr{GMT_OGR_SEG}
 	next::Ptr{GMT_DATASEGMENT}
-	file::Array_2_Ptr
+	file::NTuple{2, Ptr{UInt8}}
 end
 immutable GMT_DATATABLE
 	n_headers::UInt32
@@ -1396,13 +511,7 @@ immutable GMT_DATATABLE
 	n_alloc::Cint
 	mode::GMT_enum_out
 	ogr::Ptr{GMT_OGR}
-	file::Array_2_Ptr
-end
-immutable Array_4_Uint64
-	d1::UInt64
-	d2::UInt64
-	d3::UInt64
-	d4::UInt64
+	file::NTuple{2, Ptr{UInt8}}
 end
 immutable GMT_DATASET
 	n_tables::UInt64
@@ -1414,12 +523,12 @@ immutable GMT_DATASET
 	table::Ptr{Ptr{GMT_DATATABLE}}
 	id::UInt64
 	n_alloc::Cint
-	dim::Array_4_Uint64
+	dim::NTuple{4, UInt64}
 	geometry::UInt32
 	alloc_level::UInt32
 	io_mode::UInt32
 	alloc_mode::UInt32
-	file::Array_2_Ptr
+	file::NTuple{2, Ptr{UInt8}}
 end
 immutable GMT_TEXTSEGMENT
 	n_rows::UInt64
@@ -1429,7 +538,7 @@ immutable GMT_TEXTSEGMENT
 	id::UInt64
 	mode::UInt32
 	n_alloc::Cint
-	file::Array_2_Ptr
+	file::NTuple{2, Ptr{UInt8}}
 	tvalue::Ptr{Ptr{UInt8}}
 end
 immutable GMT_TEXTTABLE
@@ -1441,7 +550,7 @@ immutable GMT_TEXTTABLE
 	id::UInt64
 	n_alloc::Cint
 	mode::UInt32
-	file::Array_2_Ptr
+	file::NTuple{2, Ptr{UInt8}}
 end
 immutable GMT_TEXTSET
 	n_tables::UInt64
@@ -1454,7 +563,7 @@ immutable GMT_TEXTSET
 	alloc_level::UInt32
 	io_mode::UInt32
 	alloc_mode::UInt32
-	file::Array_2_Ptr
+	file::NTuple{2, Ptr{UInt8}}
 end
 # begin enum GMT_enum_color
 typealias GMT_enum_color UInt32
@@ -1481,46 +590,41 @@ const GMT_CPT_NO_BNF = 1
 const GMT_CPT_EXTEND_BNF = 2
 # end enum GMT_enum_cptflags
 immutable GMT_FILL
-	rgb::Array_4_Cdouble
-	f_rgb::Array_4_Cdouble
-	b_rgb::Array_4_Cdouble
+	rgb::NTuple{4, Cdouble}
+	f_rgb::NTuple{4, Cdouble}
+	b_rgb::NTuple{4, Cdouble}
 	use_pattern::Bool
 	pattern_no::Int32
 	dpi::UInt32
-	pattern::Array_256_Uint8		# was char pattern[GMT_BUFSIZ];
+	pattern::NTuple{256, UInt8}		# was char pattern[GMT_BUFSIZ];
 end
 immutable GMT_LUT
 	z_low::Cdouble
 	z_high::Cdouble
 	i_dz::Cdouble
-	rgb_low::Array_4_Cdouble
-	rgb_high::Array_4_Cdouble
-	rgb_diff::Array_4_Cdouble
-	hsv_low::Array_4_Cdouble
-	hsv_high::Array_4_Cdouble
-	hsv_diff::Array_4_Cdouble
+	rgb_low::NTuple{4, Cdouble}
+	rgb_high::NTuple{4, Cdouble}
+	rgb_diff::NTuple{4, Cdouble}
+	hsv_low::NTuple{4, Cdouble}
+	hsv_high::NTuple{4, Cdouble}
+	hsv_diff::NTuple{4, Cdouble}
 	annot::UInt32
 	skip::UInt32
 	fill::Ptr{GMT_FILL}
 	label::Ptr{UInt8}
 end
 immutable GMT_BFN_COLOR
-	rgb::Array_4_Cdouble
-	hsv::Array_4_Cdouble
+	rgb::NTuple{4, Cdouble}
+	hsv::NTuple{4, Cdouble}
 	skip::UInt32
 	fill::Ptr{GMT_FILL}
-end
-immutable Array_3_GMT_BFN_COLOR
-	d1::GMT_BFN_COLOR
-	d2::GMT_BFN_COLOR
-	d3::GMT_BFN_COLOR
 end
 immutable GMT_PALETTE
 	n_headers::UInt32
 	n_colors::UInt32
 	cpt_flags::UInt32
 	range::Ptr{GMT_LUT}
-	patch::Array_3_GMT_BFN_COLOR
+	patch::NTuple{3, GMT_BFN_COLOR}
 	header::Ptr{Ptr{UInt8}}
 	id::UInt64
 	alloc_mode::UInt32
@@ -1533,10 +637,10 @@ immutable GMT_PALETTE
 	has_pattern::UInt32
 	skip::UInt32
 	categorical::UInt32
-	z_adjust::Array_2_Uint32
-	z_mode::Array_2_Uint32
-	z_unit::Array_2_Uint32
-	z_unit_to_meter::Array_2_Cdouble
+	z_adjust::NTuple{2, UInt32}
+	z_mode::NTuple{2, UInt32}
+	z_unit::NTuple{2, UInt32}
+	z_unit_to_meter::NTuple{2, Cdouble}
 end
 immutable GMT_IMAGE
 	_type::UInt32
@@ -1578,9 +682,9 @@ immutable GMT_VECTOR
 	_type::Ptr{UInt32}
 	#data::Ptr{GMT_UNIVECTOR}
 	data::Ptr{Ptr{Void}}
-	range::Array_2_Cdouble
-	command::Array_320_Uint8
-	remark::Array_160_Uint8
+	range::NTuple{2, Cdouble}
+	command::NTuple{320, UInt8}
+	remark::NTuple{160, UInt8}
 	id::UInt64
 	alloc_level::UInt32
 	alloc_mode::UInt32
@@ -1590,14 +694,6 @@ typealias GMT_enum_fmt UInt32
 const GMT_IS_ROW_FORMAT = 0
 const GMT_IS_COL_FORMAT = 1
 # end enum GMT_enum_fmt
-immutable Array_6_Cdouble
-	d1::Cdouble
-	d2::Cdouble
-	d3::Cdouble
-	d4::Cdouble
-	d5::Cdouble
-	d6::Cdouble
-end
 
 type GMT_MATRIX
 	n_rows::UInt64
@@ -1608,13 +704,13 @@ type GMT_MATRIX
 	dim::Csize_t
 	size::Csize_t
 	_type::UInt32
-	range::Array_6_Cdouble
+	range::NTuple{6, Cdouble}
 #	data::GMT_UNIVECTOR
 #	data::Union(Ptr{UInt8},Ptr{Int8},Ptr{UInt16},Ptr{Int16},Ptr{UInt32},Ptr{Int32},
 #		Ptr{UInt64},Ptr{Int64},Ptr{Float32},Ptr{Float64})
 	data::Ptr{Void}
-	command::Array_320_Uint8
-	remark::Array_160_Uint8
+	command::NTuple{320, UInt8}
+	remark::NTuple{160, UInt8}
 	id::UInt64
 	alloc_level::UInt32
 	alloc_mode::UInt32
@@ -1627,6 +723,7 @@ type GMT_RESOURCE
 	option::Ptr{GMT_OPTION} # Pointer to the corresponding module option
 	object_ID::Cint         # Object ID returned by GMT_Register_IO
 	pos::Cint               # Corresponding index into external object in|out arrays
+#	mode::Cint              # Either primary (0) or secondary (1) resource
 	object::Ptr{Void}       # Pointer to the registered GMT object
 end
 
@@ -1653,7 +750,7 @@ immutable GMTAPI_DATA_OBJECT
 	actual_family::GMT_enum_family	# May be GMT_IS_MATRIX|VECTOR when one of the others are created via those
 	method::UInt32              # One of GMT_IS_{FILE,STREAM,FDESC,DUPLICATE,REFERENCE} or sum with enum GMT_enum_via (GMT_VIA_{NONE,VECTOR,MATRIX,OUTPUT}); using unsigned type because sum exceeds enum GMT_enum_method
 	geometry::GMT_enum_geometry	# One of GMT_IS_{POINT|LINE|POLY|PLP|SURFACE|NONE}
-	wesn::Array_4_Cdouble		# Grid domain limits
+	wesn::NTuple{4, Cdouble}	# Grid domain limits
 	resource::Ptr{Void}			# Points to registered filename, memory location, etc., where data can be obtained from with GMT_Get_Data.
 	data::Ptr{Void}				# Points to GMT object that was read from a resource
 	#FILE *fp;					# Pointer to source/destination stream [For rec-by-rec procession, NULL if memory location]
@@ -1683,22 +780,22 @@ type GMTAPI_CTRL
 	# Users can run several GMT sessions concurrently; each session requires its own structure.
 	# Use GMTAPI_Create_Session to initialize a new session and GMTAPI_Destroy_Session to end it.
 
-	current_rec::Array_2_Uint64	# Current record number >= 0 in the combined virtual dataset (in and out)
+	current_rec::NTuple{2, UInt64}	# Current record number >= 0 in the combined virtual dataset (in and out)
 	n_objects::UInt32			# Number of currently active input and output data objects
 	unique_ID::UInt32			# Used to create unique IDs for duration of session
 	session_ID::UInt32			# ID of this session
 	unique_var_ID::UInt32		# Used to create unique object IDs (grid,dataset, etc) for duration of session
-	current_item::Array_2_Uint32	# Array number of current dataset being processed (in and out)
+	current_item::NTuple{2, UInt32}	# Array number of current dataset being processed (in and out)
 	pad::UInt32					# Session default for number of rows/cols padding for grids [2]
 	mode::UInt32				# 1 if called via external API (Matlab, Python) [0]
 	leave_grid_scaled::UInt32	# 1 if we dont want to unpack a grid after we packed it for writing [0]
-	registered::Array_2_Cint	# true if at least one source/destination has been registered (in and out)
-	io_enabled::Array_2_Cint	# true if access has been allowed (in and out)
+	registered::NTuple{2, Cint}	# true if at least one source/destination has been registered (in and out)
+	io_enabled::NTuple{2, Cint}	# true if access has been allowed (in and out)
 	n_objects_alloc::Csize_t	# Allocation counter for data objects
 	error::Int32				# Error code from latest API call [GMT_OK]
 	last_error::Int32			# Error code from previous API call [GMT_OK]
 	shelf::Int32				# Place to pass hidden values within API
-	io_mode::Array_2_Uint32		# 1 if access as set, 0 if record-by-record
+	io_mode::NTuple{2, UInt32}	# 1 if access as set, 0 if record-by-record
 	#GMT::Ptr{GMT_CTRL}			# Key structure with low-level GMT internal parameters
 	GMT::Ptr{Void}				# Maybe one day. Till than just keep it as void
 	object::Ptr{Ptr{GMTAPI_DATA_OBJECT}}	# List of registered data objects
@@ -1736,7 +833,7 @@ struct GMT_SESSION {
 	max_meminc::Csize_t
 	f_NaN::Float32				# Holds the IEEE NaN for floats */
 	d_NaN::Float64				# Holds the IEEE NaN for doubles */
-	no_rgb::Array_4_Cdouble		# To hold {-1, -1, -1, 0} when needed */
+	no_rgb::NTuple{4, Cdouble}	# To hold {-1, -1, -1, 0} when needed */
 	double u2u[4][4];		/* u2u is the 4x4 conversion matrix for cm, inch, m, pt */
 	char unit_name[4][8];		/* Full name of the 4 units cm, inch, m, pt */
 	struct GMT_HASH rgb_hashnode[GMT_N_COLOR_NAMES];/* Used to translate colornames to r/g/b */
