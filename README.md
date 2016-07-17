@@ -10,7 +10,7 @@ Install
 =======
 
     (Pkg.init()		# If you haven't done it yet)
-    Pkg.clone("git://github.com/joa-quim/GMT.jl.git")
+    Pkg.add("GMT")
 
 On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at /user/local/lib), I had to help
 Julia finding MY *libgmt.dylib*, with (this line should than be added to the ~/.juliarc.jl file)
