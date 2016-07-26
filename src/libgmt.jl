@@ -1,8 +1,8 @@
 # Julia wrapper for header: /cmn/ext/gmt/gmt-5.1.1/src/gmt.h
 # Automatically generated using Clang.jl wrap_c, version 0.0.0
 
-#@windows? (const thelib = "V:/build/src/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
-@windows? (const thelib = "gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
+@windows? (const thelib = "V:/build/src/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
+#@windows? (const thelib = "gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
 
 
 function GMT_Create_Session(tag::ASCIIString="GMT", pad=2, mode=0, print_func::Ptr{Void}=C_NULL)
@@ -30,7 +30,7 @@ function GMT_Create_Data(API::Ptr{Void}, family, geometry, mode, dim=C_NULL, wes
 		ret_type = Ptr{Void}			# Should be error instead
 	end
 
-	ptr = ccall((:GMT_Create_Data, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt32, UInt32, Ptr{UInt16},
+	ptr = ccall((:GMT_Create_Data, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt32, UInt32, Ptr{UInt64},
 		Ptr{Cdouble}, Ptr{Cdouble}, UInt32, Cint, Ptr{Void}), API, family, geometry, mode, dim, wesn, inc,
 		registration, pad, data)
 
@@ -252,20 +252,20 @@ function GMT_Report(API, vlevel::Int, txt::ASCIIString)
 	ccall((:GMT_Report, thelib), Void, (Ptr{Void}, Cint, Ptr{UInt8}), API, vlevel, txt)
 end
 
-function GMT_Encode_Options(V_API::Ptr{Void}, _module::ASCIIString, marker::Char, n_argin::Integer, head::Ref{Ptr{GMT_OPTION}}, n::Ptr{Int})
-	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Int32, Ref{Ptr{GMT_OPTION}},
-	        Ptr{UInt32}), V_API, _module, marker, n_argin, head, n)
+function GMT_Encode_Options(V_API::Ptr{Void}, _module, n_argin::Integer, head::Ref{Ptr{GMT_OPTION}}, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Int32, Ref{Ptr{GMT_OPTION}},
+	        Ptr{UInt32}), V_API, _module, n_argin, head, n)
 end
-function GMT_Encode_Options(V_API::Ptr{Void}, _module::Ptr{UInt8}, marker::Char, n_argin::Integer, head::Ref{Ptr{GMT_OPTION}}, n::Ptr{Int})
-	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Char, Int32, Ref{Ptr{GMT_OPTION}},
-	        Ptr{UInt32}), V_API, _module, marker, n_argin, head, n)
+function GMT_Encode_Options(V_API::Ptr{Void}, _module, n_argin::Integer, head, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Int32, Ptr{Ptr{Void}}, Ptr{UInt32}),
+	        V_API, _module, n_argin, head, n)
 end
 
-function GMT_Expand_Option(V_API::Ptr{Void}, opt::Ptr{GMT_OPTION}, marker::Char, arg::ASCIIString)
-	ccall((:GMT_Expand_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Char, Ptr{UInt8}), V_API, opt, marker, arg)
+function GMT_Expand_Option(V_API::Ptr{Void}, opt::Ptr{GMT_OPTION}, arg::ASCIIString)
+	ccall((:GMT_Expand_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Ptr{UInt8}), V_API, opt, arg)
 end
-function GMT_Expand_Option(V_API::Ptr{Void}, opt::Ptr{GMT_OPTION}, marker::Char, arg::Ptr{UInt8})
-	ccall((:GMT_Expand_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Char, Ptr{UInt8}), V_API, opt, marker, arg)
+function GMT_Expand_Option(V_API::Ptr{Void}, opt::Ptr{GMT_OPTION}, arg::Ptr{UInt8})
+	ccall((:GMT_Expand_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Ptr{UInt8}), V_API, opt, arg)
 end
 
 function gmt_core_module_info(API, candidate::ASCIIString)
@@ -298,7 +298,7 @@ function GMT_blind_change_struct_(API::Ptr{Void}, X, what, keyword::ASCIIString)
 	       API, X, what, keyword)
 end
 
-function GMT_Convert_Data(API::Ptr{Void}, In::Ptr{Void}, family_in::Integer, out::Ptr{Void}, family_out::Integer, flag::Ptr{Integer})
+function GMT_Convert_Data(API::Ptr{Void}, In::Ptr{Void}, family_in::Integer, out::Ptr{Void}, family_out::Integer, flag)
 	ccall((:GMT_Convert_Data, thelib), Ptr{Void}, (Ptr{Void}, Ptr{Void}, UInt32, Ptr{Void}, UInt32, Ptr{UInt32}), API, In,
 	       family_in, out, family_out, flag)
 end
@@ -317,7 +317,51 @@ function GMT_Read_VirtualFile(API::Ptr{Void}, str)
 end
 
 function GMT_Read_Group(API::Ptr{Void}, family::Integer, method::Integer, geometry::Integer, mode::Integer,
-                        wesn::C_NULL, sources::Ptr{Void}, n_items::Ptr{UInt32}, data::Ptr{Void})
+                        wesn, sources::Ptr{Void}, n_items::Ptr{UInt32}, data::Ptr{Void})
 	ccall((:GMT_Read_Group, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
 	       Ptr{Void}, Ptr{UInt32}, Ptr{Void}), API, family, method, geometry, mode, wesn, sources, n_items, data)
+end
+
+function GMT_Get_Index(API::Ptr{Void}, header::Ptr{GMT_GRID_HEADER}, row::Integer, col::Integer)
+	ccall((:GMT_Get_Index, thelib), UInt64, (Ptr{Void}, Ptr{GMT_GRID_HEADER}, Cint, Cint), API, header, row, col)
+end
+
+function GMT_Get_Pixel(API::Ptr{Void}, header::Ptr{GMT_GRID_HEADER}, row::Integer, col::Integer, layer::Integer)
+	ccall((:GMT_Get_Pixel, thelib), UInt64, (Ptr{Void}, Ptr{GMT_GRID_HEADER}, Cint, Cint, Cint), API, header, row, col, layer)
+end
+
+function GMT_Set_Index(API::Ptr{Void}, header::Ptr{GMT_GRID_HEADER}, code)
+	ccall((:GMT_Set_Index, thelib), Cint, (Ptr{Void}, Ptr{GMT_GRID_HEADER}, Ptr{UInt8}), API, header, code)
+end
+
+function GMT_Alloc_Segment(API::Ptr{Void}, family::Integer, n_rows::Integer, n_columns::Integer, header, S::Ptr{Void})
+	if (family == GMT_IS_DATASET)
+		ret_type = Ptr{GMT_DATASEGMENT}
+	elseif (family == GMT_IS_TEXTSET)
+		ret_type = Ptr{GMT_TEXTSEGMENT}
+	else
+		error("Bad family type")
+	end
+
+	ptr = ccall((:GMT_Alloc_Segment, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt64, UInt64, Ptr{UInt8}, Ptr{Void}),
+	             API, family, n_rows, n_columns, header, S)
+
+	convert(ret_type, ptr)
+end
+
+function GMT_Set_Columns(API::Ptr{Void}, n_columns::Integer, mode)
+	ccall((:GMT_Set_Columns, thelib), Cint, (Ptr{Void}, UInt32, UInt32), API, n_rows, mode)
+end
+
+function GMT_Duplicate_String(API::Ptr{Void}, str)
+	ccall((:GMT_Duplicate_String, thelib), Ptr{UInt8}, (Ptr{Void}, Ptr{UInt8}), API, str)
+end
+
+function GMT_Destroy_Group(API::Ptr{Void}, obj::Ptr{Void}, n_items::Integer)
+	ccall((:GMT_Destroy_Group, thelib), Cint, (Ptr{Void}, Ptr{Void}, Cuint), API, obj, n_items)
+end
+
+function GMT_Change_Layout(API::Ptr{Void}, family::Integer, code, mode::Integer, obj::Ptr{Void}, data::Ptr{Void})
+	ccall((:GMT_Change_Layout, thelib), Cint, (Ptr{Void}, Cuint, Ptr{UInt8}, Cuint, Ptr{Void}, Ptr{Void}),
+	       API, family, code, mode, obj, data)
 end
