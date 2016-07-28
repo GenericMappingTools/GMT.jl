@@ -317,7 +317,7 @@ function GMT_Read_VirtualFile(API::Ptr{Void}, str)
 end
 
 function GMT_Read_Group(API::Ptr{Void}, family::Integer, method::Integer, geometry::Integer, mode::Integer,
-                        wesn::C_NULL, sources::Ptr{Void}, n_items::Ptr{UInt32}, data::Ptr{Void})
+                        wesn, sources::Ptr{Void}, n_items::Ptr{UInt32}, data::Ptr{Void})
 	ccall((:GMT_Read_Group, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
 	       Ptr{Void}, Ptr{UInt32}, Ptr{Void}), API, family, method, geometry, mode, wesn, sources, n_items, data)
 end
