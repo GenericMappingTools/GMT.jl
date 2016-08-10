@@ -20,7 +20,7 @@ GM         = "C:/programs/GraphicsMagick/gm"
 
 function run_tests(what::ASCIIString)
 	if (what == "all_examples")
-		for (k = 1:45)
+		for k = 1:46
 			ex = @sprintf("ex%02d", k)
 			gmtest(ex)
 		end
@@ -110,7 +110,7 @@ function do_tests()
 	            "spheres" "potential";
 	            "measure" "gmtspatial"]
 
-	for (k = 1:size(tests,1))
+	for k = 1:size(tests,1)
 		gmtest(tests[k,1], tests[k,2])
 	end
 end
