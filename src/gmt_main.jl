@@ -1,8 +1,8 @@
 global API			# OK, so next times we'll use this one
 
 type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
-	ProjectionRefPROJ4::ASCIIString
-	ProjectionRefWKT::ASCIIString
+	ProjectionRefPROJ4::CHAR
+	ProjectionRefWKT::CHAR
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
 	n_rows::Int
@@ -10,21 +10,21 @@ type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
 	n_bands::Int
 	registration::Int
 	NoDataValue::Float64
-	title::ASCIIString
-	remark::ASCIIString
-	command::ASCIIString
-	DataType::ASCIIString
+	title::CHAR
+	remark::CHAR
+	command::CHAR
+	DataType::CHAR
 	x::Array{Float64,1}
 	y::Array{Float64,1}
 	z::Array{Float32,2}
-	x_units::ASCIIString
-	y_units::ASCIIString
-	z_units::ASCIIString
+	x_units::CHAR
+	y_units::CHAR
+	z_units::CHAR
 end
 
 type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
-	ProjectionRefPROJ4::ASCIIString
-	ProjectionRefWKT::ASCIIString
+	ProjectionRefPROJ4::CHAR
+	ProjectionRefWKT::CHAR
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
 	n_rows::Int
@@ -32,16 +32,16 @@ type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
 	n_bands::Int
 	registration::Int
 	NoDataValue::Float64
-	title::ASCIIString
-	remark::ASCIIString
-	command::ASCIIString
-	DataType::ASCIIString
+	title::CHAR
+	remark::CHAR
+	command::CHAR
+	DataType::CHAR
 	x::Array{Float64,1}
 	y::Array{Float64,1}
 	image::Array{UInt8,3}
-	x_units::ASCIIString
-	y_units::ASCIIString
-	z_units::ASCIIString
+	x_units::CHAR
+	y_units::CHAR
+	z_units::CHAR
 	colormap::Array{Clong,1}
 	nColors::Int
 	alpha::Array{UInt8,2}
@@ -77,11 +77,11 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
 
     gmt("pscoast -R-10/0/35/45 -B1 -W1 -Gbrown -JM14c -P -V > lixo.ps")
 """
-function gmt(cmd::ASCIIString, args...)
+function gmt(cmd::CHAR, args...)
 	global API
 	
 	# ----------- Minimal error checking ------------------------
-	if (~isa(cmd, ASCIIString))
+	if (~isa(cmd, CHAR))
 		error("gmt: first argument must always be a string")
 	end
 	n_argin = length(args)
@@ -145,14 +145,14 @@ function gmt(cmd::ASCIIString, args...)
 
 	#X = pointer_to_array(X,n_items)     # The array of GMT_RESOURCE structs
 	XX = Array(GMT_RESOURCE, 1, n_items)
-	for (k = 1:n_items)
+	for k = 1:n_items
 		XX[k] = unsafe_load(X, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
 	end
 	X = XX
 
 	# 5. Assign input (from julia) and output (from GMT) resources
 	name_PS = ""
-	for (k = 1:n_items)                 # Number of GMT containers involved in this module call */
+	for k = 1:n_items                 # Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0)
 			error("GMT: Expected a Matrix for input")
 		end
@@ -184,7 +184,7 @@ function gmt(cmd::ASCIIString, args...)
 	# 7. Hook up module GMT outputs to Julia array
 	# But first cout the number of outputs
 	n_out = 0
-	for (k = 1:n_items)                     # Number of GMT containers involved in this module call
+	for k = 1:n_items                     # Number of GMT containers involved in this module call
 		if (X[k].direction == GMT_IN) continue 	end
 		n_out = n_out + 1
 	end
@@ -193,7 +193,7 @@ function gmt(cmd::ASCIIString, args...)
 		out = cell(n_out)
 	end
 
-	for (k = 1:n_items)                     # Number of GMT containers involved in this module call
+	for k = 1:n_items                     # Number of GMT containers involved in this module call
 		if (X[k].direction == GMT_IN) continue 	end      # ONly looking for stuff coming OUT of GMT here
 		if ((X[k].object = GMT_Retrieve_Data(API, X[k].object_ID)) == C_NULL)
 			error("GMT: Error retrieving object from GMT")
@@ -217,13 +217,13 @@ function gmt(cmd::ASCIIString, args...)
 	end
 
 	# 8. Free all GMT containers involved in this module call
-	for (k = 1:n_items) 
+	for k = 1:n_items 
 		#if (X[k].family != GMT_IS_TEXTSET) 		# Gave up. The GMT_IS_TEXTSET will have to leak (blame the immutables)
 			ppp = X[k].object
 			if (GMT_Destroy_Data(API, Ref([X[k].object])) != GMT.GMT_NOERROR)
 				error("GMT: Failed to destroy object used in the interface bewteen GMT and Julia")
 			else 	# Success, now make sure we dont destroy the same pointer more than once
-				for (kk = k+1:n_items)
+				for kk = k+1:n_items
 					if (X[kk].object == ppp) 	X[kk].object = C_NULL;		end
 				end
 			end
@@ -273,7 +273,7 @@ function create_cmd(LL)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function strtok(args, delim::ASCIIString=" ")
+function strtok(args, delim::CHAR=" ")
 # A Matlab like strtok function
 	tok = "";	r = ""
 	if (~isvalid(args))
@@ -332,8 +332,8 @@ function get_grid(API, object)
 	t   = pointer_to_array(G.data, my * mx)
 	z   = zeros(Float32, ny, nx)
 
-	for (col = 1:nx)
-		for (row = 1:ny)
+	for col = 1:nx
+		for row = 1:ny
 			#ij = GMT_IJP(gmt_hdr, row, col)
 			ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
 			z[MEXG_IJ(row, col, ny)] = t[ij]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
@@ -431,7 +431,7 @@ function get_cpt(API, object::Ptr{Void})
 	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 	out = GMTJL_CPT(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), zeros(2)*NaN)
 
-	for (j = 1:C.n_colors)       # Copy r/g/b from palette to Julia array
+	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
 		gmt_lut = unsafe_load(C.range, j)
 		out.colormap[j, 1] = gmt_lut.rgb_low[1]
 		out.colormap[j, 2] = gmt_lut.rgb_low[2]
@@ -472,13 +472,13 @@ function get_textset(API, object::Ptr{Void})
 	# The segment information is lost when returned to Julia
 
 	k = 0
-	for (seg = 1:p[1].n_segments)
+	for seg = 1:p[1].n_segments
 		S = pointer_to_array(pointer_to_array(p[1].segment,1)[seg],seg)	# p[1].segment::Ptr{Ptr{GMT.GMT_TEXTSEGMENT}}
 		if (p[1].n_segments > 1)
 			C[k] = @sprintf("> %s", bytestring(S[1].header))
 			k += 1 
 		end
-		for (row = 1:S[1].n_rows)
+		for row = 1:S[1].n_rows
 			k += 1
 			C[k] = bytestring(pointer_to_array(S[1].record, row)[row])
 		end
@@ -544,9 +544,9 @@ function get_table(API, object)
 		error("get_table: Unsupported data type in GMT matrix input.")
 	end
 
-	for (c = 1:M.n_columns)
+	for c = 1:M.n_columns
 		tt = pointer_to_array(t[c], M.n_rows)
-		for (r = 1:M.n_rows)
+		for r = 1:M.n_rows
 			out[r, c] = tt[r]
 		end
 	end
@@ -556,8 +556,8 @@ function get_table(API, object)
 	if (M.shape == GMT.GMT_IS_COL_FORMAT)  # Easy, just copy
 		out = copy!(out, t)
 	else	# Must transpose
-		for (col = 1:M.n_columns)
-			for (row = 1:M.n_rows)
+		for col = 1:M.n_columns
+			for row = 1:M.n_rows
 				#ij = (row - 1) * M.n_columns + col
 				ij = (col - 1) * M.n_rows + col
 				out[row, col] = t[ij]
@@ -584,7 +584,7 @@ function GMTJL_register_IO(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
 		ID  = GMT_Get_ID(API, GMT_IS_IMAGE, X.direction, obj)
 	elseif (X.family == GMT_IS_DATASET)
 		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
-		if (X.direction == GMT_IN && ((eltype(ptr) == Array{Any}) || (eltype(ptr) == ASCIIString)))		# Got TEXTSET input
+		if (X.direction == GMT_IN && ((eltype(ptr) == Array{Any}) || (eltype(ptr) == CHAR)))		# Got TEXTSET input
 			obj = GMTJL_Text_init(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
 		else 		# Get a matrix container, and if input we associate it with the Julia pointer
 			obj = GMTJL_dataset_init(API, module_input, ptr, X.direction)
@@ -654,8 +654,8 @@ function GMTJL_grid_init(API::Ptr{Void}, module_input, Grid, grd, hdr, pad::Int=
 	n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
 	t = zeros(Float32, n_rows+2*pad, n_cols+2*pad)
 
-	for (col = 1:n_cols)
-		for (row = 1:n_rows)
+	for col = 1:n_cols
+		for row = 1:n_rows
 			ij = GMT_IJP(row, col, mx, pad, pad)
 			t[ij] = grd[MEXG_IJ(row, col, n_rows)]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
 		end
@@ -715,9 +715,9 @@ function GMTJL_image_init(API::Ptr{Void}, module_input, img, hdr::Array{Float64}
 		n_rows = size(img, 1);		n_cols = size(img, 2);		n_pages = size(img, 3)
 		t = zeros(UInt32, n_rows, n_cols, n_pages)
 
-		for (col = 1:n_cols)
+		for col = 1:n_cols
 			ic = col * n_rows
-			for (row = 1:n_rows)
+			for row = 1:n_rows
 				ij = ic - row + 1
 				t[row, col] = grd[ij]
 			end
@@ -881,7 +881,7 @@ function GMTJL_CPT_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 		Pb = unsafe_load(P)
 
 		#dz = (cpt.range[2] - cpt.range[1]) / Pb.n_colors
-		for (j = 1:Pb.n_colors)
+		for j = 1:Pb.n_colors
 			glut = unsafe_load(Pb.range, j)
 			rgb_low  = (cpt.colormap[j,1], cpt.colormap[j,2], cpt.colormap[j,3], cpt.alpha[j])
 			rgb_high = (cpt.colormap[j+one,1], cpt.colormap[j+one,2], cpt.colormap[j+one,3], cpt.alpha[j+one])
@@ -922,7 +922,7 @@ function GMTJL_Text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family
 
 		#if (module_input) family |= GMT_VIA_MODULE_INPUT;	gmtmex_parser.c has this which is not ported yet
 	
-		if (!isa(txt, Array{Any}) && isa(txt, ASCIIString))
+		if (!isa(txt, Array{Any}) && isa(txt, CHAR))
 			txt = Any[txt]
 		elseif (isa(txt, Matrix))
 			txt = num2str(txt)			# Convert the numeric matrix into a cell array of strings
@@ -949,7 +949,7 @@ function GMTJL_Text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family
 		TTABLE  = unsafe_load(unsafe_load(T0[1].table,1),1)		# ::GMT.GMT_TEXTTABLE
 		S0 = unsafe_load(unsafe_load(TTABLE.segment,1),1)		# ::GMT.GMT_TEXTSEGMENT
 
-		for (rec = 1:dim[3])
+		for rec = 1:dim[3]
 			unsafe_store!(S0.record, pointer(txt[rec]), rec)
 		end
 		
@@ -1052,7 +1052,7 @@ function strncmp(str1, str2, num)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function mutateit(API::Ptr{Void}, t_type, member::ASCIIString, val)
+function mutateit(API::Ptr{Void}, t_type, member::CHAR, val)
 	# Mutate the member 'member' of an immutable type whose pointer is T_TYPE
 	# VAL is the new value of the MEMBER field.
 	# It's up to the user to guarantie that MEMBER and VAL have the same data type
@@ -1084,7 +1084,7 @@ function num2str(mat)
 # Pseudo num2str, but returns all in a cell array of strings and no precision control yet.
 	n_cols = size(mat, 2);		n_rows = size(mat, 1)
 	out = cell(n_rows, 1)
-	for (nr = 1:n_rows)
+	for nr = 1:n_rows
 		out[nr] = join([@sprintf("%s ", mat[k]) for k=1:n_cols])
 	end
 	return out

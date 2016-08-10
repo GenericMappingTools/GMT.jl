@@ -1,3 +1,8 @@
+if (vVERSIONer.minor <= 4)
+	typealias CHAR ASCIIString
+else
+	typealias CHAR String
+end
 const GMT_B_OPT = "-B<args>"
 const GMT_I_OPT = "-I<xinc>[<unit>][=|+][/<yinc>[<unit>][=|+]]"
 const GMT_J_OPT = "-J<args>"
