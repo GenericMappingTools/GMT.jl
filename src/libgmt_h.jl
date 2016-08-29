@@ -1,4 +1,4 @@
-if (vVERSIONer.minor <= 4)
+if (VERSION.minor <= 4)
 	typealias CHAR ASCIIString
 else
 	typealias CHAR String
