@@ -5,7 +5,7 @@
 #@windows? (const thelib = "V:/build/src/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
 #@windows? (const thelib = "gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
 
-function GMT_Create_Session(tag::CHAR="GMT", pad=2, mode=0, print_func::Ptr{Void}=C_NULL)
+function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Void}=C_NULL)
 	ccall( (:GMT_Create_Session, thelib), Ptr{Void}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Void}), tag, pad, mode, print_func)
 end
 
@@ -100,7 +100,7 @@ function GMT_End_IO(API::Ptr{Void}, direction::UInt32, mode::UInt32)
 end
 
 function GMT_Write_Data(API::Ptr{Void}, family::Integer, method::Integer, geometry::Integer, mode::Integer,
-	wesn, output::CHAR, data)
+	wesn, output::String, data)
 
 	err = ccall((:GMT_Write_Data, thelib), Cint, (Ptr{Void}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
 		Ptr{UInt8}, Ptr{Void}), API, family, method, geometry, mode, wesn, output, data)
@@ -118,7 +118,7 @@ function GMT_Put_Record(API::Ptr{Void}, mode::UInt32, record::Ptr{Void})
   ccall( (:GMT_Put_Record, thelib), Cint, (Ptr{Void}, UInt32, Ptr{Void}), API, mode, record)
 end
 
-function GMT_Encode_ID(API::Ptr{Void}, fname::CHAR, object_ID::Integer)
+function GMT_Encode_ID(API::Ptr{Void}, fname::String, object_ID::Integer)
 	err = ccall((:GMT_Encode_ID, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Cint), API, fname, object_ID)
 end
 
@@ -155,19 +155,19 @@ function GMT_Get_Common(API::Ptr{Void}, option::UInt32, par::Ptr{Cdouble})
   ccall( (:GMT_Get_Common, thelib), Cint, (Ptr{Void}, UInt32, Ptr{Cdouble}), API, option, par)
 end
 
-function GMT_Get_Default(API::Ptr{Void}, keyword::CHAR, value)
+function GMT_Get_Default(API::Ptr{Void}, keyword::String, value)
 	ccall( (:GMT_Get_Default, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 end
 
-function GMT_Get_Value(API::Ptr{Void}, arg::CHAR, par::Ptr{Cdouble})
+function GMT_Get_Value(API::Ptr{Void}, arg::String, par::Ptr{Cdouble})
 	ccall( (:GMT_Get_Value, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Cdouble}), API, arg, par)
 end
-function GMT_Get_Values(API::Ptr{Void}, arg::CHAR, par::Ptr{Cdouble}, maxpar::Integer)
+function GMT_Get_Values(API::Ptr{Void}, arg::String, par::Ptr{Cdouble}, maxpar::Integer)
 	ccall( (:GMT_Get_Values, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Cdouble}, Cint), API, arg, par, maxpar)
 end
 
 function GMT_Call_Module(API::Ptr{Void}, _module=C_NULL, mode::Integer=0, args=C_NULL)
-	if (isa(args,CHAR))	args = pointer(args)	end
+	if (isa(args,String))	args = pointer(args)	end
 	ccall((:GMT_Call_Module, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Cint, Ptr{Void}), API, _module, mode, args)
 end
 
@@ -175,7 +175,7 @@ function GMT_Create_Options(API::Ptr{Void}, argc::Integer, args)
 	# VERSATILIZAR PARA O CASO DE ARGS SER STRING OU ARRAY DE STRINGS
 	ccall((:GMT_Create_Options, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, Cint, Ptr{Void}), API, argc, args)
 end
-GMT_Create_Options(API::Ptr{Void}, argc::Integer, args::CHAR) = 
+GMT_Create_Options(API::Ptr{Void}, argc::Integer, args::String) = 
                    GMT_Create_Options(API, argc, convert(Ptr{Void},pointer(args)))
 
 function GMT_Make_Option(API::Ptr{Void}, option::UInt8, arg::Ptr{UInt8})
@@ -272,12 +272,12 @@ function GMT_grid_flip_vertical(gridp, n_cols::Integer, n_rows::Integer, n_strid
 	       gridp, n_cols, n_rows, n_stride, cell_size)
 end
 
-function GMT_blind_change_struct(API::Ptr{Void}, X, what, keyword::CHAR, off::Integer)
+function GMT_blind_change_struct(API::Ptr{Void}, X, what, keyword::String, off::Integer)
 	ccall((:GMT_blind_change_struct, thelib), Cint, (Ptr{Void}, Ptr{Void}, Ptr{Void}, Ptr{UInt8}, Csize_t),
 	       API, X, what, keyword, off)
 end
 
-function GMT_blind_change_struct_(API::Ptr{Void}, X, what, keyword::CHAR)
+function GMT_blind_change_struct_(API::Ptr{Void}, X, what, keyword::String)
 	ccall((:GMT_blind_change_struct_, thelib), Cint, (Ptr{Void}, Ptr{Void}, Ptr{Void}, Ptr{UInt8}),
 	       API, X, what, keyword)
 end
