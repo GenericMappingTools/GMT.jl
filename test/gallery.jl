@@ -8,14 +8,14 @@ global g_root_dir = "C:/progs_cygw/GMTdev/gmt5/trunk/"
 global out_path = "V:/"			# Leave it empty to write files in current directory
 
 # -----------------------------------------------------------------------------------------------------
-function gallery(opt::ASCIIString)
+function gallery(opt::CHAR)
 # If called with one input only, the other two must be in the globals below.
 	global g_root_dir, out_path
 	gallery(opt, g_root_dir, out_path)
 end
 
 # -----------------------------------------------------------------------------------------------------
-function gallery(opt::ASCIIString, g_root_dir::ASCIIString, out_path::ASCIIString)
+function gallery(opt::CHAR, g_root_dir::CHAR, out_path::CHAR)
 # This function is useful when we want to call the examples from a loop and build OPT as a string
 # All of this because I don't know how to make an 'eval("string")' call a function.
 	if (opt == "ex01")			ps, path = ex01(g_root_dir, out_path)
@@ -79,6 +79,7 @@ function ex01(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex01/"
 	ps = out_path * "example_01.ps"
 
+	gmt("destroy")
 	gmt("gmtset MAP_GRID_CROSS_SIZE_PRIMARY 0 FONT_ANNOT_PRIMARY 10p PROJ_LENGTH_UNIT inch PS_MEDIA letter")
 	gmt("destroy")
 	gmt("psbasemap -R0/6.5/0/7.5 -Jx1i -B0 -P -K > " * ps)
@@ -101,6 +102,7 @@ function ex02(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex02/"
 	ps = out_path * "example_02.ps"
 
+	gmt("destroy")
 	gmt("gmtset FONT_TITLE 30p MAP_ANNOT_OBLIQUE 0 PROJ_LENGTH_UNIT inch PS_MEDIA letter")
 	gmt("destroy")
 	g_cpt = gmt("makecpt -Crainbow -T-2/14/2")
@@ -126,6 +128,7 @@ function ex03(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex03/"
 	ps = out_path * "example_03.ps"
 
+	gmt("destroy")
 	gmt("gmtset -Du")
 	gmt("destroy")
 	
@@ -217,20 +220,14 @@ function ex03(g_root_dir, out_path)
 	gmt("psxy -Bxa1f3p+l\"Wavelength (km)\" -Bya0.25f0.05+l\"Coherency@+2@+\" -BWeSn+g240/255/240" *
 		" -JX-4il/3.75i -R1/1000/0/1 -P -K -X2.5i -Sc0.07i -Gpurple -Ey/0.5p -Y1.5i > " * ps, spects[1].data[:,[1,16,17]])
 	
-	gmt("pstext -R0/4/0/3.75 -Jx1i -F+f18p,Helvetica-Bold+jTR -O -K >> " * ps, "3.85 3.6 Coherency@+2@+")
+	gmt("pstext -R -J -F+cTR+f18p,Helvetica-Bold -Dj0.1i -O -K >> " * ps, "Coherency@+2@+")
 	gmt("psxy -Bxa1f3p -Bya1f3p+l\"Power (mGal@+2@+km)\" -BWeSn+t\"Ship and Satellite Gravity\"+g240/255/240" *
 		" -Gred -ST0.07i -O -R1/1000/0.1/10000 -JX-4il/3.75il -Y4.2i -K -Ey/0.5p >> " * ps, spects[1].data[:,1:3])
 	gmt("psxy -R -JX -O -K -Gblue -Sc0.07i -Ey/0.5p >> " * ps, spects[1].data[:,[1,4,5]])
-	gmt("pstext -R0/4/0/3.75 -Jx -F+f18p,Helvetica-Bold+jTR -O -K >> " * ps, "3.9 3.6 Input Power")
-	gmt("psxy -R -Jx -O -K -Gwhite -L -Wthicker >> " * ps,
-		[0.25 0.25
-		1.4  0.25
-		1.4  0.9
-		0.25 0.9])
-	gmt("psxy   -R -Jx -O -K -ST0.07i -Gred >> " * ps, [0.4 0.7])
-	gmt("pstext -R -Jx -F+f14p,Helvetica-Bold+jLM -O -K >> " * ps, "0.5 0.7 Ship")
-	gmt("psxy   -R -Jx -O -K -Sc0.07i -Gblue >> " * ps, [0.4 0.4])
-	gmt("pstext -R -Jx -F+f14p,Helvetica-Bold+jLM -O >> " * ps, "0.5 0.4 Satellite")
+	gmt("pstext -R0/4/0/3.75 -Jx1i -F+cTR+f18p,Helvetica-Bold -Dj0.1i -O -K >> " * ps, "Input Power")
+
+	legend = ["S 0.1i T 0.07i red - 0.3i Ship", "S 0.1i c 0.07i blue - 0.3i Satellite"]
+	gmt("pslegend -R -J -O -DjBL+w1.2i+o0.25i -F+gwhite+pthicker --FONT_ANNOT_PRIMARY=14p,Helvetica-Bold >> " * ps, legend)
 
 	# Now we wonder if removing that large feature at 250 km would make any difference.
 	# We could throw away a section of data with $AWK or sed or head and tail, but we
@@ -304,15 +301,13 @@ function ex05(g_root_dir, out_path)
 	gmt("gmtset -Du")
 	gmt("destroy")
 	Gsombrero = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
-	fid = open("gray.cpt","w")
-	println(fid, "-5 128 5 128");
-	close(fid);
+	C = gmt("makecpt -C128 -T-5,5 -N")
 	Gintensity = gmt("grdgradient -A225 -Nt0.75", Gsombrero);
 	gmt("grdview -JX6i -JZ2i -B5 -Bz0.5 -BSEwnZ -N-1+gwhite -Qs -I -X1.5i" *
-		" -Cgray.cpt -R-15/15/-15/15/-1/1 -K -p120/30 > " * ps, Gintensity, Gsombrero)
+		" -C -R-15/15/-15/15/-1/1 -K -p120/30 > " * ps, Gintensity, Gsombrero, C)
 	gmt("pstext -R0/11/0/8.5 -Jx1i -F+f50p,ZapfChancery-MediumItalic+jBC -O >> " * ps,
 		"4.1 5.5 z(r) = cos (2@~p@~r/8) @~\\327@~e@+-r/10@+")
-	rm("gray.cpt");		rm("gmt.conf")
+	rm("gmt.conf")
 	return ps, d_path
 end
 
@@ -396,7 +391,7 @@ function ex09(g_root_dir, out_path)
 	gmt("psxy -R -J -O -K " * d_path * "fz.xy    -Wthinner,- >> " * ps)
 	# Take label from segment header and plot near coordinates of last record of each track
 	t = gmt("gmtconvert -El " * d_path * "tracks.txt")
-	for k = 1:length(t)	t[k].text = [t[k].header]	end
+	for k = 1:length(t)		t[k].text = [t[k].header]	end
 	gmt("pstext -R -J -F+f10p,Helvetica-Bold+a50+jRM+h -D-0.05i/-0.05i -O >> " * ps, t)
 	rm("gmt.conf")
 	return ps, d_path
@@ -421,7 +416,7 @@ function ex10(g_root_dir, out_path)
 			array[row,col] = Float64(str[row,col])
 		end
 	end
-	t = cell(nl,1)
+	t = Array(Any,nl,1)
 	for k = 1:nl
 		t[k] = @sprintf("%d %d %d\n",array[k,1], array[k,2], sum(array[k,3:end]))
 	end
@@ -543,7 +538,7 @@ function ex12(g_root_dir, out_path)
 	gmt("psxy " * d_path * "table_5.11 -R -J -O -K -Sc0.12i -Gwhite -Wthinnest >> " * ps)
 	t = readdlm(d_path * "table_5.11")
 	nl = size(t,1)
-	c = cell(nl,1)
+	c = Array{Any}(nl,1)
 	for k = 1:nl
 		c[k] = @sprintf("%f %f %d\n", t[k,1], t[k,2], k-1)
 	end
@@ -574,6 +569,7 @@ function ex13(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex13/"
 	ps = out_path * "example_13.ps"
 
+	gmt("destroy")
 	gmt("gmtset -Du")
 	gmt("destroy")
 	Gz = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL =")
@@ -808,14 +804,12 @@ function ex18(g_root_dir, out_path)
 	area = gmt("grdvolume -C50 -Sk", Gtmp); 	# | cut -f2`
 	volume = gmt("grdvolume -C50 -Sk -fg", Gtmp); # | cut -f3`
 
-	gmt("psxy -R -J -A -O -K -L -Wthin -Gwhite >> " * ps,
-		[-148.5	52.75
-		-141	52.75
-		-141	53.75
-		-148.5	53.75])
-	gmt("pstext -R -J -O -F+f14p,Helvetica-Bold+jLM >> " * ps,
-		Any[@sprintf("-148 53.08 Areas: %.2f km@+2@+", area[1].data[2])
-		 @sprintf("-148 53.42 Volumes: %d mGal\\264km@+2@+", volume[1].data[3])])
+	gmt("pstext -R -J -O -M -Gwhite -Wthin -Dj0.3i -F+f14p,Helvetica-Bold+jLB -C0.1i >> " * ps,
+ 		Any["> -149 52.5 14p 2.6i j"
+		    @sprintf("Volumes: %d mGal\\264km@+2@+", volume[1].data[3])
+ 		    ""
+		    @sprintf("Areas: %.2f km@+2@+", area[1].data[2])])
+
 	rm("gmt.conf")
 	return ps, d_path
 end
@@ -843,7 +837,7 @@ function ex19(g_root_dir, out_path)
 	gmt("pscoast -R -J -O -K -Dc -A5000 -Wthinnest >> " * ps)
 	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,red=thinner >> " * ps, "0 20 12TH INTERNATIONAL")
 	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,red=thinner >> " * ps, "0 -10 GMT CONFERENCE")
-	gmt("pstext -R -J -O -K -F+f18p,Helvetica-Bold,green=thinnest >> " * ps, "0 -30 Honolulu, Hawaii, April 1, 2016")
+	gmt("pstext -R -J -O -K -F+f18p,Helvetica-Bold,green=thinnest >> " * ps, "0 -30 Honolulu, Hawaii, April 1, 2017")
 
 	# Then show example of color patterns and placing a PostScript image
 	gmt("pscoast -R -J -O -K -Dc -A5000 -Gp100/86:FredByellow -Sp100/" * d_path * "circuit.ras -B0 -Y-3.25i >> " * ps)
@@ -859,7 +853,7 @@ function ex19(g_root_dir, out_path)
 	gmt("pscoast -R -J -O -K -Dc -A5000 -Wthinnest >> " * ps)
 	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,red=thinner >> " * ps, "0 20 12TH INTERNATIONAL")
 	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,red=thinner >> " * ps, "0 -10 GMT CONFERENCE")
-	gmt("pstext -R -J -O -F+f18p,Helvetica-Bold,green=thinnest >> " * ps, "0 -30 Honolulu, Hawaii, April 1, 2016")
+	gmt("pstext -R -J -O -F+f18p,Helvetica-Bold,green=thinnest >> " * ps, "0 -30 Honolulu, Hawaii, April 1, 2017")
 	rm("lat.cpt");	rm("gmt.conf")
 	return ps, d_path
 end
@@ -1102,7 +1096,7 @@ function ex23(g_root_dir, out_path)
 		"-Wcthinnest,white,- >> " * ps, Gdist)
 	
 	# Location info for 5 other cities + label justification
-	cities = cell(5)
+	cities = Array(Any, 5)
 	cities[1] = "105.87 21.02 LM HANOI"
 	cities[2] = "282.95 -12.1 LM LIMA"
 	cities[3] = "178.42 -18.13 LM SUVA"
@@ -1130,7 +1124,7 @@ function ex23(g_root_dir, out_path)
 
 	# Sample the distance grid at the cities and use the distance in km for labels
 	dist = gmt("grdtrack cities.txt -G", Gdist);
-	t = cell(5);
+	t = Array(Any, 5);
 	for k = 1:5
 		t[k] = @sprintf("%f %f %d", dist[1].data[k,1], dist[1].data[k,2], dist[1].data[k,end]);
 	end
@@ -1523,8 +1517,8 @@ function ex33(g_root_dir, out_path)
 	# gmt grdcut etopo1m_grd.nc -R118W/107W/49S/42S -Gspac.nc
 	gmt("gmtset -Du")
 	gmt("destroy")
-	z_cpt = gmt("makecpt -Crainbow -T-5000/-2000");
-	Gspac_int = gmt("grdgradient " * d_path * "spac.nc -A15 -Ne0.75 -G");
+	z_cpt = gmt("makecpt -Crainbow -T-5000/-2000")
+	Gspac_int = gmt("grdgradient " * d_path * "spac.nc -A15 -Ne0.75 -G")
 	gmt("grdimage " * d_path * "spac.nc -I -C -JM6i -P -Baf -K -Xc --FORMAT_GEO_MAP=dddF > " * ps, Gspac_int, z_cpt)
 	# Select two points along the ridge
 	ridge_pts = [-111.6 -43.0; -113.3 -47.5];
@@ -1536,8 +1530,8 @@ function ex33(g_root_dir, out_path)
 	table = gmt("grdtrack -G" * d_path * "spac.nc -C400k/2k/10k -Sm+sstack.txt", ridge_pts)
 	gmt("psxy -R -J -O -K -W0.5p >> " * ps, table)
 	# Show upper/lower values encountered as an envelope
-	env = gmt("gmtconvert stack.txt -o0,5");
-	env = [env; gmt("gmtconvert stack.txt -o0,6 -I -T")];		# Concat the two matrices
+	env = gmt("gmtconvert stack.txt -o0,5")
+	env = [env; gmt("gmtconvert stack.txt -o0,6 -I -T")]		# Concat the two matrices
 	gmt("psxy -R-200/200/-3500/-2000 -Bxafg1000+l\"Distance from ridge (km)\" -Byaf+l\"Depth (m)\" -BWSne" *
 		" -JX6i/3i -O -K -Glightgray -Y6.5i >> " * ps, env)
 	gmt("psxy -R -J -O -K -W3p stack.txt >> " * ps)
