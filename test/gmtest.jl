@@ -9,6 +9,9 @@
 #	Currently only family = "scripts" is implemented (means run test from the 'scripts' dir. TEST_DIR is ignored
 #		example: gmtest("GMT_insert", "", "scripts")
 
+using Compat
+import Compat.String
+
 global g_root_dir, out_path, GM
 include("gallery.jl")
 
@@ -18,19 +21,21 @@ out_path   = "V:/"		# Set this if you want to save the PS files in a prticular p
 GM         = "C:/programs/GraphicsMagick/gm"
 
 
-function run_tests(what::ASCIIString)
+function run_tests(what::String)
 	if (what == "all_examples")
-		for (k = 1:45)
+		for k = 1:46
 			ex = @sprintf("ex%02d", k)
 			gmtest(ex)
 		end
 	elseif (what == "all_tests")
 		do_tests()
+	elseif (what[1] == 'e' && what[2] == 'x')
+		gmtest(what)
 	end
 end
 
 # ----------------------------------------------------------------------------------------
-gmtest(test, test_dir::ASCIIString, family::ASCIIString) = gmtest(test, test_dir, family, 3)
+gmtest(test, test_dir::String, family::String) = gmtest(test, test_dir, family, 3)
 function gmtest(test, test_dir="", family="", nargin::Int=1)
 # Run an example or test and print its tested status, i.e. if it PASS or FAIL
 
@@ -61,7 +66,7 @@ function gmtest(test, test_dir="", family="", nargin::Int=1)
 		 assign -metric rmse -file $png_name $ps_orig $ps`
 
 	run(pipeline(ignorestatus(cm), stdout=DevNull, stderr="errs.txt"))
-	t = readall("errs.txt");
+	t = readstring("errs.txt")
 	rm("errs.txt")
 	if (isempty(t))
 		println("    Test " * test * " PASS")
@@ -110,7 +115,7 @@ function do_tests()
 	            "spheres" "potential";
 	            "measure" "gmtspatial"]
 
-	for (k = 1:size(tests,1))
+	for k = 1:size(tests,1)
 		gmtest(tests[k,1], tests[k,2])
 	end
 end

@@ -1,31 +1,5 @@
-const GMT_B_OPT = "-B<args>"
-const GMT_I_OPT = "-I<xinc>[<unit>][=|+][/<yinc>[<unit>][=|+]]"
-const GMT_J_OPT = "-J<args>"
-const GMT_R2_OPT = "-R[<unit>]<xmin>/<xmax>/<ymin>/<ymax>[r]"
-const GMT_R3_OPT = "-R[<unit>]<xmin>/<xmax>/<ymin>/<ymax>[/<zmin>/<zmax>][r]"
-const GMT_U_OPT = "-U[<just>/<dx>/<dy>/][c|<label>]"
-const GMT_V_OPT = "-V[<level>]"
-const GMT_X_OPT = "-X[a|c|r]<xshift>[<unit>]"
-const GMT_Y_OPT = "-Y[a|c|r]<yshift>[<unit>]"
-const GMT_a_OPT = "-a<col>=<name>[,...]"
-const GMT_b_OPT = "-b[i|o][<ncol>][t][w][+L|B]"
-const GMT_c_OPT = "-c<ncopies>"
-const GMT_f_OPT = "-f[i|o]<info>"
-const GMT_g_OPT = "-g[a]x|y|d|X|Y|D|[<col>]z[-|+]<gap>[<unit>]"
-const GMT_h_OPT = "-h[i|o][<nrecs>][+c][+d][+r<remark>][+t<title>]"
-const GMT_i_OPT = "-i<cols>[l][s<scale>][o<offset>][,...]"
-const GMT_n_OPT = "-n[b|c|l|n][+a][+b<BC>][+c][+t<threshold>]"
-const GMT_o_OPT = "-o<cols>[,...]"
-const GMT_p_OPT = "-p[x|y|z]<azim>/<elev>[/<zlevel>][+w<lon0>/<lat0>[/<z0>][+v<x0>/<y0>]"
-const GMT_r_OPT = "-r"
-const GMT_s_OPT = "-s[<cols>][a|r]"
-const GMT_t_OPT = "-t<transp>"
-const GMT_colon_OPT = "-:[i|o]"
-const GMT_FFT_OPT = "[f|q|s|<nx>/<ny>][+a|d|l][+e|m|n][+t<width>][+w<suffix>][+z[p]]"
-# Skipping MacroDefinition: GMT_tic(C){if(C->current.setting.verbose>=GMT_MSG_TICTOC)GMT_Message(C->parent,GMT_TIME_RESET,"");}
-# Skipping MacroDefinition: GMT_toc(C,...){if(C->current.setting.verbose>=GMT_MSG_TICTOC)GMT_Message(C->parent,GMT_TIME_ELAPSED,"(%s) | %s\n",C->init.module_name,__VA_ARGS__);}
+typealias NULL C_NULL
 # begin enum GMT_enum_api
-typealias GMT_enum_api UInt32
 const GMT_USAGE = 0
 const GMT_SYNOPSIS = 1
 const GMT_STR16 = 16
@@ -50,7 +24,6 @@ const GMT_DATETIME = 11
 const GMT_N_TYPES = 12
 # end enum GMT_enum_type
 # begin enum GMT_enum_opt
-typealias GMT_enum_opt UInt32
 const GMT_OPT_USAGE = 63
 const GMT_OPT_SYNOPSIS = 94
 const GMT_OPT_PARAMETER = 45
@@ -64,7 +37,6 @@ immutable GMT_OPTION			# Structure for a single GMT command option
 	previous::Ptr{GMT_OPTION}
 end
 # begin enum GMT_enum_method
-typealias GMT_enum_method UInt32
 const GMT_IS_FILE = 0
 const GMT_IS_STREAM = 1
 const GMT_IS_FDESC = 2
@@ -72,27 +44,27 @@ const GMT_IS_DUPLICATE = 3
 const GMT_IS_REFERENCE = 4
 # end enum GMT_enum_method
 # begin enum GMT_enum_via
-typealias GMT_enum_via UInt32
 const GMT_VIA_NONE = 0
-const GMT_VIA_VECTOR = 100
-const GMT_VIA_MATRIX = 200
 const GMT_VIA_OUTPUT = 2048
 # end enum GMT_enum_via
 # begin enum GMT_enum_family
-typealias GMT_enum_family UInt32
 const GMT_IS_DATASET = 0
-const GMT_IS_TEXTSET = 1
-const GMT_IS_GRID = 2
-const GMT_IS_CPT = 3
-const GMT_IS_IMAGE = 4
-const GMT_IS_VECTOR = 5
+const GMT_IS_GRID = 1
+const GMT_IS_IMAGE = 2
+const GMT_IS_CPT = 3				# To be removed whem >= GMT5.3 only
+const GMT_IS_PALETTE = 3
+const GMT_IS_POSTSCRIPT = 4
+const GMT_IS_TEXTSET = 5
 const GMT_IS_MATRIX = 6
-const GMT_IS_COORD = 7
-const GMT_IS_PS = 8
+const GMT_IS_VECTOR = 7
+const GMT_IS_COORD = 8
 const GMT_N_FAMILIES = 9
 # end enum GMT_enum_family
+const GMT_PS_EMPTY = 0
+const GMT_PS_HEADER = 1
+const GMT_PS_TRAILER = 2
+const GMT_PS_COMPLETE = 3
 # begin enum GMT_enum_comment
-typealias GMT_enum_comment UInt32
 const GMT_COMMENT_IS_TEXT = 0
 const GMT_COMMENT_IS_OPTION = 1
 const GMT_COMMENT_IS_COMMAND = 2
@@ -105,31 +77,26 @@ const GMT_COMMENT_IS_COLNAMES = 128
 const GMT_COMMENT_IS_RESET = 256
 # end enum GMT_enum_comment
 # begin enum GMT_api_err_enum
-typealias GMT_api_err_enum Cint
 const GMT_NOTSET = -1
 const GMT_NOERROR = 0
 # end enum GMT_api_err_enum
 # begin enum GMT_module_enum
-typealias GMT_module_enum Cint
 const GMT_MODULE_EXIST = -3
 const GMT_MODULE_PURPOSE = -2
 const GMT_MODULE_OPT = -1
 const GMT_MODULE_CMD = 0
 # end enum GMT_module_enum
 # begin enum GMT_io_enum
-typealias GMT_io_enum UInt32
 const GMT_IN = 0
 const GMT_OUT = 1
 const GMT_ERR = 2
 # end enum GMT_io_enum
 # begin enum GMT_enum_dimensions
-typealias GMT_enum_dimensions UInt32
 const GMT_X = 0
 const GMT_Y = 1
 const GMT_Z = 2
 # end enum GMT_enum_dimensions
 # begin enum GMT_enum_freg
-typealias GMT_enum_freg UInt32
 const GMT_ADD_FILES_IF_NONE = 1
 const GMT_ADD_FILES_ALWAYS = 2
 const GMT_ADD_STDIO_IF_NONE = 4
@@ -138,14 +105,12 @@ const GMT_ADD_EXISTING = 16
 const GMT_ADD_DEFAULT = 6
 # end enum GMT_enum_freg
 # begin enum GMT_enum_ioset
-typealias GMT_enum_ioset UInt32
 const GMT_IO_DONE = 0
 const GMT_IO_ASCII = 512
 const GMT_IO_RESET = 32768
 const GMT_IO_UNREG = 16384
 # end enum GMT_enum_ioset
 # begin enum GMT_enum_read
-typealias GMT_enum_read UInt32
 const GMT_READ_DOUBLE = 0
 const GMT_READ_NORMAL = 0
 const GMT_READ_TEXT = 1
@@ -159,21 +124,20 @@ const GMT_ALLOC_NORMAL = 0        # Normal allocation of new dataset based on sh
 const GMT_ALLOC_VERTICAL = 4      # Allocate a single table for data set to hold all input tables by vertical concatenation */
 const GMT_ALLOC_HORIZONTAL = 8
 # begin enum GMT_enum_write
-typealias GMT_enum_write UInt32
 const GMT_WRITE_DOUBLE = 0
 const GMT_WRITE_TEXT = 1
 const GMT_WRITE_SEGMENT_HEADER = 2
 const GMT_WRITE_TABLE_HEADER = 3
 const GMT_WRITE_TABLE_START = 4
 const GMT_WRITE_NOLF = 16
+const GMT_STRICT_CONVERSION = 1024
+const GMT_LAX_CONVERSION = 2048
 # end enum GMT_enum_write
 # begin enum GMT_enum_header
-typealias GMT_enum_header UInt32
 const GMT_HEADER_OFF = 0
 const GMT_HEADER_ON = 1
 # end enum GMT_enum_header
 # begin enum GMT_enum_dest
-typealias GMT_enum_dest UInt32
 const GMT_WRITE_SET = 0
 const GMT_WRITE_OGR = 1
 const GMT_WRITE_TABLE = 2
@@ -185,39 +149,33 @@ const GMT_ALLOCATED_EXTERNALLY = 0
 const GMT_ALLOCATED_BY_GMT = 1
 # end enum GMT_enum_alloc
 # begin enum GMT_enum_duplicate
-typealias GMT_enum_duplicate UInt32
 const GMT_DUPLICATE_NONE = 0
 const GMT_DUPLICATE_ALLOC = 1
 const GMT_DUPLICATE_DATA = 2
 # end enum GMT_enum_duplicate
 # begin enum GMT_enum_shape
-typealias GMT_enum_shape UInt32
 const GMT_ALLOC_NORMAL = 0
 const GMT_ALLOC_VERTICAL = 4
 const GMT_ALLOC_HORIZONTAL = 8
 # end enum GMT_enum_shape
 # begin enum GMT_enum_out
-typealias GMT_enum_out UInt32
 const GMT_WRITE_NORMAL = 0
 const GMT_WRITE_HEADER = 1
 const GMT_WRITE_SKIP = 2
 # end enum GMT_enum_out
 # begin enum GMT_FFT_mode
-typealias GMT_FFT_mode UInt32
 const GMT_FFT_FWD = 0
 const GMT_FFT_INV = 1
 const GMT_FFT_REAL = 0
 const GMT_FFT_COMPLEX = 1
 # end enum GMT_FFT_mode
 # begin enum GMT_time_mode
-typealias GMT_time_mode UInt32
 const GMT_TIME_NONE = 0
 const GMT_TIME_CLOCK = 1
 const GMT_TIME_ELAPSED = 2
 const GMT_TIME_RESET = 4
 # end enum GMT_time_mode
 # begin enum GMT_enum_verbose
-typealias GMT_enum_verbose UInt32
 const GMT_MSG_QUIET = 0
 const GMT_MSG_NORMAL = 1
 const GMT_MSG_TICTOC = 2
@@ -227,13 +185,11 @@ const GMT_MSG_LONG_VERBOSE = 5
 const GMT_MSG_DEBUG = 6
 # end enum GMT_enum_verbose
 # begin enum GMT_enum_reg
-typealias GMT_enum_reg UInt32
 const GMT_GRID_NODE_REG = 0
 const GMT_GRID_PIXEL_REG = 1
 const GMT_GRID_DEFAULT_REG = 1024
 # end enum GMT_enum_reg
 # begin enum GMT_enum_gridindex
-typealias GMT_enum_gridindex UInt32
 const GMT_XLO = 0
 const GMT_XHI = 1
 const GMT_YLO = 2
@@ -242,14 +198,12 @@ const GMT_ZLO = 4
 const GMT_ZHI = 5
 # end enum GMT_enum_gridindex
 # begin enum GMT_enum_dimindex
-typealias GMT_enum_dimindex UInt32
 const GMT_TBL = 0
 const GMT_SEG = 1
 const GMT_ROW = 2
 const GMT_COL = 3
 # end enum GMT_enum_dimindex
 # begin enum GMT_enum_gridio
-typealias GMT_enum_gridio UInt32
 const GMT_GRID_IS_REAL = 0
 const GMT_GRID_ALL = 0
 const GMT_GRID_HEADER_ONLY = 1
@@ -262,7 +216,6 @@ const GMT_GRID_ROW_BY_ROW = 32
 const GMT_GRID_ROW_BY_ROW_MANUAL = 64
 # end enum GMT_enum_gridio
 # begin enum GMT_enum_grdlen
-typealias GMT_enum_grdlen UInt32
 const GMT_GRID_UNIT_LEN80 = 80
 const GMT_GRID_TITLE_LEN80 = 80
 const GMT_GRID_VARNAME_LEN80 = 80
@@ -359,8 +312,8 @@ const INT8_CLASS   = 9
 const UINT8_CLASS  = 10
 
 type GMT_GRID_HEADER
-	nx::UInt32
-	ny::UInt32
+	n_columns::UInt32
+	n_rows::UInt32
 	registration::UInt32
 	wesn::NTuple{4, Cdouble}
 	z_min::Cdouble
@@ -368,9 +321,9 @@ type GMT_GRID_HEADER
 	inc::NTuple{2, Cdouble}
 	z_scale_factor::Cdouble
 	z_add_offset::Cdouble
-	x_units::NTuple{80, UInt8}
-	y_units::NTuple{80, UInt8}
-	z_units::NTuple{80, UInt8}
+	x_unit::NTuple{80, UInt8}
+	y_unit::NTuple{80, UInt8}
+	z_unit::NTuple{80, UInt8}
 	title::NTuple{80, UInt8}
 	command::NTuple{320, UInt8}
 	remark::NTuple{160, UInt8}
@@ -378,10 +331,10 @@ type GMT_GRID_HEADER
 	_type::UInt32
 	bits::UInt32
 	complex_mode::UInt32
-	mx::UInt32
+	mx::UInt32 				# Actual dimensions of the grid in memory, allowing for the padding
 	my::UInt32
-	nm::Csize_t
-	size::Csize_t
+	nm::Csize_t 			# Number of data items in this grid (n_columns * n_rows) [padding is excluded]
+	size::Csize_t 			# Actual number of items required to hold this grid (= mx * my)
 	n_alloc::Csize_t
 	trendmode::UInt32
 	arrangement::UInt32
@@ -389,6 +342,7 @@ type GMT_GRID_HEADER
 	pad::NTuple{4, UInt32}
 	BC::NTuple{4, UInt32}
 	grdtype::UInt32
+	reset_pad::UInt32
 	name::NTuple{256, UInt8}
 	varname::NTuple{80, UInt8}
 	ProjRefPROJ4::Ptr{UInt8}
@@ -407,6 +361,7 @@ type GMT_GRID_HEADER
 	pocket::Ptr{UInt8}
 	mem_layout::NTuple{4, UInt8}
 	bcr_threshold::Cdouble
+	has_NaNs::UInt32
 	bcr_interpolant::UInt32
 	bcr_n::UInt32
 	nxp::UInt32
@@ -424,15 +379,20 @@ type GMT_GRID_HEADER
 	xy_mode::NTuple{2, UInt32}
 	xy_unit::NTuple{2, UInt32}
 	xy_unit_to_meter::NTuple{2, Cdouble}
+	index_function::Ptr{Void}
 end
+
 type GMT_GRID
 	header::Ptr{GMT_GRID_HEADER}
 	data::Ptr{Cfloat}
 	id::UInt32
 	alloc_level::UInt32
 	alloc_mode::UInt32
+	x::Ptr{Cdouble}
+	y::Ptr{Cdouble}
 	extra::Ptr{Void}
 end
+
 # begin enum GMT_enum_geometry
 typealias GMT_enum_geometry UInt32
 const GMT_IS_POINT = 1
@@ -478,16 +438,17 @@ immutable GMT_OGR_SEG
 	tvalue::Ptr{Ptr{UInt8}}
 	dvalue::Ptr{Cdouble}
 end
-immutable GMT_DATASEGMENT
+type GMT_DATASEGMENT
 	n_rows::UInt64
 	n_columns::UInt64
 	min::Ptr{Cdouble}
 	max::Ptr{Cdouble}
-	coord::Ptr{Ptr{Cdouble}}
+	data::Ptr{Ptr{Cdouble}}
 	label::Ptr{UInt8}
 	header::Ptr{UInt8}
-	mode::GMT_enum_out
-	pol_mode::GMT_enum_pol
+	text::Ptr{Ptr{UInt8}}
+	mode::UInt32
+	pol_mode::UInt32
 	id::UInt64
 	n_alloc::Cint
 	range::Cint
@@ -496,9 +457,10 @@ immutable GMT_DATASEGMENT
 	lat_limit::Cdouble
 	ogr::Ptr{GMT_OGR_SEG}
 	next::Ptr{GMT_DATASEGMENT}
+	alloc_mode::UInt32
 	file::NTuple{2, Ptr{UInt8}}
 end
-immutable GMT_DATATABLE
+type GMT_DATATABLE
 	n_headers::UInt32
 	n_columns::UInt64
 	n_segments::UInt64
@@ -509,11 +471,11 @@ immutable GMT_DATATABLE
 	segment::Ptr{Ptr{GMT_DATASEGMENT}}
 	id::UInt64
 	n_alloc::Cint
-	mode::GMT_enum_out
+	mode::UInt32
 	ogr::Ptr{GMT_OGR}
 	file::NTuple{2, Ptr{UInt8}}
 end
-immutable GMT_DATASET
+type GMT_DATASET
 	n_tables::UInt64
 	n_columns::UInt64
 	n_segments::UInt64
@@ -530,9 +492,9 @@ immutable GMT_DATASET
 	alloc_mode::UInt32
 	file::NTuple{2, Ptr{UInt8}}
 end
-immutable GMT_TEXTSEGMENT
+type GMT_TEXTSEGMENT
 	n_rows::UInt64
-	record::Ptr{Ptr{UInt8}}
+	data::Ptr{Ptr{UInt8}}
 	label::Ptr{UInt8}
 	header::Ptr{UInt8}
 	id::UInt64
@@ -541,7 +503,7 @@ immutable GMT_TEXTSEGMENT
 	file::NTuple{2, Ptr{UInt8}}
 	tvalue::Ptr{Ptr{UInt8}}
 end
-immutable GMT_TEXTTABLE
+type GMT_TEXTTABLE
 	n_headers::UInt32
 	n_segments::UInt64
 	n_records::UInt64
@@ -552,7 +514,7 @@ immutable GMT_TEXTTABLE
 	mode::UInt32
 	file::NTuple{2, Ptr{UInt8}}
 end
-immutable GMT_TEXTSET
+type GMT_TEXTSET
 	n_tables::UInt64
 	n_segments::UInt64
 	n_records::UInt64
@@ -613,18 +575,18 @@ immutable GMT_LUT
 	fill::Ptr{GMT_FILL}
 	label::Ptr{UInt8}
 end
-immutable GMT_BFN_COLOR
+immutable GMT_BFN
 	rgb::NTuple{4, Cdouble}
 	hsv::NTuple{4, Cdouble}
 	skip::UInt32
 	fill::Ptr{GMT_FILL}
 end
-immutable GMT_PALETTE
+type GMT_PALETTE
 	n_headers::UInt32
 	n_colors::UInt32
-	cpt_flags::UInt32
-	range::Ptr{GMT_LUT}
-	patch::NTuple{3, GMT_BFN_COLOR}
+	mode::UInt32
+	data::Ptr{GMT_LUT}
+	bfn::NTuple{3, GMT_BFN}
 	header::Ptr{Ptr{UInt8}}
 	id::UInt64
 	alloc_mode::UInt32
@@ -635,29 +597,37 @@ immutable GMT_PALETTE
 	is_bw::UInt32
 	is_continuous::UInt32
 	has_pattern::UInt32
+	has_hinge::UInt32
 	skip::UInt32
 	categorical::UInt32
 	z_adjust::NTuple{2, UInt32}
 	z_mode::NTuple{2, UInt32}
 	z_unit::NTuple{2, UInt32}
 	z_unit_to_meter::NTuple{2, Cdouble}
+	minmax::NTuple{2, Cdouble}
+	hinge::Cdouble
 end
-immutable GMT_IMAGE
+type GMT_IMAGE
 	_type::UInt32
-	ColorMap::Ptr{Cint}
-	nIndexedColors::Cint
+	colormap::Ptr{Cint}
+	n_indexed_colors::Cint
 	header::Ptr{GMT_GRID_HEADER}
 	data::Ptr{Cuchar}
+	alpha::Ptr{Cuchar}
 	id::UInt64
 	alloc_level::UInt32
 	alloc_mode::UInt32
-	ColorInterp::Ptr{UInt8}
+	color_interp::Ptr{UInt8}
+	x::Ptr{Cdouble}
+	y::Ptr{Cdouble}
 end
-type GMT_PS
+type GMT_POSTSCRIPT
 	n_alloc::Csize_t
-	n::Csize_t
+	n_bytes::Csize_t
 	mode::UInt32
+	n_headers::UInt32
 	data::Ptr{UInt8}
+	header::Ptr{Ptr{UInt8}}
 	id::UInt64
 	alloc_level::UInt32
 	alloc_mode::UInt32
@@ -721,10 +691,10 @@ type GMT_RESOURCE
 	geometry::UInt32        # One of the recognized GMT geometries
 	direction::UInt32       # Either GMT_IN or GMT_OUT
 	option::Ptr{GMT_OPTION} # Pointer to the corresponding module option
-	object_ID::Cint         # Object ID returned by GMT_Register_IO
+	name::NTuple{16, UInt8} # Object ID returned by GMT_Register_IO
 	pos::Cint               # Corresponding index into external object in|out arrays
-#	mode::Cint              # Either primary (0) or secondary (1) resource
-	object::Ptr{Void}       # Pointer to the registered GMT object
+	mode::Cint              # Either primary (0) or secondary (1) resource
+	object::Ptr{Void}       # Pointer to the actual GMT object
 end
 
 
@@ -745,9 +715,9 @@ immutable GMTAPI_DATA_OBJECT
 	no_longer_owner::Cint		# true if the data pointed to by the object was passed on to another object
 	messenger::Cint				# true for output objects passed from the outside to receive data from GMT. If true we destroy data pointer before writing
 	alloc_mode::UInt32			# GMT_ALLOCATED_{BY_GMT|EXTERNALLY}
-	direction::GMT_io_enum		# GMT_IN or GMT_OUT
-	family::GMT_enum_family		# One of GMT_IS_{DATASET|TEXTSET|CPT|IMAGE|GRID|MATRIX|VECTOR|COORD}
-	actual_family::GMT_enum_family	# May be GMT_IS_MATRIX|VECTOR when one of the others are created via those
+	direction::UInt32			# GMT_IN or GMT_OUT
+	family::UInt32				# One of GMT_IS_{DATASET|TEXTSET|CPT|IMAGE|GRID|MATRIX|VECTOR|COORD}
+	actual_family::UInt32		# May be GMT_IS_MATRIX|VECTOR when one of the others are created via those
 	method::UInt32              # One of GMT_IS_{FILE,STREAM,FDESC,DUPLICATE,REFERENCE} or sum with enum GMT_enum_via (GMT_VIA_{NONE,VECTOR,MATRIX,OUTPUT}); using unsigned type because sum exceeds enum GMT_enum_method
 	geometry::GMT_enum_geometry	# One of GMT_IS_{POINT|LINE|POLY|PLP|SURFACE|NONE}
 	wesn::NTuple{4, Cdouble}	# Grid domain limits
@@ -1023,7 +993,7 @@ struct GMT_CURRENT {
 	struct GMT_MAP map;		# Holds all projection-related parameters
 	struct GMT_PLOT plot;		# Holds all plotting-related parameters
 	struct GMT_TIME_CONV time;	# Holds all time-related parameters
-	struct GMT_PS ps;		# Hold parameters related to PS setup
+	struct GMT_POSTSCRIPT ps;		# Hold parameters related to PS setup
 	struct GMT_OPTION *options;	# Pointer to current program's options
 	struct GMT_FFT_HIDDEN fft;	# Structure with info that must survive between FFT calls
 #ifdef HAVE_GDAL
