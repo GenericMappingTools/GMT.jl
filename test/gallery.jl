@@ -607,7 +607,7 @@ function ex14(g_root_dir, out_path)
 	# Reformat to one decimal for annotation purposes
 	#t = cellstr(num2str(mean_xyz,'%g %g %.1f'));	# Round to nearest 0.1 and convert to cells
 	nl = size(mean_xyz[1].data,1)
-	t = cell(nl,1)
+	t = Array{Any}(nl,1)
 	for k = 1:nl
 		t[k] = @sprintf("%f %f %.1f", mean_xyz[1].data[k,1], mean_xyz[1].data[k,2], mean_xyz[1].data[k,3])
 	end
