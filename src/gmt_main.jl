@@ -824,28 +824,28 @@ function GMTJL_Set_Object(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
 	module_input = (oo.option == GMT.GMT_OPT_INFILE)
 
 	if (X.family == GMT_IS_GRID)			# Get a grid from Julia or a dummy one to hold GMT output
-		X.object =  GMTJL_grid_init(API, module_input, ptr, X.direction)
+		X.object =  grid_init(API, module_input, ptr, X.direction)
 		GMT_Report(API, GMT_MSG_DEBUG, "GMTMEX_Set_Object: Got Grid\n")
 	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Matlab or a dummy one to hold GMT output
-		X.object = GMTJL_image_init(API, module_input, ptr, X.direction)
+		X.object = image_init(API, module_input, ptr, X.direction)
 		GMT_Report(API, GMT_MSG_DEBUG, "GMTMEX_Set_Object: Got Image\n");
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
 		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
 		if (X.direction == GMT_IN && (isa(ptr, Array{Any}) || (eltype(ptr) == String)))	# Got text input
-			X.object = GMTJL_Text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
+			X.object = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
 			X.family = GMT_IS_TEXTSET
 		else		# Got something for which a dataset container is appropriate
-			X.object = GMTJL_dataset_init_(API, module_input, ptr, X.direction)
+			X.object = dataset_init_(API, module_input, ptr, X.direction)
 		end
 		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("GMTMEX_Set_Object: Got %s\n", name[X.family+1]))
 	elseif (X.family == GMT_IS_TEXTSET)		# Get a textset from Julia or a dummy one to hold GMT output
-		X.object = GMTJL_Text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
+		X.object = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
 		GMT_Report(API, GMT_MSG_DEBUG, "GMTMEX_Set_Object: Got TEXTSET\n")
 	elseif (X.family == GMT_IS_PALETTE)		# Get a palette from Julia or a dummy one to hold GMT output
-		X.object = GMTJL_palette_init(API, module_input, ptr, X.direction)
+		X.object = palette_init(API, module_input, ptr, X.direction)
 		GMT_Report(API, GMT_MSG_DEBUG, "GMTMEX_Set_Object: Got CPT\n")
 	elseif (X.family == GMT_IS_POSTSCRIPT)	# Get a PostScript struct from Matlab or a dummy one to hold GMT output
-		X.object = GMTJL_PS_init(API, module_input, ptr, X.direction)
+		X.object = ps_init(API, module_input, ptr, X.direction)
 		GMT_Report(API, GMT_MSG_DEBUG, "GMTMEX_Set_Object: Got POSTSCRIPT\n")
 	else
 		GMT_Report(API, GMT_MSG_NORMAL, @sprintf("GMTMEX_Set_Object: Bad data type (%d)\n", X.family))
@@ -899,29 +899,29 @@ function GMTJL_register_IO(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
 	ID = GMT.GMT_NOTSET
 	if (X.family == GMT_IS_GRID)
 		# Get an empty grid, and if input associate it with the Julia grid pointer
-		obj = GMTJL_grid_init(API, module_input, ptr, X.direction)
+		obj = grid_init(API, module_input, ptr, X.direction)
 		ID  = GMT_Get_ID(API, GMT_IS_GRID, X.direction, obj)
 	elseif (X.family == GMT_IS_IMAGE)
-		obj = GMTJL_image_init(API, module_input, ptr, X.direction)
+		obj = image_init(API, module_input, ptr, X.direction)
 		ID  = GMT_Get_ID(API, GMT_IS_IMAGE, X.direction, obj)
 	elseif (X.family == GMT_IS_DATASET)
 		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
 		if (X.direction == GMT_IN && ((eltype(ptr) == Array{Any}) || (eltype(ptr) == String)))		# Got TEXTSET input
-			obj = GMTJL_Text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
+			obj = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
 		else 		# Get a matrix container, and if input we associate it with the Julia pointer
-			obj = GMTJL_dataset_init_(API, module_input, ptr, X.direction)
+			obj = dataset_init_(API, module_input, ptr, X.direction)
 		end
 		ID  = GMT_Get_ID(API, GMT_IS_DATASET, X.direction, obj)
 	elseif (X.family == GMT_IS_PALETTE)
 		# Get a CPT container, and if input associate it with the Julia CPT pointer
-		obj = GMTJL_palette_init(API, module_input, ptr, X.direction)
+		obj = palette_init(API, module_input, ptr, X.direction)
 		ID  = GMT_Get_ID(API, GMT_IS_PALETTE, X.direction, obj)
 	elseif (X.family == GMT_IS_TEXTSET)
 		# Get a TEXTSET container, and if input associate it with the Julia pointer
-		obj = GMTJL_Text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
+		obj = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
 		ID  = GMT_Get_ID(API, GMT_IS_TEXTSET, X.direction, obj)
 	elseif (X.family == GMT_IS_POSTSCRIPT)
-		obj = GMTJL_PS_init(API, module_input, ptr, X.direction)
+		obj = ps_init(API, module_input, ptr, X.direction)
 		ID  = GMT_Get_ID(API, GMT_IS_POSTSCRIPT, X.direction, obj)
 	else
 		error("GMTJL_register_IO: Bad data type ", X.family)
@@ -930,7 +930,7 @@ function GMTJL_register_IO(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT_IN)
+function grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT_IN)
 # If GRD_BOX is empty just allocate (GMT) an empty container and return
 # If GRD_BOX is not empty it must contain either a array_container or a GMTJL_GRID type.
 
@@ -940,7 +940,7 @@ function GMTJL_grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT
 		empty = true
 	end
 
-	if (empty)			# Just tell GMTJL_grid_init() to allocate an empty container 
+	if (empty)			# Just tell grid_init() to allocate an empty container 
 		if ((R = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
 		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT blank grid container for holding output grid")
@@ -951,9 +951,9 @@ function GMTJL_grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT
 	if (isa(grd_box, array_container))
 		grd = pointer_to_array(grd_box.grd, (grd_box.ny, grd_box.nx))
 		hdr = pointer_to_array(grd_box.hdr, 9)
-		R = GMTJL_grid_init(API, module_input, [], grd, hdr)
+		R = grid_init(API, module_input, [], grd, hdr)
 	elseif (isa(grd_box, GMTJL_GRID))
-		R = GMTJL_grid_init(API, module_input, grd_box, [], [])
+		R = grid_init(API, module_input, grd_box, [], [])
 	else
 		error(@sprintf("GMTJL_PARSER:grd_init: input (%s) is not a GRID|IMAGE container type", typeof(grd_box)))
 	end
@@ -961,7 +961,7 @@ function GMTJL_grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_grid_init(API::Ptr{Void}, module_input, Grid, grd, hdr, pad::Int=2)
+function grid_init(API::Ptr{Void}, module_input, Grid, grd, hdr, pad::Int=2)
 # We are given a Julia grid and can determine its size, etc.
 
 	if (isa(Grid, GMTJL_GRID))
@@ -1002,7 +1002,7 @@ function GMTJL_grid_init(API::Ptr{Void}, module_input, Grid, grd, hdr, pad::Int=
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GMT_IN)
+function image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GMT_IN)
 	# ...
 
 	empty = false 		# F... F... it's a shame having to do this
@@ -1011,7 +1011,7 @@ function GMTJL_image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GM
 		empty = true
 	end
 
-	if (empty)			# Just tell GMTJL_image_init() to allocate an empty container 	
+	if (empty)			# Just tell image_init() to allocate an empty container 	
 		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
 		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("image_init: Failure to alloc GMT blank grid container for holding output image")
@@ -1023,11 +1023,11 @@ function GMTJL_image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GM
 	if (isa(img_box, array_container))
 		img = pointer_to_array(img_box.grd, (img_box.ny, img_box.nx, img_box.n_bands))
 		hdr = pointer_to_array(img_box.hdr, 9)
-		I = GMTJL_image_init(API, img, hdr)
+		I = image_init(API, img, hdr)
 	elseif (isa(img_box, GMTJL_IMAGE))
 		#img = img_box.image
 		#hdr = [img_box.range; img_box.registration; img_box.inc]
-		I = GMTJL_image_init(API, img_box)
+		I = image_init(API, img_box)
 	else
 		error("GMTJL_PARSER:image_init: input is not a IMAGE container type")
 	end
@@ -1035,7 +1035,7 @@ function GMTJL_image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GM
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_image_init(API::Ptr{Void}, Img::GMTJL_IMAGE, pad::Int=0)
+function image_init(API::Ptr{Void}, Img::GMTJL_IMAGE, pad::Int=0)
 #
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_pages = size(Img.image, 3)
 	dim = pointer([n_cols, n_rows, n_pages])
@@ -1059,7 +1059,7 @@ function GMTJL_image_init(API::Ptr{Void}, Img::GMTJL_IMAGE, pad::Int=0)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, pad::Int=0)
+function image_init(API::Ptr{Void}, img, hdr::Array{Float64}, pad::Int=0)
 # Used to Create an empty Image container to hold a GMT image.
 # We are given a Julia image and can determine its size, etc.
 
@@ -1097,7 +1097,7 @@ function GMTJL_image_init(API::Ptr{Void}, img, hdr::Array{Float64}, pad::Int=0)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_matrix_init(API::Ptr{Void}, module_input, grd, dir::Integer=GMT_IN, pad::Int=0)
+function matrix_init(API::Ptr{Void}, module_input, grd, dir::Integer=GMT_IN, pad::Int=0)
 # ...
 	if (dir == GMT_IN)
 		dim = pointer([size(grd,2), size(grd,1), 0])	# MATRIX in GMT uses (col,row)
@@ -1124,7 +1124,7 @@ function GMTJL_matrix_init(API::Ptr{Void}, module_input, grd, dir::Integer=GMT_I
 		elseif (eltype(grd) == Float32)
 			Mb._type = UInt32(GMT.GMT_FLOAT)
 		else
-			error("GMTJL_matrix_init: only floating point types allowed in input. Others need to be added")
+			error("only floating point types allowed in input. Others need to be added")
 		end
 		Mb.data  = pointer(grd)
 		Mb.dim = Mb.n_rows		# Data from Julia is in column major
@@ -1145,7 +1145,7 @@ function GMTJL_matrix_init(API::Ptr{Void}, module_input, grd, dir::Integer=GMT_I
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer)
+function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer)
 # Create containers to hold or receive data tables:
 # direction == GMT_IN:  Create empty GMT_DATASET container, fill from Julia, and use as GMT input.
 #	Input from Julia may be a structure or a plain matrix
@@ -1157,7 +1157,7 @@ function GMTJL_dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Inte
 		if ((D = GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT source Dataset\n")
 		end
-		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("GMTJL_dataset_init: Allocated GMT Dataset %s\n", D))
+		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("dataset_init_: Allocated GMT Dataset %s\n", D))
 		return D
 	end
 
@@ -1165,7 +1165,7 @@ function GMTJL_dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Inte
 	#if (!((eltype(Darr) == Array{Any}) || (eltype(Darr) == String)))	# Got a matrix as input, pass data pointers via MATRIX to save memory
 	if (isa(Darr, GMTJL_DATASET))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
 	if (!(isa(Darr, Array{GMTJL_DATASET,1})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
-		D = GMTJL_dataset_init(API, module_input, Darr, direction)
+		D = dataset_init(API, module_input, Darr, direction)
 		return D
 	end
 	# We come here if we did not receive a matrix
@@ -1182,7 +1182,7 @@ function GMTJL_dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Inte
 		error("Failure to alloc GMT destination dataset")
 	end
 	DS = unsafe_load(convert(Ptr{GMT_DATASET}, D))
-	GMT_Report(API, GMT_MSG_DEBUG, @sprintf("GMTJL_dataset_init: Allocated GMT dataset %s\n", D))
+	GMT_Report(API, GMT_MSG_DEBUG, @sprintf("dataset_init_: Allocated GMT dataset %s\n", D))
 
 	DT = unsafe_load(unsafe_load(DS.table))				# GMT.GMT_DATATABLE
 
@@ -1201,7 +1201,7 @@ function GMTJL_dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Inte
 			for k = 1:size(Darr[1].comment,1)
 				if (GMT_Set_Comment(API, GMT_IS_DATASET, GMT_COMMENT_IS_TEXT, convert(Ptr{Void}, pointer(Darr[1].comment[k])), 
 				                    convert(Ptr{Void}, D)) != 0)
-					println("GMTJL_dataset_init: Failed to set a dataset header")
+					println("dataset_init_: Failed to set a dataset header")
 				end
 			end
 		end
@@ -1215,7 +1215,7 @@ function GMTJL_dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Inte
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_dataset_init(API::Ptr{Void}, module_input, ptr, direction::Integer)
+function dataset_init(API::Ptr{Void}, module_input, ptr, direction::Integer)
 # Used to create containers to hold or receive data:
 # direction == GMT_IN:  Create empty Matrix container, associate it with mex data matrix, and use as GMT input.
 # direction == GMT_OUT: Create empty Vector container, let GMT fill it out, and use for Mex output.
@@ -1225,7 +1225,7 @@ function GMTJL_dataset_init(API::Ptr{Void}, module_input, ptr, direction::Intege
 
 	if (direction == GMT_IN) 	# Dimensions are known, extract them and set dim array for a GMT_MATRIX resource */
 		dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
-		#if (!mxIsNumeric (ptr)) error("GMTJL_dataset_init: Expected a Matrix for input\n");
+		#if (!mxIsNumeric (ptr)) error("Expected a Matrix for input\n");
 		if ((M = GMT_Create_Data(API, GMT_IS_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT source matrix")
 		end
@@ -1248,7 +1248,7 @@ function GMTJL_dataset_init(API::Ptr{Void}, module_input, ptr, direction::Intege
 		elseif (eltype(ptr) == Int8)		Mb._type = UInt32(GMT.GMT_CHAR)
 		else
 			println("Type \"", typeof(ptr), "\" not allowed")
-			error("GMTJL_matrix_init: only integer or floating point types allowed in input. Others need to be added")
+			error("only integer or floating point types allowed in input. Others need to be added")
 		end
 		Mb.data = pointer(ptr)
 		Mb.dim  = Mb.n_rows		# Data from Julia is in column major
@@ -1262,20 +1262,20 @@ function GMTJL_dataset_init(API::Ptr{Void}, module_input, ptr, direction::Intege
 		if ((V = GMT_Create_Data(API, GMT_IS_VECTOR, GMT_IS_PLP, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT source vector\n")
 		end
-		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("GMTJL_dataset_init: Allocated GMT Vector %s\n", V))
+		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("dataset_init: Allocated GMT Vector %s\n", V))
 		return V
 	end
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
+function palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 	# Used to Create an empty CPT container to hold a GMT CPT.
  	# If direction is GMT_IN then we are given a Julia CPT and can determine its size, etc.
 	# If direction is GMT_OUT then we allocate an empty GMT CPT as a destination.
 
 	if (dir == GMT_OUT)
 		if ((P = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-			error("GMTJL_palette_init: Failure to alloc GMT blank CPT container for holding output CPT")
+			error("Failure to alloc GMT blank CPT container for holding output CPT")
 		end
 		return P
 	end
@@ -1297,7 +1297,7 @@ function GMTJL_palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 	end
 
 	if ((P = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-		error("GMTJL_palette_init: Failure to alloc GMT source CPT for input")
+		error("Failure to alloc GMT source CPT for input")
 	end
 
 	if (one != 0)
@@ -1351,11 +1351,11 @@ end
 
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_Text_init_(API::Ptr{Void}, module_input, Darr, dir::Integer, family::Integer=GMT_IS_TEXTSET)
+function text_init_(API::Ptr{Void}, module_input, Darr, dir::Integer, family::Integer=GMT_IS_TEXTSET)
 # 
 	if (dir == GMT_OUT)
 		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, 0, NULL, NULL, NULL, 0, 0, NULL)) == NULL)
-			error("GMTJL_Text_init: Failure to alloc GMT blank TEXTSET container for holding output TEXT")
+			error("Failure to alloc GMT blank TEXTSET container for holding output TEXT")
 		end
 		return T
 	end
@@ -1363,12 +1363,12 @@ function GMTJL_Text_init_(API::Ptr{Void}, module_input, Darr, dir::Integer, fami
 	if (isa(Darr, Array{GMTJL_DATASET,1}))
 		dim = [1 0 0]
 		dim[GMT.GMT_SEG+1] = length(Darr)		# Number of segments
-		if (dim[GMT.GMT_SEG+1] == 0) error("GMTJL_Text_init: Input has zero segments where it can't be")	end
+		if (dim[GMT.GMT_SEG+1] == 0) error("Input has zero segments where it can't be")	end
 		pdim = pointer(dim)
 		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_PLP, 0, pdim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-			error("GMTJL_Text_init: Failure to alloc GMT destination dataset.")
+			error("Failure to alloc GMT destination dataset.")
 		end
-		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("GMTJL_Text_init: Allocated GMT textset %s", T))
+		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("text_init_: Allocated GMT textset %s", T))
 
 		TS = unsafe_load(convert(Ptr{GMT_TEXTSET}, T))
 		TT = unsafe_load(unsafe_load(TS.table))				# GMT.GMT_TEXTTABLE
@@ -1407,7 +1407,7 @@ function GMTJL_Text_init_(API::Ptr{Void}, module_input, Darr, dir::Integer, fami
 				for k = 1:size(Darr[1].comment,1)
 					if (GMT_Set_Comment(API, GMT_IS_TEXTSET, GMT_COMMENT_IS_TEXT, convert(Ptr{Void}, pointer(Darr[1].comment[k])), 
 					                    convert(Ptr{Void}, T)) != 0)
-						println("GMTJL_Text_init: Failed to set a textset header")
+						println("text_init_: Failed to set a textset header")
 					end
 				end
 			end
@@ -1415,14 +1415,14 @@ function GMTJL_Text_init_(API::Ptr{Void}, module_input, Darr, dir::Integer, fami
 			unsafe_store!(TT.segment, S, seg)
 		end
 	else
-		T = GMTJL_Text_init(API, module_input, Darr, dir)
+		T = text_init(API, module_input, Darr, dir)
 	end
 
 	return T
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_Text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family::Integer=GMT_IS_TEXTSET)
+function text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family::Integer=GMT_IS_TEXTSET)
 	# Used to Create an empty Textset container to hold a GMT TEXTSET.
  	# If direction is GMT_IN then we are given a Julia cell array and can determine its size, etc.
 	# If direction is GMT_OUT then we allocate an empty GMT TEXTSET as a destination.
@@ -1439,8 +1439,10 @@ function GMTJL_Text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family
 		elseif (isa(txt[1], Number))
 			txt = num2str(txt)			# Convert the numeric matrix into a cell array of strings
 		end
-		if (!isa(txt, Array{Any}) && !(eltype(txt) == String))
-			error(@sprintf("GMTJL_Text_init: Expected a Cell array or a String for input, got a \"%s\"", typeof(txt)))
+		if (VERSION.minor > 4)
+			if (!isa(txt, Array{Any}) && !(eltype(txt) == String))
+				error(@sprintf("Expected a Cell array or a String for input, got a \"%s\"", typeof(txt)))
+			end
 		end
 
 		dim = [1 1 0]
@@ -1451,7 +1453,7 @@ function GMTJL_Text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family
 		end
 
 		if ((T = GMT_Create_Data(API, family, GMT_IS_NONE, 0, pointer(dim), C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-			error("GMTJL_Text_init: Failure to alloc GMT source TEXTSET for input")
+			error("Failure to alloc GMT source TEXTSET for input")
 		end
 		mutateit(API, T, "alloc_mode", GMT_ALLOC_EXTERNALLY)
 
@@ -1494,7 +1496,7 @@ function GMTJL_Text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family
 
 	else 	# Just allocate an empty container to hold an output grid (signal this by passing NULLs)
 		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-			error("GMTJL_Text_init: Failure to alloc GMT blank TEXTSET container for holding output TEXT")
+			error("Failure to alloc GMT blank TEXTSET container for holding output TEXT")
 		end
 	end
 
@@ -1502,19 +1504,19 @@ function GMTJL_Text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_PS_init(API::Ptr{Void}, module_input, ps, dir::Integer)
+function ps_init(API::Ptr{Void}, module_input, ps, dir::Integer)
 # Used to Create an empty POSTSCRIPT container to hold a GMT POSTSCRIPT object.
 # If direction is GMT_IN then we are given a Julia structure with known sizes.
 # If direction is GMT_OUT then we allocate an empty GMT POSTSCRIPT as a destination.
 	if (dir == GMT_OUT)
 		if ((P = GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-			error("GMTJL_PS_init: Failure to alloc GMT blank PS container for holding output PostScript")
+			error("Failure to alloc GMT blank PS container for holding output PostScript")
 		end
 		return P
 	end
 
 	if (!isa(ps, GMTJL_PS))
-		error("GMTJL_PS_init: Expected a PS structure for input")
+		error("Expected a PS structure for input")
 	end
 
 	# Passing dim[0] = 0 since we dont want any allocation of a PS string
@@ -1533,7 +1535,7 @@ function GMTJL_PS_init(API::Ptr{Void}, module_input, ps, dir::Integer)
 	
 	unsafe_store!(P, P0)
 
-	GMT_Report(API, GMT_MSG_DEBUG, @sprintf("GMTJL_PS_init: Allocated GMT POSTSCRIPT %s", P))
+	GMT_Report(API, GMT_MSG_DEBUG, @sprintf("ps_init: Allocated GMT POSTSCRIPT %s", P))
 
 	return P
 end
