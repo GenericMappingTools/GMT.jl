@@ -8,14 +8,14 @@ global g_root_dir = "C:/progs_cygw/GMTdev/gmt5/trunk/"
 global out_path = "V:/"			# Leave it empty to write files in current directory
 
 # -----------------------------------------------------------------------------------------------------
-function gallery(opt::CHAR)
+function gallery(opt::String)
 # If called with one input only, the other two must be in the globals below.
 	global g_root_dir, out_path
 	gallery(opt, g_root_dir, out_path)
 end
 
 # -----------------------------------------------------------------------------------------------------
-function gallery(opt::CHAR, g_root_dir::CHAR, out_path::CHAR)
+function gallery(opt::String, g_root_dir::String, out_path::String)
 # This function is useful when we want to call the examples from a loop and build OPT as a string
 # All of this because I don't know how to make an 'eval("string")' call a function.
 	if (opt == "ex01")			ps, path = ex01(g_root_dir, out_path)
