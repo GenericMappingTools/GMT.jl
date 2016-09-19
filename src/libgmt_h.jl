@@ -81,10 +81,13 @@ const GMT_NOTSET = -1
 const GMT_NOERROR = 0
 # end enum GMT_api_err_enum
 # begin enum GMT_module_enum
-const GMT_MODULE_EXIST = -3
-const GMT_MODULE_PURPOSE = -2
-const GMT_MODULE_OPT = -1
-const GMT_MODULE_CMD = 0
+const GMT_MODULE_USAGE	  = -6
+const GMT_MODULE_SYNOPSIS = -5
+const GMT_MODULE_LIST     = -4
+const GMT_MODULE_EXIST    = -3
+const GMT_MODULE_PURPOSE  = -2
+const GMT_MODULE_OPT      = -1
+const GMT_MODULE_CMD      = 0
 # end enum GMT_module_enum
 # begin enum GMT_io_enum
 const GMT_IN = 0
