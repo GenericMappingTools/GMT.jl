@@ -149,15 +149,15 @@ function gmt(cmd::String, args...)
 
 	# 2++ Add -T to gmtwrite if user did not explicitly give -T.
 	if ((searchindex(g_module,"write") != 0) && (searchindex(r,"-T") == 0) && n_argin == 1)
-		if (ind = findfirst(fieldnames(args[1]), symbol("z")) != 0)
+		if (ind = findfirst(fieldnames(args[1]), Symbol("z")) != 0)
 			r = r * " -Tg"
-		elseif (ind = findfirst(fieldnames(args[1]), symbol("image")) != 0)
+		elseif (ind = findfirst(fieldnames(args[1]), Symbol("image")) != 0)
 			r = r * " -Ti"
-		elseif (ind = findfirst(fieldnames(args[1]), symbol("data")) != 0)
+		elseif (ind = findfirst(fieldnames(args[1]), Symbol("data")) != 0)
 			r = r * " -Td"
-		elseif (ind = findfirst(fieldnames(args[1]), symbol("postscript")) != 0)
+		elseif (ind = findfirst(fieldnames(args[1]), Symbol("postscript")) != 0)
 			r = r * " -Tp"
-		elseif (ind = findfirst(fieldnames(args[1]), symbol("hinge")) != 0)
+		elseif (ind = findfirst(fieldnames(args[1]), Symbol("hinge")) != 0)
 			r = r * " -Tc"
 		end
 	end
