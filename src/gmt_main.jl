@@ -139,7 +139,7 @@ function gmt(cmd::String, args...)
 	end
 
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F
-	if (g_module == "psconvert" && n_argin == 0 && (isempty(r) || isempty(search(r, "-F"))))
+	if (g_module == "psconvert" && (isempty(r) || isempty(search(r, "-F"))))
 		if (!isempty(r))
 			r = r * " -F"
 		else
@@ -215,7 +215,10 @@ function gmt(cmd::String, args...)
 
 	# 6. Run GMT module; give usage message if errors arise during parsing
 	status = GMT_Call_Module(API, g_module, GMT_MODULE_OPT, LL)
-	if (!(status == GMT_NOERROR || status == GMT_SYNOPSIS))
+	if (status != GMT_NOERROR)
+		if (status == GMT_MODULE_USAGE || status == GMT_MODULE_SYNOPSIS || status == GMT_MODULE_LIST || status == GMT_MODULE_EXIST || status == GMT_MODULE_PURPOSE)
+			return
+		end
 		error("Something went wrong when calling the module. GMT error number = ", status)
 	end
 
@@ -424,11 +427,11 @@ function get_image(API::Ptr{Void}, object)
 	X  = linspace(gmt_hdr.wesn[1], gmt_hdr.wesn[2], nx)
 	Y  = linspace(gmt_hdr.wesn[3], gmt_hdr.wesn[4], ny)
 
-	t  = reshape(pointer_to_array(I.data, ny * nx * nz), ny, nx, nz)
+	t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), ny, nx, nz)
 
 	if (I.colormap != C_NULL)       # Indexed image has a color map (PROBABLY NEEDS TRANSPOSITION)
 		n_colors = Int64(I.n_indexed_colors)
-		colormap = pointer_to_array(I.colormap, n_colors * 4)
+		colormap = unsafe_wrap(Array, I.colormap, n_colors * 4)
 		#colormap = reshape(colormap, 4, n_colors)'
 	else
 		colormap = vec(zeros(Clong,1,3))	# Because we need an array
@@ -675,7 +678,7 @@ function get_PS(API::Ptr{Void}, object::Ptr{Void})
 	end
 
 	P = unsafe_load(convert(Ptr{GMT_POSTSCRIPT}, object))
-	out = GMTJL_PS(bytestring(P.data), Int(P.n_bytes), Int(P.mode), [])	# NEED TO FILL THE COMMENT
+	out = GMTJL_PS(unsafe_string(P.data), Int(P.n_bytes), Int(P.mode), [])	# NEED TO FILL THE COMMENT
 
 	return out
 end
