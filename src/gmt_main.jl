@@ -164,11 +164,12 @@ function gmt(cmd::String, args...)
 
 	# 3. Convert command line arguments to a linked GMT option list
 	LL = C_NULL
-	if (!isempty(r))
-		LL = GMT_Create_Options(API, 0, r)	# It uses also the fact that GMT parses and check options
-		if (LL == C_NULL)
-			error("Error creating the linked list of options. Probably a bad usage.")
-		end
+	if (isempty(r))		# Just requesting usage message, so add -? to options
+		r = "-?"
+	end
+	LL = GMT_Create_Options(API, 0, r)	# It uses also the fact that GMT parses and check options
+	if (LL == C_NULL)
+		error("Error creating the linked list of options. Probably a bad usage.")
 	end
 
 	# 4. Preprocess to update GMT option lists and return info array X
