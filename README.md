@@ -4,12 +4,11 @@ GMT.jl
 Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
 There is no manual yet but looking into the tests.jl should give a (good) idea on how it works. Note also that this
-wrapper works only with the GMT5.2.1. The developing version suffered too many changes and won't work with this wrapper anymore. A new version of this wrapper will be released parallel to GMT5.3 (by end of September).
+wrapper works only with the new GMT5.3.1 (GMT.jl 0.0.1 version worked with GMT5.2.1).
 
 Install
 =======
 
-    (Pkg.init()		# If you haven't done it yet)
     Pkg.add("GMT")
 
 On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at /user/local/lib), I had to help
@@ -43,9 +42,13 @@ Note that we now sent the *G grid* as argument instead of the **-G** *gridname* 
 While for this particular case it makes no difference to use or not the **-G**, because there is **only** one input, the same does not hold true when we have more than one. For example, we can run the same example but compute the color palette separately.
 
     cpt = gmt("grd2cpt -Cblue,red", G);
-    gmt("grdimage -JX8c -Ba -P -C -G > crap_img.ps", cpt, G)
+    gmt("grdimage -JX8c -Ba -P -C -G > crap_img.ps", G, cpt)
 
-Now we had to explicitly write the **-C** & **-G** (well, actually we could have omitted the **-G** because it's a mandatory input but that would make the things more confusing). Note also the order of the input data variables. It is crucial that they are used in the **exact** same order as the options in the command string.
+Now we had to explicitly write the **-C** & **-G** (well, actually we could have omitted the **-G** because
+it's a mandatory input but that would make the things more confusing). Note also the order of the input data variables.
+It is crucial that any *required* (primary) input data objects (for grdimage that is the grid) are given before
+any *optional* (secondary) input data objects (here, that is the CPT object).  The same is true for modules that
+return more than one item: List the required output object first followed by optional ones.
 
 To illustrate another aspect on the importance of the order of input data let us see how to plot a sinus curve made of colored filled circles.
 
@@ -53,9 +56,10 @@ To illustrate another aspect on the importance of the order of input data let us
     seno = sin(x);                     # yy
     xyz  = [x seno seno];              # Duplicate yy so that it can be colored
     cpt  = gmt("makecpt -T-1/1/0.1");  # Create a color palette
-    gmt("psxy -R-3.2/3.2/-1.1/1.1 -JX12c -Sc0.1c -C -P -Ba > seno.ps", cpt, xyz)
+    gmt("psxy -R-3.2/3.2/-1.1/1.1 -JX12c -Sc0.1c -C -P -Ba > seno.ps", xyz, cpt)
 
-The point here is that we had to give *cpt, xyz* and not *xyz, cpt* (which would error) because input data associated with an option letter **always comes first** and has to respect the corresponding options order in command string.
+The point here is that we had to give *xyz, cpt* and not *cpt, xyz* (which would error) because optional input data
+associated with an option letter **always comes after the required input**.
 
 To plot text strings we send in the input data wrapped in a cell array. Example:
 
@@ -87,53 +91,59 @@ So that's basically how it works. When numeric data has to be sent *in* to **GMT
 The Grid type
 -------------
 
-    type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
-	   ProjectionRefPROJ4::ASCIIString    # Projection string in PROJ4 syntax (Optional)
-	   ProjectionRefWKT::ASCIIString      # Projection string in WKT syntax (Optional)
-	   range::Array{Float64,1}            # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
-	   inc::Array{Float64,1}              # 1x2 vector with [x_inc y_inc]
-	   n_rows::Int                        # Number of rows in grid
-	   n_columns::Int                     # Number of columns in grid
-	   n_bands::Int                       # Not-yet used (always == 1)
-	   registration::Int                  # Registration type: 0 -> Grid registration; 1 -> Pixel registration
-	   NoDataValue::Float64               # The value of nodata
-	   title::ASCIIString                 # Title (Optional)
-	   remark::ASCIIString                # Remark (Optional)
-	   command::ASCIIString               # Command used to create the grid (Optional)
-	   DataType::ASCIIString              # 'float' or 'double'
-	   x::Array{Float64,1}                # [1 x n_columns] vector with XX coordinates
-	   y::Array{Float64,1}                # [1 x n_rows]    vector with YY coordinates
-	   z::Array{Float32,2}                # [n_rows x n_columns] grid array
-	   x_units::ASCIIString               # Units of XX axis (Optional)
-	   y_units::ASCIIString               # Units of YY axis (Optional)
-	   z_units::ASCIIString               # Units of ZZ axis (Optional)
+    type GMTJL_GRID 	           # The type holding a local header and data of a GMT grid
+      proj4::String               # Projection string in PROJ4 syntax (Optional)
+      wkt::String                 # Projection string in WKT syntax (Optional)
+      range::Array{Float64,1}     # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
+      inc::Array{Float64,1}       # 1x2 vector with [x_inc y_inc]
+      registration::Int           # Registration type: 0 -> Grid registration; 1 -> Pixel registration
+      nodata::Float64             # The value of nodata
+      title::String               # Title (Optional)
+      comment::String             # Remark (Optional)
+      command::String             # Command used to create the grid (Optional)
+      datatype::String            # 'float' or 'double'
+      x::Array{Float64,1}         # [1 x n_columns] vector with XX coordinates
+      y::Array{Float64,1}         # [1 x n_rows]    vector with YY coordinates
+      z::Array{Float32,2}         # [n_rows x n_columns] grid array
+      x_units::String             # Units of XX axis (Optional)
+      y_units::String             # Units of YY axis (Optional)
+      z_units::String             # Units of ZZ axis (Optional)
     end
 
 The Image type
 --------------
 
-    type GMTJL_IMAGE     # The type holding a local header and data of a GMT image
-       ProjectionRefPROJ4::ASCIIString    # Projection string in PROJ4 syntax (Optional)
-       ProjectionRefWKT::ASCIIString      # Projection string in WKT syntax (Optional)
-       range::Array{Float64,1}            # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
-       inc::Array{Float64,1}              # 1x2 vector with [x_inc y_inc]
-       n_rows::Int                        # Number of rows in image
-       n_columns::Int                     # Number of columns in image
-       n_bands::Int                       # Number of bands in image
-       registration::Int                  # Registration type: 0 -> Grid registration; 1 -> Pixel registration
-       NoDataValue::Float64               # The value of nodata
-       title::ASCIIString                 # Title (Optional)
-       remark::ASCIIString                # Remark (Optional)
-       command::ASCIIString               # Command used to create the image (Optional)
-       DataType::ASCIIString              # 'uint8' or 'int8' (needs checking)
-       x::Array{Float64,1}                # [1 x n_columns] vector with XX coordinates
-       y::Array{Float64,1}                # [1 x n_rows]    vector with YY coordinates
-       image::Array{UInt8,3}              # [n_rows x n_columns x n_bands] image array
-       x_units::ASCIIString               # Units of XX axis (Optional)
-       y_units::ASCIIString               # Units of YY axis (Optional)
-       z_units::ASCIIString               # Units of ZZ axis (Optional) ==> MAKES NO SENSE
-       colormap::Array{Clong,1}           # 
-       alpha::Array{UInt8,2}              # A [n_rows x n_columns] alpha array
+    type GMTJL_IMAGE              # The type holding a local header and data of a GMT image
+       proj4::String              # Projection string in PROJ4 syntax (Optional)
+       wkt::String                # Projection string in WKT syntax (Optional)
+       range::Array{Float64,1}    # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
+       inc::Array{Float64,1}      # 1x2 vector with [x_inc y_inc]
+       registration::Int          # Registration type: 0 -> Grid registration; 1 -> Pixel registration
+       nodata::Float64            # The value of nodata
+       title::String              # Title (Optional)
+       comment::String            # Remark (Optional)
+       command::String            # Command used to create the image (Optional)
+       datatype::String           # 'uint8' or 'int8' (needs checking)
+       x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates
+       y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates
+       image::Array{UInt8,3}      # [n_rows x n_columns x n_bands] image array
+       x_units::String            # Units of XX axis (Optional)
+       y_units::String            # Units of YY axis (Optional)
+       z_units::String            # Units of ZZ axis (Optional) ==> MAKES NO SENSE
+       colormap::Array{Clong,1}   # 
+       alpha::Array{UInt8,2}      # A [n_rows x n_columns] alpha array
+    end
+
+The DATASET type
+----------------
+
+    type GMTJL_DATASET
+        header::String
+        data::Array{Float64,2}
+        text::Array{Any,1}
+        comment::Array{Any,1}
+        proj4::String
+        wkt::String
     end
 
 The CPT type
@@ -143,5 +153,21 @@ The CPT type
         colormap::Array{Float64,2}
         alpha::Array{Float64,1}
         range::Array{Float64,2}
-        rangeMinMax::Array{Float64,1}
+        minmax::Array{Float64,1}
+        bfn::Array{Float64,2}
+        depth::Cint
+        hinge::Cdouble
+        cpt::Array{Float64,2}
+        model::String
+        comment::Array{Any,1}   # Cell array with any comments
+    end
+
+The Postscript type
+-------------------
+
+    type GMTJL_PS
+        postscript::String      # Actual PS plot (text string)
+        length::Int             # Byte length of postscript
+        mode::Int               # 1 = Has header, 2 = Has trailer, 3 = Has both
+        comment::Array{Any,1}   # Cell array with any comments
     end
