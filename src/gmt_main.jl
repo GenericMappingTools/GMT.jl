@@ -1,13 +1,10 @@
 global API			# OK, so next times we'll use this one
 
 type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
-	ProjRefPROJ4::String
-	ProjRefWKT::String
+	proj4::String
+	wkt::String
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
-	n_rows::Int
-	n_columns::Int
-	n_bands::Int
 	registration::Int
 	nodata::Float64
 	title::String
@@ -23,13 +20,10 @@ type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
 end
 
 type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
-	ProjRefPROJ4::String
-	ProjRefWKT::String
+	proj4::String
+	wkt::String
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
-	n_rows::Int
-	n_columns::Int
-	n_bands::Int
 	registration::Int
 	nodata::Float64
 	title::String
@@ -69,13 +63,13 @@ type GMTJL_PS
 end
 
 type GMTJL_DATASET
-	header::AbstractString
+	header::String
 	data::Array{Float64,2}
 	text::Array{Any,1}
 	comment::Array{Any,1}
-	ProjRefPROJ4::String
-	ProjRefWKT::String
-	GMTJL_DATASET(header, data, text, comment, ProjRefPROJ4, ProjRefWKT) = new(header, data, text, comment, ProjRefPROJ4, ProjRefWKT)
+	proj4::String
+	wkt::String
+	GMTJL_DATASET(header, data, text, comment, proj4, wkt) = new(header, data, text, comment, proj4, wkt)
 	GMTJL_DATASET() = new(string(), Array{Float64,2}(), Array{String,1}(), Array{String,1}(), string(), string())
 end
 
@@ -379,29 +373,26 @@ function get_grid(API::Ptr{Void}, object)
 	#t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
 
 	# Return grids via a float matrix in a struct
-	out = GMTJL_GRID("", "", zeros(6)*NaN, zeros(2)*NaN, 0, 0, 0, 0, NaN, "", "", "", "", X, Y, z, "", "", "")
+	out = GMTJL_GRID("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y, z, "", "", "")
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
-		out.ProjRefPROJ4 = bytestring(gmt_hdr.ProjRefPROJ4)
+		out.proj4 = bytestring(gmt_hdr.proj4)
 	end
 	if (gmt_hdr.ProjRefWKT != C_NULL)
-		out.ProjRefWKT = bytestring(gmt_hdr.ProjRefWKT)
+		out.wkt = bytestring(gmt_hdr.wkt)
 	end
 
 	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays  
 	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
 	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
-	out.n_rows       = ny
-	out.n_columns    = nx
 	out.nodata       = gmt_hdr.nan_value
 	out.registration = gmt_hdr.registration
-	out.n_bands      = gmt_hdr.n_bands
+	out.x_unit       = String(UInt8[gmt_hdr.x_unit...])
+	out.y_unit       = String(UInt8[gmt_hdr.y_unit...])
+	out.z_unit       = String(UInt8[gmt_hdr.z_unit...])
 	#out.x_unit       = bytestring(UInt8[gmt_hdr.x_unit...])
 	#out.y_unit       = bytestring(UInt8[gmt_hdr.y_unit...])
 	#out.z_unit       = bytestring(UInt8[gmt_hdr.z_unit...])
-	out.x_unit = String(UInt8[gmt_hdr.x_unit...])
-	out.y_unit = String(UInt8[gmt_hdr.y_unit...])
-	out.z_unit = String(UInt8[gmt_hdr.z_unit...])
 
 	return out
 end
@@ -442,29 +433,26 @@ function get_image(API::Ptr{Void}, object)
 	# Return grids via a float matrix in a struct
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	if (gmt_hdr.n_bands <= 3)
-		out = GMTJL_IMAGE("", "", zeros(6)*NaN, zeros(2)*NaN, 0, 0, 0, 0, NaN, "", "", "", "", X, Y,
+		out = GMTJL_IMAGE("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
 	                      t, "", "", "", colormap, n_colors, zeros(UInt8,ny,nx), layout) 	# <== Ver o qur fazer com o alpha
 	else 			# RGB(A) image
-		out = GMTJL_IMAGE("", "", zeros(6)*NaN, zeros(2)*NaN, 0, 0, 0, 0, NaN, "", "", "", "", X, Y,
+		out = GMTJL_IMAGE("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
 	                      t[:,:,1:3], "", "", "", colormap, n_colors, t[:,:,4], layout)
 	end
 	I.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# So that GMT's Garbageman does not free I.data
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
-		out.ProjRefPROJ4 = bytestring(gmt_hdr.ProjRefPROJ4)
+		out.proj4 = bytestring(gmt_hdr.proj4)
 	end
-	if (gmt_hdr.ProjRefWKT != C_NULL)
-		out.ProjRefWKT = bytestring(gmt_hdr.ProjRefWKT)
+	if (gmt_hdr.wkt != C_NULL)
+		out.ProjRefWKT = bytestring(gmt_hdr.wkt)
 	end
 
 	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
 	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
-	out.n_rows       = ny
-	out.n_columns    = nx
 	out.nodata       = gmt_hdr.nan_value
 	out.registration = gmt_hdr.registration
-	out.n_bands      = gmt_hdr.n_bands
 
 	return out
 end
@@ -1664,7 +1652,7 @@ function grid_type(z, hdr=[])
 	one_or_zero = hdr[7] == 0 ? 1 : 0
 	x_inc = (hdr[2] - hdr[1]) / (n_cols - one_or_zero)
 	y_inc = (hdr[4] - hdr[3]) / (n_rows - one_or_zero)
-	G = GMTJL_GRID("", "", hdr[1:6], [x_inc, y_inc], n_rows, n_cols, 1, hdr[7], NaN, "", "", "", "", x, y, z, "", "", "")
+	G = GMTJL_GRID("", "", hdr[1:6], [x_inc, y_inc], hdr[7], NaN, "", "", "", "", x, y, z, "", "", "")
 end
 
 
