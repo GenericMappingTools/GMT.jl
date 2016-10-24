@@ -91,7 +91,7 @@ So that's basically how it works. When numeric data has to be sent *in* to **GMT
 The Grid type
 -------------
 
-    type GMTJL_GRID 	           # The type holding a local header and data of a GMT grid
+    type GMTgrid     	           # The type holding a local header and data of a GMT grid
       proj4::String               # Projection string in PROJ4 syntax (Optional)
       wkt::String                 # Projection string in WKT syntax (Optional)
       range::Array{Float64,1}     # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
@@ -113,7 +113,7 @@ The Grid type
 The Image type
 --------------
 
-    type GMTJL_IMAGE              # The type holding a local header and data of a GMT image
+    type GMTimage                 # The type holding a local header and data of a GMT image
        proj4::String              # Projection string in PROJ4 syntax (Optional)
        wkt::String                # Projection string in WKT syntax (Optional)
        range::Array{Float64,1}    # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
@@ -137,7 +137,7 @@ The Image type
 The DATASET type
 ----------------
 
-    type GMTJL_DATASET
+    type GMTdataset
         header::String
         data::Array{Float64,2}
         text::Array{Any,1}
@@ -149,7 +149,7 @@ The DATASET type
 The CPT type
 ------------
 
-    type GMTJL_CPT
+    type GMTcpt
         colormap::Array{Float64,2}
         alpha::Array{Float64,1}
         range::Array{Float64,2}
@@ -165,7 +165,7 @@ The CPT type
 The Postscript type
 -------------------
 
-    type GMTJL_PS
+    type GMTps
         postscript::String      # Actual PS plot (text string)
         length::Int             # Byte length of postscript
         mode::Int               # 1 = Has header, 2 = Has trailer, 3 = Has both
