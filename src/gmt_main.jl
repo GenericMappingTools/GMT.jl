@@ -1,6 +1,6 @@
 global API			# OK, so next times we'll use this one
 
-type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
+type GMTgrid 	# The type holding a local header and data of a GMT grid
 	proj4::String
 	wkt::String
 	range::Array{Float64,1}
@@ -19,7 +19,7 @@ type GMTJL_GRID 	# The type holding a local header and data of a GMT grid
 	z_unit::String
 end
 
-type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
+type GMTimage 	# The type holding a local header and data of a GMT image
 	proj4::String
 	wkt::String
 	range::Array{Float64,1}
@@ -42,7 +42,7 @@ type GMTJL_IMAGE 	# The type holding a local header and data of a GMT image
 	layout::String
 end
 
-type GMTJL_CPT
+type GMTcpt
 	colormap::Array{Float64,2}
 	alpha::Array{Float64,1}
 	range::Array{Float64,2}
@@ -55,26 +55,26 @@ type GMTJL_CPT
 	comment::Array{Any,1}		# Cell array with any comments
 end
 
-type GMTJL_PS
+type GMTps
 	postscript::String			# Actual PS plot (text string)
 	length::Int 				# Byte length of postscript
 	mode::Int 					# 1 = Has header, 2 = Has trailer, 3 = Has both
 	comment::Array{Any,1}		# Cell array with any comments
 end
 
-type GMTJL_DATASET
+type GMTdataset
 	header::String
 	data::Array{Float64,2}
 	text::Array{Any,1}
 	comment::Array{Any,1}
 	proj4::String
 	wkt::String
-	GMTJL_DATASET(header, data, text, comment, proj4, wkt) = new(header, data, text, comment, proj4, wkt)
-	GMTJL_DATASET() = new(string(), Array{Float64,2}(), Array{String,1}(), Array{String,1}(), string(), string())
+	GMTdataset(header, data, text, comment, proj4, wkt) = new(header, data, text, comment, proj4, wkt)
+	GMTdataset() = new(string(), Array{Float64,2}(), Array{String,1}(), Array{String,1}(), string(), string())
 end
 
 # Container to hold info to allow creating grids in a simple (but limmited) maner
-type array_container
+type ArrayContainer
 	nx::Int
 	ny::Int
 	n_bands::Int
@@ -373,7 +373,7 @@ function get_grid(API::Ptr{Void}, object)
 	#t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
 
 	# Return grids via a float matrix in a struct
-	out = GMTJL_GRID("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y, z, "", "", "")
+	out = GMTgrid("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y, z, "", "", "")
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
 		out.proj4 = bytestring(gmt_hdr.proj4)
@@ -433,10 +433,10 @@ function get_image(API::Ptr{Void}, object)
 	# Return grids via a float matrix in a struct
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	if (gmt_hdr.n_bands <= 3)
-		out = GMTJL_IMAGE("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
+		out = GMTimage("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
 	                      t, "", "", "", colormap, n_colors, zeros(UInt8,ny,nx), layout) 	# <== Ver o qur fazer com o alpha
 	else 			# RGB(A) image
-		out = GMTJL_IMAGE("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
+		out = GMTimage("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
 	                      t[:,:,1:3], "", "", "", colormap, n_colors, t[:,:,4], layout)
 	end
 	I.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# So that GMT's Garbageman does not free I.data
@@ -487,7 +487,7 @@ function get_palette(API::Ptr{Void}, object::Ptr{Void})
 	end
 	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 
-	out = GMTJL_CPT(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), zeros(2)*NaN, zeros(3,3), 8, 0.0,
+	out = GMTcpt(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), zeros(2)*NaN, zeros(3,3), 8, 0.0,
 	                zeros(C.n_colors,6), model, [])
 
 	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
@@ -567,7 +567,7 @@ function get_textset_(API::Ptr{Void}, object::Ptr{Void})
 	Ttab_1 = unsafe_load(unsafe_load(T.table), 1)
 	n_headers = Ttab_1.n_headers
 
-	Darr = [GMTJL_DATASET() for i = 1:seg_out]			# Create the array of DATASETS
+	Darr = [GMTdataset() for i = 1:seg_out]			# Create the array of DATASETS
 
 	seg_out = 1
 	Tab = unsafe_wrap(Array, T.table, T.n_tables)		# D.n_tables-element Array{Ptr{GMT.GMT_DATATABLE},1}
@@ -667,7 +667,7 @@ function get_PS(API::Ptr{Void}, object::Ptr{Void})
 	end
 
 	P = unsafe_load(convert(Ptr{GMT_POSTSCRIPT}, object))
-	out = GMTJL_PS(unsafe_string(P.data), Int(P.n_bytes), Int(P.mode), [])	# NEED TO FILL THE COMMENT
+	out = GMTps(unsafe_string(P.data), Int(P.n_bytes), Int(P.mode), [])	# NEED TO FILL THE COMMENT
 
 	return out
 end
@@ -701,7 +701,7 @@ function get_dataset_(API::Ptr{Void}, object)
 		end
 	end
 
-	Darr = [GMTJL_DATASET() for i = 1:seg_out]			# Create the array of DATASETS
+	Darr = [GMTdataset() for i = 1:seg_out]			# Create the array of DATASETS
 
 	seg_out = 1
 	T = unsafe_wrap(Array, D.table, D.n_tables)			# D.n_tables-element Array{Ptr{GMT.GMT_DATATABLE},1}
@@ -924,7 +924,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT_IN)
 # If GRD_BOX is empty just allocate (GMT) an empty container and return
-# If GRD_BOX is not empty it must contain either a array_container or a GMTJL_GRID type.
+# If GRD_BOX is not empty it must contain either a ArrayContainer or a GMTgrid type.
 
 	empty = false 		# F... F... it's a shame having to do this
 	try
@@ -940,11 +940,11 @@ function grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT_IN)
 		return R
 	end
 
-	if (isa(grd_box, array_container))
+	if (isa(grd_box, ArrayContainer))
 		grd = pointer_to_array(grd_box.grd, (grd_box.ny, grd_box.nx))
 		hdr = pointer_to_array(grd_box.hdr, 9)
 		R = grid_init(API, module_input, [], grd, hdr)
-	elseif (isa(grd_box, GMTJL_GRID))
+	elseif (isa(grd_box, GMTgrid))
 		R = grid_init(API, module_input, grd_box, [], [])
 	else
 		error(@sprintf("GMTJL_PARSER:grd_init: input (%s) is not a GRID|IMAGE container type", typeof(grd_box)))
@@ -956,7 +956,7 @@ end
 function grid_init(API::Ptr{Void}, module_input, Grid, grd, hdr, pad::Int=2)
 # We are given a Julia grid and can determine its size, etc.
 
-	if (isa(Grid, GMTJL_GRID))
+	if (isa(Grid, GMTgrid))
 		grd = Grid.z
 		hdr = [Grid.range; Grid.registration; Grid.inc]
 	end
@@ -980,7 +980,7 @@ function grid_init(API::Ptr{Void}, module_input, Grid, grd, hdr, pad::Int=2)
 	h.z_min = hdr[5]			# Set the z_min, z_max
 	h.z_max = hdr[6]
 
-	if (isa(Grid, GMTJL_GRID))
+	if (isa(Grid, GMTgrid))
 		h.x_unit = map(UInt8, (Grid.x_unit...))
 		h.y_unit = map(UInt8, (Grid.y_unit...))
 		h.z_unit = map(UInt8, (Grid.z_unit...))
@@ -1012,11 +1012,11 @@ function image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GMT_IN)
 		return I
 	end
 
-	if (isa(img_box, array_container))
+	if (isa(img_box, ArrayContainer))
 		img = pointer_to_array(img_box.grd, (img_box.ny, img_box.nx, img_box.n_bands))
 		hdr = pointer_to_array(img_box.hdr, 9)
 		I = image_init(API, img, hdr)
-	elseif (isa(img_box, GMTJL_IMAGE))
+	elseif (isa(img_box, GMTimage))
 		#img = img_box.image
 		#hdr = [img_box.range; img_box.registration; img_box.inc]
 		I = image_init(API, img_box)
@@ -1027,7 +1027,7 @@ function image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GMT_IN)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function image_init(API::Ptr{Void}, Img::GMTJL_IMAGE, pad::Int=0)
+function image_init(API::Ptr{Void}, Img::GMTimage, pad::Int=0)
 #
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_pages = size(Img.image, 3)
 	dim = pointer([n_cols, n_rows, n_pages])
@@ -1155,13 +1155,13 @@ function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer)
 
 	if (Darr == C_NULL) error("Input is empty where it can't be.")	end
 	#if (!((eltype(Darr) == Array{Any}) || (eltype(Darr) == String)))	# Got a matrix as input, pass data pointers via MATRIX to save memory
-	if (isa(Darr, GMTJL_DATASET))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
-	if (!(isa(Darr, Array{GMTJL_DATASET,1})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
+	if (isa(Darr, GMTdataset))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
+	if (!(isa(Darr, Array{GMTdataset,1})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
 		D = dataset_init(API, module_input, Darr, direction)
 		return D
 	end
 	# We come here if we did not receive a matrix
-	#if (!isa(Darr, GMTJL_DATASET)) error("Expected a GMTJL_DATASET type for input")	end
+	#if (!isa(Darr, GMTdataset)) error("Expected a GMTdataset type for input")	end
 	dim = [1, 0, 0, 0]
 	dim[GMT.GMT_SEG+1] = length(Darr)					# Number of segments
 	if (dim[GMT.GMT_SEG+1] == 0)	error("Input has zero segments where it can't be")	end
@@ -1274,7 +1274,7 @@ function palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 
 	# Dimensions are known from the input pointer
 
-	if (!isa(cpt, GMTJL_CPT))
+	if (!isa(cpt, GMTcpt))
 		error("Expected a CPT structure for input")
 	end
 
@@ -1352,7 +1352,7 @@ function text_init_(API::Ptr{Void}, module_input, Darr, dir::Integer, family::In
 		return T
 	end
 
-	if (isa(Darr, Array{GMTJL_DATASET,1}))
+	if (isa(Darr, Array{GMTdataset,1}))
 		dim = [1 0 0]
 		dim[GMT.GMT_SEG+1] = length(Darr)		# Number of segments
 		if (dim[GMT.GMT_SEG+1] == 0) error("Input has zero segments where it can't be")	end
@@ -1507,7 +1507,7 @@ function ps_init(API::Ptr{Void}, module_input, ps, dir::Integer)
 		return P
 	end
 
-	if (!isa(ps, GMTJL_PS))
+	if (!isa(ps, GMTps))
 		error("Expected a PS structure for input")
 	end
 
@@ -1632,7 +1632,7 @@ end
 """
 G = grid_type(z, hdr=[])
     Take a 2D Z array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax ref xinc yinc] header descriptor
-    and return a grid GMTJL_GRID type.
+    and return a grid GMTgrid type.
     Optionaly, the HDR arg may be ommited and it will computed from Z alone, but than x=1:ncol, y=1:nrow
 """
 function grid_type(z, hdr=[])
@@ -1652,7 +1652,7 @@ function grid_type(z, hdr=[])
 	one_or_zero = hdr[7] == 0 ? 1 : 0
 	x_inc = (hdr[2] - hdr[1]) / (n_cols - one_or_zero)
 	y_inc = (hdr[4] - hdr[3]) / (n_rows - one_or_zero)
-	G = GMTJL_GRID("", "", hdr[1:6], [x_inc, y_inc], hdr[7], NaN, "", "", "", "", x, y, z, "", "", "")
+	G = GMTgrid("", "", hdr[1:6], [x_inc, y_inc], hdr[7], NaN, "", "", "", "", x, y, z, "", "", "")
 end
 
 
