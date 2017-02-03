@@ -17,6 +17,7 @@ type GMTgrid 	# The type holding a local header and data of a GMT grid
 	x_unit::String
 	y_unit::String
 	z_unit::String
+	layout::String
 end
 
 type GMTimage 	# The type holding a local header and data of a GMT image
@@ -156,6 +157,18 @@ function gmt(cmd::String, args...)
 		end
 	end
 
+	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
+	if ((searchindex(g_module,"read") != 0) && !isempty(r) && (searchindex(r,"-T") != 0))
+		if (searchindex(r,"-Ti") != 0)
+			GMT_Set_Default(API, "API_PAD", "0")
+		end
+		ind = searchindex(r, "-L")
+		if (!isempty(ind))
+			mem_layout, resto = strtok(r[ind+2:end])
+			r = r[1:ind-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
+		end
+	end
+
 	# 3. Convert command line arguments to a linked GMT option list
 	LL = C_NULL
 	if (isempty(r))		# Just requesting usage message, so add -? to options
@@ -231,8 +244,12 @@ function gmt(cmd::String, args...)
 
 	for k = 1:n_items					# Get results from GMT into Julia arrays
 		if (X[k].direction == GMT_IN) continue 	end      # Only looking for stuff coming OUT of GMT here
-
 		out[X[k].pos+1] = GMTJL_Get_Object(API, X[k])	# Hook mex object onto rhs list
+	end
+
+	# 2++- If gmtread -Ti than reset the session's pad value that was temporarily changed above (2+++)
+	if ((searchindex(g_module,"read") != 0) && !isempty(r) && (searchindex(r,"-Ti") != 0))
+		GMT_Set_Default(API, "API_PAD", "2")
 	end
 
 	# 8. Free all GMT containers involved in this module call
@@ -360,7 +377,7 @@ function get_grid(API::Ptr{Void}, object)
 
 	#API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, API))	# Get access to a minimalist API struct (no API.GMT)
 	t = unsafe_wrap(Array, G.data, my * mx)
-	z   = zeros(Float32, ny, nx)
+	z = zeros(Float32, ny, nx)
 
 	for col = 1:nx
 		for row = 1:ny
@@ -373,13 +390,13 @@ function get_grid(API::Ptr{Void}, object)
 	#t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
 
 	# Return grids via a float matrix in a struct
-	out = GMTgrid("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y, z, "", "", "")
+	out = GMTgrid("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y, z, "", "", "", "")
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
-		out.proj4 = bytestring(gmt_hdr.proj4)
+		out.proj4 = bytestring(gmt_hdr.ProjRefPROJ4)
 	end
 	if (gmt_hdr.ProjRefWKT != C_NULL)
-		out.wkt = bytestring(gmt_hdr.wkt)
+		out.wkt = bytestring(gmt_hdr.ProjRefWKT)
 	end
 
 	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays  
@@ -443,10 +460,10 @@ function get_image(API::Ptr{Void}, object)
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
-		out.proj4 = bytestring(gmt_hdr.proj4)
+		out.proj4 = bytestring(gmt_hdr.ProjRefPROJ4)
 	end
-	if (gmt_hdr.wkt != C_NULL)
-		out.ProjRefWKT = bytestring(gmt_hdr.wkt)
+	if (gmt_hdr.ProjRefWKT != C_NULL)
+		out.ProjRefWKT = bytestring(gmt_hdr.ProjRefWKT)
 	end
 
 	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
@@ -1008,7 +1025,7 @@ function image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GMT_IN)
 		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("image_init: Failure to alloc GMT blank grid container for holding output image")
 		end
-		GMT_Set_Default(API, "API_IMAGE_LAYOUT", "TCBa");	# State how we wish to receive images from GDAL
+		GMT_Set_Default(API, "API_IMAGE_LAYOUT", "BRBa");	# State how we wish to receive images from GDAL
 		return I
 	end
 
@@ -1080,7 +1097,7 @@ function image_init(API::Ptr{Void}, img, hdr::Array{Float64}, pad::Int=0)
 	h = unsafe_load(Ib.header)
 	h.z_min = hdr[5]			# Set the z_min, z_max
 	h.z_max = hdr[6]
-	h.mem_layout = map(UInt8, ("TCBa"...))
+	h.mem_layout = map(UInt8, ("BRBa"...))
 	unsafe_store!(Ib.header, h)
 	unsafe_store!(I, Ib)
 	GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Image %s in parser\n", I))
@@ -1652,7 +1669,7 @@ function grid_type(z, hdr=[])
 	one_or_zero = hdr[7] == 0 ? 1 : 0
 	x_inc = (hdr[2] - hdr[1]) / (n_cols - one_or_zero)
 	y_inc = (hdr[4] - hdr[3]) / (n_rows - one_or_zero)
-	G = GMTgrid("", "", hdr[1:6], [x_inc, y_inc], hdr[7], NaN, "", "", "", "", x, y, z, "", "", "")
+	G = GMTgrid("", "", hdr[1:6], [x_inc, y_inc], hdr[7], NaN, "", "", "", "", x, y, z, "", "", "", "")
 end
 
 
