@@ -45,7 +45,7 @@ export
 	GMT_GRID_DATA_ONLY, GMT_GRID_HEADER_ONLY, GMT_GRID_ALL,
 	GMT_GRID_ALL, GMT_READ_NORMAL, GMT_WRITE_SET, GMT_Report,
 	array_container,
-	GMT_Encode_Options, GMT_Expand_Option, GMT_grid_flip_vertical,
+	GMT_Encode_Options, GMT_Expand_Option, gmtlib_grd_flip_vertical,
 	gmt_core_module_info,
 	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
