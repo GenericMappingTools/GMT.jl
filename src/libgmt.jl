@@ -266,8 +266,8 @@ function GMT_Set_Default(API::Ptr{Void}, keyword, value)
 	ccall((:GMT_Set_Default, thelib), Void, (Ptr{Void}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 end
 
-function GMT_grid_flip_vertical(gridp, n_cols::Integer, n_rows::Integer, n_stride::Integer=0, cell_size::Integer=1)
-	ccall((:GMT_grid_flip_vertical, thelib), Void, (Ptr{Void}, UInt32, UInt32, UInt32, Csize_t),
+function gmtlib_grd_flip_vertical(gridp, n_cols::Integer, n_rows::Integer, n_stride::Integer=0, cell_size::Integer=1)
+	ccall((:gmtlib_grd_flip_vertical, thelib), Void, (Ptr{Void}, UInt32, UInt32, UInt32, Csize_t),
 	       gridp, n_cols, n_rows, n_stride, cell_size)
 end
 
