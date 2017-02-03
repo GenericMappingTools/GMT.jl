@@ -91,23 +91,24 @@ So that's basically how it works. When numeric data has to be sent *in* to **GMT
 The Grid type
 -------------
 
-    type GMTgrid     	           # The type holding a local header and data of a GMT grid
-      proj4::String               # Projection string in PROJ4 syntax (Optional)
-      wkt::String                 # Projection string in WKT syntax (Optional)
-      range::Array{Float64,1}     # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
-      inc::Array{Float64,1}       # 1x2 vector with [x_inc y_inc]
-      registration::Int           # Registration type: 0 -> Grid registration; 1 -> Pixel registration
-      nodata::Float64             # The value of nodata
-      title::String               # Title (Optional)
-      comment::String             # Remark (Optional)
-      command::String             # Command used to create the grid (Optional)
-      datatype::String            # 'float' or 'double'
-      x::Array{Float64,1}         # [1 x n_columns] vector with XX coordinates
-      y::Array{Float64,1}         # [1 x n_rows]    vector with YY coordinates
-      z::Array{Float32,2}         # [n_rows x n_columns] grid array
-      x_units::String             # Units of XX axis (Optional)
-      y_units::String             # Units of YY axis (Optional)
-      z_units::String             # Units of ZZ axis (Optional)
+    type GMTJL_GRID 	            # The type holding a local header and data of a GMT grid
+       proj4::String              # Projection string in PROJ4 syntax (Optional)
+       wkt::String                # Projection string in WKT syntax (Optional)
+       range::Array{Float64,1}    # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
+       inc::Array{Float64,1}      # 1x2 vector with [x_inc y_inc]
+       registration::Int          # Registration type: 0 -> Grid registration; 1 -> Pixel registration
+       nodata::Float64            # The value of nodata
+       title::String              # Title (Optional)
+       comment::String            # Remark (Optional)
+       command::String            # Command used to create the grid (Optional)
+       datatype::String           # 'float' or 'double'
+       x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates
+       y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates
+       z::Array{Float32,2}        # [n_rows x n_columns] grid array
+       x_units::String            # Units of XX axis (Optional)
+       y_units::String            # Units of YY axis (Optional)
+       z_units::String            # Units of ZZ axis (Optional)
+       layout::String             # A three character string describing the grid memory layout
     end
 
 The Image type
@@ -132,6 +133,7 @@ The Image type
        z_units::String            # Units of ZZ axis (Optional) ==> MAKES NO SENSE
        colormap::Array{Clong,1}   # 
        alpha::Array{UInt8,2}      # A [n_rows x n_columns] alpha array
+       layout::String             # A four character string describing the image memory layout
     end
 
 The DATASET type
