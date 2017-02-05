@@ -1,4 +1,5 @@
 global API			# OK, so next times we'll use this one
+global grd_mem_layout
 
 type GMTgrid 	# The type holding a local header and data of a GMT grid
 	proj4::String
@@ -94,6 +95,7 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
 """
 function gmt(cmd::String, args...)
 	global API
+	global grd_mem_layout = ""
 	
 	# ----------- Minimal error checking ------------------------
 	if (~isa(cmd, String))
@@ -163,8 +165,8 @@ function gmt(cmd::String, args...)
 			GMT_Set_Default(API, "API_PAD", "0")
 		end
 		ind = searchindex(r, "-L")
-		if (!isempty(ind))
-			mem_layout, resto = strtok(r[ind+2:end])
+		if (ind != 0)
+			grd_mem_layout, resto = strtok(r[ind+2:end])
 			r = r[1:ind-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 		end
 	end
@@ -346,7 +348,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function MEXG_IJ(row, col, ny)
-	# Get the ij that correspond to (row,col) [no pad involved]
+	# Get the ij that corresponds to (row,col) [no pad involved]
 	#ij = col * ny + ny - row - 1		in C
 	ij = col * ny - row + 1
 end
@@ -355,6 +357,7 @@ end
 function get_grid(API::Ptr{Void}, object)
 # Given an incoming GMT grid G, build a Julia type and assign the output components.
 # Note: Incoming GMT grid has standard padding while Julia grid has none.
+	global grd_mem_layout
 
 	G = unsafe_load(convert(Ptr{GMT_GRID}, object))
 	if (G.data == C_NULL)
@@ -379,12 +382,34 @@ function get_grid(API::Ptr{Void}, object)
 	t = unsafe_wrap(Array, G.data, my * mx)
 	z = zeros(Float32, ny, nx)
 
-	for col = 1:nx
-		for row = 1:ny
-			#ij = GMT_IJP(gmt_hdr, row, col)
-			ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
-			z[MEXG_IJ(row, col, ny)] = t[ij]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
+	if (isempty(grd_mem_layout))
+		for col = 1:nx
+			for row = 1:ny
+				#ij = GMT_IJP(gmt_hdr, row, col)
+				ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
+				z[MEXG_IJ(row, col, ny)] = t[ij]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
+			end
 		end
+	elseif (grd_mem_layout == "TR" || grd_mem_layout == "BR")	# Keep the Row Major but stored in Column Major
+		ind_y = 1:ny		# Start assuming "TR"
+		if (grd_mem_layout == "BR");	ind_y = ny:-1:1;	end	# Bottom up
+		k = 1
+		for row = ind_y
+			for col = 1:nx
+				ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
+				z[k] = t[ij]
+				k = k + 1		
+			end
+		end
+		grd_mem_layout = ""			# Reset because this variable is global
+	else
+		for col = 1:nx
+			for row = 1:ny
+				ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
+				z[row,col] = t[ij]
+			end
+		end
+		grd_mem_layout = ""
 	end
 
 	#t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
