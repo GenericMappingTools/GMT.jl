@@ -115,6 +115,7 @@ const GMT_IO_UNREG = 16384
 # end enum GMT_enum_ioset
 # begin enum GMT_enum_read
 const GMT_READ_DOUBLE = 0
+const GMT_READ_DATA = 0           # Renamed to GMT_READ_DATA in GMT5.3.2
 const GMT_READ_NORMAL = 0
 const GMT_READ_TEXT = 1
 const GMT_READ_MIXED = 2
@@ -127,7 +128,8 @@ const GMT_ALLOC_NORMAL = 0        # Normal allocation of new dataset based on sh
 const GMT_ALLOC_VERTICAL = 4      # Allocate a single table for data set to hold all input tables by vertical concatenation */
 const GMT_ALLOC_HORIZONTAL = 8
 # begin enum GMT_enum_write
-const GMT_WRITE_DOUBLE = 0
+const GMT_WRITE_DOUBLE = 0        # Renamed to GMT_WRITE_DATA in GMT5.3.2
+const GMT_WRITE_DATA = 0
 const GMT_WRITE_TEXT = 1
 const GMT_WRITE_SEGMENT_HEADER = 2
 const GMT_WRITE_TABLE_HEADER = 3
