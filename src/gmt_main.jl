@@ -418,10 +418,10 @@ function get_grid(API::Ptr{Void}, object)
 	out = GMTgrid("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y, z, "", "", "", "")
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
-		out.proj4 = bytestring(gmt_hdr.ProjRefPROJ4)
+		out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)
 	end
 	if (gmt_hdr.ProjRefWKT != C_NULL)
-		out.wkt = bytestring(gmt_hdr.ProjRefWKT)
+		out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)
 	end
 
 	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays  
@@ -432,9 +432,9 @@ function get_grid(API::Ptr{Void}, object)
 	out.x_unit       = String(UInt8[gmt_hdr.x_unit...])
 	out.y_unit       = String(UInt8[gmt_hdr.y_unit...])
 	out.z_unit       = String(UInt8[gmt_hdr.z_unit...])
-	#out.x_unit       = bytestring(UInt8[gmt_hdr.x_unit...])
-	#out.y_unit       = bytestring(UInt8[gmt_hdr.y_unit...])
-	#out.z_unit       = bytestring(UInt8[gmt_hdr.z_unit...])
+	#out.x_unit       = unsafe_string(UInt8[gmt_hdr.x_unit...])
+	#out.y_unit       = unsafe_string(UInt8[gmt_hdr.y_unit...])
+	#out.z_unit       = unsafe_string(UInt8[gmt_hdr.z_unit...])
 
 	return out
 end
@@ -485,10 +485,10 @@ function get_image(API::Ptr{Void}, object)
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
-		out.proj4 = bytestring(gmt_hdr.ProjRefPROJ4)
+		out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)
 	end
 	if (gmt_hdr.ProjRefWKT != C_NULL)
-		out.ProjRefWKT = bytestring(gmt_hdr.ProjRefWKT)
+		out.ProjRefWKT = unsafe_string(gmt_hdr.ProjRefWKT)
 	end
 
 	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
@@ -684,12 +684,12 @@ function get_textset(API::Ptr{Void}, object::Ptr{Void})
 	for seg = 1:p[1].n_segments
 		S = pointer_to_array(pointer_to_array(p[1].segment,1)[seg],seg)	# p[1].segment::Ptr{Ptr{GMT.GMT_TEXTSEGMENT}}
 		if (p[1].n_segments > 1)
-			C[k] = @sprintf("> %s", bytestring(S[1].header))
+			C[k] = @sprintf("> %s", unsafe_string(S[1].header))
 			k += 1 
 		end
 		for row = 1:S[1].n_rows
 			k += 1
-			C[k] = bytestring(pointer_to_array(S[1].data, row)[row])
+			C[k] = unsafe_string(pointer_to_array(S[1].data, row)[row])
 		end
 	end
 
@@ -900,7 +900,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_Get_Object(API::Ptr{Void}, X::GMT_RESOURCE)
-	#name = bytestring([X.name...])			# Because X.name is a NTuple
+	#name = unsafe_string([X.name...])			# Because X.name is a NTuple
 	name = String([X.name...])
 	if ((X.object = GMT_Read_VirtualFile(API, name)) == NULL)
 		error("GMT: Error reading virtual file from GMT")
