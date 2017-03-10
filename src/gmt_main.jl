@@ -102,6 +102,11 @@ function gmt(cmd::String, args...)
 		error("gmt: first argument must always be a string")
 	end
 	n_argin = length(args)
+	if (n_argin > 0 && isa(args[1], String))	# Accept also the gmt("progname", "options", data) construct
+		cmd = cmd * " " * args[1]				# Cat it with the progname and so pretend input followed the classic construct
+		args = args[2:end]
+		n_argin -= 1
+	end
 	# -----------------------------------------------------------
 
 	try
@@ -135,12 +140,22 @@ function gmt(cmd::String, args...)
 		error("GMT: No module by that name was found.")
 	end
 
-	# 2+ Add -F to psconvert if user requested a return image but did not give -F. We use the -T to solve the ambiguity
-	if (g_module == "psconvert" && ( isempty(r) || (isempty(search(r, "-F")) && isempty(search(r, "-T"))) ) )
-		if (!isempty(r))
-			r = r * " -F"
-		else
+	# 2+ Add -F to psconvert if user requested a return image but did not give -F.
+	# The problem is that we can't use nargout to decide what to do, so we use -T to solve the ambiguity. 
+	if (g_module == "psconvert" && (isempty(r) || isempty(search(r, "-F"))) )
+		if (isempty(r))
 			r = "-F"
+		else
+			ind = search(r, "-T")
+			if (isempty(ind))
+				r = r * " -F"
+			else								# Hmm, have to find if any of 'e' or 'f' are used as -T flags
+				tok = strtok(r[ind[2]:end])		# Will have T?
+				tok = lowercase(tok[1])
+				if (isempty(search(tok,"e")) && isempty(search(tok,"f")))	# No any -Tef combo so add -F
+					r = r * " -F"
+				end
+			end
 		end
 	end
 
