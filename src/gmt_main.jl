@@ -137,7 +137,6 @@ function gmt(cmd::String, args...)
 
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F. We use the -T to solve the ambiguity
 	if (g_module == "psconvert" && ( isempty(r) || (isempty(search(r, "-F")) && isempty(search(r, "-T"))) ) )
-@show("Merda")
 		if (!isempty(r))
 			r = r * " -F"
 		else
