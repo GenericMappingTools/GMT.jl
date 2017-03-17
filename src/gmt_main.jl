@@ -102,10 +102,13 @@ function gmt(cmd::String, args...)
 		error("gmt: first argument must always be a string")
 	end
 	n_argin = length(args)
-	if (n_argin > 0 && isa(args[1], String))	# Accept also the gmt("progname", "options", data) construct
-		cmd = cmd * " " * args[1]				# Cat it with the progname and so pretend input followed the classic construct
-		args = args[2:end]
-		n_argin -= 1
+	if (n_argin > 0 && isa(args[1], String))
+		tok, r = strtok(cmd)
+		if (isempty(r))							# User gave 'module' separately from 'options' 
+			cmd = cmd * " " * args[1]			# Cat it with the progname and so pretend input followed the classic construct
+			args = args[2:end]
+			n_argin -= 1
+		end
 	end
 	# -----------------------------------------------------------
 
@@ -191,6 +194,7 @@ function gmt(cmd::String, args...)
 	if (isempty(r))		# Just requesting usage message, so add -? to options
 		r = "-?"
 	end
+@show(r)
 	LL = GMT_Create_Options(API, 0, r)	# It uses also the fact that GMT parses and check options
 	if (LL == C_NULL)
 		error("Error creating the linked list of options. Probably a bad usage.")
@@ -210,6 +214,7 @@ function gmt(cmd::String, args...)
 	n_items = pointer([0])
 	X = GMT_Encode_Options(API, g_module, n_argin, pLL, n_items)	# This call also changes LL
 	n_items = unsafe_load(n_items)
+@show("MERDA_00", n_items)
 	if (X == C_NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
 		n_items = 0
 	elseif (X == C_NULL)
