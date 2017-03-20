@@ -194,7 +194,6 @@ function gmt(cmd::String, args...)
 	if (isempty(r))		# Just requesting usage message, so add -? to options
 		r = "-?"
 	end
-@show(r)
 	LL = GMT_Create_Options(API, 0, r)	# It uses also the fact that GMT parses and check options
 	if (LL == C_NULL)
 		error("Error creating the linked list of options. Probably a bad usage.")
