@@ -214,7 +214,6 @@ function gmt(cmd::String, args...)
 	n_items = pointer([0])
 	X = GMT_Encode_Options(API, g_module, n_argin, pLL, n_items)	# This call also changes LL
 	n_items = unsafe_load(n_items)
-@show("MERDA_00", n_items)
 	if (X == C_NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
 		n_items = 0
 	elseif (X == C_NULL)
