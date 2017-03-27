@@ -4,7 +4,7 @@ using GMT
 
 # When calling the gallery() function directly and with only one argument, one need to edit
 # these two for own paths. Otherwise this same job is done in gmtest()
-global g_root_dir = "C:/progs_cygw/GMTdev/gmt5/trunk/"
+global g_root_dir = "C:/progs_cygw/GMTdev/gmt5/5.3/"
 global out_path = "V:/"			# Leave it empty to write files in current directory
 
 # -----------------------------------------------------------------------------------------------------
@@ -79,8 +79,7 @@ function ex01(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex01/"
 	ps = out_path * "example_01.ps"
 
-	gmt("destroy")
-	gmt("gmtset MAP_GRID_CROSS_SIZE_PRIMARY 0 FONT_ANNOT_PRIMARY 10p PROJ_LENGTH_UNIT inch PS_MEDIA letter")
+	gmt("gmtset MAP_GRID_CROSS_SIZE_PRIMARY 0 FONT_ANNOT_PRIMARY 10p PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
 	gmt("destroy")
 	gmt("psbasemap -R0/6.5/0/7.5 -Jx1i -B0 -P -K > " * ps)
 	gmt("pscoast -Rg -JH0/6i -X0.25i -Y0.2i -O -K -Bg30 -Dc -Glightbrown -Slightblue >> " * ps)
@@ -102,8 +101,7 @@ function ex02(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex02/"
 	ps = out_path * "example_02.ps"
 
-	gmt("destroy")
-	gmt("gmtset FONT_TITLE 30p MAP_ANNOT_OBLIQUE 0 PROJ_LENGTH_UNIT inch PS_MEDIA letter")
+	gmt("gmtset FONT_TITLE 30p MAP_ANNOT_OBLIQUE 0 PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
 	gmt("destroy")
 	g_cpt = gmt("makecpt -Crainbow -T-2/14/2")
 	gmt("grdimage " * d_path * "HI_geoid2.nc -R160/20/220/30r -JOc190/25.5/292/69/4.5i -C" *
@@ -128,7 +126,6 @@ function ex03(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex03/"
 	ps = out_path * "example_03.ps"
 
-	gmt("destroy")
 	gmt("gmtset -Du")
 	gmt("destroy")
 	
@@ -569,7 +566,6 @@ function ex13(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex13/"
 	ps = out_path * "example_13.ps"
 
-	gmt("destroy")
 	gmt("gmtset -Du")
 	gmt("destroy")
 	Gz = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL =")
@@ -1760,8 +1756,8 @@ function ex40(g_root_dir, out_path)
 	gmt("psxy -R -J -O -K -W1p,blue >> " * ps, T500k)
 	gmt("psxy -R -J -O -K -Sx0.3i -W3p >> " * ps, centroid)
 	gmt("pstext -R -J -O -K -Dj0.1i/0.1i -F+jTL+f18p >> " * ps, "112 -10 T = 500 km")
-	gmt("pstext -R -J -O -K -F+14p+cCM >> " * ps, area)
-	gmt("pstext -R -J -O -K -F+14p+cLB -Dj0.2i >> " * ps, area_T500k)
+	gmt("pstext -R -J -O -K -F+f14p+cCM >> " * ps, area)
+	gmt("pstext -R -J -O -K -F+f14p+cLB -Dj0.2i >> " * ps, area_T500k)
 	gmt("psbasemap -R -J -O -K -B20+lightgray -BWsne+g240/255/240 -Y4.7i >> " * ps)
 	gmt("psxy " * d_path * "GSHHS_h_Australia.txt -R -J -O -Wfaint -G240/240/255 -K >> " * ps)
 	gmt("psxy " * d_path * "GSHHS_h_Australia.txt -R -J -O -Sc0.01c -Gred -K >> " * ps)
@@ -1771,8 +1767,8 @@ function ex40(g_root_dir, out_path)
 	gmt("psxy -R -J -O -K -W1p,blue >> " * ps, T100k)
 	gmt("psxy -R -J -O -K -Sx0.3i -W3p >> " * ps, centroid)
 	gmt("pstext -R -J -O -K -Dj0.1i/0.1i -F+jTL+f18p >> " * ps, "112 -10 T = 100 km")
-	gmt("pstext -R -J -O -K -F+14p+cCM >> " * ps, area)
-	gmt("pstext -R -J -O -K -F+14p+cLB -Dj0.2i >> " * ps, area_T100k)
+	gmt("pstext -R -J -O -K -F+f14p+cCM >> " * ps, area)
+	gmt("pstext -R -J -O -K -F+f14p+cLB -Dj0.2i >> " * ps, area_T100k)
 	gmt("psxy -R -J -O -T >> " * ps)
 	rm("gmt.conf")
 	return ps, d_path
@@ -1807,8 +1803,6 @@ function ex42(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex42/"
 	ps = out_path * "example_42.ps"
 
-	gmt("destroy")
-	gmt("destroy")
 	gmt("gmtset FONT_ANNOT_PRIMARY 12p FONT_LABEL 12p PROJ_ELLIPSOID WGS-84 FORMAT_GEO_MAP dddF" *
 		" PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
 	gmt("destroy")
