@@ -831,7 +831,7 @@ function ex19(g_root_dir, out_path)
 	gmt("grdimage -J -C -O -K -nl >> " * ps, Glon, lon_cpt)
 	gmt("pscoast -R -J -O -K -Q >> " * ps)
 	gmt("pscoast -R -J -O -K -Dc -A5000 -Wthinnest >> " * ps)
-	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,red=thinner >> " * ps, "0 20 12TH INTERNATIONAL")
+	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,red=thinner >> " * ps, "0 20 14TH INTERNATIONAL")
 	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,red=thinner >> " * ps, "0 -10 GMT CONFERENCE")
 	gmt("pstext -R -J -O -K -F+f18p,Helvetica-Bold,green=thinnest >> " * ps, "0 -30 Honolulu, Hawaii, April 1, 2017")
 
@@ -847,7 +847,7 @@ function ex19(g_root_dir, out_path)
 	gmt("grdimage -J -Clat.cpt -O -K -nl >> " * ps, Glat)
 	gmt("pscoast -R -J -O -K -Q >> " * ps)
 	gmt("pscoast -R -J -O -K -Dc -A5000 -Wthinnest >> " * ps)
-	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,red=thinner >> " * ps, "0 20 12TH INTERNATIONAL")
+	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,red=thinner >> " * ps, "0 20 14TH INTERNATIONAL")
 	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,red=thinner >> " * ps, "0 -10 GMT CONFERENCE")
 	gmt("pstext -R -J -O -F+f18p,Helvetica-Bold,green=thinnest >> " * ps, "0 -30 Honolulu, Hawaii, April 1, 2017")
 	rm("lat.cpt");	rm("gmt.conf")
@@ -1204,8 +1204,10 @@ function ex25(g_root_dir, out_path)
 	# But unfortunately this palette is not correct, so lets patch it
 	C.colormap[1,1:2] = 0;		C.colormap[1,3] = 1;
 	C.colormap[3,2:3] = 0;		C.colormap[3,1] = 1;
+
 	# Create the final plot and overlay coastlines
 	gmt("gmtset FONT_ANNOT_PRIMARY +10p FORMAT_GEO_MAP dddF PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
+	gmt("destroy")
 	gmt("grdimage -JKs180/9i -Bx60 -By30 -BWsNE+t\"Antipodal comparisons\" -K -C -Y1.2i -nn > " * ps, Gkey, C)
 	gmt("pscoast -R -J -O -K -Wthinnest -Dc -A500 >> " * ps)
 	# Place an explanatory legend below
