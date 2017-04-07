@@ -8,6 +8,7 @@ const GMT_SESSION_NORMAL   = 0   # Typical mode to GMT_Create_Session
 const GMT_SESSION_NOEXIT   = 1   # Call return and not exit when error
 const GMT_SESSION_EXTERNAL = 2   # Called by an external API (e.g., Matlab, Julia, Python).
 const GMT_SESSION_COLMAJOR = 4   # External API uses column-major formats (e.g., Julai, MATLAB, Fortran). [Row-major format]
+const GMT_SESSION_RUNMODE  = 8	 # If set enable GMT's modern runmode. [Classic]
 # begin enum GMT_enum_type
 const GMT_CHAR = 0
 const GMT_UCHAR = 1
@@ -42,6 +43,7 @@ const GMT_IS_STREAM = 1
 const GMT_IS_FDESC = 2
 const GMT_IS_DUPLICATE = 3
 const GMT_IS_REFERENCE = 4
+const GMT_IS_OUTPUT = 1024
 # end enum GMT_enum_method
 # begin enum GMT_enum_via
 const GMT_VIA_NONE = 0
