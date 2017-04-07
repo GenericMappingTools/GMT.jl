@@ -95,7 +95,8 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
 """
 function gmt(cmd::String, args...)
 	global API
-	global grd_mem_layout = ""
+	#global grd_mem_layout = ""
+	global img_mem_layout = "TCP"
 	
 	# ----------- Minimal error checking ------------------------
 	if (~isa(cmd, String))
@@ -140,7 +141,7 @@ function gmt(cmd::String, args...)
 
 	# Make sure this is a valid module
 	if ((status = GMT_Call_Module(API, g_module, GMT_MODULE_EXIST, C_NULL)) != 0)
-		error("GMT: No module by that name was found.")
+		error("GMT: No module by that name -- " * g_module * " -- was found.")
 	end
 
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F.
@@ -460,7 +461,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function get_image(API::Ptr{Void}, object)
 # Given an incoming GMT image, build a Julia type and assign the output components.
-# Note: Incoming GMT image may have standard padding while Julia grid has none.
+# Note: Incoming GMT image may have standard padding while Julia image has none.
+	global img_mem_layout
 
 	I = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
 	if (I.data == C_NULL)
@@ -479,7 +481,11 @@ function get_image(API::Ptr{Void}, object)
 	X  = linspace(gmt_hdr.wesn[1], gmt_hdr.wesn[2], nx)
 	Y  = linspace(gmt_hdr.wesn[3], gmt_hdr.wesn[4], ny)
 
-	t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), ny, nx, nz)
+	if (!isempty(search(img_mem_layout, "TCP")))		# BIP case for Images.jl
+		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), nz, ny, nx)
+	else
+		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), ny, nx, nz)
+	end
 
 	if (I.colormap != C_NULL)       # Indexed image has a color map (PROBABLY NEEDS TRANSPOSITION)
 		n_colors = Int64(I.n_indexed_colors)
@@ -490,11 +496,11 @@ function get_image(API::Ptr{Void}, object)
 		n_colors = 0
 	end
 
-	# Return grids via a float matrix in a struct
+	# Return image via a uint8 matrix in a struct
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	if (gmt_hdr.n_bands <= 3)
 		out = GMTimage("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
-	                      t, "", "", "", colormap, n_colors, zeros(UInt8,ny,nx), layout) 	# <== Ver o qur fazer com o alpha
+	                      t, "", "", "", colormap, n_colors, zeros(UInt8,ny,nx), layout) 	# <== Ver o que fazer com o alpha
 	else 			# RGB(A) image
 		out = GMTimage("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
 	                      t[:,:,1:3], "", "", "", colormap, n_colors, t[:,:,4], layout)
@@ -878,7 +884,7 @@ function GMTJL_Set_Object(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
 	if (X.family == GMT_IS_GRID)			# Get a grid from Julia or a dummy one to hold GMT output
 		X.object =  grid_init(API, module_input, ptr, X.direction)
 		GMT_Report(API, GMT_MSG_DEBUG, "GMTMEX_Set_Object: Got Grid\n")
-	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Matlab or a dummy one to hold GMT output
+	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Julia or a dummy one to hold GMT output
 		X.object = image_init(API, module_input, ptr, X.direction)
 		GMT_Report(API, GMT_MSG_DEBUG, "GMTMEX_Set_Object: Got Image\n");
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
@@ -945,7 +951,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_register_IO(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
-# Create the grid or matrix contains, register them, and return the ID
+# Create the grid or matrix containers, register them, and return the ID
 	oo = unsafe_load(X.option)
 	module_input = (oo.option == GMT.GMT_OPT_INFILE)
 	ID = GMT.GMT_NOTSET
@@ -992,8 +998,10 @@ function grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT_IN)
 		empty = true
 	end
 
-	if (empty)			# Just tell grid_init() to allocate an empty container 
-		if ((R = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
+	if (empty)			# Just tell grid_init() to allocate an empty container
+		GMT_CREATE_MODE = 0
+		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
+		if ((R = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_CREATE_MODE, 
 		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT blank grid container for holding output grid")
 		end
@@ -1056,6 +1064,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GMT_IN)
 	# ...
+	global img_mem_layout
 
 	empty = false 		# F... F... it's a shame having to do this
 	try
@@ -1063,12 +1072,16 @@ function image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GMT_IN)
 		empty = true
 	end
 
-	if (empty)			# Just tell image_init() to allocate an empty container 	
-		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_HEADER_ONLY, 
+	if (empty)			# Just tell image_init() to allocate an empty container
+		GMT_CREATE_MODE = 0
+		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
+		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_CREATE_MODE, 
 		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("image_init: Failure to alloc GMT blank grid container for holding output image")
 		end
-		GMT_Set_Default(API, "API_IMAGE_LAYOUT", "BRBa");	# State how we wish to receive images from GDAL
+		if (!isempty(img_mem_layout))
+			GMT_Set_Default(API, "API_IMAGE_LAYOUT", img_mem_layout * "a");		# State how we wish to receive images from GDAL
+		end
 		return I
 	end
 
@@ -1114,6 +1127,7 @@ end
 function image_init(API::Ptr{Void}, img, hdr::Array{Float64}, pad::Int=0)
 # Used to Create an empty Image container to hold a GMT image.
 # We are given a Julia image and can determine its size, etc.
+	global img_mem_layout
 
 	n_rows = size(img, 1);		n_cols = size(img, 2);		n_pages = size(img, 3)
 	dim = pointer([n_cols, n_rows, n_pages])
@@ -1136,11 +1150,13 @@ function image_init(API::Ptr{Void}, img, hdr::Array{Float64}, pad::Int=0)
 =#
 
 	Ib.data = pointer(img)
-	Ib.alloc_mode = UInt32(GMT.GMT_ALLOCATED_EXTERNALLY)	# Since array was allocated by Julia
+	Ib.alloc_mode = UInt32(GMT.GMT_ALLOCATED_EXTERNALLY)		# Since array was allocated by Julia
 	h = unsafe_load(Ib.header)
 	h.z_min = hdr[5]			# Set the z_min, z_max
 	h.z_max = hdr[6]
-	h.mem_layout = map(UInt8, ("BRBa"...))
+	if (!isempty(img_mem_layout))
+		h.mem_layout = map(UInt8, (img_mem_layout * "a"...))	# The memory layout order
+	end
 	unsafe_store!(Ib.header, h)
 	unsafe_store!(I, Ib)
 	GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Image %s in parser\n", I))
@@ -1206,7 +1222,9 @@ function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer)
 # If output then we dont know size so we set dimensions to zero.
 
 	if (direction == GMT_OUT)
-		if ((D = GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+		GMT_CREATE_MODE = 0
+		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
+		if ((D = GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT source Dataset\n")
 		end
 		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("dataset_init_: Allocated GMT Dataset %s\n", D))
@@ -1311,7 +1329,9 @@ function dataset_init(API::Ptr{Void}, module_input, ptr, direction::Integer)
 
 	else	# To receive data from GMT we use a GMT_VECTOR resource instead
 		# There are no dimensions and we are just getting an empty container for output
-		if ((V = GMT_Create_Data(API, GMT_IS_VECTOR, GMT_IS_PLP, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+		GMT_CREATE_MODE = 0
+		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
+		if ((V = GMT_Create_Data(API, GMT_IS_VECTOR, GMT_IS_PLP, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT source vector\n")
 		end
 		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("dataset_init: Allocated GMT Vector %s\n", V))
@@ -1326,7 +1346,9 @@ function palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 	# If direction is GMT_OUT then we allocate an empty GMT CPT as a destination.
 
 	if (dir == GMT_OUT)
-		if ((P = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+		GMT_CREATE_MODE = 0
+		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
+		if ((P = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT blank CPT container for holding output CPT")
 		end
 		return P
@@ -1401,12 +1423,13 @@ function palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 	return P
 end
 
-
 # ---------------------------------------------------------------------------------------------------
 function text_init_(API::Ptr{Void}, module_input, Darr, dir::Integer, family::Integer=GMT_IS_TEXTSET)
 # 
 	if (dir == GMT_OUT)
-		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, 0, NULL, NULL, NULL, 0, 0, NULL)) == NULL)
+		GMT_CREATE_MODE = 0
+		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
+		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, GMT_CREATE_MODE, NULL, NULL, NULL, 0, 0, NULL)) == NULL)
 			error("Failure to alloc GMT blank TEXTSET container for holding output TEXT")
 		end
 		return T
@@ -1547,7 +1570,9 @@ function text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family::Inte
 =#
 
 	else 	# Just allocate an empty container to hold an output grid (signal this by passing NULLs)
-		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+		GMT_CREATE_MODE = 0
+		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
+		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT blank TEXTSET container for holding output TEXT")
 		end
 	end
@@ -1561,7 +1586,9 @@ function ps_init(API::Ptr{Void}, module_input, ps, dir::Integer)
 # If direction is GMT_IN then we are given a Julia structure with known sizes.
 # If direction is GMT_OUT then we allocate an empty GMT POSTSCRIPT as a destination.
 	if (dir == GMT_OUT)
-		if ((P = GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, 0, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+		GMT_CREATE_MODE = 0
+		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
+		if ((P = GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT blank PS container for holding output PostScript")
 		end
 		return P
@@ -1715,6 +1742,19 @@ function grid_type(z, hdr=[])
 	G = GMTgrid("", "", hdr[1:6], [x_inc, y_inc], hdr[7], NaN, "", "", "", "", x, y, z, "", "", "", "")
 end
 
+# ---------------------------------------------------------------------------------------------------
+"""
+Inquire about GMT version. Will return 5.3 for all versions up to this one and the truth for rest 
+"""
+function get_GMTversion(API::Ptr{Void})
+	value = "        "
+	GMT_Get_Default(API, "API_VERSION", value)
+	if (value[1] == '\0' || parse(value[1:3]) < 5.4)
+		ver = 5.3
+	else
+		ver = parse(value[1:3])
+	end
+end
 
 #=
 Em GMT_Create_Session(API, ...)
