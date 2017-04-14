@@ -95,7 +95,7 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
 """
 function gmt(cmd::String, args...)
 	global API
-	#global grd_mem_layout = ""
+	global grd_mem_layout = ""
 	global img_mem_layout = "TCP"
 	
 	# ----------- Minimal error checking ------------------------
@@ -130,12 +130,24 @@ function gmt(cmd::String, args...)
 	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
 	g_module, r = strtok(cmd)
 
-	# 2. In case this was a clean up call
+	# 2. In case this was a clean up call or a begin/end from the modern mode
 	if (g_module == "destroy")
 		if (GMT_Destroy_Session(API) != 0)
 			error("GMT: Failure to destroy GMT5 session")
 		end
 		API = NaN
+		return
+	elseif (g_module == "begin" || g_module == "end")
+		if (get_GMTversion(API) < 5.4)
+			error("GMT: The modern mode is only available at GMT5.4 and up.")
+		end
+		if (g_module == "begin")
+			gmt_manage_workflow(API, GMT.GMT_BEGIN_WORKFLOW)
+		else
+			gmt_manage_workflow(API, GMT.GMT_END_WORKFLOW)
+			GMT_Destroy_Session(API)
+			API = NaN
+		end
 		return
 	end
 
