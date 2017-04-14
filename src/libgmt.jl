@@ -379,3 +379,9 @@ function GMT_Put_Data(API::Ptr{Void}, object_ID::Integer, mode::Integer, data)
 	ccall((:GMT_Put_Data, thelib), Cint, (Ptr{Void}, Cint, UInt32, Ptr{Void}), API, object_ID, mode, data)
 end
 # --------------------------------------------------------------------------------------------------------------
+ 
+# ------------------ Development function in 5.4.0 -------------------------------------------------------------
+function gmt_manage_workflow(API::Ptr{Void}, mode::Integer)
+    ccall((:gmt_manage_workflow, thelib), Cint, (Ptr{Void}, Cuint), API, mode)
+end
+# --------------------------------------------------------------------------------------------------------------
