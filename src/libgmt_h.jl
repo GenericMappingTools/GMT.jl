@@ -9,6 +9,13 @@ const GMT_SESSION_NOEXIT   = 1   # Call return and not exit when error
 const GMT_SESSION_EXTERNAL = 2   # Called by an external API (e.g., Matlab, Julia, Python).
 const GMT_SESSION_COLMAJOR = 4   # External API uses column-major formats (e.g., Julai, MATLAB, Fortran). [Row-major format]
 const GMT_SESSION_RUNMODE  = 8	 # If set enable GMT's modern runmode. [Classic]
+# begin enum GMT_enum_workflowmode
+const GMT_USE_WORKFLOW   = 0     # Default is to use current workflow if initiated and ignore if otherwise
+const GMT_BEGIN_WORKFLOW = 1     # Initiate a new workflow via gmt begin
+const GMT_END_WORKFLOW   = 2     # Terminate current workflow via gmt begin
+# begin enum GMT_enum_runmode
+const GMT_CLASSIC        = 0     # Select Classic GMT behavior with -O -K -R -J
+const GMT_MODERN         = 1     # Select Modern behavior where -O -K are disabled and -R -J optional if possible
 # begin enum GMT_enum_type
 const GMT_CHAR = 0
 const GMT_UCHAR = 1
