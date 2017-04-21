@@ -769,21 +769,29 @@ type GMTAPI_CTRL
 	unique_ID::UInt32			# Used to create unique IDs for duration of session
 	session_ID::UInt32			# ID of this session
 	unique_var_ID::UInt32		# Used to create unique object IDs (grid,dataset, etc) for duration of session
-	current_item::NTuple{2, UInt32}	# Array number of current dataset being processed (in and out)
+	current_item::NTuple{2, Cint}	# Array number of current dataset being processed (in and out)
 	pad::UInt32					# Session default for number of rows/cols padding for grids [2]
-	mode::UInt32				# 1 if called via external API (Matlab, Python) [0]
+	external::UInt32			# 1 if called via external API (MATLAB, Python) [0]
+	runmode::UInt32				# nonzero for GMT modern runmode [0 = classic]
+	shape::Cint                 # GMT_IS_COL_FORMAT (1) if column-major (MATLAB, Fortran), GMT_IS_ROW_FORMAT (0) if row-major
 	leave_grid_scaled::UInt32	# 1 if we dont want to unpack a grid after we packed it for writing [0]
-	registered::NTuple{2, Cint}	# true if at least one source/destination has been registered (in and out)
-	io_enabled::NTuple{2, Cint}	# true if access has been allowed (in and out)
+	n_cores::UInt32             # Number of available cores on this system
+	verbose::UInt32             # Used until GMT is set up
+	registered::NTuple{2, Bool}	# true if at least one source/destination has been registered (in and out)
+	io_enabled::NTuple{2, Bool}	# true if access has been allowed (in and out)
+	module_input::Bool          # true when we are about to read inputs to the module (command line) */
 	n_objects_alloc::Csize_t	# Allocation counter for data objects
 	error::Int32				# Error code from latest API call [GMT_OK]
 	last_error::Int32			# Error code from previous API call [GMT_OK]
 	shelf::Int32				# Place to pass hidden values within API
 	io_mode::NTuple{2, UInt32}	# 1 if access as set, 0 if record-by-record
+	PPID::Cint                  # The Process ID of the parent (e.g., shell) or the external caller
 	#GMT::Ptr{GMT_CTRL}			# Key structure with low-level GMT internal parameters
 	GMT::Ptr{Void}				# Maybe one day. Till than just keep it as void
 	object::Ptr{Ptr{GMTAPI_DATA_OBJECT}}	# List of registered data objects
 	session_tag::Ptr{UInt8}		# Name tag for this session (or NULL)
+	tmp_dir::Ptr{UInt8}         # System tmp_dir (NULL if not found)
+	gwf_dir::Ptr{UInt8}         # GMT WorkFlow dir (NULL if not running in modern mode)
 	internal::Bool				# true if session was initiated by gmt.c
 	deep_debug::Bool			# temporary for debugging
 	#int (*print_func) (FILE *, const char *);	# Pointer to fprintf function (may be reset by external APIs like MEX)
