@@ -1759,11 +1759,12 @@ end
 Inquire about GMT version. Will return 5.3 for all versions up to this one and the truth for rest 
 """
 function get_GMTversion(API::Ptr{Void})
-	value = "        "
-	GMT_Get_Default(API, "API_VERSION", value)
-	if (value[1] == '\0' || parse(value[1:3]) < 5.4)
+	status = GMT_Call_Module(API, "psternary", GMT.GMT_MODULE_EXIST, C_NULL)
+	if (status != 0)
 		ver = 5.3
 	else
+		value = "        "
+		GMT_Get_Default(API, "API_VERSION", value)
 		ver = parse(value[1:3])
 	end
 end
