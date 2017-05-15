@@ -217,6 +217,11 @@ const GMT_SEG = 1
 const GMT_ROW = 2
 const GMT_COL = 3
 # end enum GMT_enum_dimindex
+# begin enum GMT_enum_container
+const GMT_CONTAINER_AND_DATA  = 0    # Create|Read|write both container and the data array
+const GMT_CONTAINER_ONLY      = 1    # Create|read|write the container but no data array
+const GMT_DATA_ONLY           = 2  	 # Create|Read|write the container's array only
+# end enum GMT_enum_container
 # begin enum GMT_enum_gridio
 const GMT_GRID_IS_REAL = 0
 const GMT_GRID_ALL = 0
