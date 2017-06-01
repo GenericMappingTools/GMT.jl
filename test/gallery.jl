@@ -4,7 +4,7 @@ using GMT
 
 # When calling the gallery() function directly and with only one argument, one need to edit
 # these two for own paths. Otherwise this same job is done in gmtest()
-global g_root_dir = "C:/progs_cygw/GMTdev/gmt5/5.3/"
+global g_root_dir = "C:/progs_cygw/GMTdev/gmt5/trunk/"
 global out_path = "V:/"			# Leave it empty to write files in current directory
 
 # -----------------------------------------------------------------------------------------------------
