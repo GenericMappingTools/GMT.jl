@@ -612,11 +612,13 @@ type GMT_PALETTE
 	alloc_level::UInt32
 	auto_scale::UInt32
 	model::UInt32
+	is_wrapping::UInt32
 	is_gray::UInt32
 	is_bw::UInt32
 	is_continuous::UInt32
 	has_pattern::UInt32
 	has_hinge::UInt32
+	has_range::UInt32
 	skip::UInt32
 	categorical::UInt32
 	z_adjust::NTuple{2, UInt32}
@@ -625,6 +627,7 @@ type GMT_PALETTE
 	z_unit_to_meter::NTuple{2, Cdouble}
 	minmax::NTuple{2, Cdouble}
 	hinge::Cdouble
+	wrap_length::Cdouble
 end
 type GMT_IMAGE
 	_type::UInt32
