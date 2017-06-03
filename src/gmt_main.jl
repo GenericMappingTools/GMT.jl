@@ -97,7 +97,7 @@ function gmt(cmd::String, args...)
 	global API
 	global grd_mem_layout = ""
 	global img_mem_layout = "TCP"
-	
+
 	# ----------- Minimal error checking ------------------------
 	if (~isa(cmd, String))
 		error("gmt: first argument must always be a string")
@@ -105,7 +105,7 @@ function gmt(cmd::String, args...)
 	n_argin = length(args)
 	if (n_argin > 0 && isa(args[1], String))
 		tok, r = strtok(cmd)
-		if (isempty(r))							# User gave 'module' separately from 'options' 
+		if (isempty(r))							# User gave 'module' separately from 'options'
 			cmd = cmd * " " * args[1]			# Cat it with the progname and so pretend input followed the classic construct
 			args = args[2:end]
 			n_argin -= 1
@@ -157,7 +157,7 @@ function gmt(cmd::String, args...)
 	end
 
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F.
-	# The problem is that we can't use nargout to decide what to do, so we use -T to solve the ambiguity. 
+	# The problem is that we can't use nargout to decide what to do, so we use -T to solve the ambiguity.
 	if (g_module == "psconvert" && (isempty(r) || isempty(search(r, "-F"))) )
 		if (isempty(r))
 			r = "-F"
@@ -429,7 +429,7 @@ function get_grid(API::Ptr{Void}, object)
 			for col = 1:nx
 				ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
 				z[k] = t[ij]
-				k = k + 1		
+				k = k + 1
 			end
 		end
 		grd_mem_layout = ""			# Reset because this variable is global
@@ -455,7 +455,7 @@ function get_grid(API::Ptr{Void}, object)
 		out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)
 	end
 
-	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays  
+	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays
 	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
 	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
 	out.nodata       = gmt_hdr.nan_value
@@ -483,7 +483,7 @@ function get_image(API::Ptr{Void}, object)
 
 	gmt_hdr = unsafe_load(I.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
-	
+
 #=	# Not yet implemented on the GMT side
 	X = zeros(nx);		t = pointer_to_array(I.x, nx)
 	[X[col] = t[col] for col = 1:nx]
@@ -608,7 +608,7 @@ function get_textset_(API::Ptr{Void}, object::Ptr{Void})
 # comment:	Cell array with any comments
 # proj4:	String with any proj4 information
 # wkt:		String with any WKT information
-	
+
 	if (object == C_NULL)	error("programming error, textset is NULL")		end
 
 	T = unsafe_load(convert(Ptr{GMT_TEXTSET}, object))		# GMT_TEXTSET
@@ -627,7 +627,7 @@ function get_textset_(API::Ptr{Void}, object::Ptr{Void})
 			if (!isnan(unsafe_load(pCols[col])))
 				n_columns = n_columns + 1
 			end
-		end		
+		end
 		have_numerical = true
 	end
 
@@ -721,7 +721,7 @@ function get_textset(API::Ptr{Void}, object::Ptr{Void})
 		S = pointer_to_array(pointer_to_array(p[1].segment,1)[seg],seg)	# p[1].segment::Ptr{Ptr{GMT.GMT_TEXTSEGMENT}}
 		if (p[1].n_segments > 1)
 			C[k] = @sprintf("> %s", unsafe_string(S[1].header))
-			k += 1 
+			k += 1
 		end
 		for row = 1:S[1].n_rows
 			k += 1
@@ -1013,7 +1013,7 @@ function grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT_IN)
 	if (empty)			# Just tell grid_init() to allocate an empty container
 		GMT_CREATE_MODE = 0
 		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
-		if ((R = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_CREATE_MODE, 
+		if ((R = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_CREATE_MODE,
 		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT blank grid container for holding output grid")
 		end
@@ -1087,7 +1087,7 @@ function image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GMT_IN)
 	if (empty)			# Just tell image_init() to allocate an empty container
 		GMT_CREATE_MODE = 0
 		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
-		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_CREATE_MODE, 
+		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_CREATE_MODE,
 		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("image_init: Failure to alloc GMT blank grid container for holding output image")
 		end
@@ -1281,7 +1281,7 @@ function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer)
 		n_records += Sb.n_rows							# Must manually keep track of totals
 		if (seg == 1 && length(Darr[1].comment) > 0)	# First segment may have table information
 			for k = 1:size(Darr[1].comment,1)
-				if (GMT_Set_Comment(API, GMT_IS_DATASET, GMT_COMMENT_IS_TEXT, convert(Ptr{Void}, pointer(Darr[1].comment[k])), 
+				if (GMT_Set_Comment(API, GMT_IS_DATASET, GMT_COMMENT_IS_TEXT, convert(Ptr{Void}, pointer(Darr[1].comment[k])),
 				                    convert(Ptr{Void}, D)) != 0)
 					println("dataset_init_: Failed to set a dataset header")
 				end
@@ -1372,7 +1372,7 @@ function palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 		error("Expected a CPT structure for input")
 	end
 
-	n_colors = size(cpt.colormap, 1)	# n_colors != n_ranges for continuous CPTs 
+	n_colors = size(cpt.colormap, 1)	# n_colors != n_ranges for continuous CPTs
 	n_ranges = size(cpt.range, 1)
 	one = 1
 	if (n_colors > n_ranges)		# Continuous
@@ -1409,7 +1409,7 @@ function palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 	else
 		Pb.model = GMT_CMYK
 	end
-	
+
 	b = (GMT.GMT_BFN((cpt.bfn[1,1], cpt.bfn[1,2], cpt.bfn[1,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
 	     GMT.GMT_BFN((cpt.bfn[2,1], cpt.bfn[2,2], cpt.bfn[2,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
 	     GMT.GMT_BFN((cpt.bfn[3,1], cpt.bfn[3,2], cpt.bfn[3,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill))
@@ -1437,7 +1437,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function text_init_(API::Ptr{Void}, module_input, Darr, dir::Integer, family::Integer=GMT_IS_TEXTSET)
-# 
+#
 	if (dir == GMT_OUT)
 		GMT_CREATE_MODE = 0
 		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
@@ -1492,7 +1492,7 @@ function text_init_(API::Ptr{Void}, module_input, Darr, dir::Integer, family::In
 
 			if (seg == 1 && length(Darr[1].comment) > 0)	# First segment may have dataset information
 				for k = 1:size(Darr[1].comment,1)
-					if (GMT_Set_Comment(API, GMT_IS_TEXTSET, GMT_COMMENT_IS_TEXT, convert(Ptr{Void}, pointer(Darr[1].comment[k])), 
+					if (GMT_Set_Comment(API, GMT_IS_TEXTSET, GMT_COMMENT_IS_TEXT, convert(Ptr{Void}, pointer(Darr[1].comment[k])),
 					                    convert(Ptr{Void}, T)) != 0)
 						println("text_init_: Failed to set a textset header")
 					end
@@ -1520,7 +1520,7 @@ function text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family::Inte
 	if (dir == GMT_IN)	# Dimensions are known from the input pointer
 
 		#if (module_input) family |= GMT_VIA_MODULE_INPUT;	gmtmex_parser.c has this which is not ported yet
-	
+
 		if (!isa(txt, Array{Any}) && isa(txt, String))
 			txt = Any[txt]
 		elseif (isa(txt[1], Number))
@@ -1553,7 +1553,7 @@ function text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family::Inte
 		for rec = 1:dim[3]
 			unsafe_store!(S0.data, pointer(txt[rec]), rec)
 		end
-		
+
 		#GMT_blind_change_struct_(API, unsafe_load(TTABLE.segment,1), pointer([dim[3]]), "API_STRUCT_MEMBER_TEXTSEGMENT_1")
 		mutateit(API, unsafe_load(TTABLE.segment,1), "n_rows", dim[3])
 
@@ -1615,7 +1615,7 @@ function ps_init(API::Ptr{Void}, module_input, ps, dir::Integer)
 	if ((P = GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, 0, pdim, NULL, NULL, 0, 0, NULL)) == NULL)
 		error("gmtmex_ps_init: Failure to alloc GMT POSTSCRIPT source for input")
 	end
-	
+
 	P0 = unsafe_load(P)		# GMT.GMT_POSTSCRIPT
 
 	P0.n_bytes = ps.length
@@ -1623,7 +1623,7 @@ function ps_init(API::Ptr{Void}, module_input, ps, dir::Integer)
 	P0.data = pointer(ps.postscript)
 	P0.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY 	# Hence we are not allowed to free it
 	P0.n_alloc = 0			# But nothing was actually allocated here - just passing pointer from Julia
-	
+
 	unsafe_store!(P, P0)
 
 	GMT_Report(API, GMT_MSG_DEBUG, @sprintf("ps_init: Allocated GMT POSTSCRIPT %s", P))
@@ -1656,7 +1656,7 @@ function GMTJL_type(API::Ptr{Void})		# Set default export type
 	if (strncmp(value, "ushort", 6)) return UINT16_CLASS	end
 	if (strncmp(value, "char",   4)) return   INT8_CLASS	end
 	if (strncmp(value, "uchar",  5)) return  UINT8_CLASS	end
-	
+
 	println("Unable to interpret GMT_EXPORT_TYPE - Default to double")
 	return DOUBLE_CLASS
 end
@@ -1674,7 +1674,7 @@ function get_datatype(var)
 	if (eltype(var) == Int16) 	return INT16_CLASS	end
 	if (eltype(var) == UInt8) 	return UINT8_CLASS	end
 	if (eltype(var) == Int8) 	return INT8_CLASS	end
-	
+
 	println("Unable to discovery this data type - Default to double")
 	return DOUBLE_CLASS
 end
@@ -1756,7 +1756,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-Inquire about GMT version. Will return 5.3 for all versions up to this one and the truth for rest 
+Inquire about GMT version. Will return 5.3 for all versions up to this one and the truth for rest
 """
 function get_GMTversion(API::Ptr{Void})
 	status = GMT_Call_Module(API, "psternary", GMT.GMT_MODULE_EXIST, C_NULL)
