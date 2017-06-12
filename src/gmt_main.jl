@@ -137,14 +137,20 @@ function gmt(cmd::String, args...)
 		end
 		API = NaN
 		return
-	elseif (g_module == "begin" || g_module == "end")
+	elseif (g_module == "begin" || g_module == "figure" || g_module == "end")
 		if (get_GMTversion(API) < 5.4)
 			error("GMT: The modern mode is only available at GMT5.4 and up.")
 		end
 		if (g_module == "begin")
-			gmt_manage_workflow(API, GMT.GMT_BEGIN_WORKFLOW)
+			if (GMT_Manage_Session(API, GMT.GMT_SESSION_BEGIN, NULL) != 0)
+				error("GMT: Error running the 'begin' command")
+			end
+		elseif (g_module == "figure")
+			if (GMT_Manage_Session(API, GMT.GMT_SESSION_FIGURE, convert(Ptr{Void},pointer(r))) != 0)
+				error("GMT: Error running the 'figure' command")
+			end
 		else
-			gmt_manage_workflow(API, GMT.GMT_END_WORKFLOW)
+			GMT_Manage_Session(API, GMT.GMT_SESSION_END, NULL)
 			GMT_Destroy_Session(API)
 			API = NaN
 		end
@@ -939,7 +945,7 @@ function GMTJL_Get_Object(API::Ptr{Void}, X::GMT_RESOURCE)
 	#name = unsafe_string([X.name...])			# Because X.name is a NTuple
 	name = String([X.name...])
 	if ((X.object = GMT_Read_VirtualFile(API, name)) == NULL)
-		error("GMT: Error reading virtual file from GMT")
+		error(@sprintf("GMT: Error reading virtual file %s from GMT", name))
 	end
 	if (X.family == GMT_IS_GRID)         	# A GMT grid; make it the pos'th output item
 		ptr = get_grid(API, X.object)
