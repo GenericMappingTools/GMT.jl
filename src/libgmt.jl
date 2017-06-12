@@ -68,11 +68,15 @@ function GMT_Insert_Data(API::Ptr{Void}, object_ID::Integer, data)
 	ccall((:GMT_Insert_Data, thelib), Cint, (Ptr{Void}, Cint, Ptr{Void}), API, object_ID, data)
 end
 
-function GMT_Duplicate_Data(API::Ptr{Void}, family::UInt32, mode::UInt32, data::Ptr{Void})
+function GMT_Duplicate_Data(API::Ptr{Void}, family::Integer, mode::Integer, data::Ptr{Void})
   ccall( (:GMT_Duplicate_Data, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt32, Ptr{Void}), API, family, mode, data)
 end
-function GMT_Get_Record(API::Ptr{Void}, mode::UInt32, retval::Ptr{Cint})
+function GMT_Get_Record(API::Ptr{Void}, mode::Integer, retval::Ptr{Cint})
   ccall( (:GMT_Get_Record, thelib), Ptr{Void}, (Ptr{Void}, UInt32, Ptr{Cint}), API, mode, retval)
+end
+
+function GMT_Manage_Session(API::Ptr{Void}, mode::Integer, args::Ptr{Void})
+  ccall( (:GMT_Manage_Session, thelib), Cint, (Ptr{Void}, UInt32, Ptr{Void}), API, mode, args)
 end
 
 function GMT_Destroy_Session(API::Ptr{Void})
@@ -381,7 +385,7 @@ end
 # --------------------------------------------------------------------------------------------------------------
  
 # ------------------ Development function in 5.4.0 -------------------------------------------------------------
-function gmt_manage_workflow(API::Ptr{Void}, mode::Integer)
-    ccall((:gmt_manage_workflow, thelib), Cint, (Ptr{Void}, Cuint), API, mode)
+function gmtlib_manage_workflow(API::Ptr{Void}, mode::Integer)
+    ccall((:gmtlib_manage_workflow, thelib), Cint, (Ptr{Void}, Cuint), API, mode)
 end
 # --------------------------------------------------------------------------------------------------------------
