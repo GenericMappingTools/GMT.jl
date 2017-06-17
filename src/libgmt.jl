@@ -1,8 +1,9 @@
 # Julia wrapper for header: /cmn/ext/gmt/gmt-5.1.1/src/gmt.h
 # Automatically generated using Clang.jl wrap_c, version 0.0.0
 
+@static is_windows() ? (const thelib = "V:/build32/src/gmt_w32") : (const thelib = "libgmt")  # Name of GMT shared lib.
 #@static is_windows() ? (const thelib = "V:/build/src/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
-@static is_windows() ? (const thelib = "gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
+#@static is_windows() ? (const thelib = "gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
 
 function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Void}=C_NULL)
 	ccall( (:GMT_Create_Session, thelib), Ptr{Void}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Void}), tag, pad, mode, print_func)
@@ -144,7 +145,7 @@ function GMT_Get_Family(API::Ptr{Void}, dir::Integer, head::Ptr{GMT_OPTION})
 end
 
 function GMT_Get_Index(API::Ptr{Void}, header::Ptr{GMT_GRID_HEADER}, row::Cint, col::Cint)
-  ccall( (:GMT_Get_Index, thelib), int64_t, (Ptr{Void}, Ptr{GMT_GRID_HEADER}, Cint, Cint), API, header, row, col)
+  ccall( (:GMT_Get_Index, thelib), Clonglong, (Ptr{Void}, Ptr{GMT_GRID_HEADER}, Cint, Cint), API, header, row, col)
 end
 function GMT_Get_Coord(API::Ptr{Void}, family::Integer, dim::Integer, container::Ptr{Void})
   ccall( (:GMT_Get_Coord, thelib), Ptr{Cdouble}, (Ptr{Void}, UInt32, UInt32, Ptr{Void}), API, family, dim, container)
@@ -385,7 +386,7 @@ end
 # --------------------------------------------------------------------------------------------------------------
  
 # ------------------ Development function in 5.4.0 -------------------------------------------------------------
-function gmtlib_manage_workflow(API::Ptr{Void}, mode::Integer)
-    ccall((:gmtlib_manage_workflow, thelib), Cint, (Ptr{Void}, Cuint), API, mode)
+function gmtlib_manage_workflow(API::Ptr{Void}, mode::Integer, arg)
+    ccall((:gmtlib_manage_workflow, thelib), Cint, (Ptr{Void}, Cuint, Ptr{UInt8}), API, mode, arg)
 end
 # --------------------------------------------------------------------------------------------------------------
