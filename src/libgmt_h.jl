@@ -1,4 +1,4 @@
-typealias NULL C_NULL
+const NULL = C_NULL
 # begin enum GMT_enum_api
 const GMT_USAGE = 0
 const GMT_SYNOPSIS = 1
@@ -248,7 +248,7 @@ const GMT_GRID_NAME_LEN256 = 256
 const GMT_GRID_HEADER_SIZE = 892
 # end enum GMT_enum_grdlen
 
-typealias Gmt_api_error_code UInt32
+const Gmt_api_error_code = UInt32
 const GMT_OK = 0
 const GMT_WRONG_MATRIX_SHAPE = 1
 const GMT_ACCESS_NOT_ENABLED = 2
@@ -418,7 +418,7 @@ type GMT_GRID
 end
 
 # begin enum GMT_enum_geometry
-typealias GMT_enum_geometry UInt32
+const GMT_enum_geometry = UInt32
 const GMT_IS_POINT = 1
 const GMT_IS_LINE = 2
 const GMT_IS_POLY = 4
@@ -427,12 +427,12 @@ const GMT_IS_SURFACE = 8
 const GMT_IS_NONE = 16
 # end enum GMT_enum_geometry
 # begin enum GMT_enum_pol
-typealias GMT_enum_pol UInt32
+const GMT_enum_pol = UInt32
 const GMT_IS_PERIMETER = 0
 const GMT_IS_HOLE = 1
 # end enum GMT_enum_pol
 # begin enum GMT_enum_ascii_input_return
-typealias GMT_enum_ascii_input_return UInt32
+const GMT_enum_ascii_input_return = UInt32
 const GMT_IO_DATA_RECORD = 0
 const GMT_IO_TABLE_HEADER = 1
 const GMT_IO_SEGMENT_HEADER = 2
@@ -552,7 +552,7 @@ type GMT_TEXTSET
 	file::NTuple{2, Ptr{UInt8}}
 end
 # begin enum GMT_enum_color
-typealias GMT_enum_color UInt32
+const GMT_enum_color = UInt32
 const GMT_RGB = 0
 const GMT_CMYK = 1
 const GMT_HSV = 2
@@ -560,18 +560,18 @@ const GMT_COLORINT = 4
 const GMT_NO_COLORNAMES = 8
 # end enum GMT_enum_color
 # begin enum GMT_enum_bfn
-typealias GMT_enum_bfn UInt32
+const GMT_enum_bfn = UInt32
 const GMT_BGD = 0
 const GMT_FGD = 1
 const GMT_NAN = 2
 # end enum GMT_enum_bfn
 # begin enum GMT_enum_cpt
-typealias GMT_enum_cpt UInt32
+const GMT_enum_cpt = UInt32
 const GMT_CPT_REQUIRED = 0
 const GMT_CPT_OPTIONAL = 1
 # end enum GMT_enum_cpt
 # begin enum GMT_enum_cptflags
-typealias GMT_enum_cptflags UInt32
+const GMT_enum_cptflags = UInt32
 const GMT_CPT_NO_BNF = 1
 const GMT_CPT_EXTEND_BNF = 2
 # end enum GMT_enum_cptflags
@@ -687,7 +687,7 @@ immutable GMT_VECTOR
 	alloc_mode::UInt32
 end
 # begin enum GMT_enum_fmt
-typealias GMT_enum_fmt UInt32
+const GMT_enum_fmt = UInt32
 const GMT_IS_ROW_FORMAT = 0
 const GMT_IS_COL_FORMAT = 1
 # end enum GMT_enum_fmt
