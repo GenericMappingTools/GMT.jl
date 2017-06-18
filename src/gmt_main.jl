@@ -72,7 +72,7 @@ type GMTdataset
 	proj4::String
 	wkt::String
 	GMTdataset(header, data, text, comment, proj4, wkt) = new(header, data, text, comment, proj4, wkt)
-	GMTdataset() = new(string(), Array{Float64,2}(), Array{String,1}(), Array{String,1}(), string(), string())
+	GMTdataset() = new(string(), Array{Float64,2}(0,0), Array{String,1}(), Array{String,1}(), string(), string())
 end
 
 # Container to hold info to allow creating grids in a simple (but limmited) maner
@@ -243,7 +243,7 @@ function gmt(cmd::String, args...)
 		pLL = Ref([LL])		# Need this because GMT_Destroy_Options() wants a Ref
 	end
 
-	XX = Array(GMT_RESOURCE, 1, n_items)
+	XX = Array{GMT_RESOURCE}(1, n_items)
 	for k = 1:n_items
 		XX[k] = unsafe_load(X, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
 	end
@@ -278,7 +278,7 @@ function gmt(cmd::String, args...)
 	end
 	out = []
 	if (n_out > 0)
-		out = Array(Any, n_out)
+		out = Array{Any}(n_out)
 	end
 
 	for k = 1:n_items					# Get results from GMT into Julia arrays
@@ -671,7 +671,7 @@ function get_textset_(API::Ptr{Void}, object::Ptr{Void})
 			end
 
 			if (!have_numerical)
-				dest = Array(Any,Ttab_Seg.n_rows)
+				dest = Array{Any}(Ttab_Seg.n_rows)
 				for row = 1:Ttab_Seg.n_rows
 					t = unsafe_load(Ttab_Seg.data, row)	# Ptr{UInt8}
 					dest[row] = unsafe_string(t)
@@ -681,7 +681,7 @@ function get_textset_(API::Ptr{Void}, object::Ptr{Void})
 
 			#headers = pointer_to_array(Ttab_1.header, Ttab_1.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
 			headers = unsafe_wrap(Array, Ttab_1.header, Ttab_1.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
-			dest = Array(Any,length(headers))
+			dest = Array{Any}(length(headers))
 			for k = 1:n_headers
 				dest[k] = unsafe_string(headers[k])
 			end
@@ -807,7 +807,7 @@ function get_dataset_(API::Ptr{Void}, object)
 			if (seg == 1)
 				#headers = pointer_to_array(DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
 				headers = unsafe_wrap(Array, DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
-				dest = Array(Any,length(headers))
+				dest = Array{Any}(length(headers))
 				for k = 1:length(headers)
 					dest[k] = unsafe_string(headers[k])
 				end
