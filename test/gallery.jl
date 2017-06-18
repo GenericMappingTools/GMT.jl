@@ -413,7 +413,7 @@ function ex10(g_root_dir, out_path)
 			array[row,col] = Float64(str[row,col])
 		end
 	end
-	t = Array(Any,nl,1)
+	t = Array{Any}(nl,1)
 	for k = 1:nl
 		t[k] = @sprintf("%d %d %d\n",array[k,1], array[k,2], sum(array[k,3:end]))
 	end
@@ -1092,7 +1092,7 @@ function ex23(g_root_dir, out_path)
 		"-Wcthinnest,white,- >> " * ps, Gdist)
 	
 	# Location info for 5 other cities + label justification
-	cities = Array(Any, 5)
+	cities = Array{Any}(5)
 	cities[1] = "105.87 21.02 LM HANOI"
 	cities[2] = "282.95 -12.1 LM LIMA"
 	cities[3] = "178.42 -18.13 LM SUVA"
@@ -1120,7 +1120,7 @@ function ex23(g_root_dir, out_path)
 
 	# Sample the distance grid at the cities and use the distance in km for labels
 	dist = gmt("grdtrack cities.txt -G", Gdist);
-	t = Array(Any, 5);
+	t = Array{Any}(5);
 	for k = 1:5
 		t[k] = @sprintf("%f %f %d", dist[1].data[k,1], dist[1].data[k,2], dist[1].data[k,end]);
 	end
