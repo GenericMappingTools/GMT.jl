@@ -211,8 +211,8 @@ end
 function GMT_Update_Option(API::Ptr{Void}, current::Ptr{GMT_OPTION}, arg::Ptr{UInt8})
   ccall( (:GMT_Update_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Ptr{UInt8}), API, current, arg)
 end
-function GMT_Delete_Option(API::Ptr{Void}, current::Ptr{GMT_OPTION})
-  ccall( (:GMT_Delete_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}), API, current)
+function GMT_Delete_Option(API::Ptr{Void}, current::Ptr{GMT_OPTION}, head::Ptr{Ptr{GMT_OPTION}})
+  ccall( (:GMT_Delete_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Ptr{Ptr{GMT_OPTION}}), API, current, head)
 end
 function GMT_Parse_Common(API::Ptr{Void}, given_options::Ptr{UInt8}, options::Ptr{GMT_OPTION})
   ccall( (:GMT_Parse_Common, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{GMT_OPTION}), API, given_options, options)
