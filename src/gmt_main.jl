@@ -209,7 +209,7 @@ function gmt(cmd::String, args...)
 	end
 
 	# 3. Convert command line arguments to a linked GMT option list
-	LL = C_NULL
+	LL = NULL
 	if (isempty(r) && n_argin == 0)		# Just requesting usage message, so add -? to options
 		r = "-?"
 	end
@@ -220,22 +220,22 @@ function gmt(cmd::String, args...)
 	# Here I have an issue that I can't resolve any better. For modules that can have no options (e.g. gmtinfo)
 	# the LinkedList (LL) is actually created in GMT_Encode_Options but I can't get it's contents back when pLL
 	# is a Ref, so I'm forced to use 'pointer', which goes against the documents recommendation.
-	if (LL != C_NULL)
+	if (LL != NULL)
 		pLL = Ref([LL])
 	else
-		pLL = pointer([C_NULL])
+		pLL = pointer([NULL])
 	end
 
 	n_items = pointer([0])
 	X = GMT_Encode_Options(API, g_module, n_argin, pLL, n_items)	# This call also changes LL
 	n_items = unsafe_load(n_items)
-	if (X == C_NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
+	if (X == NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
 		n_items = 0
-	elseif (X == C_NULL)
+	elseif (X == NULL)
 		error("GMT: Failure to encode Julia command options")
 	end
 
-	if (LL == C_NULL)		# The no-options case. Must get the LL that was created in GMT_Encode_Options
+	if (LL == NULL)		# The no-options case. Must get the LL that was created in GMT_Encode_Options
 		LL = convert(Ptr{GMT.GMT_OPTION}, unsafe_load(pLL))
 		pLL = Ref([LL])		# Need this because GMT_Destroy_Options() wants a Ref
 	end
@@ -299,7 +299,7 @@ function gmt(cmd::String, args...)
 			error("Failed to destroy object used in the interface bewteen GMT and Julia")
 		else 		# Success, now make sure we dont destroy the same pointer more than once
 			for kk = k+1:n_items
-				if (X[kk].object == ppp) 	X[kk].object = C_NULL;		end
+				if (X[kk].object == ppp) 	X[kk].object = NULL;		end
 			end
 		end
 	end
