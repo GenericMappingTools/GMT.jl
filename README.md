@@ -4,6 +4,8 @@ GMT.jl
 [![Build Status](https://travis-ci.org/joa-quim/GMT.jl.svg?branch=master)](https://travis-ci.org/joa-quim/GMT.jl)
 [![codecov.io](http://codecov.io/github/joa-quim/GMT.jl/coverage.svg?branch=master)](http://codecov.io/github/joa-quim/GMT.jl?branch=master)
 
+[![GMT](http://pkg.julialang.org/badges/GMT_0.5.svg)](http://pkg.julialang.org/?pkg=GMT&ver=0.5)
+[![GMT](http://pkg.julialang.org/badges/GMT_0.6.svg)](http://pkg.julialang.org/?pkg=GMT&ver=0.6)
 
 Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
