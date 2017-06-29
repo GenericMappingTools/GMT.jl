@@ -1,6 +1,10 @@
 GMT.jl
 ======
 
+[![Build Status](https://travis-ci.org/joa-quim/GMT.jl.svg?branch=master)](https://travis-ci.org/joa-quim/GMT.jl)
+[![codecov.io](http://codecov.io/github/joa-quim/GMT.jl/coverage.svg?branch=master)](http://codecov.io/github/joa-quim/GMT.jl?branch=master)
+
+
 Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
 There is no manual yet but looking into the tests.jl should give a (good) idea on how it works. Note also that this
