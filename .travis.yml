@@ -1,15 +1,20 @@
 # Documentation: http://docs.travis-ci.com/user/languages/julia/
 language: julia
 os:
-  - linux
   - osx
 julia:
-  - 0.4
   - 0.5
+  - 0.6
   - nightly
 notifications:
   email: false
+before_install:
+  - if [ `uname` = "Linux" ]; then
+      sudo apt-get install gmt;
+    elif [ `uname` = "Darwin" ]; then
+      brew install gmt;
+    fi
 # uncomment the following lines to override the default test script
 #script:
-#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia -e 'Pkg.clone(pwd()); Pkg.build("GMT"); Pkg.test("GMT"; coverage=true)'
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia -e 'Pkg.clone(pwd()); Pkg.build("GMT"); Pkg.test("GMT"; coverage=true)'
