@@ -7,7 +7,7 @@ julia:
   - 0.6
   - nightly
 notifications:
-  email: false
+  email: true
 before_install:
   - if [ `uname` = "Linux" ]; then
       sudo apt-get install gmt;
