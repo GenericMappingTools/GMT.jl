@@ -2,9 +2,6 @@ VERSION >= v"0.4" && __precompile__()
 
 module GMT
 
-using Compat
-import Compat.String
-
 export
 	GMT_Call_Module,
 	GMT_Create_Args,

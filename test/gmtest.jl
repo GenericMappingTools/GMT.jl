@@ -9,9 +9,6 @@
 #	Currently only family = "scripts" is implemented (means run test from the 'scripts' dir. TEST_DIR is ignored
 #		example: gmtest("GMT_insert", "", "scripts")
 
-using Compat
-import Compat.String
-
 global g_root_dir, out_path, GM
 include("gallery.jl")
 
