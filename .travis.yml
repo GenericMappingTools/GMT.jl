@@ -7,13 +7,14 @@ julia:
   - 0.5
   - 0.6
   - nightly
+dist: trusty
 notifications:
   email: true
 before_install:
   - if [ `uname` = "Linux" ]; then
       sudo apt-get install libgmt-dev;
     elif [ `uname` = "Darwin" ]; then
-      brew install gmt;
+      brew install homebrew/science/gmt;
     fi
 # uncomment the following lines to override the default test script
 #script:
