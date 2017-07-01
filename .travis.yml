@@ -17,6 +17,6 @@ before_install:
       brew install homebrew/science/gmt;
     fi
 # uncomment the following lines to override the default test script
-#script:
+script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia -e 'Pkg.clone(pwd()); Pkg.build("GMT"); Pkg.test("GMT"; coverage=true)'
