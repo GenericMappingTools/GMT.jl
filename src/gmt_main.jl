@@ -180,6 +180,14 @@ function gmt(cmd::String, args...)
 			end
 		end
 	end
+	if (g_module == "psconvert" && !isempty(search(r, "-M")))
+		ind = search(r, "-M")
+		img_mem_layout, r2 = strtok(r[ind[2]+1:end])
+		if (length(img_mem_layout) != 3)
+			error("GMT: Error in memory layout option (-M) for psconvert. It must have 3 characters.")
+		end
+		r = r[1:ind[1]-1] * " " * r2	# Remove the -M option that psconvert doesn't know about
+	end
 
 	# 2++ Add -T to gmtwrite if user did not explicitly give -T.
 	if ((searchindex(g_module,"write") != 0) && (searchindex(r,"-T") == 0) && n_argin == 1)
