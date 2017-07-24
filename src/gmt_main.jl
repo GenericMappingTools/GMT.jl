@@ -976,44 +976,6 @@ function GMTJL_Get_Object(API::Ptr{Void}, X::GMT_RESOURCE)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_register_IO(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
-# Create the grid or matrix containers, register them, and return the ID
-	oo = unsafe_load(X.option)
-	module_input = (oo.option == GMT.GMT_OPT_INFILE)
-	ID = GMT.GMT_NOTSET
-	if (X.family == GMT_IS_GRID)
-		# Get an empty grid, and if input associate it with the Julia grid pointer
-		obj = grid_init(API, module_input, ptr, X.direction)
-		ID  = GMT_Get_ID(API, GMT_IS_GRID, X.direction, obj)
-	elseif (X.family == GMT_IS_IMAGE)
-		obj = image_init(API, module_input, ptr, X.direction)
-		ID  = GMT_Get_ID(API, GMT_IS_IMAGE, X.direction, obj)
-	elseif (X.family == GMT_IS_DATASET)
-		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
-		if (X.direction == GMT_IN && ((eltype(ptr) == Array{Any}) || (eltype(ptr) == String)))		# Got TEXTSET input
-			obj = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
-		else 		# Get a matrix container, and if input we associate it with the Julia pointer
-			obj = dataset_init_(API, module_input, ptr, X.direction)
-		end
-		ID  = GMT_Get_ID(API, GMT_IS_DATASET, X.direction, obj)
-	elseif (X.family == GMT_IS_PALETTE)
-		# Get a CPT container, and if input associate it with the Julia CPT pointer
-		obj = palette_init(API, module_input, ptr, X.direction)
-		ID  = GMT_Get_ID(API, GMT_IS_PALETTE, X.direction, obj)
-	elseif (X.family == GMT_IS_TEXTSET)
-		# Get a TEXTSET container, and if input associate it with the Julia pointer
-		obj = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
-		ID  = GMT_Get_ID(API, GMT_IS_TEXTSET, X.direction, obj)
-	elseif (X.family == GMT_IS_POSTSCRIPT)
-		obj = ps_init(API, module_input, ptr, X.direction)
-		ID  = GMT_Get_ID(API, GMT_IS_POSTSCRIPT, X.direction, obj)
-	else
-		error("GMTJL_register_IO: Bad data type ", X.family)
-	end
-	return obj, ID
-end
-
-# ---------------------------------------------------------------------------------------------------
 function grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT_IN)
 # If GRD_BOX is empty just allocate (GMT) an empty container and return
 # If GRD_BOX is not empty it must contain either a ArrayContainer or a GMTgrid type.
