@@ -138,6 +138,7 @@ function gmt(cmd::String, args...)
 		API = NaN
 		return
 	elseif (g_module == "begin" || g_module == "figure" || g_module == "end")
+#=
 		if (get_GMTversion(API) < 5.4)
 			error("GMT: The modern mode is only available at GMT5.4 and up.")
 		end
@@ -155,6 +156,7 @@ function gmt(cmd::String, args...)
 			API = NaN
 		end
 		return
+=#
 	end
 
 	# Make sure this is a valid module
@@ -288,7 +290,7 @@ function gmt(cmd::String, args...)
 
 	for k = 1:n_items					# Get results from GMT into Julia arrays
 		if (X[k].direction == GMT_IN) continue 	end      # Only looking for stuff coming OUT of GMT here
-		out[X[k].pos+1] = GMTJL_Get_Object(API, X[k])	# Hook mex object onto rhs list
+		out[X[k].pos+1] = GMTJL_Get_Object(API, X[k])    # Hook mex object onto rhs list
 	end
 
 	# 2++- If gmtread -Ti than reset the session's pad value that was temporarily changed above (2+++)
@@ -319,7 +321,7 @@ function gmt(cmd::String, args...)
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)
-		return []
+		return nothing
 	elseif (n_out == 1)
 		return out[1]
 	elseif (n_out == 2)
@@ -914,11 +916,12 @@ function GMTJL_Set_Object(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
 		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
 		if (X.direction == GMT_IN && (isa(ptr, Array{Any}) || (eltype(ptr) == String)))	# Got text input
 			X.object = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
-			X.family = GMT_IS_TEXTSET
+			actual_family = GMT_IS_TEXTSET
 		else		# Got something for which a dataset container is appropriate
-			X.object = dataset_init_(API, module_input, ptr, X.direction)
+			actual_family = [GMT_IS_DATASET]		# Default but may change to matrix
+			X.object = dataset_init_(API, module_input, ptr, X.direction, actual_family)
 		end
-		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("GMTMEX_Set_Object: Got %s\n", name[X.family+1]))
+		X.family = actual_family[1]
 	elseif (X.family == GMT_IS_TEXTSET)		# Get a textset from Julia or a dummy one to hold GMT output
 		X.object = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
 		GMT_Report(API, GMT_MSG_DEBUG, "GMTMEX_Set_Object: Got TEXTSET\n")
@@ -1198,7 +1201,7 @@ function matrix_init(API::Ptr{Void}, module_input, grd, dir::Integer=GMT_IN, pad
 		mode = GMT_VIA_OUTPUT;
 	end
 
-	if ((M = GMT_Create_Data(API, GMT_IS_MATRIX, GMT_IS_PLP, mode, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+	if ((M = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, mode, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 		println("GMTJL_PARSER:matrix_init: Failure to alloc GMT source matrix")
 		return -1
 	end
@@ -1236,11 +1239,11 @@ function matrix_init(API::Ptr{Void}, module_input, grd, dir::Integer=GMT_IN, pad
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer)
+function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer, actual_family)
 # Create containers to hold or receive data tables:
 # direction == GMT_IN:  Create empty GMT_DATASET container, fill from Julia, and use as GMT input.
 #	Input from Julia may be a structure or a plain matrix
-# direction == GMT_OUT: Create empty GMT_DATASET container, let GMT fill it out, and use for Mex output.
+# direction == GMT_OUT: Create empty GMT_DATASET container, let GMT fill it out, and use for Julia output.
 # If direction is GMT_IN then we are given a Julia struct and can determine dimension.
 # If output then we dont know size so we set dimensions to zero.
 
@@ -1258,7 +1261,7 @@ function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer)
 	#if (!((eltype(Darr) == Array{Any}) || (eltype(Darr) == String)))	# Got a matrix as input, pass data pointers via MATRIX to save memory
 	if (isa(Darr, GMTdataset))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
 	if (!(isa(Darr, Array{GMTdataset,1})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
-		D = dataset_init(API, module_input, Darr, direction)
+		D = dataset_init(API, module_input, Darr, direction, actual_family)
 		return D
 	end
 	# We come here if we did not receive a matrix
@@ -1308,7 +1311,7 @@ function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dataset_init(API::Ptr{Void}, module_input, ptr, direction::Integer)
+function dataset_init(API::Ptr{Void}, module_input, ptr, direction::Integer, actual_family)
 # Used to create containers to hold or receive data:
 # direction == GMT_IN:  Create empty Matrix container, associate it with mex data matrix, and use as GMT input.
 # direction == GMT_OUT: Create empty Vector container, let GMT fill it out, and use for Mex output.
@@ -1319,10 +1322,11 @@ function dataset_init(API::Ptr{Void}, module_input, ptr, direction::Integer)
 	if (direction == GMT_IN) 	# Dimensions are known, extract them and set dim array for a GMT_MATRIX resource */
 		dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
 		#if (!mxIsNumeric (ptr)) error("Expected a Matrix for input\n");
-		if ((M = GMT_Create_Data(API, GMT_IS_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+		if ((M = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT source matrix")
 		end
 
+		actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
 		GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Matrix %s in gmtjl_parser\n", M) )
 		Mb = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)
 		tipo = get_datatype(ptr)

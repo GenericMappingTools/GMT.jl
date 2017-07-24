@@ -22,6 +22,8 @@ function GMT_Create_Data(API::Ptr{Void}, family, geometry, mode, dim=C_NULL, wes
 		ret_type = Ptr{GMT_IMAGE}
 	elseif (family == GMT_IS_MATRIX)
 		ret_type = Ptr{GMT_MATRIX}
+    elseif (family == GMT_IS_MATRIX|GMT_VIA_MATRIX)
+        ret_type = Ptr{GMT_MATRIX}
 	elseif (family == GMT_IS_VECTOR)
 		ret_type = Ptr{GMT_VECTOR}
 	elseif (family == GMT_IS_POSTSCRIPT)
@@ -368,7 +370,10 @@ function GMT_Get_Matrix(API::Ptr{Void}, M::Ptr{GMT_MATRIX})
 	ccall((:GMT_Get_Matrix, thelib), Ptr{Void}, (Ptr{Void}, Ptr{GMT_MATRIX}), API, M)
 end
 
- 
+function GMT_Error_Message(API::Ptr{Void})
+    ccall((:GMT_Error_Message, thelib), Ptr{UInt8}, (Ptr{Void},), API)
+end
+
 # ------------------ Backwards compatibility for old API functions no longer in favor -------------------------
 function GMT_Retrieve_Data(API::Ptr{Void}, object_ID::Integer)
 	ccall((:GMT_Retrieve_Data, thelib), Ptr{Void}, (Ptr{Void}, Cint), API, object_ID)

@@ -8,11 +8,12 @@ const GMT_SESSION_NORMAL   = 0   # Typical mode to GMT_Create_Session
 const GMT_SESSION_NOEXIT   = 1   # Call return and not exit when error
 const GMT_SESSION_EXTERNAL = 2   # Called by an external API (e.g., Matlab, Julia, Python).
 const GMT_SESSION_COLMAJOR = 4   # External API uses column-major formats (e.g., Julai, MATLAB, Fortran). [Row-major format]
-const GMT_SESSION_RUNMODE  = 8	 # If set enable GMT's modern runmode. [Classic]
-const GMT_SESSION_BEGIN    = 16  # Begin a new session. [Sets modern mode]
-const GMT_SESSION_END      = 32  # End a session. [Ends modern mode]
-const GMT_SESSION_CLEAR    = 64  # Clear session files/directories
-const GMT_SESSION_FIGURE   = 128 # Add a figure to the session queue. [Modern mode only]
+const GMT_SESSION_LOGERRORS = 8
+const GMT_SESSION_RUNMODE  = 16	 # If set enable GMT's modern runmode. [Classic]
+const GMT_SESSION_BEGIN    = 32  # Begin a new session. [Sets modern mode]
+const GMT_SESSION_END      = 64  # End a session. [Ends modern mode]
+const GMT_SESSION_CLEAR    = 128  # Clear session files/directories
+const GMT_SESSION_FIGURE   = 256 # Add a figure to the session queue. [Modern mode only]
 # begin enum GMT_enum_workflowmode
 const GMT_USE_WORKFLOW   = 0     # Default is to use current workflow if initiated and ignore if otherwise
 const GMT_BEGIN_WORKFLOW = 1     # Initiate a new workflow via gmt begin
@@ -34,6 +35,16 @@ const GMT_DOUBLE = 9
 const GMT_TEXT = 10
 const GMT_DATETIME = 11
 const GMT_N_TYPES = 12
+const GMT_VIA_CHAR = 100         # int8_t, 1-byte signed integer type */
+const GMT_VIA_UCHAR = 200        # uint8_t, 1-byte unsigned integer type */
+const GMT_VIA_SHORT = 300        # int16_t, 2-byte signed integer type */
+const GMT_VIA_USHORT = 400       # uint16_t, 2-byte unsigned integer type */
+const GMT_VIA_INT = 500          # int32_t, 4-byte signed integer type */
+const GMT_VIA_UINT = 600         # uint32_t, 4-byte unsigned integer type */
+const GMT_VIA_LONG = 700         # int64_t, 8-byte signed integer type */
+const GMT_VIA_ULONG = 800        # uint64_t, 8-byte unsigned integer type */
+const GMT_VIA_FLOAT = 900        # 4-byte data float type */
+const GMT_VIA_DOUBLE = 1000
 # end enum GMT_enum_type
 # begin enum GMT_enum_opt
 const GMT_OPT_USAGE = 63
@@ -58,7 +69,9 @@ const GMT_IS_OUTPUT = 1024
 # end enum GMT_enum_method
 # begin enum GMT_enum_via
 const GMT_VIA_NONE = 0
-const GMT_VIA_OUTPUT = 2048
+const GMT_VIA_MODULE_INPUT = 64
+const GMT_VIA_VECTOR = 128
+const GMT_VIA_MATRIX = 256
 # end enum GMT_enum_via
 # begin enum GMT_enum_family
 const GMT_IS_DATASET = 0
@@ -221,6 +234,22 @@ const GMT_SEG = 1
 const GMT_ROW = 2
 const GMT_COL = 3
 # end enum GMT_enum_dimindex
+# GMT_enum_session
+const GMT_SESSION_NORMAL    = 0   # Typical mode to GMT_Create_Session */
+const GMT_SESSION_NOEXIT    = 1   # Call return and not exit when error */
+const GMT_SESSION_EXTERNAL  = 2   # Called by an external API (e.g., MATLAB, Python). */
+const GMT_SESSION_COLMAJOR  = 4   # External API uses column-major formats (e.g., MATLAB, FORTRAN). [Row-major format] */
+const GMT_SESSION_LOGERRORS = 8   # External API uses column-major formats (e.g., MATLAB, FORTRAN). [Row-major format] */
+const GMT_SESSION_RUNMODE   = 16  # If set enable GMT's modern runmode. [Classic] */
+const GMT_SESSION_BEGIN     = 32  # Begin a new session. [Sets modern mode] */
+const GMT_SESSION_END       = 64  # End a session. [Ends modern mode] */
+const GMT_SESSION_CLEAR     = 128 # Clear session files/directories */
+const GMT_SESSION_FIGURE    = 256
+
+# GMT_enum_api
+const GMT_USAGE	= 0               # Want to report full program usage message */
+const GMT_SYNOPSIS	= 1           # Just want the synopsis of usage */
+const GMT_STR16	= 16
 # begin enum GMT_enum_container
 const GMT_CONTAINER_AND_DATA  = 0    # Create|Read|write both container and the data array
 const GMT_CONTAINER_ONLY      = 1    # Create|read|write the container but no data array
