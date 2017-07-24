@@ -1,17 +1,17 @@
 environment:
   matrix:
   - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x86/0.5/julia-0.5-latest-win32.exe"
-    GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win32.exe"
+  - GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win32.exe"
   - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x64/0.5/julia-0.5-latest-win64.exe"
-    GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win64.exe"
+  - GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win64.exe"
   - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x86/0.6/julia-0.6-latest-win32.exe"
-    GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win32.exe"
+  - GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win32.exe"
   - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x64/0.6/julia-0.6-latest-win64.exe"
-    GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win64.exe"
+  - GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win64.exe"
   - JULIA_URL: "https://julialangnightlies-s3.julialang.org/bin/winnt/x86/julia-latest-win32.exe"
-    GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win32.exe"
+  - GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win32.exe"
   - JULIA_URL: "https://julialangnightlies-s3.julialang.org/bin/winnt/x64/julia-latest-win64.exe"
-    GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win64.exe"
+  - GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.2-win64.exe"
 
 branches:
   only:
@@ -32,8 +32,8 @@ install:
         "C:\projects\julia-binary.exe")
 # Run installer silently, output to C:\projects\julia
   - C:\projects\julia-binary.exe /S /D=C:\projects\julia
-  - appveyor DownloadFile %GMT_URL% -FileName "C:\projects\gmt-binary.exe"
-  - C:\projects\gmt-binary.exe /S /D=C:\projects\gmt
+  - appveyor DownloadFile %GMT_URL% -FileName "C:\projects\gmt-5.4.2-win64.exe"
+  - C:\projects\gmt-5.4.2-win64.exe /S /D=C:\projects\gmt
 
 build_script:
 # Need to convert from shallow to complete for Pkg.clone to work
