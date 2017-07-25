@@ -1283,12 +1283,17 @@ function dataset_init(API::Ptr{Void}, module_input, ptr, direction::Integer, act
 
 	if (direction == GMT_IN) 	# Dimensions are known, extract them and set dim array for a GMT_MATRIX resource */
 		dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
-		#if (!mxIsNumeric (ptr)) error("Expected a Matrix for input\n");
-		if ((M = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-			error("Failure to alloc GMT source matrix")
+		if (get_GMTversion(API) < 6.0)
+			if ((M = GMT_Create_Data(API, GMT_IS_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+				error("Failure to alloc GMT source matrix")
+			end
+		else
+			if ((M = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+				error("Failure to alloc GMT source matrix")
+			end
+			actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
 		end
 
-		actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
 		GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Matrix %s in gmtjl_parser\n", M) )
 		Mb = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)
 		tipo = get_datatype(ptr)
