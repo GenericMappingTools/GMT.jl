@@ -17,4 +17,4 @@ before_install:
 # uncomment the following lines to override the default test script
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone(pwd()); Pkg.build("GMT"); Pkg.test("GMT"; coverage=true)'
+  - julia -e 'Pkg.clone(pwd()); Pkg.build("GMT"); Pkg.test("GMT"; coverage=true); using Coverage; Codecov.submit(process_folder())'
