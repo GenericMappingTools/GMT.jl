@@ -301,7 +301,7 @@ function ex05(g_root_dir, out_path)
 	C = gmt("makecpt -C128 -T-5,5 -N")
 	Gintensity = gmt("grdgradient -A225 -Nt0.75", Gsombrero);
 	gmt("grdview -JX6i -JZ2i -B5 -Bz0.5 -BSEwnZ -N-1+gwhite -Qs -I -X1.5i" *
-		" -C -R-15/15/-15/15/-1/1 -K -p120/30 > " * ps, Gintensity, Gsombrero, C)
+		" -C -R-15/15/-15/15/-1/1 -K -p120/30 > " * ps, Gsombrero, Gintensity, C)
 	gmt("pstext -R0/11/0/8.5 -Jx1i -F+f50p,ZapfChancery-MediumItalic+jBC -O >> " * ps,
 		"4.1 5.5 z(r) = cos (2@~p@~r/8) @~\\327@~e@+-r/10@+")
 	rm("gmt.conf")
