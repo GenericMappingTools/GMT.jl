@@ -235,20 +235,21 @@ const GMT_ROW = 2
 const GMT_COL = 3
 # end enum GMT_enum_dimindex
 # GMT_enum_session
-const GMT_SESSION_NORMAL    = 0   # Typical mode to GMT_Create_Session */
-const GMT_SESSION_NOEXIT    = 1   # Call return and not exit when error */
-const GMT_SESSION_EXTERNAL  = 2   # Called by an external API (e.g., MATLAB, Python). */
-const GMT_SESSION_COLMAJOR  = 4   # External API uses column-major formats (e.g., MATLAB, FORTRAN). [Row-major format] */
-const GMT_SESSION_LOGERRORS = 8   # External API uses column-major formats (e.g., MATLAB, FORTRAN). [Row-major format] */
-const GMT_SESSION_RUNMODE   = 16  # If set enable GMT's modern runmode. [Classic] */
-const GMT_SESSION_BEGIN     = 32  # Begin a new session. [Sets modern mode] */
-const GMT_SESSION_END       = 64  # End a session. [Ends modern mode] */
-const GMT_SESSION_CLEAR     = 128 # Clear session files/directories */
+const GMT_SESSION_NORMAL    = 0   # Typical mode to GMT_Create_Session
+const GMT_SESSION_NOEXIT    = 1   # Call return and not exit when error
+const GMT_SESSION_EXTERNAL  = 2   # Called by an external API (e.g., MATLAB, Python).
+const GMT_SESSION_COLMAJOR  = 4   # External API uses column-major formats (e.g., MATLAB, FORTRAN). [Row-major format]
+const GMT_SESSION_LOGERRORS = 8   # External API uses column-major formats (e.g., MATLAB, FORTRAN). [Row-major format]
+const GMT_SESSION_RUNMODE   = 16  # If set enable GMT's modern runmode. [Classic]
+const GMT_SESSION_BEGIN     = 32  # Begin a new session. [Sets modern mode]
+const GMT_SESSION_END       = 64  # End a session. [Ends modern mode]
+const GMT_SESSION_CLEAR     = 128 # Clear session files/directories
 const GMT_SESSION_FIGURE    = 256
 
 # GMT_enum_api
-const GMT_USAGE	= 0               # Want to report full program usage message */
-const GMT_SYNOPSIS	= 1           # Just want the synopsis of usage */
+const GMT_USAGE	= 0               # Want to report full program usage message
+const GMT_SYNOPSIS	= 1           # Just want the synopsis of usage
+const GMT_PAD_DEFAULT = 2         # Default is 2 rows and 2 cols for grid padding
 const GMT_STR16	= 16
 # begin enum GMT_enum_container
 const GMT_CONTAINER_AND_DATA  = 0    # Create|Read|write both container and the data array
