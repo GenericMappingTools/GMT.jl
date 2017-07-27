@@ -83,7 +83,7 @@ function ex01(g_root_dir, out_path)
 	gmt("destroy")
 	gmt("psbasemap -R0/6.5/0/7.5 -Jx1i -B0 -P -K > " * ps)
 	gmt("pscoast -Rg -JH0/6i -X0.25i -Y0.2i -O -K -Bg30 -Dc -Glightbrown -Slightblue >> " * ps)
-	cmd = "grdcontour " * d_path * "osu91a1f_16.nc"
+	cmd = "grdcontour @osu91a1f_16.nc"
 	gmt(cmd * " -J -C10 -A50+f7p -Gd4i -L-1000/-1 -Wcthinnest,- -Wathin,- -O -K -T+d0.1i/0.02i >> " * ps)
 	gmt(cmd * " -J -C10 -A50+f7p -Gd4i -L-1/1000 -O -K -T+d0.1i/0.02i >> " * ps)
 	gmt("pscoast -Rg -JH6i -Y3.4i -O -K -B+t\"Low Order Geoid\" -Bg30 -Dc -Glightbrown -Slightblue >> " * ps)
@@ -101,16 +101,16 @@ function ex02(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex02/"
 	ps = out_path * "example_02.ps"
 
-	gmt("gmtset FONT_TITLE 30p MAP_ANNOT_OBLIQUE 0 PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
+	gmt("gmtset -Du")
+	gmt("gmtset FONT_TITLE 30p MAP_ANNOT_OBLIQUE 0")
 	gmt("destroy")
 	g_cpt = gmt("makecpt -Crainbow -T-2/14/2")
-	gmt("grdimage " * d_path * "HI_geoid2.nc -R160/20/220/30r -JOc190/25.5/292/69/4.5i -C" *
+	gmt("grdimage @HI_geoid_02.nc -R160/20/220/30r -JOc190/25.5/292/69/4.5i -C" *
 		" -E50 -K -P -B10 -X1.5i -Y1.25i > " * ps, g_cpt)
 	gmt("psscale -DJRM+o0.6i/0+e+mc -R -J -O -K -Bx2+lGEOID -By+lm >> " * ps, g_cpt)
-	t_cpt = gmt("grd2cpt " * d_path * "HI_topo2.nc -Crelief -Z")
-	GHI_topo2_int = gmt("grdgradient " * d_path * "HI_topo2.nc -A0 -Nt")
-	gmt("grdimage " * d_path * "HI_topo2.nc -I -R -J -B+t\"H@#awaiian@# T@#opo and @#G@#eoid@#\"" *
-        " -B10 -E50 -O -K -C -Y4.5i --MAP_TITLE_OFFSET=0.5i >> " * ps, GHI_topo2_int, t_cpt)
+	t_cpt = gmt("grd2cpt @HI_topo_02.nc -Crelief -Z")
+	gmt("grdimage @HI_topo_02.nc -I+a0 -R -J -B+t\"H@#awaiian@# T@#opo and @#G@#eoid@#\"" *
+        " -B10 -E50 -O -K -C -Y4.5i --MAP_TITLE_OFFSET=0.5i >> " * ps, t_cpt)
 	gmt("psscale -DJRM+o0.6i/0+mc -R -J -O -K -I0.3 -Bx2+lTOPO -By+lkm >> " * ps, t_cpt)
 	gmt("pstext -R0/8.5/0/11 -Jx1i -F+f30p,Helvetica-Bold+jCB -O -N -Y-4.5i >> " * ps,
 		Any["-0.4 7.5 a)", "-0.4 3.0 b)"])
@@ -126,12 +126,12 @@ function ex03(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex03/"
 	ps = out_path * "example_03.ps"
 
-	gmt("gmtset -Du")
+	gmt("gmtset -Du GMT_FFT kiss")
 	gmt("destroy")
 	
-	cpos  = gmt("fitcircle " * d_path * "sat.xyg -L2 -Fm")
+	cpos  = gmt("fitcircle @sat_03.xyg -L2 -Fm")
 	cposx = cpos[1].data[1,1];		cposy = cpos[1].data[1,2]
-	ppos  = gmt("fitcircle " * d_path * "sat.xyg -L2 -Fn")
+	ppos  = gmt("fitcircle @sat_03.xyg -L2 -Fn")
 	pposx = ppos[1].data[1,1];		pposy = ppos[1].data[1,2]
 
 	# Now we use "gmt project" to gmt project the data in both sat.xyg and ship.xyg
@@ -139,8 +139,8 @@ function ex03(g_root_dir, out_path)
 	# the great circle.  We use -Q to get the p distance in kilometers, and -S
 	# to sort the output into increasing p values.
 
-	sat_pg  = gmt(@sprintf("project %ssat.xyg -C%f/%f -T%f/%f -S -Fpz -Q", d_path, cposx, cposy, pposx, pposy));
-	ship_pg = gmt(@sprintf("project %sship.xyg -C%f/%f -T%f/%f -S -Fpz -Q", d_path, cposx, cposy, pposx, pposy));
+	sat_pg  = gmt(@sprintf("project @sat_03.xyg -C%f/%f -T%f/%f -S -Fpz -Q", cposx, cposy, pposx, pposy));
+	ship_pg = gmt(@sprintf("project @ship_03.xyg -C%f/%f -T%f/%f -S -Fpz -Q", cposx, cposy, pposx, pposy));
 	sat_pg  = sat_pg[1].data;
 	ship_pg = ship_pg[1].data;
 
@@ -242,7 +242,7 @@ function ex03(g_root_dir, out_path)
 	gmt("psxy " * R[1].text[1] * " -JX8i/1.1i -O -Y4.25i -Bxf100 -Bya0.5f0.1+l\"Weight\" -BWesn -Sp0.03i >> " * ps, samp_ship_xw)
 	rm("gmt.conf")
 
-	return out_path * "example_03.ps", d_path
+	return ps, d_path
 end
 
 # -----------------------------------------------------------------------------------------------------
@@ -623,7 +623,7 @@ function ex14(g_root_dir, out_path)
 	# Sample along diagonal
 	data  = gmt("grdtrack -G -o2,3", track, Gdata);
 	trend = gmt("grdtrack -G -o2,3", track, Gtrend);
-	t = gmt("gmtinfo -I0.5/25", data, trend);
+	t = gmt("gmtinfo -I0.5/25", trend, data);
 	gmt("psxy -JX6.3i/1.4i "  * t[1].text[1] * " -Wthick -O -K -X-3.25i -Y-1.9i -Bx1 -By50 -BWSne >> " * ps, data)
 	gmt("psxy -R -J -Wthinner,- -O >> " * ps, trend)
 	rm("gmt.conf")
@@ -661,7 +661,7 @@ function ex15(g_root_dir, out_path)
 	gmt("grdcontour -J -B -C250 -A1000 -L-8000/0 -Gd2i -O -K -X3.6i >> " * ps, Gship_clipped)
 	gmt("pscoast " * region * " -J -O -K -Ggray -Wthinnest >> " * ps)
 	info = gmt("grdinfo -C -M", Gship)
-	gmt("psxy -R -J -O -K -Sa0.15i -Wthick >> " * ps, info[1].data[11:12])			# <--------- DOES NOT SHOW UP
+	gmt("psxy -R -J -O -K -Sa0.15i -i10,11 -Wthick >> " * ps, info)
 	gmt("pstext -R0/3/0/4 -Jx1i -F+f24p,Helvetica-Bold+jCB -O -N >> " * ps, "-0.3 3.6 Gridding with missing data")
 	rm("gmt.conf")
 	return ps, d_path
@@ -764,7 +764,7 @@ function ex18(g_root_dir, out_path)
 	gmt("grdimage " * d_path * "AK_gulf_grav.nc -I -JM5.5i -C -B2f1 -P -K -X1.5i" *
 		" -Y5.85i > " * ps, GAK_gulf_grav_i, grav_cpt)
 	gmt("pscoast -R" * d_path * "AK_gulf_grav.nc -J -O -K -Di -Ggray -Wthinnest >> " * ps)
-	gmt("psscale -DJBC+o0/0.4i+w4i/0.15i+h -R -J -C -Bx20f10 -By+l\"mGal\" -O -K >> " * ps, grav_cpt)
+	gmt("psscale -DJBC+o0/0.4i -R -J -C -Bx20f10 -By+l\"mGal\" -O -K >> " * ps, grav_cpt)
 	gmt("pstext -R -J -O -K -D0.1i/0.1i -F+f12p,Helvetica-Bold+jLB >> " * ps, 
 		@sprintf("%f %f Pratt", pratt[1], pratt[2]))
 	gmt("psxy -R -J -O -K -SE- -Wthinnest >> " * ps, pratt)
@@ -877,11 +877,11 @@ function ex20(g_root_dir, out_path)
 
 	gmt("gmtset -Du")
 	gmt("destroy")
-	gmt("pscoast -Rg -JR9i -Bx60 -By30 -B+t\"Hotspot Islands and Cities\" -Gdarkgreen -Slightblue -Dc -A5000 -K > " * ps)
-	gmt("psxy -R -J -Skvolcano -O -K -Wthinnest -Gred >> " * ps, fogspots)
+	gmt("pscoast -Rg -JR9i -Bx60 -By30 -B+t\"Hotspot Islands and Hot Cities\" -Gdarkgreen -Slightblue -Dc -A5000 -K > " * ps)
+	gmt("psxy -R -J @hotspots.txt -Skvolcano -O -K -Wthinnest -Gred >> " * ps)
 
 	# Overlay a few bullseyes at NY, Cairo, and Perth
-	cities = [286 40.45 0.8; 31.15 30.03 0.8; 115.49 -31.58 0.8]
+	cities = [-74 40.45 0.5; 31.15 30.03 0.5; 115.49 -31.58 0.5; -56.16 -34.9 0.5]
 	gmt("psxy -R -J -Sk" * d_path * "bullseye -O >> " * ps, cities)
 	rm("gmt.conf")
 	return ps, d_path
@@ -982,7 +982,8 @@ function ex22(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex22/"
 	ps = out_path * "example_22.ps"
 
-	gmt("gmtset FONT_ANNOT_PRIMARY 10p FONT_TITLE 18p FORMAT_GEO_MAP ddd:mm:ssF PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
+	gmt("gmtset -Du")
+	gmt("gmtset FONT_ANNOT_PRIMARY 10p FONT_TITLE 18p FORMAT_GEO_MAP ddd:mm:ssF")
 	gmt("destroy")
 
 	# Get the data (-q quietly) from USGS using the wget (comment out in case
@@ -1304,7 +1305,7 @@ function ex28(g_root_dir, out_path)
 	gmt("pscoast -R" * d_path * "Kilauea.utm.nc -Ju5Q/1:160000 -O -K -Df+ -Slightblue -W0.5p -B5mg5m -BNE" *
 		" --FONT_ANNOT_PRIMARY=12p --FORMAT_GEO_MAP=ddd:mmF >> " * ps)
 	gmt("pstext -R -J -O -K -F+f12p,Helvetica-Bold+jCB >> " * ps, "155:16:20W 19:26:20N KILAUEA")
-	gmt("psbasemap -R -J -O -K --FONT_ANNOT_PRIMARY=9p -Lg155:07:30W/19:15:40N+c19:23N+jTC+f+w5k+l1:16,000+u" *
+	gmt("psbasemap -R -J -O -K --FONT_ANNOT_PRIMARY=9p -LjRB+c19:23N+f+w5k+l1:16,000+u+o0.2i" *
 		" --FONT_LABEL=10p >> " * ps)
 	# Annotate in km but append ,000m to annotations to get customized meter labels
 	gmt("psbasemap -R" * d_path * "Kilauea.utm.nc+Uk -Jx1:160 -B5g5+u\"@:8:000m@::\"" * 
@@ -1389,7 +1390,7 @@ function ex30(g_root_dir, out_path)
 
 	# Draw a circle and indicate the 0-70 degree angle
 	gmt("psxy -R-1/1/-1/1 -Jx1.5i -O -K -X3.625i -Y2.75i -Sc2i -W1p -N >> " * ps, [0 0])
-	gmt("psxy -R-1/1/-1/1 -J -O -K -W1p >> " * ps,
+	gmt("psxy -R-1/1/-1/1 -J -O -K -Wdefault >> " * ps,
 		[
 		NaN NaN
 # 		> x-gridline  -Wdefault
@@ -1406,7 +1407,9 @@ function ex30(g_root_dir, out_path)
 		NaN NaN
 # 		> angle = 120
 		0 0
-		-0.5 0.866025
+		-0.5 0.866025])
+	gmt("psxy -R-1/1/-1/1 -J -O -K -W2p >> " * ps,
+		[
 		NaN NaN
 # 		> x-gmt projection -W2p
 		-0.3333	0
@@ -1422,7 +1425,7 @@ function ex30(g_root_dir, out_path)
 		"0.22 0.27 12p,Symbol -30 CB a"
 		"-0.33333 0.6 12p,Times-Roman 30 LB 120\\312"])
 
-	gmt("psxy -R -J -O -Sm0.15i+e -W1p -Gblack >> " * ps, [0 0 1.26 0 120])
+	gmt("psxy -R -J -O -Sm0.15i+e -W1p -Gblack >> " * ps, [0 0 0.5 0 120])
 	rm("gmt.conf")
 	return ps, d_path
 end
@@ -1624,7 +1627,7 @@ function ex37(g_root_dir, out_path)
 	# Testing gmt grdfft coherence calculation with Karen Marks example data
 	G = d_path * "grav.V18.par.surf.1km.sq.nc"
 	T = d_path * "mb.par.surf.1km.sq.nc"
-	gmt("gmtset FONT_TITLE 14p PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
+	gmt("gmtset FONT_TITLE 14p GMT_FFT kiss PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
 	gmt("destroy")
 
 	z_cpt  = gmt("makecpt -Crainbow -T-5000/-3000")
@@ -1661,6 +1664,11 @@ function ex37(g_root_dir, out_path)
  
 	gmt("psxy -R2/160/0/1 -JX-6il/2.5i -Bxa2f3g3+u\" km\" -Byafg0.5+l\"Coherency@+2@+\"" *
 		" -BWsNe+t\"Coherency between gravity and bathymetry\" -O -K -X-3.25i -Y3.3i -i0,15 -W0.5p --FONT_TITLE=24p >> " * ps, cross)
+
+	# These two lines serve also to show that there is a bug in the previous psxy, which completely ignores the plot line order
+	lix = gmt("gmtconvert -o0,15", cross)
+	gmt("psxy -R -J -O -K -W0.5p >> " * ps, lix)
+
 	gmt("psxy -R -J -O -K -i0,15,16 -Sc0.075i -Gred -W0.25p -Ey >> " * ps, cross)
  	gmt("psxy -R -J -O -T >> " * ps)
  	rm("grav.V18.par.surf.1km.sq_tmp.nc"), 	rm("mb.par.surf.1km.sq_tmp.nc")
@@ -1680,21 +1688,22 @@ function ex38(g_root_dir, out_path)
 	gmt("destroy")
 	t_cpt = gmt("makecpt -Crainbow -T0/1700");
 	c_cpt = gmt("makecpt -Crainbow -T0/15/1");
-	Gitopo = gmt("grdgradient " * d_path * "topo.nc -Nt1 -fg -A45 -G")
-	Gout  = gmt("grdhisteq " * d_path * "topo.nc -G -C16")
-	gmt("grdimage " * d_path * "topo.nc -I -C -JM3i -Y5i -K -P -B5 -BWSne > " * ps, Gitopo, t_cpt)
+	Gout  = gmt("grdhisteq " * d_path * "topo.nc -C16")
+	gmt("grdimage " * d_path * "topo.nc -I+a45+nt1 -C -JM3i -Y6i -K -P -B5 -BWSne > " * ps, t_cpt)
 	gmt("pstext -R" * d_path * "topo.nc -J -O -K -F+jTR+f14p -T -Gwhite -W1p -Dj0.1i >> " * ps, "315 -10 Original")
 	gmt("grdimage -C -J -X3.5i -K -O -B5 -BWSne >> " * ps, Gout, c_cpt)
 	gmt("pstext -R -J -O -K -F+jTR+f14p -T -Gwhite -W1p -Dj0.1i >> " * ps, "315 -10 Equalized")
 	gmt("psscale -Dx0i/-0.4i+jTC+w5i/0.15i+h+e+n -O -K -C -Ba500 -By+lm >> " * ps, t_cpt)
-	Gout = gmt("grdhisteq " * d_path * "topo.nc -G -N")
+	Gout = gmt("grdhisteq " * d_path * "topo.nc -N")
 	c_cpt = gmt("makecpt -Crainbow -T-3/3")
 	gmt("grdimage -C -J -X-3.5i -Y-3.3i -K -O -B5 -BWSne >> " * ps, Gout, c_cpt)
 	gmt("pstext -R -J -O -K -F+jTR+f14p -T -Gwhite -W1p -Dj0.1i >> " * ps, "315 -10 Normalized")
-	Gout = gmt("grdhisteq " * d_path * "topo.nc -G -N")
-	gmt("grdimage -C -J -X3.5i -K -O -B5 -BWSne >> " * ps, Gout, c_cpt)
+	Gout = gmt("grdhisteq " * d_path * "topo.nc -Q")
+	q_cpt = gmt("makecpt -Crainbow -T0/15")
+	gmt("grdimage -C -J -X3.5i -K -O -B5 -BWSne >> " * ps, Gout, q_cpt)
 	gmt("pstext -R -J -O -K -F+jTR+f14p -T -Gwhite -W1p -Dj0.1i >> " * ps, "315 -10 Quadratic")
-	gmt("psscale -Dx0i/-0.4i+w5i/0.15i+h+jTC+e+n -O -C -Bx1 -By+lz >> " * ps, c_cpt)
+	gmt("psscale -Dx0i/-0.4i+w5i/0.15i+h+jTC+e+n -O -K -C -Bx1 -By+l\"z@-n@-\" >> " * ps, c_cpt)
+	gmt("psscale -Dx0i/-1.0i+w5i/0.15i+h+jTC+e+n -O -C -Bx1 -By+l\"z@-q@-\" >> " * ps, q_cpt)
 	rm("gmt.conf")
 	return ps, d_path
 end
