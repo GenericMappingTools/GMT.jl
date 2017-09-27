@@ -2,7 +2,10 @@ VERSION >= v"0.4" && __precompile__()
 
 module GMT
 
+GMTver = 5.4
+
 export
+	GMTver,
 	GMT_Call_Module,
 	GMT_Create_Args,
 	GMT_Create_Session,
@@ -45,10 +48,14 @@ export
 	gmt_core_module_info,
 	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
+	pscoast, psxy,
 	NULL
 
 include("libgmt_h.jl")
 include("libgmt.jl")
 include("gmt_main.jl")
+include("common_options.jl")
+include("pscoast.jl")
+include("psxy.jl")
 
 end # module
