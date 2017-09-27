@@ -278,7 +278,7 @@ const GMT_GRID_NAME_LEN256 = 256
 const GMT_GRID_HEADER_SIZE = 892
 # end enum GMT_enum_grdlen
 
-const Gmt_api_error_code = UInt32
+#=
 const GMT_OK = 0
 const GMT_WRONG_MATRIX_SHAPE = 1
 const GMT_ACCESS_NOT_ENABLED = 2
@@ -353,6 +353,7 @@ const GMT_SUBSET_NOT_ALLOWED = 70
 const GMT_VALUE_NOT_SET = 71
 const GMT_WRITTEN_ONCE = 72
 # end enum Gmt_api_error_code
+=#
 
 const DOUBLE_CLASS = 1
 const SINGLE_CLASS = 2
@@ -365,7 +366,84 @@ const UINT16_CLASS = 8
 const INT8_CLASS   = 9
 const UINT8_CLASS  = 10
 
-type GMT_GRID_HEADER
+# begin enum GMT_enum_fmt
+const GMT_IS_ROW_FORMAT = 0
+const GMT_IS_COL_FORMAT = 1
+# end enum GMT_enum_fmt
+
+type GMT_GRID_HEADER_v6
+	n_columns::UInt32
+	n_rows::UInt32
+	registration::UInt32
+	wesn::NTuple{4, Cdouble}
+	z_min::Cdouble
+	z_max::Cdouble
+	inc::NTuple{2, Cdouble}
+	z_scale_factor::Cdouble
+	z_add_offset::Cdouble
+	x_unit::NTuple{80, UInt8}
+	y_unit::NTuple{80, UInt8}
+	z_unit::NTuple{80, UInt8}
+	title::NTuple{80, UInt8}
+	command::NTuple{320, UInt8}
+	remark::NTuple{160, UInt8}
+	# Variables "hidden" from the API. This section is flexible and considered private
+	_type::UInt32
+	bits::UInt32
+	complex_mode::UInt32
+	mx::UInt32 				# Actual dimensions of the grid in memory, allowing for the padding
+	my::UInt32
+	nm::Csize_t 			# Number of data items in this grid (n_columns * n_rows) [padding is excluded]
+	size::Csize_t 			# Actual number of items required to hold this grid (= mx * my)
+	n_alloc::Csize_t
+	trendmode::UInt32
+	arrangement::UInt32
+	n_bands::UInt32
+	pad::NTuple{4, UInt32}
+	BC::NTuple{4, UInt32}
+	grdtype::UInt32
+	reset_pad::UInt32
+	name::NTuple{256, UInt8}
+	varname::NTuple{80, UInt8}
+	ProjRefPROJ4::Ptr{UInt8}
+	ProjRefWKT::Ptr{UInt8}
+	row_order::Cint
+	z_id::Cint
+	ncid::Cint
+	xy_dim::NTuple{2, Cint}
+	t_index::NTuple{3, Csize_t}
+	data_offset::Csize_t
+	stride::UInt32
+	nan_value::Cfloat
+	xy_off::Cdouble
+	r_inc::NTuple{2, Cdouble}
+	flags::NTuple{4, UInt8}
+	pocket::Ptr{UInt8}
+	mem_layout::NTuple{4, UInt8}
+	bcr_threshold::Cdouble
+	has_NaNs::UInt32
+	bcr_interpolant::UInt32
+	bcr_n::UInt32
+	nxp::UInt32
+	nyp::UInt32
+	no_BC::UInt32
+	gn::UInt32
+	gs::UInt32
+	is_netcdf4::UInt32
+	orig_datatype::UInt32
+	z_chunksize::NTuple{2, Csize_t}
+	z_shuffle::UInt32
+	z_deflate_level::UInt32
+	z_scale_autoadust::UInt32
+	z_offset_autoadust::UInt32
+	xy_adjust::NTuple{2, UInt32}
+	xy_mode::NTuple{2, UInt32}
+	xy_unit::NTuple{2, UInt32}
+	xy_unit_to_meter::NTuple{2, Cdouble}
+	index_function::Ptr{Void}
+end
+
+type GMT_GRID_HEADER_v5
 	n_columns::UInt32
 	n_rows::UInt32
 	registration::UInt32
@@ -434,6 +512,12 @@ type GMT_GRID_HEADER
 	xy_unit::NTuple{2, UInt32}
 	xy_unit_to_meter::NTuple{2, Cdouble}
 	index_function::Ptr{Void}
+end
+
+if (GMTver >= 6.0)
+	const GMT_GRID_HEADER = GMT_GRID_HEADER_v6
+else
+	const GMT_GRID_HEADER = GMT_GRID_HEADER_v5
 end
 
 type GMT_GRID
@@ -702,7 +786,23 @@ immutable GMT_UNIVECTOR
 	f8::Ptr{Float64}
 end
 
-immutable GMT_VECTOR
+immutable GMT_VECTOR_v6
+	n_columns::UInt64
+	n_rows::UInt64
+	registration::UInt32
+	_type::Ptr{UInt32}
+	range::NTuple{2, Cdouble}
+	#data::Ptr{GMT_UNIVECTOR}
+	data::Ptr{Ptr{Void}}
+	text::Ptr{Ptr{UInt8}};			# Pointer to optional array of strings [NULL] */
+	command::NTuple{320, UInt8}
+	remark::NTuple{160, UInt8}
+	id::UInt64
+	alloc_level::UInt32
+	alloc_mode::UInt32
+end
+
+immutable GMT_VECTOR_v5
 	n_columns::UInt64
 	n_rows::UInt64
 	registration::UInt32
@@ -716,13 +816,14 @@ immutable GMT_VECTOR
 	alloc_level::UInt32
 	alloc_mode::UInt32
 end
-# begin enum GMT_enum_fmt
-const GMT_enum_fmt = UInt32
-const GMT_IS_ROW_FORMAT = 0
-const GMT_IS_COL_FORMAT = 1
-# end enum GMT_enum_fmt
 
-type GMT_MATRIX
+if (GMTver >= 6.0)
+	const GMT_VECTOR = GMT_VECTOR_v6
+else
+	const GMT_VECTOR = GMT_VECTOR_v5
+end
+
+type GMT_MATRIX_v6
 	n_rows::UInt64
 	n_columns::UInt64
 	n_layers::UInt64
@@ -733,14 +834,38 @@ type GMT_MATRIX
 	_type::UInt32
 	range::NTuple{6, Cdouble}
 #	data::GMT_UNIVECTOR
-#	data::Union(Ptr{UInt8},Ptr{Int8},Ptr{UInt16},Ptr{Int16},Ptr{UInt32},Ptr{Int32},
-#		Ptr{UInt64},Ptr{Int64},Ptr{Float32},Ptr{Float64})
+	data::Ptr{Void}
+	text::Ptr{Ptr{UInt8}}
+	command::NTuple{320, UInt8}
+	remark::NTuple{160, UInt8}
+	id::UInt64
+	alloc_level::UInt32
+	alloc_mode::UInt32
+end
+
+type GMT_MATRIX_v5
+	n_rows::UInt64
+	n_columns::UInt64
+	n_layers::UInt64
+	shape::UInt32
+	registration::UInt32
+	dim::Csize_t
+	size::Csize_t
+	_type::UInt32
+	range::NTuple{6, Cdouble}
+#	data::GMT_UNIVECTOR
 	data::Ptr{Void}
 	command::NTuple{320, UInt8}
 	remark::NTuple{160, UInt8}
 	id::UInt64
 	alloc_level::UInt32
 	alloc_mode::UInt32
+end
+
+if (GMTver >= 6.0)
+	const GMT_MATRIX = GMT_MATRIX_v6
+else
+	const GMT_MATRIX = GMT_MATRIX_v5
 end
 
 type GMT_RESOURCE
