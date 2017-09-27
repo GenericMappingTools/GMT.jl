@@ -702,17 +702,15 @@ function ex17(g_root_dir, out_path)
 	gmt("gmtset -Du")
 	gmt("destroy")
 	# First generate geoid image w/ shading
-	geoid_cpt = gmt("grd2cpt " * d_path * "india_geoid.nc -Crainbow")
-	Gindia_geoid_i = gmt("grdgradient " * d_path * "india_geoid.nc -Nt1 -A45 -G")
-	gmt("grdimage " * d_path * "india_geoid.nc -I -JM6.5i -C -P -K > " * ps, Gindia_geoid_i, geoid_cpt)
+	geoid_cpt = gmt("grd2cpt @india_geoid.nc -Crainbow")
+	gmt("grdimage @india_geoid.nc -I+a45+nt1 -JM6.5i -C -P -K > " * ps, geoid_cpt)
 
 	# Then use gmt pscoast to initiate clip path for land
-	gmt("pscoast -R" * d_path * "india_geoid.nc -J -O -K -Dl -Gc >> " * ps)
+	gmt("pscoast -R@india_geoid.nc -J -O -K -Dl -Gc >> " * ps)
 
 	# Now generate topography image w/shading
 	fid = open("gray.cpt","w");		println(fid, "-10000 150 10000 150");	close(fid)
-	Gindia_topo_i = gmt("grdgradient " * d_path * "india_topo.nc -Nt1 -A45 -G")
-	gmt("grdimage " * d_path * "india_topo.nc -I -J -Cgray.cpt -O -K >> " * ps, Gindia_topo_i)
+	gmt("grdimage @india_topo.nc -I+a45+nt1 -J -Cgray.cpt -O -K >> " * ps)
 
 	# Finally undo clipping and overlay basemap
 	gmt("pscoast -R -J -O -K -Q -B10f5 -B+t\"Clipping of Images\" >> " * ps)
@@ -751,19 +749,19 @@ function ex18(g_root_dir, out_path)
 	# of radius = 200 km centered on Pratt.
 
 	grav_cpt = gmt("makecpt -Crainbow -T-60/60");
-	GAK_gulf_grav_i = gmt("grdgradient " * d_path * "AK_gulf_grav.nc -Nt1 -A45");
-	gmt("grdimage " * d_path * "AK_gulf_grav.nc -I -JM5.5i -C -B2f1 -P -K -X1.5i" *
+	GAK_gulf_grav_i = gmt("grdgradient @AK_gulf_grav.nc -Nt1 -A45");
+	gmt("grdimage @AK_gulf_grav.nc -I -JM5.5i -C -B2f1 -P -K -X1.5i" *
 		" -Y5.85i > " * ps, GAK_gulf_grav_i, grav_cpt)
-	gmt("pscoast -R" * d_path * "AK_gulf_grav.nc -J -O -K -Di -Ggray -Wthinnest >> " * ps)
+	gmt("pscoast -R@AK_gulf_grav.nc -J -O -K -Di -Ggray -Wthinnest >> " * ps)
 	gmt("psscale -DJBC+o0/0.4i -R -J -C -Bx20f10 -By+l\"mGal\" -O -K >> " * ps, grav_cpt)
 	gmt("pstext -R -J -O -K -D0.1i/0.1i -F+f12p,Helvetica-Bold+jLB >> " * ps, 
 		@sprintf("%f %f Pratt", pratt[1], pratt[2]))
 	gmt("psxy -R -J -O -K -SE- -Wthinnest >> " * ps, pratt)
 
 	# Then draw 10 mGal contours and overlay 50 mGal contour in green
-	gmt("grdcontour " * d_path * "AK_gulf_grav.nc -J -C20 -B2f1 -BWSEn -O -K -Y-4.85i >> " * ps)
+	gmt("grdcontour @AK_gulf_grav.nc -J -C20 -B2f1 -BWSEn -O -K -Y-4.85i >> " * ps)
 	# Save 50 mGal contours to individual files, then plot them
-	gmt("grdcontour " * d_path * "AK_gulf_grav.nc -C10 -L49/51 -Dsm_%c.txt")
+	gmt("grdcontour @AK_gulf_grav.nc -C10 -L49/51 -Dsm_%c.txt")
 	gmt("psxy -R -J -O -K -Wthin,green sm_C.txt >> " * ps)
 	gmt("psxy -R -J -O -K -Wthin,green sm_O.txt >> " * ps)
 	gmt("pscoast -R -J -O -K -Di -Ggray -Wthinnest >> " * ps)
@@ -787,7 +785,7 @@ function ex18(g_root_dir, out_path)
 
 	Gmask = gmt("grdmath -R " * @sprintf("%f %f", pratt[1], pratt[2]) * " SDIST =")
 	Gmask = gmt("grdclip -Sa200/NaN -Sb200/1", Gmask)
-	Gtmp = gmt("grdmath " * d_path * "AK_gulf_grav.nc ? MUL =", Gmask);
+	Gtmp = gmt("grdmath @AK_gulf_grav.nc ? MUL =", Gmask);
 	area = gmt("grdvolume -C50 -Sk", Gtmp); 	# | cut -f2`
 	volume = gmt("grdvolume -C50 -Sk -fg", Gtmp); # | cut -f3`
 
@@ -830,7 +828,7 @@ function ex19(g_root_dir, out_path)
 	gmt("pscoast -R -J -O -K -Dc -A5000 -Gp100/86:FredByellow -Sp100/" * d_path * "circuit.ras -B0 -Y-3.25i >> " * ps)
 	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,lightgreen=thinner >> " * ps, "0 30 SILLY USES OF")
 	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,magenta=thinner >> " * ps, "0 -30 COLOR PATTERNS")
-	gmt("psimage -DjCM+w3i -R -J " * d_path * "GMT_covertext.eps -O -K >> " * ps)
+	gmt("psimage -DjCM+w3i -R -J @GMT_covertext.eps -O -K >> " * ps)
 
 	# Finally repeat 1st plot but exchange the patterns
 	gmt("grdimage -J -C -O -K -Y-3.25i -B0 -nl >> " * ps, Glon, lon_cpt)
