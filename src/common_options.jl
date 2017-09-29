@@ -71,12 +71,14 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict)
-    if (haskey(d, :B))
-		opt_B = build_opt_B(d[:B])
-	elseif (haskey(d, :frame))
-		opt_B = build_opt_B(d[:frame])
+	for symb in [:B :frame]
+		if (haskey(d, symb))
+			opt_B = build_opt_B(d[symb])
+			if (!isempty(opt_B))  cmd = cmd * opt_B  end
+			break
+		end
 	end
-	cmd = cmd * opt_B
+	return cmd
 end
 
 function build_opt_B(Val)
@@ -235,6 +237,18 @@ function parse_i(cmd::String, d::Dict)
 	for symb in [:i :input_col]
 		if (haskey(d, symb) && isa(d[symb], String))
 			cmd = cmd * " -i" * d[symb]
+			break
+		end
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_n(cmd::String, d::Dict)
+	# Parse the global -n option. Return CMD same as input if no -n option in args
+	for symb in [:n :interp :interp_method]
+		if (haskey(d, symb) && isa(d[symb], String))
+			cmd = cmd * " -n" * d[symb]
 			break
 		end
 	end
