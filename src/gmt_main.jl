@@ -1099,7 +1099,7 @@ function image_init(API::Ptr{Void}, Img::GMTimage, pad::Int=0)
 	Ib = unsafe_load(I)			# Ib = GMT_IMAGE (constructor with 1 method)
 
 	Ib.data = pointer(Img.image)
-	Ib.alloc_mode = UInt32(GMT.GMT_ALLOCATED_EXTERNALLY)	# Since array was allocated by Julia
+	Ib.alloc_mode = UInt32(GMT.GMT_ALLOC_EXTERNALLY)	# Since array was allocated by Julia
 	h = unsafe_load(Ib.header)
 	h.z_min = Img.range[5]			# Set the z_min, z_max
 	h.z_max = Img.range[6]
@@ -1138,7 +1138,7 @@ function image_init(API::Ptr{Void}, img, hdr::Array{Float64}, pad::Int=0)
 =#
 
 	Ib.data = pointer(img)
-	Ib.alloc_mode = UInt32(GMT.GMT_ALLOCATED_EXTERNALLY)		# Since array was allocated by Julia
+	Ib.alloc_mode = UInt32(GMT.GMT_ALLOC_EXTERNALLY)		# Since array was allocated by Julia
 	h = unsafe_load(Ib.header)
 	h.z_min = hdr[5]			# Set the z_min, z_max
 	h.z_max = hdr[6]
