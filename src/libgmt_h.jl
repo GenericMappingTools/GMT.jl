@@ -1,9 +1,4 @@
 const NULL = C_NULL
-# GMT_enum_api
-const GMT_USAGE	= 0               # Want to report full program usage message
-const GMT_SYNOPSIS	= 1           # Just want the synopsis of usage
-const GMT_PAD_DEFAULT = 2         # Default is 2 rows and 2 cols for grid padding
-const GMT_STR16	= 16
 
 const GMT_SESSION_NORMAL   = 0   # Typical mode to GMT_Create_Session
 const GMT_SESSION_NOEXIT   = 1   # Call return and not exit when error
@@ -44,26 +39,13 @@ const GMT_VIA_FLOAT = 900        # 4-byte data float type */
 const GMT_VIA_DOUBLE = 1000
 # end enum GMT_enum_type
 # begin enum GMT_enum_opt
-const GMT_OPT_USAGE = 63
-const GMT_OPT_SYNOPSIS = 94
-const GMT_OPT_PARAMETER = 45
 const GMT_OPT_INFILE = 60
-const GMT_OPT_OUTFILE = 62
 # end enum GMT_enum_opt
-immutable GMT_OPTION			# Structure for a single GMT command option
-	option::UInt8				# 1-char command line -<option> (e.g. D in -D) identifying the option (* if file)
-	arg::Ptr{UInt8}				# If not NULL, contains the argument for this option
-	next::Ptr{GMT_OPTION}
-	previous::Ptr{GMT_OPTION}
-end
+
 # begin enum GMT_enum_method
-const GMT_IS_FILE = 0
-const GMT_IS_STREAM = 1
-const GMT_IS_FDESC = 2
-const GMT_IS_DUPLICATE = 3
-const GMT_IS_REFERENCE = 4
 const GMT_IS_OUTPUT = 1024
 # end enum GMT_enum_method
+
 # begin enum GMT_enum_via
 const GMT_VIA_NONE = 0
 const GMT_VIA_MODULE_INPUT = 64
@@ -80,19 +62,8 @@ const GMT_IS_POSTSCRIPT = 4
 const GMT_IS_TEXTSET = 5
 const GMT_IS_MATRIX = 6
 const GMT_IS_VECTOR = 7
-const GMT_IS_COORD = 8
-const GMT_N_FAMILIES = 9
 # begin enum GMT_enum_comment
 const GMT_COMMENT_IS_TEXT = 0
-const GMT_COMMENT_IS_OPTION = 1
-const GMT_COMMENT_IS_COMMAND = 2
-const GMT_COMMENT_IS_REMARK = 4
-const GMT_COMMENT_IS_TITLE = 8
-const GMT_COMMENT_IS_NAME_X = 16
-const GMT_COMMENT_IS_NAME_Y = 32
-const GMT_COMMENT_IS_NAME_Z = 64
-const GMT_COMMENT_IS_COLNAMES = 128
-const GMT_COMMENT_IS_RESET = 256
 # end enum GMT_enum_comment
 # begin enum GMT_api_err_enum
 const GMT_NOTSET = -1
@@ -120,29 +91,10 @@ const GMT_Z = 2
 
 const GMT_ALLOC_EXTERNALLY = 0    # Allocated outside of GMT: We cannot reallocate or free this memory
 const GMT_ALLOC_INTERNALLY = 1    # Allocated by GMT: We may reallocate as needed and free when no longer needed
-const GMT_ALLOC_NORMAL = 0        # Normal allocation of new dataset based on shape of input dataset
-const GMT_ALLOC_VERTICAL = 4      # Allocate a single table for data set to hold all input tables by vertical concatenation */
-const GMT_ALLOC_HORIZONTAL = 8
 # begin enum GMT_enum_write
 const GMT_STRICT_CONVERSION = 1024
 const GMT_LAX_CONVERSION = 2048
 # end enum GMT_enum_write
-# begin enum GMT_enum_dest
-const GMT_WRITE_SET = 0
-const GMT_WRITE_OGR = 1
-const GMT_WRITE_TABLE = 2
-const GMT_WRITE_SEGMENT = 3
-# end enum GMT_enum_dest
-# begin enum GMT_enum_alloc
-const GMT_ALLOCATED_EXTERNALLY = 0
-const GMT_ALLOCATED_BY_GMT = 1
-# end enum GMT_enum_alloc
-# begin enum GMT_time_mode
-const GMT_TIME_NONE = 0
-const GMT_TIME_CLOCK = 1
-const GMT_TIME_ELAPSED = 2
-const GMT_TIME_RESET = 4
-# end enum GMT_time_mode
 # begin enum GMT_enum_verbose
 const GMT_MSG_QUIET = 0
 const GMT_MSG_NORMAL = 1
@@ -155,7 +107,6 @@ const GMT_MSG_DEBUG = 6
 # begin enum GMT_enum_reg
 const GMT_GRID_NODE_REG = 0
 const GMT_GRID_PIXEL_REG = 1
-const GMT_GRID_DEFAULT_REG = 1024
 # end enum GMT_enum_reg
 # begin enum GMT_enum_gridindex
 const GMT_XLO = 0
@@ -171,29 +122,9 @@ const GMT_SEG = 1
 const GMT_ROW = 2
 const GMT_COL = 3
 # end enum GMT_enum_dimindex
-# GMT_enum_session
-const GMT_SESSION_NORMAL    = 0   # Typical mode to GMT_Create_Session
-const GMT_SESSION_NOEXIT    = 1   # Call return and not exit when error
-const GMT_SESSION_EXTERNAL  = 2   # Called by an external API (e.g., MATLAB, Python).
-const GMT_SESSION_COLMAJOR  = 4   # External API uses column-major formats (e.g., MATLAB, FORTRAN). [Row-major format]
-const GMT_SESSION_LOGERRORS = 8   # External API uses column-major formats (e.g., MATLAB, FORTRAN). [Row-major format]
-const GMT_SESSION_RUNMODE   = 16  # If set enable GMT's modern runmode. [Classic]
-const GMT_SESSION_BEGIN     = 32  # Begin a new session. [Sets modern mode]
-const GMT_SESSION_END       = 64  # End a session. [Ends modern mode]
-const GMT_SESSION_CLEAR     = 128 # Clear session files/directories
-const GMT_SESSION_FIGURE    = 256
 
 # begin enum GMT_enum_gridio
-const GMT_GRID_IS_REAL = 0
 const GMT_GRID_ALL = 0
-const GMT_GRID_HEADER_ONLY = 1
-const GMT_GRID_DATA_ONLY = 2
-const GMT_GRID_IS_COMPLEX_REAL = 4
-const GMT_GRID_IS_COMPLEX_IMAG = 8
-const GMT_GRID_IS_COMPLEX_MASK = 12
-const GMT_GRID_NO_HEADER = 16
-const GMT_GRID_ROW_BY_ROW = 32
-const GMT_GRID_ROW_BY_ROW_MANUAL = 64
 # end enum GMT_enum_gridio
 
 const DOUBLE_CLASS = 1
@@ -225,9 +156,14 @@ const GMT_IS_NONE = 16
 const GMT_RGB = 0
 const GMT_CMYK = 1
 const GMT_HSV = 2
-const GMT_COLORINT = 4
-const GMT_NO_COLORNAMES = 8
 # end enum GMT_enum_color
+
+immutable GMT_OPTION			# Structure for a single GMT command option
+	option::UInt8				# 1-char command line -<option> (e.g. D in -D) identifying the option (* if file)
+	arg::Ptr{UInt8}				# If not NULL, contains the argument for this option
+	next::Ptr{GMT_OPTION}
+	previous::Ptr{GMT_OPTION}
+end
 
 type GMT_GRID_HEADER_v6
 	n_columns::UInt32
