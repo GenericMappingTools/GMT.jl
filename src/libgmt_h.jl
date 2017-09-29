@@ -117,14 +117,6 @@ const GMT_X = 0
 const GMT_Y = 1
 const GMT_Z = 2
 # end enum GMT_enum_dimensions
-# begin enum GMT_enum_read
-const GMT_READ_DOUBLE = 0
-const GMT_READ_DATA = 0           # Renamed to GMT_READ_DATA in GMT5.3.2
-const GMT_READ_NORMAL = 0
-const GMT_READ_TEXT = 1
-const GMT_READ_MIXED = 2
-const GMT_FILE_BREAK = 4
-# end enum GMT_enum_read
 
 const GMT_ALLOC_EXTERNALLY = 0    # Allocated outside of GMT: We cannot reallocate or free this memory
 const GMT_ALLOC_INTERNALLY = 1    # Allocated by GMT: We may reallocate as needed and free when no longer needed
@@ -132,13 +124,6 @@ const GMT_ALLOC_NORMAL = 0        # Normal allocation of new dataset based on sh
 const GMT_ALLOC_VERTICAL = 4      # Allocate a single table for data set to hold all input tables by vertical concatenation */
 const GMT_ALLOC_HORIZONTAL = 8
 # begin enum GMT_enum_write
-const GMT_WRITE_DOUBLE = 0        # Renamed to GMT_WRITE_DATA in GMT5.3.2
-const GMT_WRITE_DATA = 0
-const GMT_WRITE_TEXT = 1
-const GMT_WRITE_SEGMENT_HEADER = 2
-const GMT_WRITE_TABLE_HEADER = 3
-const GMT_WRITE_TABLE_START = 4
-const GMT_WRITE_NOLF = 16
 const GMT_STRICT_CONVERSION = 1024
 const GMT_LAX_CONVERSION = 2048
 # end enum GMT_enum_write
@@ -147,7 +132,6 @@ const GMT_WRITE_SET = 0
 const GMT_WRITE_OGR = 1
 const GMT_WRITE_TABLE = 2
 const GMT_WRITE_SEGMENT = 3
-const GMT_WRITE_TABLE_SEGMENT = 4
 # end enum GMT_enum_dest
 # begin enum GMT_enum_alloc
 const GMT_ALLOCATED_EXTERNALLY = 0
