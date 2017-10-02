@@ -64,7 +64,9 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
     D : str
         Selects the resolution of the data set to use ((f)ull, (h)igh,
         (i)ntermediate, (l)ow, and (c)rude).
-    E : str
+	E : str; Tuple(str, str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
+        'code1,code2,...[+l|L][+gfill][+ppen]'		
+        Select painting or dumping country polygons from the Digital Chart of the World
     G : str
         Select filling or clipping of “dry” areas.
     I : str
@@ -85,23 +87,23 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
         Draw shorelines [Default is no shorelines]. Append pen attributes.
 """
 # ---------------------------------------------------------------------------------------------------
-function pscoast(cmd0::String=""; Vd=false, portrait=true, output=[], clip=[], K=false, O=false, kwargs...)
+function pscoast(cmd0::String=""; Vd=false, portrait=true, output="", clip=[], K=false, O=false, 
+                 ps=false, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("pscoast " * cmd0)
 	end
 
-	if (isempty(output))          fname = "lixo.ps"
-	elseif (isa(output, String))  fname = output
-	else error("Output name must be a String")
+	if (!isa(output, String))
+		error("Output name must be a String")
 	end
 
 	d = KW(kwargs)
 	cmd = ""
 	maybe_more = false			# If latter set to true, search for lc & lc pen settings
-	cmd = parse_R(cmd, d)
-	cmd = parse_J(cmd, d)
-	cmd = parse_B(cmd, d)
+	cmd, opt_R = parse_R(cmd, d)
+	cmd, opt_J = parse_J(cmd, d)
+	cmd, opt_B = parse_B(cmd, d)
 	cmd = parse_U(cmd, d)
 	cmd = parse_V(cmd, d)
 	cmd = parse_X(cmd, d)
@@ -155,10 +157,10 @@ function pscoast(cmd0::String=""; Vd=false, portrait=true, output=[], clip=[], K
 
 	if (maybe_more)				# Search for color and style line settings
 		lc = parse_pen_color(d)
-		if (!isa(lc, Void))
+		if (!isempty(lc))
 			cmd = cmd * "," * lc
 			ls = parse_pen_style(d)
-			if (!isa(ls, Void))		cmd = cmd * "," * ls	end
+			if (!isempty(ls))		cmd = cmd * "," * ls	end
 		end
 		maybe_more = false		# and because we can use this only once, deactivate it
 	end
@@ -256,7 +258,7 @@ function pscoast(cmd0::String=""; Vd=false, portrait=true, output=[], clip=[], K
 		end
 	end
 
-	cmd = finish_PS(cmd0, cmd, fname, output, portrait, K, O)
+	cmd = finish_PS(cmd0, cmd, output, portrait, K, O)
 
 	Vd && println(@sprintf("\tpscoast %s", cmd))
 	return gmt("pscoast " * cmd)

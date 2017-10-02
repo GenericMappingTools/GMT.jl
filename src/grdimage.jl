@@ -74,8 +74,8 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 		Draw shorelines [Default is no shorelines]. Append pen attributes.
 """
 # ---------------------------------------------------------------------------------------------------
-function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; Vd=false, data=[], portrait=true, 
-                                                              output=[], K=false, O=false, kwargs...)
+function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; V=false, data=[], portrait=true, 
+                                   output="", K=false, O=false, ps=false, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("grdimage " * cmd0)
@@ -85,17 +85,16 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; Vd=false, data=[],
 		error("When 'data' is a tuple, it MUST contain a GMTgrid data type")
 	end
 
-	if (isempty(output))          fname = "lixo.ps"
-	elseif (isa(output, String))  fname = output
-	else error("Output name must be a String")
+	if (!isa(output, String))
+		error("Output name must be a String")
 	end
 
 	d = KW(kwargs)
 	cmd = ""
 	maybe_more = false			# If latter set to true, search for lc & lc pen settings
-	cmd = parse_R(cmd, d)
-	cmd = parse_J(cmd, d)
-	cmd = parse_B(cmd, d)
+	cmd, opt_R = parse_R(cmd, d)
+	cmd, opt_J = parse_J(cmd, d)
+	cmd, opt_B = parse_B(cmd, d)
 	cmd = parse_U(cmd, d)
 	cmd = parse_V(cmd, d)
 	cmd = parse_X(cmd, d)
@@ -183,14 +182,13 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; Vd=false, data=[],
 		end
 	end
 
-	cmd = finish_PS(cmd0, cmd, fname, output, portrait, K, O)
+	cmd = finish_PS(cmd0, cmd, output, portrait, K, O)
 
 	Vd && println(@sprintf("\tgrdimage %s", cmd))
 
 	if (!isempty(arg1) && isempty(arg2))
 		return gmt("grdimage " * cmd, arg1)                 # A numeric input
 	elseif (!isempty(arg1) && !isempty(arg3))
-@show(arg1,arg2,arg3)
 		return gmt("grdimage " * cmd, arg1, arg2, arg3)     # The three R, G, B grids case
 	else
 		return gmt("grdimage " * cmd)                       # Ploting from file

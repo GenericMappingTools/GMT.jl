@@ -15,6 +15,7 @@ function parse_R(cmd::String, d::Dict, force=false)
 		end
 	end
 	cmd = cmd * opt_R
+	return cmd, opt_R
 end
 
 function build_opt_R(Val)
@@ -60,6 +61,7 @@ function parse_J(cmd::String, d::Dict, force=false)
 		end
 	end
 	cmd = cmd * opt_J
+	return cmd, opt_J
 end
 
 function build_opt_J(Val)
@@ -71,21 +73,40 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict)
-	for symb in [:B :frame]
-		if (haskey(d, symb))
-			opt_B = build_opt_B(d[symb])
-			if (!isempty(opt_B))  cmd = cmd * opt_B  end
+	opt_B = ""
+	for sym in [:B :frame :axes]
+		if (haskey(d, sym) && isa(d[sym], String))
+			opt_B = d[sym]
 			break
 		end
 	end
-	return cmd
-end
 
-function build_opt_B(Val)
-    if (isa(Val, String))
-		return " -B" * Val
+	tok = Vector{String}(10)
+	k = 1
+	r = opt_B
+	while (!isempty(r))
+		tok[k],r = GMT.strtok(r)
+		if (ismatch(r"[WESNwesntlbu+g+o]", tok[k]) && searchindex(tok[k], "+t") == 0)		# If title here, forget about :title
+			if (haskey(d, :title) && isa(d[:title], String))
+				tok[k] = tok[k] * "+t\"" * d[:title] * "\""
+			end
+		elseif (ismatch(r"[afgpsxyz+S+u]", tok[k]) && !ismatch(r"[+l+L]", tok[k]))		# If label here, forget about :x|y_label
+    		if (haskey(d, :x_label) && isa(d[:x_label], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:x_label] * "\""  end
+    		if (haskey(d, :y_label) && isa(d[:y_label], String))  tok[k] = tok[k] * " -By+l\"" * d[:y_label] * "\""  end
+		end
+		if (searchindex(tok[k], "-B") == 0)  tok[k] = " -B" * tok[k]
+		else                                 tok[k] = " " * tok[k]
+		end
+		k = k + 1
 	end
-    return ""
+	# Rebuild the B option string
+	opt_B = ""
+	for n = 1:k-1
+		opt_B = opt_B * tok[n]
+	end
+
+	if (!isempty(opt_B))  cmd = cmd * opt_B  end
+	return cmd, opt_B
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -150,13 +171,15 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_bi(cmd::String, d::Dict)
 	# Parse the global -bi option. Return CMD same as input if no -bi option in args
+	opt_bi = ""
 	for symb in [:bi :binary_in]
 		if (haskey(d, symb))
-			cmd = cmd * " -bi" * arg2str(d[symb])
+			opt_bi = " -bi" * arg2str(d[symb])
+			cmd = cmd * opt_bi
 			break
 		end
 	end
-	return cmd
+	return cmd, opt_bi
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -174,13 +197,15 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_di(cmd::String, d::Dict)
 	# Parse the global -di option. Return CMD same as input if no -di option in args
+	opt_di = ""
 	for symb in [:di :nodata_in]
 		if (haskey(d, symb) && isa(d[symb], Number))
-			cmd = cmd * " -di" * arg2str(d[symb])
+			opt_di = " -di" * arg2str(d[symb])
+			cmd = cmd * opt_di
 			break
 		end
 	end
-	return cmd
+	return cmd, opt_di
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -234,13 +259,15 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_i(cmd::String, d::Dict)
 	# Parse the global -i option. Return CMD same as input if no -i option in args
+	opt_i = ""
 	for symb in [:i :input_col]
 		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -i" * d[symb]
+			opt_i = " -i" * d[symb]
+			cmd = cmd * opt_i
 			break
 		end
 	end
-	return cmd
+	return cmd, opt_i
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -315,67 +342,63 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_pen_width(d::Dict)
 	# Search for a "lw" or "linewidth" specification
-	if (haskey(d, :lw))
-		if (isa(d[:lw], Number))      return @sprintf("%f", d[:lw])
-		elseif (isa(d[:lw], String))  return d[:lw]
-		else error("Nonsense in line width argument")
-		end
-	elseif (haskey(d, :linewidh))
-		if (isa(d[:linewidth], Number))      return @sprintf("%f", d[:linewidth])
-		elseif (isa(d[:linewidth], String))  return d[:linewidth]
-		else error("Nonsense in line width argument")
+	pw = ""
+	for sym in [:lw :linewidth :LineWidth]
+		if (haskey(d, sym))
+			if (isa(d[sym], Number))      pw = @sprintf("%.6g", d[sym])
+			elseif (isa(d[sym], String))  pw = d[sym]
+			else error("Nonsense in line width argument")
+			end
+			break
 		end
 	end
-	return nothing
+	return pw
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_pen_color(d::Dict)
 	# Search for a "lc" or "linecolor" specification
-	if (haskey(d, :lc))
-		if (isa(d[:lc], String))      return d[:lc]
-		elseif (isa(d[:lc], Number))  return @sprintf("%d", d[:lc])
-		else error("Nonsense in line color argument")
-		end
-	elseif (haskey(d, :linecolor))
-		if (isa(d[:linecolor], String))      return d[:linecolor]
-		elseif (isa(d[:linecolor], Number))  return @sprintf("%d", d[:linecolor])
-		else error("Nonsense in line color argument")
+	pc = ""
+	for sym in [:lc :linecolor :LineColor]
+		if (haskey(d, sym))
+			if (isa(d[sym], String))      pc = d[sym]
+			elseif (isa(d[sym], Number))  pc = @sprintf("%d", d[sym])
+			else error("Nonsense in line color argument")
+			end
+			break
 		end
 	end
-	return nothing
+	return pc
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_pen_style(d::Dict)
 	# Search for a "ls" or "linestyle" specification
-	if (haskey(d, :ls))
-		if (isa(d[:ls], String))  return d[:ls]
-		else error("Nonsense in line style argument")
-		end
-	elseif (haskey(d, :linestyle))
-		if (isa(d[:linestyle], String))  return d[:linestyle]
-		else error("Nonsense in line style argument")
+	ps = ""
+	for sym in [:ls :linestyle :LineStyle]
+		if (haskey(d, sym))
+			if (isa(d[sym], String))      ps = d[sym]
+			elseif (isa(d[sym], Number))  ps = @sprintf("%d", d[sym])
+			else error("Nonsense in line color argument")
+			end
+			break
 		end
 	end
-	return nothing
+	return ps
 end
 
 # ---------------------------------------------------------------------------------------------------
 function build_pen(d::Dict)
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
-	s = parse_pen_width(d)
-	if (isa(s, Void))  return "" end
-	pen = s
-	s = parse_pen_color(d)
-	if (isa(s, Void))  return pen end
-	pen = pen * "," * s
-	s = parse_pen_style(d)
-	if (!isa(s, Void))
-		pen = pen * "," * s
+	lw = parse_pen_width(d)
+	lc = parse_pen_color(d)
+	ls = parse_pen_style(d)
+	if (!isempty(lw) || !isempty(lc) || !isempty(ls))
+		return lw * "," * lc * "," * ls
+	else
+		return ""
 	end
-	return pen
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -409,20 +432,33 @@ function arg2str(arg)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS(cmd0::String, cmd::String, fname::String, output::String, P::Bool, K::Bool, O::Bool)
+function finish_PS(cmd0::String, cmd::String, output::String, P::Bool, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
 	if (P) cmd = cmd * " -P" end
 
-	cmd = cmd * cmd0		# Append any other eventual args not send in via kwargs
+	if (!isempty(cmd0))
+		cmd = cmd * " " * cmd0		# Append any other eventual args not send in via kwargs
+	end
 	
 	# Cannot mix -O,-K and output redirect between positional and kwarg arguments
 	if (isempty(search(cmd0, "-K")) && isempty(search(cmd0, "-O")) && isempty(search(cmd0, ">")))
 		# So the -O -K dance is provided via kwargs
-		if (K && !O)              cmd = cmd * " -K > " * fname
-		elseif (K && O)           cmd = cmd * " -K -O >> " * fname
-		elseif (!K && O)          cmd = cmd * " -O >> " * fname
-		elseif (!isempty(output)) cmd = cmd * " > " * fname
-		# else no redirection to a file and the PS will be stored in GMT internal memory
+		if (K && !O)              opt = " -K"
+		elseif (K && O)           opt = " -K -O"
+		elseif (!K && O)          opt = " -O"
+		else                      opt = ""
+		end
+
+		if (!isempty(output))
+			if (K && !O)          cmd = cmd * opt * " > " * output
+			elseif (!K && !O)     cmd = cmd * opt * " > " * output
+			elseif (O)            cmd = cmd * opt * " >> " * output
+			end
+		else
+			if (K && !O)          cmd = cmd * opt
+			elseif (!K && !O)     cmd = cmd * opt
+			elseif (O)            cmd = cmd * opt
+			end
 		end
 	end
 	return cmd
