@@ -75,7 +75,7 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 """
 # ---------------------------------------------------------------------------------------------------
 function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; V=false, data=[], portrait=true, 
-                                   output="", K=false, O=false, ps=false, kwargs...)
+                                   fmt="", K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("grdimage " * cmd0)
@@ -85,8 +85,11 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; V=false, data=[], 
 		error("When 'data' is a tuple, it MUST contain a GMTgrid data type")
 	end
 
+	output = fmt
 	if (!isa(output, String))
-		error("Output name must be a String")
+		error("Output format or name must be a String")
+	else
+		output, opt_T, fname_ext = fname_out(output)		# OUTPUT may have been an extension only
 	end
 
 	d = KW(kwargs)
@@ -103,6 +106,10 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; V=false, data=[], 
 	cmd = parse_n(cmd, d)
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
+
+	if (first)  K = true;	O = false
+	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
+	end
 
 	for symb in [:A :img_out :image_out]
 		if (haskey(d, symb) && isa(d[symb], String))
@@ -184,13 +191,30 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; V=false, data=[], 
 
 	cmd = finish_PS(cmd0, cmd, output, portrait, K, O)
 
-	Vd && println(@sprintf("\tgrdimage %s", cmd))
-
-	if (!isempty(arg1) && isempty(arg2))
-		return gmt("grdimage " * cmd, arg1)                 # A numeric input
-	elseif (!isempty(arg1) && !isempty(arg3))
-		return gmt("grdimage " * cmd, arg1, arg2, arg3)     # The three R, G, B grids case
-	else
-		return gmt("grdimage " * cmd)                       # Ploting from file
+	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
+	else                PS = false
 	end
+
+	V && println(@sprintf("\tgrdimage %s", cmd))
+
+	P = nothing
+	if (!isempty(arg1) && isempty(arg2))
+		if (PS) P = gmt("grdimage " * cmd, arg1)                 # A numeric input
+		else        gmt("grdimage " * cmd, arg1)
+		end
+	elseif (!isempty(arg1) && !isempty(arg3))
+		if (PS) P = gmt("grdimage " * cmd, arg1, arg2, arg3)     # The three R, G, B grids case
+		else        gmt("grdimage " * cmd, arg1, arg2, arg3)
+		end
+	else
+		if (PS) P = gmt("grdimage " * cmd)                       # Ploting from file
+		else        gmt("grdimage " * cmd)
+		end
+	end
+	if (haskey(d, :show)) 										# Display Fig in default viewer
+		showfig(output, fname_ext, opt_T, K)
+	elseif (haskey(d, :savefig))
+		showfig(output, fname_ext, opt_T, K, d[:savefig])
+	end
+	return P
 end

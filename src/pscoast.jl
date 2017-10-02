@@ -87,15 +87,18 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
         Draw shorelines [Default is no shorelines]. Append pen attributes.
 """
 # ---------------------------------------------------------------------------------------------------
-function pscoast(cmd0::String=""; Vd=false, portrait=true, output="", clip=[], K=false, O=false, 
-                 ps=false, kwargs...)
+function pscoast(cmd0::String=""; V=false, portrait=true, fmt="", clip=[], K=false, O=false, first=true, 
+                 kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("pscoast " * cmd0)
 	end
 
+	output = fmt
 	if (!isa(output, String))
-		error("Output name must be a String")
+		error("Output format or name must be a String")
+	else
+		output, opt_T, fname_ext = fname_out(output)		# OUTPUT may have been an extension only
 	end
 
 	d = KW(kwargs)
@@ -111,6 +114,10 @@ function pscoast(cmd0::String=""; Vd=false, portrait=true, output="", clip=[], K
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
 	cmd = parse_bo(cmd, d)
+
+	if (first)  K = true;	O = false
+	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
+	end
 
 	if (!isempty(clip))
 		if (clip == "land")       cmd = cmd * " -Gc"
@@ -260,6 +267,20 @@ function pscoast(cmd0::String=""; Vd=false, portrait=true, output="", clip=[], K
 
 	cmd = finish_PS(cmd0, cmd, output, portrait, K, O)
 
-	Vd && println(@sprintf("\tpscoast %s", cmd))
-	return gmt("pscoast " * cmd)
+	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
+	else                PS = false
+	end
+
+	V && println(@sprintf("\tpscoast %s", cmd))
+
+	P = nothing
+	if (PS) P = gmt("pscoast " * cmd)
+	else        gmt("pscoast " * cmd)
+	end
+	if (haskey(d, :show)) 					# Display Fig in default viewer
+		showfig(output, fname_ext, opt_T, K)
+	elseif (haskey(d, :savefig))
+		showfig(output, fname_ext, opt_T, K, d[:savefig])
+	end
+	return P
 end

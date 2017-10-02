@@ -40,14 +40,12 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
     - t = transparency
 """
 # ---------------------------------------------------------------------------------------------------
-function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=true, output="",
-              K=false, O=false,  ps=false, kwargs...)
+function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=true, fmt="",
+              K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0 && isempty(arg1) && isempty(data))			# Good, the speedy mode
-		if (isempty(arg1))
-			return gmt("psxy " * cmd0)
-		else
-			return gmt("psxy " * cmd0, arg1)
+		if (isempty(arg1))  return gmt("psxy " * cmd0)
+		else                return gmt("psxy " * cmd0, arg1)
 		end
 	end
 
@@ -56,15 +54,26 @@ function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=tr
 			  a data array via keyword args were provided. Ignoring former argument")
 	end
 
+	output = fmt
 	if (!isa(output, String))
-		error("Output name must be a String")
+		error("Output format or name must be a String")
+	else
+		output, opt_T, fname_ext = fname_out(output)		# OUTPUT may have been an extension only
 	end
 
     d = KW(kwargs)
 	cmd = ""
-	cmd, opt_R = parse_R(cmd, d)
-	cmd, opt_J = parse_J(cmd, d)
-	cmd, opt_B = parse_B(cmd, d)
+	cmd, opt_R = parse_R(cmd, d, O)
+	cmd, opt_J = parse_J(cmd, d, O)
+	if (!O && isempty(opt_J))					# If we have no -J use this default
+		opt_J = " -JX12c/8c"
+		cmd = cmd * opt_J
+	end
+	if (!isempty(caller) && searchindex(cmd0,"-B") == 0 && searchindex(opt_J, "-JX") != 0)	# e.g. plot() sets 'caller'
+		cmd, opt_B = parse_B(cmd, d, "-Ba -BWS")
+	else
+		cmd, opt_B = parse_B(cmd, d)
+	end
 	cmd = parse_U(cmd, d)
 	cmd = parse_V(cmd, d)
 	cmd = parse_X(cmd, d)
@@ -80,6 +89,10 @@ function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=tr
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
 	cmd = parse_swapxy(cmd, d)
+
+	if (first)  K = true;	O = false
+	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
+	end
 
 	# Read in the 'data' and compute a tight -R if this was not provided 
 	if (isa(data, String))
@@ -103,9 +116,6 @@ function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=tr
 		opt_R = @sprintf(" -R%.8g/%.8g/%.8g/%.8g", info[1].data[1], info[1].data[2], info[1].data[3], info[1].data[4])
 		cmd = cmd * opt_R
 	end
-
-	# If we have no -J use this default
-	if (isempty(opt_J))  cmd = cmd * " -JX12c/8c"  end
 
 	for sym in [:A :straight_lines]
 		if (haskey(d, sym))
@@ -248,10 +258,6 @@ function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=tr
 		if (!isempty(marca))  opt_S = " -S" * marca  end
 	end
 
-	if (!isempty(caller) && isempty(opt_B) && searchindex(cmd0,"-B") != 0 && searchindex(cmd, "-JX") != 0)		# 'caller' isn't empty when called from 'plot'
-		cmd = cmd * " -Ba -BWS"
-	end
-
 	if (!isempty(opt_W) && isempty(opt_S)) 			# We have a line/polygon request
 		cmd = [finish_PS(cmd0, cmd * opt_W, output, portrait, K, O)]
 	elseif (isempty(opt_W) && !isempty(opt_S))		# We have a symbol request
@@ -271,18 +277,27 @@ function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=tr
 		cmd = [finish_PS(cmd0, cmd, output, portrait, K, O)]
 	end
 
+	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
+	else                PS = false
+	end
+
 	P = nothing
 	for k = 1:length(cmd)
 		V && println(@sprintf("\tpsxy %s", cmd[k]))
 		if (!isempty(arg1))					# A numeric input
-			if (ps) P = gmt("psxy " * cmd[k], arg1)
+			if (PS) P = gmt("psxy " * cmd[k], arg1)
 			else        gmt("psxy " * cmd[k], arg1)
 			end
 		else								# Ploting from file
-			if (ps) P = gmt("psxy " * cmd[k])
+			if (PS) P = gmt("psxy " * cmd[k])
 			else        gmt("psxy " * cmd[k])
 			end
 		end
+	end
+	if (haskey(d, :show)) 					# Display Fig in default viewer
+		showfig(output, fname_ext, opt_T, K)
+	elseif (haskey(d, :savefig))
+		showfig(output, fname_ext, opt_T, K, d[:savefig])
 	end
 	return P
 end
@@ -304,3 +319,9 @@ psxy(arg1=[], cmd0::String=""; V=false, data=[], portrait=true, output=[], K=fal
 WARNING: Method definition psxy() in module GMT at c:\j\.julia\v0.6\GMT\src\psxy.jl:45 overwritten at c:\j\.julia\v0.6\GMT\src\psxy.jl:252.
 WARNING: Method definition #psxy(Array{Any, 1}, typeof(GMT.psxy)) in module GMT overwritten.
 =#
+
+# ---------------------------------------------------------------------------------------------------
+psxy!(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=true, fmt="",
+      K=false, O=false,  first=false, kwargs...) =
+	psxy(cmd0, arg1; V=V, caller=caller, data=data, portrait=portrait, fmt=fmt,
+	     K=true, O=true,  first=first, kwargs...)

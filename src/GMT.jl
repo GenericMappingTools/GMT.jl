@@ -43,7 +43,7 @@ export
 	gmt_core_module_info,
 	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
-	pscoast, psxy, grdimage, plot,
+	pscoast, psxy, psxy!, grdimage, plot, plot!,
 	NULL
 
 include("libgmt_h.jl")

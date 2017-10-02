@@ -2,18 +2,16 @@
 
 const KW = Dict{Symbol,Any}
 
-function parse_R(cmd::String, d::Dict, force=false)
-    if (haskey(d, :R))
-        opt_R = build_opt_R(d[:R])
-    elseif (haskey(d, :region))
-        opt_R = build_opt_R(d[:region])
-    elseif (haskey(d, :limits))
-        opt_R = build_opt_R(d[:limits])
-    else
-		if (force) opt_R = " -R"
-		else       opt_R = ""
+function parse_R(cmd::String, d::Dict, O=false)
+	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
+	opt_R = ""
+	for sym in [:R :region :limits]
+		if (haskey(d, sym))
+        	opt_R = build_opt_R(d[sym])
+			break
 		end
 	end
+	if (O && isempty(opt_R))  opt_R = " -R"  end
 	cmd = cmd * opt_R
 	return cmd, opt_R
 end
@@ -28,19 +26,19 @@ function build_opt_R(Val)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_J(cmd::String, d::Dict, force=false)
+function parse_J(cmd::String, d::Dict, O=false)
+	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
+	# Default to 14c if no size is provided
+	opt_J = ""
 	for symb in [:J :proj :projection]
     	if (haskey(d, symb))
     	    opt_J = build_opt_J(d[symb])
 			break
-		else
-			if (force) opt_J = " -J"
-			else       opt_J = ""
-			end
 		end
 	end
+	if (O && isempty(opt_J))  opt_J = " -J"  end
 
-	if (!force && !isempty(opt_J))
+	if (!O && !isempty(opt_J))
 		# If only the projection but no size, try to get it from the kwargs.
 		if (haskey(d, :figwidth))
 			if (isa(d[:figwidth], Number))
@@ -56,7 +54,7 @@ function parse_J(cmd::String, d::Dict, force=false)
 			if (isdigit(opt_J[end]))  opt_J = opt_J * "/" * s
 			else                      opt_J = opt_J * s
 			end
-		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isalpha(opt_J[5])))
+		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isalpha(opt_J[5])))	# No size provided
 			opt_J = opt_J * "14c"			# If no size, default to 14 centimeters
 		end
 	end
@@ -72,8 +70,7 @@ function build_opt_J(Val)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_B(cmd::String, d::Dict)
-	opt_B = ""
+function parse_B(cmd::String, d::Dict, opt_B::String="")
 	for sym in [:B :frame :axes]
 		if (haskey(d, sym) && isa(d[sym], String))
 			opt_B = d[sym]
@@ -462,4 +459,39 @@ function finish_PS(cmd0::String, cmd::String, output::String, P::Bool, K::Bool, 
 		end
 	end
 	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function fname_out(out::String)
+	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
+	opt_T = "";		EXT = ""
+	if (length(out) <= 3)
+		template = tempdir() * "GMTjl_tmp.ps"
+		ext = lowercase(out)
+		if (ext == "ps")       out = template
+		elseif (ext == "pdf")  opt_T = " -Tf";	out = template;		EXT = ext
+		elseif (ext == "eps")  opt_T = " -Te";	out = template;		EXT = ext
+		elseif (ext == "png")  opt_T = " -Tg";	out = template;		EXT = ext
+		elseif (ext == "jpg")  opt_T = " -Tj";	out = template;		EXT = ext
+		elseif (ext == "tif")  opt_T = " -Tt";	out = template;		EXT = ext
+		end
+	end
+	return out, opt_T, EXT
+end
+
+# ---------------------------------------------------------------------------------------------------
+function showfig(fname_ps::String, fname_ext::String, opt_T::String, K=false, fname="")
+	# Take a PS file, convert it with psconvert (unless opt_T == "" meaning file is PS)
+	# and display it in default system viewer
+	if (!isempty(opt_T))
+		if (K) gmt("psxy -T -R -J -O >> " * fname_ps)  end			# Close the PS file first
+		gmt("psconvert -A1p " * fname_ps * opt_T)
+		out = fname_ps[1:end-2] * fname_ext
+	else
+		out = fname_ps
+	end
+	if (is_windows()) run(ignorestatus(`explorer $out`))
+	elseif (is_apple()) run(`open $(out)`)
+	elseif (is_linux()) run(`xdg-open $(out)`)
+	end
 end
