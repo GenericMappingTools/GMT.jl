@@ -68,10 +68,16 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 		Select filling or clipping of “wet” areas.
 	U : Str or []
 		Draw GMT time stamp logo on plot.
-	V : bool or Str
+    V : Bool or Str   '[level]'
+        Select verbosity level 
+		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#v
 	W : Str
 		'[level/]pen'
 		Draw shorelines [Default is no shorelines]. Append pen attributes.
+    X : Str    '[a|c|f|r][x-shift[u]]'
+    Y : Str    '[a|c|f|r][y-shift[u]]'
+        Shift plot origin. 
+		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x
 """
 # ---------------------------------------------------------------------------------------------------
 function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; V=false, data=[], portrait=true, 

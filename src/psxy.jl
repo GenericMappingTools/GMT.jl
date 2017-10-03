@@ -45,17 +45,66 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
     ----------
     J : Str
         Select map projection. Defaults to 12x8 cm with linear (non-projected) maps.
-    R : Str or list
-        'xmin/xmax/ymin/ymax[+r][+uunit]'.
+    R : Str or list    'xmin/xmax/ymin/ymax[+r][+uunit]'.
         Specify the region of interest. Set to data minimum BoundinBox if not provided.
     B : Str
         Set map boundary frame and axes attributes.
     C : Str
         Give a CPT or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those colors automatically.
         http://gmt.soest.hawaii.edu/doc/latest/psxy.html#c
+    D : Str
+        Offset the plot symbol or line locations by the given amounts dx/dy.
+    E : Str   '[x|y|X|Y][+a][+cl|f][+n][+wcap][+ppen]'
+        Draw symmetrical error bars.
+        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#e
+    F : Str   '[c|n|r][a|f|s|r|refpoint]'
+        Alter the way points are connected
+        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#f
+    G : Str
+        Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
+        color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
+        'fill' for the polygons and 'markerfacecolor' for filling the symbols. Same applyies for W bellow
+    I : Str or number
+        Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating illumination.
+    L : Str    '[+b|d|D][+xl|r|x0][+yl|r|y0][+ppen]'
+        Force closed polygons. 
+        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#l
+    N : Str or []  '[c|r]'
+        Do NOT clip symbols that fall outside map border 
+    S : Str        '[symbol][size[u]]'
+        Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
+		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s
+		Alternatively select a sub-set of symbols using the aliases: 'marker' or 'Marker' and values: 
+           "-" or "x-dash"
+           "+" or "plus"
+           "a" or "*" or "star"
+           "c" or "circle"
+           "d" or "diamond"
+           "g" or "octagon"
+           "h" or "hexagon"
+           "i" or "v" or "inverted_tri"
+           "n" or "pentagon"
+           "p" or "." or "point"
+           "r" or "rectangle"
+           "s" or "square"
+           "t" or "^" or "triangle"
+           "x" or "cross"
+           "y" or "y-dash"
+    W : Str    '[pen][attr]'
+        Set pen attributes for lines or the outline of symbols
+		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w
+        WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
+        If your plot has polygons and symbols, use 'W' or 'line_attribs' for the polygons and
+        'markeredgecolor' or 'MarkerEdgeColor' for filling the symbols. Similar to S above.
     U : Str or Bool or []
         Draw GMT time stamp logo on plot.
-    V : Bool or Str
+    V : Bool or Str   '[level]'
+        Select verbosity level 
+		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#v
+    X : Str    '[a|c|f|r][x-shift[u]]'
+    Y : Str    '[a|c|f|r][y-shift[u]]'
+        Shift plot origin. 
+		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x
 """
 # ---------------------------------------------------------------------------------------------------
 function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=true, fmt="",
