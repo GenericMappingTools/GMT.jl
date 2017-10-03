@@ -180,7 +180,7 @@ function pscoast(cmd0::String=""; V=false, portrait=true, fmt="", clip=[], K=fal
 
 	for symb in [:D :resolution]
 		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -D" * d[symb][1]
+			cmd = string(cmd, " -D", d[symb][1])
 			break
 		end
 	end
@@ -190,14 +190,14 @@ function pscoast(cmd0::String=""; V=false, portrait=true, fmt="", clip=[], K=fal
 			if (isa(d[sb], String))
 				cmd = cmd * " -E" * d[sb]							# Simple case, ex E="PT,+gblue"
 			elseif (isa(d[sb], Tuple))
-				if (length(d[sb]) == 2 && isa(d[sb][1], String) && isa(d[sb][2], String))		# ex E=("PT","+p0.5")
-					cmd = cmd * " -E" * d[sb][1] * "," * d[sb][2]
-				elseif (length(d[sb]) == 2 && isa(d[sb][1], String) && isa(d[sb][2], Tuple))	# ex E=("PT",(0.5,"red","--"))
-					cmd = cmd * " -E" * d[sb][1] * ",+p" * parse_pen(d[sb][2])
+				if (length(d[sb]) == 2 && isa(d[sb][1], Char) && isa(d[sb][2], Char))			# ex E=("PT","+p0.5")
+					cmd = string(cmd, " -E", d[sb][1], ",", d[sb][2])
+				elseif (length(d[sb]) == 2 && isa(d[sb][1], Char) && isa(d[sb][2], Tuple))		# ex E=("PT",(0.5,"red","--"))
+					cmd = string(cmd, " -E", d[sb][1], ",+p", parse_pen(d[sb][2]))
 				elseif (length(d[sb]) >= 2 && isa(d[sb][1], Tuple) && isa(d[sb][end], Tuple)) 	# ex E=((),(),...,())
 					for k = 1:length(d[sb])
-						if (isa(d[sb][k][2], String))  cmd = cmd * " -E" * d[sb][k][1] * "," * d[sb][k][2]
-						else                           cmd = cmd * " -E" * d[sb][k][1] * ",+p" * parse_pen(d[sb][k][2])
+						if (isa(d[sb][k][2], Char))  cmd = string(cmd, " -E", d[sb][k][1], ",", d[sb][k][2])
+						else                         cmd = string(cmd, " -E", d[sb][k][1], ",+p", parse_pen(d[sb][k][2]))
 						end
 					end
 				end
