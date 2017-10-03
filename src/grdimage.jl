@@ -34,42 +34,42 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 	
 	Parameters
 	----------
-	J : str
+	J : Str
 		Select map projection.
-	R : str or list
+	R : Str or list
 		'xmin/xmax/ymin/ymax[+r][+uunit]'.
 		Specify the region of interest.
-	A : str or number
+	A : Str or number
 		'min_area[/min_level/max_level][+ag|i|s|S][+r|l][+ppercent]'
 		Features with an area smaller than min_area in km^2 or of
 		hierarchical level that is lower than min_level or higher than
 		max_level will not be plotted.
-	B : str
+	B : Str
 		Set map boundary frame and axes attributes.
-	C : str
+	C : Str
 		Set the shade, color, or pattern for lakes and river-lakes.
-	D : str
+	D : Str
 		Selects the resolution of the data set to use ((f)ull, (h)igh,
 		(i)ntermediate, (l)ow, and (c)rude).
-	E : str; Tuple(str, str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
+	E : Str; Tuple(Str, Str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
 		'code1,code2,...[+l|L][+gfill][+ppen]'		
 		Select painting or dumping country polygons from the Digital Chart of the World
-	G : str
+	G : Str
 		Select filling or clipping of “dry” areas.
-	I : str
+	I : Str
 		'river[/pen]'
 		Draw rivers. Specify the type of rivers and [optionally] append pen
 		attributes.
-	N : str
+	N : Str
 		'border[/pen]'
 		Draw political boundaries. Specify the type of boundary and
 		[optionally] append pen attributes
-	S : str
+	S : Str
 		Select filling or clipping of “wet” areas.
-	U : str or []
+	U : Str or []
 		Draw GMT time stamp logo on plot.
-	V : bool or str
-	W : str
+	V : bool or Str
+	W : Str
 		'[level/]pen'
 		Draw shorelines [Default is no shorelines]. Append pen attributes.
 """

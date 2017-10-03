@@ -12,22 +12,24 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
     **Aliases:**
 
     - A = straight_lines
-    - B = frame
+    - B = frame, axes
     - C = color
     - D = offset
     - E = error_bars
     - F = conn, connection
-    - G = fill
+    - G = fill, markerfacecolor, MarkerFaceColor
     - I = intens
     - J = proj, projection
     - L = closed_polygon
     - N = no_clip
     - P = portrait
     - R = region, limits
+    - S = symbol, marker, Marker
+    - U = stamp
     - V = verbose
     - X = x_offset
     - Y = y_offset
-    - W = line_attribs
+    - W = line_attribs, markeredgecolor, MarkerEdgeColor
     - a = aspatial
     - bi = binary_in
     - di = nodata_in
@@ -38,6 +40,22 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
     - i = input_col
     - p = perspective
     - t = transparency
+	
+	Parameters
+    ----------
+    J : Str
+        Select map projection. Defaults to 12x8 cm with linear (non-projected) maps.
+    R : Str or list
+        'xmin/xmax/ymin/ymax[+r][+uunit]'.
+        Specify the region of interest. Set to data minimum BoundinBox if not provided.
+    B : Str
+        Set map boundary frame and axes attributes.
+    C : Str
+        Give a CPT or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those colors automatically.
+        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#c
+    U : Str or Bool or []
+        Draw GMT time stamp logo on plot.
+    V : Bool or Str
 """
 # ---------------------------------------------------------------------------------------------------
 function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=true, fmt="",
