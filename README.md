@@ -1,9 +1,9 @@
 GMT.jl
 ======
 
-[![Build Status](https://travis-ci.org/joa-quim/GMT.jl.svg?branch=master)](https://travis-ci.org/joa-quim/GMT.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/usjewfb5v48m18kh/branch/master?svg=true)](https://ci.appveyor.com/project/joa-quim/gmt-jl-suu4y/branch/master)
-[![codecov.io](http://codecov.io/github/joa-quim/GMT.jl/coverage.svg?branch=master)](http://codecov.io/github/joa-quim/GMT.jl?branch=master)
+[![Build Status](https://travis-ci.org/GenericMappingTools/GMT.jl.svg?branch=master)](https://travis-ci.org/GenericMappingTools/GMT.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/usjewfb5v48m18kh/branch/master?svg=true)](https://ci.appveyor.com/project/GenericMappingTools/gmt-jl-suu4y/branch/master)
+[![codecov.io](http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg?branch=master)](http://codecov.io/github/GenericMappingTools/GMT.jl?branch=master)
 
 [![GMT](http://pkg.julialang.org/badges/GMT_0.5.svg)](http://pkg.julialang.org/?pkg=GMT&ver=0.5)
 [![GMT](http://pkg.julialang.org/badges/GMT_0.6.svg)](http://pkg.julialang.org/?pkg=GMT&ver=0.6)
