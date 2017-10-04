@@ -507,7 +507,7 @@ function showfig(fname_ps::String, fname_ext::String, opt_T::String, K=false, fn
 	# and display it in default system viewer
 	if (!isempty(opt_T))
 		if (K) gmt("psxy -T -R -J -O >> " * fname_ps)  end			# Close the PS file first
-		gmt("psconvert -A1p " * fname_ps * opt_T)
+		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T)
 		out = fname_ps[1:end-2] * fname_ext
 	else
 		out = fname_ps
