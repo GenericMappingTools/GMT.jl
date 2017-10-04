@@ -191,13 +191,6 @@ function psxy(cmd0::String="", arg1=[]; Vd=false, caller=[], data=[], portrait=t
 		cmd = cmd * opt_R
 	end
 
-	for sym in [:A :straight_lines]
-		if (haskey(d, sym))
-			cmd = cmd * " -A" * arg2str(d[sym])
-			break
-		end
-	end
-
 	for sym in [:C :color]
 		if (haskey(d, sym))
 			if (isa(d[sym], GMT.GMTcpt))
@@ -213,33 +206,12 @@ function psxy(cmd0::String="", arg1=[]; Vd=false, caller=[], data=[], portrait=t
 		end
 	end
 
-	for sym in [:D :offset]
-		if (haskey(d, sym))
-			cmd = cmd * " -D" * arg2str(d[sym])
-			break
-		end
-	end
+	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
+	cmd = add_opt(cmd, 'D', d, [:D :offset])
+	cmd = add_opt(cmd, 'E', d, [:E :error_bars])
+	cmd = add_opt(cmd, 'F', d, [:F :conn :connection])
 
-	for sym in [:E :error_bars]
-		if (haskey(d, sym))
-			cmd = cmd * " -E" * arg2str(d[sym])
-			break
-		end
-	end
-
-	for sym in [:F :conn :connection]
-		if (haskey(d, sym))
-			cmd = cmd * " -F" * arg2str(d[sym])
-			break
-		end
-	end
-
-	for sym in [:G :fill]
-		if (haskey(d, sym))
-			cmd = cmd * " -G" * arg2str(d[sym])
-			break
-		end
-	end
+	cmd = add_opt(cmd, 'G', d, [:G :fill])
 	opt_Gsymb = ""			# Filling color for symbols
 	for sym in [:G :markerfacecolor :MarkerFaceColor]
 		if (haskey(d, sym))
@@ -256,26 +228,9 @@ function psxy(cmd0::String="", arg1=[]; Vd=false, caller=[], data=[], portrait=t
 		end
 	end
 
-	for sym in [:I :intens]
-		if (haskey(d, sym))
-			cmd = cmd * " -I" * arg2str(d[sym])
-			break
-		end
-	end
-
-	for sym in [:L :closed_polygon]
-		if (haskey(d, sym))
-			cmd = cmd * " -L" * arg2str(d[sym])
-			break
-		end
-	end
-
-	for sym in [:N :no_clip]
-		if (haskey(d, sym))
-			cmd = cmd * " -N" * arg2str(d[sym])
-			break
-		end
-	end
+	cmd = add_opt(cmd, 'I', d, [:I :intens])
+	cmd = add_opt(cmd, 'L', d, [:L :closed_polygon])
+	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 
 	opt_W = ""
 	pen = build_pen(d)						# Either a full pen string or empty ("")

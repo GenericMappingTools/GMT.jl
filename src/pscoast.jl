@@ -82,7 +82,7 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x
 """
 # ---------------------------------------------------------------------------------------------------
-function pscoast(cmd0::String=""; V=false, portrait=true, fmt="", clip=[], K=false, O=false, first=true, 
+function pscoast(cmd0::String=""; Vd=false, portrait=true, fmt="", clip=[], K=false, O=false, first=true, 
                  kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
@@ -266,7 +266,7 @@ function pscoast(cmd0::String=""; V=false, portrait=true, fmt="", clip=[], K=fal
 	else                PS = false
 	end
 
-	V && println(@sprintf("\tpscoast %s", cmd))
+	Vd && println(@sprintf("\tpscoast %s", cmd))
 
 	P = nothing
 	if (PS) P = gmt("pscoast " * cmd)
