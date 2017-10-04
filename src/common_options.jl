@@ -502,6 +502,16 @@ function fname_out(out::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function show_or_save(d::Dict, output::String, fname_ext::String, opt_T::String, K::Bool)
+	# Display Fig in default viewer or save it to file after converting with psconvert
+	if (haskey(d, :show))
+		showfig(output, fname_ext, opt_T, K)
+	elseif (haskey(d, :savefig))
+		showfig(output, fname_ext, opt_T, K, d[:savefig])
+	end	
+end
+
+# ---------------------------------------------------------------------------------------------------
 function showfig(fname_ps::String, fname_ext::String, opt_T::String, K=false, fname="")
 	# Take a PS file, convert it with psconvert (unless opt_T == "" meaning file is PS)
 	# and display it in default system viewer
