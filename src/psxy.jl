@@ -362,7 +362,7 @@ WARNING: Method definition #psxy(Array{Any, 1}, typeof(GMT.psxy)) in module GMT 
 =#
 
 # ---------------------------------------------------------------------------------------------------
-psxy!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; V=false, caller=[], data=[], portrait=true, fmt="",
-      K=false, O=false,  first=false, kwargs...) =
-	psxy(cmd0, arg1, arg2; V=V, caller=caller, data=data, portrait=portrait, fmt=fmt,
-	     K=true, O=true,  first=first, kwargs...)
+psxy!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; Vd=false, caller=[], data=[], portrait=true, fmt="",
+      K=true, O=true,  first=false, kwargs...) =
+	psxy(cmd0, arg1, arg2; Vd=Vd, caller=caller, data=data, portrait=portrait, fmt=fmt,
+	     K=true, O=true,  first=false, kwargs...)
