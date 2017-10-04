@@ -417,12 +417,10 @@ function arg2str(arg)
 	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
 	if (isa(arg, String))
 		out = arg
-	elseif (isa(arg, Integer))
-		out = @sprintf("%d", arg)
-	elseif (isa(arg, Number))
-		out = @sprintf("%.6g", arg)
 	elseif (isempty(arg) || (isa(arg, Bool) && arg))
 		out = ""
+	elseif (isa(arg, Number))			# Have to do it after the Bool test above because Bool is a Number too
+		out = @sprintf("%.6g", arg)
 	else
 		error("Argument 'arg' can only be a String or a Number")
 	end
@@ -456,6 +454,30 @@ function finish_PS(cmd0::String, cmd::String, output::String, P::Bool, K::Bool, 
 			elseif (!K && !O)     cmd = cmd * opt
 			elseif (O)            cmd = cmd * opt
 			end
+		end
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function add_opt(cmd::String, opt::Char, d::Dict, symbs)
+	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
+	for sym in symbs
+		if (haskey(d, sym))
+			cmd = string(cmd, " -", opt, arg2str(d[sym]))
+			break
+		end
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function add_opt_s(cmd::String, opt::Char, d::Dict, symbs)
+	# Same as add_opt() but where we only accept string arguments
+	for sym in symbs
+		if (haskey(d, sym) && isa(d[sym], String))
+			cmd = string(cmd, " -", opt, d[sym])
+			break
 		end
 	end
 	return cmd
