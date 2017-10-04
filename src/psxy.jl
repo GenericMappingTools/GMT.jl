@@ -43,38 +43,42 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 	
 	Parameters
     ----------
-    J : Str
+    J : proj : projection : -- Str --
         Select map projection. Defaults to 12x8 cm with linear (non-projected) maps.
-    R : Str or list    'xmin/xmax/ymin/ymax[+r][+uunit]'.
+        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#j
+    R : region : limits : -- Str or list --    'xmin/xmax/ymin/ymax[+r][+uunit]'.
         Specify the region of interest. Set to data minimum BoundinBox if not provided.
-    B : Str
+        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#r
+    B : frame : axes : -- Str --  '[p|s]parameters'
         Set map boundary frame and axes attributes.
-    C : Str
+        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#b
+    C : color : -- Str --
         Give a CPT or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those colors automatically.
         http://gmt.soest.hawaii.edu/doc/latest/psxy.html#c
-    D : Str
+    D : offset : -- Str --  'dx/dy'
         Offset the plot symbol or line locations by the given amounts dx/dy.
-    E : Str   '[x|y|X|Y][+a][+cl|f][+n][+wcap][+ppen]'
+    E : error_bars : -- Str --   '[x|y|X|Y][+a][+cl|f][+n][+wcap][+ppen]'
         Draw symmetrical error bars.
         http://gmt.soest.hawaii.edu/doc/latest/psxy.html#e
-    F : Str   '[c|n|r][a|f|s|r|refpoint]'
+    F : conn : connection : -- Str --   '[c|n|r][a|f|s|r|refpoint]'
         Alter the way points are connected
         http://gmt.soest.hawaii.edu/doc/latest/psxy.html#f
-    G : Str
+    G : fill : markerfacecolor : MarkerFaceColor : -- Str --
         Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
         color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
         'fill' for the polygons and 'markerfacecolor' for filling the symbols. Same applyies for W bellow
-    I : Str or number
+        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#g
+    I : intens : -- Str or number --
         Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating illumination.
-    L : Str    '[+b|d|D][+xl|r|x0][+yl|r|y0][+ppen]'
+    L : closed_polygon : -- Str --    '[+b|d|D][+xl|r|x0][+yl|r|y0][+ppen]'
         Force closed polygons. 
         http://gmt.soest.hawaii.edu/doc/latest/psxy.html#l
-    N : Str or []  '[c|r]'
+    N : no_clip : --- Str or [] --   '[c|r]'
         Do NOT clip symbols that fall outside map border 
-    S : Str        '[symbol][size[u]]'
+    S : symbol : marker : Marker : -- Str --  '[symbol][size[u]]'
         Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
-		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s
-		Alternatively select a sub-set of symbols using the aliases: 'marker' or 'Marker' and values: 
+        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s
+        Alternatively select a sub-set of symbols using the aliases: 'marker' or 'Marker' and values: 
            "-" or "x-dash"
            "+" or "plus"
            "a" or "*" or "star"
@@ -90,33 +94,36 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
            "t" or "^" or "triangle"
            "x" or "cross"
            "y" or "y-dash"
-    W : Str    '[pen][attr]'
+    W : line_attribs : markeredgecolor : MarkerEdgeColor : -- Str --  '[pen][attr]'
         Set pen attributes for lines or the outline of symbols
 		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w
         WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
         If your plot has polygons and symbols, use 'W' or 'line_attribs' for the polygons and
         'markeredgecolor' or 'MarkerEdgeColor' for filling the symbols. Similar to S above.
-    U : Str or Bool or []
+    U : stamp : --- Str or Bool or [] --   '[[just]/dx/dy/][c|label]'
         Draw GMT time stamp logo on plot.
-    V : Bool or Str   '[level]'
+    V : verbose : -- Bool or Str --   '[level]'
         Select verbosity level 
 		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#v
-    X : Str    '[a|c|f|r][x-shift[u]]'
-    Y : Str    '[a|c|f|r][y-shift[u]]'
+    X : x_offset : -- Str --   '[a|c|f|r][x-shift[u]]'
+    Y : x_offset : -- Str --   '[a|c|f|r][y-shift[u]]'
         Shift plot origin. 
 		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x
 """
 # ---------------------------------------------------------------------------------------------------
-function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=true, fmt="",
+function psxy(cmd0::String="", arg1=[]; Vd=false, caller=[], data=[], portrait=true, fmt="",
               K=false, O=false, first=true, kwargs...)
 
-	if (length(kwargs) == 0 && isempty(arg1) && isempty(data))			# Good, the speedy mode
-		if (isempty(arg1))  return gmt("psxy " * cmd0)
-		else                return gmt("psxy " * cmd0, arg1)
+	arg2 = []		# May be needed if GMTcpt type is sent in via C
+	N_args = isempty(arg1) ? 0 : 1
+
+	if (length(kwargs) == 0 && N_args == 0 && isempty(data))			# Good, the speedy mode
+		if (N_args == 0)  return gmt("psxy " * cmd0)
+		else              return gmt("psxy " * cmd0, arg1)
 		end
 	end
 
-	if (!isempty(data) && !isempty(arg1))
+	if (!isempty(data) && N_args == 1)
 		warn("Conflicting ways of providing input data. Both a file name via positional and
 			  a data array via keyword args were provided. Ignoring former argument")
 	end
@@ -193,7 +200,15 @@ function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=tr
 
 	for sym in [:C :color]
 		if (haskey(d, sym))
-			cmd = cmd * " -C" * arg2str(d[sym])
+			if (isa(d[sym], GMT.GMTcpt))
+				cmd = cmd * " -C"
+				if     (N_args == 0)  arg1 = d[sym];	N_args += 1
+				elseif (N_args == 1)  arg2 = d[sym];	N_args += 1
+				else   error("Can't send the CPT data via C and input array")
+				end
+			else
+				cmd = cmd * " -C" * arg2str(d[sym])
+			end
 			break
 		end
 	end
@@ -350,14 +365,18 @@ function psxy(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=tr
 
 	P = nothing
 	for k = 1:length(cmd)
-		V && println(@sprintf("\tpsxy %s", cmd[k]))
-		if (!isempty(arg1))					# A numeric input
+		Vd && println(@sprintf("\tpsxy %s", cmd[k]))
+		if (N_args == 0)					# Simple case
+			if (PS) P = gmt("psxy " * cmd[k])
+			else        gmt("psxy " * cmd[k])
+			end
+		elseif (N_args == 1)				# One numeric input
 			if (PS) P = gmt("psxy " * cmd[k], arg1)
 			else        gmt("psxy " * cmd[k], arg1)
 			end
-		else								# Ploting from file
-			if (PS) P = gmt("psxy " * cmd[k])
-			else        gmt("psxy " * cmd[k])
+		else								# Two numeric inputs (data + CPT)
+			if (PS) P = gmt("psxy " * cmd[k], arg1, arg2)
+			else        gmt("psxy " * cmd[k], arg1, arg2)
 			end
 		end
 	end
@@ -388,7 +407,7 @@ WARNING: Method definition #psxy(Array{Any, 1}, typeof(GMT.psxy)) in module GMT 
 =#
 
 # ---------------------------------------------------------------------------------------------------
-psxy!(cmd0::String="", arg1=[]; V=false, caller=[], data=[], portrait=true, fmt="",
+psxy!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; V=false, caller=[], data=[], portrait=true, fmt="",
       K=false, O=false,  first=false, kwargs...) =
-	psxy(cmd0, arg1; V=V, caller=caller, data=data, portrait=portrait, fmt=fmt,
+	psxy(cmd0, arg1, arg2; V=V, caller=caller, data=data, portrait=portrait, fmt=fmt,
 	     K=true, O=true,  first=first, kwargs...)
