@@ -43,7 +43,8 @@ export
 	gmt_core_module_info,
 	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
-	pscoast, psxy, psxy!, grdimage, plot, plot!, makecpt,
+	pscoast, psxy, psxy!, grdcontour, grdcontour!, grdimage, grdimage!, grdview, grdview!,
+	plot, plot!, makecpt, psscale, psscale!,
 	NULL
 
 include("libgmt_h.jl")
@@ -51,9 +52,12 @@ include("libgmt.jl")
 include("gmt_main.jl")
 include("common_options.jl")
 include("pscoast.jl")
+include("psscale.jl")
 include("psxy.jl")
 include("plot.jl")
+include("grdcontour.jl")
 include("grdimage.jl")
+include("grdview.jl")
 include("makecpt.jl")
 
 end # module

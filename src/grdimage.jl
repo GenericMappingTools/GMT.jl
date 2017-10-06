@@ -80,14 +80,14 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x
 """
 # ---------------------------------------------------------------------------------------------------
-function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; V=false, data=[], portrait=true, 
+function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; Vd=false, data=[], portrait=true, 
                                    fmt="", K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("grdimage " * cmd0)
 	end
 
-	if (!isempty(data) && isa(data, Tuple) && !isa(data[1], GMTgrid))
+	if (!isempty_(data) && isa(data, Tuple) && !isa(data[1], GMTgrid))
 		error("When 'data' is a tuple, it MUST contain a GMTgrid data type")
 	end
 
@@ -117,71 +117,16 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; V=false, data=[], 
 	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
 	end
 
-	for symb in [:A :img_out :image_out]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -A" * d[symb]
-			break
-		end
-	end
+	cmd = add_opt_s(cmd, 'A', d, [:A :img_out :image_out])
+	cmd = add_opt(cmd, 'D', d, [:D :img_in :image_in])
+	cmd = add_opt(cmd, 'E', d, [:E :dpi])
+	cmd = add_opt(cmd, 'G', d, [:G])
+	cmd = add_opt(cmd, 'M', d, [:M :monochrome])
+	cmd = add_opt(cmd, 'N', d, [:M :noclip])
+	cmd = add_opt(cmd, 'Q', d, [:Q :nan_t :nan_alpha])
 
-	for symb in [:C :color]
-		if (haskey(d, symb))
-			cmd = cmd * " -C" * arg2str(d[symb])
-			break
-		end
-	end
-
-	for symb in [:D :img_in :image_in]
-		if (haskey(d, symb))
-			cmd = cmd * " -D" * arg2str(d[symb])
-			break
-		end
-	end
-
-	for symb in [:E :dpi :DPI]
-		if (haskey(d, symb))
-			cmd = cmd * " -E" * arg2str(d[symb])
-			break
-		end
-	end
-
-	for symb in [:G]
-		if (haskey(d, symb))
-			cmd = cmd * " -G" * arg2str(d[symb])
-			break
-		end
-	end
-
-	for symb in [:I :shade :intensity :intensfile]
-		if (haskey(d, symb))
-			cmd = cmd * " -I" * arg2str(d[symb])
-			break
-		end
-	end
-
-	for symb in [:M :monocrome]
-		if (haskey(d, symb))
-			cmd = cmd * " -M" * arg2str(d[symb])
-			break
-		end
-	end
-
-	for symb in [:N :noclip]
-		if (haskey(d, symb))
-			cmd = cmd * " -N" * arg2str(d[symb])
-			break
-		end
-	end
-
-	for symb in [:Q :nan_t :nan_transparent]
-		if (haskey(d, symb))
-			cmd = cmd * " -Q" * arg2str(d[symb])
-			break
-		end
-	end
-
-	if (!isempty(data))
-		if (!isempty(arg1))
+	if (!isempty_(data))
+		if (!isempty_(arg1))
 			warn("Conflicting ways of providing input data. Both a file name via positional and
 				  a data array via kwyword args were provided. Ignoring later argument")
 		else
@@ -195,32 +140,67 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; V=false, data=[], 
 		end
 	end
 
+	for sym in [:C :cpt :cmap]
+		if (haskey(d, sym))
+			if (!isa(d[sym], GMTcpt))					# Uff, simple. Either a file name or a -A type modifier
+				cmd = cmd * " -C" * arg2str(d[sym])
+			else
+				cmd, N_cpt = put_in_slot(cmd, d[sym], 'C', (arg1, arg2, arg3, arg4))
+				if (N_cpt == 1)     arg1 = [d[sym]]
+				elseif (N_cpt == 2) arg2 = [d[sym]]
+				elseif (N_cpt == 3) arg3 = [d[sym]]
+				elseif (N_cpt == 4) arg4 = [d[sym]]
+				end
+			end
+			break
+		end
+	end
+
+	for sym in [:I :shade :intensity :intensfile]
+		if (haskey(d, sym))
+			if (!isa(d[sym], GMTgrid))                  # Uff, simple. Either a file name or a -A type modifier
+				cmd = cmd * " -I" * arg2str(d[sym])
+			else
+				cmd,N_shade = put_in_slot(cmd, d[sym], 'I', (arg1, arg2, arg3))
+				if (N_shade == 1)     arg1 = [d[sym]]
+				elseif (N_shade == 2) arg2 = [d[sym]]
+				elseif (N_shade == 3) arg3 = [d[sym]]
+				end
+			end
+			break
+		end
+	end
+
 	cmd = finish_PS(cmd0, cmd, output, portrait, K, O)
 
 	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
 	else                PS = false
 	end
 
-	V && println(@sprintf("\tgrdimage %s", cmd))
+	Vd && println(@sprintf("\tgrdimage %s", cmd))
 
 	P = nothing
-	if (!isempty(arg1) && isempty(arg2))
-		if (PS) P = gmt("grdimage " * cmd, arg1)                 # A numeric input
-		else        gmt("grdimage " * cmd, arg1)
-		end
-	elseif (!isempty(arg1) && !isempty(arg3))
-		if (PS) P = gmt("grdimage " * cmd, arg1, arg2, arg3)     # The three R, G, B grids case
-		else        gmt("grdimage " * cmd, arg1, arg2, arg3)
+	if (PS)
+		if (!isempty_(arg4))      P = gmt("grdimage " * cmd, arg1[1], arg2[1], arg3[1], arg4[1])
+		elseif (!isempty_(arg3))  P = gmt("grdimage " * cmd, arg1[1], arg2[1], arg3[1])
+		elseif (!isempty_(arg2))  P = gmt("grdimage " * cmd, arg1[1], arg2[1])
+		elseif (!isempty_(arg1))  P = gmt("grdimage " * cmd, arg1[1])
+		else                     P = gmt("grdimage " * cmd)
 		end
 	else
-		if (PS) P = gmt("grdimage " * cmd)                       # Ploting from file
-		else        gmt("grdimage " * cmd)
+		if (!isempty_(arg4))      gmt("grdimage " * cmd, arg1[1], arg2[1], arg3[1], arg4[1])
+		elseif (!isempty_(arg3))  gmt("grdimage " * cmd, arg1[1], arg2[1], arg3[1])
+		elseif (!isempty_(arg2))  gmt("grdimage " * cmd, arg1[1], arg2[1])
+		elseif (!isempty_(arg1))  gmt("grdimage " * cmd, arg1[1])
+		else                     gmt("grdimage " * cmd)
 		end
 	end
-	if (haskey(d, :show)) 										# Display Fig in default viewer
-		showfig(output, fname_ext, opt_T, K)
-	elseif (haskey(d, :savefig))
-		showfig(output, fname_ext, opt_T, K, d[:savefig])
-	end
+	show_or_save(d, output, fname_ext, opt_T, K)    # Display Fig in default viewer or save it to file
 	return P
 end
+
+# ---------------------------------------------------------------------------------------------------
+grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; Vd=false, data=[], portrait=true,
+          fmt="", K=true, O=true, first=false, kw...) =
+	grdimage(cmd0, arg1, arg2, arg3, arg4; Vd=Vd, data=data, portrait=portrait,
+	         fmt=fmt, K=true, O=true, first=false, kw...) 

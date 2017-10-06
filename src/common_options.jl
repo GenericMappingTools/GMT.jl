@@ -26,6 +26,21 @@ function build_opt_R(Val)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_JZ(cmd::String, d::Dict)
+	for sym in [:JZ :Jz]
+		if (haskey(d, sym))
+			if (sym == :JZ)
+				cmd = cmd * " -JZ" * arg2str(d[sym])
+			else
+				cmd = cmd * " -Jz" * arg2str(d[sym])
+			end
+			break
+		end
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_J(cmd::String, d::Dict, O=false)
 	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
 	# Default to 14c if no size is provided
@@ -65,6 +80,8 @@ end
 function build_opt_J(Val)
     if (isa(Val, String))
 		return " -J" * Val
+	elseif (isempty(Val))
+		return " -J"
 	end
     return ""
 end
@@ -526,4 +543,14 @@ function showfig(fname_ps::String, fname_ext::String, opt_T::String, K=false, fn
 	elseif (is_apple()) run(`open $(out)`)
 	elseif (is_linux()) run(`xdg-open $(out)`)
 	end
+end
+
+# ---------------------------------------------------------------------------------------------------
+function isempty_(arg)
+	# F... F... it's a shame having to do this
+	empty = false
+	try
+		empty = isempty(arg)
+	end
+	return empty
 end

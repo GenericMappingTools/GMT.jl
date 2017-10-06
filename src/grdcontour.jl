@@ -8,7 +8,7 @@ function grdcontour(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, 
 		return gmt("grdcontour " * cmd0)
 	end
 
-	if (!isempty(data) && !isempty(arg1))
+	if (!isempty_(data) && !isempty_(arg1))
 		warn("Conflicting ways of providing input data. Both a file name via positional and
 			  a data array via keyword args were provided. Ignoring former argument")
 	end
@@ -41,8 +41,8 @@ function grdcontour(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, 
 	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
 	end
 
-	cmd = add_opt(cmd, 'A', d, [:A :annot_int])
-	cmd = add_opt(cmd, 'C', d, [:C :cont_int])
+	cmd = add_opt(cmd, 'A', d, [:A :annot])
+	cmd = add_opt(cmd, 'C', d, [:C :cont :contour])
 	cmd = add_opt(cmd, 'D', d, [:D :dump])
 	cmd = add_opt(cmd, 'F', d, [:F :force])
 	cmd = add_opt(cmd, 'G', d, [:G :labels])
@@ -53,8 +53,8 @@ function grdcontour(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, 
 	cmd = add_opt(cmd, 'W', d, [:W :pen])
 	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
 
-	if (!isempty(data))
-		if (!isempty(arg1))
+	if (!isempty_(data))
+		if (!isempty_(arg1))
 			warn("Conflicting ways of providing input data. Both a file name via positional and
 				  a data array via kwyword args were provided. Ignoring later argument")
 		else
@@ -75,7 +75,7 @@ function grdcontour(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, 
 	Vd && println(@sprintf("\tgrdcontour %s", cmd))
 
 	P = nothing
-	if (!isempty(arg1))
+	if (!isempty_(arg1))
 		if (PS) P = gmt("grdcontour " * cmd, arg1)                 # A numeric input
 		else        gmt("grdcontour " * cmd, arg1)
 		end

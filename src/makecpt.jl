@@ -21,7 +21,6 @@ function makecpt(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, kwa
 	end
 	if (!isempty(data)) arg1 = data  end
 
-
 	for sym in [:C :color]
 		if (haskey(d, sym))
 			if (isa(d[sym], GMT.GMTcpt))
@@ -36,7 +35,7 @@ function makecpt(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, kwa
 
 	for sym in [:E :data_levels]
 		if (haskey(d, sym))
-			if (isempty(arg1) && isempty(data))
+			if (isempty_(arg1) && isempty_(data))
 				error("E option requires that a data table is provided as well")
 			else
 				cmd = cmd * " -E" * arg2str(d[sym])
@@ -63,7 +62,7 @@ function makecpt(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, kwa
 		Vd && println(@sprintf("\tmakecpt %s", cmd))
 	else
 		Vd && println(@sprintf("\tmakecpt %s", cmd))
-		if (isempty(arg1))
+		if (isempty_(arg1))
 			C = gmt("makecpt " * cmd)
 		else
 			C = gmt("makecpt " * cmd, arg1)
