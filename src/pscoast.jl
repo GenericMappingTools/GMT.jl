@@ -1,79 +1,66 @@
 """
-pscoast Plot continents, shorelines, rivers, and borders on maps
+    pscoast(cmd0::String=""; portrait=true, fmt="", clip=[], K=false, O=false, first=true, kwargs...)
 
+Plot continents, shorelines, rivers, and borders on maps.
 Plots grayshaded, colored, or textured land-masses [or water-masses] on
 maps and [optionally] draws coastlines, rivers, and political
 boundaries. A map projection must be supplied.
 
 Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 
-    **Aliases:**
-
-    - A = area
-    - B = frame
-    - C = river_fill
-    - D = resolution
-    - E = DCW
     - F = box
-    - G = land
-    - I = rivers
-    - J = proj, projection
-    - L = map_scale
     - M = dump
-    - N = borders
     - P = portrait
-    - R = region, limits
-    - S = water
     - Td = rose
     - Tm = compass
-    - V = verbose
-    - X = x_offset
-    - Y = y_offset
-    - W = shore
     - bo = binary_out
     - p = perspective
     - t = transparency
 	
 	Parameters
     ----------
-    J : Str
-        Select map projection.
-    R : Str or list
-        'xmin/xmax/ymin/ymax[+r][+uunit]'.
-        Specify the region of interest.
-    A : Str or number
+    J : proj : projection : -- Str --
+        Select map projection. Defaults to 12x8 cm with linear (non-projected) maps.
+        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#j
+    R : region : limits : -- Str or list --    'xmin/xmax/ymin/ymax[+r][+uunit]'.
+        Specify the region of interest. Set to data minimum BoundinBox if not provided.
+        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#r
+    A : area : -- Str or number --
         'min_area[/min_level/max_level][+ag|i|s|S][+r|l][+ppercent]'
         Features with an area smaller than min_area in km^2 or of
         hierarchical level that is lower than min_level or higher than
         max_level will not be plotted.
-    B : Str
+    B : frame : axes : -- Str --  '[p|s]parameters'
         Set map boundary frame and axes attributes.
-    C : Str
+        http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#b
+    C : river_fill : -- Str --
         Set the shade, color, or pattern for lakes and river-lakes.
-    D : Str
+    D : res : resolution : -- Str --
         Selects the resolution of the data set to use ((f)ull, (h)igh,
         (i)ntermediate, (l)ow, and (c)rude).
-	E : Str; Tuple(Str, Str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
+	E : ECW : -- Str --  Tuple(Str, Str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
         'code1,code2,...[+l|L][+gfill][+ppen]'		
         Select painting or dumping country polygons from the Digital Chart of the World
-    G : Str
+    G : land : -- Str --
         Select filling or clipping of “dry” areas.
-    I : Str
+    I : rivers : -- Str --
         'river[/pen]'
         Draw rivers. Specify the type of rivers and [optionally] append pen
         attributes.
-    N : Str
+	L : map_scale : -- Str --
+        Dtraw a map scale.
+    N : borders : -- Str --
         'border[/pen]'
         Draw political boundaries. Specify the type of boundary and
         [optionally] append pen attributes
-    S : Str
+    S : water : -- Str --
         Select filling or clipping of “wet” areas.
     U : Str or Bool or []
         Draw GMT time stamp logo on plot.
     V : Bool or Str   '[level]'
         Select verbosity level 
 		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#v
-    W : Str
+    W : shore : -- Str --
         '[level/]pen'
         Draw shorelines [Default is no shorelines]. Append pen attributes.
     X : Str    '[a|c|f|r][x-shift[u]]'

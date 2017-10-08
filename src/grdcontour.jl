@@ -1,4 +1,6 @@
 """
+    grdcontour(cmd0::String="", arg1=[]; data=[], portrait=true, fmt="", K=false, 
+               O=false, first=true, kwargs...)
 """
 # ---------------------------------------------------------------------------------------------------
 function grdcontour(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, fmt="", K=false, 

@@ -1,5 +1,7 @@
 """
-psxy reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
+    psxy(cmd0::String="", arg1=[]; caller=[], data=[], portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
+
+reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
 polygons, or symbols at those locations on a map. If a symbol is selected and no symbol size given,
 then psxy will interpret the third column of the input data as symbol size. Symbols whose size is <= 0 are skipped.
 If no symbols are specified then the symbol code must be present as last column in the input. If -S is not used,
@@ -9,27 +11,8 @@ If a symbol is selected, -G and -W determines the fill and outline/no outline, r
 
 Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 
-    **Aliases:**
-
     - A = straight_lines
-    - B = frame, axes
-    - C = color
-    - D = offset
-    - E = error_bars
-    - F = conn, connection
-    - G = fill, markerfacecolor, MarkerFaceColor
-    - I = intens
-    - J = proj, projection
-    - L = closed_polygon
-    - N = no_clip
     - P = portrait
-    - R = region, limits
-    - S = symbol, marker, Marker
-    - U = stamp
-    - V = verbose
-    - X = x_offset
-    - Y = y_offset
-    - W = line_attribs, markeredgecolor, MarkerEdgeColor
     - a = aspatial
     - bi = binary_in
     - di = nodata_in
@@ -79,7 +62,7 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
         Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
         http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s
         Alternatively select a sub-set of symbols using the aliases: 'marker' or 'Marker' and values: 
-           "-" or "x-dash"
+           "-" or "x_dash"
            "+" or "plus"
            "a" or "*" or "star"
            "c" or "circle"
@@ -93,7 +76,7 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
            "s" or "square"
            "t" or "^" or "triangle"
            "x" or "cross"
-           "y" or "y-dash"
+           "y" or "y_dash"
     W : line_attribs : markeredgecolor : MarkerEdgeColor : -- Str --  '[pen][attr]'
         Set pen attributes for lines or the outline of symbols
 		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w

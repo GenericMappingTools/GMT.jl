@@ -1,3 +1,6 @@
+"""
+    psscale(cmd0::String="", arg1=[]; Vd=false, portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
+"""
 # ---------------------------------------------------------------------------------------------------
 function psscale(cmd0::String="", arg1=[]; Vd=false, portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
 

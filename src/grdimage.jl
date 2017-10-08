@@ -1,37 +1,11 @@
 """
-pscoast Plot continents, shorelines, rivers, and borders on maps
+    grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; Vd=false, data=[], portrait=true, 
+			 fmt="", K=false, O=false, first=true, kwargs...)
 
-Plots grayshaded, colored, or textured land-masses [or water-masses] on
+Produces a gray-shaded (or colored) map by plotting rectangles centered on each grid node and assigning them a gray-shade (or color) based on the z-value.
 
-Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
+Full option list at http://gmt.soest.hawaii.edu/doc/latest/grdimage.html
 
-	**Aliases:**
-
-	- A = area
-	- B = frame
-	- C = river_fill
-	- D = resolution
-	- E = DCW
-	- F = box
-	- G = land
-	- I = rivers
-	- J = proj, projection
-	- L = map_scale
-	- M = dump
-	- N = borders
-	- P = portrait
-	- R = region, limits
-	- S = water
-	- Td = rose
-	- Tm = compass
-	- V = verbose
-	- X = x_offset
-	- Y = y_offset
-	- W = shore
-	- bo = binary_out
-	- p = perspective
-	- t = transparency
-	
 	Parameters
 	----------
 	J : Str
@@ -70,14 +44,14 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 		Draw GMT time stamp logo on plot.
     V : Bool or Str   '[level]'
         Select verbosity level 
-		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#v
+		http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#v
 	W : Str
 		'[level/]pen'
 		Draw shorelines [Default is no shorelines]. Append pen attributes.
     X : Str    '[a|c|f|r][x-shift[u]]'
     Y : Str    '[a|c|f|r][y-shift[u]]'
         Shift plot origin. 
-		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x
+		http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#x
 """
 # ---------------------------------------------------------------------------------------------------
 function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; Vd=false, data=[], portrait=true, 

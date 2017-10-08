@@ -1,8 +1,10 @@
 """
+    grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; Vd=false, data=[],
+            portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
 """
 # ---------------------------------------------------------------------------------------------------
-function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; Vd=false, data=[], portrait=true, fmt="", K=false, 
-                 O=false, first=true, kwargs...)
+function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; Vd=false, data=[],
+                 portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("grdview " * cmd0)
