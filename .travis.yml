@@ -8,7 +8,7 @@ julia:
 notifications:
   email: true
 before_install:
-  - if [ `uname` = "Linux" ]; then
+  #- if [ `uname` = "Linux" ]; then
   #sudo apt-get install libgmt-dev;
   # Get Miniconda from Continuum
   # Need to source the script to set the PATH variable in this environment
@@ -22,9 +22,9 @@ before_install:
   - conda install --yes --file requirements-dev.txt -c conda-forge
   # Show installed pkg information for postmortem diagnostic
   - conda list
-  - if [ `uname` = "Darwin" ]; then
-        brew install homebrew/science/gmt;
-    fi
+  #- if [ `uname` = "Darwin" ]; then
+  #      brew install homebrew/science/gmt;
+  #  fi
 # uncomment the following lines to override the default test script
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
