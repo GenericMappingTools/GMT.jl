@@ -1,3 +1,8 @@
+"""
+	makecpt(cmd0::String="", arg1=[]; data=[], portrait=true, kwargs...)
+	
+Make static color palette tables (CPTs).
+"""
 # ---------------------------------------------------------------------------------------------------
 function makecpt(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, kwargs...)
 
