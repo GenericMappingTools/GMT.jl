@@ -16,7 +16,7 @@ before_install:
   - source install-miniconda.sh
   - conda update --yes conda
   # Install dependencies
-  - conda install --yes python=3.5 pip -c conda-forge
+  - conda install --yes python=3.6 pip -c conda-forge
   # Need the dev channel to get development builds of GMT 6
   - conda install --yes --file requirements.txt -c conda-forge/label/dev -c conda-forge
   - conda install --yes --file requirements-dev.txt -c conda-forge
