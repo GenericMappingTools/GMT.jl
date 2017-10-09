@@ -1,13 +1,6 @@
 GMT.jl
 ======
 
-#[![Build Status](https://travis-ci.org/GenericMappingTools/GMT.jl.svg?branch=master)](https://travis-ci.org/GenericMappingTools/GMT.jl)
-#[![Build status](https://ci.appveyor.com/api/projects/status/usjewfb5v48m18kh/branch/master?svg=true)](https://ci.appveyor.com/project/joa-quim/gmt-jl-suu4y/branch/master)
-#[![codecov.io](http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg?branch=master)](http://codecov.io/github/GenericMappingTools/GMT.jl?branch=master)
-
-#[![Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://genericmappingtools.github.io/GMT.jl/latest)
-#[![GMT](http://pkg.julialang.org/badges/GMT_0.6.svg)](http://pkg.julialang.org/?pkg=GMT&ver=0.6)
-
 Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
 | **Documentation**                       | **PackageEvaluator**            | **Build Status**                          |
@@ -24,11 +17,11 @@ Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-stable-url]: https://genericmappingtools.github.io/GMT.jl/stable
 
-[travis-img]: https://ci.appveyor.com/api/projects/status/usjewfb5v48m18kh/branch/master?svg=true
-[travis-url]: https://ci.appveyor.com/project/joa-quim/gmt-jl-suu4y/branch/master
+[travis-img]: https://travis-ci.org/GenericMappingTools/GMT.jl.svg?branch=master
+[travis-url]: https://travis-ci.org/GenericMappingTools/GMT.jl
 
-[appveyor-img]: https://ci.appveyor.com/api/projects/status/xx7nimfpnl1r4gx0?svg=true
-[appveyor-url]: https://ci.appveyor.com/project/JuliaDocs/documenter-jl
+[appveyor-img]: https://ci.appveyor.com/api/projects/status/usjewfb5v48m18kh/branch/master?svg=true
+[appveyor-url]: https://ci.appveyor.com/project/joa-quim/gmt-jl-suu4y/branch/master
 
 [codecov-img]: http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg?branch=master
 [codecov-url]: http://codecov.io/github/GenericMappingTools/GMT.jl?branch=master
