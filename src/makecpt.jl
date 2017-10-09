@@ -3,13 +3,11 @@
 	
 Make static color palette tables (CPTs).
 
-```jldoctest
-cpt = makecpt(range="-1/1/0.1");
-(size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]);
-
-# output
-true
-```
+#```jldoctest
+#julia> cpt = makecpt(range="-1/1/0.1");
+#julia> (size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0])
+#true
+#```
 """
 # ---------------------------------------------------------------------------------------------------
 function makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
@@ -85,4 +83,4 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Version to use with the -E option
-makecpt(arg1=[]; data=[], kw...) = makecpt("", arg1; data=data, kw...)
+#makecpt(arg1=[]; data=[], kw...) = makecpt("", arg1; data=data, kw...)
