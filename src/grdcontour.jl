@@ -3,7 +3,7 @@
                O=false, first=true, kwargs...)
 """
 # ---------------------------------------------------------------------------------------------------
-function grdcontour(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, fmt="", K=false, 
+function grdcontour(cmd0::String="", arg1=[]; data=[], portrait=true, fmt="", K=false, 
                     O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
@@ -74,7 +74,7 @@ function grdcontour(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, 
 	else                PS = false
 	end
 
-	Vd && println(@sprintf("\tgrdcontour %s", cmd))
+	(haskey(d, :Vd)) && println(@sprintf("\tgrdcontour %s", cmd))
 
 	P = nothing
 	if (!isempty_(arg1))
@@ -91,5 +91,5 @@ function grdcontour(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, 
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdcontour!(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, fmt="", K=true, O=true, first=false, kw...) =
-    grdcontour(cmd0, arg1; Vd=Vd, data=data, portrait=portrait, fmt=fmt, K=true, O=true, first=false, kw...)
+grdcontour!(cmd0::String="", arg1=[]; data=[], portrait=true, fmt="", K=true, O=true, first=false, kw...) =
+    grdcontour(cmd0, arg1; data=data, portrait=portrait, fmt=fmt, K=true, O=true, first=false, kw...)

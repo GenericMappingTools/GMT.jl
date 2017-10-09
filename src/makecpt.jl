@@ -12,7 +12,7 @@ true
 ```
 """
 # ---------------------------------------------------------------------------------------------------
-function makecpt(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, kwargs...)
+function makecpt(cmd0::String="", arg1=[]; data=[], portrait=true, kwargs...)
 
 	d = KW(kwargs)
 	cmd = ""
@@ -72,9 +72,9 @@ function makecpt(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, kwa
 	if (haskey(d, :cptname))
 		cmd = cmd * " > " * d[:cptname]
 		C = gmt("makecpt " * cmd)
-		Vd && println(@sprintf("\tmakecpt %s", cmd))
+		(haskey(d, :Vd)) && println(@sprintf("\tmakecpt %s", cmd))
 	else
-		Vd && println(@sprintf("\tmakecpt %s", cmd))
+		(haskey(d, :Vd)) && println(@sprintf("\tmakecpt %s", cmd))
 		if (isempty_(arg1))
 			C = gmt("makecpt " * cmd)
 		else
@@ -85,4 +85,4 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Version to use with the -E option
-makecpt(arg1=[]; Vd=false, data=[], portrait=true, kw...) = makecpt("", arg1; Vd=Vd, data=data, portrait=portrait, kw...)
+makecpt(arg1=[]; data=[], portrait=true, kw...) = makecpt("", arg1; data=data, portrait=portrait, kw...)

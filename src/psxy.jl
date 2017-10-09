@@ -94,7 +94,7 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x
 """
 # ---------------------------------------------------------------------------------------------------
-function psxy(cmd0::String="", arg1=[]; Vd=false, caller=[], data=[], portrait=true, fmt="",
+function psxy(cmd0::String="", arg1=[]; caller=[], data=[], portrait=true, fmt="",
               K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
@@ -303,7 +303,7 @@ function psxy(cmd0::String="", arg1=[]; Vd=false, caller=[], data=[], portrait=t
 
 	P = nothing
 	for k = 1:length(cmd)
-		Vd && println(@sprintf("\tpsxy %s", cmd[k]))
+		(haskey(d, :Vd)) && println(@sprintf("\tpsxy %s", cmd[k]))
 		if (N_args == 0)					# Simple case
 			if (PS) P = gmt("psxy " * cmd[k])
 			else        gmt("psxy " * cmd[k])
@@ -345,7 +345,7 @@ WARNING: Method definition #psxy(Array{Any, 1}, typeof(GMT.psxy)) in module GMT 
 =#
 
 # ---------------------------------------------------------------------------------------------------
-psxy!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; Vd=false, caller=[], data=[], portrait=true, fmt="",
+psxy!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; caller=[], data=[], portrait=true, fmt="",
       K=true, O=true,  first=false, kwargs...) =
-	psxy(cmd0, arg1, arg2; Vd=Vd, caller=caller, data=data, portrait=portrait, fmt=fmt,
+	psxy(cmd0, arg1, arg2; caller=caller, data=data, portrait=portrait, fmt=fmt,
 	     K=true, O=true,  first=false, kwargs...)

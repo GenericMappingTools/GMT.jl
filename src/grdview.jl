@@ -1,9 +1,9 @@
 """
-    grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; Vd=false, data=[],
+    grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
             portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
 """
 # ---------------------------------------------------------------------------------------------------
-function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; Vd=false, data=[],
+function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
                  portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
@@ -118,7 +118,7 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 	else                PS = false
 	end
 
-	Vd && println(@sprintf("\tgrdview %s", cmd))
+	(haskey(d, :Vd)) && println(@sprintf("\tgrdview %s", cmd))
 
 	P = nothing
 	if (PS)
@@ -145,8 +145,8 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdview!(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, fmt="", K=true, O=true, first=false, kw...) =
-	grdview(cmd0, arg1; Vd=Vd, data=data, portrait=portrait, fmt=fmt, K=true, O=true, first=false, kw...)
+grdview!(cmd0::String="", arg1=[]; data=[], portrait=true, fmt="", K=true, O=true, first=false, kw...) =
+	grdview(cmd0, arg1; data=data, portrait=portrait, fmt=fmt, K=true, O=true, first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 function put_in_slot(cmd::String, val, opt::Char, args)

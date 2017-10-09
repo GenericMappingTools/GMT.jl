@@ -1,8 +1,8 @@
 """
-    psscale(cmd0::String="", arg1=[]; Vd=false, portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
+    psscale(cmd0::String="", arg1=[]; portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
 """
 # ---------------------------------------------------------------------------------------------------
-function psscale(cmd0::String="", arg1=[]; Vd=false, portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
+function psscale(cmd0::String="", arg1=[]; portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
 
 	output = fmt
 	if (!isa(output, String))
@@ -50,7 +50,7 @@ function psscale(cmd0::String="", arg1=[]; Vd=false, portrait=true, fmt="", K=fa
 
 	cmd = finish_PS(cmd0, cmd, output, portrait, K, O)
 
-	Vd && println(@sprintf("\tpsscale %s", cmd))
+	(haskey(d, :Vd)) && println(@sprintf("\tpsscale %s", cmd))
 
 	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
 	else                PS = false
@@ -71,5 +71,5 @@ function psscale(cmd0::String="", arg1=[]; Vd=false, portrait=true, fmt="", K=fa
 end
 
 # ---------------------------------------------------------------------------------------------------
-psscale!(cmd0::String="", arg1=[]; Vd=false, portrait=true, fmt="", K=false, O=false, first=false, kw...) =
-    psscale(cmd0, arg1; Vd=Vd, portrait=portrait, fmt=fmt, K=true, O=true, first=false, kw...)
+psscale!(cmd0::String="", arg1=[]; portrait=true, fmt="", K=false, O=false, first=false, kw...) =
+    psscale(cmd0, arg1; portrait=portrait, fmt=fmt, K=true, O=true, first=false, kw...)

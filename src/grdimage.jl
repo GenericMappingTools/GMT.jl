@@ -1,5 +1,5 @@
 """
-    grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; Vd=false, data=[], portrait=true, 
+    grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], portrait=true, 
 			 fmt="", K=false, O=false, first=true, kwargs...)
 
 Produces a gray-shaded (or colored) map by plotting rectangles centered on each grid node and assigning them a gray-shade (or color) based on the z-value.
@@ -54,7 +54,7 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/grdimage.html
 		http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#x
 """
 # ---------------------------------------------------------------------------------------------------
-function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; Vd=false, data=[], portrait=true, 
+function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], portrait=true, 
                                    fmt="", K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
@@ -151,7 +151,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; Vd=false,
 	else                PS = false
 	end
 
-	Vd && println(@sprintf("\tgrdimage %s", cmd))
+	(haskey(d, :Vd)) && println(@sprintf("\tgrdimage %s", cmd))
 
 	P = nothing
 	if (PS)
@@ -174,7 +174,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; Vd=false,
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; Vd=false, data=[], portrait=true,
+grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], portrait=true,
           fmt="", K=true, O=true, first=false, kw...) =
-	grdimage(cmd0, arg1, arg2, arg3, arg4; Vd=Vd, data=data, portrait=portrait,
+	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, portrait=portrait,
 	         fmt=fmt, K=true, O=true, first=false, kw...) 
