@@ -1,5 +1,5 @@
 """
-	makecpt(cmd0::String="", arg1=[]; data=[], portrait=true, kwargs...)
+	makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
 	
 Make static color palette tables (CPTs).
 
@@ -12,7 +12,7 @@ true
 ```
 """
 # ---------------------------------------------------------------------------------------------------
-function makecpt(cmd0::String="", arg1=[]; data=[], portrait=true, kwargs...)
+function makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	d = KW(kwargs)
 	cmd = ""
@@ -85,4 +85,4 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Version to use with the -E option
-makecpt(arg1=[]; data=[], portrait=true, kw...) = makecpt("", arg1; data=data, portrait=portrait, kw...)
+makecpt(arg1=[]; data=[], kw...) = makecpt("", arg1; data=data, kw...)

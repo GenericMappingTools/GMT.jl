@@ -1,10 +1,10 @@
 """
     grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
-            portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
+            fmt="", K=false, O=false, first=true, kwargs...)
 """
 # ---------------------------------------------------------------------------------------------------
 function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
-                 portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
+                 fmt="", K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("grdview " * cmd0)
@@ -112,7 +112,7 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 		end
 	end
 
-	cmd = finish_PS(cmd0, cmd, output, portrait, K, O)
+	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
 	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
 	else                PS = false
@@ -145,8 +145,8 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdview!(cmd0::String="", arg1=[]; data=[], portrait=true, fmt="", K=true, O=true, first=false, kw...) =
-	grdview(cmd0, arg1; data=data, portrait=portrait, fmt=fmt, K=true, O=true, first=false, kw...)
+grdview!(cmd0::String="", arg1=[]; data=[], fmt="", K=true, O=true, first=false, kw...) =
+	grdview(cmd0, arg1; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 function put_in_slot(cmd::String, val, opt::Char, args)

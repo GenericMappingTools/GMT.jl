@@ -1,5 +1,5 @@
 """
-    psxy(cmd0::String="", arg1=[]; caller=[], data=[], portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
+    psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="", K=false, O=false, first=true, kwargs...)
 
 reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
 polygons, or symbols at those locations on a map. If a symbol is selected and no symbol size given,
@@ -94,7 +94,7 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x
 """
 # ---------------------------------------------------------------------------------------------------
-function psxy(cmd0::String="", arg1=[]; caller=[], data=[], portrait=true, fmt="",
+function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="",
               K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
@@ -279,22 +279,22 @@ function psxy(cmd0::String="", arg1=[]; caller=[], data=[], portrait=true, fmt="
 	end
 
 	if (!isempty(opt_W) && isempty(opt_S)) 			# We have a line/polygon request
-		cmd = [finish_PS(cmd0, cmd * opt_W, output, portrait, K, O)]
+		cmd = [finish_PS(d, cmd0, cmd * opt_W, output, K, O)]
 	elseif (isempty(opt_W) && !isempty(opt_S))		# We have a symbol request
 		if (!isempty(opt_Wmarker) && isempty(opt_W))
 			opt_Gsymb = opt_Gsymb * " -W" * opt_Wmarker	# Piggy back in this option string
 		end
-		cmd = [finish_PS(cmd0, cmd * opt_S * opt_Gsymb, output, portrait, K, O)]
+		cmd = [finish_PS(d, cmd0, cmd * opt_S * opt_Gsymb, output, K, O)]
 	elseif (!isempty(opt_W) && !isempty(opt_S))		# We have both line/polygon and symbol requests 
 		if (!isempty(opt_Wmarker))
 			opt_Wmarker = " -W" * opt_Wmarker		# Set Symbol edge color 
 		end
 		cmd1 = cmd * opt_W
 		cmd2 = replace(cmd, opt_B, "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
-		cmd = [finish_PS(cmd0, cmd1, output, portrait, true, O)
-			   finish_PS(cmd0, cmd2, output, portrait, K, true)]
+		cmd = [finish_PS(d, cmd0, cmd1, output, true, O)
+			   finish_PS(d, cmd0, cmd2, output, K, true)]
 	else
-		cmd = [finish_PS(cmd0, cmd, output, portrait, K, O)]
+		cmd = [finish_PS(d, cmd0, cmd, output, K, O)]
 	end
 
 	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
@@ -337,15 +337,15 @@ foo (generic function with 5 methods)
 
 But not this
 
-psxy(arg1=[], cmd0::String=""; V=false, data=[], portrait=true, output=[], K=false, O=false,  kwargs...) =
-	psxy(cmd0, arg1; V=V, data=data, portrait=portrait, output=output, K=K, O=O,  kwargs...)
+psxy(arg1=[], cmd0::String=""; V=false, data=[], output=[], K=false, O=false,  kwargs...) =
+	psxy(cmd0, arg1; V=V, data=data, output=output, K=K, O=O,  kwargs...)
 
 WARNING: Method definition psxy() in module GMT at c:\j\.julia\v0.6\GMT\src\psxy.jl:45 overwritten at c:\j\.julia\v0.6\GMT\src\psxy.jl:252.
 WARNING: Method definition #psxy(Array{Any, 1}, typeof(GMT.psxy)) in module GMT overwritten.
 =#
 
 # ---------------------------------------------------------------------------------------------------
-psxy!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; caller=[], data=[], portrait=true, fmt="",
+psxy!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; caller=[], data=[], fmt="",
       K=true, O=true,  first=false, kwargs...) =
-	psxy(cmd0, arg1, arg2; caller=caller, data=data, portrait=portrait, fmt=fmt,
+	psxy(cmd0, arg1, arg2; caller=caller, data=data, fmt=fmt,
 	     K=true, O=true,  first=false, kwargs...)

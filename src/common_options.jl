@@ -444,9 +444,11 @@ function arg2str(arg)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS(cmd0::String, cmd::String, output::String, P::Bool, K::Bool, O::Bool)
+function finish_PS(d::Dict, cmd0::String, cmd::String, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
-	if (P) cmd = cmd * " -P" end
+	if (!haskey(d, :P) && !haskey(d, :portrait))
+		cmd = cmd * " -P"
+	end
 
 	if (!isempty(cmd0))
 		cmd = cmd * " " * cmd0		# Append any other eventual args not send in via kwargs

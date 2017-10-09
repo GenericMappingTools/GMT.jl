@@ -1,8 +1,8 @@
 """
-    psscale(cmd0::String="", arg1=[]; portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
+    psscale(cmd0::String="", arg1=[]; fmt="", K=false, O=false, first=true, kwargs...)
 """
 # ---------------------------------------------------------------------------------------------------
-function psscale(cmd0::String="", arg1=[]; portrait=true, fmt="", K=false, O=false, first=true, kwargs...)
+function psscale(cmd0::String="", arg1=[]; fmt="", K=false, O=false, first=true, kwargs...)
 
 	output = fmt
 	if (!isa(output, String))
@@ -48,7 +48,7 @@ function psscale(cmd0::String="", arg1=[]; portrait=true, fmt="", K=false, O=fal
 	cmd = add_opt(cmd, 'W', d, [:W :z_scale])
 	cmd = add_opt(cmd, 'Z', d, [:Z :zfile])
 
-	cmd = finish_PS(cmd0, cmd, output, portrait, K, O)
+	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
 	(haskey(d, :Vd)) && println(@sprintf("\tpsscale %s", cmd))
 
@@ -71,5 +71,5 @@ function psscale(cmd0::String="", arg1=[]; portrait=true, fmt="", K=false, O=fal
 end
 
 # ---------------------------------------------------------------------------------------------------
-psscale!(cmd0::String="", arg1=[]; portrait=true, fmt="", K=false, O=false, first=false, kw...) =
-    psscale(cmd0, arg1; portrait=portrait, fmt=fmt, K=true, O=true, first=false, kw...)
+psscale!(cmd0::String="", arg1=[]; fmt="", K=false, O=false, first=false, kw...) =
+    psscale(cmd0, arg1; fmt=fmt, K=true, O=true, first=false, kw...)

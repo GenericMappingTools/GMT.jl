@@ -1,10 +1,8 @@
 """
-    grdcontour(cmd0::String="", arg1=[]; data=[], portrait=true, fmt="", K=false, 
-               O=false, first=true, kwargs...)
+    grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false, first=true, kwargs...)
 """
 # ---------------------------------------------------------------------------------------------------
-function grdcontour(cmd0::String="", arg1=[]; data=[], portrait=true, fmt="", K=false, 
-                    O=false, first=true, kwargs...)
+function grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("grdcontour " * cmd0)
@@ -68,7 +66,7 @@ function grdcontour(cmd0::String="", arg1=[]; data=[], portrait=true, fmt="", K=
 		end
 	end
 
-	cmd = finish_PS(cmd0, cmd, output, portrait, K, O)
+	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
 	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
 	else                PS = false
@@ -91,5 +89,5 @@ function grdcontour(cmd0::String="", arg1=[]; data=[], portrait=true, fmt="", K=
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdcontour!(cmd0::String="", arg1=[]; data=[], portrait=true, fmt="", K=true, O=true, first=false, kw...) =
-    grdcontour(cmd0, arg1; data=data, portrait=portrait, fmt=fmt, K=true, O=true, first=false, kw...)
+grdcontour!(cmd0::String="", arg1=[]; data=[], fmt="", K=true, O=true, first=false, kw...) =
+    grdcontour(cmd0, arg1; data=data, fmt=fmt, K=true, O=true, first=false, kw...)

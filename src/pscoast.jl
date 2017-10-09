@@ -1,5 +1,5 @@
 """
-    pscoast(cmd0::String=""; portrait=true, fmt="", clip=[], K=false, O=false, first=true, kwargs...)
+    pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true, kwargs...)
 
 Plot continents, shorelines, rivers, and borders on maps.
 Plots grayshaded, colored, or textured land-masses [or water-masses] on
@@ -69,8 +69,7 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x
 """
 # ---------------------------------------------------------------------------------------------------
-function pscoast(cmd0::String=""; portrait=true, fmt="", clip=[], K=false, O=false, first=true, 
-                 kwargs...)
+function pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("pscoast " * cmd0)
@@ -247,7 +246,7 @@ function pscoast(cmd0::String=""; portrait=true, fmt="", clip=[], K=false, O=fal
 		end
 	end
 
-	cmd = finish_PS(cmd0, cmd, output, portrait, K, O)
+	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
 	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
 	else                PS = false
@@ -268,5 +267,5 @@ function pscoast(cmd0::String=""; portrait=true, fmt="", clip=[], K=false, O=fal
 end
 
 # ---------------------------------------------------------------------------------------------------
-pscoast!(cmd0::String=""; portrait=true, fmt="", clip=[], K=false, O=false, first=false, kwargs...) =
-	pscoast!(cmd0; portrait=true, fmt="", clip=[], K=true, O=true, first=false, kwargs...)
+pscoast!(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=false, kwargs...) =
+	pscoast!(cmd0; fmt="", clip=[], K=true, O=true, first=false, kwargs...)
