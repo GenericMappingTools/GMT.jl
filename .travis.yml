@@ -9,9 +9,21 @@ notifications:
   email: true
 before_install:
   - if [ `uname` = "Linux" ]; then
-      sudo apt-get install libgmt-dev;
-    elif [ `uname` = "Darwin" ]; then
-      brew install homebrew/science/gmt;
+  #sudo apt-get install libgmt-dev;
+  # Get Miniconda from Continuum
+  # Need to source the script to set the PATH variable in this environment
+  # (not the scripts environment)
+  - source install-miniconda.sh
+  - conda update --yes conda
+  # Install dependencies
+  - conda install --yes python=$PYTHON pip -c conda-forge
+  # Need the dev channel to get development builds of GMT 6
+  - conda install --yes --file requirements.txt -c conda-forge/label/dev -c conda-forge
+  - conda install --yes --file requirements-dev.txt -c conda-forge
+  # Show installed pkg information for postmortem diagnostic
+  - conda list
+  - if [ `uname` = "Darwin" ]; then
+        brew install homebrew/science/gmt;
     fi
 # uncomment the following lines to override the default test script
 script:
