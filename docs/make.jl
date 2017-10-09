@@ -13,6 +13,7 @@ makedocs(
 deploydocs(
     repo   = "github.com/GenericMappingTools/GMT.jl.git",
     target = "build",
+    julia = "0.6",
     deps   = nothing,
     make   = nothing
 )
