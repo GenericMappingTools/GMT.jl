@@ -324,7 +324,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_t(cmd::String, d::Dict)
 	# Parse the global -t option. Return CMD same as input if no -t option in args
-	for symb in [:t :transparency]
+	for symb in [:t :alpha :transparency]
 		if (haskey(d, symb) && isa(d[symb], Number))
 			cmd = @sprintf("%s -t%.6g", cmd, d[symb])
 			break

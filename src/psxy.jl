@@ -54,48 +54,48 @@ Parameters
 - **S** : **symbol** : **marker** : **Marker** : -- Str --  '[symbol][size[u]]'
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s)
-    Alternatively select a sub-set of symbols using the aliases: 'marker' or 'Marker' and values:
+    Alternatively select a sub-set of symbols using the aliases: **marker** or **Marker** and values:
 
-    * **-**   *or*   **x_dash**
-    * **+** *or* **plus**
-    * **a** *or* * *or* **star**
-    * **c** *or* **circle**
-    * **d** *or* **diamond**
-    * **g** *or* **octagon**
-    * **h** *or* **hexagon**
-    * **i** *or* **v** *or* **inverted_tri**
-    * **n** *or* **pentagon**
-    * **p** *or* **.** *or* **point**
-    * **r** *or* **rectangle**
-    * **s** *or* **square**
-    * **t** *or* **^** *or* **triangle**
-    * **x** *or* **cross**
-    * **y** *or* **y_dash**
-- W : line_attribs : markeredgecolor : MarkerEdgeColor : -- Str --  '[pen][attr]'
+    + **-**, **x_dash**
+    + **+**, **plus**
+    + **a**, *, **star**
+    + **c**, **circle**
+    + **d**, **diamond**
+    + **g**, **octagon**
+    + **h**, **hexagon**
+    + **i**, **v**, **inverted_tri**
+    + **n**, **pentagon**
+    + **p**, **.**, **point**
+    + **r**, **rectangle**
+    + **s**, **square**
+    + **t**, **^**, **triangle**
+    + **x**, **cross**
+    + **y**, **y_dash**
+- **W** : **line_attribs** : **markeredgecolor** : **MarkerEdgeColor** : -- Str --  '[pen][attr]'
     Set pen attributes for lines or the outline of symbols
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
-    If your plot has polygons and symbols, use 'W' or 'line_attribs' for the polygons and
-    'markeredgecolor' or 'MarkerEdgeColor' for filling the symbols. Similar to S above.
-- U : stamp : --- Str or Bool or [] --   '[[just]/dx/dy/][c|label]'
+    If your plot has polygons and symbols, use **W** or **line_attribs** for the polygons and
+    **markeredgecolor** or **MarkerEdgeColor** for filling the symbols. Similar to S above.
+- **U** : **stamp** : -- Str or Bool or [] --   '[[just]/dx/dy/][c|label]'
     Draw GMT time stamp logo on plot.
-- V : verbose : -- Bool or Str --   '[level]'
+- **V** : **verbose** : -- Bool or Str --   '[level]'
     Select verbosity level 
     [`-V`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#v)
-- X : x_offset : -- Str --   '[a|c|f|r][x-shift[u]]'
-- Y : x_offset : -- Str --   '[a|c|f|r][y-shift[u]]'
+- **X** : **x_offset** : -- Str --   '[a|c|f|r][x-shift[u]]'
+- **Y** : **y_offset** : -- Str --   '[a|c|f|r][y-shift[u]]'
     Shift plot origin. 
     [`-Y`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x)
-- a : aspatial : -- Str --
-- bi : binary_in : -- Str --
-- di : nodata_in : -- Str --
-- e : patern : -- Str --
-- f : colinfo : -- Str --
-- g : gaps : -- Str --
-- h : headers : -- Str --
-- i : input_col : -- Str --
-- p : perspective : -- Str --
-- t : transparency : -- Str --
+- **a** : **aspatial** : -- Str --
+- **bi** : **binary_in** : -- Str --
+- **di** : **nodata_in** : -- Str --
+- **e** : **patern** : -- Str --
+- **f** : **colinfo** : -- Str --
+- **g** : **gaps** : -- Str --
+- **h** : **headers** : -- Str --
+- **i** : **input_col** : -- Str --
+- **p** : **perspective** : -- Str --
+- **t** : **alpha** : **transparency** : -- Str --
 """
 # ---------------------------------------------------------------------------------------------------
 function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="",

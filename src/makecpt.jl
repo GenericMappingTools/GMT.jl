@@ -83,4 +83,4 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Version to use with the -E option
-#makecpt(arg1=[]; data=[], kw...) = makecpt("", arg1; data=data, kw...)
+makecpt(arg1=[]; data=[], kw...) = makecpt("", arg1; data=data, kw...)
