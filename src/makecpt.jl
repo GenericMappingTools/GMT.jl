@@ -2,6 +2,14 @@
 	makecpt(cmd0::String="", arg1=[]; data=[], portrait=true, kwargs...)
 	
 Make static color palette tables (CPTs).
+
+```jldoctest
+cpt = makecpt(range="-1/1/0.1");
+(size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]);
+
+# output
+true
+```
 """
 # ---------------------------------------------------------------------------------------------------
 function makecpt(cmd0::String="", arg1=[]; Vd=false, data=[], portrait=true, kwargs...)
