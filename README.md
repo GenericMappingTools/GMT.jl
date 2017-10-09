@@ -1,17 +1,46 @@
 GMT.jl
 ======
 
-[![Build Status](https://travis-ci.org/GenericMappingTools/GMT.jl.svg?branch=master)](https://travis-ci.org/GenericMappingTools/GMT.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/usjewfb5v48m18kh/branch/master?svg=true)](https://ci.appveyor.com/project/joa-quim/gmt-jl-suu4y/branch/master)
-[![codecov.io](http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg?branch=master)](http://codecov.io/github/GenericMappingTools/GMT.jl?branch=master)
+#[![Build Status](https://travis-ci.org/GenericMappingTools/GMT.jl.svg?branch=master)](https://travis-ci.org/GenericMappingTools/GMT.jl)
+#[![Build status](https://ci.appveyor.com/api/projects/status/usjewfb5v48m18kh/branch/master?svg=true)](https://ci.appveyor.com/project/joa-quim/gmt-jl-suu4y/branch/master)
+#[![codecov.io](http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg?branch=master)](http://codecov.io/github/GenericMappingTools/GMT.jl?branch=master)
 
-[![GMT](http://pkg.julialang.org/badges/GMT_0.5.svg)](http://pkg.julialang.org/?pkg=GMT&ver=0.5)
-[![GMT](http://pkg.julialang.org/badges/GMT_0.6.svg)](http://pkg.julialang.org/?pkg=GMT&ver=0.6)
+#[![Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://genericmappingtools.github.io/GMT.jl/latest)
+#[![GMT](http://pkg.julialang.org/badges/GMT_0.6.svg)](http://pkg.julialang.org/?pkg=GMT&ver=0.6)
 
 Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
-There is no manual yet but looking into the tests.jl should give a (good) idea on how it works. Note also that this
-wrapper works only with the new GMT5.3.1 (GMT.jl 0.0.1 version worked with GMT5.2.1).
+| **Documentation**                       | **PackageEvaluator**            | **Build Status**                          |
+|:---------------------------------------:|:-------------------------------:|:-----------------------------------------:|
+| [![][docs-latest-img]][docs-latest-url] | [![][pkg-0.6-img]][pkg-0.6-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] |
+
+[gitter-url]: https://gitter.im/genericmappingtools/users
+
+[contrib-url]: https://genericmappingtools.github.io/GMT.jl/latest/man/contributing/
+
+[docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
+[docs-latest-url]: https://genericmappingtools.github.io/GMT.jl/latest
+
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-stable-url]: https://genericmappingtools.github.io/GMT.jl/stable
+
+[travis-img]: https://ci.appveyor.com/api/projects/status/usjewfb5v48m18kh/branch/master?svg=true
+[travis-url]: https://ci.appveyor.com/project/joa-quim/gmt-jl-suu4y/branch/master
+
+[appveyor-img]: https://ci.appveyor.com/api/projects/status/xx7nimfpnl1r4gx0?svg=true
+[appveyor-url]: https://ci.appveyor.com/project/JuliaDocs/documenter-jl
+
+[codecov-img]: http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg?branch=master
+[codecov-url]: http://codecov.io/github/GenericMappingTools/GMT.jl?branch=master
+
+[issues-url]: https://github.com/JuliaDocs/GMT.jl/issues
+
+[pkg-0.6-img]: http://pkg.julialang.org/badges/GMT_0.6.svg
+[pkg-0.6-url]: http://pkg.julialang.org/?pkg=GMT&ver=0.6
+[pkg-0.7-img]: http://pkg.julialang.org/badges/GMT_0.7.svg
+[pkg-0.7-url]: http://pkg.julialang.org/?pkg=GMT&ver=0.7
+
+This wrapper works only with GMT5.3.1 and above
 
 Install
 =======
