@@ -1,8 +1,5 @@
 jupyter
-pytest-cov
-pytest-mpl
 coverage
-flake8
 sphinx
 sphinx_bootstrap_theme
 nbsphinx
