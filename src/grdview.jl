@@ -79,9 +79,9 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 		end
 	end
 
-	for sym in [:C :cpt :cmap]
+	for sym in [:C :color :cmap]
 		if (haskey(d, sym))
-			if (!isa(d[sym], GMTcpt))					# Uff, simple. Either a file name or a -A type modifier
+			if (!isa(d[sym], GMTcpt))	# Uff, simple. Either a file name or a -A type modifier
 				cmd = cmd * " -C" * arg2str(d[sym])
 			else
 				cmd, N_cpt = put_in_slot(cmd, d[sym], 'C', (arg1, arg2))

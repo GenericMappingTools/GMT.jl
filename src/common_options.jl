@@ -312,7 +312,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_p(cmd::String, d::Dict)
 	# Parse the global -p option. Return CMD same as input if no -p option in args
-	for symb in [:p :perspective]
+	for symb in [:p :view :perspective]
 		if (haskey(d, symb) && isa(d[symb], String))
 			cmd = cmd * " -p" * d[symb]
 			break

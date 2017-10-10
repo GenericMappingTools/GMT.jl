@@ -1,4 +1,4 @@
-const opt_C = "**C** : **color** : -- Str --
+const opt_C = "**C** : **color** : **cmap** : -- Str --
     Name of the CPT (for grd_z only). Alternatively, supply the name of a GMT color
     master dynamic CPT.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#c)"
@@ -52,7 +52,7 @@ const opt_i = "**i** : **input_col** : -- Str --"
 const opt_n = "**n** : **interp** : -- Str --
       [`-n`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#n-full)"
 
-const opt_p = "**p** : **perspective** : -- Str --
+const opt_p = "**p** : **view** : **perspective** : -- Str --
       [`-p`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#perspective-full)"
 
 const opt_t = "**t** : **alpha** : **transparency** : -- Str --

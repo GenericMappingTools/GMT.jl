@@ -24,7 +24,7 @@ function psscale(cmd0::String="", arg1=[]; fmt="", K=false, O=false, first=true,
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
 
-	for sym in [:C :color]
+	for sym in [:C :color :cmap]
 		if (haskey(d, sym))
 			if (isa(d[sym], GMT.GMTcpt))
 				cmd = cmd * " -C"
@@ -47,6 +47,10 @@ function psscale(cmd0::String="", arg1=[]; fmt="", K=false, O=false, first=true,
 	cmd = add_opt(cmd, 'S', d, [:S :nolines])
 	cmd = add_opt(cmd, 'W', d, [:W :z_scale])
 	cmd = add_opt(cmd, 'Z', d, [:Z :zfile])
+
+	if (first)  K = true;	O = false
+	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
+	end
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
