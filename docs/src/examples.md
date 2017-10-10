@@ -60,13 +60,10 @@ psscale!(position="jTC+w5i/0.25i+h+o0/-1i", region="@tut_relief.nc", color=topo,
 ## Perspective view
 
 We will make a perspective, color-coded view of the US Rockies from the southeast.
-This plot is pretty crude since we selected 100 dpi but it is fast to render and allows us to try
-alternate values for vantage point and scaling. When we settle on the final values we select
-the appropriate dpi for the final output device and let it rip.
 
 
 ```julia
-grdview(data="@tut_bathy.nc", proj="M12c", JZ="4c", shade="+ne0.8+a100", view="135/30",
+grdview(data="@tut_relief.nc", proj="M12c", JZ="1c", shade="+ne0.8+a100", view="135/30",
         frame="a", fmt="jpg", color="topo", Q="i100", show=1)
 ```
 
