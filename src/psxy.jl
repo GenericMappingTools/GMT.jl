@@ -1,13 +1,9 @@
 """
-    psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="", K=false, O=false, first=true, kwargs...)
+	psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="", K=false, O=false,
+	     first=true, kwargs...)
 
 reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
-polygons, or symbols at those locations on a map. If a symbol is selected and no symbol size given,
-then psxy will interpret the third column of the input data as symbol size. Symbols whose size is <= 0 are skipped.
-If no symbols are specified then the symbol code must be present as last column in the input. If -S is not used,
-a line connecting the data points will be drawn instead. To explicitly close polygons, use -L.
-Select a fill with -G. If -G is set, -W will control whether the polygon outline is drawn or not.
-If a symbol is selected, -G and -W determines the fill and outline/no outline, respectively.
+polygons, or symbols at those locations on a map.
 
 Full option list at [`psxy`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html)
 
@@ -75,15 +71,15 @@ Parameters
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - $(GMT.opt_a)
-- **bi** : **binary_in** : -- Str --
-- **di** : **nodata_in** : -- Str --
-- **e** : **patern** : -- Str --
-- **f** : **colinfo** : -- Str --
-- **g** : **gaps** : -- Str --
-- **h** : **headers** : -- Str --
-- **i** : **input_col** : -- Str --
-- **p** : **perspective** : -- Str --
-- **t** : **alpha** : **transparency** : -- Str --
+- $(GMT.opt_bi)
+- $(GMT.opt_di)
+- $(GMT.opt_e)
+- $(GMT.opt_f)
+- $(GMT.opt_g)
+- $(GMT.opt_h)
+- $(GMT.opt_i)
+- $(GMT.opt_p)
+- $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
 function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="",

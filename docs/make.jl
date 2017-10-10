@@ -3,10 +3,11 @@ using Documenter, GMT
 makedocs(
     modules = [GMT],
     format = :html,
-    sitename = "GMT.jl",
+    sitename = "GMT",
     pages = [
         "Home" => "index.md",
-        "A few examples" => "examples.md"
+        "Some examples" => "examples.md",
+        "Index" => "functionindex.md"
     ],
     html_prettyurls = true,
 )
