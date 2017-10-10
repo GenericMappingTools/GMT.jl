@@ -10,12 +10,18 @@
 
 ## Functions
 
+```@meta
+DocTestSetup = quote
+    using GMT
+end
+```
+
 ```@docs
 psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="",
      K=false, O=false, first=true, kwargs...)
 
 pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true, kwargs...)
-    
+
 psscale(cmd0::String="", arg1=[]; fmt="", K=false, O=false, first=true, kwargs...)
 
 grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[],

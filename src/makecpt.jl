@@ -1,13 +1,14 @@
 """
 	makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
-	
+
 Make static color palette tables (CPTs).
 
-#```jldoctest
-#julia> cpt = makecpt(range="-1/1/0.1");
-#julia> (size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0])
-#true
-#```
+```jldoctest
+julia> cpt = makecpt(range="-1/1/0.1");
+
+julia> (size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0])
+true
+```
 
 - $(GMT.opt_C)
 - $(GMT.opt_bi)
@@ -25,7 +26,7 @@ function makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	# Read in the 'data'
 	if (isa(data, String))
-		if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option 
+		if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
 			data = gmt("read -Td " * opt_i * opt_bi * " " * data)
 			if (!isempty(opt_i))		# Remove the -i option from cmd. It has done its job
 				cmd = replace(cmd, opt_i, "")
