@@ -1,5 +1,17 @@
 """
     grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false, first=true, kwargs...)
+
+Parameters
+----------
+
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- $(GMT.opt_B)
+- $(GMT.opt_U)
+- $(GMT.opt_V)
+- $(GMT.opt_X)
+- $(GMT.opt_Y)
+
 """
 # ---------------------------------------------------------------------------------------------------
 function grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false, first=true, kwargs...)

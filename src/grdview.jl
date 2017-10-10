@@ -1,6 +1,24 @@
 """
     grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
             fmt="", K=false, O=false, first=true, kwargs...)
+
+Reads a 2-D grid file and produces a 3-D perspective plot by drawing a mesh, painting a
+colored/grayshaded surface made up of polygons, or by scanline conversion of these polygons
+to a raster image.
+	
+Full option list at [`grdimage`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html)
+
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- $(GMT.opt_B)
+- $(GMT.opt_C)
+- $(GMT.opt_U)
+- $(GMT.opt_V)
+- $(GMT.opt_X)
+- $(GMT.opt_Y)
+- $(GMT.opt_n)
+- $(GMT.opt_p)
+- $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
 function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],

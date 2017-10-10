@@ -4,58 +4,23 @@
 
 Produces a gray-shaded (or colored) map by plotting rectangles centered on each grid node and assigning them a gray-shade (or color) based on the z-value.
 
-Full option list at http://gmt.soest.hawaii.edu/doc/latest/grdimage.html
+Full option list at [`grdimage`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html)
 
-	Parameters
-	----------
-	J : Str
-		Select map projection.
-	R : Str or list
-		'xmin/xmax/ymin/ymax[+r][+uunit]'.
-		Specify the region of interest.
-	A : Str or number
-		'min_area[/min_level/max_level][+ag|i|s|S][+r|l][+ppercent]'
-		Features with an area smaller than min_area in km^2 or of
-		hierarchical level that is lower than min_level or higher than
-		max_level will not be plotted.
-	B : Str
-		Set map boundary frame and axes attributes.
-	C : Str
-		Set the shade, color, or pattern for lakes and river-lakes.
-	D : Str
-		Selects the resolution of the data set to use ((f)ull, (h)igh,
-		(i)ntermediate, (l)ow, and (c)rude).
-	E : Str; Tuple(Str, Str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
-		'code1,code2,...[+l|L][+gfill][+ppen]'		
-		Select painting or dumping country polygons from the Digital Chart of the World
-	G : Str
-		Select filling or clipping of “dry” areas.
-	I : Str
-		'river[/pen]'
-		Draw rivers. Specify the type of rivers and [optionally] append pen
-		attributes.
-	N : Str
-		'border[/pen]'
-		Draw political boundaries. Specify the type of boundary and
-		[optionally] append pen attributes
-	S : Str
-		Select filling or clipping of “wet” areas.
-	U : Str or []
-		Draw GMT time stamp logo on plot.
-    V : Bool or Str   '[level]'
-        Select verbosity level 
-		http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#v
-	W : Str
-		'[level/]pen'
-		Draw shorelines [Default is no shorelines]. Append pen attributes.
-    X : Str    '[a|c|f|r][x-shift[u]]'
-    Y : Str    '[a|c|f|r][y-shift[u]]'
-        Shift plot origin. 
-		http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#x
+Parameters
+----------
+
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- $(GMT.opt_B)
+- $(GMT.opt_C)
+- $(GMT.opt_U)
+- $(GMT.opt_V)
+- $(GMT.opt_X)
+- $(GMT.opt_Y)
 """
 # ---------------------------------------------------------------------------------------------------
 function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], fmt="", 
-                                   K=false, O=false, first=true, kwargs...)
+                  K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("grdimage " * cmd0)
@@ -176,5 +141,4 @@ end
 # ---------------------------------------------------------------------------------------------------
 grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[],
           fmt="", K=true, O=true, first=false, kw...) =
-	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data,
-	         fmt=fmt, K=true, O=true, first=false, kw...) 
+	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, fmt=fmt, K=true, O=true, first=false, kw...) 

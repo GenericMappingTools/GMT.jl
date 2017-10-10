@@ -10,63 +10,53 @@ Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 
     - F = box
     - M = dump
-    - P = portrait
     - Td = rose
     - Tm = compass
-    - bo = binary_out
-    - p = perspective
-    - t = transparency
 	
 	Parameters
-    ----------
-    J : proj : projection : -- Str --
-        Select map projection. Defaults to 12x8 cm with linear (non-projected) maps.
-        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#j
-    R : region : limits : -- Str or list --    'xmin/xmax/ymin/ymax[+r][+uunit]'.
-        Specify the region of interest. Set to data minimum BoundinBox if not provided.
-        http://gmt.soest.hawaii.edu/doc/latest/psxy.html#r
-    A : area : -- Str or number --
+	----------
+
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- **A** : **area** : -- Str or number --
         'min_area[/min_level/max_level][+ag|i|s|S][+r|l][+ppercent]'
         Features with an area smaller than min_area in km^2 or of
         hierarchical level that is lower than min_level or higher than
         max_level will not be plotted.
-    B : frame : axes : -- Str --  '[p|s]parameters'
-        Set map boundary frame and axes attributes.
-        http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#b
-    C : river_fill : -- Str --
+- $(GMT.opt_B)
+- **C** : **river_fill** : -- Str --
         Set the shade, color, or pattern for lakes and river-lakes.
-    D : res : resolution : -- Str --
+- **D** : **res** : **resolution** : -- Str --
         Selects the resolution of the data set to use ((f)ull, (h)igh,
         (i)ntermediate, (l)ow, and (c)rude).
-	E : ECW : -- Str --  Tuple(Str, Str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
+- **E** : **ECW** : -- Str --  Tuple(Str, Str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
         'code1,code2,...[+l|L][+gfill][+ppen]'		
         Select painting or dumping country polygons from the Digital Chart of the World
-    G : land : -- Str --
+- **G** : **land** : -- Str --
         Select filling or clipping of “dry” areas.
-    I : rivers : -- Str --
+- **I** : **rivers** : -- Str --
         'river[/pen]'
         Draw rivers. Specify the type of rivers and [optionally] append pen
         attributes.
-	L : map_scale : -- Str --
+- **L** : **map_scale** : -- Str --
         Dtraw a map scale.
-    N : borders : -- Str --
+- **N** : **borders** : -- Str --
         'border[/pen]'
         Draw political boundaries. Specify the type of boundary and
         [optionally] append pen attributes
-    S : water : -- Str --
+- $(GMT.opt_P)
+- **S** : **water** : -- Str --
         Select filling or clipping of “wet” areas.
-    U : Str or Bool or []
-        Draw GMT time stamp logo on plot.
-    V : Bool or Str   '[level]'
-        Select verbosity level 
-		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#v
-    W : shore : -- Str --
+- $(GMT.opt_U)
+- $(GMT.opt_V)
+- **W** : **shore** : -- Str --
         '[level/]pen'
         Draw shorelines [Default is no shorelines]. Append pen attributes.
-    X : Str    '[a|c|f|r][x-shift[u]]'
-    Y : Str    '[a|c|f|r][y-shift[u]]'
-        Shift plot origin. 
-		http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x
+- $(GMT.opt_X)
+- $(GMT.opt_Y)
+- $(GMT.opt_bo)
+- $(GMT.opt_p)
+- $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
 function pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true, kwargs...)

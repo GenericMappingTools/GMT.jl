@@ -43,10 +43,11 @@ export
 	gmt_core_module_info,
 	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
-	pscoast, psxy, psxy!, grdcontour, grdcontour!, grdimage, grdimage!, grdview, grdview!,
-	plot, plot!, makecpt, psscale, psscale!,
+	pscoast, pscoast!, psxy, psxy!, grdcontour, grdcontour!, grdimage, grdimage!,
+	grdview, grdview!, plot, plot!, makecpt, psscale, psscale!,
 	NULL
 
+include("common_docs.jl")
 include("libgmt_h.jl")
 include("libgmt.jl")
 include("gmt_main.jl")

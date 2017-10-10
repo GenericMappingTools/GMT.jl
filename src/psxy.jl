@@ -11,21 +11,14 @@ If a symbol is selected, -G and -W determines the fill and outline/no outline, r
 
 Full option list at [`psxy`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html)
 
-	
 Parameters
 ----------
 
 - **A** : **straight_lines** : -- Str --  
     By default, geographic line segments are drawn as great circle arcs. To draw them as straight lines, use the -A flag.
-- **J** : **proj** : **projection** : -- Str --  
-    Select map projection. Defaults to 12x8 cm with linear (non-projected) maps.
-    [`-J`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#j)
-- **R** : **region** : **limits** : -- Str or list --    'xmin/xmax/ymin/ymax[+r][+uunit]'.
-    Specify the region of interest. Set to data minimum BoundinBox if not provided.
-    [`-R`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#r)
-- **B** : **frame** : **axes** : -- Str --  '[p|s]parameters'
-    Set map boundary frame and axes attributes.
-    [`-B`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#b)
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- $(GMT.opt_B)
 - **C** : **color** : -- Str --
     Give a CPT or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those colors automatically.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#c)
@@ -77,16 +70,11 @@ Parameters
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
     If your plot has polygons and symbols, use **W** or **line_attribs** for the polygons and
     **markeredgecolor** or **MarkerEdgeColor** for filling the symbols. Similar to S above.
-- **U** : **stamp** : -- Str or Bool or [] --   '[[just]/dx/dy/][c|label]'
-    Draw GMT time stamp logo on plot.
-- **V** : **verbose** : -- Bool or Str --   '[level]'
-    Select verbosity level 
-    [`-V`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#v)
-- **X** : **x_offset** : -- Str --   '[a|c|f|r][x-shift[u]]'
-- **Y** : **y_offset** : -- Str --   '[a|c|f|r][y-shift[u]]'
-    Shift plot origin. 
-    [`-Y`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#x)
-- **a** : **aspatial** : -- Str --
+- $(GMT.opt_U)
+- $(GMT.opt_V)
+- $(GMT.opt_X)
+- $(GMT.opt_Y)
+- $(GMT.opt_a)
 - **bi** : **binary_in** : -- Str --
 - **di** : **nodata_in** : -- Str --
 - **e** : **patern** : -- Str --
