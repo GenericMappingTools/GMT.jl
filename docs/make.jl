@@ -6,6 +6,7 @@ makedocs(
     sitename = "GMT.jl",
     pages = [
         "Home" => "index.md",
+        "A few examples" => "examples.md"
     ],
     html_prettyurls = true,
 )
