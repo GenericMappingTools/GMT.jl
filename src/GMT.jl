@@ -2,7 +2,7 @@ VERSION >= v"0.4" && __precompile__()
 
 module GMT
 
-GMTver = 6.0
+GMTver = 5.4
 
 export
 	GMTver,
