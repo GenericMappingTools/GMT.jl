@@ -10,10 +10,41 @@ julia> (size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0])
 true
 ```
 
+- **A** : **alpha** : **transparency** : -- Str --  
+	Sets a constant level of transparency (0-100) for all color slices.
+	[`-A`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#a)
 - $(GMT.opt_C)
-- $(GMT.opt_bi)
-- $(GMT.opt_di)
-- $(GMT.opt_i)
+- **D** : -- Str or [] --  
+	Select the back- and foreground colors to match the colors for lowest and highest
+	z-values in the output CPT. [`-D`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#d)
+- **E** : **data_levels** : -- Int or [] --  
+	Implies reading data table(s) from file or arrays. We use the last data column to
+	determine the data range
+	[`-E`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#e)
+- **F** : **force** : -- Str --  
+    Force output CPT to written with r/g/b codes, gray-scale values or color name.
+	[`-F`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#f)
+- **G** : **truncate** : -- Str --  
+    Truncate the incoming CPT so that the lowest and highest z-levels are to zlo and zhi.
+	[`-G`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#g)
+- **I** : **inverse** : **reverse** : -- Str --  
+    Reverse the sense of color progression in the master CPT.
+	[`-I`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#i)
+- **N** : -- Bool or [] --
+    Do not write out the background, foreground, and NaN-color fields.
+- **Q** : **log** : -- Str --
+    Selects a logarithmic interpolation scheme [Default is linear].
+	[`-Q`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#q)
+- **T** : **range** : -- Str --
+    Defines the range of the new CPT by giving the lowest and highest z-value and interval.
+	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#t)
+- **W** : **wrap** : **categorical** : -- Bool or [] --
+	Do not interpolate the input color table but pick the output colors starting at the
+	beginning of the color table, until colors for all intervals are assigned.
+	[`-W`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#w)
+- **Z** : **continuous** : -- Bool or [] --
+    Creates a continuous CPT [Default is discontinuous, i.e., constant colors for each interval].
+	[`-Z`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#z)
 """
 # ---------------------------------------------------------------------------------------------------
 function makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
