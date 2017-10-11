@@ -479,7 +479,7 @@ function finish_PS(d::Dict, cmd0::String, cmd::String, output::String, K::Bool, 
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(cmd::String, opt::Char, d::Dict, symbs)
+function add_opt(cmd::String, opt, d::Dict, symbs)
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	for sym in symbs
 		if (haskey(d, sym))

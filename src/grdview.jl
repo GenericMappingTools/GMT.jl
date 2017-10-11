@@ -89,9 +89,9 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 	cmd = add_opt(cmd, 'S', d, [:S :smooth])
 	cmd = add_opt(cmd, 'T', d, [:T :no_interp])
 	cmd = add_opt(cmd, 'W', d, [:W])
-	cmd = add_opt(cmd, 'Wc', d, [:contour])
-	cmd = add_opt(cmd, 'Wm', d, [:mesh])
-	cmd = add_opt(cmd, 'Wf', d, [:facade])
+	cmd = add_opt(cmd, "Wc", d, [:contour])
+	cmd = add_opt(cmd, "Wm", d, [:mesh])
+	cmd = add_opt(cmd, "Wf", d, [:facade])
 
 	if (!isempty_(data))
 		if (!isempty_(arg1))
