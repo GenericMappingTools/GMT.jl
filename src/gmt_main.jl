@@ -775,8 +775,8 @@ function get_dataset_(API::Ptr{Void}, object)
 # wkt:		String with any WKT information
 
 	D = unsafe_load(convert(Ptr{GMT_DATASET}, object))
-	if (D == C_NULL || D.n_segments == 0)
-		error("programming error, input Dataset is empty")
+	if (D == C_NULL)
+		error("get_dataset: programming error, input Dataset is empty")
 	end
 
 	seg_out = 0
