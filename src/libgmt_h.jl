@@ -354,7 +354,7 @@ type GMT_DATASEGMENT
 	mode::UInt32
 	pol_mode::UInt32
 	id::UInt64
-	n_alloc::Cint
+	n_alloc::Csize_t
 	range::Cint
 	pole::Cint
 	dist::Cdouble
@@ -374,12 +374,12 @@ type GMT_DATATABLE
 	header::Ptr{Ptr{UInt8}}
 	segment::Ptr{Ptr{GMT_DATASEGMENT}}
 	id::UInt64
-	n_alloc::Cint
+	n_alloc::Csize_t
 	mode::UInt32
 	ogr::Ptr{GMT_OGR}
 	file::NTuple{2,Ptr{UInt8}}
 end
-type GMT_DATASET
+type GMT_DATASET_v5
 	n_tables::UInt64
 	n_columns::UInt64
 	n_segments::UInt64
@@ -388,7 +388,7 @@ type GMT_DATASET
 	max::Ptr{Cdouble}
 	table::Ptr{Ptr{GMT_DATATABLE}}
 	id::UInt64
-	n_alloc::Cint
+	n_alloc::Csize_t
 	dim::NTuple{4,UInt64}
 	geometry::UInt32
 	alloc_level::UInt32
@@ -396,6 +396,31 @@ type GMT_DATASET
 	alloc_mode::UInt32
 	file::NTuple{2,Ptr{UInt8}}
 end
+type GMT_DATASET_v6
+	n_tables::UInt64
+	n_columns::UInt64
+	n_segments::UInt64
+	n_records::UInt64
+	min::Ptr{Cdouble}
+	max::Ptr{Cdouble}
+	table::Ptr{Ptr{GMT_DATATABLE}}
+	id::UInt64
+	n_alloc::Csize_t
+	dim::NTuple{4,UInt64}
+	alloc_level::UInt32
+	type_::UInt32
+	geometry::UInt32
+	io_mode::UInt32
+	alloc_mode::UInt32
+	file::NTuple{2,Ptr{UInt8}}
+end
+
+if (GMTver >= 6.0)
+	const GMT_DATASET = GMT_DATASET_v6
+else
+	const GMT_DATASET = GMT_DATASET_v5
+end
+
 type GMT_TEXTSEGMENT
 	n_rows::UInt64
 	data::Ptr{Ptr{UInt8}}
@@ -403,7 +428,7 @@ type GMT_TEXTSEGMENT
 	header::Ptr{UInt8}
 	id::UInt64
 	mode::UInt32
-	n_alloc::Cint
+	n_alloc::Csize_t
 	file::NTuple{2,Ptr{UInt8}}
 	tvalue::Ptr{Ptr{UInt8}}
 end
@@ -414,7 +439,7 @@ type GMT_TEXTTABLE
 	header::Ptr{Ptr{UInt8}}
 	segment::Ptr{Ptr{GMT_TEXTSEGMENT}}
 	id::UInt64
-	n_alloc::Cint
+	n_alloc::Csize_t
 	mode::UInt32
 	file::NTuple{2,Ptr{UInt8}}
 end
@@ -461,7 +486,7 @@ immutable GMT_BFN
 	skip::UInt32
 	fill::Ptr{GMT_FILL}
 end
-type GMT_PALETTE
+type GMT_PALETTE_v5
 	n_headers::UInt32
 	n_colors::UInt32
 	mode::UInt32
@@ -490,6 +515,43 @@ type GMT_PALETTE
 	hinge::Cdouble
 	wrap_length::Cdouble
 end
+type GMT_PALETTE_v6
+	n_headers::UInt32
+	n_colors::UInt32
+	mode::UInt32
+	data::Ptr{GMT_LUT}
+	bfn::NTuple{3,GMT_BFN}
+	header::Ptr{Ptr{UInt8}}
+	id::UInt64
+	n_alloc::Csize_t
+	alloc_mode::UInt32
+	alloc_level::UInt32
+	auto_scale::UInt32
+	model::UInt32
+	is_wrapping::UInt32
+	is_gray::UInt32
+	is_bw::UInt32
+	is_continuous::UInt32
+	has_pattern::UInt32
+	has_hinge::UInt32
+	has_range::UInt32
+	skip::UInt32
+	categorical::UInt32
+	z_adjust::NTuple{2,UInt32}
+	z_mode::NTuple{2,UInt32}
+	z_unit::NTuple{2,UInt32}
+	z_unit_to_meter::NTuple{2,Cdouble}
+	minmax::NTuple{2,Cdouble}
+	hinge::Cdouble
+	wrap_length::Cdouble
+end
+
+if (GMTver >= 6.0)
+	const GMT_PALETTE = GMT_PALETTE_v5
+else
+	const GMT_PALETTE = GMT_PALETTE_v6
+end
+
 type GMT_IMAGE
 	_type::UInt32
 	colormap::Ptr{Cint}
@@ -504,7 +566,7 @@ type GMT_IMAGE
 	x::Ptr{Cdouble}
 	y::Ptr{Cdouble}
 end
-type GMT_POSTSCRIPT
+type GMT_POSTSCRIPT_v5
 	n_alloc::Csize_t
 	n_bytes::Csize_t
 	mode::UInt32
@@ -515,6 +577,24 @@ type GMT_POSTSCRIPT
 	alloc_level::UInt32
 	alloc_mode::UInt32
 end
+type GMT_POSTSCRIPT_v6
+	n_bytes::Csize_t
+	mode::UInt32
+	n_headers::UInt32
+	data::Ptr{UInt8}
+	header::Ptr{Ptr{UInt8}}
+	id::UInt64
+	n_alloc::Csize_t
+	alloc_level::UInt32
+	alloc_mode::UInt32
+end
+
+if (GMTver >= 6.0)
+	const GMT_POSTSCRIPT = GMT_POSTSCRIPT_v5
+else
+	const GMT_POSTSCRIPT = GMT_POSTSCRIPT_v6
+end
+
 immutable GMT_UNIVECTOR
 	uc1::Ptr{UInt8}
 	sc1::Ptr{Int8}
