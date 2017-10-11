@@ -190,10 +190,6 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdview!(cmd0::String="", arg1=[]; data=[], fmt="", K=true, O=true, first=false, kw...) =
-	grdview(cmd0, arg1; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
-
-# ---------------------------------------------------------------------------------------------------
 function put_in_slot(cmd::String, val, opt::Char, args)
 	# Find the first non-empty slot in ARGS and assign it the Val of d[:symb]
 	# Return also the index of that first non-empty slot in ARGS
@@ -207,3 +203,15 @@ function put_in_slot(cmd::String, val, opt::Char, args)
 	end
 	return cmd, k
 end
+
+# ---------------------------------------------------------------------------------------------------
+grdview!(cmd0::String="", arg1=[]; data=[], fmt="", K=true, O=true, first=false, kw...) =
+	grdview(cmd0, arg1; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+
+grdview(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
+        fmt="", K=false, O=false, first=true, kw...) =
+	grdview(cmd0, arg1, arg2, arg3, arg4, arg5, arg6; data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+
+grdview!(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
+        fmt="", K=true, O=true, first=false, kw...) =
+	grdview(cmd0, arg1, arg2, arg3, arg4, arg5, arg6; data=data, fmt=fmt, K=true, O=true, first=false, kw...)

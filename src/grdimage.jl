@@ -11,28 +11,28 @@ Parameters
 
 - **A** : **img_out** : **image_out** : -- Str --  
     Save an image in a raster format instead of PostScript.
-	[`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#a)
+    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#a)
 - $(GMT.opt_J)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
 - **D** : **img_in** : **image_in** : -- Str or [] --  
     Specifies that the grid supplied is an image file to be read via GDAL.
-	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#d)
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#d)
 - **E** : **dpi** : -- Int or [] --  
     Sets the resolution of the projected grid that will be created.
-	[`-E`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#e)
+    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#e)
 - **G** : -- Str or Int --
-	[`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#g)
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#g)
 - **I** : **shade** : **intensity** : **intensfileintens** : -- Str or GMTgrid --
-	Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
-	or a grdgradient shading flags.
-	[`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#i)
+    Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
+    or a grdgradient shading flags.
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#i)
 - **M** : **monochrome** : -- Bool or [] --
     Force conversion to monochrome image using the (television) YIQ transformation.
-	[`-M`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#m)
+    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#m)
 - **N** : **noclip** : -- Bool or [] --
     Do not clip the image at the map boundary.
-	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#n)
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#n)
 - **Q** : **nan_t** : **nan_alphan** : -- Bool or [] --
     Make grid nodes with z = NaN transparent, using the colormasking feature in PostScript Level 3.
 - $(GMT.opt_R)
@@ -169,3 +169,11 @@ end
 grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[],
           fmt="", K=true, O=true, first=false, kw...) =
 	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, fmt=fmt, K=true, O=true, first=false, kw...) 
+
+grdimage(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[], fmt="", 
+         K=false, O=false, first=true, kw...) =
+	grdimage(cmd0, arg1=[], arg2=[], arg3=[], arg4=[]; data=[], fmt=fmt, K=K, O=O, first=first, kw...)
+
+grdimage!(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[], fmt="", 
+         K=true, O=true, first=false, kw...) =
+	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, fmt=fmt, K=true, O=true, first=false, kw...)

@@ -8,50 +8,58 @@ boundaries. A map projection must be supplied.
 
 Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
 
-    - F = box
-    - M = dump
-    - Td = rose
-    - Tm = compass
-	
-	Parameters
-	----------
+Parameters
+----------
 
 - $(GMT.opt_J)
 - $(GMT.opt_R)
-- **A** : **area** : -- Str or number --
-        'min_area[/min_level/max_level][+ag|i|s|S][+r|l][+ppercent]'
-        Features with an area smaller than min_area in km^2 or of
-        hierarchical level that is lower than min_level or higher than
-        max_level will not be plotted.
+- **A** : **area** : -- Str or Number --
+    Features with an area smaller than min_area in km^2 or of
+    hierarchical level that is lower than min_level or higher than
+    max_level will not be plotted.
+    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#a)
 - $(GMT.opt_B)
 - **C** : **river_fill** : -- Str --
-        Set the shade, color, or pattern for lakes and river-lakes.
+    Set the shade, color, or pattern for lakes and river-lakes.
+    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#c)
 - **D** : **res** : **resolution** : -- Str --
-        Selects the resolution of the data set to use ((f)ull, (h)igh,
-        (i)ntermediate, (l)ow, and (c)rude).
+    Selects the resolution of the data set to use ((f)ull, (h)igh, (i)ntermediate, (l)ow, and (c)rude).
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#d)
 - **E** : **ECW** : -- Str --  Tuple(Str, Str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
-        'code1,code2,...[+l|L][+gfill][+ppen]'		
-        Select painting or dumping country polygons from the Digital Chart of the World
+    Select painting or dumping country polygons from the Digital Chart of the World
+    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#e)
+- **F** : **box** : -- Str --
+    Draws a rectangular border around the map scale or rose.
+    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#f)
 - **G** : **land** : -- Str --
-        Select filling or clipping of “dry” areas.
+    Select filling or clipping of “dry” areas.
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#g)
 - **I** : **rivers** : -- Str --
-        'river[/pen]'
-        Draw rivers. Specify the type of rivers and [optionally] append pen
-        attributes.
+    Draw rivers. Specify the type of rivers and [optionally] append pen attributes.
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#i)
 - **L** : **map_scale** : -- Str --
-        Dtraw a map scale.
+    Dtraw a map scale.
+- **M** : **dump** : -- Str --
+    Dumps a single multisegment ASCII output. No plotting occurs.
+    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#m)
 - **N** : **borders** : -- Str --
-        'border[/pen]'
-        Draw political boundaries. Specify the type of boundary and
-        [optionally] append pen attributes
+    Draw political boundaries. Specify the type of boundary and [optionally] append pen attributes
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#n)
 - $(GMT.opt_P)
 - **S** : **water** : -- Str --
-        Select filling or clipping of “wet” areas.
+    Select filling or clipping of “wet” areas.
+    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#s)
+- **Td** : **rose`** : -- Str --
+    Draws a map directional rose on the map at the location defined by the reference and anchor points.
+    [`-Td`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#t)
+- **Tm** : **compass** : -- Str --
+    Draws a map magnetic rose on the map at the location defined by the reference and anchor points.
+    [`-Tm`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - **W** : **shore** : -- Str --
-        '[level/]pen'
-        Draw shorelines [Default is no shorelines]. Append pen attributes.
+    Draw shorelines [Default is no shorelines]. Append pen attributes.
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#w)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - $(GMT.opt_bo)
@@ -143,29 +151,9 @@ function pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true,
 		maybe_more = false		# and because we can use this only once, deactivate it
 	end
 
-	for symb in [:A :area]
-		if (haskey(d, symb))
-			if (isa(d[symb], String))      cmd = cmd * " -A" * d[symb]
-			elseif (isa(d[symb], Number))  cmd = @sprintf("%s -A%d", cmd, d[symb])
-			else	error("Nonsense in 'A' argument")
-			end
-			break
-		end
-	end
-
-	for symb in [:C :river_fill]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -C" * d[symb]
-			break
-		end
-	end
-
-	for symb in [:D :resolution]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = string(cmd, " -D", d[symb][1])
-			break
-		end
-	end
+	cmd = add_opt(cmd, 'A', d, [:A :area])
+	cmd = add_opt_s(cmd, 'C', d, [:C :river_fill])
+	cmd = add_opt_s(cmd, 'D', d, [:D :res :resolution])
 
 	for sb in [:E :DCW]
 		if (haskey(d, sb))
@@ -190,51 +178,13 @@ function pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true,
 		end
 	end
 
-	for symb in [:F :box]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -F" * d[symb]
-			break
-		end
-	end
-
-	for symb in [:G :land]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -G" * d[symb]
-			break
-		end
-	end
-
-	for symb in [:L :map_scale]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -L" * d[symb]
-			break
-		end
-	end
-
-	if (haskey(d, :M) || haskey(d, :dump))
-		cmd = cmd * " -M"
-	end
-
-	for symb in [:S :water]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -S" * d[symb]
-			break
-		end
-	end
-
-	for symb in [:Td :rose]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -Td" * d[symb]
-			break
-		end
-	end
-
-	for symb in [:Tm :compass]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -Tm" * d[symb]
-			break
-		end
-	end
+	cmd = add_opt_s(cmd, 'F', d, [:F :box])
+	cmd = add_opt(cmd, 'G', d, [:G :land])
+	cmd = add_opt_s(cmd, 'L', d, [:L :map_scale])
+	cmd = add_opt(cmd, 'M', d, [:M :dump])
+	cmd = add_opt(cmd, 'S', d, [:S :water])
+	cmd = add_opt_s(cmd, "Td", d, [:Td :rose])
+	cmd = add_opt_s(cmd, "Tm", d, [:Td :compass])
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 

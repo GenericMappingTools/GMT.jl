@@ -1,5 +1,6 @@
 """
-    grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false, first=true, kwargs...)
+	grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false,
+	           first=true, kwargs...)
 
 Reads a 2-D grid file or a GMTgrid type and produces a contour map by tracing each
 contour through the grid.

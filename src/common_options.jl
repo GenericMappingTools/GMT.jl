@@ -491,7 +491,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_s(cmd::String, opt::Char, d::Dict, symbs)
+function add_opt_s(cmd::String, opt, d::Dict, symbs)
 	# Same as add_opt() but where we only accept string arguments
 	for sym in symbs
 		if (haskey(d, sym) && isa(d[sym], String))
@@ -535,7 +535,7 @@ function showfig(fname_ps::String, fname_ext::String, opt_T::String, K=false, fn
 	# Take a PS file, convert it with psconvert (unless opt_T == "" meaning file is PS)
 	# and display it in default system viewer
 	if (!isempty(opt_T))
-		if (K) gmt("psxy -T -R -J -O >> " * fname_ps)  end			# Close the PS file first
+		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end			# Close the PS file first
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T)
 		out = fname_ps[1:end-2] * fname_ext
 	else

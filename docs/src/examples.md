@@ -49,7 +49,7 @@ for more details about what the arguments mean.
 
 ```julia
 topo = makecpt(color="rainbow", range="1000/5000/500", continuous=true);
-grdimage(data="@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", frame="a", fmt="jpg",
+grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", frame="a", fmt="jpg",
          color=topo)
 psscale!(position="jTC+w5i/0.25i+h+o0/-1i", region="@tut_relief.nc", color=topo,
          frame="y+lm", fmt="jpg", show=1)
@@ -63,7 +63,7 @@ We will make a perspective, color-coded view of the US Rockies from the southeas
 
 
 ```julia
-grdview(data="@tut_relief.nc", proj="M12c", JZ="1c", shade="+ne0.8+a100", view="135/30",
+grdview("@tut_relief.nc", proj="M12c", JZ="1c", shade="+ne0.8+a100", view="135/30",
         frame="a", fmt="jpg", color="topo", Q="i100", show=1)
 ```
 
