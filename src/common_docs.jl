@@ -43,6 +43,11 @@ const opt_bo = "**bo** : **binary_out** : -- Str --"
 
 const opt_di = "**di** : **nodata_in** : -- Str --"
 
+const opt_do = "**do** : **nodata_out** : -- Number --
+      Examine all output columns and if any item equals NAN substitute it with
+      the chosen missing data value
+      [`-do`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#do-full)"
+
 const opt_e = "**e** : **patern** : -- Str --"
 
 const opt_f = "**f** : **colinfo** : -- Str --"

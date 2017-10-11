@@ -1,6 +1,4 @@
-#@static is_windows() ? (const thelib = "V:/build32/src/gmt_w32") : (const thelib = "libgmt")  # Name of GMT shared lib.
 #@static is_windows() ? (const thelib = "V:/build/src/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
-#@static is_windows() ? (const thelib = "gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
 @static is_windows() ? (Sys.WORD_SIZE == 64 ? (const thelib = "gmt_w64") : (const thelib = "gmt_w32")) : (const thelib = "libgmt")  # Name of GMT shared lib.
 
 function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Void}=C_NULL)

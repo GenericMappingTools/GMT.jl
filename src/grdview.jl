@@ -101,7 +101,7 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 			if (isa(data, String)) 		# OK, we have data via file
 				cmd = cmd * " " * data
 			else
-				arg1 = [data]			# Whatever this is
+				arg1 = data				# Whatever this is
 			end
 		end
 	end
