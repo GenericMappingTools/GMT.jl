@@ -9,14 +9,41 @@ Full option list at [`grdimage`](http://gmt.soest.hawaii.edu/doc/latest/grdimage
 Parameters
 ----------
 
+- **A** : **img_out** : **image_out** : -- Str --  
+    Save an image in a raster format instead of PostScript.
+	[`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#a)
 - $(GMT.opt_J)
-- $(GMT.opt_R)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
+- **D** : **img_in** : **image_in** : -- Str or [] --  
+    Specifies that the grid supplied is an image file to be read via GDAL.
+	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#d)
+- **E** : **dpi** : -- Int or [] --  
+    Sets the resolution of the projected grid that will be created.
+	[`-E`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#e)
+- **G** : -- Str or Int --
+	[`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#g)
+- **I** : **shade** : **intensity** : **intensfileintens** : -- Str or GMTgrid --
+	Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
+	or a grdgradient shading flags.
+	[`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#i)
+- **M** : **monochrome** : -- Bool or [] --
+    Force conversion to monochrome image using the (television) YIQ transformation.
+	[`-M`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#m)
+- **N** : **noclip** : -- Bool or [] --
+    Do not clip the image at the map boundary.
+	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#n)
+- **Q** : **nan_t** : **nan_alphan** : -- Bool or [] --
+    Make grid nodes with z = NaN transparent, using the colormasking feature in PostScript Level 3.
+- $(GMT.opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
+- $(GMT.opt_f)
+- $(GMT.opt_n)
+- $(GMT.opt_p)
+- $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
 function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], fmt="", 
@@ -79,9 +106,9 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], 
 		end
 	end
 
-	for sym in [:C :cpt :cmap]
+	for sym in [:C :color :cmap]
 		if (haskey(d, sym))
-			if (!isa(d[sym], GMTcpt))					# Uff, simple. Either a file name or a -A type modifier
+			if (!isa(d[sym], GMTcpt))		# Uff, simple. Either a file name or a -A type modifier
 				cmd = cmd * " -C" * arg2str(d[sym])
 			else
 				cmd, N_cpt = put_in_slot(cmd, d[sym], 'C', (arg1, arg2, arg3, arg4))

@@ -7,6 +7,10 @@ const opt_J = "**J** : **proj** : **projection** : -- Str --
     Select map projection. Defaults to 12x8 cm with linear (non-projected) maps.
     [`-J`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#j)"
 
+const opt_Jz = "**Jz** : **z_axis** : -- Str --
+    Set z-axis scaling. 
+    [`-Jz`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#jz-full)
+
 const opt_R = "**R** : **region** : **limits** : -- Str or list --    'xmin/xmax/ymin/ymax[+r][+uunit]'.
     Specify the region of interest. Set to data minimum BoundinBox if not provided.
     [`-R`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#r)"

@@ -12,10 +12,34 @@ Full option list at [`grdimage`](http://gmt.soest.hawaii.edu/doc/latest/grdview.
 - $(GMT.opt_R)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
+- **G** : **drapefile** : -- Str or GMTgrid or a Tuple with 3 GMTgrid types --
+    Drape the image in drapefile on top of the relief provided by relief_file.
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#g)
+- **I** : **shade** : **intensity** : **intensfileintens** : -- Str or GMTgrid --
+    Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
+    or a grdgradient shading flags.
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#i)
+- $(GMT.opt_Jz)
+- **N** : **plane** : -- Str or Int --
+    Draws a plane at this z-level.
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#n)
+- **Q** : **type** : -- Str or Int --
+    Specify **m** for mesh plot, **s* for surface, **i** for image.
+    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#q)
+- **S** : **smooth** : -- Number --
+    Smooth the contours before plotting.
+    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#s)
+- **T** : **no_interp** : -- Str --
+    Plot image without any interpolation.
+    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#t)
+- **W** : **contour** : **mesh** : **facade** : -- Str --
+    Draw contour, mesh or facade. Append pen attributes.
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#w)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
+- $(GMT.opt_f)
 - $(GMT.opt_n)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
@@ -65,6 +89,9 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 	cmd = add_opt(cmd, 'S', d, [:S :smooth])
 	cmd = add_opt(cmd, 'T', d, [:T :no_interp])
 	cmd = add_opt(cmd, 'W', d, [:W])
+	cmd = add_opt(cmd, 'Wc', d, [:contour])
+	cmd = add_opt(cmd, 'Wm', d, [:mesh])
+	cmd = add_opt(cmd, 'Wf', d, [:facade])
 
 	if (!isempty_(data))
 		if (!isempty_(arg1))
