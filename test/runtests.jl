@@ -18,5 +18,5 @@ C = grdcontour(G, C="+0.7", D=[]);
 assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 #
 # Just create the figs but not check if they are correct.
-PS = grdimage(G, J="X10", fmt="ps",ps=1);
-PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", fmt="ps", ps=1)
+#PS = grdimage(G, J="X10", fmt="ps",ps=1);
+#PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", fmt="ps", ps=1)
