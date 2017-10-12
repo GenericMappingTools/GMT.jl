@@ -23,7 +23,7 @@ Parameters
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#e)
 - **G** : -- Str or Int --
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#g)
-- **I** : **shade** : **intensity** : **intensfileintens** : -- Str or GMTgrid --
+- **I** : **shade** : **intensity** : **intensfile** : -- Str or GMTgrid --
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#i)
@@ -111,11 +111,11 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], 
 			if (!isa(d[sym], GMTcpt))		# Uff, simple. Either a file name or a -A type modifier
 				cmd = cmd * " -C" * arg2str(d[sym])
 			else
-				cmd, N_cpt = put_in_slot(cmd, d[sym], 'C', (arg1, arg2, arg3, arg4))
-				if (N_cpt == 1)     arg1 = [d[sym]]
-				elseif (N_cpt == 2) arg2 = [d[sym]]
-				elseif (N_cpt == 3) arg3 = [d[sym]]
-				elseif (N_cpt == 4) arg4 = [d[sym]]
+				cmd, N_cpt = put_in_slot(cmd, d[sym], 'C', [arg1, arg2, arg3, arg4])
+				if (N_cpt == 1)     arg1 = d[sym]
+				elseif (N_cpt == 2) arg2 = d[sym]
+				elseif (N_cpt == 3) arg3 = d[sym]
+				elseif (N_cpt == 4) arg4 = d[sym]
 				end
 			end
 			break
@@ -124,13 +124,13 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], 
 
 	for sym in [:I :shade :intensity :intensfile]
 		if (haskey(d, sym))
-			if (!isa(d[sym], GMTgrid))                  # Uff, simple. Either a file name or a -A type modifier
+			if (!isa(d[sym], GMTgrid))		# Uff, simple. Either a file name or a -A type modifier
 				cmd = cmd * " -I" * arg2str(d[sym])
 			else
-				cmd,N_shade = put_in_slot(cmd, d[sym], 'I', (arg1, arg2, arg3))
-				if (N_shade == 1)     arg1 = [d[sym]]
-				elseif (N_shade == 2) arg2 = [d[sym]]
-				elseif (N_shade == 3) arg3 = [d[sym]]
+				cmd,N_shade = put_in_slot(cmd, d[sym], 'I', [arg1, arg2, arg3])
+				if (N_shade == 1)     arg1 = d[sym]
+				elseif (N_shade == 2) arg2 = d[sym]
+				elseif (N_shade == 3) arg3 = d[sym]
 				end
 			end
 			break
@@ -147,18 +147,18 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], 
 
 	P = nothing
 	if (PS)
-		if (!isempty_(arg4))      P = gmt("grdimage " * cmd, arg1[1], arg2[1], arg3[1], arg4[1])
-		elseif (!isempty_(arg3))  P = gmt("grdimage " * cmd, arg1[1], arg2[1], arg3[1])
-		elseif (!isempty_(arg2))  P = gmt("grdimage " * cmd, arg1[1], arg2[1])
-		elseif (!isempty_(arg1))  P = gmt("grdimage " * cmd, arg1[1])
-		else                     P = gmt("grdimage " * cmd)
+		if (!isempty_(arg4))      P = gmt("grdimage " * cmd, arg1, arg2, arg3, arg4)
+		elseif (!isempty_(arg3))  P = gmt("grdimage " * cmd, arg1, arg2, arg3)
+		elseif (!isempty_(arg2))  P = gmt("grdimage " * cmd, arg1, arg2)
+		elseif (!isempty_(arg1))  P = gmt("grdimage " * cmd, arg1)
+		else                      P = gmt("grdimage " * cmd)
 		end
 	else
-		if (!isempty_(arg4))      gmt("grdimage " * cmd, arg1[1], arg2[1], arg3[1], arg4[1])
-		elseif (!isempty_(arg3))  gmt("grdimage " * cmd, arg1[1], arg2[1], arg3[1])
-		elseif (!isempty_(arg2))  gmt("grdimage " * cmd, arg1[1], arg2[1])
-		elseif (!isempty_(arg1))  gmt("grdimage " * cmd, arg1[1])
-		else                     gmt("grdimage " * cmd)
+		if (!isempty_(arg4))      gmt("grdimage " * cmd, arg1, arg2, arg3, arg4)
+		elseif (!isempty_(arg3))  gmt("grdimage " * cmd, arg1, arg2, arg3)
+		elseif (!isempty_(arg2))  gmt("grdimage " * cmd, arg1, arg2)
+		elseif (!isempty_(arg1))  gmt("grdimage " * cmd, arg1)
+		else                      gmt("grdimage " * cmd)
 		end
 	end
 	show_or_save(d, output, fname_ext, opt_T, K)    # Display Fig in default viewer or save it to file
@@ -172,7 +172,7 @@ grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[],
 
 grdimage(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[], fmt="", 
          K=false, O=false, first=true, kw...) =
-	grdimage(cmd0, arg1=[], arg2=[], arg3=[], arg4=[]; data=[], fmt=fmt, K=K, O=O, first=first, kw...)
+	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, fmt=fmt, K=K, O=O, first=first, kw...)
 
 grdimage!(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[], fmt="", 
          K=true, O=true, first=false, kw...) =

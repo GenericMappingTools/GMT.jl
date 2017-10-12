@@ -111,9 +111,9 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 			if (!isa(d[sym], GMTcpt))	# Uff, simple. Either a file name or a -A type modifier
 				cmd = cmd * " -C" * arg2str(d[sym])
 			else
-				cmd, N_cpt = put_in_slot(cmd, d[sym], 'C', (arg1, arg2))
-				if (N_cpt == 1)     arg1 = [d[sym]]
-				elseif (N_cpt == 2) arg2 = [d[sym]]
+				cmd, N_cpt = put_in_slot(cmd, d[sym], 'C', [arg1, arg2])
+				if (N_cpt == 1)     arg1 = d[sym]
+				elseif (N_cpt == 2) arg2 = d[sym]
 				end
 			end
 			break
@@ -125,10 +125,10 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 			if (!isa(d[sym], GMTgrid))                  # Uff, simple. Either a file name or a -A type modifier
 				cmd = cmd * " -I" * arg2str(d[sym])
 			else
-				cmd,N_shade = put_in_slot(cmd, d[sym], 'I', (arg1, arg2, arg3))
-				if (N_shade == 1)     arg1 = [d[sym]]
-				elseif (N_shade == 2) arg2 = [d[sym]]
-				elseif (N_shade == 3) arg3 = [d[sym]]
+				cmd,N_shade = put_in_slot(cmd, d[sym], 'I', [arg1, arg2, arg3])
+				if (N_shade == 1)     arg1 = d[sym]
+				elseif (N_shade == 2) arg2 = d[sym]
+				elseif (N_shade == 3) arg3 = d[sym]
 				end
 			end
 			break
@@ -140,18 +140,18 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 			if (isa(d[sym], String))					# Uff, simple. Either a file name or a -A type modifier
 				cmd = cmd * " -G" * d[sym]
 			elseif (isa(d[sym], GMTgrid))				# A single drape grid
-				cmd,N_drape = put_in_slot(cmd, d[sym], 'G', (arg1, arg2, arg3, arg4))
-				if (N_drape == 1)     arg1 = [d[sym]]
-				elseif (N_drape == 2) arg2 = [d[sym]]
-				elseif (N_drape == 3) arg3 = [d[sym]]
-				elseif (N_drape == 4) arg4 = [d[sym]]
+				cmd,N_drape = put_in_slot(cmd, d[sym], 'G', [arg1, arg2, arg3, arg4])
+				if (N_drape == 1)     arg1 = d[sym]
+				elseif (N_drape == 2) arg2 = d[sym]
+				elseif (N_drape == 3) arg3 = d[sym]
+				elseif (N_drape == 4) arg4 = d[sym]
 				end
 			elseif (isa(d[sym], Tuple) && length(d[sym]) == 3)
-				cmd,N_drape = put_in_slot(cmd, d[sym][1], 'G', (arg1, arg2, arg3, arg4, arg5, arg6))
-				if (N_drape == 1)      arg1 = [d[sym][1]];	arg2 = [d[sym][2]];		arg3 = [d[sym][3]]
-				elseif (N_drape == 2)  arg2 = [d[sym][1]];	arg3 = [d[sym][2]];		arg4 = [d[sym][3]]
-				elseif (N_drape == 3)  arg3 = [d[sym][1]];	arg4 = [d[sym][2]];		arg5 = [d[sym][3]]
-				elseif (N_drape == 4)  arg4 = [d[sym][1]];	arg5 = [d[sym][2]];		arg6 = [d[sym][3]]
+				cmd,N_drape = put_in_slot(cmd, d[sym][1], 'G', [arg1, arg2, arg3, arg4, arg5, arg6])
+				if (N_drape == 1)      arg1 = d[sym][1];	arg2 = d[sym][2];		arg3 = d[sym][3]
+				elseif (N_drape == 2)  arg2 = d[sym][1];	arg3 = d[sym][2];		arg4 = d[sym][3]
+				elseif (N_drape == 3)  arg3 = d[sym][1];	arg4 = d[sym][2];		arg5 = d[sym][3]
+				elseif (N_drape == 4)  arg4 = d[sym][1];	arg5 = d[sym][2];		arg6 = d[sym][3]
 				end
 			end
 		end
@@ -167,41 +167,26 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 
 	P = nothing
 	if (PS)
-		if     (!isempty_(arg6))  P = gmt("grdview " * cmd, arg1[1], arg2[1], arg3[1], arg4[1], arg5[1], arg6[1])
-		elseif (!isempty_(arg5))  P = gmt("grdview " * cmd, arg1[1], arg2[1], arg3[1], arg4[1], arg5[1])
-		elseif (!isempty_(arg4))  P = gmt("grdview " * cmd, arg1[1], arg2[1], arg3[1], arg4[1])
-		elseif (!isempty_(arg3))  P = gmt("grdview " * cmd, arg1[1], arg2[1], arg3[1])
-		elseif (!isempty_(arg2))  P = gmt("grdview " * cmd, arg1[1], arg2[1])
-		elseif (!isempty_(arg1))  P = gmt("grdview " * cmd, arg1[1])
-		else                     P = gmt("grdview " * cmd)
+		if     (!isempty_(arg6))  P = gmt("grdview " * cmd, arg1, arg2, arg3, arg4, arg5, arg6)
+		elseif (!isempty_(arg5))  P = gmt("grdview " * cmd, arg1, arg2, arg3, arg4, arg5)
+		elseif (!isempty_(arg4))  P = gmt("grdview " * cmd, arg1, arg2, arg3, arg4)
+		elseif (!isempty_(arg3))  P = gmt("grdview " * cmd, arg1, arg2, arg3)
+		elseif (!isempty_(arg2))  P = gmt("grdview " * cmd, arg1, arg2)
+		elseif (!isempty_(arg1))  P = gmt("grdview " * cmd, arg1)
+		else                      P = gmt("grdview " * cmd)
 		end
 	else
-		if     (!isempty_(arg6))  gmt("grdview " * cmd, arg1[1], arg2[1], arg3[1], arg4[1], arg5[1], arg6[1])
-		elseif (!isempty_(arg5))  gmt("grdview " * cmd, arg1[1], arg2[1], arg3[1], arg4[1], arg5[1])
-		elseif (!isempty_(arg4))  gmt("grdview " * cmd, arg1[1], arg2[1], arg3[1], arg4[1])
-		elseif (!isempty_(arg3))  gmt("grdview " * cmd, arg1[1], arg2[1], arg3[1])
-		elseif (!isempty_(arg2))  gmt("grdview " * cmd, arg1[1], arg2[1])
-		elseif (!isempty_(arg1))  gmt("grdview " * cmd, arg1[1])
-		else                     gmt("grdview " * cmd)
+		if     (!isempty_(arg6))  gmt("grdview " * cmd, arg1, arg2, arg3, arg4, arg5, arg6)
+		elseif (!isempty_(arg5))  gmt("grdview " * cmd, arg1, arg2, arg3, arg4, arg5)
+		elseif (!isempty_(arg4))  gmt("grdview " * cmd, arg1, arg2, arg3, arg4)
+		elseif (!isempty_(arg3))  gmt("grdview " * cmd, arg1, arg2, arg3)
+		elseif (!isempty_(arg2))  gmt("grdview " * cmd, arg1, arg2)
+		elseif (!isempty_(arg1))  gmt("grdview " * cmd, arg1)
+		else                      gmt("grdview " * cmd)
 		end
 	end
 	show_or_save(d, output, fname_ext, opt_T, K)    # Display Fig in default viewer or save it to file
 	return P
-end
-
-# ---------------------------------------------------------------------------------------------------
-function put_in_slot(cmd::String, val, opt::Char, args)
-	# Find the first non-empty slot in ARGS and assign it the Val of d[:symb]
-	# Return also the index of that first non-empty slot in ARGS
-	k = 1
-	for arg in args					# Find the first empty slot
-		if (isempty_(arg))
-			cmd = string(cmd, " -", opt)
-			break
-		end
-		k += 1
-	end
-	return cmd, k
 end
 
 # ---------------------------------------------------------------------------------------------------
