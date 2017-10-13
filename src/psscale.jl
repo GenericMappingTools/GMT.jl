@@ -3,7 +3,7 @@
 	
 Plots gray scales or color scales on maps.
 
-Full option list at [`grdimage`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html)
+Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html)
 
 - **D** : **position** : -- Str --
     Defines the reference point on the map for the color scale using one of four coordinate systems.

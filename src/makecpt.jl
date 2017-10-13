@@ -3,6 +3,8 @@
 
 Make static color palette tables (CPTs).
 
+Full option list at [`makecpt`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html)
+
 - **A** : **alpha** : **transparency** : -- Str --
     Sets a constant level of transparency (0-100) for all color slices.
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#a)

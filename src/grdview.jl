@@ -6,7 +6,7 @@ Reads a 2-D grid file and produces a 3-D perspective plot by drawing a mesh, pai
 colored/grayshaded surface made up of polygons, or by scanline conversion of these polygons
 to a raster image.
 
-Full option list at [`grdimage`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html)
+Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html)
 
 - $(GMT.opt_J)
 - $(GMT.opt_R)

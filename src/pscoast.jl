@@ -6,7 +6,7 @@ Plots grayshaded, colored, or textured land-masses [or water-masses] on
 maps and [optionally] draws coastlines, rivers, and political
 boundaries. A map projection must be supplied.
 
-Full option list at http://gmt.soest.hawaii.edu/doc/latest/pscoast.html
+Full option list at [`pscoast`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html)
 
 Parameters
 ----------

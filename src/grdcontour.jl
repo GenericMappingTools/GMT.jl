@@ -5,6 +5,8 @@
 Reads a 2-D grid file or a GMTgrid type and produces a contour map by tracing each
 contour through the grid.
 
+Full option list at [`pscontour`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html)
+
 Parameters
 ----------
 
