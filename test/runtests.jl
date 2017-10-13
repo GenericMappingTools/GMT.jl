@@ -23,3 +23,15 @@ PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="1
 #
 G = gmt("surface -R0/150/0/150 -I1 -Ll-100", rand(100,3) * 150);
 assert(size(G.z) == (151, 151))
+
+# GMTSPATIAL
+# Test  Cartesian centroid and area
+result = gmt("gmtspatial -Q", [0 0; 1 0; 1 1; 0 1; 0 0]);
+assert(isapprox(result[1].data, [0.5 0.5 1]))
+# Test Geographic centroid and area
+result = gmt("gmtspatial -Q -fg", [0 0; 1 0; 1 1; 0 1; 0 0]);
+assert(isapprox(result[1].data, [0.5 0.500019546308 12308.3096995]))
+# Intersections
+l1 = gmt("project -C22/49 -E-60/-20 -G10 -Q");
+l2 = gmt("project -C0/-60 -E-60/-30 -G10 -Q");
+#int = gmt("gmtspatial -Ie -Fl", l1, l2);       # Error returned from GMT API: GMT_ONLY_ONE_ALLOWED (59)
