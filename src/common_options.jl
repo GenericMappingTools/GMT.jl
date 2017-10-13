@@ -507,7 +507,7 @@ function fname_out(out::String)
 	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 	opt_T = "";		EXT = ""
 	if (length(out) <= 3)
-		@static is_windows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * '/' * "GMTjl_tmp.ps" 
+		@static is_windows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps" 
 		template = tempdir() * "GMTjl_tmp.ps"
 		ext = lowercase(out)
 		if (ext == "ps")       out = template
