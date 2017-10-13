@@ -3,7 +3,7 @@
 The Grid type
 -------------
 
-    type GMTJL_GRID               # The type holding a local header and data of a GMT grid
+    type GMTgrid                  # The type holding a local header and data of a GMT grid
        proj4::String              # Projection string in PROJ4 syntax (Optional)
        wkt::String                # Projection string in WKT syntax (Optional)
        range::Array{Float64,1}    # 1x6 vector with [x_min x_max y_min y_max z_min z_max]

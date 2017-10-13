@@ -7,6 +7,7 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Some examples" => "examples.md",
+        "The manual" => "usage.md",
         "The GMT types" => "types.md"
     ],
     html_prettyurls = true,
