@@ -20,3 +20,6 @@ assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 # Just create the figs but not check if they are correct.
 PS = grdimage(G, J="X10", ps=1);
 PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1)
+#
+G = gmt("surface -R0/150/0/150 -I1 -Ll-100", rand(100,3) * 150);
+assert(size(G.z) == (151, 151))
