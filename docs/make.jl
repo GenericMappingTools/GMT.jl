@@ -8,6 +8,10 @@ makedocs(
         "Home" => "index.md",
         "Some examples" => "examples.md",
         "The manual" => "usage.md",
+        "Manual" => [
+            "man/monolitic.md",
+            "man/modules.md",
+        ],
         "The GMT types" => "types.md"
     ],
     html_prettyurls = true,
