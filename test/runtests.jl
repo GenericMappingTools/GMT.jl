@@ -23,6 +23,8 @@ PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="1
 #
 G = gmt("surface -R0/150/0/150 -I1 -Ll-100", rand(100,3) * 150);
 assert(size(G.z) == (151, 151))
+#
+plot(collect(1:10),rand(10), lw=1, lc="blue", fmt="ps", marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
 
 # GMTSPATIAL
 # Test  Cartesian centroid and area
