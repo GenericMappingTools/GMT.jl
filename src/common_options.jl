@@ -338,14 +338,10 @@ function parse_pen(pen::Tuple)
 	# Convert a empty to 3 args tuple containing (width[c|i|p]], [color], [style[c|i|p|])
 	len = length(pen)
 	if (len == 0) return "0.25p" end 	# just the default pen
-	if (isa(pen[1], Number))			# First arg is differene because there is no leading ','
-		s = @sprintf("%d", pen[1])
-	else
-		s = @sprintf("%s", pen[1])
-	end
+	s = arg2str(pen[1])					# First arg is differene because there is no leading ','
 	for k = 2:len
 		if (isa(pen[k], Number))
-			s = @sprintf("%s,%d", s, pen[k])
+			s = @sprintf("%s,%.8g", s, pen[k])
 		else
 			s = @sprintf("%s,%s", s, pen[k])
 		end
