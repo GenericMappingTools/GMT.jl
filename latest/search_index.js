@@ -138,22 +138,22 @@ var documenterSearchIndex = {"docs": [
 
 {
     "location": "usage/#",
-    "page": "The manual",
-    "title": "The manual",
+    "page": "Introduction",
+    "title": "Introduction",
     "category": "page",
     "text": ""
 },
 
 {
-    "location": "usage/#The-monolitic-usage-1",
-    "page": "The manual",
-    "title": "The monolitic usage",
+    "location": "usage/#Introduction-1",
+    "page": "Introduction",
+    "title": "Introduction",
     "category": "section",
-    "text": "Access to GMT from Julia is accomplished via a main function (also called gmt), which offers full access to all of GMT’s ~140 modules as well as fundamental import, formatting, and export of GMT data objects. Internally, the GMT5 C API defines six high-level data structures (GMT6 will define only five) that handle input and output of data via GMT modules. These are data tables (representing one or more sets of points, lines, or polygons), grids (2-D equidistant data matrices), raster images (with 1–4 color bands), raw PostScript code, text tables (free-form text/data mixed records) and color palette tables (i.e., color maps). Correspondingly, we have defined five data structures that we use at the interface between GMT and Julia via the gmt function. The GMT.jl wrapper is responsible for translating between the GMT structures and native Julia structures, which are:Grids: Many tools consider equidistant grids a particular data type and numerous file formats exist for saving such data. Because GMT relies on GDAL we are able to read and write almost all such formats in addition to a native netCDF4 format that complies with both the COARDS and CF netCDF conventions. We have designed a native Julia grid structure GMTgrid that holds header information from the GMT grid as well as the data matrix representing the gridded values. These structures may be passed to GMT modules that expect grids and are returned from GMT modules that produce such grids. In addition, we supply a function to convert a matrix and some metadata into a grid structure.\nImages: The raster image shares many characteristics with the grid structure except the bytes representing each node reflect gray shade, color bands (1, 3, or 4 for indexed, RGB and RGBA, respectively), and possibly transparency values. We therefore represent images in another native structure GMTimage that among other items contains three components: The image matrix, a color map (present for indexed images only), and an alpha matrix (for images specifying transparency on a per-pixel level). As for grids, a wrapper function creating the correct structure is available.\nSegments: GMT considers point, line, and polygon data to be organized in one or more segments in a data table. Modules that return segments uses a native Julia segment structure GMTdataset that holds the segment data, which may be either numerical, text, or both; it also holds a segment header string which GMT uses to pass metadata. Thus, GMT modules returning segments will typically produce arrays of segments and you may pass these to any other module expecting points, lines, or polygons or use them directly in Julia. Since a matrix is one fundamental data type you can also pass a matrix directly to GMT modules as well. Consequently, it is very easy to pass data from Julia into GMT modules that process data tables as well as to receive data segments from GMT modules that process and produce data tables as output.\nColor palettes: GMT uses its flexible Color Palette Table (CPT) format to describe how the color (or pattern) of symbols, lines, polygons or grids should vary as a function of a state variable. In Julia, this information is provided in another structure GMTcpt that holds the color map as well as an optional alpha array for transparency values. Like grids, these structures may be passed to GMT modules that expect CPTs and will be returned from GMT modules that normally would produce CPT files.\nPostScript: While most users of the GMT.jl wrapper are unlikely to manipulate PostScript directly, it allows for the passing of PostScript via another data structure GMTps.Given this design the Julia wrapper is designed to work in two distinct ways. The first way, referred as the monolitic, is the more feature reach and follows closely the GMT usage from shell(s) command line but still provide all the facilities of the Julia language. See the Monolitic for the Reference on how to use the Package.\nThe second way uses an upper level set of functions that abstract aspects that make the monolitic usage more complex. It provides an interface to some of the GMT modules using a option=val list type syntax. This makes it more appropriate for newcommers but it won't release you from understanding the monolitic way. See the By Modules"
+    "text": "Access to GMT from Julia is accomplished via a main function (also called gmt), which offers full access to all of GMT’s ~140 modules as well as fundamental import, formatting, and export of GMT data objects. Internally, the GMT5 C API defines six high-level data structures (GMT6 will define only five) that handle input and output of data via GMT modules. These are data tables (representing one or more sets of points, lines, or polygons), grids (2-D equidistant data matrices), raster images (with 1–4 color bands), raw PostScript code, text tables (free-form text/data mixed records) and color palette tables (i.e., color maps). Correspondingly, we have defined five data structures that we use at the interface between GMT and Julia via the gmt function. The GMT.jl wrapper is responsible for translating between the GMT structures and native Julia structures, which are:Grids: Many tools consider equidistant grids a particular data type and numerous file formats exist for saving such data. Because GMT relies on GDAL we are able to read and write almost all such formats in addition to a native netCDF4 format that complies with both the COARDS and CF netCDF conventions. We have designed a native Julia grid structure Grid type that holds header information from the GMT grid as well as the data matrix representing the gridded values. These structures may be passed to GMT modules that expect grids and are returned from GMT modules that produce such grids. In addition, we supply a function to convert a matrix and some metadata into a grid structure.\nImages: The raster image shares many characteristics with the grid structure except the bytes representing each node reflect gray shade, color bands (1, 3, or 4 for indexed, RGB and RGBA, respectively), and possibly transparency values. We therefore represent images in another native structure Image type that among other items contains three components: The image matrix, a color map (present for indexed images only), and an alpha matrix (for images specifying transparency on a per-pixel level). As for grids, a wrapper function creating the correct structure is available.\nSegments: GMT considers point, line, and polygon data to be organized in one or more segments in a data table. Modules that return segments uses a native Julia segment structure Dataset type that holds the segment data, which may be either numerical, text, or both; it also holds a segment header string which GMT uses to pass metadata. Thus, GMT modules returning segments will typically produce arrays of segments and you may pass these to any other module expecting points, lines, or polygons or use them directly in Julia. Since a matrix is one fundamental data type you can also pass a matrix directly to GMT modules as well. Consequently, it is very easy to pass data from Julia into GMT modules that process data tables as well as to receive data segments from GMT modules that process and produce data tables as output.\nColor palettes: GMT uses its flexible Color Palette Table (CPT) format to describe how the color (or pattern) of symbols, lines, polygons or grids should vary as a function of a state variable. In Julia, this information is provided in another structure CPT type that holds the color map as well as an optional alpha array for transparency values. Like grids, these structures may be passed to GMT modules that expect CPTs and will be returned from GMT modules that normally would produce CPT files.\nPostScript: While most users of the GMT.jl wrapper are unlikely to manipulate PostScript directly, it allows for the passing of PostScript via another data structure Postscript type.Given this design the Julia wrapper is designed to work in two distinct ways. The first way, referred as the monolitic, is the more feature reach and follows closely the GMT usage from shell(s) command line but still provide all the facilities of the Julia language. See the Monolitic for the Reference on how to use the Package.\nThe second way uses an upper level set of functions that abstract aspects that make the monolitic usage more complex. It provides an interface to some of the GMT modules using a option=val list type syntax. This makes it more appropriate for newcommers but it won't release you from understanding the monolitic way. See the By Modules"
 },
 
 {
-    "location": "man/monolitic/#",
+    "location": "monolitic/#",
     "page": "Monolitic",
     "title": "Monolitic",
     "category": "page",
@@ -161,7 +161,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "man/monolitic/#Monolitic-1",
+    "location": "monolitic/#Monolitic-1",
     "page": "Monolitic",
     "title": "Monolitic",
     "category": "section",
@@ -169,7 +169,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "man/monolitic/#How-input-and-output-are-assigned-1",
+    "location": "monolitic/#How-input-and-output-are-assigned-1",
     "page": "Monolitic",
     "title": "How input and output are assigned",
     "category": "section",
@@ -177,7 +177,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "man/modules/#",
+    "location": "modules/#",
     "page": "By Modules",
     "title": "By Modules",
     "category": "page",
@@ -185,7 +185,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "man/modules/#By-Modules-1",
+    "location": "modules/#By-Modules-1",
     "page": "By Modules",
     "title": "By Modules",
     "category": "section",
@@ -193,23 +193,23 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "man/modules/#Specifying-the-pen-attributes-1",
+    "location": "modules/#Specifying-the-pen-attributes-1",
     "page": "By Modules",
     "title": "Specifying the pen attributes",
     "category": "section",
-    "text": "So, in summary, a pen attribute may be set in three different ways:With a text string that follows the width, color, style specs as explained in Specifying pen attributes\nBy using the lw or linewidth keyword where its value is either a number, meaning the line thickness in points, or a string like the width above; the color is set with the lc or linecolor and the value is either a number between 0 255 or a color name (for example \"red\"); and a ls or linestyle with the value specified as a string (example: \"–\" plot a dashed line).\nA tuple with one to three elements: ([width], [color], [style]) where each of the elements follows the same syntax as explained in the case (2) above."
+    "text": "So, in summary, a pen attribute may be set in three different ways:With a text string that follows the width, color, style specs as explained in Specifying pen attributes\nBy using the lw or linewidth keyword where its value is either a number, meaning the line thickness in points, or a string like the width above; the color is set with the lc or linecolor and the value is either a number between [0 255] (meaning a gray shade) or a color name (for example \"red\"); and a ls or linestyle with the value specified as a string (example: \"–\" plot a dashed line).\nA tuple with one to three elements: ([width], [color], [style]) where each of the elements follows the same syntax as explained in the case (2) above."
 },
 
 {
-    "location": "man/modules/#Specifying-the-axes-1",
+    "location": "modules/#Specifying-the-axes-1",
     "page": "By Modules",
     "title": "Specifying the axes",
     "category": "section",
-    "text": "The axes are controlled by the B or frame or axes keywords. The easiest for it can have is the axes=\"a\", which means do an automatic annotation of the 4 map boundaries – left, bottom, right and top – axes. To annotate only the left and bottom boundaries, one would do axes=\"a WSne\". For a higher level of control the user must really consult the original -B documentation.Axes titles and labels may be also set, taht is other than setting them with a axes string, using the keywords title, x_label and y_label.The figure limits is set with the R, region, or limits  keywords. Again, the full docs for this option are explained in -R documentation but besides the string version, the numeric form region=[x_min x_max y_min y_max] is also permitted. The plot() function allows that a no limits setting, in which case it will default to the data's bounding box."
+    "text": "The axes are controlled by the B or frame or axes keywords. The easiest for it can have is the axes=\"a\", which means do an automatic annotation of the 4 map boundaries – left, bottom, right and top – axes. To annotate only the left and bottom boundaries, one would do axes=\"a WSne\". For a higher level of control the user must really consult the original -B documentation.Axes titles and labels may be also set. That is, other than setting them with a axes string, using the keywords title, x_label and y_label.The figure limits is set with the R, region or limits  keywords. Again, the full docs for this option are explained in -R documentation but besides the string version, the numeric form region=[x_min x_max y_min y_max] is also permitted. The plot() function allows that a no limits setting, in which case it will default to the data's bounding box."
 },
 
 {
-    "location": "man/modules/#Specifying-the-figure-size-1",
+    "location": "modules/#Specifying-the-figure-size-1",
     "page": "By Modules",
     "title": "Specifying the figure size",
     "category": "section",
@@ -233,41 +233,41 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "types/#The-Grid-type-1",
+    "location": "types/#Grid-type-1",
     "page": "The GMT types",
-    "title": "The Grid type",
+    "title": "Grid type",
     "category": "section",
     "text": "type GMTgrid                  # The type holding a local header and data of a GMT grid\n   proj4::String              # Projection string in PROJ4 syntax (Optional)\n   wkt::String                # Projection string in WKT syntax (Optional)\n   range::Array{Float64,1}    # 1x6 vector with [x_min x_max y_min y_max z_min z_max]\n   inc::Array{Float64,1}      # 1x2 vector with [x_inc y_inc]\n   registration::Int          # Registration type: 0 -> Grid registration; 1 -> Pixel registration\n   nodata::Float64            # The value of nodata\n   title::String              # Title (Optional)\n   comment::String            # Remark (Optional)\n   command::String            # Command used to create the grid (Optional)\n   datatype::String           # 'float' or 'double'\n   x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates\n   y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates\n   z::Array{Float32,2}        # [n_rows x n_columns] grid array\n   x_units::String            # Units of XX axis (Optional)\n   y_units::String            # Units of YY axis (Optional)\n   z_units::String            # Units of ZZ axis (Optional)\n   layout::String             # A three character string describing the grid memory layout\nend"
 },
 
 {
-    "location": "types/#The-Image-type-1",
+    "location": "types/#Image-type-1",
     "page": "The GMT types",
-    "title": "The Image type",
+    "title": "Image type",
     "category": "section",
     "text": "type GMTimage                 # The type holding a local header and data of a GMT image\n   proj4::String              # Projection string in PROJ4 syntax (Optional)\n   wkt::String                # Projection string in WKT syntax (Optional)\n   range::Array{Float64,1}    # 1x6 vector with [x_min x_max y_min y_max z_min z_max]\n   inc::Array{Float64,1}      # 1x2 vector with [x_inc y_inc]\n   registration::Int          # Registration type: 0 -> Grid registration; 1 -> Pixel registration\n   nodata::Float64            # The value of nodata\n   title::String              # Title (Optional)\n   comment::String            # Remark (Optional)\n   command::String            # Command used to create the image (Optional)\n   datatype::String           # 'uint8' or 'int8' (needs checking)\n   x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates\n   y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates\n   image::Array{UInt8,3}      # [n_rows x n_columns x n_bands] image array\n   x_units::String            # Units of XX axis (Optional)\n   y_units::String            # Units of YY axis (Optional)\n   z_units::String            # Units of ZZ axis (Optional) ==> MAKES NO SENSE\n   colormap::Array{Clong,1}   # \n   alpha::Array{UInt8,2}      # A [n_rows x n_columns] alpha array\n   layout::String             # A four character string describing the image memory layout\nend"
 },
 
 {
-    "location": "types/#The-DATASET-type-1",
+    "location": "types/#Dataset-type-1",
     "page": "The GMT types",
-    "title": "The DATASET type",
+    "title": "Dataset type",
     "category": "section",
     "text": "type GMTdataset\n    header::String\n    data::Array{Float64,2}\n    text::Array{Any,1}\n    comment::Array{Any,1}\n    proj4::String\n    wkt::String\nend"
 },
 
 {
-    "location": "types/#The-CPT-type-1",
+    "location": "types/#CPT-type-1",
     "page": "The GMT types",
-    "title": "The CPT type",
+    "title": "CPT type",
     "category": "section",
     "text": "type GMTcpt\n    colormap::Array{Float64,2}\n    alpha::Array{Float64,1}\n    range::Array{Float64,2}\n    minmax::Array{Float64,1}\n    bfn::Array{Float64,2}\n    depth::Cint\n    hinge::Cdouble\n    cpt::Array{Float64,2}\n    model::String\n    comment::Array{Any,1}   # Cell array with any comments\nend"
 },
 
 {
-    "location": "types/#The-Postscript-type-1",
+    "location": "types/#Postscript-type-1",
     "page": "The GMT types",
-    "title": "The Postscript type",
+    "title": "Postscript type",
     "category": "section",
     "text": "type GMTps\n    postscript::String      # Actual PS plot (text string)\n    length::Int             # Byte length of postscript\n    mode::Int               # 1 = Has header, 2 = Has trailer, 3 = Has both\n    comment::Array{Any,1}   # Cell array with any comments\nend"
 },
