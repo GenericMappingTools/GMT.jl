@@ -1,4 +1,4 @@
-# The monolitic usage
+# Introduction
 
 Access to GMT from Julia is accomplished via a main function (also called gmt), which offers full
 access to all of GMT’s ~140 modules as well as fundamental import, formatting, and export of GMT
@@ -13,7 +13,7 @@ between the GMT structures and native Julia structures, which are:
 - **Grids**: Many tools consider equidistant grids a particular data type and numerous file formats
   exist for saving such data. Because GMT relies on GDAL we are able to read and write almost
   all such formats in addition to a native netCDF4 format that complies with both the COARDS
-  and CF netCDF conventions. We have designed a native Julia grid structure [`GMTgrid`](@ref)
+  and CF netCDF conventions. We have designed a native Julia grid structure [`Grid type`](@ref)
   that holds header information from the GMT grid as well as the data matrix representing the
   gridded values. These structures may be passed to GMT modules that expect grids and are
   returned from GMT modules that produce such grids. In addition, we supply a function to
@@ -22,13 +22,13 @@ between the GMT structures and native Julia structures, which are:
 - **Images**: The raster image shares many characteristics with the grid structure except the
   bytes representing each node reflect gray shade, color bands (1, 3, or 4 for indexed, RGB and
   RGBA, respectively), and possibly transparency values. We therefore represent images in another
-  native structure [`GMTimage`](@ref) that among other items contains three components: The image
+  native structure [`Image type`](@ref) that among other items contains three components: The image
   matrix, a color map (present for indexed images only), and an alpha matrix (for images specifying
   transparency on a per-pixel level). As for grids, a wrapper function creating the correct structure
   is available.
 
 - **Segments**: GMT considers point, line, and polygon data to be organized in one or more segments
-  in a data table. Modules that return segments uses a native Julia segment structure [`GMTdataset`](@ref)
+  in a data table. Modules that return segments uses a native Julia segment structure [`Dataset type`](@ref)
   that holds the segment data, which may be either numerical, text, or both; it also holds a segment
   header string which GMT uses to pass metadata. Thus, GMT modules returning segments will typically
   produce arrays of segments and you may pass these to any other module expecting points, lines, or
@@ -39,13 +39,13 @@ between the GMT structures and native Julia structures, which are:
 
 - **Color palettes**: GMT uses its flexible Color Palette Table (CPT) format to describe how the
   color (or pattern) of symbols, lines, polygons or grids should vary as a function of a state variable.
-  In Julia, this information is provided in another structure [`GMTcpt`](@ref) that holds the color
+  In Julia, this information is provided in another structure [`CPT type`](@ref) that holds the color
   map as well as an optional alpha array for transparency values. Like grids, these structures may
   be passed to GMT modules that expect CPTs and will be returned from GMT modules that normally
   would produce CPT files.
 
 - **PostScript**: While most users of the GMT.jl wrapper are unlikely to manipulate PostScript
-  directly, it allows for the passing of PostScript via another data structure [`GMTps`](@ref).
+  directly, it allows for the passing of PostScript via another data structure [`Postscript type`](@ref).
 
 Given this design the Julia wrapper is designed to work in two distinct ways. 
 

@@ -7,10 +7,10 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Some examples" => "examples.md",
-        "The manual" => "usage.md",
         "Manual" => [
-            "man/monolitic.md",
-            "man/modules.md",
+            "usage.md",
+            "monolitic.md",
+            "modules.md",
         ],
         "The GMT types" => "types.md"
     ],

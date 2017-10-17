@@ -1,7 +1,7 @@
 # The GMT.jl types
 
-The Grid type
--------------
+Grid type
+---------
 
     type GMTgrid                  # The type holding a local header and data of a GMT grid
        proj4::String              # Projection string in PROJ4 syntax (Optional)
@@ -23,8 +23,8 @@ The Grid type
        layout::String             # A three character string describing the grid memory layout
     end
 
-The Image type
---------------
+Image type
+----------
 
     type GMTimage                 # The type holding a local header and data of a GMT image
        proj4::String              # Projection string in PROJ4 syntax (Optional)
@@ -48,8 +48,8 @@ The Image type
        layout::String             # A four character string describing the image memory layout
     end
 
-The DATASET type
-----------------
+Dataset type
+------------
 
     type GMTdataset
         header::String
@@ -60,8 +60,8 @@ The DATASET type
         wkt::String
     end
 
-The CPT type
-------------
+CPT type
+--------
 
     type GMTcpt
         colormap::Array{Float64,2}
@@ -76,8 +76,8 @@ The CPT type
         comment::Array{Any,1}   # Cell array with any comments
     end
 
-The Postscript type
--------------------
+Postscript type
+---------------
 
     type GMTps
         postscript::String      # Actual PS plot (text string)
