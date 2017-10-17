@@ -16,6 +16,10 @@ assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
 G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 C = grdcontour(G, C="+0.7", D=[]);
 assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
+# Do the same but write the file on disk first
+gmt("write -Tg lixo.grd", G)
+C = grdcontour("lixo.grd", C="+0.7", D=[]);
+assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 #
 # Just create the figs but not check if they are correct.
 PS = grdimage(G, J="X10", ps=1);
@@ -25,6 +29,7 @@ G = gmt("surface -R0/150/0/150 -I1 -Ll-100", rand(100,3) * 150);
 assert(size(G.z) == (151, 151))
 #
 plot(collect(1:10),rand(10), lw=1, lc="blue", fmt="ps", marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
+plot!(collect(1:10),rand(10), fmt="ps")
 #
 pscoast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green")))
 #
