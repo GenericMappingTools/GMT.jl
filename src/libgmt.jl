@@ -158,14 +158,14 @@ function GMT_Get_Common(API::Ptr{Void}, option::UInt32, par::Ptr{Cdouble})
 end
 
 function GMT_Get_Default(API::Ptr{Void}, keyword::String, value)
-	ccall( (:GMT_Get_Default, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
+	ccall((:GMT_Get_Default, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 end
 
 function GMT_Get_Value(API::Ptr{Void}, arg::String, par::Ptr{Cdouble})
-	ccall( (:GMT_Get_Value, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Cdouble}), API, arg, par)
+	ccall((:GMT_Get_Value, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Cdouble}), API, arg, par)
 end
 function GMT_Get_Values(API::Ptr{Void}, arg::String, par::Ptr{Cdouble}, maxpar::Integer)
-	ccall( (:GMT_Get_Values, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Cdouble}, Cint), API, arg, par, maxpar)
+	ccall((:GMT_Get_Values, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Cdouble}, Cint), API, arg, par, maxpar)
 end
 
 function GMT_Call_Module(API::Ptr{Void}, _module=C_NULL, mode::Integer=0, args=C_NULL)
@@ -178,10 +178,10 @@ function GMT_Create_Options(API::Ptr{Void}, argc::Integer, args)
 	ccall((:GMT_Create_Options, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, Cint, Ptr{Void}), API, argc, args)
 end
 GMT_Create_Options(API::Ptr{Void}, argc::Integer, args::String) = 
-									 GMT_Create_Options(API, argc, convert(Ptr{Void},pointer(args)))
+                   GMT_Create_Options(API, argc, convert(Ptr{Void},pointer(args)))
 
 function GMT_Make_Option(API::Ptr{Void}, option::UInt8, arg::Ptr{UInt8})
-	ccall( (:GMT_Make_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, UInt8, Ptr{UInt8}), API, option, arg)
+	ccall((:GMT_Make_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, UInt8, Ptr{UInt8}), API, option, arg)
 end
 
 function GMT_Find_Option(API::Ptr{Void}, option::UInt8, head::Ptr{GMT_OPTION})
@@ -189,7 +189,7 @@ function GMT_Find_Option(API::Ptr{Void}, option::UInt8, head::Ptr{GMT_OPTION})
 end
 
 function GMT_Append_Option(API::Ptr{Void}, current::Ptr{GMT_OPTION}, head::Ptr{GMT_OPTION})
-	ccall( (:GMT_Append_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, Ptr{GMT_OPTION}, Ptr{GMT_OPTION}), API, current, head)
+	ccall((:GMT_Append_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, Ptr{GMT_OPTION}, Ptr{GMT_OPTION}), API, current, head)
 end
 function GMT_Create_Args(API::Ptr{Void}, argc::Ptr{Int}, head::Ptr{GMT_OPTION})
 	ccall( (:GMT_Create_Args, thelib), Ptr{Ptr{UInt8}}, (Ptr{Void}, Ptr{Cint}, Ptr{GMT_OPTION}), API, argc, head)

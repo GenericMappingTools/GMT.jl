@@ -119,11 +119,18 @@ would do *axes="a WSne"*. For a higher level of control the user must really con
 Axes titles and labels may be also set, taht is other than setting them with a *axes* string, using
 the keywords *title*, *x_label* and *y_label*.
 
+The figure limits is set with the *R*, *region*, or *limits*  keywords. Again, the full docs for this
+option are explained in [`-R documentation`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#r-full)
+but besides the string version, the numeric form *region=[x_min x_max y_min y_max]* is also permitted.
+The ``plot()`` function allows that a no limits setting, in which case it will default to the
+data's bounding box.
+
 ## Specifying the figure size
 
 Figure sizes are automatically set to 12x8 cm for basic case of Cartesian *xy* plots done with the *plot()*
 function but otherwise in general they need to be user specified using the *J* or *proj* or *projection*
 keywords. See the full doc at [`-J documentation`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#j-full). 
-But if you really like to type keywords, it is allowed to not specify the size in *proj* and set the figure
-width using the *figwidth=width* keyword. If neither of these forms is used, the figure width defaults
-to 14 cm.
+For Cartesian plots one can also use the *figsize=width*  or *figsize=[width height]* keyword, where the
+dimensions are in centimiters. The array form allows also set *height* or *width* to 0 to have it recomputed
+based on the implied scale of the other axis. Use negative sizes to reverse the direction of an axis
+(e.g., to have y be positive down). If neither of these forms is used, the figure width defaults to 14 cm.
