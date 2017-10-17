@@ -27,6 +27,9 @@ assert(size(G.z) == (151, 151))
 plot(collect(1:10),rand(10), lw=1, lc="blue", fmt="ps", marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
 #
 pscoast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green")))
+#
+C = makecpt(T="-200/1000/100", C="rainbow");
+psscale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
 
 # GMTSPATIAL
 # Test  Cartesian centroid and area
