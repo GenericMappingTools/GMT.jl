@@ -55,11 +55,13 @@ function parse_J(cmd::String, d::Dict, O=false)
 
 	if (!O && !isempty(opt_J))
 		# If only the projection but no size, try to get it from the kwargs.
-		if (haskey(d, :figwidth))
-			if (isa(d[:figwidth], Number))
-				s = @sprintf("%.6g", d[:figwidth])
-			elseif (isa(d[:figwidth], String))
-				s = d[:figwidth]
+		if (haskey(d, :figsize))
+			if (isa(d[:figsize], Number))
+				s = @sprintf("%.8g", d[:figsize])
+			elseif (isa(d[:figsize], Array) && length(d[:figsize]) == 2)
+				s = @sprintf("%.10g/%.10g", d[:figsize][1], d[:figsize][2])
+			elseif (isa(d[:figsize], String))
+				s = d[:figsize]
 			else
 				error("What the hell is this figwidth argument?")
 			end
