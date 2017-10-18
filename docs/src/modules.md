@@ -26,7 +26,7 @@ man page.
 Before diving more in the way options may be transmitted in the model we have to understand what
 happens with the output image file. The *fmt="ps"* states that the output image format is in
 PostScript (actually, with the exception of *grdimage -A*, the only format that *GMT* can write).
-But we can also say *fmt="jpg"*, or*fmt="png"* or *fmt="pdf"*. In such cases, the *ghostscript*
+But we can also say *fmt="jpg"*, or *fmt="png"* or *fmt="pdf"*. In such cases, the *ghostscript*
 program (you need to have it installed) will take care of converting the *ps* file into the selected
 format.
 
@@ -103,7 +103,7 @@ So, in summary, a *pen* attribute may be set in three different ways:
    line thickness in points, or a string like the *width* above; the color is set with the
    **lc** or **linecolor** and the value is either a number between *[0 255]* (meaning a gray shade)
    or a color name (for example "red"); and a **ls** or **linestyle** with the value specified as
-   a string (example: "--" plot a dashed line).
+   a string (example: "- -" plot a dashed line).
 
 3. A tuple with one to three elements: ([*width*], [*color*], [*style*]) where each of the
    elements follows the same syntax as explained in the case (2) above.
@@ -134,3 +134,28 @@ For Cartesian plots one can also use the *figsize=width*  or *figsize=[width hei
 dimensions are in centimiters. The array form allows also set *height* or *width* to 0 to have it recomputed
 based on the implied scale of the other axis. Use negative sizes to reverse the direction of an axis
 (e.g., to have y be positive down). If neither of these forms is used, the figure width defaults to 14 cm.
+
+## The output format
+
+It was referred above that the **fmt** determines the output format and that the default is PostScript.
+But inspite being the default if we want a image in PS one still has to declare *fmt="ps"*. If it is the
+default why is it mandatory to still declare it? Well, the reason lies in the fact that one may decide
+*NOT* to save any file on disk but to keep the PS figure internally stored in the program's memory. In
+other words, if we do not use the **fmt** keyword the figure is built and kept in memory only. This allows
+converting to another format directly without the use of an intermediary disk file. The conversion is
+performed by the *psconvert* *GMT* module (not yet portded to an stand-alone function) that would be
+used like this (to convert to PDF):
+
+    gmt("psconvert = -A -Tf -Fmyfig.pdf")
+
+The issue with this solution, that could be implemented internally without user intervention, is that it
+currently only works on Windows.
+
+A very interesting alternative to a file format is the option to create RGB images with *psconvert* and
+return it to Julia in a [`Image type`](@ref) type.
+
+    I = gmt("psconvert = -A")
+
+but again, so far on Windows only. A cool thing to develop would be the possibility to display this *I*
+image with the [`Images.jl`](https://github.com/JuliaImages/Images.jl) package.
+ 
