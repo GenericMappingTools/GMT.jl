@@ -2,7 +2,6 @@ using GMT
 using Base.Test
 
 # write your own tests here
-@test 1 == 1
 r = gmt("gmtinfo -C",ones(Float32,9,3)*5);
 assert(r[1].data == [5.0 5 5 5 5 5])
 #
@@ -12,14 +11,20 @@ assert(r[1].data == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
 #
 cpt = makecpt(range="-1/1/0.1");
 assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
-#
+
+# GRDCONTOUR
 G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 C = grdcontour(G, C="+0.7", D=[]);
 assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 # Do the same but write the file on disk first
 gmt("write -Tg lixo.grd", G)
+GG = gmt("read -Tg lixo.grd");
 C = grdcontour("lixo.grd", C="+0.7", D=[]);
 assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
+pscoast(R=[-10 1 36 45], J="M", B="a", shore=1, E=("PT",(20,"green")), fmt="ps");
+pscoast(R=[-10 1 36 45], J="M", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
+pscoast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps");
+
 #
 # Just create the figs but not check if they are correct.
 PS = grdimage(G, J="X10", ps=1);
