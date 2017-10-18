@@ -22,8 +22,8 @@ GG = gmt("read -Tg lixo.grd");
 C = grdcontour("lixo.grd", C="+0.7", D=[]);
 assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 pscoast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
-#pscoast(R=[-10 1 36 45], J="M", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
-#pscoast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps");
+pscoast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
+pscoast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps");
 
 #
 # Just create the figs but not check if they are correct.
