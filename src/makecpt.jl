@@ -1,5 +1,5 @@
 """
-	makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
+	makecpt(cmd0::String="", arg1=[]; kwargs...)
 
 Make static color palette tables (CPTs).
 

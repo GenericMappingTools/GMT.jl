@@ -1,5 +1,5 @@
 """
-	psscale(cmd0::String="", arg1=[]; fmt="", K=false, O=false, first=true, kwargs...)
+	psscale(cmd0::String="", arg1=[]; fmt="", kwargs...)
 	
 Plots gray scales or color scales on maps.
 

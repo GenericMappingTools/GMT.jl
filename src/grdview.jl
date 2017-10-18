@@ -1,6 +1,5 @@
 """
-    grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
-            fmt="", K=false, O=false, first=true, kwargs...)
+    grdview(cmd0::String="", arg1=[], arg2=[], arg3=[]; fmt="", kwargs...)
 
 Reads a 2-D grid file and produces a 3-D perspective plot by drawing a mesh, painting a
 colored/grayshaded surface made up of polygons, or by scanline conversion of these polygons

@@ -1,6 +1,5 @@
 """
-    grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[],
-			 fmt="", K=false, O=false, first=true, kwargs...)
+    grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; fmt="", kwargs...)
 
 Produces a gray-shaded (or colored) map by plotting rectangles centered on each grid node and assigning them a gray-shade (or color) based on the z-value.
 
@@ -33,7 +32,7 @@ Parameters
 - **N** : **noclip** : -- Bool or [] --
     Do not clip the image at the map boundary.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#n)
-- **Q** : **nan_t** : **nan_alphan** : -- Bool or [] --
+- **Q** : **nan_t** : **nan_alpha** : -- Bool or [] --
     Make grid nodes with z = NaN transparent, using the colormasking feature in PostScript Level 3.
 - $(GMT.opt_R)
 - $(GMT.opt_U)

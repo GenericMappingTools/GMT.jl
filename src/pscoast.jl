@@ -1,5 +1,5 @@
 """
-    pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true, kwargs...)
+    pscoast(cmd0::String=""; fmt="", clip=[], kwargs...)
 
 Plot continents, shorelines, rivers, and borders on maps.
 Plots grayshaded, colored, or textured land-masses [or water-masses] on
@@ -25,7 +25,7 @@ Parameters
 - **D** : **res** : **resolution** : -- Str --
     Selects the resolution of the data set to use ((f)ull, (h)igh, (i)ntermediate, (l)ow, and (c)rude).
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#d)
-- **E** : **ECW** : -- Str --  Tuple(Str, Str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
+- **E** : **DCW** : -- Str --  Tuple(Str, Str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
     Select painting or dumping country polygons from the Digital Chart of the World
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#e)
 - **F** : **box** : -- Str --
@@ -158,18 +158,14 @@ function pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true,
 	for sb in [:E :DCW]
 		if (haskey(d, sb))
 			if (isa(d[sb], String))
-				cmd = cmd * " -E" * d[sb]							# Simple case, ex E="PT,+gblue"
+				cmd = cmd * " -E" * d[sb]					# Simple case, ex E="PT,+gblue"
 			elseif (isa(d[sb], Tuple))
-				if (length(d[sb]) == 2 && isa(d[sb][1], Char) && isa(d[sb][2], Char))			# ex E=("PT","+p0.5")
-					cmd = string(cmd, " -E", d[sb][1], ",", d[sb][2])
-				elseif (length(d[sb]) == 2 && isa(d[sb][1], Char) && isa(d[sb][2], Tuple))		# ex E=("PT",(0.5,"red","--"))
-					cmd = string(cmd, " -E", d[sb][1], ",+p", parse_pen(d[sb][2]))
-				elseif (length(d[sb]) >= 2 && isa(d[sb][1], Tuple) && isa(d[sb][end], Tuple)) 	# ex E=((),(),...,())
+				if (length(d[sb]) >= 2 && isa(d[sb][1], Tuple) && isa(d[sb][end], Tuple)) 	# ex E=((),(),...,())
 					for k = 1:length(d[sb])
-						if (isa(d[sb][k][2], Char))  cmd = string(cmd, " -E", d[sb][k][1], ",", d[sb][k][2])
-						else                         cmd = string(cmd, " -E", d[sb][k][1], ",+p", parse_pen(d[sb][k][2]))
-						end
+						cmd = parse_dcw(d[sb][k], cmd)
 					end
+				else
+					cmd = parse_dcw(d[sb], cmd)
 				end
 			else
 				error("Arguments of E can only be a String or a Tuple (or Tuple of Tuples")
@@ -204,6 +200,27 @@ function pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true,
 		showfig(output, fname_ext, opt_T, K, d[:savefig])
 	end
 	return P
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_dcw(val::Tuple, cmd::String)
+	# Parse the multiple forms that the -E option may assume
+	if (length(val) >= 2 && isa(val[1], String) && isa(val[2], String) && isa(val[end], String))
+		# ex: E=("PT","+p0.5") or E=("PT","+p0.5","+gblue")
+		cmd = string(cmd, " -E", val[1], ",", val[2])
+		if (length(val) == 3)  cmd = string(cmd, ",", val[3])  end
+	elseif (length(val) >= 2 && isa(val[1], String))
+		if (length(val) == 2 && isa(val[2], Tuple))			# ex: E=("PT", (0.5,"red","--"))
+			cmd = string(cmd, " -E", val[1], ",+p", parse_pen(val[2]))
+		elseif (length(val) == 3 && isa(val[2], Tuple) && isa(val[3], String))
+			# ex: E=("PT", (0.5, "red", "--"), "+gblue")
+			cmd = string(cmd, " -E", val[1], ",+p", parse_pen(val[2]), val[3])
+		elseif (length(val) == 3 && isa(val[3], Tuple) && isa(val[2], String))
+			# ex: E=("PT", "+gblue", (0.5,"red","--"))
+			cmd = string(cmd, " -E", val[1], val[2], ",+p", parse_pen(val[3]))
+		end
+	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------

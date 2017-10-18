@@ -1,6 +1,5 @@
 """
-	psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="", K=false, O=false,
-	     first=true, kwargs...)
+	psxy(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
 reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
 polygons, or symbols at those locations on a map.
@@ -18,12 +17,12 @@ Parameters
 - **C** : **color** : -- Str --
     Give a CPT or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those colors automatically.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#c)
-- **D** : **offset** : -- Str --  'dx/dy'
+- **D** : **offset** : -- Str --
     Offset the plot symbol or line locations by the given amounts dx/dy.
-- **E** : **error_bars** : -- Str --   '[x|y|X|Y][+a][+cl|f][+n][+wcap][+ppen]'
+- **E** : **error_bars** : -- Str --
     Draw symmetrical error bars.
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#e)
-- **F** : **conn** : **connection** : -- Str --   '[c|n|r][a|f|s|r|refpoint]'
+- **F** : **conn** : **connection** : -- Str --
     Alter the way points are connected
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#f)
 - **G** : **fill** : **markerfacecolor** : **MarkerFaceColor** : -- Str --
@@ -33,14 +32,14 @@ Parameters
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#g)
 - **I** : **intens** : -- Str or number --
     Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating illumination.
-- **L** : **closed_polygon** : -- Str --    '[+b|d|D][+xl|r|x0][+yl|r|y0][+ppen]'
+- **L** : **closed_polygon** : -- Str --
     Force closed polygons. 
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#l)
-- **N** : **no_clip** : --- Str or [] --   '[c|r]'
+- **N** : **no_clip** : --- Str or [] --
     Do NOT clip symbols that fall outside map border 
 - **P** : **portrait** : --- Bool or [] --
     Tell GMT to **NOT** draw in portriat mode (that is, make a Landscape plot)
-- **S** : **symbol** : **marker** : **Marker** : -- Str --  '[symbol][size[u]]'
+- **S** : **symbol** : **marker** : **Marker** : -- Str --
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s)
     Alternatively select a sub-set of symbols using the aliases: **marker** or **Marker** and values:
@@ -60,7 +59,7 @@ Parameters
     + **t**, **^**, **triangle**
     + **x**, **cross**
     + **y**, **y_dash**
-- **W** : **line_attribs** : **markeredgecolor** : **MarkerEdgeColor** : -- Str --  '[pen][attr]'
+- **W** : **line_attribs** : **markeredgecolor** : **MarkerEdgeColor** : -- Str --
     Set pen attributes for lines or the outline of symbols
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
