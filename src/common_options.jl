@@ -506,7 +506,6 @@ function fname_out(out::String)
 	opt_T = "";		EXT = ""
 	if (length(out) <= 3)
 		@static is_windows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps" 
-		template = tempdir() * "GMTjl_tmp.ps"
 		ext = lowercase(out)
 		if (ext == "ps")       out = template
 		elseif (ext == "pdf")  opt_T = " -Tf";	out = template;		EXT = ext
