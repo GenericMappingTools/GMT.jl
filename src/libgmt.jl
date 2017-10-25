@@ -309,7 +309,7 @@ function GMT_Set_Index(API::Ptr{Void}, header::Ptr{GMT_GRID_HEADER}, code)
 end
 
 function GMT_Alloc_Segment(API::Ptr{Void}, family::Integer, n_rows::Integer, n_columns::Integer, header, S::Ptr{Void})
-	if (family == GMT_IS_DATASET)
+	if (family == GMT_IS_DATASET || family == GMT_WITH_STRINGS)
 		ret_type = Ptr{GMT_DATASEGMENT}
 	elseif (family == GMT_IS_TEXTSET)
 		ret_type = Ptr{GMT_TEXTSEGMENT}
