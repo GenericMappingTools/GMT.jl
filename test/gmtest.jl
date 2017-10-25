@@ -59,7 +59,7 @@ function gmtest(test, test_dir="", family="", nargin::Int=1)
 	ps_orig  = orig_path * fname * ".ps"
 
 	# Compare the ps file with its original.
-	cm = `$GM compare -density 200 -maximum-error 0.001 -highlight-color magenta -highlight-style
+	cm = `$GM compare -density 200 -maximum-error 0.005 -highlight-color magenta -highlight-style
 		 assign -metric rmse -file $png_name $ps_orig $ps`
 
 	run(pipeline(ignorestatus(cm), stdout=DevNull, stderr="errs.txt"))
