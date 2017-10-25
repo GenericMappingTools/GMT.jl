@@ -52,6 +52,21 @@ const GMT_VIA_MODULE_INPUT = 64
 const GMT_VIA_VECTOR = 128
 const GMT_VIA_MATRIX = 256
 # end enum GMT_enum_via
+
+# GMT_enum_container
+const GMT_CONTAINER_AND_DATA = 0    # Create|Read|write both container and the data array
+const GMT_CONTAINER_ONLY     = 1    # Create|read|write the container but no data array
+const GMT_DATA_ONLY          = 2    # Create|Read|write the container's array only
+const GMT_WITH_STRINGS       = 32   # Allocate string array also [DATASET, MATRIX, VECTOR only]
+const GMT_NO_STRINGS         = 0 
+
+# GMT_enum_read
+const GMT_READ_NORMAL = 0	# Normal read mode [Default]
+const GMT_READ_DATA   = 1	# Read ASCII data record and return double array
+const GMT_READ_TEXT   = 2	# Read ASCII data record and return text string
+const GMT_READ_MIXED  = 3   # Read ASCII data record and return double array but tolerate conversion errors
+const GMT_READ_FILEBREAK = 4
+
 # begin enum GMT_enum_family
 const GMT_IS_DATASET = 0
 const GMT_IS_GRID = 1
@@ -157,6 +172,11 @@ const GMT_RGB = 0
 const GMT_CMYK = 1
 const GMT_HSV = 2
 # end enum GMT_enum_color
+
+# GMT_enum_cptflags
+const GMT_CPT_NO_BNF     = 1
+const GMT_CPT_EXTEND_BNF = 2
+const GMT_CPT_HINGED     = 4
 
 immutable GMT_OPTION			# Structure for a single GMT command option
 	option::UInt8				# 1-char command line -<option> (e.g. D in -D) identifying the option (* if file)
@@ -547,9 +567,9 @@ type GMT_PALETTE_v6
 end
 
 if (GMTver >= 6.0)
-	const GMT_PALETTE = GMT_PALETTE_v5
-else
 	const GMT_PALETTE = GMT_PALETTE_v6
+else
+	const GMT_PALETTE = GMT_PALETTE_v5
 end
 
 type GMT_IMAGE
@@ -589,7 +609,7 @@ type GMT_POSTSCRIPT_v6
 	alloc_mode::UInt32
 end
 
-if (GMTver >= 6.0)
+if (GMTver < 6.0)
 	const GMT_POSTSCRIPT = GMT_POSTSCRIPT_v5
 else
 	const GMT_POSTSCRIPT = GMT_POSTSCRIPT_v6
@@ -611,14 +631,16 @@ end
 immutable GMT_VECTOR_v6
 	n_columns::UInt64
 	n_rows::UInt64
+	n_headers::UInt32
 	registration::UInt32
 	_type::Ptr{UInt32}
 	range::NTuple{2,Cdouble}
 	#data::Ptr{GMT_UNIVECTOR}
 	data::Ptr{Ptr{Void}}
-	text::Ptr{Ptr{UInt8}};			# Pointer to optional array of strings [NULL] */
+	text::Ptr{Ptr{UInt8}};			# Pointer to optional array of strings [NULL]
 	command::NTuple{320,UInt8}
 	remark::NTuple{160,UInt8}
+	header::Ptr{Ptr{UInt8}};		# Array with all Vector header records, if any)
 	id::UInt64
 	alloc_level::UInt32
 	alloc_mode::UInt32
@@ -649,6 +671,7 @@ type GMT_MATRIX_v6
 	n_rows::UInt64
 	n_columns::UInt64
 	n_layers::UInt64
+	n_headers::UInt32
 	shape::UInt32
 	registration::UInt32
 	dim::Csize_t
@@ -660,6 +683,7 @@ type GMT_MATRIX_v6
 	text::Ptr{Ptr{UInt8}}
 	command::NTuple{320,UInt8}
 	remark::NTuple{160,UInt8}
+	header::Ptr{Ptr{UInt8}};		# Array with all Matrix header records, if any)
 	id::UInt64
 	alloc_level::UInt32
 	alloc_mode::UInt32
