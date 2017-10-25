@@ -37,6 +37,20 @@ The second command uses the **!** variation of the ``plot`` function, which mean
 that we are *appending* to a previous plot, and uses the ``show=true`` because we
 are donne with this figure.
 
+## Simple contours
+
+Contours are created with ``grdcontour`` that takes a *grid* as input (or a *GMTgrid* data type).
+This example shows uses the *peaks* function to create a classical example. Note, however, that the
+memory consumption in this example, when creating the plot, is much lower than traditional likewise 
+examples because we will be using only one 2D array intead of 3 3D arrays (ref).
+
+```julia
+x,y,z=GMT.peaks()
+G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);  # Iterpolate into a regular grid
+grdcontour(G, frame="a", fmt="png", show=1)
+```
+!["Simple black&white contour"](figures/hello-bw-contour.png)
+
 ## Color images
 
 Color images are made with ``grdimage`` which takes the usual common options and a color
