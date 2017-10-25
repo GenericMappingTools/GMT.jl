@@ -14,7 +14,7 @@ Parameters
     Save an image in a raster format instead of PostScript.
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#a)
 - $(GMT.opt_B)
-- **C** : **cont** : **contour** : -- Str or Number --
+- **C** : **cont** : **contours** : **levels** : -- Str or Number --
     Contours to be drawn.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#c)
 - **D** : **dump** : -- Str --
@@ -99,7 +99,7 @@ function grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false,
 	end
 
 	cmd = add_opt(cmd, 'A', d, [:A :annot])
-	cmd = add_opt(cmd, 'C', d, [:C :cont :contour])
+	cmd = add_opt(cmd, 'C', d, [:C :cont :contours :levels])
 	cmd = add_opt(cmd, 'D', d, [:D :dump])
 	cmd = add_opt(cmd, 'F', d, [:F :force])
 	cmd = add_opt(cmd, 'G', d, [:G :labels])

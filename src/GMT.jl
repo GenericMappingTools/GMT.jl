@@ -2,7 +2,7 @@ VERSION >= v"0.4" && __precompile__()
 
 module GMT
 
-GMTver = 6.0
+const GMTver = 5.4
 
 export
 	GMTver,
@@ -45,6 +45,7 @@ export
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
 	pscoast, pscoast!, psxy, psxy!, grdcontour, grdcontour!, grdimage, grdimage!,
 	grdview, grdview!, plot, plot!, makecpt, psscale, psscale!,
+	text_record,
 	NULL
 
 include("common_docs.jl")

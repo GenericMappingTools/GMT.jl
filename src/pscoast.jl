@@ -25,9 +25,11 @@ Parameters
 - **D** : **res** : **resolution** : -- Str --
     Selects the resolution of the data set to use ((f)ull, (h)igh, (i)ntermediate, (l)ow, and (c)rude).
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#d)
-- **E** : **DCW** : -- Str --  Tuple(Str, Str); Tuple("code", (pen)), ex: ("PT",(0.5,"red","--")); Tuple((...),(...),...)
-    Select painting or dumping country polygons from the Digital Chart of the World
+- **E** : **DCW** : -- Str --
+    Select painting or dumping country polygons from the Digital Chart of the World.
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#e)
+    + Tuple("code", Str); Tuple("code" [,"fill"], (pen)); Tuple((...),(...),...)
+    + ex: ("PT",(0.5,"red","--")); (("PT","gblue",(0.5,"red"),("ES",(0.5,"yellow")))
 - **F** : **box** : -- Str --
     Draws a rectangular border around the map scale or rose.
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#f)
@@ -38,7 +40,8 @@ Parameters
     Draw rivers. Specify the type of rivers and [optionally] append pen attributes.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#i)
 - **L** : **map_scale** : -- Str --
-    Dtraw a map scale.
+    Draw a map scale.
+    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#l)
 - **M** : **dump** : -- Str --
     Dumps a single multisegment ASCII output. No plotting occurs.
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#m)
