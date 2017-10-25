@@ -59,7 +59,7 @@ Parameters
 - $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
-function grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false, first=true, kwargs...)
+function grdcontour(cmd0::String="", arg1=[], arg2=[]; data=[], fmt="", K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("grdcontour " * cmd0)
@@ -82,6 +82,10 @@ function grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false,
 	maybe_more = false			# If latter set to true, search for lc & lc pen settings
 	cmd, opt_R = parse_R(cmd, d)
 	cmd, opt_J = parse_J(cmd, d)
+	if (!O && isempty(opt_J))	# If we have no -J use this default
+		opt_J = " -JX12c/0"
+		cmd = cmd * opt_J
+	end
 	cmd, opt_B = parse_B(cmd, d)
 	cmd = parse_U(cmd, d)
 	cmd = parse_V(cmd, d)
@@ -100,6 +104,17 @@ function grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false,
 
 	cmd = add_opt(cmd, 'A', d, [:A :annot])
 	cmd = add_opt(cmd, 'C', d, [:C :cont :contours :levels])
+	for sym in [:color :cmap]		# If a CPT is being used
+		if (haskey(d, sym))
+			if (isa(d[sym], GMTcpt))
+				cmd, N_cpt = put_in_slot(cmd, d[sym], 'C', [arg1, arg2])
+				if (N_cpt == 1)     arg1 = d[sym]
+				elseif (N_cpt == 2) arg2 = d[sym]
+				end
+			end
+			break
+		end
+	end
 	cmd = add_opt(cmd, 'D', d, [:D :dump])
 	cmd = add_opt(cmd, 'F', d, [:F :force])
 	cmd = add_opt(cmd, 'G', d, [:G :labels])
@@ -133,13 +148,15 @@ function grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false,
 	(haskey(d, :Vd)) && println(@sprintf("\tgrdcontour %s", cmd))
 
 	P = nothing
-	if (!isempty_(arg1))
-		if (PS) P = gmt("grdcontour " * cmd, arg1)                 # A numeric input
-		else        gmt("grdcontour " * cmd, arg1)
+	if (PS)
+		if (!isempty_(arg2))      P = gmt("grdcontour " * cmd, arg1, arg2)
+		elseif (!isempty_(arg1))  P = gmt("grdcontour " * cmd, arg1)
+		else                      P = gmt("grdcontour " * cmd)		# Ploting from file(s)
 		end
 	else
-		if (PS) P = gmt("grdcontour " * cmd)                       # Ploting from file
-		else        gmt("grdcontour " * cmd)
+		if (!isempty_(arg2))      gmt("grdcontour " * cmd, arg1, arg2)
+		elseif (!isempty_(arg1))  gmt("grdcontour " * cmd, arg1)
+		else                      gmt("grdcontour " * cmd)
 		end
 	end
     show_or_save(d, output, fname_ext, opt_T, K)    # Display Fig in default viewer or save it to file
@@ -147,11 +164,11 @@ function grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", K=false, O=false,
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdcontour!(cmd0::String="", arg1=[]; data=[], fmt="", K=true, O=true, first=false, kw...) =
-	grdcontour(cmd0, arg1; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+grdcontour!(cmd0::String="", arg1=[], arg2=[]; data=[], fmt="", K=true, O=true, first=false, kw...) =
+	grdcontour(cmd0, arg1, arg2; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
 
-grdcontour(arg1::GMTgrid, cmd0::String=""; data=[], fmt="", K=false, O=false, first=true, kw...) =
-	grdcontour(cmd0, arg1; data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+grdcontour(arg1::GMTgrid, cmd0::String="", arg2=[]; data=[], fmt="", K=false, O=false, first=true, kw...) =
+	grdcontour(cmd0, arg1, arg2; data=data, fmt=fmt, K=K, O=O, first=first, kw...)
 
-grdcontour!(arg1::GMTgrid, cmd0::String=""; data=[], fmt="", K=true, O=true, first=false, kw...) =
-	grdcontour(cmd0, arg1; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+grdcontour!(arg1::GMTgrid, cmd0::String="", arg2=[]; data=[], fmt="", K=true, O=true, first=false, kw...) =
+	grdcontour(cmd0, arg1, arg2; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
