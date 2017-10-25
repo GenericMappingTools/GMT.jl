@@ -65,14 +65,14 @@ type GMTps
 end
 
 type GMTdataset
-	header::String
 	data::Array{Float64,2}
 	text::Array{Any,1}
+	header::String
 	comment::Array{Any,1}
 	proj4::String
 	wkt::String
-	GMTdataset(header, data, text, comment, proj4, wkt) = new(header, data, text, comment, proj4, wkt)
-	GMTdataset() = new(string(), Array{Float64,2}(0,0), Array{String,1}(), Array{String,1}(), string(), string())
+	GMTdataset(data, text, header, comment, proj4, wkt) = new(data, text, header, comment, proj4, wkt)
+	GMTdataset() = new(Array{Float64,2}(0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 end
 
 # Container to hold info to allow creating grids in a simple (but limmited) maner
@@ -309,7 +309,7 @@ function gmt(cmd::String, args...)
 			error("Failed to destroy object used in the interface bewteen GMT and Julia")
 		else 		# Success, now make sure we dont destroy the same pointer more than once
 			for kk = k+1:n_items
-				if (X[kk].object == ppp) 	X[kk].object = NULL;		end
+				if (X[kk].object == ppp) 	X[kk].object = NULL;	end
 			end
 		end
 	end
@@ -810,6 +810,18 @@ function get_dataset_(API::Ptr{Void}, object)
 			end
 			Darr[seg_out].data = dest
 
+# NEW
+			if (DS.text != C_NULL)
+				texts = unsafe_wrap(Array, DS.text, DS.n_rows)	# n_headers-element Array{Ptr{UInt8},1}
+				if (texts != NULL)
+					dest = Array{Any}(DS.n_rows)
+					for row = 1:DS.n_rows					# Copy the text rows
+						if (texts[row] != NULL)  dest[row] = unsafe_string(texts[row])  end
+					end
+					Darr[seg_out].text = dest
+				end
+			end
+
 			if (DS.header != C_NULL)	Darr[seg_out].header = unsafe_string(DS.header)	end
 			if (seg == 1)
 				#headers = pointer_to_array(DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
@@ -914,7 +926,7 @@ function GMTJL_Set_Object(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
 		GMT_Report(API, GMT_MSG_DEBUG, "GMTMEX_Set_Object: Got Image\n");
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
 		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
-		if (X.direction == GMT_IN && (isa(ptr, Array{Any}) || (eltype(ptr) == String)))	# Got text input
+		if (GMTver < 6.0 && X.direction == GMT_IN && (isa(ptr, Array{Any}) || (eltype(ptr) == String)))	# Got text input
 			X.object = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
 			actual_family = GMT_IS_TEXTSET
 		else		# Got something for which a dataset container is appropriate
@@ -1229,14 +1241,22 @@ function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer, a
 	# We come here if we did not receive a matrix
 	#if (!isa(Darr, GMTdataset)) error("Expected a GMTdataset type for input")	end
 	dim = [1, 0, 0, 0]
-	dim[GMT.GMT_SEG+1] = length(Darr)					# Number of segments
+	dim[GMT.GMT_SEG+1] = length(Darr)				# Number of segments
 	if (dim[GMT.GMT_SEG+1] == 0)	error("Input has zero segments where it can't be")	end
-	if (length(Darr[1].data) == 0)	error("The 'data' array is NULL where it can't be")	end
+	if (length(Darr[1].data) == 0 && length(Darr[1].text) == 0)
+		error("Both 'data' array and 'text' arrays are NULL!")
+	end
 	dim[GMT.GMT_COL+1] = size(Darr[1].data, 2)		# Number of columns
-	if (dim[GMT.GMT_COL+1] == 0) error("Input has zero columns where it can't be.")	end
 
+# NEW
+	if (length(Darr[1].text) != 0)	# This segment also has a cell array of strings
+		mode = GMT_WITH_STRINGS;
+	else
+		mode = GMT_NO_STRINGS;
+	end
+	
 	pdim = pointer(dim)
-	if ((D = GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, 0, pdim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
+	if ((D = GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, mode, pdim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 		error("Failure to alloc GMT destination dataset")
 	end
 	DS = unsafe_load(convert(Ptr{GMT_DATASET}, D))
@@ -1247,22 +1267,46 @@ function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer, a
 	n_records = 0
 	for seg = 1:dim[GMT.GMT_SEG+1] 						# Each incoming structure is a new data segment
 		dim[GMT.GMT_ROW+1] = size(Darr[seg].data, 1)	# Number of rows in matrix
+		if (dim[GMT.GMT_ROW+1] == 0)					# When we have only text
+			dim[GMT.GMT_ROW+1] = size(Darr[seg].text, 1)
+		end
+
+		# This segment also has a cell array of strings?
+		mode = (length(Darr[seg].text) != 0) ? GMT_WITH_STRINGS : GMT_NO_STRINGS
+
 		DSv = convert(Ptr{Void}, unsafe_load(DT.segment, seg))		# DT.segment = Ptr{Ptr{GMT.GMT_DATASEGMENT}}
-		S = GMT_Alloc_Segment(API, GMT_IS_DATASET, dim[GMT.GMT_ROW+1], dim[GMT.GMT_COL+1], Darr[seg].header, DSv) # Ptr{GMT_DATASEGMENT}
+		S = GMT_Alloc_Segment(API, mode, dim[GMT.GMT_ROW+1], dim[GMT.GMT_COL+1], Darr[seg].header, DSv) # Ptr{GMT_DATASEGMENT}
 		Sb = unsafe_load(S)								# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
 		for col = 1:Sb.n_columns						# Copy the data columns
 			#unsafe_store!(Sb.data, pointer(Darr[seg].data[:,col]), col)	# This would allow shared mem
 			unsafe_copy!(unsafe_load(Sb.data, col), pointer(Darr[seg].data[:,col]), Sb.n_rows)
 		end
+
+# NEW
+		if (mode == GMT_WITH_STRINGS)	# Add in the trailing strings
+			for row = 1:Sb.n_rows
+				unsafe_store!(Sb.text, GMT_Duplicate_String(API, Darr[seg].text[row]), row)
+			end
+		end
+
 		n_records += Sb.n_rows							# Must manually keep track of totals
 		if (seg == 1 && length(Darr[1].comment) > 0)	# First segment may have table information
 			for k = 1:size(Darr[1].comment,1)
-				if (GMT_Set_Comment(API, GMT_IS_DATASET, GMT_COMMENT_IS_TEXT, convert(Ptr{Void}, pointer(Darr[1].comment[k])),
-				                    convert(Ptr{Void}, D)) != 0)
+				if (GMT_Set_Comment(API, GMT_IS_DATASET, GMT_COMMENT_IS_TEXT, convert(Ptr{Void},
+					                pointer(Darr[1].comment[k])), convert(Ptr{Void}, D)) != 0)
 					println("dataset_init_: Failed to set a dataset header")
 				end
 			end
 		end
+
+		if (GMTver >= 6.0)
+			if (mode == GMT_WITH_STRINGS)
+				DS.type_ = (DS.n_columns != 0) ? GMT_READ_MIXED : GMT_READ_TEXT
+			else
+				DS.type_ = GMT_READ_DATA
+			end
+		end
+
 		unsafe_store!(S, Sb)
 		unsafe_store!(DT.segment, S, seg)
 	end
@@ -1378,11 +1422,13 @@ function palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 	end
 	if (!isnan(cpt.hinge))
 		mutateit(API, P, "has_hinge", 1)
-		#P->mode &= GMT.GMT_CPT_HINGED;			# <========= Still need to translate this
-		Pb.mode = Pb.mode & GMT.GMT_CPT_HINGED
 	end
 
 	Pb = unsafe_load(P)		# GMT.GMT_PALETTE
+
+	if (!isnan(cpt.hinge))
+		Pb.mode = Pb.mode & GMT.GMT_CPT_HINGED
+	end
 
 	if (cpt.model == "rgb")
 		Pb.model = GMT_RGB
@@ -1751,12 +1797,48 @@ function get_GMTversion(API::Ptr{Void})
 	end
 end
 
-#=
-Em GMT_Create_Session(API, ...)
-	API->pad = pad;
+# ---------------------------------------------------------------------------------------------------
+function text_record(data, text)
+	# Create a text record to send to pstext. DATA is the Mx2 coordinates array. TEXT is a string or a cell array
+	if (GMTver < 6.0)		# Convert to the old cell array of strings format
+		if (!isempty(data))
+			nl = size(data,1)
+			t = Array{Any}(nl,1)
+			if (nl == 1)
+				t[1] = string(@sprintf("%.10g %.10g", data[1,1], data[1,2]), " ", text)
+			else
+				for k = 1:nl
+					t[k] = @sprintf("%.10g %.10g %s", data[k,1], data[k,2], text[k])
+				end
+			end
+		else
+			if (isa(text, String))  t = [text]
+			else					t = text
+			end
+		end
+		return t
+	end
 
-O GMT_begin chama indirectamente esta
-void GMT_set_pad (struct GMT_CTRL *GMT, unsigned int pad) {
-	GMT->current.io.pad[XLO] = GMT->current.io.pad[XHI] = GMT->current.io.pad[YLO] = GMT->current.io.pad[YHI] = pad;
-}
-=#
+	if (isa(text, String))
+		T = GMTdataset(data, [text], string(), Array{String,1}(), string(), string())
+	else
+		if (text[1][1] == '>')
+			#= This only works for one single segment
+			nl = length(text)
+			ind = zeros(UInt32, nl)
+			n = 2
+			for k = 2:nl
+				if (text[k][1] == '>')
+					ind[n] = k
+					n += 1
+				end
+			end
+			=#
+			T = GMTdataset(data, text[2:end], text[1], Array{String,1}(), string(), string())
+		else
+			T = GMTdataset(data, text, string(), Array{String,1}(), string(), string())
+		end
+	end
+	return T
+end
+text_record(text) = text_record(Array{Float64,2}(0,0), text)
