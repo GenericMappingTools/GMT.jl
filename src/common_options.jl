@@ -7,7 +7,7 @@ function parse_R(cmd::String, d::Dict, O=false)
 	opt_R = ""
 	for sym in [:R :region :limits]
 		if (haskey(d, sym))
-        	opt_R = build_opt_R(d[sym])
+			opt_R = build_opt_R(d[sym])
 			break
 		end
 	end
@@ -17,12 +17,12 @@ function parse_R(cmd::String, d::Dict, O=false)
 end
 
 function build_opt_R(Val)
-    if (isa(Val, String))
-        return " -R" * Val
-    elseif (isa(Val, Array) && length(Val) == 4)
-        return @sprintf(" -R%.14g/%.14g/%.14g/%.14g", Val[1], Val[2], Val[3], Val[4])
-    end
-    return ""
+	if (isa(Val, String))
+		return " -R" * Val
+	elseif (isa(Val, Array) && length(Val) == 4)
+		return @sprintf(" -R%.14g/%.14g/%.14g/%.14g", Val[1], Val[2], Val[3], Val[4])
+	end
+	return ""
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -46,8 +46,8 @@ function parse_J(cmd::String, d::Dict, O=false)
 	# Default to 14c if no size is provided
 	opt_J = ""
 	for symb in [:J :proj :projection]
-    	if (haskey(d, symb))
-    	    opt_J = build_opt_J(d[symb])
+		if (haskey(d, symb))
+			opt_J = build_opt_J(d[symb])
 			break
 		end
 	end
@@ -80,12 +80,12 @@ function parse_J(cmd::String, d::Dict, O=false)
 end
 
 function build_opt_J(Val)
-    if (isa(Val, String))
+	if (isa(Val, String))
 		return " -J" * Val
 	elseif (isempty(Val))
 		return " -J"
 	end
-    return ""
+	return ""
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -107,8 +107,8 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 				tok[k] = tok[k] * "+t\"" * d[:title] * "\""
 			end
 		elseif (ismatch(r"[afgpsxyz+S+u]", tok[k]) && !ismatch(r"[+l+L]", tok[k]))		# If label here, forget about :x|y_label
-    		if (haskey(d, :x_label) && isa(d[:x_label], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:x_label] * "\""  end
-    		if (haskey(d, :y_label) && isa(d[:y_label], String))  tok[k] = tok[k] * " -By+l\"" * d[:y_label] * "\""  end
+			if (haskey(d, :x_label) && isa(d[:x_label], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:x_label] * "\""  end
+			if (haskey(d, :y_label) && isa(d[:y_label], String))  tok[k] = tok[k] * " -By+l\"" * d[:y_label] * "\""  end
 		end
 		if (searchindex(tok[k], "-B") == 0)  tok[k] = " -B" * tok[k]
 		else                                 tok[k] = " " * tok[k]
@@ -128,7 +128,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_X(cmd::String, d::Dict)
 	# Parse the global -X option. Return CMD same as input if no -X option in args
-    if (haskey(d, :X))
+	if (haskey(d, :X))
 		cmd = cmd * " -X" * arg2str(d[:X])
 	elseif (haskey(d, :x_offset))
 		cmd = cmd * " -X" * arg2str(d[:x_offset])
@@ -139,7 +139,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_Y(cmd::String, d::Dict)
 	# Parse the global -Y option. Return CMD same as input if no -Y option in args
-    if (haskey(d, :Y))
+	if (haskey(d, :Y))
 		cmd = cmd * " -Y" * arg2str(d[:Y])
 	elseif (haskey(d, :y_offset))
 		cmd = cmd * " -Y" * arg2str(d[:y_offset])
@@ -568,4 +568,32 @@ function put_in_slot(cmd::String, val, opt::Char, args)
 		k += 1
 	end
 	return cmd, k
+end
+
+# --------------------------------------------------------------------------------------------------
+function peaks(N=49)
+	x,y = meshgrid(linspace(-3,3,N))
+	
+	z =  3 * (1.-x).^2 .* exp.(-(x.^2) - (y+1).^2) - 10*(x./5 - x.^3 - y.^5) .* exp.(-x.^2 - y.^2)
+	   - 1/3 * exp.(-(x+1).^2 - y.^2)
+	return x,y,z
+end	
+
+meshgrid(v::AbstractVector) = meshgrid(v, v)
+function meshgrid{T}(vx::AbstractVector{T}, vy::AbstractVector{T})
+	m, n = length(vy), length(vx)
+	vx = reshape(vx, 1, n)
+	vy = reshape(vy, m, 1)
+	(repmat(vx, m, 1), repmat(vy, 1, n))
+end
+
+function meshgrid{T}(vx::AbstractVector{T}, vy::AbstractVector{T}, vz::AbstractVector{T})
+	m, n, o = length(vy), length(vx), length(vz)
+	vx = reshape(vx, 1, n, 1)
+	vy = reshape(vy, m, 1, 1)
+	vz = reshape(vz, 1, 1, o)
+	om = ones(Int, m)
+	on = ones(Int, n)
+	oo = ones(Int, o)
+	(vx[om, :, oo], vy[:, on, oo], vz[om, on, :])
 end
