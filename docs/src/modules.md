@@ -9,7 +9,7 @@ where *modulename* is the program name (*e.g. pscoast*), *cmd* is used to transm
 modules that will read data from files and *argi* is one, and for certain modules, or more data
 arrays or *GMT.jl* data types. *opti* named arguments common to many modules used for example to
 set the output format. Finally *kwargs* are keyword parameters used to set the individual module
-options. But contrary to the [`Monolitic`](@ref) usage, the one letter *GMT* option syntax may be
+options. But contrary to the [Monolitic](@ref) usage, the one letter *GMT* option syntax may be
 replaced by more verbose aliases. To make it clear let us look at couple of examples.
 
     pscoast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy", fmt="ps")
@@ -152,7 +152,7 @@ The issue with this solution, that could be implemented internally without user 
 currently only works on Windows.
 
 A very interesting alternative to a file format is the option to create RGB images with *psconvert* and
-return it to Julia in a [`Image type`](@ref) type.
+return it to Julia in a [Image type](@ref) type.
 
     I = gmt("psconvert = -A")
 
