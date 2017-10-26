@@ -49,7 +49,19 @@ x,y,z=GMT.peaks()
 G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);  # Iterpolate into a regular grid
 grdcontour(G, frame="a", fmt="png", show=1)
 ```
+
 !["Simple black&white contour"](figures/hello-bw-contour.png)
+
+Now with colored contours. To make it colored we need to generate a color map and use it. Notetice
+that we have to specify a *pen* attribute to get the colored contours because pen specifications
+are always set separately.
+
+```julia
+cpt = makecpt(T="-6/8/1");      # Create the color map
+grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", show=1)
+```
+
+!["Simple color contour"](figures/hello-color-contour.png)
 
 ## Color images
 
