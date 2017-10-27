@@ -2,7 +2,7 @@ VERSION >= v"0.4" && __precompile__()
 
 module GMT
 
-const GMTver = 5.0
+const GMTver = 6.0
 
 export
 	GMTver,
@@ -44,7 +44,8 @@ export
 	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
 	pscoast, pscoast!, psxy, psxy!, grdcontour, grdcontour!, grdimage, grdimage!,
-	grdview, grdview!, plot, plot!, makecpt, psscale, psscale!,
+	grdview, grdview!, plot, plot!, makecpt, pshistogram, pshistogram!, psscale, psscale!,
+	pstext, pstext!, gmtinfo, grdinfo, surface,
 	text_record,
 	NULL
 
@@ -53,13 +54,17 @@ include("libgmt_h.jl")
 include("libgmt.jl")
 include("gmt_main.jl")
 include("common_options.jl")
-include("pscoast.jl")
-include("psscale.jl")
-include("psxy.jl")
-include("plot.jl")
+include("gmtinfo.jl")
 include("grdcontour.jl")
+include("grdinfo.jl")
 include("grdimage.jl")
 include("grdview.jl")
 include("makecpt.jl")
+include("pscoast.jl")
+include("psscale.jl")
+include("pstext.jl")
+include("psxy.jl")
+include("plot.jl")
+include("surface.jl")
 
 end # module
