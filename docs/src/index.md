@@ -17,21 +17,31 @@ end
 ```
 
 ```@docs
-psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="",
-     K=false, O=false, first=true, kwargs...)
+plot(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true, kwargs...)
+psxy(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-psscale(cmd0::String="", arg1=[]; fmt="", K=false, O=false, first=true, kwargs...)
+pscoast(cmd0::String=""; fmt="", clip=[], kwargs...)
+
+pshistogram(cmd0::String="", arg1=[]; fmt="", kwargs...)
+
+psscale(cmd0::String="", arg1=[]; fmt="", kwargs...)
+
+pstext(cmd0::String="", arg1=[]; fmt="", kwargs...)
+
+gmtinfo(cmd0::String="", arg1=[], kwargs...)
 
 grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[],
-         fmt="", K=false, O=false, first=true, kwargs...)
+         fmt="", kwargs...)
 
-grdcontour(cmd0::String="", arg1=[]; data=[], fmt="",
-           K=false, O=false, first=true, kwargs...)
+grdcontour(cmd0::String="", arg1=[]; data=[], fmt="", kwargs...)
+
+grdinfo(cmd0::String="", arg1=[], kwargs...)
 
 grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
-        fmt="", K=false, O=false, first=true, kwargs...)
+        fmt="", kwargs...)
 
 makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
+
+surface(cmd0::String="", arg1=[]; fmt="", kwargs...)
 ```
