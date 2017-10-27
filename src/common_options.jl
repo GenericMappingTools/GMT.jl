@@ -299,10 +299,10 @@ function parse_n(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_swapxy(cmd::String, d::Dict)
+function parse_swappxy(cmd::String, d::Dict)
 	# Parse the global -: option. Return CMD same as input if no -: option in args
-	# But because we acn't have a variable called ':' we use only the 'swapxy' alias
-	for symb in [:swapxy]
+	# But because we acn't have a variable called ':' we use only the 'swappxy' alias
+	for symb in [:swappxy]
 		if (haskey(d, symb))
 			cmd = cmd * " -:" * arg2str(d[symb])
 			break
@@ -324,6 +324,18 @@ function parse_p(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_r(cmd::String, d::Dict)
+	# Parse the global -r option. Return CMD same as input if no -r option in args
+	for symb in [:r :reg :registration]
+		if (haskey(d, symb) && isa(d[symb], String))
+			cmd = cmd * " -r" * d[symb]
+			break
+		end
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_t(cmd::String, d::Dict)
 	# Parse the global -t option. Return CMD same as input if no -t option in args
 	for symb in [:t :alpha :transparency]
@@ -333,6 +345,30 @@ function parse_t(cmd::String, d::Dict)
 		end
 	end
 	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function opt_pen(d::Dict, opt::Char, symbs)
+	# Create an option string of the type -Wpen
+	out = ""
+	pen = build_pen(d)						# Either a full pen string or empty ("")
+	if (!isempty(pen))
+		out = " -" * opt * pen
+	else
+		for sym in symbs
+			if (haskey(d, sym))
+				if (isa(d[sym], String))
+					out = " -" * opt * arg2str(d[sym])
+				elseif (isa(d[sym], Tuple))	# Like this it can hold the pen, not extended atts
+					out = " -" * opt * parse_pen(d[sym])
+				else
+					error("Nonsense in " * opt * " option")
+				end
+				break
+			end
+		end
+	end
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -30,6 +30,7 @@ Parameters
 - **L** : **range** : -- Str --
     Limit range: Do not draw contours for data values below low or above high.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#l)
+- $(GMT.opt_P)
 - **Q** : **cut** : -- Str or Number --
     Do not draw contours with less than cut number of points.
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#q)

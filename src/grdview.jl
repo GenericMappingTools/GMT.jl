@@ -22,6 +22,7 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
 - **N** : **plane** : -- Str or Int --
     Draws a plane at this z-level.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#n)
+- $(GMT.opt_P)
 - **Q** : **type** : -- Str or Int --
     Specify **m** for mesh plot, **s* for surface, **i** for image.
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#q)

@@ -74,7 +74,11 @@ const opt_n = "**n** : **interp** : -- Str --
 const opt_p = "**p** : **view** : **perspective** : -- Str --
       [`-p`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#perspective-full)"
 
+const opt_r = "**r** : **reg** : **registration** : -- Str --
+      [`-r`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#r-full)"
+
 const opt_t = "**t** : **alpha** : **transparency** : -- Str --
       [`-t`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#t-full)"
 
-
+const opt_swappxy = "**swappxy** : Str --
+      [`-:`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#colon-full)"

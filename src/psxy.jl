@@ -37,8 +37,7 @@ Parameters
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#l)
 - **N** : **no_clip** : --- Str or [] --
     Do NOT clip symbols that fall outside map border 
-- **P** : **portrait** : --- Bool or [] --
-    Tell GMT to **NOT** draw in portriat mode (that is, make a Landscape plot)
+- $(GMT.opt_P)
 - **S** : **symbol** : **marker** : **Marker** : -- Str --
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s)
@@ -132,7 +131,7 @@ function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="",
 	cmd, opt_i = parse_i(cmd, d)
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
-	cmd = parse_swapxy(cmd, d)
+	cmd = parse_swappxy(cmd, d)
 
 	if (first)  K = true;	O = false
 	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""

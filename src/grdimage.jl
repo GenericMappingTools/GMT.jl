@@ -8,13 +8,13 @@ Full option list at [`grdimage`](http://gmt.soest.hawaii.edu/doc/latest/grdimage
 Parameters
 ----------
 
-- **A** : **img_out** : **image_out** : -- Str --  
+- **A** : **img_out** : **image_out** : -- Str --
     Save an image in a raster format instead of PostScript.
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#a)
 - $(GMT.opt_J)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
-- **D** : **img_in** : **image_in** : -- Str or [] --  
+- **D** : **img_in** : **image_in** : -- Str or [] --
     Specifies that the grid supplied is an image file to be read via GDAL.
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#d)
 - **E** : **dpi** : -- Int or [] --  
@@ -32,6 +32,7 @@ Parameters
 - **N** : **noclip** : -- Bool or [] --
     Do not clip the image at the map boundary.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#n)
+- $(GMT.opt_P)
 - **Q** : **nan_t** : **nan_alpha** : -- Bool or [] --
     Make grid nodes with z = NaN transparent, using the colormasking feature in PostScript Level 3.
 - $(GMT.opt_R)
@@ -87,7 +88,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], 
 	cmd = add_opt(cmd, 'E', d, [:E :dpi])
 	cmd = add_opt(cmd, 'G', d, [:G])
 	cmd = add_opt(cmd, 'M', d, [:M :monochrome])
-	cmd = add_opt(cmd, 'N', d, [:M :noclip])
+	cmd = add_opt(cmd, 'N', d, [:N :noclip])
 	cmd = add_opt(cmd, 'Q', d, [:Q :nan_t :nan_alpha])
 
 	if (!isempty_(data))
