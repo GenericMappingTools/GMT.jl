@@ -312,6 +312,18 @@ function parse_swappxy(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_o(cmd::String, d::Dict)
+	# Parse the global -p option. Return CMD same as input if no -p option in args
+	for symb in [:o :output_col]
+		if (haskey(d, symb) && isa(d[symb], String))
+			cmd = cmd * " -o" * d[symb]
+			break
+		end
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_p(cmd::String, d::Dict)
 	# Parse the global -p option. Return CMD same as input if no -p option in args
 	for symb in [:p :view :perspective]

@@ -71,6 +71,9 @@ const opt_i = "**i** : **input_col** : -- Str --
 const opt_n = "**n** : **interp** : -- Str --
       [`-n`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#n-full)"
 
+const opt_o = "**o** : **output_col** : -- Str --
+      [`-o`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#ocols-full)"
+
 const opt_p = "**p** : **view** : **perspective** : -- Str --
       [`-p`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#perspective-full)"
 
