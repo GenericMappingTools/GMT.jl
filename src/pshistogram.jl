@@ -9,6 +9,9 @@ Parameters
 ----------
 
 - $(GMT.opt_J)
+- **W** : **bin** : **width** : -- Number or Str --
+    Sets the bin width used for histogram calculations.
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#w)
 - **A** : **horizontal** : -- Bool or [] --
     Plot the histogram horizontally from x = 0 [Default is vertically from y = 0].
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#a)
@@ -23,17 +26,17 @@ Parameters
     Center bin on each value. [Default is left edge].
 	[`-F`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#f)
 - **G** : **fill** : -- Number or Str --
-    Select filling of bars [Default is no fill].
+    Select filling of bars [if no G, L or C set G=100].
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#g)
 - **I** : **inquire** : -- Bool or [] --
     Inquire about min/max x and y after binning.
 	[`-I`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#i)
 - **L** : **labels** : -- Str or [] --
-    Specify labels for the 0, 90, 180, and 270 degree marks.
+    Draw bar outline using the specified pen thickness [if no G, L or C set L=0.5].
 	[`-L`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#l)
-- **M** : -- Str --
-    Used with C to modify vector parameters. For vector heads, append vector head size.
-	[`-M`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#m)
+- **N** : **normal** : -- Str --
+    Draw the equivalent normal distribution; append desired pen [0.5p,black].
+	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#n)
 - $(GMT.opt_P)
 - **Q** : **alpha** : -- Number or [] --
     Sets the confidence level used to determine if the mean resultant is significant.
@@ -76,7 +79,7 @@ function pshistogram(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="
 
     d = KW(kwargs)
 	cmd = ""
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, caller, O, " -JX12c/0")
+    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, caller, O, " -JX12c/12c")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
@@ -90,20 +93,27 @@ function pshistogram(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	# If data is a file name, read it and compute a tight -R if this was not provided 
+	# If data is a file name, read it and compute a tight -R if this was not provided
+	if (isempty(opt_R))  opt_R = " "  end		# So it doesn't try to find the -R in next call
 	cmd, arg1, opt_R, opt_i = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
-	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1, arg2)
+	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
 	cmd = add_opt(cmd, 'A', d, [:A :horizontal])
 	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate])
 	cmd = add_opt(cmd, 'F', d, [:F :center])
     cmd = add_opt(cmd, 'G', d, [:G :fill])
 	cmd = add_opt(cmd, 'I', d, [:I :inquire])
-	cmd = cmd * opt_pen(d, "L", [:L :pen])
+	opt_L = opt_pen(d, 'L', [:L :pen])
 	cmd = add_opt(cmd, 'Q', d, [:Q :cumulative])
 	cmd = add_opt(cmd, 'S', d, [:S :stairs])
+	cmd = add_opt(cmd, 'W', d, [:W :bin :width])
 	cmd = add_opt(cmd, 'Z', d, [:Z :kind])
+	if (isempty(opt_L) && !contains(cmd, "-G") && !contains(cmd, "-C"))		# If no -L, -G or -C set these defaults
+		cmd = cmd * " -G150" * " -L0.5p"
+	elseif (!isempty(opt_L))
+		cmd = cmd * opt_L
+	end
 
 	for symb in [:N :normal]
 		if (haskey(d, symb))
@@ -115,13 +125,17 @@ function pshistogram(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="
 		end
 	end
 
-	cmd = [finish_PS(d, cmd0, cmd, output, K, O)]
+	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
     return finish_PS_module(d, cmd, "", arg1, arg2, [], [], [], [], output, fname_ext, opt_T, K, "pshistogram")
 end
 
 # ---------------------------------------------------------------------------------------------------
-pshistogram!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; caller=[], data=[], fmt::String="",
-      K=true, O=true,  first=false, kwargs...) =
-	pshistogram(cmd0, arg1, arg2; caller=caller, data=data, fmt=fmt,
-	     K=true, O=true,  first=false, kwargs...)
+pshistogram!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true, first=false, kw...) =
+	pshistogram(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+
+pshistogram(arg1=[]; caller=[], data=[], fmt::String="", K=false, O=false, first=true, kw...) =
+	pshistogram("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+
+pshistogram!(arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true, first=false, kw...) =
+	pshistogram("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
