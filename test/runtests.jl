@@ -11,7 +11,7 @@ assert(r[1].data == [5.0 5 5 5 5 5])
 G=gmt("grdmath -R0/10/0/10 -I1 5");
 r=gmt("grdinfo -C", G);
 assert(r[1].data == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
-r2=gmt("grdinfo -C", G);
+r2=grdinfo(G, C=true);
 assert(r[1].data == r2[1].data)
 #
 cpt = makecpt(range="-1/1/0.1");
@@ -47,7 +47,7 @@ C = makecpt(T="-200/1000/100", C="rainbow");
 psscale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
 
 # PSHISTOGRAM
-pshistogram(randn(1000),W=0.1,center=true,fmt="ps",B="a")
+pshistogram(randn(1000),W=0.1,center=true,fmt="ps",B="a",N=0)
 
 # PSTEXT
 pstext(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps")
