@@ -46,7 +46,7 @@ Parameters
 - $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
-function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], fmt="", 
+function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], fmt::String="", 
                   K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
@@ -57,31 +57,18 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], 
 		error("When 'data' is a tuple, it MUST contain a GMTgrid data type")
 	end
 
-	output = fmt
-	if (!isa(output, String))
-		error("Output format or name must be a String")
-	else
-		output, opt_T, fname_ext = fname_out(output)		# OUTPUT may have been an extension only
-	end
+	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
 	cmd = ""
-	maybe_more = false			# If latter set to true, search for lc & lc pen settings
-	cmd, opt_R = parse_R(cmd, d)
-	cmd, opt_J = parse_J(cmd, d)
-	cmd, opt_B = parse_B(cmd, d)
-	cmd = parse_U(cmd, d)
-	cmd = parse_V(cmd, d)
-	cmd = parse_X(cmd, d)
-	cmd = parse_Y(cmd, d)
+    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
+	cmd = parse_UVXY(cmd, d)
 	cmd = parse_f(cmd, d)
 	cmd = parse_n(cmd, d)
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
 
-	if (first)  K = true;	O = false
-	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
-	end
+	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	cmd = add_opt_s(cmd, 'A', d, [:A :img_out :image_out])
 	cmd = add_opt(cmd, 'D', d, [:D :img_in :image_in])
@@ -91,20 +78,8 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], 
 	cmd = add_opt(cmd, 'N', d, [:N :noclip])
 	cmd = add_opt(cmd, 'Q', d, [:Q :nan_t :nan_alpha])
 
-	if (!isempty_(data))
-		if (!isempty_(arg1))
-			warn("Conflicting ways of providing input data. Both a file name via positional and
-				  a data array via kwyword args were provided. Ignoring later argument")
-		else
-			if (isa(data, String)) 		# OK, we have data via file
-				cmd = cmd * " " * data
-			elseif (isa(data, Tuple) && length(data) == 3)
-				arg1 = data[1];     arg2 = data[2];     arg3 = data[3]
-			else
-				arg1 = data				# Whatever this is
-			end
-		end
-	end
+	# In case DATA holds a grid file name, copy it into cmd. If Grids put them in ARGs
+	cmd, arg1, arg2, arg3 = read_data(data, cmd, arg1, arg2, arg3)
 
 	for sym in [:C :color :cmap]
 		if (haskey(d, sym))
@@ -138,42 +113,18 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], 
 	end
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
-
-	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
-	else                PS = false
-	end
-
-	(haskey(d, :Vd)) && println(@sprintf("\tgrdimage %s", cmd))
-
-	P = nothing
-	if (PS)
-		if (!isempty_(arg4))      P = gmt("grdimage " * cmd, arg1, arg2, arg3, arg4)
-		elseif (!isempty_(arg3))  P = gmt("grdimage " * cmd, arg1, arg2, arg3)
-		elseif (!isempty_(arg2))  P = gmt("grdimage " * cmd, arg1, arg2)
-		elseif (!isempty_(arg1))  P = gmt("grdimage " * cmd, arg1)
-		else                      P = gmt("grdimage " * cmd)
-		end
-	else
-		if (!isempty_(arg4))      gmt("grdimage " * cmd, arg1, arg2, arg3, arg4)
-		elseif (!isempty_(arg3))  gmt("grdimage " * cmd, arg1, arg2, arg3)
-		elseif (!isempty_(arg2))  gmt("grdimage " * cmd, arg1, arg2)
-		elseif (!isempty_(arg1))  gmt("grdimage " * cmd, arg1)
-		else                      gmt("grdimage " * cmd)
-		end
-	end
-	show_or_save(d, output, fname_ext, opt_T, K)    # Display Fig in default viewer or save it to file
-	return P
+    return finish_PS_module(d, cmd, "", arg1, arg2, arg3, arg4, [], [], output, fname_ext, opt_T, K, "grdimage")
 end
 
 # ---------------------------------------------------------------------------------------------------
 grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[],
-          fmt="", K=true, O=true, first=false, kw...) =
+          fmt::String="", K=true, O=true, first=false, kw...) =
 	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, fmt=fmt, K=true, O=true, first=false, kw...) 
 
-grdimage(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[], fmt="", 
+grdimage(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[], fmt::String="", 
          K=false, O=false, first=true, kw...) =
 	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, fmt=fmt, K=K, O=O, first=first, kw...)
 
-grdimage!(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[], fmt="", 
-         K=true, O=true, first=false, kw...) =
+grdimage!(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[], fmt::String="", 
+          K=true, O=true, first=false, kw...) =
 	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, fmt=fmt, K=true, O=true, first=false, kw...)

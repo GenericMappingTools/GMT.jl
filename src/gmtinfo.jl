@@ -56,46 +56,32 @@ function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 		return gmt("gmtinfo " * cmd0)
 	end
 
-	if (!isempty_(data) && !isa(data, GMTgrid))
-		error("When using 'data', it MUST contain a GMTgrid data type")
-	end
-
 	d = KW(kwargs)
 	cmd = ""
 	cmd = parse_V(cmd, d)
-	cmd, = parse_bi(cmd, d)
-	cmd, = parse_di(cmd, d)
+	cmd, opt_bi = parse_bi(cmd, d)
+	cmd, opt_di = parse_di(cmd, d)
 	cmd = parse_e(cmd, d)
 	cmd = parse_f(cmd, d)
 	cmd = parse_h(cmd, d)
 	cmd = parse_h(cmd, d)
-	cmd, = parse_i(cmd, d)
+	cmd, opt_i = parse_i(cmd, d)
 	cmd = parse_o(cmd, d)
 	cmd = parse_r(cmd, d)
 	cmd = parse_swappxy(cmd, d)
 
 	cmd = add_opt_s(cmd, 'A', d, [:A])
-	cmd = add_opt(cmd, 'C', d, [:C :per_column])
-	cmd = add_opt(cmd, 'D', d, [:D :center])
+	cmd = add_opt(cmd,   'C', d, [:C :per_column])
+	cmd = add_opt(cmd,   'D', d, [:D :center])
 	cmd = add_opt_s(cmd, 'E', d, [:E :get_record])
-	cmd = add_opt(cmd, 'F', d, [:F :counts])
-	cmd = add_opt(cmd, 'I', d, [:I :report_region])
-	cmd = add_opt(cmd, 'L', d, [:L :common_limits])
-	cmd = add_opt(cmd, 'S', d, [:S :for_error_bars])
-	cmd = add_opt(cmd, 'T', d, [:T :nearest_multiple])
+	cmd = add_opt(cmd,   'F', d, [:F :counts])
+	cmd = add_opt(cmd,   'I', d, [:I :report_region])
+	cmd = add_opt(cmd,   'L', d, [:L :common_limits])
+	cmd = add_opt(cmd,   'S', d, [:S :for_error_bars])
+	cmd = add_opt(cmd,   'T', d, [:T :nearest_multiple])
 
-	if (!isempty_(data))
-		if (!isempty_(arg1))
-			warn("Conflicting ways of providing input data. Both a file name via positional and
-				  a data array via kwyword args were provided. Ignoring later argument")
-		else
-			if (isa(data, String)) 		# OK, we have data via file
-				cmd = cmd * " " * data
-			else
-				arg1 = data				# Whatever this is
-			end
-		end
-	end
+	# If data is a file name, read it.
+	cmd, arg1, = read_data(data, cmd, arg1, " ", opt_i, opt_bi, opt_di)
 
 	(haskey(d, :Vd)) && println(@sprintf("\tgmtinfo %s", cmd))
 

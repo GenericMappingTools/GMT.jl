@@ -70,36 +70,24 @@ Parameters
 - $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
-function pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true, kwargs...)
+function pscoast(cmd0::String=""; fmt::String="", clip=[], K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("pscoast " * cmd0)
 	end
 
-	output = fmt
-	if (!isa(output, String))
-		error("Output format or name must be a String")
-	else
-		output, opt_T, fname_ext = fname_out(output)		# OUTPUT may have been an extension only
-	end
+	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
 	cmd = ""
-	maybe_more = false			# If latter set to true, search for lc & lc pen settings
-	cmd, opt_R = parse_R(cmd, d)
-	cmd, opt_J = parse_J(cmd, d)
-	cmd, opt_B = parse_B(cmd, d)
-	cmd = parse_U(cmd, d)
-	cmd = parse_V(cmd, d)
-	cmd = parse_X(cmd, d)
-	cmd = parse_Y(cmd, d)
+	maybe_more = false				# If latter set to true, search for lc & lc pen settings
+    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
+	cmd = parse_UVXY(cmd, d)
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
 	cmd = parse_bo(cmd, d)
 
-	if (first)  K = true;	O = false
-	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
-	end
+	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	if (!isempty(clip))
 		if (clip == "land")       cmd = cmd * " -Gc"
@@ -187,22 +175,7 @@ function pscoast(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=true,
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
-	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
-	else                PS = false
-	end
-
-	(haskey(d, :Vd)) && println(@sprintf("\tpscoast %s", cmd))
-
-	P = nothing
-	if (PS) P = gmt("pscoast " * cmd)
-	else        gmt("pscoast " * cmd)
-	end
-	if (haskey(d, :show)) 					# Display Fig in default viewer
-		showfig(output, fname_ext, opt_T, K)
-	elseif (haskey(d, :savefig))
-		showfig(output, fname_ext, opt_T, K, d[:savefig])
-	end
-	return P
+    return finish_PS_module(d, cmd, "", [], [], [], [], [], [], output, fname_ext, opt_T, K, "pscoast")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -227,5 +200,5 @@ function parse_dcw(val::Tuple, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-pscoast!(cmd0::String=""; fmt="", clip=[], K=false, O=false, first=false, kwargs...) =
+pscoast!(cmd0::String=""; fmt::String="", clip=[], K=false, O=false, first=false, kwargs...) =
 	pscoast!(cmd0; fmt="", clip=[], K=true, O=true, first=false, kwargs...)

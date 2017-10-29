@@ -80,7 +80,7 @@ Parameters
 - $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
-function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="",
+function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
               K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
@@ -92,35 +92,12 @@ function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="",
 		end
 	end
 
-	if (!isempty(data) && N_args == 1)
-		warn("Conflicting ways of providing input data. Both a file name via positional and
-			  a data array via keyword args were provided. Ignoring former argument")
-	end
-
-	output = fmt
-	if (!isa(output, String))
-		error("Output format or name must be a String")
-	else
-		output, opt_T, fname_ext = fname_out(output)		# OUTPUT may have been an extension only
-	end
+	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
     d = KW(kwargs)
 	cmd = ""
-	cmd, opt_R = parse_R(cmd, d, O)
-	cmd, opt_J = parse_J(cmd, d, O)
-	if (!O && isempty(opt_J))					# If we have no -J use this default
-		opt_J = " -JX12c/8c"
-		cmd = cmd * opt_J
-	end
-	if (!isempty(caller) && searchindex(cmd0,"-B") == 0 && searchindex(opt_J, "-JX") != 0)	# e.g. plot() sets 'caller'
-		cmd, opt_B = parse_B(cmd, d, "-Ba -BWS")
-	else
-		cmd, opt_B = parse_B(cmd, d)
-	end
-	cmd = parse_U(cmd, d)
-	cmd = parse_V(cmd, d)
-	cmd = parse_X(cmd, d)
-	cmd = parse_Y(cmd, d)
+    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, caller, O, " -JX12c/8c")
+	cmd = parse_UVXY(cmd, d)
 	cmd = parse_a(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
@@ -133,47 +110,12 @@ function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="",
 	cmd = parse_t(cmd, d)
 	cmd = parse_swappxy(cmd, d)
 
-	if (first)  K = true;	O = false
-	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
-	end
+	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	# Read in the 'data' and compute a tight -R if this was not provided 
-	if (isa(data, String))
-		if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option 
-			data = gmt("read -Td " * opt_i * opt_bi * opt_di * " " * data)
-			if (!isempty(opt_i))		# Remove the -i option from cmd. It has done its job
-				cmd = replace(cmd, opt_i, "")
-				opt_i = ""
-			end
-		else
-			data = gmt("read -Td " * opt_bi * opt_di * " " * data)
-		end
-	end
-	if (!isempty(data)) arg1 = data  end
+	# If data is a file name, read it and compute a tight -R if this was not provided 
+	cmd, arg1, opt_R, opt_i = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
-	if (isempty(opt_R))
-		info = gmt("gmtinfo -C" * opt_i, arg1)		# Here we reading from an original GMTdataset or Array
-		if (size(info[1].data, 2) < 4)
-			error("Need at least 2 columns of data to run this program")
-		end
-		opt_R = @sprintf(" -R%.8g/%.8g/%.8g/%.8g", info[1].data[1], info[1].data[2], info[1].data[3], info[1].data[4])
-		cmd = cmd * opt_R
-	end
-
-	for sym in [:C :color]
-		if (haskey(d, sym))
-			if (isa(d[sym], GMT.GMTcpt))
-				cmd = cmd * " -C"
-				if     (N_args == 0)  arg1 = d[sym];	N_args += 1
-				elseif (N_args == 1)  arg2 = d[sym];	N_args += 1
-				else   error("Can't send the CPT data via C and input array")
-				end
-			else
-				cmd = cmd * " -C" * arg2str(d[sym])
-			end
-			break
-		end
-	end
+	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1, arg2)
 
 	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
 	cmd = add_opt(cmd, 'D', d, [:D :offset])
@@ -283,33 +225,7 @@ function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt="",
 		cmd = [finish_PS(d, cmd0, cmd, output, K, O)]
 	end
 
-	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
-	else                PS = false
-	end
-
-	P = nothing
-	for k = 1:length(cmd)
-		(haskey(d, :Vd)) && println(@sprintf("\tpsxy %s", cmd[k]))
-		if (N_args == 0)					# Simple case
-			if (PS) P = gmt("psxy " * cmd[k])
-			else        gmt("psxy " * cmd[k])
-			end
-		elseif (N_args == 1)				# One numeric input
-			if (PS) P = gmt("psxy " * cmd[k], arg1)
-			else        gmt("psxy " * cmd[k], arg1)
-			end
-		else								# Two numeric inputs (data + CPT)
-			if (PS) P = gmt("psxy " * cmd[k], arg1, arg2)
-			else        gmt("psxy " * cmd[k], arg1, arg2)
-			end
-		end
-	end
-	if (haskey(d, :show)) 					# Display Fig in default viewer
-		showfig(output, fname_ext, opt_T, K)
-	elseif (haskey(d, :savefig))
-		showfig(output, fname_ext, opt_T, K, d[:savefig])
-	end
-	return P
+    return finish_PS_module(d, cmd, arg1, arg2, N_args, output, fname_ext, opt_T, K, "psxy")
 end
 
 #=
@@ -331,7 +247,7 @@ WARNING: Method definition #psxy(Array{Any, 1}, typeof(GMT.psxy)) in module GMT 
 =#
 
 # ---------------------------------------------------------------------------------------------------
-psxy!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; caller=[], data=[], fmt="",
+psxy!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; caller=[], data=[], fmt::String="",
       K=true, O=true,  first=false, kwargs...) =
 	psxy(cmd0, arg1, arg2; caller=caller, data=data, fmt=fmt,
 	     K=true, O=true,  first=false, kwargs...)

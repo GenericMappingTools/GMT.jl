@@ -40,6 +40,9 @@ Full option list at [`makecpt`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.h
 - **Z** : **continuous** : -- Bool or [] --
     Creates a continuous CPT [Default is discontinuous, i.e., constant colors for each interval].
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#z)
+- $(GMT.opt_bi)
+- $(GMT.opt_di)
+- $(GMT.opt_i)
 """
 # ---------------------------------------------------------------------------------------------------
 function makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
@@ -48,33 +51,13 @@ function makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = ""
 	cmd = parse_V(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
+	cmd, opt_di = parse_bi(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
 
-	# Read in the 'data'
-	if (isa(data, String))
-		if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
-			data = gmt("read -Td " * opt_i * opt_bi * " " * data)
-			if (!isempty(opt_i))		# Remove the -i option from cmd. It has done its job
-				cmd = replace(cmd, opt_i, "")
-				opt_i = ""
-			end
-		else
-			data = gmt("read -Td " * opt_bi * " " * data)
-		end
-	end
-	if (!isempty(data)) arg1 = data  end
+	# If data is a file name, read it and compute a tight -R if this was not provided 
+	cmd, arg1, opt_R, = read_data(data, cmd, arg1, " ", opt_i, opt_bi, opt_di)
 
-	for sym in [:C :color]
-		if (haskey(d, sym))
-			if (isa(d[sym], GMT.GMTcpt))
-				cmd = cmd * " -C"
-				arg1 = d[sym]
-			else
-				cmd = cmd * " -C" * arg2str(d[sym])
-			end
-			break
-		end
-	end
+	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color], 'C', 0, arg1, [])
 
 	for sym in [:E :data_levels]
 		if (haskey(d, sym))

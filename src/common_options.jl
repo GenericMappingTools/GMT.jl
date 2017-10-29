@@ -126,6 +126,25 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_BJR(d::Dict, cmd0::String, cmd::String, caller, O, default)
+	# Join these thre in one function. CALLER is non-empty when module is called by plot()
+	cmd, opt_R = parse_R(cmd, d, O)
+	cmd, opt_J = parse_J(cmd, d, O)
+	if (!O && isempty(opt_J))					# If we have no -J use this default
+		opt_J = default					# " -JX12c/8c" (e.g. psxy) or " -JX12c/0" (e.g. grdimage)
+		cmd = cmd * opt_J
+	elseif (O && isempty(opt_J))
+		cmd = cmd * " -J"
+	end
+	if (!isempty(caller) && !contains(cmd0,"-B") && contains(opt_J, "-JX"))	# e.g. plot() sets 'caller'
+		cmd, opt_B = parse_B(cmd, d, "-Ba -BWS")
+	else
+		cmd, opt_B = parse_B(cmd, d)
+	end
+	return cmd, opt_B, opt_J, opt_R
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_X(cmd::String, d::Dict)
 	# Parse the global -X option. Return CMD same as input if no -X option in args
 	if (haskey(d, :X))
@@ -169,6 +188,15 @@ function parse_V(cmd::String, d::Dict)
 			break
 		end
 	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_UVXY(cmd::String, d::Dict)
+	cmd = parse_U(cmd, d)
+	cmd = parse_V(cmd, d)
+	cmd = parse_X(cmd, d)
+	cmd = parse_Y(cmd, d)
 	return cmd
 end
 
@@ -490,6 +518,15 @@ function arg2str(arg)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function set_KO(cmd, opt_B, first, K, O)
+	# Set the O K pair dance
+	if (first)  K = true;	O = false
+	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
+	end
+	return cmd, K, O, opt_B
+end
+
+# ---------------------------------------------------------------------------------------------------
 function finish_PS(d::Dict, cmd0::String, cmd::String, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
 	if (!haskey(d, :P) && !haskey(d, :portrait))
@@ -549,6 +586,26 @@ function add_opt_s(cmd::String, opt, d::Dict, symbs)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args, arg1, arg2)
+	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
+	for sym in symbs
+		if (haskey(d, sym))
+			if (isa(d[sym], GMT.GMTcpt))
+				cmd = string(cmd, " -", opt)
+				if     (N_args == 0)  arg1 = d[sym];	N_args += 1
+				elseif (N_args == 1)  arg2 = d[sym];	N_args += 1
+				else   error(string("Can't send the CPT data via ", opt, " and input array"))
+				end
+			else
+				cmd = string(cmd, " -", opt, arg2str(d[sym]))
+			end
+			break
+		end
+	end
+	return cmd, arg1, arg2, N_args
+end
+
+# ---------------------------------------------------------------------------------------------------
 function fname_out(out::String)
 	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 	opt_T = "";		EXT = ""
@@ -564,6 +621,58 @@ function fname_out(out::String)
 		end
 	end
 	return out, opt_T, EXT
+end
+
+# ---------------------------------------------------------------------------------------------------
+function read_data(data, cmd, arg, opt_R, opt_i, opt_bi, opt_di)
+	# In case DATA holds a file name, read that data and put it in ARG
+	# Also compute a tight -R if this was not provided 
+	if (!isempty_(data) && !isempty_(arg1))
+		warn("Conflicting ways of providing input data. Both a file name via positional and
+			  a data array via keyword args were provided. Unknown effect of this.")
+	end
+	if (isa(data, String))
+		if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option 
+			data = gmt("read -Td " * opt_i * opt_bi * opt_di * " " * data)
+			if (!isempty(opt_i))		# Remove the -i option from cmd. It has done its job
+				cmd = replace(cmd, opt_i, "")
+				opt_i = ""
+			end
+		else
+			data = gmt("read -Td " * opt_bi * opt_di * " " * data)
+		end
+	end
+	if (!isempty_(data)) arg = data  end
+
+	if (isempty(opt_R))
+		info = gmt("gmtinfo -C" * opt_i, arg)		# Here we are reading from an original GMTdataset or Array
+		if (size(info[1].data, 2) < 4)
+			error("Need at least 2 columns of data to run this program")
+		end
+		opt_R = @sprintf(" -R%.8g/%.8g/%.8g/%.8g", info[1].data[1], info[1].data[2], info[1].data[3], info[1].data[4])
+		cmd = cmd * opt_R
+	end
+
+	return cmd, arg, opt_R, opt_i
+end
+
+# ---------------------------------------------------------------------------------------------------
+function read_data(data, cmd, arg1, arg2=[], arg3=[])
+	# In case DATA holds a grid file name, copy it into cmd. If Grids put them in ARGs
+	if (!isempty_(data) && !isempty_(arg1))
+		warn("Conflicting ways of providing input data. Both a file name via positional and
+			  a data array via keyword args were provided. Unknown effect of this.")
+	end
+	if (!isempty_(data))
+		if (isa(data, String)) 		# OK, we have data via file
+			cmd = cmd * " " * data
+		elseif (isa(data, Tuple) && length(data) == 3)
+			arg1 = data[1];     arg2 = data[2];     arg3 = data[3]
+		else
+			arg1 = data				# Whatever this is
+		end
+	end
+	return cmd, arg1, arg2, arg3
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -616,6 +725,81 @@ function put_in_slot(cmd::String, val, opt::Char, args)
 		k += 1
 	end
 	return cmd, k
+end
+
+# ---------------------------------------------------------------------------------------------------
+function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, arg3, arg4, arg5, arg6,
+                          output::String, fname_ext::String, opt_T::String, K::Bool, prog::String)
+	# Common code shared by most of the PS producing modules.
+
+	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
+	else                PS = false
+	end
+	if (!isempty(opt_extra) && contains(cmd, opt_extra))  PS = true  end	# For example -D in grdcontour
+
+	(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd))
+
+	P = nothing
+	if (PS)
+		if     (!isempty_(arg6))  P = gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4, arg5, arg6)
+		elseif (!isempty_(arg5))  P = gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4, arg5)
+		elseif (!isempty_(arg4))  P = gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4)
+		elseif (!isempty_(arg3))  P = gmt(string(prog, " ", cmd), arg1, arg2, arg3)
+		elseif (!isempty_(arg2))  P = gmt(string(prog, " ", cmd), arg1, arg2)
+		elseif (!isempty_(arg2))  P = gmt(string(prog, " ", cmd), arg1, arg2)
+		elseif (!isempty_(arg1))  P = gmt(string(prog, " ", cmd), arg1)
+		else                      P = gmt(string(prog, " ", cmd))
+		end
+	else
+		if     (!isempty_(arg6))  gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4, arg5, arg6)
+		elseif (!isempty_(arg5))  gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4, arg5)
+		elseif (!isempty_(arg4))  gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4)
+		elseif (!isempty_(arg3))  gmt(string(prog, " ", cmd), arg1, arg2, arg3)
+		elseif (!isempty_(arg2))  gmt(string(prog, " ", cmd), arg1, arg2)
+		elseif (!isempty_(arg1))  gmt(string(prog, " ", cmd), arg1)
+		else                      gmt(string(prog, " ", cmd))
+		end
+	end
+	if (haskey(d, :show)) 					# Display Fig in default viewer
+		showfig(output, fname_ext, opt_T, K)
+	elseif (haskey(d, :savefig))
+		showfig(output, fname_ext, opt_T, K, d[:savefig])
+	end
+	return P
+end
+
+# ---------------------------------------------------------------------------------------------------
+function finish_PS_module(d::Dict, cmd::Array{String,1}, arg1, arg2, N_args::Integer, output::String,
+                          fname_ext::String, opt_T::String, K::Bool, prog::String)
+	# Common code shared by most of the PS producing modules.
+
+	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
+	else                PS = false
+	end
+
+	P = nothing
+	for k = 1:length(cmd)
+		(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd[k]))
+		if (N_args == 0)					# Simple case
+			if (PS) P = gmt(string(prog, " ", cmd[k]))
+			else        gmt(string(prog, " ", cmd[k]))
+			end
+		elseif (N_args == 1)				# One numeric input
+			if (PS) P = gmt(string(prog, " ", cmd[k]), arg1)
+			else        gmt(string(prog, " ", cmd[k]), arg1)
+			end
+		else								# Two numeric inputs (data + CPT)
+			if (PS) P = gmt(string(prog, " ", cmd[k]), arg1, arg2)
+			else        gmt(string(prog, " ", cmd[k]), arg1, arg2)
+			end
+		end
+	end
+	if (haskey(d, :show)) 					# Display Fig in default viewer
+		showfig(output, fname_ext, opt_T, K)
+	elseif (haskey(d, :savefig))
+		showfig(output, fname_ext, opt_T, K, d[:savefig])
+	end
+	return P
 end
 
 # --------------------------------------------------------------------------------------------------

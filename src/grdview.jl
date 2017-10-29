@@ -46,43 +46,25 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
 """
 # ---------------------------------------------------------------------------------------------------
 function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
-                 fmt="", K=false, O=false, first=true, kwargs...)
+                 fmt::String="", K=false, O=false, first=true, kwargs...)
 
 	if (length(kwargs) == 0)		# Good, speed mode
 		return gmt("grdview " * cmd0)
 	end
 
-	if (!isempty_(data) && !isempty_(arg1))
-		warn("Conflicting ways of providing input data. Both a file name via positional and
-			  a data array via keyword args were provided. Ignoring former argument")
-	end
-
-	output = fmt
-	if (!isa(output, String))
-		error("Output format or name must be a String")
-	else
-		output, opt_T, fname_ext = fname_out(output)		# OUTPUT may have been an extension only
-	end
+	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
 	cmd = ""
-	maybe_more = false			# If latter set to true, search for lc & lc pen settings
-	cmd, opt_R = parse_R(cmd, d)
-	cmd, opt_B = parse_B(cmd, d)
-	cmd, opt_J = parse_J(cmd, d)
+    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
 	cmd = parse_JZ(cmd, d)
-	cmd = parse_U(cmd, d)
-	cmd = parse_V(cmd, d)
-	cmd = parse_X(cmd, d)
-	cmd = parse_Y(cmd, d)
+	cmd = parse_UVXY(cmd, d)
 	cmd = parse_f(cmd, d)
 	cmd = parse_n(cmd, d)
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
 
-	if (first)  K = true;	O = false
-	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
-	end
+	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	cmd = add_opt(cmd, 'N', d, [:N :plane])
 	cmd = add_opt(cmd, 'Q', d, [:Q :type])
@@ -93,18 +75,8 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 	cmd = add_opt(cmd, "Wm", d, [:mesh])
 	cmd = add_opt(cmd, "Wf", d, [:facade])
 
-	if (!isempty_(data))
-		if (!isempty_(arg1))
-			warn("Conflicting ways of providing input data. Both a file name via positional and
-				  a data array via kwyword args were provided. Ignoring later argument")
-		else
-			if (isa(data, String)) 		# OK, we have data via file
-				cmd = cmd * " " * data
-			else
-				arg1 = data				# Whatever this is
-			end
-		end
-	end
+	# In case DATA holds a grid file name, copy it into cmd. If Grids put them in ARGs
+	cmd, arg1, arg2, arg3 = read_data(data, cmd, arg1, arg2, arg3)
 
 	for sym in [:C :color :cmap]
 		if (haskey(d, sym))
@@ -158,45 +130,17 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 	end
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
-
-	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
-	else                PS = false
-	end
-
-	(haskey(d, :Vd)) && println(@sprintf("\tgrdview %s", cmd))
-
-	P = nothing
-	if (PS)
-		if     (!isempty_(arg6))  P = gmt("grdview " * cmd, arg1, arg2, arg3, arg4, arg5, arg6)
-		elseif (!isempty_(arg5))  P = gmt("grdview " * cmd, arg1, arg2, arg3, arg4, arg5)
-		elseif (!isempty_(arg4))  P = gmt("grdview " * cmd, arg1, arg2, arg3, arg4)
-		elseif (!isempty_(arg3))  P = gmt("grdview " * cmd, arg1, arg2, arg3)
-		elseif (!isempty_(arg2))  P = gmt("grdview " * cmd, arg1, arg2)
-		elseif (!isempty_(arg1))  P = gmt("grdview " * cmd, arg1)
-		else                      P = gmt("grdview " * cmd)
-		end
-	else
-		if     (!isempty_(arg6))  gmt("grdview " * cmd, arg1, arg2, arg3, arg4, arg5, arg6)
-		elseif (!isempty_(arg5))  gmt("grdview " * cmd, arg1, arg2, arg3, arg4, arg5)
-		elseif (!isempty_(arg4))  gmt("grdview " * cmd, arg1, arg2, arg3, arg4)
-		elseif (!isempty_(arg3))  gmt("grdview " * cmd, arg1, arg2, arg3)
-		elseif (!isempty_(arg2))  gmt("grdview " * cmd, arg1, arg2)
-		elseif (!isempty_(arg1))  gmt("grdview " * cmd, arg1)
-		else                      gmt("grdview " * cmd)
-		end
-	end
-	show_or_save(d, output, fname_ext, opt_T, K)    # Display Fig in default viewer or save it to file
-	return P
+    return finish_PS_module(d, cmd, "", arg1, arg2, arg3, arg4, arg5, arg6, output, fname_ext, opt_T, K, "grdview")
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdview!(cmd0::String="", arg1=[]; data=[], fmt="", K=true, O=true, first=false, kw...) =
+grdview!(cmd0::String="", arg1=[]; data=[], fmt::String="", K=true, O=true, first=false, kw...) =
 	grdview(cmd0, arg1; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
 
 grdview(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
-        fmt="", K=false, O=false, first=true, kw...) =
+        fmt::String="", K=false, O=false, first=true, kw...) =
 	grdview(cmd0, arg1, arg2, arg3, arg4, arg5, arg6; data=data, fmt=fmt, K=K, O=O, first=first, kw...)
 
 grdview!(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
-        fmt="", K=true, O=true, first=false, kw...) =
+        fmt::String="", K=true, O=true, first=false, kw...) =
 	grdview(cmd0, arg1, arg2, arg3, arg4, arg5, arg6; data=data, fmt=fmt, K=true, O=true, first=false, kw...)

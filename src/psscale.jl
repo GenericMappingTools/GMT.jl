@@ -46,39 +46,18 @@ Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.h
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html#z)
 """
 # ---------------------------------------------------------------------------------------------------
-function psscale(cmd0::String="", arg1=[]; fmt="", K=false, O=false, first=true, kwargs...)
+function psscale(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, first=true, kwargs...)
 
-	output = fmt
-	if (!isa(output, String))
-		error("Output format or name must be a String")
-	else
-		output, opt_T, fname_ext = fname_out(output)		# OUTPUT may have been an extension only
-	end
+	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
 	cmd = ""
-	cmd, opt_B = parse_B(cmd, d)
-	cmd, opt_R = parse_R(cmd, d, O)
-	cmd, opt_J = parse_J(cmd, d, O)
-	if (O && K && isempty(opt_J))  cmd = cmd * " -J"  end
-	cmd = parse_U(cmd, d)
-	cmd = parse_V(cmd, d)
-	cmd = parse_X(cmd, d)
-	cmd = parse_Y(cmd, d)
+    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, "", O, "")
+	cmd = parse_UVXY(cmd, d)
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
 
-	for sym in [:C :color :cmap]
-		if (haskey(d, sym))
-			if (isa(d[sym], GMT.GMTcpt))
-				cmd = cmd * " -C"
-				arg1 = d[sym]
-			else
-				cmd = cmd * " -C" * arg2str(d[sym])
-			end
-			break
-		end
-	end
+	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, [])
 
 	cmd = add_opt(cmd, 'D', d, [:D :position])
 	cmd = add_opt(cmd, 'F', d, [:F :box])
@@ -92,32 +71,12 @@ function psscale(cmd0::String="", arg1=[]; fmt="", K=false, O=false, first=true,
 	cmd = add_opt(cmd, 'W', d, [:W :zscale])
 	cmd = add_opt(cmd, 'Z', d, [:Z :zfile])
 
-	if (first)  K = true;	O = false
-	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
-	end
+	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
-
-	(haskey(d, :Vd)) && println(@sprintf("\tpsscale %s", cmd))
-
-	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
-	else                PS = false
-	end
-
-    P = nothing
-	if (isempty_(arg1))
-        if (PS) P = gmt("psscale " * cmd)
-        else        gmt("psscale " * cmd)
-        end
-    else
-        if (PS) P = gmt("psscale " * cmd, arg1)
-        else        gmt("psscale " * cmd, arg1)
-        end
-    end
-	show_or_save(d, output, fname_ext, opt_T, K)    # Display Fig in default viewer or save it to file
-	return P
+    return finish_PS_module(d, cmd, "", arg1, [], [], [], [], [], output, fname_ext, opt_T, K, "psscale")
 end
 
 # ---------------------------------------------------------------------------------------------------
-psscale!(cmd0::String="", arg1=[]; fmt="", K=false, O=false, first=false, kw...) =
+psscale!(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, first=false, kw...) =
     psscale(cmd0, arg1; fmt=fmt, K=true, O=true, first=false, kw...)

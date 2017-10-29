@@ -60,18 +60,8 @@ function grdinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = add_opt(cmd, 'M', d, [:M :location])
 	cmd = add_opt(cmd, 'T', d, [:T :zmin_max])
 
-	if (!isempty_(data))
-		if (!isempty_(arg1))
-			warn("Conflicting ways of providing input data. Both a file name via positional and
-				  a data array via kwyword args were provided. Ignoring later argument")
-		else
-			if (isa(data, String)) 		# OK, we have data via file
-				cmd = cmd * " " * data
-			else
-				arg1 = data				# Whatever this is
-			end
-		end
-	end
+	# In case DATA holds a grid file name, copy it into cmd. If Grids put them in ARG1
+	cmd, arg1, = read_data(data, cmd, arg1)
 
 	(haskey(d, :Vd)) && println(@sprintf("\tgrdinfo %s", cmd))
 
