@@ -69,7 +69,7 @@ function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = parse_o(cmd, d)
 	cmd = parse_r(cmd, d)
 	cmd = parse_swappxy(cmd, d)
-
+	
 	cmd = add_opt_s(cmd, 'A', d, [:A])
 	cmd = add_opt(cmd,   'C', d, [:C :per_column])
 	cmd = add_opt(cmd,   'D', d, [:D :center])
@@ -85,6 +85,7 @@ function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	(haskey(d, :Vd)) && println(@sprintf("\tgmtinfo %s", cmd))
 
+@show cmd, arg1
 	if (!isempty_(arg1))  R = gmt("gmtinfo " * cmd, arg1)
 	else                  R = gmt("gmtinfo " * cmd)
 	end
@@ -92,4 +93,4 @@ function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtinfo(arg1::GMTgrid, cmd0::String=""; data=[], kw...) = gmtinfo(cmd0, arg1; data=data, kw...)
+gmtinfo(arg1, cmd0::String=""; data=[], kw...) = gmtinfo(cmd0, arg1; data=data, kw...)

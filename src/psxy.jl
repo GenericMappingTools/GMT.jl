@@ -115,7 +115,7 @@ function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 	# If data is a file name, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, opt_i = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
-	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1, arg2)
+	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
 	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
 	cmd = add_opt(cmd, 'D', d, [:D :offset])
@@ -247,7 +247,6 @@ WARNING: Method definition #psxy(Array{Any, 1}, typeof(GMT.psxy)) in module GMT 
 =#
 
 # ---------------------------------------------------------------------------------------------------
-psxy!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; caller=[], data=[], fmt::String="",
-      K=true, O=true,  first=false, kwargs...) =
-	psxy(cmd0, arg1, arg2; caller=caller, data=data, fmt=fmt,
-	     K=true, O=true,  first=false, kwargs...)
+psxy!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
+      K=true, O=true,  first=false, kw...) =
+	psxy(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=true, O=true,  first=false, kw...)

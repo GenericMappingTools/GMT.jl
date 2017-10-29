@@ -44,6 +44,9 @@ Parameters
 - **W** : **line_attribs** : -- Str --
     Sets the pen used to draw a rectangle around the text string.
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#w)
+- **Z** : **threeD** : -- Str --
+    For 3-D projections: expect each item to have its own level given in the 3rd column.
+    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#z)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -86,7 +89,7 @@ function pstext(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
 
-	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
+    cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	# If data is a file name, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, opt_i = read_data(data, cmd, arg1, opt_R, "", opt_bi, opt_di)
@@ -101,7 +104,7 @@ function pstext(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 	cmd = add_opt(cmd, 'L', d, [:L :pen])
 	cmd = add_opt(cmd, 'Q', d, [:Q :change_case])
 	cmd = add_opt(cmd, 'T', d, [:T :text_box])
-	cmd = add_opt(cmd, 'Z', d, [:Z :3D])
+	cmd = add_opt(cmd, 'Z', d, [:Z :threeD])
 
 	opt_W = ""
 	pen = build_pen(d)						# Either a full pen string or empty ("")
@@ -123,16 +126,21 @@ function pstext(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 	end
 
 	if (!isempty(opt_W)) 		# We have a rectangle request
-		cmd = [finish_PS(d, cmd0, cmd * opt_W, output, K, O)]
+		cmd = finish_PS(d, cmd0, cmd * opt_W, output, K, O)
 	else
-		cmd = [finish_PS(d, cmd0, cmd, output, K, O)]
+		cmd = finish_PS(d, cmd0, cmd, output, K, O)
 	end
 
     return finish_PS_module(d, cmd, "", arg1, arg2, [], [], [], [], output, fname_ext, opt_T, K, "pstext")
 end
 
 # ---------------------------------------------------------------------------------------------------
-pstext!(cmd0::String="", arg1=[], arg2::GMTcpt=[]; caller=[], data=[], fmt::String="",
-      K=true, O=true,  first=false, kwargs...) =
-	pstext(cmd0, arg1, arg2; caller=caller, data=data, fmt=fmt,
-	     K=true, O=true,  first=false, kwargs...)
+pstext!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
+      K=true, O=true,  first=false, kw...) =
+    pstext(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=true, O=true,  first=false, kw...)
+
+pstext(arg1=[]; caller=[], data=[], fmt::String="", K=false, O=false, first=true, kw...) =
+    pstext("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+
+pstext!(arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true, first=false, kw...) =
+    pstext("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
