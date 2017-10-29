@@ -4,6 +4,8 @@ using Base.Test
 # write your own tests here
 r = gmt("gmtinfo -C",ones(Float32,9,3)*5);
 assert(r[1].data == [5.0 5 5 5 5 5])
+r = gmtinfo(ones(Float32,9,3)*5, C=true);
+assert(r[1].data == [5.0 5 5 5 5 5])
 #
 G=gmt("grdmath -R0/10/0/10 -I1 5");
 r=gmt("grdinfo -C", G);
@@ -30,7 +32,7 @@ pscoast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps");
 PS = grdimage(G, J="X10", ps=1);
 PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 #
-G = gmt("surface -R0/150/0/150 -I1 -Ll-100", rand(100,3) * 150);
+G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
 assert(size(G.z) == (151, 151))
 #
 plot(collect(1:10),rand(10), lw=1, lc="blue", fmt="ps", marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
@@ -40,6 +42,9 @@ pscoast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"gree
 #
 C = makecpt(T="-200/1000/100", C="rainbow");
 psscale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
+
+# PSTEXT
+pstext(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps")
 
 # GMTSPATIAL
 # Test  Cartesian centroid and area
