@@ -28,7 +28,7 @@ C = grdcontour("lixo.grd", C="+0.7", D=[]);
 assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 pscoast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
 pscoast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
-pscoast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps");
+pscoast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
 
 #
 # Just create the figs but not check if they are correct.
@@ -45,6 +45,9 @@ pscoast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"gree
 #
 C = makecpt(T="-200/1000/100", C="rainbow");
 psscale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
+
+# PSHISTOGRAM
+pshistogram(randn(1000),W=0.1,center=true,fmt="ps",B="a")
 
 # PSTEXT
 pstext(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps")
