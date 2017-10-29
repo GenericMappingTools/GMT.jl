@@ -393,16 +393,18 @@ function opt_pen(d::Dict, opt::Char, symbs)
 	out = ""
 	pen = build_pen(d)						# Either a full pen string or empty ("")
 	if (!isempty(pen))
-		out = " -" * opt * pen
+		out = string(" -", opt, pen)
 	else
 		for sym in symbs
 			if (haskey(d, sym))
 				if (isa(d[sym], String))
-					out = " -" * opt * arg2str(d[sym])
+					out = string(" -", opt, arg2str(d[sym]))
+				elseif (isa(d[sym], Number))
+					out = string(" -", opt, d[sym])
 				elseif (isa(d[sym], Tuple))	# Like this it can hold the pen, not extended atts
-					out = " -" * opt * parse_pen(d[sym])
+					out = string(" -", opt, parse_pen(d[sym]))
 				else
-					error("Nonsense in " * opt * " option")
+					error(string("Nonsense in ", opt, " option"))
 				end
 				break
 			end
