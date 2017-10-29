@@ -26,6 +26,12 @@ gmt("write -Tg lixo.grd", G)
 GG = gmt("read -Tg lixo.grd");
 C = grdcontour("lixo.grd", C="+0.7", D=[]);
 assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
+x,y,z=GMT.peaks()
+G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);
+cpt = makecpt(T="-6/8/1");
+grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c")
+
+# PSCOAST
 pscoast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
 pscoast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
 pscoast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
