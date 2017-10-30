@@ -3,6 +3,7 @@ VERSION >= v"0.4" && __precompile__()
 module GMT
 
 const GMTver = 5.0
+const FMT = "ps"
 
 export
 	GMTver,
