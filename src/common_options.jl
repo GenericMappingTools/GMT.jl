@@ -610,6 +610,10 @@ end
 # ---------------------------------------------------------------------------------------------------
 function fname_out(out::String)
 	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
+	if (isempty(out)) out = FMT  end		# Use the global FMT choice
+	if (isempty(out) && !is_windows())
+		error("NOT specifying the **fmt** format is only allowed on Windows")
+	end
 	opt_T = "";		EXT = ""
 	if (length(out) <= 3)
 		@static is_windows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps" 
@@ -678,25 +682,26 @@ function read_data(data, cmd, arg1, arg2=[], arg3=[])
 end
 
 # ---------------------------------------------------------------------------------------------------
-function show_or_save(d::Dict, output::String, fname_ext::String, opt_T::String, K::Bool)
-	# Display Fig in default viewer or save it to file after converting with psconvert
-	if (haskey(d, :show))
-		showfig(output, fname_ext, opt_T, K)
-	elseif (haskey(d, :savefig))
-		showfig(output, fname_ext, opt_T, K, d[:savefig])
-	end	
-end
-
-# ---------------------------------------------------------------------------------------------------
 function showfig(fname_ps::String, fname_ext::String, opt_T::String, K=false, fname="")
 	# Take a PS file, convert it with psconvert (unless opt_T == "" meaning file is PS)
 	# and display it in default system viewer
+	# FNAME_EXT hold the extension when not PS
+	# OPT_T holds the psconvert -T option, again when not PS
+	# FNAME is for when we implement the savefig option
 	if (!isempty(opt_T))
 		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end			# Close the PS file first
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T)
 		out = fname_ps[1:end-2] * fname_ext
-	else
+	elseif (!isempty(fname_ps))
 		out = fname_ps
+	else
+		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O ")  end		# Close the PS file first
+		if (isempty(fname_ext))
+			return gmt("psconvert = -A1p")					# Return a GMTimage object
+		else
+			out = tempdir() * "GMTjl_tmp.pdf"
+			gmt("psconvert = -A1p -Tf -F" * out)
+		end
 	end
 	if (is_windows()) run(ignorestatus(`explorer $out`))
 	elseif (is_apple()) run(`open $(out)`)
@@ -762,10 +767,15 @@ function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, a
 		else                      gmt(string(prog, " ", cmd))
 		end
 	end
-	if (haskey(d, :show)) 					# Display Fig in default viewer
-		showfig(output, fname_ext, opt_T, K)
-	elseif (haskey(d, :savefig))
-		showfig(output, fname_ext, opt_T, K, d[:savefig])
+
+	if (isempty(fname_ext))						# Return result as an GMTimage
+		P = showfig(output, fname_ext, "", K)
+	else
+		if (haskey(d, :show)) 					# Display Fig in default viewer
+			showfig(output, fname_ext, opt_T, K)
+		elseif (haskey(d, :savefig))
+			showfig(output, fname_ext, opt_T, K, d[:savefig])
+		end
 	end
 	return P
 end
@@ -796,10 +806,15 @@ function finish_PS_module(d::Dict, cmd::Array{String,1}, arg1, arg2, N_args::Int
 			end
 		end
 	end
-	if (haskey(d, :show)) 					# Display Fig in default viewer
-		showfig(output, fname_ext, opt_T, K)
-	elseif (haskey(d, :savefig))
-		showfig(output, fname_ext, opt_T, K, d[:savefig])
+
+	if (isempty(fname_ext))						# Return result as an GMTimage
+		P = showfig(output, fname_ext, "", K)
+	else
+		if (haskey(d, :show)) 					# Display Fig in default viewer
+			showfig(output, fname_ext, opt_T, K)
+		elseif (haskey(d, :savefig))
+			showfig(output, fname_ext, opt_T, K, d[:savefig])
+		end
 	end
 	return P
 end
