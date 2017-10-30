@@ -618,7 +618,7 @@ function fname_out(out::String)
 	if (length(out) <= 3)
 		@static is_windows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps" 
 		ext = lowercase(out)
-		if (ext == "ps")       out = template
+		if (ext == "ps")       out = template;  EXT = ext
 		elseif (ext == "pdf")  opt_T = " -Tf";	out = template;		EXT = ext
 		elseif (ext == "eps")  opt_T = " -Te";	out = template;		EXT = ext
 		elseif (ext == "png")  opt_T = " -Tg";	out = template;		EXT = ext
@@ -768,10 +768,11 @@ function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, a
 		end
 	end
 
-	if (isempty(fname_ext))						# Return result as an GMTimage
+	if (isempty(fname_ext) && isempty(opt_extra))	# Return result as an GMTimage
+@show "MERDA1"
 		P = showfig(output, fname_ext, "", K)
 	else
-		if (haskey(d, :show)) 					# Display Fig in default viewer
+		if (haskey(d, :show)) 						# Display Fig in default viewer
 			showfig(output, fname_ext, opt_T, K)
 		elseif (haskey(d, :savefig))
 			showfig(output, fname_ext, opt_T, K, d[:savefig])
@@ -781,8 +782,8 @@ function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, a
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd::Array{String,1}, arg1, arg2, N_args::Integer, output::String,
-                          fname_ext::String, opt_T::String, K::Bool, prog::String)
+function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, arg1, arg2, N_args::Integer,
+                          output::String, fname_ext::String, opt_T::String, K::Bool, prog::String)
 	# Common code shared by most of the PS producing modules.
 
 	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
@@ -807,10 +808,10 @@ function finish_PS_module(d::Dict, cmd::Array{String,1}, arg1, arg2, N_args::Int
 		end
 	end
 
-	if (isempty(fname_ext))						# Return result as an GMTimage
+	if (isempty(fname_ext) && isempty(opt_extra))	# Return result as an GMTimage
 		P = showfig(output, fname_ext, "", K)
 	else
-		if (haskey(d, :show)) 					# Display Fig in default viewer
+		if (haskey(d, :show)) 						# Display Fig in default viewer
 			showfig(output, fname_ext, opt_T, K)
 		elseif (haskey(d, :savefig))
 			showfig(output, fname_ext, opt_T, K, d[:savefig])
