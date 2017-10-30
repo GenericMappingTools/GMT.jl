@@ -23,7 +23,7 @@ the classical one letter option syntax, as:
 So, each module defines a set of aliases to the one letter options that are reported in each module
 man page.
 
-Before diving more in the way options may be transmitted in the model we have to understand what
+Before diving more in the way options may be transmitted into the module, we have to understand what
 happens with the output image file. The *fmt="ps"* states that the output image format is in
 PostScript (actually, with the exception of *grdimage -A*, the only format that *GMT* can write).
 But we can also say *fmt="jpg"*, or *fmt="png"* or *fmt="pdf"*. In such cases, the *ghostscript*
@@ -41,7 +41,7 @@ reads a the netCDF grid *tut_relief.nc* and displays it as an Mercator projected
 is used by *GMT* to know that the grid file should be downloaded from a server and cached locally. This
 example introduces also the *show=true* keyword. It means that we want to see right way the image that
 just been created. While it might seam obvious that one want to see the result, the result might not be
-ready with only one *GMT* module call. And that because the *GMT* philosophy uses a *layer cake*  model
+ready with only one *GMT* module call. And that's because the *GMT* philosophy uses a *layer cake*  model
 to construct potentially highly complex figures. Next example illustrates a slightly more evolved
 example
 
@@ -55,7 +55,7 @@ Here we used the *makecpt* command to compute a colormap object, used it as the 
 keyword of both *grdimage* and *psscale* modules. The final image is made up of two layers, the first
 one is the part created by *grdimage*, which is complemented by the color scale plot performed by
 *psscale*. But since this was an appending operation we **HAD** to use the **!** form. This form tells
-*GMT* tho append to a previous initiated image. The image layer cake is finalized by the *show=true*
+*GMT* to append to a previous initiated image. The image layer cake is finalized by the *show=true*
 keyword. If our example had more layers, we would have used the same rule: second on layers use the
 **!** construct and the last is signaled by *show=true*.
 
