@@ -225,7 +225,7 @@ function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 		cmd = [finish_PS(d, cmd0, cmd, output, K, O)]
 	end
 
-    return finish_PS_module(d, cmd, arg1, arg2, N_args, output, fname_ext, opt_T, K, "psxy")
+    return finish_PS_module(d, cmd, "", arg1, arg2, N_args, output, fname_ext, opt_T, K, "psxy")
 end
 
 #=
