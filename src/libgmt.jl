@@ -392,3 +392,8 @@ function gmtlib_manage_workflow(API::Ptr{Void}, mode::Integer, arg)
 		ccall((:gmtlib_manage_workflow, thelib), Cint, (Ptr{Void}, Cuint, Ptr{UInt8}), API, mode, arg)
 end
 # --------------------------------------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------------------------------------
+function GMT_Set_AllocMode(API::Ptr{Void}, family::Integer, object)
+	ccall((:GMT_Set_AllocMode, thelib), Cint, (Ptr{Void}, UInt32, Ptr{Void}), API, family, object)
+end
