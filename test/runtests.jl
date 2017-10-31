@@ -65,8 +65,8 @@ psscale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps"
 pshistogram(randn(1000),W=0.1,center=true,fmt="ps",B="a",N=0)
 
 # PSSOLAR
-D=pssolar(I="-7.93/37.079+d2016-02-04T10:01:00");
-assert(D[1].text[end] == "\tDuration = 10:27")
+#D=pssolar(I="-7.93/37.079+d2016-02-04T10:01:00");
+#assert(D[1].text[end] == "\tDuration = 10:27")
 pssolar(R="d", W=1, J="Q0/14c", B="a", T="dc")
 
 # PSTEXT
