@@ -47,16 +47,16 @@ Full option list at [`makecpt`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.h
 # ---------------------------------------------------------------------------------------------------
 function makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
 
+	length(kwargs) == 0 && isempty(data) && return monolitic("makecpt", cmd0, arg1)	# Speedy mode
+
 	d = KW(kwargs)
-	cmd = ""
-	cmd = parse_V(cmd, d)
+	cmd = parse_V("", d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_bi(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
 
 	# If data is a file name, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(data, cmd, arg1, " ", opt_i, opt_bi, opt_di)
-
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color], 'C', 0, arg1, [])
 
 	for sym in [:E :data_levels]

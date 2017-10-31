@@ -57,9 +57,7 @@ Parameters
 # ---------------------------------------------------------------------------------------------------
 function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 
-	if (length(kwargs) == 0)		# Good, speed mode
-		return gmt("surface " * cmd0)
-	end
+	length(kwargs) == 0 && isempty(data) && return monolitic("surface", cmd0, arg1)	# Speedy mode
 
 	if (!isempty_(data) && isa(data, Tuple) && !isa(data[1], GMTgrid))
 		error("When 'data' is a tuple, it MUST contain a GMTgrid data type")

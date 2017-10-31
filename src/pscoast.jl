@@ -72,16 +72,12 @@ Parameters
 # ---------------------------------------------------------------------------------------------------
 function pscoast(cmd0::String=""; fmt::String="", clip=[], K=false, O=false, first=true, kwargs...)
 
-	if (length(kwargs) == 0)		# Good, speed mode
-		return gmt("pscoast " * cmd0)
-	end
-
+	length(kwargs) == 0 && return monolitic("pscoast", cmd0, arg1)	# Speedy mode
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
-	cmd = ""
 	maybe_more = false				# If latter set to true, search for lc & lc pen settings
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
+    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/0")
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)

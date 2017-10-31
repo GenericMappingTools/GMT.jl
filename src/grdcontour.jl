@@ -62,9 +62,7 @@ Parameters
 # ---------------------------------------------------------------------------------------------------
 function grdcontour(cmd0::String="", arg1=[], arg2=[]; data=[], fmt::String="", K=false, O=false, first=true, kwargs...)
 
-	if (length(kwargs) == 0)		# Good, speed mode
-		return gmt("grdcontour " * cmd0)
-	end
+	length(kwargs) == 0 && isempty(data) && return monolitic("grdcontour", cmd0, arg1)	# Speedy mode
 
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 

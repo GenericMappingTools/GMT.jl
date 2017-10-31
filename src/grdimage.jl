@@ -49,9 +49,7 @@ Parameters
 function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], fmt::String="", 
                   K=false, O=false, first=true, kwargs...)
 
-	if (length(kwargs) == 0)		# Good, speed mode
-		return gmt("grdimage " * cmd0)
-	end
+	length(kwargs) == 0 && isempty(data) && return monolitic("grdimage", cmd0, arg1)	# Speedy mode
 
 	if (!isempty_(data) && isa(data, Tuple) && !isa(data[1], GMTgrid))
 		error("When 'data' is a tuple, it MUST contain a GMTgrid data type")

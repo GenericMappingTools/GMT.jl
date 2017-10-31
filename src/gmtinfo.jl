@@ -52,13 +52,10 @@ Parameters
 # ---------------------------------------------------------------------------------------------------
 function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 
-	if (length(kwargs) == 0)		# Good, speed mode
-		return gmt("gmtinfo " * cmd0)
-	end
+	length(kwargs) == 0 && isempty(data) && return monolitic("gmtinfo", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = ""
-	cmd = parse_V(cmd, d)
+	cmd = parse_V("", d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd = parse_e(cmd, d)

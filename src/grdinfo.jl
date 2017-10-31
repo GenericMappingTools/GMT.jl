@@ -38,17 +38,14 @@ Parameters
 # ---------------------------------------------------------------------------------------------------
 function grdinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 
-	if (length(kwargs) == 0)		# Good, speed mode
-		return gmt("grdinfo " * cmd0)
-	end
+	length(kwargs) == 0 && isempty_(data) && return monolitic("grdinfo", cmd0, arg1)	# Speedy mode
 
 	if (!isempty_(data) && !isa(data, GMTgrid))
 		error("When using 'data', it MUST contain a GMTgrid data type")
 	end
 
 	d = KW(kwargs)
-	cmd = ""
-	cmd, opt_R = parse_R(cmd, d)
+	cmd, opt_R = parse_R("", d)
 	cmd = parse_V(cmd, d)
 	cmd = parse_f(cmd, d)
 

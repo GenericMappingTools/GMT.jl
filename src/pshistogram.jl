@@ -61,6 +61,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_swappxy)
 """
 # ---------------------------------------------------------------------------------------------------
 function pshistogram(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
@@ -69,17 +70,11 @@ function pshistogram(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	if (length(kwargs) == 0 && N_args == 0 && isempty(data))			# Good, the speedy mode
-		if (N_args == 0)  return gmt("pshistogram " * cmd0)
-		else              return gmt("pshistogram " * cmd0, arg1)
-		end
-	end
-
+	length(kwargs) == 0 && isempty(data) && return monolitic("pshistogram", cmd0, arg1)	# Speedy mode
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
     d = KW(kwargs)
-	cmd = ""
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, caller, O, " -JX12c/12c")
+    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, " -JX12c/12c")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)

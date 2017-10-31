@@ -48,11 +48,11 @@ Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.h
 # ---------------------------------------------------------------------------------------------------
 function psscale(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, first=true, kwargs...)
 
+	length(kwargs) == 0 && isempty(data) && return monolitic("psscale", cmd0, arg1)	# Speedy mode
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
-	cmd = ""
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, "", O, "")
+    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, "")
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)

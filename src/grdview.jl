@@ -48,10 +48,7 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
 function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
                  fmt::String="", K=false, O=false, first=true, kwargs...)
 
-	if (length(kwargs) == 0)		# Good, speed mode
-		return gmt("grdview " * cmd0)
-	end
-
+	length(kwargs) == 0 && isempty(data) && return monolitic("grdview", cmd0, arg1)	# Speedy mode
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
