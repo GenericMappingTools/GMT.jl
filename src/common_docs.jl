@@ -80,6 +80,9 @@ const opt_p = "**p** : **view** : **perspective** : -- Str --
 const opt_r = "**r** : **reg** : **registration** : -- Str --
       [`-r`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#r-full)"
 
+const opt_s = "**s** : **skip_col** : -- Str --
+      [`-s`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#s-full)"
+
 const opt_t = "**t** : **alpha** : **transparency** : -- Str --
       [`-t`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#t-full)"
 
