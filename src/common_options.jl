@@ -327,6 +327,18 @@ function parse_n(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_s(cmd::String, d::Dict)
+	# Parse the global -s option. Return CMD same as input if no -s option in args
+	for symb in [:s :skip_col]
+		if (haskey(d, symb) && isa(d[symb], String))
+			cmd = cmd * " -s" * d[symb]
+			break
+		end
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_swappxy(cmd::String, d::Dict)
 	# Parse the global -: option. Return CMD same as input if no -: option in args
 	# But because we acn't have a variable called ':' we use only the 'swappxy' alias
@@ -738,6 +750,7 @@ end
 function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, arg3, arg4, arg5, arg6,
                           output::String, fname_ext::String, opt_T::String, K::Bool, prog::String)
 	# Common code shared by most of the PS producing modules.
+	# OPT_EXTRA is used to force an LHS for cases whe the PS module also produces other things
 
 	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
 	else                PS = false
@@ -769,7 +782,6 @@ function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, a
 	end
 
 	if (isempty(fname_ext) && isempty(opt_extra))	# Return result as an GMTimage
-@show "MERDA1"
 		P = showfig(output, fname_ext, "", K)
 	else
 		if (haskey(d, :show)) 						# Display Fig in default viewer
@@ -818,6 +830,25 @@ function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, arg1
 		end
 	end
 	return P
+end
+
+# --------------------------------------------------------------------------------------------------
+function monolitic(prog::String, cmd0::String, arg1=[], need_out::Bool=true)
+	# Run this module in the monolitic way. e.g. [outs] = gmt("module args",[inputs])
+	# NEED_OUT signals if the module has an output. The PS producers, however, may or not
+	# return something (the PS itself), psconvert can also have it (the Image) or not.
+	R = nothing
+	if (need_out && contains(cmd0, ">"))  need_out = false  end		# Interpreted as "> file" so not LHS
+	if (need_out)
+		if (isempty(arg1))  R = gmt(prog * cmd0)
+		else                R = gmt(prog * cmd0, arg1)
+		end
+	else
+		if (isempty(arg1))  gmt(prog * cmd0)
+		else                gmt(prog * cmd0, arg1)
+		end
+	end
+	return R
 end
 
 # --------------------------------------------------------------------------------------------------
