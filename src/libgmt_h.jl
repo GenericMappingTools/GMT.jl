@@ -75,8 +75,8 @@ const GMT_IS_CPT = 3				# To be removed whem >= GMT5.3 only
 const GMT_IS_PALETTE = 3
 const GMT_IS_POSTSCRIPT = 4
 const GMT_IS_TEXTSET = 5
-const GMT_IS_MATRIX = 6
-const GMT_IS_VECTOR = 7
+const GMT_IS_MATRIX = 6 - (GMTver >= 6)		# FCK, I hate this
+const GMT_IS_VECTOR = 7 - (GMTver >= 6)
 # begin enum GMT_enum_comment
 const GMT_COMMENT_IS_TEXT = 0
 # end enum GMT_enum_comment
@@ -201,60 +201,22 @@ type GMT_GRID_HEADER_v6
 	title::NTuple{80,UInt8}
 	command::NTuple{320,UInt8}
 	remark::NTuple{160,UInt8}
-	# Variables "hidden" from the API. This section is flexible and considered private
-	_type::UInt32
-	bits::UInt32
-	complex_mode::UInt32
-	mx::UInt32 				# Actual dimensions of the grid in memory, allowing for the padding
-	my::UInt32
+	# Items not stored in the data file for grids but explicitly used in macros computing node numbers
 	nm::Csize_t 			# Number of data items in this grid (n_columns * n_rows) [padding is excluded]
 	size::Csize_t 			# Actual number of items required to hold this grid (= mx * my)
-	n_alloc::Csize_t
-	trendmode::UInt32
-	arrangement::UInt32
+	bits::UInt32
+	complex_mode::UInt32
+	_type::UInt32
 	n_bands::UInt32
+	mx::UInt32 				# Actual dimensions of the grid in memory, allowing for the padding
+	my::UInt32
 	pad::NTuple{4,UInt32}
-	BC::NTuple{4,UInt32}
-	grdtype::UInt32
-	reset_pad::UInt32
-	name::NTuple{256,UInt8}
-	varname::NTuple{80,UInt8}
+	mem_layout::NTuple{4,UInt8}
 	ProjRefPROJ4::Ptr{UInt8}
 	ProjRefWKT::Ptr{UInt8}
-	row_order::Cint
-	z_id::Cint
-	ncid::Cint
-	xy_dim::NTuple{2,Cint}
-	t_index::NTuple{3,Csize_t}
-	data_offset::Csize_t
-	stride::UInt32
 	nan_value::Cfloat
 	xy_off::Cdouble
-	r_inc::NTuple{2,Cdouble}
-	flags::NTuple{4,UInt8}
-	pocket::Ptr{UInt8}
-	mem_layout::NTuple{4,UInt8}
-	bcr_threshold::Cdouble
-	has_NaNs::UInt32
-	bcr_interpolant::UInt32
-	bcr_n::UInt32
-	nxp::UInt32
-	nyp::UInt32
-	no_BC::UInt32
-	gn::UInt32
-	gs::UInt32
-	is_netcdf4::UInt32
-	orig_datatype::UInt32
-	z_chunksize::NTuple{2,Csize_t}
-	z_shuffle::UInt32
-	z_deflate_level::UInt32
-	z_scale_autoadust::UInt32
-	z_offset_autoadust::UInt32
-	xy_adjust::NTuple{2,UInt32}
-	xy_mode::NTuple{2,UInt32}
-	xy_unit::NTuple{2,UInt32}
-	xy_unit_to_meter::NTuple{2,Cdouble}
-	index_function::Ptr{Void}
+	hidden::Ptr{Void}		# Lower-level information for GMT use only
 end
 
 type GMT_GRID_HEADER_v5
@@ -334,7 +296,7 @@ else
 	const GMT_GRID_HEADER = GMT_GRID_HEADER_v5
 end
 
-type GMT_GRID
+type GMT_GRID_v5
 	header::Ptr{GMT_GRID_HEADER}
 	data::Ptr{Cfloat}
 	id::UInt32
@@ -345,101 +307,136 @@ type GMT_GRID
 	extra::Ptr{Void}
 end
 
-immutable GMT_OGR
-	geometry::UInt32
-	n_aspatial::UInt32
-	region::Ptr{UInt8}
-	proj::NTuple{4,Ptr{UInt8}}
-	_type::Ptr{UInt32}
-	name::Ptr{Ptr{UInt8}}
-	pol_mode::UInt32
-	tvalue::Ptr{Ptr{UInt8}}
-	dvalue::Ptr{Cdouble}
-end
-immutable GMT_OGR_SEG
-	pol_mode::UInt32
-	n_aspatial::UInt32
-	tvalue::Ptr{Ptr{UInt8}}
-	dvalue::Ptr{Cdouble}
-end
-type GMT_DATASEGMENT
-	n_rows::UInt64
-	n_columns::UInt64
-	min::Ptr{Cdouble}
-	max::Ptr{Cdouble}
-	data::Ptr{Ptr{Cdouble}}
-	label::Ptr{UInt8}
-	header::Ptr{UInt8}
-	text::Ptr{Ptr{UInt8}}
-	mode::UInt32
-	pol_mode::UInt32
-	id::UInt64
-	n_alloc::Csize_t
-	range::Cint
-	pole::Cint
-	dist::Cdouble
-	lat_limit::Cdouble
-	ogr::Ptr{GMT_OGR_SEG}
-	next::Ptr{GMT_DATASEGMENT}
-	alloc_mode::UInt32
-	file::NTuple{2,Ptr{UInt8}}
-end
-type GMT_DATATABLE
-	n_headers::UInt32
-	n_columns::UInt64
-	n_segments::UInt64
-	n_records::UInt64
-	min::Ptr{Cdouble}
-	max::Ptr{Cdouble}
-	header::Ptr{Ptr{UInt8}}
-	segment::Ptr{Ptr{GMT_DATASEGMENT}}
-	id::UInt64
-	n_alloc::Csize_t
-	mode::UInt32
-	ogr::Ptr{GMT_OGR}
-	file::NTuple{2,Ptr{UInt8}}
-end
-type GMT_DATASET_v5
-	n_tables::UInt64
-	n_columns::UInt64
-	n_segments::UInt64
-	n_records::UInt64
-	min::Ptr{Cdouble}
-	max::Ptr{Cdouble}
-	table::Ptr{Ptr{GMT_DATATABLE}}
-	id::UInt64
-	n_alloc::Csize_t
-	dim::NTuple{4,UInt64}
-	geometry::UInt32
-	alloc_level::UInt32
-	io_mode::UInt32
-	alloc_mode::UInt32
-	file::NTuple{2,Ptr{UInt8}}
-end
-type GMT_DATASET_v6
-	n_tables::UInt64
-	n_columns::UInt64
-	n_segments::UInt64
-	n_records::UInt64
-	min::Ptr{Cdouble}
-	max::Ptr{Cdouble}
-	table::Ptr{Ptr{GMT_DATATABLE}}
-	id::UInt64
-	n_alloc::Csize_t
-	dim::NTuple{4,UInt64}
-	alloc_level::UInt32
-	type_::UInt32
-	geometry::UInt32
-	io_mode::UInt32
-	alloc_mode::UInt32
-	file::NTuple{2,Ptr{UInt8}}
+type GMT_GRID_v6
+	header::Ptr{GMT_GRID_HEADER}
+	data::Ptr{Cfloat}
+	x::Ptr{Cdouble}
+	y::Ptr{Cdouble}
+	hidden::Ptr{Void}
 end
 
 if (GMTver >= 6.0)
-	const GMT_DATASET = GMT_DATASET_v6
+	const GMT_GRID = GMT_GRID_v6
 else
-	const GMT_DATASET = GMT_DATASET_v5
+	const GMT_GRID = GMT_GRID_v5
 end
+
+if (GMTver < 6.0)
+	immutable GMT_OGR
+		geometry::UInt32
+		n_aspatial::UInt32
+		region::Ptr{UInt8}
+		proj::NTuple{4,Ptr{UInt8}}
+		_type::Ptr{UInt32}
+		name::Ptr{Ptr{UInt8}}
+		pol_mode::UInt32
+		tvalue::Ptr{Ptr{UInt8}}
+		dvalue::Ptr{Cdouble}
+	end
+	immutable GMT_OGR_SEG
+		pol_mode::UInt32
+		n_aspatial::UInt32
+		tvalue::Ptr{Ptr{UInt8}}
+		dvalue::Ptr{Cdouble}
+	end
+
+	type GMT_DATASEGMENT
+		n_rows::UInt64
+		n_columns::UInt64
+		min::Ptr{Cdouble}
+		max::Ptr{Cdouble}
+		data::Ptr{Ptr{Cdouble}}
+		label::Ptr{UInt8}
+		header::Ptr{UInt8}
+		text::Ptr{Ptr{UInt8}}
+		mode::UInt32
+		pol_mode::UInt32
+		id::UInt64
+		n_alloc::Csize_t
+		range::Cint
+		pole::Cint
+		dist::Cdouble
+		lat_limit::Cdouble
+		ogr::Ptr{GMT_OGR_SEG}
+		next::Ptr{GMT_DATASEGMENT}
+		alloc_mode::UInt32
+		file::NTuple{2,Ptr{UInt8}}
+	end
+
+	type GMT_DATATABLE
+		n_headers::UInt32
+		n_columns::UInt64
+		n_segments::UInt64
+		n_records::UInt64
+		min::Ptr{Cdouble}
+		max::Ptr{Cdouble}
+		header::Ptr{Ptr{UInt8}}
+		segment::Ptr{Ptr{GMT_DATASEGMENT}}
+		id::UInt64
+		n_alloc::Csize_t
+		mode::UInt32
+		ogr::Ptr{GMT_OGR}
+		file::NTuple{2,Ptr{UInt8}}
+	end
+
+	type GMT_DATASET
+		n_tables::UInt64
+		n_columns::UInt64
+		n_segments::UInt64
+		n_records::UInt64
+		min::Ptr{Cdouble}
+		max::Ptr{Cdouble}
+		table::Ptr{Ptr{GMT_DATATABLE}}
+		id::UInt64
+		n_alloc::Csize_t
+		dim::NTuple{4,UInt64}
+		geometry::UInt32
+		alloc_level::UInt32
+		io_mode::UInt32
+		alloc_mode::UInt32
+		file::NTuple{2,Ptr{UInt8}}
+	end
+
+else
+
+	type GMT_DATASEGMENT
+		n_rows::UInt64
+		n_columns::UInt64
+		min::Ptr{Cdouble}
+		max::Ptr{Cdouble}
+		data::Ptr{Ptr{Cdouble}}
+		label::Ptr{UInt8}
+		header::Ptr{UInt8}
+		text::Ptr{Ptr{UInt8}}
+		hidden::Ptr{Void}
+	end
+
+	type GMT_DATATABLE
+		n_headers::UInt32
+		n_columns::UInt64
+		n_segments::UInt64
+		n_records::UInt64
+		min::Ptr{Cdouble}
+		max::Ptr{Cdouble}
+		header::Ptr{Ptr{UInt8}}
+		segment::Ptr{Ptr{GMT_DATASEGMENT}}
+		hidden::Ptr{Void}
+	end
+
+	type GMT_DATASET
+		n_tables::UInt64
+		n_columns::UInt64
+		n_segments::UInt64
+		n_records::UInt64
+		min::Ptr{Cdouble}
+		max::Ptr{Cdouble}
+		table::Ptr{Ptr{GMT_DATATABLE}}
+		type_::UInt32
+		geometry::UInt32
+		hidden::Ptr{Void}
+	end
+end
+
 
 type GMT_TEXTSEGMENT
 	n_rows::UInt64
@@ -536,17 +533,11 @@ type GMT_PALETTE_v5
 	wrap_length::Cdouble
 end
 type GMT_PALETTE_v6
+	data::Ptr{GMT_LUT}
+	bfn::NTuple{3,GMT_BFN}
 	n_headers::UInt32
 	n_colors::UInt32
 	mode::UInt32
-	data::Ptr{GMT_LUT}
-	bfn::NTuple{3,GMT_BFN}
-	header::Ptr{Ptr{UInt8}}
-	id::UInt64
-	n_alloc::Csize_t
-	alloc_mode::UInt32
-	alloc_level::UInt32
-	auto_scale::UInt32
 	model::UInt32
 	is_wrapping::UInt32
 	is_gray::UInt32
@@ -555,15 +546,12 @@ type GMT_PALETTE_v6
 	has_pattern::UInt32
 	has_hinge::UInt32
 	has_range::UInt32
-	skip::UInt32
 	categorical::UInt32
-	z_adjust::NTuple{2,UInt32}
-	z_mode::NTuple{2,UInt32}
-	z_unit::NTuple{2,UInt32}
-	z_unit_to_meter::NTuple{2,Cdouble}
 	minmax::NTuple{2,Cdouble}
 	hinge::Cdouble
 	wrap_length::Cdouble
+	header::Ptr{Ptr{UInt8}}
+	hidden::Ptr{Void}
 end
 
 if (GMTver >= 6.0)
@@ -572,7 +560,7 @@ else
 	const GMT_PALETTE = GMT_PALETTE_v5
 end
 
-type GMT_IMAGE
+type GMT_IMAGE_v5
 	_type::UInt32
 	colormap::Ptr{Cint}
 	n_indexed_colors::Cint
@@ -586,6 +574,26 @@ type GMT_IMAGE
 	x::Ptr{Cdouble}
 	y::Ptr{Cdouble}
 end
+
+type GMT_IMAGE_v6
+	_type::UInt32
+	colormap::Ptr{Cint}
+	n_indexed_colors::Cint
+	header::Ptr{GMT_GRID_HEADER}
+	data::Ptr{Cuchar}
+	alpha::Ptr{Cuchar}
+	color_interp::Ptr{UInt8}
+	x::Ptr{Cdouble}
+	y::Ptr{Cdouble}
+	hidden::Ptr{Void}
+end
+
+if (GMTver >= 6.0)
+	const GMT_IMAGE = GMT_IMAGE_v5
+else
+	const GMT_IMAGE = GMT_IMAGE_v6
+end
+
 type GMT_POSTSCRIPT_v5
 	n_alloc::Csize_t
 	n_bytes::Csize_t
@@ -603,10 +611,7 @@ type GMT_POSTSCRIPT_v6
 	n_headers::UInt32
 	data::Ptr{UInt8}
 	header::Ptr{Ptr{UInt8}}
-	id::UInt64
-	n_alloc::Csize_t
-	alloc_level::UInt32
-	alloc_mode::UInt32
+	hidden::Ptr{Void}
 end
 
 if (GMTver < 6.0)
@@ -641,9 +646,7 @@ immutable GMT_VECTOR_v6
 	command::NTuple{320,UInt8}
 	remark::NTuple{160,UInt8}
 	header::Ptr{Ptr{UInt8}};		# Array with all Vector header records, if any)
-	id::UInt64
-	alloc_level::UInt32
-	alloc_mode::UInt32
+	hidden::Ptr{Void}
 end
 
 immutable GMT_VECTOR_v5
@@ -684,9 +687,7 @@ type GMT_MATRIX_v6
 	command::NTuple{320,UInt8}
 	remark::NTuple{160,UInt8}
 	header::Ptr{Ptr{UInt8}};		# Array with all Matrix header records, if any)
-	id::UInt64
-	alloc_level::UInt32
-	alloc_mode::UInt32
+	hidden::Ptr{Void}
 end
 
 type GMT_MATRIX_v5
