@@ -76,7 +76,7 @@ function psrose(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
     d = KW(kwargs)
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, " -JX12c/0")
+    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, "")
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_e(cmd, d)
 	cmd = parse_h(cmd, d)
@@ -98,12 +98,12 @@ function psrose(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 	cmd = add_opt(cmd, 'F', d, [:F :no_scale])
     cmd = add_opt(cmd, 'G', d, [:G :fill])
 	cmd = add_opt(cmd, 'I', d, [:I :inquire])
-	cmd = cmd * opt_pen(d, "L", [:L :pen])
+	cmd = cmd * opt_pen(d, 'L', [:L :pen])
 	cmd = add_opt(cmd, 'M', d, [:M])
 	cmd = add_opt(cmd, 'Q', d, [:Q :alpha])
 	cmd = add_opt(cmd, 'S', d, [:S :radius])
 	cmd = add_opt(cmd, 'T', d, [:T :radius])
-	cmd = cmd * opt_pen(d, "W", [:W :pen])
+	cmd = cmd * opt_pen(d, 'W', [:W :pen])
 	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
@@ -113,4 +113,10 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 psrose!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
-	psrose(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=true, O=true,  first=false, kw...)
+	psrose(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
+
+psrose(arg1=[], cmd0::String=""; caller=[], data=[], fmt::String="", K=false, O=false,  first=true, kw...) =
+    psrose(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
+
+psrose!(arg1=[], cmd0::String=""; caller=[], data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
+    psrose(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=first, kw...)

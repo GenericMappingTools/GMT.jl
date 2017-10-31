@@ -86,5 +86,5 @@ const opt_s = "**s** : **skip_col** : -- Str --
 const opt_t = "**t** : **alpha** : **transparency** : -- Str --
       [`-t`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#t-full)"
 
-const opt_swappxy = "**swappxy** : Str --
+const opt_swappxy = "**swappxy** : Str or Bool or [] --
       [`-:`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#colon-full)"
