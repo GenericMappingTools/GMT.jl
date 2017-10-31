@@ -44,9 +44,9 @@ export
 	gmt_core_module_info,
 	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
-	pscoast, pscoast!, psxy, psxy!, grdcontour, grdcontour!, grdimage, grdimage!,
+	pscoast, pscoast!, psxy, psxy!, grdcontour, grdcontour!, grdimage, grdimage!, grdtrack,
 	grdview, grdview!, plot, plot!, makecpt, pshistogram, pshistogram!, psscale, psscale!,
-	pstext, pstext!, gmtinfo, grdinfo, surface,
+	psrose, psrose!, pssolar, pssolar!, pstext, pstext!, gmtinfo, grdinfo, surface,
 	text_record,
 	NULL
 
@@ -59,11 +59,14 @@ include("gmtinfo.jl")
 include("grdcontour.jl")
 include("grdinfo.jl")
 include("grdimage.jl")
+include("grdtrack.jl")
 include("grdview.jl")
 include("makecpt.jl")
 include("pscoast.jl")
 include("pshistogram.jl")
 include("psscale.jl")
+include("psrose.jl")
+include("pssolar.jl")
 include("pstext.jl")
 include("psxy.jl")
 include("plot.jl")
