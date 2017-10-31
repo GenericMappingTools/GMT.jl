@@ -14,6 +14,7 @@ assert(r[1].data == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
 r2=grdinfo(G, C=true);
 assert(r[1].data == r2[1].data)
 #
+# MAKECPT
 cpt = makecpt(range="-1/1/0.1");
 assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
 
@@ -30,6 +31,14 @@ x,y,z=GMT.peaks()
 G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);
 cpt = makecpt(T="-6/8/1");
 grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c")
+
+# GRDTRACK
+G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
+D = grdtrack([0 0], G);
+assert(D[1].data == [0.0 0 1])
+D = grdtrack(G, [0 0]);
+D = grdtrack([0 0], G=G);
+assert(D[1].data == [0.0 0 1])
 
 # PSCOAST
 pscoast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
@@ -54,6 +63,11 @@ psscale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps"
 
 # PSHISTOGRAM
 pshistogram(randn(1000),W=0.1,center=true,fmt="ps",B="a",N=0)
+
+# PSSOLAR
+D=pssolar(I="-7.93/37.079+d2016-02-04T10:01:00");
+assert(D[1].text[end] == "\tDuration = 10:27")
+pssolar(R="d", W=1, J="Q0/14c", B="a", T="dc")
 
 # PSTEXT
 pstext(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps")
