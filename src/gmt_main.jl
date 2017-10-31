@@ -1150,7 +1150,11 @@ function image_init(API::Ptr{Void}, img, hdr::Array{Float64}, pad::Int=0)
 =#
 
 	Ib.data = pointer(img)
-	Ib.alloc_mode = UInt32(GMT.GMT_ALLOC_EXTERNALLY)		# Since array was allocated by Julia
+	if (GMTver < 6)
+		Ib.alloc_mode = UInt32(GMT.GMT_ALLOC_EXTERNALLY)		# Since array was allocated by Julia
+	else
+		GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)
+	end
 	h = unsafe_load(Ib.header)
 	h.z_min = hdr[5]			# Set the z_min, z_max
 	h.z_max = hdr[6]
@@ -1360,7 +1364,11 @@ function dataset_init(API::Ptr{Void}, module_input, ptr, direction::Integer, act
 		end
 		Mb.data = pointer(ptr)
 		Mb.dim  = Mb.n_rows		# Data from Julia is in column major
-		Mb.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# Since matrix was allocated by Julia
+		if (GMTver < 6)
+			Mb.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# Since matrix was allocated by Julia
+		else
+			GMT_Set_AllocMode(API, GMT_IS_MATRIX, convert(Ptr{Void},M))
+		end
 		Mb.shape = GMT.GMT_IS_COL_FORMAT;			# Julia order is column major
 		unsafe_store!(M, Mb)
 		return M
@@ -1649,8 +1657,12 @@ function ps_init(API::Ptr{Void}, module_input, ps, dir::Integer)
 	P0.n_bytes = ps.length
 	P0.mode = ps.mode
 	P0.data = pointer(ps.postscript)
-	P0.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY 	# Hence we are not allowed to free it
-	P0.n_alloc = 0			# But nothing was actually allocated here - just passing pointer from Julia
+	if (GMTver < 6)
+		P0.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY 	# Hence we are not allowed to free it
+		P0.n_alloc = 0			# But nothing was actually allocated here - just passing pointer from Julia
+	else
+		GMT_Set_AllocMode(API, GMT_IS_POSTSCRIPT, P)
+	end
 
 	unsafe_store!(P, P0)
 
