@@ -784,7 +784,7 @@ function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, a
 	if (isempty(fname_ext) && isempty(opt_extra))	# Return result as an GMTimage
 		P = showfig(output, fname_ext, "", K)
 	else
-		if (haskey(d, :show)) 						# Display Fig in default viewer
+		if (haskey(d, :show) && d[:show] != 0) 		# Display Fig in default viewer
 			showfig(output, fname_ext, opt_T, K)
 		elseif (haskey(d, :savefig))
 			showfig(output, fname_ext, opt_T, K, d[:savefig])
