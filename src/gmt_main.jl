@@ -1862,7 +1862,7 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function mat2grid(mat::AbstractFloat)
+function mat2grid(mat)
 	# Take a 2D array of floats and turn it into a GMTgrid
 	nx = size(mat, 2);		ny = size(mat, 1);
 	x  = collect(1:nx);		y = collect(1:ny)
