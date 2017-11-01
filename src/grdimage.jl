@@ -49,7 +49,7 @@ Parameters
 function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], fmt::String="", 
                   K=false, O=false, first=true, kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("grdimage", cmd0, arg1)	# Speedy mode
+	contains(cmd0, " -") && length(kwargs) == 0 && return monolitic("grdimage", cmd0, arg1)	# Speedy mode
 
 	if (!isempty_(data) && isa(data, Tuple) && !isa(data[1], GMTgrid))
 		error("When 'data' is a tuple, it MUST contain a GMTgrid data type")
@@ -58,8 +58,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], 
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
-	cmd = ""
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/0")
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_f(cmd, d)
 	cmd = parse_n(cmd, d)

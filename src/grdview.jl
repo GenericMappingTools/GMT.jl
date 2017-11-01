@@ -52,8 +52,7 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
-	cmd = ""
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/0")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_f(cmd, d)
