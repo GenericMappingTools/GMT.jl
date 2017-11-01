@@ -40,24 +40,29 @@ D = grdtrack(G, [0 0]);
 D = grdtrack([0 0], G=G);
 assert(D[1].data == [0.0 0 1])
 
+# Just create the figs but not check if they are correct.
+PS = grdimage(G, J="X10", ps=1);
+PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
+
+# IMSHOW
+imshow(rand(128,128),show=false)
+imshow(G, frame="a", shade="+a45",show=false)
+
+#
+G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
+assert(size(G.z) == (151, 151))
+
+# PLOT
+plot(collect(1:10),rand(10), lw=1, lc="blue", fmt="ps", marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
+plot!(collect(1:10),rand(10), fmt="ps")
+
 # PSCOAST
 pscoast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
 pscoast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
 pscoast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
-
-#
-# Just create the figs but not check if they are correct.
-PS = grdimage(G, J="X10", ps=1);
-PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
-#
-G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
-assert(size(G.z) == (151, 151))
-#
-plot(collect(1:10),rand(10), lw=1, lc="blue", fmt="ps", marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
-plot!(collect(1:10),rand(10), fmt="ps")
-#
 pscoast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green")))
-#
+
+# PSSCALE
 C = makecpt(T="-200/1000/100", C="rainbow");
 psscale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
 
