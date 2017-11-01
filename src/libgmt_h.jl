@@ -290,10 +290,10 @@ type GMT_GRID_HEADER_v5
 	index_function::Ptr{Void}
 end
 
-if (GMTver >= 6.0)
-	const GMT_GRID_HEADER = GMT_GRID_HEADER_v6
-else
+if (GMTver < 6.0)
 	const GMT_GRID_HEADER = GMT_GRID_HEADER_v5
+else
+	const GMT_GRID_HEADER = GMT_GRID_HEADER_v6
 end
 
 type GMT_GRID_v5
@@ -315,10 +315,10 @@ type GMT_GRID_v6
 	hidden::Ptr{Void}
 end
 
-if (GMTver >= 6.0)
-	const GMT_GRID = GMT_GRID_v6
-else
+if (GMTver < 6.0)
 	const GMT_GRID = GMT_GRID_v5
+else
+	const GMT_GRID = GMT_GRID_v6
 end
 
 if (GMTver < 6.0)
@@ -437,7 +437,6 @@ else
 	end
 end
 
-
 type GMT_TEXTSEGMENT
 	n_rows::UInt64
 	data::Ptr{Ptr{UInt8}}
@@ -554,10 +553,10 @@ type GMT_PALETTE_v6
 	hidden::Ptr{Void}
 end
 
-if (GMTver >= 6.0)
-	const GMT_PALETTE = GMT_PALETTE_v6
-else
+if (GMTver < 6.0)
 	const GMT_PALETTE = GMT_PALETTE_v5
+else
+	const GMT_PALETTE = GMT_PALETTE_v6
 end
 
 type GMT_IMAGE_v5
@@ -588,7 +587,7 @@ type GMT_IMAGE_v6
 	hidden::Ptr{Void}
 end
 
-if (GMTver >= 6.0)
+if (GMTver < 6.0)
 	const GMT_IMAGE = GMT_IMAGE_v5
 else
 	const GMT_IMAGE = GMT_IMAGE_v6
@@ -664,10 +663,10 @@ immutable GMT_VECTOR_v5
 	alloc_mode::UInt32
 end
 
-if (GMTver >= 6.0)
-	const GMT_VECTOR = GMT_VECTOR_v6
-else
+if (GMTver < 6.0)
 	const GMT_VECTOR = GMT_VECTOR_v5
+else
+	const GMT_VECTOR = GMT_VECTOR_v6
 end
 
 type GMT_MATRIX_v6
@@ -709,10 +708,10 @@ type GMT_MATRIX_v5
 	alloc_mode::UInt32
 end
 
-if (GMTver >= 6.0)
-	const GMT_MATRIX = GMT_MATRIX_v6
-else
+if (GMTver < 6.0)
 	const GMT_MATRIX = GMT_MATRIX_v5
+else
+	const GMT_MATRIX = GMT_MATRIX_v6
 end
 
 type GMT_RESOURCE
