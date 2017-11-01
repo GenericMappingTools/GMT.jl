@@ -12,30 +12,29 @@ set the output format. Finally *kwargs* are keyword parameters used to set the i
 options. But contrary to the [Monolitic](@ref) usage, the one letter *GMT* option syntax may be
 replaced by more verbose aliases. To make it clear let us look at couple of examples.
 
-    pscoast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy", fmt="ps")
+    pscoast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")
 
-This command creates a map in PotScript file (set by the *fmt="ps"*) called *GMTjl_tmp.ps* and save
-it in your system's *tmp* directory. For comparison, the same command could have been written, using
-the classical one letter option syntax, as:
+This command creates a map in PotScript file called *GMTjl_tmp.ps* and save it in your system's
+*tmp* directory. For comparison, the same command could have been written, using the classical
+one letter option syntax, as:
 
-    pscoast(R="g", J="A300/30/6c", B="g", D="c", G="navy", fmt="ps")
+    pscoast(R="g", J="A300/30/6c", B="g", D="c", G="navy")
 
 So, each module defines a set of aliases to the one letter options that are reported in each module
 man page.
 
 Before diving more in the way options may be transmitted into the module, we have to understand what
-happens with the output image file. The *fmt="ps"* states that the output image format is in
-PostScript (actually, with the exception of *grdimage -A*, the only format that *GMT* can write).
-But we can also say *fmt="jpg"*, or *fmt="png"* or *fmt="pdf"*. In such cases, the *ghostscript*
-program (you need to have it installed) will take care of converting the *ps* file into the selected
-format.
+happens with the output image file. By not directly specifying any format we are using the default
+output image format which is PostScript (actually, with the exception of *grdimage -A*, the only
+format that *GMT* can write). But we can select other formats by using the *fmt* keyword, for example
+*fmt="jpg"*, or *fmt="png"* or *fmt="pdf"*. In such cases, the *ghostscript* program (you need to have
+it installed) will take care of converting the *ps* file into the selected format.
 
 The above example, however, does not use any input data (*pscoast* knows how to find its own data). One
 way of providing it to modules that work on them is to send in a file name with the data to operate on.
 This example
 
-    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", frame="a",
-             fmt="ps", show=true)
+    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", frame="a", show=true)
 
 reads a the netCDF grid *tut_relief.nc* and displays it as an Mercator projected image. The '@' prefix
 is used by *GMT* to know that the grid file should be downloaded from a server and cached locally. This
@@ -84,7 +83,7 @@ borders with different line colors and thickness. Here we cannot simple state *l
 program wouldn't know which of the shore line or borders this attribute applies to. The solution for
 this is to use tuples as values of corresponding keyword options.
 
-    pscoast(limits="-10/0/35/45", proj="M12c", shore=(0.5,"red"), fmt="ps", frame="a",
+    pscoast(limits="-10/0/35/45", proj="M12c", shore=(0.5,"red"), frame="a",
             show=1, borders=(1,(1,"green")))
 
 Here we used tuples to set the pen attributes, where the tuple may have 1 to 3 elements in the form
@@ -138,13 +137,15 @@ based on the implied scale of the other axis. Use negative sizes to reverse the 
 ## The output format
 
 It was referred above that the **fmt** determines the output format and that the default is PostScript.
-But inspite being the default if we want a image in PS one still has to declare *fmt="ps"*. If it is the
-default why is it mandatory to still declare it? Well, the reason lies in the fact that one may decide
-*NOT* to save any file on disk but to keep the PS figure internally stored in the program's memory. In
-other words, if we do not use the **fmt** keyword the figure is built and kept in memory only. This allows
-converting to another format directly without the use of an intermediary disk file. The conversion is
-performed by the *psconvert* *GMT* module (not yet portded to an stand-alone function) that would be
-used like this (to convert to PDF):
+Actually the default format is choosen by the contents of the global **FMT** variable set at the top of
+the *GMT.jl* file. Eventually this will evolve to using an evironment variable but for the moment users
+will have to edit that file to set a different default format.
+
+A very interesting alternative is to set **FMT=""**, that is to not specify any image format. This will
+result in *NOT* saving any file on disk but to keep the PS figure internally stored in the program's memory. 
+In other words the figure is built and kept in memory only. This allows converting to another format
+directly without the use of an intermediary disk file. The conversion is performed by the *psconvert* *GMT*
+module (not yet ported to an stand-alone function) that would be used like this (to convert to PDF):
 
     gmt("psconvert = -A -Tf -Fmyfig.pdf")
 
