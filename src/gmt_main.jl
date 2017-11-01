@@ -96,7 +96,8 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
 function gmt(cmd::String, args...)
 	global API
 	global grd_mem_layout = ""
-	global img_mem_layout = "TCP"
+	#global img_mem_layout = "TCP"		# For Images.jl
+	global img_mem_layout = ""
 
 	# ----------- Minimal error checking ------------------------
 	if (~isa(cmd, String))
@@ -530,7 +531,11 @@ function get_image(API::Ptr{Void}, object)
 		out = GMTimage("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
 	                      t[:,:,1:3], "", "", "", colormap, n_colors, t[:,:,4], layout)
 	end
-	I.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# So that GMT's Garbageman does not free I.data
+	if (GMTver < 6)
+		I.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# So that GMT's Garbageman does not free I.data
+	else
+		GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
+	end
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
@@ -1049,9 +1054,15 @@ function grid_init(API::Ptr{Void}, module_input, Grid, grd, hdr, pad::Int=2)
 	h.z_max = hdr[6]
 
 	if (isa(Grid, GMTgrid))
-		h.x_unit = map(UInt8, (Grid.x_unit...))
-		h.y_unit = map(UInt8, (Grid.y_unit...))
-		h.z_unit = map(UInt8, (Grid.z_unit...))
+		try
+			h.x_unit = map(UInt8, (Grid.x_unit...))
+			h.y_unit = map(UInt8, (Grid.y_unit...))
+			h.z_unit = map(UInt8, (Grid.z_unit...))
+		catch
+			h.x_unit = map(UInt8, (string("x", repeat("\0",79))...))
+			h.y_unit = map(UInt8, (string("y", repeat("\0",79))...))
+			h.z_unit = map(UInt8, (string("z", repeat("\0",79))...))
+		end
 	end
 
 	unsafe_store!(Gb.header, h)
@@ -1111,7 +1122,11 @@ function image_init(API::Ptr{Void}, Img::GMTimage, pad::Int=0)
 	Ib = unsafe_load(I)			# Ib = GMT_IMAGE (constructor with 1 method)
 
 	Ib.data = pointer(Img.image)
-	Ib.alloc_mode = UInt32(GMT.GMT_ALLOC_EXTERNALLY)	# Since array was allocated by Julia
+	if (GMTver < 6)
+		Ib.alloc_mode = UInt32(GMT.GMT_ALLOC_EXTERNALLY)	# Since array was allocated by Julia
+	else
+		GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)
+	end
 	h = unsafe_load(Ib.header)
 	h.z_min = Img.range[5]			# Set the z_min, z_max
 	h.z_max = Img.range[6]
@@ -1200,7 +1215,11 @@ function matrix_init(API::Ptr{Void}, module_input, grd, dir::Integer=GMT_IN, pad
 		end
 		Mb.data  = pointer(grd)
 		Mb.dim = Mb.n_rows		# Data from Julia is in column major
-		Mb.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# Since matrix was allocated by Julia
+		if (GMTver < 6)
+			Mb.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# Since matrix was allocated by Julia
+		else
+			GMT_Set_AllocMode(API, GMT_IS_MATRIX, M)
+		end
 		Mb.shape = GMT.GMT_IS_COL_FORMAT;		# Julia order is column major */
 
 	else
@@ -1367,7 +1386,7 @@ function dataset_init(API::Ptr{Void}, module_input, ptr, direction::Integer, act
 		if (GMTver < 6)
 			Mb.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# Since matrix was allocated by Julia
 		else
-			GMT_Set_AllocMode(API, GMT_IS_MATRIX, convert(Ptr{Void},M))
+			GMT_Set_AllocMode(API, GMT_IS_MATRIX, M)
 		end
 		Mb.shape = GMT.GMT_IS_COL_FORMAT;			# Julia order is column major
 		unsafe_store!(M, Mb)
@@ -1578,10 +1597,9 @@ function text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family::Inte
 		if ((T = GMT_Create_Data(API, family, GMT_IS_NONE, 0, pointer(dim), C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT source TEXTSET for input")
 		end
-		mutateit(API, T, "alloc_mode", GMT_ALLOC_EXTERNALLY)
+		mutateit(API, T, "alloc_mode", GMT_ALLOC_EXTERNALLY)	# Don't know if this is still used
 
 		T0 = unsafe_load(T)				# GMT.GMT_TEXTSET
-		#T0.alloc_mode = GMT_ALLOC_EXTERNALLY
 
 		TTABLE  = unsafe_load(unsafe_load(T0.table,1),1)		# ::GMT.GMT_TEXTTABLE
 		S0 = unsafe_load(unsafe_load(TTABLE.segment,1),1)		# ::GMT.GMT_TEXTSEGMENT
@@ -1590,32 +1608,7 @@ function text_init(API::Ptr{Void}, module_input, txt, dir::Integer, family::Inte
 			unsafe_store!(S0.data, pointer(txt[rec]), rec)
 		end
 
-		#GMT_blind_change_struct_(API, unsafe_load(TTABLE.segment,1), pointer([dim[3]]), "API_STRUCT_MEMBER_TEXTSEGMENT_1")
 		mutateit(API, unsafe_load(TTABLE.segment,1), "n_rows", dim[3])
-
-		# This chunk is no longer need as long as it works the call to GMT_Set_alloc_mode() that sets
-		# the number of rows using very uggly tricks via C. The problem with the commented code below
-		# comes from the GMT GarbageMan that would crash Julia when attempting to free a the Julia owned TS
-
-#=
-		TS = GMT_TEXTSEGMENT(dim[3], S0.record, S0.label, S0.header, S0.id, S0.mode, S0.n_alloc,
-		                     S0.file, S0.tvalue)
-
-		#segment::Ptr{Ptr{GMT_TEXTSEGMENT}}
-		TSp1 = pointer([TS])		# ::Ptr{GMT_TEXTSEGMENT}
-		TSp2 = pointer([TSp1])		# ::Ptr{Ptr{GMT_TEXTSEGMENT}}
-		TT0  = TTABLE               # ::GMT_TEXTTABLE
-		TT = GMT_TEXTTABLE(TT0.n_headers, TT0.n_segments, dim[3], TT0.header, TSp2, TT0.id, TT0.n_alloc,
-		                   TT0.mode, TT0.file)
-		pointer_to_array(TSp2,1)	# Just to prevent the garbage man to destroy TSp? before this time
-		TTp1 = pointer([TT])		# ::Ptr{GMT_TEXTTABLE}
-		TTp2 = pointer([TTp1])		# ::Ptr{Ptr{GMT_TEXTTABLE}}
-		# Actually, here it ignores all but the pointers (TTp2)
-		Tt   = GMT_TEXTSET(T0[1].n_tables, T0[1].n_segments, dim[3], TTp2, T0[1].id, T0[1].n_alloc, T0[1].geometry,
-		                   T0[1].alloc_level, T0[1].io_mode, GMT.GMT_ALLOC_EXTERNALLY, T0[1].file)
-		pointer_to_array(TTp2,2)	# Just to prevent the GarbageMan to destroy TTp? before this time
-		unsafe_store!(T, Tt)
-=#
 
 	else 	# Just allocate an empty container to hold an output grid (signal this by passing NULLs)
 		GMT_CREATE_MODE = 0
@@ -1854,3 +1847,30 @@ function text_record(data, text)
 	return T
 end
 text_record(text) = text_record(Array{Float64,2}(0,0), text)
+
+#= ---------------------------------------------------------------------------------------------------
+function mat2img(mat::UInt8)
+	# Take a 2D array of uint8 and turn it into a GMTimage.  NOT FINISHED YEY
+	nx = size(mat, 2);		ny = size(mat, 1);
+	x  = collect(1:nx);		y = collect(1:ny)
+	colormap = vec(zeros(Clong,1,3))	# Because we need an array
+	n_colors = 0
+	layout = "BRPa"
+	I = GMTimage("", "", [1.0, nx, 1, ny, minimum(mat), maximum(mat)], [1.0, 1.0], 0, NaN, "", "", "", "",
+	             x,y,mat, "", "", "", colormap, n_colors, zeros(UInt8,ny,nx), layout)
+end
+=#
+
+# ---------------------------------------------------------------------------------------------------
+function mat2grid(mat::AbstractFloat)
+	# Take a 2D array of floats and turn it into a GMTgrid
+	nx = size(mat, 2);		ny = size(mat, 1);
+	x  = collect(1:nx);		y = collect(1:ny)
+	if (!isa(mat, Float32))
+		z = Float32.(mat)
+	else
+		z = mat
+	end
+	G = GMTgrid("", "", [1.0, nx, 1, ny, minimum(mat), maximum(mat)], [1.0, 1.0], 
+	            0, NaN, "", "", "", "", x, y, z, "x", "y", "z", "")
+end
