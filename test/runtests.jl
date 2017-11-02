@@ -30,7 +30,7 @@ assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 x,y,z=GMT.peaks()
 G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);
 cpt = makecpt(T="-6/8/1");
-grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c")
+grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, U=[])
 
 # GRDTRACK
 G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
@@ -67,7 +67,7 @@ C = makecpt(T="-200/1000/100", C="rainbow");
 psscale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
 
 # PSHISTOGRAM
-pshistogram(randn(1000),W=0.1,center=true,fmt="ps",B="a",N=0)
+pshistogram(randn(1000),W=0.1,center=true,fmt="ps",B="a",N=0, x_offset=1, y_offset=1, stamp=[])
 
 # PSROSE
 data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3;; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
