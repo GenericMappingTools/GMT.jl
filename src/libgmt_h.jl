@@ -212,10 +212,11 @@ type GMT_GRID_HEADER_v6
 	my::UInt32
 	pad::NTuple{4,UInt32}
 	mem_layout::NTuple{4,UInt8}
-	ProjRefPROJ4::Ptr{UInt8}
-	ProjRefWKT::Ptr{UInt8}
 	nan_value::Cfloat
 	xy_off::Cdouble
+	ProjRefPROJ4::Ptr{UInt8}
+	ProjRefWKT::Ptr{UInt8}
+	ProjRefEPSG::Cint
 	hidden::Ptr{Void}		# Lower-level information for GMT use only
 end
 
@@ -397,7 +398,7 @@ if (GMTver < 6.0)
 		file::NTuple{2,Ptr{UInt8}}
 	end
 
-else
+else			# GMT6
 
 	type GMT_DATASEGMENT
 		n_rows::UInt64
@@ -433,6 +434,9 @@ else
 		table::Ptr{Ptr{GMT_DATATABLE}}
 		type_::UInt32
 		geometry::UInt32
+		ProjRefPROJ4::Ptr{UInt8}
+		ProjRefWKT::Ptr{UInt8}
+		ProjRefEPSG::Cint
 		hidden::Ptr{Void}
 	end
 end
@@ -645,6 +649,9 @@ immutable GMT_VECTOR_v6
 	command::NTuple{320,UInt8}
 	remark::NTuple{160,UInt8}
 	header::Ptr{Ptr{UInt8}};		# Array with all Vector header records, if any)
+	ProjRefPROJ4::Ptr{UInt8}
+	ProjRefWKT::Ptr{UInt8}
+	ProjRefEPSG::Cint
 	hidden::Ptr{Void}
 end
 
@@ -686,6 +693,9 @@ type GMT_MATRIX_v6
 	command::NTuple{320,UInt8}
 	remark::NTuple{160,UInt8}
 	header::Ptr{Ptr{UInt8}};		# Array with all Matrix header records, if any)
+	ProjRefPROJ4::Ptr{UInt8}
+	ProjRefWKT::Ptr{UInt8}
+	ProjRefEPSG::Cint
 	hidden::Ptr{Void}
 end
 
