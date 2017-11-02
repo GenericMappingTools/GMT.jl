@@ -196,5 +196,5 @@ function parse_dcw(val::Tuple, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-pscoast!(cmd0::String=""; fmt::String="", clip=[], K=false, O=false, first=false, kwargs...) =
-	pscoast!(cmd0; fmt="", clip=[], K=true, O=true, first=false, kwargs...)
+pscoast!(cmd0::String=""; fmt::String="", clip=[], K=true, O=true, first=false, kw...) =
+	pscoast(cmd0; fmt=fmt, clip=clip, K=K, O=O, first=first, kw...)
