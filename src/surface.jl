@@ -81,7 +81,7 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = add_opt(cmd, 'C', d, [:C :convergence])
     cmd = add_opt(cmd, 'G', d, [:G :grid])
     ind = searchindex(cmd, "-G")
-    if (ind > 0 && cmd[min(ind+2,length(cmd))] != ' ')      # A file name was provided
+	if (ind > 0 && length(cmd) > ind+2)      # A file name was provided
         no_output = true
     else
         no_output = false

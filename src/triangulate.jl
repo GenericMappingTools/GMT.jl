@@ -67,7 +67,7 @@ function triangulate(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd, opt_J = parse_J(cmd, d)
 	cmd = parse_V(cmd, d)
 	cmd, = parse_bi(cmd, d)
-	cmd, = parse_bo(cmd, d)
+	cmd = parse_bo(cmd, d)
 	cmd, = parse_di(cmd, d)
 	cmd = parse_e(cmd, d)
 	cmd = parse_f(cmd, d)
@@ -81,7 +81,7 @@ function triangulate(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = add_opt(cmd, 'E', d, [:E :empty])
     cmd = add_opt(cmd, 'G', d, [:G :grid])
     ind = searchindex(cmd, "-G")
-    if (ind > 0 && cmd[min(ind+2,length(cmd))] != ' ')      # A file name was provided
+	if (ind > 0 && length(cmd) > ind+2)      # A file name was provided
         no_output = true
     else
         no_output = false
