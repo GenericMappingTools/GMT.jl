@@ -1,5 +1,5 @@
 """
-    surface(cmd0::String="", arg1=[]; fmt="", kwargs...)
+    surface(cmd0::String="", arg1=[]; kwargs...)
 
 Reads randomly-spaced (x,y,z) triples and produces a binary grid file of gridded values z(x,y) by solving:
 	
@@ -21,6 +21,9 @@ Parameters
 	Convergence limit. Iteration is assumed to have converged when the maximum absolute change in any
 	grid value is less than convergence_limit.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#c)
+- **G** : **grid** : -- Str or [] --
+	Optional output grid file name. If not provided return a GMTgrid type.
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#g)
 - **Ll** : **lower** : -- Str or Number --
 	Impose limits on the output solution. lower sets the lower bound. lower can be the name of a grid
 	file with lower bound values, a fixed value, d to set to minimum input value,
@@ -59,10 +62,6 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("surface", cmd0, arg1)	# Speedy mode
 
-	if (!isempty_(data) && isa(data, Tuple) && !isa(data[1], GMTgrid))
-		error("When 'data' is a tuple, it MUST contain a GMTgrid data type")
-	end
-
 	d = KW(kwargs)
 	cmd = ""
 	cmd, opt_R = parse_R(cmd, d)
@@ -77,10 +76,17 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd, = parse_i(cmd, d)
 	cmd = parse_r(cmd, d)
 	cmd = parse_swappxy(cmd, d)
-	cmd = add_opt(cmd, 'I', d, [:I :inc])
 
 	cmd = add_opt(cmd, 'A', d, [:A :aspect_ratio])
 	cmd = add_opt(cmd, 'C', d, [:C :convergence])
+    cmd = add_opt(cmd, 'G', d, [:G :grid])
+    ind = searchindex(cmd, "-G")
+    if (ind > 0 && cmd[min(ind+2,length(cmd))] != ' ')      # A file name was provided
+        no_output = true
+    else
+        no_output = false
+    end
+	cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt(cmd, "Ll", d, [:Ll :lower])
 	cmd = add_opt(cmd, "Lu", d, [:Ll :upper])
 	cmd = add_opt(cmd, 'N', d, [:N :max_iterations])
@@ -89,23 +95,13 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = add_opt(cmd, 'T', d, [:T :tension])
 	cmd = add_opt(cmd, 'Z', d, [:Z :over_relaxation])
 
-	if (!isempty_(data))
-		if (!isempty_(arg1))
-			warn("Conflicting ways of providing input data. Both a file name via positional and
-				  a data array via kwyword args were provided. Ignoring later argument")
-		else
-			if (isa(data, String)) 		# OK, we have data via file
-				cmd = cmd * " " * data
-			else
-				arg1 = data				# Whatever this is
-			end
-		end
-	end
+    cmd, arg1, = read_data(data, cmd, arg1)
 
 	(haskey(d, :Vd)) && println(@sprintf("\tsurface %s", cmd))
 
 	G = nothing
-	if (contains(cmd, "-Q"))
+	no_output = no_output || contains(cmd, "-Q")
+	if (no_output)
 		if (!isempty_(arg1))  gmt("surface " * cmd, arg1)
 		else                  gmt("surface " * cmd)
 		end
