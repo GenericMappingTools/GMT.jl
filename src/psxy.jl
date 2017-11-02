@@ -223,24 +223,6 @@ function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
     return finish_PS_module(d, cmd, "", arg1, arg2, N_args, output, fname_ext, opt_T, K, "psxy")
 end
 
-#=
-WTF I can do this
-
-julia> foo(a::String="", b=[]; v=false, c=[], kw...) = 1
-foo (generic function with 3 methods)
-
-julia> foo(a=[], b::String=""; v=false, c=[], kw...) = foo(b, a; v=false, c=[], kw...)
-foo (generic function with 5 methods)
-
-But not this
-
-psxy(arg1=[], cmd0::String=""; V=false, data=[], output=[], K=false, O=false,  kwargs...) =
-	psxy(cmd0, arg1; V=V, data=data, output=output, K=K, O=O,  kwargs...)
-
-WARNING: Method definition psxy() in module GMT at c:\j\.julia\v0.6\GMT\src\psxy.jl:45 overwritten at c:\j\.julia\v0.6\GMT\src\psxy.jl:252.
-WARNING: Method definition #psxy(Array{Any, 1}, typeof(GMT.psxy)) in module GMT overwritten.
-=#
-
 # ---------------------------------------------------------------------------------------------------
 psxy!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
       K=true, O=true,  first=false, kw...) =
