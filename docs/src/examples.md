@@ -22,8 +22,7 @@ some curvy lines.
 
 ```julia
 x = linspace(0, 2pi,180); seno = sin.(x/0.2)*45;
-pscoast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy",
-        fmt="png")
+pscoast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")
 
 plot!(collect(x)*60, seno, lw=0.5, lc="red", fmt="png", marker="circle",
       markeredgecolor=0, size=0.05, markerfacecolor="cyan", show=true)
@@ -94,3 +93,16 @@ grdview("@tut_relief.nc", proj="M12c", JZ="1c", shade="+ne0.8+a100", view="135/3
 ```
 
 !["Hello 3D view world"](figures/hello-view-world.jpg)
+
+## Warp image in geographical projection
+
+In this example we will load a network image (GDAL will do that for us) and make a
+*creative* world map. First command, the *imshow*, needs to set *show=false* to no display
+the image before it is complete. We have to do this because *imshow* is a one command
+only shot and so, by default, it has the *show* keyword hardwire to *true*.
+
+    imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg",
+          frame="g", region="d", proj="I15c", image_in="r", show=false)
+    pscoast!(shore="1,white", resolution="c", fmt="png", show=true)
+
+![SinuJessica](http://w3.ualg.pt/~jluis/jessy.png)
