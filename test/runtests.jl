@@ -92,3 +92,9 @@ assert(isapprox(result[1].data, [0.5 0.500019546308 12308.3096995]))
 l1 = gmt("project -C22/49 -E-60/-20 -G10 -Q");
 l2 = gmt("project -C0/-60 -E-60/-30 -G10 -Q");
 #int = gmt("gmtspatial -Ie -Fl", l1, l2);       # Error returned from GMT API: GMT_ONLY_ONE_ALLOWED (59)
+
+# TRIANGULATE
+G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
+
+# NEARNEIGHBOR
+G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, grid=[], S=10);
