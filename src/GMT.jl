@@ -2,7 +2,7 @@ VERSION >= v"0.4" && __precompile__()
 
 module GMT
 
-const GMTver = 5.0
+const GMTver = 6.0
 const FMT = "ps"
 
 export
@@ -46,8 +46,8 @@ export
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
 	pscoast, pscoast!, psxy, psxy!, grdcontour, grdcontour!, grdimage, grdimage!, grdtrack,
 	grdview, grdview!, makecpt, pshistogram, pshistogram!, psscale, psscale!,
-	psrose, psrose!, pssolar, pssolar!, pstext, pstext!, gmtinfo, grdinfo, surface,
-	imshow, imshow!, plot, plot!,
+	psrose, psrose!, pssolar, pssolar!, pstext, pstext!, gmtinfo, grdinfo, surface, triangulate,
+	nearneighbor, imshow, imshow!, plot, plot!,
 	text_record,
 	NULL
 
@@ -64,6 +64,7 @@ include("grdtrack.jl")
 include("grdview.jl")
 include("imshow.jl")
 include("makecpt.jl")
+include("nearneighbor.jl")
 include("pscoast.jl")
 include("pshistogram.jl")
 include("psscale.jl")
@@ -73,5 +74,6 @@ include("pstext.jl")
 include("psxy.jl")
 include("plot.jl")
 include("surface.jl")
+include("triangulate.jl")
 
 end # module

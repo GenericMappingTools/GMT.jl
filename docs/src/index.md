@@ -50,5 +50,9 @@ grdview(arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
 
 makecpt(arg1=[]; data=[], kwargs...)
 
+nearneighbor(arg1=[]; fmt="", kwargs...)
+
 surface(arg1=[]; fmt="", kwargs...)
+
+triangulate(arg1=[]; fmt="", kwargs...)
 ```
