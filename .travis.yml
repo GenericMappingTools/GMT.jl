@@ -35,7 +35,7 @@ before_install:
       - cd $HOME/gmt
       - mkdir build
       - cd build
-      - cmake --config Release .. -DDO_EXAMPLES=ON -DDO_TESTS=ON -DCOPY_GSHHG=TRUE -DCOPY_DCW=TRUE -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGSHHG_ROOT=$HOME/gmt/share/coast -DDCW_ROOT=$HOME/gmt/share/dcw -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt
+      - cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt
       - make -j && make install
   #- if [ `uname` = "Darwin" ]; then
   #    brew update && brew install homebrew/science/gmt;
