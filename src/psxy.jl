@@ -90,8 +90,8 @@ function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 	length(kwargs) == 0 && isempty(data) && contains(cmd0, " -") && return monolitic("psxy", cmd0, arg1)	# Speedy mode
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
-    d = KW(kwargs)
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, " -JX12c/8c")
+	d = KW(kwargs)
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, " -JX12c/8c")
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_a(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
