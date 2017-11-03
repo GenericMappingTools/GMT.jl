@@ -33,6 +33,11 @@ Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 [pkg-0.7-img]: http://pkg.julialang.org/badges/GMT_0.7.svg
 [pkg-0.7-url]: http://pkg.julialang.org/?pkg=GMT&ver=0.7
 
+The Generic Mapping Tools, **GMT**, is an open source collection of tools for manipulating geographic
+and Cartesian data sets (including filtering, trend fitting, gridding, projecting, etc.) and producing
+PostScript illustrations ranging from simple x–y plots via contour maps to artificially illuminated
+surfaces and 3D perspective views.
+
 This wrapper works only with GMT5.3.1 and above
 
 Install
@@ -40,8 +45,9 @@ Install
 
     Pkg.add("GMT")
 
-On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at /user/local/lib), I had to help
-Julia finding MY *libgmt.dylib*, with (this line should than be added to the ~/.juliarc.jl file)
+On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at
+/user/local/lib), I had to help Julia finding MY *libgmt.dylib*, with (this line should than be
+added to the ~/.juliarc.jl file)
 
     push!(Libdl.DL_LOAD_PATH, "/Users/j/programs/gmt5/lib")
 
@@ -55,11 +61,11 @@ However, we also acknowledge that not every one is comfortable with the *GMT* sy
 needed to accommodate the immense pool of options that let you control all details of a figure but that
 also makes it harder to read/master.
 
-To make life easier for simple plots we provide also a more limited sub-set of commands that use the *GMT*
-module name directly and where the image details are set via keyword arguments. While the monolotic way
-of using this package is robust and keeps being updated to latestes *GMT* developments, this *By modules*
-alternative is a very Work In Progress and many things may not work yet. So all help is most than
-wellcome.
+To make life easier for simple plots we provide also a more limited sub-set of commands that use the
+**GMT** module name directly and where the image details are set via keyword arguments. While the
+monolotic way of using this package is robust and keeps being updated to latestes **GMT** developments,
+this *By modules* alternative is a very Work In Progress and many things may not work yet. So all help is
+most than wellcome.
 
 Documentation
 =============
