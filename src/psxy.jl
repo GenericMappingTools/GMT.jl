@@ -1,5 +1,5 @@
 """
-	psxy(cmd0::String="", arg1=[]; fmt="", kwargs...)
+	xy(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
 reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
 polygons, or symbols at those locations on a map.
@@ -78,10 +78,10 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
-- $(GMT.opt_swappxy)
+- $(GMT.opt_swap_xy)
 """
 # ---------------------------------------------------------------------------------------------------
-function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
+function xy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
               K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
@@ -103,7 +103,7 @@ function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 	cmd, opt_i = parse_i(cmd, d)
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
-	cmd = parse_swappxy(cmd, d)
+	cmd = parse_swap_xy(cmd, d)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
@@ -224,6 +224,5 @@ function psxy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 end
 
 # ---------------------------------------------------------------------------------------------------
-psxy!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
-      K=true, O=true,  first=false, kw...) =
-	psxy(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=true, O=true,  first=false, kw...)
+xy!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
+	xy(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=first, kw...)

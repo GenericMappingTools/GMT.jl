@@ -47,8 +47,8 @@ example
     topo = makecpt(color="rainbow", range="1000/5000/500", Z=[]);
     grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", frame="a", color=topo,
              fmt="jpg")
-    psscale!(position="jTC+w5i/0.25i+h+o0/-1i", region="@tut_relief.nc", color=topo,
-             frame="y+lm", fmt="jpg", show=true)
+    scale!(position="jTC+w5i/0.25i+h+o0/-1i", region="@tut_relief.nc", color=topo,
+           frame="y+lm", fmt="jpg", show=true)
 
 Here we used the *makecpt* command to compute a colormap object, used it as the value of the *color*
 keyword of both *grdimage* and *psscale* modules. The final image is made up of two layers, the first
@@ -78,12 +78,12 @@ parameters used to set the image's title and labels.
 
 But setting pen attributes like illustrated above may be complicated if one has more that one set of
 graphical objects (lines and polygons) that need to receive different settings. A good example of
-this again provide by a *pscoast* command. Imagine one want to plot coast lines ans well as country
+this again provide by a *coast* command. Imagine one want to plot coast lines ans well as country
 borders with different line colors and thickness. Here we cannot simple state *lw=1* because the
 program wouldn't know which of the shore line or borders this attribute applies to. The solution for
 this is to use tuples as values of corresponding keyword options.
 
-    pscoast(limits="-10/0/35/45", proj="M12c", shore=(0.5,"red"), frame="a",
+    coast(limits="-10/0/35/45", proj="M12c", shore=(0.5,"red"), frame="a",
             show=1, borders=(1,(1,"green")))
 
 Here we used tuples to set the pen attributes, where the tuple may have 1 to 3 elements in the form

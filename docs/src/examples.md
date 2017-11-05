@@ -22,7 +22,7 @@ some curvy lines.
 
 ```julia
 x = linspace(0, 2pi,180); seno = sin.(x/0.2)*45;
-pscoast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")
+coast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")
 
 plot!(collect(x)*60, seno, lw=0.5, lc="red", fmt="png", marker="circle",
       markeredgecolor=0, size=0.05, markerfacecolor="cyan", show=true)
@@ -76,8 +76,8 @@ for more details about what the arguments mean.
 topo = makecpt(color="rainbow", range="1000/5000/500", continuous=true);
 grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", frame="a", fmt="jpg",
          color=topo)
-psscale!(position="jTC+w5i/0.25i+h+o0/-1i", region="@tut_relief.nc", color=topo,
-         frame="y+lm", fmt="jpg", show=1)
+scale!(position="jTC+w5i/0.25i+h+o0/-1i", region="@tut_relief.nc", color=topo,
+       frame="y+lm", fmt="jpg", show=1)
 ```
 
 !["Hello shaded world"](figures/hello-shaded-world.jpg)
@@ -103,6 +103,6 @@ only shot and so, by default, it has the *show* keyword hardwire to *true*.
 
     imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg",
           frame="g", region="d", proj="I15c", image_in="r", show=false)
-    pscoast!(shore="1,white", resolution="c", fmt="png", show=true)
+    coast!(shore="1,white", resolution="c", fmt="png", show=true)
 
 ![SinuJessica](http://w3.ualg.pt/~jluis/jessy.png)

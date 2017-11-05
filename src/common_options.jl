@@ -339,10 +339,10 @@ function parse_s(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_swappxy(cmd::String, d::Dict)
+function parse_swap_xy(cmd::String, d::Dict)
 	# Parse the global -: option. Return CMD same as input if no -: option in args
-	# But because we acn't have a variable called ':' we use only the 'swappxy' alias
-	for symb in [:swappxy]
+	# But because we can't have a variable called ':' we use only the 'swap_xy' alias
+	for symb in [:swap_xy]
 		if (haskey(d, symb))
 			cmd = cmd * " -:" * arg2str(d[symb])
 			break

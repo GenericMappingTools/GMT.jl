@@ -1,5 +1,5 @@
 """
-	pssolar(cmd0::String="", arg1=[]; fmt="", kwargs...)
+	solar(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
 Calculate and plot the day-night terminator and the civil, nautical and astronomical twilights.
 
@@ -37,7 +37,7 @@ Parameters
 - $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
-function pssolar(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, first=true, kwargs...)
+function solar(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
@@ -73,5 +73,5 @@ function pssolar(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, fir
 end
 
 # ---------------------------------------------------------------------------------------------------
-pssolar!(cmd0::String="", arg1=[]; fmt::String="", K=true, O=true,  first=false, kw...) =
-	pssolar(cmd0, arg1; fmt=fmt, K=true, O=true,  first=false, kw...)
+solar!(cmd0::String="", arg1=[]; fmt::String="", K=true, O=true,  first=false, kw...) =
+	solar(cmd0, arg1; fmt=fmt, K=K, O=O,  first=first, kw...)

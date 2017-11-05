@@ -55,7 +55,7 @@ Parameters
 - $(GMT.opt_h)
 - $(GMT.opt_i)
 - $(GMT.opt_r)
-- $(GMT.opt_swappxy)
+- $(GMT.opt_swap_xy)
 """
 # ---------------------------------------------------------------------------------------------------
 function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
@@ -75,7 +75,7 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = parse_h(cmd, d)
 	cmd, = parse_i(cmd, d)
 	cmd = parse_r(cmd, d)
-	cmd = parse_swappxy(cmd, d)
+	cmd = parse_swap_xy(cmd, d)
 
 	cmd = add_opt(cmd, 'A', d, [:A :aspect_ratio])
 	cmd = add_opt(cmd, 'C', d, [:C :convergence])

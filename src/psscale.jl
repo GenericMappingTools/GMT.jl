@@ -1,5 +1,5 @@
 """
-	psscale(cmd0::String="", arg1=[]; fmt="", kwargs...)
+	scale(cmd0::String="", arg1=[]; fmt="", kwargs...)
 	
 Plots gray scales or color scales on maps.
 
@@ -46,7 +46,7 @@ Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.h
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html#z)
 """
 # ---------------------------------------------------------------------------------------------------
-function psscale(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, first=true, kwargs...)
+function scale(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("psscale", cmd0, arg1)	# Speedy mode
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
@@ -78,5 +78,5 @@ function psscale(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, fir
 end
 
 # ---------------------------------------------------------------------------------------------------
-psscale!(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, first=false, kw...) =
-    psscale(cmd0, arg1; fmt=fmt, K=true, O=true, first=false, kw...)
+scale!(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, first=false, kw...) =
+    scale(cmd0, arg1; fmt=fmt, K=K, O=O, first=first, kw...)

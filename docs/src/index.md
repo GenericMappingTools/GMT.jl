@@ -21,19 +21,19 @@ plot(arg1=[], arg2=[]; fmt="", kwargs...)
 
 imshow(input; fmt="", kwargs...)
 
-pscoast(fmt="", clip=[], kwargs...)
+coast(fmt="", clip=[], kwargs...)
 
-pshistogram(arg1=[]; fmt="", kwargs...)
+histogram(arg1=[]; fmt="", kwargs...)
 
-psscale(arg1=[]; fmt="", kwargs...)
+scale(arg1=[]; fmt="", kwargs...)
 
-pstext(arg1=[]; fmt="", kwargs...)
+text(arg1=[]; fmt="", kwargs...)
 
-psrose(arg1=[]; fmt="", kwargs...)
+rose(arg1=[]; fmt="", kwargs...)
 
-pssoloar(arg1=[]; fmt="", kwargs...)
+soloar(arg1=[]; fmt="", kwargs...)
 
-psxy(arg1=[]; fmt="", kwargs...)
+xy(arg1=[]; fmt="", kwargs...)
 
 gmtinfo(arg1=[], kwargs...)
 

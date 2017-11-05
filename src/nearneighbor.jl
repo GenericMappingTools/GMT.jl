@@ -41,7 +41,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_n)
 - $(GMT.opt_r)
-- $(GMT.opt_swappxy)
+- $(GMT.opt_swap_xy)
 """
 # ---------------------------------------------------------------------------------------------------
 function nearneighbor(cmd0::String="", arg1=[]; data=[], kwargs...)
@@ -60,7 +60,7 @@ function nearneighbor(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd, = parse_i(cmd, d)
 	cmd = parse_n(cmd, d)
 	cmd = parse_r(cmd, d)
-	cmd = parse_swappxy(cmd, d)
+	cmd = parse_swap_xy(cmd, d)
 
 	cmd = add_opt(cmd, 'E', d, [:E :empty])
     cmd = add_opt(cmd, 'G', d, [:G :grid])

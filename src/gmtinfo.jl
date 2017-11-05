@@ -47,7 +47,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_o)
 - $(GMT.opt_r)
-- $(GMT.opt_swappxy)
+- $(GMT.opt_swap_xy)
 """
 # ---------------------------------------------------------------------------------------------------
 function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
@@ -65,7 +65,7 @@ function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd, opt_i = parse_i(cmd, d)
 	cmd = parse_o(cmd, d)
 	cmd = parse_r(cmd, d)
-	cmd = parse_swappxy(cmd, d)
+	cmd = parse_swap_xy(cmd, d)
 
 	cmd = add_opt_s(cmd, 'A', d, [:A])
 	cmd = add_opt(cmd,   'C', d, [:C :per_column])

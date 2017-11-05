@@ -53,7 +53,7 @@ const opt_do = "**do** : **nodata_out** : -- Number --
       the chosen missing data value
       [`-do`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#do-full)"
 
-const opt_e = "**e** : **patern** : -- Str --
+const opt_e = "**e** : **pattern** : -- Str --
       [`-e`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#e-full)"
 
 const opt_f = "**f** : **colinfo** : -- Str --
@@ -86,5 +86,5 @@ const opt_s = "**s** : **skip_col** : -- Str --
 const opt_t = "**t** : **alpha** : **transparency** : -- Str --
       [`-t`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#t-full)"
 
-const opt_swappxy = "**swappxy** : Str or Bool or [] --
+const opt_swap_xy = "**swap_xy** : Str or Bool or [] --
       [`-:`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#colon-full)"

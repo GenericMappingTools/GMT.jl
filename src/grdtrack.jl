@@ -40,7 +40,7 @@ Parameters
 - $(GMT.opt_n)
 - $(GMT.opt_o)
 - $(GMT.opt_s)
-- $(GMT.opt_swappxy)
+- $(GMT.opt_swap_xy)
 
 'arg1' may contain the table data as an array or a GMTdataset type and GMTgrid or it can be
 left empty. Same thing for 'arg2'. 'cmd' can have the file name of either the table or the grid.
@@ -68,7 +68,7 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; data=[], kwargs...)
 	cmd = parse_n(cmd, d)
 	cmd = parse_o(cmd, d)
 	cmd = parse_s(cmd, d)
-	cmd = parse_swappxy(cmd, d)
+	cmd = parse_swap_xy(cmd, d)
 
 	cmd = add_opt(cmd, 'A', d, [:A :interp_path])
 	cmd = add_opt(cmd, 'C', d, [:C :equi])

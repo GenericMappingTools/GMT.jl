@@ -1,5 +1,5 @@
 """
-	pstext(cmd0::String="", arg1=[]; fmt="", kwargs...)
+	text(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
 Plots text strings of variable size, font type, and orientation. Various map projections are
 provided, with the option to draw and annotate the map boundaries.
@@ -60,10 +60,10 @@ Parameters
 - $(GMT.opt_h)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
-- $(GMT.opt_swappxy)
+- $(GMT.opt_swap_xy)
 """
 # ---------------------------------------------------------------------------------------------------
-function pstext(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
+function text(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
               K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via G
@@ -130,12 +130,11 @@ function pstext(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 end
 
 # ---------------------------------------------------------------------------------------------------
-pstext!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
-      K=true, O=true,  first=false, kw...) =
-    pstext(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=true, O=true,  first=false, kw...)
+text!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
+    text(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=false, kw...)
 
-pstext(arg1=[]; caller=[], data=[], fmt::String="", K=false, O=false, first=true, kw...) =
-    pstext("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+text(arg1=[]; caller=[], data=[], fmt::String="", K=false, O=false, first=true, kw...) =
+    text("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
 
-pstext!(arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true, first=false, kw...) =
-    pstext("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+text!(arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true, first=false, kw...) =
+    text("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)

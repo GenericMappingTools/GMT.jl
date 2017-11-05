@@ -1,5 +1,5 @@
 """
-	pshistogram(cmd0::String="", arg1=[]; fmt="", kwargs...)
+	histogram(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
 Reads file and examines the first data column to calculate histogram parameters based on the bin-width provided.
 
@@ -10,46 +10,46 @@ Parameters
 
 - $(GMT.opt_J)
 - **W** : **bin** : **width** : -- Number or Str --
-    Sets the bin width used for histogram calculations.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#w)
+	Sets the bin width used for histogram calculations.
+	[`-W`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#w)
 - **A** : **horizontal** : -- Bool or [] --
-    Plot the histogram horizontally from x = 0 [Default is vertically from y = 0].
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#a)
+	Plot the histogram horizontally from x = 0 [Default is vertically from y = 0].
+	[`-A`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#a)
 - $(GMT.opt_B)
 - **C** : **color** : -- Str or GMTcpt --
-    Give a CPT. The mid x-value for each bar is used to look-up the bar color.
+	Give a CPT. The mid x-value for each bar is used to look-up the bar color.
 	[`-C`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#c)
 - **D** : **annot** : **annotate** : -- Str or [] --
-    Annotate each bar with the count it represents.
+	Annotate each bar with the count it represents.
 	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#d)
 - **F** : **center** : -- Bool or [] --
-    Center bin on each value. [Default is left edge].
+	Center bin on each value. [Default is left edge].
 	[`-F`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#f)
 - **G** : **fill** : -- Number or Str --
-    Select filling of bars [if no G, L or C set G=100].
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#g)
+	Select filling of bars [if no G, L or C set G=100].
+	[`-G`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#g)
 - **I** : **inquire** : -- Bool or [] --
-    Inquire about min/max x and y after binning.
+	Inquire about min/max x and y after binning.
 	[`-I`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#i)
 - **L** : **labels** : -- Str or [] --
-    Draw bar outline using the specified pen thickness [if no G, L or C set L=0.5].
+	Draw bar outline using the specified pen thickness [if no G, L or C set L=0.5].
 	[`-L`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#l)
 - **N** : **normal** : -- Str --
-    Draw the equivalent normal distribution; append desired pen [0.5p,black].
+	Draw the equivalent normal distribution; append desired pen [0.5p,black].
 	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#n)
 - $(GMT.opt_P)
 - **Q** : **alpha** : -- Number or [] --
-    Sets the confidence level used to determine if the mean resultant is significant.
+	Sets the confidence level used to determine if the mean resultant is significant.
 	[`-Q`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#q)
 - **R** : **region** : -- Str --
-    Specifies the ‘region’ of interest in (r,azimuth) space. r0 is 0, r1 is max length in units.
+	Specifies the ‘region’ of interest in (r,azimuth) space. r0 is 0, r1 is max length in units.
 	[`-R`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#r)
 - **S** : **stairs** : -- Str or number --
-    Draws a stairs-step diagram which does not include the internal bars of the default histogram.
+	Draws a stairs-step diagram which does not include the internal bars of the default histogram.
 	[`-S`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#s)
 - **Z** : **kind** : -- Number or Str --
-    Choose between 6 types of histograms.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#z)
+	Choose between 6 types of histograms.
+	[`-Z`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#z)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -61,11 +61,11 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
-- $(GMT.opt_swappxy)
+- $(GMT.opt_swap_xy)
 """
 # ---------------------------------------------------------------------------------------------------
-function pshistogram(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
-              K=false, O=false, first=true, kwargs...)
+function histogram(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
+                   K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
@@ -73,8 +73,8 @@ function pshistogram(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="
 	length(kwargs) == 0 && isempty(data) && return monolitic("pshistogram", cmd0, arg1)	# Speedy mode
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
-    d = KW(kwargs)
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, " -JX12c/12c")
+	d = KW(kwargs)
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, " -JX12c/12c")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
@@ -84,7 +84,7 @@ function pshistogram(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="
 	cmd, opt_i = parse_i(cmd, d)
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
-	cmd = parse_swappxy(cmd, d)
+	cmd = parse_swap_xy(cmd, d)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
@@ -97,7 +97,7 @@ function pshistogram(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="
 	cmd = add_opt(cmd, 'A', d, [:A :horizontal])
 	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate])
 	cmd = add_opt(cmd, 'F', d, [:F :center])
-    cmd = add_opt(cmd, 'G', d, [:G :fill])
+	cmd = add_opt(cmd, 'G', d, [:G :fill])
 	cmd = add_opt(cmd, 'I', d, [:I :inquire])
 	opt_L = opt_pen(d, 'L', [:L :pen])
 	cmd = add_opt(cmd, 'Q', d, [:Q :cumulative])
@@ -122,15 +122,15 @@ function pshistogram(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
-    return finish_PS_module(d, cmd, "", arg1, arg2, [], [], [], [], output, fname_ext, opt_T, K, "pshistogram")
+	return finish_PS_module(d, cmd, "", arg1, arg2, [], [], [], [], output, fname_ext, opt_T, K, "pshistogram")
 end
 
 # ---------------------------------------------------------------------------------------------------
-pshistogram!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true, first=false, kw...) =
-	pshistogram(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+histogram!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true, first=false, kw...) =
+	histogram(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
 
-pshistogram(arg1=[]; caller=[], data=[], fmt::String="", K=false, O=false, first=true, kw...) =
-	pshistogram("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+histogram(arg1=[]; caller=[], data=[], fmt::String="", K=false, O=false, first=true, kw...) =
+	histogram("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
 
-pshistogram!(arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true, first=false, kw...) =
-	pshistogram("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+histogram!(arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true, first=false, kw...) =
+	histogram("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)

@@ -57,29 +57,29 @@ plot(collect(1:10),rand(10), lw=1, lc="blue", fmt="ps", marker="circle", markere
 plot!(collect(1:10),rand(10), fmt="ps")
 
 # PSCOAST
-pscoast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
-pscoast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
-pscoast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
-pscoast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green")))
+coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
+coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
+coast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
+coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green")))
 
 # PSSCALE
 C = makecpt(T="-200/1000/100", C="rainbow");
-psscale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
+scale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
 
 # PSHISTOGRAM
-pshistogram(randn(1000),W=0.1,center=true,fmt="ps",B="a",N=0, x_offset=1, y_offset=1, stamp=[])
+histogram(randn(1000),W=0.1,center=true,fmt="ps",B="a",N=0, x_offset=1, y_offset=1, stamp=[])
 
 # PSROSE
 data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3;; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
-psrose(data, swappxy=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=1, D=1, S=4)
+rose(data, swap_xy=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=1, D=1, S=4)
 
 # PSSOLAR
-#D=pssolar(I="-7.93/37.079+d2016-02-04T10:01:00");
+#D=solar(I="-7.93/37.079+d2016-02-04T10:01:00");
 #assert(D[1].text[end] == "\tDuration = 10:27")
-pssolar(R="d", W=1, J="Q0/14c", B="a", T="dc")
+solar(R="d", W=1, J="Q0/14c", B="a", T="dc")
 
 # PSTEXT
-pstext(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps")
+text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps")
 
 # GMTSPATIAL
 # Test  Cartesian centroid and area
