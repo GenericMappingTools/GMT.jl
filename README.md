@@ -72,6 +72,11 @@ Documentation
 
 [Latest Docs](https://genericmappingtools.github.io/GMT.jl/latest)
 
+Examples
+========
+
+[Some examples](https://genericmappingtools.github.io/GMT.jl/latest/examples)
+
 License
 =======
 
