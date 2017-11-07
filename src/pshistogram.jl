@@ -1,5 +1,5 @@
 """
-	histogram(cmd0::String="", arg1=[]; fmt="", kwargs...)
+	histogram(cmd0::String="", arg1=[]; fmt::String="", kwargs...)
 
 Reads file and examines the first data column to calculate histogram parameters based on the bin-width provided.
 

@@ -1,5 +1,5 @@
 """
-    imshow(input; fmt="", kwargs...)
+    imshow(arg1; fmt="",  kw...)
 
 Is a simple front end to the [`grdimage`](@ref) program that accepts GMTgrid, GMTimage, 2D array 
 of floats or strings with file names of grids or images. The normal options of the *grdimage* program
@@ -23,30 +23,6 @@ julia> imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabb
 See also: [`grdimage`](@ref)
 """
 # -----------------------------------------------------------------------------------------------------
-function imshow(arg1::GMTgrid; extra="", data=[], fmt="", K=false, O=false, first=true, kw...)
-	# Here the default is to show, but if a 'show' was used let it rule
-	d = KW(kw)
-	if (!haskey(d, :show))
-		grdimage("", arg1; caller="grdimage", data=[], fmt=fmt, K=K, O=O, first=first, show=true, kw...)
-	else
-		grdimage("", arg1; caller="grdimage", data=[], fmt=fmt, K=K, O=O, first=first, kw...)
-	end
-end
-imshow!(arg1::GMTgrid; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
-	grdimage(extra, arg1; caller="grdimage", data=data, fmt=fmt, K=K, O=O, first=first, kw...)
-
-function imshow(arg1::GMTimage; extra="", data=[], fmt="", K=false, O=false, first=true, kw...)
-	# Here the default is to show, but if a 'show' was used let it rule
-	d = KW(kw)
-	if (!haskey(d, :show))
-		grdimage("", arg1; caller="grdimage", data=[], fmt=fmt, K=K, O=O, first=first, D=[], show=true, kw...)
-	else
-		grdimage("", arg1; caller="grdimage", data=[], fmt=fmt, K=K, O=O, first=first, D=[], kw...)
-	end
-end
-imshow!(arg1::GMTimage; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
-	grdimage(extra, arg1; caller="grdimage", data=data, fmt=fmt, K=K, O=O, first=first, kw...)
-
 function imshow(arg1; fmt="", K=false, O=false, first=true, kw...)
 	# Take a 2D array of floats and turn it into a GMTgrid or if input is a string assume it's a file name
 	# In this later case try to figure if it's a grid or an image and act accordingly.
@@ -78,3 +54,27 @@ function imshow(arg1; fmt="", K=false, O=false, first=true, kw...)
 	end
 end
 imshow!(arg1; fmt="", K=true, O=true, first=false, kw...) = imshow(arg1; fmt="", K=K, O=O, first=first, kw...)
+function imshow(arg1::GMTgrid; extra="", data=[], fmt="", K=false, O=false, first=true, kw...)
+	# Here the default is to show, but if a 'show' was used let it rule
+	d = KW(kw)
+	if (!haskey(d, :show))
+		grdimage("", arg1; caller="grdimage", data=[], fmt=fmt, K=K, O=O, first=first, show=true, kw...)
+	else
+		grdimage("", arg1; caller="grdimage", data=[], fmt=fmt, K=K, O=O, first=first, kw...)
+	end
+end
+imshow!(arg1::GMTgrid; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
+	grdimage(extra, arg1; caller="grdimage", data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+
+function imshow(arg1::GMTimage; extra="", data=[], fmt="", K=false, O=false, first=true, kw...)
+	# Here the default is to show, but if a 'show' was used let it rule
+	d = KW(kw)
+	if (!haskey(d, :show))
+		grdimage("", arg1; caller="grdimage", data=[], fmt=fmt, K=K, O=O, first=first, D=[], show=true, kw...)
+	else
+		grdimage("", arg1; caller="grdimage", data=[], fmt=fmt, K=K, O=O, first=first, D=[], kw...)
+	end
+end
+imshow!(arg1::GMTimage; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
+	grdimage(extra, arg1; caller="grdimage", data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+

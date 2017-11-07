@@ -17,42 +17,42 @@ end
 ```
 
 ```@docs
-plot(arg1=[], arg2=[]; fmt="", kwargs...)
+plot(arg1::Array; fmt="", kwargs...)
 
-imshow(input; fmt="", kwargs...)
+imshow(arg1; fmt="", kwargs...)
 
-coast(fmt="", clip=[], kwargs...)
+coast(cmd0::String=""; fmt="", clip=[], kwargs...)
 
-histogram(arg1=[]; fmt="", kwargs...)
+histogram(cmd0::String="", arg1=[]; fmt::String="", kwargs...)
 
-scale(arg1=[]; fmt="", kwargs...)
+scale(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-text(arg1=[]; fmt="", kwargs...)
+text(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-rose(arg1=[]; fmt="", kwargs...)
+rose(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-soloar(arg1=[]; fmt="", kwargs...)
+solar(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-xy(arg1=[]; fmt="", kwargs...)
+xy(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-gmtinfo(arg1=[], kwargs...)
+gmtinfo(cmd0::String="", arg1=[]; kwargs...)
 
-grdcontour(arg1=[]; data=[], fmt="", kwargs...)
+grdcontour(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-grdimage(arg1=[], arg2=[], arg3=[], arg4=[]; data=[], fmt="", kwargs...)
+grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; fmt="", kwargs...)
 
-grdinfo(arg1=[], kwargs...)
+grdinfo(cmd0::String="", arg1=[]; kwargs...)
 
-grdtrack(arg1=[], arg2=[], kwargs...)
+grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
-grdview(arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
+grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; 
         fmt="", kwargs...)
 
-makecpt(arg1=[]; data=[], kwargs...)
+makecpt(cmd0::String="", arg1=[]; kwargs...)
 
-nearneighbor(arg1=[]; fmt="", kwargs...)
+nearneighbor(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-surface(arg1=[]; fmt="", kwargs...)
+surface(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-triangulate(arg1=[]; fmt="", kwargs...)
+triangulate(cmd0::String="", arg1=[]; fmt="", kwargs...)
 ```

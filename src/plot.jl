@@ -1,5 +1,5 @@
 """
-plot(cmd0::String="", arg1=[]; fmt="", kwargs...)
+plot(arg1::Array; fmt="", kwargs...)
 
 reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
 polygons, or symbols at those locations on a map.
@@ -80,16 +80,16 @@ Parameters
 - $(GMT.opt_t)
 """
 # -----------------------------------------------------------------------------------------------------
+# Tested with plot(xyz, S="c0.1c", C=cpt, fmt="ps", show=1)
+plot(arg1::Array; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
+xy(extra, arg1; caller="plot", data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+plot!(arg1::Array; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
+xy(extra, arg1; caller="plot", data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+
+# -----------------------------------------------------------------------------------------------------
 plot(arg1::GMTdataset; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
 	xy(extra, arg1; caller="plot", data=data, fmt=fmt, K=K, O=O, first=first, kw...)
 plot!(arg1::GMTdataset; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
-	xy(extra, arg1; caller="plot", data=data, fmt=fmt, K=true, O=true, first=false, kw...)
-
-# -----------------------------------------------------------------------------------------------------
-# Tested with plot(xyz, S="c0.1c", C=cpt, fmt="ps", show=1)
-plot(arg1::Array; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
-	xy(extra, arg1; caller="plot", data=data, fmt=fmt, K=K, O=O, first=first, kw...)
-plot!(arg1::Array; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
 	xy(extra, arg1; caller="plot", data=data, fmt=fmt, K=true, O=true, first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------

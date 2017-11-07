@@ -1,5 +1,5 @@
 """
-    gmtinfo(cmd0::String="", arg1=[], kwargs...)
+    gmtinfo(cmd0::String="", arg1=[]; kwargs...)
 
 Reads its standard input [or from files] and finds the extreme values in each of the columns.
 

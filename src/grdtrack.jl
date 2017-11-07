@@ -1,5 +1,5 @@
 """
-	grdtrack(cmd::String="", arg1=[], arg2=[], kwargs...)
+	grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 Interpolates the grid(s) at the positions in the table and writes out the table with the
 interpolated values added as (one or more) new columns.
