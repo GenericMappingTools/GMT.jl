@@ -5,20 +5,20 @@ set using keyword arguments. The general syntax is (where the brackets mean opti
 
     [output objects] = modulename([cmd::String="",] [argi=[];] opt1=val1, opt2=val2, kwargs...);
 
-where *modulename* is the program name (*e.g. pscoast*), *cmd* is used to transmit a file name for
+where *modulename* is the program name (*e.g. coast*), *cmd* is used to transmit a file name for
 modules that will read data from files and *argi* is one, and for certain modules, or more data
 arrays or *GMT.jl* data types. *opti* named arguments common to many modules used for example to
 set the output format. Finally *kwargs* are keyword parameters used to set the individual module
 options. But contrary to the [Monolitic](@ref) usage, the one letter *GMT* option syntax may be
 replaced by more verbose aliases. To make it clear let us look at couple of examples.
 
-    pscoast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")
+    coast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")
 
 This command creates a map in PotScript file called *GMTjl_tmp.ps* and save it in your system's
 *tmp* directory. For comparison, the same command could have been written, using the classical
 one letter option syntax, as:
 
-    pscoast(R="g", J="A300/30/6c", B="g", D="c", G="navy")
+    coast(R="g", J="A300/30/6c", B="g", D="c", G="navy")
 
 So, each module defines a set of aliases to the one letter options that are reported in each module
 man page.
@@ -30,7 +30,7 @@ format that *GMT* can write). But we can select other formats by using the *fmt*
 *fmt="jpg"*, or *fmt="png"* or *fmt="pdf"*. In such cases, the *ghostscript* program (you need to have
 it installed) will take care of converting the *ps* file into the selected format.
 
-The above example, however, does not use any input data (*pscoast* knows how to find its own data). One
+The above example, however, does not use any input data (*coast* knows how to find its own data). One
 way of providing it to modules that work on them is to send in a file name with the data to operate on.
 This example
 
