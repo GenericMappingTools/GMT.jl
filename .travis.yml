@@ -4,7 +4,7 @@ language: julia
 sudo: false
 
 os:
-  - osx
+  - linux
 julia:
   - 0.6
   - nightly
@@ -18,15 +18,15 @@ before_install:
       #sudo apt-get install libgmt-dev;
       # Get Miniconda from Continuum
       # Need to source the script to set the PATH variable in this environment
-      #- source install-miniconda.sh
-      #- conda update --yes conda
+      - source install-miniconda.sh
+      - conda update --yes conda
       # Install dependencies
-      #- conda install --yes python=3.6 pip -c conda-forge --quiet
+      - conda install --yes python=3.6 pip -c conda-forge --quiet
       # Need the dev channel to get development builds of GMT 6
-      #- conda install --yes --file requirements.txt -c conda-forge/label/dev -c conda-forge --quiet
-      #- conda install --yes --file requirements-dev.txt -c conda-forge --quiet
+      - conda install --yes --file requirements.txt -c conda-forge/label/dev -c conda-forge --quiet
+      - conda install --yes --file requirements-dev.txt -c conda-forge --quiet
       # Show installed pkg information for postmortem diagnostic
-      #- conda list
+      - conda list
       # Install GMT trunk
       ##- sudo apt-get install subversion build-essential cmake libcurl4-gnutls-dev libnetcdf-dev libgdal1-dev libfftw3-dev libpcre3-dev liblapack-dev
       ##- svn checkout svn://gmtserver.soest.hawaii.edu/gmt/trunk $HOME/gmt
@@ -37,9 +37,9 @@ before_install:
       ##- cd build
       ##- cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt
       ##- make -j && make install
-  - if [ `uname` = "Darwin" ]; then
-      brew update && brew install homebrew/science/gmt;
-    fi
+  #- if [ `uname` = "Darwin" ]; then
+  #    brew update && brew install homebrew/science/gmt;
+  #  fi
 # uncomment the following lines to override the default test script
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
