@@ -46,7 +46,7 @@ examples because we will be using only one 2D array intead of 3 3D arrays (ref).
 ```julia
 x,y,z=GMT.peaks()
 G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);  # Iterpolate into a regular grid
-grdcontour(G, frame="a", fmt="png", show=1)
+grdcontour(G, cont=1, annot=2, frame="a", fmt="png", show=1)
 ```
 
 !["Simple black&white contour"](figures/hello-bw-contour.png)
@@ -76,8 +76,8 @@ for more details about what the arguments mean.
 topo = makecpt(color="rainbow", range="1000/5000/500", continuous=true);
 grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", frame="a", fmt="jpg",
          color=topo)
-scale!(position="jTC+w5i/0.25i+h+o0/-1i", region="@tut_relief.nc", color=topo,
-       frame="y+lm", fmt="jpg", show=1)
+GMT.scale!(position="jTC+w5i/0.25i+h+o0/-1i", region=[-108 -103 35 40], color=topo,
+       proj=[], frame="y+lm", fmt="jpg", show=1)
 ```
 
 !["Hello shaded world"](figures/hello-shaded-world.jpg)
@@ -88,8 +88,9 @@ We will make a perspective, color-coded view of the US Rockies from the southeas
 
 
 ```julia
+topo = makecpt(color="rainbow", range="1000/5000/500", continuous=true);
 grdview("@tut_relief.nc", proj="M12c", JZ="1c", shade="+ne0.8+a100", view="135/30",
-        frame="a", fmt="jpg", color="topo", Q="i100", show=1)
+        frame="a", fmt="jpg", color=topo, Q="i100", show=1)
 ```
 
 !["Hello 3D view world"](figures/hello-view-world.jpg)
