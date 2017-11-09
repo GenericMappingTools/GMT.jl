@@ -98,3 +98,19 @@ G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
 
 # NEARNEIGHBOR
 G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, grid=[], S=10);
+
+# EXAMPLES
+plot(collect(1:10),rand(10), lw=1, lc="blue", marker="square",
+markeredgecolor=0, size=0.2, markerfacecolor="red", title="Hello World",
+x_label="Spoons", y_label="Forks")
+
+x = linspace(0, 2pi,180); seno = sin.(x/0.2)*45;
+coast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")
+plot!(collect(x)*60, seno, lw=0.5, lc="red", marker="circle",
+      markeredgecolor=0, size=0.05, markerfacecolor="cyan")
+
+x,y,z=GMT.peaks()
+G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);  # Iterpolate into a regular grid
+grdcontour(G, cont=1, annot=2, frame="a")
+cpt = makecpt(T="-6/8/1");      # Create the color map
+grdcontour(G, frame="a", color=cpt, pen="+c")
