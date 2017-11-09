@@ -221,7 +221,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Some examples",
     "title": "Simple contours",
     "category": "section",
-    "text": "Contours are created with grdcontour that takes a grid as input (or a GMTgrid data type). This example shows uses the peaks function to create a classical example. Note, however, that the memory consumption in this example, when creating the plot, is much lower than traditional likewise  examples because we will be using only one 2D array intead of 3 3D arrays (ref).x,y,z=GMT.peaks()\nG = gmt(\"surface -R-3/3/-3/3 -I0.1\", [x[:] y[:] z[:]]);  # Iterpolate into a regular grid\ngrdcontour(G, frame=\"a\", fmt=\"png\", show=1)(Image: \"Simple black&white contour\")Now with colored contours. To make it colored we need to generate a color map and use it. Notetice that we have to specify a pen attribute to get the colored contours because pen specifications are always set separately.cpt = makecpt(T=\"-6/8/1\");      # Create the color map\ngrdcontour(G, frame=\"a\", fmt=\"png\", color=cpt, pen=\"+c\", show=1)(Image: \"Simple color contour\")"
+    "text": "Contours are created with grdcontour that takes a grid as input (or a GMTgrid data type). This example shows uses the peaks function to create a classical example. Note, however, that the memory consumption in this example, when creating the plot, is much lower than traditional likewise  examples because we will be using only one 2D array intead of 3 3D arrays (ref).x,y,z=GMT.peaks()\nG = gmt(\"surface -R-3/3/-3/3 -I0.1\", [x[:] y[:] z[:]]);  # Iterpolate into a regular grid\ngrdcontour(G, cont=1, annot=2, frame=\"a\", fmt=\"png\", show=1)(Image: \"Simple black&white contour\")Now with colored contours. To make it colored we need to generate a color map and use it. Notetice that we have to specify a pen attribute to get the colored contours because pen specifications are always set separately.cpt = makecpt(T=\"-6/8/1\");      # Create the color map\ngrdcontour(G, frame=\"a\", fmt=\"png\", color=cpt, pen=\"+c\", show=1)(Image: \"Simple color contour\")"
 },
 
 {
@@ -229,7 +229,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Some examples",
     "title": "Color images",
     "category": "section",
-    "text": "Color images are made with grdimage which takes the usual common options and a color map. It operates over grids or images. The next example shows how to create a color appropriate for the grid's z range, plot the image and add a color scale. We use here the data keyword to tell the program to load the grid from a file. The  before the tut_relief.nc file name instructs GMT to download the file from its server on the first usage and save it in a cache dir. See the GMT tuturial for more details about what the arguments mean.topo = makecpt(color=\"rainbow\", range=\"1000/5000/500\", continuous=true);\ngrdimage(\"@tut_relief.nc\", shade=\"+ne0.8+a100\", proj=\"M12c\", frame=\"a\", fmt=\"jpg\",\n         color=topo)\nscale!(position=\"jTC+w5i/0.25i+h+o0/-1i\", region=\"@tut_relief.nc\", color=topo,\n       frame=\"y+lm\", fmt=\"jpg\", show=1)(Image: \"Hello shaded world\")"
+    "text": "Color images are made with grdimage which takes the usual common options and a color map. It operates over grids or images. The next example shows how to create a color appropriate for the grid's z range, plot the image and add a color scale. We use here the data keyword to tell the program to load the grid from a file. The  before the tut_relief.nc file name instructs GMT to download the file from its server on the first usage and save it in a cache dir. See the GMT tuturial for more details about what the arguments mean.topo = makecpt(color=\"rainbow\", range=\"1000/5000/500\", continuous=true);\ngrdimage(\"@tut_relief.nc\", shade=\"+ne0.8+a100\", proj=\"M12c\", frame=\"a\", fmt=\"jpg\",\n         color=topo)\nGMT.scale!(position=\"jTC+w5i/0.25i+h+o0/-1i\", region=[-108 -103 35 40], color=topo,\n       proj=[], frame=\"y+lm\", fmt=\"jpg\", show=1)(Image: \"Hello shaded world\")"
 },
 
 {
@@ -237,7 +237,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Some examples",
     "title": "Perspective view",
     "category": "section",
-    "text": "We will make a perspective, color-coded view of the US Rockies from the southeast.grdview(\"@tut_relief.nc\", proj=\"M12c\", JZ=\"1c\", shade=\"+ne0.8+a100\", view=\"135/30\",\n        frame=\"a\", fmt=\"jpg\", color=\"topo\", Q=\"i100\", show=1)(Image: \"Hello 3D view world\")"
+    "text": "We will make a perspective, color-coded view of the US Rockies from the southeast.topo = makecpt(color=\"rainbow\", range=\"1000/5000/500\", continuous=true);\ngrdview(\"@tut_relief.nc\", proj=\"M12c\", JZ=\"1c\", shade=\"+ne0.8+a100\", view=\"135/30\",\n        frame=\"a\", fmt=\"jpg\", color=topo, Q=\"i100\", show=1)(Image: \"Hello 3D view world\")"
 },
 
 {
