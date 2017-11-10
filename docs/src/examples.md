@@ -15,22 +15,28 @@ A few notes about this example. Because we didn't specify the figure size (with 
 PNG format. The ``show=true`` is needed to show the image at the end.
 
 But now we want an image made up with two layers of data. And we are going to plot on the sphere
-(the Earth). For that we will need to use the ``pscoast`` program to plot the Earth and append
+(the Earth). For that we will need to use the ``coast`` program to plot the Earth and append
 some curvy lines.
 
 ## And the "Hello Round World"
 
 ```julia
 x = linspace(0, 2pi,180); seno = sin.(x/0.2)*45;
-coast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")
+coast(region=[0 360 -90 90], proj="A300/30/6c", frame="g", resolution="c", land="navy")
 
 plot!(collect(x)*60, seno, lw=0.5, lc="red", fmt="png", marker="circle",
       markeredgecolor=0, size=0.05, markerfacecolor="cyan", show=true)
 ```
 
+In this example *region=[0 360 -90 90]*  means the domain is the whole Earth, *frame="g"*
+sets the grid on, *resolution="c"* selects the crude coast lines resolution and the 
+*land="navy"* paints the continents with a navy blue color. More complex is the *proj="A300/30/6c"*
+argument that selects the map projection, which is a Lambert projection with projection center
+at 300 degrees East, 0 degrees North. The *6c* sets the map width of 6 centimeters.
+
 !["Hello round world"](figures/hello-round-world.png)
 
-Note that now the first command, the ``pscoast``, does not have the ``show`` keyword.
+Note that now the first command, the ``coast``, does not have the ``show`` keyword.
 It means we are here creating the first layer but we don't want to see it just yet.
 The second command uses the **!** variation of the ``plot`` function, which means
 that we are *appending* to a previous plot, and uses the ``show=true`` because we
@@ -41,7 +47,9 @@ are donne with this figure.
 Contours are created with ``grdcontour`` that takes a *grid* as input (or a *GMTgrid* data type).
 This example shows uses the *peaks* function to create a classical example. Note, however, that the
 memory consumption in this example, when creating the plot, is much lower than traditional likewise 
-examples because we will be using only one 2D array intead of 3 3D arrays (ref).
+examples because we will be using only one 2D array intead of 3 3D arrays (ref). In the example
+*cont=1* and *annot=2* means draw contours at evry 1 unit of the *G* grid and annotate at evry other
+contour line. *frame="a"* means pick a default automatic annotation and labeling for the axis.
 
 ```julia
 x,y,z=GMT.peaks()
@@ -53,10 +61,11 @@ grdcontour(G, cont=1, annot=2, frame="a", fmt="png", show=1)
 
 Now with colored contours. To make it colored we need to generate a color map and use it. Notetice
 that we have to specify a *pen* attribute to get the colored contours because pen specifications
-are always set separately.
+are always set separately. Here we will create first a colormap with *makecpt* that will from -6 to
+8 with steps of 1. These values are picked up after the *z* values of the *G* grid. 
 
 ```julia
-cpt = makecpt(T="-6/8/1");      # Create the color map
+cpt = makecpt(range="-6/8/1");      # Create the color map
 grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", show=1)
 ```
 
