@@ -1,7 +1,7 @@
 """
 	xy(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
+reads (x,y) pairs and generates PostScript code that will plot lines,
 polygons, or symbols at those locations on a map.
 
 Full option list at [`psxy`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html)
@@ -10,7 +10,9 @@ Parameters
 ----------
 
 - **A** : **straight_lines** : -- Str --  
-    By default, geographic line segments are drawn as great circle arcs. To draw them as straight lines, use the -A flag.
+    By default, geographic line segments are drawn as great circle arcs. To draw them as straight
+    lines, use the -A flag.
+    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#a)
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
@@ -19,6 +21,7 @@ Parameters
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#c)
 - **D** : **offset** : -- Str --
     Offset the plot symbol or line locations by the given amounts dx/dy.
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#d)
 - **E** : **error_bars** : -- Str --
     Draw symmetrical error bars.
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#e)
@@ -31,12 +34,15 @@ Parameters
     'fill' for the polygons and 'markerfacecolor' for filling the symbols. Same applyies for W bellow
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#g)
 - **I** : **intens** : -- Str or number --
-    Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating illumination.
+	Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating
+	shading illumination.
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#i)
 - **L** : **closed_polygon** : -- Str --
     Force closed polygons. 
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#l)
 - **N** : **no_clip** : --- Str or [] --
     Do NOT clip symbols that fall outside map border 
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#n)
 - $(GMT.opt_P)
 - **S** : **symbol** : **marker** : **Marker** : -- Str --
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
