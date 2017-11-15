@@ -2,7 +2,7 @@ __precompile__()
 
 module GMT
 
-const GMTver = 5.0
+const GMTver = 6.0
 const FMT = "ps"
 
 export
@@ -44,7 +44,7 @@ export
 	gmt_core_module_info,
 	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
-	coast, coast!, xy, xy!, grdcontour, grdcontour!, grdimage, grdimage!, grdtrack,
+	basemap, basemap!, coast, coast!, xy, xy!, grdcontour, grdcontour!, grdimage, grdimage!, grdtrack,
 	grdview, grdview!, makecpt, histogram, histogram!, scale, scale!,
 	rose, rose!, solar, solar!, text, text!, gmtinfo, grdinfo, surface, triangulate,
 	nearneighbor, imshow, imshow!, plot, plot!,
@@ -65,6 +65,7 @@ include("grdview.jl")
 include("imshow.jl")
 include("makecpt.jl")
 include("nearneighbor.jl")
+include("psbasemap.jl")
 include("pscoast.jl")
 include("pshistogram.jl")
 include("psscale.jl")
