@@ -9,7 +9,9 @@ plot(collect(1:10),rand(10), lw=1, lc="blue", fmt="png", marker="square",
      x_label="Spoons", y_label="Forks", show=true)
 ```
 
+<div style="width:300px; height=200px">
 !["Hello world"](figures/hello-world.png)
+</div>
 
 A few notes about this example. Because we didn't specify the figure size (with the ``figsize`` keyword) a default value of 12x8 cm (not counting labels and title) was used. The ``fmt="png"`` selected the
 PNG format. The ``show=true`` is needed to show the image at the end.
