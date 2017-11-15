@@ -102,7 +102,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 	r = opt_B
 	while (!isempty(r))
 		tok[k],r = GMT.strtok(r)
-		if (ismatch(r"[WESNwesntlbu+g+o]", tok[k]) && searchindex(tok[k], "+t") == 0)		# If title here, forget about :title
+		if (ismatch(r"[WESNwesntlbu+g+o]", tok[k]) && !contains(tok[k], "+t"))		# If title here, forget about :title
 			if (haskey(d, :title) && isa(d[:title], String))
 				tok[k] = tok[k] * "+t\"" * d[:title] * "\""
 			end
@@ -110,8 +110,8 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 			if (haskey(d, :x_label) && isa(d[:x_label], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:x_label] * "\""  end
 			if (haskey(d, :y_label) && isa(d[:y_label], String))  tok[k] = tok[k] * " -By+l\"" * d[:y_label] * "\""  end
 		end
-		if (searchindex(tok[k], "-B") == 0)  tok[k] = " -B" * tok[k]
-		else                                 tok[k] = " " * tok[k]
+		if (!contains(tok[k], "-B") && tok[k][end] != '"')  tok[k] = " -B" * tok[k]
+		else                                                tok[k] = " " * tok[k]
 		end
 		k = k + 1
 	end
