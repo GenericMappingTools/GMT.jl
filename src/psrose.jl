@@ -1,7 +1,7 @@
 """
 	rose(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
-Reads (length,azimuth) pairs from file and plot a windrose diagram.
+Reads (length,azimuth) pairs and plot a windrose diagram.
 
 Full option list at [`psrose`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html)
 
@@ -66,7 +66,7 @@ Parameters
 - $(GMT.opt_swap_xy)
 """
 # ---------------------------------------------------------------------------------------------------
-function rose(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
+function rose(cmd0::String="", arg1=[]; data=[], fmt::String="",
               K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
@@ -76,7 +76,7 @@ function rose(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, "")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, "")
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_e(cmd, d)
 	cmd = parse_h(cmd, d)
@@ -112,11 +112,11 @@ function rose(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 end
 
 # ---------------------------------------------------------------------------------------------------
-rose!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
-	rose(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
+rose!(cmd0::String="", arg1=[]; data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
+	rose(cmd0, arg1; data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
 
-rose(arg1=[], cmd0::String=""; caller=[], data=[], fmt::String="", K=false, O=false,  first=true, kw...) =
-	rose(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
+rose(arg1=[], cmd0::String=""; data=[], fmt::String="", K=false, O=false,  first=true, kw...) =
+	rose(cmd0, arg1; data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
 
-rose!(arg1=[], cmd0::String=""; caller=[], data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
-	rose(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
+rose!(arg1=[], cmd0::String=""; data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
+	rose(cmd0, arg1; data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
