@@ -8,6 +8,7 @@ to a raster image.
 Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html)
 
 - $(GMT.opt_J)
+- $(GMT.opt_Jz)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
@@ -18,7 +19,6 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#i)
-- $(GMT.opt_Jz)
 - **N** : **plane** : -- Str or Int --
     Draws a plane at this z-level.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#n)
