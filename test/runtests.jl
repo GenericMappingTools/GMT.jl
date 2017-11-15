@@ -56,6 +56,9 @@ assert(size(G.z) == (151, 151))
 plot(collect(1:10),rand(10), lw=1, lc="blue", fmt="ps", marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
 plot!(collect(1:10),rand(10), fmt="ps")
 
+# PSBASEMAP
+basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
+
 # PSCOAST
 coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
 coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
