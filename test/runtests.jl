@@ -48,7 +48,7 @@ PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="1
 imshow(rand(128,128),show=false)
 imshow(G, frame="a", shade="+a45",show=false)
 
-#
+# SURFACE
 G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
 assert(size(G.z) == (151, 151))
 
@@ -59,15 +59,23 @@ plot!(collect(1:10),rand(10), fmt="ps")
 # PSBASEMAP
 basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
 
+# PSCONVERT
+gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
+psconvert("lixo.ps", adjust=true, fmt="png")
+psconvert("lixo.ps", Z=true)
+
 # PSCOAST
 coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
 coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
 coast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
 coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green")))
 
+# PSIMAGE
+#gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
+
 # PSSCALE
 C = makecpt(T="-200/1000/100", C="rainbow");
-scale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+ltopography y+lkm", fmt="ps")
+scale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
 
 # PSHISTOGRAM
 histogram(randn(1000),W=0.1,center=true,fmt="ps",B="a",N=0, x_offset=1, y_offset=1, stamp=[])
