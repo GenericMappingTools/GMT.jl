@@ -68,7 +68,7 @@ function basemap(cmd0::String=""; fmt::String="", K=false, O=false, first=true, 
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
-    return finish_PS_module(d, cmd, "", [], [], [], [], [], [], output, fname_ext, opt_T, K, "psbasemap")
+    return finish_PS_module(d, cmd, "", [], [], output, fname_ext, opt_T, K, "psbasemap")
 end
 
 # ---------------------------------------------------------------------------------------------------
