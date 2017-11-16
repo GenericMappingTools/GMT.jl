@@ -110,8 +110,17 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 			if (haskey(d, :x_label) && isa(d[:x_label], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:x_label] * "\""  end
 			if (haskey(d, :y_label) && isa(d[:y_label], String))  tok[k] = tok[k] * " -By+l\"" * d[:y_label] * "\""  end
 		end
-		if (!contains(tok[k], "-B") && tok[k][end] != '"')  tok[k] = " -B" * tok[k]
-		else                                                tok[k] = " " * tok[k]
+		if (!contains(tok[k], "-B"))
+			ind = searchindex(tok[k], '"')
+			if (ind != 0 && tok[k][end] != '"')
+				tok[k] = " -B" * tok[k] 		# A title in quotes with spaces
+			elseif (ind == 0 || (ind < length(tok[k]) && tok[k][end] == '"'))
+				tok[k] = " -B" * tok[k] 		# A title in quotes but no spaces or no quotes at all
+			else
+				tok[k] = " " * tok[k]
+			end
+		else
+			tok[k] = " " * tok[k]
 		end
 		k = k + 1
 	end
@@ -250,6 +259,18 @@ function parse_di(cmd::String, d::Dict)
 		end
 	end
 	return cmd, opt_di
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_do(cmd::String, d::Dict)
+	# Parse the global -do option. Return CMD same as input if no -do option in args
+	for symb in [:do :nodata_out]
+		if (haskey(d, symb) && isa(d[symb], Number))
+			cmd = cmd * " -do" * arg2str(d[symb])
+			break
+		end
+	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -522,10 +543,15 @@ function arg2str(arg)
 	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
 	if (isa(arg, String))
 		out = arg
+	elseif (isa(arg, Symbol))
+		out = string(arg)
 	elseif (isempty(arg) || (isa(arg, Bool) && arg))
 		out = ""
 	elseif (isa(arg, Number))			# Have to do it after the Bool test above because Bool is a Number too
-		out = @sprintf("%.6g", arg)
+		out = @sprintf("%.8g", arg)
+	elseif (isa(arg, Array{<:Number}))
+		out = join([@sprintf("%.4g/",x) for x in min(4, length(arg))])	# No more than 4 to avoid 'abuses'
+		out = rstrip(out, '/')		# Remove last '/'
 	else
 		error("Argument 'arg' can only be a String or a Number")
 	end
@@ -796,7 +822,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, arg1, arg2, N_args::Integer,
                           output::String, fname_ext::String, opt_T::String, K::Bool, prog::String)
-	# Common code shared by most of the PS producing modules.
+	# This version uses onle two ARGi and CMD is an Array of strings
+	# Also N_args is no longer used and must be removed.
 
 	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
 	else                PS = false
@@ -805,11 +832,11 @@ function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, arg1
 	P = nothing
 	for k = 1:length(cmd)
 		(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd[k]))
-		if (N_args == 0)					# Simple case
+		if (isempty_(arg1))					# Simple case
 			if (PS) P = gmt(string(prog, " ", cmd[k]))
 			else        gmt(string(prog, " ", cmd[k]))
 			end
-		elseif (N_args == 1)				# One numeric input
+		elseif (isempty_(arg2))				# One numeric input
 			if (PS) P = gmt(string(prog, " ", cmd[k]), arg1)
 			else        gmt(string(prog, " ", cmd[k]), arg1)
 			end
@@ -830,6 +857,13 @@ function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, arg1
 		end
 	end
 	return P
+end
+
+# ---------------------------------------------------------------------------------------------------
+function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, output::String,
+                          fname_ext::String, opt_T::String, K::Bool, prog::String)
+	finish_PS_module(d, [cmd], opt_extra, arg1, arg2, 0, output, fname_ext, opt_T, K, prog)
+	# This version uses only two ARGi and CMD is a string
 end
 
 # --------------------------------------------------------------------------------------------------
