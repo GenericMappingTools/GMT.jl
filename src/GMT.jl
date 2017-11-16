@@ -2,7 +2,7 @@ __precompile__()
 
 module GMT
 
-const GMTver = 5.0
+const GMTver = 6.0
 const FMT = "ps"
 
 export
@@ -33,7 +33,7 @@ export
 	GMT_IS_CPT, GMT_IS_IMAGE, GMT_IS_VECTOR, GMT_IS_MATRIX,
 	GMT_IS_POINT, GMT_IS_SURFACE, GMT_DATASET, GMT_IS_PLP,
 	GMT_GRID, GMT_MATRIX, GMT_PALETTE, GMT_PS,
-	GMT_UNIVECTOR, GMT_IN, GMT_OUT, GMT_OK,
+	GMT_UNIVECTOR, GMT_IN, GMT_OUT,
 	GMT_VIA_NONE, GMT_VIA_VECTOR, GMT_VIA_MATRIX, GMT_VIA_OUTPUT,
 	GMT_IS_DUPLICATE_VIA_VECTOR, GMT_IS_REFERENCE_VIA_VECTOR,
 	GMT_IS_DUPLICATE_VIA_MATRIX, GMT_IS_REFERENCE_VIA_MATRIX,
@@ -45,9 +45,9 @@ export
 	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
 	basemap, basemap!, coast, coast!, xy, xy!, grdcontour, grdcontour!, grdimage, grdimage!, grdtrack,
-	grdview, grdview!, makecpt, histogram, histogram!, scale, scale!,
+	grdview, grdview!, makecpt, histogram, histogram!, image, image!, psconvert, scale, scale!,
 	rose, rose!, solar, solar!, text, text!, gmtinfo, grdinfo, surface, triangulate,
-	nearneighbor, imshow, imshow!, plot, plot!,
+	nearneighbor, imshow, imshow!, plot, plot!, splitxyz, wiggle, wiggle!,
 	text_record,
 	NULL
 
@@ -67,13 +67,17 @@ include("makecpt.jl")
 include("nearneighbor.jl")
 include("psbasemap.jl")
 include("pscoast.jl")
+include("psconvert.jl")
 include("pshistogram.jl")
+include("psimage.jl")
 include("psscale.jl")
 include("psrose.jl")
 include("pssolar.jl")
 include("pstext.jl")
 include("psxy.jl")
+include("pswiggle.jl")
 include("plot.jl")
+include("splitxyz.jl")
 include("surface.jl")
 include("triangulate.jl")
 
