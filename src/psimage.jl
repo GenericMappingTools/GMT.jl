@@ -15,12 +15,12 @@ Parameters
 - **F** : **box** : -- Str or [] --
     Without further options, draws a rectangular border around the image using MAP_FRAME_PEN.
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html#f)
-- **I** : **nearest_multiple** : -- Number or Str --
+- **I** : **invert_1bit** : -- Number or Str --
     Invert 1-bit image before plotting.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html#i)
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
-- **M** : **zmin_max** : -- Bool or [] --
+- **M** : **monochrome** : -- Bool or [] --
     Convert color image to monochrome grayshades using the (television) YIQ-transformation.
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html#m)
 - $(GMT.opt_R)
