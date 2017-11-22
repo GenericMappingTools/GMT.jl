@@ -91,8 +91,12 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict, opt_B::String="")
 	for sym in [:B :frame :axes]
-		if (haskey(d, sym) && isa(d[sym], String))
-			opt_B = d[sym]
+		if (haskey(d, sym))
+			if (isa(d[sym], String))
+				opt_B = d[sym]
+			elseif (isa(d[sym], Symbol))
+				opt_B = string(d[sym])
+			end
 			break
 		end
 	end
@@ -139,7 +143,7 @@ function parse_BJR(d::Dict, cmd0::String, cmd::String, caller, O, default)
 	# Join these thre in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(cmd, d, O)
 	cmd, opt_J = parse_J(cmd, d, O)
-	if (!O && isempty(opt_J))					# If we have no -J use this default
+	if (!O && isempty(opt_J))			# If we have no -J use this default
 		opt_J = default					# " -JX12c/8c" (e.g. psxy) or " -JX12c/0" (e.g. grdimage)
 		cmd = cmd * opt_J
 	elseif (O && isempty(opt_J))
