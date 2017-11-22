@@ -82,6 +82,8 @@ end
 function build_opt_J(Val)
 	if (isa(Val, String))
 		return " -J" * Val
+	elseif (isa(Val, Symbol))
+		return " -J" * string(Val)
 	elseif (isempty(Val))
 		return " -J"
 	end
