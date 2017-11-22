@@ -40,7 +40,7 @@ Parameters
 - **L** : **closed_polygon** : -- Str --
     Force closed polygons. 
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#l)
-- **N** : **no_clip** : --- Str or [] --
+- **N** : **no_clip** : -- Str or [] --
     Do NOT clip symbols that fall outside map border 
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#n)
 - $(GMT.opt_P)
@@ -74,6 +74,8 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
+- **axis** : **aspect** : -- Str --
+    When equal to "equal" makes a square plot.
 - $(GMT.opt_a)
 - $(GMT.opt_bi)
 - $(GMT.opt_di)
@@ -88,7 +90,7 @@ Parameters
 """
 # ---------------------------------------------------------------------------------------------------
 function xy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
-              K=false, O=false, first=true, kwargs...)
+            K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty(arg1) ? 0 : 1
@@ -97,7 +99,16 @@ function xy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, " -JX12c/8c")
+	opt_J = " -JX12c/8c"
+	for sym in [:axis :aspect]
+		if (haskey(d, sym))
+			if (d[sym] == "equal")	# Need also a 'tight' option
+				opt_J = " -JX12c"
+			end
+			break
+		end
+	end
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, opt_J)
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_a(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
