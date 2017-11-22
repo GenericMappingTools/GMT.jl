@@ -21,11 +21,13 @@ plot(arg1::Array; fmt="", kwargs...)
 
 imshow(arg1; fmt="", kwargs...)
 
+basemap(cmd0::String=""; fmt="", kwargs...)
+
 coast(cmd0::String=""; fmt="", clip=[], kwargs...)
 
 histogram(cmd0::String="", arg1=[]; fmt::String="", kwargs...)
 
-scale(cmd0::String="", arg1=[]; fmt="", kwargs...)
+colorbar(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
 text(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
@@ -52,7 +54,13 @@ makecpt(cmd0::String="", arg1=[]; kwargs...)
 
 nearneighbor(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
+psconvert(cmd0::String="", arg1=[]; kwargs...)
+
+splitxyz(cmd0::String="", arg1=[]; kwargs...)
+
 surface(cmd0::String="", arg1=[]; fmt="", kwargs...)
 
 triangulate(cmd0::String="", arg1=[]; fmt="", kwargs...)
+
+wiggle(cmd0::String="", arg1=[]; fmt="", kwargs...)
 ```
