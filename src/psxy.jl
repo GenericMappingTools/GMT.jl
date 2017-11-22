@@ -225,14 +225,19 @@ function xy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 			opt_Gsymb = opt_Gsymb * " -W" * opt_Wmarker	# Piggy back in this option string
 		end
 		cmd = [finish_PS(d, cmd0, cmd * opt_S * opt_Gsymb, output, K, O)]
-	elseif (!isempty(opt_W) && !isempty(opt_S))		# We have both line/polygon and symbol requests 
-		if (!isempty(opt_Wmarker))
-			opt_Wmarker = " -W" * opt_Wmarker		# Set Symbol edge color 
+	elseif (!isempty(opt_W) && !isempty(opt_S))			# We have both line/polygon and a symbol
+		# that is not a vector (because Vector width is set by -W)
+		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
+            cmd = [finish_PS(d, cmd0, cmd * opt_W * opt_S * opt_Gsymb, output, K, O)]
+		else
+			if (!isempty(opt_Wmarker))
+				opt_Wmarker = " -W" * opt_Wmarker		# Set Symbol edge color 
+			end
+			cmd1 = cmd * opt_W
+			cmd2 = replace(cmd, opt_B, "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
+			cmd = [finish_PS(d, cmd0, cmd1, output, true, O)
+			       finish_PS(d, cmd0, cmd2, output, K, true)]
 		end
-		cmd1 = cmd * opt_W
-		cmd2 = replace(cmd, opt_B, "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
-		cmd = [finish_PS(d, cmd0, cmd1, output, true, O)
-			   finish_PS(d, cmd0, cmd2, output, K, true)]
 	else
 		cmd = [finish_PS(d, cmd0, cmd, output, K, O)]
 	end
@@ -243,3 +248,5 @@ end
 # ---------------------------------------------------------------------------------------------------
 xy!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
 	xy(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
+xy!(arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
+	xy("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
