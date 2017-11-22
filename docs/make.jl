@@ -8,6 +8,7 @@ makedocs(
         "Home" => "index.md",
         "Some examples" => "examples.md",
         "Draw rectangles examples" => "rectangles.md",
+        "Draw frames examples" => "frames.md",
         "Manual" => [
             "usage.md",
             "monolitic.md",
