@@ -75,7 +75,7 @@ coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green"
 
 # PSSCALE
 C = makecpt(T="-200/1000/100", C="rainbow");
-scale(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
+colorbar(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
 
 # PSHISTOGRAM
 histogram(randn(1000),W=0.1,center=true,fmt="ps",B="a",N=0, x_offset=1, y_offset=1, stamp=[])
