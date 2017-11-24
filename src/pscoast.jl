@@ -83,6 +83,9 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 	cmd = parse_p(cmd, d)
 	cmd = parse_t(cmd, d)
 	cmd = parse_bo(cmd, d)
+	cmd = parse_gmtconf_MAP(cmd, d)
+	cmd = parse_gmtconf_FONT(cmd, d)
+	cmd = parse_gmtconf_FORMAT(cmd, d)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
