@@ -97,6 +97,7 @@ function text(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, fi
     cmd = add_opt(cmd, 'G', d, [:G :fill])
 	cmd = add_opt(cmd, 'I', d, [:I :inquire])
 	cmd = add_opt(cmd, 'L', d, [:L :pen])
+	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 	cmd = add_opt(cmd, 'Q', d, [:Q :change_case])
 	cmd = add_opt(cmd, 'T', d, [:T :text_box])
 	cmd = add_opt(cmd, 'Z', d, [:Z :threeD])
