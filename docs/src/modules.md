@@ -145,9 +145,9 @@ A very interesting alternative is to set **FMT=""**, that is to not specify any 
 result in *NOT* saving any file on disk but to keep the PS figure internally stored in the program's memory. 
 In other words the figure is built and kept in memory only. This allows converting to another format
 directly without the use of an intermediary disk file. The conversion is performed by the *psconvert* *GMT*
-module (not yet ported to an stand-alone function) that would be used like this (to convert to PDF):
+module that would be used like this (to convert to PDF):
 
-    gmt("psconvert = -A -Tf -Fmyfig.pdf")
+    psconvert(in_memory=true, adjust=true, format="f", out_name="myfig.pdf")
 
 The issue with this solution, that could be implemented internally without user intervention, is that it
 currently only works on Windows.
@@ -155,7 +155,7 @@ currently only works on Windows.
 A very interesting alternative to a file format is the option to create RGB images with *psconvert* and
 return it to Julia in a [Image type](@ref) type.
 
-    I = gmt("psconvert = -A")
+    I = psconvert(in_memory=true, adjust=true)
 
 but again, so far on Windows only. A cool thing to develop would be the possibility to display this *I*
 image with the [`Images.jl`](https://github.com/JuliaImages/Images.jl) package.
