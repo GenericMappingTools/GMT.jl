@@ -216,6 +216,119 @@ function parse_UVXY(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_gmtconf_MAP(cmd::String, d::Dict)
+	# Parse the MAP_ type global parameters of gmt.conf
+	if     (haskey(d, :MAP_ANNOT_MIN_ANGLE))
+		cmd = string(cmd, " --MAP_ANNOT_MIN_ANGLE=", d[:MAP_ANNOT_MIN_ANGLE])
+	end
+	if (haskey(d, :MAP_ANNOT_MIN_SPACING))
+		cmd = string(cmd, " --MAP_ANNOT_MIN_SPACING=", d[:MAP_ANNOT_MIN_SPACING])
+	end
+	if (haskey(d, :MAP_ANNOT_OBLIQUE))
+		cmd = string(cmd, " --MAP_ANNOT_OBLIQUE=", d[:MAP_ANNOT_OBLIQUE])
+	end
+	if (haskey(d, :MAP_ANNOT_OFFSET))
+		cmd = string(cmd, " --MAP_ANNOT_OFFSET=", d[:MAP_ANNOT_OFFSET])
+	end
+	if (haskey(d, :MAP_ANNOT_OFFSET_PRIMARY))
+		cmd = string(cmd, " --MAP_ANNOT_OFFSET_PRIMARY=", d[:MAP_ANNOT_OFFSET_PRIMARY])
+	end
+	if (haskey(d, :MAP_ANNOT_OFFSET_SECONDARY))
+		cmd = string(cmd, " --MAP_ANNOT_OFFSET_SECONDARY=", d[:MAP_ANNOT_OFFSET_SECONDARY])
+	end
+	if (haskey(d, :MAP_ANNOT_ORTHO))
+		cmd = string(cmd, " --MAP_ANNOT_ORTHO=", d[:MAP_ANNOT_ORTHO])
+	end
+	if (haskey(d, :MAP_DEFAULT_PEN))
+		cmd = string(cmd, " --MAP_DEFAULT_PEN=", d[:MAP_DEFAULT_PEN])
+	end
+	if (haskey(d, :MAP_DEGREE_SYMBOL))
+		cmd = string(cmd, " --MAP_DEGREE_SYMBOL=", d[:MAP_DEGREE_SYMBOL])
+	end
+	if (haskey(d, :MAP_FRAME_AXES))
+		cmd = string(cmd, " --MAP_FRAME_AXES=", d[:MAP_FRAME_AXES])
+	end
+	if (haskey(d, :MAP_FRAME_PEN))
+		cmd = string(cmd, " --MAP_FRAME_PEN=", d[:MAP_FRAME_PEN])
+	end
+	if (haskey(d, :MAP_FRAME_TYPE))
+		cmd = string(cmd, " --MAP_FRAME_TYPE=", d[:MAP_FRAME_TYPE])
+	end
+	if (haskey(d, :MAP_FRAME_WIDTH))
+		cmd = string(cmd, " --MAP_FRAME_WIDTH=", d[:MAP_FRAME_WIDTH])
+	end
+	if (haskey(d, :MAP_GRID_CROSS_SIZE))
+		cmd = string(cmd, " --MAP_GRID_CROSS_SIZE=", d[:MAP_GRID_CROSS_SIZE])
+	end
+	if (haskey(d, :MAP_GRID_CROSS_SIZE_PRIMARY))
+		cmd = string(cmd, " --MAP_GRID_CROSS_SIZE_PRIMARY=", d[:MAP_GRID_CROSS_SIZE_PRIMARY])
+	end
+	if (haskey(d, :MAP_GRID_CROSS_SIZE_SECONDARY))
+		cmd = string(cmd, " --MAP_GRID_CROSS_SIZE_SECONDARY=", d[:MAP_GRID_CROSS_SIZE_SECONDARY])
+	end
+	if (haskey(d, :MAP_GRID_CROSS_PEN))
+		cmd = string(cmd, " --MAP_GRID_CROSS_PEN=", d[:MAP_GRID_CROSS_PEN])
+	end
+	if (haskey(d, :MAP_GRID_PEN_PRIMARY))
+		cmd = string(cmd, " --MAP_GRID_PEN_PRIMARY=", d[:MAP_GRID_PEN_PRIMARY])
+	end
+	if (haskey(d, :MAP_GRID_PEN_SECONDARY))
+		cmd = string(cmd, " --MAP_GRID_PEN_SECONDARY=", d[:MAP_GRID_PEN_SECONDARY])
+	end
+	if (haskey(d, :MAP_HEADING_OFFSET))
+		cmd = string(cmd, " --MAP_HEADING_OFFSET=", d[:MAP_HEADING_OFFSET])
+	end
+	if (haskey(d, :MAP_LABEL_OFFSET))
+		cmd = string(cmd, " --MAP_LABEL_OFFSET=", d[:MAP_LABEL_OFFSET])
+	end
+	if (haskey(d, :MAP_LINE_STEP))
+		cmd = string(cmd, " --MAP_LINE_STEP=", d[:MAP_LINE_STEP])
+	end
+	if (haskey(d, :MAP_LOGO))
+		cmd = string(cmd, " --MAP_LOGO=", d[:MAP_LOGO])
+	end
+	if (haskey(d, :MAP_LOGO_POS))
+		cmd = string(cmd, " --MAP_LOGO_POS=", d[:MAP_LOGO_POS])
+	end
+	if (haskey(d, :MAP_ORIGIN_X))
+		cmd = string(cmd, " --MAP_ORIGIN_X=", d[:MAP_ORIGIN_X])
+	end
+	if (haskey(d, :MAP_ORIGIN_Y))
+		cmd = string(cmd, " --MAP_ORIGIN_Y=", d[:MAP_ORIGIN_Y])
+	end
+	if (haskey(d, :MAP_POLAR_CAP))
+		cmd = string(cmd, " --MAP_POLAR_CAP=", d[:MAP_POLAR_CAP])
+	end
+	if (haskey(d, :MAP_SCALE_HEIGHT))
+		cmd = string(cmd, " --MAP_SCALE_HEIGHT=", d[:MAP_SCALE_HEIGHT])
+	end
+	if (haskey(d, :MAP_TICK_LENGTH))
+		cmd = string(cmd, " --MAP_TICK_LENGTH=", d[:MAP_TICK_LENGTH])
+	end
+	if (haskey(d, :MAP_TICK_LENGTH_PRIMARY))
+		cmd = string(cmd, " --MAP_TICK_LENGTH_PRIMARY=", d[:MAP_TICK_LENGTH_PRIMARY])
+	end
+	if (haskey(d, :MAP_TICK_LENGTH_SECONDARY))
+		cmd = string(cmd, " --MAP_TICK_LENGTH_SECONDARY=", d[:MAP_TICK_LENGTH_SECONDARY])
+	end
+	if (haskey(d, :MAP_TICK_PEN))
+		cmd = string(cmd, " --MAP_TICK_PEN=", d[:MAP_TICK_PEN])
+	end
+	if (haskey(d, :MAP_TICK_PEN_PRIMARY))
+		cmd = string(cmd, " --MAP_TICK_PEN_PRIMARY=", d[:MAP_TICK_PEN_PRIMARY])
+	end
+	if (haskey(d, :MAP_TICK_PEN_SECONDARY))
+		cmd = string(cmd, " --MAP_TICK_PEN_SECONDARY=", d[:MAP_TICK_PEN_SECONDARY])
+	end
+	if (haskey(d, :MAP_TITLE_OFFSET))
+		cmd = string(cmd, " --MAP_TITLE_OFFSET=", d[:MAP_TITLE_OFFSET])
+	end
+	if (haskey(d, :MAP_VECTOR_SHAPE))
+		cmd = string(cmd, " --MAP_VECTOR_SHAPE=", d[:MAP_VECTOR_SHAPE])
+	end
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_a(cmd::String, d::Dict)
 	# Parse the global -a option. Return CMD same as input if no -a option in args
 	for symb in [:a :aspatial]
@@ -652,13 +765,25 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function fname_out(out::String)
+function fname_out(d::Dict)
 	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
-	if (isempty(out)) out = FMT  end		# Use the global FMT choice
+	EXT = ""
+	if (haskey(d, :fmt))
+		out = (isa(d[:fmt], Symbol)) ? string(d[:fmt]) : d[:fmt]
+	else
+		out = FMT						# Use the global FMT choice
+	end
 	if (isempty(out) && !is_windows())
 		error("NOT specifying the **fmt** format is only allowed on Windows")
 	end
-	opt_T = "";		EXT = ""
+	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
+		out = ""
+		EXT = "ps"
+	end
+	# When OUT == "" here, it plays a double role. It means to put the PS in memory or
+	# return it to the REPL. The ambiguity is cleared in finish_PS_module()
+
+	opt_T = "";
 	if (length(out) <= 3)
 		@static is_windows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps" 
 		ext = lowercase(out)
