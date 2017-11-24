@@ -32,16 +32,17 @@ Parameters
 - $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
-function image(cmd0::String="", arg1=[]; data=[], fmt::String="", K=false, O=false, first=true, kwargs...)
+function image(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && isempty_(data) && return monolitic("psimage", cmd0, arg1)	# Speedy mode
-	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
+
+	d = KW(kwargs)
+	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	if (!isempty_(data) && !isa(data, String))
 		error("When using 'data', it MUST contain a String data type (the file name)")
 	end
 
-	d = KW(kwargs)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/12c")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
@@ -64,5 +65,5 @@ function image(cmd0::String="", arg1=[]; data=[], fmt::String="", K=false, O=fal
 end
 
 # ---------------------------------------------------------------------------------------------------
-image!(cmd0::String="", arg1=[]; data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
-	image(cmd0, arg1; data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
+image!(cmd0::String="", arg1=[]; data=[], K=true, O=true,  first=false, kw...) =
+	image(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)

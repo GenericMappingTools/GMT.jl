@@ -1,5 +1,5 @@
 """
-	xy(cmd0::String="", arg1=[]; fmt="", kwargs...)
+	xy(cmd0::String="", arg1=[]; kwargs...)
 
 reads (x,y) pairs and generates PostScript code that will plot lines,
 polygons, or symbols at those locations on a map.
@@ -89,16 +89,17 @@ Parameters
 - $(GMT.opt_swap_xy)
 """
 # ---------------------------------------------------------------------------------------------------
-function xy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
-            K=false, O=false, first=true, kwargs...)
+function xy(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty(arg1) ? 0 : 1
 
-	length(kwargs) == 0 && isempty(data) && contains(cmd0, " -") && return monolitic("psxy", cmd0, arg1)	# Speedy mode
-	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
+	((isempty(cmd0) && isempty_(arg1) && isempty(data)) || contains(cmd0, " -")) &&
+	return monolitic("psxy", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
+	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+
 	opt_J = " -JX12c/8c"
 	for sym in [:axis :aspect]
 		if (haskey(d, sym))
@@ -246,7 +247,7 @@ function xy(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 end
 
 # ---------------------------------------------------------------------------------------------------
-xy!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
-	xy(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
-xy!(arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
-	xy("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
+xy!(cmd0::String="", arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
+	xy(cmd0, arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
+xy!(arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
+	xy("", arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)

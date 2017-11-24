@@ -1,5 +1,5 @@
 """
-plot(arg1::Array; fmt="", kwargs...)
+plot(arg1::Array; kwargs...)
 
 reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
 polygons, or symbols at those locations on a map.
@@ -80,31 +80,31 @@ Parameters
 - $(GMT.opt_t)
 """
 # -----------------------------------------------------------------------------------------------------
-# Tested with plot(xyz, S="c0.1c", C=cpt, fmt="ps", show=1)
-plot(arg1::Array; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
-    GMT.xy(extra, arg1; caller="plot", data=data, fmt=fmt, K=K, O=O, first=first, kw...)
-plot!(arg1::Array; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
-    GMT.xy(extra, arg1; caller="plot", data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+# Tested with plot(xyz, S="c0.1c", C=cpt, show=1)
+plot(arg1::Array; extra="", data=[], K=false, O=false, first=true, kw...) =
+    GMT.xy(extra, arg1; caller="plot", data=data, K=K, O=O, first=first, kw...)
+plot!(arg1::Array; extra="", data=[], K=false, O=false, first=true, kw...) =
+    GMT.xy(extra, arg1; caller="plot", data=data, K=true, O=true, first=false, kw...)
 
 # -----------------------------------------------------------------------------------------------------
-plot(arg1::GMTdataset; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", data=data, fmt=fmt, K=K, O=O, first=first, kw...)
-plot!(arg1::GMTdataset; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+plot(arg1::GMTdataset; extra="", data=[], K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, arg1; caller="plot", data=data, K=K, O=O, first=first, kw...)
+plot!(arg1::GMTdataset; extra="", data=[], K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, arg1; caller="plot", data=data, K=true, O=true, first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-plot(arg1::String; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, []; caller="plot", data=arg1, fmt=fmt, K=K, O=O, first=first, kw...)
-plot!(arg1::String; extra="", data=[], fmt="", K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, []; caller="plot", data=arg1, fmt=fmt, K=true, O=true, first=false, kw...)
+plot(arg1::String; extra="", data=[], K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, []; caller="plot", data=arg1, K=K, O=O, first=first, kw...)
+plot!(arg1::String; extra="", data=[], K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, []; caller="plot", data=arg1, K=true, O=true, first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-function plot(arg1::Array, arg2::Array; extra="", data=[], fmt="", K=false, O=false, first=true, kw...)
+function plot(arg1::Array, arg2::Array; extra="", data=[], K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2)
-	GMT.xy(extra, arg; caller="plot", data=[], fmt=fmt, K=K, O=O, first=first, kw...)
+	GMT.xy(extra, arg; caller="plot", data=[], K=K, O=O, first=first, kw...)
 end
-function plot!(arg1::Array, arg2::Array; extra="", data=[], fmt="", K=false, O=false, first=true, kw...)
+function plot!(arg1::Array, arg2::Array; extra="", data=[], K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2)
-	GMT.xy(extra, arg; caller="plot", data=[], fmt=fmt, K=true, O=true, first=false, kw...)
+	GMT.xy(extra, arg; caller="plot", data=[], K=true, O=true, first=false, kw...)
 end
 # ------------------------------------------------------------------------------------------------------

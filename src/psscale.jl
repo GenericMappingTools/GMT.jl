@@ -1,5 +1,5 @@
 """
-	colorbar(cmd0::String="", arg1=[]; fmt="", kwargs...)
+	colorbar(cmd0::String="", arg1=[]; kwargs...)
 	
 Plots gray scales or color scales on maps.
 
@@ -46,12 +46,13 @@ Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.h
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html#z)
 """
 # ---------------------------------------------------------------------------------------------------
-function colorbar(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, first=true, kwargs...)
+function colorbar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("psscale", cmd0, arg1)	# Speedy mode
-	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
+    length(kwargs) == 0 && isempty(data) && return monolitic("psscale", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
+	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, "")
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_p(cmd, d)
@@ -78,5 +79,5 @@ function colorbar(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, fi
 end
 
 # ---------------------------------------------------------------------------------------------------
-colorbar!(cmd0::String="", arg1=[]; fmt::String="", K=false, O=false, first=false, kw...) =
-    scale(cmd0, arg1; fmt=fmt, K=K, O=O, first=first, kw...)
+colorbar!(cmd0::String="", arg1=[]; K=false, O=false, first=false, kw...) =
+    scale(cmd0, arg1; K=K, O=O, first=first, kw...)

@@ -1,5 +1,5 @@
 """
-    grdview(cmd0::String="", arg1=[], arg2=[], arg3=[]; fmt="", kwargs...)
+    grdview(cmd0::String="", arg1=[], arg2=[], arg3=[]; kwargs...)
 
 Reads a 2-D grid file and produces a 3-D perspective plot by drawing a mesh, painting a
 colored/grayshaded surface made up of polygons, or by scanline conversion of these polygons
@@ -46,12 +46,13 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
 """
 # ---------------------------------------------------------------------------------------------------
 function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
-                 fmt::String="", K=false, O=false, first=true, kwargs...)
+                 K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("grdview", cmd0, arg1)	# Speedy mode
-	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
+	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/0")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
@@ -130,13 +131,13 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdview!(cmd0::String="", arg1=[]; data=[], fmt::String="", K=true, O=true, first=false, kw...) =
-	grdview(cmd0, arg1; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+grdview!(cmd0::String="", arg1=[]; data=[], K=true, O=true, first=false, kw...) =
+	grdview(cmd0, arg1; data=data, K=true, O=true, first=false, kw...)
 
 grdview(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
-        fmt::String="", K=false, O=false, first=true, kw...) =
-	grdview(cmd0, arg1, arg2, arg3, arg4, arg5, arg6; data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+        K=false, O=false, first=true, kw...) =
+	grdview(cmd0, arg1, arg2, arg3, arg4, arg5, arg6; data=data, K=K, O=O, first=first, kw...)
 
 grdview!(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
-        fmt::String="", K=true, O=true, first=false, kw...) =
-	grdview(cmd0, arg1, arg2, arg3, arg4, arg5, arg6; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+        K=true, O=true, first=false, kw...) =
+	grdview(cmd0, arg1, arg2, arg3, arg4, arg5, arg6; data=data, K=true, O=true, first=false, kw...)

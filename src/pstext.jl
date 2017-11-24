@@ -1,5 +1,5 @@
 """
-	text(cmd0::String="", arg1=[]; fmt="", kwargs...)
+	text(cmd0::String="", arg1=[]; kwargs...)
 
 Plots text strings of variable size, font type, and orientation. Various map projections are
 provided, with the option to draw and annotate the map boundaries.
@@ -63,16 +63,16 @@ Parameters
 - $(GMT.opt_swap_xy)
 """
 # ---------------------------------------------------------------------------------------------------
-function text(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
-              K=false, O=false, first=true, kwargs...)
+function text(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via G
 	N_args = isempty_(arg1) ? 0 : 1
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("pstext", cmd0, arg1)	# Speedy mode
-	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
     d = KW(kwargs)
+	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, " -JX12c/0")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
@@ -93,7 +93,7 @@ function text(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 
 	cmd = add_opt(cmd, 'A', d, [:A :horizontal])
 	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate])
-	cmd = add_opt(cmd, 'F', d, [:F :center])
+	cmd = add_opt(cmd, 'F', d, [:F :text_attrib])
     cmd = add_opt(cmd, 'G', d, [:G :fill])
 	cmd = add_opt(cmd, 'I', d, [:I :inquire])
 	cmd = add_opt(cmd, 'L', d, [:L :pen])
@@ -130,11 +130,11 @@ function text(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="",
 end
 
 # ---------------------------------------------------------------------------------------------------
-text!(cmd0::String="", arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
-    text(cmd0, arg1; caller=caller, data=data, fmt=fmt, K=K, O=O,  first=false, kw...)
+text!(cmd0::String="", arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
+    text(cmd0, arg1; caller=caller, data=data, K=K, O=O,  first=false, kw...)
 
-text(arg1=[]; caller=[], data=[], fmt::String="", K=false, O=false, first=true, kw...) =
-    text("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+text(arg1=[]; caller=[], data=[], K=false, O=false, first=true, kw...) =
+    text("", arg1; caller=caller, data=data, K=K, O=O, first=first, kw...)
 
-text!(arg1=[]; caller=[], data=[], fmt::String="", K=true, O=true, first=false, kw...) =
-    text("", arg1; caller=caller, data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+text!(arg1=[]; caller=[], data=[], K=true, O=true, first=false, kw...) =
+    text("", arg1; caller=caller, data=data, K=K, O=O, first=first, kw...)

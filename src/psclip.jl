@@ -1,5 +1,5 @@
 """
-	clip(cmd0::String="", arg1=[]; fmt="", kwargs...)
+	clip(cmd0::String="", arg1=[]; kwargs...)
 
 Reads (length,azimuth) pairs from file and plot a windclip diagram.
 
@@ -42,12 +42,13 @@ Parameters
 - $(GMT.opt_swap_xy)
 """
 # ---------------------------------------------------------------------------------------------------
-function clip(cmd0::String="", arg1=[]; data=[], fmt::String="", K=false, O=false, first=true, kwargs...)
+function clip(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("psclip", cmd0, arg1)	# Speedy mode
-	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
+	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/12c")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
@@ -78,11 +79,11 @@ function clip(cmd0::String="", arg1=[]; data=[], fmt::String="", K=false, O=fals
 end
 
 # ---------------------------------------------------------------------------------------------------
-clip!(cmd0::String="", arg1=[]; data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
-	clip(cmd0, arg1; data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
+clip!(cmd0::String="", arg1=[]; data=[], K=true, O=true,  first=false, kw...) =
+	clip(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
 
-clip(arg1=[], cmd0::String=""; data=[], fmt::String="", K=false, O=false,  first=true, kw...) =
-	clip(cmd0, arg1; data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
+clip(arg1=[], cmd0::String=""; data=[], K=false, O=false,  first=true, kw...) =
+	clip(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
 
-clip!(arg1=[], cmd0::String=""; data=[], fmt::String="", K=true, O=true,  first=false, kw...) =
-	clip(cmd0, arg1; data=data, fmt=fmt, K=K, O=O,  first=first, kw...)
+clip!(arg1=[], cmd0::String=""; data=[], K=true, O=true,  first=false, kw...) =
+	clip(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)

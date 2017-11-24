@@ -1,5 +1,5 @@
 """
-    coast(cmd0::String=""; fmt="", clip=[], kwargs...)
+    coast(cmd0::String=""; clip=[], kwargs...)
 
 Plot continents, shorelines, rivers, and borders on maps.
 Plots grayshaded, colored, or textured land-masses [or water-masses] on
@@ -70,12 +70,13 @@ Parameters
 - $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
-function coast(cmd0::String=""; fmt::String="", clip=[], K=false, O=false, first=true, kwargs...)
+function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("pscoast", cmd0, arg1)	# Speedy mode
-	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
 
 	d = KW(kwargs)
+	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+
 	maybe_more = false				# If latter set to true, search for lc & lc pen settings
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/0")
 	cmd = parse_UVXY(cmd, d)
@@ -196,5 +197,5 @@ function parse_dcw(val::Tuple, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-coast!(cmd0::String=""; fmt::String="", clip=[], K=true, O=true, first=false, kw...) =
-	coast(cmd0; fmt=fmt, clip=clip, K=K, O=O, first=first, kw...)
+coast!(cmd0::String=""; clip=[], K=true, O=true, first=false, kw...) =
+	coast(cmd0; clip=clip, K=K, O=O, first=first, kw...)

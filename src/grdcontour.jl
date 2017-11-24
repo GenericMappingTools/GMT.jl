@@ -1,5 +1,5 @@
 """
-	grdcontour(cmd0::String="", arg1=[]; fmt="", kwargs...)
+	grdcontour(cmd0::String="", arg1=[]; kwargs...)
 
 Reads a 2-D grid file or a GMTgrid type and produces a contour map by tracing each
 contour through the grid.
@@ -60,15 +60,14 @@ Parameters
 - $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
-function grdcontour(cmd0::String="", arg1=[], arg2=[]; data=[], fmt::String="", K=false, O=false, first=true, kwargs...)
+function grdcontour(cmd0::String="", arg1=[], arg2=[]; data=[], K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("grdcontour", cmd0, arg1)	# Speedy mode
 
-	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
-
 	d = KW(kwargs)
-	cmd = ""
-	cmd, opt_B = parse_B(cmd, d)
+	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+
+	cmd, opt_B = parse_B("", d)
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_bo(cmd, d)
@@ -111,11 +110,11 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; data=[], fmt::String="", 
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdcontour!(cmd0::String="", arg1=[], arg2=[]; data=[], fmt::String="", K=true, O=true, first=false, kw...) =
-	grdcontour(cmd0, arg1, arg2; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+grdcontour!(cmd0::String="", arg1=[], arg2=[]; data=[], K=true, O=true, first=false, kw...) =
+	grdcontour(cmd0, arg1, arg2; data=data, K=true, O=true, first=false, kw...)
 
-grdcontour(arg1::GMTgrid, cmd0::String="", arg2=[]; data=[], fmt::String="", K=false, O=false, first=true, kw...) =
-	grdcontour(cmd0, arg1, arg2; data=data, fmt=fmt, K=K, O=O, first=first, kw...)
+grdcontour(arg1::GMTgrid, cmd0::String="", arg2=[]; data=[], K=false, O=false, first=true, kw...) =
+	grdcontour(cmd0, arg1, arg2; data=data, K=K, O=O, first=first, kw...)
 
-grdcontour!(arg1::GMTgrid, cmd0::String="", arg2=[]; data=[], fmt::String="", K=true, O=true, first=false, kw...) =
-	grdcontour(cmd0, arg1, arg2; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+grdcontour!(arg1::GMTgrid, cmd0::String="", arg2=[]; data=[], K=true, O=true, first=false, kw...) =
+	grdcontour(cmd0, arg1, arg2; data=data, K=true, O=true, first=false, kw...)

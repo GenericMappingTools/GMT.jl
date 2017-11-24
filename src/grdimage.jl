@@ -1,5 +1,5 @@
 """
-    grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; fmt="", kwargs...)
+    grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; kwargs...)
 
 Produces a gray-shaded (or colored) map by plotting rectangles centered on each grid node and assigning them a gray-shade (or color) based on the z-value.
 
@@ -46,7 +46,7 @@ Parameters
 - $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
-function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], fmt::String="", 
+function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[],
                   K=false, O=false, first=true, kwargs...)
 
 	contains(cmd0, " -") && length(kwargs) == 0 && return monolitic("grdimage", cmd0, arg1)	# Speedy mode
@@ -55,9 +55,9 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], 
 		error("When 'data' is a tuple, it MUST contain a GMTgrid data type")
 	end
 
-	output, opt_T, fname_ext = fname_out(fmt)		# OUTPUT may have been an extension only
-
 	d = KW(kwargs)
+	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/0")
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_f(cmd, d)
@@ -77,6 +77,12 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[], 
 
 	# In case DATA holds a grid file name, copy it into cmd. If Grids put them in ARGs
 	cmd, arg1, arg2, arg3 = read_data(data, cmd, arg1, arg2, arg3)
+
+	if (isa(arg1, Array{<:Number}))
+		arg1 = mat2grid(arg1)
+		if (!isempty_(arg2) && isa(arg2, Array{<:Number}))  arg2 = mat2grid(arg2)  end
+		if (!isempty_(arg3) && isa(arg3, Array{<:Number}))  arg3 = mat2grid(arg3)  end
+	end
 
 	for sym in [:C :color :cmap]
 		if (haskey(d, sym))
@@ -115,13 +121,13 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[],
-          fmt::String="", K=true, O=true, first=false, kw...) =
-	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, fmt=fmt, K=true, O=true, first=false, kw...) 
-
-grdimage(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[], fmt::String="", 
-         K=false, O=false, first=true, kw...) =
-	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, fmt=fmt, K=K, O=O, first=first, kw...)
-
-grdimage!(arg1::GMTgrid, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[], fmt::String="", 
           K=true, O=true, first=false, kw...) =
-	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, fmt=fmt, K=true, O=true, first=false, kw...)
+	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, K=true, O=true, first=false, kw...) 
+
+grdimage(arg1, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[],
+         K=false, O=false, first=true, kw...) =
+	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, K=K, O=O, first=first, kw...)
+
+grdimage!(arg1, cmd0::String="", arg2=[], arg3=[], arg4=[]; data=[],
+          K=true, O=true, first=false, kw...) =
+	grdimage(cmd0, arg1, arg2, arg3, arg4; data=data, K=K, O=O, first=first, kw...)

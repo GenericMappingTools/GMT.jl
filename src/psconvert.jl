@@ -62,7 +62,7 @@ Parameters
 - $(GMT.opt_V)
 """
 # ---------------------------------------------------------------------------------------------------
-function psconvert(cmd0::String="", arg1=[]; data=[], fmt::String="", kwargs...)
+function psconvert(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	length(kwargs) == 0 && isempty_(data) && contains(cmd0, " -") &&
 		return monolitic("psconvert", cmd0, arg1)	# Speedy mode
@@ -87,6 +87,11 @@ function psconvert(cmd0::String="", arg1=[]; data=[], fmt::String="", kwargs...)
 	cmd = add_opt(cmd, 'T', d, [:T :format])
 	cmd = add_opt(cmd, 'Z', d, [:Z :del_input_ps])
 	cmd = parse_V(cmd, d)
+
+	fmt = ""
+	if (haskey(d, :fmt))
+		fmt = isa(d[:fmt], Symbol) ? string(d[:fmt]) : d[:fmt]
+	end
 
 	if (!contains(cmd, "-T") && !isempty(fmt) && fmt != "ps")	# Must convert the FMT into a -T opt
 		if (fmt == "pdf")      cmd = cmd * " -Tf"
