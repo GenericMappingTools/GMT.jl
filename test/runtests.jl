@@ -42,7 +42,9 @@ assert(D[1].data == [0.0 0 1])
 
 # Just create the figs but not check if they are correct.
 PS = grdimage(G, J="X10", ps=1);
+gmt("destroy")
 PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
+gmt("destroy")
 
 # IMSHOW
 imshow(rand(128,128),show=false)
