@@ -218,7 +218,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_gmtconf_MAP(cmd::String, d::Dict)
 	# Parse the MAP_ type global parameters of gmt.conf
-	if     (haskey(d, :MAP_ANNOT_MIN_ANGLE))
+	if (haskey(d, :MAP_ANNOT_MIN_ANGLE))
 		cmd = string(cmd, " --MAP_ANNOT_MIN_ANGLE=", d[:MAP_ANNOT_MIN_ANGLE])
 	end
 	if (haskey(d, :MAP_ANNOT_MIN_SPACING))
@@ -326,6 +326,79 @@ function parse_gmtconf_MAP(cmd::String, d::Dict)
 	if (haskey(d, :MAP_VECTOR_SHAPE))
 		cmd = string(cmd, " --MAP_VECTOR_SHAPE=", d[:MAP_VECTOR_SHAPE])
 	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_gmtconf_FONT(cmd::String, d::Dict)
+	# Parse the FONT_ type global parameters of gmt.conf
+	if (haskey(d, :FONT))
+		cmd = string(cmd, " --FONT=", d[:FONT])
+	end
+	if (haskey(d, :FONT_ANNOT))
+		cmd = string(cmd, " --FONT_ANNOT=", d[:FONT_ANNOT])
+	end
+	if (haskey(d, :FONT_ANNOT_PRIMARY))
+		cmd = string(cmd, " --FONT_ANNOT_PRIMARY=", d[:FONT_ANNOT_PRIMARY])
+	end
+	if (haskey(d, :FONT_ANNOT_SECONDARY))
+		cmd = string(cmd, " --FONT_ANNOT_SECONDARY=", d[:FONT_ANNOT_SECONDARY])
+	end
+	if (haskey(d, :FONT_HEADING))
+		cmd = string(cmd, " --FONT_HEADING=", d[:FONT_HEADING])
+	end
+	if (haskey(d, :FONT_LABEL))
+		cmd = string(cmd, " --FONT_LABEL=", d[:FONT_LABEL])
+	end
+	if (haskey(d, :FONT_LOGO))
+		cmd = string(cmd, " --FONT_LOGO=", d[:FONT_LOGO])
+	end
+	if (haskey(d, :FONT_TAG))
+		cmd = string(cmd, " --FONT_TAG=", d[:FONT_TAG])
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_gmtconf_FORMAT(cmd::String, d::Dict)
+	# Parse the FORMAT_ type global parameters of gmt.conf
+	if (haskey(d, :FORMAT_CLOCK_OUT))
+		cmd = string(cmd, " --FORMAT_CLOCK_OUT=", d[:FORMAT_CLOCK_OUT])
+	end
+	if (haskey(d, :FORMAT_DATE_IN))
+		cmd = string(cmd, " --FORMAT_DATE_IN=", d[:FORMAT_DATE_IN])
+	end
+	if (haskey(d, :FORMAT_DATE_MAP))
+		cmd = string(cmd, " --FORMAT_DATE_MAP=", d[:FORMAT_DATE_MAP])
+	end
+	if (haskey(d, :FORMAT_DATE_OUT))
+		cmd = string(cmd, " --FORMAT_DATE_OUT=", d[:FORMAT_DATE_OUT])
+	end
+	if (haskey(d, :FORMAT_GEO_MAP))
+		cmd = string(cmd, " --FORMAT_GEO_MAP=", d[:FORMAT_GEO_MAP])
+	end
+	if (haskey(d, :FORMAT_GEO_OUT))
+		cmd = string(cmd, " --FORMAT_GEO_OUT=", d[:FORMAT_GEO_OUT])
+	end
+	if (haskey(d, :FORMAT_FLOAT_MAP))
+		cmd = string(cmd, " --FORMAT_FLOAT_MAP=", d[:FORMAT_FLOAT_MAP])
+	end
+	if (haskey(d, :FORMAT_FLOAT_OUT))
+		cmd = string(cmd, " --FORMAT_FLOAT_OUT=", d[:FORMAT_FLOAT_OUT])
+	end
+	if (haskey(d, :FORMAT_TIME_MAP))
+		cmd = string(cmd, " --FORMAT_TIME_MAP=", d[:FORMAT_TIME_MAP])
+	end
+	if (haskey(d, :FORMAT_TIME_PRIMARY_MAP))
+		cmd = string(cmd, " --FORMAT_TIME_PRIMARY_MAP=", d[:FORMAT_TIME_PRIMARY_MAP])
+	end
+	if (haskey(d, :FORMAT_TIME_SECONDARY_MAP))
+		cmd = string(cmd, " --FORMAT_TIME_SECONDARY_MAP=", d[:FORMAT_TIME_SECONDARY_MAP])
+	end
+	if (haskey(d, :FORMAT_TIME_STAMP))
+		cmd = string(cmd, " --FORMAT_TIME_STAMP=", d[:FORMAT_TIME_STAMP])
+	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
