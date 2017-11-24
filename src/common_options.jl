@@ -112,18 +112,22 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 			if (haskey(d, :title) && isa(d[:title], String))
 				tok[k] = tok[k] * "+t\"" * d[:title] * "\""
 			end
-		elseif (ismatch(r"[afgpsxyz+S+u]", tok[k]) && !ismatch(r"[+l+L]", tok[k]))		# If label here, forget about :x|y_label
+		elseif (ismatch(r"[afgpsxyz+S+u]", tok[k]) && !ismatch(r"[+l+L]", tok[k]))	# If label here, forget about :x|y_label
 			if (haskey(d, :x_label) && isa(d[:x_label], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:x_label] * "\""  end
 			if (haskey(d, :y_label) && isa(d[:y_label], String))  tok[k] = tok[k] * " -By+l\"" * d[:y_label] * "\""  end
 		end
 		if (!contains(tok[k], "-B"))
 			ind = searchindex(tok[k], '"')
-			if (ind != 0 && tok[k][end] != '"')
-				tok[k] = " -B" * tok[k] 		# A title in quotes with spaces
-			elseif (ind == 0 || (ind < length(tok[k]) && tok[k][end] == '"'))
-				tok[k] = " -B" * tok[k] 		# A title in quotes but no spaces or no quotes at all
+			if (ind == 0)
+				tok[k] = " -B" * tok[k] 		# Simple case, no quotes to break our heads
 			else
-				tok[k] = " " * tok[k]
+				if (tok[k][end] != '"')
+					tok[k] = " -B" * tok[k] 	# A title in quotes with spaces
+				elseif (ind < length(tok[k]) && tok[k][end] == '"')
+					tok[k] = " -B" * tok[k] 	# A title with no spaces
+				else
+					tok[k] = " " * tok[k]
+				end
 			end
 		else
 			tok[k] = " " * tok[k]
@@ -362,6 +366,12 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_gmtconf_FORMAT(cmd::String, d::Dict)
 	# Parse the FORMAT_ type global parameters of gmt.conf
+	if (haskey(d, :FORMAT_CLOCK_IN))
+		cmd = string(cmd, " --FORMAT_CLOCK_IN=", d[:FORMAT_CLOCK_IN])
+	end
+	if (haskey(d, :FORMAT_CLOCK_MAP))
+		cmd = string(cmd, " --FORMAT_CLOCK_MAP=", d[:FORMAT_CLOCK_MAP])
+	end
 	if (haskey(d, :FORMAT_CLOCK_OUT))
 		cmd = string(cmd, " --FORMAT_CLOCK_OUT=", d[:FORMAT_CLOCK_OUT])
 	end
@@ -397,6 +407,36 @@ function parse_gmtconf_FORMAT(cmd::String, d::Dict)
 	end
 	if (haskey(d, :FORMAT_TIME_STAMP))
 		cmd = string(cmd, " --FORMAT_TIME_STAMP=", d[:FORMAT_TIME_STAMP])
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_gmtconf_TIME(cmd::String, d::Dict)
+	# Parse the TIME_ type global parameters of gmt.conf
+	if (haskey(d, :TIME_EPOCH))
+		cmd = string(cmd, " --TIME_EPOCH=", d[:TIME_EPOCH])
+	end
+	if (haskey(d, :TIME_INTERVAL_FRACTION))
+		cmd = string(cmd, " --TIME_INTERVAL_FRACTION=", d[:TIME_INTERVAL_FRACTION])
+	end
+	if (haskey(d, :TIME_IS_INTERVAL))
+		cmd = string(cmd, " --TIME_IS_INTERVAL=", d[:TIME_IS_INTERVAL])
+	end
+	if (haskey(d, :TIME_REPORT))
+		cmd = string(cmd, " --TIME_REPORT=", d[:TIME_REPORT])
+	end
+	if (haskey(d, :TIME_SYSTEM))
+		cmd = string(cmd, " --TIME_SYSTEM=", d[:TIME_SYSTEM])
+	end
+	if (haskey(d, :TIME_UNIT))
+		cmd = string(cmd, " --TIME_UNIT=", d[:TIME_UNIT])
+	end
+	if (haskey(d, :TIME_WEEK_START))
+		cmd = string(cmd, " --TIME_WEEK_START=", d[:TIME_WEEK_START])
+	end
+	if (haskey(d, :TIME_Y2K_OFFSET_YEAR))
+		cmd = string(cmd, " --TIME_Y2K_OFFSET_YEAR=", d[:TIME_Y2K_OFFSET_YEAR])
 	end
 	return cmd
 end
@@ -753,7 +793,10 @@ end
 function set_KO(cmd, opt_B, first, K, O)
 	# Set the O K pair dance
 	if (first)  K = true;	O = false
-	else        K = true;	O = true;	cmd = replace(cmd, opt_B, "");	opt_B = ""
+	else        K = true;	O = true;
+		if (!contains(cmd, " -X") && !contains(cmd, " -Y"))
+			cmd = replace(cmd, opt_B, "");	opt_B = ""
+		end
 	end
 	return cmd, K, O, opt_B
 end
