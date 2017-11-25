@@ -37,6 +37,7 @@ function GMT_Create_Data(API::Ptr{Void}, family, geometry, mode, dim=C_NULL, wes
 	convert(ret_type, ptr)
 end
 
+#=		Not used yet, so comment
 function GMT_Read_Data(API::Ptr{Void}, family, method, geometry, mode, wesn, input=C_NULL, data=C_NULL)
 
 	if (family == GMT_IS_DATASET)
@@ -62,6 +63,7 @@ function GMT_Read_Data(API::Ptr{Void}, family, method, geometry, mode, wesn, inp
 
 	convert(ret_type, ptr)
 end
+=#
 
 function GMT_Insert_Data(API::Ptr{Void}, object_ID::Integer, data)
 	ccall((:GMT_Insert_Data, thelib), Cint, (Ptr{Void}, Cint, Ptr{Void}), API, object_ID, data)
