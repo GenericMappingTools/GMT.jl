@@ -67,7 +67,7 @@ function splitxyz(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = add_opt(cmd, 'Q', d, [:Q :xyzdh])
 	cmd = add_opt(cmd, 'S', d, [:S :dh :dist_head])
 
-    cmd, arg1, = read_data(data, cmd, arg1)
+	cmd, arg1, = read_data(data, cmd, arg1)
 
 	(haskey(d, :Vd)) && println(@sprintf("\tsplitxyz %s", cmd))
 
@@ -76,3 +76,6 @@ function splitxyz(cmd0::String="", arg1=[]; data=[], kwargs...)
 	end
 	return D
 end
+
+# ---------------------------------------------------------------------------------------------------
+splitxyz(arg1=[]; data=[], kw...) = splitxyz("", arg1; data=data, kw...)
