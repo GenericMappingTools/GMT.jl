@@ -62,12 +62,11 @@ plot!(collect(1:10),rand(10), fmt="ps")
 basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
 
 # PSCONVERT
-#gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
-#psconvert("lixo.ps", adjust=true, fmt="png")
-#psconvert("lixo.ps", Z=true)
+gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
+psconvert("lixo.ps", adjust=true, fmt="eps", Z=true)
 
 # PSCOAST
-coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
+coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, fmt="ps");
 coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
 coast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
 coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green")))
@@ -93,6 +92,11 @@ solar(R="d", W=1, J="Q0/14c", B="a", T="dc")
 
 # PSTEXT
 text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps")
+
+# PSWIGGLE
+t=[0 7; 1 8; 8 3; 10 7];
+t1=gmt("sample1d -I5k", t); t2 = gmt("mapproject -G+uk", t1); t3 = gmt("math ? -C2 10 DIV COS", t2);
+wiggle(t3,R="-1/11/0/12", J="M8",B="af WSne", W="0.25p", Z="4c", G="+green", T="0.5p", A=1, Y="0.75i", D="jBR+w2+o0.2i")
 
 # GMTSPATIAL
 # Test  Cartesian centroid and area
@@ -140,7 +144,8 @@ function testa_conf(;kw...)
 	return nothing
 end
 testa_conf(MAP_ANNOT_MIN_ANGLE=:a,MAP_ANNOT_MIN_SPACING=:a,MAP_ANNOT_OBLIQUE=:a,MAP_ANNOT_OFFSET_PRIMARY=:a, 
-MAP_ANNOT_OFFSET=:a, MAP_ANNOT_OFFSET_SECONDARY=:a, MAP_ANNOT_ORTHO=:a, MAP_DEFAULT_PEN=:a, MAP_DEGREE_SYMBOL=:a, 
+MAP_ANNOT_OFFSET=:a, MAP_ANNOT_OFFSET_SECONDARY=:a, MAP_ANNOT_ORTHO=:a, MAP_DEFAULT_PEN=:a,
+MAP_DEGREE_SYMBOL=:a, MAP_TICK_LENGTH=:a, MAP_TICK_PEN=:a,
 MAP_FRAME_AXES=:a, MAP_FRAME_PEN=:a, MAP_FRAME_TYPE=:a, MAP_FRAME_WIDTH=:a, MAP_GRID_CROSS_SIZE_PRIMARY=:a, 
 MAP_GRID_CROSS_SIZE_SECONDARY=:a, MAP_GRID_PEN_PRIMARY=:a, MAP_GRID_PEN_SECONDARY=:a, MAP_HEADING_OFFSET=:a, 
 MAP_LABEL_OFFSET=:a, MAP_LINE_STEP=:a, MAP_LOGO=:a, MAP_LOGO_POS=:a, MAP_ORIGIN_X=:a, MAP_ORIGIN_Y=:a, 
@@ -151,7 +156,8 @@ MAP_GRID_CROSS_SIZE=:a, MAP_GRID_CROSS_PEN=:a);
 testa_conf(FONT_ANNOT_PRIMARY=:a, FONT_ANNOT_SECONDARY=:a, FONT_HEADING=:a, FONT_LABEL=:a, FONT_LOGO=:a,
 FONT_TAG=:a, FONT_TITLE=:a, FORMAT_CLOCK_IN=:a, FORMAT_CLOCK_OUT=:a, FORMAT_CLOCK_MAP=:a, FORMAT_DATE_IN=:a,
 FORMAT_DATE_OUT=:a, FORMAT_DATE_MAP=:a, FORMAT_GEO_OUT=:a, FORMAT_GEO_MAP=:a, FORMAT_FLOAT_OUT=:a,
-FORMAT_FLOAT_MAP=:a, FORMAT_TIME_PRIMARY_MAP=:a, FORMAT_TIME_SECONDARY_MAP=:a, FORMAT_TIME_STAMP =:a);
+FORMAT_FLOAT_MAP=:a, FORMAT_TIME_PRIMARY_MAP=:a, FORMAT_TIME_SECONDARY_MAP=:a, FORMAT_TIME_STAMP =:a,
+FONT=:a, FONT_ANNOT=:a, FORMAT_TIME_MAP=:a);
 
 testa_conf(TIME_EPOCH=:a, TIME_IS_INTERVAL=:a, TIME_INTERVAL_FRACTION=:a, TIME_LEAP_SECONDS=:a,
-TIME_REPORT=:a, TIME_UNIT=:a, TIME_WEEK_START=:a, TIME_Y2K_OFFSET_YEAR=:a);
+TIME_REPORT=:a, TIME_UNIT=:a, TIME_WEEK_START=:a, TIME_Y2K_OFFSET_YEAR=:a, TIME_SYSTEM=:a);
