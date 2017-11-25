@@ -370,7 +370,7 @@ function GMT_Get_Matrix(API::Ptr{Void}, M::Ptr{GMT_MATRIX})
 end
 
 function GMT_Error_Message(API::Ptr{Void})
-		ccall((:GMT_Error_Message, thelib), Ptr{UInt8}, (Ptr{Void},), API)
+	ccall((:GMT_Error_Message, thelib), Ptr{UInt8}, (Ptr{Void},), API)
 end
 
 # ------------------ Backwards compatibility for old API functions no longer in favor -------------------------
@@ -385,15 +385,11 @@ end
 function GMT_Put_Data(API::Ptr{Void}, object_ID::Integer, mode::Integer, data)
 	ccall((:GMT_Put_Data, thelib), Cint, (Ptr{Void}, Cint, UInt32, Ptr{Void}), API, object_ID, mode, data)
 end
-# --------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------
  
-# ------------------ Development function in 5.4.0 -------------------------------------------------------------
-function gmtlib_manage_workflow(API::Ptr{Void}, mode::Integer, arg)
-		ccall((:gmtlib_manage_workflow, thelib), Cint, (Ptr{Void}, Cuint, Ptr{UInt8}), API, mode, arg)
-end
-# --------------------------------------------------------------------------------------------------------------
+# ------------------ Development function in 5.4.0 ------------------------------------------------------------
 
-# --------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------
 function GMT_Set_AllocMode(API::Ptr{Void}, family::Integer, object)
 	ccall((:GMT_Set_AllocMode, thelib), Cint, (Ptr{Void}, UInt32, Ptr{Void}), API, family, object)
 end
