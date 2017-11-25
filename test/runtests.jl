@@ -123,10 +123,26 @@ x_label="Spoons", y_label="Forks")
 x = linspace(0, 2pi,180); seno = sin.(x/0.2)*45;
 coast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")
 plot!(collect(x)*60, seno, lw=0.5, lc="red", marker="circle",
-      markeredgecolor=0, size=0.05, markerfacecolor="cyan")
+	markeredgecolor=0, size=0.05, markerfacecolor="cyan")
 
 x,y,z=GMT.peaks()
 G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);  # Iterpolate into a regular grid
 grdcontour(G, cont=1, annot=2, frame="a")
 cpt = makecpt(T="-6/8/1");      # Create the color map
 grdcontour(G, frame="a", color=cpt, pen="+c")
+
+function testa_conf(;kw...)
+	d = GMT.KW(kw)
+	cmd = GMT.parse_gmtconf_MAP("", d)
+	cmd = GMT.parse_gmtconf_FONT(cmd, d)
+	cmd = GMT.parse_gmtconf_FORMAT(cmd, d)
+	cmd = GMT.parse_gmtconf_TIME(cmd, d)
+	return nothing
+end
+testa_conf(MAP_ANNOT_MIN_ANGLE=:a,MAP_ANNOT_MIN_SPACING=:a,MAP_ANNOT_OBLIQUE=:a,MAP_ANNOT_OFFSET_PRIMARY=:a, 
+MAP_ANNOT_OFFSET_SECONDARY=:a, MAP_ANNOT_ORTHO=:a, MAP_DEFAULT_PEN=:a, MAP_DEGREE_SYMBOL=:a, 
+MAP_FRAME_AXES=:a, MAP_FRAME_PEN=:a, MAP_FRAME_TYPE=:a, MAP_FRAME_WIDTH=:a, MAP_GRID_CROSS_SIZE_PRIMARY=:a, 
+MAP_GRID_CROSS_SIZE_SECONDARY=:a, MAP_GRID_PEN_PRIMARY=:a, MAP_GRID_PEN_SECONDARY=:a, MAP_HEADING_OFFSET=:a, 
+MAP_LABEL_OFFSET=:a, MAP_LINE_STEP=:a, MAP_LOGO=:a, MAP_LOGO_POS=:a, MAP_ORIGIN_X=:a, MAP_ORIGIN_Y=:a, 
+MAP_POLAR_CAP=:a, MAP_SCALE_HEIGHT=:a, MAP_TICK_LENGTH_PRIMARY=:a, MAP_TICK_LENGTH_SECONDARY=:a, 
+MAP_TICK_PEN_PRIMARY=:a, MAP_TICK_PEN_SECONDARY=:a, MAP_TITLE_OFFSET=:a, MAP_VECTOR_SHAPE=:a);
