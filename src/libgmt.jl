@@ -373,20 +373,6 @@ function GMT_Error_Message(API::Ptr{Void})
 	ccall((:GMT_Error_Message, thelib), Ptr{UInt8}, (Ptr{Void},), API)
 end
 
-# ------------------ Backwards compatibility for old API functions no longer in favor -------------------------
-function GMT_Retrieve_Data(API::Ptr{Void}, object_ID::Integer)
-	ccall((:GMT_Retrieve_Data, thelib), Ptr{Void}, (Ptr{Void}, Cint), API, object_ID)
-end
-
-function GMT_Get_Data(API, object_ID::Integer, mode::Integer=0, data=C_NULL)
-	ccall((:GMT_Get_Data, thelib), Ptr{Void}, (Ptr{Void}, Cint, UInt32, Ptr{Void}), API, object_ID, mode, data)
-end
-
-function GMT_Put_Data(API::Ptr{Void}, object_ID::Integer, mode::Integer, data)
-	ccall((:GMT_Put_Data, thelib), Cint, (Ptr{Void}, Cint, UInt32, Ptr{Void}), API, object_ID, mode, data)
-end
-# -------------------------------------------------------------------------------------------------------------
- 
 # ------------------ Development function in 5.4.0 ------------------------------------------------------------
 
 # -------------------------------------------------------------------------------------------------------------
