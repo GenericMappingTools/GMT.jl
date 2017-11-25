@@ -4,14 +4,14 @@ using Base.Test
 # write your own tests here
 r = gmt("gmtinfo -C",ones(Float32,9,3)*5);
 assert(r[1].data == [5.0 5 5 5 5 5])
-r = gmtinfo(ones(Float32,9,3)*5, C=true);
+r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
 assert(r[1].data == [5.0 5 5 5 5 5])
 #
 # GRDINFO
 G=gmt("grdmath -R0/10/0/10 -I1 5");
 r=gmt("grdinfo -C", G);
 assert(r[1].data == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
-r2=grdinfo(G, C=true);
+r2=grdinfo(G, C=true, V=true);
 assert(r[1].data == r2[1].data)
 #
 # MAKECPT
@@ -48,14 +48,14 @@ gmt("destroy")
 
 # IMSHOW
 imshow(rand(128,128),show=false)
-imshow(G, frame="a", shade="+a45",show=false)
+imshow(G, frame=:a, shade="+a45",show=false)
 
 # SURFACE
 G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
 assert(size(G.z) == (151, 151))
 
 # PLOT
-plot(collect(1:10),rand(10), lw=1, lc="blue", fmt="ps", marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
+plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
 plot!(collect(1:10),rand(10), fmt="ps")
 
 # PSBASEMAP
@@ -67,7 +67,7 @@ basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y50
 #psconvert("lixo.ps", Z=true)
 
 # PSCOAST
-coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
+coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), fmt="ps");
 coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
 coast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
 coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green")))
@@ -80,7 +80,7 @@ C = makecpt(T="-200/1000/100", C="rainbow");
 colorbar(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
 
 # PSHISTOGRAM
-histogram(randn(1000),W=0.1,center=true,fmt="ps",B="a",N=0, x_offset=1, y_offset=1, stamp=[])
+histogram(randn(1000),W=0.1,center=true,fmt="ps",B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
 
 # PSROSE
 data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3;; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
@@ -140,9 +140,18 @@ function testa_conf(;kw...)
 	return nothing
 end
 testa_conf(MAP_ANNOT_MIN_ANGLE=:a,MAP_ANNOT_MIN_SPACING=:a,MAP_ANNOT_OBLIQUE=:a,MAP_ANNOT_OFFSET_PRIMARY=:a, 
-MAP_ANNOT_OFFSET_SECONDARY=:a, MAP_ANNOT_ORTHO=:a, MAP_DEFAULT_PEN=:a, MAP_DEGREE_SYMBOL=:a, 
+MAP_ANNOT_OFFSET=:a, MAP_ANNOT_OFFSET_SECONDARY=:a, MAP_ANNOT_ORTHO=:a, MAP_DEFAULT_PEN=:a, MAP_DEGREE_SYMBOL=:a, 
 MAP_FRAME_AXES=:a, MAP_FRAME_PEN=:a, MAP_FRAME_TYPE=:a, MAP_FRAME_WIDTH=:a, MAP_GRID_CROSS_SIZE_PRIMARY=:a, 
 MAP_GRID_CROSS_SIZE_SECONDARY=:a, MAP_GRID_PEN_PRIMARY=:a, MAP_GRID_PEN_SECONDARY=:a, MAP_HEADING_OFFSET=:a, 
 MAP_LABEL_OFFSET=:a, MAP_LINE_STEP=:a, MAP_LOGO=:a, MAP_LOGO_POS=:a, MAP_ORIGIN_X=:a, MAP_ORIGIN_Y=:a, 
 MAP_POLAR_CAP=:a, MAP_SCALE_HEIGHT=:a, MAP_TICK_LENGTH_PRIMARY=:a, MAP_TICK_LENGTH_SECONDARY=:a, 
-MAP_TICK_PEN_PRIMARY=:a, MAP_TICK_PEN_SECONDARY=:a, MAP_TITLE_OFFSET=:a, MAP_VECTOR_SHAPE=:a);
+MAP_TICK_PEN_PRIMARY=:a, MAP_TICK_PEN_SECONDARY=:a, MAP_TITLE_OFFSET=:a, MAP_VECTOR_SHAPE=:a,
+MAP_GRID_CROSS_SIZE=:a, MAP_GRID_CROSS_PEN=:a);
+
+testa_conf(FONT_ANNOT_PRIMARY=:a, FONT_ANNOT_SECONDARY=:a, FONT_HEADING=:a, FONT_LABEL=:a, FONT_LOGO=:a,
+FONT_TAG=:a, FONT_TITLE=:a, FORMAT_CLOCK_IN=:a, FORMAT_CLOCK_OUT=:a, FORMAT_CLOCK_MAP=:a, FORMAT_DATE_IN=:a,
+FORMAT_DATE_OUT=:a, FORMAT_DATE_MAP=:a, FORMAT_GEO_OUT=:a, FORMAT_GEO_MAP=:a, FORMAT_FLOAT_OUT=:a,
+FORMAT_FLOAT_MAP=:a, FORMAT_TIME_PRIMARY_MAP=:a, FORMAT_TIME_SECONDARY_MAP=:a, FORMAT_TIME_STAMP =:a);
+
+testa_conf(TIME_EPOCH=:a, TIME_IS_INTERVAL=:a, TIME_INTERVAL_FRACTION=:a, TIME_LEAP_SECONDS=:a,
+TIME_REPORT=:a, TIME_UNIT=:a, TIME_WEEK_START=:a, TIME_Y2K_OFFSET_YEAR=:a);
