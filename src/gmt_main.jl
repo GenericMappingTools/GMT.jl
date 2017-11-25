@@ -1184,58 +1184,6 @@ function image_init(API::Ptr{Void}, img, hdr::Array{Float64}, pad::Int=0)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function matrix_init(API::Ptr{Void}, module_input, grd, dir::Integer=GMT_IN, pad::Int=0)
-# ...
-	if (dir == GMT_IN)
-		dim = pointer([size(grd,2), size(grd,1), 0])	# MATRIX in GMT uses (col,row)
-		mode = 0;
-	else
-		dim = C_NULL
-		mode = GMT_VIA_OUTPUT;
-	end
-
-	if ((M = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, mode, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-		println("GMTJL_PARSER:matrix_init: Failure to alloc GMT source matrix")
-		return -1
-	end
-
-	GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Matrix %s in gmtjl_parser\n", M) )
-	Mb = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)
-	Mb.n_rows    = size(grd,1)
-	Mb.n_columns = size(grd,2)
-
-	if (dir == GMT_IN)
-		# NEED TO ADD CODE FOR THE OTHER DATA TYPES
-		if (eltype(grd) == Float64)
-			Mb._type = UInt32(GMT.GMT_DOUBLE)
-		elseif (eltype(grd) == Float32)
-			Mb._type = UInt32(GMT.GMT_FLOAT)
-		else
-			error("only floating point types allowed in input. Others need to be added")
-		end
-		Mb.data  = pointer(grd)
-		Mb.dim = Mb.n_rows		# Data from Julia is in column major
-		if (GMTver < 6)
-			Mb.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# Since matrix was allocated by Julia
-		else
-			GMT_Set_AllocMode(API, GMT_IS_MATRIX, M)
-		end
-		Mb.shape = GMT.GMT_IS_COL_FORMAT;		# Julia order is column major */
-
-	else
-		Mb._type = UInt32(GMT.GMT_FLOAT)		# PROVIDE A MEAN TO CHOOSE?
-		if (~isempty(grd))
-			Mb.data  = pointer(grd)
-		end
-		# Data from GMT must be in row format since we may not know n_rows until later
-		Mb.shape = UInt32(GMT.GMT_IS_ROW_FORMAT)
-	end
-
-	unsafe_store!(M, Mb)
-	return M
-end
-
-# ---------------------------------------------------------------------------------------------------
 function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer, actual_family)
 # Create containers to hold or receive data tables:
 # direction == GMT_IN:  Create empty GMT_DATASET container, fill from Julia, and use as GMT input.
