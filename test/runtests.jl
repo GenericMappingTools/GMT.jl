@@ -96,7 +96,7 @@ text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps")
 # PSWIGGLE
 t=[0 7; 1 8; 8 3; 10 7];
 t1=gmt("sample1d -I5k", t); t2 = gmt("mapproject -G+uk", t1); t3 = gmt("math ? -C2 10 DIV COS", t2);
-wiggle(t3,R="-1/11/0/12", J="M8",B="af WSne", W="0.25p", Z="4c", G="+green", T="0.5p", A=1, Y="0.75i", D="jBR+w2+o0.2i")
+wiggle(t3,R="-1/11/0/12", J="M8",B="af WSne", W="0.25p", Z="4c", G="+green", T="0.5p", A=1, Y="0.75i", S="8/1/2")
 
 # GMTSPATIAL
 # Test  Cartesian centroid and area
