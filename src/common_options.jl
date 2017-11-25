@@ -606,7 +606,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_o(cmd::String, d::Dict)
-	# Parse the global -p option. Return CMD same as input if no -p option in args
+	# Parse the global -o option. Return CMD same as input if no -o option in args
 	for symb in [:o :output_col]
 		if (haskey(d, symb) && isa(d[symb], String))
 			cmd = cmd * " -o" * d[symb]
