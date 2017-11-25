@@ -30,7 +30,6 @@ export
 	GMT_Init_VirtualFile, GMT_Open_VirtualFile, GMT_Close_VirtualFile, GMT_Read_VirtualFile,
 	GMT_Get_Matrix, GMT_Put_Matrix, GMT_Get_Vector, GMT_Put_Vector,
 	GMT_DATASET, GMT_GRID, GMT_MATRIX, GMT_PALETTE, GMT_UNIVECTOR,
-	GMT_VIA_OUTPUT,
 	GMT_Report, array_container,
 	GMT_Encode_Options, GMT_Expand_Option, gmtlib_grd_flip_vertical,
 	gmt_core_module_info,
