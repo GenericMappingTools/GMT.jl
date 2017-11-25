@@ -106,6 +106,9 @@ l1 = gmt("project -C22/49 -E-60/-20 -G10 -Q");
 l2 = gmt("project -C0/-60 -E-60/-30 -G10 -Q");
 #int = gmt("gmtspatial -Ie -Fl", l1, l2);       # Error returned from GMT API: GMT_ONLY_ONE_ALLOWED (59)
 
+# SPLITXYZ (fails)
+#splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
+
 # TRIANGULATE
 G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
 
