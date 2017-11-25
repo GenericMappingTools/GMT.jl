@@ -2,7 +2,7 @@ __precompile__()
 
 module GMT
 
-const GMTver = 5.0
+const GMTver = 6.0
 const FMT = "ps"
 
 export
@@ -22,8 +22,6 @@ export
 	GMT_Option,
 	GMT_Read_Data,
 	GMT_Register_IO,
-	GMT_Get_Data,
-	GMT_Retrieve_Data,
 	GMT_Destroy_Data,
 	GMT_Message,
 	GMT_Write_Data,

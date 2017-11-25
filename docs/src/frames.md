@@ -206,7 +206,7 @@ gmt("set FORMAT_DATE_MAP u FORMAT_TIME_PRIMARY_MAP Character FORMAT_TIME_SECONDA
      FONT_ANNOT_PRIMARY +9p")
 basemap(region="1969-7-21T/1969-8-9T/0/1", proj="X12/0.25", frame="pa1K sa1U S")
 gmt("set FORMAT_DATE_MAP o TIME_WEEK_START Sunday FORMAT_TIME_SECONDARY_MAP Chararacter")
-basemap(frame="pa3Kf1k sa1r S", y_offset=1.7, fmt="png", show=true)
+basemap!(frame="pa3Kf1k sa1r S", y_offset=1.7, fmt="png", show=true)
 ```
 
 !["B_time5"](figures/B_time5.png)
