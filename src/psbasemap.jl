@@ -43,7 +43,7 @@ Parameters
 - $(GMT.opt_t)
 """
 # ---------------------------------------------------------------------------------------------------
-function basemap(cmd0::String=""; K=false, O=false, first=true, kwargs...)
+function basemap(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("psbasemap", cmd0, arg1)	# Speedy mode
 	d = KW(kwargs)
@@ -72,9 +72,11 @@ function basemap(cmd0::String=""; K=false, O=false, first=true, kwargs...)
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
-    return finish_PS_module(d, cmd, "", [], [], output, fname_ext, opt_T, K, "psbasemap")
+    return finish_PS_module(d, cmd, "", arg1, [], output, fname_ext, opt_T, K, "psbasemap")
 end
 
 # ---------------------------------------------------------------------------------------------------
-basemap!(cmd0::String=""; K=true, O=true, first=false, kw...) =
-	basemap(cmd0; K=K, O=O, first=first, kw...)
+basemap!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) = 
+	basemap(cmd0, arg1; K=K, O=O, first=first, kw...)
+basemap(arg1=[]; K=false, O=false, first=true, kw...) = basemap("", arg1; K=K, O=O, first=first, kw...)
+basemap!(arg1=[]; K=true, O=true, first=false, kw...) = basemap("", arg1; K=K, O=O, first=first, kw...)
