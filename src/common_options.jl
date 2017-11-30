@@ -106,6 +106,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 	tok = Vector{String}(10)
 	k = 1
 	r = opt_B
+	found = false
 	while (!isempty(r))
 		tok[k],r = GMT.strtok(r)
 		if (ismatch(r"[WESNwesntlbu+g+o]", tok[k]) && !contains(tok[k], "+t"))		# If title here, forget about :title
@@ -121,13 +122,23 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 			if (ind == 0)
 				tok[k] = " -B" * tok[k] 		# Simple case, no quotes to break our heads
 			else
+				if (!found)
+					tok[k] = " -B" * tok[k] 	# A title in quotes with spaces
+					found = true
+				else
+					tok[k] = " " * tok[k]
+					found = false
+				end
+				#=
 				if (tok[k][end] != '"')
 					tok[k] = " -B" * tok[k] 	# A title in quotes with spaces
+					last_k = k
 				elseif (ind < length(tok[k]) && tok[k][end] == '"')
 					tok[k] = " -B" * tok[k] 	# A title with no spaces
 				else
 					tok[k] = " " * tok[k]
 				end
+				=#
 			end
 		else
 			tok[k] = " " * tok[k]
@@ -794,9 +805,6 @@ function set_KO(cmd, opt_B, first, K, O)
 	# Set the O K pair dance
 	if (first)  K = true;	O = false
 	else        K = true;	O = true;
-		if (!contains(cmd, " -X") && !contains(cmd, " -Y"))
-			cmd = replace(cmd, opt_B, "");	opt_B = ""
-		end
 	end
 	return cmd, K, O, opt_B
 end
