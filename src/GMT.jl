@@ -20,7 +20,6 @@ export
 	GMT_Get_ID,
 	GMT_Get_Default,
 	GMT_Option,
-	GMT_Read_Data,
 	GMT_Register_IO,
 	GMT_Destroy_Data,
 	GMT_Message,
