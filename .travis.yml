@@ -14,8 +14,8 @@ matrix:
 notifications:
   email: true
 before_install:
-  # if [ `uname` = "Linux" ]; then
-      #sudo apt-get install libgmt-dev;
+  - if [ `uname` = "Linux" ]; then
+      sudo apt-get install libgmt-dev;
       # Get Miniconda from Continuum
       # Need to source the script to set the PATH variable in this environment
       #- source install-miniconda.sh
@@ -37,8 +37,8 @@ before_install:
       ##- cd build
       ##- cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt
       ##- make -j && make install
-  - if [ `uname` = "Darwin" ]; then
-      brew update && brew install homebrew/science/gmt;
+    elif [ `uname` = "Darwin" ]; then
+      brew update && brew install gmt;
     fi
 # uncomment the following lines to override the default test script
 script:
