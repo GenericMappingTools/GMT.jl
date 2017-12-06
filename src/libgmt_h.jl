@@ -154,8 +154,13 @@ const INT8_CLASS   = 9
 const UINT8_CLASS  = 10
 
 # begin enum GMT_enum_fmt
-const GMT_IS_ROW_FORMAT = 0
-const GMT_IS_COL_FORMAT = 1
+if (GMTver < 6.0)
+	const GMT_IS_ROW_FORMAT = 0
+	const GMT_IS_COL_FORMAT = 1
+else
+	const GMT_IS_ROW_FORMAT = 1
+	const GMT_IS_COL_FORMAT = 2
+end
 # end enum GMT_enum_fmt
 
 # begin enum GMT_enum_geometry
