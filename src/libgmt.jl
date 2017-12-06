@@ -218,6 +218,7 @@ end
 function GMT_Parse_Common(API::Ptr{Void}, given_options::Ptr{UInt8}, options::Ptr{GMT_OPTION})
 	ccall( (:GMT_Parse_Common, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{GMT_OPTION}), API, given_options, options)
 end
+#=
 function GMT_FFT_Option(API::Ptr{Void}, option::UInt8, dim::UInt32, string::Ptr{UInt8})
 	ccall( (:GMT_FFT_Option, thelib), UInt32, (Ptr{Void}, UInt8, UInt32, Ptr{UInt8}), API, option, dim, string)
 end
@@ -242,6 +243,7 @@ end
 function GMT_FFT_2D(API::Ptr{Void}, data::Ptr{Cfloat}, nx::UInt32, ny::UInt32, direction::Cint, mode::UInt32)
 	ccall( (:GMT_FFT_2D, thelib), Cint, (Ptr{Void}, Ptr{Cfloat}, UInt32, UInt32, Cint, UInt32), API, data, nx, ny, direction, mode)
 end
+=#
 
 function GMT_Report(API, vlevel::Int, txt)
 	ccall((:GMT_Report, thelib), Void, (Ptr{Void}, Cint, Ptr{UInt8}), API, vlevel, txt)
