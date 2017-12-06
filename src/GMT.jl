@@ -16,26 +16,22 @@ export
 	GMT_Destroy_Options,
 	GMT_Destroy_Args,
 	GMT_Destroy_Session,
-	GMT_Encode_ID,
-	GMT_Get_ID,
 	GMT_Get_Default,
 	GMT_Option,
 	GMT_Register_IO,
 	GMT_Destroy_Data,
-	GMT_Message,
 	GMT_Write_Data,
 	GMT_Init_VirtualFile, GMT_Open_VirtualFile, GMT_Close_VirtualFile, GMT_Read_VirtualFile,
 	GMT_Get_Matrix, GMT_Put_Matrix, GMT_Get_Vector, GMT_Put_Vector,
 	GMT_DATASET, GMT_GRID, GMT_MATRIX, GMT_PALETTE, GMT_UNIVECTOR,
-	GMT_Report, array_container,
 	GMT_Encode_Options, GMT_Expand_Option, gmtlib_grd_flip_vertical,
 	gmt_core_module_info,
 	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
-	basemap, basemap!, coast, coast!, xy, xy!, grdcontour, grdcontour!, grdimage, grdimage!, grdtrack,
-	grdview, grdview!, makecpt, histogram, histogram!, image, image!, psconvert, colorbar, colorbar!,
-	rose, rose!, solar, solar!, text, text!, gmtinfo, grdinfo, surface, triangulate,
-	nearneighbor, imshow, imshow!, plot, plot!, splitxyz, wiggle, wiggle!,
+	basemap, basemap!, coast, coast!, logo, logo!, xy, xy!, grdcontour, grdcontour!, grdimage,
+	grdimage!, grdtrack, grdview, grdview!, makecpt, histogram, histogram!, image, image!, psconvert,
+	colorbar, colorbar!, rose, rose!, solar, solar!, text, text!, gmtinfo, grdinfo, surface,
+	triangulate, nearneighbor, imshow, imshow!, plot, plot!, splitxyz, wiggle, wiggle!,
 	text_record,
 	NULL
 
@@ -45,6 +41,7 @@ include("libgmt.jl")
 include("gmt_main.jl")
 include("common_options.jl")
 include("gmtinfo.jl")
+include("gmtlogo.jl")
 include("grdcontour.jl")
 include("grdinfo.jl")
 include("grdimage.jl")
