@@ -175,34 +175,14 @@ function parse_BJR(d::Dict, cmd0::String, cmd::String, caller, O, default)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_X(cmd::String, d::Dict)
-	# Parse the global -X option. Return CMD same as input if no -X option in args
-	if (haskey(d, :X))
-		cmd = cmd * " -X" * arg2str(d[:X])
-	elseif (haskey(d, :x_offset))
-		cmd = cmd * " -X" * arg2str(d[:x_offset])
-	end
-	return cmd
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_Y(cmd::String, d::Dict)
-	# Parse the global -Y option. Return CMD same as input if no -Y option in args
-	if (haskey(d, :Y))
-		cmd = cmd * " -Y" * arg2str(d[:Y])
-	elseif (haskey(d, :y_offset))
-		cmd = cmd * " -Y" * arg2str(d[:y_offset])
-	end
-	return cmd
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_U(cmd::String, d::Dict)
-	# Parse the global -U option. Return CMD same as input if no -U option in args
-	if (haskey(d, :U))
-		cmd = cmd * " -U" * arg2str(d[:U])
-	elseif (haskey(d, :stamp))
-		cmd = cmd * " -U" * arg2str(d[:stamp])
+function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)
+	# Parse the global -U, -X, -Y options. Return CMD same as input if no option  OPT in args
+	# ALIASES: [:X :x_off :x_offset] (same for Y) or [:U :time_stamp :stamp]
+	for symb in aliases
+		if (haskey(d, symb))
+			cmd = string(cmd, " -", opt, d[symb])
+			break
+		end
 	end
 	return cmd
 end
@@ -223,10 +203,10 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_UVXY(cmd::String, d::Dict)
-	cmd = parse_U(cmd, d)
 	cmd = parse_V(cmd, d)
-	cmd = parse_X(cmd, d)
-	cmd = parse_Y(cmd, d)
+	cmd = parse_UXY(cmd, d, [:X :x_off :x_offset], 'X')
+	cmd = parse_UXY(cmd, d, [:Y :y_off :y_offset], 'Y')
+	cmd = parse_UXY(cmd, d, [:U :stamp :time_stamp], 'U')
 	return cmd
 end
 
@@ -711,11 +691,7 @@ function parse_pen_width(d::Dict)
 	pw = ""
 	for sym in [:lw :linewidth :LineWidth]
 		if (haskey(d, sym))
-			if (isa(d[sym], Number))      pw = @sprintf("%.6g", d[sym])
-			elseif (isa(d[sym], String))  pw = d[sym]
-			else error("Nonsense in line width argument")
-			end
-			break
+			pw = string(d[sym])
 		end
 	end
 	return pw
@@ -727,10 +703,7 @@ function parse_pen_color(d::Dict)
 	pc = ""
 	for sym in [:lc :linecolor :LineColor]
 		if (haskey(d, sym))
-			if (isa(d[sym], String))      pc = d[sym]
-			elseif (isa(d[sym], Number))  pc = @sprintf("%d", d[sym])
-			else error("Nonsense in line color argument")
-			end
+			pc = string(d[sym])
 			break
 		end
 	end
@@ -743,11 +716,7 @@ function parse_pen_style(d::Dict)
 	ps = ""
 	for sym in [:ls :linestyle :LineStyle]
 		if (haskey(d, sym))
-			if (isa(d[sym], String))      ps = d[sym]
-			elseif (isa(d[sym], Number))  ps = @sprintf("%d", d[sym])
-			else error("Nonsense in line color argument")
-			end
-			break
+			ps = string(d[sym])
 		end
 	end
 	return ps
