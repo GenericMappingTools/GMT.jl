@@ -383,3 +383,7 @@ end
 function GMT_Set_AllocMode(API::Ptr{Void}, family::Integer, object)
 	ccall((:GMT_Set_AllocMode, thelib), Cint, (Ptr{Void}, UInt32, Ptr{Void}), API, family, object)
 end
+
+function gmt_manage_workflow(API::Ptr{Void}, mode::Integer, texto)
+	ccall((:gmt_manage_workflow, thelib), Cint, (Ptr{Void}, UInt32, Cstring), API, mode, texto)
+end
