@@ -114,6 +114,16 @@ function gmt(cmd::String, args...)
 	end
 	# -----------------------------------------------------------
 
+	# 1. Get arguments, if any, and extract the GMT module name
+	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
+	g_module, r = strtok(cmd)
+
+	if (g_module == "end")				# Last command of a MODERN session
+		if (isempty(r)) r = "-Vq" end	# Cannot have a no-args for this case otherwise it prints help
+		GMT_Destroy_Session(API)		# Force calling GMT_Create_Session() below. Need this so that
+		API = NaN						# gmt_manage_workflow() knows what to do when ENDing a modern session
+	end
+
 	try
 		a = API
 		if (!isa(API, Ptr{Void}))
@@ -127,10 +137,6 @@ function gmt(cmd::String, args...)
 		end
 	end
 
-	# 1. Get arguments, if any, and extract the GMT module name
-	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
-	g_module, r = strtok(cmd)
-
 	# 2. In case this was a clean up call or a begin/end from the modern mode
 	if (g_module == "destroy")
 		if (GMT_Destroy_Session(API) != 0)
@@ -138,26 +144,10 @@ function gmt(cmd::String, args...)
 		end
 		API = NaN
 		return
-	elseif (g_module == "begin" || g_module == "figure" || g_module == "end")
-#=
-		if (get_GMTversion(API) < 5.4)
-			error("GMT: The modern mode is only available at GMT5.4 and up.")
-		end
-		if (g_module == "begin")
-			if (GMT_Manage_Session(API, GMT.GMT_SESSION_BEGIN, NULL) != 0)
-				error("GMT: Error running the 'begin' command")
-			end
-		elseif (g_module == "figure")
-			if (GMT_Manage_Session(API, GMT.GMT_SESSION_FIGURE, convert(Ptr{Void},pointer(r))) != 0)
-				error("GMT: Error running the 'figure' command")
-			end
-		else
-			GMT_Manage_Session(API, GMT.GMT_SESSION_END, NULL)
-			GMT_Destroy_Session(API)
-			API = NaN
-		end
-		return
-=#
+	elseif (g_module == "begin" && isempty(r))	# Cannot have a no-args for these cases otherwise it prints help
+		r = "gmtsession"
+	else
+		gmt_manage_workflow(API, 0, NULL)		# Force going here to see if we are in middle of a MODERN session
 	end
 
 	# Make sure this is a valid module
