@@ -72,6 +72,8 @@ type GMTdataset
 	proj4::String
 	wkt::String
 	GMTdataset(data, text, header, comment, proj4, wkt) = new(data, text, header, comment, proj4, wkt)
+	GMTdataset(data, text) = new(data, text, string(), Array{String,1}(), string(), string())
+	GMTdataset(data) = new(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
 	GMTdataset() = new(Array{Float64,2}(0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 end
 
