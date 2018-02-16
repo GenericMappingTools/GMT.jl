@@ -4,7 +4,7 @@ language: julia
 sudo: false
 
 os:
-  - osx
+  - linux
 julia:
   - 0.6
   - nightly
