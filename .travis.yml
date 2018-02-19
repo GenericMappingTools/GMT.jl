@@ -30,17 +30,17 @@ before_install:
       - pwd
       - sudo apt-get install subversion build-essential cmake libcurl4-gnutls-dev libnetcdf-dev libgdal1-dev libfftw3-dev libpcre3-dev liblapack-dev
       - svn checkout svn://gmtserver.soest.hawaii.edu/gmt5/branches/5.4 $HOME/gmt
-      - wget ftp://ftp.soest.hawaii.edu/gshhg/gshhg-gmt-2.3.7.tar.gz
-      - ls
-      - gzip -d gshhg-gmt-2.3.7.tar.gz
-      - ls gshhg-gmt-2.3.7
       - PATH="$HOME/gmt/bin:$PATH"
       - export PATH
       - echo 'export PATH="$HOME/gmt/bin:$PATH"' >>~/.bash_profile
       - cd $HOME/gmt
+      - wget ftp://ftp.soest.hawaii.edu/gshhg/gshhg-gmt-2.3.7.tar.gz
+      - ls
+      - tar -xvzf gshhg-gmt-2.3.7.tar.gz
+      - ls gshhg-gmt-2.3.7
       - mkdir build
       - cd build
-      - cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt -DGSHHG_ROOT=$HOME/gshhg-gmt-2.3.7
+      - cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt -DGSHHG_ROOT=$HOME/gmt/gshhg-gmt-2.3.7
       - make -j && make install
       - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/gmt/lib"
       - cd /home/travis/build/GenericMappingTools/GMT.jl
