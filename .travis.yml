@@ -4,7 +4,7 @@ language: julia
 sudo: false
 
 os:
-  - linux
+  - osx
 julia:
   - 0.6
   - nightly
@@ -14,8 +14,7 @@ matrix:
 notifications:
   email: true
 before_install:
-  #- if [ `uname` = "linux" ]; then  apt-get install gmt gmt-dcw gmt-gshhg; fi
-  - sudo apt-get install gmt
+  #- if [ `uname` = "linux" ]; then sudo apt-get install gmt gmt-dcw gmt-gshhg; fi
       # Get Miniconda from Continuum
       # Need to source the script to set the PATH variable in this environment
       #- source install-miniconda.sh
@@ -39,6 +38,7 @@ before_install:
       ##- cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt
       ##- make -j && make install
   #- if [ `uname` = "Darwin" ]; then brew install gmt; fi
+  - sudo fink install gmt5
 
 # uncomment the following lines to override the default test script
 script:
