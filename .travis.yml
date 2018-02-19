@@ -15,7 +15,7 @@ notifications:
   email: true
 before_install:
   #- if [ `uname` = "linux" ]; then  apt-get install gmt gmt-dcw gmt-gshhg; fi
-  - apt-get install gmt gmt-dcw gmt-gshhg
+  - sudo apt-get install gmt gmt-dcw gmt-gshhg
       # Get Miniconda from Continuum
       # Need to source the script to set the PATH variable in this environment
       #- source install-miniconda.sh
