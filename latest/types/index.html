@@ -38,12 +38,12 @@ end</code></pre><h2><a class="nav-anchor" id="Image-type-1" href="#Image-type-1"
    alpha::Array{UInt8,2}      # A [n_rows x n_columns] alpha array
    layout::String             # A four character string describing the image memory layout
 end</code></pre><h2><a class="nav-anchor" id="Dataset-type-1" href="#Dataset-type-1">Dataset type</a></h2><pre><code class="language-none">type GMTdataset
-    header::String
-    data::Array{Float64,2}
-    text::Array{Any,1}
-    comment::Array{Any,1}
-    proj4::String
-    wkt::String
+    data::Array{Float64,2}     # Mx2 Matrix with segment data
+    text::Array{Any,1}         # Array with text after data coordinates (mandatory only when plotting Text)
+    header::String             # String with segment header (Optional but sometimes very useful)
+    comment::Array{Any,1}      # Array with any dataset comments [empty after first segment]
+    proj4::String              # Projection string in PROJ4 syntax (Optional)
+    wkt::String                # Projection string in WKT syntax (Optional)
 end</code></pre><h2><a class="nav-anchor" id="CPT-type-1" href="#CPT-type-1">CPT type</a></h2><pre><code class="language-none">type GMTcpt
     colormap::Array{Float64,2}
     alpha::Array{Float64,1}
