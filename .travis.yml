@@ -38,7 +38,8 @@ before_install:
       ##- cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt
       ##- make -j && make install
   #- if [ `uname` = "Darwin" ]; then brew install gmt; fi
-  - sudo fink install gmt5
+  - sudo port install port install gdal +curl +geos +hdf5 +netcdf
+  - sudo port install gmt5
 
 # uncomment the following lines to override the default test script
 script:
