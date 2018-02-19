@@ -38,11 +38,12 @@ before_install:
       - cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt
       - make -j && make install
       - cd $HOME
+      - psxy -
   #- if [ `uname` = "Darwin" ]; then brew update && brew upgrade && brew install gmt; fi
 
 # uncomment the following lines to override the default test script
 script:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  #- if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia -e 'Pkg.clone(pwd()); Pkg.build("GMT"); Pkg.test("GMT"; coverage=true);'
 after_success:
   - julia -e 'cd(Pkg.dir("GMT")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
