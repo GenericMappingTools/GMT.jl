@@ -4,7 +4,7 @@ language: julia
 sudo: false
 
 os:
-  - osx
+  - linux
 julia:
   - 0.6
   - nightly
@@ -27,19 +27,18 @@ before_install:
       # Show installed pkg information for postmortem diagnostic
       #- conda list
       # Install GMT trunk
-      ##- sudo apt-get install subversion build-essential cmake libcurl4-gnutls-dev libnetcdf-dev libgdal1-dev libfftw3-dev libpcre3-dev liblapack-dev
-      ##- svn checkout svn://gmtserver.soest.hawaii.edu/gmt/trunk $HOME/gmt
-      ##- PATH="$HOME/gmt/bin:$PATH"
-      ##- export PATH
-      ##- echo 'export PATH="$HOME/gmt/bin:$PATH"' >>~/.bash_profile
-      ##- cd $HOME/gmt
-      ##- mkdir build
-      ##- cd build
-      ##- cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt
-      ##- make -j && make install
-  #- if [ `uname` = "Darwin" ]; then brew install gmt; fi
-  - brew update && brew upgrade
-  - brew install gmt
+      - sudo apt-get install subversion build-essential cmake libcurl4-gnutls-dev libnetcdf-dev libgdal1-dev libfftw3-dev libpcre3-dev liblapack-dev
+      - svn checkout svn://gmtserver.soest.hawaii.edu/gmt/trunk $HOME/gmt
+      - PATH="$HOME/gmt/bin:$PATH"
+      - export PATH
+      - echo 'export PATH="$HOME/gmt/bin:$PATH"' >>~/.bash_profile
+      - cd $HOME/gmt
+      - mkdir build
+      - cd build
+      - cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt
+      - make -j && make install
+      - cd $HOME
+  #- if [ `uname` = "Darwin" ]; then brew update && brew upgrade && brew install gmt; fi
 
 # uncomment the following lines to override the default test script
 script:
