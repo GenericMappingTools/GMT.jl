@@ -38,6 +38,7 @@ before_install:
       - cd build
       - cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt
       - make -j && make install
+      - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/gmt/lib"
       - cd /home/travis/build/GenericMappingTools/GMT.jl
   #- if [ `uname` = "Darwin" ]; then brew update && brew upgrade && brew install gmt; fi
 
