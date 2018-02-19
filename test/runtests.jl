@@ -8,7 +8,7 @@ r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
 assert(r[1].data == [5.0 5 5 5 5 5])
 #
 # GRDINFO
-G=gmt("grdmath -R0/10/0/10 -I1 5");
+G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 r=gmt("grdinfo -C", G);
 assert(r[1].data == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
 r2=grdinfo(G, C=true, V=true);
@@ -23,7 +23,7 @@ G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH
 C = grdcontour(G, C="+0.7", D=[]);
 assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 # Do the same but write the file on disk first
-gmt("write -Tg lixo.grd", G)
+gmt("write lixo.grd", G)
 GG = gmt("read -Tg lixo.grd");
 C = grdcontour("lixo.grd", C="+0.7", D=[]);
 assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
@@ -62,8 +62,8 @@ plot!(collect(1:10),rand(10), fmt="ps")
 basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
 
 # PSCONVERT
-#gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
-#psconvert("lixo.ps", adjust=true, fmt="eps", Z=true)
+gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
+psconvert("lixo.ps", adjust=true, fmt="eps", Z=true)
 
 # PSCOAST
 coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, fmt="ps");
@@ -122,6 +122,9 @@ G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
 
 # NEARNEIGHBOR
 G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, grid=[], S=10);
+
+# MISC
+G = GMT.grid_type(G.z);
 
 # EXAMPLES
 plot(collect(1:10),rand(10), lw=1, lc="blue", marker="square",
