@@ -27,6 +27,7 @@ before_install:
       # Show installed pkg information for postmortem diagnostic
       #- conda list
       # Install GMT trunk
+      - pwd
       - sudo apt-get install subversion build-essential cmake libcurl4-gnutls-dev libnetcdf-dev libgdal1-dev libfftw3-dev libpcre3-dev liblapack-dev
       - svn checkout svn://gmtserver.soest.hawaii.edu/gmt/trunk $HOME/gmt
       - PATH="$HOME/gmt/bin:$PATH"
@@ -42,7 +43,7 @@ before_install:
 
 # uncomment the following lines to override the default test script
 script:
-  #- if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia -e 'Pkg.clone(pwd()); Pkg.build("GMT"); Pkg.test("GMT"; coverage=true);'
 after_success:
   - julia -e 'cd(Pkg.dir("GMT")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
