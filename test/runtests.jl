@@ -63,7 +63,9 @@ basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y50
 
 # PSCONVERT
 gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
-psconvert("lixo.ps", adjust=true, fmt="eps", Z=true)
+psconvert("lixo.ps", adjust=true, fmt="eps")
+psconvert("lixo.ps", adjust=true, fmt="png")
+gmt("grdinfo lixo.png");
 
 # PSCOAST
 coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, fmt="ps");
