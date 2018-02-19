@@ -148,7 +148,7 @@ function gmt(cmd::String, args...)
 		return
 	elseif (g_module == "begin" && isempty(r))	# Cannot have a no-args for these cases otherwise it prints help
 		r = "gmtsession"
-	else
+	elseif (GMTver > 5)
 		gmt_manage_workflow(API, 0, NULL)		# Force going here to see if we are in middle of a MODERN session
 	end
 
@@ -168,7 +168,7 @@ function gmt(cmd::String, args...)
 				r = r * " -F"
 			else								# Hmm, have to find if any of 'e' or 'f' are used as -T flags
 				tok = strtok(r[ind[2]:end])		# Will have T?
-				tok = lowercase(tok[1])
+				tok = lowercase(tok)
 				if (isempty(search(tok,"e")) && isempty(search(tok,"f")))	# No any -Tef combo so add -F
 					r = r * " -F"
 				end
