@@ -1692,7 +1692,7 @@ end
 function num2str(mat)
 # Pseudo num2str, but returns all in a cell array of strings and no precision control yet.
 	n_cols = size(mat, 2);		n_rows = size(mat, 1)
-	out = cell(n_rows, 1)
+	out = Any[n_rows, 1]
 	for nr = 1:n_rows
 		out[nr] = join([@sprintf("%s\t", mat[nr,k]) for k=1:n_cols-1])
 		out[nr] = out[nr] * @sprintf("%s", mat[nr,n_cols])
