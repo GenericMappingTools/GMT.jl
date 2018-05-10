@@ -120,7 +120,7 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; data=[], kwargs...)
 	elseif (isa(arg2, GMTgrid))  arg2_is_grid = true
 	end
 
-	if (arg1_is_grid || arg2_is_grid && !contains(cmd, "-G"))  cmd = cmd * " -G"  end
+	if (arg1_is_grid || arg2_is_grid && !occursin("-G", cmd))  cmd = cmd * " -G"  end
 
 	(haskey(d, :Vd)) && println(@sprintf("\tgrdtrack %s", cmd))
 

@@ -91,6 +91,10 @@ plot(arg1::GMTdataset; extra="", data=[], K=false, O=false, first=true, kw...) =
 	GMT.xy(extra, arg1; caller="plot", data=data, K=K, O=O, first=first, kw...)
 plot!(arg1::GMTdataset; extra="", data=[], K=false, O=false, first=true, kw...) =
 	GMT.xy(extra, arg1; caller="plot", data=data, K=true, O=true, first=false, kw...)
+plot(arg1::Array{GMTdataset,1}; extra="", data=[], K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, arg1; caller="plot", data=data, K=K, O=O, first=first, kw...)
+plot!(arg1::Array{GMTdataset,1}; extra="", data=[], K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, arg1; caller="plot", data=data, K=true, O=true, first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 plot(arg1::String; extra="", data=[], K=false, O=false, first=true, kw...) =

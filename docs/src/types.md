@@ -52,12 +52,12 @@ Dataset type
 ------------
 
     type GMTdataset
-        header::String
-        data::Array{Float64,2}
-        text::Array{Any,1}
-        comment::Array{Any,1}
-        proj4::String
-        wkt::String
+        data::Array{Float64,2}     # Mx2 Matrix with segment data
+        text::Array{Any,1}         # Array with text after data coordinates (mandatory only when plotting Text)
+        header::String             # String with segment header (Optional but sometimes very useful)
+        comment::Array{Any,1}      # Array with any dataset comments [empty after first segment]
+        proj4::String              # Projection string in PROJ4 syntax (Optional)
+        wkt::String                # Projection string in WKT syntax (Optional)
     end
 
 CPT type

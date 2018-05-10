@@ -64,7 +64,7 @@ Parameters
     + **t**, **^**, **triangle**
     + **x**, **cross**
     + **y**, **y_dash**
-- **W** : **line_attribs** : **markeredgecolor** : **MarkerEdgeColor** : -- Str --
+- **W** : **line_attrib** : **markeredgecolor** : **MarkerEdgeColor** : -- Str --
     Set pen attributes for lines or the outline of symbols
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
@@ -90,12 +90,28 @@ Parameters
 """
 # ---------------------------------------------------------------------------------------------------
 function xy(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, kwargs...)
+	common_plot_xyz(cmd0, arg1, caller, data, K, O, first, false, kwargs...)
+end
 
+# ---------------------------------------------------------------------------------------------------
+function xyz(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, kwargs...)
+	common_plot_xyz(cmd0, arg1, caller, data, K, O, first, true, kwargs...)
+end
+
+# ---------------------------------------------------------------------------------------------------
+#function common_plot_xyz(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, is3D=false, kwargs...)
+function common_plot_xyz(cmd0, arg1, caller, data, K, O, first, is3D, kwargs...)
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty(arg1) ? 0 : 1
 
-	((isempty(cmd0) && isempty_(arg1) && isempty(data)) || contains(cmd0, " -")) &&
-	return monolitic("psxy", cmd0, arg1)	# Speedy mode
+	if (is3D)
+		gmt_proggy = "psxyz"
+	else
+		gmt_proggy = "psxy"
+	end
+
+	((isempty(cmd0) && isempty_(arg1) && isempty(data)) || occursin(" -", cmd0)) &&
+	return monolitic(gmt_proggy, cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -103,13 +119,14 @@ function xy(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, firs
 	opt_J = " -JX12c/8c"
 	for sym in [:axis :aspect]
 		if (haskey(d, sym))
-			if (d[sym] == "equal")	# Need also a 'tight' option
+			if (d[sym] == "equal")				# Need also a 'tight' option
 				opt_J = " -JX12c"
 			end
 			break
 		end
 	end
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, opt_J)
+	if (is3D)	cmd = parse_JZ(cmd, d)	end
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_a(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
@@ -126,7 +143,7 @@ function xy(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, firs
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	# If data is a file name, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, opt_i = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	cmd, arg1, opt_R, opt_i = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
 
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
@@ -163,12 +180,10 @@ function xy(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, firs
 	else
 		for sym in [:W :line_attrib]
 			if (haskey(d, sym))
-				if (isa(d[sym], String))
-					opt_W = " -W" * arg2str(d[sym])
-				elseif (isa(d[sym], Tuple))	# Like this it can hold the pen, not extended atts
+				if (isa(d[sym], Tuple))		# Like this it can hold the pen, not extended atts
 					opt_W = " -W" * parse_pen(d[sym])
 				else
-					error("Nonsense in W option")
+					opt_W = " -W" * arg2str(d[sym])
 				end
 				break
 			end
@@ -186,21 +201,24 @@ function xy(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, firs
 		marca = ""
 		for sym in [:marker :Marker]
 			if (haskey(d, sym))
-				if (d[sym] == "-"     || d[sym] == "x-dash")   marca = "-"
-				elseif (d[sym] == "+" || d[sym] == "plus")     marca = "+"
-				elseif (d[sym] == "a" || d[sym] == "*" || d[sym] == "star")     marca = "a"
-				elseif (d[sym] == "c" || d[sym] == "circle")   marca = "c"
-				elseif (d[sym] == "d" || d[sym] == "diamond")  marca = "d"
-				elseif (d[sym] == "g" || d[sym] == "octagon")  marca = "g"
-				elseif (d[sym] == "h" || d[sym] == "hexagon")  marca = "h"
-				elseif (d[sym] == "i" || d[sym] == "v" || d[sym] == "inverted_tri")  marca = "i"
-				elseif (d[sym] == "n" || d[sym] == "pentagon")  marca = "n"
-				elseif (d[sym] == "p" || d[sym] == "." || d[sym] == "point")     marca = "p"
-				elseif (d[sym] == "r" || d[sym] == "rectangle") marca = "r"
-				elseif (d[sym] == "s" || d[sym] == "square")    marca = "s"
-				elseif (d[sym] == "t" || d[sym] == "^" || d[sym] == "triangle")  marca = "t"
-				elseif (d[sym] == "x" || d[sym] == "cross")     marca = "x"
-				elseif (d[sym] == "y" || d[sym] == "y-dash")    marca = "y"
+				t = d[sym]
+				if (isa(t, Symbol))	t = string(t)	end
+				if (t == "-"     || t == "x-dash")   marca = "-"
+				elseif (t == "+" || t == "plus")     marca = "+"
+				elseif (t == "a" || t == "*" || t == "star")     marca = "a"
+				elseif (t == "c" || t == "circle")   marca = "c"
+				elseif (t == "d" || t == "diamond")  marca = "d"
+				elseif (t == "g" || t == "octagon")  marca = "g"
+				elseif (t == "h" || t == "hexagon")  marca = "h"
+				elseif (t == "i" || t == "v" || t == "inverted_tri")  marca = "i"
+				elseif (t == "n" || t == "pentagon")  marca = "n"
+				elseif (t == "p" || t == "." || t == "point")     marca = "p"
+				elseif (t == "r" || t == "rectangle") marca = "r"
+				elseif (t == "s" || t == "square")    marca = "s"
+				elseif (t == "t" || t == "^" || t == "triangle")  marca = "t"
+				elseif (t == "x" || t == "cross")     marca = "x"
+				elseif (is3D && (t == "u" || t == "cube"))  marca = "u"
+				elseif (t == "y" || t == "y-dash")    marca = "y"
 				end
 				break
 			end
@@ -219,31 +237,60 @@ function xy(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, firs
 		if (!isempty(marca))  opt_S = " -S" * marca  end
 	end
 
+	if (!isempty(opt_S))			# 
+		opt_ML = ""
+		for sym in [:markerline :MarkerLine]
+			if (haskey(d, sym))
+				if (isa(d[sym], Tuple))	# Like this it can hold the pen, not extended atts
+					opt_ML = " -W" * parse_pen(d[sym])
+				else
+					opt_ML = " -W" * arg2str(d[sym])
+				end
+				if (!isempty(opt_Wmarker))
+					opt_Wmarker = ""
+					warn("markerline overrides markeredgecolor")
+				end
+				break
+			end
+		end
+		if (!isempty(opt_W) && !isempty(opt_ML))
+			warn("You cannot use both markeredgecolor and W or line_attrib keys.")
+		end
+	end
+
 	if (!isempty(opt_W) && isempty(opt_S)) 			# We have a line/polygon request
 		cmd = [finish_PS(d, cmd0, cmd * opt_W, output, K, O)]
 	elseif (isempty(opt_W) && !isempty(opt_S))		# We have a symbol request
 		if (!isempty(opt_Wmarker) && isempty(opt_W))
 			opt_Gsymb = opt_Gsymb * " -W" * opt_Wmarker	# Piggy back in this option string
 		end
+		if (!isempty(opt_ML))						# If we have a symbol outline pen
+			cmd = cmd * opt_ML
+		end
 		cmd = [finish_PS(d, cmd0, cmd * opt_S * opt_Gsymb, output, K, O)]
-	elseif (!isempty(opt_W) && !isempty(opt_S))			# We have both line/polygon and a symbol
+	elseif (!isempty(opt_W) && !isempty(opt_S))		# We have both line/polygon and a symbol
 		# that is not a vector (because Vector width is set by -W)
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
-            cmd = [finish_PS(d, cmd0, cmd * opt_W * opt_S * opt_Gsymb, output, K, O)]
+			cmd = [finish_PS(d, cmd0, cmd * opt_W * opt_S * opt_Gsymb, output, K, O)]
 		else
 			if (!isempty(opt_Wmarker))
-				opt_Wmarker = " -W" * opt_Wmarker		# Set Symbol edge color 
+				opt_Wmarker = " -W" * opt_Wmarker	# Set Symbol edge color 
 			end
 			cmd1 = cmd * opt_W
-			cmd2 = replace(cmd, opt_B, "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
+			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
+			if (!isempty(opt_ML))					# If we have a symbol outline pen
+				cmd1 = cmd1 * opt_ML
+			end
 			cmd = [finish_PS(d, cmd0, cmd1, output, true, O)
 			       finish_PS(d, cmd0, cmd2, output, K, true)]
 		end
+	elseif (!isempty(opt_ML) && !isempty(opt_S))		# We have a symbol outline pen
+		cmd = [finish_PS(d, cmd0, cmd * opt_ML * opt_S * opt_Gsymb, output, K, O)]
 	else
 		cmd = [finish_PS(d, cmd0, cmd, output, K, O)]
 	end
 
-    return finish_PS_module(d, cmd, "", arg1, arg2, N_args, output, fname_ext, opt_T, K, "psxy")
+    return finish_PS_module(d, cmd, "", arg1, arg2, N_args, output, fname_ext, opt_T, K, gmt_proggy)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -251,3 +298,9 @@ xy!(cmd0::String="", arg1=[]; caller=[], data=[], K=true, O=true,  first=false, 
 	xy(cmd0, arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
 xy!(arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
 	xy("", arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
+
+# ---------------------------------------------------------------------------------------------------
+xyz!(cmd0::String="", arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
+	xyz(cmd0, arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
+xyz!(arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
+	xyz("", arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)

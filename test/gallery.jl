@@ -1,6 +1,7 @@
 #The examples Gallery in Julia
 
 using GMT
+using DelimitedFiles
 
 # When calling the gallery() function directly and with only one argument, one need to edit
 # these two for own paths. Otherwise this same job is done in gmtest()
@@ -169,8 +170,8 @@ function ex03(g_root_dir, out_path)
 	ps = out_path * "example_03b.ps"
 
 	gmt("pshistogram -W0.1 -Gblack -JX3i -K -X2i -Y1.5i -B0 -B+t\"Ship\" -UL/-1.75i/-1.25i/\"Example 3b in Cookbook\"" *
-		" > " * ps, diff(ship_pg))
-	gmt("pshistogram  -W0.1 -Gblack -JX3i -O -X5i -B0 -B+t\"Sat\" >> " * ps, diff(sat_pg))
+		" > " * ps, diff(ship_pg, dims=1))
+	gmt("pshistogram  -W0.1 -Gblack -JX3i -O -X5i -B0 -B+t\"Sat\" >> " * ps, diff(sat_pg, dims=1))
 
 	# This experience shows that the satellite values are spaced fairly evenly, with
 	# delta-p between 3.222 and 3.418.  The ship values are spaced quite unevenly, with
@@ -403,7 +404,7 @@ function ex10(g_root_dir, out_path)
 	gmt("gmtset -Du")
 	gmt("destroy")
 	gmt("pscoast -Rd -JX8id/5id -Dc -Sazure2 -Gwheat -Wfaint -A5000 -p200/40 -K > " * ps)
-	str = readdlm(d_path * "languages.txt",'\t','\n')
+	str = readdlm(d_path * "languages.txt",'\t','\n', comments=true)
 	nl  = size(str,1)
 	array = zeros(nl, 7)
 	for row = 1:nl
@@ -417,7 +418,7 @@ function ex10(g_root_dir, out_path)
 			t[k] = @sprintf("%d %d %d\n",array[k,1], array[k,2], sum(array[k,3:end]))
 		end
 	else
-		tt = Array{Any}(nl)
+		tt = Array{Any}(undef, nl)
 		for k = 1:nl  tt[k] = @sprintf("%d",sum(array[k,3:end])) end
 		t = text_record(array, tt)
 	end
@@ -425,10 +426,10 @@ function ex10(g_root_dir, out_path)
 	gmt("psxyz " * d_path * "languages.txt -R-180/180/-90/90/0/2500 -J -JZ2.5i -So0.3i -Gpurple -Wthinner" *
 		" --FONT_TITLE=30p,Times-Bold --MAP_TITLE_OFFSET=-0.7i -O -K -p --FORMAT_GEO_MAP=dddF" *
 		" -Bx60 -By30 -Bza500+lLanguages -BWSneZ+t\"World Languages By Continent\" >> " * ps)
-	gmt("psxyz -R -J -JZ -So0.3ib -Gblue -Wthinner -O -K -p >> " * ps, [array[:,1:2] sum(array[:,3:4],2) array[:,3]])
-	gmt("psxyz -R -J -JZ -So0.3ib -Gdarkgreen -Wthinner -O -K -p >> " * ps, [array[:,1:2] sum(array[:,3:5],2) sum(array[:,3:4],2)])
-	gmt("psxyz -R -J -JZ -So0.3ib -Gyellow -Wthinner -O -K -p >> " * ps, [array[:,1:2] sum(array[:,3:6],2) sum(array[:,3:5],2)])
-	gmt("psxyz -R -J -JZ -So0.3ib -Gred -Wthinner -O -K -p >> " * ps, [array[:,1:2] sum(array[:,3:7],2) sum(array[:,3:6],2)])
+	gmt("psxyz -R -J -JZ -So0.3ib -Gblue -Wthinner -O -K -p >> " * ps, [array[:,1:2] sum(array[:,3:4],dims=2) array[:,3]])
+	gmt("psxyz -R -J -JZ -So0.3ib -Gdarkgreen -Wthinner -O -K -p >> " * ps, [array[:,1:2] sum(array[:,3:5],dims=2) sum(array[:,3:4],dims=2)])
+	gmt("psxyz -R -J -JZ -So0.3ib -Gyellow -Wthinner -O -K -p >> " * ps, [array[:,1:2] sum(array[:,3:6],dims=2) sum(array[:,3:5],dims=2)])
+	gmt("psxyz -R -J -JZ -So0.3ib -Gred -Wthinner -O -K -p >> " * ps, [array[:,1:2] sum(array[:,3:7],dims=2) sum(array[:,3:6],dims=2)])
 	gmt("pslegend -R -J -JZ -DjLB+o0.2i+w1.35i/0+jBL -O --FONT=Helvetica-Bold" *
 		" -F+glightgrey+pthinner+s-4p/-6p/grey20@40 -p " * d_path * "legend.txt >> " * ps)
 	rm("gmt.conf")
@@ -637,7 +638,7 @@ function ex14(g_root_dir, out_path)
 			t[k] = @sprintf("%f %f %.1f", mean_xyz[1].data[k,1], mean_xyz[1].data[k,2], mean_xyz[1].data[k,3])
 		end
 	else
-		tt = Array{Any}(nl)
+		tt = Array{Any}(undef, nl)
 		for k = 1:nl
 			tt[k] = @sprintf("%.1f", mean_xyz[1].data[k,3])
 		end
@@ -964,7 +965,7 @@ function ex21(g_root_dir, out_path)
 	# Pull out a suitable region string in yyy-mm-dd format
 	R = gmt("gmtinfo -fT -I50 @RHAT_price.csv");		# The output is a cell
 	R = R[1].text[1]
-	ind = strfind(R, '/')
+	ind = strfind(R, "/")
 	wT = R[3:ind[1]-1]				# West and East in T time coordinates (to be used later)
 	eT = R[ind[1]+1:ind[2]-1]
 	sF = R[ind[2]+1:ind[3]-1]

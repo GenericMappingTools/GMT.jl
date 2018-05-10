@@ -79,8 +79,9 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	cmd = add_opt(cmd, 'A', d, [:A :aspect_ratio])
 	cmd = add_opt(cmd, 'C', d, [:C :convergence])
-    cmd = add_opt(cmd, 'G', d, [:G :grid])
-    ind = searchindex(cmd, "-G")
+	cmd = add_opt(cmd, 'G', d, [:G :grid])
+	ff = findfirst("-G", cmd)
+    ind = (ff == nothing) ? 0 : first(ff)
 	if (ind > 0 && length(cmd) > ind+2)      # A file name was provided
         no_output = true
     else
@@ -100,7 +101,7 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 	(haskey(d, :Vd)) && println(@sprintf("\tsurface %s", cmd))
 
 	G = nothing
-	no_output = no_output || contains(cmd, "-Q")
+	no_output = no_output || occursin("-Q", cmd)
 	if (no_output)
 		if (!isempty_(arg1))  gmt("surface " * cmd, arg1)
 		else                  gmt("surface " * cmd)

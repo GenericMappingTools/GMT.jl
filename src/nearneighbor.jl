@@ -64,7 +64,7 @@ function nearneighbor(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	cmd = add_opt(cmd, 'E', d, [:E :empty])
     cmd = add_opt(cmd, 'G', d, [:G :grid])
-    ind = searchindex(cmd, "-G")
+    ind = first(findfirst("-G", cmd))
 	if (ind > 0 && length(cmd) > ind+2)      # A file name was provided
         no_output = true
     else

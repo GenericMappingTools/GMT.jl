@@ -19,7 +19,7 @@ chmod +x miniconda.sh
 export PATH=$CONDA_PREFIX/bin:$PATH
 
 # So that we can find libgmt
-export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 # Workaround for https://github.com/travis-ci/travis-ci/issues/6522
 # Turn off exit on failure.

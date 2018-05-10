@@ -21,6 +21,8 @@ function build_opt_R(Val)
 		return " -R" * Val
 	elseif (isa(Val, Array) && length(Val) == 4)
 		return @sprintf(" -R%.14g/%.14g/%.14g/%.14g", Val[1], Val[2], Val[3], Val[4])
+	elseif (isa(Val, Array) && length(Val) == 6)
+		return @sprintf(" -R%.14g/%.14g/%.14g/%.14g/%.14g/%.14g", Val[1], Val[2], Val[3], Val[4], Val[5], Val[6])
 	end
 	return ""
 end
@@ -105,23 +107,22 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 		end
 	end
 
-	tok = Vector{String}(10)
+	tok = Vector{String}(undef, 10)
 	k = 1
 	r = opt_B
 	found = false
 	while (!isempty(r))
 		tok[k],r = GMT.strtok(r)
-		if (ismatch(r"[WESNwesntlbu+g+o]", tok[k]) && !contains(tok[k], "+t"))		# If title here, forget about :title
+		if (occursin(r"[WESNwesntlbu+g+o]", tok[k]) && !occursin("+t", tok[k]))		# If title here, forget about :title
 			if (haskey(d, :title) && isa(d[:title], String))
 				tok[k] = tok[k] * "+t\"" * d[:title] * "\""
 			end
-		elseif (ismatch(r"[afgpsxyz+S+u]", tok[k]) && !ismatch(r"[+l+L]", tok[k]))	# If label here, forget about :x|y_label
+		elseif (occursin(r"[afgpsxyz+S+u]", tok[k]) && !occursin(r"[+l+L]", tok[k]))	# If label here, forget about :x|y_label
 			if (haskey(d, :x_label) && isa(d[:x_label], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:x_label] * "\""  end
 			if (haskey(d, :y_label) && isa(d[:y_label], String))  tok[k] = tok[k] * " -By+l\"" * d[:y_label] * "\""  end
 		end
-		if (!contains(tok[k], "-B"))
-			ind = searchindex(tok[k], '"')
-			if (ind == 0)
+		if (!occursin("-B", tok[k]))
+			if (!occursin('"', tok[k]))
 				tok[k] = " -B" * tok[k] 		# Simple case, no quotes to break our heads
 			else
 				if (!found)
@@ -131,16 +132,6 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 					tok[k] = " " * tok[k]
 					found = false
 				end
-				#=
-				if (tok[k][end] != '"')
-					tok[k] = " -B" * tok[k] 	# A title in quotes with spaces
-					last_k = k
-				elseif (ind < length(tok[k]) && tok[k][end] == '"')
-					tok[k] = " -B" * tok[k] 	# A title with no spaces
-				else
-					tok[k] = " " * tok[k]
-				end
-				=#
 			end
 		else
 			tok[k] = " " * tok[k]
@@ -168,8 +159,12 @@ function parse_BJR(d::Dict, cmd0::String, cmd::String, caller, O, default)
 	elseif (O && isempty(opt_J))
 		cmd = cmd * " -J"
 	end
-	if (!isempty(caller) && !contains(cmd0,"-B") && contains(opt_J, "-JX"))	# e.g. plot() sets 'caller'
-		cmd, opt_B = parse_B(cmd, d, "-Ba -BWS")
+	if (!isempty(caller) && !occursin("-B", cmd0) && occursin("-JX", opt_J))	# e.g. plot() sets 'caller'
+		if (caller == "plot3d")
+			cmd, opt_B = parse_B(cmd, d, "-Ba -Bza -BWSZ")
+		else
+			cmd, opt_B = parse_B(cmd, d, "-Ba -BWS")
+		end
 	else
 		cmd, opt_B = parse_B(cmd, d)
 	end
@@ -761,7 +756,7 @@ function arg2str(arg)
 		out = string(arg)
 	elseif (isempty(arg) || (isa(arg, Bool) && arg))
 		out = ""
-	elseif (isa(arg, Number))			# Have to do it after the Bool test above because Bool is a Number too
+	elseif (isa(arg, Number))		# Have to do it after the Bool test above because Bool is a Number too
 		out = @sprintf("%.8g", arg)
 	elseif (isa(arg, Array{<:Number}))
 		out = join([@sprintf("%.4g/",x) for x in min(4, length(arg))])	# No more than 4 to avoid 'abuses'
@@ -792,7 +787,7 @@ function finish_PS(d::Dict, cmd0::String, cmd::String, output::String, K::Bool, 
 	end
 	
 	# Cannot mix -O,-K and output redirect between positional and kwarg arguments
-	if (isempty(search(cmd0, "-K")) && isempty(search(cmd0, "-O")) && isempty(search(cmd0, ">")))
+	if (!occursin("-K", cmd0) && !occursin("-)", cmd0) && !occursin(">", cmd0))
 		# So the -O -K dance is provided via kwargs
 		if (K && !O)              opt = " -K"
 		elseif (K && O)           opt = " -K -O"
@@ -868,7 +863,7 @@ function fname_out(d::Dict)
 	else
 		out = FMT						# Use the global FMT choice
 	end
-	if (isempty(out) && !is_windows())
+	if (isempty(out) && !Sys.iswindows())
 		error("NOT specifying the **fmt** format is only allowed on Windows")
 	end
 	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
@@ -880,7 +875,7 @@ function fname_out(d::Dict)
 
 	opt_T = "";
 	if (length(out) <= 3)
-		@static is_windows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps" 
+		@static Sys.iswindows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps" 
 		ext = lowercase(out)
 		if (ext == "ps")       out = template;  EXT = ext
 		elseif (ext == "pdf")  opt_T = " -Tf";	out = template;		EXT = ext
@@ -894,7 +889,7 @@ function fname_out(d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function read_data(data, cmd, arg, opt_R, opt_i, opt_bi, opt_di)
+function read_data(data, cmd, arg, opt_R, opt_i, opt_bi, opt_di, is3D=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided 
 	if (!isempty_(data) && !isempty_(arg1))
@@ -919,7 +914,11 @@ function read_data(data, cmd, arg, opt_R, opt_i, opt_bi, opt_di)
 		if (size(info[1].data, 2) < 4)
 			error("Need at least 2 columns of data to run this program")
 		end
-		opt_R = @sprintf(" -R%.8g/%.8g/%.8g/%.8g", info[1].data[1], info[1].data[2], info[1].data[3], info[1].data[4])
+		if (is3D)
+			opt_R = @sprintf(" -R%.8g/%.8g/%.8g/%.8g/%.8g/%.8g", info[1].data[1], info[1].data[2], info[1].data[3], info[1].data[4], info[1].data[5], info[1].data[6])
+		else
+			opt_R = @sprintf(" -R%.8g/%.8g/%.8g/%.8g", info[1].data[1], info[1].data[2], info[1].data[3], info[1].data[4])
+		end
 		cmd = cmd * opt_R
 	end
 
@@ -967,7 +966,7 @@ function showfig(fname_ps::String, fname_ext::String, opt_T::String, K=false, fn
 			gmt("psconvert = -A1p -Tf -F" * out)
 		end
 	end
-	if (is_windows()) run(ignorestatus(`explorer $out`))
+	if (Sys.iswindows()) run(ignorestatus(`explorer $out`))
 	elseif (is_apple()) run(`open $(out)`)
 	elseif (is_linux()) run(`xdg-open $(out)`)
 	end
@@ -976,6 +975,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function isempty_(arg)
 	# F... F... it's a shame having to do this
+	if (arg == nothing)
+		return true
+	end
 	empty = false
 	try
 		empty = isempty(arg)
@@ -1007,7 +1009,7 @@ function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, a
 	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
 	else                PS = false
 	end
-	if (!isempty(opt_extra) && contains(cmd, opt_extra))  PS = true  end	# For example -D in grdcontour
+	if (!isempty(opt_extra) && occursin(opt_extra, cmd))  PS = true  end	# For example -D in grdcontour
 
 	(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd))
 
@@ -1076,7 +1078,7 @@ function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, arg1
 	if (isempty(fname_ext) && isempty(opt_extra))	# Return result as an GMTimage
 		P = showfig(output, fname_ext, "", K)
 	else
-		if (haskey(d, :show)) 						# Display Fig in default viewer
+		if (haskey(d, :show) && d[:show] != 0) 		# Display Fig in default viewer
 			showfig(output, fname_ext, opt_T, K)
 		elseif (haskey(d, :savefig))
 			showfig(output, fname_ext, opt_T, K, d[:savefig])
@@ -1098,7 +1100,7 @@ function monolitic(prog::String, cmd0::String, arg1=[], need_out::Bool=true)
 	# NEED_OUT signals if the module has an output. The PS producers, however, may or not
 	# return something (the PS itself), psconvert can also have it (the Image) or not.
 	R = nothing
-	if (need_out && contains(cmd0, ">"))  need_out = false  end		# Interpreted as "> file" so not LHS
+	if (need_out && occursin(">", cmd0))  need_out = false  end		# Interpreted as "> file" so not LHS
 	if (need_out)
 		if (isempty(arg1))  R = gmt(prog * cmd0)
 		else                R = gmt(prog * cmd0, arg1)
@@ -1113,10 +1115,10 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function peaks(N=49)
-	x,y = meshgrid(linspace(-3,3,N))
+	x,y = meshgrid(range(-3,stop=3,length=N))
 	
-	z =  3 * (1.-x).^2 .* exp.(-(x.^2) - (y.+1).^2) - 10*(x./5 - x.^3 - y.^5) .* exp.(-x.^2 - y.^2)
-	   - 1/3 * exp.(-(x.+1).^2 - y.^2)
+	z =  3 * (1 .- x).^2 .* exp.(-(x.^2) - (y .+ 1).^2) - 10*(x./5 - x.^3 - y.^5) .* exp.(-x.^2 - y.^2)
+	   - 1/3 * exp.(-(x .+ 1).^2 - y.^2)
 	return x,y,z
 end	
 
@@ -1125,7 +1127,7 @@ function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}) where T
 	m, n = length(vy), length(vx)
 	vx = reshape(vx, 1, n)
 	vy = reshape(vy, m, 1)
-	(repmat(vx, m, 1), repmat(vy, 1, n))
+	(repeat(vx, m, 1), repeat(vy, 1, n))
 end
 
 function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}, vz::AbstractVector{T}) where T

@@ -1,12 +1,12 @@
 #@static is_windows() ? (const thelib = "V:/build/src/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
-@static is_windows() ? (Sys.WORD_SIZE == 64 ? (const thelib = "gmt_w64") : (const thelib = "gmt_w32")) : (const thelib = "libgmt")  # Name of GMT shared lib.
+@static Sys.iswindows() ? (Sys.WORD_SIZE == 64 ? (const thelib = "gmt_w64") : (const thelib = "gmt_w32")) : (const thelib = "libgmt")  # Name of GMT shared lib.
 
-function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Void}=C_NULL)
-	ccall( (:GMT_Create_Session, thelib), Ptr{Void}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Void}), tag, pad, mode, print_func)
+function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Cvoid}=C_NULL)
+	ccall( (:GMT_Create_Session, thelib), Ptr{Cvoid}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Cvoid}), tag, pad, mode, print_func)
 end
 
-function GMT_Create_Data(API::Ptr{Void}, family, geometry, mode, dim=C_NULL, wesn=C_NULL,
-                         inc=C_NULL, registration=0, pad=2, data::Ptr{Void}=C_NULL)
+function GMT_Create_Data(API::Ptr{Cvoid}, family, geometry, mode, dim=C_NULL, wesn=C_NULL,
+                         inc=C_NULL, registration=0, pad=2, data::Ptr{Cvoid}=C_NULL)
 
 	if (family == GMT_IS_DATASET)
 		ret_type = Ptr{GMT_DATASET}
@@ -27,18 +27,18 @@ function GMT_Create_Data(API::Ptr{Void}, family, geometry, mode, dim=C_NULL, wes
 	elseif (family == GMT_IS_POSTSCRIPT)
 		ret_type = Ptr{GMT_POSTSCRIPT}
 	else
-		ret_type = Ptr{Void}			# Should be error instead
+		ret_type = Ptr{Cvoid}			# Should be error instead
 	end
 
-	ptr = ccall((:GMT_Create_Data, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt32, UInt32, Ptr{UInt64},
-		Ptr{Cdouble}, Ptr{Cdouble}, UInt32, Cint, Ptr{Void}), API, family, geometry, mode, dim, wesn, inc,
+	ptr = ccall((:GMT_Create_Data, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt32, UInt32, UInt32, Ptr{UInt64},
+		Ptr{Cdouble}, Ptr{Cdouble}, UInt32, Cint, Ptr{Cvoid}), API, family, geometry, mode, dim, wesn, inc,
 		registration, pad, data)
 
 	convert(ret_type, ptr)
 end
 
 #=		Not used yet, so comment
-function GMT_Read_Data(API::Ptr{Void}, family, method, geometry, mode, wesn, input=C_NULL, data=C_NULL)
+function GMT_Read_Data(API::Ptr{Cvoid}, family, method, geometry, mode, wesn, input=C_NULL, data=C_NULL)
 
 	if (family == GMT_IS_DATASET)
 		ret_type = Ptr{GMT_DATASET}
@@ -55,264 +55,264 @@ function GMT_Read_Data(API::Ptr{Void}, family, method, geometry, mode, wesn, inp
 	elseif (family == GMT_IS_VECTOR)
 		ret_type = Ptr{GMT_VECTOR}
 	else
-		ret_type = Ptr{Void}			# Should be error instead
+		ret_type = Ptr{Cvoid}			# Should be error instead
 	end
 
-	ptr = ccall( (:GMT_Read_Data, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
-		Ptr{UInt8}, Ptr{Void}), API, family, method, geometry, mode, wesn, input, data)
+	ptr = ccall( (:GMT_Read_Data, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
+		Ptr{UInt8}, Ptr{Cvoid}), API, family, method, geometry, mode, wesn, input, data)
 
 	convert(ret_type, ptr)
 end
 =#
 
-function GMT_Insert_Data(API::Ptr{Void}, object_ID::Integer, data)
-	ccall((:GMT_Insert_Data, thelib), Cint, (Ptr{Void}, Cint, Ptr{Void}), API, object_ID, data)
+function GMT_Insert_Data(API::Ptr{Cvoid}, object_ID::Integer, data)
+	ccall((:GMT_Insert_Data, thelib), Cint, (Ptr{Cvoid}, Cint, Ptr{Cvoid}), API, object_ID, data)
 end
 
-function GMT_Duplicate_Data(API::Ptr{Void}, family::Integer, mode::Integer, data::Ptr{Void})
-	ccall( (:GMT_Duplicate_Data, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt32, Ptr{Void}), API, family, mode, data)
+function GMT_Duplicate_Data(API::Ptr{Cvoid}, family::Integer, mode::Integer, data::Ptr{Cvoid})
+	ccall( (:GMT_Duplicate_Data, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt32, UInt32, Ptr{Cvoid}), API, family, mode, data)
 end
-function GMT_Get_Record(API::Ptr{Void}, mode::Integer, retval::Ptr{Cint})
-	ccall( (:GMT_Get_Record, thelib), Ptr{Void}, (Ptr{Void}, UInt32, Ptr{Cint}), API, mode, retval)
-end
-
-function GMT_Manage_Session(API::Ptr{Void}, mode::Integer, args::Ptr{Void})
-	ccall( (:GMT_Manage_Session, thelib), Cint, (Ptr{Void}, UInt32, Ptr{Void}), API, mode, args)
+function GMT_Get_Record(API::Ptr{Cvoid}, mode::Integer, retval::Ptr{Cint})
+	ccall( (:GMT_Get_Record, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt32, Ptr{Cint}), API, mode, retval)
 end
 
-function GMT_Destroy_Session(API::Ptr{Void})
-	ccall( (:GMT_Destroy_Session, thelib), Cint, (Ptr{Void},), API)
+function GMT_Manage_Session(API::Ptr{Cvoid}, mode::Integer, args::Ptr{Cvoid})
+	ccall( (:GMT_Manage_Session, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{Cvoid}), API, mode, args)
+end
+
+function GMT_Destroy_Session(API::Ptr{Cvoid})
+	ccall( (:GMT_Destroy_Session, thelib), Cint, (Ptr{Cvoid},), API)
 end
 
 function GMT_Register_IO(API, family::Integer, method::Integer, geometry::Integer, direction::Integer=0,
 		wesn=C_NULL, resource=C_NULL)
-	err = ccall((:GMT_Register_IO, thelib), Cint, (Ptr{Void}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
-		Ptr{Void}), API, family, method, geometry, direction, wesn, resource)
+	err = ccall((:GMT_Register_IO, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
+		Ptr{Cvoid}), API, family, method, geometry, direction, wesn, resource)
 end
 
-function GMT_Init_IO(API::Ptr{Void}, family::UInt32, geometry::UInt32, direction::UInt32, mode::UInt32, n_args::UInt32, args::Ptr{Void})
-	ccall( (:GMT_Init_IO, thelib), Cint, (Ptr{Void}, UInt32, UInt32, UInt32, UInt32, UInt32, Ptr{Void}), API, family, geometry, direction, mode, n_args, args)
+function GMT_Init_IO(API::Ptr{Cvoid}, family::UInt32, geometry::UInt32, direction::UInt32, mode::UInt32, n_args::UInt32, args::Ptr{Cvoid})
+	ccall( (:GMT_Init_IO, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32, UInt32, UInt32, UInt32, Ptr{Cvoid}), API, family, geometry, direction, mode, n_args, args)
 end
-function GMT_Begin_IO(API::Ptr{Void}, family::UInt32, direction::UInt32, header::UInt32)
-	ccall( (:GMT_Begin_IO, thelib), Cint, (Ptr{Void}, UInt32, UInt32, UInt32), API, family, direction, header)
+function GMT_Begin_IO(API::Ptr{Cvoid}, family::UInt32, direction::UInt32, header::UInt32)
+	ccall( (:GMT_Begin_IO, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32, UInt32), API, family, direction, header)
 end
-function GMT_Status_IO(API::Ptr{Void}, mode::UInt32)
-	ccall( (:GMT_Status_IO, thelib), Cint, (Ptr{Void}, UInt32), API, mode)
+function GMT_Status_IO(API::Ptr{Cvoid}, mode::UInt32)
+	ccall( (:GMT_Status_IO, thelib), Cint, (Ptr{Cvoid}, UInt32), API, mode)
 end
-function GMT_End_IO(API::Ptr{Void}, direction::UInt32, mode::UInt32)
-	ccall( (:GMT_End_IO, thelib), Cint, (Ptr{Void}, UInt32, UInt32), API, direction, mode)
+function GMT_End_IO(API::Ptr{Cvoid}, direction::UInt32, mode::UInt32)
+	ccall( (:GMT_End_IO, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32), API, direction, mode)
 end
 
-function GMT_Write_Data(API::Ptr{Void}, family::Integer, method::Integer, geometry::Integer, mode::Integer,
+function GMT_Write_Data(API::Ptr{Cvoid}, family::Integer, method::Integer, geometry::Integer, mode::Integer,
 	wesn, output::String, data)
 
-	err = ccall((:GMT_Write_Data, thelib), Cint, (Ptr{Void}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
-		Ptr{UInt8}, Ptr{Void}), API, family, method, geometry, mode, wesn, output, data)
+	err = ccall((:GMT_Write_Data, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
+		Ptr{UInt8}, Ptr{Cvoid}), API, family, method, geometry, mode, wesn, output, data)
 end
 
 function get_that_pointer(object)
-	ccall( (:get_that_pointer, thelib), Ptr{Void}, (Ptr{Void},), object)
+	ccall( (:get_that_pointer, thelib), Ptr{Cvoid}, (Ptr{Cvoid},), object)
 end
 
-function GMT_Destroy_Data(API::Ptr{Void}, object)
-	ccall( (:GMT_Destroy_Data, thelib), Cint, (Ptr{Void}, Ptr{Void}), API, object)
+function GMT_Destroy_Data(API::Ptr{Cvoid}, object)
+	ccall( (:GMT_Destroy_Data, thelib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), API, object)
 end
 
-function GMT_Put_Record(API::Ptr{Void}, mode::UInt32, record::Ptr{Void})
-	ccall( (:GMT_Put_Record, thelib), Cint, (Ptr{Void}, UInt32, Ptr{Void}), API, mode, record)
+function GMT_Put_Record(API::Ptr{Cvoid}, mode::UInt32, record::Ptr{Cvoid})
+	ccall( (:GMT_Put_Record, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{Cvoid}), API, mode, record)
 end
 
-function GMT_Encode_ID(API::Ptr{Void}, fname::String, object_ID::Integer)
-	err = ccall((:GMT_Encode_ID, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Cint), API, fname, object_ID)
+function GMT_Encode_ID(API::Ptr{Cvoid}, fname::String, object_ID::Integer)
+	err = ccall((:GMT_Encode_ID, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Cint), API, fname, object_ID)
 end
 
-function GMT_Get_Row(API::Ptr{Void}, rec_no::Cint, G::Ptr{GMT_GRID}, row::Ptr{Cfloat})
-	ccall( (:GMT_Get_Row, thelib), Cint, (Ptr{Void}, Cint, Ptr{GMT_GRID}, Ptr{Cfloat}), API, rec_no, G, row)
+function GMT_Get_Row(API::Ptr{Cvoid}, rec_no::Cint, G::Ptr{GMT_GRID}, row::Ptr{Cfloat})
+	ccall( (:GMT_Get_Row, thelib), Cint, (Ptr{Cvoid}, Cint, Ptr{GMT_GRID}, Ptr{Cfloat}), API, rec_no, G, row)
 end
-function GMT_Put_Row(API::Ptr{Void}, rec_no::Cint, G::Ptr{GMT_GRID}, row::Ptr{Cfloat})
-	ccall( (:GMT_Put_Row, thelib), Cint, (Ptr{Void}, Cint, Ptr{GMT_GRID}, Ptr{Cfloat}), API, rec_no, G, row)
+function GMT_Put_Row(API::Ptr{Cvoid}, rec_no::Cint, G::Ptr{GMT_GRID}, row::Ptr{Cfloat})
+	ccall( (:GMT_Put_Row, thelib), Cint, (Ptr{Cvoid}, Cint, Ptr{GMT_GRID}, Ptr{Cfloat}), API, rec_no, G, row)
 end
-function GMT_Set_Comment(API::Ptr{Void}, family::Integer, mode::Integer, arg::Ptr{Void}, data::Ptr{Void})
-	ccall( (:GMT_Set_Comment, thelib), Cint, (Ptr{Void}, UInt32, UInt32, Ptr{Void}, Ptr{Void}), API, family, mode, arg, data)
-end
-
-function GMT_Get_ID(API::Ptr{Void}, family::Integer, dir::Integer, resource=C_NULL)
-	ccall((:GMT_Get_ID, thelib), Cint, (Ptr{Void}, UInt32, UInt32, Ptr{Void}), API, family, dir, resource)
+function GMT_Set_Comment(API::Ptr{Cvoid}, family::Integer, mode::Integer, arg::Ptr{Cvoid}, data::Ptr{Cvoid})
+	ccall( (:GMT_Set_Comment, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32, Ptr{Cvoid}, Ptr{Cvoid}), API, family, mode, arg, data)
 end
 
-function GMT_Get_Family(API::Ptr{Void}, dir::Integer, head::Ptr{GMT_OPTION})
-	ccall((:GMT_Get_Family, thelib), Cint, (Ptr{Void}, UInt32, Ptr{GMT_OPTION}), API, dir, head)
+function GMT_Get_ID(API::Ptr{Cvoid}, family::Integer, dir::Integer, resource=C_NULL)
+	ccall((:GMT_Get_ID, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32, Ptr{Cvoid}), API, family, dir, resource)
 end
 
-function GMT_Get_Index(API::Ptr{Void}, header::Ptr{GMT_GRID_HEADER}, row::Cint, col::Cint)
-	ccall( (:GMT_Get_Index, thelib), Clonglong, (Ptr{Void}, Ptr{GMT_GRID_HEADER}, Cint, Cint), API, header, row, col)
-end
-function GMT_Get_Coord(API::Ptr{Void}, family::Integer, dim::Integer, container::Ptr{Void})
-	ccall( (:GMT_Get_Coord, thelib), Ptr{Cdouble}, (Ptr{Void}, UInt32, UInt32, Ptr{Void}), API, family, dim, container)
+function GMT_Get_Family(API::Ptr{Cvoid}, dir::Integer, head::Ptr{GMT_OPTION})
+	ccall((:GMT_Get_Family, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{GMT_OPTION}), API, dir, head)
 end
 
-function GMT_Option(API::Ptr{Void}, options)
-	ccall( (:GMT_Option, thelib), Cint, (Ptr{Void}, Ptr{UInt8}), API, options)
+function GMT_Get_Index(API::Ptr{Cvoid}, header::Ptr{GMT_GRID_HEADER}, row::Cint, col::Cint)
+	ccall( (:GMT_Get_Index, thelib), Clonglong, (Ptr{Cvoid}, Ptr{GMT_GRID_HEADER}, Cint, Cint), API, header, row, col)
+end
+function GMT_Get_Coord(API::Ptr{Cvoid}, family::Integer, dim::Integer, container::Ptr{Cvoid})
+	ccall( (:GMT_Get_Coord, thelib), Ptr{Cdouble}, (Ptr{Cvoid}, UInt32, UInt32, Ptr{Cvoid}), API, family, dim, container)
 end
 
-function GMT_Get_Common(API::Ptr{Void}, option::UInt32, par::Ptr{Cdouble})
-	ccall( (:GMT_Get_Common, thelib), Cint, (Ptr{Void}, UInt32, Ptr{Cdouble}), API, option, par)
+function GMT_Option(API::Ptr{Cvoid}, options)
+	ccall( (:GMT_Option, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}), API, options)
 end
 
-function GMT_Get_Default(API::Ptr{Void}, keyword::String, value)
-	ccall((:GMT_Get_Default, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
+function GMT_Get_Common(API::Ptr{Cvoid}, option::UInt32, par::Ptr{Cdouble})
+	ccall( (:GMT_Get_Common, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{Cdouble}), API, option, par)
 end
 
-function GMT_Get_Value(API::Ptr{Void}, arg::String, par::Ptr{Cdouble})
-	ccall((:GMT_Get_Value, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Cdouble}), API, arg, par)
-end
-function GMT_Get_Values(API::Ptr{Void}, arg::String, par::Ptr{Cdouble}, maxpar::Integer)
-	ccall((:GMT_Get_Values, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{Cdouble}, Cint), API, arg, par, maxpar)
+function GMT_Get_Default(API::Ptr{Cvoid}, keyword::String, value)
+	ccall((:GMT_Get_Default, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 end
 
-function GMT_Call_Module(API::Ptr{Void}, _module=C_NULL, mode::Integer=0, args=C_NULL)
+function GMT_Get_Value(API::Ptr{Cvoid}, arg::String, par::Ptr{Cdouble})
+	ccall((:GMT_Get_Value, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cdouble}), API, arg, par)
+end
+function GMT_Get_Values(API::Ptr{Cvoid}, arg::String, par::Ptr{Cdouble}, maxpar::Integer)
+	ccall((:GMT_Get_Values, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cdouble}, Cint), API, arg, par, maxpar)
+end
+
+function GMT_Call_Module(API::Ptr{Cvoid}, _module=C_NULL, mode::Integer=0, args=C_NULL)
 	if (isa(args,String))	args = pointer(args)	end
-	ccall((:GMT_Call_Module, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Cint, Ptr{Void}), API, _module, mode, args)
+	ccall((:GMT_Call_Module, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Cint, Ptr{Cvoid}), API, _module, mode, args)
 end
 
-function GMT_Create_Options(API::Ptr{Void}, argc::Integer, args)
+function GMT_Create_Options(API::Ptr{Cvoid}, argc::Integer, args)
 	# VERSATILIZAR PARA O CASO DE ARGS SER STRING OU ARRAY DE STRINGS
-	#ccall((:GMT_Create_Options, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, Cint, Ptr{Void}), API, argc, args)
-	ccall((:GMT_Create_Options, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, Cint, Cstring), API, argc, args)
+	#ccall((:GMT_Create_Options, thelib), Ptr{GMT_OPTION}, (Ptr{Cvoid}, Cint, Ptr{Cvoid}), API, argc, args)
+	ccall((:GMT_Create_Options, thelib), Ptr{GMT_OPTION}, (Ptr{Cvoid}, Cint, Cstring), API, argc, args)
 end
-#GMT_Create_Options(API::Ptr{Void}, argc::Integer, args::String) = 
-#                   GMT_Create_Options(API, argc, convert(Ptr{Void},pointer(args)))
+#GMT_Create_Options(API::Ptr{Cvoid}, argc::Integer, args::String) = 
+#                   GMT_Create_Options(API, argc, convert(Ptr{Cvoid},pointer(args)))
 
-function GMT_Make_Option(API::Ptr{Void}, option::UInt8, arg::Ptr{UInt8})
-	ccall((:GMT_Make_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, UInt8, Ptr{UInt8}), API, option, arg)
-end
-
-function GMT_Find_Option(API::Ptr{Void}, option::UInt8, head::Ptr{GMT_OPTION})
-	ccall((:GMT_Find_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, UInt8, Ptr{GMT_OPTION}), API, option, head)
+function GMT_Make_Option(API::Ptr{Cvoid}, option::UInt8, arg::Ptr{UInt8})
+	ccall((:GMT_Make_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Cvoid}, UInt8, Ptr{UInt8}), API, option, arg)
 end
 
-function GMT_Append_Option(API::Ptr{Void}, current::Ptr{GMT_OPTION}, head::Ptr{GMT_OPTION})
-	ccall((:GMT_Append_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Void}, Ptr{GMT_OPTION}, Ptr{GMT_OPTION}), API, current, head)
+function GMT_Find_Option(API::Ptr{Cvoid}, option::UInt8, head::Ptr{GMT_OPTION})
+	ccall((:GMT_Find_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Cvoid}, UInt8, Ptr{GMT_OPTION}), API, option, head)
 end
-function GMT_Create_Args(API::Ptr{Void}, argc::Ptr{Int}, head::Ptr{GMT_OPTION})
-	ccall( (:GMT_Create_Args, thelib), Ptr{Ptr{UInt8}}, (Ptr{Void}, Ptr{Cint}, Ptr{GMT_OPTION}), API, argc, head)
+
+function GMT_Append_Option(API::Ptr{Cvoid}, current::Ptr{GMT_OPTION}, head::Ptr{GMT_OPTION})
+	ccall((:GMT_Append_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Cvoid}, Ptr{GMT_OPTION}, Ptr{GMT_OPTION}), API, current, head)
 end
-function GMT_Create_Cmd(API::Ptr{Void}, head::Ptr{GMT_OPTION})
-	ccall( (:GMT_Create_Cmd, thelib), Ptr{UInt8}, (Ptr{Void}, Ptr{GMT_OPTION}), API, head)
+function GMT_Create_Args(API::Ptr{Cvoid}, argc::Ptr{Int}, head::Ptr{GMT_OPTION})
+	ccall( (:GMT_Create_Args, thelib), Ptr{Ptr{UInt8}}, (Ptr{Cvoid}, Ptr{Cint}, Ptr{GMT_OPTION}), API, argc, head)
 end
-function GMT_Destroy_Options(API::Ptr{Void}, head::Ref{Ptr{GMT_OPTION}})
-	ccall( (:GMT_Destroy_Options, thelib), Cint, (Ptr{Void}, Ref{Ptr{GMT_OPTION}}), API, head)
+function GMT_Create_Cmd(API::Ptr{Cvoid}, head::Ptr{GMT_OPTION})
+	ccall( (:GMT_Create_Cmd, thelib), Ptr{UInt8}, (Ptr{Cvoid}, Ptr{GMT_OPTION}), API, head)
 end
-function GMT_Destroy_Args(API::Ptr{Void}, argc::Cint, argv::Ptr{Ptr{Ptr{UInt8}}})
-	ccall( (:GMT_Destroy_Args, thelib), Cint, (Ptr{Void}, Cint, Ptr{Ptr{Ptr{UInt8}}}), API, argc, argv)
+function GMT_Destroy_Options(API::Ptr{Cvoid}, head::Ref{Ptr{GMT_OPTION}})
+	ccall( (:GMT_Destroy_Options, thelib), Cint, (Ptr{Cvoid}, Ref{Ptr{GMT_OPTION}}), API, head)
 end
-function GMT_Destroy_Cmd(API::Ptr{Void}, cmd::Ptr{Ptr{UInt8}})
-	ccall( (:GMT_Destroy_Cmd, thelib), Cint, (Ptr{Void}, Ptr{Ptr{UInt8}}), API, cmd)
+function GMT_Destroy_Args(API::Ptr{Cvoid}, argc::Cint, argv::Ptr{Ptr{Ptr{UInt8}}})
+	ccall( (:GMT_Destroy_Args, thelib), Cint, (Ptr{Cvoid}, Cint, Ptr{Ptr{Ptr{UInt8}}}), API, argc, argv)
 end
-function GMT_Update_Option(API::Ptr{Void}, current::Ptr{GMT_OPTION}, arg::Ptr{UInt8})
-	ccall( (:GMT_Update_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Ptr{UInt8}), API, current, arg)
+function GMT_Destroy_Cmd(API::Ptr{Cvoid}, cmd::Ptr{Ptr{UInt8}})
+	ccall( (:GMT_Destroy_Cmd, thelib), Cint, (Ptr{Cvoid}, Ptr{Ptr{UInt8}}), API, cmd)
 end
-function GMT_Delete_Option(API::Ptr{Void}, current::Ptr{GMT_OPTION}, head::Ptr{Ptr{GMT_OPTION}})
-	ccall( (:GMT_Delete_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Ptr{Ptr{GMT_OPTION}}), API, current, head)
+function GMT_Update_Option(API::Ptr{Cvoid}, current::Ptr{GMT_OPTION}, arg::Ptr{UInt8})
+	ccall( (:GMT_Update_Option, thelib), Cint, (Ptr{Cvoid}, Ptr{GMT_OPTION}, Ptr{UInt8}), API, current, arg)
 end
-function GMT_Parse_Common(API::Ptr{Void}, given_options::Ptr{UInt8}, options::Ptr{GMT_OPTION})
-	ccall( (:GMT_Parse_Common, thelib), Cint, (Ptr{Void}, Ptr{UInt8}, Ptr{GMT_OPTION}), API, given_options, options)
+function GMT_Delete_Option(API::Ptr{Cvoid}, current::Ptr{GMT_OPTION}, head::Ptr{Ptr{GMT_OPTION}})
+	ccall( (:GMT_Delete_Option, thelib), Cint, (Ptr{Cvoid}, Ptr{GMT_OPTION}, Ptr{Ptr{GMT_OPTION}}), API, current, head)
+end
+function GMT_Parse_Common(API::Ptr{Cvoid}, given_options::Ptr{UInt8}, options::Ptr{GMT_OPTION})
+	ccall( (:GMT_Parse_Common, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{GMT_OPTION}), API, given_options, options)
 end
 #=
-function GMT_FFT_Option(API::Ptr{Void}, option::UInt8, dim::UInt32, string::Ptr{UInt8})
-	ccall( (:GMT_FFT_Option, thelib), UInt32, (Ptr{Void}, UInt8, UInt32, Ptr{UInt8}), API, option, dim, string)
+function GMT_FFT_Option(API::Ptr{Cvoid}, option::UInt8, dim::UInt32, string::Ptr{UInt8})
+	ccall( (:GMT_FFT_Option, thelib), UInt32, (Ptr{Cvoid}, UInt8, UInt32, Ptr{UInt8}), API, option, dim, string)
 end
-function GMT_FFT_Parse(API::Ptr{Void}, option::UInt8, dim::UInt32, args::Ptr{UInt8})
-	ccall( (:GMT_FFT_Parse, thelib), Ptr{Void}, (Ptr{Void}, UInt8, UInt32, Ptr{UInt8}), API, option, dim, args)
+function GMT_FFT_Parse(API::Ptr{Cvoid}, option::UInt8, dim::UInt32, args::Ptr{UInt8})
+	ccall( (:GMT_FFT_Parse, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt8, UInt32, Ptr{UInt8}), API, option, dim, args)
 end
-function GMT_FFT_Create(API::Ptr{Void}, X::Ptr{Void}, dim::UInt32, mode::UInt32, F::Ptr{Void})
-	ccall( (:GMT_FFT_Create, thelib), Ptr{Void}, (Ptr{Void}, Ptr{Void}, UInt32, UInt32, Ptr{Void}), API, X, dim, mode, F)
+function GMT_FFT_Create(API::Ptr{Cvoid}, X::Ptr{Cvoid}, dim::UInt32, mode::UInt32, F::Ptr{Cvoid})
+	ccall( (:GMT_FFT_Create, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, UInt32, UInt32, Ptr{Cvoid}), API, X, dim, mode, F)
 end
-function GMT_FFT_Wavenumber(API::Ptr{Void}, k::UInt16, mode::UInt32, K::Ptr{Void})
-	ccall( (:GMT_FFT_Wavenumber, thelib), Cdouble, (Ptr{Void}, UInt16, UInt32, Ptr{Void}), API, k, mode, K)
+function GMT_FFT_Wavenumber(API::Ptr{Cvoid}, k::UInt16, mode::UInt32, K::Ptr{Cvoid})
+	ccall( (:GMT_FFT_Wavenumber, thelib), Cdouble, (Ptr{Cvoid}, UInt16, UInt32, Ptr{Cvoid}), API, k, mode, K)
 end
-function GMT_FFT(API::Ptr{Void}, X::Ptr{Void}, direction::Cint, mode::UInt32, K::Ptr{Void})
-	ccall( (:GMT_FFT, thelib), Cint, (Ptr{Void}, Ptr{Void}, Cint, UInt32, Ptr{Void}), API, X, direction, mode, K)
+function GMT_FFT(API::Ptr{Cvoid}, X::Ptr{Cvoid}, direction::Cint, mode::UInt32, K::Ptr{Cvoid})
+	ccall( (:GMT_FFT, thelib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Cint, UInt32, Ptr{Cvoid}), API, X, direction, mode, K)
 end
-function GMT_FFT_Destroy(API::Ptr{Void}, K::Ptr{Void})
-	ccall( (:GMT_FFT_Destroy, thelib), Cint, (Ptr{Void}, Ptr{Void}), API, K)
+function GMT_FFT_Destroy(API::Ptr{Cvoid}, K::Ptr{Cvoid})
+	ccall( (:GMT_FFT_Destroy, thelib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), API, K)
 end
-function GMT_FFT_1D(API::Ptr{Void}, data::Ptr{Cfloat}, n::UInt16, direction::Cint, mode::UInt32)
-	ccall( (:GMT_FFT_1D, thelib), Cint, (Ptr{Void}, Ptr{Cfloat}, UInt16, Cint, UInt32), API, data, n, direction, mode)
+function GMT_FFT_1D(API::Ptr{Cvoid}, data::Ptr{Cfloat}, n::UInt16, direction::Cint, mode::UInt32)
+	ccall( (:GMT_FFT_1D, thelib), Cint, (Ptr{Cvoid}, Ptr{Cfloat}, UInt16, Cint, UInt32), API, data, n, direction, mode)
 end
-function GMT_FFT_2D(API::Ptr{Void}, data::Ptr{Cfloat}, nx::UInt32, ny::UInt32, direction::Cint, mode::UInt32)
-	ccall( (:GMT_FFT_2D, thelib), Cint, (Ptr{Void}, Ptr{Cfloat}, UInt32, UInt32, Cint, UInt32), API, data, nx, ny, direction, mode)
+function GMT_FFT_2D(API::Ptr{Cvoid}, data::Ptr{Cfloat}, nx::UInt32, ny::UInt32, direction::Cint, mode::UInt32)
+	ccall( (:GMT_FFT_2D, thelib), Cint, (Ptr{Cvoid}, Ptr{Cfloat}, UInt32, UInt32, Cint, UInt32), API, data, nx, ny, direction, mode)
 end
 =#
 
 function GMT_Report(API, vlevel::Int, txt)
-	ccall((:GMT_Report, thelib), Void, (Ptr{Void}, Cint, Ptr{UInt8}), API, vlevel, txt)
+	ccall((:GMT_Report, thelib), Cvoid, (Ptr{Cvoid}, Cint, Ptr{UInt8}), API, vlevel, txt)
 end
 
-function GMT_Encode_Options(V_API::Ptr{Void}, _module, n_argin::Integer, head::Ref{Ptr{GMT_OPTION}}, n::Ptr{Int})
-	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Int32, Ref{Ptr{GMT_OPTION}},
+function GMT_Encode_Options(V_API::Ptr{Cvoid}, _module, n_argin::Integer, head::Ref{Ptr{GMT_OPTION}}, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Cvoid}, Ptr{UInt8}, Int32, Ref{Ptr{GMT_OPTION}},
 					Ptr{UInt32}), V_API, _module, n_argin, head, n)
 end
-function GMT_Encode_Options(V_API::Ptr{Void}, _module, n_argin::Integer, head, n::Ptr{Int})
-	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Void}, Ptr{UInt8}, Int32, Ptr{Ptr{Void}}, Ptr{UInt32}),
+function GMT_Encode_Options(V_API::Ptr{Cvoid}, _module, n_argin::Integer, head, n::Ptr{Int})
+	ccall((:GMT_Encode_Options, thelib), Ptr{GMT_RESOURCE}, (Ptr{Cvoid}, Ptr{UInt8}, Int32, Ptr{Ptr{Cvoid}}, Ptr{UInt32}),
 					V_API, _module, n_argin, head, n)
 end
 
-function GMT_Expand_Option(V_API::Ptr{Void}, opt::Ptr{GMT_OPTION}, arg)
-	ccall((:GMT_Expand_Option, thelib), Cint, (Ptr{Void}, Ptr{GMT_OPTION}, Ptr{UInt8}), V_API, opt, arg)
+function GMT_Expand_Option(V_API::Ptr{Cvoid}, opt::Ptr{GMT_OPTION}, arg)
+	ccall((:GMT_Expand_Option, thelib), Cint, (Ptr{Cvoid}, Ptr{GMT_OPTION}, Ptr{UInt8}), V_API, opt, arg)
 end
 
 function gmt_core_module_info(API, candidate)
-	ccall((:gmt_core_module_info, thelib), Ptr{UInt8}, (Ptr{Void}, Ptr{UInt8}), API, candidate)
+	ccall((:gmt_core_module_info, thelib), Ptr{UInt8}, (Ptr{Cvoid}, Ptr{UInt8}), API, candidate)
 end
 
 function GMT_set_mem_layout(API, mem_layout)
-	ccall((:GMT_set_mem_layout, thelib), Void, (Ptr{Void}, Ptr{UInt8}), API, mem_layout)
+	ccall((:GMT_set_mem_layout, thelib), Cvoid, (Ptr{Cvoid}, Ptr{UInt8}), API, mem_layout)
 end
 
-function GMT_Set_Default(API::Ptr{Void}, keyword, value)
-	ccall((:GMT_Set_Default, thelib), Void, (Ptr{Void}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
+function GMT_Set_Default(API::Ptr{Cvoid}, keyword, value)
+	ccall((:GMT_Set_Default, thelib), Cvoid, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 end
 
 function gmtlib_grd_flip_vertical(gridp, n_cols::Integer, n_rows::Integer, n_stride::Integer=0, cell_size::Integer=1)
-	ccall((:gmtlib_grd_flip_vertical, thelib), Void, (Ptr{Void}, UInt32, UInt32, UInt32, Csize_t),
+	ccall((:gmtlib_grd_flip_vertical, thelib), Cvoid, (Ptr{Cvoid}, UInt32, UInt32, UInt32, Csize_t),
 				 gridp, n_cols, n_rows, n_stride, cell_size)
 end
 
-function GMT_blind_change_struct(API::Ptr{Void}, X, what, keyword::String, off::Integer)
-	ccall((:GMT_blind_change_struct, thelib), Cint, (Ptr{Void}, Ptr{Void}, Ptr{Void}, Ptr{UInt8}, Csize_t),
+function GMT_blind_change_struct(API::Ptr{Cvoid}, X, what, keyword::String, off::Integer)
+	ccall((:GMT_blind_change_struct, thelib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}, Csize_t),
 				 API, X, what, keyword, off)
 end
 
-function GMT_blind_change_struct_(API::Ptr{Void}, X, what, keyword::String)
-	ccall((:GMT_blind_change_struct_, thelib), Cint, (Ptr{Void}, Ptr{Void}, Ptr{Void}, Ptr{UInt8}),
+function GMT_blind_change_struct_(API::Ptr{Cvoid}, X, what, keyword::String)
+	ccall((:GMT_blind_change_struct_, thelib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}),
 				 API, X, what, keyword)
 end
 
-function GMT_Convert_Data(API::Ptr{Void}, In::Ptr{Void}, family_in::Integer, out::Ptr{Void}, family_out::Integer, flag)
-	ccall((:GMT_Convert_Data, thelib), Ptr{Void}, (Ptr{Void}, Ptr{Void}, UInt32, Ptr{Void}, UInt32, Ptr{UInt32}), API, In,
+function GMT_Convert_Data(API::Ptr{Cvoid}, In::Ptr{Cvoid}, family_in::Integer, out::Ptr{Cvoid}, family_out::Integer, flag)
+	ccall((:GMT_Convert_Data, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, UInt32, Ptr{Cvoid}, UInt32, Ptr{UInt32}), API, In,
 				 family_in, out, family_out, flag)
 end
 
-function GMT_Read_Group(API::Ptr{Void}, family::Integer, method::Integer, geometry::Integer, mode::Integer,
-												wesn, sources::Ptr{Void}, n_items::Ptr{UInt32}, data::Ptr{Void})
-	ccall((:GMT_Read_Group, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
-				 Ptr{Void}, Ptr{UInt32}, Ptr{Void}), API, family, method, geometry, mode, wesn, sources, n_items, data)
+function GMT_Read_Group(API::Ptr{Cvoid}, family::Integer, method::Integer, geometry::Integer, mode::Integer,
+												wesn, sources::Ptr{Cvoid}, n_items::Ptr{UInt32}, data::Ptr{Cvoid})
+	ccall((:GMT_Read_Group, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
+				 Ptr{Cvoid}, Ptr{UInt32}, Ptr{Cvoid}), API, family, method, geometry, mode, wesn, sources, n_items, data)
 end
 
-function GMT_Get_Index(API::Ptr{Void}, header::Ptr{GMT_GRID_HEADER}, row::Integer, col::Integer)
-	ccall((:GMT_Get_Index, thelib), UInt64, (Ptr{Void}, Ptr{GMT_GRID_HEADER}, Cint, Cint), API, header, row, col)
+function GMT_Get_Index(API::Ptr{Cvoid}, header::Ptr{GMT_GRID_HEADER}, row::Integer, col::Integer)
+	ccall((:GMT_Get_Index, thelib), UInt64, (Ptr{Cvoid}, Ptr{GMT_GRID_HEADER}, Cint, Cint), API, header, row, col)
 end
 
-function GMT_Get_Pixel(API::Ptr{Void}, header::Ptr{GMT_GRID_HEADER}, row::Integer, col::Integer, layer::Integer)
-	ccall((:GMT_Get_Pixel, thelib), UInt64, (Ptr{Void}, Ptr{GMT_GRID_HEADER}, Cint, Cint, Cint), API, header, row, col, layer)
+function GMT_Get_Pixel(API::Ptr{Cvoid}, header::Ptr{GMT_GRID_HEADER}, row::Integer, col::Integer, layer::Integer)
+	ccall((:GMT_Get_Pixel, thelib), UInt64, (Ptr{Cvoid}, Ptr{GMT_GRID_HEADER}, Cint, Cint, Cint), API, header, row, col, layer)
 end
 
-function GMT_Set_Index(API::Ptr{Void}, header::Ptr{GMT_GRID_HEADER}, code)
-	ccall((:GMT_Set_Index, thelib), Cint, (Ptr{Void}, Ptr{GMT_GRID_HEADER}, Ptr{UInt8}), API, header, code)
+function GMT_Set_Index(API::Ptr{Cvoid}, header::Ptr{GMT_GRID_HEADER}, code)
+	ccall((:GMT_Set_Index, thelib), Cint, (Ptr{Cvoid}, Ptr{GMT_GRID_HEADER}, Ptr{UInt8}), API, header, code)
 end
 
-function GMT_Alloc_Segment(API::Ptr{Void}, family::Integer, n_rows::Integer, n_columns::Integer, header, S::Ptr{Void})
+function GMT_Alloc_Segment(API::Ptr{Cvoid}, family::Integer, n_rows::Integer, n_columns::Integer, header, S::Ptr{Cvoid})
 	if (family == GMT_IS_DATASET || family == GMT_WITH_STRINGS)
 		ret_type = Ptr{GMT_DATASEGMENT}
 	elseif (family == GMT_IS_TEXTSET)
@@ -321,69 +321,69 @@ function GMT_Alloc_Segment(API::Ptr{Void}, family::Integer, n_rows::Integer, n_c
 		error("Bad family type")
 	end
 
-	ptr = ccall((:GMT_Alloc_Segment, thelib), Ptr{Void}, (Ptr{Void}, UInt32, UInt64, UInt64, Ptr{UInt8}, Ptr{Void}),
+	ptr = ccall((:GMT_Alloc_Segment, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt32, UInt64, UInt64, Ptr{UInt8}, Ptr{Cvoid}),
 							 API, family, n_rows, n_columns, header, S)
 
 	convert(ret_type, ptr)
 end
 
-function GMT_Set_Columns(API::Ptr{Void}, n_columns::Integer, mode)
-	ccall((:GMT_Set_Columns, thelib), Cint, (Ptr{Void}, UInt32, UInt32), API, n_columns, mode)
+function GMT_Set_Columns(API::Ptr{Cvoid}, n_columns::Integer, mode)
+	ccall((:GMT_Set_Columns, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32), API, n_columns, mode)
 end
 
-function GMT_Duplicate_String(API::Ptr{Void}, str)
-	ccall((:GMT_Duplicate_String, thelib), Ptr{UInt8}, (Ptr{Void}, Ptr{UInt8}), API, str)
+function GMT_Duplicate_String(API::Ptr{Cvoid}, str)
+	ccall((:GMT_Duplicate_String, thelib), Ptr{UInt8}, (Ptr{Cvoid}, Ptr{UInt8}), API, str)
 end
 
-function GMT_Destroy_Group(API::Ptr{Void}, obj::Ptr{Void}, n_items::Integer)
-	ccall((:GMT_Destroy_Group, thelib), Cint, (Ptr{Void}, Ptr{Void}, Cuint), API, obj, n_items)
+function GMT_Destroy_Group(API::Ptr{Cvoid}, obj::Ptr{Cvoid}, n_items::Integer)
+	ccall((:GMT_Destroy_Group, thelib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Cuint), API, obj, n_items)
 end
 
-function GMT_Change_Layout(API::Ptr{Void}, family::Integer, code, mode::Integer, obj::Ptr{Void}, data::Ptr{Void}=C_NULL, alpha::Ptr{Void}=C_NULL)
-	ccall((:GMT_Change_Layout, thelib), Cint, (Ptr{Void}, Cuint, Ptr{UInt8}, Cuint, Ptr{Void}, Ptr{Void}, Ptr{Void}),
+function GMT_Change_Layout(API::Ptr{Cvoid}, family::Integer, code, mode::Integer, obj::Ptr{Cvoid}, data::Ptr{Cvoid}=C_NULL, alpha::Ptr{Cvoid}=C_NULL)
+	ccall((:GMT_Change_Layout, thelib), Cint, (Ptr{Cvoid}, Cuint, Ptr{UInt8}, Cuint, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}),
 				 API, family, code, mode, obj, data, alpha)
 end
 
-function GMT_Open_VirtualFile(API::Ptr{Void}, family::Integer, geometry::Integer, dir::Integer, data, name)
-	ccall((:GMT_Open_VirtualFile, thelib), Cint, (Ptr{Void}, UInt32, UInt32, UInt32, Ptr{Void}, Ptr{UInt8}), API, family, geometry, dir, data, name)
+function GMT_Open_VirtualFile(API::Ptr{Cvoid}, family::Integer, geometry::Integer, dir::Integer, data, name)
+	ccall((:GMT_Open_VirtualFile, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32, UInt32, Ptr{Cvoid}, Ptr{UInt8}), API, family, geometry, dir, data, name)
 end
-function GMT_Close_VirtualFile(API::Ptr{Void}, str)
-	ccall((:GMT_Close_VirtualFile, thelib), Cint, (Ptr{Void}, Ptr{UInt8}), API, str)
-end
-
-function GMT_Read_VirtualFile(API::Ptr{Void}, str)
-	ccall((:GMT_Read_VirtualFile, thelib), Ptr{Void}, (Ptr{Void}, Ptr{UInt8}), API, str)
+function GMT_Close_VirtualFile(API::Ptr{Cvoid}, str)
+	ccall((:GMT_Close_VirtualFile, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}), API, str)
 end
 
-function GMT_Init_VirtualFile(API::Ptr{Void}, mode::Integer, name)
-	ccall((:GMT_Init_VirtualFile, thelib), Ptr{Void}, (Ptr{Void}, UInt32, Ptr{UInt8}), API, mode, name)
+function GMT_Read_VirtualFile(API::Ptr{Cvoid}, str)
+	ccall((:GMT_Read_VirtualFile, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{UInt8}), API, str)
 end
 
-function GMT_Put_Vector(API::Ptr{Void}, V::GMT_VECTOR, col::Integer, tipo::Integer, vector)
-	ccall((:GMT_Put_Vector, thelib), Cint, (Ptr{Void}, GMT_VECTOR, UInt32, UInt32, Ptr{Void}), API, V, col, tipo, vector)
-end
-function GMT_Get_Vector(API::Ptr{Void}, V::Ptr{GMT_VECTOR}, col::Integer)
-	ccall((:GMT_Get_Vector, thelib), Ptr{Void}, (Ptr{Void}, Ptr{GMT_VECTOR}, UInt32), API, V, col)
+function GMT_Init_VirtualFile(API::Ptr{Cvoid}, mode::Integer, name)
+	ccall((:GMT_Init_VirtualFile, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt32, Ptr{UInt8}), API, mode, name)
 end
 
-function GMT_Put_Matrix(API::Ptr{Void}, M::GMT_MATRIX, tipo::Integer, matrix)
-	ccall((:GMT_Put_Matrix, thelib), Cint, (Ptr{Void}, GMT_MATRIX, UInt32, Ptr{Void}), API, M, tipo, matrix)
+function GMT_Put_Vector(API::Ptr{Cvoid}, V::GMT_VECTOR, col::Integer, tipo::Integer, vector)
+	ccall((:GMT_Put_Vector, thelib), Cint, (Ptr{Cvoid}, GMT_VECTOR, UInt32, UInt32, Ptr{Cvoid}), API, V, col, tipo, vector)
 end
-function GMT_Get_Matrix(API::Ptr{Void}, M::Ptr{GMT_MATRIX})
-	ccall((:GMT_Get_Matrix, thelib), Ptr{Void}, (Ptr{Void}, Ptr{GMT_MATRIX}), API, M)
+function GMT_Get_Vector(API::Ptr{Cvoid}, V::Ptr{GMT_VECTOR}, col::Integer)
+	ccall((:GMT_Get_Vector, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{GMT_VECTOR}, UInt32), API, V, col)
 end
 
-function GMT_Error_Message(API::Ptr{Void})
-	ccall((:GMT_Error_Message, thelib), Ptr{UInt8}, (Ptr{Void},), API)
+function GMT_Put_Matrix(API::Ptr{Cvoid}, M::GMT_MATRIX, tipo::Integer, matrix)
+	ccall((:GMT_Put_Matrix, thelib), Cint, (Ptr{Cvoid}, GMT_MATRIX, UInt32, Ptr{Cvoid}), API, M, tipo, matrix)
+end
+function GMT_Get_Matrix(API::Ptr{Cvoid}, M::Ptr{GMT_MATRIX})
+	ccall((:GMT_Get_Matrix, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{GMT_MATRIX}), API, M)
+end
+
+function GMT_Error_Message(API::Ptr{Cvoid})
+	ccall((:GMT_Error_Message, thelib), Ptr{UInt8}, (Ptr{Cvoid},), API)
 end
 
 # ------------------ Development function in 5.4.0 ------------------------------------------------------------
 
 # -------------------------------------------------------------------------------------------------------------
-function GMT_Set_AllocMode(API::Ptr{Void}, family::Integer, object)
-	ccall((:GMT_Set_AllocMode, thelib), Cint, (Ptr{Void}, UInt32, Ptr{Void}), API, family, object)
+function GMT_Set_AllocMode(API::Ptr{Cvoid}, family::Integer, object)
+	ccall((:GMT_Set_AllocMode, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{Cvoid}), API, family, object)
 end
 
-function gmt_manage_workflow(API::Ptr{Void}, mode::Integer, texto)
-	ccall((:gmt_manage_workflow, thelib), Cint, (Ptr{Void}, UInt32, Cstring), API, mode, texto)
+function gmt_manage_workflow(API::Ptr{Cvoid}, mode::Integer, texto)
+	ccall((:gmt_manage_workflow, thelib), Cint, (Ptr{Cvoid}, UInt32, Cstring), API, mode, texto)
 end

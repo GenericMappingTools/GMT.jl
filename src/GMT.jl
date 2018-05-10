@@ -2,7 +2,9 @@ __precompile__()
 
 module GMT
 
-const GMTver = 5.0
+using Printf
+
+const GMTver = 6.0
 const FMT = "ps"
 
 export
@@ -24,14 +26,14 @@ export
 	GMT_Init_VirtualFile, GMT_Open_VirtualFile, GMT_Close_VirtualFile, GMT_Read_VirtualFile,
 	GMT_Get_Matrix, GMT_Put_Matrix, GMT_Get_Vector, GMT_Put_Vector,
 	GMT_DATASET, GMT_GRID, GMT_MATRIX, GMT_PALETTE, GMT_UNIVECTOR,
-	GMT_Encode_Options, GMT_Expand_Option, gmtlib_grd_flip_vertical,
-	gmt_core_module_info,
-	gmt, grid_type,
 	GMT_RESOURCE, GMTAPI_CTRL, GMTAPI_DATA_OBJECT,
+	GMTgrid, GMTimage, GMTcpt, GMTdataset, GMTps,
+	GMT_Encode_Options, GMT_Expand_Option, gmtlib_grd_flip_vertical,
+	gmt, grid_type,
 	basemap, basemap!, coast, coast!, logo, logo!, xy, xy!, grdcontour, grdcontour!, grdimage,
 	grdimage!, grdtrack, grdview, grdview!, makecpt, histogram, histogram!, image, image!, psconvert,
 	colorbar, colorbar!, rose, rose!, solar, solar!, text, text!, gmtinfo, grdinfo, surface,
-	triangulate, nearneighbor, imshow, imshow!, plot, plot!, splitxyz, wiggle, wiggle!,
+	triangulate, nearneighbor, imshow, imshow!, plot, plot!, plot3d, plot3d!, splitxyz, wiggle, wiggle!,
 	text_record,
 	NULL
 
@@ -62,6 +64,7 @@ include("pstext.jl")
 include("psxy.jl")
 include("pswiggle.jl")
 include("plot.jl")
+include("plot3d.jl")
 include("splitxyz.jl")
 include("surface.jl")
 include("triangulate.jl")
