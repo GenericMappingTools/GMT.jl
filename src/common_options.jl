@@ -620,8 +620,8 @@ end
 function parse_r(cmd::String, d::Dict)
 	# Parse the global -r option. Return CMD same as input if no -r option in args
 	for symb in [:r :reg :registration]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -r" * d[symb]
+		if (haskey(d, symb))
+			cmd = cmd * " -r"
 			break
 		end
 	end
@@ -1102,12 +1102,12 @@ function monolitic(prog::String, cmd0::String, arg1=[], need_out::Bool=true)
 	R = nothing
 	if (need_out && occursin(">", cmd0))  need_out = false  end		# Interpreted as "> file" so not LHS
 	if (need_out)
-		if (isempty(arg1))  R = gmt(prog * cmd0)
-		else                R = gmt(prog * cmd0, arg1)
+		if (isempty(arg1))  R = gmt(prog * " " * cmd0)
+		else                R = gmt(prog * " " * cmd0, arg1)
 		end
 	else
-		if (isempty(arg1))  gmt(prog * cmd0)
-		else                gmt(prog * cmd0, arg1)
+		if (isempty(arg1))  gmt(prog * " " * cmd0)
+		else                gmt(prog * " " * cmd0, arg1)
 		end
 	end
 	return R
