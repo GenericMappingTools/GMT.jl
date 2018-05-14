@@ -39,7 +39,7 @@ Parameters
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#q)
 - **S** : **search_radius** : -- Number or Str --  
     Sets the resolution of the projected grid that will be created.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#e)
+    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#s)
 - **T** : **tension** : -- Number or Str --
     Tension factor[s]. These must be between 0 and 1.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#t)
@@ -65,7 +65,6 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 	d = KW(kwargs)
 	cmd = ""
 	cmd, opt_R = parse_R(cmd, d)
-	cmd, opt_J = parse_J(cmd, d)
 	cmd = parse_V(cmd, d)
 	cmd = parse_a(cmd, d)
 	cmd, = parse_bi(cmd, d)
