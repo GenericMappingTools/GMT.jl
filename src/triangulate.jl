@@ -27,7 +27,7 @@ Parameters
 - **I** : **inc** : -- Str or Number --
 	*x_inc* [and optionally *y_inc*] is the grid spacing.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#i)
-- $(GMT.opt_R)
+- $(GMT.opt_J)
 - **M** : **network** : -- Bool or [] --
     Output triangulation network as multiple line segments separated by a segment header record.
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#m)
