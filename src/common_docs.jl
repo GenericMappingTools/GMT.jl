@@ -77,7 +77,7 @@ const opt_o = "**o** : **output_col** : -- Str --
 const opt_p = "**p** : **view** : **perspective** : -- Str --
       [`-p`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#perspective-full)"
 
-const opt_r = "**r** : **reg** : **registration** : -- Str --
+const opt_r = "**r** : **reg** : **registration** : -- Bool or Str or Number --
       [`-r`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#r-full)"
 
 const opt_s = "**s** : **skip_col** : -- Str --
