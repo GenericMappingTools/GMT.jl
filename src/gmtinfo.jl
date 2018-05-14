@@ -1,7 +1,7 @@
 """
     gmtinfo(cmd0::String="", arg1=[]; kwargs...)
 
-Reads its standard input [or from files] and finds the extreme values in each of the columns.
+Reads files and finds the extreme values in each of the columns.
 
 Full option list at [`gmtinfo`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html)
 
@@ -52,7 +52,7 @@ Parameters
 # ---------------------------------------------------------------------------------------------------
 function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("gmtinfo", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && isempty(data) && !isa(arg1, GMTdataset) && return monolitic("gmtinfo", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 	cmd = parse_V("", d)
@@ -89,4 +89,4 @@ function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtinfo(arg1, cmd0::String=""; data=[], kw...) = gmtinfo(cmd0, arg1; data=data, kw...)
+gmtinfo(arg1::GMTdataset, cmd0::String=""; data=[], kw...) = gmtinfo(cmd0, arg1; data=data, kw...)
