@@ -104,6 +104,16 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_blocks(cmd0, arg1, data, d, cmd, proggy, kwargs...)
 
+	cmd = add_opt(cmd, 'A', d, [:A :fields])
+	cmd = add_opt(cmd, 'C', d, [:C :center])
+	cmd = add_opt(cmd, 'G', d, [:G :grid])
+	if (occursin("-G", cmd) && !occursin("-A", cmd))
+		cmd = cmd * " -Az"					# So that we can use plain -G to mean write grid 
+	end
+	if (GMTver < 6 && occursin("-A", cmd))
+		@warn("Computing grids is only possible with GMT version >= 6")
+		return nothing
+	end
 	cmd, opt_R = parse_R(cmd, d)
 	cmd = parse_V(cmd, d)
 	cmd, = parse_bi(cmd, d)
@@ -116,16 +126,16 @@ function common_blocks(cmd0, arg1, data, d, cmd, proggy, kwargs...)
 	cmd = parse_r(cmd, d)
 	cmd = parse_swap_xy(cmd, d)
 
-	cmd = add_opt(cmd, 'A', d, [:A :fields])
-	cmd = add_opt(cmd, 'C', d, [:C :center])
-	cmd = add_opt(cmd, 'G', d, [:G :grid])
 	ff = findfirst("-G", cmd)
     ind = (ff == nothing) ? 0 : first(ff)
-	if (ind > 0 && length(cmd) > ind+2)      # A file name was provided
+	if (ind > 0 && cmd[ind+2] != ' ')      # A file name was provided
         no_output = true
     else
-        no_output = false
-    end
+		no_output = false
+		if (ind > 0)		# Remove the -G because the GMT API does not allow a -G from externals
+			cmd = replace(cmd, "-G" => "")
+		end
+	end
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt(cmd, 'W', d, [:W :weights])
 
@@ -142,7 +152,11 @@ function common_blocks(cmd0, arg1, data, d, cmd, proggy, kwargs...)
 		if (!isempty_(arg1))  O = gmt(proggy * " " * cmd, arg1)
 		else                  O = gmt(proggy * " " * cmd)
 		end
-		[return O[k] for k=1:length(O)]
+		if (isa(O, Tuple))
+			[return O[k] for k=1:length(O)]
+		else
+			return O
+		end
 	end
 end
 
