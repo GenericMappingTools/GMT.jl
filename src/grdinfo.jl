@@ -38,7 +38,7 @@ Parameters
 # ---------------------------------------------------------------------------------------------------
 function grdinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 
-	length(kwargs) == 0 && isempty_(data) && return monolitic("grdinfo", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && isempty_(data) && !isa(arg1, GMTgrid) && return monolitic("grdinfo", cmd0, arg1)	# Speedy mode
 
 	if (!isempty_(data) && !isa(data, GMTgrid))
 		error("When using 'data', it MUST contain a GMTgrid data type")
