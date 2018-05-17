@@ -284,7 +284,7 @@ function common_plot_xyz(cmd0, arg1, caller, data, K, O, first, is3D, kwargs...)
 			cmd = [finish_PS(d, cmd0, cmd1, output, true, O)
 			       finish_PS(d, cmd0, cmd2, output, K, true)]
 		end
-	elseif (!isempty(opt_ML) && !isempty(opt_S))		# We have a symbol outline pen
+	elseif (!isempty(opt_S) && !isempty(opt_ML))		# We have a symbol outline pen
 		cmd = [finish_PS(d, cmd0, cmd * opt_ML * opt_S * opt_Gsymb, output, K, O)]
 	else
 		cmd = [finish_PS(d, cmd0, cmd, output, K, O)]
