@@ -790,6 +790,7 @@ struct Gmt_libinfo
 	handle::Ptr{Cvoid}	# Handle to the shared library, returned by dlopen or dlopen_special */
 end
 
+#=
 mutable struct GMTAPI_CTRL
 	# Master controller which holds all GMT API related information at run-time for a single session.
 	# Users can run several GMT sessions concurrently; each session requires its own structure.
@@ -831,3 +832,4 @@ mutable struct GMTAPI_CTRL
 	lib::Ptr{Gmt_libinfo}		# List of shared libs to consider
 	n_shared_libs::UInt32		# How many in lib
 end
+=#

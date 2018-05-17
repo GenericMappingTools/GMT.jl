@@ -135,14 +135,14 @@ function gmt(cmd::String, args...)
 		API = GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL
 		                         + GMT.GMT_SESSION_COLMAJOR)
 		if (API == C_NULL)
-			error("Failure to create a GMT5 Session")
+			error("Failure to create a GMT Session")
 		end
 	end
 
 	# 2. In case this was a clean up call or a begin/end from the modern mode
 	if (g_module == "destroy")
 		if (GMT_Destroy_Session(API) != 0)
-			error("GMT: Failure to destroy GMT5 session")
+			error("GMT: Failure to destroy GMT session")
 		end
 		API = NaN
 		return
@@ -416,7 +416,6 @@ function get_grid(API::Ptr{Void}, object)
 	X  = range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx)
 	Y  = range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny)
 
-	#API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, API))	# Get access to a minimalist API struct (no API.GMT)
 	t = unsafe_wrap(Array, G.data, my * mx)
 	z = zeros(Float32, ny, nx)
 
