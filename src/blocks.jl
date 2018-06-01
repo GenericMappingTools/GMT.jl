@@ -152,11 +152,7 @@ function common_blocks(cmd0, arg1, data, d, cmd, proggy, kwargs...)
 		if (!isempty_(arg1))  O = gmt(proggy * " " * cmd, arg1)
 		else                  O = gmt(proggy * " " * cmd)
 		end
-		if (isa(O, Tuple))
-			[return O[k] for k=1:length(O)]
-		else
-			return O
-		end
+		return O
 	end
 end
 

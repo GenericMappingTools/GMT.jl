@@ -75,7 +75,7 @@ function parse_J(cmd::String, d::Dict, O=false)
 			end
 		elseif (haskey(d, :figscale))
 			opt_J = opt_J * string(d[:figscale])
-		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isalpha(opt_J[5])))	# No size provided
+		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))	# No size provided
 			opt_J = opt_J * "14c"			# If no size, default to 14 centimeters
 		end
 	end
