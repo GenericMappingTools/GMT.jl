@@ -4,7 +4,7 @@ module GMT
 
 using Printf
 
-const GMTver = 6.0
+const GMTver = 5.0
 const FMT = "ps"
 
 export
