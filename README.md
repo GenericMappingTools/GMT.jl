@@ -40,6 +40,12 @@ surfaces and 3D perspective views.
 
 This wrapper works only with GMT5.3.1 and above
 
+WARNING
+=======
+
+GMT.jl version 0.3 runs only in Julia v0.6. Shortly it will be updated to Julia 0.7 (GMT.jl 0.4) and it no
+longer support older Julia versions. that is, it will be a >= 0.7
+
 Install
 =======
 
@@ -50,6 +56,7 @@ On OSX, with a manual GMT build and dependencies obtained with Homebrew (that ar
 added to the ~/.juliarc.jl file)
 
     push!(Libdl.DL_LOAD_PATH, "/Users/j/programs/gmt5/lib")
+
 
 Using
 =====
