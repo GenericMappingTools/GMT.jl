@@ -5,7 +5,7 @@ Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
 | **Documentation**                       | **PackageEvaluator**            | **Build Status**                          |
 |:---------------------------------------:|:-------------------------------:|:-----------------------------------------:|
-| [![][docs-latest-img]][docs-latest-url] | [![][pkg-0.6-img]][pkg-0.6-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] |
+| [![][docs-latest-img]][docs-latest-url] | [![][pkg-0.7-img]][pkg-0.7-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] |
 
 [gitter-url]: https://gitter.im/genericmappingtools/users
 
