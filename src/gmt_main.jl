@@ -626,7 +626,7 @@ function get_textset_(API::Ptr{Void}, object::Ptr{Void})
 	n_columns = 0
 	have_numerical = false
 
-	D = GMT_Convert_Data(API, object, GMT_IS_TEXTSET, NULL, GMT_IS_DATASET, Ref(pointer(flag)))		# Ptr{Void}
+	D = GMT_Convert_Data(API, object, GMT_IS_TEXTSET, NULL, GMT_IS_DATASET, Ref(pointer(flag),1))		# Ptr{Void}
 
 	if (D != NULL)											# Ptr{GMT_DATASET}
 		DS = unsafe_load(convert(Ptr{GMT_DATASET}, D))		# GMT_DATASET
@@ -675,7 +675,7 @@ function get_textset_(API::Ptr{Void}, object::Ptr{Void})
 			end
 
 			if (!have_numerical)
-				dest = Array{Any}(Ttab_Seg.n_rows)
+				dest = Array{Any}(undef, Ttab_Seg.n_rows)
 				for row = 1:Ttab_Seg.n_rows
 					t = unsafe_load(Ttab_Seg.data, row)	# Ptr{UInt8}
 					dest[row] = unsafe_string(t)
@@ -685,7 +685,7 @@ function get_textset_(API::Ptr{Void}, object::Ptr{Void})
 
 			#headers = pointer_to_array(Ttab_1.header, Ttab_1.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
 			headers = unsafe_wrap(Array, Ttab_1.header, Ttab_1.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
-			dest = Array{Any}(length(headers))
+			dest = Array{Any}(undef, length(headers))
 			for k = 1:n_headers
 				dest[k] = unsafe_string(headers[k])
 			end
