@@ -59,7 +59,6 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-# ---------------------------------------------------------------------------------------------------
 function grdcontour(cmd0::String="", arg1=[], arg2=[]; data=[], K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("grdcontour", cmd0, arg1)	# Speedy mode

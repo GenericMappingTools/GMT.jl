@@ -45,7 +45,6 @@ Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.h
     File with colorbar-width per color entry.
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html#z)
 """
-# ---------------------------------------------------------------------------------------------------
 function colorbar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
     length(kwargs) == 0 && isempty(data) && return monolitic("psscale", cmd0, arg1)	# Speedy mode

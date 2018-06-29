@@ -39,7 +39,7 @@ Parameters
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#q)
 - **S** : **search_radius** : -- Number or Str --  
     Sets the resolution of the projected grid that will be created.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#e)
+    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#s)
 - **T** : **tension** : -- Number or Str --
     Tension factor[s]. These must be between 0 and 1.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#t)
@@ -57,7 +57,6 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-# ---------------------------------------------------------------------------------------------------
 function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("surface", cmd0, arg1)	# Speedy mode
@@ -65,7 +64,6 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 	d = KW(kwargs)
 	cmd = ""
 	cmd, opt_R = parse_R(cmd, d)
-	cmd, opt_J = parse_J(cmd, d)
 	cmd = parse_V(cmd, d)
 	cmd = parse_a(cmd, d)
 	cmd, = parse_bi(cmd, d)
@@ -79,8 +77,9 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	cmd = add_opt(cmd, 'A', d, [:A :aspect_ratio])
 	cmd = add_opt(cmd, 'C', d, [:C :convergence])
-    cmd = add_opt(cmd, 'G', d, [:G :grid])
-    ind = searchindex(cmd, "-G")
+	cmd = add_opt(cmd, 'G', d, [:G :grid])
+	ff = findfirst("-G", cmd)
+    ind = (ff == nothing) ? 0 : first(ff)
 	if (ind > 0 && length(cmd) > ind+2)      # A file name was provided
         no_output = true
     else
@@ -100,7 +99,7 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 	(haskey(d, :Vd)) && println(@sprintf("\tsurface %s", cmd))
 
 	G = nothing
-	no_output = no_output || contains(cmd, "-Q")
+	no_output = no_output || occursin("-Q", cmd)
 	if (no_output)
 		if (!isempty_(arg1))  gmt("surface " * cmd, arg1)
 		else                  gmt("surface " * cmd)

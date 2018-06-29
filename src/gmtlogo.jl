@@ -27,7 +27,6 @@ Parameters
 - $(GMT.opt_Y)
 - $(GMT.opt_t)
 """
-# ---------------------------------------------------------------------------------------------------
 function logo(cmd0::String=""; K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("pslogo", cmd0, arg1)	# Speedy mode
@@ -50,8 +49,8 @@ function logo(cmd0::String=""; K=false, O=false, first=true, kwargs...)
 	if (haskey(d, :julia))
 		r = d[:julia]
 		c,t = jlogo(r)
-		if (!contains(cmd, "-R"))  cmd = @sprintf("-R0/%f/0/%f ", 2r, 2r) * cmd  end
-		if (!contains(cmd, "-J"))  cmd = " -Jx1 " * cmd  end
+		if (!occursin("-R", cmd))  cmd = @sprintf("-R0/%f/0/%f ", 2r, 2r) * cmd  end
+		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
 		cmd = c * cmd
 		return finish_PS_module(d, cmd, "", t, [], output, fname_ext, opt_T, K, "psxy")
 	else

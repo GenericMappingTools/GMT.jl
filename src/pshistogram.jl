@@ -63,7 +63,6 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-# ---------------------------------------------------------------------------------------------------
 function histogram(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
@@ -104,7 +103,7 @@ function histogram(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=fals
 	cmd = add_opt(cmd, 'S', d, [:S :stairs])
 	cmd = add_opt(cmd, 'W', d, [:W :bin :width])
 	cmd = add_opt(cmd, 'Z', d, [:Z :kind])
-	if (isempty(opt_L) && !contains(cmd, "-G") && !contains(cmd, "-C"))		# If no -L, -G or -C set these defaults
+	if (isempty(opt_L) && !occursin("-G", cmd) && !occursin("-C", cmd))		# If no -L, -G or -C set these defaults
 		cmd = cmd * " -G150" * " -L0.5p"
 	elseif (!isempty(opt_L))
 		cmd = cmd * opt_L

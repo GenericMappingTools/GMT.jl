@@ -1,32 +1,41 @@
 using GMT
-using Base.Test
+using Test
+using LinearAlgebra
 
 # write your own tests here
 r = gmt("gmtinfo -C",ones(Float32,9,3)*5);
-assert(r[1].data == [5.0 5 5 5 5 5])
+@assert(r[1].data == [5.0 5 5 5 5 5])
 r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
-assert(r[1].data == [5.0 5 5 5 5 5])
-#
+@assert(r[1].data == [5.0 5 5 5 5 5])
+
+# BLOCK*s
+d = [0.1 1.5 1; 0.5 1.5 2; 0.9 1.5 3; 0.1 0.5 4; 0.5 0.5 5; 0.9 0.5 6; 1.1 1.5 7; 1.5 1.5 8; 1.9 1.5 9; 1.1 0.5 10; 1.5 0.5 11; 1.9 0.5 12];
+G = blockmedian(region=[0 2 0 2], inc=1, fields="z", reg=1, d);
+if (G != nothing)	# If run from GMT5 it will return nothing
+	G = blockmean(d, region=[0 2 0 2], inc=1, grid=true, reg=1, S=:n);	# Number of points in cell
+	G,L = blockmode(region=[0 2 0 2], inc=1, fields="z,l", reg=1, d);
+end
+
 # GRDINFO
 G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 r=gmt("grdinfo -C", G);
-assert(r[1].data == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
+@assert(r[1].data == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
 r2=grdinfo(G, C=true, V=true);
-assert(r[1].data == r2[1].data)
-#
+@assert(r[1].data == r2[1].data)
+
 # MAKECPT
 cpt = makecpt(range="-1/1/0.1");
-assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
+@assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
 
 # GRDCONTOUR
 G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 C = grdcontour(G, C="+0.7", D=[]);
-assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
+@assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 # Do the same but write the file on disk first
 gmt("write lixo.grd", G)
 GG = gmt("read -Tg lixo.grd");
 C = grdcontour("lixo.grd", C="+0.7", D=[]);
-assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
+@assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 x,y,z=GMT.peaks()
 G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);
 cpt = makecpt(T="-6/8/1");
@@ -35,10 +44,10 @@ grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, U=[])
 # GRDTRACK
 G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 D = grdtrack([0 0], G);
-assert(D[1].data == [0.0 0 1])
+@assert(D[1].data == [0.0 0 1])
 D = grdtrack(G, [0 0]);
 D = grdtrack([0 0], G=G);
-assert(D[1].data == [0.0 0 1])
+@assert(D[1].data == [0.0 0 1])
 
 # Just create the figs but not check if they are correct.
 PS = grdimage(G, J="X10", ps=1);
@@ -52,7 +61,7 @@ imshow(G, frame=:a, shade="+a45",show=false)
 
 # SURFACE
 G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
-assert(size(G.z) == (151, 151))
+@assert(size(G.z) == (151, 151))
 
 # PLOT
 plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
@@ -89,7 +98,7 @@ rose(data, swap_xy=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagr
 
 # PSSOLAR
 #D=solar(I="-7.93/37.079+d2016-02-04T10:01:00");
-#assert(D[1].text[end] == "\tDuration = 10:27")
+#@assert(D[1].text[end] == "\tDuration = 10:27")
 solar(R="d", W=1, J="Q0/14c", B="a", T="dc")
 
 # PSTEXT
@@ -107,10 +116,10 @@ logo(julia=8)
 # GMTSPATIAL
 # Test  Cartesian centroid and area
 result = gmt("gmtspatial -Q", [0 0; 1 0; 1 1; 0 1; 0 0]);
-assert(isapprox(result[1].data, [0.5 0.5 1]))
+@assert(isapprox(result[1].data, [0.5 0.5 1]))
 # Test Geographic centroid and area
 result = gmt("gmtspatial -Q -fg", [0 0; 1 0; 1 1; 0 1; 0 0]);
-assert(isapprox(result[1].data, [0.5 0.500019546308 12308.3096995]))
+@assert(isapprox(result[1].data, [0.5 0.500019546308 12308.3096995]))
 # Intersections
 l1 = gmt("project -C22/49 -E-60/-20 -G10 -Q");
 l2 = gmt("project -C0/-60 -E-60/-30 -G10 -Q");
@@ -133,7 +142,7 @@ plot(collect(1:10),rand(10), lw=1, lc="blue", marker="square",
 markeredgecolor=0, size=0.2, markerfacecolor="red", title="Hello World",
 x_label="Spoons", y_label="Forks")
 
-x = linspace(0, 2pi,180); seno = sin.(x/0.2)*45;
+x = range(0, stop=2pi, length=180);	seno = sin.(x/0.2)*45;
 coast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")
 plot!(collect(x)*60, seno, lw=0.5, lc="red", marker="circle",
 	markeredgecolor=0, size=0.05, markerfacecolor="cyan")

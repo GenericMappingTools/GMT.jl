@@ -1,15 +1,14 @@
 """
-    triangulate(cmd0::String="", arg1=[]; kwargs...)
+	triangulate(cmd0::String="", arg1=[]; kwargs...)
 
 Reads one or more ASCII [or binary] files (or standard input) containing x,y[,z] and performs Delaunay
 triangulation, i.e., it find how the points should be connected to give the most equilateral
 triangulation possible. 
-	
+
 Full option list at [`triangulate`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html)
 
 Parameters
 ----------
-
 - **C** : **slope_grid** : -- Number --
     Read a slope grid (in degrees) and compute the propagated uncertainty in the
     bathymetry using the CURVE algorithm
@@ -25,9 +24,9 @@ Parameters
     Append the name of the output grid file.
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#g)
 - **I** : **inc** : -- Str or Number --
-	*x_inc* [and optionally *y_inc*] is the grid spacing.
+    *x_inc* [and optionally *y_inc*] is the grid spacing.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#i)
-- $(GMT.opt_R)
+- $(GMT.opt_J)
 - **M** : **network** : -- Bool or [] --
     Output triangulation network as multiple line segments separated by a segment header record.
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#m)
@@ -57,7 +56,6 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-# ---------------------------------------------------------------------------------------------------
 function triangulate(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("triangulate", cmd0, arg1)	# Speedy mode
@@ -80,7 +78,7 @@ function triangulate(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = add_opt(cmd, 'D', d, [:D :derivatives])
 	cmd = add_opt(cmd, 'E', d, [:E :empty])
     cmd = add_opt(cmd, 'G', d, [:G :grid])
-    ind = searchindex(cmd, "-G")
+    ind = first(findfirst("-G", cmd))
 	if (ind > 0 && length(cmd) > ind+2)      # A file name was provided
         no_output = true
     else

@@ -1,3 +1,4 @@
+const Void = Cvoid
 const NULL = C_NULL
 
 const GMT_SESSION_NORMAL   = 0   # Typical mode to GMT_Create_Session
@@ -182,15 +183,16 @@ const GMT_HSV = 2
 const GMT_CPT_NO_BNF     = 1
 const GMT_CPT_EXTEND_BNF = 2
 const GMT_CPT_HINGED     = 4
+const GMT_CPT_TIME       = 8
 
-immutable GMT_OPTION			# Structure for a single GMT command option
+struct GMT_OPTION			# Structure for a single GMT command option
 	option::UInt8				# 1-char command line -<option> (e.g. D in -D) identifying the option (* if file)
 	arg::Ptr{UInt8}				# If not NULL, contains the argument for this option
 	next::Ptr{GMT_OPTION}
 	previous::Ptr{GMT_OPTION}
 end
 
-type GMT_GRID_HEADER_v6
+mutable struct GMT_GRID_HEADER_v6
 	n_columns::UInt32
 	n_rows::UInt32
 	registration::UInt32
@@ -222,10 +224,10 @@ type GMT_GRID_HEADER_v6
 	ProjRefPROJ4::Ptr{UInt8}
 	ProjRefWKT::Ptr{UInt8}
 	ProjRefEPSG::Cint
-	hidden::Ptr{Void}		# Lower-level information for GMT use only
+	hidden::Ptr{Cvoid}		# Lower-level information for GMT use only
 end
 
-type GMT_GRID_HEADER_v5
+mutable struct GMT_GRID_HEADER_v5
 	n_columns::UInt32
 	n_rows::UInt32
 	registration::UInt32
@@ -293,7 +295,7 @@ type GMT_GRID_HEADER_v5
 	xy_mode::NTuple{2,UInt32}
 	xy_unit::NTuple{2,UInt32}
 	xy_unit_to_meter::NTuple{2,Cdouble}
-	index_function::Ptr{Void}
+	index_function::Ptr{Cvoid}
 end
 
 if (GMTver < 6.0)
@@ -302,7 +304,7 @@ else
 	const GMT_GRID_HEADER = GMT_GRID_HEADER_v6
 end
 
-type GMT_GRID_v5
+mutable struct GMT_GRID_v5
 	header::Ptr{GMT_GRID_HEADER}
 	data::Ptr{Cfloat}
 	id::UInt32
@@ -310,15 +312,15 @@ type GMT_GRID_v5
 	alloc_mode::UInt32
 	x::Ptr{Cdouble}
 	y::Ptr{Cdouble}
-	extra::Ptr{Void}
+	extra::Ptr{Cvoid}
 end
 
-type GMT_GRID_v6
+mutable struct GMT_GRID_v6
 	header::Ptr{GMT_GRID_HEADER}
 	data::Ptr{Cfloat}
 	x::Ptr{Cdouble}
 	y::Ptr{Cdouble}
-	hidden::Ptr{Void}
+	hidden::Ptr{Cvoid}
 end
 
 if (GMTver < 6.0)
@@ -328,7 +330,7 @@ else
 end
 
 if (GMTver < 6.0)
-	immutable GMT_OGR
+	struct GMT_OGR
 		geometry::UInt32
 		n_aspatial::UInt32
 		region::Ptr{UInt8}
@@ -339,14 +341,14 @@ if (GMTver < 6.0)
 		tvalue::Ptr{Ptr{UInt8}}
 		dvalue::Ptr{Cdouble}
 	end
-	immutable GMT_OGR_SEG
+	struct GMT_OGR_SEG
 		pol_mode::UInt32
 		n_aspatial::UInt32
 		tvalue::Ptr{Ptr{UInt8}}
 		dvalue::Ptr{Cdouble}
 	end
 
-	type GMT_DATASEGMENT
+	mutable struct GMT_DATASEGMENT
 		n_rows::UInt64
 		n_columns::UInt64
 		min::Ptr{Cdouble}
@@ -369,7 +371,7 @@ if (GMTver < 6.0)
 		file::NTuple{2,Ptr{UInt8}}
 	end
 
-	type GMT_DATATABLE
+	mutable struct GMT_DATATABLE
 		n_headers::UInt32
 		n_columns::UInt64
 		n_segments::UInt64
@@ -385,7 +387,7 @@ if (GMTver < 6.0)
 		file::NTuple{2,Ptr{UInt8}}
 	end
 
-	type GMT_DATASET
+	mutable struct GMT_DATASET
 		n_tables::UInt64
 		n_columns::UInt64
 		n_segments::UInt64
@@ -405,7 +407,7 @@ if (GMTver < 6.0)
 
 else			# GMT6
 
-	type GMT_DATASEGMENT
+	mutable struct GMT_DATASEGMENT
 		n_rows::UInt64
 		n_columns::UInt64
 		min::Ptr{Cdouble}
@@ -414,10 +416,10 @@ else			# GMT6
 		label::Ptr{UInt8}
 		header::Ptr{UInt8}
 		text::Ptr{Ptr{UInt8}}
-		hidden::Ptr{Void}
+		hidden::Ptr{Cvoid}
 	end
 
-	type GMT_DATATABLE
+	mutable struct GMT_DATATABLE
 		n_headers::UInt32
 		n_columns::UInt64
 		n_segments::UInt64
@@ -426,10 +428,10 @@ else			# GMT6
 		max::Ptr{Cdouble}
 		header::Ptr{Ptr{UInt8}}
 		segment::Ptr{Ptr{GMT_DATASEGMENT}}
-		hidden::Ptr{Void}
+		hidden::Ptr{Cvoid}
 	end
 
-	type GMT_DATASET
+	mutable struct GMT_DATASET
 		n_tables::UInt64
 		n_columns::UInt64
 		n_segments::UInt64
@@ -442,11 +444,11 @@ else			# GMT6
 		ProjRefPROJ4::Ptr{UInt8}
 		ProjRefWKT::Ptr{UInt8}
 		ProjRefEPSG::Cint
-		hidden::Ptr{Void}
+		hidden::Ptr{Cvoid}
 	end
 end
 
-type GMT_TEXTSEGMENT
+mutable struct GMT_TEXTSEGMENT
 	n_rows::UInt64
 	data::Ptr{Ptr{UInt8}}
 	label::Ptr{UInt8}
@@ -457,7 +459,7 @@ type GMT_TEXTSEGMENT
 	file::NTuple{2,Ptr{UInt8}}
 	tvalue::Ptr{Ptr{UInt8}}
 end
-type GMT_TEXTTABLE
+mutable struct GMT_TEXTTABLE
 	n_headers::UInt32
 	n_segments::UInt64
 	n_records::UInt64
@@ -468,7 +470,7 @@ type GMT_TEXTTABLE
 	mode::UInt32
 	file::NTuple{2,Ptr{UInt8}}
 end
-type GMT_TEXTSET
+mutable struct GMT_TEXTSET
 	n_tables::UInt64
 	n_segments::UInt64
 	n_records::UInt64
@@ -481,7 +483,7 @@ type GMT_TEXTSET
 	alloc_mode::UInt32
 	file::NTuple{2,Ptr{UInt8}}
 end
-immutable GMT_FILL
+struct GMT_FILL
 	rgb::NTuple{4,Cdouble}
 	f_rgb::NTuple{4,Cdouble}
 	b_rgb::NTuple{4,Cdouble}
@@ -490,28 +492,47 @@ immutable GMT_FILL
 	dpi::UInt32
 	pattern::NTuple{256,UInt8}		# was char pattern[GMT_BUFSIZ];
 end
-immutable GMT_LUT
-	z_low::Cdouble
-	z_high::Cdouble
-	i_dz::Cdouble
-	rgb_low::NTuple{4,Cdouble}
-	rgb_high::NTuple{4,Cdouble}
-	rgb_diff::NTuple{4,Cdouble}
-	hsv_low::NTuple{4,Cdouble}
-	hsv_high::NTuple{4,Cdouble}
-	hsv_diff::NTuple{4,Cdouble}
-	annot::UInt32
-	skip::UInt32
-	fill::Ptr{GMT_FILL}
-	label::Ptr{UInt8}
+if (GMTver < 6.0)
+	struct GMT_LUT
+		z_low::Cdouble
+		z_high::Cdouble
+		i_dz::Cdouble
+		rgb_low::NTuple{4,Cdouble}
+		rgb_high::NTuple{4,Cdouble}
+		rgb_diff::NTuple{4,Cdouble}
+		hsv_low::NTuple{4,Cdouble}
+		hsv_high::NTuple{4,Cdouble}
+		hsv_diff::NTuple{4,Cdouble}
+		annot::UInt32
+		skip::UInt32
+		fill::Ptr{GMT_FILL}
+		label::Ptr{UInt8}
+	end
+else
+	struct GMT_LUT
+		z_low::Cdouble
+		z_high::Cdouble
+		i_dz::Cdouble
+		rgb_low::NTuple{4,Cdouble}
+		rgb_high::NTuple{4,Cdouble}
+		rgb_diff::NTuple{4,Cdouble}
+		hsv_low::NTuple{4,Cdouble}
+		hsv_high::NTuple{4,Cdouble}
+		hsv_diff::NTuple{4,Cdouble}
+		annot::UInt32
+		skip::UInt32
+		fill::Ptr{GMT_FILL}
+		label::Ptr{UInt8}
+		key::Ptr{UInt8}
+	end
 end
-immutable GMT_BFN
+struct GMT_BFN
 	rgb::NTuple{4,Cdouble}
 	hsv::NTuple{4,Cdouble}
 	skip::UInt32
 	fill::Ptr{GMT_FILL}
 end
-type GMT_PALETTE_v5
+mutable struct GMT_PALETTE_v5
 	n_headers::UInt32
 	n_colors::UInt32
 	mode::UInt32
@@ -540,7 +561,7 @@ type GMT_PALETTE_v5
 	hinge::Cdouble
 	wrap_length::Cdouble
 end
-type GMT_PALETTE_v6
+mutable struct GMT_PALETTE_v6
 	data::Ptr{GMT_LUT}
 	bfn::NTuple{3,GMT_BFN}
 	n_headers::UInt32
@@ -559,7 +580,7 @@ type GMT_PALETTE_v6
 	hinge::Cdouble
 	wrap_length::Cdouble
 	header::Ptr{Ptr{UInt8}}
-	hidden::Ptr{Void}
+	hidden::Ptr{Cvoid}
 end
 
 if (GMTver < 6.0)
@@ -568,7 +589,7 @@ else
 	const GMT_PALETTE = GMT_PALETTE_v6
 end
 
-type GMT_IMAGE_v5
+mutable struct GMT_IMAGE_v5
 	_type::UInt32
 	colormap::Ptr{Cint}
 	n_indexed_colors::Cint
@@ -583,7 +604,7 @@ type GMT_IMAGE_v5
 	y::Ptr{Cdouble}
 end
 
-type GMT_IMAGE_v6
+mutable struct GMT_IMAGE_v6
 	_type::UInt32
 	colormap::Ptr{Cint}
 	n_indexed_colors::Cint
@@ -593,7 +614,7 @@ type GMT_IMAGE_v6
 	color_interp::Ptr{UInt8}
 	x::Ptr{Cdouble}
 	y::Ptr{Cdouble}
-	hidden::Ptr{Void}
+	hidden::Ptr{Cvoid}
 end
 
 if (GMTver < 6.0)
@@ -602,7 +623,7 @@ else
 	const GMT_IMAGE = GMT_IMAGE_v6
 end
 
-type GMT_POSTSCRIPT_v5
+mutable struct GMT_POSTSCRIPT_v5
 	n_alloc::Csize_t
 	n_bytes::Csize_t
 	mode::UInt32
@@ -613,13 +634,13 @@ type GMT_POSTSCRIPT_v5
 	alloc_level::UInt32
 	alloc_mode::UInt32
 end
-type GMT_POSTSCRIPT_v6
+mutable struct GMT_POSTSCRIPT_v6
 	n_bytes::Csize_t
 	mode::UInt32
 	n_headers::UInt32
 	data::Ptr{UInt8}
 	header::Ptr{Ptr{UInt8}}
-	hidden::Ptr{Void}
+	hidden::Ptr{Cvoid}
 end
 
 if (GMTver < 6.0)
@@ -628,7 +649,7 @@ else
 	const GMT_POSTSCRIPT = GMT_POSTSCRIPT_v6
 end
 
-immutable GMT_UNIVECTOR
+struct GMT_UNIVECTOR
 	uc1::Ptr{UInt8}
 	sc1::Ptr{Int8}
 	ui2::Ptr{UInt16}
@@ -641,7 +662,7 @@ immutable GMT_UNIVECTOR
 	f8::Ptr{Float64}
 end
 
-immutable GMT_VECTOR_v6
+struct GMT_VECTOR_v6
 	n_columns::UInt64
 	n_rows::UInt64
 	n_headers::UInt32
@@ -649,7 +670,7 @@ immutable GMT_VECTOR_v6
 	_type::Ptr{UInt32}
 	range::NTuple{2,Cdouble}
 	#data::Ptr{GMT_UNIVECTOR}
-	data::Ptr{Ptr{Void}}
+	data::Ptr{Ptr{Cvoid}}
 	text::Ptr{Ptr{UInt8}};			# Pointer to optional array of strings [NULL]
 	command::NTuple{320,UInt8}
 	remark::NTuple{160,UInt8}
@@ -657,16 +678,16 @@ immutable GMT_VECTOR_v6
 	ProjRefPROJ4::Ptr{UInt8}
 	ProjRefWKT::Ptr{UInt8}
 	ProjRefEPSG::Cint
-	hidden::Ptr{Void}
+	hidden::Ptr{Cvoid}
 end
 
-immutable GMT_VECTOR_v5
+struct GMT_VECTOR_v5
 	n_columns::UInt64
 	n_rows::UInt64
 	registration::UInt32
 	_type::Ptr{UInt32}
 	#data::Ptr{GMT_UNIVECTOR}
-	data::Ptr{Ptr{Void}}
+	data::Ptr{Ptr{Cvoid}}
 	range::NTuple{2,Cdouble}
 	command::NTuple{320,UInt8}
 	remark::NTuple{160,UInt8}
@@ -681,7 +702,7 @@ else
 	const GMT_VECTOR = GMT_VECTOR_v6
 end
 
-type GMT_MATRIX_v6
+mutable struct GMT_MATRIX_v6
 	n_rows::UInt64
 	n_columns::UInt64
 	n_layers::UInt64
@@ -692,8 +713,9 @@ type GMT_MATRIX_v6
 	size::Csize_t
 	_type::UInt32
 	range::NTuple{6,Cdouble}
+	inc::NTuple{3,Cdouble}
 #	data::GMT_UNIVECTOR
-	data::Ptr{Void}
+	data::Ptr{Cvoid}
 	text::Ptr{Ptr{UInt8}}
 	command::NTuple{320,UInt8}
 	remark::NTuple{160,UInt8}
@@ -701,10 +723,10 @@ type GMT_MATRIX_v6
 	ProjRefPROJ4::Ptr{UInt8}
 	ProjRefWKT::Ptr{UInt8}
 	ProjRefEPSG::Cint
-	hidden::Ptr{Void}
+	hidden::Ptr{Cvoid}
 end
 
-type GMT_MATRIX_v5
+mutable struct GMT_MATRIX_v5
 	n_rows::UInt64
 	n_columns::UInt64
 	n_layers::UInt64
@@ -715,7 +737,7 @@ type GMT_MATRIX_v5
 	_type::UInt32
 	range::NTuple{6,Cdouble}
 #	data::GMT_UNIVECTOR
-	data::Ptr{Void}
+	data::Ptr{Cvoid}
 	command::NTuple{320,UInt8}
 	remark::NTuple{160,UInt8}
 	id::UInt64
@@ -729,7 +751,7 @@ else
 	const GMT_MATRIX = GMT_MATRIX_v6
 end
 
-type GMT_RESOURCE
+mutable struct GMT_RESOURCE
 	family::UInt32          # GMT data family, i.e., GMT_IS_DATASET, GMT_IS_GRID, etc.
 	geometry::UInt32        # One of the recognized GMT geometries
 	direction::UInt32       # Either GMT_IN or GMT_OUT
@@ -737,11 +759,11 @@ type GMT_RESOURCE
 	name::NTuple{16,UInt8} # Object ID returned by GMT_Register_IO
 	pos::Cint               # Corresponding index into external object in|out arrays
 	mode::Cint              # Either primary (0) or secondary (1) resource
-	object::Ptr{Void}       # Pointer to the actual GMT object
+	object::Ptr{Cvoid}       # Pointer to the actual GMT object
 end
 
 
-immutable GMTAPI_DATA_OBJECT
+struct GMTAPI_DATA_OBJECT
 	# Information for each input or output data entity, including information
 	# needed while reading/writing from a table (file or array)
 	rec::UInt64                 # Current rec to read [GMT_DATASET and GMT_TEXTSET to/from MATRIX/VECTOR only]
@@ -764,31 +786,32 @@ immutable GMTAPI_DATA_OBJECT
 	method::UInt32              # One of GMT_IS_{FILE,STREAM,FDESC,DUPLICATE,REFERENCE} or sum with enum GMT_enum_via (GMT_VIA_{NONE,VECTOR,MATRIX,OUTPUT}); using unsigned type because sum exceeds enum GMT_enum_method
 	geometry::UInt32			# One of GMT_IS_{POINT|LINE|POLY|PLP|SURFACE|NONE}
 	wesn::NTuple{4,Cdouble}	# Grid domain limits
-	resource::Ptr{Void}			# Points to registered filename, memory location, etc., where data can be obtained from with GMT_Get_Data.
-	data::Ptr{Void}				# Points to GMT object that was read from a resource
+	resource::Ptr{Cvoid}			# Points to registered filename, memory location, etc., where data can be obtained from with GMT_Get_Data.
+	data::Ptr{Cvoid}				# Points to GMT object that was read from a resource
 	#FILE *fp;					# Pointer to source/destination stream [For rec-by-rec procession, NULL if memory location]
-	fp::Ptr{Void}				# Pointer to source/destination stream [For rec-by-rec procession, NULL if memory location]
+	fp::Ptr{Cvoid}				# Pointer to source/destination stream [For rec-by-rec procession, NULL if memory location]
 	filename::Ptr{UInt8}		# Filename, stream, of file handle (otherwise NULL)
-	#void *(*import) (struct GMT_CTRL *, FILE *, uint64_t *, int *);	# Pointer to input function (for DATASET/TEXTSET only)
-	ifun::Ptr{Void} 			# Pointer to input function (for DATASET/TEXTSET only)
+	#Cvoid *(*import) (struct GMT_CTRL *, FILE *, uint64_t *, int *);	# Pointer to input function (for DATASET/TEXTSET only)
+	ifun::Ptr{Cvoid} 			# Pointer to input function (for DATASET/TEXTSET only)
 	# Start of temporary variables for API debug - They are only set when building GMT with /DEBUG
-	G::Ptr{Void}				# struct GMT_GRID *G;
-	D::Ptr{Void}				# struct GMT_DATASET *D;
-	T::Ptr{Void}				# struct GMT_TEXTSET *T;
-	C::Ptr{Void}				# struct GMT_PALETTE *C;
-	M::Ptr{Void}				# struct GMT_MATRIX *M;
-	V::Ptr{Void}				# struct GMT_VECTOR *V;
-	I::Ptr{Void}				# struct GMT_IMAGE *I;
+	G::Ptr{Cvoid}				# struct GMT_GRID *G;
+	D::Ptr{Cvoid}				# struct GMT_DATASET *D;
+	T::Ptr{Cvoid}				# struct GMT_TEXTSET *T;
+	C::Ptr{Cvoid}				# struct GMT_PALETTE *C;
+	M::Ptr{Cvoid}				# struct GMT_MATRIX *M;
+	V::Ptr{Cvoid}				# struct GMT_VECTOR *V;
+	I::Ptr{Cvoid}				# struct GMT_IMAGE *I;
 end
 
-immutable Gmt_libinfo
+struct Gmt_libinfo
 	name::Ptr{UInt8}	# Library tag name [without leading "lib" and extension], e.g. "gmt", "gmtsuppl" */
 	path::Ptr{UInt8}	# Full path to library as given in GMT_CUSTOM_LIBS */
 	skip::Ptr{Bool}		# true if we tried to open it and it was not available the first time */
-	handle::Ptr{Void}	# Handle to the shared library, returned by dlopen or dlopen_special */
+	handle::Ptr{Cvoid}	# Handle to the shared library, returned by dlopen or dlopen_special */
 end
 
-type GMTAPI_CTRL
+#=
+mutable struct GMTAPI_CTRL
 	# Master controller which holds all GMT API related information at run-time for a single session.
 	# Users can run several GMT sessions concurrently; each session requires its own structure.
 	# Use GMTAPI_Create_Session to initialize a new session and GMTAPI_Destroy_Session to end it.
@@ -816,7 +839,7 @@ type GMTAPI_CTRL
 	io_mode::NTuple{2,UInt32}	# 1 if access as set, 0 if record-by-record
 	PPID::Cint                  # The Process ID of the parent (e.g., shell) or the external caller
 	#GMT::Ptr{GMT_CTRL}			# Key structure with low-level GMT internal parameters
-	GMT::Ptr{Void}				# Maybe one day. Till than just keep it as void
+	GMT::Ptr{Cvoid}				# Maybe one day. Till than just keep it as Cvoid
 	object::Ptr{Ptr{GMTAPI_DATA_OBJECT}}	# List of registered data objects
 	session_tag::Ptr{UInt8}		# Name tag for this session (or NULL)
 	tmp_dir::Ptr{UInt8}         # System tmp_dir (NULL if not found)
@@ -824,8 +847,9 @@ type GMTAPI_CTRL
 	internal::Bool				# true if session was initiated by gmt.c
 	deep_debug::Bool			# temporary for debugging
 	#int (*print_func) (FILE *, const char *);	# Pointer to fprintf function (may be reset by external APIs like MEX)
-	pf::Ptr{Void}				# Don't know what to put here, so ley it be *void
+	pf::Ptr{Cvoid}				# Don't know what to put here, so ley it be *void
 	do_not_exit::UInt32			# 0 by default, mieaning it is OK to call exit  (may be reset by external APIs like MEX to call return instead)
 	lib::Ptr{Gmt_libinfo}		# List of shared libs to consider
 	n_shared_libs::UInt32		# How many in lib
 end
+=#

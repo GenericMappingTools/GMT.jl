@@ -61,10 +61,9 @@ Parameters
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#z)
 - $(GMT.opt_V)
 """
-# ---------------------------------------------------------------------------------------------------
 function psconvert(cmd0::String="", arg1=[]; data=[], kwargs...)
 
-	length(kwargs) == 0 && isempty_(data) && contains(cmd0, " -") &&
+	length(kwargs) == 0 && isempty_(data) && occursin(" -", cmd0) &&
 		return monolitic("psconvert", cmd0, arg1)	# Speedy mode
 
 	if (!isempty_(data) && !isa(data, String))
@@ -93,7 +92,7 @@ function psconvert(cmd0::String="", arg1=[]; data=[], kwargs...)
 		fmt = isa(d[:fmt], Symbol) ? string(d[:fmt]) : d[:fmt]
 	end
 
-	if (!contains(cmd, "-T") && !isempty(fmt) && fmt != "ps")	# Must convert the FMT into a -T opt
+	if (!occursin("-T", cmd) && !isempty(fmt) && fmt != "ps")	# Must convert the FMT into a -T opt
 		if (fmt == "pdf")      cmd = cmd * " -Tf"
 		elseif (fmt == "eps")  cmd = cmd * " -Te"
 		elseif (fmt == "png")  cmd = cmd * " -Tg"
@@ -139,7 +138,7 @@ function psconvert(cmd0::String="", arg1=[]; data=[], kwargs...)
 	end
 
 	if (isempty(cmd))          cmd = "-A1p -Tj -Qg4 -Qt4"  end 	# Means no options were used. Allowed case
-	if (!contains(cmd, "-Q"))  cmd = cmd * " -Qt4 -Qg4"    end	# We promised to have these as default
+	if (!occursin("-Q", cmd))  cmd = cmd * " -Qt4 -Qg4"    end	# We promised to have these as default
 	if (isa(arg1, String))
 		cmd = cmd * " " * arg1
 		is_struct_PS = false

@@ -41,7 +41,6 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-# ---------------------------------------------------------------------------------------------------
 function clip(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("psclip", cmd0, arg1)	# Speedy mode

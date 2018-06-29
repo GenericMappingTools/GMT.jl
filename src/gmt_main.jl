@@ -1,7 +1,7 @@
 global API			# OK, so next times we'll use this one
 global grd_mem_layout
 
-type GMTgrid 	# The type holding a local header and data of a GMT grid
+mutable struct GMTgrid 	# The type holding a local header and data of a GMT grid
 	proj4::String
 	wkt::String
 	range::Array{Float64,1}
@@ -21,7 +21,7 @@ type GMTgrid 	# The type holding a local header and data of a GMT grid
 	layout::String
 end
 
-type GMTimage 	# The type holding a local header and data of a GMT image
+mutable struct GMTimage 	# The mutable struct holding a local header and data of a GMT image
 	proj4::String
 	wkt::String
 	range::Array{Float64,1}
@@ -44,7 +44,7 @@ type GMTimage 	# The type holding a local header and data of a GMT image
 	layout::String
 end
 
-type GMTcpt
+mutable struct GMTcpt
 	colormap::Array{Float64,2}
 	alpha::Array{Float64,1}
 	range::Array{Float64,2}
@@ -57,14 +57,14 @@ type GMTcpt
 	comment::Array{Any,1}		# Cell array with any comments
 end
 
-type GMTps
+mutable struct GMTps
 	postscript::String			# Actual PS plot (text string)
 	length::Int 				# Byte length of postscript
 	mode::Int 					# 1 = Has header, 2 = Has trailer, 3 = Has both
 	comment::Array{Any,1}		# Cell array with any comments
 end
 
-type GMTdataset
+mutable struct GMTdataset
 	data::Array{Float64,2}
 	text::Array{Any,1}
 	header::String
@@ -74,11 +74,11 @@ type GMTdataset
 	GMTdataset(data, text, header, comment, proj4, wkt) = new(data, text, header, comment, proj4, wkt)
 	GMTdataset(data, text) = new(data, text, string(), Array{String,1}(), string(), string())
 	GMTdataset(data) = new(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
-	GMTdataset() = new(Array{Float64,2}(0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
+	GMTdataset() = new(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 end
 
 # Container to hold info to allow creating grids in a simple (but limmited) maner
-type ArrayContainer
+mutable struct ArrayContainer
 	nx::Int
 	ny::Int
 	n_bands::Int
@@ -135,14 +135,14 @@ function gmt(cmd::String, args...)
 		API = GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL
 		                         + GMT.GMT_SESSION_COLMAJOR)
 		if (API == C_NULL)
-			error("Failure to create a GMT5 Session")
+			error("Failure to create a GMT Session")
 		end
 	end
 
 	# 2. In case this was a clean up call or a begin/end from the modern mode
 	if (g_module == "destroy")
 		if (GMT_Destroy_Session(API) != 0)
-			error("GMT: Failure to destroy GMT5 session")
+			error("GMT: Failure to destroy GMT session")
 		end
 		API = NaN
 		return
@@ -159,24 +159,30 @@ function gmt(cmd::String, args...)
 
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F.
 	# The problem is that we can't use nargout to decide what to do, so we use -T to solve the ambiguity.
-	if (g_module == "psconvert" && (isempty(r) || isempty(search(r, "-F"))) )
+	if (g_module == "psconvert" && (isempty(r) || !occursin("-F", r)) )
 		if (isempty(r))
 			r = "-F"
 		else
-			ind = search(r, "-T")
-			if (isempty(ind))
+			if (!occursin("-T", r))
 				r = r * " -F"
 			else								# Hmm, have to find if any of 'e' or 'f' are used as -T flags
+<<<<<<< HEAD
 				tok = strtok(r[ind[2]:end])		# Will have T?
 				tok = lowercase(tok[1])			# Here tok[1] means the first element of the tuple
 				if (isempty(search(tok,"e")) && isempty(search(tok,"f")))	# No any -Tef combo so add -F
+=======
+				ind = findfirst("-T", r)
+				tok = strtok(r[ind[2]:end])		# Will have T
+				tok = lowercase(tok[1])			# Here tok[1] means the first element of the tuple
+				if (!occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
+>>>>>>> j07
 					r = r * " -F"
 				end
 			end
 		end
 	end
-	if (g_module == "psconvert" && !isempty(search(r, "-M")))
-		ind = search(r, "-M")
+	if (g_module == "psconvert" && occursin("-M", r))
+		ind = findfirst("-M", r)
 		img_mem_layout, r2 = strtok(r[ind[2]+1:end])
 		if (length(img_mem_layout) != 3)
 			error("GMT: Error in memory layout option (-M) for psconvert. It must have 3 characters.")
@@ -185,26 +191,27 @@ function gmt(cmd::String, args...)
 	end
 
 	# 2++ Add -T to gmtwrite if user did not explicitly give -T.
-	if ((searchindex(g_module,"write") != 0) && (searchindex(r,"-T") == 0) && n_argin == 1)
-		if (ind = findfirst(fieldnames(args[1]), Symbol("z")) != 0)
+	if (occursin("write", g_module) && !occursin("-T", r) && n_argin == 1)
+		if (any(isequal(:z), fieldnames(typeof(args[1]))))
 			r = r * " -Tg"
-		elseif (ind = findfirst(fieldnames(args[1]), Symbol("image")) != 0)
+		elseif (any(isequal(:image), fieldnames(typeof(args[1]))))
 			r = r * " -Ti"
-		elseif (ind = findfirst(fieldnames(args[1]), Symbol("data")) != 0)
+		elseif (any(isequal(:data), fieldnames(typeof(args[1]))))
 			r = r * " -Td"
-		elseif (ind = findfirst(fieldnames(args[1]), Symbol("postscript")) != 0)
+		elseif (any(isequal(:postscript), fieldnames(typeof(args[1]))))
 			r = r * " -Tp"
-		elseif (ind = findfirst(fieldnames(args[1]), Symbol("hinge")) != 0)
+		elseif (any(isequal(:hinge), fieldnames(typeof(args[1]))))
 			r = r * " -Tc"
 		end
 	end
 
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
-	if ((searchindex(g_module,"read") != 0) && !isempty(r) && (searchindex(r,"-T") != 0))
-		if (searchindex(r,"-Ti") != 0)
+	if (occursin("read", g_module) && !isempty(r) && occursin("-T", r))
+		if (occursin("-Ti", r))
 			GMT_Set_Default(API, "API_PAD", "0")
 		end
-		ind = searchindex(r, "-L")
+		ff = findfirst( "-L", r)
+		ind = (ff == nothing) ? 0 : first(ff)
 		if (ind != 0)
 			grd_mem_layout, resto = strtok(r[ind+2:end])
 			r = r[1:ind-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
@@ -224,7 +231,7 @@ function gmt(cmd::String, args...)
 	# the LinkedList (LL) is actually created in GMT_Encode_Options but I can't get it's contents back when pLL
 	# is a Ref, so I'm forced to use 'pointer', which goes against the documents recommendation.
 	if (LL != NULL)
-		pLL = Ref([LL])
+		pLL = Ref([LL], 1)
 	else
 		pLL = pointer([NULL])
 	end
@@ -240,10 +247,10 @@ function gmt(cmd::String, args...)
 
 	if (LL == NULL)		# The no-options case. Must get the LL that was created in GMT_Encode_Options
 		LL = convert(Ptr{GMT.GMT_OPTION}, unsafe_load(pLL))
-		pLL = Ref([LL])		# Need this because GMT_Destroy_Options() wants a Ref
+		pLL = Ref([LL], 1)		# Need this because GMT_Destroy_Options() wants a Ref
 	end
 
-	XX = Array{GMT_RESOURCE}(1, n_items)
+	XX = Array{GMT_RESOURCE}(undef, 1, n_items)
 	for k = 1:n_items
 		XX[k] = unsafe_load(X, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
 	end
@@ -278,7 +285,7 @@ function gmt(cmd::String, args...)
 	end
 	out = []
 	if (n_out > 0)
-		out = Array{Any}(n_out)
+		out = Array{Any}(undef, n_out)
 	end
 
 	for k = 1:n_items					# Get results from GMT into Julia arrays
@@ -287,7 +294,7 @@ function gmt(cmd::String, args...)
 	end
 
 	# 2++- If gmtread -Ti than reset the session's pad value that was temporarily changed above (2+++)
-	if ((searchindex(g_module,"read") != 0) && !isempty(r) && (searchindex(r,"-Ti") != 0))
+	if (occursin("read", g_module) && !isempty(r) && occursin("-Ti", r))
 		GMT_Set_Default(API, "API_PAD", "2")
 	end
 
@@ -298,7 +305,7 @@ function gmt(cmd::String, args...)
 		if (GMT_Close_VirtualFile(API, name) != 0)
 			error("GMT: Failed to close virtual file")
 		end
-		if (GMT_Destroy_Data(API, Ref([X[k].object])) != GMT_NOERROR)
+		if (GMT_Destroy_Data(API, Ref([X[k].object], 1)) != GMT_NOERROR)
 			error("Failed to destroy object used in the interface bewteen GMT and Julia")
 		else 		# Success, now make sure we dont destroy the same pointer more than once
 			for kk = k+1:n_items
@@ -353,12 +360,12 @@ end
 function strtok(args, delim::String=" ")
 # A Matlab like strtok function
 	tok = "";	r = ""
-	if (~isvalid(args))
-		return tok, r
-	end
+	#if (~isvalid(args))
+	#	return tok, r
+	#end
 
-	ind = search(args, delim)
-	if (isempty(ind))
+	ind = findfirst(delim, args)
+	if (ind == nothing)
 		return lstrip(args,collect(delim)), r		# Always clip delimiters at the begining
 	end
 	tok = lstrip(args[1:ind[1]-1], collect(delim))	#		""
@@ -412,10 +419,9 @@ function get_grid(API::Ptr{Void}, object)
 	Y = zeros(ny);		t = pointer_to_array(G.y, ny)
 	[Y[col] = t[col] for col = 1:ny]
 =#
-	X  = linspace(gmt_hdr.wesn[1], gmt_hdr.wesn[2], nx)
-	Y  = linspace(gmt_hdr.wesn[3], gmt_hdr.wesn[4], ny)
+	X  = range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx)
+	Y  = range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny)
 
-	#API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, API))	# Get access to a minimalist API struct (no API.GMT)
 	t = unsafe_wrap(Array, G.data, my * mx)
 	z = zeros(Float32, ny, nx)
 
@@ -496,10 +502,10 @@ function get_image(API::Ptr{Void}, object)
 	Y = zeros(ny);		t = pointer_to_array(I.y, ny)
 	[Y[col] = t[col] for col = 1:ny]
 =#
-	X  = linspace(gmt_hdr.wesn[1], gmt_hdr.wesn[2], nx)
-	Y  = linspace(gmt_hdr.wesn[3], gmt_hdr.wesn[4], ny)
+	X  = range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx)
+	Y  = range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny)
 
-	if (!isempty(search(img_mem_layout, "TCP")))		# BIP case for Images.jl
+	if (occursin("TCP", img_mem_layout))		# BIP case for Images.jl
 		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), nz, ny, nx)
 	else
 		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), ny, nx, nz)
@@ -803,7 +809,7 @@ function get_dataset_(API::Ptr{Void}, object)
 			C = unsafe_wrap(Array, DS.data, DS.n_columns)	# DS.data = Ptr{Ptr{Float64}}; C = Array{Ptr{Float64},1}
 			dest = zeros(Float64, DS.n_rows, DS.n_columns)
 			for col = 1:DS.n_columns					# Copy the data columns
-				unsafe_copy!(pointer(dest, DS.n_rows * (col - 1) + 1), unsafe_load(DS.data, col), DS.n_rows)
+				unsafe_copyto!(pointer(dest, DS.n_rows * (col - 1) + 1), unsafe_load(DS.data, col), DS.n_rows)
 			end
 			Darr[seg_out].data = dest
 
@@ -811,7 +817,7 @@ function get_dataset_(API::Ptr{Void}, object)
 			if (DS.text != C_NULL)
 				texts = unsafe_wrap(Array, DS.text, DS.n_rows)	# n_headers-element Array{Ptr{UInt8},1}
 				if (texts != NULL)
-					dest = Array{Any}(DS.n_rows)
+					dest = Array{Any}(undef, DS.n_rows)
 					for row = 1:DS.n_rows					# Copy the text rows
 						if (texts[row] != NULL)  dest[row] = unsafe_string(texts[row])  end
 					end
@@ -823,7 +829,7 @@ function get_dataset_(API::Ptr{Void}, object)
 			if (seg == 1)
 				#headers = pointer_to_array(DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
 				headers = unsafe_wrap(Array, DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
-				dest = Array{Any}(length(headers))
+				dest = Array{Any}(undef, length(headers))
 				for k = 1:length(headers)
 					dest[k] = unsafe_string(headers[k])
 				end
@@ -952,7 +958,7 @@ function GMTJL_Set_Object(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
 	if (GMT_Expand_Option(API, X.option, name) != GMT_NOERROR)	# Replace ? in argument with name
 		error("GMT: Failure to expand filename marker (?)")
 	end
-	X.name = map(UInt8, (name...))
+	X.name = map(UInt8, (name...,))
 
 	return X
 end
@@ -989,13 +995,9 @@ function grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT_IN)
 # If GRD_BOX is empty just allocate (GMT) an empty container and return
 # If GRD_BOX is not empty it must contain either a ArrayContainer or a GMTgrid type.
 
-	empty = false 		# F... F... it's a shame having to do this
-	try
-		isempty(grd_box)
-		empty = true
-	end
+	vazio = isempty_(grd_box)
 
-	if (empty)			# Just tell grid_init() to allocate an empty container
+	if (vazio)			# Just tell grid_init() to allocate an empty container
 		GMT_CREATE_MODE = 0
 		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
 		if ((R = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_CREATE_MODE,
@@ -1047,13 +1049,13 @@ function grid_init(API::Ptr{Void}, module_input, Grid, grd, hdr, pad::Int=2)
 
 	if (isa(Grid, GMTgrid))
 		try
-			h.x_unit = map(UInt8, (Grid.x_unit...))
-			h.y_unit = map(UInt8, (Grid.y_unit...))
-			h.z_unit = map(UInt8, (Grid.z_unit...))
+			h.x_unit = map(UInt8, (Grid.x_unit...,))
+			h.y_unit = map(UInt8, (Grid.y_unit...,))
+			h.z_unit = map(UInt8, (Grid.z_unit...,))
 		catch
-			h.x_unit = map(UInt8, (string("x", repeat("\0",79))...))
-			h.y_unit = map(UInt8, (string("y", repeat("\0",79))...))
-			h.z_unit = map(UInt8, (string("z", repeat("\0",79))...))
+			h.x_unit = map(UInt8, (string("x", repeat("\0",79))...,))
+			h.y_unit = map(UInt8, (string("y", repeat("\0",79))...,))
+			h.z_unit = map(UInt8, (string("z", repeat("\0",79))...,))
 		end
 	end
 
@@ -1069,13 +1071,9 @@ function image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GMT_IN)
 	# ...
 	global img_mem_layout
 
-	empty = false 		# F... F... it's a shame having to do this
-	try
-		isempty(img_box)
-		empty = true
-	end
+	vazio = isempty_(img_box)
 
-	if (empty)			# Just tell image_init() to allocate an empty container
+	if (vazio)			# Just tell image_init() to allocate an empty container
 		GMT_CREATE_MODE = 0
 		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
 		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_CREATE_MODE,
@@ -1122,7 +1120,7 @@ function image_init(API::Ptr{Void}, Img::GMTimage, pad::Int=0)
 	h = unsafe_load(Ib.header)
 	h.z_min = Img.range[5]			# Set the z_min, z_max
 	h.z_max = Img.range[6]
-	h.mem_layout = map(UInt8, (Img.layout...))
+	h.mem_layout = map(UInt8, (Img.layout...,))
 	unsafe_store!(Ib.header, h)
 	unsafe_store!(I, Ib)
 	GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Image %s in parser\n", I))
@@ -1166,7 +1164,7 @@ function image_init(API::Ptr{Void}, img, hdr::Array{Float64}, pad::Int=0)
 	h.z_min = hdr[5]			# Set the z_min, z_max
 	h.z_max = hdr[6]
 	if (!isempty(img_mem_layout))
-		h.mem_layout = map(UInt8, (img_mem_layout * "a"...))	# The memory layout order
+		h.mem_layout = map(UInt8, (img_mem_layout * "a"...,))	# The memory layout order
 	end
 	unsafe_store!(Ib.header, h)
 	unsafe_store!(I, Ib)
@@ -1242,7 +1240,7 @@ function dataset_init_(API::Ptr{Void}, module_input, Darr, direction::Integer, a
 		Sb = unsafe_load(S)								# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
 		for col = 1:Sb.n_columns						# Copy the data columns
 			#unsafe_store!(Sb.data, pointer(Darr[seg].data[:,col]), col)	# This would allow shared mem
-			unsafe_copy!(unsafe_load(Sb.data, col), pointer(Darr[seg].data[:,col]), Sb.n_rows)
+			unsafe_copyto!(unsafe_load(Sb.data, col), pointer(Darr[seg].data[:,col]), Sb.n_rows)
 		end
 
 # NEW
@@ -1420,8 +1418,14 @@ function palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 		z_high = cpt.range[j,2]
 
 		annot = 3						# Enforce annotations for now
-		lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
-		              glut.hsv_diff, annot, glut.skip, glut.fill, glut.label)
+		if (GMTver < 6.0)
+			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
+			              glut.hsv_diff, annot, glut.skip, glut.fill, glut.label)
+		else
+			# For now send NULL for the new param 'key'
+			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
+			             glut.hsv_diff, annot, glut.skip, glut.fill, glut.label, NULL)
+		end
 
 		unsafe_store!(Pb.data, lut, j)
 	end
@@ -1675,8 +1679,8 @@ function mutateit(API::Ptr{Void}, t_type, member::String, val)
 	dt = typeof(x_type)			# Get the specific datatype. That's what we'll need for next inquires
 	ft = dt.types
 	#fo = fieldoffsets(dt)
-	fo = map(idx->fieldoffset(dt, idx), 1:nfields(dt))
-	ind = findfirst(fieldnames(dt), Symbol(member))	# Find the index of the "is_continuous" member
+	fo = map(idx->fieldoffset(dt, idx), 1:fieldcount(dt))
+	ind = findfirst(isequal(Symbol(member)), fieldnames(dt))	# Find the index of the "is_continuous" member
 	# This would work too
 	# ind = ccall(:jl_field_index, Cint, (Any, Any, Cint), dt, symbol(member), 1) + 1
 	if (isa(val, AbstractString))	# No idea why I have to do this
@@ -1718,8 +1722,8 @@ function grid_type(z, hdr=[])
 	elseif (length(hdr) != 9)
 		error("The HDR array must have 9 elements")
 	end
-	x = linspace(hdr[1], hdr[2], n_cols)
-	y = linspace(hdr[3], hdr[4], n_rows)
+	x = range(hdr[1], stop=hdr[2], length=n_cols)
+	y = range(hdr[3], stop=hdr[4], length=n_rows)
 	# Recompute the x|y_inc to make sure they are right.
 	one_or_zero = hdr[7] == 0 ? 1 : 0
 	x_inc = (hdr[2] - hdr[1]) / (n_cols - one_or_zero)
@@ -1738,7 +1742,7 @@ function get_GMTversion(API::Ptr{Void})
 	else
 		value = "        "
 		GMT_Get_Default(API, "API_VERSION", value)
-		ver = parse(value[1:3])
+		ver = Meta.parse(value[1:3])
 	end
 end
 
@@ -1786,7 +1790,7 @@ function text_record(data, text)
 	end
 	return T
 end
-text_record(text) = text_record(Array{Float64,2}(0,0), text)
+text_record(text) = text_record(Array{Float64,2}(undef,0,0), text)
 
 #= ---------------------------------------------------------------------------------------------------
 function mat2img(mat::UInt8)

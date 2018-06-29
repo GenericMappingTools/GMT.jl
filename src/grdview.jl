@@ -44,7 +44,6 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-# ---------------------------------------------------------------------------------------------------
 function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[]; data=[],
                  K=false, O=false, first=true, kwargs...)
 

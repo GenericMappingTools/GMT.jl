@@ -36,7 +36,6 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-# ---------------------------------------------------------------------------------------------------
 function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
@@ -66,7 +65,7 @@ function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 	cmd = cmd * opt_pen(d, 'W', [:W :pen])
 
     opt_extra = ""
-    if (contains(cmd , "-I") || contains(cmd0, "-I"))
+    if (occursin( "-I", cmd) || occursin("-I", cmd0))
         output = "";    opt_extra = "-I"
     end
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)

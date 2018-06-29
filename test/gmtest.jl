@@ -9,6 +9,7 @@
 #	Currently only family = "scripts" is implemented (means run test from the 'scripts' dir. TEST_DIR is ignored
 #		example: gmtest("GMT_insert", "", "scripts")
 
+using Printf
 global g_root_dir, out_path, GM
 include("gallery.jl")
 
@@ -62,14 +63,14 @@ function gmtest(test, test_dir="", family="", nargin::Int=1)
 	cm = `$GM compare -density 200 -maximum-error 0.005 -highlight-color magenta -highlight-style
 		 assign -metric rmse -file $png_name $ps_orig $ps`
 
-	run(pipeline(ignorestatus(cm), stdout=DevNull, stderr="errs.txt"))
-	t = readstring("errs.txt")
+	run(pipeline(ignorestatus(cm), stdout=devnull, stderr="errs.txt"))
+	t = read("errs.txt", String)
 	rm("errs.txt")
 	if (isempty(t))
 		println("    Test " * test * " PASS")
 		rm(png_name)
 	else
-		ind = searchindex(t, "image")
+		ind = first(findfirst("image", t))
 		if (ind == 0)
 			println("    Test " * test * " FAIL with:\n " * t)		# Quite likely a Ghostscript error
 		else
@@ -149,16 +150,22 @@ mfilename() = mfilename("treta")	# Output only the script name
 feval(fn_str, args...) = eval(parse(fn_str))(args...)	# This is not a good one.
 
 # ---------------------------------------------------------------------------------------
-function strfind(str::AbstractString, sub_str)
+function strfind(str::AbstractString, sub_str::AbstractString)
 # To mimic Matalab's function except that it returns [0] instead of [] in case of failure
 # and it always returns a vector.
-	ind = [search(str, sub_str)]
+	ind_i = findfirst(sub_str, str)
+	if (ind_i == nothing) return [0] end
+	ind = [first(ind_i)]
 	ind_n = ind[1]
 	while (ind_n != 0)
-		ind_n = searchindex(str, sub_str, ind_n+1)
-		if (ind_n != 0)		# Found another
+		ind_i = findnext(sub_str, str, ind_n+1)
+		if (ind_i != nothing)			# Found another
+			ind_n = first(ind_i)
 			push!(ind, ind_n)
+		else
+			ind_n = 0
 		end
 	end
 	return ind
 end
+strfind(str::AbstractString, sub_str::Char) = strfind(str, string(sub_str))

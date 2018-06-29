@@ -45,11 +45,10 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-# ---------------------------------------------------------------------------------------------------
 function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[],
                   K=false, O=false, first=true, kwargs...)
 
-	contains(cmd0, " -") && length(kwargs) == 0 && return monolitic("grdimage", cmd0, arg1)	# Speedy mode
+	occursin(" -", cmd0) && length(kwargs) == 0 && return monolitic("grdimage", cmd0, arg1)	# Speedy mode
 
 	if (!isempty_(data) && isa(data, Tuple) && !isa(data[1], GMTgrid))
 		error("When 'data' is a tuple, it MUST contain a GMTgrid data type")
