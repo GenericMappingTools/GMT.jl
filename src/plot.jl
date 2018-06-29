@@ -79,8 +79,6 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-# -----------------------------------------------------------------------------------------------------
-# Tested with plot(xyz, S="c0.1c", C=cpt, show=1)
 plot(arg1::Array; extra="", data=[], K=false, O=false, first=true, kw...) =
     GMT.xy(extra, arg1; caller="plot", data=data, K=K, O=O, first=first, kw...)
 plot!(arg1::Array; extra="", data=[], K=false, O=false, first=true, kw...) =

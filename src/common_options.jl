@@ -892,7 +892,7 @@ end
 function read_data(data, cmd, arg, opt_R, opt_i, opt_bi, opt_di, is3D=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided 
-	if (!isempty_(data) && !isempty_(arg1))
+	if (!isempty_(data) && !isempty_(arg))
 		warn("Conflicting ways of providing input data. Both a file name via positional and
 			  a data array via keyword args were provided. Unknown effect of this.")
 	end
@@ -978,11 +978,12 @@ function isempty_(arg)
 	if (arg == nothing)
 		return true
 	end
-	empty = false
 	try
-		empty = isempty(arg)
+		vazio = isempty(arg)
+		return vazio
+	catch
+		return false
 	end
-	return empty
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -35,7 +35,6 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """
-# ---------------------------------------------------------------------------------------------------
 function grdinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	length(kwargs) == 0 && isempty_(data) && !isa(arg1, GMTgrid) && return monolitic("grdinfo", cmd0, arg1)	# Speedy mode

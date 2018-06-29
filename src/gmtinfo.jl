@@ -49,7 +49,6 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-# ---------------------------------------------------------------------------------------------------
 function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && !isa(arg1, GMTdataset) && return monolitic("gmtinfo", cmd0, arg1)	# Speedy mode

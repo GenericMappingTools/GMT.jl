@@ -45,7 +45,6 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-# ---------------------------------------------------------------------------------------------------
 function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; data=[],
                   K=false, O=false, first=true, kwargs...)
 

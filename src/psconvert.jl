@@ -61,7 +61,6 @@ Parameters
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#z)
 - $(GMT.opt_V)
 """
-# ---------------------------------------------------------------------------------------------------
 function psconvert(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	length(kwargs) == 0 && isempty_(data) && occursin(" -", cmd0) &&

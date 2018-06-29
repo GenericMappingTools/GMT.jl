@@ -45,7 +45,6 @@ Parameters
 'arg1' may contain the table data as an array or a GMTdataset type and GMTgrid or it can be
 left empty. Same thing for 'arg2'. 'cmd' can have the file name of either the table or the grid.
 """
-# ---------------------------------------------------------------------------------------------------
 function grdtrack(cmd0::String="", arg1=[], arg2=[]; data=[], kwargs...)
 
 	length(kwargs) == 0 && isempty_(arg1) && isempty_(data) && return monolitic("grdtrack", cmd0, arg1)	# Speedy mode

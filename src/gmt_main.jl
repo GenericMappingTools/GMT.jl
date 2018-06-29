@@ -989,13 +989,9 @@ function grid_init(API::Ptr{Void}, module_input, grd_box, dir::Integer=GMT_IN)
 # If GRD_BOX is empty just allocate (GMT) an empty container and return
 # If GRD_BOX is not empty it must contain either a ArrayContainer or a GMTgrid type.
 
-	empty = false 		# F... F... it's a shame having to do this
-	try
-		isempty(grd_box)
-		empty = true
-	end
+	vazio = isempty_(grd_box)
 
-	if (empty)			# Just tell grid_init() to allocate an empty container
+	if (vazio)			# Just tell grid_init() to allocate an empty container
 		GMT_CREATE_MODE = 0
 		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
 		if ((R = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_CREATE_MODE,
@@ -1069,13 +1065,9 @@ function image_init(API::Ptr{Void}, module_input, img_box, dir::Integer=GMT_IN)
 	# ...
 	global img_mem_layout
 
-	empty = false 		# F... F... it's a shame having to do this
-	try
-		isempty(img_box)
-		empty = true
-	end
+	vazio = isempty_(img_box)
 
-	if (empty)			# Just tell image_init() to allocate an empty container
+	if (vazio)			# Just tell image_init() to allocate an empty container
 		GMT_CREATE_MODE = 0
 		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
 		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_CREATE_MODE,
@@ -1420,8 +1412,14 @@ function palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 		z_high = cpt.range[j,2]
 
 		annot = 3						# Enforce annotations for now
-		lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
-		              glut.hsv_diff, annot, glut.skip, glut.fill, glut.label)
+		if (GMTver < 6.0)
+			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
+			              glut.hsv_diff, annot, glut.skip, glut.fill, glut.label)
+		else
+			# For now send NULL for the new param 'key'
+			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
+			             glut.hsv_diff, annot, glut.skip, glut.fill, glut.label, NULL)
+		end
 
 		unsafe_store!(Pb.data, lut, j)
 	end

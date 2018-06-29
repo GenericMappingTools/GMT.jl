@@ -49,7 +49,6 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-# ---------------------------------------------------------------------------------------------------
 function blockmean(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("blockmean", cmd0, arg1)	# Speedy mode

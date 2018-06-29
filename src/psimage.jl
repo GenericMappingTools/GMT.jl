@@ -31,7 +31,6 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-# ---------------------------------------------------------------------------------------------------
 function image(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && isempty_(data) && return monolitic("psimage", cmd0, arg1)	# Speedy mode

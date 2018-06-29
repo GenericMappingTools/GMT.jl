@@ -44,7 +44,6 @@ Full option list at [`makecpt`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.h
 - $(GMT.opt_di)
 - $(GMT.opt_i)
 """
-# ---------------------------------------------------------------------------------------------------
 function makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && return monolitic("makecpt", cmd0, arg1)	# Speedy mode

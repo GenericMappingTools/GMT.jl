@@ -42,7 +42,6 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-# ---------------------------------------------------------------------------------------------------
 function basemap(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("psbasemap", cmd0, arg1)	# Speedy mode

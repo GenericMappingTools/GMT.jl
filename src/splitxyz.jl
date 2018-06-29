@@ -42,7 +42,6 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_swap_xy)
 """
-# ---------------------------------------------------------------------------------------------------
 function splitxyz(cmd0::String="", arg1=[]; data=[], kwargs...)
 
 	length(kwargs) == 0 && isempty(data) && occursin(" -", cmd0) && return monolitic("splitxyz", cmd0, arg1)	# Speedy mode

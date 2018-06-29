@@ -8,6 +8,7 @@ const GMTver = 6.0
 const FMT = "ps"
 
 export
+	GMTver, FMT,
 	gmt, grid_type, basemap, basemap!, blockmean, blockmedian, blockmode, coast, coast!, logo, logo!,
 	xy, xy!, grdcontour, grdcontour!, grdimage,
 	grdimage!, grdtrack, grdview, grdview!, makecpt, histogram, histogram!, image, image!, psconvert,

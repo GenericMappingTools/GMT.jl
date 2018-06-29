@@ -69,7 +69,6 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-# ---------------------------------------------------------------------------------------------------
 function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("pscoast", cmd0, arg1)	# Speedy mode

@@ -27,7 +27,6 @@ Parameters
 - $(GMT.opt_Y)
 - $(GMT.opt_t)
 """
-# ---------------------------------------------------------------------------------------------------
 function logo(cmd0::String=""; K=false, O=false, first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("pslogo", cmd0, arg1)	# Speedy mode

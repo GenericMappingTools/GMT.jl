@@ -80,8 +80,6 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-# -----------------------------------------------------------------------------------------------------
-# Tested with plot3d(xyz, S="c0.1c", C=cpt, show=1)
 plot3d(arg1::Array; extra="", data=[], K=false, O=false, first=true, kw...) =
     GMT.xyz(extra, arg1; caller="plot3d", data=data, K=K, O=O, first=first, kw...)
 plot3d!(arg1::Array; extra="", data=[], K=false, O=false, first=true, kw...) =

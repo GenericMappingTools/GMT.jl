@@ -88,7 +88,6 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-# ---------------------------------------------------------------------------------------------------
 function xy(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, kwargs...)
 	common_plot_xyz(cmd0, arg1, caller, data, K, O, first, false, kwargs...)
 end

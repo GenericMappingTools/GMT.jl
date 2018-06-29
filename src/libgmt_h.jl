@@ -492,20 +492,39 @@ struct GMT_FILL
 	dpi::UInt32
 	pattern::NTuple{256,UInt8}		# was char pattern[GMT_BUFSIZ];
 end
-struct GMT_LUT
-	z_low::Cdouble
-	z_high::Cdouble
-	i_dz::Cdouble
-	rgb_low::NTuple{4,Cdouble}
-	rgb_high::NTuple{4,Cdouble}
-	rgb_diff::NTuple{4,Cdouble}
-	hsv_low::NTuple{4,Cdouble}
-	hsv_high::NTuple{4,Cdouble}
-	hsv_diff::NTuple{4,Cdouble}
-	annot::UInt32
-	skip::UInt32
-	fill::Ptr{GMT_FILL}
-	label::Ptr{UInt8}
+if (GMTver < 6.0)
+	struct GMT_LUT
+		z_low::Cdouble
+		z_high::Cdouble
+		i_dz::Cdouble
+		rgb_low::NTuple{4,Cdouble}
+		rgb_high::NTuple{4,Cdouble}
+		rgb_diff::NTuple{4,Cdouble}
+		hsv_low::NTuple{4,Cdouble}
+		hsv_high::NTuple{4,Cdouble}
+		hsv_diff::NTuple{4,Cdouble}
+		annot::UInt32
+		skip::UInt32
+		fill::Ptr{GMT_FILL}
+		label::Ptr{UInt8}
+	end
+else
+	struct GMT_LUT
+		z_low::Cdouble
+		z_high::Cdouble
+		i_dz::Cdouble
+		rgb_low::NTuple{4,Cdouble}
+		rgb_high::NTuple{4,Cdouble}
+		rgb_diff::NTuple{4,Cdouble}
+		hsv_low::NTuple{4,Cdouble}
+		hsv_high::NTuple{4,Cdouble}
+		hsv_diff::NTuple{4,Cdouble}
+		annot::UInt32
+		skip::UInt32
+		fill::Ptr{GMT_FILL}
+		label::Ptr{UInt8}
+		key::Ptr{UInt8}
+	end
 end
 struct GMT_BFN
 	rgb::NTuple{4,Cdouble}
@@ -694,6 +713,7 @@ mutable struct GMT_MATRIX_v6
 	size::Csize_t
 	_type::UInt32
 	range::NTuple{6,Cdouble}
+	inc::NTuple{3,Cdouble}
 #	data::GMT_UNIVECTOR
 	data::Ptr{Cvoid}
 	text::Ptr{Ptr{UInt8}}
