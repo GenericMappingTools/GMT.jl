@@ -166,16 +166,10 @@ function gmt(cmd::String, args...)
 			if (!occursin("-T", r))
 				r = r * " -F"
 			else								# Hmm, have to find if any of 'e' or 'f' are used as -T flags
-<<<<<<< HEAD
-				tok = strtok(r[ind[2]:end])		# Will have T?
-				tok = lowercase(tok[1])			# Here tok[1] means the first element of the tuple
-				if (isempty(search(tok,"e")) && isempty(search(tok,"f")))	# No any -Tef combo so add -F
-=======
 				ind = findfirst("-T", r)
 				tok = strtok(r[ind[2]:end])		# Will have T
 				tok = lowercase(tok[1])			# Here tok[1] means the first element of the tuple
 				if (!occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
->>>>>>> j07
 					r = r * " -F"
 				end
 			end
