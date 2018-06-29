@@ -7,7 +7,6 @@ os:
   - linux
 julia:
   - 0.6
-  - 0.7
   - nightly
 matrix:
   allow_failures:
@@ -28,23 +27,18 @@ before_install:
       # Show installed pkg information for postmortem diagnostic
       - conda list
       # Install GMT trunk
-      - pwd
-      - sudo apt-get install subversion build-essential cmake libcurl4-gnutls-dev libnetcdf-dev libgdal1-dev libfftw3-dev libpcre3-dev liblapack-dev ghostscript
-      - svn checkout svn://gmtserver.soest.hawaii.edu/gmt5/branches/5.4 $HOME/gmt
-      - PATH="$HOME/gmt/bin:$PATH"
-      - export PATH
-      - echo 'export PATH="$HOME/gmt/bin:$PATH"' >>~/.bash_profile
-      - cd $HOME/gmt
-      - wget ftp://ftp.soest.hawaii.edu/gshhg/gshhg-gmt-2.3.7.tar.gz
-      - tar -xvzf gshhg-gmt-2.3.7.tar.gz
-      - mkdir build
-      - cd build
-      - cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt -DGSHHG_ROOT=$HOME/gmt/gshhg-gmt-2.3.7
-      - make -j && make install
-      - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/gmt/lib"
-      - cd /home/travis/build/GenericMappingTools/GMT.jl
-  #- if [ `uname` = "Darwin" ]; then brew update && brew upgrade && brew install gmt; fi
-
+      ##- sudo apt-get install subversion build-essential cmake libcurl4-gnutls-dev libnetcdf-dev libgdal1-dev libfftw3-dev libpcre3-dev liblapack-dev
+      ##- svn checkout svn://gmtserver.soest.hawaii.edu/gmt/trunk $HOME/gmt
+      ##- PATH="$HOME/gmt/bin:$PATH"
+      ##- echo 'export PATH="$HOME/gmt/bin:$PATH"' >>~/.bash_profile
+      ##- cd $HOME/gmt
+      ##- mkdir build
+      ##- cd build
+      ##- cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt
+      ##- make -j && make install
+  #- if [ `uname` = "Darwin" ]; then
+      #brew update && brew install gmt;
+  #  fi
 # uncomment the following lines to override the default test script
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
