@@ -1,15 +1,7 @@
 environment:
   matrix:
-  - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x86/0.7/julia-0.7-latest-win32.exe"
-    GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.3-win32.exe"
   - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x64/0.7/julia-0.7-latest-win64.exe"
     GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.3-win64.exe"
-  - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x86/0.7/julia-0.7-latest-win32.exe"
-    GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.3-win32.exe"
-  - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x64/0.7/julia-0.7-latest-win64.exe"
-    GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.3-win64.exe"
-  - JULIA_URL: "https://julialangnightlies-s3.julialang.org/bin/winnt/x86/julia-latest-win32.exe"
-    GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.3-win32.exe"
   - JULIA_URL: "https://julialangnightlies-s3.julialang.org/bin/winnt/x64/julia-latest-win64.exe"
     GMT_URL: "http://gmt.soest.hawaii.edu/files/download?name=gmt-5.4.3-win64.exe"
 
