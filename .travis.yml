@@ -34,7 +34,8 @@ before_install:
       - export PATH
       - echo 'export PATH="$HOME/gmt/bin:$PATH"' >>~/.bash_profile
       - cd $HOME/gmt
-      - wget ftp://ftp.soest.hawaii.edu/gshhg/gshhg-gmt-2.3.7.tar.gz
+      #- wget ftp://ftp.soest.hawaii.edu/gshhg/gshhg-gmt-2.3.7.tar.gz
+      - wget http://w3.ualg.pt/~jluis/ftp/gshhg-gmt-2.3.7.tar.gz
       - tar -xvzf gshhg-gmt-2.3.7.tar.gz
       - mkdir build
       - cd build
