@@ -3,9 +3,9 @@ GMT.jl
 
 Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
-| **Documentation**                       | **PackageEvaluator**            | **Build Status**                          |
-|:---------------------------------------:|:-------------------------------:|:-----------------------------------------:|
-| [![][docs-latest-img]][docs-latest-url] | [![][pkg-0.7-img]][pkg-0.7-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] |
+| **Documentation**                       | **Build Status (Julia 0.7)**              |
+|:---------------------------------------:|:-----------------------------------------:|
+| [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] |
 
 [gitter-url]: https://gitter.im/genericmappingtools/users
 
@@ -43,12 +43,14 @@ This wrapper works only with GMT5.3.1 and above
 WARNING
 =======
 
-Done, master branch runs only on 0.7
+Tagged version 0.4 that runs only on Julia 0.7
 
 Install
 =======
 
-    Pkg.add("GMT")
+Use the new Pkg3 to install current version (0.4). To install on Julia 0.6, this should do it:
+
+    Pkg.checkout("GMT", v"0.3.0")
 
 On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at
 /user/local/lib), I had to help Julia finding MY *libgmt.dylib*, with (this line should than be
