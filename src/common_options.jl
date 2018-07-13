@@ -497,8 +497,8 @@ end
 function parse_e(cmd::String, d::Dict)
 	# Parse the global -e option. Return CMD same as input if no -e option in args
 	for symb in [:e :pattern]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -e" * d[symb]
+		if (haskey(d, symb))
+			cmd = cmd * " -e" * arg2str(d[symb])
 			break
 		end
 	end
@@ -509,8 +509,8 @@ end
 function parse_f(cmd::String, d::Dict)
 	# Parse the global -f option. Return CMD same as input if no -f option in args
 	for symb in [:f :colinfo]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -f" * d[symb]
+		if (haskey(d, symb))
+			cmd = cmd * " -f" * arg2str(d[symb])
 			break
 		end
 	end
@@ -521,8 +521,8 @@ end
 function parse_g(cmd::String, d::Dict)
 	# Parse the global -g option. Return CMD same as input if no -g option in args
 	for symb in [:g :gaps]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -g" * d[symb]
+		if (haskey(d, symb))
+			cmd = cmd * " -g" * arg2str(d[symb])
 			break
 		end
 	end
@@ -546,8 +546,8 @@ function parse_i(cmd::String, d::Dict)
 	# Parse the global -i option. Return CMD same as input if no -i option in args
 	opt_i = ""
 	for symb in [:i :input_col]
-		if (haskey(d, symb) && isa(d[symb], String))
-			opt_i = " -i" * d[symb]
+		if (haskey(d, symb))
+			opt_i = " -i" * arg2str(d[symb])
 			cmd = cmd * opt_i
 			break
 		end
@@ -559,8 +559,8 @@ end
 function parse_n(cmd::String, d::Dict)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
 	for symb in [:n :interp :interp_method]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -n" * d[symb]
+		if (haskey(d, symb))
+			cmd = cmd * " -n" * arg2str(d[symb])
 			break
 		end
 	end
@@ -571,8 +571,8 @@ end
 function parse_s(cmd::String, d::Dict)
 	# Parse the global -s option. Return CMD same as input if no -s option in args
 	for symb in [:s :skip_col]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -s" * d[symb]
+		if (haskey(d, symb))
+			cmd = cmd * " -s" * arg2str(d[symb])
 			break
 		end
 	end
@@ -596,8 +596,8 @@ end
 function parse_o(cmd::String, d::Dict)
 	# Parse the global -o option. Return CMD same as input if no -o option in args
 	for symb in [:o :output_col]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -o" * d[symb]
+		if (haskey(d, symb))
+			cmd = cmd * " -o" * arg2str(d[symb])
 			break
 		end
 	end
@@ -608,8 +608,8 @@ end
 function parse_p(cmd::String, d::Dict)
 	# Parse the global -p option. Return CMD same as input if no -p option in args
 	for symb in [:p :view :perspective]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -p" * d[symb]
+		if (haskey(d, symb))
+			cmd = cmd * " -p" * arg2str(d[symb])
 			break
 		end
 	end
