@@ -153,6 +153,13 @@ grdcontour(G, cont=1, annot=2, frame="a")
 cpt = makecpt(T="-6/8/1");      # Create the color map
 grdcontour(G, frame="a", color=cpt, pen="+c")
 
+# Remove garbage
+rm("gmt.history")
+rm("lixo.ps")
+rm("lixo.eps")
+rm("lixo.grd")
+rm("lixo.pbg")
+
 function testa_conf(;kw...)
 	d = GMT.KW(kw)
 	cmd = GMT.parse_gmtconf_MAP("", d)
