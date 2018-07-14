@@ -175,28 +175,26 @@ function gmt(cmd::String, args...)
 			end
 		end
 	end
-	if (g_module == "psconvert" && occursin("-M", r))
-		ind = findfirst("-M", r)
-		img_mem_layout, r2 = strtok(r[ind[2]+1:end])
-		if (length(img_mem_layout) != 3)
-			error("GMT: Error in memory layout option (-M) for psconvert. It must have 3 characters.")
-		end
-		r = r[1:ind[1]-1] * " " * r2	# Remove the -M option that psconvert doesn't know about
+	if (g_module == "psconvert" && occursin("-,", r))	# It has also a mem layout request
+		r, img_mem_layout, grd_mem_layout =  parse_mem_layouts(r)
 	end
 
-	# 2++ Add -T to gmtwrite if user did not explicitly give -T.
-	if (occursin("write", g_module) && !occursin("-T", r) && n_argin == 1)
-		if (any(isequal(:z), fieldnames(typeof(args[1]))))
-			r = r * " -Tg"
-		elseif (any(isequal(:image), fieldnames(typeof(args[1]))))
-			r = r * " -Ti"
-		elseif (any(isequal(:data), fieldnames(typeof(args[1]))))
-			r = r * " -Td"
-		elseif (any(isequal(:postscript), fieldnames(typeof(args[1]))))
-			r = r * " -Tp"
-		elseif (any(isequal(:hinge), fieldnames(typeof(args[1]))))
-			r = r * " -Tc"
+	# 2++ Add -T to gmtwrite if user did not explicitly give -T. Seek also for MEM layout requests
+	if (occursin("write", g_module))
+		if (!occursin("-T", r) && n_argin == 1)
+			if (any(isequal(:z), fieldnames(typeof(args[1]))))
+				r = r * " -Tg"
+			elseif (any(isequal(:image), fieldnames(typeof(args[1]))))
+				r = r * " -Ti"
+			elseif (any(isequal(:data), fieldnames(typeof(args[1]))))
+				r = r * " -Td"
+			elseif (any(isequal(:postscript), fieldnames(typeof(args[1]))))
+				r = r * " -Tp"
+			elseif (any(isequal(:hinge), fieldnames(typeof(args[1]))))
+				r = r * " -Tc"
+			end
 		end
+		r, img_mem_layout, grd_mem_layout =  parse_mem_layouts(r)
 	end
 
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
@@ -204,12 +202,15 @@ function gmt(cmd::String, args...)
 		if (occursin("-Ti", r))
 			GMT_Set_Default(API, "API_PAD", "0")
 		end
+		#=
 		ff = findfirst( "-L", r)
 		ind = (ff == nothing) ? 0 : first(ff)
 		if (ind != 0)
 			grd_mem_layout, resto = strtok(r[ind+2:end])
 			r = r[1:ind-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 		end
+		=#
+		r, img_mem_layout, grd_mem_layout =  parse_mem_layouts(r)
 	end
 
 	# 3. Convert command line arguments to a linked GMT option list
@@ -348,6 +349,35 @@ function create_cmd(LL)
 		end
 	end
 	return takebuf_string(a)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_mem_layouts(cmd)
+# See if a specific grid or image mem layout is requested. If found return its value and also
+# strip the corresponding option from the CMD string (otherwise GMT would scream)
+	grd_mem_layout = "";	img_mem_layout = ""
+
+	ff = findfirst( "-,", cmd)
+	ind = (ff == nothing) ? 0 : first(ff)
+	if (ind != 0)
+		img_mem_layout, resto = strtok(cmd[ind+2:end])
+		if (length(img_mem_layout) != 3)
+			error(@sprintf("GMT: Memory layout option must have 3 characters and not %s", img_mem_layout))
+		end
+		cmd = cmd[1:ind-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
+	end
+	if (isempty(img_mem_layout))			# Only if because we can't have a double request
+		ff = findfirst( "-;", cmd)
+		ind = (ff == nothing) ? 0 : first(ff)
+		if (ind != 0)
+			grd_mem_layout, resto = strtok(cmd[ind+2:end])
+			if (length(img_mem_layout) != 3)
+				error(@sprintf("GMT: Memory layout option must have 3 characters and not %s", grd_mem_layout))
+			end
+			cmd = cmd[1:ind-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
+		end
+	end
+	return cmd, img_mem_layout, grd_mem_layout
 end
 
 # ---------------------------------------------------------------------------------------------------
