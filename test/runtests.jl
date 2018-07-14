@@ -158,7 +158,7 @@ rm("gmt.history")
 rm("lixo.ps")
 rm("lixo.eps")
 rm("lixo.grd")
-rm("lixo.pbg")
+rm("lixo.png")
 
 function testa_conf(;kw...)
 	d = GMT.KW(kw)
