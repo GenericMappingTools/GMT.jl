@@ -14,7 +14,7 @@ export
 	grdimage!, grdtrack, grdview, grdview!, makecpt, histogram, histogram!, image, image!, psconvert,
 	colorbar, colorbar!, rose, rose!, solar, solar!, text, text!, gmtinfo, grdinfo, surface,
 	triangulate, nearneighbor, imshow, imshow!, plot, plot!, plot3d, plot3d!, splitxyz, wiggle, wiggle!,
-	text_record
+	text_record, gmtread, gmtwrite
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -24,6 +24,7 @@ include("common_options.jl")
 include("gmtinfo.jl")
 include("blocks.jl")
 include("gmtlogo.jl")
+include("gmtreadwrite.jl")
 include("grdcontour.jl")
 include("grdinfo.jl")
 include("grdimage.jl")
