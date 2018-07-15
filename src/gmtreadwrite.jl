@@ -178,20 +178,25 @@ function gmtwrite(fname::String="", data=[]; kwargs...)
 
 	if (isa(data, GMTgrid))
 		opt_T = " -Tg"
-		fname = fname * parse_grd_format(d)	# If we have format requests
+		fname = fname * parse_grd_format(d)		# If we have format requests
 		cmd = parse_f(cmd, d)
 	elseif (isa(data, GMTimage))
 		opt_T = " -Ti"
-		fname = fname * parse_grd_format(d)	# If we have format requests
+		fname = fname * parse_grd_format(d)		# If we have format requests
 	elseif (isa(data, GMTdataset))
 		opt_T = " -Td"
-		cmd = parse_bo(cmd, d)				# Write to binary file
+		cmd = parse_bo(cmd, d)					# Write to binary file
 	elseif (isa(data, GMTcpt))
 		opt_T = " -Tc"
 	elseif (isa(data, GMTps))
 		opt_T = " -Ts"
+	elseif (isa(data, Array{UInt8}))
+		data = mat2img(data)
+		fname = fname * parse_grd_format(d)		# If we have format requests
+		opt_T = " -Ti"
 	elseif (isa(data, AbstractArray))
 		data = mat2grid(data)
+		fname = fname * parse_grd_format(d)		# If we have format requests
 		opt_T = " -Tg"
 	elseif (isempty_(data))
 		error("Second argument must contain the data to save in file, and not be EMPTY like it is in this case.")
@@ -246,7 +251,7 @@ function parse_grd_format(d::Dict)
 		end
 	end
 	if (haskey(d, :driver))
-		out = out * arg2str(d[:driver])
+		out = out * ":" * arg2str(d[:driver])
 		if (haskey(d, :datatype))
 			out = out * "/" * arg2str(d[:datatype])
 		end
