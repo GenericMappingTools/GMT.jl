@@ -34,7 +34,7 @@ mutable struct GMTimage 	# The mutable struct holding a local header and data of
 	datatype::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-	image::Array{UInt8,3}
+	image::Array{UInt8}
 	x_unit::String
 	y_unit::String
 	z_unit::String
@@ -1816,21 +1816,21 @@ function text_record(data, text)
 end
 text_record(text) = text_record(Array{Float64,2}(undef,0,0), text)
 
-#= ---------------------------------------------------------------------------------------------------
-function mat2img(mat::UInt8)
+## ---------------------------------------------------------------------------------------------------
+function mat2img(mat::Array{UInt8}, proj4::String="", wkt::String="")
 	# Take a 2D array of uint8 and turn it into a GMTimage.  NOT FINISHED YEY
 	nx = size(mat, 2);		ny = size(mat, 1);
 	x  = collect(1:nx);		y = collect(1:ny)
 	colormap = vec(zeros(Clong,1,3))	# Because we need an array
 	n_colors = 0
-	layout = "BRPa"
-	I = GMTimage("", "", [1.0, nx, 1, ny, minimum(mat), maximum(mat)], [1.0, 1.0], 0, NaN, "", "", "", "",
+	layout = "TRPa"
+	I = GMTimage(proj4, wkt, [1.0, nx, 1, ny, minimum(mat), maximum(mat)], [1.0, 1.0], 0, NaN, "", "", "", "",
 	             x,y,mat, "", "", "", colormap, n_colors, zeros(UInt8,ny,nx), layout)
 end
-=#
+##
 
 # ---------------------------------------------------------------------------------------------------
-function mat2grid(mat)
+function mat2grid(mat, proj4::String="", wkt::String="")
 	# Take a 2D array of floats and turn it into a GMTgrid
 	nx = size(mat, 2);		ny = size(mat, 1);
 	x  = collect(1:nx);		y = collect(1:ny)
@@ -1839,6 +1839,6 @@ function mat2grid(mat)
 	else
 		z = mat
 	end
-	G = GMTgrid("", "", [1.0, nx, 1, ny, minimum(mat), maximum(mat)], [1.0, 1.0], 
+	G = GMTgrid(proj4, wkt, [1.0, nx, 1, ny, minimum(mat), maximum(mat)], [1.0, 1.0], 
 	            0, NaN, "", "", "", "", x, y, z, "x", "y", "z", "")
 end
