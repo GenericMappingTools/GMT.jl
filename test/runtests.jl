@@ -18,11 +18,14 @@ end
 
 # GMTREADWRITE
 G=gmt("grdmath", "-R0/10/0/10 -I1 5");
-gmtwrite("lixo.grd", G,  scale=10, offset=-10)
-GG = gmtread("lixo.grd", grd=true);
-@assert(sum(G.z[:] - GG.z[:]) == 0)
 if (GMTver >= 6)
+	gmtwrite("lixo.grd", G,  scale=10, offset=-10)
+	GG = gmtread("lixo.grd", grd=true);
+	@assert(sum(G.z[:] - GG.z[:]) == 0)
 	gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
+else
+	gmtwrite("lixo.grd", G)
+	GG = gmtread("lixo.grd", grd=true);
 end
 
 # GRDINFO
