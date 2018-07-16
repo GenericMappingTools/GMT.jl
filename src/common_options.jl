@@ -966,9 +966,9 @@ function showfig(fname_ps::String, fname_ext::String, opt_T::String, K=false, fn
 			gmt("psconvert = -A1p -Tf -F" * out)
 		end
 	end
-	if (Sys.iswindows()) run(ignorestatus(`explorer $out`))
-	elseif (is_apple()) run(`open $(out)`)
-	elseif (is_linux()) run(`xdg-open $(out)`)
+	@static if (Sys.iswindows()) run(ignorestatus(`explorer $out`))
+	elseif (Sys.isapple()) run(`open $(out)`)
+	elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
 	end
 end
 
