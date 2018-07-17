@@ -1831,7 +1831,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function mat2grid(mat, proj4::String="", wkt::String="")
-	# Take a 2D array of floats and turn it into a GMTgrid
+# Take a 2D array of floats and turn it into a GMTgrid
 	nx = size(mat, 2);		ny = size(mat, 1);
 	x  = collect(1:nx);		y = collect(1:ny)
 	if (!isa(mat, Float32))
@@ -1841,4 +1841,56 @@ function mat2grid(mat, proj4::String="", wkt::String="")
 	end
 	G = GMTgrid(proj4, wkt, [1.0, nx, 1, ny, minimum(mat), maximum(mat)], [1.0, 1.0], 
 	            0, NaN, "", "", "", "", x, y, z, "x", "y", "z", "")
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:+(G1::GMTgrid, G2::GMTgrid)
+# Add two grids, element by element. Inherit header parameters from G1 grid
+	if (size(G1.z) != size(G2.z))
+		error("The two grids have not the same size, so thay cannot be added.")
+	end
+	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+				 G1.command, G1.datatype, G1.x, G1.y, G1.z .+ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	G3.range[5] = minimum(G3.z)
+	G3.range[6] = maximum(G3.z)
+	return G3
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:-(G1::GMTgrid, G2::GMTgrid)
+# Subtract two grids, element by element. Inherit header parameters from G1 grid
+	if (size(G1.z) != size(G2.z))
+		error("The two grids have not the same size, so thay cannot be added.")
+	end
+	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	             G1.command, G1.datatype, G1.x, G1.y, G1.z .- G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	G3.range[5] = minimum(G3.z)
+	G3.range[6] = maximum(G3.z)
+	return G3
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:*(G1::GMTgrid, G2::GMTgrid)
+# Multiply two grids, element by element. Inherit header parameters from G1 grid
+	if (size(G1.z) != size(G2.z))
+		error("The two grids have not the same size, so thay cannot be added.")
+	end
+	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	             G1.command, G1.datatype, G1.x, G1.y, G1.z .* G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	G3.range[5] = minimum(G3.z)
+	G3.range[6] = maximum(G3.z)
+	return G3
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:/(G1::GMTgrid, G2::GMTgrid)
+# Divide two grids, element by element. Inherit header parameters from G1 grid
+	if (size(G1.z) != size(G2.z))
+		error("The two grids have not the same size, so thay cannot be added.")
+	end
+	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	             G1.command, G1.datatype, G1.x, G1.y, G1.z ./ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	G3.range[5] = minimum(G3.z)
+	G3.range[6] = maximum(G3.z)
+	return G3
 end
