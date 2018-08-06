@@ -1,4 +1,5 @@
 #@static is_windows() ? (const thelib = "V:/build/src/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
+#@static is_windows() ? (const thelib = "C:/progs_cygw/GMTdev/gmt5/5.4/WIN64/bin/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
 @static Sys.iswindows() ? (Sys.WORD_SIZE == 64 ? (const thelib = "gmt_w64") : (const thelib = "gmt_w32")) : (const thelib = "libgmt")  # Name of GMT shared lib.
 
 function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Cvoid}=C_NULL)
@@ -72,6 +73,7 @@ end
 function GMT_Duplicate_Data(API::Ptr{Cvoid}, family::Integer, mode::Integer, data::Ptr{Cvoid})
 	ccall( (:GMT_Duplicate_Data, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt32, UInt32, Ptr{Cvoid}), API, family, mode, data)
 end
+
 function GMT_Get_Record(API::Ptr{Cvoid}, mode::Integer, retval::Ptr{Cint})
 	ccall( (:GMT_Get_Record, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt32, Ptr{Cint}), API, mode, retval)
 end
@@ -145,18 +147,18 @@ function GMT_Get_Family(API::Ptr{Cvoid}, dir::Integer, head::Ptr{GMT_OPTION})
 end
 
 function GMT_Get_Index(API::Ptr{Cvoid}, header::Ptr{GMT_GRID_HEADER}, row::Cint, col::Cint)
-	ccall( (:GMT_Get_Index, thelib), Clonglong, (Ptr{Cvoid}, Ptr{GMT_GRID_HEADER}, Cint, Cint), API, header, row, col)
+	ccall((:GMT_Get_Index, thelib), Clonglong, (Ptr{Cvoid}, Ptr{GMT_GRID_HEADER}, Cint, Cint), API, header, row, col)
 end
 function GMT_Get_Coord(API::Ptr{Cvoid}, family::Integer, dim::Integer, container::Ptr{Cvoid})
-	ccall( (:GMT_Get_Coord, thelib), Ptr{Cdouble}, (Ptr{Cvoid}, UInt32, UInt32, Ptr{Cvoid}), API, family, dim, container)
+	ccall((:GMT_Get_Coord, thelib), Ptr{Cdouble}, (Ptr{Cvoid}, UInt32, UInt32, Ptr{Cvoid}), API, family, dim, container)
 end
 
 function GMT_Option(API::Ptr{Cvoid}, options)
-	ccall( (:GMT_Option, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}), API, options)
+	ccall((:GMT_Option, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}), API, options)
 end
 
 function GMT_Get_Common(API::Ptr{Cvoid}, option::UInt32, par::Ptr{Cdouble})
-	ccall( (:GMT_Get_Common, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{Cdouble}), API, option, par)
+	ccall((:GMT_Get_Common, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{Cdouble}), API, option, par)
 end
 
 function GMT_Get_Default(API::Ptr{Cvoid}, keyword::String, value)
@@ -341,7 +343,7 @@ end
 
 function GMT_Change_Layout(API::Ptr{Cvoid}, family::Integer, code, mode::Integer, obj::Ptr{Cvoid}, data::Ptr{Cvoid}=C_NULL, alpha::Ptr{Cvoid}=C_NULL)
 	ccall((:GMT_Change_Layout, thelib), Cint, (Ptr{Cvoid}, Cuint, Ptr{UInt8}, Cuint, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}),
-				 API, family, code, mode, obj, data, alpha)
+	      API, family, code, mode, obj, data, alpha)
 end
 
 function GMT_Open_VirtualFile(API::Ptr{Cvoid}, family::Integer, geometry::Integer, dir::Integer, data, name)
@@ -386,4 +388,11 @@ end
 
 function gmt_manage_workflow(API::Ptr{Cvoid}, mode::Integer, texto)
 	ccall((:gmt_manage_workflow, thelib), Cint, (Ptr{Cvoid}, UInt32, Cstring), API, mode, texto)
+end
+
+function GMT_Get_Version()
+	ver = ccall((:GMT_Get_Version, thelib), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
+end
+function GMT_Get_Version(major::Ptr{Cuint}, minor::Ptr{Cuint}, patch::Ptr{Cuint})
+	ver = ccall((:GMT_Get_Version, thelib), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, major, minor, patch)
 end
