@@ -811,11 +811,15 @@ function finish_PS(d::Dict, cmd0::String, cmd::String, output::String, K::Bool, 
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(cmd::String, opt, d::Dict, symbs)
+function add_opt(cmd::String, opt, d::Dict, symbs, del::Bool=false)
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
+	# If DEL == true we remove the found key. Useful when 
 	for sym in symbs
 		if (haskey(d, sym))
 			cmd = string(cmd, " -", opt, arg2str(d[sym]))
+			if (del)
+				delete!(d, sym)
+			end
 			break
 		end
 	end
