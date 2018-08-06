@@ -1312,7 +1312,7 @@ function dataset_init(API::Ptr{Void}, module_input, ptr, direction::Integer, act
 
 	if (direction == GMT_IN) 	# Dimensions are known, extract them and set dim array for a GMT_MATRIX resource */
 		dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
-		if (get_GMTversion(API) < 6.0)
+		if (GMTver < 6.0)
 			if ((M = GMT_Create_Data(API, GMT_IS_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 				error("Failure to alloc GMT source matrix")
 			end
