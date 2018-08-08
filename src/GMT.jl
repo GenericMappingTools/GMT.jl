@@ -20,12 +20,16 @@ function GMT_Get_Version_()
 	end
 end
 
+#= Shit, the try is not "strong enough" to catch the case where the function does not exist
 # Wrapp it in a try catch because GMT_Get_version() does not exist in GMT5
 try
 	global const GMTver = GMT_Get_Version_()
 catch
 	global const GMTver = 5.0
 end
+=#
+
+const GMTver = 5.0
 const FMT = "ps"
 
 export
