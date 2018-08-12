@@ -5,18 +5,22 @@ Plots the GMT logo on a map. By default, the GMT logo is 5 cm wide and 2.5 cm hi
 positioned relative to the current plot origin. Use various options to change this and to place
 a transparent or opaque rectangular map panel behind the GMT logo.
 
-Full option list at [`pslogo`](http://gmt.soest.hawaii.edu/doc/latest/pslogo.html)
+Full option list at [`gmtlogo`](http://gmt.soest.hawaii.edu/doc/latest/gmtlogo.html)
 
 Parameters
 ----------
 
-- **D** : **inset** : -- Str --
+- **D** : **pos** : **position** : -- Str --
 	Sets reference point on the map for the image using one of four coordinate systems.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pslogo.html#d)
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmtlogo.html#d)
 - **F** : **box** : -- Str --
 	Without further options, draws a rectangular border around the GMT logo using MAP_FRAME_PEN.
     or map rose (T)
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/pslogo.html#f)
+    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/gmtlogo.html#f)
+- **julia** : -- Number --
+	Create the Julia instead of the GMT logo. Provide circle diameter in centimeters
+- **GMTjulia** : -- Number --
+    Create the GMT Julia GMT logo. Provide circle diameter in centimeters
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
 - $(GMT.opt_P)
@@ -26,10 +30,12 @@ Parameters
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - $(GMT.opt_t)
+
+- Example, make a GMT Julia logo with circles of 1 cm: logo(GMTjulia=1, show=true)
 """
 function logo(cmd0::String=""; K=false, O=false, first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("pslogo", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("gmtlogo", cmd0, arg1)	# Speedy mode
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
@@ -37,23 +43,40 @@ function logo(cmd0::String=""; K=false, O=false, first=true, kwargs...)
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
 	cmd = parse_t(cmd, d)
-	cmd = parse_gmtconf_MAP(cmd, d)
+	#cmd = parse_gmtconf_MAP(cmd, d)
+	cmd = parse_params(cmd, d)
 
 	cmd, K, O = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	cmd = add_opt(cmd, 'D', d, [:D :position])
+	cmd = add_opt(cmd, 'D', d, [:D :pos :position])
 	cmd = add_opt(cmd, 'F', d, [:F :box])
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
-	if (haskey(d, :julia))
-		r = d[:julia]
-		c,t = jlogo(r)
+	do_julia    = haskey(d, :julia)
+	do_GMTjulia = haskey(d, :GMTjulia)
+	if (do_julia || do_GMTjulia)
+		if (do_julia)	r = d[:julia]	else	r = d[:GMTjulia]	end
+		c,t,r2 = jlogo(r)			# r2 is the diameter of the inner circle
 		if (!occursin("-R", cmd))  cmd = @sprintf("-R0/%f/0/%f ", 2r, 2r) * cmd  end
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
-		cmd = c * cmd
-		return finish_PS_module(d, cmd, "", t, [], output, fname_ext, opt_T, K, "psxy")
+		do_show = false
+		if (do_GMTjulia && haskey(d, :show))	# Too soon to make the display
+			delete!(d, :show);	do_show = true
+		end
+		fmt = fname_ext
+		if (do_GMTjulia && haskey(d, :fmt))		# Too soon to set the format. Need to finish the PS first
+			fmt = d[:fmt];	delete!(d, :fmt);
+			fname_ext = "ps"
+		end
+		finish_PS_module(d, c * cmd, "", t, [], output, fname_ext, opt_T, K, "psxy")
+		if (haskey(d, :GMTjulia))
+			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
+			opt_F = @sprintf("+f%d,NewCenturySchlbk-Italic",letter_height)
+			text!(text_record(t[1:3,1:2], ["G", "T", "M"]), R=[], J=[], F=opt_F, fmt=fmt, show=do_show)
+		end
 	else
+		if (!occursin("-D", cmd))  cmd = " -Dx0/0+w5c " * cmd	end
 		return finish_PS_module(d, cmd, "", [], [], output, fname_ext, opt_T, K, "gmtlogo")
 	end
 end
@@ -77,5 +100,5 @@ function jlogo(L=5)
 	s2 = s1 * (1 - 0.06)		# Inner circle diameter. The one that will be filled.
 	t = [L/2 L/2 0 s1; L+L/2 L/2 1 s1; L L/2+H 2 s1; L/2 L/2 3 s2; L+L/2 L/2 4 s2; L L/2+H 5 s2]
 	cmd = " -Sc -C171/43/33,130/83/171,81/143/24,191/101/95,158/122/190,128/171/93 "
-	return cmd, t
+	return cmd, t, s2
 end
