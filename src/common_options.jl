@@ -641,6 +641,29 @@ function parse_t(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_params(cmd::String, d::Dict)
+	# Parse the gmt.conf parameters when used from within the modules. Return a --PAR=val string
+	# The input to this kwarg can be a tuple (e.g. (PAR,val)) or a NamedTuple (P1=V1, P2=V2,...)
+
+	for symb in [:conf :par :params]
+		#if (haskey(d, symb) && isa(d[symb], NamedTuple))
+		if (haskey(d, symb))
+			t = d[symb]
+			if (isa(t, NamedTuple))
+				fn = fieldnames(typeof(t))
+				for k = 1:length(fn)
+					cmd = cmd * " --" * string(fn[k]) * "=" * string(t[2])
+				end
+			elseif (isa(t, Tuple))
+				cmd = cmd * " --" * string(t[1]) * "=" * string(t[2])
+			end
+			break
+		end
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function opt_pen(d::Dict, opt::Char, symbs)
 	# Create an option string of the type -Wpen
 	out = ""
@@ -1004,6 +1027,7 @@ function put_in_slot(cmd::String, val, opt::Char, args)
 	end
 	return cmd, k
 end
+
 
 # ---------------------------------------------------------------------------------------------------
 function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, arg3, arg4, arg5, arg6,
