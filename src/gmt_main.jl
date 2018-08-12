@@ -1809,6 +1809,9 @@ function text_record(data, text)
 			=#
 			T = GMTdataset(data, text[2:end], text[1], Array{String,1}(), string(), string())
 		else
+			if (isa(text, Array{String,2}) && size(text, 1) == 1)	# A 2d array, cov to vec
+				text = vec(text)
+			end
 			T = GMTdataset(data, text, string(), Array{String,1}(), string(), string())
 		end
 	end
