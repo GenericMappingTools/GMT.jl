@@ -1,8 +1,8 @@
 """
 	grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
-Reads a 2-D grid file or a GMTgrid type and produces a contour map by tracing each
-contour through the grid.
+reads a 2-D grid file and fits a low-order polynomial trend to these data by
+[optionally weighted] least-squares.
 
 Full option list at [`grdtrend`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html)
 
@@ -10,16 +10,16 @@ Parameters
 ----------
 
 - **N** : **model** : -- Str or Number --
-	Contours to be drawn.
+    Sets the number of model parameters to fit.
 	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#n)
 - **D** : **diff** : -- Str or [] --
-	Dump contours as data line segments; no plotting takes place.
+	Compute the difference (input data - trend)
 	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#d)
 - **T** : **trend** : -- Str or [] --
-	Output the trend surface 
+	Compute the trend surface
 	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#t)
 - **W** : **weights** : -- Str --
-	Used to 
+    If weight.nc exists, it will be read and used to solve a weighted least-squares problem.
 	[`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#w)
 - $(GMT.opt_R)
 - $(GMT.opt_V)
