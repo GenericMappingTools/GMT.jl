@@ -39,6 +39,10 @@ r2=grdinfo(G, C=true, V=true);
 cpt = makecpt(range="-1/1/0.1");
 @assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
 
+# GRDCLIP
+G=gmt("grdmath", "-R0/10/0/10 -I1 X");
+G2=grdclip(G,above=[5 6], low=[2 2], between="3/4/3.5");
+
 # GRDCONTOUR
 G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 C = grdcontour(G, C="+0.7", D=[]);
@@ -52,6 +56,26 @@ x,y,z=GMT.peaks()
 G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);
 cpt = makecpt(T="-6/8/1");
 grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, U=[])
+
+# GRDCUT
+G=gmt("grdmath", "-R0/10/0/10 -I1 X Y");
+G2=grdcut(G, limits=[3 9 2 8]);
+
+# GRDFILTER
+G2=grdfilter(G, filter="m600", distflag=4, inc=0.5); # Use G of previous test
+
+# GRDGRADIENT
+G2=grdgradient(G, azim="0/270", normalize="e0.6");	# Use G of previous test
+
+# GRDHISTEQ
+G2=grdhisteq(G, gaussian=[]);	# Use G of previous test
+
+# GRDSAMPLE
+G2=grdsample(G, inc=0.5);		# Use G of previous test
+
+# GRDTREND
+G2=grdtrend(G, model=3);
+G2=grdtrend(G, model=3, diff=[]);
 
 # GRDTRACK
 G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
@@ -171,6 +195,7 @@ rm("lixo.ps")
 rm("lixo.eps")
 rm("lixo.grd")
 rm("lixo.png")
+rm("lixo.tif")
 
 function testa_conf(;kw...)
 	d = GMT.KW(kw)
