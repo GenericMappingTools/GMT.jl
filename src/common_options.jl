@@ -629,6 +629,18 @@ function parse_r(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_x(cmd::String, d::Dict)
+	# Parse the global -x option. Return CMD same as input if no -x option in args
+	for symb in [:x :n_threads]
+		if (haskey(d, symb))
+			cmd = cmd * " -x" * arg2str(d[symb])
+			break
+		end
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_t(cmd::String, d::Dict)
 	# Parse the global -t option. Return CMD same as input if no -t option in args
 	for symb in [:t :alpha :transparency]
@@ -969,6 +981,52 @@ function read_data(data, cmd, arg1, arg2=[], arg3=[])
 		end
 	end
 	return cmd, arg1, arg2, arg3
+end
+
+# ---------------------------------------------------------------------------------------------------
+function common_grd(cmd::String, flag::Char)
+	# Detect an output grid file name was requested, normally via -G, or not. Latter implies
+	# that the result grid is returned in a G GMTgrid type.
+	# Used the the grdxxx modules that produce a grid.
+	ff = findfirst(string("-", flag), cmd)
+	ind = (ff == nothing) ? 0 : first(ff)
+	if (ind > 0 && length(cmd) > ind+2 && cmd[ind+2] != ' ')      # A file name was provided
+		no_output = true
+	else
+		no_output = false
+	end
+end
+
+# ---------------------------------------------------------------------------------------------------
+function common_grd(d::Dict, cmd0::String, cmd::String, arg1, no_output::Bool, prog::String)
+	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
+    O = nothing
+	if (isempty_(arg1) && !isempty(cmd0))	# Grid was passed as file name
+		cmd = cmd0 * " " * cmd
+		dbg_print_cmd(d, cmd, prog)
+		if (no_output)
+			gmt(prog * " " * cmd)
+		else
+			O = gmt(prog * " " * cmd)
+		end
+	else
+		if (!isa(arg1, GMT.GMTgrid))
+			error("The arg1 argument when used MUST be a GMTgrid type.")
+		end
+		dbg_print_cmd(d, cmd, prog)
+		if (no_output)
+			gmt(prog * " " * cmd, arg1)
+		else
+			O = gmt(prog * " " * cmd, arg1)
+		end
+    end
+    return O
+end
+
+# ---------------------------------------------------------------------------------------------------
+function dbg_print_cmd(d::Dict, cmd::String, prog::String)
+	# Print the gmt command when the Vd=1 kwarg was used
+	(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd))
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -68,6 +68,7 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; data=[], kwargs...)
 	cmd = parse_o(cmd, d)
 	cmd = parse_s(cmd, d)
 	cmd = parse_swap_xy(cmd, d)
+	cmd = parse_params(cmd, d)
 
 	cmd = add_opt(cmd, 'A', d, [:A :interp_path])
 	cmd = add_opt(cmd, 'C', d, [:C :equi])

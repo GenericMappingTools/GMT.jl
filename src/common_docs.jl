@@ -12,6 +12,7 @@ const opt_Jz = "**Jz** : **z_axis** : -- Str --
     [`-Jz`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#jz-full)"
 
 const opt_R = "**R** : **region** : **limits** : -- Str or list --
+
     Specify the region of interest. Set to data minimum BoundinBox if not provided.
     [`-R`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#r-full)"
 
@@ -85,6 +86,9 @@ const opt_s = "**s** : **skip_col** : -- Str --
 
 const opt_t = "**t** : **alpha** : **transparency** : -- Str --
       [`-t`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#t-full)"
+
+const opt_x = "**x** : **n_threads** : -- Str or Number --
+      [`-x`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#x-full)"
 
 const opt_swap_xy = "**swap_xy** : Str or Bool or [] --
       [`-:`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#colon-full)"
