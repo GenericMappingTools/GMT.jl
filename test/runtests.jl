@@ -195,7 +195,9 @@ rm("lixo.ps")
 rm("lixo.eps")
 rm("lixo.grd")
 rm("lixo.png")
-rm("lixo.tif")
+if (GMTver >= 6)
+	rm("lixo.tif")
+end
 
 function testa_conf(;kw...)
 	d = GMT.KW(kw)
