@@ -10,15 +10,19 @@ Parameters
 ----------
 
 - **N** : **model** : -- Str or Number --
+
     Sets the number of model parameters to fit.
 	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#n)
 - **D** : **diff** : -- Str or [] --
-	Compute the difference (input data - trend)
+
+	Compute the difference (input data - trend). Optionaly provide a file name to save result on disk.
 	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#d)
 - **T** : **trend** : -- Str or [] --
-	Compute the trend surface
+
+	Compute the trend surface. Optionaly provide a file name to save result on disk.
 	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#t)
 - **W** : **weights** : -- Str --
+
     If weight.nc exists, it will be read and used to solve a weighted least-squares problem.
 	[`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#w)
 - $(GMT.opt_R)
@@ -36,8 +40,12 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	cmd, opt_R = parse_R("", d)
 	cmd = parse_V(cmd, d)
+	cmd = parse_params(cmd, d)
 
 	cmd = add_opt(cmd, 'N', d, [:N :model])
+	if (findfirst("-N", cmd) == nothing)
+		error("The 'model' parameter is mandatory")
+	end
 	cmd = add_opt(cmd, 'D', d, [:D :diff])
 	cmd = add_opt(cmd, 'T', d, [:T :trend])
 	cmd = add_opt(cmd, 'W', d, [:W :weights])
@@ -51,7 +59,7 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 		ff = findfirst("-T", cmd)
 	end
 	ind = (ff == nothing) ? 0 : first(ff)
-	if (ind > 0 && cmd[ind+2] != ' ')      # A file name was provided
+	if (ind > 0 && length(cmd) > ind+2 && cmd[ind+2] != ' ')      # A file name was provided
 		no_output = true
 	else
 		no_output = false

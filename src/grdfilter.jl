@@ -1,5 +1,5 @@
 """
-	grdfilter(cmd0::String="", arg1=[], arg2=[]; kwargs...)
+	grdfilter(cmd0::String="", arg1=[], kwargs...)
 
 Filter a grid file in the time domain using one of the selected convolution or non-convolution 
 isotropic or rectangular filters and compute distances using Cartesian or Spherical geometries.
@@ -9,27 +9,37 @@ Full option list at [`grdfilter`](http://gmt.soest.hawaii.edu/doc/latest/grdfilt
 Parameters
 ----------
 
-- $(GMT.opt_R)
-- **I** : **inc** : -- Str or Number --
-	*x_inc* [and optionally *y_inc*] is the grid spacing.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#i)
-- **N** : **model** : -- Str or Number --
-	Contours to be drawn.
-	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdfilter.html#n)
-- **D** : **diff** : -- Str or [] --
-	Dump contours as data line segments; no plotting takes place.
+- **F** : **filter** : -- Str --
+
+    Sets the filter type. 
+    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/grdfilter.html#f)
+- **D** : **distflag** : **distance** : -- Number --
+
+    Distance flag tells how grid (x,y) relates to filter width.
 	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdfilter.html#d)
-- **T** : **trend** : -- Str or [] --
-	Output the trend surface 
-	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdfilter.html#t)
-- **W** : **weights** : -- Str --
-	Used to 
-	[`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdfilter.html#w)
+
+- **G** : **outgrid** : -- Str --
+
+    Output grid file name. Note that this is optional and to be used only when saving
+    the result directly on disk. Otherwise, just use the G = grdfilter(....) form.
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdfilter.html#g)
+- **I** : **inc** : -- Str or Number --
+
+    *x_inc* [and optionally *y_inc*] is the grid spacing.
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdfilter.html#i)
+- **N** : **nans** : -- Str --
+
+    Determine how NaN-values in the input grid affects the filtered output. Values are i|p|r
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdfilter.html#n)
 - $(GMT.opt_R)
+- **T** : **toggle** : -- Bool --
+
+    Toggle the node registration for the output grid so as to become the opposite of the input grid
+    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdfilter.html#t)
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """
-function grdfilter(cmd0::String="", arg1=[], kwargs...)
+function grdfilter(cmd0::String="", arg1=[]; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdfilter", cmd0, arg1)	# Speedy mode
 
@@ -42,6 +52,7 @@ function grdfilter(cmd0::String="", arg1=[], kwargs...)
 	cmd, opt_R = parse_R("", d)
 	cmd = parse_V(cmd, d)
 	cmd = parse_f(cmd, d)
+	cmd = parse_params(cmd, d)
 
     cmd = add_opt(cmd, 'D', d, [:D :distflag :distance])
     cmd = add_opt(cmd, 'F', d, [:F :filter])
@@ -50,32 +61,8 @@ function grdfilter(cmd0::String="", arg1=[], kwargs...)
 	cmd = add_opt(cmd, 'N', d, [:N :nans])
 	cmd = add_opt(cmd, 'T', d, [:T :toggle])
 
-	ff = findfirst("-G", cmd)
-	ind = (ff == nothing) ? 0 : first(ff)
-	if (ind > 0 && cmd[ind+2] != ' ')      # A file name was provided
-		no_output = true
-	else
-		no_output = false
-	end
-
-    O = nothing
-	if (isempty_(arg1) && !isempty(cmd0))	# Grid was passed as file name
-		cmd = cmd0 * " " * cmd
-		(haskey(d, :Vd)) && println(@sprintf("\tgrdtrend %s", cmd))
-		if (no_output)
-			gmt("grdfilter " * cmd)
-		else
-			O = gmt("grdfilter " * cmd)
-		end
-	else
-		(haskey(d, :Vd)) && println(@sprintf("\tgrdtrend %s", cmd))
-		if (no_output)
-			gmt("grdfilter " * cmd, arg1)
-		else
-			O = gmt("grdfilter " * cmd, arg1)
-		end
-    end
-    return O
+	no_output = common_grd(cmd, 'G')		# See if an output is requested (or write result in grid file)
+	return common_grd(d, cmd0, cmd, arg1, no_output, "grdfilter")	# Shared by several grdxxx modules
 end
 
 # ---------------------------------------------------------------------------------------------------
