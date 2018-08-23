@@ -108,7 +108,7 @@ function grd2cpt(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'W', d, [:W :no_interp])
 	cmd = add_opt(cmd, 'Z', d, [:Z :continuous])
 
-	return common_grd(d, cmd0, cmd, arg1, false, "grd2cpt")	# Shared by several grdxxx modules
+	return common_grd(d, cmd0, cmd, arg1, [], false, "grd2cpt")	# Shared by several grdxxx modules
 end
 
 # ---------------------------------------------------------------------------------------------------

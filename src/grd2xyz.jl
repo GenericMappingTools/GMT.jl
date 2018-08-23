@@ -55,7 +55,7 @@ function grd2xyz(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'W', d, [:W :weight])
 	cmd = add_opt(cmd, 'Z', d, [:Z :flags])
 
-	return common_grd(d, cmd0, cmd, arg1, false, "grd2xyz")	# Shared by several grdxxx modules
+	return common_grd(d, cmd0, cmd, arg1, [], false, "grd2xyz")	# Shared by several grdxxx modules
 end
 
 # ---------------------------------------------------------------------------------------------------

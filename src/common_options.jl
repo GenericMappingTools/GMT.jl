@@ -1014,7 +1014,7 @@ function common_grd(cmd::String, flag::Char)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict, cmd0::String, cmd::String, arg1, no_output::Bool, prog::String)
+function common_grd(d::Dict, cmd0::String, cmd::String, arg1, arg2, no_output::Bool, prog::String)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
     O = nothing
 	if (isempty_(arg1) && !isempty(cmd0))	# Grid was passed as file name
@@ -1031,9 +1031,17 @@ function common_grd(d::Dict, cmd0::String, cmd::String, arg1, no_output::Bool, p
 		end
 		dbg_print_cmd(d, cmd, prog)
 		if (no_output)
-			gmt(prog * " " * cmd, arg1)
+			if (isempty_(arg2))
+				gmt(prog * " " * cmd, arg1)
+			else
+				gmt(prog * " " * cmd, arg1, arg2)
+			end
 		else
-			O = gmt(prog * " " * cmd, arg1)
+			if (isempty_(arg2))
+				O = gmt(prog * " " * cmd, arg1)
+			else
+				O = gmt(prog * " " * cmd, arg1, arg2)
+			end
 		end
     end
     return O

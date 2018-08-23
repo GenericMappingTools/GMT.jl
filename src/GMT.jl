@@ -35,7 +35,8 @@ const FMT = "ps"
 export
 	GMTver, FMT,
 	gmt, grid_type, basemap, basemap!, blockmean, blockmedian, blockmode, coast, coast!, logo, logo!,
-	xy, xy!, grd2cpt, grd2xyz, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdproject, grdsample, grdtrack,
+	xy, xy!, grd2cpt, grd2kml, grd2xyz, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft, grdfilter,
+	grdgradient, grdhisteq, grdimage, grdimage!, grdproject, grdsample, grdtrack,
 	grdtrend, grdview, grdview!, makecpt, histogram, histogram!, image, image!, psconvert,
 	colorbar, colorbar!, rose, rose!, solar, solar!, text, text!, gmtinfo, grdinfo, surface,
 	triangulate, nearneighbor, imshow, imshow!, plot, plot!, plot3d, plot3d!, splitxyz, wiggle, wiggle!,
@@ -52,11 +53,13 @@ include("gmtlogo.jl")
 include("gmtreadwrite.jl")
 include("gmtset.jl")
 include("grd2cpt.jl")
+include("grd2kml.jl")
 include("grd2xyz.jl")
 include("grdclip.jl")
 include("grdcut.jl")
 include("grdedit.jl")
 include("grdcontour.jl")
+include("grdfft.jl")
 include("grdfilter.jl")
 include("grdhisteq.jl")
 include("grdinfo.jl")

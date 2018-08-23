@@ -88,7 +88,7 @@ function grd2kml(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	cmd = add_opt(cmd, 'Q', d, [:Q :nan_t :nan_alpha])
 	cmd = add_opt(cmd, 'T', d, [:T :title])
 
-	return common_grd(d, cmd0, cmd, arg1, true, "grd2kml")	# Shared by several grdxxx modules
+	return common_grd(d, cmd0, cmd, arg1, [], true, "grd2kml")	# Shared by several grdxxx modules
 end
 
 # ---------------------------------------------------------------------------------------------------

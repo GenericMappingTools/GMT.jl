@@ -69,7 +69,7 @@ function grdgradient(cmd0::String="", arg1=[]; kwargs...)
     cmd = add_opt(cmd, 'S', d, [:S :slopegrid])
 
 	no_output = common_grd(cmd, 'G')		# See if an output is requested (or write result in grid file)
-	return common_grd(d, cmd0, cmd, arg1, no_output, "grdgradient")	# Shared by several grdxxx modules
+	return common_grd(d, cmd0, cmd, arg1, [], no_output, "grdgradient")	# Shared by several grdxxx modules
 end
 
 # ---------------------------------------------------------------------------------------------------
