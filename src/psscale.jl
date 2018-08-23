@@ -79,4 +79,4 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 colorbar!(cmd0::String="", arg1=[]; K=false, O=false, first=false, kw...) =
-    scale(cmd0, arg1; K=K, O=O, first=first, kw...)
+    colorbar(cmd0, arg1; K=K, O=O, first=first, kw...)
