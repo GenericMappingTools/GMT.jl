@@ -70,6 +70,9 @@ G2=grdcut(G, limits=[3 9 2 8]);
 # GRDEDIT
 # TODO
 
+# GRDFFT
+G2=grdfft(G, upward=800); 	# Use G of previous test
+
 # GRDFILTER
 G2=grdfilter(G, filter="m600", distflag=4, inc=0.5); # Use G of previous test
 
