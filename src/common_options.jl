@@ -43,9 +43,10 @@ function parse_JZ(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_J(cmd::String, d::Dict, O=false)
+function parse_J(cmd::String, d::Dict, map=true, O=false)
 	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
-	# Default to 14c if no size is provided
+	# Default to 14c if no size is provided.
+	# If MAP == false, do not try to append a fig size
 	opt_J = ""
 	for symb in [:J :proj :projection]
 		if (haskey(d, symb))
@@ -53,6 +54,10 @@ function parse_J(cmd::String, d::Dict, O=false)
 			break
 		end
 	end
+	if (!map && !isempty(opt_J))
+		return cmd * opt_J, opt_J
+	end
+
 	if (O && isempty(opt_J))  opt_J = " -J"  end
 
 	if (!O && !isempty(opt_J))
@@ -152,7 +157,7 @@ end
 function parse_BJR(d::Dict, cmd0::String, cmd::String, caller, O, default)
 	# Join these thre in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(cmd, d, O)
-	cmd, opt_J = parse_J(cmd, d, O)
+	cmd, opt_J = parse_J(cmd, d, true, O)
 	if (!O && isempty(opt_J))			# If we have no -J use this default
 		opt_J = default					# " -JX12c/8c" (e.g. psxy) or " -JX12c/0" (e.g. grdimage)
 		cmd = cmd * opt_J
@@ -468,13 +473,24 @@ function parse_bo(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_d(cmd::String, d::Dict)
+	# Parse the global -di option. Return CMD same as input if no -di option in args
+	opt_d = ""
+	for symb in [:d :nodata]
+		if (haskey(d, symb) && isa(d[symb], Number))
+			cmd = cmd * " -d" * arg2str(d[symb])
+			break
+		end
+	end
+	return cmd, opt_d
+end
+# ---------------------------------------------------------------------------------------------------
 function parse_di(cmd::String, d::Dict)
 	# Parse the global -di option. Return CMD same as input if no -di option in args
 	opt_di = ""
 	for symb in [:di :nodata_in]
 		if (haskey(d, symb) && isa(d[symb], Number))
-			opt_di = " -di" * arg2str(d[symb])
-			cmd = cmd * opt_di
+			cmd = cmd * " -di" * arg2str(d[symb])
 			break
 		end
 	end
@@ -874,7 +890,7 @@ function add_opt_s(cmd::String, opt, d::Dict, symbs)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args, arg1, arg2)
+function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args, arg1, arg2=[])
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	for sym in symbs
 		if (haskey(d, sym))
@@ -998,7 +1014,7 @@ function common_grd(cmd::String, flag::Char)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict, cmd0::String, cmd::String, arg1, no_output::Bool, prog::String)
+function common_grd(d::Dict, cmd0::String, cmd::String, arg1, arg2, no_output::Bool, prog::String)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
     O = nothing
 	if (isempty_(arg1) && !isempty(cmd0))	# Grid was passed as file name
@@ -1015,9 +1031,17 @@ function common_grd(d::Dict, cmd0::String, cmd::String, arg1, no_output::Bool, p
 		end
 		dbg_print_cmd(d, cmd, prog)
 		if (no_output)
-			gmt(prog * " " * cmd, arg1)
+			if (isempty_(arg2))
+				gmt(prog * " " * cmd, arg1)
+			else
+				gmt(prog * " " * cmd, arg1, arg2)
+			end
 		else
-			O = gmt(prog * " " * cmd, arg1)
+			if (isempty_(arg2))
+				O = gmt(prog * " " * cmd, arg1)
+			else
+				O = gmt(prog * " " * cmd, arg1, arg2)
+			end
 		end
     end
     return O
