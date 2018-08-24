@@ -36,8 +36,8 @@ export
 	GMTver, FMT,
 	gmt, grid_type, basemap, basemap!, blockmean, blockmedian, blockmode, coast, coast!, logo, logo!,
 	xy, xy!, grd2cpt, grd2kml, grd2xyz, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft, grdfilter,
-	grdgradient, grdhisteq, grdimage, grdimage!, grdproject, grdsample, grdtrack,
-	grdtrend, grdview, grdview!, makecpt, histogram, histogram!, image, image!, psconvert,
+	grdgradient, grdhisteq, grdimage, grdimage!, grdlandmask, grdproject, grdsample, grdtrack,
+	grdtrend, grdview, grdview!, grdvolume, makecpt, histogram, histogram!, image, image!, psconvert,
 	colorbar, colorbar!, rose, rose!, solar, solar!, text, text!, gmtinfo, grdinfo, surface,
 	triangulate, nearneighbor, imshow, imshow!, plot, plot!, plot3d, plot3d!, splitxyz, wiggle, wiggle!,
 	text_record, gmtread, gmtwrite
@@ -65,11 +65,13 @@ include("grdhisteq.jl")
 include("grdinfo.jl")
 include("grdimage.jl")
 include("grdgradient.jl")
+include("grdlandmask.jl")
 include("grdproject.jl")
 include("grdsample.jl")
 include("grdtrack.jl")
 include("grdtrend.jl")
 include("grdview.jl")
+include("grdvolume.jl")
 include("imshow.jl")
 include("makecpt.jl")
 include("nearneighbor.jl")
