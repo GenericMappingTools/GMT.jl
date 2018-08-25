@@ -1000,6 +1000,55 @@ function read_data(data, cmd, arg1, arg2=[], arg3=[])
 end
 
 # ---------------------------------------------------------------------------------------------------
+function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], arg3=[], arg4=[])
+	got_fname = 0;		data_kw = nothing
+	if (haskey(d, :data))	data_kw = d[:data]	end
+	if (!isempty(cmd0))						# Data was passed as file name
+		cmd = cmd0 * " " * cmd
+		got_fname = 1
+	end
+	if (tipo == 1)
+		# Accepts "input1"; arg1; data=input1;
+		if (got_fname != 0) 
+			return cmd, got_fname, arg1		# got_fname = 1 => data is in cmd 
+		elseif (!isempty_(arg1))
+			return cmd, got_fname, arg1 	# got_fname = 0 => data is in arg1
+		elseif (data_kw != nothing)
+			if (isa(data_kw, String))
+				cmd = data_kw * " " * cmd
+				return cmd, 1, arg1			# got_fname = 1 => data is in cmd 
+			else
+				return cmd, 0, data_kw 		# got_fname = 0 => data is in arg1
+			end
+		else
+			error("Missing input data to run this module.")
+		end
+	elseif (tipo == 2)			# Two inputs (but second can be optional is some modules)
+		# Accepts "input1  input2"; "input1", arg1; "input1", data=input2; arg1, arg2; data=(input1,input2)
+		if (got_fname != 0)
+			if (isempty_(arg1) && data_kw == nothing)
+				return cmd, 1, arg1, arg2	# got_fname = 1 => all data is in cmd 
+			elseif (!isempty_(arg1))
+				return cmd, 2, arg1, arg2	# got_fname = 2 => data is in cmd and arg1
+			elseif (data_kw != nothing && length(data_kw) == 1)
+				return cmd, 2, data_kw, arg2	# got_fname = 2 => data is in cmd and arg1
+			else
+				error("Missing input data to run this module.")
+			end
+		else
+			if (!isempty_(arg1) && !isempty_(arg2))
+				return cmd, 0, arg1, arg2				# got_fname = 0 => all data is in arg1 & arg2 
+			elseif (data_kw != nothing && length(data_kw) == 2)
+				return cmd, 0, data_kw[1], data_kw[2]	# got_fname = 0 => all data is in arg1 & arg2 
+			else
+				error("Missing input data to run this module.")
+			end
+		end
+	elseif (tipo == 3)			# Two inputs (but second can be optional is some modules)
+	end
+end
+
+# ---------------------------------------------------------------------------------------------------
 function common_grd(cmd::String, flag::Char)
 	# Detect an output grid file name was requested, normally via -G, or not. Latter implies
 	# that the result grid is returned in a G GMTgrid type.
@@ -1044,6 +1093,26 @@ function common_grd(d::Dict, cmd0::String, cmd::String, arg1, arg2, no_output::B
 			end
 		end
     end
+    return O
+end
+
+# ---------------------------------------------------------------------------------------------------
+function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, arg1, arg2, no_output::Bool, prog::String)
+	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
+	O = nothing
+	if (tipo == 1)			# One input only
+		dbg_print_cmd(d, cmd, prog)
+		if (got_fname != 0)
+			O = gmt(prog * " " * cmd)
+		else
+			O = gmt(prog * " " * cmd, arg1)
+		end
+	else					# Two inputs
+		dbg_print_cmd(d, cmd, prog)
+		if (got_fname != 0)
+		else
+		end
+	end
     return O
 end
 

@@ -66,6 +66,9 @@ grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, U=[])
 # GRDCUT
 G=gmt("grdmath", "-R0/10/0/10 -I1 X Y");
 G2=grdcut(G, limits=[3 9 2 8]);
+G2=grdcut("lixo.grd", limits=[3 9 2 8]);	# lixo.grd was written above in the gmtwrite test
+G2=grdcut(data="lixo.grd", limits=[3 9 2 8]);
+G2=grdcut(data=G, limits=[3 9 2 8]);
 
 # GRDEDIT
 # TODO
