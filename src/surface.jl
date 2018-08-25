@@ -57,13 +57,12 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
+function surface(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("surface", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("surface", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = ""
-	cmd, opt_R = parse_R(cmd, d)
+	cmd, opt_R = parse_R("", d)
 	cmd = parse_V(cmd, d)
 	cmd = parse_a(cmd, d)
 	cmd, = parse_bi(cmd, d)
@@ -74,6 +73,7 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd, = parse_i(cmd, d)
 	cmd = parse_r(cmd, d)
 	cmd = parse_swap_xy(cmd, d)
+	cmd = parse_params(cmd, d)
 
 	cmd = add_opt(cmd, 'A', d, [:A :aspect_ratio])
 	cmd = add_opt(cmd, 'C', d, [:C :convergence])
@@ -87,25 +87,9 @@ function surface(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = add_opt(cmd, 'T', d, [:T :tension])
 	cmd = add_opt(cmd, 'Z', d, [:Z :over_relaxation])
 
-	no_output = common_grd(cmd, 'G')		# See if an output is requested (or write result in grid file)
-    cmd, arg1, = read_data(data, cmd, arg1)
-
-	(haskey(d, :Vd)) && println(@sprintf("\tsurface %s", cmd))
-
-	G = nothing
-	no_output = no_output || occursin("-Q", cmd)
-	if (no_output)
-		if (!isempty_(arg1))  gmt("surface " * cmd, arg1)
-		else                  gmt("surface " * cmd)
-		end
-	else
-		if (!isempty_(arg1))  G = gmt("surface " * cmd, arg1)
-		else                  G = gmt("surface " * cmd)
-		end
-	end
-	return G
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	return common_grd(d, cmd, got_fname, 1, "surface", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
-surface(arg1::GMTgrid, cmd0::String=""; data=[], kw...) = surface(cmd0, arg1; data=data, kw...)
-surface(arg1::Array, cmd0::String=""; data=[], kw...) = surface(cmd0, arg1; data=data, kw...)
+surface(arg1=[], cmd0::String=""; kw...) = surface(cmd0, arg1; kw...)

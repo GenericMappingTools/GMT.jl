@@ -54,10 +54,6 @@ function grd2kml(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	length(kwargs) == 0 && (findfirst(" -", cmd0) != nothing) && return monolitic("grd2kml", cmd0, arg1)	# Speedy mode
 
-	if (isempty(cmd0) && isempty_(arg1))
-		error("Must provide the grid to work with.")
-	end
-
 	d = KW(kwargs)
 
 	cmd = parse_V("", d)
@@ -88,7 +84,8 @@ function grd2kml(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	cmd = add_opt(cmd, 'Q', d, [:Q :nan_t :nan_alpha])
 	cmd = add_opt(cmd, 'T', d, [:T :title])
 
-	return common_grd(d, cmd0, cmd, arg1, [], true, "grd2kml")	# Shared by several grdxxx modules
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	return common_grd(d, cmd, got_fname, 1, "grd2kml", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -58,10 +58,6 @@ function grdfft(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdfft", cmd0, arg1, arg2)	# Speedy mode
 
-	if (isempty(cmd0) && isempty_(arg1))
-		error("Must provide the grid to work with.")
-	end
-
 	d = KW(kwargs)
 
 	cmd = parse_V("", d)
@@ -78,8 +74,17 @@ function grdfft(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	cmd = add_opt(cmd, 'N', d, [:N :inquire])
 	cmd = add_opt(cmd, 'S', d, [:S :scale])
 
-	no_output = common_grd(cmd, 'G')		# See if an output is requested (or write result in grid file)
-	return common_grd(d, cmd0, cmd, arg1, arg2, no_output, "grdfft")	# Shared by several grdxxx modules
+	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, arg1, arg2)
+	if (!occursin(" -E", cmd))          # Simpler case
+		return common_grd(d, cmd, got_fname, 1, "grdfft", arg1)		# Finish build cmd and run it
+	else
+		# Here several cases can happen: 1) arg1 only; 2) arg1 && arg2; 3) grid(s) provided via fname
+		if (isempty_(arg2))
+			return common_grd(d, cmd, got_fname, 1, "grdfft", arg1)
+		else
+			return common_grd(d, cmd, got_fname, 2, "grdfft", arg1, arg2)
+		end
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------

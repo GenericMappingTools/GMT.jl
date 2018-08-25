@@ -33,10 +33,6 @@ function grdhisteq(cmd0::String="", arg1=[]; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdhisteq", cmd0, arg1)	# Speedy mode
 
-	if (isempty(cmd0) && isempty_(arg1))
-		error("Must provide the grid to work with.")
-	end
-
 	d = KW(kwargs)
 
 	cmd, opt_R = parse_R("", d)
@@ -49,8 +45,8 @@ function grdhisteq(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'N', d, [:N :gaussian])
 	cmd = add_opt(cmd, 'Q', d, [:Q :quadratic ])
 
-	no_output = common_grd(cmd, 'G')		# See if an output is requested (or write result in grid file)
-	return common_grd(d, cmd0, cmd, arg1, [], no_output, "grdhisteq")	# Shared by several grdxxx modules
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	return common_grd(d, cmd, got_fname, 1, "grdhisteq", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

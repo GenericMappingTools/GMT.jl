@@ -44,7 +44,7 @@ Parameters
 """
 function grdlandmask(cmd0::String=""; kwargs...)
 
-	length(kwargs) == 0 && (findfirst(" -", cmd0) != nothing) && return monolitic("grdlandmask", cmd0)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("grdlandmask", cmd0)	# Speedy mode
 
 	d = KW(kwargs)
 
@@ -61,6 +61,5 @@ function grdlandmask(cmd0::String=""; kwargs...)
 	cmd = add_opt_s(cmd, 'G', d, [:G :outgrid])
 	cmd = add_opt(cmd, 'N', d, [:N :maskvalues])
 
-	no_output = common_grd(cmd, 'G')		# See if an output is requested (or write result in grid file)
-    return common_grd(d, " ", cmd, [], [], no_output, "grdlandmask")	# Shared by several grdxxx modules
+	return common_grd(d, cmd, 1, 1, "grdlandmask", [])		# Finish build cmd and run it
 end

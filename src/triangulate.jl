@@ -56,9 +56,9 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-function triangulate(cmd0::String="", arg1=[]; data=[], kwargs...)
+function triangulate(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("triangulate", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("triangulate", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 	cmd, opt_R = parse_R("", d)
@@ -73,17 +73,12 @@ function triangulate(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd, = parse_i(cmd, d)
 	cmd = parse_r(cmd, d)
 	cmd = parse_swap_xy(cmd, d)
+	cmd = parse_params(cmd, d)
 
 	cmd = add_opt(cmd, 'C', d, [:C :slope_grid])
 	cmd = add_opt(cmd, 'D', d, [:D :derivatives])
 	cmd = add_opt(cmd, 'E', d, [:E :empty])
     cmd = add_opt(cmd, 'G', d, [:G :grid])
-    ind = first(findfirst("-G", cmd))
-	if (ind > 0 && length(cmd) > ind+2)      # A file name was provided
-        no_output = true
-    else
-        no_output = false
-    end
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt(cmd, 'M', d, [:N :network])
 	cmd = add_opt(cmd, 'N', d, [:N :ids])
@@ -92,22 +87,9 @@ function triangulate(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = add_opt(cmd, 'T', d, [:T :edges])
 	cmd = add_opt(cmd, 'Z', d, [:Z :xyz :triplets])
 
-    cmd, arg1, = read_data(data, cmd, arg1)
-
-	(haskey(d, :Vd)) && println(@sprintf("\ttriangulate %s", cmd))
-
-	G = nothing
-	if (no_output)
-		if (!isempty_(arg1))  gmt("triangulate " * cmd, arg1)
-		else                  gmt("triangulate " * cmd)
-		end
-	else
-		if (!isempty_(arg1))  G = gmt("triangulate " * cmd, arg1)
-		else                  G = gmt("triangulate " * cmd)
-		end
-	end
-	return G
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	return common_grd(d, cmd, got_fname, 1, "triangulate", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
-triangulate(arg1::Array, cmd0::String=""; data=[], kw...) = triangulate(cmd0, arg1; data=data, kw...)
+triangulate(arg1::Array, cmd0::String=""; kw...) = triangulate(cmd0, arg1; kw...)
