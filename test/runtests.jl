@@ -2,6 +2,15 @@ using GMT
 using Test
 using LinearAlgebra
 
+#=
+try
+	gmt("psxy -")
+catch
+	@test 1 == 1
+	return
+end
+=#
+
 # write your own tests here
 r = gmt("gmtinfo -C",ones(Float32,9,3)*5);
 @assert(r[1].data == [5.0 5 5 5 5 5])
@@ -75,6 +84,7 @@ G2=grdcut(data=G, limits=[3 9 2 8]);
 
 # GRDFFT
 G2=grdfft(G, upward=800); 	# Use G of previous test
+G2=grdfft(G, G, E=[]);
 
 # GRDFILTER
 G2=grdfilter(G, filter="m600", distflag=4, inc=0.5); # Use G of previous test
@@ -84,6 +94,9 @@ G2=grdgradient(G, azim="0/270", normalize="e0.6");	# Use G of previous test
 
 # GRDHISTEQ
 G2=grdhisteq(G, gaussian=[]);	# Use G of previous test
+
+# GRDLANDMASK
+G2=grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
 
 # GRDPROJECT	-- Works but does not save projection info in header
 G2=grdproject(G, proj="u29/1:1", F=[], C=[]); 		# Use G of previous test

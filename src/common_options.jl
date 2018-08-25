@@ -1027,9 +1027,9 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 		# Accepts "input1  input2"; "input1", arg1; "input1", data=input2; arg1, arg2; data=(input1,input2)
 		if (got_fname != 0)
 			if (isempty_(arg1) && data_kw == nothing)
-				return cmd, 1, arg1, arg2	# got_fname = 1 => all data is in cmd 
+				return cmd, 1, arg1, arg2		# got_fname = 1 => all data is in cmd 
 			elseif (!isempty_(arg1))
-				return cmd, 2, arg1, arg2	# got_fname = 2 => data is in cmd and arg1
+				return cmd, 2, arg1, arg2		# got_fname = 2 => data is in cmd and arg1
 			elseif (data_kw != nothing && length(data_kw) == 1)
 				return cmd, 2, data_kw, arg2	# got_fname = 2 => data is in cmd and arg1
 			else
@@ -1038,6 +1038,10 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 		else
 			if (!isempty_(arg1) && !isempty_(arg2))
 				return cmd, 0, arg1, arg2				# got_fname = 0 => all data is in arg1 & arg2 
+			elseif (!isempty_(arg1) && isempty_(arg2) && data_kw == nothing)
+				return cmd, 0, arg1, arg2				# got_fname = 0 => all data is in arg1
+			elseif (!isempty_(arg1) && isempty_(arg2) && data_kw != nothing && length(data_kw) == 1)
+				return cmd, 0, arg1, data_kw			# got_fname = 0 => all data is in arg1 & arg2 
 			elseif (data_kw != nothing && length(data_kw) == 2)
 				return cmd, 0, data_kw[1], data_kw[2]	# got_fname = 0 => all data is in arg1 & arg2 
 			else
@@ -1048,7 +1052,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 	end
 end
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function common_grd(cmd::String, flag::Char)
 	# Detect an output grid file name was requested, normally via -G, or not. Latter implies
 	# that the result grid is returned in a G GMTgrid type.
@@ -1061,56 +1065,25 @@ function common_grd(cmd::String, flag::Char)
 		no_output = false
 	end
 end
-
-# ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict, cmd0::String, cmd::String, arg1, arg2, no_output::Bool, prog::String)
-	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
-    O = nothing
-	if (isempty_(arg1) && !isempty(cmd0))	# Grid was passed as file name
-		cmd = cmd0 * " " * cmd
-		dbg_print_cmd(d, cmd, prog)
-		if (no_output)
-			gmt(prog * " " * cmd)
-		else
-			O = gmt(prog * " " * cmd)
-		end
-	else
-		if (!isa(arg1, GMT.GMTgrid))
-			error("The arg1 argument when used MUST be a GMTgrid type.")
-		end
-		dbg_print_cmd(d, cmd, prog)
-		if (no_output)
-			if (isempty_(arg2))
-				gmt(prog * " " * cmd, arg1)
-			else
-				gmt(prog * " " * cmd, arg1, arg2)
-			end
-		else
-			if (isempty_(arg2))
-				O = gmt(prog * " " * cmd, arg1)
-			else
-				O = gmt(prog * " " * cmd, arg1, arg2)
-			end
-		end
-    end
-    return O
-end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, prog::String, arg1, arg2=[])
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
-	O = nothing
+	dbg_print_cmd(d, cmd, prog)
 	if (tipo == 1)			# One input only
-		dbg_print_cmd(d, cmd, prog)
 		if (got_fname != 0)
 			O = gmt(prog * " " * cmd)
 		else
 			O = gmt(prog * " " * cmd, arg1)
 		end
 	else					# Two inputs
-		dbg_print_cmd(d, cmd, prog)
-		if (got_fname != 0)
+		if (got_fname == 1)
+			O = gmt(prog * " " * cmd)
+		elseif (got_fname == 2)					# NOT SURE ON THIS ONE
+			O = gmt(prog * " " * cmd, arg1)
 		else
+			O = gmt(prog * " " * cmd, arg1, arg2)
 		end
 	end
     return O
