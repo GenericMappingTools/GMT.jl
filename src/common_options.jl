@@ -1097,7 +1097,7 @@ function common_grd(d::Dict, cmd0::String, cmd::String, arg1, arg2, no_output::B
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, arg1, arg2, no_output::Bool, prog::String)
+function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, prog::String, arg1, arg2=[])
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
 	O = nothing
 	if (tipo == 1)			# One input only

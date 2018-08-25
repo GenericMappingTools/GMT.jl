@@ -74,7 +74,8 @@ function grdclip(cmd0::String="", arg1=[]; kwargs...)
 	cmd = opt_S(d, cmd, [:between], 'i')
 
 	no_output = common_grd(cmd, 'G')		# See if an output is requested (or write result in grid file)
-	return common_grd(d, cmd0, cmd, arg1, [], no_output, "grdclip")	# Shared by several grdxxx modules
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	return common_grd(d, cmd, got_fname, 1, "grdclip", arg1)	# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
