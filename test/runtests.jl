@@ -202,7 +202,7 @@ plot!(collect(x)*60, seno, lw=0.5, lc="red", marker="circle",
 	markeredgecolor=0, size=0.05, markerfacecolor="cyan")
 
 x,y,z=GMT.peaks()
-G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);  # Iterpolate into a regular grid
+G = surface([x[:] y[:] z[:]], R="-3/3/-3/3", I=0.1);	# Iterpolate into a regular grid
 grdcontour(G, cont=1, annot=2, frame="a")
 cpt = makecpt(T="-6/8/1");      # Create the color map
 grdcontour(G, frame="a", color=cpt, pen="+c")

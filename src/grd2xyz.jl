@@ -35,10 +35,6 @@ function grd2xyz(cmd0::String="", arg1=[]; kwargs...)
 
 	length(kwargs) == 0 && (findfirst(" -", cmd0) != nothing) && return monolitic("grd2xyz", cmd0, arg1)	# Speedy mode
 
-	if (isempty(cmd0) && isempty_(arg1))
-		error("Must provide the grid to work with.")
-	end
-
 	d = KW(kwargs)
 
 	cmd, opt_R = parse_R("", d)
@@ -55,7 +51,8 @@ function grd2xyz(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'W', d, [:W :weight])
 	cmd = add_opt(cmd, 'Z', d, [:Z :flags])
 
-	return common_grd(d, cmd0, cmd, arg1, [], false, "grd2xyz")	# Shared by several grdxxx modules
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	return common_grd(d, cmd, got_fname, 1, "grd2xyz", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

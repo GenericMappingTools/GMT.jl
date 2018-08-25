@@ -51,7 +51,6 @@ function grdcut(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'S', d, [:S :circ_subregion])
 	cmd = add_opt(cmd, 'Z', d, [:Z :z_subregion])
 
-	no_output = common_grd(cmd, 'G')		# See if an output is requested (or write result in grid file)
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "grdcut", arg1)		# Finish build cmd and run it
 end

@@ -57,13 +57,12 @@ Parameters
 - $(GMT.opt_x)
 - $(GMT.opt_swap_xy)
 """
-function greenspline(cmd0::String="", arg1=[]; data=[], kwargs...)
+function greenspline(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("greenspline", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("greenspline", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = ""
-	cmd, opt_R = parse_R(cmd, d)
+	cmd, opt_R = parse_R("", d)
 	cmd = parse_V(cmd, d)
 	cmd, = parse_bi(cmd, d)
 	cmd, = parse_d(cmd, d)
@@ -89,12 +88,9 @@ function greenspline(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = add_opt(cmd, 'T', d, [:T :maskgrid])
 	cmd = add_opt(cmd, 'W', d, [:W :uncertainties])
 
-	no_output = common_grd(cmd, 'G')		# See if an output is requested (or write result in grid file)
-    cmd, arg1, = read_data(data, cmd, arg1)
-
-	return common_grd(d, cmd0, cmd, arg1, [], no_output, "greenspline")	# Shared by several grdxxx modules
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	return common_grd(d, cmd, got_fname, 1, "greenspline", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
-greenspline(arg1::GMTgrid, cmd0::String=""; data=[], kw...) = greenspline(cmd0, arg1; data=data, kw...)
-greenspline(arg1::Array, cmd0::String=""; data=[], kw...) = greenspline(cmd0, arg1; data=data, kw...)
+greenspline(arg1=[], cmd0::String=""; kw...) = greenspline(cmd0, arg1; kw...)
