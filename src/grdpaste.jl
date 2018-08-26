@@ -1,0 +1,34 @@
+"""
+	grdpaste(cmd0::String="", arg1=[], arg2=[], kwargs...)
+
+Combine grids ``grid1`` and ``grid2`` into ``grid3`` by pasting them together along their common edge.
+Both grids must have the same dx, dy and have one edge in common.
+
+Full option list at [`grdpaste`](http://gmt.soest.hawaii.edu/doc/latest/grdpaste.html)
+
+Parameters
+----------
+
+- **G** : **outgrid** : -- Str --
+
+    Output grid file name. Note that this is optional and to be used only when saving
+    the result directly on disk. Otherwise, just use the G = grdpaste(....) form.
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdpaste.html#g)
+- $(GMT.opt_V)
+- $(GMT.opt_f)
+"""
+function grdpaste(cmd0::String="", arg1=[], arg2=[]; kwargs...)
+
+	d = KW(kwargs)
+	cmd = parse_V("", d)
+	cmd = parse_f(cmd, d)
+	cmd = parse_params(cmd, d)
+
+	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
+
+	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, arg1, arg2)
+	return common_grd(d, cmd, got_fname, 2, "grdpaste", arg1, arg2)		# Finish build cmd and run it
+end
+
+# ---------------------------------------------------------------------------------------------------
+grdpaste(arg1=[], arg2=[], cmd0::String=""; kw...) = grdpaste(cmd0, arg1, arg2; kw...)
