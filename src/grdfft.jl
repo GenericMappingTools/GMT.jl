@@ -1,5 +1,5 @@
 """
-	grdfft(cmd0::String="", arg1=[], kwargs...)
+	grdfft(cmd0::String="", arg1=[], [arg2=[],] kwargs...)
 
 Take the 2-D forward Fast Fourier Transform and perform one or more mathematical operations
 in the frequency domain before transforming back to the space domain.
@@ -36,7 +36,7 @@ Parameters
 - **G** : **outgrid** : **table**-- Str --
 
     Output grid file name (or table if **radial_power** is used). Note that this is optional and to
-    be used only when saving the result directly on disk. Otherwise, just use the G = grdedit(....) form.
+    be used only when saving the result directly on disk. Otherwise, just use the G = grdfft(....) form.
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdfft.html#g)
 - **I** : **integrate** : -- Str or Number --		Flags = [scale|g]
 

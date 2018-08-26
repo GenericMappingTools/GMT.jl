@@ -12,42 +12,64 @@ Parameters
 
 - $(GMT.opt_R)
 - **I** : **inc** : -- Str or Number --
+
 	*x_inc* [and optionally *y_inc*] is the grid spacing.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#i)
-- **A** : **aspect_ratio** : -- Number --
-    Aspect ratio. If desired, grid anisotropy can be added to the equations.
+- **A** : **gradient** : -- Str --		Flags = gradfile+f1|2|3|4|5
+
+	The solution will partly be constrained by surface gradients v = v*n, where v is the
+	gradient magnitude and n its unit vector direction.
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#a)
-- **C** : **convergence** : -- Number --
-	Convergence limit. Iteration is assumed to have converged when the maximum absolute change in any
-	grid value is less than convergence_limit.
+- **C** : **approx** : **approximate** : -- Str or Number --	Flags = [n]value[+ffile]
+
+	Find an approximate surface fit: Solve the linear system for the spline coefficients by
+	SVD and eliminate the contribution from all eigenvalues whose ratio to the largest
+	eigenvalue is less than value.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#c)
 - **G** : **grid** : -- Str or [] --
-	Optional output grid file name. If not provided return a GMTgrid type.
+
+	Output grid file name. Note that this is optional and to be used only when saving
+    the result directly on disk. Otherwise, just use the G = greenspline(....) form.
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#g)
-- **Ll** : **lower** : -- Str or Number --
-	Impose limits on the output solution. lower sets the lower bound. lower can be the name of a grid
-	file with lower bound values, a fixed value, d to set to minimum input value,
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#l)
-- **Lu** : **upper** : -- Str or Number --
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#l)
-- **N** : **max_iterations** : -- Number --
-	Number of iterations. Iteration will cease when convergence_limit is reached or when number of
-	iterations reaches max_iterations.
+- **D** : **mode** : -- Number --
+
+	Sets the distance flag that determines how we calculate distances between data points.
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#d)
+- **E** : **misfit** : -- Str or [] --		Flags = [misfitfile]
+
+	Evaluate the spline exactly at the input data locations and report statistics of
+	the misfit (mean, standard deviation, and rms).
+    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#e)
+- **L** : **leave_trend** : -- Bool or [] --
+
+	Do not remove a linear (1-D) or planer (2-D) trend when -D selects mode 0-3.
+    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#L)
+- **N** : **nodes** : -- Number --			Flags = nodefile
+
+	ASCII file with coordinates of desired output locations x in the first column(s).
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#n)
-- **Q** : **suggest** : -- Bool or [] --
-    Suggest grid dimensions which have a highly composite greatest common factor.
+- **Q** : **dir_derivative** : -- Str --		Flags = az|x/y/z
+
+	Rather than evaluate the surface, take the directional derivative in the az azimuth and
+	return the magnitude of this derivative instead.
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#q)
-- **S** : **search_radius** : -- Number or Str --  
-    Sets the resolution of the projected grid that will be created.
+- **S** : **splines** : -- Str --				Flags = c|t|l|r|p|q[pars] 
+
+    Select one of six different splines. The first two are used for 1-D, 2-D, or 3-D Cartesian splines.
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#s)
-- **T** : **tension** : -- Number or Str --
-    Tension factor[s]. These must be between 0 and 1.
+
+- **T** : **mask** : -- Str --					Flags = maskgrid
+
+	For 2-D interpolation only. Only evaluate the solution at the nodes in the maskgrid that are
+	not equal to NaN.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#t)
 - $(GMT.opt_V)
-- **Z** : **over_relaxation** : -- Str or GMTgrid --
-    Over-relaxation factor. This parameter is used to accelerate the convergence; it is a number between 1 and 2.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#z)
-- $(GMT.opt_bi)
+- **W** : **uncertainties** : -- Str or [] --	Flags = [w]
+
+	Data one-sigma uncertainties are provided in the last column. We then compute weights that
+	are inversely proportional to the uncertainties squared.
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/greenspline.html#w)
+- $(GMT.opt_b)
 - $(GMT.opt_d)
 - $(GMT.opt_e)
 - $(GMT.opt_f)
@@ -75,17 +97,17 @@ function greenspline(cmd0::String="", arg1=[]; kwargs...)
 	cmd = parse_swap_xy(cmd, d)
 	cmd = parse_params(cmd, d)
 
-	cmd = add_opt(cmd, 'A', d, [:A :gradfile])
-	cmd = add_opt(cmd, 'C', d, [:C :approximate])
+	cmd = add_opt(cmd, 'A', d, [:A :gradient])
+	cmd = add_opt(cmd, 'C', d, [:C :approx :approximate])
 	cmd = add_opt(cmd, 'D', d, [:D :mode])
 	cmd = add_opt(cmd, 'E', d, [:E :misfit])
 	cmd = add_opt(cmd, 'G', d, [:G :grid])
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, "L", d, [:L :leave_trend])
-	cmd = add_opt(cmd, 'N', d, [:N :nodefile])
-	cmd = add_opt(cmd, 'Q', d, [:Q :direction_derivative])
+	cmd = add_opt(cmd, 'L', d, [:L :leave_trend])
+	cmd = add_opt(cmd, 'N', d, [:N :nodes])
+	cmd = add_opt(cmd, 'Q', d, [:Q :dir_derivative])
 	cmd = add_opt(cmd, 'S', d, [:S :splines])
-	cmd = add_opt(cmd, 'T', d, [:T :maskgrid])
+	cmd = add_opt(cmd, 'T', d, [:T :mask])
 	cmd = add_opt(cmd, 'W', d, [:W :uncertainties])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)

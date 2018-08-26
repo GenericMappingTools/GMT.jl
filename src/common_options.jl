@@ -1048,7 +1048,15 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 				error("Missing input data to run this module.")
 			end
 		end
-	elseif (tipo == 3)			# Two inputs (but second can be optional is some modules)
+	elseif (tipo == 3)			# Three inputs
+		if (got_fname != 0)
+			if (isempty_(arg1) && data_kw == nothing)
+				return cmd, 1, arg1, arg2, arg3		# got_fname = 1 => all data is in cmd 
+			elseif (!isempty_(arg1))
+				return cmd, 2, arg1, arg2, arg3		# got_fname = 2 => data is in cmd and arg1,2
+			end
+		else
+		end
 	end
 end
 
