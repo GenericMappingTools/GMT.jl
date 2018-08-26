@@ -55,6 +55,10 @@ C=grd2cpt(G);
 # GRD2XYZ
 D=grd2xyz(G); # Use G of previous test
 
+# GRDBLEND		(not working)
+#G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y");
+#G2=grdblend(G,G3, I=1);
+
 # GRDCLIP
 G2=grdclip(G,above=[5 6], low=[2 2], between="3/4/3.5"); # Use G of previous test
 
@@ -97,6 +101,10 @@ G2=grdhisteq(G, gaussian=[]);	# Use G of previous test
 
 # GRDLANDMASK
 G2=grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
+
+# GRDPASTE
+G3=gmt("grdmath", "-R10/20/0/10 -I1 X");
+G2=grdpaste(G,G3);
 
 # GRDPROJECT	-- Works but does not save projection info in header
 G2=grdproject(G, proj="u29/1:1", F=[], C=[]); 		# Use G of previous test
