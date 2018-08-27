@@ -1,0 +1,71 @@
+"""
+	trend2d(cmd0::String="", arg1=[], kwargs...)
+
+Fit a [weighted] [robust] polynomial model for z = f(x,y) to xyz[w] data.
+
+Full option list at [`trend2d`](http://gmt.soest.hawaii.edu/doc/latest/trend2d.html)
+
+Parameters
+----------
+
+- **F** : **output** : -- Str --   Flags = xyzmrw|p
+
+    Specify up to five letters from the set {x y m r w} in any order to create columns of output. 
+    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/trend2d.html#f)
+- **N** : **n_model** : -- Str --      Flags = n_model[+r]
+
+    Specify the number of terms in the model, n_model, and append +r to do a robust fit. E.g.,
+    a robust bilinear model is N="4+r".
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/trend2d.html#n)
+
+- **C** : **condition_number** : -- Number --   Flags = condition_number
+
+    Set the maximum allowed condition number for the matrix solution.
+    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/trend2d.html#c)
+- **I** : **confidence_level** : -- Number or [] --   Flags = [confidence_level]
+
+    Iteratively increase the number of model parameters, starting at one, until n_model is reachedx
+    or the reduction in variance of the model is not significant at the confidence_level level.
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/trend2d.html#i)
+- **W** : **weights** : -- Str or [] --     Flags = [+s]
+
+    Weights are supplied in input column 4. Do a weighted least squares fit [or start with
+    these weights when doing the iterative robust fit].
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/trend2d.html#w)
+- $(GMT.opt_V)
+- $(GMT.opt_b)
+- $(GMT.opt_d)
+- $(GMT.opt_e)
+- $(GMT.opt_f)
+- $(GMT.opt_h)
+- $(GMT.opt_i)
+- $(GMT.opt_swap_xy)
+"""
+function trend2d(cmd0::String="", arg1=[]; kwargs...)
+
+	length(kwargs) == 0 && return monolitic("trend2d", cmd0, arg1)	# Speedy mode
+
+	d = KW(kwargs)
+
+	cmd = parse_V("", d)
+	cmd, = parse_b(cmd, d)
+	cmd, = parse_d(cmd, d)
+	cmd = parse_e(cmd, d)
+	cmd = parse_f(cmd, d)
+	cmd = parse_h(cmd, d)
+	cmd, = parse_i(cmd, d)
+	cmd = parse_swap_xy(cmd, d)
+	cmd = parse_params(cmd, d)
+
+	cmd = add_opt(cmd, 'C', d, [:C :condition_number])
+	cmd = add_opt(cmd, 'I', d, [:I :confidence_level])
+	cmd = add_opt(cmd, 'F', d, [:F :output])
+	cmd = add_opt(cmd, 'N', d, [:N :n_model])
+	cmd = add_opt(cmd, 'W', d, [:W :weights])
+
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	return common_grd(d, cmd, got_fname, 1, "trend2d", arg1)		# Finish build cmd and run it
+end
+
+# ---------------------------------------------------------------------------------------------------
+trend2d(arg1=[], cmd0::String=""; kw...) = trend2d(cmd0, arg1; kw...)

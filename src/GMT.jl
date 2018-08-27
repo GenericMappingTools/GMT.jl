@@ -33,25 +33,34 @@ const GMTver = 5.0
 const FMT = "ps"
 
 export
-	GMTver, FMT,
-	gmt, grid_type, basemap, basemap!, blockmean, blockmedian, blockmode, coast, coast!, logo, logo!,
-	xy, xy!, grd2cpt, grd2kml, grd2xyz, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft, grdfilter,
-	grdgradient, grdhisteq, grdimage, grdimage!, grdlandmask, grdpaste, grdproject, grdsample, grdtrack,
-	grdtrend, grdview, grdview!, grdvolume, makecpt, histogram, histogram!, image, image!, psconvert,
-	colorbar, colorbar!, rose, rose!, solar, solar!, text, text!, gmtinfo, grdinfo, surface,
-	triangulate, nearneighbor, imshow, imshow!, plot, plot!, plot3d, plot3d!, splitxyz, wiggle, wiggle!,
-	text_record, gmtread, gmtwrite
+	GMTver, FMT, gmt,
+	basemap, basemap!, blockmean, blockmedian, blockmode, coast, coast!, colorbar, colorbar!, filter1d,
+	filter2d, fitcircle, gmtinfo, gmtregress, gmtread, gmtselect, gmtsimplify, gmtspatial, gmtvector,
+	gmtwrite, gmtwich, grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit,
+	grdfft, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdlandmask, grdpaste,
+	grdproject, grdsample, grdtrack, grdtrend, grdview, grdview!, grdvolume, grid_type, histogram,
+	histogram!, image, image!, imshow, imshow!, logo, logo!, makecpt, nearneighbor, plot, plot!,
+	plot3d, plot3d!, project, psconvert, rose, rose!, sample1d, solar, solar!, spectrum1d,
+	sphdistance, sphinterpolate, sphtriangulate, surface, text, text!, text_record, trend1d, trend2d,
+	triangulate, splitxyz, wiggle, wiggle!, xy, xy!, xyz2grd
 
 include("common_docs.jl")
 include("libgmt_h.jl")
 include("libgmt.jl")
 include("gmt_main.jl")
 include("common_options.jl")
-include("gmtinfo.jl")
 include("blocks.jl")
+include("filter1d.jl")
+include("fitcircle.jl")
+include("gmtinfo.jl")
 include("gmtlogo.jl")
 include("gmtreadwrite.jl")
 include("gmtset.jl")
+include("gmtselect.jl")
+include("gmtsimplify.jl")
+include("gmtspatial.jl")
+include("gmtregress.jl")
+include("gmtvector.jl")
 include("grd2cpt.jl")
 include("grd2kml.jl")
 include("grd2xyz.jl")
@@ -77,6 +86,7 @@ include("grdvolume.jl")
 include("imshow.jl")
 include("makecpt.jl")
 include("nearneighbor.jl")
+include("project.jl")
 include("psbasemap.jl")
 include("pscoast.jl")
 include("psconvert.jl")
@@ -90,8 +100,16 @@ include("psxy.jl")
 include("pswiggle.jl")
 include("plot.jl")
 include("plot3d.jl")
+include("sample1d.jl")
+include("spectrum1d.jl")
+include("sphdistance.jl")
+include("sphinterpolate.jl")
+include("sphtriangulate.jl")
 include("splitxyz.jl")
 include("surface.jl")
 include("triangulate.jl")
+include("trend1d.jl")
+include("trend2d.jl")
+include("xyz2grd.jl")
 
 end # module

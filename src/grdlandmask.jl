@@ -34,7 +34,7 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdlandmask(....) form.
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdlandmask.html#g)
-- **N** : **maskvalues** : -- Str or List --    Flags = wet/dry or ocean/land/lake/island/pond
+- **N** : **mask_geog** : -- Str or List --    Flags = wet/dry or ocean/land/lake/island/pond
 
     Sets the values that will be assigned to nodes. Values can be any number, including the textstring NaN
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdlandmask.html#n)
@@ -59,7 +59,7 @@ function grdlandmask(cmd0::String=""; kwargs...)
 	cmd = add_opt(cmd, 'E', d, [:E :bordervalues])
     cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt_s(cmd, 'G', d, [:G :outgrid])
-	cmd = add_opt(cmd, 'N', d, [:N :maskvalues])
+	cmd = add_opt(cmd, 'N', d, [:N :mask_geog])
 
 	return common_grd(d, cmd, 1, 1, "grdlandmask", [])		# Finish build cmd and run it
 end

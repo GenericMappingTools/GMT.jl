@@ -1,0 +1,76 @@
+"""
+	sphtriangulate(cmd0::String="", arg1=[], kwargs...)
+
+Delaunay or Voronoi construction of spherical lon,lat data
+
+Full option list at [`sphtriangulate`](http://gmt.soest.hawaii.edu/doc/latest/sphtriangulate .html)
+
+Parameters
+----------
+
+- **A** : **area** : -- Bool or [] --
+
+    Compute the area of the spherical triangles (Qd) or polygons (Qv) and write the areas in the output segment headers
+    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/sphtriangulate.html#a)
+- **C** : **save_mem** : -- Bool or [] --
+
+    For large data sets you can save some memory (at the expense of more processing).
+    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/sphdistance.html#c)
+- **D** : **skip** : -- Bool or [] --
+
+    Skip the last (repeated) input vertex at the end of a closed segment if it equals the first point in the segment.
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/sphtriangulate.html#d)
+- **L** : **unit** : -- Str --          Flags = e|f|k|m|n|u|d
+
+    Specify the unit used for distance and area calculations.
+    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/sphtriangulate.html#l)
+- **N** : -- Str --         Flags = ``nfile``
+
+    Write the information pertaining to each polygon to a separate file.
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/sphtriangulate.html#n)
+- **Q** : **voronoi** : -- Str --     Flags = d|v
+
+    Append d for Delaunay triangles or v for Voronoi polygons [Delaunay].
+    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/sphtriangulate .html#q)
+- **T** : -- Bool or Str --
+
+    Write the unique arcs of the construction [Default writes fillable triangles or polygons].
+    When used with -A we store arc length in the segment header in chosen unit.
+    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/sphtriangulate.html#t)
+- $(GMT.opt_V)
+- $(GMT.opt_b)
+- $(GMT.opt_d)
+- $(GMT.opt_e)
+- $(GMT.opt_h)
+- $(GMT.opt_i)
+- $(GMT.opt_swap_xy)
+"""
+function sphtriangulate(cmd0::String="", arg1=[]; kwargs...)
+
+	length(kwargs) == 0 && return monolitic("sphtriangulate ", cmd0, arg1)	# Speedy mode
+
+	d = KW(kwargs)
+
+	cmd = parse_V("", d)
+	cmd, = parse_b(cmd, d)
+	cmd = parse_d(cmd, d)
+	cmd = parse_e(cmd, d)
+	cmd = parse_h(cmd, d)
+	cmd, = parse_i(cmd, d)
+	cmd = parse_swap_xy(cmd, d)
+	cmd = parse_params(cmd, d)
+
+    cmd = add_opt(cmd, 'A', d, [:A :area])
+    cmd = add_opt(cmd, 'C', d, [:C :save_mem])
+	cmd = add_opt(cmd, 'D', d, [:D :skip])
+	cmd = add_opt(cmd, 'L', d, [:L :unit])
+	cmd = add_opt(cmd, 'N', d, [:N])
+	cmd = add_opt(cmd, 'Q', d, [:Q :voronoi])
+	cmd = add_opt(cmd, 'T', d, [:T])
+
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	return common_grd(d, cmd, got_fname, 1, "sphtriangulate", arg1)		# Finish build cmd and run it
+end
+
+# ---------------------------------------------------------------------------------------------------
+sphtriangulate(arg1=[], cmd0::String=""; kw...) = sphtriangulate(cmd0, arg1; kw...)
