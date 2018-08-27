@@ -447,6 +447,20 @@ function parse_a(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_b(cmd::String, d::Dict)
+	# Parse the global -b option. Return CMD same as input if no -b option in args
+	opt_b = ""
+	for symb in [:b :binary]
+		if (haskey(d, symb))
+			opt_b = " -b" * arg2str(d[symb])
+			cmd = cmd * opt_b
+			break
+		end
+	end
+	return cmd, opt_b
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_bi(cmd::String, d::Dict)
 	# Parse the global -bi option. Return CMD same as input if no -bi option in args
 	opt_bi = ""

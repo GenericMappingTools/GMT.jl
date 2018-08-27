@@ -1,0 +1,62 @@
+"""
+	fitcircle(cmd0::String="", arg1=[], kwargs...)
+
+Find mean position and great [or small] circle fit to points on a sphere.
+
+Full option list at [`fitcircle`](http://gmt.soest.hawaii.edu/doc/latest/fitcircle.html)
+
+Parameters
+----------
+
+- **L** : **norm** : -- Int or [] --
+
+    Specify the desired norm as 1 or 2, or use [] or 3 to see both solutions.
+	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/fitcircle.html#d)
+
+- **F** : **coord** : **coordinates** : -- Str --	Flags = f|m|n|s|c
+
+    Only return data coordinates, and append flags to specify which coordinates you would like.
+    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/fitcircle.html#f)
+- **S** : **symetry** : -- Number --    Flags = symmetry_factor
+
+    Attempt to
+    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/fitcircle.html#s)
+- $(GMT.opt_V)
+- $(GMT.opt_bi)
+- $(GMT.opt_di)
+- $(GMT.opt_e)
+- $(GMT.opt_f)
+- $(GMT.opt_g)
+- $(GMT.opt_h)
+- $(GMT.opt_i)
+- $(GMT.opt_o)
+- $(GMT.opt_swap_xy)
+"""
+function fitcircle(cmd0::String="", arg1=[]; kwargs...)
+
+	length(kwargs) == 0 && return monolitic("fitcircle", cmd0, arg1)	# Speedy mode
+
+	d = KW(kwargs)
+
+	cmd = parse_V("", d)
+	cmd, = parse_bi(cmd, d)
+	cmd, = parse_di(cmd, d)
+	cmd = parse_e(cmd, d)
+	cmd = parse_f(cmd, d)
+	cmd = parse_g(cmd, d)
+	cmd = parse_h(cmd, d)
+	cmd = parse_i(cmd, d)
+	cmd = parse_o(cmd, d)
+	cmd = parse_swap_xy(cmd, d)
+	cmd = parse_params(cmd, d)
+
+	cmd = add_opt(cmd, 'L', d, [:L :norm])
+	cmd = add_opt(cmd, 'F', d, [:F :coord :coordinates])
+	cmd = add_opt(cmd, 'S', d, [:S :small_circle])
+
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	return common_grd(d, cmd, got_fname, 1, "fitcircle", arg1)		# Finish build cmd and run it
+end
+
+# ---------------------------------------------------------------------------------------------------
+fitcircle(arg1=[], cmd0::String=""; kw...) = fitcircle(cmd0, arg1; kw...)

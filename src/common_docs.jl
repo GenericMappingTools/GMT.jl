@@ -43,10 +43,16 @@ const opt_Y = "**Y** : **y_offset** : -- Str --
 const opt_a = "**a** : **aspatial** : -- Str --
       [`-a`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#aspatial-full)"
 
+const opt_b = "**b** : **binary** : -- Str --
+
+      [`-b`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#b-full)"
+
 const opt_bi = "**bi** : **binary_in** : -- Str --
+
       [`-bi`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#bi-full)"
 
 const opt_bo = "**bo** : **binary_out** : -- Str --
+
       [`-bo`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#bo-full)"
 
 const opt_d = "**d** : **nodata** : -- Str or Number --

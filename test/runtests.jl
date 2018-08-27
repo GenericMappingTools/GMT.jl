@@ -25,6 +25,10 @@ if (G != nothing)	# If run from GMT5 it will return nothing
 	G,L = blockmode(region=[0 2 0 2], inc=1, fields="z,l", reg=1, d);
 end
 
+# FILTER1D
+raw = [collect((1.0:50)) rand(50)];
+filter1d(raw, F="m15");
+
 # GMTREADWRITE
 G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 if (GMTver >= 6)
@@ -44,10 +48,6 @@ r=gmt("grdinfo -C", G);
 r2=grdinfo(G, C=true, V=true);
 @assert(r[1].data == r2[1].data)
 
-# MAKECPT
-cpt = makecpt(range="-1/1/0.1");
-@assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
-
 # GRD2CPT
 G=gmt("grdmath", "-R0/10/0/10 -I1 X");
 C=grd2cpt(G);
@@ -55,9 +55,11 @@ C=grd2cpt(G);
 # GRD2XYZ
 D=grd2xyz(G); # Use G of previous test
 
-# GRDBLEND		(not working)
-#G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y");
-#G2=grdblend(G,G3, I=1);
+# GRDBLEND
+if (GMTver >= 6)
+	G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y");
+	G2=grdblend(G,G3);
+end
 
 # GRDCLIP
 G2=grdclip(G,above=[5 6], low=[2 2], between="3/4/3.5"); # Use G of previous test
@@ -133,6 +135,10 @@ gmt("destroy")
 # IMSHOW
 imshow(rand(128,128),show=false)
 imshow(G, frame=:a, shade="+a45",show=false)
+
+# MAKECPT
+cpt = makecpt(range="-1/1/0.1");
+@assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
 
 # SURFACE
 G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
