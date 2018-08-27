@@ -29,7 +29,7 @@ catch
 end
 =#
 
-const GMTver = 6.0
+const GMTver = 5.0
 const FMT = "ps"
 
 export
