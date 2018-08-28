@@ -14,48 +14,61 @@ Parameters
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - **A** : **area** : -- Str or Number --
+
     Features with an area smaller than min_area in km^2 or of
     hierarchical level that is lower than min_level or higher than
     max_level will not be plotted.
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#a)
 - $(GMT.opt_B)
 - **C** : **river_fill** : -- Str --
+
     Set the shade, color, or pattern for lakes and river-lakes.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#c)
 - **D** : **res** : **resolution** : -- Str --
+
     Selects the resolution of the data set to use ((f)ull, (h)igh, (i)ntermediate, (l)ow, and (c)rude).
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#d)
 - **E** : **DCW** : -- Str --
+
     Select painting or dumping country polygons from the Digital Chart of the World.
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#e)
     + Tuple("code", Str); Tuple("code" [,"fill"], (pen)); Tuple((...),(...),...)
     + ex: ("PT",(0.5,"red","--")); (("PT","gblue",(0.5,"red"),("ES",(0.5,"yellow")))
 - **F** : **box** : -- Str --
+
     Draws a rectangular border around the map scale or rose.
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#f)
 - **G** : **land** : -- Str --
+
     Select filling or clipping of “dry” areas.
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#g)
 - **I** : **rivers** : -- Str --
+
     Draw rivers. Specify the type of rivers and [optionally] append pen attributes.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#i)
 - **L** : **map_scale** : -- Str --
+
     Draw a map scale.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#l)
 - **M** : **dump** : -- Str --
+
     Dumps a single multisegment ASCII output. No plotting occurs.
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#m)
 - **N** : **borders** : -- Str --
+
     Draw political boundaries. Specify the type of boundary and [optionally] append pen attributes
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#n)
 - $(GMT.opt_P)
 - **S** : **water** : -- Str --
+
     Select filling or clipping of “wet” areas.
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#s)
 - **Td** : **rose`** : -- Str --
+
     Draws a map directional rose on the map at the location defined by the reference and anchor points.
     [`-Td`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#t)
 - **Tm** : **compass** : -- Str --
+
     Draws a map magnetic rose on the map at the location defined by the reference and anchor points.
     [`-Tm`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#t)
 - $(GMT.opt_U)
@@ -79,13 +92,10 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 	maybe_more = false				# If latter set to true, search for lc & lc pen settings
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/0")
 	cmd = parse_UVXY(cmd, d)
-	cmd = parse_p(cmd, d)
-	cmd = parse_t(cmd, d)
-	cmd = parse_bo(cmd, d)
-	cmd = parse_gmtconf_MAP(cmd, d)
-	cmd = parse_gmtconf_FONT(cmd, d)
-	cmd = parse_gmtconf_FORMAT(cmd, d)
-	cmd = parse_gmtconf_TIME(cmd, d)
+	cmd, = parse_p(cmd, d)
+	cmd, = parse_t(cmd, d)
+	cmd, = parse_bo(cmd, d)
+	cmd = parse_params(cmd, d)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 

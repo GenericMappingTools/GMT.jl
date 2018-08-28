@@ -45,10 +45,9 @@ function grdfilter(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 
-	cmd, opt_R = parse_R("", d)
-	cmd = parse_V(cmd, d)
-	cmd = parse_f(cmd, d)
-	cmd = parse_params(cmd, d)
+	cmd, = parse_R("", d)
+	cmd  = parse_V_params(cmd, d)
+	cmd, = parse_f(cmd, d)
 
     cmd = add_opt(cmd, 'D', d, [:D :distflag :distance])
     cmd = add_opt(cmd, 'F', d, [:F :filter])

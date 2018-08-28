@@ -70,7 +70,7 @@ function makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
 	length(kwargs) == 0 && isempty(data) && return monolitic("makecpt", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = parse_V("", d)
+	cmd = parse_V_params("", d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_bi(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)

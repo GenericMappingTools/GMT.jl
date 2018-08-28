@@ -204,6 +204,13 @@ function parse_V(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_V_params(cmd::String, d::Dict)
+	# Parse the global -V option and the --PAR=val. Return CMD same as input if no options in args
+	cmd = parse_V(cmd, d)
+	return parse_params(cmd, d)
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_UVXY(cmd::String, d::Dict)
 	cmd = parse_V(cmd, d)
 	cmd = parse_UXY(cmd, d, [:X :x_off :x_offset], 'X')
@@ -213,473 +220,138 @@ function parse_UVXY(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_gmtconf_MAP(cmd::String, d::Dict)
-	# Parse the MAP_ type global parameters of gmt.conf
-	if (haskey(d, :MAP_ANNOT_MIN_ANGLE))
-		cmd = string(cmd, " --MAP_ANNOT_MIN_ANGLE=", d[:MAP_ANNOT_MIN_ANGLE])
-	end
-	if (haskey(d, :MAP_ANNOT_MIN_SPACING))
-		cmd = string(cmd, " --MAP_ANNOT_MIN_SPACING=", d[:MAP_ANNOT_MIN_SPACING])
-	end
-	if (haskey(d, :MAP_ANNOT_OBLIQUE))
-		cmd = string(cmd, " --MAP_ANNOT_OBLIQUE=", d[:MAP_ANNOT_OBLIQUE])
-	end
-	if (haskey(d, :MAP_ANNOT_OFFSET))
-		cmd = string(cmd, " --MAP_ANNOT_OFFSET=", d[:MAP_ANNOT_OFFSET])
-	end
-	if (haskey(d, :MAP_ANNOT_OFFSET_PRIMARY))
-		cmd = string(cmd, " --MAP_ANNOT_OFFSET_PRIMARY=", d[:MAP_ANNOT_OFFSET_PRIMARY])
-	end
-	if (haskey(d, :MAP_ANNOT_OFFSET_SECONDARY))
-		cmd = string(cmd, " --MAP_ANNOT_OFFSET_SECONDARY=", d[:MAP_ANNOT_OFFSET_SECONDARY])
-	end
-	if (haskey(d, :MAP_ANNOT_ORTHO))
-		cmd = string(cmd, " --MAP_ANNOT_ORTHO=", d[:MAP_ANNOT_ORTHO])
-	end
-	if (haskey(d, :MAP_DEFAULT_PEN))
-		cmd = string(cmd, " --MAP_DEFAULT_PEN=", d[:MAP_DEFAULT_PEN])
-	end
-	if (haskey(d, :MAP_DEGREE_SYMBOL))
-		cmd = string(cmd, " --MAP_DEGREE_SYMBOL=", d[:MAP_DEGREE_SYMBOL])
-	end
-	if (haskey(d, :MAP_FRAME_AXES))
-		cmd = string(cmd, " --MAP_FRAME_AXES=", d[:MAP_FRAME_AXES])
-	end
-	if (haskey(d, :MAP_FRAME_PEN))
-		cmd = string(cmd, " --MAP_FRAME_PEN=", d[:MAP_FRAME_PEN])
-	end
-	if (haskey(d, :MAP_FRAME_TYPE))
-		cmd = string(cmd, " --MAP_FRAME_TYPE=", d[:MAP_FRAME_TYPE])
-	end
-	if (haskey(d, :MAP_FRAME_WIDTH))
-		cmd = string(cmd, " --MAP_FRAME_WIDTH=", d[:MAP_FRAME_WIDTH])
-	end
-	if (haskey(d, :MAP_GRID_CROSS_SIZE))
-		cmd = string(cmd, " --MAP_GRID_CROSS_SIZE=", d[:MAP_GRID_CROSS_SIZE])
-	end
-	if (haskey(d, :MAP_GRID_CROSS_SIZE_PRIMARY))
-		cmd = string(cmd, " --MAP_GRID_CROSS_SIZE_PRIMARY=", d[:MAP_GRID_CROSS_SIZE_PRIMARY])
-	end
-	if (haskey(d, :MAP_GRID_CROSS_SIZE_SECONDARY))
-		cmd = string(cmd, " --MAP_GRID_CROSS_SIZE_SECONDARY=", d[:MAP_GRID_CROSS_SIZE_SECONDARY])
-	end
-	if (haskey(d, :MAP_GRID_CROSS_PEN))
-		cmd = string(cmd, " --MAP_GRID_CROSS_PEN=", d[:MAP_GRID_CROSS_PEN])
-	end
-	if (haskey(d, :MAP_GRID_PEN_PRIMARY))
-		cmd = string(cmd, " --MAP_GRID_PEN_PRIMARY=", d[:MAP_GRID_PEN_PRIMARY])
-	end
-	if (haskey(d, :MAP_GRID_PEN_SECONDARY))
-		cmd = string(cmd, " --MAP_GRID_PEN_SECONDARY=", d[:MAP_GRID_PEN_SECONDARY])
-	end
-	if (haskey(d, :MAP_HEADING_OFFSET))
-		cmd = string(cmd, " --MAP_HEADING_OFFSET=", d[:MAP_HEADING_OFFSET])
-	end
-	if (haskey(d, :MAP_LABEL_OFFSET))
-		cmd = string(cmd, " --MAP_LABEL_OFFSET=", d[:MAP_LABEL_OFFSET])
-	end
-	if (haskey(d, :MAP_LINE_STEP))
-		cmd = string(cmd, " --MAP_LINE_STEP=", d[:MAP_LINE_STEP])
-	end
-	if (haskey(d, :MAP_LOGO))
-		cmd = string(cmd, " --MAP_LOGO=", d[:MAP_LOGO])
-	end
-	if (haskey(d, :MAP_LOGO_POS))
-		cmd = string(cmd, " --MAP_LOGO_POS=", d[:MAP_LOGO_POS])
-	end
-	if (haskey(d, :MAP_ORIGIN_X))
-		cmd = string(cmd, " --MAP_ORIGIN_X=", d[:MAP_ORIGIN_X])
-	end
-	if (haskey(d, :MAP_ORIGIN_Y))
-		cmd = string(cmd, " --MAP_ORIGIN_Y=", d[:MAP_ORIGIN_Y])
-	end
-	if (haskey(d, :MAP_POLAR_CAP))
-		cmd = string(cmd, " --MAP_POLAR_CAP=", d[:MAP_POLAR_CAP])
-	end
-	if (haskey(d, :MAP_SCALE_HEIGHT))
-		cmd = string(cmd, " --MAP_SCALE_HEIGHT=", d[:MAP_SCALE_HEIGHT])
-	end
-	if (haskey(d, :MAP_TICK_LENGTH))
-		cmd = string(cmd, " --MAP_TICK_LENGTH=", d[:MAP_TICK_LENGTH])
-	end
-	if (haskey(d, :MAP_TICK_LENGTH_PRIMARY))
-		cmd = string(cmd, " --MAP_TICK_LENGTH_PRIMARY=", d[:MAP_TICK_LENGTH_PRIMARY])
-	end
-	if (haskey(d, :MAP_TICK_LENGTH_SECONDARY))
-		cmd = string(cmd, " --MAP_TICK_LENGTH_SECONDARY=", d[:MAP_TICK_LENGTH_SECONDARY])
-	end
-	if (haskey(d, :MAP_TICK_PEN))
-		cmd = string(cmd, " --MAP_TICK_PEN=", d[:MAP_TICK_PEN])
-	end
-	if (haskey(d, :MAP_TICK_PEN_PRIMARY))
-		cmd = string(cmd, " --MAP_TICK_PEN_PRIMARY=", d[:MAP_TICK_PEN_PRIMARY])
-	end
-	if (haskey(d, :MAP_TICK_PEN_SECONDARY))
-		cmd = string(cmd, " --MAP_TICK_PEN_SECONDARY=", d[:MAP_TICK_PEN_SECONDARY])
-	end
-	if (haskey(d, :MAP_TITLE_OFFSET))
-		cmd = string(cmd, " --MAP_TITLE_OFFSET=", d[:MAP_TITLE_OFFSET])
-	end
-	if (haskey(d, :MAP_VECTOR_SHAPE))
-		cmd = string(cmd, " --MAP_VECTOR_SHAPE=", d[:MAP_VECTOR_SHAPE])
-	end
-	return cmd
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_gmtconf_FONT(cmd::String, d::Dict)
-	# Parse the FONT_ type global parameters of gmt.conf
-	if (haskey(d, :FONT))
-		cmd = string(cmd, " --FONT=", d[:FONT])
-	end
-	if (haskey(d, :FONT_ANNOT))
-		cmd = string(cmd, " --FONT_ANNOT=", d[:FONT_ANNOT])
-	end
-	if (haskey(d, :FONT_ANNOT_PRIMARY))
-		cmd = string(cmd, " --FONT_ANNOT_PRIMARY=", d[:FONT_ANNOT_PRIMARY])
-	end
-	if (haskey(d, :FONT_ANNOT_SECONDARY))
-		cmd = string(cmd, " --FONT_ANNOT_SECONDARY=", d[:FONT_ANNOT_SECONDARY])
-	end
-	if (haskey(d, :FONT_HEADING))
-		cmd = string(cmd, " --FONT_HEADING=", d[:FONT_HEADING])
-	end
-	if (haskey(d, :FONT_LABEL))
-		cmd = string(cmd, " --FONT_LABEL=", d[:FONT_LABEL])
-	end
-	if (haskey(d, :FONT_LOGO))
-		cmd = string(cmd, " --FONT_LOGO=", d[:FONT_LOGO])
-	end
-	if (haskey(d, :FONT_TAG))
-		cmd = string(cmd, " --FONT_TAG=", d[:FONT_TAG])
-	end
-	return cmd
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_gmtconf_FORMAT(cmd::String, d::Dict)
-	# Parse the FORMAT_ type global parameters of gmt.conf
-	if (haskey(d, :FORMAT_CLOCK_IN))
-		cmd = string(cmd, " --FORMAT_CLOCK_IN=", d[:FORMAT_CLOCK_IN])
-	end
-	if (haskey(d, :FORMAT_CLOCK_MAP))
-		cmd = string(cmd, " --FORMAT_CLOCK_MAP=", d[:FORMAT_CLOCK_MAP])
-	end
-	if (haskey(d, :FORMAT_CLOCK_OUT))
-		cmd = string(cmd, " --FORMAT_CLOCK_OUT=", d[:FORMAT_CLOCK_OUT])
-	end
-	if (haskey(d, :FORMAT_DATE_IN))
-		cmd = string(cmd, " --FORMAT_DATE_IN=", d[:FORMAT_DATE_IN])
-	end
-	if (haskey(d, :FORMAT_DATE_MAP))
-		cmd = string(cmd, " --FORMAT_DATE_MAP=", d[:FORMAT_DATE_MAP])
-	end
-	if (haskey(d, :FORMAT_DATE_OUT))
-		cmd = string(cmd, " --FORMAT_DATE_OUT=", d[:FORMAT_DATE_OUT])
-	end
-	if (haskey(d, :FORMAT_GEO_MAP))
-		cmd = string(cmd, " --FORMAT_GEO_MAP=", d[:FORMAT_GEO_MAP])
-	end
-	if (haskey(d, :FORMAT_GEO_OUT))
-		cmd = string(cmd, " --FORMAT_GEO_OUT=", d[:FORMAT_GEO_OUT])
-	end
-	if (haskey(d, :FORMAT_FLOAT_MAP))
-		cmd = string(cmd, " --FORMAT_FLOAT_MAP=", d[:FORMAT_FLOAT_MAP])
-	end
-	if (haskey(d, :FORMAT_FLOAT_OUT))
-		cmd = string(cmd, " --FORMAT_FLOAT_OUT=", d[:FORMAT_FLOAT_OUT])
-	end
-	if (haskey(d, :FORMAT_TIME_MAP))
-		cmd = string(cmd, " --FORMAT_TIME_MAP=", d[:FORMAT_TIME_MAP])
-	end
-	if (haskey(d, :FORMAT_TIME_PRIMARY_MAP))
-		cmd = string(cmd, " --FORMAT_TIME_PRIMARY_MAP=", d[:FORMAT_TIME_PRIMARY_MAP])
-	end
-	if (haskey(d, :FORMAT_TIME_SECONDARY_MAP))
-		cmd = string(cmd, " --FORMAT_TIME_SECONDARY_MAP=", d[:FORMAT_TIME_SECONDARY_MAP])
-	end
-	if (haskey(d, :FORMAT_TIME_STAMP))
-		cmd = string(cmd, " --FORMAT_TIME_STAMP=", d[:FORMAT_TIME_STAMP])
-	end
-	return cmd
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_gmtconf_TIME(cmd::String, d::Dict)
-	# Parse the TIME_ type global parameters of gmt.conf
-	if (haskey(d, :TIME_EPOCH))
-		cmd = string(cmd, " --TIME_EPOCH=", d[:TIME_EPOCH])
-	end
-	if (haskey(d, :TIME_INTERVAL_FRACTION))
-		cmd = string(cmd, " --TIME_INTERVAL_FRACTION=", d[:TIME_INTERVAL_FRACTION])
-	end
-	if (haskey(d, :TIME_IS_INTERVAL))
-		cmd = string(cmd, " --TIME_IS_INTERVAL=", d[:TIME_IS_INTERVAL])
-	end
-	if (haskey(d, :TIME_REPORT))
-		cmd = string(cmd, " --TIME_REPORT=", d[:TIME_REPORT])
-	end
-	if (haskey(d, :TIME_SYSTEM))
-		cmd = string(cmd, " --TIME_SYSTEM=", d[:TIME_SYSTEM])
-	end
-	if (haskey(d, :TIME_UNIT))
-		cmd = string(cmd, " --TIME_UNIT=", d[:TIME_UNIT])
-	end
-	if (haskey(d, :TIME_WEEK_START))
-		cmd = string(cmd, " --TIME_WEEK_START=", d[:TIME_WEEK_START])
-	end
-	if (haskey(d, :TIME_Y2K_OFFSET_YEAR))
-		cmd = string(cmd, " --TIME_Y2K_OFFSET_YEAR=", d[:TIME_Y2K_OFFSET_YEAR])
-	end
-	return cmd
-end
-
-# ---------------------------------------------------------------------------------------------------
 function parse_a(cmd::String, d::Dict)
 	# Parse the global -a option. Return CMD same as input if no -a option in args
-	for symb in [:a :aspatial]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -a" * d[symb]
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:a :aspatial], " -a")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_b(cmd::String, d::Dict)
 	# Parse the global -b option. Return CMD same as input if no -b option in args
-	opt_b = ""
-	for symb in [:b :binary]
-		if (haskey(d, symb))
-			opt_b = " -b" * arg2str(d[symb])
-			cmd = cmd * opt_b
-			break
-		end
-	end
-	return cmd, opt_b
+	return parse_helper(cmd, d, [:b :binary], " -b")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_bi(cmd::String, d::Dict)
 	# Parse the global -bi option. Return CMD same as input if no -bi option in args
-	opt_bi = ""
-	for symb in [:bi :binary_in]
-		if (haskey(d, symb))
-			opt_bi = " -bi" * arg2str(d[symb])
-			cmd = cmd * opt_bi
-			break
-		end
-	end
-	return cmd, opt_bi
+	return parse_helper(cmd, d, [:bi :binary_in], " -bi")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_bo(cmd::String, d::Dict)
 	# Parse the global -bo option. Return CMD same as input if no -bo option in args
-	for symb in [:bo :binary_out]
-		if (haskey(d, symb) && isa(d[symb], String))
-			cmd = cmd * " -bo" * d[symb]
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:bo :binary_out], " -bo")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_d(cmd::String, d::Dict)
 	# Parse the global -di option. Return CMD same as input if no -di option in args
-	opt_d = ""
-	for symb in [:d :nodata]
-		if (haskey(d, symb) && isa(d[symb], Number))
-			cmd = cmd * " -d" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd, opt_d
+	return parse_helper(cmd, d, [:d :nodata], " -d")
 end
+
 # ---------------------------------------------------------------------------------------------------
 function parse_di(cmd::String, d::Dict)
 	# Parse the global -di option. Return CMD same as input if no -di option in args
-	opt_di = ""
-	for symb in [:di :nodata_in]
-		if (haskey(d, symb) && isa(d[symb], Number))
-			cmd = cmd * " -di" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd, opt_di
+	return parse_helper(cmd, d, [:di :nodata_in], " -di")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_do(cmd::String, d::Dict)
 	# Parse the global -do option. Return CMD same as input if no -do option in args
-	for symb in [:do :nodata_out]
-		if (haskey(d, symb) && isa(d[symb], Number))
-			cmd = cmd * " -do" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:do :nodata_out], " -do")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_e(cmd::String, d::Dict)
 	# Parse the global -e option. Return CMD same as input if no -e option in args
-	for symb in [:e :pattern]
-		if (haskey(d, symb))
-			cmd = cmd * " -e" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:e :pattern], " -e")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_f(cmd::String, d::Dict)
 	# Parse the global -f option. Return CMD same as input if no -f option in args
-	for symb in [:f :colinfo]
-		if (haskey(d, symb))
-			cmd = cmd * " -f" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:f :colinfo], " -f")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_g(cmd::String, d::Dict)
 	# Parse the global -g option. Return CMD same as input if no -g option in args
-	for symb in [:g :gaps]
-		if (haskey(d, symb))
-			cmd = cmd * " -g" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:g :gaps], " -g")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_h(cmd::String, d::Dict)
 	# Parse the global -h option. Return CMD same as input if no -h option in args
-	for symb in [:h :headers]
-		if (haskey(d, symb))
-			cmd = cmd * " -h" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:h :headers], " -h")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_i(cmd::String, d::Dict)
 	# Parse the global -i option. Return CMD same as input if no -i option in args
-	opt_i = ""
-	for symb in [:i :input_col]
-		if (haskey(d, symb))
-			opt_i = " -i" * arg2str(d[symb])
-			cmd = cmd * opt_i
-			break
-		end
-	end
-	return cmd, opt_i
+	return parse_helper(cmd, d, [:i :input_col], " -i")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_n(cmd::String, d::Dict)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
-	for symb in [:n :interp :interp_method]
-		if (haskey(d, symb))
-			cmd = cmd * " -n" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:n :interp :interp_method], " -n")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_s(cmd::String, d::Dict)
 	# Parse the global -s option. Return CMD same as input if no -s option in args
-	for symb in [:s :skip_col]
-		if (haskey(d, symb))
-			cmd = cmd * " -s" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:s :skip_col], " -s")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_swap_xy(cmd::String, d::Dict)
 	# Parse the global -: option. Return CMD same as input if no -: option in args
 	# But because we can't have a variable called ':' we use only the 'swap_xy' alias
-	for symb in [:swap_xy]
-		if (haskey(d, symb))
-			cmd = cmd * " -:" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:swap_xy], " -:")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_o(cmd::String, d::Dict)
 	# Parse the global -o option. Return CMD same as input if no -o option in args
-	for symb in [:o :output_col]
-		if (haskey(d, symb))
-			cmd = cmd * " -o" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:o :output_col], " -o")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_p(cmd::String, d::Dict)
 	# Parse the global -p option. Return CMD same as input if no -p option in args
-	for symb in [:p :view :perspective]
-		if (haskey(d, symb))
-			cmd = cmd * " -p" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:p :view :perspective], " -p")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_r(cmd::String, d::Dict)
 	# Parse the global -r option. Return CMD same as input if no -r option in args
-	for symb in [:r :reg :registration]
-		if (haskey(d, symb))
-			cmd = cmd * " -r"
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:r :reg :registration], " -r")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_x(cmd::String, d::Dict)
 	# Parse the global -x option. Return CMD same as input if no -x option in args
-	for symb in [:x :n_threads]
-		if (haskey(d, symb))
-			cmd = cmd * " -x" * arg2str(d[symb])
-			break
-		end
-	end
-	return cmd
+	return parse_helper(cmd, d, [:x :n_threads], " -x")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_t(cmd::String, d::Dict)
 	# Parse the global -t option. Return CMD same as input if no -t option in args
-	for symb in [:t :alpha :transparency]
-		if (haskey(d, symb) && isa(d[symb], Number))
-			cmd = @sprintf("%s -t%.6g", cmd, d[symb])
+	return parse_helper(cmd, d, [:t :alpha :transparency], " -t")
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_helper(cmd::String, d::Dict, symbs, opt::String)
+	# Helper function to the parse_?() global options. Isolate in a fun to not repeat over and over
+	opt_val = ""
+	for sym in symbs
+		if (haskey(d, sym))
+			opt_val = opt * arg2str(d[sym])
+			cmd = cmd * opt_val
 			break
 		end
 	end
-	return cmd
+	return cmd, opt_val
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -822,9 +494,9 @@ function arg2str(arg)
 	elseif (isempty(arg) || (isa(arg, Bool) && arg))
 		out = ""
 	elseif (isa(arg, Number))		# Have to do it after the Bool test above because Bool is a Number too
-		out = @sprintf("%.8g", arg)
+		out = @sprintf("%.12g", arg)
 	elseif (isa(arg, Array{<:Number}))
-		out = join([@sprintf("%.4g/",x) for x in min(4, length(arg))])	# No more than 4 to avoid 'abuses'
+		out = join([@sprintf("%.12g/",x) for x in min(4, length(arg))])	# No more than 4 to avoid 'abuses'
 		out = rstrip(out, '/')		# Remove last '/'
 	else
 		error("Argument 'arg' can only be a String or a Number")

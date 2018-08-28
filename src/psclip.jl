@@ -9,21 +9,25 @@ Parameters
 ----------
 
 - **C** : **end_clip_path** : -- Bool or [] --
+
     Mark end of existing clip path. No input file is needed.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psclip.html#C)
 - $(GMT.opt_J)
 
 - **A** : **inc** : -- Str or [] --
+
     By default, geographic line segments are connected as great circle arcs. To connect them as straight lines, use **A** 
 	[`-A`](http://gmt.soest.hawaii.edu/doc/latest/psclip.html#A)
 - $(GMT.opt_B)
 - $(GMT.opt_Jz)
 - **N** : **invert** : -- Bool or [] --
+
     Invert the sense of the test, i.e., clip regions where there is data coverage.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/psclip.html#n)
 - $(GMT.opt_P)
 - $(GMT.opt_R)
 - **T** : **clip_map_region** : -- Bool or [] --
+
     Rather than read any input files, simply turn on clipping for the current map region.
 	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/psclip.html#t)
 - $(GMT.opt_U)
@@ -53,14 +57,15 @@ function clip(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, k
 	cmd = parse_UVXY(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
-	cmd = parse_e(cmd, d)
-	cmd = parse_f(cmd, d)
-	cmd = parse_g(cmd, d)
-	cmd = parse_h(cmd, d)
+	cmd, = parse_e(cmd, d)
+	cmd, = parse_f(cmd, d)
+	cmd, = parse_g(cmd, d)
+	cmd, = parse_h(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
-	cmd = parse_p(cmd, d)
-	cmd = parse_t(cmd, d)
-	cmd = parse_swap_xy(cmd, d)
+	cmd, = parse_p(cmd, d)
+	cmd, = parse_t(cmd, d)
+	cmd, = parse_swap_xy(cmd, d)
+	cmd = parse_params(cmd, d)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 

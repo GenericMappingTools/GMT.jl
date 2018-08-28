@@ -81,15 +81,10 @@ function grd2cpt(cmd0::String="", arg1=[]; kwargs...)
 
 	length(kwargs) == 0 && (findfirst(" -", cmd0) != nothing) && return monolitic("grd2cpt", cmd0, arg1)	# Speedy mode
 
-	if (isempty(cmd0) && isempty_(arg1))
-		error("Must provide the grid to work with.")
-	end
-
 	d = KW(kwargs)
 
-	cmd, opt_R = parse_R("", d)
-	cmd = parse_V(cmd, d)
-    cmd = parse_params(cmd, d)
+	cmd, = parse_R("", d)
+	cmd = parse_V_params(cmd, d)
 
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
 

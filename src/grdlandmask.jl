@@ -48,11 +48,10 @@ function grdlandmask(cmd0::String=""; kwargs...)
 
 	d = KW(kwargs)
 
-	cmd, opt_R = parse_R("", d)
-	cmd = parse_V(cmd, d)
-	cmd = parse_r(cmd, d)
-	cmd = parse_x(cmd, d)
-	cmd = parse_params(cmd, d)
+	cmd, = parse_R("", d)
+	cmd = parse_V_params(cmd, d)
+	cmd, = parse_r(cmd, d)
+	cmd, = parse_x(cmd, d)
 
 	cmd = add_opt(cmd, 'A', d, [:A :area])
 	cmd = add_opt_s(cmd, 'D', d, [:D :res :resolution])

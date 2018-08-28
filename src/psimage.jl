@@ -10,17 +10,21 @@ Parameters
 
 - $(GMT.opt_B)
 - **D** : **ref_point** : -- Str --  
+
     Sets reference point on the map for the image using one of four coordinate systems.
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html#d)
 - **F** : **box** : -- Str or [] --
+
     Without further options, draws a rectangular border around the image using MAP_FRAME_PEN.
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html#f)
 - **I** : **invert_1bit** : -- Number or Str --
+
     Invert 1-bit image before plotting.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html#i)
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
 - **M** : **monochrome** : -- Bool or [] --
+
     Convert color image to monochrome grayshades using the (television) YIQ-transformation.
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html#m)
 - $(GMT.opt_R)
@@ -45,8 +49,9 @@ function image(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/12c")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
-	cmd = parse_p(cmd, d)
-	cmd = parse_t(cmd, d)
+	cmd, = parse_p(cmd, d)
+	cmd, = parse_t(cmd, d)
+	cmd = parse_params(cmd, d)
 
 	cmd = add_opt(cmd, 'D', d, [:D :ref_point])
 	cmd = add_opt(cmd, 'F', d, [:F :box])

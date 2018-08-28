@@ -11,20 +11,27 @@ Parameters
 - $(GMT.opt_J)
 - $(GMT.opt_B)
 - **C** : **vectors** : -- Str --
+
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#c)
 - **G** : **fill** : -- Number or Str --
+
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#g)
 - **I** : **inquire** : -- Bool or [] --
+
 	[`-I`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#i)
 - $(GMT.opt_P)
 - **M** : **alpha** : -- Str or [] --
+
 	[`-M`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#M)
 - $(GMT.opt_R)
 - **N** : **radius** : -- Bool or [] --
+
 	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#n)
 - **T** : -- Bool or [] --
+
 	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#t)
 - **W** : **pen** : -- Str or tuple --
+
 	[`-W`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#w)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
@@ -48,11 +55,12 @@ function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12cd/0d")
 	cmd = parse_UVXY(cmd, d)
-	cmd = parse_bo(cmd, d)
-	cmd = parse_h(cmd, d)
-	cmd = parse_o(cmd, d)
-	cmd = parse_p(cmd, d)
-	cmd = parse_t(cmd, d)
+	cmd, = parse_bo(cmd, d)
+	cmd, = parse_h(cmd, d)
+	cmd, = parse_o(cmd, d)
+	cmd, = parse_p(cmd, d)
+	cmd, = parse_t(cmd, d)
+	cmd = parse_params(cmd, d)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 

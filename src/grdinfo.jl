@@ -44,9 +44,9 @@ function grdinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 	end
 
 	d = KW(kwargs)
-	cmd, opt_R = parse_R("", d)
-	cmd = parse_V(cmd, d)
-	cmd = parse_f(cmd, d)
+	cmd, = parse_R("", d)
+	cmd = parse_V_params(cmd, d)
+	cmd, = parse_f(cmd, d)
 
 	cmd = add_opt(cmd, 'C', d, [:C :numeric])
 	cmd = add_opt(cmd, 'D', d, [:D :tiles])
