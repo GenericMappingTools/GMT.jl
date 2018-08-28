@@ -120,6 +120,4 @@ if (!foundGMT)
 	end
 end
 
-@show(GMTver)
-
 end # module
