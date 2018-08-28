@@ -148,7 +148,7 @@ function gmt(cmd::String, args...)
 		return
 	elseif (g_module == "begin" && isempty(r))	# Cannot have a no-args for these cases otherwise it prints help
 		r = "gmtsession"
-	elseif (GMTver > 5)
+	elseif (GMTver >= 6.0)
 		gmt_manage_workflow(API, 0, NULL)		# Force going here to see if we are in middle of a MODERN session
 	end
 

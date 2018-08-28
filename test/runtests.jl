@@ -4,7 +4,7 @@ using LinearAlgebra
 
 #=
 try
-	gmt("psxy -")
+	gmt("gmt --version")
 catch
 	@test 1 == 1
 	return
@@ -12,7 +12,7 @@ end
 =#
 
 # write your own tests here
-r = gmt("gmtinfo -C",ones(Float32,9,3)*5);
+r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
 @assert(r[1].data == [5.0 5 5 5 5 5])
 r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
 @assert(r[1].data == [5.0 5 5 5 5 5])

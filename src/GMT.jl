@@ -1,35 +1,25 @@
-#__precompile__()
-
 module GMT
 
 using Printf
 
-# Need to have this function here so that one can automatically detect the GMT version available. Similar
-# functions in libgmt.jl cannot be called yet (due to convoluted interdependencies)
-function GMT_Get_Version_()
-	#@static Sys.iswindows() ? (Sys.WORD_SIZE == 64 ? (thelib = "gmt_w64") : (thelib = "gmt_w32")) : (thelib = "libgmt")
-	#ver = ccall((:GMT_Get_Version, "gmt_w64"), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
-	if (Sys.iswindows())
-		if (Sys.WORD_SIZE == 64)
-			ver = ccall((:GMT_Get_Version, "gmt_w64"), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
-		else
-			ver = ccall((:GMT_Get_Version, "gmt_w32"), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
-		end
-	else
-		ver = ccall((:GMT_Get_Version, "libgmt"), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
-	end
-end
-
-#= Shit, the try is not "strong enough" to catch the case where the function does not exist
-# Wrapp it in a try catch because GMT_Get_version() does not exist in GMT5
+# Need to know what GMT version is available or if none at all to warn users on how to
+# install GMT.
 try
-	global const GMTver = GMT_Get_Version_()
-catch
-	global const GMTver = 5.0
-end
-=#
+	# Due to a likely Julia bug next command fails when this file called with 'using'
+	#ver_s = @capture_out run(`gmt --version`);
+	#@show(length(ver_s))			# Prints 0 length
 
-const GMTver = 5.0
+	# So resort to write result to file on disk and read from it
+	write("gmtversion__.txt", read(`gmt --version`))
+	global const GMTver = Meta.parse(read("gmtversion__.txt", String)[1:3])
+	rm("gmtversion__.txt")
+	global foundGMT = true
+catch
+	global foundGMT = false
+	global const GMTver = 5.0		# Don't want to raise an error in libgmt_h.jl due to a missing var
+end
+
+#const GMTver = 6.0
 const FMT = "ps"
 
 export
@@ -111,5 +101,23 @@ include("triangulate.jl")
 include("trend1d.jl")
 include("trend2d.jl")
 include("xyz2grd.jl")
+
+if (!foundGMT)
+	println("\n\nYou don't seem to have GMT installed and I don't currently install it automatically,")
+	println("so you will have to do it yourself. Please follow instructions bellow but please note")
+	println("that since GMT is migrating to Github (https://github.com/GenericMappingTools/gmt),")
+	println("some of the links may change in a near future.\n\n")
+	if (Sys.iswindows() && Sys.WORD_SIZE == 64)
+		println("1) Download and install the official version at (the '..._win64.exe':")
+		println("\t\t https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download")
+		println("\n2) Or even better, download and install the GMT6dev version at:")
+		println("\t\t http://w3.ualg.pt/~jluis/downloads/gmt.html")
+	elseif (Sys.iswindows() && Sys.WORD_SIZE == 32)
+		println("Download and install the official version at (the '..._win32.exe':")
+		println("\t\t https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download")
+	else
+		println("https://gmt.soest.hawaii.edu/projects/gmt/wiki/BuildingGMT")
+	end
+end
 
 end # module
