@@ -10,7 +10,7 @@ catch
 	global got_it = false
 end
 
-if (got_it)			# Otherwise go straight to end
+if (got_it)					# Otherwise go straight to end
 
 	# write your own tests here
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
