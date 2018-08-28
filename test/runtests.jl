@@ -2,14 +2,12 @@ using GMT
 using Test
 using LinearAlgebra
 
-#=
 try
-	gmt("gmt --version")
+	gmt("gmta --version")
 catch
 	@test 1 == 1
 	return
 end
-=#
 
 # write your own tests here
 r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
