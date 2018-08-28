@@ -9,9 +9,11 @@ Parameters
 ----------
 
 - **D** : **units** : -- Str or [] --  
+
     Modify the GMT defaults based on the system settings. Append u for US defaults or s for SI defaults.
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#d)
 - **G** : **defaultsfile** : -- Str --
+
     Name of specific gmt.conf file to read and modify. 
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#g)
 - $(GMT.opt_V)

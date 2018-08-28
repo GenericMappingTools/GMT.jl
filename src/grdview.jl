@@ -55,10 +55,11 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/0")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
-	cmd = parse_f(cmd, d)
-	cmd = parse_n(cmd, d)
-	cmd = parse_p(cmd, d)
-	cmd = parse_t(cmd, d)
+	cmd, = parse_f(cmd, d)
+	cmd, = parse_n(cmd, d)
+	cmd, = parse_p(cmd, d)
+	cmd, = parse_t(cmd, d)
+	cmd  = parse_params(cmd, d)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 

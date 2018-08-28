@@ -9,40 +9,50 @@ Parameters
 ----------
 
 - **I** : **inc** : -- Str or Number --
+
     Set a fixed azimuth projection for masks [Default uses track azimuth, but see -A].
 	[`-I`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#i)
 - $(GMT.opt_R)
 
 - $(GMT.opt_B)
 - **C** : **end_clip_path** : -- Bool or [] --
+
     Mark end of existing clip path. No input file is needed.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#C)
 - **D** : **dump** : -- Str --
+
     Dump the (x,y) coordinates of each clipping polygon to one or more output files
     (or stdout if template is not given).
 	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#d)
 - **F** : **oriented_polygons** : -- Str or [] --
+
     Force clip contours (polygons) to be oriented so that data points are to the left (-Fl [Default]) or right (-Fr) 
 	[`-F`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#f)
 - **G** : **fill** : -- Number or Str --
+
     Set fill shade, color or pattern for positive and/or negative masks [Default is no fill].
 	[`-G`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#g)
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
 - **L** : **node_grid** : -- Str --
+
     Save the internal grid with ones (data constraint) and zeros (no data) to the named nodegrid.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#l)
 - **N** : **invert** : -- Bool or [] --
+
     Invert the sense of the test, i.e., clip regions where there is data coverage.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#n)
 - $(GMT.opt_P)
 - **Q** : **cut_number** : -- Number or Str --
+
     Do not dump polygons with less than cut number of points [Dumps all polygons].
 	[`-Q`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#q)
 - **S** : **search_radius** : -- Number or Str --
+
     Sets radius of influence. Grid nodes within radius of a data point are considered reliable.
 	[`-S`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#s)
 - **T** : **tiles** : -- Bool or [] --
+
     Plot tiles instead of clip polygons. Use -G to set tile color or pattern. Cannot be used with -D.
 	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#t)
 - $(GMT.opt_U)
@@ -70,18 +80,19 @@ function mask(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, k
 	cmd = parse_UVXY(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
-	cmd = parse_e(cmd, d)
-	cmd = parse_h(cmd, d)
+	cmd, = parse_e(cmd, d)
+	cmd, = parse_h(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
-	cmd = parse_p(cmd, d)
-	cmd = parse_r(cmd, d)
-	cmd = parse_t(cmd, d)
-	cmd = parse_swap_xy(cmd, d)
+	cmd, = parse_p(cmd, d)
+	cmd, = parse_r(cmd, d)
+	cmd, = parse_t(cmd, d)
+	cmd, = parse_swap_xy(cmd, d)
+	cmd = parse_params(cmd, d)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	# If data is a file name, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, opt_i = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	cmd, arg1, opt_R, = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
 	cmd = add_opt(cmd, 'C', d, [:C :end_clip_path])
 	cmd = add_opt(cmd, 'D', d, [:D :dump])

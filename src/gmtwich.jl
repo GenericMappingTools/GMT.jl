@@ -33,9 +33,7 @@ function gmtwich(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("gmtwich", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-
-	cmd = parse_V("", d)
-	cmd = parse_params(cmd, d)
+	cmd = parse_V_params("", d)
 
     cmd = add_opt(cmd, 'A', d, [:A :with_permissions])
     cmd = add_opt(cmd, 'C', d, [:C :confirm])

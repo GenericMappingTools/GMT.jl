@@ -10,35 +10,44 @@ Parameters
 
 - $(GMT.opt_R)
 - **Z** : **scale** : -- Number or Str --
+
     Gives anomaly scale in data-units/distance-unit.
 	[`-Z`](http://gmt.soest.hawaii.edu/doc/latest/pswiggle.html#z)
 - **A** : **azimuth** : -- Str or number --
+
     Sets the preferred positive azimuth. Positive wiggles will “gravitate” towards that direction.
 	[`-A`](http://gmt.soest.hawaii.edu/doc/latest/pswiggle.html#a)
 - $(GMT.opt_B)
 - **C** : **center** : -- Number --
+
     Subtract center from the data set before plotting [0].
 	[`-C`](http://gmt.soest.hawaii.edu/doc/latest/pswiggle.html#c)
 - **D** : **scale_bar** : -- Str --
+
     Defines the reference point on the map for the vertical scale bar using one of four coordinate systems.
 	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/pswiggle.html#d)
 - **F** : **bar_rectangle** : -- Str --
+
     Without further options, draws a rectangular border around the vertical scale bar.
 	[`-F`](http://gmt.soest.hawaii.edu/doc/latest/pswiggle.html#f)
 - **G** : **fill** : -- Number or Str --
+
     Set fill shade, color or pattern for positive and/or negative wiggles [Default is no fill].
 	[`-G`](http://gmt.soest.hawaii.edu/doc/latest/pswiggle.html#g)
 - **I** : **fixed_azim** : -- Number --
+
     Set a fixed azimuth projection for wiggles [Default uses track azimuth, but see -A].
 	[`-I`](http://gmt.soest.hawaii.edu/doc/latest/pswiggle.html#i)
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
 - $(GMT.opt_P)
 - **T** : **pen** : -- Number or Str or Tuple or [] --
+
     Draw track [Default is no track]. Append pen attributes to use [Defaults: width = 0.25p, color =
     black, style = solid].
 	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/pswiggle.html#t)
 - **W** : **pen** : -- Number or Str or tuple or [] --
+
     Specify outline pen attributes [Default is no outline].
 	[`-W`](http://gmt.soest.hawaii.edu/doc/latest/pswiggle.html#w)
 - $(GMT.opt_U)
@@ -66,19 +75,20 @@ function wiggle(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true,
 	cmd = parse_UVXY(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
-	cmd = parse_e(cmd, d)
-	cmd = parse_f(cmd, d)
-	cmd = parse_g(cmd, d)
-	cmd = parse_h(cmd, d)
+	cmd, = parse_e(cmd, d)
+	cmd, = parse_f(cmd, d)
+	cmd, = parse_g(cmd, d)
+	cmd, = parse_h(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
-	cmd = parse_p(cmd, d)
-	cmd = parse_t(cmd, d)
-	cmd = parse_swap_xy(cmd, d)
+	cmd, = parse_p(cmd, d)
+	cmd, = parse_t(cmd, d)
+	cmd, = parse_swap_xy(cmd, d)
+	cmd = parse_params(cmd, d)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	# If data is a file name, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, opt_i = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	cmd, arg1, opt_R, = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
 	cmd = add_opt(cmd, 'A', d, [:A :azimuth])
 	cmd = add_opt(cmd, 'C', d, [:C :center])

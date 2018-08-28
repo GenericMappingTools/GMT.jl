@@ -20,9 +20,8 @@ Parameters
 function grdpaste(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	d = KW(kwargs)
-	cmd = parse_V("", d)
-	cmd = parse_f(cmd, d)
-	cmd = parse_params(cmd, d)
+	cmd = parse_V_params("", d)
+	cmd, = parse_f(cmd, d)
 
 	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
 

@@ -11,15 +11,19 @@ Parameters
 ----------
 
 - **D** : **pos** : **position** : -- Str --
+
 	Sets reference point on the map for the image using one of four coordinate systems.
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmtlogo.html#d)
 - **F** : **box** : -- Str --
+
 	Without further options, draws a rectangular border around the GMT logo using MAP_FRAME_PEN.
     or map rose (T)
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/gmtlogo.html#f)
 - **julia** : -- Number --
+
 	Create the Julia instead of the GMT logo. Provide circle diameter in centimeters
 - **GMTjulia** : -- Number --
+
     Create the GMT Julia GMT logo. Provide circle diameter in centimeters
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
@@ -42,8 +46,7 @@ function logo(cmd0::String=""; K=false, O=false, first=true, kwargs...)
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, "")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
-	cmd = parse_t(cmd, d)
-	#cmd = parse_gmtconf_MAP(cmd, d)
+	cmd, = parse_t(cmd, d)
 	cmd = parse_params(cmd, d)
 
 	cmd, K, O = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance

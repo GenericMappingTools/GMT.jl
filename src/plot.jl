@@ -10,35 +10,45 @@ Parameters
 ----------
 
 - **A** : **straight_lines** : -- Str --  
+
     By default, geographic line segments are drawn as great circle arcs. To draw them as straight lines, use the -A flag.
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
 - **C** : **color** : -- Str --
+
     Give a CPT or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those colors automatically.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#c)
 - **D** : **offset** : -- Str --
+
     Offset the plot symbol or line locations by the given amounts dx/dy.
 - **E** : **error_bars** : -- Str --
+
     Draw symmetrical error bars.
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#e)
 - **F** : **conn** : **connection** : -- Str --
+
     Alter the way points are connected
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#f)
 - **G** : **fill** : **markerfacecolor** : **MarkerFaceColor** : -- Str --
+
     Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
     color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
     'fill' for the polygons and 'markerfacecolor' for filling the symbols. Same applyies for W bellow
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#g)
 - **I** : **intens** : -- Str or number --
+
     Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating illumination.
 - **L** : **closed_polygon** : -- Str --
+
     Force closed polygons. 
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#l)
 - **N** : **no_clip** : --- Str or [] --
+
     Do NOT clip symbols that fall outside map border 
 - $(GMT.opt_P)
 - **S** : **symbol** : **marker** : **Marker** : -- Str --
+
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s)
     Alternatively select a sub-set of symbols using the aliases: **marker** or **Marker** and values:

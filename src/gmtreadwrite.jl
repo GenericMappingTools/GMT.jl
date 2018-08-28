@@ -61,8 +61,8 @@ function gmtread(fname::String=""; kwargs...)
 
 	d = KW(kwargs)
 	cmd, opt_R = parse_R("", d)
-	cmd = parse_V(cmd, d)
-	cmd = parse_f(cmd, d)
+	cmd = parse_V_params(cmd, d)
+	cmd, = parse_f(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
 
 	# Process these first so they may take precedence over defaults set below
@@ -174,18 +174,18 @@ function gmtwrite(fname::String="", data=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd, opt_R = parse_R("", d)
-	cmd = parse_V(cmd, d)
+	cmd = parse_V_params(cmd, d)
 
 	if (isa(data, GMTgrid))
 		opt_T = " -Tg"
 		fname = fname * parse_grd_format(d)		# If we have format requests
-		cmd = parse_f(cmd, d)
+		cmd, = parse_f(cmd, d)
 	elseif (isa(data, GMTimage))
 		opt_T = " -Ti"
 		fname = fname * parse_grd_format(d)		# If we have format requests
 	elseif (isa(data, GMTdataset))
 		opt_T = " -Td"
-		cmd = parse_bo(cmd, d)					# Write to binary file
+		cmd, = parse_bo(cmd, d)					# Write to binary file
 	elseif (isa(data, GMTcpt))
 		opt_T = " -Tc"
 	elseif (isa(data, GMTps))

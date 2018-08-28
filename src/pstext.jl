@@ -13,38 +13,49 @@ Parameters
 - $(GMT.opt_R)
 - $(GMT.opt_B)
 - **A** : **azimuths** : -- Bool or [] --
+
     Angles are given as azimuths; convert them to directions using the current projection.
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#a)
 - **C** : **clearance** : -- Str --
+
     Sets the clearance between the text and the surrounding box [15%].
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#c)
 - **D** : **offset** : -- Str --
+
     Offsets the text from the projected (x,y) point by dx,dy [0/0].
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#d)
 - **F** : **text_attrib** : -- Str or number --
+
     Specify up to three text attributes (font, angle, and justification).
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#f)
 - **G** : **fill** : -- Number or Str --
+
     Sets the shade or color used for filling the text box [Default is no fill].
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#g)
 - $(GMT.opt_Jz)
 - **L** : **list** : -- Bool or [] --
+
     Lists the font-numbers and font-names available, then exits.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#l)
 - **N** : **no_clip** : --- Str or [] --
+
     Do NOT clip text at map boundaries.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#n)
 - $(GMT.opt_P)
 - **Q** : **change_case** : --- Str --
+
     Change all text to either lower or upper case.
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#q)
 - **T** : **text_box** : --- Str --
+
     Specify the shape of the textbox when using G and/or W.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#t)
 - **W** : **line_attribs** : -- Str --
+
     Sets the pen used to draw a rectangle around the text string.
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#w)
 - **Z** : **threeD** : -- Str --
+
     For 3-D projections: expect each item to have its own level given in the 3rd column.
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#z)
 - $(GMT.opt_U)
@@ -77,11 +88,12 @@ function text(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, fi
 	cmd = parse_UVXY(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
-	cmd = parse_e(cmd, d)
-	cmd = parse_f(cmd, d)
-	cmd = parse_h(cmd, d)
-	cmd = parse_p(cmd, d)
-	cmd = parse_t(cmd, d)
+	cmd, = parse_e(cmd, d)
+	cmd, = parse_f(cmd, d)
+	cmd, = parse_h(cmd, d)
+	cmd, = parse_p(cmd, d)
+	cmd, = parse_t(cmd, d)
+	cmd = parse_params(cmd, d)
 
     cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 

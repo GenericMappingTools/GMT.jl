@@ -30,6 +30,22 @@ if (got_it)					# Otherwise go straight to end
 	raw = [collect((1.0:50)) rand(50)];
 	filter1d(raw, F="m15");
 
+	# GMTLOGO
+	logo(D="x0/0+w2i")
+	logo(julia=8)
+
+	# GMTSPATIAL
+	# Test  Cartesian centroid and area
+	result = gmt("gmtspatial -Q", [0 0; 1 0; 1 1; 0 1; 0 0]);
+	@assert(isapprox(result[1].data, [0.5 0.5 1]))
+	# Test Geographic centroid and area
+	result = gmt("gmtspatial -Q -fg", [0 0; 1 0; 1 1; 0 1; 0 0]);
+	@assert(isapprox(result[1].data, [0.5 0.500019546308 12308.3096995]))
+	# Intersections
+	l1 = gmt("project -C22/49 -E-60/-20 -G10 -Q");
+	l2 = gmt("project -C0/-60 -E-60/-30 -G10 -Q");
+	#int = gmt("gmtspatial -Ie -Fl", l1, l2);       # Error returned from GMT API: GMT_ONLY_ONE_ALLOWED (59)
+
 	# GMTREADWRITE
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 	if (GMTver >= 6)
@@ -141,10 +157,6 @@ if (got_it)					# Otherwise go straight to end
 	cpt = makecpt(range="-1/1/0.1");
 	@assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
 
-	# SURFACE
-	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
-	@assert(size(G.z) == (151, 151))
-
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
 	plot!(collect(1:10),rand(10), fmt="ps")
@@ -191,21 +203,9 @@ if (got_it)					# Otherwise go straight to end
 	t1=gmt("sample1d -I5k", t); t2 = gmt("mapproject -G+uk", t1); t3 = gmt("math ? -C2 10 DIV COS", t2);
 	wiggle(t3,R="-1/11/0/12", J="M8",B="af WSne", W="0.25p", Z="4c", G="+green", T="0.5p", A=1, Y="0.75i", S="8/1/2")
 
-	# GMTLOGO
-	logo(D="x0/0+w2i")
-	logo(julia=8)
-
-	# GMTSPATIAL
-	# Test  Cartesian centroid and area
-	result = gmt("gmtspatial -Q", [0 0; 1 0; 1 1; 0 1; 0 0]);
-	@assert(isapprox(result[1].data, [0.5 0.5 1]))
-	# Test Geographic centroid and area
-	result = gmt("gmtspatial -Q -fg", [0 0; 1 0; 1 1; 0 1; 0 0]);
-	@assert(isapprox(result[1].data, [0.5 0.500019546308 12308.3096995]))
-	# Intersections
-	l1 = gmt("project -C22/49 -E-60/-20 -G10 -Q");
-	l2 = gmt("project -C0/-60 -E-60/-30 -G10 -Q");
-	#int = gmt("gmtspatial -Ie -Fl", l1, l2);       # Error returned from GMT API: GMT_ONLY_ONE_ALLOWED (59)
+	# SURFACE
+	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
+	@assert(size(G.z) == (151, 151))
 
 	# SPLITXYZ (fails)
 	#splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
@@ -214,7 +214,7 @@ if (got_it)					# Otherwise go straight to end
 	G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
 
 	# NEARNEIGHBOR
-	G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, grid=[], S=10);
+	G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, grid=[], S=10, r=true);
 
 	# MISC
 	G = GMT.grid_type(G.z);
@@ -246,30 +246,3 @@ if (got_it)					# Otherwise go straight to end
 	end
 
 end					# End valid testing zone
-
-function testa_conf(;kw...)
-	d = GMT.KW(kw)
-	cmd = GMT.parse_gmtconf_MAP("", d)
-	cmd = GMT.parse_gmtconf_FONT(cmd, d)
-	cmd = GMT.parse_gmtconf_FORMAT(cmd, d)
-	cmd = GMT.parse_gmtconf_TIME(cmd, d)
-	return nothing
-end
-testa_conf(MAP_ANNOT_MIN_ANGLE=:a,MAP_ANNOT_MIN_SPACING=:a,MAP_ANNOT_OBLIQUE=:a,MAP_ANNOT_OFFSET_PRIMARY=:a, 
-MAP_ANNOT_OFFSET=:a, MAP_ANNOT_OFFSET_SECONDARY=:a, MAP_ANNOT_ORTHO=:a, MAP_DEFAULT_PEN=:a,
-MAP_DEGREE_SYMBOL=:a, MAP_TICK_LENGTH=:a, MAP_TICK_PEN=:a,
-MAP_FRAME_AXES=:a, MAP_FRAME_PEN=:a, MAP_FRAME_TYPE=:a, MAP_FRAME_WIDTH=:a, MAP_GRID_CROSS_SIZE_PRIMARY=:a, 
-MAP_GRID_CROSS_SIZE_SECONDARY=:a, MAP_GRID_PEN_PRIMARY=:a, MAP_GRID_PEN_SECONDARY=:a, MAP_HEADING_OFFSET=:a, 
-MAP_LABEL_OFFSET=:a, MAP_LINE_STEP=:a, MAP_LOGO=:a, MAP_LOGO_POS=:a, MAP_ORIGIN_X=:a, MAP_ORIGIN_Y=:a, 
-MAP_POLAR_CAP=:a, MAP_SCALE_HEIGHT=:a, MAP_TICK_LENGTH_PRIMARY=:a, MAP_TICK_LENGTH_SECONDARY=:a, 
-MAP_TICK_PEN_PRIMARY=:a, MAP_TICK_PEN_SECONDARY=:a, MAP_TITLE_OFFSET=:a, MAP_VECTOR_SHAPE=:a,
-MAP_GRID_CROSS_SIZE=:a, MAP_GRID_CROSS_PEN=:a);
-
-testa_conf(FONT_ANNOT_PRIMARY=:a, FONT_ANNOT_SECONDARY=:a, FONT_HEADING=:a, FONT_LABEL=:a, FONT_LOGO=:a,
-FONT_TAG=:a, FONT_TITLE=:a, FORMAT_CLOCK_IN=:a, FORMAT_CLOCK_OUT=:a, FORMAT_CLOCK_MAP=:a, FORMAT_DATE_IN=:a,
-FORMAT_DATE_OUT=:a, FORMAT_DATE_MAP=:a, FORMAT_GEO_OUT=:a, FORMAT_GEO_MAP=:a, FORMAT_FLOAT_OUT=:a,
-FORMAT_FLOAT_MAP=:a, FORMAT_TIME_PRIMARY_MAP=:a, FORMAT_TIME_SECONDARY_MAP=:a, FORMAT_TIME_STAMP =:a,
-FONT=:a, FONT_ANNOT=:a, FORMAT_TIME_MAP=:a);
-
-testa_conf(TIME_EPOCH=:a, TIME_IS_INTERVAL=:a, TIME_INTERVAL_FRACTION=:a, TIME_LEAP_SECONDS=:a,
-TIME_REPORT=:a, TIME_UNIT=:a, TIME_WEEK_START=:a, TIME_Y2K_OFFSET_YEAR=:a, TIME_SYSTEM=:a);
