@@ -11,7 +11,7 @@ function GMT_Get_Version_()
 	#ver = ccall((:GMT_Get_Version, "gmt_w64"), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
 	if (Sys.iswindows())
 		if (Sys.WORD_SIZE == 64)
-			ver = ccall((:GMT_Get_Version, "gmt_w63"), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
+			ver = ccall((:GMT_Get_Version, "gmt_w64"), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
 		else
 			ver = ccall((:GMT_Get_Version, "gmt_w32"), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
 		end
