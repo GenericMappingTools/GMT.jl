@@ -11,44 +11,55 @@ Parameters
 
 - $(GMT.opt_J)
 - **A** : **annot** : -- Str or Number --
+
     Save an image in a raster format instead of PostScript.
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#a)
 - $(GMT.opt_B)
 - **C** : **cont** : **contours** : **levels** : -- Str or Number --
+
     Contours to be drawn.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#c)
 - **D** : **dump** : -- Str --
+
     Dump contours as data line segments; no plotting takes place.
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#d)
 - **F** : **force** : -- Str or [] --
+
     Force dumped contours to be oriented so that higher z-values are to the left (-Fl [Default]) or right.
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#f)
 - **G** : **labels** : -- Str --
+
     Controls the placement of labels along the quoted lines.
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#g)
 - $(GMT.opt_Jz)
 - **L** : **range** : -- Str --
+
     Limit range: Do not draw contours for data values below low or above high.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#l)
 - $(GMT.opt_P)
 - **Q** : **cut** : -- Str or Number --
+
     Do not draw contours with less than cut number of points.
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#q)
 - **S** : **smooth** : -- Number --
+
     Used to resample the contour lines at roughly every (gridbox_size/smoothfactor) interval.
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#s)
 - **T** : **ticks** : -- Str --
+
     Draw tick marks pointing in the downward direction every *gap* along the innermost closed contours.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#t)
 - $(GMT.opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - **W** : **pen** : -- Str or Number --
+
     Sets the attributes for the particular line.
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#w)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - **Z** : **scale** : -- Str --
+
     Use to subtract shift from the data and multiply the results by factor before contouring starts.
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#z)
 - $(GMT.opt_bo)
@@ -66,9 +77,9 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; data=[], K=false, O=false
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
-	cmd, opt_B = parse_B("", d)
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
-	cmd = parse_UVXY(cmd, d)
+	cmd  = ""
+    cmd, opt_B, opt_J, = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
+	cmd  = parse_UVXY(cmd, d)
 	cmd, = parse_bo(cmd, d)
 	cmd, = parse_e(cmd, d)
 	cmd, = parse_f(cmd, d)

@@ -155,7 +155,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_BJR(d::Dict, cmd0::String, cmd::String, caller, O, default)
-	# Join these thre in one function. CALLER is non-empty when module is called by plot()
+	# Join these three in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(cmd, d, O)
 	cmd, opt_J = parse_J(cmd, d, true, O)
 	if (!O && isempty(opt_J))			# If we have no -J use this default
@@ -578,6 +578,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args, arg1, arg2=[])
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
+	# N_args only applyies to when a GMTcpt was transmitted, Than it's either 0, case in which
+	# the cpt is put in arg1, or 1 and the cpt goes to arg2.
 	for sym in symbs
 		if (haskey(d, sym))
 			if (isa(d[sym], GMT.GMTcpt))
@@ -699,7 +701,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 			return cmd, got_fname, arg1		# got_fname = 1 => data is in cmd 
 		elseif (!isempty_(arg1))
 			return cmd, got_fname, arg1 	# got_fname = 0 => data is in arg1
-		elseif (data_kw != nothing)
+		elseif (data_kw !== nothing)
 			if (isa(data_kw, String))
 				cmd = data_kw * " " * cmd
 				return cmd, 1, arg1			# got_fname = 1 => data is in cmd 
@@ -712,36 +714,42 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 	elseif (tipo == 2)			# Two inputs (but second can be optional is some modules)
 		# Accepts "input1  input2"; "input1", arg1; "input1", data=input2; arg1, arg2; data=(input1,input2)
 		if (got_fname != 0)
-			if (isempty_(arg1) && data_kw == nothing)
+			if (isempty_(arg1) && data_kw === nothing)
 				return cmd, 1, arg1, arg2		# got_fname = 1 => all data is in cmd 
 			elseif (!isempty_(arg1))
 				return cmd, 2, arg1, arg2		# got_fname = 2 => data is in cmd and arg1
-			elseif (data_kw != nothing && length(data_kw) == 1)
+			elseif (data_kw !== nothing && length(data_kw) == 1)
 				return cmd, 2, data_kw, arg2	# got_fname = 2 => data is in cmd and arg1
 			else
 				error("Missing input data to run this module.")
 			end
 		else
 			if (!isempty_(arg1) && !isempty_(arg2))
-				return cmd, 0, arg1, arg2				# got_fname = 0 => all data is in arg1 & arg2 
-			elseif (!isempty_(arg1) && isempty_(arg2) && data_kw == nothing)
+				return cmd, 0, arg1, arg2				# got_fname = 0 => all data is in arg1,2
+			elseif (!isempty_(arg1) && isempty_(arg2) && data_kw === nothing)
 				return cmd, 0, arg1, arg2				# got_fname = 0 => all data is in arg1
-			elseif (!isempty_(arg1) && isempty_(arg2) && data_kw != nothing && length(data_kw) == 1)
-				return cmd, 0, arg1, data_kw			# got_fname = 0 => all data is in arg1 & arg2 
-			elseif (data_kw != nothing && length(data_kw) == 2)
-				return cmd, 0, data_kw[1], data_kw[2]	# got_fname = 0 => all data is in arg1 & arg2 
+			elseif (!isempty_(arg1) && isempty_(arg2) && data_kw !== nothing && length(data_kw) == 1)
+				return cmd, 0, arg1, data_kw			# got_fname = 0 => all data is in arg1,2
+			elseif (data_kw !== nothing && length(data_kw) == 2)
+				return cmd, 0, data_kw[1], data_kw[2]	# got_fname = 0 => all data is in arg1,2
 			else
 				error("Missing input data to run this module.")
 			end
 		end
 	elseif (tipo == 3)			# Three inputs
+		# Accepts "input1  input2 input3"; arg1, arg2, arg3; data=(input1,input2,input3)
 		if (got_fname != 0)
-			if (isempty_(arg1) && data_kw == nothing)
-				return cmd, 1, arg1, arg2, arg3		# got_fname = 1 => all data is in cmd 
-			elseif (!isempty_(arg1))
-				return cmd, 2, arg1, arg2, arg3		# got_fname = 2 => data is in cmd and arg1,2
+			if (isempty_(arg1) && data_kw === nothing)
+				return cmd, 1, arg1, arg2, arg3			# got_fname = 1 => all data is in cmd 
+			else
+				error("Cannot mix input as file names and numeric data.")
 			end
 		else
+			if (isempty_(arg1) && isempty_(arg2) && isempty_(arg3))
+				return cmd, 0, arg1, arg2, arg3			# got_fname = 0 => all data in arg1,2,3
+			elseif (data_kw !== nothing && length(data_kw) == 3)
+				return cmd, 0, data_kw[1], data_kw[2], data_kw[3]	# got_fname = 0 => all data in arg1,2,3
+			end
 		end
 	end
 end

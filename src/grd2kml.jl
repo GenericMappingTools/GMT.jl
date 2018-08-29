@@ -52,7 +52,7 @@ Parameters
 """
 function grd2kml(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
-	length(kwargs) == 0 && (findfirst(" -", cmd0) != nothing) && return monolitic("grd2kml", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2kml", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 
