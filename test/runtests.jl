@@ -146,6 +146,7 @@ if (got_it)					# Otherwise go straight to end
 	# Just create the figs but not check if they are correct.
 	PS = grdimage(G, J="X10", ps=1);
 	gmt("destroy")
+	#grdimage("@earth_relief_05m", J="S21/90/15c", R="10/68/50/80r", B=:afg, X=:c, I="+")
 	PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
 

@@ -39,7 +39,7 @@ Parameters
 """
 function sample1d(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && (findfirst(" -", cmd0) != nothing) && return monolitic("sample1d", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("sample1d", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 
