@@ -68,7 +68,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; K=false, 
 	cmd, = parse_t(cmd, d)
 	cmd  = parse_params(cmd, d)
 
-	cmd, K, O, = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
+	cmd, K, O, = set_KO(cmd, opt_B, first, K, O)			# Set the K O dance
 
 	cmd = add_opt_s(cmd, 'A', d, [:A :img_out :image_out])
 	cmd = add_opt(cmd, 'D', d, [:D :img_in :image_in])
@@ -78,9 +78,8 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; K=false, 
 	cmd = add_opt(cmd, 'N', d, [:N :noclip])
 	cmd = add_opt(cmd, 'Q', d, [:Q :nan_t :nan_alpha])
 
-	# Find how data was transmitted
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	if (got_fname == 0 && isempty_(arg1))		# Than it must be using the three r,g,b grids
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
+	if (got_fname == 0 && isempty_(arg1))			# Than it must be using the three r,g,b grids
 		cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, 3, arg1, arg2, arg3)
 		if (got_fname == 0 && isempty_(arg1))
 			error("No input data to use in grdimage.")

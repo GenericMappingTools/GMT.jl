@@ -21,7 +21,7 @@ Parameters
 - **E** : **by_coord** : -- Str --
 
 	[`-E`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#e)
-- **G** : **grid** : -- Str or GMTgrid --
+- **G** : **grid** : -- Str or GMTgrid or Tuple(GMTgrid's) --
 
 	[`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#g)
 - **N** : **no_skip** : -- Bool or [] --
@@ -51,16 +51,12 @@ Parameters
 - $(GMT.opt_s)
 - $(GMT.opt_swap_xy)
 
-'arg1' may contain the table data as an array or a GMTdataset type and GMTgrid or it can be
-left empty. Same thing for 'arg2'. 'cmd' can have the file name of either the table or the grid.
+When using two numeric inputs and no G option, the order of the x,y and grid is not important.
+That is, both of this will work: D = grdtrack([0 0], G);  or  D = grdtrack(G, [0 0]); 
 """
-function grdtrack(cmd0::String="", arg1=[], arg2=[]; data=[], kwargs...)
+function grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
-	length(kwargs) == 0 && isempty_(arg1) && isempty_(data) && return monolitic("grdtrack", cmd0, arg1)	# Speedy mode
-
-	if (!isempty_(data) && !isa(data, GMTgrid))
-		error("When using 'data', it MUST contain a GMTgrid data type")
-	end
+	length(kwargs) == 0 && isempty_(arg1) && return monolitic("grdtrack", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd, = parse_R("", d)
@@ -87,9 +83,17 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; data=[], kwargs...)
 	cmd = add_opt(cmd, 'T', d, [:T :radius])
 	cmd = add_opt(cmd, 'Z', d, [:Z :z_only])
 
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+
+	grid_tuple = nothing
 	for sym in [:G :grid]
 		if (haskey(d, sym))
-			if (isa(d[sym], GMT.GMTgrid))
+			if (isa(d[sym], Tuple))
+				grid_tuple = d[sym]
+				for k = 1:length(grid_tuple)	# Need as many -G as numel(grid_tuple)
+					cmd = string(cmd, " -G")
+				end
+			elseif (isa(d[sym], GMT.GMTgrid))
 				cmd = string(cmd, " -G")
 				if     (isempty_(arg1))  arg1 = d[sym];
 				elseif (isempty_(arg2))  arg2 = d[sym];
@@ -102,57 +106,32 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; data=[], kwargs...)
 		end
 	end
 
-	no_slot = false
-	if (!isempty_(data) && (isa(data, Array) || isa(data, GMTdataset)))
-		if     (isempty_(arg1))  arg1 = data
-		elseif (isempty_(arg2))  arg2 = data
-		else   no_slot = true
-		end
-	elseif (!isempty_(data) && isa(data, GMTgrid))
-		if     (isempty_(arg1))  arg1 = data
-		elseif (isempty_(arg2))  arg2 = data
-		else   no_slot = true
-		end
-	end
-	if (no_slot)
-		warn("Inconsistent usage of the 'data' keyword. Data transmittend in conflicting ways.")
-	end
-
 	# Because we allow arg1 and arg2 to either exist or not and also contain data & grid in any order
-	arg1_is_table = false;		arg2_is_table = false
-	arg1_is_grid  = false;		arg2_is_grid  = false
-	if     (isa(arg1, Array) || isa(arg1, GMTdataset))  arg1_is_table = true
-	elseif (isa(arg2, Array) || isa(arg2, GMTdataset))  arg2_is_table = true
-	end
-	if     (isa(arg1, GMTgrid))  arg1_is_grid = true
-	elseif (isa(arg2, GMTgrid))  arg2_is_grid = true
-	end
-
-	if (arg1_is_grid || arg2_is_grid && !occursin("-G", cmd))  cmd = cmd * " -G"  end
-
-	(haskey(d, :Vd)) && println(@sprintf("\tgrdtrack %s", cmd))
-
-	# Count how many argi
-	N_args = 0
-	if (!isempty_(arg1))  N_args += 1  end
-	if (!isempty_(arg2))  N_args += 1  end
-
-	if (N_args == 0)
-		R = gmt("grdtrack " * cmd)
-	elseif (N_args == 1)
-		R = gmt("grdtrack " * cmd, arg1)
-	else
-		# Here is more complicated because first argument must hold data and second the grid
-		if (arg1_is_table && arg2_is_grid)
-			R = gmt("grdtrack " * cmd, arg1, arg2)
-		elseif (arg2_is_table && arg1_is_grid)
-			R = gmt("grdtrack " * cmd, arg2, arg1)
-		else
-			error("Shit, failed in the logic of finding which data type is which")
+	if (!isempty_(arg1) && !isempty_(arg2))
+		arg1_is_table = false;		arg2_is_table = false
+		arg1_is_grid  = false;		arg2_is_grid  = false
+		if (isa(arg1, GMTgrid))		arg1_is_grid = true		end
+		if (isa(arg2, Array) || isa(arg2, GMTdataset))  arg2_is_table = true	end
+		if (arg2_is_table && arg1_is_grid)			# Swap the arg1, arg2
+			tmp = arg1;		arg1 = arg2;	arg2 = tmp
 		end
 	end
-	return R
+
+	if (isa(arg1, GMTgrid) || isa(arg2, GMTgrid) && !occursin("-G", cmd))  cmd = cmd * " -G"  end
+
+	if (isa(grid_tuple, Tuple))
+		if (got_fname != 0)
+			return common_grd(d, cmd, got_fname, 3, "grdtrack", grid_tuple)
+		else
+			return common_grd(d, cmd, got_fname, 3, "grdtrack", tuple(arg1, grid_tuple...))
+		end
+	elseif (isempty_(arg2))
+		return common_grd(d, cmd, got_fname, 1, "grdtrack", arg1)		# Finish build cmd and run it
+	else
+		return common_grd(d, cmd, got_fname, 2, "grdtrack", arg1, arg2)
+	end
+
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdtrack(arg1=[], arg2=[], cmd0::String=""; data=[], kw...) = grdtrack(cmd0, arg1, arg2; data=data, kw...)
+grdtrack(arg1=[], arg2=[], cmd0::String=""; kw...) = grdtrack(cmd0, arg1, arg2; kw...)

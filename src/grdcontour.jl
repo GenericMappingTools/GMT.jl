@@ -70,15 +70,15 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function grdcontour(cmd0::String="", arg1=[], arg2=[]; data=[], K=false, O=false, first=true, kwargs...)
+function grdcontour(cmd0::String="", arg1=[], arg2=[]; K=false, O=false, first=true, kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("grdcontour", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("grdcontour", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	cmd  = ""
-    cmd, opt_B, opt_J, = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
+    cmd, opt_B, = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
 	cmd  = parse_UVXY(cmd, d)
 	cmd, = parse_bo(cmd, d)
 	cmd, = parse_e(cmd, d)
@@ -89,20 +89,17 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; data=[], K=false, O=false
 	cmd  = parse_params(cmd, d)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)	# Find how data was transmitted
+	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
+
+	N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
+	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
 
 	cmd = add_opt(cmd, 'A', d, [:A :annot])
-	cmd = add_opt(cmd, 'C', d, [:C :cont :contours :levels])
-	for sym in [:color :cmap]		# If a CPT is being used
-		if (haskey(d, sym))
-			if (isa(d[sym], GMTcpt))
-				cmd, N_cpt = put_in_slot(cmd, d[sym], 'C', [arg1, arg2])
-				if (N_cpt == 1)     arg1 = d[sym]
-				elseif (N_cpt == 2) arg2 = d[sym]
-				end
-			end
-			break
-		end
+	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
+		cmd = add_opt(cmd, 'C', d, [:cont :contours :levels])
 	end
+
 	cmd = add_opt(cmd, 'D', d, [:D :dump])
 	cmd = add_opt(cmd, 'F', d, [:F :force])
 	cmd = add_opt(cmd, 'G', d, [:G :labels])
@@ -113,19 +110,16 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; data=[], K=false, O=false
 	cmd = add_opt(cmd, 'W', d, [:W :pen])
 	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
 
-	# In case DATA holds a grid file name, copy it into cmd. If Grids put them in ARG1
-	cmd, arg1, = read_data(data, cmd, arg1)
-
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
     return finish_PS_module(d, cmd, "-D", arg1, arg2, [], [], [], [], output, fname_ext, opt_T, K, "grdcontour")
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdcontour!(cmd0::String="", arg1=[], arg2=[]; data=[], K=true, O=true, first=false, kw...) =
-	grdcontour(cmd0, arg1, arg2; data=data, K=true, O=true, first=false, kw...)
+grdcontour!(cmd0::String="", arg1=[], arg2=[]; K=true, O=true, first=false, kw...) =
+	grdcontour(cmd0, arg1, arg2; K=true, O=true, first=false, kw...)
 
-grdcontour(arg1::GMTgrid, cmd0::String="", arg2=[]; data=[], K=false, O=false, first=true, kw...) =
-	grdcontour(cmd0, arg1, arg2; data=data, K=K, O=O, first=first, kw...)
+grdcontour(arg1, cmd0::String="", arg2=[]; K=false, O=false, first=true, kw...) =
+	grdcontour(cmd0, arg1, arg2; K=K, O=O, first=first, kw...)
 
-grdcontour!(arg1::GMTgrid, cmd0::String="", arg2=[]; data=[], K=true, O=true, first=false, kw...) =
-	grdcontour(cmd0, arg1, arg2; data=data, K=true, O=true, first=false, kw...)
+grdcontour!(arg1, cmd0::String="", arg2=[]; K=true, O=true, first=false, kw...) =
+	grdcontour(cmd0, arg1, arg2; K=true, O=true, first=false, kw...)

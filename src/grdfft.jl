@@ -74,6 +74,7 @@ function grdfft(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	cmd = add_opt(cmd, 'S', d, [:S :scale])
 
 	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, arg1, arg2)
+	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
 	if (!occursin(" -E", cmd))          # Simpler case
 		return common_grd(d, cmd, got_fname, 1, "grdfft", arg1)		# Finish build cmd and run it
 	else
@@ -81,6 +82,7 @@ function grdfft(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 		if (isempty_(arg2))
 			return common_grd(d, cmd, got_fname, 1, "grdfft", arg1)
 		else
+			if (isa(arg2, Array{<:Number}))		arg2 = mat2grid(arg2)	end
 			return common_grd(d, cmd, got_fname, 2, "grdfft", arg1, arg2)
 		end
 	end
