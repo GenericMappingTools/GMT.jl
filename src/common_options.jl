@@ -519,10 +519,13 @@ function finish_PS(d::Dict, cmd0::String, cmd::String, output::String, K::Bool, 
 		cmd = cmd * " -P"
 	end
 
-	if (!isempty(cmd0))
+	# The mess starts. The problem araised when I added the find_data() fun that concats
+	# the file name to CMD, and we can't do it again here. I must revisit all calls to
+	# this function to find whem CMD0 has other than a file name and clean things.
+	if (!isempty(cmd0) && (occursin(" -", cmd0) || occursin(">", cmd0)))
 		cmd = cmd * " " * cmd0		# Append any other eventual args not send in via kwargs
 	end
-	
+
 	# Cannot mix -O,-K and output redirect between positional and kwarg arguments
 	if (!occursin("-K", cmd0) && !occursin("-)", cmd0) && !occursin(">", cmd0))
 		# So the -O -K dance is provided via kwargs
@@ -770,23 +773,26 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, prog::String, arg1, arg2=[])
+function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, prog::String, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
 	dbg_print_cmd(d, cmd, prog)
-	if (tipo == 1)			# One input only
+	prog = prog * " "			# Instead of having this in all cases below
+	if (tipo == 1)				# One input only
 		if (got_fname != 0)
-			O = gmt(prog * " " * cmd)
+			O = gmt(prog * cmd)
 		else
-			O = gmt(prog * " " * cmd, arg1)
+			O = gmt(prog * cmd, args[1])
 		end
-	else					# Two inputs
+	elseif (tipo == 2)			# Two inputs
 		if (got_fname == 1)
-			O = gmt(prog * " " * cmd)
-		elseif (got_fname == 2)					# NOT SURE ON THIS ONE
-			O = gmt(prog * " " * cmd, arg1)
+			O = gmt(prog * cmd)
+		elseif (got_fname == 2)	# NOT SURE ON THIS ONE
+			O = gmt(prog * cmd, args[1])
 		else
-			O = gmt(prog * " " * cmd, arg1, arg2)
+			O = gmt(prog * cmd, args[1], args[2])
 		end
+	else						# ARGS is a tuple(tuple) with all numeric inputs
+		O = gmt(prog * cmd, args[1]...)		# args[1] because args is a tuple(tuple)
 	end
     return O
 end

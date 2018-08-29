@@ -38,62 +38,43 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	d = KW(kwargs)
 
-	cmd, = parse_R("", d)
-	cmd = parse_V_params(cmd, d)
-
-	cmd = add_opt(cmd, 'N', d, [:N :model])
-	if (findfirst("-N", cmd) == nothing)
+	cmd = add_opt("", 'N', d, [:N :model])
+	if (!occursin("-N", cmd))
 		error("The 'model' parameter is mandatory")
 	end
+
+	cmd, = parse_R(cmd, d)
+	cmd = parse_V_params(cmd, d)
 	cmd = add_opt(cmd, 'D', d, [:D :diff])
 	cmd = add_opt(cmd, 'T', d, [:T :trend])
-	cmd = add_opt(cmd, 'W', d, [:W :weights])
 
-	if (occursin(cmd, "-D") && occursin(cmd, "-T"))
+	if (occursin("-D", cmd) && occursin("-T", cmd))
 		warning("Usage error, both difference and trend were required. Ignoring the trend request.")
+	elseif (!occursin("-D", cmd) && !occursin("-T", cmd))
+		cmd = cmd * " -T" 			# No -T -or -D provided so default to -T
 	end
 
-	ff = findfirst("-D", cmd)
-	if (ff == nothing)
-		ff = findfirst("-T", cmd)
-	end
-	ind = (ff == nothing) ? 0 : first(ff)
-	if (ind > 0 && length(cmd) > ind+2 && cmd[ind+2] != ' ')      # A file name was provided
-		no_output = true
-	else
-		no_output = false
-		if (ind == 0)						# No -T -or -D provided so default to -T
-			cmd = cmd * " -T"
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
+
+	for sym in [:W :weights]
+		if (haskey(d, sym))
+			if (!isa(d[sym], GMTgrid))
+				cmd = cmd * " -W" * arg2str(d[sym])
+			else
+				cmd, N_used = put_in_slot(cmd, d[sym], 'W', [arg1, arg2])
+				if (N_used == 1)     arg1 = d[sym]
+				elseif (N_used == 2) arg2 = d[sym]
+				end
+			end
+			break
 		end
 	end
 
-	if (isempty_(arg1) && !isempty(cmd0))	# Grid was passed as file name
-		cmd = cmd0 * " " * cmd
-		(haskey(d, :Vd)) && println(@sprintf("\tgrdtrend %s", cmd))
-		if (no_output)
-			if (!isempty_(arg2))  gmt("grdtrend " * cmd, arg2)
-			else                  gmt("grdtrend " * cmd)
-			end
-			return nothing
-		else
-			if (!isempty_(arg2))  O = gmt("grdtrend " * cmd, arg2)
-			else                  O = gmt("grdtrend " * cmd)
-			end
-			return O
-		end
+	if (isempty_(arg2))
+		return common_grd(d, cmd, got_fname, 1, "grdtrend", arg1)		# Finish build cmd and run it
 	else
-		(haskey(d, :Vd)) && println(@sprintf("\tgrdtrend %s", cmd))
-		if (no_output)
-			if (!isempty_(arg2))  gmt("grdtrend " * cmd, arg1, arg2)
-			else                  gmt("grdtrend " * cmd, arg1)
-			end
-			return nothing
-		else
-			if (!isempty_(arg2))  O = gmt("grdtrend " * cmd, arg1, arg2)
-			else                  O = gmt("grdtrend " * cmd, arg1)
-			end
-			return O
-		end
+		return common_grd(d, cmd, got_fname, 2, "grdtrend", arg1, arg2)
 	end
 end
 

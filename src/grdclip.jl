@@ -69,6 +69,7 @@ function grdclip(cmd0::String="", arg1=[]; kwargs...)
 	cmd = opt_S(d, cmd, [:between], 'i')
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
 	return common_grd(d, cmd, got_fname, 1, "grdclip", arg1)	# Finish build cmd and run it
 end
 
