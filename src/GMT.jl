@@ -25,18 +25,18 @@ const FMT = "ps"
 export
 	GMTver, FMT, gmt,
 	basemap, basemap!, blockmean, blockmedian, blockmode, coast, coast!, colorbar, colorbar!, filter1d,
-	filter2d, fitcircle, gmtinfo, gmtregress, gmtread, gmtselect, gmtsimplify, gmtspatial, gmtvector,
-	gmtwrite, gmtwich, grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut,
-	grdedit, grdfft, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdlandmask, grdpaste,
-	grdproject, grdsample, grdtrack, grdtrend, grdview, grdview!, grdvolume, grid_type, histogram,
-	histogram!, image, image!, imshow, imshow!, logo, logo!, makecpt, nearneighbor, plot, plot!,
-	plot3d, plot3d!, project,
+	filter2d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, gmtread, gmtselect, gmtsimplify,
+	gmtspatial, gmtvector, gmtwrite, gmtwich, grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour,
+	grdcontour!, grdcut, grdedit, grdfft, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo,
+	grdlandmask, grdpaste, grdproject, grdsample, grdtrack, grdtrend, grdview, grdview!, grdvolume,
+	grid_type, histogram, histogram!, image, image!, imshow, imshow!, kml2gmt, logo, logo!, makecpt,
+	mapproject, nearneighbor, plot, plot!, plot3d, plot3d!, project,
 	psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, pshistogram, pshistogram!,
 	psimage, psimage!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
-	pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!,
+	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!,
 	rose, rose!, sample1d, solar, solar!, spectrum1d, sphdistance, sphinterpolate, sphtriangulate,
-	surface, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz, wiggle, wiggle!,
-	xy, xy!, xyz2grd
+	surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
+	wiggle, wiggle!, xy, xy!, xyz2grd
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -46,6 +46,9 @@ include("common_options.jl")
 include("blocks.jl")
 include("filter1d.jl")
 include("fitcircle.jl")
+include("gmt2kml.jl")
+include("gmtconnect.jl")
+include("gmtconvert.jl")
 include("gmtinfo.jl")
 include("gmtlogo.jl")
 include("gmtreadwrite.jl")
@@ -78,7 +81,9 @@ include("grdtrend.jl")
 include("grdview.jl")
 include("grdvolume.jl")
 include("imshow.jl")
+include("kml2gmt.jl")
 include("makecpt.jl")
+include("mapproject.jl")
 include("nearneighbor.jl")
 include("project.jl")
 include("psbasemap.jl")
