@@ -149,7 +149,6 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 			ls = parse_pen_style(d)
 			if (!isempty(ls))		cmd = cmd * "," * ls	end
 		end
-		maybe_more = false		# and because we can use this only once, deactivate it
 	end
 
 	cmd = add_opt(cmd, 'A', d, [:A :area])
