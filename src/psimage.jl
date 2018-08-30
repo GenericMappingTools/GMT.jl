@@ -71,3 +71,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 image!(cmd0::String="", arg1=[]; data=[], K=true, O=true,  first=false, kw...) =
 	image(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+
+psimage  = image			# Alias
+psimage! = image!			# Alias

@@ -10,41 +10,52 @@ Full option list at [`triangulate`](http://gmt.soest.hawaii.edu/doc/latest/trian
 Parameters
 ----------
 - **C** : **slope_grid** : -- Number --
+
     Read a slope grid (in degrees) and compute the propagated uncertainty in the
     bathymetry using the CURVE algorithm
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#c)
 - **D** : **derivatives** : -- Str --
+
     Take either the x- or y-derivatives of surface represented by the planar facets (only used when G is set).
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#a)
 - **E** : **empty** : -- Bool or [] --
+
     Set the value assigned to empty nodes when G is set [NaN].
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#e)
-- **G** : **grid** : -- Str or [] --
+- **G** : **grid** : **outgrid** : -- Str or [] --
+
     Use triangulation to grid the data onto an even grid (specified with R I).
     Append the name of the output grid file.
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#g)
 - **I** : **inc** : -- Str or Number --
+
     *x_inc* [and optionally *y_inc*] is the grid spacing.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#i)
 - $(GMT.opt_J)
 - **M** : **network** : -- Bool or [] --
+
     Output triangulation network as multiple line segments separated by a segment header record.
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#m)
 - **N** : **ids** : -- Bool or [] --
+
     Used in conjunction with G to also write the triplets of the ids of all the Delaunay vertices
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#n)
 - **Q** : **voronoi** : -- Str or [] --
+
     Output the edges of the Voronoi cells instead [Default is Delaunay triangle edges]
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#q)
 - $(GMT.opt_R)
 - **S** : **triangles** : -- Bool or [] --  
+
     Output triangles as polygon segments separated by a segment header record. Requires Delaunay triangulation.
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#s)
 - **T** : **edges** : -- Bool or [] --
+
     Output edges or polygons even if gridding has been selected with the G option
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#t)
 - $(GMT.opt_V)
 - **Z** : **xyz** : **triplets** : -- Bool or [] --
+
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#z)
 - $(GMT.opt_bi)
 - $(GMT.opt_bo)
@@ -77,7 +88,7 @@ function triangulate(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'C', d, [:C :slope_grid])
 	cmd = add_opt(cmd, 'D', d, [:D :derivatives])
 	cmd = add_opt(cmd, 'E', d, [:E :empty])
-    cmd = add_opt(cmd, 'G', d, [:G :grid])
+    cmd = add_opt(cmd, 'G', d, [:G :grid :outgrid])
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt(cmd, 'M', d, [:N :network])
 	cmd = add_opt(cmd, 'N', d, [:N :ids])

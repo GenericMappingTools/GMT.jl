@@ -82,3 +82,6 @@ basemap!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
 	basemap(cmd0, arg1; K=K, O=O, first=first, kw...)
 basemap(arg1=[]; K=false, O=false, first=true, kw...) = basemap("", arg1; K=K, O=O, first=first, kw...)
 basemap!(arg1=[]; K=true, O=true, first=false, kw...) = basemap("", arg1; K=K, O=O, first=first, kw...)
+
+psbasemap  = basemap 		# Alias
+psbasemap! = basemap!		# Alias

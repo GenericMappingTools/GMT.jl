@@ -120,6 +120,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# GRDLANDMASK
 	G2=grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
+	G2=grdlandmask("-R-10/4/37/45 -Dc -I0.1");
 
 	# GRDPASTE
 	G3=gmt("grdmath", "-R10/20/0/10 -I1 X");
@@ -215,7 +216,7 @@ if (got_it)					# Otherwise go straight to end
 	G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
 
 	# NEARNEIGHBOR
-	G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, grid=[], S=10, r=true);
+	G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, S=10, r=true);
 
 	# MISC
 	G = GMT.grid_type(G.z);

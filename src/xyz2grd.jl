@@ -65,7 +65,7 @@ function xyz2grd(cmd0::String="", arg1=[]; kwargs...)
 
 	cmd = add_opt(cmd, 'A', d, [:A :multiple_nodes])
 	cmd = add_opt(cmd, 'D', d, [:D :header])
-    cmd = add_opt(cmd, 'G', d, [:G :grid])
+    cmd = add_opt(cmd, 'G', d, [:G :outgrid])
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt(cmd, 'S', d, [:S :swap])
 	cmd = add_opt(cmd, 'Z', d, [:Z :flags])

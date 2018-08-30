@@ -133,3 +133,6 @@ rose(arg1=[], cmd0::String=""; data=[], K=false, O=false,  first=true, kw...) =
 
 rose!(arg1=[], cmd0::String=""; data=[], K=true, O=true,  first=false, kw...) =
 	rose(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+
+psrose  = rose 			# Alias
+psrose! = rose!			# Alias

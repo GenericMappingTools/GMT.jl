@@ -212,3 +212,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 coast!(cmd0::String=""; clip=[], K=true, O=true, first=false, kw...) =
 	coast(cmd0; clip=clip, K=K, O=O, first=first, kw...)
+
+pscoast  = coast			# Alias for GMT5
+pscoast! = coast!			# Alias for GMT5

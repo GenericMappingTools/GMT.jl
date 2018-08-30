@@ -312,3 +312,8 @@ xyz!(cmd0::String="", arg1=[]; caller=[], data=[], K=true, O=true,  first=false,
 	xyz(cmd0, arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
 xyz!(arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
 	xyz("", arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
+
+psxy   = xy				# Alias
+psxy!  = xy!			# Alias
+psxyz  = xyz			# Alias
+psxyz! = xyz!			# Alias

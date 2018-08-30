@@ -69,7 +69,7 @@ function nearneighbor(cmd0::String="", arg1=[]; kwargs...)
 	cmd, = parse_swap_xy(cmd, d)
 
 	cmd = add_opt(cmd, 'E', d, [:E :empty])
-    cmd = add_opt(cmd, 'G', d, [:G :grid :outgrid])
+    cmd = add_opt(cmd, 'G', d, [:G :outgrid])
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt(cmd, 'N', d, [:N :ids])
 	cmd = add_opt(cmd, 'S', d, [:S :search_radius])

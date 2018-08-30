@@ -119,3 +119,6 @@ mask(arg1=[], cmd0::String=""; data=[], K=false, O=false,  first=true, kw...) =
 
 mask!(arg1=[], cmd0::String=""; data=[], K=true, O=true,  first=false, kw...) =
 	mask(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+
+psmask  = mask			# Alias
+psmask! = mask!			# Alias
