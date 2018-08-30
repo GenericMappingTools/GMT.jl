@@ -70,7 +70,7 @@ function clip(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, k
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	# If data is a file name, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, opt_i = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	cmd, arg1, = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
 	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
 	cmd = add_opt(cmd, 'C', d, [:C :end_clip_path])
@@ -91,3 +91,6 @@ clip(arg1=[], cmd0::String=""; data=[], K=false, O=false,  first=true, kw...) =
 
 clip!(arg1=[], cmd0::String=""; data=[], K=true, O=true,  first=false, kw...) =
 	clip(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+
+psclip  = clip			# Alias
+psclip! = clip!			# Alias

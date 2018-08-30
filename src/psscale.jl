@@ -92,3 +92,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 colorbar!(cmd0::String="", arg1=[]; K=false, O=false, first=false, kw...) =
     colorbar(cmd0, arg1; K=K, O=O, first=first, kw...)
+
+psscale  = colorbar         # Alias
+psscale! = colorbar!        # Alias

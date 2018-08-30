@@ -83,3 +83,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 solar!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
 	solar(cmd0, arg1; K=K, O=O,  first=first, kw...)
+
+pssolar  = solar				# Alias
+pssolar! = solar!				# Alias

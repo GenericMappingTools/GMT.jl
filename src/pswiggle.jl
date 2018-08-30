@@ -114,3 +114,6 @@ wiggle(arg1=[], cmd0::String=""; data=[], K=false, O=false,  first=true, kw...) 
 
 wiggle!(arg1=[], cmd0::String=""; data=[], K=true, O=true,  first=false, kw...) =
 	wiggle(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+
+pswiggle  = wiggle			# Alias
+pswiggle! = wiggle!			# Alias

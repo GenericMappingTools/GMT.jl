@@ -88,7 +88,7 @@ function surface(cmd0::String="", arg1=[]; kwargs...)
 
 	cmd = add_opt(cmd, 'A', d, [:A :aspect_ratio])
 	cmd = add_opt(cmd, 'C', d, [:C :convergence])
-	cmd = add_opt(cmd, 'G', d, [:G :grid :outgrid])
+	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt(cmd, "Ll", d, [:Ll :lower])
 	cmd = add_opt(cmd, "Lu", d, [:Ll :upper])
