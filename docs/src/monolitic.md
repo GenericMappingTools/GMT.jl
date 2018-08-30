@@ -47,7 +47,7 @@ Here, the input file is given on the command line but input could instead come v
 standard input stream via piping. Most GMT modules that write tables will write these to the
 shell’s output stream and users will typically redirect these streams to a file (as in our example)
 or pipe the output into another process. When using GMT.jl there are no shell redirections available.
-Instead, we wish to pass data to and from the MATLAB environment. If we assume that the content in
+Instead, we wish to pass data to and from the Julia environment. If we assume that the content in
 *raw_data.txt* exists in a array named *raw_data* and we wish to receive the filtered result
 as a segment array named filtered, we would run the command
 
