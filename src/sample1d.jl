@@ -1,5 +1,5 @@
 """
-	gmtsample1d(cmd0::String="", arg1=[], kwargs...)
+	sample1d(cmd0::String="", arg1=[], kwargs...)
 
 Resample 1-D table data using splines
 
@@ -47,6 +47,7 @@ function sample1d(cmd0::String="", arg1=[]; kwargs...)
 	cmd, = parse_b(cmd, d)
 	cmd, = parse_d(cmd, d)
 	cmd, = parse_e(cmd, d)
+	cmd, = parse_f(cmd, d)
 	cmd, = parse_g(cmd, d)
 	cmd, = parse_h(cmd, d)
 	cmd, = parse_i(cmd, d)
