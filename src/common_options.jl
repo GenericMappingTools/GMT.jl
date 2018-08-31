@@ -700,6 +700,15 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 		cmd = cmd0 * " " * cmd
 		got_fname = 1
 	end
+
+	# Check if we need to save to file
+	if (haskey(d, :>))			cmd = string(cmd, " > ", d[:>])
+	elseif (haskey(d, :|>))		cmd = string(cmd, " > ", d[:|>])
+	elseif (haskey(d, :write))	cmd = string(cmd, " > ", d[write])
+	elseif (haskey(d, :>>))		cmd = string(cmd, " > ", d[:>>])
+	elseif (haskey(d, :write_append))	cmd = string(cmd, " > ", d[write_append])
+	end
+
 	if (tipo == 1)
 		# Accepts "input1"; arg1; data=input1;
 		if (got_fname != 0) 
@@ -778,25 +787,24 @@ end
 function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, prog::String, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
 	dbg_print_cmd(d, cmd, prog)
-	prog = prog * " "			# Instead of having this in all cases below
+	cmd = prog * " " * cmd		# Instead of having this in all cases below
 	if (tipo == 1)				# One input only
 		if (got_fname != 0)
-			O = gmt(prog * cmd)
+			return gmt(cmd)
 		else
-			O = gmt(prog * cmd, args[1])
+			return gmt(cmd, args[1])
 		end
 	elseif (tipo == 2)			# Two inputs
 		if (got_fname == 1)
-			O = gmt(prog * cmd)
+			return gmt(cmd)
 		elseif (got_fname == 2)	# NOT SURE ON THIS ONE
-			O = gmt(prog * cmd, args[1])
+			return gmt(cmd, args[1])
 		else
-			O = gmt(prog * cmd, args[1], args[2])
+			return gmt(cmd, args[1], args[2])
 		end
 	else						# ARGS is a tuple(tuple) with all numeric inputs
-		O = gmt(prog * cmd, args[1]...)		# args[1] because args is a tuple(tuple)
+		return gmt(cmd, args[1]...)		# args[1] because args is a tuple(tuple)
 	end
-    return O
 end
 
 # ---------------------------------------------------------------------------------------------------
