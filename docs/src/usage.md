@@ -51,7 +51,7 @@ Given this design the Julia wrapper is designed to work in two distinct ways.
 
 1. The first way, referred as the monolitic, is the more feature reach and follows closely
    the GMT usage from shell(s) command line but still provide all the facilities of the Julia
-   language. See the [Monolitic](@ref) for the Reference on how to use the Package.
+   language. See the [Monolithic](@ref) for the Reference on how to use the Package.
    
 2. The second way uses an upper level set of functions that abstract aspects that
    make the monolitic usage more complex. It provides an interface to some of the GMT modules

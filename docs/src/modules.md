@@ -9,7 +9,7 @@ where *modulename* is the program name (*e.g. coast*), *cmd* is used to transmit
 modules that will read data from files and *argi* is one or, and for certain modules, more data
 arrays or *GMT.jl* data types. *opti* named arguments common to many modules used for example to
 set the output format. Finally *kwargs* are keyword parameters used to set the individual module
-options. But contrary to the [Monolitic](@ref) usage, the one letter *GMT* option syntax may be
+options. But contrary to the [Monolithic](@ref) usage, the one letter *GMT* option syntax may be
 replaced by more verbose aliases. To make it clear let us look at couple of examples.
 
     coast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")

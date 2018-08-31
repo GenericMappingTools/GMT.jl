@@ -120,7 +120,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# GRDLANDMASK
 	G2=grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
-	G2=grdlandmask("-R-10/4/37/45 -Dc -I0.1");
+	G2=grdlandmask("-R-10/4/37/45 -Dc -I0.1");			# Monolithitc
 
 	# GRDPASTE
 	G3=gmt("grdmath", "-R10/20/0/10 -I1 X");
@@ -128,6 +128,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# GRDPROJECT	-- Works but does not save projection info in header
 	G2=grdproject(G, proj="u29/1:1", F=[], C=[]); 		# Use G of previous test
+	G2=grdproject("-Ju29/1:1 -F -C", G);				# Monolithic
 
 	# GRDSAMPLE
 	G2=grdsample(G, inc=0.5);		# Use G of previous test
@@ -183,7 +184,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSSCALE
 	C = makecpt(T="-200/1000/100", C="rainbow");
-	colorbar(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps")
+	colorbar(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps", par=(MAP_FRAME_WIDTH=0.2))
 
 	# PSHISTOGRAM
 	histogram(randn(1000),W=0.1,center=true,fmt="ps",B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)

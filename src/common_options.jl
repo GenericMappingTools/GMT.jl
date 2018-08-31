@@ -966,19 +966,43 @@ function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, o
 end
 
 # --------------------------------------------------------------------------------------------------
-function monolitic(prog::String, cmd0::String, arg1=[], need_out::Bool=true)
-	# Run this module in the monolitic way. e.g. [outs] = gmt("module args",[inputs])
-	# NEED_OUT signals if the module has an output. The PS producers, however, may or not
-	# return something (the PS itself), psconvert can also have it (the Image) or not.
-	R = nothing
-	if (need_out && occursin(">", cmd0))  need_out = false  end		# Interpreted as "> file" so not LHS
+function monolitic(prog::String, cmd0::String, args...)
+	# Run this module in the monolithic way. e.g. [outs] = gmt("module args",[inputs])
+	cmd0 = prog * " " * cmd0
+	if (isempty_(args[1]))	return gmt(cmd0)
+	else					return gmt(cmd0, args...)
+	end
+end
+
+# --------------------------------------------------------------------------------------------------
+function peaks(N=49)
+	x,y = meshgrid(range(-3,stop=3,length=N))
+	
+	z =  3 * (1 .- x).^2 .* exp.(-(x.^2) - (y .+ 1).^2) - 10*(x./5 - x.^3 - y.^5) .* exp.(-x.^2 - y.^2)
+	   - 1/3 * exp.(-(x .+ 1).^2 - y.^2)
+	return x,y,z
+end	
+
+meshgrid(v::AbstractVector) = meshgrid(v, v)
+function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}) where T
+	m, n = length(vy), length(vx)
+	vx = reshape(vx, 1, n)
+	vy = reshape(vy, m, 1)
+	(repeat(vx, m, 1), repeat(vy, 1, n))
+end
+
+function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}, vz::AbstractVector{T}) where T
+	m, n, o = length(vy), length(vx), length(vz)
+	vx = reshape(vx, 1, n, 1)
+	vy = reshape(vy, m, 1, 1)
+	vz = reshape(vz, 1, 1, o)
 	if (need_out)
-		if (isempty(arg1))  R = gmt(prog * " " * cmd0)
-		else                R = gmt(prog * " " * cmd0, arg1)
+		if (isempty_(arg1))	R = gmt(cmd0)
+		else				R = gmt(cmd0, arg1)
 		end
 	else
-		if (isempty(arg1))  gmt(prog * " " * cmd0)
-		else                gmt(prog * " " * cmd0, arg1)
+		if (isempty_(arg1))	gmt(cmd0)
+		else				gmt(cmd0, arg1)
 		end
 	end
 	return R
