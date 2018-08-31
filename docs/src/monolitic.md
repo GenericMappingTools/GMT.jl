@@ -1,4 +1,4 @@
-# Monolitic
+# Monolithic
 
 In this mode all **GMT** options are put in a single text string that is passed, plus the data
 itself when it applies, to the ``gmt()`` command. This function is invoked with the syntax

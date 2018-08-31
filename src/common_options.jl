@@ -966,22 +966,12 @@ function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, o
 end
 
 # --------------------------------------------------------------------------------------------------
-function monolitic(prog::String, cmd0::String, arg1=[], need_out::Bool=true)
-	# Run this module in the monolitic way. e.g. [outs] = gmt("module args",[inputs])
-	# NEED_OUT signals if the module has an output. The PS producers, however, may or not
-	# return something (the PS itself), psconvert can also have it (the Image) or not.
-	R = nothing
-	if (need_out && occursin(">", cmd0))  need_out = false  end		# Interpreted as "> file" so not LHS
-	if (need_out)
-		if (isempty(arg1))  R = gmt(prog * " " * cmd0)
-		else                R = gmt(prog * " " * cmd0, arg1)
-		end
-	else
-		if (isempty(arg1))  gmt(prog * " " * cmd0)
-		else                gmt(prog * " " * cmd0, arg1)
-		end
+function monolitic(prog::String, cmd0::String, args...)
+	# Run this module in the monolithic way. e.g. [outs] = gmt("module args",[inputs])
+	cmd0 = prog * " " * cmd0
+	if (isempty_(args[1]))	return gmt(cmd0)
+	else					return gmt(cmd0, args...)
 	end
-	return R
 end
 
 # --------------------------------------------------------------------------------------------------
