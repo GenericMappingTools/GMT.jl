@@ -996,40 +996,6 @@ function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}, vz::AbstractVect
 	vx = reshape(vx, 1, n, 1)
 	vy = reshape(vy, m, 1, 1)
 	vz = reshape(vz, 1, 1, o)
-	if (need_out)
-		if (isempty_(arg1))	R = gmt(cmd0)
-		else				R = gmt(cmd0, arg1)
-		end
-	else
-		if (isempty_(arg1))	gmt(cmd0)
-		else				gmt(cmd0, arg1)
-		end
-	end
-	return R
-end
-
-# --------------------------------------------------------------------------------------------------
-function peaks(N=49)
-	x,y = meshgrid(range(-3,stop=3,length=N))
-	
-	z =  3 * (1 .- x).^2 .* exp.(-(x.^2) - (y .+ 1).^2) - 10*(x./5 - x.^3 - y.^5) .* exp.(-x.^2 - y.^2)
-	   - 1/3 * exp.(-(x .+ 1).^2 - y.^2)
-	return x,y,z
-end	
-
-meshgrid(v::AbstractVector) = meshgrid(v, v)
-function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}) where T
-	m, n = length(vy), length(vx)
-	vx = reshape(vx, 1, n)
-	vy = reshape(vy, m, 1)
-	(repeat(vx, m, 1), repeat(vy, 1, n))
-end
-
-function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}, vz::AbstractVector{T}) where T
-	m, n, o = length(vy), length(vx), length(vz)
-	vx = reshape(vx, 1, n, 1)
-	vy = reshape(vy, m, 1, 1)
-	vz = reshape(vz, 1, 1, o)
 	om = ones(Int, m)
 	on = ones(Int, n)
 	oo = ones(Int, o)
