@@ -701,18 +701,12 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 		got_fname = 1
 	end
 
-	# Check if we need to save to file.
-	for sym in [:> :|> :write]
-		if (haskey(d, d[sym]))
-			cmd = string(cmd, " > ", d[sym])
-			break
-		end
-	end
-	for sym in [:>> :write_append]
-		if (haskey(d, d[sym]))
-			cmd = string(cmd, " >> ", d[sym])
-			break
-		end
+	# Check if we need to save to file
+	if (haskey(d, :>))			cmd = string(cmd, " > ", d[:>])
+	elseif (haskey(d, :|>))		cmd = string(cmd, " > ", d[:|>])
+	elseif (haskey(d, :write))	cmd = string(cmd, " > ", d[write])
+	elseif (haskey(d, :>>))		cmd = string(cmd, " > ", d[:>>])
+	elseif (haskey(d, :write_append))	cmd = string(cmd, " > ", d[write_append])
 	end
 
 	if (tipo == 1)
