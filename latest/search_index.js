@@ -273,6 +273,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "modules/#Axes-(and-other)-configuration-1",
+    "page": "By Modules",
+    "title": "Axes (and other) configuration",
+    "category": "section",
+    "text": "There are almost 150 parameters which can be adjusted individually to modify the appearance of plots or affect the manipulation of data. When a program is run, it initializes all parameters to the GMTdefaults (see more at GMT defaults).  At times it may be desirable to temporarilly override some of those defaults. We can do that easily by using any of the keywords conf, par or params, which are recognized by all modules. Its usage follows closely the syntax described at gmt.conf but using Named Tuples. The parameter names are always given in UPPER CASE. The parameter values are case-insensitive unless otherwise noted and can be given as strings or numeric. Provide as many parameters as you want in the named tuple. Examplebasemap(...., conf=(MAP_TICK_LENGTH_PRIMARY=0.25, FORMAT_GEO_MAP=\"ddd:mm:ssF\"))"
+},
+
+{
     "location": "modules/#Specifying-the-figure-size-1",
     "page": "By Modules",
     "title": "Specifying the figure size",
@@ -285,7 +293,23 @@ var documenterSearchIndex = {"docs": [
     "page": "By Modules",
     "title": "The output format",
     "category": "section",
-    "text": "It was referred above that the fmt determines the output format and that the default is PostScript. Actually the default format is choosen by the contents of the global FMT variable set at the top of the GMT.jl file. Eventually this will evolve to using an evironment variable but for the moment users will have to edit that file to set a different default format.A very interesting alternative is to set FMT=\"\", that is to not specify any image format. This will result in NOT saving any file on disk but to keep the PS figure internally stored in the program\'s memory.  In other words the figure is built and kept in memory only. This allows converting to another format directly without the use of an intermediary disk file. The conversion is performed by the psconvert GMT module that would be used like this (to convert to PDF):psconvert(in_memory=true, adjust=true, format=\"f\", out_name=\"myfig.pdf\")The issue with this solution, that could be implemented internally without user intervention, is that it currently only works on Windows.Another interesting alternative to a file format is the option to create RGB images with psconvert and return it to Julia as a Image type type.I = psconvert(in_memory=true, adjust=true)but again, so far on Windows only. A cool thing to develop would be the possibility to display this I image with the Images.jl package."
+    "text": "It was referred above that the fmt determines the output format and that the default is PostScript. Actually the default format is choosen by the contents of the global FMT variable set at the top of the GMT.jl file. Eventually this will evolve to using an evironment variable but for the moment users will have to edit that file to set a different default format.A very interesting alternative is to set FMT=\"\", that is to not specify any image format. This will result in NOT saving any file on disk but to keep the PS figure internally stored in the program\'s memory.  In other words the figure is built and kept in memory only. This allows converting to another format directly without the use of an intermediary disk file. The conversion is performed by the psconvert GMT module that would be used like this (to convert to PDF):psconvert(in_memory=true, adjust=true, format=:f, out_name=\"myfig.pdf\")The issue with this solution, that could be implemented internally without user intervention, is that it currently only works on Windows.Another interesting alternative to a file format is the option to create RGB images with psconvert and return it to Julia as a Image type type.I = psconvert(in_memory=true, adjust=true)but again, so far on Windows only. A cool thing to develop would be the possibility to display this I image with the Images.jl package."
+},
+
+{
+    "location": "modules/#Saving-data-to-disk-1",
+    "page": "By Modules",
+    "title": "Saving data to disk",
+    "category": "section",
+    "text": "As referred in the Monolithic section, we have two programs to do read and writing. Their module names are gmtread and gmtwrite. These modules allow to import and export any of the GMT data types to and from external files. For instance, to save the grid G stored into a GMTgrid type into the file relief.nc we run gmtwrite(\"relief.nc\", G)Here there is no need to inform about the type of data that we are dealing with because that can be inferred from the type of the numeric argument. There are cases, however, where we may want to save the result of a computation directly on disk instead of assigning it to a Julia variable and latter save it with gmtwrite. For computations that deal with grids that is easy. Just provide ask for an output name using the outgrid keyword, likegrdcut(G, limits=[3 9 2 8], outgrid=\"lixo.grd\");but for table data the GMT programs normally output their results to stdout so if we want to save data directly to disk (as would do the corresponding GMT shell command) we use the write or |> keywords. We can also use this mechanism to append to an existing file, but then we use the write_append keyword. The following converts the grid G to x,y,z triplets and save the result in a disk file.grd2xyz(G, write=\"lixo.xyz\")"
+},
+
+{
+    "location": "modules/#How-inputs-are-transmitted-to-modules-1",
+    "page": "By Modules",
+    "title": "How inputs are transmitted to modules",
+    "category": "section",
+    "text": "Different modules take different number of inputs (for example grdblend accepts a variable number of grids) and some modules accept primary input and optionally a secondary input (for example the weights  option in grdtrend). The primary input(s) can be sent as text strings with the names of files to be read or as Julia variables holding the appropriate data type, as that as the first argument to the module call. Alternatively, the numeric input can be sent via the data keyword whose value can be a tuple when the expected input is composed by more than one variable. The same applies when an option is expected to receive more than one arguments (for example the three R,G,B in grdview). Examples:grdimage(G, intens=I, J=:M6i, color=C, B=\"1 WSne\", X=:c, Y=0.5, show=1)\n\ngrdimage(data=G, intens=I, J=:M6i, color=C, B=\"1 WSne\", X=:c, Y=0.5, show=1)\n\ngrdview(G, intens=:+, J=:M4i, JZ=\"2i\", p=\"145/35\", G=(Gr,Gg,Gb), B=\"af WSne\", Q=:i, show=1,)"
 },
 
 {
