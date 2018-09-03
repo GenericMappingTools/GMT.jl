@@ -43,18 +43,39 @@ This wrapper works only with GMT5.3.1 and above
 WARNING
 =======
 
-Tagged version 0.4 that runs only on Julia 0.7
+Tagged version 0.4 that runs only on Julia 0.7+
 
 Install
 =======
 
-Use the new Pkg3 to install current version (0.4). To install on Julia 0.6, this should do it:
+Use the new Pkg3 to install current version (0.4).
+
+    ]add GMT
+
+To install on Julia 0.6, this should do it:
 
     Pkg.checkout("GMT", v"0.3.0")
 
+A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT** install the
+[GMT](http://gmt.soest.hawaii.edu) program. It's the user responsability to do that.
+
+    o Windows64
+		1) Download and install the official version at (the [..._win64.exe]
+        (https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
+		
+		2) Or even better, download and install the [GMT6dev version]
+		(http://w3.ualg.pt/~jluis/downloads/gmt.html)
+
+	o Windows32
+		Download and install the official version at (the [..._win32.exe]
+		(https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
+
+    o Unix
+        Follow instructions at https://gmt.soest.hawaii.edu/projects/gmt/wiki/BuildingGMT
+
 On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at
 /user/local/lib), I had to help Julia finding MY *libgmt.dylib*, with (this line should than be
-added to the ~/.juliarc.jl file)
+added to the ~/.julia/config/startup.jl file)
 
     push!(Libdl.DL_LOAD_PATH, "/Users/j/programs/gmt5/lib")
 
@@ -69,11 +90,11 @@ However, we also acknowledge that not every one is comfortable with the *GMT* sy
 needed to accommodate the immense pool of options that let you control all details of a figure but that
 also makes it harder to read/master.
 
-To make life easier for simple plots we provide also a more limited sub-set of commands that use the
-**GMT** module name directly and where the image details are set via keyword arguments. While the
-monolotic way of using this package is robust and keeps being updated to latestes **GMT** developments,
-this *By modules* alternative is a very Work In Progress and many things may not work yet. So all help is
-most than wellcome.
+To make life easier we provide also a new mechanism that use the **GMT** module name directly and where
+the program's options are set via keyword arguments. While the monolotic way of using this package is
+robust and keeps being updated to latestes **GMT** developments, this *By modules* alternative is a Work
+In Progress (the **GMT supplements** were not ported yet) and some things may not work yet. So all help
+is most than wellcome.
 
 Documentation
 =============
