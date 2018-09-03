@@ -37,6 +37,8 @@ Parameters
     and d,h are computed from delta x, delta y.
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/splitxyz.html#s)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_bi)
 - $(GMT.opt_bo)
 - $(GMT.opt_di)

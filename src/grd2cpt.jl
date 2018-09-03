@@ -76,6 +76,8 @@ Parameters
 
     Creates a continuous CPT [Default is discontinuous, i.e., constant colors for each interval].
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#z)
+- $(GMT.opt_V)
+- $(GMT.opt_write)
 """
 function grd2cpt(cmd0::String="", arg1=[]; kwargs...)
 

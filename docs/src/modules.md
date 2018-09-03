@@ -200,8 +200,9 @@ output name using the *outgrid* keyword, like
 
 but for table data the **GMT** programs normally output their results to *stdout* so if we want to save
 data directly to disk (as would do the corresponding GMT shell command) we use the *write* or *|>*
-keywords. We can also use this mechanism to append to an existing file, but then we use the *write_append*
-keyword. The following converts the grid *G* to *x,y,z* triplets and save the result in a disk file.
+keywords. We can also use this mechanism to append to an existing file, but then we use the *append*
+keyword. Use together with the **bo** option to save as a binary file. The following converts the grid
+*G* to *x,y,z* triplets and save the result in an ASCII disk file.
 
     grd2xyz(G, write="lixo.xyz")
 

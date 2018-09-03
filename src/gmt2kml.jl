@@ -48,7 +48,7 @@ Parameters
 
     By default, if segment headers contain a -L”label string” then we use that for the name of the KML feature.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#n)
-- **O** : **append** : -- Bool or [] --
+- **O** : **overlay** : -- Bool or [] --
 
     Append KML code to an existing KML file [initialize a new KML file].
     [`-O`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#n)
@@ -80,6 +80,8 @@ Parameters
     Set one or more attributes of the Document and Region tags.
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#z)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_bi)
 - $(GMT.opt_di)
 - $(GMT.opt_e)
@@ -113,7 +115,7 @@ function gmt2kml(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'K', d, [:K :not_finished])
 	cmd = add_opt(cmd, 'L', d, [:L :extended_data])
 	cmd = add_opt(cmd, 'N', d, [:N :feature_name])
-	cmd = add_opt(cmd, 'O', d, [:O :append])
+	cmd = add_opt(cmd, 'O', d, [:O :overlay])
 	cmd = add_opt(cmd, "Qa", d, [:Qa :wiggles])
 	cmd = add_opt(cmd, "Qs", d, [:Qs :wiggle_scale])
 	cmd = add_opt(cmd, 'S', d, [:S :scale])

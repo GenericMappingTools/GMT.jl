@@ -152,3 +152,13 @@ const opt_swap_xy = "**swap_xy** : Str or Bool or [] --     Flags = [i|o]
 
       Swap 1st and 2nd column on input and/or output.
       [`-:`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#colon-full)"
+
+const opt_write = "**write** : **|>** : Str --     Flags = ``fname``
+
+      Save result to ASCII file instead of returning to a Julia variable. Give file name as argument.
+      Use the bo option to save as a binary file."
+
+const opt_append = "**append** : Str --     Flags = ``fname``
+
+      Append result to an existing file named ``fname`` instead of returning to a Julia variable.
+      Use the bo option to save as a binary file."

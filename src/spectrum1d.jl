@@ -38,6 +38,8 @@ Parameters
     Write Wavelength rather than frequency in column 1 of the output file[s] [Default = frequency, (cycles / dt)].
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/spectrum1d.html#w)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
 - $(GMT.opt_e)

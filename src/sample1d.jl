@@ -27,6 +27,8 @@ Parameters
     Evaluate the best-fit regression model at the equidistant points implied by the arguments.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/sample1d.html#t)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
 - $(GMT.opt_e)

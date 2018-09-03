@@ -54,6 +54,8 @@ Parameters
     Truncate polygons against the specified polygon given, possibly resulting in open polygons.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/gmtspatial.html#t)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
 - $(GMT.opt_e)

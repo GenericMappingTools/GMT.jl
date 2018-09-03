@@ -22,6 +22,8 @@ Parameters
     Attempt to
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/fitcircle.html#s)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_bi)
 - $(GMT.opt_di)
 - $(GMT.opt_e)

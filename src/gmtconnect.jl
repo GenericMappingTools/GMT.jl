@@ -31,6 +31,8 @@ Parameters
     If two lines has end-points that are closer than this cutoff they will be joined.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/gmtconnect.html#t)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
 - $(GMT.opt_e)

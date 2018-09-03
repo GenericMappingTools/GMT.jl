@@ -42,6 +42,8 @@ Parameters
     Specifies weighted regression and which weights will be provided.
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/gmtregress.html#w)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
 - $(GMT.opt_e)
