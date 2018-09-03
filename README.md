@@ -64,9 +64,11 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
       2. Or even better, download and install the [GMT6dev version](http://w3.ualg.pt/~jluis/downloads/gmt.html)
 
   * Windows32
+
       Download and install the official version at (the [..._win32.exe](https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
 
   * Unix
+  
       Follow instructions at https://gmt.soest.hawaii.edu/projects/gmt/wiki/BuildingGMT
 
 On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at
