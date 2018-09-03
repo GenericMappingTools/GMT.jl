@@ -59,16 +59,14 @@ To install on Julia 0.6, this should do it:
 A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT** install the
 [GMT](http://gmt.soest.hawaii.edu) program. It's the user responsability to do that.
 
-    o Windows64
-		1) Download and install the official version at (the [..._win64.exe]
-        (https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
-		
-		2) Or even better, download and install the [GMT6dev version]
-		(http://w3.ualg.pt/~jluis/downloads/gmt.html)
+Download and install the official version at (the [..._win64.exe](https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
 
-	o Windows32
-		Download and install the official version at (the [..._win32.exe]
-		(https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
+   o Windows64
+        1) Download and install the official version at (the [..._win64.exe](https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
+        1) Or even better, download and install the [GMT6dev version](http://w3.ualg.pt/~jluis/downloads/gmt.html)
+
+   o Windows32
+        Download and install the official version at (the [..._win32.exe](https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
 
     o Unix
         Follow instructions at https://gmt.soest.hawaii.edu/projects/gmt/wiki/BuildingGMT
