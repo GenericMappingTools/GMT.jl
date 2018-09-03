@@ -13,6 +13,8 @@ Parameters
     Specifies the maximum mismatch tolerance in the user units. If the data is not Cartesian then append the distance unit.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/gmtsimplify.html#t)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
 - $(GMT.opt_e)

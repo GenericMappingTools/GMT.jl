@@ -24,6 +24,8 @@ Parameters
     Write a 1-column table. Output will be organized according to the specified ordering
     convention contained in ``flags``.
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grd2xyz.html#z)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_bo)
 - $(GMT.opt_d)
 - $(GMT.opt_f)

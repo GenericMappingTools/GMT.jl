@@ -65,6 +65,8 @@ Parameters
     (very first record) and if last is not set then it defaults to the very last record.
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/gmtconvert.html#z)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
 - $(GMT.opt_e)

@@ -54,6 +54,8 @@ Parameters
     Width controls. Project only those points whose q coordinate is within w_min < q < w_max.
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/project.html#w)
 
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_V)
 - $(GMT.opt_b)
 - $(GMT.opt_d)

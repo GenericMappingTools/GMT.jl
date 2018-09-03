@@ -200,8 +200,9 @@ output name using the *outgrid* keyword, like
 
 but for table data the **GMT** programs normally output their results to *stdout* so if we want to save
 data directly to disk (as would do the corresponding GMT shell command) we use the *write* or *|>*
-keywords. We can also use this mechanism to append to an existing file, but then we use the *write_append*
-keyword. The following converts the grid *G* to *x,y,z* triplets and save the result in a disk file.
+keywords. We can also use this mechanism to append to an existing file, but then we use the *append*
+keyword. Use together with the **bo** option to save as a binary file. The following converts the grid
+*G* to *x,y,z* triplets and save the result in an ASCII disk file.
 
     grd2xyz(G, write="lixo.xyz")
 
@@ -210,7 +211,7 @@ keyword. The following converts the grid *G* to *x,y,z* triplets and save the re
 Different modules take different number of inputs (for example *grdblend* accepts a variable number of
 grids) and some modules accept primary input and optionally a secondary input (for example the *weights* 
 option in *grdtrend*). The primary input(s) can be sent as text strings with the names of files to be read
-or as Julia variables holding the appropriate data type, as that as the first argument to the module call.
+or as Julia variables holding the appropriate data type, and that as the first argument to the module call.
 Alternatively, the numeric input can be sent via the *data* keyword whose value can be a tuple when the
 expected input is composed by more than one variable. The same applies when an option is expected to
 receive more than one arguments (for example the three *R,G,B* in *grdview*). Examples:

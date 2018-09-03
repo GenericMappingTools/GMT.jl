@@ -47,6 +47,8 @@ Parameters
     the string -Tzmin/zmax/dz.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#t)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_bi)
 - $(GMT.opt_di)
 - $(GMT.opt_e)

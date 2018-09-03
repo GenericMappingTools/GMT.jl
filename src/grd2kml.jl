@@ -48,6 +48,8 @@ Parameters
     Sets the title of the top-level document (i.e., its description).
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grd2kml.html#t)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_f)
 """
 function grd2kml(cmd0::String="", arg1=[], arg2=[]; kwargs...)

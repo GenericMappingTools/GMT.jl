@@ -34,6 +34,8 @@ Parameters
     Specify the vector transformation of interest.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/gmtvector.html#t)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
 - $(GMT.opt_e)

@@ -39,6 +39,8 @@ Parameters
     Make evenly spaced time-steps from min to max by inc [Default uses input times].
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/filter1d.html#t)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
+- $(GMT.opt_append)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
 - $(GMT.opt_e)

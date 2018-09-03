@@ -17,6 +17,7 @@ Parameters
     Name of specific gmt.conf file to read and modify. 
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#g)
 - $(GMT.opt_V)
+- $(GMT.opt_write)
 """
 function gmtset(cmd0::String=""; kwargs...)
 
