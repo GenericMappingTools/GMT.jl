@@ -43,12 +43,12 @@ This wrapper works only with GMT5.3.1 and above
 WARNING
 =======
 
-Tagged version 0.4 that runs only on Julia 0.7+
+Tagged version 0.4+ that runs only on Julia 0.7+
 
 Install
 =======
 
-Use the new Pkg3 to install current version (0.4).
+Use the new Pkg3 to install current version (0.5.0).
 
     ]add GMT
 
