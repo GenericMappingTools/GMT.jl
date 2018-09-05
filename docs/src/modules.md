@@ -62,6 +62,12 @@ one is the part created by *grdimage*, which is complemented by the color scale 
 keyword. If our example had more layers, we would have used the same rule: second and on layers use the
 **!** construct and the last is signaled by *show=true*.
 
+By default the image files are writen into *tmp* system directory under the name *GMTjl_tmp.ps* (remember
+*PostScript* is the default format) and *GMTjl_tmp.xxx* when user specifies a different format with the
+*fmt* keyword. It's one of this files that shows up when *show=true* is used. But we may want to save the
+image file permanently under a different name and location. For that use the keyword *savefig=name*, where
+*name* is realative or full file name.
+
 The examples above show also that we didn't completely get rid of the compact *GMT* syntax. For example
 the *shade="+ne0.8+a100"* in *grdimage* means that we are computing the shade using a normalized a
 cumulative Laplace distribution and setting the Sun direction from the 100 azimuth direction. For as much

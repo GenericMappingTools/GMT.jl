@@ -824,6 +824,10 @@ function showfig(fname_ps::String, fname_ext::String, opt_T::String, K=false, fn
 		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end			# Close the PS file first
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T)
 		out = fname_ps[1:end-2] * fname_ext
+		if (!isempty(fname))
+			run(`mv $out $fname`)
+			out = fname
+		end
 	elseif (!isempty(fname_ps))
 		out = fname_ps
 	else
