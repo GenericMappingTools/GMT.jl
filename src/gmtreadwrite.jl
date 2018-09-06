@@ -154,9 +154,38 @@ end
 Write a GMT object to file. The object is one of "grid" or "grd", "image" or "img",
 "data" or "table", "cmap" or "cpt" and "ps" (for postscript).
 
+When saving grids we have a large panoply of formats at our disposal.
+
 Parameters
 ----------
 
+- **id** : -- Str --  
+
+	Use an ``id`` code when not not saving a grid into a standard COARDS-compliant netCDF grid. This ``id``
+	is made up of two characters like ``ef`` to save in ESRI Arc/Info ASCII Grid Interchange format (ASCII float).
+	See the full list of ids at https://gmt.soest.hawaii.edu/doc/latest/grdconvert.html#format-identifier.
+
+    [`-G`](https://gmt.soest.hawaii.edu/doc/latest/grdconvert.html#g)
+- **scale** : **offset** -- Number --
+
+	You may optionally ask to scale the data and then offset them with the specified amounts.
+	These modifiers are particularly practical when storing the data as integers, by first removing an offset
+	and then scaling down the values.
+- **nan** : **novalue** : **invalid** : **missing** -- Number --
+
+	Lets you supply a value that represents an invalid grid entry, i.e., ‘Not-a-Number’.
+- **gdal** : -- Bool or [] --
+
+    Force the use of the GDAL library to write the grid (to be used only with grids).
+    [](https://gmt.soest.hawaii.edu/doc/latest/GMT_Docs.html#grid-file-format-specifications)
+- **driver** : -- Str --  
+
+    When saving in other than the netCDF format we must tell the GDAL library what is wished format.
+    That is done by specifying the driver name used by GDAL itself (e.g., netCDF, GTiFF, etc...).
+- **datatype** : -- Str --  		Flags = u8|u16|i16|u32|i32|float32
+
+	When saving with GDAL we can specify the data type from u8|u16|i16|u32|i32|float32 where ‘i’ and ‘u’ denote
+	signed and unsigned integers respectively.
 - $(GMT.opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_bo)
@@ -224,9 +253,9 @@ function parse_grd_format(d::Dict)
 # Scan options to fill any of  [=<id>][+s<scale>][+o<offset>][+n<nan>][:<driver>[/<dataType>]
 # that control the grid/image output format
 	out = ""
-	for sym in [:fmt :format :gdal]
+	for sym in [:id :gdal :driver]
 		if (haskey(d, sym))
-			if (sym == :gdal)
+			if (sym == :gdal || sym == :driver)
 				out = "=gd"
 			else
 				t = arg2str(d[sym])
