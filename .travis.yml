@@ -4,7 +4,7 @@ language: julia
 sudo: false
 
 os:
-  - linux
+  - osx
 julia:
   - 0.7
   - nightly
@@ -27,6 +27,7 @@ before_install:
       # Show installed pkg information for postmortem diagnostic
       #- conda list
       # Install GMT trunk
+      #=
       - pwd
       - sudo apt-get install subversion build-essential cmake libcurl4-gnutls-dev libnetcdf-dev libgdal1-dev libfftw3-dev libpcre3-dev liblapack-dev ghostscript
       - svn checkout svn://gmtserver.soest.hawaii.edu/gmt5/branches/5.4 $HOME/gmt
@@ -43,7 +44,8 @@ before_install:
       - make -j && make install
       - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/gmt/lib"
       - cd /home/travis/build/GenericMappingTools/GMT.jl
-  #- if [ `uname` = "Darwin" ]; then brew update && brew upgrade && brew install gmt; fi
+      =#
+      if [ `uname` = "Darwin" ]; then brew update && brew upgrade && brew install gmt; fi
 
 # uncomment the following lines to override the default test script
 script:
