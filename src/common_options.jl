@@ -774,7 +774,7 @@ function common_grd(cmd::String, flag::Char)
 	# that the result grid is returned in a G GMTgrid type.
 	# Used the the grdxxx modules that produce a grid.
 	ff = findfirst(string("-", flag), cmd)
-	ind = (ff == nothing) ? 0 : first(ff)
+	ind = (ff === nothing) ? 0 : first(ff)
 	if (ind > 0 && length(cmd) > ind+2 && cmd[ind+2] != ' ')      # A file name was provided
 		no_output = true
 	else
@@ -848,7 +848,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function isempty_(arg)
 	# F... F... it's a shame having to do this
-	if (arg == nothing)
+	if (arg === nothing)
 		return true
 	end
 	try

@@ -204,7 +204,7 @@ function gmt(cmd::String, args...)
 		end
 		#=
 		ff = findfirst( "-L", r)
-		ind = (ff == nothing) ? 0 : first(ff)
+		ind = (ff === nothing) ? 0 : first(ff)
 		if (ind != 0)
 			grd_mem_layout, resto = strtok(r[ind+2:end])
 			r = r[1:ind-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
@@ -358,7 +358,7 @@ function parse_mem_layouts(cmd)
 	grd_mem_layout = "";	img_mem_layout = ""
 
 	ff = findfirst( "-,", cmd)
-	ind = (ff == nothing) ? 0 : first(ff)
+	ind = (ff === nothing) ? 0 : first(ff)
 	if (ind != 0)
 		img_mem_layout, resto = strtok(cmd[ind+2:end])
 		if (length(img_mem_layout) != 3)
@@ -368,7 +368,7 @@ function parse_mem_layouts(cmd)
 	end
 	if (isempty(img_mem_layout))			# Only if because we can't have a double request
 		ff = findfirst( "-;", cmd)
-		ind = (ff == nothing) ? 0 : first(ff)
+		ind = (ff === nothing) ? 0 : first(ff)
 		if (ind != 0)
 			grd_mem_layout, resto = strtok(cmd[ind+2:end])
 			if (length(img_mem_layout) != 3)
@@ -389,7 +389,7 @@ function strtok(args, delim::String=" ")
 	#end
 
 	ind = findfirst(delim, args)
-	if (ind == nothing)
+	if (ind === nothing)
 		return lstrip(args,collect(delim)), r		# Always clip delimiters at the begining
 	end
 	tok = lstrip(args[1:ind[1]-1], collect(delim))	#		""

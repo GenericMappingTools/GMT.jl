@@ -154,12 +154,12 @@ function strfind(str::AbstractString, sub_str::AbstractString)
 # To mimic Matalab's function except that it returns [0] instead of [] in case of failure
 # and it always returns a vector.
 	ind_i = findfirst(sub_str, str)
-	if (ind_i == nothing) return [0] end
+	if (ind_i === nothing) return [0] end
 	ind = [first(ind_i)]
 	ind_n = ind[1]
 	while (ind_n != 0)
 		ind_i = findnext(sub_str, str, ind_n+1)
-		if (ind_i != nothing)			# Found another
+		if (ind_i !== nothing)			# Found another
 			ind_n = first(ind_i)
 			push!(ind, ind_n)
 		else
