@@ -78,12 +78,12 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function rose(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, kwargs...)
+function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("psrose", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("psrose", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -102,8 +102,8 @@ function rose(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, k
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	# If data is a file name, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	# If file name sent in, read it and compute a tight -R if this was not provided 
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
 	cmd = add_opt(cmd, 'A', d, [:A :sector])
 	cmd = add_opt(cmd, 'C', d, [:C :vectors])
@@ -125,14 +125,14 @@ function rose(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, k
 end
 
 # ---------------------------------------------------------------------------------------------------
-rose!(cmd0::String="", arg1=[]; data=[], K=true, O=true,  first=false, kw...) =
-	rose(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+rose!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
+	rose(cmd0, arg1; K=K, O=O,  first=first, kw...)
 
-rose(arg1=[], cmd0::String=""; data=[], K=false, O=false,  first=true, kw...) =
-	rose(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+rose(arg1=[], cmd0::String=""; K=false, O=false,  first=true, kw...) =
+	rose(cmd0, arg1; K=K, O=O,  first=first, kw...)
 
-rose!(arg1=[], cmd0::String=""; data=[], K=true, O=true,  first=false, kw...) =
-	rose(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+rose!(arg1=[], cmd0::String=""; K=true, O=true,  first=false, kw...) =
+	rose(cmd0, arg1; K=K, O=O,  first=first, kw...)
 
 psrose  = rose 			# Alias
 psrose! = rose!			# Alias

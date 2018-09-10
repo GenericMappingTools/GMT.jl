@@ -33,7 +33,7 @@ Parameters
 
     Full path to your GhostScript executable.
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#g)
-- **I** : -- Bool or [] --
+- **I** : **icc_gray** : -- Bool or [] --
 
     Enforce gray-shades by using ICC profiles.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#i)
@@ -76,14 +76,9 @@ Parameters
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#z)
 - $(GMT.opt_V)
 """
-function psconvert(cmd0::String="", arg1=[]; data=[], kwargs...)
+function psconvert(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && isempty_(data) && occursin(" -", cmd0) &&
-		return monolitic("psconvert", cmd0, arg1)	# Speedy mode
-
-	if (!isempty_(data) && !isa(data, String))
-		error("When using 'data', it MUST contain a String data type (the file name")
-	end
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("psconvert", cmd0, arg1)
 
 	if (!isempty(cmd0)) && isempty_(arg1)  arg1 = cmd0  end
 
@@ -94,7 +89,7 @@ function psconvert(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = add_opt(cmd, 'E', d, [:E :dpi])
 	cmd = add_opt(cmd, 'F', d, [:F :out_name :output_name])
 	cmd = add_opt(cmd, 'G', d, [:G :ghost_path])
-	cmd = add_opt(cmd, 'I', d, [:I])
+	cmd = add_opt(cmd, 'I', d, [:I :icc_gray])
 	cmd = add_opt(cmd, 'L', d, [:L :list_file])
 	cmd = add_opt(cmd, 'Q', d, [:Q :anti_aliasing])
 	cmd = add_opt(cmd, 'S', d, [:S :gs_command])
@@ -134,7 +129,6 @@ function psconvert(cmd0::String="", arg1=[]; data=[], kwargs...)
 		cmd = cmd * " -W+k" * d[:kml]
 	end
 
-	want_output = false
 	if (haskey(d, :in_memory))
 		cmd = cmd * " ="
 		if (!isempty_(arg1))
@@ -142,37 +136,20 @@ function psconvert(cmd0::String="", arg1=[]; data=[], kwargs...)
 			      Dropping this one.")
 			arg1 = []
 		end
-		want_output = true
 	end
 
 	# In case DATA holds a file name, copy it into cmd.
-	cmd, arg1, = read_data(data, cmd, arg1)
-
-	if (isempty_(arg1))
-		error("Must provide one input PS file name or GMTps type struct")
-	end
+	#cmd, arg1, = read_data(d, cmd0, cmd, arg1)
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
 
 	if (isempty(cmd))          cmd = "-A1p -Tj -Qg4 -Qt4"  end 	# Means no options were used. Allowed case
 	if (!occursin("-Q", cmd))  cmd = cmd * " -Qt4 -Qg4"    end	# We promised to have these as default
-	if (isa(arg1, String))
-		cmd = cmd * " " * arg1
-		is_struct_PS = false
-	elseif (isa(arg1, GMTps))
+
+	is_struct_PS = false
+	if (isa(arg1, GMTps))
 		is_struct_PS = true
-	else
-		error("Input mut either be a STRING (file name) or a GMTps type (a struct with the PS contents)")
 	end
-
-	(haskey(d, :Vd)) && println(@sprintf("\tpsconvert %s", cmd))
-
-	if (want_output)
-		if (is_struct_PS)  return gmt("psconvert " * cmd, arg1)
-		else               return gmt("psconvert " * cmd)
-		end
-	else
-		if (is_struct_PS)  gmt("psconvert " * cmd, arg1)
-		else               gmt("psconvert " * cmd)
-		end
-		return nothing
+	if (is_struct_PS)  return gmt("psconvert " * cmd, arg1)
+	else               return gmt("psconvert " * cmd)
 	end
 end

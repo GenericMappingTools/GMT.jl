@@ -35,16 +35,12 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function image(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, kwargs...)
+function image(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
-	length(kwargs) == 0 && isempty_(data) && return monolitic("psimage", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("psimage", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
-
-	if (!isempty_(data) && !isa(data, String))
-		error("When using 'data', it MUST contain a String data type (the file name)")
-	end
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/12c")
 	cmd = parse_JZ(cmd, d)
@@ -59,18 +55,15 @@ function image(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, 
 	cmd = add_opt(cmd, 'I', d, [:I :invert_1bit])
 	cmd = add_opt(cmd, 'M', d, [:M :monochrome])
 
-	# In case DATA holds a file name, copy it into cmd.
-	cmd, arg1, = read_data(data, cmd, arg1)
-
-	(haskey(d, :Vd)) && println(@sprintf("\tpsimage %s", cmd))
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 	return finish_PS_module(d, cmd, "", arg1, [], [], [], [], [], output, fname_ext, opt_T, K, "psimage")
 end
 
 # ---------------------------------------------------------------------------------------------------
-image!(cmd0::String="", arg1=[]; data=[], K=true, O=true,  first=false, kw...) =
-	image(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+image!(cmd0::String="", arg1=[]; kw...) = image(cmd0, arg1; K=true, O=true,  first=false, kw...)
 
+# ---------------------------------------------------------------------------------------------------
 psimage  = image			# Alias
 psimage! = image!			# Alias
