@@ -156,7 +156,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_BJR(d::Dict, cmd0::String, cmd::String, caller, O, default)
+function parse_BJR(d::Dict, cmd::String, caller, O, default)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(cmd, d, O)
 	cmd, opt_J = parse_J(cmd, d, true, O)
@@ -166,7 +166,7 @@ function parse_BJR(d::Dict, cmd0::String, cmd::String, caller, O, default)
 	elseif (O && isempty(opt_J))
 		cmd = cmd * " -J"
 	end
-	if (!isempty(caller) && !occursin("-B", cmd0) && occursin("-JX", opt_J))	# e.g. plot() sets 'caller'
+	if (!isempty(caller) && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (caller == "plot3d")
 			cmd, opt_B = parse_B(cmd, d, "-Ba -Bza -BWSZ")
 		else

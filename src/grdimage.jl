@@ -60,7 +60,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; K=false, 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
-	cmd, opt_B, = parse_BJR(d, cmd0, "", "", O, " -JX12c/0")
+	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_UVXY(cmd, d)
 	cmd, = parse_f(cmd, d)
 	cmd, = parse_n(cmd, d)
