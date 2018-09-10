@@ -54,10 +54,10 @@ function grdlandmask(cmd0::String=""; kwargs...)
 	cmd, = parse_x(cmd, d)
 
 	cmd = add_opt(cmd, 'A', d, [:A :area])
-	cmd = add_opt_s(cmd, 'D', d, [:D :res :resolution])
+	cmd = add_opt(cmd, 'D', d, [:D :res :resolution])
 	cmd = add_opt(cmd, 'E', d, [:E :bordervalues])
     cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt_s(cmd, 'G', d, [:G :outgrid])
+	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
 	cmd = add_opt(cmd, 'N', d, [:N :mask_geog])
 
 	return common_grd(d, cmd, 1, 1, "grdlandmask", [])		# Finish build cmd and run it

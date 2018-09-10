@@ -76,25 +76,24 @@ function gmtinfo(cmd0::String="", arg1=[]; kwargs...)
 	cmd, = parse_r(cmd, d)
 	cmd, = parse_swap_xy(cmd, d)
 
-	cmd = add_opt_s(cmd, 'A', d, [:A])
-	cmd = add_opt(cmd,   'C', d, [:C :per_column])
-	cmd = add_opt(cmd,   'D', d, [:D :center])
-	cmd = add_opt_s(cmd, 'E', d, [:E :get_record])
-	cmd = add_opt(cmd,   'F', d, [:F :counts])
-	cmd = add_opt(cmd,   'I', d, [:I :report_region])
-	cmd = add_opt(cmd,   'L', d, [:L :common_limits])
-	cmd = add_opt(cmd,   'S', d, [:S :for_error_bars])
-	cmd = add_opt(cmd,   'T', d, [:T :nearest_multiple])
+	cmd = add_opt(cmd, 'A', d, [:A])
+	cmd = add_opt(cmd, 'C', d, [:C :per_column])
+	cmd = add_opt(cmd, 'D', d, [:D :center])
+	cmd = add_opt(cmd, 'E', d, [:E :get_record])
+	cmd = add_opt(cmd, 'F', d, [:F :counts])
+	cmd = add_opt(cmd, 'I', d, [:I :report_region])
+	cmd = add_opt(cmd, 'L', d, [:L :common_limits])
+	cmd = add_opt(cmd, 'S', d, [:S :for_error_bars])
+	cmd = add_opt(cmd, 'T', d, [:T :nearest_multiple])
 
 	# If file name sent in, read it.
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ", opt_i, opt_bi, opt_di)
 
 	(haskey(d, :Vd)) && println(@sprintf("\tgmtinfo %s", cmd))
 
-	if (!isempty_(arg1))  R = gmt("gmtinfo " * cmd, arg1)
-	else                  R = gmt("gmtinfo " * cmd)
+	if (!isempty_(arg1))  return gmt("gmtinfo " * cmd, arg1)
+	else                  return gmt("gmtinfo " * cmd)
 	end
-	return R
 end
 
 # ---------------------------------------------------------------------------------------------------
