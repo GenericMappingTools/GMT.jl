@@ -72,8 +72,7 @@ function basemap(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs.
 	cmd = add_opt(cmd, "Td", d, [:Td :rose])
 	cmd = add_opt(cmd, "Tm", d, [:Td :compass])
 
-	cmd = finish_PS(d, cmd0, cmd, output, K, O)
-
+	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, "", arg1, [], output, fname_ext, opt_T, K, "psbasemap")
 end
 

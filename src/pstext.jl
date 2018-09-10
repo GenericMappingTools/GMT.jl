@@ -133,9 +133,9 @@ function text(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true,
 	end
 
 	if (!isempty(opt_W)) 		# We have a rectangle request
-		cmd = finish_PS(d, cmd0, cmd * opt_W, output, K, O)
+		cmd = finish_PS(d, cmd * opt_W, output, K, O)
 	else
-		cmd = finish_PS(d, cmd0, cmd, output, K, O)
+		cmd = finish_PS(d, cmd, output, K, O)
 	end
 
     return finish_PS_module(d, cmd, "", arg1, arg2, [], [], [], [], output, fname_ext, opt_T, K, "pstext")

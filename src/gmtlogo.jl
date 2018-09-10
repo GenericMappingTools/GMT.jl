@@ -54,7 +54,7 @@ function logo(cmd0::String=""; K=false, O=false, first=true, kwargs...)
 	cmd = add_opt(cmd, 'D', d, [:D :pos :position])
 	cmd = add_opt(cmd, 'F', d, [:F :box])
 
-	cmd = finish_PS(d, cmd0, cmd, output, K, O)
+	cmd = finish_PS(d, cmd, output, K, O)
 
 	do_julia    = haskey(d, :julia)
 	do_GMTjulia = haskey(d, :GMTjulia)

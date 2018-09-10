@@ -182,8 +182,7 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 	cmd = add_opt(cmd, "Td", d, [:Td :rose])
 	cmd = add_opt(cmd, "Tm", d, [:Tm :compass])
 
-	cmd = finish_PS(d, cmd0, cmd, output, K, O)
-
+	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, "", [], [], [], [], [], [], output, fname_ext, opt_T, K, "pscoast")
 end
 

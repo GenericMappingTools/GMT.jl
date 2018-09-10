@@ -515,38 +515,27 @@ function set_KO(cmd, opt_B, first, K, O)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS(d::Dict, cmd0::String, cmd::String, output::String, K::Bool, O::Bool)
+function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
 	if (!haskey(d, :P) && !haskey(d, :portrait))
 		cmd = cmd * " -P"
 	end
 
-	# The mess starts. The problem araised when I added the find_data() fun that concats
-	# the file name to CMD, and we can't do it again here. I must revisit all calls to
-	# this function to find whem CMD0 has other than a file name and clean things.
-	if (!isempty(cmd0) && (occursin(" -", cmd0) || occursin(">", cmd0)))
-		cmd = cmd * " " * cmd0		# Append any other eventual args not send in via kwargs
+	if (K && !O)              opt = " -K"
+	elseif (K && O)           opt = " -K -O"
+	elseif (!K && O)          opt = " -O"
+	else                      opt = ""
 	end
 
-	# Cannot mix -O,-K and output redirect between positional and kwarg arguments
-	if (!occursin("-K", cmd0) && !occursin("-)", cmd0) && !occursin(">", cmd0))
-		# So the -O -K dance is provided via kwargs
-		if (K && !O)              opt = " -K"
-		elseif (K && O)           opt = " -K -O"
-		elseif (!K && O)          opt = " -O"
-		else                      opt = ""
+	if (!isempty(output))
+		if (K && !O)          cmd = cmd * opt * " > " * output
+		elseif (!K && !O)     cmd = cmd * opt * " > " * output
+		elseif (O)            cmd = cmd * opt * " >> " * output
 		end
-
-		if (!isempty(output))
-			if (K && !O)          cmd = cmd * opt * " > " * output
-			elseif (!K && !O)     cmd = cmd * opt * " > " * output
-			elseif (O)            cmd = cmd * opt * " >> " * output
-			end
-		else
-			if (K && !O)          cmd = cmd * opt
-			elseif (!K && !O)     cmd = cmd * opt
-			elseif (O)            cmd = cmd * opt
-			end
+	else
+		if (K && !O)          cmd = cmd * opt
+		elseif (!K && !O)     cmd = cmd * opt
+		elseif (O)            cmd = cmd * opt
 		end
 	end
 	return cmd
