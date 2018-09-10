@@ -60,9 +60,9 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
+function gmtinfo(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && !isa(arg1, GMTdataset) && return monolitic("gmtinfo", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && !isa(arg1, GMTdataset) && return monolitic("gmtinfo", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 	cmd = parse_V_params("", d)
@@ -86,8 +86,8 @@ function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd = add_opt(cmd,   'S', d, [:S :for_error_bars])
 	cmd = add_opt(cmd,   'T', d, [:T :nearest_multiple])
 
-	# If data is a file name, read it.
-	cmd, arg1, = read_data(data, cmd, arg1, " ", opt_i, opt_bi, opt_di)
+	# If file name sent in, read it.
+	cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ", opt_i, opt_bi, opt_di)
 
 	(haskey(d, :Vd)) && println(@sprintf("\tgmtinfo %s", cmd))
 
@@ -98,4 +98,4 @@ function gmtinfo(cmd0::String="", arg1=[]; data=[], kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtinfo(arg1, cmd0::String=""; data=[], kw...) = gmtinfo(cmd0, arg1; data=data, kw...)
+gmtinfo(arg1, cmd0::String=""; kw...) = gmtinfo(cmd0, arg1; kw...)

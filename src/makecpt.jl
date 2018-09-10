@@ -65,9 +65,9 @@ Full option list at [`makecpt`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.h
 - $(GMT.opt_di)
 - $(GMT.opt_i)
 """
-function makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
+function makecpt(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("makecpt", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("makecpt", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 	cmd = parse_V_params("", d)
@@ -75,8 +75,8 @@ function makecpt(cmd0::String="", arg1=[]; data=[], kwargs...)
 	cmd, opt_di = parse_bi(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
 
-	# If data is a file name, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, = read_data(data, cmd, arg1, " ", opt_i, opt_bi, opt_di)
+	# If file name sent in, read it and compute a tight -R if this was not provided 
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, " ", opt_i, opt_bi, opt_di)
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, [])
 
 	for sym in [:E :data_levels]
@@ -119,4 +119,4 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Version to use with the -E option
-#makecpt(arg1=[]; data=[], kw...) = makecpt("", arg1; data, kw...)
+#makecpt(arg1=[]; kw...) = makecpt("", arg1; kw...)

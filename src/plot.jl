@@ -89,34 +89,34 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-plot(arg1::Array; extra="", data=[], K=false, O=false, first=true, kw...) =
-    GMT.xy(extra, arg1; caller="plot", data=data, K=K, O=O, first=first, kw...)
-plot!(arg1::Array; extra="", data=[], K=false, O=false, first=true, kw...) =
-    GMT.xy(extra, arg1; caller="plot", data=data, K=true, O=true, first=false, kw...)
+plot(arg1::Array; extra="", K=false, O=false, first=true, kw...) =
+    GMT.xy(extra, arg1; caller="plot", K=K, O=O, first=first, kw...)
+plot!(arg1::Array; extra="", K=false, O=false, first=true, kw...) =
+    GMT.xy(extra, arg1; caller="plot", K=true, O=true, first=false, kw...)
 
 # -----------------------------------------------------------------------------------------------------
-plot(arg1::GMTdataset; extra="", data=[], K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", data=data, K=K, O=O, first=first, kw...)
-plot!(arg1::GMTdataset; extra="", data=[], K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", data=data, K=true, O=true, first=false, kw...)
-plot(arg1::Array{GMTdataset,1}; extra="", data=[], K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", data=data, K=K, O=O, first=first, kw...)
-plot!(arg1::Array{GMTdataset,1}; extra="", data=[], K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", data=data, K=true, O=true, first=false, kw...)
+plot(arg1::GMTdataset; extra="", K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, arg1; caller="plot", K=K, O=O, first=first, kw...)
+plot!(arg1::GMTdataset; extra="", K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, arg1; caller="plot", K=true, O=true, first=false, kw...)
+plot(arg1::Array{GMTdataset,1}; extra="", K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, arg1; caller="plot", K=K, O=O, first=first, kw...)
+plot!(arg1::Array{GMTdataset,1}; extra="", K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, arg1; caller="plot", K=true, O=true, first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-plot(arg1::String; extra="", data=[], K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, []; caller="plot", data=arg1, K=K, O=O, first=first, kw...)
-plot!(arg1::String; extra="", data=[], K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, []; caller="plot", data=arg1, K=true, O=true, first=false, kw...)
+plot(arg1::String; extra="", K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, []; caller="plot", K=K, O=O, first=first, kw...)
+plot!(arg1::String; extra="", K=false, O=false, first=true, kw...) =
+	GMT.xy(extra, []; caller="plot", K=true, O=true, first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-function plot(arg1::Array, arg2::Array; extra="", data=[], K=false, O=false, first=true, kw...)
+function plot(arg1::Array, arg2::Array; extra="", K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2)
-	GMT.xy(extra, arg; caller="plot", data=[], K=K, O=O, first=first, kw...)
+	GMT.xy(extra, arg; caller="plot",  K=K, O=O, first=first, kw...)
 end
-function plot!(arg1::Array, arg2::Array; extra="", data=[], K=false, O=false, first=true, kw...)
+function plot!(arg1::Array, arg2::Array; extra="", K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2)
-	GMT.xy(extra, arg; caller="plot", data=[], K=true, O=true, first=false, kw...)
+	GMT.xy(extra, arg; caller="plot",  K=true, O=true, first=false, kw...)
 end
 # ------------------------------------------------------------------------------------------------------

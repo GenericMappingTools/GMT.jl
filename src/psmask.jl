@@ -69,9 +69,9 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function mask(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, kwargs...)
+function mask(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("psmask", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("psmask", cmd0, arg1)	# Speedy mode
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
@@ -91,8 +91,8 @@ function mask(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, k
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	# If data is a file name, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	# If file name sent in, read it and compute a tight -R if this was not provided 
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
 	cmd = add_opt(cmd, 'C', d, [:C :end_clip_path])
 	cmd = add_opt(cmd, 'D', d, [:D :dump])
@@ -111,14 +111,14 @@ function mask(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, k
 end
 
 # ---------------------------------------------------------------------------------------------------
-mask!(cmd0::String="", arg1=[]; data=[], K=true, O=true,  first=false, kw...) =
-	mask(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+mask!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
+	mask(cmd0, arg1; K=K, O=O,  first=first, kw...)
 
-mask(arg1=[], cmd0::String=""; data=[], K=false, O=false,  first=true, kw...) =
-	mask(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+mask(arg1=[], cmd0::String=""; K=false, O=false,  first=true, kw...) =
+	mask(cmd0, arg1; K=K, O=O,  first=first, kw...)
 
-mask!(arg1=[], cmd0::String=""; data=[], K=true, O=true,  first=false, kw...) =
-	mask(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+mask!(arg1=[], cmd0::String=""; K=true, O=true,  first=false, kw...) =
+	mask(cmd0, arg1; K=K, O=O,  first=first, kw...)
 
 psmask  = mask			# Alias
 psmask! = mask!			# Alias

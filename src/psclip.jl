@@ -45,9 +45,9 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function clip(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, kwargs...)
+function clip(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("psclip", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("psclip", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -69,8 +69,8 @@ function clip(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, k
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	# If data is a file name, read it and compute a tight -R if this was not provided 
-	cmd, arg1, = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	# If file name sent in, read it and compute a tight -R if this was not provided 
+	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
 	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
 	cmd = add_opt(cmd, 'C', d, [:C :end_clip_path])
@@ -83,14 +83,14 @@ function clip(cmd0::String="", arg1=[]; data=[], K=false, O=false, first=true, k
 end
 
 # ---------------------------------------------------------------------------------------------------
-clip!(cmd0::String="", arg1=[]; data=[], K=true, O=true,  first=false, kw...) =
-	clip(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+clip!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
+	clip(cmd0, arg1; K=K, O=O,  first=first, kw...)
 
-clip(arg1=[], cmd0::String=""; data=[], K=false, O=false,  first=true, kw...) =
-	clip(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+clip(arg1=[], cmd0::String=""; K=false, O=false,  first=true, kw...) =
+	clip(cmd0, arg1; K=K, O=O,  first=first, kw...)
 
-clip!(arg1=[], cmd0::String=""; data=[], K=true, O=true,  first=false, kw...) =
-	clip(cmd0, arg1; data=data, K=K, O=O,  first=first, kw...)
+clip!(arg1=[], cmd0::String=""; K=true, O=true,  first=false, kw...) =
+	clip(cmd0, arg1; K=K, O=O,  first=first, kw...)
 
 psclip  = clip			# Alias
 psclip! = clip!			# Alias

@@ -96,20 +96,19 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function xy(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, kwargs...)
-	common_plot_xyz(cmd0, arg1, caller, data, K, O, first, false, kwargs...)
+function xy(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, kwargs...)
+	common_plot_xyz(cmd0, arg1, caller, K, O, first, false, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function xyz(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, kwargs...)
-	common_plot_xyz(cmd0, arg1, caller, data, K, O, first, true, kwargs...)
+function xyz(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, kwargs...)
+	common_plot_xyz(cmd0, arg1, caller, K, O, first, true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-#function common_plot_xyz(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, is3D=false, kwargs...)
-function common_plot_xyz(cmd0, arg1, caller, data, K, O, first, is3D, kwargs...)
+function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
-	N_args = isempty(arg1) ? 0 : 1
+	N_args = isempty_(arg1) ? 0 : 1
 
 	if (is3D)
 		gmt_proggy = "psxyz"
@@ -117,8 +116,7 @@ function common_plot_xyz(cmd0, arg1, caller, data, K, O, first, is3D, kwargs...)
 		gmt_proggy = "psxy"
 	end
 
-	((isempty(cmd0) && isempty_(arg1) && isempty(data)) || occursin(" -", cmd0)) &&
-	return monolitic(gmt_proggy, cmd0, arg1)	# Speedy mode
+	((isempty(cmd0) && isempty_(arg1)) || occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -150,8 +148,8 @@ function common_plot_xyz(cmd0, arg1, caller, data, K, O, first, is3D, kwargs...)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	# If data is a file name, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, opt_i = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
+	# If file name sent in, read it and compute a tight -R if this was not provided 
+	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
 
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
@@ -302,16 +300,16 @@ function common_plot_xyz(cmd0, arg1, caller, data, K, O, first, is3D, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-xy!(cmd0::String="", arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
-	xy(cmd0, arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
-xy!(arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
-	xy("", arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
+xy!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
+	xy(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
+xy!(arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
+	xy("", arg1; caller=caller, K=K, O=O,  first=first, kw...)
 
 # ---------------------------------------------------------------------------------------------------
-xyz!(cmd0::String="", arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
-	xyz(cmd0, arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
-xyz!(arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
-	xyz("", arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
+xyz!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
+	xyz(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
+xyz!(arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
+	xyz("", arg1; caller=caller, K=K, O=O,  first=first, kw...)
 
 psxy   = xy				# Alias
 psxy!  = xy!			# Alias

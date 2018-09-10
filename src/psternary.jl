@@ -84,13 +84,12 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function ternary(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, kwargs...)
+function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
-	N_args = isempty(arg1) ? 0 : 1
+	N_args = isempty_(arg1) ? 0 : 1
 
-	((isempty(cmd0) && isempty_(arg1) && isempty(data)) || occursin(" -", cmd0)) &&
-	return monolitic("ternary", cmd0, arg1)	# Monolitic mode
+	((isempty(cmd0) && isempty_(arg1) || occursin(" -", cmd0)) && return monolitic("ternary", cmd0, arg1)	# Monolitic mode
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -121,8 +120,8 @@ function ternary(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false,
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	# If data is a file name, read it and compute a tight -R if this was not provided 
-	cmd, arg1, = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, false)
+	# If file name sent in, read it and compute a tight -R if this was not provided 
+	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, false)
 
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
@@ -272,10 +271,10 @@ function ternary(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false,
 end
 
 # ---------------------------------------------------------------------------------------------------
-ternary!(cmd0::String="", arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
-	ternary(cmd0, arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
-ternary!(arg1=[]; caller=[], data=[], K=true, O=true,  first=false, kw...) =
-	ternary("", arg1; caller=caller, data=data, K=K, O=O,  first=first, kw...)
+ternary!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
+	ternary(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
+ternary!(arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
+	ternary("", arg1; caller=caller, K=K, O=O,  first=first, kw...)
 
 psternary  = ternary            # Aliases
 psternary! = ternary!           # Aliases

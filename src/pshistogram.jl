@@ -76,12 +76,12 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function histogram(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=false, first=true, kwargs...)
+function histogram(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("pshistogram", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("pshistogram", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -101,9 +101,9 @@ function histogram(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=fals
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	# If data is a file name, read it and compute a tight -R if this was not provided
+	# If file name sent in, read it and compute a tight -R if this was not provided
 	if (isempty(opt_R))  opt_R = " "  end		# So it doesn't try to find the -R in next call
-	cmd, arg1, opt_R, opt_i = read_data(data, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
@@ -139,14 +139,14 @@ function histogram(cmd0::String="", arg1=[]; caller=[], data=[], K=false, O=fals
 end
 
 # ---------------------------------------------------------------------------------------------------
-histogram!(cmd0::String="", arg1=[]; caller=[], data=[], K=true, O=true, first=false, kw...) =
-	histogram(cmd0, arg1; caller=caller, data=data, K=K, O=O, first=first, kw...)
+histogram!(cmd0::String="", arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+	histogram(cmd0, arg1; caller=caller, K=K, O=O, first=first, kw...)
 
-histogram(arg1=[]; caller=[], data=[], K=false, O=false, first=true, kw...) =
-	histogram("", arg1; caller=caller, data=data, K=K, O=O, first=first, kw...)
+histogram(arg1=[]; caller=[], K=false, O=false, first=true, kw...) =
+	histogram("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
-histogram!(arg1=[]; caller=[], data=[], K=true, O=true, first=false, kw...) =
-	histogram("", arg1; caller=caller, data=data, K=K, O=O, first=first, kw...)
+histogram!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+	histogram("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
 pshistogram  = histogram			# Alias
 pshistogram! = histogram!			# Alias
