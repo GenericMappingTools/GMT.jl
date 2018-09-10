@@ -498,7 +498,7 @@ function arg2str(arg)
 	elseif (isa(arg, Number))		# Have to do it after the Bool test above because Bool is a Number too
 		out = @sprintf("%.12g", arg)
 	elseif (isa(arg, Array{<:Number}))
-		out = join([@sprintf("%.12g/",x) for x in min(4, length(arg))])	# No more than 4 to avoid 'abuses'
+		out = join([@sprintf("%.12g/",x) for x in arg])
 		out = rstrip(out, '/')		# Remove last '/'
 	else
 		error("Argument 'arg' can only be a String or a Number")
