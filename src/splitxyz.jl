@@ -55,10 +55,10 @@ function splitxyz(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("splitxyz", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = parse_V_params("", d)
-	cmd, opt_bi = parse_bi(cmd, d)
+	cmd  = parse_V_params("", d)
+	cmd, = parse_bi(cmd, d)
 	cmd, = parse_bo(cmd, d)
-	cmd, opt_di = parse_di(cmd, d)
+	cmd, = parse_di(cmd, d)
 	cmd, = parse_do(cmd, d)
 	cmd, = parse_e(cmd, d)
 	cmd, = parse_f(cmd, d)

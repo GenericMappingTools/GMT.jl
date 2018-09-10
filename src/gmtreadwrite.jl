@@ -1,5 +1,5 @@
 """
-	gmtread(fname::String; kwargs...)
+	gmtread(fname::String, data; kwargs...)
 
 Read GMT object from file. The object is one of "grid" or "grd", "image" or "img",
 "data" or "table", "cmap" or "cpt" and "ps" (for postscript).
@@ -17,7 +17,7 @@ Specify data type.  Choose among:
 - **cpt** : **cmap** : -- Any --
 
     Tell the program to load a GMT color palette.
-- **data** : **table** : -- Any --
+- **dataset** : **table** : -- Any --
 
     Tell the program to load a dataset (a table of numbers).
 - **ps** : -- Any --
@@ -73,7 +73,7 @@ function gmtread(fname::String=""; kwargs...)
 		opt_T = add_opt("", "Ti", d, [:img :image])
 	end
 	if (isempty(opt_T))
-		opt_T = add_opt("", "Td", d, [:data :table])
+		opt_T = add_opt("", "Td", d, [:dataset :table])
 	end
 	if (isempty(opt_T))
 		opt_T = add_opt("", "Tc", d, [:cpt :cmap])
@@ -124,7 +124,7 @@ function gmtread(fname::String=""; kwargs...)
 	end
 
 	if (isempty(opt_T))
-		error("Must select one input data type (grid, image, data, cmap or ps")
+		error("Must select one input data type (grid, image, dataset, cmap or ps")
 	else
 		opt_T = opt_T[1:4]      				# Remove whatever was given as argument to type kwarg
 	end
@@ -152,7 +152,7 @@ end
 	gmtwrite(fname::String, data; kwargs...)
 
 Write a GMT object to file. The object is one of "grid" or "grd", "image" or "img",
-"data" or "table", "cmap" or "cpt" and "ps" (for postscript).
+"dataset" or "table", "cmap" or "cpt" and "ps" (for postscript).
 
 When saving grids we have a large panoply of formats at our disposal.
 
