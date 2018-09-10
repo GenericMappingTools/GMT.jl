@@ -86,7 +86,7 @@ function histogram(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, " -JX12c/12c")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", caller, O, " -JX12c/12c")
 	cmd = parse_JZ(cmd, d)
 	cmd = parse_UVXY(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)

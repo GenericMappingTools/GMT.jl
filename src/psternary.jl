@@ -103,7 +103,7 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 			break
 		end
 	end
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, opt_J)
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", caller, O, opt_J)
 	cmd = parse_UVXY(cmd, d)
 	cmd, = parse_a(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)

@@ -63,7 +63,7 @@ function colorbar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, "")
+    cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
 	cmd = parse_UVXY(cmd, d)
 	cmd, = parse_p(cmd, d)
 	cmd, = parse_t(cmd, d)

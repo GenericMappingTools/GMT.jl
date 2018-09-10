@@ -78,7 +78,7 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; K=false, O=false, first=t
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	cmd  = ""
-    cmd, opt_B, = parse_BJR(d, cmd0, cmd, "", O, " -JX12c/0")
+    cmd, opt_B, = parse_BJR(d, cmd, "", O, " -JX12c/0")
 	cmd  = parse_UVXY(cmd, d)
 	cmd, = parse_bo(cmd, d)
 	cmd, = parse_e(cmd, d)

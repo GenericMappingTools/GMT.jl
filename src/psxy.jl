@@ -130,7 +130,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 			break
 		end
 	end
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", caller, O, opt_J)
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", caller, O, opt_J)
 	if (is3D)	cmd = parse_JZ(cmd, d)	end
 	cmd = parse_UVXY(cmd, d)
 	cmd, = parse_a(cmd, d)
