@@ -70,7 +70,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; K=false, 
 
 	cmd, K, O, = set_KO(cmd, opt_B, first, K, O)			# Set the K O dance
 
-	cmd = add_opt_s(cmd, 'A', d, [:A :img_out :image_out])
+	cmd = add_opt(cmd, 'A', d, [:A :img_out :image_out])
 	cmd = add_opt(cmd, 'D', d, [:D :img_in :image_in])
 	cmd = add_opt(cmd, 'E', d, [:E :dpi])
 	cmd = add_opt(cmd, 'G', d, [:G])

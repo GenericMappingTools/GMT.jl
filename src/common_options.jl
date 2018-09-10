@@ -569,18 +569,6 @@ function add_opt(cmd::String, opt, d::Dict, symbs, del::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_s(cmd::String, opt, d::Dict, symbs)
-	# Same as add_opt() but where we only accept string arguments
-	for sym in symbs
-		if (haskey(d, sym) && isa(d[sym], String))
-			cmd = string(cmd, " -", opt, d[sym])
-			break
-		end
-	end
-	return cmd
-end
-
-# ---------------------------------------------------------------------------------------------------
 function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args, arg1, arg2=[])
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	# N_args only applyies to when a GMTcpt was transmitted, Than it's either 0, case in which

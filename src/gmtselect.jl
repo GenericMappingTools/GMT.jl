@@ -88,7 +88,7 @@ function gmtselect(cmd0::String="", arg1=[]; kwargs...)
 
 	cmd = add_opt(cmd, 'A', d, [:A :area])
 	cmd = add_opt(cmd, 'C', d, [:C :point_file])
-	cmd = add_opt_s(cmd, 'D', d, [:D :res :resolution])
+	cmd = add_opt(cmd, 'D', d, [:D :res :resolution])
 	cmd = add_opt(cmd, 'E', d, [:E :boundary])
 	cmd = add_opt(cmd, 'F', d, [:F :polygon])
 	cmd = add_opt(cmd, 'G', d, [:G :gridmask])

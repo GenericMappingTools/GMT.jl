@@ -91,11 +91,11 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 
 	maybe_more = false				# If latter set to true, search for lc & lc pen settings
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd0, "", "", O, " -JX12c/0")
-	cmd = parse_UVXY(cmd, d)
+	cmd  = parse_UVXY(cmd, d)
 	cmd, = parse_p(cmd, d)
 	cmd, = parse_t(cmd, d)
 	cmd, = parse_bo(cmd, d)
-	cmd = parse_params(cmd, d)
+	cmd  = parse_params(cmd, d)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
@@ -152,8 +152,8 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 	end
 
 	cmd = add_opt(cmd, 'A', d, [:A :area])
-	cmd = add_opt_s(cmd, 'C', d, [:C :river_fill])
-	cmd = add_opt_s(cmd, 'D', d, [:D :res :resolution])
+	cmd = add_opt(cmd, 'C', d, [:C :river_fill])
+	cmd = add_opt(cmd, 'D', d, [:D :res :resolution])
 
 	for sb in [:E :DCW]
 		if (haskey(d, sb))
@@ -174,13 +174,13 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 		end
 	end
 
-	cmd = add_opt_s(cmd, 'F', d, [:F :box])
+	cmd = add_opt(cmd, 'F', d, [:F :box])
 	cmd = add_opt(cmd, 'G', d, [:G :land])
-	cmd = add_opt_s(cmd, 'L', d, [:L :map_scale])
+	cmd = add_opt(cmd, 'L', d, [:L :map_scale])
 	cmd = add_opt(cmd, 'M', d, [:M :dump])
 	cmd = add_opt(cmd, 'S', d, [:S :water])
-	cmd = add_opt_s(cmd, "Td", d, [:Td :rose])
-	cmd = add_opt_s(cmd, "Tm", d, [:Td :compass])
+	cmd = add_opt(cmd, "Td", d, [:Td :rose])
+	cmd = add_opt(cmd, "Tm", d, [:Tm :compass])
 
 	cmd = finish_PS(d, cmd0, cmd, output, K, O)
 
