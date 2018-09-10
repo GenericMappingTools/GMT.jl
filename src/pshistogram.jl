@@ -133,8 +133,7 @@ function histogram(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=
 		end
 	end
 
-	cmd = finish_PS(d, cmd0, cmd, output, K, O)
-
+	cmd = finish_PS(d, cmd, output, K, O)
 	return finish_PS_module(d, cmd, "", arg1, arg2, [], [], [], [], output, fname_ext, opt_T, K, "pshistogram")
 end
 

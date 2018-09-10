@@ -265,7 +265,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	end
 
 	if (!isempty(opt_W) && isempty(opt_S)) 			# We have a line/polygon request
-		cmd = [finish_PS(d, cmd0, cmd * opt_W, output, K, O)]
+		cmd = [finish_PS(d, cmd * opt_W, output, K, O)]
 	elseif (isempty(opt_W) && !isempty(opt_S))		# We have a symbol request
 		if (!isempty(opt_Wmarker) && isempty(opt_W))
 			opt_Gsymb = opt_Gsymb * " -W" * opt_Wmarker	# Piggy back in this option string
@@ -273,11 +273,11 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		if (!isempty(opt_ML))						# If we have a symbol outline pen
 			cmd = cmd * opt_ML
 		end
-		cmd = [finish_PS(d, cmd0, cmd * opt_S * opt_Gsymb, output, K, O)]
+		cmd = [finish_PS(d, cmd * opt_S * opt_Gsymb, output, K, O)]
 	elseif (!isempty(opt_W) && !isempty(opt_S))		# We have both line/polygon and a symbol
 		# that is not a vector (because Vector width is set by -W)
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
-			cmd = [finish_PS(d, cmd0, cmd * opt_W * opt_S * opt_Gsymb, output, K, O)]
+			cmd = [finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb, output, K, O)]
 		else
 			if (!isempty(opt_Wmarker))
 				opt_Wmarker = " -W" * opt_Wmarker	# Set Symbol edge color 
@@ -287,13 +287,13 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 			if (!isempty(opt_ML))					# If we have a symbol outline pen
 				cmd1 = cmd1 * opt_ML
 			end
-			cmd = [finish_PS(d, cmd0, cmd1, output, true, O)
-			       finish_PS(d, cmd0, cmd2, output, K, true)]
+			cmd = [finish_PS(d, cmd1, output, true, O)
+			       finish_PS(d, cmd2, output, K, true)]
 		end
 	elseif (!isempty(opt_S) && !isempty(opt_ML))		# We have a symbol outline pen
-		cmd = [finish_PS(d, cmd0, cmd * opt_ML * opt_S * opt_Gsymb, output, K, O)]
+		cmd = [finish_PS(d, cmd * opt_ML * opt_S * opt_Gsymb, output, K, O)]
 	else
-		cmd = [finish_PS(d, cmd0, cmd, output, K, O)]
+		cmd = [finish_PS(d, cmd, output, K, O)]
 	end
 
     return finish_PS_module(d, cmd, "", arg1, arg2, N_args, output, fname_ext, opt_T, K, gmt_proggy)

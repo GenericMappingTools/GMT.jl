@@ -110,7 +110,7 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; K=false, O=false, first=t
 	cmd = add_opt(cmd, 'W', d, [:W :pen])
 	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
 
-	cmd = finish_PS(d, cmd0, cmd, output, K, O)
+	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, "-D", arg1, arg2, [], [], [], [], output, fname_ext, opt_T, K, "grdcontour")
 end
 

@@ -76,7 +76,7 @@ function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
     if (occursin( "-I", cmd) || occursin("-I", cmd0))
         output = "";    opt_extra = "-I"
     end
-	cmd = finish_PS(d, cmd0, cmd, output, K, O)
+	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, opt_extra, arg1, arg2, [], [], [], [], output, fname_ext, opt_T, K, "pssolar")
 end
 
