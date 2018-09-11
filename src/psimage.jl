@@ -58,7 +58,7 @@ function image(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
 
 	cmd = finish_PS(d, cmd, output, K, O)
-	return finish_PS_module(d, cmd, "", arg1, [], [], [], [], [], output, fname_ext, opt_T, K, "psimage")
+	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psimage", arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

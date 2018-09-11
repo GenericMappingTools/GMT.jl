@@ -841,52 +841,32 @@ function put_in_slot(cmd::String, val, opt::Char, args)
 	return cmd, k
 end
 
-
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, arg3, arg4, arg5, arg6,
-                          output::String, fname_ext::String, opt_T::String, K::Bool, prog::String)
-	# Common code shared by most of the PS producing modules.
-	# OPT_EXTRA is used to force an LHS for cases whe the PS module also produces other things
-
-	(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd))
-
-	cmd = string(prog, " ", cmd)
-	if     (!isempty_(arg6))  P = gmt(cmd, arg1, arg2, arg3, arg4, arg5, arg6)
-	elseif (!isempty_(arg5))  P = gmt(cmd, arg1, arg2, arg3, arg4, arg5)
-	elseif (!isempty_(arg4))  P = gmt(cmd, arg1, arg2, arg3, arg4)
-	elseif (!isempty_(arg3))  P = gmt(cmd, arg1, arg2, arg3)
-	elseif (!isempty_(arg2))  P = gmt(cmd, arg1, arg2)
-	elseif (!isempty_(arg2))  P = gmt(cmd, arg1, arg2)
-	elseif (!isempty_(arg1))  P = gmt(cmd, arg1)
-	else                      P = gmt(cmd)
-	end
-
-	if (isempty(fname_ext) && isempty(opt_extra))	# Return result as an GMTimage
-		P = showfig(output, fname_ext, "", K)
-	else
-		if (haskey(d, :show) && d[:show] != 0) 		# Display Fig in default viewer
-			showfig(output, fname_ext, opt_T, K)
-		elseif (haskey(d, :savefig))
-			showfig(output, fname_ext, opt_T, K, d[:savefig])
+function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String, 
+						   opt_T::String, K::Bool, prog::String, arg1=[], arg2=[], arg3=[], 
+						   arg4=[], arg5=[], arg6=[])
+	if (isa(cmd, Array{String, 1}))
+		for k = 1:length(cmd)
+			dbg_print_cmd(d, cmd[k], prog)
+			if (isempty_(arg1))					# Simple case
+				P = gmt(string(prog, " ", cmd[k]))
+			elseif (isempty_(arg2))				# One numeric input
+				P = gmt(string(prog, " ", cmd[k]), arg1)
+			else								# Two numeric inputs
+				P = gmt(string(prog, " ", cmd[k]), arg1, arg2)
+			end
 		end
-	end
-	return P
-end
-
-# ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, arg1, arg2, N_args::Integer,
-                          output::String, fname_ext::String, opt_T::String, K::Bool, prog::String)
-	# This version uses onle two ARGi and CMD is an Array of strings
-	# Also N_args is no longer used and must be removed.
-
-	for k = 1:length(cmd)
-		(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd[k]))
-		if (isempty_(arg1))					# Simple case
-			P = gmt(string(prog, " ", cmd[k]))
-		elseif (isempty_(arg2))				# One numeric input
-			P = gmt(string(prog, " ", cmd[k]), arg1)
-		else								# Two numeric inputs (data + CPT)
-			P = gmt(string(prog, " ", cmd[k]), arg1, arg2)
+	else
+		dbg_print_cmd(d, cmd, prog)
+		cmd = string(prog, " ", cmd)
+		if     (!isempty_(arg6))  P = gmt(cmd, arg1, arg2, arg3, arg4, arg5, arg6)
+		elseif (!isempty_(arg5))  P = gmt(cmd, arg1, arg2, arg3, arg4, arg5)
+		elseif (!isempty_(arg4))  P = gmt(cmd, arg1, arg2, arg3, arg4)
+		elseif (!isempty_(arg3))  P = gmt(cmd, arg1, arg2, arg3)
+		elseif (!isempty_(arg2))  P = gmt(cmd, arg1, arg2)
+		elseif (!isempty_(arg2))  P = gmt(cmd, arg1, arg2)
+		elseif (!isempty_(arg1))  P = gmt(cmd, arg1)
+		else                      P = gmt(cmd)
 		end
 	end
 
@@ -900,13 +880,6 @@ function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, arg1
 		end
 	end
 	return P
-end
-
-# ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, output::String,
-                          fname_ext::String, opt_T::String, K::Bool, prog::String)
-	finish_PS_module(d, [cmd], opt_extra, arg1, arg2, 0, output, fname_ext, opt_T, K, prog)
-	# This version uses only two ARGi and CMD is a string
 end
 
 # --------------------------------------------------------------------------------------------------

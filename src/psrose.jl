@@ -120,7 +120,7 @@ function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
 
 	cmd = finish_PS(d, cmd, output, K, O)
-	return finish_PS_module(d, cmd, "", arg1, arg2, [], [], [], [], output, fname_ext, opt_T, K, "psrose")
+	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psrose", arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------
