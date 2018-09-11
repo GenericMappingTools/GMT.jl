@@ -138,7 +138,7 @@ function text(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true,
 		cmd = finish_PS(d, cmd, output, K, O)
 	end
 
-    return finish_PS_module(d, cmd, "", arg1, arg2, [], [], [], [], output, fname_ext, opt_T, K, "pstext")
+    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pstext", arg1, arg2, [], [], [], [])
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -843,8 +843,8 @@ end
 
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, arg3, arg4, arg5, arg6,
-                          output::String, fname_ext::String, opt_T::String, K::Bool, prog::String)
+function finish_PS_module(d::Dict, cmd::String, opt_extra::String, output::String, fname_ext::String,
+                          opt_T::String, K::Bool, prog::String, arg1, arg2, arg3, arg4, arg5, arg6)
 	# Common code shared by most of the PS producing modules.
 	# OPT_EXTRA is used to force an LHS for cases whe the PS module also produces other things
 
@@ -874,8 +874,9 @@ function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, a
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, arg1, arg2, N_args::Integer,
-                          output::String, fname_ext::String, opt_T::String, K::Bool, prog::String)
+function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, N_args::Integer,
+						  output::String, fname_ext::String, opt_T::String, K::Bool, prog::String,
+						  arg1, arg2)
 	# This version uses onle two ARGi and CMD is an Array of strings
 	# Also N_args is no longer used and must be removed.
 
@@ -903,9 +904,9 @@ function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, arg1
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, output::String,
-                          fname_ext::String, opt_T::String, K::Bool, prog::String)
-	finish_PS_module(d, [cmd], opt_extra, arg1, arg2, 0, output, fname_ext, opt_T, K, prog)
+function finish_PS_module(d::Dict, cmd::String, opt_extra::String, output::String,
+                          fname_ext::String, opt_T::String, K::Bool, prog::String, arg1, arg2)
+	finish_PS_module(d, [cmd], opt_extra, 0, output, fname_ext, opt_T, K, prog, arg1, arg2)
 	# This version uses only two ARGi and CMD is a string
 end
 

@@ -267,7 +267,7 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 		cmd = [finish_PS(d, cmd, output, K, O)]
 	end
 
-	return finish_PS_module(d, cmd, "", arg1, arg2, N_args, output, fname_ext, opt_T, K, "ternary")
+	return finish_PS_module(d, cmd, "", N_args, output, fname_ext, opt_T, K, "ternary", arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------
