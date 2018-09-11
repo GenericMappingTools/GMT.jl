@@ -874,12 +874,11 @@ function finish_PS_module(d::Dict, cmd::String, opt_extra::String, output::Strin
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, N_args::Integer,
-						  output::String, fname_ext::String, opt_T::String, K::Bool, prog::String,
-						  arg1, arg2)
+function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String, 
+                          opt_T::String, K::Bool, prog::String, arg1, arg2)
 	# This version uses onle two ARGi and CMD is an Array of strings
-	# Also N_args is no longer used and must be removed.
 
+	if (!isa(cmd, Array{String, 1}))	cmd = [cmd]		end
 	for k = 1:length(cmd)
 		(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd[k]))
 		if (isempty_(arg1))					# Simple case
@@ -903,12 +902,13 @@ function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, N_ar
 	return P
 end
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function finish_PS_module(d::Dict, cmd::String, opt_extra::String, output::String,
                           fname_ext::String, opt_T::String, K::Bool, prog::String, arg1, arg2)
 	finish_PS_module(d, [cmd], opt_extra, 0, output, fname_ext, opt_T, K, prog, arg1, arg2)
 	# This version uses only two ARGi and CMD is a string
 end
+=#
 
 # --------------------------------------------------------------------------------------------------
 function monolitic(prog::String, cmd0::String, args...)

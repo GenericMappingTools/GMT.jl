@@ -123,7 +123,7 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, false)
 
-	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
+	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
 	cmd = add_opt(cmd, 'L', d, [:L :straight_lines])
 	cmd = add_opt(cmd, 'M', d, [:M :offset])
@@ -267,7 +267,7 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 		cmd = [finish_PS(d, cmd, output, K, O)]
 	end
 
-	return finish_PS_module(d, cmd, "", N_args, output, fname_ext, opt_T, K, "ternary", arg1, arg2)
+	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "ternary", arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------
