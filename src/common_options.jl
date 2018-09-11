@@ -848,33 +848,17 @@ function finish_PS_module(d::Dict, cmd::String, opt_extra::String, arg1, arg2, a
 	# Common code shared by most of the PS producing modules.
 	# OPT_EXTRA is used to force an LHS for cases whe the PS module also produces other things
 
-	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
-	else                PS = false
-	end
-	if (!isempty(opt_extra) && occursin(opt_extra, cmd))  PS = true  end	# For example -D in grdcontour
-
 	(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd))
 
-	P = nothing
-	if (PS)
-		if     (!isempty_(arg6))  P = gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4, arg5, arg6)
-		elseif (!isempty_(arg5))  P = gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4, arg5)
-		elseif (!isempty_(arg4))  P = gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4)
-		elseif (!isempty_(arg3))  P = gmt(string(prog, " ", cmd), arg1, arg2, arg3)
-		elseif (!isempty_(arg2))  P = gmt(string(prog, " ", cmd), arg1, arg2)
-		elseif (!isempty_(arg2))  P = gmt(string(prog, " ", cmd), arg1, arg2)
-		elseif (!isempty_(arg1))  P = gmt(string(prog, " ", cmd), arg1)
-		else                      P = gmt(string(prog, " ", cmd))
-		end
-	else
-		if     (!isempty_(arg6))  gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4, arg5, arg6)
-		elseif (!isempty_(arg5))  gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4, arg5)
-		elseif (!isempty_(arg4))  gmt(string(prog, " ", cmd), arg1, arg2, arg3, arg4)
-		elseif (!isempty_(arg3))  gmt(string(prog, " ", cmd), arg1, arg2, arg3)
-		elseif (!isempty_(arg2))  gmt(string(prog, " ", cmd), arg1, arg2)
-		elseif (!isempty_(arg1))  gmt(string(prog, " ", cmd), arg1)
-		else                      gmt(string(prog, " ", cmd))
-		end
+	cmd = string(prog, " ", cmd)
+	if     (!isempty_(arg6))  P = gmt(cmd, arg1, arg2, arg3, arg4, arg5, arg6)
+	elseif (!isempty_(arg5))  P = gmt(cmd, arg1, arg2, arg3, arg4, arg5)
+	elseif (!isempty_(arg4))  P = gmt(cmd, arg1, arg2, arg3, arg4)
+	elseif (!isempty_(arg3))  P = gmt(cmd, arg1, arg2, arg3)
+	elseif (!isempty_(arg2))  P = gmt(cmd, arg1, arg2)
+	elseif (!isempty_(arg2))  P = gmt(cmd, arg1, arg2)
+	elseif (!isempty_(arg1))  P = gmt(cmd, arg1)
+	else                      P = gmt(cmd)
 	end
 
 	if (isempty(fname_ext) && isempty(opt_extra))	# Return result as an GMTimage
@@ -895,25 +879,14 @@ function finish_PS_module(d::Dict, cmd::Array{String,1}, opt_extra::String, arg1
 	# This version uses onle two ARGi and CMD is an Array of strings
 	# Also N_args is no longer used and must be removed.
 
-	if (haskey(d, :ps)) PS = true			# To know if returning PS to the REPL was requested
-	else                PS = false
-	end
-
-	P = nothing
 	for k = 1:length(cmd)
 		(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd[k]))
 		if (isempty_(arg1))					# Simple case
-			if (PS) P = gmt(string(prog, " ", cmd[k]))
-			else        gmt(string(prog, " ", cmd[k]))
-			end
+			P = gmt(string(prog, " ", cmd[k]))
 		elseif (isempty_(arg2))				# One numeric input
-			if (PS) P = gmt(string(prog, " ", cmd[k]), arg1)
-			else        gmt(string(prog, " ", cmd[k]), arg1)
-			end
+			P = gmt(string(prog, " ", cmd[k]), arg1)
 		else								# Two numeric inputs (data + CPT)
-			if (PS) P = gmt(string(prog, " ", cmd[k]), arg1, arg2)
-			else        gmt(string(prog, " ", cmd[k]), arg1, arg2)
-			end
+			P = gmt(string(prog, " ", cmd[k]), arg1, arg2)
 		end
 	end
 
