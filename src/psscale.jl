@@ -86,7 +86,7 @@ function colorbar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psscale", arg1, [], [], [], [], [])
+    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psscale", arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

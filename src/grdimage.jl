@@ -115,7 +115,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; K=false, 
 	end
 
 	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "grdimage", arg1, arg2, arg3, arg4, [], [])
+    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "grdimage", arg1, arg2, arg3, arg4)
 end
 
 # ---------------------------------------------------------------------------------------------------
