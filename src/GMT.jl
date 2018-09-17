@@ -24,16 +24,18 @@ const FMT = "ps"
 
 export
 	GMTver, FMT, gmt,
-	basemap, basemap!, blockmean, blockmedian, blockmode, coast, coast!, colorbar, colorbar!, filter1d,
-	filter2d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, gmtread, gmtselect, gmtsimplify,
-	gmtspatial, gmtvector, gmtwrite, gmtwich, grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour,
+	basemap, basemap!, blockmean, blockmedian, blockmode, coast, coast!, colorbar, colorbar!, contour, 
+	contour!, filter1d, filter2d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
+	gmtread, gmtselect, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwich, 
+	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour,
 	grdcontour!, grdcut, grdedit, grdfft, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo,
 	grdlandmask, grdpaste, grdproject, grdsample, grdtrack, grdtrend, grdview, grdview!, grdvolume,
 	grid_type, histogram, histogram!, image, image!, imshow, imshow!, kml2gmt, logo, logo!, makecpt,
 	mapproject, nearneighbor, plot, plot!, plot3d, plot3d!, project,
-	psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, pshistogram, pshistogram!,
-	psimage, psimage!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
-	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!,
+	pscontour, pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, 
+	pshistogram, pshistogram!, psimage, psimage!, psmask, psmask!, psrose, psrose!, psscale, psscale!, 
+	pssolar, pssolar!, psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, 
+	psxyz!,
 	rose, rose!, sample1d, solar, solar!, spectrum1d, sphdistance, sphinterpolate, sphtriangulate,
 	surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
 	wiggle, wiggle!, xy, xy!, xyz2grd
@@ -88,6 +90,7 @@ include("nearneighbor.jl")
 include("project.jl")
 include("psbasemap.jl")
 include("pscoast.jl")
+include("pscontour.jl")
 include("psconvert.jl")
 include("pshistogram.jl")
 include("psimage.jl")

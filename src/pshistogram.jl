@@ -105,7 +105,7 @@ function histogram(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=
 	if (isempty(opt_R))  opt_R = " "  end		# So it doesn't try to find the -R in next call
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
-	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
+	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
 	cmd = add_opt(cmd, 'A', d, [:A :horizontal])
 	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate])

@@ -179,6 +179,10 @@ if (got_it)					# Otherwise go straight to end
 	coast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green")))
 
+	# PSCONTOUR
+	x,y,z=GMT.peaks();
+	contour([x[:] y[:] z[:]], cont=1, annot=2, frame="a")
+
 	# PSIMAGE
 	#gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
 

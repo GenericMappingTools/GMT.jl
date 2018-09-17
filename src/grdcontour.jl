@@ -10,9 +10,9 @@ Parameters
 ----------
 
 - $(GMT.opt_J)
-- **A** : **annot** : -- Str or Number --
+- **A** : **annot** : -- Str or Number --       Flags = [-|[+]annot_int][labelinfo]
 
-    Save an image in a raster format instead of PostScript.
+    *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#a)
 - $(GMT.opt_B)
 - **C** : **cont** : **contours** : **levels** : -- Str or Number --
