@@ -60,8 +60,8 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
 [GMT](http://gmt.soest.hawaii.edu) program. It's the user responsability to do that.
 
   * Windows64
-      1. Download and install the official version at (the [..._win64.exe](https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
-      2. Or even better, download and install the [GMT6dev version](http://w3.ualg.pt/~jluis/downloads/gmt.html)
+      1. It's better to install the [GMT6dev version](http://w3.ualg.pt/~jluis/mirone/downloads/gmt.html)
+      2. But if you prefer the official GMT5 version (the [..._win64.exe](https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
 
   * Windows32
 
