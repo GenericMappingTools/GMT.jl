@@ -19,10 +19,18 @@ end
 function build_opt_R(Val)
 	if (isa(Val, String))
 		return " -R" * Val
+	elseif (isa(Val, Array{<:Number}) && (length(Val) == 4 || length(Val) == 6))
+		out = join([@sprintf("%.12g/",x) for x in Val])
+		return " -R" * rstrip(out, '/')		# Remove last '/'
+	elseif (isa(Val, Tuple) && (length(Val) == 4 || length(Val) == 6))
+		out = join([@sprintf("%.12g/",x) for x in Val])
+		return " -R" * rstrip(out, '/')		# Remove last '/'
+#=
 	elseif (isa(Val, Array) && length(Val) == 4)
 		return @sprintf(" -R%.14g/%.14g/%.14g/%.14g", Val[1], Val[2], Val[3], Val[4])
 	elseif (isa(Val, Array) && length(Val) == 6)
 		return @sprintf(" -R%.14g/%.14g/%.14g/%.14g/%.14g/%.14g", Val[1], Val[2], Val[3], Val[4], Val[5], Val[6])
+=#
 	elseif (isa(Val, GMTgrid) || isa(Val, GMTimage))
 		return @sprintf(" -R%.14g/%.14g/%.14g/%.14g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
 	end
