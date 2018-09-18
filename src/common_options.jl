@@ -19,12 +19,11 @@ end
 function build_opt_R(Val)
 	if (isa(Val, String))
 		return " -R" * Val
-	elseif (isa(Val, Array) && length(Val) == 4)
-		return @sprintf(" -R%.14g/%.14g/%.14g/%.14g", Val[1], Val[2], Val[3], Val[4])
-	elseif (isa(Val, Array) && length(Val) == 6)
-		return @sprintf(" -R%.14g/%.14g/%.14g/%.14g/%.14g/%.14g", Val[1], Val[2], Val[3], Val[4], Val[5], Val[6])
+	elseif ((isa(Val, Array{<:Number}) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
+		out = join([@sprintf("%.15g/",x) for x in Val])
+		return " -R" * rstrip(out, '/')		# Remove last '/'
 	elseif (isa(Val, GMTgrid) || isa(Val, GMTimage))
-		return @sprintf(" -R%.14g/%.14g/%.14g/%.14g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
+		return @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
 	end
 	return ""
 end
@@ -496,9 +495,9 @@ function arg2str(arg)
 	elseif (isempty(arg) || (isa(arg, Bool) && arg))
 		out = ""
 	elseif (isa(arg, Number))		# Have to do it after the Bool test above because Bool is a Number too
-		out = @sprintf("%.12g", arg)
-	elseif (isa(arg, Array{<:Number}))
-		out = join([@sprintf("%.12g/",x) for x in arg])
+		out = @sprintf("%.15g", arg)
+	elseif (isa(arg, Array{<:Number}) || isa(arg, Tuple))
+		out = join([@sprintf("%.15g/",x) for x in arg])
 		out = rstrip(out, '/')		# Remove last '/'
 	else
 		error("Argument 'arg' can only be a String or a Number")
