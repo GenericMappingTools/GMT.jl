@@ -36,6 +36,10 @@ Parameters
 
     Limit range: Do not draw contours for data values below low or above high.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#l)
+- **N** : **fill** : -- Bool or [] --
+
+    Fill the area between contours using the discrete color table given by cpt.
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#n)
 - $(GMT.opt_P)
 - **Q** : **cut** : -- Str or Number --
 
@@ -104,6 +108,7 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; K=false, O=false, first=t
 	cmd = add_opt(cmd, 'F', d, [:F :force])
 	cmd = add_opt(cmd, 'G', d, [:G :labels])
 	cmd = add_opt(cmd, 'L', d, [:L :range])
+	cmd = add_opt(cmd, 'N', d, [:N :fill])
 	cmd = add_opt(cmd, 'Q', d, [:Q :cut])
 	cmd = add_opt(cmd, 'S', d, [:S :smooth])
 	cmd = add_opt(cmd, 'T', d, [:T :ticks])
