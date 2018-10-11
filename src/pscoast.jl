@@ -104,7 +104,7 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 		elseif (clip == "water")  cmd = cmd * " -Sc"
 		elseif (clip == "end")    cmd = cmd * " -Q"
 		else
-			warn("The 'clip' argument can only be \"land\", \"water\" or \"end\". Ignoring it.")
+			@warn("The 'clip' argument can only be \"land\", \"water\" or \"end\". Ignoring it.")
 		end
 	end
 
