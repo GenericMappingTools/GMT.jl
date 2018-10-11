@@ -178,7 +178,6 @@ if (got_it)					# Otherwise go straight to end
 	coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
 	coast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green")))
-	coast(xlim=(-10,-5),ylim=(35,45), B=:a, W=1)
 
 	# PSCONTOUR
 	x,y,z=GMT.peaks();
@@ -226,6 +225,11 @@ if (got_it)					# Otherwise go straight to end
 
 	# MISC
 	G = GMT.grid_type(G.z);
+
+	# Test common_options
+	d = Dict(:xlim => (1,2), :ylim => (3,4));
+	r = GMT.parse_R("", d);
+	@test r[1] == " -R1/2/3/4"
 
 	# EXAMPLES
 	plot(collect(1:10),rand(10), lw=1, lc="blue", marker="square",
