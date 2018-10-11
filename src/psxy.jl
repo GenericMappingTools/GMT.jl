@@ -254,13 +254,13 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 				end
 				if (!isempty(opt_Wmarker))
 					opt_Wmarker = ""
-					warn("markerline overrides markeredgecolor")
+					@warn("markerline overrides markeredgecolor")
 				end
 				break
 			end
 		end
 		if (!isempty(opt_W) && !isempty(opt_ML))
-			warn("You cannot use both markeredgecolor and W or line_attrib keys.")
+			@warn("You cannot use both markeredgecolor and W or line_attrib keys.")
 		end
 	end
 

@@ -132,7 +132,7 @@ function psconvert(cmd0::String="", arg1=[]; kwargs...)
 	if (haskey(d, :in_memory))
 		cmd = cmd * " ="
 		if (!isempty_(arg1))
-			warn("The IN_MEMORY option is imcompatible with passing an input file name.
+			@warn("The IN_MEMORY option is imcompatible with passing an input file name.
 			      Dropping this one.")
 			arg1 = []
 		end

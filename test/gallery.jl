@@ -66,7 +66,7 @@ function gallery(opt::String, g_root_dir::String, out_path::String)
 	elseif (opt == "ex45")		ps, path = ex45(g_root_dir, out_path)
 	elseif (opt == "ex46")		ps, path = ex46(g_root_dir, out_path)
 	else
-		warn("Example " * opt * " does not exits or not implemented.")
+		@warn("Example " * opt * " does not exits or not implemented.")
 		ps = [];	path = []
 	end
 	return ps, path

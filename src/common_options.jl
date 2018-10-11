@@ -621,7 +621,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R, opt_i, opt_bi, opt_d
 
 	ins = sum([data_kw !== nothing !isempty_(arg) !isempty(fname)])
 	if (ins > 1)
-		warn("Conflicting ways of providing input data. Either a file name via positional and
+		@warn("Conflicting ways of providing input data. Either a file name via positional and
 		a data array via keyword args were provided or numeric input. Unknown effect of this.")
 	end
 
