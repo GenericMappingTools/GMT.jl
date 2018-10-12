@@ -226,6 +226,11 @@ if (got_it)					# Otherwise go straight to end
 	# MISC
 	G = GMT.grid_type(G.z);
 
+	# Test common_options
+	d = Dict(:xlim => (1,2), :ylim => (3,4));
+	r = GMT.parse_R("", d);
+	@test r[1] == " -R1/2/3/4"
+
 	# EXAMPLES
 	plot(collect(1:10),rand(10), lw=1, lc="blue", marker="square",
 	markeredgecolor=0, size=0.2, markerfacecolor="red", title="Hello World",

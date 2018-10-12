@@ -11,6 +11,23 @@ function parse_R(cmd::String, d::Dict, O=false)
 			break
 		end
 	end
+	if (isempty(opt_R))		# See if we got the region as tuples of xlim, ylim [zlim]
+		R = "";		c = 0
+		if (haskey(d, :xlim) && isa(d[:xlim], Tuple) && length(d[:xlim]) == 2)
+			R = @sprintf(" -R%.15g/%.15g", d[:xlim][1], d[:xlim][2])
+			c += 2
+			if (haskey(d, :ylim) && isa(d[:ylim], Tuple) && length(d[:ylim]) == 2)
+				R = @sprintf("%s/%.15g/%.15g", R, d[:ylim][1], d[:ylim][2])
+				c += 2
+				if (haskey(d, :zlim) && isa(d[:zlim], Tuple) && length(d[:zlim]) == 2)
+					R = @sprintf("%s/%.15g/%.15g", R, d[:zlim][1], d[:zlim][2])
+				end
+			end
+		end
+		if (!isempty(R) && c == 4)
+			opt_R = R
+		end
+	end
 	if (O && isempty(opt_R))  opt_R = " -R"  end
 	cmd = cmd * opt_R
 	return cmd, opt_R
