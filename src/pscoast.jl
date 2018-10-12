@@ -24,9 +24,9 @@ Parameters
 
     Set the shade, color, or pattern for lakes and river-lakes.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#c)
-- **D** : **res** : **resolution** : -- Str --
+- **D** : **res** : **resolution** : -- Str --		Flags = c|l|i|h|f|a
 
-    Selects the resolution of the data set to use ((f)ull, (h)igh, (i)ntermediate, (l)ow, and (c)rude).
+    Selects the resolution of the data set to use ((f)ull, (h)igh, (i)ntermediate, (l)ow, (c)rude), or (a)uto).
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#d)
 - **E** : **DCW** : -- Str --
 
@@ -59,6 +59,11 @@ Parameters
     Draw political boundaries. Specify the type of boundary and [optionally] append pen attributes
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#n)
 - $(GMT.opt_P)
+- **clip** : -- Str --		Flags = land|water|end
+
+    To clip land do *clip=:land*, *clip=:water* clips water. Use *end* to mark end of existing clip path.
+    No projection information is needed.
+    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#q)
 - **S** : **water** : -- Str --
 
     Select filling or clipping of “wet” areas.
@@ -100,9 +105,9 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	if (!isempty(clip))
-		if (clip == "land")       cmd = cmd * " -Gc"
-		elseif (clip == "water")  cmd = cmd * " -Sc"
-		elseif (clip == "end")    cmd = cmd * " -Q"
+		if (clip == "land" || clip == :land)       cmd = cmd * " -Gc"
+		elseif (clip == "water" || clip == :water) cmd = cmd * " -Sc"
+		elseif (clip == "end" || clip == :end)     cmd = cmd * " -Q"
 		else
 			@warn("The 'clip' argument can only be \"land\", \"water\" or \"end\". Ignoring it.")
 		end
@@ -181,6 +186,14 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 	cmd = add_opt(cmd, 'S', d, [:S :water])
 	cmd = add_opt(cmd, "Td", d, [:Td :rose])
 	cmd = add_opt(cmd, "Tm", d, [:Tm :compass])
+
+	if (!occursin("-C",cmd) && !occursin("-E",cmd) && !occursin("-G",cmd) && !occursin("-I",cmd) &&
+		!occursin("-M",cmd) && !occursin("-N",cmd) && !occursin("-Q",cmd) && !occursin("-S",cmd) && !occursin("-W",cmd))
+		cmd = cmd * " -W0.5p"
+	end
+	if (!occursin("-D",cmd))		# Then pick automatic
+		cmd = cmd * " -Da"
+	end
 
 	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pscoast")
