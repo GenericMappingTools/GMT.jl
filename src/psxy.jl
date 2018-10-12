@@ -1,8 +1,7 @@
 """
 	xy(cmd0::String="", arg1=[]; kwargs...)
 
-reads (x,y) pairs and generates PostScript code that will plot lines,
-polygons, or symbols at those locations on a map.
+reads (x,y) pairs and plot lines, polygons, or symbols at those locations on a map.
 
 Full option list at [`psxy`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html)
 
@@ -97,6 +96,10 @@ Parameters
 - $(GMT.opt_swap_xy)
 """
 function xy(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, kwargs...)
+	if (isempty(cmd0) && isa(arg1, Array) && size(arg1,2) == 1 || size(arg1,1) == 1)	# y only
+		x = collect(1:length(arg1))
+		arg1 = [x arg1[:]]
+	end
 	common_plot_xyz(cmd0, arg1, caller, K, O, first, false, kwargs...)
 end
 
@@ -311,6 +314,7 @@ xyz!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
 xyz!(arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
 	xyz("", arg1; caller=caller, K=K, O=O,  first=first, kw...)
 
+# ---------------------------------------------------------------------------------------------------
 psxy   = xy				# Alias
 psxy!  = xy!			# Alias
 psxyz  = xyz			# Alias
