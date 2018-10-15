@@ -164,6 +164,10 @@ if (got_it)					# Otherwise go straight to end
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
 	plot!(collect(1:10),rand(10), fmt="ps")
 
+	# SCATTER
+	sizevec = [s for s = 1:10] ./ 10;
+	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
+
 	# PSBASEMAP
 	basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
 

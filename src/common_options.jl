@@ -47,17 +47,19 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_JZ(cmd::String, d::Dict)
+	opt_J = ""
 	for sym in [:JZ :Jz]
 		if (haskey(d, sym))
 			if (sym == :JZ)
-				cmd = cmd * " -JZ" * arg2str(d[sym])
+				opt_J = " -JZ" * arg2str(d[sym])
 			else
-				cmd = cmd * " -Jz" * arg2str(d[sym])
+				opt_J = " -Jz" * arg2str(d[sym])
 			end
+			cmd = cmd * opt_J
 			break
 		end
 	end
-	return cmd
+	return cmd, opt_J
 end
 
 # ---------------------------------------------------------------------------------------------------

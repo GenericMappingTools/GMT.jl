@@ -53,8 +53,8 @@ function clip(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
-	cmd = parse_JZ(cmd, d)
-	cmd = parse_UVXY(cmd, d)
+	cmd, = parse_JZ(cmd, d)
+	cmd  = parse_UVXY(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, = parse_e(cmd, d)

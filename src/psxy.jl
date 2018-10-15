@@ -29,7 +29,7 @@ Parameters
 
     Alter the way points are connected
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#f)
-- **G** : **fill** : **markerfacecolor** : **MarkerFaceColor** : -- Str --
+- **G** : **fill** : **markerfacecolor** : -- Str --
 
     Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
     color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
@@ -49,11 +49,12 @@ Parameters
     Do NOT clip symbols that fall outside map border 
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#n)
 - $(GMT.opt_P)
-- **S** : **symbol** : **marker** : **Marker** : -- Str --
+- **S** : -- Str --
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s)
-    Alternatively select a sub-set of symbols using the aliases: **marker** or **Marker** and values:
+	[`-S`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s)
+
+    Alternatively select a sub-set of symbols using the aliases: **symbol** or **marker** and values:
 
     + **-**, **x_dash**
     + **+**, **plus**
@@ -69,14 +70,18 @@ Parameters
     + **s**, **square**
     + **t**, **^**, **triangle**
     + **x**, **cross**
-    + **y**, **y_dash**
-- **W** : **line_attrib** : **markeredgecolor** : **MarkerEdgeColor** : -- Str --
+	+ **y**, **y_dash**
+	
+	and select their sizes with the **markersize** or **size** keyword [default is 8p].
+	The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
+	points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
+- **W** : **line_attrib** : **markeredgecolor** : -- Str --
 
     Set pen attributes for lines or the outline of symbols
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
     If your plot has polygons and symbols, use **W** or **line_attribs** for the polygons and
-    **markeredgecolor** or **MarkerEdgeColor** for filling the symbols. Similar to S above.
+    **markeredgecolor** for filling the symbols. Similar to S above.
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -121,20 +126,27 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	((isempty(cmd0) && isempty_(arg1)) || occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
 
+	if (occursin(" -", caller))
+		cmd = caller
+		caller = []			# It was piggy-backed by scatter or others
+	else
+		cmd = ""
+	end
+
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	opt_J = " -JX12c/8c"
-	for sym in [:axis :aspect]
-		if (haskey(d, sym))
-			if (d[sym] == "equal")				# Need also a 'tight' option
+	for symb in [:axis :aspect]
+		if (haskey(d, symb))
+			if (d[symb] == "equal" || d[symb] == :equal)	# Need also a 'tight' option?
 				opt_J = " -JX12c"
 			end
 			break
 		end
 	end
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", caller, O, opt_J)
-	if (is3D)	cmd = parse_JZ(cmd, d)	end
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, opt_J)
+	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
 	cmd = parse_UVXY(cmd, d)
 	cmd, = parse_a(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
@@ -153,6 +165,10 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
+	
+	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
+		cmd = cmd * " -JZ6c"	# Default -JZ
+	end
 
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
@@ -162,20 +178,11 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd = add_opt(cmd, 'F', d, [:F :conn :connection])
 
 	cmd = add_opt(cmd, 'G', d, [:G :fill])
-	opt_Gsymb = ""			# Filling color for symbols
-	for sym in [:G :markerfacecolor :MarkerFaceColor]
-		if (haskey(d, sym))
-			opt_Gsymb = " -G" * arg2str(d[sym])
-			break
-		end
-	end
+	opt_Gsymb = add_opt("", 'G', d, [:G :markerfacecolor])		# Filling color for symbols
 
 	opt_Wmarker = ""
-	for sym in [:markeredgecolor :MarkerEdgeColor]
-		if (haskey(d, sym))
-			opt_Wmarker = "0.5p," * arg2str(d[sym])		# 0.25p is so thin
-			break
-		end
+	if (haskey(d, :markeredgecolor))
+		opt_Wmarker = "0.5p," * arg2str(d[:markeredgecolor])		# 0.25p is so thin
 	end
 
 	cmd = add_opt(cmd, 'I', d, [:I :intens])
@@ -199,67 +206,42 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		end
 	end
 
-	opt_S = ""
-	for sym in [:S :symbol]
-		if (haskey(d, sym))
-			opt_S = " -S" * arg2str(d[sym])
-			break
-		end
-	end
+	opt_S = add_opt("", 'S', d, [:S :symbol])
 	if (isempty(opt_S))			# OK, no symbol given via the -S option. So fish in aliases
-		marca = ""
-		for sym in [:marker :Marker]
-			if (haskey(d, sym))
-				t = d[sym]
-				if (isa(t, Symbol))	t = string(t)	end
-				if (t == "-"     || t == "x-dash")   marca = "-"
-				elseif (t == "+" || t == "plus")     marca = "+"
-				elseif (t == "a" || t == "*" || t == "star")     marca = "a"
-				elseif (t == "c" || t == "circle")   marca = "c"
-				elseif (t == "d" || t == "diamond")  marca = "d"
-				elseif (t == "g" || t == "octagon")  marca = "g"
-				elseif (t == "h" || t == "hexagon")  marca = "h"
-				elseif (t == "i" || t == "v" || t == "inverted_tri")  marca = "i"
-				elseif (t == "n" || t == "pentagon")  marca = "n"
-				elseif (t == "p" || t == "." || t == "point")     marca = "p"
-				elseif (t == "r" || t == "rectangle") marca = "r"
-				elseif (t == "s" || t == "square")    marca = "s"
-				elseif (t == "t" || t == "^" || t == "triangle")  marca = "t"
-				elseif (t == "x" || t == "cross")     marca = "x"
-				elseif (is3D && (t == "u" || t == "cube"))  marca = "u"
-				elseif (t == "y" || t == "y-dash")    marca = "y"
-				end
-				break
-			end
-		end
+		marca = get_marker_name(d, [:marker])
 		if (!isempty(marca))
-			done = false
-			for sym in [:markersize :MarkerSize :size]
-				if (haskey(d, sym))
-					marca = marca * arg2str(d[sym])
-					done = true
+			ms = ""
+			for symb in [:size :markersize]
+				if (haskey(d, symb))
+					if (isa(d[symb], AbstractArray))
+						if (length(d[symb]) == size(arg1,1))
+							arg1 = hcat(arg1, d[symb][:])
+							ms = " "		# Just to defeat the empty test below
+						else
+							error("The size array must have the same number of elements rows in the data")
+						end
+					else
+						marca = marca * arg2str(d[symb]);	ms = " "
+					end
 					break
 				end
 			end
-			if (!done)  marca = marca * "8p"  end			# Default to 8p
+			if (ms == "")  marca = marca * "8p"		end		# Default to 8p
 		end
 		if (!isempty(marca))  opt_S = " -S" * marca  end
 	end
 
-	if (!isempty(opt_S))			# 
+	if (!isempty(opt_S))
 		opt_ML = ""
-		for sym in [:markerline :MarkerLine]
-			if (haskey(d, sym))
-				if (isa(d[sym], Tuple))	# Like this it can hold the pen, not extended atts
-					opt_ML = " -W" * parse_pen(d[sym])
-				else
-					opt_ML = " -W" * arg2str(d[sym])
-				end
-				if (!isempty(opt_Wmarker))
-					opt_Wmarker = ""
-					@warn("markerline overrides markeredgecolor")
-				end
-				break
+		if (haskey(d, :markerline))
+			if (isa(d[:markerline], Tuple))			# Like this it can hold the pen, not extended atts
+				opt_ML = " -W" * parse_pen(d[:markerline])
+			else
+				opt_ML = " -W" * arg2str(d[:markerline])
+			end
+			if (!isempty(opt_Wmarker))
+				opt_Wmarker = ""
+				@warn("markerline overrides markeredgecolor")
 			end
 		end
 		if (!isempty(opt_W) && !isempty(opt_ML))
@@ -300,6 +282,39 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	end
 
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, gmt_proggy, arg1, arg2)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function get_marker_name(d::Dict, symbs, del=false)
+	marca = ""
+	for symb in symbs
+		if (haskey(d, symb))
+			t = d[symb]
+			if (isa(t, Symbol))	t = string(t)	end
+			if     (t == "-" || t == "x-dash")   marca = "-"
+			elseif (t == "+" || t == "plus")     marca = "+"
+			elseif (t == "a" || t == "*" || t == "star")     marca = "a"
+			elseif (t == "c" || t == "circle")   marca = "c"
+			elseif (t == "d" || t == "diamond")  marca = "d"
+			elseif (t == "g" || t == "octagon")  marca = "g"
+			elseif (t == "h" || t == "hexagon")  marca = "h"
+			elseif (t == "i" || t == "v" || t == "inverted_tri")  marca = "i"
+			elseif (t == "n" || t == "pentagon")  marca = "n"
+			elseif (t == "p" || t == "." || t == "point")     marca = "p"
+			elseif (t == "r" || t == "rectangle") marca = "r"
+			elseif (t == "s" || t == "square")    marca = "s"
+			elseif (t == "t" || t == "^" || t == "triangle")  marca = "t"
+			elseif (t == "x" || t == "cross")     marca = "x"
+			elseif (is3D && (t == "u" || t == "cube"))  marca = "u"
+			elseif (t == "y" || t == "y-dash")    marca = "y"
+			end
+			if (del)
+				delete!(d, symb)
+			end
+			break
+		end
+	end
+	return marca
 end
 
 # ---------------------------------------------------------------------------------------------------
