@@ -167,6 +167,11 @@ if (got_it)					# Otherwise go straight to end
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
+	scatter(1:10,rand(10), fill=:red, B=:a)
+
+	# BARPLOT
+	data = sort(randn(10));
+	barplot(data,G=0,B=:a)
 
 	# PSBASEMAP
 	basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")

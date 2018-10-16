@@ -102,8 +102,7 @@ Parameters
 """
 function xy(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, kwargs...)
 	if (isempty(cmd0) && isa(arg1, Array) && size(arg1,2) == 1 || size(arg1,1) == 1)	# y only
-		x = collect(1:length(arg1))
-		arg1 = [x arg1[:]]
+		arg1 = hcat(1:length(arg1), arg1[:])
 	end
 	common_plot_xyz(cmd0, arg1, caller, K, O, first, false, kwargs...)
 end
@@ -118,10 +117,8 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	if (is3D)
-		gmt_proggy = "psxyz"
-	else
-		gmt_proggy = "psxy"
+	if (is3D)	gmt_proggy = "psxyz"
+	else		gmt_proggy = "psxy"
 	end
 
 	((isempty(cmd0) && isempty_(arg1)) || occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
