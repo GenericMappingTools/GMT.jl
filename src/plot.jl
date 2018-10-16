@@ -123,34 +123,42 @@ end
 
 
 # ------------------------------------------------------------------------------------------------------
-scatter(arg1; K=false, O=false, first=true, kw...) = 
-	scatter("", arg1; caller=[], K=K, O=O, first=first, is3D=false, kw...)
-scatter!(arg1; K=true, O=true, first=false, kw...) = 
-	scatter("", arg1; caller=[], K=K, O=O, first=first, is3D=false, kw...)
-scatter3(arg1; K=false, O=false, first=true, kw...) = 
-	scatter("", arg1; caller=[], K=K, O=O, first=first, is3D=true, kw...)
-scatter3!(arg1; K=true, O=true, first=false, kw...) = 
-	scatter("", arg1; caller=[], K=K, O=O, first=first, is3D=true, kw...)
+scatter(arg1; K=false, O=false, first=true, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=false, kw...)
+scatter!(arg1; K=true, O=true, first=false, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=false, kw...)
+scatter3(arg1; K=false, O=false, first=true, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=true, kw...)
+scatter3!(arg1; K=true, O=true, first=false, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=true, kw...)
 
 function scatter(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = hcat(arg1, arg2)
-	scatter("", arg; caller=[], K=K, O=O, first=first, is3D=false, kw...)
+	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
+		arg = hcat(arg1[:], arg2[:])
+	else
+		error("SCATTER: The two array args must be vectors or ONE column (or row) matrices.")
+	end
+	scatter("", arg; K=K, O=O, first=first, is3D=false, kw...)
 end
 function scatter!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...)
-	arg = hcat(arg1, arg2)
-	scatter("", arg; caller=[], K=K, O=O, first=first, is3D=false, kw...)
+	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
+		arg = hcat(arg1[:], arg2[:])
+	else
+		error("SCATTER: The two array args must be vectors or ONE column (or row) matrices.")
+	end
+	scatter("", arg; K=K, O=O, first=first, is3D=false, kw...)
 end
-function scatter3(arg1::Array, arg2::Array, arg3::Array; K=false, O=false, first=true, kw...)
+function scatter3(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2, arg3)
-	scatter("", arg; caller=[], K=K, O=O, first=first, is3D=true, kw...)
+	scatter("", arg; K=K, O=O, first=first, is3D=true, kw...)
 end
-function scatter3!(arg1::Array, arg2::Array, arg3::Array; K=true, O=true, first=false, kw...)
+function scatter3!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=true, O=true, first=false, kw...)
 	arg = hcat(arg1, arg2, arg3)
-	scatter("", arg; caller=[], K=K, O=O, first=first, is3D=true, kw...)
+	scatter("", arg; K=K, O=O, first=first, is3D=true, kw...)
 end
 
 # ------------------------------------------------------------------------------------------------------
 function scatter(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=false, kwargs...)
+
+	if (isempty(cmd0) && isa(arg1, AbstractArray) && size(arg1,2) == 1 || size(arg1,1) == 1)	# y only
+		arg1 = hcat(1:length(arg1), arg1[:])
+	end
 
 	d = KW(kwargs)
 	optG = add_opt("", 'G', d, [:G :fill :markerfacecolor], true)
@@ -189,6 +197,66 @@ function scatter(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=fa
 		else            caller = caller * opt
 		end
 	end
+
+	GMT.common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, d...)
+end
+# ------------------------------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------------------------------
+function barplot(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
+	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
+		arg = hcat(arg1[:], arg2[:])
+	else
+		error("BARPLOT: The two array args must be vectors or ONE column (or row) matrices.")
+	end
+	barplot("", arg; K=K, O=O, first=first, is3D=false, kw...)
+end
+function barplot(arg::AbstractArray; K=false, O=false, first=true, kw...)
+	if (size(arg,2) == 1 || size(arg,1) == 1)
+		x = collect(1:length(arg))
+		arg1 = [x arg[:]]
+	end
+	barplot("", arg; K=K, O=O, first=first, is3D=false, kw...)
+end
+function barplot!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...)
+	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
+		arg = hcat(arg1[:], arg2[:])
+	else
+		error("BARPLOT: The two array args must be vectors or ONE column (or row) matrices.")
+	end
+	barplot("", arg; K=K, O=O, first=first, is3D=false, kw...)
+end
+function barplot!(arg::AbstractArray; K=true, O=true, first=false, kw...)
+	if (size(arg,2) == 1 || size(arg,1) == 1)
+		x = collect(1:length(arg))
+		arg1 = [x arg[:]]
+	end
+	barplot("", arg; K=K, O=O, first=first, is3D=false, kw...)
+end
+# ------------------------------------------------------------------------------------------------------
+function barplot(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=false, kwargs...)
+
+	if (isempty(cmd0) && isa(arg1, AbstractArray) && size(arg1,2) == 1 || size(arg1,1) == 1)	# y only
+		arg1 = hcat(1:length(arg1), arg1[:])
+	end
+
+	d = KW(kwargs)
+	optG = add_opt("", 'G', d, [:G :fill], true)
+
+	optS = add_opt("", "Sb",  d, [:size], true)
+	if (optS == "")
+		optW = add_opt("", "",  d, [:width])	# No need to purge because width is not a psxy option
+		if (optW == "")	optW = "0.8"	end		# The default
+		optS = " -Sb" * optW * "u"
+	end
+
+
+	optB = add_opt("", "",  d, [:bottom])		# No need to purge because bottom is not a psxy option
+	if (optB == "")	optB = "0"	end
+	optB = "+b" * optB
+
+	caller = optG * optS * optB				# Piggy-back this
 
 	GMT.common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, d...)
 end

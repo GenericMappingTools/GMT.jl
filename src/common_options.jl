@@ -565,7 +565,11 @@ function add_opt(cmd::String, opt, d::Dict, symbs, del::Bool=false)
 	# If DEL == true we remove the found key. Useful when 
 	for sym in symbs
 		if (haskey(d, sym))
-			cmd = string(cmd, " -", opt, arg2str(d[sym]))
+			if (opt != "")
+				cmd = string(cmd, " -", opt, arg2str(d[sym]))
+			else
+				cmd = string(cmd, arg2str(d[sym]))
+			end
 			if (del)
 				delete!(d, sym)
 			end
