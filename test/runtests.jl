@@ -171,7 +171,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# BARPLOT
 	data = sort(randn(10));
-	barplot(data,G=0,B=:a)
+	bar(data,G=0,B=:a)
 
 	# PSBASEMAP
 	basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
