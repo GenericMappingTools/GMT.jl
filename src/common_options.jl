@@ -670,9 +670,11 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R, opt_i, opt_bi, opt_d
 			error("Need at least 2 columns of data to run this program")
 		end
 		if (is3D)
-			opt_R = @sprintf(" -R%.8g/%.8g/%.8g/%.8g/%.8g/%.8g", info[1].data[1], info[1].data[2], info[1].data[3], info[1].data[4], info[1].data[5], info[1].data[6])
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
+			                 info[1].data[3], info[1].data[4], info[1].data[5], info[1].data[6])
 		else
-			opt_R = @sprintf(" -R%.8g/%.8g/%.8g/%.8g", info[1].data[1], info[1].data[2], info[1].data[3], info[1].data[4])
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
+			                 info[1].data[3], info[1].data[4])
 		end
 		cmd = cmd * opt_R
 	end

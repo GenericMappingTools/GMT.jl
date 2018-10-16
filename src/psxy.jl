@@ -179,7 +179,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	opt_Wmarker = ""
 	if (haskey(d, :markeredgecolor))
-		opt_Wmarker = "0.5p," * arg2str(d[:markeredgecolor])		# 0.25p is so thin
+		opt_Wmarker = "0.5p," * arg2str(d[:markeredgecolor])	# 0.25p is so thin
 	end
 
 	cmd = add_opt(cmd, 'I', d, [:I :intens])
