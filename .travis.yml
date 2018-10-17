@@ -52,5 +52,5 @@ script:
   - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("GMT"); Pkg.test("GMT"; coverage=true);'
 after_success:
   - julia -e 'using Pkg; cd(Pkg.dir("GMT")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
-  - julia -e 'using Pkg; Pkg.add("Documenter")'
+  - julia -e 'using Pkg; ps=Pkg.PackageSpec(name="Documenter", version="0.19"); Pkg.add(ps); Pkg.pin(ps)'
   - julia -e 'using Pkg; cd(Pkg.dir("GMT")); include(joinpath("docs", "make.jl"))'
