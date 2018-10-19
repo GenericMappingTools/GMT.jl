@@ -1833,17 +1833,21 @@ end
 ##
 
 # ---------------------------------------------------------------------------------------------------
-function mat2grid(mat, proj4::String="", wkt::String="")
+function mat2grid(mat, reg=0, proj4::String="", wkt::String="")
 # Take a 2D array of floats and turn it into a GMTgrid
 	nx = size(mat, 2);		ny = size(mat, 1);
-	x  = collect(1:nx);		y = collect(1:ny)
+	if (reg == 0)
+		x  = collect(1:nx);			y = collect(1:ny)
+	else
+		x  = collect(0.5:nx+0.5);	y = collect(0.5:ny+0.5)
+	end
 	if (!isa(mat, Float32))
 		z = Float32.(mat)
 	else
 		z = mat
 	end
-	G = GMTgrid(proj4, wkt, [1.0, nx, 1, ny, minimum(mat), maximum(mat)], [1.0, 1.0], 
-	            0, NaN, "", "", "", "", x, y, z, "x", "y", "z", "")
+	G = GMTgrid(proj4, wkt, [x[1], x[end], y[1], y[end], minimum(mat), maximum(mat)], [1.0, 1.0], 
+	            reg, NaN, "", "", "", "", x, y, z, "x", "y", "z", "")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1897,3 +1901,11 @@ function Base.:/(G1::GMTgrid, G2::GMTgrid)
 	G3.range[6] = maximum(G3.z)
 	return G3
 end
+
+# EDIPO SECTION
+# ---------------------------------------------------------------------------------------------------
+linspace(start, stop, length=100) = range(start, stop=stop, length=length)
+logspace(start, stop, length=100) = exp10.(range(start, stop=stop, length=length))
+contains(haystack, needle) = occursin(needle, haystack)
+#contains(s::AbstractString, r::Regex, offset::Integer) = occursin(r, s, offset=offset)
+fields(arg) = fieldnames(typeof(arg))

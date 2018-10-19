@@ -161,12 +161,12 @@ function scatter(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=fa
 	end
 
 	d = KW(kwargs)
-	optG = add_opt("", 'G', d, [:G :fill :markerfacecolor], true)
-	optW = add_opt("", 'W', d, [:markeredgecolor], true)
+	opt_G = add_opt("", 'G', d, [:G :fill :markerfacecolor], true)
+	opt_W = add_opt("", 'W', d, [:markeredgecolor], true)
 
-	optS = get_marker_name(d, [:symbol :marker], true)
-	if (isempty(optS))  optS = " -Sc"
-	else                optS = " -S" * optS
+	opt_S = get_marker_name(d, [:symbol :marker], true)
+	if (isempty(opt_S))  opt_S = " -Sc"
+	else                 opt_S = " -S" * opt_S
 	end
 
 	opt = ""
@@ -187,13 +187,13 @@ function scatter(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=fa
 		end
 	end
 
-	if (opt == "")  opt  = "8p"		end		# Default to 8p
-	if (optG == "")	optG = " -G0"	end
-	caller = optS * opt * optG * optW		# Piggy-back this
+	if (opt == "")  	opt  = "8p"		end		# Default to 8p
+	if (opt_G == "")	opt_G = " -G0"	end
+	caller = opt_S * opt * opt_G * opt_W		# Piggy-back this
 
 	if (is3D)
-		opt = add_opt("", 'p', d, [:p :view :perspective], true)
-		if (opt == "")  caller = caller * " -p170/45"
+		opt = add_opt("", 'p', d, [:p :view], true)
+		if (opt == "")  caller = caller * " -p200/30"
 		else            caller = caller * opt
 		end
 	end
@@ -210,14 +210,14 @@ function bar(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=t
 	else
 		error("BARPLOT: The two array args must be vectors or ONE column (or row) matrices.")
 	end
-	bar("", arg; K=K, O=O, first=first, is3D=false, kw...)
+	bar("", arg; K=K, O=O, first=first, kw...)
 end
 function bar(arg::AbstractArray; K=false, O=false, first=true, kw...)
 	if (size(arg,2) == 1 || size(arg,1) == 1)
 		x = collect(1:length(arg))
 		arg1 = [x arg[:]]
 	end
-	bar("", arg; K=K, O=O, first=first, is3D=false, kw...)
+	bar("", arg; K=K, O=O, first=first, kw...)
 end
 function bar!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...)
 	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
@@ -225,39 +225,106 @@ function bar!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=fa
 	else
 		error("BARPLOT: The two array args must be vectors or ONE column (or row) matrices.")
 	end
-	bar("", arg; K=K, O=O, first=first, is3D=false, kw...)
+	bar("", arg; K=K, O=O, first=first, kw...)
 end
 function bar!(arg::AbstractArray; K=true, O=true, first=false, kw...)
 	if (size(arg,2) == 1 || size(arg,1) == 1)
 		x = collect(1:length(arg))
 		arg1 = [x arg[:]]
 	end
-	bar("", arg; K=K, O=O, first=first, is3D=false, kw...)
+	bar("", arg; K=K, O=O, first=first, kw...)
 end
 
 # ------------------------------------------------------------------------------------------------------
-function bar(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=false, kwargs...)
+function bar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+
+	if (isa(arg1, Array{GMT.GMTdataset,1}))		# Shitty consequence of arg1 being the output of a prev cmd
+		arg1 = arg1[1]
+	end
 
 	if (isempty(cmd0) && isa(arg1, AbstractArray) && size(arg1,2) == 1 || size(arg1,1) == 1)	# y only
 		arg1 = hcat(1:length(arg1), arg1[:])
 	end
 
 	d = KW(kwargs)
-	optG = add_opt("", 'G', d, [:G :fill], true)
-	if (optG == "")	optG = " -G0/115/190"	end	# Default bar color
+	opt_G = add_opt("", 'G', d, [:G :fill], true)
+	if (opt_G == "")	opt_G = " -G0/115/190"	end	# Default bar color
 
-	optS = add_opt("", "Sb",  d, [:size], true)
-	if (optS == "")
-		optW = add_opt("", "",  d, [:width])	# No need to purge because width is not a psxy option
-		if (optW == "")	optW = "0.8"	end		# The default
-		optS = " -Sb" * optW * "u"
+	opt_S = add_opt("", "Sb",  d, [:size], true)
+	if (opt_S == "")
+		opt = add_opt("", "",  d, [:width])		# No need to purge because width is not a psxy option
+		if (opt == "")	opt = "0.8"	end			# The default
+		opt_S = " -Sb" * opt * "u"
 	end
 
-	optB = add_opt("", "",  d, [:bottom])		# No need to purge because bottom is not a psxy option
+	optB = add_opt("", "",  d, [:bottom :base])	# No need to purge because bottom is not a psxy option
 	if (optB == "")	optB = "0"	end
 	optB = "+b" * optB
 
-	caller = optG * optS * optB					# Piggy-back this
+	caller = opt_G * opt_S * optB				# Piggy-back this
 
-	GMT.common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, d...)
+	GMT.common_plot_xyz(cmd0, arg1, caller, K, O, first, false, d...)
+end
+
+# ------------------------------------------------------------------------------------------------------
+bar3!(arg1; K=true, O=true, first=false, kw...) = bar3(arg1; K=K, O=O, first=first, kw...)
+
+# ------------------------------------------------------------------------------------------------------
+function bar3(arg; K=false, O=false, first=true, kwargs...)
+#
+	d = KW(kwargs)
+
+	arg1 = arg			# Make a copy that may or not become a new thing
+	if (isa(arg1, Array{GMT.GMTdataset,1}))		# Shitty consequence of arg1 being the output of a prev cmd
+		arg1 = arg1[1]
+	end
+
+	if (isa(arg1, Array))
+		ny, nx = size(arg1)
+		if ((nx > 3 && ny > 3))					# Assume it is a 'bare grid'
+			arg1 = mat2grid(arg1)
+		end
+	end
+
+	if (isa(arg1, GMTgrid))
+		opt_S = @sprintf(" -So%.8gu/%.8gu", arg1.inc[1]*0.80, arg1.inc[2]*0.80)
+		opt, = parse_R("", d, O)
+		if (opt == "")							# OK, no R but we know it here so put it in 'd'
+			push!(d, :R => arg1.range)
+		end
+		arg1 = gmt("grd2xyz", arg1)[1]			# Now arg1 is a GMTdataset
+	else
+		opt_S = parse_inc("", d, [:size :width], "So", true)
+		if (opt_S == "")	error("BAR3: must provide the column bar width.")	end
+	end
+
+	if (!isa(arg1, Array) && !isa(arg1, GMTdataset))
+		error(@sprintf("I don't know how this datatype (%s) managed to make it's way here but can't use it.", typeof(arg1)))
+	end
+
+	opt = add_opt("", "",  d, [:bottom :base])	# No need to purge because bottom is not a psxy option
+	if (opt == "")
+		if (isa(arg1, Array))
+			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1, :, 3)) * 1.05)
+		else
+			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1.data, :, 3)) * 1.05)
+		end
+	else
+		opt_S = opt_S * "+b" * opt
+	end
+
+	opt_G = add_opt("", 'G', d, [:G :fill], true)
+	if (opt_G == "")	opt_G = " -G0/115/190"	end		# Default bar color
+
+	opt_J, = parse_J("", d, true, false, true)			# Trim it if exists in d
+	if (opt_J == "")	opt_J = " -JX12c/0"		end		# Default fig size
+
+	#s = split(opt_R[4:end], "/")
+	#R = [parse(Float64, s[k]) for k = 1:length(s)]
+
+	caller = opt_G * opt_S * opt_J						# Piggy-back this
+	opt = add_opt("", 'p', d, [:p :view], true)
+	if (opt == "")  caller = caller * " -p200/30"	end
+
+	GMT.common_plot_xyz("", arg1, caller, K, O, first, true, d...)
 end

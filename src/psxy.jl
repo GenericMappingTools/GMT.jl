@@ -101,7 +101,8 @@ Parameters
 - $(GMT.opt_swap_xy)
 """
 function xy(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, kwargs...)
-	if (isempty(cmd0) && isa(arg1, Array) && size(arg1,2) == 1 || size(arg1,1) == 1)	# y only
+	if (isempty(cmd0) && isa(arg1, AbstractArray) && length(arg1) != 2 &&
+		(size(arg1,2) == 1 || size(arg1,1) == 1))	# y only
 		arg1 = hcat(1:length(arg1), arg1[:])
 	end
 	common_plot_xyz(cmd0, arg1, caller, K, O, first, false, kwargs...)
@@ -123,9 +124,9 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	((isempty(cmd0) && isempty_(arg1)) || occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
 
-	if (occursin(" -", caller))
+	if (!isempty(caller) && occursin(" -", caller))
 		cmd = caller
-		caller = []			# It was piggy-backed by scatter or others
+		caller = []					# It was piggy-backed by scatter or others
 	else
 		cmd = ""
 	end
@@ -133,15 +134,20 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
-	opt_J = " -JX12c/8c"
-	for symb in [:axis :aspect]
-		if (haskey(d, symb))
-			if (d[symb] == "equal" || d[symb] == :equal)	# Need also a 'tight' option?
-				opt_J = " -JX12c"
+	if (!occursin("-J", cmd))		# bar, bar3 and others may send in a -J
+		opt_J = " -JX12c/8c"
+		for symb in [:axis :aspect]
+			if (haskey(d, symb))
+				if (d[symb] == "equal" || d[symb] == :equal)	# Need also a 'tight' option?
+					opt_J = " -JX12c"
+				end
+				break
 			end
-			break
 		end
+	else
+		opt_J = ""
 	end
+
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, opt_J)
 	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
 	cmd = parse_UVXY(cmd, d)
@@ -161,7 +167,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
 	
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd = cmd * " -JZ6c"	# Default -JZ
@@ -315,16 +321,16 @@ function get_marker_name(d::Dict, symbs, del=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-xy!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
-	xy(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
-xy!(arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
-	xy("", arg1; caller=caller, K=K, O=O,  first=first, kw...)
+xy!(cmd0::String="", arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+	xy(cmd0, arg1; caller=caller, K=K, O=O, first=first, kw...)
+xy!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+	xy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 xyz!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
 	xyz(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
-xyz!(arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
-	xyz("", arg1; caller=caller, K=K, O=O,  first=first, kw...)
+xyz!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+	xyz("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 psxy   = xy				# Alias
