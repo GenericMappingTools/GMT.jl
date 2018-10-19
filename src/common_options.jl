@@ -2,12 +2,13 @@
 
 const KW = Dict{Symbol,Any}
 
-function parse_R(cmd::String, d::Dict, O=false)
+function parse_R(cmd::String, d::Dict, O=false, del=false)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	opt_R = ""
-	for sym in [:R :region :limits]
-		if (haskey(d, sym))
-			opt_R = build_opt_R(d[sym])
+	for symb in [:R :region :limits]
+		if (haskey(d, symb))
+			opt_R = build_opt_R(d[symb])
+			if (del) delete!(d, symb) end
 			break
 		end
 	end
@@ -46,16 +47,17 @@ function build_opt_R(Val)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_JZ(cmd::String, d::Dict)
+function parse_JZ(cmd::String, d::Dict, del=false)
 	opt_J = ""
-	for sym in [:JZ :Jz]
-		if (haskey(d, sym))
-			if (sym == :JZ)
-				opt_J = " -JZ" * arg2str(d[sym])
+	for symb in [:JZ :Jz]
+		if (haskey(d, symb))
+			if (symb == :JZ)
+				opt_J = " -JZ" * arg2str(d[symb])
 			else
-				opt_J = " -Jz" * arg2str(d[sym])
+				opt_J = " -Jz" * arg2str(d[symb])
 			end
 			cmd = cmd * opt_J
+			if (del) delete!(d, symb) end
 			break
 		end
 	end
@@ -63,7 +65,7 @@ function parse_JZ(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_J(cmd::String, d::Dict, map=true, O=false)
+function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
 	# Default to 14c if no size is provided.
 	# If MAP == false, do not try to append a fig size
@@ -71,6 +73,7 @@ function parse_J(cmd::String, d::Dict, map=true, O=false)
 	for symb in [:J :proj :projection]
 		if (haskey(d, symb))
 			opt_J = build_opt_J(d[symb])
+			if (del) delete!(d, symb) end
 			break
 		end
 	end
@@ -120,14 +123,15 @@ function build_opt_J(Val)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_B(cmd::String, d::Dict, opt_B::String="")
-	for sym in [:B :frame :axes]
-		if (haskey(d, sym))
-			if (isa(d[sym], String))
-				opt_B = d[sym]
-			elseif (isa(d[sym], Symbol))
-				opt_B = string(d[sym])
+function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
+	for symb in [:B :frame :axes]
+		if (haskey(d, symb))
+			if (isa(d[symb], String))
+				opt_B = d[symb]
+			elseif (isa(d[symb], Symbol))
+				opt_B = string(d[symb])
 			end
+			if (del) delete!(d, symb) end
 			break
 		end
 	end
@@ -174,10 +178,10 @@ function parse_B(cmd::String, d::Dict, opt_B::String="")
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_BJR(d::Dict, cmd::String, caller, O, default)
+function parse_BJR(d::Dict, cmd::String, caller, O, default, del=false)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
-	cmd, opt_R = parse_R(cmd, d, O)
-	cmd, opt_J = parse_J(cmd, d, true, O)
+	cmd, opt_R = parse_R(cmd, d, O, del)
+	cmd, opt_J = parse_J(cmd, d, true, O, del)
 	if (!O && isempty(opt_J))			# If we have no -J use this default
 		opt_J = default					# " -JX12c/8c" (e.g. psxy) or " -JX12c/0" (e.g. grdimage)
 		cmd = cmd * opt_J
@@ -186,12 +190,12 @@ function parse_BJR(d::Dict, cmd::String, caller, O, default)
 	end
 	if (!isempty(caller) && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (caller == "plot3d")
-			cmd, opt_B = parse_B(cmd, d, "-Ba -Bza -BWSZ")
+			cmd, opt_B = parse_B(cmd, d, "-Ba -Bza -BWSZ", del)
 		else
-			cmd, opt_B = parse_B(cmd, d, "-Ba -BWS")
+			cmd, opt_B = parse_B(cmd, d, "-Ba -BWS", del)
 		end
 	else
-		cmd, opt_B = parse_B(cmd, d)
+		cmd, opt_B = parse_B(cmd, d, "", del)
 	end
 	return cmd, opt_B, opt_J, opt_R
 end
@@ -372,6 +376,56 @@ function parse_helper(cmd::String, d::Dict, symbs, opt::String)
 		end
 	end
 	return cmd, opt_val
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_inc(cmd::String, d::Dict, symbs, opt, del=false)
+	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
+	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or 
+	for symb in symbs
+		if (!haskey(d, symb))	continue	end
+		if (isa(d[symb], NamedTuple))
+			fn = fieldnames(typeof(d[symb]))
+			x = "";	y = "";	u = "";	e = false
+			for k = 1:length(fn)
+				if     (fn[k] == :x)     x  = string(d[symb][k])
+				elseif (fn[k] == :y)     y  = string(d[symb][k])
+				elseif (fn[k] == :unit)  u  = string(d[symb][k])
+				elseif (fn[k] == :extend) e = true
+				end
+			end
+			if (x == "") error("Need at least the x increment")	end
+			cmd = string(cmd, " -", opt, x)
+			if (u != "")
+				if (u == "m" || u == "minutes" || u == "s" || u == "seconds" ||
+					u == "f" || u == "foot"    || u == "k" || u == "km" || u == "n" || u == "nautical")
+					cmd = cmd * u[1]
+				elseif (u == "e" || u == "meter")
+					cmd = cmd * "e";	u = "e"
+				elseif (u == "M" || u == "mile")
+					cmd = cmd * "M";	u = "M"
+				elseif (u == "nodes")		# 
+					cmd = cmd * "+n";	u = "+n"
+				elseif (u == "data")		# For the `scatter` modules
+					u = "u";
+				end
+			end
+			if (e)	cmd = cmd * "+e"	end
+			if (y != "")
+				cmd = string(cmd, "/", y, u)
+				if (e)	cmd = cmd * "+e"	end		# Should never have this and u != ""
+			end
+		else
+			if (opt != "")
+				cmd = string(cmd, " -", opt, arg2str(d[symb]))
+			else
+				cmd = string(cmd, arg2str(d[symb]))
+			end
+		end
+		if (del) delete!(d, symb) end
+		break
+	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -669,6 +723,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R, opt_i, opt_bi, opt_d
 		if (size(info[1].data, 2) < 4)
 			error("Need at least 2 columns of data to run this program")
 		end
+		info[1].data = round_wesn(info[1].data)
 		if (is3D)
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
 			                 info[1].data[3], info[1].data[4], info[1].data[5], info[1].data[6])
@@ -680,6 +735,50 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R, opt_i, opt_bi, opt_d
 	end
 
 	return cmd, arg, opt_R, opt_i
+end
+
+# ---------------------------------------------------------------------------------------------------
+function round_wesn(wesn, geo::Bool=false)
+	# Use data range to round to nearest reasonable multiples
+	# If wesn has 6 elements (is3D), last two are not modified.
+	set = zeros(Bool, 2)
+	range = zeros(2)
+	range[1] = wesn[2] - wesn[1]
+	range[2] = wesn[4] - wesn[3]
+	if (geo) 	# Special checks due to periodicity
+		if (range[1] > 306.0) 	# If within 15% of a full 360 we promote to 360
+			wesn[1] = 0.0;	wesn[2] = 360.0
+			set[1] = true
+		end
+		if (range[2] > 153.0) 	# If within 15% of a full 180 we promote to 180
+			wesn[3] = -90.0;	wesn[4] = 90.0
+			set[2] = true
+		end
+	end
+
+	item = 1
+	for side = 1:2
+		if (set[side]) continue		end		# Done above */
+		mag = round(log10(range[side])) - 1.0
+		inc = 10.0^mag
+		if ((range[side] / inc) > 10.0) inc *= 2.0	end	# Factor of 2 in the rounding
+		if ((range[side] / inc) > 10.0) inc *= 2.5	end	# Factor of 5 in the rounding
+		s = 1.0
+		if (geo) 	# Use arc integer minutes or seconds if possible
+			if (inc < 1.0 && inc > 0.05) 				# Nearest arc minute
+				s = 60.0;		inc = 1.0
+				if ((s * range[side] / inc) > 10.0) inc *= 2.0	end		# 2 arcmin
+				if ((s * range[side] / inc) > 10.0) inc *= 2.5	end		# 5 arcmin
+			elseif (inc < 0.1 && inc > 0.005) 			# Nearest arc second
+				s = 3600.0;		inc = 1.0
+				if ((s * range[side] / inc) > 10.0) inc *= 2.0	end		# 2 arcsec
+				if ((s * range[side] / inc) > 10.0) inc *= 2.5	end		# 5 arcsec
+			end
+		end
+		wesn[item] = (floor(s * wesn[item] / inc) * inc) / s;	item += 1;
+		wesn[item] = (ceil(s * wesn[item] / inc) * inc) / s;	item += 1;
+	end
+	return wesn
 end
 
 # ---------------------------------------------------------------------------------------------------

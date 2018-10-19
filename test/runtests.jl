@@ -2,6 +2,7 @@ using GMT
 using Test
 using LinearAlgebra
 
+#=
 try
 	run(`gmt --version`)	# Will fail if GMT is not installed.
 	global got_it = true
@@ -11,6 +12,7 @@ catch
 end
 
 if (got_it)					# Otherwise go straight to end
+=#
 
 	# write your own tests here
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
@@ -173,6 +175,10 @@ if (got_it)					# Otherwise go straight to end
 	data = sort(randn(10));
 	bar(data,G=0,B=:a)
 
+	# BAR3
+	G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
+	bar3(G, lw=:thinnest)
+
 	# PSBASEMAP
 	basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
 
@@ -237,8 +243,21 @@ if (got_it)					# Otherwise go straight to end
 
 	# Test common_options
 	d = Dict(:xlim => (1,2), :ylim => (3,4));
-	r = GMT.parse_R("", d);
-	@test r[1] == " -R1/2/3/4"
+	r = GMT.parse_R("", d);		@test r[1] == " -R1/2/3/4"
+	d = Dict(:inc => (x=1.5, y=2.6, unit="meter"));
+	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5e/2.6e"
+	d = Dict(:inc => (x=1.5, y=2.6, unit="data"));
+	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5/2.6u"
+	d = Dict(:inc => (x=1.5, y=2.6, extend="data"));
+	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5+e/2.6+e"
+	d = Dict(:inc => (x=1.5, y=2.6, unit="nodes"));
+	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5+n/2.6+n"
+	d = Dict(:inc => (2,4));
+	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I2/4"
+	d = Dict(:inc => [2 4]);
+	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I2/4"
+	d = Dict(:inc => "2");
+	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I2"
 
 	# EXAMPLES
 	plot(collect(1:10),rand(10), lw=1, lc="blue", marker="square",
@@ -266,4 +285,4 @@ if (got_it)					# Otherwise go straight to end
 		rm("lixo.tif")
 	end
 
-end					# End valid testing zone
+#end					# End valid testing zone
