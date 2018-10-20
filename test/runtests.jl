@@ -147,6 +147,12 @@ if (got_it)					# Otherwise go straight to end
 	D = grdtrack([0 0], G=G);
 	@assert(D[1].data == [0.0 0 1])
 
+	# GRDVECTOR
+	G = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL");
+	dzdy = gmt("grdmath ? DDY", G);
+	dzdx = gmt("grdmath ? DDX", G);
+	grdvector(dzdx, dzdy, I=0.2, Q="0.25+e+n0.25i+h0.5", G=:black, W="1p", S=12)
+
 	# Just create the figs but not check if they are correct.
 	PS = grdimage(G, J="X10", ps=1);
 	gmt("destroy")

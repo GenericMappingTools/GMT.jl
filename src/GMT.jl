@@ -28,9 +28,9 @@ export
 	basemap, basemap!, blockmean, blockmedian, blockmode, coast, coast!, colorbar, colorbar!, contour, 
 	contour!, filter1d, filter2d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
 	gmtread, gmtselect, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwich, 
-	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour,
-	grdcontour!, grdcut, grdedit, grdfft, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo,
-	grdlandmask, grdpaste, grdproject, grdsample, grdtrack, grdtrend, grdview, grdview!, grdvolume,
+	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft,
+	grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdlandmask, grdpaste, grdproject,
+	grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume,
 	grid_type, histogram, histogram!, image, image!, imshow, imshow!, kml2gmt, logo, logo!, makecpt,
 	mapproject, nearneighbor, plot, plot!, plot3d, plot3d!, project,
 	pscontour, pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, 
@@ -82,6 +82,7 @@ include("grdproject.jl")
 include("grdsample.jl")
 include("grdtrack.jl")
 include("grdtrend.jl")
+include("grdvector.jl")
 include("grdview.jl")
 include("grdvolume.jl")
 include("imshow.jl")
