@@ -151,7 +151,7 @@ if (got_it)					# Otherwise go straight to end
 	G = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL");
 	dzdy = gmt("grdmath ? DDY", G);
 	dzdx = gmt("grdmath ? DDX", G);
-	grdvector(dzdx, dzdy, I=0.2, Q="0.25+e+n0.25i+h0.5", G=:black, W="1p", S=12)
+	grdvector(dzdx, dzdy, I=0.2, vector=vector_attrib(head_size=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
 
 	# Just create the figs but not check if they are correct.
 	PS = grdimage(G, J="X10", ps=1);
@@ -264,6 +264,10 @@ if (got_it)					# Otherwise go straight to end
 	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I2/4"
 	d = Dict(:inc => "2");
 	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I2"
+
+	r = vector_attrib(head_size=2.2,stop=[],norm=0.635,shape=:arrow,half_arrow=:right,
+	                  justify=:end,head_fill=:none,trim=0.1,xy=true,scale=6.6)
+	@test r == "2.2+e+je+r+g-+n0.635+h1+t0.1+s+z6.6"
 
 	# EXAMPLES
 	plot(collect(1:10),rand(10), lw=1, lc="blue", marker="square",

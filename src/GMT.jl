@@ -39,7 +39,7 @@ export
 	psxyz!, rose, rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d,
 	sphdistance, sphinterpolate, sphtriangulate,
 	surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
-	wiggle, wiggle!, xy, xy!, xyz2grd,
+	vector_attrib, wiggle, wiggle!, xy, xy!, xyz2grd,
 	linspace, logspace, contains, fields
 
 include("common_docs.jl")
