@@ -656,6 +656,108 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args, arg1, arg2=
 end
 
 # ---------------------------------------------------------------------------------------------------
+function add_opt_pen(d::Dict, symbs, opt)
+	# Build a pen option. Input can be either a full hard core string or a spread in lw, lc, lw, etc or a tuple
+	if (opt != "")  opt = " -" * opt  end 	# Will become -W<pen>, for example
+	out = ""
+	pen = build_pen(d)						# Either a full pen string or empty ("")
+	if (!isempty(pen))
+		out = opt * pen
+	else
+		for symb in symbs
+			if (haskey(d, symb))
+				if (isa(d[symb], Tuple))		# Like this it can hold the pen, not extended atts
+					out = opt * parse_pen(d[symb])
+				else
+					out = opt * arg2str(d[symb])
+				end
+				break
+			end
+		end
+	end
+	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
+function vector_attrib(;kwargs...)
+	#@show(kwargs)
+	#@show(typeof(kwargs))
+	d = KW(kwargs)
+	cmd = ""
+	if (haskey(d, :head_size))  cmd = arg2str(d[:head_size])  end	# To use from grdvector
+	if (haskey(d, :angle))      cmd = string(cmd, "+a", d[:angle])  end
+	if (haskey(d, :start) || haskey(d, :stop) || haskey(d, :middle))
+		if     (haskey(d, :start)) cmd = cmd * "+b";		symb = :start	# Can't use 'begin'
+		elseif (haskey(d, :stop))  cmd = cmd * "+e";		symb = :stop	# Can't use 'end'
+		else
+			cmd = cmd * "+m";		symb = :middle
+			if (d[symb] == "reverse"    || d[symb] == :reverse)	cmd = cmd * "r"  end
+		end
+		if     (d[symb] == "line"       || d[symb] == :line)	cmd = cmd * "t"
+		elseif (d[symb] == "circle"     || d[symb] == :circle)	cmd = cmd * "c"
+		elseif (d[symb] == "tail"       || d[symb] == :tail)	cmd = cmd * "i"
+		elseif (d[symb] == "open_arrow" || d[symb] == :open_arrow)	cmd = cmd * "A"
+		elseif (d[symb] == "open_tail"  || d[symb] == :open_tail)	cmd = cmd * "I"
+		elseif (d[symb] == "left_side"  || d[symb] == :left_side)	cmd = cmd * "l"
+		elseif (d[symb] == "right_side" || d[symb] == :right_side)	cmd = cmd * "r"
+		end
+	end
+	if (haskey(d, :justify))
+		if     (d[:justify] == "beginning" || d[:justify] == :beginning)  cmd = cmd * "+jb"
+		elseif (d[:justify] == "end"       || d[:justify] == :end)        cmd = cmd * "+je"
+		elseif (d[:justify] == "center"    || d[:justify] == :center)     cmd = cmd * "+jc"
+		end
+	end
+	if (haskey(d, :half_arrow))
+		if (d[:half_arrow] == "left" || d[:half_arrow] == :left)
+			cmd = cmd * "+l"
+		else		# Whatever, gives right half
+			cmd = cmd * "+r"
+		end
+	end
+	if (haskey(d, :head_fill))
+		if (d[:head_fill] == "none" || d[:head_fill] == :none)
+			cmd = cmd * "+g-"
+		else
+			cmd = cmd * "+g" * arg2str(d[:head_fill])		# MUST GET TESTS TO THIS
+		end
+	end
+	if (haskey(d, :norm))
+		if (GMTver < 6 && isa(d[:norm], String) && !isletter(d[:norm][end]))	# Avoid Bug in 5.X
+			cmd = string(cmd, "+n", parse(Float64, d[:norm]) / 2.54, "i")
+		elseif (GMTver < 6 && isa(d[:norm], Number))
+			cmd = string(cmd, "+n", d[:norm] / 2.54, "i")
+		else
+			cmd = string(cmd, "+n", d[:norm])
+		end
+	end
+	if (haskey(d, :oblique_pole))  cmd = cmd * "+o" * arg2str(d[:oblique_pole])  end
+	if (haskey(d, :pen))
+		p = add_opt_pen(d, [:pen], "")
+		if (p != "")  cmd = cmd * "+p" * p  end
+	end
+	if (haskey(d, :shape))
+		if (isa(d[:shape], String) || isa(d[:shape], Symbol))
+			if     (d[:shape] == "triang" || d[:shape] == :triang)	cmd = cmd * "+h0"
+			elseif (d[:shape] == "arrow"  || d[:shape] == :arrow)	cmd = cmd * "+h1"
+			elseif (d[:shape] == "V"      || d[:shape] == :V)	cmd = cmd * "+h2"
+			else	error("Shape string can be only: 'triang', 'arrow' or 'V'")
+			end
+		elseif (isa(d[:shape], Number))
+			if (d[:shape] < -2 || d[:shape] > 2)  error("Numeric shape code must be in the [-2 2] interval.")  end
+			cmd = string(cmd, "+h", d[:shape])
+		else
+			error("Bad data type for the 'shape' option")
+		end
+	end
+	if (haskey(d, :trim))  cmd = cmd * "+t" * arg2str(d[:trim])  end
+	if (haskey(d, :ang1_ang2) || haskey(d, :start_stop))  cmd = cmd * "+q"  end
+	if (haskey(d, :xy))  cmd = cmd * "+s"  end
+	if (haskey(d, :scale))  cmd = cmd * "+z" * arg2str(d[:scale])  end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function fname_out(d::Dict)
 	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 	EXT = ""

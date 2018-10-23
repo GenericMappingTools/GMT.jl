@@ -192,6 +192,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd = add_opt(cmd, 'L', d, [:L :closed_polygon])
 	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 
+	#=
 	opt_W = ""
 	pen = build_pen(d)						# Either a full pen string or empty ("")
 	if (!isempty(pen))
@@ -208,6 +209,8 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 			end
 		end
 	end
+	=#
+	opt_W = add_opt_pen(d, [:W :line_attrib], "W")
 
 	opt_S = add_opt("", 'S', d, [:S :symbol])
 	if (isempty(opt_S))			# OK, no symbol given via the -S option. So fish in aliases

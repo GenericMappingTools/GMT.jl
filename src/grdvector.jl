@@ -23,7 +23,7 @@ Parameters
 
     Do NOT clip symbols that fall outside map border 
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#n)
-- **Q** : **vector_params** : -- Str --
+- **Q** : **vector** : -- Str --
 
     Modify vector parameters. For vector heads, append vector head size [Default is 0, i.e., stick-plot].
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#q)
@@ -77,11 +77,21 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; K=false, O=false
 	cmd = add_opt(cmd, 'G', d, [:G :fill])
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
-	cmd = add_opt(cmd, 'Q', d, [:Q :vector_params])
 	cmd = add_opt(cmd, 'S', d, [:S :scale])
 	cmd = add_opt(cmd, 'T', d, [:T])
-	cmd = add_opt(cmd, 'W', d, [:W :pen])
+	cmd = cmd * add_opt_pen(d, [:W :pen], "W")
 	cmd = add_opt(cmd, 'Z', d, [:Z :azimuth])
+
+	for symb in [:Q :vector]
+		if (haskey(d, symb))
+			if (isa(d[symb], String))		# An hard core GMT string directly with options
+				cmd = cmd * " -Q" * d[symb]
+			else
+				cmd = cmd * " -Q" * vector_attrib(d[symb])
+			end
+			break
+		end
+	end
 
 	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "grdvector", arg1, arg2)
