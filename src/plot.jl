@@ -328,3 +328,39 @@ function bar3(arg; K=false, O=false, first=true, kwargs...)
 
 	GMT.common_plot_xyz("", arg1, caller, K, O, first, true, d...)
 end
+
+# ------------------------------------------------------------------------------------------------------
+function arrows(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+
+	d = KW(kwargs)
+
+	cmd = ""
+	for symb in [:vec :arrow :vector :vecmap :geovec :geovector]
+		if (haskey(d, symb))
+			code = "v"
+			if (d[symb] == :geovector || d[symb] == :geovec)
+				code = "="
+			elseif (d[symb] == :vecmap)		# Uses azimuth and plots angles taking projection into account
+				code = "V"
+			end
+			if (isa(d[symb], String))		# An hard core GMT string directly with options
+				cmd = cmd * " -S" * code * d[symb]
+			else
+				cmd = cmd * " -S" * code * vector_attrib(d[symb])
+			end
+			break
+		end
+	end
+	if (cmd == "")  cmd = " -Sv0.5+e+h0.5"  end		# Minimalist defaults
+
+	caller = cmd				# Piggy-back this
+
+	GMT.common_plot_xyz(cmd0, arg1, caller, K, O, first, false, d...)
+end
+
+# ------------------------------------------------------------------------------------------------------
+arrows(arg1; K=false, O=false, first=true, kw...) = arrows("", arg1; K=K, O=O, first=first, kw...)
+
+arrows!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
+	arrows(cmd0, arg1; K=K, O=O, first=first, kw...)
+arrows!(arg1; K=true, O=true, first=false, kw...) = arrows("", arg1; K=K, O=O, first=first, kw...)

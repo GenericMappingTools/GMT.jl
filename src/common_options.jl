@@ -93,7 +93,7 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 			elseif (isa(d[:figsize], String))
 				s = d[:figsize]
 			else
-				error("What the hell is this figwidth argument?")
+				error("What the hell is this figsize argument?")
 			end
 			if (haskey(d, :units))
 				s = s * d[:units][1]
@@ -116,6 +116,8 @@ function build_opt_J(Val)
 		return " -J" * Val
 	elseif (isa(Val, Symbol))
 		return " -J" * string(Val)
+	elseif (isa(Val, Number))
+		return string(" -JX", string(Val))
 	elseif (isempty(Val))
 		return " -J"
 	end
@@ -680,34 +682,33 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function vector_attrib(;kwargs...)
-	#@show(kwargs)
-	#@show(typeof(kwargs))
 	d = KW(kwargs)
 	cmd = ""
-	if (haskey(d, :head_size))  cmd = arg2str(d[:head_size])  end	# To use from grdvector
-	if (haskey(d, :angle))      cmd = string(cmd, "+a", d[:angle])  end
-	if (haskey(d, :start) || haskey(d, :stop) || haskey(d, :middle))
-		if     (haskey(d, :start)) cmd = cmd * "+b";		symb = :start	# Can't use 'begin'
-		elseif (haskey(d, :stop))  cmd = cmd * "+e";		symb = :stop	# Can't use 'end'
-		else
-			cmd = cmd * "+m";		symb = :middle
-			if (d[symb] == "reverse"    || d[symb] == :reverse)	cmd = cmd * "r"  end
-		end
-		if     (d[symb] == "line"       || d[symb] == :line)	cmd = cmd * "t"
-		elseif (d[symb] == "circle"     || d[symb] == :circle)	cmd = cmd * "c"
-		elseif (d[symb] == "tail"       || d[symb] == :tail)	cmd = cmd * "i"
-		elseif (d[symb] == "open_arrow" || d[symb] == :open_arrow)	cmd = cmd * "A"
-		elseif (d[symb] == "open_tail"  || d[symb] == :open_tail)	cmd = cmd * "I"
-		elseif (d[symb] == "left_side"  || d[symb] == :left_side)	cmd = cmd * "l"
-		elseif (d[symb] == "right_side" || d[symb] == :right_side)	cmd = cmd * "r"
+	cmd = add_opt("", "", d, [:size :head_size])
+	if (haskey(d, :angle))  cmd = string(cmd, "+a", d[:angle])  end
+	if (haskey(d, :middle))
+		cmd = cmd * "+m";
+		if (d[:middle] == "reverse" || d[:middle] == :reverse)	cmd = cmd * "r"  end
+		cmd = helper_vec_loc(d, :middle, cmd)
+	else
+		for symb in [:start :stop]
+			if (haskey(d, symb) && symb == :start)
+				cmd = cmd * "+b";
+				cmd = helper_vec_loc(d, :start, cmd)
+			elseif (haskey(d, symb) && symb == :stop)
+				cmd = cmd * "+e";
+				cmd = helper_vec_loc(d, :stop, cmd)
+			end
 		end
 	end
+
 	if (haskey(d, :justify))
 		if     (d[:justify] == "beginning" || d[:justify] == :beginning)  cmd = cmd * "+jb"
 		elseif (d[:justify] == "end"       || d[:justify] == :end)        cmd = cmd * "+je"
 		elseif (d[:justify] == "center"    || d[:justify] == :center)     cmd = cmd * "+jc"
 		end
 	end
+
 	if (haskey(d, :half_arrow))
 		if (d[:half_arrow] == "left" || d[:half_arrow] == :left)
 			cmd = cmd * "+l"
@@ -715,13 +716,15 @@ function vector_attrib(;kwargs...)
 			cmd = cmd * "+r"
 		end
 	end
-	if (haskey(d, :head_fill))
-		if (d[:head_fill] == "none" || d[:head_fill] == :none)
+
+	if (haskey(d, :fill))
+		if (d[:fill] == "none" || d[:fill] == :none)
 			cmd = cmd * "+g-"
 		else
-			cmd = cmd * "+g" * arg2str(d[:head_fill])		# MUST GET TESTS TO THIS
+			cmd = cmd * "+g" * arg2str(d[:fill])		# MUST GET TESTS TO THIS
 		end
 	end
+
 	if (haskey(d, :norm))
 		if (GMTver < 6 && isa(d[:norm], String) && !isletter(d[:norm][end]))	# Avoid Bug in 5.X
 			cmd = string(cmd, "+n", parse(Float64, d[:norm]) / 2.54, "i")
@@ -731,11 +734,13 @@ function vector_attrib(;kwargs...)
 			cmd = string(cmd, "+n", d[:norm])
 		end
 	end
+
 	if (haskey(d, :oblique_pole))  cmd = cmd * "+o" * arg2str(d[:oblique_pole])  end
 	if (haskey(d, :pen))
 		p = add_opt_pen(d, [:pen], "")
 		if (p != "")  cmd = cmd * "+p" * p  end
 	end
+
 	if (haskey(d, :shape))
 		if (isa(d[:shape], String) || isa(d[:shape], Symbol))
 			if     (d[:shape] == "triang" || d[:shape] == :triang)	cmd = cmd * "+h0"
@@ -750,10 +755,25 @@ function vector_attrib(;kwargs...)
 			error("Bad data type for the 'shape' option")
 		end
 	end
+
 	if (haskey(d, :trim))  cmd = cmd * "+t" * arg2str(d[:trim])  end
 	if (haskey(d, :ang1_ang2) || haskey(d, :start_stop))  cmd = cmd * "+q"  end
 	if (haskey(d, :xy))  cmd = cmd * "+s"  end
 	if (haskey(d, :scale))  cmd = cmd * "+z" * arg2str(d[:scale])  end
+	return cmd
+end
+
+function helper_vec_loc(d, symb, cmd)
+	# Helper function to the 'begin', 'middle', 'end' vector attrib function
+	if     (d[symb] == "line"       || d[symb] == :line)	cmd = cmd * "t"
+	elseif (d[symb] == "arrow"      || d[symb] == :arrow)	cmd = cmd * "a"
+	elseif (d[symb] == "circle"     || d[symb] == :circle)	cmd = cmd * "c"
+	elseif (d[symb] == "tail"       || d[symb] == :tail)	cmd = cmd * "i"
+	elseif (d[symb] == "open_arrow" || d[symb] == :open_arrow)	cmd = cmd * "A"
+	elseif (d[symb] == "open_tail"  || d[symb] == :open_tail)	cmd = cmd * "I"
+	elseif (d[symb] == "left_side"  || d[symb] == :left_side)	cmd = cmd * "l"
+	elseif (d[symb] == "right_side" || d[symb] == :right_side)	cmd = cmd * "r"
+	end
 	return cmd
 end
 

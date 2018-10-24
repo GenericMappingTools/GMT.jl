@@ -170,6 +170,10 @@ if (got_it)					# Otherwise go straight to end
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
 	plot!(collect(1:10),rand(10), fmt="ps")
 
+	# ARROWS
+	arrows([0 8.2 0 6], R="-2/4/0/9", vec=vector_attrib(head=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
+	arrows([0 8.2 0 6], R="-2/4/0/9", vec=vector_attrib(size=2,start=:arrow,stop=:tail,shape=0.5), J=14, B=:a, pen="6p")
+
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
@@ -263,8 +267,8 @@ if (got_it)					# Otherwise go straight to end
 	d = Dict(:inc => "2");
 	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I2"
 
-	r = vector_attrib(head_size=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
-	                  justify=:end,head_fill=:none,trim=0.1,xy=true,scale=6.6)
+	r = vector_attrib(size=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
+	                  justify=:end,fill=:none,trim=0.1,xy=true,scale=6.6)
 	@test r == "2.2+e+je+r+g-+n0.25i+h1+t0.1+s+z6.6"
 
 	# EXAMPLES

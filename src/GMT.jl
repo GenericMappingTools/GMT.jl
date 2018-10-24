@@ -24,7 +24,7 @@ const FMT = "ps"
 
 export
 	GMTver, FMT, gmt,
-	bar, bar!, bar3,
+	arrows, arrows!, bar, bar!, bar3,
 	basemap, basemap!, blockmean, blockmedian, blockmode, coast, coast!, colorbar, colorbar!, contour, 
 	contour!, filter1d, filter2d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
 	gmtread, gmtselect, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwich, 
