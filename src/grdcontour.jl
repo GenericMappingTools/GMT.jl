@@ -125,7 +125,7 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; K=false, O=false, first=t
 	cmd = add_opt(cmd, 'Q', d, [:Q :cut])
 	cmd = add_opt(cmd, 'S', d, [:S :smooth])
 	cmd = add_opt(cmd, 'T', d, [:T :ticks])
-	cmd = add_opt(cmd, 'W', d, [:W :pen])
+	cmd = cmd * add_opt_pen(d, [:W :pen], "W")
 	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
 
 	cmd = finish_PS(d, cmd, output, K, O)

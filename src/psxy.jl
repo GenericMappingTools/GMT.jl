@@ -75,7 +75,7 @@ Parameters
 	and select their sizes with the **markersize** or **size** keyword [default is 8p].
 	The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
 	points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
-- **W** : **line_attrib** : **markeredgecolor** : -- Str --
+- **W** : **pen** : **line_attrib** : **markeredgecolor** : -- Str --
 
     Set pen attributes for lines or the outline of symbols
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w)
@@ -210,7 +210,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		end
 	end
 	=#
-	opt_W = add_opt_pen(d, [:W :line_attrib], "W")
+	opt_W = add_opt_pen(d, [:W :pen :line_attrib], "W")
 
 	opt_S = add_opt("", 'S', d, [:S :symbol])
 	if (isempty(opt_S))			# OK, no symbol given via the -S option. So fish in aliases
@@ -324,6 +324,11 @@ function get_marker_name(d::Dict, symbs, del=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
+xy(arg1; caller=[], K=false, O=false, first=true, kw...) =
+	xy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
+xy!(arg1; caller=[], K=true, O=true, first=false, kw...) =
+	xy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
+
 xy!(cmd0::String="", arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
 	xy(cmd0, arg1; caller=caller, K=K, O=O, first=first, kw...)
 xy!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =

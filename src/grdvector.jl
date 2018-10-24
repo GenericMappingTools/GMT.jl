@@ -23,7 +23,7 @@ Parameters
 
     Do NOT clip symbols that fall outside map border 
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#n)
-- **Q** : **vector** : -- Str --
+- **Q** : **vec** : **vector** : **arrow** : -- Str --
 
     Modify vector parameters. For vector heads, append vector head size [Default is 0, i.e., stick-plot].
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#q)
@@ -82,7 +82,7 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; K=false, O=false
 	cmd = cmd * add_opt_pen(d, [:W :pen], "W")
 	cmd = add_opt(cmd, 'Z', d, [:Z :azimuth])
 
-	for symb in [:Q :vector]
+	for symb in [:Q :vec :vector :arrow]
 		if (haskey(d, symb))
 			if (isa(d[symb], String))		# An hard core GMT string directly with options
 				cmd = cmd * " -Q" * d[symb]
