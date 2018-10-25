@@ -481,10 +481,10 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_pen(pen::Tuple)
-	# Convert a empty to 3 args tuple containing (width[c|i|p]], [color], [style[c|i|p|])
+	# Convert to an empty to 3 args tuple containing (width[c|i|p]], [color], [style[c|i|p|])
 	len = length(pen)
 	if (len == 0) return "0.25p" end 	# just the default pen
-	s = arg2str(pen[1])					# First arg is differene because there is no leading ','
+	s = arg2str(pen[1])					# First arg is different because there is no leading ','
 	for k = 2:len
 		if (isa(pen[k], Number))
 			s = @sprintf("%s,%.8g", s, pen[k])
@@ -496,24 +496,27 @@ function parse_pen(pen::Tuple)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_pen_width(d::Dict)
+function parse_pen_width(d::Dict, del::Bool=false)
 	# Search for a "lw" or "linewidth" specification
 	pw = ""
-	for sym in [:lw :linewidth :LineWidth]
-		if (haskey(d, sym))
-			pw = string(d[sym])
+	for symb in [:lw :linewidth :LineWidth]
+		if (haskey(d, symb))
+			pw = string(d[symb])
+			if (del)  delete!(d, symb)  end
+			break
 		end
 	end
 	return pw
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_pen_color(d::Dict)
+function parse_pen_color(d::Dict, del::Bool=false)
 	# Search for a "lc" or "linecolor" specification
 	pc = ""
-	for sym in [:lc :linecolor :LineColor]
-		if (haskey(d, sym))
-			pc = string(d[sym])
+	for symb in [:lc :linecolor :LineColor]
+		if (haskey(d, symb))
+			pc = string(d[symb])
+			if (del)  delete!(d, symb)  end
 			break
 		end
 	end
@@ -521,24 +524,26 @@ function parse_pen_color(d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_pen_style(d::Dict)
+function parse_pen_style(d::Dict, del::Bool=false)
 	# Search for a "ls" or "linestyle" specification
 	ps = ""
-	for sym in [:ls :linestyle :LineStyle]
-		if (haskey(d, sym))
-			ps = string(d[sym])
+	for symb in [:ls :linestyle :LineStyle]
+		if (haskey(d, symb))
+			ps = string(d[symb])
+			if (del)  delete!(d, symb)  end
+			break
 		end
 	end
 	return ps
 end
 
 # ---------------------------------------------------------------------------------------------------
-function build_pen(d::Dict)
+function build_pen(d::Dict, del::Bool=false)
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
-	lw = parse_pen_width(d)
-	lc = parse_pen_color(d)
-	ls = parse_pen_style(d)
+	lw = parse_pen_width(d, del)
+	lc = parse_pen_color(d, del)
+	ls = parse_pen_style(d, del)
 	if (!isempty(lw) || !isempty(lc) || !isempty(ls))
 		return lw * "," * lc * "," * ls
 	else
@@ -575,7 +580,8 @@ function arg2str(arg)
 		out = join([@sprintf("%.15g/",x) for x in arg])
 		out = rstrip(out, '/')		# Remove last '/'
 	else
-		error("Argument 'arg' can only be a String or a Number")
+		error(@sprintf("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple,
+		                but was %s", typeof(arg)))
 	end
 end
 
@@ -619,16 +625,14 @@ end
 function add_opt(cmd::String, opt, d::Dict, symbs, del::Bool=false)
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == true we remove the found key. Useful when 
-	for sym in symbs
-		if (haskey(d, sym))
+	for symb in symbs
+		if (haskey(d, symb))
 			if (opt != "")
-				cmd = string(cmd, " -", opt, arg2str(d[sym]))
+				cmd = string(cmd, " -", opt, arg2str(d[symb]))
 			else
-				cmd = string(cmd, arg2str(d[sym]))
+				cmd = string(cmd, arg2str(d[symb]))
 			end
-			if (del)
-				delete!(d, sym)
-			end
+			if (del)  delete!(d, symb)  end
 			break
 		end
 	end
@@ -658,8 +662,8 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args, arg1, arg2=
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_pen(d::Dict, symbs, opt)
-	# Build a pen option. Input can be either a full hard core string or a spread in lw, lc, lw, etc or a tuple
+function add_opt_pen(d::Dict, symbs, opt="", del::Bool=false)
+	# Build a pen option. Input can be either a full hard core string or spread in lw, lc, lw, etc or a tuple
 	if (opt != "")  opt = " -" * opt  end 	# Will become -W<pen>, for example
 	out = ""
 	pen = build_pen(d)						# Either a full pen string or empty ("")
@@ -668,11 +672,12 @@ function add_opt_pen(d::Dict, symbs, opt)
 	else
 		for symb in symbs
 			if (haskey(d, symb))
-				if (isa(d[symb], Tuple))		# Like this it can hold the pen, not extended atts
+				if (isa(d[symb], Tuple))	# Like this it can hold the pen, not extended atts
 					out = opt * parse_pen(d[symb])
 				else
 					out = opt * arg2str(d[symb])
 				end
+				if (del)  delete!(d, symb)  end
 				break
 			end
 		end
@@ -681,6 +686,7 @@ function add_opt_pen(d::Dict, symbs, opt)
 end
 
 # ---------------------------------------------------------------------------------------------------
+vector_attrib(t::NamedTuple) = vector_attrib(; t...)
 function vector_attrib(;kwargs...)
 	d = KW(kwargs)
 	cmd = ""
@@ -758,7 +764,7 @@ function vector_attrib(;kwargs...)
 
 	if (haskey(d, :trim))  cmd = cmd * "+t" * arg2str(d[:trim])  end
 	if (haskey(d, :ang1_ang2) || haskey(d, :start_stop))  cmd = cmd * "+q"  end
-	if (haskey(d, :xy))  cmd = cmd * "+s"  end
+	if (haskey(d, :uv))  cmd = cmd * "+s"  end
 	if (haskey(d, :scale))  cmd = cmd * "+z" * arg2str(d[:scale])  end
 	return cmd
 end
@@ -773,6 +779,59 @@ function helper_vec_loc(d, symb, cmd)
 	elseif (d[symb] == "open_tail"  || d[symb] == :open_tail)	cmd = cmd * "I"
 	elseif (d[symb] == "left_side"  || d[symb] == :left_side)	cmd = cmd * "l"
 	elseif (d[symb] == "right_side" || d[symb] == :right_side)	cmd = cmd * "r"
+	end
+	return cmd
+end
+# ---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
+function front(;kwargs...)
+	d = KW(kwargs)
+	cmd = ""
+	for symb in [:dist :distance]
+		if (haskey(d, symb))
+			if (isa(d[symb], String))
+				cmd = d[symb]
+			elseif (isa(d[symb], NamedTuple))
+				fn = fieldnames(typeof(d[symb]))
+				if (fn[1] == :gap)
+					cmd = string(d[symb][1])
+					if (length(fn) == 2)  cmd = string(cmd, '/', d[symb][2]) end	# Have also the 'size'
+				elseif (fn[1] == :number)
+					if (length(fn) != 2)
+						error("FRONT: when providing the number of symbols MUST provide also its size.")
+					end
+					cmd = string('-', d[symb][1], '/', d[symb][2])
+				end
+			else
+				error("FRONT: the 'distance' parameter is mandatory and must be either a string or a named tuple.")
+			end
+			break
+		end
+	end
+	if (cmd == "")
+		error("FRONT: the 'dist' (or 'distance') parameter is mandatory and you provided none.")
+	end
+
+	if     (haskey(d, :left))  cmd = cmd * "+l"
+	elseif (haskey(d, :right)) cmd = cmd * "+r"
+	end
+
+	if (haskey(d, :symbol))
+		if     (d[:symbol] == "box"      || d[:symbol] == :box)      cmd = cmd * "+b"
+		elseif (d[:symbol] == "circle"   || d[:symbol] == :circle)   cmd = cmd * "+c"
+		elseif (d[:symbol] == "fault"    || d[:symbol] == :fault)    cmd = cmd * "+f"
+		elseif (d[:symbol] == "triangle" || d[:symbol] == :triangle) cmd = cmd * "+t"
+		elseif (d[:symbol] == "slip"     || d[:symbol] == :slip)     cmd = cmd * "+s"
+		elseif (d[:symbol] == "arcuate"  || d[:symbol] == :arcuate)  cmd = cmd * "+S"
+		else   @warn(string("FRONT: unknown symbol: ", d[:symbol]))
+		end
+	end
+
+	if (haskey(d, :offset))  cmd = cmd * "+o" * arg2str(d[:offset])  end
+	if (haskey(d, :pen))
+		cmd = cmd * "+p"
+		if (!isempty_(d[:pen])) cmd = cmd * add_opt_pen(d, [:pen])  end
 	end
 	return cmd
 end

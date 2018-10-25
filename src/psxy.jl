@@ -17,7 +17,7 @@ Parameters
 - $(GMT.opt_R)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
-- **D** : **offset** : -- Str --
+- **D** : **shift** : **offset** : -- Str --
 
     Offset the plot symbol or line locations by the given amounts dx/dy.
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#d)
@@ -176,7 +176,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
 	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
-	cmd = add_opt(cmd, 'D', d, [:D :offset])
+	cmd = add_opt(cmd, 'D', d, [:D :shift :offset])		# 'offset' may be needed in vec attribs
 	cmd = add_opt(cmd, 'E', d, [:E :error_bars])
 	cmd = add_opt(cmd, 'F', d, [:F :conn :connection])
 

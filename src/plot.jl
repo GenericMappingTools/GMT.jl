@@ -334,29 +334,36 @@ function arrows(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs..
 
 	d = KW(kwargs)
 
+	cmd = helper_arrows(d)
+	if (cmd == "")  cmd = " -Sv0.5+e+h0.5"	# Minimalist defaults
+	else            cmd = " -S" * cmd
+	end
+
+	GMT.common_plot_xyz(cmd0, arg1, cmd, K, O, first, false, d...)
+end
+
+function helper_arrows(d::Dict)
+	# Helper function to set the vector head attributes
 	cmd = ""
 	for symb in [:vec :arrow :vector :vecmap :geovec :geovector]
 		if (haskey(d, symb))
 			code = "v"
-			if (d[symb] == :geovector || d[symb] == :geovec)
+			if (symb == :geovec || symb == :geovector)
 				code = "="
-			elseif (d[symb] == :vecmap)		# Uses azimuth and plots angles taking projection into account
+			elseif (symb == :vecmap)		# Uses azimuth and plots angles taking projection into account
 				code = "V"
 			end
 			if (isa(d[symb], String))		# An hard core GMT string directly with options
-				cmd = cmd * " -S" * code * d[symb]
+				cmd = code * d[symb]
 			else
-				cmd = cmd * " -S" * code * vector_attrib(d[symb])
+				cmd = code * vector_attrib(d[symb])
 			end
 			break
 		end
 	end
-	if (cmd == "")  cmd = " -Sv0.5+e+h0.5"  end		# Minimalist defaults
-
-	caller = cmd				# Piggy-back this
-
-	GMT.common_plot_xyz(cmd0, arg1, caller, K, O, first, false, d...)
+	return cmd
 end
+# ------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------
 arrows(arg1; K=false, O=false, first=true, kw...) = arrows("", arg1; K=K, O=O, first=first, kw...)
@@ -364,3 +371,50 @@ arrows(arg1; K=false, O=false, first=true, kw...) = arrows("", arg1; K=K, O=O, f
 arrows!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
 	arrows(cmd0, arg1; K=K, O=O, first=first, kw...)
 arrows!(arg1; K=true, O=true, first=false, kw...) = arrows("", arg1; K=K, O=O, first=first, kw...)
+
+
+# ------------------------------------------------------------------------------------------------------
+function lines(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+
+	d = KW(kwargs)
+
+	cmd = ""
+	for symb in [:front]
+		if (haskey(d, symb))
+			if (isa(d[symb], String))		# An hard core GMT string directly with options
+				cmd = cmd * " -Sf" * d[symb]
+			else
+				cmd = cmd * " -Sf" * front(d[symb])
+			end
+			break
+		end
+	end
+
+	if (!occursin("+p", cmd))					# If no pen was specified search for a -W
+		pen = add_opt_pen(d, [:W :pen], "W", true)
+		if (pen == "")
+			cmd = cmd * " -W0.25p"				# Do not leave without a pen specification
+		else
+			cmd = cmd * pen
+			if (haskey(d, :bezier))  cmd = cmd * "+s"  end
+			if (haskey(d, :offset))  cmd = cmd * "+o" * arg2str(d[:offset]);	delete!(d, :offset)  end
+			# Search for eventual vec specs
+			r = helper_arrows(d)
+			if (r != "")
+				if     (haskey(d, :vec_start))  cmd = cmd * "+vb" * r[2:end]	# r[1] = 'v'
+				elseif (haskey(d, :vec_stop))   cmd = cmd * "+ve" * r[2:end]
+				else   cmd = cmd * "+" * r
+				end
+			end
+		end
+	end
+
+	GMT.common_plot_xyz(cmd0, arg1, cmd, K, O, first, false, d...)
+end
+
+# ------------------------------------------------------------------------------------------------------
+lines(arg1; K=false, O=false, first=true, kw...) = lines("", arg1; K=K, O=O, first=first, kw...)
+
+lines!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
+	lines(cmd0, arg1; K=K, O=O, first=first, kw...)
+lines!(arg1; K=true, O=true, first=false, kw...) = lines("", arg1; K=K, O=O, first=first, kw...)
