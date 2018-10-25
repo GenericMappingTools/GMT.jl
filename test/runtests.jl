@@ -171,8 +171,14 @@ if (got_it)					# Otherwise go straight to end
 	plot!(collect(1:10),rand(10), fmt="ps")
 
 	# ARROWS
-	arrows([0 8.2 0 6], R="-2/4/0/9", vec=vector_attrib(head=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
+	arrows([0 8.2 0 6], R="-2/4/0/9", vec=vector_attrib(size=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
 	arrows([0 8.2 0 6], R="-2/4/0/9", vec=vector_attrib(size=2,start=:arrow,stop=:tail,shape=0.5), J=14, B=:a, pen="6p")
+
+	# LINES
+	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, front=front(dist=(gap=1,size=0.25), symbol=:box))
+	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af)
+	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", vec=(size=0.65, fill=:red))
+	#lines!([-50 40; 50 -40], R="-60/60/-50/50", W="1p+o1.25/0.25i+v0.65+gred", show=1)
 
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
@@ -268,8 +274,11 @@ if (got_it)					# Otherwise go straight to end
 	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I2"
 
 	r = vector_attrib(size=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
-	                  justify=:end,fill=:none,trim=0.1,xy=true,scale=6.6)
+	                  justify=:end,fill=:none,trim=0.1,uv=true,scale=6.6);
 	@test r == "2.2+e+je+r+g-+n0.25i+h1+t0.1+s+z6.6"
+
+	r = front(dist=(gap="0.4i",size=0.25), symbol=:arcuate, pen=2, offset="10i", right=1);
+	@test r == "0.4i/0.25+r+S+o10i+p2"
 
 	# EXAMPLES
 	plot(collect(1:10),rand(10), lw=1, lc="blue", marker="square",
