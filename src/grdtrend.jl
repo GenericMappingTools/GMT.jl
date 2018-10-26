@@ -49,7 +49,7 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	cmd = add_opt(cmd, 'T', d, [:T :trend])
 
 	if (occursin("-D", cmd) && occursin("-T", cmd))
-		warning("Usage error, both difference and trend were required. Ignoring the trend request.")
+		@warn("Usage error, both difference and trend were required. Ignoring the trend request.")
 	elseif (!occursin("-D", cmd) && !occursin("-T", cmd))
 		cmd = cmd * " -T" 			# No -T -or -D provided so default to -T
 	end

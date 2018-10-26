@@ -716,18 +716,14 @@ function vector_attrib(;kwargs...)
 	end
 
 	if (haskey(d, :half_arrow))
-		if (d[:half_arrow] == "left" || d[:half_arrow] == :left)
-			cmd = cmd * "+l"
-		else		# Whatever, gives right half
-			cmd = cmd * "+r"
+		if (d[:half_arrow] == "left" || d[:half_arrow] == :left)	cmd = cmd * "+l"
+		else	cmd = cmd * "+r"		# Whatever, gives right half
 		end
 	end
 
 	if (haskey(d, :fill))
-		if (d[:fill] == "none" || d[:fill] == :none)
-			cmd = cmd * "+g-"
-		else
-			cmd = cmd * "+g" * arg2str(d[:fill])		# MUST GET TESTS TO THIS
+		if (d[:fill] == "none" || d[:fill] == :none) cmd = cmd * "+g-"
+		else	cmd = cmd * "+g" * arg2str(d[:fill])		# MUST GET TESTS TO THIS
 		end
 	end
 
@@ -755,7 +751,7 @@ function vector_attrib(;kwargs...)
 			else	error("Shape string can be only: 'triang', 'arrow' or 'V'")
 			end
 		elseif (isa(d[:shape], Number))
-			if (d[:shape] < -2 || d[:shape] > 2)  error("Numeric shape code must be in the [-2 2] interval.")  end
+			if (d[:shape] < -2 || d[:shape] > 2) error("Numeric shape code must be in the [-2 2] interval.") end
 			cmd = string(cmd, "+h", d[:shape])
 		else
 			error("Bad data type for the 'shape' option")
@@ -769,6 +765,7 @@ function vector_attrib(;kwargs...)
 	return cmd
 end
 
+# -----------------------------------
 function helper_vec_loc(d, symb, cmd)
 	# Helper function to the 'begin', 'middle', 'end' vector attrib function
 	if     (d[symb] == "line"       || d[symb] == :line)	cmd = cmd * "t"
@@ -785,56 +782,147 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
-function front(;kwargs...)
+function decorated(;kwargs...)
 	d = KW(kwargs)
-	cmd = ""
-	for symb in [:dist :distance]
+
+	cmd, optD = helper_decorated(d)		# 'cmd' cannot come out empty (would have errored)
+
+	if (haskey(d, :dec2))				# -S~ mode.
+		cmd = cmd * ":"
+		marca = get_marker_name(d, [:marker :symbol])		# This fun lieves in psxy.jl
+		if (marca == "")
+			cmd = "+sa0.5" * cmd
+		else
+			cmd = cmd * "+s" * marca
+			for symb in [:size :markersize :symbsize :symbolsize]
+				if (haskey(d, symb))
+					cmd = cmd * arg2str(d[symb]);
+					break
+				end
+			end
+		end
+		if (haskey(d, :angle))   cmd = string(cmd, "+a", d[:angle])  end
+		if (haskey(d, :debug))   cmd = cmd * "+d"  end
+		if (haskey(d, :fill))    cmd = cmd * "+g" * arg2str(d[:fill])    end
+		if (haskey(d, :nudge))   cmd = cmd * "+n" * arg2str(d[:nudge])   end
+		if (haskey(d, :n_data))  cmd = cmd * "+w" * arg2str(d[:n_data])  end
+		optD = "d"		# Need to find out also when it's -D
+		opt_S = " -S~"
+	elseif (haskey(d, :quoted))				# -Sq mode.
+		if (haskey(d, :angle))   cmd = string(cmd, "+a", d[:angle])  end
+		if (haskey(d, :debug))   cmd = cmd * "+d"  end
+		if (haskey(d, :clearance ))  cmd = cmd * "+c" * arg2str(d[:clearance]) end
+		if (haskey(d, :delay))   cmd = cmd * "+e"  end
+		if (haskey(d, :font))    cmd = cmd * "+f" * arg2str(d[:font])    end	# MUST WRITE A FONT FUN
+		if (haskey(d, :color))   cmd = cmd * "+g" * arg2str(d[:color])   end
+		if (haskey(d, :justify)) cmd = cmd * "+j" * arg2str(d[:justify]) end
+		if (haskey(d, :const_label)) cmd = cmd * "+l" * arg2str(d[:const_label])  end
+		if (haskey(d, :nudge))   cmd = cmd * "+n" * arg2str(d[:nudge])   end
+		if (haskey(d, :rounded)) cmd = cmd * "+o"  end
+		if (haskey(d, :min_rad)) cmd = cmd * "+r" * arg2str(d[:min_rad]) end
+		if (haskey(d, :unit))    cmd = cmd * "+u" * arg2str(d[:unit])    end
+		if (haskey(d, :curved))  cmd = cmd * "+v"  end
+		if (haskey(d, :n_data))  cmd = cmd * "+w" * arg2str(d[:n_data])  end
+		if (haskey(d, :prefix))  cmd = cmd * "+=" * arg2str(d[:prefix])  end
+		if (haskey(d, :suffices)) cmd = cmd * "+x" * arg2str(d[:suffices])  end		# Only when -SqN2
+		if (haskey(d, :label))
+			if (isa(d[:label], String))
+				cmd = cmd * "+L" * d[:label]
+			elseif (isa(d[:label], NamedTuple))
+				fn = fieldnames(typeof(d[:label]))
+				for k = 1:length(fn)
+					if     (fn[k] == :header)    cmd = cmd * "+Lh"
+					elseif (fn[k] == :plot_dist)
+						cmd = cmd * "+Ld"
+						if (isa(d[:label][k], String)) cmd = cmd * d[:label][k] end	# So that [], etc ignored
+					elseif (fn[k] == :map_dist)
+						cmd = cmd * "+LD"
+						if (isa(d[:label][k], String)) cmd = cmd * d[:label][k]	end	# MUST write a fun to expand d|e|f|k|n|M|n|s
+					elseif (fn[k] == :input)	# 3rd column has the text label
+						cmd = cmd * "+Lf"
+					end
+				end
+			else
+				@warn("'label' option must be a string or a NamedTuple. Since it wasn't I'm ignoring it.")
+			end
+		end
+		optD = "d"		# Need to find out also when it's -D
+		opt_S = " -Sq"
+	else									# -Sf mode.
+		if     (haskey(d, :left))  cmd = cmd * "+l"
+		elseif (haskey(d, :right)) cmd = cmd * "+r"
+		end
+		if (haskey(d, :symbol))
+			if     (d[:symbol] == "box"      || d[:symbol] == :box)      cmd = cmd * "+b"
+			elseif (d[:symbol] == "circle"   || d[:symbol] == :circle)   cmd = cmd * "+c"
+			elseif (d[:symbol] == "fault"    || d[:symbol] == :fault)    cmd = cmd * "+f"
+			elseif (d[:symbol] == "triangle" || d[:symbol] == :triangle) cmd = cmd * "+t"
+			elseif (d[:symbol] == "slip"     || d[:symbol] == :slip)     cmd = cmd * "+s"
+			elseif (d[:symbol] == "arcuate"  || d[:symbol] == :arcuate)  cmd = cmd * "+S"
+			else   @warn(string("DECORATED: unknown symbol: ", d[:symbol]))
+			end
+		end
+		if (haskey(d, :offset))  cmd = cmd * "+o" * arg2str(d[:offset])  end
+		opt_S = " -Sf"
+	end
+
+	if (haskey(d, :pen))
+		cmd = cmd * "+p"
+		if (!isempty_(d[:pen])) cmd = cmd * add_opt_pen(d, [:pen])  end
+	end
+	return opt_S * optD * cmd
+end
+
+# --------------------------------
+function helper_decorated(d::Dict)
+	# Helper function to deal with the gap and symbol size parameters
+	cmd = "";	optD = ""
+	for symb in [:dist :distance :distmap]
 		if (haskey(d, symb))
+			# The String assumes all is already encoded. Number, Array only accept numerics
+			# Tuple accepts numerics and/or strings. NamedTuples are the most generic
 			if (isa(d[symb], String))
 				cmd = d[symb]
+			elseif (isa(d[symb], Number))
+				cmd = string(d[symb])
+			elseif (isa(d[symb], Array) || isa(d[symb], Tuple))
+				cmd = arg2str(d[symb])
 			elseif (isa(d[symb], NamedTuple))
 				fn = fieldnames(typeof(d[symb]))
-				if (fn[1] == :gap)
+				if (fn[1] == :val || fn[1] == :value)
 					cmd = string(d[symb][1])
 					if (length(fn) == 2)  cmd = string(cmd, '/', d[symb][2]) end	# Have also the 'size'
 				elseif (fn[1] == :number)
 					if (length(fn) != 2)
-						error("FRONT: when providing the number of symbols MUST provide also its size.")
+						error("DECORATED: when providing the number of symbols MUST provide also its size.")
 					end
 					cmd = string('-', d[symb][1], '/', d[symb][2])
 				end
 			else
-				error("FRONT: the 'distance' parameter is mandatory and must be either a string or a named tuple.")
+				error("DECORATED: the 'dist' (or 'distance') parameter is mandatory and must be either a string or a named tuple.")
+			end
+			if (symb == :distmap)	# Here we know that we are dealing with a -S~ for sure.
+				optD = "D"
 			end
 			break
 		end
 	end
 	if (cmd == "")
-		error("FRONT: the 'dist' (or 'distance') parameter is mandatory and you provided none.")
-	end
-
-	if     (haskey(d, :left))  cmd = cmd * "+l"
-	elseif (haskey(d, :right)) cmd = cmd * "+r"
-	end
-
-	if (haskey(d, :symbol))
-		if     (d[:symbol] == "box"      || d[:symbol] == :box)      cmd = cmd * "+b"
-		elseif (d[:symbol] == "circle"   || d[:symbol] == :circle)   cmd = cmd * "+c"
-		elseif (d[:symbol] == "fault"    || d[:symbol] == :fault)    cmd = cmd * "+f"
-		elseif (d[:symbol] == "triangle" || d[:symbol] == :triangle) cmd = cmd * "+t"
-		elseif (d[:symbol] == "slip"     || d[:symbol] == :slip)     cmd = cmd * "+s"
-		elseif (d[:symbol] == "arcuate"  || d[:symbol] == :arcuate)  cmd = cmd * "+S"
-		else   @warn(string("FRONT: unknown symbol: ", d[:symbol]))
+		for symb in [:n_labels :n_symbols]
+			if (haskey(d, symb))  cmd = string("n", d[symb]);	break	end
 		end
 	end
-
-	if (haskey(d, :offset))  cmd = cmd * "+o" * arg2str(d[:offset])  end
-	if (haskey(d, :pen))
-		cmd = cmd * "+p"
-		if (!isempty_(d[:pen])) cmd = cmd * add_opt_pen(d, [:pen])  end
+	if (cmd == "")
+		for symb in [:N_labels :N_symbols]
+			if (haskey(d, symb))  cmd = string("N", d[symb]);	break	end
+		end
 	end
-	return cmd
+	if (cmd == "")
+		error("DECORATED: no controlling algorithm to place the elements was provided (dist, n_symbols, etc).")
+	end
+	return cmd, optD
 end
+# ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
 function fname_out(d::Dict)
