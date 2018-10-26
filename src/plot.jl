@@ -379,12 +379,12 @@ function lines(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 	d = KW(kwargs)
 
 	cmd = ""
-	for symb in [:front]
+	for symb in [:dec :decorated]
 		if (haskey(d, symb))
-			if (isa(d[symb], String))		# An hard core GMT string directly with options
-				cmd = cmd * " -Sf" * d[symb]
+			if (isa(d[symb], String))		# A hard core GMT string directly with options, including -S
+				cmd = cmd * " " * d[symb]
 			else
-				cmd = cmd * " -Sf" * front(d[symb])
+				cmd = cmd * decorated(d[symb])
 			end
 			break
 		end

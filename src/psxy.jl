@@ -192,30 +192,12 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd = add_opt(cmd, 'L', d, [:L :closed_polygon])
 	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 
-	#=
-	opt_W = ""
-	pen = build_pen(d)						# Either a full pen string or empty ("")
-	if (!isempty(pen))
-		opt_W = " -W" * pen
-	else
-		for sym in [:W :line_attrib]
-			if (haskey(d, sym))
-				if (isa(d[sym], Tuple))		# Like this it can hold the pen, not extended atts
-					opt_W = " -W" * parse_pen(d[sym])
-				else
-					opt_W = " -W" * arg2str(d[sym])
-				end
-				break
-			end
-		end
-	end
-	=#
 	opt_W = add_opt_pen(d, [:W :pen :line_attrib], "W")
 
 	opt_S = add_opt("", 'S', d, [:S :symbol])
 	if (isempty(opt_S))			# OK, no symbol given via the -S option. So fish in aliases
 		marca = get_marker_name(d, [:marker])
-		if (!isempty(marca))
+		if (marca != "")
 			ms = ""
 			for symb in [:size :markersize]
 				if (haskey(d, symb))
@@ -314,9 +296,7 @@ function get_marker_name(d::Dict, symbs, del=false)
 			elseif (is3D && (t == "u" || t == "cube"))  marca = "u"
 			elseif (t == "y" || t == "y-dash")    marca = "y"
 			end
-			if (del)
-				delete!(d, symb)
-			end
+			if (del)  delete!(d, symb)  end
 			break
 		end
 	end
