@@ -436,13 +436,12 @@ function parse_params(cmd::String, d::Dict)
 	# The input to this kwarg can be a tuple (e.g. (PAR,val)) or a NamedTuple (P1=V1, P2=V2,...)
 
 	for symb in [:conf :par :params]
-		#if (haskey(d, symb) && isa(d[symb], NamedTuple))
 		if (haskey(d, symb))
 			t = d[symb]
 			if (isa(t, NamedTuple))
 				fn = fieldnames(typeof(t))
-				for k = 1:length(fn)
-					cmd = cmd * " --" * string(fn[k]) * "=" * string(t[2])
+				for k = 1:length(fn)		# Suspect that this is higly inefficient but N is small
+					cmd = cmd * " --" * string(fn[k]) * "=" * string(t[k])
 				end
 			elseif (isa(t, Tuple))
 				cmd = cmd * " --" * string(t[1]) * "=" * string(t[2])
@@ -516,11 +515,12 @@ function build_pen(d::Dict, del::Bool=false)
 	lw = add_opt("", "", d, [:lw :linewidth], del)	# Line width
 	ls = add_opt("", "", d, [:ls :linestyle], del)	# Line style
 	lc = parse_pen_color(d, [:lc :linecolor], del)
+	out = ""
 	if (lw != "" || lc != "" || ls != "")
-		return lw * "," * lc * "," * ls
-	else
-		return ""
+		out = lw * "," * lc * "," * ls
+		while (out[end] == ',')  out = rstrip(out, ',')  end	# Strip unneeded commas
 	end
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -741,11 +741,19 @@ function parse_unit_unit(str)
 end
 # ---------------------------------------------------------------------------------------------------
 
+
+#= ---------------------------------------------------------------------------------------------------
+function axis(secondary=false; x=false, y=false, z=false, kwargs...)
+	d = KW(kwargs)
+	cmd = add_opt("", "", d, [:axes])
+
+end
+=#
+
 # ---------------------------------------------------------------------------------------------------
 vector_attrib(t::NamedTuple) = vector_attrib(; t...)
 function vector_attrib(;kwargs...)
 	d = KW(kwargs)
-	cmd = ""
 	cmd = add_opt("", "", d, [:len :length])
 	if (haskey(d, :angle))  cmd = string(cmd, "+a", d[:angle])  end
 	if (haskey(d, :middle))
