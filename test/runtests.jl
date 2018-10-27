@@ -50,13 +50,19 @@ if (got_it)					# Otherwise go straight to end
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 	if (GMTver >= 6)
 		gmtwrite("lixo.grd", G,  scale=10, offset=-10)
-		GG = gmtread("lixo.grd", grd=true);
-		@assert(sum(G.z[:] - GG.z[:]) == 0)
+		GG = gmtread("lixo.grd", grd=true, varname=:z);
+		@test(sum(G.z[:] - GG.z[:]) == 0)
 		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
 	else
 		gmtwrite("lixo.grd", G)
-		GG = gmtread("lixo.grd", grd=true);
+		GG = gmtread("lixo.grd", grd=true, varname=:z);
 	end
+	cpt = makecpt(T="-6/8/1");
+	gmtwrite("lixo.cpt", cpt)
+	cpt = gmtread("lixo.cpt", cpt=true);
+	gmtwrite("lixo.dat", [1 2; 3 4])
+	D = gmtread("lixo.dat", table=true);
+	@test(sum(D[1].data) == 10)
 
 	# GRDINFO
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
@@ -218,7 +224,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSSCALE
 	C = makecpt(T="-200/1000/100", C="rainbow");
-	colorbar(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps", par=(MAP_FRAME_WIDTH=0.2))
+	colorbar(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps", par=(MAP_FRAME_WIDTH=0.2,))
 
 	# PSHISTOGRAM
 	histogram(randn(1000),W=0.1,center=true,fmt="ps",B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
@@ -267,12 +273,25 @@ if (got_it)					# Otherwise go straight to end
 	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5+e/2.6+e"
 	d = Dict(:inc => (x=1.5, y=2.6, unit="nodes"));
 	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5+n/2.6+n"
-	d = Dict(:inc => (2,4));
-	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I2/4"
-	d = Dict(:inc => [2 4]);
-	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I2/4"
-	d = Dict(:inc => "2");
-	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I2"
+	@test GMT.parse_inc("",Dict(:inc => (2,4)),[:I :inc], "I") == " -I2/4"
+	@test GMT.parse_inc("",Dict(:inc => [2 4]),[:I :inc], "I") == " -I2/4"
+	@test GMT.parse_inc("",Dict(:inc => "2"),[:I :inc], "I") == " -I2"
+	r, = GMT.parse_JZ("", Dict(:JZ => "5c"));	@test r == " -JZ5c"
+	r, = GMT.parse_JZ("", Dict(:Jz => "5c"));	@test r == " -Jz5c"
+	r, = GMT.parse_J("", Dict(:J => "X5"), false);	@test r == " -JX5"
+	r, = GMT.parse_J("", Dict(:a => ""), true, true);	@test r == " -J"
+	r, = GMT.parse_J("", Dict(:J => "X", :figsize => 10));	@test r == " -JX10"
+	r = GMT.parse_params("", Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")));
+	@test r == " --MAP_FRAME_WIDTH=0.2 --IO=lixo --OI=xoli"
+	@test GMT.parse_params("", Dict(:par => (:MAP_FRAME_WIDTH,0.2))) == " --MAP_FRAME_WIDTH=0.2"
+	@test GMT.parse_params("", Dict(:par => ("MAP_FRAME_WIDTH",0.2))) == " --MAP_FRAME_WIDTH=0.2"
+	@test GMT.opt_pen(Dict(:lw => 5, :lc => :red),'W', nothing) == " -W5,red"
+	@test GMT.opt_pen(Dict(:lw => 5),'W', nothing) == " -W5"
+	@test GMT.opt_pen(Dict(:a => (10,:red)),'W', [:a]) == " -W10,red"
+	@test GMT.get_color((1,2,3)) == "1/2/3"
+	@test GMT.get_color((0.1,0.2,0.3)) == "26/51/77"
+	@test GMT.get_color([1 2 3]) == "1/2/3"
+	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
 
 	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
 	                  justify=:end,fill=:none,trim=0.1,uv=true,scale=6.6);
@@ -321,6 +340,8 @@ if (got_it)					# Otherwise go straight to end
 	rm("lixo.eps")
 	rm("lixo.grd")
 	rm("lixo.png")
+	rm("lixo.cpt")
+	rm("lixo.dat")
 	if (GMTver >= 6)
 		rm("lixo.tif")
 	end

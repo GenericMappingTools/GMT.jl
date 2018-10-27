@@ -220,13 +220,25 @@ function gmtwrite(fname::String="", data=[]; kwargs...)
 	elseif (isa(data, GMTps))
 		opt_T = " -Ts"
 	elseif (isa(data, Array{UInt8}))
-		data = mat2img(data)
-		fname = fname * parse_grd_format(d)		# If we have format requests
-		opt_T = " -Ti"
+		fmt = parse_grd_format(d)				# See if we have format requests
+		if (fmt == "")							# If no format, write a dataset
+			opt_T = " -Td"
+			cmd, = parse_bo(cmd, d)				# Write to binary file
+		else
+			data = mat2img(data)
+			fname = fname * fmt
+			opt_T = " -Ti"
+		end
 	elseif (isa(data, AbstractArray))
-		data = mat2grid(data)
-		fname = fname * parse_grd_format(d)		# If we have format requests
-		opt_T = " -Tg"
+		fmt = parse_grd_format(d)				# See if we have format requests
+		if (fmt == "")							# If no format, write a dataset
+			opt_T = " -Td"
+			cmd, = parse_bo(cmd, d)				# Write to binary file
+		else
+			data = mat2grid(data)
+			fname = fname * fmt
+			opt_T = " -Tg"
+		end
 	elseif (isempty_(data))
 		error("Second argument must contain the data to save in file, and not be EMPTY like it is in this case.")
 	end
