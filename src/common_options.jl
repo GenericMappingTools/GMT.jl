@@ -481,70 +481,42 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_pen(pen::Tuple)
-	# Convert to an empty to 3 args tuple containing (width[c|i|p]], [color], [style[c|i|p|])
+	# Convert an empty to 3 args tuple containing (width[c|i|p]], [color], [style[c|i|p|])
 	len = length(pen)
 	if (len == 0) return "0.25p" end 	# just the default pen
 	s = arg2str(pen[1])					# First arg is different because there is no leading ','
-	for k = 2:len
-		if (isa(pen[k], Number))
-			s = @sprintf("%s,%.8g", s, pen[k])
-		else
-			s = @sprintf("%s,%s", s, pen[k])
+	if (length(pen) > 1)
+		s = s * ',' * get_color(pen[2])
+		if (length(pen) > 2)
+			s = s * ',' * arg2str(pen[3])
 		end
 	end
 	return s
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_pen_width(d::Dict, del::Bool=false)
-	# Search for a "lw" or "linewidth" specification
-	pw = ""
-	for symb in [:lw :linewidth :LineWidth]
+function parse_pen_color(d::Dict, symbs=nothing, del::Bool=false)
+	# Need this a separate fun because it's used from modules
+	lc = ""
+	if (symbs === nothing)  symbs = [:lc :linecolor]  end
+	for symb in symbs
 		if (haskey(d, symb))
-			pw = string(d[symb])
+			lc = get_color(d[symb])
 			if (del)  delete!(d, symb)  end
 			break
 		end
 	end
-	return pw
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_pen_color(d::Dict, del::Bool=false)
-	# Search for a "lc" or "linecolor" specification
-	pc = ""
-	for symb in [:lc :linecolor :LineColor]
-		if (haskey(d, symb))
-			pc = string(d[symb])
-			if (del)  delete!(d, symb)  end
-			break
-		end
-	end
-	return pc
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_pen_style(d::Dict, del::Bool=false)
-	# Search for a "ls" or "linestyle" specification
-	ps = ""
-	for symb in [:ls :linestyle :LineStyle]
-		if (haskey(d, symb))
-			ps = string(d[symb])
-			if (del)  delete!(d, symb)  end
-			break
-		end
-	end
-	return ps
+	return lc
 end
 
 # ---------------------------------------------------------------------------------------------------
 function build_pen(d::Dict, del::Bool=false)
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
-	lw = parse_pen_width(d, del)
-	lc = parse_pen_color(d, del)
-	ls = parse_pen_style(d, del)
-	if (!isempty(lw) || !isempty(lc) || !isempty(ls))
+	lw = add_opt("", "", d, [:lw :linewidth], del)	# Line width
+	ls = add_opt("", "", d, [:ls :linestyle], del)	# Line style
+	lc = parse_pen_color(d, [:lc :linecolor], del)
+	if (lw != "" || lc != "" || ls != "")
 		return lw * "," * lc * "," * ls
 	else
 		return ""
@@ -653,7 +625,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args, arg1, arg2=
 				else   error(string("Can't send the CPT data via ", opt, " and input array"))
 				end
 			else
-				cmd = string(cmd, " -", opt, arg2str(d[sym]))
+				cmd = string(cmd, " -", opt, get_color(d[sym]))
 			end
 			break
 		end
@@ -666,7 +638,7 @@ function add_opt_pen(d::Dict, symbs, opt="", del::Bool=false)
 	# Build a pen option. Input can be either a full hard core string or spread in lw, lc, lw, etc or a tuple
 	if (opt != "")  opt = " -" * opt  end 	# Will become -W<pen>, for example
 	out = ""
-	pen = build_pen(d)						# Either a full pen string or empty ("")
+	pen = build_pen(d, del)					# Either a full pen string or empty ("") (Seeks for lw, lc, etc)
 	if (!isempty(pen))
 		out = opt * pen
 	else
@@ -682,15 +654,99 @@ function add_opt_pen(d::Dict, symbs, opt="", del::Bool=false)
 			end
 		end
 	end
+	o = add_opt("", "", d, [:cline])		# Some -W take extra options to indicate that color comes from CPT
+	if (o != "")  out = out * "+cl"  end
+	o = add_opt("", "", d, [:csymbol :ctext])
+	if (o != "")  out = out * "+cf"  end
 	return out
 end
+
+# ---------------------------------------------------------------------------------------------------
+function get_color(val)
+	# Parse a color input. Always return a string
+	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc 
+	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return string(val)  end
+
+	if (isa(val, Tuple) && (length(val) == 3))
+		if (val[1] <= 1 && val[2] <= 1 && val[3] <= 1)		# Assume colors components are in [0 1]
+			return @sprintf("%d/%d/%d", val[1]*255, val[2]*255, val[3]*255)
+		else
+			return @sprintf("%d/%d/%d", val[1], val[2], val[3])
+		end
+	elseif (isa(val, Array) && (size(val, 2) == 3))
+		if (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1)
+			copy = val .* 255		# Do not change the original
+		else
+			copy = val
+		end
+		out = @sprintf("%d/%d/%d", copy[1], copy[2], copy[3])
+		for k = 2:size(copy, 1)
+			out = @sprintf("%s,%d/%d/%d", out, copy[k,1], copy[k,2], copy[k,3])
+		end
+		return out
+	else
+		error(@sprintf("GOT_COLOR, got and unsupported data type: %s", typeof(val)))
+	end
+end
+
+# ---------------------------------------------------------------------------------------------------
+function font(val)
+	# parse and create a font string.
+	# TODO: either add a NammedTuple option and/or guess if 2nd arg is the font name or the color
+	if (isa(val, String) || isa(val, Number))  return string(val)  end
+
+	if (isa(val, Tuple))
+		s = parse_units(val[1])
+		if (length(val) > 1)
+			s = string(s,',',val[2])
+			if (length(val) > 2)
+				s = string(s, ',', get_color(val[3]))
+			end
+		end
+	end
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_units(val)
+	# Parse a units string in the form d|e|f|k|n|M|n|s or expanded
+	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return string(val)  end
+
+	if (isa(val, Tuple) && (length(val) == 2))
+		return string(val[1]) * parse_unit_uint(val[2])
+	else
+		error(@sprintf("PARSE_UNITS, got and unsupported data type: %s", typeof(val)))
+	end
+end
+
+# ---------------------------
+function parse_unit_unit(str)
+	out = ""
+	if (isa(str, Symbol))  str = string(str)  end
+	if (!isa(str, String))
+		error(@sprintf("Argument data type must be String or Symbol but was: %s", typeof(val)))
+	end
+	if (str == "m" || str == "minutes" || str == "s" || str == "seconds" || str == "d" || str == "degrees" ||
+		str == "f" || str == "foot"    || str == "k" || str == "km" || str == "n" || str == "nautical")
+		out = str[1]
+	elseif (str == "e" || str == "meter")
+		out = "e";
+	elseif (str == "M" || str == "mile")
+		out = "M";
+	elseif (str == "nodes")		# 
+		out = cmd * "+n";
+	elseif (str == "data")		# For the `scatter` modules
+		out = "u";
+	end
+	return out
+end
+# ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
 vector_attrib(t::NamedTuple) = vector_attrib(; t...)
 function vector_attrib(;kwargs...)
 	d = KW(kwargs)
 	cmd = ""
-	cmd = add_opt("", "", d, [:size :head_size])
+	cmd = add_opt("", "", d, [:len :length])
 	if (haskey(d, :angle))  cmd = string(cmd, "+a", d[:angle])  end
 	if (haskey(d, :middle))
 		cmd = cmd * "+m";
@@ -813,7 +869,7 @@ function decorated(;kwargs...)
 		if (haskey(d, :debug))   cmd = cmd * "+d"  end
 		if (haskey(d, :clearance ))  cmd = cmd * "+c" * arg2str(d[:clearance]) end
 		if (haskey(d, :delay))   cmd = cmd * "+e"  end
-		if (haskey(d, :font))    cmd = cmd * "+f" * arg2str(d[:font])    end	# MUST WRITE A FONT FUN
+		if (haskey(d, :font))    cmd = cmd * "+f" * font(d[:font])    end
 		if (haskey(d, :color))   cmd = cmd * "+g" * arg2str(d[:color])   end
 		if (haskey(d, :justify)) cmd = cmd * "+j" * arg2str(d[:justify]) end
 		if (haskey(d, :const_label)) cmd = cmd * "+l" * arg2str(d[:const_label])  end
@@ -837,7 +893,7 @@ function decorated(;kwargs...)
 						if (isa(d[:label][k], String)) cmd = cmd * d[:label][k] end	# So that [], etc ignored
 					elseif (fn[k] == :map_dist)
 						cmd = cmd * "+LD"
-						if (isa(d[:label][k], String)) cmd = cmd * d[:label][k]	end	# MUST write a fun to expand d|e|f|k|n|M|n|s
+						if (isa(d[:label][k], String)) cmd = cmd * parse_units(d[:label][k])  end
 					elseif (fn[k] == :input)	# 3rd column has the text label
 						cmd = cmd * "+Lf"
 					end

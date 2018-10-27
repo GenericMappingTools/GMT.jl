@@ -193,6 +193,9 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 
 	opt_W = add_opt_pen(d, [:W :pen :line_attrib], "W")
+	if (occursin("+c", opt_W) && !occursin("-C", cmd))
+		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
+	end
 
 	opt_S = add_opt("", 'S', d, [:S :symbol])
 	if (isempty(opt_S))			# OK, no symbol given via the -S option. So fish in aliases

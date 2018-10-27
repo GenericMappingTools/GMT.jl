@@ -149,7 +149,7 @@ if (got_it)					# Otherwise go straight to end
 	G = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL");
 	dzdy = gmt("grdmath ? DDY", G);
 	dzdx = gmt("grdmath ? DDX", G);
-	grdvector(dzdx, dzdy, I=0.2, vector=vector_attrib(head_size=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
+	grdvector(dzdx, dzdy, I=0.2, vector=vector_attrib(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
 
 	# Just create the figs but not check if they are correct.
 	PS = grdimage(G, J="X10", ps=1);
@@ -171,8 +171,8 @@ if (got_it)					# Otherwise go straight to end
 	plot!(collect(1:10),rand(10), fmt="ps")
 
 	# ARROWS
-	arrows([0 8.2 0 6], R="-2/4/0/9", vec=vector_attrib(size=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
-	arrows([0 8.2 0 6], R="-2/4/0/9", vec=vector_attrib(size=2,start=:arrow,stop=:tail,shape=0.5), J=14, B=:a, pen="6p")
+	arrows([0 8.2 0 6], R="-2/4/0/9", vec=vector_attrib(len=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
+	arrows([0 8.2 0 6], R="-2/4/0/9", vec=vector_attrib(len=2,start=:arrow,stop=:tail,shape=0.5), J=14, B=:a, pen="6p")
 
 	# LINES
 	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, dec=decorated(dist=(val=1,size=0.25), symbol=:box))
@@ -256,7 +256,7 @@ if (got_it)					# Otherwise go straight to end
 	# MISC
 	G = GMT.grid_type(G.z);
 
-	# Test common_options
+	# -------------------- Test common_options ----------------------------------------
 	d = Dict(:xlim => (1,2), :ylim => (3,4));
 	r = GMT.parse_R("", d);		@test r[1] == " -R1/2/3/4"
 	d = Dict(:inc => (x=1.5, y=2.6, unit="meter"));
@@ -274,7 +274,7 @@ if (got_it)					# Otherwise go straight to end
 	d = Dict(:inc => "2");
 	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I2"
 
-	r = vector_attrib(size=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
+	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
 	                  justify=:end,fill=:none,trim=0.1,uv=true,scale=6.6);
 	@test r == "2.2+e+je+r+g-+n0.25i+h1+t0.1+s+z6.6"
 
@@ -287,6 +287,17 @@ if (got_it)					# Otherwise go straight to end
 
 	r = decorated(dist=(val="0.4i",size=0.25), angle=7, clearance=(2,3), debug=1, delay=1, font=10, color=:red, justify=:TC, const_label=:Ai, pen=(0.5,:red), fill=:blue, nudge=(3,4), rounded=1, unit=:TT, min_rad=0.5, curved=1, n_data=20, prefix="Pre", suffices="a,b", label=(map_dist="d",), quoted=1)
 	@test r == " -Sqd0.4i/0.25+a7+d+c2/3+e+f10+gred+jTC+lAi+n3/4+o+r0.5+uTT+v+w20+=Pre+xa,b+LDd+p0.5,red"
+
+	r = GMT.get_color((1,2,3));	@test r == "1/2/3"
+	r = GMT.get_color([1 2 3; 3 4 5; 6 7 8]);	@test r == "1/3/6,3/4/5,6/7/8"
+	r = GMT.get_color(:red);	@test r == "red"
+
+	r = GMT.font(("10p","Times", :red));	@test r == "10p,Times,red"
+
+	d = Dict(:lw => 1, :lc => (1,2,3));
+	r = GMT.build_pen(d);	@test r == "1,1/2/3,"
+	r = GMT.parse_pen((0.5, [1 2 3]));	@test r == "0.5,1/2/3"
+	# ---------------------------------------------------------------------------------------------------
 
 	# EXAMPLES
 	plot(collect(1:10),rand(10), lw=1, lc="blue", marker="square",
