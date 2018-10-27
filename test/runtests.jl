@@ -314,7 +314,7 @@ if (got_it)					# Otherwise go straight to end
 	r = GMT.font(("10p","Times", :red));	@test r == "10p,Times,red"
 
 	d = Dict(:lw => 1, :lc => (1,2,3));
-	r = GMT.build_pen(d);	@test r == "1,1/2/3,"
+	r = GMT.build_pen(d);	@test r == "1,1/2/3"
 	r = GMT.parse_pen((0.5, [1 2 3]));	@test r == "0.5,1/2/3"
 	# ---------------------------------------------------------------------------------------------------
 
