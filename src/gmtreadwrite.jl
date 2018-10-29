@@ -218,7 +218,7 @@ function gmtwrite(fname::String="", data=[]; kwargs...)
 	elseif (isa(data, GMTcpt))
 		opt_T = " -Tc"
 	elseif (isa(data, GMTps))
-		opt_T = " -Ts"
+		opt_T = " -Tp"
 	elseif (isa(data, Array{UInt8}))
 		fmt = parse_grd_format(d)				# See if we have format requests
 		if (fmt == "")							# If no format, write a dataset

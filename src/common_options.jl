@@ -2,6 +2,14 @@
 
 const KW = Dict{Symbol,Any}
 
+function nt2dict(nt::NamedTuple)
+	# Convert a NamedTuple into a Dict{Any,Any} but where the key is always a Symbol
+	fn = fieldnames(typeof(nt))
+	d = Dict()
+	[d[fn[k]] = nt[k] for k=1:length(fn)]
+	return d
+end
+
 function parse_R(cmd::String, d::Dict, O=false, del=false)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	opt_R = ""
@@ -126,18 +134,29 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
-	for symb in [:B :frame :axes]
+
+	# These three are aliases
+	for symb in [:B :frame :axis]
 		if (haskey(d, symb))
-			if (isa(d[symb], String))
-				opt_B = d[symb]
-			elseif (isa(d[symb], Symbol))
-				opt_B = string(d[symb])
+			if     (isa(d[symb], String))     opt_B = opt_B * d[symb]
+			elseif (isa(d[symb], Symbol))     opt_B = opt_B * string(d[symb])
+			elseif (isa(d[symb], NamedTuple)) opt_B = opt_B * axis(d[symb])
 			end
 			if (del) delete!(d, symb) end
 			break
 		end
 	end
 
+	# These are not and we can have one or all of them. NamedTuples are dealt at the end
+	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2 :zaxis2]
+		if (haskey(d, symb) && !isa(d[symb], NamedTuple))
+			if     (isa(d[symb], String))  opt_B = opt_B * d[symb]
+			elseif (isa(d[symb], Symbol))  opt_B = opt_B * string(d[symb])
+			end
+		end
+	end
+
+	# This is old code that takes care to break a string in tokens and prefix with a -B to each token
 	tok = Vector{String}(undef, 10)
 	k = 1
 	r = opt_B
@@ -173,6 +192,20 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	opt_B = ""
 	for n = 1:k-1
 		opt_B = opt_B * tok[n]
+	end
+
+	# We can have one or all of them. Deal separatelly here to allow way code to keep working
+	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2 :zaxis2]
+		if (haskey(d, symb) && isa(d[symb], NamedTuple))
+			if     (symb == :axis2)   opt_B = opt_B * axis(d[symb], secondary=true)
+			elseif (symb == :xaxis)   opt_B = opt_B * axis(d[symb], x=true)
+			elseif (symb == :xaxis2)  opt_B = opt_B * axis(d[symb], x=true, secondary=true)
+			elseif (symb == :yaxis)   opt_B = opt_B * axis(d[symb], y=true)
+			elseif (symb == :yaxis2)  opt_B = opt_B * axis(d[symb], y=true, secondary=true)
+			elseif (symb == :zaxis)   opt_B = opt_B * axis(d[symb], z=true)
+			elseif (symb == :zaxis2)  opt_B = opt_B * axis(d[symb], z=true, secondary=true)
+			end 
+		end
 	end
 
 	if (!isempty(opt_B))  cmd = cmd * opt_B  end
@@ -544,7 +577,7 @@ function arg2str(arg)
 		out = arg
 	elseif (isa(arg, Symbol))
 		out = string(arg)
-	elseif (isempty(arg) || (isa(arg, Bool) && arg))
+	elseif (isempty_(arg) || (isa(arg, Bool) && arg))
 		out = ""
 	elseif (isa(arg, Number))		# Have to do it after the Bool test above because Bool is a Number too
 		out = @sprintf("%.15g", arg)
@@ -742,13 +775,168 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 
-#= ---------------------------------------------------------------------------------------------------
-function axis(secondary=false; x=false, y=false, z=false, kwargs...)
-	d = KW(kwargs)
-	cmd = add_opt("", "", d, [:axes])
-
+# ---------------------------------------------------------------------------------------------------
+function axis(nt::NamedTuple; x=false, y=false, z=false, secondary=false)
+	d = nt2dict(nt)
+	axis(;x=x, y=y, z=z, secondary=secondary, d...)
 end
-=#
+
+function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
+	# Build a (terrible) -B option
+	d = KW(kwargs)
+
+	secondary ? primo = 's' : primo = 'p'			# Primary or secondary axe
+	x ? axe = "x" : y ? axe = "y" : z ? axe = "z" : axe = ""	# Are we dealing with a specific axis?
+
+	#opt = add_opt(" -B", "", d, [:axes])
+	opt = " -B"
+	if (haskey(d, :axes)) opt = " -B" * helper0_axes(d[:axes])  end
+
+	if (haskey(d, :corners)) opt = opt * string(d[:corners])  end	# 1234
+	if (haskey(d, :fill))    opt = opt * "+g" * get_color(d[:fill])  end
+	if (haskey(d, :cube))    opt = opt * "+b"  end
+	if (haskey(d, :noframe)) opt = opt * "+n"  end
+	if (haskey(d, :oblique_pole))  opt = opt * "+o" * arg2str(d[:oblique_pole])  end
+	if (haskey(d, :title))   opt = opt * "+t" * arg2str(d[:title])  end
+
+	if (opt == " -B")  opt = ""  end	# If nothing, no -B
+
+	# axes supps
+	ax_sup = ""
+	if (haskey(d, :prefix))     ax_sup = ax_sup * "+p" * arg2str(d[:prefix])     end
+	if (haskey(d, :seclabel))   ax_sup = ax_sup * "+s" * arg2str(d[:seclabel])   end
+	if (haskey(d, :label_unit)) ax_sup = ax_sup * "+u" * arg2str(d[:label_unit]) end
+
+	if (haskey(d, :label))
+		opt = opt * " -B" * primo * axe * "+l"  * arg2str(d[:label]) * ax_sup
+	elseif (haskey(d, :Yhlabel))
+		opt = opt * " -B" * primo * axe * "+L"  * arg2str(d[:Yhlabel]) * ax_sup
+	else
+		if (haskey(d, :xlabel))  opt = opt * " -B" * primo * "x+l" * arg2str(d[:xlabel]) * ax_sup  end
+		if (haskey(d, :ylabel))  opt = opt * " -B" * primo * "y+l" * arg2str(d[:ylabel]) * ax_sup  end
+		if (haskey(d, :zlabel))  opt = opt * " -B" * primo * "z+l" * arg2str(d[:zlabel]) * ax_sup  end
+	end
+
+	# intervals
+	ints = ""
+	if (haskey(d, :annot))      ints = ints * "a" * helper1_axes(d[:annot])  end
+	if (haskey(d, :annot_unit)) ints = ints * helper2_axes(d[:annot_unit])   end
+	if (haskey(d, :ticks))      ints = ints * "f" * helper1_axes(d[:ticks])  end
+	if (haskey(d, :ticks_unit)) ints = ints * helper2_axes(d[:ticks_unit])   end
+	if (haskey(d, :grid))       ints = ints * "g" * helper1_axes(d[:grid])   end
+	if (haskey(d, :grid_unit))  ints = ints * helper2_axes(d[:grid_unit])    end
+	if (haskey(d, :custom))
+		ints = ints * 'c'
+		if (isa(d[:custom], String))  ints = ints * d[:custom]  end
+		# Should find a way to also accept custom=GMTdataset
+	elseif (haskey(d, :pi))
+		if (isa(d[:pi], Number))
+			ints = ints * string(d[:pi]) * "pi"		# (n)pi
+		elseif (isa(d[:pi], Array) || isa(d[:pi], Tuple))
+			ints = ints * string(d[:pi])[1] * "pi" * string(d[:pi])[2]	# (n)pi(m)
+		end
+	elseif (haskey(d, :scale))
+		s = arg2str(d[:scale])
+		if     (s == "log")    ints = ints * 'l'
+		elseif (s == "10log")  ints = ints * 'p'
+		elseif (s == "exp")    ints = ints * 'p'
+		end
+	end
+	if (haskey(d, :phase_add))
+		ints = ints * "+" * arg2str(d[:phase_add])
+	elseif (haskey(d, :phase_sub))
+		ints = ints * "-" * arg2str(d[:phase_sub])
+	end
+	if (ints != "") opt = opt * " -B" * primo * axe * ints  end
+
+	return opt
+end
+
+# ------------------------
+function helper0_axes(arg)
+	# Deal with the available ways of specifying the WESN(Z),wesn(z),lbrt(u)
+	# The solution is very enginious and allows using "left_full", "l_full" or only "l_f"
+	# to mean 'W'. Same for others:
+	# bottom|bot|b_f(ull);  right|r_f(ull);  t(op)_f(ull);  up_f(ull)  => S, E, N, Z
+	# bottom|bot|b_t(icks); right|r_t(icks); t(op)_t(icks); up_t(icks) => s, e, n, z
+	# bottom|bot|b_b(are);  right|r_b(are);  t(op)_b(are);  up_b(are)  => b, r, t, u
+
+	if (isa(arg, String) || isa(arg, Symbol))	# Assume that a WESNwesn string was already sent in.
+		return string(arg)
+	end
+
+	if (!isa(arg, Tuple))
+		error(@sprintf("The 'axes' argument must be a String, Symbol or a Tuple but was (%s)", typeof(arg)))
+	end
+
+	opt = ""
+	for k = 1:length(arg)
+		t = string(arg[k])		# For the case it was a symbol
+		if (occursin("_f", t))
+			if     (t[1] == 'l')  opt = opt * 'W'
+			elseif (t[1] == 'b')  opt = opt * 'S'
+			elseif (t[1] == 'r')  opt = opt * 'E'
+			elseif (t[1] == 't')  opt = opt * 'N'
+			elseif (t[1] == 'u')  opt = opt * 'Z'
+			end
+		elseif (occursin("_t", t))
+			if     (t[1] == 'l')  opt = opt * 'w'
+			elseif (t[1] == 'b')  opt = opt * 's'
+			elseif (t[1] == 'r')  opt = opt * 'e'
+			elseif (t[1] == 't')  opt = opt * 'n'
+			elseif (t[1] == 'u')  opt = opt * 'z'
+			end
+		elseif (occursin("_b", t))
+			if     (t[1] == 'l')  opt = opt * 'l'
+			elseif (t[1] == 'b')  opt = opt * 'b'
+			elseif (t[1] == 'r')  opt = opt * 'r'
+			elseif (t[1] == 't')  opt = opt * 't'
+			elseif (t[1] == 'u')  opt = opt * 'u'
+			end
+		end
+	end
+	return opt
+end
+
+# ------------------------
+function helper1_axes(arg)
+	# Used by annot, ticks and grid to accept also 'auto', [] and "" to mean automatic
+	out = arg2str(arg)
+	if (out != "" && out[1] == 'a')  out = ""  end
+	return out
+end
+# ------------------------
+function helper2_axes(arg)
+	# Used by 
+	out = arg2str(arg)
+	if (out == "")
+		@warn("Empty units. Ignoring this units request.")
+		return out
+	end
+	if     (out == 'Y' || out == "year")     out = 'Y'
+	elseif (out == 'y' || out == "year2")    out = 'y'
+	elseif (out == 'O' || out == "month")    out = 'O'
+	elseif (out == 'o' || out == "month2")   out = 'o'
+	elseif (out == 'U' || out == "ISOweek")  out = 'U'
+	elseif (out == 'u' || out == "ISOweek2") out = 'u'
+	elseif (out == 'r' || out == "Gregorian_week") out = 'r'
+	elseif (out == 'K' || out == "ISOweekday") out = 'K'
+	elseif (out == 'D' || out == "date")     out = 'D'
+	elseif (out == 'd' || out == "day_date") out = 'd'
+	elseif (out == 'R' || out == "day_week") out = 'R'
+	elseif (out == 'H' || out == "hour")     out = 'H'
+	elseif (out == 'h' || out == "hour2")    out = 'h'
+	elseif (out == 'M' || out == "minute")   out = 'M'
+	elseif (out == 'm' || out == "minute2")  out = 'm'
+	elseif (out == 'S' || out == "second")   out = 'S'
+	elseif (out == 's' || out == "second2")  out = 's'
+	else
+		@warn("Unknown units request (" * out * ") Ignoring it")
+		out = ""
+	end
+	return out
+end
+# ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
 vector_attrib(t::NamedTuple) = vector_attrib(; t...)

@@ -161,12 +161,13 @@ if (got_it)					# Otherwise go straight to end
 	PS = grdimage(G, J="X10", ps=1);
 	gmt("destroy")
 	#grdimage("@earth_relief_05m", J="S21/90/15c", R="10/68/50/80r", B=:afg, X=:c, I="+")
-	PS = grdview(G, J="X6i", JZ=5,  Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
+	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
 
 	# IMSHOW
 	imshow(rand(128,128),show=false)
 	imshow(G, frame=:a, shade="+a45",show=false)
+	imshow(rand(128,128), shade="+a45",show=false)
 
 	# MAKECPT
 	cpt = makecpt(range="-1/1/0.1");
@@ -206,8 +207,8 @@ if (got_it)					# Otherwise go straight to end
 	# PSCONVERT
 	gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
 	psconvert("lixo.ps", adjust=true, fmt="eps")
-	psconvert("lixo.ps", adjust=true, fmt="png")
-	gmt("grdinfo lixo.png");
+	psconvert("lixo.ps", adjust=true, fmt="tif")
+	gmt("grdinfo lixo.tif");
 
 	# PSCOAST
 	coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, fmt="ps");
@@ -307,15 +308,18 @@ if (got_it)					# Otherwise go straight to end
 	r = decorated(dist=(val="0.4i",size=0.25), angle=7, clearance=(2,3), debug=1, delay=1, font=10, color=:red, justify=:TC, const_label=:Ai, pen=(0.5,:red), fill=:blue, nudge=(3,4), rounded=1, unit=:TT, min_rad=0.5, curved=1, n_data=20, prefix="Pre", suffices="a,b", label=(map_dist="d",), quoted=1)
 	@test r == " -Sqd0.4i/0.25+a7+d+c2/3+e+f10+gred+jTC+lAi+n3/4+o+r0.5+uTT+v+w20+=Pre+xa,b+LDd+p0.5,red"
 
-	r = GMT.get_color((1,2,3));	@test r == "1/2/3"
-	r = GMT.get_color([1 2 3; 3 4 5; 6 7 8]);	@test r == "1/3/6,3/4/5,6/7/8"
-	r = GMT.get_color(:red);	@test r == "red"
+	@test GMT.get_color((1,2,3)) == "1/2/3"
+	@test GMT.get_color([1 2 3; 3 4 5; 6 7 8]) == "1/3/6,3/4/5,6/7/8"
+	@test GMT.get_color(:red) == "red"
 
-	r = GMT.font(("10p","Times", :red));	@test r == "10p,Times,red"
+	@test GMT.font(("10p","Times", :red)) == "10p,Times,red"
 
-	d = Dict(:lw => 1, :lc => (1,2,3));
-	r = GMT.build_pen(d);	@test r == "1,1/2/3"
-	r = GMT.parse_pen((0.5, [1 2 3]));	@test r == "0.5,1/2/3"
+	@test GMT.build_pen(Dict(:lw => 1, :lc => (1,2,3))) == "1,1/2/3"
+	@test GMT.parse_pen((0.5, [1 2 3])) == "0.5,1/2/3"
+
+	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
+	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, grid_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",));
+	@test GMT.parse_B("", d)[1] == " -BWSen+taiai -Bpx+lai+sBlaBla -Bpxafg10U -Bpyclixo.txt -Bsxa5f1"
 	# ---------------------------------------------------------------------------------------------------
 
 	# EXAMPLES
@@ -339,11 +343,8 @@ if (got_it)					# Otherwise go straight to end
 	rm("lixo.ps")
 	rm("lixo.eps")
 	rm("lixo.grd")
-	rm("lixo.png")
+	rm("lixo.tif")
 	rm("lixo.cpt")
 	rm("lixo.dat")
-	if (GMTver >= 6)
-		rm("lixo.tif")
-	end
 
 end					# End valid testing zone

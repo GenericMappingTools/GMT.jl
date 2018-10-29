@@ -499,9 +499,6 @@ function get_grid(API::Ptr{Void}, object)
 	out.x_unit       = String(UInt8[gmt_hdr.x_unit...])
 	out.y_unit       = String(UInt8[gmt_hdr.y_unit...])
 	out.z_unit       = String(UInt8[gmt_hdr.z_unit...])
-	#out.x_unit       = unsafe_string(UInt8[gmt_hdr.x_unit...])
-	#out.y_unit       = unsafe_string(UInt8[gmt_hdr.y_unit...])
-	#out.z_unit       = unsafe_string(UInt8[gmt_hdr.z_unit...])
 
 	return out
 end
