@@ -155,7 +155,7 @@ if (got_it)					# Otherwise go straight to end
 	G = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL");
 	dzdy = gmt("grdmath ? DDY", G);
 	dzdx = gmt("grdmath ? DDX", G);
-	grdvector(dzdx, dzdy, I=0.2, vector=vector_attrib(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
+	grdvector(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
 
 	# Just create the figs but not check if they are correct.
 	PS = grdimage(G, J="X10", ps=1);
@@ -178,15 +178,15 @@ if (got_it)					# Otherwise go straight to end
 	plot!(collect(1:10),rand(10), fmt="ps")
 
 	# ARROWS
-	arrows([0 8.2 0 6], R="-2/4/0/9", vec=vector_attrib(len=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
-	arrows([0 8.2 0 6], R="-2/4/0/9", vec=vector_attrib(len=2,start=:arrow,stop=:tail,shape=0.5), J=14, B=:a, pen="6p")
+	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
+	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,stop=:tail,shape=0.5), J=14, B=:a, pen="6p")
 
 	# LINES
-	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, dec=decorated(dist=(val=1,size=0.25), symbol=:box))
+	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(val=1,size=0.25), symbol=:box))
 	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af)
 	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", vec=(size=0.65, fill=:red))
 	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
-	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), dec=decorated(dist=(val=2.5,size=0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
+	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(val=2.5,size=0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;

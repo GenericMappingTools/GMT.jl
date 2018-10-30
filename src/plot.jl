@@ -345,7 +345,7 @@ end
 function helper_arrows(d::Dict)
 	# Helper function to set the vector head attributes
 	cmd = ""
-	for symb in [:vec :arrow :vector :vecmap :geovec :geovector]
+	for symb in [:arrow :vector :vecmap :geovec :geovector]
 		if (haskey(d, symb))
 			code = "v"
 			if (symb == :geovec || symb == :geovector)
@@ -377,16 +377,12 @@ arrows!(arg1; K=true, O=true, first=false, kw...) = arrows("", arg1; K=K, O=O, f
 function lines(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
 	d = KW(kwargs)
-
 	cmd = ""
-	for symb in [:dec :decorated]
-		if (haskey(d, symb))
-			if (isa(d[symb], String))		# A hard core GMT string directly with options, including -S
-				cmd = cmd * " " * d[symb]
-			else
-				cmd = cmd * decorated(d[symb])
-			end
-			break
+	if (haskey(d, :decorated))
+		if (isa(d[:decorated], String))		# A hard core GMT string directly with options, including -S
+			cmd = " " * d[:decorated]
+		else
+			cmd = decorated(d[:decorated])
 		end
 	end
 

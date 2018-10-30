@@ -776,11 +776,7 @@ end
 
 
 # ---------------------------------------------------------------------------------------------------
-function axis(nt::NamedTuple; x=false, y=false, z=false, secondary=false)
-	d = nt2dict(nt)
-	axis(;x=x, y=y, z=z, secondary=secondary, d...)
-end
-
+axis(nt::NamedTuple; x=false, y=false, z=false, secondary=false) = axis(;x=x, y=y, z=z, secondary=secondary, nt...)
 function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	# Build a (terrible) -B option
 	d = KW(kwargs)
@@ -1034,6 +1030,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
+decorated(nt::NamedTuple) = decorated(;nt...)
 function decorated(;kwargs...)
 	d = KW(kwargs)
 
