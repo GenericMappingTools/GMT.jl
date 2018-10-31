@@ -167,16 +167,32 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
+	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
 	
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd = cmd * " -JZ6c"	# Default -JZ
 	end
 
-	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
+	# Look for color request
+	len = length(cmd);	n_prev = N_args;
+	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
+
+	if (N_args > n_prev || len < length(cmd))			# Got a CPT. Probably need to make room to color column
+		if ((isa(arg1, Array) && size(arg1,2) <= 2+is3D) ||
+			(isa(arg1, GMTdataset) && size(arg1.data,2) <= 2+is3D) ||
+			(isa(arg1, Array{GMTdataset}) && size(arg1[1].data,2) <= 2+is3D))
+			if (opt_i == "")
+				cmd = @sprintf("%s -i0-%d,%d", cmd, 1+is3D, 1+is3D)
+				println(cmd)
+			else
+				@warn("Plotting with color table requires adding one more column to the dataset but your -i
+				option did not do it, so you won't get waht you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots")
+			end
+		end
+	end
 
 	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
-	cmd = add_opt(cmd, 'D', d, [:D :shift :offset])		# 'offset' may be needed in vec attribs
+	cmd = add_opt(cmd, 'D', d, [:D :shift :offset])				# 'offset' may be needed in vec attribs
 	cmd = add_opt(cmd, 'E', d, [:E :error_bars])
 	cmd = add_opt(cmd, 'F', d, [:F :conn :connection])
 
@@ -199,7 +215,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	opt_S = add_opt("", 'S', d, [:S :symbol])
 	if (isempty(opt_S))			# OK, no symbol given via the -S option. So fish in aliases
-		marca = get_marker_name(d, [:marker])
+		marca = get_marker_name(d, [:marker], is3D)
 		if (marca != "")
 			ms = ""
 			for symb in [:size :markersize]
@@ -276,7 +292,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_marker_name(d::Dict, symbs, del=false)
+function get_marker_name(d::Dict, symbs, is3D=false, del=false)
 	marca = ""
 	for symb in symbs
 		if (haskey(d, symb))

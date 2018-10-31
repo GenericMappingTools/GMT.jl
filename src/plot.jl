@@ -215,7 +215,7 @@ function scatter(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=fa
 	opt_G = add_opt("", 'G', d, [:G :fill :markerfacecolor], true)
 	opt_W = add_opt("", 'W', d, [:markeredgecolor], true)
 
-	opt_S = get_marker_name(d, [:symbol :marker], true)
+	opt_S = get_marker_name(d, [:symbol :marker], is3D, true)
 	if (isempty(opt_S))  opt_S = " -Sc"
 	else                 opt_S = " -S" * opt_S
 	end
@@ -338,7 +338,7 @@ function bar3(arg; K=false, O=false, first=true, kwargs...)
 	end
 
 	if (isa(arg1, GMTgrid))
-		opt_S = @sprintf(" -So%.8gu/%.8gu", arg1.inc[1]*0.80, arg1.inc[2]*0.80)
+		opt_S = @sprintf(" -So%.8gu/%.8gu", arg1.inc[1]*0.85, arg1.inc[2]*0.85)		# 0.85 is the % of inc width of bars
 		opt, = parse_R("", d, O)
 		if (opt == "")							# OK, no R but we know it here so put it in 'd'
 			push!(d, :R => arg1.range)
@@ -356,7 +356,7 @@ function bar3(arg; K=false, O=false, first=true, kwargs...)
 	opt = add_opt("", "",  d, [:bottom :base])	# No need to purge because bottom is not a psxy option
 	if (opt == "")
 		if (isa(arg1, Array))
-			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1, :, 3)) * 1.05)
+			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1, :, 3)) * 1.05)		# 1.05 means base is 5% below minimum
 		else
 			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1.data, :, 3)) * 1.05)
 		end
@@ -365,7 +365,9 @@ function bar3(arg; K=false, O=false, first=true, kwargs...)
 	end
 
 	opt_G = add_opt("", 'G', d, [:G :fill], true)
-	if (opt_G == "")	opt_G = " -G0/115/190"	end		# Default bar color
+	if     (opt_G == " -G")	opt_G = ""					# Same as black
+	elseif (opt_G == "")    opt_G = " -G0/115/190"		# Default bar color. But it might be overriden by -C
+	end
 
 	opt_J, = parse_J("", d, true, false, true)			# Trim it if exists in d
 	if (opt_J == "")	opt_J = " -JX12c/0"		end		# Default fig size

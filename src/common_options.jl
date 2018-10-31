@@ -1208,7 +1208,7 @@ function fname_out(d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function read_data(d::Dict, fname::String, cmd, arg, opt_R, opt_i, opt_bi, opt_di, is3D=false)
+function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi="", opt_di="", is3D=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided 
 	data_kw = nothing

@@ -90,34 +90,34 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-plot3d(arg1::Array; extra="", K=false, O=false, first=true, kw...) =
-    GMT.xyz(extra, arg1; caller="plot3d", K=K, O=O, first=first, kw...)
-plot3d!(arg1::Array; extra="", K=false, O=false, first=true, kw...) =
-    GMT.xyz(extra, arg1; caller="plot3d", K=true, O=true, first=false, kw...)
+plot3d(arg1::Array; K=false, O=false, first=true, kw...) =
+    GMT.xyz("", arg1; caller="plot3d", K=K, O=O, first=first, kw...)
+plot3d!(arg1::Array; K=false, O=false, first=true, kw...) =
+    GMT.xyz("", arg1; caller="plot3d", K=true, O=true, first=false, kw...)
 
 # -----------------------------------------------------------------------------------------------------
-plot3d(arg1::GMTdataset; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xyz(extra, arg1; caller="plot3d", K=K, O=O, first=first, kw...)
-plot3d!(arg1::GMTdataset; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xyz(extra, arg1; caller="plot3d", K=true, O=true, first=false, kw...)
-plot3d(arg1::Array{GMTdataset,1}; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xyz(extra, arg1; caller="plot3d", K=K, O=O, first=first, kw...)
-plot3d!(arg1::Array{GMTdataset,1}; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xyz(extra, arg1; caller="plot3d", K=true, O=true, first=false, kw...)
+plot3d(arg1::GMTdataset; K=false, O=false, first=true, kw...) =
+	GMT.xyz("", arg1; caller="plot3d", K=K, O=O, first=first, kw...)
+plot3d!(arg1::GMTdataset; K=false, O=false, first=true, kw...) =
+	GMT.xyz("", arg1; caller="plot3d", K=true, O=true, first=false, kw...)
+plot3d(arg1::Array{GMTdataset,1}; K=false, O=false, first=true, kw...) =
+	GMT.xyz("", arg1; caller="plot3d", K=K, O=O, first=first, kw...)
+plot3d!(arg1::Array{GMTdataset,1}; K=false, O=false, first=true, kw...) =
+	GMT.xyz("", arg1; caller="plot3d", K=true, O=true, first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-plot3d(arg1::String; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xyz(extra, []; caller="plot3d", K=K, O=O, first=first, kw...)
-plot3d!(arg1::String; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xyz(extra, []; caller="plot3d", K=true, O=true, first=false, kw...)
+plot3d(arg1::String; K=false, O=false, first=true, kw...) =
+	GMT.xyz("", []; caller="plot3d", K=K, O=O, first=first, kw...)
+plot3d!(arg1::String; K=false, O=false, first=true, kw...) =
+	GMT.xyz("", []; caller="plot3d", K=true, O=true, first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-function plot3d(arg1::Array, arg2::Array; extra="", K=false, O=false, first=true, kw...)
+function plot3d(arg1::Array, arg2::Array; K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2)
-	GMT.xyz(extra, arg; caller="plot3d", K=K, O=O, first=first, kw...)
+	GMT.xyz("", arg; caller="plot3d", K=K, O=O, first=first, kw...)
 end
-function plot3d!(arg1::Array, arg2::Array; extra="", K=false, O=false, first=true, kw...)
+function plot3d!(arg1::Array, arg2::Array; K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2)
-	GMT.xyz(extra, arg; caller="plot3d", K=true, O=true, first=false, kw...)
+	GMT.xyz("", arg; caller="plot3d", K=true, O=true, first=false, kw...)
 end
 # ------------------------------------------------------------------------------------------------------

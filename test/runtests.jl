@@ -197,6 +197,7 @@ if (got_it)					# Otherwise go straight to end
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
 	plot!(collect(1:10),rand(10), fmt="ps")
+	plot3d(rand(5,5,3), marker=:cube)
 
 	# ARROWS
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
