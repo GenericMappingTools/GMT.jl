@@ -1,9 +1,9 @@
 """
-	gmtregress(cmd0::String="", arg1=[], kwargs...)
+	regress(cmd0::String="", arg1=[], kwargs...)
 
 Linear regression of 1-D data sets.
 
-Full option list at [`gmtregress`](http://gmt.soest.hawaii.edu/doc/latest/gmtregress.html)
+Full option list at [`regress`](http://gmt.soest.hawaii.edu/doc/latest/gmtregress.html)
 
 Parameters
 ----------
@@ -54,7 +54,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function gmtregress(cmd0::String="", arg1=[]; kwargs...)
+function regress(cmd0::String="", arg1=[]; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("gmtregress", cmd0, arg1)	# Speedy mode
 
@@ -84,4 +84,6 @@ function gmtregress(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtregress(arg1=[], cmd0::String=""; kw...) = gmtregress(cmd0, arg1; kw...)
+regress(arg1=[], cmd0::String=""; kw...) = regress(cmd0, arg1; kw...)
+
+gmtregress = regress 		# Alias

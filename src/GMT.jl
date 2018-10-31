@@ -36,7 +36,7 @@ export
 	pscontour, pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, 
 	pshistogram, pshistogram!, psimage, psimage!, psmask, psmask!, psrose, psrose!, psscale, psscale!, 
 	pssolar, pssolar!, psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, 
-	psxyz!, rose, rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d,
+	psxyz!, regress, rose, rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d,
 	sphdistance, sphinterpolate, sphtriangulate,
 	surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
 	decorated, vector_attrib, wiggle, wiggle!, xy, xy!, xyz2grd,

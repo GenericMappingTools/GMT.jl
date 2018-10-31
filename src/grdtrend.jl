@@ -32,16 +32,12 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdtrend", cmd0, arg1, arg2)	# Speedy mode
 
-	if (isempty(cmd0) && isempty_(arg1))
-		error("Must provide the grid to work with.")
-	end
+	if (isempty(cmd0) && isempty_(arg1))  error("Must provide the grid to work with.")  end
 
 	d = KW(kwargs)
 
 	cmd = add_opt("", 'N', d, [:N :model])
-	if (!occursin("-N", cmd))
-		error("The 'model' parameter is mandatory")
-	end
+	if (!occursin("-N", cmd))  error("The 'model' parameter is mandatory")  end
 
 	cmd, = parse_R(cmd, d)
 	cmd = parse_V_params(cmd, d)

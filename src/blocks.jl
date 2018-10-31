@@ -61,8 +61,7 @@ function blockmean(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("blockmean", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = ""
-	cmd = add_opt(cmd, 'E', d, [:E :extended])
+	cmd = add_opt("",  'E', d, [:E :extended])
 	cmd = add_opt(cmd, 'S', d, [:S :npts :number_of_points])
 	return common_blocks(cmd0, arg1, d, cmd, "blockmean", kwargs...)
 end
@@ -80,8 +79,7 @@ function blockmedian(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("blockmedian", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = ""
-	cmd = add_opt(cmd, 'E', d, [:E :extended])
+	cmd = add_opt("",  'E', d, [:E :extended])
 	cmd = add_opt(cmd, 'Q', d, [:Q :quick])
 	cmd = add_opt(cmd, 'T', d, [:T :quantile])
 	return common_blocks(cmd0, arg1, d, cmd, "blockmedian", kwargs...)
@@ -100,8 +98,7 @@ function blockmode(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("blockmode", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = ""
-	cmd = add_opt(cmd, 'E', d, [:E :extended])
+	cmd = add_opt("",  'E', d, [:E :extended])
 	cmd = add_opt(cmd, 'D', d, [:D :histogram_binning])
 	cmd = add_opt(cmd, 'Q', d, [:Q :quick])
 	return common_blocks(cmd0, arg1, d, cmd, "blockmode", kwargs...)
