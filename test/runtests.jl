@@ -25,10 +25,20 @@ if (got_it)					# Otherwise go straight to end
 		G = blockmean(d, region=[0 2 0 2], inc=1, grid=true, reg=1, S=:n);	# Number of points in cell
 		G,L = blockmode(region=[0 2 0 2], inc=1, fields="z,l", reg=1, d);
 	end
+	D = blockmedian(region=[0 2 0 2], inc=1,  reg=1, d);
+	D = blockmean(region=[0 2 0 2], inc=1,  reg=1, d);
+	D = blockmode(region=[0 2 0 2], inc=1,  reg=1, d);
 
 	# FILTER1D
 	raw = [collect((1.0:50)) rand(50)];
 	filter1d(raw, F="m15");
+
+	# GMT2KML
+	D = gmt("pscoast -R-15/2/50/59:30 -Jm1i -M -W0.25p -Di");
+	gmt2kml(D, F=:l, W=(1,:red));
+
+	# GMTCONVERT
+	gmtconvert([1.1 2; 3 4], o=0)
 
 	# GMTLOGO
 	logo(D="x0/0+w2i")
@@ -75,8 +85,8 @@ if (got_it)					# Otherwise go straight to end
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X");
 	C=grd2cpt(G);
 
-	# GRD2XYZ
-	D=grd2xyz(G); # Use G of previous test
+	# GRD2XYZ (It's tested near the end)
+	#D=grd2xyz(G); # Use G of previous test
 
 	# GRDBLEND
 	if (GMTver >= 6)
@@ -234,6 +244,10 @@ if (got_it)					# Otherwise go straight to end
 	data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3;; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
 	rose(data, swap_xy=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=1, D=1, S=4)
 
+	# PSMASK
+	D = gmt("gmtmath -T-90/90/10 -N2/1 0");
+	mask(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, B="xafg180 yafg10")
+
 	# PSSOLAR
 	#D=solar(I="-7.93/37.079+d2016-02-04T10:01:00");
 	#@assert(D[1].text[end] == "\tDuration = 10:27")
@@ -254,11 +268,18 @@ if (got_it)					# Otherwise go straight to end
 	# SPLITXYZ (fails)
 	#splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
 
-	# TRIANGULATE
+	# TRIANGULA##TE
 	G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
 
 	# NEARNEIGHBOR
 	G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, S=10, r=true);
+
+	# XYZ2GRD
+	D=grd2xyz(G); # Use G of previous test
+	xyz2grd(D, R="0/150/0/150", I=1, r=true);
+
+	# TREND2D
+	trend2d(D, F=:xyr, N=3);
 
 	# MISC
 	G = GMT.grid_type(G.z);
