@@ -42,6 +42,10 @@ if (got_it)					# Otherwise go straight to end
 	# GMTCONVERT
 	gmtconvert([1.1 2; 3 4], o=0)
 
+	# GMTREGRESS
+	d = [0 5.9 1e3 1; 0.9 5.4 1e3 1.8; 1.8 4.4 5e2 4; 2.6 4.6 8e2 8; 3.3 3.5 2e2 2e1; 4.4 3.7 8e1 2e1; 5.2 2.8 6e1 7e1; 6.1 2.8 2e1 7e1; 6.5 2.4 1.8 1e2; 7.4 1.5 1 5e2];
+	regress(d, E=:y, F=:xm, N=2, T="-0.5/8.5/2+n");
+
 	# GMTLOGO
 	logo(D="x0/0+w2i")
 	logo(julia=8)
@@ -184,6 +188,9 @@ if (got_it)					# Otherwise go straight to end
 	# MAKECPT
 	cpt = makecpt(range="-1/1/0.1");
 	@assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
+
+	# MAPPROJECT
+	mapproject([-10 40], J=:u29, C=true, F=true);
 
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")

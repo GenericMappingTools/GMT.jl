@@ -70,7 +70,7 @@ gmtwrite(fname::String, data; kwargs...)
 ```
 
 ```@docs
-gmtregress(cmd0::String="", arg1=[], kwargs...)
+regress(cmd0::String="", arg1=[], kwargs...)
 ```
 
 ```@docs

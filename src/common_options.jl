@@ -995,7 +995,7 @@ function vector_attrib(;kwargs...)
 		if (isa(d[:shape], String) || isa(d[:shape], Symbol))
 			if     (d[:shape] == "triang" || d[:shape] == :triang)	cmd = cmd * "+h0"
 			elseif (d[:shape] == "arrow"  || d[:shape] == :arrow)	cmd = cmd * "+h1"
-			elseif (d[:shape] == "V"      || d[:shape] == :V)	cmd = cmd * "+h2"
+			elseif (d[:shape] == "V"      || d[:shape] == :V)	    cmd = cmd * "+h2"
 			else	error("Shape string can be only: 'triang', 'arrow' or 'V'")
 			end
 		elseif (isa(d[:shape], Number))
@@ -1008,8 +1008,8 @@ function vector_attrib(;kwargs...)
 
 	if (haskey(d, :trim))  cmd = cmd * "+t" * arg2str(d[:trim])  end
 	if (haskey(d, :ang1_ang2) || haskey(d, :start_stop))  cmd = cmd * "+q"  end
-	if (haskey(d, :uv))  cmd = cmd * "+s"  end
-	if (haskey(d, :scale))  cmd = cmd * "+z" * arg2str(d[:scale])  end
+	if (haskey(d, :endpoint))  cmd = cmd * "+s"  end
+	if (haskey(d, :uv))    cmd = cmd * "+z" * arg2str(d[:scale])  end
 	return cmd
 end
 
