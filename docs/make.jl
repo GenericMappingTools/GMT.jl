@@ -4,17 +4,17 @@ makedocs(
     modules = [GMT],
     format = :html,
     sitename = "GMT",
-    pages = [
-        "Home" => "index.md",
-        "Some examples" => "examples.md",
+    pages = Any[
+        "Introduction"             => "usage.md",
+        "Some examples"            => "examples.md",
         "Draw rectangles examples" => "rectangles.md",
-        "Draw frames examples" => "frames.md",
+        "Draw frames examples"     => "frames.md",
         "Manual" => [
-            "usage.md",
             "monolitic.md",
             "modules.md",
         ],
-        "The GMT types" => "types.md"
+        "The GMT types"            => "types.md",
+        "Index"                    => "index.md",
     ],
     html_prettyurls = true,
 )
