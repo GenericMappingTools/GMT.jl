@@ -106,6 +106,17 @@ grdview("@tut_relief.nc", proj="M12c", JZ="1c", shade="+ne0.8+a100", view="135/3
 
 !["Hello 3D view world"](figures/hello-view-world.jpg)
 
+Above we used the *Peaks* function to create a contour plot. Let us use that grid again and
+display it this time as 3D bar plot in a perspective view. 
+
+```julia
+cmap = grd2cpt(G);      # Compute a colormap with the grid's data range
+bar3(G, lw=:thinnest, color=cmap, fmt=:png, show=true)
+```
+
+!["Hello bar3D"](figures/bar3-peaks.png)
+
+
 ## Warp image in geographical projection
 
 In this example we will load a network image (GDAL will do that for us) and make a
