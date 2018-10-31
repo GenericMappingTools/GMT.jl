@@ -3,7 +3,7 @@
 
 Reads (length,azimuth) pairs from file and plot a windmask diagram.
 
-Full option list at [`psmask`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html)
+Full option list at [`psmask`](http://gmt.soest.hawaii.edu/doc/latest/mask.html)
 
 Parameters
 ----------
@@ -11,7 +11,7 @@ Parameters
 - **I** : **inc** : -- Str or Number --
 
     Set a fixed azimuth projection for masks [Default uses track azimuth, but see -A].
-	[`-I`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#i)
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#i)
 - $(GMT.opt_R)
 
 - $(GMT.opt_B)
@@ -23,15 +23,15 @@ Parameters
 
     Dump the (x,y) coordinates of each clipping polygon to one or more output files
     (or stdout if template is not given).
-	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#d)
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#d)
 - **F** : **oriented_polygons** : -- Str or [] --
 
     Force clip contours (polygons) to be oriented so that data points are to the left (-Fl [Default]) or right (-Fr) 
-	[`-F`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#f)
+    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#f)
 - **G** : **fill** : -- Number or Str --
 
     Set fill shade, color or pattern for positive and/or negative masks [Default is no fill].
-	[`-G`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#g)
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#g)
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
 - **L** : **node_grid** : -- Str --
@@ -46,15 +46,15 @@ Parameters
 - **Q** : **cut_number** : -- Number or Str --
 
     Do not dump polygons with less than cut number of points [Dumps all polygons].
-	[`-Q`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#q)
+    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#q)
 - **S** : **search_radius** : -- Number or Str --
 
     Sets radius of influence. Grid nodes within radius of a data point are considered reliable.
-	[`-S`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#s)
+    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#s)
 - **T** : **tiles** : -- Bool or [] --
 
     Plot tiles instead of clip polygons. Use -G to set tile color or pattern. Cannot be used with -D.
-	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#t)
+    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

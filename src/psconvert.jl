@@ -39,16 +39,16 @@ Parameters
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#i)
 - **in_memory** : -- Bool or [] --
 
-	Process a in memory PS file. No other input file should be provided.
-	Currently works on Windows only.
+    Process a in memory PS file. No other input file should be provided.
+    Currently works on Windows only.
 - **L** : **list_file** : -- Str --
 
     The listfile is an ASCII file with the names of the PostScript files to be converted.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#l)
 - **Q** : **anti_aliasing** : -- Str --
 
-	Set the anti-aliasing options for graphics or text. Append the size of the subsample box
-	(1, 2, or 4) [4]. This option is set by default.
+    Set the anti-aliasing options for graphics or text. Append the size of the subsample box
+    (1, 2, or 4) [4]. This option is set by default.
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#q)
 - **S** : **gs_command** : -- Bool or [] --
 
@@ -58,8 +58,8 @@ Parameters
 
     b|e|E|f|F|j|g|G|m|s|t Sets the output format, where b = BMP, e = EPS, E = EPS with PageSize command,
     f = PDF, F = multi-page PDF, j = JPEG, g = PNG, G = transparent PNG (untouched regions are
-	transparent), m = PPM,  and t = TIFF [default is JPEG].
-	Alternatively, the format may be set with the *fmt* keyword, e.g. *fmt="png"*.
+    transparent), m = PPM,  and t = TIFF [default is JPEG].
+    Alternatively, the format may be set with the *fmt* keyword, e.g. *fmt="png"*.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#t)
 - **W** : **world_file** : -- Str --
 

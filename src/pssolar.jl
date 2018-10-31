@@ -3,7 +3,7 @@
 
 Calculate and plot the day-night terminator and the civil, nautical and astronomical twilights.
 
-Full option list at [`pssolar`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html)
+Full option list at [`pssolar`](http://gmt.soest.hawaii.edu/doc/latest/solar.html)
 
 Parameters
 ----------
@@ -18,21 +18,21 @@ Parameters
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#g)
 - **I** : **inquire** : -- Bool or [] --
 
-	[`-I`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#i)
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#i)
 - $(GMT.opt_P)
 - **M** : **alpha** : -- Str or [] --
 
-	[`-M`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#M)
+    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#M)
 - $(GMT.opt_R)
 - **N** : **radius** : -- Bool or [] --
 
-	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#n)
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#n)
 - **T** : -- Bool or [] --
 
-	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#t)
+    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#t)
 - **W** : **pen** : -- Str or tuple --
 
-	[`-W`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#w)
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#w)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

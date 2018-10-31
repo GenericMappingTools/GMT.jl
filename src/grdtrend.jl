@@ -12,19 +12,19 @@ Parameters
 - **N** : **model** : -- Str or Number --
 
     Sets the number of model parameters to fit.
-	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#n)
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#n)
 - **D** : **diff** : -- Str or [] --
 
-	Compute the difference (input data - trend). Optionaly provide a file name to save result on disk.
-	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#d)
+    Compute the difference (input data - trend). Optionaly provide a file name to save result on disk.
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#d)
 - **T** : **trend** : -- Str or [] --
 
-	Compute the trend surface. Optionaly provide a file name to save result on disk.
-	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#t)
+    Compute the trend surface. Optionaly provide a file name to save result on disk.
+    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#t)
 - **W** : **weights** : -- Str --
 
     If weight.nc exists, it will be read and used to solve a weighted least-squares problem.
-	[`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#w)
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#w)
 - $(GMT.opt_R)
 - $(GMT.opt_V)
 """

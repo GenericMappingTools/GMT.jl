@@ -1,9 +1,9 @@
 """
-	xy(cmd0::String="", arg1=[]; kwargs...)
+    xy(cmd0::String="", arg1=[]; kwargs...)
 
 reads (x,y) pairs and plot lines, polygons, or symbols at those locations on a map.
 
-Full option list at [`psxy`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html)
+Full option list at [`psxy`](http://gmt.soest.hawaii.edu/doc/latest/plot.html)
 
 Parameters
 ----------
@@ -12,7 +12,7 @@ Parameters
 
     By default, geographic line segments are drawn as great circle arcs. To draw them as straight
     lines, use the -A flag.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#a)
+    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#a)
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
@@ -20,39 +20,39 @@ Parameters
 - **D** : **shift** : **offset** : -- Str --
 
     Offset the plot symbol or line locations by the given amounts dx/dy.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#d)
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#d)
 - **E** : **error_bars** : -- Str --
 
     Draw symmetrical error bars.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#e)
+    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#e)
 - **F** : **conn** : **connection** : -- Str --
 
     Alter the way points are connected
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#f)
+    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#f)
 - **G** : **fill** : **markerfacecolor** : -- Str --
 
     Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
     color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
     'fill' for the polygons and 'markerfacecolor' for filling the symbols. Same applyies for W bellow
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#g)
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#g)
 - **I** : **intens** : -- Str or number --
 
-	Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating
-	shading illumination.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#i)
+    Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating
+    shading illumination.
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#i)
 - **L** : **closed_polygon** : -- Str --
 
     Force closed polygons. 
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#l)
+    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#l)
 - **N** : **no_clip** : -- Str or [] --
 
     Do NOT clip symbols that fall outside map border 
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#n)
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#n)
 - $(GMT.opt_P)
 - **S** : -- Str --
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
-	[`-S`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s)
+    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#s)
 
     Alternatively select a sub-set of symbols using the aliases: **symbol** or **marker** and values:
 
@@ -70,15 +70,15 @@ Parameters
     + **s**, **square**
     + **t**, **^**, **triangle**
     + **x**, **cross**
-	+ **y**, **y_dash**
-	
-	and select their sizes with the **markersize** or **size** keyword [default is 8p].
-	The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
-	points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
+    + **y**, **y_dash**
+
+    and select their sizes with the **markersize** or **size** keyword [default is 8p].
+    The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
+    points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
 - **W** : **pen** : **line_attrib** : **markeredgecolor** : -- Str --
 
     Set pen attributes for lines or the outline of symbols
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w)
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
     If your plot has polygons and symbols, use **W** or **line_attribs** for the polygons and
     **markeredgecolor** for filling the symbols. Similar to S above.
