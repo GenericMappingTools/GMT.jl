@@ -183,7 +183,6 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 			(isa(arg1, Array{GMTdataset}) && size(arg1[1].data,2) <= 2+is3D))
 			if (opt_i == "")
 				cmd = @sprintf("%s -i0-%d,%d", cmd, 1+is3D, 1+is3D)
-				println(cmd)
 			else
 				@warn("Plotting with color table requires adding one more column to the dataset but your -i
 				option did not do it, so you won't get waht you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots")
