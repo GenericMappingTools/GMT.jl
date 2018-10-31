@@ -61,6 +61,8 @@ if (got_it)					# Otherwise go straight to end
 	l1 = gmt("project -C22/49 -E-60/-20 -G10 -Q");
 	l2 = gmt("project -C0/-60 -E-60/-30 -G10 -Q");
 	#int = gmt("gmtspatial -Ie -Fl", l1, l2);       # Error returned from GMT API: GMT_ONLY_ONE_ALLOWED (59)
+	d = [-300 -3500; -200 -800; 400 -780; 500 -3400; -300 -3500];
+	gmtspatial(d, C=true, R="0/100/-3100/-3000");
 
 	# GMTREADWRITE
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
