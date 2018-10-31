@@ -327,7 +327,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
 
 	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
-	                  justify=:end,fill=:none,trim=0.1,uv=true,scale=6.6);
+	                  justify=:end,fill=:none,trim=0.1,endpoint=true,uv=6.6);
 	@test r == "2.2+e+je+r+g-+n0.25i+h1+t0.1+s+z6.6"
 
 	r = decorated(dist=(val="0.4i",size=0.25), symbol=:arcuate, pen=2, offset="10i", right=1);
