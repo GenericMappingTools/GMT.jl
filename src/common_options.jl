@@ -1009,7 +1009,7 @@ function vector_attrib(;kwargs...)
 	if (haskey(d, :trim))  cmd = cmd * "+t" * arg2str(d[:trim])  end
 	if (haskey(d, :ang1_ang2) || haskey(d, :start_stop))  cmd = cmd * "+q"  end
 	if (haskey(d, :endpoint))  cmd = cmd * "+s"  end
-	if (haskey(d, :uv))    cmd = cmd * "+z" * arg2str(d[:scale])  end
+	if (haskey(d, :uv))    cmd = cmd * "+z" * arg2str(d[:uv])  end
 	return cmd
 end
 
