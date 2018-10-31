@@ -89,7 +89,7 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	((isempty(cmd0) && isempty_(arg1) || occursin(" -", cmd0)) && return monolitic("ternary", cmd0, arg1)	# Monolitic mode
+	((isempty(cmd0) && isempty_(arg1) || occursin(" -", cmd0)) && return monolitic("ternary", cmd0, arg1))	# Monolitic mode
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only

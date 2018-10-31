@@ -266,7 +266,7 @@ sample1d(cmd0::String="", arg1=[], kwargs...)
 ```
 
 ```@docs
-gmtspectrum1d(cmd0::String="", arg1=[], kwargs...)
+spectrum1d(cmd0::String="", arg1=[], kwargs...)
 ```
 
 ```@docs
