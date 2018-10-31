@@ -135,7 +135,7 @@ function scatter(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, fir
 	else
 		error("SCATTER: The two array args must be vectors or ONE column (or row) matrices.")
 	end
-	scatter("", arg; K=K, O=O, first=first, false, kw...)
+	scatter("", arg; K=K, O=O, first=first, is3D=false, kw...)
 end
 function scatter!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...)
 	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
@@ -143,11 +143,11 @@ function scatter!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, firs
 	else
 		error("SCATTER: The two array args must be vectors or ONE column (or row) matrices.")
 	end
-	scatter("", arg; K=K, O=O, first=first, false, kw...)
+	scatter("", arg; K=K, O=O, first=first, is3D=false, kw...)
 end
 function scatter3(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2, arg3)
-	scatter("", arg; K=K, O=O, first=first, true, kw...)
+	scatter("", arg; K=K, O=O, first=first, is3D=true, kw...)
 end
 function scatter3!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=true, O=true, first=false, kw...)
 	arg = hcat(arg1, arg2, arg3)
