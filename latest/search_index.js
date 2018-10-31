@@ -69,7 +69,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Some examples",
     "title": "Perspective view",
     "category": "section",
-    "text": "We will make a perspective, color-coded view of the US Rockies from the southeast.topo = makecpt(color=\"rainbow\", range=\"1000/5000/500\", continuous=true);\ngrdview(\"@tut_relief.nc\", proj=\"M12c\", JZ=\"1c\", shade=\"+ne0.8+a100\", view=\"135/30\",\n        frame=\"a\", fmt=\"jpg\", color=topo, Q=\"i100\", show=1)(Image: \"Hello 3D view world\")"
+    "text": "We will make a perspective, color-coded view of the US Rockies from the southeast.topo = makecpt(color=\"rainbow\", range=\"1000/5000/500\", continuous=true);\ngrdview(\"@tut_relief.nc\", proj=\"M12c\", JZ=\"1c\", shade=\"+ne0.8+a100\", view=\"135/30\",\n        frame=\"a\", fmt=\"jpg\", color=topo, Q=\"i100\", show=1)(Image: \"Hello 3D view world\")Above we used the Peaks function to create a contour plot. Let us use that grid again and display it this time as 3D bar plot in a perspective view. cmap = grd2cpt(G);      # Compute a colormap with the grid\'s data range\nbar3(G, lw=:thinnest, color=cmap, fmt=:png, show=true)(Image: \"Hello bar3D\")"
 },
 
 {
@@ -101,7 +101,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Draw rectangles examples",
     "title": "Simple filled rectangle",
     "category": "section",
-    "text": "using GMT\nrect = [2 2; 2 6; 6 6; 6 2; 2 2];\nplot(rect, region=[0 10 0 10], lw=1, fill=\"blue\", frame=\"a\", axis=\"equal\", fmt=\"png\", show=true)(Image: \"Blue rectangle\")"
+    "text": "using GMT\nrect = [2 2; 2 6; 6 6; 6 2; 2 2];\nplot(rect, region=[0 10 0 10], lw=1, fill=:blue, frame=:a, axis=:equal, fmt=:png, show=true)(Image: \"Blue rectangle\")"
 },
 
 {
@@ -109,7 +109,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Draw rectangles examples",
     "title": "Rectangles with patterns",
     "category": "section",
-    "text": "Now add some patterns. The full pattern syntax is explained in GMT patterns but basically we are using pattern number 20 at 200 dpi and a blue background for the left rectangle and pattern 89 also at 200 dpis for the right rectangle.using GMT\nrect = [1 1; 1 7; 4 7; 4 1; 1 1];\nplot(rect, region=[0 10 0 10], lw=1, fill=\"p20+bgreen+r200\", frame=\"a\", axis=\"equal\")\nplot!([4 0].+rect, lw=1, fill=\"p89+r200\", fmt=\"png\", show=true)(Image: \"Pattern Rectangles\")"
+    "text": "Now add some patterns. The full pattern syntax is explained in GMT patterns but basically we are using pattern number 20 at 200 dpi and a blue background for the left rectangle and pattern 89 also at 200 dpis for the right rectangle.using GMT\nrect = [1 1; 1 7; 4 7; 4 1; 1 1];\nplot(rect, region=[0 10 0 10], lw=1, fill=\"p20+bgreen+r200\", frame=:a, axis=:equal)\nplot!([4 0].+rect, lw=1, fill=\"p89+r200\", fmt=:png, show=true)(Image: \"Pattern Rectangles\")"
 },
 
 {
@@ -117,7 +117,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Draw rectangles examples",
     "title": "Rectangles with transparency",
     "category": "section",
-    "text": "This variation creates rectangles with 0, 30% and 70% transparency as well as different boundary lines.using GMT\nrect = [0.5 0.5; 0.5 7; 2.5 7; 2.5 0.5; 0.5 0.5];\nplot(rect, region=[0 10 0 10], lw=0.5, fill=\"blue\", frame=\"a\", axis=\"equal\")\nplot!([3 0].+rect, lw=1, ls=\"--\", fill=\"blue\", transparency=30)\nplot!([6 0].+rect, lw=2, lc=\"red\", fill=\"blue\", transparency=70, fmt=\"png\", show=true)(Image: \"Transparent Rectangles\")"
+    "text": "This variation creates rectangles with 0, 30% and 70% transparency as well as different boundary lines.using GMT\nrect = [0.5 0.5; 0.5 7; 2.5 7; 2.5 0.5; 0.5 0.5];\nplot(rect, region=[0 10 0 10], lw=0.5, fill=:blue, frame=:a, axis=:equal\")\nplot!([3 0].+rect, lw=1, ls=\"--\", fill=:blue, transparency=30)\nplot!([6 0].+rect, lw=2, lc=:red, fill=:blue, transparency=70, fmt=:png, show=true)(Image: \"Transparent Rectangles\")"
 },
 
 {
