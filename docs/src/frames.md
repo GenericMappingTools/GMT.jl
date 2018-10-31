@@ -31,7 +31,7 @@ grid crosses.
 
 ```julia
 using GMT
-basemap(region="-2/1/0/0.35", proj=:M10, frame="pa15mf5mg5m wSe s1f30mg15m", conf(MAP_FRAME_TYPE="fancy+",
+basemap(region="-2/1/0/0.35", proj=:M10, frame="pa15mf5mg5m wSe s1f30mg15m", conf=(MAP_FRAME_TYPE="fancy+",
 	MAP_GRID_PEN_PRIMARY="thinnest,black,.", MAP_GRID_CROSS_SIZE_SECONDARY=0.25, MAP_FRAME_WIDTH=0.2,
 	MAP_TICK_LENGTH_PRIMARY=0.25, FORMAT_GEO_MAP="ddd:mm:ssF", FONT_ANNOT_PRIMARY="+8", FONT_ANNOT_SECONDARY=12))
 # Draw Arrows and text
@@ -142,7 +142,7 @@ removes leading zeros from calendar items (e.g., 03 becomes 3).
 ```julia
 using GMT
 basemap(region="2000-4-1T/2000-5-25T/0/1", proj="X12/0.5", frame="pa7Rf1d sa1O S",
-        conf(FORMAT_DATE_MAP="-o", FONT_ANNOT_PRIMARY="+9p"), fmt=:png, show=true)
+        conf=(FORMAT_DATE_MAP="-o", FONT_ANNOT_PRIMARY="+9p"), fmt=:png, show=true)
 ```
 
 !["B_time1"](figures/B_time1.png)
@@ -172,7 +172,7 @@ The third example presents two years, annotating both the years and every 3rd mo
 
 ```julia
 using GMT
-basemap(region="1997T/1999T/0/1", proj="X12/0.25", frame="pa3Of1o sa1Y S", conf(FORMAT_DATE_MAP="o",
+basemap(region="1997T/1999T/0/1", proj="X12/0.25", frame="pa3Of1o sa1Y S", conf=(FORMAT_DATE_MAP="o",
     FORMAT_TIME_PRIMARY_MAP="Character", FONT_ANNOT_PRIMARY="+9p"), fmt=:png, show=true)
 ```
 
@@ -191,7 +191,7 @@ ask for a 12-hour clock, and let time go from right to left:
 using GMT
 gmt("set FORMAT_CLOCK_MAP=-hham FONT_ANNOT_PRIMARY +9p TIME_UNIT d")
 basemap(region="0.2t/0.35t/0/1", proj="X-12/0.25", frame="pa15mf5m sa1H S",
-    conf(FORMAT_CLOCK_MAP="-hham", FONT_ANNOT_PRIMARY="+9p", TIME_UNIT="d"), fmt=:png, show=true)
+    conf=(FORMAT_CLOCK_MAP="-hham", FONT_ANNOT_PRIMARY="+9p", TIME_UNIT="d"), fmt=:png, show=true)
 ```
 
 !["B_time4"](figures/B_time4.png)
@@ -217,7 +217,7 @@ abbreviated, upper case name and 2-digit year. Only the primary axes information
 ```julia
 using GMT
 basemap(region="1996T/1996-6T/0/1", proj="X12/0.25", frame="a1Of1d S",
-    conf(FORMAT_DATE_MAP="\"o yy\"", FORMAT_TIME_PRIMARY_MAP="Abbreviated"), fmt=:png, show=true)
+    conf=(FORMAT_DATE_MAP="\"o yy\"", FORMAT_TIME_PRIMARY_MAP="Abbreviated"), fmt=:png, show=true)
 ```
 
 !["B_time6"](figures/B_time6.png)
@@ -231,7 +231,7 @@ intervals; normally such truncated interval must be at least half of a full inte
 using GMT
 gmt("set FORMAT_DATE_MAP jjj TIME_INTERVAL_FRACTION 0.05 FONT_ANNOT_PRIMARY +9p")
 basemap(region="2000-12-15T/2001-1-15T/0/1", proj="X12/0.25", frame="pa5Df1d sa1Y S",
-    conf(FORMAT_DATE_MAP="jjj", TIME_INTERVAL_FRACTION=0.05, FONT_ANNOT_PRIMARY="+9p"), fmt=:png, show=true)
+    conf=(FORMAT_DATE_MAP="jjj", TIME_INTERVAL_FRACTION=0.05, FONT_ANNOT_PRIMARY="+9p"), fmt=:png, show=true)
 ```
 
 !["B_time7"](figures/B_time7.png)
@@ -248,4 +248,4 @@ else
                      ["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]);
 end
 basemap(T2,  region="416/542/0/6.2831852", proj="X-5i/2.5i", frame="WS+glightblue px25f5g25+u\" Ma\" pyc")
-basemap!(T1, frame="WS sxc", conf(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), show=true)
+basemap!(T1, frame="WS sxc", conf=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), show=true)

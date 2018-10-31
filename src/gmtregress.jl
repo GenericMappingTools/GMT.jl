@@ -1,5 +1,5 @@
 """
-	gmtgmtregress(cmd0::String="", arg1=[], kwargs...)
+	gmtregress(cmd0::String="", arg1=[], kwargs...)
 
 Linear regression of 1-D data sets.
 
