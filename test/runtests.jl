@@ -34,8 +34,10 @@ if (got_it)					# Otherwise go straight to end
 	filter1d(raw, F="m15");
 
 	# GMT2KML
-	D = gmt("pscoast -R-15/2/50/59:30 -Jm1i -M -W0.25p -Di");
-	gmt2kml(D, F=:l, W=(1,:red));
+	if (GMTver >= 6)
+		D = gmt("pscoast -R-15/2/50/59:30 -Jm1i -M -W0.25p -Di");
+		gmt2kml(D, F=:l, W=(1,:red));
+	end
 
 	# GMTCONVERT
 	gmtconvert([1.1 2; 3 4], o=0)
