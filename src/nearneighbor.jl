@@ -14,7 +14,7 @@ Parameters
 
 - **I** : **inc** : -- Str or Number --
 
-	*x_inc* [and optionally *y_inc*] is the grid spacing.
+    *x_inc* [and optionally *y_inc*] is the grid spacing.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/nearneighbor.html#i)
 - **N** : **sectors** : -- Number or Str --
 

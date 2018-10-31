@@ -11,32 +11,32 @@ Parameters
 
 - **A** : **interp_path** : -- Str --
 
-	[`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#a)
+    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#a)
 - **C** : **equi** : -- Str --
 
-	[`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#c)
+    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#c)
 - **D** : **dfile** : -- Str --  
 
-	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#d)
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#d)
 - **E** : **by_coord** : -- Str --
 
-	[`-E`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#e)
+    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#e)
 - **G** : **grid** : -- Str or GMTgrid or Tuple(GMTgrid's) --
 
-	[`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#g)
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#g)
 - **N** : **no_skip** : -- Bool or [] --
 
-	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#n)
+    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#n)
 - $(GMT.opt_R)
 - **S** : **stack** : -- Str --
 
-	[`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#s)
+    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#s)
 - **T** : **radius** : -- Number, Str or [] --
 
-	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#t)
+    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#t)
 - **Z** : **z_only** : -- Bool or [] --
 
-	[`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#z)
+    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#z)
 - $(GMT.opt_V)
 - $(GMT.opt_bi)
 - $(GMT.opt_bo)

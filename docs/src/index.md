@@ -266,6 +266,10 @@ sample1d(cmd0::String="", arg1=[], kwargs...)
 ```
 
 ```@docs
+scatter(cmd0::String="", arg1=[], kwargs...)
+```
+
+```@docs
 spectrum1d(cmd0::String="", arg1=[], kwargs...)
 ```
 

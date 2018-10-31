@@ -13,7 +13,7 @@ Parameters
 - $(GMT.opt_R)
 - **I** : **inc** : -- Str or Number --
 
-	*x_inc* [and optionally *y_inc*] is the grid spacing.
+    *x_inc* [and optionally *y_inc*] is the grid spacing.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#i)
 - **A** : **aspect_ratio** : -- Number --
 
@@ -21,8 +21,8 @@ Parameters
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#a)
 - **C** : **convergence** : -- Number --
 
-	Convergence limit. Iteration is assumed to have converged when the maximum absolute change in any
-	grid value is less than convergence_limit.
+    Convergence limit. Iteration is assumed to have converged when the maximum absolute change in any
+    grid value is less than convergence_limit.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#c)
 - **G** : **outgrid** : -- Str --
 
@@ -31,16 +31,16 @@ Parameters
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#g)
 - **Ll** : **lower** : -- Str or Number --
 
-	Impose limits on the output solution. lower sets the lower bound. lower can be the name of a grid
-	file with lower bound values, a fixed value, d to set to minimum input value,
+    Impose limits on the output solution. lower sets the lower bound. lower can be the name of a grid
+    file with lower bound values, a fixed value, d to set to minimum input value,
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#l)
 - **Lu** : **upper** : -- Str or Number --
 
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#l)
 - **N** : **max_iterations** : -- Number --
 
-	Number of iterations. Iteration will cease when convergence_limit is reached or when number of
-	iterations reaches max_iterations.
+    Number of iterations. Iteration will cease when convergence_limit is reached or when number of
+    iterations reaches max_iterations.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#n)
 - **Q** : **suggest** : -- Bool or [] --
 

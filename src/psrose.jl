@@ -3,7 +3,7 @@
 
 Reads (length,azimuth) pairs and plot a windrose diagram.
 
-Full option list at [`psrose`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html)
+Full option list at [`psrose`](http://gmt.soest.hawaii.edu/doc/latest/rose.html)
 
 Parameters
 ----------
@@ -11,60 +11,60 @@ Parameters
 - $(GMT.opt_J)
 - **A** : **sector** : -- Str or number --
 
-	Gives the sector width in degrees for sector and rose diagram.
-	[`-A`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#a)
+    Gives the sector width in degrees for sector and rose diagram.
+    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#a)
 - $(GMT.opt_B)
 - **C** : **vectors** : -- Str --
 
-	Plot vectors showing the principal directions given in the mode_file file.
-	[`-C`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#c)
+    Plot vectors showing the principal directions given in the mode_file file.
+    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#c)
 - **D** : **shift** : -- Bool or [] --
 
-	Shift sectors so that they are centered on the bin interval (e.g., first sector is centered on 0 degrees).
-	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#d)
+    Shift sectors so that they are centered on the bin interval (e.g., first sector is centered on 0 degrees).
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#d)
 - **F** : **no_scale** : -- Bool or [] --
 
-	Do not draw the scale length bar [Default plots scale in lower right corner].
-	[`-F`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#f)
+    Do not draw the scale length bar [Default plots scale in lower right corner].
+    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#f)
 - **G** : **fill** : -- Number or Str --
 
-	Selects shade, color or pattern for filling the sectors [Default is no fill].
-	[`-G`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#g)
+    Selects shade, color or pattern for filling the sectors [Default is no fill].
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#g)
 - **I** : **inquire** : -- Bool or [] --
 
-	Inquire. Computes statistics needed to specify a useful -R. No plot is generated.
-	[`-I`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#i)
+    Inquire. Computes statistics needed to specify a useful -R. No plot is generated.
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#i)
 - **L** : **pen** : -- Number or Str --
 
-	Draw bar outline using the specified pen thickness. [Default is no outline].
-	[`-L`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#l)
+    Draw bar outline using the specified pen thickness. [Default is no outline].
+    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#l)
 - **M** : -- Bool or [] --
 
-	Used with -C to modify vector parameters.
-	[`-M`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#m)
+    Used with -C to modify vector parameters.
+    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#m)
 - $(GMT.opt_P)
 - **Q** : **alpha** : -- Str or [] --
 
-	Sets the confidence level used to determine if the mean resultant is significant.
-	[`-Q`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#q)
+    Sets the confidence level used to determine if the mean resultant is significant.
+    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#q)
 - $(GMT.opt_R)
 - **S** : **radius** : -- Bool or [] --
 
-	Specifies radius of plotted circle (append a unit from c|i|p).
-	[`-S`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#s)
+    Specifies radius of plotted circle (append a unit from c|i|p).
+    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#s)
 - **T** : -- Bool or [] --
 
-	Specifies that the input data are orientation data (i.e., have a 180 degree ambiguity)
-	instead of true 0-360 degree directions [Default].
-	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#t)
+    Specifies that the input data are orientation data (i.e., have a 180 degree ambiguity)
+    instead of true 0-360 degree directions [Default].
+    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#t)
 - **W** : **pen** : -- Str or tuple --
 
-	Set pen attributes for sector outline or rose plot. [Default is no outline].
-	[`-W`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#w)
+    Set pen attributes for sector outline or rose plot. [Default is no outline].
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#w)
 - **Z** : **scale** : -- Str --
 
-	Multiply the data radii by scale.
-	[`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#z)
+    Multiply the data radii by scale.
+    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#z)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

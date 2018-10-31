@@ -12,16 +12,16 @@ Parameters
 
 - **D** : **pos** : **position** : -- Str --
 
-	Sets reference point on the map for the image using one of four coordinate systems.
+    Sets reference point on the map for the image using one of four coordinate systems.
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmtlogo.html#d)
 - **F** : **box** : -- Str --
 
-	Without further options, draws a rectangular border around the GMT logo using MAP_FRAME_PEN.
+    Without further options, draws a rectangular border around the GMT logo using MAP_FRAME_PEN.
     or map rose (T)
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/gmtlogo.html#f)
 - **julia** : -- Number --
 
-	Create the Julia instead of the GMT logo. Provide circle diameter in centimeters
+    Create the Julia instead of the GMT logo. Provide circle diameter in centimeters
 - **GMTjulia** : -- Number --
 
     Create the GMT Julia GMT logo. Provide circle diameter in centimeters
