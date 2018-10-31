@@ -25,14 +25,14 @@ const FMT = "ps"
 export
 	GMTver, FMT, gmt,
 	arrows, arrows!, bar, bar!, bar3, lines, lines!,
-	basemap, basemap!, blockmean, blockmedian, blockmode, coast, coast!, colorbar, colorbar!, contour, 
+	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!, contour, 
 	contour!, filter1d, filter2d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
-	gmtread, gmtselect, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwich, 
+	gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwich, 
 	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft,
 	grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdlandmask, grdpaste, grdproject,
-	grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume,
+	grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume, greenspline,
 	grid_type, histogram, histogram!, image, image!, imshow, imshow!, kml2gmt, logo, logo!, makecpt,
-	mapproject, nearneighbor, plot, plot!, plot3d, plot3d!, project,
+	mask, mask!, mapproject, nearneighbor, plot, plot!, plot3d, plot3d!, project,
 	pscontour, pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, 
 	pshistogram, pshistogram!, psimage, psimage!, psmask, psmask!, psrose, psrose!, psscale, psscale!, 
 	pssolar, pssolar!, psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, 
@@ -62,6 +62,7 @@ include("gmtsimplify.jl")
 include("gmtspatial.jl")
 include("gmtregress.jl")
 include("gmtvector.jl")
+include("gmtwich.jl")
 include("grd2cpt.jl")
 include("grd2kml.jl")
 include("grd2xyz.jl")
@@ -80,6 +81,7 @@ include("grdlandmask.jl")
 include("grdpaste.jl")
 include("grdproject.jl")
 include("grdsample.jl")
+include("greenspline.jl")
 include("grdtrack.jl")
 include("grdtrend.jl")
 include("grdvector.jl")
@@ -92,14 +94,17 @@ include("mapproject.jl")
 include("nearneighbor.jl")
 include("project.jl")
 include("psbasemap.jl")
+include("psclip.jl")
 include("pscoast.jl")
 include("pscontour.jl")
 include("psconvert.jl")
 include("pshistogram.jl")
 include("psimage.jl")
+include("psmask.jl")
 include("psscale.jl")
 include("psrose.jl")
 include("pssolar.jl")
+include("psternary.jl")
 include("pstext.jl")
 include("psxy.jl")
 include("pswiggle.jl")
