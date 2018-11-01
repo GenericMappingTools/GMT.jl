@@ -49,11 +49,11 @@ between the GMT structures and native Julia structures, which are:
 
 Given this design the Julia wrapper is designed to work in two distinct ways. 
 
-1. The first way, referred as the monolitic, is the more feature reach and follows closely
+1. The first way, referred as the monolithic, is the more feature reach and follows closely
    the GMT usage from shell(s) command line but still provide all the facilities of the Julia
    language. See the [Monolithic](@ref) for the Reference on how to use the Package.
    
 2. The second way uses an upper level set of functions that abstract aspects that
-   make the monolitic usage more complex. It provides an interface to some of the GMT modules
+   make the monolithic usage more complex. It provides an interface to some of the GMT modules
    using a *option=val* list type syntax. This makes it more appropriate for newcommers but
-   it won't release you from understanding the monolitic way. See the [By Modules](@ref)
+   it won't release you from understanding the monolithic way. See the [By Modules](@ref)
