@@ -75,7 +75,8 @@ function gmtselect(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 
-	cmd = parse_V_params("", d)
+	cmd, = parse_R("", d)
+	cmd  = parse_V_params(cmd, d)
 	cmd, = parse_b(cmd, d)
 	cmd, = parse_d(cmd, d)
 	cmd, = parse_e(cmd, d)
