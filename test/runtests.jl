@@ -64,6 +64,12 @@ if (got_it)					# Otherwise go straight to end
 	d = [-300 -3500; -200 -800; 400 -780; 500 -3400; -300 -3500];
 	gmtspatial(d, C=true, R="0/100/-3100/-3000");
 
+	# GMTSELECT
+	gmtselect([2 2], R=(0,3,0,3));		# But is bugged when answer is []
+
+	# GMTSET
+	gmtset(MAP_FRAME_WIDTH=0.2)
+
 	# GMTREADWRITE
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 	if (GMTver >= 6)
@@ -373,6 +379,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# Remove garbage
 	rm("gmt.history")
+	rm("gmt.conf")
 	rm("lixo.ps")
 	rm("lixo.eps")
 	rm("lixo.grd")
