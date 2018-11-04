@@ -181,6 +181,9 @@ if (got_it)					# Otherwise go straight to end
 	dzdx = gmt("grdmath ? DDX", G);
 	grdvector(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
 
+	# GRDVOLUME
+	grdvolume(G, S=:k);
+
 	# Just create the figs but not check if they are correct.
 	PS = grdimage(G, J="X10", ps=1);
 	gmt("destroy")
@@ -229,8 +232,15 @@ if (got_it)					# Otherwise go straight to end
 	G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 	bar3(G, lw=:thinnest)
 
+	# PROJECT
+	project(C="15/15", T="85/40", G="1/110", L="-20/60", Vd=1);
+
 	# PSBASEMAP
 	basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
+
+	# PSCLIP
+	d = [0.2 0.2; 0.2 0.8; 0.8 0.8; 0.8 0.2; 0.2 0.2];
+	psclip(d, J="X3i", R="0/1/0/1", N=true);
 
 	# PSCONVERT
 	gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
@@ -279,6 +289,14 @@ if (got_it)					# Otherwise go straight to end
 	t1=gmt("sample1d -I5k", t); t2 = gmt("mapproject -G+uk", t1); t3 = gmt("math ? -C2 10 DIV COS", t2);
 	wiggle(t3,R="-1/11/0/12", J="M8",B="af WSne", W="0.25p", Z="4c", G="+green", T="0.5p", A=1, Y="0.75i", S="8/1/2")
 
+	# SAMPLE1D
+	d = [-5 74; 38 68; 42 73; 43 76; 44 73];
+	sample1d(d, I="2c", A=:r);	
+
+	# SPECTRUM1D
+	D = gmt("gmtmath -T0/10239/1 T 10240 DIV 360 MUL 400 MUL COSD");
+	spectrum1d(D, S=256, W=true, par=(GMT_FFT=:brenner), N=true, i=1);
+
 	# SURFACE
 	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
 	@assert(size(G.z) == (151, 151))
@@ -295,6 +313,10 @@ if (got_it)					# Otherwise go straight to end
 	# XYZ2GRD
 	D=grd2xyz(G); # Use G of previous test
 	xyz2grd(D, R="0/150/0/150", I=1, r=true);
+
+	# TREND1D
+	D = gmt("gmtmath -T10/110/1 T 50 DIV 2 POW 2 MUL T 60 DIV ADD 4 ADD 0 0.25 NRAND ADD T 25 DIV 2 MUL PI MUL COS 2 MUL 2 ADD ADD");
+	trend1d(D, N="p2,F1+o0+l25", F=:xm);
 
 	# TREND2D
 	trend2d(D, F=:xyr, N=3);

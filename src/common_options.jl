@@ -2,14 +2,6 @@
 
 const KW = Dict{Symbol,Any}
 
-function nt2dict(nt::NamedTuple)
-	# Convert a NamedTuple into a Dict{Any,Any} but where the key is always a Symbol
-	fn = fieldnames(typeof(nt))
-	d = Dict()
-	[d[fn[k]] = nt[k] for k=1:length(fn)]
-	return d
-end
-
 function parse_R(cmd::String, d::Dict, O=false, del=false)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	opt_R = ""

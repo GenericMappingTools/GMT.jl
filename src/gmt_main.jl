@@ -1336,6 +1336,7 @@ function dataset_init(API::Ptr{Void}, module_input, ptr, direction::Integer, act
 		elseif (eltype(ptr) == Int16)		Mb._type = UInt32(GMT.GMT_SHORT)
 		elseif (eltype(ptr) == UInt8)		Mb._type = UInt32(GMT.GMT_UCHAR)
 		elseif (eltype(ptr) == Int8)		Mb._type = UInt32(GMT.GMT_CHAR)
+		elseif (ptr == [])		# Do nothing here (-G of project comes here) but looks dangerous
 		else
 			println("Type \"", typeof(ptr), "\" not allowed")
 			error("only integer or floating point types allowed in input. Others need to be added")
@@ -1672,6 +1673,7 @@ function get_datatype(var)
 	if (eltype(var) == Int16) 	return INT16_CLASS	end
 	if (eltype(var) == UInt8) 	return UINT8_CLASS	end
 	if (eltype(var) == Int8) 	return INT8_CLASS	end
+	if (var == [])				return DOUBLE_CLASS	end		# Motivated by project -G
 
 	println("Unable to discovery this data type - Default to double")
 	return DOUBLE_CLASS
