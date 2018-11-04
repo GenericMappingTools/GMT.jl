@@ -182,7 +182,7 @@ if (got_it)					# Otherwise go straight to end
 	grdvector(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
 
 	# GRDVOLUME
-	grdvolume(G, S=:k);
+	grdvolume(G);
 
 	# Just create the figs but not check if they are correct.
 	PS = grdimage(G, J="X10", ps=1);
