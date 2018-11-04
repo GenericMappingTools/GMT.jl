@@ -96,7 +96,10 @@ function project(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'T', d, [:T :pole])
 	cmd = add_opt(cmd, 'W', d, [:W :width_control])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	got_fname = 0
+	if (!occursin("-G", cmd))
+		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	end
 	return common_grd(d, cmd, got_fname, 1, "project", arg1)		# Finish build cmd and run it
 end
 
