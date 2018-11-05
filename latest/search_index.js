@@ -521,11 +521,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "#GMT.gmtwich",
+    "location": "#GMT.gmtwhich",
     "page": "Index",
-    "title": "GMT.gmtwich",
+    "title": "GMT.gmtwhich",
     "category": "function",
-    "text": "gmtwich(cmd0::String=\"\", arg1=[], kwargs...)\n\nTime domain filtering of 1-D data tables.\n\nFull option list at gmtwich\n\nParameters\n\nA : with_permissions : – Bool or [] –\nOnly consider files that the user has permission to read [Default consider all files found].   -A\nC : confirm : – Bool or [] –\nInstead of reporting the paths, print the confirmation Y if the file is found and N if it is not.   -C\nD : report_dir : – Bool or [] –\nInstead of reporting the paths, print the directories that contains the files.   -D\nG : download : – Str or [] –      Flags = [c|l|u]\nIf a file argument is a downloadable file (either a full URL, a @file for downloading from   the GMT Site Cache, or @earthrelief*.grd) we will try to download the file if it is not   found in your local data or cache dirs.   -G\nV : verbose : – Bool or Str –		Flags = level\nSelect verbosity level, which will send progress reports to stderr.   -V\n\n\n\n\n\n"
+    "text": "gmtwhich(cmd0::String=\"\", arg1=[], kwargs...)\n\nTime domain filtering of 1-D data tables.\n\nFull option list at gmtwhich\n\nParameters\n\nA : with_permissions : – Bool or [] –\nOnly consider files that the user has permission to read [Default consider all files found].   -A\nC : confirm : – Bool or [] –\nInstead of reporting the paths, print the confirmation Y if the file is found and N if it is not.   -C\nD : report_dir : – Bool or [] –\nInstead of reporting the paths, print the directories that contains the files.   -D\nG : download : – Str or [] –      Flags = [c|l|u]\nIf a file argument is a downloadable file (either a full URL, a @file for downloading from   the GMT Site Cache, or @earthrelief*.grd) we will try to download the file if it is not   found in your local data or cache dirs.   -G\nV : verbose : – Bool or Str –		Flags = level\nSelect verbosity level, which will send progress reports to stderr.   -V\n\n\n\n\n\n"
 },
 
 {
