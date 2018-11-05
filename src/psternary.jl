@@ -267,14 +267,17 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 		cmd = [finish_PS(d, cmd, output, K, O)]
 	end
 
-	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "ternary", arg1, arg2)
+	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psternary", arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------
+ternary(arg1; caller=[], K=false, O=false, first=true, kw...) =
+	ternary("", arg1; caller=caller, K=K, O=O,  first=first, kw...)
+
 ternary!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
 	ternary(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
 ternary!(arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
 	ternary("", arg1; caller=caller, K=K, O=O,  first=first, kw...)
 
-psternary  = ternary            # Aliases
-psternary! = ternary!           # Aliases
+const psternary  = ternary            # Aliases
+const psternary! = ternary!           # Aliases

@@ -88,6 +88,13 @@ if (got_it)					# Otherwise go straight to end
 	D = gmtread("lixo.dat", table=true);
 	@test(sum(D[1].data) == 10)
 
+	# GMTVECTOR
+	d = [0 0; 0 90; 135 45; -30 -60];
+	gmtvector(d, T=:D, S="0/0", f=:g);
+
+	# GMTWICH
+	gmtwhich("lixo.dat");
+
 	# GRDINFO
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 	r=gmt("grdinfo -C", G);
@@ -133,7 +140,7 @@ if (got_it)					# Otherwise go straight to end
 	G2=grdcut(data=G, limits=[3 9 2 8]);
 
 	# GRDEDIT
-	# TODO
+	grdedit(G, C=true);
 
 	# GRDFFT
 	G2=grdfft(G, upward=800); 	# Use G of previous test
@@ -280,6 +287,9 @@ if (got_it)					# Otherwise go straight to end
 	#D=solar(I="-7.93/37.079+d2016-02-04T10:01:00");
 	#@assert(D[1].text[end] == "\tDuration = 10:27")
 	solar(R="d", W=1, J="Q0/14c", B="a", T="dc")
+
+	# PSTERNARY
+	ternary([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", X=:c, B=:a, S="c0.1c");
 
 	# PSTEXT
 	text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps")
