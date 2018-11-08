@@ -1,3 +1,5 @@
+const GMTdoc = "http://gmt.soest.hawaii.edu/doc/latest/"
+
 const opt_C = "**C** : **color** : **cmap** : -- Str --		``Flags = [cpt |master[+izinc] |color1,color2[,*color3*,…]]``
 
     Name of the CPT (for grd_z only). Alternatively, supply the name of a GMT color

@@ -810,9 +810,7 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	if (haskey(d, :annot))      ints = ints * "a" * helper1_axes(d[:annot])  end
 	if (haskey(d, :annot_unit)) ints = ints * helper2_axes(d[:annot_unit])   end
 	if (haskey(d, :ticks))      ints = ints * "f" * helper1_axes(d[:ticks])  end
-	if (haskey(d, :ticks_unit)) ints = ints * helper2_axes(d[:ticks_unit])   end
 	if (haskey(d, :grid))       ints = ints * "g" * helper1_axes(d[:grid])   end
-	if (haskey(d, :grid_unit))  ints = ints * helper2_axes(d[:grid_unit])    end
 	if (haskey(d, :custom))
 		ints = ints * 'c'
 		if (isa(d[:custom], String))  ints = ints * d[:custom]  end

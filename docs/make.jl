@@ -12,6 +12,9 @@ makedocs(
         "Manual" => [
             "monolitic.md",
             "modules.md",
+            "Common options" => [
+                "axis.md",
+            ],
         ],
         "The GMT types"            => "types.md",
         "Index"                    => "index.md",
