@@ -389,8 +389,8 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_pen((0.5, [1 2 3])) == "0.5,1/2/3"
 
 	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
-	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, grid_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",));
-	@test GMT.parse_B("", d)[1] == " -BWSen+taiai -Bpx+lai+sBlaBla -Bpxafg10U -Bpyclixo.txt -Bsxa5f1"
+	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",));
+	@test GMT.parse_B("", d)[1] == " -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10 -Bpyclixo.txt -Bsxa5f1"
 	# ---------------------------------------------------------------------------------------------------
 
 	# EXAMPLES
