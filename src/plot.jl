@@ -90,35 +90,35 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-plot(arg1::Array; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", K=K, O=O, first=first, kw...)
-plot!(arg1::Array; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", K=true, O=true, first=false, kw...)
+plot(arg1::Array; K=false, O=false, first=true, kw...) =
+	GMT.xy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
+plot!(arg1::Array; K=false, O=false, first=true, kw...) =
+	GMT.xy("", arg1; caller="plot", K=true, O=true, first=false, kw...)
 
 # -----------------------------------------------------------------------------------------------------
-plot(arg1::GMTdataset; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", K=K, O=O, first=first, kw...)
-plot!(arg1::GMTdataset; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", K=true, O=true, first=false, kw...)
-plot(arg1::Array{GMTdataset,1}; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", K=K, O=O, first=first, kw...)
-plot!(arg1::Array{GMTdataset,1}; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, arg1; caller="plot", K=true, O=true, first=false, kw...)
+plot(arg1::GMTdataset; K=false, O=false, first=true, kw...) =
+	GMT.xy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
+plot!(arg1::GMTdataset; K=false, O=false, first=true, kw...) =
+	GMT.xy("", arg1; caller="plot", K=true, O=true, first=false, kw...)
+plot(arg1::Array{GMTdataset,1}; K=false, O=false, first=true, kw...) =
+	GMT.xy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
+plot!(arg1::Array{GMTdataset,1}; K=false, O=false, first=true, kw...) =
+	GMT.xy("", arg1; caller="plot", K=true, O=true, first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-plot(arg1::String; extra="", K=false, O=false, first=true, kw...) =
-	GMT.xy(extra, []; caller="plot", K=K, O=O, first=first, kw...)
-plot!(arg1::String; extra="", K=true, O=true, first=false, kw...) =
-	GMT.xy(extra, []; caller="plot", K=K, O=O, first=first, kw...)
+plot(arg1::String; K=false, O=false, first=true, kw...) =
+	GMT.xy("", []; caller="plot", K=K, O=O, first=first, kw...)
+plot!(arg1::String; K=true, O=true, first=false, kw...) =
+	GMT.xy("", []; caller="plot", K=K, O=O, first=first, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-function plot(arg1::Array, arg2::Array; extra="", K=false, O=false, first=true, kw...)
+function plot(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2)
-	GMT.xy(extra, arg; caller="plot",  K=K, O=O, first=first, kw...)
+	GMT.xy("", arg; caller="plot",  K=K, O=O, first=first, kw...)
 end
-function plot!(arg1::Array, arg2::Array; extra="", K=false, O=false, first=true, kw...)
+function plot!(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2)
-	GMT.xy(extra, arg; caller="plot",  K=true, O=true, first=false, kw...)
+	GMT.xy("", arg; caller="plot",  K=true, O=true, first=false, kw...)
 end
 # ------------------------------------------------------------------------------------------------------
 
@@ -238,7 +238,7 @@ function scatter(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=fa
 		end
 	end
 
-	if (opt == "")  	opt  = "8p"		end		# Default to 8p
+	if (opt == "")  	opt   = "8p"	end		# Default to 8p
 	if (opt_G == "")	opt_G = " -G0"	end
 	caller = opt_S * opt * opt_G * opt_W		# Piggy-back this
 
@@ -462,6 +462,15 @@ function lines(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 end
 
 # ------------------------------------------------------------------------------------------------------
+function lines(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
+	arg = hcat(arg1, arg2)
+	lines("", arg; K=K, O=O, first=first, kw...)
+end
+function lines!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...)
+	arg = hcat(arg1, arg2)
+	lines("", arg; K=K, O=O, first=first, kw...)
+end
+
 lines(arg1; K=false, O=false, first=true, kw...) = lines("", arg1; K=K, O=O, first=first, kw...)
 
 lines!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =

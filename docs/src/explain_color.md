@@ -1,0 +1,25 @@
+
+# Setting color
+
+Color can be selected in several different ways. One of the is to create color maps with the *makecpt* and
+*grd2cpt* modules (see their own man pages). This is the method we use to colorize images, sets of points, etc. The other option sets the color via keyword/value pairs and is appropriate to color fill poygons, individual
+symbols, etc and the one documented here.
+
+We may use this in modules that expect the *color* keyword, then the value can be a string or a
+symbol with the color's name (or names separated by commas); a number in the [0 255] range to indicate a
+gray shade tone; or a 3-elements tuple or array where each element contains the R,G,B component in either
+[0 255] or [0 1] range.
+
+Examples:
+
+- *color=:red*
+- *color=200*
+- *color="30/20/180"*
+- *color=(30,20,180)*
+- *color=[0.118 0.078 0.706]*
+- *color=:red,green,blue*
+
+But there are other options that expect color in one of its constituints. For example to set a text font we
+may want to choose a color (i.e. not use the default which is black). Then we would do drop the *color=*
+and use the value in that other option value. For example *font=(12, "Helvetica", (30,20,180))*, where the color
+is the third element in the *font* keyword option. 

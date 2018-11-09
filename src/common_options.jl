@@ -128,11 +128,11 @@ end
 function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
 	# These three are aliases
+	extra_parse = true
 	for symb in [:B :frame :axis]
 		if (haskey(d, symb))
-			if     (isa(d[symb], String))     opt_B = opt_B * d[symb]
-			elseif (isa(d[symb], Symbol))     opt_B = opt_B * string(d[symb])
-			elseif (isa(d[symb], NamedTuple)) opt_B = opt_B * axis(d[symb])
+			if (isa(d[symb], NamedTuple)) opt_B = axis(d[symb]) * " " * opt_B;	extra_parse = false
+			else                          opt_B = string(d[symb], " ", opt_B)
 			end
 			if (del) delete!(d, symb) end
 			break
@@ -142,60 +142,60 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	# These are not and we can have one or all of them. NamedTuples are dealt at the end
 	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2 :zaxis2]
 		if (haskey(d, symb) && !isa(d[symb], NamedTuple))
-			if     (isa(d[symb], String))  opt_B = opt_B * d[symb]
-			elseif (isa(d[symb], Symbol))  opt_B = opt_B * string(d[symb])
-			end
+			opt_B = string(d[symb], " ", opt_B)
 		end
 	end
 
-	# This is old code that takes care to break a string in tokens and prefix with a -B to each token
-	tok = Vector{String}(undef, 10)
-	k = 1
-	r = opt_B
-	found = false
-	while (!isempty(r))
-		tok[k],r = GMT.strtok(r)
-		if (occursin(r"[WESNwesntlbu+g+o]", tok[k]) && !occursin("+t", tok[k]))		# If title here, forget about :title
-			if (haskey(d, :title) && isa(d[:title], String))
-				tok[k] = tok[k] * "+t\"" * d[:title] * "\""
-			end
-		elseif (occursin(r"[afgpsxyz+S+u]", tok[k]) && !occursin(r"[+l+L]", tok[k]))	# If label here, forget about :x|y_label
-			if (haskey(d, :x_label) && isa(d[:x_label], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:x_label] * "\""  end
-			if (haskey(d, :y_label) && isa(d[:y_label], String))  tok[k] = tok[k] * " -By+l\"" * d[:y_label] * "\""  end
-		end
-		if (!occursin("-B", tok[k]))
-			if (!occursin('"', tok[k]))
-				tok[k] = " -B" * tok[k] 		# Simple case, no quotes to break our heads
-			else
-				if (!found)
-					tok[k] = " -B" * tok[k] 	# A title in quotes with spaces
-					found = true
-				else
-					tok[k] = " " * tok[k]
-					found = false
+	if (extra_parse)
+		# This is old code that takes care to break a string in tokens and prefix with a -B to each token
+		tok = Vector{String}(undef, 10)
+		k = 1
+		r = opt_B
+		found = false
+		while (!isempty(r))
+			tok[k],r = GMT.strtok(r)
+			if (occursin(r"[WESNwesntlbu+g+o]", tok[k]) && !occursin("+t", tok[k]))		# If title here, forget about :title
+				if (haskey(d, :title) && isa(d[:title], String))
+					tok[k] = tok[k] * "+t\"" * d[:title] * "\""
 				end
+			elseif (occursin(r"[afgpsxyz+S+u]", tok[k]) && !occursin(r"[+l+L]", tok[k]))	# If label, forget about :x|y_label
+				if (haskey(d, :x_label) && isa(d[:x_label], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:x_label] * "\""  end
+				if (haskey(d, :y_label) && isa(d[:y_label], String))  tok[k] = tok[k] * " -By+l\"" * d[:y_label] * "\""  end
 			end
-		else
-			tok[k] = " " * tok[k]
+			if (!occursin("-B", tok[k]))
+				if (!occursin('"', tok[k]))
+					tok[k] = " -B" * tok[k] 		# Simple case, no quotes to break our heads
+				else
+					if (!found)
+						tok[k] = " -B" * tok[k] 	# A title in quotes with spaces
+						found = true
+					else
+						tok[k] = " " * tok[k]
+						found = false
+					end
+				end
+			else
+				tok[k] = " " * tok[k]
+			end
+			k = k + 1
 		end
-		k = k + 1
-	end
-	# Rebuild the B option string
-	opt_B = ""
-	for n = 1:k-1
-		opt_B = opt_B * tok[n]
+		# Rebuild the B option string
+		opt_B = ""
+		for n = 1:k-1
+			opt_B = opt_B * tok[n]
+		end
 	end
 
 	# We can have one or all of them. Deal separatelly here to allow way code to keep working
 	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2 :zaxis2]
 		if (haskey(d, symb) && isa(d[symb], NamedTuple))
-			if     (symb == :axis2)   opt_B = opt_B * axis(d[symb], secondary=true)
-			elseif (symb == :xaxis)   opt_B = opt_B * axis(d[symb], x=true)
-			elseif (symb == :xaxis2)  opt_B = opt_B * axis(d[symb], x=true, secondary=true)
-			elseif (symb == :yaxis)   opt_B = opt_B * axis(d[symb], y=true)
-			elseif (symb == :yaxis2)  opt_B = opt_B * axis(d[symb], y=true, secondary=true)
-			elseif (symb == :zaxis)   opt_B = opt_B * axis(d[symb], z=true)
-			elseif (symb == :zaxis2)  opt_B = opt_B * axis(d[symb], z=true, secondary=true)
+			if     (symb == :axis2)   opt_B = axis(d[symb], secondary=true) * opt_B
+			elseif (symb == :xaxis)   opt_B = axis(d[symb], x=true) * opt_B
+			elseif (symb == :xaxis2)  opt_B = axis(d[symb], x=true, secondary=true) * opt_B
+			elseif (symb == :yaxis)   opt_B = axis(d[symb], y=true) * opt_B
+			elseif (symb == :yaxis2)  opt_B = axis(d[symb], y=true, secondary=true) * opt_B
+			elseif (symb == :zaxis)   opt_B = axis(d[symb], z=true) * opt_B
+			elseif (symb == :zaxis2)  opt_B = axis(d[symb], z=true, secondary=true) * opt_B
 			end 
 		end
 	end
@@ -770,39 +770,41 @@ end
 # ---------------------------------------------------------------------------------------------------
 axis(nt::NamedTuple; x=false, y=false, z=false, secondary=false) = axis(;x=x, y=y, z=z, secondary=secondary, nt...)
 function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
-	# Build a (terrible) -B option
+	# Build the (terrible) -B option
 	d = KW(kwargs)
 
 	secondary ? primo = 's' : primo = 'p'			# Primary or secondary axe
 	x ? axe = "x" : y ? axe = "y" : z ? axe = "z" : axe = ""	# Are we dealing with a specific axis?
 
-	#opt = add_opt(" -B", "", d, [:axes])
 	opt = " -B"
-	if (haskey(d, :axes)) opt = " -B" * helper0_axes(d[:axes])  end
+	if (haskey(d, :axes)) opt = opt * helper0_axes(d[:axes])  end
 
 	if (haskey(d, :corners)) opt = opt * string(d[:corners])  end	# 1234
 	if (haskey(d, :fill))    opt = opt * "+g" * get_color(d[:fill])  end
 	if (haskey(d, :cube))    opt = opt * "+b"  end
 	if (haskey(d, :noframe)) opt = opt * "+n"  end
 	if (haskey(d, :oblique_pole))  opt = opt * "+o" * arg2str(d[:oblique_pole])  end
-	if (haskey(d, :title))   opt = opt * "+t" * arg2str(d[:title])  end
+	if (haskey(d, :title))   opt = opt * "+t" * str_with_blancs(arg2str(d[:title]))  end
 
 	if (opt == " -B")  opt = ""  end	# If nothing, no -B
 
 	# axes supps
 	ax_sup = ""
 	if (haskey(d, :prefix))     ax_sup = ax_sup * "+p" * arg2str(d[:prefix])     end
-	if (haskey(d, :seclabel))   ax_sup = ax_sup * "+s" * arg2str(d[:seclabel])   end
+	if (haskey(d, :seclabel))   ax_sup = ax_sup * "+s" * str_with_blancs(arg2str(d[:seclabel]))   end
 	if (haskey(d, :label_unit)) ax_sup = ax_sup * "+u" * arg2str(d[:label_unit]) end
 
 	if (haskey(d, :label))
-		opt = opt * " -B" * primo * axe * "+l"  * arg2str(d[:label]) * ax_sup
-	elseif (haskey(d, :Yhlabel))
-		opt = opt * " -B" * primo * axe * "+L"  * arg2str(d[:Yhlabel]) * ax_sup
+		opt = opt * " -B" * primo * axe * "+l"  * str_with_blancs(arg2str(d[:label])) * ax_sup
 	else
-		if (haskey(d, :xlabel))  opt = opt * " -B" * primo * "x+l" * arg2str(d[:xlabel]) * ax_sup  end
-		if (haskey(d, :ylabel))  opt = opt * " -B" * primo * "y+l" * arg2str(d[:ylabel]) * ax_sup  end
-		if (haskey(d, :zlabel))  opt = opt * " -B" * primo * "z+l" * arg2str(d[:zlabel]) * ax_sup  end
+		if (haskey(d, :xlabel))  opt = opt * " -B" * primo * "x+l" * str_with_blancs(arg2str(d[:xlabel])) * ax_sup  end
+		if (haskey(d, :zlabel))  opt = opt * " -B" * primo * "z+l" * str_with_blancs(arg2str(d[:zlabel])) * ax_sup  end
+		if (haskey(d, :ylabel))
+			opt = opt * " -B" * primo * "y+l" * str_with_blancs(arg2str(d[:ylabel])) * ax_sup
+		elseif (haskey(d, :Yhlabel))
+			axe != "y" ? opt_L = "y+L" : opt_L = "+L"
+			opt = opt * " -B" * primo * axe * opt_L  * str_with_blancs(arg2str(d[:Yhlabel])) * ax_sup
+		end
 	end
 
 	# intervals
@@ -817,9 +819,9 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 		# Should find a way to also accept custom=GMTdataset
 	elseif (haskey(d, :pi))
 		if (isa(d[:pi], Number))
-			ints = ints * string(d[:pi]) * "pi"		# (n)pi
+			ints = string(ints, d[:pi], "pi")		# (n)pi
 		elseif (isa(d[:pi], Array) || isa(d[:pi], Tuple))
-			ints = ints * string(d[:pi])[1] * "pi" * string(d[:pi])[2]	# (n)pi(m)
+			ints = string(ints, d[:pi][1], "pi", d[:pi][2])	# (n)pi(m)
 		end
 	elseif (haskey(d, :scale))
 		s = arg2str(d[:scale])
@@ -834,6 +836,9 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 		ints = ints * "-" * arg2str(d[:phase_sub])
 	end
 	if (ints != "") opt = opt * " -B" * primo * axe * ints  end
+
+	# Check if ax_sup was requested
+	if (opt == "" && ax_sup != "")  opt = " -B" * primo * axe * ax_sup  end
 
 	return opt
 end
@@ -923,6 +928,13 @@ function helper2_axes(arg)
 	return out
 end
 # ---------------------------------------------------------------------------------------------------
+
+function str_with_blancs(str)
+	# If the STR string has spaces enclose it with quotes
+	out = str
+	if (occursin(" ", out))  out = string("\"", out, "\"")  end
+	return out
+end
 
 # ---------------------------------------------------------------------------------------------------
 vector_attrib(t::NamedTuple) = vector_attrib(; t...)
