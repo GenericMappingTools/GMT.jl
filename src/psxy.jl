@@ -126,7 +126,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	if (!isempty(caller) && occursin(" -", caller))
 		cmd = caller
-		caller = []					# It was piggy-backed by scatter or others
+		caller = "others"		# It was piggy-backed by scatter or others
 	else
 		cmd = ""
 	end

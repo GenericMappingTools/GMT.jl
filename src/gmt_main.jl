@@ -388,9 +388,13 @@ function strtok(args, delim::String=" ")
 	#	return tok, r
 	#end
 
+	@label restart
 	ind = findfirst(delim, args)
 	if (ind === nothing)
 		return lstrip(args,collect(delim)), r		# Always clip delimiters at the begining
+	elseif (startswith(args, delim))
+		args = lstrip(args,collect(delim)) 			# Otherwise delim would be return as a token
+		@goto restart
 	end
 	tok = lstrip(args[1:ind[1]-1], collect(delim))	#		""
 	r = lstrip(args[ind[1]:end], collect(delim))

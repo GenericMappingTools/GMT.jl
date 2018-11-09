@@ -172,6 +172,7 @@ The entire parameters collection is displayed in the following table
 | xlabel        | x-axis label  | Str or Symb   | Add a label to X axis |
 | ylabel        | y-axis label  | Str or Symb   | Add a label to Y axis |
 | zlabel        | z-axis label  | Str or Symb   | Add a label to Z axis |
+| seclabel      | second label  | Str or Symb   | Add a seconadry label to X|Y|Z axis |
 | annot         | annot interval| Symb or Num   | Annot stride interval |
 | ticks         | tick interval | Symb or Num   | Tick interval |
 | grid          | grid interval | Symb or Num   | Grid lines interval |
@@ -188,3 +189,48 @@ The entire parameters collection is displayed in the following table
 or *frame="a1Of1d WS"* also work.
 
 ## Examples
+
+Demonstrates use of dual (left vs right, bottom vs top) Cartesian axis labels
+
+```julia
+basemap(limits=(0,50,0,7), proj="X14c/14c",
+        xaxis=(annot=:auto, ticks=:auto, label="Bottom Label", seclabel="Top label"),
+        yaxis=(annot=:auto, ticks=:auto, label="Left label", seclabel="Right label"), show=1)
+```
+
+we can obtain the same result with a slightly shorter version of the above that shows how can mix *axis* and *xaxis* calls.
+
+```julia
+basemap(limits=(0,50,0,7), proj="X14c/14c",
+        axis=(annot=:auto, ticks=:auto, xlabel="Bottom Label", ylabel="Left label"),
+        xaxis=(seclabel="Top label",), yaxis=(seclabel="Right label",), show=1)
+```
+
+Show inside labeling. We will use *frame* instead of *axis* just to recall that they are aliases.
+
+```julia
+basemap(limits=(0,13,0,10), proj="x1",
+        frame=(annot=2, ticks=0.5), par=(:MAP_FRAME_TYPE,:inside), show=1)
+```
+
+Show horizontal and vertical annotations
+
+```julia
+basemap(region=[0 1000 0 1000], proj="X5/5",
+        axis=(axes=(:left_full,:bottom_full,:right_full,:top_full), annot=200,
+              ticks=100, xlabel=:horizontal, ylabel=:vertical),
+        par=(FONT_ANNOT_PRIMARY=10, FONT_LABEL=16, MAP_ANNOT_ORTHO=:we))
+
+basemap!(axis=(axes=(:left_full,:bottom_full,:right_full,:top_full), annot=200
+               ticks=100, xlabel=:horizontal, ylabel=:vertical),
+         par=(FONT_ANNOT_PRIMARY=10, FONT_LABEL=16, MAP_ANNOT_ORTHO=:sn),
+         x_offset=10, show=1)
+```
+
+Show `Yhlabel` for horizontal labels for y-axis 
+
+```julia
+basemap(region="-30/30/-20/20", proj="X12/8",
+        axis=(annot=:a, ticks=:a, xlabel="Standard horizontal label", Yhlabel="@~Y(q)@~"
+              title="Vertical Y-axis label"), show=1)
+```
