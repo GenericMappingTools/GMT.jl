@@ -167,7 +167,7 @@ The entire parameters collection is displayed in the following table
 | oblique_pole  | lon lat       | Str or Tuple  | Draw oblique gridlines abot pole |
 | title         | the title     | Str or Symb   | Add a plot title |
 | label         | axis label    | Str or Symb   | Add a label to an axis |
-| Ylabel        | y-axis hlabel | Str or Symb   | Horizontal label for y-axes |
+| Yhlabel       | y-axis hlabel | Str or Symb   | Horizontal label for y-axes |
 | prefix        | annot prefix  | Str or Symb   | Annot leading text prefix |
 | xlabel        | x-axis label  | Str or Symb   | Add a label to X axis |
 | ylabel        | y-axis label  | Str or Symb   | Add a label to Y axis |

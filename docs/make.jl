@@ -14,7 +14,9 @@ makedocs(
             "modules.md",
             "Common options" => [
                 "axis.md",
-                "explain_color.md",
+                "arrows.md",
+                "color.md",
+                "decorated.md",
             ],
         ],
         "The GMT types"            => "types.md",
