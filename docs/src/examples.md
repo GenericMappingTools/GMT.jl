@@ -24,6 +24,7 @@ some curvy lines.
 
 ```julia
 x = range(0, stop=2pi, length=180);       seno = sin.(x/0.2)*45;
+- *angle=xx* sets the angle of the vector head apex [default 30]
 coast(region=[0 360 -90 90], proj="A300/30/6c", frame="g", resolution="c", land="navy")
 
 plot!(collect(x)*60, seno, lw=0.5, lc="red", fmt="png", marker="circle",

@@ -220,11 +220,11 @@ if (got_it)					# Otherwise go straight to end
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,stop=:tail,shape=0.5), J=14, B=:a, pen="6p")
 
 	# LINES
-	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(val=1,size=0.25), symbol=:box))
+	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
 	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af)
 	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", vec=(size=0.65, fill=:red))
 	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
-	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(val=2.5,size=0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
+	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
@@ -369,14 +369,14 @@ if (got_it)					# Otherwise go straight to end
 	                  justify=:end,fill=:none,trim=0.1,endpoint=true,uv=6.6);
 	@test r == "2.2+e+je+r+g-+n0.25i+h1+t0.1+s+z6.6"
 
-	r = decorated(dist=(val="0.4i",size=0.25), symbol=:arcuate, pen=2, offset="10i", right=1);
+	r = decorated(dist=("0.4i",0.25), symbol=:arcuate, pen=2, offset="10i", right=1);
 	@test r == " -Sf0.4i/0.25+r+S+o10i+p2"
-	r = decorated(dist=(val="0.8i",size="0.1i"), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, n_data=20, nudge=1, debug=1, dec2=1);
+	r = decorated(dist=("0.8i","0.1i"), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, n_data=20, nudge=1, debug=1, dec2=1);
 	@test r == " -S~d0.8i/0.1i:+sa1+d+gblue+n1+w20+p0.5,green"
 	r = decorated(n_symbols=5, symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, quoted=1);
 	@test r == " -Sqdn5+p0.5,green"
 
-	r = decorated(dist=(val="0.4i",size=0.25), angle=7, clearance=(2,3), debug=1, delay=1, font=10, color=:red, justify=:TC, const_label=:Ai, pen=(0.5,:red), fill=:blue, nudge=(3,4), rounded=1, unit=:TT, min_rad=0.5, curved=1, n_data=20, prefix="Pre", suffices="a,b", label=(map_dist="d",), quoted=1)
+	r = decorated(dist=("0.4i",0.25), angle=7, clearance=(2,3), debug=1, delay=1, font=10, color=:red, justify=:TC, const_label=:Ai, pen=(0.5,:red), fill=:blue, nudge=(3,4), rounded=1, unit=:TT, min_rad=0.5, curved=1, n_data=20, prefix="Pre", suffices="a,b", label=(:map_dist,"d"), quoted=1)
 	@test r == " -Sqd0.4i/0.25+a7+d+c2/3+e+f10+gred+jTC+lAi+n3/4+o+r0.5+uTT+v+w20+=Pre+xa,b+LDd+p0.5,red"
 
 	@test GMT.get_color((1,2,3)) == "1/2/3"

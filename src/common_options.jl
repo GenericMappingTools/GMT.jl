@@ -129,7 +129,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
 	# These three are aliases
 	extra_parse = true
-	for symb in [:B :frame :axis]
+	for symb in [:B :frame :axis :axes]
 		if (haskey(d, symb))
 			if (isa(d[symb], NamedTuple)) opt_B = axis(d[symb]) * " " * opt_B;	extra_parse = false
 			else                          opt_B = string(d[symb], " ", opt_B)
@@ -718,6 +718,8 @@ end
 function font(val)
 	# parse and create a font string.
 	# TODO: either add a NammedTuple option and/or guess if 2nd arg is the font name or the color
+	# And this: Optionally, you may append =pen to the fill value in order to draw the text outline with
+	# the specified pen; if used you may optionally skip the filling of the text by setting fill to -.
 	if (isa(val, String) || isa(val, Number))  return string(val)  end
 
 	if (isa(val, Tuple))
@@ -1038,7 +1040,7 @@ function decorated(;kwargs...)
 
 	cmd, optD = helper_decorated(d)		# 'cmd' cannot come out empty (would have errored)
 
-	if (haskey(d, :dec2))				# -S~ mode.
+	if (haskey(d, :dec2))				# -S~ mode (decorated, with symbols, lines).
 		cmd = cmd * ":"
 		marca = get_marker_name(d, [:marker :symbol])		# This fun lieves in psxy.jl
 		if (marca == "")
@@ -1057,9 +1059,9 @@ function decorated(;kwargs...)
 		if (haskey(d, :fill))    cmd = cmd * "+g" * arg2str(d[:fill])    end
 		if (haskey(d, :nudge))   cmd = cmd * "+n" * arg2str(d[:nudge])   end
 		if (haskey(d, :n_data))  cmd = cmd * "+w" * arg2str(d[:n_data])  end
-		optD = "d"		# Need to find out also when it's -D
+		if (optD == "")  optD = "d"  end	# Need to find out also when it's -D
 		opt_S = " -S~"
-	elseif (haskey(d, :quoted))				# -Sq mode.
+	elseif (haskey(d, :quoted))				# -Sq mode (quoted lines).
 		if (haskey(d, :angle))   cmd = string(cmd, "+a", d[:angle])  end
 		if (haskey(d, :debug))   cmd = cmd * "+d"  end
 		if (haskey(d, :clearance ))  cmd = cmd * "+c" * arg2str(d[:clearance]) end
@@ -1079,27 +1081,23 @@ function decorated(;kwargs...)
 		if (haskey(d, :label))
 			if (isa(d[:label], String))
 				cmd = cmd * "+L" * d[:label]
-			elseif (isa(d[:label], NamedTuple))
-				fn = fieldnames(typeof(d[:label]))
-				for k = 1:length(fn)
-					if     (fn[k] == :header)    cmd = cmd * "+Lh"
-					elseif (fn[k] == :plot_dist)
-						cmd = cmd * "+Ld"
-						if (isa(d[:label][k], String)) cmd = cmd * d[:label][k] end	# So that [], etc ignored
-					elseif (fn[k] == :map_dist)
-						cmd = cmd * "+LD"
-						if (isa(d[:label][k], String)) cmd = cmd * parse_units(d[:label][k])  end
-					elseif (fn[k] == :input)	# 3rd column has the text label
-						cmd = cmd * "+Lf"
-					end
+			elseif (isa(d[:label], Symbol))
+				if     (d[:label] == :header)  cmd = cmd * "+Lh"
+				elseif (d[:label] == :input)   cmd = cmd * "+Lf"
+				else   error("Wrong content for the :label option. Must be only :header or :input")
+				end
+			elseif (isa(d[:label], Tuple))
+				if     (d[:label][1] == :plot_dist)  cmd = cmd * "+Ld" * string(d[:label][2])
+				elseif (d[:label][1] == :map_dist)   cmd = cmd * "+LD" * parse_units(d[:label][2])
+				else   error("Wrong content for the :label option. Must be only :plot_dist or :map_dist")
 				end
 			else
 				@warn("'label' option must be a string or a NamedTuple. Since it wasn't I'm ignoring it.")
 			end
 		end
-		optD = "d"		# Need to find out also when it's -D
+		if (optD == "")  optD = "d"  end	# Need to find out also when it's -D
 		opt_S = " -Sq"
-	else									# -Sf mode.
+	else									# -Sf mode (front lines).
 		if     (haskey(d, :left))  cmd = cmd * "+l"
 		elseif (haskey(d, :right)) cmd = cmd * "+r"
 		end
@@ -1128,26 +1126,15 @@ end
 function helper_decorated(d::Dict)
 	# Helper function to deal with the gap and symbol size parameters
 	cmd = "";	optD = ""
-	for symb in [:dist :distance :distmap]
+	for symb in [:dist :distance :distmap :number]
 		if (haskey(d, symb))
 			# The String assumes all is already encoded. Number, Array only accept numerics
-			# Tuple accepts numerics and/or strings. NamedTuples are the most generic
-			if (isa(d[symb], String))
-				cmd = d[symb]
-			elseif (isa(d[symb], Number))
+			# Tuple accepts numerics and/or strings.
+			if (isa(d[symb], String) || isa(d[symb], Number) || isa(d[symb], Symbol))
 				cmd = string(d[symb])
 			elseif (isa(d[symb], Array) || isa(d[symb], Tuple))
-				cmd = arg2str(d[symb])
-			elseif (isa(d[symb], NamedTuple))
-				fn = fieldnames(typeof(d[symb]))
-				if (fn[1] == :val || fn[1] == :value)
-					cmd = string(d[symb][1])
-					if (length(fn) == 2)  cmd = string(cmd, '/', d[symb][2]) end	# Have also the 'size'
-				elseif (fn[1] == :number)
-					if (length(fn) != 2)
-						error("DECORATED: when providing the number of symbols MUST provide also its size.")
-					end
-					cmd = string('-', d[symb][1], '/', d[symb][2])
+				if (symb == :number)  cmd = "-" * string(d[symb][1], '/', d[symb][2])
+				else                  cmd = string(d[symb][1], '/', d[symb][2])
 				end
 			else
 				error("DECORATED: the 'dist' (or 'distance') parameter is mandatory and must be either a string or a named tuple.")
@@ -1156,6 +1143,22 @@ function helper_decorated(d::Dict)
 				optD = "D"
 			end
 			break
+		end
+	end
+	if (cmd == "")
+		for symb in [:lines :Lines]
+			if (haskey(d, symb))
+				if (!isa(d[symb], Array) && size(d[symb],2) !=4)
+					@warn("DECORATED: lines option must me an Array Mx4")
+					break
+				end
+				opt = string(d[symb])
+				s = string("+",opt[1], d[sym][1,1],'/',d[sym][1,2],'/',d[sym][1,3],'/',d[sym][1,4])
+				for k=2:size(d[symb],1)
+					s = string(s,',',d[sym][k,1],'/',d[sym][k,2],'/',d[sym][k,3],'/',d[sym][k,4])
+				end
+				break
+			end
 		end
 	end
 	if (cmd == "")

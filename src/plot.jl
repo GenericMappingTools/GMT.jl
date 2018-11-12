@@ -287,6 +287,30 @@ function bar!(arg::AbstractArray; K=true, O=true, first=false, kw...)
 end
 
 # ------------------------------------------------------------------------------------------------------
+"""
+    bar(cmd0::String="", arg1=[], arg2=[], kwargs...)
+
+Reads a file or (x,y) pairs and plots vertical bars extending from base to y.
+
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- $(GMT.opt_B)
+- **fill** : -- Str --
+
+    Select color or pattern for filling the bars
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#g)
+- **base** : **bottom** : -- Str or Num --		``key=value``
+
+    By default, base = ymin. Use this option to change that value. If base is not appended then we read it.
+    from the last input data column.
+- **size** : **width** : -- Str or Num --		``key=value``
+
+    The size or width is the bar width. Append u if size is in x-units. When *width* is used the default is plot-distance units.
+
+Example:
+
+    bar(sort(randn(10)), fill=:black, frame=:auto, show=true)
+"""
 function bar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
 	if (isa(arg1, Array{GMT.GMTdataset,1}))		# Shitty consequence of arg1 being the output of a prev cmd
@@ -321,6 +345,28 @@ end
 bar3!(arg1; K=true, O=true, first=false, kw...) = bar3(arg1; K=K, O=O, first=first, kw...)
 
 # ------------------------------------------------------------------------------------------------------
+"""
+    bar3(cmd0::String="", arg1=[], kwargs...)
+
+Read a grid file, a grid or a MxN matrix and plots vertical bars extending from base to z.
+
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- $(GMT.opt_B)
+- **fill** : -- Str --		``key=color``
+
+    Select color or pattern for filling the bars
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#g)
+- **base** : **bottom** : -- Str or Num --		``key=value``
+
+    By default, base = ymin. Use this option to change that value. If base is not appended then we read it.
+- $(GMT.opt_p)
+
+Example:
+
+    G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
+    bar3(G, lw=:thinnest, show=true)
+"""
 function bar3(arg; K=false, O=false, first=true, kwargs...)
 #
 	d = KW(kwargs)
@@ -383,10 +429,41 @@ function bar3(arg; K=false, O=false, first=true, kwargs...)
 end
 
 # ------------------------------------------------------------------------------------------------------
+"""
+    arrows(cmd0::String="", arg1=[], arrow=(...), kwargs...)
+
+Reads a file or (x,y) pairs and plots an arrow field
+
+When the keyword *arrow=(...)* or *vector=(...)* is used, the direction (in degrees counter-clockwise
+from horizontal) and length must be found in columns 3 and 4, and size, if not specified on the
+command-line, should be present in column 5. The size is the length of the vector head. Vector stem
+width is set by option *pen* or *line_attrib*.
+
+The *vecmap=(...)* variation is similar to above except azimuth (in degrees east of north) should be
+given instead of direction. The azimuth will be mapped into an angle based on the chosen map projection.
+If length is not in plot units but in arbitrary user units (e.g., a rate in mm/yr) then you can use the
+*input_col* option to scale the corresponding column via the +sscale modifier.
+
+The *geovec=(...)* or *geovector=(...)* keywords plot geovectors. In geovectors azimuth (in degrees east from north) and geographical length must be found in columns 3 and 4. The size is the length of the vector head. Vector width is set by *pen* or *line_attrib*. Note: Geovector stems are drawn as thin filled polygons and hence pen attributes like dashed and dotted are not available. For allowable geographical units, see the *units=()* option.
+
+The full *arrow* options list can be consulted at [Arrow controls](@ref)
+
+- $(GMT.opt_B)
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- **W** : **pen** : **line_attrib** : -- Str --
+
+    Set pen attributes for lines or the outline of symbols
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#w)
+
+Example:
+
+	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, frame=:a, pen="6p", show=true)
+"""
 function arrows(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+	# A arrows plotting method of plot
 
 	d = KW(kwargs)
-
 	cmd = helper_arrows(d)
 	if (cmd == "")  cmd = " -Sv0.5+e+h0.5"	# Minimalist defaults
 	else            cmd = " -S" * cmd
@@ -420,14 +497,32 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 arrows(arg1; K=false, O=false, first=true, kw...) = arrows("", arg1; K=K, O=O, first=first, kw...)
-
 arrows!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
 	arrows(cmd0, arg1; K=K, O=O, first=first, kw...)
 arrows!(arg1; K=true, O=true, first=false, kw...) = arrows("", arg1; K=K, O=O, first=first, kw...)
 
 
 # ------------------------------------------------------------------------------------------------------
+"""
+    lines(cmd0::String="", arg1=[], decorated=(...), kwargs...)
+
+Reads a file or (x,y) pairs and plots a nice collection of different line with decorations
+
+- $(GMT.opt_B)
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- **W** : **pen** : **line_attrib** : -- Str --
+
+    Set pen attributes for lines or the outline of symbols
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#w)
+
+Example:
+
+	lines([0 0; 10 20], limits=(-2,12,-2,22), proj="M2.5", pen=1, fill=:red,
+	      decorated=(dist=(val=1,size=0.25), symbol=:box), show=true)
+"""
 function lines(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+	# A lines plotting method of plot
 
 	d = KW(kwargs)
 	cmd = ""

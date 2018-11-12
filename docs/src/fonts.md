@@ -1,7 +1,7 @@
 
 # Setting fonts
 
-font = (size, fontname, color)
+    font = (size, fontname, color)
 
 A text font is composed of three parts: 1) a *size*; 2) a *fontname; 3) the font *color*.
 The *size* may be a scalar, a string with the units appended or a tuple with (size, units).
@@ -11,6 +11,8 @@ The *color* is a color element, See [Setting color](@ref)
 
 Both *fontname* and *color* are optional. So a font=10 is a valid setting, meaning a default font of size 10
 points. It's also valid to provide a all font parametrs in a string using the compact GMT syntax.
+The [GMT docs](https://gmt.soest.hawaii.edu/doc/latest/GMT_Docs.html#specifying-fonts) has further details on
+this option.
 
 Examples:
 

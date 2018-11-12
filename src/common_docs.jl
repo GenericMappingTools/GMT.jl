@@ -40,15 +40,15 @@ const opt_V = "**V** : **verbose** : -- Bool or Str --		``Flags = [level]``
     Select verbosity level, which will send progress reports to stderr.
     [`-V`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#v-full)"
 
-const opt_X = "**X** : **x_offset** : -- Str --Flags = [a|c|f|r][x-shift[u]]" 
+const opt_X = "**X** : **x_offset** : -- Str --     ``Flags = [a|c|f|r][x-shift[u]]``" 
 
-const opt_Y = "**Y** : **y_offset** : -- Str --Flags = [a|c|f|r][y-shift[u]]
+const opt_Y = "**Y** : **y_offset** : -- Str --     ``Flags = [a|c|f|r][y-shift[u]]``
 
     Shift plot origin relative to the current origin by (x-shift,y-shift) and optionally
     append the length unit (c, i, or p). 
     [`-Y`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#xy-full)"
 
-const opt_a = "**a** : **aspatial** : -- Str --			Flags = [col=]name[…] 
+const opt_a = "**a** : **aspatial** : -- Str --			``Flags = [col=]name[…]``
 
     Control how aspatial data are handled in GMT during input and output.
     [`-a`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#aspatial-full)"
@@ -57,7 +57,7 @@ const opt_b = "**b** : **binary** : -- Str --
 
     [`-b`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#b-full)"
 
-const opt_bi = "**bi** : **binary_in** : -- Str --			Flags = [ncols][type][w][+L|+B]
+const opt_bi = "**bi** : **binary_in** : -- Str --			``Flags = [ncols][type][w][+L|+B]``
 
     Select native binary format for primary input (secondary inputs are always ASCII).
     [`-bi`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#bi-full)"
