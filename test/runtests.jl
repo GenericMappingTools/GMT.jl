@@ -71,6 +71,9 @@ if (got_it)					# Otherwise go straight to end
 	# GMTSET
 	gmtset(MAP_FRAME_WIDTH=0.2)
 
+	# GMTSIMPLIFY
+	gmtsimplify([0.0 0; 1.1 1.1; 2 2.2; 3.3 3], T="3k")
+
 	# GMTREADWRITE
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 	if (GMTver >= 6)
