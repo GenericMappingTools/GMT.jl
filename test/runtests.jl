@@ -58,7 +58,8 @@ if (got_it)					# Otherwise go straight to end
 	result = gmt("gmtspatial -Q -fg", [0 0; 1 0; 1 1; 0 1; 0 0]);
 	@assert(isapprox(result[1].data, [0.5 0.500019546308 12308.3096995]))
 	# Intersections
-	l1 = gmt("project -C22/49 -E-60/-20 -G10 -Q");
+	#l1 = gmt("project -C22/49 -E-60/-20 -G10 -Q");
+	l1 = project(C="22/49", E="-60/-20", G=10, Q=1);
 	l2 = gmt("project -C0/-60 -E-60/-30 -G10 -Q");
 	#int = gmt("gmtspatial -Ie -Fl", l1, l2);       # Error returned from GMT API: GMT_ONLY_ONE_ALLOWED (59)
 	d = [-300 -3500; -200 -800; 400 -780; 500 -3400; -300 -3500];
