@@ -326,6 +326,7 @@ if (got_it)					# Otherwise go straight to end
 	# XYZ2GRD
 	D=grd2xyz(G); # Use G of previous test
 	xyz2grd(D, R="0/150/0/150", I=1, r=true);
+	xyz2grd(D, xlim=(0,150), ylim=(0,150), I=1, r=true);
 
 	# TREND1D
 	D = gmt("gmtmath -T10/110/1 T 50 DIV 2 POW 2 MUL T 60 DIV ADD 4 ADD 0 0.25 NRAND ADD T 25 DIV 2 MUL PI MUL COS 2 MUL 2 ADD ADD");
@@ -367,6 +368,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.get_color((0.1,0.2,0.3)) == "26/51/77"
 	@test GMT.get_color([1 2 3]) == "1/2/3"
 	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
+	@test GMT.parse_unit_unit("data") == "u"
 
 	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
 	                  justify=:end,fill=:none,trim=0.1,endpoint=true,uv=6.6);

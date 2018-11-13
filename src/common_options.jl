@@ -112,9 +112,7 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 end
 
 function build_opt_J(Val)
-	if (isa(Val, String))
-		return " -J" * Val
-	elseif (isa(Val, Symbol))
+	if (isa(Val, String) || isa(Val, Symbol))
 		return " -J" * string(Val)
 	elseif (isa(Val, Number))
 		return string(" -JX", string(Val))
@@ -750,7 +748,7 @@ function parse_unit_unit(str)
 	out = ""
 	if (isa(str, Symbol))  str = string(str)  end
 	if (!isa(str, String))
-		error(@sprintf("Argument data type must be String or Symbol but was: %s", typeof(val)))
+		error(@sprintf("Argument data type must be String or Symbol but was: %s", typeof(str)))
 	end
 	if (str == "m" || str == "minutes" || str == "s" || str == "seconds" || str == "d" || str == "degrees" ||
 		str == "f" || str == "foot"    || str == "k" || str == "km" || str == "n" || str == "nautical")
