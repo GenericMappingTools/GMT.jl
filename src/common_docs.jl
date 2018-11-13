@@ -21,7 +21,7 @@ const opt_R = "**R** : **region** : **limits** : -- Str or list or GMTgrid|image
     Specify the region of interest. Set to data minimum BoundinBox if not provided.
     [`-R`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#r-full)"
 
-const opt_B = "**B** : **frame** : **axes** : -- Str --
+const opt_B = "**B** : **frame** : **axis** : -- Str -- 
 
     Set map boundary frame and axes attributes.
     [`-B`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#b-full)"
@@ -30,7 +30,7 @@ const opt_P = "**P** : **portrait** : --- Bool or [] --
 
     Tell GMT to **NOT** draw in portriat mode (that is, make a Landscape plot)"
 
-const opt_U = "**U** : **stamp** : -- Str or Bool or [] --	``Flags = [[just]/dx/dy/][c|label]``
+const opt_U = "**U** : **stamp** : -- Str or Bool or [] --	`Flags = [[just]/dx/dy/][c|label]`
 
     Draw GMT time stamp logo on plot.
     [`-U`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#u-full)"

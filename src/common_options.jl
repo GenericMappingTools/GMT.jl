@@ -637,7 +637,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, del::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args, arg1, arg2=[])
+function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=[], arg2=[])
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	# N_args only applyies to when a GMTcpt was transmitted, Than it's either 0, case in which
 	# the cpt is put in arg1, or 1 and the cpt goes to arg2.
@@ -975,7 +975,7 @@ function vector_attrib(;kwargs...)
 
 	if (haskey(d, :fill))
 		if (d[:fill] == "none" || d[:fill] == :none) cmd = cmd * "+g-"
-		else	cmd = cmd * "+g" * arg2str(d[:fill])		# MUST GET TESTS TO THIS
+		else	cmd = cmd * "+g" * get_color(d[:fill])		# MUST GET TESTS TO THIS
 		end
 	end
 
@@ -1056,7 +1056,7 @@ function decorated(;kwargs...)
 		end
 		if (haskey(d, :angle))   cmd = string(cmd, "+a", d[:angle])  end
 		if (haskey(d, :debug))   cmd = cmd * "+d"  end
-		if (haskey(d, :fill))    cmd = cmd * "+g" * arg2str(d[:fill])    end
+		if (haskey(d, :fill))    cmd = cmd * "+g" * get_color(d[:fill])    end
 		if (haskey(d, :nudge))   cmd = cmd * "+n" * arg2str(d[:nudge])   end
 		if (haskey(d, :n_data))  cmd = cmd * "+w" * arg2str(d[:n_data])  end
 		if (optD == "")  optD = "d"  end	# Need to find out also when it's -D

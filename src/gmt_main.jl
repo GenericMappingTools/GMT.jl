@@ -1905,6 +1905,16 @@ function Base.:/(G1::GMTgrid, G2::GMTgrid)
 	return G3
 end
 
+# ---------------------------------------------------------------------------------------------------
+function fakedata(sz...)
+	# 'Stolen' from Plots.fakedata()
+	y = zeros(sz...)
+	for r in 2:size(y,1)
+	  y[r,:] = 0.95 * vec(y[r-1,:]) + randn(size(y,2))
+	end
+	y
+  end
+ 
 # EDIPO SECTION
 # ---------------------------------------------------------------------------------------------------
 linspace(start, stop, length=100) = range(start, stop=stop, length=length)
