@@ -10,24 +10,24 @@ Parameters
 
 - $(GMT.opt_J)
 - $(GMT.opt_B)
-- **C** : **vectors** : -- Str --
+- **C** : **formats** : -- Str --
 
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#c)
 - **G** : **fill** : -- Number or Str --
 
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#g)
-- **I** : **inquire** : -- Bool or [] --
+- **I** : **sun** : -- Bool or [] --
 
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#i)
 - $(GMT.opt_P)
-- **M** : **alpha** : -- Str or [] --
+- **M** : **dump** : -- Str or [] --
 
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#M)
 - $(GMT.opt_R)
 - **N** : **radius** : -- Bool or [] --
 
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#n)
-- **T** : -- Bool or [] --
+- **T** : **terminators** : -- Bool or [] --
 
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#t)
 - **W** : **pen** : -- Str or tuple --
@@ -64,11 +64,11 @@ function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	cmd = add_opt(cmd, 'C', d, [:C :])
-    cmd = add_opt(cmd, 'G', d, [:G :fill])
+	cmd = add_opt(cmd, 'C', d, [:C :formats])
+    cmd, = add_opt_cpt(d, cmd, [:G :fill], 'G')
     cmd = add_opt(cmd, 'I', d, [:I :sun])
 	cmd = add_opt(cmd, 'M', d, [:M :dump])
-	cmd = add_opt(cmd, 'N', d, [:M :invert])
+	cmd = add_opt(cmd, 'N', d, [:N :invert])
 	cmd = add_opt(cmd, 'T', d, [:T :terminators])
 	cmd = cmd * opt_pen(d, 'W', [:W :pen])
 

@@ -19,6 +19,9 @@ makedocs(
                 "decorated.md",
             ],
         ],
+        "Modules manuals" => [
+            "solar.md",
+        ],
         "The GMT types"            => "types.md",
         "Index"                    => "index.md",
     ],
