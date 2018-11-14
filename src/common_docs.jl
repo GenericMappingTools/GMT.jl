@@ -6,12 +6,12 @@ const opt_C = "**C** : **color** : **cmap** : -- Str --		``Flags = [cpt |master[
     master dynamic CPT.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#c)"
 
-const opt_J = "**J** : **proj** : **projection** : -- Str --
+const opt_J = "**J** : **proj** : -- ::String --
 
     Select map projection. Defaults to 12x8 cm with linear (non-projected) maps.
     [`-J`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#j-full)"
 
-const opt_Jz = "**Jz** : **z_axis** : -- Str --
+const opt_Jz = "**Jz** : **z_axis** : -- ::String --
 
     Set z-axis scaling. 
     [`-Jz`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#jz-full)"

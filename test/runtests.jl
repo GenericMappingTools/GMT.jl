@@ -357,8 +357,8 @@ if (got_it)					# Otherwise go straight to end
 	GMT.contains("aiai", "ia");
 
 	# -------------------- Test common_options ----------------------------------------
-	d = Dict(:xlim => (1,2), :ylim => (3,4));
-	r = GMT.parse_R("", d);		@test r[1] == " -R1/2/3/4"
+	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4)))[1] == " -R1/2/3/4"
+	@test GMT.build_opt_R(:d) == " -Rd"
 	d = Dict(:inc => (x=1.5, y=2.6, unit="meter"));
 	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5e/2.6e"
 	d = Dict(:inc => (x=1.5, y=2.6, unit="data"));
@@ -370,11 +370,12 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_inc("",Dict(:inc => (2,4)),[:I :inc], "I") == " -I2/4"
 	@test GMT.parse_inc("",Dict(:inc => [2 4]),[:I :inc], "I") == " -I2/4"
 	@test GMT.parse_inc("",Dict(:inc => "2"),[:I :inc], "I") == " -I2"
-	r, = GMT.parse_JZ("", Dict(:JZ => "5c"));	@test r == " -JZ5c"
-	r, = GMT.parse_JZ("", Dict(:Jz => "5c"));	@test r == " -Jz5c"
+	@test GMT.parse_JZ("", Dict(:JZ => "5c"))[1] == " -JZ5c"
+	@test GMT.parse_JZ("", Dict(:Jz => "5c"))[1] == " -Jz5c"
 	r, = GMT.parse_J("", Dict(:J => "X5"), false);	@test r == " -JX5"
 	r, = GMT.parse_J("", Dict(:a => ""), true, true);	@test r == " -J"
 	r, = GMT.parse_J("", Dict(:J => "X", :figsize => 10));	@test r == " -JX10"
+	@test GMT.parse_J("",Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
 	r = GMT.parse_params("", Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")));
 	@test r == " --MAP_FRAME_WIDTH=0.2 --IO=lixo --OI=xoli"
 	@test GMT.parse_params("", Dict(:par => (:MAP_FRAME_WIDTH,0.2))) == " --MAP_FRAME_WIDTH=0.2"
@@ -415,6 +416,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
 	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",));
 	@test GMT.parse_B("", d)[1] == " -Bsxa5f1 -Bpyclixo.txt -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10"
+	GMT.helper2_axes("lolo");
 	# ---------------------------------------------------------------------------------------------------
 
 	# EXAMPLES
