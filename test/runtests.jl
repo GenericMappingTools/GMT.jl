@@ -268,17 +268,17 @@ if (got_it)					# Otherwise go straight to end
 	gmt("grdinfo lixo.tif");
 
 	# PSCOAST
-	coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, fmt="ps");
+	coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, borders="1/0.5p");
 	coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
 	coast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
-	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B="a", N=(1,(1,"green")))
+	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B=:a, N=(1,(1,"green")), water=:blue)
 
 	# PSCONTOUR
 	x,y,z=GMT.peaks();
 	contour([x[:] y[:] z[:]], cont=1, annot=2, frame="a")
 
 	# PSIMAGE
-	#gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
+	psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
 
 	# PSSCALE
 	C = makecpt(T="-200/1000/100", C="rainbow");
@@ -326,7 +326,7 @@ if (got_it)					# Otherwise go straight to end
 	# SPLITXYZ (fails)
 	#splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
 
-	# TRIANGULA##TE
+	# TRIANGULATE
 	G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
 
 	# NEARNEIGHBOR
@@ -360,7 +360,11 @@ if (got_it)					# Otherwise go straight to end
 
 	# -------------------- Test common_options ----------------------------------------
 	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4)))[1] == " -R1/2/3/4"
+	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
 	@test GMT.build_opt_R(:d) == " -Rd"
+	@test GMT.build_opt_J(5) == " -JX5"
+	@test GMT.build_opt_J([]) == " -J"
+	@test GMT.arg2str((1,2,3)) == "1/2/3"
 	d = Dict(:inc => (x=1.5, y=2.6, unit="meter"));
 	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5e/2.6e"
 	d = Dict(:inc => (x=1.5, y=2.6, unit="data"));
@@ -374,9 +378,9 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_inc("",Dict(:inc => "2"),[:I :inc], "I") == " -I2"
 	@test GMT.parse_JZ("", Dict(:JZ => "5c"))[1] == " -JZ5c"
 	@test GMT.parse_JZ("", Dict(:Jz => "5c"))[1] == " -Jz5c"
-	r, = GMT.parse_J("", Dict(:J => "X5"), false);	@test r == " -JX5"
-	r, = GMT.parse_J("", Dict(:a => ""), true, true);	@test r == " -J"
-	r, = GMT.parse_J("", Dict(:J => "X", :figsize => 10));	@test r == " -JX10"
+	@test GMT.parse_J("", Dict(:J => "X5"), false)[1] == " -JX5"
+	@test GMT.parse_J("", Dict(:a => ""), true, true)[1] == " -J"
+	@test GMT.parse_J("", Dict(:J => "X", :figsize => 10))[1] == " -JX10"
 	@test GMT.parse_J("",Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
 	r = GMT.parse_params("", Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")));
 	@test r == " --MAP_FRAME_WIDTH=0.2 --IO=lixo --OI=xoli"

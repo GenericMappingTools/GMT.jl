@@ -104,13 +104,9 @@ function gmtread(fname::String=""; kwargs...)
 			if (haskey(d, sym))
 				fname = fname * "+b"
 				b = d[sym]
-				if (isa(b, String))
-					fname = fname * b
-				elseif (isa(b, Symbol))
-					fname = fname * string(b)
-				elseif (isa(b, Number))
-					fname = fname * @sprintf("%d", b)
-				elseif (isa(b, Array))
+				if (isa(b, String) || isa(b, Symbol) || isa(b, Number))
+					fname = fname * string(fname, b)
+				elseif (isa(b, Array) || isa(b, Tuple))
 					if (length(b) == 3)
 						fname = fname * @sprintf("%d,%d,%d", b[1], b[2], b[3])
 					else
