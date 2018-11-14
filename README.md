@@ -63,6 +63,10 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
   
       Follow instructions at https://gmt.soest.hawaii.edu/projects/gmt/wiki/BuildingGMT
 
+  * In any case, since *GMT* produces PostScript you need a PS visualizer
+
+      Install `Ghostscript` and `ghostview` at https://www.ghostscript.com/download/gsdnld.html
+
 On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at
 /user/local/lib), I had to help Julia finding MY *libgmt.dylib*, with (this line should than be
 added to the ~/.julia/config/startup.jl file)
