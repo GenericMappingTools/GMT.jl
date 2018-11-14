@@ -40,11 +40,6 @@ surfaces and 3D perspective views.
 
 This wrapper works only with GMT5.3.1 and above
 
-WARNING
-=======
-
-Tagged version 0.4+ that runs only on Julia 0.7+
-
 Install
 =======
 
@@ -52,9 +47,6 @@ Use the new Pkg3 to install current version (0.5.0).
 
     ]add GMT
 
-To install on Julia 0.6, this should do it:
-
-    Pkg.checkout("GMT", v"0.3.0")
 
 A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT** install the
 [GMT](http://gmt.soest.hawaii.edu) program. It's the user responsability to do that.
