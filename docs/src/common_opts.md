@@ -1,11 +1,13 @@
 # axis
 
+- *B* **|** *frame* **|** *axis* **|** *xaxis* **|** *xaxis2* **|** *yaxis* **|** ...
+
 Set map Axes parameters. They are specified by a keyword and a named tuple (but see [1])
 
     axis=(axes=..., corners=..., xlabel=..., ylabel=..., annot=..., etc)
 
 or separated on a per axes basis by using specific *xaxis*, *yaxis* and *zaxis* that share the same syntax
-as the generic *axis* option.
+as the generic *axis* option. The *xaxis2* and *yaxis2* apply when dealing with secondary axes.
 
 By default, all 4 map boundaries (or plot axes) are plotted and annotated. To customize, use the *axes*
 keyword that takes as value a tuple with a combination of words. Axes are named *left*, *bottom*, *right*,
@@ -185,8 +187,10 @@ The entire parameters collection is displayed in the following table
 |               | 10log         | Str or Symb   | Annot as 10 raised to log10 |
 |               | exp           | Str or Symb   | Annot interval in transformed units |
 
-[1] However, the original GMT compact syntax can also be used. I.e, *axis=:a*, or *frame=:WSen*
-or *frame="a1Of1d WS"* also work.
+   [1] However, the original GMT compact syntax can also be used. I.e, *axis=:a*, or *frame=:WSen*
+   or *frame="a1Of1d WS"* also work.
+
+   [`-B GMT doc`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#b-full)
 
 ## Examples
 
@@ -237,6 +241,52 @@ basemap(region="-30/30/-20/20", proj="X12/8",
 
 --------------------------
 
+# limits
+
+- *R* **|** *region* **|** *limits* **|** *xlimits*,*ylimits* : *limits=(xmin, xmax, ymin, ymax)* **|**
+  *limits=(BB=(xmin, xmax, ymin, ymax),)* **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more 
+
+   *xmin*, *xmax*, *ymin*, and *ymax* specify the region of interest (aka, BoundingBox). For geographic
+   regions, these limits correspond to *west*, *east*, *south*, and *north* and you may specify them in
+   decimal degrees or in [+|-]dd:mm[:ss.xxx][W|E|S|N] format. In this case the elements of the `Tuple` or
+   `NamedTuple` must ofc be in string format. Used the *LLUR* form if lower left and upper right map
+   coordinates are given instead of *(xmin, xmax, ymin, ymax)*. The *xlimts*, *ylimits* is used to break
+   the specification into two pairs but it won't support all the options of the *limits* functionality.
+
+   The two shorthands *limits=:g* and *limits=:d* stand for global domain (0/360 and -180/+180 in longitude
+   respectively, with -90/+90 in latitude).
+
+   [`-R GMT doc`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#r-full)
+
+--------------------------
+
+# proj
+
+- *J* **|** *proj* : *proj=<parameters>*
+
+   Select map projection. The following character determines the projection. If the character is upper case
+   then the argument(s) supplied as scale(s) is interpreted to be the map width (or axis lengths), else the
+   scale argument(s) is the map scale (see its definition for each projection). UNIT (default is cm) can be
+   overridden on the command line by appending **i**, or **p** to the scale or width values. Append **h**,
+   **+**, or **-** to the given width if you instead want to set map height, the maximum dimension, or the
+   minimum dimension, respectively [Default is **w** for width]. In case the central meridian is an optional
+   parameter and it is being omitted, then the center of the longitude range given by the *limits* option is
+   used. he default standard parallel is the equator. The ellipsoid used in the map projections is
+   user-definable by editing the gmt.conf file in your home directory. 73 commonly used ellipsoids and
+   spheroids are currently supported, and users may also specify their own custom ellipsoid parameters
+   [Default is WGS-84]. Several GMT parameters can affect the projection: *PROJ\_ELLIPSOID*, *GMT\_INTERPOLANT*,
+   *PROJ\_SCALE\_FACTOR*, and *PROJ\_LENGTH\_UNIT*; see the gmt.conf man page for details.
+
+   For linear (Cartesian) projections use, *e.g.*, *proj="X12"* to mean a figure 12 cm width. As a special
+   case one can use *proj=12* to also select a 12 cm fig. When using only *proj=:X* we can specify the figure
+   dimensions with *figsize=(width, height)* (both numeric or string). We can also specify the scale
+   separately: *e.g.* *proj=:x*, *figscale=1:xxxx*. When no size is provided for linear projections a default
+   value of 14 cm is assumed.
+
+   [`-J GMT doc`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#j-full)
+
+--------------------------
+
 # stamp
 
 - *U* **|** *stamp* **|** *time_stamp* : *stamp=(just="code", pos=(dx,dy), label="label", com=true)*
@@ -247,10 +297,12 @@ basemap(region="-30/30/-20/20", proj="X12/8",
    For example, BL/0/0 will align the lower left corner of the time
    stamp with the lower left corner of the plot [LL]. Optionally, append a
    *label*, or **c** (which will plot the command string.). The GMT
-   parameters :ref:`MAP_LOGO <MAP_LOGO>`, :ref:`MAP_LOGO_POS <MAP_LOGO_POS>`, and
-   :ref:`FORMAT_TIME_STAMP <FORMAT_TIME_STAMP>` can affect the appearance; see the
-   :doc:`gmt.conf` man page for details. The time string will be in the
+   parameters `MAP\_LOGO`, `MAP\_LOGO\_POS`, and
+   `FORMAT\_TIME\_STAMP` can affect the appearance; see the
+   `gmt.conf` man page for details. The time string will be in the
    locale set by the environment variable **TZ** (generally local time).
+
+   [`-U GMT doc`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#u-full)
 
 --------------------------
 
@@ -271,11 +323,11 @@ basemap(region="-30/30/-20/20", proj="X12/8",
 
 # x_off
 
-- *X* **|** *x_off*  **|** *x_offset** : *x_off=[] **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*
+- *X* **|** *x_off*  **|** *x_offset* : *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*
 
 # y_off
 
-- *Y* **|** *y_off*  **|** *y_offset** : *y_off=[] **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*
+- *Y* **|** *y_off*  **|** *y_offset* : *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*
 
    Shift plot origin relative to the current origin by (*x-shift*, *y-shift*) and optionally append the
    length unit (**c**, **i**, or **p**). This second case (with units) implies that *x-shift* must be a

@@ -37,8 +37,8 @@ function parse_R(cmd::String, d::Dict, O=false, del=false)
 end
 
 function build_opt_R(Val)
-	if (isa(Val, String))
-		return " -R" * Val
+	if (isa(Val, String) || isa(Val, Symbol))
+		return string(" -R", Val)
 	elseif ((isa(Val, Array{<:Number}) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
 		out = join([@sprintf("%.15g/",x) for x in Val])
 		return " -R" * rstrip(out, '/')		# Remove last '/'
@@ -72,7 +72,7 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 	# Default to 14c if no size is provided.
 	# If MAP == false, do not try to append a fig size
 	opt_J = ""
-	for symb in [:J :proj :projection]
+	for symb in [:J :proj]
 		if (haskey(d, symb))
 			opt_J = build_opt_J(d[symb])
 			if (del) delete!(d, symb) end
@@ -88,15 +88,7 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 	if (!O && !isempty(opt_J))
 		# If only the projection but no size, try to get it from the kwargs.
 		if (haskey(d, :figsize))
-			if (isa(d[:figsize], Number))
-				s = @sprintf("%.8g", d[:figsize])
-			elseif (isa(d[:figsize], Array) && length(d[:figsize]) == 2)
-				s = @sprintf("%.10g/%.10g", d[:figsize][1], d[:figsize][2])
-			elseif (isa(d[:figsize], String))
-				s = d[:figsize]
-			else
-				error("What the hell is this figsize argument?")
-			end
+			s = arg2str(d[:figsize])
 			if (haskey(d, :units))
 				s = s * d[:units][1]
 			end
@@ -105,8 +97,10 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 			end
 		elseif (haskey(d, :figscale))
 			opt_J = opt_J * string(d[:figscale])
-		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))	# No size provided
-			opt_J = opt_J * "14c"			# If no size, default to 14 centimeters
+		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
+			if !(length(opt_J) >= 6 && isnumeric(opt_J[6]))
+				opt_J = opt_J * "14c"			# If no size, default to 14 centimeters
+			end
 		end
 	end
 	cmd = cmd * opt_J
@@ -140,7 +134,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	end
 
 	# These are not and we can have one or all of them. NamedTuples are dealt at the end
-	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2 :zaxis2]
+	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2]
 		if (haskey(d, symb) && !isa(d[symb], NamedTuple))
 			opt_B = string(d[symb], " ", opt_B)
 		end
@@ -195,7 +189,6 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 			elseif (symb == :yaxis)   opt_B = axis(d[symb], y=true) * opt_B
 			elseif (symb == :yaxis2)  opt_B = axis(d[symb], y=true, secondary=true) * opt_B
 			elseif (symb == :zaxis)   opt_B = axis(d[symb], z=true) * opt_B
-			elseif (symb == :zaxis2)  opt_B = axis(d[symb], z=true, secondary=true) * opt_B
 			end 
 		end
 	end
