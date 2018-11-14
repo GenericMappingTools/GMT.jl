@@ -281,35 +281,67 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "axis/#",
-    "page": "The axis control",
-    "title": "The axis control",
+    "location": "common_opts/#",
+    "page": "Common options",
+    "title": "Common options",
     "category": "page",
     "text": ""
 },
 
 {
-    "location": "axis/#The-axis-control-1",
-    "page": "The axis control",
-    "title": "The axis control",
+    "location": "common_opts/#axis-1",
+    "page": "Common options",
+    "title": "axis",
     "category": "section",
     "text": "Set map Axes parameters. They are specified by a keyword and a named tuple (but see [1])axis=(axes=..., corners=..., xlabel=..., ylabel=..., annot=..., etc)or separated on a per axes basis by using specific xaxis, yaxis and zaxis that share the same syntax as the generic axis option.By default, all 4 map boundaries (or plot axes) are plotted and annotated. To customize, use the axes keyword that takes as value a tuple with a combination of words. Axes are named left, bottom, right, top and, for the 3D maps, up. Next we have three categories of axes: the annotated and ticked, the ticked and those with no annoations and no tick marks. We call them full, ticks and bare and combine with the axes name using an underscore to glue them. Hence left_full means draw and annotate left axes, whilst top_bare means draw only top axes. The full combination is left|bottom|right|top|up_full|ticks|bare. To not draw a boundary, simply ommit the name of it in tuple. Note that the short one single char naming used by GMT is also valide. E.g. axes=:WSn will draw and annotate left and south bondaries and draw but no ticks or anotations the top boundary.If a 3-D basemap is selected with view and J=:z, by default a single vertical axes will be plotted at the most suitable map corner. Override the default by using the keyword corners and any combination of corner ids 1234, where 1 represents the lower left corner and the order goes counter-clockwise.Use cube=true to draw the outline of the 3-D cube defined by region this option is also needed to display gridlines in the x-z, y-z planes. Note that for 3-D views the title, if given, will be suppressed. You can paint the interior of the canvas with fill=fill where the fill value can be a color or a pattern.Use noframe=true to have no frame and annotations at all [Default is controlled by the codes].Optionally append oblique_pole=\"plon/plat\" (or oblique_pole=(plon,plat) to draw oblique gridlines about specified pole [regular gridlines]. Ignored if gridlines are not requested (below) and disallowed for the oblique Mercator projection.To add a plot title do title=\"My title\" The Frame setting is optional but can be invoked once to override the above defaults.GMT uses the notion of primary (the default) and secondary axes. To set an axes as secondary, use secondary=true (mostly used for time axes annotations).The xaxis yaxis and zaxis specify which axis you are providing information for. The syntax is the same as for the axis keyword but allows fine tunning of different options for the 4 (or 6) axis.To add a label to an axis use label=\"Label text\" if using the xaxis etc form, or use the xlabel, ylabel and zlabel keywords in the common axis tuple of options.Use Yhlabel=true to force a horizontal label for y-axes (useful for very short labels).If the axis annotation should have a leading text prefix (e.g., dollar sign for those plots of your net worth) you can add prefix=\"prefix\" For geographic maps the addition of degree symbols, etc. is automatic (and controlled by the GMT default setting FORMAT_GEO_MAP). However, for other plots you can add specific units by adding label_unit=\"unit\"Annotations, ticks and grid intervals are specified with the annot, ticks and grid keywords, which take as value the desired stride interval. As an example, annot=10 means annotate at spacing of 10 data units. Alternatively, for linear maps, we can use the special value :auto annotations at automatically determined intervals.annot=:auto, grid=:auto plots both annotations and grid lines with the same spacing,\nannot=:auto, ticks=:auto, grid=:auto adds suitable minor tick intervals,\ngrid=:auto plots grid lines with the same interval as if ticks=:auto was used.The optional phase_add=xx and phase_sub=xx shifts the annotation interval by tht xx amount (positive or negative).The optional annot_unit indicates the unit of the stride and can be any of the ones listed below::year  or :Y (year, plot with 4 digits)\n:year2 or :y (year, plot with 2 digits)\n:month or :O (month, plot using FORMAT_DATE_MAP)\n:month2 or :o (month, plot with 2 digits)\n:ISOweek or :U (ISO week, plot using FORMAT_DATE_MAP)\n:ISOweek2 or :u (ISO week, plot using 2 digits)\nGregorian_week or :r (Gregorian week, 7-day stride from start of week TIME_WEEK_START)\n:ISOweekday or :K (ISO weekday, plot name of day)\n:date or :D (date, plot using FORMAT_DATE_MAP)\n:day_date or :d (day, plot day of month 0-31 or year 1-366, via FORMAT_DATE_MAP)\n:day_week or :R (day, same as d, aligned with TIME_WEEK_START)\n:hour    or :H (hour, plot using FORMAT_CLOCK_MAP)\n:hour2   or :h (hour, plot with 2 digits)\n:minute  or :M (minute, plot using FORMAT_CLOCK_MAP)\n:minute2 or :m (minute, plot with 2 digits)\n:second  or :S (second, plot using FORMAT_CLOCK_MAP)\n:second2 or :s (second, plot with 2 digits).Note for geographic axes m and s instead mean arc minutes and arc seconds. All entities that are language-specific are under control by GMT_LANGUAGE. For custom annotations and intervals, let intervals be given as custom=\"intfile\", where intfile contains any number of records with coord type [label]. Here, type is one or more letters from a or i, f, and g. For a or i you must supply a label that will be plotted at the coord location.For non-geographical projections: Give negative scale (in proj=\"x scale\" or axis length (in proj=\"X map width\" to change the direction of increasing coordinates (i.e., to make the y-axis positive down).For log10 axes: Annotations can be specified in one of three ways: stride can be 1, 2, 3, or -n. Annotations will then occur at 1,     1-2-5, or 1-2-3-4-...-9, respectively; for -n we annotate every     n\'t magnitude. This option can also be used for the frame and grid intervals. \nUse log=true, then log10 of the tick value is plotted at every integer log10 value.\nUse 10log=true, then annotations appear as 10 raised to log10 of the tick value.For power axes: Annotations can be specified in one of two ways:stride sets the regular annotation interval.\nUse exp=true, then, the annotation interval is     expected to be in transformed units, but the annotation value will     be plotted as untransformed units. E.g., if stride = 1 and power     = 0.5 (i.e., sqrt), then equidistant annotations labeled 1-4-9...  will appear.Finally, if your axis is in radians you can use multiples or fractions of pi to set such annotation intervals. The format is pi=n or pi=(n,m), for an optional integer n and optional m fractions 2, 3, or 4.These GMT parameters can affect the appearance of the map boundary: MAP_ANNOT_MIN_ANGLE, MAP_ANNOT_MIN_SPACING, FONT_ANNOT_PRIMARY, FONT_ANNOT_SECONDARY, MAP_ANNOT_OFFSET_PRIMARY, MAP_ANNOT_OFFSET_SECONDARY, MAP_ANNOT_ORTHO, MAP_FRAME_AXES, MAP_DEFAULT_PEN, MAP_FRAME_TYPE, FORMAT_GEO_MAP, MAP_FRAME_PEN, MAP_FRAME_WIDTH, MAP_GRID_CROSS_SIZE_PRIMARY, MAP_GRID_PEN_PRIMARY, MAP_GRID_CROSS_SIZE_SECONDARY, MAP_GRID_PEN_SECONDARY, FONT_TITLE, FONT_LABEL, MAP_LINE_STEP, MAP_ANNOT_OBLIQUE, FORMAT_CLOCK_MAP, FORMAT_DATE_MAP, FORMAT_TIME_PRIMARY_MAP, FORMAT_TIME_SECONDARY_MAP, GMT_LANGUAGE, TIME_WEEK_START, MAP_TICK_LENGTH_PRIMARY, and MAP_TICK_PEN_PRIMARY"
 },
 
 {
-    "location": "axis/#Axis-options-table-1",
-    "page": "The axis control",
+    "location": "common_opts/#Axis-options-table-1",
+    "page": "Common options",
     "title": "Axis options table",
     "category": "section",
     "text": "The entire parameters collection is displayed in the following tablekeyword value type meaning\naxes left_full Str or Symb Annot and tick left axis\n left_ticks Str or Symb Tick left axis\n left_bare Str or Symb Just draw left axis\n bottom_full Str or Symb Same for bottom axis\n right_full Str or Symb Same for right axis\n top_full Str or Symb Same for top axis\n up_full Str or Symb Same for z axis\ncorners 1234 Str or Symb Vertical axis\nscondary true or false Bool Secondary axis info\nfill color Str or Symb Paint interior\ncube anything Sym or Bool Draw outline of the 3-D cube\nnoframe anything Sym or Bool No frame and annotations at all\noblique_pole lon lat Str or Tuple Draw oblique gridlines abot pole\ntitle the title Str or Symb Add a plot title\nlabel axis label Str or Symb Add a label to an axis\nYhlabel y-axis hlabel Str or Symb Horizontal label for y-axes\nprefix annot prefix Str or Symb Annot leading text prefix\nxlabel x-axis label Str or Symb Add a label to X axis\nylabel y-axis label Str or Symb Add a label to Y axis\nzlabel z-axis label Str or Symb Add a label to Z axis\nseclabel second label Str or Symb Add a seconadry label to X\nannot annot interval Symb or Num Annot stride interval\nticks tick interval Symb or Num Tick interval\ngrid grid interval Symb or Num Grid lines interval\nphase_add xx Numb Shifts right the annot interval\nphase_sub xx Numb Shifts left the annot interval\nannot_unit annot unit Str or Symb Unit of the stride\ncustom custom annot Str or Symb Custom annotations file\npi n or (n,m) Num or Tuple If axis is in radians\nscale log Str or Symb log10 of the tick value\n 10log Str or Symb Annot as 10 raised to log10\n exp Str or Symb Annot interval in transformed units[1] However, the original GMT compact syntax can also be used. I.e, axis=:a, or frame=:WSen or frame=\"a1Of1d WS\" also work."
 },
 
 {
-    "location": "axis/#Examples-1",
-    "page": "The axis control",
+    "location": "common_opts/#Examples-1",
+    "page": "Common options",
     "title": "Examples",
     "category": "section",
     "text": "Demonstrates use of dual (left vs right, bottom vs top) Cartesian axis labelsbasemap(limits=(0,50,0,7), proj=\"X14c/14c\",\n        xaxis=(annot=:auto, ticks=:auto, label=\"Bottom Label\", seclabel=\"Top label\"),\n        yaxis=(annot=:auto, ticks=:auto, label=\"Left label\", seclabel=\"Right label\"), show=1)we can obtain the same result with a slightly shorter version of the above that shows how can mix axis and xaxis calls.basemap(limits=(0,50,0,7), proj=\"X14c/14c\",\n        axis=(annot=:auto, ticks=:auto, xlabel=\"Bottom Label\", ylabel=\"Left label\"),\n        xaxis=(seclabel=\"Top label\",), yaxis=(seclabel=\"Right label\",), show=1)Show inside labeling. We will use frame instead of axis just to recall that they are aliases.basemap(limits=(0,13,0,10), proj=\"x1\",\n        frame=(annot=2, ticks=0.5), par=(:MAP_FRAME_TYPE,:inside), show=1)Show horizontal and vertical annotationsbasemap(region=[0 1000 0 1000], proj=\"X5/5\",\n        axis=(axes=(:left_full,:bottom_full,:right_full,:top_full), annot=200,\n              ticks=100, xlabel=:horizontal, ylabel=:vertical),\n        par=(FONT_ANNOT_PRIMARY=10, FONT_LABEL=16, MAP_ANNOT_ORTHO=:we))\n\nbasemap!(axis=(axes=(:left_full,:bottom_full,:right_full,:top_full), annot=200\n               ticks=100, xlabel=:horizontal, ylabel=:vertical),\n         par=(FONT_ANNOT_PRIMARY=10, FONT_LABEL=16, MAP_ANNOT_ORTHO=:sn),\n         x_offset=10, show=1)Show Yhlabel for horizontal labels for y-axis basemap(region=\"-30/30/-20/20\", proj=\"X12/8\",\n        axis=(annot=:a, ticks=:a, xlabel=\"Standard horizontal label\", Yhlabel=\"@~Y(q)@~\"\n              title=\"Vertical Y-axis label\"), show=1)"
+},
+
+{
+    "location": "common_opts/#stamp-1",
+    "page": "Common options",
+    "title": "stamp",
+    "category": "section",
+    "text": "U | stamp | time_stamp : stamp=(just=\"code\", pos=(dx,dy), label=\"label\", com=true)\nDraw Unix System time stamp on plot. By adding [just\\ ]\\ /dx/dy/, the  user may specify the justification of the stamp and where the stamp  should fall on the page relative to lower left corner of the plot.  For example, BL/0/0 will align the lower left corner of the time  stamp with the lower left corner of the plot [LL]. Optionally, append a  label, or c (which will plot the command string.). The GMT  parameters :ref:MAP_LOGO <MAP_LOGO>, :ref:MAP_LOGO_POS <MAP_LOGO_POS>, and  :ref:FORMAT_TIME_STAMP <FORMAT_TIME_STAMP> can affect the appearance; see the  :doc:gmt.conf man page for details. The time string will be in the  locale set by the environment variable TZ (generally local time)."
+},
+
+{
+    "location": "common_opts/#verbose-1",
+    "page": "Common options",
+    "title": "verbose",
+    "category": "section",
+    "text": "V | verbose : verbose=true | verbose=level\nSelect verbose mode, which will send progress reports to stderr.  Choose among 6 levels of verbosity; each level adds more messages:\nq – Complete silence, not even fatal error messages are produced.\nn – Normal verbosity: produce only fatal error messages.\nc – Produce also compatibility warnings (same as when verbose is omitted).\nv – Produce also warnings and progress messages (same as verbose only).\nl – Produce also detailed progress messages.\nd – Produce also debugging messages."
+},
+
+{
+    "location": "common_opts/#x_off-1",
+    "page": "Common options",
+    "title": "x_off",
+    "category": "section",
+    "text": "X | x_off  | xoffset** : *xoff=[] | *x_off=x-shift | x_off=(shift=x-shift, mov=\"a|c|f|r\")"
+},
+
+{
+    "location": "common_opts/#y_off-1",
+    "page": "Common options",
+    "title": "y_off",
+    "category": "section",
+    "text": "Y | y_off  | yoffset** : *yoff=[] | *y_off=y-shift | y_off=(shift=y-shift, mov=\"a|c|f|r\")\nShift plot origin relative to the current origin by (x-shift, y-shift) and optionally append the  length unit (c, i, or p). This second case (with units) implies that x-shift must be a  string. To make non-default sifts, use the form x_off=(shift=x-shift, mov=\"a|c|f|r\") where a  shifts the origin back to the original position after plotting; c centers the plot on the center of  the paper (optionally add shift); f shifts the origin relative to the fixed lower left corner of the  page, and r [Default] to move the origin relative to its current location. For overlays the default  (x-shift, y-shift) is (r0), otherwise it is (r1i). When x_off or y_off are used without any  further arguments, the values from the last use of that option in a previous GMT command will be used.  Note that x_off and y_off can also access the previous plot dimensions w and h and construct  offsets that involves them. For instance, to move the origin up 2 cm beyond the height of the previous  plot, use y_off=\"h+2c\". To move the origin half the width to the right, use x_off=\"w/2\"."
 },
 
 {
@@ -385,6 +417,22 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "symbols/#",
+    "page": "Symbols",
+    "title": "Symbols",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "symbols/#Symbols-1",
+    "page": "Symbols",
+    "title": "Symbols",
+    "category": "section",
+    "text": "Not yet"
+},
+
+{
     "location": "solar/#",
     "page": "solar",
     "title": "solar",
@@ -413,7 +461,23 @@ var documenterSearchIndex = {"docs": [
     "page": "solar",
     "title": "Optional Arguments",
     "category": "section",
-    "text": "B | axis | frame The axis control   Set map boundary frame and axes attributes.\nC=true    Formats the report selected by sun=?? using tab-separated fields on a single line. The output is Sun Lon Lat Azimuth Elevation in degrees, Sunrise Sunset Noon in decimal days, day length in minutes, SolarElevationCorrected corrected for the effect of refraction index and Equation of time in minutes. Note that if no position is provided in sun=(lon,lat) the data after Elevation refers to the point (0,0).\nG or fill : fill=color | fill=color | G=:c    Select color or pattern for filling of terminators; or use G=:c for clipping [Default is no fill].  Deactivate clipping by appending the output of gmt :doc:clip C.\nI or sun : sun=true | sun=(lon,lat) | sun=\"lon/lat+ddate | sun=\"lon/lat+ddate+zTZ\"    Print current sun position as well as Azimuth and Elevation. Use sun=(lon,lat) to print also the times of  Sunrise, Sunset, Noon and length of the day. Add +ddate in ISO format (and therefore use a string), e.g,  +d2000-04-25, to compute sun parameters for this date. If necessary, append time zone via +zTZ.\nM or dump : dump=true   Write terminator(s) as a multisegment file to standard output. No plotting occurs.\nN or invert : invert=true   Invert the sense of what is inside and outside the terminator. Only used with clipping (G=:c) and   cannot be used together with axis.\nR or region or limits :\nT or terminators : terminators=\"d|c|n|a\" | terminators=\"d|c|n|a+ddate | terminators=\"d|c|n|a+ddate+zTZ\"     Plot (or dump; see dump) one or more terminators defined via the dcna flags. Where:   d means day/night terminator; c means civil twilight; n means nautical twilight;   a means astronomical twilight. Add +ddate in ISO format (and therefore use a string), e.g,   +d2000-04-25 to know where the day-night was at that date. If necessary, append time zone via   +zTZ (This option is not yet fully ported to expanded syntax)\nW | pen : Set pen attributes for lines or the outline of symbols [Defaults: width = default, color = black, style = solid]."
+    "text": "B | axis | frame\nSet map boundary frame and axes attributes. More at axis\nC=true\nFormats the report selected by sun=?? using tab-separated fields on a single line. The  output is Sun Lon Lat Azimuth Elevation in degrees, Sunrise Sunset Noon in decimal days,  day length in minutes, SolarElevationCorrected corrected for the effect of refraction index  and Equation of time in minutes. Note that if no position is provided in sun=(lon,lat) the  data after Elevation refers to the point (0,0).\nG or fill : fill=color | fill=color | G=:c\nSelect color or pattern for filling of terminators; or use G=:c for clipping [Default is no fill].  Deactivate clipping by appending the output of gmt :doc:clip C.\nI or sun : sun=true | sun=(lon,lat) | sun=(pos=(lon,lat), date=date) | sun=(pos=(lon,lat), date=date, TZ=tzone)\nPrint current sun position as well as Azimuth and Elevation. Use sun=(lon,lat) to print also the times of  Sunrise, Sunset, Noon and length of the day. To add a date, use a NamedTuple instead and add the element  date=date in ISO format, e.g, date=\"2000-04-25\" to compute sun parameters for this date. If necessary,  add another element with the time zone via TZ=tzone.\nM or dump : dump=true\nWrite terminator(s) as a multisegment file to standard output. No plotting occurs.\nN or invert : invert=true\nInvert the sense of what is inside and outside the terminator. Only used with clipping (G=:c) and  cannot be used together with axis.\nR or region or limits :\nT or terminators : terminators=\"d|c|n|a\" | terminators=(terms=\"d|c|n|a\", date=date) | terminators=(terms=\"d|c|n|a\", date=date), TZ=tzone)\nPlot (or dump; see dump) one or more terminators defined via the dcna flags. Where: d means  day/night terminator; c means civil twilight; n means nautical twilight; a means astronomical  twilight. To add a date, use a NamedTuple instead and add the element date=date in ISO format, e.g,  date=\"2000-04-25\" to know where the day-night was at that date. If necessary, add another element with  the time zone via TZ=tzone. \nU or stamp : stamp=true | stamp=(just=\"code\", pos=(dx,dy), label=\"label\", com=true)\nDraw GMT time stamp logo on plot. More at stamp\nV or verbose : verbose=true | verbose=level\nSelect verbosity level. More at verbose\nX or x_off or xoffset : *xoff=[] | *x_off=x-shift | x_off=(shift=x-shift, mov=\"a|c|f|r\")\nShift plot origin. More at x_off\nY or y_off or yoffset : *yoff=[] | *y_off=y-shift | y_off=(shift=y-shift, mov=\"a|c|f|r\")\nShift plot origin. More at y_off\nW | pen :\nSet pen attributes for lines or the outline of symbols [Defaults: width = default, color = black, style = solid]."
+},
+
+{
+    "location": "solar/#Examples-1",
+    "page": "solar",
+    "title": "Examples",
+    "category": "section",
+    "text": "Print current Sun position and Sunrise, Sunset times at:    solar(sun=(pos=(-7.93,37.079), date=\"2016-02-04T10:01:00\"))Plot the day-night and civil twilight     coast(region=:d, pen=0.1, proj=\"Q0/14c\", axis=(annot=:auto, axes=\"WSen\"),\n          resolution=:low, area=1000)\n    solar!(pen=1, terminators=\"dc\", show=true)"
+},
+
+{
+    "location": "solar/#See-also-1",
+    "page": "solar",
+    "title": "See also",
+    "category": "section",
+    "text": "The GMT man page"
 },
 
 {
@@ -685,7 +749,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Index",
     "title": "GMT.gmtwhich",
     "category": "function",
-    "text": "gmtwhich(cmd0::String=\"\", arg1=[], kwargs...)\n\nTime domain filtering of 1-D data tables.\n\nFull option list at gmtwhich\n\nParameters\n\nA : with_permissions : – Bool or [] –\nOnly consider files that the user has permission to read [Default consider all files found].   -A\nC : confirm : – Bool or [] –\nInstead of reporting the paths, print the confirmation Y if the file is found and N if it is not.   -C\nD : report_dir : – Bool or [] –\nInstead of reporting the paths, print the directories that contains the files.   -D\nG : download : – Str or [] –      Flags = [c|l|u]\nIf a file argument is a downloadable file (either a full URL, a @file for downloading from   the GMT Site Cache, or @earthrelief*.grd) we will try to download the file if it is not   found in your local data or cache dirs.   -G\nV : verbose : – Bool or Str –		Flags = level\nSelect verbosity level, which will send progress reports to stderr.   -V\n\n\n\n\n\n"
+    "text": "gmtwhich(cmd0::String=\"\", arg1=[], kwargs...)\n\nTime domain filtering of 1-D data tables.\n\nFull option list at gmtwhich\n\nParameters\n\nA : with_permissions : – Bool or [] –\n\nOnly consider files that the user has permission to read [Default consider all files found].\n[`-A`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#a)\n\nC : confirm : – Bool or [] –\n\nInstead of reporting the paths, print the confirmation Y if the file is found and N if it is not.\n[`-C`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#c)\n\nD : report_dir : – Bool or [] –\n\nInstead of reporting the paths, print the directories that contains the files.\n[`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#d)\n\nG : download : – Str or [] –      Flags = [c|l|u]\n\nIf a file argument is a downloadable file (either a full URL, a @file for downloading from\nthe GMT Site Cache, or @earth_relief_*.grd) we will try to download the file if it is not\nfound in your local data or cache dirs.\n[`-G`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#g)\n\nV : verbose : – Bool or Str –		Flags = level\nSelect verbosity level, which will send progress reports to stderr.   -V\n\n\n\n\n\n"
 },
 
 {
@@ -1045,7 +1109,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Index",
     "title": "GMT.solar",
     "category": "function",
-    "text": "solar(cmd0::String=\"\", arg1=[]; kwargs...)\n\nCalculate and plot the day-night terminator and the civil, nautical and astronomical twilights.\n\nFull option list at pssolar\n\nParameters\n\nJ : proj : projection : – Str –\nSelect map projection. Defaults to 12x8 cm with linear (non-projected) maps.   -J\nB : frame : axis : – Str – \nSet map boundary frame and axes attributes.   -B\nC : formats : – Str –\n-C\nG : fill : – Number or Str –\n-G\nI : sun : – Bool or [] –\n-I\nP : portrait : –- Bool or [] –\nTell GMT to NOT draw in portriat mode (that is, make a Landscape plot)\nM : dump : – Str or [] –\n-M\nR : region : limits : – Str or list or GMTgrid|image –		Flags = xminxmaxyminymax+r+uunit\nSpecify the region of interest. Set to data minimum BoundinBox if not provided.   -R\nN : radius : – Bool or [] –\n-N\nT : terminators : – Bool or [] –\n-T\nW : pen : – Str or tuple –\n-W\nU : stamp : – Str or Bool or [] –	Flags = [[just]/dx/dy/][c|label]\nDraw GMT time stamp logo on plot.   -U\nV : verbose : – Bool or Str –		Flags = level\nSelect verbosity level, which will send progress reports to stderr.   -V\nX : x_offset : – Str –     Flags = acfrx-shiftu\nY : y_offset : – Str –     Flags = acfry-shiftu\nShift plot origin relative to the current origin by (x-shift,y-shift) and optionally   append the length unit (c, i, or p).    -Y\nbo : binary_out : – Str –			Flags = ncolstypew+L+B\nSelect native binary output.   -bo\nh : headers : – Str –        Flags = ion+c+d+rremark+ttitle\nPrimary input file(s) has header record(s).   -h\no : output_col : – Str –     Flags = cols\nSelect specific data columns for primary output, in arbitrary order.   -o\np : view : perspective : – Str or List –   Flags = xyzazimelevzlevel+wlon0lat0z0+vx0y0\nSelects perspective view and sets the azimuth and elevation of the viewpoint [180/90].   -p\nt : alpha : transparency : – Str –   Flags = transp\nSet PDF transparency level for an overlay, in (0-100] percent range. [Default is 0, i.e., opaque].   -t\n\n\n\n\n\n"
+    "text": "solar(cmd0::String=\"\", arg1=[]; kwargs...)\n\nCalculate and plot the day-night terminator and the civil, nautical and astronomical twilights.\n\nParameters\n\nJ : proj : projection : – Str –\nSelect map projection. Defaults to 12x8 cm with linear (non-projected) maps.   -J\nB : frame : axis : – Str – \nSet map boundary frame and axes attributes.   -B\nC : format : – ::Bool –\n-C\nG : fill : – Number or Str –\n-G\nI : sun : – ::Bool or ::Tuple or ::NamedTuple –\n-I\nP : portrait : –- Bool or [] –\nTell GMT to NOT draw in portriat mode (that is, make a Landscape plot)\nM : dump : – ::Bool –\n-M\nR : region : limits : – Str or list or GMTgrid|image –		Flags = xminxmaxyminymax+r+uunit\nSpecify the region of interest. Set to data minimum BoundinBox if not provided.   -R\nN : invert : – ::Bool –\n-N\nT : terminators : – ::Bool or ::Tuple or ::NamedTuple –\n-T\nW : pen : – Str or tuple –\n-W\nU : stamp : – Str or Bool or [] –	Flags = [[just]/dx/dy/][c|label]\nDraw GMT time stamp logo on plot.   -U\nV : verbose : – Bool or Str –		Flags = level\nSelect verbosity level, which will send progress reports to stderr.   -V\nX : x_offset : – Str –     Flags = acfrx-shiftu\nY : y_offset : – Str –     Flags = acfry-shiftu\nShift plot origin relative to the current origin by (x-shift,y-shift) and optionally   append the length unit (c, i, or p).    -Y\nbo : binary_out : – Str –			Flags = ncolstypew+L+B\nSelect native binary output.   -bo\nh : headers : – Str –        Flags = ion+c+d+rremark+ttitle\nPrimary input file(s) has header record(s).   -h\no : output_col : – Str –     Flags = cols\nSelect specific data columns for primary output, in arbitrary order.   -o\np : view : perspective : – Str or List –   Flags = xyzazimelevzlevel+wlon0lat0z0+vx0y0\nSelects perspective view and sets the azimuth and elevation of the viewpoint [180/90].   -p\nt : alpha : transparency : – Str –   Flags = transp\nSet PDF transparency level for an overlay, in (0-100] percent range. [Default is 0, i.e., opaque].   -t\n\nFull man page GMT man page\n\n\n\n\n\n"
 },
 
 {
