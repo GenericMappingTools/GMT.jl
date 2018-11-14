@@ -250,7 +250,9 @@ if (got_it)					# Otherwise go straight to end
 	bar3(G, lw=:thinnest)
 
 	# PROJECT
-	#project(C="15/15", T="85/40", G="1/110", L="-20/60", Vd=1);	# Fails in GMT5
+	if (GMTver >= 6)
+		project(C="15/15", T="85/40", G="1/110", L="-20/60", Vd=1);	# Fails in GMT5
+	end
 
 	# PSBASEMAP
 	basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
