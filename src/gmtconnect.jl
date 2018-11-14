@@ -43,7 +43,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function gmtconnect(cmd0::String="", arg1=[]; kwargs...)
+function gmtconnect(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtconnect", cmd0, arg1)	# Speedy mode
 
@@ -66,9 +66,9 @@ function gmtconnect(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'Q', d, [:Q :list_file])
 	cmd = add_opt(cmd, 'T', d, [:T :tolerance ])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	return common_grd(d, cmd, got_fname, 1, "gmtconnect", arg1)		# Finish build cmd and run it
+	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, arg1, arg2)
+	return common_grd(d, cmd, got_fname, 2, "gmtconnect", arg1, arg2)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtconnect(arg1=[], cmd0::String=""; kw...) = gmtconnect(cmd0, arg1; kw...)
+gmtconnect(arg1=[], arg2=[], cmd0::String=""; kw...) = gmtconnect(cmd0, arg1, arg2; kw...)

@@ -212,8 +212,8 @@ function scatter(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=fa
 	end
 
 	d = KW(kwargs)
-	opt_G = add_opt("", 'G', d, [:G :fill :markerfacecolor], true)
-	opt_W = add_opt("", 'W', d, [:markeredgecolor], true)
+	opt_G = add_opt("", 'G', d, [:G :fill :markerfacecolor], nothing, true)
+	opt_W = add_opt("", 'W', d, [:markeredgecolor], nothing, true)
 
 	opt_S = get_marker_name(d, [:symbol :marker], is3D, true)
 	if (isempty(opt_S))  opt_S = " -Sc"
@@ -243,7 +243,7 @@ function scatter(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=fa
 	caller = opt_S * opt * opt_G * opt_W		# Piggy-back this
 
 	if (is3D)
-		opt = add_opt("", 'p', d, [:p :view], true)
+		opt = add_opt("", 'p', d, [:p :view], nothing, true)
 		if (opt == "")  caller = caller * " -p200/30"
 		else            caller = caller * opt
 		end
@@ -322,10 +322,10 @@ function bar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	end
 
 	d = KW(kwargs)
-	opt_G = add_opt("", 'G', d, [:G :fill], true)
+	opt_G = add_opt("", 'G', d, [:G :fill], nothing, true)
 	if (opt_G == "")	opt_G = " -G0/115/190"	end	# Default bar color
 
-	opt_S = add_opt("", "Sb",  d, [:size], true)
+	opt_S = add_opt("", "Sb",  d, [:size], nothing, true)
 	if (opt_S == "")
 		opt = add_opt("", "",  d, [:width])		# No need to purge because width is not a psxy option
 		if (opt == "")	opt = "0.8"	end			# The default
@@ -410,7 +410,7 @@ function bar3(arg; K=false, O=false, first=true, kwargs...)
 		opt_S = opt_S * "+b" * opt
 	end
 
-	opt_G = add_opt("", 'G', d, [:G :fill], true)
+	opt_G = add_opt("", 'G', d, [:G :fill], nothing, true)
 	if     (opt_G == " -G")	opt_G = ""					# Same as black
 	elseif (opt_G == "")    opt_G = " -G0/115/190"		# Default bar color. But it might be overriden by -C
 	end
@@ -422,7 +422,7 @@ function bar3(arg; K=false, O=false, first=true, kwargs...)
 	#R = [parse(Float64, s[k]) for k = 1:length(s)]
 
 	caller = opt_G * opt_S * opt_J						# Piggy-back this
-	opt = add_opt("", 'p', d, [:p :view], true)
+	opt = add_opt("", 'p', d, [:p :view], nothing, true)
 	if (opt == "")  caller = caller * " -p200/30"	end
 
 	GMT.common_plot_xyz("", arg1, caller, K, O, first, true, d...)

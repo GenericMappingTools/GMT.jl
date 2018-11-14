@@ -3,31 +3,30 @@
 
 Calculate and plot the day-night terminator and the civil, nautical and astronomical twilights.
 
-Full option list at [`pssolar`](http://gmt.soest.hawaii.edu/doc/latest/solar.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_J)
 - $(GMT.opt_B)
-- **C** : **formats** : -- Str --
+- **C** : **format** : -- ::Bool --
 
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#c)
 - **G** : **fill** : -- Number or Str --
 
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#g)
-- **I** : **sun** : -- Bool or [] --
+- **I** : **sun** : -- ::Bool or ::Tuple or ::NamedTuple --
 
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#i)
 - $(GMT.opt_P)
-- **M** : **dump** : -- Str or [] --
+- **M** : **dump** : -- ::Bool --
 
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#M)
 - $(GMT.opt_R)
-- **N** : **radius** : -- Bool or [] --
+- **N** : **invert** : -- ::Bool --
 
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#n)
-- **T** : **terminators** : -- Bool or [] --
+- **T** : **terminators** : -- ::Bool or ::Tuple or ::NamedTuple --
 
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#t)
 - **W** : **pen** : -- Str or tuple --
@@ -42,6 +41,9 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+
+[`Full man page`](https://genericmappingtools.github.io/GMT.jl/latest/solar/)
+[`GMT man page`](http://gmt.soest.hawaii.edu/doc/latest/solar.html)
 """
 function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
@@ -64,12 +66,12 @@ function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	cmd = add_opt(cmd, 'C', d, [:C :formats])
+	cmd = add_opt(cmd, 'C', d, [:C :format])
     cmd, = add_opt_cpt(d, cmd, [:G :fill], 'G')
-    cmd = add_opt(cmd, 'I', d, [:I :sun])
+    cmd = add_opt(cmd, 'I', d, [:I :sun], (pos="",date="+d",TZ="+z"))
 	cmd = add_opt(cmd, 'M', d, [:M :dump])
 	cmd = add_opt(cmd, 'N', d, [:N :invert])
-	cmd = add_opt(cmd, 'T', d, [:T :terminators])
+	cmd = add_opt(cmd, 'T', d, [:T :terminators], (terms="",date="+d",TZ="+z"))
 	cmd = cmd * opt_pen(d, 'W', [:W :pen])
 
     opt_extra = ""

@@ -12,11 +12,12 @@ makedocs(
         "Manual" => [
             "monolitic.md",
             "modules.md",
-            "Common options" => [
-                "axis.md",
+            "Common options"       => "common_opts.md",
+            "General features" => [
                 "arrows.md",
                 "color.md",
                 "decorated.md",
+                "symbols.md",
             ],
         ],
         "Modules manuals" => [
