@@ -1,6 +1,8 @@
 # Parse the common options that all GMT modules share, plus some others functions of also common usage
 
 const KW = Dict{Symbol,Any}
+nt2dict(nt::NamedTuple) = nt2dict(; nt...)
+nt2dict(; kw...) = Dict(kw)
 
 function parse_R(cmd::String, d::Dict, O=false, del=false)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
@@ -535,8 +537,8 @@ end
 function build_pen(d::Dict, del::Bool=false)
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
-	lw = add_opt("", "", d, [:lw :linewidth], del)	# Line width
-	ls = add_opt("", "", d, [:ls :linestyle], del)	# Line style
+	lw = add_opt("", "", d, [:lw :linewidth], nothing, del)	# Line width
+	ls = add_opt("", "", d, [:ls :linestyle], nothing, del)	# Line style
 	lc = parse_pen_color(d, [:lc :linecolor], del)
 	out = ""
 	if (lw != "" || lc != "" || ls != "")
@@ -563,9 +565,7 @@ end
 function arg2str(arg)
 	# Convert an empty, a numeric or string ARG into a string ... if it's not one to start with
 	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
-	if (isa(arg, String))
-		out = arg
-	elseif (isa(arg, Symbol))
+	if (isa(arg, String) || isa(arg, Symbol))
 		out = string(arg)
 	elseif (isempty_(arg) || (isa(arg, Bool) && arg))
 		out = ""
@@ -617,18 +617,40 @@ function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(cmd::String, opt, d::Dict, symbs, del::Bool=false)
+function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false)
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == true we remove the found key. Useful when 
 	for symb in symbs
 		if (haskey(d, symb))
-			if (opt != "")
-				cmd = string(cmd, " -", opt, arg2str(d[symb]))
-			else
-				cmd = string(cmd, arg2str(d[symb]))
+			if (isa(d[symb], NamedTuple))  args = add_opt(d[symb], mapa)
+			else                           args = arg2str(d[symb])
+			end
+			if (opt != "")  cmd = string(cmd, " -", opt, args)
+			else            cmd = string(cmd, args)
 			end
 			if (del)  delete!(d, symb)  end
 			break
+		end
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function add_opt(nt::NamedTuple, mapa::NamedTuple)
+	# Generic parser of options passed in a NT and whose last element is anther NT with the mapping
+	# between expanded sub-options names and the original GMT flags.
+	# Example: 
+	#	nt=(a=1,b=2,flags=(a="+a",b="-b"))
+	# translates to:	"+a1-b2"
+	#if (!isa(mapa, NamedTuple))
+	#	error("Programming error. The 'mapa' arg must contain a NamedTuple")
+	#end
+	key = keys(nt);
+	d = nt2dict(mapa)	# The flags mapping as a Dict
+	cmd = ""
+	for k = 1:length(key)
+		if (haskey(d, key[k]))
+			cmd = cmd * d[key[k]] * arg2str(nt[k])
 		end
 	end
 	return cmd

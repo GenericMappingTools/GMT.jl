@@ -33,11 +33,18 @@ if (got_it)					# Otherwise go straight to end
 	raw = [collect((1.0:50)) rand(50)];
 	filter1d(raw, F="m15");
 
+	# FITCIRCLE
+	d = [-3.2488 -1.2735; 7.46259 6.6050; 0.710402 3.0484; 6.6633 4.3121; 12.188 18.570; 8.807 14.397; 17.045 12.865; 19.688 30.128; 31.823 33.685; 39.410 32.460; 48.194 47.114; 62.446 46.528; 59.865 46.453; 68.739 50.164; 64.334 32.984];
+	fitcircle(d, L=3);
+
 	# GMT2KML
 	if (GMTver >= 6)
 		D = gmt("pscoast -R-15/2/50/59:30 -Jm1i -M -W0.25p -Di");
 		gmt2kml(D, F=:l, W=(1,:red));
 	end
+
+	# GMTCONNECT
+	gmtconnect([0 0; 1 1], [1.1 1.1; 2 2], T=0.5);
 
 	# GMTCONVERT
 	gmtconvert([1.1 2; 3 4], o=0)
@@ -96,7 +103,7 @@ if (got_it)					# Otherwise go straight to end
 	gmtvector(d, T=:D, S="0/0", f=:g);
 
 	# GMTWICH
-	gmtwhich("lixo.dat");
+	gmtwhich("lixo.dat", C=true);
 
 	# GRDINFO
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
@@ -295,7 +302,7 @@ if (got_it)					# Otherwise go straight to end
 	ternary([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", X=:c, B=:a, S="c0.1c");
 
 	# PSTEXT
-	text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps")
+	text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps",showfig="lixo.ps")
 
 	# PSWIGGLE
 	t=[0 7; 1 8; 8 3; 10 7];
@@ -337,6 +344,17 @@ if (got_it)					# Otherwise go straight to end
 
 	# MISC
 	G = GMT.grid_type(G.z);
+	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
+	G2 = G1;
+	G3 = G1 + G2;
+	G3 = G1 - G2;
+	G3 = G1 * G2;
+	G3 = G1 / G2;
+	GMT.get_datatype([]);
+
+	GMT.linspace(1,1,100);
+	GMT.fakedata(50,1);
+	GMT.contains("aiai", "ia");
 
 	# -------------------- Test common_options ----------------------------------------
 	d = Dict(:xlim => (1,2), :ylim => (3,4));
@@ -369,6 +387,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.get_color([1 2 3]) == "1/2/3"
 	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
 	@test GMT.parse_unit_unit("data") == "u"
+	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
 
 	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
 	                  justify=:end,fill=:none,trim=0.1,endpoint=true,uv=6.6);

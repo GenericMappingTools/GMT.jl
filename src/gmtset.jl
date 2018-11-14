@@ -26,8 +26,8 @@ function gmtset(cmd0::String=""; kwargs...)
 	d = KW(kwargs)
 	cmd = parse_V("", d)
 
-	cmd = add_opt(cmd, 'D', d, [:D :units], true)
-	cmd = add_opt(cmd, 'G', d, [:G :defaultsfile], true)
+	cmd = add_opt(cmd, 'D', d, [:D :units], nothing, true)
+	cmd = add_opt(cmd, 'G', d, [:G :defaultsfile], nothing, true)
  
 	key = collect(keys(d))
 	for k = 1:length(d)
