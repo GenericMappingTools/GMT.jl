@@ -224,6 +224,8 @@ if (got_it)					# Otherwise go straight to end
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
 	plot!(collect(1:10),rand(10), fmt="ps")
 	plot3d(rand(5,5,3), marker=:cube)
+	plot(1:10,rand(10), S=(symb=:c,size=7,unit=:point), color=:rainbow, zcolor=rand(10))
+	plot(1:10,rand(10), S="c7p", color=:rainbow)
 
 	# ARROWS
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
@@ -251,7 +253,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PROJECT
 	if (GMTver >= 6)
-		project(C="15/15", T="85/40", G="1/110", L="-20/60", Vd=1);	# Fails in GMT5
+		project(C="15/15", T="85/40", G="1/110", L="-20/60");	# Fails in GMT5
 	end
 
 	# PSBASEMAP
@@ -395,6 +397,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
 	@test GMT.parse_unit_unit("data") == "u"
 	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
+	@test GMT.add_opt((symb=:circle, size=7, unit=:point), (symb="1", size="", unit="1")) == "c7p"
 
 	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
 	                  justify=:end,fill=:none,trim=0.1,endpoint=true,uv=6.6);

@@ -38,11 +38,11 @@ Parameters
     Do NOT clip symbols that fall outside map border 
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/ternary.html#n)
 - $(GMT.opt_P)
-- **S** : **symbol** : **marker** : **Marker** : -- Str --
+- **S** : **symbol** : **marker** : **shape** : -- Str --
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/ternary.html#s)
-    Alternatively select a sub-set of symbols using the aliases: **marker** or **Marker** and values:
+    Alternatively select a sub-set of symbols using the aliases: **symbol**, **marker** or **shape**and values:
 
     + **-**, **x_dash**
     + **+**, **plus**
@@ -131,7 +131,7 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 
 	cmd = add_opt(cmd, 'G', d, [:G :fill])
 	opt_Gsymb = ""			# Filling color for symbols
-	for sym in [:G :markerfacecolor :MarkerFaceColor]
+	for sym in [:G :markerfacecolor]
 		if (haskey(d, sym))
 			opt_Gsymb = " -G" * arg2str(d[sym])
 			break
@@ -139,7 +139,7 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 	end
 
 	opt_Wmarker = ""
-	for sym in [:markeredgecolor :MarkerEdgeColor]
+	for sym in [:markeredgecolor]
 		if (haskey(d, sym))
 			opt_Wmarker = "0.5p," * arg2str(d[sym])		# 0.25p is so thin
 			break
@@ -174,35 +174,11 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 			break
 		end
 	end
-	if (isempty(opt_S))			# OK, no symbol given via the -S option. So fish in aliases
-		marca = ""
-		for sym in [:marker :Marker]
-			if (haskey(d, sym))
-				t = d[sym]
-				if (isa(t, Symbol))	t = string(t)	end
-				if (t == "-"     || t == "x-dash")   marca = "-"
-				elseif (t == "+" || t == "plus")     marca = "+"
-				elseif (t == "a" || t == "*" || t == "star")     marca = "a"
-				elseif (t == "c" || t == "circle")   marca = "c"
-				elseif (t == "d" || t == "diamond")  marca = "d"
-				elseif (t == "g" || t == "octagon")  marca = "g"
-				elseif (t == "h" || t == "hexagon")  marca = "h"
-				elseif (t == "i" || t == "v" || t == "inverted_tri")  marca = "i"
-				elseif (t == "n" || t == "pentagon")  marca = "n"
-				elseif (t == "p" || t == "." || t == "point")     marca = "p"
-				elseif (t == "r" || t == "rectangle") marca = "r"
-				elseif (t == "s" || t == "square")    marca = "s"
-				elseif (t == "t" || t == "^" || t == "triangle")  marca = "t"
-				elseif (t == "x" || t == "cross")     marca = "x"
-				elseif (is3D && (t == "u" || t == "cube"))  marca = "u"
-				elseif (t == "y" || t == "y-dash")    marca = "y"
-				end
-				break
-			end
-		end
-		if (!isempty(marca))
+	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
+		marca = get_marker_name(d, [:marker :shape], false)
+		if (marca != "")
 			done = false
-			for sym in [:markersize :MarkerSize :size]
+			for sym in [:markersize :ms :size]
 				if (haskey(d, sym))
 					marca = marca * arg2str(d[sym])
 					done = true
@@ -211,12 +187,12 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 			end
 			if (!done)  marca = marca * "8p"  end			# Default to 8p
 		end
-		if (!isempty(marca))  opt_S = " -S" * marca  end
+		if (marca != "")  opt_S = " -S" * marca  end
 	end
 
-	if (!isempty(opt_S))			# 
+	if (opt_S != "")			# 
 		opt_ML = ""
-		for sym in [:markerline :MarkerLine]
+		for sym in [:markerline]
 			if (haskey(d, sym))
 				if (isa(d[sym], Tuple))	# Like this it can hold the pen, not extended atts
 					opt_ML = " -W" * parse_pen(d[sym])
@@ -230,38 +206,34 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 				break
 			end
 		end
-		if (!isempty(opt_W) && !isempty(opt_ML))
+		if (opt_W != "" && !isempty(opt_ML))
 			@warn("You cannot use both markeredgecolor and W or line_attrib keys.")
 		end
 	end
 
-	if (!isempty(opt_W) && isempty(opt_S)) 			# We have a line/polygon request
+	if (opt_W != "" && opt_S == "") 			# We have a line/polygon request
 		cmd = [finish_PS(d, cmd * opt_W, output, K, O)]
-	elseif (isempty(opt_W) && !isempty(opt_S))		# We have a symbol request
-		if (!isempty(opt_Wmarker) && isempty(opt_W))
+	elseif (opt_W == "" && opt_S != "")			# We have a symbol request
+		if (opt_Wmarker != "" && opt_W == "")
 			opt_Gsymb = opt_Gsymb * " -W" * opt_Wmarker	# Piggy back in this option string
 		end
-		if (!isempty(opt_ML))						# If we have a symbol outline pen
-			cmd = cmd * opt_ML
-		end
+		if (opt_ML != "")  cmd = cmd * opt_ML  end		# If we have a symbol outline pen
 		cmd = [finish_PS(d, cmd * opt_S * opt_Gsymb, output, K, O)]
-	elseif (!isempty(opt_W) && !isempty(opt_S))		# We have both line/polygon and a symbol
+	elseif (opt_W != "" && opt_S != "")		# We have both line/polygon and a symbol
 		# that is not a vector (because Vector width is set by -W)
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
 			cmd = [finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb, output, K, O)]
 		else
-			if (!isempty(opt_Wmarker))
+			if (opt_Wmarker != "")
 				opt_Wmarker = " -W" * opt_Wmarker	# Set Symbol edge color 
 			end
 			cmd1 = cmd * opt_W
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
-			if (!isempty(opt_ML))					# If we have a symbol outline pen
-				cmd1 = cmd1 * opt_ML
-			end
+			if (opt_ML != "")  cmd1 = cmd1 * opt_ML  end		# If we have a symbol outline pen
 			cmd = [finish_PS(d, cmd1, output, true, O)
 			       finish_PS(d, cmd2, output, K, true)]
 		end
-	elseif (!isempty(opt_S) && !isempty(opt_ML))		# We have a symbol outline pen
+	elseif (opt_S != "" && opt_ML != "")		# We have a symbol outline pen
 		cmd = [finish_PS(d, cmd * opt_ML * opt_S * opt_Gsymb, output, K, O)]
 	else
 		cmd = [finish_PS(d, cmd, output, K, O)]

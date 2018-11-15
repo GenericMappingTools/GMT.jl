@@ -4,6 +4,17 @@ const KW = Dict{Symbol,Any}
 nt2dict(nt::NamedTuple) = nt2dict(; nt...)
 nt2dict(; kw...) = Dict(kw)
 
+function find_in_dict(d::Dict, symbs, del=false)
+	# See if D contains any of the symbols in SYMBS. If yes, return corresponding value
+	for symb in symbs
+		if (haskey(d, symb))
+			if (del) delete!(d, symb) end
+			return d[symb], symb
+		end
+	end
+	return nothing, 0
+end
+
 function parse_R(cmd::String, d::Dict, O=false, del=false)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	opt_R = ""
@@ -635,15 +646,16 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple)
 	# Example: 
 	#	nt=(a=1,b=2,flags=(a="+a",b="-b"))
 	# translates to:	"+a1-b2"
-	#if (!isa(mapa, NamedTuple))
-	#	error("Programming error. The 'mapa' arg must contain a NamedTuple")
-	#end
 	key = keys(nt);
-	d = nt2dict(mapa)	# The flags mapping as a Dict
+	d = nt2dict(mapa)				# The flags mapping as a Dict
 	cmd = ""
-	for k = 1:length(key)
+	for k = 1:length(key)			# Loop over the keys of option's tuple
 		if (haskey(d, key[k]))
-			cmd = cmd * d[key[k]] * arg2str(nt[k])
+			if (d[key[k]] == "1")	# Means that only first char in value is retained. Used with units
+				cmd = cmd * arg2str(nt[k])[1]
+			else
+				cmd = cmd * d[key[k]] * arg2str(nt[k])
+			end
 		end
 	end
 	return cmd

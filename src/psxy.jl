@@ -40,7 +40,7 @@ Parameters
     Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating
     shading illumination.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#i)
-- **L** : **closed_polygon** : -- Str --
+- **L** : **polygon** : -- Str --
 
     Force closed polygons. 
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#l)
@@ -49,12 +49,12 @@ Parameters
     Do NOT clip symbols that fall outside map border 
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#n)
 - $(GMT.opt_P)
-- **S** : -- Str --
+- **S** : **symbol** : -- Str --
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#s)
 
-    Alternatively select a sub-set of symbols using the aliases: **symbol** or **marker** and values:
+    Alternatively select a sub-set of symbols using the aliases: **marker** or **shape**and values:
 
     + **-**, **x_dash**
     + **+**, **plus**
@@ -126,7 +126,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	if (!isempty(caller) && occursin(" -", caller))
 		cmd = caller
-		caller = "others"		# It was piggy-backed by scatter or others
+		caller = "others"			# It was piggy-backed by scatter or others
 	else
 		cmd = ""
 	end
@@ -166,7 +166,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	# If file name sent in, read it and compute a tight -R if this was not provided 
+	# If a file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
 	
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
@@ -181,12 +181,35 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		if ((isa(arg1, Array) && size(arg1,2) <= 2+is3D) ||
 			(isa(arg1, GMTdataset) && size(arg1.data,2) <= 2+is3D) ||
 			(isa(arg1, Array{GMTdataset}) && size(arg1[1].data,2) <= 2+is3D))
-			if (opt_i == "")
-				cmd = @sprintf("%s -i0-%d,%d", cmd, 1+is3D, 1+is3D)
+			mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
+			if (mz !== nothing)
+				if (isa(arg1, Array) && length(mz) == size(arg1,1))
+					arg1 = hcat(arg1, mz[:])
+				elseif (isa(arg1, GMTdataset) && length(mz) == size(arg1.data,1))
+					arg1.data = hcat(arg1.data, mz[:])
+				elseif (isa(arg1, Array{GMTdataset}) && length(mz) == size(arg1[1].data,1))
+					arg1[1].data = hcat(arg1[1].data, mz[:])
+				else
+					@warn(string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it."))
+				end
 			else
-				@warn("Plotting with color table requires adding one more column to the dataset but your -i
-				option did not do it, so you won't get waht you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots")
+				if (opt_i == "")
+					cmd = @sprintf("%s -i0-%d,%d", cmd, 1+is3D, 1+is3D)
+				else
+					@warn("Plotting with color table requires adding one more column to the dataset but your -i
+					option did not do it, so you won't get waht you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots")
+				end
 			end
+			#=
+			if (N_args == n_prev)		# No cpt transmitted, so need to compute one
+				if (mz !== nothing)
+					@show(cmd[len+2:end])
+					arg2 = gmt("makecpt -E " * cmd[len+2:end], mz[:])
+				else
+					arg2 = gmt("makecpt -E " * cmd[len+2:end], arg1)
+				end
+			end
+			=#
 		end
 	end
 
@@ -204,7 +227,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	end
 
 	cmd = add_opt(cmd, 'I', d, [:I :intens])
-	cmd = add_opt(cmd, 'L', d, [:L :closed_polygon])
+	cmd = add_opt(cmd, 'L', d, [:L :polygon])
 	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 
 	opt_W = add_opt_pen(d, [:W :pen :line_attrib], "W")
@@ -212,12 +235,12 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
 	end
 
-	opt_S = add_opt("", 'S', d, [:S :symbol])
-	if (isempty(opt_S))			# OK, no symbol given via the -S option. So fish in aliases
-		marca = get_marker_name(d, [:marker], is3D)
+	opt_S = add_opt("", 'S', d, [:S :symbol], (symb="1", size="", unit="1"))
+	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
+		marca = get_marker_name(d, [:marker :shape], is3D)
 		if (marca != "")
 			ms = ""
-			for symb in [:size :markersize]
+			for symb in [:markersize :ms :size]
 				if (haskey(d, symb))
 					if (isa(d[symb], AbstractArray))
 						if (length(d[symb]) == size(arg1,1))
@@ -233,11 +256,11 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 				end
 			end
 			if (ms == "")  marca = marca * "8p"		end		# Default to 8p
+			opt_S = " -S" * marca
 		end
-		if (!isempty(marca))  opt_S = " -S" * marca  end
 	end
 
-	if (!isempty(opt_S))
+	if (opt_S != "")
 		opt_ML = ""
 		if (haskey(d, :markerline))
 			if (isa(d[:markerline], Tuple))			# Like this it can hold the pen, not extended atts
@@ -250,39 +273,39 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 				@warn("markerline overrides markeredgecolor")
 			end
 		end
-		if (!isempty(opt_W) && !isempty(opt_ML))
+		if (opt_W != "" && opt_ML != "")
 			@warn("You cannot use both markeredgecolor and W or line_attrib keys.")
 		end
 	end
 
-	if (!isempty(opt_W) && isempty(opt_S)) 			# We have a line/polygon request
+	if (opt_W != "" && opt_S == "") 					# We have a line/polygon request
 		cmd = [finish_PS(d, cmd * opt_W, output, K, O)]
-	elseif (isempty(opt_W) && !isempty(opt_S))		# We have a symbol request
-		if (!isempty(opt_Wmarker) && isempty(opt_W))
+
+	elseif (opt_W == "" && opt_S != "")					# We have a symbol request
+		if (opt_Wmarker != "" && opt_W == "")
 			opt_Gsymb = opt_Gsymb * " -W" * opt_Wmarker	# Piggy back in this option string
 		end
-		if (!isempty(opt_ML))						# If we have a symbol outline pen
-			cmd = cmd * opt_ML
-		end
+		if (opt_ML != "")  cmd = cmd * opt_ML  end		# If we have a symbol outline pen
 		cmd = [finish_PS(d, cmd * opt_S * opt_Gsymb, output, K, O)]
-	elseif (!isempty(opt_W) && !isempty(opt_S))		# We have both line/polygon and a symbol
+
+	elseif (opt_W != "" && opt_S != "")					# We have both line/polygon and a symbol
 		# that is not a vector (because Vector width is set by -W)
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
 			cmd = [finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb, output, K, O)]
 		else
-			if (!isempty(opt_Wmarker))
-				opt_Wmarker = " -W" * opt_Wmarker	# Set Symbol edge color 
+			if (opt_Wmarker != "")
+				opt_Wmarker = " -W" * opt_Wmarker		# Set Symbol edge color 
 			end
 			cmd1 = cmd * opt_W
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
-			if (!isempty(opt_ML))					# If we have a symbol outline pen
-				cmd1 = cmd1 * opt_ML
-			end
+			if (opt_ML != "")  cmd1 = cmd1 * opt_ML  end	# If we have a symbol outline pen
 			cmd = [finish_PS(d, cmd1, output, true, O)
 			       finish_PS(d, cmd2, output, K, true)]
 		end
-	elseif (!isempty(opt_S) && !isempty(opt_ML))		# We have a symbol outline pen
+
+	elseif (opt_S != "" && opt_ML != "")				# We have a symbol outline pen
 		cmd = [finish_PS(d, cmd * opt_ML * opt_S * opt_Gsymb, output, K, O)]
+
 	else
 		cmd = [finish_PS(d, cmd, output, K, O)]
 	end

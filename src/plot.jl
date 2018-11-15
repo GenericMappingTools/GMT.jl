@@ -378,9 +378,7 @@ function bar3(arg; K=false, O=false, first=true, kwargs...)
 
 	if (isa(arg1, Array))
 		ny, nx = size(arg1)
-		if ((nx > 3 && ny > 3))					# Assume it is a 'bare grid'
-			arg1 = mat2grid(arg1)
-		end
+		if ((nx > 3 && ny > 3))  arg1 = mat2grid(arg1)  end		# Assume it is a 'bare grid'
 	end
 
 	if (isa(arg1, GMTgrid))
