@@ -253,7 +253,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PROJECT
 	if (GMTver >= 6)
-		project(C="15/15", T="85/40", G="1/110", L="-20/60", Vd=1);	# Fails in GMT5
+		project(C="15/15", T="85/40", G="1/110", L="-20/60");	# Fails in GMT5
 	end
 
 	# PSBASEMAP

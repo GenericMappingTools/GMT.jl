@@ -12,7 +12,7 @@ function find_in_dict(d::Dict, symbs, del=false)
 			return d[symb], symb
 		end
 	end
-	return nothing
+	return nothing, 0
 end
 
 function parse_R(cmd::String, d::Dict, O=false, del=false)
