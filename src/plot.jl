@@ -99,21 +99,6 @@ plot(cmd0::String="", arg1=[]; K=false, O=false, first=true, kw...) =
 	GMT.xy(cmd0, arg1; caller="plot", K=K, O=O, first=first, kw...)
 plot!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
 	GMT.xy(cmd0, arg1; caller="plot", K=K, O=O, first=first, kw...)
-# -----------------------------------------------------------------------------------------------------
-#plot(arg1::GMTdataset; K=false, O=false, first=true, kw...) =
-#	GMT.xy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
-#plot!(arg1::GMTdataset; K=false, O=false, first=true, kw...) =
-#	GMT.xy("", arg1; caller="plot", K=true, O=true, first=false, kw...)
-#plot(arg1::Array{GMTdataset,1}; K=false, O=false, first=true, kw...) =
-#	GMT.xy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
-#plot!(arg1::Array{GMTdataset,1}; K=false, O=false, first=true, kw...) =
-#	GMT.xy("", arg1; caller="plot", K=true, O=true, first=false, kw...)
-
-# ------------------------------------------------------------------------------------------------------
-#plot(arg1::String; K=false, O=false, first=true, kw...) =
-#	GMT.xy("", []; caller="plot", K=K, O=O, first=first, kw...)
-#plot!(arg1::String; K=true, O=true, first=false, kw...) =
-#	GMT.xy("", []; caller="plot", K=K, O=O, first=first, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 function plot(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
@@ -128,10 +113,10 @@ end
 
 
 # ------------------------------------------------------------------------------------------------------
-scatter(arg1; K=false, O=false, first=true, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=false, kw...)
-scatter!(arg1; K=true, O=true, first=false, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=false, kw...)
-scatter3(arg1; K=false, O=false, first=true, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=true, kw...)
-scatter3!(arg1; K=true, O=true, first=false, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=true, kw...)
+scatter(arg1;   K=false, O=false, first=true, kw...)  = scatter("", arg1; K=K, O=O, first=first, is3D=false, kw...)
+scatter!(arg1;  K=true,  O=true,  first=false, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=false, kw...)
+scatter3(arg1;  K=false, O=false, first=true, kw...)  = scatter("", arg1; K=K, O=O, first=first, is3D=true, kw...)
+scatter3!(arg1; K=true,  O=true,  first=false, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=true, kw...)
 
 function scatter(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
 	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
@@ -203,57 +188,16 @@ Parameters
 	
     and select their sizes with the **markersize** or **size** keyword [default is 8p].
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
-    points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*	
-- **W** : **pen** : **line_attrib** : **markeredgecolor** : -- Str --
+    points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT=:c,)*	
+- **W** : **pen** : **markeredgecolor** : -- Str --
 
     Set pen attributes for lines or the outline of symbols
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w)
 """
 function scatter(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=false, kwargs...)
-
-	if (isempty(cmd0) && isa(arg1, AbstractArray) && size(arg1,2) == 1 || size(arg1,1) == 1)	# y only
-		arg1 = hcat(1:length(arg1), arg1[:])
+	if (is3D)  GMT.common_plot_xyz(cmd0, arg1, "scatter3", K, O, first, is3D, kwargs...)
+	else       GMT.common_plot_xyz(cmd0, arg1, "scatter",  K, O, first, is3D, kwargs...)
 	end
-
-	d = KW(kwargs)
-	opt_G = add_opt("", 'G', d, [:G :fill :markerfacecolor], nothing, true)
-	opt_W = add_opt("", 'W', d, [:markeredgecolor], nothing, true)
-
-	opt_S = get_marker_name(d, [:symbol :marker], is3D, true)
-	if (isempty(opt_S))  opt_S = " -Sc"
-	else                 opt_S = " -S" * opt_S
-	end
-
-	opt = ""
-	for symb in [:size :markersize]
-		if (haskey(d, symb))
-			if (isa(d[symb], AbstractArray))
-				if (length(d[symb]) == size(arg1,1))
-					arg1 = hcat(arg1, d[symb][:])
-					opt = " "		# Just to defeat the empty test below
-				else
-					error("SCATTER: The size array must have the same number of elements rows in the data")
-				end
-			else
-				opt = arg2str(d[symb])
-			end
-			delete!(d, symb)
-			break
-		end
-	end
-
-	if (opt == "")  	opt   = "8p"	end		# Default to 8p
-	if (opt_G == "")	opt_G = " -G0"	end
-	caller = opt_S * opt * opt_G * opt_W		# Piggy-back this
-
-	if (is3D)
-		opt = add_opt("", 'p', d, [:p :view], nothing, true)
-		if (opt == "")  caller = caller * " -p200/30"
-		else            caller = caller * opt
-		end
-	end
-
-	GMT.common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, d...)
 end
 # ------------------------------------------------------------------------------------------------------
 
@@ -317,32 +261,10 @@ Example:
 """
 function bar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
-	if (isa(arg1, Array{GMT.GMTdataset,1}))		# Shitty consequence of arg1 being the output of a prev cmd
-		arg1 = arg1[1]
-	end
-
 	if (isempty(cmd0) && isa(arg1, AbstractArray) && size(arg1,2) == 1 || size(arg1,1) == 1)	# y only
 		arg1 = hcat(1:length(arg1), arg1[:])
 	end
-
-	d = KW(kwargs)
-	opt_G = add_opt("", 'G', d, [:G :fill], nothing, true)
-	if (opt_G == "")	opt_G = " -G0/115/190"	end	# Default bar color
-
-	opt_S = add_opt("", "Sb",  d, [:size], nothing, true)
-	if (opt_S == "")
-		opt = add_opt("", "",  d, [:width])		# No need to purge because width is not a psxy option
-		if (opt == "")	opt = "0.8"	end			# The default
-		opt_S = " -Sb" * opt * "u"
-	end
-
-	optB = add_opt("", "",  d, [:bottom :base])	# No need to purge because bottom is not a psxy option
-	if (optB == "")	optB = "0"	end
-	optB = "+b" * optB
-
-	caller = opt_G * opt_S * optB				# Piggy-back this
-
-	GMT.common_plot_xyz(cmd0, arg1, caller, K, O, first, false, d...)
+	GMT.common_plot_xyz(cmd0, arg1, "bar", K, O, first, false, kwargs...)
 end
 
 # ------------------------------------------------------------------------------------------------------
@@ -372,7 +294,7 @@ Example:
     bar3(G, lw=:thinnest, show=true)
 """
 function bar3(arg; K=false, O=false, first=true, kwargs...)
-#
+	# Contrary to "bar" this one has specific work to do here.
 	d = KW(kwargs)
 
 	arg1 = arg			# Make a copy that may or not become a new thing
