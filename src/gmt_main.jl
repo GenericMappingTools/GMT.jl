@@ -310,9 +310,7 @@ function gmt(cmd::String, args...)
 	end
 
 	# 9. Destroy linked option list
-	if (GMT_Destroy_Options(API, pLL) != 0)
-		@printf("GMT Warning: Failure to destroy GMT5 options")
-	end
+	if (GMT_Destroy_Options(API, pLL) != 0) @warn("GMT Warning: Failure to destroy GMT options") end
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)
@@ -324,13 +322,13 @@ function gmt(cmd::String, args...)
 	elseif (n_out == 3)
 		return out[1], out[2], out[3]
 	else
-		println("Case non-foreseen. More than 3 outputs?")
+		@warn("Case non-foreseen. More than 3 outputs?")
 		return out
 	end
 
 end
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function create_cmd(LL)
 	# Takes a LinkedList LL of gmt options created by GMT_Create_Options() and join them in a single
 	# string but taking care that all options start with the '-' char and insert '<' if necessary
@@ -350,6 +348,7 @@ function create_cmd(LL)
 	end
 	return takebuf_string(a)
 end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function parse_mem_layouts(cmd)
@@ -456,7 +455,6 @@ function get_grid(API::Ptr{Void}, object)
 	if (isempty(grd_mem_layout))
 		for col = 1:nx
 			for row = 1:ny
-				#ij = GMT_IJP(gmt_hdr, row, col)
 				ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
 				z[MEXG_IJ(row, col, ny)] = t[ij]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
 			end
@@ -733,47 +731,6 @@ function get_textset_(API::Ptr{Void}, object::Ptr{Void})
 	return Darr
 end
 
-#= ---------------------------------------------------------------------------------------------------
-function get_textset(API::Ptr{Void}, object::Ptr{Void})
-# Hook this Julia TEXTSET into the k'th output item
-
-	if (object == C_NULL)
-		error("programming error, textset is NULL")
-	end
-
-	t = [GMT.GMT_STRICT_CONVERSION, 0, 0]
-	if ((V = GMT_Convert_Data(API, object, GMT.GMT_IS_TEXTSET, C_NULL, GMT.GMT_IS_VECTOR, Ref(pointer(t)))) != C_NULL)
-		C = get_dataset(API, V)
-		return C
-	end
-
-	T = unsafe_load(convert(Ptr{GMT_TEXTSET}, object))
-	p = pointer_to_array(pointer_to_array(T.table,1)[1],1) 		# T.table::Ptr{Ptr{GMT.GMT_TEXTTABLE}}
-
-	# Create a cell array to hold all records
-	k = T.n_records
-	if (p[1].n_segments > 1) k += p[1].n_segments	end
-	C = cell(k)
-	# There is only one table when used in the external API, but it may have many segments.
-	# The segment information is lost when returned to Julia
-
-	k = 0
-	for seg = 1:p[1].n_segments
-		S = pointer_to_array(pointer_to_array(p[1].segment,1)[seg],seg)	# p[1].segment::Ptr{Ptr{GMT.GMT_TEXTSEGMENT}}
-		if (p[1].n_segments > 1)
-			C[k] = @sprintf("> %s", unsafe_string(S[1].header))
-			k += 1
-		end
-		for row = 1:S[1].n_rows
-			k += 1
-			C[k] = unsafe_string(pointer_to_array(S[1].data, row)[row])
-		end
-	end
-
-	return C
-end
-=#
-
 # ---------------------------------------------------------------------------------------------------
 function get_PS(API::Ptr{Void}, object::Ptr{Void})
 # Given a GMT Postscript structure P, build a Julia PS type
@@ -867,64 +824,6 @@ function get_dataset_(API::Ptr{Void}, object)
 
 	return Darr
 end
-
-#= ---------------------------------------------------------------------------------------------------
-function get_dataset(API::Ptr{Void}, object)
-# Given an incoming GMT dataset via vectors, build a matrix and assign values per column
-
-	V = unsafe_load(convert(Ptr{GMT_VECTOR}, object))
-	if (V.data == C_NULL)
-		error("programming error, input Dataset is NULL")
-	end
-	if (V.data == C_NULL)
-		error("programming error, input Dataset empty")
-	end
-
-	tipo = GMTJL_type(API)
-	if (tipo == DOUBLE_CLASS)
-		out = zeros(Float64, V.n_rows, V.n_columns)
-		t = pointer_to_array(convert(Ptr{Ptr{Cdouble}},V.data), V.n_columns)
-	elseif (tipo == SINGLE_CLASS)
-		out = zeros(Float32, V.n_rows, V.n_columns)
-		t = pointer_to_array(convert(Ptr{Ptr{Cfloat}},V.data), V.n_columns)
-	elseif (tipo == UINT64_CLASS)
-		out = zeros(Culonglong, V.n_rows, V.n_columns)
-		t = pointer_to_array(convert(Ptr{Ptr{Culonglong}},V.data), V.n_columns)
-	elseif (tipo == INT64_CLASS)
-		out = zeros(Clonglong, V.n_rows, V.n_columns)
-		t = pointer_to_array(convert(Ptr{Ptr{Clonglong}},V.data), V.n_columns)
-	elseif (tipo == UINT32_CLASS)
-		out = zeros(Cuint, V.n_rows, V.n_columns)
-		t = pointer_to_array(convert(Ptr{Ptr{Cuint}},V.data), V.n_columns)
-	elseif (tipo == INT32_CLASS)
-		out = zeros(Cint, V.n_rows, V.n_columns)
-		t = pointer_to_array(convert(Ptr{Ptr{Cint}},V.data), V.n_columns)
-	elseif (tipo == UINT16_CLASS)
-		out = zeros(Cushort, V.n_rows, V.n_columns)
-		t = pointer_to_array(convert(Ptr{Ptr{Cushort}},V.data), V.n_columns)
-	elseif (tipo == INT16_CLASS)
-		out = zeros(Cshort, V.n_rows, V.n_columns)
-		t = pointer_to_array(convert(Ptr{Ptr{Cshort}},V.data), V.n_columns)
-	elseif (tipo == UINT8_CLASS)
-		out = zeros(Cuchar, V.n_rows, V.n_columns)
-		t = pointer_to_array(convert(Ptr{Ptr{Cuchar}},V.data), V.n_columns)
-	elseif (tipo == INT8_CLASS)
-		out = zeros(Cchar, V.n_rows, V.n_columns)
-		t = pointer_to_array(convert(Ptr{Ptr{Cchar}},V.data), V.n_columns)
-	else
-		error("get_dataset: Unsupported data type in GMT matrix input.")
-	end
-
-	for c = 1:V.n_columns
-		tt = pointer_to_array(t[c], V.n_rows)
-		for r = 1:V.n_rows
-			out[r, c] = tt[r]
-		end
-	end
-
-	return out
-end
-=#
 
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_Set_Object(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
@@ -1857,7 +1756,7 @@ end
 function Base.:-(G1::GMTgrid, G2::GMTgrid)
 # Subtract two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z))
-		error("The two grids have not the same size, so thay cannot be added.")
+		error("The two grids have not the same size, so thay cannot be subtracted.")
 	end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z .- G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
@@ -1870,7 +1769,7 @@ end
 function Base.:*(G1::GMTgrid, G2::GMTgrid)
 # Multiply two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z))
-		error("The two grids have not the same size, so thay cannot be added.")
+		error("The two grids have not the same size, so thay cannot be multiplied.")
 	end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z .* G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
@@ -1883,7 +1782,7 @@ end
 function Base.:/(G1::GMTgrid, G2::GMTgrid)
 # Divide two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z))
-		error("The two grids have not the same size, so thay cannot be added.")
+		error("The two grids have not the same size, so thay cannot be divided.")
 	end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z ./ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)

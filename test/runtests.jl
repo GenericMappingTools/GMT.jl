@@ -87,6 +87,7 @@ if (got_it)					# Otherwise go straight to end
 		GG = gmtread("lixo.grd", grd=true, varname=:z);
 		@test(sum(G.z[:] - GG.z[:]) == 0)
 		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
+		gmtread("lixo.tif", img=true);
 	else
 		gmtwrite("lixo.grd", G)
 		GG = gmtread("lixo.grd", grd=true, varname=:z);
@@ -95,6 +96,7 @@ if (got_it)					# Otherwise go straight to end
 	gmtwrite("lixo.cpt", cpt)
 	cpt = gmtread("lixo.cpt", cpt=true);
 	gmtwrite("lixo.dat", [1 2; 3 4])
+	gmt("gmtwrite lixo.cpt", cpt)		# Same but tests other code chunk in gmt_main.jl
 	D = gmtread("lixo.dat", table=true);
 	@test(sum(D[1].data) == 10)
 
@@ -356,8 +358,10 @@ if (got_it)					# Otherwise go straight to end
 	G3 = G1 * G2;
 	G3 = G1 / G2;
 	GMT.get_datatype([]);
+	T = text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"]);
 
 	GMT.linspace(1,1,100);
+	GMT.logspace(1,5);
 	GMT.fakedata(50,1);
 	GMT.contains("aiai", "ia");
 
