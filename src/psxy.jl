@@ -128,17 +128,22 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		arg1 = arg1[1]
 	end
 
-	if (!isempty(caller) && occursin(" -", caller))
-		cmd = caller
-		caller = "others"			# It was piggy-backed by scatter or others
-	else
-		cmd = ""
+	cmd = ""
+	sub_module = ""						# Will change to "scatter", etc... if called by sub-modules
+	if (!isempty(caller))
+		if (occursin(" -", caller))		# bar3 still uses this piggy-backed call
+			cmd = caller
+			caller = "others"			# It was piggy-backed
+		else
+			sub_module = caller
+			caller = ""					# Because of parse_BJR()
+		end
 	end
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
-	if (!occursin("-J", cmd))		# bar, bar3 and others may send in a -J
+	if (!occursin("-J", cmd))			# bar, bar3 and others may send in a -J
 		opt_J = " -JX12c/8c"
 		for symb in [:axis :aspect]
 			if (haskey(d, symb))
@@ -248,6 +253,9 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 			@warn("You cannot use both markeredgecolor and W or line_attrib keys.")
 		end
 	end
+
+	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
+	cmd = check_caller(d, cmd, opt_S, sub_module)
 
 	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
 		cmd = [finish_PS(d, cmd * opt_W, output, K, O)]
@@ -372,6 +380,28 @@ function get_marker_name(d::Dict, symbs, is3D=false, del=false)
 		end
 	end
 	return marca
+end
+
+# ---------------------------------------------------------------------------------------------------
+function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
+	# Set sensible defaults for the sub-modules "scatter" & "bar" 
+	if (caller == "scatter")
+		if (opt_S == "")  cmd = cmd * " -Sc8p"  end
+	elseif (caller == "scatter3")
+		if (opt_S == "")  cmd = cmd * " -Su8p"  end
+		if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
+	elseif (caller == "bar")
+		if (opt_S == "")	
+			opt = add_opt("", "",  d, [:width])		# No need to purge because width is not a psxy option
+			if (opt == "")	opt = "0.8"	end			# The default
+			cmd = cmd * " -Sb" * opt * "u"
+		end
+		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end		# Default bar color
+		optB = add_opt("", "",  d, [:bottom :base])	# No need to purge because bottom is not a psxy option
+		if (optB == "")	optB = "0"	end
+		cmd = cmd * "+b" * optB				# NEEDS DOC AND IMPLEMENT THE OTHER BASE
+	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
