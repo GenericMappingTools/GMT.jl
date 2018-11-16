@@ -1057,7 +1057,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "#GMT.plot-Tuple{Array}",
+    "location": "#GMT.plot-Tuple{Any}",
     "page": "Index",
     "title": "GMT.plot",
     "category": "method",
