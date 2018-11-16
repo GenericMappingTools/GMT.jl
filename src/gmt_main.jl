@@ -733,7 +733,7 @@ function get_textset_(API::Ptr{Void}, object::Ptr{Void})
 	return Darr
 end
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function get_textset(API::Ptr{Void}, object::Ptr{Void})
 # Hook this Julia TEXTSET into the k'th output item
 
@@ -772,6 +772,7 @@ function get_textset(API::Ptr{Void}, object::Ptr{Void})
 
 	return C
 end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function get_PS(API::Ptr{Void}, object::Ptr{Void})
@@ -802,10 +803,10 @@ function get_dataset_(API::Ptr{Void}, object)
 # proj4:	String with any proj4 information
 # wkt:		String with any WKT information
 
-	D = unsafe_load(convert(Ptr{GMT_DATASET}, object))
-	if (D == C_NULL)
-		error("get_dataset: programming error, input Dataset is empty")
+	if (object == C_NULL)		# No output produced (?) - return a null data set
+		return GMTdataset()
 	end
+	D = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
 	seg_out = 0
 	for tbl = 1:D.n_tables
@@ -867,7 +868,7 @@ function get_dataset_(API::Ptr{Void}, object)
 	return Darr
 end
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function get_dataset(API::Ptr{Void}, object)
 # Given an incoming GMT dataset via vectors, build a matrix and assign values per column
 
@@ -921,23 +922,9 @@ function get_dataset(API::Ptr{Void}, object)
 		end
 	end
 
-#=
-	out = zeros(Float64, V.n_rows, V.n_columns)
-	if (V.shape == GMT.GMT_IS_COL_FORMAT)  # Easy, just copy
-		out = copy!(out, t)
-	else	# Must transpose
-		for col = 1:V.n_columns
-			for row = 1:V.n_rows
-				#ij = (row - 1) * V.n_columns + col
-				ij = (col - 1) * V.n_rows + col
-				out[row, col] = t[ij]
-			end
-		end
-	end
-=#
-
 	return out
 end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_Set_Object(API::Ptr{Void}, X::GMT_RESOURCE, ptr)
@@ -990,9 +977,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_Get_Object(API::Ptr{Void}, X::GMT_RESOURCE)
-	#name = unsafe_string([X.name...])			# Because X.name is a NTuple
 	name = String([X.name...])
-	if ((X.object = GMT_Read_VirtualFile(API, name)) == NULL)
+	# In line-by-line modules it is possible no output is produced, hence we make an exception for DATASET
+	if ((X.object = GMT_Read_VirtualFile(API, name)) == NULL && X.family != GMT_IS_DATASET)
 		error(@sprintf("GMT: Error reading virtual file %s from GMT", name))
 	end
 	if (X.family == GMT_IS_GRID)         	# A GMT grid; make it the pos'th output item
