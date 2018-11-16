@@ -124,6 +124,10 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	((isempty(cmd0) && isempty_(arg1)) || occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
 
+	if (isa(arg1, Array{GMT.GMTdataset,1}))		# Shitty consequence of arg1 being the output of a prev cmd
+		arg1 = arg1[1]
+	end
+
 	if (!isempty(caller) && occursin(" -", caller))
 		cmd = caller
 		caller = "others"			# It was piggy-backed by scatter or others
@@ -177,41 +181,8 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	len = length(cmd);	n_prev = N_args;
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
-	if (N_args > n_prev || len < length(cmd))			# Got a CPT. Probably need to make room to color column
-		if ((isa(arg1, Array) && size(arg1,2) <= 2+is3D) ||
-			(isa(arg1, GMTdataset) && size(arg1.data,2) <= 2+is3D) ||
-			(isa(arg1, Array{GMTdataset}) && size(arg1[1].data,2) <= 2+is3D))
-			mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
-			if (mz !== nothing)
-				if (isa(arg1, Array) && length(mz) == size(arg1,1))
-					arg1 = hcat(arg1, mz[:])
-				elseif (isa(arg1, GMTdataset) && length(mz) == size(arg1.data,1))
-					arg1.data = hcat(arg1.data, mz[:])
-				elseif (isa(arg1, Array{GMTdataset}) && length(mz) == size(arg1[1].data,1))
-					arg1[1].data = hcat(arg1[1].data, mz[:])
-				else
-					@warn(string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it."))
-				end
-			else
-				if (opt_i == "")
-					cmd = @sprintf("%s -i0-%d,%d", cmd, 1+is3D, 1+is3D)
-				else
-					@warn("Plotting with color table requires adding one more column to the dataset but your -i
-					option did not do it, so you won't get waht you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots")
-				end
-			end
-			#=
-			if (N_args == n_prev)		# No cpt transmitted, so need to compute one
-				if (mz !== nothing)
-					@show(cmd[len+2:end])
-					arg2 = gmt("makecpt -E " * cmd[len+2:end], mz[:])
-				else
-					arg2 = gmt("makecpt -E " * cmd[len+2:end], arg1)
-				end
-			end
-			=#
-		end
-	end
+	# See if we got a CPT. If yes there may may quite some work to do if no color column provided in input data.
+	cmd, arg1, arg2, N_args = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 
 	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
 	cmd = add_opt(cmd, 'D', d, [:D :shift :offset])				# 'offset' may be needed in vec attribs
@@ -278,23 +249,23 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		end
 	end
 
-	if (opt_W != "" && opt_S == "") 					# We have a line/polygon request
+	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
 		cmd = [finish_PS(d, cmd * opt_W, output, K, O)]
 
-	elseif (opt_W == "" && opt_S != "")					# We have a symbol request
+	elseif (opt_W == "" && opt_S != "")						# We have a symbol request
 		if (opt_Wmarker != "" && opt_W == "")
-			opt_Gsymb = opt_Gsymb * " -W" * opt_Wmarker	# Piggy back in this option string
+			opt_Gsymb = opt_Gsymb * " -W" * opt_Wmarker		# Piggy back in this option string
 		end
-		if (opt_ML != "")  cmd = cmd * opt_ML  end		# If we have a symbol outline pen
+		if (opt_ML != "")  cmd = cmd * opt_ML  end			# If we have a symbol outline pen
 		cmd = [finish_PS(d, cmd * opt_S * opt_Gsymb, output, K, O)]
 
-	elseif (opt_W != "" && opt_S != "")					# We have both line/polygon and a symbol
+	elseif (opt_W != "" && opt_S != "")						# We have both line/polygon and a symbol
 		# that is not a vector (because Vector width is set by -W)
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
 			cmd = [finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb, output, K, O)]
 		else
 			if (opt_Wmarker != "")
-				opt_Wmarker = " -W" * opt_Wmarker		# Set Symbol edge color 
+				opt_Wmarker = " -W" * opt_Wmarker			# Set Symbol edge color 
 			end
 			cmd1 = cmd * opt_W
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
@@ -303,7 +274,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 			       finish_PS(d, cmd2, output, K, true)]
 		end
 
-	elseif (opt_S != "" && opt_ML != "")				# We have a symbol outline pen
+	elseif (opt_S != "" && opt_ML != "")					# We have a symbol outline pen
 		cmd = [finish_PS(d, cmd * opt_ML * opt_S * opt_Gsymb, output, K, O)]
 
 	else
@@ -311,6 +282,65 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	end
 
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, gmt_proggy, arg1, arg2)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
+	# See if we got a CPT. If yes there may may quite some work to do if no color column provided in input data.
+	if (N_args > n_prev || len < length(cmd))
+		if ((isa(arg1, Array) && size(arg1,2) <= 2+is3D) || (isa(arg1, GMTdataset) && size(arg1.data,2) <= 2+is3D))
+			mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
+			if (mz !== nothing)
+				if (isa(arg1, Array) && length(mz) == size(arg1,1))
+					arg1 = hcat(arg1, mz[:])
+				elseif (isa(arg1, GMTdataset) && length(mz) == size(arg1.data,1))
+					arg1.data = hcat(arg1.data, mz[:])
+				else
+					@warn(string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it."))
+					@goto noway
+				end
+			else
+				if (opt_i == "")
+					cmd = @sprintf("%s -i0-%d,%d", cmd, 1+is3D, 1+is3D)
+				else
+					@warn("Plotting with color table requires adding one more column to the dataset but your -i
+					option didn't do it, so you won't get waht you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots")
+					@goto noway
+				end
+			end
+
+			if (N_args == n_prev)		# No cpt transmitted, so need to compute one
+				if (GMTver >= 7)
+					if (mz !== nothing)
+						arg2 = gmt("makecpt -E " * cmd[len+2:end], mz[:])
+					else
+						if (isa(arg1, Array))  arg2 = gmt("makecpt -E " * cmd[len+2:end], arg1)
+						else                   arg2 = gmt("makecpt -E " * cmd[len+2:end], arg1.data)
+						end
+					end
+				else
+					if (mz !== nothing)
+						mi, ma = extrema(mz)
+					else
+						if (isa(arg1, Array))  mi, ma = extrema(view(arg1, :, size(arg1,2)))
+						else                   mi, ma = extrema(view(arg1.data, :, size(arg1.data,2)))
+						end
+					end
+					just_C = cmd[len+2:end];	reset_i = ""
+					if ((ind = findfirst(" -i", just_C)) !== nothing)
+						reset_i = just_C[ind[1]:end] 
+						just_C  = just_C[1:ind[1]-1]
+					end
+					arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
+					cmd = cmd[1:len+3] * reset_i			# Strip the cpt name and reset -i (if existed)
+				end
+				N_args = 2
+			end
+		end
+	end
+	@label noway
+
+	return cmd, arg1, arg2, N_args
 end
 
 # ---------------------------------------------------------------------------------------------------

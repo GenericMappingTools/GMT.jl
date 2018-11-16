@@ -225,7 +225,8 @@ if (got_it)					# Otherwise go straight to end
 	plot!(collect(1:10),rand(10), fmt="ps")
 	plot3d(rand(5,5,3), marker=:cube)
 	plot(1:10,rand(10), S=(symb=:c,size=7,unit=:point), color=:rainbow, zcolor=rand(10))
-	plot(1:10,rand(10), S="c7p", color=:rainbow)
+	plot(1:10,rand(10)*3, S="c7p", color=:rainbow)
+	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3)
 
 	# ARROWS
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
