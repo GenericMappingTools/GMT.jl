@@ -244,7 +244,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# SCATTER
 	scatter("",hcat(collect(1:10)[:],rand(10,1)))
-	scatter!("",hcat(collect(1:10)[:],rand(10,1)))
+	#scatter!("",hcat(collect(1:10)[:],rand(10,1)))
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
 	scatter(1:10,rand(10), fill=:red, B=:a)
