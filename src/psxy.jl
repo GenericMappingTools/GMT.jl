@@ -195,7 +195,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd = add_opt(cmd, 'F', d, [:F :conn :connection])
 
 	cmd = add_opt(cmd, 'G', d, [:G :fill])
-	opt_Gsymb = add_opt("", 'G', d, [:G :markerfacecolor])		# Filling color for symbols
+	opt_Gsymb = add_opt("", 'G', d, [:G :markerfacecolor :mc])	# Filling color for symbols
 
 	opt_Wmarker = ""
 	if (haskey(d, :markeredgecolor))
@@ -387,8 +387,10 @@ function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
 	# Set sensible defaults for the sub-modules "scatter" & "bar" 
 	if (caller == "scatter")
 		if (opt_S == "")  cmd = cmd * " -Sc8p"  end
+		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
 	elseif (caller == "scatter3")
 		if (opt_S == "")  cmd = cmd * " -Su8p"  end
+		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -Bza -BWSZ"  end
 		if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
 	elseif (caller == "bar")
 		if (opt_S == "")	
