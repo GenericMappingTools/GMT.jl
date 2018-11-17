@@ -224,6 +224,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
+	plot("",hcat(collect(1:10)[:],rand(10,1)))
 	plot!(collect(1:10),rand(10), fmt="ps")
 	plot3d(rand(5,5,3), marker=:cube)
 	plot(1:10,rand(10), S=(symb=:c,size=7,unit=:point), color=:rainbow, zcolor=rand(10))
@@ -242,6 +243,8 @@ if (got_it)					# Otherwise go straight to end
 	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 
 	# SCATTER
+	scatter("",hcat(collect(1:10)[:],rand(10,1)))
+	scatter!("",hcat(collect(1:10)[:],rand(10,1)))
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
 	scatter(1:10,rand(10), fill=:red, B=:a)

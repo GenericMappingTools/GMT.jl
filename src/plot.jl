@@ -193,6 +193,9 @@ Parameters
 
     Set pen attributes for lines or the outline of symbols
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w)
+
+[`Full man page`](https://genericmappingtools.github.io/GMT.jl/latest/scatter/)
+[`GMT man page`](http://gmt.soest.hawaii.edu/doc/latest/plot.html)
 """
 function scatter(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=false, kwargs...)
 	if (is3D)  GMT.common_plot_xyz(cmd0, arg1, "scatter3", K, O, first, is3D, kwargs...)
