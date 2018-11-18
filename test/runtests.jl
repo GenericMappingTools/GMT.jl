@@ -243,15 +243,20 @@ if (got_it)					# Otherwise go straight to end
 	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 
 	# SCATTER
-	scatter("",hcat(collect(1:10)[:],rand(10,1)))
-	#scatter!("",hcat(collect(1:10)[:],rand(10,1)))
+	scatter(hcat(collect(1:10)[:],rand(10,1)))
+	scatter!(hcat(collect(1:10)[:],rand(10,1)))
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
 	scatter(1:10,rand(10), fill=:red, B=:a)
+	scatter3(rand(5,5,3))
 
 	# BARPLOT
 	data = sort(randn(10));
 	bar(data,G=0,B=:a)
+	bar(rand(20),bar=(width=0.5,), Vd=:cmd)
+	bar(rand(20),hbar=(width=0.5,unit=:c, base=9), Vd=:cmd)
+	bar(rand(20),bar="0.5c+b9",  Vd=:cmd)
+	bar(rand(20),hbar="0.5c+b9",  Vd=:cmd)
 
 	# BAR3
 	G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");

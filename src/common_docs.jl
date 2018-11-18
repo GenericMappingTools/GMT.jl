@@ -125,7 +125,7 @@ const opt_o = "**o** : **output_col** : -- Str --     ``Flags = cols[,…]``
     Select specific data columns for primary output, in arbitrary order.
     [`-o`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#ocols-full)"
 
-const opt_p = "**p** : **view** : **perspective** : -- Str or List --   ``Flags = [x|y|z]azim[/elev[/zlevel]][+wlon0/lat0[/z0]][+vx0/y0]``
+const opt_p = "**p** : **view** : -- Str or List --   `Flags = [x|y|z]azim[/elev[/zlevel]][+wlon0/lat0[/z0]][+vx0/y0]`
 
     Selects perspective view and sets the azimuth and elevation of the viewpoint [180/90].
     [`-p`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#perspective-full)"

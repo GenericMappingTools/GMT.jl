@@ -110,7 +110,7 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 			opt_J = opt_J * string(d[:figscale])
 		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
 			if !(length(opt_J) >= 6 && isnumeric(opt_J[6]))
-				opt_J = opt_J * "14c"			# If no size, default to 14 centimeters
+				opt_J = opt_J * "12c"			# If no size, default to 12 centimeters
 			end
 		end
 	end
@@ -374,7 +374,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_p(cmd::String, d::Dict)
 	# Parse the global -p option. Return CMD same as input if no -p option in args
-	return parse_helper(cmd, d, [:p :view :perspective], " -p")
+	return parse_helper(cmd, d, [:p :view], " -p")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1448,7 +1448,15 @@ end
 # ---------------------------------------------------------------------------------------------------
 function dbg_print_cmd(d::Dict, cmd::String, prog::String)
 	# Print the gmt command when the Vd=1 kwarg was used
-	(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd))
+	#(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd))
+	if (haskey(d, :Vd))
+		if (d[:Vd] == :cmd)		# For testing puposes, return the GMT command
+			return cmd
+		else
+			println(@sprintf("\t%s %s", prog, cmd))
+		end
+	end
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1518,7 +1526,8 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 						   arg4=[], arg5=[], arg6=[])
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
-			dbg_print_cmd(d, cmd[k], prog)
+			#dbg_print_cmd(d, cmd[k], prog)
+			if ((r = dbg_print_cmd(d, cmd[k], prog)) !== nothing)  return r  end 	# For tests only
 			if (isempty_(arg1))					# Simple case
 				P = gmt(string(prog, " ", cmd[k]))
 			elseif (isempty_(arg2))				# One numeric input
@@ -1528,7 +1537,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 			end
 		end
 	else
-		dbg_print_cmd(d, cmd, prog)
+		if ((r = dbg_print_cmd(d, cmd, prog)) !== nothing)  return r  end 	# For tests only
 		cmd = string(prog, " ", cmd)
 		if     (!isempty_(arg6))  P = gmt(cmd, arg1, arg2, arg3, arg4, arg5, arg6)
 		elseif (!isempty_(arg5))  P = gmt(cmd, arg1, arg2, arg3, arg4, arg5)

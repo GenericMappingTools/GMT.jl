@@ -144,11 +144,11 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	if (!occursin("-J", cmd))			# bar, bar3 and others may send in a -J
-		opt_J = " -JX12c/8c"
+		opt_J = " -JX12c"
 		for symb in [:axis :aspect]
 			if (haskey(d, symb))
 				if (d[symb] == "equal" || d[symb] == :equal)	# Need also a 'tight' option?
-					opt_J = " -JX12c"
+					opt_J = " -JX12c/8c"
 				end
 				break
 			end
@@ -386,22 +386,54 @@ end
 function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
 	# Set sensible defaults for the sub-modules "scatter" & "bar" 
 	if (caller == "scatter")
-		if (opt_S == "")  cmd = cmd * " -Sc8p"  end
+		if (opt_S == "")  cmd = cmd * " -Sc7p"  end
 		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
 	elseif (caller == "scatter3")
-		if (opt_S == "")  cmd = cmd * " -Su8p"  end
+		if (opt_S == "")  cmd = cmd * " -Su7p"  end
 		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -Bza -BWSZ"  end
 		if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
 	elseif (caller == "bar")
-		if (opt_S == "")	
-			opt = add_opt("", "",  d, [:width])		# No need to purge because width is not a psxy option
-			if (opt == "")	opt = "0.8"	end			# The default
-			cmd = cmd * " -Sb" * opt * "u"
+		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
+		if (opt_S == "")
+			opt = ""
+			if (haskey(d, :bar))
+				if (isa(d[:bar], String))
+					cmd = cmd * " -Sb" * d[:bar]
+				elseif (isa(d[:bar], NamedTuple))
+					opt = add_opt("", "Sb", d, [:bar], (width="",unit="1",base="+b",height="+B"))
+				else
+					error("Argument of the *bar* keyword can be only a string or a NamedTuple.")
+				end
+			elseif (haskey(d, :hbar))
+				if (isa(d[:hbar], String))
+					cmd = cmd * " -SB" * d[:hbar]
+				elseif (isa(d[:hbar], NamedTuple))
+					opt = add_opt("", "SB", d, [:hbar], (width="",unit="1",base="+b",height="+B"))
+				else
+					error("Argument of the *hbar* keyword can be only a string or a NamedTuple.")
+				end
+			else
+				opt = add_opt("", "",  d, [:width])		# No need to purge because width is not a psxy option
+				if (opt == "")	opt = "0.8"	end			# The default
+				cmd = cmd * " -Sb" * opt * "u"
+
+				optB = add_opt("", "",  d, [:base])
+				if (optB == "")	optB = "0"	end
+				cmd = cmd * "+b" * optB
+				opt = ""
+			end
+			if (opt != "")				# Still need to finish parsing this
+				if ((ind = findfirst("+", opt)) !== nothing)	# See if need to insert a 'u'
+					if (!isletter(opt[ind[1]-1]))  opt = opt[1:ind[1]-1] * 'u' * opt[ind[1]:end]  end
+				else
+					if (!isletter(opt[end-1]))  opt = opt * "u+b0"	# No base set so default to 0
+					else                        opt = opt * "+b0"
+					end
+				end
+				cmd = cmd * opt
+			end
 		end
 		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end		# Default bar color
-		optB = add_opt("", "",  d, [:bottom :base])	# No need to purge because bottom is not a psxy option
-		if (optB == "")	optB = "0"	end
-		cmd = cmd * "+b" * optB				# NEEDS DOC AND IMPLEMENT THE OTHER BASE
 	end
 	return cmd
 end

@@ -1,8 +1,8 @@
-# scatter
+# bar
 
-	scatter(cmd0::String="", arg1=[]; kwargs...)
+	bar(cmd0::String="", arg1=[]; kwargs...)
 
-Reads (x,y) pairs and plot symbols at those locations on a map. This module is a subset of `plot` to make
+Reads (x,y) pairs and plots a bar graph. This module is a subset of `plot` to make
 it simpler to draw scatter plots. So many of its (fine) controling parameters are not listed here. For a
 finer control, user should consult the `plot` module.
 
@@ -35,16 +35,25 @@ Optional Arguments
    and let any values thus found over-ride the command line settings (but those must provided in the terse GMT
    syntax). See [Setting color](@ref) for extend color selection (including color map generation).
 
-- **S** or *symbol* or `others` : --  Default is `circle` with diameter of 7 points
-   - *symbol=symbol string* -- A full GMT compact string.
-   - *symbol=(symb=??, size=??, unit=??)*  -- Where *symb* is one [Symbols](@ref) like `:circle`, *size* is
-     symbol size in cm, unless *unit* is specified i.e. `:points`
+- *bar*
 
-   In alternative to the *symbol* keyword, user can select the symbol name with either *marker* or *shape*
-   and symbol size with *markersize*, *ms* or just *size*. The value of these keywords can be either numeric
-   (symb meaning size in cm) or string if an unit is appended, *e.g.*  *markersize=5p*. This form of symbol
-   selection allows also to specify a variable symbol size. All it's need for this is that the keywrd's value
-   be an array with the same number of elements as the number of data points. 
+   Vertical bar extending from base to y. By default base is 0 and the bar widths are 0.8 of the width in
+   x-units. You can change this by using (in alternative):
+     - *width=xx* -- where *xx* is the bar width in x-units (bar base remains = 0).
+     - *base=xx* -- where *xx* is the base value (bar width remains = 0.8).
+     - *bar=??* -- where *??* is a string with a full GMT syntax for this option (**-Sb**)
+     - *bar=(width=xx,unit=xx,base=xx,height=xx)*  -- Atention, the order of members matters but only *width* is mandatory.
+       - *width* -- The bar width in x-units. To specify it in plot units, use the *unit* member with `cm`, `inch` or `point`.
+       - *unit* -- In case *width* is given in plot units. Valid units are cm`, `inch` or `point`.
+       - *base=xx* -- where *xx* is the base value.
+       - *height* -- If the bar height is measured relative to base *xx* [Default is relative to origin].
+          Cannot be used together with *base*.
+
+- *hbar*
+
+   Horizontal bar extending from base to x. Same as *bar* but now with respect to y axis, except that one
+   cannot use *width* or *base* to change just those defaults (the use of it is restricted to the vertical
+   bars case).
 
 
 Examples
@@ -56,11 +65,9 @@ A simple scatter of ten points plotted as red circles of 7 points size
     scatter(1:10,rand(10), fill=:red, show=true)
 ```
 
-A plot where symbol's size grows linearly
+A plot 
 
 ```julia
-    sizevec = [s for s = 1:10] ./ 10;
-    scatter(1:10, 1:10, markersize = sizevec, marker=:square, fill=:green, show=1)
 ```
 
 
