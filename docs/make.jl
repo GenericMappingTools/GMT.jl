@@ -21,7 +21,9 @@ makedocs(
             ],
         ],
         "Modules manuals" => [
+            "bar.md",
             "scatter.md",
+            "scatter3.md",
             "solar.md",
         ],
         "The GMT types"            => "types.md",
