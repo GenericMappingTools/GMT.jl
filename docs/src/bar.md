@@ -6,38 +6,28 @@ Reads (x,y) pairs and plots a bar graph. This module is a subset of `plot` to ma
 it simpler to draw scatter plots. So many of its (fine) controling parameters are not listed here. For a
 finer control, user should consult the `plot` module.
 
-Required Arguments
-------------------
+Parameters
+----------
 
-There are no required arguments but
-
-Optional Arguments
-------------------
-
-- **B** or *axis* or *frame*
-
+- **B** or *axis* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
-  Extended at [axis](@ref)
+  More at [axis](@ref)
 
-- **J** or *proj* : *proj=<parameters>*
-
-  Select map projection. Default is linear and 14 cm width. Extended at [proj](@ref)
+- **J** or *proj* : *proj=<parameters>*\
+  Select map projection. Default is linear and 14 cm width. More at [proj](@ref)
 
 - **R** or *region* or *limits* : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
-   **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more 
+   **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more \
+   Specify the region of interest. Default limits are computed from data extents. More at [limits](@ref)
 
-   Specify the region of interest. Default limits are computed from data extents. Extended at [limits](@ref)
-
-- **G** or *markerfacecolor* or *mc* or *fill*
-
+- **G** or *markerfacecolor* or *mc* or *fill*\
    Select color or pattern for filling of symbols [Default is no fill]. Note that plot will search for *fill*
    and *pen* settings in all the segment headers (when passing a GMTdaset or file of a multi-segment dataset)
    and let any values thus found over-ride the command line settings (but those must provided in the terse GMT
    syntax). See [Setting color](@ref) for extend color selection (including color map generation).
 
-- *bar*
-
-   Vertical bar extending from base to y. By default base is 0 and the bar widths are 0.8 of the width in
+- *bar*\
+   Vertical bar extending from base to *y*. By default base is 0 and the bar widths are 0.8 of the width in
    x-units. You can change this by using (in alternative):
      - *width=xx* -- where *xx* is the bar width in x-units (bar base remains = 0).
      - *base=xx* -- where *xx* is the base value (bar width remains = 0.8).
@@ -49,8 +39,7 @@ Optional Arguments
        - *height* -- If the bar height is measured relative to base *xx* [Default is relative to origin].
           Cannot be used together with *base*.
 
-- *hbar*
-
+- *hbar*\
    Horizontal bar extending from base to x. Same as *bar* but now with respect to y axis, except that one
    cannot use *width* or *base* to change just those defaults (the use of it is restricted to the vertical
    bars case).

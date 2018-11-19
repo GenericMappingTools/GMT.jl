@@ -22,6 +22,7 @@ makedocs(
         ],
         "Modules manuals" => [
             "bar.md",
+            "bar3.md",
             "scatter.md",
             "scatter3.md",
             "solar.md",
