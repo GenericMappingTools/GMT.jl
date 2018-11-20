@@ -393,14 +393,13 @@ function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
 	# Set sensible defaults for the sub-modules "scatter" & "bar"
 	if (caller == "scatter")
 		if (opt_S == "")  cmd = cmd * " -Sc7p"  end
-		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
+		#if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
 	elseif (caller == "scatter3")
 		if (opt_S == "")  cmd = cmd * " -Su7p"  end
-		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -Bza -BWSZ"  end
-		if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
+		#if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -Bza -BWSenZ"  end
+		#if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
 	elseif (caller == "bar")
 		if (opt_S == "")
-			opt = ""
 			if (haskey(d, :bar))
 				cmd = GMT.parse_bar_cmd(d, :bar, cmd, "Sb")
 			elseif (haskey(d, :hbar))
@@ -413,20 +412,27 @@ function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
 				optB = add_opt("", "",  d, [:base])
 				if (optB == "")	optB = "0"	end
 				cmd = cmd * "+b" * optB
-				opt = ""
 			end
 		end
 		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end		# Default color
-		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
+		#if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
 	elseif (caller == "bar3")
 		if (haskey(d, :noshade) && occursin("-So", cmd))
 			cmd = replace(cmd, "-So" => "-SO", count=1)
 		end
-		if (!occursin(" -B", cmd))  cmd = cmd * " -Baf -Bza -BWSZ"  end
+		#if (!occursin(" -B", cmd))  cmd = cmd * " -Baf -Bza -BWSenZ"  end
 		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end	
 		if (!occursin(" -J", cmd))  cmd = cmd * " -JX12c/0"  end
-		if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
+		#if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
 	end
+
+	if (occursin('3', caller))
+		if (!occursin(" -B", cmd))  cmd = cmd * " -Baf -Bza -BWSenZ"  end
+		if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
+	else
+		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
+	end
+
 	return cmd
 end
 

@@ -2,9 +2,9 @@
 
 	bar(cmd0::String="", arg1=[]; kwargs...)
 
-Reads (x,y) pairs and plots a bar graph. This module is a subset of `plot` to make
-it simpler to draw scatter plots. So many of its (fine) controling parameters are not listed here. For a
-finer control, user should consult the `plot` module.
+Reads (x,y) pairs and plots a bar graph. This module is a subset of `plot` to make it simpler to draw bar
+plots. So not all of its (fine) controling parameters are listed here. For a finer control, user should
+consult the `plot` module. 
 
 Parameters
 ----------

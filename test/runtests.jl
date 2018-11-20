@@ -254,6 +254,9 @@ if (got_it)					# Otherwise go straight to end
 	data = sort(randn(10));
 	bar(data,G=0,B=:a)
 	bar(rand(20),bar=(width=0.5,), Vd=:cmd)
+	bar!(rand(20),bar=(width=0.5,), Vd=:cmd)
+	bar(1:20,  rand(20),bar=(width=0.5,), Vd=:cmd)
+	bar!(1:20, rand(20),bar=(width=0.5,), Vd=:cmd)
 	bar(rand(20),hbar=(width=0.5,unit=:c, base=9), Vd=:cmd)
 	bar(rand(20),bar="0.5c+b9",  Vd=:cmd)
 	bar(rand(20),hbar="0.5c+b9",  Vd=:cmd)
@@ -261,6 +264,7 @@ if (got_it)					# Otherwise go straight to end
 	# BAR3
 	G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 	bar3(G, lw=:thinnest)
+	bar3!(G, lw=:thinnest, Vd=:cmd)
 	bar3(G, lw=:thinnest, bar=(width=0.085,), Vd=:cmd)
 	bar3(G, lw=:thinnest, width=0.085, nbands=3, Vd=:cmd)
 	bar3(G, lw=:thinnest, noshade=1, Vd=:cmd)
