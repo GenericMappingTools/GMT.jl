@@ -8,8 +8,8 @@ to provide a grid object (a GMTgrid) or a MxN matrix (with M,N > 3) and accept t
 data types. When `not` using grids or matrices the *width* keyword (see below) is mandatory, unless both
 `xsize` and `ysize` are given as two extra data columns.
 
-This module is a subset of `plot` to make it simpler to draw scatter plots. So many of its (fine)
-controling parameters are not listed here. For a finer control, user should consult the `plot` module.
+This module is a subset of `plot` to make it simpler to draw 3D bar plots. So not all of its (fine)
+controling parameters are listed here. For a finer control, user should consult the `plot` module.
 
 Parameters
 ----------

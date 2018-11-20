@@ -6,16 +6,15 @@ Reads (x,y) pairs and plot lines with different levels of decoration. The input 
 name of a file with at least two columns (x,y), but optionally more, a GMTdatset object with also two
 or more columns.
 
-This module is a subset of `plot` to make it simpler to draw scatter plots. So many of its (fine)
-controling parameters are not listed here. For a finer control, user should consult the `plot` module.
+This module plots a large variaty of lines and polygons. It goes from *simple* lines and polygons
+(color/pattern filled or not) to the so called *decorated* lines. That is, lines decorated with
+symbols and text patterns.
 
-Required Arguments
-------------------
+This module is a subset of `plot` to make it simpler to draw line plots. So not all of its (fine)
+controling parameters are not listed here. For the finest control, user should consult the `plot` module.
 
-There are no required arguments but
-
-Optional Arguments
-------------------
+Parameters
+----------
 
 - **B** or *axis* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
@@ -29,22 +28,25 @@ Optional Arguments
    Specify the region of interest. Default limits are computed from data extents. Extended at [limits](@ref)
 
 - **G** or *markerfacecolor* or *mc* or *fill*\
-   Select color or pattern for filling of symbols [Default is no fill]. Note that plot will search for *fill*
+   Select color or pattern for filling of polygons [Default is no fill]. Note that plot will search for *fill*
    and *pen* settings in all the segment headers (when passing a GMTdaset or file of a multi-segment dataset)
    and let any values thus found over-ride the command line settings (but those must provided in the terse GMT
-   syntax). See [Setting color](@ref) for extend color selection (including color map generation).
+   syntax). See [Setting color](@ref) for extend color selection (including colormap generation).
 
-- **S** or *symbol* or `others` : --  Default is `circle` with diameter of 7 points
-   - *symbol=symbol string* -- A full GMT compact string.
-   - *symbol=(symb=??, size=??, unit=??)*  -- Where *symb* is one [Symbols](@ref) like `:circle`, *size* is
-     symbol size in cm, unless *unit* is specified i.e. `:points`
+- **U** or *stamp* : *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
+   Draw GMT time stamp logo on plot. More at [stamp](@ref)
 
-   In alternative to the *symbol* keyword, user can select the symbol name with either *marker* or *shape*
-   and symbol size with *markersize*, *ms* or just *size*. The value of these keywords can be either numeric
-   (symb meaning size in cm) or string if an unit is appended, *e.g.*  *markersize=5p*. This form of symbol
-   selection allows also to specify a variable symbol size. All it's need for this is that the keywrd's value
-   be an array with the same number of elements as the number of data points. 
+- **V** or *verbose* : *verbose=true* **|** *verbose=level*\
+   Select verbosity level. More at [verbose](@ref)
 
+- **W** or *pen=pen*\
+   Set pen attributes for lines or the outline of symbols [Defaults: width = default, color = black, style = solid].
+
+- **X** or *x_off* or *x_offset* : *x_off=[] **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [x_off](@ref)
+
+- **Y** or *y_off* or *y_offset* : *y_off=[] **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [y_off](@ref)
 
 Examples
 --------
@@ -54,16 +56,3 @@ A simple scatter of ten points plotted as red circles of 7 points size
 ```julia
     scatter(1:10,rand(10), fill=:red, show=true)
 ```
-
-A plot where symbol's size grows linearly
-
-```julia
-    sizevec = [s for s = 1:10] ./ 10;
-    scatter(1:10, 1:10, markersize = sizevec, marker=:square, fill=:green, show=1)
-```
-
-
-See also
---------
-
-The [`GMT man page`](https://gmt.soest.hawaii.edu/doc/latest/plot.html)
