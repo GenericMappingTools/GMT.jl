@@ -85,7 +85,7 @@ Symbol formatting:
 - *n_data=xx*\
    Specifies how many (x,y) points will be used to estimate symbol angles [Default is 10].
 
-## Quoted lines.
+## Quoted lines
 
 To select this type the *quoted=true* keyword/value must be present in the *decorated* args.
 Lines with annotations such as contours. The required setting controls the placement of labels along the quoted

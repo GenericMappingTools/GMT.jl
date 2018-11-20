@@ -18,14 +18,14 @@ Parameters
 
 - **B** or *axis* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
-  Extended at [axis](@ref)
+  More at [axis](@ref)
 
 - **J** or *proj* : *proj=<parameters>*\
-  Select map projection. Default is linear and 14 cm width. Extended at [proj](@ref)
+  Select map projection. Default is linear and 14 cm width. More at [proj](@ref)
 
 - **R** or *region* or *limits* : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
    **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more \
-   Specify the region of interest. Default limits are computed from data extents. Extended at [limits](@ref)
+   Specify the region of interest. Default limits are computed from data extents. More at [limits](@ref)
 
 - **G** or *markerfacecolor* or *mc* or *fill*\
    Select color or pattern for filling of polygons [Default is no fill]. Note that plot will search for *fill*
@@ -33,14 +33,19 @@ Parameters
    and let any values thus found over-ride the command line settings (but those must provided in the terse GMT
    syntax). See [Setting color](@ref) for extend color selection (including colormap generation).
 
+- **W** or *pen=pen*\
+   Set pen attributes for lines or the outline of symbols [Defaults: width = default, color = black,
+   style = solid]. See [Pen attributes](@ref)
+
+- **decorated**\
+   For all types of line decorations: symbols [Decorated lines](@ref), fronts [Front lines](@ref),
+   text [Quoted lines](@ref), etc... see [Line decorations](@ref)
+
 - **U** or *stamp* : *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
    Draw GMT time stamp logo on plot. More at [stamp](@ref)
 
 - **V** or *verbose* : *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)
-
-- **W** or *pen=pen*\
-   Set pen attributes for lines or the outline of symbols [Defaults: width = default, color = black, style = solid].
 
 - **X** or *x_off* or *x_offset* : *x_off=[] **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [x_off](@ref)
@@ -51,8 +56,10 @@ Parameters
 Examples
 --------
 
-A simple scatter of ten points plotted as red circles of 7 points size
+Decorated curve with blue stars
 
 ```julia
-    scatter(1:10,rand(10), fill=:red, show=true)
+    xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
+    lines(xy, frame=:af, pen=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star,
+          symbsize=1, pen=(0.5,:green), fill=:blue, dec2=true), show=true)
 ```

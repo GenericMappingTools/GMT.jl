@@ -63,5 +63,6 @@ In addition, all but circular vectors may take these options:
 
 Finally, Cartesian vectors may take this option:
 
-- *uv=scale* -- Expects input vx,vy vector components and uses the scale to convert to polar coordinates with
+- *uv=scale*\
+   Expects input vx,vy vector components and uses the scale to convert to polar coordinates with
    length in given unit.
