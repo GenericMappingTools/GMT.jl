@@ -1,4 +1,4 @@
-# Arrow controls
+# Vector Attributes
 
 Set arrow parameters. They are specified by a keyword (*arrow*) and a named tuple.
 Several modifiers may be provided for specifying the placement of vector heads, their shapes, and the

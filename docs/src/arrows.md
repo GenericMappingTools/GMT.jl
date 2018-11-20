@@ -2,15 +2,11 @@
 
 	arrows(cmd0::String="", arg1=[]; kwargs...)
 
-Reads (x,y,a,b) data and make arrow plots. The input can either be a file
-name of a file with at least two columns (x,y), but optionally more, a GMTdatset object with also two
-or more columns.
+Reads (x,y,a,b) data and make arrow plots. The input can either be a file name of a file with at least
+four columns, but optionally more, or an Mx2 Array or GMTdatset object with the same characteristics in
+terms of columns number.
 
-This module plots a large variaty of lines and polygons. It goes from *simple* lines and polygons
-(color/pattern filled or not) to the so called *decorated* lines. That is, lines decorated with
-symbols and text patterns.
-
-This module is a subset of `plot` to make it simpler to draw line plots. So not all of its (fine)
+This module is a subset of `plot` to make it simpler to draw arrow plots. So not all of its (fine)
 controling parameters are not listed here. For the finest control, user should consult the `plot` module.
 
 Parameters
@@ -28,18 +24,17 @@ Parameters
    Specify the region of interest. Default limits are computed from data extents. More at [limits](@ref)
 
 - **G** or *markerfacecolor* or *mc* or *fill*\
-   Select color or pattern for filling of polygons [Default is no fill]. Note that plot will search for *fill*
-   and *pen* settings in all the segment headers (when passing a GMTdaset or file of a multi-segment dataset)
-   and let any values thus found over-ride the command line settings (but those must provided in the terse GMT
-   syntax). See [Setting color](@ref) for extend color selection (including colormap generation).
+   Select color or pattern for filling of vector heads [Default is no fill]. See [Setting color](@ref)
+   for extend color selection (including colormap generation).
 
 - **W** or *pen=pen*\
-   Set pen attributes for lines or the outline of symbols [Defaults: width = default, color = black,
+   Set pen attributes for the arrow stem [Defaults: width = default, color = black,
    style = solid]. See [Pen attributes](@ref)
 
-- **decorated**\
-   For all types of line decorations: symbols [Decorated lines](@ref), fronts [Front lines](@ref),
-   text [Quoted lines](@ref), etc... see [Line decorations](@ref)
+- **arrow**\
+   Direction (in degrees counter-clockwise from horizontal) and length must be found in columns 3 and 4,
+   and size, if not specified on the command-line, should be present in column 5. The size is the length of
+   the vector head. Vector width is set by *pen*. See [Vector Attributes](@ref) for specifying other attributes.
 
 - **U** or *stamp* : *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
    Draw GMT time stamp logo on plot. More at [stamp](@ref)
@@ -56,10 +51,9 @@ Parameters
 Examples
 --------
 
-Decorated curve with blue stars
+Plot a single arrow with head and tail.
 
 ```julia
-    xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
-    lines(xy, frame=:af, pen=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star,
-          symbsize=1, pen=(0.5,:green), fill=:blue, dec2=true), show=true)
+    arrows([0 8.2 0 6], limits=(-1,4,7,9), arrow=(len=2,start=:arrow,stop=:tail,shape=0.5),
+           proj=:X, figsize=(12,4), frame=:a, pen="4p", show=true)
 ```
