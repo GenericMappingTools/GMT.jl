@@ -14,13 +14,14 @@ makedocs(
             "modules.md",
             "Common options"       => "common_opts.md",
             "General features" => [
-                "arrows.md",
+                "arrows_control.md",
                 "color.md",
                 "decorated.md",
                 "symbols.md",
             ],
         ],
         "Modules manuals" => [
+            "arrows.md",
             "bar.md",
             "bar3.md",
             "lines.md",
