@@ -261,6 +261,9 @@ if (got_it)					# Otherwise go straight to end
 	# BAR3
 	G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 	bar3(G, lw=:thinnest)
+	bar3(G, lw=:thinnest, bar=(width=0.085,), Vd=:cmd)
+	bar3(G, lw=:thinnest, width=0.085, nbands=3, Vd=:cmd)
+	bar3(G, lw=:thinnest, noshade=1, Vd=:cmd)
 
 	# PROJECT
 	if (GMTver >= 6)

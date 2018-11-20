@@ -132,10 +132,14 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
+	opt_B = ""
 	# These three are aliases
 	extra_parse = true
 	for symb in [:B :frame :axis :axes]
 		if (haskey(d, symb))
+			if (d[symb] == :none || d[symb] == "none")		# User explicitly said NO AXES
+				return cmd * " -B0", " -B0"
+			end
 			if (isa(d[symb], NamedTuple)) opt_B = axis(d[symb]) * " " * opt_B;	extra_parse = false
 			else                          opt_B = string(d[symb], " ", opt_B)
 			end
@@ -219,8 +223,8 @@ function parse_BJR(d::Dict, cmd::String, caller, O, default, del=false)
 	elseif (O && isempty(opt_J))
 		cmd = cmd * " -J"
 	end
-	if (!isempty(caller) && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
-		if (caller == "plot3d")
+	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
+		if (caller == "plot3d" || caller == "bar3" || caller == "scatter3")
 			cmd, opt_B = parse_B(cmd, d, "-Ba -Bza -BWSZ", del)
 		else
 			cmd, opt_B = parse_B(cmd, d, "-Ba -BWS", del)

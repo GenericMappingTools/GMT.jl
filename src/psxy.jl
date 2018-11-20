@@ -100,7 +100,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function xy(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, kwargs...)
+function xy(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, kwargs...)
 	if (isempty(cmd0) && isa(arg1, AbstractArray) && length(arg1) != 2 &&
 		(size(arg1,2) == 1 || size(arg1,1) == 1))	# y only
 		arg1 = hcat(1:length(arg1), arg1[:])
@@ -109,7 +109,7 @@ function xy(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, k
 end
 
 # ---------------------------------------------------------------------------------------------------
-function xyz(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, kwargs...)
+function xyz(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, kwargs...)
 	common_plot_xyz(cmd0, arg1, caller, K, O, first, true, kwargs...)
 end
 
@@ -131,9 +131,15 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd = ""
 	sub_module = ""						# Will change to "scatter", etc... if called by sub-modules
 	if (!isempty(caller))
-		if (occursin(" -", caller))		# bar3 still uses this piggy-backed call
-			cmd = caller
-			caller = "others"			# It was piggy-backed
+		if (occursin(" -", caller))		# some sub-modues use this piggy-backed call
+			if ((ind = findfirst("|", caller)) !== nothing)	# A mixed case with "caler|partiall_command"
+				sub_module = caller[1:ind[1]-1]
+				cmd = caller[ind[1]+1:end]
+				caller = sub_module		# Because of parse_BJR()
+			else
+				cmd = caller
+				caller = "others"		# It was piggy-backed
+			end
 		else
 			sub_module = caller
 			caller = ""					# Because of parse_BJR()
@@ -148,7 +154,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		for symb in [:axis :aspect]
 			if (haskey(d, symb))
 				if (d[symb] == "equal" || d[symb] == :equal)	# Need also a 'tight' option?
-					opt_J = " -JX12c/8c"
+					opt_J = " -JX12c"
 				end
 				break
 			end
@@ -384,7 +390,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
-	# Set sensible defaults for the sub-modules "scatter" & "bar" 
+	# Set sensible defaults for the sub-modules "scatter" & "bar"
 	if (caller == "scatter")
 		if (opt_S == "")  cmd = cmd * " -Sc7p"  end
 		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
@@ -393,25 +399,12 @@ function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
 		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -Bza -BWSZ"  end
 		if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
 	elseif (caller == "bar")
-		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
 		if (opt_S == "")
 			opt = ""
 			if (haskey(d, :bar))
-				if (isa(d[:bar], String))
-					cmd = cmd * " -Sb" * d[:bar]
-				elseif (isa(d[:bar], NamedTuple))
-					opt = add_opt("", "Sb", d, [:bar], (width="",unit="1",base="+b",height="+B"))
-				else
-					error("Argument of the *bar* keyword can be only a string or a NamedTuple.")
-				end
+				cmd = GMT.parse_bar_cmd(d, :bar, cmd, "Sb")
 			elseif (haskey(d, :hbar))
-				if (isa(d[:hbar], String))
-					cmd = cmd * " -SB" * d[:hbar]
-				elseif (isa(d[:hbar], NamedTuple))
-					opt = add_opt("", "SB", d, [:hbar], (width="",unit="1",base="+b",height="+B"))
-				else
-					error("Argument of the *hbar* keyword can be only a string or a NamedTuple.")
-				end
+				cmd = GMT.parse_bar_cmd(d, :hbar, cmd, "SB")
 			else
 				opt = add_opt("", "",  d, [:width])		# No need to purge because width is not a psxy option
 				if (opt == "")	opt = "0.8"	end			# The default
@@ -422,21 +415,53 @@ function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
 				cmd = cmd * "+b" * optB
 				opt = ""
 			end
-			if (opt != "")				# Still need to finish parsing this
-				if ((ind = findfirst("+", opt)) !== nothing)	# See if need to insert a 'u'
-					if (!isletter(opt[ind[1]-1]))  opt = opt[1:ind[1]-1] * 'u' * opt[ind[1]:end]  end
-				else
-					if (!isletter(opt[end-1]))  opt = opt * "u+b0"	# No base set so default to 0
-					else                        opt = opt * "+b0"
-					end
-				end
-				cmd = cmd * opt
-			end
 		end
-		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end		# Default bar color
+		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end		# Default color
+		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
+	elseif (caller == "bar3")
+		if (haskey(d, :noshade) && occursin("-So", cmd))
+			cmd = replace(cmd, "-So" => "-SO", count=1)
+		end
+		if (!occursin(" -B", cmd))  cmd = cmd * " -Baf -Bza -BWSZ"  end
+		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end	
+		if (!occursin(" -J", cmd))  cmd = cmd * " -JX12c/0"  end
+		if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
 	end
 	return cmd
 end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String)
+	# Deal with parsing the 'bar' & 'hbar' keywors of psxy. Also called by plot/bar3. For this
+	# later module is input is not a string or NamedTuple the scatter options must be processed in bar3().
+	# KEY is either :bar or :hbar
+	# OPT is either "Sb", "SB" or "So"
+	opt =""
+	if (haskey(d, key))
+		if (isa(d[key], String))
+			cmd = cmd * " -" * optS * d[key]
+		elseif (isa(d[key], NamedTuple))
+			opt = add_opt("", optS, d, [key], (width="",unit="1",base="+b",height="+B",nbands="+z",Nbands="+Z"))
+		else
+			error("Argument of the *bar* keyword can be only a string or a NamedTuple.")
+		end
+	end
+
+	if (opt != "")				# Still need to finish parsing this
+		if ((ind = findfirst("+", opt)) !== nothing)	# See if need to insert a 'u'
+			if (!isletter(opt[ind[1]-1]))  opt = opt[1:ind[1]-1] * 'u' * opt[ind[1]:end]  end
+		else
+			pb = ""
+			if (optS != "So")  pb = "+b0"  end	# The default for bar3 (So) is set in the bar3() fun
+			if (!isletter(opt[end]))  opt = opt * 'u' * pb	# No base set so default to ...
+			else                      opt = opt * pb
+			end
+		end
+		cmd = cmd * opt
+	end
+	return cmd
+end
+# ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
 xy(arg1; caller=[], K=false, O=false, first=true, kw...) =

@@ -14,22 +14,18 @@ There are no required arguments but
 Optional Arguments
 ------------------
 
-- **B** or *axis* or *frame*
-
+- **B** or *axis* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left, bottom and Z axes.
   More at [axis](@ref)
 
-- **J** or *proj* : *proj=<parameters>*
-
+- **J** or *proj* : *proj=<parameters>*\
   Select map projection. Default is linear and 14 cm width. More at [proj](@ref)
 
 - **R** or *region* or *limits* : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
-   **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more 
-
+   **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more \
    Specify the region of interest. Default limits are computed from data extents. More at [limits](@ref)
 
-- **G** or *markerfacecolor* or *mc* or *fill*
-
+- **G** or *markerfacecolor* or *mc* or *fill*\
    Select color or pattern for filling of symbols [Default is black cubes]. Note that plot will search for *fill*
    and *pen* settings in all the segment headers (when passing a GMTdaset or file of a multi-segment dataset)
    and let any values thus found over-ride the command line settings (but those must provided in the terse GMT
@@ -46,8 +42,7 @@ Optional Arguments
    selection allows also to specify a variable symbol size. All it's need for this is that the keywrd's value
    be an array with the same number of elements as the number of data points. 
 
-- **p** or *view* : -- Default is viewpoin from an azimuth of 200 and elevation of 30 degrees.
-
+- **p** or *view* : -- Default is viewpoin from an azimuth of 200 and elevation of 30 degrees.\
    Specify the viewpoint in terms of azimuth and elevation. The azimuth is the horizontal rotation about the z-axis as measured in degrees from the positive y-axis. That is, from North. This option is not yet fully
    expanded. Current alternatives are:
      - *view=??*  -- A full GMT compact string with the full set of options.

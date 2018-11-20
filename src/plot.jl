@@ -271,9 +271,6 @@ function bar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 end
 
 # ------------------------------------------------------------------------------------------------------
-bar3!(arg1; K=true, O=true, first=false, kw...) = bar3(arg1; K=K, O=O, first=first, kw...)
-
-# ------------------------------------------------------------------------------------------------------
 """
     bar3(cmd0::String="", arg1=[], kwargs...)
 
@@ -286,7 +283,7 @@ Read a grid file, a grid or a MxN matrix and plots vertical bars extending from 
 
     Select color or pattern for filling the bars
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#g)
-- **base** : **bottom** : -- Str or Num --		``key=value``
+- **base** : -- Str or Num --		``key=value``
 
     By default, base = ymin. Use this option to change that value. If base is not appended then we read it.
 - $(GMT.opt_p)
@@ -296,14 +293,12 @@ Example:
     G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
     bar3(G, lw=:thinnest, show=true)
 """
-function bar3(arg; K=false, O=false, first=true, kwargs...)
+function bar3(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
 	# Contrary to "bar" this one has specific work to do here.
 	d = KW(kwargs)
+	opt_z = ""
 
 	arg1 = arg			# Make a copy that may or not become a new thing
-	if (isa(arg1, Array{GMT.GMTdataset,1}))		# Shitty consequence of arg1 being the output of a prev cmd
-		arg1 = arg1[1]
-	end
 
 	if (isa(arg1, Array))
 		ny, nx = size(arg1)
@@ -311,25 +306,45 @@ function bar3(arg; K=false, O=false, first=true, kwargs...)
 	end
 
 	if (isa(arg1, GMTgrid))
-		opt_S = @sprintf(" -So%.8gu/%.8gu", arg1.inc[1]*0.85, arg1.inc[2]*0.85)		# 0.85 is the % of inc width of bars
+		if (haskey(d, :bar))
+			opt_S = GMT.parse_bar_cmd(d, :bar, "", "So")
+		else
+			# 0.85 is the % of inc width of bars
+			opt_S = @sprintf(" -So%.8gu/%.8gu", arg1.inc[1]*0.85, arg1.inc[2]*0.85)
+			if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands])
+			elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands])
+			end
+		end
 		opt, = parse_R("", d, O)
 		if (opt == "")							# OK, no R but we know it here so put it in 'd'
-			push!(d, :R => arg1.range)
+			if (arg1.registration == 1)			# Fine, grid is already pixel reg
+				push!(d, :R => arg1.range)
+			else								# Need to get a pix reg R
+				range = deepcopy(arg1.range)
+				range[1] = range[1] - arg1.inc[1] / 2;	range[2] = range[2] + arg1.inc[1] / 2;
+				range[3] = range[3] - arg1.inc[2] / 2;	range[4] = range[4] + arg1.inc[2] / 2;
+				push!(d, :R => range)
+			end
 		end
 		arg1 = gmt("grd2xyz", arg1)[1]			# Now arg1 is a GMTdataset
 	else
-		opt_S = parse_inc("", d, [:size :width], "So", true)
-		if (opt_S == "")	error("BAR3: must provide the column bar width.")	end
+		opt_S = parse_inc("", d, [:width], "So", true)
+		if (opt_S == "")
+			if ((isa(arg1, Array) && size(arg1,2) < 5) || (isa(arg1, GMTdataset) && size(arg1.data,2) < 5) ||
+				(isa(arg1, Array{GMT.GMTdataset,1}) && size(arg1[1].data,2) < 5))
+				error("BAR3: When NOT providing *width* data must contain at least 5 columns.")
+			end
+		end
+		if (!isletter(opt_S[end]))  opt_S = opt_S * 'u'  end
+		if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands])
+		elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands])
+		end
 	end
 
-	if (!isa(arg1, Array) && !isa(arg1, GMTdataset))
-		error(@sprintf("I don't know how this datatype (%s) managed to make it's way here but can't use it.", typeof(arg1)))
-	end
-
-	opt = add_opt("", "",  d, [:bottom :base])	# No need to purge because bottom is not a psxy option
+	opt = add_opt("", "",  d, [:base])	# No need to purge because base is not a psxy option
 	if (opt == "")
-		if (isa(arg1, Array))
-			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1, :, 3)) * 1.05)		# 1.05 means base is 5% below minimum
+		if (isa(arg1, Array))			# 1.05 means base is 5% below minimum
+			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1, :, 3)) * 1.05)
 		else
 			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1.data, :, 3)) * 1.05)
 		end
@@ -337,23 +352,15 @@ function bar3(arg; K=false, O=false, first=true, kwargs...)
 		opt_S = opt_S * "+b" * opt
 	end
 
-	opt_G = add_opt("", 'G', d, [:G :fill], nothing, true)
-	if     (opt_G == " -G")	opt_G = ""					# Same as black
-	elseif (opt_G == "")    opt_G = " -G0/115/190"		# Default bar color. But it might be overriden by -C
-	end
+	caller = "bar3|" * opt_S * opt_z
 
-	opt_J, = parse_J("", d, true, false, true)			# Trim it if exists in d
-	if (opt_J == "")	opt_J = " -JX12c/0"		end		# Default fig size
-
-	#s = split(opt_R[4:end], "/")
-	#R = [parse(Float64, s[k]) for k = 1:length(s)]
-
-	caller = opt_G * opt_S * opt_J						# Piggy-back this
-	opt = add_opt("", 'p', d, [:p :view], nothing, true)
-	if (opt == "")  caller = caller * " -p200/30"	end
-
-	GMT.common_plot_xyz("", arg1, caller, K, O, first, true, d...)
+	GMT.common_plot_xyz(cmd0, arg1, caller, K, O, first, true, d...)
 end
+
+# ------------------------------------------------------------------------------------------------------
+bar3(arg1; K=false, O=false, first=true, kw...) = bar3("", arg1; K=K, O=O, first=first, kw...)
+bar3!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) = bar3(cmd0, arg1; K=K, O=O, first=first, kw...)
+bar3!(arg1; K=true, O=true, first=false, kw...) = bar3("", arg1; K=K, O=O, first=first, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 """
