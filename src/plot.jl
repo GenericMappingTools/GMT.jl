@@ -380,7 +380,7 @@ If length is not in plot units but in arbitrary user units (e.g., a rate in mm/y
 
 The *geovec=(...)* or *geovector=(...)* keywords plot geovectors. In geovectors azimuth (in degrees east from north) and geographical length must be found in columns 3 and 4. The size is the length of the vector head. Vector width is set by *pen* or *line_attrib*. Note: Geovector stems are drawn as thin filled polygons and hence pen attributes like dashed and dotted are not available. For allowable geographical units, see the *units=()* option.
 
-The full *arrow* options list can be consulted at [Arrow controls](@ref)
+The full *arrow* options list can be consulted at [Vector Attributes](@ref)
 
 - $(GMT.opt_B)
 - $(GMT.opt_J)
