@@ -132,6 +132,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
+	opt_B = ""
 	# These three are aliases
 	extra_parse = true
 	for symb in [:B :frame :axis :axes]

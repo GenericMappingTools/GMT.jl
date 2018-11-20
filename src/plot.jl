@@ -296,6 +296,7 @@ Example:
 function bar3(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
 	# Contrary to "bar" this one has specific work to do here.
 	d = KW(kwargs)
+	opt_z = ""
 
 	arg1 = arg			# Make a copy that may or not become a new thing
 
@@ -310,6 +311,9 @@ function bar3(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
 		else
 			# 0.85 is the % of inc width of bars
 			opt_S = @sprintf(" -So%.8gu/%.8gu", arg1.inc[1]*0.85, arg1.inc[2]*0.85)
+			if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands])
+			elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands])
+			end
 		end
 		opt, = parse_R("", d, O)
 		if (opt == "")							# OK, no R but we know it here so put it in 'd'
@@ -325,14 +329,21 @@ function bar3(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
 		arg1 = gmt("grd2xyz", arg1)[1]			# Now arg1 is a GMTdataset
 	else
 		opt_S = parse_inc("", d, [:width], "So", true)
-		if (opt_S == "")	error("BAR3: must provide the column bar width.")	end
+		if (opt_S == "")
+			if ((isa(arg1, Array) && size(arg1,2) < 5) || (isa(arg1, GMTdataset) && size(arg1.data,2) < 5) ||
+				(isa(arg1, Array{GMT.GMTdataset,1}) && size(arg1[1].data,2) < 5))
+				error("BAR3: When NOT providing *width* data must contain at least 5 columns.")
+			end
+		end
 		if (!isletter(opt_S[end]))  opt_S = opt_S * 'u'  end
+		if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands])
+		elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands])
+		end
 	end
 
 	opt = add_opt("", "",  d, [:base])	# No need to purge because base is not a psxy option
 	if (opt == "")
-		if (isa(arg1, Array))
-			# 1.05 means base is 5% below minimum
+		if (isa(arg1, Array))			# 1.05 means base is 5% below minimum
 			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1, :, 3)) * 1.05)
 		else
 			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1.data, :, 3)) * 1.05)
@@ -341,7 +352,7 @@ function bar3(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
 		opt_S = opt_S * "+b" * opt
 	end
 
-	caller = "bar3|" * opt_S
+	caller = "bar3|" * opt_S * opt_z
 
 	GMT.common_plot_xyz(cmd0, arg1, caller, K, O, first, true, d...)
 end

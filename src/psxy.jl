@@ -390,7 +390,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
-	# Set sensible defaults for the sub-modules "scatter" & "bar" 
+	# Set sensible defaults for the sub-modules "scatter" & "bar"
 	if (caller == "scatter")
 		if (opt_S == "")  cmd = cmd * " -Sc7p"  end
 		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
@@ -402,27 +402,9 @@ function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
 		if (opt_S == "")
 			opt = ""
 			if (haskey(d, :bar))
-				cmd = GMT.parse_bar_cmd(d, :bar, "", "Sb")
-#=
-				if (isa(d[:bar], String))
-					cmd = cmd * " -Sb" * d[:bar]
-				elseif (isa(d[:bar], NamedTuple))
-					opt = add_opt("", "Sb", d, [:bar], (width="",unit="1",base="+b",height="+B"))
-				else
-					error("Argument of the *bar* keyword can be only a string or a NamedTuple.")
-				end
-=#
+				cmd = GMT.parse_bar_cmd(d, :bar, cmd, "Sb")
 			elseif (haskey(d, :hbar))
-				cmd = GMT.parse_bar_cmd(d, :hbar, "", "SB")
-#=
-				if (isa(d[:hbar], String))
-					cmd = cmd * " -SB" * d[:hbar]
-				elseif (isa(d[:hbar], NamedTuple))
-					opt = add_opt("", "SB", d, [:hbar], (width="",unit="1",base="+b",height="+B"))
-				else
-					error("Argument of the *hbar* keyword can be only a string or a NamedTuple.")
-				end
-=#
+				cmd = GMT.parse_bar_cmd(d, :hbar, cmd, "SB")
 			else
 				opt = add_opt("", "",  d, [:width])		# No need to purge because width is not a psxy option
 				if (opt == "")	opt = "0.8"	end			# The default
@@ -433,22 +415,13 @@ function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
 				cmd = cmd * "+b" * optB
 				opt = ""
 			end
-#=
-			if (opt != "")				# Still need to finish parsing this
-				if ((ind = findfirst("+", opt)) !== nothing)	# See if need to insert a 'u'
-					if (!isletter(opt[ind[1]-1]))  opt = opt[1:ind[1]-1] * 'u' * opt[ind[1]:end]  end
-				else
-					if (!isletter(opt[end-1]))  opt = opt * "u+b0"	# No base set so default to 0
-					else                        opt = opt * "+b0"
-					end
-				end
-				cmd = cmd * opt
-			end
-=#
 		end
 		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end		# Default color
 		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
 	elseif (caller == "bar3")
+		if (haskey(d, :noshade) && occursin("-So", cmd))
+			cmd = replace(cmd, "-So" => "-SO", count=1)
+		end
 		if (!occursin(" -B", cmd))  cmd = cmd * " -Baf -Bza -BWSZ"  end
 		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end	
 		if (!occursin(" -J", cmd))  cmd = cmd * " -JX12c/0"  end
@@ -459,15 +432,16 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String)
-	# Deal with parsing the 'bar' & 'hbar' keywors of psxy. Also called by plot/bar3.
+	# Deal with parsing the 'bar' & 'hbar' keywors of psxy. Also called by plot/bar3. For this
+	# later module is input is not a string or NamedTuple the scatter options must be processed in bar3().
 	# KEY is either :bar or :hbar
-	# OPT is either "Sb" or "SB"
+	# OPT is either "Sb", "SB" or "So"
 	opt =""
 	if (haskey(d, key))
 		if (isa(d[key], String))
 			cmd = cmd * " -" * optS * d[key]
 		elseif (isa(d[key], NamedTuple))
-			opt = add_opt("", optS, d, [key], (width="",unit="1",base="+b",height="+B"))
+			opt = add_opt("", optS, d, [key], (width="",unit="1",base="+b",height="+B",nbands="+z",Nbands="+Z"))
 		else
 			error("Argument of the *bar* keyword can be only a string or a NamedTuple.")
 		end
@@ -477,8 +451,10 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String)
 		if ((ind = findfirst("+", opt)) !== nothing)	# See if need to insert a 'u'
 			if (!isletter(opt[ind[1]-1]))  opt = opt[1:ind[1]-1] * 'u' * opt[ind[1]:end]  end
 		else
-			if (!isletter(opt[end-1]))  opt = opt * "u+b0"	# No base set so default to 0
-			else                        opt = opt * "+b0"
+			pb = ""
+			if (optS != "So")  pb = "+b0"  end	# The default for bar3 (So) is set in the bar3() fun
+			if (!isletter(opt[end]))  opt = opt * 'u' * pb	# No base set so default to ...
+			else                      opt = opt * pb
 			end
 		end
 		cmd = cmd * opt
