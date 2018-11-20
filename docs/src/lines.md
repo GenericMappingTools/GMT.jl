@@ -1,8 +1,8 @@
-# scatter
+# lines
 
-	scatter(cmd0::String="", arg1=[]; kwargs...)
+	lines(cmd0::String="", arg1=[]; kwargs...)
 
-Reads (x,y) pairs and plot symbols at those locations on a map/figure. The input can either be a file
+Reads (x,y) pairs and plot lines with different levels of decoration. The input can either be a file
 name of a file with at least two columns (x,y), but optionally more, a GMTdatset object with also two
 or more columns.
 
@@ -35,11 +35,9 @@ Optional Arguments
    syntax). See [Setting color](@ref) for extend color selection (including color map generation).
 
 - **S** or *symbol* or `others` : --  Default is `circle` with diameter of 7 points
-   - *symbol=symbol string*\
-      A full GMT compact string.
-   - *symbol=(symb=??, size=??, unit=??)*\
-      Where *symb* is one [Symbols](@ref) like `:circle`, *size* is symbol size in cm, unless *unit*
-      is specified i.e. `:points`
+   - *symbol=symbol string* -- A full GMT compact string.
+   - *symbol=(symb=??, size=??, unit=??)*  -- Where *symb* is one [Symbols](@ref) like `:circle`, *size* is
+     symbol size in cm, unless *unit* is specified i.e. `:points`
 
    In alternative to the *symbol* keyword, user can select the symbol name with either *marker* or *shape*
    and symbol size with *markersize*, *ms* or just *size*. The value of these keywords can be either numeric

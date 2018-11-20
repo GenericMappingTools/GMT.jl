@@ -15,8 +15,8 @@ Parameters
 ----------
 
 - **B** or *axis* or *frame*\
-  Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
-  Extended at [axis](@ref)
+  Set map boundary frame and axes attributes. Default is to draw and annotate left, bottom and verical
+  axes and just draw left and tp axes. Extended at [axis](@ref)
 
 - **J** or *proj* : *proj=<parameters>*\
   Select map projection. Default is linear and 12 cm width. More at [proj](@ref)
@@ -46,7 +46,7 @@ Parameters
    on input; these must be monotonically increasing up the column) or *Nbands=n* (and expect *n* of dz
    increments that must be summed to yield actual *z* values). The multi-band column symbol requires a
    *fill=cmap* (*i.e.* the use of a colormap) and will use the band number (0, 1, nbands-1) to assign the band
-   color. The way to use these options is also as separate keyword, or as an extra member of the *bar* tuple.
+   color. The way to use these options is also as a separate keyword, or as an extra member of the *bar* tuple.
      - *nbands=n* or *Nbands=n*
    or
      - *bar=(width=xx,unit=xx,base=xx,height=xx,nbands=xx)*  (or *Nbands=xx* for last element)
