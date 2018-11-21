@@ -104,7 +104,7 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	if (!isempty(clip))
+	if (!isempty_(clip))
 		if (clip == "land" || clip == :land)       cmd = cmd * " -Gc"
 		elseif (clip == "water" || clip == :water) cmd = cmd * " -Sc"
 		elseif (clip == "end" || clip == :end)     cmd = cmd * " -Q"
@@ -160,22 +160,19 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 	cmd = add_opt(cmd, 'C', d, [:C :river_fill])
 	cmd = add_opt(cmd, 'D', d, [:D :res :resolution])
 
-	for sb in [:E :DCW]
-		if (haskey(d, sb))
-			if (isa(d[sb], String))
-				cmd = cmd * " -E" * d[sb]					# Simple case, ex E="PT,+gblue"
-			elseif (isa(d[sb], Tuple))
-				if (length(d[sb]) >= 2 && isa(d[sb][1], Tuple) && isa(d[sb][end], Tuple)) 	# ex E=((),(),...,())
-					for k = 1:length(d[sb])
-						cmd = parse_dcw(d[sb][k], cmd)
-					end
-				else
-					cmd = parse_dcw(d[sb], cmd)
+	if ((val = find_in_dict(d, [:E :DCW])) !== nothing)
+		if (isa(val, String))
+			cmd = cmd * " -E" * val					# Simple case, ex E="PT,+gblue"
+		elseif (isa(val, Tuple))
+			if (length(val) >= 2 && isa(val[1], Tuple) && isa(val[end], Tuple)) 	# ex E=((),(),...,())
+				for k = 1:length(val)
+					cmd = parse_dcw(val[k], cmd)
 				end
 			else
-				error("Arguments of E can only be a String or a Tuple (or Tuple of Tuples")
+				cmd = parse_dcw(val, cmd)
 			end
-			break
+		else
+			error("Arguments of E can only be a String or a Tuple (or Tuple of Tuples")
 		end
 	end
 

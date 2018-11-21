@@ -225,9 +225,12 @@ if (got_it)					# Otherwise go straight to end
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
 	plot("",hcat(collect(1:10)[:],rand(10,1)))
+	plot!("",hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
+	plot(hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
+	plot!(hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
 	plot!(collect(1:10),rand(10), fmt="ps")
 	plot(1:10,rand(10), S=(symb=:c,size=7,unit=:point), color=:rainbow, zcolor=rand(10))
-	plot(1:10,rand(10)*3, S="c7p", color=:rainbow)
+	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, Vd=:cmd)
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3)
 	plot3d(rand(5,5,3), marker=:cube)
 	plot3d!(rand(5,5,3), marker=:cube, Vd=:cmd)
@@ -254,8 +257,10 @@ if (got_it)					# Otherwise go straight to end
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
 	scatter(1:10, rand(10), fill=:red, B=:a)
 	scatter!(1:10, rand(10), fill=:red, B=:a, Vd=:cmd)
+	scatter(rand(5,5))
+	scatter!(rand(5,5), Vd=:cmd)
 	scatter3(rand(5,5,3))
-	scatter3(rand(5,5,3), Vd=:cmd)
+	scatter3!(rand(5,5,3), Vd=:cmd)
 	scatter3(1:10, rand(10), rand(10), fill=:red, B=:a, Vd=:cmd)
 	scatter3!(1:10, rand(10), rand(10), Vd=:cmd)
 
@@ -300,7 +305,8 @@ if (got_it)					# Otherwise go straight to end
 	coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, borders="1/0.5p");
 	coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
 	coast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
-	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), fmt="ps", B=:a, N=(1,(1,"green")), water=:blue)
+	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), water=:blue, clip=:land, Vd=:cmd)
+	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), Vd=:cmd)
 
 	# PSCONTOUR
 	x,y,z=GMT.peaks();
@@ -331,6 +337,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSTERNARY
 	ternary([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", X=:c, B=:a, S="c0.1c");
+	ternary!([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", S="c0.1c", Vd=:cmd);
 
 	# PSTEXT
 	text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps",showfig="lixo.ps")

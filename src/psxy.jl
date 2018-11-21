@@ -151,12 +151,9 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	if (!occursin("-J", cmd))			# bar, bar3 and others may send in a -J
 		opt_J = " -JX12c"
-		for symb in [:axis :aspect]
-			if (haskey(d, symb))
-				if (d[symb] == "equal" || d[symb] == :equal)	# Need also a 'tight' option?
-					opt_J = " -JX12c"
-				end
-				break
+		if ((val = find_in_dict(d, [:axis :aspect])) !== nothing)
+			if (val[1] == "equal" || val[1] == :equal)	# Need also a 'tight' option?
+				opt_J = " -JX12c"
 			end
 		end
 	else
@@ -485,9 +482,3 @@ xyz!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
 	xyz(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
 xyz!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
 	xyz("", arg1; caller=caller, K=K, O=O, first=first, kw...)
-
-# ---------------------------------------------------------------------------------------------------
-#psxy   = xy				# Alias
-#psxy!  = xy!			# Alias
-#psxyz  = xyz			# Alias
-#psxyz! = xyz!			# Alias
