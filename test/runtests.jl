@@ -226,29 +226,38 @@ if (got_it)					# Otherwise go straight to end
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
 	plot("",hcat(collect(1:10)[:],rand(10,1)))
 	plot!(collect(1:10),rand(10), fmt="ps")
-	plot3d(rand(5,5,3), marker=:cube)
 	plot(1:10,rand(10), S=(symb=:c,size=7,unit=:point), color=:rainbow, zcolor=rand(10))
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow)
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3)
+	plot3d(rand(5,5,3), marker=:cube)
+	plot3d!(rand(5,5,3), marker=:cube, Vd=:cmd)
+	plot3d(1:10, rand(10), rand(10), Vd=:cmd)
+	plot3d!(1:10, rand(10), rand(10), Vd=:cmd)
 
 	# ARROWS
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,stop=:tail,shape=0.5), J=14, B=:a, pen="6p")
+	arrows!([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,shape=0.5), pen="6p", Vd=:cmd)
+	arrows!("", [0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,shape=0.5), pen="6p", Vd=:cmd)
 
 	# LINES
 	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
 	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af)
-	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", vec=(size=0.65, fill=:red))
+	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", vec=(size=0.65, fill=:red), Vd=:cmd)
+	lines(1:10,rand(10), W=0.25, Vd=:cmd)
+	lines!(1:10,rand(10), W=0.25, Vd=:cmd)
 	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
 	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 
 	# SCATTER
-	scatter(hcat(collect(1:10)[:],rand(10,1)))
-	scatter!(hcat(collect(1:10)[:],rand(10,1)))
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
-	scatter(1:10,rand(10), fill=:red, B=:a)
+	scatter(1:10, rand(10), fill=:red, B=:a)
+	scatter!(1:10, rand(10), fill=:red, B=:a, Vd=:cmd)
 	scatter3(rand(5,5,3))
+	scatter3(rand(5,5,3), Vd=:cmd)
+	scatter3(1:10, rand(10), rand(10), fill=:red, B=:a, Vd=:cmd)
+	scatter3!(1:10, rand(10), rand(10), Vd=:cmd)
 
 	# BARPLOT
 	data = sort(randn(10));
