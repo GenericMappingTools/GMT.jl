@@ -91,23 +91,23 @@ Parameters
 - $(GMT.opt_t)
 """
 plot(arg1; K=false, O=false, first=true, kw...) =
-	GMT.xy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
+	psxy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
 plot!(arg1; K=true, O=true, first=false, kw...) =
-	GMT.xy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
+	psxy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
 
 plot(cmd0::String="", arg1=[]; K=false, O=false, first=true, kw...) =
-	GMT.xy(cmd0, arg1; caller="plot", K=K, O=O, first=first, kw...)
+	psxy(cmd0, arg1; caller="plot", K=K, O=O, first=first, kw...)
 plot!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
-	GMT.xy(cmd0, arg1; caller="plot", K=K, O=O, first=first, kw...)
+	psxy(cmd0, arg1; caller="plot", K=K, O=O, first=first, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 function plot(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2)
-	GMT.xy("", arg; caller="plot",  K=K, O=O, first=first, kw...)
+	psxy("", arg; caller="plot",  K=K, O=O, first=first, kw...)
 end
 function plot!(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
 	arg = hcat(arg1, arg2)
-	GMT.xy("", arg; caller="plot",  K=true, O=true, first=false, kw...)
+	psxy("", arg; caller="plot",  K=true, O=true, first=false, kw...)
 end
 # ------------------------------------------------------------------------------------------------------
 
@@ -204,24 +204,24 @@ Parameters
 - $(GMT.opt_t)
 """
 plot3d(arg1; K=false, O=false, first=true, kw...) =
-    GMT.xyz("", arg1; caller="plot3d", K=K, O=O, first=first, kw...)
+	psxyz("", arg1; caller="plot3d", K=K, O=O, first=first, kw...)
 plot3d!(arg1; K=false, O=false, first=true, kw...) =
-    GMT.xyz("", arg1; caller="plot3d", K=true, O=true, first=false, kw...)
+	psxyz("", arg1; caller="plot3d", K=true, O=true, first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 plot3d(cmd0::String; K=false, O=false, first=true, kw...) =
-	GMT.xyz(cmd0; caller="plot3d", K=K, O=O, first=first, kw...)
+	psxyz(cmd0; caller="plot3d", K=K, O=O, first=first, kw...)
 plot3d!(cmd0::String; K=false, O=false, first=true, kw...) =
-	GMT.xyz(cmd0; caller="plot3d", K=true, O=true, first=false, kw...)
+	psxyz(cmd0; caller="plot3d", K=true, O=true, first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 function plot3d(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=false, O=false, first=true, kw...)
 	arg = hcat(arg1[:], arg2[:], arg3[:])
-	GMT.xyz("", arg; caller="plot3d", K=K, O=O, first=first, kw...)
+	psxyz("", arg; caller="plot3d", K=K, O=O, first=first, kw...)
 end
 function plot3d!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=false, O=false, first=true, kw...)
 	arg = hcat(arg1[:], arg2[:], arg3[:])
-	GMT.xyz("", arg; caller="plot3d", K=true, O=true, first=false, kw...)
+	psxyz("", arg; caller="plot3d", K=true, O=true, first=false, kw...)
 end
 # ------------------------------------------------------------------------------------------------------
 

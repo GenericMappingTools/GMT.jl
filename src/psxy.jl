@@ -100,7 +100,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function xy(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, kwargs...)
+function psxy(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, kwargs...)
 	if (isempty(cmd0) && isa(arg1, AbstractArray) && length(arg1) != 2 &&
 		(size(arg1,2) == 1 || size(arg1,1) == 1))	# y only
 		arg1 = hcat(1:length(arg1), arg1[:])
@@ -109,7 +109,7 @@ function xy(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, k
 end
 
 # ---------------------------------------------------------------------------------------------------
-function xyz(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, kwargs...)
+function psxyz(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, kwargs...)
 	common_plot_xyz(cmd0, arg1, caller, K, O, first, true, kwargs...)
 end
 
@@ -487,7 +487,7 @@ xyz!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
 	xyz("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
 # ---------------------------------------------------------------------------------------------------
-psxy   = xy				# Alias
-psxy!  = xy!			# Alias
-psxyz  = xyz			# Alias
-psxyz! = xyz!			# Alias
+#psxy   = xy				# Alias
+#psxy!  = xy!			# Alias
+#psxyz  = xyz			# Alias
+#psxyz! = xyz!			# Alias
