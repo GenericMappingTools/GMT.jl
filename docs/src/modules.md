@@ -25,14 +25,14 @@ man page.
 
 Before diving more in the way options may be transmitted into the module, we have to understand what
 happens with the output image file. By not directly specifying any format we are using the default
-output image format which is PostScript (actually, with the exception of *grdimage -A*, the only
+output image format which is PostScript (actually, except for *grdimage -A*, the only
 format that *GMT* can write). But we can select other formats by using the *fmt* keyword, for example
 *fmt="jpg"*, or *fmt=:png* or *fmt=:pdf*. In such cases, the *ghostscript* program (you need to have
 it installed) will take care of converting the *ps* file into the selected format. Note that we used
 either strings ("") or symbols (:) to represent the format. Here the rule is we can use symbols for
 any string argument that can be safely written as a symbol. Example, this is valid =:abc, but this
-is not =:+a (apparently parser will try to add to *a*). The use of symbols may be prefered for a
-question of lazzyness (less typing).
+is not =:+a (apparently parser will try to add to *a*). The use of symbols may be preferred for a
+question of laziness (less typing).
 
 The above example, however, does not use any input data (*coast* knows how to find its own data). One
 way of providing it to modules that work on them is to send in a file name with the data to operate on.
@@ -40,11 +40,11 @@ This example
 
     grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:M12c, frame=:a, show=true)
 
-reads a the netCDF grid *tut_relief.nc* and displays it as an Mercator projected image. The '@' prefix
+reads a the netCDF grid *tut_relief.nc* and displays it as a Mercator projected image. The '@' prefix
 is used by *GMT* to know that the grid file should be downloaded from a server and cached locally. This
 example introduces also the *show=true* keyword. It means that we want to see right way the image that
-has just been created. While it might seam obvious that one want to see the result, the result might not be
-ready with only one *GMT* module call. And that's why the *GMT* philosophy uses a *layer cake*  model
+has just been created. While it might seem obvious that one wants to see the result, the result might not be
+ready with only one *GMT* module call. And that's why the *GMT* philosophy uses a *layer cake* model
 to construct potentially highly complex figures. Next example illustrates a slightly more evolved
 example
 
@@ -62,11 +62,11 @@ one is the part created by *grdimage*, which is complemented by the color scale 
 keyword. If our example had more layers, we would have used the same rule: second and on layers use the
 **!** construct and the last is signaled by *show=true*.
 
-By default the image files are writen into *tmp* system directory under the name *GMTjl_tmp.ps* (remember
+By defaultn the image files are written into *tmp* system directory under the name *GMTjl_tmp.ps* (remember
 *PostScript* is the default format) and *GMTjl_tmp.xxx* when user specifies a different format with the
 *fmt* keyword. It's one of this files that shows up when *show=true* is used. But we may want to save the
 image file permanently under a different name and location. For that use the keyword *savefig=name*, where
-*name* is realative or full file name.
+*name* is relative or full file name.
 
 The examples above show also that we didn't completely get rid of the compact *GMT* syntax. For example
 the *shade="+ne0.8+a100"* in *grdimage* means that we are computing the shade using a normalized a
@@ -88,7 +88,7 @@ parameters used to set the image's title and labels.
 
 But setting pen attributes like illustrated above may be complicated if one has more that one set of
 graphical objects (lines and polygons) that need to receive different settings. A good example of
-this is again provide by a *coast* command. Imagine that we want to plot coast lines as well as country
+this is again provided by a *coast* command. Imagine that we want to plot coast lines as well as country
 borders with different line colors and thickness. Here we cannot simple state *lw=1* because the
 program wouldn't know which of the shore line or borders this attribute applies to. The solution for
 this is to use tuples as values of corresponding keyword options.
@@ -115,7 +115,7 @@ So, in summary, a *pen* attribute may be set in three different ways:
    a string (example: "- -" plot a dashed line).
 
 3. A tuple with one to three elements: ([*width*], [*color*], [*style*]) where each of the
-   elements follows the same syntax as explained in the case (2) above.
+   elements follow the same syntax as explained in the case (2) above.
 
 ## Specifying the axes
 
@@ -141,7 +141,7 @@ data's bounding box.
 There are almost 150 parameters which can be adjusted individually to modify the appearance of plots or
 affect the manipulation of data. When a program is run, it initializes all parameters to the GMTdefaults
 (see more at [`GMT defaults`](https://gmt.soest.hawaii.edu/doc/latest/GMT_Docs.html#gmt-defaults)). 
-At times it may be desirable to temporarilly override some of those defaults. We can do that easily
+At times it may be desirable to temporarily override some of those defaults. We can do that easily
 by using any of the keywords *conf*, *par* or *params*, which are recognized by all modules. Its usage
 follows closely the syntax described at [`gmt.conf`](https://gmt.soest.hawaii.edu/doc/latest/gmt.conf.html)
 but using Named Tuples. The parameter names are always given in UPPER CASE. The parameter values are
@@ -157,20 +157,20 @@ Figure sizes are automatically set to 12x8 cm for basic case of Cartesian *xy* p
 function but otherwise in general they need to be user specified using the **J** or **proj** or **projection**
 keywords. See the full doc at [`-J documentation`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#j-full). 
 For Cartesian plots one can also use the *figsize=width*  or *figsize=[width height]* keyword, where the
-dimensions are in centimiters. The array form allows also set *height* or *width* to 0 to have it recomputed
+dimensions are in centimeters. The array form allows also set *height* or *width* to 0 to have it recomputed
 based on the implied scale of the other axis. Use negative sizes to reverse the direction of an axis
 (e.g., to have y be positive down). If neither of these forms is used, the figure width defaults to 14 cm.
 
 ## The output format
 
 It was referred above that the **fmt** determines the output format and that the default is *PostScript*.
-Actually the default format is choosen by the contents of the global **FMT** variable set at the top of
-the *GMT.jl* file. Eventually this will evolve to using an evironment variable but for the moment users
+Actually, the default format is chosen by the contents of the global **FMT** variable set at the top of
+the *GMT.jl* file. Eventually this will evolve to using an environment variable but for the moment users
 will have to edit that file to set a different default format.
 
 A very interesting alternative is to set **FMT=""**, that is to not specify any image format. This will
 result in *NOT* saving any file on disk but to keep the PS figure internally stored in the program's memory. 
-In other words the figure is built and kept in memory only. This allows converting to another format
+In other words, the figure is built and kept in memory only. This allows converting to another format
 directly without the use of an intermediary disk file. The conversion is performed by the *psconvert* *GMT*
 module that would be used like this (to convert to PDF):
 

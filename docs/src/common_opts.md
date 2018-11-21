@@ -15,11 +15,11 @@ keyword that takes as value a tuple with a combination of words. Axes are named 
 and those with no annoations and no tick marks. We call them *full*, *ticks* and *bare* and combine with the axes
 name using an underscore to glue them. Hence *left_full* means draw and annotate left axes, whilst *top_bare*
 means draw only top axes. The full combination is *left|bottom|right|top|up_full|ticks|bare*. To not draw a
-boundary, simply ommit the name of it in tuple. Note that the short one single char naming used by GMT is also
-valide. E.g. *axes=:WSn* will draw and annotate left and south bondaries and draw but no ticks or anotations
+boundary, simply omit the name of it in tuple. Note that the short one single char naming used by GMT is also
+valid. E.g. *axes=:WSn* will draw and annotate left and south boundaries and draw but no ticks or annotations
 the top boundary.
 
-If a 3-D basemap is selected with *view* and *J=:z*, by default a single vertical axes will be plotted at
+If a 3-D base map is selected with *view* and *J=:z*, by default a single vertical axes will be plotted at
 the most suitable map corner. Override the default by using the keyword *corners* and any combination of
 corner ids **1234**, where **1** represents the lower left corner and the order goes counter-clockwise.
 
@@ -39,9 +39,9 @@ GMT uses the notion of *primary* (the default) and *secondary* axes. To set an a
 *secondary=true* (mostly used for time axes annotations).
 
 The *xaxis* *yaxis* and *zaxis* specify which axis you are providing information for. The syntax is the same as for
-the *axis* keyword but allows fine tunning of different options for the 4 (or 6) axis.
+the *axis* keyword but allows fine tuning of different options for the 4 (or 6) axis.
 
-To add a label to an axis use *label="Label text"* if using the *xaxis* etc form, or use the *xlabel*, *ylabel*
+To add a label, to an axis use *label="Label text"* if using the *xaxis* etc form, or use the *xlabel*, *ylabel*
 and *zlabel* keywords in the common *axis* tuple of options.
 
 Use *Yhlabel=true* to force a horizontal label for *y*-axes (useful for very short labels).
@@ -271,7 +271,7 @@ basemap(region="-30/30/-20/20", proj="X12/8",
    **+**, or **-** to the given width if you instead want to set map height, the maximum dimension, or the
    minimum dimension, respectively [Default is **w** for width]. In case the central meridian is an optional
    parameter and it is being omitted, then the center of the longitude range given by the *limits* option is
-   used. he default standard parallel is the equator. The ellipsoid used in the map projections is
+   used. The default standard parallel is the equator. The ellipsoid used in the map projections is
    user-definable by editing the gmt.conf file in your home directory. 73 commonly used ellipsoids and
    spheroids are currently supported, and users may also specify their own custom ellipsoid parameters
    [Default is WGS-84]. Several GMT parameters can affect the projection: *PROJ\_ELLIPSOID*, *GMT\_INTERPOLANT*,

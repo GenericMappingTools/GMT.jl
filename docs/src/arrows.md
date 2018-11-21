@@ -6,8 +6,8 @@ Reads (x,y,a,b) data and make arrow plots. The input can either be a file name o
 four columns, but optionally more, or an Mx2 Array or GMTdatset object with the same characteristics in
 terms of columns number.
 
-This module is a subset of `plot` to make it simpler to draw arrow plots. So not all of its (fine)
-controling parameters are not listed here. For the finest control, user should consult the `plot` module.
+This module is a subset of `plot` to make it simpler to draw arrow plots. So not all (fine)
+controlling parameters are not listed here. For the finest control, user should consult the `plot` module.
 
 Parameters
 ----------
@@ -34,7 +34,8 @@ Parameters
 - **arrow**\
    Direction (in degrees counter-clockwise from horizontal) and length must be found in columns 3 and 4,
    and size, if not specified on the command-line, should be present in column 5. The size is the length of
-   the vector head. Vector width is set by *pen*. See [Vector Attributes](@ref) for specifying other attributes.
+   the vector head. Vector stem width is set by *pen*. By default, a vector head of 0.5 cm is set but see
+   [Vector Attributes](@ref) for overwriting this default and specifying other attributes.
 
 - **U** or *stamp* : *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
    Draw GMT time stamp logo on plot. More at [stamp](@ref)

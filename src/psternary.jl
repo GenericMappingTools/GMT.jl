@@ -142,18 +142,15 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 
 	opt_W = ""
-	pen = build_pen(d)						# Either a full pen string or empty ("")
-	if (!isempty(pen))
+	pen = build_pen(d)					# Either a full pen string or empty ("")
+	if (pen != "")
 		opt_W = " -W" * pen
 	else
-		for sym in [:W :line_attrib]
-			if (haskey(d, sym))
-				if (isa(d[sym], Tuple))		# Like this it can hold the pen, not extended atts
-					opt_W = " -W" * parse_pen(d[sym])
-				else
-					opt_W = " -W" * arg2str(d[sym])
-				end
-				break
+		if ((val = find_in_dict(d, [:W :line_attrib])[1]) !== nothing)
+			if (isa(val, Tuple))		# Like this it can hold the pen, not extended atts
+				opt_W = " -W" * parse_pen(val)
+			else
+				opt_W = " -W" * arg2str(val)
 			end
 		end
 	end
@@ -163,8 +160,8 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 		marca = get_marker_name(d, [:marker :shape], false)
 		if (marca != "")
 			done = false
-			if ((val = find_in_dict(d, [:markersize :ms :size])) !== nothing)
-				marca = marca * arg2str(val[1])
+			if ((val = find_in_dict(d, [:markersize :ms :size])[1]) !== nothing)
+				marca = marca * arg2str(val)
 				done = true
 			end
 			if (!done)  marca = marca * "8p"  end			# Default to 8p
@@ -174,18 +171,15 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 
 	if (opt_S != "")			# 
 		opt_ML = ""
-		for sym in [:markerline]
-			if (haskey(d, sym))
-				if (isa(d[sym], Tuple))	# Like this it can hold the pen, not extended atts
-					opt_ML = " -W" * parse_pen(d[sym])
-				else
-					opt_ML = " -W" * arg2str(d[sym])
-				end
-				if (!isempty(opt_Wmarker))
-					opt_Wmarker = ""
-					@warn("markerline overrides markeredgecolor")
-				end
-				break
+		if (haskey(d, :markerline))
+			if (isa(:markerline, Tuple))	# Like this it can hold the pen, not extended atts
+				opt_ML = " -W" * parse_pen(:markerline)
+			else
+				opt_ML = " -W" * arg2str(:markerline)
+			end
+			if (!isempty(opt_Wmarker))
+				opt_Wmarker = ""
+				@warn("markerline overrides markeredgecolor")
 			end
 		end
 		if (opt_W != "" && !isempty(opt_ML))

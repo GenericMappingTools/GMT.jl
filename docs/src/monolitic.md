@@ -89,7 +89,7 @@ must specify the corresponding option flag but provide no file argument (e.g., j
 above case). Likewise, for secondary output we supply the option flag and add additional objects
 to the left-hand side of the assignment. All secondary items, whether input or output, must appear
 after all primary items, and if more than one secondary item is given then their order must match
-the order of the corresponding options in optionstring.
+the order of the corresponding options in option string.
 
 Here are two examples contrasting the GMT command line versus ``gmt()`` usage. In the first example
 we wish to determine all the data points in the file *all_points.txt* that happen to be located inside
@@ -155,7 +155,7 @@ operands. However, in the general case it may not be possible to determine a uni
 importantly it is simply too confusing to separate all operators from their operands (other than
 constants) as we would lose track of the mathematical operation we are performing. For this reason,
 we will assist the module by inserting question marks where we wish the module to use the next unused
-input object in the list. Hence, the valid command actually becomes
+input object in the list. Hence, the valid command becomes
 
     answer = gmt("grdmath ? ? MUL PI ADD", kei, C);
 

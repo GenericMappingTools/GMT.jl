@@ -55,5 +55,5 @@ Given this design the Julia wrapper is designed to work in two distinct ways.
    
 2. The second way uses an upper level set of functions that abstract aspects that
    make the monolithic usage more complex. It provides an interface to some of the GMT modules
-   using a *option=val* list type syntax. This makes it more appropriate for newcommers but
+   using a *option=val* list type syntax. This makes it more appropriate for new commers but
    it won't release you from understanding the monolithic way. See the [By Modules](@ref)

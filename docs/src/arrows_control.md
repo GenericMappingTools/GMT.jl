@@ -65,7 +65,7 @@ the start point to the end point of a segment:
    Shift the beginning or end point (or both) along the vector segment by the given trim. To
    select begin or end prepend a 'b' or a 'e' to the *trim* value (hence it must be a string). Append suitable
    unit (c, i, or p). If the modifiers b|e are not used then trim may be two values separated by a slash, which
-   is used to specify different trims for the beginning and end. Positive trims will shorted the vector while
+   is used to specify different trims for the beginning and end. Positive trims will short the vector while
    negative trims will lengthen it [no trim].
 
 In addition, all but circular vectors may take these options:

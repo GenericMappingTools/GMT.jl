@@ -3,16 +3,11 @@
 	scatter3(cmd0::String="", arg1=[]; kwargs...)
 
 Reads (x,y,z) triplets and plot symbols at those locations on a map. This module is a subset of `plot` to make
-it simpler to draw scatter plots. So many of its (fine) controling parameters are not listed here. For a
+it simpler to draw scatter plots. So many (fine) controlling parameters are not listed here. For a
 finer control, user should consult the `plot` module.
 
-Required Arguments
-------------------
-
-There are no required arguments but
-
-Optional Arguments
-------------------
+Parameters
+----------
 
 - **B** or *axis* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left, bottom and verical
@@ -32,9 +27,11 @@ Optional Arguments
    syntax). See [Setting color](@ref) for extend color selection (including color map generation).
 
 - **S** or *symbol* or `others` : --  Default is `cube` with size of 7 points
-   - *symbol=symbol string* -- A full GMT compact string.
-   - *symbol=(symb=??, size=??, unit=??)*  -- Where *symb* is one [Symbols](@ref) like `:circle`, *size* is
-     symbol size in cm, unless *unit* is specified i.e. `:points`
+   - *symbol=symbol string*\
+      A full GMT compact string.
+   - *symbol=(symb=??, size=??, unit=??)*\
+      Where *symb* is one [Symbols](@ref) like `:circle`, *size* is
+      symbol size in cm, unless *unit* is specified i.e. `:points`
 
    In alternative to the *symbol* keyword, user can select the symbol name with either *marker* or *shape*
    and symbol size with *markersize*, *ms* or just *size*. The value of these keywords can be either numeric
@@ -42,11 +39,15 @@ Optional Arguments
    selection allows also to specify a variable symbol size. All it's need for this is that the keywrd's value
    be an array with the same number of elements as the number of data points. 
 
-- **p** or *view* : -- Default is viewpoin from an azimuth of 200 and elevation of 30 degrees.\
-   Specify the viewpoint in terms of azimuth and elevation. The azimuth is the horizontal rotation about the z-axis as measured in degrees from the positive y-axis. That is, from North. This option is not yet fully
-   expanded. Current alternatives are:
-     - *view=??*  -- A full GMT compact string with the full set of options.
-     - *view=(azim,elev)*  -- A two elements tuple with azimuth and elevation
+- **p** or *view*\
+   Default is viewpoin from an azimuth of 200 and elevation of 30 degrees. Specify the viewpoint in terms
+   of azimuth and elevation. The azimuth is the horizontal rotation about the z-axis as measured in degrees
+   from the positive y-axis. That is, from North. This option is not yet fully expanded. Current alternatives
+   are:
+     - *view=??*\
+        A full GMT compact string with the full set of options.
+     - *view=(azim,elev)*\
+        A two elements tuple with azimuth and elevation
 
 Examples
 --------

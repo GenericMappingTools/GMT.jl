@@ -1530,7 +1530,6 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 						   arg4=[], arg5=[], arg6=[])
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
-			#dbg_print_cmd(d, cmd[k], prog)
 			if ((r = dbg_print_cmd(d, cmd[k], prog)) !== nothing)  return r  end 	# For tests only
 			if (isempty_(arg1))					# Simple case
 				P = gmt(string(prog, " ", cmd[k]))

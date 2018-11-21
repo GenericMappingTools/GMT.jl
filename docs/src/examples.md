@@ -43,15 +43,15 @@ Note that now the first command, the ``coast``, does not have the ``show`` keywo
 It means we are here creating the first layer but we don't want to see it just yet.
 The second command uses the **!** variation of the ``plot`` function, which means
 that we are *appending* to a previous plot, and uses the ``show=true`` because we
-are donne with this figure.
+are done with this figure.
 
 ## Simple contours
 
 Contours are created with ``grdcontour`` that takes a *grid* as input (or a *GMTgrid* data type).
 This example shows uses the *peaks* function to create a classical example. Note, however, that the
 memory consumption in this example, when creating the plot, is much lower than traditional likewise 
-examples because we will be using only one 2D array intead of 3 3D arrays (ref). In the example
-*cont=1* and *annot=2* means draw contours at evry 1 unit of the *G* grid and annotate at evry other
+examples because we will be using only one 2D array instead of 3 3D arrays (ref). In the example
+*cont=1* and *annot=2* means draw contours at every 1 unit of the *G* grid and annotate at every other
 contour line. *frame="a"* means pick a default automatic annotation and labeling for the axis.
 
 ```julia
@@ -62,8 +62,8 @@ grdcontour(G, cont=1, annot=2, frame="a", fmt="png", show=1)
 
 !["Simple black&white contour"](figures/hello-bw-contour.png)
 
-Now with colored contours. To make it colored we need to generate a color map and use it. Notetice
-that we have to specify a *pen* attribute to get the colored contours because pen specifications
+Now with colored contours. To make it colored we need to generate a color map and use it. Notice
+that we must specify a *pen* attribute to get the colored contours because pen specifications
 are always set separately. Here we will create first a colormap with *makecpt* that will from -6 to
 8 with steps of 1. These values are picked up after the *z* values of the *G* grid. 
 

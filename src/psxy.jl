@@ -151,8 +151,8 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	if (!occursin("-J", cmd))			# bar, bar3 and others may send in a -J
 		opt_J = " -JX12c"
-		if ((val = find_in_dict(d, [:axis :aspect])) !== nothing)
-			if (val[1] == "equal" || val[1] == :equal)	# Need also a 'tight' option?
+		if ((val = find_in_dict(d, [:axis :aspect])[1]) !== nothing)
+			if (val == "equal" || val == :equal)	# Need also a 'tight' option?
 				opt_J = " -JX12c"
 			end
 		end
@@ -219,19 +219,16 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		marca = get_marker_name(d, [:marker :shape], is3D)
 		if (marca != "")
 			ms = ""
-			for symb in [:markersize :ms :size]
-				if (haskey(d, symb))
-					if (isa(d[symb], AbstractArray))
-						if (length(d[symb]) == size(arg1,1))
-							arg1 = hcat(arg1, d[symb][:])
-							ms = " "		# Just to defeat the empty test below
-						else
-							error("The size array must have the same number of elements rows in the data")
-						end
+			if ((val = find_in_dict(d, [:markersize :ms :size])[1]) !== nothing)
+				if (isa(val, AbstractArray))
+					if (length(val) == size(arg1,1))
+						arg1 = hcat(arg1, val[:])
+						ms = " "		# Just to defeat the empty test below
 					else
-						marca = marca * arg2str(d[symb]);	ms = " "
+						error("The size array must have the same number of elements rows in the data")
 					end
-					break
+				else
+					marca = marca * arg2str(val);	ms = " "
 				end
 			end
 			if (ms == "")  marca = marca * "8p"		end		# Default to 8p
@@ -271,7 +268,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		cmd = [finish_PS(d, cmd * opt_S * opt_Gsymb, output, K, O)]
 
 	elseif (opt_W != "" && opt_S != "")						# We have both line/polygon and a symbol
-		# that is not a vector (because Vector width is set by -W)
+		if (occursin(opt_Gsymb, cmd))  opt_Gsymb = ""  end
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
 			cmd = [finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb, output, K, O)]
 		else

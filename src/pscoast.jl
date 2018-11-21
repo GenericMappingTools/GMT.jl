@@ -160,7 +160,7 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 	cmd = add_opt(cmd, 'C', d, [:C :river_fill])
 	cmd = add_opt(cmd, 'D', d, [:D :res :resolution])
 
-	if ((val = find_in_dict(d, [:E :DCW])) !== nothing)
+	if ((val = find_in_dict(d, [:E :DCW])[1]) !== nothing)
 		if (isa(val, String))
 			cmd = cmd * " -E" * val					# Simple case, ex E="PT,+gblue"
 		elseif (isa(val, Tuple))
