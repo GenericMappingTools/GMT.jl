@@ -130,20 +130,11 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 	cmd = add_opt(cmd, 'N', d, [:N :error_bars])
 
 	cmd = add_opt(cmd, 'G', d, [:G :fill])
-	opt_Gsymb = ""			# Filling color for symbols
-	for sym in [:G :markerfacecolor]
-		if (haskey(d, sym))
-			opt_Gsymb = " -G" * arg2str(d[sym])
-			break
-		end
-	end
+	opt_Gsymb = add_opt("", 'G', d, [:G :markerfacecolor :mc])	# Filling color for symbols
 
 	opt_Wmarker = ""
-	for sym in [:markeredgecolor]
-		if (haskey(d, sym))
-			opt_Wmarker = "0.5p," * arg2str(d[sym])		# 0.25p is so thin
-			break
-		end
+	if (haskey(d, :markeredgecolor))
+		opt_Wmarker = "0.5p," * arg2str(d[:markeredgecolor])	# 0.25p is so thin
 	end
 
 	cmd = add_opt(cmd, 'L', d, [:L :labels])
@@ -167,23 +158,14 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 		end
 	end
 
-	opt_S = ""
-	for sym in [:S :symbol]
-		if (haskey(d, sym))
-			opt_S = " -S" * arg2str(d[sym])
-			break
-		end
-	end
+	opt_S = add_opt("", 'S', d, [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
 		marca = get_marker_name(d, [:marker :shape], false)
 		if (marca != "")
 			done = false
-			for sym in [:markersize :ms :size]
-				if (haskey(d, sym))
-					marca = marca * arg2str(d[sym])
-					done = true
-					break
-				end
+			if ((val = find_in_dict(d, [:markersize :ms :size])) !== nothing)
+				marca = marca * arg2str(val[1])
+				done = true
 			end
 			if (!done)  marca = marca * "8p"  end			# Default to 8p
 		end
