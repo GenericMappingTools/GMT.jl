@@ -6,8 +6,8 @@ Reads (x,y) pairs and plot symbols at those locations on a map/figure. The input
 name of a file with at least two columns (x,y), but optionally more, a GMTdatset object with also two
 or more columns.
 
-This module is a subset of `plot` to make it simpler to draw scatter plots. So many of its (fine)
-controling parameters are not listed here. For a finer control, user should consult the `plot` module.
+This module is a subset of `plot` to make it simpler to draw scatter plots. So many (fine)
+controlling parameters are not listed here. For a finer control, user should consult the `plot` module.
 
 Required Arguments
 ------------------
@@ -31,7 +31,7 @@ Optional Arguments
 - **G** or *markerfacecolor* or *mc* or *fill*\
    Select color or pattern for filling of symbols [Default is no fill]. Note that plot will search for *fill*
    and *pen* settings in all the segment headers (when passing a GMTdaset or file of a multi-segment dataset)
-   and let any values thus found over-ride the command line settings (but those must provided in the terse GMT
+   and let any values thus found over-ride the command line settings (but those must be provided in the terse GMT
    syntax). See [Setting color](@ref) for extend color selection (including color map generation).
 
 - **S** or *symbol* or `others` : --  Default is `circle` with diameter of 7 points
@@ -44,7 +44,7 @@ Optional Arguments
    In alternative to the *symbol* keyword, user can select the symbol name with either *marker* or *shape*
    and symbol size with *markersize*, *ms* or just *size*. The value of these keywords can be either numeric
    (symb meaning size in cm) or string if an unit is appended, *e.g.*  *markersize=5p*. This form of symbol
-   selection allows also to specify a variable symbol size. All it's need for this is that the keywrd's value
+   selection allows also to specify a variable symbol size. All it's need for this is that the keyword's value
    be an array with the same number of elements as the number of data points. 
 
 

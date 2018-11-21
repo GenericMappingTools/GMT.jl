@@ -523,20 +523,20 @@ end
 function helper_arrows(d::Dict)
 	# Helper function to set the vector head attributes
 	cmd = ""
-	for symb in [:arrow :vector :vecmap :geovec :geovector]
-		if (haskey(d, symb))
-			code = "v"
-			if (symb == :geovec || symb == :geovector)
-				code = "="
-			elseif (symb == :vecmap)		# Uses azimuth and plots angles taking projection into account
-				code = "V"
+	val, symb = find_in_dict(d, [:arrow :vector :vecmap :geovec :geovector])
+	if (val !== nothing)
+		code = 'v'
+		if (symb == :geovec || symb == :geovector)
+			code = '='
+		elseif (symb == :vecmap)	# Uses azimuth and plots angles taking projection into account
+			code = 'V'
+		end
+		if (isa(val, String))		# An hard core GMT string directly with options
+			if (val[1] != code)  cmd = code * val
+			else                 cmd = val			# The GMT string already had vector flag char
 			end
-			if (isa(d[symb], String))		# An hard core GMT string directly with options
-				cmd = code * d[symb]
-			else
-				cmd = code * vector_attrib(d[symb])
-			end
-			break
+		else
+			cmd = code * vector_attrib(val)
 		end
 	end
 	return cmd

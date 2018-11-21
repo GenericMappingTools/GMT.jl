@@ -13,8 +13,8 @@ with symbols. This second category is still subdivided in two algorithms. They a
    array or tuple the first element is *gap* and second the *size*. However, *size* may be ommited
    (defaulting to 30% of the *gap*) and in this case *xx* may be a scalar or a string.
 - *number=xx*\
-   Insted of the above, use this option to set the number of symbols along the front instead,
-   but in this case *xx* must be a two elemts array or tuple with the number and size.
+   Instead of the above, use this option to set the number of symbols along the front instead,
+   but in this case *xx* must be a two elements array or tuple with the number and size.
 - *left=true*\
    Plot symbols on the left side of the front
 - *right=true*\
@@ -45,7 +45,7 @@ Placement methods:
    Give distances between labels on the plot in your preferred measurement unit.
   *xx* may be a scalar or a string. Use strings when appending the units c (cm), i (inch), or p (points).
 - *distmap=xx*\
-   Similar to above but specify distances in map units and append the unit; choose among e (m),
+   Like above but specify distances in map units and append the unit; choose among e (m),
    f (foot), k (km), M (mile), n (nautical mile) or u (US survey foot), and d (arc degree), m (arc minute),
    or s (arc second)
 - *line=xx*\
@@ -104,7 +104,7 @@ Placement methods:
    Give the coordinates of the end points for one or more straight line segments.
    Symbols will be placed where these lines intersect the quoted lines. *xx* format is a Mx4 array
    with the coordinates of the line's end points. The format of each line specification is
-   [start_x start_y stop_x stop_y]. These can be replaced by by a 2-character key that uses the justification
+   [start_x start_y stop_x stop_y]. These can be replaced by a 2-character key that uses the justification
    format employed in text to indicate a point on the frame or center of the map, given as [**LCR**][**BMT**].
 - *Line=xx*\
    Like *line* But will interpret the point pairs as defining great circles.

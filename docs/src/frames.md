@@ -2,9 +2,9 @@
 
 ## Geographic basemaps
 
-Geographic basemaps may differ from regular plot axis in that some projections support a “fancy”
+Geographic base maps may differ from regular plot axis in that some projections support a “fancy”
 form of axis and is selected by the MAP_FRAME_TYPE setting. The annotations will be formatted according
-to the FORMAT_GEO_MAP template and MAP_DEGREE_SYMBOL setting. A simple example of part of a basemap
+to the FORMAT_GEO_MAP template and MAP_DEGREE_SYMBOL setting. A simple example of part of a base map
 is shown in Figure Geographic map border.
 
 ```julia
@@ -24,8 +24,8 @@ text!(T, text_attrib="+f9p+jCB", fmt=:png, show=true)
 
 !["B_geo_1"](figures/B_geo_1.png)
 
-The machinery for primary and secondary annotations axes can be utilized for geographic basemaps. This may
-be used to separate degree annotations from minutes- and seconds-annotations. For a more complicated basemap
+The machinery for primary and secondary annotations axes can be utilized for geographic base maps. This may
+be used to separate degree annotations from minutes- and seconds-annotations. For a more complicated base map
 example using several sets of intervals, including different intervals and pen attributes for grid lines and
 grid crosses.
 

@@ -6,12 +6,12 @@ Reads (x,y) pairs and plot lines with different levels of decoration. The input 
 name of a file with at least two columns (x,y), but optionally more, a GMTdatset object with also two
 or more columns.
 
-This module plots a large variaty of lines and polygons. It goes from *simple* lines and polygons
+This module plots a large variety of lines and polygons. It goes from *simple* lines and polygons
 (color/pattern filled or not) to the so called *decorated* lines. That is, lines decorated with
 symbols and text patterns.
 
-This module is a subset of `plot` to make it simpler to draw line plots. So not all of its (fine)
-controling parameters are not listed here. For the finest control, user should consult the `plot` module.
+This module is a subset of `plot` to make it simpler to draw line plots. So not all (fine)
+controlling parameters are not listed here. For the finest control, user should consult the `plot` module.
 
 Parameters
 ----------
@@ -30,7 +30,7 @@ Parameters
 - **G** or *markerfacecolor* or *mc* or *fill*\
    Select color or pattern for filling of polygons [Default is no fill]. Note that plot will search for *fill*
    and *pen* settings in all the segment headers (when passing a GMTdaset or file of a multi-segment dataset)
-   and let any values thus found over-ride the command line settings (but those must provided in the terse GMT
+   and let any values thus found over-ride the command line settings (but those must be provided in the terse GMT
    syntax). See [Setting color](@ref) for extend color selection (including colormap generation).
 
 - **W** or *pen=pen*\
