@@ -9,6 +9,9 @@ Set map Axes parameters. They are specified by a keyword and a named tuple (but 
 or separated on a per axes basis by using specific *xaxis*, *yaxis* and *zaxis* that share the same syntax
 as the generic *axis* option. The *xaxis2* and *yaxis2* apply when dealing with secondary axes.
 
+Before the rest, note that several modules have axes default settings (`scatter`, `bar`, etc...) but if
+no axes is desired, just use *axis=:none*.
+
 By default, all 4 map boundaries (or plot axes) are plotted and annotated. To customize, use the *axes*
 keyword that takes as value a tuple with a combination of words. Axes are named *left*, *bottom*, *right*,
 *top* and, for the 3D maps, *up*. Next we have three categories of axes: the *annotated and ticked*, the *ticked*
@@ -25,7 +28,8 @@ corner ids **1234**, where **1** represents the lower left corner and the order 
 
 Use *cube=true* to draw the outline of the 3-D cube defined by *region* this option is also needed to display
 gridlines in the x-z, y-z planes. Note that for 3-D views the title, if given, will be
-suppressed. You can paint the interior of the canvas with `fill=fill` where the *fill* value can be a color or a pattern.
+suppressed. You can paint the interior of the canvas with `fill=fill` where the *fill* value can be a color
+or a pattern.
 
 Use *noframe=true* to have no frame and annotations at all [Default is controlled by the codes].
 
@@ -33,27 +37,29 @@ Optionally append *oblique_pole="plon/plat"* (or *oblique_pole=(plon,plat)* to d
 specified pole [regular gridlines]. Ignored if gridlines are not requested (below) and disallowed for the oblique
 Mercator projection.
 
-To add a plot title do *title="My title"* The Frame setting is optional but can be invoked once to override the above defaults.
+To add a plot title do *title="My title"* The Frame setting is optional but can be invoked once to override
+the above defaults.
 
 GMT uses the notion of *primary* (the default) and *secondary* axes. To set an axes as secondary, use
 *secondary=true* (mostly used for time axes annotations).
 
-The *xaxis* *yaxis* and *zaxis* specify which axis you are providing information for. The syntax is the same as for
-the *axis* keyword but allows fine tuning of different options for the 4 (or 6) axis.
+The *xaxis* *yaxis* and *zaxis* specify which axis you are providing information for. The syntax is the same
+as for the *axis* keyword but allows fine tuning of different options for the 4 (or 6) axes.
 
 To add a label, to an axis use *label="Label text"* if using the *xaxis* etc form, or use the *xlabel*, *ylabel*
 and *zlabel* keywords in the common *axis* tuple of options.
 
 Use *Yhlabel=true* to force a horizontal label for *y*-axes (useful for very short labels).
 
-If the axis annotation should have a leading text prefix (e.g., dollar sign for those plots of your net worth) you can
-add *prefix="prefix"* For geographic maps the addition of degree symbols, etc. is automatic (and controlled by the
-GMT default setting [FORMAT\_GEO\_MAP](http://gmt.soest.hawaii.edu/doc/latest/gmt.conf.html#format-geo-map)).
+If the axis annotation should have a leading text prefix (e.g., dollar sign for those plots of your net worth)
+you can add *prefix="prefix"* For geographic maps the addition of degree symbols, etc. is automatic (and
+controlled by the GMT default setting [FORMAT\_GEO\_MAP](http://gmt.soest.hawaii.edu/doc/latest/gmt.conf.html#format-geo-map)).
 However, for other plots you can add specific units by adding *label_unit="unit"*
 
 Annotations, ticks and grid intervals are specified with the *annot*, *ticks* and *grid* keywords, which take
 as value the desired stride interval. As an example, *annot=10* means annotate at spacing of 10 data units.
-Alternatively, for linear maps, we can use the special value *:auto* annotations at automatically determined intervals.
+Alternatively, for linear maps, we can use the special value *:auto* annotations at automatically determined
+intervals.
 
 - **annot=:auto, grid=:auto** plots both annotations and grid lines with the same spacing,
 - **annot=:auto, ticks=:auto, grid=:auto** adds suitable minor tick intervals,
@@ -87,12 +93,13 @@ Note for geographic axes **m** and **s** instead mean arc minutes and arc second
 All entities that are language-specific are under control by [GMT\_LANGUAGE](http://gmt.soest.hawaii.edu/doc/latest/gmt.conf.html#gmt-language). 
 
 For custom annotations and intervals, let *intervals* be given as *custom="intfile"*, where
-*intfile* contains any number of records with *coord* *type* [*label*]. Here, *type* is one or more
+*intfile* contains any number of records with *coord * *type* [*label*]. Here, *type* is one or more
 letters from **a** or **i**, **f**, and **g**. For **a** or **i** you must supply a *label* that will
 be plotted at the *coord* location.
 
-For non-geographical projections: Give negative scale (in *proj="x scale"* or axis length (in *proj="X map width"*
-to change the direction of increasing coordinates (i.e., to make the y-axis positive down).
+For non-geographical projections: Give negative scale (in *proj="x scale"* or axis length
+(in *proj="X map width"* to change the direction of increasing coordinates (i.e., to make the y-axis
+positive down).
 
 For log10 axes: Annotations can be specified in one of three ways: 
 
@@ -154,6 +161,7 @@ The entire parameters collection is displayed in the following table
 
 | keyword       | value          | type            | meaning     |
 | ------------- |:--------------:|:---------------:| -----------:|
+| none          | true          | Bool          | Do not plot any axis |
 | axes          | left_full     | Str or Symb   | Annot and tick left axis |
 |               | left_ticks    | Str or Symb   | Tick left axis |
 |               | left_bare     | Str or Symb   | Just draw left axis |
@@ -161,6 +169,7 @@ The entire parameters collection is displayed in the following table
 |               | right_full    | Str or Symb   | Same for right axis |
 |               | top_full      | Str or Symb   | Same for top axis |
 |               | up_full       | Str or Symb   | Same for z axis |
+|               | WESNwesn...   | Str or Symb   | The classic GMT syntax |
 | corners       | 1234          | Str or Symb   | Vertical axis |
 | scondary      | true or false | Bool          | Secondary axis info |
 | fill          | `color`       | Str or Symb   | Paint interior |
@@ -171,6 +180,7 @@ The entire parameters collection is displayed in the following table
 | label         | axis label    | Str or Symb   | Add a label to an axis |
 | Yhlabel       | y-axis hlabel | Str or Symb   | Horizontal label for y-axes |
 | prefix        | annot prefix  | Str or Symb   | Annot leading text prefix |
+| suffix        | annot suffix  | Str or Symb   | Annot trailing text suffix |
 | xlabel        | x-axis label  | Str or Symb   | Add a label to X axis |
 | ylabel        | y-axis label  | Str or Symb   | Add a label to Y axis |
 | zlabel        | z-axis label  | Str or Symb   | Add a label to Z axis |

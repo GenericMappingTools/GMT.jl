@@ -265,8 +265,7 @@ if (got_it)					# Otherwise go straight to end
 	scatter3!(1:10, rand(10), rand(10), Vd=:cmd)
 
 	# BARPLOT
-	data = sort(randn(10));
-	bar(data,G=0,B=:a)
+	bar(sort(randn(10)), G=0, B=:a)
 	bar(rand(20),bar=(width=0.5,), Vd=:cmd)
 	bar!(rand(20),bar=(width=0.5,), Vd=:cmd)
 	bar(1:20,  rand(20),bar=(width=0.5,), Vd=:cmd)
