@@ -238,26 +238,18 @@ basemap(region="2000-12-15T/2001-1-15T/0/1", proj="X12/0.25", frame="pa5Df1d sa1
 
 ## Custom axes
 
-if (GMTver < 6)
-    T1 = ["416.0 ig Devonian"; "443.7 ig Silurian"; "488.3 ig Ordovician"; "542 ig Cambrian"];
-    T2 = ["0 a"; "1 a"; "2 f"; "2.71828 ag e"; "3 f"; "3.1415926 ag @~p@~"; "4 f"; "5 f"; "6 f";
-          "6.2831852 ag 2@~p@~"];
-else
-    T1 = text_record([416.0 443.7 488.3 542], ["ig Devonian", "ig Silurian", "ig Ordovician", "ig Cambrian"]);
-    T2 = text_record([0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852],
-                     ["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]);
-end
-basemap(T2,  region="416/542/0/6.2831852", proj="X-5i/2.5i", frame="WS+glightblue px25f5g25+u\" Ma\" pyc")
-basemap!(T1, frame="WS sxc", conf=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), show=true)
 
 ```julia
-    basemap(region="416/542/0/6.2831852", proj="X-12/6.5",
+    basemap(region="416/542/0/6.2831852", proj="X-12/5",
             axis=(axes=(:left_full, :bot_full), fill=:lightblue),
-            xaxis=(annot=25, ticks=5, grid=25, suffix= " Ma"),
+            xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"),
+            yaxis=(custom=(pos=[0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852],
+                            type_=["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]),),)
+
+    basemap!(axis=(axes=(:left_full, :bot_full),),
             xaxis2=(custom=(pos=[416.0; 443.7; 488.3; 542],
                             type_=["ig Devonian", "ig Silurian", "ig Ordovician", "ig Cambrian"]),),
-            yaxis=(custom=(pos=[0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852],
-                           type_=["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]),),
-            par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"),
-            show=true)
+            par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), fmt=:png, show=true)
 ```
+
+!["B_time7"](figures/B_time8.png)
