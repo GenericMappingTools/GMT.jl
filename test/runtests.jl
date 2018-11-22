@@ -273,6 +273,7 @@ if (got_it)					# Otherwise go straight to end
 	bar(rand(20),hbar=(width=0.5,unit=:c, base=9), Vd=:cmd)
 	bar(rand(20),bar="0.5c+b9",  Vd=:cmd)
 	bar(rand(20),hbar="0.5c+b9",  Vd=:cmd)
+	bar(rand(10), xaxis=(custom=(pos=1:5,),), Vd=:cmd)
 
 	# BAR3
 	G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
@@ -289,6 +290,14 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSBASEMAP
 	basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
+	basemap(region="416/542/0/6.2831852", proj="X-12/6.5",
+	axis=(axes=(:left_full, :bot_full), fill=:lightblue),
+	xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"),
+	xaxis2=(custom=(pos=[416.0; 443.7; 488.3; 542],
+					type_=["ig Devonian", "ig Silurian", "ig Ordovician", "ig Cambrian"]),),
+	yaxis=(custom=(pos=[0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852],
+				   type_=["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]),),
+	par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=:cmd)
 
 	# PSCLIP
 	d = [0.2 0.2; 0.2 0.8; 0.8 0.8; 0.8 0.2; 0.2 0.2];
