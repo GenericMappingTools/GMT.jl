@@ -56,17 +56,11 @@ Parameters
 Examples
 --------
 
-A simple scatter of ten points plotted as red circles of 7 points size
+A simple bar plot with 10 bars and automatic limits.
 
 ```julia
-    scatter(1:10,rand(10), fill=:red, show=true)
+    bar(rand(10), show=true)
 ```
-
-A plot 
-
-```julia
-```
-
 
 See also
 --------

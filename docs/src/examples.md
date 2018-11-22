@@ -85,11 +85,11 @@ first usage and save it in a cache dir. See the [`GMT tuturial`](http://gmt.soes
 for more details about what the arguments mean.
 
 ```julia
-topo = makecpt(color="rainbow", range="1000/5000/500", continuous=true);
-grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", frame="a", fmt="jpg",
+topo = makecpt(color="rainbow", range=(1000,5000,500), continuous=true);
+grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", frame=:a,
          color=topo)
 colorbar!(position="jTC+w5i/0.25i+h+o0/-1i", region=[-108 -103 35 40], color=topo,
-       proj=[], frame="y+lm", fmt="jpg", show=1)
+          proj=[], frame="y+lm", fmt=:jpg, show=true)
 ```
 
 !["Hello shaded world"](figures/hello-shaded-world.jpg)
@@ -100,9 +100,9 @@ We will make a perspective, color-coded view of the US Rockies from the southeas
 
 
 ```julia
-topo = makecpt(color="rainbow", range="1000/5000/500", continuous=true);
-grdview("@tut_relief.nc", proj="M12c", JZ="1c", shade="+ne0.8+a100", view="135/30",
-        frame="a", fmt="jpg", color=topo, Q="i100", show=1)
+topo = makecpt(color="rainbow", range=(1000,5000,500), continuous=true);
+grdview("@tut_relief.nc", proj="M12c", JZ="1c", shade="+ne0.8+a100", view=(135,30),
+        frame=:a, fmt=:jpg, color=topo, Q="i100", show=true)
 ```
 
 !["Hello 3D view world"](figures/hello-view-world.jpg)

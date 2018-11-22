@@ -204,7 +204,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 			elseif (symb == :yaxis)   opt_B = axis(d[symb], y=true) * opt_B
 			elseif (symb == :yaxis2)  opt_B = axis(d[symb], y=true, secondary=true) * opt_B
 			elseif (symb == :zaxis)   opt_B = axis(d[symb], z=true) * opt_B
-			end 
+			end
 		end
 	end
 
@@ -804,6 +804,9 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	# Build the (terrible) -B option
 	d = KW(kwargs)
 
+	# Before anything else
+	if (haskey(d, :none)) return " -B0"  end
+
 	secondary ? primo = 's' : primo = 'p'			# Primary or secondary axe
 	x ? axe = "x" : y ? axe = "y" : z ? axe = "z" : axe = ""	# Are we dealing with a specific axis?
 
@@ -821,9 +824,7 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 
 	# axes supps
 	ax_sup = ""
-	if (haskey(d, :prefix))     ax_sup = ax_sup * "+p" * arg2str(d[:prefix])     end
 	if (haskey(d, :seclabel))   ax_sup = ax_sup * "+s" * str_with_blancs(arg2str(d[:seclabel]))   end
-	if (haskey(d, :label_unit)) ax_sup = ax_sup * "+u" * arg2str(d[:label_unit]) end
 
 	if (haskey(d, :label))
 		opt = opt * " -B" * primo * axe * "+l"  * str_with_blancs(arg2str(d[:label])) * ax_sup
@@ -844,9 +845,13 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	if (haskey(d, :annot_unit)) ints = ints * helper2_axes(d[:annot_unit])   end
 	if (haskey(d, :ticks))      ints = ints * "f" * helper1_axes(d[:ticks])  end
 	if (haskey(d, :grid))       ints = ints * "g" * helper1_axes(d[:grid])   end
+	if (haskey(d, :prefix))     ints = ints * "+p" * str_with_blancs(arg2str(d[:prefix]))  end
+	if (haskey(d, :suffix))     ints = ints * "+u" * str_with_blancs(arg2str(d[:suffix]))  end
 	if (haskey(d, :custom))
-		ints = ints * 'c'
-		if (isa(d[:custom], String))  ints = ints * d[:custom]  end
+		if (isa(d[:custom], String))  ints = ints * 'c' * d[:custom]
+		else
+			if ((r = helper3_axes(d[:custom], primo, axe)) != "")  ints = ints * 'c' * r  end
+		end
 		# Should find a way to also accept custom=GMTdataset
 	elseif (haskey(d, :pi))
 		if (isa(d[:pi], Number))
@@ -957,6 +962,60 @@ function helper2_axes(arg)
 		out = ""
 	end
 	return out
+end
+# ------------------------
+function helper3_axes(arg, primo, axe)
+	# Parse the custom annotations arg, save result into a tmp file and return its name	
+
+	label = ""
+	if (isa(arg, AbstractArray))
+		pos = arg
+		n_annot = length(pos)
+		tipo = fill('a', n_annot)			# Default to annotate
+	elseif (isa(arg, NamedTuple))
+		d = nt2dict(arg)
+		if (!haskey(d, :pos))
+			error("The custom annotations NamedTuple must contain at least the named member 'pos'")
+		end
+		pos = d[:pos]
+		n_annot = length(pos)
+		if ((val = find_in_dict(d, [:type_ :type])[1]) !== nothing)
+			if (isa(val, Char) || isa(val, String) || isa(val, Symbol))
+				tipo = Array{Any,1}(undef, n_annot)
+				for k = 1:n_annot  tipo[k] = val  end
+			else
+				tipo = val		# Assume it's a good guy, otherwise ...
+			end
+		else
+			tipo = fill('a', n_annot)		# Default to annotate
+		end
+
+		if (haskey(d, :label))
+			if (!isa(d[:label], Array) || length(d[:label]) != n_annot)
+				error("Number of labels in custom annotations must be the same as the 'pos' element")
+			end
+			label = d[:label]
+		end
+	else
+		@warn("Argument of the custom annotations must be an N-array or a NamedTuple")
+		return ""
+	end
+
+	temp = "GMTjl_custom_" * primo
+	if (axe != "") temp = temp * axe  end
+	@static Sys.iswindows() ? fname = tempdir() * temp * ".txt" : fname = tempdir() * "/" * temp * ".txt" 
+	fid = open(fname, "w")
+	if (label != "")
+		for k = 1:n_annot
+			println(fid, pos[k], ' ', tipo[k], ' ', label[k])
+		end
+	else
+		for k = 1:n_annot
+			println(fid, pos[k], ' ', tipo[k])
+		end
+	end
+	close(fid)
+	return fname
 end
 # ---------------------------------------------------------------------------------------------------
 

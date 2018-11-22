@@ -1661,7 +1661,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function text_record(data, text)
-	# Create a text record to send to pstext. DATA is the Mx2 coordinates array. TEXT is a string or a cell array
+	# Create a text record to send to pstext. DATA is the Mx2 coordinates array.
+	# TEXT is a string or a cell array
 	if (GMTver < 6.0)		# Convert to the old cell array of strings format
 		if (!isempty(data))
 			nl = size(data,1)
@@ -1680,6 +1681,8 @@ function text_record(data, text)
 		end
 		return t
 	end
+
+	if (isa(data, Array{Float64,1}))  data = data[:,:]  end 	# Needs to be 2D
 
 	if (isa(text, String))
 		T = GMTdataset(data, [text], string(), Array{String,1}(), string(), string())
