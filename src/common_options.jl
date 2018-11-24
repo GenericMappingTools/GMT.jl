@@ -134,8 +134,8 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 			if (d[symb] == :none || d[symb] == "none")		# User explicitly said NO AXES
 				return cmd * " -B0", " -B0"
 			end
-			if (isa(d[symb], NamedTuple)) opt_B = axis(d[symb]) * " " * opt_B;	extra_parse = false
-			else                          opt_B = string(d[symb], " ", opt_B)
+			if (isa(d[symb], NamedTuple)) opt_B = axis(d[symb]);	extra_parse = false
+			else                          opt_B = string(d[symb])
 			end
 			if (del) delete!(d, symb) end
 			break
