@@ -255,6 +255,8 @@ if (got_it)					# Otherwise go straight to end
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
+	scatter(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3, show=1, Vd=:cmd)
+	scatter(rand(50),rand(50), markersize=rand(50), zcolor=rand(50), aspect=:equal, alpha=50, Vd=:cmd)
 	scatter(1:10, rand(10), fill=:red, B=:a)
 	scatter!(1:10, rand(10), fill=:red, B=:a, Vd=:cmd)
 	scatter(rand(5,5))
@@ -451,6 +453,8 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_unit_unit("data") == "u"
 	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
 	@test GMT.add_opt((symb=:circle, size=7, unit=:point), (symb="1", size="", unit="1")) == "c7p"
+	#d = Dict(:a=>1,:b=>1,:bi=>1,:bo=>1,:d=>1,:di=>1,:do=>1,:e=>1,:f=>1,:g=>1,:h=>1,:i=>1,:n=>1,:o=>1,:p=>1,:r=>1,:s=>1,:x=>1,:t=>1,:xy=>1);
+	#GMT.parse_common_opts(d,"", [:a :b :bi :bo :d :di :do :e :f :g :h :i :n :o :p :r :s :x :t :xy])
 
 	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
 	                  justify=:end,fill=:none,trim=0.1,endpoint=true,uv=6.6);

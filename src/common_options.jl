@@ -351,6 +351,18 @@ function parse_n(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_o(cmd::String, d::Dict)
+	# Parse the global -o option. Return CMD same as input if no -o option in args
+	return parse_helper(cmd, d, [:o :output_col], " -o")
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_p(cmd::String, d::Dict)
+	# Parse the global -p option. Return CMD same as input if no -p option in args
+	return parse_helper(cmd, d, [:p :view], " -p")
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_s(cmd::String, d::Dict)
 	# Parse the global -s option. Return CMD same as input if no -s option in args
 	return parse_helper(cmd, d, [:s :skip_col], " -s")
@@ -361,18 +373,6 @@ function parse_swap_xy(cmd::String, d::Dict)
 	# Parse the global -: option. Return CMD same as input if no -: option in args
 	# But because we can't have a variable called ':' we use only the 'swap_xy' alias
 	return parse_helper(cmd, d, [:swap_xy], " -:")
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_o(cmd::String, d::Dict)
-	# Parse the global -o option. Return CMD same as input if no -o option in args
-	return parse_helper(cmd, d, [:o :output_col], " -o")
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_p(cmd::String, d::Dict)
-	# Parse the global -p option. Return CMD same as input if no -p option in args
-	return parse_helper(cmd, d, [:p :view], " -p")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -406,6 +406,37 @@ function parse_helper(cmd::String, d::Dict, symbs, opt::String)
 	end
 	return cmd, opt_val
 end
+
+#= ---------------------------------------------------------------------------------------------------
+function parse_common_opts(d, cmd, opts)
+	for opt in opts
+		if     (opt == :a)  cmd, = parse_a(cmd, d)
+		elseif (opt == :b)  cmd, = parse_b(cmd, d)
+		elseif (opt == :bi) cmd, = parse_bi(cmd, d)
+		elseif (opt == :bo) cmd, = parse_bo(cmd, d)
+		elseif (opt == :d)  cmd, = parse_d(cmd, d)
+		elseif (opt == :di) cmd, = parse_di(cmd, d)
+		elseif (opt == :do) cmd, = parse_do(cmd, d)
+		elseif (opt == :e)  cmd, = parse_e(cmd, d)
+		elseif (opt == :f)  cmd, = parse_f(cmd, d)
+		elseif (opt == :g)  cmd, = parse_g(cmd, d)
+		elseif (opt == :h)  cmd, = parse_h(cmd, d)
+		elseif (opt == :i)  cmd, = parse_i(cmd, d)
+		elseif (opt == :n)  cmd, = parse_n(cmd, d)
+		elseif (opt == :o)  cmd, = parse_o(cmd, d)
+		elseif (opt == :p)  cmd, = parse_p(cmd, d)
+		elseif (opt == :r)  cmd, = parse_r(cmd, d)
+		elseif (opt == :s)  cmd, = parse_p(cmd, d)
+		elseif (opt == :x)  cmd, = parse_x(cmd, d)
+		elseif (opt == :t)  cmd, = parse_t(cmd, d)
+		elseif (opt == :UVXY) cmd = parse_UVXY(cmd, d)
+		elseif (opt == :V_params) cmd = parse_V_params(cmd, d)
+		elseif (opt == :params) cmd = parse_params(cmd, d)
+		end
+	end
+	return cmd
+end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function parse_inc(cmd::String, d::Dict, symbs, opt, del=false)
