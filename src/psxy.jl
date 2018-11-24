@@ -72,7 +72,7 @@ Parameters
     + **x**, **cross**
     + **y**, **y_dash**
 
-    and select their sizes with the **markersize** or **size** keyword [default is 8p].
+    and select their sizes with the **markersize** or **size** keyword [default is 7p].
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
     points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
 - **W** : **pen** : **line_attrib** : **markeredgecolor** : -- Str --
@@ -166,19 +166,20 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, opt_J)
 	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
-	cmd = parse_UVXY(cmd, d)
-	cmd, = parse_a(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
+	cmd, opt_i  = parse_i(cmd, d)
+	cmd  = parse_UVXY(cmd, d)
+	cmd, = parse_a(cmd, d)
 	cmd, = parse_e(cmd, d)
 	cmd, = parse_f(cmd, d)
 	cmd, = parse_g(cmd, d)
 	cmd, = parse_h(cmd, d)
-	cmd, opt_i = parse_i(cmd, d)
 	cmd, = parse_p(cmd, d)
 	cmd, = parse_t(cmd, d)
 	cmd, = parse_swap_xy(cmd, d)
-	cmd = parse_params(cmd, d)
+	cmd  = parse_params(cmd, d)
+	#cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :xy])
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
@@ -229,22 +230,23 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	opt_S = add_opt("", 'S', d, [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
 		marca = get_marker_name(d, [:marker :shape], is3D)
-		if (marca != "")
-			ms = ""
-			if ((val = find_in_dict(d, [:markersize :ms :size])[1]) !== nothing)
-				if (isa(val, AbstractArray))
-					if (length(val) == size(arg1,1))
-						arg1 = hcat(arg1, val[:])
-						ms = " "		# Just to defeat the empty test below
-					else
-						error("The size array must have the same number of elements rows in the data")
-					end
+		if ((val = find_in_dict(d, [:markersize :ms :size])[1]) !== nothing)
+			if (marca == "")  marca = "c"  end		# If a marker name was not selected, defaults to circle
+			#ms = ""
+			if (isa(val, AbstractArray))
+				if (length(val) == size(arg1,1))
+					arg1 = hcat(arg1, val[:])
+					#ms = " "		# Just to defeat the empty test below
 				else
-					marca = marca * arg2str(val);	ms = " "
+					error("The size array must have the same number of elements rows in the data")
 				end
+			else
+				marca = marca * arg2str(val);	#ms = " "
 			end
-			if (ms == "")  marca = marca * "8p"		end		# Default to 8p
+			#if (ms == "")  marca = marca * "7p"		end		# Default to 7p
 			opt_S = " -S" * marca
+		elseif (marca != "")			# User only selected a marker name but no size.
+			opt_S = " -S" * marca * "7p"
 		end
 	end
 
@@ -301,8 +303,6 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		cmd = [finish_PS(d, cmd, output, K, O)]
 	end
 
-#@show arg1, arg2
-#gmtwrite("lixo.cpt",arg2)
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, gmt_proggy, arg1, arg2)
 end
 
@@ -310,15 +310,17 @@ end
 function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 	# See if we got a CPT. If yes there is quite some work to do if no color column provided in input data.
 
-	if (!(N_args > n_prev || len < length(cmd)) || isempty_(arg1))	# No color request, so return right away
+	if (isempty_(arg1))  return cmd, arg1, arg2, N_args  end		# Just play safe
+
+	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
+	if (!(N_args > n_prev || len < length(cmd)) && mz === nothing)	# No color request, so return right away
 		return cmd, arg1, arg2, N_args
 	end
 
 	if (isa(arg1, Array))  n_rows, n_col = size(arg1)
-	else                   n_rows, n_col = size(arg1.data)		# Must be a GMTdataset
+	else                   n_rows, n_col = size(arg1.data)			# Must be a GMTdataset
 	end
 
-	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
 	warn1 = string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it.")
 	warn2 = "Plotting with color table requires adding one more column to the dataset but your -i
 	option didn't do it, so you won't get waht you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots"
@@ -349,6 +351,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 
 	if (N_args == n_prev)		# No cpt transmitted, so need to compute one
 		if (GMTver >= 7)		# 7 because this solution is currently still bugged
+			#=
 			if (mz !== nothing)
 				arg2 = gmt("makecpt -E " * cmd[len+2:end], mz[:])
 			else
@@ -356,6 +359,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 				else                   arg2 = gmt("makecpt -E " * cmd[len+2:end], arg1.data)
 				end
 			end
+			=#
 		else
 			if (mz !== nothing)
 				mi, ma = extrema(mz)
@@ -370,8 +374,10 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 				just_C  = just_C[1:ind[1]-1]
 			end
 			arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
-			cmd = cmd[1:len+3] * reset_i			# Strip the cpt name and reset -i (if existed)
+			if (occursin(" -C", cmd))  cmd = cmd[1:len+3]  end		# Strip the cpt name
+			if (reset_i != "")  cmd = cmd * reset_i  end	# Reset -i, in case it existed
 		end
+		if (!occursin(" -C", cmd))  cmd = cmd * " -C"  end	# Need to inform that there is a cpt to use
 		N_args = 2
 	end
 
