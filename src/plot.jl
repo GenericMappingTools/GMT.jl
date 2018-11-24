@@ -320,6 +320,18 @@ end
 
 
 # ------------------------------------------------------------------------------------------------------
+function bar(arg1::NTuple; K=false, O=false, first=true, kw...)
+	bar(1:length(arg1), collect(arg1); K=K, O=O, first=first, kw...)
+end
+function bar!(arg1::NTuple; K=true, O=true, first=false, kw...)
+	bar(1:length(arg1), collect(arg1); K=K, O=O, first=first, kw...)
+end
+function bar(arg1::NTuple, arg2::NTuple; K=false, O=false, first=true, kw...)
+	bar(collect(arg1), collect(arg2); K=K, O=O, first=first, kw...)
+end
+function bar!(arg1::NTuple, arg2::NTuple; K=true, O=true, first=false, kw...)
+	bar(collect(arg1), collect(arg2); K=K, O=O, first=first, kw...)
+end
 function bar(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
 	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
 		arg = hcat(arg1[:], arg2[:])

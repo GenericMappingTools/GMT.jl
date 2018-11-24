@@ -291,7 +291,7 @@ basemap(region="-30/30/-20/20", proj="X12/8",
    case one can use *proj=12* to also select a 12 cm fig. When using only *proj=:X* we can specify the figure
    dimensions with *figsize=(width, height)* (both numeric or string). We can also specify the scale
    separately: *e.g.* *proj=:x*, *figscale=1:xxxx*. When no size is provided for linear projections a default
-   value of 14 cm is assumed.
+   value of 12 cm is assumed.
 
    [`-J GMT doc`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#j-full)
 

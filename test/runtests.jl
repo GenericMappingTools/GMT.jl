@@ -274,6 +274,15 @@ if (got_it)					# Otherwise go straight to end
 	bar(rand(20),bar="0.5c+b9",  Vd=:cmd)
 	bar(rand(20),hbar="0.5c+b9",  Vd=:cmd)
 	bar(rand(10), xaxis=(custom=(pos=1:5,),), Vd=:cmd)
+	bar(rand(10), axis=(custom=(pos=1:5,label=[:a :b :c :d :e]),), Vd=:cmd)
+	bar((1,2,3), Vd=:cmd)
+	bar((1,2,3), (1,2,3), Vd=:cmd)
+	bar!((1,2,3), Vd=:cmd)
+	bar!((1,2,3), (1,2,3), Vd=:cmd)
+	men_means, men_std = (20, 35, 30, 35, 27), (2, 3, 4, 1, 2)
+	x = collect(1:length(men_means))
+	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue,
+	    limits=(0.5,5.5,0,40), axis=:none, error_bars=(y=men_std,), Vd=:cmd)
 
 	# BAR3
 	G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");

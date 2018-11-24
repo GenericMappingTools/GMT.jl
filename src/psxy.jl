@@ -21,7 +21,7 @@ Parameters
 
     Offset the plot symbol or line locations by the given amounts dx/dy.
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#d)
-- **E** : **error_bars** : -- Str --
+- **E** : **error** : **error_bars** : -- Str --
 
     Draw symmetrical error bars.
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#e)
@@ -150,10 +150,14 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	if (!occursin("-J", cmd))			# bar, bar3 and others may send in a -J
-		opt_J = " -JX12c"
+		opt_J = " -JX" * def_fig_size
 		if ((val = find_in_dict(d, [:axis :aspect])[1]) !== nothing)
 			if (val == "equal" || val == :equal)	# Need also a 'tight' option?
-				opt_J = " -JX12c"
+				if ((ind = findfirst("/", opt_J)) !== nothing)	# Already had something in height
+					opt_J = opt_J[1:ind[1]-1] * "/0"
+				else
+					opt_J = " -JX12c/0"
+				end
 			end
 		end
 	else
@@ -185,17 +189,25 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		cmd = cmd * " -JZ6c"	# Default -JZ
 	end
 
-	# Look for color request
+	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
+	cmd = add_opt(cmd, 'D', d, [:D :shift :offset])				# 'offset' may be needed in vec attribs
+	cmd = add_opt(cmd, 'F', d, [:F :conn :connection])
+
+	if ((val = find_in_dict(d, [:E :error :error_bars])[1]) !== nothing)	# Crazzy shit to allow increasing the arg1 matrix
+		n_rows, n_cols = size(arg1)
+		arg1 = reshape(arg1, :)
+		cmd = add_opt(cmd, 'E', d, [:E :error :error_bars],
+					  (x="|x",y="|y",xy="|xy",X="|X",Y="|Y",asym="+a",cline="+cl",csymbol="+cf",
+					   wiskers="|+n",cap="+w",pen="+p"), false, arg1)
+		arg1 = reshape(arg1, n_rows, :)
+	end
+
+	# Look for color request. Do it after error bars because they may add a column
 	len = length(cmd);	n_prev = N_args;
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
-	# See if we got a CPT. If yes there may may quite some work to do if no color column provided in input data.
+	# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
 	cmd, arg1, arg2, N_args = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
-
-	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
-	cmd = add_opt(cmd, 'D', d, [:D :shift :offset])				# 'offset' may be needed in vec attribs
-	cmd = add_opt(cmd, 'E', d, [:E :error_bars])
-	cmd = add_opt(cmd, 'F', d, [:F :conn :connection])
 
 	cmd = add_opt(cmd, 'G', d, [:G :fill])
 	opt_Gsymb = add_opt("", 'G', d, [:G :markerfacecolor :mc])	# Filling color for symbols
@@ -255,7 +267,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	end
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
-	cmd = check_caller(d, cmd, opt_S, sub_module)
+	cmd = check_caller(d, cmd, opt_S, sub_module, O)
 
 	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
 		cmd = [finish_PS(d, cmd * opt_W, output, K, O)]
@@ -289,63 +301,80 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		cmd = [finish_PS(d, cmd, output, K, O)]
 	end
 
+#@show arg1, arg2
+#gmtwrite("lixo.cpt",arg2)
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, gmt_proggy, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------
 function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
-	# See if we got a CPT. If yes there may may quite some work to do if no color column provided in input data.
-	if (N_args > n_prev || len < length(cmd))
-		if ((isa(arg1, Array) && size(arg1,2) <= 2+is3D) || (isa(arg1, GMTdataset) && size(arg1.data,2) <= 2+is3D))
-			mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
-			if (mz !== nothing)
-				if (isa(arg1, Array) && length(mz) == size(arg1,1))
-					arg1 = hcat(arg1, mz[:])
-				elseif (isa(arg1, GMTdataset) && length(mz) == size(arg1.data,1))
-					arg1.data = hcat(arg1.data, mz[:])
-				else
-					@warn(string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it."))
-					@goto noway
-				end
-			else
-				if (opt_i == "")
-					cmd = @sprintf("%s -i0-%d,%d", cmd, 1+is3D, 1+is3D)
-				else
-					@warn("Plotting with color table requires adding one more column to the dataset but your -i
-					option didn't do it, so you won't get waht you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots")
-					@goto noway
-				end
-			end
+	# See if we got a CPT. If yes there is quite some work to do if no color column provided in input data.
 
-			if (N_args == n_prev)		# No cpt transmitted, so need to compute one
-				if (GMTver >= 7)
-					if (mz !== nothing)
-						arg2 = gmt("makecpt -E " * cmd[len+2:end], mz[:])
-					else
-						if (isa(arg1, Array))  arg2 = gmt("makecpt -E " * cmd[len+2:end], arg1)
-						else                   arg2 = gmt("makecpt -E " * cmd[len+2:end], arg1.data)
-						end
-					end
-				else
-					if (mz !== nothing)
-						mi, ma = extrema(mz)
-					else
-						if (isa(arg1, Array))  mi, ma = extrema(view(arg1, :, size(arg1,2)))
-						else                   mi, ma = extrema(view(arg1.data, :, size(arg1.data,2)))
-						end
-					end
-					just_C = cmd[len+2:end];	reset_i = ""
-					if ((ind = findfirst(" -i", just_C)) !== nothing)
-						reset_i = just_C[ind[1]:end] 
-						just_C  = just_C[1:ind[1]-1]
-					end
-					arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
-					cmd = cmd[1:len+3] * reset_i			# Strip the cpt name and reset -i (if existed)
-				end
-				N_args = 2
+	if (!(N_args > n_prev || len < length(cmd)) || isempty_(arg1))	# No color request, so return right away
+		return cmd, arg1, arg2, N_args
+	end
+
+	if (isa(arg1, Array))  n_rows, n_col = size(arg1)
+	else                   n_rows, n_col = size(arg1.data)		# Must be a GMTdataset
+	end
+
+	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
+	warn1 = string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it.")
+	warn2 = "Plotting with color table requires adding one more column to the dataset but your -i
+	option didn't do it, so you won't get waht you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots"
+
+	if (n_col <= 2+is3D)
+		if (mz !== nothing)
+			if (length(mz) != n_rows)  @warn(warn1); @goto noway  end
+			if (isa(arg1, Array))  arg1 = hcat(arg1, mz[:])
+			else                   arg1.data = hcat(arg1.data, mz[:])
+			end
+		else
+			if (opt_i == "")  cmd = @sprintf("%s -i0-%d,%d", cmd, 1+is3D, 1+is3D)
+			else              @warn(warn2);		@goto noway
+			end
+		end
+	elseif (n_col > 2+is3D)
+		if (mz !== nothing)			# Here we must insert the color col right after the coords
+			if (length(mz) != n_rows)  @warn(warn1); @goto noway  end
+			if (isa(arg1, Array))  arg1 = hcat(arg1[:,1:2+is3D], mz[:], arg1[:,3+is3D:end])
+			else                   arg1.data = hcat(arg1.data[:,1:2+is3D], mz[:], arg1.data[:,3+is3D:end])
+			end
+		else
+			if (opt_i == "")  cmd = @sprintf("%s -i0-%d,%d,%d-%d", cmd, 1+is3D, 1+is3D, 2+is3D, n_col-1)
+			else              @warn(warn2);		@goto noway 
 			end
 		end
 	end
+
+	if (N_args == n_prev)		# No cpt transmitted, so need to compute one
+		if (GMTver >= 7)		# 7 because this solution is currently still bugged
+			if (mz !== nothing)
+				arg2 = gmt("makecpt -E " * cmd[len+2:end], mz[:])
+			else
+				if (isa(arg1, Array))  arg2 = gmt("makecpt -E " * cmd[len+2:end], arg1)
+				else                   arg2 = gmt("makecpt -E " * cmd[len+2:end], arg1.data)
+				end
+			end
+		else
+			if (mz !== nothing)
+				mi, ma = extrema(mz)
+			else
+				if (isa(arg1, Array))  mi, ma = extrema(view(arg1, :, 2+is3D))
+				else                   mi, ma = extrema(view(arg1.data, :, 2+is3D))
+				end
+			end
+			just_C = cmd[len+2:end];	reset_i = ""
+			if ((ind = findfirst(" -i", just_C)) !== nothing)
+				reset_i = just_C[ind[1]:end] 
+				just_C  = just_C[1:ind[1]-1]
+			end
+			arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
+			cmd = cmd[1:len+3] * reset_i			# Strip the cpt name and reset -i (if existed)
+		end
+		N_args = 2
+	end
+
 	@label noway
 
 	return cmd, arg1, arg2, N_args
@@ -383,15 +412,12 @@ function get_marker_name(d::Dict, symbs, is3D=false, del=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
+function check_caller(d::Dict, cmd::String, opt_S::String, caller::String, O::Bool)
 	# Set sensible defaults for the sub-modules "scatter" & "bar"
 	if (caller == "scatter")
 		if (opt_S == "")  cmd = cmd * " -Sc7p"  end
-		#if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
 	elseif (caller == "scatter3")
 		if (opt_S == "")  cmd = cmd * " -Su7p"  end
-		#if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -Bza -BWSenZ"  end
-		#if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
 	elseif (caller == "bar")
 		if (opt_S == "")
 			if (haskey(d, :bar))
@@ -409,22 +435,19 @@ function check_caller(d::Dict, cmd::String, opt_S::String, caller::String)
 			end
 		end
 		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end		# Default color
-		#if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
 	elseif (caller == "bar3")
 		if (haskey(d, :noshade) && occursin("-So", cmd))
 			cmd = replace(cmd, "-So" => "-SO", count=1)
 		end
-		#if (!occursin(" -B", cmd))  cmd = cmd * " -Baf -Bza -BWSenZ"  end
 		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end	
 		if (!occursin(" -J", cmd))  cmd = cmd * " -JX12c/0"  end
-		#if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
 	end
 
 	if (occursin('3', caller))
-		if (!occursin(" -B", cmd))  cmd = cmd * " -Baf -Bza -BWSenZ"  end
+		if (!occursin(" -B", cmd) && !O)  cmd = cmd * def_fig_axes3  end	# For overlays default is no axes
 		if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
 	else
-		if (!occursin(" -B", cmd))  cmd = cmd * " -Ba -BWS"  end
+		if (!occursin(" -B", cmd) && !O)  cmd = cmd * def_fig_axes   end
 	end
 
 	return cmd
@@ -464,18 +487,18 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
-xy(arg1; caller=[], K=false, O=false, first=true, kw...) =
-	xy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
-xy!(arg1; caller=[], K=true, O=true, first=false, kw...) =
-	xy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
+psxy(arg1; caller=[], K=false, O=false, first=true, kw...) =
+	psxy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
+psxy!(arg1; caller=[], K=true, O=true, first=false, kw...) =
+	psxy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
-xy!(cmd0::String="", arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
-	xy(cmd0, arg1; caller=caller, K=K, O=O, first=first, kw...)
-xy!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
-	xy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
+psxy!(cmd0::String="", arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+	psxy(cmd0, arg1; caller=caller, K=K, O=O, first=first, kw...)
+psxy!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+	psxy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
 # ---------------------------------------------------------------------------------------------------
-xyz!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
-	xyz(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
-xyz!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
-	xyz("", arg1; caller=caller, K=K, O=O, first=first, kw...)
+psxyz!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
+	psxyz(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
+psxyz!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+	psxyz("", arg1; caller=caller, K=K, O=O, first=first, kw...)
