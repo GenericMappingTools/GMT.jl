@@ -21,6 +21,9 @@ end
 
 #const GMTver = 6.0
 const FMT = "ps"
+const def_fig_size  = "12c/8c"			# Default fig size for plot like programs
+const def_fig_axes  = " -Ba -BWSen"		# Default fig axes for plot like programs
+const def_fig_axes3 = " -Baf -Bza -BWSenZ"		#		"" but for 3D views
 
 export
 	GMTver, FMT, gmt,

@@ -18,12 +18,10 @@ end
 function parse_R(cmd::String, d::Dict, O=false, del=false)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	opt_R = ""
-	for symb in [:R :region :limits]
-		if (haskey(d, symb))
-			opt_R = build_opt_R(d[symb])
-			if (del) delete!(d, symb) end
-			break
-		end
+	val, symb = find_in_dict(d, [:R :region :limits])
+	if (val !== nothing)
+		opt_R = build_opt_R(val)
+		if (del) delete!(d, symb) end
 	end
 	if (isempty(opt_R))		# See if we got the region as tuples of xlim, ylim [zlim]
 		R = "";		c = 0
@@ -38,9 +36,7 @@ function parse_R(cmd::String, d::Dict, O=false, del=false)
 				end
 			end
 		end
-		if (!isempty(R) && c == 4)
-			opt_R = R
-		end
+		if (!isempty(R) && c == 4)  opt_R = R  end
 	end
 	if (O && isempty(opt_R))  opt_R = " -R"  end
 	cmd = cmd * opt_R
@@ -62,17 +58,15 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_JZ(cmd::String, d::Dict, del=false)
 	opt_J = ""
-	for symb in [:JZ :Jz]
-		if (haskey(d, symb))
-			if (symb == :JZ)
-				opt_J = " -JZ" * arg2str(d[symb])
-			else
-				opt_J = " -Jz" * arg2str(d[symb])
-			end
-			cmd = cmd * opt_J
-			if (del) delete!(d, symb) end
-			break
+	val, symb = find_in_dict(d, [:JZ :Jz])
+	if (val !== nothing)
+		if (symb == :JZ)
+			opt_J = " -JZ" * arg2str(val)
+		else
+			opt_J = " -Jz" * arg2str(val)
 		end
+		cmd = cmd * opt_J
+		if (del) delete!(d, symb) end
 	end
 	return cmd, opt_J
 end
@@ -110,7 +104,7 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 			opt_J = opt_J * string(d[:figscale])
 		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
 			if !(length(opt_J) >= 6 && isnumeric(opt_J[6]))
-				opt_J = opt_J * "12c"			# If no size, default to 12 centimeters
+				opt_J = opt_J * def_fig_size[1:3]		# If no size, default to 12 centimeters
 			end
 		end
 	end
@@ -132,7 +126,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
-	opt_B = ""
+	#opt_B = ""					# The problem seems to be with the tests at the end of psxy/check_caller()
 	# These three are aliases
 	extra_parse = true
 	for symb in [:B :frame :axis :axes]
@@ -225,9 +219,9 @@ function parse_BJR(d::Dict, cmd::String, caller, O, default, del=false)
 	end
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (caller == "plot3d" || caller == "bar3" || caller == "scatter3")
-			cmd, opt_B = parse_B(cmd, d, "-Ba -Bza -BWSZ", del)
+			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes3), del)
 		else
-			cmd, opt_B = parse_B(cmd, d, "-Ba -BWS", del)
+			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes), del)	# For overlays, default is no axes
 		end
 	else
 		cmd, opt_B = parse_B(cmd, d, "", del)
@@ -625,12 +619,12 @@ function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false)
+function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false, arg=nothing)
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
-	# If DEL == true we remove the found key. Useful when 
+	# If DEL == true we remove the found key.
 	for symb in symbs
 		if (haskey(d, symb))
-			if (isa(d[symb], NamedTuple))  args = add_opt(d[symb], mapa)
+			if (isa(d[symb], NamedTuple))  args = add_opt(d[symb], mapa, arg)
 			else                           args = arg2str(d[symb])
 			end
 			if (opt != "")  cmd = string(cmd, " -", opt, args)
@@ -644,12 +638,12 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(nt::NamedTuple, mapa::NamedTuple)
+function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 	# Generic parser of options passed in a NT and whose last element is anther NT with the mapping
 	# between expanded sub-options names and the original GMT flags.
 	# Example: 
-	#	nt=(a=1,b=2,flags=(a="+a",b="-b"))
-	# translates to:	"+a1-b2"
+	#	add_opt((a=(1,0.5),b=2), (a="+a",b="-b"))
+	# translates to:	"+a1/0.5-b2"
 	key = keys(nt);
 	d = nt2dict(mapa)				# The flags mapping as a Dict
 	cmd = ""
@@ -657,6 +651,21 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple)
 		if (haskey(d, key[k]))
 			if (d[key[k]] == "1")	# Means that only first char in value is retained. Used with units
 				cmd = cmd * arg2str(nt[k])[1]
+			elseif (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix
+				if (arg === nothing)
+					@warn(@sprintf("The key %s implies appending to input but the 'arg' variable is empty. Ignoring it.",key[k]))
+					continue
+				end
+				if (isa(nt[k], AbstractArray) || isa(nt[k], NTuple))
+					if (mod(length(arg), length(nt[k])) != 0)
+						@warn("The columns to be appended do not have the same number of rows as the input data. Ignoring it.")
+						continue
+					end
+					if (isa(nt[k], AbstractArray))  append!(arg, reshape(nt[k], :))
+					else                            append!(arg, reshape(collect(nt[k]), :))
+					end
+				end
+				cmd = cmd * d[key[k]][2:end]		# And now append the flag
 			else
 				cmd = cmd * d[key[k]] * arg2str(nt[k])
 			end
