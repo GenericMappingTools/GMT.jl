@@ -27,12 +27,13 @@ function kml2gmt(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("kml2gmt", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-
+#=
 	cmd = parse_V_params("", d)
 	cmd, = parse_bo(cmd, d)
 	cmd, = parse_do(cmd, d)
 	cmd, = parse_swap_xy(cmd, d)
-
+=#
+	cmd = parse_common_opts(d, "", [:V_params :bo :do :xy])
 	cmd = add_opt(cmd, 'F', d, [:F :select])
 	cmd = add_opt(cmd, 'Z', d, [:Z :altitudes])
 
