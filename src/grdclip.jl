@@ -56,13 +56,9 @@ function grdclip(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdclip", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-
-	cmd, = parse_R("", d)
-	cmd = parse_V_params(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:R :V_params])
     cmd = add_opt(cmd, 'G', d, [:G :outgrid])
     cmd = add_opt(cmd, 'S', d, [:S])
-	
 	cmd = opt_S(d, cmd, [:high :above], 'a')
 	cmd = opt_S(d, cmd, [:low :below], 'b')
 	cmd = opt_S(d, cmd, [:old :new], 'r')

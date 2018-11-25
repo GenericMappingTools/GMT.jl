@@ -38,16 +38,7 @@ function grd2xyz(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2xyz", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-
-	cmd, = parse_R("", d)
-	cmd = parse_V_params(cmd, d)
-	cmd, = parse_bo(cmd, d)
-	cmd, = parse_d(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_h(cmd, d)
-	cmd, = parse_o(cmd, d)
-	cmd, = parse_s(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:R :V_params :bo :d :f :h :o :s])
 	cmd = add_opt(cmd, 'C', d, [:C :row_col])
 	cmd = add_opt(cmd, 'W', d, [:W :weight])
 	cmd = add_opt(cmd, 'Z', d, [:Z :flags])
@@ -58,4 +49,4 @@ function grd2xyz(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grd2xyz(arg1=[], cmd0::String=""; kw...) = grd2xyz(cmd0, arg1; kw...)
+grd2xyz(arg1; kw...) = grd2xyz("", arg1; kw...)

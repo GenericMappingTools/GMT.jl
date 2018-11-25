@@ -60,9 +60,7 @@ function gmtread(fname::String=""; kwargs...)
 	end
 
 	d = KW(kwargs)
-	cmd, opt_R = parse_R("", d)
-	cmd = parse_V_params(cmd, d)
-	cmd, = parse_f(cmd, d)
+	cmd = parse_common_opts(d, "", [:R :V_params :f])
 	cmd, opt_bi = parse_bi(cmd, d)
 
 	# Process these first so they may take precedence over defaults set below

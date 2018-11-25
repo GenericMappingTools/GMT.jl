@@ -60,9 +60,7 @@ function grdfft(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	d = KW(kwargs)
 
-	cmd = parse_V_params("", d)
-	cmd, = parse_f(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:V_params :f])
 	cmd = add_opt(cmd, 'A', d, [:A :azim])
 	cmd = add_opt(cmd, 'C', d, [:C :upward])
 	cmd = add_opt(cmd, 'D', d, [:D :dfdz])

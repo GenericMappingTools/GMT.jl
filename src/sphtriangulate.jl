@@ -50,17 +50,7 @@ function sphtriangulate(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("sphtriangulate ", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-#=
-	cmd = parse_V_params("", d)
-	cmd, = parse_b(cmd, d)
-	cmd, = parse_d(cmd, d)
-	cmd, = parse_e(cmd, d)
-	cmd, = parse_h(cmd, d)
-	cmd, = parse_i(cmd, d)
-    cmd, = parse_swap_xy(cmd, d)
-=#
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :h :i :xy])
-
     cmd = add_opt(cmd, 'A', d, [:A :area])
     cmd = add_opt(cmd, 'C', d, [:C :save_mem])
 	cmd = add_opt(cmd, 'D', d, [:D :skip])

@@ -84,18 +84,7 @@ function gmtconvert(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 
-	cmd = parse_V_params("", d)
-	cmd, = parse_b(cmd, d)
-	cmd, = parse_d(cmd, d)
-	cmd, = parse_e(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_g(cmd, d)
-	cmd, = parse_h(cmd, d)
-	cmd, = parse_i(cmd, d)
-	cmd, = parse_o(cmd, d)
-	cmd, = parse_s(cmd, d)
-	cmd, = parse_swap_xy(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :s :xy])
 	cmd = add_opt(cmd, 'A', d, [:A :h_cat])
 	cmd = add_opt(cmd, 'C', d, [:C :n_records])
 	cmd = add_opt(cmd, 'D', d, [:D :dump])
@@ -115,4 +104,4 @@ function gmtconvert(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtconvert(arg1=[], cmd0::String=""; kw...) = gmtconvert(cmd0, arg1; kw...)
+gmtconvert(arg1; kw...) = gmtconvert("", arg1; kw...)

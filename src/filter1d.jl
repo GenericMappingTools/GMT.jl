@@ -56,18 +56,7 @@ function filter1d(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("filter1d", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-
-	cmd = parse_V_params("", d)
-	cmd, = parse_b(cmd, d)
-	cmd, = parse_d(cmd, d)
-	cmd, = parse_e(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_g(cmd, d)
-	cmd, = parse_h(cmd, d)
-	cmd, = parse_i(cmd, d)
-	cmd, = parse_o(cmd, d)
-	cmd, = parse_swap_xy(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :xy])
 	cmd = add_opt(cmd, 'F', d, [:F :filter_type])
 	cmd = add_opt(cmd, 'D', d, [:D :inc])
 	cmd = add_opt(cmd, 'E', d, [:E :ends])

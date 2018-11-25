@@ -45,4 +45,4 @@ function gmtwhich(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtwhich(arg1=[], cmd0::String=""; kw...) = gmtwhich(cmd0, arg1; kw...)
+gmtwhich(arg1; kw...) = gmtwhich("", arg1; kw...)
