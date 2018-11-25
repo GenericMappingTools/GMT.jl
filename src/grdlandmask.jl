@@ -47,12 +47,7 @@ function grdlandmask(cmd0::String=""; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdlandmask", cmd0, [])	# Speedy mode
 
 	d = KW(kwargs)
-
-	cmd, = parse_R("", d)
-	cmd = parse_V_params(cmd, d)
-	cmd, = parse_r(cmd, d)
-	cmd, = parse_x(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:R :V_params :r :x])
 	cmd = add_opt(cmd, 'A', d, [:A :area])
 	cmd = add_opt(cmd, 'D', d, [:D :res :resolution])
 	cmd = add_opt(cmd, 'E', d, [:E :bordervalues])

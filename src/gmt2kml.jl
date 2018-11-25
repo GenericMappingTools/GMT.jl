@@ -96,16 +96,7 @@ function gmt2kml(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 
-	cmd, = parse_R("", d)
-	cmd  = parse_V_params(cmd, d)
-	cmd, = parse_bi(cmd, d)
-	cmd, = parse_di(cmd, d)
-	cmd, = parse_e(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_h(cmd, d)
-	cmd, = parse_i(cmd, d)
-	cmd, = parse_swap_xy(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :xy])
 	cmd = add_opt(cmd, 'A', d, [:A :altitude_mode])
 	cmd = add_opt(cmd, 'D', d, [:D :descript])
 	cmd = add_opt(cmd, 'E', d, [:E :extrude])

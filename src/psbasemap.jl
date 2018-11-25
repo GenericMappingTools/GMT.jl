@@ -55,15 +55,6 @@ function basemap(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs.
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-#=
-	cmd, = parse_JZ(cmd, d)
-	cmd  = parse_UVXY(cmd, d)
-	cmd, = parse_bo(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_p(cmd, d)
-	cmd, = parse_t(cmd, d)
-	cmd  = parse_params(cmd, d)
-=#
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :bo :f :p :t :params])
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance

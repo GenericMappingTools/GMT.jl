@@ -35,14 +35,7 @@ function grdsample(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdsample", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-
-	cmd, = parse_R("", d)
-	cmd = parse_V_params(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_n(cmd, d)
-	cmd, = parse_r(cmd, d)
-	cmd, = parse_x(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:R :V_params :f :n :r :x])
     cmd = add_opt(cmd, 'G', d, [:G :outgrid])
     cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt(cmd, 'T', d, [:T :toggle])

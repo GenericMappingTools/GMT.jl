@@ -49,12 +49,7 @@ function grdgradient(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdgradient", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-
-	cmd, = parse_R("", d)
-	cmd = parse_V_params(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_n(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:R :V_params :f :n])
     cmd = add_opt(cmd, 'A', d, [:A :azim])
     cmd = add_opt(cmd, 'D', d, [:D :find_dir])
     cmd = add_opt(cmd, 'G', d, [:G :outgrid])

@@ -38,14 +38,7 @@ function grdvolume(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdvolume", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-#=
-	cmd, = parse_R("", d)
-	cmd = parse_V_params(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_o(cmd, d)
-=#
 	cmd = parse_common_opts(d, "", [:R :V_params :f :o])
-
 	cmd = add_opt(cmd, 'C', d, [:C :contour])
 	cmd = add_opt(cmd, 'L', d, [:L :base_level])
 	cmd = add_opt(cmd, 'S', d, [:S :unit])

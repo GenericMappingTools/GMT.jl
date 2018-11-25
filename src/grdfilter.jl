@@ -44,11 +44,7 @@ function grdfilter(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdfilter", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-
-	cmd, = parse_R("", d)
-	cmd  = parse_V_params(cmd, d)
-	cmd, = parse_f(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:R :V_params :f])
     cmd = add_opt(cmd, 'D', d, [:D :distflag :distance])
     cmd = add_opt(cmd, 'F', d, [:F :filter])
     cmd = add_opt(cmd, 'G', d, [:G :outgrid])

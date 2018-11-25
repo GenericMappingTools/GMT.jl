@@ -117,17 +117,7 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 		@warn("Computing grids is only possible with GMT version >= 6")
 		return nothing
 	end
-	cmd, opt_R = parse_R(cmd, d)
-	cmd = parse_V_params(cmd, d)
-	cmd, = parse_bi(cmd, d)
-	cmd, = parse_di(cmd, d)
-	cmd, = parse_e(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_h(cmd, d)
-	cmd, = parse_i(cmd, d)
-	cmd, = parse_o(cmd, d)
-	cmd, = parse_r(cmd, d)
-	cmd, = parse_swap_xy(cmd, d)
+	cmd = parse_common_opts(d, cmd, [:R :V_params :bi :di :e :f :h :i :o :r :xy])
 
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt(cmd, 'W', d, [:W :weights])

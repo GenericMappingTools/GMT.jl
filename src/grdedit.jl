@@ -59,16 +59,7 @@ function grdedit(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdedit", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-
-	cmd, = parse_R("", d)
-	cmd, = parse_J(cmd, d)
-	cmd = parse_V_params(cmd, d)
-	cmd, = parse_bi(cmd, d)
-	cmd, = parse_di(cmd, d)
-	cmd, = parse_e(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_swap_xy(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :xy])
 	cmd = add_opt(cmd, 'A', d, [:A :adjust])
 	cmd = add_opt(cmd, 'C', d, [:C :clear_history])
 	cmd = add_opt(cmd, 'D', d, [:D :header])

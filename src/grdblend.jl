@@ -50,12 +50,7 @@ Parameters
 function grdblend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	d = KW(kwargs)
-	cmd, = parse_R("", d)
-	cmd  = parse_V_params(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_n(cmd, d)
-	cmd, = parse_r(cmd, d)
-
+	cmd = parse_common_opts(d, "", [:R :V_params :f :n :r])
 	cmd = add_opt(cmd, 'C', d, [:C :clobber])
 	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
     cmd = add_opt(cmd, 'I', d, [:I :inc])

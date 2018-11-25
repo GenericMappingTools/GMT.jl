@@ -61,12 +61,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; K=false, 
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_UVXY(cmd, d)
-	cmd, = parse_f(cmd, d)
-	cmd, = parse_n(cmd, d)
-	cmd, = parse_p(cmd, d)
-	cmd, = parse_t(cmd, d)
-	cmd  = parse_params(cmd, d)
+	cmd = parse_common_opts(d, cmd, [:UVXY :params :f :n :p :t])
 
 	cmd, K, O, = set_KO(cmd, opt_B, first, K, O)			# Set the K O dance
 

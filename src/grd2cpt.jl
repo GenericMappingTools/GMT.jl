@@ -85,8 +85,7 @@ function grd2cpt(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 
-	cmd, = parse_R("", d)
-	cmd = parse_V_params(cmd, d)
+	cmd = parse_common_opts(d, "", [:R :V_params])
 
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
 
@@ -111,4 +110,4 @@ function grd2cpt(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grd2cpt(arg1=[], cmd0::String=""; kw...) = grd2cpt(cmd0, arg1; kw...)
+grd2cpt(arg1; kw...) = grd2cpt("", arg1; kw...)
