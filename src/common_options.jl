@@ -407,7 +407,7 @@ function parse_helper(cmd::String, d::Dict, symbs, opt::String)
 	return cmd, opt_val
 end
 
-#= ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------
 function parse_common_opts(d, cmd, opts)
 	for opt in opts
 		if     (opt == :a)  cmd, = parse_a(cmd, d)
@@ -429,6 +429,9 @@ function parse_common_opts(d, cmd, opts)
 		elseif (opt == :s)  cmd, = parse_p(cmd, d)
 		elseif (opt == :x)  cmd, = parse_x(cmd, d)
 		elseif (opt == :t)  cmd, = parse_t(cmd, d)
+		elseif (opt == :R)  cmd, = parse_R(cmd, d)
+		elseif (opt == :J)  cmd, = parse_J(cmd, d)
+		elseif (opt == :JZ) cmd, = parse_JZ(cmd, d)
 		elseif (opt == :UVXY) cmd = parse_UVXY(cmd, d)
 		elseif (opt == :V_params) cmd = parse_V_params(cmd, d)
 		elseif (opt == :params) cmd = parse_params(cmd, d)
@@ -436,7 +439,6 @@ function parse_common_opts(d, cmd, opts)
 	end
 	return cmd
 end
-=#
 
 # ---------------------------------------------------------------------------------------------------
 function parse_inc(cmd::String, d::Dict, symbs, opt, del=false)

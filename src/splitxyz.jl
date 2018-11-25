@@ -55,6 +55,7 @@ function splitxyz(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("splitxyz", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
+#=
 	cmd  = parse_V_params("", d)
 	cmd, = parse_bi(cmd, d)
 	cmd, = parse_bo(cmd, d)
@@ -66,6 +67,8 @@ function splitxyz(cmd0::String="", arg1=[]; kwargs...)
 	cmd, = parse_h(cmd, d)
 	cmd, = parse_i(cmd, d)
 	cmd, = parse_swap_xy(cmd, d)
+=#
+	cmd = parse_common_opts(d, "", [:V_params :bi :bo :di :do :e :f :g :h :i :xy])
 
 	cmd = add_opt(cmd, 'A', d, [:A :azim_tol])
 	cmd = add_opt(cmd, 'C', d, [:C :course_change])
