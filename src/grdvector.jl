@@ -60,12 +60,15 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; K=false, O=false
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
-    cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
+	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
+#=
 	cmd  = parse_UVXY(cmd, d)
 	cmd, = parse_f(cmd, d)
 	cmd, = parse_p(cmd, d)
 	cmd, = parse_t(cmd, d)
 	cmd  = parse_params(cmd, d)
+=#
+	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params])
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)	# Find how data was transmitted

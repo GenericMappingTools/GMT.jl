@@ -104,19 +104,22 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 		end
 	end
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", caller, O, opt_J)
-	cmd = parse_UVXY(cmd, d)
-	cmd, = parse_a(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
+	cmd, opt_i = parse_i(cmd, d)
+#=
+	cmd = parse_UVXY(cmd, d)
+	cmd, = parse_a(cmd, d)
 	cmd, = parse_e(cmd, d)
 	cmd, = parse_f(cmd, d)
 	cmd, = parse_g(cmd, d)
 	cmd, = parse_h(cmd, d)
-	cmd, opt_i = parse_i(cmd, d)
 	cmd, = parse_p(cmd, d)
 	cmd, = parse_t(cmd, d)
 	cmd, = parse_swap_xy(cmd, d)
 	cmd = parse_params(cmd, d)
+=#
+	cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :xy :UVXY :params])
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 

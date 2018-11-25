@@ -72,6 +72,7 @@ function triangulate(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("triangulate", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
+#=
 	cmd, = parse_R("", d)
 	cmd, = parse_J(cmd, d)
 	cmd  = parse_V_params(cmd, d)
@@ -84,6 +85,8 @@ function triangulate(cmd0::String="", arg1=[]; kwargs...)
 	cmd, = parse_i(cmd, d)
 	cmd, = parse_r(cmd, d)
 	cmd, = parse_swap_xy(cmd, d)
+=#
+	cmd = parse_common_opts(d, "", [:R :J :V_params :bi :bo :di :e :f :h :i :r :xy])
 
 	cmd = add_opt(cmd, 'C', d, [:C :slope_grid])
 	cmd = add_opt(cmd, 'D', d, [:D :derivatives])

@@ -55,6 +55,7 @@ function sphdistance(cmd0::String="", arg1=[]; kwargs...)
 	d = KW(kwargs)
 
 	cmd, = parse_R("", d)
+#=
 	cmd = parse_V_params(cmd, d)
 	cmd, = parse_b(cmd, d)
 	cmd, = parse_d(cmd, d)
@@ -63,7 +64,8 @@ function sphdistance(cmd0::String="", arg1=[]; kwargs...)
 	cmd, = parse_i(cmd, d)
 	cmd, = parse_r(cmd, d)
 	cmd, = parse_swap_xy(cmd, d)
-
+=#
+	cmd = parse_common_opts(d, cmd, [:V_params :b :d :e :h :i :r :xy])
 	cmd = add_opt(cmd, 'C', d, [:C :save_mem])
 	cmd = add_opt(cmd, 'E', d, [:E :what_quantity])
     cmd = add_opt(cmd, 'G', d, [:G :outgrid])

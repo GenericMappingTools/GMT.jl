@@ -54,7 +54,7 @@ function spectrum1d(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("spectrum1d", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-
+#=
 	cmd = parse_V_params("", d)
 	cmd, = parse_b(cmd, d)
 	cmd, = parse_d(cmd, d)
@@ -63,7 +63,8 @@ function spectrum1d(cmd0::String="", arg1=[]; kwargs...)
 	cmd, = parse_h(cmd, d)
 	cmd, = parse_i(cmd, d)
 	cmd, = parse_swap_xy(cmd, d)
-
+=#
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :xy])
 	cmd = add_opt(cmd, 'C', d, [:C :response_fun])
 	cmd = add_opt(cmd, 'D', d, [:D :sample_dist])
 	cmd = add_opt(cmd, 'L', d, [:L :leave_trend])

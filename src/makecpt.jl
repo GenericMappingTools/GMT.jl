@@ -70,10 +70,13 @@ function makecpt(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("makecpt", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
+#=
 	cmd = parse_V_params("", d)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_bi(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
+=#
+	cmd = parse_common_opts(d, "", [:V_params :bi :di :i])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, " ", opt_i, opt_bi, opt_di)

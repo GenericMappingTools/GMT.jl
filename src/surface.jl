@@ -74,6 +74,7 @@ function surface(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("surface", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
+#=
 	cmd, = parse_R("", d)
 	cmd = parse_V_params(cmd, d)
 	cmd, = parse_a(cmd, d)
@@ -85,6 +86,8 @@ function surface(cmd0::String="", arg1=[]; kwargs...)
 	cmd, = parse_i(cmd, d)
 	cmd, = parse_r(cmd, d)
 	cmd, = parse_swap_xy(cmd, d)
+=#
+	cmd = parse_common_opts(d, "", [:R :V_params :a :bi :di :e :f :h :i :r :xy])
 
 	cmd = add_opt(cmd, 'A', d, [:A :aspect_ratio])
 	cmd = add_opt(cmd, 'C', d, [:C :convergence])

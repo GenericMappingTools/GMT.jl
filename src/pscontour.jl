@@ -95,19 +95,22 @@ function contour(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs.
 
 	cmd  = ""
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "", O, " -JX12c/0")
-	cmd  = parse_UVXY(cmd, d)
 	cmd, opt_bi = parse_bi(cmd, d)
+	cmd, opt_i = parse_i(cmd, d)
+#=
+	cmd  = parse_UVXY(cmd, d)
 	cmd, = parse_bo(cmd, d)
 	cmd, = parse_d(cmd, d)
 	cmd, = parse_di(cmd, d)
 	cmd, = parse_do(cmd, d)
 	cmd, = parse_e(cmd, d)
 	cmd, = parse_h(cmd, d)
-	cmd, opt_i = parse_i(cmd, d)
 	cmd, = parse_p(cmd, d)
 	cmd, = parse_t(cmd, d)
 	cmd, = parse_swap_xy(cmd, d)
 	cmd  = parse_params(cmd, d)
+=#
+	cmd = parse_common_opts(d, cmd, [:UVXY :bo :d :di :do :e :h :p :t :xy :params])
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 

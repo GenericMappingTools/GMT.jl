@@ -46,6 +46,7 @@ function sphinterpolate(cmd0::String="", arg1=[]; kwargs...)
 	d = KW(kwargs)
 
 	cmd, = parse_R("", d)
+#=
 	cmd = parse_V_params(cmd, d)
 	cmd, = parse_bi(cmd, d)
 	cmd, = parse_di(cmd, d)
@@ -54,6 +55,8 @@ function sphinterpolate(cmd0::String="", arg1=[]; kwargs...)
 	cmd, = parse_i(cmd, d)
 	cmd, = parse_r(cmd, d)
 	cmd, = parse_swap_xy(cmd, d)
+=#
+	cmd = parse_common_opts(d, cmd, [:bi :di :e :h :i :r :xy :V_params])
 
     cmd = add_opt(cmd, 'G', d, [:G :outgrid])
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
