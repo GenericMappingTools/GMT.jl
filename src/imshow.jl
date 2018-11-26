@@ -52,8 +52,8 @@ function imshow(arg1; K=false, O=false, first=true, kw...)
 		grdimage(G; caller="grdimage", K=K, O=O, first=first, show=see, kw...)
 	end
 end
-imshow!(arg1; K=true, O=true, first=false, kw...) = imshow(arg1; K=K, O=O, first=first, kw...)
-function imshow(arg1::GMTgrid; extra="", K=false, O=false, first=true, kw...)
+
+function imshow(arg1::GMTgrid; K=false, O=false, first=true, kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)
 	if (!haskey(d, :show))
@@ -62,10 +62,8 @@ function imshow(arg1::GMTgrid; extra="", K=false, O=false, first=true, kw...)
 		grdimage("", arg1; caller="grdimage", K=K, O=O, first=first, kw...)
 	end
 end
-imshow!(arg1::GMTgrid; extra="", K=false, O=false, first=true, kw...) =
-	grdimage(extra, arg1; caller="grdimage", K=K, O=O, first=first, kw...)
 
-function imshow(arg1::GMTimage; extra="", K=false, O=false, first=true, kw...)
+function imshow(arg1::GMTimage; K=false, O=false, first=true, kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)
 	if (!haskey(d, :show))
@@ -74,6 +72,3 @@ function imshow(arg1::GMTimage; extra="", K=false, O=false, first=true, kw...)
 		grdimage("", arg1; caller="grdimage", K=K, O=O, first=first, D=[], kw...)
 	end
 end
-imshow!(arg1::GMTimage; extra="", K=false, O=false, first=true, kw...) =
-	grdimage(extra, arg1; caller="grdimage", K=K, O=O, first=first, kw...)
-

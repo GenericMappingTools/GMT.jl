@@ -333,7 +333,7 @@ function bar!(arg1::NTuple, arg2::NTuple; K=true, O=true, first=false, kw...)
 	bar(collect(arg1), collect(arg2); K=K, O=O, first=first, kw...)
 end
 function bar(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
+	if (isa(arg1, Vector) && isa(arg2, Vector))
 		arg = hcat(arg1[:], arg2[:])
 	else
 		error("BARPLOT: The two array args must be vectors or ONE column (or row) matrices.")
@@ -341,14 +341,14 @@ function bar(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=t
 	bar("", arg; K=K, O=O, first=first, kw...)
 end
 function bar(arg::AbstractArray; K=false, O=false, first=true, kw...)
-	if (size(arg,2) == 1 || size(arg,1) == 1)
+	if (isa(arg, Vector))
 		x = collect(1:length(arg))
-		arg1 = [x arg[:]]
+		arg = [x arg[:]]
 	end
 	bar("", arg; K=K, O=O, first=first, kw...)
 end
 function bar!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...)
-	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
+	if (isa(arg1, Vector) && isa(arg2, Vector))
 		arg = hcat(arg1[:], arg2[:])
 	else
 		error("BARPLOT: The two array args must be vectors or ONE column (or row) matrices.")
@@ -356,9 +356,9 @@ function bar!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=fa
 	bar("", arg; K=K, O=O, first=first, kw...)
 end
 function bar!(arg::AbstractArray; K=true, O=true, first=false, kw...)
-	if (size(arg,2) == 1 || size(arg,1) == 1)
+	if (isa(arg, Vector))
 		x = collect(1:length(arg))
-		arg1 = [x arg[:]]
+		arg = [x arg[:]]
 	end
 	bar("", arg; K=K, O=O, first=first, kw...)
 end
@@ -389,8 +389,7 @@ Example:
     bar(sort(randn(10)), fill=:black, frame=:auto, show=true)
 """
 function bar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
-
-	if (isempty(cmd0) && isa(arg1, AbstractArray) && size(arg1,2) == 1 || size(arg1,1) == 1)	# y only
+	if (isempty(cmd0) && isa(arg1, AbstractArray) && isa(arg1, Vector))	# y only
 		arg1 = hcat(1:length(arg1), arg1[:])
 	end
 	GMT.common_plot_xyz(cmd0, arg1, "bar", K, O, first, false, kwargs...)

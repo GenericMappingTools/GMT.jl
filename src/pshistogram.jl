@@ -76,7 +76,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function histogram(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, kwargs...)
+function histogram(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
@@ -84,6 +84,16 @@ function histogram(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=
 	length(kwargs) == 0 && return monolitic("pshistogram", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
+
+	cmd = add_opt("", 'I', d, [:I :inquire])	# If inquire, no plotting so do it and return
+	if (cmd != "")
+		cmd = add_opt(cmd, 'W', d, [:W :bin :width])
+		(haskey(d, :Vd)) && println(@sprintf("\tpshistogram %s", cmd))
+		if (!isempty_(arg1))  return gmt("pshistogram " * cmd, arg1)
+		else                  return gmt("pshistogram " * cmd)
+		end
+	end
+
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", caller, O, " -JX12c/12c")
@@ -95,7 +105,7 @@ function histogram(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
-	if (isempty(opt_R))  opt_R = " "  end		# So it doesn't try to find the -R in next call
+	if (opt_R == "")  opt_R = " "  end		# So it doesn't try to find the -R in next call
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
@@ -104,25 +114,21 @@ function histogram(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=
 	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate])
 	cmd = add_opt(cmd, 'F', d, [:F :center])
 	cmd = add_opt(cmd, 'G', d, [:G :fill])
-	cmd = add_opt(cmd, 'I', d, [:I :inquire])
 	opt_L = opt_pen(d, 'L', [:L :pen])
 	cmd = add_opt(cmd, 'Q', d, [:Q :cumulative])
 	cmd = add_opt(cmd, 'S', d, [:S :stairs])
 	cmd = add_opt(cmd, 'W', d, [:W :bin :width])
 	cmd = add_opt(cmd, 'Z', d, [:Z :kind])
-	if (isempty(opt_L) && !occursin("-G", cmd) && !occursin("-C", cmd))		# If no -L, -G or -C set these defaults
-		cmd = cmd * " -G150" * " -L0.5p"
-	elseif (!isempty(opt_L))
+	if ((opt_L == "") && !occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-I", cmd))
+		cmd = cmd * " -G150" * " -L0.5p"	# If no -L, -G, -I or -C set these defaults
+	elseif (opt_L != "")
 		cmd = cmd * opt_L
 	end
 
-	for symb in [:N :normal]
-		if (haskey(d, symb))
-			if (isa(d[symb], Number))      cmd = @sprintf("%s -N%d", cmd, d[symb])
-			elseif (isa(d[symb], String))  cmd = cmd * " -N" * d[symb]
-			elseif (isa(d[symb], Tuple))   cmd = cmd * " -N" * parse_arg_and_pen(d[symb])
-			end
-			break
+	if ((val = find_in_dict(d, [:N :normal])[1]) !== nothing)
+		if (isa(val, Number))      cmd = @sprintf("%s -N%d", cmd, val)
+		elseif (isa(val, String))  cmd = cmd * " -N" * val
+		elseif (isa(val, Tuple))   cmd = cmd * " -N" * parse_arg_and_pen(val)
 		end
 	end
 
@@ -131,13 +137,13 @@ function histogram(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=
 end
 
 # ---------------------------------------------------------------------------------------------------
-histogram!(cmd0::String="", arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+histogram!(cmd0::String="", arg1=[]; caller="", K=true, O=true, first=false, kw...) =
 	histogram(cmd0, arg1; caller=caller, K=K, O=O, first=first, kw...)
 
-histogram(arg1=[]; caller=[], K=false, O=false, first=true, kw...) =
+histogram(arg1=[]; caller="", K=false, O=false, first=true, kw...) =
 	histogram("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
-histogram!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+histogram!(arg1=[]; caller="", K=true, O=true, first=false, kw...) =
 	histogram("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
 pshistogram  = histogram			# Alias

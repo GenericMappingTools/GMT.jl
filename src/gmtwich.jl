@@ -1,7 +1,7 @@
 """
-	gmtwhich(cmd0::String="", arg1=[], kwargs...)
+	gmtwhich(cmd0::String; kwargs...)
 
-Time domain filtering of 1-D data tables.
+Find full path to specified files
 
 Full option list at [`gmtwhich`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html)
 
@@ -28,9 +28,9 @@ Parameters
 	[`-G`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#g)
 - $(GMT.opt_V)
 """
-function gmtwhich(cmd0::String="", arg1=[]; kwargs...)
+function gmtwhich(cmd0::String; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtwhich", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtwhich", cmd0)
 
 	d = KW(kwargs)
 	cmd = parse_V_params("", d)
@@ -40,9 +40,6 @@ function gmtwhich(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'D', d, [:D :report_dir])
 	cmd = add_opt(cmd, 'G', d, [:G :download])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, [])
 	return common_grd(d, cmd, got_fname, 1, "gmtwhich", arg1)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-gmtwhich(arg1; kw...) = gmtwhich("", arg1; kw...)

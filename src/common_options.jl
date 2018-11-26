@@ -1345,7 +1345,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi="", opt_di="", is3D=false)
 	# In case DATA holds a file name, read that data and put it in ARG
-	# Also compute a tight -R if this was not provided 
+	# Also compute a tight -R if this was not provided
 	data_kw = nothing
 	if (haskey(d, :data))	data_kw = d[:data]	end
 
@@ -1371,12 +1371,21 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi=
 
 	if (!isempty_(data_kw)) arg = data_kw  end		# Finaly move the data into ARG
 
-	if (isempty(opt_R))
+	if (opt_R == "" || opt_R[1] == '/')
 		info = gmt("gmtinfo -C" * opt_i, arg)		# Here we are reading from an original GMTdataset or Array
-		if (size(info[1].data, 2) < 4)
-			error("Need at least 2 columns of data to run this program")
+		if (opt_R != "" && opt_R[1] == '/')	# Modify waht will be reported as a -R string
+			# Example "/-1/1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
+			rs = split(opt_R, '/')
+			for k = 2:length(rs)
+				if (rs[k] != "")
+					x = parse(Float64, rs[k])
+					if (x == 0.0) info[1].data[k-1] = x
+					else          info[1].data[k-1] += x 
+					end
+				end
+			end
 		end
-		info[1].data = round_wesn(info[1].data)
+		if (opt_R != "tight")  info[1].data = round_wesn(info[1].data)  end
 		if (is3D)
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
 			                 info[1].data[3], info[1].data[4], info[1].data[5], info[1].data[6])
@@ -1396,9 +1405,15 @@ function round_wesn(wesn, geo::Bool=false)
 	# If wesn has 6 elements (is3D), last two are not modified.
 	set = zeros(Bool, 2)
 	range = zeros(2)
+	if (wesn[1] == wesn[2])
+		wesn[1] -= abs(wesn[1]) * 0.1;	wesn[2] += abs(wesn[2]) * 0.1
+	end
+	if (wesn[3] == wesn[4])
+		wesn[3] -= abs(wesn[3]) * 0.1;	wesn[4] += abs(wesn[4]) * 0.1
+	end
 	range[1] = wesn[2] - wesn[1]
 	range[2] = wesn[4] - wesn[3]
-	if (geo) 	# Special checks due to periodicity
+	if (geo) 					# Special checks due to periodicity
 		if (range[1] > 306.0) 	# If within 15% of a full 360 we promote to 360
 			wesn[1] = 0.0;	wesn[2] = 360.0
 			set[1] = true
