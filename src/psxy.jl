@@ -130,7 +130,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	cmd = ""
 	sub_module = ""						# Will change to "scatter", etc... if called by sub-modules
-	if (!isempty(caller))
+	if (caller != "")
 		if (occursin(" -", caller))		# some sub-modues use this piggy-backed call
 			if ((ind = findfirst("|", caller)) !== nothing)	# A mixed case with "caler|partiall_command"
 				sub_module = caller[1:ind[1]-1]
@@ -173,7 +173,8 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
-	# If a file name sent in, read it and compute a tight -R if this was not provided 
+	# If a file name sent in, read it and compute a tight -R if this was not provided
+	if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
 	
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)

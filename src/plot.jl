@@ -90,10 +90,8 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-plot(arg1; K=false, O=false, first=true, kw...) =
-	psxy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
-plot!(arg1; K=true, O=true, first=false, kw...) =
-	psxy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
+plot(arg1; K=false, O=false, first=true, kw...) = psxy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
+plot!(arg1; K=true, O=true, first=false, kw...) = psxy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
 
 plot(cmd0::String="", arg1=[]; K=false, O=false, first=true, kw...) =
 	psxy(cmd0, arg1; caller="plot", K=K, O=O, first=first, kw...)
@@ -341,9 +339,9 @@ function bar(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=t
 	bar("", arg; K=K, O=O, first=first, kw...)
 end
 function bar(arg::AbstractArray; K=false, O=false, first=true, kw...)
-	if (size(arg,2) == 1 || size(arg,1) == 1)
+	if ((size(arg,2) == 1 || size(arg,1) == 1))
 		x = collect(1:length(arg))
-		arg1 = [x arg[:]]
+		arg = [x arg[:]]
 	end
 	bar("", arg; K=K, O=O, first=first, kw...)
 end
@@ -356,9 +354,9 @@ function bar!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=fa
 	bar("", arg; K=K, O=O, first=first, kw...)
 end
 function bar!(arg::AbstractArray; K=true, O=true, first=false, kw...)
-	if (size(arg,2) == 1 || size(arg,1) == 1)
+	if ((size(arg,2) == 1 || size(arg,1) == 1))
 		x = collect(1:length(arg))
-		arg1 = [x arg[:]]
+		arg = [x arg[:]]
 	end
 	bar("", arg; K=K, O=O, first=first, kw...)
 end
@@ -389,9 +387,8 @@ Example:
     bar(sort(randn(10)), fill=:black, frame=:auto, show=true)
 """
 function bar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
-
-	if (isempty(cmd0) && isa(arg1, AbstractArray) && size(arg1,2) == 1 || size(arg1,1) == 1)	# y only
-		arg1 = hcat(1:length(arg1), arg1[:])
+	if ((cmd0 == "") && !isa(arg1, Array{GMT.GMTdataset,1}) && isa(arg1, AbstractArray) && isa(arg1, Vector))
+		arg1 = hcat(1:length(arg1), arg1[:])	# y only
 	end
 	GMT.common_plot_xyz(cmd0, arg1, "bar", K, O, first, false, kwargs...)
 end
