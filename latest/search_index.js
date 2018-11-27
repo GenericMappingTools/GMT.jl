@@ -993,11 +993,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "#GMT.gmtwhich",
+    "location": "#GMT.gmtwhich-Tuple{String}",
     "page": "Index",
     "title": "GMT.gmtwhich",
-    "category": "function",
-    "text": "gmtwhich(cmd0::String=\"\", arg1=[], kwargs...)\n\nTime domain filtering of 1-D data tables.\n\nFull option list at gmtwhich\n\nParameters\n\nA : with_permissions : – Bool or [] –\n\nOnly consider files that the user has permission to read [Default consider all files found].\n[`-A`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#a)\n\nC : confirm : – Bool or [] –\n\nInstead of reporting the paths, print the confirmation Y if the file is found and N if it is not.\n[`-C`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#c)\n\nD : report_dir : – Bool or [] –\n\nInstead of reporting the paths, print the directories that contains the files.\n[`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#d)\n\nG : download : – Str or [] –      Flags = [c|l|u]\n\nIf a file argument is a downloadable file (either a full URL, a @file for downloading from\nthe GMT Site Cache, or @earth_relief_*.grd) we will try to download the file if it is not\nfound in your local data or cache dirs.\n[`-G`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#g)\n\nV : verbose : – Bool or Str –		Flags = level\nSelect verbosity level, which will send progress reports to stderr.   -V\n\n\n\n\n\n"
+    "category": "method",
+    "text": "gmtwhich(cmd0::String; kwargs...)\n\nFind full path to specified files\n\nFull option list at gmtwhich\n\nParameters\n\nA : with_permissions : – Bool or [] –\n\nOnly consider files that the user has permission to read [Default consider all files found].\n[`-A`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#a)\n\nC : confirm : – Bool or [] –\n\nInstead of reporting the paths, print the confirmation Y if the file is found and N if it is not.\n[`-C`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#c)\n\nD : report_dir : – Bool or [] –\n\nInstead of reporting the paths, print the directories that contains the files.\n[`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#d)\n\nG : download : – Str or [] –      Flags = [c|l|u]\n\nIf a file argument is a downloadable file (either a full URL, a @file for downloading from\nthe GMT Site Cache, or @earth_relief_*.grd) we will try to download the file if it is not\nfound in your local data or cache dirs.\n[`-G`](http://gmt.soest.hawaii.edu/doc/latest/gmtwhich.html#g)\n\nV : verbose : – Bool or Str –		Flags = level\nSelect verbosity level, which will send progress reports to stderr.   -V\n\n\n\n\n\n"
 },
 
 {
