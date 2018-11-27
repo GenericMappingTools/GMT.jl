@@ -76,7 +76,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function histogram(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, kwargs...)
+function histogram(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
@@ -96,7 +96,7 @@ function histogram(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=
 
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", caller, O, " -JX12c/12c")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "histogram", O, " -JX12c/12c")
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
@@ -137,14 +137,11 @@ function histogram(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=
 end
 
 # ---------------------------------------------------------------------------------------------------
-histogram!(cmd0::String="", arg1=[]; caller="", K=true, O=true, first=false, kw...) =
-	histogram(cmd0, arg1; caller=caller, K=K, O=O, first=first, kw...)
+histogram!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
+	histogram(cmd0, arg1; K=K, O=O, first=first, kw...)
 
-histogram(arg1=[]; caller="", K=false, O=false, first=true, kw...) =
-	histogram("", arg1; caller=caller, K=K, O=O, first=first, kw...)
-
-histogram!(arg1=[]; caller="", K=true, O=true, first=false, kw...) =
-	histogram("", arg1; caller=caller, K=K, O=O, first=first, kw...)
+histogram(arg1=[]; K=false, O=false, first=true, kw...) = histogram("", arg1; K=K, O=O, first=first, kw...)
+histogram!(arg1=[]; K=true, O=true, first=false, kw...) = histogram("", arg1; K=K, O=O, first=first, kw...)
 
 pshistogram  = histogram			# Alias
 pshistogram! = histogram!			# Alias
