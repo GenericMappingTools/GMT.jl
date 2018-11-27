@@ -230,28 +230,25 @@ scatter!(arg1;  K=true,  O=true,  first=false, kw...) = scatter("", arg1; K=K, O
 scatter3(arg1;  K=false, O=false, first=true, kw...)  = scatter("", arg1; K=K, O=O, first=first, is3D=true, kw...)
 scatter3!(arg1; K=true,  O=true,  first=false, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=true, kw...)
 
+function scatter(arg::AbstractArray; K=false, O=false, first=true, kw...)
+	arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
+	scatter("", arg; K=K, O=O, first=first, kw...)
+end
+scatter!(arg::AbstractArray; K=false, O=false, first=true, kw...) = scatter(arg; K=K, O=O, first=first, kw...)
 function scatter(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
-		arg = hcat(arg1[:], arg2[:])
-	else
-		error("SCATTER: The two array args must be vectors or ONE column (or row) matrices.")
-	end
+	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
 	scatter("", arg; K=K, O=O, first=first, is3D=false, kw...)
 end
 function scatter!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...)
-	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
-		arg = hcat(arg1[:], arg2[:])
-	else
-		error("SCATTER: The two array args must be vectors or ONE column (or row) matrices.")
-	end
+	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
 	scatter("", arg; K=K, O=O, first=first, is3D=false, kw...)
 end
 function scatter3(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = hcat(arg1[:], arg2[:], arg3[:])
+	arg = hcat(arg1, arg2, arg3)
 	scatter("", arg; K=K, O=O, first=first, is3D=true, kw...)
 end
 function scatter3!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=true, O=true, first=false, kw...)
-	arg = hcat(arg1[:], arg2[:], arg3[:])
+	arg = hcat(arg1, arg2, arg3)
 	scatter("", arg; K=K, O=O, first=first, is3D=true, kw...)
 end
 
@@ -321,45 +318,26 @@ end
 function bar(arg1::NTuple; K=false, O=false, first=true, kw...)
 	bar(1:length(arg1), collect(arg1); K=K, O=O, first=first, kw...)
 end
-function bar!(arg1::NTuple; K=true, O=true, first=false, kw...)
-	bar(1:length(arg1), collect(arg1); K=K, O=O, first=first, kw...)
-end
+bar!(arg1::NTuple; K=true, O=true, first=false, kw...) = bar(arg1; K=K, O=O, first=first, kw...)
+
 function bar(arg1::NTuple, arg2::NTuple; K=false, O=false, first=true, kw...)
 	bar(collect(arg1), collect(arg2); K=K, O=O, first=first, kw...)
 end
-function bar!(arg1::NTuple, arg2::NTuple; K=true, O=true, first=false, kw...)
-	bar(collect(arg1), collect(arg2); K=K, O=O, first=first, kw...)
-end
+bar!(arg1::NTuple, arg2::NTuple; K=true, O=true, first=false, kw...) =
+	bar(arg1, arg2; K=K, O=O, first=first, kw...)
+
 function bar(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
-		arg = hcat(arg1[:], arg2[:])
-	else
-		error("BARPLOT: The two array args must be vectors or ONE column (or row) matrices.")
-	end
+	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
 	bar("", arg; K=K, O=O, first=first, kw...)
 end
+bar!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...) =
+	bar(arg1, arg2; K=K, O=O, first=first, kw...)
+
 function bar(arg::AbstractArray; K=false, O=false, first=true, kw...)
-	if ((size(arg,2) == 1 || size(arg,1) == 1))
-		x = collect(1:length(arg))
-		arg = [x arg[:]]
-	end
+	arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
 	bar("", arg; K=K, O=O, first=first, kw...)
 end
-function bar!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...)
-	if ((size(arg1,2) == 1 || size(arg1,1) == 1) && (size(arg2,2) == 1 || size(arg2,1) == 1))
-		arg = hcat(arg1[:], arg2[:])
-	else
-		error("BARPLOT: The two array args must be vectors or ONE column (or row) matrices.")
-	end
-	bar("", arg; K=K, O=O, first=first, kw...)
-end
-function bar!(arg::AbstractArray; K=true, O=true, first=false, kw...)
-	if ((size(arg,2) == 1 || size(arg,1) == 1))
-		x = collect(1:length(arg))
-		arg = [x arg[:]]
-	end
-	bar("", arg; K=K, O=O, first=first, kw...)
-end
+bar!(arg::AbstractArray; K=true, O=true, first=false, kw...) = bar(arg; K=false, O=false, first=true, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 """
@@ -386,11 +364,11 @@ Example:
 
     bar(sort(randn(10)), fill=:black, frame=:auto, show=true)
 """
-function bar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
-	if ((cmd0 == "") && !isa(arg1, Array{GMT.GMTdataset,1}) && isa(arg1, AbstractArray) && isa(arg1, Vector))
-		arg1 = hcat(1:length(arg1), arg1[:])	# y only
+function bar(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
+	if (cmd0 == "")
+		arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
 	end
-	GMT.common_plot_xyz(cmd0, arg1, "bar", K, O, first, false, kwargs...)
+	GMT.common_plot_xyz(cmd0, arg, "bar", K, O, first, false, kwargs...)
 end
 
 # ------------------------------------------------------------------------------------------------------
@@ -615,16 +593,43 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 function lines(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = hcat(arg1, arg2)
+	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
 	lines("", arg; K=K, O=O, first=first, kw...)
 end
 function lines!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...)
-	arg = hcat(arg1, arg2)
+	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
 	lines("", arg; K=K, O=O, first=first, kw...)
 end
 
-lines(arg1; K=false, O=false, first=true, kw...) = lines("", arg1; K=K, O=O, first=first, kw...)
+function lines(arg::AbstractArray; K=false, O=false, first=true, kw...)
+	arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
+	lines("", arg; K=K, O=O, first=first, kw...)
+end
+function lines!(arg; K=true, O=true, first=false, kw...)
+	arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
+	lines("", arg; K=K, O=O, first=first, kw...)
+end
 
-lines!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
-	lines(cmd0, arg1; K=K, O=O, first=first, kw...)
-lines!(arg1; K=true, O=true, first=false, kw...) = lines("", arg1; K=K, O=O, first=first, kw...)
+lines!(cmd0::String="", arg=[]; K=true, O=true, first=false, kw...) =
+	lines(cmd0, arg; K=K, O=O, first=first, kw...)
+
+
+# ------------------------------------------------------------------------------------------------------
+function cat_1_arg(arg)
+	# When functions that expect matrices get only a vector, add a first col with 1:nx
+	if (!isa(arg, Array{GMT.GMTdataset,1}) && isa(arg, Vector))
+		arg = hcat(1:length(arg), arg)	# y only
+	end
+	return arg
+end
+
+# ------------------------------------------------------------------------------------------------------
+function cat_2_arg2(arg1, arg2)
+	# Cat two vectors in a Mx2 matrix
+	if (!isa(arg1, Array{GMT.GMTdataset,1}) && !isa(arg2, Array{GMT.GMTdataset,1}) &&
+		(isa(arg1, Vector) || isa(arg1, UnitRange)) && (isa(arg2, Vector) || isa(arg2, UnitRange)) )
+		arg = hcat(arg1, arg2)
+	else
+		error("The two array args must be vectors or ONE column (or row) matrices.")
+	end
+end
