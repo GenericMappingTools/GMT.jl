@@ -86,34 +86,26 @@ function gmtread(fname::String=""; kwargs...)
 			opt_T = " -Tg"
 		end
 		fname = fname * "?" * arg2str(d[:varname])
-		for sym in [:layer :band]
-			if (haskey(d, sym))
-				b = d[sym]
-				if (isa(b, Number))
-					fname = fname * @sprintf("[%d]", b)
-				elseif (isa(b, Array))		# A 4D array
-					fname = fname * @sprintf("[%d,%d]", b[1], b[2])
-				end
-				break
+		if ((val = find_in_dict(d, [:layer :band])[1]) !== nothing)
+			if (isa(val, Number))
+				fname = fname * @sprintf("[%d]", val)
+			elseif (isa(val, Array))		# A 4D array
+				fname = fname * @sprintf("[%d,%d]", val[1], val[2])
 			end
 		end
 	else									# See if we have a bands request
-		for sym in [:layer :band]
-			if (haskey(d, sym))
-				fname = fname * "+b"
-				b = d[sym]
-				if (isa(b, String) || isa(b, Symbol) || isa(b, Number))
-					fname = fname * string(fname, b)
-				elseif (isa(b, Array) || isa(b, Tuple))
-					if (length(b) == 3)
-						fname = fname * @sprintf("%d,%d,%d", b[1], b[2], b[3])
-					else
-						error("Number of bands in the 'band' option can only be 1 or 3")
-					end
+		if ((val = find_in_dict(d, [:layer :band])[1]) !== nothing)
+			fname = fname * "+b"
+			if (isa(val, String) || isa(val, Symbol) || isa(val, Number))
+				fname = fname * string(fname, val)
+			elseif (isa(val, Array) || isa(val, Tuple))
+				if (length(val) == 3)
+					fname = fname * @sprintf("%d,%d,%d", val[1], val[2], val[3])
+				else
+					error("Number of bands in the 'band' option can only be 1 or 3")
 				end
-				if (isempty(opt_T))	opt_T = " -Ti"	end
-				break
 			end
+			if (isempty(opt_T))	opt_T = " -Ti"	end
 		end
 	end
 
@@ -279,17 +271,12 @@ function parse_grd_format(d::Dict)
 	if (haskey(d, :offset))
 		out = out * "+o" * arg2str(d[:offset])
 	end
-	for sym in [:nan :novalue :invalid :missing]
-		if (haskey(d, sym))
-			out = out * "+n" * arg2str(d[sym])
-			break
-		end
+	if ((val = find_in_dict(d, [:nan :novalue :invalid :missing])[1]) !== nothing)
+		out = out * "+n" * arg2str(val)
 	end
 	if (haskey(d, :driver))
 		out = out * ":" * arg2str(d[:driver])
-		if (haskey(d, :datatype))
-			out = out * "/" * arg2str(d[:datatype])
-		end
+		if (haskey(d, :datatype))  out = out * "/" * arg2str(d[:datatype])  end
 	end
 	return out
 end

@@ -1,5 +1,5 @@
 """
-    xy(cmd0::String="", arg1=[]; kwargs...)
+    psxy(cmd0::String="", arg1=[]; kwargs...)
 
 reads (x,y) pairs and plot lines, polygons, or symbols at those locations on a map.
 
@@ -103,7 +103,7 @@ Parameters
 function psxy(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, kwargs...)
 	if (isempty(cmd0) && isa(arg1, AbstractArray) && length(arg1) != 2 &&
 		(size(arg1,2) == 1 || size(arg1,1) == 1))	# y only
-		arg1 = hcat(1:length(arg1), arg1[:])
+		arg1 = hcat(1:length(arg1), arg1)
 	end
 	common_plot_xyz(cmd0, arg1, caller, K, O, first, false, kwargs...)
 end
