@@ -248,8 +248,8 @@ function scatter3(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray;
 	scatter("", arg; K=K, O=O, first=first, is3D=true, kw...)
 end
 function scatter3!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=true, O=true, first=false, kw...)
-	arg = hcat(arg1, arg2, arg3)
-	scatter("", arg; K=K, O=O, first=first, is3D=true, kw...)
+	#arg = hcat(arg1, arg2, arg3)
+	scatter("", hcat(arg1, arg2, arg3); K=K, O=O, first=first, is3D=true, kw...)
 end
 
 """
@@ -365,9 +365,7 @@ Example:
     bar(sort(randn(10)), fill=:black, frame=:auto, show=true)
 """
 function bar(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
-	if (cmd0 == "")
-		arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
-	end
+	if (cmd0 == "") arg = cat_1_arg(arg)  end	# If ARG is a vector, prepend it with a 1:N x column
 	GMT.common_plot_xyz(cmd0, arg, "bar", K, O, first, false, kwargs...)
 end
 
@@ -606,19 +604,18 @@ function lines(arg::AbstractArray; K=false, O=false, first=true, kw...)
 	lines("", arg; K=K, O=O, first=first, kw...)
 end
 function lines!(arg; K=true, O=true, first=false, kw...)
-	arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
-	lines("", arg; K=K, O=O, first=first, kw...)
+	#arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
+	lines("", cat_1_arg(arg); K=K, O=O, first=first, kw...)
 end
 
 lines!(cmd0::String="", arg=[]; K=true, O=true, first=false, kw...) =
 	lines(cmd0, arg; K=K, O=O, first=first, kw...)
 
-
 # ------------------------------------------------------------------------------------------------------
 function cat_1_arg(arg)
 	# When functions that expect matrices get only a vector, add a first col with 1:nx
-	if (!isa(arg, Array{GMT.GMTdataset,1}) && isa(arg, Vector))
-		arg = hcat(1:length(arg), arg)	# y only
+	if (!isa(arg, Array{GMT.GMTdataset,1}) && isa(arg, Vector) || isa(arg, UnitRange))
+		arg = hcat(1:length(arg), arg)
 	end
 	return arg
 end

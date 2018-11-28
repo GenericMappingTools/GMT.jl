@@ -56,6 +56,7 @@ if (got_it)					# Otherwise go straight to end
 	# GMTLOGO
 	logo(D="x0/0+w2i")
 	logo(julia=8)
+	logo!(julia=8, Vd=:cmd)
 
 	# GMTSPATIAL
 	# Test  Cartesian centroid and area
@@ -259,6 +260,8 @@ if (got_it)					# Otherwise go straight to end
 	scatter(rand(50),rand(50), markersize=rand(50), zcolor=rand(50), aspect=:equal, alpha=50, Vd=:cmd)
 	scatter(1:10, rand(10), fill=:red, B=:a)
 	scatter!(1:10, rand(10), fill=:red, B=:a, Vd=:cmd)
+	scatter(1:10, Vd=:cmd)
+	scatter!(1:10, Vd=:cmd)
 	scatter(rand(5,5))
 	scatter!(rand(5,5), Vd=:cmd)
 	scatter3(rand(5,5,3))
@@ -380,7 +383,7 @@ if (got_it)					# Otherwise go straight to end
 	@assert(size(G.z) == (151, 151))
 
 	# SPLITXYZ (fails)
-	#splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
+	splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
 
 	# TRIANGULATE
 	G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
