@@ -51,19 +51,16 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	end
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
+	if (isa(arg1, Array{<:Number}))  arg1 = mat2grid(arg1)  end
 
-	for sym in [:W :weights]
-		if (haskey(d, sym))
-			if (!isa(d[sym], GMTgrid))
-				cmd = cmd * " -W" * arg2str(d[sym])
-			else
-				cmd, N_used = put_in_slot(cmd, d[sym], 'W', [arg1, arg2])
-				if (N_used == 1)     arg1 = d[sym]
-				elseif (N_used == 2) arg2 = d[sym]
-				end
+	if ((val = find_in_dict(d, [:W :weights])[1]) !== nothing)
+		if (!isa(val, GMTgrid))
+			cmd *= " -W" * arg2str(val)
+		else
+			cmd, N_used = put_in_slot(cmd, val, 'W', [arg1, arg2])
+			if (N_used == 1)     arg1 = val
+			elseif (N_used == 2) arg2 = val
 			end
-			break
 		end
 	end
 

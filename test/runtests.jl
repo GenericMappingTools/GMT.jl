@@ -252,6 +252,8 @@ if (got_it)					# Otherwise go straight to end
 	lines!(1:10,rand(10), W=0.25, Vd=:cmd)
 	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
 	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
+	D = histogram(randn(1000), I=:o, W=0.1, Vd=1);
+	lines(D, steps=(x=true,), close=(bot="",))
 
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
@@ -360,7 +362,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSTERNARY
 	ternary([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", X=:c, B=:a, S="c0.1c");
-	ternary!([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", S="c0.1c", Vd=:cmd);
+	ternary!([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", shape=:square, ms=0.1, Vd=:cmd);
 
 	# PSTEXT
 	text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps",showfig="lixo.ps")
@@ -418,6 +420,7 @@ if (got_it)					# Otherwise go straight to end
 	GMT.logspace(1,5);
 	GMT.fakedata(50,1);
 	GMT.contains("aiai", "ia");
+	GMT.meshgrid(1:5, 1:5, 1:5);
 
 	# -------------------- Test common_options ----------------------------------------
 	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4)))[1] == " -R1/2/3/4"
@@ -457,6 +460,9 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_unit_unit("data") == "u"
 	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
 	@test GMT.add_opt((symb=:circle, size=7, unit=:point), (symb="1", size="", unit="1")) == "c7p"
+	r = GMT.add_opt_fill("", 'G', Dict(:G=>(inv_pattern=12,fg="white",bg=(1,2,3), dpi=10) ), [:G :fill]);
+	@test r == " -GP12+b1/2/3+fwhite+r10"
+	@test GMT.add_opt_fill("", 'G', Dict(:G=>:red), [:G :fill]) == " -Gred"
 	#d = Dict(:a=>1,:b=>1,:bi=>1,:bo=>1,:d=>1,:di=>1,:do=>1,:e=>1,:f=>1,:g=>1,:h=>1,:i=>1,:n=>1,:o=>1,:p=>1,:r=>1,:s=>1,:x=>1,:t=>1,:xy=>1);
 	#GMT.parse_common_opts(d,"", [:a :b :bi :bo :d :di :do :e :f :g :h :i :n :o :p :r :s :x :t :xy])
 

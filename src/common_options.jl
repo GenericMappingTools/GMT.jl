@@ -94,9 +94,7 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 		# If only the projection but no size, try to get it from the kwargs.
 		if (haskey(d, :figsize))
 			s = arg2str(d[:figsize])
-			if (haskey(d, :units))
-				s = s * d[:units][1]
-			end
+			if (haskey(d, :units))  s *= d[:units][1]  end
 			if (isdigit(opt_J[end]))  opt_J = opt_J * "/" * s
 			else                      opt_J = opt_J * s
 			end
@@ -400,7 +398,7 @@ function parse_helper(cmd::String, d::Dict, symbs, opt::String)
 	for sym in symbs
 		if (haskey(d, sym))
 			opt_val = opt * arg2str(d[sym])
-			cmd = cmd * opt_val
+			cmd *= opt_val
 			break
 		end
 	end
@@ -495,18 +493,14 @@ function parse_params(cmd::String, d::Dict)
 	# Parse the gmt.conf parameters when used from within the modules. Return a --PAR=val string
 	# The input to this kwarg can be a tuple (e.g. (PAR,val)) or a NamedTuple (P1=V1, P2=V2,...)
 
-	for symb in [:conf :par :params]
-		if (haskey(d, symb))
-			t = d[symb]
-			if (isa(t, NamedTuple))
-				fn = fieldnames(typeof(t))
-				for k = 1:length(fn)		# Suspect that this is higly inefficient but N is small
-					cmd = cmd * " --" * string(fn[k]) * "=" * string(t[k])
-				end
-			elseif (isa(t, Tuple))
-				cmd = cmd * " --" * string(t[1]) * "=" * string(t[2])
+	if ((val = find_in_dict(d, [:conf :par :params])[1]) !== nothing)
+		if (isa(val, NamedTuple))
+			fn = fieldnames(typeof(val))
+			for k = 1:length(fn)		# Suspect that this is higly inefficient but N is small
+				cmd = cmd * " --" * string(fn[k]) * "=" * string(val[k])
 			end
-			break
+		elseif (isa(val, Tuple))
+			cmd = cmd * " --" * string(val[1]) * "=" * string(val[2])
 		end
 	end
 	return cmd
@@ -546,9 +540,7 @@ function parse_pen(pen::Tuple)
 	s = arg2str(pen[1])					# First arg is different because there is no leading ','
 	if (length(pen) > 1)
 		s = s * ',' * get_color(pen[2])
-		if (length(pen) > 2)
-			s = s * ',' * arg2str(pen[3])
-		end
+		if (length(pen) > 2)  s *= ',' * arg2str(pen[3])  end
 	end
 	return s
 end
@@ -710,7 +702,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=[], arg2=[])
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
-	# N_args only applyies to when a GMTcpt was transmitted, Than it's either 0, case in which
+	# N_args only applyies to when a GMTcpt was transmitted. Than it's either 0, case in which
 	# the cpt is put in arg1, or 1 and the cpt goes to arg2.
 	for sym in symbs
 		if (haskey(d, sym))
@@ -755,6 +747,30 @@ function add_opt_pen(d::Dict, symbs, opt="", del::Bool=false)
 	o = add_opt("", "", d, [:csymbol :ctext])
 	if (o != "")  out = out * "+cf"  end
 	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
+function add_opt_fill(cmd::String, opt, d::Dict, symbs)
+	# Deal with the area fill attributes option. Normally, -G
+	if ((val = find_in_dict(d, symbs)[1]) === nothing)  return cmd  end
+	if (isa(val, NamedTuple))
+		d2 = nt2dict(val)
+		cmd *= " -" * opt
+		if     (haskey(d2, :pattern))     cmd *= 'p' * add_opt("", "", d2, [:pattern])
+		elseif (haskey(d2, :inv_pattern)) cmd *= 'P' * add_opt("", "", d2, [:inv_pattern])
+		else   error("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member")
+		end
+
+		if ((val2 = find_in_dict(d2, [:bg :background])[1]) !== nothing)
+			cmd *= "+b" * get_color(val2)
+		end
+		if ((val2 = find_in_dict(d2, [:fg :foreground])[1]) !== nothing)
+			cmd *= "+f" * get_color(val2)
+		end
+		if (haskey(d2, :dpi))  cmd = string(cmd, "+r", d2[:dpi])  end
+	else
+		cmd *= " -" * opt * get_color(val)
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1404,7 +1420,7 @@ function round_wesn(wesn, geo::Bool=false)
 	# Use data range to round to nearest reasonable multiples
 	# If wesn has 6 elements (is3D), last two are not modified.
 	set = zeros(Bool, 2)
-	range = zeros(2)
+	range = [0.0, 0.0]
 	if (wesn[1] == wesn[2])
 		wesn[1] -= abs(wesn[1]) * 0.1;	wesn[2] += abs(wesn[2]) * 0.1
 	end
