@@ -207,6 +207,7 @@ if (got_it)					# Otherwise go straight to end
 	# Just create the figs but not check if they are correct.
 	PS = grdimage(G, J="X10", ps=1);
 	gmt("destroy")
+	grdimage!(G, J="X10", Vd=:cmd);
 	#grdimage("@earth_relief_05m", J="S21/90/15c", R="10/68/50/80r", B=:afg, X=:c, I="+")
 	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
@@ -379,6 +380,9 @@ if (got_it)					# Otherwise go straight to end
 	# SPECTRUM1D
 	D = gmt("gmtmath -T0/10239/1 T 10240 DIV 360 MUL 400 MUL COSD");
 	spectrum1d(D, S=256, W=true, par=(GMT_FFT=:brenner), N=true, i=1);
+
+	# SPHTRIANGULATE
+	sphtriangulate(rand(10,3), I=0.1, R="0/1/0/1");		# One dataset per triangle????
 
 	# SURFACE
 	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
