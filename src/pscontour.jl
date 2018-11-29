@@ -111,19 +111,16 @@ function contour(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs.
 		cmd = add_opt(cmd, 'C', d, [:cont :contours :levels])
 	end
 
-	for sym in [:E :index]
-		if (haskey(d, sym))
-			if (isa(d[sym], Array{Int}))
-				cmd = string(cmd, " -E")
-				# Now need to find the free slot where to store the indices array
-				if (N_args == 0)		arg1 = d[sym]
-				elseif (N_args == 1)	arg2 = d[sym]
-				else					arg3 = d[sym]
-				end
-			else
-				cmd = string(cmd, " -E", arg2str(d[sym]))
+	if ((val = find_in_dict(d, [:E :index])[1]) !== nothing)
+		if (isa(val, Array{Int}))
+			cmd = string(cmd, " -E")
+			# Now need to find the free slot where to store the indices array
+			if (N_args == 0)      arg1 = val
+			elseif (N_args == 1)  arg2 = val
+			else                  arg3 = val
 			end
-			break
+		else
+			cmd = string(cmd, " -E", arg2str(val))
 		end
 	end
 

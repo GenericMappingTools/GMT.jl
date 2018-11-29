@@ -59,7 +59,7 @@ Parameters
     b|e|E|f|F|j|g|G|m|s|t Sets the output format, where b = BMP, e = EPS, E = EPS with PageSize command,
     f = PDF, F = multi-page PDF, j = JPEG, g = PNG, G = transparent PNG (untouched regions are
     transparent), m = PPM,  and t = TIFF [default is JPEG].
-    Alternatively, the format may be set with the *fmt* keyword, e.g. *fmt="png"*.
+    Alternatively, the format may be set with the *fmt* keyword, e.g. *fmt=:png*.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#t)
 - **W** : **world_file** : -- Str --
 
@@ -93,48 +93,41 @@ function psconvert(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'L', d, [:L :list_file])
 	cmd = add_opt(cmd, 'Q', d, [:Q :anti_aliasing])
 	cmd = add_opt(cmd, 'S', d, [:S :gs_command])
-	cmd = add_opt(cmd, 'T', d, [:T :format])
 	cmd = add_opt(cmd, 'Z', d, [:Z :del_input_ps])
 	cmd = parse_V_params(cmd, d)
 
 	fmt = ""
 	if (haskey(d, :fmt))
 		fmt = isa(d[:fmt], Symbol) ? string(d[:fmt]) : d[:fmt]
-	end
-
-	if (!occursin("-T", cmd) && !isempty(fmt) && fmt != "ps")	# Must convert the FMT into a -T opt
 		if (fmt == "pdf")      cmd = cmd * " -Tf"
 		elseif (fmt == "eps")  cmd = cmd * " -Te"
 		elseif (fmt == "png")  cmd = cmd * " -Tg"
 		elseif (fmt == "jpg")  cmd = cmd * " -Tj"
 		elseif (fmt == "tif")  cmd = cmd * " -Tt"
 		end
+	else
+		cmd = add_opt(cmd, 'T', d, [:T :format])
 	end
 
-	for sym in [:C :gs_option]
-		if (haskey(d, sym))
-			if (isa(d[sym], String))
-				cmd = cmd * " -C" * d[sym]
-			elseif (isa(d[sym], Array{Any})) 
-				for k = 1:length(d[sym])
-					cmd = cmd * " -C" * d[sym][k]
-				end
+	if ((val = find_in_dict(d, [:C :gs_option])[1]) !== nothing)
+		if (isa(val, String))
+			cmd = cmd * " -C" * val
+		elseif (isa(val, Array{Any})) 
+			for k = 1:length(val)
+				cmd = cmd * " -C" * val[k]
 			end
-			break
 		end
 	end
 
 	cmd = add_opt(cmd, 'W', d, [:W :world_file])
-	if (haskey(d, :kml))
-		cmd = cmd * " -W+k" * d[:kml]
-	end
+	if (haskey(d, :kml))  cmd = cmd * " -W+k" * d[:kml]  end
 
 	if (haskey(d, :in_memory))
-		cmd = cmd * " ="
 		if (!isempty_(arg1))
-			@warn("The IN_MEMORY option is imcompatible with passing an input file name.
-			      Dropping this one.")
+			@warn("The IN_MEMORY option is imcompatible with passing an input file name. Dropping this one.")
 			arg1 = []
+		else
+			cmd = cmd * " ="
 		end
 	end
 
@@ -146,9 +139,7 @@ function psconvert(cmd0::String="", arg1=[]; kwargs...)
 	if (!occursin("-Q", cmd))  cmd = cmd * " -Qt4 -Qg4"    end	# We promised to have these as default
 
 	is_struct_PS = false
-	if (isa(arg1, GMTps))
-		is_struct_PS = true
-	end
+	if (isa(arg1, GMTps))  is_struct_PS = true  end
 	if (is_struct_PS)  return gmt("psconvert " * cmd, arg1)
 	else               return gmt("psconvert " * cmd)
 	end

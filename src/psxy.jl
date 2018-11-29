@@ -40,7 +40,7 @@ Parameters
     Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating
     shading illumination.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#i)
-- **L** : **polygon** : -- Str --
+- **L** : **close** : -- Str --
 
     Force closed polygons. 
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#l)
@@ -181,7 +181,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		cmd = cmd * " -JZ6c"	# Default -JZ
 	end
 
-	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
+	cmd = add_opt(cmd, 'A', d, [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
 	cmd = add_opt(cmd, 'D', d, [:D :shift :offset])				# 'offset' may be needed in vec attribs
 	cmd = add_opt(cmd, 'F', d, [:F :conn :connection])
 
@@ -201,16 +201,18 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
 	cmd, arg1, arg2, N_args = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 
-	cmd = add_opt(cmd, 'G', d, [:G :fill])
-	opt_Gsymb = add_opt("", 'G', d, [:G :markerfacecolor :mc])	# Filling color for symbols
+	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
+	opt_Gsymb = add_opt_fill("", 'G', d, [:G :markerfacecolor :mc])		# Filling of symbols
+	cmd = add_opt(cmd, 'L', d, [:L :close],
+		  (left="+xl", right="+xr", bot="+yb", top="+yt", sym="+d", asym="+D", envelope="+b",pen="+p"))
+	if (occursin("-L", cmd) && !occursin("-G", cmd) && !occursin("+p", cmd))  cmd *= "+p0.5p"  end
 
 	opt_Wmarker = ""
 	if (haskey(d, :markeredgecolor))
-		opt_Wmarker = "0.5p," * arg2str(d[:markeredgecolor])	# 0.25p is so thin
+		opt_Wmarker = "0.5p," * arg2str(d[:markeredgecolor])		# 0.25p is so thin
 	end
 
 	cmd = add_opt(cmd, 'I', d, [:I :intens])
-	cmd = add_opt(cmd, 'L', d, [:L :polygon])
 	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 
 	opt_W = add_opt_pen(d, [:W :pen :line_attrib], "W")
@@ -223,18 +225,15 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		marca = get_marker_name(d, [:marker :shape], is3D)
 		if ((val = find_in_dict(d, [:markersize :ms :size])[1]) !== nothing)
 			if (marca == "")  marca = "c"  end		# If a marker name was not selected, defaults to circle
-			#ms = ""
 			if (isa(val, AbstractArray))
 				if (length(val) == size(arg1,1))
 					arg1 = hcat(arg1, val[:])
-					#ms = " "		# Just to defeat the empty test below
 				else
 					error("The size array must have the same number of elements rows in the data")
 				end
 			else
-				marca = marca * arg2str(val);	#ms = " "
+				marca = marca * arg2str(val);
 			end
-			#if (ms == "")  marca = marca * "7p"		end		# Default to 7p
 			opt_S = " -S" * marca
 		elseif (marca != "")			# User only selected a marker name but no size.
 			opt_S = " -S" * marca * "7p"

@@ -74,16 +74,13 @@ function makecpt(cmd0::String="", arg1=[]; kwargs...)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, " ", opt_i, opt_bi, opt_di)
-	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, [])
+	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
 
-	for sym in [:E :data_levels]
-		if (haskey(d, sym))
-			if (isempty_(arg1) && isempty_(data))
-				error("E option requires that a data table is provided as well")
-			else
-				cmd = cmd * " -E" * arg2str(d[sym])
-			end
-			break
+	if ((val = find_in_dict(d, [:E :data_levels])[1]) !== nothing)
+		if (isempty_(arg1) && isempty_(data))
+			error("E option requires that a data table is provided as well")
+		else
+			cmd = cmd * " -E" * arg2str(val)
 		end
 	end
 
@@ -100,20 +97,15 @@ function makecpt(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'W', d, [:W :wrap :categorical])
 	cmd = add_opt(cmd, 'Z', d, [:Z :continuous])
 
-	if (haskey(d, :cptname))
-		cmd = cmd * " > " * d[:cptname]
+	if (haskey(d, :cptname))  cmd = cmd * " > " * d[:cptname]  end
+	(haskey(d, :Vd)) && println(@sprintf("\tmakecpt %s", cmd))
+	if (isempty_(arg1))
 		C = gmt("makecpt " * cmd)
-		(haskey(d, :Vd)) && println(@sprintf("\tmakecpt %s", cmd))
 	else
-		(haskey(d, :Vd)) && println(@sprintf("\tmakecpt %s", cmd))
-		if (isempty_(arg1))
-			C = gmt("makecpt " * cmd)
-		else
-			C = gmt("makecpt " * cmd, arg1)
-		end
+		C = gmt("makecpt " * cmd, arg1)
 	end
 end
 
 # ---------------------------------------------------------------------------------------------------
 # Version to use with the -E option
-makecpt(arg1=[]; kw...) = makecpt("", arg1; kw...)
+makecpt(arg1; kw...) = makecpt("", arg1; kw...)
