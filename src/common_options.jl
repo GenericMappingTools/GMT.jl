@@ -771,6 +771,7 @@ function add_opt_fill(cmd::String, opt, d::Dict, symbs)
 	else
 		cmd *= " -" * opt * get_color(val)
 	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------

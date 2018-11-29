@@ -203,6 +203,10 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
 	opt_Gsymb = add_opt_fill("", 'G', d, [:G :markerfacecolor :mc])		# Filling of symbols
+	got_pattern = false		# To track a still existing bug in sessions management at GMT lib level
+	if (occursin(" -Gp", cmd) || occursin(" -GP", cmd) || occursin(" -Gp", opt_Gsymb) || occursin(" -GP", opt_Gsymb))
+		got_pattern = true
+	end
 	cmd = add_opt(cmd, 'L', d, [:L :close],
 		  (left="+xl", right="+xr", bot="+yb", top="+yt", sym="+d", asym="+D", envelope="+b",pen="+p"))
 	if (occursin("-L", cmd) && !occursin("-G", cmd) && !occursin("+p", cmd))  cmd *= "+p0.5p"  end
@@ -293,7 +297,9 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		cmd = [finish_PS(d, cmd, output, K, O)]
 	end
 
-    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, gmt_proggy, arg1, arg2)
+	r = finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, gmt_proggy, arg1, arg2)
+	if (got_pattern)  gmt("destroy")  end 	# Apparently patterns are screweing the session
+	return r
 end
 
 # ---------------------------------------------------------------------------------------------------
