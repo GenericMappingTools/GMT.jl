@@ -85,7 +85,8 @@ function histogram(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwarg
 
 	d = KW(kwargs)
 
-	cmd = add_opt("", 'I', d, [:I :inquire])	# If inquire, no plotting so do it and return
+	# If inquire, no plotting so do it and return
+	cmd = add_opt("", 'I', d, [:I :inquire])
 	if (cmd != "")
 		cmd = add_opt(cmd, 'W', d, [:W :bin :width])
 		(haskey(d, :Vd)) && println(@sprintf("\tpshistogram %s", cmd))
@@ -113,7 +114,7 @@ function histogram(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwarg
 	cmd = add_opt(cmd, 'A', d, [:A :horizontal])
 	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate])
 	cmd = add_opt(cmd, 'F', d, [:F :center])
-	cmd = add_opt(cmd, 'G', d, [:G :fill])
+	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
 	opt_L = opt_pen(d, 'L', [:L :pen])
 	cmd = add_opt(cmd, 'Q', d, [:Q :cumulative])
 	cmd = add_opt(cmd, 'S', d, [:S :stairs])

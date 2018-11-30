@@ -73,22 +73,22 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function text(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true, kwargs...)
+function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via G
 	N_args = isempty_(arg1) ? 0 : 1
 
 	length(kwargs) == 0 && return monolitic("pstext", cmd0, arg1)	# Speedy mode
 
-    d = KW(kwargs)
+	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", caller, O, " -JX12c/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:e :f :h :p :t :xy :JZ :UVXY :params])
 
-    cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
+	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, "", opt_bi, opt_di)
@@ -96,9 +96,10 @@ function text(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true,
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1, arg2)
 
 	cmd = add_opt(cmd, 'A', d, [:A :horizontal])
+	cmd = add_opt(cmd, 'C', d, [:C :clearance])
 	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate])
 	cmd = add_opt(cmd, 'F', d, [:F :text_attrib])
-    cmd = add_opt(cmd, 'G', d, [:G :fill])
+	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
 	cmd = add_opt(cmd, 'I', d, [:I :inquire])
 	cmd = add_opt(cmd, 'L', d, [:L :pen])
 	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
@@ -108,41 +109,31 @@ function text(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=true,
 
 	opt_W = ""
 	pen = build_pen(d)						# Either a full pen string or empty ("")
-	if (!isempty(pen))
+	if (pen != "")
 		opt_W = " -W" * pen
 	else
-		for sym in [:W :line_attrib]
-			if (haskey(d, sym))
-				if (isa(d[sym], String))
-					opt_W = " -W" * arg2str(d[sym])
-				elseif (isa(d[sym], Tuple))	# Like this it can hold the pen, not extended atts
-					opt_W = " -W" * parse_pen(d[sym])
-				else
-					error("Nonsense in W option")
-				end
-				break
+		if ((val = find_in_dict(d, [:W :line_attrib])[1]) !== nothing)
+			if (isa(val, String))
+				opt_W = " -W" * arg2str(val)
+			elseif (isa(val, Tuple))	# Like this it can hold the pen, not extended atts
+				opt_W = " -W" * parse_pen(val)
+			else
+				error("Nonsense in W option")
 			end
 		end
 	end
 
-	if (!isempty(opt_W)) 		# We have a rectangle request
-		cmd = finish_PS(d, cmd * opt_W, output, K, O)
-	else
-		cmd = finish_PS(d, cmd, output, K, O)
-	end
+	cmd = finish_PS(d, cmd * opt_W, output, K, O)
 
-    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pstext", arg1, arg2)
+	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pstext", arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------
-text!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
-    text(cmd0, arg1; caller=caller, K=K, O=O,  first=false, kw...)
+text!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
+    text(cmd0, arg1; K=K, O=O,  first=false, kw...)
 
-text(arg1=[]; caller=[], K=false, O=false, first=true, kw...) =
-    text("", arg1; caller=caller, K=K, O=O, first=first, kw...)
-
-text!(arg1=[]; caller=[],  K=true, O=true, first=false, kw...) =
-    text("", arg1; caller=caller, K=K, O=O, first=first, kw...)
+text(arg1; K=false, O=false, first=true, kw...) = text("", arg1; K=K, O=O, first=first, kw...)
+text!(arg1; K=true, O=true, first=false, kw...) = text("", arg1; K=K, O=O, first=first, kw...)
 
 pstext  = text			# Alias
 pstext! = text!			# Alias

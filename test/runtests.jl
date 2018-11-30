@@ -351,6 +351,9 @@ if (got_it)					# Otherwise go straight to end
 	# PSROSE
 	data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3;; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
 	rose(data, swap_xy=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=1, D=1, S=4)
+	rose!(data, swap_xy=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
+	rose!("",data, swap_xy=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
+	#rose(data, swap_xy=[], A=20, I=1, Vd=:cmd);	# Broken in GMT
 
 	# PSMASK
 	D = gmt("gmtmath -T-90/90/10 -N2/1 0");
@@ -372,6 +375,8 @@ if (got_it)					# Otherwise go straight to end
 	t=[0 7; 1 8; 8 3; 10 7];
 	t1=gmt("sample1d -I5k", t); t2 = gmt("mapproject -G+uk", t1); t3 = gmt("math ? -C2 10 DIV COS", t2);
 	wiggle(t3,R="-1/11/0/12", J="M8",B="af WSne", W="0.25p", Z="4c", G="+green", T="0.5p", A=1, Y="0.75i", S="8/1/2")
+	wiggle!(t3,R="-1/11/0/12", J="M8",Z="4c", A=1, Y="0.75i", S="8/1/2", Vd=:cmd)
+	wiggle!("",t3,R="-1/11/0/12", J="M8",Z="4c", A=1, Y="0.75i", S="8/1/2", Vd=:cmd)
 
 	# SAMPLE1D
 	d = [-5 74; 38 68; 42 73; 43 76; 44 73];
@@ -383,6 +388,9 @@ if (got_it)					# Otherwise go straight to end
 
 	# SPHTRIANGULATE
 	sphtriangulate(rand(10,3), I=0.1, R="0/1/0/1");		# One dataset per triangle????
+
+	# SPHINTERPOLATE
+	sphinterpolate(rand(10,3), I=0.1, R="0/1/0/1");
 
 	# SURFACE
 	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
