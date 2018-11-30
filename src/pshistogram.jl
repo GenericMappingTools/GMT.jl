@@ -90,9 +90,7 @@ function histogram(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwarg
 	if (cmd != "")
 		cmd = add_opt(cmd, 'W', d, [:W :bin :width])
 		(haskey(d, :Vd)) && println(@sprintf("\tpshistogram %s", cmd))
-		if (!isempty_(arg1))  return gmt("pshistogram " * cmd, arg1)
-		else                  return gmt("pshistogram " * cmd)
-		end
+		return gmt("pshistogram " * cmd, arg1)
 	end
 
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -121,9 +119,9 @@ function histogram(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwarg
 	cmd = add_opt(cmd, 'W', d, [:W :bin :width])
 	cmd = add_opt(cmd, 'Z', d, [:Z :kind])
 	if ((opt_L == "") && !occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-I", cmd))
-		cmd = cmd * " -G150" * " -L0.5p"	# If no -L, -G, -I or -C set these defaults
+		cmd *= " -G150" * " -L0.5p"		# If no -L, -G, -I or -C set these defaults
 	elseif (opt_L != "")
-		cmd = cmd * opt_L
+		cmd *= opt_L
 	end
 
 	if ((val = find_in_dict(d, [:N :normal])[1]) !== nothing)

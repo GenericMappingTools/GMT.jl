@@ -123,7 +123,7 @@ function gmt2kml(cmd0::String="", arg1=[]; kwargs...)
 				if (!isempty(lc))
 					cmd = cmd * "," * lc
 					ls = parse_pen_style(d)
-					if (!isempty(ls))		cmd = cmd * "," * ls	end
+					if (!isempty(ls))  cmd = cmd * "," * ls  end
 				end
 			end
 			break
@@ -132,11 +132,10 @@ function gmt2kml(cmd0::String="", arg1=[]; kwargs...)
 
     cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 
-	arg2 = []								# May be needed if GMTcpt type is sent in via C
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
-	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
+	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1)
 
-	return common_grd(d, cmd, got_fname, 1, "gmt2kml", arg1)		# Finish build cmd and run it
+	return common_grd(d, cmd, got_fname, 1, "gmt2kml", arg1, arg2)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

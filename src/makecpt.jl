@@ -99,11 +99,7 @@ function makecpt(cmd0::String="", arg1=[]; kwargs...)
 
 	if (haskey(d, :cptname))  cmd = cmd * " > " * d[:cptname]  end
 	(haskey(d, :Vd)) && println(@sprintf("\tmakecpt %s", cmd))
-	if (isempty_(arg1))
-		C = gmt("makecpt " * cmd)
-	else
-		C = gmt("makecpt " * cmd, arg1)
-	end
+	C = gmt("makecpt " * cmd, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

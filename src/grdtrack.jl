@@ -111,8 +111,6 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 		else
 			return common_grd(d, cmd, got_fname, 3, "grdtrack", tuple(arg1, grid_tuple...))
 		end
-	elseif (isempty_(arg2))
-		return common_grd(d, cmd, got_fname, 1, "grdtrack", arg1)		# Finish build cmd and run it
 	else
 		return common_grd(d, cmd, got_fname, 2, "grdtrack", arg1, arg2)
 	end
