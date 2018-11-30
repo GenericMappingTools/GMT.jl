@@ -328,8 +328,10 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 			else                   arg1.data = hcat(arg1.data, mz[:])
 			end
 		else
-			if (opt_i == "")  cmd = @sprintf("%s -i0-%d,%d", cmd, 1+is3D, 1+is3D)
-			else              @warn(warn2);		@goto noway
+			if (opt_i != "")  @warn(warn2);		@goto noway		end
+			cmd = @sprintf("%s -i0-%d,%d", cmd, 1+is3D, 1+is3D)
+			if ((val = find_in_dict(d, [:markersize :ms :size])[1]) !== nothing)
+				cmd = @sprintf("%s-%d", cmd, 2+is3D)	# Because we know that an extra col will be added later
 			end
 		end
 	elseif (n_col > 2+is3D)

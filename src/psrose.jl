@@ -12,59 +12,63 @@ Parameters
 - **A** : **sector** : -- Str or number --
 
     Gives the sector width in degrees for sector and rose diagram.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#a)
+    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#a)
 - $(GMT.opt_B)
-- **C** : **vectors** : -- Str --
+- **C** : **color** : -- Str or GMTcpt --
+
+    Give a CPT. The mid x-value for each bar is used to look-up the bar color.
+    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#c)
+- **E** : **vectors** : -- Str --
 
     Plot vectors showing the principal directions given in the mode_file file.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#c)
+    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#e)
 - **D** : **shift** : -- Bool or [] --
 
     Shift sectors so that they are centered on the bin interval (e.g., first sector is centered on 0 degrees).
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#d)
+    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#d)
 - **F** : **no_scale** : -- Bool or [] --
 
     Do not draw the scale length bar [Default plots scale in lower right corner].
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#f)
+    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#f)
 - **G** : **fill** : -- Number or Str --
 
     Selects shade, color or pattern for filling the sectors [Default is no fill].
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#g)
+    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#g)
 - **I** : **inquire** : -- Bool or [] --
 
     Inquire. Computes statistics needed to specify a useful -R. No plot is generated.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#i)
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#i)
 - **L** : **pen** : -- Number or Str --
 
     Draw bar outline using the specified pen thickness. [Default is no outline].
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#l)
+    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#l)
 - **M** : -- Bool or [] --
 
     Used with -C to modify vector parameters.
-    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#m)
+    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#m)
 - $(GMT.opt_P)
 - **Q** : **alpha** : -- Str or [] --
 
     Sets the confidence level used to determine if the mean resultant is significant.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#q)
+    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#q)
 - $(GMT.opt_R)
 - **S** : **radius** : -- Bool or [] --
 
     Specifies radius of plotted circle (append a unit from c|i|p).
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#s)
-- **T** : -- Bool or [] --
+    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#s)
+- **T** : **orientation** : -- Bool or [] --
 
     Specifies that the input data are orientation data (i.e., have a 180 degree ambiguity)
     instead of true 0-360 degree directions [Default].
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#t)
+    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#t)
 - **W** : **pen** : -- Str or tuple --
 
     Set pen attributes for sector outline or rose plot. [Default is no outline].
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#w)
+    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#w)
 - **Z** : **scale** : -- Str --
 
     Multiply the data radii by scale.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psrose.html#z)
+    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#z)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -83,9 +87,22 @@ function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	length(kwargs) == 0 && return monolitic("psrose", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("psrose", cmd0, arg1)
 
 	d = KW(kwargs)
+
+	# If inquire, no plotting so do it and return
+#=		Its currently broken in GMT
+	cmd = add_opt("", 'I', d, [:I :inquire])
+	if (cmd != "")
+		cmd = add_opt(cmd, 'A', d, [:A :sector])
+		(haskey(d, :Vd)) && println(@sprintf("\tpsrose %s", cmd))
+		if (!isempty_(arg1))  return gmt("psrose " * cmd, arg1)
+		else                  return gmt("psrose " * cmd)
+		end
+	end
+=#
+
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
@@ -99,17 +116,21 @@ function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
+	if (GMTver >= 6)		# This changed letter between 5 and 6
+		cmd = add_opt(cmd, 'E', d, [:E :vectors])
+		cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
+	else
+		cmd = add_opt(cmd, 'C', d, [:C :vectors])
+	end
 	cmd = add_opt(cmd, 'A', d, [:A :sector])
-	cmd = add_opt(cmd, 'C', d, [:C :vectors])
 	cmd = add_opt(cmd, 'D', d, [:D :shift])
 	cmd = add_opt(cmd, 'F', d, [:F :no_scale])
-	cmd = add_opt(cmd, 'G', d, [:G :fill])
-	cmd = add_opt(cmd, 'I', d, [:I :inquire])
+	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
 	cmd = cmd * opt_pen(d, 'L', [:L :pen])
 	cmd = add_opt(cmd, 'M', d, [:M])
 	cmd = add_opt(cmd, 'Q', d, [:Q :alpha])
 	cmd = add_opt(cmd, 'S', d, [:S :radius])
-	cmd = add_opt(cmd, 'T', d, [:T :radius])
+	cmd = add_opt(cmd, 'T', d, [:T :orientation])
 	cmd = cmd * opt_pen(d, 'W', [:W :pen])
 	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
 
