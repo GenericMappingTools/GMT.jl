@@ -106,11 +106,16 @@ function gmt(cmd::String, args...)
 		error("gmt: first argument must always be a string")
 	end
 	n_argin = length(args)
-	if (n_argin > 0 && isa(args[1], String))
-		tok, r = strtok(cmd)
-		if (isempty(r))							# User gave 'module' separately from 'options'
-			cmd = cmd * " " * args[1]			# Cat it with the progname and so pretend input followed the classic construct
-			args = args[2:end]
+	if (n_argin > 0)
+		if (isa(args[1], String))
+			tok, r = strtok(cmd)
+			if (r == "")				# User gave 'module' separately from 'options'
+				cmd *= " " * args[1]	# Cat with the progname and so pretend input followed the classic construct
+				args = args[2:end]
+				n_argin -= 1
+			end
+		end
+		if (n_argin > 0 && isempty_(args[end]))	# This allows code simplification (less IF branches) in modules
 			n_argin -= 1
 		end
 	end

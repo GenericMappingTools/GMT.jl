@@ -212,6 +212,10 @@ if (got_it)					# Otherwise go straight to end
 	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
 
+	# GREENSPLINE
+	#d = [0 6.44; 1820 8.61; 2542 5.24; 2889 5.73; 3460 3.81; 4586 4.05; 6020 2.95; 6841 2.57; 7232 3.37; 10903 3.84; 11098 2.86; 11922 1.22; 12530 1.09; 14065 2.36; 14937 2.24; 16244 2.05; 17632 2.23; 19002 0.42; 20860 0.87; 22471 1.26];
+	#greenspline(d, R="-2000/25000", I=100, S=:l, D=0, Vd=:cmd)
+
 	# IMSHOW
 	imshow(rand(128,128),show=false)
 	imshow(G, frame=:a, shade="+a45",show=false)
@@ -220,6 +224,9 @@ if (got_it)					# Otherwise go straight to end
 	# MAKECPT
 	cpt = makecpt(range="-1/1/0.1");
 	@assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
+	if (GMTver >= 6)
+		makecpt(rand(10,1), E="", C=:rainbow);
+	end
 
 	# MAPPROJECT
 	mapproject([-10 40], J=:u29, C=true, F=true);
@@ -337,6 +344,8 @@ if (got_it)					# Otherwise go straight to end
 	# PSCONTOUR
 	x,y,z=GMT.peaks();
 	contour([x[:] y[:] z[:]], cont=1, annot=2, frame="a")
+	contour!([x[:] y[:] z[:]], cont=1, Vd=:cmd)
+	contour!("", [x[:] y[:] z[:]], cont=1, Vd=:cmd)
 
 	# PSIMAGE
 	psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
@@ -347,13 +356,17 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSHISTOGRAM
 	histogram(randn(1000),W=0.1,center=true,fmt="ps",B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
+	histogram("", randn(1000),W=0.1,center=true,N=0, Vd=:cmd)
+	histogram!(randn(1000),W=0.1,center=true,N=0, Vd=:cmd)
 
 	# PSROSE
 	data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3;; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
 	rose(data, swap_xy=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=1, D=1, S=4)
 	rose!(data, swap_xy=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
 	rose!("",data, swap_xy=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
-	#rose(data, swap_xy=[], A=20, I=1, Vd=:cmd);	# Broken in GMT
+	if (GMTver >= 6)
+		rose(data, swap_xy=[], A=20, I=1, Vd=:cmd);		# Broken in GMT5`
+	end
 
 	# PSMASK
 	D = gmt("gmtmath -T-90/90/10 -N2/1 0");
@@ -363,6 +376,7 @@ if (got_it)					# Otherwise go straight to end
 	#D=solar(I="-7.93/37.079+d2016-02-04T10:01:00");
 	#@assert(D[1].text[end] == "\tDuration = 10:27")
 	solar(R="d", W=1, J="Q0/14c", B="a", T="dc")
+	solar!(R="d", W=1, J="Q0/14c", T="dc", Vd=:cmd)
 
 	# PSTERNARY
 	ternary([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", X=:c, B=:a, S="c0.1c");
@@ -370,6 +384,8 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSTEXT
 	text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps",showfig="lixo.ps")
+	text!(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",Vd=:cmd)
+	text!("", text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",Vd=:cmd)
 
 	# PSWIGGLE
 	t=[0 7; 1 8; 8 3; 10 7];
