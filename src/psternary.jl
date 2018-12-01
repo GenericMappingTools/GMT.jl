@@ -95,13 +95,8 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	opt_J = " -JX12c/10.4c"                     # Equilateral triangle
-	for sym in [:axis :aspect]
-		if (haskey(d, sym))
-			if (d[sym] == "equal")				# Need also a 'tight' option
-				opt_J = " -JX12c"
-			end
-			break
-		end
+	if ((val = find_in_dict(d, [:axis :aspect])[1]) !== nothing)
+		if (val == "equal")  opt_J = " -JX12c"  end
 	end
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", caller, O, opt_J)
 	cmd, opt_bi = parse_bi(cmd, d)

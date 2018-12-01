@@ -124,7 +124,6 @@ function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	end
 
 	cmd = finish_PS(d, cmd * opt_W, output, K, O)
-
 	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pstext", arg1, arg2)
 end
 

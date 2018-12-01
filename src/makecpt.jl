@@ -37,7 +37,7 @@ Full option list at [`makecpt`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.h
     Overrule background, foreground, and NaN colors specified in the master CPT with the values of
     the parameters COLOR_BACKGROUND, COLOR_FOREGROUND, and COLOR_NAN.
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#m)
-- **N** : **no_bg** -- Bool or [] --
+- **N** : **no_bg** : **nobg** : -- Bool or [] --
 
     Do not write out the background, foreground, and NaN-color fields.
 - **Q** : **log** : -- Bool or [] or Str --			Flags = [i|o]
@@ -67,7 +67,7 @@ Full option list at [`makecpt`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.h
 """
 function makecpt(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("makecpt", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("makecpt", cmd0, arg1)	# Monolithic mode
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :bi :di :i])
@@ -90,7 +90,7 @@ function makecpt(cmd0::String="", arg1=[]; kwargs...)
 	cmd = add_opt(cmd, 'G', d, [:G :truncate])
 	cmd = add_opt(cmd, 'I', d, [:I :inverse :reverse])
 	cmd = add_opt(cmd, 'M', d, [:M :overrule_bg])
-	cmd = add_opt(cmd, 'N', d, [:N :no_bg])
+	cmd = add_opt(cmd, 'N', d, [:N :no_bg :nobg])
 	cmd = add_opt(cmd, 'Q', d, [:Q :log])
 	cmd = add_opt(cmd, 'S', d, [:S :auto])
 	cmd = add_opt(cmd, 'T', d, [:T :range])

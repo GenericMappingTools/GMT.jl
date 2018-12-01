@@ -117,7 +117,8 @@ function histogram(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwarg
 	cmd = add_opt(cmd, 'Q', d, [:Q :cumulative])
 	cmd = add_opt(cmd, 'S', d, [:S :stairs])
 	cmd = add_opt(cmd, 'W', d, [:W :bin :width])
-	cmd = add_opt(cmd, 'Z', d, [:Z :kind])
+	cmd = add_opt(cmd, 'Z', d, [:Z :kind],
+		(counts="0", freq="1", log_count="2", log_freq="3", log10_count="4", log10_freq="5", weights="+w"))
 	if ((opt_L == "") && !occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-I", cmd))
 		cmd *= " -G150" * " -L0.5p"		# If no -L, -G, -I or -C set these defaults
 	elseif (opt_L != "")

@@ -26,7 +26,7 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
     Draws a plane at this z-level.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#n)
 - $(GMT.opt_P)
-- **Q** : **type** : -- Str or Int --
+- **Q** : **surftime** : **surf_type** : -- Str or Int --
 
     Specify **m** for mesh plot, **s* for surface, **i** for image.
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#q)
@@ -65,7 +65,7 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	cmd = add_opt(cmd, 'N', d, [:N :plane])
-	cmd = add_opt(cmd, 'Q', d, [:Q :type])
+	cmd = add_opt(cmd, 'Q', d, [:Q :surftype :surf_type])
 	cmd = add_opt(cmd, 'S', d, [:S :smooth])
 	cmd = add_opt(cmd, 'T', d, [:T :no_interp])
 	cmd = add_opt(cmd, 'W', d, [:W])
@@ -75,51 +75,43 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
 
-	if (isa(arg1, Array{<:Number}))
-		arg1 = mat2grid(arg1)
-	end
+	if (isa(arg1, Array{<:Number}))  arg1 = mat2grid(arg1)  end
 
 	N_used = got_fname == 0 ? 1 : 0				# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
 
-	for sym in [:I :shade :intensity :intensfile]
-		if (haskey(d, sym))
-			if (!isa(d[sym], GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
-				cmd = cmd * " -I" * arg2str(d[sym])
-			else
-				cmd, N_used = put_in_slot(cmd, d[sym], 'I', [arg1, arg2, arg3])
-				if (N_used == 1)     arg1 = d[sym]
-				elseif (N_used == 2) arg2 = d[sym]
-				elseif (N_used == 3) arg3 = d[sym]
-				end
+	if ((val = find_in_dict(d, [:I :shade :intensity :intensfile])[1]) !== nothing)
+		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
+			cmd = cmd * " -I" * arg2str(val)
+		else
+			cmd, N_used = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3])
+			if (N_used == 1)     arg1 = val
+			elseif (N_used == 2) arg2 = val
+			elseif (N_used == 3) arg3 = val
 			end
-			break
 		end
 	end
 
-	for sym in [:G :drapefile]
-		if (haskey(d, sym))
-			if (isa(d[sym], String))				# Uff, simple. Either a file name or a -A type modifier
-				cmd = cmd * " -G" * d[sym]
-			elseif (isa(d[sym], GMTgrid))			# A single drape grid (arg1-3 may be used already)
-				cmd, N_used = put_in_slot(cmd, d[sym], 'G', [arg1, arg2, arg3, arg4])
-				if (N_used == 1)     arg1 = d[sym]
-				elseif (N_used == 2) arg2 = d[sym]
-				elseif (N_used == 3) arg3 = d[sym]
-				elseif (N_used == 4) arg4 = d[sym]
-				end
-			elseif (isa(d[sym], Tuple) && length(d[sym]) == 3)
-				cmd, N_used = put_in_slot(cmd, d[sym][1], 'G', [arg1, arg2, arg3, arg4, arg5, arg6])
-				cmd = cmd * " -G -G"	# Because the above only set one -G and we need 3
-				if (N_used == 1)      arg1 = d[sym][1];	arg2 = d[sym][2];		arg3 = d[sym][3]
-				elseif (N_used == 2)  arg2 = d[sym][1];	arg3 = d[sym][2];		arg4 = d[sym][3]
-				elseif (N_used == 3)  arg3 = d[sym][1];	arg4 = d[sym][2];		arg5 = d[sym][3]
-				elseif (N_used == 4)  arg4 = d[sym][1];	arg5 = d[sym][2];		arg6 = d[sym][3]
-				end
-			else
-				error("Wrong way of setting the drape (G) option.")
+	if ((val = find_in_dict(d, [:G :drapefile])[1]) !== nothing)
+		if (isa(val, String))				# Uff, simple. Either a file name or a -A type modifier
+			cmd = cmd * " -G" * val
+		elseif (isa(val, GMTgrid))			# A single drape grid (arg1-3 may be used already)
+			cmd, N_used = put_in_slot(cmd, val, 'G', [arg1, arg2, arg3, arg4])
+			if (N_used == 1)     arg1 = val
+			elseif (N_used == 2) arg2 = val
+			elseif (N_used == 3) arg3 = val
+			elseif (N_used == 4) arg4 = val
 			end
-			break
+		elseif (isa(val, Tuple) && length(val) == 3)
+			cmd, N_used = put_in_slot(cmd, val[1], 'G', [arg1, arg2, arg3, arg4, arg5, arg6])
+			cmd = cmd * " -G -G"	# Because the above only set one -G and we need 3
+			if (N_used == 1)      arg1 = val[1];	arg2 = val[2];		arg3 = val[3]
+			elseif (N_used == 2)  arg2 = val[1];	arg3 = val[2];		arg4 = val[3]
+			elseif (N_used == 3)  arg3 = val[1];	arg4 = val[2];		arg5 = val[3]
+			elseif (N_used == 4)  arg4 = val[1];	arg5 = val[2];		arg6 = val[3]
+			end
+		else
+			error("Wrong way of setting the drape (G) option.")
 		end
 	end
 
