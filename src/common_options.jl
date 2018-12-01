@@ -264,8 +264,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_UVXY(cmd::String, d::Dict)
 	cmd = parse_V(cmd, d)
-	cmd = parse_UXY(cmd, d, [:X :x_off :x_offset], 'X')
-	cmd = parse_UXY(cmd, d, [:Y :y_off :y_offset], 'Y')
+	cmd = parse_UXY(cmd, d, [:X :x_off :off_x :x_offset], 'X')
+	cmd = parse_UXY(cmd, d, [:Y :y_off :off_y :y_offset], 'Y')
 	cmd = parse_UXY(cmd, d, [:U :stamp :time_stamp], 'U')
 	return cmd
 end
@@ -370,7 +370,7 @@ end
 function parse_swap_xy(cmd::String, d::Dict)
 	# Parse the global -: option. Return CMD same as input if no -: option in args
 	# But because we can't have a variable called ':' we use only the 'swap_xy' alias
-	return parse_helper(cmd, d, [:swap_xy], " -:")
+	return parse_helper(cmd, d, [:swap_xy :xy], " -:")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -427,6 +427,7 @@ function parse_common_opts(d, cmd, opts)
 		elseif (opt == :s)  cmd, = parse_p(cmd, d)
 		elseif (opt == :x)  cmd, = parse_x(cmd, d)
 		elseif (opt == :t)  cmd, = parse_t(cmd, d)
+		elseif (opt == :xy) cmd, = parse_swap_xy(cmd, d)
 		elseif (opt == :R)  cmd, = parse_R(cmd, d)
 		elseif (opt == :J)  cmd, = parse_J(cmd, d)
 		elseif (opt == :JZ) cmd, = parse_JZ(cmd, d)
@@ -675,7 +676,10 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 	for k = 1:length(key)			# Loop over the keys of option's tuple
 		if (haskey(d, key[k]))
 			if (d[key[k]] == "1")	# Means that only first char in value is retained. Used with units
-				cmd = cmd * arg2str(nt[k])[1]
+				t = arg2str(nt[k])
+				if (t != "")  cmd *= t[1]
+				else          cmd *= "1"	# "1" is itself the flag
+				end
 			elseif (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix
 				if (arg === nothing)
 					@warn(@sprintf("The key %s implies appending to input but the 'arg' variable is empty. Ignoring it.",key[k]))

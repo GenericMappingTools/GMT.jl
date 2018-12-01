@@ -38,9 +38,9 @@ Parameters
 
     Inquire. Computes statistics needed to specify a useful -R. No plot is generated.
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#i)
-- **L** : **pen** : -- Number or Str --
+- **L** : **labels** : -- Number or Str --
 
-    Draw bar outline using the specified pen thickness. [Default is no outline].
+    Specify labels for the 0, 90, 180, and 270 degree marks.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#l)
 - **M** : -- Bool or [] --
 
@@ -92,7 +92,6 @@ function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	d = KW(kwargs)
 
 	# If inquire, no plotting so do it and return
-#=		Its currently broken in GMT
 	cmd = add_opt("", 'I', d, [:I :inquire])
 	if (cmd != "")
 		cmd = add_opt(cmd, 'A', d, [:A :sector])
@@ -101,7 +100,6 @@ function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 		else                  return gmt("psrose " * cmd)
 		end
 	end
-=#
 
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
@@ -126,7 +124,7 @@ function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	cmd = add_opt(cmd, 'D', d, [:D :shift])
 	cmd = add_opt(cmd, 'F', d, [:F :no_scale])
 	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
-	cmd = cmd * opt_pen(d, 'L', [:L :pen])
+	cmd = cmd * opt_pen(d, 'L', [:L :labels])
 	cmd = add_opt(cmd, 'M', d, [:M])
 	cmd = add_opt(cmd, 'Q', d, [:Q :alpha])
 	cmd = add_opt(cmd, 'S', d, [:S :radius])
