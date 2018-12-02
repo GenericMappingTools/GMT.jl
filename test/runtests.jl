@@ -12,7 +12,80 @@ end
 
 if (got_it)					# Otherwise go straight to end
 
-	# write your own tests here
+	# -------------------- Test common_options ----------------------------------------
+	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4)))[1] == " -R1/2/3/4"
+	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
+	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
+	@test GMT.build_opt_R(:d) == " -Rd"
+	@test GMT.build_opt_J(:X5) == " -JX5"
+	@test GMT.build_opt_J([]) == " -J"
+	@test GMT.arg2str((1,2,3)) == "1/2/3"
+	d = Dict(:inc => (x=1.5, y=2.6, unit="meter"));
+	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5e/2.6e"
+	d = Dict(:inc => (x=1.5, y=2.6, unit="data"));
+	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5/2.6u"
+	d = Dict(:inc => (x=1.5, y=2.6, extend="data"));
+	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5+e/2.6+e"
+	d = Dict(:inc => (x=1.5, y=2.6, unit="nodes"));
+	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5+n/2.6+n"
+	@test GMT.parse_inc("",Dict(:inc => (2,4)),[:I :inc], "I") == " -I2/4"
+	@test GMT.parse_inc("",Dict(:inc => [2 4]),[:I :inc], "I") == " -I2/4"
+	@test GMT.parse_inc("",Dict(:inc => "2"),[:I :inc], "I") == " -I2"
+	@test GMT.parse_JZ("", Dict(:JZ => "5c"))[1] == " -JZ5c"
+	@test GMT.parse_JZ("", Dict(:Jz => "5c"))[1] == " -Jz5c"
+	@test GMT.parse_J("", Dict(:J => "X5"), false)[1] == " -JX5"
+	@test GMT.parse_J("", Dict(:a => ""), true, true)[1] == " -J"
+	@test GMT.parse_J("", Dict(:J => "X", :figsize => 10))[1] == " -JX10"
+	@test GMT.parse_J("",Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
+	r = GMT.parse_params("", Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")));
+	@test r == " --MAP_FRAME_WIDTH=0.2 --IO=lixo --OI=xoli"
+	@test GMT.parse_params("", Dict(:par => (:MAP_FRAME_WIDTH,0.2))) == " --MAP_FRAME_WIDTH=0.2"
+	@test GMT.parse_params("", Dict(:par => ("MAP_FRAME_WIDTH",0.2))) == " --MAP_FRAME_WIDTH=0.2"
+	@test GMT.opt_pen(Dict(:lw => 5, :lc => :red),'W', nothing) == " -W5,red"
+	@test GMT.opt_pen(Dict(:lw => 5),'W', nothing) == " -W5"
+	@test GMT.opt_pen(Dict(:a => (10,:red)),'W', [:a]) == " -W10,red"
+	@test GMT.get_color((1,2,3)) == "1/2/3"
+	@test GMT.get_color((0.1,0.2,0.3)) == "26/51/77"
+	@test GMT.get_color([1 2 3]) == "1/2/3"
+	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
+	@test GMT.parse_unit_unit("data") == "u"
+	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
+	@test GMT.add_opt((symb=:circle, size=7, unit=:point), (symb="1", size="", unit="1")) == "c7p"
+	r = GMT.add_opt_fill("", 'G', Dict(:G=>(inv_pattern=12,fg="white",bg=(1,2,3), dpi=10) ), [:G :fill]);
+	@test r == " -GP12+b1/2/3+fwhite+r10"
+	@test GMT.add_opt_fill("", 'G', Dict(:G=>:red), [:G :fill]) == " -Gred"
+	#d = Dict(:a=>1,:b=>1,:bi=>1,:bo=>1,:d=>1,:di=>1,:do=>1,:e=>1,:f=>1,:g=>1,:h=>1,:i=>1,:n=>1,:o=>1,:p=>1,:r=>1,:s=>1,:x=>1,:t=>1,:xy=>1);
+	#GMT.parse_common_opts(d,"", [:a :b :bi :bo :d :di :do :e :f :g :h :i :n :o :p :r :s :x :t :xy])
+
+	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
+	                  justify=:end,fill=:none,trim=0.1,endpoint=true,uv=6.6);
+	@test r == "2.2+e+je+r+g-+n0.25i+h1+t0.1+s+z6.6"
+
+	r = decorated(dist=("0.4i",0.25), symbol=:arcuate, pen=2, offset="10i", right=1);
+	@test r == " -Sf0.4i/0.25+r+S+o10i+p2"
+	r = decorated(dist=("0.8i","0.1i"), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, n_data=20, nudge=1, debug=1, dec2=1);
+	@test r == " -S~d0.8i/0.1i:+sa1+d+gblue+n1+w20+p0.5,green"
+	r = decorated(n_symbols=5, symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, quoted=1);
+	@test r == " -Sqdn5+p0.5,green"
+
+	r = decorated(dist=("0.4i",0.25), angle=7, clearance=(2,3), debug=1, delay=1, font=10, color=:red, justify=:TC, const_label=:Ai, pen=(0.5,:red), fill=:blue, nudge=(3,4), rounded=1, unit=:TT, min_rad=0.5, curved=1, n_data=20, prefix="Pre", suffices="a,b", label=(:map_dist,"d"), quoted=1)
+	@test r == " -Sqd0.4i/0.25+a7+d+c2/3+e+f10+gred+jTC+lAi+n3/4+o+r0.5+uTT+v+w20+=Pre+xa,b+LDd+p0.5,red"
+
+	@test GMT.get_color((1,2,3)) == "1/2/3"
+	@test GMT.get_color([1 2 3; 3 4 5; 6 7 8]) == "1/3/6,3/4/5,6/7/8"
+	@test GMT.get_color(:red) == "red"
+
+	@test GMT.font(("10p","Times", :red)) == "10p,Times,red"
+
+	@test GMT.build_pen(Dict(:lw => 1, :lc => (1,2,3))) == "1,1/2/3"
+	@test GMT.parse_pen((0.5, [1 2 3])) == "0.5,1/2/3"
+
+	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
+	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",));
+	@test GMT.parse_B("", d)[1] == " -Bsxa5f1 -Bpyclixo.txt -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10"
+	GMT.helper2_axes("lolo");
+	# ---------------------------------------------------------------------------------------------------
+
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
 	@assert(r[1].data == [5.0 5 5 5 5 5])
 	r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
@@ -262,7 +335,7 @@ if (got_it)					# Otherwise go straight to end
 	lines!(1:10,rand(10), W=0.25, Vd=:cmd)
 	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
 	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
-	D = histogram(randn(1000), I=:o, W=0.1, Vd=1);
+	D = histogram(randn(1000), I=:o, W=0.1);
 	lines(D, steps=(x=true,), close=(bot="",))
 
 	# SCATTER
@@ -329,6 +402,8 @@ if (got_it)					# Otherwise go straight to end
 	# PSCLIP
 	d = [0.2 0.2; 0.2 0.8; 0.8 0.8; 0.8 0.2; 0.2 0.2];
 	psclip(d, J="X3i", R="0/1/0/1", N=true);
+	psclip!(d, J="X3i", R="0/1/0/1", Vd=:cmd);
+	psclip!("", d, J="X3i", R="0/1/0/1", Vd=:cmd);
 
 	# PSCONVERT
 	gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
@@ -452,79 +527,6 @@ if (got_it)					# Otherwise go straight to end
 	GMT.fakedata(50,1);
 	GMT.contains("aiai", "ia");
 	GMT.meshgrid(1:5, 1:5, 1:5);
-
-	# -------------------- Test common_options ----------------------------------------
-	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4)))[1] == " -R1/2/3/4"
-	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
-	@test GMT.build_opt_R(:d) == " -Rd"
-	@test GMT.build_opt_J(:X5) == " -JX5"
-	@test GMT.build_opt_J([]) == " -J"
-	@test GMT.arg2str((1,2,3)) == "1/2/3"
-	d = Dict(:inc => (x=1.5, y=2.6, unit="meter"));
-	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5e/2.6e"
-	d = Dict(:inc => (x=1.5, y=2.6, unit="data"));
-	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5/2.6u"
-	d = Dict(:inc => (x=1.5, y=2.6, extend="data"));
-	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5+e/2.6+e"
-	d = Dict(:inc => (x=1.5, y=2.6, unit="nodes"));
-	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5+n/2.6+n"
-	@test GMT.parse_inc("",Dict(:inc => (2,4)),[:I :inc], "I") == " -I2/4"
-	@test GMT.parse_inc("",Dict(:inc => [2 4]),[:I :inc], "I") == " -I2/4"
-	@test GMT.parse_inc("",Dict(:inc => "2"),[:I :inc], "I") == " -I2"
-	@test GMT.parse_JZ("", Dict(:JZ => "5c"))[1] == " -JZ5c"
-	@test GMT.parse_JZ("", Dict(:Jz => "5c"))[1] == " -Jz5c"
-	@test GMT.parse_J("", Dict(:J => "X5"), false)[1] == " -JX5"
-	@test GMT.parse_J("", Dict(:a => ""), true, true)[1] == " -J"
-	@test GMT.parse_J("", Dict(:J => "X", :figsize => 10))[1] == " -JX10"
-	@test GMT.parse_J("",Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
-	r = GMT.parse_params("", Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")));
-	@test r == " --MAP_FRAME_WIDTH=0.2 --IO=lixo --OI=xoli"
-	@test GMT.parse_params("", Dict(:par => (:MAP_FRAME_WIDTH,0.2))) == " --MAP_FRAME_WIDTH=0.2"
-	@test GMT.parse_params("", Dict(:par => ("MAP_FRAME_WIDTH",0.2))) == " --MAP_FRAME_WIDTH=0.2"
-	@test GMT.opt_pen(Dict(:lw => 5, :lc => :red),'W', nothing) == " -W5,red"
-	@test GMT.opt_pen(Dict(:lw => 5),'W', nothing) == " -W5"
-	@test GMT.opt_pen(Dict(:a => (10,:red)),'W', [:a]) == " -W10,red"
-	@test GMT.get_color((1,2,3)) == "1/2/3"
-	@test GMT.get_color((0.1,0.2,0.3)) == "26/51/77"
-	@test GMT.get_color([1 2 3]) == "1/2/3"
-	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
-	@test GMT.parse_unit_unit("data") == "u"
-	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
-	@test GMT.add_opt((symb=:circle, size=7, unit=:point), (symb="1", size="", unit="1")) == "c7p"
-	r = GMT.add_opt_fill("", 'G', Dict(:G=>(inv_pattern=12,fg="white",bg=(1,2,3), dpi=10) ), [:G :fill]);
-	@test r == " -GP12+b1/2/3+fwhite+r10"
-	@test GMT.add_opt_fill("", 'G', Dict(:G=>:red), [:G :fill]) == " -Gred"
-	#d = Dict(:a=>1,:b=>1,:bi=>1,:bo=>1,:d=>1,:di=>1,:do=>1,:e=>1,:f=>1,:g=>1,:h=>1,:i=>1,:n=>1,:o=>1,:p=>1,:r=>1,:s=>1,:x=>1,:t=>1,:xy=>1);
-	#GMT.parse_common_opts(d,"", [:a :b :bi :bo :d :di :do :e :f :g :h :i :n :o :p :r :s :x :t :xy])
-
-	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
-	                  justify=:end,fill=:none,trim=0.1,endpoint=true,uv=6.6);
-	@test r == "2.2+e+je+r+g-+n0.25i+h1+t0.1+s+z6.6"
-
-	r = decorated(dist=("0.4i",0.25), symbol=:arcuate, pen=2, offset="10i", right=1);
-	@test r == " -Sf0.4i/0.25+r+S+o10i+p2"
-	r = decorated(dist=("0.8i","0.1i"), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, n_data=20, nudge=1, debug=1, dec2=1);
-	@test r == " -S~d0.8i/0.1i:+sa1+d+gblue+n1+w20+p0.5,green"
-	r = decorated(n_symbols=5, symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, quoted=1);
-	@test r == " -Sqdn5+p0.5,green"
-
-	r = decorated(dist=("0.4i",0.25), angle=7, clearance=(2,3), debug=1, delay=1, font=10, color=:red, justify=:TC, const_label=:Ai, pen=(0.5,:red), fill=:blue, nudge=(3,4), rounded=1, unit=:TT, min_rad=0.5, curved=1, n_data=20, prefix="Pre", suffices="a,b", label=(:map_dist,"d"), quoted=1)
-	@test r == " -Sqd0.4i/0.25+a7+d+c2/3+e+f10+gred+jTC+lAi+n3/4+o+r0.5+uTT+v+w20+=Pre+xa,b+LDd+p0.5,red"
-
-	@test GMT.get_color((1,2,3)) == "1/2/3"
-	@test GMT.get_color([1 2 3; 3 4 5; 6 7 8]) == "1/3/6,3/4/5,6/7/8"
-	@test GMT.get_color(:red) == "red"
-
-	@test GMT.font(("10p","Times", :red)) == "10p,Times,red"
-
-	@test GMT.build_pen(Dict(:lw => 1, :lc => (1,2,3))) == "1,1/2/3"
-	@test GMT.parse_pen((0.5, [1 2 3])) == "0.5,1/2/3"
-
-	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
-	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",));
-	@test GMT.parse_B("", d)[1] == " -Bsxa5f1 -Bpyclixo.txt -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10"
-	GMT.helper2_axes("lolo");
-	# ---------------------------------------------------------------------------------------------------
 
 	# EXAMPLES
 	plot(collect(1:10),rand(10), lw=1, lc="blue", marker="square",

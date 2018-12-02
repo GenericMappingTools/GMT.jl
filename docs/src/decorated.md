@@ -8,7 +8,7 @@ with symbols. This second category is still subdivided in two algorithms. They a
 
 ## Front lines
 
-- *dist=xx* or *:distance=xx*\
+- *dist=xx* or *distance=xx*\
    Distance gap between symbols and symbol size. If *xx* is a two elements
    array or tuple the first element is *gap* and second the *size*. However, *size* may be ommited
    (defaulting to 30% of the *gap*) and in this case *xx* may be a scalar or a string.
@@ -41,7 +41,7 @@ algorithms.
 
 Placement methods:
 
-- *dist=xx* or *:distance=xx*\
+- *dist=xx* or *distance=xx*\
    Give distances between labels on the plot in your preferred measurement unit.
   *xx* may be a scalar or a string. Use strings when appending the units c (cm), i (inch), or p (points).
 - *distmap=xx*\
@@ -93,7 +93,7 @@ lines. Choose among the controlling algorithms.
 
 Placement methods:
 
-- *dist=xx* or *:distance=xx*\
+- *dist=xx* or *distance=xx*\
    Give distances between labels on the plot in your preferred measurement unit.
   *xx* may be a scalar or a string. Use strings when appending the units c (cm), i (inch), or p (points).
 - *distmap=xx*\
