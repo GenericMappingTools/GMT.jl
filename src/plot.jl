@@ -100,12 +100,11 @@ plot!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
 
 # ------------------------------------------------------------------------------------------------------
 function plot(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = hcat(arg1, arg2)
+	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
 	psxy("", arg; caller="plot",  K=K, O=O, first=first, kw...)
 end
 function plot!(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = hcat(arg1, arg2)
-	psxy("", arg; caller="plot",  K=true, O=true, first=false, kw...)
+	psxy("", cat_2_arg2(arg1, arg2); caller="plot",  K=true, O=true, first=false, kw...)
 end
 # ------------------------------------------------------------------------------------------------------
 

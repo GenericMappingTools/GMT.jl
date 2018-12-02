@@ -113,6 +113,9 @@ function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	if (isa(arg1, Array{GMT.GMTdataset,1}))		# TODO. MUST DEBUG TO SEE WHY I HAVE TO DO THIS
+		arg1 = arg1[1].data
+	end
 
 	if (GMTver >= 6)		# This changed letter between 5 and 6
 		cmd = add_opt(cmd, 'E', d, [:E :vectors])

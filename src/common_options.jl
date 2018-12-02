@@ -84,36 +84,42 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 			break
 		end
 	end
-	if (!map && !isempty(opt_J))
+	if (!map && opt_J != "")
 		return cmd * opt_J, opt_J
 	end
 
-	if (O && isempty(opt_J))  opt_J = " -J"  end
+	if (O && opt_J == "")  opt_J = " -J"  end
 
-	if (!O && !isempty(opt_J))
+	if (!O)
+		if (opt_J == "")  opt_J = " -JX"  end
 		# If only the projection but no size, try to get it from the kwargs.
 		if (haskey(d, :figsize))
 			s = arg2str(d[:figsize])
 			if (haskey(d, :units))  s *= d[:units][1]  end
-			if (isdigit(opt_J[end]))  opt_J = opt_J * "/" * s
-			else                      opt_J = opt_J * s
+			if (isdigit(opt_J[end]))  opt_J *= "/" * s
+			else                      opt_J *= s
 			end
 		elseif (haskey(d, :figscale))
-			opt_J = opt_J * string(d[:figscale])
+			opt_J *= string(d[:figscale])
 		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
 			if !(length(opt_J) >= 6 && isnumeric(opt_J[6]))
-				opt_J = opt_J * def_fig_size[1:3]		# If no size, default to 12 centimeters
+				opt_J *= def_fig_size[1:3]		# If no size, default to 12 centimeters
 			end
 		end
 	end
-	cmd = cmd * opt_J
+	cmd *= opt_J
 	return cmd, opt_J
 end
 
 function build_opt_J(Val)
 	if (isa(Val, String) || isa(Val, Symbol))
-		return " -J" * string(Val)
+		s = string(Val)
+		if (!isletter(s[1])) error("This (" * s * ") is a bad 'proj' argument. Must start with a char code.") end
+		return " -J" * s
 	elseif (isa(Val, Number))
+		if (!(typeof(Val) <: Int) || Val < 2000)
+			error("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (" * string(Val) * ") is clearly an invalid EPSG")
+		end
 		return string(" -JX", string(Val))
 	elseif (isempty(Val))
 		return " -J"
@@ -131,6 +137,8 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 		if (haskey(d, symb))
 			if (d[symb] == :none || d[symb] == "none")		# User explicitly said NO AXES
 				return cmd * " -B0", " -B0"
+			elseif (d[symb] == :same || d[symb] == "same")	# User explicitly said "Same as previous -B"
+				return cmd * " -B", " -B"
 			end
 			if (isa(d[symb], NamedTuple)) opt_B = axis(d[symb]);	extra_parse = false
 			else                          opt_B = string(d[symb])
@@ -1376,7 +1384,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi=
 		a data array via keyword args were provided or numeric input. Unknown effect of this.")
 	end
 
-	if (!isempty(fname))		data_kw = fname		end
+	if (fname != "")	data_kw = fname		end
 
 	if (isa(data_kw, String))
 		if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option 

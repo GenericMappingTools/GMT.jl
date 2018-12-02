@@ -19,6 +19,10 @@ Parameters
 
     Sets color or shade for vector interiors [Default is no fill].
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#g)
+- **I** : **inc** : -- Sytr or Number --	`Flags=[x]dx[/dy]`
+
+    Only plot vectors at nodes every x_inc, y_inc apart (must be multiples of original grid spacing).
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#i)
 - **N** : **no_clip** : -- Bool or [] --
 
     Do NOT clip symbols that fall outside map border 
@@ -29,7 +33,7 @@ Parameters
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#q)
 - $(GMT.opt_P)
 - $(GMT.opt_R)
-- **S** : **scale** : -- Str or Number --		Flags = [i|l]scale[unit]
+- **S** : **scale** : -- Str or Number --		`Flags = [i|l]scale[unit]``
 
     Sets scale for vector plot length in data units per plot distance measurement unit [1].
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#s)

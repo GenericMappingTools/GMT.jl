@@ -64,11 +64,7 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 		end
 	end
 
-	if (isempty_(arg2))
-		return common_grd(d, cmd, got_fname, 1, "grdtrend", arg1)		# Finish build cmd and run it
-	else
-		return common_grd(d, cmd, got_fname, 2, "grdtrend", arg1, arg2)
-	end
+	return common_grd(d, cmd, got_fname, 2, "grdtrend", arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -24,7 +24,7 @@ Parameters
 
     Offsets the text from the projected (x,y) point by dx,dy [0/0].
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#d)
-- **F** : **text_attrib** : -- Str or number --
+- **F** : **text** : **text_attrib** : -- Str or number --
 
     Specify up to three text attributes (font, angle, and justification).
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#f)
@@ -98,7 +98,7 @@ function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	cmd = add_opt(cmd, 'A', d, [:A :horizontal])
 	cmd = add_opt(cmd, 'C', d, [:C :clearance])
 	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate])
-	cmd = add_opt(cmd, 'F', d, [:F :text_attrib])
+	cmd = add_opt(cmd, 'F', d, [:F :text :text_attrib])
 	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
 	cmd = add_opt(cmd, 'I', d, [:I :inquire])
 	cmd = add_opt(cmd, 'L', d, [:L :pen])
