@@ -34,8 +34,8 @@ Parameters
    syntax). See [Setting color](@ref) for extend color selection (including colormap generation).
 
 - **W** or *pen=pen*\
-   Set pen attributes for lines or the outline of symbols [Defaults: width = default, color = black,
-   style = solid]. See [Pen attributes](@ref)
+   Set pen attributes for lines or the outline of symbols (except for the *decorated* lines that have their own
+   options to do it) [Defaults: width = default, color = black, style = solid]. See [Pen attributes](@ref)
 
 - **decorated**\
    For all types of line decorations: symbols [Decorated lines](@ref), fronts [Front lines](@ref),

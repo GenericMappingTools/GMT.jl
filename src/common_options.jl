@@ -8,8 +8,9 @@ function find_in_dict(d::Dict, symbs, del=false)
 	# See if D contains any of the symbols in SYMBS. If yes, return corresponding value
 	for symb in symbs
 		if (haskey(d, symb))
+			val = d[symb]
 			if (del) delete!(d, symb) end
-			return d[symb], symb
+			return val, symb
 		end
 	end
 	return nothing, 0
@@ -77,12 +78,8 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 	# Default to 14c if no size is provided.
 	# If MAP == false, do not try to append a fig size
 	opt_J = ""
-	for symb in [:J :proj]
-		if (haskey(d, symb))
-			opt_J = build_opt_J(d[symb])
-			if (del) delete!(d, symb) end
-			break
-		end
+	if ((val = find_in_dict(d, [:J :proj], del)[1]) !== nothing)
+		opt_J = build_opt_J(val)
 	end
 	if (!map && opt_J != "")
 		return cmd * opt_J, opt_J
@@ -133,18 +130,14 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	#opt_B = ""					# The problem seems to be with the tests at the end of psxy/check_caller()
 	# These three are aliases
 	extra_parse = true
-	for symb in [:B :frame :axis :axes]
-		if (haskey(d, symb))
-			if (d[symb] == :none || d[symb] == "none")		# User explicitly said NO AXES
-				return cmd * " -B0", " -B0"
-			elseif (d[symb] == :same || d[symb] == "same")	# User explicitly said "Same as previous -B"
-				return cmd * " -B", " -B"
-			end
-			if (isa(d[symb], NamedTuple)) opt_B = axis(d[symb]);	extra_parse = false
-			else                          opt_B = string(d[symb])
-			end
-			if (del) delete!(d, symb) end
-			break
+	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
+		if (val == :none || val == "none")		# User explicitly said NO AXES
+			return cmd * " -B0", " -B0"
+		elseif (val == :same || val == "same")	# User explicitly said "Same as previous -B"
+			return cmd * " -B", " -B"
+		end
+		if (isa(val, NamedTuple)) opt_B = axis(val);	extra_parse = false
+		else                      opt_B = string(val)
 		end
 	end
 
@@ -239,11 +232,8 @@ end
 function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)
 	# Parse the global -U, -X, -Y options. Return CMD same as input if no option  OPT in args
 	# ALIASES: [:X :x_off :x_offset] (same for Y) or [:U :time_stamp :stamp]
-	for symb in aliases
-		if (haskey(d, symb))
-			cmd = string(cmd, " -", opt, d[symb])
-			break
-		end
+	if ((val = find_in_dict(d, aliases)[1]) !== nothing)
+		cmd = string(cmd, " -", opt, val)
 	end
 	return cmd
 end
@@ -251,12 +241,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_V(cmd::String, d::Dict)
 	# Parse the global -V option. Return CMD same as input if no -V option in args
-	for symb in [:V :verbose]
-		if (haskey(d, symb))
-			if (isa(d[symb], Bool) && d[symb]) cmd = cmd * " -V"
-			else                               cmd = cmd * " -V" * arg2str(d[symb])
-			end
-			break
+	if ((val = find_in_dict(d, [:V :verbose])[1]) !== nothing)
+		if (isa(val, Bool) && val) cmd = cmd * " -V"
+		else                       cmd = cmd * " -V" * arg2str(val)
 		end
 	end
 	return cmd
@@ -403,12 +390,9 @@ end
 function parse_helper(cmd::String, d::Dict, symbs, opt::String)
 	# Helper function to the parse_?() global options. Isolate in a fun to not repeat over and over
 	opt_val = ""
-	for sym in symbs
-		if (haskey(d, sym))
-			opt_val = opt * arg2str(d[sym])
-			cmd *= opt_val
-			break
-		end
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		opt_val = opt * arg2str(val)
+		cmd *= opt_val
 	end
 	return cmd, opt_val
 end
@@ -451,15 +435,14 @@ end
 function parse_inc(cmd::String, d::Dict, symbs, opt, del=false)
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or 
-	for symb in symbs
-		if (!haskey(d, symb))	continue	end
-		if (isa(d[symb], NamedTuple))
-			fn = fieldnames(typeof(d[symb]))
+	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
+		if (isa(val, NamedTuple))
+			fn = fieldnames(typeof(val))
 			x = "";	y = "";	u = "";	e = false
 			for k = 1:length(fn)
-				if     (fn[k] == :x)     x  = string(d[symb][k])
-				elseif (fn[k] == :y)     y  = string(d[symb][k])
-				elseif (fn[k] == :unit)  u  = string(d[symb][k])
+				if     (fn[k] == :x)     x  = string(val[k])
+				elseif (fn[k] == :y)     y  = string(val[k])
+				elseif (fn[k] == :unit)  u  = string(val[k])
 				elseif (fn[k] == :extend) e = true
 				end
 			end
@@ -473,26 +456,22 @@ function parse_inc(cmd::String, d::Dict, symbs, opt, del=false)
 					cmd = cmd * "e";	u = "e"
 				elseif (u == "M" || u == "mile")
 					cmd = cmd * "M";	u = "M"
-				elseif (u == "nodes")		# 
+				elseif (u == "nodes")
 					cmd = cmd * "+n";	u = "+n"
-				elseif (u == "data")		# For the `scatter` modules
+				elseif (u == "data")			# For the `scatter` modules
 					u = "u";
 				end
 			end
-			if (e)	cmd = cmd * "+e"	end
+			if (e)  cmd *= "+e"  end
 			if (y != "")
 				cmd = string(cmd, "/", y, u)
-				if (e)	cmd = cmd * "+e"	end		# Should never have this and u != ""
+				if (e)  cmd *= "+e"  end		# Should never have this and u != ""
 			end
 		else
-			if (opt != "")
-				cmd = string(cmd, " -", opt, arg2str(d[symb]))
-			else
-				cmd = string(cmd, arg2str(d[symb]))
+			if (opt != "")  cmd = string(cmd, " -", opt, arg2str(val))
+			else            cmd = string(cmd, arg2str(val))
 			end
 		end
-		if (del) delete!(d, symb) end
-		break
 	end
 	return cmd
 end
@@ -516,6 +495,30 @@ function parse_params(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function add_opt_pen(d::Dict, symbs, opt="", del::Bool=false)
+	# Build a pen option. Input can be either a full hard core string or spread in lw, lc, lw, etc or a tuple
+	if (opt != "")  opt = " -" * opt  end 	# Will become -W<pen>, for example
+	out = ""
+	pen = build_pen(d, del)					# Either a full pen string or empty ("") (Seeks for lw, lc, etc)
+	if (pen != "")
+		out = opt * pen
+	else
+		if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
+			if (isa(val, Tuple))			# Like this it can hold the pen, not extended atts
+				out = opt * parse_pen(val)
+			else
+				out = opt * arg2str(val)
+			end
+		end
+	end
+	o = add_opt("", "", d, [:cline])		# Some -W take extra options to indicate that color comes from CPT
+	if (o != "")  out *= "+cl"  end
+	o = add_opt("", "", d, [:csymbol :ctext])
+	if (o != "")  out *= "+cf"  end
+	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
 function opt_pen(d::Dict, opt::Char, symbs)
 	# Create an option string of the type -Wpen
 	out = ""
@@ -523,18 +526,13 @@ function opt_pen(d::Dict, opt::Char, symbs)
 	if (!isempty(pen))
 		out = string(" -", opt, pen)
 	else
-		for sym in symbs
-			if (haskey(d, sym))
-				if (isa(d[sym], String))
-					out = string(" -", opt, arg2str(d[sym]))
-				elseif (isa(d[sym], Number))
-					out = string(" -", opt, d[sym])
-				elseif (isa(d[sym], Tuple))	# Like this it can hold the pen, not extended atts
-					out = string(" -", opt, parse_pen(d[sym]))
-				else
-					error(string("Nonsense in ", opt, " option"))
-				end
-				break
+		if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+			if (isa(val, String) || isa(val, Number))
+				out = string(" -", opt, val)
+			elseif (isa(val, Tuple))	# Like this it can hold the pen, not extended atts
+				out = string(" -", opt, parse_pen(val))
+			else
+				error(string("Nonsense in ", opt, " option"))
 			end
 		end
 	end
@@ -548,7 +546,7 @@ function parse_pen(pen::Tuple)
 	if (len == 0) return "0.25p" end 	# just the default pen
 	s = arg2str(pen[1])					# First arg is different because there is no leading ','
 	if (length(pen) > 1)
-		s = s * ',' * get_color(pen[2])
+		s *= ',' * get_color(pen[2])
 		if (length(pen) > 2)  s *= ',' * arg2str(pen[3])  end
 	end
 	return s
@@ -556,15 +554,11 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_pen_color(d::Dict, symbs=nothing, del::Bool=false)
-	# Need this a separate fun because it's used from modules
+	# Need this as a separate fun because it's used from modules
 	lc = ""
 	if (symbs === nothing)  symbs = [:lc :linecolor]  end
-	for symb in symbs
-		if (haskey(d, symb))
-			lc = get_color(d[symb])
-			if (del)  delete!(d, symb)  end
-			break
-		end
+	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
+		lc = get_color(val)
 	end
 	return lc
 end
@@ -656,16 +650,12 @@ end
 function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false, arg=nothing)
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == true we remove the found key.
-	for symb in symbs
-		if (haskey(d, symb))
-			if (isa(d[symb], NamedTuple))  args = add_opt(d[symb], mapa, arg)
-			else                           args = arg2str(d[symb])
-			end
-			if (opt != "")  cmd = string(cmd, " -", opt, args)
-			else            cmd = string(cmd, args)
-			end
-			if (del)  delete!(d, symb)  end
-			break
+	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
+		if (isa(val, NamedTuple))  args = add_opt(val, mapa, arg)
+		else                       args = arg2str(val)
+		end
+		if (opt != "")  cmd = string(cmd, " -", opt, args)
+		else            cmd = string(cmd, args)
 		end
 	end
 	return cmd
@@ -716,49 +706,18 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=[], 
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	# N_args only applyies to when a GMTcpt was transmitted. Than it's either 0, case in which
 	# the cpt is put in arg1, or 1 and the cpt goes to arg2.
-	for sym in symbs
-		if (haskey(d, sym))
-			if (isa(d[sym], GMT.GMTcpt))
-				cmd = string(cmd, " -", opt)
-				if     (N_args == 0)  arg1 = d[sym];	N_args += 1
-				elseif (N_args == 1)  arg2 = d[sym];	N_args += 1
-				else   error(string("Can't send the CPT data via ", opt, " and input array"))
-				end
-			else
-				cmd = string(cmd, " -", opt, get_color(d[sym]))
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		if (isa(val, GMT.GMTcpt))
+			cmd = string(cmd, " -", opt)
+			if     (N_args == 0)  arg1 = val;	N_args += 1
+			elseif (N_args == 1)  arg2 = val;	N_args += 1
+			else   error(string("Can't send the CPT data via ", opt, " and input array"))
 			end
-			break
+		else
+			cmd = string(cmd, " -", opt, get_color(val))
 		end
 	end
 	return cmd, arg1, arg2, N_args
-end
-
-# ---------------------------------------------------------------------------------------------------
-function add_opt_pen(d::Dict, symbs, opt="", del::Bool=false)
-	# Build a pen option. Input can be either a full hard core string or spread in lw, lc, lw, etc or a tuple
-	if (opt != "")  opt = " -" * opt  end 	# Will become -W<pen>, for example
-	out = ""
-	pen = build_pen(d, del)					# Either a full pen string or empty ("") (Seeks for lw, lc, etc)
-	if (!isempty(pen))
-		out = opt * pen
-	else
-		for symb in symbs
-			if (haskey(d, symb))
-				if (isa(d[symb], Tuple))	# Like this it can hold the pen, not extended atts
-					out = opt * parse_pen(d[symb])
-				else
-					out = opt * arg2str(d[symb])
-				end
-				if (del)  delete!(d, symb)  end
-				break
-			end
-		end
-	end
-	o = add_opt("", "", d, [:cline])		# Some -W take extra options to indicate that color comes from CPT
-	if (o != "")  out = out * "+cl"  end
-	o = add_opt("", "", d, [:csymbol :ctext])
-	if (o != "")  out = out * "+cf"  end
-	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1285,49 +1244,42 @@ end
 function helper_decorated(d::Dict)
 	# Helper function to deal with the gap and symbol size parameters
 	cmd = "";	optD = ""
-	for symb in [:dist :distance :distmap :number]
-		if (haskey(d, symb))
-			# The String assumes all is already encoded. Number, Array only accept numerics
-			# Tuple accepts numerics and/or strings.
-			if (isa(d[symb], String) || isa(d[symb], Number) || isa(d[symb], Symbol))
-				cmd = string(d[symb])
-			elseif (isa(d[symb], Array) || isa(d[symb], Tuple))
-				if (symb == :number)  cmd = "-" * string(d[symb][1], '/', d[symb][2])
-				else                  cmd = string(d[symb][1], '/', d[symb][2])
-				end
+	val, symb = find_in_dict(d, [:dist :distance :distmap :number])
+	if (val !== nothing)
+		# The String assumes all is already encoded. Number, Array only accept numerics
+		# Tuple accepts numerics and/or strings.
+		if (isa(val, String) || isa(val, Number) || isa(val, Symbol))
+			cmd = string(val)
+		elseif (isa(val, Array) || isa(val, Tuple))
+			if (symb == :number)  cmd = "-" * string(val[1], '/', val[2])
+			else                  cmd = string(val[1], '/', val[2])
+			end
+		else
+			error("DECORATED: the 'dist' (or 'distance') parameter is mandatory and must be either a string or a named tuple.")
+		end
+		if (symb == :distmap)  optD = "D"  end		# Here we know that we are dealing with a -S~ for sure.
+	end
+	if (cmd == "")
+		if ((val = find_in_dict(d, [:lines :Lines])[1]) !== nothing)
+			if (!isa(val, Array) && size(val,2) !=4)
+				@warn("DECORATED: lines option must me an Array Mx4. Ignoring this.")
 			else
-				error("DECORATED: the 'dist' (or 'distance') parameter is mandatory and must be either a string or a named tuple.")
-			end
-			if (symb == :distmap)	# Here we know that we are dealing with a -S~ for sure.
-				optD = "D"
-			end
-			break
-		end
-	end
-	if (cmd == "")
-		for symb in [:lines :Lines]
-			if (haskey(d, symb))
-				if (!isa(d[symb], Array) && size(d[symb],2) !=4)
-					@warn("DECORATED: lines option must me an Array Mx4")
-					break
+				opt = string(val)
+				s = string("+",opt[1], val[1,1],'/',val[1,2],'/',val[1,3],'/',val[1,4])
+				for k = 2:size(val,1)
+					s = string(s,',',val[k,1],'/',val[k,2],'/',val[k,3],'/',val[k,4])
 				end
-				opt = string(d[symb])
-				s = string("+",opt[1], d[sym][1,1],'/',d[sym][1,2],'/',d[sym][1,3],'/',d[sym][1,4])
-				for k=2:size(d[symb],1)
-					s = string(s,',',d[sym][k,1],'/',d[sym][k,2],'/',d[sym][k,3],'/',d[sym][k,4])
-				end
-				break
 			end
 		end
 	end
 	if (cmd == "")
-		for symb in [:n_labels :n_symbols]
-			if (haskey(d, symb))  cmd = string("n", d[symb]);	break	end
+		if ((val = find_in_dict(d, [:n_labels :n_symbols])[1]) !== nothing)
+			cmd = string("n", val);
 		end
 	end
 	if (cmd == "")
-		for symb in [:N_labels :N_symbols]
-			if (haskey(d, symb))  cmd = string("N", d[symb]);	break	end
+		if ((val = find_in_dict(d, [:N_labels :N_symbols])[1]) !== nothing)
+			cmd = string("N", val);
 		end
 	end
 	if (cmd == "")
