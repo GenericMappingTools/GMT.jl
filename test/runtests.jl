@@ -249,8 +249,8 @@ if (got_it)					# Otherwise go straight to end
 	plot3d!(1:10, rand(10), rand(10), Vd=:cmd)
 
 	# ARROWS
-	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, B=:a, pen="6p")
-	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,stop=:tail,shape=0.5), J=14, B=:a, pen="6p")
+	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,stop=1,shape=0.5,fill=:red), J=:X14, B=:a, pen="6p")
+	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,stop=:tail,shape=0.5), J=:X14, B=:a, pen="6p")
 	arrows!([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,shape=0.5), pen="6p", Vd=:cmd)
 	arrows!("", [0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,shape=0.5), pen="6p", Vd=:cmd)
 
@@ -457,7 +457,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4)))[1] == " -R1/2/3/4"
 	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
 	@test GMT.build_opt_R(:d) == " -Rd"
-	@test GMT.build_opt_J(5) == " -JX5"
+	@test GMT.build_opt_J(:X5) == " -JX5"
 	@test GMT.build_opt_J([]) == " -J"
 	@test GMT.arg2str((1,2,3)) == "1/2/3"
 	d = Dict(:inc => (x=1.5, y=2.6, unit="meter"));

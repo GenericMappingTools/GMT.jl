@@ -10,7 +10,8 @@ or separated on a per axes basis by using specific *xaxis*, *yaxis* and *zaxis* 
 as the generic *axis* option. The *xaxis2* and *yaxis2* apply when dealing with secondary axes.
 
 Before the rest, note that several modules have axes default settings (`scatter`, `bar`, etc...) but if
-no axes is desired, just use *axis=:none*.
+no axes is desired, just use *axis=:none*. Also useful is the *axis=:same* to repeat the previously set
+(from another call) axis specification.
 
 By default, all 4 map boundaries (or plot axes) are plotted and annotated. To customize, use the *axes*
 keyword that takes as value a tuple with a combination of words. Axes are named *left*, *bottom*, *right*,
@@ -287,11 +288,10 @@ basemap(region="-30/30/-20/20", proj="X12/8",
    [Default is WGS-84]. Several GMT parameters can affect the projection: *PROJ\_ELLIPSOID*, *GMT\_INTERPOLANT*,
    *PROJ\_SCALE\_FACTOR*, and *PROJ\_LENGTH\_UNIT*; see the gmt.conf man page for details.
 
-   For linear (Cartesian) projections use, *e.g.*, *proj="X12"* to mean a figure 12 cm width. As a special
-   case one can use *proj=12* to also select a 12 cm fig. When using only *proj=:X* we can specify the figure
-   dimensions with *figsize=(width, height)* (both numeric or string). We can also specify the scale
-   separately: *e.g.* *proj=:x*, *figscale=1:xxxx*. When no size is provided for linear projections a default
-   value of 12 cm is assumed.
+   For linear (Cartesian) projections use, *e.g.*, *proj="X12"* to mean a figure 12 cm width. Alternatively,
+   use only the *figsize* specification with *figsize=(width, height)* (both numeric or string). We can also
+   specify the scale separately: *e.g.* *proj=:x*, *figscale=1:xxxx*. When no size is provided for linear
+   projections a default value of 12 cm is assumed.
 
    [`-J GMT doc`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#j-full)
 

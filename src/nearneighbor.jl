@@ -55,7 +55,7 @@ function nearneighbor(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("nearneighbor", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :h :i :n :r :xy])
+	cmd = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :n :r :xy])
 	cmd = add_opt(cmd, 'E', d, [:E :empty])
     cmd = add_opt(cmd, 'G', d, [:G :outgrid])
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
