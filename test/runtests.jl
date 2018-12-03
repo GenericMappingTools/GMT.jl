@@ -56,6 +56,10 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.add_opt_fill("", 'G', Dict(:G=>:red), [:G :fill]) == " -Gred"
 	#d = Dict(:a=>1,:b=>1,:bi=>1,:bo=>1,:d=>1,:di=>1,:do=>1,:e=>1,:f=>1,:g=>1,:h=>1,:i=>1,:n=>1,:o=>1,:p=>1,:r=>1,:s=>1,:x=>1,:t=>1,:xy=>1);
 	#GMT.parse_common_opts(d,"", [:a :b :bi :bo :d :di :do :e :f :g :h :i :n :o :p :r :s :x :t :xy])
+	d = Dict(:offset=>5, :bezier=>true, :cline=>"", :ctext=>true, :pen=>("10p",:red,:dashed));
+	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,dashed+cl+cf+s+o5"
+	d = Dict(:W=>(offset=5, bezier=true, cline="", ctext=true, pen=("10p",:red,:dashed)));
+	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,dashed+cl+cf+s+o5"
 
 	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
 	                  justify=:end,fill=:none,trim=0.1,endpoint=true,uv=6.6);
@@ -104,7 +108,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# FILTER1D
 	raw = [collect((1.0:50)) rand(50)];
-	filter1d(raw, F="m15");
+	filter1d(raw, F="m15", Vd=1);
 
 	# FITCIRCLE
 	d = [-3.2488 -1.2735; 7.46259 6.6050; 0.710402 3.0484; 6.6633 4.3121; 12.188 18.570; 8.807 14.397; 17.045 12.865; 19.688 30.128; 31.823 33.685; 39.410 32.460; 48.194 47.114; 62.446 46.528; 59.865 46.453; 68.739 50.164; 64.334 32.984];
