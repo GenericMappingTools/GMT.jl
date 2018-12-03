@@ -594,7 +594,7 @@ lines!(cmd0::String="", arg=[]; K=true, O=true, first=false, kw...) =
 # ------------------------------------------------------------------------------------------------------
 function cat_1_arg(arg)
 	# When functions that expect matrices get only a vector, add a first col with 1:nx
-	if (!isa(arg, Array{GMT.GMTdataset,1}) && isa(arg, Vector) || isa(arg, UnitRange || isa(arg, StepRangeLen)))
+	if (!isa(arg, Array{GMT.GMTdataset,1}) && (isa(arg, Vector) || isa(arg, UnitRange) || isa(arg, StepRangeLen)) )
 		arg = hcat(1:length(arg), arg)
 	end
 	return arg
