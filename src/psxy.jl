@@ -419,9 +419,11 @@ end
 function check_caller(d::Dict, cmd::String, opt_S::String, caller::String, O::Bool)
 	# Set sensible defaults for the sub-modules "scatter" & "bar"
 	if (caller == "scatter")
-		if (opt_S == "")  cmd = cmd * " -Sc7p"  end
+		if (opt_S == "")  cmd *= " -Sc7p"  end
 	elseif (caller == "scatter3")
-		if (opt_S == "")  cmd = cmd * " -Su7p"  end
+		if (opt_S == "")  cmd *= " -Su7p"  end
+	elseif (caller == "lines")
+		if (!occursin("+p", cmd)) cmd *= " -W0.25p"  end # Do not leave without a pen specification
 	elseif (caller == "bar")
 		if (opt_S == "")
 			if (haskey(d, :bar))

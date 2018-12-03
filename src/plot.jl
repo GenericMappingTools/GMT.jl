@@ -566,25 +566,6 @@ function lines(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 		end
 	end
 
-	if (!occursin("+p", cmd))					# If no pen was specified search for a -W
-		pen = add_opt_pen(d, [:W :pen], "W", true)
-		if (pen == "")
-			cmd = cmd * " -W0.25p"				# Do not leave without a pen specification
-		else
-			cmd = cmd * pen
-			if (haskey(d, :bezier))  cmd = cmd * "+s"  end
-			if (haskey(d, :offset))  cmd = cmd * "+o" * arg2str(d[:offset]);	delete!(d, :offset)  end
-			# Search for eventual vec specs
-			r = helper_arrows(d)
-			if (r != "")
-				if     (haskey(d, :vec_start))  cmd = cmd * "+vb" * r[2:end]	# r[1] = 'v'
-				elseif (haskey(d, :vec_stop))   cmd = cmd * "+ve" * r[2:end]
-				else   cmd = cmd * "+" * r
-				end
-			end
-		end
-	end
-
 	GMT.common_plot_xyz(cmd0, arg1, cmd, K, O, first, false, d...)
 end
 

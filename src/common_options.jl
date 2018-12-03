@@ -505,16 +505,31 @@ function add_opt_pen(d::Dict, symbs, opt="", del::Bool=false)
 	else
 		if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
 			if (isa(val, Tuple))			# Like this it can hold the pen, not extended atts
-				out = opt * parse_pen(val)
+				out = opt * parse_pen(val)	# Should be a better function
+			elseif (isa(val, NamedTuple))	# Make a recursive call. Will screw if used in mix mode
+				d2 = nt2dict(val)			# Decompose the NT and feed into this-self
+				return opt * add_opt_pen(d2, symbs, "")
 			else
 				out = opt * arg2str(val)
 			end
 		end
 	end
-	o = add_opt("", "", d, [:cline])		# Some -W take extra options to indicate that color comes from CPT
-	if (o != "")  out *= "+cl"  end
-	o = add_opt("", "", d, [:csymbol :ctext])
-	if (o != "")  out *= "+cf"  end
+
+	# Some -W take extra options to indicate that color comes from CPT
+	if (haskey(d, :cline))  out *= "+cl"  end
+	if (haskey(d, :ctext) || haskey(d, :csymbol))  out *= "+cf"  end
+	if (haskey(d, :bezier))  out *= "+s"  end
+	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])	 end
+	
+	# Search for eventual vec specs
+	r = helper_arrows(d)
+	if (r != "")
+		if     (haskey(d, :vec_start))  out *= "+vb" * r[2:end]	# r[1] = 'v'
+		elseif (haskey(d, :vec_stop))   out *= "+ve" * r[2:end]
+		else   out *= "+" * r
+		end
+	end
+
 	return out
 end
 
@@ -1159,54 +1174,51 @@ function decorated(;kwargs...)
 	cmd, optD = helper_decorated(d)		# 'cmd' cannot come out empty (would have errored)
 
 	if (haskey(d, :dec2))				# -S~ mode (decorated, with symbols, lines).
-		cmd = cmd * ":"
+		cmd *= ":"
 		marca = get_marker_name(d, [:marker :symbol])		# This fun lieves in psxy.jl
 		if (marca == "")
 			cmd = "+sa0.5" * cmd
 		else
-			cmd = cmd * "+s" * marca
-			for symb in [:size :markersize :symbsize :symbolsize]
-				if (haskey(d, symb))
-					cmd = cmd * arg2str(d[symb]);
-					break
-				end
+			cmd *= "+s" * marca
+			if ((val = find_in_dict(d, [:size :markersize :symbsize :symbolsize])[1]) !== nothing)
+				cmd *= arg2str(val);
 			end
 		end
 		if (haskey(d, :angle))   cmd = string(cmd, "+a", d[:angle])  end
-		if (haskey(d, :debug))   cmd = cmd * "+d"  end
-		if (haskey(d, :fill))    cmd = cmd * "+g" * get_color(d[:fill])    end
-		if (haskey(d, :nudge))   cmd = cmd * "+n" * arg2str(d[:nudge])   end
-		if (haskey(d, :n_data))  cmd = cmd * "+w" * arg2str(d[:n_data])  end
+		if (haskey(d, :debug))   cmd *= "+d"  end
+		if (haskey(d, :fill))    cmd *= "+g" * get_color(d[:fill])    end
+		if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])   end
+		if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])  end
 		if (optD == "")  optD = "d"  end	# Need to find out also when it's -D
 		opt_S = " -S~"
 	elseif (haskey(d, :quoted))				# -Sq mode (quoted lines).
-		if (haskey(d, :angle))   cmd = string(cmd, "+a", d[:angle])  end
-		if (haskey(d, :debug))   cmd = cmd * "+d"  end
-		if (haskey(d, :clearance ))  cmd = cmd * "+c" * arg2str(d[:clearance]) end
-		if (haskey(d, :delay))   cmd = cmd * "+e"  end
-		if (haskey(d, :font))    cmd = cmd * "+f" * font(d[:font])    end
-		if (haskey(d, :color))   cmd = cmd * "+g" * arg2str(d[:color])   end
-		if (haskey(d, :justify)) cmd = cmd * "+j" * arg2str(d[:justify]) end
-		if (haskey(d, :const_label)) cmd = cmd * "+l" * arg2str(d[:const_label])  end
-		if (haskey(d, :nudge))   cmd = cmd * "+n" * arg2str(d[:nudge])   end
-		if (haskey(d, :rounded)) cmd = cmd * "+o"  end
-		if (haskey(d, :min_rad)) cmd = cmd * "+r" * arg2str(d[:min_rad]) end
-		if (haskey(d, :unit))    cmd = cmd * "+u" * arg2str(d[:unit])    end
-		if (haskey(d, :curved))  cmd = cmd * "+v"  end
-		if (haskey(d, :n_data))  cmd = cmd * "+w" * arg2str(d[:n_data])  end
-		if (haskey(d, :prefix))  cmd = cmd * "+=" * arg2str(d[:prefix])  end
-		if (haskey(d, :suffices)) cmd = cmd * "+x" * arg2str(d[:suffices])  end		# Only when -SqN2
+		if (haskey(d, :angle))   cmd  = string(cmd, "+a", d[:angle])  end
+		if (haskey(d, :debug))   cmd *= "+d"  end
+		if (haskey(d, :clearance ))  cmd *= "+c" * arg2str(d[:clearance]) end
+		if (haskey(d, :delay))   cmd *= "+e"  end
+		if (haskey(d, :font))    cmd *= "+f" * font(d[:font])    end
+		if (haskey(d, :color))   cmd *= "+g" * arg2str(d[:color])   end
+		if (haskey(d, :justify)) cmd *= "+j" * arg2str(d[:justify]) end
+		if (haskey(d, :const_label)) cmd *= "+l" * arg2str(d[:const_label])  end
+		if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])   end
+		if (haskey(d, :rounded)) cmd *= "+o"  end
+		if (haskey(d, :min_rad)) cmd *= "+r" * arg2str(d[:min_rad]) end
+		if (haskey(d, :unit))    cmd *= "+u" * arg2str(d[:unit])    end
+		if (haskey(d, :curved))  cmd *= "+v"  end
+		if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])  end
+		if (haskey(d, :prefix))  cmd *= "+=" * arg2str(d[:prefix])  end
+		if (haskey(d, :suffices)) cmd *= "+x" * arg2str(d[:suffices])  end		# Only when -SqN2
 		if (haskey(d, :label))
 			if (isa(d[:label], String))
-				cmd = cmd * "+L" * d[:label]
+				cmd *= "+L" * d[:label]
 			elseif (isa(d[:label], Symbol))
-				if     (d[:label] == :header)  cmd = cmd * "+Lh"
-				elseif (d[:label] == :input)   cmd = cmd * "+Lf"
+				if     (d[:label] == :header)  cmd *= "+Lh"
+				elseif (d[:label] == :input)   cmd *= "+Lf"
 				else   error("Wrong content for the :label option. Must be only :header or :input")
 				end
 			elseif (isa(d[:label], Tuple))
-				if     (d[:label][1] == :plot_dist)  cmd = cmd * "+Ld" * string(d[:label][2])
-				elseif (d[:label][1] == :map_dist)   cmd = cmd * "+LD" * parse_units(d[:label][2])
+				if     (d[:label][1] == :plot_dist)  cmd *= "+Ld" * string(d[:label][2])
+				elseif (d[:label][1] == :map_dist)   cmd *= "+LD" * parse_units(d[:label][2])
 				else   error("Wrong content for the :label option. Must be only :plot_dist or :map_dist")
 				end
 			else
@@ -1216,26 +1228,26 @@ function decorated(;kwargs...)
 		if (optD == "")  optD = "d"  end	# Need to find out also when it's -D
 		opt_S = " -Sq"
 	else									# -Sf mode (front lines).
-		if     (haskey(d, :left))  cmd = cmd * "+l"
-		elseif (haskey(d, :right)) cmd = cmd * "+r"
+		if     (haskey(d, :left))  cmd *= "+l"
+		elseif (haskey(d, :right)) cmd *= "+r"
 		end
 		if (haskey(d, :symbol))
-			if     (d[:symbol] == "box"      || d[:symbol] == :box)      cmd = cmd * "+b"
-			elseif (d[:symbol] == "circle"   || d[:symbol] == :circle)   cmd = cmd * "+c"
-			elseif (d[:symbol] == "fault"    || d[:symbol] == :fault)    cmd = cmd * "+f"
-			elseif (d[:symbol] == "triangle" || d[:symbol] == :triangle) cmd = cmd * "+t"
-			elseif (d[:symbol] == "slip"     || d[:symbol] == :slip)     cmd = cmd * "+s"
-			elseif (d[:symbol] == "arcuate"  || d[:symbol] == :arcuate)  cmd = cmd * "+S"
+			if     (d[:symbol] == "box"      || d[:symbol] == :box)      cmd *= "+b"
+			elseif (d[:symbol] == "circle"   || d[:symbol] == :circle)   cmd *= "+c"
+			elseif (d[:symbol] == "fault"    || d[:symbol] == :fault)    cmd *= "+f"
+			elseif (d[:symbol] == "triangle" || d[:symbol] == :triangle) cmd *= "+t"
+			elseif (d[:symbol] == "slip"     || d[:symbol] == :slip)     cmd *= "+s"
+			elseif (d[:symbol] == "arcuate"  || d[:symbol] == :arcuate)  cmd *= "+S"
 			else   @warn(string("DECORATED: unknown symbol: ", d[:symbol]))
 			end
 		end
-		if (haskey(d, :offset))  cmd = cmd * "+o" * arg2str(d[:offset])  end
+		if (haskey(d, :offset))  cmd *= "+o" * arg2str(d[:offset]);	delete!(d, :offset)  end
 		opt_S = " -Sf"
 	end
 
 	if (haskey(d, :pen))
-		cmd = cmd * "+p"
-		if (!isempty_(d[:pen])) cmd = cmd * add_opt_pen(d, [:pen])  end
+		cmd *= "+p"
+		if (!isempty_(d[:pen])) cmd *= add_opt_pen(d, [:pen])  end
 	end
 	return opt_S * optD * cmd
 end
