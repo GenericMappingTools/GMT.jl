@@ -594,7 +594,7 @@ lines!(cmd0::String="", arg=[]; K=true, O=true, first=false, kw...) =
 # ------------------------------------------------------------------------------------------------------
 function cat_1_arg(arg)
 	# When functions that expect matrices get only a vector, add a first col with 1:nx
-	if (!isa(arg, Array{GMT.GMTdataset,1}) && isa(arg, Vector) || isa(arg, UnitRange))
+	if (!isa(arg, Array{GMT.GMTdataset,1}) && (isa(arg, Vector) || isa(arg, UnitRange) || isa(arg, StepRangeLen)) )
 		arg = hcat(1:length(arg), arg)
 	end
 	return arg
@@ -604,9 +604,11 @@ end
 function cat_2_arg2(arg1, arg2)
 	# Cat two vectors in a Mx2 matrix
 	if (!isa(arg1, Array{GMT.GMTdataset,1}) && !isa(arg2, Array{GMT.GMTdataset,1}) &&
-		(isa(arg1, Vector) || isa(arg1, UnitRange)) && (isa(arg2, Vector) || isa(arg2, UnitRange)) )
+		(isa(arg1, Vector) || isa(arg1, UnitRange) || isa(arg1, StepRangeLen)) &&
+		(isa(arg2, Vector) || isa(arg2, UnitRange) || isa(arg2, StepRangeLen)) )
 		arg = hcat(arg1, arg2)
 	else
+		@show(isa(arg1, Vector) || isa(arg1, UnitRange))
 		error("The two array args must be vectors or ONE column (or row) matrices.")
 	end
 end

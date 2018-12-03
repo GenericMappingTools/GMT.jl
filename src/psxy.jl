@@ -75,13 +75,13 @@ Parameters
     and select their sizes with the **markersize** or **size** keyword [default is 7p].
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
     points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
-- **W** : **pen** : **line_attrib** : **markeredgecolor** : -- Str --
+- **W** : **pen** : **markeredgecolor** : -- Str --
 
     Set pen attributes for lines or the outline of symbols
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
     If your plot has polygons and symbols, use **W** or **line_attribs** for the polygons and
-    **markeredgecolor** for filling the symbols. Similar to S above.
+    **markeredgecolor** for outline of symbols. Similar to S above.
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -185,9 +185,9 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd = add_opt(cmd, 'D', d, [:D :shift :offset])				# 'offset' may be needed in vec attribs
 	cmd = add_opt(cmd, 'F', d, [:F :conn :connection])
 
-	if ((val = find_in_dict(d, [:E :error :error_bars])[1]) !== nothing)	# Crazzy shit to allow increasing the arg1 matrix
+	if ((val = find_in_dict(d, [:E :error :error_bars])[1]) !== nothing)
 		n_rows, n_cols = size(arg1)
-		arg1 = reshape(arg1, :)
+		arg1 = reshape(arg1, :)				# Crazzy shit to allow increasing the arg1 matrix
 		cmd = add_opt(cmd, 'E', d, [:E :error :error_bars],
 					  (x="|x",y="|y",xy="|xy",X="|X",Y="|Y",asym="+a",cline="+cl",csymbol="+cf",
 					   wiskers="|+n",cap="+w",pen="+p"), false, arg1)
@@ -219,7 +219,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd = add_opt(cmd, 'I', d, [:I :intens])
 	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 
-	opt_W = add_opt_pen(d, [:W :pen :line_attrib], "W")
+	opt_W = add_opt_pen(d, [:W :pen], "W")
 	if (occursin("+c", opt_W) && !occursin("-C", cmd))
 		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
 	end
