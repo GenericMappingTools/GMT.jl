@@ -6,7 +6,7 @@
 using GMT
 plot(1:10, rand(10), lw=1, lc=:blue, fmt=:png, marker=:square,
      markeredgecolor=0, size=0.2, markerfacecolor=:red, title="Hello World",
-     x_label="Spoons", y_label="Forks", show=true)
+     xlabel="Spoons", ylabel="Forks", show=true)
 ```
 
 !["Hello world"](figures/hello-world.png)

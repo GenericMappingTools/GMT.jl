@@ -533,9 +533,9 @@ if (got_it)					# Otherwise go straight to end
 	GMT.meshgrid(1:5, 1:5, 1:5);
 
 	# EXAMPLES
-	plot(collect(1:10),rand(10), lw=1, lc="blue", marker="square",
+	plot(1:10,rand(10), lw=1, lc="blue", marker="square",
 	markeredgecolor=0, size=0.2, markerfacecolor="red", title="Hello World",
-		x_label="Spoons", y_label="Forks")
+		xlabel="Spoons", ylabel="Forks", show=1, Vd=:cmd)
 
 	x = range(0, stop=2pi, length=180);	seno = sin.(x/0.2)*45;
 	coast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")

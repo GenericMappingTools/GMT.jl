@@ -96,8 +96,11 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 			if (isdigit(opt_J[end]))  opt_J *= "/" * s
 			else                      opt_J *= s
 			end
-		elseif (haskey(d, :figscale))
-			opt_J *= string(d[:figscale])
+		elseif ((val = find_in_dict(d, [:figscale :scale])[1]) !== nothing)
+			val = string(val)
+			if (opt_J == " -JX")  isletter(val[1]) ? opt_J = " -J" * val : opt_J = " -Jx" * val	# FRAGILE
+			else                  opt_J *= string(val)
+			end
 		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
 			if !(length(opt_J) >= 6 && isnumeric(opt_J[6]))
 				opt_J *= def_fig_size[1:3]		# If no size, default to 12 centimeters
@@ -127,8 +130,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
-	#opt_B = ""					# The problem seems to be with the tests at the end of psxy/check_caller()
-	# These three are aliases
+	# These four are aliases
 	extra_parse = true
 	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
 		if (val == :none || val == "none")		# User explicitly said NO AXES
@@ -139,6 +141,17 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 		if (isa(val, NamedTuple)) opt_B = axis(val);	extra_parse = false
 		else                      opt_B = string(val)
 		end
+	end
+
+	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
+	t = ""
+	if (haskey(d, :title))  t *= "+t"  * str_with_blancs(d[:title]);   delete!(d, :title)   end
+	if (haskey(d, :xlabel)) t *= " x+l" * str_with_blancs(d[:xlabel]);  delete!(d, :xlabel)  end
+	if (haskey(d, :ylabel)) t *= " y+l" * str_with_blancs(d[:ylabel]);  delete!(d, :ylabel)  end
+	if (t != "")
+		if (opt_B == "")  opt_B = def_fig_axes  end
+		opt_B = replace(opt_B, "-B" => "")	# Needed so that bellow titles with blanks don't get -B's
+		opt_B *= t;		extra_parse = true
 	end
 
 	# These are not and we can have one or all of them. NamedTuples are dealt at the end
@@ -154,16 +167,18 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 		k = 1
 		r = opt_B
 		found = false
-		while (!isempty(r))
+		while (r != "")
 			tok[k],r = GMT.strtok(r)
+			#=
 			if (occursin(r"[WESNwesntlbu+g+o]", tok[k]) && !occursin("+t", tok[k]))		# If title here, forget about :title
 				if (haskey(d, :title) && isa(d[:title], String))
 					tok[k] = tok[k] * "+t\"" * d[:title] * "\""
 				end
 			elseif (occursin(r"[afgpsxyz+S+u]", tok[k]) && !occursin(r"[+l+L]", tok[k]))	# If label, forget about :x|y_label
-				if (haskey(d, :x_label) && isa(d[:x_label], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:x_label] * "\""  end
-				if (haskey(d, :y_label) && isa(d[:y_label], String))  tok[k] = tok[k] * " -By+l\"" * d[:y_label] * "\""  end
+				if (haskey(d, :xlabel) && isa(d[:xlabel], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:xlabel] * "\""  end
+				if (haskey(d, :ylabel) && isa(d[:ylabel], String))  tok[k] = tok[k] * " -By+l\"" * d[:ylabel] * "\""  end
 			end
+			=#
 			if (!occursin("-B", tok[k]))
 				if (!occursin('"', tok[k]))
 					tok[k] = " -B" * tok[k] 		# Simple case, no quotes to break our heads
@@ -201,7 +216,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 		end
 	end
 
-	if (!isempty(opt_B))  cmd = cmd * opt_B  end
+	if (opt_B != "")  cmd = cmd * opt_B  end
 	return cmd, opt_B
 end
 

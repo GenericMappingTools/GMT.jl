@@ -22,12 +22,12 @@ end
 #const GMTver = 6.0
 const FMT = "ps"
 const def_fig_size  = "12c/8c"			# Default fig size for plot like programs
-const def_fig_axes  = " -Ba -BWSen"		# Default fig axes for plot like programs
+const def_fig_axes  = " -Baf -BWSen"		# Default fig axes for plot like programs
 const def_fig_axes3 = " -Baf -Bza -BWSenZ"		#		"" but for 3D views
 
 export
 	GMTver, FMT, gmt,
-	arrows, arrows!, bar, bar!, bar3, bar3!, lines, lines!,
+	arrows, arrows!, bar, bar!, bar3, bar3!, lines, lines!, legend, legend!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!, contour, 
 	contour!, filter1d, filter2d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
 	gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwhich, 
@@ -103,6 +103,7 @@ include("pscontour.jl")
 include("psconvert.jl")
 include("pshistogram.jl")
 include("psimage.jl")
+include("pslegend.jl")
 include("psmask.jl")
 include("psscale.jl")
 include("psrose.jl")

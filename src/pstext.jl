@@ -92,7 +92,6 @@ function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, "", opt_bi, opt_di)
-
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1, arg2)
 
 	cmd = add_opt(cmd, 'A', d, [:A :horizontal])
@@ -106,22 +105,7 @@ function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	cmd = add_opt(cmd, 'Q', d, [:Q :change_case])
 	cmd = add_opt(cmd, 'T', d, [:T :text_box])
 	cmd = add_opt(cmd, 'Z', d, [:Z :threeD])
-
-	opt_W = ""
-	pen = build_pen(d)						# Either a full pen string or empty ("")
-	if (pen != "")
-		opt_W = " -W" * pen
-	else
-		if ((val = find_in_dict(d, [:W :line_attrib])[1]) !== nothing)
-			if (isa(val, String))
-				opt_W = " -W" * arg2str(val)
-			elseif (isa(val, Tuple))	# Like this it can hold the pen, not extended atts
-				opt_W = " -W" * parse_pen(val)
-			else
-				error("Nonsense in W option")
-			end
-		end
-	end
+	opt_W = add_opt_pen(d, [:W :pen], "W")
 
 	cmd = finish_PS(d, cmd * opt_W, output, K, O)
 	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pstext", arg1, arg2)
