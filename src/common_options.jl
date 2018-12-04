@@ -144,13 +144,22 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	end
 
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
-	t = ""
-	if (haskey(d, :title))  t *= "+t"  * str_with_blancs(d[:title]);   delete!(d, :title)   end
-	if (haskey(d, :xlabel)) t *= " x+l" * str_with_blancs(d[:xlabel]);  delete!(d, :xlabel)  end
-	if (haskey(d, :ylabel)) t *= " y+l" * str_with_blancs(d[:ylabel]);  delete!(d, :ylabel)  end
+	t = ""		# Use the trick to replace blanks by some utf8 char and undo it in extra_parse
+	if (haskey(d, :title))   t *= "+t"  * replace(str_with_blancs(d[:title]), ' '=>'\U00AF');   end
+	if (haskey(d, :xlabel))  t *= "x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\U00AF');   end
+	if (haskey(d, :ylabel))  t *= "y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\U00AF');   end
+	#if (haskey(d, :title))  t *= "+t"  * str_with_blancs(d[:title]);   delete!(d, :title)   end
+	#if (haskey(d, :xlabel)) t *= " x+l" * str_with_blancs(d[:xlabel]);  delete!(d, :xlabel)  end
+	#if (haskey(d, :ylabel)) t *= " y+l" * str_with_blancs(d[:ylabel]);  delete!(d, :ylabel)  end
 	if (t != "")
-		if (opt_B == "")  opt_B = def_fig_axes  end
-		opt_B = replace(opt_B, "-B" => "")	# Needed so that bellow titles with blanks don't get -B's
+		if (opt_B == "")
+			opt_B = def_fig_axes
+		else
+			if !(((ind = findlast("-B",opt_B)) !== nothing) && (occursin(r"[WESNwesntlbu+g+o]",opt_B[ind[2]:end])) )
+				t = " " * t;		# Do not glue, for example, -Bg with :title
+			end
+		end
+		#opt_B = replace(opt_B, "-B" => "")	# Needed so that bellow titles with blanks don't get -B's
 		opt_B *= t;		extra_parse = true
 	end
 
@@ -180,16 +189,14 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 			end
 			=#
 			if (!occursin("-B", tok[k]))
+				tok[k] = replace(tok[k], '\U00AF'=>' ')
 				if (!occursin('"', tok[k]))
-					tok[k] = " -B" * tok[k] 		# Simple case, no quotes to break our heads
+					tok[k] = " -B" * tok[k] 				# Simple case, no quotes to break our heads
 				else
-					if (!found)
-						tok[k] = " -B" * tok[k] 	# A title in quotes with spaces
-						found = true
-					else
-						tok[k] = " " * tok[k]
-						found = false
+					if (!found)  tok[k] = " -B" * tok[k] 	# A title in quotes with spaces
+					else         tok[k] = " " * tok[k]
 					end
+					found = !found
 				end
 			else
 				tok[k] = " " * tok[k]
@@ -227,9 +234,9 @@ function parse_BJR(d::Dict, cmd::String, caller, O, default, del=false)
 	cmd, opt_J = parse_J(cmd, d, true, O, del)
 	if (!O && isempty(opt_J))			# If we have no -J use this default
 		opt_J = default					# " -JX12c/8c" (e.g. psxy) or " -JX12c/0" (e.g. grdimage)
-		cmd = cmd * opt_J
+		cmd *= opt_J
 	elseif (O && isempty(opt_J))
-		cmd = cmd * " -J"
+		cmd *= " -J"
 	end
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (caller == "plot3d" || caller == "bar3" || caller == "scatter3")
@@ -257,8 +264,8 @@ end
 function parse_V(cmd::String, d::Dict)
 	# Parse the global -V option. Return CMD same as input if no -V option in args
 	if ((val = find_in_dict(d, [:V :verbose])[1]) !== nothing)
-		if (isa(val, Bool) && val) cmd = cmd * " -V"
-		else                       cmd = cmd * " -V" * arg2str(val)
+		if (isa(val, Bool) && val) cmd *= " -V"
+		else                       cmd *= " -V" * arg2str(val)
 		end
 	end
 	return cmd
@@ -466,15 +473,11 @@ function parse_inc(cmd::String, d::Dict, symbs, opt, del=false)
 			if (u != "")
 				if (u == "m" || u == "minutes" || u == "s" || u == "seconds" ||
 					u == "f" || u == "foot"    || u == "k" || u == "km" || u == "n" || u == "nautical")
-					cmd = cmd * u[1]
-				elseif (u == "e" || u == "meter")
-					cmd = cmd * "e";	u = "e"
-				elseif (u == "M" || u == "mile")
-					cmd = cmd * "M";	u = "M"
-				elseif (u == "nodes")
-					cmd = cmd * "+n";	u = "+n"
-				elseif (u == "data")			# For the `scatter` modules
-					u = "u";
+					cmd *= u[1]
+				elseif (u == "e" || u == "meter") cmd *= "e";	u = "e"
+				elseif (u == "M" || u == "mile")  cmd *= "M";	u = "M"
+				elseif (u == "nodes")             cmd *= "+n";	u = "+n"
+				elseif (u == "data")              u = "u";		# For the `scatter` modules
 				end
 			end
 			if (e)  cmd *= "+e"  end
@@ -500,10 +503,10 @@ function parse_params(cmd::String, d::Dict)
 		if (isa(val, NamedTuple))
 			fn = fieldnames(typeof(val))
 			for k = 1:length(fn)		# Suspect that this is higly inefficient but N is small
-				cmd = cmd * " --" * string(fn[k]) * "=" * string(val[k])
+				cmd *= " --" * string(fn[k]) * "=" * string(val[k])
 			end
 		elseif (isa(val, Tuple))
-			cmd = cmd * " --" * string(val[1]) * "=" * string(val[2])
+			cmd *= " --" * string(val[1]) * "=" * string(val[2])
 		end
 	end
 	return cmd
@@ -615,9 +618,7 @@ function parse_arg_and_pen(arg::Tuple)
 	elseif (isa(arg[1], Number))  s = @sprintf("%d", arg[1])
 	else	error("Nonsense first argument")
 	end
-	if (length(arg) > 1 && isa(arg[2], Tuple))
-		s = s * "/" * parse_pen(arg[2])
-	end
+	if (length(arg) > 1 && isa(arg[2], Tuple))  s *= "/" * parse_pen(arg[2])  end
 	return s
 end
 
@@ -652,9 +653,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
-	if (!haskey(d, :P) && !haskey(d, :portrait))
-		cmd = cmd * " -P"
-	end
+	if (!haskey(d, :P) && !haskey(d, :portrait))  cmd *= " -P"  end
 
 	if (K && !O)              opt = " -K"
 	elseif (K && O)           opt = " -K -O"
@@ -662,15 +661,15 @@ function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)
 	else                      opt = ""
 	end
 
-	if (!isempty(output))
-		if (K && !O)          cmd = cmd * opt * " > " * output
-		elseif (!K && !O)     cmd = cmd * opt * " > " * output
-		elseif (O)            cmd = cmd * opt * " >> " * output
+	if (output != "")
+		if (K && !O)          cmd *= opt * " > " * output
+		elseif (!K && !O)     cmd *= opt * " > " * output
+		elseif (O)            cmd *= opt * " >> " * output
 		end
 	else
-		if (K && !O)          cmd = cmd * opt
-		elseif (!K && !O)     cmd = cmd * opt
-		elseif (O)            cmd = cmd * opt
+		if (K && !O)          cmd *= opt
+		elseif (!K && !O)     cmd *= opt
+		elseif (O)            cmd *= opt
 		end
 	end
 	return cmd
@@ -722,9 +721,9 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 					else                            append!(arg, reshape(collect(nt[k]), :))
 					end
 				end
-				cmd = cmd * d[key[k]][2:end]		# And now append the flag
+				cmd *= d[key[k]][2:end]		# And now append the flag
 			else
-				cmd = cmd * d[key[k]] * arg2str(nt[k])
+				cmd *= d[key[k]] * arg2str(nt[k])
 			end
 		end
 	end
@@ -871,44 +870,44 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	x ? axe = "x" : y ? axe = "y" : z ? axe = "z" : axe = ""	# Are we dealing with a specific axis?
 
 	opt = " -B"
-	if (haskey(d, :axes)) opt = opt * helper0_axes(d[:axes])  end
+	if (haskey(d, :axes)) opt *= helper0_axes(d[:axes])  end
 
-	if (haskey(d, :corners)) opt = opt * string(d[:corners])  end	# 1234
-	if (haskey(d, :fill))    opt = opt * "+g" * get_color(d[:fill])  end
-	if (haskey(d, :cube))    opt = opt * "+b"  end
-	if (haskey(d, :noframe)) opt = opt * "+n"  end
-	if (haskey(d, :oblique_pole))  opt = opt * "+o" * arg2str(d[:oblique_pole])  end
-	if (haskey(d, :title))   opt = opt * "+t" * str_with_blancs(arg2str(d[:title]))  end
+	if (haskey(d, :corners)) opt *= string(d[:corners])  end	# 1234
+	if (haskey(d, :fill))    opt *= "+g" * get_color(d[:fill])  end
+	if (haskey(d, :cube))    opt *= "+b"  end
+	if (haskey(d, :noframe)) opt *= "+n"  end
+	if (haskey(d, :oblique_pole))  opt *= "+o" * arg2str(d[:oblique_pole])  end
+	if (haskey(d, :title))   opt *= "+t" * str_with_blancs(arg2str(d[:title]))  end
 
 	if (opt == " -B")  opt = ""  end	# If nothing, no -B
 
 	# axes supps
 	ax_sup = ""
-	if (haskey(d, :seclabel))   ax_sup = ax_sup * "+s" * str_with_blancs(arg2str(d[:seclabel]))   end
+	if (haskey(d, :seclabel))   ax_sup *= "+s" * str_with_blancs(arg2str(d[:seclabel]))   end
 
 	if (haskey(d, :label))
-		opt = opt * " -B" * primo * axe * "+l"  * str_with_blancs(arg2str(d[:label])) * ax_sup
+		opt *= " -B" * primo * axe * "+l"  * str_with_blancs(arg2str(d[:label])) * ax_sup
 	else
-		if (haskey(d, :xlabel))  opt = opt * " -B" * primo * "x+l" * str_with_blancs(arg2str(d[:xlabel])) * ax_sup  end
-		if (haskey(d, :zlabel))  opt = opt * " -B" * primo * "z+l" * str_with_blancs(arg2str(d[:zlabel])) * ax_sup  end
+		if (haskey(d, :xlabel))  opt *= " -B" * primo * "x+l" * str_with_blancs(arg2str(d[:xlabel])) * ax_sup  end
+		if (haskey(d, :zlabel))  opt *= " -B" * primo * "z+l" * str_with_blancs(arg2str(d[:zlabel])) * ax_sup  end
 		if (haskey(d, :ylabel))
-			opt = opt * " -B" * primo * "y+l" * str_with_blancs(arg2str(d[:ylabel])) * ax_sup
+			opt *= " -B" * primo * "y+l" * str_with_blancs(arg2str(d[:ylabel])) * ax_sup
 		elseif (haskey(d, :Yhlabel))
 			axe != "y" ? opt_L = "y+L" : opt_L = "+L"
-			opt = opt * " -B" * primo * axe * opt_L  * str_with_blancs(arg2str(d[:Yhlabel])) * ax_sup
+			opt *= " -B" * primo * axe * opt_L  * str_with_blancs(arg2str(d[:Yhlabel])) * ax_sup
 		end
 	end
 
 	# intervals
 	ints = ""
-	if (haskey(d, :annot))      ints = ints * "a" * helper1_axes(d[:annot])  end
-	if (haskey(d, :annot_unit)) ints = ints * helper2_axes(d[:annot_unit])   end
-	if (haskey(d, :ticks))      ints = ints * "f" * helper1_axes(d[:ticks])  end
-	if (haskey(d, :grid))       ints = ints * "g" * helper1_axes(d[:grid])   end
-	if (haskey(d, :prefix))     ints = ints * "+p" * str_with_blancs(arg2str(d[:prefix]))  end
-	if (haskey(d, :suffix))     ints = ints * "+u" * str_with_blancs(arg2str(d[:suffix]))  end
+	if (haskey(d, :annot))      ints *= "a" * helper1_axes(d[:annot])  end
+	if (haskey(d, :annot_unit)) ints *= helper2_axes(d[:annot_unit])   end
+	if (haskey(d, :ticks))      ints *= "f" * helper1_axes(d[:ticks])  end
+	if (haskey(d, :grid))       ints *= "g" * helper1_axes(d[:grid])   end
+	if (haskey(d, :prefix))     ints *= "+p" * str_with_blancs(arg2str(d[:prefix]))  end
+	if (haskey(d, :suffix))     ints *= "+u" * str_with_blancs(arg2str(d[:suffix]))  end
 	if (haskey(d, :custom))
-		if (isa(d[:custom], String))  ints = ints * 'c' * d[:custom]
+		if (isa(d[:custom], String))  ints *= 'c' * d[:custom]
 		else
 			if ((r = helper3_axes(d[:custom], primo, axe)) != "")  ints = ints * 'c' * r  end
 		end
@@ -921,17 +920,17 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 		end
 	elseif (haskey(d, :scale))
 		s = arg2str(d[:scale])
-		if     (s == "log")    ints = ints * 'l'
-		elseif (s == "10log")  ints = ints * 'p'
-		elseif (s == "exp")    ints = ints * 'p'
+		if     (s == "log")    ints *= 'l'
+		elseif (s == "10log")  ints *= 'p'
+		elseif (s == "exp")    ints *= 'p'
 		end
 	end
 	if (haskey(d, :phase_add))
-		ints = ints * "+" * arg2str(d[:phase_add])
+		ints *= "+" * arg2str(d[:phase_add])
 	elseif (haskey(d, :phase_sub))
-		ints = ints * "-" * arg2str(d[:phase_sub])
+		ints *= "-" * arg2str(d[:phase_sub])
 	end
-	if (ints != "") opt = opt * " -B" * primo * axe * ints  end
+	if (ints != "") opt *= " -B" * primo * axe * ints  end
 
 	# Check if ax_sup was requested
 	if (opt == "" && ax_sup != "")  opt = " -B" * primo * axe * ax_sup  end
@@ -960,25 +959,25 @@ function helper0_axes(arg)
 	for k = 1:length(arg)
 		t = string(arg[k])		# For the case it was a symbol
 		if (occursin("_f", t))
-			if     (t[1] == 'l')  opt = opt * 'W'
-			elseif (t[1] == 'b')  opt = opt * 'S'
-			elseif (t[1] == 'r')  opt = opt * 'E'
-			elseif (t[1] == 't')  opt = opt * 'N'
-			elseif (t[1] == 'u')  opt = opt * 'Z'
+			if     (t[1] == 'l')  opt *= 'W'
+			elseif (t[1] == 'b')  opt *= 'S'
+			elseif (t[1] == 'r')  opt *= 'E'
+			elseif (t[1] == 't')  opt *= 'N'
+			elseif (t[1] == 'u')  opt *= 'Z'
 			end
 		elseif (occursin("_t", t))
-			if     (t[1] == 'l')  opt = opt * 'w'
-			elseif (t[1] == 'b')  opt = opt * 's'
-			elseif (t[1] == 'r')  opt = opt * 'e'
-			elseif (t[1] == 't')  opt = opt * 'n'
-			elseif (t[1] == 'u')  opt = opt * 'z'
+			if     (t[1] == 'l')  opt *= 'w'
+			elseif (t[1] == 'b')  opt *= 's'
+			elseif (t[1] == 'r')  opt *= 'e'
+			elseif (t[1] == 't')  opt *= 'n'
+			elseif (t[1] == 'u')  opt *= 'z'
 			end
 		elseif (occursin("_b", t))
-			if     (t[1] == 'l')  opt = opt * 'l'
-			elseif (t[1] == 'b')  opt = opt * 'b'
-			elseif (t[1] == 'r')  opt = opt * 'r'
-			elseif (t[1] == 't')  opt = opt * 't'
-			elseif (t[1] == 'u')  opt = opt * 'u'
+			if     (t[1] == 'l')  opt *= 'l'
+			elseif (t[1] == 'b')  opt *= 'b'
+			elseif (t[1] == 'r')  opt *= 'r'
+			elseif (t[1] == 't')  opt *= 't'
+			elseif (t[1] == 'u')  opt *= 'u'
 			end
 		end
 	end
@@ -1062,7 +1061,7 @@ function helper3_axes(arg, primo, axe)
 	end
 
 	temp = "GMTjl_custom_" * primo
-	if (axe != "") temp = temp * axe  end
+	if (axe != "") temp *= axe  end
 	@static Sys.iswindows() ? fname = tempdir() * temp * ".txt" : fname = tempdir() * "/" * temp * ".txt" 
 	fid = open(fname, "w")
 	if (label != "")
@@ -1109,21 +1108,21 @@ function vector_attrib(;kwargs...)
 	end
 
 	if (haskey(d, :justify))
-		if     (d[:justify] == "beginning" || d[:justify] == :beginning)  cmd = cmd * "+jb"
-		elseif (d[:justify] == "end"       || d[:justify] == :end)        cmd = cmd * "+je"
-		elseif (d[:justify] == "center"    || d[:justify] == :center)     cmd = cmd * "+jc"
+		if     (d[:justify] == "beginning" || d[:justify] == :beginning)  cmd *= "+jb"
+		elseif (d[:justify] == "end"       || d[:justify] == :end)        cmd *= "+je"
+		elseif (d[:justify] == "center"    || d[:justify] == :center)     cmd *= "+jc"
 		end
 	end
 
 	if (haskey(d, :half_arrow))
-		if (d[:half_arrow] == "left" || d[:half_arrow] == :left)	cmd = cmd * "+l"
-		else	cmd = cmd * "+r"		# Whatever, gives right half
+		if (d[:half_arrow] == "left" || d[:half_arrow] == :left)	cmd *= "+l"
+		else	cmd *= "+r"		# Whatever, gives right half
 		end
 	end
 
 	if (haskey(d, :fill))
-		if (d[:fill] == "none" || d[:fill] == :none) cmd = cmd * "+g-"
-		else	cmd = cmd * "+g" * get_color(d[:fill])		# MUST GET TESTS TO THIS
+		if (d[:fill] == "none" || d[:fill] == :none) cmd *= "+g-"
+		else	cmd *= "+g" * get_color(d[:fill])		# MUST GET TESTS TO THIS
 		end
 	end
 
@@ -1140,14 +1139,14 @@ function vector_attrib(;kwargs...)
 	if (haskey(d, :oblique_pole))  cmd = cmd * "+o" * arg2str(d[:oblique_pole])  end
 	if (haskey(d, :pen))
 		p = add_opt_pen(d, [:pen], "")
-		if (p != "")  cmd = cmd * "+p" * p  end
+		if (p != "")  cmd *= "+p" * p  end
 	end
 
 	if (haskey(d, :shape))
 		if (isa(d[:shape], String) || isa(d[:shape], Symbol))
-			if     (d[:shape] == "triang" || d[:shape] == :triang)	cmd = cmd * "+h0"
-			elseif (d[:shape] == "arrow"  || d[:shape] == :arrow)	cmd = cmd * "+h1"
-			elseif (d[:shape] == "V"      || d[:shape] == :V)	    cmd = cmd * "+h2"
+			if     (d[:shape] == "triang" || d[:shape] == :triang)	cmd *= "+h0"
+			elseif (d[:shape] == "arrow"  || d[:shape] == :arrow)	cmd *= "+h1"
+			elseif (d[:shape] == "V"      || d[:shape] == :V)	    cmd *= "+h2"
 			else	error("Shape string can be only: 'triang', 'arrow' or 'V'")
 			end
 		elseif (isa(d[:shape], Number))
@@ -1158,24 +1157,24 @@ function vector_attrib(;kwargs...)
 		end
 	end
 
-	if (haskey(d, :trim))  cmd = cmd * "+t" * arg2str(d[:trim])  end
-	if (haskey(d, :ang1_ang2) || haskey(d, :start_stop))  cmd = cmd * "+q"  end
-	if (haskey(d, :endpoint))  cmd = cmd * "+s"  end
-	if (haskey(d, :uv))    cmd = cmd * "+z" * arg2str(d[:uv])  end
+	if (haskey(d, :trim))  cmd *= "+t" * arg2str(d[:trim])  end
+	if (haskey(d, :ang1_ang2) || haskey(d, :start_stop))  cmd *= "+q"  end
+	if (haskey(d, :endpoint))  cmd *= "+s"  end
+	if (haskey(d, :uv))    cmd *= "+z" * arg2str(d[:uv])  end
 	return cmd
 end
 
 # -----------------------------------
 function helper_vec_loc(d, symb, cmd)
 	# Helper function to the 'begin', 'middle', 'end' vector attrib function
-	if     (d[symb] == "line"       || d[symb] == :line)	cmd = cmd * "t"
-	elseif (d[symb] == "arrow"      || d[symb] == :arrow)	cmd = cmd * "a"
-	elseif (d[symb] == "circle"     || d[symb] == :circle)	cmd = cmd * "c"
-	elseif (d[symb] == "tail"       || d[symb] == :tail)	cmd = cmd * "i"
-	elseif (d[symb] == "open_arrow" || d[symb] == :open_arrow)	cmd = cmd * "A"
-	elseif (d[symb] == "open_tail"  || d[symb] == :open_tail)	cmd = cmd * "I"
-	elseif (d[symb] == "left_side"  || d[symb] == :left_side)	cmd = cmd * "l"
-	elseif (d[symb] == "right_side" || d[symb] == :right_side)	cmd = cmd * "r"
+	if     (d[symb] == "line"       || d[symb] == :line)	cmd *= "t"
+	elseif (d[symb] == "arrow"      || d[symb] == :arrow)	cmd *= "a"
+	elseif (d[symb] == "circle"     || d[symb] == :circle)	cmd *= "c"
+	elseif (d[symb] == "tail"       || d[symb] == :tail)	cmd *= "i"
+	elseif (d[symb] == "open_arrow" || d[symb] == :open_arrow)	cmd *= "A"
+	elseif (d[symb] == "open_tail"  || d[symb] == :open_tail)	cmd *= "I"
+	elseif (d[symb] == "left_side"  || d[symb] == :left_side)	cmd *= "l"
+	elseif (d[symb] == "right_side" || d[symb] == :right_side)	cmd *= "r"
 	end
 	return cmd
 end
