@@ -421,6 +421,8 @@ if (got_it)					# Otherwise go straight to end
 	coast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), water=:blue, clip=:land, Vd=:cmd)
 	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), Vd=:cmd)
+	r = coast(region=:g, proj="A300/30/14c", frame=:g, resolution=:crude, title="Hello Round World", Vd=:cmd);
+	@test r[1:54] == " -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude"
 
 	# PSCONTOUR
 	x,y,z=GMT.peaks();
