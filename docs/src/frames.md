@@ -3,22 +3,20 @@
 ## Geographic basemaps
 
 Geographic base maps may differ from regular plot axis in that some projections support a “fancy”
-form of axis and is selected by the MAP_FRAME_TYPE setting. The annotations will be formatted according
-to the FORMAT_GEO_MAP template and MAP_DEGREE_SYMBOL setting. A simple example of part of a base map
+form of axis and is selected by the MAP\_FRAME\_TYPE setting. The annotations will be formatted according
+to the FORMAT\_GEO\_MAP template and MAP_DEGREE_SYMBOL setting. A simple example of part of a base map
 is shown in Figure Geographic map border.
 
 ```julia
 using GMT
-basemap(limits="-1/2/0/0.4", proj=:M8, frame="a1f15mg5m S")
-t = [-1.0 0 0 1.0
-    0.25 0 0 0.25
-    1.25 0 0 0.08333332];
-GMT.xy!(t, symbol="v2p+b+e+a60", lw=0.5, fill=:black, y_offset=-1.0, no_clip=true)
-if (GMTver < 6)
-    T = ["-0.5 0.05 annotation", "0.375 0.05 frame", "1.29166666 0.05 grid"];
-else
-    T = text_record([-0.5 0.05; 0.375 0.05; 1.29166666 0.05], ["annotation", "frame", "grid"]);
-end
+
+basemap(limits=(-1,2,0,0.4), proj=:M10, axis=(axes=:S, annot=1, ticks="15m",grid="5m"))
+t = [-1.0 0 0 3.33
+    0.25 0 0 0.833
+    1.25 0 0 0.28];
+arrows!(t, arrow=(length="5p",start=true,stop=true,angle=60), lw=0.5, fill=:black, noclip=true)
+
+T = text_record([-0.5 0.05; 0.375 0.05; 1.29166666 0.05], ["annotation", "frame", "grid"]);
 text!(T, text_attrib="+f9p+jCB", fmt=:png, show=true)
 ```
 
@@ -64,9 +62,9 @@ text!(T, text_attrib="+f+j", no_clip=true, fmt=:png, show=true)
 
 For non-geographic axes, the MAP_FRAME_TYPE setting is implicitly set to plain. Other than that,
 cartesian linear axes are very similar to geographic axes. The annotation format may be controlled with
-the FORMAT_FLOAT_OUT parameter. By default, it is set to “%g”, which is a C language format statement
+the FORMAT\_FLOAT\_OUT parameter. By default, it is set to “%g”, which is a C language format statement
 for floating point numbers, and with this setting the various axis routines will automatically determine
-how many decimal points should be used by inspecting the stride settings. If FORMAT_FLOAT_OUT is set to
+how many decimal points should be used by inspecting the stride settings. If FORMAT\_FLOAT\_OUT is set to
 another format it will be used directly (.e.g, “%.2f” for a fixed, two decimals format). Note that for
 these axes you may use the unit setting to add a unit string to each annotation.
 
@@ -177,8 +175,8 @@ basemap(region="1997T/1999T/0/1", proj="X12/0.25", frame="pa3Of1o sa1Y S", conf=
 ```
 
 Note that while the year annotation is centered on the 1-year interval, the month annotations must
-be centered on the corresponding month and not the 3-month interval. The FORMAT_DATE_MAP selects
-month name only and FORMAT_TIME_PRIMARY_MAP selects the 1-character, upper case abbreviation of
+be centered on the corresponding month and not the 3-month interval. The FORMAT\_DATE\_MAP selects
+month name only and FORMAT\_TIME\_PRIMARY_MAP selects the 1-character, upper case abbreviation of
 month names using the current language (selected by GMT_LANGUAGE).
 
 !["B_time3"](figures/B_time3.png)
@@ -223,7 +221,7 @@ basemap(region="1996T/1996-6T/0/1", proj="X12/0.25", frame="a1Of1d S",
 !["B_time6"](figures/B_time6.png)
 
 Our seventh and final example illustrates annotation of year-days. Unless we specify the
-formatting with a leading hyphen in FORMAT_DATE_MAP we get 3-digit integer days. Note that in
+formatting with a leading hyphen in FORMAT\_DATE\_MAP we get 3-digit integer days. Note that in
 order to have the two years annotated we need to allow for the annotation of small fractional
 intervals; normally such truncated interval must be at least half of a full interval.
 

@@ -44,7 +44,7 @@ Parameters
 
     Force closed polygons. 
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#l)
-- **N** : **no_clip** : -- Str or [] --
+- **N** : **noclip** : **no_clip** : -- Str or [] --
 
     Do NOT clip symbols that fall outside map border 
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#n)
@@ -185,6 +185,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd = add_opt(cmd, 'D', d, [:D :shift :offset])				# 'offset' may be needed in vec attribs
 	cmd = add_opt(cmd, 'F', d, [:F :conn :connection])
 
+	# Error Bars?
 	if ((val = find_in_dict(d, [:E :error :error_bars])[1]) !== nothing)
 		n_rows, n_cols = size(arg1)
 		arg1 = reshape(arg1, :)				# Crazzy shit to allow increasing the arg1 matrix
@@ -217,7 +218,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	end
 
 	cmd = add_opt(cmd, 'I', d, [:I :intens])
-	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
+	cmd = add_opt(cmd, 'N', d, [:N :noclip :no_clip])
 
 	opt_W = add_opt_pen(d, [:W :pen], "W")
 	if (occursin("+c", opt_W) && !occursin("-C", cmd))
@@ -236,7 +237,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 					error("The size array must have the same number of elements rows in the data")
 				end
 			else
-				marca = marca * arg2str(val);
+				marca *= arg2str(val);
 			end
 			opt_S = " -S" * marca
 		elseif (marca != "")			# User only selected a marker name but no size.

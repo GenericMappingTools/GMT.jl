@@ -155,7 +155,8 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 		if (opt_B == "")
 			opt_B = def_fig_axes
 		else
-			if !(((ind = findlast("-B",opt_B)) !== nothing) && (occursin(r"[WESNwesntlbu+g+o]",opt_B[ind[2]:end])) )
+			if !( ((ind = findlast("-B",opt_B)) !== nothing || (ind = findlast(" ",opt_B)) !== nothing) &&
+				  (occursin(r"[WESNwesntlbu+g+o]",opt_B[ind[1]:end])) )
 				t = " " * t;		# Do not glue, for example, -Bg with :title
 			end
 		end
@@ -188,8 +189,8 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 				if (haskey(d, :ylabel) && isa(d[:ylabel], String))  tok[k] = tok[k] * " -By+l\"" * d[:ylabel] * "\""  end
 			end
 			=#
+			tok[k] = replace(tok[k], '\U00AF'=>' ')
 			if (!occursin("-B", tok[k]))
-				tok[k] = replace(tok[k], '\U00AF'=>' ')
 				if (!occursin('"', tok[k]))
 					tok[k] = " -B" * tok[k] 				# Simple case, no quotes to break our heads
 				else
@@ -537,14 +538,15 @@ function add_opt_pen(d::Dict, symbs, opt="", del::Bool=false)
 	if (haskey(d, :cline))  out *= "+cl"  end
 	if (haskey(d, :ctext) || haskey(d, :csymbol))  out *= "+cf"  end
 	if (haskey(d, :bezier))  out *= "+s"  end
-	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])	 end
-	
-	# Search for eventual vec specs
-	r = helper_arrows(d)
-	if (r != "")
-		if     (haskey(d, :vec_start))  out *= "+vb" * r[2:end]	# r[1] = 'v'
-		elseif (haskey(d, :vec_stop))   out *= "+ve" * r[2:end]
-		else   out *= "+" * r
+	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])   end
+
+	if (out != "")		# Search for eventual vec specs, but only if something above has activated -W
+		r = helper_arrows(d)
+		if (r != "")
+			if     (haskey(d, :vec_start))  out *= "+vb" * r[2:end]	# r[1] = 'v'
+			elseif (haskey(d, :vec_stop))   out *= "+ve" * r[2:end]
+			else   out *= "+" * r
+			end
 		end
 	end
 
@@ -1533,21 +1535,6 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 	end
 end
 
-#= ---------------------------------------------------------------------------------------------------
-function common_grd(cmd::String, flag::Char)
-	# Detect an output grid file name was requested, normally via -G, or not. Latter implies
-	# that the result grid is returned in a G GMTgrid type.
-	# Used the the grdxxx modules that produce a grid.
-	ff = findfirst(string("-", flag), cmd)
-	ind = (ff === nothing) ? 0 : first(ff)
-	if (ind > 0 && length(cmd) > ind+2 && cmd[ind+2] != ' ')      # A file name was provided
-		no_output = true
-	else
-		no_output = false
-	end
-end
-=#
-
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, prog::String, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
@@ -1587,34 +1574,42 @@ function dbg_print_cmd(d::Dict, cmd::String, prog::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function showfig(fname_ps::String, fname_ext::String, opt_T::String, K=false, fname="")
+function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=false, fname="")
 	# Take a PS file, convert it with psconvert (unless opt_T == "" meaning file is PS)
 	# and display it in default system viewer
 	# FNAME_EXT hold the extension when not PS
 	# OPT_T holds the psconvert -T option, again when not PS
-	# FNAME is for when we implement the savefig option
-	if (!isempty(opt_T))
-		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end			# Close the PS file first
+	# FNAME is for when using the savefig option
+
+	if (opt_T != "")
+		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end		# Close the PS file first
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T)
 		out = fname_ps[1:end-2] * fname_ext
-		if (!isempty(fname))
+		if (fname != "")
 			run(`mv $out $fname`)
 			out = fname
 		end
-	elseif (!isempty(fname_ps))
+	elseif (fname_ps != "")
 		out = fname_ps
+		if (fname != "")
+			run(`mv $out $fname`)
+			out = fname
+		end
 	else
-		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O ")  end		# Close the PS file first
-		if (isempty(fname_ext))
+		if (K)  gmt("psxy -T -R0/1/0/1 -JX1 -O ")  end		# Close the PS file first
+		if (fname_ext == "")
 			return gmt("psconvert = -A1p")					# Return a GMTimage object
 		else
 			out = tempdir() * "GMTjl_tmp.pdf"
 			gmt("psconvert = -A1p -Tf -F" * out)
 		end
 	end
-	@static if (Sys.iswindows()) run(ignorestatus(`explorer $out`))
-	elseif (Sys.isapple()) run(`open $(out)`)
-	elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
+
+	if (haskey(d, :show) && d[:show] != 0)
+		@static if (Sys.iswindows()) run(ignorestatus(`explorer $out`))
+		elseif (Sys.isapple()) run(`open $(out)`)
+		elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
+		end
 	end
 end
 
@@ -1651,6 +1646,8 @@ end
 function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String, 
 						   opt_T::String, K::Bool, prog::String, arg1=[], arg2=[], arg3=[], 
 						   arg4=[], arg5=[], arg6=[])
+	# FNAME_EXT hold the extension when not PS
+	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
 			if ((r = dbg_print_cmd(d, cmd[k], prog)) !== nothing)  return r  end 	# For tests only
@@ -1676,14 +1673,18 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 		end
 	end
 
-	if (isempty(fname_ext) && isempty(opt_extra))	# Return result as an GMTimage
-		P = showfig(output, fname_ext, "", K)
-	else
-		if (haskey(d, :show) && d[:show] != 0) 		# Display Fig in default viewer
-			showfig(output, fname_ext, opt_T, K)
-		elseif (haskey(d, :savefig))
-			showfig(output, fname_ext, opt_T, K, d[:savefig])
+	fname = ""
+	if (haskey(d, :savefig))		# Also ensure that file has the right extension
+		fname, ext = splitext(d[:savefig])
+		if (fname_ext != "")  fname *= '.' * fname_ext
+		else                  fname *= ext			# PS, otherwise shit had happened
 		end
+	end
+
+	if (isempty(fname_ext) && isempty(opt_extra))	# Return result as an GMTimage
+		P = showfig(d, output, fname_ext, "", K)
+	elseif ((haskey(d, :show) && d[:show] != 0) || fname != "")
+		showfig(d, output, fname_ext, opt_T, K, fname)
 	end
 	return P
 end
