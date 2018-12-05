@@ -496,7 +496,7 @@ function arrows(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs..
 	# A arrows plotting method of plot
 
 	d = KW(kwargs)
-	cmd = helper_arrows(d)
+	cmd = helper_arrows(d, true)	# Have to delete to avoid double parsing in -W
 	if (cmd == "")  cmd = " -Sv0.5+e+h0.5"	# Minimalist defaults
 	else            cmd = " -S" * cmd
 	end
@@ -504,7 +504,7 @@ function arrows(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs..
 	GMT.common_plot_xyz(cmd0, arg1, cmd, K, O, first, false, d...)
 end
 
-function helper_arrows(d::Dict)
+function helper_arrows(d::Dict, del::Bool=false)
 	# Helper function to set the vector head attributes
 	cmd = ""
 	val, symb = find_in_dict(d, [:arrow :vector :vecmap :geovec :geovector])
@@ -522,6 +522,7 @@ function helper_arrows(d::Dict)
 		else
 			cmd = code * vector_attrib(val)
 		end
+		if (del)  delete!(d, symb)  end
 	end
 	return cmd
 end
