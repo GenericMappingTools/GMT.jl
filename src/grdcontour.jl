@@ -96,17 +96,14 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; K=false, O=false, first=t
 		cmd = add_opt(cmd, 'C', d, [:cont :contours :levels])
 	end
 
-	for symb in [:N :fill]
-		if (haskey(d, symb))
-			if (isa(d[symb], GMTcpt))
-				if (!isempty_(arg2))	# Already have one cpt in arg2, replace it by new one
-					arg2 = []
-				end
-				cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:N :fill], 'N', N_used, arg1, arg2)
-			else
-				cmd = cmd * " -N"
+	if ((val = find_in_dict(d, [:N :fill])[1]) !== nothing)
+		if (isa(val, GMTcpt))
+			if (!isempty_(arg2))	# Already have one cpt in arg2, replace it by new one
+				arg2 = []
 			end
-			break
+			cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:N :fill], 'N', N_used, arg1, arg2)
+		else
+			cmd *= " -N"
 		end
 	end
 

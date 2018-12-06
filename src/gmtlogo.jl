@@ -43,8 +43,8 @@ function logo(cmd0::String=""; K=false, O=false, first=true, kwargs...)
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
-	cmd = parse_common_opts(d, cmd, [:JZ :UVXY :t :params])
+	cmd, = parse_R("", d, O)
+	cmd, = parse_J(cmd, d, "", true, O)
 
 	cmd, K, O = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 

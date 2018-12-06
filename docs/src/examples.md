@@ -22,7 +22,6 @@ some curvy lines.
 
 ```julia
 x = range(0, stop=2pi, length=180);       seno = sin.(x/0.2)*45;
-- angle=xx sets the angle of the vector head apex [default 30]
 coast(region=[0 360 -90 90], proj="A300/30/6c", frame=:g, resolution="c", land=:navy)
 
 plot!(collect(x)*60, seno, lw=0.5, lc=:red, fmt=:png, marker=:circle,
@@ -53,9 +52,8 @@ examples because we will be using only one 2D array instead of 3 3D arrays (ref)
 contour line. *frame="a"* means pick a default automatic annotation and labeling for the axis.
 
 ```julia
-x,y,z=GMT.peaks()
-G = surface([x[:] y[:] z[:]], region=(-3,3,-3,3), inc=0.1);  # Iterpolate into a regular grid
-grdcontour(G, cont=1, annot=2, frame=:a, fmt=:png, show=true)
+G = GMT.peaks();
+grdcontour(G, cont=1, annot=2, fmt=:png, show=true)
 ```
 
 !["Simple black&white contour"](figures/hello-bw-contour.png)
@@ -67,7 +65,7 @@ are always set separately. Here we will create first a colormap with *makecpt* t
 
 ```julia
 cpt = makecpt(range=(-6,8,1));      # Create the color map
-grdcontour(G, frame=:a, fmt=:png, color=cpt, pen="+c", show=1)
+grdcontour(G, fmt=:png, color=cpt, pen="+c", show=1)
 ```
 
 !["Simple color contour"](figures/hello-color-contour.png)
