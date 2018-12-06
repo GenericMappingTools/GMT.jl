@@ -70,10 +70,10 @@ if (got_it)					# Otherwise go straight to end
 	r = decorated(dist=("0.8i","0.1i"), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, n_data=20, nudge=1, debug=1, dec2=1);
 	@test r == " -S~d0.8i/0.1i:+sa1+d+gblue+n1+w20+p0.5,green"
 	r = decorated(n_symbols=5, symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, quoted=1);
-	@test r == " -Sqdn5+p0.5,green"
+	@test r == " -Sqn5:+p0.5,green"
 
 	r = decorated(dist=("0.4i",0.25), angle=7, clearance=(2,3), debug=1, delay=1, font=10, color=:red, justify=:TC, const_label=:Ai, pen=(0.5,:red), fill=:blue, nudge=(3,4), rounded=1, unit=:TT, min_rad=0.5, curved=1, n_data=20, prefix="Pre", suffices="a,b", label=(:map_dist,"d"), quoted=1)
-	@test r == " -Sqd0.4i/0.25+a7+d+c2/3+e+f10+gred+jTC+lAi+n3/4+o+r0.5+uTT+v+w20+=Pre+xa,b+LDd+p0.5,red"
+	@test r == " -Sqd0.4i/0.25:+a7+d+c2/3+e+f10+gred+jTC+lAi+n3/4+o+r0.5+uTT+v+w20+=Pre+xa,b+LDd+p0.5,red"
 
 	@test GMT.get_color((1,2,3)) == "1/2/3"
 	@test GMT.get_color([1 2 3; 3 4 5; 6 7 8]) == "1/3/6,3/4/5,6/7/8"
@@ -340,6 +340,10 @@ if (got_it)					# Otherwise go straight to end
 	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 	D = histogram(randn(1000), I=:o, W=0.1);
 	lines(D, steps=(x=true,), close=(bot="",))
+	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
+	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna),
+	decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=:cmd);
+	@test r[1:85] == " -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -R0/6/-1/0.7 -JX40/8 -B+g220 --PS_MEDIA=A1 -W2,sienna"
 
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
