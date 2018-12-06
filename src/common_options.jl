@@ -1203,17 +1203,18 @@ function decorated(;kwargs...)
 		if (haskey(d, :fill))    cmd *= "+g" * get_color(d[:fill])    end
 		if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])   end
 		if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])  end
-		if (optD == "")  optD = "d"  end	# Need to find out also when it's -D
+		if (optD == "")  optD = "d"  end	# Really need to improve the algo of this
 		opt_S = " -S~"
 	elseif (haskey(d, :quoted))				# -Sq mode (quoted lines).
+		cmd *= ":"
 		if (haskey(d, :angle))   cmd  = string(cmd, "+a", d[:angle])  end
 		if (haskey(d, :debug))   cmd *= "+d"  end
 		if (haskey(d, :clearance ))  cmd *= "+c" * arg2str(d[:clearance]) end
 		if (haskey(d, :delay))   cmd *= "+e"  end
 		if (haskey(d, :font))    cmd *= "+f" * font(d[:font])    end
 		if (haskey(d, :color))   cmd *= "+g" * arg2str(d[:color])   end
-		if (haskey(d, :justify)) cmd *= "+j" * arg2str(d[:justify]) end
-		if (haskey(d, :const_label)) cmd *= "+l" * arg2str(d[:const_label])  end
+		if (haskey(d, :justify)) cmd = string(cmd, "+j", d[:justify]) end
+		if (haskey(d, :const_label)) cmd = string(cmd, "+l", str_with_blancs(d[:const_label]))  end
 		if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])   end
 		if (haskey(d, :rounded)) cmd *= "+o"  end
 		if (haskey(d, :min_rad)) cmd *= "+r" * arg2str(d[:min_rad]) end
@@ -1239,7 +1240,7 @@ function decorated(;kwargs...)
 				@warn("'label' option must be a string or a NamedTuple. Since it wasn't I'm ignoring it.")
 			end
 		end
-		if (optD == "")  optD = "d"  end	# Need to find out also when it's -D
+		if (optD == "")  optD = "d"  end	# Really need to improve the algo of this
 		opt_S = " -Sq"
 	else									# -Sf mode (front lines).
 		if     (haskey(d, :left))  cmd *= "+l"
@@ -1288,8 +1289,9 @@ function helper_decorated(d::Dict)
 	if (cmd == "")
 		if ((val = find_in_dict(d, [:lines :Lines])[1]) !== nothing)
 			if (!isa(val, Array) && size(val,2) !=4)
-				@warn("DECORATED: lines option must me an Array Mx4. Ignoring this.")
+				@warn("DECORATED: lines option must be an Array Mx4. Ignoring this.")
 			else
+				# THIS s DOES NOT SEEM TO BE USED
 				opt = string(val)
 				s = string("+",opt[1], val[1,1],'/',val[1,2],'/',val[1,3],'/',val[1,4])
 				for k = 2:size(val,1)
@@ -1300,15 +1302,15 @@ function helper_decorated(d::Dict)
 	end
 	if (cmd == "")
 		if ((val = find_in_dict(d, [:n_labels :n_symbols])[1]) !== nothing)
-			cmd = string("n", val);
+			optD = string("n", val);
 		end
 	end
 	if (cmd == "")
 		if ((val = find_in_dict(d, [:N_labels :N_symbols])[1]) !== nothing)
-			cmd = string("N", val);
+			optD = string("N", val);
 		end
 	end
-	if (cmd == "")
+	if (cmd == "" && optD == "")
 		error("DECORATED: no controlling algorithm to place the elements was provided (dist, n_symbols, etc).")
 	end
 	return cmd, optD
