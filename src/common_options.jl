@@ -61,19 +61,17 @@ function parse_JZ(cmd::String, d::Dict, del=false)
 	opt_J = ""
 	val, symb = find_in_dict(d, [:JZ :Jz])
 	if (val !== nothing)
-		if (symb == :JZ)
-			opt_J = " -JZ" * arg2str(val)
-		else
-			opt_J = " -Jz" * arg2str(val)
+		if (symb == :JZ)  opt_J = " -JZ" * arg2str(val)
+		else              opt_J = " -Jz" * arg2str(val)
 		end
-		cmd = cmd * opt_J
+		cmd *= opt_J
 		if (del) delete!(d, symb) end
 	end
 	return cmd, opt_J
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
+function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
 	# Default to 14c if no size is provided.
 	# If MAP == false, do not try to append a fig size
@@ -101,6 +99,8 @@ function parse_J(cmd::String, d::Dict, map=true, O=false, del=false)
 			if (opt_J == " -JX")  isletter(val[1]) ? opt_J = " -J" * val : opt_J = " -Jx" * val	# FRAGILE
 			else                  opt_J *= string(val)
 			end
+		elseif (default != "" && opt_J == "")		# WILL SCREW SO EASILY!!! 
+			opt_J = default
 		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
 			if !(length(opt_J) >= 6 && isnumeric(opt_J[6]))
 				opt_J *= def_fig_size[1:3]		# If no size, default to 12 centimeters
@@ -146,11 +146,8 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
 	t = ""		# Use the trick to replace blanks by some utf8 char and undo it in extra_parse
 	if (haskey(d, :title))   t *= "+t"  * replace(str_with_blancs(d[:title]), ' '=>'\U00AF');   end
-	if (haskey(d, :xlabel))  t *= "x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\U00AF');   end
-	if (haskey(d, :ylabel))  t *= "y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\U00AF');   end
-	#if (haskey(d, :title))  t *= "+t"  * str_with_blancs(d[:title]);   delete!(d, :title)   end
-	#if (haskey(d, :xlabel)) t *= " x+l" * str_with_blancs(d[:xlabel]);  delete!(d, :xlabel)  end
-	#if (haskey(d, :ylabel)) t *= " y+l" * str_with_blancs(d[:ylabel]);  delete!(d, :ylabel)  end
+	if (haskey(d, :xlabel))  t *= " x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\U00AF');   end
+	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\U00AF');   end
 	if (t != "")
 		if (opt_B == "")
 			opt_B = def_fig_axes
@@ -232,13 +229,14 @@ end
 function parse_BJR(d::Dict, cmd::String, caller, O, default, del=false)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(cmd, d, O, del)
-	cmd, opt_J = parse_J(cmd, d, true, O, del)
-	if (!O && isempty(opt_J))			# If we have no -J use this default
+	cmd, opt_J = parse_J(cmd, d, default, true, O, del)
+	if (!O && opt_J == "")			# If we have no -J use this default
 		opt_J = default					# " -JX12c/8c" (e.g. psxy) or " -JX12c/0" (e.g. grdimage)
 		cmd *= opt_J
-	elseif (O && isempty(opt_J))
+	elseif (O && opt_J == "")
 		cmd *= " -J"
 	end
+
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (caller == "plot3d" || caller == "bar3" || caller == "scatter3")
 			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes3), del)
@@ -246,14 +244,14 @@ function parse_BJR(d::Dict, cmd::String, caller, O, default, del=false)
 			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes), del)	# For overlays, default is no axes
 		end
 	else
-		cmd, opt_B = parse_B(cmd, d, "", del)
+		cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes), del)
 	end
 	return cmd, opt_B, opt_J, opt_R
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)
-	# Parse the global -U, -X, -Y options. Return CMD same as input if no option  OPT in args
+	# Parse the global -U, -X, -Y options. Return CMD same as input if no option OPT in args
 	# ALIASES: [:X :x_off :x_offset] (same for Y) or [:U :time_stamp :stamp]
 	if ((val = find_in_dict(d, aliases)[1]) !== nothing)
 		cmd = string(cmd, " -", opt, val)
@@ -961,25 +959,25 @@ function helper0_axes(arg)
 	for k = 1:length(arg)
 		t = string(arg[k])		# For the case it was a symbol
 		if (occursin("_f", t))
-			if     (t[1] == 'l')  opt *= 'W'
-			elseif (t[1] == 'b')  opt *= 'S'
-			elseif (t[1] == 'r')  opt *= 'E'
-			elseif (t[1] == 't')  opt *= 'N'
-			elseif (t[1] == 'u')  opt *= 'Z'
+			if     (t[1] == 'l')  opt *= "W"
+			elseif (t[1] == 'b')  opt *= "S"
+			elseif (t[1] == 'r')  opt *= "E"
+			elseif (t[1] == 't')  opt *= "N"
+			elseif (t[1] == 'u')  opt *= "Z"
 			end
 		elseif (occursin("_t", t))
-			if     (t[1] == 'l')  opt *= 'w'
-			elseif (t[1] == 'b')  opt *= 's'
-			elseif (t[1] == 'r')  opt *= 'e'
-			elseif (t[1] == 't')  opt *= 'n'
-			elseif (t[1] == 'u')  opt *= 'z'
+			if     (t[1] == 'l')  opt *= "w"
+			elseif (t[1] == 'b')  opt *= "s"
+			elseif (t[1] == 'r')  opt *= "e"
+			elseif (t[1] == 't')  opt *= "n"
+			elseif (t[1] == 'u')  opt *= "z"
 			end
 		elseif (occursin("_b", t))
-			if     (t[1] == 'l')  opt *= 'l'
-			elseif (t[1] == 'b')  opt *= 'b'
-			elseif (t[1] == 'r')  opt *= 'r'
-			elseif (t[1] == 't')  opt *= 't'
-			elseif (t[1] == 'u')  opt *= 'u'
+			if     (t[1] == 'l')  opt *= "l"
+			elseif (t[1] == 'b')  opt *= "b"
+			elseif (t[1] == 'r')  opt *= "r"
+			elseif (t[1] == 't')  opt *= "t"
+			elseif (t[1] == 'u')  opt *= "u"
 			end
 		end
 	end
@@ -1001,23 +999,23 @@ function helper2_axes(arg)
 		@warn("Empty units. Ignoring this units request.")
 		return out
 	end
-	if     (out == 'Y' || out == "year")     out = 'Y'
-	elseif (out == 'y' || out == "year2")    out = 'y'
-	elseif (out == 'O' || out == "month")    out = 'O'
-	elseif (out == 'o' || out == "month2")   out = 'o'
-	elseif (out == 'U' || out == "ISOweek")  out = 'U'
-	elseif (out == 'u' || out == "ISOweek2") out = 'u'
-	elseif (out == 'r' || out == "Gregorian_week") out = 'r'
-	elseif (out == 'K' || out == "ISOweekday") out = 'K'
-	elseif (out == 'D' || out == "date")     out = 'D'
-	elseif (out == 'd' || out == "day_date") out = 'd'
-	elseif (out == 'R' || out == "day_week") out = 'R'
-	elseif (out == 'H' || out == "hour")     out = 'H'
-	elseif (out == 'h' || out == "hour2")    out = 'h'
-	elseif (out == 'M' || out == "minute")   out = 'M'
-	elseif (out == 'm' || out == "minute2")  out = 'm'
-	elseif (out == 'S' || out == "second")   out = 'S'
-	elseif (out == 's' || out == "second2")  out = 's'
+	if     (out == "Y" || out == "year")     out = 'Y'
+	elseif (out == "y" || out == "year2")    out = 'y'
+	elseif (out == "O" || out == "month")    out = 'O'
+	elseif (out == "o" || out == "month2")   out = 'o'
+	elseif (out == "U" || out == "ISOweek")  out = 'U'
+	elseif (out == "u" || out == "ISOweek2") out = 'u'
+	elseif (out == "r" || out == "Gregorian_week") out = 'r'
+	elseif (out == "K" || out == "ISOweekday") out = 'K'
+	elseif (out == "D" || out == "date")     out = 'D'
+	elseif (out == "d" || out == "day_date") out = 'd'
+	elseif (out == "R" || out == "day_week") out = 'R'
+	elseif (out == "H" || out == "hour")     out = 'H'
+	elseif (out == "h" || out == "hour2")    out = 'h'
+	elseif (out == "M" || out == "minute")   out = 'M'
+	elseif (out == "m" || out == "minute2")  out = 'm'
+	elseif (out == "S" || out == "second")   out = 'S'
+	elseif (out == "s" || out == "second2")  out = 's'
 	else
 		@warn("Unknown units request (" * out * ") Ignoring it")
 		out = ""
@@ -1082,7 +1080,7 @@ end
 
 function str_with_blancs(str)
 	# If the STR string has spaces enclose it with quotes
-	out = str
+	out = string(str)
 	if (occursin(" ", out))  out = string("\"", out, "\"")  end
 	return out
 end
@@ -1699,12 +1697,22 @@ function monolitic(prog::String, cmd0::String, args...)
 end
 
 # --------------------------------------------------------------------------------------------------
-function peaks(N=49)
+function peaks(; N=49, grid=true)
 	x,y = meshgrid(range(-3,stop=3,length=N))
 	
 	z =  3 * (1 .- x).^2 .* exp.(-(x.^2) - (y .+ 1).^2) - 10*(x./5 - x.^3 - y.^5) .* exp.(-x.^2 - y.^2)
 	   - 1/3 * exp.(-(x .+ 1).^2 - y.^2)
-	return x,y,z
+
+	if (grid)
+		x = collect(range(-3,stop=3,length=N))
+		y = deepcopy(x)
+		z = Float32.(z)
+		G = GMTgrid("", "", [x[1], x[end], y[1], y[end], minimum(z), maximum(z)], [x[2]-x[1], y[2]-y[1]], 
+					0, NaN, "", "", "", "", x, y, z, "x", "y", "z", "")
+		return G
+	else
+		return x,y,z
+	end
 end	
 
 meshgrid(v::AbstractVector) = meshgrid(v, v)

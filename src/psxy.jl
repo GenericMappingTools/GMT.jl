@@ -151,7 +151,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	if (!occursin("-J", cmd))			# bar, bar3 and others may send in a -J
 		opt_J = " -JX" * def_fig_size
-		if ((val = find_in_dict(d, [:axis :aspect])[1]) !== nothing)
+		if ((val = find_in_dict(d, [:aspect :axis])[1]) !== nothing)
 			if (val == "equal" || val == :equal)	# Need also a 'tight' option?
 				if ((ind = findfirst("/", opt_J)) !== nothing)	# Already had something in height
 					opt_J = opt_J[1:ind[1]-1] * "/0"
@@ -169,7 +169,8 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :xy :UVXY :params])
+	cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :xy :params])
+	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
 
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
@@ -266,20 +267,22 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
 	cmd = check_caller(d, cmd, opt_S, sub_module, O)
 
+	if (occursin(" -B0", cmd))  cmd = replace(cmd, " -B0" => "")  end	# -B0 really means NO AXES
+
 	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
-		cmd = [finish_PS(d, cmd * opt_W, output, K, O)]
+		cmd = [finish_PS(d, cmd * opt_W * opt_UVXY, output, K, O)]
 
 	elseif (opt_W == "" && opt_S != "")						# We have a symbol request
 		if (opt_Wmarker != "" && opt_W == "")
 			opt_Gsymb = opt_Gsymb * " -W" * opt_Wmarker		# Piggy back in this option string
 		end
 		if (opt_ML != "")  cmd = cmd * opt_ML  end			# If we have a symbol outline pen
-		cmd = [finish_PS(d, cmd * opt_S * opt_Gsymb, output, K, O)]
+		cmd = [finish_PS(d, cmd * opt_S * opt_Gsymb * opt_UVXY, output, K, O)]
 
 	elseif (opt_W != "" && opt_S != "")						# We have both line/polygon and a symbol
 		if (occursin(opt_Gsymb, cmd))  opt_Gsymb = ""  end
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
-			cmd = [finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb, output, K, O)]
+			cmd = [finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY, output, K, O)]
 		else
 			if (opt_Wmarker != "")
 				opt_Wmarker = " -W" * opt_Wmarker			# Set Symbol edge color 
@@ -287,15 +290,15 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 			cmd1 = cmd * opt_W
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
 			if (opt_ML != "")  cmd1 = cmd1 * opt_ML  end	# If we have a symbol outline pen
-			cmd = [finish_PS(d, cmd1, output, true, O)
+			cmd = [finish_PS(d, cmd1 * opt_UVXY, output, true, O)
 			       finish_PS(d, cmd2, output, K, true)]
 		end
 
 	elseif (opt_S != "" && opt_ML != "")					# We have a symbol outline pen
-		cmd = [finish_PS(d, cmd * opt_ML * opt_S * opt_Gsymb, output, K, O)]
+		cmd = [finish_PS(d, cmd * opt_ML * opt_S * opt_Gsymb * opt_UVXY, output, K, O)]
 
 	else
-		cmd = [finish_PS(d, cmd, output, K, O)]
+		cmd = [finish_PS(d, cmd * opt_UVXY, output, K, O)]
 	end
 
 	r = finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, gmt_proggy, arg1, arg2)

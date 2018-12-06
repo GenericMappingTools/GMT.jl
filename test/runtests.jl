@@ -33,8 +33,8 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_inc("",Dict(:inc => "2"),[:I :inc], "I") == " -I2"
 	@test GMT.parse_JZ("", Dict(:JZ => "5c"))[1] == " -JZ5c"
 	@test GMT.parse_JZ("", Dict(:Jz => "5c"))[1] == " -Jz5c"
-	@test GMT.parse_J("", Dict(:J => "X5"), false)[1] == " -JX5"
-	@test GMT.parse_J("", Dict(:a => ""), true, true)[1] == " -J"
+	@test GMT.parse_J("", Dict(:J => "X5"), "", false)[1] == " -JX5"
+	@test GMT.parse_J("", Dict(:a => ""), "", true, true)[1] == " -J"
 	@test GMT.parse_J("", Dict(:J => "X", :figsize => 10))[1] == " -JX10"
 	@test GMT.parse_J("",Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
 	r = GMT.parse_params("", Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")));
@@ -217,8 +217,7 @@ if (got_it)					# Otherwise go straight to end
 	GG = gmt("read -Tg lixo.grd");
 	C = grdcontour("lixo.grd", C="+0.7", D=[]);
 	@assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
-	x,y,z=GMT.peaks()
-	G = gmt("surface -R-3/3/-3/3 -I0.1", [x[:] y[:] z[:]]);
+	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
 	grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, U=[])
 
@@ -425,7 +424,7 @@ if (got_it)					# Otherwise go straight to end
 	@test r[1:54] == " -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude"
 
 	# PSCONTOUR
-	x,y,z=GMT.peaks();
+	x,y,z=GMT.peaks(grid=false);
 	contour([x[:] y[:] z[:]], cont=1, annot=2, frame="a")
 	contour!([x[:] y[:] z[:]], cont=1, Vd=:cmd)
 	contour!("", [x[:] y[:] z[:]], cont=1, Vd=:cmd)
@@ -544,11 +543,10 @@ if (got_it)					# Otherwise go straight to end
 	plot!(collect(x)*60, seno, lw=0.5, lc="red", marker="circle",
 		markeredgecolor=0, size=0.05, markerfacecolor="cyan")
 
-	x,y,z=GMT.peaks()
-	G = surface([x[:] y[:] z[:]], R="-3/3/-3/3", I=0.1);	# Iterpolate into a regular grid
+	G = GMT.peaks()
 	grdcontour(G, cont=1, annot=2, frame="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
-	grdcontour(G, frame="a", color=cpt, pen="+c")
+	grdcontour(G, frame="a", color=cpt, pen="+c", fmt=:ps, savefig="lixo")
 
 	# Remove garbage
 	rm("gmt.history")
