@@ -5,7 +5,7 @@ Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
 | **Documentation**                       | **Build Status (Julia 0.7)**              |
 |:---------------------------------------:|:-----------------------------------------:|
-| [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] |
+| [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] [![Coverage Status]([coveralls-img])]([coveralls-url]) |
 
 [gitter-url]: https://gitter.im/genericmappingtools/users
 
@@ -25,6 +25,9 @@ Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
 [codecov-img]: http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg?branch=master
 [codecov-url]: http://codecov.io/github/GenericMappingTools/GMT.jl?branch=master
+
+[coveralls-img]: https://coveralls.io/repos/github/GenericMappingTools/GMT.jl/badge.svg?branch=master
+[coveralls-url]: https://coveralls.io/github/GenericMappingTools/GMT.jl?branch=master
 
 [issues-url]: https://github.com/JuliaDocs/GMT.jl/issues
 
