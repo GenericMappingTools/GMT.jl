@@ -45,7 +45,7 @@ GMT uses the notion of *primary* (the default) and *secondary* axes. To set an a
 *secondary=true* (mostly used for time axes annotations).
 
 The *xaxis* *yaxis* and *zaxis* specify which axis you are providing information for. The syntax is the same
-as for the *axis* keyword but allows fine tuning of different options for the 4 (or 6) axes.
+as for the *axis* keyword but allows fine tuning of different options for the 4 (or 5) axes.
 
 To add a label, to an axis use *label="Label text"* if using the *xaxis* etc form, or use the *xlabel*, *ylabel*
 and *zlabel* keywords in the common *axis* tuple of options.
