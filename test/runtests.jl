@@ -551,7 +551,7 @@ if (got_it)					# Otherwise go straight to end
 	G = GMT.peaks()
 	grdcontour(G, cont=1, annot=2, frame="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
-	grdcontour(G, frame="a", color=cpt, pen="+c", fmt=:ps, savefig="lixo")
+	grdcontour(G, frame="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
 
 	# Remove garbage
 	rm("gmt.history")
