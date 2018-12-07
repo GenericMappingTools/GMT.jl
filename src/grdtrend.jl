@@ -47,7 +47,7 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	if (occursin("-D", cmd) && occursin("-T", cmd))
 		@warn("Usage error, both difference and trend were required. Ignoring the trend request.")
 	elseif (!occursin("-D", cmd) && !occursin("-T", cmd))
-		cmd = cmd * " -T" 			# No -T -or -D provided so default to -T
+		cmd *= " -T" 			# No -T -or -D provided so default to -T
 	end
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
