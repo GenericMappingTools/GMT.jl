@@ -82,7 +82,7 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 
 	if ((val = find_in_dict(d, [:I :shade :intensity :intensfile])[1]) !== nothing)
 		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
-			cmd = cmd * " -I" * arg2str(val)
+			cmd *= " -I" * arg2str(val)
 		else
 			cmd, N_used = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3])
 			if (N_used == 1)     arg1 = val
@@ -94,7 +94,7 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 
 	if ((val = find_in_dict(d, [:G :drapefile])[1]) !== nothing)
 		if (isa(val, String))				# Uff, simple. Either a file name or a -A type modifier
-			cmd = cmd * " -G" * val
+			cmd *= " -G" * val
 		elseif (isa(val, GMTgrid))			# A single drape grid (arg1-3 may be used already)
 			cmd, N_used = put_in_slot(cmd, val, 'G', [arg1, arg2, arg3, arg4])
 			if (N_used == 1)     arg1 = val
@@ -104,7 +104,7 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 			end
 		elseif (isa(val, Tuple) && length(val) == 3)
 			cmd, N_used = put_in_slot(cmd, val[1], 'G', [arg1, arg2, arg3, arg4, arg5, arg6])
-			cmd = cmd * " -G -G"	# Because the above only set one -G and we need 3
+			cmd *= " -G -G"		# Because the above only set one -G and we need 3
 			if (N_used == 1)      arg1 = val[1];	arg2 = val[2];		arg3 = val[3]
 			elseif (N_used == 2)  arg2 = val[1];	arg3 = val[2];		arg4 = val[3]
 			elseif (N_used == 3)  arg3 = val[1];	arg4 = val[2];		arg5 = val[3]

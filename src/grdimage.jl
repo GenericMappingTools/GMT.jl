@@ -93,19 +93,16 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; K=false, 
 		error("Cannot use the three R,G,B grids and a color table.")
 	end
 
-	for sym in [:I :shade :intensity :intensfile]
-		if (haskey(d, sym))
-			if (!isa(d[sym], GMTgrid))		# Uff, simple. Either a file name or a -A type modifier
-				cmd = cmd * " -I" * arg2str(d[sym])
-			else
-				cmd, N = put_in_slot(cmd, d[sym], 'I', [arg1, arg2, arg3, arg4])
-				if (N == 1)     arg1 = d[sym]
-				elseif (N == 2) arg2 = d[sym]
-				elseif (N == 3) arg3 = d[sym]
-				elseif (N == 4) arg4 = d[sym]
-				end
+	if ((val = find_in_dict(d, [:I :shade :intensity :intensfile])[1]) !== nothing)
+		if (!isa(val, GMTgrid))		# Uff, simple. Either a file name or a -A type modifier
+			cmd *= " -I" * arg2str(val)
+		else
+			cmd, N = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3, arg4])
+			if (N == 1)     arg1 = val
+			elseif (N == 2) arg2 = val
+			elseif (N == 3) arg3 = val
+			elseif (N == 4) arg4 = val
 			end
-			break
 		end
 	end
 

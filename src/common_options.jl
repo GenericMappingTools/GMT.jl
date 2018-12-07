@@ -1681,8 +1681,9 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 		end
 	end
 
-	if (isempty(fname_ext) && isempty(opt_extra))	# Return result as an GMTimage
+	if (fname_ext == "" && opt_extra == "")	# Return result as an GMTimage
 		P = showfig(d, output, fname_ext, "", K)
+		gmt("destroy")				# Returning a PS screws the session
 	elseif ((haskey(d, :show) && d[:show] != 0) || fname != "")
 		showfig(d, output, fname_ext, opt_T, K, fname)
 	end
