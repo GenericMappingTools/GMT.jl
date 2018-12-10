@@ -25,7 +25,7 @@ Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.h
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html#i)
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
-- **L** : **equal_size** : -- Str or [] --
+- **L** : **equal** : **equal_size** : -- Str or [] --
 
     Gives equal-sized color rectangles. Default scales rectangles according to the z-range in the CPT.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html#l)
@@ -72,7 +72,7 @@ function colorbar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs
 	cmd = add_opt(cmd, 'F', d, [:F :box])
 	cmd = add_opt(cmd, 'G', d, [:G :truncate])
     cmd = add_opt(cmd, 'I', d, [:I :shade])
-	cmd = add_opt(cmd, 'L', d, [:L :equal_size])
+	cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
 	cmd = add_opt(cmd, 'M', d, [:M :monochrome])
 	cmd = add_opt(cmd, 'N', d, [:N :dpi])
     cmd = add_opt(cmd, 'Q', d, [:Q :log])

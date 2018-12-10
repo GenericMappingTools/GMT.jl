@@ -702,7 +702,13 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 	cmd = ""
 	for k = 1:length(key)			# Loop over the keys of option's tuple
 		if (haskey(d, key[k]))
-			if (d[key[k]] == "1")	# Means that only first char in value is retained. Used with units
+			if (isa(d[key[k]], Tuple))	# Complexify it
+				if (isa(nt[k], NamedTuple))
+					cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), [])
+				else
+					cmd *= d[key[k]][1] * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])
+				end
+			elseif (d[key[k]] == "1")	# Means that only first char in value is retained. Used with units
 				t = arg2str(nt[k])
 				if (t != "")  cmd *= t[1]
 				else          cmd *= "1"	# "1" is itself the flag

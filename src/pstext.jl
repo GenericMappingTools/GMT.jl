@@ -37,7 +37,7 @@ Parameters
 
     Lists the font-numbers and font-names available, then exits.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#l)
-- **N** : **no_clip** : --- Str or [] --
+- **N** : **noclip** : **no_clip** : --- Str or [] --
 
     Do NOT clip text at map boundaries.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#n)
@@ -96,11 +96,13 @@ function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
 	cmd = add_opt(cmd, 'A', d, [:A :horizontal])
 	cmd = add_opt(cmd, 'C', d, [:C :clearance])
-	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate])
-	cmd = add_opt(cmd, 'F', d, [:F :text :text_attrib])
+	cmd = add_opt(cmd, 'D', d, [:D :offset], (shift="", line="+v", pen=("",add_opt_pen)) )
+	cmd = add_opt(cmd, 'F', d, [:F :text :text_attrib],
+		(angle="+a", font="+f", justify="+j", region_justify="+c", header="+h", label="+l",
+		rec_number="+r", text="+t", zvalues="+z"))
 	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
 	cmd = add_opt(cmd, 'L', d, [:L :list])
-	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
+	cmd = add_opt(cmd, 'N', d, [:N :noclip :no_clip])
 	cmd = add_opt(cmd, 'Q', d, [:Q :change_case])
 	cmd = add_opt(cmd, 'T', d, [:T :text_box])
 	cmd = add_opt(cmd, 'Z', d, [:Z :threeD])

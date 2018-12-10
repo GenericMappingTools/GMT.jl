@@ -88,6 +88,13 @@ if (got_it)					# Otherwise go straight to end
 	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",));
 	@test GMT.parse_B("", d)[1] == " -Bsxa5f1 -Bpyclixo.txt -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10"
 	GMT.helper2_axes("lolo");
+
+	d=Dict(:L => (pen=(lw=10,lc=:red),) );
+	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
+	r = psxy([0 0; 1 1.1], L=(pen=(10,:red),bot=true), Vd=:cmd);
+	@test r[1:45] == " -JX12c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb"
+	r = psxy([0 0; 1 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=:cmd);
+	@test r[1:44] == " -JX12c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb"
 	# ---------------------------------------------------------------------------------------------------
 
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);

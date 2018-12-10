@@ -192,7 +192,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		arg1 = reshape(arg1, :)				# Crazzy shit to allow increasing the arg1 matrix
 		cmd = add_opt(cmd, 'E', d, [:E :error :error_bars],
 					  (x="|x",y="|y",xy="|xy",X="|X",Y="|Y",asym="+a",cline="+cl",csymbol="+cf",
-					   wiskers="|+n",cap="+w",pen="+p"), false, arg1)
+					   wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, arg1)
 		arg1 = reshape(arg1, n_rows, :)
 	end
 
@@ -210,7 +210,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		got_pattern = true
 	end
 	cmd = add_opt(cmd, 'L', d, [:L :close],
-		  (left="+xl", right="+xr", bot="+yb", top="+yt", sym="+d", asym="+D", envelope="+b",pen="+p"))
+		  (left="+xl", right="+xr", bot="+yb", top="+yt", sym="+d", asym="+D", envelope="+b", pen=("+p",add_opt_pen) ))
 	if (occursin("-L", cmd) && !occursin("-G", cmd) && !occursin("+p", cmd))  cmd *= "+p0.5p"  end
 
 	opt_Wmarker = ""
@@ -497,18 +497,18 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
-psxy(arg1; caller=[], K=false, O=false, first=true, kw...) =
+psxy(arg1; caller="", K=false, O=false, first=true, kw...) =
 	psxy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
-psxy!(arg1; caller=[], K=true, O=true, first=false, kw...) =
+psxy!(arg1; caller="", K=true, O=true, first=false, kw...) =
 	psxy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
-psxy!(cmd0::String="", arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+psxy!(cmd0::String="", arg1=[]; caller="", K=true, O=true, first=false, kw...) =
 	psxy(cmd0, arg1; caller=caller, K=K, O=O, first=first, kw...)
-psxy!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+psxy!(arg1=[]; caller="", K=true, O=true, first=false, kw...) =
 	psxy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
 # ---------------------------------------------------------------------------------------------------
-psxyz!(cmd0::String="", arg1=[]; caller=[], K=true, O=true,  first=false, kw...) =
+psxyz!(cmd0::String="", arg1=[]; caller="", K=true, O=true,  first=false, kw...) =
 	psxyz(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
-psxyz!(arg1=[]; caller=[], K=true, O=true, first=false, kw...) =
+psxyz!(arg1=[]; caller="", K=true, O=true, first=false, kw...) =
 	psxyz("", arg1; caller=caller, K=K, O=O, first=first, kw...)
