@@ -809,6 +809,10 @@ function get_color(val)
 end
 
 # ---------------------------------------------------------------------------------------------------
+#font(d::Dict, symbs) = font(collect(values(d))[1])	# So far, for allow the generic call from add_opt()
+function font(d::Dict, symbs)
+	font(collect(values(d))[1])		# Don't understand why types got so complicated that must use 'collect'
+end
 function font(val)
 	# parse and create a font string.
 	# TODO: either add a NammedTuple option and/or guess if 2nd arg is the font name or the color

@@ -80,6 +80,8 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.get_color(:red) == "red"
 
 	@test GMT.font(("10p","Times", :red)) == "10p,Times,red"
+	r = text(text_record([0 0], "TopLeft"), R="1/10/1/10", J=:X10, F=(region_justify=:MC,font=("10p","Times", :red)), Vd=:cmd);
+	ind = findfirst("-F", r); @test GMT.strtok(r[ind[1]:end])[1] == "-F+cMC+f10p,Times,red"
 
 	@test GMT.build_pen(Dict(:lw => 1, :lc => (1,2,3))) == "1,1/2/3"
 	@test GMT.parse_pen((0.5, [1 2 3])) == "0.5,1/2/3"
@@ -227,6 +229,8 @@ if (got_it)					# Otherwise go straight to end
 	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
 	grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, U=[])
+	grdcontour!(G, frame="a", color=cpt, pen="+c", X=1, Y=1, Vd=:cmd)
+	grdcontour!("", G, frame="a", color=cpt, pen="+c", X=1, Y=1, Vd=:cmd)
 
 	# GRDCUT
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X Y");
@@ -452,6 +456,10 @@ if (got_it)					# Otherwise go straight to end
 	histogram(randn(1000),W=0.1,center=true,fmt="ps",B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
 	histogram("", randn(1000),W=0.1,center=true,N=0, Vd=:cmd)
 	histogram!(randn(1000),W=0.1,center=true,N=0, Vd=:cmd)
+
+	# PSLEGEND
+	T = text_record(["P", "T d = [0 0; 1 1; 2 1; 3 0.5; 2 0.25]"]);
+	legend(T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", F="+p+ggray")
 
 	# PSROSE
 	data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3;; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
