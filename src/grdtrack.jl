@@ -72,23 +72,20 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 
 	grid_tuple = nothing
-	for sym in [:G :grid]
-		if (haskey(d, sym))
-			if (isa(d[sym], Tuple))
-				grid_tuple = d[sym]
-				for k = 1:length(grid_tuple)	# Need as many -G as numel(grid_tuple)
-					cmd = string(cmd, " -G")
-				end
-			elseif (isa(d[sym], GMT.GMTgrid))
+	if ((val = find_in_dict(d, [:G :grid])[1]) !== nothing)
+		if (isa(val, Tuple))
+			grid_tuple = val
+			for k = 1:length(grid_tuple)	# Need as many -G as numel(grid_tuple)
 				cmd = string(cmd, " -G")
-				if     (isempty_(arg1))  arg1 = d[sym];
-				elseif (isempty_(arg2))  arg2 = d[sym];
-				else   error(string("Can't send the Grid data via G and input array"))
-				end
-			else
-				cmd = string(cmd, " -G", arg2str(d[sym]))
 			end
-			break
+		elseif (isa(val, GMT.GMTgrid))
+			cmd = string(cmd, " -G")
+			if     (isempty_(arg1))  arg1 = val;
+			elseif (isempty_(arg2))  arg2 = val;
+			else   error(string("Can't send the Grid data via G and input array"))
+			end
+		else
+			cmd = string(cmd, " -G", arg2str(val))
 		end
 	end
 

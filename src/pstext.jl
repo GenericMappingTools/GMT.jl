@@ -98,7 +98,7 @@ function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	cmd = add_opt(cmd, 'C', d, [:C :clearance])
 	cmd = add_opt(cmd, 'D', d, [:D :offset], (shift="", line="+v", pen=("",add_opt_pen)) )
 	cmd = add_opt(cmd, 'F', d, [:F :text :text_attrib],
-		(angle="+a", font="+f", justify="+j", region_justify="+c", header="+h", label="+l",
+		(angle="+a", font=("+f", font), justify="+j", region_justify="+c", header="+h", label="+l",
 		rec_number="+r", text="+t", zvalues="+z"))
 	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
 	cmd = add_opt(cmd, 'L', d, [:L :list])

@@ -1665,6 +1665,19 @@ function get_GMTversion(API::Ptr{Void})
 end
 
 # ---------------------------------------------------------------------------------------------------
+#=
+function text_record(text)
+	# For those that get coords from -R or for pslegend
+	if (isa(text, String))
+		text_record([0. 0], text)
+	elseif (isa(text, Array{String}))
+		data = zeros(length(text), 2)
+		text_record(data, text)
+	else
+		error(@sprintf("Bad type (%s) in text_record()", typeof(text)))
+	end
+end
+=#
 function text_record(data, text)
 	# Create a text record to send to pstext. DATA is the Mx2 coordinates array.
 	# TEXT is a string or a cell array
@@ -1690,7 +1703,7 @@ function text_record(data, text)
 	if (isa(data, Array{Float64,1}))  data = data[:,:]  end 	# Needs to be 2D
 
 	if (isa(text, String))
-		T = GMTdataset(data, [text], string(), Array{String,1}(), string(), string())
+		T = GMTdataset(data, [text], "", Array{String,1}(), "", "")
 	else
 		if (text[1][1] == '>')
 			#= This only works for one single segment
@@ -1704,12 +1717,12 @@ function text_record(data, text)
 				end
 			end
 			=#
-			T = GMTdataset(data, text[2:end], text[1], Array{String,1}(), string(), string())
+			T = GMTdataset(data, text[2:end], text[1], Array{String,1}(), "", "")
 		else
-			if (isa(text, Array{String,2}) && size(text, 1) == 1)	# A 2d array, cov to vec
+			if (isa(text, Array{String,2}) && size(text, 1) == 1)	# A 2d array, conv to vec
 				text = vec(text)
 			end
-			T = GMTdataset(data, text, string(), Array{String,1}(), string(), string())
+			T = GMTdataset(data, text, "", Array{String,1}(), "", "")
 		end
 	end
 	return T
