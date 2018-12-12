@@ -44,12 +44,12 @@ function logo(cmd0::String=""; K=false, O=false, first=true, kwargs...)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	K, O = set_KO(first)		# Set the K O dance
-
 	cmd, = parse_R("", d, O)
 	cmd, = parse_J(cmd, d, "", true, O)
 
 	cmd = add_opt(cmd, 'D', d, [:D :pos :position])
-	cmd = add_opt(cmd, 'F', d, [:F :box])
+	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
+	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
 	cmd = finish_PS(d, cmd, output, K, O)
 

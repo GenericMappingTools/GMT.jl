@@ -87,7 +87,7 @@ function gmtconvert(cmd0::String="", arg1=[]; kwargs...)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :s :xy])
 	cmd = parse_these_opts(cmd, d, [[:A :h_cat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
 		[:I :invert], [:L :list_only], [:L :extended_data], [:N :sort], [:Q :select_num], [:S :select_hdr],
-		[:T :suppress]], [:W :word2num], [:Z :range])
+		[:T :suppress], [:W :word2num], [:Z :range]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "gmtconvert", arg1)		# Finish build cmd and run it
