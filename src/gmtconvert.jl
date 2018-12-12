@@ -80,24 +80,14 @@ Parameters
 """
 function gmtconvert(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtconvert", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtconvert", cmd0, arg1)
 
 	d = KW(kwargs)
 
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :s :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :h_cat])
-	cmd = add_opt(cmd, 'C', d, [:C :n_records])
-	cmd = add_opt(cmd, 'D', d, [:D :dump])
-	cmd = add_opt(cmd, 'E', d, [:E :first_last])
-	cmd = add_opt(cmd, 'F', d, [:F :conn_method])
-	cmd = add_opt(cmd, 'I', d, [:I :invert])
-	cmd = add_opt(cmd, 'L', d, [:L :list_only])
-	cmd = add_opt(cmd, 'N', d, [:N :sort])
-	cmd = add_opt(cmd, 'Q', d, [:Q :select_num])
-	cmd = add_opt(cmd, 'S', d, [:S :select_hdr])
-	cmd = add_opt(cmd, 'T', d, [:T :suppress])
-	cmd = add_opt(cmd, 'W', d, [:W :word2num])
-	cmd = add_opt(cmd, 'Z', d, [:Z :range])
+	cmd = parse_these_opts(cmd, d, [[:A :h_cat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
+		[:I :invert], [:L :list_only], [:L :extended_data], [:N :sort], [:Q :select_num], [:S :select_hdr],
+		[:T :suppress], [:W :word2num], [:Z :range]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "gmtconvert", arg1)		# Finish build cmd and run it

@@ -457,6 +457,16 @@ function parse_common_opts(d, cmd, opts)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_these_opts(cmd, d, opts)
+	# Parse a group of options that individualualy would had been parsed as (example):
+	# cmd = add_opt(cmd, 'A', d, [:A :horizontal])
+	for opt in opts
+		cmd = add_opt(cmd, string(opt[1]), d, opt)
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_inc(cmd::String, d::Dict, symbs, opt, del=false)
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or 

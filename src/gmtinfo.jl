@@ -69,25 +69,15 @@ function gmtinfo(cmd0::String="", arg1=[]; kwargs...)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:V_params :e :f :h :o :r :xy])
-
-	cmd = add_opt(cmd, 'A', d, [:A])
-	cmd = add_opt(cmd, 'C', d, [:C :per_column])
-	cmd = add_opt(cmd, 'D', d, [:D :center])
-	cmd = add_opt(cmd, 'E', d, [:E :get_record])
-	cmd = add_opt(cmd, 'F', d, [:F :counts])
-	cmd = add_opt(cmd, 'I', d, [:I :report_region])
-	cmd = add_opt(cmd, 'L', d, [:L :common_limits])
-	cmd = add_opt(cmd, 'S', d, [:S :for_error_bars])
-	cmd = add_opt(cmd, 'T', d, [:T :nearest_multiple])
+	cmd = parse_these_opts(cmd, d, [[:A], [:C :per_column], [:D :center], [:E :get_record], [:F :counts],
+		[:I :report_region], [:L :common_limits], [:S :for_error_bars], [:T :nearest_multiple]])
 
 	# If file name sent in, read it.
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ", opt_i, opt_bi, opt_di)
 
 	(haskey(d, :Vd)) && println(@sprintf("\tgmtinfo %s", cmd))
 
-	if (!isempty_(arg1))  return gmt("gmtinfo " * cmd, arg1)
-	else                  return gmt("gmtinfo " * cmd)
-	end
+	return gmt("gmtinfo " * cmd, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
