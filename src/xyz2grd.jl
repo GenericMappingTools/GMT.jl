@@ -52,12 +52,8 @@ function xyz2grd(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :h :i :r :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :multiple_nodes])
-	cmd = add_opt(cmd, 'D', d, [:D :header])
-    cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-	cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, 'S', d, [:S :swap])
-	cmd = add_opt(cmd, 'Z', d, [:Z :flags])
+	cmd = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:G :outgrid], [:I :inc],
+				[:S :swap], [:Z :flags]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "xyz2grd", arg1)		# Finish build cmd and run it

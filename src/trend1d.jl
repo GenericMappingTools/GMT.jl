@@ -12,7 +12,7 @@ Parameters
 
     Specify up to five letters from the set {x y m r w} in any order to create columns of output. 
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/trend1d.html#f)
-- **N** : **model_components** : -- Str --      Flags = [p|P|f|F|c|C|s|S|x]n[,…][+llength][+oorigin][+r]
+- **N** : **n_model** : -- Str --      Flags = [p|P|f|F|c|C|s|S|x]n[,…][+llength][+oorigin][+r]
 
     Specify Specify the number of terms in the model, n_model, and append +r to do a robust fit. E.g., a robust bilinear model is -N4+r.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/trend1d.html#n)
@@ -46,11 +46,8 @@ function trend1d(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :xy])
-	cmd = add_opt(cmd, 'C', d, [:C :condition_number])
-	cmd = add_opt(cmd, 'I', d, [:I :confidence_level])
-	cmd = add_opt(cmd, 'F', d, [:F :output])
-	cmd = add_opt(cmd, 'N', d, [:N :model_components])
-	cmd = add_opt(cmd, 'W', d, [:W :weights])
+	cmd = parse_these_opts(cmd, d, [[:C :condition_number], [:I :confidence_level], [:F :output],
+				[:N :n_model], [:W :weights]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "trend1d", arg1)		# Finish build cmd and run it

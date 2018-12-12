@@ -85,18 +85,9 @@ function greenspline(cmd0::String="", arg1=[]; kwargs...)
 
     d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :bi :d :e :f :h :i :o :x :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :gradient])
-	cmd = add_opt(cmd, 'C', d, [:C :approx :approximate])
-	cmd = add_opt(cmd, 'D', d, [:D :mode])
-	cmd = add_opt(cmd, 'E', d, [:E :misfit])
-	cmd = add_opt(cmd, 'G', d, [:G :grid])
-	cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, 'L', d, [:L :leave_trend])
-	cmd = add_opt(cmd, 'N', d, [:N :nodes])
-	cmd = add_opt(cmd, 'Q', d, [:Q :dir_derivative])
-	cmd = add_opt(cmd, 'S', d, [:S :splines])
-	cmd = add_opt(cmd, 'T', d, [:T :mask])
-	cmd = add_opt(cmd, 'W', d, [:W :uncertainties])
+	cmd = parse_these_opts(cmd, d, [[:A :gradient], [:C :approx :approximate], [:D :mode], [:E :misfit],
+				[:G :grid], [:I :inc], [:L :leave_trend], [:N :nodes], [:Q :dir_derivative], [:S :splines],
+				[:T :mask], [:W :uncertainties]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "greenspline", arg1)		# Finish build cmd and run it

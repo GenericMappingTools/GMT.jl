@@ -54,13 +54,8 @@ function sphdistance(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :h :i :r :xy])
-	cmd = add_opt(cmd, 'C', d, [:C :save_mem])
-	cmd = add_opt(cmd, 'E', d, [:E :what_quantity])
-    cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-	cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, 'L', d, [:L :dist_unit])
-	cmd = add_opt(cmd, 'N', d, [:N :nodetable])
-	cmd = add_opt(cmd, 'Q', d, [:Q :voronoi_polyg])
+	cmd = parse_these_opts(cmd, d, [[:C :save_mem], [:E :what_quantity], [:G :outgrid], [:I :inc],
+				[:L :dist_unit], [:N :nodetable], [:Q :voronoi_polyg]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "sphdistance", arg1)		# Finish build cmd and run it

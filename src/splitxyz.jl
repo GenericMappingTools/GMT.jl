@@ -56,12 +56,8 @@ function splitxyz(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :bi :bo :di :do :e :f :g :h :i :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :azim_tol])
-	cmd = add_opt(cmd, 'C', d, [:C :course_change])
-	cmd = add_opt(cmd, 'D', d, [:D :min_dist :min_distance])
-	cmd = add_opt(cmd, 'F', d, [:F :filter])
-	cmd = add_opt(cmd, 'Q', d, [:Q :xyzdh])
-	cmd = add_opt(cmd, 'S', d, [:S :dh :dist_head])
+	cmd = parse_these_opts(cmd, d, [[:A :azim_tol], [:C :course_change], [:D :min_dist :min_distance], [:F :filter],
+				[:Q :xyzdh], [:S :dh :dist_head]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "splitxyz", arg1)		# Finish build cmd and run it
