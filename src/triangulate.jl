@@ -73,17 +73,8 @@ function triangulate(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :J :V_params :bi :bo :di :e :f :h :i :r :xy])
-	cmd = add_opt(cmd, 'C', d, [:C :slope_grid])
-	cmd = add_opt(cmd, 'D', d, [:D :derivatives])
-	cmd = add_opt(cmd, 'E', d, [:E :empty])
-    cmd = add_opt(cmd, 'G', d, [:G :grid :outgrid])
-	cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, 'M', d, [:N :network])
-	cmd = add_opt(cmd, 'N', d, [:N :ids])
-	cmd = add_opt(cmd, 'Q', d, [:Q :voronoi])
-	cmd = add_opt(cmd, 'S', d, [:S :triangles])
-	cmd = add_opt(cmd, 'T', d, [:T :edges])
-	cmd = add_opt(cmd, 'Z', d, [:Z :xyz :triplets])
+	cmd = parse_these_opts(cmd, d, [[:C :slope_grid], [:D :derivatives], [:E :empty], [:G :grid :outgrid],
+				[:I :inc], [:M :network], [:N :ids], [:Q :voronoi], [:S :triangles], [:T :edges], [:Z :xyz :triplets])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "triangulate", arg1)		# Finish build cmd and run it

@@ -37,7 +37,7 @@ Parameters
 - **Lu** : **upper** : -- Str or Number --
 
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#l)
-- **N** : **max_iterations** : -- Number --
+- **N** : **max_iter** : -- Number --
 
     Number of iterations. Iteration will cease when convergence_limit is reached or when number of
     iterations reaches max_iterations.
@@ -75,17 +75,9 @@ function surface(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :a :bi :di :e :f :h :i :r :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :aspect_ratio])
-	cmd = add_opt(cmd, 'C', d, [:C :convergence])
-	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-	cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, "Ll", d, [:Ll :lower])
-	cmd = add_opt(cmd, "Lu", d, [:Ll :upper])
-	cmd = add_opt(cmd, 'N', d, [:N :max_iterations])
-	cmd = add_opt(cmd, 'Q', d, [:Q :suggest])
-	cmd = add_opt(cmd, 'S', d, [:S :search_radius])
-	cmd = add_opt(cmd, 'T', d, [:T :tension])
-	cmd = add_opt(cmd, 'Z', d, [:Z :over_relaxation])
+	cmd = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:G :grid :outgrid], [:I :inc],
+				[:Ll :lower], [:Lu :upper], [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension],
+				[:Z :over_relaxation])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "surface", arg1)		# Finish build cmd and run it

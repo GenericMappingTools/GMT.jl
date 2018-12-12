@@ -58,12 +58,14 @@ function grd2kml(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :f])
+	cmd = parse_these_opts(cmd, d, [[:E :url], [:F :filter], [:H :sub_pixel], [:L :tile_size], [:N :prefix],
+				[:Q :nan_t :nan_alpha], [:T :title]])
 
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, arg2)
 
 	if ((val = find_in_dict(d, [:I :shade :intensity :intensfile])[1]) !== nothing)
 		if (!isa(val, GMTgrid))		# Uff, simple. Either a file name or a -A type modifier
-			cmd = cmd * " -I" * arg2str(val)
+			cmd *= " -I" * arg2str(val)
 		else
 			cmd,N_shade = put_in_slot(cmd, val, 'I', [arg1, arg2])
 			if (N_shade == 1)     arg1 = val
@@ -71,14 +73,6 @@ function grd2kml(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 			end
 		end
 	end
-
-	cmd = add_opt(cmd, 'E', d, [:E :url])
-	cmd = add_opt(cmd, 'F', d, [:F :filter])
-	cmd = add_opt(cmd, 'H', d, [:H :sub_pixel])
-	cmd = add_opt(cmd, 'L', d, [:L :tile_size])
-	cmd = add_opt(cmd, 'N', d, [:N :prefix])
-	cmd = add_opt(cmd, 'Q', d, [:Q :nan_t :nan_alpha])
-	cmd = add_opt(cmd, 'T', d, [:T :title])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
