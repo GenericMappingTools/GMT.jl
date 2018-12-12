@@ -27,7 +27,7 @@ Parameters
 
     Sets the feature type. Choose from points (event, symbol, or timespan), line, polygon, or wiggle.
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#f)
-- **G** : **fill_color** : -- Str --  Flags = f|nfill
+- **G** : **fill** : **fill_color** : -- Str --  Flags = f|nfill
 
     Sets color fill (G=:f) or label font color (G=:n).
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#g)
@@ -97,40 +97,14 @@ function gmt2kml(cmd0::String="", arg1=[]; kwargs...)
 	d = KW(kwargs)
 
 	cmd = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :altitude_mode])
-	cmd = add_opt(cmd, 'D', d, [:D :descript])
-	cmd = add_opt(cmd, 'E', d, [:E :extrude])
-	cmd = add_opt(cmd, 'F', d, [:F :feature_type])
-	cmd = add_opt(cmd, 'G', d, [:G :fill_color])
-	cmd = add_opt(cmd, 'I', d, [:I :icon])
-	cmd = add_opt(cmd, 'K', d, [:K :not_finished])
-	cmd = add_opt(cmd, 'L', d, [:L :extended_data])
-	cmd = add_opt(cmd, 'N', d, [:N :feature_name])
-	cmd = add_opt(cmd, 'O', d, [:O :overlay])
-	cmd = add_opt(cmd, "Qa", d, [:Qa :wiggles])
-	cmd = add_opt(cmd, "Qs", d, [:Qs :wiggle_scale])
-	cmd = add_opt(cmd, 'S', d, [:S :scale])
-	cmd = add_opt(cmd, 'T', d, [:T :title])
-	cmd = add_opt(cmd, 'Z', d, [:Z :attrib])
+	cmd = parse_these_opts(cmd, d, [[:A :altitude_mode], [:D :descript], [:E :extrude], [:F :feature_type],
+		[:I :icon], [:K :not_finished], [:L :extended_data], [:N :feature_name], [:O :overlay], [:Qa :wiggles],
+		[:Qs :wiggle_scale]], [:S :scale], [:T :title], [:Z :attrib])
 
-	for symb in [:W :pen]
-		if (haskey(d, symb))
-			if (isa(d[symb], Tuple))
-				cmd = cmd * parse_pen(d[symb])
-			else
-				cmd = cmd * arg2str(d[symb]);
-				lc = parse_pen_color(d)
-				if (!isempty(lc))
-					cmd = cmd * "," * lc
-					ls = parse_pen_style(d)
-					if (!isempty(ls))  cmd = cmd * "," * ls  end
-				end
-			end
-			break
-		end
-	end
+	cmd = add_opt(cmd, 'G', d, [:G :fill :fill_color])
+	cmd *= add_opt_pen(d, [:W :pen], "W")
 
-    cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1)

@@ -172,6 +172,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :xy :params])
+	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:F :conn :connection], [:I :intens], [:N :noclip :no_clip]])
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
@@ -183,8 +184,6 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	end
 
 	cmd = add_opt(cmd, 'A', d, [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
-	cmd = add_opt(cmd, 'D', d, [:D :shift :offset])				# 'offset' may be needed in vec attribs
-	cmd = add_opt(cmd, 'F', d, [:F :conn :connection])
 
 	# Error Bars?
 	if ((val = find_in_dict(d, [:E :error :error_bars])[1]) !== nothing)
@@ -210,16 +209,13 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		got_pattern = true
 	end
 	cmd = add_opt(cmd, 'L', d, [:L :close],
-		  (left="+xl", right="+xr", bot="+yb", top="+yt", sym="+d", asym="+D", envelope="+b", pen=("+p",add_opt_pen) ))
+		  (left="+xl", right="+xr", bot="+yb", top="+yt", sym="+d", asym="+D", envelope="+b", pen=("+p",add_opt_pen)))
 	if (occursin("-L", cmd) && !occursin("-G", cmd) && !occursin("+p", cmd))  cmd *= "+p0.5p"  end
 
 	opt_Wmarker = ""
 	if (haskey(d, :markeredgecolor))
 		opt_Wmarker = "0.5p," * arg2str(d[:markeredgecolor])		# 0.25p is so thin
 	end
-
-	cmd = add_opt(cmd, 'I', d, [:I :intens])
-	cmd = add_opt(cmd, 'N', d, [:N :noclip :no_clip])
 
 	opt_W = add_opt_pen(d, [:W :pen], "W")
 	if (occursin("+c", opt_W) && !occursin("-C", cmd))

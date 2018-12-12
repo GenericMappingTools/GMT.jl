@@ -36,13 +36,11 @@ Parameters
 """
 function fitcircle(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("fitcircle", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("fitcircle", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :bi :di :e :f :g :h :i :o :xy])
-	cmd = add_opt(cmd, 'L', d, [:L :norm])
-	cmd = add_opt(cmd, 'F', d, [:F :coord :coordinates])
-	cmd = add_opt(cmd, 'S', d, [:S :small_circle])
+	cmd = parse_these_opts(cmd, d, [[:L :norm], [:F :coord :coordinates], [:S :small_circle]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "fitcircle", arg1)		# Finish build cmd and run it

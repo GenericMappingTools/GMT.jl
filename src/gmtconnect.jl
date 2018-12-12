@@ -49,11 +49,7 @@ function gmtconnect(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :xy])
-	cmd = add_opt(cmd, 'C', d, [:C :closed])
-	cmd = add_opt(cmd, 'D', d, [:D :dump])
-	cmd = add_opt(cmd, 'L', d, [:L :linkfile])
-	cmd = add_opt(cmd, 'Q', d, [:Q :list_file])
-	cmd = add_opt(cmd, 'T', d, [:T :tolerance ])
+	cmd = parse_these_opts(cmd, d, [[:C :closed], [:D :dump], [:L :linkfile], [:Q :list_file], [:T :tolerance]])
 
 	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, arg1, arg2)
 	return common_grd(d, cmd, got_fname, 2, "gmtconnect", arg1, arg2)		# Finish build cmd and run it

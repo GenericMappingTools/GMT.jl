@@ -88,26 +88,18 @@ function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:e :f :h :p :t :xy :JZ :UVXY :params])
+	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:C :clearance], [:L :list], [:M :paragraph],
+	                 [:N :noclip :no_clip], [:Q :change_case], [:T :text_box], [:Z :threeD]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, "", opt_bi, opt_di)
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1, arg2)
 
-	#parse_these_opts(cmd, d, [[:A :horizontal], [:C :clearance], [:L :list], [:M :paragraph], [:N :noclip :no_clip], [:Q :change_case] [:T :text_box], [:Z :threeD]])
-
-	cmd = add_opt(cmd, 'A', d, [:A :horizontal])
-	cmd = add_opt(cmd, 'C', d, [:C :clearance])
 	cmd = add_opt(cmd, 'D', d, [:D :offset], (shift="", line="+v", pen=("",add_opt_pen)) )
 	cmd = add_opt(cmd, 'F', d, [:F :text :text_attrib],
 		(angle="+a", font=("+f", font), justify="+j", region_justify="+c", header="+h", label="+l",
 		rec_number="+r", text="+t", zvalues="+z"))
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = add_opt(cmd, 'L', d, [:L :list])
-	cmd = add_opt(cmd, 'M', d, [:M :paragraph])
-	cmd = add_opt(cmd, 'N', d, [:N :noclip :no_clip])
-	cmd = add_opt(cmd, 'Q', d, [:Q :change_case])
-	cmd = add_opt(cmd, 'T', d, [:T :text_box])
-	cmd = add_opt(cmd, 'Z', d, [:Z :threeD])
 	cmd *= add_opt_pen(d, [:W :pen], "W")
 
 	cmd = finish_PS(d, cmd, output, K, O)
