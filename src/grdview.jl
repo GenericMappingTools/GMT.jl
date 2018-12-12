@@ -59,10 +59,9 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
+	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :f :n :p :t :params])
-
-	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	cmd = add_opt(cmd, 'N', d, [:N :plane])
 	cmd = add_opt(cmd, 'Q', d, [:Q :surftype :surf_type])

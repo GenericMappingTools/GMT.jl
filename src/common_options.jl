@@ -646,12 +646,12 @@ function arg2str(arg)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function set_KO(cmd, opt_B, first, K, O)
+function set_KO(first::Bool)
 	# Set the O K pair dance
 	if (first)  K = true;	O = false
 	else        K = true;	O = true;
 	end
-	return cmd, K, O, opt_B
+	return K, O
 end
 
 # ---------------------------------------------------------------------------------------------------

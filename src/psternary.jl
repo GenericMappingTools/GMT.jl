@@ -98,13 +98,12 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 	if ((val = find_in_dict(d, [:axis :aspect])[1]) !== nothing)
 		if (val == "equal")  opt_J = " -JX12c"  end
 	end
+	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", caller, O, opt_J)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :xy :UVXY :params])
-
-	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, false)

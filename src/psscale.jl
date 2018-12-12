@@ -63,6 +63,7 @@ function colorbar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
+	K, O = set_KO(first)		# Set the K O dance
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :p :t])
 
@@ -80,8 +81,6 @@ function colorbar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs
 	cmd = add_opt(cmd, 'S', d, [:S :nolines])
 	cmd = add_opt(cmd, 'W', d, [:W :zscale])
 	cmd = add_opt(cmd, 'Z', d, [:Z :zfile])
-
-	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psscale", arg1)

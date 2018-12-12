@@ -164,6 +164,8 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		opt_J = ""
 	end
 
+	K, O = set_KO(first)		# Set the K O dance
+
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, opt_J)
 	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
 	cmd, opt_bi = parse_bi(cmd, d)
@@ -171,8 +173,6 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd, opt_i  = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :xy :params])
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
-
-	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
 	if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0

@@ -95,10 +95,9 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	maybe_more = false				# If latter set to true, search for lc & lc pen settings
+	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :bo :p :t :params])
-
-	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	if (!isempty_(clip))
 		if (clip == "land" || clip == :land)       cmd = cmd * " -Gc"

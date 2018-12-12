@@ -64,10 +64,10 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; K=false, O=false
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
+	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params])
 
-	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)	# Find how data was transmitted
 
 	N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
@@ -79,8 +79,8 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; K=false, O=false
 	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 	cmd = add_opt(cmd, 'S', d, [:S :scale])
 	cmd = add_opt(cmd, 'T', d, [:T])
-	cmd = cmd * add_opt_pen(d, [:W :pen], "W")
 	cmd = add_opt(cmd, 'Z', d, [:Z :azimuth])
+	cmd *= add_opt_pen(d, [:W :pen], "W")
 
 	for symb in [:Q :vec :vector :arrow]
 		if (haskey(d, symb))
