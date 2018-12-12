@@ -47,7 +47,7 @@ function trend1d(cmd0::String="", arg1=[]; kwargs...)
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :xy])
 	cmd = parse_these_opts(cmd, d, [[:C :condition_number], [:I :confidence_level], [:F :output],
-				[:N :n_model], [:W :weights])
+				[:N :n_model], [:W :weights]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "trend1d", arg1)		# Finish build cmd and run it

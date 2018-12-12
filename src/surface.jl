@@ -77,7 +77,7 @@ function surface(cmd0::String="", arg1=[]; kwargs...)
 	cmd = parse_common_opts(d, "", [:R :V_params :a :bi :di :e :f :h :i :r :xy])
 	cmd = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:G :grid :outgrid], [:I :inc],
 				[:Ll :lower], [:Lu :upper], [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension],
-				[:Z :over_relaxation])
+				[:Z :over_relaxation]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "surface", arg1)		# Finish build cmd and run it
