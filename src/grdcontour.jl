@@ -81,10 +81,10 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; K=false, O=false, first=t
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
+	K, O = set_KO(first)		# Set the K O dance
     cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t])
 
-	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)	# Find how data was transmitted
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
 

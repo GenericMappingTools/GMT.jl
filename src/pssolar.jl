@@ -55,10 +55,9 @@ function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
     d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
+	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
 	cmd = parse_common_opts(d, cmd, [:bo :h :o :p :t :UVXY :params])
-
-	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	cmd = add_opt(cmd, 'C', d, [:C :format])
     cmd = add_opt_fill(cmd, d, [:G :fill], 'G')

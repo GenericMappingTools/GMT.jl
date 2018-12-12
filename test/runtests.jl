@@ -557,6 +557,12 @@ if (got_it)					# Otherwise go straight to end
 	G3 = G1 * G2;
 	G3 = G1 / G2;
 	GMT.get_datatype([]);
+	GMT.get_datatype(Float32(8));
+	GMT.get_datatype(UInt32(8));
+	GMT.get_datatype(Int32(8));
+	GMT.get_datatype(UInt16(8));
+	GMT.get_datatype(Int16(8));
+	GMT.get_datatype(UInt8(8));
 	GMT.get_datatype(Int8(8));
 	GMT.mat2grid(rand(Float32, 10,10), 1);
 	GMT.num2str(rand(2,3));
