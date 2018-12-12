@@ -44,12 +44,9 @@ function image(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :p :t :params])
-
-	cmd = add_opt(cmd, 'D', d, [:D :ref_point])
-	cmd = add_opt(cmd, 'F', d, [:F :box])
-	cmd = add_opt(cmd, 'G', d, [:G :bit_color])
-	cmd = add_opt(cmd, 'I', d, [:I :invert_1bit])
-	cmd = add_opt(cmd, 'M', d, [:M :monochrome])
+	cmd = parse_these_opts(cmd, d, [[:D :ref_point], [:G :bit_color], [:I :invert_1bit], [:M :monochrome]])
+	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
+	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
 

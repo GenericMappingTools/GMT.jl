@@ -58,12 +58,10 @@ function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
 	cmd = parse_common_opts(d, cmd, [:bo :h :o :p :t :UVXY :params])
+	cmd = parse_these_opts(cmd, d, [[:C :format], [:M :dump], [:N :invert]])
 
-	cmd = add_opt(cmd, 'C', d, [:C :format])
     cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
     cmd = add_opt(cmd, 'I', d, [:I :sun], (pos="",date="+d",TZ="+z"))
-	cmd = add_opt(cmd, 'M', d, [:M :dump])
-	cmd = add_opt(cmd, 'N', d, [:N :invert])
 	cmd = add_opt(cmd, 'T', d, [:T :terminators], (term="",date="+d",TZ="+z"))
 	cmd = cmd * opt_pen(d, 'W', [:W :pen])
 

@@ -47,17 +47,11 @@ Parameters
 """
 function sphtriangulate(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("sphtriangulate ", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("sphtriangulate ", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :h :i :xy])
-    cmd = add_opt(cmd, 'A', d, [:A :area])
-    cmd = add_opt(cmd, 'C', d, [:C :save_mem])
-	cmd = add_opt(cmd, 'D', d, [:D :skip])
-	cmd = add_opt(cmd, 'L', d, [:L :unit])
-	cmd = add_opt(cmd, 'N', d, [:N])
-	cmd = add_opt(cmd, 'Q', d, [:Q :voronoi])
-	cmd = add_opt(cmd, 'T', d, [:T])
+	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :skip], [:L :unit], [:N], [:Q :voronoi], [:T]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "sphtriangulate", arg1)		# Finish build cmd and run it

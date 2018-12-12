@@ -109,6 +109,8 @@ function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:UVXY :e :h :p :t :xy :params])
+    cmd = parse_these_opts(cmd, d, [[:A :sector], [:D :shift], [:F :no_scale], [:L :labels], [:M],
+                [:Q :alpha], [:S :radius], [:T :orientation], [:Z :scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
@@ -122,17 +124,8 @@ function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	else
 		cmd = add_opt(cmd, 'C', d, [:C :vectors])
 	end
-	cmd = add_opt(cmd, 'A', d, [:A :sector])
-	cmd = add_opt(cmd, 'D', d, [:D :shift])
-	cmd = add_opt(cmd, 'F', d, [:F :no_scale])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = cmd * opt_pen(d, 'L', [:L :labels])
-	cmd = add_opt(cmd, 'M', d, [:M])
-	cmd = add_opt(cmd, 'Q', d, [:Q :alpha])
-	cmd = add_opt(cmd, 'S', d, [:S :radius])
-	cmd = add_opt(cmd, 'T', d, [:T :orientation])
-	cmd = cmd * opt_pen(d, 'W', [:W :pen])
-	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
+	cmd *= opt_pen(d, 'W', [:W :pen])
 
 	cmd = finish_PS(d, cmd, output, K, O)
 	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psrose", arg1, arg2)

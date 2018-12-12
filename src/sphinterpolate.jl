@@ -45,11 +45,7 @@ function sphinterpolate(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :bi :di :e :h :i :r :xy])
-    cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-	cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, 'Q', d, [:Q :tension])
-	cmd = add_opt(cmd, 'T', d, [:T :nodetable])
-	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
+	cmd = parse_these_opts(cmd, d, [[:G :outgrid], [:I :inc], [:Q :tension], [:T :nodetable], [:Z :scale]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "sphinterpolate", arg1)		# Finish build cmd and run it
