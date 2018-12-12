@@ -61,7 +61,7 @@ function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 	cmd, K, O, opt_B = set_KO(cmd, opt_B, first, K, O)		# Set the K O dance
 
 	cmd = add_opt(cmd, 'C', d, [:C :format])
-    cmd, = add_opt_cpt(d, cmd, [:G :fill], 'G')
+    cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
     cmd = add_opt(cmd, 'I', d, [:I :sun], (pos="",date="+d",TZ="+z"))
 	cmd = add_opt(cmd, 'M', d, [:M :dump])
 	cmd = add_opt(cmd, 'N', d, [:N :invert])

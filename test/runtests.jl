@@ -51,9 +51,9 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_unit_unit("data") == "u"
 	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
 	@test GMT.add_opt((symb=:circle, size=7, unit=:point), (symb="1", size="", unit="1")) == "c7p"
-	r = GMT.add_opt_fill("", 'G', Dict(:G=>(inv_pattern=12,fg="white",bg=(1,2,3), dpi=10) ), [:G :fill]);
+	r = GMT.add_opt_fill("", Dict(:G=>(inv_pattern=12,fg="white",bg=(1,2,3), dpi=10) ), [:G :fill], 'G');
 	@test r == " -GP12+b1/2/3+fwhite+r10"
-	@test GMT.add_opt_fill("", 'G', Dict(:G=>:red), [:G :fill]) == " -Gred"
+	@test GMT.add_opt_fill("", Dict(:G=>:red), [:G :fill], 'G') == " -Gred"
 	#d = Dict(:a=>1,:b=>1,:bi=>1,:bo=>1,:d=>1,:di=>1,:do=>1,:e=>1,:f=>1,:g=>1,:h=>1,:i=>1,:n=>1,:o=>1,:p=>1,:r=>1,:s=>1,:x=>1,:t=>1,:xy=>1);
 	#GMT.parse_common_opts(d,"", [:a :b :bi :bo :d :di :do :e :f :g :h :i :n :o :p :r :s :x :t :xy])
 	d = Dict(:offset=>5, :bezier=>true, :cline=>"", :ctext=>true, :pen=>("10p",:red,:dashed));
@@ -94,9 +94,11 @@ if (got_it)					# Otherwise go straight to end
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	r = psxy([0 0; 1 1.1], L=(pen=(10,:red),bot=true), Vd=:cmd);
-	@test r[1:45] == " -JX12c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb"
+	@test r[1:45] == " -JX12c -R0/1/0/1.2 -L+p10,red+yb -Baf -BWSen"
 	r = psxy([0 0; 1 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=:cmd);
-	@test r[1:44] == " -JX12c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb"
+	@test r[1:44] == " -JX12c -R0/1/0/1.2 -L+p10+cl+yb -Baf -BWSen"
+	psxy!([0 0; 1 1.1], Vd=:cmd);
+	psxy!("", [0 0; 1 1.1], Vd=:cmd);
 	# ---------------------------------------------------------------------------------------------------
 
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
@@ -398,6 +400,7 @@ if (got_it)					# Otherwise go straight to end
 	G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 	bar3(G, lw=:thinnest)
 	bar3!(G, lw=:thinnest, Vd=:cmd)
+	bar3!("", G, lw=:thinnest, Vd=:cmd)
 	bar3(G, lw=:thinnest, bar=(width=0.085,), Vd=:cmd)
 	bar3(G, lw=:thinnest, width=0.085, nbands=3, Vd=:cmd)
 	bar3(G, lw=:thinnest, noshade=1, Vd=:cmd)
@@ -460,6 +463,8 @@ if (got_it)					# Otherwise go straight to end
 	# PSLEGEND
 	T = text_record(["P", "T d = [0 0; 1 1; 2 1; 3 0.5; 2 0.25]"]);
 	legend(T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", F="+p+ggray")
+	legend!(T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", Vd=:cmd)
+	legend!("", T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", Vd=:cmd)
 
 	# PSROSE
 	data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3;; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
@@ -489,6 +494,13 @@ if (got_it)					# Otherwise go straight to end
 	text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps",showfig="lixo.ps")
 	text!(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",Vd=:cmd)
 	text!("", text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",Vd=:cmd)
+	t = ["46p A Tale of Two Cities", "32p Dickens, Charles", "24p 1812-1973"];
+	pstext(text_record([3 8; 3 7; 3 6.4],t), R="0/6/0/9", J=:x1i, B=0, F="+f+jCM")
+	t = ["\tIt was the best of times, it was the worst of times, it was the age of wisdom, it was the age of,",
+		"",
+		"\tThere were a king with a large jaw and a queen with a plain face,"];
+	T = text_record(t,"> 3 5 18p 5i j");
+	pstext!(T, F="+f16p,Times-Roman,red+jTC", M=true)
 
 	# PSWIGGLE
 	t=[0 7; 1 8; 8 3; 10 7];

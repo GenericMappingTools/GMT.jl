@@ -209,20 +209,25 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	end
 
 	# We can have one or all of them. Deal separatelly here to allow way code to keep working
+	this_opt_B = "";
 	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2 :zaxis2]
 		if (haskey(d, symb) && isa(d[symb], NamedTuple))
-			if     (symb == :axis2)   opt_B = axis(d[symb], secondary=true) * opt_B
-			elseif (symb == :xaxis)   opt_B = axis(d[symb], x=true) * opt_B
-			elseif (symb == :xaxis2)  opt_B = axis(d[symb], x=true, secondary=true) * opt_B
-			elseif (symb == :yaxis)   opt_B = axis(d[symb], y=true) * opt_B
-			elseif (symb == :yaxis2)  opt_B = axis(d[symb], y=true, secondary=true) * opt_B
-			elseif (symb == :zaxis)   opt_B = axis(d[symb], z=true) * opt_B
+			if     (symb == :axis2)   this_opt_B = axis(d[symb], secondary=true)
+			elseif (symb == :xaxis)   this_opt_B = axis(d[symb], x=true) * this_opt_B
+			elseif (symb == :xaxis2)  this_opt_B = axis(d[symb], x=true, secondary=true) * this_opt_B
+			elseif (symb == :yaxis)   this_opt_B = axis(d[symb], y=true) * this_opt_B
+			elseif (symb == :yaxis2)  this_opt_B = axis(d[symb], y=true, secondary=true) * this_opt_B
+			elseif (symb == :zaxis)   this_opt_B = axis(d[symb], z=true) * this_opt_B
 			end
 		end
 	end
 
-	if (opt_B != "")  cmd = cmd * opt_B  end
-	return cmd, opt_B
+	if (opt_B != def_fig_axes)  opt_B *= this_opt_B
+	else                        opt_B  = this_opt_B
+	end 
+
+	#if (opt_B != "")  cmd *= opt_B  end
+	return cmd * opt_B, opt_B
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -756,12 +761,14 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=[], 
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_fill(cmd::String, opt, d::Dict, symbs)
+add_opt_fill(d::Dict, symbs, opt="") = add_opt_fill("", d, symbs, opt) 
+function add_opt_fill(cmd::String, d::Dict, symbs, opt="")
 	# Deal with the area fill attributes option. Normally, -G
 	if ((val = find_in_dict(d, symbs)[1]) === nothing)  return cmd  end
+	if (opt != "")  opt = " -" * opt  end
 	if (isa(val, NamedTuple))
 		d2 = nt2dict(val)
-		cmd *= " -" * opt
+		cmd *= opt
 		if     (haskey(d2, :pattern))     cmd *= 'p' * add_opt("", "", d2, [:pattern])
 		elseif (haskey(d2, :inv_pattern)) cmd *= 'P' * add_opt("", "", d2, [:inv_pattern])
 		else   error("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member")
@@ -775,7 +782,7 @@ function add_opt_fill(cmd::String, opt, d::Dict, symbs)
 		end
 		if (haskey(d2, :dpi))  cmd = string(cmd, "+r", d2[:dpi])  end
 	else
-		cmd *= " -" * opt * get_color(val)
+		cmd *= opt * get_color(val)
 	end
 	return cmd
 end
@@ -809,7 +816,6 @@ function get_color(val)
 end
 
 # ---------------------------------------------------------------------------------------------------
-#font(d::Dict, symbs) = font(collect(values(d))[1])	# So far, for allow the generic call from add_opt()
 function font(d::Dict, symbs)
 	font(collect(values(d))[1])		# Don't understand why types got so complicated that must use 'collect'
 end
@@ -883,7 +889,8 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	if (haskey(d, :axes)) opt *= helper0_axes(d[:axes])  end
 
 	if (haskey(d, :corners)) opt *= string(d[:corners])  end	# 1234
-	if (haskey(d, :fill))    opt *= "+g" * get_color(d[:fill])  end
+	#if (haskey(d, :fill))    opt *= "+g" * get_color(d[:fill])  end
+	if (haskey(d, :fill))    opt *= "+g" * add_opt_fill(d, [:fill])  end	# Works, but patterns can screw
 	if (haskey(d, :cube))    opt *= "+b"  end
 	if (haskey(d, :noframe)) opt *= "+n"  end
 	if (haskey(d, :oblique_pole))  opt *= "+o" * arg2str(d[:oblique_pole])  end

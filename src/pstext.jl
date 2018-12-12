@@ -100,8 +100,9 @@ function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	cmd = add_opt(cmd, 'F', d, [:F :text :text_attrib],
 		(angle="+a", font=("+f", font), justify="+j", region_justify="+c", header="+h", label="+l",
 		rec_number="+r", text="+t", zvalues="+z"))
-	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
+	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = add_opt(cmd, 'L', d, [:L :list])
+	cmd = add_opt(cmd, 'M', d, [:M :paragraph])
 	cmd = add_opt(cmd, 'N', d, [:N :noclip :no_clip])
 	cmd = add_opt(cmd, 'Q', d, [:Q :change_case])
 	cmd = add_opt(cmd, 'T', d, [:T :text_box])
@@ -109,7 +110,9 @@ function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	opt_W = add_opt_pen(d, [:W :pen], "W")
 
 	cmd = finish_PS(d, cmd * opt_W, output, K, O)
-	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pstext", arg1, arg2)
+	r = finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pstext", arg1, arg2)
+	gmt("destroy")
+	return r
 end
 
 # ---------------------------------------------------------------------------------------------------

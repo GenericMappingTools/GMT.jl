@@ -1678,7 +1678,7 @@ function text_record(text)
 	end
 end
 =#
-function text_record(data, text)
+function text_record(data, text, hdr=nothing)
 	# Create a text record to send to pstext. DATA is the Mx2 coordinates array.
 	# TEXT is a string or a cell array
 	if (GMTver < 6.0)		# Convert to the old cell array of strings format
@@ -1700,34 +1700,33 @@ function text_record(data, text)
 		return t
 	end
 
+#@show("MERDA", text, data, hdr)
 	if (isa(data, Array{Float64,1}))  data = data[:,:]  end 	# Needs to be 2D
 
 	if (isa(text, String))
 		T = GMTdataset(data, [text], "", Array{String,1}(), "", "")
-	else
-		if (text[1][1] == '>')
-			#= This only works for one single segment
-			nl = length(text)
-			ind = zeros(UInt32, nl)
-			n = 2
-			for k = 2:nl
-				if (text[k][1] == '>')
-					ind[n] = k
-					n += 1
-				end
-			end
-			=#
+	elseif (isa(text, Array{String}))
+		if (text[1][1] == '>')			# Alternative (but risky) way of setting the header content
 			T = GMTdataset(data, text[2:end], text[1], Array{String,1}(), "", "")
 		else
-			if (isa(text, Array{String,2}) && size(text, 1) == 1)	# A 2d array, conv to vec
-				text = vec(text)
-			end
-			T = GMTdataset(data, text, "", Array{String,1}(), "", "")
+			T = GMTdataset(data, text, (hdr === nothing ? "" : hdr), Array{String,1}(), "", "")
 		end
+	elseif (isa(text, Array{Array}))
+		nl_t = length(text);	nl_d = length(data)
+		if (nl_d > 0 && nl_d != nl_t)
+			error("Number of data points (coordinates) is not equal to number of text strings.")
+		end
+		T = Array{GMTdataset, 1}(undef,nl_t)
+		for k = 1:nl_t
+			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), text[k], (hdr === nothing ? "" : hdr[k]), Array{String,1}(), "", "")
+		end
+	else
+		error(@sprintf("Wrong type (%s) for the 'text' argin", typeof(text)))
 	end
 	return T
 end
 text_record(text) = text_record(Array{Float64,2}(undef,0,0), text)
+text_record(text::Array{String}, hdr::String) = text_record(Array{Float64,2}(undef,0,0), text, hdr)
 
 ## ---------------------------------------------------------------------------------------------------
 function mat2img(mat::Array{UInt8}, proj4::String="", wkt::String="")

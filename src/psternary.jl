@@ -115,8 +115,8 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 	cmd = add_opt(cmd, 'M', d, [:M :offset])
 	cmd = add_opt(cmd, 'N', d, [:N :error_bars])
 
-	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
-	opt_Gsymb = add_opt_fill("", 'G', d, [:G :markerfacecolor :mc])	# Filling color for symbols
+	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :mc], 'G')	# Filling color for symbols
 
 	opt_Wmarker = ""
 	if (haskey(d, :markeredgecolor))

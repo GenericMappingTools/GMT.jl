@@ -203,8 +203,8 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
 	cmd, arg1, arg2, N_args = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 
-	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
-	opt_Gsymb = add_opt_fill("", 'G', d, [:G :markerfacecolor :mc])		# Filling of symbols
+	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :mc], 'G')		# Filling of symbols
 	got_pattern = false		# To track a still existing bug in sessions management at GMT lib level
 	if (occursin(" -Gp", cmd) || occursin(" -GP", cmd) || occursin(" -Gp", opt_Gsymb) || occursin(" -GP", opt_Gsymb))
 		got_pattern = true
@@ -504,8 +504,6 @@ psxy!(arg1; caller="", K=true, O=true, first=false, kw...) =
 
 psxy!(cmd0::String="", arg1=[]; caller="", K=true, O=true, first=false, kw...) =
 	psxy(cmd0, arg1; caller=caller, K=K, O=O, first=first, kw...)
-psxy!(arg1=[]; caller="", K=true, O=true, first=false, kw...) =
-	psxy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 psxyz!(cmd0::String="", arg1=[]; caller="", K=true, O=true,  first=false, kw...) =
