@@ -74,7 +74,7 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; K=false, O=false
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
 
 	cmd = add_opt(cmd, 'A', d, [:A :polar])
-	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
+	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = add_opt(cmd, 'I', d, [:I :inc])
 	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 	cmd = add_opt(cmd, 'S', d, [:S :scale])

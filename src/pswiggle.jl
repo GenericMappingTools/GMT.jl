@@ -85,7 +85,7 @@ function wiggle(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs..
 	cmd = add_opt(cmd, 'C', d, [:C :center])
 	cmd = add_opt(cmd, 'D', d, [:D :scale_bar])
 	cmd = add_opt(cmd, 'F', d, [:F :bar_rectangle])
-	cmd = add_opt_fill(cmd, 'G', d, [:G :fill])
+	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = add_opt(cmd, 'I', d, [:I :fixed_azim])
 	cmd = cmd * opt_pen(d, 'T', [:T :track])
 	cmd = cmd * opt_pen(d, 'W', [:W :pen])

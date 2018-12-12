@@ -35,10 +35,10 @@ Parameters
 """
 function legend(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("pslegend", cmd0, arg1)
+
 	arg2 = []		# May be needed if GMTcpt type is sent in via G
 	N_args = isempty_(arg1) ? 0 : 1
-
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("pslegend", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -54,7 +54,8 @@ function legend(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs..
 	cmd = add_opt(cmd, 'D', d, [:D :pos :position :refpoint],
 		(map_coord="g",plot_coord="x",norm="n",pos="",width="+w",justify="+j",spacing="+l",offset="+o"))
 	cmd = add_opt(cmd, 'C', d, [:C :clearance])
-	cmd = add_opt(cmd, 'F', d, [:F :box])
+	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
+	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
 	cmd = finish_PS(d, cmd, output, K, O)
 	r = finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pslegend", arg1)

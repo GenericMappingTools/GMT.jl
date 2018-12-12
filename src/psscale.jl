@@ -5,7 +5,7 @@ Plots gray scales or color scales on maps.
 
 Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html)
 
-- **D** : **position** : -- Str --
+- **D** : **pos** : **position** : -- Str --
 
     Defines the reference point on the map for the color scale using one of four coordinate systems.
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html#d)
@@ -68,8 +68,9 @@ function colorbar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs
 
 	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, [])
 
-	cmd = add_opt(cmd, 'D', d, [:D :position])
-	cmd = add_opt(cmd, 'F', d, [:F :box])
+	cmd = add_opt(cmd, 'D', d, [:D :pos :position])
+	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
+	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 	cmd = add_opt(cmd, 'G', d, [:G :truncate])
     cmd = add_opt(cmd, 'I', d, [:I :shade])
 	cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
