@@ -94,9 +94,9 @@ if (got_it)					# Otherwise go straight to end
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	r = psxy([0 0; 1 1.1], L=(pen=(10,:red),bot=true), Vd=:cmd);
-	@test r[1:45] == " -JX12c -R0/1/0/1.2 -L+p10,red+yb -Baf -BWSen"
+	@test r[1:45] == " -JX12c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb"
 	r = psxy([0 0; 1 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=:cmd);
-	@test r[1:44] == " -JX12c -R0/1/0/1.2 -L+p10+cl+yb -Baf -BWSen"
+	@test r[1:44] == " -JX12c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb"
 	psxy!([0 0; 1 1.1], Vd=:cmd);
 	psxy!("", [0 0; 1 1.1], Vd=:cmd);
 	# ---------------------------------------------------------------------------------------------------
@@ -557,13 +557,21 @@ if (got_it)					# Otherwise go straight to end
 	G3 = G1 * G2;
 	G3 = G1 / G2;
 	GMT.get_datatype([]);
-	T = text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"]);
+	GMT.get_datatype(Int8(8));
+	GMT.mat2grid(rand(Float32, 10,10), 1);
+	GMT.num2str(rand(2,3));
+	text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"]);
+	text_record(["aa", "bb"], "> 3 5 18p 5i j");
+	text_record(["> 3 5 18p 5i j", "aa", "bb"]);
+	text_record(Array[["aa", "bb"],["cc", "dd", "ee"]]);
+	text_record([["aa", "bb"],["cc", "dd", "ee"]]);
 
 	GMT.linspace(1,1,100);
 	GMT.logspace(1,5);
 	GMT.fakedata(50,1);
 	GMT.contains("aiai", "ia");
 	GMT.meshgrid(1:5, 1:5, 1:5);
+	fields(7);
 
 	# EXAMPLES
 	plot(1:10,rand(10), lw=1, lc="blue", marker="square",

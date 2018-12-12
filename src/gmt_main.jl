@@ -1276,48 +1276,35 @@ function palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 
 	# Dimensions are known from the input pointer
 
-	if (!isa(cpt, GMTcpt))
-		error("Expected a CPT structure for input")
-	end
+	if (!isa(cpt, GMTcpt))  error("Expected a CPT structure for input")  end
 
 	n_colors = size(cpt.colormap, 1)	# n_colors != n_ranges for continuous CPTs
 	n_ranges = size(cpt.range, 1)
-	one = 1
+	one = 0
 	if (n_colors > n_ranges)		# Continuous
 		n_ranges = n_colors;		# Actual length of colormap array
 		n_colors = n_colors - 1;	# Number of CPT slices
-	else
-		one = 0
+		one = 1
 	end
 
 	if ((P = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 		error("Failure to alloc GMT source CPT for input")
 	end
 
-	if (one != 0)
-		mutateit(API, P, "is_continuous", one)
+	if (one != 0)  mutateit(API, P, "is_continuous", one)  end
+
+	if (cpt.depth == 1)      mutateit(API, P, "is_bw", 1)
+	elseif (cpt.depth == 8)  mutateit(API, P, "is_gray", 1)
 	end
-	if (cpt.depth == 1)
-		mutateit(API, P, "is_bw", 1)
-	elseif (cpt.depth == 8)
-		mutateit(API, P, "is_gray", 1)
-	end
-	if (!isnan(cpt.hinge))
-		mutateit(API, P, "has_hinge", 1)
-	end
+	if (!isnan(cpt.hinge))   mutateit(API, P, "has_hinge", 1)  end
 
 	Pb = unsafe_load(P)		# GMT.GMT_PALETTE
 
-	if (!isnan(cpt.hinge))
-		Pb.mode = Pb.mode & GMT.GMT_CPT_HINGED
-	end
+	if (!isnan(cpt.hinge))   Pb.mode = Pb.mode & GMT.GMT_CPT_HINGED  end
 
-	if (cpt.model == "rgb")
-		Pb.model = GMT_RGB
-	elseif (cpt.model == "hsv")
-		Pb.model = GMT_HSV
-	else
-		Pb.model = GMT_CMYK
+	if (cpt.model == "rgb")      Pb.model = GMT_RGB
+	elseif (cpt.model == "hsv")  Pb.model = GMT_HSV
+	else                         Pb.model = GMT_CMYK
 	end
 
 	b = (GMT.GMT_BFN((cpt.bfn[1,1], cpt.bfn[1,2], cpt.bfn[1,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
@@ -1336,12 +1323,12 @@ function palette_init(API::Ptr{Void}, module_input, cpt, dir::Integer)
 
 		annot = 3						# Enforce annotations for now
 		if (GMTver < 6.0)
-			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
-			              glut.hsv_diff, annot, glut.skip, glut.fill, glut.label)
+			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low,
+			              glut.hsv_high, glut.hsv_diff, annot, glut.skip, glut.fill, glut.label)
 		else
 			# For now send NULL for the new param 'key'
-			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
-			             glut.hsv_diff, annot, glut.skip, glut.fill, glut.label, NULL)
+			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low,
+			              glut.hsv_high, glut.hsv_diff, annot, glut.skip, glut.fill, glut.label, NULL)
 		end
 
 		unsafe_store!(Pb.data, lut, j)
@@ -1536,7 +1523,7 @@ function convert_string(str)
 	out = join([Char(str.(n)) for n=1:k])
 end
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function GMTJL_type(API::Ptr{Void})		# Set default export type
 	value = "        "		# 8 spaces
 	GMT_Get_Default(API, "GMT_EXPORT_TYPE", value)
@@ -1554,6 +1541,7 @@ function GMTJL_type(API::Ptr{Void})		# Set default export type
 	println("Unable to interpret GMT_EXPORT_TYPE - Default to double")
 	return DOUBLE_CLASS
 end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function get_datatype(var)
@@ -1665,19 +1653,6 @@ function get_GMTversion(API::Ptr{Void})
 end
 
 # ---------------------------------------------------------------------------------------------------
-#=
-function text_record(text)
-	# For those that get coords from -R or for pslegend
-	if (isa(text, String))
-		text_record([0. 0], text)
-	elseif (isa(text, Array{String}))
-		data = zeros(length(text), 2)
-		text_record(data, text)
-	else
-		error(@sprintf("Bad type (%s) in text_record()", typeof(text)))
-	end
-end
-=#
 function text_record(data, text, hdr=nothing)
 	# Create a text record to send to pstext. DATA is the Mx2 coordinates array.
 	# TEXT is a string or a cell array
@@ -1700,7 +1675,6 @@ function text_record(data, text, hdr=nothing)
 		return t
 	end
 
-#@show("MERDA", text, data, hdr)
 	if (isa(data, Array{Float64,1}))  data = data[:,:]  end 	# Needs to be 2D
 
 	if (isa(text, String))
@@ -1711,7 +1685,7 @@ function text_record(data, text, hdr=nothing)
 		else
 			T = GMTdataset(data, text, (hdr === nothing ? "" : hdr), Array{String,1}(), "", "")
 		end
-	elseif (isa(text, Array{Array}))
+	elseif (isa(text, Array{Array}) || isa(text, Array{Array{String,1}}))
 		nl_t = length(text);	nl_d = length(data)
 		if (nl_d > 0 && nl_d != nl_t)
 			error("Number of data points (coordinates) is not equal to number of text strings.")
@@ -1734,10 +1708,8 @@ function mat2img(mat::Array{UInt8}, proj4::String="", wkt::String="")
 	nx = size(mat, 2);		ny = size(mat, 1);
 	x  = collect(1:nx);		y = collect(1:ny)
 	colormap = vec(zeros(Clong,1,3))	# Because we need an array
-	n_colors = 0
-	layout = "TRPa"
 	I = GMTimage(proj4, wkt, [1.0, nx, 1, ny, minimum(mat), maximum(mat)], [1.0, 1.0], 0, NaN, "", "", "", "",
-	             x,y,mat, "", "", "", colormap, n_colors, zeros(UInt8,ny,nx), layout)
+	             x,y,mat, "", "", "", colormap, 0, zeros(UInt8,ny,nx), "TRPa")
 end
 ##
 
