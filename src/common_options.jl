@@ -223,10 +223,9 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	end
 
 	if (opt_B != def_fig_axes)  opt_B *= this_opt_B
-	else                        opt_B  = this_opt_B
+	elseif (this_opt_B != "")   opt_B  = this_opt_B
 	end 
 
-	#if (opt_B != "")  cmd *= opt_B  end
 	return cmd * opt_B, opt_B
 end
 
@@ -236,7 +235,7 @@ function parse_BJR(d::Dict, cmd::String, caller, O, default, del=false)
 	cmd, opt_R = parse_R(cmd, d, O, del)
 	cmd, opt_J = parse_J(cmd, d, default, true, O, del)
 	if (!O && opt_J == "")			# If we have no -J use this default
-		opt_J = default					# " -JX12c/8c" (e.g. psxy) or " -JX12c/0" (e.g. grdimage)
+		opt_J = default				# " -JX12c/8c" (e.g. psxy) or " -JX12c/0" (e.g. grdimage)
 		cmd *= opt_J
 	elseif (O && opt_J == "")
 		cmd *= " -J"
