@@ -81,20 +81,13 @@ function mask(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :e :h :p :r :t :xy :params])
+	cmd = parse_these_opts(cmd, d, [[:C :end_clip_path], [:D :dump], [:F :oriented_polygons], [:I :inc],
+				[:L :node_grid], [:N :invert], [:Q :cut_number], [:S :search_radius], [:T :tiles]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
-	cmd = add_opt(cmd, 'C', d, [:C :end_clip_path])
-	cmd = add_opt(cmd, 'D', d, [:D :dump])
-	cmd = add_opt(cmd, 'F', d, [:F :oriented_polygons])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, 'L', d, [:L :node_grid])
-	cmd = add_opt(cmd, 'N', d, [:N :invert])
-	cmd = add_opt(cmd, 'Q', d, [:Q :cut_number])
-	cmd = add_opt(cmd, 'S', d, [:S :search_radius])
-	cmd = add_opt(cmd, 'T', d, [:T :tiles])
 
 	cmd = finish_PS(d, cmd, output, K, O)
 	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psmask", arg1)

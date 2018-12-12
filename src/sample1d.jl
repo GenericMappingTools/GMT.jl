@@ -45,10 +45,7 @@ function sample1d(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :resamp])
-	cmd = add_opt(cmd, 'F', d, [:F :interp_type])
-	cmd = add_opt(cmd, 'N', d, [:N :time_col])
-	cmd = add_opt(cmd, 'T', d, [:T :equi_space])
+	cmd = parse_these_opts(cmd, d, [[:A :resamp], [:F :interp_type], [:N :time_col], [:T :equi_space]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "sample1d", arg1)		# Finish build cmd and run it

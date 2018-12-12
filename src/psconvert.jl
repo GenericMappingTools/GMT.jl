@@ -85,25 +85,19 @@ function psconvert(cmd0::String="", arg1=[]; kwargs...)
 	d = KW(kwargs)
 	cmd = add_opt("", 'A', d, [:A :adjust])
 	if (cmd == " -A")  cmd = cmd * "1p"  end		# If just -A default to -A1p
-	cmd = add_opt(cmd, 'D', d, [:D :out_dir :output_dir])
-	cmd = add_opt(cmd, 'E', d, [:E :dpi])
-	cmd = add_opt(cmd, 'F', d, [:F :out_name :output_name])
-	cmd = add_opt(cmd, 'G', d, [:G :ghost_path])
-	cmd = add_opt(cmd, 'I', d, [:I :icc_gray])
-	cmd = add_opt(cmd, 'L', d, [:L :list_file])
-	cmd = add_opt(cmd, 'Q', d, [:Q :anti_aliasing])
-	cmd = add_opt(cmd, 'S', d, [:S :gs_command])
-	cmd = add_opt(cmd, 'Z', d, [:Z :del_input_ps])
+	cmd = parse_these_opts(cmd, d, [[:D :out_dir :output_dir], [:E :dpi], [:F :out_name :output_name],
+				[:G :ghost_path], [:I :icc_gray], [:L :list_file], [:Q :anti_aliasing], [:S :gs_command],
+				[:Z :del_input_ps]])
 	cmd = parse_V_params(cmd, d)
 
 	fmt = ""
 	if (haskey(d, :fmt))
 		fmt = isa(d[:fmt], Symbol) ? string(d[:fmt]) : d[:fmt]
-		if (fmt == "pdf")      cmd = cmd * " -Tf"
-		elseif (fmt == "eps")  cmd = cmd * " -Te"
-		elseif (fmt == "png")  cmd = cmd * " -Tg"
-		elseif (fmt == "jpg")  cmd = cmd * " -Tj"
-		elseif (fmt == "tif")  cmd = cmd * " -Tt"
+		if (fmt == "pdf")      cmd *= " -Tf"
+		elseif (fmt == "eps")  cmd *= " -Te"
+		elseif (fmt == "png")  cmd *= " -Tg"
+		elseif (fmt == "jpg")  cmd *= " -Tj"
+		elseif (fmt == "tif")  cmd *= " -Tt"
 		end
 	else
 		cmd = add_opt(cmd, 'T', d, [:T :format])
@@ -111,23 +105,23 @@ function psconvert(cmd0::String="", arg1=[]; kwargs...)
 
 	if ((val = find_in_dict(d, [:C :gs_option])[1]) !== nothing)
 		if (isa(val, String))
-			cmd = cmd * " -C" * val
+			cmd *= " -C" * val
 		elseif (isa(val, Array{Any})) 
 			for k = 1:length(val)
-				cmd = cmd * " -C" * val[k]
+				cmd *= " -C" * val[k]
 			end
 		end
 	end
 
 	cmd = add_opt(cmd, 'W', d, [:W :world_file])
-	if (haskey(d, :kml))  cmd = cmd * " -W+k" * d[:kml]  end
+	if (haskey(d, :kml))  cmd *= " -W+k" * d[:kml]  end
 
 	if (haskey(d, :in_memory))
 		if (!isempty_(arg1))
 			@warn("The IN_MEMORY option is imcompatible with passing an input file name. Dropping this one.")
 			arg1 = []
 		else
-			cmd = cmd * " ="
+			cmd *= " ="
 		end
 	end
 

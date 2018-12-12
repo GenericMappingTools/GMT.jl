@@ -51,17 +51,12 @@ Parameters
 """
 function spectrum1d(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("spectrum1d", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("spectrum1d", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :xy])
-	cmd = add_opt(cmd, 'C', d, [:C :response_fun])
-	cmd = add_opt(cmd, 'D', d, [:D :sample_dist])
-	cmd = add_opt(cmd, 'L', d, [:L :leave_trend])
-	cmd = add_opt(cmd, 'N', d, [:N :time_col])
-	cmd = add_opt(cmd, 'S', d, [:S :size])
-	cmd = add_opt(cmd, 'T', d, [:T])
-	cmd = add_opt(cmd, 'W', d, [:W :wavelength])
+	cmd = parse_these_opts(cmd, d, [[:C :response_fun], [:D :sample_dist], [:L :leave_trend], [:N :time_col],
+				[:S :size], [:T], [:W :wavelength]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "spectrum1d", arg1)		# Finish build cmd and run it

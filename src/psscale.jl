@@ -66,21 +66,14 @@ function colorbar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs
 	K, O = set_KO(first)		# Set the K O dance
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :p :t])
+    cmd = parse_these_opts(cmd, d, [[:D :pos :position], [:G :truncate], [:I :shade], [:M :monochrome],
+                [:N :dpi], [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
 
 	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, [])
 
-	cmd = add_opt(cmd, 'D', d, [:D :pos :position])
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
-	cmd = add_opt(cmd, 'G', d, [:G :truncate])
-    cmd = add_opt(cmd, 'I', d, [:I :shade])
-	cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
-	cmd = add_opt(cmd, 'M', d, [:M :monochrome])
-	cmd = add_opt(cmd, 'N', d, [:N :dpi])
-    cmd = add_opt(cmd, 'Q', d, [:Q :log])
-	cmd = add_opt(cmd, 'S', d, [:S :nolines])
-	cmd = add_opt(cmd, 'W', d, [:W :zscale])
-	cmd = add_opt(cmd, 'Z', d, [:Z :zfile])
+    cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
 
 	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psscale", arg1)
