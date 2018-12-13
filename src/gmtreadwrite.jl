@@ -76,9 +76,7 @@ function gmtread(fname::String=""; kwargs...)
 	if (isempty(opt_T))
 		opt_T = add_opt("", "Tc", d, [:cpt :cmap])
 	end
-	if (isempty(opt_T))
-		opt_T = add_opt("", "Tp", d, [:ps])
-	end
+	if (isempty(opt_T))  opt_T = add_opt("", "Tp", d, [:ps])  end
 
 	if (haskey(d, :varname))				# See if we have a nc varname / layer request
 		if (isempty(opt_T))
@@ -87,10 +85,8 @@ function gmtread(fname::String=""; kwargs...)
 		end
 		fname = fname * "?" * arg2str(d[:varname])
 		if ((val = find_in_dict(d, [:layer :band])[1]) !== nothing)
-			if (isa(val, Number))
-				fname = fname * @sprintf("[%d]", val)
-			elseif (isa(val, Array))		# A 4D array
-				fname = fname * @sprintf("[%d,%d]", val[1], val[2])
+			if (isa(val, Number))     fname *= @sprintf("[%d]", val)
+			elseif (isa(val, Array))  fname *= @sprintf("[%d,%d]", val[1], val[2])	# A 4D array
 			end
 		end
 	else									# See if we have a bands request
@@ -125,10 +121,8 @@ function gmtread(fname::String=""; kwargs...)
 		end
 	end
 
-	if (opt_T == " -Td" && !isempty(opt_bi))	# Read from binary file
-		cmd = cmd * opt_bi
-	end
-	cmd = cmd * opt_T
+	if (opt_T == " -Td" && !isempty(opt_bi))  cmd *= opt_bi  end		# Read from binary file
+	cmd *= opt_T
 	(haskey(d, :Vd)) && println(@sprintf("\tread %s %s", fname, cmd))
 
 	O = gmt("read " * fname * cmd)
@@ -197,7 +191,7 @@ function gmtwrite(fname::String="", data=[]; kwargs...)
 		cmd, = parse_f(cmd, d)
 	elseif (isa(data, GMTimage))
 		opt_T = " -Ti"
-		fname = fname * parse_grd_format(d)		# If we have format requests
+		fname *= parse_grd_format(d)		# If we have format requests
 	elseif (isa(data, GMTdataset))
 		opt_T = " -Td"
 		cmd, = parse_bo(cmd, d)					# Write to binary file
@@ -212,7 +206,7 @@ function gmtwrite(fname::String="", data=[]; kwargs...)
 			cmd, = parse_bo(cmd, d)				# Write to binary file
 		else
 			data = mat2img(data)
-			fname = fname * fmt
+			fname *= fmt
 			opt_T = " -Ti"
 		end
 	elseif (isa(data, AbstractArray))
@@ -222,7 +216,7 @@ function gmtwrite(fname::String="", data=[]; kwargs...)
 			cmd, = parse_bo(cmd, d)				# Write to binary file
 		else
 			data = mat2grid(data)
-			fname = fname * fmt
+			fname *= fmt
 			opt_T = " -Tg"
 		end
 	elseif (isempty_(data))
@@ -265,18 +259,14 @@ function parse_grd_format(d::Dict)
 			break
 		end
 	end
-	if (haskey(d, :scale))
-		out = out * "+s" * arg2str(d[:scale])
-	end
-	if (haskey(d, :offset))
-		out = out * "+o" * arg2str(d[:offset])
-	end
+	if (haskey(d, :scale))  out *= "+s" * arg2str(d[:scale])  end
+	if (haskey(d, :offset)) out *= "+o" * arg2str(d[:offset]) end
 	if ((val = find_in_dict(d, [:nan :novalue :invalid :missing])[1]) !== nothing)
-		out = out * "+n" * arg2str(val)
+		out *= "+n" * arg2str(val)
 	end
 	if (haskey(d, :driver))
-		out = out * ":" * arg2str(d[:driver])
-		if (haskey(d, :datatype))  out = out * "/" * arg2str(d[:datatype])  end
+		out *= ":" * arg2str(d[:driver])
+		if (haskey(d, :datatype))  out *= "/" * arg2str(d[:datatype])  end
 	end
 	return out
 end

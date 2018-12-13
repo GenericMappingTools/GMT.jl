@@ -73,17 +73,8 @@ function project(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :s :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :azim])
-	cmd = add_opt(cmd, 'C', d, [:C :origin])
-	cmd = add_opt(cmd, 'E', d, [:E :end_point])
-	cmd = add_opt(cmd, 'F', d, [:F :out_flags])
-	cmd = add_opt(cmd, 'G', d, [:G :no_input])
-	cmd = add_opt(cmd, 'L', d, [:L :length_control])
-	cmd = add_opt(cmd, 'N', d, [:N :flat_earth])
-	cmd = add_opt(cmd, 'Q', d, [:Q :units])
-	cmd = add_opt(cmd, 'S', d, [:S :sort])
-	cmd = add_opt(cmd, 'T', d, [:T :pole])
-	cmd = add_opt(cmd, 'W', d, [:W :width_control])
+	cmd = parse_these_opts(cmd, d, [[:A :azim], [:C :origin], [:E :end_point], [:F :out_flags], [:G :no_input],
+				[:L :length_control], [:N :flat_earth], [:Q :units], [:S :sort], [:T :pole], [:W :width_control]])
 
 	got_fname = 0
 	if (!occursin("-G", cmd))

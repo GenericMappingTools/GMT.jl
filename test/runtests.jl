@@ -145,6 +145,7 @@ if (got_it)					# Otherwise go straight to end
 	logo(D="x0/0+w2i")
 	logo(julia=8)
 	logo!(julia=8, Vd=:cmd)
+	logo!("", julia=8, Vd=:cmd)
 
 	# GMTSPATIAL
 	# Test  Cartesian centroid and area
@@ -175,8 +176,10 @@ if (got_it)					# Otherwise go straight to end
 		gmtwrite("lixo.grd", G,  scale=10, offset=-10)
 		GG = gmtread("lixo.grd", grd=true, varname=:z);
 		@test(sum(G.z[:] - GG.z[:]) == 0)
+		gmtwrite("lixo.grd", rand(5,5), id=:cf)
 		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
-		gmtread("lixo.tif", img=true);
+		I = gmtread("lixo.tif", img=true);
+		imshow(I, show=false)			# Test this one here because we habe a GMTimage at hand
 	else
 		gmtwrite("lixo.grd", G)
 		GG = gmtread("lixo.grd", grd=true, varname=:z);
@@ -187,6 +190,7 @@ if (got_it)					# Otherwise go straight to end
 	gmtwrite("lixo.dat", [1 2; 3 4])
 	gmt("gmtwrite lixo.cpt", cpt)		# Same but tests other code chunk in gmt_main.jl
 	D = gmtread("lixo.dat", table=true);
+	gmtwrite("lixo.dat", D)
 	@test(sum(D[1].data) == 10)
 
 	# GMTVECTOR
@@ -312,6 +316,7 @@ if (got_it)					# Otherwise go straight to end
 	imshow(rand(128,128),show=false)
 	imshow(G, frame=:a, shade="+a45",show=false)
 	imshow(rand(128,128), shade="+a45",show=false)
+	imshow("lixo.tif",show=false)
 
 	# MAKECPT
 	cpt = makecpt(range="-1/1/0.1");
@@ -487,8 +492,8 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSTERNARY
 	ternary([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", X=:c, B=:a, S="c0.1c");
-	ternary!([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", shape=:square, ms=0.1, Vd=:cmd);
-	ternary!("", [0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", ms=0.1, Vd=:cmd);
+	ternary!([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", shape=:square, ms=0.1, markerline=1,Vd=:cmd);
+	ternary!("", [0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", ms=0.1, markeredgecolor=:red,aspect=:equal, Vd=:cmd);
 
 	# PSTEXT
 	text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps",showfig="lixo.ps")

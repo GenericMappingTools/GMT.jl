@@ -98,33 +98,32 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :bo :p :t :params])
+	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution], [:G :land],
+				[:L :map_scale], [:M :dump], [:S :water], [:Td :rose], [:Tm :compass]])
+
+	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
+	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
 	if (!isempty_(clip))
-		if (clip == "land" || clip == :land)       cmd = cmd * " -Gc"
-		elseif (clip == "water" || clip == :water) cmd = cmd * " -Sc"
-		elseif (clip == "end" || clip == :end)     cmd = cmd * " -Q"
+		if (clip == "land" || clip == :land)       cmd *= " -Gc"
+		elseif (clip == "water" || clip == :water) cmd *= " -Sc"
+		elseif (clip == "end" || clip == :end)     cmd *= " -Q"
 		else
 			@warn("The 'clip' argument can only be \"land\", \"water\" or \"end\". Ignoring it.")
 		end
 	end
 
-	for symb in [:I :rivers]
-		if (haskey(d, symb))
-			if (isa(d[symb], Number))      cmd = @sprintf("%s -I%d", cmd, d[symb])
-			elseif (isa(d[symb], String))  cmd = cmd * " -I" * d[symb]
-			elseif (isa(d[symb], Tuple))   cmd = cmd * " -I" * parse_arg_and_pen(d[symb])
-			end
-			break
+	if ((val = find_in_dict(d, [:I :rivers])[1]) !== nothing)
+		if (isa(val, Number))      cmd = @sprintf("%s -I%d", cmd, val)
+		elseif (isa(val, String))  cmd *= " -I" * val
+		elseif (isa(val, Tuple))   cmd *= " -I" * parse_arg_and_pen(val)
 		end
 	end
 
-	for symb in [:N :borders]
-		if (haskey(d, symb))
-			if (isa(d[symb], Number))      cmd = @sprintf("%s -N%d", cmd, d[symb])
-			elseif (isa(d[symb], String))  cmd = cmd * " -N" * d[symb]
-			elseif (isa(d[symb], Tuple))   cmd = cmd * " -N" * parse_arg_and_pen(d[symb])
-			end
-			break
+	if ((val = find_in_dict(d, [:N :borders])[1]) !== nothing)
+		if (isa(val, Number))      cmd = @sprintf("%s -N%d", cmd, val)
+		elseif (isa(val, String))  cmd *= " -N" * val
+		elseif (isa(val, Tuple))   cmd *= " -N" * parse_arg_and_pen(val)
 		end
 	end
 
@@ -136,8 +135,8 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 			elseif (symb == :shore3)          lev = " -W3/" 
 			elseif (symb == :shore4)          lev = " -W4/" 
 			end
-			if (isa(d[symb], Tuple))  cmd = cmd * lev * parse_pen(d[symb])
-			else                      cmd = cmd * lev * arg2str(d[symb]);		maybe_more = true
+			if (isa(d[symb], Tuple))  cmd *= lev * parse_pen(d[symb])
+			else                      cmd *= lev * arg2str(d[symb]);		maybe_more = true
 			end
 		end
 	end
@@ -145,19 +144,15 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 	if (maybe_more)				# Search for color and style line settings
 		lc = parse_pen_color(d)
 		if (!isempty(lc))
-			cmd = cmd * "," * lc
+			cmd *= "," * lc
 			ls = parse_pen_style(d)
-			if (!isempty(ls))		cmd = cmd * "," * ls	end
+			if (!isempty(ls))  cmd *= "," * ls	end
 		end
 	end
 
-	cmd = add_opt(cmd, 'A', d, [:A :area])
-	cmd = add_opt(cmd, 'C', d, [:C :river_fill])
-	cmd = add_opt(cmd, 'D', d, [:D :res :resolution])
-
 	if ((val = find_in_dict(d, [:E :DCW])[1]) !== nothing)
 		if (isa(val, String))
-			cmd = cmd * " -E" * val					# Simple case, ex E="PT,+gblue"
+			cmd *= " -E" * val					# Simple case, ex E="PT,+gblue"
 		elseif (isa(val, Tuple))
 			if (length(val) >= 2 && isa(val[1], Tuple) && isa(val[end], Tuple)) 	# ex E=((),(),...,())
 				for k = 1:length(val)
@@ -171,21 +166,11 @@ function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...
 		end
 	end
 
-	cmd = add_opt(cmd, 'F', d, [:F :box])
-	cmd = add_opt(cmd, 'G', d, [:G :land])
-	cmd = add_opt(cmd, 'L', d, [:L :map_scale])
-	cmd = add_opt(cmd, 'M', d, [:M :dump])
-	cmd = add_opt(cmd, 'S', d, [:S :water])
-	cmd = add_opt(cmd, "Td", d, [:Td :rose])
-	cmd = add_opt(cmd, "Tm", d, [:Tm :compass])
-
 	if (!occursin("-C",cmd) && !occursin("-E",cmd) && !occursin("-G",cmd) && !occursin("-I",cmd) &&
 		!occursin("-M",cmd) && !occursin("-N",cmd) && !occursin("-Q",cmd) && !occursin("-S",cmd) && !occursin("-W",cmd))
-		cmd = cmd * " -W0.5p"
+		cmd *= " -W0.5p"
 	end
-	if (!occursin("-D",cmd))		# Then pick automatic
-		cmd = cmd * " -Da"
-	end
+	if (!occursin("-D",cmd))  cmd *= " -Da"  end		# Then pick automatic
 
 	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pscoast")
