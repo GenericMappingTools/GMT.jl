@@ -49,13 +49,8 @@ function grdproject(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :J :V_params :n :r])
-	cmd = add_opt(cmd, 'C', d, [:C :center])
-	cmd = add_opt(cmd, 'D', d, [:D :inc])
-	cmd = add_opt(cmd, 'E', d, [:E :dpi])
-	cmd = add_opt(cmd, 'F', d, [:F :one2one])
-	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-	cmd = add_opt(cmd, 'I', d, [:I :inverse])
-	cmd = add_opt(cmd, 'M', d, [:M :projected_unit])
+	cmd = parse_these_opts(cmd, d, [[:C :center], [:D :inc], [:E :dpi], [:F :one2one],
+				[:G :outgrid], [:I :inverse], [:M :projected_unit]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "grdproject", arg1)		# Finish build cmd and run it

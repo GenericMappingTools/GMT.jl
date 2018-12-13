@@ -21,7 +21,7 @@ Parameters
 """
 function gmtset(cmd0::String=""; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtset", cmd0)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("gmtset", cmd0)
 
 	d = KW(kwargs)
 	cmd = parse_V("", d)
@@ -32,7 +32,7 @@ function gmtset(cmd0::String=""; kwargs...)
 	key = collect(keys(d))
 	for k = 1:length(d)
 		if (key[k] == :Vd)	continue	end
-		cmd = cmd * " " * string(key[k]) * " " * string(d[key[k]])
+		cmd *= " " * string(key[k]) * " " * string(d[key[k]])
 	end
 
 	(haskey(d, :Vd)) && println(@sprintf("\tgmtset %s", cmd))

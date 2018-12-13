@@ -61,15 +61,8 @@ function grdfft(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	d = KW(kwargs)
 
 	cmd = parse_common_opts(d, "", [:V_params :f])
-	cmd = add_opt(cmd, 'A', d, [:A :azim])
-	cmd = add_opt(cmd, 'C', d, [:C :upward])
-	cmd = add_opt(cmd, 'D', d, [:D :dfdz])
-	cmd = add_opt(cmd, 'E', d, [:E :radial_power])
-	cmd = add_opt(cmd, 'F', d, [:F :filter])
-	cmd = add_opt(cmd, 'G', d, [:G :outgrid :table])
-	cmd = add_opt(cmd, 'I', d, [:I :integrate])
-	cmd = add_opt(cmd, 'N', d, [:N :inquire])
-	cmd = add_opt(cmd, 'S', d, [:S :scale])
+	cmd = parse_these_opts(cmd, d, [[:A :azim], [:C :upward], [:D :dfdz], [:E :radial_power], [:F :filter],
+				[:G :outgrid :table], [:I :integrate], [:N :inquire], [:S :scale]])
 
 	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, arg1, arg2)
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end

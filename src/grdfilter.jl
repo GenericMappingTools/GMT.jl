@@ -45,12 +45,8 @@ function grdfilter(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f])
-    cmd = add_opt(cmd, 'D', d, [:D :distflag :distance])
-    cmd = add_opt(cmd, 'F', d, [:F :filter])
-    cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-    cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, 'N', d, [:N :nans])
-	cmd = add_opt(cmd, 'T', d, [:T :toggle])
+	cmd = parse_these_opts(cmd, d, [[:D :distflag :distance], [:F :filter], [:G :outgrid], [:I :inc],
+				[:N :nans], [:G :outgrid :table], [:T :toggle]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end

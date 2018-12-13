@@ -51,13 +51,8 @@ function grdblend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f :n :r])
-	cmd = add_opt(cmd, 'C', d, [:C :clobber])
-	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-    cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, 'N', d, [:N :nodata])
-	cmd = add_opt(cmd, 'Q', d, [:Q :headless])
-	cmd = add_opt(cmd, 'W', d, [:W :no_blend])
-	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
+	cmd = parse_these_opts(cmd, d, [[:C :clobber], [:G :outgrid], [:I :inc], [:N :nodata],
+				[:Q :headless], [:W :no_blend], [:Z :scale]])
 
 	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, arg1, arg2)
 	return common_grd(d, cmd, got_fname, 2, "grdblend", arg1, arg2)		# Finish build cmd and run it

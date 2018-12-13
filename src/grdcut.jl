@@ -40,10 +40,7 @@ function grdcut(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :J :V_params :f])
-	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-	cmd = add_opt(cmd, 'N', d, [:N :extend])
-	cmd = add_opt(cmd, 'S', d, [:S :circ_subregion])
-	cmd = add_opt(cmd, 'Z', d, [:Z :z_subregion])
+    cmd = parse_these_opts(cmd, d, [[:G :outgrid], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "grdcut", arg1)		# Finish build cmd and run it

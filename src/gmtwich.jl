@@ -34,11 +34,7 @@ function gmtwhich(cmd0::String; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_V_params("", d)
-
-	cmd = add_opt(cmd, 'A', d, [:A :with_permissions])
-	cmd = add_opt(cmd, 'C', d, [:C :confirm])
-	cmd = add_opt(cmd, 'D', d, [:D :report_dir])
-	cmd = add_opt(cmd, 'G', d, [:G :download])
+    cmd = parse_these_opts(cmd, d, [[:A :with_permissions], [:C :confirm], [:D :report_dir], [:G :download]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, [])
 	return common_grd(d, cmd, got_fname, 1, "gmtwhich", arg1)		# Finish build cmd and run it

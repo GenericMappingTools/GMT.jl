@@ -59,15 +59,9 @@ function grdedit(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdedit", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :adjust])
-	cmd = add_opt(cmd, 'C', d, [:C :clear_history])
-	cmd = add_opt(cmd, 'D', d, [:D :header])
-	cmd = add_opt(cmd, 'E', d, [:E :flip])
-	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-	cmd = add_opt(cmd, 'N', d, [:N :replace])
-	cmd = add_opt(cmd, 'S', d, [:S :wrap])
-	cmd = add_opt(cmd, 'T', d, [:T :toggle])
+	cmd = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :yx])
+	cmd = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:G :outgrid],
+				[:N :replace], [:S :wrap], [:T :toggle]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "grdedit", arg1)		# Finish build cmd and run it

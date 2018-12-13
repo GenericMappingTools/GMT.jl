@@ -171,7 +171,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :xy :params])
+	cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :yx :params])
 	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:F :conn :connection], [:I :intens], [:N :noclip :no_clip]])
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
 

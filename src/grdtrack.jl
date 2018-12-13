@@ -60,14 +60,8 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :interp_path])
-	cmd = add_opt(cmd, 'C', d, [:C :equi])
-	cmd = add_opt(cmd, 'D', d, [:D :dfile])
-	cmd = add_opt(cmd, 'E', d, [:E :by_coord])
-	cmd = add_opt(cmd, 'N', d, [:N :no_skip])
-	cmd = add_opt(cmd, 'S', d, [:S :stack])
-	cmd = add_opt(cmd, 'T', d, [:T :radius])
-	cmd = add_opt(cmd, 'Z', d, [:Z :z_only])
+	cmd = parse_these_opts(cmd, d, [[:A :interp_path], [:C :equi], [:D :dfile], [:E :by_coord],
+				[:N :no_skip], [:S :stack], [:T :radius], [:Z :z_only]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 
