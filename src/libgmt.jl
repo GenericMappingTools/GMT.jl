@@ -9,26 +9,16 @@ end
 function GMT_Create_Data(API::Ptr{Cvoid}, family, geometry, mode, dim=C_NULL, wesn=C_NULL,
                          inc=C_NULL, registration=0, pad=2, data::Ptr{Cvoid}=C_NULL)
 
-	if (family == GMT_IS_DATASET)
-		ret_type = Ptr{GMT_DATASET}
-	elseif (family == GMT_IS_TEXTSET)
-		ret_type = Ptr{GMT_TEXTSET}
-	elseif (family == GMT_IS_GRID)
-		ret_type = Ptr{GMT_GRID}
-	elseif (family == GMT_IS_CPT)
-		ret_type = Ptr{GMT_PALETTE}
-	elseif (family == GMT_IS_IMAGE)
-		ret_type = Ptr{GMT_IMAGE}
-	elseif (family == GMT_IS_MATRIX)
-		ret_type = Ptr{GMT_MATRIX}
-	elseif (family == GMT_IS_MATRIX|GMT_VIA_MATRIX)
-		ret_type = Ptr{GMT_MATRIX}
-	elseif (family == GMT_IS_VECTOR)
-		ret_type = Ptr{GMT_VECTOR}
-	elseif (family == GMT_IS_POSTSCRIPT)
-		ret_type = Ptr{GMT_POSTSCRIPT}
-	else
-		ret_type = Ptr{Cvoid}			# Should be error instead
+	if (family == GMT_IS_DATASET)        ret_type = Ptr{GMT_DATASET}
+	elseif (family == GMT_IS_TEXTSET)    ret_type = Ptr{GMT_TEXTSET}
+	elseif (family == GMT_IS_GRID)       ret_type = Ptr{GMT_GRID}
+	elseif (family == GMT_IS_CPT)        ret_type = Ptr{GMT_PALETTE}
+	elseif (family == GMT_IS_IMAGE)      ret_type = Ptr{GMT_IMAGE}
+	elseif (family == GMT_IS_MATRIX)     ret_type = Ptr{GMT_MATRIX}
+	elseif (family == GMT_IS_MATRIX|GMT_VIA_MATRIX) ret_type = Ptr{GMT_MATRIX}
+	elseif (family == GMT_IS_VECTOR)     ret_type = Ptr{GMT_VECTOR}
+	elseif (family == GMT_IS_POSTSCRIPT) ret_type = Ptr{GMT_POSTSCRIPT}
+	else                                 ret_type = Ptr{Cvoid}		# Should be error instead
 	end
 
 	ptr = ccall((:GMT_Create_Data, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt32, UInt32, UInt32, Ptr{UInt64},

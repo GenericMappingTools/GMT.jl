@@ -56,12 +56,8 @@ function nearneighbor(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :n :r :xy])
-	cmd = add_opt(cmd, 'E', d, [:E :empty])
-    cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-	cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, 'N', d, [:N :ids])
-	cmd = add_opt(cmd, 'S', d, [:S :search_radius])
-	cmd = add_opt(cmd, 'W', d, [:Z :weights])
+    cmd = parse_these_opts(cmd, d, [[:E :empty], [:G :outgrid], [:I :inc], [:N :ids],
+                [:S :search_radius], [:Z :weights]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "nearneighbor", arg1)		# Finish build cmd and run it

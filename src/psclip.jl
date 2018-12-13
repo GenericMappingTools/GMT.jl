@@ -26,7 +26,7 @@ Parameters
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/psclip.html#n)
 - $(GMT.opt_P)
 - $(GMT.opt_R)
-- **T** : **clip_map_region** : -- Bool or [] --
+- **T** : **clip_limits** : -- Bool or [] --
 
     Rather than read any input files, simply turn on clipping for the current map region.
 	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/psclip.html#t)
@@ -45,7 +45,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function clip(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function clip(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("psclip", cmd0, arg1)	# Speedy mode
 
@@ -56,30 +56,21 @@ function clip(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
-	cmd, opt_i = parse_i(cmd, d)
+	cmd, opt_i  = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :e :f :g :h :p :t :xy :params])
+	cmd = parse_these_opts(cmd, d, [[:A :straight_lines], [:C :end_clip_path], [:N :invert], [:T :clip_limits]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
-
-	cmd = add_opt(cmd, 'A', d, [:A :straight_lines])
-	cmd = add_opt(cmd, 'C', d, [:C :end_clip_path])
-	cmd = add_opt(cmd, 'N', d, [:N :invert])
-	cmd = add_opt(cmd, 'T', d, [:T :clip_map_region])
 
 	cmd = finish_PS(d, cmd, output, K, O)
 	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psclip", arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-clip!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
-	clip(cmd0, arg1; K=K, O=O,  first=first, kw...)
-
-clip(arg1=[], cmd0::String=""; K=false, O=false,  first=true, kw...) =
-	clip(cmd0, arg1; K=K, O=O,  first=first, kw...)
-
-clip!(arg1=[], cmd0::String=""; K=true, O=true,  first=false, kw...) =
-	clip(cmd0, arg1; K=K, O=O,  first=first, kw...)
+clip!(cmd0::String="", arg1=[]; first=false, kw...) = clip(cmd0, arg1; first=first, kw...)
+clip(arg1=[], cmd0::String=""; first=true, kw...)   = clip(cmd0, arg1; first=first, kw...)
+clip!(arg1=[], cmd0::String=""; first=false, kw...) = clip(cmd0, arg1; first=first, kw...)
 
 psclip  = clip			# Alias
 psclip! = clip!			# Alias

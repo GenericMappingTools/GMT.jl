@@ -59,7 +59,7 @@ Parameters
     + **t**, **^**, **triangle**
     + **x**, **cross**
     + **y**, **y_dash**
-- **W** : **line_attrib** : **markeredgecolor** : **MarkerEdgeColor** : -- Str --
+- **W** : **line_attrib** : **markeredgecolor** : -- Str --
 
     Set pen attributes for lines or the outline of symbols
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/ternary.html#w)
@@ -89,13 +89,13 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	((isempty(cmd0) && isempty_(arg1) || occursin(" -", cmd0)) && return monolitic("ternary", cmd0, arg1))	# Monolitic mode
+	((isempty(cmd0) && isempty_(arg1) || occursin(" -", cmd0)) && return monolitic("ternary", cmd0, arg1))
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	opt_J = " -JX12c/10.4c"                     # Equilateral triangle
-	if ((val = find_in_dict(d, [:axis :aspect])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:aspect :axis])[1]) !== nothing)
 		if (val == "equal")  opt_J = " -JX12c"  end
 	end
 	K, O = set_KO(first)		# Set the K O dance
@@ -104,15 +104,11 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :xy :UVXY :params])
+	cmd = parse_these_opts(cmd, d, [[:L :labels], [:M :no_plot], [:N :noclip :no_clip]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, false)
-
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
-
-	cmd = add_opt(cmd, 'L', d, [:L :straight_lines])
-	cmd = add_opt(cmd, 'M', d, [:M :offset])
-	cmd = add_opt(cmd, 'N', d, [:N :error_bars])
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :mc], 'G')	# Filling color for symbols
@@ -121,10 +117,6 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 	if (haskey(d, :markeredgecolor))
 		opt_Wmarker = "0.5p," * arg2str(d[:markeredgecolor])	# 0.25p is so thin
 	end
-
-	cmd = add_opt(cmd, 'L', d, [:L :labels])
-	cmd = add_opt(cmd, 'M', d, [:M :no_plot])
-	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
 
 	opt_W = ""
 	pen = build_pen(d)					# Either a full pen string or empty ("")
@@ -146,10 +138,10 @@ function ternary(cmd0::String="", arg1=[]; caller=[], K=false, O=false, first=tr
 		if (marca != "")
 			done = false
 			if ((val = find_in_dict(d, [:markersize :ms :size])[1]) !== nothing)
-				marca = marca * arg2str(val)
+				marca *= arg2str(val)
 				done = true
 			end
-			if (!done)  marca = marca * "8p"  end			# Default to 8p
+			if (!done)  marca *= "8p"  end			# Default to 8p
 		end
 		if (marca != "")  opt_S = " -S" * marca  end
 	end

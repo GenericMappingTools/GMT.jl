@@ -57,13 +57,9 @@ function basemap(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs.
 	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :bo :f :p :t :params])
-
-	cmd = add_opt(cmd, 'A', d, [:A :polygon])
-	cmd = add_opt(cmd, 'D', d, [:D :inset])
-	cmd = add_opt(cmd, 'F', d, [:F :box])
-	cmd = add_opt(cmd, 'L', d, [:L :map_scale])
-	cmd = add_opt(cmd, "Td", d, [:Td :rose])
-	cmd = add_opt(cmd, "Tm", d, [:Td :compass])
+	cmd = parse_these_opts(cmd, d, [[:A :polygon], [:D :inset], [:L :map_scale], [:Td :rose], [:Tm :compass]])
+	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
+	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
 	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psbasemap", arg1)
