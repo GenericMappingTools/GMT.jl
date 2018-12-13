@@ -35,15 +35,11 @@ Parameters
 """
 function grdvolume(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdvolume", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdvolume", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f :o])
-	cmd = add_opt(cmd, 'C', d, [:C :contour])
-	cmd = add_opt(cmd, 'L', d, [:L :base_level])
-	cmd = add_opt(cmd, 'S', d, [:S :unit])
-	cmd = add_opt(cmd, 'T', d, [:T])
-	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
+	cmd = parse_these_opts(cmd, d, [[:C :contour], [:L :base_level], [:S :unit], [:T], [:Z :scale]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "grdvolume", arg1)		# Finish build cmd and run it

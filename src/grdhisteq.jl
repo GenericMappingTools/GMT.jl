@@ -35,11 +35,7 @@ function grdhisteq(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params])
-	cmd = add_opt(cmd, 'C', d, [:C :n_cells])
-	cmd = add_opt(cmd, 'D', d, [:D :dump])
-	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-	cmd = add_opt(cmd, 'N', d, [:N :gaussian])
-	cmd = add_opt(cmd, 'Q', d, [:Q :quadratic])
+	cmd = parse_these_opts(cmd, d, [[:C :n_cells], [:D :dump], [:G :outgrid], [:N :gaussian], [:Q :quadratic]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end

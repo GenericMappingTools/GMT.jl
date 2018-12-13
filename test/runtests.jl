@@ -17,7 +17,9 @@ if (got_it)					# Otherwise go straight to end
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
 	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
 	@test GMT.build_opt_R(:d) == " -Rd"
+	@test GMT.build_opt_R([]) == ""
 	@test GMT.build_opt_J(:X5) == " -JX5"
+	@test GMT.build_opt_J(2500) == " -J2500"
 	@test GMT.build_opt_J([]) == " -J"
 	@test GMT.arg2str((1,2,3)) == "1/2/3"
 	d = Dict(:inc => (x=1.5, y=2.6, unit="meter"));
@@ -297,10 +299,11 @@ if (got_it)					# Otherwise go straight to end
 	# GRDVOLUME
 	grdvolume(G);
 
-	# Just create the figs but not check if they are correct.
+	# Just create the figs but no check if they are correct.
 	PS = grdimage(G, J="X10", ps=1);
 	gmt("destroy")
 	grdimage!(G, J="X10", Vd=:cmd);
+	grdimage!("", G, J="X10", Vd=:cmd);
 	#grdimage("@earth_relief_05m", J="S21/90/15c", R="10/68/50/80r", B=:afg, X=:c, I="+")
 	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
@@ -493,7 +496,7 @@ if (got_it)					# Otherwise go straight to end
 	# PSTERNARY
 	ternary([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", X=:c, B=:a, S="c0.1c");
 	ternary!([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", shape=:square, ms=0.1, markerline=1,Vd=:cmd);
-	ternary!("", [0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", ms=0.1, markeredgecolor=:red,aspect=:equal, Vd=:cmd);
+	ternary!("", [0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", ms=0.1, lw=1,markeredgecolor=:red,aspect=:equal, Vd=:cmd);
 
 	# PSTEXT
 	text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps",showfig="lixo.ps")

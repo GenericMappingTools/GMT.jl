@@ -62,15 +62,8 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :f :n :p :t :params])
-
-	cmd = add_opt(cmd, 'N', d, [:N :plane])
-	cmd = add_opt(cmd, 'Q', d, [:Q :surftype :surf_type])
-	cmd = add_opt(cmd, 'S', d, [:S :smooth])
-	cmd = add_opt(cmd, 'T', d, [:T :no_interp])
-	cmd = add_opt(cmd, 'W', d, [:W])
-	cmd = add_opt(cmd, "Wc", d, [:contour])
-	cmd = add_opt(cmd, "Wm", d, [:mesh])
-	cmd = add_opt(cmd, "Wf", d, [:facade])
+	cmd = parse_these_opts(cmd, d, [[:N :plane], [:Q :surftype :surf_type], [:S :smooth], [:T :no_interp],
+				[:W], [:Wc :contour], [:Wm :mesh], [:Wf :facade]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
 

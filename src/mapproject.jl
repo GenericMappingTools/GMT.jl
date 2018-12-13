@@ -84,20 +84,9 @@ function mapproject(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :J :V_params :b :d :e :f :g :h :i :o :p :s :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :azim])
-	cmd = add_opt(cmd, 'C', d, [:C :center])
-	cmd = add_opt(cmd, 'D', d, [:D :override_units])
-	cmd = add_opt(cmd, 'E', d, [:E :geod2ecef])
-	cmd = add_opt(cmd, 'F', d, [:F :one2one])
-	cmd = add_opt(cmd, 'G', d, [:G :track_distances])
-	cmd = add_opt(cmd, 'I', d, [:I :inverse])
-	cmd = add_opt(cmd, 'L', d, [:L :dist2line])
-	cmd = add_opt(cmd, 'N', d, [:N :geod2aux])
-	cmd = add_opt(cmd, 'Q', d, [:Q :list])
-	cmd = add_opt(cmd, 'S', d, [:S :supress])
-	cmd = add_opt(cmd, 'T', d, [:T :change_datum])
-	cmd = add_opt(cmd, 'W', d, [:W :map_size])
-	cmd = add_opt(cmd, 'Z', d, [:Z :travel_times])
+	cmd = parse_these_opts(cmd, d, [[:A :azim], [:C :center], [:D :override_units], [:E :geod2ecef],
+				[:F :one2one], [:G :track_distances], [:I :inverse], [:L :dist2line], [:N :geod2aux],
+				[:Q :list], [:S :supress], [:T :change_datum], [:W :map_size], [:Z :travel_times]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "mapproject", arg1)		# Finish build cmd and run it

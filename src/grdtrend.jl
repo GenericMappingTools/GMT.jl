@@ -30,19 +30,16 @@ Parameters
 """
 function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdtrend", cmd0, arg1, arg2)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("grdtrend", cmd0, arg1, arg2)
 
 	if (isempty(cmd0) && isempty_(arg1))  error("Must provide the grid to work with.")  end
 
 	d = KW(kwargs)
 
-	cmd = add_opt("", 'N', d, [:N :model])
-	if (!occursin("-N", cmd))  error("The 'model' parameter is mandatory")  end
-
-	cmd, = parse_R(cmd, d)
+	cmd, = parse_R("", d)
 	cmd = parse_V_params(cmd, d)
-	cmd = add_opt(cmd, 'D', d, [:D :diff])
-	cmd = add_opt(cmd, 'T', d, [:T :trend])
+	cmd = parse_these_opts(cmd, d, [[:D :diff], [:N :model], [:T :trend]])
+	if (!occursin("-N", cmd))  error("The 'model' parameter is mandatory")  end
 
 	if (occursin("-D", cmd) && occursin("-T", cmd))
 		@warn("Usage error, both difference and trend were required. Ignoring the trend request.")

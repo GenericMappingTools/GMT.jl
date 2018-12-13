@@ -52,12 +52,8 @@ function gmtvector(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :single_vec])
-	cmd = add_opt(cmd, 'C', d, [:C :cartesian])
-	cmd = add_opt(cmd, 'E', d, [:E :geod2geoc])
-	cmd = add_opt(cmd, 'N', d, [:N :normalize])
-	cmd = add_opt(cmd, 'S', d, [:S :secondary_vec])
-	cmd = add_opt(cmd, 'T', d, [:T :transform])
+	cmd = parse_these_opts(cmd, d, [[:A :single_vec], [:C :cartesian], [:E :geod2geoc], [:N :normalize],
+				[:S :secondary_vec], [:T :transform]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "gmtvector", arg1)		# Finish build cmd and run it

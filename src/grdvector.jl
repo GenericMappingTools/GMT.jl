@@ -23,7 +23,7 @@ Parameters
 
     Only plot vectors at nodes every x_inc, y_inc apart (must be multiples of original grid spacing).
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#i)
-- **N** : **no_clip** : -- Bool or [] --
+- **N** : **noclip** : **no_clip** : -- Bool or [] --
 
     Do NOT clip symbols that fall outside map border 
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#n)
@@ -67,29 +67,22 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; K=false, O=false
 	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params])
+	cmd = parse_these_opts(cmd, d, [[:A :polar], [:I :inc], [:N :noclip :no_clip], [:S :scale],
+				[:T], [:Z :azimuth]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)	# Find how data was transmitted
 
 	N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
 
-	cmd = add_opt(cmd, 'A', d, [:A :polar])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, 'N', d, [:N :no_clip])
-	cmd = add_opt(cmd, 'S', d, [:S :scale])
-	cmd = add_opt(cmd, 'T', d, [:T])
-	cmd = add_opt(cmd, 'Z', d, [:Z :azimuth])
 	cmd *= add_opt_pen(d, [:W :pen], "W")
 
-	for symb in [:Q :vec :vector :arrow]
-		if (haskey(d, symb))
-			if (isa(d[symb], String))		# An hard core GMT string directly with options
-				cmd = cmd * " -Q" * d[symb]
-			else
-				cmd = cmd * " -Q" * vector_attrib(d[symb])
-			end
-			break
+	if ((val = find_in_dict(d, [:Q :vec :vector :arrow])[1]) !== nothing)
+		if (isa(val, String))		# An hard core GMT string directly with options
+			cmd *= " -Q" * val
+		else
+			cmd *= " -Q" * vector_attrib(val)
 		end
 	end
 

@@ -75,27 +75,17 @@ function makecpt(cmd0::String="", arg1=[]; kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, " ", opt_i, opt_bi, opt_di)
 	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
+	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :force_rgb],
+				[:G :truncate], [:I :inverse :reverse], [:M :overrule_bg], [:N :no_bg :nobg],
+				[:Q :log], [:S :auto], [:T :range], [:W :wrap :categorical], [:Z :continuous]])
 
 	if ((val = find_in_dict(d, [:E :data_levels])[1]) !== nothing)
 		if (isempty_(arg1) && isempty_(data))
 			error("E option requires that a data table is provided as well")
 		else
-			cmd = cmd * " -E" * arg2str(val)
+			cmd *= " -E" * arg2str(val)
 		end
 	end
-
-	cmd = add_opt(cmd, 'A', d, [:A :alpha :transparency])
-	cmd = add_opt(cmd, 'D', d, [:D :bg :background])
-	cmd = add_opt(cmd, 'F', d, [:F :force_rgb])
-	cmd = add_opt(cmd, 'G', d, [:G :truncate])
-	cmd = add_opt(cmd, 'I', d, [:I :inverse :reverse])
-	cmd = add_opt(cmd, 'M', d, [:M :overrule_bg])
-	cmd = add_opt(cmd, 'N', d, [:N :no_bg :nobg])
-	cmd = add_opt(cmd, 'Q', d, [:Q :log])
-	cmd = add_opt(cmd, 'S', d, [:S :auto])
-	cmd = add_opt(cmd, 'T', d, [:T :range])
-	cmd = add_opt(cmd, 'W', d, [:W :wrap :categorical])
-	cmd = add_opt(cmd, 'Z', d, [:Z :continuous])
 
 	if (haskey(d, :cptname))  cmd = cmd * " > " * d[:cptname]  end
 	(haskey(d, :Vd)) && println(@sprintf("\tmakecpt %s", cmd))

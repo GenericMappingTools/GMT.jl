@@ -120,7 +120,7 @@ function build_opt_J(Val)
 		if (!(typeof(Val) <: Int) || Val < 2000)
 			error("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (" * string(Val) * ") is clearly an invalid EPSG")
 		end
-		return string(" -JX", string(Val))
+		return string(" -J", string(Val))
 	elseif (isempty(Val))
 		return " -J"
 	end
@@ -390,7 +390,7 @@ end
 function parse_swap_xy(cmd::String, d::Dict)
 	# Parse the global -: option. Return CMD same as input if no -: option in args
 	# But because we can't have a variable called ':' we use only the 'swap_xy' alias
-	return parse_helper(cmd, d, [:swap_xy :xy], " -:")
+	return parse_helper(cmd, d, [:swap_xy :xy :yx], " -:")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -445,6 +445,7 @@ function parse_common_opts(d, cmd, opts)
 		elseif (opt == :x)  cmd, = parse_x(cmd, d)
 		elseif (opt == :t)  cmd, = parse_t(cmd, d)
 		elseif (opt == :xy) cmd, = parse_swap_xy(cmd, d)
+		elseif (opt == :yx) cmd, = parse_swap_xy(cmd, d)
 		elseif (opt == :R)  cmd, = parse_R(cmd, d)
 		elseif (opt == :J)  cmd, = parse_J(cmd, d)
 		elseif (opt == :JZ) cmd, = parse_JZ(cmd, d)
@@ -590,7 +591,6 @@ end
 function parse_pen(pen::Tuple)
 	# Convert an empty to 3 args tuple containing (width[c|i|p]], [color], [style[c|i|p|])
 	len = length(pen)
-	if (len == 0) return "0.25p" end 	# just the default pen
 	s = arg2str(pen[1])					# First arg is different because there is no leading ','
 	if (length(pen) > 1)
 		s *= ',' * get_color(pen[2])
@@ -681,10 +681,7 @@ function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)
 		elseif (O)            cmd *= opt * " >> " * output
 		end
 	else
-		if (K && !O)          cmd *= opt
-		elseif (!K && !O)     cmd *= opt
-		elseif (O)            cmd *= opt
-		end
+		if ((K && !O) || (!K && !O) || O)  cmd *= opt  end
 	end
 	return cmd
 end
@@ -868,14 +865,10 @@ function parse_unit_unit(str)
 	if (str == "m" || str == "minutes" || str == "s" || str == "seconds" || str == "d" || str == "degrees" ||
 		str == "f" || str == "foot"    || str == "k" || str == "km" || str == "n" || str == "nautical")
 		out = str[1]
-	elseif (str == "e" || str == "meter")
-		out = "e";
-	elseif (str == "M" || str == "mile")
-		out = "M";
-	elseif (str == "nodes")		# 
-		out = cmd * "+n";
-	elseif (str == "data")		# For the `scatter` modules
-		out = "u";
+	elseif (str == "e" || str == "meter")  out = "e";
+	elseif (str == "M" || str == "mile")   out = "M";
+	elseif (str == "nodes")                out = cmd * "+n";
+	elseif (str == "data")                 out = "u";		# For the `scatter` modules
 	end
 	return out
 end
@@ -1118,16 +1111,16 @@ function vector_attrib(;kwargs...)
 	cmd = add_opt("", "", d, [:len :length])
 	if (haskey(d, :angle))  cmd = string(cmd, "+a", d[:angle])  end
 	if (haskey(d, :middle))
-		cmd = cmd * "+m";
-		if (d[:middle] == "reverse" || d[:middle] == :reverse)	cmd = cmd * "r"  end
+		cmd *= "+m";
+		if (d[:middle] == "reverse" || d[:middle] == :reverse)	cmd *= "r"  end
 		cmd = helper_vec_loc(d, :middle, cmd)
 	else
 		for symb in [:start :stop]
 			if (haskey(d, symb) && symb == :start)
-				cmd = cmd * "+b";
+				cmd *= "+b";
 				cmd = helper_vec_loc(d, :start, cmd)
 			elseif (haskey(d, symb) && symb == :stop)
-				cmd = cmd * "+e";
+				cmd *= "+e";
 				cmd = helper_vec_loc(d, :stop, cmd)
 			end
 		end
@@ -1707,7 +1700,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 		end
 	end
 
-	if (fname_ext == "" && opt_extra == "")	# Return result as an GMTimage
+	if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
 		P = showfig(d, output, fname_ext, "", K)
 		gmt("destroy")				# Returning a PS screws the session
 	elseif ((haskey(d, :show) && d[:show] != 0) || fname != "")

@@ -30,7 +30,7 @@ Parameters
 
     Boundary condition flag.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html#l)
-- **N** : **normalize** : -- Str --     Flags = [e|t][amp][+ssigma][+ooffset]
+- **N** : **norm** : **normalize** : -- Str --     Flags = [e|t][amp][+ssigma][+ooffset]
 
     Normalization. [Default is no normalization.] The actual gradients g are offset and scaled
     to produce normalized gradients.
@@ -50,13 +50,8 @@ function grdgradient(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f :n])
-    cmd = add_opt(cmd, 'A', d, [:A :azim])
-    cmd = add_opt(cmd, 'D', d, [:D :find_dir])
-    cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-    cmd = add_opt(cmd, 'E', d, [:E :lambertian])
-	cmd = add_opt(cmd, 'L', d, [:L :bc :boundary])
-	cmd = add_opt(cmd, 'N', d, [:N :normalize])
-    cmd = add_opt(cmd, 'S', d, [:S :slopegrid])
+	cmd = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:G :outgrid], [:E :lambertian],
+				[:L :bc :boundary], [:N :norm :normalize], [:S :slopegrid]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end

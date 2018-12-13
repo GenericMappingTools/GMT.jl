@@ -75,23 +75,21 @@ grdclip(arg1=[], cmd0::String=""; kw...) = grdclip(cmd0, arg1; kw...)
 # ---------------------------------------------------------------------------------------------------
 function opt_S(d::Dict, cmd::String, symbs, flag::Char)
 	# This is common to the 4 cases
-	for sym in symbs
-		if (haskey(d, sym))
-			cmd = string(cmd, " -S", flag)
-			if (isa(d[sym], String))
-				cmd = cmd * d[sym]
-			elseif (isa(d[sym], Array))
-				if (sym == :between && length(d[sym]) == 3)
-					cmd = @sprintf("%s%f/%f/%f", cmd, d[sym][1], d[sym][2], d[sym][3])
-				elseif (length(d[sym]) == 2)
-					cmd = @sprintf("%s%f/%f", cmd, d[sym][1], d[sym][2])
-				else
-					error("Wrong number of elements in S option")
-				end
+	val, symb = find_in_dict(d, symbs)
+	if (val !== nothing)
+		cmd = string(cmd, " -S", flag)
+		if (isa(val, String))
+			cmd *= val
+		elseif (isa(val, Array))
+			if (symb == :between && length(val) == 3)
+				cmd = @sprintf("%s%f/%f/%f", cmd, val[1], val[2], val[3])
+			elseif (length(val) == 2)
+				cmd = @sprintf("%s%f/%f", cmd, val[1], val[2])
 			else
-				error(string("Argument of :", sym, " must be a string or a two elements array."))
+				error("Wrong number of elements in S option")
 			end
-			break
+		else
+			error("OPT_S: argument must be a string or a two elements array.")
 		end
 	end
 	return cmd

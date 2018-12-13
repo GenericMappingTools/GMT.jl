@@ -84,6 +84,9 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; K=false, O=false, first=t
 	K, O = set_KO(first)		# Set the K O dance
     cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t])
+	cmd = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:G :labels], [:L :range], [:Q :cut],
+				[:S :smooth], [:T :ticks], [:Z :scale]])
+	cmd *= add_opt_pen(d, [:W :pen], "W")
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)	# Find how data was transmitted
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
@@ -106,16 +109,6 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; K=false, O=false, first=t
 			cmd *= " -N"
 		end
 	end
-
-	cmd = add_opt(cmd, 'D', d, [:D :dump])
-	cmd = add_opt(cmd, 'F', d, [:F :force])
-	cmd = add_opt(cmd, 'G', d, [:G :labels])
-	cmd = add_opt(cmd, 'L', d, [:L :range])
-	cmd = add_opt(cmd, 'Q', d, [:Q :cut])
-	cmd = add_opt(cmd, 'S', d, [:S :smooth])
-	cmd = add_opt(cmd, 'T', d, [:T :ticks])
-	cmd = cmd * add_opt_pen(d, [:W :pen], "W")
-	cmd = add_opt(cmd, 'Z', d, [:Z :scale])
 
 	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, "-D", output, fname_ext, opt_T, K, "grdcontour", arg1, arg2)

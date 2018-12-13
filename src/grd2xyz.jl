@@ -39,9 +39,7 @@ function grd2xyz(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :bo :d :f :h :o :s])
-	cmd = add_opt(cmd, 'C', d, [:C :row_col])
-	cmd = add_opt(cmd, 'W', d, [:W :weight])
-	cmd = add_opt(cmd, 'Z', d, [:Z :flags])
+    cmd = parse_these_opts(cmd, d, [[:C :row_col], [:W :weight], [:Z :flags]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end

@@ -43,17 +43,12 @@ Parameters
 """
 function grdinfo(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && !isa(arg1, GMTgrid) && return monolitic("grdinfo", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && !isa(arg1, GMTgrid) && return monolitic("grdinfo", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f])
-	cmd = add_opt(cmd, 'C', d, [:C :numeric])
-	cmd = add_opt(cmd, 'D', d, [:D :tiles])
-	cmd = add_opt(cmd, 'F', d, [:F])
-	cmd = add_opt(cmd, 'I', d, [:I :nearest_multiple])
-	cmd = add_opt(cmd, 'L', d, [:L :force_scan])
-	cmd = add_opt(cmd, 'M', d, [:M :location])
-	cmd = add_opt(cmd, 'T', d, [:T :zmin_max])
+	cmd = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:I :nearest_multiple],
+				[:L :force_scan], [:M :location], [:T :zmin_max]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "grdinfo", arg1)		# Finish build cmd and run it

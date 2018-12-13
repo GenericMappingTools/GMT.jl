@@ -55,7 +55,7 @@ Parameters
 """
 function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; K=false, O=false, first=true, kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdimage", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdimage", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -63,14 +63,8 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[]; K=false, 
 	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :f :n :p :t])
-
-	cmd = add_opt(cmd, 'A', d, [:A :img_out :image_out])
-	cmd = add_opt(cmd, 'D', d, [:D :img_in :image_in])
-	cmd = add_opt(cmd, 'E', d, [:E :dpi])
-	cmd = add_opt(cmd, 'G', d, [:G])
-	cmd = add_opt(cmd, 'M', d, [:M :monochrome])
-	cmd = add_opt(cmd, 'N', d, [:N :noclip])
-	cmd = add_opt(cmd, 'Q', d, [:Q :nan_t :nan_alpha])
+	cmd = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G],
+				[:M :monochrome], [:N :noclip], [:Q :nan_t :nan_alpha]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
 	if (got_fname == 0 && isempty_(arg1))			# Than it must be using the three r,g,b grids

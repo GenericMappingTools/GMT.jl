@@ -45,7 +45,7 @@ Parameters
     Overrule background, foreground, and NaN colors specified in the master CPT with the values of
     the parameters COLOR_BACKGROUND, COLOR_FOREGROUND, and COLOR_NAN.
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#m)
-- **N** : **no_bg** -- Bool or [] --
+- **N** : **no_bg** : **nobg** : -- Bool or [] --
 
     Do not write out the background, foreground, and NaN-color fields.
 - **Q** : **log** : -- Bool or [] --
@@ -86,23 +86,11 @@ function grd2cpt(cmd0::String="", arg1=[]; kwargs...)
 	d = KW(kwargs)
 
 	cmd = parse_common_opts(d, "", [:R :V_params])
+	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:E :nlevels],
+				[:G :truncate], [:F :force_rgb], [:I :inverse :reverse], [:L :limit], [:M :overrule_bg],
+				[:N :no_bg :nobg], [:Q :log], [:S :steps], [:T :symetric], [:W :no_interp], [:Z :continuous]])
 
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
-
-	cmd = add_opt(cmd, 'A', d, [:A :alpha :transparency])
-	cmd = add_opt(cmd, 'D', d, [:D :bg :background])
-	cmd = add_opt(cmd, 'E', d, [:E :nlevels])
-	cmd = add_opt(cmd, 'F', d, [:F :force_rgb])
-	cmd = add_opt(cmd, 'G', d, [:G :truncate])
-	cmd = add_opt(cmd, 'I', d, [:I :inverse :reverse])
-	cmd = add_opt(cmd, 'L', d, [:L :limit])
-	cmd = add_opt(cmd, 'M', d, [:M :overrule_bg])
-	cmd = add_opt(cmd, 'N', d, [:N :no_bg])
-	cmd = add_opt(cmd, 'Q', d, [:Q :log])
-	cmd = add_opt(cmd, 'S', d, [:S :steps])
-	cmd = add_opt(cmd, 'T', d, [:T :symetric])
-	cmd = add_opt(cmd, 'W', d, [:W :no_interp])
-	cmd = add_opt(cmd, 'Z', d, [:Z :continuous])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end

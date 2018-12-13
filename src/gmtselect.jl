@@ -74,17 +74,9 @@ function gmtselect(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :area])
-	cmd = add_opt(cmd, 'C', d, [:C :point_file])
-	cmd = add_opt(cmd, 'D', d, [:D :res :resolution])
-	cmd = add_opt(cmd, 'E', d, [:E :boundary])
-	cmd = add_opt(cmd, 'F', d, [:F :polygon])
-	cmd = add_opt(cmd, 'G', d, [:G :gridmask])
-	cmd = add_opt(cmd, 'I', d, [:I :reverse])
-	cmd = add_opt(cmd, 'L', d, [:L :dist2line])
-	cmd = add_opt(cmd, 'N', d, [:N :mask_geog])
-	cmd = add_opt(cmd, 'Z', d, [:Z :in_range])
+	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
+    cmd = parse_these_opts(cmd, d, [[:A :area], [:C :point_file], [:D :res :resolution], [:E :boundary],
+                [:F :polygon], [:G :gridmask], [:I :reverse], [:L :dist2line], [:N :mask_geog], [:Z :in_range]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "gmtselect", arg1)		# Finish build cmd and run it

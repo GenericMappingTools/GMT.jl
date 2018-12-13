@@ -17,7 +17,7 @@ Parameters
     Set the confidence level (in %) to use for the optional calculation of confidence
     bands on the regression [95].
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/gmtregress.html#c)
-- **E** : **type_of_regression** : -- Str --    Flags = x|y|o|r
+- **E** : **regression_type** : -- Str --    Flags = x|y|o|r
 
     Type of linear regression, i.e., select the type of misfit we should calculate.
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/gmtregress.html#e)
@@ -56,18 +56,12 @@ Parameters
 """
 function regress(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtregress", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("gmtregress", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :o :xy])
-	cmd = add_opt(cmd, 'A', d, [:A :all_slopes])
-	cmd = add_opt(cmd, 'C', d, [:C :confidence_level])
-	cmd = add_opt(cmd, 'E', d, [:E :type_of_regression])
-	cmd = add_opt(cmd, 'F', d, [:F :column_combination])
-	cmd = add_opt(cmd, 'N', d, [:N :norm])
-	cmd = add_opt(cmd, 'S', d, [:S :restrict])
-	cmd = add_opt(cmd, 'T', d, [:T :equi_space])
-	cmd = add_opt(cmd, 'W', d, [:W :weighted])
+    cmd = parse_these_opts(cmd, d, [[:A :all_slopes], [:C :confidence_level], [:E :regression_type], [:N :norm],
+                [:F :column_combination], [:S :restrict], [:T :equi_space], [:W :weighted]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, cmd, got_fname, 1, "gmtregress", arg1)		# Finish build cmd and run it
