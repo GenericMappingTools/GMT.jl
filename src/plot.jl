@@ -396,7 +396,9 @@ function bar3(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
 	d = KW(kwargs)
 	opt_z = ""
 
-	arg1 = arg			# Make a copy that may or not become a new thing
+	if (isa(arg, Array{GMT.GMTdataset,1}))  arg1 = arg[1]	# It makes no sense accepting > 1 datasets
+	else                                    arg1 = arg	# Make a copy that may or not become a new thing
+	end
 
 	if (isa(arg1, Array))
 		ny, nx = size(arg1)
@@ -428,12 +430,11 @@ function bar3(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
 	else
 		opt_S = parse_inc("", d, [:width], "So", true)
 		if (opt_S == "")
-			if ((isa(arg1, Array) && size(arg1,2) < 5) || (isa(arg1, GMTdataset) && size(arg1.data,2) < 5) ||
-				(isa(arg1, Array{GMT.GMTdataset,1}) && size(arg1[1].data,2) < 5))
+			if ((isa(arg1, Array) && size(arg1,2) < 5) || (isa(arg1, GMTdataset) && size(arg1.data,2) < 5))
 				error("BAR3: When NOT providing *width* data must contain at least 5 columns.")
 			end
 		end
-		if (!isletter(opt_S[end]))  opt_S = opt_S * 'u'  end
+		if (!isletter(opt_S[end]))   opt_S = opt_S * 'u'  end
 		if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands])
 		elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands])
 		end
@@ -447,7 +448,7 @@ function bar3(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
 			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1.data, :, 3)) * 1.05)
 		end
 	else
-		opt_S = opt_S * "+b" * opt
+		opt_S *= "+b" * opt
 	end
 
 	caller = "bar3|" * opt_S * opt_z
@@ -561,9 +562,9 @@ function lines(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 	cmd = ""
 	if (haskey(d, :decorated))
 		if (isa(d[:decorated], String))		# A hard core GMT string directly with options, including -S
-			cmd = " " * d[:decorated]
+			cmd *= d[:decorated]
 		else
-			cmd = decorated(d[:decorated])
+			cmd  = decorated(d[:decorated])
 		end
 	end
 
@@ -591,6 +592,17 @@ end
 
 lines!(cmd0::String="", arg=[]; K=true, O=true, first=false, kw...) =
 	lines(cmd0, arg; K=K, O=O, first=first, kw...)
+
+# ------------------------------------------------------------------------------------------------------
+function ternary(cmd0::String="", arg1=[]; first=true, kwargs...)
+	# A wrapper for psternary
+	GMT.common_plot_xyz(cmd0, arg1, "ternary", false, false, first, false, kwargs...)
+end
+ternary!(cmd0::String="", arg1=[]; first=false, kw...) = ternary(cmd0, arg1; first=first, kw...)
+ternary(arg1=[];  first=true, kw...)  = ternary("", arg1; first=first, kw...)
+ternary!(arg1=[]; first=false, kw...) = ternary("", arg1; first=first, kw...)
+const psternary  = ternary            # Aliases
+const psternary! = ternary!           # Aliases
 
 # ------------------------------------------------------------------------------------------------------
 function cat_1_arg(arg)
