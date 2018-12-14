@@ -118,8 +118,10 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	if (is3D)	gmt_proggy = "psxyz"
-	else		gmt_proggy = "psxy"
+	is_ternary = (caller == "ternary") ? true : false
+	if (is3D)	        gmt_proggy = "psxyz"
+	elseif (is_ternary) gmt_proggy = "psternary"
+	else		        gmt_proggy = "psxy"
 	end
 
 	((isempty(cmd0) && isempty_(arg1)) || occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
@@ -173,6 +175,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd, opt_i  = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :yx :params])
 	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:F :conn :connection], [:I :intens], [:N :noclip :no_clip]])
+	if (is_ternary)  cmd = add_opt(cmd, 'M', d, [:M :no_plot])  end
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
@@ -180,7 +183,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
 	
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
-		cmd = cmd * " -JZ6c"	# Default -JZ
+		cmd *= " -JZ6c"		# Default -JZ
 	end
 
 	cmd = add_opt(cmd, 'A', d, [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
@@ -205,12 +208,18 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :mc], 'G')		# Filling of symbols
 	got_pattern = false		# To track a still existing bug in sessions management at GMT lib level
-	if (occursin(" -Gp", cmd) || occursin(" -GP", cmd) || occursin(" -Gp", opt_Gsymb) || occursin(" -GP", opt_Gsymb))
+	if (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb))
 		got_pattern = true
 	end
-	cmd = add_opt(cmd, 'L', d, [:L :close],
-		  (left="+xl", right="+xr", bot="+yb", top="+yt", sym="+d", asym="+D", envelope="+b", pen=("+p",add_opt_pen)))
-	if (occursin("-L", cmd) && !occursin("-G", cmd) && !occursin("+p", cmd))  cmd *= "+p0.5p"  end
+
+	if (is_ternary)			# Means we are in the psternary mode
+		cmd = add_opt(cmd, 'L', d, [:L :labels])
+	else
+		cmd = add_opt(cmd, 'L', d, [:L :close],
+			(left="+xl", right="+xr", bot="+yb", top="+yt", sym="+d", asym="+D", envelope="+b",
+			 pen=("+p",add_opt_pen)))
+		if (occursin("-L", cmd) && !occursin("-G", cmd) && !occursin("+p", cmd))  cmd *= "+p0.5p"  end
+	end
 
 	opt_Wmarker = ""
 	if (haskey(d, :markeredgecolor))
