@@ -80,7 +80,7 @@ function makecpt(cmd0::String="", arg1=[]; kwargs...)
 				[:Q :log], [:S :auto], [:T :range], [:W :wrap :categorical], [:Z :continuous]])
 
 	if ((val = find_in_dict(d, [:E :data_levels])[1]) !== nothing)
-		if (isempty_(arg1) && isempty_(data))
+		if (isempty_(arg1))
 			error("E option requires that a data table is provided as well")
 		else
 			cmd *= " -E" * arg2str(val)

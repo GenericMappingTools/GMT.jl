@@ -39,6 +39,8 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_J("", Dict(:a => ""), "", true, true)[1] == " -J"
 	@test GMT.parse_J("", Dict(:J => "X", :figsize => 10))[1] == " -JX10"
 	@test GMT.parse_J("",Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
+	@test GMT.parse_J("",Dict(:scale=>"1:10"))[1] == " -Jx1:10"
+	@test GMT.parse_J("",Dict(:s=>"1:10"), " -JU")[1] == " -JU"
 	r = GMT.parse_params("", Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")));
 	@test r == " --MAP_FRAME_WIDTH=0.2 --IO=lixo --OI=xoli"
 	@test GMT.parse_params("", Dict(:par => (:MAP_FRAME_WIDTH,0.2))) == " --MAP_FRAME_WIDTH=0.2"
@@ -91,16 +93,19 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
 	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",));
 	@test GMT.parse_B("", d)[1] == " -Bsxa5f1 -Bpyclixo.txt -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10"
+	@test GMT.parse_B("",Dict(:B=>:same))[1] == " -B"
 	GMT.helper2_axes("lolo");
 
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	r = psxy([0 0; 1 1.1], L=(pen=(10,:red),bot=true), Vd=:cmd);
-	@test r[1:45] == " -JX12c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb"
+	@test r[1:48] == " -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb"
 	r = psxy([0 0; 1 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=:cmd);
-	@test r[1:44] == " -JX12c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb"
+	@test r[1:47] == " -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb"
 	psxy!([0 0; 1 1.1], Vd=:cmd);
 	psxy!("", [0 0; 1 1.1], Vd=:cmd);
+
+	@test_throws ErrorException("Nonsense first argument") GMT.parse_arg_and_pen((:a,0))
 	# ---------------------------------------------------------------------------------------------------
 
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
@@ -326,6 +331,7 @@ if (got_it)					# Otherwise go straight to end
 	@assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
 	if (GMTver >= 6)
 		makecpt(rand(10,1), E="", C=:rainbow);
+		@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
 	end
 
 	# MAPPROJECT
@@ -464,7 +470,7 @@ if (got_it)					# Otherwise go straight to end
 	colorbar(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps", par=(MAP_FRAME_WIDTH=0.2,))
 
 	# PSHISTOGRAM
-	histogram(randn(1000),W=0.1,center=true,fmt="ps",B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
+	histogram(randn(1000),W=0.1,center=true,B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
 	histogram("", randn(1000),W=0.1,center=true,N=0, Vd=:cmd)
 	histogram!(randn(1000),W=0.1,center=true,N=0, Vd=:cmd)
 

@@ -76,12 +76,12 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function histogram(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function histogram(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	length(kwargs) == 0 && return monolitic("pshistogram", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("pshistogram", cmd0, arg1)
 
 	d = KW(kwargs)
 
@@ -100,34 +100,37 @@ function histogram(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwarg
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :e :h :p :t :xy :params])
+	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :e :h :p :t :yx :params])
+	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:D :annot :annotate], [:F :center],
+				[:Q :cumulative], [:S :stairs]])
+	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd = add_opt(cmd, 'Z', d, [:Z :kind],
+		(counts="0", freq="1", log_count="2", log_freq="3", log10_count="4", log10_freq="5", weights="+w"))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	if (opt_R == "")  opt_R = " "  end		# So it doesn't try to find the -R in next call
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
-
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
-	cmd = add_opt(cmd, 'A', d, [:A :horizontal])
-	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate])
-	cmd = add_opt(cmd, 'F', d, [:F :center])
-	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	opt_L = opt_pen(d, 'L', [:L :pen])
-	cmd = add_opt(cmd, 'Q', d, [:Q :cumulative])
-	cmd = add_opt(cmd, 'S', d, [:S :stairs])
-	cmd = add_opt(cmd, 'W', d, [:W :bin :width])
-	cmd = add_opt(cmd, 'Z', d, [:Z :kind],
-		(counts="0", freq="1", log_count="2", log_freq="3", log10_count="4", log10_freq="5", weights="+w"))
-	if ((opt_L == "") && !occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-I", cmd))
-		cmd *= " -G150" * " -L0.5p"		# If no -L, -G, -I or -C set these defaults
-	elseif (opt_L != "")
-		cmd *= opt_L
+	if (GMTver >= 6)
+		cmd   = add_opt(cmd, 'T', d, [:T :bin :width])
+		cmd   = add_opt(cmd, 'L', d, [:L :out_range])
+		cmd  *= add_opt_pen(d, [:W :pen], "W")
+		if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-I", cmd))
+			cmd *= " -L0.5p -G150"		# If no -L, -G, -I or -C set these defaults
+		end
+	else
+		cmd   = add_opt(cmd, 'W', d, [:W :bin :width])
+		cmd  *= add_opt_pen(d, [:L :pen], "L")
+		if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-L", cmd) && !occursin("-I", cmd))
+			cmd *= " -L0.5p -G150"		# If no -L, -G, -I or -C set these defaults
+		end
 	end
 
 	if ((val = find_in_dict(d, [:N :normal])[1]) !== nothing)
-		if (isa(val, Number))      cmd = @sprintf("%s -N%d", cmd, val)
-		elseif (isa(val, String))  cmd = cmd * " -N" * val
-		elseif (isa(val, Tuple))   cmd = cmd * " -N" * parse_arg_and_pen(val)
+		if (isa(val, Number))      cmd  = @sprintf("%s -N%d", cmd, val)
+		elseif (isa(val, String))  cmd *= " -N" * val
+		elseif (isa(val, Tuple))   cmd *= " -N" * parse_arg_and_pen(val)
 		end
 	end
 
@@ -136,11 +139,10 @@ function histogram(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwarg
 end
 
 # ---------------------------------------------------------------------------------------------------
-histogram!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
-	histogram(cmd0, arg1; K=K, O=O, first=first, kw...)
+histogram!(cmd0::String="", arg1=[]; first=false, kw...) = histogram(cmd0, arg1; first=first, kw...)
 
-histogram(arg1=[]; K=false, O=false, first=true, kw...) = histogram("", arg1; K=K, O=O, first=first, kw...)
-histogram!(arg1=[]; K=true, O=true, first=false, kw...) = histogram("", arg1; K=K, O=O, first=first, kw...)
+histogram(arg1=[]; first=true, kw...) = histogram("", arg1; first=first, kw...)
+histogram!(arg1=[]; first=false, kw...) = histogram("", arg1; first=first, kw...)
 
 pshistogram  = histogram			# Alias
 pshistogram! = histogram!			# Alias
