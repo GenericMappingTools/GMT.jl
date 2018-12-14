@@ -53,6 +53,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.get_color([1 2 3]) == "1/2/3"
 	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
 	@test GMT.parse_unit_unit("data") == "u"
+	@test GMT.parse_units((2,:p)) == "2p"
 	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
 	@test GMT.add_opt((symb=:circle, size=7, unit=:point), (symb="1", size="", unit="1")) == "c7p"
 	r = GMT.add_opt_fill("", Dict(:G=>(inv_pattern=12,fg="white",bg=(1,2,3), dpi=10) ), [:G :fill], 'G');
@@ -104,6 +105,8 @@ if (got_it)					# Otherwise go straight to end
 	@test r[1:47] == " -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb"
 	psxy!([0 0; 1 1.1], Vd=:cmd);
 	psxy!("", [0 0; 1 1.1], Vd=:cmd);
+
+	GMT.round_wesn([1.333 17.4678 6.66777 33.333], true);
 
 	@test_throws ErrorException("Nonsense first argument") GMT.parse_arg_and_pen((:a,0))
 	# ---------------------------------------------------------------------------------------------------
@@ -285,7 +288,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# GRDTREND
 	G2=grdtrend(G, model=3);
-	G2=grdtrend(G, model=3, diff=[]);
+	G2=grdtrend(G, model=3, diff=[], trend=true);
 
 	# GRDTRACK
 	G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
@@ -338,7 +341,7 @@ if (got_it)					# Otherwise go straight to end
 	mapproject([-10 40], J=:u29, C=true, F=true);
 
 	# PLOT
-	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks")
+	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks", savefig="lixo")
 	plot("",hcat(collect(1:10)[:],rand(10,1)))
 	plot!("",hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
 	plot(hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
@@ -471,8 +474,8 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSHISTOGRAM
 	histogram(randn(1000),W=0.1,center=true,B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
-	histogram("", randn(1000),W=0.1,center=true,N=0, Vd=:cmd)
-	histogram!(randn(1000),W=0.1,center=true,N=0, Vd=:cmd)
+	histogram!("", randn(1000),W=0.1,center=true,N="1+p0.5", Vd=:cmd)
+	histogram!(randn(1000),W=0.1,center=true,N=(2,(1,:red)), Vd=:cmd)
 
 	# PSLEGEND
 	T = text_record(["P", "T d = [0 0; 1 1; 2 1; 3 0.5; 2 0.25]"]);
