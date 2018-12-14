@@ -99,8 +99,8 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 			if (opt_J == " -JX")  isletter(val[1]) ? opt_J = " -J" * val : opt_J = " -Jx" * val	# FRAGILE
 			else                  opt_J *= string(val)
 			end
-		elseif (default != "" && opt_J == "")		# WILL SCREW SO EASILY!!! 
-			opt_J = default
+		elseif (default != "" && opt_J == " -JX")
+			opt_J = default  					# -JX was a working default
 		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
 			if !(length(opt_J) >= 6 && isnumeric(opt_J[6]))
 				opt_J *= def_fig_size[1:3]		# If no size, default to 12 centimeters
