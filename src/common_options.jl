@@ -849,7 +849,7 @@ function parse_units(val)
 	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return string(val)  end
 
 	if (isa(val, Tuple) && (length(val) == 2))
-		return string(val[1]) * parse_unit_uint(val[2])
+		return string(val[1], parse_unit_unit(val[2]))
 	else
 		error(@sprintf("PARSE_UNITS, got and unsupported data type: %s", typeof(val)))
 	end
@@ -862,14 +862,14 @@ function parse_unit_unit(str)
 	if (!isa(str, String))
 		error(@sprintf("Argument data type must be String or Symbol but was: %s", typeof(str)))
 	end
-	if (str == "m" || str == "minutes" || str == "s" || str == "seconds" || str == "d" || str == "degrees" ||
-		str == "f" || str == "foot"    || str == "k" || str == "km" || str == "n" || str == "nautical")
-		out = str[1]
-	elseif (str == "e" || str == "meter")  out = "e";
+
+	if     (str == "e" || str == "meter")  out = "e";
 	elseif (str == "M" || str == "mile")   out = "M";
-	elseif (str == "nodes")                out = cmd * "+n";
+	elseif (str == "nodes")                out = "+n";
 	elseif (str == "data")                 out = "u";		# For the `scatter` modules
+	else                                   out = string(str[1])		# To be type-stable
 	end
+
 	return out
 end
 # ---------------------------------------------------------------------------------------------------
@@ -1301,7 +1301,7 @@ function helper_decorated(d::Dict)
 			else                  cmd = string(val[1], '/', val[2])
 			end
 		else
-			error("DECORATED: the 'dist' (or 'distance') parameter is mandatory and must be either a string or a named tuple.")
+			error("DECORATED: the 'dist' (or 'distance') parameter is mandatory and must be either a string or a tuple.")
 		end
 		if (symb == :distmap)  optD = "D"  end		# Here we know that we are dealing with a -S~ for sure.
 	end
@@ -1340,10 +1340,8 @@ end
 function fname_out(d::Dict)
 	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 	EXT = ""
-	if (haskey(d, :fmt))
-		out = (isa(d[:fmt], Symbol)) ? string(d[:fmt]) : d[:fmt]
-	else
-		out = FMT						# Use the global FMT choice
+	if (haskey(d, :fmt))  out = string(d[:fmt])
+	else                  out = FMT						# Use the global FMT choice
 	end
 	if (isempty(out) && !Sys.iswindows())
 		error("NOT specifying the **fmt** format is only allowed on Windows")
