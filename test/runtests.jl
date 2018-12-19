@@ -377,7 +377,7 @@ if (got_it)					# Otherwise go straight to end
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
-	scatter(rand(10), leg=:bottomright, fill=:red)
+	scatter(rand(10), leg=:bottomrigh, fill=:red)	# leg wong on purpose
 	scatter(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3, show=1, Vd=:cmd)
 	scatter(rand(50),rand(50), markersize=rand(50), zcolor=rand(50), aspect=:equal, alpha=50, Vd=:cmd)
 	scatter(1:10, rand(10), fill=:red, B=:a)
