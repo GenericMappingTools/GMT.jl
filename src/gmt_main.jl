@@ -172,8 +172,7 @@ function gmt(cmd::String, args...)
 				r = r * " -F"
 			else								# Hmm, have to find if any of 'e' or 'f' are used as -T flags
 				ind = findfirst("-T", r)
-				tok, = strtok(r[ind[2]:end])	# Will have T
-				tok = lowercase(tok[1])			# Here tok[1] means the first element of the tuple
+				tok = lowercase(strtok(r[ind[2]:end])[1])
 				if (!occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
 					r = r * " -F"
 				end
