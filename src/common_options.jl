@@ -1763,11 +1763,12 @@ function digests_legend_bag(d::Dict)
 		symb_width = 1			# Default to 1 cm (good for lines)
 		lab_width = maximum(length.(legend_type.label[:])) * 12 / 72 * 2.54 * 0.55 + 0.15	# Guess label width in cm
 		if ((opt_D = add_opt("", "", d, [:leg_pos :legend_pos :legend_position],
-			(map_coord="g",plot_coord="x",norm="n",pos="",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
+			(map_coord="g",plot_coord="x",norm="n",pos="j",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
 			just = "TR"					# The default
 			if (isa(val, String) || isa(val, Symbol))  just = justify(val)  end
 			opt_D = @sprintf("j%s+w%.3f+o0.2", just, symb_width*1.2 + lab_width)
 		else
+			if (opt_D[1] != 'j' && opt_D[1] != 'g' && opt_D[1] != 'x' && opt_D[1] != 'n')  opt_D = "jTR" * opt_D  end
 			if (!occursin("+w", opt_D))  opt_D = @sprintf("%s+w%.3f", opt_D, symb_width*1.2 + lab_width)  end
 			if (!occursin("+o", opt_D))  opt_D *= "+o0.2"  end
 		end

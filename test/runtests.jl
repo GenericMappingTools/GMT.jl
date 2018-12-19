@@ -361,7 +361,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# LINES
 	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
-	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af)
+	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af, box_pos="+p0.5", leg_pos=(offset=0.5,), leg=:TL)
 	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", vec=(size=0.65, fill=:red), Vd=:cmd)
 	lines(1:10,rand(10), W=0.25, Vd=:cmd)
 	lines!(1:10,rand(10), W=0.25, Vd=:cmd)
@@ -377,7 +377,7 @@ if (got_it)					# Otherwise go straight to end
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
-	scatter(rand(10), leg=true, fill=:red)
+	scatter(rand(10), leg=:bottomright, fill=:red)
 	scatter(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3, show=1, Vd=:cmd)
 	scatter(rand(50),rand(50), markersize=rand(50), zcolor=rand(50), aspect=:equal, alpha=50, Vd=:cmd)
 	scatter(1:10, rand(10), fill=:red, B=:a)
