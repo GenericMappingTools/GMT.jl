@@ -179,7 +179,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
-	if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
+	#if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
 	
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
@@ -251,8 +251,8 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		end
 	end
 
+	opt_ML = ""
 	if (opt_S != "")
-		opt_ML = ""
 		if (haskey(d, :markerline))
 			if (isa(d[:markerline], Tuple))			# Like this it can hold the pen, not extended atts
 				opt_ML = " -W" * parse_pen(d[:markerline])
@@ -279,9 +279,9 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 
 	elseif (opt_W == "" && opt_S != "")						# We have a symbol request
 		if (opt_Wmarker != "" && opt_W == "")
-			opt_Gsymb = opt_Gsymb * " -W" * opt_Wmarker		# Piggy back in this option string
+			opt_Gsymb *= " -W" * opt_Wmarker				# Piggy back in this option string
 		end
-		if (opt_ML != "")  cmd = cmd * opt_ML  end			# If we have a symbol outline pen
+		if (opt_ML != "")  cmd *= opt_ML  end				# If we have a symbol outline pen
 		cmd = [finish_PS(d, cmd * opt_S * opt_Gsymb * opt_UVXY, output, K, O)]
 
 	elseif (opt_W != "" && opt_S != "")						# We have both line/polygon and a symbol
@@ -305,6 +305,8 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	else
 		cmd = [finish_PS(d, cmd * opt_UVXY, output, K, O)]
 	end
+
+	put_in_legend_bag(d, cmd)
 
 	r = finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, gmt_proggy, arg1, arg2)
 	if (got_pattern)  gmt("destroy")  end 	# Apparently patterns are screweing the session
@@ -442,27 +444,27 @@ function check_caller(d::Dict, cmd::String, opt_S::String, caller::String, O::Bo
 			else
 				opt = add_opt("", "",  d, [:width])		# No need to purge because width is not a psxy option
 				if (opt == "")	opt = "0.8"	end			# The default
-				cmd = cmd * " -Sb" * opt * "u"
+				cmd *= " -Sb" * opt * "u"
 
 				optB = add_opt("", "",  d, [:base])
 				if (optB == "")	optB = "0"	end
-				cmd = cmd * "+b" * optB
+				cmd *= "+b" * optB
 			end
 		end
-		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end		# Default color
+		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd *= " -G0/115/190"	end		# Default color
 	elseif (caller == "bar3")
 		if (haskey(d, :noshade) && occursin("-So", cmd))
 			cmd = replace(cmd, "-So" => "-SO", count=1)
 		end
-		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd = cmd * " -G0/115/190"	end	
-		if (!occursin(" -J", cmd))  cmd = cmd * " -JX12c/0"  end
+		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd *= " -G0/115/190"	end	
+		if (!occursin(" -J", cmd))  cmd *= " -JX12c/0"  end
 	end
 
 	if (occursin('3', caller))
-		if (!occursin(" -B", cmd) && !O)  cmd = cmd * def_fig_axes3  end	# For overlays default is no axes
-		if (!occursin(" -p", cmd))  cmd = cmd * " -p200/30"  end
+		if (!occursin(" -B", cmd) && !O)  cmd *= def_fig_axes3  end	# For overlays default is no axes
+		if (!occursin(" -p", cmd))  cmd *= " -p200/30"  end
 	else
-		if (!occursin(" -B", cmd) && !O)  cmd = cmd * def_fig_axes   end
+		if (!occursin(" -B", cmd) && !O)  cmd *= def_fig_axes   end
 	end
 
 	return cmd
@@ -477,7 +479,7 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String)
 	opt =""
 	if (haskey(d, key))
 		if (isa(d[key], String))
-			cmd = cmd * " -" * optS * d[key]
+			cmd *= " -" * optS * d[key]
 		elseif (isa(d[key], NamedTuple))
 			opt = add_opt("", optS, d, [key], (width="",unit="1",base="+b",height="+B",nbands="+z",Nbands="+Z"))
 		else
@@ -491,11 +493,11 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String)
 		else
 			pb = ""
 			if (optS != "So")  pb = "+b0"  end	# The default for bar3 (So) is set in the bar3() fun
-			if (!isletter(opt[end]))  opt = opt * 'u' * pb	# No base set so default to ...
-			else                      opt = opt * pb
+			if (!isletter(opt[end]))  opt *= 'u' * pb	# No base set so default to ...
+			else                      opt *= pb
 			end
 		end
-		cmd = cmd * opt
+		cmd *= opt
 	end
 	return cmd
 end

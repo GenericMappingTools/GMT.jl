@@ -19,7 +19,7 @@ catch
 	global const GMTver = 5.0		# Don't want to raise an error in libgmt_h.jl due to a missing var
 end
 
-#const GMTver = 6.0
+global legend_type = nothing
 const FMT = "ps"
 const def_fig_size  = "12c/8c"			# Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"		# Default fig axes for plot like programs

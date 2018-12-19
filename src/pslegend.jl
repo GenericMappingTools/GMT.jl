@@ -37,9 +37,6 @@ function legend(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs..
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("pslegend", cmd0, arg1)
 
-	arg2 = []		# May be needed if GMTcpt type is sent in via G
-	N_args = isempty_(arg1) ? 0 : 1
-
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
