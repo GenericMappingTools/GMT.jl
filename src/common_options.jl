@@ -17,6 +17,7 @@ function find_in_dict(d::Dict, symbs, del=false)
 end
 
 function parse_R(cmd::String, d::Dict, O=false, del=false)
+	
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	opt_R = ""
 	val, symb = find_in_dict(d, [:R :region :limits])
@@ -224,7 +225,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
 	if (opt_B != def_fig_axes)  opt_B *= this_opt_B
 	elseif (this_opt_B != "")   opt_B  = this_opt_B
-	end 
+	end
 
 	return cmd * opt_B, opt_B
 end
@@ -470,7 +471,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_inc(cmd::String, d::Dict, symbs, opt, del=false)
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
-	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or 
+	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
 		if (isa(val, NamedTuple))
 			fn = fieldnames(typeof(val))
@@ -705,21 +706,21 @@ end
 function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 	# Generic parser of options passed in a NT and whose last element is anther NT with the mapping
 	# between expanded sub-options names and the original GMT flags.
-	# Example: 
+	# Example:
 	#	add_opt((a=(1,0.5),b=2), (a="+a",b="-b"))
 	# translates to:	"+a1/0.5-b2"
 	key = keys(nt);
-	d = nt2dict(mapa)				# The flags mapping as a Dict
+	d = nt2dict(mapa)						# The flags mapping as a Dict
 	cmd = ""
-	for k = 1:length(key)			# Loop over the keys of option's tuple
+	for k = 1:length(key)					# Loop over the keys of option's tuple
 		if (haskey(d, key[k]))
-			if (isa(d[key[k]], Tuple))	# Complexify it
+			if (isa(d[key[k]], Tuple))		# Complexify it
 				if (isa(nt[k], NamedTuple))
 					cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), [])
 				else
 					cmd *= d[key[k]][1] * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])
 				end
-			elseif (d[key[k]] == "1")	# Means that only first char in value is retained. Used with units
+			elseif (d[key[k]] == "1")		# Means that only first char in value is retained. Used with units
 				t = arg2str(nt[k])
 				if (t != "")  cmd *= t[1]
 				else          cmd *= "1"	# "1" is itself the flag
@@ -767,7 +768,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=[], 
 end
 
 # ---------------------------------------------------------------------------------------------------
-add_opt_fill(d::Dict, symbs, opt="") = add_opt_fill("", d, symbs, opt) 
+add_opt_fill(d::Dict, symbs, opt="") = add_opt_fill("", d, symbs, opt)
 function add_opt_fill(cmd::String, d::Dict, symbs, opt="")
 	# Deal with the area fill attributes option. Normally, -G
 	if ((val = find_in_dict(d, symbs)[1]) === nothing)  return cmd  end
@@ -796,7 +797,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function get_color(val)
 	# Parse a color input. Always return a string
-	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc 
+	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
 	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return string(val)  end
 
 	if (isa(val, Tuple) && (length(val) == 3))
@@ -884,7 +885,7 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	# Before anything else
 	if (haskey(d, :none)) return " -B0"  end
 
-	secondary ? primo = 's' : primo = 'p'			# Primary or secondary axe
+	secondary ? primo = 's' : primo = 'p'			# Primary or secondary axis
 	x ? axe = "x" : y ? axe = "y" : z ? axe = "z" : axe = ""	# Are we dealing with a specific axis?
 
 	opt = " -B"
@@ -1012,7 +1013,7 @@ function helper1_axes(arg)
 end
 # ------------------------
 function helper2_axes(arg)
-	# Used by 
+	# Used by
 	out = arg2str(arg)
 	if (out == "")
 		@warn("Empty units. Ignoring this units request.")
@@ -1043,7 +1044,7 @@ function helper2_axes(arg)
 end
 # ------------------------
 function helper3_axes(arg, primo, axe)
-	# Parse the custom annotations arg, save result into a tmp file and return its name	
+	# Parse the custom annotations arg, save result into a tmp file and return its name
 
 	label = ""
 	if (isa(arg, AbstractArray))
@@ -1081,7 +1082,7 @@ function helper3_axes(arg, primo, axe)
 
 	temp = "GMTjl_custom_" * primo
 	if (axe != "") temp *= axe  end
-	@static Sys.iswindows() ? fname = tempdir() * temp * ".txt" : fname = tempdir() * "/" * temp * ".txt" 
+	@static Sys.iswindows() ? fname = tempdir() * temp * ".txt" : fname = tempdir() * "/" * temp * ".txt"
 	fid = open(fname, "w")
 	if (label != "")
 		for k = 1:n_annot
@@ -1355,7 +1356,7 @@ function fname_out(d::Dict)
 
 	opt_T = "";
 	if (length(out) <= 3)
-		@static Sys.iswindows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps" 
+		@static Sys.iswindows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps"
 		ext = lowercase(out)
 		if (ext == "ps")       out = template;  EXT = ext
 		elseif (ext == "pdf")  opt_T = " -Tf";	out = template;		EXT = ext
@@ -1384,7 +1385,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi=
 	if (fname != "")	data_kw = fname		end
 
 	if (isa(data_kw, String))
-		if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option 
+		if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
 			data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * " " * data_kw)
 			if (!isempty(opt_i))		# Remove the -i option from cmd. It has done its job
 				cmd = replace(cmd, opt_i, "")
@@ -1406,7 +1407,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi=
 				if (rs[k] != "")
 					x = parse(Float64, rs[k])
 					if (x == 0.0) info[1].data[k-1] = x
-					else          info[1].data[k-1] += x 
+					else          info[1].data[k-1] += x
 					end
 				end
 			end
@@ -1495,14 +1496,14 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 
 	if (tipo == 1)
 		# Accepts "input1"; arg1; data=input1;
-		if (got_fname != 0) 
-			return cmd, got_fname, arg1		# got_fname = 1 => data is in cmd 
+		if (got_fname != 0)
+			return cmd, got_fname, arg1		# got_fname = 1 => data is in cmd
 		elseif (!isempty_(arg1))
 			return cmd, got_fname, arg1 	# got_fname = 0 => data is in arg1
 		elseif (data_kw !== nothing)
 			if (isa(data_kw, String))
 				cmd = data_kw * " " * cmd
-				return cmd, 1, arg1			# got_fname = 1 => data is in cmd 
+				return cmd, 1, arg1			# got_fname = 1 => data is in cmd
 			else
 				return cmd, 0, data_kw 		# got_fname = 0 => data is in arg1
 			end
@@ -1513,7 +1514,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 		# Accepts "input1  input2"; "input1", arg1; "input1", data=input2; arg1, arg2; data=(input1,input2)
 		if (got_fname != 0)
 			if (isempty_(arg1) && data_kw === nothing)
-				return cmd, 1, arg1, arg2		# got_fname = 1 => all data is in cmd 
+				return cmd, 1, arg1, arg2		# got_fname = 1 => all data is in cmd
 			elseif (!isempty_(arg1))
 				return cmd, 2, arg1, arg2		# got_fname = 2 => data is in cmd and arg1
 			elseif (data_kw !== nothing && length(data_kw) == 1)
@@ -1538,7 +1539,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 		# Accepts "input1  input2 input3"; arg1, arg2, arg3; data=(input1,input2,input3)
 		if (got_fname != 0)
 			if (isempty_(arg1) && data_kw === nothing)
-				return cmd, 1, arg1, arg2, arg3			# got_fname = 1 => all data is in cmd 
+				return cmd, 1, arg1, arg2, arg3			# got_fname = 1 => all data is in cmd
 			else
 				error("Cannot mix input as file names and numeric data.")
 			end
@@ -1633,9 +1634,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function isempty_(arg)
 	# F... F... it's a shame having to do this
-	if (arg === nothing)
-		return true
-	end
+	if (arg === nothing)  return true  end
 	try
 		vazio = isempty(arg)
 		return vazio
@@ -1660,11 +1659,12 @@ function put_in_slot(cmd::String, val, opt::Char, args)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String, 
-						   opt_T::String, K::Bool, prog::String, arg1=[], arg2=[], arg3=[], 
+function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String,
+						   opt_T::String, K::Bool, prog::String, arg1=[], arg2=[], arg3=[],
 						   arg4=[], arg5=[], arg6=[])
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
+
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
 			if ((r = dbg_print_cmd(d, cmd[k], prog)) !== nothing)  return r  end 	# For tests only
@@ -1690,6 +1690,8 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 		end
 	end
 
+	digests_legend_bag(d)			# Plot the legend if requested
+
 	fname = ""
 	if (haskey(d, :savefig))		# Also ensure that file has the right extension
 		fname, ext = splitext(d[:savefig])
@@ -1700,11 +1702,115 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 
 	if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
 		P = showfig(d, output, fname_ext, "", K)
-		gmt("destroy")				# Returning a PS screws the session
+		gmt("destroy")							# Returning a PS screws the session
 	elseif ((haskey(d, :show) && d[:show] != 0) || fname != "")
 		showfig(d, output, fname_ext, opt_T, K, fname)
 	end
 	return P
+end
+
+# --------------------------------------------------------------------------------------------------
+mutable struct legend_bag
+	label::Array{String,1}
+	cmd::Array{String,1}
+end
+
+# --------------------------------------------------------------------------------------------------
+function put_in_legend_bag(d::Dict, cmd)
+	# So far this fun is only called from plot() and stores line/symbol info in global var LEGEND_TYPE
+	global legend_type
+
+	if ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)
+		lab = [val]
+	elseif (legend_type === nothing) lab = ["y1"]
+	else                             lab = [@sprintf("y%d", size(legend_type.label ,1))]
+	end
+
+	if ((isa(cmd, Array{String, 1}) && !occursin("-O", cmd[1])) || (isa(cmd, String) && !occursin("-O", cmd)))
+		legend_type = nothing					# Make sure that we always start with an empty one
+	end
+
+	if (legend_type === nothing)
+		legend_type = legend_bag(Array{String,1}(undef,1), Array{String,1}(undef,1))
+		legend_type.label = lab;		legend_type.cmd = cmd
+	else
+		if (!isassigned(legend_type.label, 1))	# Some previous error left it in an #undef state
+			legend_type.label[1] = lab;		legend_type.cmd[1] = cmd
+		else
+			append!(legend_type.label, lab);	append!(legend_type.cmd, cmd)
+		end
+	end
+end
+
+# --------------------------------------------------------------------------------------------------
+function digests_legend_bag(d::Dict)
+	# Plot a legend if the leg or legend keywords were used. Legend info is stored in LEGEND_TYPE global variable
+	global legend_type
+
+	if ((val = find_in_dict(d, [:leg :legend])[1]) !== nothing)
+		(legend_type === nothing) && @warn("This module does not support automatic legends") && return
+
+		nl  = length(legend_type.label)
+		leg = Array{String,1}(undef,nl)
+		for k = 1:nl											# Loop over number of entries
+			symb = scan_opt(legend_type.cmd[k], "-S");		if (symb == "")  symb = "-"  end
+			fill = scan_opt(legend_type.cmd[k], "-G");		if (fill == "")  fill = "-"  end
+			pen = scan_opt(legend_type.cmd[k], "-W");
+			(pen  == "" && symb != "-" && fill != "-") ? pen = "-" : (pen == "" ? pen = "0.25p" : pen = pen)
+			leg[k] = "S 0.5 " * symb * " 1 " * fill * " " * pen * " 1.2 " * legend_type.label[k]
+		end
+
+		symb_width = 1			# Default to 1 cm (good for lines)
+		lab_width = maximum(length.(legend_type.label[:])) * 12 / 72 * 2.54 * 0.55 + 0.15	# Guess label width in cm
+		if ((opt_D = add_opt("", "", d, [:leg_pos :legend_pos :legend_position],
+			(map_coord="g",plot_coord="x",norm="n",pos="",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
+			just = "TR"					# The default
+			if (isa(val, String) || isa(val, Symbol))  just = justify(val)  end
+			opt_D = @sprintf("j%s+w%.3f+o0.2", just, symb_width*1.2 + lab_width)
+		else
+			if (!occursin("+w", opt_D))  opt_D = @sprintf("%s+w%.3f", opt_D, symb_width*1.2 + lab_width)  end
+			if (!occursin("+o", opt_D))  opt_D *= "+o0.2"  end
+		end
+
+		if ((opt_F = add_opt("", "", d, [:box_pos :box_position],
+			(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"))) == "")
+			opt_F = "+p0.5+gwhite"
+		else
+			if (!occursin("+p", opt_F))  opt_F *= "+p0.5"    end
+			if (!occursin("+g", opt_F))  opt_F *= "+gwhite"  end
+		end
+		legend!(text_record(leg), F=opt_F, D=opt_D)
+		legend_type = nothing			# Job done, now empty the bag
+	end
+end
+
+# --------------------------------------------------------------------------------------------------
+function scan_opt(cmd, opt)
+	# Scan the CMD string for the OPT option. Note OPT mut be a 2 chars -X GMT option.
+	out = ""
+	if ((ind = findfirst(opt, cmd)) !== nothing)  out, = strtok(cmd[ind[1]+2:end])  end
+	return out
+end
+
+# --------------------------------------------------------------------------------------------------
+function justify(arg)
+	# Take a string or symbol in ARG and return the two chars justification code.
+	if (isa(arg, Symbol))  arg = string(arg)  end
+	if (length(arg) == 2)  return arg  end 		# Assume it's already the 2 chars code (no further checking)
+	if     (arg == "topleft"      || arg == "TopLeft")       out = "TL"
+	elseif (arg == "middleleft"   || arg == "MiddleLeft")    out = "ML"
+	elseif (arg == "bottomleft"   || arg == "BottomLeft")    out = "BL"
+	elseif (arg == "topcenter"    || arg == "TopCenter")     out = "TC"
+	elseif (arg == "middlecenter" || arg == "MiddleCenter")  out = "MC"
+	elseif (arg == "bottomcenter" || arg == "BottomCenter")  out = "BC"
+	elseif (arg == "topcright"    || arg == "TopRight")      out = "TR"
+	elseif (arg == "middleright"  || arg == "MiddleRight")   out = "MR"
+	elseif (arg == "bottomright"  || arg == "BottomRight")   out = "BR"
+	else
+		@warn("Justification code provided ($arg) is not valid. Defaulting to TopRight")
+		out = "TR"
+	end
+	return out
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -1719,7 +1825,7 @@ end
 # --------------------------------------------------------------------------------------------------
 function peaks(; N=49, grid=true)
 	x,y = meshgrid(range(-3,stop=3,length=N))
-	
+
 	z =  3 * (1 .- x).^2 .* exp.(-(x.^2) - (y .+ 1).^2) - 10*(x./5 - x.^3 - y.^5) .* exp.(-x.^2 - y.^2)
 	   - 1/3 * exp.(-(x .+ 1).^2 - y.^2)
 
@@ -1727,13 +1833,13 @@ function peaks(; N=49, grid=true)
 		x = collect(range(-3,stop=3,length=N))
 		y = deepcopy(x)
 		z = Float32.(z)
-		G = GMTgrid("", "", [x[1], x[end], y[1], y[end], minimum(z), maximum(z)], [x[2]-x[1], y[2]-y[1]], 
+		G = GMTgrid("", "", [x[1], x[end], y[1], y[end], minimum(z), maximum(z)], [x[2]-x[1], y[2]-y[1]],
 					0, NaN, "", "", "", "", x, y, z, "x", "y", "z", "")
 		return G
 	else
 		return x,y,z
 	end
-end	
+end
 
 meshgrid(v::AbstractVector) = meshgrid(v, v)
 function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}) where T

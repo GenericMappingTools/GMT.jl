@@ -59,8 +59,6 @@ if (got_it)					# Otherwise go straight to end
 	r = GMT.add_opt_fill("", Dict(:G=>(inv_pattern=12,fg="white",bg=(1,2,3), dpi=10) ), [:G :fill], 'G');
 	@test r == " -GP12+b1/2/3+fwhite+r10"
 	@test GMT.add_opt_fill("", Dict(:G=>:red), [:G :fill], 'G') == " -Gred"
-	#d = Dict(:a=>1,:b=>1,:bi=>1,:bo=>1,:d=>1,:di=>1,:do=>1,:e=>1,:f=>1,:g=>1,:h=>1,:i=>1,:n=>1,:o=>1,:p=>1,:r=>1,:s=>1,:x=>1,:t=>1,:xy=>1);
-	#GMT.parse_common_opts(d,"", [:a :b :bi :bo :d :di :do :e :f :g :h :i :n :o :p :r :s :x :t :xy])
 	d = Dict(:offset=>5, :bezier=>true, :cline=>"", :ctext=>true, :pen=>("10p",:red,:dashed));
 	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,dashed+cl+cf+s+o5"
 	d = Dict(:W=>(offset=5, bezier=true, cline="", ctext=true, pen=("10p",:red,:dashed)));
@@ -269,26 +267,26 @@ if (got_it)					# Otherwise go straight to end
 	G2=grdgradient(G, azim="0/270", normalize="e0.6");	# Use G of previous test
 
 	# GRDHISTEQ
-	G2=grdhisteq(G, gaussian=[]);	# Use G of previous test
+	G2 = grdhisteq(G, gaussian=[]);	# Use G of previous test
 
 	# GRDLANDMASK
-	G2=grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
-	G2=grdlandmask("-R-10/4/37/45 -Dc -I0.1");			# Monolithitc
+	G2 = grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
+	G2 = grdlandmask("-R-10/4/37/45 -Dc -I0.1");			# Monolithitc
 
 	# GRDPASTE
-	G3=gmt("grdmath", "-R10/20/0/10 -I1 X");
-	G2=grdpaste(G,G3);
+	G3 = gmt("grdmath", "-R10/20/0/10 -I1 X");
+	G2 = grdpaste(G,G3);
 
 	# GRDPROJECT	-- Works but does not save projection info in header
-	G2=grdproject(G, proj="u29/1:1", F=[], C=[]); 		# Use G of previous test
-	G2=grdproject("-Ju29/1:1 -F -C", G);				# Monolithic
+	G2 = grdproject(G, proj="u29/1:1", F=[], C=[]); 		# Use G of previous test
+	G2 = grdproject("-Ju29/1:1 -F -C", G);				# Monolithic
 
 	# GRDSAMPLE
-	G2=grdsample(G, inc=0.5);		# Use G of previous test
+	G2 = grdsample(G, inc=0.5);		# Use G of previous test
 
 	# GRDTREND
-	G2=grdtrend(G, model=3);
-	G2=grdtrend(G, model=3, diff=[], trend=true);
+	G2 = grdtrend(G, model=3);
+	G2 = grdtrend(G, model=3, diff=[], trend=true);
 
 	# GRDTRACK
 	G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
@@ -379,6 +377,7 @@ if (got_it)					# Otherwise go straight to end
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
+	scatter(rand(10), leg=true, fill=:red)
 	scatter(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3, show=1, Vd=:cmd)
 	scatter(rand(50),rand(50), markersize=rand(50), zcolor=rand(50), aspect=:equal, alpha=50, Vd=:cmd)
 	scatter(1:10, rand(10), fill=:red, B=:a)
@@ -598,7 +597,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# EXAMPLES
 	plot(1:10,rand(10), lw=1, lc="blue", marker="square",
-	markeredgecolor=0, size=0.2, markerfacecolor="red", title="Hello World",
+	markeredgecolor=:white, size=0.2, markerfacecolor="red", title="Hello World",
 		xlabel="Spoons", ylabel="Forks", show=1, Vd=:cmd)
 
 	x = range(0, stop=2pi, length=180);	seno = sin.(x/0.2)*45;

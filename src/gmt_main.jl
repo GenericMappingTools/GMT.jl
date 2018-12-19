@@ -172,7 +172,7 @@ function gmt(cmd::String, args...)
 				r = r * " -F"
 			else								# Hmm, have to find if any of 'e' or 'f' are used as -T flags
 				ind = findfirst("-T", r)
-				tok = strtok(r[ind[2]:end])		# Will have T
+				tok, = strtok(r[ind[2]:end])	# Will have T
 				tok = lowercase(tok[1])			# Here tok[1] means the first element of the tuple
 				if (!occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
 					r = r * " -F"
@@ -188,15 +188,15 @@ function gmt(cmd::String, args...)
 	if (occursin("write", g_module))
 		if (!occursin("-T", r) && n_argin == 1)
 			if (any(isequal(:z), fieldnames(typeof(args[1]))))
-				r = r * " -Tg"
+				r *= " -Tg"
 			elseif (any(isequal(:image), fieldnames(typeof(args[1]))))
-				r = r * " -Ti"
+				r *= " -Ti"
 			elseif (any(isequal(:data), fieldnames(typeof(args[1]))))
-				r = r * " -Td"
+				r *= " -Td"
 			elseif (any(isequal(:postscript), fieldnames(typeof(args[1]))))
-				r = r * " -Tp"
+				r *= " -Tp"
 			elseif (any(isequal(:hinge), fieldnames(typeof(args[1]))))
-				r = r * " -Tc"
+				r *= " -Tc"
 			end
 		end
 		r, img_mem_layout, grd_mem_layout =  parse_mem_layouts(r)
@@ -436,9 +436,7 @@ function get_grid(API::Ptr{Void}, object)
 	global grd_mem_layout
 
 	G = unsafe_load(convert(Ptr{GMT_GRID}, object))
-	if (G.data == C_NULL)
-		error("get_grid: programming error, output matrix is empty")
-	end
+	if (G.data == C_NULL)  error("get_grid: programming error, output matrix is empty")  end
 
 	gmt_hdr = unsafe_load(G.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
@@ -517,9 +515,7 @@ function get_image(API::Ptr{Void}, object)
 	global img_mem_layout
 
 	I = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
-	if (I.data == C_NULL)
-		error("get_image: programming error, output matrix is empty")
-	end
+	if (I.data == C_NULL)  error("get_image: programming error, output matrix is empty")  end
 
 	gmt_hdr = unsafe_load(I.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
@@ -596,16 +592,11 @@ function get_palette(API::Ptr{Void}, object::Ptr{Void})
 
 	C = unsafe_load(convert(Ptr{GMT_PALETTE}, object))
 
-	if (C.data == C_NULL)
-		error("get_palette: programming error, output CPT is empty")
-	end
+	if (C.data == C_NULL)  error("get_palette: programming error, output CPT is empty")  end
 
-	if (C.model & GMT_HSV != 0)
-		model = "hsv"
-	elseif (C.model & GMT_CMYK != 0)
-		model = "cmyk"
-	else
-		model = "rgb"
+	if (C.model & GMT_HSV != 0)       model = "hsv"
+	elseif (C.model & GMT_CMYK != 0)  model = "cmyk"
+	else                              model = "rgb"
 	end
 	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 
@@ -653,7 +644,7 @@ function get_textset_(API::Ptr{Void}, object::Ptr{Void})
 # proj4:	String with any proj4 information
 # wkt:		String with any WKT information
 
-	if (object == C_NULL)	error("programming error, textset is NULL")		end
+	if (object == C_NULL)  error("programming error, textset is NULL")  end
 
 	T = unsafe_load(convert(Ptr{GMT_TEXTSET}, object))		# GMT_TEXTSET
 	flag = [GMT.GMT_LAX_CONVERSION, 0, 0]
