@@ -103,9 +103,7 @@ function gmt(cmd::String, args...)
 				n_argin -= 1
 			end
 		end
-		if (n_argin > 0 && isempty_(args[end]))	# This allows code simplification (less IF branches) in modules
-			n_argin -= 1
-		end
+		while (n_argin > 0 && args[n_argin] == [])  n_argin -= 1  end	# We may have trailing [] args in modules
 	end
 	# -----------------------------------------------------------
 
@@ -162,7 +160,7 @@ function gmt(cmd::String, args...)
 		end
 	end
 	if (g_module == "psconvert" && occursin("-,", r))	# It has also a mem layout request
-		r, img_mem_layout, grd_mem_layout =  parse_mem_layouts(r)
+		r, img_mem_layout, grd_mem_layout = parse_mem_layouts(r)
 	end
 
 	# 2++ Add -T to gmtwrite if user did not explicitly give -T. Seek also for MEM layout requests
@@ -180,7 +178,7 @@ function gmt(cmd::String, args...)
 				r *= " -Tc"
 			end
 		end
-		r, img_mem_layout, grd_mem_layout =  parse_mem_layouts(r)
+		r, img_mem_layout, grd_mem_layout = parse_mem_layouts(r)
 	end
 
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
@@ -188,14 +186,6 @@ function gmt(cmd::String, args...)
 		if (occursin("-Ti", r))
 			GMT_Set_Default(API, "API_PAD", "0")
 		end
-		#=
-		ff = findfirst( "-L", r)
-		ind = (ff === nothing) ? 0 : first(ff)
-		if (ind != 0)
-			grd_mem_layout, resto = strtok(r[ind+2:end])
-			r = r[1:ind-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
-		end
-		=#
 		r, img_mem_layout, grd_mem_layout =  parse_mem_layouts(r)
 	end
 
@@ -264,10 +254,10 @@ function gmt(cmd::String, args...)
 		if (X[k].direction == GMT_IN) continue 	end
 		n_out = n_out + 1
 	end
-	out = []
-	if (n_out > 0)
-		out = Array{Any}(undef, n_out)
-	end
+
+	#out = []
+	#if (n_out > 0)  out = Array{Any}(undef, n_out)  end
+	(n_out > 0) ? out = Array{Any}(undef, n_out) : out = []
 
 	for k = 1:n_items					# Get results from GMT into Julia arrays
 		if (X[k].direction == GMT_IN) continue 	end      # Only looking for stuff coming OUT of GMT here
@@ -283,9 +273,7 @@ function gmt(cmd::String, args...)
 	for k = 1:n_items
 		ppp = X[k].object
 		name = String([X[k].name...])				# Because X.name is a NTuple
-		if (GMT_Close_VirtualFile(API, name) != 0)
-			error("GMT: Failed to close virtual file")
-		end
+		if (GMT_Close_VirtualFile(API, name) != 0)  error("GMT: Failed to close virtual file")  end
 		if (GMT_Destroy_Data(API, Ref([X[k].object], 1)) != GMT_NOERROR)
 			error("Failed to destroy object used in the interface bewteen GMT and Julia")
 		else 		# Success, now make sure we dont destroy the same pointer more than once
@@ -342,24 +330,20 @@ function parse_mem_layouts(cmd)
 # strip the corresponding option from the CMD string (otherwise GMT would scream)
 	grd_mem_layout = "";	img_mem_layout = ""
 
-	ff = findfirst( "-,", cmd)
-	ind = (ff === nothing) ? 0 : first(ff)
-	if (ind != 0)
-		img_mem_layout, resto = strtok(cmd[ind+2:end])
+	if ((ind = findfirst( "-,", cmd)) !== nothing)
+		img_mem_layout, resto = strtok(cmd[ind[1]+2:end])
 		if (length(img_mem_layout) != 3)
 			error(@sprintf("GMT: Memory layout option must have 3 characters and not %s", img_mem_layout))
 		end
-		cmd = cmd[1:ind-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
+		cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 	end
-	if (isempty(img_mem_layout))			# Only if because we can't have a double request
-		ff = findfirst( "-;", cmd)
-		ind = (ff === nothing) ? 0 : first(ff)
-		if (ind != 0)
-			grd_mem_layout, resto = strtok(cmd[ind+2:end])
-			if (length(img_mem_layout) != 3)
-				error(@sprintf("GMT: Memory layout option must have 3 characters and not %s", grd_mem_layout))
+	if (isempty(img_mem_layout))				# Only if because we can't have a double request
+		if ((ind = findfirst( "-;", cmd)) !== nothing)
+			grd_mem_layout, resto = strtok(cmd[ind[1]+2:end])
+			if (length(img_mem_layout) < 2)
+				error(@sprintf("GMT: Memory layout option must have at least 2 chars and not %s", grd_mem_layout))
 			end
-			cmd = cmd[1:ind-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
+			cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 		end
 	end
 	return cmd, img_mem_layout, grd_mem_layout
@@ -443,9 +427,9 @@ function get_grid(API::Ptr{Nothing}, object)
 				z[MEXG_IJ(row, col, ny)] = t[ij]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
 			end
 		end
-	elseif (grd_mem_layout == "TR" || grd_mem_layout == "BR")	# Keep the Row Major but stored in Column Major
+	elseif (startswith(grd_mem_layout, "TR") || startswith(grd_mem_layout, "BR"))	# Keep the Row Major but stored in Column Major
 		ind_y = 1:ny		# Start assuming "TR"
-		if (grd_mem_layout == "BR");	ind_y = ny:-1:1;	end	# Bottom up
+		if (startswith(grd_mem_layout, "BR"))  ind_y = ny:-1:1  end	# Bottom up
 		k = 1
 		for row = ind_y
 			for col = 1:nx
