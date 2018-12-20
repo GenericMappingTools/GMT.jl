@@ -7,10 +7,11 @@ os:
   - linux
 julia:
   #- 0.7
+  - 1.0.3
   - nightly
 matrix:
   allow_failures:
-    #- julia: nightly
+    - julia: nightly
 notifications:
   email: true
 before_install:
