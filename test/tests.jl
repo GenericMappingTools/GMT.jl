@@ -46,24 +46,6 @@ function grdimage()
 end
 
 # -------------------------------------------------------------------------
-function gridbox()
-	grd = ones(Float32,9,9)*5
-	hdr = [0.0,8,0,8,0,1,0,1,1]
-	grd_box = ArrayContainer(9, 9, 1, pointer(grd), pointer(hdr))
-	#gmt("grdinfo -L0 -V", grd_box)
-	gmt("write -Tg V:/lixo.grd -Vl", grd_box)
-end
-
-# -------------------------------------------------------------------------
-function grd2xyz_box()
-	grd = reshape(Float32(1):12,3,4)
-	hdr = [1.0,4,1,3,1,12,0,1,1]
-	grd_box = ArrayContainer(4, 3, 1, pointer(grd), pointer(hdr))
-	xyz = gmt("grd2xyz -V", grd_box)
-	return xyz
-end
-
-# -------------------------------------------------------------------------
 function grd2xyz()
 	G = gmt("surface -R0/150/0/100 -I1", rand(Float64,100,3)*150)
 	xyz = gmt("grd2xyz -V", G)

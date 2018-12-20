@@ -1668,26 +1668,12 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
 			if ((r = dbg_print_cmd(d, cmd[k], prog)) !== nothing)  return r  end 	# For tests only
-			if (isempty_(arg1))					# Simple case
-				P = gmt(string(prog, " ", cmd[k]))
-			elseif (isempty_(arg2))				# One numeric input
-				P = gmt(string(prog, " ", cmd[k]), arg1)
-			else								# Two numeric inputs
-				P = gmt(string(prog, " ", cmd[k]), arg1, arg2)
-			end
+			P = gmt(string(prog, " ", cmd[k]), arg1, arg2)
 		end
 	else
 		if ((r = dbg_print_cmd(d, cmd, prog)) !== nothing)  return r  end 	# For tests only
 		cmd = string(prog, " ", cmd)
-		if     (!isempty_(arg6))  P = gmt(cmd, arg1, arg2, arg3, arg4, arg5, arg6)
-		elseif (!isempty_(arg5))  P = gmt(cmd, arg1, arg2, arg3, arg4, arg5)
-		elseif (!isempty_(arg4))  P = gmt(cmd, arg1, arg2, arg3, arg4)
-		elseif (!isempty_(arg3))  P = gmt(cmd, arg1, arg2, arg3)
-		elseif (!isempty_(arg2))  P = gmt(cmd, arg1, arg2)
-		elseif (!isempty_(arg2))  P = gmt(cmd, arg1, arg2)
-		elseif (!isempty_(arg1))  P = gmt(cmd, arg1)
-		else                      P = gmt(cmd)
-		end
+		P = gmt(cmd, arg1, arg2, arg3, arg4, arg5, arg6)
 	end
 
 	digests_legend_bag(d)			# Plot the legend if requested
