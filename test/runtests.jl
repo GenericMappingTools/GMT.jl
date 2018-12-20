@@ -565,7 +565,7 @@ if (got_it)					# Otherwise go straight to end
 	trend2d(D, F=:xyr, N=3);
 
 	# MISC
-	G = GMT.grid_type(G.z);
+	G = GMT.mat2grid(G.z, 0, [G.range; G.registration; G.inc]);
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
 	G2 = G1;
 	G3 = G1 + G2;

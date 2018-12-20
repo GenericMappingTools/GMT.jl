@@ -1556,33 +1556,6 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-G = grid_type(z, hdr=[])
-    Take a 2D Z array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax ref xinc yinc] header descriptor
-    and return a grid GMTgrid type.
-    Optionaly, the HDR arg may be ommited and it will computed from Z alone, but than x=1:ncol, y=1:nrow
-"""
-function grid_type(z, hdr=[])
-	n_rows = size(z,1);		n_cols = size(z,2)
-	if (n_rows == 1 || n_cols == 1)
-		error("Z must be a 2D array")
-	end
-	if (isempty(hdr))
-		zmin, zmax = extrema(z)
-		hdr = [1. n_cols 1. n_rows zmin zmax 0 1 1]
-	elseif (length(hdr) != 9)
-		error("The HDR array must have 9 elements")
-	end
-	x = range(hdr[1], stop=hdr[2], length=n_cols)
-	y = range(hdr[3], stop=hdr[4], length=n_rows)
-	# Recompute the x|y_inc to make sure they are right.
-	one_or_zero = hdr[7] == 0 ? 1 : 0
-	x_inc = (hdr[2] - hdr[1]) / (n_cols - one_or_zero)
-	y_inc = (hdr[4] - hdr[3]) / (n_rows - one_or_zero)
-	G = GMTgrid("", "", hdr[1:6], [x_inc, y_inc], hdr[7], NaN, "", "", "", "", x, y, z, "", "", "", "")
-end
-
-# ---------------------------------------------------------------------------------------------------
-"""
 Inquire about GMT version. Will return 5.3 for all versions up to this one and the truth for rest
 """
 function get_GMTversion(API::Ptr{Nothing})
@@ -1658,21 +1631,41 @@ end
 ##
 
 # ---------------------------------------------------------------------------------------------------
-function mat2grid(mat, reg=0, proj4::String="", wkt::String="")
+"""
+G = mat2grid(mat, reg=0, hdr=nothing, proj4::String="", wkt::String="")
+    Take a 2D Z array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax ref xinc yinc] header descriptor
+    and return a grid GMTgrid type.
+	Optionaly, the HDR arg may be ommited and it will computed from Z alone, but than x=1:ncol, y=1:nrow
+	When HDR is not used, REG == 0 means create a grid registration grid and REG == 1, a pixel registered grid.
+"""
+function mat2grid(mat, reg=0, hdr=nothing, proj4::String="", wkt::String="")
 # Take a 2D array of floats and turn it into a GMTgrid
 	nx = size(mat, 2);		ny = size(mat, 1);
-	if (reg == 0)
-		x  = collect(1:nx);			y = collect(1:ny)
+
+	if (hdr === nothing)
+		zmin, zmax = extrema(mat)
+		if (reg == 0)  x  = collect(1:nx);		 y = collect(1:ny)
+		else           x  = collect(0.5:nx+0.5); y = collect(0.5:ny+0.5)
+		end
+		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
+		x_inc = 1.0;	y_inc = 1.0
+	elseif (length(hdr) != 9)
+		error("The HDR array must have 9 elements")
 	else
-		x  = collect(0.5:nx+0.5);	y = collect(0.5:ny+0.5)
+		x = range(hdr[1], stop=hdr[2], length=nx)
+		y = range(hdr[3], stop=hdr[4], length=ny)
+		# Recompute the x|y_inc to make sure they are right.
+		reg = hdr[7]
+		one_or_zero = reg == 0 ? 1 : 0
+		x_inc = (hdr[2] - hdr[1]) / (nx - one_or_zero)
+		y_inc = (hdr[4] - hdr[3]) / (ny - one_or_zero)
 	end
-	if (!isa(mat, Float32))
-		z = Float32.(mat)
-	else
-		z = mat
+
+	if (!isa(mat, Float32))  z = Float32.(mat)
+	else                     z = mat
 	end
-	G = GMTgrid(proj4, wkt, [x[1], x[end], y[1], y[end], minimum(mat), maximum(mat)], [1.0, 1.0], 
-	            reg, NaN, "", "", "", "", x, y, z, "x", "y", "z", "")
+
+	G = GMTgrid(proj4, wkt, hdr[1:6], [x_inc, y_inc], reg, NaN, "", "", "", "", x, y, z, "x", "y", "z", "")
 end
 
 # ---------------------------------------------------------------------------------------------------
