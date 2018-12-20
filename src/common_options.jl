@@ -1658,6 +1658,16 @@ function put_in_slot(cmd::String, val, opt::Char, args)
 	return cmd, k
 end
 
+#= ---------------------------------------------------------------------------------------------------
+function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String,
+	opt_T::String, K::Bool, O::Bool, prog::String, args...)
+	# FNAME_EXT hold the extension when not PS
+	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
+	cmd = finish_PS(d, cmd, output, K, O)
+	return finish_PS_module(d, cmd, opt_extra, output, fname_ext, opt_T::String, K, prog, args...)
+end
+=#
+
 # ---------------------------------------------------------------------------------------------------
 function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String,
 						   opt_T::String, K::Bool, prog::String, arg1=[], arg2=[], arg3=[],

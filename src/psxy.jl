@@ -292,10 +292,10 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 			if (opt_Wmarker != "")
 				opt_Wmarker = " -W" * opt_Wmarker			# Set Symbol edge color 
 			end
-			cmd1 = cmd * opt_W
+			cmd1 = cmd * opt_W * opt_UVXY
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
 			if (opt_ML != "")  cmd1 = cmd1 * opt_ML  end	# If we have a symbol outline pen
-			cmd = [finish_PS(d, cmd1 * opt_UVXY, output, true, O)
+			cmd = [finish_PS(d, cmd1, output, true, O)
 			       finish_PS(d, cmd2, output, K, true)]
 		end
 
