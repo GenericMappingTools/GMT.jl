@@ -597,6 +597,17 @@ if (got_it)					# Otherwise go straight to end
 	text_record(Array[["aa", "bb"],["cc", "dd", "ee"]]);
 	text_record([["aa", "bb"],["cc", "dd", "ee"]]);
 
+	# TEST THE API DIRECTLY (basically to improve coverage under GMT6)
+	if (GMTver >= 6)
+		PS = plot(rand(3), ps=1);
+		API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
+		GMT.ps_init(API, "", PS, 0);
+		@test_throws ErrorException("Failure to alloc GMT source TEXTSET for input") GMT.text_init(API, "", "aaaa", 0);
+		@test_throws ErrorException("Failure to alloc GMT blank TEXTSET container for holding output TEXT") GMT.text_init(API, "", "aaaa", 1);
+		@test_throws ErrorException("Failure to alloc GMT blank TEXTSET container for holding output TEXT") GMT.text_init_(API, "", "", 1);
+		gmt("destroy")
+	end
+
 	GMT.linspace(1,1,100);
 	GMT.logspace(1,5);
 	GMT.fakedata(50,1);
