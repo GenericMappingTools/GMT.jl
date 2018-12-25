@@ -39,7 +39,7 @@ Parameters
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#l)
 - **S** : **for_error_bars** : -- Str or [] --
 
-    Add extra space for error bars. Useful together with I option and when later plotting with psxy E.
+    Add extra space for error bars. Useful together with I option and when later plotting with `plot E`.
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#s)
 - **T** : **nearest_multiple** : -- Number or Str --
 

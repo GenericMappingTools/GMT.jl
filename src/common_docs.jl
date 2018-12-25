@@ -2,8 +2,8 @@ const GMTdoc = "http://gmt.soest.hawaii.edu/doc/latest/"
 
 const opt_C = "**C** : **color** : **cmap** : -- Str --		``Flags = [cpt |master[+izinc] |color1,color2[,*color3*,…]]``
 
-    Name of the CPT (for grd_z only). Alternatively, supply the name of a GMT color
-    master dynamic CPT.
+    Give a CPT name or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those
+    colors automatically.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#c)"
 
 const opt_J = "**J** : **proj** : -- ::String --
@@ -104,28 +104,28 @@ const opt_g = "**g** : **gaps** : -- Str --           ``Flags = [a]x|y|d|X|Y|D|[
     Examine the spacing between consecutive data points in order to impose breaks in the line.
     [`-g`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#g-full)"
 
-const opt_h = "**h** : **headers** : -- Str --        ``Flags = [i|o][n][+c][+d][+rremark][+ttitle]``
+const opt_h = "**h** : **header** : -- Str --        ``Flags = [i|o][n][+c][+d][+rremark][+ttitle]``
 
     Primary input file(s) has header record(s).
     [`-h`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#h-full)"
 
-const opt_i = "**i** : **input_col** : -- Str --      ``Flags = cols[+l][+sscale][+ooffset][,…]``
+const opt_i = "**i** : **incol** : -- Str --      ``Flags = cols[+l][+sscale][+ooffset][,…]``
 
     Select specific data columns for primary input, in arbitrary order.
     [`-i`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#icols-full)"
 
-const opt_n = "**n** : **interp** : -- Str --         ``Flags = [b|c|l|n][+a][+bBC][+c][+tthreshold]``
+const opt_n = "**n** : **interp** : **interpol** : -- Str --         ``Flags = [b|c|l|n][+a][+bBC][+c][+tthreshold]``
 
     Select grid interpolation mode by adding b for B-spline smoothing, c for bicubic interpolation,
     l for bilinear interpolation, or n for nearest-neighbor value.
     [`-n`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#n-full)"
 
-const opt_o = "**o** : **output_col** : -- Str --     ``Flags = cols[,…]``
+const opt_o = "**o** : **outcol** : -- Str --     ``Flags = cols[,…]``
 
     Select specific data columns for primary output, in arbitrary order.
     [`-o`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#ocols-full)"
 
-const opt_p = "**p** : **view** : -- Str or List --   `Flags = [x|y|z]azim[/elev[/zlevel]][+wlon0/lat0[/z0]][+vx0/y0]`
+const opt_p = "**p** : **view** : **perspective** : -- Str or List --   `Flags = [x|y|z]azim[/elev[/zlevel]][+wlon0/lat0[/z0]][+vx0/y0]`
 
     Selects perspective view and sets the azimuth and elevation of the viewpoint [180/90].
     [`-p`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#perspective-full)"
@@ -145,7 +145,7 @@ const opt_t = "**t** : **alpha** : **transparency** : -- Str --   ``Flags = tran
     Set PDF transparency level for an overlay, in (0-100] percent range. [Default is 0, i.e., opaque].
     [`-t`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#t-full)"
 
-const opt_x = "**x** : **n_threads** : -- Str or Number --  ``Flags = [[-]n]``
+const opt_x = "**x** : **cores** : **n_threads** : -- Str or Number --  ``Flags = [[-]n]``
 
     Limit the number of cores to be used in any OpenMP-enabled multi-threaded algorithms.
     [`-x`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#x-full)"

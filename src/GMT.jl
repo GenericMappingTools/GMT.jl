@@ -34,8 +34,8 @@ export
 	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft,
 	grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdlandmask, grdpaste, grdproject,
 	grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume, greenspline,
-	mat2grid, histogram, histogram!, image, image!, imshow, imshow!, kml2gmt, logo, logo!, makecpt,
-	mask, mask!, mapproject, nearneighbor, plot, plot!, plot3d, plot3d!, project,
+	mat2ds, mat2grid, mat2img, histogram, histogram!, image, image!, imshow, imshow!, kml2gmt, logo, logo!,
+	makecpt, mask, mask!, mapproject, nearneighbor, plot, plot!, plot3d, plot3d!, project,
 	pscontour, pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, 
 	pshistogram, pshistogram!, psimage, psimage!, psmask, psmask!, psrose, psrose!, psscale, psscale!, 
 	pssolar, pssolar!, psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, 
@@ -95,6 +95,7 @@ include("kml2gmt.jl")
 include("makecpt.jl")
 include("mapproject.jl")
 include("nearneighbor.jl")
+include("plot.jl")
 include("project.jl")
 include("psbasemap.jl")
 include("psclip.jl")
@@ -111,7 +112,6 @@ include("pssolar.jl")
 include("pstext.jl")
 include("psxy.jl")
 include("pswiggle.jl")
-include("plot.jl")
 include("sample1d.jl")
 include("spectrum1d.jl")
 include("sphdistance.jl")

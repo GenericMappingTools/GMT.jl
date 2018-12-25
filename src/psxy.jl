@@ -1,120 +1,10 @@
-"""
-    psxy(cmd0::String="", arg1=[]; kwargs...)
-
-reads (x,y) pairs and plot lines, polygons, or symbols at those locations on a map.
-
-Full option list at [`psxy`](http://gmt.soest.hawaii.edu/doc/latest/plot.html)
-
-Parameters
-----------
-
-- **A** : **straight_lines** : -- Str --  
-
-    By default, geographic line segments are drawn as great circle arcs. To draw them as straight
-    lines, use the -A flag.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#a)
-- $(GMT.opt_J)
-- $(GMT.opt_R)
-- $(GMT.opt_B)
-- $(GMT.opt_C)
-- **D** : **shift** : **offset** : -- Str --
-
-    Offset the plot symbol or line locations by the given amounts dx/dy.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#d)
-- **E** : **error** : **error_bars** : -- Str --
-
-    Draw symmetrical error bars.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#e)
-- **F** : **conn** : **connection** : -- Str --
-
-    Alter the way points are connected
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#f)
-- **G** : **fill** : **markerfacecolor** : -- Str --
-
-    Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
-    color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
-    'fill' for the polygons and 'markerfacecolor' for filling the symbols. Same applyies for W bellow
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#g)
-- **I** : **intens** : -- Str or number --
-
-    Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating
-    shading illumination.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#i)
-- **L** : **close** : -- Str --
-
-    Force closed polygons. 
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#l)
-- **N** : **noclip** : **no_clip** : -- Str or [] --
-
-    Do NOT clip symbols that fall outside map border 
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#n)
-- $(GMT.opt_P)
-- **S** : **symbol** : -- Str --
-
-    Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#s)
-
-    Alternatively select a sub-set of symbols using the aliases: **marker** or **shape**and values:
-
-    + **-**, **x_dash**
-    + **+**, **plus**
-    + **a**, *, **star**
-    + **c**, **circle**
-    + **d**, **diamond**
-    + **g**, **octagon**
-    + **h**, **hexagon**
-    + **i**, **v**, **inverted_tri**
-    + **n**, **pentagon**
-    + **p**, **.**, **point**
-    + **r**, **rectangle**
-    + **s**, **square**
-    + **t**, **^**, **triangle**
-    + **x**, **cross**
-    + **y**, **y_dash**
-
-    and select their sizes with the **markersize** or **size** keyword [default is 7p].
-    The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
-    points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
-- **W** : **pen** : **markeredgecolor** : -- Str --
-
-    Set pen attributes for lines or the outline of symbols
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#w)
-    WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
-    If your plot has polygons and symbols, use **W** or **line_attribs** for the polygons and
-    **markeredgecolor** for outline of symbols. Similar to S above.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- **axis** : **aspect** : -- Str --
-    When equal to "equal" makes a square plot.
-- $(GMT.opt_a)
-- $(GMT.opt_bi)
-- $(GMT.opt_di)
-- $(GMT.opt_e)
-- $(GMT.opt_f)
-- $(GMT.opt_g)
-- $(GMT.opt_h)
-- $(GMT.opt_i)
-- $(GMT.opt_p)
-- $(GMT.opt_t)
-- $(GMT.opt_swap_xy)
-"""
-function psxy(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, kwargs...)
-	if (isempty(cmd0) && isa(arg1, AbstractArray) && length(arg1) != 2 &&
-		(size(arg1,2) == 1 || size(arg1,1) == 1))	# y only
-		arg1 = hcat(1:length(arg1), arg1)
-	end
-	common_plot_xyz(cmd0, arg1, caller, K, O, first, false, kwargs...)
-end
+const psxy  = plot
+const psxy! = plot!
+const psxyz  = plot3d
+const psxyz! = plot3d!
 
 # ---------------------------------------------------------------------------------------------------
-function psxyz(cmd0::String="", arg1=[]; caller="", K=false, O=false, first=true, kwargs...)
-	common_plot_xyz(cmd0, arg1, caller, K, O, first, true, kwargs...)
-end
-
-# ---------------------------------------------------------------------------------------------------
-function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
+function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
@@ -124,14 +14,9 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	else		        gmt_proggy = "psxy"
 	end
 
-	((isempty(cmd0) && isempty_(arg1)) || occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
+	((cmd0 == "" && isempty_(arg1)) || occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
 
-	if (isa(arg1, Array{GMT.GMTdataset,1}))		# Shitty consequence of arg1 being the output of a prev cmd
-		arg1 = arg1[1]
-	end
-
-	cmd = ""
-	sub_module = ""						# Will change to "scatter", etc... if called by sub-modules
+	cmd = "";	sub_module = ""					# Will change to "scatter", etc... if called by sub-modules
 	if (caller != "")
 		if (occursin(" -", caller))		# some sub-modues use this piggy-backed call
 			if ((ind = findfirst("|", caller)) !== nothing)	# A mixed case with "caler|partiall_command"
@@ -179,7 +64,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
-	#if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
+	if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
 	
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
@@ -259,7 +144,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 			else
 				opt_ML = " -W" * arg2str(d[:markerline])
 			end
-			if (!isempty(opt_Wmarker))
+			if (opt_Wmarker != "")
 				opt_Wmarker = ""
 				@warn("markerline overrides markeredgecolor")
 			end
@@ -306,7 +191,7 @@ function common_plot_xyz(cmd0, arg1, caller, K, O, first, is3D, kwargs...)
 		cmd = [finish_PS(d, cmd * opt_UVXY, output, K, O)]
 	end
 
-	put_in_legend_bag(d, cmd)
+	put_in_legend_bag(d, cmd, arg1)
 
 	r = finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, gmt_proggy, arg1, arg2)
 	if (got_pattern)  gmt("destroy")  end 	# Apparently patterns are screweing the session
@@ -503,7 +388,7 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String)
 end
 # ---------------------------------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 psxy(arg1; caller="", K=false, O=false, first=true, kw...) =
 	psxy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
 psxy!(arg1; caller="", K=true, O=true, first=false, kw...) =
@@ -517,3 +402,4 @@ psxyz!(cmd0::String="", arg1=[]; caller="", K=true, O=true,  first=false, kw...)
 	psxyz(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
 psxyz!(arg1=[]; caller="", K=true, O=true, first=false, kw...) =
 	psxyz("", arg1; caller=caller, K=K, O=O, first=first, kw...)
+=#

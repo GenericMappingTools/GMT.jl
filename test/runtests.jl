@@ -98,9 +98,9 @@ if (got_it)					# Otherwise go straight to end
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	r = psxy([0 0; 1 1.1], L=(pen=(10,:red),bot=true), Vd=:cmd);
-	@test r[1:48] == " -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb"
+	@test startswith(r," -JX12c/8c -Baf -BWSen -R1/2/0/1 -L+p10,red+yb")
 	r = psxy([0 0; 1 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=:cmd);
-	@test r[1:47] == " -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb"
+	@test startswith(r," -JX12c/8c -Baf -BWSen -R1/2/0/1 -L+p10+cl+yb")
 	psxy!([0 0; 1 1.1], Vd=:cmd);
 	psxy!("", [0 0; 1 1.1], Vd=:cmd);
 
@@ -340,6 +340,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks", savefig="lixo")
+	plot(mat2ds(hcat(collect(1:6), GMT.fakedata(6,6)), color=[:red, :green, :blue, :yellow]), leg=true, label="Bla")
 	plot("",hcat(collect(1:10)[:],rand(10,1)))
 	plot!("",hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
 	plot(hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
@@ -348,8 +349,8 @@ if (got_it)					# Otherwise go straight to end
 	plot(1:10,rand(10), S=(symb=:c,size=7,unit=:point), color=:rainbow, zcolor=rand(10))
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, Vd=:cmd)
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3)
-	plot3d(rand(5,5,3), marker=:cube)
-	plot3d!(rand(5,5,3), marker=:cube, Vd=:cmd)
+	plot3d(rand(5,3), marker=:cube)
+	plot3d!(rand(5,3), marker=:cube, Vd=:cmd)
 	plot3d(1:10, rand(10), rand(10), Vd=:cmd)
 	plot3d!(1:10, rand(10), rand(10), Vd=:cmd)
 
@@ -377,7 +378,7 @@ if (got_it)					# Otherwise go straight to end
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
-	scatter(rand(10), leg=:bottomrigh, fill=:red)	# leg wong on purpose
+	scatter(rand(10), leg=:bottomrigh, fill=:red)	# leg wrong on purpose
 	scatter(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3, show=1, Vd=:cmd)
 	scatter(rand(50),rand(50), markersize=rand(50), zcolor=rand(50), aspect=:equal, alpha=50, Vd=:cmd)
 	scatter(1:10, rand(10), fill=:red, B=:a)
@@ -572,8 +573,16 @@ if (got_it)					# Otherwise go straight to end
 	G3 = G1 - G2;
 	G3 = G1 * G2;
 	G3 = G1 / G2;
+	G2 = GMT.mat2grid(rand(Float32,5,5))
+	@test_throws ErrorException("The two grids have not the same size, so they cannot be added.") G1 + G2;
+	@test_throws ErrorException("The two grids have not the same size, so they cannot be subtracted.") G1 - G2;
+	@test_throws ErrorException("The two grids have not the same size, so they cannot be multiplied.") G1 * G2;
+	@test_throws ErrorException("The two grids have not the same size, so they cannot be divided.") G1 / G2;
+
 	GMT.get_datatype([]);
 	GMT.get_datatype(Float32(8));
+	GMT.get_datatype(UInt64(8));
+	GMT.get_datatype(Int64(8));
 	GMT.get_datatype(UInt32(8));
 	GMT.get_datatype(Int32(8));
 	GMT.get_datatype(UInt16(8));

@@ -145,7 +145,7 @@ function gmt(cmd::String, args...)
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F.
 	# The problem is that we can't use nargout to decide what to do, so we use -T to solve the ambiguity.
 	if (g_module == "psconvert" && (isempty(r) || !occursin("-F", r)) )
-		if (isempty(r))
+		if (r == "")
 			r = "-F"
 		else
 			if (!occursin("-T", r))
@@ -1427,9 +1427,7 @@ function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
 		return P
 	end
 
-	if (!isa(ps, GMTps))
-		error("Expected a PS structure for input")
-	end
+	if (!isa(ps, GMTps))  error("Expected a PS structure for input")  end
 
 	# Passing dim[0] = 0 since we dont want any allocation of a PS string
 	pdim = pointer([0])
@@ -1457,7 +1455,7 @@ function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
 end
 
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function convert_string(str)
 # Convert a string stored in one of those GMT.Array_XXX_Uint8 types into an ascii string
 	k = 1
@@ -1467,7 +1465,7 @@ function convert_string(str)
 	out = join([Char(str.(n)) for n=1:k])
 end
 
-#= ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------
 function GMTJL_type(API::Ptr{Nothing})		# Set default export type
 	value = "        "		# 8 spaces
 	GMT_Get_Default(API, "GMT_EXPORT_TYPE", value)
@@ -1508,7 +1506,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function strncmp(str1, str2, num)
-# Pseudo strncmp
+	# Pseudo strncmp
 	a = str1[1:min(num,length(str1))] == str2
 end
 
@@ -1533,10 +1531,8 @@ function mutateit(API::Ptr{Nothing}, t_type, member::String, val)
 	ind = findfirst(isequal(Symbol(member)), fieldnames(dt))	# Find the index of the "is_continuous" member
 	# This would work too
 	# ind = ccall(:jl_field_index, Cint, (Any, Any, Cint), dt, symbol(member), 1) + 1
-	if (isa(val, AbstractString))	# No idea why I have to do this
-		p_val = pointer(val)
-	else
-		p_val = pointer([val])
+	if (isa(val, AbstractString))  p_val = pointer(val)		# No idea why I have to do this
+	else                           p_val = pointer([val])
 	end
 	GMT_blind_change_struct(API, p_type, p_val, @sprintf("%s",ft[ind]), fo[ind])
 	typeof(p_type); 	typeof(p_val)		# Just to be sure that GC doesn't kill them before their due time
@@ -1619,7 +1615,32 @@ end
 text_record(text) = text_record(Array{Float64,2}(undef,0,0), text)
 text_record(text::Array{String}, hdr::String) = text_record(Array{Float64,2}(undef,0,0), text, hdr)
 
-## ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------
+function mat2ds(mat; hdr=nothing, color=nothing)
+	n_ds = size(mat, 2) - 1
+	D = Array{GMTdataset, 1}(undef, n_ds)
+	if (color !== nothing)
+		n_colors = length(color)
+		if (hdr == nothing)
+			hdr = Array{String,1}(undef, n_ds)
+			for k = 1:n_ds
+				k != n_colors ? n = k % n_colors : n = n_colors
+				hdr[k] = " -W" * arg2str(color[n])
+			end
+		else
+			for k = 1:n_ds
+				k != n_colors ? n = k % n_colors : n = n_colors
+				hdr[k] *= " -W" * arg2str(color[n])
+			end
+		end
+	end
+	for k = 1:n_ds
+		D[k] = GMTdataset(mat[:,[1,k+1]], Array{String,1}(), (hdr === nothing ? "" : hdr[k]), Array{String,1}(), "", "")
+	end
+	return D
+end
+
+# ---------------------------------------------------------------------------------------------------
 function mat2img(mat::Array{UInt8}, proj4::String="", wkt::String="")
 	# Take a 2D array of uint8 and turn it into a GMTimage.  NOT FINISHED YEY
 	nx = size(mat, 2);		ny = size(mat, 1);
@@ -1628,7 +1649,6 @@ function mat2img(mat::Array{UInt8}, proj4::String="", wkt::String="")
 	I = GMTimage(proj4, wkt, [1.0, nx, 1, ny, minimum(mat), maximum(mat)], [1.0, 1.0], 0, NaN, "", "", "", "",
 	             x,y,mat, "", "", "", colormap, 0, zeros(UInt8,ny,nx), "TRPa")
 end
-##
 
 # ---------------------------------------------------------------------------------------------------
 """
@@ -1672,7 +1692,7 @@ end
 function Base.:+(G1::GMTgrid, G2::GMTgrid)
 # Add two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z))
-		error("The two grids have not the same size, so thay cannot be added.")
+		error("The two grids have not the same size, so they cannot be added.")
 	end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 				 G1.command, G1.datatype, G1.x, G1.y, G1.z .+ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
@@ -1685,7 +1705,7 @@ end
 function Base.:-(G1::GMTgrid, G2::GMTgrid)
 # Subtract two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z))
-		error("The two grids have not the same size, so thay cannot be subtracted.")
+		error("The two grids have not the same size, so they cannot be subtracted.")
 	end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z .- G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
@@ -1698,7 +1718,7 @@ end
 function Base.:*(G1::GMTgrid, G2::GMTgrid)
 # Multiply two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z))
-		error("The two grids have not the same size, so thay cannot be multiplied.")
+		error("The two grids have not the same size, so they cannot be multiplied.")
 	end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z .* G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
@@ -1711,7 +1731,7 @@ end
 function Base.:/(G1::GMTgrid, G2::GMTgrid)
 # Divide two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z))
-		error("The two grids have not the same size, so thay cannot be divided.")
+		error("The two grids have not the same size, so they cannot be divided.")
 	end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z ./ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
