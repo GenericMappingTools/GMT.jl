@@ -354,31 +354,31 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_h(cmd::String, d::Dict)
 	# Parse the global -h option. Return CMD same as input if no -h option in args
-	return parse_helper(cmd, d, [:h :headers], " -h")
+	return parse_helper(cmd, d, [:h :header], " -h")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_i(cmd::String, d::Dict)
 	# Parse the global -i option. Return CMD same as input if no -i option in args
-	return parse_helper(cmd, d, [:i :input_col], " -i")
+	return parse_helper(cmd, d, [:i :incol], " -i")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_n(cmd::String, d::Dict)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
-	return parse_helper(cmd, d, [:n :interp :interp_method], " -n")
+	return parse_helper(cmd, d, [:n :interp :interpol], " -n")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_o(cmd::String, d::Dict)
 	# Parse the global -o option. Return CMD same as input if no -o option in args
-	return parse_helper(cmd, d, [:o :output_col], " -o")
+	return parse_helper(cmd, d, [:o :outcol], " -o")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_p(cmd::String, d::Dict)
 	# Parse the global -p option. Return CMD same as input if no -p option in args
-	return parse_helper(cmd, d, [:p :view], " -p")
+	return parse_helper(cmd, d, [:p :view :perspective], " -p")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -403,7 +403,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_x(cmd::String, d::Dict)
 	# Parse the global -x option. Return CMD same as input if no -x option in args
-	return parse_helper(cmd, d, [:x :n_threads], " -x")
+	return parse_helper(cmd, d, [:x :cores :n_threads], " -x")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1400,15 +1400,13 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi=
 
 	if (opt_R == "" || opt_R[1] == '/')
 		info = gmt("gmtinfo -C" * opt_i, arg)		# Here we are reading from an original GMTdataset or Array
-		if (opt_R != "" && opt_R[1] == '/')	# Modify waht will be reported as a -R string
-			# Example "/-1/1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
+		if (opt_R != "" && opt_R[1] == '/')	# Modify what will be reported as a -R string
+			# Example "/-0.1/0.1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
 			rs = split(opt_R, '/')
 			for k = 2:length(rs)
 				if (rs[k] != "")
 					x = parse(Float64, rs[k])
-					if (x == 0.0) info[1].data[k-1] = x
-					else          info[1].data[k-1] += x
-					end
+					(x == 0.0) ? info[1].data[k-1] = x : info[1].data[k-1] += x
 				end
 			end
 		end
@@ -1420,7 +1418,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi=
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
 			                 info[1].data[3], info[1].data[4])
 		end
-		cmd = cmd * opt_R
+		cmd *= opt_R
 	end
 
 	return cmd, arg, opt_R, opt_i
@@ -1712,30 +1710,61 @@ mutable struct legend_bag
 end
 
 # --------------------------------------------------------------------------------------------------
-function put_in_legend_bag(d::Dict, cmd)
+function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 	# So far this fun is only called from plot() and stores line/symbol info in global var LEGEND_TYPE
 	global legend_type
 
-	if ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)
+	#if ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)
+		#lab = [val]
+	#elseif (legend_type === nothing) lab = ["y1"]
+	#else                             lab = [@sprintf("y%d", size(legend_type.label ,1))]
+	#end
+
+	cmd_ = cmd									# Starts to be just a shallow copy
+	if (isa(arg, Array{GMT.GMTdataset,1}))		# Multi-segments can have different settings per line
+		cmd_ = deepcopy(cmd)					# OK, in this case we need to make it a deep copy
+		pens = Array{String,1}(undef,length(arg))
+		for k = 1:length(arg)
+			pens[k] = " -W," * scan_opt(arg[k].header, "-W");
+		end
+		lab = Array{String,1}(undef,length(arg))
+		if ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)		# Have label(s)
+			if (!isa(val, Array))				# One single label, take it as a label prefix
+				for k = 1:length(arg)  lab[k] = string(val,k)  end
+			else
+				for k = 1:min(length(arg), length(val))  lab[k] = string(val[k],k)  end
+				if (length(val) < length(arg))	# Probably shit, but don't error because of it
+					for k = length(val)+1:length(arg)  lab[k] = string(val[end],k)  end
+				end
+			end
+		else
+			for k = 1:length(arg)  lab[k] = string('y',k)  end
+		end
+		# Now need to append the 'pens' var to the input arg CMD
+		if (isa(cmd, String))  cmd_ = append!([cmd_], pens)
+		else                   append!(cmd_, pens)
+		end
+	elseif ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)
 		lab = [val]
 	elseif (legend_type === nothing) lab = ["y1"]
 	else                             lab = [@sprintf("y%d", size(legend_type.label ,1))]
 	end
 
-	if ((isa(cmd, Array{String, 1}) && !occursin("-O", cmd[1])) || (isa(cmd, String) && !occursin("-O", cmd)))
+	if ((isa(cmd_, Array{String, 1}) && !occursin("-O", cmd_[1])) || (isa(cmd_, String) && !occursin("-O", cmd_)))
 		legend_type = nothing					# Make sure that we always start with an empty one
 	end
 
 	if (legend_type === nothing)
 		legend_type = legend_bag(Array{String,1}(undef,1), Array{String,1}(undef,1))
-		legend_type.label = lab;		legend_type.cmd = cmd
+		legend_type.label = lab;		legend_type.cmd = cmd_
 	else
 		if (!isassigned(legend_type.label, 1))	# Some previous error left it in an #undef state
-			legend_type.label[1] = lab;		legend_type.cmd[1] = cmd
+			legend_type.label[1] = lab;			legend_type.cmd[1] = cmd_
 		else
-			append!(legend_type.label, lab);	append!(legend_type.cmd, cmd)
+			append!(legend_type.label, lab);	append!(legend_type.cmd, cmd_)
 		end
 	end
+
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -1746,27 +1775,28 @@ function digests_legend_bag(d::Dict)
 	if ((val = find_in_dict(d, [:leg :legend])[1]) !== nothing)
 		(legend_type === nothing) && @warn("This module does not support automatic legends") && return
 
+		fs = 10					# Font size in points
+		symbW = 0.75			# Symbol width. Default to 0.75 cm (good for lines)
 		nl  = length(legend_type.label)
 		leg = Array{String,1}(undef,nl)
 		for k = 1:nl											# Loop over number of entries
 			symb = scan_opt(legend_type.cmd[k], "-S");		if (symb == "")  symb = "-"  end
 			fill = scan_opt(legend_type.cmd[k], "-G");		if (fill == "")  fill = "-"  end
-			pen = scan_opt(legend_type.cmd[k], "-W");
+			pen = scan_opt(legend_type.cmd[k],  "-W");
 			(pen  == "" && symb != "-" && fill != "-") ? pen = "-" : (pen == "" ? pen = "0.25p" : pen = pen)
-			leg[k] = "S 0.5 " * symb * " 1 " * fill * " " * pen * " 1.2 " * legend_type.label[k]
+			leg[k] = @sprintf("S %.3fc %s %.2fc %s %s %.2fc %s", symbW/2, symb, symbW, fill, pen, symbW+0.14, legend_type.label[k])
 		end
 
-		symb_width = 1			# Default to 1 cm (good for lines)
-		lab_width = maximum(length.(legend_type.label[:])) * 12 / 72 * 2.54 * 0.55 + 0.15	# Guess label width in cm
+		lab_width = maximum(length.(legend_type.label[:])) * fs / 72 * 2.54 * 0.55 + 0.15	# Guess label width in cm
 		if ((opt_D = add_opt("", "", d, [:leg_pos :legend_pos :legend_position],
 			(map_coord="g",plot_coord="x",norm="n",pos="j",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
 			just = "TR"					# The default
 			if (isa(val, String) || isa(val, Symbol))  just = justify(val)  end
-			opt_D = @sprintf("j%s+w%.3f+o0.2", just, symb_width*1.2 + lab_width)
+			opt_D = @sprintf("j%s+w%.3f+o0.1", just, symbW*1.2 + lab_width)
 		else
 			if (opt_D[1] != 'j' && opt_D[1] != 'g' && opt_D[1] != 'x' && opt_D[1] != 'n')  opt_D = "jTR" * opt_D  end
-			if (!occursin("+w", opt_D))  opt_D = @sprintf("%s+w%.3f", opt_D, symb_width*1.2 + lab_width)  end
-			if (!occursin("+o", opt_D))  opt_D *= "+o0.2"  end
+			if (!occursin("+w", opt_D))  opt_D = @sprintf("%s+w%.3f", opt_D, symbW*1.2 + lab_width)  end
+			if (!occursin("+o", opt_D))  opt_D *= "+o0.1"  end
 		end
 
 		if ((opt_F = add_opt("", "", d, [:box_pos :box_position],
@@ -1776,7 +1806,7 @@ function digests_legend_bag(d::Dict)
 			if (!occursin("+p", opt_F))  opt_F *= "+p0.5"    end
 			if (!occursin("+g", opt_F))  opt_F *= "+gwhite"  end
 		end
-		legend!(text_record(leg), F=opt_F, D=opt_D)
+		legend!(text_record(leg), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fs))
 		legend_type = nothing			# Job done, now empty the bag
 	end
 end

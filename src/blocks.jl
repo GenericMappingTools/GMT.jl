@@ -30,7 +30,7 @@ Parameters
     outputs x,y,z[,w]. See -W for w output. If -Ep is used we assume weights are 1/(sigma squared)
     and s becomes the propagated error of the mean.
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/blockmean.html#e)
-- **G** : **grid** : -- Str or [] --
+- **G** : **grid** : **gridfile** : -- Str or [] --
 
     Write one or more fields directly to grids on disk; no table data are return. If more than one
     fields are specified via **A** then grdfile must contain the format flag %s so that we can embed the
@@ -61,8 +61,7 @@ function blockmean(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("blockmean", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = add_opt("",  'E', d, [:E :extended])
-	cmd = add_opt(cmd, 'S', d, [:S :npts :number_of_points])
+	cmd = parse_these_opts("", d, [[:E :extended], [:S :npts :number_of_points]])
 	return common_blocks(cmd0, arg1, d, cmd, "blockmean", kwargs...)
 end
 
@@ -79,9 +78,7 @@ function blockmedian(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("blockmedian", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = add_opt("",  'E', d, [:E :extended])
-	cmd = add_opt(cmd, 'Q', d, [:Q :quick])
-	cmd = add_opt(cmd, 'T', d, [:T :quantile])
+	cmd = parse_these_opts("", d, [[:E :extended], [:Q :quick], [:T :quantile]])
 	return common_blocks(cmd0, arg1, d, cmd, "blockmedian", kwargs...)
 end
 
@@ -98,18 +95,14 @@ function blockmode(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("blockmode", cmd0, arg1)	# Speedy mode
 
 	d = KW(kwargs)
-	cmd = add_opt("",  'E', d, [:E :extended])
-	cmd = add_opt(cmd, 'D', d, [:D :histogram_binning])
-	cmd = add_opt(cmd, 'Q', d, [:Q :quick])
+	cmd = parse_these_opts("", d, [[:E :extended], [:D :histogram_binning], [:Q :quick]])
 	return common_blocks(cmd0, arg1, d, cmd, "blockmode", kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
 function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 
-	cmd = add_opt(cmd, 'A', d, [:A :fields])
-	cmd = add_opt(cmd, 'C', d, [:C :center])
-	cmd = add_opt(cmd, 'G', d, [:G :grid])
+	cmd = parse_these_opts(cmd, d, [[:A :fields], [:C :center], [:G :grid :gridfile], [:I :inc], [:W :weights]])
 	if (occursin("-G", cmd) && !occursin("-A", cmd))
 		cmd = cmd * " -Az"					# So that we can use plain -G to mean write grid 
 	end
@@ -117,10 +110,8 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 		@warn("Computing grids is only possible with GMT version >= 6")
 		return nothing
 	end
-	cmd = parse_common_opts(d, cmd, [:R :V_params :bi :di :e :f :h :i :o :r :xy])
+	cmd = parse_common_opts(d, cmd, [:R :V_params :bi :di :e :f :h :i :o :r :yx])
 
-	cmd = add_opt(cmd, 'I', d, [:I :inc])
-	cmd = add_opt(cmd, 'W', d, [:W :weights])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	if (occursin("-G", cmd))			# GMT API does not allow a -G from externals

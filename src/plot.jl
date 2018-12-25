@@ -16,10 +16,7 @@ Parameters
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
-- **C** : **color** : -- Str --
-
-    Give a CPT or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those colors automatically.
-	[`-C`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#c)
+- $(GMT.opt_C)
 - **D** : **offset** : -- Str --
 
     Offset the plot symbol or line locations by the given amounts dx/dy.
@@ -68,17 +65,24 @@ Parameters
     + **s**, **square**
     + **t**, **^**, **triangle**
     + **x**, **cross**
-    + **y**, **y_dash**
-- **W** : **line_attribs** : **markeredgecolor** : **MarkerEdgeColor** : -- Str --
+	+ **y**, **y_dash**
+
+    and select their sizes with the **markersize** or **size** keyword [default is 7p].
+    The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
+	points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
+
+- **W** : **pen** : **markeredgecolor** : -- Str --
     Set pen attributes for lines or the outline of symbols
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
-    If your plot has polygons and symbols, use **W** or **line_attribs** for the polygons and
-    **markeredgecolor** or **MarkerEdgeColor** for filling the symbols. Similar to S above.
+    If your plot has polygons and symbols, use **W** or **pen** for the polygons and
+    **markeredgecolor** for filling the symbols. Similar to S above.
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
+- **axis** : **aspect** : -- Str --
+    When equal to "equal" makes a square plot.
 - $(GMT.opt_a)
 - $(GMT.opt_bi)
 - $(GMT.opt_di)
@@ -89,23 +93,18 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_swap_xy)
 """
-plot(arg1; K=false, O=false, first=true, kw...) = psxy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
-plot!(arg1; K=true, O=true, first=false, kw...) = psxy("", arg1; caller="plot", K=K, O=O, first=first, kw...)
+plot(arg1; kw...)  = common_plot_xyz("", cat_1_arg(arg1), "plot", true, false, kw...)
+plot!(arg1; kw...) = common_plot_xyz("", cat_1_arg(arg1), "plot", false, false, kw...)
 
-plot(cmd0::String="", arg1=[]; K=false, O=false, first=true, kw...) =
-	psxy(cmd0, arg1; caller="plot", K=K, O=O, first=first, kw...)
-plot!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
-	psxy(cmd0, arg1; caller="plot", K=K, O=O, first=first, kw...)
+plot(cmd0::String="", arg1=[]; kw...)  = common_plot_xyz(cmd0, arg1, "plot", true, false, kw...)
+plot!(cmd0::String="", arg1=[]; kw...) = common_plot_xyz(cmd0, arg1, "plot", false, false, kw...)
 
-# ------------------------------------------------------------------------------------------------------
-function plot(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
-	psxy("", arg; caller="plot",  K=K, O=O, first=first, kw...)
-end
-function plot!(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	psxy("", cat_2_arg2(arg1, arg2); caller="plot",  K=true, O=true, first=false, kw...)
-end
+plot(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "plot", true, false, kw...)
+plot!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "plot", false, false, kw...)
+plot(arg1::Number, arg2::Number; kw...)  = common_plot_xyz("", cat_2_arg2([arg1], [arg2]), "plot", true, false, kw...)
+plot!(arg1::Number, arg2::Number; kw...) = common_plot_xyz("", cat_2_arg2([arg1], [arg2]), "plot", false, false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 """
@@ -200,56 +199,22 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-plot3d(arg1; K=false, O=false, first=true, kw...) =
-	psxyz("", arg1; caller="plot3d", K=K, O=O, first=first, kw...)
-plot3d!(arg1; K=false, O=false, first=true, kw...) =
-	psxyz("", arg1; caller="plot3d", K=true, O=true, first=false, kw...)
+plot3d(arg1; kw...)  = common_plot_xyz("", cat_1_arg(arg1), "plot3d", true, true, kw...)
+plot3d!(arg1; kw...) = common_plot_xyz("", cat_1_arg(arg1), "plot3d", false, true, kw...)
+
+plot3d(cmd0::String="", arg1=[]; kw...)  = common_plot_xyz(cmd0, arg1, "plot3d", true, true, kw...)
+plot3d!(cmd0::String="", arg1=[]; kw...) = common_plot_xyz(cmd0, arg1, "plot3d", false, true, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-plot3d(cmd0::String; K=false, O=false, first=true, kw...) =
-	psxyz(cmd0; caller="plot3d", K=K, O=O, first=first, kw...)
-plot3d!(cmd0::String; K=false, O=false, first=true, kw...) =
-	psxyz(cmd0; caller="plot3d", K=true, O=true, first=false, kw...)
-
-# ------------------------------------------------------------------------------------------------------
-function plot3d(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=false, O=false, first=true, kw...)
+function plot3d(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
 	arg = hcat(arg1[:], arg2[:], arg3[:])
-	psxyz("", arg; caller="plot3d", K=K, O=O, first=first, kw...)
+	common_plot_xyz("", arg, "plot3d", true, true, kw...)
 end
-function plot3d!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=false, O=false, first=true, kw...)
+function plot3d!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
 	arg = hcat(arg1[:], arg2[:], arg3[:])
-	psxyz("", arg; caller="plot3d", K=true, O=true, first=false, kw...)
+	common_plot_xyz("", arg, "plot3d", false, true, kw...)
 end
 # ------------------------------------------------------------------------------------------------------
-
-
-# ------------------------------------------------------------------------------------------------------
-scatter(arg1;   K=false, O=false, first=true, kw...)  = scatter("", arg1; K=K, O=O, first=first, is3D=false, kw...)
-scatter!(arg1;  K=true,  O=true,  first=false, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=false, kw...)
-scatter3(arg1;  K=false, O=false, first=true, kw...)  = scatter("", arg1; K=K, O=O, first=first, is3D=true, kw...)
-scatter3!(arg1; K=true,  O=true,  first=false, kw...) = scatter("", arg1; K=K, O=O, first=first, is3D=true, kw...)
-
-function scatter(arg::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
-	scatter("", arg; K=K, O=O, first=first, kw...)
-end
-scatter!(arg::AbstractArray; K=false, O=false, first=true, kw...) = scatter(arg; K=K, O=O, first=first, kw...)
-function scatter(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
-	scatter("", arg; K=K, O=O, first=first, is3D=false, kw...)
-end
-function scatter!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...)
-	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
-	scatter("", arg; K=K, O=O, first=first, is3D=false, kw...)
-end
-function scatter3(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = hcat(arg1, arg2, arg3)
-	scatter("", arg; K=K, O=O, first=first, is3D=true, kw...)
-end
-function scatter3!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; K=true, O=true, first=false, kw...)
-	#arg = hcat(arg1, arg2, arg3)
-	scatter("", hcat(arg1, arg2, arg3); K=K, O=O, first=first, is3D=true, kw...)
-end
 
 """
     scatter(cmd0::String="", arg1=[], kwargs...)
@@ -305,42 +270,30 @@ Parameters
 [`Full man page`](https://genericmappingtools.github.io/GMT.jl/latest/scatter/)
 [`GMT man page`](http://gmt.soest.hawaii.edu/doc/latest/plot.html)
 """
-function scatter(cmd0::String="", arg1=[]; K=false, O=false, first=true, is3D=false, kwargs...)
-	if (is3D)  GMT.common_plot_xyz(cmd0, arg1, "scatter3", K, O, first, is3D, kwargs...)
-	else       GMT.common_plot_xyz(cmd0, arg1, "scatter",  K, O, first, is3D, kwargs...)
-	end
+scatter(cmd0::String="", arg1=[]; kw...)  = common_plot_xyz(cmd0, arg1, "scatter",  true, false, kw...)
+scatter!(cmd0::String="", arg1=[]; kw...) = common_plot_xyz(cmd0, arg1, "scatter",  false, false, kw...)
+
+scatter(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "scatter", true, false, kw...)
+scatter!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "scatter", false, false, kw...)
+
+scatter(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "scatter", true, false, kw...)
+scatter!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "scatter", false, false, kw...)
+
+# ------------------------------------------------------------------------------------------------------
+scatter3(cmd0::String="", arg1=[]; kw...)  = common_plot_xyz(cmd0, arg1, "scatter3",  true, true, kw...)
+scatter3!(cmd0::String="", arg1=[]; kw...) = common_plot_xyz(cmd0, arg1, "scatter3",  false, true, kw...)
+scatter3(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "scatte3", true, false, kw...)
+scatter3!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "scatte3", false, false, kw...)
+function scatter3(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
+	common_plot_xyz("", hcat(arg1, arg2, arg3), "scatter3", true, true, kw...)
+end
+function scatter3!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
+	common_plot_xyz("", hcat(arg1, arg2, arg3), "scatter3", false, true, kw...)
 end
 # ------------------------------------------------------------------------------------------------------
 
-
-# ------------------------------------------------------------------------------------------------------
-function bar(arg1::NTuple; K=false, O=false, first=true, kw...)
-	bar(1:length(arg1), collect(arg1); K=K, O=O, first=first, kw...)
-end
-bar!(arg1::NTuple; K=true, O=true, first=false, kw...) = bar(arg1; K=K, O=O, first=first, kw...)
-
-function bar(arg1::NTuple, arg2::NTuple; K=false, O=false, first=true, kw...)
-	bar(collect(arg1), collect(arg2); K=K, O=O, first=first, kw...)
-end
-bar!(arg1::NTuple, arg2::NTuple; K=true, O=true, first=false, kw...) =
-	bar(arg1, arg2; K=K, O=O, first=first, kw...)
-
-function bar(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
-	bar("", arg; K=K, O=O, first=first, kw...)
-end
-bar!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...) =
-	bar(arg1, arg2; K=K, O=O, first=first, kw...)
-
-function bar(arg::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
-	bar("", arg; K=K, O=O, first=first, kw...)
-end
-bar!(arg::AbstractArray; K=true, O=true, first=false, kw...) = bar(arg; K=false, O=false, first=true, kw...)
-
-# ------------------------------------------------------------------------------------------------------
 """
-    bar(cmd0::String="", arg1=[], arg2=[], kwargs...)
+    bar(cmd0::String="", arg1=[], kwargs...)
 
 Reads a file or (x,y) pairs and plots vertical bars extending from base to y.
 
@@ -363,12 +316,18 @@ Example:
 
     bar(sort(randn(10)), fill=:black, frame=:auto, show=true)
 """
-function bar(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
+function bar(cmd0::String="", arg=[]; first=true, kw...)
 	if (cmd0 == "") arg = cat_1_arg(arg)  end	# If ARG is a vector, prepend it with a 1:N x column
-	GMT.common_plot_xyz(cmd0, arg, "bar", K, O, first, false, kwargs...)
+	GMT.common_plot_xyz(cmd0, arg, "bar", first, false, kw...)
 end
+bar!(cmd0::String="", arg=[]; kw...) = bar(cmd0, arg; first=false, kw...)
 
+bar(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "bar", true, false, kw...)
+bar!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "bar", false, false, kw...)
+bar(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "bar", true, false, kw...)
+bar!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "bar", false, false, kw...)
 # ------------------------------------------------------------------------------------------------------
+
 """
     bar3(cmd0::String="", arg1=[], kwargs...)
 
@@ -391,7 +350,7 @@ Example:
     G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
     bar3(G, lw=:thinnest, show=true)
 """
-function bar3(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
+function bar3(cmd0::String="", arg=[]; first=true, kwargs...)
 	# Contrary to "bar" this one has specific work to do here.
 	d = KW(kwargs)
 	opt_z = ""
@@ -415,7 +374,7 @@ function bar3(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
 			elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands])
 			end
 		end
-		opt, = parse_R("", d, O)
+		opt, = parse_R("", d, !first)
 		if (opt == "")							# OK, no R but we know it here so put it in 'd'
 			if (arg1.registration == 1)			# Fine, grid is already pixel reg
 				push!(d, :R => arg1.range)
@@ -453,15 +412,14 @@ function bar3(cmd0::String="", arg=[]; K=false, O=false, first=true, kwargs...)
 
 	caller = "bar3|" * opt_S * opt_z
 
-	GMT.common_plot_xyz(cmd0, arg1, caller, K, O, first, true, d...)
+	common_plot_xyz(cmd0, arg1, caller, first, true, d...)
 end
 
+bar3(arg1; kw...) = bar3("", arg1; first=true, kw...)
+bar3!(cmd0::String="", arg1=[]; kw...) = bar3(cmd0, arg1; first=false, kw...)
+bar3!(arg1; kw...) = bar3("", arg1; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
-bar3(arg1; K=false, O=false, first=true, kw...) = bar3("", arg1; K=K, O=O, first=first, kw...)
-bar3!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) = bar3(cmd0, arg1; K=K, O=O, first=first, kw...)
-bar3!(arg1; K=true, O=true, first=false, kw...) = bar3("", arg1; K=K, O=O, first=first, kw...)
 
-# ------------------------------------------------------------------------------------------------------
 """
     arrows(cmd0::String="", arg1=[], arrow=(...), kwargs...)
 
@@ -493,7 +451,7 @@ Example:
 
 	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, frame=:a, pen="6p", show=true)
 """
-function arrows(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function arrows(cmd0::String="", arg1=[]; first=true, kwargs...)
 	# A arrows plotting method of plot
 
 	d = KW(kwargs)
@@ -502,7 +460,7 @@ function arrows(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs..
 	else            cmd = " -S" * cmd
 	end
 
-	GMT.common_plot_xyz(cmd0, arg1, cmd, K, O, first, false, d...)
+	GMT.common_plot_xyz(cmd0, arg1, cmd, first, false, d...)
 end
 
 function helper_arrows(d::Dict, del::Bool=false)
@@ -527,20 +485,15 @@ function helper_arrows(d::Dict, del::Bool=false)
 	end
 	return cmd
 end
+arrows!(cmd0::String="", arg1=[]; kw...) = arrows(cmd0, arg1; first=false, kw...)
+arrows(arg1; kw...)  = arrows("", arg1; first=true, kw...)
+arrows!(arg1; kw...) = arrows("", arg1; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
-# ------------------------------------------------------------------------------------------------------
-arrows(arg1; K=false, O=false, first=true, kw...) = arrows("", arg1; K=K, O=O, first=first, kw...)
-arrows!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
-	arrows(cmd0, arg1; K=K, O=O, first=first, kw...)
-arrows!(arg1; K=true, O=true, first=false, kw...) = arrows("", arg1; K=K, O=O, first=first, kw...)
-
-
-# ------------------------------------------------------------------------------------------------------
 """
     lines(cmd0::String="", arg1=[], decorated=(...), kwargs...)
 
-Reads a file or (x,y) pairs and plots a nice collection of different line with decorations
+Reads a file or (x,y) pairs and plots a collection of different line with decorations
 
 - $(GMT.opt_B)
 - $(GMT.opt_J)
@@ -555,9 +508,8 @@ Example:
 	lines([0 0; 10 20], limits=(-2,12,-2,22), proj="M2.5", pen=1, fill=:red,
 	      decorated=(dist=(val=1,size=0.25), symbol=:box), show=true)
 """
-function lines(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function lines(cmd0::String="", arg1=[]; first=true, kwargs...)
 	# A lines plotting method of plot
-
 	d = KW(kwargs)
 	cmd = ""
 	if (haskey(d, :decorated))
@@ -568,60 +520,58 @@ function lines(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 		end
 	end
 
-	GMT.common_plot_xyz(cmd0, arg1, cmd, K, O, first, false, d...)
+	common_plot_xyz(cmd0, arg1, cmd, first, false, d...)
 end
+lines!(cmd0::String="", arg=[]; kw...) = lines(cmd0, arg; first=false, kw...)
+
+lines(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=true, kw...)
+lines!(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=false, kw...)
+lines(arg; kw...) = lines("", cat_1_arg(arg); first=true, kw...)
+lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
+# ------------------------------------------------------------------------------------------------------
+
 
 # ------------------------------------------------------------------------------------------------------
-function lines(arg1::AbstractArray, arg2::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
-	lines("", arg; K=K, O=O, first=first, kw...)
-end
-function lines!(arg1::AbstractArray, arg2::AbstractArray; K=true, O=true, first=false, kw...)
-	arg = cat_2_arg2(arg1, arg2)	# If they are vectors, cat them into a Mx2 matrix
-	lines("", arg; K=K, O=O, first=first, kw...)
-end
-
-function lines(arg::AbstractArray; K=false, O=false, first=true, kw...)
-	arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
-	lines("", arg; K=K, O=O, first=first, kw...)
-end
-function lines!(arg; K=true, O=true, first=false, kw...)
-	#arg = cat_1_arg(arg)			# If ARG is a vector, prepend it with a 1:N x column
-	lines("", cat_1_arg(arg); K=K, O=O, first=first, kw...)
-end
-
-lines!(cmd0::String="", arg=[]; K=true, O=true, first=false, kw...) =
-	lines(cmd0, arg; K=K, O=O, first=first, kw...)
-
-# ------------------------------------------------------------------------------------------------------
-function ternary(cmd0::String="", arg1=[]; first=true, kwargs...)
+function ternary(cmd0::String="", arg1=[]; kwargs...)
 	# A wrapper for psternary
-	GMT.common_plot_xyz(cmd0, arg1, "ternary", false, false, first, false, kwargs...)
+	common_plot_xyz(cmd0, arg1, "ternary", true, false, kwargs...)
 end
-ternary!(cmd0::String="", arg1=[]; first=false, kw...) = ternary(cmd0, arg1; first=first, kw...)
-ternary(arg1=[];  first=true, kw...)  = ternary("", arg1; first=first, kw...)
-ternary!(arg1=[]; first=false, kw...) = ternary("", arg1; first=first, kw...)
+ternary!(cmd0::String="", arg1=[]; kw...) = ternary(cmd0, arg1; first=false, kw...)
+ternary(arg1=[];  kw...)  = ternary("", arg1; first=true, kw...)
+ternary!(arg1=[]; kw...) = ternary("", arg1; first=false, kw...)
 const psternary  = ternary            # Aliases
 const psternary! = ternary!           # Aliases
 
 # ------------------------------------------------------------------------------------------------------
 function cat_1_arg(arg)
-	# When functions that expect matrices get only a vector, add a first col with 1:nx
-	if (!isa(arg, Array{GMT.GMTdataset,1}) && (isa(arg, Vector) || isa(arg, UnitRange) || isa(arg, StepRangeLen)) )
-		arg = hcat(1:length(arg), arg)
+	# Add a first column with 1:n to all args that are not GMTdatasets
+	if (!isa(arg, Array{GMT.GMTdataset,1}) && !isa(arg, GMT.GMTdataset))
+		if (isa(arg, Vector) || isa(arg, Matrix) || isa(arg, UnitRange) || isa(arg, StepRangeLen))
+			if     (!isa(arg, Matrix))                       arg = hcat(1:length(arg), arg)
+			elseif ((isa(arg, Matrix) && size(arg,1) == 1))  arg = hcat(1:length(arg), arg')
+			else                                             arg = hcat(1:size(arg,1), arg)
+			end
+		elseif (isa(arg, NTuple))
+			arg = hcat(1:length(arg), collect(arg))
+		end
 	end
 	return arg
 end
 
 # ------------------------------------------------------------------------------------------------------
 function cat_2_arg2(arg1, arg2)
-	# Cat two vectors in a Mx2 matrix
-	if (!isa(arg1, Array{GMT.GMTdataset,1}) && !isa(arg2, Array{GMT.GMTdataset,1}) &&
-		(isa(arg1, Vector) || isa(arg1, UnitRange) || isa(arg1, StepRangeLen)) &&
-		(isa(arg2, Vector) || isa(arg2, UnitRange) || isa(arg2, StepRangeLen)) )
+	# Cat two vectors (or tuples) or a vector (or tuple) and a matrix in a Mx2 matrix
+
+	if ((isa(arg1, Vector) || isa(arg1, UnitRange) || isa(arg1, StepRangeLen) || isa(arg1, NTuple)) &&
+		(isa(arg2, Vector) || isa(arg2, UnitRange) || isa(arg2, StepRangeLen) || isa(arg2, NTuple) ||
+		 isa(arg2, Matrix)) )
+
+		if (isa(arg1, NTuple))  arg1 = collect(arg1)  end
+		if (isa(arg2, NTuple))  arg2 = collect(arg2)  end
 		arg = hcat(arg1, arg2)
-	else
-		@show(isa(arg1, Vector) || isa(arg1, UnitRange))
-		error("The two array args must be vectors or ONE column (or row) matrices.")
+	elseif (!isa(arg1, Array{GMT.GMTdataset,1}) && !isa(arg1, GMT.GMTdataset) &&
+		    !isa(arg2, Array{GMT.GMTdataset,1}) && !isa(arg2, GMT.GMTdataset) )
+		error(@sprintf("Unknown types (%s) and (%s) in cat_2_arg2() function", typeof(arg1), typeof(arg2)))
 	end
+
 end
