@@ -505,19 +505,20 @@ Reads a file or (x,y) pairs and plots a collection of different line with decora
 
 Example:
 
-	lines([0 0; 10 20], limits=(-2,12,-2,22), proj="M2.5", pen=1, fill=:red,
-	      decorated=(dist=(val=1,size=0.25), symbol=:box), show=true)
+    lines([0, 10]; [0, 20], limits=(-2,12,-2,22), proj="M2.5", pen=1, fill=:red,
+          decorated=(dist=(val=1,size=0.25), symbol=:box), show=true)
 """
 function lines(cmd0::String="", arg1=[]; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
-	cmd = ""
 	if (haskey(d, :decorated))
 		if (isa(d[:decorated], String))		# A hard core GMT string directly with options, including -S
-			cmd *= d[:decorated]
+			cmd = d[:decorated]
 		else
-			cmd  = decorated(d[:decorated])
+			cmd = decorated(d[:decorated])
 		end
+	else
+		cmd = "lines"
 	end
 
 	common_plot_xyz(cmd0, arg1, cmd, first, false, d...)

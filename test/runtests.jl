@@ -97,10 +97,10 @@ if (got_it)					# Otherwise go straight to end
 
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
-	r = psxy([0 0; 1 1.1], L=(pen=(10,:red),bot=true), Vd=:cmd);
-	@test startswith(r," -JX12c/8c -Baf -BWSen -R1/2/0/1 -L+p10,red+yb")
-	r = psxy([0 0; 1 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=:cmd);
-	@test startswith(r," -JX12c/8c -Baf -BWSen -R1/2/0/1 -L+p10+cl+yb")
+	r = psxy([0.0, 1],[0, 1.1], L=(pen=(10,:red),bot=true), Vd=:cmd);
+	@test startswith(r," -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb")
+	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=:cmd);
+	@test startswith(r," -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb")
 	psxy!([0 0; 1 1.1], Vd=:cmd);
 	psxy!("", [0 0; 1 1.1], Vd=:cmd);
 
@@ -340,12 +340,14 @@ if (got_it)					# Otherwise go straight to end
 
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks", savefig="lixo")
-	plot(mat2ds(hcat(collect(1:6), GMT.fakedata(6,6)), color=[:red, :green, :blue, :yellow]), leg=true, label="Bla")
+	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=[:red, :green, :blue, :yellow]), leg=true, label="Bla")
 	plot("",hcat(collect(1:10)[:],rand(10,1)))
 	plot!("",hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
 	plot(hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
 	plot!(hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
 	plot!(collect(1:10),rand(10), fmt="ps")
+	plot(0.5,0.5, R="0/1/0/1", Vd=:cmd)
+	plot!(0.5,0.5, R="0/1/0/1", Vd=:cmd)
 	plot(1:10,rand(10), S=(symb=:c,size=7,unit=:point), color=:rainbow, zcolor=rand(10))
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, Vd=:cmd)
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3)
@@ -421,6 +423,7 @@ if (got_it)					# Otherwise go straight to end
 	bar3(G, lw=:thinnest, bar=(width=0.085,), Vd=:cmd)
 	bar3(G, lw=:thinnest, width=0.085, nbands=3, Vd=:cmd)
 	bar3(G, lw=:thinnest, noshade=1, Vd=:cmd)
+	bar3(rand(4,4), Vd=:cmd)
 
 	# PROJECT
 	if (GMTver >= 6)
@@ -574,10 +577,15 @@ if (got_it)					# Otherwise go straight to end
 	G3 = G1 * G2;
 	G3 = G1 / G2;
 	G2 = GMT.mat2grid(rand(Float32,5,5))
+	@test_throws ErrorException("The HDR array must have 9 elements") mat2grid(rand(4,4), 0, [0. 1 0 1 0 1])
 	@test_throws ErrorException("The two grids have not the same size, so they cannot be added.") G1 + G2;
 	@test_throws ErrorException("The two grids have not the same size, so they cannot be subtracted.") G1 - G2;
 	@test_throws ErrorException("The two grids have not the same size, so they cannot be multiplied.") G1 * G2;
 	@test_throws ErrorException("The two grids have not the same size, so they cannot be divided.") G1 / G2;
+	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle), leg=true, Vd=:cmd)
+	mat2ds(rand(6,6), color=[:red :blue]);
+	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
+	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"]);
 
 	GMT.get_datatype([]);
 	GMT.get_datatype(Float32(8));
