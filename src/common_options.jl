@@ -382,17 +382,13 @@ function parse_p(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_s(cmd::String, d::Dict)
-	# Parse the global -s option. Return CMD same as input if no -s option in args
-	return parse_helper(cmd, d, [:s :skip_col], " -s")
-end
+# Parse the global -s option. Return CMD same as input if no -s option in args
+parse_s(cmd::String, d::Dict) = parse_helper(cmd, d, [:s :skip_col], " -s")
 
 # ---------------------------------------------------------------------------------------------------
-function parse_swap_xy(cmd::String, d::Dict)
-	# Parse the global -: option. Return CMD same as input if no -: option in args
-	# But because we can't have a variable called ':' we use only the 'swap_xy' alias
-	return parse_helper(cmd, d, [:swap_xy :xy :yx], " -:")
-end
+# Parse the global -: option. Return CMD same as input if no -: option in args
+# But because we can't have a variable called ':' we use only the aliases
+parse_swap_xy(cmd::String, d::Dict) = parse_helper(cmd, d, [:swap_xy :xy :yx], " -:")
 
 # ---------------------------------------------------------------------------------------------------
 function parse_r(cmd::String, d::Dict)
@@ -401,10 +397,8 @@ function parse_r(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_x(cmd::String, d::Dict)
-	# Parse the global -x option. Return CMD same as input if no -x option in args
-	return parse_helper(cmd, d, [:x :cores :n_threads], " -x")
-end
+# Parse the global -x option. Return CMD same as input if no -x option in args
+parse_x(cmd::String, d::Dict) = parse_helper(cmd, d, [:x :cores :n_threads], " -x")
 
 # ---------------------------------------------------------------------------------------------------
 function parse_t(cmd::String, d::Dict)
@@ -442,7 +436,7 @@ function parse_common_opts(d, cmd, opts)
 		elseif (opt == :o)  cmd, = parse_o(cmd, d)
 		elseif (opt == :p)  cmd, = parse_p(cmd, d)
 		elseif (opt == :r)  cmd, = parse_r(cmd, d)
-		elseif (opt == :s)  cmd, = parse_p(cmd, d)
+		elseif (opt == :s)  cmd, = parse_s(cmd, d)
 		elseif (opt == :x)  cmd, = parse_x(cmd, d)
 		elseif (opt == :t)  cmd, = parse_t(cmd, d)
 		elseif (opt == :xy) cmd, = parse_swap_xy(cmd, d)
@@ -1714,12 +1708,6 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 	# So far this fun is only called from plot() and stores line/symbol info in global var LEGEND_TYPE
 	global legend_type
 
-	#if ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)
-		#lab = [val]
-	#elseif (legend_type === nothing) lab = ["y1"]
-	#else                             lab = [@sprintf("y%d", size(legend_type.label ,1))]
-	#end
-
 	cmd_ = cmd									# Starts to be just a shallow copy
 	if (isa(arg, Array{GMT.GMTdataset,1}))		# Multi-segments can have different settings per line
 		cmd_ = deepcopy(cmd)					# OK, in this case we need to make it a deep copy
@@ -1783,15 +1771,14 @@ function digests_legend_bag(d::Dict)
 			symb = scan_opt(legend_type.cmd[k], "-S");		if (symb == "")  symb = "-"  end
 			fill = scan_opt(legend_type.cmd[k], "-G");		if (fill == "")  fill = "-"  end
 			pen = scan_opt(legend_type.cmd[k],  "-W");
-			(pen  == "" && symb != "-" && fill != "-") ? pen = "-" : (pen == "" ? pen = "0.25p" : pen = pen)
+			(pen == "" && symb != "-" && fill != "-") ? pen = "-" : (pen == "" ? pen = "0.25p" : pen = pen)
 			leg[k] = @sprintf("S %.3fc %s %.2fc %s %s %.2fc %s", symbW/2, symb, symbW, fill, pen, symbW+0.14, legend_type.label[k])
 		end
 
 		lab_width = maximum(length.(legend_type.label[:])) * fs / 72 * 2.54 * 0.55 + 0.15	# Guess label width in cm
 		if ((opt_D = add_opt("", "", d, [:leg_pos :legend_pos :legend_position],
 			(map_coord="g",plot_coord="x",norm="n",pos="j",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
-			just = "TR"					# The default
-			if (isa(val, String) || isa(val, Symbol))  just = justify(val)  end
+			just = (isa(val, String) || isa(val, Symbol)) ? justify(val) : "TR"		# "TR" is the default
 			opt_D = @sprintf("j%s+w%.3f+o0.1", just, symbW*1.2 + lab_width)
 		else
 			if (opt_D[1] != 'j' && opt_D[1] != 'g' && opt_D[1] != 'x' && opt_D[1] != 'n')  opt_D = "jTR" * opt_D  end

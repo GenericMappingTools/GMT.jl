@@ -16,7 +16,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	((cmd0 == "" && isempty_(arg1)) || occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
 
-	cmd = "";	sub_module = ""					# Will change to "scatter", etc... if called by sub-modules
+	cmd = "";	sub_module = ""			# Will change to "scatter", etc... if called by sub-modules
 	if (caller != "")
 		if (occursin(" -", caller))		# some sub-modues use this piggy-backed call
 			if ((ind = findfirst("|", caller)) !== nothing)	# A mixed case with "caler|partiall_command"
@@ -29,7 +29,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			end
 		else
 			sub_module = caller
-			caller = ""					# Because of parse_BJR()
+			#caller = ""				# Because of parse_BJR()
 		end
 	end
 
@@ -51,7 +51,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		opt_J = ""
 	end
 
-	K, O = set_KO(first)		# Set the K O dance
+	K, O = set_KO(first)				# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, opt_J)
 	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
@@ -88,13 +88,16 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
 	# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
-	cmd, arg1, arg2, N_args = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
+	cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :mc], 'G')		# Filling of symbols
-	got_pattern = false		# To track a still existing bug in sessions management at GMT lib level
+
+	# To track a still existing bug in sessions management at GMT lib level
 	if (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb))
 		got_pattern = true
+	else
+		got_pattern = false
 	end
 
 	if (is_ternary)			# Means we are in the psternary mode
@@ -150,7 +153,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			end
 		end
 		if (opt_W != "" && opt_ML != "")
-			@warn("You cannot use both markeredgecolor and W or line_attrib keys.")
+			@warn("You cannot use both markerline and W or pen keys.")
 		end
 	end
 
@@ -191,6 +194,13 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		cmd = [finish_PS(d, cmd * opt_UVXY, output, K, O)]
 	end
 
+	# Let matrices with more data columns, and for which no Color info was set, plot multiple lines at once
+	if (!mcc && (caller == "lines" || caller == "plot") && isa(arg1, Array{Float64,2}) && size(arg1,2) > 2+is3D)
+		arg1 = mat2ds(arg1, color=:cycle)	# Convert to multi-segment GMTdataset
+		D = gmt("gmtinfo -C", arg1)			# But now also need to update the -R string
+		cmd[1] = replace(cmd[1], opt_R => " -R" * arg2str(round_wesn(D[1].data)))	# Replace old -R by the new one
+	end
+
 	put_in_legend_bag(d, cmd, arg1)
 
 	r = finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, gmt_proggy, arg1, arg2)
@@ -200,17 +210,18 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
-	# See if we got a CPT. If yes there is quite some work to do if no color column provided in input data.
+	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 
-	if (isempty_(arg1))  return cmd, arg1, arg2, N_args  end		# Just play safe
+	if (isempty_(arg1))  return cmd, arg1, arg2, N_args, false  end		# Just play safe
 
 	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
 	if (!(N_args > n_prev || len < length(cmd)) && mz === nothing)	# No color request, so return right away
-		return cmd, arg1, arg2, N_args
+		return cmd, arg1, arg2, N_args, false
 	end
 
-	if (isa(arg1, Array))  n_rows, n_col = size(arg1)
-	else                   n_rows, n_col = size(arg1.data)			# Must be a GMTdataset
+	if (isa(arg1, Array))          n_rows, n_col = size(arg1)
+	elseif (isa(arg1,GMTdataset))  n_rows, n_col = size(arg1.data)
+	else                           n_rows, n_col = size(arg1[1].data)
 	end
 
 	warn1 = string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it.")
@@ -220,8 +231,9 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 	if (n_col <= 2+is3D)
 		if (mz !== nothing)
 			if (length(mz) != n_rows)  @warn(warn1); @goto noway  end
-			if (isa(arg1, Array))  arg1 = hcat(arg1, mz[:])
-			else                   arg1.data = hcat(arg1.data, mz[:])
+			if (isa(arg1, Array))          arg1 = hcat(arg1, mz[:])
+			elseif (isa(arg1,GMTdataset))  arg1.data = hcat(arg1.data, mz[:])
+			else                           arg1[1].data = hcat(arg1[1].data, mz[:])
 			end
 		else
 			if (opt_i != "")  @warn(warn2);		@goto noway		end
@@ -233,8 +245,9 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 	elseif (n_col > 2+is3D)
 		if (mz !== nothing)			# Here we must insert the color col right after the coords
 			if (length(mz) != n_rows)  @warn(warn1); @goto noway  end
-			if (isa(arg1, Array))  arg1 = hcat(arg1[:,1:2+is3D], mz[:], arg1[:,3+is3D:end])
-			else                   arg1.data = hcat(arg1.data[:,1:2+is3D], mz[:], arg1.data[:,3+is3D:end])
+			if     (isa(arg1, Array))      arg1 = hcat(arg1[:,1:2+is3D], mz[:], arg1[:,3+is3D:end])
+			elseif (isa(arg1,GMTdataset))  arg1.data = hcat(arg1.data[:,1:2+is3D], mz[:], arg1.data[:,3+is3D:end])
+			else                  arg1[1].data = hcat(arg1[1].data[:,1:2+is3D], mz[:], arg1[1].data[:,3+is3D:end])
 			end
 		else
 			if (opt_i == "")  cmd = @sprintf("%s -i0-%d,%d,%d-%d", cmd, 1+is3D, 1+is3D, 2+is3D, n_col-1)
@@ -244,7 +257,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 	end
 
 	if (N_args == n_prev)		# No cpt transmitted, so need to compute one
-		if (GMTver >= 7)		# 7 because this solution is currently still bugged
+		if (GMTver >= 8)		# 7 because this solution is currently still bugged
 			#=
 			if (mz !== nothing)
 				arg2 = gmt("makecpt -E " * cmd[len+2:end], mz[:])
@@ -255,11 +268,11 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 			end
 			=#
 		else
-			if (mz !== nothing)
-				mi, ma = extrema(mz)
+			if (mz !== nothing)               mi, ma = extrema(mz)
 			else
-				if (isa(arg1, Array))  mi, ma = extrema(view(arg1, :, 2+is3D))
-				else                   mi, ma = extrema(view(arg1.data, :, 2+is3D))
+				if     (isa(arg1, Array))     mi, ma = extrema(view(arg1, :, 2+is3D))
+				elseif (isa(arg1,GMTdataset)) mi, ma = extrema(view(arg1.data, :, 2+is3D))
+				else                          mi, ma = extrema(view(arg1[1].data, :, 2+is3D))
 				end
 			end
 			just_C = cmd[len+2:end];	reset_i = ""
@@ -269,15 +282,15 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 			end
 			arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
 			if (occursin(" -C", cmd))  cmd = cmd[1:len+3]  end		# Strip the cpt name
-			if (reset_i != "")  cmd = cmd * reset_i  end	# Reset -i, in case it existed
+			if (reset_i != "")  cmd *= reset_i  end		# Reset -i, in case it existed
 		end
-		if (!occursin(" -C", cmd))  cmd = cmd * " -C"  end	# Need to inform that there is a cpt to use
+		if (!occursin(" -C", cmd))  cmd *= " -C"  end	# Need to inform that there is a cpt to use
 		N_args = 2
 	end
 
 	@label noway
 
-	return cmd, arg1, arg2, N_args
+	return cmd, arg1, arg2, N_args, true
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -358,9 +371,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String)
 	# Deal with parsing the 'bar' & 'hbar' keywors of psxy. Also called by plot/bar3. For this
-	# later module is input is not a string or NamedTuple the scatter options must be processed in bar3().
+	# later module if input is not a string or NamedTuple the scatter options must be processed in bar3().
 	# KEY is either :bar or :hbar
-	# OPT is either "Sb", "SB" or "So"
+	# OPTS is either "Sb", "SB" or "So"
 	opt =""
 	if (haskey(d, key))
 		if (isa(d[key], String))
@@ -376,8 +389,7 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String)
 		if ((ind = findfirst("+", opt)) !== nothing)	# See if need to insert a 'u'
 			if (!isletter(opt[ind[1]-1]))  opt = opt[1:ind[1]-1] * 'u' * opt[ind[1]:end]  end
 		else
-			pb = ""
-			if (optS != "So")  pb = "+b0"  end	# The default for bar3 (So) is set in the bar3() fun
+			pb = (optS != "So") ? "+b0" : ""		# The default for bar3 (So) is set in the bar3() fun
 			if (!isletter(opt[end]))  opt *= 'u' * pb	# No base set so default to ...
 			else                      opt *= pb
 			end
@@ -386,20 +398,3 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String)
 	end
 	return cmd
 end
-# ---------------------------------------------------------------------------------------------------
-
-#= ---------------------------------------------------------------------------------------------------
-psxy(arg1; caller="", K=false, O=false, first=true, kw...) =
-	psxy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
-psxy!(arg1; caller="", K=true, O=true, first=false, kw...) =
-	psxy("", arg1; caller=caller, K=K, O=O, first=first, kw...)
-
-psxy!(cmd0::String="", arg1=[]; caller="", K=true, O=true, first=false, kw...) =
-	psxy(cmd0, arg1; caller=caller, K=K, O=O, first=first, kw...)
-
-# ---------------------------------------------------------------------------------------------------
-psxyz!(cmd0::String="", arg1=[]; caller="", K=true, O=true,  first=false, kw...) =
-	psxyz(cmd0, arg1; caller=caller, K=K, O=O,  first=first, kw...)
-psxyz!(arg1=[]; caller="", K=true, O=true, first=false, kw...) =
-	psxyz("", arg1; caller=caller, K=K, O=O, first=first, kw...)
-=#
