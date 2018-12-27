@@ -138,6 +138,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			opt_S = " -S" * marca * "7p"
 		end
 	end
+	if (opt_S != "" && isnumeric(opt_S[end]))  opt_S *= 'c'  end 	# GMT bug. If no unit pslegend takes it in inches
 
 	opt_ML = ""
 	if (opt_S != "")
@@ -163,19 +164,19 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	if (occursin(" -B0", cmd))  cmd = replace(cmd, " -B0" => "")  end	# -B0 really means NO AXES
 
 	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
-		cmd = [finish_PS(d, cmd * opt_W * opt_UVXY, output, K, O)]
+		cmd = finish_PS(d, cmd * opt_W * opt_UVXY, output, K, O)
 
 	elseif (opt_W == "" && opt_S != "")						# We have a symbol request
 		if (opt_Wmarker != "" && opt_W == "")
 			opt_Gsymb *= " -W" * opt_Wmarker				# Piggy back in this option string
 		end
 		if (opt_ML != "")  cmd *= opt_ML  end				# If we have a symbol outline pen
-		cmd = [finish_PS(d, cmd * opt_S * opt_Gsymb * opt_UVXY, output, K, O)]
+		cmd = finish_PS(d, cmd * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
 
 	elseif (opt_W != "" && opt_S != "")						# We have both line/polygon and a symbol
 		if (occursin(opt_Gsymb, cmd))  opt_Gsymb = ""  end
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
-			cmd = [finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY, output, K, O)]
+			cmd = finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
 		else
 			if (opt_Wmarker != "")
 				opt_Wmarker = " -W" * opt_Wmarker			# Set Symbol edge color 
@@ -188,17 +189,25 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		end
 
 	elseif (opt_S != "" && opt_ML != "")					# We have a symbol outline pen
-		cmd = [finish_PS(d, cmd * opt_ML * opt_S * opt_Gsymb * opt_UVXY, output, K, O)]
+		cmd = finish_PS(d, cmd * opt_ML * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
 
 	else
-		cmd = [finish_PS(d, cmd * opt_UVXY, output, K, O)]
+		cmd = finish_PS(d, cmd * opt_UVXY, output, K, O)
 	end
 
-	# Let matrices with more data columns, and for which no Color info was set, plot multiple lines at once
+	# Let matrices with more data columns, and for which no Color info was NOT set, plot multiple lines at once
 	if (!mcc && (caller == "lines" || caller == "plot") && isa(arg1, Array{Float64,2}) && size(arg1,2) > 2+is3D)
-		arg1 = mat2ds(arg1, color=:cycle)	# Convert to multi-segment GMTdataset
-		D = gmt("gmtinfo -C", arg1)			# But now also need to update the -R string
-		cmd[1] = replace(cmd[1], opt_R => " -R" * arg2str(round_wesn(D[1].data)))	# Replace old -R by the new one
+		penC = "";		cycle=:cycle
+		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
+		if (opt_W != "")  penT, penC, = break_pen(scan_opt(opt_W, "-W"))  end
+		if (penC  != "")  cycle = [penC]  end
+		arg1 = mat2ds(arg1, color=cycle)			# Convert to multi-segment GMTdataset
+		D = gmt("gmtinfo -C", arg1)					# But now also need to update the -R string
+		if (isa(cmd, Array))						# Replace old -R by the new one
+			cmd[1] = replace(cmd[1], opt_R => " -R" * arg2str(round_wesn(D[1].data)))
+		else
+			cmd = replace(cmd, opt_R => " -R" * arg2str(round_wesn(D[1].data)))
+		end
 	end
 
 	put_in_legend_bag(d, cmd, arg1)

@@ -865,8 +865,6 @@ function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN
 	vazio = isempty_(grd_box)
 
 	if (vazio)			# Just tell grid_init() to allocate an empty container
-		#GMT_CREATE_MODE = 0
-		#if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		if ((R = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_CREATE_MODE,
 		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
@@ -937,8 +935,6 @@ function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_I
 
 	vazio = isempty_(img_box)
 	if (vazio)			# Just tell image_init() to allocate an empty container
-		#GMT_CREATE_MODE = 0
-		#if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_CREATE_MODE,
 		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
@@ -1031,8 +1027,6 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 # If output then we dont know size so we set dimensions to zero.
 
 	if (direction == GMT_OUT)
-		#GMT_CREATE_MODE = 0
-		#if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		if ((D = GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT source Dataset\n")
@@ -1182,8 +1176,7 @@ function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, 
 
 	else	# To receive data from GMT we use a GMT_VECTOR resource instead
 		# There are no dimensions and we are just getting an empty container for output
-		GMT_CREATE_MODE = 0
-		if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
+		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		if ((V = GMT_Create_Data(API, GMT_IS_VECTOR, GMT_IS_PLP, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT source vector\n")
 		end
@@ -1199,8 +1192,6 @@ function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
 	# If direction is GMT_OUT then we allocate an empty GMT CPT as a destination.
 
 	if (dir == GMT_OUT)
-		#GMT_CREATE_MODE = 0
-		#if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		if ((P = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT blank CPT container for holding output CPT")
@@ -1276,8 +1267,6 @@ end
 function text_init_(API::Ptr{Nothing}, module_input, Darr, dir::Integer, family::Integer=GMT_IS_TEXTSET)
 #
 	if (dir == GMT_OUT)
-		#GMT_CREATE_MODE = 0
-		#if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, GMT_CREATE_MODE, NULL, NULL, NULL, 0, 0, NULL)) == NULL)
 			error("Failure to alloc GMT blank TEXTSET container for holding output TEXT")
@@ -1394,8 +1383,6 @@ function text_init(API::Ptr{Nothing}, module_input, txt, dir::Integer, family::I
 		mutateit(API, unsafe_load(TTABLE.segment,1), "n_rows", dim[3])
 
 	else 	# Just allocate an empty container to hold an output grid (signal this by passing NULLs)
-		#GMT_CREATE_MODE = 0
-		#if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT blank TEXTSET container for holding output TEXT")
@@ -1411,8 +1398,6 @@ function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
 # If direction is GMT_IN then we are given a Julia structure with known sizes.
 # If direction is GMT_OUT then we allocate an empty GMT POSTSCRIPT as a destination.
 	if (dir == GMT_OUT)
-		#GMT_CREATE_MODE = 0
-		#if (get_GMTversion(API) > 5.3)	GMT_CREATE_MODE = GMT_IS_OUTPUT;	end
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		if ((P = GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("Failure to alloc GMT blank PS container for holding output PostScript")
@@ -1644,12 +1629,12 @@ function mat2ds(mat; x=nothing, hdr=nothing, color=nothing)
 			hdr = Array{String,1}(undef, n_ds)
 			for k = 1:n_ds
 				if ((n = k % n_colors) == 0)  n = n_colors  end
-				hdr[k] = " -W" * arg2str(color[n])
+				hdr[k] = " -W," * arg2str(color[n])
 			end
 		else
 			for k = 1:n_ds
 				if ((n = k % n_colors) == 0)  n = n_colors  end
-				hdr[k] *= " -W" * arg2str(color[n])
+				hdr[k] *= " -W," * arg2str(color[n])
 			end
 		end
 	end

@@ -186,11 +186,25 @@ const GMT_CPT_HINGED     = 4
 const GMT_CPT_TIME       = 8
 
 struct GMT_OPTION			# Structure for a single GMT command option
-	option::UInt8				# 1-char command line -<option> (e.g. D in -D) identifying the option (* if file)
-	arg::Ptr{UInt8}				# If not NULL, contains the argument for this option
+	option::UInt8			# 1-char command line -<option> (e.g. D in -D) identifying the option (* if file)
+	arg::Ptr{UInt8}			# If not NULL, contains the argument for this option
 	next::Ptr{GMT_OPTION}
 	previous::Ptr{GMT_OPTION}
 end
+
+#=
+struct GMT_PEN				# Structure to hold pen attributes
+	width::Cdouble			# In points
+	offset::Cdouble			# In points
+	rgb::NTuple{4,Cdouble}	# RGB color of pen + Transparency 0-1 [0 = opaque] */
+	style::NTuple{128,UInt8}
+	# For line modifications
+	mode::UInt32			# Line-type: PSL_LINEAR [0; default] or PSL_BEZIER [1]
+	cptmode::UInt32		# How a cpt affects pens and fills: 0-none, 1=use CPT for line, 2 = use CPT for fill, 3 = both
+	#end::NTuple{2,GMT_LINE_END}
+	end_::Ptr{Cvoid}		# This is a dangereous thing. If accessed, will crash Julia
+end
+=#
 
 mutable struct GMT_GRID_HEADER_v6
 	n_columns::UInt32
@@ -756,10 +770,10 @@ mutable struct GMT_RESOURCE
 	geometry::UInt32        # One of the recognized GMT geometries
 	direction::UInt32       # Either GMT_IN or GMT_OUT
 	option::Ptr{GMT_OPTION} # Pointer to the corresponding module option
-	name::NTuple{16,UInt8} # Object ID returned by GMT_Register_IO
+	name::NTuple{16,UInt8}  # Object ID returned by GMT_Register_IO
 	pos::Cint               # Corresponding index into external object in|out arrays
 	mode::Cint              # Either primary (0) or secondary (1) resource
-	object::Ptr{Cvoid}       # Pointer to the actual GMT object
+	object::Ptr{Cvoid}      # Pointer to the actual GMT object
 end
 
 
