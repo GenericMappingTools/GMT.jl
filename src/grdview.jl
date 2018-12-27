@@ -51,10 +51,10 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[];
-                 K=false, O=false, first=true, kwargs...)
+function grdview(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdview", cmd0, arg1)
+	arg2 = [];	arg3 = [];	arg4 = [];	arg5 = [];
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdview", cmd0, arg1, arg2, arg3, arg4, arg5)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -77,9 +77,9 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 			cmd *= " -I" * arg2str(val)
 		else
 			cmd, N_used = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3])
-			if (N_used == 1)     arg1 = val
-			elseif (N_used == 2) arg2 = val
-			elseif (N_used == 3) arg3 = val
+			if     (N_used == 1)  arg1 = val
+			elseif (N_used == 2)  arg2 = val
+			elseif (N_used == 3)  arg3 = val
 			end
 		end
 	end
@@ -95,12 +95,11 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 			elseif (N_used == 4) arg4 = val
 			end
 		elseif (isa(val, Tuple) && length(val) == 3)
-			cmd, N_used = put_in_slot(cmd, val[1], 'G', [arg1, arg2, arg3, arg4, arg5, arg6])
+			cmd, N_used = put_in_slot(cmd, val[1], 'G', [arg1, arg2, arg3, arg4, arg5])
 			cmd *= " -G -G"		# Because the above only set one -G and we need 3
 			if (N_used == 1)      arg1 = val[1];	arg2 = val[2];		arg3 = val[3]
 			elseif (N_used == 2)  arg2 = val[1];	arg3 = val[2];		arg4 = val[3]
 			elseif (N_used == 3)  arg3 = val[1];	arg4 = val[2];		arg5 = val[3]
-			elseif (N_used == 4)  arg4 = val[1];	arg5 = val[2];		arg6 = val[3]
 			end
 		else
 			error("Wrong way of setting the drape (G) option.")
@@ -108,18 +107,12 @@ function grdview(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], a
 	end
 
 	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "grdview", arg1, arg2, arg3, arg4, arg5, arg6)
+    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "grdview", arg1, arg2, arg3, arg4, arg5)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdview!(cmd0::String="", arg1=[], arg2=[], arg3=[], arg4=[], arg5=[], arg6=[];
-        K=true, O=true, first=false, kw...) =
-	grdview(cmd0, arg1, arg2, arg3, arg4, arg5, arg6; K=true, O=true, first=false, kw...)
+grdview!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
+	grdview(cmd0, arg1; K=K, O=O, first=first, kw...)
 
-grdview(arg1, cmd0::String="", arg2=[], arg3=[], arg4=[], arg5=[], arg6=[];
-        K=false, O=false, first=true, kw...) =
-	grdview(cmd0, arg1, arg2, arg3, arg4, arg5, arg6; K=K, O=O, first=first, kw...)
-
-grdview!(arg1, cmd0::String="", arg2=[], arg3=[], arg4=[], arg5=[], arg6=[];
-        K=true, O=true, first=false, kw...) =
-	grdview(cmd0, arg1, arg2, arg3, arg4, arg5, arg6; K=true, O=true, first=false, kw...)
+grdview(arg1; K=false, O=false, first=true, kw...) = grdview("", arg1; K=K, O=O, first=first, kw...)
+grdview!(arg1; K=true, O=true, first=false, kw...) = grdview("", arg1; K=K, O=O, first=first, kw...)

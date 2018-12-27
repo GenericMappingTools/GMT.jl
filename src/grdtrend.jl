@@ -41,12 +41,6 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:D :diff], [:N :model], [:T :trend]])
 	if (!occursin("-N", cmd))  error("The 'model' parameter is mandatory")  end
 
-	if (occursin("-D", cmd) && occursin("-T", cmd))
-		@warn("Usage error, both difference and trend were required. Ignoring the trend request.")
-	elseif (!occursin("-D", cmd) && !occursin("-T", cmd))
-		cmd *= " -T" 			# No -T -or -D provided so default to -T
-	end
-
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	if (isa(arg1, Array{<:Number}))  arg1 = mat2grid(arg1)  end
 
@@ -59,6 +53,12 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 			elseif (N_used == 2) arg2 = val
 			end
 		end
+	end
+
+	if (occursin("-D", cmd) && occursin("-T", cmd))
+		@warn("Usage error, both difference and trend were required. Ignoring the trend request.")
+	elseif (!occursin("-D", cmd) && !occursin("-T", cmd) && !occursin("-W", cmd))
+		cmd *= " -T" 			# No -T -or -D provided so default to -T
 	end
 
 	return common_grd(d, cmd, got_fname, 2, "grdtrend", arg1, arg2)

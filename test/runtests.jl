@@ -279,14 +279,17 @@ if (got_it)					# Otherwise go straight to end
 
 	# GRDPROJECT	-- Works but does not save projection info in header
 	G2 = grdproject(G, proj="u29/1:1", F=[], C=[]); 		# Use G of previous test
-	G2 = grdproject("-Ju29/1:1 -F -C", G);				# Monolithic
+	G2 = grdproject("-Ju29/1:1 -F -C", G);					# Monolithic
 
 	# GRDSAMPLE
 	G2 = grdsample(G, inc=0.5);		# Use G of previous test
 
 	# GRDTREND
+	G  = gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
 	G2 = grdtrend(G, model=3);
+	#w = mat2grid(ones(Float32, size(G.z,1), size(G.z,2)))
 	G2 = grdtrend(G, model=3, diff=[], trend=true);
+	#G2 = grdtrend(G, model="3+r", W=true);	# GMT bug. grdtrend (api_import_grid): Could not find file ...
 
 	# GRDTRACK
 	G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
@@ -310,12 +313,15 @@ if (got_it)					# Otherwise go straight to end
 	gmt("destroy")
 	grdimage!(G, J="X10", Vd=:cmd);
 	grdimage!("", G, J="X10", Vd=:cmd);
+	grdimage(rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, J="X10")
 	#grdimage("@earth_relief_05m", J="S21/90/15c", R="10/68/50/80r", B=:afg, X=:c, I="+")
 	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
 	grdview!("",G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
 	grdview!(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
 	grdview!(G, G=G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
+	Gr=mat2grid(rand(Float32, 128, 128)*255); Gg=mat2grid(rand(Float32, 128, 128)*255); Gb=mat2grid(rand(Float32, 128, 128)*255);
+	grdview(rand(128,128), G=(Gr,Gg,Gb), I=mat2grid(rand(Float32,128,128)), J=:X12, JZ=5, Q=:i, view="145/30")
 
 	# GREENSPLINE
 	#d = [0 6.44; 1820 8.61; 2542 5.24; 2889 5.73; 3460 3.81; 4586 4.05; 6020 2.95; 6841 2.57; 7232 3.37; 10903 3.84; 11098 2.86; 11922 1.22; 12530 1.09; 14065 2.36; 14937 2.24; 16244 2.05; 17632 2.23; 19002 0.42; 20860 0.87; 22471 1.26];
