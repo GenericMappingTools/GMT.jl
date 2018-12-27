@@ -188,6 +188,7 @@ if (got_it)					# Otherwise go straight to end
 		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
 		I = gmtread("lixo.tif", img=true);
 		imshow(I, show=false)			# Test this one here because we habe a GMTimage at hand
+		gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
 	else
 		gmtwrite("lixo.grd", G)
 		GG = gmtread("lixo.grd", grd=true, varname=:z);
@@ -313,14 +314,15 @@ if (got_it)					# Otherwise go straight to end
 	gmt("destroy")
 	grdimage!(G, J="X10", Vd=:cmd);
 	grdimage!("", G, J="X10", Vd=:cmd);
+	Gr=mat2grid(rand(Float32, 128, 128)*255); Gg=mat2grid(rand(Float32, 128, 128)*255); Gb=mat2grid(rand(Float32, 128, 128)*255);
 	grdimage(rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, J="X10")
+	grdimage(data=(Gr,Gg,Gb), J=:X10, I=mat2grid(rand(Float32,128,128)), Vd=:cmd)
 	#grdimage("@earth_relief_05m", J="S21/90/15c", R="10/68/50/80r", B=:afg, X=:c, I="+")
 	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
 	grdview!("",G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
 	grdview!(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
 	grdview!(G, G=G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
-	Gr=mat2grid(rand(Float32, 128, 128)*255); Gg=mat2grid(rand(Float32, 128, 128)*255); Gb=mat2grid(rand(Float32, 128, 128)*255);
 	grdview(rand(128,128), G=(Gr,Gg,Gb), I=mat2grid(rand(Float32,128,128)), J=:X12, JZ=5, Q=:i, view="145/30")
 
 	# GREENSPLINE
@@ -359,6 +361,8 @@ if (got_it)					# Otherwise go straight to end
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3)
 	plot3d(rand(5,3), marker=:cube)
 	plot3d!(rand(5,3), marker=:cube, Vd=:cmd)
+	plot3d("", rand(5,3), Vd=:cmd)
+	plot3d!("", rand(5,3), Vd=:cmd)
 	plot3d(1:10, rand(10), rand(10), Vd=:cmd)
 	plot3d!(1:10, rand(10), rand(10), Vd=:cmd)
 
@@ -374,6 +378,7 @@ if (got_it)					# Otherwise go straight to end
 	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", vec=(size=0.65, fill=:red), Vd=:cmd)
 	lines(1:10,rand(10), W=0.25, Vd=:cmd)
 	lines!(1:10,rand(10), W=0.25, Vd=:cmd)
+	lines!("", rand(10), W=0.25, Vd=:cmd)
 	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
 	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 	D = histogram(randn(1000), I=:o, W=0.1);
@@ -395,8 +400,12 @@ if (got_it)					# Otherwise go straight to end
 	scatter!(1:10, Vd=:cmd)
 	scatter(rand(5,5))
 	scatter!(rand(5,5), Vd=:cmd)
+	scatter("",rand(5,5), Vd=:cmd)
+	scatter!("",rand(5,5), Vd=:cmd)
 	scatter3(rand(5,5,3))
 	scatter3!(rand(5,5,3), Vd=:cmd)
+	scatter3("", rand(5,5,3), Vd=:cmd)
+	scatter3!("", rand(5,5,3), Vd=:cmd)
 	scatter3(1:10, rand(10), rand(10), fill=:red, B=:a, Vd=:cmd)
 	scatter3!(1:10, rand(10), rand(10), Vd=:cmd)
 
@@ -416,6 +425,8 @@ if (got_it)					# Otherwise go straight to end
 	bar!((1,2,3), Vd=:cmd)
 	bar!((1,2,3), (1,2,3), Vd=:cmd)
 	bar([3 31], C=:lightblue, Vd=:cmd)
+	bar("", [3 31], C=:lightblue, Vd=:cmd)
+	bar!("", [3 31], C=:lightblue, Vd=:cmd)
 	men_means, men_std = (20, 35, 30, 35, 27), (2, 3, 4, 1, 2)
 	x = collect(1:length(men_means))
 	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue,
@@ -455,7 +466,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSCONVERT
 	gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
-	psconvert("lixo.ps", adjust=true, fmt="eps")
+	psconvert("lixo.ps", adjust=true, fmt="eps", C=:dDOINTERPOLATE)
 	psconvert("lixo.ps", adjust=true, fmt="tif")
 	gmt("grdinfo lixo.tif");
 

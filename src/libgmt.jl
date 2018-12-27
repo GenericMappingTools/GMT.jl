@@ -28,6 +28,10 @@ function GMT_Create_Data(API::Ptr{Cvoid}, family, geometry, mode, dim=C_NULL, we
 	convert(ret_type, ptr)
 end
 
+function GMT_Destroy_Session(API::Ptr{Cvoid})
+	ccall( (:GMT_Destroy_Session, thelib), Cint, (Ptr{Cvoid},), API)
+end
+
 #=		Not used yet, so comment
 function GMT_Read_Data(API::Ptr{Cvoid}, family, method, geometry, mode, wesn, input=C_NULL, data=C_NULL)
 
@@ -54,7 +58,6 @@ function GMT_Read_Data(API::Ptr{Cvoid}, family, method, geometry, mode, wesn, in
 
 	convert(ret_type, ptr)
 end
-=#
 
 function GMT_Insert_Data(API::Ptr{Cvoid}, object_ID::Integer, data)
 	ccall((:GMT_Insert_Data, thelib), Cint, (Ptr{Cvoid}, Cint, Ptr{Cvoid}), API, object_ID, data)
@@ -70,10 +73,6 @@ end
 
 function GMT_Manage_Session(API::Ptr{Cvoid}, mode::Integer, args::Ptr{Cvoid})
 	ccall( (:GMT_Manage_Session, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{Cvoid}), API, mode, args)
-end
-
-function GMT_Destroy_Session(API::Ptr{Cvoid})
-	ccall( (:GMT_Destroy_Session, thelib), Cint, (Ptr{Cvoid},), API)
 end
 
 function GMT_Register_IO(API, family::Integer, method::Integer, geometry::Integer, direction::Integer=0,
@@ -97,19 +96,20 @@ end
 
 function GMT_Write_Data(API::Ptr{Cvoid}, family::Integer, method::Integer, geometry::Integer, mode::Integer,
 	wesn, output::String, data)
-
 	err = ccall((:GMT_Write_Data, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32, UInt32, UInt32, Ptr{Cdouble},
 		Ptr{UInt8}, Ptr{Cvoid}), API, family, method, geometry, mode, wesn, output, data)
 end
-
-function get_that_pointer(object)
-	ccall( (:get_that_pointer, thelib), Ptr{Cvoid}, (Ptr{Cvoid},), object)
-end
+=#
 
 function GMT_Destroy_Data(API::Ptr{Cvoid}, object)
 	ccall( (:GMT_Destroy_Data, thelib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), API, object)
 end
 
+function GMT_Set_Comment(API::Ptr{Cvoid}, family::Integer, mode::Integer, arg::Ptr{Cvoid}, data::Ptr{Cvoid})
+	ccall( (:GMT_Set_Comment, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32, Ptr{Cvoid}, Ptr{Cvoid}), API, family, mode, arg, data)
+end
+
+#=
 function GMT_Put_Record(API::Ptr{Cvoid}, mode::UInt32, record::Ptr{Cvoid})
 	ccall( (:GMT_Put_Record, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{Cvoid}), API, mode, record)
 end
@@ -123,9 +123,6 @@ function GMT_Get_Row(API::Ptr{Cvoid}, rec_no::Cint, G::Ptr{GMT_GRID}, row::Ptr{C
 end
 function GMT_Put_Row(API::Ptr{Cvoid}, rec_no::Cint, G::Ptr{GMT_GRID}, row::Ptr{Cfloat})
 	ccall( (:GMT_Put_Row, thelib), Cint, (Ptr{Cvoid}, Cint, Ptr{GMT_GRID}, Ptr{Cfloat}), API, rec_no, G, row)
-end
-function GMT_Set_Comment(API::Ptr{Cvoid}, family::Integer, mode::Integer, arg::Ptr{Cvoid}, data::Ptr{Cvoid})
-	ccall( (:GMT_Set_Comment, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32, Ptr{Cvoid}, Ptr{Cvoid}), API, family, mode, arg, data)
 end
 
 function GMT_Get_ID(API::Ptr{Cvoid}, family::Integer, dir::Integer, resource=C_NULL)
@@ -151,15 +148,16 @@ function GMT_Get_Common(API::Ptr{Cvoid}, option::UInt32, par::Ptr{Cdouble})
 	ccall((:GMT_Get_Common, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{Cdouble}), API, option, par)
 end
 
-function GMT_Get_Default(API::Ptr{Cvoid}, keyword::String, value)
-	ccall((:GMT_Get_Default, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
-end
-
 function GMT_Get_Value(API::Ptr{Cvoid}, arg::String, par::Ptr{Cdouble})
 	ccall((:GMT_Get_Value, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cdouble}), API, arg, par)
 end
 function GMT_Get_Values(API::Ptr{Cvoid}, arg::String, par::Ptr{Cdouble}, maxpar::Integer)
 	ccall((:GMT_Get_Values, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cdouble}, Cint), API, arg, par, maxpar)
+end
+=#
+
+function GMT_Get_Default(API::Ptr{Cvoid}, keyword::String, value)
+    ccall((:GMT_Get_Default, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 end
 
 function GMT_Call_Module(API::Ptr{Cvoid}, _module=C_NULL, mode::Integer=0, args=C_NULL)
@@ -175,6 +173,11 @@ end
 #GMT_Create_Options(API::Ptr{Cvoid}, argc::Integer, args::String) = 
 #                   GMT_Create_Options(API, argc, convert(Ptr{Cvoid},pointer(args)))
 
+function GMT_Destroy_Options(API::Ptr{Cvoid}, head::Ref{Ptr{GMT_OPTION}})
+	ccall( (:GMT_Destroy_Options, thelib), Cint, (Ptr{Cvoid}, Ref{Ptr{GMT_OPTION}}), API, head)
+end
+
+#=
 function GMT_Make_Option(API::Ptr{Cvoid}, option::UInt8, arg::Ptr{UInt8})
 	ccall((:GMT_Make_Option, thelib), Ptr{GMT_OPTION}, (Ptr{Cvoid}, UInt8, Ptr{UInt8}), API, option, arg)
 end
@@ -192,9 +195,7 @@ end
 function GMT_Create_Cmd(API::Ptr{Cvoid}, head::Ptr{GMT_OPTION})
 	ccall( (:GMT_Create_Cmd, thelib), Ptr{UInt8}, (Ptr{Cvoid}, Ptr{GMT_OPTION}), API, head)
 end
-function GMT_Destroy_Options(API::Ptr{Cvoid}, head::Ref{Ptr{GMT_OPTION}})
-	ccall( (:GMT_Destroy_Options, thelib), Cint, (Ptr{Cvoid}, Ref{Ptr{GMT_OPTION}}), API, head)
-end
+
 function GMT_Destroy_Args(API::Ptr{Cvoid}, argc::Cint, argv::Ptr{Ptr{Ptr{UInt8}}})
 	ccall( (:GMT_Destroy_Args, thelib), Cint, (Ptr{Cvoid}, Cint, Ptr{Ptr{Ptr{UInt8}}}), API, argc, argv)
 end
@@ -210,7 +211,7 @@ end
 function GMT_Parse_Common(API::Ptr{Cvoid}, given_options::Ptr{UInt8}, options::Ptr{GMT_OPTION})
 	ccall( (:GMT_Parse_Common, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{GMT_OPTION}), API, given_options, options)
 end
-#=
+
 function GMT_FFT_Option(API::Ptr{Cvoid}, option::UInt8, dim::UInt32, string::Ptr{UInt8})
 	ccall( (:GMT_FFT_Option, thelib), UInt32, (Ptr{Cvoid}, UInt8, UInt32, Ptr{UInt8}), API, option, dim, string)
 end
@@ -254,16 +255,9 @@ function GMT_Expand_Option(V_API::Ptr{Cvoid}, opt::Ptr{GMT_OPTION}, arg)
 	ccall((:GMT_Expand_Option, thelib), Cint, (Ptr{Cvoid}, Ptr{GMT_OPTION}, Ptr{UInt8}), V_API, opt, arg)
 end
 
+#=
 function gmt_core_module_info(API, candidate)
 	ccall((:gmt_core_module_info, thelib), Ptr{UInt8}, (Ptr{Cvoid}, Ptr{UInt8}), API, candidate)
-end
-
-function GMT_set_mem_layout(API, mem_layout)
-	ccall((:GMT_set_mem_layout, thelib), Cvoid, (Ptr{Cvoid}, Ptr{UInt8}), API, mem_layout)
-end
-
-function GMT_Set_Default(API::Ptr{Cvoid}, keyword, value)
-	ccall((:GMT_Set_Default, thelib), Cvoid, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 end
 
 function gmtlib_grd_flip_vertical(gridp, n_cols::Integer, n_rows::Integer, n_stride::Integer=0, cell_size::Integer=1)
@@ -271,11 +265,21 @@ function gmtlib_grd_flip_vertical(gridp, n_cols::Integer, n_rows::Integer, n_str
 				 gridp, n_cols, n_rows, n_stride, cell_size)
 end
 
+function GMT_set_mem_layout(API, mem_layout)
+	ccall((:GMT_set_mem_layout, thelib), Cvoid, (Ptr{Cvoid}, Ptr{UInt8}), API, mem_layout)
+end
+=#
+
+function GMT_Set_Default(API::Ptr{Cvoid}, keyword, value)
+	ccall((:GMT_Set_Default, thelib), Cvoid, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
+end
+
 function GMT_blind_change_struct(API::Ptr{Cvoid}, X, what, keyword::String, off::Integer)
 	ccall((:GMT_blind_change_struct, thelib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}, Csize_t),
 				 API, X, what, keyword, off)
 end
 
+#=
 function GMT_blind_change_struct_(API::Ptr{Cvoid}, X, what, keyword::String)
 	ccall((:GMT_blind_change_struct_, thelib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}),
 				 API, X, what, keyword)
@@ -303,6 +307,7 @@ end
 function GMT_Set_Index(API::Ptr{Cvoid}, header::Ptr{GMT_GRID_HEADER}, code)
 	ccall((:GMT_Set_Index, thelib), Cint, (Ptr{Cvoid}, Ptr{GMT_GRID_HEADER}, Ptr{UInt8}), API, header, code)
 end
+=#
 
 function GMT_Alloc_Segment(API::Ptr{Cvoid}, family::Integer, n_rows::Integer, n_columns::Integer, header, S::Ptr{Cvoid})
 	if (family == GMT_IS_DATASET || family == GMT_WITH_STRINGS)
@@ -319,12 +324,9 @@ function GMT_Alloc_Segment(API::Ptr{Cvoid}, family::Integer, n_rows::Integer, n_
 	convert(ret_type, ptr)
 end
 
+#=
 function GMT_Set_Columns(API::Ptr{Cvoid}, n_columns::Integer, mode)
 	ccall((:GMT_Set_Columns, thelib), Cint, (Ptr{Cvoid}, UInt32, UInt32), API, n_columns, mode)
-end
-
-function GMT_Duplicate_String(API::Ptr{Cvoid}, str)
-	ccall((:GMT_Duplicate_String, thelib), Ptr{UInt8}, (Ptr{Cvoid}, Ptr{UInt8}), API, str)
 end
 
 function GMT_Destroy_Group(API::Ptr{Cvoid}, obj::Ptr{Cvoid}, n_items::Integer)
@@ -334,6 +336,11 @@ end
 function GMT_Change_Layout(API::Ptr{Cvoid}, family::Integer, code, mode::Integer, obj::Ptr{Cvoid}, data::Ptr{Cvoid}=C_NULL, alpha::Ptr{Cvoid}=C_NULL)
 	ccall((:GMT_Change_Layout, thelib), Cint, (Ptr{Cvoid}, Cuint, Ptr{UInt8}, Cuint, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}),
 	      API, family, code, mode, obj, data, alpha)
+end
+=#
+
+function GMT_Duplicate_String(API::Ptr{Cvoid}, str)
+	ccall((:GMT_Duplicate_String, thelib), Ptr{UInt8}, (Ptr{Cvoid}, Ptr{UInt8}), API, str)
 end
 
 function GMT_Open_VirtualFile(API::Ptr{Cvoid}, family::Integer, geometry::Integer, dir::Integer, data, name)
@@ -347,6 +354,7 @@ function GMT_Read_VirtualFile(API::Ptr{Cvoid}, str)
 	ccall((:GMT_Read_VirtualFile, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{UInt8}), API, str)
 end
 
+#=
 function GMT_Init_VirtualFile(API::Ptr{Cvoid}, mode::Integer, name)
 	ccall((:GMT_Init_VirtualFile, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, UInt32, Ptr{UInt8}), API, mode, name)
 end
@@ -368,6 +376,7 @@ end
 function GMT_Error_Message(API::Ptr{Cvoid})
 	ccall((:GMT_Error_Message, thelib), Ptr{UInt8}, (Ptr{Cvoid},), API)
 end
+=#
 
 # ------------------ Development function in 5.4.0 ------------------------------------------------------------
 

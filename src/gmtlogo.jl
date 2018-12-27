@@ -95,10 +95,8 @@ function jlogo(L=5)
 	s_size = 0.8 * L 			# Circle diameter
 	l_thick = s_size * 0.06 	# Line thickness
 
-	s1 = s_size					# Outer circle diameter. To simulate a line.
-	if (GMTver < 6)  s1 = s1 / 2.54  end	# There is a bug in older versions
+	s1 = (GMTver < 6) ? s1 / 2.54 : s_size	# Outer circle diameter to simulate a line (was bugged in older versions)
 	s2 = s1 * (1 - 0.06)		# Inner circle diameter. The one that will be filled.
 	t = [L/2 L/2 0 s1; L+L/2 L/2 1 s1; L L/2+H 2 s1; L/2 L/2 3 s2; L+L/2 L/2 4 s2; L L/2+H 5 s2]
-	cmd = " -Sc -C171/43/33,130/83/171,81/143/24,191/101/95,158/122/190,128/171/93 "
-	return cmd, t, s2
+	return " -Sc -C171/43/33,130/83/171,81/143/24,191/101/95,158/122/190,128/171/93 ", t, s2
 end

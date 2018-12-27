@@ -55,7 +55,7 @@ to read a jpg image with the bands reversed (this example is currently broken in
 """
 function gmtread(fname::String=""; kwargs...)
 
-	if (isempty(fname))
+	if (fname == "")
 		error("First argument cannot be empty. It must contain the file name to read.")
 	end
 
@@ -70,12 +70,8 @@ function gmtread(fname::String=""; kwargs...)
 	else
 		opt_T = add_opt("", "Ti", d, [:img :image])
 	end
-	if (isempty(opt_T))
-		opt_T = add_opt("", "Td", d, [:dataset :table])
-	end
-	if (isempty(opt_T))
-		opt_T = add_opt("", "Tc", d, [:cpt :cmap])
-	end
+	if (isempty(opt_T))  opt_T = add_opt("", "Td", d, [:dataset :table])  end
+	if (isempty(opt_T))  opt_T = add_opt("", "Tc", d, [:cpt :cmap])  end
 	if (isempty(opt_T))  opt_T = add_opt("", "Tp", d, [:ps])  end
 
 	if (haskey(d, :varname))				# See if we have a nc varname / layer request
@@ -175,9 +171,9 @@ Example: write the GMTgrid 'G' object into a nc file called 'lixo.grd'
 
 	gmtwrite("lixo.grd", G);
 """
-function gmtwrite(fname::String="", data=[]; kwargs...)
+function gmtwrite(fname::String, data; kwargs...)
 
-	if (isempty(fname))
+	if (fname == "")
 		error("First argument cannot be empty. It must contain the file name to write.")
 	end
 
@@ -219,8 +215,6 @@ function gmtwrite(fname::String="", data=[]; kwargs...)
 			fname *= fmt
 			opt_T = " -Tg"
 		end
-	elseif (isempty_(data))
-		error("Second argument must contain the data to save in file, and not be EMPTY like it is in this case.")
 	end
 	cmd = cmd * opt_T
 
