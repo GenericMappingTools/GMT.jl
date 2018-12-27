@@ -172,9 +172,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	if (extra_parse)
 		# This is old code that takes care to break a string in tokens and prefix with a -B to each token
 		tok = Vector{String}(undef, 10)
-		k = 1
-		r = opt_B
-		found = false
+		k = 1;		r = opt_B;		found = false
 		while (r != "")
 			tok[k],r = GMT.strtok(r)
 			#=
@@ -205,7 +203,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 		# Rebuild the B option string
 		opt_B = ""
 		for n = 1:k-1
-			opt_B = opt_B * tok[n]
+			opt_B *= tok[n]
 		end
 	end
 
@@ -635,7 +633,7 @@ end
 function arg2str(arg)
 	# Convert an empty, a numeric or string ARG into a string ... if it's not one to start with
 	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
-	if (isa(arg, String) || isa(arg, Symbol))
+	if (isa(arg, AbstractString) || isa(arg, Symbol))
 		out = string(arg)
 	elseif (isempty_(arg) || (isa(arg, Bool) && arg))
 		out = ""
@@ -1710,11 +1708,20 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 
 	cmd_ = cmd									# Starts to be just a shallow copy
 	if (isa(arg, Array{GMT.GMTdataset,1}))		# Multi-segments can have different settings per line
-		cmd_ = deepcopy(cmd)					# OK, in this case we need to make it a deep copy
-		pens = Array{String,1}(undef,length(arg))
-		for k = 1:length(arg)
-			pens[k] = " -W," * scan_opt(arg[k].header, "-W");
+		(isa(cmd, String)) ? cmd_ = deepcopy([cmd]) : cmd_ = deepcopy(cmd)
+		lix, penC, = break_pen(scan_opt(arg[1].header, "-W"))
+		penT, penC_, = break_pen(scan_opt(cmd_[end], "-W"))
+		if (penC == "")  penC = penC_  end
+		cmd_[end] = "-W" * penT * ',' * penC * " " * cmd_[end]	# Trick to make the parser find this pen
+		pens = Array{String,1}(undef,length(arg)-1)
+		for k = 1:length(arg)-1
+			t = scan_opt(arg[k+1].header, "-W")
+			if (t[1] == ',')  pens[k] = " -W" * penT * t		# Can't have, e.g., ",,230/159/0" => Crash
+			else              pens[k] = " -W" * penT * ',' * t
+			end
 		end
+		append!(cmd_, pens)			# Append the 'pens' var to the input arg CMD
+
 		lab = Array{String,1}(undef,length(arg))
 		if ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)		# Have label(s)
 			if (!isa(val, Array))				# One single label, take it as a label prefix
@@ -1728,14 +1735,12 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 		else
 			for k = 1:length(arg)  lab[k] = string('y',k)  end
 		end
-		# Now need to append the 'pens' var to the input arg CMD
-		if (isa(cmd, String))  cmd_ = append!([cmd_], pens)
-		else                   append!(cmd_, pens)
-		end
 	elseif ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)
 		lab = [val]
-	elseif (legend_type === nothing) lab = ["y1"]
-	else                             lab = [@sprintf("y%d", size(legend_type.label ,1))]
+	elseif (legend_type === nothing)
+		lab = ["y1"]
+	else
+		lab = [@sprintf("y%d", size(legend_type.label ,1))]
 	end
 
 	if ((isa(cmd_, Array{String, 1}) && !occursin("-O", cmd_[1])) || (isa(cmd_, String) && !occursin("-O", cmd_)))
@@ -1744,15 +1749,12 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 
 	if (legend_type === nothing)
 		legend_type = legend_bag(Array{String,1}(undef,1), Array{String,1}(undef,1))
-		legend_type.label = lab;		legend_type.cmd = cmd_
+		legend_type.cmd = (isa(cmd_, String)) ? [cmd_] : cmd_
+		legend_type.label = lab
 	else
-		if (!isassigned(legend_type.label, 1))	# Some previous error left it in an #undef state
-			legend_type.label[1] = lab;			legend_type.cmd[1] = cmd_
-		else
-			append!(legend_type.label, lab);	append!(legend_type.cmd, cmd_)
-		end
+		isa(cmd_, String) ? append!(legend_type.cmd, [cmd_]) : append!(legend_type.cmd, cmd_)
+		append!(legend_type.label, lab)
 	end
-
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -1770,7 +1772,7 @@ function digests_legend_bag(d::Dict)
 		for k = 1:nl											# Loop over number of entries
 			symb = scan_opt(legend_type.cmd[k], "-S");		if (symb == "")  symb = "-"  end
 			fill = scan_opt(legend_type.cmd[k], "-G");		if (fill == "")  fill = "-"  end
-			pen = scan_opt(legend_type.cmd[k],  "-W");
+			pen  = scan_opt(legend_type.cmd[k],  "-W");
 			(pen == "" && symb != "-" && fill != "-") ? pen = "-" : (pen == "" ? pen = "0.25p" : pen = pen)
 			leg[k] = @sprintf("S %.3fc %s %.2fc %s %s %.2fc %s", symbW/2, symb, symbW, fill, pen, symbW+0.14, legend_type.label[k])
 		end
@@ -1804,6 +1806,20 @@ function scan_opt(cmd, opt)
 	out = ""
 	if ((ind = findfirst(opt, cmd)) !== nothing)  out, = strtok(cmd[ind[1]+2:end])  end
 	return out
+end
+
+# --------------------------------------------------------------------------------------------------
+function break_pen(pen)
+	# Break a pen string in its form thick,color,style into its constituints
+	# Absolutely minimalist. Will fail if -Wwidth,color,style pattern is not followed.
+
+	ps = split(pen, ',')
+	nc = length(ps)
+	if     (nc == 1)  penT = ps[1];    penC = "";       penS = "";	
+	elseif (nc == 2)  penT = ps[1];    penC = ps[2];    penS = "";	
+	else              penT = ps[1];    penC = ps[2];    penS = ps[3];	
+	end
+	return penT, penC, penS
 end
 
 # --------------------------------------------------------------------------------------------------

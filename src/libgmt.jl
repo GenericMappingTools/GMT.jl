@@ -386,3 +386,7 @@ end
 function GMT_Get_Version(major::Ptr{Cuint}, minor::Ptr{Cuint}, patch::Ptr{Cuint})
 	ver = ccall((:GMT_Get_Version, thelib), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, major, minor, patch)
 end
+
+#function gmt_getpen(GMT::Ptr{Cvoid}, buffer, P::Ptr{GMT_PEN})
+	#ccall((:gmt_getpen, thelib), Cint, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{GMT_PEN}), GMT, buffer, P)
+#end
