@@ -862,9 +862,7 @@ function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN
 # If GRD_BOX is empty just allocate (GMT) an empty container and return
 # If GRD_BOX is not empty it must contain a GMTgrid type.
 
-	vazio = isempty_(grd_box)
-
-	if (vazio)			# Just tell grid_init() to allocate an empty container
+	if (isempty_(grd_box))			# Just tell grid_init() to allocate an empty container
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		if ((R = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_CREATE_MODE,
 		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
@@ -876,7 +874,7 @@ function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN
 	if (isa(grd_box, GMTgrid))
 		R = grid_init(API, module_input, grd_box, [], [])
 	else
-		error(@sprintf("GMTJL_PARSER:grd_init: input (%s) is not a GRID|IMAGE container type", typeof(grd_box)))
+		error(@sprintf("GMTJL_PARSER:grd_init: input (%s) is not a GRID container type", typeof(grd_box)))
 	end
 	return R
 end

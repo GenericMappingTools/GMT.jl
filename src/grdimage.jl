@@ -68,7 +68,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; K=false, O=false, 
 				[:M :monochrome], [:N :noclip], [:Q :nan_t :nan_alpha]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
-	if (got_fname == 0 && isempty_(arg1))			# Than it must be using the three r,g,b grids
+	if (got_fname == 0 && isa(arg1, Tuple))			# Than it must be using the three r,g,b grids
 		cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, 3, arg1, arg2, arg3)
 		if (got_fname == 0 && isempty_(arg1))
 			error("No input data to use in grdimage.")
@@ -100,6 +100,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; K=false, O=false, 
 		end
 	end
 
+	if (isa(arg1, GMTimage) && !occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not necessary but it is.
 	cmd = finish_PS(d, cmd, output, K, O)
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "grdimage", arg1, arg2, arg3, arg4)
 end
@@ -108,8 +109,8 @@ end
 grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[]; K=true, O=true, first=false, kw...) =
 	grdimage(cmd0, arg1, arg2, arg3; K=true, O=true, first=false, kw...) 
 
-grdimage(arg1, arg2=[], arg3=[]; K=false, O=false, first=true, kw...) =
+grdimage(arg1=[], arg2=[], arg3=[]; K=false, O=false, first=true, kw...) =
 	grdimage("", arg1, arg2, arg3; K=K, O=O, first=first, kw...)
 
-grdimage!(arg1, arg2=[], arg3=[]; K=true, O=true, first=false, kw...) =
+grdimage!(arg1=[], arg2=[], arg3=[]; K=true, O=true, first=false, kw...) =
 	grdimage("", arg1, arg2, arg3; K=K, O=O, first=first, kw...)

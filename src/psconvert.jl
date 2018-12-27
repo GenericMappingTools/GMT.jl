@@ -90,10 +90,9 @@ function psconvert(cmd0::String="", arg1=[]; kwargs...)
 				[:Z :del_input_ps]])
 	cmd = parse_V_params(cmd, d)
 
-	fmt = ""
 	if (haskey(d, :fmt))
 		fmt = isa(d[:fmt], Symbol) ? string(d[:fmt]) : d[:fmt]
-		if (fmt == "pdf")      cmd *= " -Tf"
+		if     (fmt == "pdf")  cmd *= " -Tf"
 		elseif (fmt == "eps")  cmd *= " -Te"
 		elseif (fmt == "png")  cmd *= " -Tg"
 		elseif (fmt == "jpg")  cmd *= " -Tj"
