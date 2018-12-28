@@ -70,12 +70,8 @@ function grdfft(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 		return common_grd(d, cmd, got_fname, 1, "grdfft", arg1)		# Finish build cmd and run it
 	else
 		# Here several cases can happen: 1) arg1 only; 2) arg1 && arg2; 3) grid(s) provided via fname
-		if (isempty_(arg2))
-			return common_grd(d, cmd, got_fname, 1, "grdfft", arg1)
-		else
-			if (isa(arg2, Array{<:Number}))		arg2 = mat2grid(arg2)	end
-			return common_grd(d, cmd, got_fname, 2, "grdfft", arg1, arg2)
-		end
+		if (isa(arg2, Array{<:Number}))  arg2 = mat2grid(arg2)  end
+		return common_grd(d, cmd, got_fname, 2, "grdfft", arg1, arg2)
 	end
 end
 

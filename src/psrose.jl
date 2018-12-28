@@ -96,9 +96,7 @@ function rose(cmd0::String="", arg1=[]; first=true, kwargs...)
 	if (cmd != "")
 		cmd = add_opt(cmd, 'A', d, [:A :sector])
 		(haskey(d, :Vd)) && println(@sprintf("\tpsrose %s", cmd))
-		if (!isempty_(arg1))  return gmt("psrose " * cmd, arg1)
-		else                  return gmt("psrose " * cmd)
-		end
+		return gmt("psrose " * cmd, arg1)
 	end
 
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only

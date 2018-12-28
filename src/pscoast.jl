@@ -143,10 +143,10 @@ function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 
 	if (maybe_more)				# Search for color and style line settings
 		lc = parse_pen_color(d)
-		if (!isempty(lc))
+		if (lc != "")
 			cmd *= "," * lc
-			ls = parse_pen_style(d)
-			if (!isempty(ls))  cmd *= "," * ls	end
+			ls = add_opt("", "", d, [:ls :linestyle], nothing)
+			if (ls != "")  cmd *= "," * ls	end
 		end
 	end
 
