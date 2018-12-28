@@ -309,6 +309,8 @@ if (got_it)					# Otherwise go straight to end
 	dzdy = gmt("grdmath ? DDY", G);
 	dzdx = gmt("grdmath ? DDX", G);
 	grdvector(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
+	grdvector!(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), W="1p", S=12, Vd=:cmd)
+	grdvector!("",dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65), W="1p", S=12, Vd=:cmd)
 
 	# GRDVOLUME
 	grdvolume(G);
@@ -453,6 +455,8 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSBASEMAP
 	basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
+	basemap!(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth", Vd=:cmd)
+	basemap!("", region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth", Vd=:cmd)
 	basemap(region="416/542/0/6.2831852", proj="X-12/6.5",
 	axis=(axes=(:left_full, :bot_full), fill=:lightblue),
 	xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"),
@@ -477,9 +481,9 @@ if (got_it)					# Otherwise go straight to end
 	# PSCOAST
 	coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, borders="1/0.5p");
 	coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
-	coast(R=[-10 1 36 45], J="M", B="a", shore=1,  E="PT,+gblue", fmt="ps", borders="a", rivers="a");
+	coast(R=[-10 1 36 45], J="M", B="a", shore4=1,  E="PT,+gblue", borders="a", rivers="a", lc=:red);
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), water=:blue, clip=:land, Vd=:cmd)
-	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), Vd=:cmd)
+	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), clip=:end, rivers="1/0.5p", Vd=:cmd)
 	r = coast(region=:g, proj="A300/30/14c", frame=:g, resolution=:crude, title="Hello Round World", Vd=:cmd);
 	@test r[1:54] == " -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude"
 
@@ -495,6 +499,7 @@ if (got_it)					# Otherwise go straight to end
 	# PSSCALE
 	C = makecpt(T="-200/1000/100", C="rainbow");
 	colorbar(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps", par=(MAP_FRAME_WIDTH=0.2,))
+	colorbar!("", C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=:cmd)
 
 	# PSHISTOGRAM
 	histogram(randn(1000),W=0.1,center=true,B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
@@ -519,6 +524,8 @@ if (got_it)					# Otherwise go straight to end
 	# PSMASK
 	D = gmt("gmtmath -T-90/90/10 -N2/1 0");
 	mask(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, B="xafg180 yafg10")
+	mask!(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=:cmd)
+	mask!("", D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=:cmd)
 
 	# PSSOLAR
 	#D=solar(I="-7.93/37.079+d2016-02-04T10:01:00");
