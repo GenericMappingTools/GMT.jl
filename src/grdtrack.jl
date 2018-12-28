@@ -69,9 +69,7 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	if ((val = find_in_dict(d, [:G :grid])[1]) !== nothing)
 		if (isa(val, Tuple))
 			grid_tuple = val
-			for k = 1:length(grid_tuple)	# Need as many -G as numel(grid_tuple)
-				cmd = string(cmd, " -G")
-			end
+			for k = 1:length(grid_tuple)  cmd *= " -G"  end		# Need as many -G as numel(grid_tuple)
 		elseif (isa(val, GMT.GMTgrid))
 			cmd = string(cmd, " -G")
 			if     (isempty_(arg1))  arg1 = val;
@@ -85,8 +83,7 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
 	# Because we allow arg1 and arg2 to either exist or not and also contain data & grid in any order
 	if (!isempty_(arg1) && !isempty_(arg2))
-		arg1_is_table = false;		arg2_is_table = false
-		arg1_is_grid  = false;		arg2_is_grid  = false
+		arg1_is_table = false;	arg2_is_table = false;	arg1_is_grid = false;	arg2_is_grid = false
 		if (isa(arg1, GMTgrid))		arg1_is_grid = true		end
 		if (isa(arg2, Array) || isa(arg2, GMTdataset))  arg2_is_table = true	end
 		if (arg2_is_table && arg1_is_grid)			# Swap the arg1, arg2
@@ -97,11 +94,7 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	if (isa(arg1, GMTgrid) || isa(arg2, GMTgrid) && !occursin("-G", cmd))  cmd = cmd * " -G"  end
 
 	if (isa(grid_tuple, Tuple))
-		if (got_fname != 0)
-			return common_grd(d, cmd, got_fname, 3, "grdtrack", grid_tuple)
-		else
-			return common_grd(d, cmd, got_fname, 3, "grdtrack", tuple(arg1, grid_tuple...))
-		end
+		return common_grd(d, cmd, got_fname, 3, "grdtrack", (got_fname != 0) ? grid_tuple : tuple(arg1,grid_tuple...))
 	else
 		return common_grd(d, cmd, got_fname, 2, "grdtrack", arg1, arg2)
 	end

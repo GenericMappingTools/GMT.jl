@@ -183,13 +183,13 @@ function parse_dcw(val::Tuple, cmd::String)
 		if (length(val) == 3)  cmd = string(cmd, ",", val[3])  end
 	elseif (length(val) >= 2 && isa(val[1], String))
 		if (length(val) == 2 && isa(val[2], Tuple))			# ex: E=("PT", (0.5,"red","--"))
-			cmd = string(cmd, " -E", val[1], ",+p", parse_pen(val[2]))
+			cmd = string(cmd, " -E", val[1], "+p", parse_pen(val[2]))
 		elseif (length(val) == 3 && isa(val[2], Tuple) && isa(val[3], String))
 			# ex: E=("PT", (0.5, "red", "--"), "+gblue")
-			cmd = string(cmd, " -E", val[1], ",+p", parse_pen(val[2]), val[3])
+			cmd = string(cmd, " -E", val[1], "+p", parse_pen(val[2]), val[3])
 		elseif (length(val) == 3 && isa(val[3], Tuple) && isa(val[2], String))
 			# ex: E=("PT", "+gblue", (0.5,"red","--"))
-			cmd = string(cmd, " -E", val[1], val[2], ",+p", parse_pen(val[3]))
+			cmd = string(cmd, " -E", val[1], val[2], "+p", parse_pen(val[3]))
 		end
 	end
 	return cmd

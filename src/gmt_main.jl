@@ -1601,7 +1601,7 @@ D = mat2ds(mat; x=nothing, hdr=nothing, color=nothing)
 	`color` optional array with color names. Its length can be smaller than n_rows, case in which colors will be
 	cycled.
 """
-function mat2ds(mat; x=nothing, hdr=nothing, color=nothing)
+function mat2ds(mat; x=nothing, hdr=nothing, color=nothing, ls=nothing)
 	if (x === nothing)
 		n_ds = size(mat, 2) - 1
 		xx = nothing
@@ -1635,6 +1635,15 @@ function mat2ds(mat; x=nothing, hdr=nothing, color=nothing)
 				if ((n = k % n_colors) == 0)  n = n_colors  end
 				hdr[k] *= " -W," * arg2str(color[n])
 			end
+		end
+	end
+	if (ls !== nothing && ls != "")
+@show(ls)
+		if (isa(ls, AbstractString) || isa(ls, Symbol))
+			for k = 1:n_ds   hdr[k] = string(hdr[k], ',', ls)   end
+@show(hdr)
+		else
+			for k = 1:n_ds   hdr[k] = string(hdr[k], ',', ls[k])   end
 		end
 	end
 
