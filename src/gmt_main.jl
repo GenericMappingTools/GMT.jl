@@ -1638,10 +1638,8 @@ function mat2ds(mat; x=nothing, hdr=nothing, color=nothing, ls=nothing)
 		end
 	end
 	if (ls !== nothing && ls != "")
-@show(ls)
 		if (isa(ls, AbstractString) || isa(ls, Symbol))
 			for k = 1:n_ds   hdr[k] = string(hdr[k], ',', ls)   end
-@show(hdr)
 		else
 			for k = 1:n_ds   hdr[k] = string(hdr[k], ',', ls[k])   end
 		end
