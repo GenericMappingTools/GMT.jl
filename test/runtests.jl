@@ -186,6 +186,8 @@ if (got_it)					# Otherwise go straight to end
 	if (GMTver >= 6)
 		gmtwrite("lixo.grd", G,  scale=10, offset=-10)
 		GG = gmtread("lixo.grd", grd=true, varname=:z);
+		GG = gmtread("lixo.grd", varname=:z);
+		#GG = gmtread("lixo.grd", grd=true, layer=1);	# This crashes GMT or GDAL in Linux
 		@test(sum(G.z[:] - GG.z[:]) == 0)
 		gmtwrite("lixo.grd", rand(5,5), id=:cf)
 		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
@@ -247,9 +249,9 @@ if (got_it)					# Otherwise go straight to end
 	@assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
-	grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, U=[])
-	grdcontour!(G, frame="a", color=cpt, pen="+c", X=1, Y=1, Vd=:cmd)
-	grdcontour!("", G, frame="a", color=cpt, pen="+c", X=1, Y=1, Vd=:cmd)
+	grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[])
+	grdcontour!(G, frame="a", color=cpt, pen="+c", X=1, Y=1, N=true, Vd=:cmd)
+	grdcontour!("", G, frame="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=:cmd)
 
 	# GRDCUT
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X Y");
@@ -481,6 +483,7 @@ if (got_it)					# Otherwise go straight to end
 	# PSCOAST
 	coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, borders="1/0.5p");
 	coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
+	#coast(R=[-10 1 36 45], J="M12c", B="a", shore2=1, E=("PT", "+gblue", (0.5,"red","--"))), Vd=:cmd) #BUG?
 	coast(R=[-10 1 36 45], J="M", B="a", shore4=1,  E="PT,+gblue", borders="a", rivers="a", lc=:red);
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), water=:blue, clip=:land, Vd=:cmd)
 	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), clip=:end, rivers="1/0.5p", Vd=:cmd)

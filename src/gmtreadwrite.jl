@@ -53,11 +53,7 @@ to read a jpg image with the bands reversed (this example is currently broken in
 
     I = gmtread("image.jpg", band=[2,1,0]);
 """
-function gmtread(fname::String=""; kwargs...)
-
-	if (fname == "")
-		error("First argument cannot be empty. It must contain the file name to read.")
-	end
+function gmtread(fname::String; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f])
@@ -65,7 +61,7 @@ function gmtread(fname::String=""; kwargs...)
 
 	# Process these first so they may take precedence over defaults set below
 	opt_T = add_opt("", "Tg", d, [:grd :grid])
-	if (!isempty(opt_T))
+	if (opt_T != "")
 		(haskey(d, :gdal)) && (fname = fname * "=gd")     # Force read via GDAL
 	else
 		opt_T = add_opt("", "Ti", d, [:img :image])
