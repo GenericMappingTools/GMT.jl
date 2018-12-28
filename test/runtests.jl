@@ -187,7 +187,7 @@ if (got_it)					# Otherwise go straight to end
 		gmtwrite("lixo.grd", G,  scale=10, offset=-10)
 		GG = gmtread("lixo.grd", grd=true, varname=:z);
 		GG = gmtread("lixo.grd", varname=:z);
-		GG = gmtread("lixo.grd", grd=true, layer=1);
+		#GG = gmtread("lixo.grd", grd=true, layer=1);	# This crashes GMT or GDAL in Linux
 		@test(sum(G.z[:] - GG.z[:]) == 0)
 		gmtwrite("lixo.grd", rand(5,5), id=:cf)
 		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
