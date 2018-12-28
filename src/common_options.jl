@@ -1008,8 +1008,7 @@ function helper2_axes(arg)
 	# Used by
 	out = arg2str(arg)
 	if (out == "")
-		@warn("Empty units. Ignoring this units request.")
-		return out
+		@warn("Empty units. Ignoring this units request.");		return out
 	end
 	if     (out == "Y" || out == "year")     out = 'Y'
 	elseif (out == "y" || out == "year2")    out = 'y'
@@ -1150,8 +1149,7 @@ function vector_attrib(;kwargs...)
 
 	if (haskey(d, :oblique_pole))  cmd = cmd * "+o" * arg2str(d[:oblique_pole])  end
 	if (haskey(d, :pen))
-		p = add_opt_pen(d, [:pen], "")
-		if (p != "")  cmd *= "+p" * p  end
+		if ((p = add_opt_pen(d, [:pen], "")) != "")  cmd *= "+p" * p  end
 	end
 
 	if (haskey(d, :shape))
@@ -1340,8 +1338,7 @@ function fname_out(d::Dict)
 		error("NOT specifying the **fmt** format is only allowed on Windows")
 	end
 	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
-		out = ""
-		EXT = "ps"
+		out = "";	EXT = "ps"
 	end
 	# When OUT == "" here, it plays a double role. It means to put the PS in memory or
 	# return it to the REPL. The ambiguity is cleared in finish_PS_module()
@@ -1417,6 +1414,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi=
 end
 
 # ---------------------------------------------------------------------------------------------------
+round_wesn(wesn::Array{Int}, geo::Bool=false) = round_wesn(float(wesn),geo)
 function round_wesn(wesn, geo::Bool=false)
 	# Use data range to round to nearest reasonable multiples
 	# If wesn has 6 elements (is3D), last two are not modified.

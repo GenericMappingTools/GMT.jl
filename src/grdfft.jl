@@ -56,7 +56,7 @@ Parameters
 """
 function grdfft(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdfft", cmd0, arg1, arg2)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("grdfft", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
 

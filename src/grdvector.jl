@@ -57,9 +57,9 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """
-function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; K=false, O=false, first=true, kwargs...)
+function grdvector(cmd0::String="", arg1=[], arg2=[]; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdvector", cmd0, arg1)
+	length(kwargs) == 0 && return monolitic("grdvector", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -91,11 +91,6 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; K=false, O=false
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdvector(arg1=nothing, arg2=nothing, cmd0::String=""; K=false, O=false, first=true,  kw...) =
-	grdvector(cmd0, arg1, arg2; K=false, O=false, first=true,  kw...)
-
-grdvector!(cmd0::String="", arg1=nothing, arg2=nothing; K=true, O=true, first=false, kwargs...) =
-	grdvector(cmd0, arg1, arg2; K=K, O=O, first=first,  kw...)
-
-grdvector!(arg1=nothing, arg2=nothing, cmd0::String=""; K=true, O=true, first=false,  kw...) =
-	grdvector(cmd0, arg1, arg2; K=K, O=O, first=false,  kw...)
+grdvector(arg1=[], arg2=[], cmd0::String="";  kw...) = grdvector(cmd0, arg1, arg2; first=true, kw...)
+grdvector!(cmd0::String="", arg1=[], arg2=[]; kw...) = grdvector(cmd0, arg1, arg2; first=false, kw...)
+grdvector!(arg1=[], arg2=[], cmd0::String=""; kw...) = grdvector(cmd0, arg1, arg2; first=false, kw...)

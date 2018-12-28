@@ -73,12 +73,12 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function text(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via G
 	N_args = isempty_(arg1) ? 0 : 1
 
-	length(kwargs) == 0 && return monolitic("pstext", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("pstext", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -109,11 +109,9 @@ function text(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-text!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
-    text(cmd0, arg1; K=K, O=O,  first=false, kw...)
+text!(cmd0::String="", arg1=[]; first=false, kw...) = text(cmd0, arg1; first=false, kw...)
+text(arg1;  first=true, kw...)  = text("", arg1; first=first, kw...)
+text!(arg1; first=false, kw...) = text("", arg1; first=first, kw...)
 
-text(arg1; K=false, O=false, first=true, kw...) = text("", arg1; K=K, O=O, first=first, kw...)
-text!(arg1; K=true, O=true, first=false, kw...) = text("", arg1; K=K, O=O, first=first, kw...)
-
-pstext  = text			# Alias
-pstext! = text!			# Alias
+const pstext  = text			# Alias
+const pstext! = text!			# Alias

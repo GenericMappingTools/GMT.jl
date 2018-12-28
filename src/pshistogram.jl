@@ -81,7 +81,7 @@ function histogram(cmd0::String="", arg1=[]; first=true, kwargs...)
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	length(kwargs) == 0 && return monolitic("pshistogram", cmd0, arg1)
+	length(kwargs) == 0 && return monolitic("pshistogram", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
 
@@ -144,5 +144,5 @@ histogram!(cmd0::String="", arg1=[]; first=false, kw...) = histogram(cmd0, arg1;
 histogram(arg1=[]; first=true, kw...) = histogram("", arg1; first=first, kw...)
 histogram!(arg1=[]; first=false, kw...) = histogram("", arg1; first=first, kw...)
 
-pshistogram  = histogram			# Alias
-pshistogram! = histogram!			# Alias
+const pshistogram  = histogram			# Alias
+const pshistogram! = histogram!			# Alias

@@ -45,7 +45,7 @@ Parameters
 """
 function gmtconnect(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtconnect", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtconnect", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :xy])

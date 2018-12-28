@@ -69,9 +69,9 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function mask(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function mask(cmd0::String="", arg1=[]; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("psmask", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("psmask", cmd0, arg1)
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
@@ -94,14 +94,9 @@ function mask(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-mask!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
-	mask(cmd0, arg1; K=K, O=O,  first=first, kw...)
+mask!(cmd0::String="", arg1=[]; first=false, kw...) = mask(cmd0, arg1; first=first, kw...)
+mask(arg1=[],  cmd0::String=""; first=true, kw...)  = mask(cmd0, arg1; first=first, kw...)
+mask!(arg1=[], cmd0::String=""; first=false, kw...) = mask(cmd0, arg1; first=first, kw...)
 
-mask(arg1=[], cmd0::String=""; K=false, O=false,  first=true, kw...) =
-	mask(cmd0, arg1; K=K, O=O,  first=first, kw...)
-
-mask!(arg1=[], cmd0::String=""; K=true, O=true,  first=false, kw...) =
-	mask(cmd0, arg1; K=K, O=O,  first=first, kw...)
-
-psmask  = mask			# Alias
-psmask! = mask!			# Alias
+const psmask  = mask			# Alias
+const psmask! = mask!			# Alias

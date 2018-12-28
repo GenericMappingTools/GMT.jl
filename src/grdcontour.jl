@@ -74,9 +74,10 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function grdcontour(cmd0::String="", arg1=[], arg2=[]; K=false, O=false, first=true, kwargs...)
+function grdcontour(cmd0::String="", arg1=[]; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdcontour", cmd0, arg1)	# Speedy mode
+	arg2 = []
+	length(kwargs) == 0 && return monolitic("grdcontour", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -115,11 +116,6 @@ function grdcontour(cmd0::String="", arg1=[], arg2=[]; K=false, O=false, first=t
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdcontour!(cmd0::String="", arg1=[], arg2=[]; K=true, O=true, first=false, kw...) =
-	grdcontour(cmd0, arg1, arg2; K=true, O=true, first=false, kw...)
-
-grdcontour(arg1, cmd0::String="", arg2=[]; K=false, O=false, first=true, kw...) =
-	grdcontour(cmd0, arg1, arg2; K=K, O=O, first=first, kw...)
-
-grdcontour!(arg1, cmd0::String="", arg2=[]; K=true, O=true, first=false, kw...) =
-	grdcontour(cmd0, arg1, arg2; K=true, O=true, first=false, kw...)
+grdcontour!(cmd0::String="", arg1=[]; first=false, kw...) = grdcontour(cmd0, arg1; first=false, kw...)
+grdcontour(arg1, cmd0::String=""; first=true, kw...) = grdcontour(cmd0, arg1; first=first, kw...)
+grdcontour!(arg1, cmd0::String=""; first=false, kw...) = grdcontour(cmd0, arg1; first=false, kw...)

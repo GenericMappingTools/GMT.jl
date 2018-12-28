@@ -71,7 +71,7 @@ Parameters
 """
 function surface(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("surface", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("surface", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :a :bi :di :e :f :h :i :r :xy])

@@ -63,9 +63,9 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function wiggle(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function wiggle(cmd0::String="", arg1=[]; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("pswiggle", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("pswiggle", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -92,14 +92,9 @@ function wiggle(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs..
 end
 
 # ---------------------------------------------------------------------------------------------------
-wiggle!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
-	wiggle(cmd0, arg1; K=K, O=O,  first=first, kw...)
+wiggle!(cmd0::String="", arg1=[]; first=false, kw...) = wiggle(cmd0, arg1; first=first, kw...)
+wiggle(arg1=[],  cmd0::String=""; first=true, kw...)  = wiggle(cmd0, arg1; first=first, kw...)
+wiggle!(arg1=[], cmd0::String=""; first=false, kw...) = wiggle(cmd0, arg1; first=first, kw...)
 
-wiggle(arg1=[], cmd0::String=""; K=false, O=false,  first=true, kw...) =
-	wiggle(cmd0, arg1; K=K, O=O,  first=first, kw...)
-
-wiggle!(arg1=[], cmd0::String=""; K=true, O=true,  first=false, kw...) =
-	wiggle(cmd0, arg1; K=K, O=O,  first=first, kw...)
-
-pswiggle  = wiggle			# Alias
-pswiggle! = wiggle!			# Alias
+const pswiggle  = wiggle			# Alias
+const pswiggle! = wiggle!			# Alias

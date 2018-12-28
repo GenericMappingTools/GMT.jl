@@ -51,7 +51,7 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function grdview(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function grdview(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	arg2 = [];	arg3 = [];	arg4 = [];	arg5 = [];
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdview", cmd0, arg1, arg2, arg3, arg4, arg5)
@@ -111,8 +111,6 @@ function grdview(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs.
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdview!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
-	grdview(cmd0, arg1; K=K, O=O, first=first, kw...)
-
-grdview(arg1; K=false, O=false, first=true, kw...) = grdview("", arg1; K=K, O=O, first=first, kw...)
-grdview!(arg1; K=true, O=true, first=false, kw...) = grdview("", arg1; K=K, O=O, first=first, kw...)
+grdview!(cmd0::String="", arg1=[]; first=false, kw...) = grdview(cmd0, arg1; first=first, kw...)
+grdview(arg1; first=true, kw...) = grdview("", arg1; first=first, kw...)
+grdview!(arg1; first=false, kw...) = grdview("", arg1; first=first, kw...)

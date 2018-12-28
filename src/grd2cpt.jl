@@ -81,7 +81,7 @@ Parameters
 """
 function grd2cpt(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2cpt", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2cpt", cmd0, arg1)
 
 	d = KW(kwargs)
 

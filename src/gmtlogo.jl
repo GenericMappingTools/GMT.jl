@@ -37,9 +37,9 @@ Parameters
 
 - Example, make a GMT Julia logo with circles of 1 cm: logo(GMTjulia=1, show=true)
 """
-function logo(cmd0::String=""; K=false, O=false, first=true, kwargs...)
+function logo(cmd0::String=""; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtlogo", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("gmtlogo", cmd0, arg1)
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
@@ -82,9 +82,9 @@ function logo(cmd0::String=""; K=false, O=false, first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-logo!(cmd0::String=""; K=true, O=true, first=false, kw...) = logo(cmd0; K=K, O=O, first=first, kw...)
-logo(; K=false, O=false, first=true, kw...) = logo(""; K=K, O=O, first=first, kw...)
-logo!(; K=true, O=true, first=false, kw...) = logo(""; K=K, O=O, first=first, kw...)
+logo!(cmd0::String=""; first=false, kw...) = logo(cmd0; first=first, kw...)
+logo(; first=true, kw...) = logo(""; first=first, kw...)
+logo!(; first=false, kw...) = logo(""; first=first, kw...)
 
 # -------------------------------------------------------------------------
 function jlogo(L=5)

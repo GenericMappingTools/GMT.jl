@@ -35,13 +35,14 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function image(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function image(cmd0::String="", arg1=[]; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("psimage", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("psimage", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
+	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :p :t :params])
 	cmd = parse_these_opts(cmd, d, [[:D :ref_point], [:G :bit_color], [:I :invert_1bit], [:M :monochrome]])
@@ -55,8 +56,8 @@ function image(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 end
 
 # ---------------------------------------------------------------------------------------------------
-image!(cmd0::String="", arg1=[]; kw...) = image(cmd0, arg1; K=true, O=true,  first=false, kw...)
+image!(cmd0::String="", arg1=[]; kw...) = image(cmd0, arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
-psimage  = image			# Alias
-psimage! = image!			# Alias
+const psimage  = image			# Alias
+const psimage! = image!			# Alias
