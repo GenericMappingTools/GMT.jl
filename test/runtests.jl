@@ -356,7 +356,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", x_label="Spoons", y_label="Forks", savefig="lixo")
-	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=[:red, :green, :blue, :yellow]), leg=true, label="Bla")
+	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=[:red, :green, :blue, :yellow], ls=:dashdot), leg=true, label="Bla")
 	plot("",hcat(collect(1:10)[:],rand(10,1)))
 	plot!("",hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
 	plot(hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
@@ -481,10 +481,10 @@ if (got_it)					# Otherwise go straight to end
 	gmt("grdinfo lixo.tif");
 
 	# PSCOAST
-	coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, borders="1/0.5p");
-	coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps");
-	#coast(R=[-10 1 36 45], J="M12c", B="a", shore2=1, E=("PT", "+gblue", (0.5,"red","--"))), Vd=:cmd) #BUG?
-	coast(R=[-10 1 36 45], J="M", B="a", shore4=1,  E="PT,+gblue", borders="a", rivers="a", lc=:red);
+	coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, borders="1/0.5p")
+	coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps")
+	coast(R=[-10 1 36 45], J="M12c", B="a", shore2=1, E=("PT", "+gblue", (0.5,"red","--")), Vd=:cmd)
+	coast(R=[-10 1 36 45], J="M", B="a", shore4=1,  E="PT,+gblue", borders="a", rivers="a", lc=:red, Vd=:cmd)
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), water=:blue, clip=:land, Vd=:cmd)
 	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), clip=:end, rivers="1/0.5p", Vd=:cmd)
 	r = coast(region=:g, proj="A300/30/14c", frame=:g, resolution=:crude, title="Hello Round World", Vd=:cmd);

@@ -1707,10 +1707,11 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 	cmd_ = cmd									# Starts to be just a shallow copy
 	if (isa(arg, Array{GMT.GMTdataset,1}))		# Multi-segments can have different settings per line
 		(isa(cmd, String)) ? cmd_ = deepcopy([cmd]) : cmd_ = deepcopy(cmd)
-		lix, penC, = break_pen(scan_opt(arg[1].header, "-W"))
-		penT, penC_, = break_pen(scan_opt(cmd_[end], "-W"))
+		lix, penC, penS = break_pen(scan_opt(arg[1].header, "-W"))
+		penT, penC_, penS_ = break_pen(scan_opt(cmd_[end], "-W"))
 		if (penC == "")  penC = penC_  end
-		cmd_[end] = "-W" * penT * ',' * penC * " " * cmd_[end]	# Trick to make the parser find this pen
+		if (penS == "")  penS = penS_  end
+		cmd_[end] = "-W" * penT * ',' * penC * ',' * penS * " " * cmd_[end]	# Trick to make the parser find this pen
 		pens = Array{String,1}(undef,length(arg)-1)
 		for k = 1:length(arg)-1
 			t = scan_opt(arg[k+1].header, "-W")
