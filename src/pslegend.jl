@@ -33,7 +33,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function legend(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function legend(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("pslegend", cmd0, arg1)
 
@@ -60,11 +60,9 @@ function legend(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs..
 end
 
 # ---------------------------------------------------------------------------------------------------
-legend!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
-    legend(cmd0, arg1; K=K, O=O,  first=false, kw...)
+legend!(cmd0::String="", arg1=[]; first=false, kw...) = legend(cmd0, arg1;first=false, kw...)
+legend(arg1; first=true, kw...)   = legend("", arg1; first=first, kw...)
+legend!(arg1; first=false, kw...) = legend("", arg1; first=first, kw...)
 
-legend(arg1; K=false, O=false, first=true, kw...) = legend("", arg1; K=K, O=O, first=first, kw...)
-legend!(arg1; K=true, O=true, first=false, kw...) = legend("", arg1; K=K, O=O, first=first, kw...)
-
-pslegend  = legend			# Alias
-pslegend! = legend!			# Alias
+const pslegend  = legend			# Alias
+const pslegend! = legend!			# Alias

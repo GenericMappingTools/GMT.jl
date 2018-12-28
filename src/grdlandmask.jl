@@ -44,7 +44,7 @@ Parameters
 """
 function grdlandmask(cmd0::String=""; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdlandmask", cmd0, [])	# Speedy mode
+	length(kwargs) == 0 && return monolitic("grdlandmask", cmd0, [])
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :r :x])

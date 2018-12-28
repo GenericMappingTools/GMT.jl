@@ -48,7 +48,7 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function basemap(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function basemap(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("psbasemap", cmd0, arg1)
 	d = KW(kwargs)
@@ -66,10 +66,9 @@ function basemap(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs.
 end
 
 # ---------------------------------------------------------------------------------------------------
-basemap!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) = 
-	basemap(cmd0, arg1; K=K, O=O, first=first, kw...)
-basemap(arg1=[]; K=false, O=false, first=true, kw...) = basemap("", arg1; K=K, O=O, first=first, kw...)
-basemap!(arg1=[]; K=true, O=true, first=false, kw...) = basemap("", arg1; K=K, O=O, first=first, kw...)
+basemap!(cmd0::String="", arg1=[]; first=false, kw...) = basemap(cmd0, arg1; first=first, kw...)
+basemap(arg1=[]; first=true, kw...) = basemap("", arg1; first=first, kw...)
+basemap!(arg1=[]; first=false, kw...) = basemap("", arg1; first=first, kw...)
 
-psbasemap  = basemap 		# Alias
-psbasemap! = basemap!		# Alias
+const psbasemap  = basemap 		# Alias
+const psbasemap! = basemap!		# Alias

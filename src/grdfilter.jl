@@ -41,7 +41,7 @@ Parameters
 """
 function grdfilter(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdfilter", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("grdfilter", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f])

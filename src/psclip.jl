@@ -47,7 +47,7 @@ Parameters
 """
 function clip(cmd0::String="", arg1=[]; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("psclip", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("psclip", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only

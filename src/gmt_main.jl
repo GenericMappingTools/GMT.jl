@@ -166,15 +166,15 @@ function gmt(cmd::String, args...)
 	# 2++ Add -T to gmtwrite if user did not explicitly give -T. Seek also for MEM layout requests
 	if (occursin("write", g_module))
 		if (!occursin("-T", r) && n_argin == 1)
-			if (any(isequal(:z), fieldnames(typeof(args[1]))))
+			if (isa(args[1], GMTgrid))
 				r *= " -Tg"
-			elseif (any(isequal(:image), fieldnames(typeof(args[1]))))
+			elseif (isa(args[1], GMTimage))
 				r *= " -Ti"
-			elseif (any(isequal(:data), fieldnames(typeof(args[1]))))
+			elseif (isa(args[1], Array{GMTdataset}) || isa(args[1], GMTdataset))
 				r *= " -Td"
-			elseif (any(isequal(:postscript), fieldnames(typeof(args[1]))))
+			elseif (isa(args[1], GMTps))
 				r *= " -Tp"
-			elseif (any(isequal(:hinge), fieldnames(typeof(args[1]))))
+			elseif (isa(args[1], GMTcpt))
 				r *= " -Tc"
 			end
 		end
@@ -371,13 +371,14 @@ function strtok(args, delim::String=" ")
 	return tok,r
 end
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function GMT_IJP(hdr::GMT_GRID_HEADER, row, col)
 # Function for indecing into a GMT grid [with pad]
 # padTop (hdr.pad[GMT.GMT_YHI]) and padLeft (hdr.pad[GMT.GMT_XLO]) are normally equal
 	#ij = (row + hdr.pad[4]) * hdr.mx + col + hdr.pad[1]		# in C
 	ij = ((row-1) + hdr.pad[4]) * hdr.mx + col + hdr.pad[1]
 end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function GMT_IJP(row::Integer, col, mx, padTop, padLeft)

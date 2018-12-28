@@ -53,7 +53,7 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; K=false, O=false, first=true, kwargs...)
+function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=true, kwargs...)
 
 	arg4 = []		# For the r,g,b + intensity case
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdimage", cmd0, arg1, arg2, arg3)
@@ -106,11 +106,8 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; K=false, O=false, 
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[]; K=true, O=true, first=false, kw...) =
-	grdimage(cmd0, arg1, arg2, arg3; K=true, O=true, first=false, kw...) 
+grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=false, kw...) =
+	grdimage(cmd0, arg1, arg2, arg3; first=false, kw...) 
 
-grdimage(arg1=[], arg2=[], arg3=[]; K=false, O=false, first=true, kw...) =
-	grdimage("", arg1, arg2, arg3; K=K, O=O, first=first, kw...)
-
-grdimage!(arg1=[], arg2=[], arg3=[]; K=true, O=true, first=false, kw...) =
-	grdimage("", arg1, arg2, arg3; K=K, O=O, first=first, kw...)
+grdimage(arg1=[], arg2=[], arg3=[]; first=true, kw...) = grdimage("", arg1, arg2, arg3; first=first, kw...)
+grdimage!(arg1=[], arg2=[], arg3=[]; first=false, kw...) = grdimage("", arg1, arg2, arg3; first=first, kw...)

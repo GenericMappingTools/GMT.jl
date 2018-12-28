@@ -45,12 +45,12 @@ Parameters
 [`Full man page`](https://genericmappingtools.github.io/GMT.jl/latest/solar/)
 [`GMT man page`](http://gmt.soest.hawaii.edu/doc/latest/solar.html)
 """
-function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function solar(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	length(kwargs) == 0 && N_args == 0 && isempty(data) && return monolitic("pssolar", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && N_args == 0 && isempty(data) && return monolitic("pssolar", cmd0, arg1)
 
     d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -74,8 +74,7 @@ function solar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...
 end
 
 # ---------------------------------------------------------------------------------------------------
-solar!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
-	solar(cmd0, arg1; K=K, O=O,  first=first, kw...)
+solar!(cmd0::String="", arg1=[]; kw...) = solar(cmd0, arg1; first=false, kw...)
 
-pssolar  = solar				# Alias
-pssolar! = solar!				# Alias
+const pssolar  = solar				# Alias
+const pssolar! = solar!				# Alias

@@ -82,7 +82,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function contour(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function contour(cmd0::String="", arg1=[]; first=true, kwargs...)
 
     arg2 = []       # May will contain a CPT or a Mx3 indices array
     arg3 = []       # May will contain a Mx3 indices array
@@ -132,15 +132,10 @@ function contour(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs.
 end
 
 # ---------------------------------------------------------------------------------------------------
-contour!(cmd0::String="", arg1=[]; K=true, O=true, first=false, kw...) =
-	contour(cmd0, arg1; K=true, O=true, first=false, kw...)
-
-contour(arg1, cmd0::String=""; K=false, O=false, first=true, kw...) =
-	contour(cmd0, arg1; K=K, O=O, first=first, kw...)
-
-contour!(arg1, cmd0::String=""; K=true, O=true, first=false, kw...) =
-	contour(cmd0, arg1; K=true, O=true, first=false, kw...)
+contour!(cmd0::String="", arg1=[]; first=false, kw...) = contour(cmd0, arg1; first=false, kw...)
+contour(arg1, cmd0::String=""; first=true, kw...) = contour(cmd0, arg1; first=first, kw...)
+contour!(arg1, cmd0::String=""; first=false, kw...) = contour(cmd0, arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
-pscontour  = contour
-pscontour! = contour!
+const pscontour  = contour
+const pscontour! = contour!

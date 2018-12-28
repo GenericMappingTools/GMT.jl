@@ -105,6 +105,9 @@ if (got_it)					# Otherwise go straight to end
 	psxy!("", [0 0; 1 1.1], Vd=:cmd);
 
 	GMT.round_wesn([1.333 17.4678 6.66777 33.333], true);
+	GMT.round_wesn([1 1 2 2]);
+	GMT.round_wesn([1. 350 1. 180], true)
+	GMT.round_wesn([0. 1.1 0. 0.1], true)
 
 	@test_throws ErrorException("Nonsense first argument") GMT.parse_arg_and_pen((:a,0))
 	# ---------------------------------------------------------------------------------------------------
@@ -197,10 +200,11 @@ if (got_it)					# Otherwise go straight to end
 	gmtwrite("lixo.cpt", cpt)
 	cpt = gmtread("lixo.cpt", cpt=true);
 	gmtwrite("lixo.dat", [1 2; 3 4])
-	gmt("gmtwrite lixo.cpt", cpt)		# Same but tests other code chunk in gmt_main.jl
 	D = gmtread("lixo.dat", table=true);
-	gmtwrite("lixo.dat", D)
 	@test(sum(D[1].data) == 10)
+	gmtwrite("lixo.dat", D)
+	gmt("gmtwrite lixo.cpt", cpt)		# Same but tests other code chunk in gmt_main.jl
+	gmt("gmtwrite lixo.dat", D)
 
 	# GMTVECTOR
 	d = [0 0; 0 90; 135 45; -30 -60];

@@ -82,7 +82,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function rose(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	arg2 = []		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
@@ -132,14 +132,9 @@ function rose(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-rose!(cmd0::String="", arg1=[]; K=true, O=true,  first=false, kw...) =
-	rose(cmd0, arg1; K=K, O=O,  first=first, kw...)
+rose!(cmd0::String="", arg1=[]; first=false, kw...) = rose(cmd0, arg1; first=first, kw...)
+rose(arg1=[],  cmd0::String=""; first=true, kw...)  = rose(cmd0, arg1; first=first, kw...)
+rose!(arg1=[], cmd0::String=""; first=false, kw...) = rose(cmd0, arg1; first=first, kw...)
 
-rose(arg1=[], cmd0::String=""; K=false, O=false,  first=true, kw...) =
-	rose(cmd0, arg1; K=K, O=O,  first=first, kw...)
-
-rose!(arg1=[], cmd0::String=""; K=true, O=true,  first=false, kw...) =
-	rose(cmd0, arg1; K=K, O=O,  first=first, kw...)
-
-psrose  = rose 			# Alias
-psrose! = rose!			# Alias
+const psrose  = rose 			# Alias
+const psrose! = rose!			# Alias

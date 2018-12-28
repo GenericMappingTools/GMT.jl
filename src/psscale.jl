@@ -56,9 +56,9 @@ Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.h
     File with colorbar-width per color entry.
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html#z)
 """
-function colorbar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs...)
+function colorbar(cmd0::String="", arg1=[]; first=true, kwargs...)
 
-    length(kwargs) == 0 && isempty(data) && return monolitic("psscale", cmd0, arg1)	# Speedy mode
+    length(kwargs) == 0 && isempty(data) && return monolitic("psscale", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -80,8 +80,7 @@ function colorbar(cmd0::String="", arg1=[]; K=false, O=false, first=true, kwargs
 end
 
 # ---------------------------------------------------------------------------------------------------
-colorbar!(cmd0::String="", arg1=[]; K=false, O=false, first=false, kw...) =
-    colorbar(cmd0, arg1; K=K, O=O, first=first, kw...)
+colorbar!(cmd0::String="", arg1=[]; first=false, kw...) = colorbar(cmd0, arg1; first=first, kw...)
 
-psscale  = colorbar         # Alias
-psscale! = colorbar!        # Alias
+const psscale  = colorbar         # Alias
+const psscale! = colorbar!        # Alias

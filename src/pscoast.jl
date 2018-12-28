@@ -87,9 +87,9 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function coast(cmd0::String=""; clip=[], K=false, O=false, first=true, kwargs...)
+function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("pscoast", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("pscoast", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -198,8 +198,7 @@ function parse_dcw(val::Tuple, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-coast!(cmd0::String=""; clip=[], K=true, O=true, first=false, kw...) =
-	coast(cmd0; clip=clip, K=K, O=O, first=first, kw...)
+coast!(cmd0::String=""; clip=[], first=false, kw...) = coast(cmd0; clip=clip, first=first, kw...)
 
-pscoast  = coast			# Alias for GMT5
-pscoast! = coast!			# Alias for GMT5
+const pscoast  = coast			# Alias for GMT5
+const pscoast! = coast!			# Alias for GMT5

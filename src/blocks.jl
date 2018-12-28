@@ -58,7 +58,7 @@ Parameters
 """
 function blockmean(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("blockmean", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("blockmean", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_these_opts("", d, [[:E :extended], [:S :npts :number_of_points]])
@@ -75,7 +75,7 @@ Full option list at [`blockmedian`](http://gmt.soest.hawaii.edu/doc/latest/block
 """
 function blockmedian(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("blockmedian", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("blockmedian", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_these_opts("", d, [[:E :extended], [:Q :quick], [:T :quantile]])
@@ -92,7 +92,7 @@ Full option list at [`blockmode`](http://gmt.soest.hawaii.edu/doc/latest/blockmo
 """
 function blockmode(cmd0::String="", arg1=[]; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("blockmode", cmd0, arg1)	# Speedy mode
+	length(kwargs) == 0 && return monolitic("blockmode", cmd0, arg1)
 
 	d = KW(kwargs)
 	cmd = parse_these_opts("", d, [[:E :extended], [:D :histogram_binning], [:Q :quick]])
