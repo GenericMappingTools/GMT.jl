@@ -89,7 +89,7 @@ Parameters
 """
 function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("pscoast", cmd0, arg1)
+	length(kwargs) == 0 && return monolitic("pscoast", cmd0)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -151,8 +151,8 @@ function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 	end
 
 	if ((val = find_in_dict(d, [:E :DCW])[1]) !== nothing)
-		if (isa(val, String))
-			cmd *= " -E" * val					# Simple case, ex E="PT,+gblue"
+		if (isa(val, String) || isa(val, Symbol))
+			cmd = string(cmd, " -E", val)		# Simple case, ex E="PT,+gblue"
 		elseif (isa(val, Tuple))
 			if (length(val) >= 2 && isa(val[1], Tuple) && isa(val[end], Tuple)) 	# ex E=((),(),...,())
 				for k = 1:length(val)
@@ -161,8 +161,6 @@ function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 			else
 				cmd = parse_dcw(val, cmd)
 			end
-		else
-			error("Arguments of E can only be a String or a Tuple (or Tuple of Tuples")
 		end
 	end
 
