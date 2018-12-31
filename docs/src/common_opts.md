@@ -34,7 +34,7 @@ or a pattern.
 
 Use *noframe=true* to have no frame and annotations at all [Default is controlled by the codes].
 
-Optionally append *oblique_pole="plon/plat"* (or *oblique_pole=(plon,plat)* to draw oblique gridlines about
+Optionally append *pole="plon/plat"* (or *pole=(plon,plat)* to draw oblique gridlines about
 specified pole [regular gridlines]. Ignored if gridlines are not requested (below) and disallowed for the oblique
 Mercator projection.
 
@@ -176,7 +176,7 @@ The entire parameters collection is displayed in the following table
 | fill          | `color`       | Str or Symb   | Paint interior |
 | cube          | anything      | Sym or Bool   | Draw outline of the 3-D cube |
 | noframe       | anything      | Sym or Bool   | No frame and annotations at all |
-| oblique_pole  | lon lat       | Str or Tuple  | Draw oblique gridlines abot pole |
+| pole          | lon lat       | Str or Tuple  | Draw oblique gridlines abot pole |
 | title         | the title     | Str or Symb   | Add a plot title |
 | label         | axis label    | Str or Symb   | Add a label to an axis |
 | Yhlabel       | y-axis hlabel | Str or Symb   | Horizontal label for y-axes |

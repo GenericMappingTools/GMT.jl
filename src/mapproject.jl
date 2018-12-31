@@ -83,7 +83,7 @@ function mapproject(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("mapproject", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :J :V_params :b :d :e :f :g :h :i :o :p :s :xy])
+	cmd = parse_common_opts(d, "", [:R :J :V_params :b :d :e :f :g :h :i :o :p :s :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :azim], [:C :center], [:D :override_units], [:E :geod2ecef],
 				[:F :one2one], [:G :track_distances], [:I :inverse], [:L :dist2line], [:N :geod2aux],
 				[:Q :list], [:S :supress], [:T :change_datum], [:W :map_size], [:Z :travel_times]])

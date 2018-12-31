@@ -192,8 +192,7 @@ struct GMT_OPTION			# Structure for a single GMT command option
 	previous::Ptr{GMT_OPTION}
 end
 
-#=
-struct GMT_PEN				# Structure to hold pen attributes
+mutable struct GMT_PEN		# Structure to hold pen attributes
 	width::Cdouble			# In points
 	offset::Cdouble			# In points
 	rgb::NTuple{4,Cdouble}	# RGB color of pen + Transparency 0-1 [0 = opaque] */
@@ -202,9 +201,10 @@ struct GMT_PEN				# Structure to hold pen attributes
 	mode::UInt32			# Line-type: PSL_LINEAR [0; default] or PSL_BEZIER [1]
 	cptmode::UInt32		# How a cpt affects pens and fills: 0-none, 1=use CPT for line, 2 = use CPT for fill, 3 = both
 	#end::NTuple{2,GMT_LINE_END}
-	end_::Ptr{Cvoid}		# This is a dangereous thing. If accessed, will crash Julia
+	end_::NTuple{2,Ptr{Cvoid}}		# This is a dangereous thing. If accessed, will crash Julia
+	GMT_PEN(width, offset, rgb, style, mode, cptmode, end_) = new(width, offset, rgb, style, mode, cptmode, end_)
+	GMT_PEN() = new(0.0, 0.0, (0.0, 0.0, 0.0, 0.0), map(UInt8, (repeat('\0', 128)...,)), 0, 0, (pointer([0]), pointer([0])))
 end
-=#
 
 mutable struct GMT_GRID_HEADER_v6
 	n_columns::UInt32

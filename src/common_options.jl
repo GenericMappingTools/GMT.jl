@@ -437,7 +437,6 @@ function parse_common_opts(d, cmd, opts)
 		elseif (opt == :s)  cmd, = parse_s(cmd, d)
 		elseif (opt == :x)  cmd, = parse_x(cmd, d)
 		elseif (opt == :t)  cmd, = parse_t(cmd, d)
-		elseif (opt == :xy) cmd, = parse_swap_xy(cmd, d)
 		elseif (opt == :yx) cmd, = parse_swap_xy(cmd, d)
 		elseif (opt == :R)  cmd, = parse_R(cmd, d)
 		elseif (opt == :J)  cmd, = parse_J(cmd, d)
@@ -888,7 +887,7 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	if (haskey(d, :fill))    opt *= "+g" * add_opt_fill(d, [:fill])  end	# Works, but patterns can screw
 	if (haskey(d, :cube))    opt *= "+b"  end
 	if (haskey(d, :noframe)) opt *= "+n"  end
-	if (haskey(d, :oblique_pole))  opt *= "+o" * arg2str(d[:oblique_pole])  end
+	if (haskey(d, :pole))    opt *= "+o" * arg2str(d[:pole])  end
 	if (haskey(d, :title))   opt *= "+t" * str_with_blancs(arg2str(d[:title]))  end
 
 	if (opt == " -B")  opt = ""  end	# If nothing, no -B
@@ -1147,7 +1146,7 @@ function vector_attrib(;kwargs...)
 		end
 	end
 
-	if (haskey(d, :oblique_pole))  cmd = cmd * "+o" * arg2str(d[:oblique_pole])  end
+	if (haskey(d, :pole))  cmd *= "+o" * arg2str(d[:pole])  end
 	if (haskey(d, :pen))
 		if ((p = add_opt_pen(d, [:pen], "")) != "")  cmd *= "+p" * p  end
 	end
@@ -1769,11 +1768,18 @@ function digests_legend_bag(d::Dict)
 		nl  = length(legend_type.label)
 		leg = Array{String,1}(undef,nl)
 		for k = 1:nl											# Loop over number of entries
-			symb = scan_opt(legend_type.cmd[k], "-S");		if (symb == "")  symb = "-"  end
-			fill = scan_opt(legend_type.cmd[k], "-G");		if (fill == "")  fill = "-"  end
+			if ((symb = scan_opt(legend_type.cmd[k], "-S")) == "")  symb = "-"
+			else                                                    symbW_ = symb[2:end];	symb = symb[1]
+			end
+			if ((fill = scan_opt(legend_type.cmd[k], "-G")) == "")  fill = "-"  end
 			pen  = scan_opt(legend_type.cmd[k],  "-W");
 			(pen == "" && symb != "-" && fill != "-") ? pen = "-" : (pen == "" ? pen = "0.25p" : pen = pen)
-			leg[k] = @sprintf("S %.3fc %s %.2fc %s %s %.2fc %s", symbW/2, symb, symbW, fill, pen, symbW+0.14, legend_type.label[k])
+			if (symb == "-")
+				leg[k] = @sprintf("S %.3fc %s %.2fc %s %s %.2fc %s",
+				                  symbW/2, symb, symbW, fill, pen, symbW+0.14, legend_type.label[k])
+			else
+				leg[k] = @sprintf("S - %s %s %s %s - %s", symb, symbW_, fill, pen, legend_type.label[k])
+			end
 		end
 
 		lab_width = maximum(length.(legend_type.label[:])) * fs / 72 * 2.54 * 0.55 + 0.15	# Guess label width in cm

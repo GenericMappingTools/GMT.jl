@@ -150,7 +150,7 @@ const opt_x = "**x** : **cores** : **n_threads** : -- Str or Number --  ``Flags 
     Limit the number of cores to be used in any OpenMP-enabled multi-threaded algorithms.
     [`-x`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#x-full)"
 
-const opt_swap_xy = "**swap_xy** : **yx** : Str or Bool or [] --     ``Flags = [i|o]``
+const opt_swap_xy = "**yx** : Str or Bool or [] --     ``Flags = [i|o]``
 
     Swap 1st and 2nd column on input and/or output.
     [`-:`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#colon-full)"

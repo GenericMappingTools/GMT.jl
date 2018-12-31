@@ -138,7 +138,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			opt_S = " -S" * marca * "7p"
 		end
 	end
-	if (opt_S != "" && isnumeric(opt_S[end]))  opt_S *= 'c'  end 	# GMT bug. If no unit pslegend takes it in inches
+	#if (opt_S != "" && isnumeric(opt_S[end]))  opt_S *= 'c'  end 	# GMT bug. If no unit pslegend takes it in inches
 
 	opt_ML = ""
 	if (opt_S != "")

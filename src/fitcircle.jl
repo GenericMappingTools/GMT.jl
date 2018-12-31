@@ -39,7 +39,7 @@ function fitcircle(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("fitcircle", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :bi :di :e :f :g :h :i :o :xy])
+	cmd = parse_common_opts(d, "", [:V_params :bi :di :e :f :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:L :norm], [:F :coord :coordinates], [:S :small_circle]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)

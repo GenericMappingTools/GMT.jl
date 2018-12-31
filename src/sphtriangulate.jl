@@ -50,7 +50,7 @@ function sphtriangulate(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("sphtriangulate ", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :h :i :xy])
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :h :i :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :skip], [:L :unit], [:N], [:Q :voronoi], [:T]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)

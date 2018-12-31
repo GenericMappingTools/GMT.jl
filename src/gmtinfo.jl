@@ -68,7 +68,7 @@ function gmtinfo(cmd0::String="", arg1=[]; kwargs...)
 	cmd, opt_bi = parse_bi("", d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:V_params :e :f :h :o :r :xy])
+	cmd = parse_common_opts(d, cmd, [:V_params :e :f :h :o :r :yx])
 	cmd = parse_these_opts(cmd, d, [[:A], [:C :per_column], [:D :center], [:E :get_record], [:F :counts],
 		[:I :report_region], [:L :common_limits], [:S :for_error_bars], [:T :nearest_multiple]])
 
