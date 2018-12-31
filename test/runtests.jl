@@ -529,7 +529,7 @@ if (got_it)					# Otherwise go straight to end
 	rose!(data, yx=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
 	rose!("",data, yx=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
 	if (GMTver >= 6)
-		rose(data, yx=[], A=20, I=1, Vd=:cmd);		# Broken in GMT5`
+		#rose(data, yx=[], A=20, I=1, Vd=:cmd);		# Broken in GMT5`
 	end
 
 	# PSMASK
