@@ -10,7 +10,7 @@ catch
 	global got_it = false
 end
 
-#if (got_it)					# Otherwise go straight to end
+if (got_it)					# Otherwise go straight to end
 
 	# -------------------- Test common_options ----------------------------------------
 	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4)))[1] == " -R1/2/3/4"
@@ -690,4 +690,4 @@ end
 	rm("lixo.cpt")
 	rm("lixo.dat")
 
-#end					# End valid testing zone
+end					# End valid testing zone
