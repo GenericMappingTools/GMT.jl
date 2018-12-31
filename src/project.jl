@@ -72,7 +72,7 @@ function project(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("project", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :s :xy])
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :s :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :azim], [:C :origin], [:E :end_point], [:F :out_flags], [:G :no_input],
 				[:L :length_control], [:N :flat_earth], [:Q :units], [:S :sort], [:T :pole], [:W :width_control]])
 

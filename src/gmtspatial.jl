@@ -71,7 +71,7 @@ function gmtspatial(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("gmtspatial", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :g :h :i :o :xy])
+	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :nn :nearest_neighbor], [:C :clip], [:D :duplicates], [:E :handedness],
 				[:F :force_polygons], [:I :intersections], [:N :in_polyg], [:Q :area_or_length],
 				[:S :polyg_process], [:T :truncate]])

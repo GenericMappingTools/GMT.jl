@@ -80,7 +80,7 @@ function mask(cmd0::String="", arg1=[]; first=true, kwargs...)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :e :h :p :r :t :xy :params])
+	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :e :h :p :r :t :yx :params])
 	cmd = parse_these_opts(cmd, d, [[:C :end_clip_path], [:D :dump], [:F :oriented_polygons], [:I :inc],
 				[:L :node_grid], [:N :invert], [:Q :cut_number], [:S :search_radius], [:T :tiles]])
 

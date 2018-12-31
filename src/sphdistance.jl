@@ -53,7 +53,7 @@ function sphdistance(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0  && return monolitic("sphdistance ", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :h :i :r :xy])
+	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :h :i :r :yx])
 	cmd = parse_these_opts(cmd, d, [[:C :save_mem], [:E :what_quantity], [:G :outgrid], [:I :inc],
 				[:L :dist_unit], [:N :nodetable], [:Q :voronoi_polyg]])
 

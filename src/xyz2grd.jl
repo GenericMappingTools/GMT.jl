@@ -51,7 +51,7 @@ function xyz2grd(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("xyz2grd", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :h :i :r :xy])
+	cmd = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :h :i :r :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:G :outgrid], [:I :inc],
 				[:S :swap], [:Z :flags]])
 

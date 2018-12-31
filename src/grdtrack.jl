@@ -59,7 +59,7 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	length(kwargs) == 0 && isempty_(arg1) && return monolitic("grdtrack", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :xy])
+	cmd = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :interp_path], [:C :equi], [:D :dfile], [:E :by_coord],
 				[:N :no_skip], [:S :stack], [:T :radius], [:Z :z_only]])
 

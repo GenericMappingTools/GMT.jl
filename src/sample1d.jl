@@ -44,7 +44,7 @@ function sample1d(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("sample1d", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :xy])
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :resamp], [:F :interp_type], [:N :time_col], [:T :equi_space]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)

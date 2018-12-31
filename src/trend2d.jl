@@ -46,7 +46,7 @@ function trend2d(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("trend2d", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :xy])
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :yx])
 	cmd = parse_these_opts(cmd, d, [[:C :condition_number], [:I :confidence_level], [:F :output],
 				[:N :n_model], [:W :weights]])
 

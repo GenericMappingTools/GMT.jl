@@ -75,7 +75,7 @@ function wiggle(cmd0::String="", arg1=[]; first=true, kwargs...)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:e :f :g :h :p :t :xy :JZ :UVXY :params])
+	cmd = parse_common_opts(d, cmd, [:e :f :g :h :p :t :yx :JZ :UVXY :params])
 	cmd = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:D :scale_bar], [:I :fixed_azim], [:Z :scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided

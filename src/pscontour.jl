@@ -97,7 +97,7 @@ function contour(cmd0::String="", arg1=[]; first=true, kwargs...)
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:UVXY :bo :d :di :do :e :h :p :t :xy :params])
+	cmd = parse_common_opts(d, cmd, [:UVXY :bo :d :di :do :e :h :p :t :yx :params])
 	cmd = parse_these_opts(cmd, d, [[:D :dump], [:G :labels], [:I :colorize], [:L :mesh], [:N :no_clip],
 				[:Q :cut], [:S :skip], [:T :ticks], [:W :pen]])
 

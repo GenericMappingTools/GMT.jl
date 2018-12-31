@@ -87,7 +87,7 @@ function text(cmd0::String="", arg1=[]; first=true, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:e :f :h :p :t :xy :JZ :UVXY :params])
+	cmd = parse_common_opts(d, cmd, [:e :f :h :p :t :yx :JZ :UVXY :params])
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:C :clearance], [:L :list], [:M :paragraph],
 	                 [:N :noclip :no_clip], [:Q :change_case], [:T :text_box], [:Z :threeD]])
 
