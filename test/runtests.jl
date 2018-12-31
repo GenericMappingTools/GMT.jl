@@ -10,7 +10,7 @@ catch
 	global got_it = false
 end
 
-if (got_it)					# Otherwise go straight to end
+#if (got_it)					# Otherwise go straight to end
 
 	# -------------------- Test common_options ----------------------------------------
 	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4)))[1] == " -R1/2/3/4"
@@ -249,12 +249,14 @@ if (got_it)					# Otherwise go straight to end
 	@assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
-	grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[])
-	grdcontour!(G, frame="a", color=cpt, pen="+c", X=1, Y=1, N=true, Vd=:cmd)
-	grdcontour!("", G, frame="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=:cmd)
+	if (GMTver >= 6)
+		grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[])
+		grdcontour!(G, frame="a", color=cpt, pen="+c", X=1, Y=1, N=true, Vd=:cmd)
+		grdcontour!("", G, frame="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=:cmd)
+	end
 
 	# GRDCUT
-	G=gmt("grdmath", "-R0/10/0/10 -I1 X Y");
+	G=gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
 	G2=grdcut(G, limits=[3 9 2 8]);
 	G2=grdcut("lixo.grd", limits=[3 9 2 8]);	# lixo.grd was written above in the gmtwrite test
 	G2=grdcut(data="lixo.grd", limits=[3 9 2 8]);
@@ -331,7 +333,9 @@ if (got_it)					# Otherwise go straight to end
 	grdview!("",G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
 	grdview!(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
 	grdview!(G, G=G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
-	grdview(rand(128,128), G=(Gr,Gg,Gb), I=mat2grid(rand(Float32,128,128)), J=:X12, JZ=5, Q=:i, view="145/30")
+	if (GMTver >= 6)		# Crashes GMT5
+		grdview(rand(128,128), G=(Gr,Gg,Gb), I=mat2grid(rand(Float32,128,128)), J=:X12, JZ=5, Q=:i, view="145/30")
+	end
 
 	# GREENSPLINE
 	#d = [0 6.44; 1820 8.61; 2542 5.24; 2889 5.73; 3460 3.81; 4586 4.05; 6020 2.95; 6841 2.57; 7232 3.37; 10903 3.84; 11098 2.86; 11922 1.22; 12530 1.09; 14065 2.36; 14937 2.24; 16244 2.05; 17632 2.23; 19002 0.42; 20860 0.87; 22471 1.26];
@@ -341,7 +345,7 @@ if (got_it)					# Otherwise go straight to end
 	imshow(rand(128,128),show=false)
 	imshow(G, frame=:a, shade="+a45",show=false)
 	imshow(rand(128,128), shade="+a45",show=false)
-	imshow("lixo.tif",show=false)
+	if (GMTver >= 6)  imshow("lixo.tif",show=false)  end
 
 	# MAKECPT
 	cpt = makecpt(range="-1/1/0.1");
@@ -499,7 +503,9 @@ if (got_it)					# Otherwise go straight to end
 	contour!("", [x[:] y[:] z[:]], cont=1, Vd=:cmd)
 
 	# PSIMAGE
-	psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
+	if (GMTver >= 6)
+		psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
+	end
 
 	# PSSCALE
 	C = makecpt(T="-200/1000/100", C="rainbow");
@@ -581,7 +587,9 @@ if (got_it)					# Otherwise go straight to end
 	@assert(size(G.z) == (151, 151))
 
 	# SPLITXYZ (fails)
-	splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
+	if (GMTver >= 6)
+		splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
+	end
 
 	# TRIANGULATE
 	G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
@@ -682,4 +690,4 @@ if (got_it)					# Otherwise go straight to end
 	rm("lixo.cpt")
 	rm("lixo.dat")
 
-end					# End valid testing zone
+#end					# End valid testing zone

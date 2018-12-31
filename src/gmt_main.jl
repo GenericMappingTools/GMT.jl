@@ -1551,7 +1551,7 @@ function text_record(data, text, hdr=nothing)
 	if (GMTver < 6.0)		# Convert to the old cell array of strings format
 		if (!isempty(data))
 			nl = size(data,1)
-			t = Array{Any}(nl,1)
+			t = Array{Any}(undef,nl,1)
 			if (nl == 1)
 				t[1] = string(@sprintf("%.10g %.10g", data[1,1], data[1,2]), " ", text)
 			else

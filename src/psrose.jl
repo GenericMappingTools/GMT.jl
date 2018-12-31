@@ -103,6 +103,7 @@ function rose(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
+	if (GMTver < 6)  cmd = replace(cmd, opt_J => "")  end	# GMT5 doesn't accept a -J
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
