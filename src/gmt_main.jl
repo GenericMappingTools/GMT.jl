@@ -599,7 +599,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
 	return out
 end
 
-#= ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------
 function get_textset_(API::Ptr{Nothing}, object::Ptr{Nothing})
 # Given a GMT GMT_TEXTSET T, build a Julia array of segment structure and assign values.
 # Each segment will have 6 items:
@@ -690,7 +690,6 @@ function get_textset_(API::Ptr{Nothing}, object::Ptr{Nothing})
 
 	return Darr
 end
-=#
 
 # ---------------------------------------------------------------------------------------------------
 function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})
@@ -1263,7 +1262,7 @@ function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
 	return P
 end
 
-#= ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------
 function text_init_(API::Ptr{Nothing}, module_input, Darr, dir::Integer, family::Integer=GMT_IS_TEXTSET)
 #
 	if (dir == GMT_OUT)
@@ -1391,7 +1390,6 @@ function text_init(API::Ptr{Nothing}, module_input, txt, dir::Integer, family::I
 
 	return T
 end
-=#
 
 # ---------------------------------------------------------------------------------------------------
 function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
