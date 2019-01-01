@@ -529,7 +529,7 @@ if (got_it)					# Otherwise go straight to end
 	rose!(data, yx=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
 	rose!("",data, yx=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
 	if (GMTver >= 6)
-		#rose(data, yx=[], A=20, I=1, Vd=:cmd);		# Broken in GMT5`
+		rose(data, yx=[], A=20, I=1, Vd=:cmd);		# Broken in GMT5`
 	end
 
 	# PSMASK
@@ -651,9 +651,9 @@ if (got_it)					# Otherwise go straight to end
 		PS = plot(rand(3), ps=1);
 		API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 		GMT.ps_init(API, "", PS, 0);
-		#@test_throws ErrorException("Failure to alloc GMT source TEXTSET for input") GMT.text_init(API, "", "aaaa", 0);
-		#@test_throws ErrorException("Failure to alloc GMT blank TEXTSET container for holding output TEXT") GMT.text_init(API, "", "aaaa", 1);
-		#@test_throws ErrorException("Failure to alloc GMT blank TEXTSET container for holding output TEXT") GMT.text_init_(API, "", "", 1);
+		@test_throws ErrorException("Failure to alloc GMT source TEXTSET for input") GMT.text_init(API, "", "aaaa", 0);
+		@test_throws ErrorException("Failure to alloc GMT blank TEXTSET container for holding output TEXT") GMT.text_init(API, "", "aaaa", 1);
+		@test_throws ErrorException("Failure to alloc GMT blank TEXTSET container for holding output TEXT") GMT.text_init_(API, "", "", 1);
 		gmt("destroy")
 	end
 
