@@ -22,13 +22,13 @@ some curvy lines.
 
 ```julia
 x = range(0, stop=2pi, length=180);       seno = sin.(x/0.2)*45;
-coast(region=[0 360 -90 90], proj="A300/30/6c", frame=:g, resolution="c", land=:navy)
+coast(region=[0 360 -90 90], proj="A300/30/6c", axis=:g, resolution="c", land=:navy)
 
 plot!(collect(x)*60, seno, lw=0.5, lc=:red, fmt=:png, marker=:circle,
       markeredgecolor=0, size=0.05, markerfacecolor=:cyan, show=true)
 ```
 
-In this example *region=[0 360 -90 90]*  means the domain is the whole Earth, *frame=:g*
+In this example *region=[0 360 -90 90]*  means the domain is the whole Earth, *axis=:g*
 sets the grid on, *resolution=:c* selects the crude coast lines resolution and the 
 *land=:navy* paints the continents with a navy blue color. More complex is the *proj="A300/30/6c"*
 argument that selects the map projection, which is a Lambert projection with projection center
@@ -49,7 +49,7 @@ This example shows uses the *peaks* function to create a classical example. Note
 memory consumption in this example, when creating the plot, is much lower than traditional likewise 
 examples because we will be using only one 2D array instead of 3 3D arrays (ref). In the example
 *cont=1* and *annot=2* means draw contours at every 1 unit of the *G* grid and annotate at every other
-contour line. *frame="a"* means pick a default automatic annotation and labeling for the axis.
+contour line. *axis="a"* means pick a default automatic annotation and labeling for the axis.
 
 ```julia
 G = GMT.peaks();
@@ -82,9 +82,9 @@ for more details about what the arguments mean.
 
 ```julia
 topo = makecpt(color=:rainbow, range=(1000,5000,500), continuous=true);
-grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", frame=:a, color=topo)
+grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", axis=:a, color=topo)
 colorbar!(position="jTC+w5i/0.25i+h+o0/-1i", region=[-108 -103 35 40], color=topo,
-          proj=[], frame="y+lm", fmt=:jpg, show=true)
+          proj=[], axis="y+lm", fmt=:jpg, show=true)
 ```
 
 !["Hello shaded world"](figures/hello-shaded-world.jpg)
@@ -97,7 +97,7 @@ We will make a perspective, color-coded view of the US Rockies from the southeas
 ```julia
 topo = makecpt(color=:rainbow, range=(1000,5000,500), continuous=true);
 grdview("@tut_relief.nc", proj="M12c", JZ="1c", shade="+ne0.8+a100", view=(135,30),
-        frame=:a, fmt=:jpg, color=topo, Q="i100", show=true)
+        axis=:a, fmt=:jpg, color=topo, Q="i100", show=true)
 ```
 
 !["Hello 3D view world"](figures/hello-view-world.jpg)
@@ -121,7 +121,7 @@ the image before it is complete. We have to do this because *imshow* is a one co
 only shot and so, by default, it has the *show* keyword hardwire to *true*.
 
     imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg",
-          frame=:g, region=:d, proj="I15c", image_in=:r, show=false)
+          axis=:g, region=:d, proj="I15c", image_in=:r, show=false)
     coast!(shore="1,white", resolution=:c, fmt=:png, show=true)
 
 ![SinuJessica](http://w3.ualg.pt/~jluis/jessy.png)

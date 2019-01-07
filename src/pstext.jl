@@ -75,10 +75,10 @@ Parameters
 """
 function text(cmd0::String="", arg1=[]; first=true, kwargs...)
 
+	length(kwargs) == 0 && return monolitic("pstext", cmd0, arg1)
+
 	arg2 = []		# May be needed if GMTcpt type is sent in via G
 	N_args = isempty_(arg1) ? 0 : 1
-
-	length(kwargs) == 0 && return monolitic("pstext", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only

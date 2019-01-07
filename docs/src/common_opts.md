@@ -38,6 +38,10 @@ Optionally append *pole="plon/plat"* (or *pole=(plon,plat)* to draw oblique grid
 specified pole [regular gridlines]. Ignored if gridlines are not requested (below) and disallowed for the oblique
 Mercator projection.
 
+For Cartesian plots the *slanted=angle* allows for the optional angle to plot slanted annotations; the angle
+is with respect to the horizontal and must be in the -90 <= *angle* <= 90 range only. This applies to the x-axis
+only, with the exception of the *slanted=:parallel* form that plots the y annotations parallel to y-axis.
+
 To add a plot title do *title="My title"* The Frame setting is optional but can be invoked once to override
 the above defaults.
 
@@ -189,6 +193,7 @@ The entire parameters collection is displayed in the following table
 | annot         | annot interval| Symb or Num   | Annot stride interval |
 | ticks         | tick interval | Symb or Num   | Tick interval |
 | grid          | grid interval | Symb or Num   | Grid lines interval |
+| slanted       | x-annot angle | Symb or Num   | Angle of slanted annotations |
 | phase_add     | xx            | Numb          | Shifts right the annot interval |
 | phase_sub     | xx            | Numb          | Shifts left the annot interval |
 | annot_unit    | annot unit    | Str or Symb   | Unit of the *stride* |
@@ -221,11 +226,11 @@ basemap(limits=(0,50,0,7), proj="X14c/14c",
         xaxis=(seclabel="Top label",), yaxis=(seclabel="Right label",), show=1)
 ```
 
-Show inside labeling. We will use *frame* instead of *axis* just to recall that they are aliases.
+Show inside labeling.
 
 ```julia
 basemap(limits=(0,13,0,10), proj="x1",
-        frame=(annot=2, ticks=0.5), par=(:MAP_FRAME_TYPE,:inside), show=1)
+        axis=(annot=2, ticks=0.5), par=(:MAP_FRAME_TYPE,:inside), show=1)
 ```
 
 Show horizontal and vertical annotations
@@ -236,7 +241,7 @@ basemap(region=[0 1000 0 1000], proj="X5/5",
               ticks=100, xlabel=:horizontal, ylabel=:vertical),
         par=(FONT_ANNOT_PRIMARY=10, FONT_LABEL=16, MAP_ANNOT_ORTHO=:we))
 
-basemap!(axis=(axes=(:left_full,:bottom_full,:right_full,:top_full), annot=200
+basemap!(axis=(axes=(:left_full,:bottom_full,:right_full,:top_full), annot=200,
                ticks=100, xlabel=:horizontal, ylabel=:vertical),
          par=(FONT_ANNOT_PRIMARY=10, FONT_LABEL=16, MAP_ANNOT_ORTHO=:sn),
          x_offset=10, show=1)

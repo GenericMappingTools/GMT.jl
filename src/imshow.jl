@@ -12,13 +12,13 @@ he can use *show=false* for the intermediate layers.
 ```julia-repl
 # Plot vertical shaded illuminated view of the Mexican hat
 julia> G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
-julia> imshow(G, frame="a", shade="+a45")
+julia> imshow(G, axis="a", shade="+a45")
 
 # Plot a random heat map
 julia> imshow(rand(128,128))
 
 # Display a web downloaded jpeg image wrapped into a sinusoidal projection
-julia> imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg", region="d", frame="g", proj="I15", img_in="r", fmt="jpg") 
+julia> imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg", region="d", axis="g", proj="I15", img_in="r", fmt="jpg") 
 ```
 See also: [`grdimage`](@ref)
 """

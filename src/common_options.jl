@@ -917,6 +917,16 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	if (haskey(d, :grid))       ints *= "g" * helper1_axes(d[:grid])   end
 	if (haskey(d, :prefix))     ints *= "+p" * str_with_blancs(arg2str(d[:prefix]))  end
 	if (haskey(d, :suffix))     ints *= "+u" * str_with_blancs(arg2str(d[:suffix]))  end
+	if (haskey(d, :slanted))
+		s = arg2str(d[:slanted])
+		if (s != "")
+			if (!isnumeric(s[1]))
+				s = s[1]
+				if (axe == "y" && s != 'p')  error("slanted option: Only 'parallel' is allowed for the y-axis")  end
+			end
+			ints *= "+a" * s
+		end
+	end
 	if (haskey(d, :custom))
 		if (isa(d[:custom], String))  ints *= 'c' * d[:custom]
 		else
