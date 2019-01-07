@@ -39,8 +39,8 @@ function grdcut(cmd0::String="", arg1=[]; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdcut", cmd0, arg1)
 
     d = KW(kwargs)
-    if (GMTver >= 6)  cmd = parse_common_opts(d, "", [:R :J :V_params :f])
-    else              cmd = parse_common_opts(d, "", [:R :V_params :f])
+    if (GMTver < 6)  cmd = parse_common_opts(d, "", [:R :V_params :f])
+    else             cmd = parse_common_opts(d, "", [:R :J :V_params :f])
     end
     cmd = parse_these_opts(cmd, d, [[:G :outgrid], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
 

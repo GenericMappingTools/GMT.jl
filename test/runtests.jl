@@ -136,10 +136,13 @@ if (got_it)					# Otherwise go straight to end
 	d = [-3.2488 -1.2735; 7.46259 6.6050; 0.710402 3.0484; 6.6633 4.3121; 12.188 18.570; 8.807 14.397; 17.045 12.865; 19.688 30.128; 31.823 33.685; 39.410 32.460; 48.194 47.114; 62.446 46.528; 59.865 46.453; 68.739 50.164; 64.334 32.984];
 	fitcircle(d, L=3);
 
-	# GMT2KML
+	# GMT2KML & KML2GMT
 	if (GMTver >= 6)
-		D = gmt("pscoast -R-15/2/50/59:30 -Jm1i -M -W0.25p -Di");
-		gmt2kml(D, F=:l, W=(1,:red));
+		D = gmt("pscoast -R-5/-3/56/58 -Jm1i -M -W0.25p -Di");
+		K = gmt2kml(D, F=:l, W=(1,:red));
+		gmtwrite("lixo.kml", K)
+		kml2gmt("lixo.kml", Z=true);
+		rm("lixo.kml")
 	end
 
 	# GMTCONNECT
@@ -250,9 +253,9 @@ if (got_it)					# Otherwise go straight to end
 	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
 	if (GMTver >= 6)
-		grdcontour(G, frame="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[])
-		grdcontour!(G, frame="a", color=cpt, pen="+c", X=1, Y=1, N=true, Vd=:cmd)
-		grdcontour!("", G, frame="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=:cmd)
+		grdcontour(G, axis="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[])
+		grdcontour!(G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=true, Vd=:cmd)
+		grdcontour!("", G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=:cmd)
 	end
 
 	# GRDCUT
@@ -343,7 +346,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# IMSHOW
 	imshow(rand(128,128),show=false)
-	imshow(G, frame=:a, shade="+a45",show=false)
+	imshow(G, axis=:a, shade="+a45",show=false)
 	imshow(rand(128,128), shade="+a45",show=false)
 	if (GMTver >= 6)  imshow("lixo.tif",show=false)  end
 
@@ -493,18 +496,19 @@ if (got_it)					# Otherwise go straight to end
 	coast(R=[-10 1 36 45], J="M", B="a", shore4=1,  E="PT,+gblue", borders="a", rivers="a", lc=:red, Vd=:cmd)
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), water=:blue, clip=:land, Vd=:cmd)
 	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), clip=:end, rivers="1/0.5p", Vd=:cmd)
-	r = coast(region=:g, proj="A300/30/14c", frame=:g, resolution=:crude, title="Hello Round World", Vd=:cmd);
+	r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hello Round World", Vd=:cmd);
 	@test r[1:54] == " -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude"
 
 	# PSCONTOUR
 	x,y,z=GMT.peaks(grid=false);
-	contour([x[:] y[:] z[:]], cont=1, annot=2, frame="a")
+	contour([x[:] y[:] z[:]], cont=1, annot=2, axis="a")
 	contour!([x[:] y[:] z[:]], cont=1, Vd=:cmd)
 	contour!("", [x[:] y[:] z[:]], cont=1, Vd=:cmd)
 
 	# PSIMAGE
 	if (GMTver >= 6)
 		psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
+		psimage!("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7, Vd=:cmd)
 	end
 
 	# PSSCALE
@@ -670,14 +674,14 @@ if (got_it)					# Otherwise go straight to end
 		xlabel="Spoons", ylabel="Forks", show=1, Vd=:cmd)
 
 	x = range(0, stop=2pi, length=180);	seno = sin.(x/0.2)*45;
-	coast(region="g", proj="A300/30/6c", frame="g", resolution="c", land="navy")
+	coast(region="g", proj="A300/30/6c", axis="g", resolution="c", land="navy")
 	plot!(collect(x)*60, seno, lw=0.5, lc="red", marker="circle",
 		markeredgecolor=0, size=0.05, markerfacecolor="cyan")
 
 	G = GMT.peaks()
-	grdcontour(G, cont=1, annot=2, frame="a")
+	grdcontour(G, cont=1, annot=2, axis="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
-	grdcontour(G, frame="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
+	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
 
 	# Remove garbage
 	rm("gmt.history")

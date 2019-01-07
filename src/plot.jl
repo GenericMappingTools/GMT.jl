@@ -314,7 +314,7 @@ Reads a file or (x,y) pairs and plots vertical bars extending from base to y.
 
 Example:
 
-    bar(sort(randn(10)), fill=:black, frame=:auto, show=true)
+    bar(sort(randn(10)), fill=:black, axis=:auto, show=true)
 """
 function bar(cmd0::String="", arg=[]; first=true, kw...)
 	if (cmd0 == "") arg = cat_1_arg(arg)  end	# If ARG is a vector, prepend it with a 1:N x column
@@ -449,7 +449,7 @@ The full *arrow* options list can be consulted at [Vector Attributes](@ref)
 
 Example:
 
-	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, frame=:a, pen="6p", show=true)
+	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, axis=:a, pen="6p", show=true)
 """
 function arrows(cmd0::String="", arg1=[]; first=true, kwargs...)
 	# A arrows plotting method of plot

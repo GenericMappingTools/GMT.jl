@@ -76,8 +76,8 @@ Parameters
 """
 function grdcontour(cmd0::String="", arg1=[]; first=true, kwargs...)
 
-	arg2 = []
 	length(kwargs) == 0 && return monolitic("grdcontour", cmd0, arg1)
+	arg2 = []
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only

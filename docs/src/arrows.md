@@ -56,7 +56,7 @@ Plot a single arrow with head and tail.
 
 ```julia
     arrows([0 8.2 0 6], limits=(-1,4,7,9), arrow=(len=2,start=:arrow,stop=:tail,shape=0.5),
-           proj=:X, figsize=(12,4), frame=:a, pen="4p", show=true)
+           proj=:X, figsize=(12,4), axis=:a, pen="4p", show=true)
 ```
 
 Let us see the effect of the scale factor in quiver plots (components given in *u,v*). Plot a single vector
