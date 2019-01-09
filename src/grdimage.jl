@@ -55,8 +55,8 @@ Parameters
 """
 function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=true, kwargs...)
 
-	arg4 = []		# For the r,g,b + intensity case
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdimage", cmd0, arg1, arg2, arg3)
+	arg4 = []		# For the r,g,b + intensity case
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only

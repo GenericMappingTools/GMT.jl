@@ -84,11 +84,11 @@ Parameters
 """
 function contour(cmd0::String="", arg1=[]; first=true, kwargs...)
 
-    arg2 = []       # May will contain a CPT or a Mx3 indices array
-    arg3 = []       # May will contain a Mx3 indices array
-	N_args = isempty_(arg1) ? 0 : 1
-
 	length(kwargs) == 0 && return monolitic("pscontour", cmd0, arg1)
+
+	arg2 = []       # May will contain a CPT or a Mx3 indices array
+	arg3 = []       # May will contain a Mx3 indices array
+	N_args = isempty_(arg1) ? 0 : 1
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only

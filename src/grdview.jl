@@ -53,8 +53,8 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
 """
 function grdview(cmd0::String="", arg1=[]; first=true, kwargs...)
 
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdview", cmd0, arg1)
 	arg2 = [];	arg3 = [];	arg4 = [];	arg5 = [];
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdview", cmd0, arg1, arg2, arg3, arg4, arg5)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
