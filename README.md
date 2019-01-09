@@ -46,7 +46,7 @@ This wrapper works only with GMT5.3.1 and above
 Install
 =======
 
-Use the new Pkg3 to install current version (0.5.0).
+Use the new Pkg3 to install current version.
 
     ]add GMT
 
