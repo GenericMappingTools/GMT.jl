@@ -21,7 +21,7 @@ const opt_R = "**R** : **region** : **limits** : -- Str or list or GMTgrid|image
     Specify the region of interest. Set to data minimum BoundinBox if not provided.
     [`-R`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#r-full)"
 
-const opt_B = "**B** : **frame** : **axis** : -- Str -- 
+const opt_B = "**B** : **axis** : -- Str -- 
 
     Set map boundary frame and axes attributes.
     [`-B`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#b-full)"

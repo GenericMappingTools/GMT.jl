@@ -196,7 +196,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	# Let matrices with more data columns, and for which no Color info was NOT set, plot multiple lines at once
-	if (!mcc && (caller == "lines" || caller == "plot") && isa(arg1, Array{Float64,2}) && size(arg1,2) > 2+is3D)
+	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{Float64,2}) && size(arg1,2) > 2+is3D)
 		penC = "";		penS = "";	cycle=:cycle
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
 		if (opt_W != "")  penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))  end
