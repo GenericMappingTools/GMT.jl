@@ -283,8 +283,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_UVXY(cmd::String, d::Dict)
 	cmd = parse_V(cmd, d)
-	cmd = parse_UXY(cmd, d, [:X :x_off :off_x :x_offset], 'X')
-	cmd = parse_UXY(cmd, d, [:Y :y_off :off_y :y_offset], 'Y')
+	cmd = parse_UXY(cmd, d, [:X :x_off :x_offset], 'X')
+	cmd = parse_UXY(cmd, d, [:Y :y_off :y_offset], 'Y')
 	cmd = parse_UXY(cmd, d, [:U :stamp :time_stamp], 'U')
 	return cmd
 end
@@ -880,7 +880,9 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	x ? axe = "x" : y ? axe = "y" : z ? axe = "z" : axe = ""	# Are we dealing with a specific axis?
 
 	opt = " -B"
-	if (haskey(d, :axes)) opt *= helper0_axes(d[:axes])  end
+	if ((val = find_in_dict(d, [:frame :axes])[1]) !== nothing)
+		opt *= helper0_axes(val)
+	end
 
 	if (haskey(d, :corners)) opt *= string(d[:corners])  end	# 1234
 	#if (haskey(d, :fill))    opt *= "+g" * get_color(d[:fill])  end

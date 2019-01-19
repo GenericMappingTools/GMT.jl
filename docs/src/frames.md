@@ -36,23 +36,15 @@ basemap(region="-2/1/0/0.35", proj=:M10, axis="pa15mf5mg5m wSe s1f30mg15m", conf
 t = [-1.875 0 0 0.33333
     -0.45833 0 0 0.11111
     0.541666 0 0 0.11111]
-GMT.xy!(t, symbol="v0.08+b+e+jc", lw=0.5, fill=:black, y_offset=-1, no_clip=true)
-if (GMTver < 6)
-    T = ["-2.1 0.025 10p RM P:", "-1.875 0.05 6p CB annotation",
-         "-0.45833 0.05 6p CB frame", "0.541666 0.05 6p CB grid"]
-else
-    T = text_record([-2.1 0.025; -1.875 0.05; -0.45833 0.05; 0.541666 0.05], ["10p RM P:", "6p CB annotation", "6p CB frame", "6p CB grid"])
-end
+plot!(t, symbol="v0.08+b+e+jc", lw=0.5, fill=:black, y_offset=-1, no_clip=true)
+T = text_record([-2.1 0.025; -1.875 0.05; -0.45833 0.05; 0.541666 0.05],
+                ["10p RM P:", "6p CB annotation", "6p CB frame", "6p CB grid"])
 text!(T, text_attrib="+f+j", no_clip=true)
 t = [-1.5 0 0 1.33333; -0.25 0 0 0.66666; 0.625 0 0 0.33333]
-GMT.xy!(t, symbol="v0.08+b+e+jc", lw=0.5, fill=:black, y_offset=-0.6, no_clip=true)
+plot!(t, symbol="v0.08+b+e+jc", lw=0.5, fill=:black, y_offset=-0.6, no_clip=true)
 
-if (GMTver < 6)
-    T = ["-2.1 0.025 10p RM S:", "-1.5  0.05 9p CB annotation",
-         "-0.25 0.05 9p CB frame", "0.625 0.05 9p CB grid"]
-else
-    T = text_record([-2.1 0.025; -1.5  0.05; -0.25 0.05; 0.625 0.05], ["10p RM S:", "9p CB annotation", "9p CB frame", "9p CB grid"])
-end
+T = text_record([-2.1 0.025; -1.5  0.05; -0.25 0.05; 0.625 0.05],
+                ["10p RM S:", "9p CB annotation", "9p CB frame", "9p CB grid"])
 text!(T, text_attrib="+f+j", no_clip=true, fmt=:png, show=true)
 ```
 
@@ -60,7 +52,7 @@ text!(T, text_attrib="+f+j", no_clip=true, fmt=:png, show=true)
 
 ## Cartesian linear axes
 
-For non-geographic axes, the MAP_FRAME_TYPE setting is implicitly set to plain. Other than that,
+For non-geographic axes, the MAP\_FRAME\_TYPE setting is implicitly set to plain. Other than that,
 cartesian linear axes are very similar to geographic axes. The annotation format may be controlled with
 the FORMAT\_FLOAT\_OUT parameter. By default, it is set to “%g”, which is a C language format statement
 for floating point numbers, and with this setting the various axis routines will automatically determine
@@ -70,14 +62,11 @@ these axes you may use the unit setting to add a unit string to each annotation.
 
 ```julia
 using GMT
-basemap(region="0/12/0/1", proj="X12/1", axis="-Ba4f2g1+lFrequency+u\" \%\" S")
-t = [0 0 0 1.57; 6.0 0 0 0.79; 9.0 0 0 0.39]
-GMT.xy!(t, symbol="v2p+b+e+a60", lw=0.5, fill=:black, y_offset=0.25, no_clip=true)
-if (GMTver < 6)
-    T = ["2 0.2 annotation"; "7 0.2 frame"; "9.5 0.2 grid"]
-else
-    T = text_record([2 0.2; 7 0.2; 9.5 0.2], ["annotation", "frame", "grid"])
-end
+basemap(basemap(region="0/12/0/1", proj="X12/1", axis=(frame="a4f2g1",
+        xlabel="Frequency", suffix="%"), axis2=(frame="S",)))
+t = [0 0 0 4.0; 6.0 0 0 2.0; 9.0 0 0 1.0];
+plot!(t, symbol="v2p+b+e+a60", lw=0.5, fill=:black, y_offset=0.25, no_clip=true)
+T = text_record([2 0.2; 7 0.2; 9.5 0.2], ["annotation", "frame", "grid"]);
 text!(T, text_attrib="+f9p+jCB", clearance="0.025/0.025", fill=:white, fmt=:png, show=true)
 ```
 

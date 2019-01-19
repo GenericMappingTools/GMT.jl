@@ -95,8 +95,8 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-plot(arg1; kw...)  = common_plot_xyz("", cat_1_arg(arg1), "plot", true, false, kw...)
-plot!(arg1; kw...) = common_plot_xyz("", cat_1_arg(arg1), "plot", false, false, kw...)
+plot(arg1; kw...)  = common_plot_xyz("", arg1, "plot", true, false, kw...)
+plot!(arg1; kw...) = common_plot_xyz("", arg1, "plot", false, false, kw...)
 
 plot(cmd0::String="", arg1=[]; kw...)  = common_plot_xyz(cmd0, arg1, "plot", true, false, kw...)
 plot!(cmd0::String="", arg1=[]; kw...) = common_plot_xyz(cmd0, arg1, "plot", false, false, kw...)
