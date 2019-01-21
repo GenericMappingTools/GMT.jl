@@ -376,6 +376,7 @@ if (got_it)					# Otherwise go straight to end
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3)
 	plot(1:2pi, rand(6), xaxis=(pi=1,), Vd=:cmd)
 	plot(1:2pi, rand(6), xaxis=(pi=(1,2),), Vd=:cmd)
+	plot(rand(10,4), leg=true)
 	plot3d(rand(5,3), marker=:cube)
 	plot3d!(rand(5,3), marker=:cube, Vd=:cmd)
 	plot3d("", rand(5,3), Vd=:cmd)
@@ -485,7 +486,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSCONVERT
 	gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
-	psconvert("lixo.ps", adjust=true, fmt="eps", C=:dDOINTERPOLATE)
+	#psconvert("lixo.ps", adjust=true, fmt="eps", C=:dDOINTERPOLATE)
 	psconvert("lixo.ps", adjust=true, fmt="tif")
 	gmt("grdinfo lixo.tif");
 
@@ -688,7 +689,7 @@ if (got_it)					# Otherwise go straight to end
 	rm("gmt.conf")
 	rm("lixo.ps")
 	rm("lixo.png")
-	rm("lixo.eps")
+	#rm("lixo.eps")
 	rm("lixo.grd")
 	rm("lixo.tif")
 	rm("lixo.cpt")

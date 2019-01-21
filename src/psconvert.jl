@@ -103,8 +103,8 @@ function psconvert(cmd0::String="", arg1=[]; kwargs...)
 	end
 
 	if ((val = find_in_dict(d, [:C :gs_option])[1]) !== nothing)
-		if (isa(val, String))
-			cmd *= " -C" * val
+		if (isa(val, String) || isa(val, Symbol))
+			cmd = string(cmd, " -C", val)
 		elseif (isa(val, Array{Any})) 
 			for k = 1:length(val)
 				cmd *= " -C" * val[k]
