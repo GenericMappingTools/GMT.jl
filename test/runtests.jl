@@ -376,6 +376,7 @@ if (got_it)					# Otherwise go straight to end
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3)
 	plot(1:2pi, rand(6), xaxis=(pi=1,), Vd=:cmd)
 	plot(1:2pi, rand(6), xaxis=(pi=(1,2),), Vd=:cmd)
+	plot(rand(10,4), leg=true)
 	plot3d(rand(5,3), marker=:cube)
 	plot3d!(rand(5,3), marker=:cube, Vd=:cmd)
 	plot3d("", rand(5,3), Vd=:cmd)
