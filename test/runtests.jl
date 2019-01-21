@@ -486,7 +486,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSCONVERT
 	gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
-	psconvert("lixo.ps", adjust=true, fmt="eps", C=:dDOINTERPOLATE)
+	#psconvert("lixo.ps", adjust=true, fmt="eps", C=:dDOINTERPOLATE)
 	psconvert("lixo.ps", adjust=true, fmt="tif")
 	gmt("grdinfo lixo.tif");
 
