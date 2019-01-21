@@ -689,7 +689,7 @@ if (got_it)					# Otherwise go straight to end
 	rm("gmt.conf")
 	rm("lixo.ps")
 	rm("lixo.png")
-	rm("lixo.eps")
+	#rm("lixo.eps")
 	rm("lixo.grd")
 	rm("lixo.tif")
 	rm("lixo.cpt")
