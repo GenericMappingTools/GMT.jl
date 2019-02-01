@@ -119,14 +119,14 @@ if (got_it)					# Otherwise go straight to end
 
 	# BLOCK*s
 	d = [0.1 1.5 1; 0.5 1.5 2; 0.9 1.5 3; 0.1 0.5 4; 0.5 0.5 5; 0.9 0.5 6; 1.1 1.5 7; 1.5 1.5 8; 1.9 1.5 9; 1.1 0.5 10; 1.5 0.5 11; 1.9 0.5 12];
-	G = blockmedian(region=[0 2 0 2], inc=1, fields="z", reg=1, d);
+	G = blockmedian(region=[0 2 0 2], inc=1, fields="z", reg=true, d);
 	if (G !== nothing)	# If run from GMT5 it will return nothing
-		G = blockmean(d, region=[0 2 0 2], inc=1, grid=true, reg=1, S=:n);	# Number of points in cell
-		G,L = blockmode(region=[0 2 0 2], inc=1, fields="z,l", reg=1, d);
+		G = blockmean(d, region=[0 2 0 2], inc=1, grid=true, reg=true, S=:n);	# Number of points in cell
+		G,L = blockmode(region=[0 2 0 2], inc=1, fields="z,l", reg=true, d);
 	end
-	D = blockmedian(region=[0 2 0 2], inc=1,  reg=1, d);
-	D = blockmean(region=[0 2 0 2], inc=1,  reg=1, d);
-	D = blockmode(region=[0 2 0 2], inc=1,  reg=1, d);
+	D = blockmedian(region=[0 2 0 2], inc=1,  reg=true, d);
+	D = blockmean(region=[0 2 0 2], inc=1,  reg=true, d);
+	D = blockmode(region=[0 2 0 2], inc=1,  reg=true, d);
 
 	# FILTER1D
 	raw = [collect((1.0:50)) rand(50)];

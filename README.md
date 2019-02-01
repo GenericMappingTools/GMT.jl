@@ -50,7 +50,6 @@ Use the new Pkg3 to install current version.
 
     ]add GMT
 
-
 A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT** install the
 [GMT](http://gmt.soest.hawaii.edu) program. It's the user responsability to do that.
 
@@ -75,7 +74,6 @@ On OSX, with a manual GMT build and dependencies obtained with Homebrew (that ar
 added to the ~/.julia/config/startup.jl file)
 
     push!(Libdl.DL_LOAD_PATH, "/Users/j/programs/gmt5/lib")
-
 
 Using
 =====

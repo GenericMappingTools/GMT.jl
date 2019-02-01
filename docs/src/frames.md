@@ -185,14 +185,14 @@ basemap(region="0.2t/0.35t/0/1", proj="X-12/0.25", axis="pa15mf5m sa1H S",
 
 The fifth example shows a few weeks of time (Figure Cartesian time axis, example 5). The lower
 axis shows ISO weeks with week numbers and abbreviated names of the weekdays. The upper uses
-Gregorian weeks (which start at the day chosen by TIME_WEEK_START); they do not have numbers.
+Gregorian weeks (which start at the day chosen by TIME\_WEEK\_START); they do not have numbers.
 
 ```julia
 using GMT
 gmt("set FORMAT_DATE_MAP u FORMAT_TIME_PRIMARY_MAP Character FORMAT_TIME_SECONDARY_MAP full
      FONT_ANNOT_PRIMARY +9p")
 basemap(region="1969-7-21T/1969-8-9T/0/1", proj="X12/0.25", axis="pa1K sa1U S")
-gmt("set FORMAT_DATE_MAP o TIME_WEEK_START Sunday FORMAT_TIME_SECONDARY_MAP Chararacter")
+gmt("set FORMAT\_DATE\_MAP o TIME\_WEEK\_START Sunday FORMAT\_TIME\_SECONDARY\_MAP Chararacter")
 basemap!(axis="pa3Kf1k sa1r S", y_offset=1.7, fmt=:png, show=true)
 ```
 
@@ -228,12 +228,12 @@ basemap(region="2000-12-15T/2001-1-15T/0/1", proj="X12/0.25", axis="pa5Df1d sa1Y
 
 ```julia
     basemap(region="416/542/0/6.2831852", proj="X-12/5",
-            axis=(axes=(:left_full, :bot_full), fill=:lightblue),
+            axis=(frame=(:left_full, :bot_full), fill=:lightblue),
             xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"),
             yaxis=(custom=(pos=[0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852],
                             type_=["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]),),)
 
-    basemap!(axis=(axes=(:left_full, :bot_full),),
+    basemap!(axis=(frame=(:left_full, :bot_full),),
             xaxis2=(custom=(pos=[416.0; 443.7; 488.3; 542],
                             type_=["ig Devonian", "ig Silurian", "ig Ordovician", "ig Cambrian"]),),
             par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), fmt=:png, show=true)

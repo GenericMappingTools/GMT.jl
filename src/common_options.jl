@@ -1345,7 +1345,7 @@ function fname_out(d::Dict)
 	if (haskey(d, :fmt))  out = string(d[:fmt])
 	else                  out = FMT						# Use the global FMT choice
 	end
-	if (isempty(out) && !Sys.iswindows())
+	if (out == "" && !Sys.iswindows())
 		error("NOT specifying the **fmt** format is only allowed on Windows")
 	end
 	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
@@ -1355,6 +1355,7 @@ function fname_out(d::Dict)
 	# return it to the REPL. The ambiguity is cleared in finish_PS_module()
 
 	opt_T = "";
+	if (out == "pdfg" || out == "gpdf")  out = "pdg"  end	# Trick to keep the ext with only 3 chars (for GeoPDFs)
 	if (length(out) <= 3)
 		@static Sys.iswindows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps"
 		ext = lowercase(out)
@@ -1364,6 +1365,7 @@ function fname_out(d::Dict)
 		elseif (ext == "png")  opt_T = " -Tg";	out = template;		EXT = ext
 		elseif (ext == "jpg")  opt_T = " -Tj";	out = template;		EXT = ext
 		elseif (ext == "tif")  opt_T = " -Tt";	out = template;		EXT = ext
+		elseif (ext == "pdg")  opt_T = " -Tf -Qp";	out = template;	EXT = "pdf"
 		end
 	end
 	return out, opt_T, EXT
@@ -1480,7 +1482,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 	# ...
 	got_fname = 0;		data_kw = nothing
 	if (haskey(d, :data))	data_kw = d[:data]	end
-	if (!isempty(cmd0))						# Data was passed as file name
+	if (cmd0 != "")						# Data was passed as file name
 		cmd = cmd0 * " " * cmd
 		got_fname = 1
 	end
