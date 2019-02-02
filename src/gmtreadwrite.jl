@@ -37,7 +37,7 @@ Specify data type.  Choose among:
     layer=4 reads the fourth layer (or band) of the file. But the file can be a grid or an image. If it is a
     grid layer can be a scalar (to read 3D arrays) or an array of two elements (to read a 4D array).
     If file is an image 'layer' can be a 1 or a 1x3 array (to read a RGB image). Not that in this later case
-    bands do not to be contiguous. A band=[0,5,2] composes an RGB aout of those bands. See more at
+    bands do not need to be contiguous. A band=[0,5,2] composes an RGB out of those bands. See more at
     (https://gmt.soest.hawaii.edu/doc/latest/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files)
 
 - $(GMT.opt_R)
@@ -66,9 +66,9 @@ function gmtread(fname::String; kwargs...)
 	else
 		opt_T = add_opt("", "Ti", d, [:img :image])
 	end
-	if (isempty(opt_T))  opt_T = add_opt("", "Td", d, [:dataset :table])  end
-	if (isempty(opt_T))  opt_T = add_opt("", "Tc", d, [:cpt :cmap])  end
-	if (isempty(opt_T))  opt_T = add_opt("", "Tp", d, [:ps])  end
+	if (opt_T == "")  opt_T = add_opt("", "Td", d, [:dataset :table])  end
+	if (opt_T == "")  opt_T = add_opt("", "Tc", d, [:cpt :cmap])  end
+	if (opt_T == "")  opt_T = add_opt("", "Tp", d, [:ps])  end
 
 	if (haskey(d, :varname))				# See if we have a nc varname / layer request
 		if (isempty(opt_T))
@@ -97,7 +97,7 @@ function gmtread(fname::String; kwargs...)
 		end
 	end
 
-	if (isempty(opt_T))
+	if (opt_T == "")
 		error("Must select one input data type (grid, image, dataset, cmap or ps")
 	else
 		opt_T = opt_T[1:4]      				# Remove whatever was given as argument to type kwarg

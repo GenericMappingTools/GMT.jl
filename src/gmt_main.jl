@@ -159,8 +159,12 @@ function gmt(cmd::String, args...)
 			end
 		end
 	end
-	if (g_module == "psconvert" && occursin("-,", r))	# It has also a mem layout request
+	if ((g_module == "psconvert" || g_module == "grdimage") && occursin("-,", r))	# It has also a mem layout request
 		r, img_mem_layout, grd_mem_layout = parse_mem_layouts(r)
+		if (g_module == "grdimage" && img_mem_layout != "")
+			mem_layout = length(img_mem_layout) == 3 ? img_mem_layout * "a" : img_mem_layout
+			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);		# Tell grdimage to give us the image with this mem layout
+		end
 	end
 
 	# 2++ Add -T to gmtwrite if user did not explicitly give -T. Seek also for MEM layout requests
@@ -332,7 +336,7 @@ function parse_mem_layouts(cmd)
 
 	if ((ind = findfirst( "-,", cmd)) !== nothing)
 		img_mem_layout, resto = strtok(cmd[ind[1]+2:end])
-		if (length(img_mem_layout) != 3)
+		if (length(img_mem_layout) < 3 || length(img_mem_layout) > 4)
 			error(@sprintf("GMT: Memory layout option must have 3 characters and not %s", img_mem_layout))
 		end
 		cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
@@ -346,6 +350,7 @@ function parse_mem_layouts(cmd)
 			cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 		end
 	end
+	img_mem_layout = string(img_mem_layout);	grd_mem_layout = string(grd_mem_layout);	# We don't want substrings
 	return cmd, img_mem_layout, grd_mem_layout
 end
 
@@ -495,7 +500,11 @@ function get_image(API::Ptr{Nothing}, object)
 	X  = range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx)
 	Y  = range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny)
 
-	if (occursin("TCP", img_mem_layout))		# BIP case for Images.jl
+	is4bytes = false
+	if (occursin("0", img_mem_layout) || occursin("1", img_mem_layout))
+		t  = unsafe_wrap(Array, I.data, ny * nx * nz)
+		is4bytes = true
+	elseif (occursin("TCP", img_mem_layout))		# BIP case for Images.jl
 		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), nz, ny, nx)
 	else
 		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), ny, nx, nz)
@@ -512,7 +521,10 @@ function get_image(API::Ptr{Nothing}, object)
 
 	# Return image via a uint8 matrix in a struct
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
-	if (gmt_hdr.n_bands <= 3)
+	if (is4bytes)
+		out = GMTimage("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
+	                      t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
+	elseif (gmt_hdr.n_bands <= 3)
 		out = GMTimage("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
 	                      t, "", "", "", colormap, n_colors, zeros(UInt8,ny,nx), layout) 	# <== Ver o que fazer com o alpha
 	else 			# RGB(A) image
@@ -940,7 +952,8 @@ function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_I
 			error("image_init: Failure to alloc GMT blank grid container for holding output image")
 		end
 		if (!isempty(img_mem_layout))
-			GMT_Set_Default(API, "API_IMAGE_LAYOUT", img_mem_layout * "a");		# State how we wish to receive images from GDAL
+			mem_layout = length(img_mem_layout) == 3 ? img_mem_layout * "a" : img_mem_layout
+			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);		# State how we wish to receive images from GDAL
 		end
 		return I
 	end

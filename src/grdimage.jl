@@ -65,7 +65,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=true, kwargs
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :f :n :p :t])
 	cmd = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G],
-				[:M :monochrome], [:N :noclip], [:Q :nan_t :nan_alpha]])
+				[:M :monochrome], [:N :noclip], [:Q :nan_t :nan_alpha], ["," :mem :mem_layout]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
 	if (got_fname == 0 && isa(arg1, Tuple))			# Than it must be using the three r,g,b grids
@@ -101,7 +101,9 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=true, kwargs
 	end
 
 	if (isa(arg1, GMTimage) && !occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not necessary but it is.
-	cmd = finish_PS(d, cmd, output, K, O)
+	if (!occursin("-A", cmd))		# -A means that we are requesting the image directly
+		cmd = finish_PS(d, cmd, output, K, O)
+	end
     return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "grdimage", arg1, arg2, arg3, arg4)
 end
 

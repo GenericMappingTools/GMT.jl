@@ -8,7 +8,7 @@ Full option list at [`psconvert`](http://gmt.soest.hawaii.edu/doc/latest/psconve
 Parameters
 ----------
 
-- **A** : **adjust** : -- Str or Number --  
+- **A** : **adjust** : **crop** : -- Str or Number --  
 
     Adjust the BoundingBox and HiResBoundingBox to the minimum required by the image content.
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#a)
@@ -83,7 +83,7 @@ function psconvert(cmd0::String="", arg1=[]; kwargs...)
 	if (!isempty(cmd0)) && isempty_(arg1)  arg1 = cmd0  end
 
 	d = KW(kwargs)
-	cmd = add_opt("", 'A', d, [:A :adjust])
+	cmd = add_opt("", 'A', d, [:A :adjust :crop])
 	if (cmd == " -A")  cmd = cmd * "1p"  end		# If just -A default to -A1p
 	cmd = parse_these_opts(cmd, d, [[:D :out_dir :output_dir], [:E :dpi], [:F :out_name :output_name],
 				[:G :ghost_path], [:I :icc_gray], [:L :list_file], [:Q :anti_aliasing], [:S :gs_command],
@@ -126,7 +126,9 @@ function psconvert(cmd0::String="", arg1=[]; kwargs...)
 
 	# In case DATA holds a file name, copy it into cmd.
 	#cmd, arg1, = read_data(d, cmd0, cmd, arg1)
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
+	if (cmd0 != "" || !isempty_(arg1))						# Data was passed as file name
+		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
+	end
 
 	if (isempty(cmd))          cmd = "-A1p -Tj -Qg4 -Qt4"  end 	# Means no options were used. Allowed case
 	if (!occursin("-Q", cmd))  cmd = cmd * " -Qt4 -Qg4"    end	# We promised to have these as default
@@ -137,3 +139,6 @@ function psconvert(cmd0::String="", arg1=[]; kwargs...)
 	else               return gmt("psconvert " * cmd)
 	end
 end
+
+# ---------------------------------------------------------------------------------------------------
+psconvert(arg1::GMTps; kw...) = psconvert("", arg1; kw...)
