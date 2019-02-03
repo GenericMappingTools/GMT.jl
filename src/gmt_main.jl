@@ -88,7 +88,7 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
 """
 function gmt(cmd::String, args...)
 	global API
-	global grd_mem_layout = ""
+	global grd_mem_layout = ""			# "BRP" is the default for GMT PS images.
 	#global img_mem_layout = "TCP"		# For Images.jl
 	global img_mem_layout = ""
 
@@ -504,7 +504,8 @@ function get_image(API::Ptr{Nothing}, object)
 	if (occursin("0", img_mem_layout) || occursin("1", img_mem_layout))
 		t  = unsafe_wrap(Array, I.data, ny * nx * nz)
 		is4bytes = true
-	elseif (occursin("TCP", img_mem_layout))		# BIP case for Images.jl
+	#elseif (occursin("TCP", img_mem_layout))		# BIP case for Images.jl
+	elseif (img_mem_layout != "" && img_mem_layout[3] == 'P')	# Like the "TCP" BIP case for Images.jl
 		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), nz, ny, nx)
 	else
 		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), ny, nx, nz)
@@ -934,7 +935,6 @@ function grid_init(API::Ptr{Nothing}, module_input, Grid, grd, hdr, pad::Int=2)
 
 	unsafe_store!(Gb.header, h)
 	unsafe_store!(G, Gb)
-	GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Grid %s in parser\n", G))
 
 	return G
 end
@@ -974,10 +974,10 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_pages = size(Img.image, 3)
 	dim = pointer([n_cols, n_rows, n_pages])
 	if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_ALL, dim,
-	                         C_NULL, C_NULL, UInt32(Img.registration), pad)) == C_NULL)
+							 Img.range[1:4], Img.inc, UInt32(Img.registration), pad)) == C_NULL)
 		error("image_init: Failure to alloc GMT source image for input")
 	end
-	Ib = unsafe_load(I)			# Ib = GMT_IMAGE (constructor with 1 method)
+	Ib = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
 
 	Ib.data = pointer(Img.image)
 	if (GMTver < 6)
@@ -991,7 +991,6 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	h.mem_layout = map(UInt8, (Img.layout...,))
 	unsafe_store!(Ib.header, h)
 	unsafe_store!(I, Ib)
-	GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Image %s in parser\n", I))
 
 	return I
 end
