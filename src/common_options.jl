@@ -115,7 +115,6 @@ end
 function build_opt_J(Val)
 	if (isa(Val, String) || isa(Val, Symbol))
 		s = string(Val)
-		if (!isletter(s[1])) error("This (" * s * ") is a bad 'proj' argument. Must start with a char code.") end
 		return " -J" * s
 	elseif (isa(Val, Number))
 		if (!(typeof(Val) <: Int) || Val < 2000)
