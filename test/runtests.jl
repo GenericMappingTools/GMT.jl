@@ -666,9 +666,9 @@ if (got_it)					# Otherwise go straight to end
 
 		# Test ogr2GMTdataset
 		D = gmtconvert([1.0 2 3; 2 3 4], a="2=lolo+gPOINT");	# Ther's a bug in GMT for this. No data points are printed
-		API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 		gmtwrite("lixo.gmt", D)
-		GMT.ogr2GMTdataset(GMT.gmt_ogrread(API, "lixo.gmt"));
+		#API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
+		#GMT.ogr2GMTdataset(GMT.gmt_ogrread(API, "lixo.gmt"));
 		rm("lixo.gmt")
 	end
 
