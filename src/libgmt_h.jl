@@ -824,6 +824,29 @@ struct Gmt_libinfo
 	handle::Ptr{Cvoid}	# Handle to the shared library, returned by dlopen or dlopen_special */
 end
 
+mutable struct OGR_FEATURES
+	n_rows::Cint
+	n_cols::Cint
+	n_layers::Cint
+	n_filled::Cint
+	is3D::Cint
+	np::Cuint
+	att_number::Cint
+	name::Ptr{UInt8} 
+	wkt::Ptr{UInt8} 
+	proj4::Ptr{UInt8} 
+	type::Ptr{UInt8}            # Geometry type. E.g. Point, Polygon or LineString
+	att_names::Ptr{Ptr{UInt8}}  # Names of the attributes of a Feature
+	att_values::Ptr{Ptr{UInt8}} # Values of the attributes of a Feature as strings
+	att_types::Ptr{Cint}
+	islands::Ptr{Cint}
+	BoundingBox::NTuple{6,Cdouble}
+	BBgeom::Ptr{Cdouble};       # Not currently assigned (would be the BoundingBox of each individual geometry)
+	x::Ptr{Cdouble}
+	y::Ptr{Cdouble}
+	z::Ptr{Cdouble}
+end
+
 #=
 mutable struct GMTAPI_CTRL
 	# Master controller which holds all GMT API related information at run-time for a single session.

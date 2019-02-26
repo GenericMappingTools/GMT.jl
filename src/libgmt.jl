@@ -404,3 +404,8 @@ function gmt_getpen(API::Ptr{Cvoid}, buffer, P)
 	GMT_ = GMT_Get_Ctrl(API)
 	ccall((:gmt_getpen, thelib), Cint, (Ptr{Cvoid}, Ptr{Cuint}, Ref{GMT_PEN}), GMT_, buffer, P)
 end
+
+function gmt_ogrread(API::Ptr{Cvoid}, fname::String)
+	GMT_ = GMT_Get_Ctrl(API)
+	ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Ptr{Cvoid}, Ptr{UInt8}), GMT_, fname)
+end

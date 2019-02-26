@@ -109,6 +109,9 @@ if (got_it)					# Otherwise go straight to end
 	GMT.round_wesn([1. 350 1. 180], true)
 	GMT.round_wesn([0. 1.1 0. 0.1], true)
 
+	GMT.GMTdataset([0.0 0]);
+	GMT.GMTdataset([0.0 0], Array{String,1}());
+
 	@test_throws ErrorException("Nonsense first argument") GMT.parse_arg_and_pen((:a,0))
 	# ---------------------------------------------------------------------------------------------------
 
@@ -660,6 +663,13 @@ if (got_it)					# Otherwise go straight to end
 		@test_throws ErrorException("Failure to alloc GMT blank TEXTSET container for holding output TEXT") GMT.text_init(API, "", "aaaa", 1);
 		@test_throws ErrorException("Failure to alloc GMT blank TEXTSET container for holding output TEXT") GMT.text_init_(API, "", "", 1);
 		gmt("destroy")
+
+		# Test ogr2GMTdataset
+		D = gmtconvert([1.0 2 3; 2 3 4], a="2=lolo+gPOINT");	# Ther's a bug in GMT for this. No data points are printed
+		gmtwrite("lixo.gmt", D)
+		#API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
+		#GMT.ogr2GMTdataset(GMT.gmt_ogrread(API, "lixo.gmt"));
+		rm("lixo.gmt")
 	end
 
 	GMT.linspace(1,1,100);

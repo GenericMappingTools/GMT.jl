@@ -1443,6 +1443,25 @@ function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
 	return P
 end
 
+# ---------------------------------------------------------------------------------------------------
+function ogr2GMTdataset(in::Ptr{OGR_FEATURES})
+	OGR_F = unsafe_load(in)
+	n_max = OGR_F.n_rows * OGR_F.n_cols * OGR_F.n_layers
+	D = Array{GMTdataset, 1}(undef, OGR_F.n_filled)
+	D[1] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
+		Array{String,1}(), "", Array{String,1}(), OGR_F.proj4 != C_NULL ? unsafe_string(OGR_F.proj4) : "",
+		OGR_F.wkt != C_NULL ? unsafe_string(OGR_F.wkt) : "")
+	n = 2
+	for k = 2:n_max
+		OGR_F = unsafe_load(in, k)
+		if (OGR_F.np > 0)
+			D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
+				Array{String,1}(), "", Array{String,1}(), "", "")
+			n = n + 1
+		end
+	end
+	return D
+end
 
 #= ---------------------------------------------------------------------------------------------------
 function convert_string(str)
