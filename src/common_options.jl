@@ -74,7 +74,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
-	# Default to 14c if no size is provided.
+	# Default to 12c if no size is provided.
 	# If MAP == false, do not try to append a fig size
 	opt_J = ""
 	if ((val = find_in_dict(d, [:J :proj], del)[1]) !== nothing)
@@ -93,6 +93,7 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 			s = arg2str(d[:figsize])
 			if (haskey(d, :units))  s *= d[:units][1]  end
 			if (isdigit(opt_J[end]))  opt_J *= "/" * s
+			elseif (occursin("+proj", opt_J)) opt_J *= "+width=" * s
 			else                      opt_J *= s
 			end
 		elseif ((val = find_in_dict(d, [:figscale :scale])[1]) !== nothing)
@@ -102,8 +103,12 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 			end
 		elseif (default != "" && opt_J == " -JX")
 			opt_J = default  					# -JX was a working default
+		elseif (occursin("+width=", opt_J))		# OK, a proj4 string, don't touch it. Size already in.
+		elseif (occursin("+proj", opt_J))		# A proj4 string but no size info. Use default size
+			opt_J *= "+width=" * def_fig_size[1:3]
 		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
-			if !(length(opt_J) >= 6 && isnumeric(opt_J[6]))
+			#if !(length(opt_J) >= 6 && isnumeric(opt_J[6]))
+			if (length(opt_J) < 6 || !isnumeric(opt_J[6]))
 				opt_J *= def_fig_size[1:3]		# If no size, default to 12 centimeters
 			end
 		end
@@ -1727,8 +1732,9 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 		pens = Array{String,1}(undef,length(arg)-1)
 		for k = 1:length(arg)-1
 			t = scan_opt(arg[k+1].header, "-W")
-			if (t[1] == ',')  pens[k] = " -W" * penT * t		# Can't have, e.g., ",,230/159/0" => Crash
-			else              pens[k] = " -W" * penT * ',' * t
+			if     (t == "")      pens[k] = " -W0.5"
+			elseif (t[1] == ',')  pens[k] = " -W" * penT * t		# Can't have, e.g., ",,230/159/0" => Crash
+			else                  pens[k] = " -W" * penT * ',' * t
 			end
 		end
 		append!(cmd_, pens)			# Append the 'pens' var to the input arg CMD
