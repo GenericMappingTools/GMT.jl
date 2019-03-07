@@ -85,7 +85,7 @@ function gmtread(fname::String; kwargs...)
 		if ((val = find_in_dict(d, [:layer :band])[1]) !== nothing)
 			fname = fname * "+b"
 			if (isa(val, String) || isa(val, Symbol) || isa(val, Number))
-				fname = fname * string(fname, val)
+				fname = string(fname, val)
 			elseif (isa(val, Array) || isa(val, Tuple))
 				if (length(val) == 3)
 					fname = fname * @sprintf("%d,%d,%d", val[1], val[2], val[3])
@@ -98,7 +98,7 @@ function gmtread(fname::String; kwargs...)
 	end
 
 	if (opt_T == "")
-		error("Must select one input data type (grid, image, dataset, cmap or ps")
+		error("Must select one input data type (grid, image, dataset, cmap or ps)")
 	else
 		opt_T = opt_T[1:4]      				# Remove whatever was given as argument to type kwarg
 	end
