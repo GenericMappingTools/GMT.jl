@@ -118,42 +118,50 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 end
 
 function build_opt_J(Val)
+	out = ""
 	if (isa(Val, String) || isa(Val, Symbol))
-		s = parse_proj(string(Val))
-		return " -J" * s
+		out = " -J" * parse_proj(string(Val))
 	elseif (isa(Val, NamedTuple))
-		return " -J" * parse_proj(Val) 
+		out = " -J" * parse_proj(Val) 
 	elseif (isa(Val, Number))
 		if (!(typeof(Val) <: Int) || Val < 2000)
 			error("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (" * string(Val) * ") is clearly an invalid EPSG")
 		end
-		return string(" -J", string(Val))
+		out = string(" -J", string(Val))
 	elseif (isempty(Val))
-		return " -J"
+		out = " -J"
 	end
-	return ""
+	return out
 end
 
 function parse_proj(p::String)
 	# See "p" is a string with a projection name. If yes, convert it into the corresponding -J syntax
 	if (p[1] == '+' || startswith(p, "epsg") || occursin('/', p) || length(p) < 3)  return p  end
 	s = lowercase(p)
-	if     (s == "laea" || s == "lambertazimuthal")        out = "A0/0"
-	elseif (s == "aea"  || s == "albers")                  out = "B0/0"
-	elseif (startswith(s, "cass"))       out = "C0/0"
-	elseif (startswith(s, "merc"))       out = "M"
-	elseif (startswith(s, "mill"))       out = "J"
-	elseif (startswith(s, "moll"))       out = "W"
+	if     (s == "aea"   || s == "albers")                 out = "B0/0"
+	elseif (s == "laea"  || s == "lambertazimuthal")       out = "A0/0"
+	elseif (s == "lcc"   || s == "lambertconic")           out = "L0/0"
 	elseif (s == "aeqd"  || s == "azimuthalequidistant")   out = "E0/0"
 	elseif (s == "eqdc"  || s == "conicequidistant")       out = "D0/90"
 	elseif (s == "tmerc" || s == "transversemercator")     out = "T0"
 	elseif (s == "equidistant" || s == "equirectangular")  out = "Q"
+	elseif (s == "eck4"  || s == "eckertiv")               out = "Kf"
+	elseif (s == "eck6"  || s == "eckertvi")               out = "Ks"
+	elseif (s == "omerc" || s == "obliquemerc1")           out = "Oa"
+	elseif (s == "omerc2"|| s == "obliquemerc2")           out = "Ob"
+	elseif (s == "omercp"|| s == "obliquemerc3")           out = "Oc"
+	elseif (startswith(s, "cass"))       out = "C0/0"
+	elseif (startswith(s, "cyl_"))       out = "Cyl_stere"
 	elseif (startswith(s, "gnom"))       out = "F0/0"
+	elseif (startswith(s, "hammer"))     out = "H"
+	elseif (startswith(s, "merc"))       out = "M"
+	elseif (startswith(s, "mill"))       out = "J"
+	elseif (startswith(s, "moll"))       out = "W"
 	elseif (startswith(s, "ortho"))      out = "G0/0"
+	elseif (startswith(s, "poly"))       out = "Poly"
 	elseif (startswith(s, "robin"))      out = "N"
 	elseif (startswith(s, "stere"))      out = "S0/90"
 	elseif (startswith(s, "sinu"))       out = "I"
-	elseif (startswith(s, "cyl_"))       out = "Cyl_stere"
 	elseif (startswith(s, "utm"))        out = "U" * s[4:end]
 	elseif (startswith(s, "vandg"))      out = "V"
 	elseif (s == "winkel" || s == "wintri")                out = "R"
@@ -194,6 +202,7 @@ function parse_proj(p::NamedTuple)
 	else   error("When projection is a named tuple you need to specify also 'center' and|or 'parallels'")
 	end
 	if (startswith(prj, "Cyl"))  prj = prj[1:9] * center	# The unique Cyl_stere case
+	elseif (prj[1] == 'K' || prj[1] == 'O')  prj = prj[1:2] * center	# Eckert || Oblique Merc
 	else                         prj = prj[1] * center
 	end
 	return prj
@@ -304,12 +313,6 @@ function parse_BJR(d::Dict, cmd::String, caller, O, default, del=false)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(cmd, d, O, del)
 	cmd, opt_J = parse_J(cmd, d, default, true, O, del)
-	if (!O && opt_J == "")			# If we have no -J use this default
-		opt_J = default				# " -JX12c/8c" (e.g. psxy) or " -JX12c/0" (e.g. grdimage)
-		cmd *= opt_J
-	elseif (O && opt_J == "")
-		cmd *= " -J"
-	end
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (caller == "plot3d" || caller == "bar3" || caller == "scatter3")

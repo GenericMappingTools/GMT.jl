@@ -13,7 +13,7 @@ end
 if (got_it)					# Otherwise go straight to end
 
 	# -------------------- Test common_options ----------------------------------------
-	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4)))[1] == " -R1/2/3/4"
+	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)))[1] == " -R1/2/3/4/5/6"
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
 	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
 	@test GMT.build_opt_R(:d) == " -Rd"
@@ -38,12 +38,18 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_J("", Dict(:J => "X5"), "", false)[1] == " -JX5"
 	@test GMT.parse_J("", Dict(:a => ""), "", true, true)[1] == " -J"
 	@test GMT.parse_J("", Dict(:J => "X", :figsize => 10))[1] == " -JX10"
-	@test GMT.parse_J("",Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
-	@test GMT.parse_J("",Dict(:scale=>"1:10"))[1] == " -Jx1:10"
-	@test GMT.parse_J("",Dict(:s=>"1:10"), " -JU")[1] == " -JU"
+	@test GMT.parse_J("", Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
+	@test GMT.parse_J("", Dict(:scale=>"1:10"))[1] == " -Jx1:10"
+	@test GMT.parse_J("", Dict(:s=>"1:10"), " -JU")[1] == " -JU"
+	@test GMT.parse_J("", Dict(:J => "+proj=merc"))[1] == " -J+proj=merc+width=12c"
 	@test GMT.parse_J("", Dict(:J => (name=:albers, parallels=[45 65])), "", false)[1] == " -JB0/0/45/65"
 	@test GMT.parse_J("", Dict(:J => (name=:albers, center=[10 20], parallels=[45 65])), "", false)[1] == " -JB10/20/45/65"
 	@test GMT.parse_J("", Dict(:J => "winkel"), "", false)[1] == " -JR"
+	@test GMT.parse_J("", Dict(:J => "M0/0"), "", false)[1] == " -JM0/0"
+	@test GMT.parse_J("", Dict(:J => (name=:merc,center=10)), "", false)[1] == " -JM10"
+	@test GMT.parse_J("", Dict(:J => (name=:merc,parallels=10)), "", false)[1] == " -JM0/0/10"
+	@test_throws ErrorException("When projection arguments are in a NamedTuple the projection 'name' keyword is madatory.") GMT.parse_J("", Dict(:J => (parallels=[45 65],)), "", false)
+	@test_throws ErrorException("When projection is a named tuple you need to specify also 'center' and|or 'parallels'") GMT.parse_J("", Dict(:J => (name=:merc,)), "", false)
 	r = GMT.parse_params("", Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")));
 	@test r == " --MAP_FRAME_WIDTH=0.2 --IO=lixo --OI=xoli"
 	@test GMT.parse_params("", Dict(:par => (:MAP_FRAME_WIDTH,0.2))) == " --MAP_FRAME_WIDTH=0.2"
@@ -201,12 +207,14 @@ if (got_it)					# Otherwise go straight to end
 		gmtwrite("lixo.grd", rand(5,5), id=:cf)
 		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
 		I = gmtread("lixo.tif", img=true);
-		imshow(I, show=false)			# Test this one here because we habe a GMTimage at hand
+		I = gmtread("lixo.tif", img=true, band=[0 1 2]);
+		imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
 		gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
 	else
 		gmtwrite("lixo.grd", G)
 		GG = gmtread("lixo.grd", grd=true, varname=:z);
 	end
+	@test_throws ErrorException("Must select one input data type (grid, image, dataset, cmap or ps)") GG = gmtread("lixo.grd");
 	cpt = makecpt(T="-6/8/1");
 	gmtwrite("lixo.cpt", cpt)
 	cpt = gmtread("lixo.cpt", cpt=true);
@@ -216,6 +224,7 @@ if (got_it)					# Otherwise go straight to end
 	gmtwrite("lixo.dat", D)
 	gmt("gmtwrite lixo.cpt", cpt)		# Same but tests other code chunk in gmt_main.jl
 	gmt("gmtwrite lixo.dat", D)
+	@test_throws ErrorException("First argument cannot be empty. It must contain the file name to write.") gmtwrite("",[1 2]);
 
 	# GMTVECTOR
 	d = [0 0; 0 90; 135 45; -30 -60];
