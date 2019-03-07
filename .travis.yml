@@ -29,7 +29,8 @@ before_install:
       #- conda list
       # Install GMT trunk
       - pwd
-      - sudo apt-get install subversion build-essential cmake libcurl4-gnutls-dev libnetcdf-dev libgdal1-dev libfftw3-dev libpcre3-dev liblapack-dev ghostscript
+      - sudo apt-get install subversion build-essential cmake libcurl4-gnutls-dev libnetcdf-dev libgdal1-dev gdal-bin libfftw3-dev libpcre3-dev liblapack-dev ghostscript
+      - gdalinfo --version
       #- svn checkout svn://gmtserver.soest.hawaii.edu/gmt5/branches/5.4 $HOME/gmt
       - git clone https://github.com/GenericMappingTools/gmt.git $HOME/gmt
       - PATH="$HOME/gmt/bin:$PATH"

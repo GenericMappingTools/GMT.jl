@@ -41,6 +41,9 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_J("",Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
 	@test GMT.parse_J("",Dict(:scale=>"1:10"))[1] == " -Jx1:10"
 	@test GMT.parse_J("",Dict(:s=>"1:10"), " -JU")[1] == " -JU"
+	@test GMT.parse_J("", Dict(:J => (name=:albers, parallels=[45 65])), "", false)[1] == " -JB0/0/45/65"
+	@test GMT.parse_J("", Dict(:J => (name=:albers, center=[10 20], parallels=[45 65])), "", false)[1] == " -JB10/20/45/65"
+	@test GMT.parse_J("", Dict(:J => "winkel"), "", false)[1] == " -JR"
 	r = GMT.parse_params("", Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")));
 	@test r == " --MAP_FRAME_WIDTH=0.2 --IO=lixo --OI=xoli"
 	@test GMT.parse_params("", Dict(:par => (:MAP_FRAME_WIDTH,0.2))) == " --MAP_FRAME_WIDTH=0.2"
