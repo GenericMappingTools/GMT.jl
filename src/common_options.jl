@@ -119,8 +119,10 @@ end
 
 function build_opt_J(Val)
 	if (isa(Val, String) || isa(Val, Symbol))
-		s = string(Val)
+		s = parse_proj(string(Val))
 		return " -J" * s
+	elseif (isa(Val, NamedTuple))
+		return " -J" * parse_proj(Val) 
 	elseif (isa(Val, Number))
 		if (!(typeof(Val) <: Int) || Val < 2000)
 			error("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (" * string(Val) * ") is clearly an invalid EPSG")
@@ -130,6 +132,71 @@ function build_opt_J(Val)
 		return " -J"
 	end
 	return ""
+end
+
+function parse_proj(p::String)
+	# See "p" is a string with a projection name. If yes, convert it into the corresponding -J syntax
+	if (p[1] == '+' || startswith(p, "epsg") || occursin('/', p) || length(p) < 3)  return p  end
+	s = lowercase(p)
+	if     (s == "laea" || s == "lambertazimuthal")        out = "A0/0"
+	elseif (s == "aea"  || s == "albers")                  out = "B0/0"
+	elseif (startswith(s, "cass"))       out = "C0/0"
+	elseif (startswith(s, "merc"))       out = "M"
+	elseif (startswith(s, "mill"))       out = "J"
+	elseif (startswith(s, "moll"))       out = "W"
+	elseif (s == "aeqd"  || s == "azimuthalequidistant")   out = "E0/0"
+	elseif (s == "eqdc"  || s == "conicequidistant")       out = "D0/90"
+	elseif (s == "tmerc" || s == "transversemercator")     out = "T0"
+	elseif (s == "equidistant" || s == "equirectangular")  out = "Q"
+	elseif (startswith(s, "gnom"))       out = "F0/0"
+	elseif (startswith(s, "ortho"))      out = "G0/0"
+	elseif (startswith(s, "robin"))      out = "N"
+	elseif (startswith(s, "stere"))      out = "S0/90"
+	elseif (startswith(s, "sinu"))       out = "I"
+	elseif (startswith(s, "cyl_"))       out = "Cyl_stere"
+	elseif (startswith(s, "utm"))        out = "U" * s[4:end]
+	elseif (startswith(s, "vandg"))      out = "V"
+	elseif (s == "winkel" || s == "wintri")                out = "R"
+	else   out = p
+	end
+	return out
+end
+
+function parse_proj(p::NamedTuple)
+	# Take a proj=(name=xxxx, center=[lon lat], parallels=[p1 p2]), where either center or parallels
+	# may be absent, but not BOTH, an create a GMT -J syntax string (note: for some projections 'center'
+	# maybe a scalar but the validity of that is not checked here).
+	d = nt2dict(p)					# Convert to Dict
+	if ((val = find_in_dict(d, [:name])[1]) !== nothing)
+		prj = parse_proj(string(val))
+	else
+		error("When projection arguments are in a NamedTuple the projection 'name' keyword is madatory.")
+	end
+
+	center = ""
+	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
+		if (isa(val, String))                         center = val
+		elseif (isa(val, Array) && length(val) == 2)  center = @sprintf("%.8g/%.8g", val[1], val[2])
+		elseif (isa(val, Number))                     center = @sprintf("%.8g", val)
+		end
+	end
+
+	parallels = ""
+	if ((val = find_in_dict(d, [:parallels])[1]) !== nothing)
+		if (isa(val, String))                         parallels = "/" * val
+		elseif (isa(val, Array) && length(val) == 2)  parallels = @sprintf("/%.8g/%.8g", val[1], val[2])
+		elseif (isa(val, Number))                     parallels = @sprintf("/%.8g", val)
+		end
+	end
+
+	if     (center == "" && parallels != "")  center = "0/0" * parallels
+	elseif (center != "")                     center *= parallels			# even if par == ""
+	else   error("When projection is a named tuple you need to specify also 'center' and|or 'parallels'")
+	end
+	if (startswith(prj, "Cyl"))  prj = prj[1:9] * center	# The unique Cyl_stere case
+	else                         prj = prj[1] * center
+	end
+	return prj
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -265,7 +265,7 @@ function gmt(cmd::String, args...)
 
 	for k = 1:n_items					# Get results from GMT into Julia arrays
 		if (X[k].direction == GMT_IN) continue 	end      # Only looking for stuff coming OUT of GMT here
-		out[X[k].pos+1] = GMTJL_Get_Object(API, X[k])    # Hook mex object onto rhs list
+		out[X[k].pos+1] = GMTJL_Get_Object(API, X[k])    # Hook object onto rhs list
 	end
 
 	# 2++- If gmtread -Ti than reset the session's pad value that was temporarily changed above (2+++)
@@ -721,7 +721,7 @@ function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_dataset_(API::Ptr{Nothing}, object)
+function get_dataset(API::Ptr{Nothing}, object)
 # Given a GMT DATASET D, build an array of segment structure and assign values.
 # Each segment will have 6 items:
 # header:	Text string with the segment header (could be empty)
@@ -749,20 +749,20 @@ function get_dataset_(API::Ptr{Nothing}, object)
 		end
 	end
 
-	Darr = [GMTdataset() for i = 1:seg_out]			# Create the array of DATASETS
+	Darr = [GMTdataset() for i = 1:seg_out]					# Create the array of DATASETS
 
 	seg_out = 1
-	T = unsafe_wrap(Array, D.table, D.n_tables)			# D.n_tables-element Array{Ptr{GMT.GMT_DATATABLE},1}
+	T = unsafe_wrap(Array, D.table, D.n_tables)				# D.n_tables-element Array{Ptr{GMT.GMT_DATATABLE},1}
 	for tbl = 1:D.n_tables
-		DT = unsafe_load(T[tbl])						# GMT.GMT_DATATABLE
-		S = unsafe_wrap(Array, DT.segment, DT.n_segments)# n_segments-element Array{Ptr{GMT.GMT_DATASEGMENT},1}
+		DT = unsafe_load(T[tbl])							# GMT.GMT_DATATABLE
+		S = unsafe_wrap(Array, DT.segment, DT.n_segments)	# n_segments-element Array{Ptr{GMT.GMT_DATASEGMENT},1}
 		for seg = 1:DT.n_segments
-			DS = unsafe_load(S[seg])					# GMT.GMT_DATASEGMENT
-			if (DS.n_rows == 0) continue 	end			# Skip empty segments
+			DS = unsafe_load(S[seg])						# GMT.GMT_DATASEGMENT
+			if (DS.n_rows == 0) continue 	end				# Skip empty segments
 
 			C = unsafe_wrap(Array, DS.data, DS.n_columns)	# DS.data = Ptr{Ptr{Float64}}; C = Array{Ptr{Float64},1}
 			dest = zeros(Float64, DS.n_rows, DS.n_columns)
-			for col = 1:DS.n_columns					# Copy the data columns
+			for col = 1:DS.n_columns						# Copy the data columns
 				unsafe_copyto!(pointer(dest, DS.n_rows * (col - 1) + 1), unsafe_load(DS.data, col), DS.n_rows)
 			end
 			Darr[seg_out].data = dest
@@ -795,6 +795,9 @@ function get_dataset_(API::Ptr{Nothing}, object)
 	return Darr
 end
 
+function foo(T)
+	a=1
+end
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr)
 	# Create the object container and hook as X->object
@@ -854,7 +857,7 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 	if (X.family == GMT_IS_GRID)         	# A GMT grid; make it the pos'th output item
 		ptr = get_grid(API, X.object)
 	elseif (X.family == GMT_IS_DATASET)		# A GMT table; make it a matrix and the pos'th output item
-		ptr = get_dataset_(API, X.object)
+		ptr = get_dataset(API, X.object)
 	elseif (X.family == GMT_IS_TEXTSET)		# A GMT textset; make it a cell and the pos'th output item
 		ptr = get_textset_(API, X.object)
 	elseif (X.family == GMT_IS_PALETTE)		# A GMT CPT; make it a colormap and the pos'th output item
@@ -1451,8 +1454,18 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES})
 	D[1] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
 		Array{String,1}(), "", Array{String,1}(), OGR_F.proj4 != C_NULL ? unsafe_string(OGR_F.proj4) : "",
 		OGR_F.wkt != C_NULL ? unsafe_string(OGR_F.wkt) : "")
+	next = 2
+	if (OGR_F.np == 0)			# Shit, first feature has no points. Must find first non empty since n_filled is still valid
+		n = 2
+		while (OGR_F.np == 0)
+			OGR_F = unsafe_load(in,n)
+			n = n + 1
+		end
+		D[1].data = [unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)]
+		next = n
+	end
 	n = 2
-	for k = 2:n_max
+	for k = next:n_max
 		OGR_F = unsafe_load(in, k)
 		if (OGR_F.np > 0)
 			D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
