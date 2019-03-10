@@ -18,7 +18,6 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
 	@test GMT.build_opt_R(:d) == " -Rd"
 	@test GMT.build_opt_R([]) == ""
-#=
 	@test GMT.build_opt_R((bb=:global360,)) == " -R0/360/-90/90"
 	@test GMT.build_opt_R((bb=(1,2,3,4),)) == " -R1/2/3/4"
 	@test GMT.build_opt_R((bb=(1,2,3,4), diag=1)) == " -R1/3/2/4+r"
@@ -28,7 +27,6 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.build_opt_R((iso="PT,ES",extend=4)) == " -RPT,ES+R4"
 	@test GMT.build_opt_R((iso="PT,ES",extend=[2,3])) == " -RPT,ES+R2/3"
 	@test GMT.build_opt_R((bb=:d,unit=:k)) == " -Rd+uk"			# Idiot but ok
-=#
 	@test GMT.build_opt_J(:X5)[1] == " -JX5"
 	@test GMT.build_opt_J(2500)[1] == " -J2500"
 	@test GMT.build_opt_J([])[1] == " -J"
@@ -130,7 +128,7 @@ if (got_it)					# Otherwise go straight to end
 	GMT.GMTdataset([0.0 0]);
 	GMT.GMTdataset([0.0 0], Array{String,1}());
 
-	@test_throws ErrorException("Nonsense first argument") GMT.parse_arg_and_pen((:a,0))
+	@test_throws ErrorException("parse_arg_and_pen: Nonsense first argument") GMT.parse_arg_and_pen(([:a],0))
 	# ---------------------------------------------------------------------------------------------------
 
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);

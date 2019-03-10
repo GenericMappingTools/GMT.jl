@@ -788,7 +788,7 @@ function parse_arg_and_pen(arg::Tuple, opt="")
 	# Parse an ARG of the type (arg, (pen)) and return a string. These may be used in pscoast -I & -N
 	# OPT is the option code letter including the leading - (e.g. -I or -N). This is only used when
 	# the ARG tuple has 4, 6, etc elements (arg1,(pen), arg2,(pen), arg3,(pen), ...)
-	if (isa(arg[1], String) || isa(arg[1], Symbol)  || isa(arg[1], Number))  s = string(arg[1])
+	if (isa(arg[1], String) || isa(arg[1], Symbol) || isa(arg[1], Number))  s = string(arg[1])
 	else	error("parse_arg_and_pen: Nonsense first argument")
 	end
 	if (length(arg) > 1)
