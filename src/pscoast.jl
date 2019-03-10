@@ -64,7 +64,7 @@ Parameters
     To clip land do *clip=:land*, *clip=:water* clips water. Use *end* to mark end of existing clip path.
     No projection information is needed.
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#q)
-- **S** : **water** : -- Str --
+- **S** : **water** : **ocean** : -- Str --
 
     Select filling or clipping of “wet” areas.
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#s)
@@ -98,32 +98,33 @@ function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :bo :p :t :params])
-	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution], [:G :land],
-				[:L :map_scale], [:M :dump], [:S :water], [:Td :rose], [:Tm :compass]])
+	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution],
+				[:L :map_scale], [:M :dump], [:Td :rose], [:Tm :compass]])
 
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
+	cmd = add_opt_fill(cmd, d, [:G :land], 'G')
+	cmd = add_opt_fill(cmd, d, [:S :water :ocean], 'S')
 
 	if (!isempty_(clip))
-		if (clip == "land" || clip == :land)       cmd *= " -Gc"
-		elseif (clip == "water" || clip == :water) cmd *= " -Sc"
-		elseif (clip == "end" || clip == :end)     cmd *= " -Q"
+		clip = string(clip)
+		if     (clip == "land")    cmd *= " -Gc"
+		elseif (clip == "water" || clip == "ocean") cmd *= " -Sc"
+		elseif (clip == "end")     cmd *= " -Q"
 		else
 			@warn("The 'clip' argument can only be \"land\", \"water\" or \"end\". Ignoring it.")
 		end
 	end
 
 	if ((val = find_in_dict(d, [:I :rivers])[1]) !== nothing)
-		if (isa(val, Number))      cmd = @sprintf("%s -I%d", cmd, val)
-		elseif (isa(val, String))  cmd *= " -I" * val
-		elseif (isa(val, Tuple))   cmd *= " -I" * parse_arg_and_pen(val)
+		if (isa(val, Tuple))   cmd *= " -I" * parse_arg_and_pen(val, "-I")
+		else                   cmd *= " -I" * string(val)		# Includes Str, Number or Symb
 		end
 	end
 
 	if ((val = find_in_dict(d, [:N :borders])[1]) !== nothing)
-		if (isa(val, Number))      cmd = @sprintf("%s -N%d", cmd, val)
-		elseif (isa(val, String))  cmd *= " -N" * val
-		elseif (isa(val, Tuple))   cmd *= " -N" * parse_arg_and_pen(val)
+		if (isa(val, Tuple))   cmd *= " -N" * parse_arg_and_pen(val, "-N")
+		else                   cmd *= " -N" * string(val)		# Includes Str, Number or Symb
 		end
 	end
 
@@ -141,7 +142,7 @@ function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 		end
 	end
 
-	if (maybe_more)				# Search for color and style line settings
+	if (maybe_more)									# Search for color and style line settings
 		lc = parse_pen_color(d)
 		if (lc != "")
 			cmd *= "," * lc
@@ -152,7 +153,7 @@ function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 
 	if ((val = find_in_dict(d, [:E :DCW])[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))
-			cmd = string(cmd, " -E", val)		# Simple case, ex E="PT,+gblue"
+			cmd = string(cmd, " -E", val)			# Simple case, ex E="PT,+gblue"
 		elseif (isa(val, Tuple))
 			if (length(val) >= 2 && isa(val[1], Tuple) && isa(val[end], Tuple)) 	# ex E=((),(),...,())
 				for k = 1:length(val)

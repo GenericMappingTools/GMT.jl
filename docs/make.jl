@@ -9,6 +9,7 @@ makedocs(
         "Some examples"            => "examples.md",
         "Draw rectangles examples" => "rectangles.md",
         "Draw frames examples"     => "frames.md",
+        "Map projections"          => "proj_examples.md",        
         "Manual" => [
             "monolitic.md",
             "modules.md",

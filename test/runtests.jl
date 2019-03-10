@@ -18,26 +18,34 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
 	@test GMT.build_opt_R(:d) == " -Rd"
 	@test GMT.build_opt_R([]) == ""
-	@test GMT.build_opt_J(:X5) == " -JX5"
-	@test GMT.build_opt_J(2500) == " -J2500"
-	@test GMT.build_opt_J([]) == " -J"
+#=
+	@test GMT.build_opt_R((bb=:global360,)) == " -R0/360/-90/90"
+	@test GMT.build_opt_R((bb=(1,2,3,4),)) == " -R1/2/3/4"
+	@test GMT.build_opt_R((bb=(1,2,3,4), diag=1)) == " -R1/3/2/4+r"
+	@test GMT.build_opt_R((bb_diag=(1,2,3,4),)) == " -R1/3/2/4+r"
+	@test GMT.build_opt_R((continent=:s,)) == " -R=SA"
+	@test GMT.build_opt_R((continent=:s,extend=4)) == " -R=SA+R4"
+	@test GMT.build_opt_R((iso="PT,ES",extend=4)) == " -RPT,ES+R4"
+	@test GMT.build_opt_R((iso="PT,ES",extend=[2,3])) == " -RPT,ES+R2/3"
+	@test GMT.build_opt_R((bb=:d,unit=:k)) == " -Rd+uk"			# Idiot but ok
+=#
+	@test GMT.build_opt_J(:X5)[1] == " -JX5"
+	@test GMT.build_opt_J(2500)[1] == " -J2500"
+	@test GMT.build_opt_J([])[1] == " -J"
 	@test GMT.arg2str((1,2,3)) == "1/2/3"
-	d = Dict(:inc => (x=1.5, y=2.6, unit="meter"));
-	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5e/2.6e"
-	d = Dict(:inc => (x=1.5, y=2.6, unit="data"));
-	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5/2.6u"
-	d = Dict(:inc => (x=1.5, y=2.6, extend="data"));
-	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5+e/2.6+e"
-	d = Dict(:inc => (x=1.5, y=2.6, unit="nodes"));
-	r = GMT.parse_inc("",d,[:I :inc], "I");		@test r == " -I1.5+n/2.6+n"
-	@test GMT.parse_inc("",Dict(:inc => (2,4)),[:I :inc], "I") == " -I2/4"
-	@test GMT.parse_inc("",Dict(:inc => [2 4]),[:I :inc], "I") == " -I2/4"
-	@test GMT.parse_inc("",Dict(:inc => "2"),[:I :inc], "I") == " -I2"
+	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="meter")),[:I :inc], "I") == " -I1.5e/2.6e"
+	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="data")),[:I :inc], "I") == " -I1.5/2.6u"
+	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, extend="data")),[:I :inc], "I") == " -I1.5+e/2.6+e"
+	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="nodes")),[:I :inc], "I") == " -I1.5+n/2.6+n"
+	@test GMT.parse_inc("", Dict(:inc => (2,4)),[:I :inc], "I") == " -I2/4"
+	@test GMT.parse_inc("", Dict(:inc => [2 4]),[:I :inc], "I") == " -I2/4"
+	@test GMT.parse_inc("", Dict(:inc => "2"),[:I :inc], "I") == " -I2"
 	@test GMT.parse_JZ("", Dict(:JZ => "5c"))[1] == " -JZ5c"
 	@test GMT.parse_JZ("", Dict(:Jz => "5c"))[1] == " -Jz5c"
 	@test GMT.parse_J("", Dict(:J => "X5"), "", false)[1] == " -JX5"
 	@test GMT.parse_J("", Dict(:a => ""), "", true, true)[1] == " -J"
 	@test GMT.parse_J("", Dict(:J => "X", :figsize => 10))[1] == " -JX10"
+	@test GMT.parse_J("", Dict(:J => "X", :scale => "1:10"))[1] == " -Jx1:10"
 	@test GMT.parse_J("", Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
 	@test GMT.parse_J("", Dict(:scale=>"1:10"))[1] == " -Jx1:10"
 	@test GMT.parse_J("", Dict(:s=>"1:10"), " -JU")[1] == " -JU"
@@ -48,6 +56,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_J("", Dict(:J => "M0/0"), "", false)[1] == " -JM0/0"
 	@test GMT.parse_J("", Dict(:J => (name=:merc,center=10)), "", false)[1] == " -JM10"
 	@test GMT.parse_J("", Dict(:J => (name=:merc,parallels=10)), "", false)[1] == " -JM0/0/10"
+	@test GMT.parse_J("", Dict(:J => (name=:Cyl_,center=(0,45))), "", false)[1] == " -JCyl_stere/0/45"
 	@test_throws ErrorException("When projection arguments are in a NamedTuple the projection 'name' keyword is madatory.") GMT.parse_J("", Dict(:J => (parallels=[45 65],)), "", false)
 	@test_throws ErrorException("When projection is a named tuple you need to specify also 'center' and|or 'parallels'") GMT.parse_J("", Dict(:J => (name=:merc,)), "", false)
 	r = GMT.parse_params("", Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")));
@@ -512,6 +521,8 @@ if (got_it)					# Otherwise go straight to end
 	coast(R=[-10 1 36 45], J="M", B="a", shore4=1,  E="PT,+gblue", borders="a", rivers="a", lc=:red, Vd=:cmd)
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), water=:blue, clip=:land, Vd=:cmd)
 	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), clip=:end, rivers="1/0.5p", Vd=:cmd)
+	r = coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60), frame=(annot=30, grid=15), res=:crude, area=10000, land=:tan, ocean=:cyan, shore=:thinnest, figsize=10, Vd=:cmd);
+	@test startswith(r, " -Rg -JF-120/35/60/10 -Bpa30g15 -A10000 -Dcrude -Gtan -Scyan -Wthinnest")
 	r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hello Round World", Vd=:cmd);
 	@test r[1:54] == " -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude"
 
