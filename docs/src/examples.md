@@ -22,7 +22,8 @@ some curvy lines.
 
 ```julia
 x = range(0, stop=2pi, length=180);       seno = sin.(x/0.2)*45;
-coast(region=[0 360 -90 90], proj="A300/30/6c", axis=:g, resolution="c", land=:navy)
+coast(region=[0 360 -90 90], proj=(name=:laea, center=(300,30)), frame=:g,
+      res=:crude, land=:navy, figsize=6)
 
 plot!(collect(x)*60, seno, lw=0.5, lc=:red, fmt=:png, marker=:circle,
       markeredgecolor=0, size=0.05, markerfacecolor=:cyan, show=true)
@@ -84,7 +85,7 @@ for more details about what the arguments mean.
 topo = makecpt(color=:rainbow, range=(1000,5000,500), continuous=true);
 grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", axis=:a, color=topo)
 colorbar!(position="jTC+w5i/0.25i+h+o0/-1i", region=[-108 -103 35 40], color=topo,
-          proj=[], axis="y+lm", fmt=:jpg, show=true)
+          proj=[], frame="y+lm", fmt=:jpg, show=true)
 ```
 
 !["Hello shaded world"](figures/hello-shaded-world.jpg)
@@ -97,7 +98,7 @@ We will make a perspective, color-coded view of the US Rockies from the southeas
 ```julia
 topo = makecpt(color=:rainbow, range=(1000,5000,500), continuous=true);
 grdview("@tut_relief.nc", proj="M12c", JZ="1c", shade="+ne0.8+a100", view=(135,30),
-        axis=:a, fmt=:jpg, color=topo, Q="i100", show=true)
+        frame=:a, fmt=:jpg, color=topo, Q="i100", show=true)
 ```
 
 !["Hello 3D view world"](figures/hello-view-world.jpg)
@@ -121,7 +122,7 @@ the image before it is complete. We have to do this because *imshow* is a one co
 only shot and so, by default, it has the *show* keyword hardwire to *true*.
 
     imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg",
-          axis=:g, region=:d, proj="I15c", image_in=:r, show=false)
-    coast!(shore="1,white", resolution=:c, fmt=:png, show=true)
+          frame=:g, region=:d, proj=:Sinusoidal, image_in=:r, show=false)
+    coast!(shore=(1,:white), resolution=:c, figsize=15, fmt=:png, show=true)
 
 ![SinuJessica](http://w3.ualg.pt/~jluis/jessy.png)

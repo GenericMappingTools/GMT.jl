@@ -17,7 +17,6 @@ function find_in_dict(d::Dict, symbs, del=false)
 end
 
 function parse_R(cmd::String, d::Dict, O=false, del=false)
-	
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	opt_R = ""
 	val, symb = find_in_dict(d, [:R :region :limits])
@@ -45,9 +44,13 @@ function parse_R(cmd::String, d::Dict, O=false, del=false)
 	return cmd, opt_R
 end
 
-function build_opt_R(Val)
+function build_opt_R(Val)		# Generic function that deals with all but NamedTuple args
 	if (isa(Val, String) || isa(Val, Symbol))
-		return string(" -R", Val)
+		r = string(Val)
+		if     (r == "global")     return " -Rd"
+		elseif (r == "global360")  return " -Rg"
+		else                       return " -R" * r
+		end
 	elseif ((isa(Val, Array{<:Number}) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
 		out = join([@sprintf("%.15g/",x) for x in Val])
 		return " -R" * rstrip(out, '/')		# Remove last '/'
@@ -55,6 +58,69 @@ function build_opt_R(Val)
 		return @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
 	end
 	return ""
+end
+
+function build_opt_R(arg::NamedTuple)
+	# Option -R can also be diabolicly complicated. Try to addres it. Stil misses the Time part.
+	BB = ""
+	d = nt2dict(arg)					# Convert to Dict
+	if ((val = find_in_dict(d, [:bb :limits :region])[1]) !== nothing)
+		if ((isa(val, Array{<:Number}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
+			if (haskey(d, :diag))		# The diagonal case
+				BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
+			else
+				BB = join([@sprintf("%.15g/",x) for x in val])
+				BB = rstrip(BB, '/')		# and remove last '/'
+			end
+		elseif (isa(val, String) || isa(val, Symbol))
+			t = string(val)
+			if     (t == "global")     BB = "-180/180/-90/90"
+			elseif (t == "global360")  BB = "0/360/-90/90"
+			else                       BB = string(val) 			# Whatever good stuff or shit it may contain
+			end
+		end
+	elseif ((val = find_in_dict(d, [:bb_diag :limits_diag :region_diag])[1]) !== nothing)	# Alternative way of saying "+r"
+		BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
+	elseif (haskey(d, :global))
+		BB = "-180/180/-90/90"
+	elseif (haskey(d, :global360))
+		BB = "0/360/-90/90"
+	elseif ((val = find_in_dict(d, [:continent :cont])[1]) !== nothing)
+		val = uppercase(string(val))
+		if     (startswith(val, "AF"))  BB = "=AF"
+		elseif (startswith(val, "AN"))  BB = "=AN"
+		elseif (startswith(val, "AS"))  BB = "=AS"
+		elseif (startswith(val, "EU"))  BB = "=EU"
+		elseif (startswith(val, "OC"))  BB = "=OC"
+		elseif (val[1] == 'N')  BB = "=NA"
+		elseif (val[1] == 'S')  BB = "=SA"
+		end
+	elseif ((val = find_in_dict(d, [:ISO :iso])[1]) !== nothing)
+		if (isa(val, String))  BB = val
+		else                   error("argument to the ISO key must be a string with country codes")
+		end
+	end
+
+	if ((val = find_in_dict(d, [:adjust :pad :extend :expand])[1]) !== nothing)
+		if (isa(val, String) || isa(val, Number))  t = string(val)
+		elseif (isa(val, Array{<:Number}) || isa(val, Tuple)) 
+			t = join([@sprintf("%.15g/",x) for x in val])
+			t = rstrip(t, '/')		# and remove last '/'
+		else
+			error("Increments for -R must be a String, a Number, Array or Tuple")
+		end
+		if (haskey(d, :adjust))  BB *= "+r" * t
+		else                     BB *= "+R" * t
+		end
+	end
+
+	if (haskey(d, :unit))  BB *= "+u" * string(d[:unit])[1]  end	# (e.g., -R-200/200/-300/300+uk)
+
+	if (BB == "")
+		error("No, no, no. Nothing useful in the region named tuple arguments")
+	else
+		return " -R" * BB
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -76,9 +142,9 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
 	# Default to 12c if no size is provided.
 	# If MAP == false, do not try to append a fig size
-	opt_J = ""
-	if ((val = find_in_dict(d, [:J :proj], del)[1]) !== nothing)
-		opt_J = build_opt_J(val)
+	opt_J = "";		mnemo = false
+	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
+		opt_J, mnemo = build_opt_J(val)
 	end
 	if (!map && opt_J != "")
 		return cmd * opt_J, opt_J
@@ -92,24 +158,25 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 		if (haskey(d, :figsize))
 			s = arg2str(d[:figsize])
 			if (haskey(d, :units))  s *= d[:units][1]  end
-			if (isdigit(opt_J[end]))  opt_J *= "/" * s
-			elseif (occursin("+proj", opt_J)) opt_J *= "+width=" * s
-			else                      opt_J *= s
+			if (occursin("+proj", opt_J)) opt_J *= "+width=" * s
+			else                          opt_J = append_figsize(opt_J, s)
 			end
 		elseif ((val = find_in_dict(d, [:figscale :scale])[1]) !== nothing)
 			val = string(val)
 			if (opt_J == " -JX")  isletter(val[1]) ? opt_J = " -J" * val : opt_J = " -Jx" * val	# FRAGILE
-			else                  opt_J *= string(val)
+			else                  opt_J = append_figsize(opt_J, val, true)
 			end
 		elseif (default != "" && opt_J == " -JX")
 			opt_J = default  					# -JX was a working default
 		elseif (occursin("+width=", opt_J))		# OK, a proj4 string, don't touch it. Size already in.
 		elseif (occursin("+proj", opt_J))		# A proj4 string but no size info. Use default size
 			opt_J *= "+width=" * def_fig_size[1:3]
+		elseif (mnemo)							# Proj name was obtained from a name mnemonic and no size. So use default
+			opt_J = append_figsize(opt_J)
 		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
 			#if !(length(opt_J) >= 6 && isnumeric(opt_J[6]))
 			if (length(opt_J) < 6 || !isnumeric(opt_J[6]))
-				opt_J *= def_fig_size[1:3]		# If no size, default to 12 centimeters
+				opt_J *= def_fig_size[1:3]
 			end
 		end
 	end
@@ -117,12 +184,28 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 	return cmd, opt_J
 end
 
+function append_figsize(opt_J, width="", scale=false)
+	# Appendng either a fig width or fig scale depends on what projection. Sometimes we need to separate with a '\'
+	# others not. If WIDTH == "" we use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
+	if (width == "")  width = def_fig_size[1:3]  end
+	if (isnumeric(opt_J[end]))                                   opt_J *= "/" * width
+	else
+		if (occursin("Cyl_", opt_J) || occursin("Poly", opt_J))  opt_J *= "/" * width
+		else                                                     opt_J *= width
+		end
+	end
+	if (scale)  opt_J = opt_J[1:3] * lowercase(opt_J[4]) * opt_J[5:end]  end 		# Turn " -JX" to " -Jx"
+	return opt_J
+end
+
 function build_opt_J(Val)
-	out = ""
+	out = "";	mnemo = false
 	if (isa(Val, String) || isa(Val, Symbol))
-		out = " -J" * parse_proj(string(Val))
+		prj, mnemo = parse_proj(string(Val))
+		out = " -J" * prj
 	elseif (isa(Val, NamedTuple))
-		out = " -J" * parse_proj(Val) 
+		prj, mnemo = parse_proj(Val)
+		out = " -J" * prj
 	elseif (isa(Val, Number))
 		if (!(typeof(Val) <: Int) || Val < 2000)
 			error("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (" * string(Val) * ") is clearly an invalid EPSG")
@@ -131,43 +214,46 @@ function build_opt_J(Val)
 	elseif (isempty(Val))
 		out = " -J"
 	end
-	return out
+	return out, mnemo
 end
 
 function parse_proj(p::String)
 	# See "p" is a string with a projection name. If yes, convert it into the corresponding -J syntax
-	if (p[1] == '+' || startswith(p, "epsg") || occursin('/', p) || length(p) < 3)  return p  end
+	if (p[1] == '+' || startswith(p, "epsg") || occursin('/', p) || length(p) < 3)  return p,false  end
+	mnemo = true			# True when the projection name used one of the below mnemonics
 	s = lowercase(p)
 	if     (s == "aea"   || s == "albers")                 out = "B0/0"
+	elseif (s == "cea"   || s == "cylindricalequalarea")   out = "Y0/0"
 	elseif (s == "laea"  || s == "lambertazimuthal")       out = "A0/0"
 	elseif (s == "lcc"   || s == "lambertconic")           out = "L0/0"
 	elseif (s == "aeqd"  || s == "azimuthalequidistant")   out = "E0/0"
 	elseif (s == "eqdc"  || s == "conicequidistant")       out = "D0/90"
 	elseif (s == "tmerc" || s == "transversemercator")     out = "T0"
-	elseif (s == "equidistant" || s == "equirectangular")  out = "Q"
+	elseif (s == "eqc"   || startswith(s, "plat") || startswith(s, "equidist") || startswith(s, "equirect"))  out = "Q"
 	elseif (s == "eck4"  || s == "eckertiv")               out = "Kf"
 	elseif (s == "eck6"  || s == "eckertvi")               out = "Ks"
 	elseif (s == "omerc" || s == "obliquemerc1")           out = "Oa"
 	elseif (s == "omerc2"|| s == "obliquemerc2")           out = "Ob"
 	elseif (s == "omercp"|| s == "obliquemerc3")           out = "Oc"
-	elseif (startswith(s, "cass"))       out = "C0/0"
-	elseif (startswith(s, "cyl_"))       out = "Cyl_stere"
-	elseif (startswith(s, "gnom"))       out = "F0/0"
-	elseif (startswith(s, "hammer"))     out = "H"
-	elseif (startswith(s, "merc"))       out = "M"
-	elseif (startswith(s, "mill"))       out = "J"
-	elseif (startswith(s, "moll"))       out = "W"
-	elseif (startswith(s, "ortho"))      out = "G0/0"
-	elseif (startswith(s, "poly"))       out = "Poly"
-	elseif (startswith(s, "robin"))      out = "N"
-	elseif (startswith(s, "stere"))      out = "S0/90"
-	elseif (startswith(s, "sinu"))       out = "I"
-	elseif (startswith(s, "utm"))        out = "U" * s[4:end]
-	elseif (startswith(s, "vandg"))      out = "V"
-	elseif (s == "winkel" || s == "wintri")                out = "R"
-	else   out = p
+	elseif (startswith(s, "cyl_") || startswith(s, "cylindricalster"))  out = "Cyl_stere"
+	elseif (startswith(s, "cass"))   out = "C0/0"
+	elseif (startswith(s, "gnom"))   out = "F0/0"
+	elseif (startswith(s, "ham"))    out = "H"
+	elseif (startswith(s, "lin"))    out = "X"
+	elseif (startswith(s, "merc"))   out = "M"
+	elseif (startswith(s, "mil"))    out = "J"
+	elseif (startswith(s, "mol"))    out = "W"
+	elseif (startswith(s, "ortho"))  out = "G0/0"
+	elseif (startswith(s, "poly"))   out = "Poly"
+	elseif (startswith(s, "robin"))  out = "N"
+	elseif (startswith(s, "stere"))  out = "S0/90"
+	elseif (startswith(s, "sinu"))   out = "I"
+	elseif (startswith(s, "utm"))    out = "U" * s[4:end]
+	elseif (startswith(s, "vand"))   out = "V"
+	elseif (startswith(s, "win"))    out = "R"
+	else   out = p;		mnemo = false
 	end
-	return out
+	return out, mnemo
 end
 
 function parse_proj(p::NamedTuple)
@@ -176,24 +262,30 @@ function parse_proj(p::NamedTuple)
 	# maybe a scalar but the validity of that is not checked here).
 	d = nt2dict(p)					# Convert to Dict
 	if ((val = find_in_dict(d, [:name])[1]) !== nothing)
-		prj = parse_proj(string(val))
+		prj, mnemo = parse_proj(string(val))
+		if (prj != "Cyl_stere" && prj == string(val))
+			@warn("Very likely the projection name ($prj) is unknown to me. Expect troubles")
+		end
 	else
 		error("When projection arguments are in a NamedTuple the projection 'name' keyword is madatory.")
 	end
 
 	center = ""
 	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
-		if (isa(val, String))                         center = val
-		elseif (isa(val, Array) && length(val) == 2)  center = @sprintf("%.8g/%.8g", val[1], val[2])
-		elseif (isa(val, Number))                     center = @sprintf("%.8g", val)
+		if (isa(val, String))      center = val
+		elseif (isa(val, Number))  center = @sprintf("%.8g", val)
+		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)  center = @sprintf("%.8g/%.8g", val[1], val[2])
 		end
 	end
 
+	if (center != "" && (val = find_in_dict(d, [:horizon])[1]) !== nothing)  center = string(center, '/',val)  end
+
 	parallels = ""
 	if ((val = find_in_dict(d, [:parallels])[1]) !== nothing)
-		if (isa(val, String))                         parallels = "/" * val
-		elseif (isa(val, Array) && length(val) == 2)  parallels = @sprintf("/%.8g/%.8g", val[1], val[2])
-		elseif (isa(val, Number))                     parallels = @sprintf("/%.8g", val)
+		if (isa(val, String))      parallels = "/" * val
+		elseif (isa(val, Number))  parallels = @sprintf("/%.8g", val)
+		elseif (isa(val, Array) || isa(val, Tuple) && length(val) <= 3)
+			parallels = join([@sprintf("/%.12g",x) for x in val])
 		end
 	end
 
@@ -201,11 +293,11 @@ function parse_proj(p::NamedTuple)
 	elseif (center != "")                     center *= parallels			# even if par == ""
 	else   error("When projection is a named tuple you need to specify also 'center' and|or 'parallels'")
 	end
-	if (startswith(prj, "Cyl"))  prj = prj[1:9] * center	# The unique Cyl_stere case
+	if (startswith(prj, "Cyl"))  prj = prj[1:9] * "/" * center	# The unique Cyl_stere case
 	elseif (prj[1] == 'K' || prj[1] == 'O')  prj = prj[1:2] * center	# Eckert || Oblique Merc
 	else                         prj = prj[1] * center
 	end
-	return prj
+	return prj, mnemo
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -357,8 +449,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_UVXY(cmd::String, d::Dict)
 	cmd = parse_V(cmd, d)
-	cmd = parse_UXY(cmd, d, [:X :x_off :x_offset], 'X')
-	cmd = parse_UXY(cmd, d, [:Y :y_off :y_offset], 'Y')
+	cmd = parse_UXY(cmd, d, [:X :xoff :x_off :x_offset], 'X')
+	cmd = parse_UXY(cmd, d, [:Y :yoff :y_off :y_offset], 'Y')
 	cmd = parse_UXY(cmd, d, [:U :stamp :time_stamp], 'U')
 	return cmd
 end
@@ -692,13 +784,19 @@ function build_pen(d::Dict, del::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_arg_and_pen(arg::Tuple)
+function parse_arg_and_pen(arg::Tuple, opt="")
 	# Parse an ARG of the type (arg, (pen)) and return a string. These may be used in pscoast -I & -N
-	if (isa(arg[1], String))      s = arg[1]
-	elseif (isa(arg[1], Number))  s = @sprintf("%d", arg[1])
-	else	error("Nonsense first argument")
+	# OPT is the option code letter including the leading - (e.g. -I or -N). This is only used when
+	# the ARG tuple has 4, 6, etc elements (arg1,(pen), arg2,(pen), arg3,(pen), ...)
+	if (isa(arg[1], String) || isa(arg[1], Symbol) || isa(arg[1], Number))  s = string(arg[1])
+	else	error("parse_arg_and_pen: Nonsense first argument")
 	end
-	if (length(arg) > 1 && isa(arg[2], Tuple))  s *= "/" * parse_pen(arg[2])  end
+	if (length(arg) > 1)
+		if (isa(arg[2], Tuple))  s *= "/" * parse_pen(arg[2])
+		else                     s *= "/" * string(arg[2])		# Whatever that is
+		end
+	end
+	if (length(arg) >= 4) s *= " " * opt * parse_arg_and_pen((arg[3:end]))  end		# Recursive call
 	return s
 end
 
@@ -1437,6 +1535,7 @@ function fname_out(d::Dict)
 		elseif (ext == "pdf")  opt_T = " -Tf";	out = template;		EXT = ext
 		elseif (ext == "eps")  opt_T = " -Te";	out = template;		EXT = ext
 		elseif (ext == "png")  opt_T = " -Tg";	out = template;		EXT = ext
+		elseif (ext == "PNG")  opt_T = " -TG";	out = template;		EXT = "png"		# Don't want it to be .PNG
 		elseif (ext == "jpg")  opt_T = " -Tj";	out = template;		EXT = ext
 		elseif (ext == "tif")  opt_T = " -Tt";	out = template;		EXT = ext
 		elseif (ext == "pdg")  opt_T = " -Tf -Qp";	out = template;	EXT = "pdf"

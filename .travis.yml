@@ -6,9 +6,8 @@ sudo: false
 os:
   - linux
 julia:
-  #- 0.7
   - 1.0.3
-  - nightly
+  #- nightly
 matrix:
   allow_failures:
     - julia: nightly
