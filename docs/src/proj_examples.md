@@ -119,7 +119,9 @@ coast(region=(-180,-20,0,90), proj=:poly, xaxis=(annot=30,grid=10), yaxis=(annot
       res=:crude, area=1000, land=:lightgray, shore=:thinnest, figsize=10, show=true)
 ```
 
-!["GMT_Polyconic"](figures/mapproj/GMT_polyconic.png)
+```@raw html
+<img src="../figures/mapproj/GMT_polyconic.png" alt="GMT_Polyconic" title="(American) polyconic projection" width="500" class="center"/>
+```
 
 # Azimuthal projections
 
@@ -154,7 +156,9 @@ coast(region="0/-40/60/-10+r", proj=(name=:laea, center=[30,-30]), frame=:ag, re
       area=500, land=(pattern=10,dpi=300), shore=:thinnest, figsize=10, show=1)
 ```
 
-!["Lambert_az_rect"](figures/mapproj/lambert_az_rect.png)
+```@raw html
+<img src="../figures/mapproj/lambert_az_rect.png" alt="Lambert_az_rect" width="500" class="center"/>
+```
 
 Note that an **+r** is appended to the region option to inform GMT that the region has been selected using the
 rectangle technique, otherwise it would try to decode the values as west, east, south, north and report
@@ -166,11 +170,13 @@ Here, you must specify the world as your region. E.g., to obtain a hemisphere vi
 try
 
 ```julia
-coast(region=:g, proj=(name=:laea, center=[0,30]), frame=:g, res=:crude, area=1000,
+coast(region=:g, proj=(name=:laea, center=[280,30]), frame=:g, res=:crude, area=1000,
       land=:navy, figsize=8, show=true)
 ```
 
-!["GMT_Lambert_az_hemi"](figures/mapproj/GMT_lambert_az_hemi.png)
+```@raw html
+<img src="../figures/mapproj/GMT_lambert_az_hemi.png" alt="GMT_Lambert_az_hemi" width="400" class="center"/>
+```
 
 ## Stereographic Equal-Angle
 
@@ -201,7 +207,9 @@ coast(region=(-30,30,60,72), proj=(name=:Stereographic, center=[0,90], paralles=
       figscale="1:30000000", show=1)
 ```
 
-!["GMT_stereographic_polar"](figures/mapproj/GMT_stereographic_polar.png)
+```@raw html
+<img src="../figures/mapproj/GMT_stereographic_polar.png" alt="GMT_stereographic_polar" width="500" class="center"/>
+```
 
 
 ### Rectangular stereographic map
@@ -216,7 +224,9 @@ coast(region="-25/59/70/72+r", proj=(name=:stereographic, center=(10,90)), frame
       area=250, land=:darkbrown, shore=:thinnest, water=:lightgray, figsize=11, show=true)
 ```
 
-!["GMT_stereographic_rect"](figures/mapproj/GMT_stereographic_rect.png)
+```@raw html
+<img src="../figures/mapproj/GMT_stereographic_rect.png" alt="GMT_stereographic_rect" width="500" class="center"/>
+```
 
 ### General stereographic map
 
@@ -229,7 +239,9 @@ coast(region="100/-42/160/-8r", proj=(name=:stereographic, center=(130,-30)), fr
       area=500, land=:green, ocean=:lightblue, shore=:thinnest, figsize=10, show=true)
 ```
 
-!["GMT_stereographic_general"](figures/mapproj/GMT_stereographic_general.png)
+```@raw html
+<img src="../figures/mapproj/GMT_stereographic_general.png" alt="GMT_stereographic_general" width="500" class="center"/>
+```
 
 ## Perspective projection
 
@@ -263,7 +275,9 @@ coast(region=:g, proj="G4/52/230/90/60/180/60/60", xaxis=(annot=2,grid=2), yaxis
       par=(:MAP_ANNOT_MIN_SPACING,0.65), show=true)
 ```
 
-!["GMT_perspective"](figures/mapproj/GMT_perspective.png)
+```@raw html
+<img src="../figures/mapproj/GMT_perspective.png" alt="GMT_perspective" width="500" class="center"/>
+```
 
 
 ## Orthographic projection
@@ -292,7 +306,9 @@ coast(region=:g, proj=(name=:ortho, center=(-75,41)), frame=:g, res=:crude, area
       land=:pink, ocean=:thistle, figsize=10, show=true)
 ```
 
-!["GMT_orthographic"](figures/mapproj/GMT_orthographic.png)
+```@raw html
+<img src="../figures/mapproj/GMT_orthographic.png" alt="GMT_orthographic" width="400" class="center"/>
+```
 
 
 ## Azimuthal Equidistant projection
@@ -320,7 +336,9 @@ coast(region=:g, proj=(name=:azimuthalEquidistant, center=(-100,40)), frame=:g,
       res=:crude, area=10000, land=:lightgray, shore=:thinnest, figsize=10, show=true)
 ```
 
-!["GMT_az_equidistant"](figures/mapproj/GMT_az_equidistant.png)
+```@raw html
+<img src="../figures/mapproj/GMT_az_equidistant.png" alt="GMT_az_equidistant" width="400" class="center"/>
+```
 
 ## Gnomonic projection
 
@@ -348,7 +366,9 @@ coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60),
       shore=:thinnest, figsize=10, show=true)
 ```
 
-!["GMT_gnomonic"](figures/mapproj/GMT_gnomonic.png)
+```@raw html
+<img src="../figures/mapproj/GMT_gnomonic.png" alt="GMT_gnomonic" width="400" class="center"/>
+```
 
 # Cylindrical projections
 
@@ -393,7 +413,9 @@ coast(region=(0,360,-70,70), proj=:Mercator, xaxis=(annot=60,ticks=15), yaxis=(a
       res=:crude, area=:5000, land=:red, scale=0.03, par=(:MAP_FRAME_TYPE,"fancy+"), show=true)
 ```
 
-!["GMT_mercator"](figures/mapproj/GMT_mercator.png)
+```@raw html
+<img src="../figures/mapproj/GMT_mercator.png" alt="GMT_mercator" width="500" class="center"/>
+```
 
 While this example is centered on the Dateline, one can easily choose another configuration with the
 *region* option. A map centered on Greenwich would specify the region with ``region=(-180,180,-70,70)``
@@ -419,7 +441,9 @@ coast(region="20/30/50/45r", proj=(name=:tmerc, center=35), frame=:ag, res=:low,
       area=250, land=:lightbrown, ocean=:seashell, shore=:thinnest, scale=0.45, show=true)
 ```
 
-!["GMT_transverse_merc"](figures/mapproj/GMT_transverse_merc.png)
+```@raw html
+<img src="../figures/mapproj/GMT_transverse_merc.png" alt="GMT_transverse_merc" width="500" class="center"/>
+```
 
 The transverse Mercator can also be used to generate a global map - the equivalent of the 360º Mercator map.
 Using the command
@@ -430,7 +454,9 @@ coast(region=(0,360,-80,80), proj=(name=:tmerc, center=[330 -45]),
       water=:lightblue, figsize=9, show=true)
 ```
 
-!["GMT_TM"](figures/mapproj/GMT_TM.png)
+```@raw html
+<img src="../figures/mapproj/GMT_TM.png" alt="GMT_TM" width="400" class="center"/>
+```
 
 we made the map illustrated in figure below. Note that when a world map is given (indicated by
 ``region=(0,360,-80,80)``), the arguments are interpreted to mean oblique degrees, i.e., the 360º range is
@@ -474,7 +500,9 @@ coast(region="270/20/305/25+r", proj=(name=:omercp, center=[280 25.5], parallels
       rose="jTR+w1+f2+l+o0.4", figsize=12, par=(FONT_TITLE=8, MAP_TITLE_OFFSET=0.12), show=true)
 ```
 
-!["GMT_obl_merc"](figures/mapproj/GMT_obl_merc.png)
+```@raw html
+<img src="../figures/mapproj/GMT_obl_merc.png" alt="GMT_obl_merc" width="500" class="center"/>
+```
 
 ## Cassini cylindrical projection
 
@@ -500,7 +528,9 @@ coast(region="7:30/38:30/10:30/41:30r", proj=(name=:Cassini, center=[8.75 40]),
       par=(:FONT_LABEL,12), show=true)
 ```
 
-!["GMT_cassini"](figures/mapproj/GMT_cassini.png)
+```@raw html
+<img src="../figures/mapproj/GMT_cassini.png" alt="GMT_cassini" width="400" class="center"/>
+```
 
 
 ## Cylindrical equidistant projection
@@ -524,7 +554,9 @@ coast(region=:g, proj=:equidistCylindrical, frame=(annot=60, ticks=30, grid=30),
       res=:crude, area=5000, land=:tan4, water=:lightcyan, figsize=12, show=true)
 ```
 
-!["GMT_equi_cyl"](figures/mapproj/GMT_equi_cyl.png)
+```@raw html
+<img src="../figures/mapproj/GMT_equi_cyl.png" alt="GMT_equi_cyl" width="500" class="center"/>
+```
 
 Different relative scalings of longitudes and latitudes can be obtained by selecting a standard parallel
 different from the equator. Some selections for standard parallels have practical properties as shown in
@@ -572,7 +604,9 @@ coast(region=(-145,215,-90,90), proj=(name=:cylindricalEqualArea, center=(35,30)
       shore=:thinnest, figsize=12, show=true)
 ```
 
-!["GMT_general_cyl"](figures/mapproj/GMT_general_cyl.png)
+```@raw html
+<img src="../figures/mapproj/GMT_general_cyl.png" alt="GMT_general_cyl" width="500" class="center"/>
+```
 
 As one can see there is considerable distortion at high latitudes since the poles map into lines.
 
@@ -598,7 +632,9 @@ coast(region=(-90,270,-80,90), proj=:Miller, xaxis=(annot=45,grid=45),
       shore=:thinnest, scale="1:400000000", show=true)
 ```
 
-!["GMT_miller"](figures/mapproj/GMT_miller.png)
+```@raw html
+<img src="../figures/mapproj/GMT_miller.png" alt="GMT_miller" width="500" class="center"/>
+```
 
 
 ## Cylindrical stereographic projections
@@ -636,7 +672,9 @@ coast(region=(-180,180,-60,80), proj=(name=:cylindricalStereographic, center=(0,
       area=5000, shore=:black, land=:seashell4, ocean=:antiquewhite1, figsize=12, show=true)
 ```
 
-!["GMT_gall_stereo"](figures/mapproj/GMT_gall_stereo.png)
+```@raw html
+<img src="../figures/mapproj/GMT_gall_stereo.png" alt="GMT_gall_stereo" width="500" class="center"/>
+```
 
 # Miscellaneous projections
 
@@ -666,7 +704,9 @@ coast(region=:g, proj=:Hammer, frame=:g, res=:crude, area=10000, land=:black,
 	  ocean=:cornsilk, figsize=12, show=true)
 ```
 
-!["GMT_hammer"](figures/mapproj/GMT_hammer.png)
+```@raw html
+<img src="../figures/mapproj/GMT_hammer.png" alt="GMT_hammer" width="500" class="center"/>
+```
 
 ## Mollweide projection
 
@@ -688,7 +728,9 @@ coast(region=:d, proj=:Mollweide, frame=:g, res=:crude, area=10000, land=:tomato
 	  water=:skyblue, figsize=12, show=true)
 ```
 
-!["GMT_mollweide"](figures/mapproj/GMT_mollweide.png)
+```@raw html
+<img src="../figures/mapproj/GMT_mollweide.png" alt="GMT_mollweide" width="500" class="center"/>
+```
 
 
 ## Winkel Tripel projection
@@ -716,7 +758,9 @@ coast(region=:d, proj=:Winkel, frame=:g, res=:crude, area=10000, land=:burlywood
 	  water=:wheat1, figsize=12, show=true)
 ```
 
-!["GMT_winkel"](figures/mapproj/GMT_winkel.png)
+```@raw html
+<img src="../figures/mapproj/GMT_winkel.png" alt="GMT_winkel" width="500" class="center"/>
+```
 
 
 ## Robinson projection
@@ -739,7 +783,9 @@ coast(region=:d, proj=:Robinson, frame=:g, res=:crude, area=10000, land=:goldenr
 	  water=:snow2, figsize=12, show=true)
 ```
 
-!["GMT_robinson"](figures/mapproj/GMT_robinson.png)
+```@raw html
+<img src="../figures/mapproj/GMT_robinson.png" alt="GMT_robinson" width="500" class="center"/>
+```
 
 
 ## Eckert IV and VI projection
@@ -763,7 +809,9 @@ coast(region=:d, proj=:EckertIV, frame=:g, res=:crude, area=10000, land=:ivory,
 	  water=:bisque3, shore=:thinnest, figsize=12, show=true)
 ```
 
-!["GMT_eckert4"](figures/mapproj/GMT_eckert4.png)
+```@raw html
+<img src="../figures/mapproj/GMT_eckert4.png" alt="GMT_eckert4" width="500" class="center"/>
+```
 
 The same script, *EckertVI* instead of *EckertIV*, yields the Eckert VI map:
 
@@ -772,7 +820,9 @@ coast(region=:d, proj=:EckertVI, frame=:g, res=:crude, area=10000, land=:ivory,
 	  water=:bisque3, shore=:thinnest, figsize=12, show=true)
 ```
 
-!["GMT_eckert6"](figures/mapproj/GMT_eckert6.png)
+```@raw html
+<img src="../figures/mapproj/GMT_eckert6.png" alt="GMT_eckert6" width="500" class="center"/>
+```
 
 
 ## Sinusoidal projection
@@ -793,7 +843,9 @@ coast(region=:d, proj=:Sinusoidal, xaxis=(grid=30,), yaxis=(grid=15,), res=:crud
       area=10000, land=:coral4, water=:azure3, figsize=12, show=true)
 ```
 
-!["GMT_sinusoidal"](figures/mapproj/GMT_sinusoidal.png)
+```@raw html
+<img src="../figures/mapproj/GMT_sinusoidal.png" alt="GMT_sinusoidal" width="500" class="center"/>
+```
 
 To reduce distortion of shape the interrupted sinusoidal projection was introduced in 1927. Here, three
 symmetrical segments are used to cover the entire world. Traditionally, the interruptions are at 160ºW,
@@ -811,7 +863,9 @@ coast!(region=(60,200,-90,90), frame=:g, res=:crude, area=10000, land=:darkblue,
        water=:azure, xoff=2.6664, scale=0.03333, show=true)
 ```
 
-!["GMT_sinus_int"](figures/mapproj/GMT_sinus_int.png)
+```@raw html
+<img src="../figures/mapproj/GMT_sinus_int.png" alt="GMT_sinus_int" width="500" class="center"/>
+```
 
 The usefulness of the interrupted sinusoidal projection is basically limited to display of global,
 discontinuous data distributions like hydrocarbon and mineral resources, etc.
@@ -834,5 +888,7 @@ coast(region=:g, proj=:VanderGrinten, xaxis=(grid=30,), yaxis=(grid=15,),res=:cr
       land=:lightgray, water=:cornsilk, area=10000, shore=:thinnest, figsize=10, show=true)
 ```
 
-!["GMT_grinten"](figures/mapproj/GMT_grinten.png)
+```@raw html
+<img src="../figures/mapproj/GMT_grinten.png" alt="GMT_grinten" width="400" class="center"/>
+```
 
