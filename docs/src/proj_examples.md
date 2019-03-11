@@ -19,18 +19,22 @@ Note that you must include the **1:** if you choose to specify the scale that wa
 means 0.5 cm/degree or 1:200000 which means 1 cm on the map equals 200,000 cm along the standard
 parallels. The projection center defines the origin of the rectangular map coordinates. As an example we
 will make a map of the region near Taiwan. We choose the center of the projection to be at 125ºE/20ºN and
-25ºN and 45ºN as our two standard parallels. We desire a map that is 12 cm wide (the dafault).The complete
+25ºN and 45ºN as our two standard parallels. We desire a map that is 12 cm wide (the dafault). The complete
 command needed to generate the map below is therefore given by:
 
 ```julia
-coast(region=[110 140 20 35], proj=(name=:Albers, center=[125 20], parallels=[25 45]),
-      frame=:ag, res=:low, area=250, land=:green, shore=:thinnest, show=true)
+coast(region=[110 140 20 35],                                   # The Map limits	
+      proj=(name=:Albers, center=[125 20], parallels=[25 45]),  # The projection parameters
+      frame=:ag,          # Tell it to set annotations and grid lines automatically
+      resolution=:low,    # Use the low resolution coastlines
+      area=250,           # Do not plot polygons with areas < 250 km^2
+      land=:green,        # Paint land with green
+      shore=:thinnest,    # Coastlines are drwan with a 0.1 pt thickness
+      show=true)
 ```
 
-!["GMT_Albers"](figures/mapproj/GMT_albers.png)
-
 ```@raw html
-<img src="figures/mapproj/GMT_albers.png" alt="" title="Albers equal-area conic map projection" width="150" height="100"/>
+<img src="../figures/mapproj/GMT_albers.png" alt="GMT_Albers" title="Albers equal-area conic map projection" width="500" class="center"/>
 ```
 
 ## Equidistant conic
@@ -54,7 +58,9 @@ coast(region=[-88 -70 18 24], proj=(name=:eqdc, center=[-79 21], parallels=[19 2
       shore=:thinnest, show=true)
 ```
 
-!["GMT_equidistant_conic"](figures/mapproj/GMT_equidistant_conic.png)
+```@raw html
+<img src="../figures/mapproj/GMT_equidistant_conic.png" alt="GMT_equidistant_conic" title="Equidistant conic map projection" width="500" class="center"/>
+```
 
 ## Lambert conic conformal
 
@@ -83,7 +89,9 @@ coast(region=[-130 -70 24 52], proj=(name=:lambertConic, center=[-100 35], paral
       water=:blue, shore=(:thinnest,:white), show=true)
 ```
 
-!["GMT_lambert_conic"](figures/mapproj/GMT_lambert_conic.png)
+```@raw html
+<img src="../figures/mapproj/GMT_lambert_conic.png" alt="GMT_lambert_conic" title="Lambert conformal conic map projection" width="500" class="center"/>
+```
 
 
 ## (American) polyconic projection
