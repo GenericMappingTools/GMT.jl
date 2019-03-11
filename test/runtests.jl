@@ -18,6 +18,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
 	@test GMT.build_opt_R(:d) == " -Rd"
 	@test GMT.build_opt_R([]) == ""
+	@test GMT.build_opt_R((bb=:global,)) == " -R-180/180/-90/90"
 	@test GMT.build_opt_R((bb=:global360,)) == " -R0/360/-90/90"
 	@test GMT.build_opt_R((bb=(1,2,3,4),)) == " -R1/2/3/4"
 	@test GMT.build_opt_R((bb=(1,2,3,4), diag=1)) == " -R1/3/2/4+r"
@@ -261,7 +262,8 @@ if (got_it)					# Otherwise go straight to end
 	end
 
 	# GRDCLIP
-	G2=grdclip(G,above=[5 6], low=[2 2], between="3/4/3.5"); # Use G of previous test
+	G2=grdclip(G,above="5/6", low=[2 2], between=[3 4 4.5]);	 # Use G of previous test
+	@test_throws ErrorException("Wrong number of elements in S option") G2=grdclip(G,above="5/6", low=[2], between=[3 4 4.5]);
 
 	# GRDCONTOUR
 	G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
