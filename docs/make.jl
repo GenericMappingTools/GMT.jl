@@ -4,6 +4,7 @@ makedocs(
     modules = [GMT],
     format = :html,
     sitename = "GMT",
+    assets = ["assets/custom.css"],
     pages = Any[
         "Introduction"             => "usage.md",
         "Some examples"            => "examples.md",
