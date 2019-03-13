@@ -28,6 +28,10 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.build_opt_R((iso="PT,ES",extend=4)) == " -RPT,ES+R4"
 	@test GMT.build_opt_R((iso="PT,ES",extend=[2,3])) == " -RPT,ES+R2/3"
 	@test GMT.build_opt_R((bb=:d,unit=:k)) == " -Rd+uk"			# Idiot but ok
+	@test_throws ErrorException("argument to the ISO key must be a string with country codes") GMT.build_opt_R((iso=:PT,))
+	@test_throws ErrorException("No, no, no. Nothing useful in the region named tuple arguments") GMT.build_opt_R((zz=:x,))
+	@test_throws ErrorException("Unknown continent name") GMT.build_opt_R((continent='a',extend=4))
+	@test_throws ErrorException("Increments for limits must be a String, a Number, Array or Tuple") GMT.build_opt_R((iso="PT",extend='8'))
 	@test GMT.build_opt_J(:X5)[1] == " -JX5"
 	@test GMT.build_opt_J(2500)[1] == " -J2500"
 	@test GMT.build_opt_J([])[1] == " -J"
@@ -120,6 +124,8 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(r," -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb")
 	psxy!([0 0; 1 1.1], Vd=:cmd);
 	psxy!("", [0 0; 1 1.1], Vd=:cmd);
+	GMT.get_marker_name(Dict(:y => "y"), [:y])
+	@test_throws ErrorException("Argument of the *bar* keyword can be only a string or a NamedTuple.") GMT.parse_bar_cmd(Dict(:a => 0), :a, "", "")
 
 	GMT.round_wesn([1.333 17.4678 6.66777 33.333], true);
 	GMT.round_wesn([1 1 2 2]);
@@ -178,6 +184,7 @@ if (got_it)					# Otherwise go straight to end
 	# GMTLOGO
 	logo(D="x0/0+w2i")
 	logo(julia=8)
+	logo(GMTjulia=8, fmt=:png, Vd=:cmd)
 	logo!(julia=8, Vd=:cmd)
 	logo!("", julia=8, Vd=:cmd)
 
