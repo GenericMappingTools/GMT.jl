@@ -206,99 +206,175 @@ The entire parameters collection is displayed in the following table
    [1] However, the original GMT compact syntax can also be used. I.e, *axis=:a*, or *frame=:WSen*
    or *frame="a1Of1d WS"* also work.
 
-   [`-B GMT doc`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#b-full)
+   [`-B GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#b-full)
 
 ## Examples
 
 Demonstrates use of dual (left vs right, bottom vs top) Cartesian axis labels
 
 ```julia
-basemap(limits=(0,50,0,7), proj="X14c/14c",
+basemap(limits=(0,50,0,7), figsize=8,
         xaxis=(annot=:auto, ticks=:auto, label="Bottom Label", seclabel="Top label"),
         yaxis=(annot=:auto, ticks=:auto, label="Left label", seclabel="Right label"), show=1)
 ```
 
-we can obtain the same result with a slightly shorter version of the above that shows how can mix *axis* and *xaxis* calls.
+we can obtain the same result with a slightly shorter version of the above that shows how can mix *frame* and *xaxis* calls.
 
 ```julia
-basemap(limits=(0,50,0,7), proj="X14c/14c",
-        axis=(annot=:auto, ticks=:auto, xlabel="Bottom Label", ylabel="Left label"),
+basemap(limits=(0,50,0,7), figsize=8,
+        frame=(annot=:auto, ticks=:auto, xlabel="Bottom Label", ylabel="Left label"),
         xaxis=(seclabel="Top label",), yaxis=(seclabel="Right label",), show=1)
 ```
 
-Show inside labeling.
+Show inside labeling (use default fig size).
 
 ```julia
-basemap(limits=(0,13,0,10), proj="x1",
-        axis=(annot=2, ticks=0.5), par=(:MAP_FRAME_TYPE,:inside), show=1)
+basemap(limits=(0,13,0,10), frame=(annot=2, ticks=0.5), par=(:MAP_FRAME_TYPE,:inside), show=1)
 ```
 
 Show horizontal and vertical annotations
 
 ```julia
-basemap(region=[0 1000 0 1000], proj="X5/5",
-        axis=(axes=(:left_full,:bottom_full,:right_full,:top_full), annot=200,
-              ticks=100, xlabel=:horizontal, ylabel=:vertical),
+basemap(region=[0 1000 0 1000], figsize=5,
+        frame=(axes=(:left_full,:bottom_full,:right_full,:top_full), annot=200,
+               ticks=100, xlabel=:horizontal, ylabel=:vertical),
         par=(FONT_ANNOT_PRIMARY=10, FONT_LABEL=16, MAP_ANNOT_ORTHO=:we))
 
-basemap!(axis=(axes=(:left_full,:bottom_full,:right_full,:top_full), annot=200,
-               ticks=100, xlabel=:horizontal, ylabel=:vertical),
+basemap!(frame=(axes=(:left_full,:bottom_full,:right_full,:top_full), annot=200,
+                ticks=100, xlabel=:horizontal, ylabel=:vertical),
          par=(FONT_ANNOT_PRIMARY=10, FONT_LABEL=16, MAP_ANNOT_ORTHO=:sn),
-         x_offset=10, show=1)
+         x_offset=9, show=1)
 ```
 
 Show `Yhlabel` for horizontal labels for y-axis 
 
 ```julia
-basemap(region="-30/30/-20/20", proj="X12/8",
-        axis=(annot=:a, ticks=:a, xlabel="Standard horizontal label", Yhlabel="@~Y(q)@~"
-              title="Vertical Y-axis label"), show=1)
+basemap(region="-30/30/-20/20", figsize=(12,8),
+        frame=(annot=:a, ticks=:a, xlabel="Standard horizontal label", Yhlabel="@~Y(q)@~",
+               title="Vertical Y-axis label"), show=1)
 ```
 
 --------------------------
 
 # limits
 
-- *R* **|** *region* **|** *limits* **|** *xlimits*,*ylimits* : *limits=(xmin, xmax, ymin, ymax)* **|**
-  *limits=(BB=(xmin, xmax, ymin, ymax),)* **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more 
+- *R* **|** *region* **|** *limits* **|** *xlimits*,*ylimits*
 
    *xmin*, *xmax*, *ymin*, and *ymax* specify the region of interest (aka, BoundingBox). For geographic
    regions, these limits correspond to *west*, *east*, *south*, and *north* and you may specify them in
-   decimal degrees or in [+|-]dd:mm[:ss.xxx][W|E|S|N] format. In this case the elements of the `Tuple` or
-   `NamedTuple` must ofc be in string format. Used the *LLUR* form if lower left and upper right map
-   coordinates are given instead of *(xmin, xmax, ymin, ymax)*. The *xlimts*, *ylimits* is used to break
-   the specification into two pairs but it won't support all the options of the *limits* functionality.
+   decimal degrees or in [+|-]dd:mm[:ss.xxx][W|E|S|N] format.
+   
+   Using the form *region = [xmin xmax ymin ymax]* or the equivalent tuple alternative covers the largest
+   chunk of user cases. However, for fine tunning the limits setting we have an extended syntax that
+   involves the use of Named Tuples. Next needed case is when one want/need to specify the BoundingBox
+   with the *(xmin, ymin, xmax, ymax)* corners. As mentioned, this involves a NamedTuple keyword that
+   can have any of the following members name/value:
 
-   The two shorthands *limits=:g* and *limits=:d* stand for global domain (0/360 and -180/+180 in longitude
-   respectively, with -90/+90 in latitude).
+   - *R=xx*, *region=xx* or *limits=xx* -- where *xx* is a string is interpreted as a GMT **-R** syntax string.
+   - *bb*, *lmits*, *region* -- a four (or six) elements array or tuple with *xmin, xmax, ymin, ymax [zmin zmax]*
+   - *bb=global* or *bb=:d* -- shorthand for *bb=[-180 180 -90 90] 
+   - *bb=global360* or *bb=:g* -- shorthand for *bb=[0 360 -90 90] 
+   - *bb_diag*, *limits_diag*, *region_diag* or *LLUR* -- a four elements array with *xmin, ymin, xmax, ymax*
+   - *diag=true* -- makes the *bb* mean *bb_diag*
+   - *cont* or *continents=continent name* where *continent name* is any of: *Africa*, *Antarctica*,
+     *Asia*, *Europe*, *Oceania*,  *North America* or *South America* (or the shorthands: *AF, AN, AS, EU,
+      OC, NA, SA*). This sets the geographic limts covered by these continents.
+   - *ISO=code* -- use ISO country codes from the Digital Chart of the World. Append one or more comma-separated
+      countries using the 2-character ISO 3166-1 alpha-2 convention. To select a state of a country
+      (if available), append .state, e.g, US.TX for Texas.
+   - *adjust=xx* -- where *xx* is either a String, a Number or an Array/Tuple to set an *inc*, *xinc yinc*,
+      or *winc einc sinc ninc* to adjust the region to be a multiple of these steps steps.
+   - *pad=xx*, *extend=xx* or *expand=xx* -- same as above but extend the region outward by adding these
+      increments instead.
+   - *unit=val* -- use Cartesian projected coordinates compatible with the chosen projection. Append the
+      length unit (e.g. "k" for kilometer). These coordinates are internally converted to the corresponding
+      geographic (longitude, latitude) coordinates for the lower left and upper right corners. This form is
+      convenient when you want to specify a region directly in the projected units (e.g., UTM meters). For
+      Cartesian data in radians you can also use [+|-][s]pi[f], for optional integer scales *s* and fractions *f*.
 
-   [`-R GMT doc`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#r-full)
+   The *xlimts*, *ylimits* is used to break the specification into two pairs but it won't support all the
+   options of the *limits* functionality.
+
+   [`-R GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#r-full)
 
 --------------------------
 
 # proj
 
-- *J* **|** *proj* : *proj=<parameters>*
+- *J* **|** *proj* : *projection* : *proj=<parameters>*
 
-   Select map projection. The following character determines the projection. If the character is upper case
-   then the argument(s) supplied as scale(s) is interpreted to be the map width (or axis lengths), else the
-   scale argument(s) is the map scale (see its definition for each projection). UNIT (default is cm) can be
-   overridden on the command line by appending **i**, or **p** to the scale or width values. Append **h**,
-   **+**, or **-** to the given width if you instead want to set map height, the maximum dimension, or the
-   minimum dimension, respectively [Default is **w** for width]. In case the central meridian is an optional
-   parameter and it is being omitted, then the center of the longitude range given by the *limits* option is
-   used. The default standard parallel is the equator. The ellipsoid used in the map projections is
-   user-definable by editing the gmt.conf file in your home directory. 73 commonly used ellipsoids and
-   spheroids are currently supported, and users may also specify their own custom ellipsoid parameters
-   [Default is WGS-84]. Several GMT parameters can affect the projection: *PROJ\_ELLIPSOID*, *GMT\_INTERPOLANT*,
-   *PROJ\_SCALE\_FACTOR*, and *PROJ\_LENGTH\_UNIT*; see the gmt.conf man page for details.
+Select map projection. The following table describes the projections available as well as extra parameters
+needed to set a specific projection. If the *proj* argument is a string then it is assumed that it contains
+a full GMT **-J** style specification. Please refer to the GMT manual to learn how that works.
+[`-J GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#j-full)
+In the table, the *center* column indicates if a projection needs to set a projection center or if that is optional
+(when the parameters are under []). Several projections not to set also the standard paralalle(s). Those are
+indicated by a non-empty *parallels* column. Still, other projections accept an optional *horizon* parameter,
+which is an angle that specifies the max distance from projection center (in degrees, <= 180, default 90) that
+is plotted.
 
-   For linear (Cartesian) projections use, *e.g.*, *proj="X12"* to mean a figure 12 cm width. Alternatively,
-   use only the *figsize* specification with *figsize=(width, height)* (both numeric or string). We can also
-   specify the scale separately: *e.g.* *proj=:x*, *figscale=1:xxxx*. When no size is provided for linear
-   projections a default value of 12 cm is assumed.
+Given the different needs to specify a projection we can either use a simple form when only the projection
+name is required, *e.g. proj=Mercator* or in the more elaborated cases, a named tuple with fields *name, center,
+horizon, parallels*. An example of this later case would be to set an Oblique Mercator projection with center at
+280ºW, 25.5ºN and standard parallels at 22 and 60ºN. We would do that with
+*proj=(name=:omercp, center=[280 25.5], parallels=[22 69])*. Note that we can either use arrays or tuples to
+specify pairs of values.
 
-   [`-J GMT doc`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#j-full)
+In case the central meridian is an optional parameter and it is being omitted, then the center of the longitude
+range given by the *limits* option is used. The default standard parallel is the equator. 
+
+For linear (Cartesian) projections one can use *proj=:linear* but the simplest is just to omit the projection
+setting, which will default to a fig with of 12 cm. To set other fig dimensions, use the *figsize* specification
+with *figsize=(width, height)* (both numeric or string) or just *figsize=width* and the *height* is computed
+automatically from the fig limits aspect ratio. We can also specify the scale separately: *e.g.* *figscale=x*,
+*figscale=1:xxxx*. As mentioned, when no size is provided a default width value of 12 cm is assumed.
+
+When specifying a *figsize*, the UNIT is cm by default but it can be overridden by appending **i**, or **p** to
+the scale or width values. Append **h**, **+**, or **-** to the given width if you instead want to set map height,
+the maximum dimension, or the minimum dimension, respectively [Default is **w** for width]. Off course, when these
+settings are used, the argument to *figsize* must be in the form of strings.
+
+The ellipsoid used in the map projections is user-definable by editing the gmt.conf file in your home directory.
+73 commonly used ellipsoids and spheroids are currently supported, and users may also specify their own custom
+ellipsoid parameters [Default is WGS-84]. Several GMT parameters can affect the projection: *PROJ\_ELLIPSOID*,
+*GMT\_INTERPOLANT*, *PROJ\_SCALE\_FACTOR*, and *PROJ\_LENGTH\_UNIT*; see the gmt.conf man page for details.
+
+See [GMT Map Projections](@ref) for a list of projection examples 
+
+| name                 | center     | horizon | parallels | GMT code | Description |
+| -------------------- |:----------:|:------:| :---------:| -------- | ------- |
+| aea, Alberts               | ``lon_0lat_0`` | *NA*  | ``lat_1lat_2`` | **B**``lon_0/lat_0/lat_1/lat_2`` | Albers conic equal area |
+| aeqd, azimuthalEquidistant | ``lon_0lat_0`` | *yes* | *NA*           | **E**``lon_0/lat_0`` | Azimuthal equidistant |
+| Cyl_stere, cylindricalStereographic  | ``[lon_0[lat_0]]`` | *NA*  | *NA* | **Cyl_stere**``[lon_0[/lat_0]]`` | Cylindrical stereographic |
+| cass, Cassini   | ``lon_0lat_0`` | *NA*     | *NA* | **C**``lon_0/lat_0`` | Cassini cylindrical |
+| cea, cylindricalEqualarea  | ``lon_0lat_0`` | *NA*  | *NA*           | **Y**``lon_0/lat_0`` | Cylindrical equal area |
+| eqdc, conicEquidistant     | ``lon_0lat_0`` | *NA*  | ``lat_1lat_2`` | **D**``lon_0/lat_0/lat_1/lat_2`` | Equidistant conic |
+| eqc, PlateCarree, equidistant | ``[lon_0[lat_0]]``  | *NA*  | *NA* | **Q**``[lon_0[/lat_0]]`` | Equidistant cylindrical |
+| eck4, EckertIV             | ``[lon_0]``    | *NA*  | *NA* | **Kf**``[lon_0]`` | Eckert IV equal area |
+| eck6, EckertVI             | ``[lon_0]``    | *NA*  | *NA* | **Ks**``[lon_0]`` | Eckert VI equal area |
+| gnom, Gnomonic  | ``lon_0lat_0`` | *yes*    | *NA* | **F**``lon_0/lat_0`` | Azimuthal gnomonic |
+| hamm, Hammer    | ``[lon_0]``    | *NA*     | *NA* | **H**``[lon_0]`` | Hammer equal area |
+| laea, lambertAzimuthal     | ``lon_0lat_0`` | *yes* | *NA*           | **A**``lon_0/lat_0`` | Lambert azimuthal equal area |
+| lcc, lambertConic          | ``lon_0lat_0`` | *NA*  | ``lat_1lat_2`` | **L**``lon_0/lat_0/lat_1/lat_2`` | Lambert conic conformal |
+| lin, Linear     |  | *NA*        | *NA* | **X**[l|pexp|T|t][/height[l|pexp|T|t]][d] | Linear, log_{10}, x^a-y^b, and time |
+| merc, Mercator  | ``[lon_0[lat_0]]`` | *NA* | *NA* | **M**``[lon_0[/lat_0]]`` | Mercator cylindrical |
+| mill, Miller    | ``[lon_0]``    | *NA*     | *NA* | **J**``[lon_0]`` | Miller cylindrical |
+| moll, Molweide  | ``[lon_0]``    | *NA*     | *NA* | **W**``[lon_0]`` | Mollweide |
+| omerc, obliqueMerc1        | ``lon_0lat_0`` | *NA*  | ``azim`` | **Oa**``lon_0/lat_0/azim`` | Oblique Mercator, 1: origin and azim |
+| omerc2, obliqueMerc2       | ``lon_0lat_0`` | *NA*  | ``lon_1lat_1`` | **Ob**``lon_0/lat_0/lon_1/lat_1`` | Oblique Mercator, 2: two points |
+| omercp, obliqueMerc3       | ``lon_0lat_0`` | *NA*  | ``lon_plat_p`` | **Oc**``lon_0/lat_0/lon_p/lat_p`` | Oblique Mercator, 3: origin and pole |
+| ortho, Orthographic  | ``lon_0lat_0`` | *yes* | *NA* | **G**``lon_0/lat_0`` | Azimuthal orthographic |
+| poly, PolyConic | ``[lon_0[lat_0]]``  | *NA*  | *NA* | **Poly**``[lon_0[/lat_0]]`` | (American) polyconic |
+| robin, Robinson | ``[lon_0]``    | *NA*  | *NA* | **N**``[lon_0]`` | Robinson |
+| stere, Stereographic | ``lon_0lat_0`` | *yes*   | *NA* | **S**``lon_0/lat_0`` | General stereographic |
+| sinu, Sinusoidal | ``[lon_0]``    | *NA*  | *NA* | **I**``[lon_0]`` | Sinusoidal equal area |
+| tmerc, transverseMercator  | ``[lon_0[lat_0]]`` | *NA*  | *NA* | **T**``[lon_0[/lat_0]]`` | Transverse Mercator |
+| utm*xx*, UTM*xx* | *NA*           | *NA*  | *NA* | **U**``zone`` | Universal Transverse Mercator (UTM) |
+| vand, VanDerGritten | ``[lon_0]`` | *NA*  | *NA* | **V**``[lon_0]`` | Van der Grinten |
+| win, WinkelTripel   | ``[lon_0]`` | *NA*  | *NA* | **R**``[lon_0]`` | Winkel Tripel |
+
+
+   [`-J GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#j-full)
 
 --------------------------
 
@@ -317,7 +393,7 @@ basemap(region="-30/30/-20/20", proj="X12/8",
    `gmt.conf` man page for details. The time string will be in the
    locale set by the environment variable **TZ** (generally local time).
 
-   [`-U GMT doc`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#u-full)
+   [`-U GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#u-full)
 
 --------------------------
 

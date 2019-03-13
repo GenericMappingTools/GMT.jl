@@ -79,12 +79,8 @@ function build_opt_R(arg::NamedTuple)
 			else                       BB = string(val) 			# Whatever good stuff or shit it may contain
 			end
 		end
-	elseif ((val = find_in_dict(d, [:bb_diag :limits_diag :region_diag])[1]) !== nothing)	# Alternative way of saying "+r"
+	elseif ((val = find_in_dict(d, [:bb_diag :limits_diag :region_diag :LLUR])[1]) !== nothing)	# Alternative way of saying "+r"
 		BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
-	elseif (haskey(d, :global))
-		BB = "-180/180/-90/90"
-	elseif (haskey(d, :global360))
-		BB = "0/360/-90/90"
 	elseif ((val = find_in_dict(d, [:continent :cont])[1]) !== nothing)
 		val = uppercase(string(val))
 		if     (startswith(val, "AF"))  BB = "=AF"
@@ -94,6 +90,7 @@ function build_opt_R(arg::NamedTuple)
 		elseif (startswith(val, "OC"))  BB = "=OC"
 		elseif (val[1] == 'N')  BB = "=NA"
 		elseif (val[1] == 'S')  BB = "=SA"
+		else   error("Unknown continent name")
 		end
 	elseif ((val = find_in_dict(d, [:ISO :iso])[1]) !== nothing)
 		if (isa(val, String))  BB = val
@@ -107,7 +104,7 @@ function build_opt_R(arg::NamedTuple)
 			t = join([@sprintf("%.15g/",x) for x in val])
 			t = rstrip(t, '/')		# and remove last '/'
 		else
-			error("Increments for -R must be a String, a Number, Array or Tuple")
+			error("Increments for limits must be a String, a Number, Array or Tuple")
 		end
 		if (haskey(d, :adjust))  BB *= "+r" * t
 		else                     BB *= "+R" * t
