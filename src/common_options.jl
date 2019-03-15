@@ -869,43 +869,83 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 	# Example:
 	#	add_opt((a=(1,0.5),b=2), (a="+a",b="-b"))
 	# translates to:	"+a1/0.5-b2"
-	key = keys(nt);
-	d = nt2dict(mapa)						# The flags mapping as a Dict
-	cmd = ""
-	for k = 1:length(key)					# Loop over the keys of option's tuple
-		if (haskey(d, key[k]))
-			if (isa(d[key[k]], Tuple))		# Complexify it
-				if (isa(nt[k], NamedTuple))
-					cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), [])
-				else
+	key = keys(nt);						# The keys actually used in this call
+	d = nt2dict(mapa)					# The flags mapping as a Dict (all possible flags of the specific option)
+	cmd = "";		cmd_hold = Array{String,1}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
+	for k = 1:length(key)				# Loop over the keys of option's tuple
+		if (!haskey(d, key[k]))  continue  end
+		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
+			if (isa(nt[k], NamedTuple))
+				cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), [])
+			else						# 
+				if (length(d[key[k]]) == 2)		# Run the function
 					cmd *= d[key[k]][1] * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])
+				else					# This branch is to deal with options -Td, -Tm, -L and -D of basemap & psscale
+					ind_o += 1
+					if (d[key[k]][2] === nothing)  cmd_hold[ind_o] = d[key[k]][1]	# Only flag char and order matters
+					else                           cmd_hold[ind_o] = d[key[k]][1] * d[key[k]][2](nt[k])		# Run the fun
+					end
+					order[ind_o]    = d[key[k]][3];				# Store the order of this sub-option
 				end
-			elseif (d[key[k]] == "1")		# Means that only first char in value is retained. Used with units
-				t = arg2str(nt[k])
-				if (t != "")  cmd *= t[1]
-				else          cmd *= "1"	# "1" is itself the flag
-				end
-			elseif (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix
-				if (arg === nothing)
-					@warn(@sprintf("The key %s implies appending to input but the 'arg' variable is empty. Ignoring it.",key[k]))
+			end
+		elseif (d[key[k]] == "1")		# Means that only first char in value is retained. Used with units
+			t = arg2str(nt[k])
+			if (t != "")  cmd *= t[1]
+			else          cmd *= "1"	# "1" is itself the flag
+			end
+		elseif (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix
+			if (arg === nothing)
+				@warn(@sprintf("The key %s implies appending to input but the 'arg' variable is empty. Ignoring it.",key[k]))
+				continue
+			end
+			if (isa(nt[k], AbstractArray) || isa(nt[k], NTuple))
+				if (mod(length(arg), length(nt[k])) != 0)
+					@warn("The columns to be appended do not have the same number of rows as the input data. Ignoring it.")
 					continue
 				end
-				if (isa(nt[k], AbstractArray) || isa(nt[k], NTuple))
-					if (mod(length(arg), length(nt[k])) != 0)
-						@warn("The columns to be appended do not have the same number of rows as the input data. Ignoring it.")
-						continue
-					end
-					if (isa(nt[k], AbstractArray))  append!(arg, reshape(nt[k], :))
-					else                            append!(arg, reshape(collect(nt[k]), :))
-					end
+				if (isa(nt[k], AbstractArray))  append!(arg, reshape(nt[k], :))
+				else                            append!(arg, reshape(collect(nt[k]), :))
 				end
-				cmd *= d[key[k]][2:end]		# And now append the flag
+			end
+			cmd *= d[key[k]][2:end]		# And now append the flag
+		elseif (d[key[k]] != "" && d[key[k]][1] == '_')		# Means ignore the content, only keep the flag
+			cmd *= d[key[k]][2:end]		# Just append the flag
+		elseif (d[key[k]] != "" && d[key[k]][end] == '_')	# Means keep the flag and only first char of arg
+			cmd *= d[key[k]][1:end-1] * string(nt[k])[1]
+		else
+			cmd *= d[key[k]] * arg2str(nt[k])
+		end
+	end
+
+	if (ind_o > 0)			# We have an ordered set of flags (-Tm, -Td, -D, etc...). Not so trivial case
+		if     (order[1] == 1 && order[2] == 2)  cmd = cmd_hold[1] * cmd_hold[2] * cmd;		last = 2
+		elseif (order[1] == 2 && order[2] == 1)  cmd = cmd_hold[2] * cmd_hold[1] * cmd;		last = 1
+		else                                     cmd = cmd_hold[1] * cmd;		last = 1
+		end
+		if (cmd[1] != 'j' && cmd[1] != 'J' && cmd[1] != 'g')
+			if (length(cmd_hold[last]) == 2)
+				cmd = "j" * cmd
 			else
-				cmd *= d[key[k]] * arg2str(nt[k])
+				if (occursin(':', cmd_hold[last]))		# It must be a geog coordinate in dd:mm
+					cmd = "g" * cmd
+				else
+					rs = split(cmd_hold[last], '/')
+					if (length(rs) !== 2)  error("Anchor point must be given as a pair of coordinates")  end
+					x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
+					if (x <= 1.0 && y <= 1.0)  cmd = "n" * cmd  end		# Otherwise it's either a paper coord or error
+				end
 			end
 		end
 	end
+
 	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_ordered_flag(d::Dict, val)
+	# ...
+	t = arg2str(val)
+	return t
 end
 
 # ---------------------------------------------------------------------------------------------------
