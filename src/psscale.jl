@@ -66,8 +66,11 @@ function colorbar(cmd0::String="", arg1=[]; first=true, kwargs...)
 	K, O = set_KO(first)		# Set the K O dance
     cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :p :t])
-    cmd = parse_these_opts(cmd, d, [[:D :pos :position], [:G :truncate], [:I :shade], [:M :monochrome],
-                [:N :dpi], [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
+    cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
+                                    [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
+	cmd = add_opt(cmd, "D", d, [:D :pos :position],
+        (map=("g", nothing, 1), mirror=("J", nothing, 1), anchor=("", arg2str, 2), length="+w", triangles="+e",
+         justify="+j", offset="+o", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n"))
 
 	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, [])
 

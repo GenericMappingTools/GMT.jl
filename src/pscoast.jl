@@ -98,9 +98,8 @@ function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :bo :p :t :params])
-	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution],
-				[:L :map_scale], [:M :dump], [:Td :rose], [:Tm :compass]])
-
+	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution], [:M :dump]])
+	cmd = parse_TdTmL(d, cmd)
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 	cmd = add_opt_fill(cmd, d, [:G :land], 'G')
@@ -112,7 +111,7 @@ function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 		elseif (clip == "water" || clip == "ocean") cmd *= " -Sc"
 		elseif (clip == "end")     cmd *= " -Q"
 		else
-			@warn("The 'clip' argument can only be \"land\", \"water\" or \"end\". Ignoring it.")
+			@warn("The 'clip' argument can only be a string with 'land', 'water' or 'end'. Ignoring it.")
 		end
 	end
 
