@@ -80,6 +80,7 @@ if (got_it)					# Otherwise go straight to end
 	r = GMT.add_opt_fill("", Dict(:G=>(inv_pattern=12,fg="white",bg=(1,2,3), dpi=10) ), [:G :fill], 'G');
 	@test r == " -GP12+b1/2/3+fwhite+r10"
 	@test GMT.add_opt_fill("", Dict(:G=>:red), [:G :fill], 'G') == " -Gred"
+	@test_throws ErrorException("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member") GMT.add_opt_fill("", Dict(:G=>(inv_pat=12,fg="white")), [:G], 'G')
 	d = Dict(:offset=>5, :bezier=>true, :cline=>"", :ctext=>true, :pen=>("10p",:red,:dashed));
 	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,dashed+cl+cf+s+o5"
 	d = Dict(:W=>(offset=5, bezier=true, cline="", ctext=true, pen=("10p",:red,:dashed)));
@@ -115,6 +116,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_B("", d)[1] == " -Bsxa5f1 -Bpyclixo.txt -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10"
 	@test GMT.parse_B("",Dict(:B=>:same))[1] == " -B"
 	GMT.helper2_axes("lolo");
+	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
 
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
@@ -354,6 +356,7 @@ if (got_it)					# Otherwise go straight to end
 	grdvolume(G);
 
 	# Just create the figs but no check if they are correct.
+	@test_throws ErrorException("Missing input data to run this module.") grdimage("", J="X10", Vd=:cmd)
 	PS = grdimage(G, J="X10", ps=1);
 	gmt("destroy")
 	grdimage!(G, J="X10", Vd=:cmd);
@@ -508,16 +511,20 @@ if (got_it)					# Otherwise go straight to end
 	yaxis=(custom=(pos=[0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852],
 				   type_=["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]),),
 	par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=:cmd)
-	r = basemap(rose=(anchor="10:35/0.7", width=1, fancy=2, offset=0.4), show=true, Vd=:cmd);
+	r = basemap(rose=(anchor="10:35/0.7", width=1, fancy=2, offset=0.4), Vd=:cmd);
 	@test startswith(r," -JX12c/0 -Baf -BWSen -Tdg10:35/0.7+w1+f2+o0.4")
-	r = basemap(rose=(anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), show=true, Vd=:cmd);
+	r = basemap(rose=(anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=:cmd);
 	@test startswith(r," -JX12c/0 -Baf -BWSen -Tdn0.5/0.7+w1+f2+o0.4")
-	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), show=true, Vd=:cmd);
+	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=:cmd);
 	@test startswith(r," -JX12c/0 -Baf -BWSen -TdjTR+w1+f2+o0.4")
-	r = basemap(rose=(mirror=1,anchor=:TR, width=1, fancy=2, offset=0.4), show=true, Vd=:cmd);
+	r = basemap(rose=(mirror=1,anchor=:TR, width=1, fancy=2, offset=0.4), Vd=:cmd);
 	@test startswith(r," -JX12c/0 -Baf -BWSen -TdJTR+w1+f2+o0.4")
-	r = basemap(compass=(mirror=1,anchor=:TR, width=1, dec=-14, offset=0.4), show=true, Vd=:cmd);
+	r = basemap(compass=(mirror=1,anchor=:TR, width=1, dec=-14, offset=0.4), Vd=:cmd);
 	@test startswith(r," -JX12c/0 -Baf -BWSen -TmJTR+w1+d-14+o0.4")
+	r = basemap(L=(mirror=1,anchor=:TR, width=1, align=:top, fancy=0.4), Vd=:cmd);
+	@test startswith(r," -JX12c/0 -Baf -BWSen -LJTR+at+f")
+	@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=:cmd), " -JX12c/0 -Bpa10+ap")
+	@test_throws ErrorException("slanted option: Only 'parallel' is allowed for the y-axis") basemap(yaxis=(slanted=:o,), Vd=:cmd)
 
 	# PSCLIP
 	d = [0.2 0.2; 0.2 0.8; 0.8 0.8; 0.8 0.2; 0.2 0.2];
