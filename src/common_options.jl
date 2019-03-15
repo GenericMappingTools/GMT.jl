@@ -910,7 +910,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 			cmd *= d[key[k]][2:end]		# And now append the flag
 		elseif (d[key[k]] != "" && d[key[k]][1] == '_')		# Means ignore the content, only keep the flag
 			cmd *= d[key[k]][2:end]		# Just append the flag
-		elseif (d[key[k]] != "" && d[key[k]][end] == '_')	# Means keep the flag and only first char of arg
+		elseif (d[key[k]] != "" && d[key[k]][end] == '1')	# Means keep the flag and only first char of arg
 			cmd *= d[key[k]][1:end-1] * string(nt[k])[1]
 		else
 			cmd *= d[key[k]] * arg2str(nt[k])
@@ -939,13 +939,6 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 	end
 
 	return cmd
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_ordered_flag(d::Dict, val)
-	# ...
-	t = arg2str(val)
-	return t
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1265,7 +1258,7 @@ function helper3_axes(arg, primo, axe)
 	elseif (isa(arg, NamedTuple))
 		d = nt2dict(arg)
 		if (!haskey(d, :pos))
-			error("The custom annotations NamedTuple must contain at least the named member 'pos'")
+			error("Custom annotations NamedTuple must contain the member 'pos'")
 		end
 		pos = d[:pos]
 		n_annot = length(pos)

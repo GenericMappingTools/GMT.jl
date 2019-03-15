@@ -70,9 +70,6 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=true, kwargs
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
 	if (got_fname == 0 && isa(arg1, Tuple))			# Then it must be using the three r,g,b grids
 		cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, 3, arg1, arg2, arg3)
-		if (got_fname == 0 && isempty_(arg1))
-			error("No input data to use in grdimage.")
-		end
 	end
 
 	if (isa(arg1, Array{<:Number}))
