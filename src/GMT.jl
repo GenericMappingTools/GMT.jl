@@ -43,7 +43,7 @@ export
 	sphdistance, sphinterpolate, sphtriangulate,
 	surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd,
-	linspace, logspace, contains, fields
+	linspace, logspace, contains, fields, tic, toc
 
 include("common_docs.jl")
 include("libgmt_h.jl")
