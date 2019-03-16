@@ -138,6 +138,7 @@ if (got_it)					# Otherwise go straight to end
 	GMT.GMTdataset([0.0 0], Array{String,1}());
 
 	@test_throws ErrorException("parse_arg_and_pen: Nonsense first argument") GMT.parse_arg_and_pen(([:a],0))
+	@test_throws ErrorException("GMT: No module by that name -- bla -- was found.") gmt("bla")
 	# ---------------------------------------------------------------------------------------------------
 
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);

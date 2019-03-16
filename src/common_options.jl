@@ -2112,3 +2112,27 @@ function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}, vz::AbstractVect
 	oo = ones(Int, o)
 	(vx[om, :, oo], vy[:, on, oo], vz[om, on, :])
 end
+
+# --------------------------------------------------------------------------------------------------
+function tic()
+    t0 = time_ns()
+    task_local_storage(:TIMERS, (t0, get(task_local_storage(), :TIMERS, ())))
+    return t0
+end
+
+function _toq()
+    t1 = time_ns()
+    timers = get(task_local_storage(), :TIMERS, ())
+    if timers === ()
+        error("`toc()` without `tic()`")
+    end
+    t0 = timers[1]::UInt64
+    task_local_storage(:TIMERS, timers[2])
+    (t1-t0)/1e9
+end
+
+function toc()
+    t = _toq()
+    println("elapsed time: ", t, " seconds")
+    return t
+end
