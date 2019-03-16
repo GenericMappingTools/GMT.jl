@@ -726,6 +726,7 @@ if (got_it)					# Otherwise go straight to end
 	GMT.contains("aiai", "ia");
 	GMT.meshgrid(1:5, 1:5, 1:5);
 	fields(7);
+	tic();toc()
 
 	# EXAMPLES
 	plot(1:10,rand(10), lw=1, lc="blue", marker="square",
