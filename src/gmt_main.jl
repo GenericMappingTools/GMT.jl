@@ -245,7 +245,8 @@ function gmt(cmd::String, args...)
 	# 6. Run GMT module; give usage message if errors arise during parsing
 	status = GMT_Call_Module(API, g_module, GMT_MODULE_OPT, LL)
 	if (status != GMT_NOERROR)
-		if (status == GMT_MODULE_USAGE || status == GMT_MODULE_SYNOPSIS || status == GMT_MODULE_LIST || status == GMT_MODULE_EXIST || status == GMT_MODULE_PURPOSE)
+		if (status == GMT_SYNOPSIS || status == GMT_OPT_USAGE || status == GMT_MODULE_USAGE ||
+			status == GMT_MODULE_SYNOPSIS || status == GMT_MODULE_LIST || status == GMT_MODULE_PURPOSE)
 			return
 		end
 		error("Something went wrong when calling the module. GMT error number = ", status)

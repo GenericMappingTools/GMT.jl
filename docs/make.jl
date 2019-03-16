@@ -2,7 +2,7 @@ using Documenter, GMT
 
 makedocs(
     modules = [GMT],
-    format = :html,
+    #format = :html,
     sitename = "GMT",
     assets = ["assets/custom.css"],
     pages = Any[
@@ -34,7 +34,7 @@ makedocs(
         "The GMT types"            => "types.md",
         "Index"                    => "index.md",
     ],
-    html_prettyurls = true,
+    format = Documenter.HTML(prettyurls = true),
 )
 
 deploydocs(

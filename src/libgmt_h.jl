@@ -85,6 +85,8 @@ const GMT_COMMENT_IS_TEXT = 0
 const GMT_NOTSET = -1
 const GMT_NOERROR = 0
 # end enum GMT_api_err_enum
+const GMT_SYNOPSIS = 1
+const GMT_OPT_USAGE = Int('?')
 # begin enum GMT_module_enum
 const GMT_MODULE_USAGE	  = -6
 const GMT_MODULE_SYNOPSIS = -5

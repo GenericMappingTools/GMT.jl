@@ -9,7 +9,36 @@ plot(1:10, rand(10), lw=1, lc=:blue, fmt=:png, marker=:square,
      xlabel="Spoons", ylabel="Forks", show=true)
 ```
 
-!["Hello world"](figures/hello-world.png)
+```@raw html
+<img src="../figures/hello-world.png" alt="Hello world" width="500" class="center"/>
+```
+
+### Eckert IV and VI projection
+
+The Eckert IV and VI projections, presented by the German cartographer Max Eckert-Greiffendorff in 1906,
+are pseudo-cylindrical equal-area projections. Central meridian and all parallels are straight lines;
+other meridians are equally spaced elliptical arcs (IV) or sinusoids (VI). The scale is true along latitudes
+40º30’ (IV) and 49º16’ (VI). Their main use is in thematic world maps. To select Eckert IV you must use
+*EckertIV* while Eckert VI is selected with *EckertVI*. If no modifier is given it defaults
+to Eckert VI. In addition, you must enter
+
+   - Name: *eck4*, *EckertIV*, GMT code -> *Kf* (width) *kf* (scale)
+   - Name: *eck6*, *EckertVI*, GMT code -> *Ks* (width) *ks* (scale)
+   - The central meridian [Middle of your map].
+   - Scale along equator in cm/degree or 1:xxxxx, or map width.
+
+Centered on the Dateline, the Eckert IV example below was created by this command:
+
+```julia
+coast(region=:d, proj=:EckertIV, frame=:g, res=:crude, area=10000, land=:ivory,
+	  water=:bisque3, shore=:thinnest, figsize=12, show=true)
+```
+
+```@raw html
+<img src="../figures/mapproj/GMT_eckert4.png" alt="GMT_eckert4" width="500" class="center"/>
+```
+
+The same script, *EckertVI* instead of *EckertIV*, yields the Eckert VI map:
 
 A few notes about this example. Because we didn't specify the figure size (with the ``figsize`` keyword) a default value of 12x8 cm (not counting labels and title) was used. The ``fmt=:png`` selected the
 PNG format. The ``show=true`` is needed to show the image at the end.
@@ -35,7 +64,9 @@ sets the grid on, *resolution=:c* selects the crude coast lines resolution and t
 argument that selects the map projection, which is a Lambert projection with projection center
 at 300 degrees East, 0 degrees North. The *6c* sets the map width of 6 centimeters.
 
-!["Hello round world"](figures/hello-round-world.png)
+```@raw html
+<img src="../figures/hello-round-world.png" alt="Hello round world" width="500" class="center"/>
+```
 
 Note that now the first command, the ``coast``, does not have the ``show`` keyword.
 It means we are here creating the first layer but we don't want to see it just yet.
@@ -57,7 +88,9 @@ G = GMT.peaks();
 grdcontour(G, cont=1, annot=2, fmt=:png, show=true)
 ```
 
-!["Simple black&white contour"](figures/hello-bw-contour.png)
+```@raw html
+<img src="../figures/hello-bw-contour.png" alt="Simple black&white contour" width="500" class="center"/>
+```
 
 Now with colored contours. To make it colored we need to generate a color map and use it. Notice
 that we must specify a *pen* attribute to get the colored contours because pen specifications
@@ -69,7 +102,9 @@ cpt = makecpt(range=(-6,8,1));      # Create the color map
 grdcontour(G, fmt=:png, color=cpt, pen="+c", show=1)
 ```
 
-!["Simple color contour"](figures/hello-color-contour.png)
+```@raw html
+<img src="../figures/hello-color-contour.png" alt="Simple color contour" width="500" class="center"/>
+```
 
 ## Color images
 
@@ -83,12 +118,14 @@ for more details about what the arguments mean.
 
 ```julia
 topo = makecpt(color=:rainbow, range=(1000,5000,500), continuous=true);
-grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj="M12c", axis=:a, color=topo)
+grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:Mercator, frame=:a, color=topo)
 colorbar!(position="jTC+w5i/0.25i+h+o0/-1i", region=[-108 -103 35 40], color=topo,
           proj=[], frame="y+lm", fmt=:jpg, show=true)
 ```
 
-!["Hello shaded world"](figures/hello-shaded-world.jpg)
+```@raw html
+<img src="../figures/hello-shaded-world.jpg" alt="Hello shaded world" width="500" class="center"/>
+```
 
 ## Perspective view
 
@@ -97,11 +134,13 @@ We will make a perspective, color-coded view of the US Rockies from the southeas
 
 ```julia
 topo = makecpt(color=:rainbow, range=(1000,5000,500), continuous=true);
-grdview("@tut_relief.nc", proj="M12c", JZ="1c", shade="+ne0.8+a100", view=(135,30),
+grdview("@tut_relief.nc", proj=:Mercator, JZ="1c", shade="+ne0.8+a100", view=(135,30),
         frame=:a, fmt=:jpg, color=topo, Q="i100", show=true)
 ```
 
-!["Hello 3D view world"](figures/hello-view-world.jpg)
+```@raw html
+<img src="../figures/hello-view-world.jpg" alt="Hello 3D view world" width="600" class="center"/>
+```
 
 Above we used the *Peaks* function to create a contour plot. Let us use that grid again and
 display it this time as 3D bar plot in a perspective view. 
@@ -111,8 +150,9 @@ cmap = grd2cpt(G);      # Compute a colormap with the grid's data range
 bar3(G, lw=:thinnest, color=cmap, fmt=:png, show=true)
 ```
 
-!["Hello bar3D"](figures/bar3-peaks.png)
-
+```@raw html
+<img src="../figures/bar3-peaks.png" alt="Hello bar3D" width="500" class="center"/>
+```
 
 ## Warp image in geographical projection
 
@@ -125,4 +165,6 @@ only shot and so, by default, it has the *show* keyword hardwire to *true*.
           frame=:g, region=:d, proj=:Sinusoidal, image_in=:r, show=false)
     coast!(shore=(1,:white), resolution=:c, figsize=15, fmt=:png, show=true)
 
-![SinuJessica](http://w3.ualg.pt/~jluis/jessy.png)
+```@raw html
+<img src="http://w3.ualg.pt/~jluis/jessy.png" alt="SinuJessica" width="600" class="center"/>
+```
