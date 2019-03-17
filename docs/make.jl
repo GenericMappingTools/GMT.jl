@@ -10,7 +10,11 @@ makedocs(
         "Some examples"            => "examples.md",
         "Draw rectangles examples" => "rectangles.md",
         "Draw frames examples"     => "frames.md",
-        "Map projections"          => "proj_examples.md",        
+        "Map projections"          => "proj_examples.md",
+        "Gallery"                  => "gallery/tables.md",
+        hide("gallery/scripts_agu/colored_bars.md"),
+        hide("gallery/scripts_agu/bars_3D.md"),
+        hide("gallery/scripts_agu/bars3_peaks.md"),
         "Manual" => [
             "monolitic.md",
             "modules.md",

@@ -141,6 +141,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("GMT: No module by that name -- bla -- was found.") gmt("bla")
 	# ---------------------------------------------------------------------------------------------------
 
+	gmt("psxy -");
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
 	@assert(r[1].data == [5.0 5 5 5 5 5])
 	r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
@@ -224,7 +225,7 @@ if (got_it)					# Otherwise go straight to end
 		@test(sum(G.z[:] - GG.z[:]) == 0)
 		gmtwrite("lixo.grd", rand(5,5), id=:cf)
 		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
-		I = gmtread("lixo.tif", img=true);
+		I = gmtread("lixo.tif", img=true, layout="TCP");
 		I = gmtread("lixo.tif", img=true, band=[0 1 2]);
 		imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
 		gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)

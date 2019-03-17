@@ -3,7 +3,7 @@ GMT.jl
 
 Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
-| **Documentation**                       | **Build Status (Julia 0.7)**              |
+| **Documentation**                       | **Build Status (Julia 1.1)**              |
 |:---------------------------------------:|:-----------------------------------------:|
 | [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] |
 
@@ -28,8 +28,6 @@ Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 
 [coveralls-img]: https://coveralls.io/repos/github/GenericMappingTools/GMT.jl/badge.svg?branch=master
 [coveralls-url]: https://coveralls.io/github/GenericMappingTools/GMT.jl?branch=master
-
-[issues-url]: https://github.com/JuliaDocs/GMT.jl/issues
 
 [pkg-0.6-img]: http://pkg.julialang.org/badges/GMT_0.6.svg
 [pkg-0.6-url]: http://pkg.julialang.org/?pkg=GMT&ver=0.6
