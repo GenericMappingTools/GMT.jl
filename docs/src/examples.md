@@ -13,33 +13,6 @@ plot(1:10, rand(10), lw=1, lc=:blue, fmt=:png, marker=:square,
 <img src="../figures/hello-world.png" alt="Hello world" width="500" class="center"/>
 ```
 
-### Eckert IV and VI projection
-
-The Eckert IV and VI projections, presented by the German cartographer Max Eckert-Greiffendorff in 1906,
-are pseudo-cylindrical equal-area projections. Central meridian and all parallels are straight lines;
-other meridians are equally spaced elliptical arcs (IV) or sinusoids (VI). The scale is true along latitudes
-40º30’ (IV) and 49º16’ (VI). Their main use is in thematic world maps. To select Eckert IV you must use
-*EckertIV* while Eckert VI is selected with *EckertVI*. If no modifier is given it defaults
-to Eckert VI. In addition, you must enter
-
-   - Name: *eck4*, *EckertIV*, GMT code -> *Kf* (width) *kf* (scale)
-   - Name: *eck6*, *EckertVI*, GMT code -> *Ks* (width) *ks* (scale)
-   - The central meridian [Middle of your map].
-   - Scale along equator in cm/degree or 1:xxxxx, or map width.
-
-Centered on the Dateline, the Eckert IV example below was created by this command:
-
-```julia
-coast(region=:d, proj=:EckertIV, frame=:g, res=:crude, area=10000, land=:ivory,
-	  water=:bisque3, shore=:thinnest, figsize=12, show=true)
-```
-
-```@raw html
-<img src="../figures/mapproj/GMT_eckert4.png" alt="GMT_eckert4" width="500" class="center"/>
-```
-
-The same script, *EckertVI* instead of *EckertIV*, yields the Eckert VI map:
-
 A few notes about this example. Because we didn't specify the figure size (with the ``figsize`` keyword) a default value of 12x8 cm (not counting labels and title) was used. The ``fmt=:png`` selected the
 PNG format. The ``show=true`` is needed to show the image at the end.
 
@@ -58,11 +31,11 @@ plot!(collect(x)*60, seno, lw=0.5, lc=:red, fmt=:png, marker=:circle,
       markeredgecolor=0, size=0.05, markerfacecolor=:cyan, show=true)
 ```
 
-In this example *region=[0 360 -90 90]*  means the domain is the whole Earth, *axis=:g*
+In this example *region=[0 360 -90 90]*  means the domain is the whole Earth, *frame=:g*
 sets the grid on, *resolution=:c* selects the crude coast lines resolution and the 
-*land=:navy* paints the continents with a navy blue color. More complex is the *proj="A300/30/6c"*
-argument that selects the map projection, which is a Lambert projection with projection center
-at 300 degrees East, 0 degrees North. The *6c* sets the map width of 6 centimeters.
+*land=:navy* paints the continents with a navy blue color. The map projection used here
+is a Lambert projection (*laea* stands for *Lambert Azimuthal Equal Area*) with projection
+center at 300 degrees East, 30 degrees North.
 
 ```@raw html
 <img src="../figures/hello-round-world.png" alt="Hello round world" width="500" class="center"/>
