@@ -226,6 +226,7 @@ if (got_it)					# Otherwise go straight to end
 		gmtwrite("lixo.grd", rand(5,5), id=:cf)
 		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
 		I = gmtread("lixo.tif", img=true, layout="TCP");
+		I = gmtread("lixo.tif", img=true, band=0);
 		I = gmtread("lixo.tif", img=true, band=[0 1 2]);
 		imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
 		gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
