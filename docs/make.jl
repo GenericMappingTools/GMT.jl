@@ -12,7 +12,12 @@ makedocs(
         "Draw rectangles examples" => "rectangles.md",
         "Draw frames examples"     => "frames.md",
         "Map projections"          => "proj_examples.md",
-        "Gallery"                  => "gallery/tables.md",
+        #"Gallery"                  => "gallery/tables.md",
+        #"Gallery2"                 => "gallery/mapprojs.md",
+        "Gallery"                  => [
+            "AGU"             => "gallery/tables.md",
+            "Map projections" => "gallery/mapprojs.md",
+        ],
         hide("gallery/scripts_agu/colored_bars.md"),
         hide("gallery/scripts_agu/bars_3D.md"),
         hide("gallery/scripts_agu/bars3_peaks.md"),
