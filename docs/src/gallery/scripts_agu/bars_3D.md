@@ -25,5 +25,5 @@ bar3(G, fill=(0,115,190), lw=:thinnest, figsize=14, fmt=:png, show=true)
 ```
 
 ```@raw html
-<img src="../figs/bars_3D.png" width="600" class="center"/>
+<img src="../scripts_agu/figs/bars_3D.png" width="600" class="center"/>
 ```

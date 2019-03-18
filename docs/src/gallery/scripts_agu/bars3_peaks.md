@@ -25,5 +25,5 @@ bar3(G, lw=:thinnest, color=cmap, fmt=:png, show=true)
 ```
 
 ```@raw html
-<img src="../figs/bars3_peaks.png" width="500" class="center"/>
+<img src="../scripts_agu/figs/bars3_peaks.png" width="500" class="center"/>
 ```

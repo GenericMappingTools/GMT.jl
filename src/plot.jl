@@ -563,12 +563,13 @@ end
 function cat_2_arg2(arg1, arg2)
 	# Cat two vectors (or tuples) or a vector (or tuple) and a matrix in a Mx2 matrix
 
-	if ((isa(arg1, Vector) || isa(arg1, UnitRange) || isa(arg1, StepRangeLen) || isa(arg1, NTuple)) &&
-		(isa(arg2, Vector) || isa(arg2, UnitRange) || isa(arg2, StepRangeLen) || isa(arg2, NTuple) ||
-		 isa(arg2, Matrix)) )
+	if ((isa(arg1, Vector) || isa(arg1, UnitRange) || isa(arg1, StepRangeLen) || isa(arg1, NTuple) || isa(arg1, Matrix)) &&
+		(isa(arg2, Vector) || isa(arg2, UnitRange) || isa(arg2, StepRangeLen) || isa(arg2, NTuple) || isa(arg2, Matrix)) )
 
 		if (isa(arg1, NTuple))  arg1 = collect(arg1)  end
 		if (isa(arg2, NTuple))  arg2 = collect(arg2)  end
+		if (size(arg1,1) == 1 && size(arg1,2) != 1)  arg1 = arg1[:]  end
+		if (size(arg2,1) == 1 && size(arg2,2) != 1)  arg2 = arg2[:]  end
 		arg = hcat(arg1, arg2)
 	elseif (!isa(arg1, Array{GMT.GMTdataset,1}) && !isa(arg1, GMT.GMTdataset) &&
 		    !isa(arg2, Array{GMT.GMTdataset,1}) && !isa(arg2, GMT.GMTdataset) )
