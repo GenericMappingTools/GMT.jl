@@ -3,6 +3,7 @@ using Documenter, GMT
 makedocs(
     modules = [GMT],
     #format = :html,
+    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     sitename = "GMT",
     assets = ["assets/custom.css"],
     pages = Any[
@@ -15,6 +16,12 @@ makedocs(
         hide("gallery/scripts_agu/colored_bars.md"),
         hide("gallery/scripts_agu/bars_3D.md"),
         hide("gallery/scripts_agu/bars3_peaks.md"),
+        hide("gallery/scripts_agu/flower.md"),
+        hide("gallery/scripts_agu/snake.md"),
+        hide("gallery/scripts_agu/solar.md"),
+        hide("gallery/scripts_agu/scatter_cart.md"),
+        hide("gallery/scripts_agu/scatter_polar.md"),
+        hide("gallery/scripts_agu/histo_step.md"),
         "Manual" => [
             "monolitic.md",
             "modules.md",
@@ -38,7 +45,6 @@ makedocs(
         "The GMT types"            => "types.md",
         "Index"                    => "index.md",
     ],
-    format = Documenter.HTML(prettyurls = true),
 )
 
 deploydocs(

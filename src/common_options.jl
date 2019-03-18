@@ -242,6 +242,8 @@ function parse_proj(p::String)
 	elseif (startswith(s, "mol"))    out = "W"
 	elseif (startswith(s, "ortho"))  out = "G0/0"
 	elseif (startswith(s, "poly"))   out = "Poly"
+	elseif (s == "polar")            out = "P"
+	elseif (s == "polar_azim")       out = "Pa"
 	elseif (startswith(s, "robin"))  out = "N"
 	elseif (startswith(s, "stere"))  out = "S0/90"
 	elseif (startswith(s, "sinu"))   out = "I"
@@ -1805,7 +1807,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 
 	if (opt_T != "")
 		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end		# Close the PS file first
-		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T)
+		gmt("psconvert -A1p -Qg4 -Qt4 -E200 " * fname_ps * opt_T)
 		out = fname_ps[1:end-2] * fname_ext
 		if (fname != "")
 			run(`mv $out $fname`)

@@ -141,6 +141,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("GMT: No module by that name -- bla -- was found.") gmt("bla")
 	# ---------------------------------------------------------------------------------------------------
 
+	gmt("begin"); gmt("end")
 	gmt("psxy -");
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
 	@assert(r[1].data == [5.0 5 5 5 5 5])
