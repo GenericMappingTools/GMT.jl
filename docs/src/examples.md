@@ -38,7 +38,7 @@ is a Lambert projection (*laea* stands for *Lambert Azimuthal Equal Area*) with 
 center at 300 degrees East, 30 degrees North.
 
 ```@raw html
-<img src="figures/hello-round-world.png" alt="Hello round world" width="500" class="center"/>
+<img src="figures/hello-round-world.png" alt="Hello round world" width="400" class="center"/>
 ```
 
 Note that now the first command, the ``coast``, does not have the ``show`` keyword.
