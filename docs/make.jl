@@ -12,8 +12,6 @@ makedocs(
         "Draw rectangles examples" => "rectangles.md",
         "Draw frames examples"     => "frames.md",
         "Map projections"          => "proj_examples.md",
-        #"Gallery"                  => "gallery/tables.md",
-        #"Gallery2"                 => "gallery/mapprojs.md",
         "Gallery"                  => [
             "AGU"             => "gallery/tables.md",
             "Map projections" => "gallery/mapprojs.md",

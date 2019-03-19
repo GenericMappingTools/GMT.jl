@@ -252,7 +252,7 @@ coast(region="100/-42/160/-8r", proj=(name=:stereographic, center=(130,-30)), fr
 <img src="figures/mapproj/GMT_stereographic_general.png" alt="GMT_stereographic_general" width="500" class="center"/>
 ```
 
-### Perspective projection
+### Perspective
 
 The perspective projection imitates in 2 dimensions the 3-dimensional view of the earth from space. The
 implementation in GMT is very flexible, and thus requires many input variables. Those are listed and
@@ -289,7 +289,7 @@ coast(region=:g, proj="G4/52/230/90/60/180/60/60", xaxis=(annot=2,grid=2), yaxis
 ```
 
 
-### Orthographic projection
+### Orthographic
 
 The orthographic azimuthal projection is a perspective projection from infinite distance. It is therefore
 often used to give the appearance of a globe viewed from outer space. As with Lambert’s equal-area and the
@@ -319,8 +319,7 @@ coast(region=:g, proj=(name=:ortho, center=(-75,41)), frame=:g, res=:crude, area
 <img src="figures/mapproj/GMT_orthographic.png" alt="GMT_orthographic" width="400" class="center"/>
 ```
 
-
-### Azimuthal Equidistant projection
+### Azimuthal Equidistant
 
 The most noticeable feature of this azimuthal projection is the fact that distances measured from the center
 are true. Therefore, a circle about the projection center defines the locus of points that are equally far away
@@ -349,7 +348,7 @@ coast(region=:g, proj=(name=:azimuthalEquidistant, center=(-100,40)), frame=:g,
 <img src="figures/mapproj/GMT_az_equidistant.png" alt="GMT_az_equidistant" width="400" class="center"/>
 ```
 
-### Gnomonic projection
+### Gnomonic
 
 The Gnomonic azimuthal projection is a perspective projection from the center onto a plane tangent to the
 surface. Its origin goes back to the old Greeks who used it for star maps almost 2500 years ago. The projection
@@ -388,7 +387,7 @@ cylindrical equidistant, cylindrical equal-area, Miller, and cylindrical stereog
 Each have a different way of spacing the meridians and parallels to obtain certain desirable cartographic
 properties.
 
-### Mercator projection
+### Mercator
 
 Probably the most famous of the various map projections, the Mercator projection takes its name from the
 Flemish cartographer Gheert Cremer, better known as Gerardus Mercator, who presented it in 1569. The
@@ -429,7 +428,7 @@ coast(region=(0,360,-70,70), proj=:Mercator, xaxis=(annot=60,ticks=15), yaxis=(a
 While this example is centered on the Dateline, one can easily choose another configuration with the
 *region* option. A map centered on Greenwich would specify the region with ``region=(-180,180,-70,70)``
 
-### Transverse Mercator projection
+### Transverse Mercator
 
 The transverse Mercator was invented by Lambert in 1772. In this projection the cylinder touches a meridian
 along which there is no distortion. The distortion increases away from the central meridian and goes to
@@ -473,9 +472,9 @@ understood to mean the extent of the plot along the central meridian, while the 
 represent how far from the central longitude we want the plot to extend. These values correspond to latitudes
 in the regular Mercator projection and must therefore be less than 90.
 
-### Universal Transverse Mercator (UTM) projection
+### Universal Transverse Mercator (UTM)
 
-### Oblique Mercator projection
+### Oblique Mercator
 
 Oblique configurations of the cylinder give rise to the oblique Mercator projection. It is particularly useful
 when mapping regions of large lateral extent in an oblique direction. Both parallels and meridians are complex
@@ -513,7 +512,7 @@ coast(region="270/20/305/25+r", proj=(name=:omercp, center=[280 25.5], parallels
 <img src="figures/mapproj/GMT_obl_merc.png" alt="GMT_obl_merc" width="500" class="center"/>
 ```
 
-### Cassini cylindrical projection
+### Cassini cylindrical
 
 This cylindrical projection was developed in 1745 by César-François Cassini de Thury for the survey of France.
 It is occasionally called Cassini-Soldner since the latter provided the more accurate mathematical analysis
@@ -542,7 +541,7 @@ coast(region="7:30/38:30/10:30/41:30r", proj=(name=:Cassini, center=[8.75 40]),
 ```
 
 
-### Cylindrical equidistant projection
+### Cylindrical equidistant
 
 This simple cylindrical projection is really a linear scaling of longitudes and latitudes. The most common
 form is the Plate Carrée projection, where the scaling of longitudes and latitudes is the same. All meridians
@@ -580,7 +579,7 @@ table:
 | Ronald Miller, minimum overall distortion            | 37.5º |
 | Plate Carrée, Simple Cylindrical, Plain/Plane        | 0º    |
 
-### Cylindrical equal-area projections
+### Cylindrical equal-area
 
 This cylindrical projection is actually several projections, depending on what latitude is selected as the
 standard parallel. However, they are all equal area and hence non-conformal. All meridians and parallels
@@ -619,7 +618,7 @@ coast(region=(-145,215,-90,90), proj=(name=:cylindricalEqualArea, center=(35,30)
 
 As one can see there is considerable distortion at high latitudes since the poles map into lines.
 
-### Miller Cylindrical projection
+### Miller Cylindrical
 
 This cylindrical projection, presented by Osborn Maitland Miller of the American Geographic Society in 1942,
 is neither equal nor conformal. All meridians and parallels are straight lines. The projection was designed
@@ -646,7 +645,7 @@ coast(region=(-90,270,-80,90), proj=:Miller, xaxis=(annot=45,grid=45),
 ```
 
 
-### Cylindrical stereographic projections
+### Cylindrical stereographic
 
 The cylindrical stereographic projections are certainly not as notable as other cylindrical projections, but
 are still used because of their relative simplicity and their ability to overcome some of the downsides of
@@ -695,7 +694,7 @@ elliptical formulae.
 In all cases, the specification of the central meridian can be skipped. The default is the middle of the
 longitude range of the plot, specified by the (*region*) option.
 
-### Hammer projection
+### Hammer
 
 The equal-area Hammer projection, first presented by the German mathematician Ernst von Hammer in 1892, is
 also known as Hammer-Aitoff (the Aitoff projection looks similar, but is not equal-area). The border is an
@@ -717,7 +716,7 @@ coast(region=:g, proj=:Hammer, frame=:g, res=:crude, area=10000, land=:black,
 <img src="figures/mapproj/GMT_hammer.png" alt="GMT_hammer" width="500" class="center"/>
 ```
 
-### Mollweide projection
+### Mollweide
 
 This pseudo-cylindrical, equal-area projection was developed by the German mathematician and astronomer Karl
 Brandan Mollweide in 1805. Parallels are unequally spaced straight lines with the meridians being equally
@@ -742,7 +741,7 @@ coast(region=:d, proj=:Mollweide, frame=:g, res=:crude, area=10000, land=:tomato
 ```
 
 
-### Winkel Tripel projection
+### Winkel Tripel
 
 In 1921, the German mathematician Oswald Winkel a projection that was to strike a compromise between the
 properties of three elements (area, angle and distance). The German word “tripel” refers to this junction
@@ -772,7 +771,7 @@ coast(region=:d, proj=:Winkel, frame=:g, res=:crude, area=10000, land=:burlywood
 ```
 
 
-### Robinson projection
+### Robinson
 
 The Robinson projection, presented by the American geographer and cartographer Arthur H. Robinson in 1963,
 is a modified cylindrical projection that is neither conformal nor equal-area. Central meridian and all
@@ -797,7 +796,7 @@ coast(region=:d, proj=:Robinson, frame=:g, res=:crude, area=10000, land=:goldenr
 ```
 
 
-### Eckert IV and VI projection
+### Eckert IV and VI
 
 The Eckert IV and VI projections, presented by the German cartographer Max Eckert-Greiffendorff in 1906,
 are pseudo-cylindrical equal-area projections. Central meridian and all parallels are straight lines;
@@ -833,7 +832,7 @@ coast(region=:d, proj=:EckertVI, frame=:g, res=:crude, area=10000, land=:ivory,
 <img src="figures/mapproj/GMT_eckert6.png" alt="GMT_eckert6" width="500" class="center"/>
 ```
 
-### Sinusoidal projection
+### Sinusoidal
 
 The sinusoidal projection is one of the oldest known projections, is equal-area, and has been used since
 the mid-16th century. It has also been called the “Equal-area Mercator” projection. The central meridian
@@ -878,7 +877,7 @@ coast!(region=(60,200,-90,90), frame=:g, res=:crude, area=10000, land=:darkblue,
 The usefulness of the interrupted sinusoidal projection is basically limited to display of global,
 discontinuous data distributions like hydrocarbon and mineral resources, etc.
 
-### Van der Grinten projection
+### Van der Grinten
 
 The Van der Grinten projection, presented by Alphons J. van der Grinten in 1904, is neither equal-area nor
 conformal. Central meridian and Equator are straight lines; other meridians are arcs of circles. The scale
