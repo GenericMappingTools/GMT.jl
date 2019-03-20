@@ -13,8 +13,9 @@ makedocs(
         "Draw frames examples"     => "frames.md",
         "Map projections"          => "proj_examples.md",
         "Gallery"                  => [
-            "AGU"             => "gallery/tables.md",
-            "Map projections" => "gallery/mapprojs.md",
+            "AGU"                   => "gallery/tables.md",
+            "Map projections"       => "gallery/mapprojs.md",
+            "Historical collection" => "gallery/historic.md",
         ],
         hide("gallery/scripts_agu/colored_bars.md"),
         hide("gallery/scripts_agu/bars_3D.md"),

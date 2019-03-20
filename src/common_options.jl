@@ -1881,6 +1881,8 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
 
+	global img_mem_layout = add_opt("", "", d, [:layout])
+
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
 			if ((r = dbg_print_cmd(d, cmd[k], prog)) !== nothing)  return r  end 	# For tests only

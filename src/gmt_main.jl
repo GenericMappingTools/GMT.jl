@@ -88,9 +88,8 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
 """
 function gmt(cmd::String, args...)
 	global API
-	global grd_mem_layout = ""			# "BRP" is the default for GMT PS images.
-	#global img_mem_layout = "TCP"		# For Images.jl
-	global img_mem_layout = ""
+	global grd_mem_layout
+	global img_mem_layout
 
 	# ----------- Minimal error checking ------------------------
 	n_argin = length(args)
@@ -131,7 +130,7 @@ function gmt(cmd::String, args...)
 		if (GMT_Destroy_Session(API) != 0)  error("GMT: Failure to destroy GMT session") end
 		API = NaN
 		return
-	elseif (g_module == "begin" && isempty(r))	# Cannot have a no-args for these cases otherwise it prints help
+	elseif (g_module == "begin" && (r == ""))	# Cannot have a no-args for these cases otherwise it prints help
 		r = "gmtsession"
 	elseif (GMTver >= 6.0)
 		gmt_manage_workflow(API, 0, NULL)		# Force going here to see if we are in middle of a MODERN session
@@ -144,7 +143,7 @@ function gmt(cmd::String, args...)
 
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F.
 	# The problem is that we can't use nargout to decide what to do, so we use -T to solve the ambiguity.
-	if (g_module == "psconvert" && (isempty(r) || !occursin("-F", r)) )
+	if (g_module == "psconvert" && ((r == "") || !occursin("-F", r)) )
 		if (r == "")
 			r = "-F"
 		else
@@ -159,13 +158,17 @@ function gmt(cmd::String, args...)
 			end
 		end
 	end
-	if ((g_module == "psconvert" || g_module == "grdimage") && occursin("-,", r))	# It has also a mem layout request
+	#=
+	if ((g_module == "psconvert" || g_module == "grdimage") && occursin("-%", r))	# It has also a mem layout request
+@show(img_mem_layout)
 		r, img_mem_layout, grd_mem_layout = parse_mem_layouts(r)
+@show(img_mem_layout)
 		if (g_module == "grdimage" && img_mem_layout != "")
 			mem_layout = length(img_mem_layout) == 3 ? img_mem_layout * "a" : img_mem_layout
 			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);		# Tell grdimage to give us the image with this mem layout
 		end
 	end
+	=#
 
 	# 2++ Add -T to gmtwrite if user did not explicitly give -T. Seek also for MEM layout requests
 	if (occursin("write", g_module))
@@ -186,7 +189,7 @@ function gmt(cmd::String, args...)
 	end
 
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
-	if (occursin("read", g_module) && !isempty(r) && occursin("-T", r))
+	if (occursin("read", g_module) && !isempty(r) && occursin("-T", r))		# It parses the 'layout' key
 		if (occursin("-Ti", r))
 			GMT_Set_Default(API, "API_PAD", "0")
 		end
@@ -335,7 +338,7 @@ function parse_mem_layouts(cmd)
 # strip the corresponding option from the CMD string (otherwise GMT would scream)
 	grd_mem_layout = "";	img_mem_layout = ""
 
-	if ((ind = findfirst( "-,", cmd)) !== nothing)
+	if ((ind = findfirst( "-%", cmd)) !== nothing)
 		img_mem_layout, resto = strtok(cmd[ind[1]+2:end])
 		if (length(img_mem_layout) < 3 || length(img_mem_layout) > 4)
 			error(@sprintf("GMT: Memory layout option must have 3 characters and not %s", img_mem_layout))
@@ -343,7 +346,7 @@ function parse_mem_layouts(cmd)
 		cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 	end
 	if (isempty(img_mem_layout))				# Only if because we can't have a double request
-		if ((ind = findfirst( "-;", cmd)) !== nothing)
+		if ((ind = findfirst( "-&", cmd)) !== nothing)
 			grd_mem_layout, resto = strtok(cmd[ind[1]+2:end])
 			if (length(img_mem_layout) < 2)
 				error(@sprintf("GMT: Memory layout option must have at least 2 chars and not %s", grd_mem_layout))
@@ -955,7 +958,7 @@ function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_I
 		                         C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
 			error("image_init: Failure to alloc GMT blank grid container for holding output image")
 		end
-		if (!isempty(img_mem_layout))
+		if (img_mem_layout != "")
 			mem_layout = length(img_mem_layout) == 3 ? img_mem_layout * "a" : img_mem_layout
 			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);		# State how we wish to receive images from GDAL
 		end
