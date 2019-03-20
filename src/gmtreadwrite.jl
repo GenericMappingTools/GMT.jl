@@ -109,7 +109,7 @@ function gmtread(fname::String; kwargs...)
 			if (length(t) != 3)
 				error(@sprintf("Memory layout option must have 3 characters and not %s", t))
 			end
-			cmd = (opt_T == " -Ti") ? cmd * " -," * t : cmd * " -;" * t
+			cmd = (opt_T == " -Ti") ? cmd * " -%" * t : cmd * " -&" * t
 		end
 	end
 
@@ -220,7 +220,7 @@ function gmtwrite(fname::String, data; kwargs...)
 			if (length(t) != 3)
 				error(@sprintf("Memory layout option must have 3 characters and not %s", t))
 			end
-			cmd = (opt_T == " -Ti") ? cmd * " -," * t : cmd * " -;" * t
+			cmd = (opt_T == " -Ti") ? cmd * " -%" * t : cmd * " -&" * t
 		end
 	end
 
