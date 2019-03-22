@@ -22,14 +22,10 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdgradient(....) form.
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html#g)
-- **E** : **lambertian** : -- Str --    Flags = [m|s|p]azim/elev[+aambient][+ddiffuse][+pspecular][+sshine] 
+- **E** : **lambert** : -- Str --    Flags = [m|s|p]azim/elev[+aambient][+ddiffuse][+pspecular][+sshine] 
 
     Compute Lambertian radiance appropriate to use with grdimage and grdview.
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#e)
-- **L** : **bc** : **boundary** : -- Str --
-
-    Boundary condition flag.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html#l)
 - **N** : **norm** : **normalize** : -- Str --     Flags = [e|t][amp][+ssigma][+ooffset]
 
     Normalization. [Default is no normalization.] The actual gradients g are offset and scaled
@@ -50,8 +46,8 @@ function grdgradient(cmd0::String="", arg1=[]; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f :n])
-	cmd = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:G :outgrid], [:E :lambertian],
-				[:L :bc :boundary], [:N :norm :normalize], [:S :slopegrid]])
+	cmd = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:G :outgrid], [:E :lambert],
+				[:N :norm :normalize], [:S :slopegrid]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end

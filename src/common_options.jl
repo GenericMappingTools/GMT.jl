@@ -153,11 +153,7 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 		if (opt_J == "")  opt_J = " -JX"  end
 		# If only the projection but no size, try to get it from the kwargs.
 		if (haskey(d, :figsize))
-			s = arg2str(d[:figsize])
-			if (haskey(d, :units))  s *= d[:units][1]  end
-			if (occursin("+proj", opt_J)) opt_J *= "+width=" * s
-			else                          opt_J = append_figsize(opt_J, s)
-			end
+			opt_J = helper_append_figsize(d, opt_J)
 		elseif ((val = find_in_dict(d, [:figscale :scale])[1]) !== nothing)
 			val = string(val)
 			if (opt_J == " -JX")  isletter(val[1]) ? opt_J = " -J" * val : opt_J = " -Jx" * val	# FRAGILE
@@ -176,13 +172,17 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 				opt_J *= def_fig_size[1:3]
 			end
 		end
+	else										# For when a new size is entered in a middle of a script
+		if (haskey(d, :figsize))
+			opt_J = helper_append_figsize(d, opt_J)
+		end
 	end
 	cmd *= opt_J
 	return cmd, opt_J
 end
 
 function append_figsize(opt_J, width="", scale=false)
-	# Appendng either a fig width or fig scale depends on what projection. Sometimes we need to separate with a '\'
+	# Appending either a fig width or fig scale depending on what projection. Sometimes we need to separate with a '/'
 	# others not. If WIDTH == "" we use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
 	if (width == "")  width = def_fig_size[1:3]  end
 	if (isnumeric(opt_J[end]))                                   opt_J *= "/" * width
@@ -193,6 +193,15 @@ function append_figsize(opt_J, width="", scale=false)
 	end
 	if (scale)  opt_J = opt_J[1:3] * lowercase(opt_J[4]) * opt_J[5:end]  end 		# Turn " -JX" to " -Jx"
 	return opt_J
+end
+
+function helper_append_figsize(d, opt_J)
+	# This chunk of code is used twice, so put in a fun
+	s = arg2str(d[:figsize])
+	if (haskey(d, :units))  s *= d[:units][1]  end
+	if (occursin("+proj", opt_J)) opt_J *= "+width=" * s
+	else                          opt_J = append_figsize(opt_J, s)
+	end
 end
 
 function build_opt_J(Val)
@@ -271,7 +280,7 @@ function parse_proj(p::NamedTuple)
 
 	center = ""
 	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
-		if (isa(val, String))      center = val
+		if     (isa(val, String))  center = val
 		elseif (isa(val, Number))  center = @sprintf("%.8g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)  center = @sprintf("%.8g/%.8g", val[1], val[2])
 		end
@@ -281,7 +290,7 @@ function parse_proj(p::NamedTuple)
 
 	parallels = ""
 	if ((val = find_in_dict(d, [:parallels])[1]) !== nothing)
-		if (isa(val, String))      parallels = "/" * val
+		if     (isa(val, String))  parallels = "/" * val
 		elseif (isa(val, Number))  parallels = @sprintf("/%.8g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && length(val) <= 3)
 			parallels = join([@sprintf("/%.12g",x) for x in val])
@@ -294,7 +303,7 @@ function parse_proj(p::NamedTuple)
 	end
 	if (startswith(prj, "Cyl"))  prj = prj[1:9] * "/" * center	# The unique Cyl_stere case
 	elseif (prj[1] == 'K' || prj[1] == 'O')  prj = prj[1:2] * center	# Eckert || Oblique Merc
-	else                         prj = prj[1] * center
+	else                                     prj = prj[1]   * center
 	end
 	return prj, mnemo
 end
@@ -809,9 +818,11 @@ function arg2str(arg)
 		out = ""
 	elseif (isa(arg, Number))		# Have to do it after the Bool test above because Bool is a Number too
 		out = @sprintf("%.15g", arg)
-	elseif (isa(arg, Array{<:Number}) || isa(arg, Tuple))
+	elseif (isa(arg, Array{<:Number}) || (isa(arg, Tuple) && !isa(arg[1], String)) )
 		out = join([@sprintf("%.15g/",x) for x in arg])
 		out = rstrip(out, '/')		# Remove last '/'
+	elseif (isa(arg, Tuple) && isa(arg[1], String))		# Maybe better than above but misses nice %.xxg
+		out = join(arg,'/')
 	else
 		error(@sprintf("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple,
 		                but was %s", typeof(arg)))
@@ -854,14 +865,43 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == true we remove the found key.
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-		if (isa(val, NamedTuple))  args = add_opt(val, mapa, arg)
-		else                       args = arg2str(val)
+		if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
+			args = add_opt(val, mapa, arg)
+		elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
+			# Used when we need to call multiple times a `compound` option. Like grdcontour -W
+			if !(isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[1], NamedTuple))
+				return cmd		# This protects for calls with `mapa` != Tuple{Array{NamedTuple}} 
+			end
+			return cmd * add_opt2(opt, d, symbs, mapa, del, arg)	# We are done in this case
+		elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
+			if (isa(val, NamedTuple))
+				if (mapa[2] == helper_decorated)  args = mapa[2](val, true)		# 'true' means getting a single argout
+				else                              args = mapa[2](val)			# Case not yet invented
+				end
+			else
+				error("The option argument must be a NamedTuple, not a simple Tuple")
+			end
+		else
+			args = arg2str(val)
 		end
 		if (opt != "")  cmd = string(cmd, " -", opt, args)
 		else            cmd = string(cmd, args)
 		end
 	end
 	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function add_opt2(opt, d::Dict, symbs, mapa=nothing, del::Bool=false, arg=nothing)
+	# This method is a companion of the above where mapa is an Tuple{Array{NamedTuple}}
+	# but can't find that type
+	args = ""
+	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
+		for k =1:length(val)		# Loop over all the NamedTuples of this tuple
+			args *= " -" * opt * add_opt(val[k], mapa[k], arg)
+		end
+	end
+	return args
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -878,7 +918,8 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 		if (!haskey(d, key[k]))  continue  end
 		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(nt[k], NamedTuple))
-				cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), [])
+				local_opt = (d[key[k]][2] == helper_decorated) ? true : []		# 'true' means getting a single argout
+				cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), local_opt)
 			else						# 
 				if (length(d[key[k]]) == 2)		# Run the function
 					cmd *= d[key[k]][1] * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])
@@ -1410,7 +1451,10 @@ decorated(nt::NamedTuple) = decorated(;nt...)
 function decorated(;kwargs...)
 	d = KW(kwargs)
 
-	cmd, optD = helper_decorated(d)		# 'cmd' cannot come out empty (would have errored)
+	cmd, optD = helper_decorated(d)
+	if (cmd == "" && optD == "")
+		error("DECORATED: no controlling algorithm to place the elements was provided (dist, n_symbols, etc).")
+	end
 
 	if (haskey(d, :dec2))				# -S~ mode (decorated, with symbols, lines).
 		cmd *= ":"
@@ -1432,39 +1476,7 @@ function decorated(;kwargs...)
 		opt_S = " -S~"
 	elseif (haskey(d, :quoted))				# -Sq mode (quoted lines).
 		cmd *= ":"
-		if (haskey(d, :angle))   cmd  = string(cmd, "+a", d[:angle])  end
-		if (haskey(d, :debug))   cmd *= "+d"  end
-		if (haskey(d, :clearance ))  cmd *= "+c" * arg2str(d[:clearance]) end
-		if (haskey(d, :delay))   cmd *= "+e"  end
-		if (haskey(d, :font))    cmd *= "+f" * font(d[:font])    end
-		if (haskey(d, :color))   cmd *= "+g" * arg2str(d[:color])   end
-		if (haskey(d, :justify)) cmd = string(cmd, "+j", d[:justify]) end
-		if (haskey(d, :const_label)) cmd = string(cmd, "+l", str_with_blancs(d[:const_label]))  end
-		if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])   end
-		if (haskey(d, :rounded)) cmd *= "+o"  end
-		if (haskey(d, :min_rad)) cmd *= "+r" * arg2str(d[:min_rad]) end
-		if (haskey(d, :unit))    cmd *= "+u" * arg2str(d[:unit])    end
-		if (haskey(d, :curved))  cmd *= "+v"  end
-		if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])  end
-		if (haskey(d, :prefix))  cmd *= "+=" * arg2str(d[:prefix])  end
-		if (haskey(d, :suffices)) cmd *= "+x" * arg2str(d[:suffices])  end		# Only when -SqN2
-		if (haskey(d, :label))
-			if (isa(d[:label], String))
-				cmd *= "+L" * d[:label]
-			elseif (isa(d[:label], Symbol))
-				if     (d[:label] == :header)  cmd *= "+Lh"
-				elseif (d[:label] == :input)   cmd *= "+Lf"
-				else   error("Wrong content for the :label option. Must be only :header or :input")
-				end
-			elseif (isa(d[:label], Tuple))
-				if     (d[:label][1] == :plot_dist)  cmd *= "+Ld" * string(d[:label][2])
-				elseif (d[:label][1] == :map_dist)   cmd *= "+LD" * parse_units(d[:label][2])
-				else   error("Wrong content for the :label option. Must be only :plot_dist or :map_dist")
-				end
-			else
-				@warn("'label' option must be a string or a NamedTuple. Since it wasn't I'm ignoring it.")
-			end
-		end
+		cmd = parse_quoted(d, cmd)
 		if (optD == "")  optD = "d"  end	# Really need to improve the algo of this
 		opt_S = " -Sq"
 	else									# -Sf mode (front lines).
@@ -1492,9 +1504,13 @@ function decorated(;kwargs...)
 	return opt_S * optD * cmd
 end
 
-# --------------------------------
-function helper_decorated(d::Dict)
-	# Helper function to deal with the gap and symbol size parameters
+# ---------------------------------------------------------
+function helper_decorated(nt::NamedTuple, compose=false)
+	helper_decorated(nt2dict(nt), compose)
+end
+function helper_decorated(d::Dict, compose=false)
+	# Helper function to deal with the gap and symbol size parameters.
+	# At same time it's also what we need to call to build up the grdcontour -G option.
 	cmd = "";	optD = ""
 	val, symb = find_in_dict(d, [:dist :distance :distmap :number])
 	if (val !== nothing)
@@ -1509,7 +1525,9 @@ function helper_decorated(d::Dict)
 		else
 			error("DECORATED: the 'dist' (or 'distance') parameter is mandatory and must be either a string or a tuple.")
 		end
-		if (symb == :distmap)  optD = "D"  end		# Here we know that we are dealing with a -S~ for sure.
+		if     (symb == :distmap)  optD = "D"		# Here we know that we are dealing with a -S~ for sure.
+		elseif (symb != :number && compose)  optD = "d"		# I feer the case :number is not parsed anywhere
+		end
 	end
 	if (cmd == "")
 		if ((val = find_in_dict(d, [:lines :Lines])[1]) !== nothing)
@@ -1535,10 +1553,53 @@ function helper_decorated(d::Dict)
 			optD = string("N", val);
 		end
 	end
-	if (cmd == "" && optD == "")
-		error("DECORATED: no controlling algorithm to place the elements was provided (dist, n_symbols, etc).")
+	if (compose)
+		return optD * cmd			# For example for grdgradient -G
+	else
+		return cmd, optD
 	end
-	return cmd, optD
+end
+
+# -------------------------------------------------
+parse_quoted(nt::NamedTuple) = parse_quoted(;nt...)
+function parse_quoted(d::Dict, cmd::String="")
+	# This function is isolated from () above to allow calling it seperately from grdcontour
+	# In fact both -A and -G grdcontour options are almost equal to a decorated line in psxy.
+	# So we need a mechanism to call it all at once (psxy) or in two parts (grdcontour).``
+	if (haskey(d, :angle))   cmd  = string(cmd, "+a", d[:angle])  end
+	if (haskey(d, :debug))   cmd *= "+d"  end
+	if (haskey(d, :clearance ))  cmd *= "+c" * arg2str(d[:clearance]) end
+	if (haskey(d, :delay))   cmd *= "+e"  end
+	if (haskey(d, :font))    cmd *= "+f" * font(d[:font])    end
+	if (haskey(d, :color))   cmd *= "+g" * arg2str(d[:color])   end
+	if (haskey(d, :justify)) cmd = string(cmd, "+j", d[:justify]) end
+	if (haskey(d, :const_label)) cmd = string(cmd, "+l", str_with_blancs(d[:const_label]))  end
+	if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])   end
+	if (haskey(d, :rounded)) cmd *= "+o"  end
+	if (haskey(d, :min_rad)) cmd *= "+r" * arg2str(d[:min_rad]) end
+	if (haskey(d, :unit))    cmd *= "+u" * arg2str(d[:unit])    end
+	if (haskey(d, :curved))  cmd *= "+v"  end
+	if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])  end
+	if (haskey(d, :prefix))  cmd *= "+=" * arg2str(d[:prefix])  end
+	if (haskey(d, :suffices)) cmd *= "+x" * arg2str(d[:suffices])  end		# Only when -SqN2
+	if (haskey(d, :label))
+		if (isa(d[:label], String))
+			cmd *= "+L" * d[:label]
+		elseif (isa(d[:label], Symbol))
+			if     (d[:label] == :header)  cmd *= "+Lh"
+			elseif (d[:label] == :input)   cmd *= "+Lf"
+			else   error("Wrong content for the :label option. Must be only :header or :input")
+			end
+		elseif (isa(d[:label], Tuple))
+			if     (d[:label][1] == :plot_dist)  cmd *= "+Ld" * string(d[:label][2])
+			elseif (d[:label][1] == :map_dist)   cmd *= "+LD" * parse_units(d[:label][2])
+			else   error("Wrong content for the :label option. Must be only :plot_dist or :map_dist")
+			end
+		else
+			@warn("'label' option must be a string or a NamedTuple. Since it wasn't I'm ignoring it.")
+		end
+	end
+	return cmd
 end
 # ---------------------------------------------------------------------------------------------------
 
