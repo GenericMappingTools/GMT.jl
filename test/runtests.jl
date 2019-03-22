@@ -36,6 +36,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.build_opt_J(2500)[1] == " -J2500"
 	@test GMT.build_opt_J([])[1] == " -J"
 	@test GMT.arg2str((1,2,3)) == "1/2/3"
+	@test GMT.arg2str(("aa",2,3)) == "aa/2/3"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="meter")),[:I :inc], "I") == " -I1.5e/2.6e"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="data")),[:I :inc], "I") == " -I1.5/2.6u"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, extend="data")),[:I :inc], "I") == " -I1.5+e/2.6+e"
@@ -52,6 +53,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_J("", Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
 	@test GMT.parse_J("", Dict(:scale=>"1:10"))[1] == " -Jx1:10"
 	@test GMT.parse_J("", Dict(:s=>"1:10"), " -JU")[1] == " -JU"
+	@test GMT.parse_J("", Dict(:J => "Merc", :figsize => 10), "", true, true)[1] == " -JM10"
 	@test GMT.parse_J("", Dict(:J => "+proj=merc"))[1] == " -J+proj=merc+width=12c"
 	@test GMT.parse_J("", Dict(:J => (name=:albers, parallels=[45 65])), "", false)[1] == " -JB0/0/45/65"
 	@test GMT.parse_J("", Dict(:J => (name=:albers, center=[10 20], parallels=[45 65])), "", false)[1] == " -JB10/20/45/65"
@@ -69,6 +71,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.opt_pen(Dict(:lw => 5, :lc => :red),'W', nothing) == " -W5,red"
 	@test GMT.opt_pen(Dict(:lw => 5),'W', nothing) == " -W5"
 	@test GMT.opt_pen(Dict(:a => (10,:red)),'W', [:a]) == " -W10,red"
+	@test_throws ErrorException("Nonsense in W option") GMT.opt_pen(Dict(:a => [1 2]),'W', [:a])
 	@test GMT.get_color((1,2,3)) == "1/2/3"
 	@test GMT.get_color((0.1,0.2,0.3)) == "26/51/77"
 	@test GMT.get_color([1 2 3]) == "1/2/3"
@@ -100,6 +103,8 @@ if (got_it)					# Otherwise go straight to end
 	r = decorated(dist=("0.4i",0.25), angle=7, clearance=(2,3), debug=1, delay=1, font=10, color=:red, justify=:TC, const_label=:Ai, pen=(0.5,:red), fill=:blue, nudge=(3,4), rounded=1, unit=:TT, min_rad=0.5, curved=1, n_data=20, prefix="Pre", suffices="a,b", label=(:map_dist,"d"), quoted=1)
 	@test r == " -Sqd0.4i/0.25:+a7+d+c2/3+e+f10+gred+jTC+lAi+n3/4+o+r0.5+uTT+v+w20+=Pre+xa,b+LDd+p0.5,red"
 
+	@test_throws ErrorException("DECORATED: missing controlling algorithm to place the elements (dist, n_symbols, etc).") GMT.decorated(dista = 4)
+
 	@test GMT.get_color((1,2,3)) == "1/2/3"
 	@test GMT.get_color([1 2 3; 3 4 5; 6 7 8]) == "1/3/6,3/4/5,6/7/8"
 	@test GMT.get_color(:red) == "red"
@@ -128,6 +133,8 @@ if (got_it)					# Otherwise go straight to end
 	psxy!("", [0 0; 1 1.1], Vd=:cmd);
 	GMT.get_marker_name(Dict(:y => "y"), [:y])
 	@test_throws ErrorException("Argument of the *bar* keyword can be only a string or a NamedTuple.") GMT.parse_bar_cmd(Dict(:a => 0), :a, "", "")
+
+	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((post=1:5,), 'p', "x")
 
 	GMT.round_wesn([1.333 17.4678 6.66777 33.333], true);
 	GMT.round_wesn([1 1 2 2]);
@@ -287,6 +294,10 @@ if (got_it)					# Otherwise go straight to end
 	GG = gmt("read -Tg lixo.grd");
 	C = grdcontour("lixo.grd", C="+0.7", D=[]);
 	@assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
+	r = grdcontour("bla", cont=10, A=(int=50,labels=(font=7,)), G=(dist="4i",), L=(-1000,-1), W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), T=(gap=("0.1i","0.02i"),), Vd=:cmd);
+	@test startswith(r, "bla  -JX12c/0 -Baf -BWSen -L-1000/-1 -A50+f7 -Gd4i -T+d0.1i/0.02i -Wcthinnest,- -Wathin,- -C10")
+	r = grdcontour("bla", A="50+f7p", G="d4i", W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), Vd=:cmd);
+	@test startswith(r, "bla  -JX12c/0 -Baf -BWSen -A50+f7p -Gd4i -Wathin,-")
 	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
 	if (GMTver >= 6)
@@ -474,8 +485,9 @@ if (got_it)					# Otherwise go straight to end
 	bar(rand(20),hbar=(width=0.5,unit=:c, base=9), Vd=:cmd)
 	bar(rand(20),bar="0.5c+b9",  Vd=:cmd)
 	bar(rand(20),hbar="0.5c+b9",  Vd=:cmd)
-	bar(rand(10), xaxis=(custom=(pos=1:5,),), Vd=:cmd)
+	bar(rand(10), xaxis=(custom=(pos=1:5,type="A"),), Vd=:cmd)
 	bar(rand(10), axis=(custom=(pos=1:5,label=[:a :b :c :d :e]),), Vd=:cmd)
+	@test_throws ErrorException("Number of labels in custom annotations must be the same as the 'pos' element") bar(rand(10), axis=(custom=(pos=1:5,label=[:a :b :c :d]),), Vd=:cmd)
 	bar((1,2,3), Vd=:cmd)
 	bar((1,2,3), (1,2,3), Vd=:cmd)
 	bar!((1,2,3), Vd=:cmd)

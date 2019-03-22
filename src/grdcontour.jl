@@ -83,7 +83,7 @@ function grdcontour(cmd0::String="", arg1=[]; first=true, kwargs...)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	K, O = set_KO(first)		# Set the K O dance
-    cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
+	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t])
 	cmd = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
 	

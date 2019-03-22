@@ -878,6 +878,8 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false
 				if (mapa[2] == helper_decorated)  args = mapa[2](val, true)		# 'true' means getting a single argout
 				else                              args = mapa[2](val)			# Case not yet invented
 				end
+			elseif (isa(val, String))
+				args = val
 			else
 				error("The option argument must be a NamedTuple, not a simple Tuple")
 			end
@@ -1453,7 +1455,7 @@ function decorated(;kwargs...)
 
 	cmd, optD = helper_decorated(d)
 	if (cmd == "" && optD == "")
-		error("DECORATED: no controlling algorithm to place the elements was provided (dist, n_symbols, etc).")
+		error("DECORATED: missing controlling algorithm to place the elements (dist, n_symbols, etc).")
 	end
 
 	if (haskey(d, :dec2))				# -S~ mode (decorated, with symbols, lines).
@@ -1562,10 +1564,11 @@ end
 
 # -------------------------------------------------
 parse_quoted(nt::NamedTuple) = parse_quoted(;nt...)
-function parse_quoted(d::Dict, cmd::String="")
+function parse_quoted(d::Dict, opt)
 	# This function is isolated from () above to allow calling it seperately from grdcontour
 	# In fact both -A and -G grdcontour options are almost equal to a decorated line in psxy.
-	# So we need a mechanism to call it all at once (psxy) or in two parts (grdcontour).``
+	# So we need a mechanism to call it all at once (psxy) or in two parts (grdcontour).
+	cmd = (isa(opt, String)) ? opt : ""			# Need to do this to prevent from calls that don't set OPT
 	if (haskey(d, :angle))   cmd  = string(cmd, "+a", d[:angle])  end
 	if (haskey(d, :debug))   cmd *= "+d"  end
 	if (haskey(d, :clearance ))  cmd *= "+c" * arg2str(d[:clearance]) end
