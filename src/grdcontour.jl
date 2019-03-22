@@ -85,9 +85,22 @@ function grdcontour(cmd0::String="", arg1=[]; first=true, kwargs...)
 	K, O = set_KO(first)		# Set the K O dance
     cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t])
-	cmd = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:G :labels], [:L :range], [:Q :cut],
-				[:S :smooth], [:T :ticks], [:Z :scale]])
-	cmd *= add_opt_pen(d, [:W :pen], "W")
+	cmd = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
+	
+	cmd = add_opt(cmd, 'A', d, [:A :annot], (disable=("-", nothing, 1), single=("+", nothing, 1),
+	                                         int="", interval="", labels=("", parse_quoted)) )
+
+	cmd = add_opt(cmd, 'G', d, [:G :labels], ("", helper_decorated))
+
+	cmd = add_opt(cmd, 'T', d, [:T :ticks], (local_high=("h", nothing, 1), local_low=("l", nothing, 1),
+	                                         labels="+l", closed="_+a", gap="+d") )
+
+	# Only ONE of the two forms below should be used. Second one is when we want to destinguish -Wc & -Wa
+	cmd = add_opt(cmd, 'W', d, [:W :pen], (contour="c", annot="a", pen=("", add_opt_pen)) )
+	cmd = add_opt(cmd, 'W', d, [:W :pen], ((contour="_c", pen=("", add_opt_pen)),
+	                                       (annot="_a",   pen=("", add_opt_pen))) )
+
+	cmd = add_opt(cmd, 'Z', d, [:Z :scale], (factor="+s", shift="+o", periodic="_+p"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)	# Find how data was transmitted
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
@@ -95,7 +108,6 @@ function grdcontour(cmd0::String="", arg1=[]; first=true, kwargs...)
 	N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
 
-	cmd = add_opt(cmd, 'A', d, [:A :annot])
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
 		cmd = add_opt(cmd, 'C', d, [:cont :contours :levels])
 	end
