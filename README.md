@@ -7,15 +7,10 @@ Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 |:---------------------------------------:|:-----------------------------------------:|
 | [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] |
 
-[gitter-url]: https://gitter.im/genericmappingtools/users
-
 [contrib-url]: https://genericmappingtools.github.io/GMT.jl/latest/man/contributing/
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://genericmappingtools.github.io/GMT.jl/latest
-
-[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]: https://genericmappingtools.github.io/GMT.jl/stable
 
 [travis-img]: https://travis-ci.org/GenericMappingTools/GMT.jl.svg?branch=master
 [travis-url]: https://travis-ci.org/GenericMappingTools/GMT.jl
@@ -29,17 +24,21 @@ Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 [coveralls-img]: https://coveralls.io/repos/github/GenericMappingTools/GMT.jl/badge.svg?branch=master
 [coveralls-url]: https://coveralls.io/github/GenericMappingTools/GMT.jl?branch=master
 
-[pkg-0.6-img]: http://pkg.julialang.org/badges/GMT_0.6.svg
-[pkg-0.6-url]: http://pkg.julialang.org/?pkg=GMT&ver=0.6
-[pkg-0.7-img]: http://pkg.julialang.org/badges/GMT_0.7.svg
-[pkg-0.7-url]: http://pkg.julialang.org/?pkg=GMT&ver=0.7
 
 The Generic Mapping Tools, **GMT**, is an open source collection of tools for manipulating geographic
 and Cartesian data sets (including filtering, trend fitting, gridding, projecting, etc.) and producing
 PostScript illustrations ranging from simple x–y plots via contour maps to artificially illuminated
 surfaces and 3D perspective views.
 
-This wrapper works only with GMT5.3.1 and above
+This wrapper works with GMT5.3.1 and above and it is intended not only to access to **GMT** from
+within the Julia language but also to provide a more modern interface to the **GMT** modules.
+For example, instead of using the **GMT** classic syntax to do a line plot:
+
+   gmt psxy filename -R0/10/0/5 -JX12 -W1p -Ba -P > psfile.ps
+
+one can simply do:
+
+   plot("filename", show=true)
 
 Install
 =======

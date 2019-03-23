@@ -40,7 +40,7 @@ Parameters
        - *width*\
           The bar width in x-units. To specify it in plot units, use the *unit* member with `cm`, `inch` or `point`.
        - *unit*\
-          In case *width* is given in plot units. Valid units are cm`, `inch` or `point`.
+          In case *width* is given in plot units. Valid units are `cm`, `inch` or `point`.
        - *base=xx*\
           where *xx* is the base value.
        - *height*\

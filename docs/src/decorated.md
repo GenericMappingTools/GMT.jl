@@ -39,7 +39,7 @@ To select this type the *dec2=true* keyword/value must be present in the *decora
 The required setting controls the placement of labels along the quoted lines. Choose among the controlling
 algorithms.
 
-Placement methods:
+### [Placement methods:](@id placement_method_dec)
 
 - *dist=xx* or *distance=xx*\
    Give distances between labels on the plot in your preferred measurement unit.
@@ -63,7 +63,7 @@ Placement methods:
    [Default centers them along the line]. Optionally, append /min_dist[c|i|p] to enforce that a minimum distance
    separation between successive labels is enforced. In this case *xx* must obviously be a string.
 
-Symbol formatting:
+### [Symbol formatting:](@id symb_format_dec)
 
 - *marker=symb* or *symbol=symb*\
    Selects the decorating symbol *symb*. See the [Symbols](@ref) for the list of symbols available.
@@ -91,7 +91,7 @@ To select this type the *quoted=true* keyword/value must be present in the *deco
 Lines with annotations such as contours. The required setting controls the placement of labels along the quoted
 lines. Choose among the controlling algorithms.
 
-Placement methods:
+### [Placement methods:](@id placement_method_quot)
 
 - *dist=xx* or *distance=xx*\
    Give distances between labels on the plot in your preferred measurement unit.
@@ -115,7 +115,7 @@ Placement methods:
    [Default centers them along the line]. Optionally, append /min_dist[c|i|p] to enforce that a minimum distance
    separation between successive labels is enforced. In this case *xx* must obviously be a string.
 
-Label formatting:
+### [Label formatting:](@id label_format_quot)
 
 - *angle=xx*\
    For symbols at a fixed angle.

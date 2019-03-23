@@ -41,6 +41,7 @@ makedocs(
             "arrows.md",
             "bar.md",
             "bar3.md",
+            "grdcontour.md",
             "lines.md",
             "scatter.md",
             "scatter3.md",
