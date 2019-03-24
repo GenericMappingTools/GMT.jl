@@ -102,7 +102,6 @@ coast(region=[-130 -70 24 52], proj=(name=:lambertConic, center=[-100 35], paral
 <img src="figures/mapproj/GMT_lambert_conic.png" alt="GMT_lambert_conic" title="Lambert conformal conic map projection" width="500" class="center"/>
 ```
 
-
 ### (American) polyconic projection
 
 The polyconic projection, in Europe usually referred to as the American polyconic projection, was introduced
@@ -287,7 +286,6 @@ coast(region=:g, proj="G4/52/230/90/60/180/60/60", xaxis=(annot=2,grid=2), yaxis
 ```@raw html
 <img src="figures/mapproj/GMT_perspective.png" alt="GMT_perspective" width="500" class="center"/>
 ```
-
 
 ### Orthographic
 
@@ -644,7 +642,6 @@ coast(region=(-90,270,-80,90), proj=:Miller, xaxis=(annot=45,grid=45),
 <img src="figures/mapproj/GMT_miller.png" alt="GMT_miller" width="500" class="center"/>
 ```
 
-
 ### Cylindrical stereographic
 
 The cylindrical stereographic projections are certainly not as notable as other cylindrical projections, but
@@ -739,7 +736,6 @@ coast(region=:d, proj=:Mollweide, frame=:g, res=:crude, area=10000, land=:tomato
 ```@raw html
 <img src="figures/mapproj/GMT_mollweide.png" alt="GMT_mollweide" width="500" class="center"/>
 ```
-
 
 ### Winkel Tripel
 
