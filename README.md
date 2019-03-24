@@ -50,14 +50,12 @@ instead of
 
 to see
 
-    ```@raw html
-    <img src="docs/src/figures/mapproj/GMT_winkel.png" width="500" class="center"/>
-    ```
+```@raw html
+<img src="docs/src/figures/mapproj/GMT_winkel.png" width="500" class="center"/>
+```
 
 Install
 =======
-
-Use the new Pkg3 to install current version.
 
     ]add GMT
 
