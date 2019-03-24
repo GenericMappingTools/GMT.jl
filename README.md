@@ -50,9 +50,9 @@ instead of
 
 to see
 
-```@raw html
-<img src="doc/src/figures/mapproj/GMT_winkel.png" width="500" class="center"/>
-```
+    ```@raw html
+    <img src="docs/src/figures/mapproj/GMT_winkel.png" width="500" class="center"/>
+    ```
 
 Install
 =======
