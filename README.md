@@ -50,7 +50,7 @@ instead of
 
 to see
 
-<img src="docs/src/figures/mapproj/GMT_winkel.png" width="500" class="center"/>
+<img src="docs/src/figures/mapproj/GMT_winkel.png" width="400" class="center"/>
 
 Install
 =======
