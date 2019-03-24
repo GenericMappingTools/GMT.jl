@@ -24,7 +24,6 @@ Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 [coveralls-img]: https://coveralls.io/repos/github/GenericMappingTools/GMT.jl/badge.svg?branch=master
 [coveralls-url]: https://coveralls.io/github/GenericMappingTools/GMT.jl?branch=master
 
-
 The Generic Mapping Tools, **GMT**, is an open source collection of tools for manipulating geographic
 and Cartesian data sets (including filtering, trend fitting, gridding, projecting, etc.) and producing
 PostScript illustrations ranging from simple x–y plots via contour maps to artificially illuminated
@@ -34,11 +33,26 @@ This wrapper works with GMT5.3.1 and above and it is intended not only to access
 within the Julia language but also to provide a more modern interface to the **GMT** modules.
 For example, instead of using the **GMT** classic syntax to do a line plot:
 
-   gmt psxy filename -R0/10/0/5 -JX12 -W1p -Ba -P > psfile.ps
+    gmt psxy filename -R0/10/0/5 -JX12 -W1p -Ba -P > psfile.ps
 
 one can simply do:
 
-   plot("filename", show=true)
+    plot("filename", show=true)
+
+or, more verbose but easier to read
+
+    coast(region=:global, proj=:Winkel, frame=:g, resolution=:crude, area=10000,
+          land=:burlywood4, water=:wheat1, figsize=12, show=true)
+
+instead of
+
+    gmt coast -Rd -JR12 -Bg -Dc -A10000 -Gburlywood4 -Swheat1 -P > GMT_winkel.ps
+
+to see
+
+```@raw html
+<img src="doc/src/figures/mapproj/GMT_winkel.png" width="500" class="center"/>
+```
 
 Install
 =======
@@ -51,8 +65,8 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
 [GMT](http://gmt.soest.hawaii.edu) program. It's the user responsability to do that.
 
   * Windows64
-      1. It's better to install the [GMT6dev version](http://w3.ualg.pt/~jluis/mirone/downloads/gmt.html)
-      2. But if you prefer the official GMT5 version (the [..._win64.exe](https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
+     1. It's better to install the [GMT6dev version](http://w3.ualg.pt/~jluis/mirone/downloads/gmt.html)
+     2. But if you prefer the official GMT5 version (the [..._win64.exe](https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
 
   * Windows32
 
@@ -60,11 +74,11 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
 
   * Unix
   
-      Follow instructions at https://gmt.soest.hawaii.edu/projects/gmt/wiki/BuildingGMT
+      Follow instructions at <https://gmt.soest.hawaii.edu/projects/gmt/wiki/BuildingGMT>
 
   * In any case, since *GMT* produces PostScript you need a PS visualizer
 
-      Install `Ghostscript` and `ghostview` at https://www.ghostscript.com/download/gsdnld.html
+      Install `Ghostscript` and `ghostview` at <https://www.ghostscript.com/download/gsdnld.html>
 
 On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at
 /user/local/lib), I had to help Julia finding MY *libgmt.dylib*, with (this line should than be

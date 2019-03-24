@@ -83,6 +83,8 @@ function colorbar(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
+colorbar(arg1=[]; kw...) = colorbar("", arg1; first=true, kw...)
+colorbar!(arg1=[]; first=false, kw...) = colorbar("", arg1; first=first, kw...)
 colorbar!(cmd0::String="", arg1=[]; first=false, kw...) = colorbar(cmd0, arg1; first=first, kw...)
 
 const psscale  = colorbar         # Alias
