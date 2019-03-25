@@ -354,8 +354,8 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 		tok = Vector{String}(undef, 10)
 		k = 1;		r = opt_B;		found = false
 		while (r != "")
-			tok[k],r = GMT.strtok(r)
-			#=
+			tok[k], r = GMT.strtok(r)
+			#=	Don't remember why I wrote this but it fails when both x&ylabel have two or more words
 			if (occursin(r"[WESNwesntlbu+g+o]", tok[k]) && !occursin("+t", tok[k]))		# If title here, forget about :title
 				if (haskey(d, :title) && isa(d[:title], String))
 					tok[k] = tok[k] * "+t\"" * d[:title] * "\""
@@ -367,6 +367,8 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 			=#
 			tok[k] = replace(tok[k], '\U00AF'=>' ')
 			if (!occursin("-B", tok[k]))
+				tok[k] = " -B" * tok[k] 				# Simple case, no quotes to break our heads
+				#=
 				if (!occursin('"', tok[k]))
 					tok[k] = " -B" * tok[k] 				# Simple case, no quotes to break our heads
 				else
@@ -375,6 +377,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 					end
 					found = !found
 				end
+				=#
 			else
 				tok[k] = " " * tok[k]
 			end
@@ -1071,6 +1074,7 @@ function font(val)
 	# the specified pen; if used you may optionally skip the filling of the text by setting fill to -.
 	if (isa(val, String) || isa(val, Number))  return string(val)  end
 
+	s = ""
 	if (isa(val, Tuple))
 		s = parse_units(val[1])
 		if (length(val) > 1)
@@ -1080,6 +1084,7 @@ function font(val)
 			end
 		end
 	end
+	return s
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -26,6 +26,8 @@ makedocs(
         hide("gallery/scripts_agu/scatter_cart.md"),
         hide("gallery/scripts_agu/scatter_polar.md"),
         hide("gallery/scripts_agu/histo_step.md"),
+        hide("gallery/historic/ex01.md"),
+        hide("gallery/historic/ex02.md"),
         "Manual" => [
             "monolitic.md",
             "modules.md",
