@@ -90,7 +90,7 @@ function mask(cmd0::String="", arg1=[]; first=true, kwargs...)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 
 	cmd = finish_PS(d, cmd, output, K, O)
-	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psmask", arg1)
+	return finish_PS_module(d, "psmask " * cmd, "", output, fname_ext, opt_T, K, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

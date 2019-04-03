@@ -24,7 +24,7 @@ function grdpaste(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
 
 	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, arg1, arg2)
-	return common_grd(d, cmd, got_fname, 2, "grdpaste", arg1, arg2)		# Finish build cmd and run it
+	return common_grd(d, "grdpaste " * cmd, got_fname, 2, arg1, arg2)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

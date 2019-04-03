@@ -902,7 +902,7 @@ function add_opt2(opt, d::Dict, symbs, mapa=nothing, del::Bool=false, arg=nothin
 	# but can't find that type
 	args = ""
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-		for k =1:length(val)		# Loop over all the NamedTuples of this tuple
+		for k = 1:length(val)		# Loop over all the NamedTuples of this tuple
 			args *= " -" * opt * add_opt(val[k], mapa[k], arg)
 		end
 	end
@@ -1033,6 +1033,22 @@ function add_opt_fill(cmd::String, d::Dict, symbs, opt="")
 		cmd *= opt * get_color(val)
 	end
 	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function add_opt_module(d::Dict, symbs)
+	#  SYMBS should contain a module name 'coast' or 'plot', and if present in D,
+	# 'val' must be a NamedTuple with the module's arguments.
+	val, symb = find_in_dict(d, symbs)
+	if (val !== nothing && isa(val, NamedTuple))
+		nt = (val..., Vd=:cmd)
+		if     (symb == :coast)  return coast!(; nt...)
+		elseif (symb == :plot)   return plot!(; nt...)
+		end
+		return nothing
+	else
+		return nothing
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1829,10 +1845,9 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, prog::String, args...)
+function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
-	dbg_print_cmd(d, cmd, prog)
-	cmd = prog * " " * cmd		# Instead of having this in all cases below
+	dbg_print_cmd(d, cmd)
 	if (tipo == 1)				# One input only
 		if (got_fname != 0)
 			return gmt(cmd)
@@ -1853,14 +1868,14 @@ function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, prog::Strin
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dbg_print_cmd(d::Dict, cmd::String, prog::String)
+function dbg_print_cmd(d::Dict, cmd)
 	# Print the gmt command when the Vd=1 kwarg was used
-	#(haskey(d, :Vd)) && println(@sprintf("\t%s %s", prog, cmd))
 	if (haskey(d, :Vd))
+		#if (isa(cmd, Array{String, 1}))  cmd = cmd[1]  end
 		if (d[:Vd] == :cmd)		# For testing puposes, return the GMT command
 			return cmd
 		else
-			println(@sprintf("\t%s %s", prog, cmd))
+			println(@sprintf("\t%s", cmd))
 		end
 	end
 	return nothing
@@ -1945,21 +1960,19 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String,
-						   opt_T::String, K::Bool, prog::String, arg1=[], arg2=[], arg3=[],
-						   arg4=[], arg5=[], arg6=[])
+						  opt_T::String, K::Bool, arg1=[], arg2=[], arg3=[],
+						  arg4=[], arg5=[], arg6=[])
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
 
+	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
 	global img_mem_layout = add_opt("", "", d, [:layout])
 
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
-			if ((r = dbg_print_cmd(d, cmd[k], prog)) !== nothing)  return r  end 	# For tests only
-			P = gmt(string(prog, " ", cmd[k]), arg1, arg2)
+			P = gmt(cmd[k], arg1, arg2)
 		end
 	else
-		if ((r = dbg_print_cmd(d, cmd, prog)) !== nothing)  return r  end 	# For tests only
-		cmd = string(prog, " ", cmd)
 		P = gmt(cmd, arg1, arg2, arg3, arg4, arg5, arg6)
 	end
 
@@ -2143,9 +2156,10 @@ end
 function monolitic(prog::String, cmd0::String, args...)
 	# Run this module in the monolithic way. e.g. [outs] = gmt("module args",[inputs])
 	cmd0 = prog * " " * cmd0
-	if (isempty_(args[1]))	return gmt(cmd0)
-	else					return gmt(cmd0, args...)
-	end
+	return gmt(cmd0, args...)
+	#if (isempty_(args))	return gmt(cmd0)
+	#else				return gmt(cmd0, args...)
+	#end
 end
 
 # --------------------------------------------------------------------------------------------------

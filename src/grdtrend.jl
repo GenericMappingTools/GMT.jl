@@ -61,7 +61,7 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 		cmd *= " -T" 			# No -T -or -D provided so default to -T
 	end
 
-	return common_grd(d, cmd, got_fname, 2, "grdtrend", arg1, arg2)
+	return common_grd(d, "grdtrend " * cmd, got_fname, 2, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

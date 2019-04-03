@@ -51,5 +51,5 @@ function grdlandmask(cmd0::String=""; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :bordervalues], [:I :inc],
 				[:G :outgrid], [:N :mask_geog]])
 
-	return common_grd(d, cmd, 1, 1, "grdlandmask", [])		# Finish build cmd and run it
+	return common_grd(d, "grdlandmask " * cmd, 1, 1, [])		# Finish build cmd and run it
 end

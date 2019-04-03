@@ -52,7 +52,7 @@ function gmtconnect(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:C :closed], [:D :dump], [:L :linkfile], [:Q :list_file], [:T :tolerance]])
 
 	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, arg1, arg2)
-	return common_grd(d, cmd, got_fname, 2, "gmtconnect", arg1, arg2)		# Finish build cmd and run it
+	return common_grd(d, "gmtconnect " * cmd, got_fname, 2, arg1, arg2)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

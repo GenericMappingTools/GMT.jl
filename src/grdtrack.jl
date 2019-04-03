@@ -94,9 +94,9 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 	if (isa(arg1, GMTgrid) || isa(arg2, GMTgrid) && !occursin("-G", cmd))  cmd = cmd * " -G"  end
 
 	if (isa(grid_tuple, Tuple))
-		return common_grd(d, cmd, got_fname, 3, "grdtrack", (got_fname != 0) ? grid_tuple : tuple(arg1,grid_tuple...))
+		return common_grd(d, "grdtrack " * cmd, got_fname, 3, (got_fname != 0) ? grid_tuple : tuple(arg1,grid_tuple...))
 	else
-		return common_grd(d, cmd, got_fname, 2, "grdtrack", arg1, arg2)
+		return common_grd(d, "grdtrack " * cmd, got_fname, 2, arg1, arg2)
 	end
 
 end

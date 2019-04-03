@@ -1,5 +1,5 @@
 """
-    coast(cmd0::String=""; clip=[], kwargs...)
+    coast(cmd0::String=""; clip=nothing, kwargs...)
 
 Plot continents, shorelines, rivers, and borders on maps.
 Plots grayshaded, colored, or textured land-masses [or water-masses] on
@@ -87,7 +87,7 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function coast(cmd0::String=""; clip=[], first=true, kwargs...)
+function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("pscoast", cmd0)
 
@@ -105,7 +105,7 @@ function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 	cmd = add_opt_fill(cmd, d, [:G :land], 'G')
 	cmd = add_opt_fill(cmd, d, [:S :water :ocean], 'S')
 
-	if (!isempty_(clip))
+	if (clip !== nothing)
 		clip = string(clip)
 		if     (clip == "land")    cmd *= " -Gc"
 		elseif (clip == "water" || clip == "ocean") cmd *= " -Sc"
@@ -171,7 +171,7 @@ function coast(cmd0::String=""; clip=[], first=true, kwargs...)
 	if (!occursin("-D",cmd))  cmd *= " -Da"  end		# Then pick automatic
 
 	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pscoast")
+    return finish_PS_module(d, "pscoast " * cmd, "", output, fname_ext, opt_T, K)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -196,7 +196,7 @@ function parse_dcw(val::Tuple, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-coast!(cmd0::String=""; clip=[], first=false, kw...) = coast(cmd0; clip=clip, first=first, kw...)
+coast!(cmd0::String=""; clip=nothing, first=false, kw...) = coast(cmd0; clip=clip, first=first, kw...)
 
 const pscoast  = coast			# Alias for GMT5
 const pscoast! = coast!			# Alias for GMT5

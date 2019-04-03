@@ -87,7 +87,7 @@ function grdvector(cmd0::String="", arg1=[], arg2=[]; first=true, kwargs...)
 	end
 
 	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "grdvector", arg1, arg2)
+    return finish_PS_module(d, "grdvector " * cmd, "", output, fname_ext, opt_T, K, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

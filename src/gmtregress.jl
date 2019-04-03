@@ -64,7 +64,7 @@ function regress(cmd0::String="", arg1=[]; kwargs...)
                 [:F :column_combination], [:S :restrict], [:T :equi_space], [:W :weighted]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	return common_grd(d, cmd, got_fname, 1, "gmtregress", arg1)		# Finish build cmd and run it
+	return common_grd(d, "gmtregress " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -9,9 +9,9 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	N_args = isempty_(arg1) ? 0 : 1
 
 	is_ternary = (caller == "ternary") ? true : false
-	if (is3D)	        gmt_proggy = "psxyz"
-	elseif (is_ternary) gmt_proggy = "psternary"
-	else		        gmt_proggy = "psxy"
+	if (is3D)	        gmt_proggy = "psxyz "
+	elseif (is_ternary) gmt_proggy = "psternary "
+	else		        gmt_proggy = "psxy "
 	end
 
 	((cmd0 == "" && isempty_(arg1)) || occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
@@ -212,7 +212,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	put_in_legend_bag(d, cmd, arg1)
 
-	r = finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, gmt_proggy, arg1, arg2)
+	r = finish_PS_module(d, gmt_proggy .* cmd, "", output, fname_ext, opt_T, K, arg1, arg2)
 	if (got_pattern)  gmt("destroy")  end 	# Apparently patterns are screweing the session
 	return r
 end

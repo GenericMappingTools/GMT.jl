@@ -124,7 +124,7 @@ function grdcontour(cmd0::String="", arg1=[]; first=true, kwargs...)
 	end
 
 	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, cmd, "-D", output, fname_ext, opt_T, K, "grdcontour", arg1, arg2)
+    return finish_PS_module(d, "grdcontour " * cmd, "-D", output, fname_ext, opt_T, K, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

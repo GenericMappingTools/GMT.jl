@@ -7,8 +7,6 @@ Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
 |:---------------------------------------:|:-----------------------------------------:|
 | [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] |
 
-[contrib-url]: https://genericmappingtools.github.io/GMT.jl/latest/man/contributing/
-
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://genericmappingtools.github.io/GMT.jl/latest
 
@@ -48,9 +46,9 @@ instead of
 
     gmt coast -Rd -JR12 -Bg -Dc -A10000 -Gburlywood4 -Swheat1 -P > GMT_winkel.ps
 
-to see
+to show
 
-<img src="docs/src/figures/mapproj/GMT_winkel.png" width="400" class="center"/>
+<img src="docs/src/figures/mapproj/GMT_winkel.png" width="350" class="center"/>
 
 Install
 =======

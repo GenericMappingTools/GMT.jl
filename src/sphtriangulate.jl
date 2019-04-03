@@ -54,7 +54,7 @@ function sphtriangulate(cmd0::String="", arg1=[]; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :skip], [:L :unit], [:N], [:Q :voronoi], [:T]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	return common_grd(d, cmd, got_fname, 1, "sphtriangulate", arg1)		# Finish build cmd and run it
+	return common_grd(d, "sphtriangulate " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
