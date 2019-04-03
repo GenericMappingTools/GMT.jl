@@ -54,7 +54,7 @@ function legend(cmd0::String="", arg1=[]; first=true, kwargs...)
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
 	cmd = finish_PS(d, cmd, output, K, O)
-	r = finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "pslegend", arg1)
+	r = finish_PS_module(d, "pslegend " * cmd, "", output, fname_ext, opt_T, K, arg1)
 	gmt("destroy")
 	return r
 end

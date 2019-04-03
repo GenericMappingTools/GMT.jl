@@ -126,9 +126,9 @@ if (got_it)					# Otherwise go straight to end
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(10,:red),bot=true), Vd=:cmd);
-	@test startswith(r," -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb")
+	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb")
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=:cmd);
-	@test startswith(r," -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb")
+	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb")
 	psxy!([0 0; 1 1.1], Vd=:cmd);
 	psxy!("", [0 0; 1 1.1], Vd=:cmd);
 	GMT.get_marker_name(Dict(:y => "y"), [:y])
@@ -295,9 +295,9 @@ if (got_it)					# Otherwise go straight to end
 	C = grdcontour("lixo.grd", C="+0.7", D=[]);
 	@assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
 	r = grdcontour("bla", cont=10, A=(int=50,labels=(font=7,)), G=(dist="4i",), L=(-1000,-1), W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), T=(gap=("0.1i","0.02i"),), Vd=:cmd);
-	@test startswith(r, "bla  -JX12c/0 -Baf -BWSen -L-1000/-1 -A50+f7 -Gd4i -T+d0.1i/0.02i -Wcthinnest,- -Wathin,- -C10")
+	@test startswith(r, "grdcontour bla  -JX12c/0 -Baf -BWSen -L-1000/-1 -A50+f7 -Gd4i -T+d0.1i/0.02i -Wcthinnest,- -Wathin,- -C10")
 	r = grdcontour("bla", A="50+f7p", G="d4i", W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), Vd=:cmd);
-	@test startswith(r, "bla  -JX12c/0 -Baf -BWSen -A50+f7p -Gd4i -Wcthinnest,- -Wathin,-")
+	@test startswith(r, "grdcontour bla  -JX12c/0 -Baf -BWSen -A50+f7p -Gd4i -Wcthinnest,- -Wathin,-")
 	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
 	if (GMTver >= 6)
@@ -379,6 +379,7 @@ if (got_it)					# Otherwise go straight to end
 	Gr=mat2grid(rand(Float32, 128, 128)*255); Gg=mat2grid(rand(Float32, 128, 128)*255); Gb=mat2grid(rand(Float32, 128, 128)*255);
 	grdimage(rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, J="X10")
 	grdimage(data=(Gr,Gg,Gb), J=:X10, I=mat2grid(rand(Float32,128,128)), Vd=:cmd)
+	grdimage(rand(Float32, 128, 128), shade=(default=30,), coast=(W=1,), Vd=:cmd)
 	#grdimage("@earth_relief_05m", J="S21/90/15c", R="10/68/50/80r", B=:afg, X=:c, I="+")
 	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
@@ -451,9 +452,8 @@ if (got_it)					# Otherwise go straight to end
 	D = histogram(randn(1000), I=:o, W=0.1);
 	lines(D, steps=(x=true,), close=(bot="",))
 	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
-	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna),
-	decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=:cmd);
-	@test r[1:85] == " -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -R0/6/-1/0.7 -JX40/8 -B+g220 --PS_MEDIA=A1 -W2,sienna"
+	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=:cmd);
+	@test startswith(r, "psxy  -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -R0/6/-1/0.7 -JX40/8 -B+g220 --PS_MEDIA=A1 -W2,sienna")
 
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
@@ -528,18 +528,18 @@ if (got_it)					# Otherwise go straight to end
 				   type_=["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]),),
 	par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=:cmd)
 	r = basemap(rose=(anchor="10:35/0.7", width=1, fancy=2, offset=0.4), Vd=:cmd);
-	@test startswith(r," -JX12c/0 -Baf -BWSen -Tdg10:35/0.7+w1+f2+o0.4")
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdg10:35/0.7+w1+f2+o0.4")
 	r = basemap(rose=(anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=:cmd);
-	@test startswith(r," -JX12c/0 -Baf -BWSen -Tdn0.5/0.7+w1+f2+o0.4")
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdn0.5/0.7+w1+f2+o0.4")
 	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=:cmd);
-	@test startswith(r," -JX12c/0 -Baf -BWSen -TdjTR+w1+f2+o0.4")
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdjTR+w1+f2+o0.4")
 	r = basemap(rose=(mirror=1,anchor=:TR, width=1, fancy=2, offset=0.4), Vd=:cmd);
-	@test startswith(r," -JX12c/0 -Baf -BWSen -TdJTR+w1+f2+o0.4")
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdJTR+w1+f2+o0.4")
 	r = basemap(compass=(mirror=1,anchor=:TR, width=1, dec=-14, offset=0.4), Vd=:cmd);
-	@test startswith(r," -JX12c/0 -Baf -BWSen -TmJTR+w1+d-14+o0.4")
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TmJTR+w1+d-14+o0.4")
 	r = basemap(L=(mirror=1,anchor=:TR, width=1, align=:top, fancy=0.4), Vd=:cmd);
-	@test startswith(r," -JX12c/0 -Baf -BWSen -LJTR+at+f")
-	@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=:cmd), " -JX12c/0 -Bpa10+ap")
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -LJTR+at+f")
+	@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=:cmd), "psbasemap  -JX12c/0 -Bpa10+ap")
 	@test_throws ErrorException("slanted option: Only 'parallel' is allowed for the y-axis") basemap(yaxis=(slanted=:o,), Vd=:cmd)
 
 	# PSCLIP
@@ -562,9 +562,9 @@ if (got_it)					# Otherwise go straight to end
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), water=:blue, clip=:land, Vd=:cmd)
 	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), clip=:end, rivers="1/0.5p", Vd=:cmd)
 	r = coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60), frame=(annot=30, grid=15), res=:crude, area=10000, land=:tan, ocean=:cyan, shore=:thinnest, figsize=10, Vd=:cmd);
-	@test startswith(r, " -Rg -JF-120/35/60/10 -Bpa30g15 -A10000 -Dcrude -Gtan -Scyan -Wthinnest")
+	@test startswith(r, "pscoast  -Rg -JF-120/35/60/10 -Bpa30g15 -A10000 -Dcrude -Gtan -Scyan -Wthinnest")
 	r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hello Round World", Vd=:cmd);
-	@test r[1:54] == " -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude"
+	@test startswith(r, "pscoast  -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude")
 
 	# PSCONTOUR
 	x,y,z=GMT.peaks(grid=false);

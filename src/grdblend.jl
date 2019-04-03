@@ -55,7 +55,7 @@ function grdblend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 				[:Q :headless], [:W :no_blend], [:Z :scale]])
 
 	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, arg1, arg2)
-	return common_grd(d, cmd, got_fname, 2, "grdblend", arg1, arg2)		# Finish build cmd and run it
+	return common_grd(d, "grdblend " * cmd, got_fname, 2, arg1, arg2)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

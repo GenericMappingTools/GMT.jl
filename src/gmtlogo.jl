@@ -69,7 +69,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 			fmt = d[:fmt];	delete!(d, :fmt);
 			fname_ext = "ps"
 		end
-		finish_PS_module(d, c * cmd, "", output, fname_ext, opt_T, K, "psxy", t)
+		finish_PS_module(d, "psxy " * c * cmd, "", output, fname_ext, opt_T, K, t)
 		if (haskey(d, :GMTjulia))
 			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
 			opt_F = @sprintf("+f%d,NewCenturySchlbk-Italic",letter_height)
@@ -77,7 +77,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		end
 	else
 		if (!occursin("-D", cmd))  cmd = " -Dx0/0+w5c " * cmd	end
-		return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "gmtlogo")
+		return finish_PS_module(d, "gmtlogo " * cmd, "", output, fname_ext, opt_T, K)
 	end
 end
 

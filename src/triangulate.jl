@@ -77,7 +77,7 @@ function triangulate(cmd0::String="", arg1=[]; kwargs...)
 				[:I :inc], [:M :network], [:N :ids], [:Q :voronoi], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	return common_grd(d, cmd, got_fname, 1, "triangulate", arg1)		# Finish build cmd and run it
+	return common_grd(d, "triangulate " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

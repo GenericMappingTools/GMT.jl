@@ -48,7 +48,7 @@ function sample1d(cmd0::String="", arg1=[]; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :resamp], [:F :interp_type], [:N :time_col], [:T :equi_space]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	return common_grd(d, cmd, got_fname, 1, "sample1d", arg1)		# Finish build cmd and run it
+	return common_grd(d, "sample1d " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

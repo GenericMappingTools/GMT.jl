@@ -85,28 +85,34 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=true, kwargs
 	end
 
 	if ((val = find_in_dict(d, [:I :shade :intensity :intensfile])[1]) !== nothing)
-		if (!isa(val, GMTgrid))		# Uff, simple. Either a file name or a -A type modifier
-			cmd *= " -I" * arg2str(val)
+		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
+			if (isa(val, String) || isa(val, Symbol))  cmd *= " -I" * arg2str(val)
+			else                                       cmd = add_opt(cmd, 'I', d, [:I :shade :intensity],
+			                                                         (azimuth="+a", norm="+n", default="_+d+a-45+nt1"))
+			end
 		else
 			cmd, N = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3, arg4])
-			if (N == 1)     arg1 = val
-			elseif (N == 2) arg2 = val
-			elseif (N == 3) arg3 = val
-			elseif (N == 4) arg4 = val
+			if     (N == 1)  arg1 = val
+			elseif (N == 2)  arg2 = val
+			elseif (N == 3)  arg3 = val
+			elseif (N == 4)  arg4 = val
 			end
 		end
 	end
 
 	if (isa(arg1, GMTimage) && !occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not necessary but it is.
+	cmd = "grdimage " * cmd			# In any case we need this
 	if (!occursin("-A", cmd))		# -A means that we are requesting the image directly
+		if ((cmd2 = add_opt_module(d, [:coast])) !== nothing)  K = true  end
 		cmd = finish_PS(d, cmd, output, K, O)
+		if (cmd2 !== nothing)  cmd = [cmd; cmd2]  end		# Plot the coastlines as well
 	end
-    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "grdimage", arg1, arg2, arg3, arg4)
+	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, arg1, arg2, arg3, arg4)
 end
 
 # ---------------------------------------------------------------------------------------------------
 grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=false, kw...) =
 	grdimage(cmd0, arg1, arg2, arg3; first=false, kw...) 
 
-grdimage(arg1=[], arg2=[], arg3=[]; first=true, kw...) = grdimage("", arg1, arg2, arg3; first=first, kw...)
+grdimage(arg1=[],  arg2=[], arg3=[]; first=true, kw...)  = grdimage("", arg1, arg2, arg3; first=first, kw...)
 grdimage!(arg1=[], arg2=[], arg3=[]; first=false, kw...) = grdimage("", arg1, arg2, arg3; first=first, kw...)

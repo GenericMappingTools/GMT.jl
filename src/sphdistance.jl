@@ -58,7 +58,7 @@ function sphdistance(cmd0::String="", arg1=[]; kwargs...)
 				[:L :dist_unit], [:N :nodetable], [:Q :voronoi_polyg]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	return common_grd(d, cmd, got_fname, 1, "sphdistance", arg1)		# Finish build cmd and run it
+	return common_grd(d, "sphdistance " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

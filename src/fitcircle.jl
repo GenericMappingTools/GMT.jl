@@ -43,7 +43,7 @@ function fitcircle(cmd0::String="", arg1=[]; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:L :norm], [:F :coord :coordinates], [:S :small_circle]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	return common_grd(d, cmd, got_fname, 1, "fitcircle", arg1)		# Finish build cmd and run it
+	return common_grd(d, "fitcircle " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -107,7 +107,7 @@ function grdview(cmd0::String="", arg1=[]; first=true, kwargs...)
 	end
 
 	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "grdview", arg1, arg2, arg3, arg4, arg5)
+    return finish_PS_module(d, "grdview " * cmd, "", output, fname_ext, opt_T, K, arg1, arg2, arg3, arg4, arg5)
 end
 
 # ---------------------------------------------------------------------------------------------------

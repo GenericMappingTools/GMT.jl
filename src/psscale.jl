@@ -79,7 +79,7 @@ function colorbar(cmd0::String="", arg1=[]; first=true, kwargs...)
     cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
 
 	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psscale", arg1)
+    return finish_PS_module(d, "psscale " * cmd, "", output, fname_ext, opt_T, K, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

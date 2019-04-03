@@ -59,7 +59,7 @@ function spectrum1d(cmd0::String="", arg1=[]; kwargs...)
 				[:S :size], [:T], [:W :wavelength]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	return common_grd(d, cmd, got_fname, 1, "spectrum1d", arg1)		# Finish build cmd and run it
+	return common_grd(d, "spectrum1d " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -64,7 +64,7 @@ function clip(cmd0::String="", arg1=[]; first=true, kwargs...)
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
 	cmd = finish_PS(d, cmd, output, K, O)
-	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, "psclip", arg1)
+	return finish_PS_module(d, "psclip " * cmd, "", output, fname_ext, opt_T, K, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

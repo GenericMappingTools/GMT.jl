@@ -117,7 +117,7 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 	if (occursin("-G", cmd))			# GMT API does not allow a -G from externals
 		cmd = replace(cmd, "-G" => "")
 	end
-	return common_grd(d, cmd, got_fname, 1, proggy, arg1)		# Finish build cmd and run it
+	return common_grd(d, proggy * " " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
