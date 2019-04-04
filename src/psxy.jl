@@ -14,7 +14,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	else		        gmt_proggy = "psxy "
 	end
 
-	((cmd0 == "" && isempty_(arg1)) || occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
+	(occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
 
 	cmd = "";	sub_module = ""			# Will change to "scatter", etc... if called by sub-modules
 	if (caller != "")

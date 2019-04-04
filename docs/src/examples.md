@@ -92,8 +92,8 @@ for more details about what the arguments mean.
 ```julia
 topo = makecpt(color=:rainbow, range=(1000,5000,500), continuous=true);
 grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:Mercator, frame=:a, color=topo)
-colorbar!(position="jTC+w5i/0.25i+h+o0/-1i", region=[-108 -103 35 40], color=topo,
-          proj=[], frame="y+lm", fmt=:jpg, show=true)
+colorbar!(pos=(anchor=:TC,length=(12.5,0.6), horizontal=true, offset=(0,-2.5)),
+          color=topo, frame=(ylabel=:m,), fmt=:jpg, show=true)
 ```
 
 ```@raw html

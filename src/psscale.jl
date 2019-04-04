@@ -58,16 +58,16 @@ Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.h
 """
 function colorbar(cmd0::String="", arg1=[]; first=true, kwargs...)
 
-    length(kwargs) == 0 && isempty(data) && return monolitic("psscale", cmd0, arg1)
+	length(kwargs) == 0 && isempty(data) && return monolitic("psscale", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	K, O = set_KO(first)		# Set the K O dance
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
+	cmd, opt_B, = parse_BJR(d, "", "", O, "")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :p :t])
-    cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
-                                    [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
+	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
+	                                [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
 	cmd = add_opt(cmd, "D", d, [:D :pos :position],
         (map=("g", nothing, 1), mirror=("J", nothing, 1), anchor=("", arg2str, 2), length="+w", triangles="+e",
          justify="+j", offset="+o", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n"))
@@ -76,10 +76,10 @@ function colorbar(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
-    cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
+	cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
 
 	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, "psscale " * cmd, "", output, fname_ext, opt_T, K, arg1)
+	return finish_PS_module(d, "psscale " * cmd, "", output, fname_ext, opt_T, K, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
