@@ -32,6 +32,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("No, no, no. Nothing useful in the region named tuple arguments") GMT.build_opt_R((zz=:x,))
 	@test_throws ErrorException("Unknown continent name") GMT.build_opt_R((continent='a',extend=4))
 	@test_throws ErrorException("Increments for limits must be a String, a Number, Array or Tuple") GMT.build_opt_R((iso="PT",extend='8'))
+	@test_throws ErrorException("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (1500) is clearly an invalid EPSG")  GMT.build_opt_J(1500)
 	@test GMT.build_opt_J(:X5)[1] == " -JX5"
 	@test GMT.build_opt_J(2500)[1] == " -J2500"
 	@test GMT.build_opt_J([])[1] == " -J"
@@ -76,6 +77,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.get_color((0.1,0.2,0.3)) == "26/51/77"
 	@test GMT.get_color([1 2 3]) == "1/2/3"
 	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
+	@test_throws ErrorException("GOT_COLOR, got and unsupported data type: Tuple{Int64,Int64}") GMT.get_color((1,2))
 	@test GMT.parse_unit_unit("data") == "u"
 	@test GMT.parse_units((2,:p)) == "2p"
 	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
@@ -380,6 +382,8 @@ if (got_it)					# Otherwise go straight to end
 	grdimage(rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, J="X10")
 	grdimage(data=(Gr,Gg,Gb), J=:X10, I=mat2grid(rand(Float32,128,128)), Vd=:cmd)
 	grdimage(rand(Float32, 128, 128), shade=(default=30,), coast=(W=1,), Vd=:cmd)
+	grdimage(rand(Float32, 128, 128), colorbar=(color=:rainbow, pos=(anchor=:RM,length=8)), Vd=:cmd)
+	grdimage("lixo.grd", coast=true, Vd=:cmd)
 	#grdimage("@earth_relief_05m", J="S21/90/15c", R="10/68/50/80r", B=:afg, X=:c, I="+")
 	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")

@@ -1037,17 +1037,26 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function add_opt_module(d::Dict, symbs)
-	#  SYMBS should contain a module name 'coast' or 'plot', and if present in D,
+	#  SYMBS should contain a module name 'coast' or 'colorbar', and if present in D,
 	# 'val' must be a NamedTuple with the module's arguments.
-	val, symb = find_in_dict(d, symbs)
-	if (val !== nothing && isa(val, NamedTuple))
-		nt = (val..., Vd=:cmd)
-		if     (symb == :coast)  return coast!(; nt...)
-		elseif (symb == :plot)   return plot!(; nt...)
+	out = Array{String,1}()
+	for k = 1:length(symbs)
+		r = nothing
+		if (haskey(d, symbs[k]))
+			val = d[symbs[k]]
+			if (isa(val, NamedTuple))
+				nt = (val..., Vd=:cmd)
+				if     (symbs[k] == :coast)    r = coast!(; nt...)
+				elseif (symbs[k] == :colorbar) r = colorbar!(; nt...)
+				end
+			elseif (isa(val, Number) && (val != 0) && symbs[k] == :coast)	# Allow setting just ``coast=true``
+				r = coast!(W=0.5, Vd=:cmd)
+			end
 		end
-		return nothing
-	else
-		return nothing
+		if (r != nothing)  append!(out, [r])  end
+	end
+	if (out == [])  return nothing
+	else            return out
 	end
 end
 
