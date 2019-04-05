@@ -22,6 +22,12 @@ Optional Arguments
    and *Equation of time* in minutes. Note that if no position is provided in *sun=(lon,lat)* the
    data after *Elevation* refers to the point (0,0).
 
+- **coast** : *coast=true* **|** *coast=(full coast options list)*\
+   When plotting a mapp this option calls the *coast* module to plot coastlines, rivers, etc...
+   The simple form *coast=true* will plot the coastlines with a black, 0.5 points thickness, pen.
+   Note, however, that with this option the coastlines are plotted on top of the terminators. If the
+   other way arround is needed, then you must do the usual two calls: *coast* + *solar!*
+
 - **G** or *fill* : *fill=color* **|** *G=:c*\
    Select color or pattern for filling of terminators; or use *G=:c* for clipping [Default is no fill].
    Deactivate clipping by appending the output of gmt :doc:`clip` **C**.

@@ -52,7 +52,7 @@ function solar(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	length(kwargs) == 0 && N_args == 0 && isempty(data) && return monolitic("pssolar", cmd0, arg1)
 
-    d = KW(kwargs)
+	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	K, O = set_KO(first)		# Set the K O dance
@@ -60,17 +60,17 @@ function solar(cmd0::String="", arg1=[]; first=true, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:bo :h :o :p :t :UVXY :params])
 	cmd = parse_these_opts(cmd, d, [[:C :format], [:M :dump], [:N :invert]])
 
-    cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-    cmd = add_opt(cmd, 'I', d, [:I :sun], (pos="",date="+d",TZ="+z"))
+	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd = add_opt(cmd, 'I', d, [:I :sun], (pos="",date="+d",TZ="+z"))
 	cmd = add_opt(cmd, 'T', d, [:T :terminators], (term="",date="+d",TZ="+z"))
 	cmd = cmd * opt_pen(d, 'W', [:W :pen])
 
-    opt_extra = ""
-    if (occursin( "-I", cmd) || occursin("-I", cmd0))
-        output = "";    opt_extra = "-I"
-    end
-	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, "pssolar " * cmd, opt_extra, output, fname_ext, opt_T, K, arg1, arg2)
+	opt_extra = ""
+	if (occursin( "-I", cmd) || occursin("-I", cmd0))
+		output = "";    opt_extra = "-I"
+	end
+	cmd, K = finish_PS_nested(d, "pssolar " * cmd, output, K, O, [:coast])
+	return finish_PS_module(d, cmd, opt_extra, output, fname_ext, opt_T, K, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------
