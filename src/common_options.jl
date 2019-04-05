@@ -842,6 +842,15 @@ function set_KO(first::Bool)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function finish_PS_nested(d::Dict, cmd::String, output::String, K::Bool, O::Bool, nested_calls)
+	# Finish the PS creating command, but check also if we have any nested module calls like 'coast', 'colorbar', etc
+	if ((cmd2 = add_opt_module(d, nested_calls)) !== nothing)  K = true  end
+	cmd = finish_PS(d, cmd, output, K, O)
+	if (cmd2 !== nothing)  cmd = [cmd; cmd2]  end
+	return cmd, K
+end
+
+# ---------------------------------------------------------------------------------------------------
 function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
 	if (!haskey(d, :P) && !haskey(d, :portrait))  cmd *= " -P"  end
@@ -972,7 +981,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 		end
 		if (cmd[1] != 'j' && cmd[1] != 'J' && cmd[1] != 'g')
 			if (length(cmd_hold[last]) == 2)
-				cmd = "j" * cmd
+				cmd = "J" * cmd
 			else
 				if (occursin(':', cmd_hold[last]))		# It must be a geog coordinate in dd:mm
 					cmd = "g" * cmd
@@ -990,21 +999,36 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=[], arg2=[])
+function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=[], arg2=[], store=false, def=false, opt_T="")
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	# N_args only applyies to when a GMTcpt was transmitted. Than it's either 0, case in which
 	# the cpt is put in arg1, or 1 and the cpt goes to arg2.
+	# STORE, when true, will save the cpt in the global state
+	# DEF, when true, means to use the default cpt (Jet)
+	# OPT_T, when != "", contains a min/max/n_slices/+n string to calculate a cpt with n_slices colors between [min max]
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, GMT.GMTcpt))
-			cmd = string(cmd, " -", opt)
-			if     (N_args == 0)  arg1 = val;	N_args += 1
-			elseif (N_args == 1)  arg2 = val;	N_args += 1
-			else   error(string("Can't send the CPT data via ", opt, " and input array"))
-			end
+			if (N_args > 1)  error("Can't send the CPT data via option AND input array")  end
+			cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, val, store)
 		else
-			cmd = string(cmd, " -", opt, get_color(val))
+			if (opt_T != "")
+				cpt = makecpt(opt_T * " -C" * get_color(val))
+				cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
+			else
+				cmd *= " -" * opt * get_color(val)
+			end
 		end
+	elseif (def && opt_T != "")			# Requested the use of the default color map (here Jet, instead of rainbow)
+		cpt = makecpt(opt_T * " -Cjet")
+		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 	end
+	return cmd, arg1, arg2, N_args
+end
+function helper_add_cpt(cmd, opt, N_args, arg1, arg2, val, store)
+	# Helper function to avoid repeating 3 times the same code in add_opt_cpt
+	(N_args == 0) ? arg1 = val : arg2 = val;	N_args += 1
+	if (store)  global current_cpt = val  end
+	cmd *= " -" * opt
 	return cmd, arg1, arg2, N_args
 end
 
@@ -1049,8 +1073,10 @@ function add_opt_module(d::Dict, symbs)
 				if     (symbs[k] == :coast)    r = coast!(; nt...)
 				elseif (symbs[k] == :colorbar) r = colorbar!(; nt...)
 				end
-			elseif (isa(val, Number) && (val != 0) && symbs[k] == :coast)	# Allow setting just ``coast=true``
-				r = coast!(W=0.5, Vd=:cmd)
+			elseif (isa(val, Number) && (val != 0))		# Allow setting coast=true || colorbar=true
+				if     (symbs[k] == :coast)    r = coast!(W=0.5, Vd=:cmd)
+				elseif (symbs[k] == :colorbar) r = colorbar!(pos=(anchor=:MR,), B=:a, Vd=:cmd)
+				end
 			end
 		end
 		if (r != nothing)  append!(out, [r])  end

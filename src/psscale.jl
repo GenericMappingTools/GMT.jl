@@ -58,7 +58,7 @@ Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.h
 """
 function colorbar(cmd0::String="", arg1=[]; first=true, kwargs...)
 
-	length(kwargs) == 0 && isempty(data) && return monolitic("psscale", cmd0, arg1)
+	length(kwargs) == 0 && return monolitic("psscale", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -69,10 +69,15 @@ function colorbar(cmd0::String="", arg1=[]; first=true, kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
 	                                [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
 	cmd = add_opt(cmd, "D", d, [:D :pos :position],
-        (map=("g", nothing, 1), mirror=("J", nothing, 1), anchor=("", arg2str, 2), length="+w", triangles="+e",
+        (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), length="+w", triangles="+e",
          justify="+j", offset="+o", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n"))
 
 	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, [])
+	if (!occursin("-C", cmd))	# If given no CPT, try to see if we have a current one stored in global
+		if ((global cpt = current_cpt) !== nothing)
+			cmd *= " -C";	arg1 = cpt
+		end
+	end
 
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))

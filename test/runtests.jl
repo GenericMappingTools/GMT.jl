@@ -383,7 +383,7 @@ if (got_it)					# Otherwise go straight to end
 	grdimage(data=(Gr,Gg,Gb), J=:X10, I=mat2grid(rand(Float32,128,128)), Vd=:cmd)
 	grdimage(rand(Float32, 128, 128), shade=(default=30,), coast=(W=1,), Vd=:cmd)
 	grdimage(rand(Float32, 128, 128), colorbar=(color=:rainbow, pos=(anchor=:RM,length=8)), Vd=:cmd)
-	grdimage("lixo.grd", coast=true, Vd=:cmd)
+	grdimage("lixo.grd", coast=true, colorbar=true, Vd=:cmd)
 	#grdimage("@earth_relief_05m", J="S21/90/15c", R="10/68/50/80r", B=:afg, X=:c, I="+")
 	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
@@ -536,12 +536,12 @@ if (got_it)					# Otherwise go straight to end
 	r = basemap(rose=(anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=:cmd);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdn0.5/0.7+w1+f2+o0.4")
 	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=:cmd);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdjTR+w1+f2+o0.4")
-	r = basemap(rose=(mirror=1,anchor=:TR, width=1, fancy=2, offset=0.4), Vd=:cmd);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdJTR+w1+f2+o0.4")
-	r = basemap(compass=(mirror=1,anchor=:TR, width=1, dec=-14, offset=0.4), Vd=:cmd);
+	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=:cmd);
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdJTR+w1+f2+o0.4")
+	r = basemap(compass=(anchor=:TR, width=1, dec=-14, offset=0.4), Vd=:cmd);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TmJTR+w1+d-14+o0.4")
-	r = basemap(L=(mirror=1,anchor=:TR, width=1, align=:top, fancy=0.4), Vd=:cmd);
+	r = basemap(L=(anchor=:TR, width=1, align=:top, fancy=0.4), Vd=:cmd);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -LJTR+at+f")
 	@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=:cmd), "psbasemap  -JX12c/0 -Bpa10+ap")
 	@test_throws ErrorException("slanted option: Only 'parallel' is allowed for the y-axis") basemap(yaxis=(slanted=:o,), Vd=:cmd)
