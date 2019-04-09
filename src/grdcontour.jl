@@ -97,8 +97,6 @@ function grdcontour(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	# Only ONE of the two forms below should be used. Second one is when we want to destinguish -Wc & -Wa
 	cmd = add_opt(cmd, 'W', d, [:W :pen], (contour="_c", annot="_a", pen=("", add_opt_pen)) )
-	cmd = add_opt(cmd, 'W', d, [:W :pen], ((contour="_c", pen=("", add_opt_pen)),
-	                                       (annot="_a",   pen=("", add_opt_pen))) )
 
 	cmd = add_opt(cmd, 'Z', d, [:Z :scale], (factor="+s", shift="+o", periodic="_+p"))
 

@@ -561,14 +561,19 @@ if (got_it)					# Otherwise go straight to end
 	# PSCOAST
 	coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, borders="1/0.5p")
 	coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps")
-	coast(R=[-10 1 36 45], J="M12c", B="a", shore2=1, E=("PT", "+gblue", (0.5,"red","--")), Vd=:cmd)
-	coast(R=[-10 1 36 45], J="M", B="a", shore4=1,  E="PT,+gblue", borders="a", rivers="a", lc=:red, Vd=:cmd)
-	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), water=:blue, clip=:land, Vd=:cmd)
-	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(1,(1,"green")), clip=:end, rivers="1/0.5p", Vd=:cmd)
+	coast(R=[-10 1 36 45], J="M12c", B="a", shore2=1, E=("PT", (0.5,"red","--"), "+gblue"), Vd=:cmd)
+	coast(R=[-10 1 36 45], J="M", B="a", shore4=1,  E="PT,+gblue", borders="a", rivers="a", Vd=:cmd)
+	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), water=:blue, clip=:land, Vd=:cmd)
+	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), clip=:stop, rivers="1/0.5p", Vd=:cmd)
+	@test GMT.parse_dcw("", ((country=:PT, pen=(2,:red), fill=:blue), (country=:ES, pen=(2,:blue)) )) == " -EPT+p2,red+gblue -EES+p2,blue"
 	r = coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60), frame=(annot=30, grid=15), res=:crude, area=10000, land=:tan, ocean=:cyan, shore=:thinnest, figsize=10, Vd=:cmd);
 	@test startswith(r, "pscoast  -Rg -JF-120/35/60/10 -Bpa30g15 -A10000 -Dcrude -Gtan -Scyan -Wthinnest")
 	r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hello Round World", Vd=:cmd);
 	@test startswith(r, "pscoast  -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude")
+	@test startswith(coast(R=:g, W=(level=1,pen=(2,:green)), Vd=:cmd), "pscoast  -Rg -JX12cd/0 -Baf -BWSen -W1/2,green")
+	@test startswith(coast(R=:g, W=(2,:green), Vd=:cmd), "pscoast  -Rg -JX12cd/0 -Baf -BWSen -W2,green")
+	r = coast(R=:g, N=((level=1,pen=(2,:green)), (level=3,pen=(4,:blue, "--"))), Vd=:cmd);
+	@test startswith(r, "pscoast  -Rg -JX12cd/0 -Baf -BWSen -N1/2,green -N3/4,blue,--")
 
 	# PSCONTOUR
 	x,y,z=GMT.peaks(grid=false);

@@ -104,7 +104,7 @@ Optional Arguments
 
 
 - **W** or *pen* : *pen=(annot=true, contour=true, pen=pen)*\
-  *annot=true*, if present, means to annotated contours or *contour=true* for regular contours [Default].
+  *annot=true*, if present, means to annotate contours or *contour=true* for regular contours [Default].
   The *pen* sets the attributes for the particular line. Default pen for annotated contours: *pen=(0.75,:black)*.
   Regular contours use *pen=(0.25,:black)*. Normally, all contours are drawn with a fixed color determined by
   the pen setting. This option may be repeated, for example to separate contour and annotated contours settings.
@@ -124,10 +124,10 @@ Optional Arguments
 - **W** or *pen* : *pen=pen*\
    Set pen attributes for lines or the outline of symbols [Defaults: width = default, color = black, style = solid].
 
-- **X** or *x_off* or *x_offset* : *x_off=[] **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
+- **X** or *x_off* or *x_offset* : *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [x_off](@ref)
 
-- **Y** or *y_off* or *y_offset* : *y_off=[] **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
+- **Y** or *y_off* or *y_offset* : *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [y_off](@ref)
 
 Examples

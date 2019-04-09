@@ -431,3 +431,10 @@ See [GMT Map Projections](@ref) for a list of projection examples
    Note that *x_off* and *y_off* can also access the previous plot dimensions *w* and *h* and construct
    offsets that involves them. For instance, to move the origin up 2 cm beyond the height of the previous
    plot, use *y_off="h+2c"*. To move the origin half the width to the right, use *x_off="w/2"*.
+
+# perspective
+
+- **p** **|** **view** **|** **perspective** : *view=(azim, elev)*\
+   Selects perspective view and sets the azimuth and elevation of the viewpoint (180,90). When **view** is used in consort with **Jz** or **JZ**, a third value can be appended which indicates at which z-level all 2D material, like the plot frame, is plotted (in perspective). [Default is at the bottom of the z-axis]. 
+
+   [`-p GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#p-full)

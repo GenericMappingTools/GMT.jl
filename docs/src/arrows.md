@@ -43,10 +43,10 @@ Parameters
 - **V** or *verbose* : *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)
 
-- **X** or *x_off* or *x_offset* : *x_off=[] **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
+- **X** or *x_off* or *x_offset* : *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [x_off](@ref)
 
-- **Y** or *y_off* or *y_offset* : *y_off=[] **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
+- **Y** or *y_off* or *y_offset* : *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [y_off](@ref)
 
 Examples

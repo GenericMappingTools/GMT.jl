@@ -1,5 +1,5 @@
 """
-    coast(cmd0::String=""; clip=nothing, kwargs...)
+    coast(cmd0::String=""; kwargs...)
 
 Plot continents, shorelines, rivers, and borders on maps.
 Plots grayshaded, colored, or textured land-masses [or water-masses] on
@@ -101,7 +101,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution], [:M :dump]])
 	cmd = parse_TdTmL(d, cmd)
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
-	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
+	                                       pen=("+p", add_opt_pen), rounded="+r", shift="+s"))
 	cmd = add_opt_fill(cmd, d, [:G :land], 'G')
 	cmd = add_opt_fill(cmd, d, [:S :water :ocean], 'S')
 
@@ -115,52 +115,26 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		end
 	end
 
-	if ((val = find_in_dict(d, [:I :rivers])[1]) !== nothing)
-		if (isa(val, Tuple))   cmd *= " -I" * parse_arg_and_pen(val, "-I")
-		else                   cmd *= " -I" * string(val)		# Includes Str, Number or Symb
-		end
-	end
-
-	if ((val = find_in_dict(d, [:N :borders])[1]) !== nothing)
-		if (isa(val, Tuple))   cmd *= " -N" * parse_arg_and_pen(val, "-N")
-		else                   cmd *= " -N" * string(val)		# Includes Str, Number or Symb
-		end
-	end
-
-	for symb in [:W :shore :shore1 :shore2 :shore3 :shore4]
-		if (haskey(d, symb))
-			if (symb == :shore || symb == :W) lev = " -W"
-			elseif (symb == :shore1)          lev = " -W1/"
-			elseif (symb == :shore2)          lev = " -W2/" 
-			elseif (symb == :shore3)          lev = " -W3/" 
-			elseif (symb == :shore4)          lev = " -W4/" 
+	# Parse these three options that can be made to respond to same code`
+	symbs = [[:I :rivers], [:N :borders], [:W :shore]];	flags ="INW"
+	for k = 1:3
+		if ((val = find_in_dict(d, symbs[k])[1]) !== nothing)
+			if (isa(val, NamedTuple) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
+				cmd = add_opt(cmd, flags[k], d, symbs[k], (type="/#", level="/#", pen=("", add_opt_pen)))
+			elseif (isa(val, Tuple))  cmd *= " -" * flags[k] * parse_pen(val)
+			else                      cmd *= " -" * flags[k] * string(val)	# Includes Str, Number or Symb
 			end
-			if (isa(d[symb], Tuple))  cmd *= lev * parse_pen(d[symb])
-			else                      cmd *= lev * arg2str(d[symb]);		maybe_more = true
-			end
-		end
-	end
-
-	if (maybe_more)									# Search for color and style line settings
-		lc = parse_pen_color(d)
-		if (lc != "")
-			cmd *= "," * lc
-			ls = add_opt("", "", d, [:ls :linestyle], nothing)
-			if (ls != "")  cmd *= "," * ls	end
 		end
 	end
 
 	if ((val = find_in_dict(d, [:E :DCW])[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))
 			cmd = string(cmd, " -E", val)			# Simple case, ex E="PT,+gblue"
+		elseif (isa(val, NamedTuple))
+			cmd = add_opt(cmd, "E", d, [:DCW :E], (country="", name="", continent="=",
+			                                       pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))
 		elseif (isa(val, Tuple))
-			if (length(val) >= 2 && isa(val[1], Tuple) && isa(val[end], Tuple)) 	# ex E=((),(),...,())
-				for k = 1:length(val)
-					cmd = parse_dcw(val[k], cmd)
-				end
-			else
-				cmd = parse_dcw(val, cmd)
-			end
+			cmd = parse_dcw(cmd, val)
 		end
 	end
 
@@ -175,24 +149,34 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_dcw(val::Tuple, cmd::String)
-	# Parse the multiple forms that the -E option may assume
-	if (length(val) >= 2 && isa(val[1], String) && isa(val[2], String) && isa(val[end], String))
-		# ex: E=("PT","+p0.5") or E=("PT","+p0.5","+gblue")
-		cmd = string(cmd, " -E", val[1], ",", val[2])
-		if (length(val) == 3)  cmd = string(cmd, ",", val[3])  end
-	elseif (length(val) >= 2 && isa(val[1], String))
-		if (length(val) == 2 && isa(val[2], Tuple))			# ex: E=("PT", (0.5,"red","--"))
-			cmd = string(cmd, " -E", val[1], "+p", parse_pen(val[2]))
-		elseif (length(val) == 3 && isa(val[2], Tuple) && isa(val[3], String))
-			# ex: E=("PT", (0.5, "red", "--"), "+gblue")
-			cmd = string(cmd, " -E", val[1], "+p", parse_pen(val[2]), val[3])
-		elseif (length(val) == 3 && isa(val[3], Tuple) && isa(val[2], String))
-			# ex: E=("PT", "+gblue", (0.5,"red","--"))
-			cmd = string(cmd, " -E", val[1], val[2], "+p", parse_pen(val[3]))
+function parse_dcw(cmd::String, val::Tuple)
+	for k = 1:length(val)
+		if (isa(val[k], NamedTuple))
+			cmd *= add_opt("", "E", Dict(:DCW => val[k]), [:DCW],
+				(country="", name="", continent="=", pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))
+		elseif (isa(val[k], Tuple))
+			cmd *= parse_dcw(val[k])
+		else
+			cmd *= parse_dcw(val)
+			break
 		end
 	end
 	return cmd
+end
+
+function parse_dcw(val::Tuple)
+    t = string("", " -E", val[1])
+	if (length(val) > 1)
+		if (isa(val[2], Tuple))  t *= "+p" * parse_pen(val[2])
+		else                     t *= string(val[2])
+		end
+		if (length(val) > 2)
+			if (isa(val[3], Tuple))  t *= add_opt_fill("+g", Dict(fill => val[3]), [:fill])
+			else                     t *= string(val[3])
+			end
+		end
+	end
+	return t
 end
 
 # ---------------------------------------------------------------------------------------------------

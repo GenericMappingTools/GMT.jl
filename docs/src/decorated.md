@@ -124,7 +124,7 @@ lines. Choose among the controlling algorithms.
    array (to separate x and y clearances) or a string. Must use a string if units are used. Use % to indicate
    a percentage of the label font size [15%].
 - *color=color*\
-   Selects opaque text boxes [Default is transparent]; optionally specify the color [Default is PS_PAGE_COLOR].
+   Selects opaque text boxes [Default is transparent]; optionally specify the color [Default is PS\_PAGE\_COLOR].
    The *color* is a [Setting color](@ref) element.
 - *const_label="xx"*\
    Sets the constant label text.
