@@ -75,7 +75,8 @@ function parse_TdTmL(d::Dict, cmd::String)
         (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width="+w", dec="+d", justify="+j",
          rose_primary=("+i", add_opt_pen), rose_secondary=("+p", add_opt_pen), labels="+l", label="+l", annot="+t", offset="+o"))
 	cmd = add_opt(cmd, "L", d, [:L :map_scale],
-        (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), scale_at_lat="+c", length="+w",
+        (map=("g", nothing, 1), inside=("j", nothing, 1), norm=("n", nothing, 1), paper=("x", nothing, 1),
+         anchor=("", arg2str, 2), scale_at_lat="+c", length="+w",
          align="+a1", justify="+j", fancy="_+f", label="+l", offset="+o", units="_+u", vertical="_+v"))
 end
 

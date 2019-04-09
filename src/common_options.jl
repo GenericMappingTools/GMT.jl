@@ -880,11 +880,12 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false
 		if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
 			args = add_opt(val, mapa, arg)
 		elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
-			# Used when we need to call multiple times a `compound` option. Like grdcontour -W
-			if !(isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[1], NamedTuple))
-				return cmd		# This protects for calls with `mapa` != Tuple{Array{NamedTuple}} 
+			# Used in recursive calls for options like -I, -N , -W of pscoast. Here we assume that opt != ""
+			args = ""
+			for k = 1:length(val)
+				args *= " -" * opt * add_opt(val[k], mapa, arg)
 			end
-			return cmd * add_opt2(opt, d, symbs, mapa, del, arg)	# We are done in this case
+			return cmd * args
 		elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
 			if (isa(val, NamedTuple))
 				if (mapa[2] == helper_decorated)  args = mapa[2](val, true)		# 'true' means getting a single argout
@@ -903,19 +904,6 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false
 		end
 	end
 	return cmd
-end
-
-# ---------------------------------------------------------------------------------------------------
-function add_opt2(opt, d::Dict, symbs, mapa=nothing, del::Bool=false, arg=nothing)
-	# This method is a companion of the above where mapa is an Tuple{Array{NamedTuple}}
-	# but can't find that type
-	args = ""
-	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-		for k = 1:length(val)		# Loop over all the NamedTuples of this tuple
-			args *= " -" * opt * add_opt(val[k], mapa[k], arg)
-		end
-	end
-	return args
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -969,6 +957,8 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 			cmd *= d[key[k]][2:end]		# Just append the flag
 		elseif (d[key[k]] != "" && d[key[k]][end] == '1')	# Means keep the flag and only first char of arg
 			cmd *= d[key[k]][1:end-1] * string(nt[k])[1]
+		elseif (d[key[k]] != "" && d[key[k]][end] == '#')	# Means put flag at the end and make this arg first in cmd (coast -W)
+			cmd = arg2str(nt[k]) * d[key[k]][1:end-1] * cmd
 		else
 			cmd *= d[key[k]] * arg2str(nt[k])
 		end
