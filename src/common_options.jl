@@ -1062,6 +1062,7 @@ function add_opt_module(d::Dict, symbs)
 				nt = (val..., Vd=:cmd)
 				if     (symbs[k] == :coast)    r = coast!(; nt...)
 				elseif (symbs[k] == :colorbar) r = colorbar!(; nt...)
+				elseif (symbs[k] == :basemap)  r = basemap!(; nt...)
 				end
 			elseif (isa(val, Number) && (val != 0))		# Allow setting coast=true || colorbar=true
 				if     (symbs[k] == :coast)    r = coast!(W=0.5, Vd=:cmd)

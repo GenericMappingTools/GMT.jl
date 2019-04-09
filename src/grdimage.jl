@@ -26,7 +26,7 @@ Parameters
 - **G** : -- Str or Int --
 
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#g)
-- **I** : **shade** : **intensity** : **intensfile** : -- Str or GMTgrid --
+- **I** : **shade** : **intensity** : -- Str or GMTgrid --
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
@@ -79,7 +79,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=true, kwargs
 	end
 
 	cpt_opt_T = ""
-	if (opt_R == "" && isa(arg1, GMTgrid))			# GMT bug. -R is not stored in gmt.history
+	if (opt_R == "" && isa(arg1, GMTgrid))			# GMT bug, -R will not be stored in gmt.history
 		cmd *= @sprintf(" -R%f/%f/%f/%f", arg1.range[1], arg1.range[2], arg1.range[3], arg1.range[4])
 		cpt_opt_T = @sprintf(" -T%f/%f/128+n", arg1.range[5], arg1.range[6])
 	elseif (opt_R == "" && cmd0 != "")
@@ -89,11 +89,11 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=true, kwargs
 	end
 
 	N_used = got_fname == 0 ? 1 : 0					# To know whether a cpt will go to arg1 or arg2
-	if (isempty_(arg3) && !occursin("-D", cmd))		# This lieves out the case when the r,g,b were sent as a text.
+	if (isempty_(arg3) && !occursin("-D", cmd))		# But this lieves out the case when the r,g,b were sent as a text.
 		cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2, true, true, cpt_opt_T)
 	end
 
-	if ((val = find_in_dict(d, [:I :shade :intensity :intensfile])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:I :shade :intensity])[1]) !== nothing)
 		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
 			if (isa(val, String) || isa(val, Symbol))  cmd *= " -I" * arg2str(val)
 			else
@@ -113,7 +113,7 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=true, kwargs
 	if (isa(arg1, GMTimage) && !occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
 	cmd = "grdimage " * cmd				# In any case we need this
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
-		cmd, K = finish_PS_nested(d, cmd, output, K, O, [:coast :colorbar])
+		cmd, K = finish_PS_nested(d, cmd, output, K, O, [:coast :colorbar :basemap])
 	end
 	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, arg1, arg2, arg3, arg4)
 end

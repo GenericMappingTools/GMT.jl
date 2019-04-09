@@ -435,6 +435,26 @@ See [GMT Map Projections](@ref) for a list of projection examples
 # perspective
 
 - **p** **|** **view** **|** **perspective** : *view=(azim, elev)*\
-   Selects perspective view and sets the azimuth and elevation of the viewpoint (180,90). When **view** is used in consort with **Jz** or **JZ**, a third value can be appended which indicates at which z-level all 2D material, like the plot frame, is plotted (in perspective). [Default is at the bottom of the z-axis]. 
+   Selects perspective view and sets the azimuth and elevation of the viewpoint (180,90). When **view**
+   is used in consort with **Jz** or **JZ**, a third value can be appended which indicates at which
+   z-level all 2D material, like the plot frame, is plotted (in perspective). [Default is at the bottom
+   of the z-axis]. 
 
    [`-p GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#p-full)
+
+# interp
+
+- **n** **|** *interp* **|** *interpol* : *interp="[b|c|l|n][+a][+bBC][+c][+tthreshold]"*\
+
+   Select grid interpolation mode by adding b for B-spline smoothing, c for bicubic interpolation,
+   l for bilinear interpolation, or n for nearest-neighbor value (for example to plot categorical data).
+   Optionally, append +a to switch off antialiasing (where supported). Append +bBC to override the boundary
+   conditions used, adding g for geographic, p for periodic, or n for natural boundary conditions. For the
+   latter two you may append x or y to specify just one direction, otherwise both are assumed. Append +c
+   to clip the interpolated grid to input z-min/max [Default may exceed limits]. Append +tthreshold to
+   control how close to nodes with NaNs the interpolation will go. A threshold of 1.0 requires all (4 or 16)
+   nodes involved in interpolation to be non-NaN. 0.5 will interpolate about half way from a non-NaN value;
+   0.1 will go about 90% of the way, etc. [Default is bicubic interpolation with antialiasing and a threshold
+   of 0.5, using geographic (if grid is known to be geographic) or natural boundary conditions].
+
+   [`-n GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#n-full)
