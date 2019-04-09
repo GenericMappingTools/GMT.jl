@@ -145,7 +145,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	if (!occursin("-D",cmd))  cmd *= " -Da"  end		# Then pick automatic
 
 	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, "pscoast " * cmd, "", output, fname_ext, opt_T, K)
+	return finish_PS_module(d, "pscoast " * cmd, "", output, fname_ext, opt_T, K)
 end
 
 # ---------------------------------------------------------------------------------------------------
