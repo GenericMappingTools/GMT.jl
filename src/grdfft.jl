@@ -1,5 +1,5 @@
 """
-	grdfft(cmd0::String="", arg1=[], [arg2=[],] kwargs...)
+	grdfft(cmd0::String="", arg1=nothing, [arg2=nothing,] kwargs...)
 
 Take the 2-D forward Fast Fourier Transform and perform one or more mathematical operations
 in the frequency domain before transforming back to the space domain.
@@ -54,7 +54,7 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """
-function grdfft(cmd0::String="", arg1=[], arg2=[]; kwargs...)
+function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdfft", cmd0, arg1, arg2)
 
@@ -76,4 +76,4 @@ function grdfft(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdfft(arg1=[], arg2=[], cmd0::String=""; kw...) = grdfft(cmd0, arg1, arg2; kw...)
+grdfft(arg1, arg2=nothing, cmd0::String=""; kw...) = grdfft(cmd0, arg1, arg2; kw...)

@@ -1,5 +1,5 @@
 """
-	grdclip(cmd0::String="", arg1=[], kwargs...)
+	grdclip(cmd0::String="", arg1=nothing, kwargs...)
 
 Clip the range of grid values. will set values < low to below and/or values > high to above.
 You can also specify one or more intervals where all values should be set to ``between``,
@@ -51,7 +51,7 @@ Parameters
 
         G2=grdclip(G, S="a5/6 -Sb2/2 -Si3/4/3.5")
 """
-function grdclip(cmd0::String="", arg1=[]; kwargs...)
+function grdclip(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdclip", cmd0, arg1)
 
@@ -70,7 +70,7 @@ function grdclip(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdclip(arg1=[], cmd0::String=""; kw...) = grdclip(cmd0, arg1; kw...)
+grdclip(arg1, cmd0::String=""; kw...) = grdclip(cmd0, arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 function opt_S(d::Dict, cmd::String, symbs, flag::Char)

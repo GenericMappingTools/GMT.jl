@@ -1,5 +1,5 @@
 """
-	gmtspatial(cmd0::String="", arg1=[], kwargs...)
+	gmtspatial(cmd0::String="", arg1=nothing, kwargs...)
 
 Geospatial operations on points, lines and polygons.
 
@@ -66,7 +66,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function gmtspatial(cmd0::String="", arg1=[]; kwargs...)
+function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("gmtspatial", cmd0, arg1)
 
@@ -81,4 +81,4 @@ function gmtspatial(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtspatial(arg1=[], cmd0::String=""; kw...) = gmtspatial(cmd0, arg1; kw...)
+gmtspatial(arg1, cmd0::String=""; kw...) = gmtspatial(cmd0, arg1; kw...)

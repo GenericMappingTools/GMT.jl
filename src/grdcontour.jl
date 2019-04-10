@@ -1,5 +1,5 @@
 """
-	grdcontour(cmd0::String="", arg1=[]; kwargs...)
+	grdcontour(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads a 2-D grid file or a GMTgrid type and produces a contour map by tracing each
 contour through the grid.
@@ -74,10 +74,10 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function grdcontour(cmd0::String="", arg1=[]; first=true, kwargs...)
+function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdcontour", cmd0, arg1)
-	arg2 = []
+	arg2 = nothing
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -113,7 +113,7 @@ function grdcontour(cmd0::String="", arg1=[]; first=true, kwargs...)
 	if ((val = find_in_dict(d, [:N :fill])[1]) !== nothing)
 		if (isa(val, GMTcpt))
 			if (!isempty_(arg2))	# Already have one cpt in arg2, replace it by new one
-				arg2 = []
+				arg2 = nothing
 			end
 			cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:N :fill], 'N', N_used, arg1, arg2)
 		else
@@ -126,6 +126,6 @@ function grdcontour(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdcontour!(cmd0::String="", arg1=[]; first=false, kw...) = grdcontour(cmd0, arg1; first=false, kw...)
+grdcontour!(cmd0::String="", arg1=nothing; first=false, kw...) = grdcontour(cmd0, arg1; first=false, kw...)
 grdcontour(arg1, cmd0::String=""; first=true, kw...) = grdcontour(cmd0, arg1; first=first, kw...)
 grdcontour!(arg1, cmd0::String=""; first=false, kw...) = grdcontour(cmd0, arg1; first=false, kw...)

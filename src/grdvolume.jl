@@ -1,5 +1,5 @@
 """
-	grdvolume(cmd0::String="", arg1=[], kwargs...)
+	grdvolume(cmd0::String="", arg1=nothing, kwargs...)
 
 Reads one 2-D grid and returns xyz-triplets.
 
@@ -33,7 +33,7 @@ Parameters
 - $(GMT.opt_f)
 - $(GMT.opt_o)
 """
-function grdvolume(cmd0::String="", arg1=[]; kwargs...)
+function grdvolume(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdvolume", cmd0, arg1)
 
@@ -46,4 +46,4 @@ function grdvolume(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdvolume(arg1=[], cmd0::String=""; kw...) = grdvolume(cmd0, arg1; kw...)
+grdvolume(arg1, cmd0::String=""; kw...) = grdvolume(cmd0, arg1; kw...)

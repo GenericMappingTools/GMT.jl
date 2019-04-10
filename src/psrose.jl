@@ -1,5 +1,5 @@
 """
-	rose(cmd0::String="", arg1=[]; kwargs...)
+	rose(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads (length,azimuth) pairs and plot a windrose diagram.
 
@@ -82,9 +82,9 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function rose(cmd0::String="", arg1=[]; first=true, kwargs...)
+function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	arg2 = []		# May be needed if GMTcpt type is sent in via C
+	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
 	length(kwargs) == 0 && return monolitic("psrose", cmd0, arg1)
@@ -131,9 +131,9 @@ function rose(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-rose!(cmd0::String="", arg1=[]; first=false, kw...) = rose(cmd0, arg1; first=first, kw...)
-rose(arg1=[],  cmd0::String=""; first=true, kw...)  = rose(cmd0, arg1; first=first, kw...)
-rose!(arg1=[], cmd0::String=""; first=false, kw...) = rose(cmd0, arg1; first=first, kw...)
+rose!(cmd0::String="", arg1=nothing; first=false, kw...) = rose(cmd0, arg1; first=first, kw...)
+rose(arg1,  cmd0::String=""; first=true, kw...)  = rose(cmd0, arg1; first=first, kw...)
+rose!(arg1, cmd0::String=""; first=false, kw...) = rose(cmd0, arg1; first=first, kw...)
 
 const psrose  = rose 			# Alias
 const psrose! = rose!			# Alias

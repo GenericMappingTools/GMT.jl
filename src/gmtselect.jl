@@ -1,5 +1,5 @@
 """
-	gmtselect(cmd0::String="", arg1=[], kwargs...)
+	gmtselect(cmd0::String="", arg1=nothing, kwargs...)
 
 Select data table subsets based on multiple spatial criteria.
 
@@ -69,7 +69,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function gmtselect(cmd0::String="", arg1=[]; kwargs...)
+function gmtselect(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1)
 
@@ -83,4 +83,4 @@ function gmtselect(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtselect(arg1=[], cmd0::String=""; kw...) = gmtselect(cmd0, arg1; kw...)
+gmtselect(arg1, cmd0::String=""; kw...) = gmtselect(cmd0, arg1; kw...)

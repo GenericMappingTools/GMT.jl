@@ -1,5 +1,5 @@
 """
-	mask(cmd0::String="", arg1=[]; kwargs...)
+	mask(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads (length,azimuth) pairs from file and plot a windmask diagram.
 
@@ -69,7 +69,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function mask(cmd0::String="", arg1=[]; first=true, kwargs...)
+function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("psmask", cmd0, arg1)
 	d = KW(kwargs)
@@ -94,9 +94,9 @@ function mask(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-mask!(cmd0::String="", arg1=[]; first=false, kw...) = mask(cmd0, arg1; first=first, kw...)
-mask(arg1=[],  cmd0::String=""; first=true, kw...)  = mask(cmd0, arg1; first=first, kw...)
-mask!(arg1=[], cmd0::String=""; first=false, kw...) = mask(cmd0, arg1; first=first, kw...)
+mask!(cmd0::String="", arg1=nothing; first=false, kw...) = mask(cmd0, arg1; first=first, kw...)
+mask(arg1,  cmd0::String=""; first=true, kw...)  = mask(cmd0, arg1; first=first, kw...)
+mask!(arg1, cmd0::String=""; first=false, kw...) = mask(cmd0, arg1; first=first, kw...)
 
 const psmask  = mask			# Alias
 const psmask! = mask!			# Alias

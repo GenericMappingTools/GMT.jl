@@ -54,21 +54,21 @@ mutable struct GMTcpt
 	hinge::Cdouble
 	cpt::Array{Float64,2}
 	model::String
-	comment::Array{Any,1}		# Cell array with any comments
+	comment::Array{String,1}	# Cell array with any comments
 end
 
 mutable struct GMTps
 	postscript::String			# Actual PS plot (text string)
 	length::Int 				# Byte length of postscript
 	mode::Int 					# 1 = Has header, 2 = Has trailer, 3 = Has both
-	comment::Array{Any,1}		# Cell array with any comments
+	comment::Array{String,1}	# Cell array with any comments
 end
 
 mutable struct GMTdataset
 	data::Array{Float64,2}
-	text::Array{Any,1}
+	text::Array{String,1}
 	header::String
-	comment::Array{Any,1}
+	comment::Array{String,1}
 	proj4::String
 	wkt::String
 	GMTdataset(data, text, header, comment, proj4, wkt) = new(data, text, header, comment, proj4, wkt)
@@ -102,7 +102,7 @@ function gmt(cmd::String, args...)
 				n_argin -= 1
 			end
 		end
-		while (n_argin > 0 && args[n_argin] == [])  n_argin -= 1  end	# We may have trailing [] args in modules
+		while (n_argin > 0 && (args[n_argin] === nothing || args[n_argin] == []))  n_argin -= 1  end	# We may have trailing [] args in modules
 	end
 	# -----------------------------------------------------------
 
@@ -113,7 +113,7 @@ function gmt(cmd::String, args...)
 	if (g_module == "end")				# Last command of a MODERN session
 		if (isempty(r)) r = "-Vq" end	# Cannot have a no-args for this case otherwise it prints help
 		GMT_Destroy_Session(API)		# Force calling GMT_Create_Session() below. Need this so that
-		API = NaN						# gmt_manage_workflow() knows what to do when ENDing a modern session
+		API = nothing					# gmt_manage_workflow() knows what to do when ENDing a modern session
 	end
 
 	try
@@ -128,7 +128,7 @@ function gmt(cmd::String, args...)
 	# 2. In case this was a clean up call or a begin/end from the modern mode
 	if (g_module == "destroy")
 		if (GMT_Destroy_Session(API) != 0)  error("GMT: Failure to destroy GMT session") end
-		API = NaN
+		API = nothing
 		return
 	elseif (g_module == "begin" && (r == ""))	# Cannot have a no-args for these cases otherwise it prints help
 		r = "gmtsession"
@@ -241,7 +241,7 @@ function gmt(cmd::String, args...)
 		if (X[k].direction == GMT_IN && n_argin == 0)
 			error("GMT: Expected a Matrix for input")
 		end
-		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : []
+		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : nothing
 		GMTJL_Set_Object(API, X[k], ptr)	# Set object pointer
 	end
 
@@ -263,9 +263,7 @@ function gmt(cmd::String, args...)
 		n_out = n_out + 1
 	end
 
-	#out = []
-	#if (n_out > 0)  out = Array{Any}(undef, n_out)  end
-	(n_out > 0) ? out = Array{Any}(undef, n_out) : out = []
+	(n_out > 0) ? out = Array{Any}(undef, n_out) : out = nothing
 
 	for k = 1:n_items					# Get results from GMT into Julia arrays
 		if (X[k].direction == GMT_IN) continue 	end      # Only looking for stuff coming OUT of GMT here
@@ -681,7 +679,7 @@ function get_textset_(API::Ptr{Nothing}, object::Ptr{Nothing})
 			end
 
 			if (!have_numerical)
-				dest = Array{Any}(undef, Ttab_Seg.n_rows)
+				dest = Array{String}(undef, Ttab_Seg.n_rows)
 				for row = 1:Ttab_Seg.n_rows
 					t = unsafe_load(Ttab_Seg.data, row)	# Ptr{UInt8}
 					dest[row] = unsafe_string(t)
@@ -691,7 +689,7 @@ function get_textset_(API::Ptr{Nothing}, object::Ptr{Nothing})
 
 			#headers = pointer_to_array(Ttab_1.header, Ttab_1.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
 			headers = unsafe_wrap(Array, Ttab_1.header, Ttab_1.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
-			dest = Array{Any}(undef, length(headers))
+			dest = Array{String}(undef, length(headers))
 			for k = 1:n_headers
 				dest[k] = unsafe_string(headers[k])
 			end
@@ -774,7 +772,7 @@ function get_dataset(API::Ptr{Nothing}, object)
 			if (DS.text != C_NULL)
 				texts = unsafe_wrap(Array, DS.text, DS.n_rows)	# n_headers-element Array{Ptr{UInt8},1}
 				if (texts != NULL)
-					dest = Array{Any}(undef, DS.n_rows)
+					dest = Array{String}(undef, DS.n_rows)
 					for row = 1:DS.n_rows					# Copy the text rows
 						if (texts[row] != NULL)  dest[row] = unsafe_string(texts[row])  end
 					end
@@ -786,7 +784,7 @@ function get_dataset(API::Ptr{Nothing}, object)
 			if (seg == 1)
 				#headers = pointer_to_array(DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
 				headers = unsafe_wrap(Array, DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
-				dest = Array{Any}(undef, length(headers))
+				dest = Array{String}(undef, length(headers))
 				for k = 1:length(headers)
 					dest[k] = unsafe_string(headers[k])
 				end
@@ -805,7 +803,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr)
 	# Create the object container and hook as X->object
-	name = Any["Matrix", "CellArray"]
+	#name = ["Matrix", "CellArray"]
 	oo = unsafe_load(X.option)
 	module_input = (oo.option == GMT.GMT_OPT_INFILE)
 
@@ -893,7 +891,7 @@ function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN
 	end
 
 	if (isa(grd_box, GMTgrid))
-		R = grid_init(API, module_input, grd_box, [], [])
+		R = grid_init(API, module_input, grd_box, nothing, nothing)
 	else
 		error(@sprintf("GMTJL_PARSER:grd_init: input (%s) is not a GRID container type", typeof(grd_box)))
 	end
@@ -1054,7 +1052,6 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 	end
 
 	if (Darr == C_NULL) error("Input is empty where it can't be.")	end
-	#if (!((eltype(Darr) == Array{Any}) || (eltype(Darr) == String)))	# Got a matrix as input, pass data pointers via MATRIX to save memory
 	if (isa(Darr, GMTdataset))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
 	if (!(isa(Darr, Array{GMTdataset,1})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
 		D = dataset_init(API, module_input, Darr, direction, actual_family)
@@ -1176,7 +1173,7 @@ function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, 
 		elseif (eltype(ptr) == Int16)		Mb._type = UInt32(GMT.GMT_SHORT)
 		elseif (eltype(ptr) == UInt8)		Mb._type = UInt32(GMT.GMT_UCHAR)
 		elseif (eltype(ptr) == Int8)		Mb._type = UInt32(GMT.GMT_CHAR)
-		elseif (ptr == [])		# Do nothing here (-G of project comes here) but looks dangerous
+		elseif (ptr == nothing)		# Do nothing here (-G of project comes here) but looks dangerous
 		else
 			println("Type \"", typeof(ptr), "\" not allowed")
 			error("only integer or floating point types allowed in input. Others need to be added")
@@ -1359,20 +1356,19 @@ function text_init(API::Ptr{Nothing}, module_input, txt, dir::Integer, family::I
  	# If direction is GMT_IN then we are given a Julia cell array and can determine its size, etc.
 	# If direction is GMT_OUT then we allocate an empty GMT TEXTSET as a destination.
 
-
 	# Disclaimer: This code is absolutely diabolic. Thanks to immutables.
 
 	if (dir == GMT_IN)	# Dimensions are known from the input pointer
 
 		#if (module_input) family |= GMT_VIA_MODULE_INPUT;	gmtmex_parser.c has this which is not ported yet
 
-		if (!isa(txt, Array{Any}) && isa(txt, String))
-			txt = Any[txt]
+		if (!isa(txt, Array{String}) && isa(txt, String))
+			txt = [txt]
 		elseif (isa(txt[1], Number))
 			txt = num2str(txt)			# Convert the numeric matrix into a cell array of strings
 		end
 		if (VERSION.minor > 4)
-			if (!isa(txt, Array{Any}) && !(eltype(txt) == String))
+			if (!isa(txt, Array{String}) && !(eltype(txt) == String))
 				error(@sprintf("Expected a Cell array or a String for input, got a \"%s\"", typeof(txt)))
 			end
 		end
@@ -1523,7 +1519,7 @@ function get_datatype(var)
 	if (eltype(var) == Int16) 	return INT16_CLASS	end
 	if (eltype(var) == UInt8) 	return UINT8_CLASS	end
 	if (eltype(var) == Int8) 	return INT8_CLASS	end
-	if (var == [])				return DOUBLE_CLASS	end		# Motivated by project -G
+	if (var == nothing)			return DOUBLE_CLASS	end		# Motivated by project -G
 
 	println("Unable to discovery this data type - Default to double")
 	return DOUBLE_CLASS
@@ -1567,7 +1563,7 @@ end
 function num2str(mat)
 # Pseudo num2str, but returns all in a cell array of strings and no precision control yet.
 	n_cols = size(mat, 2);		n_rows = size(mat, 1)
-	out = Any[n_rows, 1]
+	out = Array{String}(undef, n_rows)
 	for nr = 1:n_rows
 		out[nr] = join([@sprintf("%s\t", mat[nr,k]) for k=1:n_cols-1])
 		out[nr] = out[nr] * @sprintf("%s", mat[nr,n_cols])
@@ -1597,7 +1593,7 @@ function text_record(data, text, hdr=nothing)
 	if (GMTver < 6.0)		# Convert to the old cell array of strings format
 		if (!isempty(data))
 			nl = size(data,1)
-			t = Array{Any}(undef,nl,1)
+			t = Array{String}(undef,nl,1)
 			if (nl == 1)
 				t[1] = string(@sprintf("%.10g %.10g", data[1,1], data[1,2]), " ", text)
 			else

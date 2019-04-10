@@ -1,5 +1,5 @@
 """
-	gmt2kml(cmd0::String="", arg1=[], kwargs...)
+	gmt2kml(cmd0::String="", arg1=nothing, kwargs...)
 
 Convert GMT data tables to KML files for Google Earth
 
@@ -90,7 +90,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_swap_xy)
 """
-function gmt2kml(cmd0::String="", arg1=[]; kwargs...)
+function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmt2kml", cmd0, arg1)
 
@@ -113,4 +113,4 @@ function gmt2kml(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmt2kml(arg1=[], cmd0::String=""; kw...) = gmt2kml(cmd0, arg1; kw...)
+gmt2kml(arg1, cmd0::String=""; kw...) = gmt2kml(cmd0, arg1; kw...)

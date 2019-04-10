@@ -1,5 +1,5 @@
 """
-	grdedit(cmd0::String="", arg1=[], kwargs...)
+	grdedit(cmd0::String="", arg1=nothing, kwargs...)
 
 Reads the header information in a binary 2-D grid file and replaces the information with
 values provided on the command line.
@@ -54,7 +54,7 @@ Parameters
 - $(GMT.opt_f)
 - $(GMT.opt_swap_xy)
 """
-function grdedit(cmd0::String="", arg1=[]; kwargs...)
+function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdedit", cmd0, arg1)
 
@@ -68,4 +68,4 @@ function grdedit(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdedit(arg1=[], cmd0::String=""; kw...) = grdedit(cmd0, arg1; kw...)
+grdedit(arg1, cmd0::String=""; kw...) = grdedit(cmd0, arg1; kw...)

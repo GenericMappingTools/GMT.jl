@@ -1,5 +1,5 @@
 """
-	gmtconnect(cmd0::String="", arg1=[], kwargs...)
+	gmtconnect(cmd0::String="", arg1=nothing, kwargs...)
 
 Connect individual lines whose end points match within tolerance
 
@@ -43,7 +43,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function gmtconnect(cmd0::String="", arg1=[], arg2=[]; kwargs...)
+function gmtconnect(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtconnect", cmd0, arg1)
 
@@ -56,4 +56,4 @@ function gmtconnect(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtconnect(arg1=[], arg2=[], cmd0::String=""; kw...) = gmtconnect(cmd0, arg1, arg2; kw...)
+gmtconnect(arg1, arg2=nothing, cmd0::String=""; kw...) = gmtconnect(cmd0, arg1, arg2; kw...)

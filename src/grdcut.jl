@@ -34,7 +34,7 @@ Parameters
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grdcut.html#z)
 - $(GMT.opt_f)
 """
-function grdcut(cmd0::String="", arg1=[]; kwargs...)
+function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdcut", cmd0, arg1)
 
@@ -44,9 +44,9 @@ function grdcut(cmd0::String="", arg1=[]; kwargs...)
     end
     cmd = parse_these_opts(cmd, d, [[:G :outgrid], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+    cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	return common_grd(d, "grdcut " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdcut(arg1=[], cmd0::String=""; kw...) = grdcut(cmd0, arg1; kw...)
+grdcut(arg1, cmd0::String=""; kw...) = grdcut(cmd0, arg1; kw...)

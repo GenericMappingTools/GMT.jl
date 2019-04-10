@@ -1,5 +1,5 @@
 """
-	trend1d(cmd0::String="", arg1=[], kwargs...)
+	trend1d(cmd0::String="", arg1=nothing, kwargs...)
 
 Fit a [weighted] [robust] polynomial/Fourier model for y = f(x) to xy[w] data.
 
@@ -40,7 +40,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_swap_xy)
 """
-function trend1d(cmd0::String="", arg1=[]; kwargs...)
+function trend1d(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("trend1d", cmd0, arg1)
 
@@ -54,4 +54,4 @@ function trend1d(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-trend1d(arg1=[], cmd0::String=""; kw...) = trend1d(cmd0, arg1; kw...)
+trend1d(arg1, cmd0::String=""; kw...) = trend1d(cmd0, arg1; kw...)

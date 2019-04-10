@@ -1,5 +1,5 @@
 """
-	gmtvector(cmd0::String="", arg1=[], kwargs...)
+	gmtvector(cmd0::String="", arg1=nothing, kwargs...)
 
 Time domain filtering of 1-D data tables.
 
@@ -46,7 +46,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function gmtvector(cmd0::String="", arg1=[]; kwargs...)
+function gmtvector(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("gmtvector", cmd0, arg1)
 

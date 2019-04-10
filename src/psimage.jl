@@ -1,5 +1,5 @@
 """
-    image(cmd0::String="", arg1=[]; kwargs...)
+    image(cmd0::String="", arg1=nothing; kwargs...)
 
 Place images or EPS files on maps.
 
@@ -35,7 +35,7 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function image(cmd0::String="", arg1=[]; first=true, kwargs...)
+function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("psimage", cmd0, arg1)
 
@@ -56,7 +56,7 @@ function image(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-image!(cmd0::String="", arg1=[]; kw...) = image(cmd0, arg1; first=false, kw...)
+image!(cmd0::String="", arg1=nothing; kw...) = image(cmd0, arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 const psimage  = image			# Alias

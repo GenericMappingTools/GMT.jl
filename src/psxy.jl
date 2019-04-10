@@ -5,7 +5,7 @@ const psxyz! = plot3d!
 
 # ---------------------------------------------------------------------------------------------------
 function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
-	arg2 = []		# May be needed if GMTcpt type is sent in via C
+	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
 	is_ternary = (caller == "ternary") ? true : false

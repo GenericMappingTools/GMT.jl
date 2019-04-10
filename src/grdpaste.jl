@@ -1,5 +1,5 @@
 """
-	grdpaste(cmd0::String="", arg1=[], arg2=[], kwargs...)
+	grdpaste(cmd0::String="", arg1=nothing, arg2=nothing, kwargs...)
 
 Combine grids ``grid1`` and ``grid2`` into ``grid3`` by pasting them together along their common edge.
 Both grids must have the same dx, dy and have one edge in common.
@@ -17,7 +17,7 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """
-function grdpaste(cmd0::String="", arg1=[], arg2=[]; kwargs...)
+function grdpaste(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :f])
@@ -28,4 +28,4 @@ function grdpaste(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdpaste(arg1=[], arg2=[], cmd0::String=""; kw...) = grdpaste(cmd0, arg1, arg2; kw...)
+grdpaste(arg1, arg2=nothing, cmd0::String=""; kw...) = grdpaste(cmd0, arg1, arg2; kw...)

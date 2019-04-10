@@ -1,5 +1,5 @@
 """
-    psconvert(cmd0::String="", arg1=[]; kwargs...)
+    psconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 Place images or EPS files on maps.
 
@@ -76,7 +76,7 @@ Parameters
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#z)
 - $(GMT.opt_V)
 """
-function psconvert(cmd0::String="", arg1=[]; kwargs...)
+function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("psconvert", cmd0, arg1)
 
@@ -118,7 +118,7 @@ function psconvert(cmd0::String="", arg1=[]; kwargs...)
 	if (haskey(d, :in_memory))
 		if (!isempty_(arg1))
 			@warn("The IN_MEMORY option is imcompatible with passing an input file name. Dropping this one.")
-			arg1 = []
+			arg1 = nothing
 		else
 			cmd *= " ="
 		end

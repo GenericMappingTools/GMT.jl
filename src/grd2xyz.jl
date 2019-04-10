@@ -1,5 +1,5 @@
 """
-	grd2xyz(cmd0::String="", arg1=[], kwargs...)
+	grd2xyz(cmd0::String="", arg1=nothing, kwargs...)
 
 Reads one 2-D grid and returns xyz-triplets.
 
@@ -33,7 +33,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_s)
 """
-function grd2xyz(cmd0::String="", arg1=[]; kwargs...)
+function grd2xyz(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2xyz", cmd0, arg1)
 

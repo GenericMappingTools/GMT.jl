@@ -1,5 +1,5 @@
 """
-	kml2gmt(cmd0::String="", arg1=[], kwargs...)
+	kml2gmt(cmd0::String="", arg1=nothing, kwargs...)
 
 kml2gmt - Extract GMT table data from Google Earth KML files
 
@@ -22,7 +22,7 @@ Parameters
 - $(GMT.opt_do)
 - $(GMT.opt_swap_xy)
 """
-function kml2gmt(cmd0::String="", arg1=[]; kwargs...)
+function kml2gmt(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("kml2gmt", cmd0, arg1)
 
@@ -35,4 +35,4 @@ function kml2gmt(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-kml2gmt(arg1=[], cmd0::String=""; kw...) = kml2gmt(cmd0, arg1; kw...)
+kml2gmt(arg1, cmd0::String=""; kw...) = kml2gmt(cmd0, arg1; kw...)

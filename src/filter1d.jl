@@ -1,5 +1,5 @@
 """
-    filter1d(cmd0::String="", arg1=[], kwargs...)
+    filter1d(cmd0::String="", arg1=nothing, kwargs...)
 
 Time domain filtering of 1-D data tables.
 
@@ -51,7 +51,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function filter1d(cmd0::String="", arg1=[]; kwargs...)
+function filter1d(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("filter1d", cmd0, arg1)
 
@@ -65,4 +65,4 @@ function filter1d(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-filter1d(arg1=[], cmd0::String=""; kw...) = filter1d(cmd0, arg1; kw...)
+filter1d(arg1, cmd0::String=""; kw...) = filter1d(cmd0, arg1; kw...)

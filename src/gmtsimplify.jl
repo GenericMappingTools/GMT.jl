@@ -1,5 +1,5 @@
 """
-	gmtsimplify(cmd0::String="", arg1=[], kwargs...)
+	gmtsimplify(cmd0::String="", arg1=nothing, kwargs...)
 
 Line reduction using the Douglas-Peucker algorithm.
 
@@ -25,7 +25,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function gmtsimplify(cmd0::String="", arg1=[]; kwargs...)
+function gmtsimplify(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("gmtsimplify", cmd0, arg1)
 
@@ -38,4 +38,4 @@ function gmtsimplify(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtsimplify(arg1=[], cmd0::String=""; kw...) = gmtsimplify(cmd0, arg1; kw...)
+gmtsimplify(arg1, cmd0::String=""; kw...) = gmtsimplify(cmd0, arg1; kw...)

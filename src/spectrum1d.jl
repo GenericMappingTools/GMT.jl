@@ -1,5 +1,5 @@
 """
-	gmtspectrum1d(cmd0::String="", arg1=[], kwargs...)
+	gmtspectrum1d(cmd0::String="", arg1=nothing, kwargs...)
 
 Compute auto- [and cross- ] spectra from one [or two] time-series.
 
@@ -49,7 +49,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_swap_xy)
 """
-function spectrum1d(cmd0::String="", arg1=[]; kwargs...)
+function spectrum1d(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("spectrum1d", cmd0, arg1)
 
@@ -63,4 +63,4 @@ function spectrum1d(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-spectrum1d(arg1=[], cmd0::String=""; kw...) = spectrum1d(cmd0, arg1; kw...)
+spectrum1d(arg1, cmd0::String=""; kw...) = spectrum1d(cmd0, arg1; kw...)

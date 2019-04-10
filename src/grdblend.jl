@@ -1,5 +1,5 @@
 """
-	grdblend(cmd0::String="", arg1=[], arg2=[], kwargs...)
+	grdblend(cmd0::String="", arg1=nothing, arg2=nothing, kwargs...)
 
 Reads a listing of grid files and blend parameters, or up to 2 GTMgrid types, and creates
 a grid by blending the other grids using cosine-taper weights.
@@ -47,7 +47,7 @@ Parameters
 - $(GMT.opt_n)
 - $(GMT.opt_r)
 """
-function grdblend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
+function grdblend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f :n :r])
@@ -59,4 +59,4 @@ function grdblend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdblend(arg1=[], arg2=[], cmd0::String=""; kw...) = grdblend(cmd0, arg1, arg2; kw...)
+grdblend(arg1, arg2=nothing, cmd0::String=""; kw...) = grdblend(cmd0, arg1, arg2; kw...)

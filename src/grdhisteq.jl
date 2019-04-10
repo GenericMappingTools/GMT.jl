@@ -1,5 +1,5 @@
 """
-	grdhisteq(cmd0::String="", arg1=[], kwargs...)
+	grdhisteq(cmd0::String="", arg1=nothing, kwargs...)
 
 Find the data values which divide a given grid file into patches of equal area. One common use of
 grdhisteq is in a kind of histogram equalization of an image.
@@ -29,7 +29,7 @@ Parameters
 - $(GMT.opt_R)
 - $(GMT.opt_V)
 """
-function grdhisteq(cmd0::String="", arg1=[]; kwargs...)
+function grdhisteq(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdhisteq", cmd0, arg1)
 
@@ -43,4 +43,4 @@ function grdhisteq(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdhisteq(arg1=[], cmd0::String=""; kw...) = grdhisteq(cmd0, arg1; kw...)
+grdhisteq(arg1, cmd0::String=""; kw...) = grdhisteq(cmd0, arg1; kw...)

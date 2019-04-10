@@ -1,5 +1,5 @@
 """
-	grdproject(cmd0::String="", arg1=[], kwargs...)
+	grdproject(cmd0::String="", arg1=nothing, kwargs...)
 
 Project a geographical gridded data set onto a rectangular grid or do the inverse projection.
 
@@ -43,7 +43,7 @@ Parameters
 - $(GMT.opt_n)
 - $(GMT.opt_r)
 """
-function grdproject(cmd0::String="", arg1=[]; kwargs...)
+function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdproject", cmd0, arg1)
 
@@ -57,4 +57,4 @@ function grdproject(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdproject(arg1=[], cmd0::String=""; kw...) = grdproject(cmd0, arg1; kw...)
+grdproject(arg1, cmd0::String=""; kw...) = grdproject(cmd0, arg1; kw...)

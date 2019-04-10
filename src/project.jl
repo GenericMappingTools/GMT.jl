@@ -1,5 +1,5 @@
 """
-	project(cmd0::String="", arg1=[], kwargs...)
+	project(cmd0::String="", arg1=nothing, kwargs...)
 
 Project data onto lines or great circles, generate tracks, or translate coordinates.
 
@@ -67,7 +67,7 @@ Parameters
 - $(GMT.opt_s)
 - $(GMT.opt_swap_xy)
 """
-function project(cmd0::String="", arg1=[]; kwargs...)
+function project(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("project", cmd0, arg1)
 
@@ -84,4 +84,4 @@ function project(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-project(arg1=[], cmd0::String=""; kw...) = project(cmd0, arg1; kw...)
+project(arg1, cmd0::String=""; kw...) = project(cmd0, arg1; kw...)

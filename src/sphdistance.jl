@@ -1,5 +1,5 @@
 """
-	sphdistance(cmd0::String="", arg1=[], kwargs...)
+	sphdistance(cmd0::String="", arg1=nothing, kwargs...)
 
 Create Voronoi distance, node, or natural nearest-neighbor grid on a sphere
 
@@ -48,7 +48,7 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-function sphdistance(cmd0::String="", arg1=[]; kwargs...)
+function sphdistance(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0  && return monolitic("sphdistance ", cmd0, arg1)
 

@@ -1,5 +1,5 @@
 """
-	sphtriangulate(cmd0::String="", arg1=[], kwargs...)
+	sphtriangulate(cmd0::String="", arg1=nothing, kwargs...)
 
 Delaunay or Voronoi construction of spherical lon,lat data
 
@@ -45,7 +45,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_swap_xy)
 """
-function sphtriangulate(cmd0::String="", arg1=[]; kwargs...)
+function sphtriangulate(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("sphtriangulate ", cmd0, arg1)
 
@@ -58,4 +58,4 @@ function sphtriangulate(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-sphtriangulate(arg1=[], cmd0::String=""; kw...) = sphtriangulate(cmd0, arg1; kw...)
+sphtriangulate(arg1, cmd0::String=""; kw...) = sphtriangulate(cmd0, arg1; kw...)

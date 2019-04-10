@@ -1,5 +1,5 @@
 """
-	regress(cmd0::String="", arg1=[], kwargs...)
+	regress(cmd0::String="", arg1=nothing, kwargs...)
 
 Linear regression of 1-D data sets.
 
@@ -54,7 +54,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function regress(cmd0::String="", arg1=[]; kwargs...)
+function regress(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("gmtregress", cmd0, arg1)
 
@@ -68,6 +68,6 @@ function regress(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-regress(arg1=[], cmd0::String=""; kw...) = regress(cmd0, arg1; kw...)
+regress(arg1, cmd0::String=""; kw...) = regress(cmd0, arg1; kw...)
 
 gmtregress = regress 		# Alias

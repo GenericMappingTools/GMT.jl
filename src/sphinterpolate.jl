@@ -1,5 +1,5 @@
 """
-	sphinterpolate(cmd0::String="", arg1=[], kwargs...)
+	sphinterpolate(cmd0::String="", arg1=nothing, kwargs...)
 
 Spherical gridding in tension of data on a sphere
 
@@ -39,7 +39,7 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-function sphinterpolate(cmd0::String="", arg1=[]; kwargs...)
+function sphinterpolate(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("sphinterpolate ", cmd0, arg1)
 
@@ -52,4 +52,4 @@ function sphinterpolate(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-sphinterpolate(arg1=[], cmd0::String=""; kw...) = sphinterpolate(cmd0, arg1; kw...)
+sphinterpolate(arg1, cmd0::String=""; kw...) = sphinterpolate(cmd0, arg1; kw...)
