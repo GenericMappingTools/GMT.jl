@@ -1,5 +1,5 @@
 """
-	gmtconvert(cmd0::String="", arg1=[], kwargs...)
+	gmtconvert(cmd0::String="", arg1=nothing, kwargs...)
 
 Convert, Paste, and/or Extract columns from data tables
 
@@ -78,7 +78,7 @@ Parameters
 - $(GMT.opt_s)
 - $(GMT.opt_swap_xy)
 """
-function gmtconvert(cmd0::String="", arg1=[]; kwargs...)
+function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtconvert", cmd0, arg1)
 

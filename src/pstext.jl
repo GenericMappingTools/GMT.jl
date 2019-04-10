@@ -1,5 +1,5 @@
 """
-	text(cmd0::String="", arg1=[]; kwargs...)
+	text(cmd0::String="", arg1=nothing; kwargs...)
 
 Plots text strings of variable size, font type, and orientation. Various map projections are
 provided, with the option to draw and annotate the map boundaries.
@@ -73,11 +73,11 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function text(cmd0::String="", arg1=[]; first=true, kwargs...)
+function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("pstext", cmd0, arg1)
 
-	arg2 = []		# May be needed if GMTcpt type is sent in via G
+	arg2 = nothing		# May be needed if GMTcpt type is sent in via G
 	N_args = isempty_(arg1) ? 0 : 1
 
 	d = KW(kwargs)
@@ -109,7 +109,7 @@ function text(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-text!(cmd0::String="", arg1=[]; first=false, kw...) = text(cmd0, arg1; first=false, kw...)
+text!(cmd0::String="", arg1=nothing; first=false, kw...) = text(cmd0, arg1; first=false, kw...)
 text(arg1;  first=true, kw...)  = text("", arg1; first=first, kw...)
 text!(arg1; first=false, kw...) = text("", arg1; first=first, kw...)
 

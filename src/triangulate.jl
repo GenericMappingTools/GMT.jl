@@ -1,5 +1,5 @@
 """
-	triangulate(cmd0::String="", arg1=[]; kwargs...)
+	triangulate(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads one or more ASCII [or binary] files (or standard input) containing x,y[,z] and performs Delaunay
 triangulation, i.e., it find how the points should be connected to give the most equilateral
@@ -18,7 +18,7 @@ Parameters
 
     Take either the x- or y-derivatives of surface represented by the planar facets (only used when G is set).
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#a)
-- **E** : **empty** : -- Bool or [] --
+- **E** : **empty** : -- Str or Number --
 
     Set the value assigned to empty nodes when G is set [NaN].
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#e)
@@ -67,7 +67,7 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-function triangulate(cmd0::String="", arg1=[]; kwargs...)
+function triangulate(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("triangulate", cmd0, arg1)
 

@@ -1,5 +1,5 @@
 """
-    gmtinfo(cmd0::String="", arg1=[]; kwargs...)
+    gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads files and finds the extreme values in each of the columns.
 
@@ -60,7 +60,7 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-function gmtinfo(cmd0::String="", arg1=[]; kwargs...)
+function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && !isa(arg1, GMTdataset) && return monolitic("gmtinfo", cmd0, arg1)
 

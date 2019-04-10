@@ -1,5 +1,5 @@
 """
-	clip(cmd0::String="", arg1=[]; kwargs...)
+	clip(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads (length,azimuth) pairs from file and plot a windclip diagram.
 
@@ -45,7 +45,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function clip(cmd0::String="", arg1=[]; first=true, kwargs...)
+function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("psclip", cmd0, arg1)
 
@@ -68,9 +68,9 @@ function clip(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-clip!(cmd0::String="", arg1=[]; first=false, kw...) = clip(cmd0, arg1; first=first, kw...)
-clip(arg1=[], cmd0::String=""; first=true, kw...)   = clip(cmd0, arg1; first=first, kw...)
-clip!(arg1=[], cmd0::String=""; first=false, kw...) = clip(cmd0, arg1; first=first, kw...)
+clip!(cmd0::String="", arg1=nothing; first=false, kw...) = clip(cmd0, arg1; first=first, kw...)
+clip(arg1, cmd0::String=""; first=true, kw...)   = clip(cmd0, arg1; first=first, kw...)
+clip!(arg1, cmd0::String=""; first=false, kw...) = clip(cmd0, arg1; first=first, kw...)
 
 psclip  = clip			# Alias
 psclip! = clip!			# Alias

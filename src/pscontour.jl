@@ -1,5 +1,5 @@
 """
-	contour(cmd0::String="", arg1=[]; kwargs...)
+	contour(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads a table data and produces a raw contour plot by triangulation.
 
@@ -82,12 +82,12 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function contour(cmd0::String="", arg1=[]; first=true, kwargs...)
+function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("pscontour", cmd0, arg1)
 
-	arg2 = []       # May will contain a CPT or a Mx3 indices array
-	arg3 = []       # May will contain a Mx3 indices array
+	arg2 = nothing       # May will contain a CPT or a Mx3 indices array
+	arg3 = nothing       # May will contain a Mx3 indices array
 	N_args = isempty_(arg1) ? 0 : 1
 
 	d = KW(kwargs)
@@ -132,7 +132,7 @@ function contour(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-contour!(cmd0::String="", arg1=[]; first=false, kw...) = contour(cmd0, arg1; first=false, kw...)
+contour!(cmd0::String="", arg1=nothing; first=false, kw...) = contour(cmd0, arg1; first=false, kw...)
 contour(arg1, cmd0::String=""; first=true, kw...) = contour(cmd0, arg1; first=first, kw...)
 contour!(arg1, cmd0::String=""; first=false, kw...) = contour(cmd0, arg1; first=false, kw...)
 

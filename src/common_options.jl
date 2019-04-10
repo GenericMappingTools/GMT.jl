@@ -920,7 +920,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 		if (!haskey(d, key[k]))  continue  end
 		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(nt[k], NamedTuple))
-				local_opt = (d[key[k]][2] == helper_decorated) ? true : []		# 'true' means getting a single argout
+				local_opt = (d[key[k]][2] == helper_decorated) ? true : nothing		# 'true' means getting a single argout
 				cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), local_opt)
 			else						# 
 				if (length(d[key[k]]) == 2)		# Run the function
@@ -989,7 +989,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=[], arg2=[], store=false, def=false, opt_T="")
+function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=nothing, arg2=nothing, store=false, def=false, opt_T="")
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	# N_args only applyies to when a GMTcpt was transmitted. Than it's either 0, case in which
 	# the cpt is put in arg1, or 1 and the cpt goes to arg2.
@@ -1303,7 +1303,7 @@ end
 
 # ------------------------
 function helper1_axes(arg)
-	# Used by annot, ticks and grid to accept also 'auto', [] and "" to mean automatic
+	# Used by annot, ticks and grid to accept also 'auto' and "" to mean automatic
 	out = arg2str(arg)
 	if (out != "" && out[1] == 'a')  out = ""  end
 	return out
@@ -1794,7 +1794,7 @@ function round_wesn(wesn, geo::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], arg3=[], arg4=[])
+function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing)
 	# ...
 	got_fname = 0;		data_kw = nothing
 	if (haskey(d, :data))	data_kw = d[:data]	end
@@ -1815,7 +1815,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 		# Accepts "input1"; arg1; data=input1;
 		if (got_fname != 0)
 			return cmd, got_fname, arg1		# got_fname = 1 => data is in cmd
-		elseif (!isempty_(arg1))
+		elseif (arg1 !== nothing)
 			return cmd, got_fname, arg1 	# got_fname = 0 => data is in arg1
 		elseif (data_kw !== nothing)
 			if (isa(data_kw, String))
@@ -1830,9 +1830,9 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 	elseif (tipo == 2)			# Two inputs (but second can be optional is some modules)
 		# Accepts "input1  input2"; "input1", arg1; "input1", data=input2; arg1, arg2; data=(input1,input2)
 		if (got_fname != 0)
-			if (isempty_(arg1) && data_kw === nothing)
+			if (arg1 === nothing && data_kw === nothing)
 				return cmd, 1, arg1, arg2		# got_fname = 1 => all data is in cmd
-			elseif (!isempty_(arg1))
+			elseif (arg1 !== nothing)
 				return cmd, 2, arg1, arg2		# got_fname = 2 => data is in cmd and arg1
 			elseif (data_kw !== nothing && length(data_kw) == 1)
 				return cmd, 2, data_kw, arg2	# got_fname = 2 => data is in cmd and arg1
@@ -1840,11 +1840,11 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 				error("Missing input data to run this module.")
 			end
 		else
-			if (!isempty_(arg1) && !isempty_(arg2))
+			if (arg1 !== nothing && arg2 !== nothing)
 				return cmd, 0, arg1, arg2				# got_fname = 0 => all data is in arg1,2
-			elseif (!isempty_(arg1) && isempty_(arg2) && data_kw === nothing)
+			elseif (arg1 !== nothing && arg2 === nothing && data_kw === nothing)
 				return cmd, 0, arg1, arg2				# got_fname = 0 => all data is in arg1
-			elseif (!isempty_(arg1) && isempty_(arg2) && data_kw !== nothing && length(data_kw) == 1)
+			elseif (arg1 !== nothing && arg2 === nothing && data_kw !== nothing && length(data_kw) == 1)
 				return cmd, 0, arg1, data_kw			# got_fname = 0 => all data is in arg1,2
 			elseif (data_kw !== nothing && length(data_kw) == 2)
 				return cmd, 0, data_kw[1], data_kw[2]	# got_fname = 0 => all data is in arg1,2
@@ -1855,13 +1855,13 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=[], arg2=[], a
 	elseif (tipo == 3)			# Three inputs
 		# Accepts "input1  input2 input3"; arg1, arg2, arg3; data=(input1,input2,input3)
 		if (got_fname != 0)
-			if (isempty_(arg1) && data_kw === nothing)
+			if (arg1 === nothing && data_kw === nothing)
 				return cmd, 1, arg1, arg2, arg3			# got_fname = 1 => all data is in cmd
 			else
 				error("Cannot mix input as file names and numeric data.")
 			end
 		else
-			if (isempty_(arg1) && isempty_(arg2) && isempty_(arg3))
+			if (arg1 === nothing && arg2 === nothing && arg3 === nothing)
 				return cmd, 0, arg1, arg2, arg3			# got_fname = 0 => all data in arg1,2,3
 			elseif (data_kw !== nothing && length(data_kw) == 3)
 				return cmd, 0, data_kw[1], data_kw[2], data_kw[3]	# got_fname = 0 => all data in arg1,2,3
@@ -1920,14 +1920,12 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T)
 		out = fname_ps[1:end-2] * fname_ext
 		if (fname != "")
-			run(`mv $out $fname`)
-			out = fname
+			out = mv(out, fname, force=true)
 		end
 	elseif (fname_ps != "")
 		out = fname_ps
 		if (fname != "")
-			run(`mv $out $fname`)
-			out = fname
+			out = mv(out, fname, force=true)
 		end
 	else
 		if (K)  gmt("psxy -T -R0/1/0/1 -JX1 -O ")  end		# Close the PS file first
@@ -1986,8 +1984,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String,
-						  opt_T::String, K::Bool, arg1=[], arg2=[], arg3=[],
-						  arg4=[], arg5=[], arg6=[])
+						  opt_T::String, K::Bool, arg1=nothing, arg2=nothing, arg3=nothing,
+						  arg4=nothing, arg5=nothing, arg6=nothing)
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
 

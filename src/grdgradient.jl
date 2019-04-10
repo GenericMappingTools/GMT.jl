@@ -1,5 +1,5 @@
 """
-	grdgradient(cmd0::String="", arg1=[], kwargs...)
+	grdgradient(cmd0::String="", arg1=nothing, kwargs...)
 
 Compute the directional derivative in a given direction, or to find the direction [and the magnitude]
 of the vector gradient of the data.
@@ -40,7 +40,7 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """
-function grdgradient(cmd0::String="", arg1=[]; kwargs...)
+function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdgradient", cmd0, arg1)
 
@@ -55,4 +55,4 @@ function grdgradient(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdgradient(arg1=[], cmd0::String=""; kw...) = grdgradient(cmd0, arg1; kw...)
+grdgradient(arg1, cmd0::String=""; kw...) = grdgradient(cmd0, arg1; kw...)

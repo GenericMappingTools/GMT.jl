@@ -1,5 +1,5 @@
 """
-	xyz2grd(cmd0::String="", arg1=[]; kwargs...)
+	xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 
 Convert data table to a grid file. 
 
@@ -46,7 +46,7 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-function xyz2grd(cmd0::String="", arg1=[]; kwargs...)
+function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("xyz2grd", cmd0, arg1)
 

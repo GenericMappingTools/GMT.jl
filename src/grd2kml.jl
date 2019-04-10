@@ -1,5 +1,5 @@
 """
-	grd2kml(cmd0::String="", arg1=[], kwargs...)
+	grd2kml(cmd0::String="", arg1=nothing, kwargs...)
 
 Reads a 2-D grid file and makes a quadtree of PNG images and KML wrappers for Google Earth
 using the selected tile size [256x256 pixels].
@@ -52,14 +52,14 @@ Parameters
 - $(GMT.opt_append)
 - $(GMT.opt_f)
 """
-function grd2kml(cmd0::String="", arg1=[], arg2=[]; kwargs...)
+function grd2kml(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2kml", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :f])
-	cmd = parse_these_opts(cmd, d, [[:E :url], [:F :filter], [:H :sub_pixel], [:L :tile_size], [:N :prefix],
-				[:Q :nan_t :nan_alpha], [:T :title]])
+    cmd = parse_these_opts(cmd, d, [[:E :url], [:F :filter], [:H :sub_pixel], [:L :tile_size],
+                                    [:N :prefix], [:Q :nan_t :nan_alpha], [:T :title]])
 
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, arg2)
 
@@ -80,4 +80,4 @@ function grd2kml(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grd2kml(arg1=[], arg2=[], cmd0::String=""; kw...) = grd2kml(cmd0, arg1, arg2; kw...)
+grd2kml(arg1, arg2=nothing, cmd0::String=""; kw...) = grd2kml(cmd0, arg1, arg2; kw...)

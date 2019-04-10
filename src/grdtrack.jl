@@ -1,5 +1,5 @@
 """
-	grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
+	grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 Interpolates the grid(s) at the positions in the table and writes out the table with the
 interpolated values added as (one or more) new columns.
@@ -54,7 +54,7 @@ Parameters
 When using two numeric inputs and no G option, the order of the x,y and grid is not important.
 That is, both of this will work: D = grdtrack([0 0], G);  or  D = grdtrack(G, [0 0]); 
 """
-function grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
+function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	length(kwargs) == 0 && isempty_(arg1) && return monolitic("grdtrack", cmd0, arg1)
 
@@ -102,4 +102,4 @@ function grdtrack(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdtrack(arg1=[], arg2=[], cmd0::String=""; kw...) = grdtrack(cmd0, arg1, arg2; kw...)
+grdtrack(arg1, arg2=nothing, cmd0::String=""; kw...) = grdtrack(cmd0, arg1, arg2; kw...)

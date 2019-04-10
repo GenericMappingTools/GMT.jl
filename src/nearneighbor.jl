@@ -1,5 +1,5 @@
 """
-    nearneighbor(cmd0::String="", arg1=[]; kwargs...)
+    nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads arbitrarily located (x,y,z[,w]) triples [quadruplets] and uses a nearest neighbor algorithm
 to assign an average value to each node that have one or more points within a radius centered on the node.
@@ -50,7 +50,7 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-function nearneighbor(cmd0::String="", arg1=[]; kwargs...)
+function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("nearneighbor", cmd0, arg1)
 
@@ -64,4 +64,4 @@ function nearneighbor(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-nearneighbor(arg1=[], cmd0::String=""; kw...) = nearneighbor(cmd0, arg1; kw...)
+nearneighbor(arg1, cmd0::String=""; kw...) = nearneighbor(cmd0, arg1; kw...)

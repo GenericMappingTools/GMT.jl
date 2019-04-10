@@ -1,5 +1,5 @@
 """
-	grdsample(cmd0::String="", arg1=[], kwargs...)
+	grdsample(cmd0::String="", arg1=nothing, kwargs...)
 
 Reads a grid file and interpolates it to create a new grid file with either: a
 different registration; or a new grid-spacing or number of nodes, and perhaps
@@ -30,7 +30,7 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_x)
 """
-function grdsample(cmd0::String="", arg1=[]; kwargs...)
+function grdsample(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdsample", cmd0, arg1)
 
@@ -44,4 +44,4 @@ function grdsample(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdsample(arg1=[], cmd0::String=""; kw...) = grdsample(cmd0, arg1; kw...)
+grdsample(arg1, cmd0::String=""; kw...) = grdsample(cmd0, arg1; kw...)

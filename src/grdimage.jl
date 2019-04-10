@@ -1,5 +1,5 @@
 """
-    grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; kwargs...)
+    grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kwargs...)
 
 Produces a gray-shaded (or colored) map by plotting rectangles centered on each grid node and assigning them a gray-shade (or color) based on the z-value.
 
@@ -53,10 +53,10 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=true, kwargs...)
+function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdimage", cmd0, arg1, arg2, arg3)
-	arg4 = []		# For the r,g,b + intensity case
+	arg4 = nothing		# For the r,g,b + intensity case
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -119,8 +119,8 @@ function grdimage(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=true, kwargs
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdimage!(cmd0::String="", arg1=[], arg2=[], arg3=[]; first=false, kw...) =
+grdimage!(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; first=false, kw...) =
 	grdimage(cmd0, arg1, arg2, arg3; first=false, kw...) 
 
-grdimage(arg1=[],  arg2=[], arg3=[]; first=true, kw...)  = grdimage("", arg1, arg2, arg3; first=first, kw...)
-grdimage!(arg1=[], arg2=[], arg3=[]; first=false, kw...) = grdimage("", arg1, arg2, arg3; first=first, kw...)
+grdimage(arg1,  arg2=nothing, arg3=nothing; first=true, kw...)  = grdimage("", arg1, arg2, arg3; first=first, kw...)
+grdimage!(arg1, arg2=nothing, arg3=nothing; first=false, kw...) = grdimage("", arg1, arg2, arg3; first=first, kw...)

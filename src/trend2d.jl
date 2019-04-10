@@ -1,5 +1,5 @@
 """
-	trend2d(cmd0::String="", arg1=[], kwargs...)
+	trend2d(cmd0::String="", arg1=nothing, kwargs...)
 
 Fit a [weighted] [robust] polynomial model for z = f(x,y) to xyz[w] data.
 
@@ -41,7 +41,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_swap_xy)
 """
-function trend2d(cmd0::String="", arg1=[]; kwargs...)
+function trend2d(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("trend2d", cmd0, arg1)
 
@@ -55,4 +55,4 @@ function trend2d(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-trend2d(arg1=[], cmd0::String=""; kw...) = trend2d(cmd0, arg1; kw...)
+trend2d(arg1, cmd0::String=""; kw...) = trend2d(cmd0, arg1; kw...)

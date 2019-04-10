@@ -1,5 +1,5 @@
 """
-	fitcircle(cmd0::String="", arg1=[], kwargs...)
+	fitcircle(cmd0::String="", arg1=nothing, kwargs...)
 
 Find mean position and great [or small] circle fit to points on a sphere.
 
@@ -34,7 +34,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function fitcircle(cmd0::String="", arg1=[]; kwargs...)
+function fitcircle(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("fitcircle", cmd0, arg1)
 
@@ -47,4 +47,4 @@ function fitcircle(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-fitcircle(arg1=[], cmd0::String=""; kw...) = fitcircle(cmd0, arg1; kw...)
+fitcircle(arg1, cmd0::String=""; kw...) = fitcircle(cmd0, arg1; kw...)

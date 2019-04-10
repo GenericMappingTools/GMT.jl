@@ -1,5 +1,5 @@
 """
-	splitxyz(cmd0::String="", arg1=[]; kwargs...)
+	splitxyz(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads a series of (x,y[,z]) records [or optionally (x,y,z,d,h)] and splits this into separate lists
 of (x,y[,z]) series, such that each series has a nearly constant azimuth through the x,y plane.
@@ -50,7 +50,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_swap_xy)
 """
-function splitxyz(cmd0::String="", arg1=[]; kwargs...)
+function splitxyz(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("splitxyz", cmd0, arg1)
 
@@ -64,4 +64,4 @@ function splitxyz(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-splitxyz(arg1=[]; kw...) = splitxyz("", arg1; kw...)
+splitxyz(arg1; kw...) = splitxyz("", arg1; kw...)

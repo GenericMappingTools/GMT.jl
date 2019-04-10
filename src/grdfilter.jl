@@ -1,5 +1,5 @@
 """
-	grdfilter(cmd0::String="", arg1=[], kwargs...)
+	grdfilter(cmd0::String="", arg1=nothing, kwargs...)
 
 Filter a grid file in the time domain using one of the selected convolution or non-convolution 
 isotropic or rectangular filters and compute distances using Cartesian or Spherical geometries.
@@ -39,7 +39,7 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """
-function grdfilter(cmd0::String="", arg1=[]; kwargs...)
+function grdfilter(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdfilter", cmd0, arg1)
 
@@ -54,4 +54,4 @@ function grdfilter(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdfilter(arg1=[], cmd0::String=""; kw...) = grdfilter(cmd0, arg1; kw...)
+grdfilter(arg1, cmd0::String=""; kw...) = grdfilter(cmd0, arg1; kw...)

@@ -1,5 +1,5 @@
 """
-    blockmean(cmd0::String="", arg1=[]; kwargs...)
+    blockmean(cmd0::String="", arg1=nothing; kwargs...)
 
 Block average (x,y,z) data tables by L2 norm.
 	
@@ -56,7 +56,7 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-function blockmean(cmd0::String="", arg1=[]; kwargs...)
+function blockmean(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("blockmean", cmd0, arg1)
 
@@ -67,13 +67,13 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    blockmedian(cmd0::String="", arg1=[]; kwargs...)
+    blockmedian(cmd0::String="", arg1=nothing; kwargs...)
 
 Block average (x,y,z) data tables by L1 norm.
 	
 Full option list at [`blockmedian`](http://gmt.soest.hawaii.edu/doc/latest/blockmedian.html)
 """
-function blockmedian(cmd0::String="", arg1=[]; kwargs...)
+function blockmedian(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("blockmedian", cmd0, arg1)
 
@@ -84,13 +84,13 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    blockmode(cmd0::String="", arg1=[]; kwargs...)
+    blockmode(cmd0::String="", arg1=nothing; kwargs...)
 
 Block average (x,y,z) data tables by mode estimation.
 	
 Full option list at [`blockmode`](http://gmt.soest.hawaii.edu/doc/latest/blockmode.html)
 """
-function blockmode(cmd0::String="", arg1=[]; kwargs...)
+function blockmode(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("blockmode", cmd0, arg1)
 
@@ -121,8 +121,8 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-blockmean(arg1=[], cmd0::String=""; kw...) = blockmean(cmd0, arg1; kw...)
+blockmean(arg1, cmd0::String=""; kw...) = blockmean(cmd0, arg1; kw...)
 # ---------------------------------------------------------------------------------------------------
-blockmedian(arg1=[], cmd0::String=""; kw...) = blockmedian(cmd0, arg1; kw...)
+blockmedian(arg1, cmd0::String=""; kw...) = blockmedian(cmd0, arg1; kw...)
 # ---------------------------------------------------------------------------------------------------
-blockmode(arg1=[], cmd0::String=""; kw...) = blockmode(cmd0, arg1; kw...)
+blockmode(arg1, cmd0::String=""; kw...) = blockmode(cmd0, arg1; kw...)

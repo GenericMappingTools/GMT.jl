@@ -1,5 +1,5 @@
 """
-	sample1d(cmd0::String="", arg1=[], kwargs...)
+	sample1d(cmd0::String="", arg1=nothing, kwargs...)
 
 Resample 1-D table data using splines
 
@@ -39,7 +39,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function sample1d(cmd0::String="", arg1=[]; kwargs...)
+function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("sample1d", cmd0, arg1)
 
@@ -52,4 +52,4 @@ function sample1d(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-sample1d(arg1=[], cmd0::String=""; kw...) = sample1d(cmd0, arg1; kw...)
+sample1d(arg1, cmd0::String=""; kw...) = sample1d(cmd0, arg1; kw...)

@@ -1,5 +1,5 @@
 """
-    grdview(cmd0::String="", arg1=[], arg2=[], arg3=[]; kwargs...)
+    grdview(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kwargs...)
 
 Reads a 2-D grid file and produces a 3-D perspective plot by drawing a mesh, painting a
 colored/grayshaded surface made up of polygons, or by scanline conversion of these polygons
@@ -51,10 +51,10 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function grdview(cmd0::String="", arg1=[]; first=true, kwargs...)
+function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdview", cmd0, arg1)
-	arg2 = [];	arg3 = [];	arg4 = [];	arg5 = [];
+	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -111,6 +111,6 @@ function grdview(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdview!(cmd0::String="", arg1=[]; first=false, kw...) = grdview(cmd0, arg1; first=first, kw...)
+grdview!(cmd0::String="", arg1=nothing; first=false, kw...) = grdview(cmd0, arg1; first=first, kw...)
 grdview(arg1; first=true, kw...) = grdview("", arg1; first=first, kw...)
 grdview!(arg1; first=false, kw...) = grdview("", arg1; first=first, kw...)

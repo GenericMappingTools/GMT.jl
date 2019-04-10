@@ -1,5 +1,5 @@
 """
-    greenspline(cmd0::String="", arg1=[]; kwargs...)
+    greenspline(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads randomly-spaced (x,y,z) triples and produces a binary grid file of gridded values z(x,y) by solving:
 	
@@ -79,7 +79,7 @@ Parameters
 - $(GMT.opt_x)
 - $(GMT.opt_swap_xy)
 """
-function greenspline(cmd0::String="", arg1=[]; kwargs...)
+function greenspline(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("greenspline", cmd0, arg1)
 
@@ -94,4 +94,4 @@ function greenspline(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-greenspline(arg1=[], cmd0::String=""; kw...) = greenspline(cmd0, arg1; kw...)
+greenspline(arg1, cmd0::String=""; kw...) = greenspline(cmd0, arg1; kw...)

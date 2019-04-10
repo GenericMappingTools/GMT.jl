@@ -1,5 +1,5 @@
 """
-    grdinfo(cmd0::String="", arg1=[]; kwargs...)
+    grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads a 2-D grid file and reports metadata and various statistics for the (x,y,z) data in the grid file
 
@@ -41,7 +41,7 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """
-function grdinfo(cmd0::String="", arg1=[]; kwargs...)
+function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && !isa(arg1, GMTgrid) && return monolitic("grdinfo", cmd0, arg1)
 

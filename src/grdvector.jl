@@ -57,7 +57,7 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """
-function grdvector(cmd0::String="", arg1=[], arg2=[]; first=true, kwargs...)
+function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdvector", cmd0, arg1, arg2)
 
@@ -91,6 +91,6 @@ function grdvector(cmd0::String="", arg1=[], arg2=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdvector(arg1=[], arg2=[], cmd0::String="";  kw...) = grdvector(cmd0, arg1, arg2; first=true, kw...)
-grdvector!(cmd0::String="", arg1=[], arg2=[]; kw...) = grdvector(cmd0, arg1, arg2; first=false, kw...)
-grdvector!(arg1=[], arg2=[], cmd0::String=""; kw...) = grdvector(cmd0, arg1, arg2; first=false, kw...)
+grdvector(arg1, arg2=nothing, cmd0::String="";  kw...) = grdvector(cmd0, arg1, arg2; first=true, kw...)
+grdvector!(cmd0::String="", arg1=nothing, arg2=nothing; kw...) = grdvector(cmd0, arg1, arg2; first=false, kw...)
+grdvector!(arg1, arg2=nothing, cmd0::String=""; kw...) = grdvector(cmd0, arg1, arg2; first=false, kw...)

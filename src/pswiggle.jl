@@ -1,5 +1,5 @@
 """
-	wiggle(cmd0::String="", arg1=[]; kwargs...)
+	wiggle(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads (length,azimuth) pairs from file and plot a windwiggle diagram.
 
@@ -63,7 +63,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function wiggle(cmd0::String="", arg1=[]; first=true, kwargs...)
+function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("pswiggle", cmd0, arg1)
 
@@ -92,9 +92,9 @@ function wiggle(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-wiggle!(cmd0::String="", arg1=[]; first=false, kw...) = wiggle(cmd0, arg1; first=first, kw...)
-wiggle(arg1=[],  cmd0::String=""; first=true, kw...)  = wiggle(cmd0, arg1; first=first, kw...)
-wiggle!(arg1=[], cmd0::String=""; first=false, kw...) = wiggle(cmd0, arg1; first=first, kw...)
+wiggle!(cmd0::String="", arg1=nothing; first=false, kw...) = wiggle(cmd0, arg1; first=first, kw...)
+wiggle(arg1,  cmd0::String=""; first=true, kw...)  = wiggle(cmd0, arg1; first=first, kw...)
+wiggle!(arg1, cmd0::String=""; first=false, kw...) = wiggle(cmd0, arg1; first=first, kw...)
 
 const pswiggle  = wiggle			# Alias
 const pswiggle! = wiggle!			# Alias

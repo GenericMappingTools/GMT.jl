@@ -1,5 +1,5 @@
 """
-	grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
+	grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 reads a 2-D grid file and fits a low-order polynomial trend to these data by
 [optionally weighted] least-squares.
@@ -28,7 +28,7 @@ Parameters
 - $(GMT.opt_R)
 - $(GMT.opt_V)
 """
-function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
+function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdtrend", cmd0, arg1, arg2)
 
@@ -65,4 +65,4 @@ function grdtrend(cmd0::String="", arg1=[], arg2=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdtrend(arg1=[], arg2=[], cmd0::String=""; kw...) = grdtrend(cmd0, arg1, arg2; kw...)
+grdtrend(arg1, arg2=nothing, cmd0::String=""; kw...) = grdtrend(cmd0, arg1, arg2; kw...)

@@ -95,11 +95,17 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-plot(arg1; kw...)  = common_plot_xyz("", arg1, "plot", true, false, kw...)
+function plot(arg1; kw...)
+	if ( (isa(arg1, Vector) || isa(arg1, UnitRange)) ||
+		 (isa(arg1, Matrix) && ((size(arg1, 1) == 1) || (size(arg1, 2) == 1) && length(arg1) != 2)) )
+		arg1 = cat_1_arg(arg1)
+	end
+	common_plot_xyz("", arg1, "plot", true, false, kw...)
+end
 plot!(arg1; kw...) = common_plot_xyz("", arg1, "plot", false, false, kw...)
 
-plot(cmd0::String="", arg1=[]; kw...)  = common_plot_xyz(cmd0, arg1, "plot", true, false, kw...)
-plot!(cmd0::String="", arg1=[]; kw...) = common_plot_xyz(cmd0, arg1, "plot", false, false, kw...)
+plot(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "plot", true, false, kw...)
+plot!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "plot", false, false, kw...)
 
 plot(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "plot", true, false, kw...)
 plot!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "plot", false, false, kw...)
@@ -202,8 +208,8 @@ Parameters
 plot3d(arg1; kw...)  = common_plot_xyz("", cat_1_arg(arg1), "plot3d", true, true, kw...)
 plot3d!(arg1; kw...) = common_plot_xyz("", cat_1_arg(arg1), "plot3d", false, true, kw...)
 
-plot3d(cmd0::String="", arg1=[]; kw...)  = common_plot_xyz(cmd0, arg1, "plot3d", true, true, kw...)
-plot3d!(cmd0::String="", arg1=[]; kw...) = common_plot_xyz(cmd0, arg1, "plot3d", false, true, kw...)
+plot3d(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "plot3d", true, true, kw...)
+plot3d!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "plot3d", false, true, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 function plot3d(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
@@ -217,7 +223,7 @@ end
 # ------------------------------------------------------------------------------------------------------
 
 """
-    scatter(cmd0::String="", arg1=[], kwargs...)
+    scatter(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads (x,y) pairs and plot symbols at those locations on a map.
 This module is a subset of ``plot`` to make it simpler to draw scatter plots. So many of
@@ -270,8 +276,8 @@ Parameters
 [`Full man page`](https://genericmappingtools.github.io/GMT.jl/latest/scatter/)
 [`GMT man page`](http://gmt.soest.hawaii.edu/doc/latest/plot.html)
 """
-scatter(cmd0::String="", arg1=[]; kw...)  = common_plot_xyz(cmd0, arg1, "scatter",  true, false, kw...)
-scatter!(cmd0::String="", arg1=[]; kw...) = common_plot_xyz(cmd0, arg1, "scatter",  false, false, kw...)
+scatter(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "scatter",  true, false, kw...)
+scatter!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "scatter",  false, false, kw...)
 
 scatter(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "scatter", true, false, kw...)
 scatter!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "scatter", false, false, kw...)
@@ -280,8 +286,8 @@ scatter(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "scatt
 scatter!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "scatter", false, false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-scatter3(cmd0::String="", arg1=[]; kw...)  = common_plot_xyz(cmd0, arg1, "scatter3",  true, true, kw...)
-scatter3!(cmd0::String="", arg1=[]; kw...) = common_plot_xyz(cmd0, arg1, "scatter3",  false, true, kw...)
+scatter3(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "scatter3",  true, true, kw...)
+scatter3!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "scatter3",  false, true, kw...)
 scatter3(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "scatte3", true, false, kw...)
 scatter3!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "scatte3", false, false, kw...)
 function scatter3(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
@@ -293,7 +299,7 @@ end
 # ------------------------------------------------------------------------------------------------------
 
 """
-    bar(cmd0::String="", arg1=[], kwargs...)
+    bar(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads a file or (x,y) pairs and plots vertical bars extending from base to y.
 
@@ -316,11 +322,11 @@ Example:
 
     bar(sort(randn(10)), fill=:black, axis=:auto, show=true)
 """
-function bar(cmd0::String="", arg=[]; first=true, kw...)
+function bar(cmd0::String="", arg=nothing; first=true, kw...)
 	if (cmd0 == "") arg = cat_1_arg(arg)  end	# If ARG is a vector, prepend it with a 1:N x column
 	GMT.common_plot_xyz(cmd0, arg, "bar", first, false, kw...)
 end
-bar!(cmd0::String="", arg=[]; kw...) = bar(cmd0, arg; first=false, kw...)
+bar!(cmd0::String="", arg=nothing; kw...) = bar(cmd0, arg; first=false, kw...)
 
 bar(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "bar", true, false, kw...)
 bar!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "bar", false, false, kw...)
@@ -329,7 +335,7 @@ bar!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "bar", false, false, kw..
 # ------------------------------------------------------------------------------------------------------
 
 """
-    bar3(cmd0::String="", arg1=[], kwargs...)
+    bar3(cmd0::String="", arg1=nothing; kwargs...)
 
 Read a grid file, a grid or a MxN matrix and plots vertical bars extending from base to z.
 
@@ -350,7 +356,7 @@ Example:
     G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
     bar3(G, lw=:thinnest, show=true)
 """
-function bar3(cmd0::String="", arg=[]; first=true, kwargs...)
+function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 	# Contrary to "bar" this one has specific work to do here.
 	d = KW(kwargs)
 	opt_z = ""
@@ -416,12 +422,12 @@ function bar3(cmd0::String="", arg=[]; first=true, kwargs...)
 end
 
 bar3(arg1; kw...) = bar3("", arg1; first=true, kw...)
-bar3!(cmd0::String="", arg1=[]; kw...) = bar3(cmd0, arg1; first=false, kw...)
+bar3!(cmd0::String="", arg1=nothing; kw...) = bar3(cmd0, arg1; first=false, kw...)
 bar3!(arg1; kw...) = bar3("", arg1; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 """
-    arrows(cmd0::String="", arg1=[], arrow=(...), kwargs...)
+    arrows(cmd0::String="", arg1=nothing; arrow=(...), kwargs...)
 
 Reads a file or (x,y) pairs and plots an arrow field
 
@@ -451,7 +457,7 @@ Example:
 
 	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, axis=:a, pen="6p", show=true)
 """
-function arrows(cmd0::String="", arg1=[]; first=true, kwargs...)
+function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# A arrows plotting method of plot
 
 	d = KW(kwargs)
@@ -485,13 +491,13 @@ function helper_arrows(d::Dict, del::Bool=false)
 	end
 	return cmd
 end
-arrows!(cmd0::String="", arg1=[]; kw...) = arrows(cmd0, arg1; first=false, kw...)
+arrows!(cmd0::String="", arg1=nothing; kw...) = arrows(cmd0, arg1; first=false, kw...)
 arrows(arg1; kw...)  = arrows("", arg1; first=true, kw...)
 arrows!(arg1; kw...) = arrows("", arg1; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 """
-    lines(cmd0::String="", arg1=[], decorated=(...), kwargs...)
+    lines(cmd0::String="", arg1=nothing; decorated=(...), kwargs...)
 
 Reads a file or (x,y) pairs and plots a collection of different line with decorations
 
@@ -508,7 +514,7 @@ Example:
     lines([0, 10]; [0, 20], limits=(-2,12,-2,22), proj="M2.5", pen=1, fill=:red,
           decorated=(dist=(val=1,size=0.25), symbol=:box), show=true)
 """
-function lines(cmd0::String="", arg1=[]; first=true, kwargs...)
+function lines(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
 	if (haskey(d, :decorated))
@@ -523,7 +529,7 @@ function lines(cmd0::String="", arg1=[]; first=true, kwargs...)
 
 	common_plot_xyz(cmd0, arg1, cmd, first, false, d...)
 end
-lines!(cmd0::String="", arg=[]; kw...) = lines(cmd0, arg; first=false, kw...)
+lines!(cmd0::String="", arg=nothing; kw...) = lines(cmd0, arg; first=false, kw...)
 
 lines(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=true, kw...)
 lines!(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=false, kw...)
@@ -533,13 +539,13 @@ lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
 
 
 # ------------------------------------------------------------------------------------------------------
-function ternary(cmd0::String="", arg1=[]; kwargs...)
+function ternary(cmd0::String="", arg1=nothing; kwargs...)
 	# A wrapper for psternary
 	common_plot_xyz(cmd0, arg1, "ternary", true, false, kwargs...)
 end
-ternary!(cmd0::String="", arg1=[]; kw...) = ternary(cmd0, arg1; first=false, kw...)
-ternary(arg1=[];  kw...)  = ternary("", arg1; first=true, kw...)
-ternary!(arg1=[]; kw...) = ternary("", arg1; first=false, kw...)
+ternary!(cmd0::String="", arg1=nothing; kw...) = ternary(cmd0, arg1; first=false, kw...)
+ternary(arg1;  kw...)  = ternary("", arg1; first=true, kw...)
+ternary!(arg1; kw...) = ternary("", arg1; first=false, kw...)
 const psternary  = ternary            # Aliases
 const psternary! = ternary!           # Aliases
 

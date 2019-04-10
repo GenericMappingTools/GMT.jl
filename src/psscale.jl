@@ -1,5 +1,5 @@
 """
-	colorbar(cmd0::String="", arg1=[]; kwargs...)
+	colorbar(cmd0::String="", arg1=nothing; kwargs...)
 	
 Plots gray scales or color scales on maps.
 
@@ -56,7 +56,7 @@ Full option list at [`psscale`](http://gmt.soest.hawaii.edu/doc/latest/psscale.h
     File with colorbar-width per color entry.
     [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psscale.html#z)
 """
-function colorbar(cmd0::String="", arg1=[]; first=true, kwargs...)
+function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("psscale", cmd0, arg1)
 
@@ -72,7 +72,7 @@ function colorbar(cmd0::String="", arg1=[]; first=true, kwargs...)
         (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), length="+w", triangles="+e",
          justify="+j", offset="+o", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n"))
 
-	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, [])
+	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
 	if (!occursin("-C", cmd))	# If given no CPT, try to see if we have a current one stored in global
 		if ((global cpt = current_cpt) !== nothing)
 			cmd *= " -C";	arg1 = cpt
@@ -88,9 +88,9 @@ function colorbar(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-colorbar(arg1=[]; kw...) = colorbar("", arg1; first=true, kw...)
-colorbar!(arg1=[]; first=false, kw...) = colorbar("", arg1; first=first, kw...)
-colorbar!(cmd0::String="", arg1=[]; first=false, kw...) = colorbar(cmd0, arg1; first=first, kw...)
+colorbar(arg1; kw...) = colorbar("", arg1; first=true, kw...)
+colorbar!(arg1; first=false, kw...) = colorbar("", arg1; first=first, kw...)
+colorbar!(cmd0::String="", arg1=nothing; first=false, kw...) = colorbar(cmd0, arg1; first=first, kw...)
 
 const psscale  = colorbar         # Alias
 const psscale! = colorbar!        # Alias

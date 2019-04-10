@@ -1,5 +1,5 @@
 """
-	makecpt(cmd0::String="", arg1=[]; kwargs...)
+	makecpt(cmd0::String="", arg1=nothing; kwargs...)
 
 Make static color palette tables (CPTs).
 
@@ -65,7 +65,7 @@ Full option list at [`makecpt`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.h
 - $(GMT.opt_di)
 - $(GMT.opt_i)
 """
-function makecpt(cmd0::String="", arg1=[]; kwargs...)
+function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("makecpt", cmd0, arg1)	# Monolithic mode
 

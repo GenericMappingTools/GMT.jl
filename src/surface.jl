@@ -1,5 +1,5 @@
 """
-    surface(cmd0::String="", arg1=[]; kwargs...)
+    surface(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads randomly-spaced (x,y,z) triples and produces a binary grid file of gridded values z(x,y) by solving:
 	
@@ -42,7 +42,7 @@ Parameters
     Number of iterations. Iteration will cease when convergence_limit is reached or when number of
     iterations reaches max_iterations.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#n)
-- **Q** : **suggest** : -- Bool or [] --
+- **Q** : **suggest** : -- Bool --
 
     Suggest grid dimensions which have a highly composite greatest common factor.
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#q)
@@ -69,7 +69,7 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
 """
-function surface(cmd0::String="", arg1=[]; kwargs...)
+function surface(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("surface", cmd0, arg1)
 
@@ -84,4 +84,4 @@ function surface(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-surface(arg1=[], cmd0::String=""; kw...) = surface(cmd0, arg1; kw...)
+surface(arg1, cmd0::String=""; kw...) = surface(cmd0, arg1; kw...)

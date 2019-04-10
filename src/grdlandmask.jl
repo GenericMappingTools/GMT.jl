@@ -1,5 +1,5 @@
 """
-	grdlandmask(cmd0::String="", arg1=[], kwargs...)
+	grdlandmask(cmd0::String="", arg1=nothing, kwargs...)
 
 Reads the selected shoreline database and uses that information to decide which nodes in the
 specified grid are over land or over water.
@@ -44,12 +44,12 @@ Parameters
 """
 function grdlandmask(cmd0::String=""; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdlandmask", cmd0, [])
+	length(kwargs) == 0 && return monolitic("grdlandmask", cmd0, nothing)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :r :x])
 	cmd = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :bordervalues], [:I :inc],
 				[:G :outgrid], [:N :mask_geog]])
 
-	return common_grd(d, "grdlandmask " * cmd, 1, 1, [])		# Finish build cmd and run it
+	return common_grd(d, "grdlandmask " * cmd, 1, 1, nothing)		# Finish build cmd and run it
 end

@@ -1,5 +1,5 @@
 """
-	histogram(cmd0::String="", arg1=[]; kwargs...)
+	histogram(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads file and examines the first data column to calculate histogram parameters based on the bin-width provided.
 
@@ -76,9 +76,9 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function histogram(cmd0::String="", arg1=[]; first=true, kwargs...)
+function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	arg2 = []		# May be needed if GMTcpt type is sent in via C
+	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
 	length(kwargs) == 0 && return monolitic("pshistogram", cmd0, arg1, arg2)
@@ -138,10 +138,10 @@ function histogram(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-histogram!(cmd0::String="", arg1=[]; first=false, kw...) = histogram(cmd0, arg1; first=first, kw...)
+histogram!(cmd0::String="", arg1=nothing; first=false, kw...) = histogram(cmd0, arg1; first=first, kw...)
 
-histogram(arg1=[]; first=true, kw...) = histogram("", arg1; first=first, kw...)
-histogram!(arg1=[]; first=false, kw...) = histogram("", arg1; first=first, kw...)
+histogram(arg1; first=true, kw...) = histogram("", arg1; first=first, kw...)
+histogram!(arg1; first=false, kw...) = histogram("", arg1; first=first, kw...)
 
 const pshistogram  = histogram			# Alias
 const pshistogram! = histogram!			# Alias

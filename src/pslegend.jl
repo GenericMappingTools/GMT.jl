@@ -1,5 +1,5 @@
 """
-	legend(cmd0::String="", arg1=[]; kwargs...)
+	legend(cmd0::String="", arg1=nothing; kwargs...)
 
 Make legends that can be overlaid on maps. It reads specific legend-related information from input or file file.
 
@@ -33,7 +33,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function legend(cmd0::String="", arg1=[]; first=true, kwargs...)
+function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("pslegend", cmd0, arg1)
 
@@ -60,7 +60,7 @@ function legend(cmd0::String="", arg1=[]; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-legend!(cmd0::String="", arg1=[]; first=false, kw...) = legend(cmd0, arg1;first=false, kw...)
+legend!(cmd0::String="", arg1=nothing; first=false, kw...) = legend(cmd0, arg1;first=false, kw...)
 legend(arg1; first=true, kw...)   = legend("", arg1; first=first, kw...)
 legend!(arg1; first=false, kw...) = legend("", arg1; first=first, kw...)
 

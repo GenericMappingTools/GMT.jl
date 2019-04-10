@@ -1,5 +1,5 @@
 """
-	grd2cpt(cmd0::String="", arg1=[], kwargs...)
+	grd2cpt(cmd0::String="", arg1=nothing, kwargs...)
 
 Make linear or histogram-equalized color palette table from grid
 
@@ -79,7 +79,7 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 """
-function grd2cpt(cmd0::String="", arg1=[]; kwargs...)
+function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2cpt", cmd0, arg1)
 

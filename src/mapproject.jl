@@ -1,5 +1,5 @@
 """
-	mapproject(cmd0::String="", arg1=[], kwargs...)
+	mapproject(cmd0::String="", arg1=nothing, kwargs...)
 
 Forward and inverse map transformations, datum conversions and geodesy.
 
@@ -78,7 +78,7 @@ Parameters
 - $(GMT.opt_s)
 - $(GMT.opt_swap_xy)
 """
-function mapproject(cmd0::String="", arg1=[]; kwargs...)
+function mapproject(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("mapproject", cmd0, arg1)
 
@@ -96,4 +96,4 @@ function mapproject(cmd0::String="", arg1=[]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-mapproject(arg1=[], cmd0::String=""; kw...) = mapproject(cmd0, arg1; kw...)
+mapproject(arg1, cmd0::String=""; kw...) = mapproject(cmd0, arg1; kw...)
