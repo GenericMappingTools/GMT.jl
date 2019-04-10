@@ -184,6 +184,7 @@ if (got_it)					# Otherwise go straight to end
 		K = gmt2kml(D, F=:l, W=(1,:red));
 		gmtwrite("lixo.kml", K)
 		kml2gmt("lixo.kml", Z=true);
+		kml2gmt(nothing, "lixo.kml", Z=true);	# yes, cheating
 		rm("lixo.kml")
 	end
 
@@ -242,6 +243,9 @@ if (got_it)					# Otherwise go straight to end
 		I = gmtread("lixo.tif", img=true, band=[0 1 2]);
 		imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
 		gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
+		@test GMT.parse_grd_format(Dict(:nan => 0)) == "+n0"
+		@test_throws ErrorException("Number of bands in the 'band' option can only be 1 or 3") GMT.gmtread("", band=[1 2])
+		@test_throws ErrorException("Format code MUST have 2 characters and not bla") GMT.parse_grd_format(Dict(:id => "bla"))
 	else
 		gmtwrite("lixo.grd", G)
 		GG = gmtread("lixo.grd", grd=true, varname=:z);
@@ -520,6 +524,7 @@ if (got_it)					# Otherwise go straight to end
 	# PROJECT
 	if (GMTver >= 6)
 		project(C="15/15", T="85/40", G="1/110", L="-20/60");	# Fails in GMT5
+		project(nothing, C="15/15", T="85/40", G="1/110", L="-20/60");	# bit of cheating
 	end
 
 	# PSBASEMAP

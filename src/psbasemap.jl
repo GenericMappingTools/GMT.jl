@@ -82,8 +82,6 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 basemap!(cmd0::String="", arg1=nothing; first=false, kw...) = basemap(cmd0, arg1; first=first, kw...)
-basemap(arg1; first=true, kw...) = basemap("", arg1; first=first, kw...)
-basemap!(arg1; first=false, kw...) = basemap("", arg1; first=first, kw...)
 
 const psbasemap  = basemap 		# Alias
 const psbasemap! = basemap!		# Alias
