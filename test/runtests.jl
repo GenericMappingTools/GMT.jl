@@ -79,6 +79,8 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.get_color((0.1,0.2,0.3)) == "26/51/77"
 	@test GMT.get_color([1 2 3]) == "1/2/3"
 	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
+	@test GMT.get_color([1 2 3; 3 4 5; 6 7 8]) == "1/3/6,3/4/5,6/7/8"
+	@test GMT.get_color(:red) == "red"
 	@test_throws ErrorException("GOT_COLOR, got and unsupported data type: Tuple{Int64,Int64}") GMT.get_color((1,2))
 	@test GMT.parse_unit_unit("data") == "u"
 	@test GMT.parse_units((2,:p)) == "2p"
@@ -108,10 +110,6 @@ if (got_it)					# Otherwise go straight to end
 	@test r == " -Sqd0.4i/0.25:+a7+d+c2/3+e+f10+gred+jTC+lAi+n3/4+o+r0.5+uTT+v+w20+=Pre+xa,b+LDd+p0.5,red"
 
 	@test_throws ErrorException("DECORATED: missing controlling algorithm to place the elements (dist, n_symbols, etc).") GMT.decorated(dista = 4)
-
-	@test GMT.get_color((1,2,3)) == "1/2/3"
-	@test GMT.get_color([1 2 3; 3 4 5; 6 7 8]) == "1/3/6,3/4/5,6/7/8"
-	@test GMT.get_color(:red) == "red"
 
 	@test GMT.font(("10p","Times", :red)) == "10p,Times,red"
 	r = text(text_record([0 0], "TopLeft"), R="1/10/1/10", J=:X10, F=(region_justify=:MC,font=("10p","Times", :red)), Vd=:cmd);
@@ -587,6 +585,7 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(r, "pscoast  -Rg -JX12cd/0 -Baf -BWSen -N1/2,green -N3/4,blue,--")
 	r = coast(proj=:Mercator, DCW=((country="GB,IT,FR", fill=:blue, pen=(0.25,:red)), (country="ES,PT,GR", fill=:yellow)), Vd=:cmd);
 	@test startswith(r, "pscoast  -JM12c -Baf -BWSen -EGB,IT,FR+gblue+p0.25,red -EES,PT,GR+gyellow -Da")
+	@test_throws ErrorException("In Overlay mode you cannot change a fig scale and NOT repeat the projection") coast!(region=(-20,60,-90,90), scale=0.03333, Vd=:cmd)
 
 	# PSCONTOUR
 	x,y,z=GMT.peaks(grid=false);
@@ -746,8 +745,6 @@ if (got_it)					# Otherwise go straight to end
 		API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 		GMT.ps_init(API, "", PS, 0);
 		@test_throws ErrorException("Failure to alloc GMT source TEXTSET for input") GMT.text_init(API, "", "aaaa", 0);
-		@test_throws ErrorException("Failure to alloc GMT blank TEXTSET container for holding output TEXT") GMT.text_init(API, "", "aaaa", 1);
-		@test_throws ErrorException("Failure to alloc GMT blank TEXTSET container for holding output TEXT") GMT.text_init_(API, "", "", 1);
 		gmt("destroy")
 
 		# Test ogr2GMTdataset
