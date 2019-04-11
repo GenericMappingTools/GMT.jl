@@ -3,7 +3,7 @@
 
 Adjust individual GMT defaults settings in the current directory’s gmt.conf file.
 
-Full option list at [`gmtinfo`](http://gmt.soest.hawaii.edu/doc/latest/gmtset.html)
+Full option list at [`gmtset`](http://gmt.soest.hawaii.edu/doc/latest/gmtset.html)
 
 Parameters
 ----------
