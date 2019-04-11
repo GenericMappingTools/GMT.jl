@@ -63,7 +63,7 @@ As an example, we generate a map of Cuba:
 
 ```julia
 coast(region=[-88 -70 18 24], proj=(name=:eqdc, center=[-79 21], parallels=[19 23]),
-      frame=:ag, res=:intermediate, borders=(1,("thick","red")), land=:green,
+      frame=:ag, res=:intermediate, borders=(type=1,pen=("thick","red")), land=:green,
       shore=:thinnest, show=true)
 ```
 
@@ -94,8 +94,8 @@ use degrees west for longitudes. The generating command used is
 
 ```julia
 coast(region=[-130 -70 24 52], proj=(name=:lambertConic, center=[-100 35], parallels=[33 45]),
-      frame=:ag, res=:low, borders=(1,("thick","red"), 2,("thinner",)), area=500, land=:tan,
-      water=:blue, shore=(:thinnest,:white), show=true)
+      frame=:ag, res=:low, borders=((type=1, pen=("thick","red")), (type=2, pen=("thinner",))),
+      area=500, land=:tan, water=:blue, shore=(:thinnest,:white), show=true)
 ```
 
 ```@raw html
@@ -861,9 +861,9 @@ wide we use the scale 12/360 = 0.03333 and offset the subsequent plots horizonta
 coast(region=(200,340,-90,90), proj=:Sinusoidal, frame=:g, res=:crude, area=10000,
       land=:darkred, water=:azure, scale=0.03333)
 coast!(region=(-20,60,-90,90), frame=:g, res=:crude, area=10000, land=:darkgreen,
-       water=:azure, xoff=4.666, scale=0.03333)
+       water=:azure, xoff=4.666)
 coast!(region=(60,200,-90,90), frame=:g, res=:crude, area=10000, land=:darkblue,
-       water=:azure, xoff=2.6664, scale=0.03333, show=true)
+       water=:azure, xoff=2.6664, show=true)
 ```
 
 ```@raw html

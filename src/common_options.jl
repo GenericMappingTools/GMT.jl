@@ -152,13 +152,8 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 	if (!O)
 		if (opt_J == "")  opt_J = " -JX"  end
 		# If only the projection but no size, try to get it from the kwargs.
-		if (haskey(d, :figsize))
-			opt_J = helper_append_figsize(d, opt_J)
-		elseif ((val = find_in_dict(d, [:figscale :scale])[1]) !== nothing)
-			val = string(val)
-			if (opt_J == " -JX")  isletter(val[1]) ? opt_J = " -J" * val : opt_J = " -Jx" * val	# FRAGILE
-			else                  opt_J = append_figsize(opt_J, val, true)
-			end
+		if ((s = helper_append_figsize(d, opt_J, O)) != "")		# Takes care of both fig scales and fig sizes
+			opt_J = s
 		elseif (default != "" && opt_J == " -JX")
 			opt_J = default  					# -JX was a working default
 		elseif (occursin("+width=", opt_J))		# OK, a proj4 string, don't touch it. Size already in.
@@ -167,18 +162,33 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 		elseif (mnemo)							# Proj name was obtained from a name mnemonic and no size. So use default
 			opt_J = append_figsize(opt_J)
 		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
-			#if !(length(opt_J) >= 6 && isnumeric(opt_J[6]))
 			if (length(opt_J) < 6 || !isnumeric(opt_J[6]))
 				opt_J *= def_fig_size[1:3]
 			end
 		end
 	else										# For when a new size is entered in a middle of a script
-		if (haskey(d, :figsize))
-			opt_J = helper_append_figsize(d, opt_J)
-		end
+		if ((s = helper_append_figsize(d, opt_J, O)) != "")  opt_J = s  end
 	end
 	cmd *= opt_J
 	return cmd, opt_J
+end
+
+function helper_append_figsize(d, opt_J, O)
+	val, symb = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])
+	if (val === nothing)  return ""  end
+	val = arg2str(val)
+	if (occursin("scale", arg2str(symb)))		# We have a fig SCALE request
+		if (opt_J == " -JX")  isletter(val[1]) ? opt_J = " -J" * val : opt_J = " -Jx" * val	# FRAGILE
+		elseif (O && opt_J == " -J")  error("In Overlay mode you cannot change a fig scale and NOT repeat the projection")
+		else                  opt_J = append_figsize(opt_J, val, true)
+		end
+	else										# A fig SIZE request
+		if (haskey(d, :units))  val *= d[:units][1]  end
+		if (occursin("+proj", opt_J)) opt_J *= "+width=" * val
+		else                          opt_J = append_figsize(opt_J, val)
+		end
+	end
+	return opt_J
 end
 
 function append_figsize(opt_J, width="", scale=false)
@@ -193,15 +203,6 @@ function append_figsize(opt_J, width="", scale=false)
 	end
 	if (scale)  opt_J = opt_J[1:3] * lowercase(opt_J[4]) * opt_J[5:end]  end 		# Turn " -JX" to " -Jx"
 	return opt_J
-end
-
-function helper_append_figsize(d, opt_J)
-	# This chunk of code is used twice, so put in a fun
-	s = arg2str(d[:figsize])
-	if (haskey(d, :units))  s *= d[:units][1]  end
-	if (occursin("+proj", opt_J)) opt_J *= "+width=" * s
-	else                          opt_J = append_figsize(opt_J, s)
-	end
 end
 
 function build_opt_J(Val)
