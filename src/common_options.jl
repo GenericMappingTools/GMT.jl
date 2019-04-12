@@ -1084,13 +1084,22 @@ function get_color(val)
 	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
 	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return string(val)  end
 
-	if (isa(val, Tuple) && (length(val) == 3))
-		if (val[1] <= 1 && val[2] <= 1 && val[3] <= 1)		# Assume colors components are in [0 1]
-			return @sprintf("%d/%d/%d", val[1]*255, val[2]*255, val[3]*255)
-		else
-			return @sprintf("%d/%d/%d", val[1], val[2], val[3])
+	out = ""
+	if (isa(val, Tuple))
+		for k = 1:length(val)
+			if (isa(val[k], Tuple) && (length(val[k]) == 3))
+				s = 1
+				if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255  end	# colors in [0 1]
+				out *= @sprintf("%d/%d/%d,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
+			elseif (isa(val[k], Symbol) || isa(val[k], String) || isa(val[k], Number))
+				out *= string(val[k],",")
+			else
+				error("Color tuples must have only one or three elements")
+			end
 		end
-	elseif (isa(val, Array) && (size(val, 2) == 3))
+		out = rstrip(out, ',')		# Strip last ','``
+	elseif ((isa(val, Array) && (size(val, 2) == 3)) || (isa(val, Vector) && length(val) == 3))
+		if (isa(val, Vector))  val = val'  end
 		if (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1)
 			copy = val .* 255		# Do not change the original
 		else
@@ -1100,10 +1109,10 @@ function get_color(val)
 		for k = 2:size(copy, 1)
 			out = @sprintf("%s,%d/%d/%d", out, copy[k,1], copy[k,2], copy[k,3])
 		end
-		return out
 	else
-		error(@sprintf("GOT_COLOR, got and unsupported data type: %s", typeof(val)))
+		error(@sprintf("GOT_COLOR, got an unsupported data type: %s", typeof(val)))
 	end
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
