@@ -75,18 +75,21 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.opt_pen(Dict(:lw => 5),'W', nothing) == " -W5"
 	@test GMT.opt_pen(Dict(:a => (10,:red)),'W', [:a]) == " -W10,red"
 	@test_throws ErrorException("Nonsense in W option") GMT.opt_pen(Dict(:a => [1 2]),'W', [:a])
-	@test GMT.get_color((1,2,3)) == "1/2/3"
-	@test GMT.get_color((0.1,0.2,0.3)) == "26/51/77"
+	@test GMT.get_color(((1,2,3),)) == "1/2/3"
+	@test GMT.get_color(((0.1,0.2,0.3),)) == "26/51/77"
 	@test GMT.get_color([1 2 3]) == "1/2/3"
 	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
 	@test GMT.get_color([1 2 3; 3 4 5; 6 7 8]) == "1/3/6,3/4/5,6/7/8"
 	@test GMT.get_color(:red) == "red"
-	@test_throws ErrorException("GOT_COLOR, got and unsupported data type: Tuple{Int64,Int64}") GMT.get_color((1,2))
+	@test GMT.get_color((:red,:blue)) == "red,blue"
+	@test GMT.get_color((200,300)) == "200,300"
+	@test_throws ErrorException("GOT_COLOR, got an unsupported data type: Array{Int64,1}") GMT.get_color([1,2])
+	@test_throws ErrorException("Color tuples must have only one or three elements") GMT.get_color(((0.2,0.3),))
 	@test GMT.parse_unit_unit("data") == "u"
 	@test GMT.parse_units((2,:p)) == "2p"
 	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
 	@test GMT.add_opt((symb=:circle, size=7, unit=:point), (symb="1", size="", unit="1")) == "c7p"
-	r = GMT.add_opt_fill("", Dict(:G=>(inv_pattern=12,fg="white",bg=(1,2,3), dpi=10) ), [:G :fill], 'G');
+	r = GMT.add_opt_fill("", Dict(:G=>(inv_pattern=12,fg="white",bg=[1,2,3], dpi=10) ), [:G :fill], 'G');
 	@test r == " -GP12+b1/2/3+fwhite+r10"
 	@test GMT.add_opt_fill("", Dict(:G=>:red), [:G :fill], 'G') == " -Gred"
 	@test_throws ErrorException("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member") GMT.add_opt_fill("", Dict(:G=>(inv_pat=12,fg="white")), [:G], 'G')
@@ -115,7 +118,7 @@ if (got_it)					# Otherwise go straight to end
 	r = text(text_record([0 0], "TopLeft"), R="1/10/1/10", J=:X10, F=(region_justify=:MC,font=("10p","Times", :red)), Vd=:cmd);
 	ind = findfirst("-F", r); @test GMT.strtok(r[ind[1]:end])[1] == "-F+cMC+f10p,Times,red"
 
-	@test GMT.build_pen(Dict(:lw => 1, :lc => (1,2,3))) == "1,1/2/3"
+	@test GMT.build_pen(Dict(:lw => 1, :lc => [1,2,3])) == "1,1/2/3"
 	@test GMT.parse_pen((0.5, [1 2 3])) == "0.5,1/2/3"
 
 	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
