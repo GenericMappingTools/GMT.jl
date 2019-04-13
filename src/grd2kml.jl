@@ -58,8 +58,8 @@ function grd2kml(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :f])
-    cmd = parse_these_opts(cmd, d, [[:E :url], [:F :filter], [:H :sub_pixel], [:L :tile_size],
-                                    [:N :prefix], [:Q :nan_t :nan_alpha], [:T :title]])
+	cmd = parse_these_opts(cmd, d, [[:E :url], [:F :filter], [:H :sub_pixel], [:L :tile_size],
+	                                [:N :prefix], [:Q :nan_t :nan_alpha], [:T :title]])
 
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, arg2)
 

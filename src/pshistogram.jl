@@ -127,9 +127,8 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	if ((val = find_in_dict(d, [:N :normal])[1]) !== nothing)
-		if (isa(val, Number))      cmd  = string(cmd, " -N", val)
-		elseif (isa(val, String))  cmd *= " -N" * val
-		elseif (isa(val, Tuple))   cmd *= " -N" * parse_arg_and_pen(val)
+		if (isa(val, Number) || isa(val, String))  cmd  = string(cmd, " -N", val)
+		elseif (isa(val, Tuple))                   cmd *= " -N" * parse_arg_and_pen(val)
 		end
 	end
 

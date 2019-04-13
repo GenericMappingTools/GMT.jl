@@ -123,10 +123,10 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_JZ(cmd::String, d::Dict, del=false)
 	opt_J = ""
-	val, symb = find_in_dict(d, [:JZ :Jz])
+	val, symb = find_in_dict(d, [:JZ :Jz :zscale :zsize])
 	if (val !== nothing)
-		if (symb == :JZ)  opt_J = " -JZ" * arg2str(val)
-		else              opt_J = " -Jz" * arg2str(val)
+		if (symb == :JZ || symb == :zsize)  opt_J = " -JZ" * arg2str(val)
+		else                                opt_J = " -Jz" * arg2str(val)
 		end
 		cmd *= opt_J
 		if (del) delete!(d, symb) end
@@ -327,7 +327,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
 	t = ""		# Use the trick to replace blanks by some utf8 char and undo it in extra_parse
-	if (haskey(d, :title))   t *= "+t"  * replace(str_with_blancs(d[:title]), ' '=>'\U00AF');   end
+	if (haskey(d, :title))   t *= "+t"   * replace(str_with_blancs(d[:title]), ' '=>'\U00AF');   end
 	if (haskey(d, :xlabel))  t *= " x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\U00AF');   end
 	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\U00AF');   end
 	if (t != "")
@@ -796,16 +796,18 @@ function build_pen(d::Dict, del::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_arg_and_pen(arg::Tuple, opt="")
+function parse_arg_and_pen(arg::Tuple, sep="/", pen=true, opt="")
 	# Parse an ARG of the type (arg, (pen)) and return a string. These may be used in pscoast -I & -N
 	# OPT is the option code letter including the leading - (e.g. -I or -N). This is only used when
 	# the ARG tuple has 4, 6, etc elements (arg1,(pen), arg2,(pen), arg3,(pen), ...)
+	# When pen=false we call the get_color function instead
+	# SEP is normally "+g" when this function is used in the "parse_arg_and_color" mode
 	if (isa(arg[1], String) || isa(arg[1], Symbol) || isa(arg[1], Number))  s = string(arg[1])
 	else	error("parse_arg_and_pen: Nonsense first argument")
 	end
 	if (length(arg) > 1)
-		if (isa(arg[2], Tuple))  s *= "/" * parse_pen(arg[2])
-		else                     s *= "/" * string(arg[2])		# Whatever that is
+		if (isa(arg[2], Tuple))  s *= sep * (pen ? parse_pen(arg[2]) : get_color(arg[2])) 
+		else                     s *= sep * string(arg[2])		# Whatever that is
 		end
 	end
 	if (length(arg) >= 4) s *= " " * opt * parse_arg_and_pen((arg[3:end]))  end		# Recursive call
@@ -1082,7 +1084,7 @@ end
 function get_color(val)
 	# Parse a color input. Always return a string
 	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
-	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return string(val)  end
+	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return isa(val, Bool) ? "" : string(val)  end
 
 	out = ""
 	if (isa(val, Tuple))

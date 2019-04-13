@@ -76,6 +76,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.opt_pen(Dict(:a => (10,:red)),'W', [:a]) == " -W10,red"
 	@test_throws ErrorException("Nonsense in W option") GMT.opt_pen(Dict(:a => [1 2]),'W', [:a])
 	@test GMT.get_color(((1,2,3),)) == "1/2/3"
+	@test GMT.get_color(((1,2,3),100)) == "1/2/3,100"
 	@test GMT.get_color(((0.1,0.2,0.3),)) == "26/51/77"
 	@test GMT.get_color([1 2 3]) == "1/2/3"
 	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
@@ -284,6 +285,14 @@ if (got_it)					# Otherwise go straight to end
 	# GRD2XYZ (It's tested near the end)
 	#D=grd2xyz(G); # Use G of previous test
 
+	# GRD2KML
+	G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");
+	if (Sys.iswindows())
+		grd2kml(G, I="+", N="NULL")
+	else
+		grd2kml(G, I="+", N="/dev/null")
+	end
+
 	# GRDBLEND
 	if (GMTver >= 6)
 		G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y");
@@ -401,6 +410,8 @@ if (got_it)					# Otherwise go straight to end
 	grdview!("",G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
 	grdview!(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
 	grdview!(G, G=G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
+	r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), Vd=:cmd);
+	@test startswith(r, "grdview  -R -J -N-6+glightgray -Qsmred")
 	if (GMTver >= 6)		# Crashes GMT5
 		grdview(rand(128,128), G=(Gr,Gg,Gb), I=mat2grid(rand(Float32,128,128)), J=:X12, JZ=5, Q=:i, view="145/30")
 	end
