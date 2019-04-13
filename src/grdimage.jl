@@ -98,7 +98,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 			if (isa(val, String) || isa(val, Symbol))  cmd *= " -I" * arg2str(val)
 			else
 				cmd = add_opt(cmd, 'I', d, [:I :shade :intensity],
-				              (azimuth="+a", norm="+n", default="_+d+a-45+nt1"))
+				              (auto="_+", azimuth="+a", norm="+n", default="_+d+a-45+nt1"))
 			end
 		else
 			cmd, N = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3, arg4])

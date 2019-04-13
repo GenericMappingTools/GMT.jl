@@ -46,6 +46,7 @@ makedocs(
             "coast.md",
             "grdcontour.md",
             "grdimage.md",
+            "grdview.md",
             "lines.md",
             "scatter.md",
             "scatter3.md",

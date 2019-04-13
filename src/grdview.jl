@@ -1,7 +1,7 @@
 """
     grdview(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kwargs...)
 
-Reads a 2-D grid file and produces a 3-D perspective plot by drawing a mesh, painting a
+Reads a 2-D grid and produces a 3-D perspective plot by drawing a mesh, painting a
 colored/grayshaded surface made up of polygons, or by scanline conversion of these polygons
 to a raster image.
 
@@ -26,7 +26,7 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
     Draws a plane at this z-level.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#n)
 - $(GMT.opt_P)
-- **Q** : **surftime** : **surf_type** : -- Str or Int --
+- **Q** : **surftype** : **surf_type** : -- Str or Int --
 
     Specify **m** for mesh plot, **s* for surface, **i** for image.
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#q)
@@ -38,7 +38,7 @@ Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.h
 
     Plot image without any interpolation.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#t)
-- **W** : **contour** : **mesh** : **facade** : -- Str --
+- **W** : **pens** : -- Str --
 
     Draw contour, mesh or facade. Append pen attributes.
     [`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#w)
@@ -62,8 +62,16 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :f :n :p :t :params])
-	cmd = parse_these_opts(cmd, d, [[:N :plane], [:Q :surftype :surf_type], [:S :smooth], [:T :no_interp],
-				[:W], [:Wc :contour], [:Wm :mesh], [:Wf :facade]])
+	cmd = add_opt(cmd, 'S', d, [:S :smooth])
+	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)
+		cmd *= " -N" * parse_arg_and_pen(val, "+g", false)
+	end
+	cmd = add_opt(cmd, 'Q', d, [:Q :surf :surftype],
+				  (mesh=("m", add_opt_fill), waterfall=("mx", add_opt_fill), surface="_s",
+				   surf="_s", img="i", image="i", nan_alpha="_c", monochrome="_+m"))
+	cmd = add_opt(cmd, 'W', d, [:W :pens], (contour=("c", add_opt_pen),
+	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
+	cmd = add_opt(cmd, 'T', d, [:T :no_interp], (skip="_+s", outlines=("+o", add_opt_pen)) )
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
 
@@ -74,7 +82,11 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	if ((val = find_in_dict(d, [:I :shade :intensity :intensfile])[1]) !== nothing)
 		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
-			cmd *= " -I" * arg2str(val)
+			if (isa(val, String) || isa(val, Symbol))  cmd *= " -I" * arg2str(val)
+			else
+				cmd = add_opt(cmd, 'I', d, [:I :shade :intensity],
+				              (auto="_+", azimuth="+a", norm="+n", default="_+d+a-45+nt1"))
+			end
 		else
 			cmd, N_used = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3])
 			if     (N_used == 1)  arg1 = val
