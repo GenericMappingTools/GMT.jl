@@ -287,11 +287,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# GRD2KML
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");
-	if (Sys.iswindows())
-		grd2kml(G, I="+", N="NULL")
-	else
-		grd2kml(G, I="+", N="/dev/null")
-	end
+	grd2kml(G, I="+", N="NULL")
 
 	# GRDBLEND
 	if (GMTver >= 6)
