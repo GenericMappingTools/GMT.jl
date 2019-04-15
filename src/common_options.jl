@@ -1053,6 +1053,42 @@ function add_opt_fill(cmd::String, d::Dict, symbs, opt="")
 end
 
 # ---------------------------------------------------------------------------------------------------
+function get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2=nothing, arg3=nothing, prog="")
+	# Get CPT either from keyword input of from current_cpt.
+	# Also puts -R in cmd when accessing grids from grdimage|view|contour, etc... (due to a GMT bug that doesn't do it)
+	cpt_opt_T = ""
+	if (isa(arg1, GMTgrid))			# GMT bug, -R will not be stored in gmt.history
+		cpt_opt_T = @sprintf(" -T%f/%f/128+n", arg1.range[5], arg1.range[6])
+		if (opt_R == "")
+			cmd *= @sprintf(" -R%f/%f/%f/%f", arg1.range[1], arg1.range[2], arg1.range[3], arg1.range[4])
+		end
+	elseif (cmd0 != "")
+		info = grdinfo(cmd0 * " -C");	range = info[1].data
+		cpt_opt_T = @sprintf(" -T%.14g/%.14g/128+n", range[5], range[6])
+		if (opt_R == "")
+			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
+		end
+	end
+
+	N_used = got_fname == 0 ? 1 : 0					# To know whether a cpt will go to arg1 or arg2
+	get_cpt = false
+	if (prog == "grdview")
+		if ((val = find_in_dict(d, [:G :drapefile])[1]) !== nothing)
+			if (isa(val, Tuple) && length(val) == 3)  cpt_opt_T = ""  end
+		end
+		get_cpt = true
+	elseif (prog == "grdimage" && (isempty_(arg3) && !occursin("-D", cmd)))
+		get_cpt = true		# This still lieve out the case when the r,g,b were sent as a text.
+	#elseif (prog == "")
+		#get_cpt = true
+	end
+	if (get_cpt)
+		cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2, true, true, cpt_opt_T)
+	end
+	return cmd, N_used, arg1, arg2, arg3
+end
+
+# ---------------------------------------------------------------------------------------------------
 function add_opt_module(d::Dict, symbs)
 	#  SYMBS should contain a module name 'coast' or 'colorbar', and if present in D,
 	# 'val' must be a NamedTuple with the module's arguments.
