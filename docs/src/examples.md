@@ -72,7 +72,7 @@ are always set separately. Here we will create first a colormap with *makecpt* t
 
 ```julia
 cpt = makecpt(range=(-6,8,1));      # Create the color map
-grdcontour(G, fmt=:png, color=cpt, pen="+c", show=1)
+grdcontour(G, color=cpt, fmt=:png, pen=(colored=true,), show=true)
 ```
 
 ```@raw html
@@ -91,7 +91,7 @@ for more details about what the arguments mean.
 
 ```julia
 topo = makecpt(color=:rainbow, range=(1000,5000,500), continuous=true);
-grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:Mercator, frame=:a, color=topo)
+grdimage("@tut_relief.nc", shade=(azimuth=100, norm="e0.8"), proj=:Mercator, frame=:a, color=topo)
 colorbar!(pos=(anchor=:TC,length=(12.5,0.6), horizontal=true, offset=(0,1.0)),
           color=topo, frame=(ylabel=:m,), fmt=:jpg, show=true)
 ```
@@ -107,7 +107,7 @@ We will make a perspective, color-coded view of the US Rockies from the southeas
 
 ```julia
 topo = makecpt(color=:rainbow, range=(1000,5000,500), continuous=true);
-grdview("@tut_relief.nc", proj=:Mercator, JZ="1c", shade="+ne0.8+a100", view=(135,30),
+grdview("@tut_relief.nc", proj=:Mercator, zsize=1, shade=(azim=100, norm="e0.8"), view=(135,30),
         frame=:a, fmt=:jpg, Q="i100", show=true)
 ```
 
