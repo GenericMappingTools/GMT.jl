@@ -103,15 +103,15 @@ Optional Arguments
   then only contours marked with upper case C or A will have tick marks [and annotations]. 
 
 - **W** or *pen* : *pen=(annot=true, contour=true, pen=pen)*\
-  *annot=true*, if present, means to annotate contours or *contour=true* for regular contours [Default].
-  The *pen* sets the attributes for the particular line. Default pen for annotated contours: *pen=(0.75,:black)*.
-  Regular contours use *pen=(0.25,:black)*. Normally, all contours are drawn with a fixed color determined by
+  ``annot=true`` if present, means to annotate contours or ``contour=true`` for regular contours [Default].
+  The *pen* sets the attributes for the particular line. Default pen for annotated contours: ``pen=(0.75,:black)``.
+  Regular contours use ``pen=(0.25,:black)``. Normally, all contours are drawn with a fixed color determined by
   the pen setting. This option may be repeated, for example to separate contour and annotated contours settings.
-  For that the syntax changes to use a Tuple of NamedTuples, *e.g.*  *pen=((annot=true, contour=true, pen=pen), (annot=true, contour=true, pen=pen))*.
+  For that the syntax changes to use a Tuple of NamedTuples, *e.g.*  ``pen=((annot=true, contour=true, pen=pen), (annot=true, contour=true, pen=pen))``.
 
 - **Z** or *scale* : *scale=factor* **|** *scale=(factor=factor, shift=shift, periodic=true)*\
   Use to subtract *shift* from the data and multiply the results by *factor* before contouring starts.
-  (Numbers in **annot**, **cont**, **range** refer to values after this scaling has occurred.) Use *periodic=true*
+  (Numbers in **annot**, **cont**, **range** refer to values after this scaling has occurred.) Use ``periodic=true``
   to indicate that this grid file contains z-values that are periodic in 360 degrees (e.g., phase data, angular distributions) and that special precautions must be taken when determining 0-contours.
 
 - **U** or *stamp* : *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\

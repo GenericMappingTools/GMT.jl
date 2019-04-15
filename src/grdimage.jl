@@ -97,7 +97,7 @@ function common_shade(d, cmd, arg1, arg2, arg3, arg4, prog)
 			if (isa(val, String) || isa(val, Symbol))  cmd *= " -I" * arg2str(val)
 			else
 				cmd = add_opt(cmd, 'I', d, [:I :shade :intensity],
-				              (auto="_+", azimuth="+a", norm="+n", default="_+d+a-45+nt1"))
+				              (auto="_+", azim="+a", azimuth="+a", norm="+n", default="_+d+a-45+nt1"))
 			end
 		else
 			if (prog == "grdimage")  cmd, N_used = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3, arg4])

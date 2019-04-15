@@ -96,19 +96,20 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	                                         labels="+l", closed="_+a", gap="+d") )
 
 	# Only ONE of the two forms below should be used. Second one is when we want to destinguish -Wc & -Wa
-	cmd = add_opt(cmd, 'W', d, [:W :pen], (contour="_c", annot="_a", pen=("", add_opt_pen)) )
+	cmd = add_opt(cmd, 'W', d, [:W :pen], (contour="_c", annot="_a", pen=("", add_opt_pen),
+	                                       colored="_+c", cline="_+cl", ctext="_+cf"))
 
 	cmd = add_opt(cmd, 'Z', d, [:Z :scale], (factor="+s", shift="+o", periodic="_+p"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)	# Find how data was transmitted
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
 
-	N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
-	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
-	#cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2)
+	#N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
+	#cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
+	cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
-		cmd = add_opt(cmd, 'C', d, [:cont :contours :levels])
+		cmd = add_opt(cmd, 'C', d, [:C :cont :contours :levels])
 	end
 
 	if ((val = find_in_dict(d, [:N :fill])[1]) !== nothing)
