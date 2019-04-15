@@ -105,6 +105,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
+	#cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2)
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
 		cmd = add_opt(cmd, 'C', d, [:cont :contours :levels])

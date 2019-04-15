@@ -408,6 +408,7 @@ if (got_it)					# Otherwise go straight to end
 	grdview!(G, G=G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
 	r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), Vd=:cmd);
 	@test startswith(r, "grdview  -R -J -N-6+glightgray -Qsmred")
+	@test_throws ErrorException("Wrong way of setting the drape (G) option.")  grdview(rand(16,16), G=(1,2))
 	if (GMTver >= 6)		# Crashes GMT5
 		grdview(rand(128,128), G=(Gr,Gg,Gb), I=mat2grid(rand(Float32,128,128)), J=:X12, JZ=5, Q=:i, view="145/30")
 	end

@@ -77,39 +77,23 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	if (isa(arg1, Array{<:Number}))  arg1 = mat2grid(arg1)  end
 
-	N_used = got_fname == 0 ? 1 : 0				# To know whether a cpt will go to arg1 or arg2
-	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
-
-	if ((val = find_in_dict(d, [:I :shade :intensity :intensfile])[1]) !== nothing)
-		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
-			if (isa(val, String) || isa(val, Symbol))  cmd *= " -I" * arg2str(val)
-			else
-				cmd = add_opt(cmd, 'I', d, [:I :shade :intensity],
-				              (auto="_+", azimuth="+a", norm="+n", default="_+d+a-45+nt1"))
-			end
-		else
-			cmd, N_used = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3])
-			if     (N_used == 1)  arg1 = val
-			elseif (N_used == 2)  arg2 = val
-			elseif (N_used == 3)  arg3 = val
-			end
-		end
-	end
+	cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdview")
+	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdview")
 
 	if ((val = find_in_dict(d, [:G :drapefile])[1]) !== nothing)
 		if (isa(val, String))				# Uff, simple. Either a file name or a -A type modifier
 			cmd *= " -G" * val
 		elseif (isa(val, GMTgrid))			# A single drape grid (arg1-3 may be used already)
 			cmd, N_used = put_in_slot(cmd, val, 'G', [arg1, arg2, arg3, arg4])
-			if (N_used == 1)     arg1 = val
-			elseif (N_used == 2) arg2 = val
-			elseif (N_used == 3) arg3 = val
-			elseif (N_used == 4) arg4 = val
+			if     (N_used == 1)  arg1 = val
+			elseif (N_used == 2)  arg2 = val
+			elseif (N_used == 3)  arg3 = val
+			elseif (N_used == 4)  arg4 = val
 			end
 		elseif (isa(val, Tuple) && length(val) == 3)
 			cmd, N_used = put_in_slot(cmd, val[1], 'G', [arg1, arg2, arg3, arg4, arg5])
 			cmd *= " -G -G"		# Because the above only set one -G and we need 3
-			if (N_used == 1)      arg1 = val[1];	arg2 = val[2];		arg3 = val[3]
+			if     (N_used == 1)  arg1 = val[1];	arg2 = val[2];		arg3 = val[3]
 			elseif (N_used == 2)  arg2 = val[1];	arg3 = val[2];		arg4 = val[3]
 			elseif (N_used == 3)  arg3 = val[1];	arg4 = val[2];		arg5 = val[3]
 			end

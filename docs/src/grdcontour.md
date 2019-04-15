@@ -102,7 +102,6 @@ Optional Arguments
   label strings with a comma (*e.g.*, *labels="lo,hi"*). If a file is given by **cont**, and **ticks** is set,
   then only contours marked with upper case C or A will have tick marks [and annotations]. 
 
-
 - **W** or *pen* : *pen=(annot=true, contour=true, pen=pen)*\
   *annot=true*, if present, means to annotate contours or *contour=true* for regular contours [Default].
   The *pen* sets the attributes for the particular line. Default pen for annotated contours: *pen=(0.75,:black)*.
