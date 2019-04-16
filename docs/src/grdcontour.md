@@ -102,12 +102,12 @@ Optional Arguments
   label strings with a comma (*e.g.*, *labels="lo,hi"*). If a file is given by **cont**, and **ticks** is set,
   then only contours marked with upper case C or A will have tick marks [and annotations]. 
 
-- **W** or *pen* : *pen=(annot=true, contour=true, pen=pen)*\
+- **W** or *pen* : *pen=(annot=true, contour=true, pen=pen, colored=true, cline=true, ctext=true)*\
   ``annot=true`` if present, means to annotate contours or ``contour=true`` for regular contours [Default].
   The *pen* sets the attributes for the particular line. Default pen for annotated contours: ``pen=(0.75,:black)``.
   Regular contours use ``pen=(0.25,:black)``. Normally, all contours are drawn with a fixed color determined by
   the pen setting. This option may be repeated, for example to separate contour and annotated contours settings.
-  For that the syntax changes to use a Tuple of NamedTuples, *e.g.*  ``pen=((annot=true, contour=true, pen=pen), (annot=true, contour=true, pen=pen))``.
+  For that the syntax changes to use a Tuple of NamedTuples, *e.g.*  ``pen=((annot=true, contour=true, pen=pen), (annot=true, contour=true, pen=pen))``. If the modifier ``pen=(cline=true,)`` is used then the color of the contour lines are taken from the CPT (see **cont**). If instead ``pen=(ctext=true,)`` is appended then the color from the cpt file is applied to the contour annotations. Select ``pen=(colored=true,)`` for both effects.
 
 - **Z** or *scale* : *scale=factor* **|** *scale=(factor=factor, shift=shift, periodic=true)*\
   Use to subtract *shift* from the data and multiply the results by *factor* before contouring starts.

@@ -72,7 +72,7 @@ are always set separately. Here we will create first a colormap with *makecpt* t
 
 ```julia
 cpt = makecpt(range=(-6,8,1));      # Create the color map
-grdcontour(G, color=cpt, fmt=:png, pen=(colored=true,), show=true)
+grdcontour(G, fmt=:png, pen=(colored=true,), show=true)
 ```
 
 ```@raw html
