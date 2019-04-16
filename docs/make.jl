@@ -28,6 +28,10 @@ makedocs(
         hide("gallery/scripts_agu/histo_step.md"),
         hide("gallery/historic/ex01.md"),
         hide("gallery/historic/ex02.md"),
+        hide("gallery/historic/ex03.md"),
+        hide("gallery/historic/ex04.md"),
+        hide("gallery/historic/ex05.md"),
+        hide("gallery/historic/ex06.md"),
         "Manual" => [
             "monolitic.md",
             "modules.md",
