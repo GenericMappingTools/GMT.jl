@@ -40,6 +40,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.build_opt_J([])[1] == " -J"
 	@test GMT.arg2str((1,2,3)) == "1/2/3"
 	@test GMT.arg2str(("aa",2,3)) == "aa/2/3"
+	@test_throws ErrorException("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was DataType") GMT.arg2str(typeof(1))
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="meter")),[:I :inc], "I") == " -I1.5e/2.6e"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="data")),[:I :inc], "I") == " -I1.5/2.6u"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, extend="data")),[:I :inc], "I") == " -I1.5+e/2.6+e"
@@ -400,7 +401,10 @@ if (got_it)					# Otherwise go straight to end
 	grdimage(rand(Float32, 128, 128), shade=(default=30,), coast=(W=1,), Vd=:cmd)
 	grdimage(rand(Float32, 128, 128), colorbar=(color=:rainbow, pos=(anchor=:RM,length=8)), Vd=:cmd)
 	grdimage("lixo.grd", coast=true, colorbar=true, Vd=:cmd)
-	#grdimage("@earth_relief_05m", J="S21/90/15c", R="10/68/50/80r", B=:afg, X=:c, I="+")
+	G = gmt("grdmath -Rg -fg -I5 X");
+	gmtwrite("lixo.grd", G)
+	grdimage("lixo.grd", proj=:Winkel, colorbar=true, coast=true)
+	#grdimage(G, proj=:Winkel, colorbar=true, coast=true)		# Fails because CPT is in arg2 and psscale expects it in arg1
 	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
 	grdview!("",G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
@@ -410,7 +414,10 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(r, "grdview  -R -J -N-6+glightgray -Qsmred")
 	@test_throws ErrorException("Wrong way of setting the drape (G) option.")  grdview(rand(16,16), G=(1,2))
 	if (GMTver >= 6)		# Crashes GMT5
-		grdview(rand(128,128), G=(Gr,Gg,Gb), I=mat2grid(rand(Float32,128,128)), J=:X12, JZ=5, Q=:i, view="145/30")
+		I = mat2grid(rand(Float32,128,128))
+		grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
+		gmtwrite("lixo.grd", I)
+		grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
 	end
 
 	# GREENSPLINE
@@ -773,6 +780,7 @@ if (got_it)					# Otherwise go straight to end
 	GMT.meshgrid(1:5, 1:5, 1:5);
 	fields(7);
 	tic();toc()
+	@test_throws ErrorException("`toc()` without `tic()`") toc()
 
 	# EXAMPLES
 	plot(1:10,rand(10), lw=1, lc="blue", marker="square",
@@ -799,5 +807,6 @@ if (got_it)					# Otherwise go straight to end
 	rm("lixo.tif")
 	rm("lixo.cpt")
 	rm("lixo.dat")
+	#@static if (Sys.iswindows())  run(`rmdir /S /Q NULL`)  end
 
 end					# End valid testing zone

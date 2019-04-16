@@ -643,8 +643,8 @@ function parse_inc(cmd::String, d::Dict, symbs, opt, del=false)
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
 		if (isa(val, NamedTuple))
-			fn = fieldnames(typeof(val))
 			x = "";	y = "";	u = "";	e = false
+			fn = fieldnames(typeof(val))
 			for k = 1:length(fn)
 				if     (fn[k] == :x)     x  = string(val[k])
 				elseif (fn[k] == :y)     y  = string(val[k])
@@ -833,8 +833,7 @@ function arg2str(arg)
 	elseif (isa(arg, Tuple) && isa(arg[1], String))		# Maybe better than above but misses nice %.xxg
 		out = join(arg,'/')
 	else
-		error(@sprintf("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple,
-		                but was %s", typeof(arg)))
+		error(@sprintf("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was %s", typeof(arg)))
 	end
 end
 
@@ -1940,10 +1939,8 @@ function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
 	dbg_print_cmd(d, cmd)
 	if (tipo == 1)				# One input only
-		if (got_fname != 0)
-			return gmt(cmd)
-		else
-			return gmt(cmd, args[1])
+		if (got_fname != 0)  return gmt(cmd)
+		else                 return gmt(cmd, args[1])
 		end
 	elseif (tipo == 2)			# Two inputs
 		if (got_fname == 1)
@@ -1992,15 +1989,6 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 		out = fname_ps
 		if (fname != "")
 			out = mv(out, fname, force=true)
-		end
-	else
-		if (K)  gmt("psxy -T -R0/1/0/1 -JX1 -O ")  end		# Close the PS file first
-		if (fname_ext == "")
-			current_cpt = nothing
-			return gmt("psconvert = -A1p")					# Return a GMTimage object
-		else
-			out = tempdir() * "GMTjl_tmp.pdf"
-			gmt("psconvert = -A1p -Tf -F" * out)
 		end
 	end
 
@@ -2248,9 +2236,6 @@ function monolitic(prog::String, cmd0::String, args...)
 	# Run this module in the monolithic way. e.g. [outs] = gmt("module args",[inputs])
 	cmd0 = prog * " " * cmd0
 	return gmt(cmd0, args...)
-	#if (isempty_(args))	return gmt(cmd0)
-	#else				return gmt(cmd0, args...)
-	#end
 end
 
 # --------------------------------------------------------------------------------------------------
