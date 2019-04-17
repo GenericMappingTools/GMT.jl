@@ -95,7 +95,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, "", opt_bi, opt_di)
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1, arg2)
 
-	cmd = add_opt(cmd, 'D', d, [:D :offset], (shift="", line="+v", pen=("",add_opt_pen)) )
+	cmd = add_opt(cmd, 'D', d, [:D :offset], (shift="", line="+v", pen=("",add_opt_pen)), true)
 	cmd = add_opt(cmd, 'F', d, [:F :attrib],
 		(angle="+a", font=("+f", font), justify="+j", region_justify="+c", header="+h", label="+l",
 		rec_number="+r", text="+t", zvalues="+z"))

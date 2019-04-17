@@ -1,6 +1,6 @@
 # bar3
 
-	bar3(cmd0::String="", arg1=[]; kwargs...)
+	bar3(cmd0::String="", arg1=nothing; kwargs...)
 
 Plots a 3D bar graph. The input can either be a file name of a file with at least three columns (x,y,z),
 but optionally more, a GMTdatset object with also three or more columns. However, the simplest usage is
@@ -72,7 +72,7 @@ Parameters
 Examples
 --------
 
-A simple scatter of ten points plotted as red circles of 7 points size
+View a grid as a 3D bar plot
 
 ```julia
 G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");

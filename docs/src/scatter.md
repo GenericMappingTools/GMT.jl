@@ -43,7 +43,7 @@ Optional Arguments
 
    In alternative to the ``symbol`` keyword, user can select the symbol name with either ``marker`` or ``shape``
    and symbol size with ``markersize`` ``ms`` or just ``size`` The value of these keywords can be either numeric
-   (symb meaning size in cm) or string if an unit is appended, *e.g.*  ``markersize=5p`` This form of symbol
+   (symb meaning size in cm) or string if an unit is appended, *e.g.*  ``markersize="5p"`` This form of symbol
    selection allows also to specify a variable symbol size. All it's need for this is that the keyword's value
    be an array with the same number of elements as the number of data points. 
 

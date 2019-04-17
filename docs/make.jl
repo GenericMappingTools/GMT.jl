@@ -32,6 +32,9 @@ makedocs(
         hide("gallery/historic/ex04.md"),
         hide("gallery/historic/ex05.md"),
         hide("gallery/historic/ex06.md"),
+        hide("gallery/historic/ex07.md"),
+        hide("gallery/historic/ex08.md"),
+        hide("gallery/historic/ex09.md"),
         "Manual" => [
             "monolitic.md",
             "modules.md",

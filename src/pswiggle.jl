@@ -75,12 +75,15 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:e :f :g :h :p :t :yx :JZ :UVXY :params])
-	cmd = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:D :scale_bar], [:I :fixed_azim], [:Z :scale]])
+	cmd = parse_common_opts(d, cmd, [:e :f :g :p :t :yx :JZ :UVXY :params])
+	cmd = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
+	cmd = add_opt(cmd, "D", d, [:D :scale_bar],
+        (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width="+w", justify="+j",
+         label_left="_+al", labels="+l", label="+l", offset="+o"))
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 	cmd *= opt_pen(d, 'T', [:T :track])
