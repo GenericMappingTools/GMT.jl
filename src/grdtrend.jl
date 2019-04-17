@@ -49,9 +49,7 @@ function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 			cmd *= " -W" * arg2str(val)
 		else
 			cmd, N_used = put_in_slot(cmd, val, 'W', [arg1, arg2])
-			if (N_used == 1)     arg1 = val
-			elseif (N_used == 2) arg2 = val
-			end
+			(N_used == 1) ? arg1 = val : arg2 = val
 		end
 	end
 

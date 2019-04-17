@@ -165,9 +165,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		cmd = finish_PS(d, cmd * opt_W * opt_UVXY, output, K, O)
 
 	elseif (opt_W == "" && opt_S != "")						# We have a symbol request
-		if (opt_Wmarker != "" && opt_W == "")
-			opt_Gsymb *= " -W" * opt_Wmarker				# Piggy back in this option string
-		end
+		if (opt_Wmarker != "" && opt_W == "") opt_Gsymb *= " -W" * opt_Wmarker  end		# reuse var name
 		if (opt_ML != "")  cmd *= opt_ML  end				# If we have a symbol outline pen
 		cmd = finish_PS(d, cmd * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
 
@@ -176,14 +174,11 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
 			cmd = finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
 		else
-			if (opt_Wmarker != "")
-				opt_Wmarker = " -W" * opt_Wmarker			# Set Symbol edge color 
-			end
+			if (opt_Wmarker != "")  opt_Wmarker = " -W" * opt_Wmarker  end		# Set Symbol edge color 
 			cmd1 = cmd * opt_W * opt_UVXY
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
 			if (opt_ML != "")  cmd1 = cmd1 * opt_ML  end	# If we have a symbol outline pen
-			cmd = [finish_PS(d, cmd1, output, true, O)
-			       finish_PS(d, cmd2, output, K, true)]
+			cmd = [finish_PS(d, cmd1, output, true, O); finish_PS(d, cmd2, output, K, true)]
 		end
 
 	elseif (opt_S != "" && opt_ML != "")					# We have a symbol outline pen

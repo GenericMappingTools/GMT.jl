@@ -528,10 +528,8 @@ function lines(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
 	if (haskey(d, :decorated))
-		if (isa(d[:decorated], String))		# A hard core GMT string directly with options, including -S
-			cmd = d[:decorated]
-		else
-			cmd = decorated(d[:decorated])
+		if (isa(d[:decorated], String))  cmd = d[:decorated]	# A hard core GMT string with options, including -S
+		else                             cmd = decorated(d[:decorated])
 		end
 	else
 		cmd = "lines"
@@ -553,7 +551,10 @@ function ternary(cmd0::String="", arg1=nothing; kwargs...)
 	# A wrapper for psternary
 	common_plot_xyz(cmd0, arg1, "ternary", true, false, kwargs...)
 end
-ternary!(cmd0::String="", arg1=nothing; kw...) = ternary(cmd0, arg1; first=false, kw...)
+#ternary!(cmd0::String="", arg1=nothing; kw...) = ternary(cmd0, arg1; first=false, kw...)
+function ternary!(cmd0::String="", arg1=nothing; kw...)
+	ternary(cmd0, arg1; first=false, kw...)
+end
 ternary(arg1;  kw...)  = ternary("", arg1; first=true, kw...)
 ternary!(arg1; kw...) = ternary("", arg1; first=false, kw...)
 const psternary  = ternary            # Aliases
