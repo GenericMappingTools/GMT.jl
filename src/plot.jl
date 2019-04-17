@@ -368,7 +368,17 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 	if (isa(arg1, Array))
 		ny, nx = size(arg1)
 		if ((nx > 3 && ny > 3))  arg1 = mat2grid(arg1)  end		# Assume it is a 'bare grid'
+	elseif (cmd0 != "")
+		if ((val = find_in_dict(d, [:grd :grid])[1]) !== nothing)
+			arg1 = gmtread(cmd0, grd=true)
+		elseif ((val = find_in_dict(d, [:dataset :table])[1]) !== nothing)
+			arg1 = gmtread(cmd0, dataset=true)
+		else
+			error("BAR3: When first arg is a name, must also state its type. e.g. grd=true or data=true")
+		end
 	end
+
+	opt_base = add_opt("", "",  d, [:base])	# No need to purge because base is not a psxy option
 
 	if (isa(arg1, GMTgrid))
 		if (haskey(d, :bar))
@@ -381,16 +391,21 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 			end
 		end
 		opt, = parse_R("", d, !first)
-		if (opt == "")							# OK, no R but we know it here so put it in 'd'
+		if (opt == "" || opt == " -R")			# OK, no R but we know it here so put it in 'd'
 			if (arg1.registration == 1)			# Fine, grid is already pixel reg
 				push!(d, :R => arg1.range)
 			else								# Need to get a pix reg R
 				range = deepcopy(arg1.range)
-				range[1] = range[1] - arg1.inc[1] / 2;	range[2] = range[2] + arg1.inc[1] / 2;
-				range[3] = range[3] - arg1.inc[2] / 2;	range[4] = range[4] + arg1.inc[2] / 2;
+				range[1] -= arg1.inc[1] / 2;	range[2] += arg1.inc[1] / 2;
+				range[3] -= arg1.inc[2] / 2;	range[4] += arg1.inc[2] / 2;
 				push!(d, :R => range)
 			end
+			z_min = arg1.range[5]
+		elseif (opt_base == "")					# Shit, need to get zmin out of the opt_R string
+			t = split(opt, '/')
+			(length(t) == 6) ? z_min = t[5] : error("For 3D cases, region must have 6 selements")
 		end
+		if (opt_base == "")  push!(d, :base => z_min)  end	# Make base = z_min
 		arg1 = gmt("grd2xyz", arg1)[1]			# Now arg1 is a GMTdataset
 	else
 		opt_S = parse_inc("", d, [:width], "So", true)
@@ -405,20 +420,15 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		end
 	end
 
-	opt = add_opt("", "",  d, [:base])	# No need to purge because base is not a psxy option
-	if (opt == "")
-		if (isa(arg1, Array))			# 1.05 means base is 5% below minimum
-			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1, :, 3)) * 1.05)
-		else
-			opt_S = @sprintf("%s+b%.8g", opt_S, minimum(view(arg1.data, :, 3)) * 1.05)
-		end
+	opt_base = add_opt("", "",  d, [:base])		# Do this again because :base may have been added above
+	if (opt_base == "")
+		z_min = (isa(arg1, Array)) ? minimum(view(arg1, :, 3)) : minimum(view(arg1.data, :, 3))
+		opt_S = @sprintf("%s+b%.8g", opt_S, z_min)
 	else
-		opt_S *= "+b" * opt
+		opt_S *= "+b" * opt_base
 	end
 
-	caller = "bar3|" * opt_S * opt_z
-
-	common_plot_xyz(cmd0, arg1, caller, first, true, d...)
+	common_plot_xyz("", arg1, "bar3|" * opt_S * opt_z, first, true, d...)
 end
 
 bar3(arg1; kw...) = bar3("", arg1; first=true, kw...)

@@ -535,14 +535,21 @@ if (got_it)					# Otherwise go straight to end
 	    limits=(0.5,5.5,0,40), axis=:none, error_bars=(y=men_std,), Vd=:cmd)
 
 	# BAR3
-	G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
+	G = gmt("grdmath -R-15/15/-15/15 -I1 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
+	gmtwrite("lixo.grd", G)
 	bar3(G, lw=:thinnest)
+	bar3("lixo.grd", grd=true, lw=:thinnest, Vd=:cmd)
 	bar3!(G, lw=:thinnest, Vd=:cmd)
 	bar3!("", G, lw=:thinnest, Vd=:cmd)
 	bar3(G, lw=:thinnest, bar=(width=0.085,), Vd=:cmd)
 	bar3(G, lw=:thinnest, width=0.085, nbands=3, Vd=:cmd)
 	bar3(G, lw=:thinnest, noshade=1, Vd=:cmd)
 	bar3(rand(4,4), Vd=:cmd)
+	D = grd2xyz(G);
+	bar3(D, width=0.01, Nbands=3, Vd=:cmd)
+	@test_throws ErrorException("BAR3: When first arg is a name, must also state its type. e.g. grd=true or data=true") bar3("lixo.grd")
+	gmtwrite("lixo.gmt", D)
+	@test_throws ErrorException("BAR3: When NOT providing *width* data must contain at least 5 columns.") bar3("lixo.gmt", dataset=true)
 
 	# PROJECT
 	if (GMTver >= 6)

@@ -748,7 +748,7 @@ function opt_pen(d::Dict, opt::Char, symbs)
 		out = string(" -", opt, pen)
 	else
 		if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-			if (isa(val, String) || isa(val, Number))
+			if (isa(val, String) || isa(val, Number) || isa(val, Symbol))
 				out = string(" -", opt, val)
 			elseif (isa(val, Tuple))	# Like this it can hold the pen, not extended atts
 				out = string(" -", opt, parse_pen(val))
