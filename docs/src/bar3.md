@@ -21,11 +21,11 @@ Parameters
 - **J** or *proj* : *proj=<parameters>*\
   Select map projection. Default is linear and 12 cm width. More at [proj](@ref)
 
-- **R** or *region* or *limits* : *limits=(xmin, xmax, ymin, ymax, zmin, zmax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax, zmin, zmax),)*
+- **R** or *region* or *limits* : -- *limits=(xmin, xmax, ymin, ymax, zmin, zmax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax, zmin, zmax),)*
    **|** ...more\
    Specify the region of interest. Default limits are computed from data extents. More at [limits](@ref)
 
-- **G** or *markerfacecolor* or *mc* or *fill*\
+- **G** or *markerfacecolor* or *MarkerFaceColor* or *mc* or *fill*\
    Select color or pattern for filling of bars [Default is default color]. See [Setting color](@ref) for extend
    color selection (including color map generation).
 

@@ -1757,31 +1757,25 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi=
 	# Also compute a tight -R if this was not provided
 	data_kw = nothing
 	if (haskey(d, :data))	data_kw = d[:data]	end
-
-	ins = sum([data_kw !== nothing !isempty_(arg) !isempty(fname)])
-	if (ins > 1)
-		@warn("Conflicting ways of providing input data. Either a file name via positional and
-		a data array via keyword args were provided or numeric input. Unknown effect of this.")
-	end
-
 	if (fname != "")	data_kw = fname		end
 
+	lix, opt_h  = parse_h("", d)		# Experimentally, put the header test here
 	if (isa(data_kw, String))
 		if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
-			data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * " " * data_kw)
+			data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * " " * data_kw)
 			if (!isempty(opt_i))		# Remove the -i option from cmd. It has done its job
-				cmd = replace(cmd, opt_i, "")
+				cmd = replace(cmd, opt_i => "")
 				opt_i = ""
 			end
 		else
-			data_kw = gmt("read -Td " * opt_bi * opt_di * " " * data_kw)
+			data_kw = gmt("read -Td " * opt_bi * opt_di * opt_h * " " * data_kw)
 		end
 	end
 
 	if (!isempty_(data_kw)) arg = data_kw  end		# Finaly move the data into ARG
 
 	if (opt_R == "" || opt_R[1] == '/')
-		info = gmt("gmtinfo -C" * opt_i, arg)		# Here we are reading from an original GMTdataset or Array
+		info = gmt("gmtinfo -C" * opt_i * opt_h, arg)		# Here we are reading from an original GMTdataset or Array
 		if (opt_R != "" && opt_R[1] == '/')	# Modify what will be reported as a -R string
 			# Example "/-0.1/0.1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
 			rs = split(opt_R, '/')

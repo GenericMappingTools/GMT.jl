@@ -13,20 +13,20 @@ Parameters
   Set map boundary frame and axes attributes. Default is to draw and annotate left, bottom and verical
   axes and just draw left and tp axes. More at [axis](@ref)
 
-- **J** or *proj* : *proj=<parameters>*\
+- **J** or *proj* : -- *proj=<parameters>*\
   Select map projection. Default is linear and 14 cm width. More at [proj](@ref)
 
-- **R** or *region* or *limits* : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
+- **R** or *region* or *limits* : -- *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
    **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more \
    Specify the region of interest. Default limits are computed from data extents. More at [limits](@ref)
 
-- **G** or *markerfacecolor* or *mc* or *fill*\
+- **G** or *markerfacecolor* or *MarkerFaceColor* or *mc* or *fill*\
    Select color or pattern for filling of symbols [Default is black cubes]. Note that plot will search for *fill*
    and *pen* settings in all the segment headers (when passing a GMTdaset or file of a multi-segment dataset)
    and let any values thus found over-ride the command line settings (but those must provided in the terse GMT
    syntax). See [Setting color](@ref) for extend color selection (including color map generation).
 
-- **S** or *symbol* or `others` : --  Default is `cube` with size of 7 points
+- **S** or *symbol* or *marker* or *Marker* or *shape* : --  Default is `cube` with size of 7 points
    - *symbol=symbol string*\
       A full GMT compact string.
    - *symbol=(symb=??, size=??, unit=??)*\

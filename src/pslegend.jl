@@ -48,7 +48,8 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, opt_R = read_data(d, cmd0, cmd, arg1, opt_R, "")
 
 	cmd = add_opt(cmd, 'D', d, [:D :pos :position :refpoint],
-		(map_coord="g",plot_coord="x",norm="n",pos="j",width="+w",justify="+j",spacing="+l",offset="+o"))
+				  (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width="+w",
+				   justify="+j", spacing="+l", offset="+o"))
 	cmd = add_opt(cmd, 'C', d, [:C :clearance])
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
