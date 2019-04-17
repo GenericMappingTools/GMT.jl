@@ -640,9 +640,7 @@ function get_textset_(API::Ptr{Nothing}, object::Ptr{Nothing})
 		Dseg = unsafe_load(unsafe_load(Dtab.segment))		# GMT_DATASEGMENT
 		pCols = pointer_to_array(Dseg.data, DS.n_columns)	# Pointer to the columns
 		for col = 1:DS.n_columns							# Now determine number of non-NaN columns from first row
-			if (!isnan(unsafe_load(pCols[col])))
-				n_columns = n_columns + 1
-			end
+			if (!isnan(unsafe_load(pCols[col])))  n_columns = n_columns + 1  end
 		end
 		have_numerical = true
 	end
@@ -697,10 +695,6 @@ function get_textset_(API::Ptr{Nothing}, object::Ptr{Nothing})
 
 			seg_out = seg_out + 1
 		end
-	end
-
-	if (have_numerical && GMT_Destroy_Data(API, Ref([D])) != 0)
-		println("Warning: Failure to delete intermediate D in GMTMEX_Get_Textset\n")
 	end
 
 	return Darr
@@ -1299,10 +1293,8 @@ function text_init_(API::Ptr{Nothing}, module_input, Darr, dir::Integer, family:
 				if (n_cols > 0)
 					buff = join([@sprintf("%s\t", Darr[seg].data[row,k]) for k=1:n_cols])
 				end
-				if (add_text)				# Then append the optional text strings
-					buff = buff * Darr[seg].text[row]
-				else
-					buff = rstrip(buff)		# Strip last '\t'
+				if (add_text)  buff = buff * Darr[seg].text[row]	# Then append the optional text strings
+				else           buff = rstrip(buff)					# Strip last '\t'
 				end
 				unsafe_store!(Sb.data, GMT_Duplicate_String(API, buff), row)	# This allows shared mem
 			end

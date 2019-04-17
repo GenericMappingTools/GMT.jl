@@ -87,12 +87,12 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:e :f :h :p :t :yx :JZ :UVXY :params])
+	cmd = parse_common_opts(d, cmd, [:e :f :p :t :yx :JZ :UVXY :params])
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:C :clearance], [:L :list], [:M :paragraph],
 	                 [:N :noclip :no_clip], [:Q :change_case], [:T :text_box], [:Z :threeD]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, "", opt_bi, opt_di)
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, "", opt_bi, opt_di)
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1, arg2)
 
 	cmd = add_opt(cmd, 'D', d, [:D :offset], (shift="", line="+v", pen=("",add_opt_pen)) )

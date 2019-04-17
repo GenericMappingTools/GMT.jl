@@ -1,6 +1,6 @@
 # arrows
 
-	arrows(cmd0::String="", arg1=[]; kwargs...)
+	arrows(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads (x,y,a,b) data and make arrow plots. The input can either be a file name of a file with at least
 four columns, but optionally more, or an Mx2 Array or GMTdatset object with the same characteristics in
@@ -19,11 +19,11 @@ Parameters
 - **J** or *proj* : *proj=<parameters>*\
   Select map projection. Default is linear and 14 cm width. More at [proj](@ref)
 
-- **R** or *region* or *limits* : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
+- **R** or *region* or *limits* : -- *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
    **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more \
    Specify the region of interest. Default limits are computed from data extents. More at [limits](@ref)
 
-- **G** or *markerfacecolor* or *mc* or *fill*\
+- **G** or *markerfacecolor* or *MarkerFaceColor* or *mc* or *fill*\
    Select color or pattern for filling of vector heads [Default is no fill]. See [Setting color](@ref)
    for extend color selection (including colormap generation).
 
@@ -37,16 +37,16 @@ Parameters
    the vector head. Vector stem width is set by *pen*. By default, a vector head of 0.5 cm is set but see
    [Vector Attributes](@ref) for overwriting this default and specifying other attributes.
 
-- **U** or *stamp* : *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
+- **U** or *stamp* : -- *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
    Draw GMT time stamp logo on plot. More at [stamp](@ref)
 
-- **V** or *verbose* : *verbose=true* **|** *verbose=level*\
+- **V** or *verbose* : -- *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)
 
-- **X** or *x_off* or *x_offset* : *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
+- **X** or *x_off* or *x_offset* : -- *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [x_off](@ref)
 
-- **Y** or *y_off* or *y_offset* : *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
+- **Y** or *y_off* or *y_offset* : -- *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [y_off](@ref)
 
 Examples

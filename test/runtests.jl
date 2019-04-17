@@ -153,6 +153,10 @@ if (got_it)					# Otherwise go straight to end
 
 	@test_throws ErrorException("parse_arg_and_pen: Nonsense first argument") GMT.parse_arg_and_pen(([:a],0))
 	@test_throws ErrorException("GMT: No module by that name -- bla -- was found.") gmt("bla")
+	@test_throws ErrorException("grd_init: input (Int64) is not a GRID container type") GMT.grid_init(C_NULL,0,0)
+	@test_throws ErrorException("image_init: input is not a IMAGE container type") GMT.image_init(C_NULL,0,0)
+	@test_throws ErrorException("Expected a CPT structure for input") GMT.palette_init(C_NULL,0,0,0)
+	GMT.strncmp("abcd", "ab", 2)
 	# ---------------------------------------------------------------------------------------------------
 
 	gmt("begin"); gmt("end")
@@ -257,9 +261,9 @@ if (got_it)					# Otherwise go straight to end
 	cpt = makecpt(T="-6/8/1");
 	gmtwrite("lixo.cpt", cpt)
 	cpt = gmtread("lixo.cpt", cpt=true);
-	gmtwrite("lixo.dat", [1 2; 3 4])
-	D = gmtread("lixo.dat", table=true);
-	@test(sum(D[1].data) == 10)
+	gmtwrite("lixo.dat", [1 2 10; 3 4 20])
+	D = gmtread("lixo.dat", i="0,1s10", table=true);
+	@test(sum(D[1].data) == 64.0)
 	gmtwrite("lixo.dat", D)
 	gmt("gmtwrite lixo.cpt", cpt)		# Same but tests other code chunk in gmt_main.jl
 	gmt("gmtwrite lixo.dat", D)

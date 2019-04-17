@@ -57,6 +57,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
+	#cmd, opt_h  = parse_h(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :h :p :t :yx :params])
 	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:F :conn :connection], [:I :intens], [:N :noclip :no_clip]])
@@ -91,7 +92,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :mc], 'G')		# Filling of symbols
+	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :MarkerFaceColor :mc], 'G')		# Filling of symbols
 
 	# To track a still existing bug in sessions management at GMT lib level
 	if (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb))
@@ -110,8 +111,8 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	opt_Wmarker = ""
-	if (haskey(d, :markeredgecolor))
-		opt_Wmarker = "0.5p," * arg2str(d[:markeredgecolor])		# 0.25p is so thin
+	if ((val = find_in_dict(d, [:markeredgecolor :MarkerEdgeColor])[1]) !== nothing)
+		opt_Wmarker = "0.5p," * arg2str(val)		# 0.25p is too thin?
 	end
 
 	opt_W = add_opt_pen(d, [:W :pen], "W")
@@ -121,8 +122,8 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	opt_S = add_opt("", 'S', d, [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
-		marca = get_marker_name(d, [:marker :shape], is3D)
-		if ((val = find_in_dict(d, [:markersize :ms :size])[1]) !== nothing)
+		marca = get_marker_name(d, [:marker :Marker :shape], is3D)
+		if ((val = find_in_dict(d, [:markersize :MarkerSize :ms :size])[1]) !== nothing)
 			if (marca == "")  marca = "c"  end		# If a marker name was not selected, defaults to circle
 			if (isa(val, AbstractArray))
 				if (length(val) == size(arg1,1))
@@ -138,15 +139,12 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			opt_S = " -S" * marca * "7p"
 		end
 	end
-	#if (opt_S != "" && isnumeric(opt_S[end]))  opt_S *= 'c'  end 	# GMT bug. If no unit pslegend takes it in inches
 
 	opt_ML = ""
 	if (opt_S != "")
-		if (haskey(d, :markerline))
-			if (isa(d[:markerline], Tuple))			# Like this it can hold the pen, not extended atts
-				opt_ML = " -W" * parse_pen(d[:markerline])
-			else
-				opt_ML = " -W" * arg2str(d[:markerline])
+		if ((val = find_in_dict(d, [:markerline :MarkerLine])[1]) !== nothing)
+			if (isa(val, Tuple))  opt_ML = " -W" * parse_pen(val) # This can hold the pen, not extended atts
+			else                  opt_ML = " -W" * arg2str(val)
 			end
 			if (opt_Wmarker != "")
 				opt_Wmarker = ""
@@ -256,7 +254,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 			if (length(mz) != n_rows)  @warn(warn1); @goto noway  end
 			if     (isa(arg1, Array))      arg1 = hcat(arg1[:,1:2+is3D], mz[:], arg1[:,3+is3D:end])
 			elseif (isa(arg1,GMTdataset))  arg1.data = hcat(arg1.data[:,1:2+is3D], mz[:], arg1.data[:,3+is3D:end])
-			else                  arg1[1].data = hcat(arg1[1].data[:,1:2+is3D], mz[:], arg1[1].data[:,3+is3D:end])
+			else                           arg1[1].data = hcat(arg1[1].data[:,1:2+is3D], mz[:], arg1[1].data[:,3+is3D:end])
 			end
 		else
 			if (opt_i == "")  cmd = @sprintf("%s -i0-%d,%d,%d-%d", cmd, 1+is3D, 1+is3D, 2+is3D, n_col-1)
