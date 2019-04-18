@@ -97,12 +97,12 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:UVXY :bo :d :di :do :e :h :p :t :yx :params])
+	cmd = parse_common_opts(d, cmd, [:UVXY :bo :d :di :do :e :p :t :yx :params])
 	cmd = parse_these_opts(cmd, d, [[:D :dump], [:G :labels], [:I :colorize], [:L :mesh], [:N :no_clip],
 				[:Q :cut], [:S :skip], [:T :ticks], [:W :pen]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
-	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
     
 	cmd = add_opt(cmd, 'A', d, [:A :annot])

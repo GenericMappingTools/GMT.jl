@@ -107,7 +107,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:UVXY :e :h :p :t :yx :params])
+	cmd = parse_common_opts(d, cmd, [:UVXY :e :p :t :yx :params])
     cmd = parse_these_opts(cmd, d, [[:A :sector], [:D :shift], [:F :no_scale], [:L :labels], [:M],
                 [:Q :alpha], [:S :radius], [:T :orientation], [:Z :scale]])
 
