@@ -156,6 +156,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("grd_init: input (Int64) is not a GRID container type") GMT.grid_init(C_NULL,0,0)
 	@test_throws ErrorException("image_init: input is not a IMAGE container type") GMT.image_init(C_NULL,0,0)
 	@test_throws ErrorException("Expected a CPT structure for input") GMT.palette_init(C_NULL,0,0,0)
+	@test_throws ErrorException("Bad family type") GMT.GMT_Alloc_Segment(C_NULL, -1, 0, 0, "", C_NULL)
 	GMT.strncmp("abcd", "ab", 2)
 	# ---------------------------------------------------------------------------------------------------
 
@@ -172,6 +173,7 @@ if (got_it)					# Otherwise go straight to end
 	if (G !== nothing)	# If run from GMT5 it will return nothing
 		G = blockmean(d, region=[0 2 0 2], inc=1, grid=true, reg=true, S=:n);	# Number of points in cell
 		G,L = blockmode(region=[0 2 0 2], inc=1, fields="z,l", reg=true, d);
+		G,L,H = blockmode(d, region=[0 2 0 2], inc=1, fields="z,l,h", reg=true)
 	end
 	D = blockmedian(region=[0 2 0 2], inc=1,  reg=true, d);
 	D = blockmean(region=[0 2 0 2], inc=1,  reg=true, d);
@@ -543,7 +545,7 @@ if (got_it)					# Otherwise go straight to end
 	bar3!("", G, lw=:thinnest, Vd=:cmd)
 	bar3(G, lw=:thinnest, bar=(width=0.085,), Vd=:cmd)
 	bar3(G, lw=:thinnest, width=0.085, nbands=3, Vd=:cmd)
-	bar3(G, lw=:thinnest, noshade=1, Vd=:cmd)
+	bar3(G, region="-15/15/-15/15/-2/2", lw=:thinnest, noshade=1, Vd=:cmd)
 	bar3(rand(4,4), Vd=:cmd)
 	D = grd2xyz(G);
 	bar3(D, width=0.01, Nbands=3, Vd=:cmd)
@@ -592,7 +594,8 @@ if (got_it)					# Otherwise go straight to end
 
 	# PSCONVERT
 	gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
-	#psconvert("lixo.ps", adjust=true, fmt="eps", C=:dDOINTERPOLATE)
+	psconvert("lixo.ps", adjust=true, fmt="eps", C="-dDOINTERPOLATE")
+	psconvert("lixo.ps", adjust=true, fmt="eps", C=["-dDOINTERPOLATE" "-dDOINTERPOLATE"])
 	psconvert("lixo.ps", adjust=true, fmt="tif")
 	gmt("grdinfo lixo.tif");
 
@@ -620,6 +623,7 @@ if (got_it)					# Otherwise go straight to end
 	x,y,z=GMT.peaks(grid=false);
 	contour([x[:] y[:] z[:]], cont=1, annot=2, axis="a")
 	contour!([x[:] y[:] z[:]], cont=1, Vd=:cmd)
+	contour!([x[:] y[:] z[:]], cont=1, E="lixo", Vd=:cmd)	# Cheating E opt because Vd=:cmd prevents its usage
 	contour!("", [x[:] y[:] z[:]], cont=1, Vd=:cmd)
 
 	# PSIMAGE

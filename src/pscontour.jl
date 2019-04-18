@@ -94,7 +94,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
 
 	K, O = set_KO(first)		# Set the K O dance
-    cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_i = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:UVXY :bo :d :di :do :e :h :p :t :yx :params])
@@ -102,8 +102,8 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 				[:Q :cut], [:S :skip], [:T :ticks], [:W :pen]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
-    cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
-    cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
+	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
     
 	cmd = add_opt(cmd, 'A', d, [:A :annot])
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
@@ -114,21 +114,16 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		if (isa(val, Array{Int}))
 			cmd = string(cmd, " -E")
 			# Now need to find the free slot where to store the indices array
-			if (N_args == 0)      arg1 = val
-			elseif (N_args == 1)  arg2 = val
-			else                  arg3 = val
-			end
+			(N_args == 0) ? arg1 = val : (N_args == 1 ? arg2 = val : arg3 = val)
 		else
 			cmd = string(cmd, " -E", arg2str(val))
 		end
 	end
 
-	if (!occursin(" -W", cmd) && !occursin(" -I", cmd))		# Use default pen
-		cmd = cmd * " -W"
-	end
+	if (!occursin(" -W", cmd) && !occursin(" -I", cmd))  cmd *= " -W"  end	# Use default pen
 
 	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, "pscontour " * cmd, "-D", output, fname_ext, opt_T, K, arg1, arg2, arg3)
+	return finish_PS_module(d, "pscontour " * cmd, "-D", output, fname_ext, opt_T, K, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------
