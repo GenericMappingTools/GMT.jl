@@ -57,7 +57,7 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, opt_bi = parse_bi(cmd, d)
 	cmd, opt_di = parse_di(cmd, d)
 	cmd, opt_i  = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :e :f :g :h :p :t :yx :params])
+	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :e :f :g :p :t :yx :params])
 	cmd = parse_these_opts(cmd, d, [[:A :straight_lines], [:C :end_clip_path], [:N :invert], [:T :clip_limits]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 

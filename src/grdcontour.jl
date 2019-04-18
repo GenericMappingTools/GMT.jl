@@ -84,7 +84,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t])
+	cmd = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :p :t])
 	cmd = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
 	
 	cmd = add_opt(cmd, 'A', d, [:A :annot], (disable=("-", nothing, 1), single=("+", nothing, 1),
