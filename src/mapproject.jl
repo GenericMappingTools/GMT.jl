@@ -91,8 +91,7 @@ function mapproject(cmd0::String="", arg1=nothing; kwargs...)
         cmd, = parse_J(cmd, d, "", false)   # Do not append a default fig size
     end
 
-    cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	return common_grd(d, "mapproject " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "mapproject ", 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

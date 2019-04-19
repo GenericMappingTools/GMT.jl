@@ -50,8 +50,7 @@ function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:I :nearest_multiple],
 				[:L :force_scan], [:M :location], [:T :zmin_max]])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	return common_grd(d, "grdinfo " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdinfo ", 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

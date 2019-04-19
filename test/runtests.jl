@@ -286,11 +286,15 @@ if (got_it)					# Otherwise go straight to end
 	@assert(r[1].data == r2[1].data)
 
 	# GRD2CPT
-	G=gmt("grdmath", "-R0/10/0/10 -I1 X");
+	G=gmt("grdmath", "-R0/10/0/10 -I2 X");
 	C=grd2cpt(G);
 
 	# GRD2XYZ (It's tested near the end)
 	#D=grd2xyz(G); # Use G of previous test
+	gmtwrite("lixo.grd", G)
+	D1=grd2xyz(G);
+	D2=grd2xyz("lixo.grd");
+	@assert(sum(D1[1].data) == sum(D2[1].data))
 
 	# GRD2KML
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");

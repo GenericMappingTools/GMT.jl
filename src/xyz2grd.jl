@@ -55,8 +55,7 @@ function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:G :outgrid], [:I :inc],
 				[:S :swap], [:Z :flags]])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	return common_grd(d, "xyz2grd " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "xyz2grd ", 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
