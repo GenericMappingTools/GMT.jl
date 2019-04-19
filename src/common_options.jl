@@ -1864,9 +1864,9 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=
 	# Check if we need to save to file
 	if (haskey(d, :>))			cmd = string(cmd, " > ", d[:>])
 	elseif (haskey(d, :|>))		cmd = string(cmd, " > ", d[:|>])
-	elseif (haskey(d, :write))	cmd = string(cmd, " > ", d[write])
+	elseif (haskey(d, :write))	cmd = string(cmd, " > ", d[:write])
 	elseif (haskey(d, :>>))		cmd = string(cmd, " > ", d[:>>])
-	elseif (haskey(d, :write_append))	cmd = string(cmd, " > ", d[write_append])
+	elseif (haskey(d, :write_append))	cmd = string(cmd, " > ", d[:write_append])
 	end
 
 	if (tipo == 1)
@@ -1929,21 +1929,31 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=
 end
 
 # ---------------------------------------------------------------------------------------------------
+function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, tipo::Int, args...)
+	# TEMP function. To be merged with the other when I know that it works well
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, tipo, args...)
+	#if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
+	common_grd(d, prog * cmd, 0, tipo, arg1)
+end
+
+# ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
 	dbg_print_cmd(d, cmd)
 	if (tipo == 1)				# One input only
-		if (got_fname != 0)  return gmt(cmd)
-		else                 return gmt(cmd, args[1])
-		end
+		#if (got_fname != 0)  return gmt(cmd)
+		#else                 return gmt(cmd, args[1])
+		#end
+		return gmt(cmd, args...)
 	elseif (tipo == 2)			# Two inputs
-		if (got_fname == 1)
-			return gmt(cmd)
-		elseif (got_fname == 2)	# NOT SURE ON THIS ONE
-			return gmt(cmd, args[1])
-		else
-			return gmt(cmd, args[1], args[2])
-		end
+		#if (got_fname == 1)
+			#return gmt(cmd)
+		#elseif (got_fname == 2)	# NOT SURE ON THIS ONE
+			#return gmt(cmd, args[1])
+		#else
+			#return gmt(cmd, args[1], args[2])
+		#end
+		return gmt(cmd, args...)
 	else						# ARGS is a tuple(tuple) with all numeric inputs
 		return gmt(cmd, args[1]...)		# args[1] because args is a tuple(tuple)
 	end
