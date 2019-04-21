@@ -52,8 +52,9 @@ Parameters
 - $(GMT.opt_append)
 - $(GMT.opt_f)
 """
-function grd2kml(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
+function grd2kml(cmd0::String="", arg1=nothing; kwargs...)
 
+    arg2 = nothing;     arg3 = nothing;     # for CPT and/or illum
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2kml", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
@@ -61,23 +62,11 @@ function grd2kml(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:E :url], [:F :filter], [:H :sub_pixel], [:L :tile_size],
 	                                [:N :prefix], [:Q :nan_t :nan_alpha], [:T :title]])
 
-	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1, arg2)
-
-	if ((val = find_in_dict(d, [:I :shade :intensity :intensfile])[1]) !== nothing)
-		if (!isa(val, GMTgrid))		# Uff, simple. Either a file name or a -A type modifier
-			cmd *= " -I" * arg2str(val)
-		else
-			cmd,N_shade = put_in_slot(cmd, val, 'I', [arg1, arg2])
-			if (N_shade == 1)     arg1 = val
-			elseif (N_shade == 2) arg2 = val
-			end
-		end
-	end
-
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
-	return common_grd(d, "grd2kml " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
+	cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2)
+    cmd, arg1, arg2, arg3 = common_shade(d, cmd, arg1, arg2, arg3, nothing, "grd2kml")
+	common_grd(d, "grd2kml " * cmd, got_fname, 2, arg1, arg2, arg3)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
-grd2kml(arg1, arg2=nothing, cmd0::String=""; kw...) = grd2kml(cmd0, arg1, arg2; kw...)
+grd2kml(arg1, cmd0::String=""; kw...) = grd2kml(cmd0, arg1; kw...)

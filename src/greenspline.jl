@@ -89,8 +89,6 @@ function greenspline(cmd0::String="", arg1=nothing; kwargs...)
 				[:G :grid], [:I :inc], [:L :leave_trend], [:N :nodes], [:Q :dir_derivative], [:S :splines],
 				[:T :mask], [:W :uncertainties]])
 
-	#cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	#return common_grd(d, "greenspline " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
 	common_grd(d, cmd0, cmd, "greenspline ", 1, arg1)		# Finish build cmd and run it
 end
 

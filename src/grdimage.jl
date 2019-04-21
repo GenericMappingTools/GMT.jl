@@ -74,8 +74,8 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 
 	if (isa(arg1, Array{<:Number}))
 		arg1 = mat2grid(arg1)
-		if (!isempty_(arg2) && isa(arg2, Array{<:Number}))  arg2 = mat2grid(arg2)  end
-		if (!isempty_(arg3) && isa(arg3, Array{<:Number}))  arg3 = mat2grid(arg3)  end
+		if (isa(arg2, Array{<:Number}))  arg2 = mat2grid(arg2)  end
+		if (isa(arg3, Array{<:Number}))  arg3 = mat2grid(arg3)  end
 	end
 
 	cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
