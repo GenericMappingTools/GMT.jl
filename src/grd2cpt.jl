@@ -90,11 +90,11 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 				[:G :truncate], [:F :force_rgb], [:I :inverse :reverse], [:L :limit], [:M :overrule_bg],
 				[:N :no_bg :nobg], [:Q :log], [:S :steps], [:T :symetric], [:W :no_interp], [:Z :continuous]])
 
-	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
-
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
+	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1)
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
-	return common_grd(d, "grd2cpt " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
+	common_grd(d, "grd2cpt " * cmd, got_fname, 2, arg1, arg2)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

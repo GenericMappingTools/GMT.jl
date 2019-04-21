@@ -41,9 +41,7 @@ function grd2xyz(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, "", [:R :V_params :bo :d :f :h :o :s])
     cmd = parse_these_opts(cmd, d, [[:C :row_col], [:W :weight], [:Z :flags]])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
-    return common_grd(d, "grd2xyz " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grd2xyz ", 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

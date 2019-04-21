@@ -1871,10 +1871,8 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=
 
 	if (tipo == 1)
 		# Accepts "input1"; arg1; data=input1;
-		if (got_fname != 0)
-			return cmd, got_fname, arg1		# got_fname = 1 => data is in cmd
-		elseif (arg1 !== nothing)
-			return cmd, got_fname, arg1 	# got_fname = 0 => data is in arg1
+		if (got_fname != 0 || arg1 !== nothing)
+			return cmd, got_fname, arg1		# got_fname = 1 => data is in cmd;	got_fname = 0 => data is in arg1
 		elseif (data_kw !== nothing)
 			if (isa(data_kw, String))
 				cmd = data_kw * " " * cmd
@@ -1885,8 +1883,8 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=
 		else
 			error("Missing input data to run this module.")
 		end
-	elseif (tipo == 2)			# Two inputs (but second can be optional is some modules)
-		# Accepts "input1  input2"; "input1", arg1; "input1", data=input2; arg1, arg2; data=(input1,input2)
+	elseif (tipo == 2)			# Two inputs (but second can be optional in some modules)
+		# Accepts "input1 input2"; "input1", arg1; "input1", data=input2; arg1, arg2; data=(input1,input2)
 		if (got_fname != 0)
 			if (arg1 === nothing && data_kw === nothing)
 				return cmd, 1, arg1, arg2		# got_fname = 1 => all data is in cmd
@@ -1911,7 +1909,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=
 			end
 		end
 	elseif (tipo == 3)			# Three inputs
-		# Accepts "input1  input2 input3"; arg1, arg2, arg3; data=(input1,input2,input3)
+		# Accepts "input1 input2 input3"; arg1, arg2, arg3; data=(input1,input2,input3)
 		if (got_fname != 0)
 			if (arg1 === nothing && data_kw === nothing)
 				return cmd, 1, arg1, arg2, arg3			# got_fname = 1 => all data is in cmd
@@ -1931,9 +1929,16 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, tipo::Int, args...)
 	# TEMP function. To be merged with the other when I know that it works well
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, tipo, args...)
-	#if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
-	common_grd(d, prog * cmd, 0, tipo, arg1)
+	n_args = length(args)
+	if (n_args <= 1)
+		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, args...)
+		if (isa(arg1, Array{<:Number}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
+		common_grd(d, prog * cmd, 0, 1, arg1)
+	elseif (n_args == 2)
+		cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, args...)
+		if (isa(arg1, Array{<:Number}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
+		common_grd(d, prog * cmd, 0, 2, arg1, arg2)
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------

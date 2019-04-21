@@ -49,9 +49,7 @@ function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:G :outgrid], [:E :lambert],
 				[:N :norm :normalize], [:S :slopegrid]])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
-	return common_grd(d, "grdgradient " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdgradient ", 1, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

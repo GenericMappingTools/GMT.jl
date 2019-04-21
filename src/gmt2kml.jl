@@ -27,7 +27,7 @@ Parameters
 
     Sets the feature type. Choose from points (event, symbol, or timespan), line, polygon, or wiggle.
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#f)
-- **G** : **fill** : **fill_color** : -- Str --  Flags = f|nfill
+- **G** : **fill** : -- Str --  Flags = f|nfill
 
     Sets color fill (G=:f) or label font color (G=:n).
     [`-G`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#g)
@@ -101,15 +101,13 @@ function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
 		[:I :icon], [:K :not_finished], [:L :extended_data], [:N :feature_name], [:O :overlay], [:Qa :wiggles],
 		[:Qs :wiggle_scale], [:S :scale], [:T :title], [:Z :attrib]])
 
-	cmd = add_opt(cmd, 'G', d, [:G :fill :fill_color])
+	cmd = add_opt(cmd, 'G', d, [:G :fill])
 	cmd *= add_opt_pen(d, [:W :pen], "W")
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
-
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1)
-
-	return common_grd(d, "gmt2kml " * cmd, got_fname, 1, arg1, arg2)		# Finish build cmd and run it
+	common_grd(d, "gmt2kml " * cmd, got_fname, 1, arg1, arg2)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
