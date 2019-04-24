@@ -204,7 +204,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	put_in_legend_bag(d, cmd, arg1)
 
-	r = finish_PS_module(d, gmt_proggy .* cmd, "", output, fname_ext, opt_T, K, arg1, arg2)
+	r = finish_PS_module(d, gmt_proggy .* cmd, "", output, fname_ext, opt_T, K, O, false, arg1, arg2)
 	if (got_pattern)  gmt("destroy")  end 	# Apparently patterns are screweing the session
 	return r
 end

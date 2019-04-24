@@ -1763,7 +1763,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi=
 	if (isa(data_kw, String))
 		if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
 			data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * " " * data_kw)
-			if (!isempty(opt_i))		# Remove the -i option from cmd. It has done its job
+			if (opt_i != "")			# Remove the -i option from cmd. It has done its job
 				cmd = replace(cmd, opt_i => "")
 				opt_i = ""
 			end
@@ -1892,8 +1892,6 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=
 				return cmd, 2, arg1, arg2		# got_fname = 2 => data is in cmd and arg1
 			elseif (data_kw !== nothing && length(data_kw) == 1)
 				return cmd, 2, data_kw, arg2	# got_fname = 2 => data is in cmd and arg1
-			else
-				error("Missing input data to run this module.")
 			end
 		else
 			if (arg1 !== nothing && arg2 !== nothing)
@@ -1904,10 +1902,9 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=
 				return cmd, 0, arg1, data_kw			# got_fname = 0 => all data is in arg1,2
 			elseif (data_kw !== nothing && length(data_kw) == 2)
 				return cmd, 0, data_kw[1], data_kw[2]	# got_fname = 0 => all data is in arg1,2
-			else
-				error("Missing input data to run this module.")
 			end
 		end
+		error("Missing input data to run this module.")
 	elseif (tipo == 3)			# Three inputs
 		# Accepts "input1 input2 input3"; arg1, arg2, arg3; data=(input1,input2,input3)
 		if (got_fname != 0)
@@ -1945,19 +1942,7 @@ end
 function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
 	dbg_print_cmd(d, cmd)
-	if (tipo == 1)				# One input only
-		#if (got_fname != 0)  return gmt(cmd)
-		#else                 return gmt(cmd, args[1])
-		#end
-		return gmt(cmd, args...)
-	elseif (tipo == 2)			# Two inputs
-		#if (got_fname == 1)
-			#return gmt(cmd)
-		#elseif (got_fname == 2)	# NOT SURE ON THIS ONE
-			#return gmt(cmd, args[1])
-		#else
-			#return gmt(cmd, args[1], args[2])
-		#end
+	if (tipo <= 2)				# One or two inputs
 		return gmt(cmd, args...)
 	else						# ARGS is a tuple(tuple) with all numeric inputs
 		return gmt(cmd, args[1]...)		# args[1] because args is a tuple(tuple)
@@ -2036,32 +2021,22 @@ function put_in_slot(cmd::String, val, opt::Char, args)
 	return cmd, k
 end
 
-#= ---------------------------------------------------------------------------------------------------
+## ---------------------------------------------------------------------------------------------------
 function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String,
-	opt_T::String, K::Bool, O::Bool, prog::String, args...)
+	opt_T::String, K::Bool, O::Bool, finish::Bool, args...)
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
-	cmd = finish_PS(d, cmd, output, K, O)
-	return finish_PS_module(d, cmd, opt_extra, output, fname_ext, opt_T::String, K, prog, args...)
-end
-=#
-
-# ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String,
-						  opt_T::String, K::Bool, arg1=nothing, arg2=nothing, arg3=nothing,
-						  arg4=nothing, arg5=nothing, arg6=nothing)
-	# FNAME_EXT hold the extension when not PS
-	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
+	if (finish) cmd = finish_PS(d, cmd, output, K, O)  end
 
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
 	global img_mem_layout = add_opt("", "", d, [:layout])
 
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
-			P = gmt(cmd[k], arg1, arg2)
+			P = gmt(cmd[k], args...)
 		end
 	else
-		P = gmt(cmd, arg1, arg2, arg3, arg4, arg5, arg6)
+		P = gmt(cmd, args...)
 	end
 
 	digests_legend_bag(d)			# Plot the legend if requested

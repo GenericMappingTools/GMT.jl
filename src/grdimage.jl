@@ -86,7 +86,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
 		cmd, K = finish_PS_nested(d, cmd, output, K, O, [:coast :colorbar :basemap])
 	end
-	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, arg1, arg2, arg3, arg4)
+	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, O, false, arg1, arg2, arg3, arg4)
 end
 
 # ---------------------------------------------------------------------------------------------------

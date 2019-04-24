@@ -63,8 +63,8 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
 
-	cmd = finish_PS(d, cmd, output, K, O)
-	return finish_PS_module(d, "psclip " * cmd, "", output, fname_ext, opt_T, K, arg1)
+	#cmd = finish_PS(d, cmd, output, K, O)
+	return finish_PS_module(d, "psclip " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

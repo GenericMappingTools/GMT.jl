@@ -302,7 +302,6 @@ function gmt(cmd::String, args...)
 	elseif (n_out == 3)
 		return out[1], out[2], out[3]
 	else
-		@warn("Case non-foreseen. More than 3 outputs?")
 		return out
 	end
 

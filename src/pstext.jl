@@ -102,8 +102,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= add_opt_pen(d, [:W :pen], "W")
 
-	cmd = finish_PS(d, cmd, output, K, O)
-	r = finish_PS_module(d, "pstext " * cmd, "", output, fname_ext, opt_T, K, arg1, arg2)
+	r = finish_PS_module(d, "pstext " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1, arg2)
 	gmt("destroy")
 	return r
 end
