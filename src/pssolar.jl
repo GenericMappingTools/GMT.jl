@@ -48,9 +48,9 @@ Parameters
 function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
-	N_args = isempty_(arg1) ? 0 : 1
+	N_args = (arg1 === nothing) ? 0 : 1
 
-	length(kwargs) == 0 && N_args == 0 && isempty(data) && return monolitic("pssolar", cmd0, arg1)
+	length(kwargs) == 0 && N_args == 0 && return monolitic("pssolar", cmd0, arg1)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
@@ -70,7 +70,7 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		output = "";    opt_extra = "-I"
 	end
 	cmd, K = finish_PS_nested(d, "pssolar " * cmd, output, K, O, [:coast])
-	return finish_PS_module(d, cmd, opt_extra, output, fname_ext, opt_T, K, arg1, arg2)
+	return finish_PS_module(d, cmd, opt_extra, output, fname_ext, opt_T, K, O, false, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

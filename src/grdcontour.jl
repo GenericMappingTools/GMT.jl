@@ -89,9 +89,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	
 	cmd = add_opt(cmd, 'A', d, [:A :annot], (disable=("-", nothing, 1), single=("+", nothing, 1),
 	                                         int="", interval="", labels=("", parse_quoted)) )
-
 	cmd = add_opt(cmd, 'G', d, [:G :labels], ("", helper_decorated))
-
 	cmd = add_opt(cmd, 'T', d, [:T :ticks], (local_high=("h", nothing, 1), local_low=("l", nothing, 1),
 	                                         labels="+l", closed="_+a", gap="+d") )
 
@@ -123,8 +121,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, "grdcontour " * cmd, "-D", output, fname_ext, opt_T, K, arg1, arg2)
+    return finish_PS_module(d, "grdcontour " * cmd, "-D", output, fname_ext, opt_T, K, O, true, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -90,8 +90,7 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd *= opt_pen(d, 'W', [:W :pen])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 
-	cmd = finish_PS(d, cmd, output, K, O)
-	return finish_PS_module(d, "pswiggle " * cmd, "", output, fname_ext, opt_T, K, arg1)
+	return finish_PS_module(d, "pswiggle " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

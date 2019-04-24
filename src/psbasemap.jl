@@ -62,9 +62,8 @@ function basemap(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 	cmd = parse_TdTmL(d, cmd)
 
-	cmd = finish_PS(d, cmd, output, K, O)
-    return finish_PS_module(d, "psbasemap " * cmd, "", output, fname_ext, opt_T, K, arg1)
-    end
+	return finish_PS_module(d, "psbasemap " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
+end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_TdTmL(d::Dict, cmd::String)
