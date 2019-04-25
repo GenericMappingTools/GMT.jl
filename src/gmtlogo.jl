@@ -41,9 +41,8 @@ function logo(cmd0::String=""; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("gmtlogo", cmd0, arg1)
 	d = KW(kwargs)
-	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
-	K, O = set_KO(first)		# Set the K O dance
 	cmd, = parse_R("", d, O)
 	cmd, = parse_J(cmd, d, "", true, O)
 

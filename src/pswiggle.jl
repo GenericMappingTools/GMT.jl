@@ -68,24 +68,18 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && return monolitic("pswiggle", cmd0, arg1)
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
-	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
-	cmd, opt_bi = parse_bi(cmd, d)
-	cmd, opt_di = parse_di(cmd, d)
-	cmd, opt_i  = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:e :f :g :p :t :yx :JZ :UVXY :params])
+	cmd = parse_common_opts(d, cmd, [:e :f :g :p :t :yx :F :JZ :UVXY :params])
 	cmd = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
-	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 
 	cmd = add_opt(cmd, "D", d, [:D :scale_bar],
         (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width="+w", justify="+j",
          label_left="_+al", labels="+l", label="+l", offset="+o"))
-	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
-	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 	cmd *= opt_pen(d, 'T', [:T :track])
 	cmd *= opt_pen(d, 'W', [:W :pen])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')

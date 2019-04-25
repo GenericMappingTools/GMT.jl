@@ -65,18 +65,13 @@ function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && !isa(arg1, GMTdataset) && return monolitic("gmtinfo", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd, opt_bi = parse_bi("", d)
-	cmd, opt_di = parse_di(cmd, d)
-	cmd, opt_i  = parse_i(cmd, d)
-	cmd = parse_common_opts(d, cmd, [:V_params :e :f :h :o :r :yx])
+	cmd = parse_common_opts(d, "", [:V_params :e :f :o :r :yx])
 	cmd = parse_these_opts(cmd, d, [[:A], [:C :per_column], [:D :center], [:E :get_record], [:F :counts],
 		[:I :report_region], [:L :common_limits], [:S :for_error_bars], [:T :nearest_multiple]])
 
 	# If file name sent in, read it.
-	cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ", opt_i, opt_bi, opt_di)
-
+	cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
 	(haskey(d, :Vd)) && println(@sprintf("\tgmtinfo %s", cmd))
-
 	return gmt("gmtinfo " * cmd, arg1)
 end
 

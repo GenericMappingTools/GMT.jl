@@ -38,23 +38,19 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("pslegend", cmd0, arg1)
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
-	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:p :t :JZ :UVXY :params])
+	cmd = parse_common_opts(d, cmd, [:F :p :t :JZ :UVXY :params])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R = read_data(d, cmd0, cmd, arg1, opt_R, "")
+	cmd, arg1, opt_R = read_data(d, cmd0, cmd, arg1, opt_R)
 
 	cmd = add_opt(cmd, 'D', d, [:D :pos :position :refpoint],
 				  (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width="+w",
 				   justify="+j", spacing="+l", offset="+o"))
 	cmd = add_opt(cmd, 'C', d, [:C :clearance])
-	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
-	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
-	#cmd = finish_PS(d, cmd, output, K, O)
 	r = finish_PS_module(d, "pslegend " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
 	gmt("destroy")
 	return r

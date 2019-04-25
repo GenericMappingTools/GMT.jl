@@ -73,19 +73,15 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("psmask", cmd0, arg1)
 	d = KW(kwargs)
-	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
-	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
-	cmd, opt_bi = parse_bi(cmd, d)
-	cmd, opt_di = parse_di(cmd, d)
-	cmd, opt_i  = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :e :p :r :t :yx :params])
 	cmd = parse_these_opts(cmd, d, [[:C :end_clip_path], [:D :dump], [:F :oriented_polygons], [:I :inc],
 				[:L :node_grid], [:N :invert], [:Q :cut_number], [:S :search_radius], [:T :tiles]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 

@@ -91,20 +91,16 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_args = (arg1 === nothing) ? 0 : 1
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
-	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd, opt_bi = parse_bi(cmd, d)
-	cmd, opt_di = parse_di(cmd, d)
-	cmd, opt_i = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:UVXY :bo :d :do :e :p :t :yx :params])
 	cmd = parse_these_opts(cmd, d, [[:D :dump], [:I :colorize], [:L :mesh], [:N :no_clip],
 				[:Q :cut], [:S :skip], [:T :ticks], [:W :pen]])
 	cmd = add_opt(cmd, 'G', d, [:G :labels], ("", helper_decorated))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
-	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
 	cmd = add_opt(cmd, 'A', d, [:A :annot])

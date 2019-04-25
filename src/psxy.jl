@@ -34,7 +34,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	if (!occursin("-J", cmd))			# bar, bar3 and others may send in a -J
 		opt_J = " -JX" * def_fig_size
@@ -51,13 +51,8 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		opt_J = ""
 	end
 
-	K, O = set_KO(first)				# Set the K O dance
-
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, opt_J)
 	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
-	cmd, opt_bi = parse_bi(cmd, d)
-	cmd, opt_di = parse_di(cmd, d)
-	cmd, opt_i  = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :p :t :yx :params])
 	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:F :conn :connection], [:I :intens], [:N :noclip :no_clip]])
 	if (is_ternary)  cmd = add_opt(cmd, 'M', d, [:M :no_plot])  end
@@ -65,7 +60,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
 	if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
-	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di, is3D)
+	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
 	
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd *= " -JZ6c"		# Default -JZ

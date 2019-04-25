@@ -431,6 +431,12 @@ function parse_BJR(d::Dict, cmd::String, caller, O, default, del=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_F(cmd::String, d::Dict)
+	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
+	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)
 	# Parse the global -U, -X, -Y options. Return CMD same as input if no option OPT in args
 	# ALIASES: [:X :x_off :x_offset] (same for Y) or [:U :time_stamp :stamp]
@@ -617,6 +623,7 @@ function parse_common_opts(d, cmd, opts)
 		elseif (opt == :t)  cmd, = parse_t(cmd, d)
 		elseif (opt == :yx) cmd, = parse_swap_xy(cmd, d)
 		elseif (opt == :R)  cmd, = parse_R(cmd, d)
+		elseif (opt == :F)  cmd  = parse_F(cmd, d)
 		elseif (opt == :J)  cmd, = parse_J(cmd, d)
 		elseif (opt == :JZ) cmd, = parse_JZ(cmd, d)
 		elseif (opt == :UVXY) cmd = parse_UVXY(cmd, d)
@@ -1718,7 +1725,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
-function fname_out(d::Dict)
+function fname_out(d::Dict, first::Bool)
 	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 	EXT = ""
 	if (haskey(d, :fmt))  out = string(d[:fmt])
@@ -1748,19 +1755,23 @@ function fname_out(d::Dict)
 		elseif (ext == "pdg")  opt_T = " -Tf -Qp";	out = template;	EXT = "pdf"
 		end
 	end
-	return out, opt_T, EXT
+	K, O = set_KO(first)		# Set the K O dance
+	return out, opt_T, EXT, K, O
 end
 
 # ---------------------------------------------------------------------------------------------------
-function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi="", opt_di="", is3D=false)
+function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", is3D=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
 	data_kw = nothing
-	if (haskey(d, :data))	data_kw = d[:data]	end
-	if (fname != "")	data_kw = fname		end
+	if (haskey(d, :data))  data_kw = d[:data]  end
+	if (fname != "")       data_kw = fname     end
 
-	lix, opt_h  = parse_h("", d)		# Experimentally, put the header test here
+	cmd, opt_i  = parse_i(cmd, d)		# If data is to be read as binary
+	cmd, opt_di = parse_di(cmd, d)		# If data missing data other than NaN
+	lixo, opt_h = parse_h("", d)		# Experimentally, put the header test here
 	if (isa(data_kw, String))
+		lixo, opt_bi = parse_bi("", d)	# See if user says file is binary
 		if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
 			data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * " " * data_kw)
 			if (opt_i != "")			# Remove the -i option from cmd. It has done its job
@@ -1775,7 +1786,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", opt_bi=
 	if (!isempty_(data_kw)) arg = data_kw  end		# Finaly move the data into ARG
 
 	if (opt_R == "" || opt_R[1] == '/')
-		info = gmt("gmtinfo -C" * opt_i * opt_h, arg)		# Here we are reading from an original GMTdataset or Array
+		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h, arg)		# Here we are reading from an original GMTdataset or Array
 		if (opt_R != "" && opt_R[1] == '/')	# Modify what will be reported as a -R string
 			# Example "/-0.1/0.1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
 			rs = split(opt_R, '/')

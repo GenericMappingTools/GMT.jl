@@ -151,6 +151,8 @@ if (got_it)					# Otherwise go straight to end
 	GMT.GMTdataset([0.0 0]);
 	GMT.GMTdataset([0.0 0], Array{String,1}());
 
+	@test_throws ErrorException("Memory layout option must have 3 characters and not 1") GMT.parse_mem_layouts("-%1")
+	@test_throws ErrorException("Memory layout option must have at least 2 chars and not 1") GMT.parse_mem_layouts("-&1")
 	@test_throws ErrorException("parse_arg_and_pen: Nonsense first argument") GMT.parse_arg_and_pen(([:a],0))
 	@test_throws ErrorException("GMT: No module by that name -- bla -- was found.") gmt("bla")
 	@test_throws ErrorException("grd_init: input (Int64) is not a GRID container type") GMT.grid_init(C_NULL,0,0)
