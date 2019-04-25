@@ -57,9 +57,8 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
-	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :f :n :p :t :params])
 	cmd = add_opt(cmd, 'S', d, [:S :smooth])

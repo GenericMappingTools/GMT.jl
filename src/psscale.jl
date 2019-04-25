@@ -61,11 +61,10 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && return monolitic("psscale", cmd0, arg1)
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
-	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, = parse_BJR(d, "", "", O, "")
-	cmd = parse_common_opts(d, cmd, [:UVXY :params :p :t])
+	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :p :t])
 	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
 	                                [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
 	cmd = add_opt(cmd, "D", d, [:D :pos :position],
@@ -79,8 +78,6 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
-	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 	cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
 
 	return finish_PS_module(d, "psscale " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)

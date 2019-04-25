@@ -59,9 +59,8 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	arg4 = nothing		# For the r,g,b + intensity case
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
-	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :f :n :p :t])
 	cmd = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G],

@@ -99,20 +99,16 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		return gmt("psrose " * cmd, arg1)
 	end
 
-	output, opt_T, fname_ext = fname_out(d)		# OUTPUT may have been an extension only
+	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
-	K, O = set_KO(first)		# Set the K O dance
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
 	if (GMTver < 6)  cmd = replace(cmd, opt_J => "")  end	# GMT5 doesn't accept a -J
-	cmd, opt_bi = parse_bi(cmd, d)
-	cmd, opt_di = parse_di(cmd, d)
-	cmd, opt_i  = parse_i(cmd, d)
 	cmd = parse_common_opts(d, cmd, [:UVXY :e :p :t :yx :params])
     cmd = parse_these_opts(cmd, d, [[:A :sector], [:D :shift], [:F :no_scale], [:L :labels], [:M],
                 [:Q :alpha], [:S :radius], [:T :orientation], [:Z :scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R, opt_i, opt_bi, opt_di)
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	if (isa(arg1, Array{GMT.GMTdataset,1}))  arg1 = arg1[1].data  end	# WHY I HAVE TO DO THIS?
 
 	if (GMTver >= 6)		# This changed letter between 5 and 6

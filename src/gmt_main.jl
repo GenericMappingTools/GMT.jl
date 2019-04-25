@@ -338,7 +338,7 @@ function parse_mem_layouts(cmd)
 	if ((ind = findfirst( "-%", cmd)) !== nothing)
 		img_mem_layout, resto = strtok(cmd[ind[1]+2:end])
 		if (length(img_mem_layout) < 3 || length(img_mem_layout) > 4)
-			error(@sprintf("GMT: Memory layout option must have 3 characters and not %s", img_mem_layout))
+			error(@sprintf("Memory layout option must have 3 characters and not %s", img_mem_layout))
 		end
 		cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 	end
@@ -346,7 +346,7 @@ function parse_mem_layouts(cmd)
 		if ((ind = findfirst( "-&", cmd)) !== nothing)
 			grd_mem_layout, resto = strtok(cmd[ind[1]+2:end])
 			if (length(img_mem_layout) < 2)
-				error(@sprintf("GMT: Memory layout option must have at least 2 chars and not %s", grd_mem_layout))
+				error(@sprintf("Memory layout option must have at least 2 chars and not %s", grd_mem_layout))
 			end
 			cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 		end
