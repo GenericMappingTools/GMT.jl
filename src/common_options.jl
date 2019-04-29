@@ -593,7 +593,12 @@ function parse_helper(cmd::String, d::Dict, symbs, opt::String)
 	# Helper function to the parse_?() global options. Isolate in a fun to not repeat over and over
 	opt_val = ""
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		opt_val = opt * arg2str(val)
+		#opt_val = opt * arg2str(val)
+		#cmd *= opt_val
+		opt_val = arg2str(val)
+		if (opt_val != "none")
+			opt_val = opt * opt_val
+		end
 		cmd *= opt_val
 	end
 	return cmd, opt_val
@@ -634,9 +639,14 @@ function parse_common_opts(d, cmd, opts, first=true)
 		end
 	end
 	if (opt_p !== nothing)		# Restrict the contents of this block to when -p was used
-		if     (opt_p != "")                         current_view = opt_p
-		elseif (!first && current_view !== nothing)  cmd *= current_view
-		elseif (first)                               current_view = nothing		# Ensure we start empty
+		if (opt_p != "")
+			if (opt_p == "none")  current_view = nothing
+			else                  current_view = opt_p
+			end
+		elseif (!first && current_view !== nothing)
+			cmd *= current_view
+		elseif (first)
+			current_view = nothing		# Ensure we start empty
 		end
 	end
 	return cmd
@@ -1100,6 +1110,7 @@ end
 function get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2=nothing, arg3=nothing, prog="")
 	# Get CPT either from keyword input of from current_cpt.
 	# Also puts -R in cmd when accessing grids from grdimage|view|contour, etc... (due to a GMT bug that doesn't do it)
+	# Used CMD0 = "" to use this function from within non-grd modules
 	global current_cpt
 	cpt_opt_T = ""
 	if (isa(arg1, GMTgrid))			# GMT bug, -R will not be stored in gmt.history

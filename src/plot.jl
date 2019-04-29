@@ -382,7 +382,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 
 	if (isa(arg1, GMTgrid))
 		if (haskey(d, :bar))
-			opt_S = GMT.parse_bar_cmd(d, :bar, "", "So")
+			opt_S = parse_bar_cmd(d, :bar, "", "So")
 		else
 			# 0.85 is the % of inc width of bars
 			opt_S = @sprintf(" -So%.8gu/%.8gu", arg1.inc[1]*0.85, arg1.inc[2]*0.85)
@@ -410,11 +410,14 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 	else
 		opt_S = parse_inc("", d, [:S :width], "So", true)
 		if (opt_S == "")
+			opt_S = parse_bar_cmd(d, :bar, "", "So", true)
+		end
+		if (opt_S == "")
 			if ((isa(arg1, Array) && size(arg1,2) < 5) || (isa(arg1, GMTdataset) && size(arg1.data,2) < 5))
 				error("BAR3: When NOT providing *width* data must contain at least 5 columns.")
 			end
 		end
-		if (opt_S != "" && !isletter(opt_S[end]))   opt_S = opt_S * 'u'  end
+		#if (opt_S != "" && !isletter(opt_S[end]))   opt_S = opt_S * 'u'  end
 		if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands])
 		elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands])
 		end
