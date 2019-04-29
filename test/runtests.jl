@@ -394,9 +394,9 @@ if (got_it)					# Otherwise go straight to end
 	grdvector(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
 	grdvector!(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), W="1p", S=12, Vd=:cmd)
 	r = grdvector!("",dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65), W="1p", S=12, Vd=:cmd);
-	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.65 -W1p -P")
+	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.65 -W1p")
 	r = grdvector!("", 1, 2, I=0.2, vec="0.25+e+n0.66", W=1, S=12, Vd=:cmd);
-	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.66 -W1 -P")
+	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.66 -W1")
 
 	# GRDVOLUME
 	grdvolume(G);
@@ -422,8 +422,8 @@ if (got_it)					# Otherwise go straight to end
 	grdview!("",G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
 	grdview!(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
 	grdview!(G, G=G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
-	r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), Vd=:cmd);
-	@test startswith(r, "grdview  -R -J -N-6+glightgray -Qsmred")
+	r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), view="120/30", Vd=:cmd);
+	@test startswith(r, "grdview  -R -J -p120/30 -N-6+glightgray -Qsmred")
 	@test_throws ErrorException("Wrong way of setting the drape (G) option.")  grdview(rand(16,16), G=(1,2))
 	if (GMTver >= 6)		# Crashes GMT5
 		I = mat2grid(rand(Float32,128,128))
@@ -433,8 +433,8 @@ if (got_it)					# Otherwise go straight to end
 	end
 
 	# GREENSPLINE
-	#d = [0 6.44; 1820 8.61; 2542 5.24; 2889 5.73; 3460 3.81; 4586 4.05; 6020 2.95; 6841 2.57; 7232 3.37; 10903 3.84; 11098 2.86; 11922 1.22; 12530 1.09; 14065 2.36; 14937 2.24; 16244 2.05; 17632 2.23; 19002 0.42; 20860 0.87; 22471 1.26];
-	#greenspline(d, R="-2000/25000", I=100, S=:l, D=0, Vd=:cmd)
+	d = [0 6.44; 1820 8.61; 2542 5.24; 2889 5.73; 3460 3.81; 4586 4.05; 6020 2.95; 6841 2.57; 7232 3.37; 10903 3.84; 11098 2.86; 11922 1.22; 12530 1.09; 14065 2.36; 14937 2.24; 16244 2.05; 17632 2.23; 19002 0.42; 20860 0.87; 22471 1.26];
+	greenspline(d, R="-2000/25000", I=100, S=:l, D=0, Vd=:cmd)
 
 	# IMSHOW
 	imshow(rand(128,128),show=false)
@@ -555,7 +555,7 @@ if (got_it)					# Otherwise go straight to end
 	bar3(rand(4,4), Vd=:cmd)
 	D = grd2xyz(G);
 	bar3(D, width=0.01, Nbands=3, Vd=:cmd)
-	@test_throws ErrorException("BAR3: When first arg is a name, must also state its type. e.g. grd=true or data=true") bar3("lixo.grd")
+	@test_throws ErrorException("BAR3: When first arg is a name, must also state its type. e.g. grd=true or dataset=true") bar3("lixo.grd")
 	gmtwrite("lixo.gmt", D)
 	@test_throws ErrorException("BAR3: When NOT providing *width* data must contain at least 5 columns.") bar3("lixo.gmt", dataset=true)
 
@@ -694,6 +694,9 @@ if (got_it)					# Otherwise go straight to end
 		"\tThere were a king with a large jaw and a queen with a plain face,"];
 	T = text_record(t,"> 3 5 18p 5i j");
 	pstext!(T, F="+f16p,Times-Roman,red+jTC", M=true)
+	pstext!(T, font=(16,"Times-Roman",:red), justify=:TC, M=true)
+	@test startswith(GMT.text([1 2 3; 4 5 6], Vd=:cmd), "pstext  -JX12c/0 -Baf -BWSen -R1/4/2/5")
+	@test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=:cmd)
 
 	# PSWIGGLE
 	t=[0 7; 1 8; 8 3; 10 7];

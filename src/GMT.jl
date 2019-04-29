@@ -22,7 +22,8 @@ end
 global legend_type = nothing
 global img_mem_layout = ""			# "TCP"	 For Images.jl. The default is "TRBa"
 global grd_mem_layout = ""			# "BRP" is the default for GMT PS images.
-global current_cpt = nothing		# To store the current palette
+global current_cpt  = nothing		# To store the current palette
+global current_view = nothing		# To store the current viewpoint (-p)
 const FMT = "ps"
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs

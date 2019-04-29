@@ -367,14 +367,14 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 
 	if (isa(arg1, Array))
 		ny, nx = size(arg1)
-		if ((nx > 3 && ny > 3))  arg1 = mat2grid(arg1)  end		# Assume it is a 'bare grid'
+		if ((nx >= 3 && ny > 3))  arg1 = mat2grid(arg1)  end		# Assume it is a 'bare grid'
 	elseif (cmd0 != "")
 		if ((val = find_in_dict(d, [:grd :grid])[1]) !== nothing)
 			arg1 = gmtread(cmd0, grd=true)
 		elseif ((val = find_in_dict(d, [:dataset :table])[1]) !== nothing)
-			arg1 = gmtread(cmd0, dataset=true)
+			arg1 = gmtread(cmd0, dataset=true);		arg1 = arg1[1]
 		else
-			error("BAR3: When first arg is a name, must also state its type. e.g. grd=true or data=true")
+			error("BAR3: When first arg is a name, must also state its type. e.g. grd=true or dataset=true")
 		end
 	end
 
@@ -408,13 +408,13 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		if (opt_base == "")  push!(d, :base => z_min)  end	# Make base = z_min
 		arg1 = gmt("grd2xyz", arg1)[1]			# Now arg1 is a GMTdataset
 	else
-		opt_S = parse_inc("", d, [:width], "So", true)
+		opt_S = parse_inc("", d, [:S :width], "So", true)
 		if (opt_S == "")
 			if ((isa(arg1, Array) && size(arg1,2) < 5) || (isa(arg1, GMTdataset) && size(arg1.data,2) < 5))
 				error("BAR3: When NOT providing *width* data must contain at least 5 columns.")
 			end
 		end
-		if (!isletter(opt_S[end]))   opt_S = opt_S * 'u'  end
+		if (opt_S != "" && !isletter(opt_S[end]))   opt_S = opt_S * 'u'  end
 		if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands])
 		elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands])
 		end

@@ -112,7 +112,6 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 	end
 	cmd = parse_common_opts(d, cmd, [:R :V_params :bi :di :e :f :h :i :o :r :yx])
 
-
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
 	if (occursin("-G", cmd))			# GMT API does not allow a -G from externals
 		cmd = replace(cmd, "-G" => "")

@@ -72,7 +72,7 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params])
 
-	# If file name sent in, read it and compute a tight -R if this was not provided 
+    # If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, " ")
 	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
 	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :force_rgb],

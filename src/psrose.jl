@@ -85,7 +85,7 @@ Parameters
 function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
-	N_args = isempty_(arg1) ? 0 : 1
+	N_args = (arg1 === nothing) ? 0 : 1
 
 	length(kwargs) == 0 && return monolitic("psrose", cmd0, arg1)
 
@@ -103,7 +103,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
 	if (GMTver < 6)  cmd = replace(cmd, opt_J => "")  end	# GMT5 doesn't accept a -J
-	cmd = parse_common_opts(d, cmd, [:UVXY :e :p :t :yx :params])
+	cmd = parse_common_opts(d, cmd, [:UVXY :e :p :t :yx :params], first)
     cmd = parse_these_opts(cmd, d, [[:A :sector], [:D :shift], [:F :no_scale], [:L :labels], [:M],
                 [:Q :alpha], [:S :radius], [:T :orientation], [:Z :scale]])
 
@@ -120,7 +120,6 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= opt_pen(d, 'W', [:W :pen])
 
-	#cmd = finish_PS(d, cmd, output, K, O)
 	return finish_PS_module(d, "psrose " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1, arg2)
 end
 

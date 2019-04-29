@@ -41,7 +41,9 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:F :p :t :JZ :UVXY :params])
+	cmd = parse_common_opts(d, cmd, [:p :t :JZ :UVXY :params], first)
+	cmd = parse_F(cmd, d)
+	#if (!first && current_view !== nothing && !occursin("-p", cmd))  cmd *= current_view  end
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R = read_data(d, cmd0, cmd, arg1, opt_R)

@@ -55,7 +55,7 @@ function basemap(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :bo :f :p :t :params])
+	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :bo :f :p :t :params], first)
 	cmd = parse_these_opts(cmd, d, [[:A :polygon], [:D :inset]])
 	cmd = parse_TdTmL(d, cmd)
 

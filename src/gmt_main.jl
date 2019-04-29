@@ -218,9 +218,7 @@ function gmt(cmd::String, args...)
 	X = GMT_Encode_Options(API, g_module, n_argin, pLL, n_items)	# This call also changes LL
 	n_items = unsafe_load(n_items)
 	if (X == NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
-		n_items = 0
-	elseif (X == NULL)
-		error("GMT: Failure to encode Julia command options")
+		(n_items > 65000) ? n_items = 0 : error("Failure to encode Julia command options") 
 	end
 
 	if (LL == NULL)		# The no-options case. Must get the LL that was created in GMT_Encode_Options
@@ -359,9 +357,6 @@ end
 function strtok(args, delim::String=" ")
 # A Matlab like strtok function
 	tok = "";	r = ""
-	#if (~isvalid(args))
-	#	return tok, r
-	#end
 
 	@label restart
 	ind = findfirst(delim, args)
@@ -1769,8 +1764,8 @@ function fakedata(sz...)
 		y[r,:] = 0.95 * vec(y[r-1,:]) + randn(size(y,2))
 	end
 	y
-  end
- 
+end
+
 # EDIPO SECTION
 # ---------------------------------------------------------------------------------------------------
 linspace(start, stop, length=100) = range(start, stop=stop, length=length)
