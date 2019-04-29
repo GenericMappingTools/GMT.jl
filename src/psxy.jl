@@ -80,6 +80,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	# Look for color request. Do it after error bars because they may add a column
 	len = length(cmd);	n_prev = N_args;
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1)
+	#cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, nothing, true, true, "", true)
 
 	# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
 	cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
@@ -364,11 +365,12 @@ function check_caller(d::Dict, cmd::String, opt_S::String, caller::String, O::Bo
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String)
+function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u=false)
 	# Deal with parsing the 'bar' & 'hbar' keywors of psxy. Also called by plot/bar3. For this
 	# later module if input is not a string or NamedTuple the scatter options must be processed in bar3().
 	# KEY is either :bar or :hbar
 	# OPTS is either "Sb", "SB" or "So"
+	# NO_U if true means to NO automatic adding of flag 'u'
 	opt =""
 	if (haskey(d, key))
 		if (isa(d[key], String))
@@ -381,11 +383,12 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String)
 	end
 
 	if (opt != "")				# Still need to finish parsing this
+		flag_u = no_u ? "" : 'u' 
 		if ((ind = findfirst("+", opt)) !== nothing)	# See if need to insert a 'u'
-			if (!isletter(opt[ind[1]-1]))  opt = opt[1:ind[1]-1] * 'u' * opt[ind[1]:end]  end
+			if (!isletter(opt[ind[1]-1]))  opt = opt[1:ind[1]-1] * flag_u * opt[ind[1]:end]  end
 		else
 			pb = (optS != "So") ? "+b0" : ""		# The default for bar3 (So) is set in the bar3() fun
-			if (!isletter(opt[end]))  opt *= 'u' * pb	# No base set so default to ...
+			if (!isletter(opt[end]))  opt *= flag_u * pb	# No base set so default to ...
 			else                      opt *= pb
 			end
 		end
