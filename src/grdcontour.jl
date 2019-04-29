@@ -83,19 +83,9 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t])
+	cmd = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t], first)
 	cmd = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
-	
-	cmd = add_opt(cmd, 'A', d, [:A :annot], (disable=("-", nothing, 1), single=("+", nothing, 1),
-	                                         int="", interval="", labels=("", parse_quoted)) )
-	cmd = add_opt(cmd, 'G', d, [:G :labels], ("", helper_decorated))
-	cmd = add_opt(cmd, 'T', d, [:T :ticks], (local_high=("h", nothing, 1), local_low=("l", nothing, 1),
-	                                         labels="+l", closed="_+a", gap="+d") )
-
-	# Only ONE of the two forms below should be used. Second one is when we want to destinguish -Wc & -Wa
-	cmd = add_opt(cmd, 'W', d, [:W :pen], (contour="_c", annot="_a", pen=("", add_opt_pen),
-	                                       colored="_+c", cline="_+cl", ctext="_+cf"))
-
+	cmd = parse_contour_AGTW(d::Dict, cmd::String)
 	cmd = add_opt(cmd, 'Z', d, [:Z :scale], (factor="+s", shift="+o", periodic="_+p"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)	# Find how data was transmitted
@@ -121,6 +111,21 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
     return finish_PS_module(d, "grdcontour " * cmd, "-D", output, fname_ext, opt_T, K, O, true, arg1, arg2)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_contour_AGTW(d::Dict, cmd::String)
+	# Common to both grd and ps contour
+	cmd = add_opt(cmd, 'A', d, [:A :annot], (disable=("-", nothing, 1), single=("+", nothing, 1),
+	                                         int="", interval="", labels=("", parse_quoted)) )
+	cmd = add_opt(cmd, 'G', d, [:G :labels], ("", helper_decorated))
+	cmd = add_opt(cmd, 'T', d, [:T :ticks], (local_high=("h", nothing, 1), local_low=("l", nothing, 1),
+	                                         labels="+l", closed="_+a", gap="+d") )
+
+	# Only ONE of the two forms below should be used. Second one is when we want to destinguish -Wc & -Wa
+	cmd = add_opt(cmd, 'W', d, [:W :pen], (contour="_c", annot="_a", pen=("", add_opt_pen),
+	                                       colored="_+c", cline="_+cl", ctext="_+cf"))
+
 end
 
 # ---------------------------------------------------------------------------------------------------

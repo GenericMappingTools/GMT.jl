@@ -56,13 +56,13 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
-	cmd = parse_common_opts(d, cmd, [:bo :h :o :p :t :UVXY :params])
+	cmd = parse_common_opts(d, cmd, [:bo :h :o :p :t :UVXY :params], first)
 	cmd = parse_these_opts(cmd, d, [[:C :format], [:M :dump], [:N :invert]])
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = add_opt(cmd, 'I', d, [:I :sun], (pos="",date="+d",TZ="+z"))
 	cmd = add_opt(cmd, 'T', d, [:T :terminators], (term="",date="+d",TZ="+z"))
-	cmd = cmd * opt_pen(d, 'W', [:W :pen])
+	cmd *= opt_pen(d, 'W', [:W :pen])
 
 	opt_extra = ""
 	if (occursin( "-I", cmd) || occursin("-I", cmd0))

@@ -60,7 +60,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :f :n :p :t :params])
+	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :f :n :p :t :params], first)
 	cmd = add_opt(cmd, 'S', d, [:S :smooth])
 	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)
 		cmd *= " -N" * parse_arg_and_pen(val, "+g", false)

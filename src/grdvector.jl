@@ -65,7 +65,7 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params])
+	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params], first)
 	cmd = parse_these_opts(cmd, d, [[:A :polar], [:I :inc], [:N :noclip :no_clip], [:S :scale],
 				[:T], [:Z :azimuth]])
 

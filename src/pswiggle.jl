@@ -71,7 +71,7 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
-	cmd = parse_common_opts(d, cmd, [:e :f :g :p :t :yx :F :JZ :UVXY :params])
+	cmd = parse_common_opts(d, cmd, [:e :f :g :p :t :yx :F :JZ :UVXY :params], first)
 	cmd = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
