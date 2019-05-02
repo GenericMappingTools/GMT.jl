@@ -64,14 +64,14 @@ function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :azim], [:C :upward], [:D :dfdz], [:E :radial_power], [:F :filter],
 				[:G :outgrid :table], [:I :integrate], [:N :inquire], [:S :scale]])
 
-	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, arg1, arg2)
+	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
 	if (!occursin(" -E", cmd))          # Simpler case
-		return common_grd(d, "grdfft " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
+		return common_grd(d, "grdfft " * cmd, arg1)		# Finish build cmd and run it
 	else
 		# Here several cases can happen: 1) arg1 only; 2) arg1 && arg2; 3) grid(s) provided via fname
 		if (isa(arg2, Array{<:Number}))  arg2 = mat2grid(arg2)  end
-		return common_grd(d, "grdfft " * cmd, got_fname, 2, arg1, arg2)
+		return common_grd(d, "grdfft " * cmd, arg1, arg2)
 	end
 end
 

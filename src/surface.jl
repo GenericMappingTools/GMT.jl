@@ -79,7 +79,7 @@ function surface(cmd0::String="", arg1=nothing; kwargs...)
 				[:Ll :lower], [:Lu :upper], [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension],
 				[:Z :over_relaxation]])
 
-	common_grd(d, cmd0, cmd, "surface ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "surface ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

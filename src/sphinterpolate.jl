@@ -47,7 +47,7 @@ function sphinterpolate(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, "", [:R :V_params :bi :di :e :h :i :r :yx])
 	cmd = parse_these_opts(cmd, d, [[:G :outgrid], [:I :inc], [:Q :tension], [:T :nodetable], [:Z :scale]])
 
-	common_grd(d, cmd0, cmd, "sphinterpolate ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "sphinterpolate ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -76,7 +76,7 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 				[:F :force_polygons], [:I :intersections], [:N :in_polyg], [:Q :area_or_length],
 				[:S :polyg_process], [:T :truncate]])
 
-	common_grd(d, cmd0, cmd, "gmtspatial ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "gmtspatial ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

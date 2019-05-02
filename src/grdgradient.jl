@@ -49,7 +49,7 @@ function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:G :outgrid], [:E :lambert],
 				[:N :norm :normalize], [:S :slopegrid]])
 
-	common_grd(d, cmd0, cmd, "grdgradient ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdgradient ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

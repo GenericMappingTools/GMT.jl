@@ -63,7 +63,7 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:G :outgrid],
 				[:N :replace], [:S :wrap], [:T :toggle]])
 
-	common_grd(d, cmd0, cmd, "grdedit ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdedit ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -52,7 +52,7 @@ function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:C :center], [:D :inc], [:E :dpi], [:F :one2one],
 				[:G :outgrid], [:I :inverse], [:M :projected_unit]])
 
-	common_grd(d, cmd0, cmd, "grdproject ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdproject ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

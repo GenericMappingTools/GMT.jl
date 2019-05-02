@@ -76,7 +76,7 @@ function triangulate(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:C :slope_grid], [:D :derivatives], [:E :empty], [:G :grid :outgrid],
 				[:I :inc], [:M :network], [:N :ids], [:Q :voronoi], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])
 
-	common_grd(d, cmd0, cmd, "triangulate ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "triangulate ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -49,7 +49,7 @@ function trend1d(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:C :condition_number], [:I :confidence_level], [:F :output],
 				[:N :n_model], [:W :weights]])
 
-	common_grd(d, cmd0, cmd, "trend1d ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "trend1d ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

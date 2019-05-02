@@ -1825,7 +1825,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", is3D=fa
 		end
 	end
 
-	if (!isempty_(data_kw)) arg = data_kw  end		# Finaly move the data into ARG
+	if (data_kw !== nothing)  arg = data_kw  end		# Finaly move the data into ARG
 
 	if (opt_R == "" || opt_R[1] == '/')
 		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h, arg)		# Here we are reading from an original GMTdataset or Array
@@ -1905,7 +1905,7 @@ function round_wesn(wesn, geo::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing)
+function find_data(d::Dict, cmd0::String, cmd::String, args...)
 	# ...
 	got_fname = 0;		data_kw = nothing
 	if (haskey(d, :data))	data_kw = d[:data]	end
@@ -1915,21 +1915,22 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=
 	end
 
 	# Check if we need to save to file
-	if (haskey(d, :>))			cmd = string(cmd, " > ", d[:>])
-	elseif (haskey(d, :|>))		cmd = string(cmd, " > ", d[:|>])
-	elseif (haskey(d, :write))	cmd = string(cmd, " > ", d[:write])
-	elseif (haskey(d, :>>))		cmd = string(cmd, " > ", d[:>>])
-	elseif (haskey(d, :write_append))	cmd = string(cmd, " > ", d[:write_append])
+	if     (haskey(d, :>))      cmd = string(cmd, " > ", d[:>])
+	elseif (haskey(d, :|>))     cmd = string(cmd, " > ", d[:|>])
+	elseif (haskey(d, :write))  cmd = string(cmd, " > ", d[:write])
+	elseif (haskey(d, :>>))     cmd = string(cmd, " > ", d[:>>])
+	elseif (haskey(d, :write_append))  cmd = string(cmd, " > ", d[:write_append])
 	end
 
+	tipo = length(args)
 	if (tipo == 1)
 		# Accepts "input1"; arg1; data=input1;
-		if (got_fname != 0 || arg1 !== nothing)
-			return cmd, got_fname, arg1		# got_fname = 1 => data is in cmd;	got_fname = 0 => data is in arg1
+		if (got_fname != 0 || args[1] !== nothing)
+			return cmd, got_fname, args[1]		# got_fname = 1 => data is in cmd;	got_fname = 0 => data is in arg1
 		elseif (data_kw !== nothing)
 			if (isa(data_kw, String))
 				cmd = data_kw * " " * cmd
-				return cmd, 1, arg1			# got_fname = 1 => data is in cmd
+				return cmd, 1, args[1]			# got_fname = 1 => data is in cmd
 			else
 				return cmd, 0, data_kw 		# got_fname = 0 => data is in arg1
 			end
@@ -1939,20 +1940,20 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=
 	elseif (tipo == 2)			# Two inputs (but second can be optional in some modules)
 		# Accepts "input1 input2"; "input1", arg1; "input1", data=input2; arg1, arg2; data=(input1,input2)
 		if (got_fname != 0)
-			if (arg1 === nothing && data_kw === nothing)
-				return cmd, 1, arg1, arg2		# got_fname = 1 => all data is in cmd
-			elseif (arg1 !== nothing)
-				return cmd, 2, arg1, arg2		# got_fname = 2 => data is in cmd and arg1
+			if (args[1] === nothing && data_kw === nothing)
+				return cmd, 1, args[1], args[2]		# got_fname = 1 => all data is in cmd
+			elseif (args[1] !== nothing)
+				return cmd, 2, args[1], args[2]		# got_fname = 2 => data is in cmd and arg1
 			elseif (data_kw !== nothing && length(data_kw) == 1)
-				return cmd, 2, data_kw, arg2	# got_fname = 2 => data is in cmd and arg1
+				return cmd, 2, data_kw, args[2]	# got_fname = 2 => data is in cmd and arg1
 			end
 		else
-			if (arg1 !== nothing && arg2 !== nothing)
-				return cmd, 0, arg1, arg2				# got_fname = 0 => all data is in arg1,2
-			elseif (arg1 !== nothing && arg2 === nothing && data_kw === nothing)
-				return cmd, 0, arg1, arg2				# got_fname = 0 => all data is in arg1
-			elseif (arg1 !== nothing && arg2 === nothing && data_kw !== nothing && length(data_kw) == 1)
-				return cmd, 0, arg1, data_kw			# got_fname = 0 => all data is in arg1,2
+			if (args[1] !== nothing && args[2] !== nothing)
+				return cmd, 0, args[1], args[2]				# got_fname = 0 => all data is in arg1,2
+			elseif (args[1] !== nothing && args[2] === nothing && data_kw === nothing)
+				return cmd, 0, args[1], args[2]				# got_fname = 0 => all data is in arg1
+			elseif (args[1] !== nothing && args[2] === nothing && data_kw !== nothing && length(data_kw) == 1)
+				return cmd, 0, args[1], data_kw			# got_fname = 0 => all data is in arg1,2
 			elseif (data_kw !== nothing && length(data_kw) == 2)
 				return cmd, 0, data_kw[1], data_kw[2]	# got_fname = 0 => all data is in arg1,2
 			end
@@ -1961,14 +1962,14 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=
 	elseif (tipo == 3)			# Three inputs
 		# Accepts "input1 input2 input3"; arg1, arg2, arg3; data=(input1,input2,input3)
 		if (got_fname != 0)
-			if (arg1 === nothing && data_kw === nothing)
-				return cmd, 1, arg1, arg2, arg3			# got_fname = 1 => all data is in cmd
+			if (args[1] === nothing && data_kw === nothing)
+				return cmd, 1, args[1], args[2], args[3]			# got_fname = 1 => all data is in cmd
 			else
 				error("Cannot mix input as file names and numeric data.")
 			end
 		else
-			if (arg1 === nothing && arg2 === nothing && arg3 === nothing)
-				return cmd, 0, arg1, arg2, arg3			# got_fname = 0 => all data in arg1,2,3
+			if (args[1] === nothing && args[2] === nothing && args[3] === nothing)
+				return cmd, 0, args[1], args[2], args[3]			# got_fname = 0 => all data in arg1,2,3
 			elseif (data_kw !== nothing && length(data_kw) == 3)
 				return cmd, 0, data_kw[1], data_kw[2], data_kw[3]	# got_fname = 0 => all data in arg1,2,3
 			end
@@ -1977,29 +1978,26 @@ function find_data(d::Dict, cmd0::String, cmd::String, tipo, arg1=nothing, arg2=
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, tipo::Int, args...)
+function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, args...)
 	# TEMP function. To be merged with the other when I know that it works well
 	n_args = length(args)
 	if (n_args <= 1)
-		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, args...)
+		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, args...)
 		if (isa(arg1, Array{<:Number}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
-		common_grd(d, prog * cmd, 0, 1, arg1)
+		common_grd(d, prog * cmd, arg1)
 	elseif (n_args == 2)
-		cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, 2, args...)
+		cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, args...)
 		if (isa(arg1, Array{<:Number}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
-		common_grd(d, prog * cmd, 0, 2, arg1, arg2)
+		common_grd(d, prog * cmd, arg1, arg2)
 	end
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict, cmd::String, got_fname::Int, tipo::Int, args...)
+function common_grd(d::Dict, cmd::String, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
 	dbg_print_cmd(d, cmd)
-	if (tipo <= 2)				# One or two inputs
-		return gmt(cmd, args...)
-	else						# ARGS is a tuple(tuple) with all numeric inputs
-		return gmt(cmd, args[1]...)		# args[1] because args is a tuple(tuple)
-	end
+	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
+	isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
 end
 
 # ---------------------------------------------------------------------------------------------------

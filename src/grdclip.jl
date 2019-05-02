@@ -64,7 +64,7 @@ function grdclip(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = opt_S(d, cmd, [:old :new], 'r')
 	cmd = opt_S(d, cmd, [:between], 'i')
 
-	common_grd(d, cmd0, cmd, "grdclip ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdclip ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

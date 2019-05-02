@@ -41,7 +41,7 @@ function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:D :diff], [:N :model], [:T :trend]])
 	if (!occursin("-N", cmd))  error("The 'model' parameter is mandatory")  end
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	if (isa(arg1, Array{<:Number}))  arg1 = mat2grid(arg1)  end
 
 	if ((val = find_in_dict(d, [:W :weights])[1]) !== nothing)
@@ -59,7 +59,7 @@ function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 		cmd *= " -T" 			# No -T -or -D provided so default to -T
 	end
 
-	return common_grd(d, "grdtrend " * cmd, got_fname, 2, arg1, arg2)
+	return common_grd(d, "grdtrend " * cmd, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

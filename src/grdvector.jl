@@ -33,7 +33,7 @@ Parameters
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#q)
 - $(GMT.opt_P)
 - $(GMT.opt_R)
-- **S** : **scale** : -- Str or Number --		`Flags = [i|l]scale[unit]``
+- **S** : **vec_scale** : -- Str or Number --		`Flags = [i|l]scale[unit]``
 
     Sets scale for vector plot length in data units per plot distance measurement unit [1].
     [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#s)
@@ -66,10 +66,10 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params], first)
-	cmd = parse_these_opts(cmd, d, [[:A :polar], [:I :inc], [:N :noclip :no_clip], [:S :scale],
+	cmd = parse_these_opts(cmd, d, [[:A :polar], [:I :inc], [:N :noclip :no_clip], [:S :vec_scale],
 				[:T], [:Z :azimuth]])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)	# Find how data was transmitted
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 
 	N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)

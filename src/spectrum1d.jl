@@ -58,7 +58,7 @@ function spectrum1d(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:C :response_fun], [:D :sample_dist], [:L :leave_trend], [:N :time_col],
 				[:S :size], [:T], [:W :wavelength]])
 
-	common_grd(d, cmd0, cmd, "spectrum1d ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "spectrum1d ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

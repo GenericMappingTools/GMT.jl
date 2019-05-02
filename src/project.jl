@@ -76,11 +76,10 @@ function project(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :azim], [:C :origin], [:E :end_point], [:F :out_flags], [:G :no_input],
 				[:L :length_control], [:N :flat_earth], [:Q :units], [:S :sort], [:T :pole], [:W :width_control]])
 
-	got_fname = 0
 	if (!occursin("-G", cmd))
-		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	end
-	return common_grd(d, "project " * cmd, got_fname, 1, arg1)		# Finish build cmd and run it
+	common_grd(d, "project " * cmd, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

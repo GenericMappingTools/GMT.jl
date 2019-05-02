@@ -62,10 +62,10 @@ function grd2kml(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:E :url], [:F :filter], [:H :sub_pixel], [:L :tile_size],
 	                                [:N :prefix], [:Q :nan_t :nan_alpha], [:T :title]])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2)
     cmd, arg1, arg2, arg3 = common_shade(d, cmd, arg1, arg2, arg3, nothing, "grd2kml")
-	common_grd(d, "grd2kml " * cmd, got_fname, 2, arg1, arg2, arg3)		# Finish build cmd and run it
+	common_grd(d, "grd2kml " * cmd, arg1, arg2, arg3)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

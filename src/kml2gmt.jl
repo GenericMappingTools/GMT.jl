@@ -30,7 +30,7 @@ function kml2gmt(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, "", [:V_params :bo :do :yx])
 	cmd = parse_these_opts(cmd, d, [[:F :select], [:Z :altitudes], [:E :extended]])
 
-	common_grd(d, cmd0, cmd, "kml2gmt ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "kml2gmt ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

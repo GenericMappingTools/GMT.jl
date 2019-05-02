@@ -63,7 +63,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :interp_path], [:C :equi], [:D :dfile], [:E :by_coord],
 				[:N :no_skip], [:S :stack], [:T :radius], [:Z :z_only]])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 
 	if ((grid_tuple = find_in_dict(d, [:G :grid])[1]) !== nothing)
 		if (isa(grid_tuple, Tuple))
@@ -92,9 +92,9 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	if (isa(arg1, GMTgrid) || isa(arg2, GMTgrid) && !occursin("-G", cmd))  cmd = cmd * " -G"  end
 
 	if (isa(grid_tuple, Tuple))
-		return common_grd(d, "grdtrack " * cmd, got_fname, 3, (got_fname != 0) ? grid_tuple : tuple(arg1,grid_tuple...))
+		return common_grd(d, "grdtrack " * cmd, (got_fname != 0) ? grid_tuple : tuple(arg1,grid_tuple...))
 	else
-		return common_grd(d, "grdtrack " * cmd, got_fname, 2, arg1, arg2)
+		return common_grd(d, "grdtrack " * cmd, arg1, arg2)
 	end
 
 end

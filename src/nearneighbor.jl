@@ -59,7 +59,7 @@ function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
     cmd = parse_these_opts(cmd, d, [[:E :empty], [:G :outgrid], [:I :inc], [:N :ids],
                 [:S :search_radius], [:Z :weights]])
 
-	common_grd(d, cmd0, cmd, "nearneighbor ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "nearneighbor ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

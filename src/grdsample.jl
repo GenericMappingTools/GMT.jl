@@ -38,7 +38,7 @@ function grdsample(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, "", [:R :V_params :f :n :r :x])
 	cmd = parse_these_opts(cmd, d, [[:G :outgrid], [:I :inc], [:T :toggle]])
 
-	common_grd(d, cmd0, cmd, "grdsample ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdsample ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -46,7 +46,7 @@ function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :p :t :params], first)
 	cmd = parse_these_opts(cmd, d, [[:D :ref_point], [:G :bit_color], [:I :invert_1bit], [:M :monochrome]])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 
 	return finish_PS_module(d, "psimage " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
 end
