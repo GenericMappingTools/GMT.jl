@@ -48,7 +48,7 @@ function grdfilter(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:D :distflag :distance], [:F :filter], [:G :outgrid], [:I :inc],
 				[:N :nans], [:G :outgrid :table], [:T :toggle]])
 
-	common_grd(d, cmd0, cmd, "grdfilter ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdfilter ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

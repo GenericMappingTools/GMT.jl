@@ -72,6 +72,7 @@ function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
 
 	# If file name sent in, read it.
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
+	#cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 	(haskey(d, :Vd)) && println(@sprintf("\tgmtinfo %s", cmd))
 	gmt("gmtinfo " * cmd, arg1)
 end

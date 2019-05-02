@@ -47,7 +47,7 @@ function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :resamp], [:F :interp_type], [:N :time_col], [:T :equi_space]])
 
-	common_grd(d, cmd0, cmd, "sample1d ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "sample1d ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -78,7 +78,7 @@ function gmtselect(cmd0::String="", arg1=nothing; kwargs...)
     cmd = parse_these_opts(cmd, d, [[:A :area], [:C :point_file], [:D :res :resolution], [:E :boundary],
                 [:F :polygon], [:G :gridmask], [:I :reverse], [:L :dist2line], [:N :mask_geog], [:Z :in_range]])
 
-	common_grd(d, cmd0, cmd, "gmtselect ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "gmtselect ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

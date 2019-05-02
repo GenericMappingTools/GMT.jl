@@ -33,7 +33,7 @@ function gmtsimplify(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd = add_opt(cmd, 'T', d, [:T :tol :tolerance])
 
-	common_grd(d, cmd0, cmd, "gmtsimplify ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "gmtsimplify ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -36,5 +36,5 @@ function gmtwhich(cmd0::String; kwargs...)
 	cmd = parse_V_params("", d)
     cmd = parse_these_opts(cmd, d, [[:A :with_permissions], [:C :confirm], [:D :report_dir], [:G :download]])
 
-	common_grd(d, cmd0, cmd, "gmtwhich ", 1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "gmtwhich ", nothing)		# Finish build cmd and run it
 end

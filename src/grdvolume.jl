@@ -41,7 +41,7 @@ function grdvolume(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, "", [:R :V_params :f :o])
 	cmd = parse_these_opts(cmd, d, [[:C :contour], [:L :base_level], [:S :unit], [:T], [:Z :scale]])
 
-	common_grd(d, cmd0, cmd, "grdvolume ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdvolume ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

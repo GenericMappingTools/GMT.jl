@@ -55,7 +55,7 @@ function gmtvector(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :single_vec], [:C :cartesian], [:E :geod2geoc], [:N :normalize],
 				[:S :secondary_vec], [:T :transform]])
 
-	common_grd(d, cmd0, cmd, "gmtvector ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "gmtvector ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

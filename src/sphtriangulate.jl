@@ -53,7 +53,7 @@ function sphtriangulate(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :h :i :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :skip], [:L :unit], [:N], [:Q :voronoi], [:T]])
 
-	common_grd(d, cmd0, cmd, "sphtriangulate ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "sphtriangulate ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

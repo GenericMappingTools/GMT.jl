@@ -104,10 +104,10 @@ function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = add_opt(cmd, 'G', d, [:G :fill])
 	cmd *= add_opt_pen(d, [:W :pen], "W")
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1)
-	common_grd(d, "gmt2kml " * cmd, got_fname, 1, arg1, arg2)		# Finish build cmd and run it
+	common_grd(d, "gmt2kml " * cmd, arg1, arg2)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

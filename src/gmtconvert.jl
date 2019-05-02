@@ -89,7 +89,7 @@ function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 		[:I :invert], [:L :list_only], [:L :extended_data], [:N :sort], [:Q :select_num], [:S :select_hdr],
 		[:T :suppress], [:W :word2num], [:Z :range]])
 
-	common_grd(d, cmd0, cmd, "gmtconvert ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "gmtconvert ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

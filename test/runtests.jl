@@ -182,8 +182,7 @@ if (got_it)					# Otherwise go straight to end
 	D = blockmode(region=[0 2 0 2], inc=1,  reg=true, d);
 
 	# FILTER1D
-	raw = [collect((1.0:50)) rand(50)];
-	filter1d(raw, F="m15", Vd=1);
+	filter1d([collect((1.0:50)) rand(50)], F="m15", Vd=1);
 
 	# FITCIRCLE
 	d = [-3.2488 -1.2735; 7.46259 6.6050; 0.710402 3.0484; 6.6633 4.3121; 12.188 18.570; 8.807 14.397; 17.045 12.865; 19.688 30.128; 31.823 33.685; 39.410 32.460; 48.194 47.114; 62.446 46.528; 59.865 46.453; 68.739 50.164; 64.334 32.984];
@@ -385,7 +384,8 @@ if (got_it)					# Otherwise go straight to end
 	@assert(D[1].data == [0.0 0 1])
 	D = grdtrack(G, [0 0]);
 	D = grdtrack([0 0], G=G);
-	@assert(D[1].data == [0.0 0 1])
+	D = grdtrack([0 0], G=(G,G));
+	@assert(D[1].data == [0.0 0 1 1])
 
 	# GRDVECTOR
 	G = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL");

@@ -63,7 +63,7 @@ function regress(cmd0::String="", arg1=nothing; kwargs...)
     cmd = parse_these_opts(cmd, d, [[:A :all_slopes], [:C :confidence_level], [:E :regression_type], [:N :norm],
                 [:F :column_combination], [:S :restrict], [:T :equi_space], [:W :weighted]])
 
-	common_grd(d, cmd0, cmd, "gmtregress ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "gmtregress ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

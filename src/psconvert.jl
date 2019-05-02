@@ -126,7 +126,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	# In case DATA holds a file name, copy it into cmd.
 	if (cmd0 != "" || !isempty_(arg1))						# Data was passed as file name
-		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
+		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	end
 
 	if (isempty(cmd))          cmd = "-A1p -Tj -Qg4 -Qt4"  end 	# Means no options were used. Allowed case

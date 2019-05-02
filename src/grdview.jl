@@ -72,7 +72,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
 	cmd = add_opt(cmd, 'T', d, [:T :no_interp], (skip="_+s", outlines=("+o", add_opt_pen)) )
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)		# Find how data was transmitted
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 
 	if (isa(arg1, Array{<:Number}))  arg1 = mat2grid(arg1)  end
 

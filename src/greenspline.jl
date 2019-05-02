@@ -89,7 +89,7 @@ function greenspline(cmd0::String="", arg1=nothing; kwargs...)
 				[:G :grid], [:I :inc], [:L :leave_trend], [:N :nodes], [:Q :dir_derivative], [:S :splines],
 				[:T :mask], [:W :uncertainties]])
 
-	common_grd(d, cmd0, cmd, "greenspline ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "greenspline ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -88,7 +88,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_contour_AGTW(d::Dict, cmd::String)
 	cmd = add_opt(cmd, 'Z', d, [:Z :scale], (factor="+s", shift="+o", periodic="_+p"))
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, 1, arg1)	# Find how data was transmitted
+	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
 
 	#N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2

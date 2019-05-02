@@ -57,7 +57,7 @@ function sphdistance(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:C :save_mem], [:E :what_quantity], [:G :outgrid], [:I :inc],
 				[:L :dist_unit], [:N :nodetable], [:Q :voronoi_polyg]])
 
-	common_grd(d, cmd0, cmd, "sphdistance ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "sphdistance ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

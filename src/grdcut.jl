@@ -42,7 +42,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, "", [:R :J :V_params :f])
 	cmd = parse_these_opts(cmd, d, [[:G :outgrid], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
 
-	common_grd(d, cmd0, cmd, "grdcut ", 1, arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdcut ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
