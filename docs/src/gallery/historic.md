@@ -14,3 +14,11 @@
 | A geographical bar graph | A 3-D RGB color cube | Optimal triangulation of data |
 |:-------------:|:---------:|:-------------:|
 |[![](historic/figs/ex10.png)](historic/ex10.md) | [![](historic/figs/ex11.png)](historic/ex11.md) | [![](historic/figs/ex12.png)](historic/ex12.md) |
+
+| Plotting of vector fields | Gridding and trend surfaces | Gridding, contouring and masking |
+|:-------------:|:---------:|:-------------:|
+|[![](historic/figs/ex13.png)](historic/ex13.md) | [![](historic/figs/ex14.png)](historic/ex14.md) | [![](historic/figs/ex15.png)](historic/ex15.md) |
+
+| Gridding of data, continued | Images clipped by coastlines | Volumes and Spatial Selections |
+|:-------------:|:---------:|:-------------:|
+|[![](historic/figs/ex16.png)](historic/ex16.md) | [![](historic/figs/ex17.png)](historic/ex17.md) | [![](historic/figs/ex18.png)](historic/ex18.md) |

@@ -116,6 +116,13 @@ if (got_it)					# Otherwise go straight to end
 
 	@test_throws ErrorException("DECORATED: missing controlling algorithm to place the elements (dist, n_symbols, etc).") GMT.decorated(dista = 4)
 
+	@test GMT.helper_decorated(Dict(:line => [1 2 3 4; 5 6 7 8]), true) == "l1/2/3/4,5/6/7/8"
+	@test GMT.helper_decorated(Dict(:Line => "CT/CB"), true) == "LCT/CB"
+	@test GMT.helper_decorated(Dict(:Line => (1,2,"CB")), true) == "L1/2/CB"
+	@test GMT.helper_decorated(Dict(:N_labels => 5), true) == "N5"
+	@test_throws ErrorException("DECORATED: 'line' option. When array, it must be an Mx4 one") GMT.helper_decorated(Dict(:line => [1 2 3]), true)
+	@test_throws ErrorException("DECORATED: 'dist' (or 'distance') option. Unknown data type.") GMT.helper_decorated(Dict(:dist => (a=1,)))
+
 	@test GMT.font(("10p","Times", :red)) == "10p,Times,red"
 	r = text(text_record([0 0], "TopLeft"), R="1/10/1/10", J=:X10, F=(region_justify=:MC,font=("10p","Times", :red)), Vd=:cmd);
 	ind = findfirst("-F", r); @test GMT.strtok(r[ind[1]:end])[1] == "-F+cMC+f10p,Times,red"
@@ -231,6 +238,8 @@ if (got_it)					# Otherwise go straight to end
 
 	# GMTSELECT
 	gmtselect([2 2], R=(0,3,0,3));		# But is bugged when answer is []
+	gmtselect([1.0 2], C=([1 2],10));
+	#@test gmtselect([1 2], C=("aa",10), Vd=:cmd) == "gmtselect  -Caa+d10"
 
 	# GMTSET
 	gmtset(MAP_FRAME_WIDTH=0.2)

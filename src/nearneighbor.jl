@@ -55,8 +55,8 @@ function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("nearneighbor", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :n :r :yx])
-    cmd = parse_these_opts(cmd, d, [[:E :empty], [:G :outgrid], [:I :inc], [:N :ids],
+	cmd = parse_common_opts(d, "", [:R :I :V_params :bi :di :e :f :h :i :n :r :yx])
+    cmd = parse_these_opts(cmd, d, [[:E :empty], [:G :outgrid], [:N :ids],
                 [:S :search_radius], [:Z :weights]])
 
 	common_grd(d, cmd0, cmd, "nearneighbor ", arg1)		# Finish build cmd and run it

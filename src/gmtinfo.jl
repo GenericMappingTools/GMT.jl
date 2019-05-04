@@ -28,7 +28,7 @@ Parameters
 
     Returns the counts of various records depending on the appended mode.
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#f)
-- **I** : **report_region** : -- Number or Str --
+- **I** : **inc** : -- Number or Str --
 
     Report the min/max of the first n columns to the nearest multiple of the provided increments
     and output results in the form -Rw/e/s/n 
@@ -67,14 +67,16 @@ function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :e :f :o :r :yx])
 	cmd = parse_these_opts(cmd, d, [[:A], [:C :per_column], [:D :center], [:E :get_record], [:F :counts],
-		[:I :report_region], [:L :common_limits], [:S :for_error_bars]])
+		[:L :common_limits], [:S :for_error_bars]])
+    cmd = add_opt(cmd, 'I', d, [:I :inc],
+                  (exact=("e", nothing, 1), polyg=("b", nothing, 1), surface=("s", nothing, 1),
+                   fft=("d", nothing, 1), inc=("", arg2str, 2)), false, true)
     cmd = add_opt(cmd, 'T', d, [:T :nearest_multiple], (dz="", col="+c", column="+c"))
 
 	# If file name sent in, read it.
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
-	#cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
-	(haskey(d, :Vd)) && println(@sprintf("\tgmtinfo %s", cmd))
-	gmt("gmtinfo " * cmd, arg1)
+    (haskey(d, :Vd)) && println(@sprintf("\tgmtinfo %s", cmd))
+    isa(arg1, Tuple) ? gmt("gmtinfo " * cmd, arg1...) : gmt("gmtinfo " * cmd, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

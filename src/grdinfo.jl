@@ -30,12 +30,12 @@ Parameters
 
     Report stats after actually scanning the data.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#l)
-- **M** : **zmin_max** : -- Bool or [] --
+- **M** : **minmax_pos** : -- Bool or [] --
 
     Find and report the location of min/max z-values.
     [`-M`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#m)
 - $(GMT.opt_R)
-- **T** : **nan_t** : -- Number or Str --
+- **T** : **zmin_max** : -- Number or Str --
     Determine min and max z-value.
     [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#t)
 - $(GMT.opt_V)
@@ -48,7 +48,7 @@ function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f])
 	cmd = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:I :nearest_multiple],
-				[:L :force_scan], [:M :location], [:T :zmin_max]])
+				[:L :force_scan], [:M :minmax_pos], [:T :zmin_max]])
 
 	common_grd(d, cmd0, cmd, "grdinfo ", arg1)		# Finish build cmd and run it
 end
