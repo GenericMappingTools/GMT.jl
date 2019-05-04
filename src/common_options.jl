@@ -49,6 +49,7 @@ function build_opt_R(Val)		# Generic function that deals with all but NamedTuple
 		r = string(Val)
 		if     (r == "global")     return " -Rd"
 		elseif (r == "global360")  return " -Rg"
+		elseif (r == "same")       return " -R"
 		else                       return " -R" * r
 		end
 	elseif ((isa(Val, Array{<:Number}) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
@@ -331,7 +332,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	if (haskey(d, :xlabel))  t *= " x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\U00AF');   end
 	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\U00AF');   end
 	if (t != "")
-		if (opt_B == "")
+		if (opt_B == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis])[1] === nothing))
 			opt_B = def_fig_axes
 		else
 			if !( ((ind = findlast("-B",opt_B)) !== nothing || (ind = findlast(" ",opt_B)) !== nothing) &&
@@ -339,7 +340,6 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 				t = " " * t;		# Do not glue, for example, -Bg with :title
 			end
 		end
-		#opt_B = replace(opt_B, "-B" => "")	# Needed so that bellow titles with blanks don't get -B's
 		opt_B *= t;		extra_parse = true
 	end
 
@@ -356,31 +356,9 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 		k = 1;		r = opt_B;		found = false
 		while (r != "")
 			tok[k], r = GMT.strtok(r)
-			#=	Don't remember why I wrote this but it fails when both x&ylabel have two or more words
-			if (occursin(r"[WESNwesntlbu+g+o]", tok[k]) && !occursin("+t", tok[k]))		# If title here, forget about :title
-				if (haskey(d, :title) && isa(d[:title], String))
-					tok[k] = tok[k] * "+t\"" * d[:title] * "\""
-				end
-			elseif (occursin(r"[afgpsxyz+S+u]", tok[k]) && !occursin(r"[+l+L]", tok[k]))	# If label, forget about :x|y_label
-				if (haskey(d, :xlabel) && isa(d[:xlabel], String))  tok[k] = tok[k] * " -Bx+l\"" * d[:xlabel] * "\""  end
-				if (haskey(d, :ylabel) && isa(d[:ylabel], String))  tok[k] = tok[k] * " -By+l\"" * d[:ylabel] * "\""  end
-			end
-			=#
 			tok[k] = replace(tok[k], '\U00AF'=>' ')
-			if (!occursin("-B", tok[k]))
-				tok[k] = " -B" * tok[k] 				# Simple case, no quotes to break our heads
-				#=
-				if (!occursin('"', tok[k]))
-					tok[k] = " -B" * tok[k] 				# Simple case, no quotes to break our heads
-				else
-					if (!found)  tok[k] = " -B" * tok[k] 	# A title in quotes with spaces
-					else         tok[k] = " " * tok[k]
-					end
-					found = !found
-				end
-				=#
-			else
-				tok[k] = " " * tok[k]
+			if (!occursin("-B", tok[k]))  tok[k] = " -B" * tok[k] 	# Simple case, no quotes to break our heads
+			else                          tok[k] = " " * tok[k]
 			end
 			k = k + 1
 		end
@@ -631,6 +609,7 @@ function parse_common_opts(d, cmd, opts, first=true)
 		elseif (opt == :yx) cmd, = parse_swap_xy(cmd, d)
 		elseif (opt == :R)  cmd, = parse_R(cmd, d)
 		elseif (opt == :F)  cmd  = parse_F(cmd, d)
+		elseif (opt == :I)  cmd  = parse_inc(cmd, d, [:I :inc], 'I')
 		elseif (opt == :J)  cmd, = parse_J(cmd, d)
 		elseif (opt == :JZ) cmd, = parse_JZ(cmd, d)
 		elseif (opt == :UVXY) cmd = parse_UVXY(cmd, d)
@@ -1119,7 +1098,8 @@ function get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2=nothing, arg3=
 		info = grdinfo(cmd0 * " -C");	range = info[1].data
 	end
 	if (isa(arg1, GMTgrid) || cmd0 != "")
-		if (current_cpt === nothing)	# Then compute (later) a default cpt
+		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap])[1]) === nothing)
+			# If no cpt name sent in, then compute (later) a default cpt
 			cpt_opt_T = @sprintf(" -T%.14g/%.14g/128+n", range[5], range[6])
 		end
 		if (opt_R == "")
@@ -1685,23 +1665,28 @@ function helper_decorated(d::Dict, compose=false)
 			else                  cmd = string(val[1], '/', val[2])
 			end
 		else
-			error("DECORATED: the 'dist' (or 'distance') parameter is mandatory and must be either a string or a tuple.")
+			error("DECORATED: 'dist' (or 'distance') option. Unknown data type.")
 		end
 		if     (symb == :distmap)  optD = "D"		# Here we know that we are dealing with a -S~ for sure.
 		elseif (symb != :number && compose)  optD = "d"		# I feer the case :number is not parsed anywhere
 		end
 	end
 	if (cmd == "")
-		if ((val = find_in_dict(d, [:lines :Lines])[1]) !== nothing)
-			if (!isa(val, Array) && size(val,2) !=4)
-				@warn("DECORATED: lines option must be an Array Mx4. Ignoring this.")
-			else
-				# THIS s DOES NOT SEEM TO BE USED
-				opt = string(val)
-				s = string("+",opt[1], val[1,1],'/',val[1,2],'/',val[1,3],'/',val[1,4])
-				for k = 2:size(val,1)
-					s = string(s,',',val[k,1],'/',val[k,2],'/',val[k,3],'/',val[k,4])
+		val, symb = find_in_dict(d, [:line :Line])
+		flag = (symb == :line) ? 'l' : 'L'
+		if (val !== nothing)
+			if (isa(val, Array{<:Number}))
+				if (size(val,2) !=4)
+					error("DECORATED: 'line' option. When array, it must be an Mx4 one")
 				end
+				optD = string(flag,val[1,1],'/',val[1,2],'/',val[1,3],'/',val[1,4])
+				for k = 2:size(val,1)
+					optD = string(optD,',',val[k,1],'/',val[k,2],'/',val[k,3],'/',val[k,4])
+				end
+			elseif (isa(val, Tuple) || isa(val, String))
+				optD = flag * arg2str(val)
+			else
+				@warn("DECORATED: lines option. Unknown option data type. Ignoring this.")
 			end
 		end
 	end
@@ -1995,7 +1980,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
-	dbg_print_cmd(d, cmd)
+	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=:cmd cause this return
 	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
 	isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
 end
@@ -2004,8 +1989,7 @@ end
 function dbg_print_cmd(d::Dict, cmd)
 	# Print the gmt command when the Vd=1 kwarg was used
 	if (haskey(d, :Vd))
-		#if (isa(cmd, Array{String, 1}))  cmd = cmd[1]  end
-		if (d[:Vd] == :cmd)		# For testing puposes, return the GMT command
+		if (d[:Vd] == :cmd || d[:Vd] == 2)		# For testing puposes, return the GMT command
 			return cmd
 		else
 			println(@sprintf("\t%s", cmd))

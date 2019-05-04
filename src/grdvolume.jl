@@ -8,7 +8,7 @@ Full option list at [`grdvolume`](http://gmt.soest.hawaii.edu/doc/latest/grdvolu
 Parameters
 ----------
 
-- **C** : **contour** : -- Str or List --   Flags = cval or low/high/delta or rlow/high or rcval
+- **C** : **cont** : **contour** : -- Str or List --   Flags = cval or low/high/delta or rlow/high or rcval
 
     Find area, volume and mean height (volume/area) inside the cval contour.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdvolume.html#c)
@@ -39,7 +39,7 @@ function grdvolume(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f :o])
-	cmd = parse_these_opts(cmd, d, [[:C :contour], [:L :base_level], [:S :unit], [:T], [:Z :scale]])
+	cmd = parse_these_opts(cmd, d, [[:C :cont :contour], [:L :base_level], [:S :unit], [:T], [:Z :scale]])
 
 	common_grd(d, cmd0, cmd, "grdvolume ", arg1)		# Finish build cmd and run it
 end

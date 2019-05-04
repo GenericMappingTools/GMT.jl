@@ -129,8 +129,9 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 				marca *= arg2str(val);
 			end
 			opt_S = " -S" * marca
-		elseif (marca != "")			# User only selected a marker name but no size.
-			opt_S = " -S" * marca * "7p"
+		elseif (marca != "")		# User only selected a marker name but no size.
+			opt_S = " -S" * marca
+			if (!startswith(marca, "E") && marca != "w" && marca != "W")  opt_S *= "7p"  end
 		end
 	end
 
@@ -182,8 +183,8 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		cmd = finish_PS(d, cmd * opt_UVXY, output, K, O)
 	end
 
-	# Let matrices with more data columns, and for which no Color info was NOT set, plot multiple lines at once
-	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{Float64,2}) && size(arg1,2) > 2+is3D)
+	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
+	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{Float64,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1)
 		penC = "";		penS = "";	cycle=:cycle
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
 		if (opt_W != "")  penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))  end
@@ -296,21 +297,31 @@ function get_marker_name(d::Dict, symbs, is3D=false, del=false)
 		if (haskey(d, symb))
 			t = d[symb]
 			if (isa(t, Symbol))	t = string(t)	end
-			if     (t == "-" || t == "x-dash")   marca = "-"
-			elseif (t == "+" || t == "plus")     marca = "+"
-			elseif (t == "a" || t == "*" || t == "star")     marca = "a"
-			elseif (t == "c" || t == "circle")   marca = "c"
-			elseif (t == "d" || t == "diamond")  marca = "d"
-			elseif (t == "g" || t == "octagon")  marca = "g"
-			elseif (t == "h" || t == "hexagon")  marca = "h"
+			if     (t == "-" || t == "x-dash")    marca = "-"
+			elseif (t == "+" || t == "plus")      marca = "+"
+			elseif (t == "a" || t == "*" || t == "star")  marca = "a"
+			elseif (t == "c" || t == "circle")    marca = "c"
+			elseif (t == "C" || t == "Circle")    marca = "C"
+			elseif (t == "d" || t == "diamond")   marca = "d"
+			elseif (t == "e" || t == "ellipse")   marca = "e"
+			elseif (t == "E" || t == "E-")        marca = t
+			elseif (t == "g" || t == "octagon")   marca = "g"
+			elseif (t == "h" || t == "hexagon")   marca = "h"
 			elseif (t == "i" || t == "v" || t == "inverted_tri")  marca = "i"
+			elseif (t == "l" || t == "letter")    marca = "l"
+			elseif (t == "m" || t == "matang")    marca = "m"
+			elseif (t == "M")                     marca = "M"
 			elseif (t == "n" || t == "pentagon")  marca = "n"
-			elseif (t == "p" || t == "." || t == "point")     marca = "p"
-			elseif (t == "r" || t == "rectangle") marca = "r"
+			elseif (t == "p" || t == "." || t == "point")  marca = "p"
+			elseif (startswith(t, "r")) marca = "r"		# Works with "r" or "rect"
+			elseif (t == "R" || t == "roundrect") marca = "R"
 			elseif (t == "s" || t == "square")    marca = "s"
 			elseif (t == "t" || t == "^" || t == "triangle")  marca = "t"
+			elseif (t == "T" || t == "Triangle")  marca = "T"
 			elseif (t == "x" || t == "cross")     marca = "x"
 			elseif (is3D && (t == "u" || t == "cube"))  marca = "u"
+			elseif (t == "w" || t == "pie")       marca = "w"
+			elseif (startswith(t, "W"))           marca = t		# Works with "W" or "W+a"
 			elseif (t == "y" || t == "y-dash")    marca = "y"
 			end
 			if (del)  delete!(d, symb)  end

@@ -69,16 +69,28 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function gmtselect(cmd0::String="", arg1=nothing; kwargs...)
+function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1)
+	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
-    cmd = parse_these_opts(cmd, d, [[:A :area], [:C :point_file], [:D :res :resolution], [:E :boundary],
-                [:F :polygon], [:G :gridmask], [:I :reverse], [:L :dist2line], [:N :mask_geog], [:Z :in_range]])
+	cmd = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary], [:F :polygon],
+	                [:G :gridmask], [:I :reverse], [:L :dist2line], [:N :mask_geog], [:Z :in_range]])
+	if ((val = find_in_dict(d, [:C :dist])[1]) !== nothing)
+		# Accept (GMTdataset, dist); or (fname, dist); or 'fname' or full GMT syntax (string) 
+		if (isa(val, Tuple) && length(val) == 2)
+			if (isa(val[1], String) || isa(val[1], Symbol))
+				cmd = string(cmd, " -C", val[1], "+d", val[2])
+			else
+				cmd = string(cmd, " -C+d", val[2]);	arg2 = val[1]
+			end
+		elseif (isa(val, String) || isa(val, Symbol))
+			cmd *= " -C" * string(val)
+		end
+	end
 
-	common_grd(d, cmd0, cmd, "gmtselect ", arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "gmtselect ", arg1, arg2)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

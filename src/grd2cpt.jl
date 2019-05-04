@@ -93,8 +93,7 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1)
-	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
-	common_grd(d, "grd2cpt " * cmd, arg1, arg2)		# Finish build cmd and run it
+	global current_cpt = common_grd(d, "grd2cpt " * cmd, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

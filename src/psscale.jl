@@ -68,10 +68,10 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
 	                                [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
 	cmd = add_opt(cmd, "D", d, [:D :pos :position],
-        (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), length="+w", triangles="+e",
-         justify="+j", offset="+o", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n"))
+        (map=("g", nothing, 1), inside=("j", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), length="+w",
+         triangles="+e", justify="+j", offset="+o", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n"))
 
-	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
+    cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
 	if (!occursin("-C", cmd))	# If given no CPT, try to see if we have a current one stored in global
 		if ((global cpt = current_cpt) !== nothing)
 			cmd *= " -C";	arg1 = cpt
@@ -80,7 +80,9 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
 
-	return finish_PS_module(d, "psscale " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
+	r = finish_PS_module(d, "psscale " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
+    gmt("destroy")      # Probably because of the rasters in cpt
+    return r
 end
 
 # ---------------------------------------------------------------------------------------------------

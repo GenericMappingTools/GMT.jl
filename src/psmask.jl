@@ -10,8 +10,8 @@ Parameters
 
 - **I** : **inc** : -- Str or Number --
 
-    Set a fixed azimuth projection for masks [Default uses track azimuth, but see -A].
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#i)
+    Set the grid spacing.
+    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#I)
 - $(GMT.opt_R)
 
 - $(GMT.opt_B)
@@ -76,9 +76,9 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :e :p :r :t :yx :params], first)
-	cmd = parse_these_opts(cmd, d, [[:C :end_clip_path], [:D :dump], [:F :oriented_polygons], [:I :inc],
-				[:L :node_grid], [:N :invert], [:Q :cut_number], [:S :search_radius], [:T :tiles]])
+	cmd = parse_common_opts(d, cmd, [:I :UVXY :JZ :e :p :r :t :yx :params], first)
+	cmd = parse_these_opts(cmd, d, [[:C :end_clip_path], [:D :dump], [:F :oriented_polygons],
+	                [:L :node_grid], [:N :invert], [:Q :cut_number], [:S :search_radius], [:T :tiles]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)

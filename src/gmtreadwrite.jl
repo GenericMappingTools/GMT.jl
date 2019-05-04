@@ -10,20 +10,19 @@ Parameters
 Specify data type.  Choose among:
 - **grd** : **grid** : -- Any --
 
-    Tell the program to load a grid.
+    Load a grid.
 - **img** : **image** : -- Any --
 
-    Tell the program to load an image.
+    Load an image.
 - **cpt** : **cmap** : -- Any --
 
-    Tell the program to load a GMT color palette.
+    Load a GMT color palette.
 - **dataset** : **table** : -- Any --
 
-    Tell the program to load a dataset (a table of numbers).
+    Load a dataset (a table of numbers).
 - **ps** : -- Any --
 
-    Tell the program to load a PostScript file
-
+    Load a PostScript file
 - **gdal** : -- Any --
 
     Force reading the file via GDAL. Should only be used to read grids.

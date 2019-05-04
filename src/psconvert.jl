@@ -80,7 +80,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("psconvert", cmd0, arg1)
 
-	if (!isempty(cmd0)) && isempty_(arg1)  arg1 = cmd0  end
+	if (!isempty(cmd0)) && (arg1 === nothing)  arg1 = cmd0  end
 
 	d = KW(kwargs)
 	cmd = add_opt("", 'A', d, [:A :adjust :crop])
@@ -116,7 +116,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 	if (haskey(d, :kml))  cmd *= " -W+k" * d[:kml]  end
 
 	if (haskey(d, :in_memory))
-		if (!isempty_(arg1))
+		if (arg1 !== nothing)
 			@warn("The IN_MEMORY option is imcompatible with passing an input file name. Dropping this one.")
 			arg1 = nothing
 		else
@@ -125,18 +125,17 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 	end
 
 	# In case DATA holds a file name, copy it into cmd.
-	if (cmd0 != "" || !isempty_(arg1))						# Data was passed as file name
+	if (cmd0 != "" || arg1 !== nothing)						# Data was passed as file name
 		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	end
 
 	if (isempty(cmd))          cmd = "-A1p -Tj -Qg4 -Qt4"  end 	# Means no options were used. Allowed case
 	if (!occursin("-Q", cmd))  cmd = cmd * " -Qt4 -Qg4"    end	# We promised to have these as default
 
-	is_struct_PS = false
-	if (isa(arg1, GMTps))  is_struct_PS = true  end
-	if (is_struct_PS)  return gmt("psconvert " * cmd, arg1)
-	else               return gmt("psconvert " * cmd)
-	end
+	#if (isa(arg1, GMTps))  return gmt("psconvert " * cmd, arg1)
+	#else                   return gmt("psconvert " * cmd)
+	#end
+	gmt("psconvert " * cmd, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

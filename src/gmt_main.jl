@@ -160,9 +160,7 @@ function gmt(cmd::String, args...)
 	end
 	#=
 	if ((g_module == "psconvert" || g_module == "grdimage") && occursin("-%", r))	# It has also a mem layout request
-@show(img_mem_layout)
 		r, img_mem_layout, grd_mem_layout = parse_mem_layouts(r)
-@show(img_mem_layout)
 		if (g_module == "grdimage" && img_mem_layout != "")
 			mem_layout = length(img_mem_layout) == 3 ? img_mem_layout * "a" : img_mem_layout
 			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);		# Tell grdimage to give us the image with this mem layout

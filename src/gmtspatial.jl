@@ -40,7 +40,7 @@ Parameters
     Determine if one (or all, with +a) points of each feature in the input data are inside any of
     the polygons given in the pfile.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/gmtspatial.html#n)
-- **Q** : **area_or_length** : -- Str --      Flags = [[-|+]unit][+cmin[/max]][+h][+l][+p][+s[a|d]]
+- **Q** : **area** or **length** : -- Str --      Flags = [[-|+]unit][+cmin[/max]][+h][+l][+p][+s[a|d]]
 
     Measure the area of all polygons or length of line segments.
     [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/gmtspatial.html#q)
@@ -73,7 +73,7 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :nn :nearest_neighbor], [:C :clip], [:D :duplicates], [:E :handedness],
-				[:F :force_polygons], [:I :intersections], [:N :in_polyg], [:Q :area_or_length],
+				[:F :force_polygons], [:I :intersections], [:N :in_polyg], [:Q :area :length],
 				[:S :polyg_process], [:T :truncate]])
 
 	common_grd(d, cmd0, cmd, "gmtspatial ", arg1)		# Finish build cmd and run it
