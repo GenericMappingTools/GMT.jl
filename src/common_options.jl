@@ -1708,7 +1708,7 @@ function helper_decorated(d::Dict, compose=false)
 end
 
 # -------------------------------------------------
-parse_quoted(nt::NamedTuple) = parse_quoted(;nt...)
+#parse_quoted(nt::NamedTuple) = parse_quoted(;nt...)
 function parse_quoted(d::Dict, opt)
 	# This function is isolated from () above to allow calling it seperately from grdcontour
 	# In fact both -A and -G grdcontour options are almost equal to a decorated line in psxy.

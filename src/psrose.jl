@@ -95,7 +95,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt("", 'I', d, [:I :inquire])
 	if (cmd != "")
 		cmd = add_opt(cmd, 'A', d, [:A :sector])
-        if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
+		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 		return gmt("psrose " * cmd, arg1)
 	end
 

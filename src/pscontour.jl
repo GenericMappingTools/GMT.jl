@@ -104,12 +104,11 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	if ((val = find_in_dict(d, [:E :index])[1]) !== nothing)
-		if (isa(val, Array{Int}))
-			cmd *= " -E"
-			# Now need to find the free slot where to store the indices array
+		cmd *= " -E"
+		if (isa(val, Array{Int}))   # Now need to find the free slot where to store the indices array
 			(N_used == 0) ? arg1 = val : (N_used == 1 ? arg2 = val : arg3 = val)
 		else
-			cmd = string(cmd, " -E", arg2str(val))
+			cmd *= arg2str(val)
 		end
 	end
 

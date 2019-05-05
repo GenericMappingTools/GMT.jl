@@ -80,9 +80,9 @@ function opt_S(d::Dict, cmd::String, symbs, flag::Char)
 			cmd *= val
 		elseif (isa(val, Array) || isa(val, Tuple))
 			if (symb == :between && length(val) == 3)
-				cmd = @sprintf("%s%.12g/%.12g/%.12g", cmd, val[1], val[2], val[3])
+				cmd = @sprintf("%s%.16g/%.16g/%.16g", cmd, val[1], val[2], val[3])
 			elseif (length(val) == 2)
-				cmd = @sprintf("%s%.12g/%.12g", cmd, val[1], val[2])
+				cmd = @sprintf("%s%.16g/%.16g", cmd, val[1], val[2])
 			else
 				error("Wrong number of elements in S option")
 			end
