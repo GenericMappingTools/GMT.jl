@@ -28,7 +28,7 @@ Parameters
 
     Alter the way points are connected (by specifying a scheme) and data are grouped (by specifying a method).
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/gmtconvert.html#f)
-- **I** : **invert** : -- Str or [] --      ``Flags = [tsr]``
+- **I** : **invert** : **reverse** : -- Str or Bool --      ``Flags = [tsr]``
 
     Invert the order of items, i.e., output the items in reverse order, starting with the last
     and ending up with the first item.
@@ -86,7 +86,7 @@ function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :s :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :h_cat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
-		[:I :invert], [:L :list_only], [:L :extended_data], [:N :sort], [:Q :select_num], [:S :select_hdr],
+		[:I :invert :reverse], [:L :list_only], [:L :extended_data], [:N :sort], [:Q :select_num], [:S :select_hdr],
 		[:T :suppress], [:W :word2num], [:Z :range]])
 
 	common_grd(d, cmd0, cmd, "gmtconvert ", arg1)		# Finish build cmd and run it

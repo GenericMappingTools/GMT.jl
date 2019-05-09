@@ -22,3 +22,7 @@
 | Gridding of data, continued | Images clipped by coastlines | Volumes and Spatial Selections |
 |:-------------:|:---------:|:-------------:|
 |[![](historic/figs/ex16.png)](historic/ex16.md) | [![](historic/figs/ex17.png)](historic/ex17.md) | [![](historic/figs/ex18.png)](historic/ex18.md) |
+
+| Color patterns on maps | Custom plot symbols | ime-series of RedHat stock price |
+|:-------------:|:---------:|:-------------:|
+|[![](historic/figs/ex19.png)](historic/ex19.md) | [![](historic/figs/ex20.png)](historic/ex20.md) | [![](historic/figs/ex21.png)](historic/ex21.md) |

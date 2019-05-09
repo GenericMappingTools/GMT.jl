@@ -760,7 +760,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# SPHDISTANCE  (would fail with: Could not obtain node-information from the segment headers)
 	G = sphdistance(R="0/10/0/10", I=0.1, Q=D, L=:k, Vd=2);	# But works with data from sph_3.sh test
-	@test sphdistance(R="0/10/0/10", I=0.1, Q="D", L=:k, Vd=2) == "sphdistance  -I0.1 -R0/10/0/10 -Lk -QD"
+	@test sphdistance(nothing, R="0/10/0/10", I=0.1, Q="D", L=:k, Vd=2) == "sphdistance  -I0.1 -R0/10/0/10 -Lk -QD"
 
 	# SURFACE
 	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);

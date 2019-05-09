@@ -89,7 +89,7 @@ Parameters
 """
 function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("pscoast", cmd0)
+	length(kwargs) == 0 && clip == nothing && return monolitic("pscoast", cmd0)
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
