@@ -137,7 +137,7 @@ if (got_it)					# Otherwise go straight to end
 
 	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
 	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",));
-	@test GMT.parse_B("", d)[1] == " -Bsxa5f1 -Bpyclixo.txt -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10"
+	@test GMT.parse_B("", d)[1] == " -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10 -Bpyclixo.txt -Bsxa5f1"
 	@test GMT.parse_B("",Dict(:B=>:same))[1] == " -B"
 	GMT.helper2_axes("lolo");
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
