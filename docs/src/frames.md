@@ -17,7 +17,7 @@ t = [-1.0 0 0 3.33
 arrows!(t, arrow=(length="5p",start=true,stop=true,angle=60), lw=0.5, fill=:black, noclip=true)
 
 T = text_record([-0.5 0.05; 0.375 0.05; 1.29166666 0.05], ["annotation", "frame", "grid"]);
-text!(T, text_attrib="+f9p+jCB", fmt=:png, show=true)
+text!(T, font=9, justify=:CB, fmt=:png, show=true)
 ```
 
 !["B_geo_1"](figures/B_geo_1.png)
@@ -39,13 +39,13 @@ t = [-1.875 0 0 0.33333
 plot!(t, symbol="v0.08+b+e+jc", lw=0.5, fill=:black, y_offset=-1, no_clip=true)
 T = text_record([-2.1 0.025; -1.875 0.05; -0.45833 0.05; 0.541666 0.05],
                 ["10p RM P:", "6p CB annotation", "6p CB frame", "6p CB grid"])
-text!(T, text_attrib="+f+j", no_clip=true)
+text!(T, attrib="+f+j", no_clip=true)
 t = [-1.5 0 0 1.33333; -0.25 0 0 0.66666; 0.625 0 0 0.33333]
 plot!(t, symbol="v0.08+b+e+jc", lw=0.5, fill=:black, y_offset=-0.6, no_clip=true)
 
 T = text_record([-2.1 0.025; -1.5  0.05; -0.25 0.05; 0.625 0.05],
                 ["10p RM S:", "9p CB annotation", "9p CB frame", "9p CB grid"])
-text!(T, text_attrib="+f+j", no_clip=true, fmt=:png, show=true)
+text!(T, attrib="+f+j", no_clip=true, fmt=:png, show=true)
 ```
 
 !["B_geo_2"](figures/B_geo_2.png)
@@ -67,7 +67,7 @@ basemap(basemap(region="0/12/0/1", proj="X12/1", axis=(frame="a4f2g1",
 t = [0 0 0 4.0; 6.0 0 0 2.0; 9.0 0 0 1.0];
 plot!(t, symbol="v2p+b+e+a60", lw=0.5, fill=:black, y_offset=0.25, no_clip=true)
 T = text_record([2 0.2; 7 0.2; 9.5 0.2], ["annotation", "frame", "grid"]);
-text!(T, text_attrib="+f9p+jCB", clearance="0.025/0.025", fill=:white, fmt=:png, show=true)
+text!(T, font=9, justify=:CB, clearance=(0.025,0.025), fill=:white, fmt=:png, show=true)
 ```
 
 !["B_linear"](figures/B_linear.png)
