@@ -43,7 +43,7 @@ one can simply do:
 
 or, more verbose but easier to read
 
-    coast(region=:global, proj=:Winkel, frame=:g, resolution=:crude, area=10000,
+    coast(region=:global, proj=:Winkel, frame=:g, area=10000,
           land=:burlywood4, water=:wheat1, figsize=12, show=true)
 
 instead of
