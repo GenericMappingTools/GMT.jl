@@ -341,7 +341,7 @@ function parse_mem_layouts(cmd)
 	if (isempty(img_mem_layout))				# Only if because we can't have a double request
 		if ((ind = findfirst( "-&", cmd)) !== nothing)
 			grd_mem_layout, resto = strtok(cmd[ind[1]+2:end])
-			if (length(img_mem_layout) < 2)
+			if (length(grd_mem_layout) < 2)
 				error(@sprintf("Memory layout option must have at least 2 chars and not %s", grd_mem_layout))
 			end
 			cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
@@ -869,7 +869,7 @@ function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN
 		                       C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 
-	if (isa(grd_box, GMTgrid))
+	if (isa(grd_box, GMTgrid) || isa(grd_box, Array{GMT.GMTgrid,1}))
 		return grid_init(API, module_input, grd_box, nothing, nothing)
 	else
 		error(@sprintf("grd_init: input (%s) is not a GRID container type", typeof(grd_box)))
@@ -880,6 +880,7 @@ end
 function grid_init(API::Ptr{Nothing}, module_input, Grid, grd, hdr, pad::Int=2)
 # We are given a Julia grid and can determine its size, etc.
 
+	if (isa(Grid, Array{GMT.GMTgrid,1}))  Grid = Grid[1]  end
 	if (isa(Grid, GMTgrid))
 		grd = Grid.z
 		hdr = [Grid.range; Grid.registration; Grid.inc]
@@ -927,8 +928,7 @@ function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_I
 	# ...
 	global img_mem_layout
 
-	vazio = isempty_(img_box)
-	if (vazio)			# Just tell image_init() to allocate an empty container
+	if (isempty_(img_box))			# Just tell image_init() to allocate an empty container
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_CREATE_MODE,
 		                    C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
