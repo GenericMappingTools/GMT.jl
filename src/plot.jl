@@ -97,7 +97,7 @@ Parameters
 """
 function plot(arg1; kw...)
 	if ( (isa(arg1, Vector) || isa(arg1, UnitRange)) ||
-		 (isa(arg1, Matrix) && ((size(arg1, 1) == 1) || (size(arg1, 2) == 1) && length(arg1) != 2)) )
+		 (isa(arg1, Matrix) && ((size(arg1,1) == 1 || size(arg1,2) == 1) && length(arg1) != 2)) )
 		arg1 = cat_1_arg(arg1)
 	end
 	common_plot_xyz("", arg1, "plot", true, false, kw...)

@@ -48,7 +48,7 @@ function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 		if (isa(val, String) || isa(val, Symbol))
 			cmd *= " -W" * arg2str(val)
 		else
-			if (isa(val, Tuple) && length(val) == 2 && (isa(val, GMTgrid) || isa(Array{GMT.GMTgrid,1})))
+			if (isa(val, Tuple) && length(val) == 2 && (isa(val, GMTgrid) || isa(val, Array{GMT.GMTgrid,1})))
 				val = val[1];	cmd *= "+s"
 			end
 			cmd, N_used = put_in_slot(cmd, val, 'W', [arg1, arg2])

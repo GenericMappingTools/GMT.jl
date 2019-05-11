@@ -967,15 +967,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 			else          cmd *= "1"	# "1" is itself the flag
 			end
 		elseif (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix
-			if (arg === nothing)
-				@warn(@sprintf("The key %s implies appending to input but the 'arg' variable is empty. Ignoring it.",key[k]))
-				continue
-			end
 			if (isa(nt[k], AbstractArray) || isa(nt[k], NTuple))
-				if (mod(length(arg), length(nt[k])) != 0)
-					@warn("The columns to be appended do not have the same number of rows as the input data. Ignoring it.")
-					continue
-				end
 				if (isa(nt[k], AbstractArray))  append!(arg, reshape(nt[k], :))
 				else                            append!(arg, reshape(collect(nt[k]), :))
 				end
