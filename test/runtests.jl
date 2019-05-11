@@ -507,6 +507,8 @@ if (got_it)					# Otherwise go straight to end
 	plot(1:2pi, rand(6), xaxis=(pi=(1,2),), Vd=:cmd)
 	plot(rand(10,4), leg=true)
 	plot([5 5], region=(0,10,0,10), frame=(annot=:a, ticks=:a, grid=5), figsize=10, symbol=:p, markerline=0.5, fill=:lightblue, E=(Y=[2 3 6 9],pen=1,cap="10p"), Vd=2);
+	plot(rand(10,4), S=:c, ms=0.2, markeredgecolor=:red, ml=2, Vd=2)
+	plot(rand(10,4), S=:c, ms=0.2, ml=2, W=1, Vd=2)
 	plot3d(rand(5,3), marker=:cube)
 	plot3d!(rand(5,3), marker=:cube, Vd=:cmd)
 	plot3d("", rand(5,3), Vd=:cmd)

@@ -89,10 +89,9 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :MarkerFaceColor :mc], 'G')		# Filling of symbols
 
 	# To track a still existing bug in sessions management at GMT lib level
+	got_pattern = false
 	if (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb))
 		got_pattern = true
-	else
-		got_pattern = false
 	end
 
 	if (is_ternary)			# Means we are in the psternary mode
@@ -184,7 +183,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
-	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{Number,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1)
+	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{<:Number,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1)
 		penC = "";		penS = "";	cycle=:cycle
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
 		if (opt_W != "")  penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))  end
