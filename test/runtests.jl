@@ -267,7 +267,6 @@ if (got_it)					# Otherwise go straight to end
 		@test(sum(G.z[:] - GG.z[:]) == 0)
 		gmtwrite("lixo.grd", rand(5,5), id=:cf)
 		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
-		gmt("write lixo.tif=gd:GTiff", mat2img(rand(UInt8,32,32,3)))
 		I = gmtread("lixo.tif", img=true, layout="TCP");
 		I = gmtread("lixo.tif", img=true, band=0);
 		I = gmtread("lixo.tif", img=true, band=[0 1 2]);
@@ -290,6 +289,8 @@ if (got_it)					# Otherwise go straight to end
 	gmtwrite("lixo.dat", D)
 	gmt("gmtwrite lixo.cpt", cpt)		# Same but tests other code chunk in gmt_main.jl
 	gmt("gmtwrite lixo.dat", D)
+	gmt("write lixo.tif=gd:GTiff", mat2img(rand(UInt8,32,32,3)))
+	gmt("grdinfo lixo.tif");
 	@test_throws ErrorException("First argument cannot be empty. It must contain the file name to write.") gmtwrite("",[1 2]);
 
 	@show("GMTVECTOR")
@@ -400,9 +401,10 @@ if (got_it)					# Otherwise go straight to end
 	# GRDTREND
 	G  = gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
 	G2 = grdtrend(G, model=3);
-	#W = mat2grid(ones(Float32, size(G.z,1), size(G.z,2)));
+	W = mat2grid(ones(Float32, size(G.z,1), size(G.z,2)));
 	G2 = grdtrend(G, model=3, diff=[], trend=true);
-	#G2 = grdtrend(G, model="3+r", W=true);	# GMT bug. grdtrend (api_import_grid): Could not find file ...
+	G2 = grdtrend(G, model="3+r", W=W);
+	G2 = grdtrend(G, model="3+r", W=(W,0), Vd=2);
 
 	# GRDTRACK
 	#G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
@@ -504,6 +506,7 @@ if (got_it)					# Otherwise go straight to end
 	plot(1:2pi, rand(6), xaxis=(pi=1,), Vd=:cmd)
 	plot(1:2pi, rand(6), xaxis=(pi=(1,2),), Vd=:cmd)
 	plot(rand(10,4), leg=true)
+	plot([5 5], region=(0,10,0,10), frame=(annot=:a, ticks=:a, grid=5), figsize=10, symbol=:p, markerline=0.5, fill=:lightblue, E=(Y=[2 3 6 9],pen=1,cap="10p"), Vd=2);
 	plot3d(rand(5,3), marker=:cube)
 	plot3d!(rand(5,3), marker=:cube, Vd=:cmd)
 	plot3d("", rand(5,3), Vd=:cmd)
@@ -642,7 +645,10 @@ if (got_it)					# Otherwise go straight to end
 	psconvert("lixo.ps", adjust=true, fmt="eps", C="-dDOINTERPOLATE")
 	psconvert("lixo.ps", adjust=true, fmt="eps", C=["-dDOINTERPOLATE" "-dDOINTERPOLATE"])
 	psconvert("lixo.ps", adjust=true, fmt="tif")
-	gmt("grdinfo lixo.tif");
+	psconvert("lixo.ps", adjust=true, Vd=2)
+	P = gmtread("lixo.ps", ps=true);
+	psconvert(P, adjust=true, in_memory=true, Vd=2)
+	gmt("write lixo.ps", P)		# Test also this case in gmt_main
 
 	@show("PSCOAST")
 	# PSCOAST

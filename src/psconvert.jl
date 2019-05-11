@@ -132,9 +132,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 	if (isempty(cmd))          cmd = "-A1p -Tj -Qg4 -Qt4"  end 	# Means no options were used. Allowed case
 	if (!occursin("-Q", cmd))  cmd = cmd * " -Qt4 -Qg4"    end	# We promised to have these as default
 
-	#if (isa(arg1, GMTps))  return gmt("psconvert " * cmd, arg1)
-	#else                   return gmt("psconvert " * cmd)
-	#end
+	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 	gmt("psconvert " * cmd, arg1)
 end
 
