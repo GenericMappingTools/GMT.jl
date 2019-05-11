@@ -27,7 +27,7 @@ and Cartesian data sets (including filtering, trend fitting, gridding, projectin
 PostScript illustrations ranging from simple x–y plots via contour maps to artificially illuminated
 surfaces and 3D perspective views.
 [This link](https://www.google.com/search?q=%22generic+mapping+tools%22+site%3Awikimedia.org&tbm=isch#imgrc=_)
-will take you to an impressive collection of figures made by **GMT**
+will take you to an impressive collection of figures made with **GMT**
 
 <img src="docs/src/figures/GMT_wikimeia.jpg" width="800" class="center"/>
 
