@@ -29,7 +29,7 @@ surfaces and 3D perspective views.
 [This link](https://www.google.com/search?q=%22generic+mapping+tools%22+site%3Awikimedia.org&tbm=isch#imgrc=_)
 will take you to an impressive collection of figures made by **GMT**
 
-<img src="docs/src/figures/GMT_wikimeia.jpg" width="700" class="center"/>
+<img src="docs/src/figures/GMT_wikimeia.jpg" width="800" class="center"/>
 
 This wrapper works with GMT5.3.1 and above and it is intended not only to access to **GMT** from
 within the Julia language but also to provide a more modern interface to the **GMT** modules.
