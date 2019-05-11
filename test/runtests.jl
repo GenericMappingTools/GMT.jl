@@ -165,6 +165,7 @@ if (got_it)					# Otherwise go straight to end
 
 	@test_throws ErrorException("Memory layout option must have 3 characters and not 1") GMT.parse_mem_layouts("-%1")
 	@test_throws ErrorException("Memory layout option must have at least 2 chars and not 1") GMT.parse_mem_layouts("-&1")
+	@test GMT.parse_mem_layouts("-&BR")[3] == "BR"
 	@test_throws ErrorException("parse_arg_and_pen: Nonsense first argument") GMT.parse_arg_and_pen(([:a],0))
 	@test_throws ErrorException("GMT: No module by that name -- bla -- was found.") gmt("bla")
 	@test_throws ErrorException("grd_init: input (Int64) is not a GRID container type") GMT.grid_init(C_NULL,0,0)
@@ -266,6 +267,7 @@ if (got_it)					# Otherwise go straight to end
 		@test(sum(G.z[:] - GG.z[:]) == 0)
 		gmtwrite("lixo.grd", rand(5,5), id=:cf)
 		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
+		gmt("write lixo.tif=gd:GTiff", mat2img(rand(UInt8,32,32,3)))
 		I = gmtread("lixo.tif", img=true, layout="TCP");
 		I = gmtread("lixo.tif", img=true, band=0);
 		I = gmtread("lixo.tif", img=true, band=[0 1 2]);
@@ -398,13 +400,17 @@ if (got_it)					# Otherwise go straight to end
 	# GRDTREND
 	G  = gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
 	G2 = grdtrend(G, model=3);
-	#w = mat2grid(ones(Float32, size(G.z,1), size(G.z,2)))
+	#W = mat2grid(ones(Float32, size(G.z,1), size(G.z,2)));
 	G2 = grdtrend(G, model=3, diff=[], trend=true);
 	#G2 = grdtrend(G, model="3+r", W=true);	# GMT bug. grdtrend (api_import_grid): Could not find file ...
 
 	# GRDTRACK
-	G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
+	#G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
+	G = gmt("grdmath -R-2/2/-2/2 -I1 1");
+	gmtwrite("lixo.grd", G)
 	D = grdtrack([0 0], G);
+	@assert(D[1].data == [0.0 0 1])
+	D = grdtrack([0 0], G="lixo.grd");
 	@assert(D[1].data == [0.0 0 1])
 	D = grdtrack(G, [0 0]);
 	D = grdtrack([0 0], G=G);
@@ -699,7 +705,7 @@ if (got_it)					# Otherwise go straight to end
 	rose!(data, yx=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
 	rose!("",data, yx=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
 	if (GMTver >= 6)
-		rose(data, yx=[], A=20, I=1, Vd=:cmd);		# Broken in GMT5`
+		rose(data, yx=[], A=20, I=1);		# Broken in GMT5`
 	end
 
 	@show("PSMASK")
@@ -874,7 +880,7 @@ if (got_it)					# Otherwise go straight to end
 	rm("gmt.conf")
 	rm("lixo.ps")
 	rm("lixo.png")
-	#rm("lixo.eps")
+	rm("lixo.eps")
 	rm("lixo.grd")
 	rm("lixo.tif")
 	rm("lixo.cpt")
