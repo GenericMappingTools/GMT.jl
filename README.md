@@ -52,9 +52,7 @@ instead of
 
 to show
 
-```@raw html
 <img src="docs/src/figures/mapproj/GMT_winkel.png" width="350" class="center"/>
-```
 
 Install
 =======
@@ -62,7 +60,7 @@ Install
     ]add GMT
 
 A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT** install the
-[GMT](http://gmt.soest.hawaii.edu) program. It's the user responsability to do that.
+[GMT](https://github.com/GenericMappingTools/gmt) program. It's the user responsability to do that.
 
   * Windows64
      1. It's better to install the [GMT6dev version](http://w3.ualg.pt/~jluis/mirone/downloads/gmt.html)
@@ -105,7 +103,7 @@ is most than wellcome.
 Documentation
 =============
 
-[Latest Docs](https://genericmappingtools.github.io/GMT.jl/latest)
+[Latest Docs](https://www.generic-mapping-tools.org/gmt/latest/)
 
 Examples
 ========
