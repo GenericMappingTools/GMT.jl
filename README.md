@@ -52,7 +52,7 @@ instead of
 
 to show
 
-```@raw htm
+```@raw html
 <img src="docs/src/figures/mapproj/GMT_winkel.png" width="350" class="center"/>
 ```
 
