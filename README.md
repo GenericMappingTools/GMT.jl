@@ -1,7 +1,7 @@
 GMT.jl
 ======
 
-Julia wrapper for the Generic Mapping Tools [GMT](http://gmt.soest.hawaii.edu)
+Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMappingTools/gmt)
 
 | **Documentation**                       | **Build Status (Julia 1.1)**              |
 |:---------------------------------------:|:-----------------------------------------:|
@@ -52,7 +52,9 @@ instead of
 
 to show
 
+```@raw htm
 <img src="docs/src/figures/mapproj/GMT_winkel.png" width="350" class="center"/>
+```
 
 Install
 =======
