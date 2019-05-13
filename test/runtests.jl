@@ -243,11 +243,12 @@ if (got_it)					# Otherwise go straight to end
 	d = [-300 -3500; -200 -800; 400 -780; 500 -3400; -300 -3500];
 	gmtspatial(d, C=true, R="0/100/-3100/-3000");
 
+	@show("GMTSELECT")
 	# GMTSELECT
 	gmtselect([2 2], R=(0,3,0,3));		# But is bugged when answer is []
 	gmtselect([1.0 2], C=([1 2],10));
 	@test gmtselect([1 2], C=("aa",10), Vd=2) == "gmtselect  -Caa+d10"
-	@test gmtselect([1 2], C=([1 2],10), Vd=2) == "gmtselect  -C+d10"
+	@test gmtselect([1 2], C=(pts=[1 2],dist=10), Vd=2) == "gmtselect  -C+d10"
 	@test gmtselect([1 2], C="aa+d0", Vd=2) == "gmtselect  -Caa+d0"
 
 	# GMTSET

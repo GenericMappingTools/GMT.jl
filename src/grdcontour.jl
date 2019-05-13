@@ -121,11 +121,8 @@ function parse_contour_AGTW(d::Dict, cmd::String)
 	cmd = add_opt(cmd, 'G', d, [:G :labels], ("", helper_decorated))
 	cmd = add_opt(cmd, 'T', d, [:T :ticks], (local_high=("h", nothing, 1), local_low=("l", nothing, 1),
 	                                         labels="+l", closed="_+a", gap="+d") )
-
-	# Only ONE of the two forms below should be used. Second one is when we want to destinguish -Wc & -Wa
 	cmd = add_opt(cmd, 'W', d, [:W :pen], (contour="_c", annot="_a", pen=("", add_opt_pen),
 	                                       colored="_+c", cline="_+cl", ctext="_+cf"))
-
 end
 
 # ---------------------------------------------------------------------------------------------------

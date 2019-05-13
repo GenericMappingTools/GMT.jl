@@ -23,6 +23,10 @@
 |:-------------:|:---------:|:-------------:|
 |[![](historic/figs/ex16.png)](historic/ex16.md) | [![](historic/figs/ex17.png)](historic/ex17.md) | [![](historic/figs/ex18.png)](historic/ex18.md) |
 
-| Color patterns on maps | Custom plot symbols | ime-series of RedHat stock price |
+| Color patterns on maps | Custom plot symbols | Time-series of RedHat stock price |
 |:-------------:|:---------:|:-------------:|
 |[![](historic/figs/ex19.png)](historic/ex19.md) | [![](historic/figs/ex20.png)](historic/ex20.md) | [![](historic/figs/ex21.png)](historic/ex21.md) |
+
+| World-wide seismicity | All great-circle paths lead to Rome | Geospatial data selection |
+|:-------------:|:---------:|:-------------:|
+|[![](historic/figs/ex22.png)](historic/ex22.md) | [![](historic/figs/ex23.png)](historic/ex23.md) | [![](historic/figs/ex24.png)](historic/ex24.md) |

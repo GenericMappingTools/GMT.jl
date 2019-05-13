@@ -88,7 +88,7 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 	end
 
 	if (haskey(d, :cptname))  cmd = cmd * " > " * d[:cptname]  end
-	(haskey(d, :Vd)) && println(@sprintf("\tmakecpt %s", cmd))
+	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
     global current_cpt = gmt("makecpt " * cmd, arg1)
 end
 

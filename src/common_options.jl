@@ -997,7 +997,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 					cmd = "g" * cmd
 				else
 					rs = split(cmd_hold[last], '/')
-					if (length(rs) !== 2)  error("Anchor point must be given as a pair of coordinates")  end
+					if (length(rs) != 2)  error("Anchor point must be given as a pair of coordinates")  end
 					x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
 					if (x <= 1.0 && y <= 1.0)  cmd = "n" * cmd  end		# Otherwise it's either a paper coord or error
 				end
@@ -1790,7 +1790,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", is3D=fa
 
 	cmd, opt_i  = parse_i(cmd, d)		# If data is to be read as binary
 	cmd, opt_di = parse_di(cmd, d)		# If data missing data other than NaN
-	lixo, opt_h = parse_h("", d)		# Experimentally, put the header test here
+	cmd, opt_h  = parse_h(cmd, d)
 	if (isa(data_kw, String))
 		if (opt_R == "")				# Then we must read the file to determine -R
 			lixo, opt_bi = parse_bi("", d)	# See if user says file is binary
@@ -1800,6 +1800,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", is3D=fa
 					cmd = replace(cmd, opt_i => "")
 					opt_i = ""
 				end
+				if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
 			else
 				data_kw = gmt("read -Td " * opt_bi * opt_di * opt_h * " " * data_kw)
 			end
@@ -1963,17 +1964,14 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, args...)
-	# TEMP function. To be merged with the other when I know that it works well
-	n_args = length(args)
-	if (n_args <= 1)
-		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, args...)
-		if (isa(arg1, Array{<:Number}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
-		common_grd(d, prog * cmd, arg1)
-	elseif (n_args == 2)
-		cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, args...)
-		if (isa(arg1, Array{<:Number}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
-		common_grd(d, prog * cmd, arg1, arg2)
+	n_args = 0
+	for k = 1:length(args) if (args[k] !== nothing)  n_args += 1  end  end	# Drop the nothings
+	if     (n_args <= 1)  cmd, got_fname, arg1 = find_data(d, cmd0, cmd, args[1])
+	elseif (n_args == 2)  cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, args[1], args[2])
+	elseif (n_args == 3)  cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, args[1], args[2], args[3])
 	end
+	if (arg1 !== nothing && isa(arg1, Array{<:Number}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
+	(n_args <= 1) ? common_grd(d, prog * cmd, arg1) : (n_args == 2) ? common_grd(d, prog * cmd, arg1, arg2) : common_grd(d, prog * cmd, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------
