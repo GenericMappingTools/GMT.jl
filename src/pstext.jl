@@ -81,7 +81,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("pstext", cmd0, arg1)
 
-	N_args = isempty_(arg1) ? 0 : 1
+	N_args = (arg1 === nothing) ? 0 : 1
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only

@@ -86,7 +86,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :MarkerFaceColor :mc], 'G')		# Filling of symbols
+	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :MarkerFaceColor :mc], 'G')	# Filling of symbols
 
 	# To track a still existing bug in sessions management at GMT lib level
 	got_pattern = false
@@ -130,7 +130,8 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			opt_S = " -S" * marca
 		elseif (marca != "")		# User only selected a marker name but no size.
 			opt_S = " -S" * marca
-			if (!startswith(marca, "E") && marca != "w" && marca != "W")  opt_S *= "7p"  end
+			# If data comes from a file, then no automatic symbol size is added
+			if (arg1 !== nothing && !isa(arg1, GMTcpt) && !startswith(marca, "E") && marca != "w" && marca != "W")  opt_S *= "7p"  end
 		end
 	end
 
@@ -208,7 +209,7 @@ end
 function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 
-	if (isempty_(arg1))  return cmd, arg1, arg2, N_args, false  end		# Just play safe
+	if (arg1 === nothing || isa(arg1, GMT.GMTcpt))  return cmd, arg1, arg2, N_args, false  end		# Just play safe
 
 	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
 	if (!(N_args > n_prev || len < length(cmd)) && mz === nothing)	# No color request, so return right away
@@ -303,7 +304,8 @@ function get_marker_name(d::Dict, symbs, is3D=false, del=false)
 			elseif (t == "C" || t == "Circle")    marca = "C"
 			elseif (t == "d" || t == "diamond")   marca = "d"
 			elseif (t == "e" || t == "ellipse")   marca = "e"
-			elseif (t == "E" || t == "E-")        marca = t
+			elseif (startswith(t, "E"))
+				t[end] == '-' ? marca = "E-" : marca = "E"
 			elseif (t == "g" || t == "octagon")   marca = "g"
 			elseif (t == "h" || t == "hexagon")   marca = "h"
 			elseif (t == "i" || t == "v" || t == "inverted_tri")  marca = "i"

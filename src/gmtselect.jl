@@ -14,7 +14,7 @@ Parameters
     Features with an area smaller than min_area in km^2 or of hierarchical level that is
     lower than min_level or higher than max_level will not be plotted.
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/gmtselect.html#a)
-- **C** : **point_file** : -- Str --   Flags = pointfile+ddist[unit]
+- **C** : **dist2pt** : -- Str --   Flags = pointfile+ddist[unit]
 
     Pass all records whose location is within dist of any of the points in the ASCII file pointfile.
     If dist is zero then the 3rd column of pointfile must have each point’s individual radius of influence.
@@ -48,7 +48,7 @@ Parameters
     Pass all records whose location is within dist of any of the line segments in the ASCII
     multiple-segment file linefile.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/gmtselect.html#l)
-- **N** : **mask_geog** : -- List or Str --     Flags = ocean/land/lake/island/pond or wet/dry
+- **N** : **mask** : -- List or Str --     Flags = ocean/land/lake/island/pond or wet/dry
 
     Pass all records whose location is inside specified geographical features.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/gmtselect.html#n)
@@ -69,28 +69,51 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
+function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1, arg2)
+	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1, arg2, arg3)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary], [:F :polygon],
-	                [:G :gridmask], [:I :reverse], [:L :dist2line], [:N :mask_geog], [:Z :in_range]])
-	if ((val = find_in_dict(d, [:C :dist])[1]) !== nothing)
-		# Accept (GMTdataset, dist); or (fname, dist); or 'fname' or full GMT syntax (string) 
-		if (isa(val, Tuple) && length(val) == 2)
+	                [:G :gridmask], [:I :reverse], [:N :mask], [:Z :in_range]])
+	#cmd = add_opt(cmd, 'N', d, [:N :mask], (ocean=("", arg2str, 1), land=("", arg2str, 2)) )
+
+	cmd, arg2 = dist2PtLine(d, cmd, 'C')
+	cmd, arg3 = dist2PtLine(d, cmd, 'L')
+	if (arg1 === nothing)  arg1 = arg2;  arg2 = arg3;  arg3 = nothing  end
+	if (arg2 === nothing && arg3 !== nothing)  arg2 = arg3  end
+
+	common_grd(d, cmd0, cmd, "gmtselect ", arg1, arg2, arg3)		# Finish build cmd and run it
+end
+
+function dist2PtLine(d, cmd, opt)
+	# Accept (GMTdataset[,dist [,whatever]]); or (fname[,dist [,whatever]]); or 'fname' or full GMT syntax (string)
+	# Accept dist2line|dist2pt(line=fname|dataset, pts=fname|datset [,dist=value [,ortho=whatever]])
+	arg = nothing
+	opt == 'C' ? symbs = [:C :dist2pt :dist] : symbs = [:L :dist2line]
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		cmd *= " -" * opt
+		if (isa(val, NamedTuple))
+			d = nt2dict(val)
+			if ((target = find_in_dict(d, [:line :pts])[1]) === nothing)  error(":line or :pts member cannot be missing")  end
+			dist = "+d0"		# The default when dist is not provided
+			if ((dist = find_in_dict(d, [:dist])[1]) !== nothing)  dist = "+d" * arg2str(dist)  end
+			(isa(target, String) || isa(target, String)) ? cmd *= target : arg = target
+			cmd *= dist
+			if (haskey(d, :ortho))  cmd *= "+p"  end
+		elseif (isa(val, Tuple))
 			if (isa(val[1], String) || isa(val[1], Symbol))
-				cmd = string(cmd, " -C", val[1], "+d", val[2])
+				cmd = string(cmd, val[1], "+d", val[2])
 			else
-				cmd = string(cmd, " -C+d", val[2]);	arg2 = val[1]
+				cmd = string(cmd, "+d", val[2]);	arg = val[1]
 			end
+			if (length(val) == 3)  cmd *= "+p"  end
 		elseif (isa(val, String) || isa(val, Symbol))
-			cmd *= " -C" * string(val)
+			cmd *= string(val)
 		end
 	end
-
-	common_grd(d, cmd0, cmd, "gmtselect ", arg1, arg2)		# Finish build cmd and run it
+	return cmd, arg
 end
 
 # ---------------------------------------------------------------------------------------------------
