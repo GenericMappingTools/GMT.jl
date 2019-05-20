@@ -54,7 +54,7 @@ the start point to the end point of a segment:
    Scales down vector attributes (pen thickness, head size) with decreasing length, where vector
    plot lengths shorter than norm will have their attributes scaled by length/norm. *xx* may be a number or a
    string (number&unit).
-- *oblique_pole=(plon,plat)* -- Specifies the oblique pole for the great or small circles.
+- *pole=(plon,plat)* -- Specifies the oblique pole for the great or small circles.
 - *pen=pen*\
    Sets the vector pen attributes. The *pen* value may contain any of valid ways of specifying pens.
    If pen has a leading '-' (and hence the *pen* value must be a string) then the head outline is not drawn.

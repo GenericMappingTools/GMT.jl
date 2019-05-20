@@ -88,6 +88,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:e :f :p :t :yx :JZ :UVXY :params], first)
+	cmd = auto_JZ(cmd)		# Add -JZ if perspective for the case -R.../z_min/z_max
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:L :list], [:M :paragraph],
 	                 [:N :noclip :no_clip], [:Q :change_case], [:T :text_box], [:Z :threeD]])
 	cmd = add_opt(cmd, 'C', d, [:C :clearance], (margin="#", round="_+tO", concave="_+tc", convex="_+tC"))
@@ -113,7 +114,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1)
 
-	cmd = add_opt(cmd, 'D', d, [:D :offset], (away=("j", nothing, 1), shift="", line="+v", pen=("",add_opt_pen)), true)
+	cmd = add_opt(cmd, 'D', d, [:D :offset], (away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)), true)
 	cmd = add_opt(cmd, 'F', d, [:F :attrib],
 		(angle="+a", font=("+f", font), justify="+j", region_justify="+c", header="+h", label="+l",
 		rec_number="+r", text="+t", zvalues="+z"), false, true)

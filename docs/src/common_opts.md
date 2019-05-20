@@ -4,16 +4,16 @@
 
 Set map Axes parameters. They are specified by a keyword and a named tuple (but see [1])
 
-    axis=(axes=..., corners=..., xlabel=..., ylabel=..., annot=..., etc)
+    frame=(axes=..., corners=..., xlabel=..., ylabel=..., annot=..., etc)
 
 or separated on a per axes basis by using specific *xaxis*, *yaxis* and *zaxis* that share the same syntax
-as the generic *axis* option. The *xaxis2* and *yaxis2* apply when dealing with secondary axes.
+as the generic *frame* option. The *xaxis2* and *yaxis2* apply when dealing with secondary axes.
 
 Before the rest, note that several modules have axes default settings (`scatter`, `bar`, etc...) but if
 no axes is desired, just use *axis=:none*. Also useful is the *axis=:same* to repeat the previously set
 (from another call) axis specification.
 
-By default, all 4 map boundaries (or plot axes) are plotted and annotated. To customize, use the *axes*
+By default, all 4 map boundaries (or plot axes) are plotted and two annotated. To customize, use the *axes*
 keyword that takes as value a tuple with a combination of words. Axes are named *left*, *bottom*, *right*,
 *top* and, for the 3D maps, *up*. Next we have three categories of axes: the *annotated and ticked*, the *ticked*
 and those with no annoations and no tick marks. We call them *full*, *ticks* and *bare* and combine with the axes
@@ -21,7 +21,8 @@ name using an underscore to glue them. Hence *left_full* means draw and annotate
 means draw only top axes. The full combination is *left|bottom|right|top|up_full|ticks|bare*. To not draw a
 boundary, simply omit the name of it in tuple. Note that the short one single char naming used by GMT is also
 valid. E.g. *axes=:WSn* will draw and annotate left and south boundaries and draw but no ticks or annotations
-the top boundary.
+the top boundary. Two special cases are provided by the *frame=:none* and *frame=:noannot* that do not plot
+any axes or just plot but do not annotate or tick them respectively.
 
 If a 3-D base map is selected with *view* and *J=:z*, by default a single vertical axes will be plotted at
 the most suitable map corner. Override the default by using the keyword *corners* and any combination of
@@ -166,7 +167,8 @@ The entire parameters collection is displayed in the following table
 
 | keyword       | value          | type            | meaning     |
 | ------------- |:--------------:|:---------------:| -----------:|
-| none          | true          | Bool          | Do not plot any axis |
+| frame         | true          | Str or Symb   | Do not plot any axis |
+| frame         | noannot|bare  | Str or Symb   | Plot axes but no annot |
 | axes          | left_full     | Str or Symb   | Annot and tick left axis |
 |               | left_ticks    | Str or Symb   | Tick left axis |
 |               | left_bare     | Str or Symb   | Just draw left axis |

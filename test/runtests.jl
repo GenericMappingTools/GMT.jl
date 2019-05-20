@@ -80,8 +80,8 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.get_color(((1,2,3),100)) == "1/2/3,100"
 	@test GMT.get_color(((0.1,0.2,0.3),)) == "26/51/77"
 	@test GMT.get_color([1 2 3]) == "1/2/3"
-	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/26/128,26/51/179"
-	@test GMT.get_color([1 2 3; 3 4 5; 6 7 8]) == "1/3/6,3/4/5,6/7/8"
+	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/128/204,26/51/179"
+	@test GMT.get_color([1 2 3; 3 4 5; 6 7 8]) == "1/2/3,3/4/5,6/7/8"
 	@test GMT.get_color(:red) == "red"
 	@test GMT.get_color((:red,:blue)) == "red,blue"
 	@test GMT.get_color((200,300)) == "200,300"
@@ -246,10 +246,11 @@ if (got_it)					# Otherwise go straight to end
 	@show("GMTSELECT")
 	# GMTSELECT
 	gmtselect([2 2], R=(0,3,0,3));		# But is bugged when answer is []
-	gmtselect([1.0 2], C=([1 2],10));
+	gmtselect([1.0 2], C=([1 2],10), Vd=1);
 	@test gmtselect([1 2], C=("aa",10), Vd=2) == "gmtselect  -Caa+d10"
 	@test gmtselect([1 2], C=(pts=[1 2],dist=10), Vd=2) == "gmtselect  -C+d10"
 	@test gmtselect([1 2], C="aa+d0", Vd=2) == "gmtselect  -Caa+d0"
+	@test gmtselect([1 2], C=(pts=[1 2],dist=10), L=(line=[1 2;3 4], dist=10), Vd=2) == "gmtselect  -C+d10 -L+d10"
 
 	# GMTSET
 	gmtset(MAP_FRAME_WIDTH=0.2)
@@ -490,6 +491,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# MAPPROJECT
 	mapproject([-10 40], J=:u29, C=true, F=true);
+	mapproject(region=(-15,35,30,48), proj=:merc, figsize=5, map_size=true);
 
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", xlabel="Spoons", ylabel="Forks", savefig="lixo")
@@ -572,7 +574,7 @@ if (got_it)					# Otherwise go straight to end
 	bar(rand(20),hbar="0.5c+b9",  Vd=:cmd)
 	bar(rand(10), xaxis=(custom=(pos=1:5,type="A"),), Vd=:cmd)
 	bar(rand(10), axis=(custom=(pos=1:5,label=[:a :b :c :d :e]),), Vd=:cmd)
-	@test_throws ErrorException("Number of labels in custom annotations must be the same as the 'pos' element") bar(rand(10), axis=(custom=(pos=1:5,label=[:a :b :c :d]),), Vd=:cmd)
+	@test_throws ErrorException("Number of labels in custom annotations must be the same as the 'pos' element") bar(rand(10), frame=(custom=(pos=1:5,label=[:a :b :c :d]),), axis=:noannot, Vd=:2)
 	bar((1,2,3), Vd=:cmd)
 	bar((1,2,3), (1,2,3), Vd=:cmd)
 	bar!((1,2,3), Vd=:cmd)
@@ -580,10 +582,9 @@ if (got_it)					# Otherwise go straight to end
 	bar([3 31], C=:lightblue, Vd=:cmd)
 	bar("", [3 31], C=:lightblue, Vd=:cmd)
 	bar!("", [3 31], C=:lightblue, Vd=:cmd)
-	men_means, men_std = (20, 35, 30, 35, 27), (2, 3, 4, 1, 2)
-	x = collect(1:length(men_means))
-	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue,
-	    limits=(0.5,5.5,0,40), axis=:none, error_bars=(y=men_std,), Vd=:cmd)
+	men_means, men_std = (20, 35, 30, 35, 27), (2, 3, 4, 1, 2);
+	x = collect(1:length(men_means));
+	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue, limits=(0.5,5.5,0,40), frame=:none, error_bars=(y=men_std,), Vd=2)
 
 	# BAR3
 	G = gmt("grdmath -R-15/15/-15/15 -I1 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
@@ -611,8 +612,8 @@ if (got_it)					# Otherwise go straight to end
 	@show("PSBASEMAP")
 	# PSBASEMAP
 	basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
-	basemap!(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth", Vd=:cmd)
-	basemap!("", region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth", Vd=:cmd)
+	basemap!(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth", Vd=2)
+	basemap!("", region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth", Vd=2)
 	basemap(region="416/542/0/6.2831852", proj="X-12/6.5",
 	axis=(axes=(:left_full, :bot_full), fill=:lightblue),
 	xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"),
@@ -620,21 +621,21 @@ if (got_it)					# Otherwise go straight to end
 					type_=["ig Devonian", "ig Silurian", "ig Ordovician", "ig Cambrian"]),),
 	yaxis=(custom=(pos=[0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852],
 				   type_=["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]),),
-	par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=:cmd)
-	r = basemap(rose=(anchor="10:35/0.7", width=1, fancy=2, offset=0.4), Vd=:cmd);
+	par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=2)
+	r = basemap(rose=(anchor="10:35/0.7", width=1, fancy=2, offset=0.4), Vd=2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdg10:35/0.7+w1+f2+o0.4")
-	r = basemap(rose=(anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=:cmd);
+	r = basemap(rose=(anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdn0.5/0.7+w1+f2+o0.4")
-	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=:cmd);
+	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdJTR+w1+f2+o0.4")
-	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=:cmd);
+	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdJTR+w1+f2+o0.4")
-	r = basemap(compass=(anchor=:TR, width=1, dec=-14, offset=0.4), Vd=:cmd);
+	r = basemap(compass=(anchor=:TR, width=1, dec=-14, offset=0.4), Vd=2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TmJTR+w1+d-14+o0.4")
-	r = basemap(L=(anchor=:TR, width=1, align=:top, fancy=0.4), Vd=:cmd);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -LJTR+at+f")
-	@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=:cmd), "psbasemap  -JX12c/0 -Bpa10+ap")
-	@test_throws ErrorException("slanted option: Only 'parallel' is allowed for the y-axis") basemap(yaxis=(slanted=:o,), Vd=:cmd)
+	r = basemap(L=(anchor=:TR, width=1, align=:top, fancy=0.4), Vd=2);
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -LJTR+w1+at+f")
+	@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=2), "psbasemap  -JX12c/0 -Bpa10+ap")
+	@test_throws ErrorException("slanted option: Only 'parallel' is allowed for the y-axis") basemap(yaxis=(slanted=:o,), Vd=2)
 
 	# PSCLIP
 	d = [0.2 0.2; 0.2 0.8; 0.8 0.8; 0.8 0.2; 0.2 0.2];
@@ -811,15 +812,19 @@ if (got_it)					# Otherwise go straight to end
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
 	G2 = G1;
 	G3 = G1 + G2;
+	G3 = G1 + 1
 	G3 = G1 - G2;
+	G3 = G1 - 1
 	G3 = G1 * G2;
+	G3 = G1 * 2
 	G3 = G1 / G2;
+	G3 = G1 / 2
 	G2 = GMT.mat2grid(rand(Float32,5,5))
 	@test_throws ErrorException("The HDR array must have 9 elements") mat2grid(rand(4,4), 0, [0. 1 0 1 0 1])
-	@test_throws ErrorException("The two grids have not the same size, so they cannot be added.") G1 + G2;
-	@test_throws ErrorException("The two grids have not the same size, so they cannot be subtracted.") G1 - G2;
-	@test_throws ErrorException("The two grids have not the same size, so they cannot be multiplied.") G1 * G2;
-	@test_throws ErrorException("The two grids have not the same size, so they cannot be divided.") G1 / G2;
+	@test_throws ErrorException("Grids have different sizes, so they cannot be added.") G1 + G2;
+	@test_throws ErrorException("Grids have different sizes, so they cannot be subtracted.") G1 - G2;
+	@test_throws ErrorException("Grids have different sizes, so they cannot be multiplied.") G1 * G2;
+	@test_throws ErrorException("Grids have different sizes, so they cannot be divided.") G1 / G2;
 	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle), leg=true, Vd=:cmd)
 	mat2ds(rand(6,6), color=[:red :blue]);
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");

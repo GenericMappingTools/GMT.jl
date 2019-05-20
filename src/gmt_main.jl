@@ -1705,9 +1705,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function Base.:+(G1::GMTgrid, G2::GMTgrid)
 # Add two grids, element by element. Inherit header parameters from G1 grid
-	if (size(G1.z) != size(G2.z))
-		error("The two grids have not the same size, so they cannot be added.")
-	end
+	if (size(G1.z) != size(G2.z)) error("Grids have different sizes, so they cannot be added.") end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 				 G1.command, G1.datatype, G1.x, G1.y, G1.z .+ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G3.range[5] = minimum(G3.z)
@@ -1716,10 +1714,17 @@ function Base.:+(G1::GMTgrid, G2::GMTgrid)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function Base.:+(G1::GMTgrid, shift::Number)
+	G2 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	             G1.command, G1.datatype, G1.x, G1.y, G1.z .+ shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	G2.range[5:6] .+= shift
+	return G2
+end
+
+# ---------------------------------------------------------------------------------------------------
 function Base.:-(G1::GMTgrid, G2::GMTgrid)
 # Subtract two grids, element by element. Inherit header parameters from G1 grid
-	if (size(G1.z) != size(G2.z))
-		error("The two grids have not the same size, so they cannot be subtracted.")
+	if (size(G1.z) != size(G2.z)) error("Grids have different sizes, so they cannot be subtracted.")
 	end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z .- G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
@@ -1729,10 +1734,17 @@ function Base.:-(G1::GMTgrid, G2::GMTgrid)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function Base.:-(G1::GMTgrid, shift::Number)
+	G2 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	             G1.command, G1.datatype, G1.x, G1.y, G1.z .- shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	G2.range[5:6] .-= shift
+	return G2
+end
+
+# ---------------------------------------------------------------------------------------------------
 function Base.:*(G1::GMTgrid, G2::GMTgrid)
 # Multiply two grids, element by element. Inherit header parameters from G1 grid
-	if (size(G1.z) != size(G2.z))
-		error("The two grids have not the same size, so they cannot be multiplied.")
+	if (size(G1.z) != size(G2.z)) error("Grids have different sizes, so they cannot be multiplied.")
 	end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z .* G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
@@ -1742,16 +1754,30 @@ function Base.:*(G1::GMTgrid, G2::GMTgrid)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function Base.:*(G1::GMTgrid, scale::Number)
+	G2 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	             G1.command, G1.datatype, G1.x, G1.y, G1.z .* scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	G2.range[5:6] .*= scale
+	return G2
+end
+
+# ---------------------------------------------------------------------------------------------------
 function Base.:/(G1::GMTgrid, G2::GMTgrid)
 # Divide two grids, element by element. Inherit header parameters from G1 grid
-	if (size(G1.z) != size(G2.z))
-		error("The two grids have not the same size, so they cannot be divided.")
-	end
+	if (size(G1.z) != size(G2.z))  error("Grids have different sizes, so they cannot be divided.")  end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z ./ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G3.range[5] = minimum(G3.z)
 	G3.range[6] = maximum(G3.z)
 	return G3
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:/(G1::GMTgrid, scale::Number)
+	G2 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	             G1.command, G1.datatype, G1.x, G1.y, G1.z ./ scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	G2.range[5:6] ./= scale
+	return G2
 end
 
 # ---------------------------------------------------------------------------------------------------

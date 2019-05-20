@@ -83,15 +83,21 @@ function mapproject(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("mapproject", cmd0, arg1)
 
 	d = KW(kwargs)
-    cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :p :s :yx])
+	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :p :s :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :azim], [:C :center], [:D :override_units], [:E :geod2ecef],
 				[:F :one2one], [:G :track_distances], [:I :inverse], [:L :dist2line], [:N :geod2aux],
-                [:Q :list], [:S :supress], [:T :change_datum], [:W :map_size], [:Z :travel_times]])
-    if (!occursin("-G", cmd))
-        cmd, = parse_J(cmd, d, "", false)   # Do not append a default fig size
-    end
+	            [:Q :list], [:S :supress], [:T :change_datum], [:W :map_size], [:Z :travel_times]])
+	if (!occursin("-G", cmd))
+		map = occursin(" -W", cmd) ? true : false
+		cmd, = parse_J(cmd, d, "", map)		# Do not append a default fig size
+	end
 
-	common_grd(d, cmd0, cmd, "mapproject ", arg1)		# Finish build cmd and run it
+	if (occursin(" -W", cmd))				# No input data in this case
+		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end	
+		gmt("mapproject " * cmd)
+	else
+		common_grd(d, cmd0, cmd, "mapproject ", arg1)
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------

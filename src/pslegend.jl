@@ -47,9 +47,10 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R = read_data(d, cmd0, cmd, arg1, opt_R)
 
-	cmd = add_opt(cmd, 'D', d, [:D :pos :position :refpoint],
-				  (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width="+w",
-				   justify="+j", spacing="+l", offset="+o"))
+	#cmd = add_opt(cmd, 'D', d, [:D :pos :position :refpoint],
+	#			  (map=("g", nothing, 1), inside=("j", nothing, 1), paper=("x", nothing, 1),
+	#			  anchor=("", arg2str, 2), width="+w", justify="+j", spacing="+l", offset="+o"))
+	cmd = parse_type_anchor(d, cmd, [:D :pos :position :refpoint])
 	cmd = add_opt(cmd, 'C', d, [:C :clearance])
 
 	r = finish_PS_module(d, "pslegend " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)

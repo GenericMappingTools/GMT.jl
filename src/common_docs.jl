@@ -135,7 +135,7 @@ const opt_r = "**r** : **reg** : **registration** : -- Bool or [] --
     Force pixel node registration [Default is gridline registration].
     [`-r`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#r-full)"
 
-const opt_s = "**s** : **skip_col** : -- Str --       ``Flags = [cols][a|r]``
+const opt_s = "**s** : **skip_NaN** : -- Str --       ``Flags = [cols][a|r]``
 
     Suppress output for records whose z-value equals NaN.
     [`-s`](http://gmt.soest.hawaii.edu/doc/latest/gmt.html#s-full)"

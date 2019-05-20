@@ -53,7 +53,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, opt_J)
 	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :p :t :yx :params], first)
-	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:F :conn :connection], [:I :intens], [:N :noclip :no_clip]])
+	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :noclip :no_clip]])
 	if (is_ternary)  cmd = add_opt(cmd, 'M', d, [:M :no_plot])  end
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
 
@@ -66,6 +66,9 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	cmd = add_opt(cmd, 'A', d, [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
+	opt_F = add_opt("", "", d, [:F :conn :connection], (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpt=("r", nothing, 1), ignore_hdr="_a", single_group="_f", segments="_s", anchor=("", arg2str)))
+	if (length(opt_F) > 1 && !occursin("/", opt_F))  opt_F = opt_F[1]  end	# Allow con=:net or con=(1,2)
+	if (opt_F != "")  cmd *= " -F" * opt_F  end
 
 	# Error Bars?
 	if ((val = find_in_dict(d, [:E :error :error_bars])[1]) !== nothing)
@@ -152,9 +155,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
-	cmd = check_caller(d, cmd, opt_S, sub_module, O)
-
-	if (occursin(" -B0", cmd))  cmd = replace(cmd, " -B0" => "")  end	# -B0 really means NO AXES
+	cmd = check_caller(d, cmd, opt_S, opt_W, sub_module, O)
 
 	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
 		cmd = finish_PS(d, cmd * opt_W * opt_UVXY, output, K, O)
@@ -184,7 +185,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
-	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{<:Number,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1)
+	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{<:Number,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && ((_ = find_in_dict(d, [:multicol])[1]) !== nothing))
 		penC = "";		penS = "";	cycle=:cycle
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
 		if (opt_W != "")  penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))  end
@@ -209,16 +210,16 @@ end
 function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 
-	if (arg1 === nothing || isa(arg1, GMT.GMTcpt))  return cmd, arg1, arg2, N_args, false  end		# Just play safe
+	if (arg1 === nothing || isa(arg1, GMT.GMTcpt))  return cmd, arg1, arg2, N_args, false  end		# Play safe
 
 	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
 	if (!(N_args > n_prev || len < length(cmd)) && mz === nothing)	# No color request, so return right away
 		return cmd, arg1, arg2, N_args, false
 	end
 
-	if (isa(arg1, Array))          n_rows, n_col = size(arg1)
-	elseif (isa(arg1,GMTdataset))  n_rows, n_col = size(arg1.data)
-	else                           n_rows, n_col = size(arg1[1].data)
+	if (isa(arg1, Array{<:Number}))  n_rows, n_col = size(arg1)
+	elseif (isa(arg1,GMTdataset))    n_rows, n_col = size(arg1.data)
+	else                             n_rows, n_col = size(arg1[1].data)
 	end
 
 	warn1 = string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it.")
@@ -333,14 +334,14 @@ function get_marker_name(d::Dict, symbs, is3D=false, del=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function check_caller(d::Dict, cmd::String, opt_S::String, caller::String, O::Bool)
+function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller::String, O::Bool)
 	# Set sensible defaults for the sub-modules "scatter" & "bar"
 	if (caller == "scatter")
 		if (opt_S == "")  cmd *= " -Sc7p"  end
 	elseif (caller == "scatter3")
 		if (opt_S == "")  cmd *= " -Su7p"  end
 	elseif (caller == "lines")
-		if (!occursin("+p", cmd)) cmd *= " -W0.25p"  end # Do not leave without a pen specification
+		if (!occursin("+p", cmd) && opt_W == "") cmd *= " -W0.25p"  end # Do not leave without a pen specification
 	elseif (caller == "bar")
 		if (opt_S == "")
 			if (haskey(d, :bar))
@@ -369,8 +370,8 @@ function check_caller(d::Dict, cmd::String, opt_S::String, caller::String, O::Bo
 	if (occursin('3', caller))
 		if (!occursin(" -B", cmd) && !O)  cmd *= def_fig_axes3  end	# For overlays default is no axes
 		if (!occursin(" -p", cmd))  cmd *= " -p200/30"  end
-	else
-		if (!occursin(" -B", cmd) && !O)  cmd *= def_fig_axes   end
+	#else
+		#if (!occursin(" -B", cmd) && !O)  cmd *= def_fig_axes   end
 	end
 
 	return cmd

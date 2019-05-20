@@ -57,14 +57,14 @@ function sphdistance(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:C :save_mem], [:E :what_quantity], [:G :grid :outgrid], [:L :dist_unit]])
 
 	(arg1 === nothing) ? N_used = 0 : N_used = 1
-	symbs = [[:Q :voronoi], [:N :nodes]];	flags = "QT"	# Process option -Q & -T
+	symbs = [[:Q :voronoi], [:N :nodes]];	flags = "QN"	# Process option -Q & -N
 	for k = 1:2
 		if ((val = find_in_dict(d, symbs[k])[1]) !== nothing)
 			cmd *= " -" * flags[k]
 			if (isa(val, GMTdataset) || isa(val, Array{GMTdataset}) || (isa(val, Array{<:Number}) && k == 2) )
 				(N_used == 0) ? arg1 = val : arg2 = val
 			else
-				cmd *= string(val)
+				cmd *= arg2str(val)
 			end
 		end
 	end

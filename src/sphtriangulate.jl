@@ -24,7 +24,7 @@ Parameters
 
     Specify the unit used for distance and area calculations.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/sphtriangulate.html#l)
-- **N** : -- Str --         Flags = ``nfile``
+- **N** : **nodes** : -- Str --         Flags = ``nfile``
 
     Write the information pertaining to each polygon to a separate file.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/sphtriangulate.html#n)
@@ -51,7 +51,7 @@ function sphtriangulate(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :h :i :yx])
-	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :skip], [:L :unit], [:N], [:Q :voronoi], [:T]])
+	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :skip], [:L :unit], [:N :nodes], [:Q :voronoi], [:T]])
 
 	common_grd(d, cmd0, cmd, "sphtriangulate ", arg1)		# Finish build cmd and run it
 end

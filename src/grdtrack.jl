@@ -12,7 +12,7 @@ Parameters
 - **A** : **interp_path** : -- Str --
 
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#a)
-- **C** : **equi** : -- Str --
+- **C** : **equidistant ** : -- Str --
 
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#c)
 - **D** : **dfile** : -- Str --  
@@ -60,7 +60,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :yx])
-	cmd = parse_these_opts(cmd, d, [[:A :interp_path], [:C :equi], [:D :dfile], [:E :by_coord],
+	cmd = parse_these_opts(cmd, d, [[:A :interp_path], [:C :equidistant ], [:D :dfile], [:E :by_coord],
 				[:N :no_skip], [:S :stack], [:T :radius], [:Z :z_only]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
@@ -89,7 +89,11 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 		end
 	end
 
-	if (isa(arg1, GMTgrid) || isa(arg2, GMTgrid) && !occursin("-G", cmd))  cmd = cmd * " -G"  end
+	if (isa(arg1, GMTgrid) || isa(arg2, GMTgrid) && !occursin("-G", cmd))  cmd *= " -G"  end
+	if (cmd0 != "" && !isa(arg1, GMTgrid) && !isa(arg1, Array{GMTgrid}) && !occursin("-G", cmd))
+		cmd = " -G" * cmd
+		if (isa(arg1, String))  cmd *= " " * arg1  end
+	end
 
 	if (isa(grid_tuple, Tuple))
 		return common_grd(d, "grdtrack " * cmd, (got_fname != 0) ? grid_tuple : tuple(arg1,grid_tuple...))

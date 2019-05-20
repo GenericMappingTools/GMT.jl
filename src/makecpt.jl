@@ -73,17 +73,15 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, "", [:V_params])
 
     # If file name sent in, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, " ")
+    cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, " ")
 	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
 	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :force_rgb],
 				[:G :truncate], [:I :inverse :reverse], [:M :overrule_bg], [:N :no_bg :nobg],
 				[:Q :log], [:S :auto], [:T :range], [:W :wrap :categorical], [:Z :continuous]])
 
 	if ((val = find_in_dict(d, [:E :data_levels])[1]) !== nothing)
-		if (isempty_(arg1))
-			error("E option requires that a data table is provided as well")
-		else
-			cmd *= " -E" * arg2str(val)
+		if (arg1 === nothing)  error("E option requires that a data table is provided as well")
+		else                   cmd *= " -E" * arg2str(val)
 		end
 	end
 
