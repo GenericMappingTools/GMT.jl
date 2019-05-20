@@ -19,9 +19,6 @@ Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMapp
 [codecov-img]: http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg?branch=master
 [codecov-url]: http://codecov.io/github/GenericMappingTools/GMT.jl?branch=master
 
-[//]: # ([coveralls-img]: https://coveralls.io/repos/github/GenericMappingTools/GMT.jl/badge.svg?branch=master)
-[//]: # ([coveralls-url]: https://coveralls.io/github/GenericMappingTools/GMT.jl?branch=master)
-
 The Generic Mapping Tools, **GMT**, is an open source collection of tools for manipulating geographic
 and Cartesian data sets (including filtering, trend fitting, gridding, projecting, etc.) and producing
 PostScript illustrations ranging from simple x–y plots via contour maps to artificially illuminated
