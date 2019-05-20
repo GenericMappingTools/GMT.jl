@@ -199,6 +199,7 @@ function append_figsize(opt_J, width="", scale=false)
 	if (isnumeric(opt_J[end]))                                   opt_J *= "/" * width
 	else
 		if (occursin("Cyl_", opt_J) || occursin("Poly", opt_J))  opt_J *= "/" * width
+		elseif (startswith(opt_J, " -JU") && length(opt_J) > 4)  opt_J *= "/" * width
 		else                                                     opt_J *= width
 		end
 	end
@@ -223,6 +224,14 @@ function build_opt_J(Val)
 		out = " -J"
 	end
 	return out, mnemo
+end
+
+function auto_JZ(cmd)
+	# Add the -JZ option to modules that should not need it (e.g. pscoast) when used after a
+	# -R with 6 elements. Without this a simple -J fails with a complain that ... -JZ is needed
+	global current_view
+	if (current_view !== nothing && !occursin("-JZ", cmd) && !occursin("-Jz", cmd))  cmd *= " -JZ0.01"  end
+	return cmd
 end
 
 function parse_proj(p::String)
@@ -283,18 +292,18 @@ function parse_proj(p::NamedTuple)
 	center = ""
 	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
 		if     (isa(val, String))  center = val
-		elseif (isa(val, Number))  center = @sprintf("%.8g", val)
-		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)  center = @sprintf("%.8g/%.8g", val[1], val[2])
+		elseif (isa(val, Number))  center = @sprintf("%.12g", val)
+		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)  center = @sprintf("%.12g/%.12g", val[1], val[2])
 		end
 	end
 
 	if (center != "" && (val = find_in_dict(d, [:horizon])[1]) !== nothing)  center = string(center, '/',val)  end
 
 	parallels = ""
-	if ((val = find_in_dict(d, [:parallels])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:parallel :parallels])[1]) !== nothing)
 		if     (isa(val, String))  parallels = "/" * val
-		elseif (isa(val, Number))  parallels = @sprintf("/%.8g", val)
-		elseif (isa(val, Array) || isa(val, Tuple) && length(val) <= 3)
+		elseif (isa(val, Number))  parallels = @sprintf("/%.12g", val)
+		elseif (isa(val, Array) || isa(val, Tuple) && (length(val) <= 3 || length(val) == 6))
 			parallels = join([@sprintf("/%.12g",x) for x in val])
 		end
 	end
@@ -317,6 +326,8 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	extra_parse = true
 	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
 		if (val == :none || val == "none")		# User explicitly said NO AXES
+			return cmd, ""
+		elseif (val == :noannot || val == :bare || val == "noannot" || val == "bare")
 			return cmd * " -B0", " -B0"
 		elseif (val == :same || val == "same")	# User explicitly said "Same as previous -B"
 			return cmd * " -B", " -B"
@@ -335,7 +346,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 		if (opt_B == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis])[1] === nothing))
 			opt_B = def_fig_axes
 		else
-			if (opt_B == def_fig_axes)  opt_B = ""  end		# opt_B = def_fig_axes from argin but no good here
+			#if (opt_B == def_fig_axes)  opt_B = ""  end		# opt_B = def_fig_axes from argin but no good here
 			if !( ((ind = findlast("-B",opt_B)) !== nothing || (ind = findlast(" ",opt_B)) !== nothing) &&
 				  (occursin(r"[WESNwesntlbu+g+o]",opt_B[ind[1]:end])) )
 				t = " " * t;		# Do not glue, for example, -Bg with :title
@@ -544,7 +555,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Parse the global -s option. Return CMD same as input if no -s option in args
-parse_s(cmd::String, d::Dict) = parse_helper(cmd, d, [:s :skip_col], " -s")
+parse_s(cmd::String, d::Dict) = parse_helper(cmd, d, [:s :skip_NaN], " -s")
 
 # ---------------------------------------------------------------------------------------------------
 # Parse the global -: option. Return CMD same as input if no -: option in args
@@ -948,8 +959,12 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 		if (!haskey(d, key[k]))  continue  end
 		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(nt[k], NamedTuple))
-				local_opt = (d[key[k]][2] == helper_decorated) ? true : nothing		# 'true' means getting a single argout
-				cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), local_opt)
+				if (d[key[k]][2] == add_opt_fill)
+					cmd *= d[key[k]][1] * d[key[k]][2]("", Dict(key[k] => nt[k]), [key[k]])
+				else
+					local_opt = (d[key[k]][2] == helper_decorated) ? true : nothing		# 'true' means getting a single argout
+					cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), local_opt)
+				end
 			else						# 
 				if (length(d[key[k]]) == 2)		# Run the function
 					cmd *= d[key[k]][1] * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])
@@ -995,7 +1010,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 			else
 				if (occursin(':', cmd_hold[last]))		# It must be a geog coordinate in dd:mm
 					cmd = "g" * cmd
-				else
+				elseif (length(cmd_hold[last]) > 1)		# Temp patch to avoid parsing single char flags
 					rs = split(cmd_hold[last], '/')
 					if (length(rs) != 2)  error("Anchor point must be given as a pair of coordinates")  end
 					x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
@@ -1065,12 +1080,8 @@ function add_opt_fill(cmd::String, d::Dict, symbs, opt="")
 		else   error("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member")
 		end
 
-		if ((val2 = find_in_dict(d2, [:bg :background])[1]) !== nothing)
-			cmd *= "+b" * get_color(val2)
-		end
-		if ((val2 = find_in_dict(d2, [:fg :foreground])[1]) !== nothing)
-			cmd *= "+f" * get_color(val2)
-		end
+		if ((val2 = find_in_dict(d2, [:bg :background])[1]) !== nothing)  cmd *= "+b" * get_color(val2)  end
+		if ((val2 = find_in_dict(d2, [:fg :foreground])[1]) !== nothing)  cmd *= "+f" * get_color(val2)  end
 		if (haskey(d2, :dpi))  cmd = string(cmd, "+r", d2[:dpi])  end
 	else
 		cmd *= opt * get_color(val)
@@ -1172,13 +1183,13 @@ function get_color(val)
 	elseif ((isa(val, Array) && (size(val, 2) == 3)) || (isa(val, Vector) && length(val) == 3))
 		if (isa(val, Vector))  val = val'  end
 		if (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1)
-			copy = val .* 255		# Do not change the original
+			copia = val .* 255		# Do not change the original
 		else
-			copy = val
+			copia = val
 		end
-		out = @sprintf("%d/%d/%d", copy[1], copy[2], copy[3])
-		for k = 2:size(copy, 1)
-			out = @sprintf("%s,%d/%d/%d", out, copy[k,1], copy[k,2], copy[k,3])
+		out = @sprintf("%d/%d/%d", copia[1,1], copia[1,2], copia[1,3])
+		for k = 2:size(copia, 1)
+			out = @sprintf("%s,%d/%d/%d", out, copia[k,1], copia[k,2], copia[k,3])
 		end
 	else
 		error(@sprintf("GOT_COLOR, got an unsupported data type: %s", typeof(val)))
@@ -1266,7 +1277,8 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 
 	if (haskey(d, :corners)) opt *= string(d[:corners])  end	# 1234
 	#if (haskey(d, :fill))    opt *= "+g" * get_color(d[:fill])  end
-	if (haskey(d, :fill))    opt *= "+g" * add_opt_fill(d, [:fill])  end	# Works, but patterns can screw
+	val, symb = find_in_dict(d, [:fill :bg :background])
+	if (val !== nothing)     opt *= "+g" * add_opt_fill(d, [symb])  end	# Works, but patterns can screw
 	if (haskey(d, :cube))    opt *= "+b"  end
 	if (haskey(d, :noframe)) opt *= "+n"  end
 	if (haskey(d, :pole))    opt *= "+o" * arg2str(d[:pole])  end
@@ -1954,9 +1966,11 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 			end
 		else
 			if (args[1] === nothing && args[2] === nothing && args[3] === nothing)
-				return cmd, 0, args[1], args[2], args[3]			# got_fname = 0 => all data in arg1,2,3
+				return cmd, 0, args[1], args[2], args[3]			# got_fname = 0 => ???
 			elseif (data_kw !== nothing && length(data_kw) == 3)
 				return cmd, 0, data_kw[1], data_kw[2], data_kw[3]	# got_fname = 0 => all data in arg1,2,3
+			else
+				return cmd, 0, args[1], args[2], args[3]
 			end
 		end
 	end
@@ -2311,8 +2325,8 @@ function _toq()
     (t1-t0)/1e9
 end
 
-function toc()
+function toc(V=true)
     t = _toq()
-    println("elapsed time: ", t, " seconds")
+    if (V)  println("elapsed time: ", t, " seconds")  end
     return t
 end

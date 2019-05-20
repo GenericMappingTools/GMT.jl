@@ -95,14 +95,15 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
 """
-function plot(arg1; kw...)
-	if ( (isa(arg1, Vector) || isa(arg1, UnitRange)) ||
-		 (isa(arg1, Matrix) && ((size(arg1,1) == 1 || size(arg1,2) == 1) && length(arg1) != 2)) )
-		arg1 = cat_1_arg(arg1)
-	end
-	common_plot_xyz("", arg1, "plot", true, false, kw...)
+function plot(arg1; first=true, kw...)
+	#if ( (isa(arg1, Vector) || isa(arg1, UnitRange)) ||
+		 #(isa(arg1, Matrix) && ((size(arg1,1) == 1 || size(arg1,2) == 1) && length(arg1) != 2)) )
+		#arg1 = cat_1_arg(arg1)
+	#end
+	#common_plot_xyz("", arg1, "plot", first, false, kw...)
+	common_plot_xyz("", cat_1_arg(arg1), "plot", first, false, kw...)
 end
-plot!(arg1; kw...) = common_plot_xyz("", arg1, "plot", false, false, kw...)
+plot!(arg1; kw...) = plot(arg1; first=false, kw...)
 
 plot(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "plot", true, false, kw...)
 plot!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "plot", false, false, kw...)
@@ -494,11 +495,11 @@ function helper_arrows(d::Dict, del::Bool=false)
 			code = 'V'
 		end
 		if (isa(val, String))		# An hard core GMT string directly with options
-			if (val[1] != code)  cmd = code * val
-			else                 cmd = val			# The GMT string already had vector flag char
+			if (val[1] != code)    cmd = code * val
+			else                   cmd = val		# The GMT string already had vector flag char
 			end
-		else
-			cmd = code * vector_attrib(val)
+		elseif (isa(val, Number))  cmd = code * "$val"
+		else                       cmd = code * vector_attrib(val)
 		end
 		if (del)  delete!(d, symb)  end
 	end
@@ -559,22 +560,23 @@ function ternary!(cmd0::String="", arg1=nothing; kw...)
 	ternary(cmd0, arg1; first=false, kw...)
 end
 ternary(arg1;  kw...)  = ternary("", arg1; first=true, kw...)
-ternary!(arg1; kw...) = ternary("", arg1; first=false, kw...)
+ternary!(arg1; kw...)  = ternary("", arg1; first=false, kw...)
 const psternary  = ternary            # Aliases
 const psternary! = ternary!           # Aliases
 
 # ------------------------------------------------------------------------------------------------------
 function cat_1_arg(arg)
 	# Add a first column with 1:n to all args that are not GMTdatasets
-	if (!isa(arg, Array{GMT.GMTdataset,1}) && !isa(arg, GMT.GMTdataset))
-		if (isa(arg, Vector) || isa(arg, Matrix) || isa(arg, UnitRange) || isa(arg, StepRangeLen))
-			if     (!isa(arg, Matrix))                       arg = hcat(1:length(arg), arg)
-			elseif ((isa(arg, Matrix) && size(arg,1) == 1))  arg = hcat(1:length(arg), arg')
-			else                                             arg = hcat(1:size(arg,1), arg)
-			end
-		elseif (isa(arg, NTuple))
-			arg = hcat(1:length(arg), collect(arg))
-		end
+	(isa(arg, Array{GMT.GMTdataset,1}) || isa(arg, GMT.GMTdataset))  &&  return arg
+	if (isa(arg, Vector) || isa(arg, UnitRange) || isa(arg, StepRangeLen))
+		arg = hcat(1:size(arg,1), arg)
+	#if (isa(arg, Vector) || isa(arg, Matrix) || isa(arg, UnitRange) || isa(arg, StepRangeLen))
+		#if     (!isa(arg, Matrix))                       arg = hcat(1:length(arg), arg)
+		#elseif ((isa(arg, Matrix) && size(arg,1) == 1))  arg = hcat(1:length(arg), arg')
+		#else                                             arg = hcat(1:size(arg,1), arg)
+		#end
+	elseif (isa(arg, NTuple))
+		arg = hcat(1:length(arg), collect(arg))
 	end
 	return arg
 end

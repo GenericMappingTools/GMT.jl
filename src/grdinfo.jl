@@ -21,10 +21,10 @@ Parameters
 
     Report grid domain and x/y-increments in world mapping format.
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#f)
-- **I** : **nearest_multiple** : -- Number or Str --
+- **I** : **nearest** : -- Number or Str --     Flags = [dx[/dy]|b|i|r]
 
     Report the min/max of the region to the nearest multiple of dx and dy, and output
-    this in the form -Rw/e/s/n 
+    this in the form -Rw/e/s/n
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#i)
 - **L** : **force_scan** : -- Number or Str --
 
@@ -47,7 +47,7 @@ function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f])
-	cmd = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:I :nearest_multiple],
+	cmd = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:I :nearest],
 				[:L :force_scan], [:M :minmax_pos], [:T :zmin_max]])
 
 	common_grd(d, cmd0, cmd, "grdinfo ", arg1)		# Finish build cmd and run it

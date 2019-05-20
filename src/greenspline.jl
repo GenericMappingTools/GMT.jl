@@ -76,6 +76,7 @@ Parameters
 - $(GMT.opt_h)
 - $(GMT.opt_i)
 - $(GMT.opt_o)
+- $(GMT.opt_r)
 - $(GMT.opt_x)
 - $(GMT.opt_swap_xy)
 """
@@ -84,7 +85,7 @@ function greenspline(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("greenspline", cmd0, arg1)
 
     d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :bi :d :e :f :h :i :o :x :yx])
+	cmd = parse_common_opts(d, "", [:R :V_params :bi :d :e :f :h :i :o :r :x :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :gradient], [:C :approx :approximate], [:D :mode], [:E :misfit],
 				[:G :grid], [:I :inc], [:L :leave_trend], [:N :nodes], [:Q :dir_derivative], [:S :splines],
 				[:T :mask], [:W :uncertainties]])
