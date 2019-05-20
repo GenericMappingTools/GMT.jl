@@ -6,8 +6,8 @@ makedocs(
 	format = Documenter.HTML(),
 	#format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
 	sitename = "GMT",
-	#assets = ["assets/custom.css"],
-	assets = Documenter.HTML(assets = ["assets/custom.css"]),
+	assets = ["assets/custom.css"],
+	#assets = Documenter.HTML(assets = ["assets/custom.css"]),
 	pages = Any[
 		"Introduction"             => "usage.md",
 		"Some examples"            => "examples.md",
