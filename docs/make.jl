@@ -2,8 +2,8 @@ using Documenter, GMT
 
 makedocs(
 	modules = [GMT],
-	#format = :html,
-	format = Documenter.HTML(),
+	format = :html,
+	#format = Documenter.HTML(),
 	#format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
 	sitename = "GMT",
 	assets = ["assets/custom.css"],
@@ -105,8 +105,8 @@ makedocs(
 
 deploydocs(
 	repo   = "github.com/GenericMappingTools/GMT.jl.git",
-#	target = "build",
-#	julia = "1.0.3",
-#	deps   = nothing,
-#	make   = nothing
+	target = "build",
+	julia = "1.0.3",
+	deps   = nothing,
+	make   = nothing
 )
