@@ -9,7 +9,7 @@ Parameters
 
 - $(GMT.opt_J)
 - $(GMT.opt_B)
-- **C** : **format** : -- ::Bool --
+- **C** : **formated** : -- ::Bool --
 
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#c)
 - **G** : **fill** : -- Number or Str --
@@ -57,7 +57,7 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
 	cmd = parse_common_opts(d, cmd, [:bo :h :o :p :t :UVXY :params], first)
-	cmd = parse_these_opts(cmd, d, [[:C :format], [:M :dump], [:N :invert]])
+	cmd = parse_these_opts(cmd, d, [[:C :formated], [:M :dump], [:N :invert]])
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = add_opt(cmd, 'I', d, [:I :sun], (pos="",date="+d",TZ="+z"))
@@ -67,6 +67,7 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	opt_extra = ""
 	if (occursin( "-I", cmd) || occursin("-I", cmd0))
 		output = "";    opt_extra = "-I"
+		cmd = replace(cmd, opt_J => "")
 	end
 	cmd, K = finish_PS_nested(d, "pssolar " * cmd, output, K, O, [:coast])
 	return finish_PS_module(d, cmd, opt_extra, output, fname_ext, opt_T, K, O, false, arg1, arg2)

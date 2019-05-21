@@ -129,7 +129,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Wrong content for the :label option. Must be only :plot_dist or :map_dist") GMT.parse_quoted(Dict(:label => (:x,)), "")
 
 	@test GMT.font(("10p","Times", :red)) == "10p,Times,red"
-	r = text(text_record([0 0], "TopLeft"), R="1/10/1/10", J=:X10, F=(region_justify=:MC,font=("10p","Times", :red)), Vd=:cmd);
+	r = text(text_record([0 0], "TopLeft"), R="1/10/1/10", J=:X10, F=(region_justify=:MC,font=("10p","Times", :red)), Vd=2);
 	ind = findfirst("-F", r); @test GMT.strtok(r[ind[1]:end])[1] == "-F+cMC+f10p,Times,red"
 
 	@test GMT.build_pen(Dict(:lw => 1, :lc => [1,2,3])) == "1,1/2/3"
@@ -144,12 +144,12 @@ if (got_it)					# Otherwise go straight to end
 
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
-	r = psxy([0.0, 1],[0, 1.1], L=(pen=(10,:red),bot=true), Vd=:cmd);
+	r = psxy([0.0, 1],[0, 1.1], L=(pen=(10,:red),bot=true), Vd=2);
 	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb")
-	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=:cmd);
+	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=2);
 	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb")
-	psxy!([0 0; 1 1.1], Vd=:cmd);
-	psxy!("", [0 0; 1 1.1], Vd=:cmd);
+	psxy!([0 0; 1 1.1], Vd=2);
+	psxy!("", [0 0; 1 1.1], Vd=2);
 	GMT.get_marker_name(Dict(:y => "y"), [:y])
 	@test_throws ErrorException("Argument of the *bar* keyword can be only a string or a NamedTuple.") GMT.parse_bar_cmd(Dict(:a => 0), :a, "", "")
 
@@ -224,9 +224,9 @@ if (got_it)					# Otherwise go straight to end
 	# GMTLOGO
 	logo(D="x0/0+w2i")
 	logo(julia=8)
-	logo(GMTjulia=8, fmt=:png, Vd=:cmd)
-	logo!(julia=8, Vd=:cmd)
-	logo!("", julia=8, Vd=:cmd)
+	logo(GMTjulia=8, fmt=:png, Vd=2)
+	logo!(julia=8, Vd=2)
+	logo!("", julia=8, Vd=2)
 
 	@show("GMTSPATIAL")
 	# GMTSPATIAL
@@ -348,16 +348,16 @@ if (got_it)					# Otherwise go straight to end
 	GG = gmt("read -Tg lixo.grd");
 	C = grdcontour("lixo.grd", C="+0.7", D=[]);
 	@assert((size(C[1].data,1) == 21) && norm(-0.6 - C[1].data[1,1]) < 1e-8)
-	r = grdcontour("lixo.grd", cont=10, A=(int=50,labels=(font=7,)), G=(dist="4i",), L=(-1000,-1), W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), T=(gap=("0.1i","0.02i"),), Vd=:cmd);
+	r = grdcontour("lixo.grd", cont=10, A=(int=50,labels=(font=7,)), G=(dist="4i",), L=(-1000,-1), W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), T=(gap=("0.1i","0.02i"),), Vd=2);
 	@test startswith(r, "grdcontour lixo.grd  -JX12c/0 -Baf -BWSen -L-1000/-1 -A50+f7 -Gd4i -T+d0.1i/0.02i -Wcthinnest,- -Wathin,- -C10")
-	r = grdcontour("lixo.grd", A="50+f7p", G="d4i", W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), Vd=:cmd);
+	r = grdcontour("lixo.grd", A="50+f7p", G="d4i", W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), Vd=2);
 	@test startswith(r, "grdcontour lixo.grd  -JX12c/0 -Baf -BWSen -A50+f7p -Gd4i -Wcthinnest,- -Wathin,-")
 	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
 	if (GMTver >= 6)
 		grdcontour(G, axis="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[])
-		grdcontour!(G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=true, Vd=:cmd)
-		grdcontour!("", G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=:cmd)
+		grdcontour!(G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=true, Vd=2)
+		grdcontour!("", G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=2)
 	end
 
 	# GRDCUT
@@ -427,10 +427,10 @@ if (got_it)					# Otherwise go straight to end
 	dzdy = gmt("grdmath ? DDY", G);
 	dzdx = gmt("grdmath ? DDX", G);
 	grdvector(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
-	grdvector!(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), W="1p", S=12, Vd=:cmd)
-	r = grdvector!("",dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65), W="1p", S=12, Vd=:cmd);
+	grdvector!(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), W="1p", S=12, Vd=2)
+	r = grdvector!("",dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65), W="1p", S=12, Vd=2);
 	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.65 -W1p")
-	r = grdvector!("", 1, 2, I=0.2, vec="0.25+e+n0.66", W=1, S=12, Vd=:cmd);
+	r = grdvector!("", 1, 2, I=0.2, vec="0.25+e+n0.66", W=1, S=12, Vd=2);
 	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.66 -W1")
 
 	@show("GRDVOLUME")
@@ -438,28 +438,28 @@ if (got_it)					# Otherwise go straight to end
 	grdvolume(G);
 
 	# Just create the figs but no check if they are correct.
-	@test_throws ErrorException("Missing input data to run this module.") grdimage("", J="X10", Vd=:cmd)
+	@test_throws ErrorException("Missing input data to run this module.") grdimage("", J="X10", Vd=2)
 	PS = grdimage(G, J="X10", ps=1);
 	gmt("destroy")
-	grdimage!(G, J="X10", Vd=:cmd);
-	grdimage!("", G, J="X10", Vd=:cmd);
+	grdimage!(G, J="X10", Vd=2);
+	grdimage!("", G, J="X10", Vd=2);
 	Gr=mat2grid(rand(Float32, 128, 128)*255); Gg=mat2grid(rand(Float32, 128, 128)*255); Gb=mat2grid(rand(Float32, 128, 128)*255);
 	@show("GRDIMAGE")
 	grdimage(rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, J="X10")
-	grdimage(data=(Gr,Gg,Gb), J=:X10, I=mat2grid(rand(Float32,128,128)), Vd=:cmd)
-	grdimage(rand(Float32, 128, 128), shade=(default=30,), coast=(W=1,), Vd=:cmd)
-	grdimage(rand(Float32, 128, 128), colorbar=(color=:rainbow, pos=(anchor=:RM,length=8)), Vd=:cmd)
-	grdimage("lixo.grd", coast=true, colorbar=true, Vd=:cmd)
+	grdimage(data=(Gr,Gg,Gb), J=:X10, I=mat2grid(rand(Float32,128,128)), Vd=2)
+	grdimage(rand(Float32, 128, 128), shade=(default=30,), coast=(W=1,), Vd=2)
+	grdimage(rand(Float32, 128, 128), colorbar=(color=:rainbow, pos=(anchor=:RM,length=8)), Vd=2)
+	grdimage("lixo.grd", coast=true, colorbar=true, Vd=2)
 	G = gmt("grdmath -Rg -fg -I5 X");
 	gmtwrite("lixo.grd", G)
 	grdimage("lixo.grd", proj=:Winkel, colorbar=true, coast=true)
 	@show("GRDVIEW")
 	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
-	grdview!("",G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
-	grdview!(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
-	grdview!(G, G=G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=:cmd);
-	r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), view="120/30", Vd=:cmd);
+	grdview!("",G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=2);
+	grdview!(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=2);
+	grdview!(G, G=G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=2);
+	r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), view="120/30", Vd=2);
 	@test startswith(r, "grdview  -R -J -p120/30 -N-6+glightgray -Qsmred")
 	@test_throws ErrorException("Wrong way of setting the drape (G) option.")  grdview(rand(16,16), G=(1,2))
 	if (GMTver >= 6)		# Crashes GMT5
@@ -472,7 +472,7 @@ if (got_it)					# Otherwise go straight to end
 	@show("GREENSPLINE")
 	# GREENSPLINE
 	d = [0 6.44; 1820 8.61; 2542 5.24; 2889 5.73; 3460 3.81; 4586 4.05; 6020 2.95; 6841 2.57; 7232 3.37; 10903 3.84; 11098 2.86; 11922 1.22; 12530 1.09; 14065 2.36; 14937 2.24; 16244 2.05; 17632 2.23; 19002 0.42; 20860 0.87; 22471 1.26];
-	greenspline(d, R="-2000/25000", I=100, S=:l, D=0, Vd=:cmd)
+	greenspline(d, R="-2000/25000", I=100, S=:l, D=0, Vd=2)
 
 	@show("IMSHOW")
 	# IMSHOW
@@ -497,91 +497,91 @@ if (got_it)					# Otherwise go straight to end
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", xlabel="Spoons", ylabel="Forks", savefig="lixo")
 	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=[:red, :green, :blue, :yellow], ls=:dashdot), leg=true, label="Bla")
 	plot("",hcat(collect(1:10)[:],rand(10,1)))
-	plot!("",hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
-	plot(hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
-	plot!(hcat(collect(1:10)[:],rand(10,1)), Vd=:cmd)
+	plot!("",hcat(collect(1:10)[:],rand(10,1)), Vd=2)
+	plot(hcat(collect(1:10)[:],rand(10,1)), Vd=2)
+	plot!(hcat(collect(1:10)[:],rand(10,1)), Vd=2)
 	plot!(collect(1:10),rand(10), fmt="ps")
-	plot(0.5,0.5, R="0/1/0/1", Vd=:cmd)
-	plot!(0.5,0.5, R="0/1/0/1", Vd=:cmd)
+	plot(0.5,0.5, R="0/1/0/1", Vd=2)
+	plot!(0.5,0.5, R="0/1/0/1", Vd=2)
 	plot(1:10,rand(10), S=(symb=:c,size=7,unit=:point), color=:rainbow, zcolor=rand(10))
-	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, Vd=:cmd)
+	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, Vd=2)
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3)
-	plot(1:2pi, rand(6), xaxis=(pi=1,), Vd=:cmd)
-	plot(1:2pi, rand(6), xaxis=(pi=(1,2),), Vd=:cmd)
-	plot(rand(10,4), leg=true)
+	plot(1:2pi, rand(6), xaxis=(pi=1,), Vd=2)
+	plot(1:2pi, rand(6), xaxis=(pi=(1,2),), Vd=2)
+	plot(1:4, rand(4,4), leg=true)
 	plot([5 5], region=(0,10,0,10), frame=(annot=:a, ticks=:a, grid=5), figsize=10, symbol=:p, markerline=0.5, fill=:lightblue, E=(Y=[2 3 6 9],pen=1,cap="10p"), Vd=2);
 	plot(rand(10,4), S=:c, ms=0.2, markeredgecolor=:red, ml=2, Vd=2)
 	plot(rand(10,4), S=:c, ms=0.2, ml=2, W=1, Vd=2)
 	plot3d(rand(5,3), marker=:cube)
-	plot3d!(rand(5,3), marker=:cube, Vd=:cmd)
-	plot3d("", rand(5,3), Vd=:cmd)
-	plot3d!("", rand(5,3), Vd=:cmd)
-	plot3d(1:10, rand(10), rand(10), Vd=:cmd)
-	plot3d!(1:10, rand(10), rand(10), Vd=:cmd)
+	plot3d!(rand(5,3), marker=:cube, Vd=2)
+	plot3d("", rand(5,3), Vd=2)
+	plot3d!("", rand(5,3), Vd=2)
+	plot3d(1:10, rand(10), rand(10), Vd=2)
+	plot3d!(1:10, rand(10), rand(10), Vd=2)
 
 	@show("ARROWS")
 	# ARROWS
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,stop=1,shape=0.5,fill=:red), J=:X14, B=:a, pen="6p")
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,stop=:tail,shape=0.5), J=:X14, B=:a, pen="6p")
-	arrows!([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,shape=0.5), pen="6p", Vd=:cmd)
-	arrows!("", [0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,shape=0.5), pen="6p", Vd=:cmd)
+	arrows!([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,shape=0.5), pen="6p", Vd=2)
+	arrows!("", [0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,shape=0.5), pen="6p", Vd=2)
 
 	# LINES
 	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
 	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af, box_pos="+p0.5", leg_pos=(offset=0.5,), leg=:TL)
-	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", vec=(size=0.65, fill=:red), Vd=:cmd)
-	lines(1:10,rand(10), W=0.25, Vd=:cmd)
-	lines!(1:10,rand(10), W=0.25, Vd=:cmd)
-	lines!("", rand(10), W=0.25, Vd=:cmd)
+	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", vec=(size=0.65, fill=:red), Vd=2)
+	lines(1:10,rand(10), W=0.25, Vd=2)
+	lines!(1:10,rand(10), W=0.25, Vd=2)
+	lines!("", rand(10), W=0.25, Vd=2)
 	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
 	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 	D = histogram(randn(1000), I=:o, W=0.1);
 	lines(D, steps=(x=true,), close=(bot="",))
 	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
-	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=:cmd);
+	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=2);
 	@test startswith(r, "psxy  -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -R0/6/-1/0.7 -JX40/8 -B+g220 --PS_MEDIA=A1 -W2,sienna")
 
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
 	scatter(rand(10), leg=:bottomrigh, fill=:red)	# leg wrong on purpose
-	scatter(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3, show=1, Vd=:cmd)
-	scatter(rand(50),rand(50), markersize=rand(50), zcolor=rand(50), aspect=:equal, alpha=50, Vd=:cmd)
+	scatter(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3, show=1, Vd=2)
+	scatter(rand(50),rand(50), markersize=rand(50), zcolor=rand(50), aspect=:equal, alpha=50, Vd=2)
 	scatter(1:10, rand(10), fill=:red, B=:a)
-	scatter!(1:10, rand(10), fill=:red, B=:a, Vd=:cmd)
-	scatter(1:10, Vd=:cmd)
-	scatter!(1:10, Vd=:cmd)
+	scatter!(1:10, rand(10), fill=:red, B=:a, Vd=2)
+	scatter(1:10, Vd=2)
+	scatter!(1:10, Vd=2)
 	scatter(rand(5,5))
-	scatter!(rand(5,5), Vd=:cmd)
-	scatter("",rand(5,5), Vd=:cmd)
-	scatter!("",rand(5,5), Vd=:cmd)
+	scatter!(rand(5,5), Vd=2)
+	scatter("",rand(5,5), Vd=2)
+	scatter!("",rand(5,5), Vd=2)
 	scatter3(rand(5,5,3))
-	scatter3!(rand(5,5,3), Vd=:cmd)
-	scatter3("", rand(5,5,3), Vd=:cmd)
-	scatter3!("", rand(5,5,3), Vd=:cmd)
-	scatter3(1:10, rand(10), rand(10), fill=:red, B=:a, Vd=:cmd)
-	scatter3!(1:10, rand(10), rand(10), Vd=:cmd)
+	scatter3!(rand(5,5,3), Vd=2)
+	scatter3("", rand(5,5,3), Vd=2)
+	scatter3!("", rand(5,5,3), Vd=2)
+	scatter3(1:10, rand(10), rand(10), fill=:red, B=:a, Vd=2)
+	scatter3!(1:10, rand(10), rand(10), Vd=2)
 
 	@show("BARPLOT")
 	# BARPLOT
 	bar(sort(randn(10)), G=0, B=:a)
-	bar(rand(20),bar=(width=0.5,), Vd=:cmd)
-	bar!(rand(20),bar=(width=0.5,), Vd=:cmd)
-	bar(1:20,  rand(20),bar=(width=0.5,), Vd=:cmd)
-	bar!(1:20, rand(20),bar=(width=0.5,), Vd=:cmd)
-	bar(rand(20),hbar=(width=0.5,unit=:c, base=9), Vd=:cmd)
-	bar(rand(20),bar="0.5c+b9",  Vd=:cmd)
-	bar(rand(20),hbar="0.5c+b9",  Vd=:cmd)
-	bar(rand(10), xaxis=(custom=(pos=1:5,type="A"),), Vd=:cmd)
-	bar(rand(10), axis=(custom=(pos=1:5,label=[:a :b :c :d :e]),), Vd=:cmd)
+	bar(rand(20),bar=(width=0.5,), Vd=2)
+	bar!(rand(20),bar=(width=0.5,), Vd=2)
+	bar(1:20,  rand(20),bar=(width=0.5,), Vd=2)
+	bar!(1:20, rand(20),bar=(width=0.5,), Vd=2)
+	bar(rand(20),hbar=(width=0.5,unit=:c, base=9), Vd=2)
+	bar(rand(20),bar="0.5c+b9",  Vd=2)
+	bar(rand(20),hbar="0.5c+b9",  Vd=2)
+	bar(rand(10), xaxis=(custom=(pos=1:5,type="A"),), Vd=2)
+	bar(rand(10), axis=(custom=(pos=1:5,label=[:a :b :c :d :e]),), Vd=2)
 	@test_throws ErrorException("Number of labels in custom annotations must be the same as the 'pos' element") bar(rand(10), frame=(custom=(pos=1:5,label=[:a :b :c :d]),), axis=:noannot, Vd=:2)
-	bar((1,2,3), Vd=:cmd)
-	bar((1,2,3), (1,2,3), Vd=:cmd)
-	bar!((1,2,3), Vd=:cmd)
-	bar!((1,2,3), (1,2,3), Vd=:cmd)
-	bar([3 31], C=:lightblue, Vd=:cmd)
-	bar("", [3 31], C=:lightblue, Vd=:cmd)
-	bar!("", [3 31], C=:lightblue, Vd=:cmd)
+	bar((1,2,3), Vd=2)
+	bar((1,2,3), (1,2,3), Vd=2)
+	bar!((1,2,3), Vd=2)
+	bar!((1,2,3), (1,2,3), Vd=2)
+	bar([3 31], C=:lightblue, Vd=2)
+	bar("", [3 31], C=:lightblue, Vd=2)
+	bar!("", [3 31], C=:lightblue, Vd=2)
 	men_means, men_std = (20, 35, 30, 35, 27), (2, 3, 4, 1, 2);
 	x = collect(1:length(men_means));
 	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue, limits=(0.5,5.5,0,40), frame=:none, error_bars=(y=men_std,), Vd=2)
@@ -590,15 +590,15 @@ if (got_it)					# Otherwise go straight to end
 	G = gmt("grdmath -R-15/15/-15/15 -I1 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 	gmtwrite("lixo.grd", G)
 	bar3(G, lw=:thinnest)
-	bar3("lixo.grd", grd=true, lw=:thinnest, Vd=:cmd)
-	bar3!(G, lw=:thinnest, Vd=:cmd)
-	bar3!("", G, lw=:thinnest, Vd=:cmd)
-	bar3(G, lw=:thinnest, bar=(width=0.085,), Vd=:cmd)
-	bar3(G, lw=:thinnest, width=0.085, nbands=3, Vd=:cmd)
-	bar3(G, region="-15/15/-15/15/-2/2", lw=:thinnest, noshade=1, Vd=:cmd)
-	bar3(rand(4,4), Vd=:cmd)
+	bar3("lixo.grd", grd=true, lw=:thinnest, Vd=2)
+	bar3!(G, lw=:thinnest, Vd=2)
+	bar3!("", G, lw=:thinnest, Vd=2)
+	bar3(G, lw=:thinnest, bar=(width=0.085,), Vd=2)
+	bar3(G, lw=:thinnest, width=0.085, nbands=3, Vd=2)
+	bar3(G, region="-15/15/-15/15/-2/2", lw=:thinnest, noshade=1, Vd=2)
+	bar3(rand(4,4), Vd=2)
 	D = grd2xyz(G);
-	bar3(D, width=0.01, Nbands=3, Vd=:cmd)
+	bar3(D, width=0.01, Nbands=3, Vd=2)
 	@test_throws ErrorException("BAR3: When first arg is a name, must also state its type. e.g. grd=true or dataset=true") bar3("lixo.grd")
 	gmtwrite("lixo.gmt", D)
 	@test_throws ErrorException("BAR3: When NOT providing *width* data must contain at least 5 columns.") bar3("lixo.gmt", dataset=true)
@@ -640,8 +640,8 @@ if (got_it)					# Otherwise go straight to end
 	# PSCLIP
 	d = [0.2 0.2; 0.2 0.8; 0.8 0.8; 0.8 0.2; 0.2 0.2];
 	psclip(d, J="X3i", R="0/1/0/1", N=true);
-	psclip!(d, J="X3i", R="0/1/0/1", Vd=:cmd);
-	psclip!("", d, J="X3i", R="0/1/0/1", Vd=:cmd);
+	psclip!(d, J="X3i", R="0/1/0/1", Vd=2);
+	psclip!("", d, J="X3i", R="0/1/0/1", Vd=2);
 
 	@show("PSCONVERT")
 	# PSCONVERT
@@ -658,62 +658,62 @@ if (got_it)					# Otherwise go straight to end
 	# PSCOAST
 	coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, borders="1/0.5p")
 	coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps")
-	coast(R=[-10 1 36 45], J="M12c", B="a", shore2=1, E=("PT", (0.5,"red","--"), "+gblue"), Vd=:cmd)
-	coast(R=[-10 1 36 45], J="M", B="a", shore4=1,  E="PT,+gblue", borders="a", rivers="a", Vd=:cmd)
-	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), water=:blue, clip=:land, Vd=:cmd)
-	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), clip=:stop, rivers="1/0.5p", Vd=:cmd)
+	coast(R=[-10 1 36 45], J="M12c", B="a", shore2=1, E=("PT", (0.5,"red","--"), "+gblue"), Vd=2)
+	coast(R=[-10 1 36 45], J="M", B="a", shore4=1,  E="PT,+gblue", borders="a", rivers="a", Vd=2)
+	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), water=:blue, clip=:land, Vd=2)
+	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), clip=:stop, rivers="1/0.5p", Vd=2)
 	@test GMT.parse_dcw("", ((country=:PT, pen=(2,:red), fill=:blue), (country=:ES, pen=(2,:blue)) )) == " -EPT+p2,red+gblue -EES+p2,blue"
-	r = coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60), frame=(annot=30, grid=15), res=:crude, area=10000, land=:tan, ocean=:cyan, shore=:thinnest, figsize=10, Vd=:cmd);
+	r = coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60), frame=(annot=30, grid=15), res=:crude, area=10000, land=:tan, ocean=:cyan, shore=:thinnest, figsize=10, Vd=2);
 	@test startswith(r, "pscoast  -Rg -JF-120/35/60/10 -Bpa30g15 -A10000 -Dcrude -Gtan -Scyan -Wthinnest")
-	r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hello Round World", Vd=:cmd);
+	r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hello Round World", Vd=2);
 	@test startswith(r, "pscoast  -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude")
-	@test startswith(coast(R=:g, W=(level=1,pen=(2,:green)), Vd=:cmd), "pscoast  -Rg -JX12cd/0 -Baf -BWSen -W1/2,green")
-	@test startswith(coast(R=:g, W=(2,:green), Vd=:cmd), "pscoast  -Rg -JX12cd/0 -Baf -BWSen -W2,green")
-	r = coast(R=:g, N=((level=1,pen=(2,:green)), (level=3,pen=(4,:blue, "--"))), Vd=:cmd);
+	@test startswith(coast(R=:g, W=(level=1,pen=(2,:green)), Vd=2), "pscoast  -Rg -JX12cd/0 -Baf -BWSen -W1/2,green")
+	@test startswith(coast(R=:g, W=(2,:green), Vd=2), "pscoast  -Rg -JX12cd/0 -Baf -BWSen -W2,green")
+	r = coast(R=:g, N=((level=1,pen=(2,:green)), (level=3,pen=(4,:blue, "--"))), Vd=2);
 	@test startswith(r, "pscoast  -Rg -JX12cd/0 -Baf -BWSen -N1/2,green -N3/4,blue,--")
-	r = coast(proj=:Mercator, DCW=((country="GB,IT,FR", fill=:blue, pen=(0.25,:red)), (country="ES,PT,GR", fill=:yellow)), Vd=:cmd);
+	r = coast(proj=:Mercator, DCW=((country="GB,IT,FR", fill=:blue, pen=(0.25,:red)), (country="ES,PT,GR", fill=:yellow)), Vd=2);
 	@test startswith(r, "pscoast  -JM12c -Baf -BWSen -EGB,IT,FR+gblue+p0.25,red -EES,PT,GR+gyellow -Da")
-	@test_throws ErrorException("In Overlay mode you cannot change a fig scale and NOT repeat the projection") coast!(region=(-20,60,-90,90), scale=0.03333, Vd=:cmd)
+	@test_throws ErrorException("In Overlay mode you cannot change a fig scale and NOT repeat the projection") coast!(region=(-20,60,-90,90), scale=0.03333, Vd=2)
 
 	@show("PSCONTOUR")
 	# PSCONTOUR
 	x,y,z=GMT.peaks(grid=false);
 	contour([x[:] y[:] z[:]], cont=1, annot=2, axis="a")
-	contour!([x[:] y[:] z[:]], cont=1, Vd=:cmd)
-	contour!([x[:] y[:] z[:]], cont=1, E="lixo", Vd=:cmd)	# Cheating E opt because Vd=:cmd prevents its usage
-	contour!("", [x[:] y[:] z[:]], cont=1, Vd=:cmd)
+	contour!([x[:] y[:] z[:]], cont=1, Vd=2)
+	contour!([x[:] y[:] z[:]], cont=1, E="lixo", Vd=2)	# Cheating E opt because Vd=2 prevents its usage
+	contour!("", [x[:] y[:] z[:]], cont=1, Vd=2)
 
 	# PSIMAGE
 	if (GMTver >= 6)
 		psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
-		psimage!("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7, Vd=:cmd)
+		psimage!("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7, Vd=2)
 	end
 
 	# PSSCALE
 	C = makecpt(T="-200/1000/100", C="rainbow");
 	colorbar(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps", par=(MAP_FRAME_WIDTH=0.2,))
-	colorbar!("", C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=:cmd)
-	colorbar!(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=:cmd)
-	colorbar(C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=:cmd)
-	colorbar!(C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=:cmd)
+	colorbar!("", C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=2)
+	colorbar!(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=2)
+	colorbar(C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=2)
+	colorbar!(C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=2)
 
 	@show("PSHISTOGRAM")
 	# PSHISTOGRAM
 	histogram(randn(1000),W=0.1,center=true,B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
-	histogram!("", randn(1000),W=0.1,center=true,N="1+p0.5", Vd=:cmd)
-	histogram!(randn(1000),W=0.1,center=true,N=(2,(1,:red)), Vd=:cmd)
+	histogram!("", randn(1000),W=0.1,center=true,N="1+p0.5", Vd=2)
+	histogram!(randn(1000),W=0.1,center=true,N=(2,(1,:red)), Vd=2)
 
 	# PSLEGEND
 	T = text_record(["P", "T d = [0 0; 1 1; 2 1; 3 0.5; 2 0.25]"]);
 	legend(T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", F="+p+ggray")
-	legend!(T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", Vd=:cmd)
-	legend!("", T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", Vd=:cmd)
+	legend!(T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", Vd=2)
+	legend!("", T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", Vd=2)
 
 	# PSROSE
 	data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3;; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
 	rose(data, yx=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=1, D=1, S=4)
-	rose!(data, yx=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
-	rose!("",data, yx=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=:cmd)
+	rose!(data, yx=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=2)
+	rose!("",data, yx=[], A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=2)
 	if (GMTver >= 6)
 		rose(data, yx=[], A=20, I=1);		# Broken in GMT5`
 	end
@@ -722,25 +722,26 @@ if (got_it)					# Otherwise go straight to end
 	# PSMASK
 	D = gmt("gmtmath -T-90/90/10 -N2/1 0");
 	mask(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, B="xafg180 yafg10")
-	mask!(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=:cmd)
-	mask!("", D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=:cmd)
+	mask!(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=2)
+	mask!("", D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=2)
 
 	# PSSOLAR
 	#D=solar(I="-7.93/37.079+d2016-02-04T10:01:00");
 	#@assert(D[1].text[end] == "\tDuration = 10:27")
 	solar(R="d", W=1, J="Q0/14c", B="a", T="dc")
-	solar!(R="d", W=1, J="Q0/14c", T="dc", Vd=:cmd)
+	solar!(R="d", W=1, J="Q0/14c", T="dc", Vd=2)
+	solar(sun=(date="2016-02-09T16:00:00",), formated=true);
 
 	# PSTERNARY
 	ternary([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", X=:c, B=:a, S="c0.1c");
-	ternary!([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", shape=:square, ms=0.1, markerline=1,Vd=:cmd);
-	ternary!("", [0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", ms=0.1, lw=1,markeredgecolor=:red,aspect=:equal, Vd=:cmd);
+	ternary!([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", shape=:square, ms=0.1, markerline=1,Vd=2);
+	ternary!("", [0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", ms=0.1, lw=1,markeredgecolor=:red,aspect=:equal, Vd=2);
 
 	@show("PSTEXT")
 	# PSTEXT
 	text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps",showfig="lixo.ps")
-	text!(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",Vd=:cmd)
-	text!("", text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",Vd=:cmd)
+	text!(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",Vd=2)
+	text!("", text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",Vd=2)
 	t = ["46p A Tale of Two Cities", "32p Dickens, Charles", "24p 1812-1973"];
 	pstext(text_record([3 8; 3 7; 3 6.4],t), R="0/6/0/9", J=:x1i, B=0, F="+f+jCM")
 	t = ["\tIt was the best of times, it was the worst of times, it was the age of wisdom, it was the age of,",
@@ -749,15 +750,15 @@ if (got_it)					# Otherwise go straight to end
 	T = text_record(t,"> 3 5 18p 5i j");
 	pstext!(T, F="+f16p,Times-Roman,red+jTC", M=true)
 	pstext!(T, font=(16,"Times-Roman",:red), justify=:TC, M=true)
-	@test startswith(GMT.text([1 2 3; 4 5 6], Vd=:cmd), "pstext  -JX12c/0 -Baf -BWSen -R1/4/2/5")
-	@test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=:cmd)
+	@test startswith(GMT.text([1 2 3; 4 5 6], Vd=2), "pstext  -JX12c/0 -Baf -BWSen -R1/4/2/5")
+	@test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=2)
 
 	# PSWIGGLE
 	t=[0 7; 1 8; 8 3; 10 7];
 	t1=gmt("sample1d -I5k", t); t2 = gmt("mapproject -G+uk", t1); t3 = gmt("math ? -C2 10 DIV COS", t2);
 	wiggle(t3,R="-1/11/0/12", J="M8",B="af WSne", W="0.25p", Z="4c", G="+green", T="0.5p", A=1, Y="0.75i", S="8/1/2")
-	wiggle!(t3,R="-1/11/0/12", J="M8",Z="4c", A=1, Y="0.75i", S="8/1/2", Vd=:cmd)
-	wiggle!("",t3,R="-1/11/0/12", J="M8",Z="4c", A=1, Y="0.75i", S="8/1/2", Vd=:cmd)
+	wiggle!(t3,R="-1/11/0/12", J="M8",Z="4c", A=1, Y="0.75i", S="8/1/2", Vd=2)
+	wiggle!("",t3,R="-1/11/0/12", J="M8",Z="4c", A=1, Y="0.75i", S="8/1/2", Vd=2)
 
 	# SAMPLE1D
 	d = [-5 74; 38 68; 42 73; 43 76; 44 73];
@@ -825,7 +826,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Grids have different sizes, so they cannot be subtracted.") G1 - G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be multiplied.") G1 * G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be divided.") G1 / G2;
-	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle), leg=true, Vd=:cmd)
+	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle), leg=true, Vd=2)
 	mat2ds(rand(6,6), color=[:red :blue]);
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"]);
@@ -877,7 +878,7 @@ if (got_it)					# Otherwise go straight to end
 	# EXAMPLES
 	plot(1:10,rand(10), lw=1, lc="blue", marker="square",
 	markeredgecolor=:white, size=0.2, markerfacecolor="red", title="Hello World",
-		xlabel="Spoons", ylabel="Forks", show=1, Vd=:cmd)
+		xlabel="Spoons", ylabel="Forks", show=1, Vd=2)
 
 	x = range(0, stop=2pi, length=180);	seno = sin.(x/0.2)*45;
 	coast(region="g", proj="A300/30/6c", axis="g", resolution="c", land="navy")

@@ -1004,20 +1004,21 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 		elseif (order[1] == 2 && order[2] == 1)  cmd = cmd_hold[2] * cmd_hold[1] * cmd;		last = 1
 		else                                     cmd = cmd_hold[1] * cmd;		last = 1
 		end
-		if (cmd[1] != 'j' && cmd[1] != 'J' && cmd[1] != 'g')
-			if (length(cmd_hold[last]) == 2)
-				cmd = "J" * cmd
-			else
-				if (occursin(':', cmd_hold[last]))		# It must be a geog coordinate in dd:mm
-					cmd = "g" * cmd
-				elseif (length(cmd_hold[last]) > 1)		# Temp patch to avoid parsing single char flags
+		#if (cmd[1] != 'j' && cmd[1] != 'J' && cmd[1] != 'g')
+			#if (length(cmd_hold[last]) == 2)
+				#cmd = "J" * cmd
+			#else
+				#if (occursin(':', cmd_hold[last]))		# It must be a geog coordinate in dd:mm
+					#cmd = "g" * cmd
+				#elseif (length(cmd_hold[last]) > 1)		# Temp patch to avoid parsing single char flags
+				if (length(cmd_hold[last]) > 2)		# Temp patch to avoid parsing single char flags
 					rs = split(cmd_hold[last], '/')
 					if (length(rs) != 2)  error("Anchor point must be given as a pair of coordinates")  end
 					x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
 					if (x <= 1.0 && y <= 1.0)  cmd = "n" * cmd  end		# Otherwise it's either a paper coord or error
 				end
-			end
-		end
+			#end
+		#end
 	end
 
 	return cmd
