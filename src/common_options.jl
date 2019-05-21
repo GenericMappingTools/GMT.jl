@@ -1008,10 +1008,9 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 			#if (length(cmd_hold[last]) == 2)
 				#cmd = "J" * cmd
 			#else
-				#if (occursin(':', cmd_hold[last]))		# It must be a geog coordinate in dd:mm
-					#cmd = "g" * cmd
-				#elseif (length(cmd_hold[last]) > 1)		# Temp patch to avoid parsing single char flags
-				if (length(cmd_hold[last]) > 2)		# Temp patch to avoid parsing single char flags
+				if (occursin(':', cmd_hold[last]))		# It must be a geog coordinate in dd:mm
+					cmd = "g" * cmd
+				elseif (length(cmd_hold[last]) > 2)		# Temp patch to avoid parsing single char flags
 					rs = split(cmd_hold[last], '/')
 					if (length(rs) != 2)  error("Anchor point must be given as a pair of coordinates")  end
 					x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
