@@ -627,13 +627,13 @@ if (got_it)					# Otherwise go straight to end
 	r = basemap(rose=(anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdn0.5/0.7+w1+f2+o0.4")
 	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=2);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdJTR+w1+f2+o0.4")
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdjTR+w1+f2+o0.4")
 	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=2);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdJTR+w1+f2+o0.4")
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdjTR+w1+f2+o0.4")
 	r = basemap(compass=(anchor=:TR, width=1, dec=-14, offset=0.4), Vd=2);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TmJTR+w1+d-14+o0.4")
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TmjTR+w1+d-14+o0.4")
 	r = basemap(L=(anchor=:TR, width=1, align=:top, fancy=0.4), Vd=2);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -LJTR+w1+at+f")
+	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -LjTR+w1+at+f")
 	@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=2), "psbasemap  -JX12c/0 -Bpa10+ap")
 	@test_throws ErrorException("slanted option: Only 'parallel' is allowed for the y-axis") basemap(yaxis=(slanted=:o,), Vd=2)
 
