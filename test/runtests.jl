@@ -173,6 +173,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Expected a CPT structure for input") GMT.palette_init(C_NULL,0,0,0)
 	@test_throws ErrorException("Bad family type") GMT.GMT_Alloc_Segment(C_NULL, -1, 0, 0, "", C_NULL)
 	GMT.strncmp("abcd", "ab", 2)
+	GMT.parse_proj((name="blabla",center=(0,0)))
 	# ---------------------------------------------------------------------------------------------------
 
 	gmt("begin"); gmt("end")
@@ -581,7 +582,7 @@ if (got_it)					# Otherwise go straight to end
 	bar!((1,2,3), (1,2,3), Vd=2)
 	bar([3 31], C=:lightblue, Vd=2)
 	bar("", [3 31], C=:lightblue, Vd=2)
-	bar!("", [3 31], C=:lightblue, Vd=2)
+	bar!("", [3 31], C=:lightblue, frame=:noannot, Vd=2)
 	men_means, men_std = (20, 35, 30, 35, 27), (2, 3, 4, 1, 2);
 	x = collect(1:length(men_means));
 	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue, limits=(0.5,5.5,0,40), frame=:none, error_bars=(y=men_std,), Vd=2)

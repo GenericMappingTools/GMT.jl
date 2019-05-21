@@ -1004,20 +1004,14 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 		elseif (order[1] == 2 && order[2] == 1)  cmd = cmd_hold[2] * cmd_hold[1] * cmd;		last = 1
 		else                                     cmd = cmd_hold[1] * cmd;		last = 1
 		end
-		#if (cmd[1] != 'j' && cmd[1] != 'J' && cmd[1] != 'g')
-			#if (length(cmd_hold[last]) == 2)
-				#cmd = "J" * cmd
-			#else
-				if (occursin(':', cmd_hold[last]))		# It must be a geog coordinate in dd:mm
-					cmd = "g" * cmd
-				elseif (length(cmd_hold[last]) > 2)		# Temp patch to avoid parsing single char flags
-					rs = split(cmd_hold[last], '/')
-					if (length(rs) != 2)  error("Anchor point must be given as a pair of coordinates")  end
-					x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
-					if (x <= 1.0 && y <= 1.0)  cmd = "n" * cmd  end		# Otherwise it's either a paper coord or error
-				end
-			#end
-		#end
+		if (occursin(':', cmd_hold[last]))		# It must be a geog coordinate in dd:mm
+			cmd = "g" * cmd
+		elseif (length(cmd_hold[last]) > 2)		# Temp patch to avoid parsing single char flags
+			rs = split(cmd_hold[last], '/')
+			if (length(rs) != 2)  error("Anchor point must be given as a pair of coordinates")  end
+			x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
+			if (x <= 1.0 && y <= 1.0)  cmd = "n" * cmd  end		# Otherwise it's either a paper coord or error
+		end
 	end
 
 	return cmd
@@ -2021,6 +2015,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	global current_view = nothing
 	if (opt_T != "")
 		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end		# Close the PS file first
+		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T)
 		out = fname_ps[1:end-2] * fname_ext
 		if (fname != "")
