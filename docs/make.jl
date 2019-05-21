@@ -2,8 +2,8 @@ using Documenter, GMT
 
 makedocs(
 	modules = [GMT],
-	#format = :html,
-	format = Documenter.HTML(),
+	format = :html,
+	#format = Documenter.HTML(),
 	#format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
 	sitename = "GMT",
 	assets = ["assets/custom.css"],
