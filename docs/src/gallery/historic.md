@@ -49,6 +49,6 @@
 |[![](historic/figs/ex41.png)](historic/ex41.md) | [![](historic/figs/ex42.png)](historic/ex42.md) | [![](historic/figs/ex44.png)](historic/ex44.md) | [![](historic/figs/ex45.png)](historic/ex45.md) |
 
 
-| Line networks and curved titles | |  |  |
+| Day-light terminators | Line networks and curved titles |  |  |
 |:-------------:|:-------------:|:---------:|:-------------:|
-|[![](historic/figs/ex48.png)](historic/ex48.md) |  |  |  |
+|[![](historic/figs/ex46.png)](historic/ex46.md) | [![](historic/figs/ex48.png)](historic/ex48.md) |  |  |

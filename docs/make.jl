@@ -69,6 +69,7 @@ makedocs(
 		hide("gallery/historic/ex43.md"),
 		hide("gallery/historic/ex44.md"),
 		hide("gallery/historic/ex45.md"),
+		hide("gallery/historic/ex46.md"),
 		hide("gallery/historic/ex48.md"),
 		hide("pens.md"),
 		hide("colorbar.md"),
@@ -105,8 +106,4 @@ makedocs(
 
 deploydocs(
 	repo   = "github.com/GenericMappingTools/GMT.jl.git",
-	#target = "build",
-	#julia = "1.0.3",
-	#deps   = nothing,
-	#make   = nothing
 )

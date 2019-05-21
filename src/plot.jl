@@ -593,6 +593,8 @@ function cat_2_arg2(arg1, arg2)
 		if (size(arg1,1) == 1 && size(arg1,2) != 1)  arg1 = arg1[:]  end
 		if (size(arg2,1) == 1 && size(arg2,2) != 1)  arg2 = arg2[:]  end
 		arg = hcat(arg1, arg2)
+		if (size(arg,2) > 2)  global multi_col = true  end
+		return arg
 	elseif (!isa(arg1, Array{GMT.GMTdataset,1}) && !isa(arg1, GMT.GMTdataset) &&
 		    !isa(arg2, Array{GMT.GMTdataset,1}) && !isa(arg2, GMT.GMTdataset) )
 		error(@sprintf("Unknown types (%s) and (%s) in cat_2_arg2() function", typeof(arg1), typeof(arg2)))
