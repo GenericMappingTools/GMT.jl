@@ -128,7 +128,9 @@ removes leading zeros from calendar items (e.g., 03 becomes 3).
 
 ```julia
 using GMT
-basemap(region="2000-4-1T/2000-5-25T/0/1", proj="X12/0.5", axis="pa7Rf1d sa1O S",
+basemap(region="2000-4-1T/2000-5-25T/0/1", figsize=(12,0.5),
+        frame=(axes=:S, annot=7, annot_unit=:day_week, ticks=1, ticks_unit=:day_date),
+        axis2=(annot=1, annot_unit=:month),
         conf=(FORMAT_DATE_MAP="-o", FONT_ANNOT_PRIMARY="+9p"), fmt=:png, show=true)
 ```
 
