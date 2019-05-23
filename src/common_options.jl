@@ -1416,6 +1416,7 @@ function helper2_axes(arg)
 	elseif (out == "u" || out == "ISOweek2") out = 'u'
 	elseif (out == "r" || out == "Gregorian_week") out = 'r'
 	elseif (out == "K" || out == "ISOweekday") out = 'K'
+	elseif (out == "k" || out == "weekday")  out = 'k'
 	elseif (out == "D" || out == "date")     out = 'D'
 	elseif (out == "d" || out == "day_date") out = 'd'
 	elseif (out == "R" || out == "day_week") out = 'R'

@@ -35,7 +35,7 @@ function gmtset(cmd0::String=""; kwargs...)
 		cmd *= " " * string(key[k]) * " " * string(d[key[k]])
 	end
 
-	(haskey(d, :Vd)) && println(@sprintf("\tgmtset %s", cmd))
+	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 
 	gmt("gmtset " * cmd)
 	gmt("destroy")
