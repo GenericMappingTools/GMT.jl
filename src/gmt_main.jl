@@ -1399,6 +1399,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function ogr2GMTdataset(in::Ptr{OGR_FEATURES})
+@show("MERDA")
 	OGR_F = unsafe_load(in)
 	n_max = OGR_F.n_rows * OGR_F.n_cols * OGR_F.n_layers
 	D = Array{GMTdataset, 1}(undef, OGR_F.n_filled)

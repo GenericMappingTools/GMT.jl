@@ -28,7 +28,7 @@ example using several sets of intervals, including different intervals and pen a
 grid crosses.
 
 ```julia
-basemap(region=(-2,1,0,0.35), proj=:M10, axis="pa15mf5mg5m wSe s1f30mg15m", conf=(MAP_FRAME_TYPE="fancy+",
+basemap(region=(-2,1,0,0.35), proj=:M10, frame="pa15mf5mg5m wSe s1f30mg15m", conf=(MAP_FRAME_TYPE="fancy+",
 	MAP_GRID_PEN_PRIMARY="thinnest,black,.", MAP_GRID_CROSS_SIZE_SECONDARY=0.25, MAP_FRAME_WIDTH=0.2,
 	MAP_TICK_LENGTH_PRIMARY=0.25, FORMAT_GEO_MAP="ddd:mm:ssF", FONT_ANNOT_PRIMARY="+8", FONT_ANNOT_SECONDARY=12))
 # Draw Arrows and text
@@ -85,9 +85,9 @@ The following concerns are specific to log axes (see Figure Logarithmic projecti
 
 ```julia
 gmt("set MAP_GRID_PEN_PRIMARY thinnest,.")
-basemap(region="1/1000/0/1", proj="X8l/0.7", axis="1f2g3p+l\"Axis Label\" S")
-basemap!(axis="1f2g3l+l\"Axis Label\" S", y_offset=2.2)
-basemap!(axis="1f2g3+l\"Axis Label\" S", y_offset=2.2, fmt=:png, show=true)
+basemap(region=(1,1000,0,1), proj="X8l/0.7", frame="1f2g3p+l\"Axis Label\" S")
+basemap!(frame="1f2g3l+l\"Axis Label\" S", y_offset=2.2)
+basemap!(frame="1f2g3+l\"Axis Label\" S", y_offset=2.2, fmt=:png, show=true)
 ```
 
 !["B_log"](figures/B_log.png)
@@ -103,8 +103,8 @@ annotations labeled 1, 4, 9, ... will appear.
 
 ```julia
 gmt("set MAP_GRID_PEN_PRIMARY thinnest,.")
-basemap(region="0/100/0/0.9", proj="X3ip0.5/0.25i", axis="a3f2g1p+l\"Axis Label\" S")
-basemap!(axis="20f10g5+l\"Axis Label\" S",  y_offset=2.2, fmt=:png, show=true)
+basemap(region=(0,100,0,0.9), proj="X3ip0.5/0.25i", frame="a3f2g1p+l\"Axis Label\" S")
+basemap!(frame="20f10g5+l\"Axis Label\" S",  y_offset=2.2, fmt=:png, show=true)
 ```
 
 !["B_pow"](figures/B_pow.png)
@@ -134,9 +134,12 @@ basemap(region="2000-4-1T/2000-5-25T/0/1", figsize=(12,0.5),
 The next example shows two different ways to annotate an axis portraying 2 days in July 1969:
 
 ```julia
-gmt("set FORMAT_DATE_MAP \"o dd\" FORMAT_CLOCK_MAP hh:mm FONT_ANNOT_PRIMARY +9p")
-basemap(region="1969-7-21T/1969-7-23T/0/1", figsize=(12,0.5), axis="pa6Hf1h sa1K S")
-basemap!(axis="pa6Hf1h sa1D S", y_offset=1.7, fmt=:png, show=true)
+gmtset(FORMAT_DATE_MAP="\"o dd\"", FORMAT_CLOCK_MAP="hh:mm", FONT_ANNOT_PRIMARY=9)
+basemap(region="1969-7-21T/1969-7-23T/0/1", figsize=(12,0.5),
+        frame=(axes=:S, annot=6, annot_unit=:hour, ticks=1, ticks_unit=:hour2),
+        axis2=(annot=1, annot_unit=:ISOweekday))
+basemap!(frame=(axes=:S, annot=6, annot_unit=:H, ticks=1, ticks_unit=:hour2),
+         axis2=(annot=1, annot_unit=:date), y_offset=1.7, fmt=:png, show=true)
 ```
 
 The lower example chooses to annotate the weekdays (by specifying a1K) while the upper example
@@ -154,7 +157,7 @@ day-of-month number.
 The third example presents two years, annotating both the years and every 3rd month.
 
 ```julia
-basemap(region="1997T/1999T/0/1", figsize=(12,0.25), axis="pa3Of1o sa1Y S", conf=(FORMAT_DATE_MAP="o",
+basemap(region="1997T/1999T/0/1", figsize=(12,0.25), frame="pa3Of1o sa1Y S", conf=(FORMAT_DATE_MAP="o",
     FORMAT_TIME_PRIMARY_MAP="Character", FONT_ANNOT_PRIMARY="+9p"), fmt=:png, show=true)
 ```
 
@@ -171,7 +174,7 @@ ask for a 12-hour clock, and let time go from right to left:
 
 ```julia
 gmt("set FORMAT_CLOCK_MAP=-hham FONT_ANNOT_PRIMARY +9p TIME_UNIT d")
-basemap(region="0.2t/0.35t/0/1", figsize=(-12,0.25), axis="pa15mf5m sa1H S",
+basemap(region="0.2t/0.35t/0/1", figsize=(-12,0.25), frame="pa15mf5m sa1H S",
     conf=(FORMAT_CLOCK_MAP="-hham", FONT_ANNOT_PRIMARY="+9p", TIME_UNIT="d"), fmt=:png, show=true)
 ```
 
@@ -227,7 +230,7 @@ basemap(region="2000-12-15T/2001-1-15T/0/1", figsize=(12,0.25),
 
 ```julia
     basemap(region=(416,542,0,6.2831852), figsize=(-12,5),
-            axis=(frame=(:left_full, :bot_full), fill=:lightblue),
+            frame=(frame=(:left_full, :bot_full), fill=:lightblue),
             xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"),
             yaxis=(custom=(pos=[0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852],
                 type_=["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]),),)
