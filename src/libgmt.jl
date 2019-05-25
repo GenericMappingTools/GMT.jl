@@ -392,7 +392,7 @@ end
 function GMT_Get_Version()
 	ver = ccall((:GMT_Get_Version, thelib), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
 end
-function GMT_Get_Version(major::Ptr{Cuint}, minor::Ptr{Cuint}, patch::Ptr{Cuint})
+function GMT_Get_Version(major, minor, patch)
 	ver = ccall((:GMT_Get_Version, thelib), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, major, minor, patch)
 end
 

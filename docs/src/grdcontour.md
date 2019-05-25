@@ -84,8 +84,7 @@ Optional Arguments
   coordinates) or **C** for plot length units in current plot units after projecting the coordinates.
   Optionally, append **+z** to exclude the zero contour.
 
-- **R** or *region* or *limits* : -- *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
-   **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more 
+- **R** or *region* or *limits* : -- *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)* **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more 
    Specify the region of interest. More at [limits](@ref)
 
 - **S** or *smooth* : *smooth=smoothfactor*\
