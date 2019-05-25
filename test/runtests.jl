@@ -12,6 +12,10 @@ end
 if (got_it)					# Otherwise go straight to end
 
 	GMT.GMT_Get_Version();
+	ma=[0];mi=[0];pa=[0];
+	GMT.GMT_Get_Version(ma,mi,pa);
+	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
+	GMT.GMT_Get_Ctrl(API);
 
 	# -------------------- Test common_options ----------------------------------------
 	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)))[1] == " -R1/2/3/4/5/6"
@@ -418,6 +422,7 @@ if (got_it)					# Otherwise go straight to end
 	@assert(D[1].data == [0.0 0 1])
 	D = grdtrack([0 0], G="lixo.grd");
 	@assert(D[1].data == [0.0 0 1])
+	D = grdtrack("lixo.grd", [0 0]);
 	D = grdtrack(G, [0 0]);
 	D = grdtrack([0 0], G=G);
 	D = grdtrack([0 0], G=(G,G));

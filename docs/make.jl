@@ -72,7 +72,6 @@ makedocs(
 		hide("gallery/historic/ex46.md"),
 		hide("gallery/historic/ex48.md"),
 		hide("pens.md"),
-		hide("colorbar.md"),
 		hide("grdhisteq.md"),
 		hide("text.md"),
 		"Manual" => [
@@ -91,6 +90,7 @@ makedocs(
 			"bar.md",
 			"bar3.md",
 			"coast.md",
+			"colorbar.md",
 			"grdcontour.md",
 			"grdimage.md",
 			"grdview.md",

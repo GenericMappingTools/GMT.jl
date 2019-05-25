@@ -94,7 +94,7 @@ Optional Arguments
    (affects the ambient light). Alternatively, derive an intensity grid from the input data grid *grd_z* via a
    call to `grdgradient`; use `shade=(azimuth=az,)` or ``shade=(azimuth=az, norm=params)`` to specify azimuth
    and intensity arguments for that module or just give ``shade=(auto=true,)`` to select the default arguments
-   (*azim=-45,nom=:t1)*. If you want a more specific intensity scenario then run grdgradient` separately first.
+   *(azim=-45,nom=:t1)*. If you want a more specific intensity scenario then run grdgradient separately first.
 
 - **Jz** or **JZ** or *zscale* or *zsize* : *zscale=scale* **|** *zsize=size*\
    Set z-axis scaling or or z-axis size. ``zsize=size`` sets the size to the fixed value *size*
