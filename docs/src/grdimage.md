@@ -36,7 +36,7 @@ Required Arguments
 Optional Arguments
 ------------------
 
-- **-A** or *img_out* or *image_out* : *img_out=fname*\
+- **-A** or **img_out** or **image_out** : *img_out=fname*\
    Save an image in a raster format instead of PostScript. Use extension .ppm for a Portable Pixel Map format.
    For GDAL-aware versions there are more choices: Use *fname* to select the image file name and extension.
    If the extension is one of .bmp, .gif, .jpg, .png, or .tif then no driver information is required. For other
@@ -47,10 +47,10 @@ Optional Arguments
    write a GeoTiff image if the GMT projection syntax translates into a PROJ4 syntax, otherwise a plain tiff
    file is produced. (2) Any vector elements will be lost.
 
-- **B** or *axis* or *frame*\
+- **B** or **axis** or *frame*\
    Set map boundary frame and axes attributes. More at [axis](@ref)
 
-- **C** or *color* or *cmap* : *color=cpt*\
+- **C** or **color** or **cmap** : *color=cpt*\
    Where *cpt* is a *GMTcpt* type or a cpt file name (for *grd_z* only). Alternatively, supply the name of
    a GMT color master dynamic CPT [jet] to automatically determine a continuous CPT from the grid's z-range;
    you may round up/down the z-range by adding **+i** *zinc*. Yet another option is to specify
@@ -103,27 +103,27 @@ Optional Arguments
 - **M** or *monochrome* : *monochrome=true*\
     Force conversion to monochrome image using the (television) YIQ transformation. Cannot be used with **nan_alpha**.
 
-- **N** or *noclip* : *noclip=true*\
+- **N** or **noclip** : *noclip=true*\
     Do not clip the image at the map boundary (only relevant for non-rectangular maps).
 
 - **Q** or *nan_t* or *nan_alpha* : *nan_alpha=true*\
     Make grid nodes with z = NaN transparent, using the color-masking feature in PostScript Level 3
     (the PS device must support PS Level 3).
 
-- **R** or *region* or *limits* : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
+- **R** or **region** or **limits** : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
    **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more 
    Specify the region of interest. More at [limits](@ref)
 
-- **U** or *stamp* : *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
+- **U** or **stamp** : *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
    Draw GMT time stamp logo on plot. More at [stamp](@ref)
 
-- **V** or *verbose* : *verbose=true* **|** *verbose=level*\
+- **V** or **verbose** : *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)
 
-- **X** or *x_off* or *x_offset* : *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
+- **X** or **x_off** or **x_offset** : *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [x_off](@ref)
 
-- **Y** or *y_off* or *y_offset* : *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
+- **Y** or **y_off** or **y_offset** : *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [y_off](@ref)
 
 - **n** or *interp* or *interpol* : *interp=params*\
