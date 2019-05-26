@@ -31,6 +31,10 @@ Parameters
     Normalization. [Default is no normalization.] The actual gradients g are offset and scaled
     to produce normalized gradients.
     [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html#n)
+- **Q** : **save_stats** : -- Str --		Flags = c|r|R
+
+    Controls how normalization via N is carried out.
+    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html#q)
 - $(GMT.opt_R)
 - **S** : **slopegrid** : -- Str --
 
@@ -46,8 +50,16 @@ function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :f :n])
-	cmd = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:G :outgrid], [:E :lambert],
-				[:N :norm :normalize], [:S :slopegrid]])
+	cmd = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:G :outgrid], [:S :slopegrid]])
+	cmd = add_opt(cmd, 'E', d, [:E :lambert], 
+	      (manip=("m", nothing, 1), simple=("s", nothing, 1), peucker=("p", nothing, 1), view=("", arg2str), ambient="+a", difuse="+d", specular="+p", shine="+s") )
+	cmd = add_opt(cmd, 'N', d, [:N :norm :normalize],
+		  (laplace=("e", nothing, 1), cauchy=("t", nothing, 1), amp="", sigma="+s", offset="+o"))
+    if ((val = find_in_dict(d, [:Q :save_stats])[1]) !== nothing)
+		val = string(val)[1]
+		if (val == 's')  val = 'c'  end
+        if (val == 'c' || val == 'r' || val == 'R')  cmd *= " -Q" * val  end
+    end
 
 	common_grd(d, cmd0, cmd, "grdgradient ", arg1)		# Finish build cmd and run it
 end

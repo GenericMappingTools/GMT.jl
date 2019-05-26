@@ -385,7 +385,10 @@ if (got_it)					# Otherwise go straight to end
 	G2=grdfilter(G, filter="m600", distflag=4, inc=0.5); # Use G of previous test
 
 	# GRDGRADIENT
-	G2=grdgradient(G, azim="0/270", normalize="e0.6");	# Use G of previous test
+	G2=grdgradient(G, azim="0/270", normalize="e0.6");
+	if (GMTver >= 6)
+		G2=grdgradient(G, azim="0/270", normalize="e0.6", Q=:save, Vd=2);
+	end
 
 	# GRDHISTEQ
 	G2 = grdhisteq(G, gaussian=[]);	# Use G of previous test

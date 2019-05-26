@@ -30,7 +30,7 @@ Optional Arguments
 
 - **G** or *fill* : *fill=color* **|** *G=:c*\
    Select color or pattern for filling of terminators; or use *G=:c* for clipping [Default is no fill].
-   Deactivate clipping by appending the output of gmt :doc:`clip` **C**.
+   Deactivate clipping by appending the output of `clip` **C**.
 
 - **I** or *sun* : *sun=true* **|** *sun=(lon,lat)* **|** *sun=(pos=(lon,lat), date=date)* **|** *sun=(pos=(lon,lat), date=date, TZ=tzone)*\
    Print current sun position as well as Azimuth and Elevation. Use *sun=(lon,lat)* to print also the times of
