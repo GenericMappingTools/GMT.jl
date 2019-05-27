@@ -27,5 +27,5 @@ plot!(3.49, 0.97, symbol="kski_alpine/1.7", fill=:black, show=true, fmt=:png)
 ```
 
 ```@raw html
-<img src="../scripts_agu/figs/snake.png" width="500" class="center"/>
+<img src="../figs/snake.png" width="500" class="center"/>
 ```

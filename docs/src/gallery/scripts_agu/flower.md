@@ -32,5 +32,5 @@ plot!(x, y, fill=(pattern="C:/progs_cygw/GMTdev/gmt5/master/test/psxy/tiling2.jp
 ```
 
 ```@raw html
-<img src="../scripts_agu/figs/flower.png" width="400" class="center"/>
+<img src="../figs/flower.png" width="400" class="center"/>
 ```

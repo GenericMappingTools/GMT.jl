@@ -27,5 +27,5 @@ solar!(terminators=(term=:a, date="2016-02-09T16:00:00"), fill="navy@80", fmt=:p
 ```
 
 ```@raw html
-<img src="../scripts_agu/figs/solar.png" width="600" class="center"/>
+<img src="../figs/solar.png" width="600" class="center"/>
 ```
