@@ -43,7 +43,7 @@ Optional Arguments
     In addition, the **region_justify** justification lets us use x,y coordinates extracted from the **region** string instead of providing them in the input file. For example **region_justify=:TL** gets the *x_min*, *y_max* from the **region** string and plots the text at the Upper Left corner of the map. Normally,the text to be plotted comes from the data record. Instead, use **header=true** or **label=true** to select the text as the most recent segment header or segment label, respectively in a multisegment input file, **rec_number=first** to use the record number (counting up from *first*), **text=text** to set a fixed *text* string, or **zvalues** to format incoming *z* values to a string using the supplied *format* (**zvalues=""** uses `FORMAT_FLOAT_MAP`). Note: If **threeD** is in effect then the *z* value used for formatting is in the 4th, not 3rd column.
     Exceptionally, this option can be broken up in its individual pieces by dropping the **attrib** keyword. 
 
-- **G** or **fill** : *fill=color* **|** *fill=:c*\
+- **G** or **fill** : -- *fill=color* **|** *fill=:c*\
     Sets the shade or color used for filling the text box [Default is no fill]. Alternatively, use **fill=:c** to plot the text and then use the text dimensions (and **clearance**) to build clip paths and turn clipping on. This clipping can then be turned off later with `clip` **C**. To *not* plot the text but activate clipping, use **fill=:C** instead.
 
 - **L** or **list** : -- *list=true*\
