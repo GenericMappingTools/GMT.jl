@@ -22,5 +22,5 @@ scatter(rand(100),rand(100), markersize=rand(100), marker=:c, color=:ocean, zcol
 ```
 
 ```@raw html
-<img src="../scripts_agu/figs/scatter_cart.png" width="500" class="center"/>
+<img src="../figs/scatter_cart.png" width="500" class="center"/>
 ```

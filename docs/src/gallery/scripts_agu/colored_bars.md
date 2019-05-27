@@ -16,5 +16,5 @@ bar(rand(15), color=:rainbow, figsize=(14,8), title="Colored bars", fmt=:png, sh
 ```
 
 ```@raw html
-<img src="../scripts_agu/figs/colored_bars.png" width="500" class="center"/>
+<img src="../figs/colored_bars.png" width="500" class="center"/>
 ```

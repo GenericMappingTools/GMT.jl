@@ -28,5 +28,5 @@ scatter(teta, r, xaxis=(annot=45,grid=45), yaxis=(annot=2,grid=2), title="Polar 
 ```
 
 ```@raw html
-<img src="../scripts_agu/figs/scatter_polar.png" width="400" class="center"/>
+<img src="../figs/scatter_polar.png" width="400" class="center"/>
 ```

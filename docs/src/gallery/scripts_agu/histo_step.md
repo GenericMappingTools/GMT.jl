@@ -30,5 +30,5 @@ lines!(D2, steps=(x=true,), close=(bot="",), fill=(pattern=82,bg=:blue,dpi=100),
 ```
 
 ```@raw html
-<img src="../scripts_agu/figs/histo_step.png" width="500" class="center"/>
+<img src="../figs/histo_step.png" width="500" class="center"/>
 ```
