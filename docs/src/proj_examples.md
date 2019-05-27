@@ -43,7 +43,7 @@ coast(region=[110 140 20 35],                                   # The Map limits
 ```
 
 ```@raw html
-<img src="figures/mapproj/GMT_albers.png" alt="GMT_Albers" title="Albers equal-area conic map projection" width="500" class="center"/>
+<img src="../figures/mapproj/GMT_albers.png" alt="GMT_Albers" title="Albers equal-area conic map projection" width="500" class="center"/>
 ```
 
 ### Equidistant conic
@@ -68,7 +68,7 @@ coast(region=[-88 -70 18 24], proj=(name=:eqdc, center=[-79 21], parallels=[19 2
 ```
 
 ```@raw html
-<img src="figures/mapproj/GMT_equidistant_conic.png" alt="GMT_equidistant_conic" title="Equidistant conic map projection" width="500" class="center"/>
+<img src="../figures/mapproj/GMT_equidistant_conic.png" alt="GMT_equidistant_conic" title="Equidistant conic map projection" width="500" class="center"/>
 ```
 
 ### Lambert conic conformal
@@ -99,7 +99,7 @@ coast(region=[-130 -70 24 52], proj=(name=:lambertConic, center=[-100 35], paral
 ```
 
 ```@raw html
-<img src="figures/mapproj/GMT_lambert_conic.png" alt="GMT_lambert_conic" title="Lambert conformal conic map projection" width="500" class="center"/>
+<img src="../figures/mapproj/GMT_lambert_conic.png" alt="GMT_lambert_conic" title="Lambert conformal conic map projection" width="500" class="center"/>
 ```
 
 ### (American) polyconic projection
