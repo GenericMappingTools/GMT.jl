@@ -43,6 +43,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.build_opt_J([])[1] == " -J"
 	@test GMT.arg2str((1,2,3)) == "1/2/3"
 	@test GMT.arg2str(("aa",2,3)) == "aa/2/3"
+	@test GMT.arg2str(Dict(:shaded => "-4p/-6p/grey20@40"), [:shaded]) == "-4p/-6p/grey20@40"
 	@test_throws ErrorException("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was DataType") GMT.arg2str(typeof(1))
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="meter")),[:I :inc], "I") == " -I1.5e/2.6e"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="data")),[:I :inc], "I") == " -I1.5/2.6u"
@@ -151,6 +152,8 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb")
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=2);
 	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb")
+	@test startswith(psxy([0.0, 1],[0, 1.1], figsize=(10,12), aspect=:equal, Vd=2), "psxy  -JX10/12")
+	@test startswith(psxy([0.0, 1],[0, 1.1], aspect=:equal, Vd=2), "psxy  -JX12c/0")
 	psxy!([0 0; 1 1.1], Vd=2);
 	psxy!("", [0 0; 1 1.1], Vd=2);
 	GMT.get_marker_name(Dict(:y => "y"), [:y])
@@ -549,7 +552,7 @@ if (got_it)					# Otherwise go straight to end
 	lines(D, steps=(x=true,), close=(bot="",))
 	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
 	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=2);
-	@test startswith(r, "psxy  -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -R0/6/-1/0.7 -JX40/8 -B+g220 --PS_MEDIA=A1 -W2,sienna")
+	@test startswith(r, "psxy  -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -R0/6.0/-1/0.7 -JX40/8 -B+g220 --PS_MEDIA=A1 -W2,sienna")
 
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
@@ -651,6 +654,10 @@ if (got_it)					# Otherwise go straight to end
 	r = basemap(L=(anchor=:TR, width=1, align=:top, fancy=0.4), Vd=2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -LjTR+w1+at+f")
 	@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=2), "psbasemap  -JX12c/0 -Bpa10+ap")
+	r = basemap(region=(1,1000,0,1), proj=:logx, figsize=(8,0.7), frame=(annot=1, ticks=2, grid=3, scale=:pow), Vd=2);
+	@test startswith(r, "psbasemap  -R1/1000/0/1 -JX8l/0.7 -Bpa1f2g3p")
+	r = basemap(region=(1,1000,0,1), proj=:logx, figsize=8, frame=(annot=1, ticks=2, scale=:pow), Vd=2)
+	@test startswith(r, "psbasemap  -R1/1000/0/1 -JX8l -Bpa1f2p")
 	@test_throws ErrorException("slanted option: Only 'parallel' is allowed for the y-axis") basemap(yaxis=(slanted=:o,), Vd=2)
 
 	# PSCLIP

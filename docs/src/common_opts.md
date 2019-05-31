@@ -115,7 +115,7 @@ For log10 axes: Annotations can be specified in one of three ways:
 
 2. Use *log=true*, then log10 of the tick value is plotted at every integer log10 value.
 
-3. Use *10log=true*, then annotations appear as 10 raised to log10 of the tick value.
+3. Use *10log=true*, or *pow=true* then annotations appear as 10 raised to log10 of the tick value.
 
 For power axes: Annotations can be specified in one of two ways:
 
@@ -167,8 +167,8 @@ The entire parameters collection is displayed in the following table
 
 | keyword       | value          | type            | meaning     |
 | ------------- |:--------------:|:---------------:| -----------:|
-| frame         | true          | Str or Symb   | Do not plot any axis |
-| frame         | noannot|bare  | Str or Symb   | Plot axes but no annot |
+| frame         | false         | Str or Symb   | Do not plot any axis |
+| frame         | noannot\|bare | Str or Symb   | Plot axes but no annot |
 | axes          | left_full     | Str or Symb   | Annot and tick left axis |
 |               | left_ticks    | Str or Symb   | Tick left axis |
 |               | left_bare     | Str or Symb   | Just draw left axis |
@@ -202,7 +202,7 @@ The entire parameters collection is displayed in the following table
 | custom        | custom annot  | Str or Symb   | Custom annotations file |
 | pi            | n or (n,m)    | Num or Tuple  | If axis is in radians |
 | scale         | log           | Str or Symb   | log10 of the tick value |
-|               | 10log         | Str or Symb   | Annot as 10 raised to log10 |
+|               | 10log or pow  | Str or Symb   | Annot as 10 raised to log10 |
 |               | exp           | Str or Symb   | Annot interval in transformed units |
 
    [1] However, the original GMT compact syntax can also be used. I.e, *axis=:a*, or *frame=:WSen*

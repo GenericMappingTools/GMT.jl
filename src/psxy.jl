@@ -29,29 +29,13 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			end
 		else
 			sub_module = caller
-			#caller = ""				# Because of parse_BJR()
 		end
 	end
 
 	d = KW(kwargs)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
-	if (!occursin("-J", cmd))			# bar, bar3 and others may send in a -J
-		opt_J = " -JX" * def_fig_size
-		if ((val = find_in_dict(d, [:aspect :axis])[1]) !== nothing)
-			if (val == "equal" || val == :equal)	# Need also a 'tight' option?
-				if ((ind = findfirst("/", opt_J)) !== nothing)	# Already had something in height
-					opt_J = opt_J[1:ind[1]-1] * "/0"
-				else
-					opt_J = " -JX12c/0"
-				end
-			end
-		end
-	else
-		opt_J = ""
-	end
-
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, opt_J)
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O)
 	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :p :t :yx :params], first)
 	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :noclip :no_clip]])
@@ -178,8 +162,8 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			cmd = [finish_PS(d, cmd1, output, true, O); finish_PS(d, cmd2, output, K, true)]
 		end
 
-	elseif (opt_S != "" && opt_ML != "")					# We have a symbol outline pen
-		cmd = finish_PS(d, cmd * opt_ML * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
+	#elseif (opt_S != "" && opt_ML != "")					# We have a symbol outline pen
+		#cmd = finish_PS(d, cmd * opt_ML * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
 
 	else
 		cmd = finish_PS(d, cmd * opt_UVXY, output, K, O)
