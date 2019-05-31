@@ -10,11 +10,13 @@ is shown in Figure Geographic map border.
 ```julia
 using GMT
 
-basemap(limits=(-1,2,0,0.4), proj=:M10, frame=(axes=:S, annot=1, ticks="15m",grid="5m"))
+basemap(limits=(-1,2,0,0.4), proj=:Mercator, figsize=10,
+        frame=(axes=:S, annot=1, ticks="15m",grid="5m"))
 t = [-1.0 0 0 3.33
-    0.25 0 0 0.833
-    1.25 0 0 0.28];
-arrows!(t, arrow=(length="5p",start=true,stop=true,angle=60), lw=0.5, fill=:black, noclip=true)
+      0.25 0 0 0.833
+      1.25 0 0 0.28];
+arrows!(t, arrow=(length="2p",start=true,stop=true,angle=60), lw=0.5,
+        fill=:black, noclip=true, y_off=-0.9)
 
 T = text_record([-0.5 0.05; 0.375 0.05; 1.29166666 0.05], ["annotation", "frame", "grid"]);
 text!(T, font=9, justify=:CB, fmt=:png, show=true)
@@ -28,23 +30,29 @@ example using several sets of intervals, including different intervals and pen a
 grid crosses.
 
 ```julia
-basemap(region=(-2,1,0,0.35), proj=:M10, frame="pa15mf5mg5m wSe s1f30mg15m", conf=(MAP_FRAME_TYPE="fancy+",
-	MAP_GRID_PEN_PRIMARY="thinnest,black,.", MAP_GRID_CROSS_SIZE_SECONDARY=0.25, MAP_FRAME_WIDTH=0.2,
-	MAP_TICK_LENGTH_PRIMARY=0.25, FORMAT_GEO_MAP="ddd:mm:ssF", FONT_ANNOT_PRIMARY="+8", FONT_ANNOT_SECONDARY=12))
+basemap(region=(-2,1,0,0.35), proj=:Mercator, figsize=10,
+        frame=(axes=:wSe, annot="15m", ticks="5m",grid="5m"),
+        axis2=(annot=1, ticks="30m", grid="15m"),
+        conf=(MAP_FRAME_TYPE="fancy+", MAP_GRID_PEN_PRIMARY="thinnest,black,.",
+              MAP_GRID_CROSS_SIZE_SECONDARY=0.25, MAP_FRAME_WIDTH=0.2,
+              MAP_TICK_LENGTH_PRIMARY=0.25, FORMAT_GEO_MAP="ddd:mm:ssF",
+              FONT_ANNOT_PRIMARY="+8", FONT_ANNOT_SECONDARY=12))
 # Draw Arrows and text
-t = [-1.875 0 0 0.33333
-    -0.45833 0 0 0.11111
-    0.541666 0 0 0.11111]
-plot!(t, symbol="v0.08+b+e+jc", lw=0.5, fill=:black, y_offset=-1, no_clip=true)
+t = [-1.875    0 0 0.85
+     -0.45833  0 0 0.3
+      0.541666 0 0 0.3]
+arrows!(t, arrow=(length=0.08, start=true, stop=true, justify=:center),
+        lw=0.5, fill=:black, y_offset=-1, no_clip=true)
 T = text_record([-2.1 0.025; -1.875 0.05; -0.45833 0.05; 0.541666 0.05],
                 ["10p RM P:", "6p CB annotation", "6p CB frame", "6p CB grid"])
-text!(T, attrib="+f+j", no_clip=true)
-t = [-1.5 0 0 1.33333; -0.25 0 0 0.66666; 0.625 0 0 0.33333]
-plot!(t, symbol="v0.08+b+e+jc", lw=0.5, fill=:black, y_offset=-0.6, no_clip=true)
+text!(T, font="", justify="", no_clip=true)
+t = [-1.5 0 0 3.4; -0.25 0 0 1.7; 0.625 0 0 0.85]
+arrows!(t, arrow=(length=0.08, start=true, stop=true, justify=:center),
+        lw=0.5, fill=:black, y_offset=-0.6, no_clip=true)
 
 T = text_record([-2.1 0.025; -1.5  0.05; -0.25 0.05; 0.625 0.05],
                 ["10p RM S:", "9p CB annotation", "9p CB frame", "9p CB grid"])
-text!(T, attrib="+f+j", no_clip=true, fmt=:png, show=true)
+text!(T, font="", justify="", no_clip=true, fmt=Çpng, 'show=true)
 ```
 
 !["B_geo_2"](figures/B_geo_2.png)
@@ -61,14 +69,27 @@ these axes you may use the unit setting to add a unit string to each annotation.
 
 ```julia
 basemap(region=(0,12,0,1), figsize=(12,1),
-        frame=(annot=4, ticks=2, grid=1, xlabel="Frequency", suffix="%"), axis2=(axes="S",))
+        frame=(annot=4, ticks=2, grid=1, xlabel="Frequency", suffix="%"),
+        axis2=(axes="S",))
 t = [0 0 0 4.0; 6.0 0 0 2.0; 9.0 0 0 1.0];
-plot!(t, symbol="v2p+b+e+a60", lw=0.5, fill=:black, y_offset=0.25, no_clip=true)
+arrows!(t, arrow=(length="2p",start=true,stop=true,angle=60),
+        lw=0.5, fill=:black, y_offset=0.25, no_clip=true)
 T = text_record([2 0.2; 7 0.2; 9.5 0.2], ["annotation", "frame", "grid"]);
 text!(T, font=9, justify=:CB, clearance=(0.025,0.025), fill=:white, fmt=:png, show=true)
 ```
 
 !["B_linear"](figures/B_linear.png)
+
+There are occasions when the length of the annotations are such that placing them horizontally
+(which is the default) may lead to overprinting or too few annotations. One solution is to request
+slanted annotations for the x-axis via the slanted keyword in frame.
+
+```julia
+basemap(region=(2000,2020,35,45), frame=(axes=:S, annot=2, ticks=:auto, slanted=-30),
+        fmt=:png, show=true)
+```
+
+!["B_slanted"](figures/B_slanted.png)
 
 ## Cartesian log10 axes
 
@@ -85,9 +106,12 @@ The following concerns are specific to log axes (see Figure Logarithmic projecti
 
 ```julia
 gmt("set MAP_GRID_PEN_PRIMARY thinnest,.")
-basemap(region=(1,1000,0,1), proj="X8l/0.7", frame="1f2g3p+l\"Axis Label\" S")
-basemap!(frame="1f2g3l+l\"Axis Label\" S", y_offset=2.2)
-basemap!(frame="1f2g3+l\"Axis Label\" S", y_offset=2.2, fmt=:png, show=true)
+basemap(region=(1,1000,0,1), proj=:logx, figsize=(8,0.7),
+        frame=(axes=:S, annot=1, ticks=2, grid=3, scale=:pow, xlabel="Axis Label"))
+basemap!(frame=(axes=:S, annot=1, ticks=2, grid=3, scale=:log,
+                xlabel="Axis Label"), y_offset=2.2)
+basemap!(frame=(axes=:S, annot=1, ticks=2, grid=3,
+                xlabel="Axis Label"), y_offset=2.2, fmt=:png, show=true)
 ```
 
 !["B_log"](figures/B_log.png)
@@ -103,8 +127,10 @@ annotations labeled 1, 4, 9, ... will appear.
 
 ```julia
 gmt("set MAP_GRID_PEN_PRIMARY thinnest,.")
-basemap(region=(0,100,0,0.9), proj="X3ip0.5/0.25i", frame="a3f2g1p+l\"Axis Label\" S")
-basemap!(frame="20f10g5+l\"Axis Label\" S",  y_offset=2.2, fmt=:png, show=true)
+asemap(region=(0,100,0,0.9), proj="powx,0.5", figsize=(10, 0.65),
+       frame=(axes=:S, annot=3, ticks=2, grid=1, scale=:pow, xlabel="Axis Label"))
+basemap!(frame=(axes=:S, annot=20, ticks=10, grid=5, xlabel="Axis Label"),
+         y_offset=2.2, fmt=:png, show=true)
 ```
 
 !["B_pow"](figures/B_pow.png)
@@ -157,8 +183,11 @@ day-of-month number.
 The third example presents two years, annotating both the years and every 3rd month.
 
 ```julia
-basemap(region="1997T/1999T/0/1", figsize=(12,0.25), frame="pa3Of1o sa1Y S", conf=(FORMAT_DATE_MAP="o",
-    FORMAT_TIME_PRIMARY_MAP="Character", FONT_ANNOT_PRIMARY="+9p"), fmt=:png, show=true)
+basemap(region=("1997T","1999T",0,1), figsize=(12,0.25),
+        frame=(axes=:S, annot=3, annot_unit=:month, ticks=1, ticks_unit=:month2),
+        xaxis2=(annot=1, annot_unit=:Y),
+        conf=(FORMAT_DATE_MAP="o", FORMAT_TIME_PRIMARY_MAP="Character", FONT_ANNOT_PRIMARY="+9p"),
+        fmt=:png, show=true)
 ```
 
 Note that while the year annotation is centered on the 1-year interval, the month annotations must
@@ -173,9 +202,10 @@ The fourth example only shows a few hours of a day, using relative time by speci
 ask for a 12-hour clock, and let time go from right to left:
 
 ```julia
-gmt("set FORMAT_CLOCK_MAP=-hham FONT_ANNOT_PRIMARY +9p TIME_UNIT d")
-basemap(region="0.2t/0.35t/0/1", figsize=(-12,0.25), frame="pa15mf5m sa1H S",
-    conf=(FORMAT_CLOCK_MAP="-hham", FONT_ANNOT_PRIMARY="+9p", TIME_UNIT="d"), fmt=:png, show=true)
+basemap(region=("0.2t","0.35t",0,1), figsize=(-12,0.25),
+        frame=(axes=:S, annot="15m", ticks="5m"), axis2=(annot=1, annot_unit=:hour),
+        conf=(FORMAT_CLOCK_MAP="-hham", FONT_ANNOT_PRIMARY="+9p", TIME_UNIT="d"),
+        fmt=:png, show=true)
 ```
 
 !["B_time4"](figures/B_time4.png)
@@ -201,7 +231,7 @@ Our sixth example shows the first five months of 1996, and we have annotated eac
 abbreviated, upper case name and 2-digit year. Only the primary axes information is specified.
 
 ```julia
-basemap(region="1996T/1996-6T/0/1", figsize=(12,0.25),
+basemap(region=("1996T","1996-6T",0,1), figsize=(12,0.25),
         frame=(axes=:S, annot=1, annot_unit=:month, ticks=1, ticks_unit=:day_date),
         conf=(FORMAT_DATE_MAP="\"o yy\"", FORMAT_TIME_PRIMARY_MAP="Abbreviated"),
         fmt=:png, show=true)
@@ -216,7 +246,7 @@ intervals; normally such truncated interval must be at least half of a full inte
 
 ```julia
 using GMT
-basemap(region="2000-12-15T/2001-1-15T/0/1", figsize=(12,0.25),
+basemap(region=("2000-12-15T","2001-1-15T",0,1), figsize=(12,0.25),
         frame=(axes=:S, annot=5, annot_unit=:date, ticks=1, ticks_unit=:day_date),
         axis2=(annot=1, annot_unit=:year),
         conf=(FORMAT_DATE_MAP="jjj", TIME_INTERVAL_FRACTION=0.05, FONT_ANNOT_PRIMARY="+9p"),

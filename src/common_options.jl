@@ -53,7 +53,7 @@ function build_opt_R(Val)		# Generic function that deals with all but NamedTuple
 		else                       return " -R" * r
 		end
 	elseif ((isa(Val, Array{<:Number}) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
-		out = join([@sprintf("%.15g/",x) for x in Val])
+		out = arg2str(Val)
 		return " -R" * rstrip(out, '/')		# Remove last '/'
 	elseif (isa(Val, GMTgrid) || isa(Val, GMTimage))
 		return @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
@@ -159,13 +159,18 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 			opt_J = default  					# -JX was a working default
 		elseif (occursin("+width=", opt_J))		# OK, a proj4 string, don't touch it. Size already in.
 		elseif (occursin("+proj", opt_J))		# A proj4 string but no size info. Use default size
-			opt_J *= "+width=" * def_fig_size[1:3]
+			opt_J *= "+width=" * split(def_fig_size, '/')[1]
 		elseif (mnemo)							# Proj name was obtained from a name mnemonic and no size. So use default
-			opt_J = append_figsize(opt_J)
-		elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
-			if (length(opt_J) < 6 || !isnumeric(opt_J[6]))
-				opt_J *= def_fig_size[1:3]
+			opt_J = append_figsize(d, opt_J)
+		elseif (!isnumeric(opt_J[end]) && (length(opt_J) < 6 || (isletter(opt_J[5]) && !isnumeric(opt_J[6]))) )
+			if ((val = find_in_dict(d, [:aspect :axis])[1]) !== nothing)  val = string(val)  end
+			if (val == "equal")  opt_J *= split(def_fig_size, '/')[1] * "/0"
+			else                 opt_J *= def_fig_size
 			end
+		#elseif (length(opt_J) == 4 || (length(opt_J) >= 5 && isletter(opt_J[5])))
+			#if (length(opt_J) < 6 || !isnumeric(opt_J[6]))
+				#opt_J *= def_fig_size
+			#end
 		end
 	else										# For when a new size is entered in a middle of a script
 		if ((s = helper_append_figsize(d, opt_J, O)) != "")  opt_J = s  end
@@ -181,26 +186,51 @@ function helper_append_figsize(d, opt_J, O)
 	if (occursin("scale", arg2str(symb)))		# We have a fig SCALE request
 		if (opt_J == " -JX")  isletter(val[1]) ? opt_J = " -J" * val : opt_J = " -Jx" * val	# FRAGILE
 		elseif (O && opt_J == " -J")  error("In Overlay mode you cannot change a fig scale and NOT repeat the projection")
-		else                  opt_J = append_figsize(opt_J, val, true)
+		else                  opt_J = append_figsize(d, opt_J, val, true)
 		end
 	else										# A fig SIZE request
 		if (haskey(d, :units))  val *= d[:units][1]  end
 		if (occursin("+proj", opt_J)) opt_J *= "+width=" * val
-		else                          opt_J = append_figsize(opt_J, val)
+		else                          opt_J = append_figsize(d, opt_J, val)
 		end
 	end
 	return opt_J
 end
 
-function append_figsize(opt_J, width="", scale=false)
-	# Appending either a fig width or fig scale depending on what projection. Sometimes we need to separate with a '/'
-	# others not. If WIDTH == "" we use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
-	if (width == "")  width = def_fig_size[1:3]  end
-	if (isnumeric(opt_J[end]))                                   opt_J *= "/" * width
+function append_figsize(d, opt_J, width="", scale=false)
+	# Appending either a fig width or fig scale depending on what projection.
+	# Sometimes we need to separate with a '/' others not. If WIDTH == "" we
+	# use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
+	if (width == "")
+		width = split(def_fig_size, '/')[1]
+	elseif ( ((val = find_in_dict(d, [:aspect :axis])[1]) !== nothing) && (val == "equal" || val == :equal)) 
+		if (occursin("/", width))
+			@warn("Ignoring the axis 'equal' request because figsize with Width and Height already provided.")
+		else
+			width *= "/0"
+		end
+	end
+
+	if (isnumeric(opt_J[end]) && ~startswith(opt_J, " -JXp"))    opt_J *= "/" * width
 	else
 		if (occursin("Cyl_", opt_J) || occursin("Poly", opt_J))  opt_J *= "/" * width
 		elseif (startswith(opt_J, " -JU") && length(opt_J) > 4)  opt_J *= "/" * width
-		else                                                     opt_J *= width
+		else		# Must parse for logx, logy, loglog, etc
+			if (startswith(opt_J, " -JXl") || startswith(opt_J, " -JXp") ||
+				startswith(opt_J, " -JXT") || startswith(opt_J, " -JXt"))
+				ax = opt_J[6];	flag = opt_J[5];
+				if (flag == 'p' && length(opt_J) > 6)  flag *= opt_J[7:end]  end	# Case p<power>
+				opt_J = opt_J[1:4]			# Trim the consumed options
+				w_h = split(width,"/")
+				if (length(w_h) == 2)		# Must find which (or both) axis is scaling be applyied
+					(ax == 'x') ? w_h[1] *= flag : ((ax == 'y') ? w_h[2] *= flag : w_h .*= flag)
+					width = w_h[1] * '/' * w_h[2]
+				elseif (ax == 'y')  error("Can't select Y scaling and provide X dimension only")
+				else
+					width *= flag
+				end
+			end
+			opt_J *= width
 		end
 	end
 	if (scale)  opt_J = opt_J[1:3] * lowercase(opt_J[4]) * opt_J[5:end]  end 		# Turn " -JX" to " -Jx"
@@ -257,6 +287,13 @@ function parse_proj(p::String)
 	elseif (startswith(s, "gnom"))   out = "F0/0"
 	elseif (startswith(s, "ham"))    out = "H"
 	elseif (startswith(s, "lin"))    out = "X"
+	elseif (startswith(s, "logx"))   out = "Xlx"
+	elseif (startswith(s, "logy"))   out = "Xly"
+	elseif (startswith(s, "loglog")) out = "Xll"
+	elseif (startswith(s, "powx"))   v = split(s, ',');	length(v) == 2 ? out = "Xpx" * v[2] : out = "Xpx"
+	elseif (startswith(s, "powy"))   v = split(s, ',');	length(v) == 2 ? out = "Xpy" * v[2] : out = "Xpy"
+	elseif (startswith(s, "Time"))   out = "XTx"
+	elseif (startswith(s, "time"))   out = "Xtx"
 	elseif (startswith(s, "merc"))   out = "M"
 	elseif (startswith(s, "mil"))    out = "J"
 	elseif (startswith(s, "mol"))    out = "W"
@@ -403,7 +440,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_BJR(d::Dict, cmd::String, caller, O, default, del=false)
+function parse_BJR(d::Dict, cmd::String, caller, O, default="", del=false)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(cmd, d, O, del)
 	cmd, opt_J = parse_J(cmd, d, default, true, O, del)
@@ -831,6 +868,12 @@ function parse_arg_and_pen(arg::Tuple, sep="/", pen=true, opt="")
 	end
 	if (length(arg) >= 4) s *= " " * opt * parse_arg_and_pen((arg[3:end]))  end		# Recursive call
 	return s
+end
+
+# ---------------------------------------------------------------------------------------------------
+function arg2str(d::Dict, symbs)
+	# Version allow calls from add_opt()
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)  arg2str(val)  end
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1309,7 +1352,7 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	if (haskey(d, :slanted))
 		s = arg2str(d[:slanted])
 		if (s != "")
-			if (!isnumeric(s[1]))
+			if (!isnumeric(s[1]) && s[1] != '-' && s[1] != '+')
 				s = s[1]
 				if (axe == "y" && s != 'p')  error("slanted option: Only 'parallel' is allowed for the y-axis")  end
 			end
@@ -1330,9 +1373,9 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 		end
 	elseif (haskey(d, :scale))
 		s = arg2str(d[:scale])
-		if     (s == "log")    ints *= 'l'
-		elseif (s == "10log")  ints *= 'p'
-		elseif (s == "exp")    ints *= 'p'
+		if     (s == "log")  ints *= 'l'
+		elseif (s == "10log" || s == "pow")  ints *= 'p'
+		elseif (s == "exp")  ints *= 'p'
 		end
 	end
 	if (haskey(d, :phase_add))
