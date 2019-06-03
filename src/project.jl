@@ -8,7 +8,7 @@ Full option list at [`project`](http://gmt.soest.hawaii.edu/doc/latest/project.h
 Parameters
 ----------
 
-- **C** : **origin** : -- Str or list --    Flags = cx/cy
+- **C** : **origin** : **start_pt** : **start_point** : -- Str or list --    Flags = cx/cy
 
     Sets the origin of the projection, in Definition 1 or 2.
     [`-C`](http://gmt.soest.hawaii.edu/doc/latest/project.html#c)
@@ -17,7 +17,7 @@ Parameters
 
     Defines the azimuth of the projection (Definition 1).
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/project.html#a)
-- **E** : **end_point** : -- Str or List --    Flags = bx/by
+- **E** : **end_pt** : **end_point** : -- Str or List --    Flags = bx/by
 
     bx/by defines the end point of the projection path (Definition 2).
     [`-E`](http://gmt.soest.hawaii.edu/doc/latest/project.html#e)
@@ -73,8 +73,7 @@ function project(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :s :yx])
-	cmd = parse_these_opts(cmd, d, [[:A :azim], [:C :origin], [:E :end_point], [:F :out_flags], [:G :no_input],
-				[:L :length_control], [:N :flat_earth], [:Q :units], [:S :sort], [:T :pole], [:W :width_control]])
+	cmd = parse_these_opts(cmd, d, [[:A :azim], [:C :origin :start_pt :start_point], [:E :end_pt :end_point], [:F :out_flags], [:G :no_input], [:L :length_control], [:N :flat_earth], [:Q :units], [:S :sort], [:T :pole],[:W :width_control]])
 
 	if (!occursin("-G", cmd))
 		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
