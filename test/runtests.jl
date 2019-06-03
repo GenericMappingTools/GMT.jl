@@ -143,7 +143,7 @@ if (got_it)					# Otherwise go straight to end
 
 	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
 	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",), :yaxis2=>(annot=2,));
-	@test GMT.parse_B("", d)[1] == " -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10 -Bpyclixo.txt -Bsxa5f1"
+	@test GMT.parse_B("", d)[1] == " -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10 -Bpyclixo.txt -Bsxa5f1 -Bsya2"
 	@test GMT.parse_B("",Dict(:B=>:same))[1] == " -B"
 	@test GMT.parse_B("", Dict(:title => :bla))[1] == " -Baf -BWSen+tbla"
 	GMT.helper2_axes("lolo");
