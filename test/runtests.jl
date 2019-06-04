@@ -131,6 +131,8 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_quoted(Dict(:label => :input), "") == "+Lf"
 	@test_throws ErrorException("Wrong content for the :label option. Must be only :header or :input") GMT.parse_quoted(Dict(:label => :x), "")
 	@test_throws ErrorException("Wrong content for the :label option. Must be only :plot_dist or :map_dist") GMT.parse_quoted(Dict(:label => (:x,)), "")
+	GMT.helper_arrows(Dict(:geovec => "bla"));
+	GMT.helper_arrows(Dict(:vecmap => "bla"));
 
 	@test GMT.font(("10p","Times", :red)) == "10p,Times,red"
 	r = text(text_record([0 0], "TopLeft"), R="1/10/1/10", J=:X10, F=(region_justify=:MC,font=("10p","Times", :red)), Vd=2);
@@ -140,9 +142,10 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_pen((0.5, [1 2 3])) == "0.5,1/2/3"
 
 	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
-	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",));
-	@test GMT.parse_B("", d)[1] == " -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10 -Bpyclixo.txt -Bsxa5f1"
+	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",), :yaxis2=>(annot=2,));
+	@test GMT.parse_B("", d)[1] == " -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10 -Bpyclixo.txt -Bsxa5f1 -Bsya2"
 	@test GMT.parse_B("",Dict(:B=>:same))[1] == " -B"
+	@test GMT.parse_B("", Dict(:title => :bla))[1] == " -Baf -BWSen+tbla"
 	GMT.helper2_axes("lolo");
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
 
@@ -153,6 +156,7 @@ if (got_it)					# Otherwise go straight to end
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=2);
 	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb")
 	@test startswith(psxy([0.0, 1],[0, 1.1], figsize=(10,12), aspect=:equal, Vd=2), "psxy  -JX10/12")
+	@test startswith(psxy([0.0, 1],[0, 1.1], figsize=10, aspect=:equal, Vd=2), "psxy  -JX10/0")
 	@test startswith(psxy([0.0, 1],[0, 1.1], aspect=:equal, Vd=2), "psxy  -JX12c/0")
 	psxy!([0 0; 1 1.1], Vd=2);
 	psxy!("", [0 0; 1 1.1], Vd=2);
@@ -634,13 +638,13 @@ if (got_it)					# Otherwise go straight to end
 	basemap!(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth", Vd=2)
 	basemap!("", region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth", Vd=2)
 	basemap(region="416/542/0/6.2831852", proj="X-12/6.5",
-	axis=(axes=(:left_full, :bot_full), fill=:lightblue),
-	xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"),
-	xaxis2=(custom=(pos=[416.0; 443.7; 488.3; 542],
+	        axis=(axes=(:left_full, :bot_full), fill=:lightblue),
+	        xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"),
+	        xaxis2=(custom=(pos=[416.0; 443.7; 488.3; 542],
 					type_=["ig Devonian", "ig Silurian", "ig Ordovician", "ig Cambrian"]),),
-	yaxis=(custom=(pos=[0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852],
+	        yaxis=(custom=(pos=[0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852],
 				   type_=["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]),),
-	par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=2)
+	        par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=2)
 	r = basemap(rose=(anchor="10:35/0.7", width=1, fancy=2, offset=0.4), Vd=2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdg10:35/0.7+w1+f2+o0.4")
 	r = basemap(rose=(anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=2);
