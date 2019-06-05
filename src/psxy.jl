@@ -387,9 +387,8 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u=fal
 			if (!isletter(opt[ind[1]-1]))  opt = opt[1:ind[1]-1] * flag_u * opt[ind[1]:end]  end
 		else
 			pb = (optS != "So") ? "+b0" : ""		# The default for bar3 (So) is set in the bar3() fun
-			if (!isletter(opt[end]))  opt *= flag_u * pb	# No base set so default to ...
-			else                      opt *= pb
-			end
+			if (!isletter(opt[end]))  opt *= flag_u	  end	# No base set so default to ...
+			opt *= pb
 		end
 		cmd *= opt
 	end

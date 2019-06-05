@@ -116,12 +116,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 	if (haskey(d, :kml))  cmd *= " -W+k" * d[:kml]  end
 
 	if (haskey(d, :in_memory))
-		if (arg1 !== nothing)
-			@warn("The IN_MEMORY option is imcompatible with passing an input file name. Dropping this one.")
-			arg1 = nothing
-		else
-			cmd *= " ="
-		end
+		(arg1 === nothing) ? cmd *= " =" : arg1 = nothing	# in_memory and input file are incompat. File wins
 	end
 
 	# In case DATA holds a file name, copy it into cmd.

@@ -196,9 +196,7 @@ function gmt(cmd::String, args...)
 
 	# 3. Convert command line arguments to a linked GMT option list
 	LL = NULL
-	if (isempty(r) && n_argin == 0)		# Just requesting usage message, so add -? to options
-		r = "-?"
-	end
+	if (r == "" && n_argin == 0)  r = "-?"   end	# Just requesting usage message, so add -? to options
 	LL = GMT_Create_Options(API, 0, r)	# It uses also the fact that GMT parses and check options
 
 	# 4. Preprocess to update GMT option lists and return info array X
@@ -206,10 +204,8 @@ function gmt(cmd::String, args...)
 	# Here I have an issue that I can't resolve any better. For modules that can have no options (e.g. gmtinfo)
 	# the LinkedList (LL) is actually created in GMT_Encode_Options but I can't get it's contents back when pLL
 	# is a Ref, so I'm forced to use 'pointer', which goes against the documents recommendation.
-	if (LL != NULL)
-		pLL = Ref([LL], 1)
-	else
-		pLL = pointer([NULL])
+	if (LL != NULL)  pLL = Ref([LL], 1)
+	else             pLL = pointer([NULL])
 	end
 
 	n_items = pointer([0])
@@ -234,9 +230,7 @@ function gmt(cmd::String, args...)
 	name_PS = ""
 	object_ID = zeros(Int32, n_items)
 	for k = 1:n_items					# Number of GMT containers involved in this module call */
-		if (X[k].direction == GMT_IN && n_argin == 0)
-			error("GMT: Expected a Matrix for input")
-		end
+		if (X[k].direction == GMT_IN && n_argin == 0) error("GMT: Expects a Matrix for input") end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : nothing
 		GMTJL_Set_Object(API, X[k], ptr)	# Set object pointer
 	end
