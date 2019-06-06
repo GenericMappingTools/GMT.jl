@@ -506,7 +506,6 @@ function parse_a(cmd::String, d::Dict)
 	parse_helper(cmd, d, [:a :aspatial], " -a")
 end
 
-# ---------------------------------------------------------------------------------------------------
 function parse_b(cmd::String, d::Dict)
 	# Parse the global -b option. Return CMD same as input if no -b option in args
 	parse_helper(cmd, d, [:b :binary], " -b")
@@ -922,7 +921,7 @@ function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)
 
 	if (K && !O)              opt = " -K"
 	elseif (K && O)           opt = " -K -O"
-	elseif (!K && O)          opt = " -O"
+	#elseif (!K && O)          opt = " -O"
 	else                      opt = ""
 	end
 

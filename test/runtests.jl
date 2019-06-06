@@ -46,12 +46,14 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.arg2str(Dict(:shaded => "-4p/-6p/grey20@40"), [:shaded]) == "-4p/-6p/grey20@40"
 	@test_throws ErrorException("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was DataType") GMT.arg2str(typeof(1))
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="meter")),[:I :inc], "I") == " -I1.5e/2.6e"
+	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="m")),[:I :inc], "I") == " -I1.5m/2.6m"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="data")),[:I :inc], "I") == " -I1.5/2.6u"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, extend="data")),[:I :inc], "I") == " -I1.5+e/2.6+e"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="nodes")),[:I :inc], "I") == " -I1.5+n/2.6+n"
 	@test GMT.parse_inc("", Dict(:inc => (2,4)),[:I :inc], "I") == " -I2/4"
 	@test GMT.parse_inc("", Dict(:inc => [2 4]),[:I :inc], "I") == " -I2/4"
 	@test GMT.parse_inc("", Dict(:inc => "2"),[:I :inc], "I") == " -I2"
+	@test GMT.parse_inc("", Dict(:inc => "2"),[:I :inc], "") == "2"
 	@test GMT.parse_JZ("", Dict(:JZ => "5c"))[1] == " -JZ5c"
 	@test GMT.parse_JZ("", Dict(:Jz => "5c"))[1] == " -Jz5c"
 	@test GMT.parse_J("", Dict(:J => "X5"), "", false)[1] == " -JX5"
@@ -101,8 +103,8 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member") GMT.add_opt_fill("", Dict(:G=>(inv_pat=12,fg="white")), [:G], 'G')
 	d = Dict(:offset=>5, :bezier=>true, :cline=>"", :ctext=>true, :pen=>("10p",:red,:dashed));
 	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,dashed+cl+cf+s+o5"
-	d = Dict(:W=>(offset=5, bezier=true, cline="", ctext=true, pen=("10p",:red,:dashed)));
-	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,dashed+cl+cf+s+o5"
+	d = Dict(:W=>(offset=5, bezier=true, cline="", ctext=true, pen=("10p",:red,:dashed), arrow=(lenght=0.1,)));
+	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,dashed+cl+cf+s+o5+v"
 
 	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
 	                  justify=:end,fill=:none,trim=0.1,endpoint=true,uv=6.6);
@@ -678,6 +680,7 @@ if (got_it)					# Otherwise go straight to end
 	psconvert("lixo.ps", adjust=true, fmt="tif")
 	psconvert("lixo.ps", adjust=true, Vd=2)
 	P = gmtread("lixo.ps", ps=true);
+	gmtwrite("lixo.ps", P)
 	psconvert(P, adjust=true, in_memory=true, Vd=2)
 	gmt("psconvert lixo.ps");
 	gmt("psconvert -A lixo.ps");
