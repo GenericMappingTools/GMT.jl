@@ -143,18 +143,14 @@ function gmt(cmd::String, args...)
 
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F.
 	# The problem is that we can't use nargout to decide what to do, so we use -T to solve the ambiguity.
-	if (g_module == "psconvert" && ((r == "") || !occursin("-F", r)) )
-		if (r == "")
-			r = "-F"
-		else
-			if (!occursin("-T", r))
+	if (g_module == "psconvert" && !occursin("-F", r))
+		if (!occursin("-T", r))
+			r *= " -F"
+		else				# Hmm, have to find if any of 'e' or 'f' are used as -T flags
+			ind = findfirst("-T", r)
+			tok = lowercase(strtok(r[ind[2]:end])[1])
+			if (!occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
 				r *= " -F"
-			else								# Hmm, have to find if any of 'e' or 'f' are used as -T flags
-				ind = findfirst("-T", r)
-				tok = lowercase(strtok(r[ind[2]:end])[1])
-				if (!occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
-					r *= " -F"
-				end
 			end
 		end
 	end
@@ -448,12 +444,8 @@ function get_grid(API::Ptr{Nothing}, object)
 	# Return grids via a float matrix in a struct
 	out = GMTgrid("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y, z, "", "", "", "")
 
-	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
-		out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)
-	end
-	if (gmt_hdr.ProjRefWKT != C_NULL)
-		out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)
-	end
+	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
+	if (gmt_hdr.ProjRefWKT != C_NULL)    out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)      end
 
 	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays
 	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
@@ -527,12 +519,8 @@ function get_image(API::Ptr{Nothing}, object)
 	end
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)
 
-	if (gmt_hdr.ProjRefPROJ4 != C_NULL)
-		out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)
-	end
-	if (gmt_hdr.ProjRefWKT != C_NULL)
-		out.ProjRefWKT = unsafe_string(gmt_hdr.ProjRefWKT)
-	end
+	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
+	if (gmt_hdr.ProjRefWKT != C_NULL)  out.ProjRefWKT = unsafe_string(gmt_hdr.ProjRefWKT) end
 
 	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
 	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
@@ -713,9 +701,7 @@ function get_dataset(API::Ptr{Nothing}, object)
 # proj4:	String with any proj4 information
 # wkt:		String with any WKT information
 
-	if (object == C_NULL)		# No output produced (?) - return a null data set
-		return GMTdataset()
-	end
+	if (object == C_NULL)  return GMTdataset()  end		# No output produced - return a null data set
 	D = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
 	seg_out = 0
