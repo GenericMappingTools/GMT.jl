@@ -5,18 +5,14 @@ using Printf
 # Need to know what GMT version is available or if none at all to warn users on how to
 # install GMT.
 try
-	# Due to a likely Julia bug next command fails when this file called with 'using'
-	#ver_s = @capture_out run(`gmt --version`);
-	#@show(length(ver_s))			# Prints 0 length
-
-	# So resort to write result to file on disk and read from it
-	write("gmtversion__.txt", read(`gmt --version`))
-	global const GMTver = Meta.parse(read("gmtversion__.txt", String)[1:3])
-	rm("gmtversion__.txt")
+	#write("gmtversion__.txt", read(`gmt --version`))
+	#global const GMTver = Meta.parse(read("gmtversion__.txt", String)[1:3])
+	#rm("gmtversion__.txt")
+	global const GMTver = Meta.parse(readlines(`gmt --version`)[1][1:3])
 	global foundGMT = true
 catch
 	global foundGMT = false
-	global const GMTver = 5.0		# Don't want to raise an error in libgmt_h.jl due to a missing var
+	global const GMTver = 5.0
 end
 
 global legend_type = nothing

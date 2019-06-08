@@ -547,43 +547,41 @@ function parse_e(cmd::String, d::Dict)
 	parse_helper(cmd, d, [:e :pattern], " -e")
 end
 
-# ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 function parse_f(cmd::String, d::Dict)
 	# Parse the global -f option. Return CMD same as input if no -f option in args
 	parse_helper(cmd, d, [:f :colinfo], " -f")
 end
 
-# ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 function parse_g(cmd::String, d::Dict)
 	# Parse the global -g option. Return CMD same as input if no -g option in args
 	parse_helper(cmd, d, [:g :gaps], " -g")
 end
 
-# ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 function parse_h(cmd::String, d::Dict)
 	# Parse the global -h option. Return CMD same as input if no -h option in args
 	parse_helper(cmd, d, [:h :header], " -h")
 end
 
-# ---------------------------------------------------------------------------------------------------
-function parse_i(cmd::String, d::Dict)
-	# Parse the global -i option. Return CMD same as input if no -i option in args
-	parse_helper(cmd, d, [:i :incol], " -i")
-end
+# ---------------------------------------------------------------------------------
+parse_i(cmd::String, d::Dict) = parse_helper(cmd, d, [:i :incol], " -i")
+parse_j(cmd::String, d::Dict) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
 
-# ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 function parse_n(cmd::String, d::Dict)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
 	parse_helper(cmd, d, [:n :interp :interpol], " -n")
 end
 
-# ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 function parse_o(cmd::String, d::Dict)
 	# Parse the global -o option. Return CMD same as input if no -o option in args
 	parse_helper(cmd, d, [:o :outcol], " -o")
 end
 
-# ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 function parse_p(cmd::String, d::Dict)
 	# Parse the global -p option. Return CMD same as input if no -p option in args
 	parse_helper(cmd, d, [:p :view :perspective], " -p")
@@ -616,15 +614,11 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_helper(cmd::String, d::Dict, symbs, opt::String)
-	# Helper function to the parse_?() global options. Isolate in a fun to not repeat over and over
+	# Helper function to the parse_?() global options.
 	opt_val = ""
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		#opt_val = opt * arg2str(val)
-		#cmd *= opt_val
 		opt_val = arg2str(val)
-		if (opt_val != "none")
-			opt_val = opt * opt_val
-		end
+		if (opt_val != "none")  opt_val = opt * opt_val  end
 		cmd *= opt_val
 	end
 	return cmd, opt_val
@@ -647,6 +641,7 @@ function parse_common_opts(d, cmd, opts, first=true)
 		elseif (opt == :g)  cmd, = parse_g(cmd, d)
 		elseif (opt == :h)  cmd, = parse_h(cmd, d)
 		elseif (opt == :i)  cmd, = parse_i(cmd, d)
+		elseif (opt == :j)  cmd, = parse_j(cmd, d)
 		elseif (opt == :n)  cmd, = parse_n(cmd, d)
 		elseif (opt == :o)  cmd, = parse_o(cmd, d)
 		elseif (opt == :p)  cmd, opt_p = parse_p(cmd, d)
@@ -779,12 +774,12 @@ function add_opt_pen(d::Dict, symbs, opt="", del::Bool=false)
 	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])   end
 
 	if (out != "")		# Search for eventual vec specs, but only if something above has activated -W
+		v = false
 		r = helper_arrows(d)
 		if (r != "")
-			if     (haskey(d, :vec_start))  out *= "+vb" * r[2:end]	# r[1] = 'v'
-			elseif (haskey(d, :vec_stop))   out *= "+ve" * r[2:end]
-			else   out *= "+" * r
-			end
+			if (haskey(d, :vec_start))  out *= "+vb" * r[2:end];  v = true  end	# r[1] = 'v'
+			if (haskey(d, :vec_stop))   out *= "+ve" * r[2:end];  v = true  end
+			if (!v)  out *= "+" * r  end
 		end
 	end
 
