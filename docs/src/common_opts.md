@@ -444,6 +444,11 @@ See [GMT Map Projections](@ref) for a list of projection examples
 
    [`-p GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#p-full)
 
+# Spherical distance
+
+- **j | spheric_dist** : -- *spheric_dist=:e|:f|:g*\
+    Determine how spherical distances are calculated in modules that support this. By default (**spheric_dist=:g**) we perform great circle distance calculations and parameters such as distance increments or radii will be compared against calculated great circle distances. To simplify and speed up calculations you can select Flat Earth mode (**spheric_dist=:f**) which gives an approximate and fast result. Alternatively, you can select ellipsoidal (**spheric_dist=:e**) or geodesic mode for the highest precision (and slowest calculation time). All spherical distance calculations depends on the current ellipsoid (``PROJ_ELLIPSOID``), the definition of the mean radius (``PROJ_MEAN_RADIUS``), and the specification of latitude type (``PROJ_AUX_LATITUDE``). Geodesic distance calculations is also controlled by method (``PROJ_GEODESIC``).
+
 # interp
 
 - **n** **|** *interp* **|** *interpol* : *interp="[b|c|l|n][+a][+bBC][+c][+tthreshold]"*\

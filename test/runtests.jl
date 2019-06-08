@@ -186,6 +186,8 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Bad family type") GMT.GMT_Alloc_Segment(C_NULL, -1, 0, 0, "", C_NULL)
 	GMT.strncmp("abcd", "ab", 2)
 	GMT.parse_proj((name="blabla",center=(0,0)))
+
+	@test GMT.parse_j("", Dict(:spheric_dist => "f"))[1] == " -jf"
 	# ---------------------------------------------------------------------------------------------------
 
 	gmt("begin"); gmt("end")

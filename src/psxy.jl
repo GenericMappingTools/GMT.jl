@@ -51,7 +51,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	cmd = add_opt(cmd, 'A', d, [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
-	opt_F = add_opt("", "", d, [:F :conn :connection], (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpt=("r", nothing, 1), ignore_hdr="_a", single_group="_f", segments="_s", anchor=("", arg2str)))
+	opt_F = add_opt("", "", d, [:F :conn :connection], (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpoint=("r", nothing, 1),  ignore_hdr="_a", single_group="_f", segments="_s", segments_reset="_r", anchor=("", arg2str)))
 	if (length(opt_F) > 1 && !occursin("/", opt_F))  opt_F = opt_F[1]  end	# Allow con=:net or con=(1,2)
 	if (opt_F != "")  cmd *= " -F" * opt_F  end
 
@@ -60,7 +60,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		n_rows, n_cols = size(arg1)
 		arg1 = reshape(arg1, :)				# Crazzy shit to allow increasing the arg1 matrix
 		cmd = add_opt(cmd, 'E', d, [:E :error :error_bars],
-					  (x="|x",y="|y",xy="|xy",X="|X",Y="|Y",asym="+a",cline="+cl",csymbol="+cf",
+					  (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl",csymbol="_+cf",
 					   wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, arg1)
 		arg1 = reshape(arg1, n_rows, :)
 	end
@@ -86,7 +86,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		cmd = add_opt(cmd, 'L', d, [:L :labels])
 	else
 		cmd = add_opt(cmd, 'L', d, [:L :close],
-			(left="+xl", right="+xr", bot="+yb", top="+yt", sym="+d", asym="+D", envelope="+b",
+			(left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b",
 			 pen=("+p",add_opt_pen)))
 		if (occursin("-L", cmd) && !occursin("-G", cmd) && !occursin("+p", cmd))  cmd *= "+p0.5p"  end
 	end
@@ -291,17 +291,18 @@ function get_marker_name(d::Dict, symbs, is3D=false, del=false)
 			elseif (t == "C" || t == "Circle")    marca = "C"
 			elseif (t == "d" || t == "diamond")   marca = "d"
 			elseif (t == "e" || t == "ellipse")   marca = "e"
-			elseif (startswith(t, "E"))
-				t[end] == '-' ? marca = "E-" : marca = "E"
+			elseif (startswith(t, "E")) t[end] == '-' ? marca = "E-" : marca = "E"
 			elseif (t == "g" || t == "octagon")   marca = "g"
 			elseif (t == "h" || t == "hexagon")   marca = "h"
 			elseif (t == "i" || t == "v" || t == "inverted_tri")  marca = "i"
+			elseif (t == "j" || t == "rotated_rec")    marca = "j"
+			elseif (startswith(t, "R")) t[end] == '-' ? marca = "J-" : marca = "J"
 			elseif (t == "l" || t == "letter")    marca = "l"
 			elseif (t == "m" || t == "matang")    marca = "m"
-			elseif (t == "M")                     marca = "M"
+			elseif (startswith(t, "M"))           marca = "M"
 			elseif (t == "n" || t == "pentagon")  marca = "n"
 			elseif (t == "p" || t == "." || t == "point")  marca = "p"
-			elseif (startswith(t, "r")) marca = "r"		# Works with "r" or "rect"
+			elseif (startswith(t, "re")) marca = "r"		# Works with "r" or "rect"
 			elseif (t == "R" || t == "roundrect") marca = "R"
 			elseif (t == "s" || t == "square")    marca = "s"
 			elseif (t == "t" || t == "^" || t == "triangle")  marca = "t"

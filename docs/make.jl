@@ -95,6 +95,7 @@ makedocs(
 			"grdgradient.md",
 			"grdview.md",
 			"lines.md",
+			"plot.md",
 			"scatter.md",
 			"scatter3.md",
 			"solar.md",
