@@ -52,7 +52,7 @@ arrows!(t, arrow=(length=0.08, start=true, stop=true, justify=:center),
 
 T = text_record([-2.1 0.025; -1.5  0.05; -0.25 0.05; 0.625 0.05],
                 ["10p RM S:", "9p CB annotation", "9p CB frame", "9p CB grid"])
-text!(T, font="", justify="", no_clip=true, fmt=Çpng, 'show=true)
+text!(T, font="", justify="", no_clip=true, fmt=:png, 'show=true)
 ```
 
 !["B_geo_2"](figures/B_geo_2.png)

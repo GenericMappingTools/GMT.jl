@@ -1019,7 +1019,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 			else          cmd *= "1"	# "1" is itself the flag
 			end
 		elseif (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix
-			if (isa(nt[k], AbstractArray) || isa(nt[k], NTuple))
+			if (isa(nt[k], AbstractArray) || isa(nt[k], Tuple))
 				if (isa(nt[k], AbstractArray))  append!(arg, reshape(nt[k], :))
 				else                            append!(arg, reshape(collect(nt[k]), :))
 				end
@@ -1045,13 +1045,25 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 			cmd = "g" * cmd
 		elseif (length(cmd_hold[last]) > 2)		# Temp patch to avoid parsing single char flags
 			rs = split(cmd_hold[last], '/')
-			if (length(rs) != 2)  error("Anchor point must be given as a pair of coordinates")  end
-			x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
-			if (x <= 1.0 && y <= 1.0)  cmd = "n" * cmd  end		# Otherwise it's either a paper coord or error
+			#if (length(rs) != 2)  error("Anchor point must be given as a pair of coordinates")  end
+			if (length(rs) == 2)
+				x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
+				if (x <= 1.0 && y <= 1.0)  cmd = "n" * cmd  end		# Otherwise, either a paper coord or error
+			end
 		end
 	end
 
 	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
+	# Crazzy shit to allow increasing the arg1 matrix
+	n_rows, n_cols = size(mat)
+	mat = reshape(mat, :)	
+	cmd = fun(t1..., t2, del, mat)
+	mat = reshape(mat, n_rows, :)
+	return cmd, mat
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1638,7 +1650,7 @@ function decorated(;kwargs...)
 
 	if (haskey(d, :dec2))				# -S~ mode (decorated, with symbols, lines).
 		cmd *= ":"
-		marca = get_marker_name(d, [:marker :symbol])		# This fun lieves in psxy.jl
+		marca = get_marker_name(d, [:marker :symbol], false)[1]	# This fun lieves in psxy.jl
 		if (marca == "")
 			cmd = "+sa0.5" * cmd
 		else
