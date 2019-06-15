@@ -1045,7 +1045,6 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 			cmd = "g" * cmd
 		elseif (length(cmd_hold[last]) > 2)		# Temp patch to avoid parsing single char flags
 			rs = split(cmd_hold[last], '/')
-			#if (length(rs) != 2)  error("Anchor point must be given as a pair of coordinates")  end
 			if (length(rs) == 2)
 				x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
 				if (x <= 1.0 && y <= 1.0)  cmd = "n" * cmd  end		# Otherwise, either a paper coord or error

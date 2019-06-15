@@ -303,8 +303,8 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 				elseif (o == "r" || startswith(o, "rec"))  opt = "r";  N = 2
 				elseif (o == "V" || startswith(o, "Vec"))  opt = "V";  N = 2
 				elseif (o == "v" || startswith(o, "vec"))  opt = "v";  N = 2
-				elseif (o == "W" || o == "Pie" || o == "Web")  opt = "W";  N = 2
 				elseif (o == "w" || o == "pie" || o == "web")  opt = "w";  N = 2
+				elseif (o == "W" || o == "Pie" || o == "Web")  opt = "W";  N = 2
 				end
 				if (N > 0)  marca, arg1, msg = helper_markers(opt, t[2], arg1, N, cst)  end
 				if (msg != "")  error(msg)  end
