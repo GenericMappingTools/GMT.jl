@@ -45,6 +45,10 @@ Parameters
 - **J** or *proj* : *proj=<parameters>*\
    Select map projection. Default is linear and 14 cm width. More at [proj](@ref)
 
+- **Jz** or **JZ** or *zscale* or *zsize* (*for* **plot3d** *only*) : -- *zscale=scale* **|** *zsize=size*\
+   Set z-axis scaling or or z-axis size. ``zsize=size`` sets the size to the fixed value *size*
+   (for example *zsize=10* or *zsize=4i*). ``zscale=scale`` sets the vertical scale to UNIT/z-unit.
+
 - **R** or *region* or *limits* : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
    **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more \
    Specify the region of interest. By default, the limits are computed from data extents. More at [limits](@ref)
