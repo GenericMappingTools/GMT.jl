@@ -19,29 +19,29 @@ The 2-D gridded data set to be contoured.
 Optional Arguments
 ------------------
 
-- **A** or *annot* : -- *annot=annot_int* **|** *annot=(int=annot_int, disable=true, single=true, labels=labelinfo)*\
-  *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
+- **A** or *annot* : -- *annot=annot\_int* **|** *annot=(int=annot\_int, disable=true, single=true, labels=labelinfo)*\
+  *annot\_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
   [Default is no annotations]. Use *annot=(disable=true,)* to disable all annotations implied by **cont**.
   Alternatively do *annot=(single=true, int=val)* to plot *val* as a single contour. The optional *labelinfo* controls the specifics of the label formatting and consists of a named tuple with the following control arguments [`Label formatting`](@ref label_format_quot)
 
 - **B** or *axis* or *frame*\
   Set map boundary frame and axes attributes. More at [axis](@ref)
 
-- **C** or *cont* or *contours* or *levels* : -- *cont=cont_int*\
+- **C** or *cont* or *contours* or *levels* : -- *cont=cont\_int*\
   The contours to be drawn may be specified in one of three possible ways:
 
-   1. If *cont_int* has the suffix ".cpt" and can be opened as a file, it is assumed to be a CPT.
+   1. If *cont\_int* has the suffix ".cpt" and can be opened as a file, it is assumed to be a CPT.
       The color boundaries are then used as contour levels. If the CPT has annotation flags in the
       last column then those contours will be annotated. By default all contours are labeled;
       use *annot=(disable=true,))* (or *annot="-"*) to disable all annotations.
 
-   2. If *cont_int* is a file but not a CPT, it is expected to contain contour levels in column 1 and a
+   2. If *cont\_int* is a file but not a CPT, it is expected to contain contour levels in column 1 and a
       C(ontour) OR A(nnotate) in col 2. The levels marked C (or c) are contoured, the levels marked A
       (or a) are contoured and annotated. Optionally, a third column maybe present and contain the
       fixed annotation angle for this contour level.
 
-   3. If no file is found, then *cont_int* is interpreted as a constant contour interval. However,
-      if prepended with the + sign (hence it has to be a string) the *cont_int* is taken as meaning draw that
+   3. If no file is found, then *cont\_int* is interpreted as a constant contour interval. However,
+      if prepended with the + sign (hence it has to be a string) the *cont\_int* is taken as meaning draw that
       single contour. The *annot* option offers the same possibility so they may be used together to plot a
       single annotated contour and another single non-annotated contour, as in *anot="+10", cont="+5"* that
       plots an annotated 10 contour and an non-annotated 5 contour.
@@ -88,13 +88,13 @@ Optional Arguments
    Specify the region of interest. More at [limits](@ref)
 
 - **S** or *smooth* : *smooth=smoothfactor*\
-  Used to resample the contour lines at roughly every (*gridbox_size/smoothfactor*) interval.
+  Used to resample the contour lines at roughly every (*gridbox\_size/smoothfactor*) interval.
 
-- **T** or *ticks* : -- *ticks=(local_high=true, local_low=true, gap=gap, closed=true, labels=labels)*\
+- **T** or *ticks* : -- *ticks=(local\_high=true, local\_low=true, gap=gap, closed=true, labels=labels)*\
   Will draw tick marks pointing in the downward direction every *gap* along the innermost closed contours only;
   set *closed=true* to tick all closed contours. Use *gap=(gap,length)* and optionally tick mark *length*
   (append units as **c**, **i**, or **p**) or use defaults [*"15p/3p"*]. User may choose to tick only local
-  highs or local lows by specifying *local_high=true*, *local_low=true*, respectively. Set *labels* to
+  highs or local lows by specifying *local\_high=true*, *local\_low=true*, respectively. Set *labels* to
   annotate the centers of closed innermost contours (i.e., the local lows and highs). If no *labels* (*i.e*,
   set *labels=""*) is set, we use - and + as the labels. Appending exactly two characters, *e.g.*, *labels=:LH*,
   will plot the two characters (here, *L* and *H*) as labels. For more elaborate labels, separate the low and hight
@@ -122,10 +122,10 @@ Optional Arguments
 - **W** or *pen* : *pen=pen*\
    Set pen attributes for lines or the outline of symbols [Defaults: width = default, color = black, style = solid].
 
-- **X** or *x_off* or *x_offset* : -- *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
+- **X** or *x\_off* or *x\_offset* : -- *x\_off=[]* **|** *x\_off=x-shift* **|** *x\_off=(shift=x-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [x_off](@ref)
 
-- **Y** or *y_off* or *y_offset* : -- *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
+- **Y** or *y\_off* or *y\_offset* : -- *y\_off=[]* **|** *y\_off=y-shift* **|** *y\_off=(shift=y-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [y_off](@ref)
 
 Examples

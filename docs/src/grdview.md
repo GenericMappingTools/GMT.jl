@@ -35,7 +35,7 @@ Optional Arguments
    dynamic CPT [jet] to automatically determine a continuous CPT from the grid's z-range; you may round
    up/down the z-range by adding **+i** *zinc*. Yet another option is to specify ``color="color1,color2[,color3 ,...]"`` or ``color=((r1,g1,b1),(r2,g2,b2),...)`` to build a linear continuous CPT from those colors automatically (see [Setting color](@ref)). When not explicitly set, but a color map is needed, we will either use the current color map, if available (set by a previous call to *makecpt*), or the default *jet* color map. Must be present if you want (1) mesh plot with contours (``surftype=(mesh=true,)``), or (2) shaded/colored perspective image (``surftype=(surface=true,)`` or ``surftype=(img=true,)``). For ``surftype=(surface=true,)`` you can specify that you want to skip a z-slice by setting the red r/g/b component to **-**.
 
-- **G** or *drape* : *drape=grid* **|** *drape=(grid_r, grid_g, grid_b)*\
+- **G** or *drape* : *drape=grid* **|** *drape=(grid\_r, grid\_g, grid\_b)*\
    Drape the image in drapegrid on top of the relief provided by reliefgrid. [Default determines colors from
    reliefgrid]. Note that **zsize** and **plane** always refers to the reliefgrid. The drapegrid only provides
    the information pertaining to colors, which (if drapegrid is a grid) will be looked-up via the CPT (see
@@ -46,7 +46,7 @@ Optional Arguments
 
 - **I** or *shade* or *intensity* : *shade=grid* **|** *shade=azim* **|** *shade=(azimuth=az, norm=params, auto=true)*\
    Gives the name of a grid with intensities in the (-1,+1) range, or a constant intensity to apply everywhere
-   (affects the ambient light). Alternatively, derive an intensity grid from the input data grid *grd_z* via a
+   (affects the ambient light). Alternatively, derive an intensity grid from the input data grid *grd\_z* via a
    call to `grdgradient`; use ``shade=(azimuth=az,)`` or ``shade=(azimuth=az, norm=params)`` to specify azimuth
    and intensity arguments for that module or just give ``shade=(auto=true,)`` to select the default arguments
    (``azim=-45,norm=:t1``). If you want a more specific intensity scenario then run grdgradient separately first.
@@ -56,7 +56,7 @@ Optional Arguments
     projection is not oblique, the frontal facade between the plane and the data perimeter is colored.
     See -Wf for setting the pen used for the outline.
 
-- **Q** or *surf* or *surftype* : *surftype=(mesh=true, waterfall=true, surface=true, image=true, nan_alpha=true, monochrome=true)*\
+- **Q** or *surf* or *surftype* : *surftype=(mesh=true, waterfall=true, surface=true, image=true, nan\_alpha=true, monochrome=true)*\
     Select one of following settings. For any of these choices, you may force a monochrome image by setting
     ``monochrome=true``. Colors are then converted to shades of gray using the (monochrome television) YIQ
     transformation. Note: pay attention to always use a tuple, even when only one option is used. This is
@@ -80,9 +80,9 @@ Optional Arguments
    A smaller region than specified in the reliefgrid will result in a subset of the grid.
 
 - **S** or *smooth* : *smooth=smoothfactor*\
-   Used to resample the contour lines at roughly every (*gridbox_size/smoothfactor*) interval.
+   Used to resample the contour lines at roughly every (*gridbox\_size/smoothfactor*) interval.
 
-- **T** or *no_interp* : *no_interp=(skip=true, outlines=true)*\
+- **T** or *no\_interp* : *no\_interp=(skip=true, outlines=true)*\
    Plot image without any interpolation. This involves converting each node-centered bin into a polygon
    which is then painted separately. Use ``skip=true`` to skip nodes with z = NaN. This option is useful
    for categorical data where interpolating between values is meaningless. Optionally, add ``outlines=true``
@@ -106,10 +106,10 @@ Optional Arguments
 > - **pens=(facade=true, pen)**\
 >>   Sets the pen attributes used for the facade. [Default: width = 0.25p, color = black, style = solid]. You must also select **plane** for the facade outline to be drawn.
 
-- **X** or *x_off* or *x_offset* : *x_off=[] **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
+- **X** or *x\_off* or *x\_offset* : *x\_off=[] **|** *x\_off=x-shift* **|** *x\_off=(shift=x-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [x_off](@ref)
 
-- **Y** or *y_off* or *y_offset* : *y_off=[] **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
+- **Y** or *y\_off* or *y\_offset* : *y\_off=[] **|** *y\_off=y-shift* **|** *y\_off=(shift=y-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [y_off](@ref)
 
 - **n** or *interp* or *interpol* : *interp=params*\
