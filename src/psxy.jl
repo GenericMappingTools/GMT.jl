@@ -233,7 +233,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 				cmd = @sprintf("%s-%d", cmd, 2+is3D)	# Because we know that an extra col will be added later
 			end
 		end
-	elseif (n_col > 2+is3D)
+	else
 		if (mz !== nothing)			# Here we must insert the color col right after the coords
 			if (length(mz) != n_rows)  @warn(warn1); @goto noway  end
 			if     (isa(arg1, Array))      arg1 = hcat(arg1[:,1:2+is3D], mz[:], arg1[:,3+is3D:end])

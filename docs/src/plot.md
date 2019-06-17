@@ -68,7 +68,7 @@ Parameters
     **bot=true** or **top=true** or **y0=y0** to connect first and last point to anchor points at either *ymin*, *ymax*, or *y0*.\
     Polygon may be painted (**fill**) and optionally outlined by adding **pen=pen**.
 
-- **N** or **noclip** or **no_clip** : *noclip=true* **|** *noclip=:r* **|** *noclip=:c*\
+- **N** or **noclip** or **no\_clip** : *noclip=true* **|** *noclip=:r* **|** *noclip=:c*\
    Do NOT clip symbols that fall outside map border [Default plots points whose coordinates are strictly inside the map border only]. This option does not apply to lines and polygons which are always clipped to the map region. For periodic (360-longitude) maps we must plot all symbols twice in case they are clipped by the repeating boundary. The **noclip** will turn off clipping and not plot repeating symbols. Use **noclip=:r** to turn off clipping but retain the plotting of such repeating symbols, or use **noclip=:c** to retain clipping but turn off plotting of repeating symbols.
 
 - **S** or *symbol* : -- *symbol=(symb=name, size=val, unit=unity)* or *marker|Marker|shape=name*, *markersize| MarkerSize|ms|size=val*\
@@ -79,14 +79,14 @@ Parameters
    **a** or * or **star**  size is diameter of circumscribing circle.\
    **c** or **circle**  size is diameter of circle.\
    **d** or **diamond** size is diameter of circumscribing circle.\
-   **e** or **ellipse** Direction (in degrees counter-clockwise from horizontal), major_axis, and minor_axis must be found in columns 3, 4, and 5.\
+   **e** or **ellipse** Direction (in degrees counter-clockwise from horizontal), major\_axis, and minor\_axis must be found in columns 3, 4, and 5.\
    **E** or **Ellipse** Same as **ellipse**, except azimuth (in degrees east of north) should be given instead of direction. The azimuth will be mapped into an angle based on the chosen map projection (**ellipse** leaves the directions unchanged.) Furthermore, the axes lengths must be given in geographical instead of plot-distance units. An exception occurs for a linear projection in which we assume the ellipse axes are given in the same units as **region**. For degenerate ellipses (circles) with just the diameter given, use **Ellipse-**. The diameter is excepted to be given in column 3. Alternatively, append the desired diameter to **E-** and this fixed diameter is used instead (*e.g.* **symbol="E-500"**). For allowable geographical units, see UNITS.\
    **front**    Draw a front. See [Front lines](@ref)\
    **g** or **octagon**  size is diameter of circumscribing circle.\
    **h** or **hexagon**  size is diameter of circumscribing circle.\
-   **i** or **v** or **inverted_tri**  size is diameter of circumscribing circle.\
-   **j** or **rotated_rec**  Rotated rectangle. Direction (in degrees counter-clockwise from horizontal), x-dimension, and y-dimension must be found in columns 3, 4, and 5.\
-   **J** or **Rotated_rec**  Same as **rotated_rec**, except azimuth (in degrees east of north) should be given instead of direction. The azimuth will be mapped into an angle based on the chosen map projection (**rotated_rec** leaves the directions unchanged.) Furthermore, the dimensions must be given in geographical instead of plot-distance units. For a degenerate rectangle (square) with one dimension given, use **J-**. The dimension is excepted to be given in column 3. Alternatively, append the dimension diameter to **J-** and this fixed dimension is used instead. An exception occurs for a linear projection in which we assume the dimensions are given in the same units as **region**. For allowable geographical units, see UNITS.\
+   **i** or **v** or **inverted\_tri**  size is diameter of circumscribing circle.\
+   **j** or **rotated\_rec**  Rotated rectangle. Direction (in degrees counter-clockwise from horizontal), x-dimension, and y-dimension must be found in columns 3, 4, and 5.\
+   **J** or **Rotated\_rec**  Same as **rotated\_rec**, except azimuth (in degrees east of north) should be given instead of direction. The azimuth will be mapped into an angle based on the chosen map projection (**rotated\_rec** leaves the directions unchanged.) Furthermore, the dimensions must be given in geographical instead of plot-distance units. For a degenerate rectangle (square) with one dimension given, use **J-**. The dimension is excepted to be given in column 3. Alternatively, append the dimension diameter to **J-** and this fixed dimension is used instead. An exception occurs for a linear projection in which we assume the dimensions are given in the same units as **region**. For allowable geographical units, see UNITS.\
    **m** or **matang**  math angle arc, optionally with one or two arrow heads [Default is no arrow heads]. The size is the length of the vector head. Arc width is set by **pen**, with vector head outlines defaulting to half of arc width. The radius of the arc and its start and stop directions (in degrees counter-clockwise from horizontal) must be given in columns 3-5. See [Vector Attributes](@ref) for specifying other attributes.\
    **M** or **Matang**  Same as **matang** but switches to straight angle symbol if angles subtend 90 degrees exactly.\
    **n** or **pentagon**  size is diameter of circumscribing circle.\
@@ -104,7 +104,7 @@ Parameters
    Set pen attributes for lines or the outline of symbols [Defaults: width = default, color = black, style = solid]. See [Pen attributes](@ref). 
    If the modifier **pen=(cline=true)** is appended then the color of the line are taken from the CPT (see **cmap**). If instead modifier **pen=(csymbol=true)** is appended then the color from the cpt file is applied to symbol fill. Use **pen=(colored=true)** for both effects.
    You can also append one or more additional line attribute modifiers: **offset=val** will start and stop drawing the line the given distance offsets from the end point. Append unit **u** from **c** | **i** | **p** to indicate plot distance on the map or append map distance units instead (see below);
-   **bezier=true** will draw the line using a Bezier spline; *vspecs* will place a vector head at the ends of the lines. You can use **vec_start** and **vec_stop** to specify separate vector specs at each end [shared specs]. See the [Vector Attributes](@ref) for more information.
+   **bezier=true** will draw the line using a Bezier spline; *vspecs* will place a vector head at the ends of the lines. You can use **vec\_start** and **vec\_stop** to specify separate vector specs at each end [shared specs]. See the [Vector Attributes](@ref) for more information.
 
 - **U** or *stamp* : *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
    Draw GMT time stamp logo on plot. More at [stamp](@ref)
@@ -121,7 +121,7 @@ Parameters
 Units
 -----
 
-For map distance unit, append unit **d** for arc degree, **m** for arc minute, and **s** for arc second, or **e** for meter [Default], **f** for foot, **k** for km, **M** for statute mile, **n** for nautical mile, and **u** for US survey foot. By default we compute such distances using a spherical approximation with great circles (**spheric_dist=:g**). You can use **spheric_dist=:f** to perform “Flat Earth” calculations (quicker but less accurate) or **spheric_dist=:e** to perform exact geodesic calculations (slower but more accurate; see ``PROJ\_GEODESIC`` for method used).
+For map distance unit, append unit **d** for arc degree, **m** for arc minute, and **s** for arc second, or **e** for meter [Default], **f** for foot, **k** for km, **M** for statute mile, **n** for nautical mile, and **u** for US survey foot. By default we compute such distances using a spherical approximation with great circles (**spheric\_dist=:g**). You can use **spheric\_dist=:f** to perform “Flat Earth” calculations (quicker but less accurate) or **spheric\_dist=:e** to perform exact geodesic calculations (slower but more accurate; see ``PROJ\_GEODESIC`` for method used).
 
 Examples
 --------
