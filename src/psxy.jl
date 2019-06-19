@@ -323,8 +323,8 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 				elseif (key == :B || key == :HBar)    opt = "B"
 				elseif (key == :l || key == :letter)  opt = "l"
 				elseif (key == :k || key == :custom)  opt = "k"
-				elseif (key == :m || key == :matang)  opt = "m"
 				elseif (key == :M || key == :Matang)  opt = "M"
+				elseif (key == :m || key == :matang)  opt = "m"
 				end
 				if (opt == "w" || opt == "W")
 					marca = opt * add_opt(t, (size=("", arg2str, 1), inner="/", arc="+a", radial="+r", pen=("+p", add_opt_pen)))

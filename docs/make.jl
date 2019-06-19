@@ -34,6 +34,7 @@ makedocs(
 		hide("gallery/scripts_agu/bezier.md"),
 		hide("gallery/scripts_agu/decorated_I.md"),
 		hide("gallery/scripts_agu/hello_I.md"),
+		hide("gallery/scripts_agu/compass.md"),
 		hide("gallery/historic/ex01.md"),
 		hide("gallery/historic/ex02.md"),
 		hide("gallery/historic/ex03.md"),
