@@ -13,6 +13,6 @@
 |:-------------:|:-------------:|:-------------:|:-------------:|
 | [![](scripts_agu/figs/solar.png)](scripts_agu/solar.md) | [![](scripts_agu/figs/matangles.png)](scripts_agu/matangles.md) | [![](scripts_agu/figs/arrows_I.png)](scripts_agu/arrows_I.md) | [![](scripts_agu/figs/arrows_II.png)](scripts_agu/arrows_II.md) |
 
-| Bezier | Decorated | Hello I  |  |
+| Bezier | Decorated | Hello I  | Compass |
 |:-------------:|:-------------:|:-------------:|:-------------:|
-| [![](scripts_agu/figs/bezier.png)](scripts_agu/bezier.md) | [![](scripts_agu/figs/decorated_I.png)](scripts_agu/decorated_I.md) | [![](scripts_agu/figs/hello_I.png)](scripts_agu/hello_I.md) |  |
+| [![](scripts_agu/figs/bezier.png)](scripts_agu/bezier.md) | [![](scripts_agu/figs/decorated_I.png)](scripts_agu/decorated_I.md) | [![](scripts_agu/figs/hello_I.png)](scripts_agu/hello_I.md) | [![](scripts_agu/figs/compass.png)](scripts_agu/compass.md) |

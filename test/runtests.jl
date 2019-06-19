@@ -565,7 +565,8 @@ if (got_it)					# Otherwise go straight to end
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,stop=1,shape=0.5,fill=:red), J=:X14, B=:a, pen="6p")
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,stop=:tail,shape=0.5), J=:X14, B=:a, pen="6p")
 	arrows!([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,shape=0.5), pen="6p", Vd=2)
-	arrows!("", [0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,shape=0.5), pen="6p", Vd=2)
+	arrows!("", [0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:V,shape=0.5, pen=(1,:red)), pen="6p", Vd=2)
+	@test_throws ErrorException("Bad data type for the 'shape' option", arrows!("", [0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,shape='1'), pen="6p", Vd=2))
 
 	# LINES
 	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
