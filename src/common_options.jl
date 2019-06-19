@@ -1047,7 +1047,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 			rs = split(cmd_hold[last], '/')
 			if (length(rs) == 2)
 				x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
-				if (x <= 1.0 && y <= 1.0)  cmd = "n" * cmd  end		# Otherwise, either a paper coord or error
+				if (0 <= x <= 1.0 && 0 <= y <= 1.0 && !occursin(r"[gjJxn]", string(cmd[1])))  cmd = "n" * cmd  end		# Otherwise, either a paper coord or error
 			end
 		end
 	end
@@ -1544,6 +1544,7 @@ function str_with_blancs(str)
 end
 
 # ---------------------------------------------------------------------------------------------------
+vector_attrib(d::Dict, lixo=nothing) = vector_attrib(; d...)	# When comming from add_opt()
 vector_attrib(t::NamedTuple) = vector_attrib(; t...)
 function vector_attrib(;kwargs...)
 	d = KW(kwargs)
@@ -1566,14 +1567,15 @@ function vector_attrib(;kwargs...)
 	end
 
 	if (haskey(d, :justify))
-		if     (d[:justify] == "beginning" || d[:justify] == :beginning)  cmd *= "+jb"
-		elseif (d[:justify] == "end"       || d[:justify] == :end)        cmd *= "+je"
-		elseif (d[:justify] == "center"    || d[:justify] == :center)     cmd *= "+jc"
+		t = string(d[:justify])[1]
+		if     (t == 'b')  cmd *= "+jb"	# "begin"
+		elseif (t == 'e')  cmd *= "+je"	# "end"
+		elseif (t == 'c')  cmd *= "+jc"	# "center"
 		end
 	end
 
-	if (haskey(d, :half_arrow))
-		if (d[:half_arrow] == "left" || d[:half_arrow] == :left)	cmd *= "+l"
+	if ((val = find_in_dict(d, [:half :half_arrow])[1]) !== nothing)
+		if (val == "left" || val == :left)	cmd *= "+l"
 		else	cmd *= "+r"		# Whatever, gives right half
 		end
 	end

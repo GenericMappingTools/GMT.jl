@@ -248,7 +248,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 	end
 
 	if (N_args == n_prev)		# No cpt transmitted, so need to compute one
-		if (GMTver >= 8)		# 7 because this solution is currently still bugged
+		if (GMTver >= 7)		# 7 because this solution is currently still bugged
 			#=
 			if (mz !== nothing)
 				arg2 = gmt("makecpt -E " * cmd[len+2:end], mz[:])
@@ -308,9 +308,12 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 				end
 				if (N > 0)  marca, arg1, msg = helper_markers(opt, t[2], arg1, N, cst)  end
 				if (msg != "")  error(msg)  end
-				if (marca == "w" || marca == "W" && (length(t) == 3 && isa(t[3], NamedTuple)))
-					# Pies can also be spiderwebs. Ex: marker=(:pie, [...], (inner=1,)) 
-					marca *= add_opt(t[3], (inner="/", arc="+a", radial="+r", pen=("+p", add_opt_pen)) )
+				if (length(t) == 3 && isa(t[3], NamedTuple))
+					if (marca == "w" || marca == "W")	# Ex (spiderweb): marker=(:pie, [...], (inner=1,)) 
+						marca *= add_opt(t[3], (inner="/", arc="+a", radial="+r", pen=("+p", add_opt_pen)) )
+					elseif (marca == "m" || marca == "M")
+						marca *= vector_attrib(t[3])
+					end
 				end
 			elseif (isa(t, NamedTuple))		# e.g. marker=(pie=true, inner=1, ...)
 				key = keys(t)[1];	opt = ""
@@ -320,6 +323,8 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 				elseif (key == :B || key == :HBar)    opt = "B"
 				elseif (key == :l || key == :letter)  opt = "l"
 				elseif (key == :k || key == :custom)  opt = "k"
+				elseif (key == :m || key == :matang)  opt = "m"
+				elseif (key == :M || key == :Matang)  opt = "M"
 				end
 				if (opt == "w" || opt == "W")
 					marca = opt * add_opt(t, (size=("", arg2str, 1), inner="/", arc="+a", radial="+r", pen=("+p", add_opt_pen)))
@@ -327,6 +332,8 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 					marca = opt * add_opt(t, (size=("", arg2str, 1), base="+b", Base="+B"))
 				elseif (opt == "l")
 					marca = opt * add_opt(t, (size=("", arg2str, 1), letter="+t", justify="+j", font=("+f", font)))
+				elseif (opt == "m" || opt == "M")
+					marca = opt * add_opt(t, (size=("", arg2str, 1), arrow=("", vector_attrib)))
 				elseif (opt == "k")
 					marca = opt * add_opt(t, (custom="", size="/"))
 				end

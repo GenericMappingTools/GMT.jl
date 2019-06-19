@@ -46,9 +46,9 @@ the start point to the end point of a segment:
    - *shape=:triang*     same as *shape=0*
    - *shape=:arrow*      same as *shape=1*
    - *shape=:V*          same as *shape=2*
-- *half_arrow=:left*\
+- *half=:left*\
    Draw half-arrows, using only the left side of specified heads [default is both sides].
-- *half_arrow=:right*\
+- *half=:right*\
    Draw half-arrows, using only the right side of specified heads [default is both sides].
 - *norm=xx*\
    Scales down vector attributes (pen thickness, head size) with decreasing length, where vector
@@ -72,7 +72,7 @@ In addition, all but circular vectors may take these options:
 
 - *justify=??*\
    Determines how the input x,y point relates to the vector. Choose from
-   - *justify=:beginning*          -- The default
+   - *justify=:begin*          -- The default
    - *justify=:end*
    - *justify=:center*
 - *endpoint=true*\
