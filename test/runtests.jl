@@ -550,6 +550,9 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(plot([5 5], region=(0,10,0,10), marker=(bar=true, size=0.5, base=0,), Vd=2), "psxy  -R0/10/0/10 -JX12c/8c -Baf -BWSen -Sb0.5+b0")
 	@test startswith(plot([5 5], region=(0,10,0,10), marker=(custom=:sun, size=0.5), Vd=2), "psxy  -R0/10/0/10 -JX12c/8c -Baf -BWSen -Sksun/0.5")
 	plot([5 5 0 45], region=(0,10,0,10), marker=(pie=true, arc=15, radial=30), Vd=2)
+	plot([0.5 1 1.75 5 85], region=(0,5,0,5), figsize=12, marker=(matang=true, arrow=(length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=2)
+	plot([2.5 2.5], region=(0,4,0,4), figsize=12, marker=(:matang, [2 50 350], (length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=2)
+
 	plot3d(rand(5,3), marker=:cube)
 	plot3d!(rand(5,3), marker=:cube, Vd=2)
 	plot3d("", rand(5,3), Vd=2)
@@ -626,7 +629,7 @@ if (got_it)					# Otherwise go straight to end
 	T =text_record([1.0 0.446143; 2.0 0.581746; 3.0 0.268978], [" "; " "; " "]);
 	bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=2)
 	T =text_record([1.0 0.446143 0; 2.0 0.581746 0; 3.0 0.268978 0], [" "; " "; " "]);
-	bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=2)
+	bar(T, color=:rainbow, figsize=(14,8), mz=[3 2 1], Vd=2)
 
 	# BAR3
 	G = gmt("grdmath -R-15/15/-15/15 -I1 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");

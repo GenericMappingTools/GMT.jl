@@ -83,7 +83,7 @@ end
 function parse_type_anchor(d::Dict, cmd::String, symbs)
 	# SYMBS: [:Td :rose] | [:Tm :compass] | [:L :map_scale] | [:D :inset] [:D :pos :position]
 	# or     [[:Td :rose], [:Tm :compass], ...]
-	if (isa(symbs, Array{Symbol,2}))  symbs = [symbs]  end      # So that we can always do a loop
+    if (isa(symbs, Array{Symbol,2}))  symbs = [symbs]  end      # So that we can always do a loop
 	for k = 1:length(symbs)
 		opt = add_opt("", "", d, symbs[k],
 			(map=("g", nothing, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), annot="+t", dec="+d", labels="+l", label="+l", length="+w", width="+w", size="+w", align="+a1", justify="+j", fancy="+f", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n", offset="+o", rose_primary=("+i", add_opt_pen), rose_secondary=("+p", add_opt_pen), save="+s", scale_at_lat="+c", spacing="+l", translate="_+t", triangles="+e", units="_+u", vertical="_+v"))
