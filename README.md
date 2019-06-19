@@ -60,16 +60,15 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
 [GMT](https://github.com/GenericMappingTools/gmt) program. It's the user responsability to do that.
 
   * Windows64
-     1. It's better to install the [GMT6dev version](http://w3.ualg.pt/~jluis/mirone/downloads/gmt.html)
-     2. But if you prefer the official GMT5 version (the [..._win64.exe](https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
+      It's better to install the [GMT6 version](https://github.com/GenericMappingTools/gmt/releases/download/6.0.0rc1/GMT-6.0.0rc1-win64.exe)
 
   * Windows32
 
-      Download and install the official version at (the [..._win32.exe](https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download))
+      Download and install the official version at (the [..._win32.exe](https://github.com/GenericMappingTools/gmt/releases/download/6.0.0rc1/GMT-6.0.0rc1-win32.exe))
 
   * Unix
   
-      Follow instructions at <https://gmt.soest.hawaii.edu/projects/gmt/wiki/BuildingGMT>
+      Follow instructions at <https://github.com/GenericMappingTools/gmt#install-gmt>
 
   * In any case, since *GMT* produces PostScript you need a PS visualizer
 
