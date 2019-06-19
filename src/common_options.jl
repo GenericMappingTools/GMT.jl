@@ -1603,9 +1603,9 @@ function vector_attrib(;kwargs...)
 
 	if (haskey(d, :shape))
 		if (isa(d[:shape], String) || isa(d[:shape], Symbol))
-			if     (d[:shape] == "triang" || d[:shape] == :triang)	cmd *= "+h0"
-			elseif (d[:shape] == "arrow"  || d[:shape] == :arrow)	cmd *= "+h1"
-			elseif (d[:shape] == "V"      || d[:shape] == :V)	    cmd *= "+h2"
+			if     (d[:shape] == "triang" || d[:shape] == :triang)  cmd *= "+h0"
+			elseif (d[:shape] == "arrow"  || d[:shape] == :arrow)   cmd *= "+h1"
+			elseif (d[:shape] == "V"      || d[:shape] == :V)       cmd *= "+h2"
 			else	error("Shape string can be only: 'triang', 'arrow' or 'V'")
 			end
 		elseif (isa(d[:shape], Number))
