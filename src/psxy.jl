@@ -322,6 +322,7 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 				elseif (key == :b || key == :bar)     opt = "b"
 				elseif (key == :B || key == :HBar)    opt = "B"
 				elseif (key == :l || key == :letter)  opt = "l"
+				elseif (key == :K || key == :Custom)  opt = "K"
 				elseif (key == :k || key == :custom)  opt = "k"
 				elseif (key == :M || key == :Matang)  opt = "M"
 				elseif (key == :m || key == :matang)  opt = "m"
@@ -334,7 +335,7 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 					marca = opt * add_opt(t, (size=("", arg2str, 1), letter="+t", justify="+j", font=("+f", font)))
 				elseif (opt == "m" || opt == "M")
 					marca = opt * add_opt(t, (size=("", arg2str, 1), arrow=("", vector_attrib)))
-				elseif (opt == "k")
+				elseif (opt == "k" || opt == "K")
 					marca = opt * add_opt(t, (custom="", size="/"))
 				end
 			else
