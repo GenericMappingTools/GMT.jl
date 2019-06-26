@@ -44,7 +44,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, = parse_R("", d, O)
-	cmd, = parse_J(cmd, d, "", true, O)
+	cmd, = parse_J(cmd, d, "-Jx1", true, O)
 
 	cmd = add_opt(cmd, 'D', d, [:D :pos :position])
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
@@ -60,15 +60,14 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		if (!occursin("-R", cmd))  cmd = @sprintf("-R0/%f/0/%f ", 2r, 2r) * cmd  end
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
 		do_show = false
-		if (do_GMTjulia && haskey(d, :show))	# Too soon to make the display
-			delete!(d, :show);	do_show = true
-		end
+		if (do_GMTjulia && haskey(d, :show))  delete!(d, :show);  do_show = true  end	# Too soon
 		fmt = fname_ext
 		if (do_GMTjulia && haskey(d, :fmt))		# Too soon to set the format. Need to finish the PS first
 			fmt = d[:fmt];	delete!(d, :fmt);
 			fname_ext = "ps"
 		end
-		finish_PS_module(d, "psxy " * c * cmd, "", output, fname_ext, opt_T, K, O, false, t)
+		r = finish_PS_module(d, "psxy " * c * cmd, "", output, fname_ext, opt_T, K, O, false, t)
+		if (r !== nothing && startswith(r, "psxy"))  return r  end
 		if (do_GMTjulia)
 			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
 			opt_F = @sprintf("+f%d,NewCenturySchlbk-Italic",letter_height)

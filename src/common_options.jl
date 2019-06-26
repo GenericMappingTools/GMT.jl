@@ -1184,14 +1184,14 @@ function add_opt_module(d::Dict, symbs)
 		if (haskey(d, symbs[k]))
 			val = d[symbs[k]]
 			if (isa(val, NamedTuple))
-				nt = (val..., Vd=:cmd)
+				nt = (val..., Vd=2)
 				if     (symbs[k] == :coast)    r = coast!(; nt...)
 				elseif (symbs[k] == :colorbar) r = colorbar!(; nt...)
 				elseif (symbs[k] == :basemap)  r = basemap!(; nt...)
 				end
 			elseif (isa(val, Number) && (val != 0))		# Allow setting coast=true || colorbar=true
-				if     (symbs[k] == :coast)    r = coast!(W=0.5, Vd=:cmd)
-				elseif (symbs[k] == :colorbar) r = colorbar!(pos=(anchor=:MR,), B=:a, Vd=:cmd)
+				if     (symbs[k] == :coast)    r = coast!(W=0.5, Vd=2)
+				elseif (symbs[k] == :colorbar) r = colorbar!(pos=(anchor=:MR,), B=:a, Vd=2)
 				end
 			end
 		end

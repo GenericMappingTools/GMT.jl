@@ -627,9 +627,9 @@ if (got_it)					# Otherwise go straight to end
 	men_means, men_std = (20, 35, 30, 35, 27), (2, 3, 4, 1, 2);
 	x = collect(1:length(men_means));
 	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue, limits=(0.5,5.5,0,40), frame=:none, error_bars=(y=men_std,), Vd=2)
-	T =text_record([1.0 0.446143; 2.0 0.581746; 3.0 0.268978], [" "; " "; " "]);
+	T = mat2ds([1.0 0.446143; 2.0 0.581746; 3.0 0.268978], text=[" "; " "; " "]);
 	bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=2)
-	T =text_record([1.0 0.446143 0; 2.0 0.581746 0; 3.0 0.268978 0], [" "; " "; " "]);
+	T = mat2ds([1.0 0.446143 0; 2.0 0.581746 0; 3.0 0.268978 0], text=[" "; " "; " "]);
 	bar(T, color=:rainbow, figsize=(14,8), mz=[3 2 1], Vd=2)
 
 	# BAR3

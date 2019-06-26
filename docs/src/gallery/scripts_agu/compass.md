@@ -1,8 +1,8 @@
 # Compass
 
-# This exmple plots a compass in a map, including a magnetic component.
-# Because several parameters used here deviat from the defaults we have
-# an unusualy large list of parameter settings
+This exmple plots a compass in a map, including a magnetic component.
+Because several parameters used here deviate from the defaults we have
+an unusualy large list of parameter settings
 
 ```julia
 basemap(region=(-7,7,-6,6), proj=:Mercator,
@@ -14,5 +14,5 @@ basemap(region=(-7,7,-6,6), proj=:Mercator,
 ```
 
 ```@raw html
-<img src="../figs/compass.png" width="400" class="center"/>
+<img src="../figs/compass.png" width="500" class="center"/>
 ```
