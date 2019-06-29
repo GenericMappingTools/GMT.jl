@@ -1678,11 +1678,7 @@ end
 decorated(nt::NamedTuple) = decorated(;nt...)
 function decorated(;kwargs...)
 	d = KW(kwargs)
-
 	cmd, optD = helper_decorated(d)
-	if (cmd == "" && optD == "")
-		error("DECORATED: missing controlling algorithm to place the elements (dist, n_symbols, etc).")
-	end
 
 	if (haskey(d, :dec2))				# -S~ mode (decorated, with symbols, lines).
 		cmd *= ":"
@@ -1774,13 +1770,8 @@ function helper_decorated(d::Dict, compose=false)
 			end
 		end
 	end
-	if (cmd == "")
+	if (cmd == "" && optD == "")
 		optD = ((val = find_in_dict(d, [:n_labels :n_symbols])[1]) !== nothing) ? string("n",val) : "n1"
-		#if ((val = find_in_dict(d, [:n_labels :n_symbols])[1]) !== nothing)
-			#optD = string("n", val);
-		#else
-			#optD = "n"
-		#end
 	end
 	if (cmd == "")
 		if ((val = find_in_dict(d, [:N_labels :N_symbols])[1]) !== nothing)

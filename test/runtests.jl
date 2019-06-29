@@ -122,8 +122,6 @@ if (got_it)					# Otherwise go straight to end
 	r = decorated(dist=("0.4i",0.25), angle=7, clearance=(2,3), debug=1, delay=1, font=10, color=:red, justify=:TC, const_label=:Ai, pen=(0.5,:red), fill=:blue, nudge=(3,4), rounded=1, unit=:TT, min_rad=0.5, curved=1, n_data=20, prefix="Pre", suffices="a,b", label=(:map_dist,"d"), quoted=1)
 	@test r == " -Sqd0.4i/0.25:+a7+d+c2/3+e+f10+gred+jTC+lAi+n3/4+o+r0.5+uTT+v+w20+=Pre+xa,b+LDd+p0.5,red"
 
-	@test_throws ErrorException("DECORATED: missing controlling algorithm to place the elements (dist, n_symbols, etc).") GMT.decorated(dista = 4)
-
 	@test GMT.helper_decorated(Dict(:line => [1 2 3 4; 5 6 7 8]), true) == "l1/2/3/4,5/6/7/8"
 	@test GMT.helper_decorated(Dict(:Line => "CT/CB"), true) == "LCT/CB"
 	@test GMT.helper_decorated(Dict(:Line => (1,2,"CB")), true) == "L1/2/CB"
