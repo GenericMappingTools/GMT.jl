@@ -1225,8 +1225,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 function text_init_(API::Ptr{Nothing}, module_input, Darr, dir::Integer, family::Integer=GMT_IS_TEXTSET)
 #
-	if (GMTver < 6.0)
-
 	if (dir == GMT_OUT)
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		return GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, GMT_CREATE_MODE, NULL, NULL, NULL, 0, 0, NULL)
@@ -1288,8 +1286,7 @@ function text_init_(API::Ptr{Nothing}, module_input, Darr, dir::Integer, family:
 		T = text_init(API, module_input, Darr, dir)
 	end
 
-		return T
-	end
+	return T
 end
 
 # ---------------------------------------------------------------------------------------------------

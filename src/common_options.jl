@@ -1603,9 +1603,10 @@ function vector_attrib(;kwargs...)
 
 	if (haskey(d, :shape))
 		if (isa(d[:shape], String) || isa(d[:shape], Symbol))
-			if     (d[:shape] == "triang" || d[:shape] == :triang)  cmd *= "+h0"
-			elseif (d[:shape] == "arrow"  || d[:shape] == :arrow)   cmd *= "+h1"
-			elseif (d[:shape] == "V"      || d[:shape] == :V)       cmd *= "+h2"
+			t = string(d[:shape])[1]
+			if     (t == 't')  cmd *= "+h0"		# triang
+			elseif (t == 'a')  cmd *= "+h1"		# arrow
+			elseif (t == 'V')  cmd *= "+h2"		# V
 			else	error("Shape string can be only: 'triang', 'arrow' or 'V'")
 			end
 		elseif (isa(d[:shape], Number))
@@ -1623,17 +1624,51 @@ function vector_attrib(;kwargs...)
 	return cmd
 end
 
+# ---------------------------------------------------------------------------------------------------
+#vector4_attrib(d::Dict, lixo=nothing) = vector4_attrib(; d...)	# When comming from add_opt()
+vector4_attrib(t::NamedTuple) = vector4_attrib(; t...)
+function vector4_attrib(; kwargs...)
+	# Old GMT4 vectors (still supported in GMT6)
+	d = KW(kwargs)
+	cmd = "t"
+	if ((val = find_in_dict(d, [:align :center])[1]) !== nothing)
+		c = string(val)[1]
+		if     (c == 'h' || c == 'b')  cmd = "h"		# Head
+		elseif (c == 'm' || c == 'c')  cmd = "b"		# Middle
+		elseif (c == 'p')              cmd = "s"		# Point
+		end
+	end
+	if (haskey(d, :double) || haskey(d, :double_head))  cmd = uppercase(cmd)  end
+
+	if (haskey(d, :norm))  cmd = string(cmd, "n", d[:norm])  end
+	if ((val = find_in_dict(d, [:head])[1]) !== nothing)
+		if (isa(val, NamedTuple))
+			ha = "0.075c";	hl = "0.3c";	hw = "0.25c"
+			dh = nt2dict(val)
+			if (haskey(dh, :arrowwidth))  ha = string(dh[:arrowwidth])  end
+			if (haskey(dh, :headlength))  hl = string(dh[:headlength])  end
+			if (haskey(dh, :headwidth))   hw = string(dh[:headwidth])   end
+			hh = ha * '/' * hl * '/' * hw
+		elseif (isa(val, Tuple) && length(val) == 3)  hh = arg2str(val)
+		elseif (isa(val, String))                     hh = val		# No checking
+		end
+		cmd *= hh
+	end
+	return cmd
+end
+
 # -----------------------------------
 function helper_vec_loc(d, symb, cmd)
 	# Helper function to the 'begin', 'middle', 'end' vector attrib function
-	if     (d[symb] == "line"       || d[symb] == :line)	cmd *= "t"
-	elseif (d[symb] == "arrow"      || d[symb] == :arrow)	cmd *= "a"
-	elseif (d[symb] == "circle"     || d[symb] == :circle)	cmd *= "c"
-	elseif (d[symb] == "tail"       || d[symb] == :tail)	cmd *= "i"
-	elseif (d[symb] == "open_arrow" || d[symb] == :open_arrow)	cmd *= "A"
-	elseif (d[symb] == "open_tail"  || d[symb] == :open_tail)	cmd *= "I"
-	elseif (d[symb] == "left_side"  || d[symb] == :left_side)	cmd *= "l"
-	elseif (d[symb] == "right_side" || d[symb] == :right_side)	cmd *= "r"
+	t = string(d[symb])
+	if     (t == "line"      )	cmd *= "t"
+	elseif (t == "arrow"     )	cmd *= "a"
+	elseif (t == "circle"    )	cmd *= "c"
+	elseif (t == "tail"      )	cmd *= "i"
+	elseif (t == "open_arrow")	cmd *= "A"
+	elseif (t == "open_tail" )	cmd *= "I"
+	elseif (t == "left_side" )	cmd *= "l"
+	elseif (t == "right_side")	cmd *= "r"
 	end
 	return cmd
 end
@@ -1643,11 +1678,7 @@ end
 decorated(nt::NamedTuple) = decorated(;nt...)
 function decorated(;kwargs...)
 	d = KW(kwargs)
-
 	cmd, optD = helper_decorated(d)
-	if (cmd == "" && optD == "")
-		error("DECORATED: missing controlling algorithm to place the elements (dist, n_symbols, etc).")
-	end
 
 	if (haskey(d, :dec2))				# -S~ mode (decorated, with symbols, lines).
 		cmd *= ":"
@@ -1698,9 +1729,7 @@ function decorated(;kwargs...)
 end
 
 # ---------------------------------------------------------
-function helper_decorated(nt::NamedTuple, compose=false)
-	helper_decorated(nt2dict(nt), compose)
-end
+helper_decorated(nt::NamedTuple, compose=false) = helper_decorated(nt2dict(nt), compose)
 function helper_decorated(d::Dict, compose=false)
 	# Helper function to deal with the gap and symbol size parameters.
 	# At same time it's also what we need to call to build up the grdcontour -G option.
@@ -1741,10 +1770,8 @@ function helper_decorated(d::Dict, compose=false)
 			end
 		end
 	end
-	if (cmd == "")
-		if ((val = find_in_dict(d, [:n_labels :n_symbols])[1]) !== nothing)
-			optD = string("n", val);
-		end
+	if (cmd == "" && optD == "")
+		optD = ((val = find_in_dict(d, [:n_labels :n_symbols])[1]) !== nothing) ? string("n",val) : "n1"
 	end
 	if (cmd == "")
 		if ((val = find_in_dict(d, [:N_labels :N_symbols])[1]) !== nothing)
