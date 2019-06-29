@@ -486,7 +486,7 @@ end
 function helper_arrows(d::Dict, del::Bool=false)
 	# Helper function to set the vector head attributes
 	cmd = ""
-	val, symb = find_in_dict(d, [:arrow :vector :vecmap :geovec :geovector])
+	val, symb = find_in_dict(d, [:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector])
 	if (val !== nothing)
 		code = 'v'
 		if (symb == :geovec || symb == :geovector)
@@ -499,6 +499,7 @@ function helper_arrows(d::Dict, del::Bool=false)
 			else                   cmd = val		# The GMT string already had vector flag char
 			end
 		elseif (isa(val, Number))  cmd = code * "$val"
+		elseif (symb == :arrow4 || symb == :vector4)  cmd = code * vector4_attrib(val)
 		else                       cmd = code * vector_attrib(val)
 		end
 		if (del)  delete!(d, symb)  end

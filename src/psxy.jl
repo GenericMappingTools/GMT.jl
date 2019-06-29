@@ -56,19 +56,14 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	if (opt_F != "")  cmd *= " -F" * opt_F  end
 
 	# Error Bars?
-	if ((val = find_in_dict(d, [:E :error :error_bars])[1]) !== nothing)
-#=
-		n_rows, n_cols = size(arg1)
-		arg1 = reshape(arg1, :)				# Crazzy shit to allow increasing the arg1 matrix
-		cmd = add_opt(cmd, 'E', d, [:E :error :error_bars],
-		              (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl",
-		               csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, arg1)
-		arg1 = reshape(arg1, n_rows, :)
-=#
-		cmd, arg1 = add_opt(add_opt, (cmd, 'E', d, [:E :error :error_bars]),
+	got_Ebars = false
+	val, symb = find_in_dict(d, [:E :error :error_bars :error_bars])
+	if (val !== nothing)
+		cmd, arg1 = add_opt(add_opt, (cmd, 'E', d, [symb]),
 					        (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl",
 		                     csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)),
-					        false, arg1)
+							false, arg1)
+		got_Ebars = true
 	end
 
 	# Look for color request. Do it after error bars because they may add a column
@@ -77,7 +72,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	#cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, nothing, true, true, "", true)
 
 	# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
-	cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
+	cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, arg1, arg2)
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :MarkerFaceColor :mc], 'G')	# Filling of symbols
@@ -134,6 +129,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	if (opt_S != "")
 		if ((val = find_in_dict(d, [:markerline :MarkerLine :ml])[1]) !== nothing)
 			if (isa(val, Tuple))  opt_ML = " -W" * parse_pen(val) # This can hold the pen, not extended atts
+			elseif (isa(val, NamedTuple))  opt_ML = add_opt_pen(nt2dict(val), [:pen], "W")
 			else                  opt_ML = " -W" * arg2str(val)
 			end
 			if (opt_Wmarker != "")
@@ -200,8 +196,9 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
+function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, arg1, arg2)
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
+	# N_ARGS will be == n_prev+1 when a -Ccpt was used. Otherwise they are equal.
 
 	if (arg1 === nothing || isa(arg1, GMT.GMTcpt))  return cmd, arg1, arg2, N_args, false  end		# Play safe
 
@@ -217,7 +214,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 
 	warn1 = string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it.")
 	warn2 = "Plotting with color table requires adding one more column to the dataset but your -i
-	option didn't do it, so you won't get waht you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots"
+	option didn't do it, so you won't get what you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots"
 
 	if (n_col <= 2+is3D)
 		if (mz !== nothing)
@@ -240,7 +237,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, arg1, arg2)
 			elseif (isa(arg1,GMTdataset))  arg1.data = hcat(arg1.data[:,1:2+is3D], mz[:], arg1.data[:,3+is3D:end])
 			else                           arg1[1].data = hcat(arg1[1].data[:,1:2+is3D], mz[:], arg1[1].data[:,3+is3D:end])
 			end
-		else
+		elseif (!got_Ebars)		# The Error bars case is very multi. Don't try to guess then.
 			if (opt_i == "")  cmd = @sprintf("%s -i0-%d,%d,%d-%d", cmd, 1+is3D, 1+is3D, 2+is3D, n_col-1)
 			else              @warn(warn2);		@goto noway 
 			end
@@ -303,22 +300,22 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 				elseif (o == "r" || startswith(o, "rec"))  opt = "r";  N = 2
 				elseif (o == "V" || startswith(o, "Vec"))  opt = "V";  N = 2
 				elseif (o == "v" || startswith(o, "vec"))  opt = "v";  N = 2
-				elseif (o == "w" || o == "pie" || o == "web")  opt = "w";  N = 2
-				elseif (o == "W" || o == "Pie" || o == "Web")  opt = "W";  N = 2
+				elseif (o == "w" || o == "pie" || o == "web" || o == "wedge")  opt = "w";  N = 2
+				elseif (o == "W" || o == "Pie" || o == "Web" || o == "Wedge")  opt = "W";  N = 2
 				end
 				if (N > 0)  marca, arg1, msg = helper_markers(opt, t[2], arg1, N, cst)  end
 				if (msg != "")  error(msg)  end
 				if (length(t) == 3 && isa(t[3], NamedTuple))
 					if (marca == "w" || marca == "W")	# Ex (spiderweb): marker=(:pie, [...], (inner=1,)) 
-						marca *= add_opt(t[3], (inner="/", arc="+a", radial="+r", pen=("+p", add_opt_pen)) )
+						marca *= add_opt(t[3], (inner="/", arc="+a", radial="+r", size=("", arg2str, 1), pen=("+p", add_opt_pen)) )
 					elseif (marca == "m" || marca == "M")
 						marca *= vector_attrib(t[3])
 					end
 				end
 			elseif (isa(t, NamedTuple))		# e.g. marker=(pie=true, inner=1, ...)
 				key = keys(t)[1];	opt = ""
-				if     (key == :w || key == :pie || key == :web)  opt = "w"
-				elseif (key == :W || key == :Pie || key == :Web)  opt = "W"
+				if     (key == :w || key == :pie || key == :web || key == :wedge)  opt = "w"
+				elseif (key == :W || key == :Pie || key == :Web || key == :Wedge)  opt = "W"
 				elseif (key == :b || key == :bar)     opt = "b"
 				elseif (key == :B || key == :HBar)    opt = "B"
 				elseif (key == :l || key == :letter)  opt = "l"
