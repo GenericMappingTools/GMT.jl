@@ -96,7 +96,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
 	maybe_more = false				# If latter set to true, search for lc & lc pen settings
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0")
-	cmd = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :p :t :params], first)
+	cmd = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
 	cmd = auto_JZ(cmd)		# Add -JZ if perspective for the case -R.../z_min/z_max
 	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution], [:M :dump]])
 	#cmd = parse_TdTmL(d, cmd)

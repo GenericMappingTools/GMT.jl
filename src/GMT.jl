@@ -21,6 +21,8 @@ global grd_mem_layout = ""			# "BRP" is the default for GMT PS images.
 global current_cpt  = nothing		# To store the current palette
 global current_view = nothing		# To store the current viewpoint (-p)
 global multi_col    = false			# To allow plottig multiple columns at once
+global modern       = false			# To know if we are in modern mode
+global splot        = false			# To know if we are in subplot mode
 const FMT = "ps"
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
@@ -29,8 +31,8 @@ const def_fig_axes3 = " -Baf -Bza -BWSenZ"  #		"" but for 3D views
 export
 	GMTver, FMT, gmt,
 	arrows, arrows!, bar, bar!, bar3, bar3!, lines, lines!, legend, legend!,
-	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!, contour, 
-	contour!, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
+	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
+	contour, contour!, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
 	gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwhich, 
 	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft,
 	grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdlandmask, grdpaste, grdproject,
@@ -41,8 +43,8 @@ export
 	pshistogram, pshistogram!, psimage, psimage!, psmask, psmask!, psrose, psrose!, psscale, psscale!, 
 	pssolar, pssolar!, psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, 
 	psxyz!, regress, rose, rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d,
-	sphdistance, sphinterpolate, sphtriangulate,
-	surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
+	sphdistance, sphinterpolate, sphtriangulate, surface, ternary, ternary!,
+	text, text!, text_record, trend1d, trend2d, triangulate, splitxyz, subplot,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd,
 	linspace, logspace, contains, fields, tic, toc
 
@@ -120,6 +122,7 @@ include("sphinterpolate.jl")
 include("sphtriangulate.jl")
 include("splitxyz.jl")
 include("surface.jl")
+include("subplot.jl")
 include("triangulate.jl")
 include("trend1d.jl")
 include("trend2d.jl")

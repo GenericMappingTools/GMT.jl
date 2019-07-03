@@ -87,7 +87,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:e :f :p :t :yx :JZ :UVXY :params], first)
+	cmd = parse_common_opts(d, cmd, [:c :e :f :p :t :yx :JZ :UVXY :params], first)
 	cmd = auto_JZ(cmd)		# Add -JZ if perspective for the case -R.../z_min/z_max
 	cmd = parse_these_opts(cmd, d, [[:A :azimuths], [:L :list], [:M :paragraph],
 	                 [:N :noclip :no_clip], [:Q :change_case], [:T :text_box], [:Z :threeD]])
