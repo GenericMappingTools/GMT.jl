@@ -39,7 +39,6 @@ Parameters
     Set a fixed azimuth projection for wiggles [Default uses track azimuth, but see -A].
     [`-I`](http://gmt.soest.hawaii.edu/doc/latest/wiggle.html#i)
 - $(GMT.opt_J)
-- $(GMT.opt_Jz)
 - $(GMT.opt_P)
 - **T** : **track** : -- Number or Str or Tuple or [] --
 
@@ -71,7 +70,7 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
-	cmd = parse_common_opts(d, cmd, [:e :f :g :p :t :yx :F :JZ :UVXY :params], first)
+	cmd = parse_common_opts(d, cmd, [:c :e :f :g :p :t :yx :F :UVXY :params], first)
 	cmd = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided

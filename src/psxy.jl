@@ -41,6 +41,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :noclip :no_clip]])
 	if (is_ternary)  cmd = add_opt(cmd, 'M', d, [:M :no_plot])  end
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
+	cmd, opt_c = parse_c(cmd, d)	# Need opt_c because we may need to remove it from double calls
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
 	if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
@@ -161,12 +162,10 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			if (opt_Wmarker != "")  opt_Wmarker = " -W" * opt_Wmarker  end		# Set Symbol edge color 
 			cmd1 = cmd * opt_W * opt_UVXY
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
+			if (opt_c != "")  cmd2 = replace(cmd2, opt_c => "")  end			# Not in scond call (subplots)
 			if (opt_ML != "")  cmd1 = cmd1 * opt_ML  end	# If we have a symbol outline pen
 			cmd = [finish_PS(d, cmd1, output, true, O); finish_PS(d, cmd2, output, K, true)]
 		end
-
-	#elseif (opt_S != "" && opt_ML != "")					# We have a symbol outline pen
-		#cmd = finish_PS(d, cmd * opt_ML * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
 
 	else
 		cmd = finish_PS(d, cmd * opt_UVXY, output, K, O)

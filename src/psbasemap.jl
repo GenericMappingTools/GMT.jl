@@ -55,7 +55,7 @@ function basemap(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :bo :f :p :t :params], first)
+	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :bo :c :f :p :t :params], first)
     cmd = parse_these_opts(cmd, d, [[:A :polygon]])
     #-D[unit]xmin/xmax/ymin/ymax[r][+sfile][+t] | -D[g|j|J|n|x]refpoint+wwidth[/height][+jjustify][+odx[/dy]][+sfile][+t]
 	#cmd = parse_TdTmL(d, cmd)
@@ -86,7 +86,7 @@ function parse_type_anchor(d::Dict, cmd::String, symbs)
     if (isa(symbs, Array{Symbol,2}))  symbs = [symbs]  end      # So that we can always do a loop
 	for k = 1:length(symbs)
 		opt = add_opt("", "", d, symbs[k],
-			(map=("g", nothing, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), annot="+t", dec="+d", labels="+l", label="+l", length="+w", width="+w", size="+w", align="+a1", justify="+j", fancy="+f", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n", offset="+o", rose_primary=("+i", add_opt_pen), rose_secondary=("+p", add_opt_pen), save="+s", scale_at_lat="+c", spacing="+l", translate="_+t", triangles="+e", units="_+u", vertical="_+v"))
+			(map=("g", nothing, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), annot="+t", dec="+d", labels="+l", label="+l", length="+w", width="+w", size="+w", align="+a1", justify="+j", fancy="+f", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n", offset=("+o", arg2str), rose_primary=("+i", add_opt_pen), rose_secondary=("+p", add_opt_pen), save="+s", scale_at_lat="+c", spacing="+l", translate="_+t", triangles="+e", units="_+u", vertical="_+v"))
 		if (opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
 		#if (opt != "" && !occursin(r"[Jjgnx]", opt[1]))
 			if (symbs[k][2] == :pos || symbs[k][2] == :position)  opt = 'J' * opt   # Colorbar default is outside

@@ -188,9 +188,9 @@ if (got_it)					# Otherwise go straight to end
 	GMT.parse_proj((name="blabla",center=(0,0)))
 
 	@test GMT.parse_j("", Dict(:spheric_dist => "f"))[1] == " -jf"
+
 	# ---------------------------------------------------------------------------------------------------
 
-	if (GMTver >= 6)  gmt("begin"); gmt("end")  end
 	gmt("psxy -");
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
 	@assert(r[1].data == [5.0 5 5 5 5 5])
@@ -768,8 +768,8 @@ if (got_it)					# Otherwise go straight to end
 	# PSLEGEND
 	T = text_record(["P", "T d = [0 0; 1 1; 2 1; 3 0.5; 2 0.25]"]);
 	legend(T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", F="+p+ggray")
-	legend!(T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", Vd=2)
-	legend!("", T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", Vd=2)
+	legend!(T, R="-3/3/-3/3", J=:X12, D="g-1.8/2.6+w12c+jTL", Vd=2)
+	legend!("", T, R="-3/3/-3/3", J=:X12, D="g-1.8/2.6+w12c+jTL", Vd=2)
 
 	# PSROSE
 	data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3;; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
@@ -840,6 +840,29 @@ if (got_it)					# Otherwise go straight to end
 	# SPHDISTANCE  (would fail with: Could not obtain node-information from the segment headers)
 	G = sphdistance(R="0/10/0/10", I=0.1, Q=D, L=:k, Vd=2);	# But works with data from sph_3.sh test
 	@test sphdistance(nothing, R="0/10/0/10", I=0.1, Q="D", L=:k, Vd=2) == "sphdistance  -I0.1 -R0/10/0/10 -Lk -QD"
+
+	# SUBPLOT
+	if (GMTver >= 6)
+		gmt("begin"); gmt("end")
+		@test GMT.helper_sub_F("1/2") == "1/2"
+		#@test GMT.helper_sub_F( ((1,2),(3,4)) ) == "1,2/3,4"
+		#@test GMT.helper_sub_F( ((1,2),3) ) == "1,2/3"
+		#@test GMT.helper_sub_F((size=(1,2), frac=((2,3),(3,4,5))) ) == "1/2+f2,3/3,4,5"
+		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), Vd=2), "-F1/2")
+		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=("1i",2), Vd=2), "-F1i/2")
+		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), Vd=2), "-F1/2+f2,3/3,4,5")
+		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(width=1,height=5,fwidth=(0.5,1),fheight=(10,) ), Vd=2), "-F1/5+f0.5,1/10")
+		@test GMT.helper_sub_F((width=1,)) == "1/0"
+		#@test GMT.helper_sub_F((width=1,height=5)) == "1/5"
+		#@test GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1),fheight=(10,))) == "1/5+f0.5,1/10"
+		@test_throws ErrorException("SUBPLOT: when using 'fwidth' must also set 'fheight'") GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1)))
+		@test_throws ErrorException("SUBPLOT: 'width' is a mandatory parameter") GMT.helper_sub_F((height=5,))
+		@test_throws ErrorException("'frac' option must be a tuple(tuple, tuple)") GMT.helper_sub_F((size=(1,2), frac=((2,3))) )
+		@test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
+		@test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=2)
+		@test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=2)
+		subplot(grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");plot([0 0; 1 1]);subplot(:end)
+	end
 
 	# SURFACE
 	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);

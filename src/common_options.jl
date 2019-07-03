@@ -524,6 +524,16 @@ function parse_bo(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_c(cmd::String, d::Dict)
+	opt_val = ""
+	if ((val = find_in_dict(d, [:c :panel])[1]) !== nothing)
+		if (isa(val, Tuple) || isa(val, Array{<:Number}))  opt_val = arg2str(val, ',')  end
+		cmd *= " -c" * opt_val
+	end
+	return cmd, opt_val
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_d(cmd::String, d::Dict)
 	# Parse the global -di option. Return CMD same as input if no -di option in args
 	parse_helper(cmd, d, [:d :nodata], " -d")
@@ -617,8 +627,7 @@ function parse_helper(cmd::String, d::Dict, symbs, opt::String)
 	# Helper function to the parse_?() global options.
 	opt_val = ""
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		opt_val = arg2str(val)
-		if (opt_val != "none")  opt_val = opt * opt_val  end
+		opt_val = opt * arg2str(val)
 		cmd *= opt_val
 	end
 	return cmd, opt_val
@@ -631,6 +640,7 @@ function parse_common_opts(d, cmd, opts, first=true)
 	for opt in opts
 		if     (opt == :a)  cmd, = parse_a(cmd, d)
 		elseif (opt == :b)  cmd, = parse_b(cmd, d)
+		elseif (opt == :c)  cmd, = parse_c(cmd, d)
 		elseif (opt == :bi) cmd, = parse_bi(cmd, d)
 		elseif (opt == :bo) cmd, = parse_bo(cmd, d)
 		elseif (opt == :d)  cmd, = parse_d(cmd, d)
@@ -866,26 +876,27 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function arg2str(d::Dict, symbs)
-	# Version allow calls from add_opt()
+	# Version that allow calls from add_opt()
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)  arg2str(val)  end
 end
 
 # ---------------------------------------------------------------------------------------------------
-function arg2str(arg)
+function arg2str(arg, sep='/')
 	# Convert an empty, a numeric or string ARG into a string ... if it's not one to start with
 	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
+	# SEP is the char separator used when ARG is a tuple ot array of numbers
 	if (isa(arg, AbstractString) || isa(arg, Symbol))
 		out = string(arg)
-	elseif (isempty_(arg) || (isa(arg, Bool) && arg))
+	elseif ((isa(arg, Bool) && arg) || isempty_(arg))
 		out = ""
 	elseif (isa(arg, Number))		# Have to do it after the Bool test above because Bool is a Number too
 		out = @sprintf("%.15g", arg)
 	elseif (isa(arg, Array{<:Number}) || (isa(arg, Tuple) && !isa(arg[1], String)) )
 		#out = join([@sprintf("%.15g/",x) for x in arg])
-		out = join([string(x,'/') for x in arg])
-		out = rstrip(out, '/')		# Remove last '/'
+		out = join([string(x, sep) for x in arg])
+		out = rstrip(out, sep)		# Remove last '/'
 	elseif (isa(arg, Tuple) && isa(arg[1], String))		# Maybe better than above but misses nice %.xxg
-		out = join(arg,'/')
+		out = join(arg, sep)
 	else
 		error(@sprintf("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was %s", typeof(arg)))
 	end
@@ -912,11 +923,12 @@ end
 # ---------------------------------------------------------------------------------------------------
 function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
+	global modern
+	if (modern)  return cmd  end	# In Modern mode this fun does not play
 	if (!O && !haskey(d, :P) && !haskey(d, :portrait))  cmd *= " -P"  end
 
 	if (K && !O)              opt = " -K"
 	elseif (K && O)           opt = " -K -O"
-	#elseif (!K && O)          opt = " -O"
 	else                      opt = ""
 	end
 
@@ -2063,7 +2075,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
-	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=:cmd cause this return
+	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
 	isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
 end
