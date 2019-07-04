@@ -101,7 +101,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		end
 		IamModern = true;		IamSubplot = true
 	elseif (do_set)
-		if (!IamSubplot)  gmt("end");	error("Cannot call subplot(set, ...) before setting dimensions")  end
+		if (!IamSubplot)  error("Cannot call subplot(set, ...) before setting dimensions")  end
 		lix, pane = parse_c(cmd, d)
 		cmd = pane * cmd				# Here we don't wanr the "-c" part
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
