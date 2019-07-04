@@ -845,19 +845,16 @@ if (got_it)					# Otherwise go straight to end
 	if (GMTver >= 6)
 		gmt("begin"); gmt("end")
 		@test GMT.helper_sub_F("1/2") == "1/2"
-		#@test GMT.helper_sub_F( ((1,2),(3,4)) ) == "1,2/3,4"
-		#@test GMT.helper_sub_F( ((1,2),3) ) == "1,2/3"
 		#@test GMT.helper_sub_F((size=(1,2), frac=((2,3),(3,4,5))) ) == "1/2+f2,3/3,4,5"
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), Vd=2), "-F1/2")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=("1i",2), Vd=2), "-F1i/2")
-		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), Vd=2), "-F1/2+f2,3/3,4,5")
-		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(width=1,height=5,fwidth=(0.5,1),fheight=(10,) ), Vd=2), "-F1/5+f0.5,1/10")
+		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), name="lixo.ps", Vd=2), "-F1/2+f2,3/3,4,5")
+		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(width=1,height=5,fwidth=(0.5,1),fheight=(10,), name="lixo"), Vd=2), "-F1/5+f0.5,1/10")
 		@test GMT.helper_sub_F((width=1,)) == "1/0"
-		#@test GMT.helper_sub_F((width=1,height=5)) == "1/5"
 		#@test GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1),fheight=(10,))) == "1/5+f0.5,1/10"
 		@test_throws ErrorException("SUBPLOT: when using 'fwidth' must also set 'fheight'") GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1)))
 		@test_throws ErrorException("SUBPLOT: 'width' is a mandatory parameter") GMT.helper_sub_F((height=5,))
-		@test_throws ErrorException("'frac' option must be a tuple(tuple, tuple)") GMT.helper_sub_F((size=(1,2), frac=((2,3))) )
+		@test_throws ErrorException("'frac' option must be a tuple(tuple, tuple)") subplot(grid=(1,1),  F=(size=(1,2), frac=((2,3))), Vd=2)
 		@test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
 		@test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=2)
 		@test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=2)

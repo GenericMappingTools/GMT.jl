@@ -96,7 +96,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "histogram", O, " -JX12c/12c")
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :e :p :t :yx :params], first)
+	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :yx :params], first)
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:D :annot :annotate], [:F :center],
 				[:Q :cumulative], [:S :stairs]])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
