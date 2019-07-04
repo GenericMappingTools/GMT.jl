@@ -64,7 +64,7 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, "")
-	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :p :t], first)
+	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)
 	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
 	                                [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
 	#cmd = add_opt(cmd, "D", d, [:D :pos :position],

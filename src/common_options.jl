@@ -140,9 +140,12 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
 	# Default to 12c if no size is provided.
 	# If MAP == false, do not try to append a fig size
+	global IamSubplot
 	opt_J = "";		mnemo = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
 		opt_J, mnemo = build_opt_J(val)
+	elseif (IamSubplot)			# Subplots do not rely is the classic default mechanism
+		return cmd, ""
 	end
 	if (!map && opt_J != "")
 		return cmd * opt_J, opt_J
@@ -359,6 +362,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
+	global IamSubplot
+	def_fig_axes_ = (IamSubplot) ? "" : def_fig_axes	# def_fig_axes is a global const
+
 	# These four are aliases
 	extra_parse = true
 	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
@@ -381,7 +387,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\U00AF');   end
 	if (t != "")
 		if (opt_B == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis])[1] === nothing))
-			opt_B = def_fig_axes
+			opt_B = def_fig_axes_
 		else
 			#if (opt_B == def_fig_axes)  opt_B = ""  end		# opt_B = def_fig_axes from argin but no good here
 			if !( ((ind = findlast("-B",opt_B)) !== nothing || (ind = findlast(" ",opt_B)) !== nothing) &&
@@ -432,27 +438,31 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 		end
 	end
 
-	if (opt_B != def_fig_axes)  opt_B *= this_opt_B
-	elseif (this_opt_B != "")   opt_B  = this_opt_B
+	if (opt_B != def_fig_axes_)  opt_B *= this_opt_B
+	elseif (this_opt_B != "")    opt_B  = this_opt_B
 	end
 
 	return cmd * opt_B, opt_B
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_BJR(d::Dict, cmd::String, caller, O, default="", del=false)
+function parse_BJR(d::Dict, cmd::String, caller, O, defaultJ="", del=false)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(cmd, d, O, del)
-	cmd, opt_J = parse_J(cmd, d, default, true, O, del)
+	cmd, opt_J = parse_J(cmd, d, defaultJ, true, O, del)
+
+	global IamSubplot
+	def_fig_axes_ = (IamSubplot) ? "" : def_fig_axes	# def_fig_axes is a global const
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (caller == "plot3d" || caller == "bar3" || caller == "scatter3")
-			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes3), del)
+			def_fig_axes3_ = (IamSubplot) ? "" : def_fig_axes3
+			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes3_), del)
 		else
-			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes), del)	# For overlays, default is no axes
+			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes_), del)	# For overlays, default is no axes
 		end
 	else
-		cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes), del)
+		cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes_), del)
 	end
 	return cmd, opt_B, opt_J, opt_R
 end
@@ -923,8 +933,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
-	global modern
-	if (modern)  return cmd  end	# In Modern mode this fun does not play
+	global IamModern
+	if (IamModern)  return cmd  end	# In Modern mode this fun does not play
 	if (!O && !haskey(d, :P) && !haskey(d, :portrait))  cmd *= " -P"  end
 
 	if (K && !O)              opt = " -K"

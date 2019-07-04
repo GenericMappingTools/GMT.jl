@@ -1,5 +1,5 @@
 """
-	subplot(fim=nothing; stop=false, kwargs...)
+	subplot(fim=nothing; kwargs...)
 
 Manage figure subplot configuration and selection.
 
@@ -41,7 +41,7 @@ Parameters
 """
 function subplot(fim=nothing; stop=false, kwargs...)
 
-	global modern, splot
+	global IamModern, IamSubplot
  
 	d = KW(kwargs)
 	# In case :title exists we must use and delete it to avoid double parsing
@@ -50,7 +50,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:params], true)
 	cmd = parse_these_opts(cmd, d, [[:M :margins]])
 	cmd = add_opt(cmd, "A", d, [:A :autolabel :fixedlabel],
-                  (Anchor=("+J", arg2str), anchor=("+j", arg2str), clerance=("+c", arg2str), justify="+j", fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), offset=("+o", arg2str), roman="_+r", Roman="_+R", vertical="_+v"))
+                  (Anchor=("+J", arg2str), anchor=("+j", arg2str), label="", clearance=("+c", arg2str), justify="+j", fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), offset=("+o", arg2str), roman="_+r", Roman="_+R", vertical="_+v"))
 	cmd = add_opt(cmd, "SC", d, [:SC :col_axes],
 	              (top=("t", nothing, 1), bott=("b", nothing, 1), bottom=("b", nothing, 1), label="+l"))
 	cmd = add_opt(cmd, "SR", d, [:SR :row_axes],
@@ -63,7 +63,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			cmd *= " -F" * helper_sub_F(val)		# VAL = (width=x, height=x, fwidth=(...), fheight=(...))
 		else
 			cmd = add_opt(cmd, "F", d, [:F :dims :dimensions :size :sizes],
-			              (panels=("s", nothing, 1), size=("", helper_sub_F), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F)))
+			              (panels=("s", nothing, 1), size=("", helper_sub_F), sizes=("", helper_sub_F), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F)))
 		end
 	end
 
@@ -71,19 +71,20 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	if (fim !== nothing)
 		t = lowercase(string(fim))
 		if     (t == "end" || t == "stop")  stop = true
-		elseif (t == "set")   do_set = true
 		elseif (t == "show")  stop = true;  do_show = true
+		elseif (t == "set")   do_set = true
 		end
 	end
 	# ------------------------------ End parsing inputs --------------------------------
 
-	start = !stop
-	if (start && !modern && !do_set)
-		cmd = helper_sub_grid(d, cmd)
+	if (!stop && !do_set)
+		if (!haskey(d, :grid))  error("SUBPLOT: 'grid' keyword is mandatory")  end
+		cmd = arg2str(d[:grid], 'x') * " " * cmd
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
+
 		fname = "GMTplot"
 		if ((val = find_in_dict(d, [:name :savefig])[1]) !== nothing)
-			fname, ext = splitext(val)
+			fname, ext = splitext(string(val))
 			if (ext != "")
 				fname *= " " * ext[2:end]
 			else
@@ -98,10 +99,11 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		catch
 			gmt("end");		return nothing
 		end
-		modern = true;		splot = true
+		IamModern = true;		IamSubplot = true
 	elseif (do_set)
-		if (!splot)  error("Cannot call subplot(set, ...) before setting dimensions")  end
-		cmd = helper_sub_grid(d, cmd)
+		if (!IamSubplot)  gmt("end");	error("Cannot call subplot(set, ...) before setting dimensions")  end
+		lix, pane = parse_c(cmd, d)
+		cmd = pane * cmd				# Here we don't wanr the "-c" part
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 		gmt("subplot set " * cmd)
 	else
@@ -109,17 +111,9 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		try
 			gmt("subplot end");		gmt("end" * show);		catch
 		end
-		modern = false;		splot = false
+		IamModern = false;		IamSubplot = false
 	end
 	return nothing
-end
-
-# --------------------------------------------------------------------------
-function helper_sub_grid(d::Dict, cmd::String)
-	# Get & check the grid argin
-	if (haskey(d, :grid))  cmd = arg2str(d[:grid], 'x') * " " * cmd
-	else                   error("SUBPLOT: 'grid' keyword is mandatory")
-	end
 end
 
 # --------------------------------------------------------------------------
@@ -130,26 +124,16 @@ function helper_sub_F(arg, dumb=nothing)
 	out = ""
 	if (isa(arg, String))
 		out = arg2str(arg)
-	elseif ((isa(arg, Tuple) || isa(arg, Array{<:Number})) && length(arg) == 2)
-		# Don't know if this form is now ever used
-		if (!isa(arg[1], Tuple) && !isa(arg[2], Tuple))
-			out = arg2str(arg)		# e.g. dims=(1,2) || dims=("2i",4)
-		#else
-			#if (isa(arg[1], Tuple))  t1 = arg2str(arg[1], ',')	# ((1,2),(3,4))
-			#else                     t1 = string(arg[1])
-			#end
-			#if (isa(arg[2], Tuple))  t2 = arg2str(arg[2], ',')
-			#else                     t2 = string(arg[2])		# ((1,2),3)
-			#end
-			#out = t1 * '/' * t2
-		end
 	elseif (isa(arg, NamedTuple) || isa(arg, Dict))
 		d = (isa(arg, NamedTuple)) ? nt2dict(arg) : arg
-		if (haskey(d, :size) || haskey(d, :frac))		# The (e.g.) dims=(size=(1,2), frac=((2,3),(3,4,5)))
-			if (haskey(d, :size))  out = arg2str(d[:size])  end		# or the decomposition of above in 2 calls
-			if ((f = find_in_dict(d, [:frac :fractions])[1]) !== nothing)
-				if (!isa(f, Tuple{Tuple, Tuple}))  error("'frac' option must be a tuple(tuple, tuple)")  end
-				out *= arg2str(f[1], ',') * '/' * arg2str(f[2], ',')
+		val, symb = find_in_dict(d, [:size :sizes :frac :fractions])	# ex: dims=(size=(1,2), frac=((2,3),(3,4,5)))
+		if (val !== nothing)
+			if (isa(val, Tuple{Tuple, Tuple}))		# ex: dims=(panels=true, sizes=((2,4),(2.5,5,1.25)))
+				out *= arg2str(val[1], ',') * '/' * arg2str(val[2], ',')
+			else
+				if (symb == :size || symb == :sizes)  out = arg2str(val)
+				else                                  error("'frac' option must be a tuple(tuple, tuple)")
+				end
 			end
 		else
 			if (!haskey(d, :width))  error("SUBPLOT: 'width' is a mandatory parameter")  end
