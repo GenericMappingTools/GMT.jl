@@ -82,24 +82,19 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		cmd = arg2str(d[:grid], 'x') * " " * cmd
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 
-		fname = "GMTplot"
-		if ((val = find_in_dict(d, [:name :savefig])[1]) !== nothing)
-			fname, ext = splitext(string(val))
-			if (ext != "")
-				fname *= " " * ext[2:end]
-			else
-				if (haskey(d, :fmt))  fname *= " " * string(d[:fmt])
-				else                  fname *= " " * FMT		# Then use default format
-				end
+		if (!IamModern)			# If we are not in modern mode, issue a gmt("begin") first
+			fname = ""			# Default name (GMTplot.ps) is set in gmt_main()
+			if ((val = find_in_dict(d, [:name :savefig])[1]) !== nothing)
+				fname = get_format(string(val), nothing, d)		# Get the fig name and format.
 			end
+			gmt("begin " * fname)
 		end
-		gmt("begin " * fname)
 		try
 			gmt("subplot begin " * cmd);
 		catch
 			gmt("end");		return nothing
 		end
-		IamModern = true;		IamSubplot = true
+		IamSubplot = true
 	elseif (do_set)
 		if (!IamSubplot)  error("Cannot call subplot(set, ...) before setting dimensions")  end
 		lix, pane = parse_c(cmd, d)

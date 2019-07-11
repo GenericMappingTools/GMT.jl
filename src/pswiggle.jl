@@ -69,7 +69,7 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d = KW(kwargs)
 	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:c :e :f :g :p :t :yx :F :UVXY :params], first)
 	cmd = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :scale]])
 
@@ -77,8 +77,8 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 
 	cmd = add_opt(cmd, "D", d, [:D :scale_bar],
-        (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width="+w", justify="+j",
-         label_left="_+al", labels="+l", label="+l", offset="+o"))
+        (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width="+w", justify="+j", label_left="_+al", labels="+l", label="+l", offset="+o"))
+    #cmd = parse_type_anchor(d, cmd, [[:D :scale_bar]])
 	cmd *= opt_pen(d, 'T', [:T :track])
 	cmd *= opt_pen(d, 'W', [:W :pen])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')

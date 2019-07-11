@@ -33,7 +33,7 @@ export
 	arrows, arrows!, bar, bar!, bar3, bar3!, lines, lines!, legend, legend!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
 	contour, contour!, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
-	gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwhich, 
+	gmtbegin, gmtend, gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwhich, 
 	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft,
 	grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdlandmask, grdpaste, grdproject,
 	grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume, greenspline,
@@ -53,6 +53,7 @@ include("libgmt_h.jl")
 include("libgmt.jl")
 include("gmt_main.jl")
 include("common_options.jl")
+include("gmtbegin.jl")
 include("blocks.jl")
 include("filter1d.jl")
 include("fitcircle.jl")

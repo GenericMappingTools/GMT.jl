@@ -110,10 +110,13 @@ function gmt(cmd::String, args...)
 	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
 	g_module, r = strtok(cmd)
 
-	if (g_module == "end")				# Last command of a MODERN session
-		if (isempty(r)) r = "-Vq" end	# Cannot have a no-args for this case otherwise it prints help
-		GMT_Destroy_Session(API)		# Force calling GMT_Create_Session() below. Need this so that
-		API = nothing					# gmt_manage_workflow() knows what to do when ENDing a modern session
+	if (g_module == "begin")		# Use this default fig name instead of "gmtsession"
+		if (r == "")  r = "GMTplot " * FMT  end
+		global IamModern = true
+	elseif (g_module == "end")
+		global IamModern = false
+	elseif (r == "" && n_argin == 0) # Just requesting usage message, add -? to options
+		r = "-?"
 	end
 
 	try
@@ -125,14 +128,13 @@ function gmt(cmd::String, args...)
 		if (API == C_NULL)  error("Failure to create a GMT Session")  end
 	end
 
-	# 2. In case this was a clean up call or a begin/end from the modern mode
 	if (g_module == "destroy")
-		if (GMT_Destroy_Session(API) != 0)  error("GMT: Failure to destroy GMT session") end
-		API = nothing
+		GMT_Destroy_Session(API);	API = nothing
 		return
-	elseif (g_module == "begin" && (r == ""))	# Cannot have a no-args for these cases otherwise it prints help
-		r = "gmtsession"
-	elseif (GMTver >= 6.0)
+	end
+
+	# 2. In case this was a clean up call or a begin/end from the modern mode
+	if (GMTver >= 6.0)
 		gmt_manage_workflow(API, 0, NULL)		# Force going here to see if we are in middle of a MODERN session
 	end
 
@@ -183,7 +185,7 @@ function gmt(cmd::String, args...)
 	end
 
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
-	if (occursin("read", g_module) && !isempty(r) && occursin("-T", r))		# It parses the 'layout' key
+	if (occursin("read", g_module) && (r != "") && occursin("-T", r))		# It parses the 'layout' key
 		if (occursin("-Ti", r))
 			GMT_Set_Default(API, "API_PAD", "0")
 		end
@@ -192,7 +194,6 @@ function gmt(cmd::String, args...)
 
 	# 3. Convert command line arguments to a linked GMT option list
 	LL = NULL
-	if (r == "" && n_argin == 0)  r = "-?"   end	# Just requesting usage message, so add -? to options
 	LL = GMT_Create_Options(API, 0, r)	# It uses also the fact that GMT parses and check options
 
 	# 4. Preprocess to update GMT option lists and return info array X
@@ -276,7 +277,9 @@ function gmt(cmd::String, args...)
 	end
 
 	# 9. Destroy linked option list
-	if (GMT_Destroy_Options(API, pLL) != 0) @warn("GMT Warning: Failure to destroy GMT options") end
+	GMT_Destroy_Options(API, pLL)
+
+	if (g_module == "begin" || g_module == "end")  gmt("destroy")  end		# Because of whitches
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)

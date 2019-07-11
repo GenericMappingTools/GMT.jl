@@ -52,7 +52,8 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	cmd = add_opt(cmd, 'A', d, [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
-	opt_F = add_opt("", "", d, [:F :conn :connection], (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpoint=("r", nothing, 1),  ignore_hdr="_a", single_group="_f", segments="_s", segments_reset="_r", anchor=("", arg2str)))
+	opt_F = add_opt("", "", d, [:F :conn :connection],
+	                (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpoint=("r", nothing, 1),  ignore_hdr="_a", single_group="_f", segments="_s", segments_reset="_r", anchor=("", arg2str)))
 	if (length(opt_F) > 1 && !occursin("/", opt_F))  opt_F = opt_F[1]  end	# Allow con=:net or con=(1,2)
 	if (opt_F != "")  cmd *= " -F" * opt_F  end
 
@@ -61,9 +62,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	val, symb = find_in_dict(d, [:E :error :error_bars :error_bars])
 	if (val !== nothing)
 		cmd, arg1 = add_opt(add_opt, (cmd, 'E', d, [symb]),
-					        (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl",
-		                     csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)),
-							false, arg1)
+					        (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, arg1)
 		got_Ebars = true
 	end
 

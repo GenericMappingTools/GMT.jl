@@ -843,7 +843,6 @@ if (got_it)					# Otherwise go straight to end
 
 	# SUBPLOT
 	if (GMTver >= 6)
-		gmt("begin"); gmt("end")
 		@test GMT.helper_sub_F("1/2") == "1/2"
 		#@test GMT.helper_sub_F((size=(1,2), frac=((2,3),(3,4,5))) ) == "1/2+f2,3/3,4,5"
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), Vd=2), "-F1/2")
@@ -858,7 +857,9 @@ if (got_it)					# Otherwise go straight to end
 		@test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
 		@test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=2)
 		@test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=2)
-		subplot(grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");plot([0 0; 1 1]);subplot(:end)
+		subplot(grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
+		gmtbegin("lixo.ps");  gmtend()
+		gmtbegin();  gmtend()
 	end
 
 	# SURFACE

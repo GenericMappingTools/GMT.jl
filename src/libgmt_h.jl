@@ -189,7 +189,7 @@ const GMT_CPT_TIME       = 8
 
 struct GMT_OPTION			# Structure for a single GMT command option
 	option::UInt8			# 1-char command line -<option> (e.g. D in -D) identifying the option (* if file)
-	arg::Ptr{UInt8}			# If not NULL, contains the argument for this option
+	arg::Cstring			# If not NULL, contains the argument for this option
 	next::Ptr{GMT_OPTION}
 	previous::Ptr{GMT_OPTION}
 end
