@@ -1578,8 +1578,9 @@ D = mat2ds(mat; x=nothing, hdr=nothing, color=nothing)
 	`color` optional array with color names. Its length can be smaller than n_rows, case in which colors will be
 	cycled.
 """
-function mat2ds(mat; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing)
+function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing)
 	
+	if (txt  !== nothing)  return text_record(mat, txt,  hdr)  end
 	if (text !== nothing)  return text_record(mat, text, hdr)  end
 
 	if (x === nothing)

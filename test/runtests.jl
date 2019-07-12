@@ -632,6 +632,7 @@ if (got_it)					# Otherwise go straight to end
 	bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=2)
 	T = mat2ds([1.0 0.446143 0; 2.0 0.581746 0; 3.0 0.268978 0], text=[" "; " "; " "]);
 	bar(T, color=:rainbow, figsize=(14,8), mz=[3 2 1], Vd=2)
+	mat2ds([0 0],["aa"]);
 
 	# BAR3
 	G = gmt("grdmath -R-15/15/-15/15 -I1 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
@@ -841,7 +842,7 @@ if (got_it)					# Otherwise go straight to end
 	G = sphdistance(R="0/10/0/10", I=0.1, Q=D, L=:k, Vd=2);	# But works with data from sph_3.sh test
 	@test sphdistance(nothing, R="0/10/0/10", I=0.1, Q="D", L=:k, Vd=2) == "sphdistance  -I0.1 -R0/10/0/10 -Lk -QD"
 
-	# SUBPLOT
+	# MODERN
 	if (GMTver >= 6)
 		@test GMT.helper_sub_F("1/2") == "1/2"
 		#@test GMT.helper_sub_F((size=(1,2), frac=((2,3),(3,4,5))) ) == "1/2+f2,3/3,4,5"
@@ -857,9 +858,22 @@ if (got_it)					# Otherwise go straight to end
 		@test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
 		@test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=2)
 		@test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=2)
-		subplot(grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
+		subplot(name="lixo", grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
 		gmtbegin("lixo.ps");  gmtend()
+		gmtbegin("lixo", fmt=:ps);  gmtend()
+		gmtbegin("lixo");  gmtend()
 		gmtbegin();  gmtend()
+
+		gmtbegin("inset.ps")
+		basemap(region=(0,40,20,60), proj=:merc, figsize=16, frame=(annot=:afg, fill=:lightgreen))
+		inset(D="jTR+w2.5i+o0.2i", F="+gpink+p0.5p", margins=0.6)
+			basemap(region=:global360, J="A20/20/2i", frame=:afg)
+			text(text_record([1 1],["INSET"]), font=18, region_justify=:TR, D="j-0.15i", noclip=true)
+		inset(:end)
+		text(text_record([0 0],[" "]), text="MAP", font=18, region_justify=:BL, D="j0.2i")
+		gmtend()
+
+		gmtbegin(); gmtfig("lixo.ps");	gmtend()
 	end
 
 	# SURFACE

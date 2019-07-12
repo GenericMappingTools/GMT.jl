@@ -89,11 +89,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			end
 			gmt("begin " * fname)
 		end
-		try
-			gmt("subplot begin " * cmd);
-		catch
-			gmt("end");		return nothing
-		end
+		gmt("subplot begin " * cmd);
 		IamSubplot = true
 	elseif (do_set)
 		if (!IamSubplot)  error("Cannot call subplot(set, ...) before setting dimensions")  end

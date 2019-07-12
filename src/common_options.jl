@@ -18,13 +18,17 @@ end
 
 function parse_R(cmd::String, d::Dict, O=false, del=false)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
+	global IamModern
 	opt_R = ""
 	val, symb = find_in_dict(d, [:R :region :limits])
 	if (val !== nothing)
 		opt_R = build_opt_R(val)
 		if (del) delete!(d, symb) end
+	elseif (IamModern)
+		return cmd, ""
 	end
-	if (isempty(opt_R))		# See if we got the region as tuples of xlim, ylim [zlim]
+
+	if (opt_R == "")		# See if we got the region as tuples of xlim, ylim [zlim]
 		R = "";		c = 0
 		if (haskey(d, :xlim) && isa(d[:xlim], Tuple) && length(d[:xlim]) == 2)
 			R = @sprintf(" -R%.15g/%.15g", d[:xlim][1], d[:xlim][2])
@@ -140,11 +144,11 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
 	# Default to 12c if no size is provided.
 	# If MAP == false, do not try to append a fig size
-	global IamSubplot
+	global IamModern
 	opt_J = "";		mnemo = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
 		opt_J, mnemo = build_opt_J(val)
-	elseif (IamSubplot)			# Subplots do not rely is the classic default mechanism
+	elseif (IamModern)			# Subplots do not rely is the classic default mechanism
 		return cmd, ""
 	end
 	if (!map && opt_J != "")
@@ -362,8 +366,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
-	global IamSubplot
-	def_fig_axes_ = (IamSubplot) ? "" : def_fig_axes	# def_fig_axes is a global const
+	global IamModern
+	def_fig_axes_ = (IamModern) ? "" : def_fig_axes	# def_fig_axes is a global const
 
 	# These four are aliases
 	extra_parse = true
@@ -451,12 +455,12 @@ function parse_BJR(d::Dict, cmd::String, caller, O, defaultJ="", del=false)
 	cmd, opt_R = parse_R(cmd, d, O, del)
 	cmd, opt_J = parse_J(cmd, d, defaultJ, true, O, del)
 
-	global IamSubplot
-	def_fig_axes_ = (IamSubplot) ? "" : def_fig_axes	# def_fig_axes is a global const
+	global IamModern
+	def_fig_axes_ = (IamModern) ? "" : def_fig_axes	# def_fig_axes is a global const
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (caller == "plot3d" || caller == "bar3" || caller == "scatter3")
-			def_fig_axes3_ = (IamSubplot) ? "" : def_fig_axes3
+			def_fig_axes3_ = (IamModern) ? "" : def_fig_axes3
 			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes3_), del)
 		else
 			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes_), del)	# For overlays, default is no axes
@@ -1890,6 +1894,7 @@ end
 function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", is3D=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
+	global IamModern
 	data_kw = nothing
 	if (haskey(d, :data))  data_kw = d[:data]  end
 	if (fname != "")       data_kw = fname     end
@@ -1918,7 +1923,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", is3D=fa
 
 	if (data_kw !== nothing)  arg = data_kw  end		# Finaly move the data into ARG
 
-	if (opt_R == "" || opt_R[1] == '/')
+	if (!IamModern && (opt_R == "" || opt_R[1] == '/'))
 		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h, arg)		# Here we are reading from an original GMTdataset or Array
 		if (opt_R != "" && opt_R[1] == '/')	# Modify what will be reported as a -R string
 			# Example "/-0.1/0.1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
