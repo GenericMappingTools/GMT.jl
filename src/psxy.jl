@@ -338,6 +338,8 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 				if     (t == "-" || t == "x-dash")    marca = "-"
 				elseif (t == "+" || t == "plus")      marca = "+"
 				elseif (t == "a" || t == "*" || t == "star")  marca = "a"
+				elseif (t == "k" || t == "custom")    marca = "k"
+				elseif (t == "x" || t == "cross")     marca = "x"
 				elseif (t[1] == 'c' || t[1] == 'C')   marca = "c"
 				elseif (t == "d" || t == "diamond")   marca = "d"
 				elseif (t == "g" || t == "octagon")   marca = "g"
@@ -349,7 +351,6 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 				elseif (t == "s" || t == "square")    marca = "s"
 				elseif (t == "t" || t == "^" || t == "triangle")  marca = "t"
 				elseif (t == "T" || t == "Triangle")  marca = "T"
-				elseif (t == "x" || t == "cross")     marca = "x"
 				elseif (is3D && (t == "u" || t == "cube"))  marca = "u"
 				elseif (t == "y" || t == "y-dash")    marca = "y"
 				end

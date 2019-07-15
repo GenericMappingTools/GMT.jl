@@ -686,8 +686,8 @@ function parse_common_opts(d, cmd, opts, first=true)
 	end
 	if (opt_p !== nothing)		# Restrict the contents of this block to when -p was used
 		if (opt_p != "")
-			if (opt_p == "none")  current_view = nothing
-			else                  current_view = opt_p
+			if (opt_p == " -pnone")  current_view = nothing;	cmd = cmd[1:end-7];	opt_p = ""
+			else                     current_view = opt_p
 			end
 		elseif (!first && current_view !== nothing)
 			cmd *= current_view
@@ -763,6 +763,7 @@ function parse_params(cmd::String, d::Dict)
 		elseif (isa(val, Tuple))
 			cmd *= " --" * string(val[1]) * "=" * string(val[2])
 		end
+		global usedConfPar = true
 	end
 	return cmd
 end
@@ -2127,6 +2128,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 			out = mv(out, fname, force=true)
 		end
 	elseif (fname_ps != "")
+		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end		# Close the PS file first
 		out = fname_ps
 		if (fname != "")
 			out = mv(out, fname, force=true)
@@ -2177,6 +2179,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
 	global img_mem_layout = add_opt("", "", d, [:layout])
+	global usedConfPar
 
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
@@ -2187,6 +2190,11 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 	end
 
 	digests_legend_bag(d)			# Plot the legend if requested
+
+	if (usedConfPar)				# Hacky shit to force start over when --PAR options were use
+		usedConfPar = false
+		gmt("destroy")
+	end
 
 	fname = ""
 	if (haskey(d, :savefig))		# Also ensure that file has the right extension
