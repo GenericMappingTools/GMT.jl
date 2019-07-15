@@ -23,6 +23,7 @@ global current_view = nothing		# To store the current viewpoint (-p)
 global multi_col    = false			# To allow plottig multiple columns at once
 global IamModern    = false			# To know if we are in modern mode
 global IamSubplot   = false			# To know if we are in subplot mode
+global usedConfPar  = false			# Hacky solution for the session's memory trouble
 const FMT = "ps"
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
