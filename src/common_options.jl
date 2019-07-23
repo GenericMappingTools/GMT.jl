@@ -930,16 +930,25 @@ end
 function finish_PS_nested(d::Dict, cmd::String, output::String, K::Bool, O::Bool, nested_calls)
 	# Finish the PS creating command, but check also if we have any nested module calls like 'coast', 'colorbar', etc
 	if ((cmd2 = add_opt_module(d, nested_calls)) !== nothing)  K = true  end
-	cmd = finish_PS(d, cmd, output, K, O)
 	if (cmd2 !== nothing)  cmd = [cmd; cmd2]  end
 	return cmd, K
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)
+function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
 	global IamModern
-	if (IamModern)  return cmd  end	# In Modern mode this fun does not play
+	if (IamModern)  return cmd  end		# In Modern mode this fun does not play
+	if (isa(cmd, Array{String,1}))		# Need a recursive call here
+		for k = 1:length(cmd)
+			KK = K;		OO = O
+			if (!occursin(" >", cmd[k]))	# Nested calls already have the redirection set
+				if (k > 1)  KK = true;	OO = true  end
+				cmd[k] = finish_PS(d, cmd[k], output, KK, OO)
+			end
+		end
+		return cmd
+	end
 	if (!O && !haskey(d, :P) && !haskey(d, :portrait))  cmd *= " -P"  end
 
 	if (K && !O)              opt = " -K"
@@ -1860,6 +1869,7 @@ end
 function fname_out(d::Dict, first::Bool)
 	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 	EXT = ""
+
 	if (haskey(d, :fmt))  out = string(d[:fmt])
 	else                  out = FMT						# Use the global FMT choice
 	end
@@ -1877,7 +1887,7 @@ function fname_out(d::Dict, first::Bool)
 	if (length(out) <= 3)
 		@static Sys.iswindows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps"
 		ext = lowercase(out)
-		if (ext == "ps")       out = template;  EXT = ext
+		if     (ext == "ps")   out = template;  EXT = ext
 		elseif (ext == "pdf")  opt_T = " -Tf";	out = template;		EXT = ext
 		elseif (ext == "eps")  opt_T = " -Te";	out = template;		EXT = ext
 		elseif (ext == "png")  opt_T = " -Tg";	out = template;		EXT = ext
@@ -1889,6 +1899,46 @@ function fname_out(d::Dict, first::Bool)
 	end
 	K, O = set_KO(first)		# Set the K O dance
 	return out, opt_T, EXT, K, O
+end
+
+# ---------------------------------------------------------------------------------------------------
+function fname_out_(d::Dict)
+	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
+
+	fname = ""
+	EXT = FMT
+	if (haskey(d, :savefig))		# Also ensure that file has the right extension
+		fname, EXT = splitext(d[:savefig])
+		if (EXT == "")  EXT = FMT  end
+	end
+	if (EXT == FMT && haskey(d, :fmt))  EXT = string(d[:fmt])  end
+	if (EXT == "" && !Sys.iswindows())  error("Return an image is only for Windows")  end
+	if (1 == length(EXT) > 3)  error("Bad graphics file extension")  end
+
+	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
+		fname = "";		EXT = "ps"
+	end
+	# When FNAME == "" here, it plays a double role. It means to put the PS in memory or
+	# return it to the REPL. The ambiguity is cleared in finish_PS_module()
+
+	opt_T = "";
+	if (EXT == "pdfg" || EXT == "gpdf")  EXT = "pdg"  end	# Trick to keep the ext with only 3 chars (for GeoPDFs)
+	@static Sys.iswindows() ? def_name = tempdir() * "GMTjl_tmp.ps" : def_name = tempdir() * "/" * "GMTjl_tmp.ps"
+	ext = lowercase(EXT)
+	if     (ext == "ps")   EXT = ext
+	elseif (ext == "pdf")  opt_T = " -Tf";	EXT = ext
+	elseif (ext == "eps")  opt_T = " -Te";	EXT = ext
+	elseif (ext == "png")  opt_T = " -Tg";	EXT = ext
+	elseif (EXT == "PNG")  opt_T = " -TG";	EXT = "png"		# Don't want it to be .PNG
+	elseif (ext == "jpg")  opt_T = " -Tj";	EXT = ext
+	elseif (ext == "tif")  opt_T = " -Tt";	EXT = ext
+	elseif (ext == "pdg")  opt_T = " -Tf -Qp";	EXT = "pdf"
+	else  
+		@show(ext) 
+		error("Unknown graphics file extension.")
+	end
+	if (fname != "")  fname *= "." * EXT  end
+	return def_name, opt_T, EXT, fname
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2171,12 +2221,14 @@ function put_in_slot(cmd::String, val, opt::Char, args)
 end
 
 ## ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname_ext::String,
-	opt_T::String, K::Bool, O::Bool, finish::Bool, args...)
+function finish_PS_module(d::Dict, cmd, opt_extra, K::Bool, O::Bool, finish::Bool, args...)
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
+	
+	output, opt_T, fname_ext, fname = fname_out_(d)
 	if (finish) cmd = finish_PS(d, cmd, output, K, O)  end
 
+@show(fname_ext, opt_extra)
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
 	global img_mem_layout = add_opt("", "", d, [:layout])
 	global usedConfPar
@@ -2192,16 +2244,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, output::String, fname
 	digests_legend_bag(d)			# Plot the legend if requested
 
 	if (usedConfPar)				# Hacky shit to force start over when --PAR options were use
-		usedConfPar = false
-		gmt("destroy")
-	end
-
-	fname = ""
-	if (haskey(d, :savefig))		# Also ensure that file has the right extension
-		fname, ext = splitext(d[:savefig])
-		if (fname_ext != "")  fname *= '.' * fname_ext
-		else                  fname *= ext		# PS, otherwise shit had happened
-		end
+		usedConfPar = false;	gmt("destroy")
 	end
 
 	if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage

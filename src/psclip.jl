@@ -50,7 +50,7 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && return monolitic("psclip", cmd0, arg1)
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :g :p :t :yx :params], first)
@@ -59,7 +59,7 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R)
 
-	return finish_PS_module(d, "psclip " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
+	return finish_PS_module(d, "psclip " * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

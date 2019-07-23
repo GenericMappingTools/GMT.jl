@@ -40,7 +40,7 @@ function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && return monolitic("psimage", cmd0, arg1)
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :c :p :t :params], first)
@@ -48,7 +48,7 @@ function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 
-	return finish_PS_module(d, "psimage " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
+	return finish_PS_module(d, "psimage " * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -73,7 +73,7 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("psmask", cmd0, arg1)
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
 	cmd = parse_common_opts(d, cmd, [:I :UVXY :JZ :c :e :p :r :t :yx :params], first)
@@ -85,7 +85,7 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 
-	return finish_PS_module(d, "psmask " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
+	return finish_PS_module(d, "psmask " * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -61,7 +61,7 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && return monolitic("psscale", cmd0, arg1)
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, "")
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)
@@ -81,7 +81,7 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
 
-	r = finish_PS_module(d, "psscale " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
+	r = finish_PS_module(d, "psscale " * cmd, "", K, O, true, arg1)
 	gmt("destroy")      # Probably because of the rasters in cpt
 	return r
 end

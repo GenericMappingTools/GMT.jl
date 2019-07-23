@@ -93,7 +93,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		return gmt("pshistogram " * cmd, arg1)
 	end
 
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "histogram", O, " -JX12c/12c")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :yx :params], first)
@@ -128,7 +128,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	return finish_PS_module(d, "pshistogram " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1, arg2)
+	return finish_PS_module(d, "pshistogram " * cmd, "", K, O, true, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

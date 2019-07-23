@@ -92,7 +92,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	length(kwargs) == 0 && clip == nothing && return monolitic("pscoast", cmd0)
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	maybe_more = false				# If latter set to true, search for lc & lc pen settings
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0")
@@ -144,7 +144,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	if (!occursin("-D",cmd))  cmd *= " -Da"  end		# Then pick automatic
 	finish = !occursin("-M ",cmd) ? true : false		# Otherwise the dump would be redirected to GMTjl_tmp.ps
 
-	return finish_PS_module(d, "pscoast " * cmd, "", output, fname_ext, opt_T, K, O, finish)
+	return finish_PS_module(d, "pscoast " * cmd, "", K, O, finish)
 end
 
 # ---------------------------------------------------------------------------------------------------

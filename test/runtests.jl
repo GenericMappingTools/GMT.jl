@@ -517,6 +517,7 @@ if (got_it)					# Otherwise go straight to end
 	mapproject([-10 40], J=:u29, C=true, F=true);
 	mapproject(region=(-15,35,30,48), proj=:merc, figsize=5, map_size=true);
 
+	@show("PLOT")
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", xlabel="Spoons", ylabel="Forks", savefig="lixo")
 	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=[:red, :green, :blue, :yellow], ls=:dashdot), leg=true, label="Bla")
@@ -551,6 +552,7 @@ if (got_it)					# Otherwise go straight to end
 	plot([0.5 1 1.75 5 85], region=(0,5,0,5), figsize=12, marker=(matang=true, arrow=(length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=2)
 	plot([2.5 2.5], region=(0,4,0,4), figsize=12, marker=(:matang, [2 50 350], (length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=2)
 
+	@show("PLOT3D")
 	plot3d(rand(5,3), marker=:cube)
 	plot3d!(rand(5,3), marker=:cube, Vd=2)
 	plot3d("", rand(5,3), Vd=2)
@@ -864,7 +866,7 @@ if (got_it)					# Otherwise go straight to end
 		gmtbegin("lixo");  gmtend()
 		gmtbegin();  gmtend()
 
-		gmtbegin("inset.ps")
+		gmtbegin("lixo.ps")
 		basemap(region=(0,40,20,60), proj=:merc, figsize=16, frame=(annot=:afg, fill=:lightgreen))
 		inset(D="jTR+w2.5i+o0.2i", F="+gpink+p0.5p", margins=0.6)
 			basemap(region=:global360, J="A20/20/2i", frame=:afg)
@@ -975,7 +977,7 @@ if (got_it)					# Otherwise go straight to end
 	# EXAMPLES
 	plot(1:10,rand(10), lw=1, lc="blue", marker="square",
 	markeredgecolor=:white, size=0.2, markerfacecolor="red", title="Hello World",
-		xlabel="Spoons", ylabel="Forks", show=1, Vd=2)
+		xlabel="Spoons", ylabel="Forks")
 
 	x = range(0, stop=2pi, length=180);	seno = sin.(x/0.2)*45;
 	coast(region="g", proj="A300/30/6c", axis="g", resolution="c", land="navy")

@@ -52,7 +52,7 @@ function basemap(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("psbasemap", cmd0, arg1)
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :bo :c :f :p :t :params], first)
@@ -61,7 +61,7 @@ function basemap(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	#cmd = parse_TdTmL(d, cmd)
     cmd = parse_type_anchor(d, cmd, [[:Td :rose], [:Tm :compass], [:L :map_scale], [:D :inset]])
 
-	return finish_PS_module(d, "psbasemap " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
+	return finish_PS_module(d, "psbasemap " * cmd, "", K, O, true, arg1)
 end
 
 #= ---------------------------------------------------------------------------------------------------

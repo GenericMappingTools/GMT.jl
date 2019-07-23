@@ -38,7 +38,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("pslegend", cmd0, arg1)
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:F :c :p :t :JZ :UVXY :params], first)
@@ -53,7 +53,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position :refpoint])
 	cmd = add_opt(cmd, 'C', d, [:C :clearance])
 
-	r = finish_PS_module(d, "pslegend " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
+	r = finish_PS_module(d, "pslegend " * cmd, "", K, O, true, arg1)
 	gmt("destroy")
 	return r
 end

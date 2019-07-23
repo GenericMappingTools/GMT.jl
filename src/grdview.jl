@@ -57,7 +57,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :f :n :p :t :params], first)
@@ -101,7 +101,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-    return finish_PS_module(d, "grdview " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1, arg2, arg3, arg4, arg5)
+    return finish_PS_module(d, "grdview " * cmd, "", K, O, true, arg1, arg2, arg3, arg4, arg5)
 end
 
 # ---------------------------------------------------------------------------------------------------
