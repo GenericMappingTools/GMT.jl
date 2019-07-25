@@ -1866,60 +1866,25 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
-function fname_out(d::Dict, first::Bool)
-	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
-	EXT = ""
-
-	if (haskey(d, :fmt))  out = string(d[:fmt])
-	else                  out = FMT						# Use the global FMT choice
-	end
-	if (out == "" && !Sys.iswindows())
-		error("NOT specifying the **fmt** format is only allowed on Windows")
-	end
-	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
-		out = "";	EXT = "ps"
-	end
-	# When OUT == "" here, it plays a double role. It means to put the PS in memory or
-	# return it to the REPL. The ambiguity is cleared in finish_PS_module()
-
-	opt_T = "";
-	if (out == "pdfg" || out == "gpdf")  out = "pdg"  end	# Trick to keep the ext with only 3 chars (for GeoPDFs)
-	if (length(out) <= 3)
-		@static Sys.iswindows() ? template = tempdir() * "GMTjl_tmp.ps" : template = tempdir() * "/" * "GMTjl_tmp.ps"
-		ext = lowercase(out)
-		if     (ext == "ps")   out = template;  EXT = ext
-		elseif (ext == "pdf")  opt_T = " -Tf";	out = template;		EXT = ext
-		elseif (ext == "eps")  opt_T = " -Te";	out = template;		EXT = ext
-		elseif (ext == "png")  opt_T = " -Tg";	out = template;		EXT = ext
-		elseif (ext == "PNG")  opt_T = " -TG";	out = template;		EXT = "png"		# Don't want it to be .PNG
-		elseif (ext == "jpg")  opt_T = " -Tj";	out = template;		EXT = ext
-		elseif (ext == "tif")  opt_T = " -Tt";	out = template;		EXT = ext
-		elseif (ext == "pdg")  opt_T = " -Tf -Qp";	out = template;	EXT = "pdf"
-		end
-	end
-	K, O = set_KO(first)		# Set the K O dance
-	return out, opt_T, EXT, K, O
-end
-
-# ---------------------------------------------------------------------------------------------------
-function fname_out_(d::Dict)
+function fname_out(d::Dict)
 	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 
 	fname = ""
 	EXT = FMT
-	if (haskey(d, :savefig))		# Also ensure that file has the right extension
-		fname, EXT = splitext(d[:savefig])
-		if (EXT == "")  EXT = FMT  end
+	if ((val = find_in_dict(d, [:savefig :name])[1]) !== nothing)
+		fname, EXT = splitext(val)
+		if (EXT == "")  EXT = FMT
+		else            EXT = EXT[2:end]
+		end
 	end
 	if (EXT == FMT && haskey(d, :fmt))  EXT = string(d[:fmt])  end
 	if (EXT == "" && !Sys.iswindows())  error("Return an image is only for Windows")  end
 	if (1 == length(EXT) > 3)  error("Bad graphics file extension")  end
 
+	ret_ps = false				# To know if we want to return or save PS in mem
 	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
-		fname = "";		EXT = "ps"
+		fname = "";		EXT = "ps";		ret_ps = true
 	end
-	# When FNAME == "" here, it plays a double role. It means to put the PS in memory or
-	# return it to the REPL. The ambiguity is cleared in finish_PS_module()
 
 	opt_T = "";
 	if (EXT == "pdfg" || EXT == "gpdf")  EXT = "pdg"  end	# Trick to keep the ext with only 3 chars (for GeoPDFs)
@@ -1933,12 +1898,11 @@ function fname_out_(d::Dict)
 	elseif (ext == "jpg")  opt_T = " -Tj";	EXT = ext
 	elseif (ext == "tif")  opt_T = " -Tt";	EXT = ext
 	elseif (ext == "pdg")  opt_T = " -Tf -Qp";	EXT = "pdf"
-	else  
-		@show(ext) 
-		error("Unknown graphics file extension.")
+	else   error(@sprintf("Unknown graphics file extension (.%s)", EXT))
 	end
+
 	if (fname != "")  fname *= "." * EXT  end
-	return def_name, opt_T, EXT, fname
+	return def_name, opt_T, EXT, fname, ret_ps
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2225,10 +2189,10 @@ function finish_PS_module(d::Dict, cmd, opt_extra, K::Bool, O::Bool, finish::Boo
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
 	
-	output, opt_T, fname_ext, fname = fname_out_(d)
+	output, opt_T, fname_ext, fname, ret_ps = fname_out(d)
+	if (ret_ps)  output = ""  end		# Here we don't want to save to file
 	if (finish) cmd = finish_PS(d, cmd, output, K, O)  end
 
-@show(fname_ext, opt_extra)
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
 	global img_mem_layout = add_opt("", "", d, [:layout])
 	global usedConfPar
