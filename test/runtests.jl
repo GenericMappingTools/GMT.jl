@@ -539,6 +539,7 @@ if (got_it)					# Otherwise go straight to end
 	plot(rand(10,4), S=:c, ms=0.2, ml=2, W=1, Vd=2)
 	@test startswith(plot!([1 1], marker=(:r, [2 3]), Vd=2), "psxy  -R -J -Sr")
 	@test_throws ErrorException("Wrong number of extra columns for marker (r). Got 3 but expected 2") plot!([1 1], marker=(:r, [2 3 4]), Vd=2)
+	@test_throws ErrorException("Unknown graphics file extension (.ppf)") plot(rand(5,2), savefig="la.ppf")
 	@test startswith(plot!([1 1], marker=(:Web, [2 3], (inner=5, arc=30,radial=45, pen=(2,:red))), Vd=2), "psxy  -R -J -SW/5+a30+r45+p2,red")
 	@test startswith(plot!([1 1], marker=(Web=true, inner=5, arc=30,radial=45, pen=(2,:red)), Vd=2), "psxy  -R -J -SW/5+a30+r45+p2,red")
 	@test startswith(plot!([1 1], marker="W/5+a30", Vd=2), "psxy  -R -J -SW/5+a30")
