@@ -59,7 +59,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	arg4 = nothing		# For the r,g,b + intensity case
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
@@ -82,10 +82,12 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 
 	if (isa(arg1, GMTimage) && !occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
 	cmd = "grdimage " * cmd				# In any case we need this
+	do_finish = false
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
-		cmd, K = finish_PS_nested(d, cmd, output, K, O, [:coast :colorbar :basemap])
+		cmd, K = finish_PS_nested(d, cmd, "", K, O, [:coast :colorbar :basemap])
+		do_finish = true
 	end
-	return finish_PS_module(d, cmd, "", output, fname_ext, opt_T, K, O, false, arg1, arg2, arg3, arg4)
+	return finish_PS_module(d, cmd, "", K, O, do_finish, arg1, arg2, arg3, arg4)
 end
 
 # ---------------------------------------------------------------------------------------------------

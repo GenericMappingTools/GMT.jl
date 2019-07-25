@@ -84,7 +84,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_args = (arg1 === nothing) ? 0 : 1
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:c :e :f :p :t :yx :JZ :UVXY :params], first)
@@ -121,7 +121,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= add_opt_pen(d, [:W :pen], "W")
 
-	r = finish_PS_module(d, "pstext " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1, arg2)
+	r = finish_PS_module(d, "pstext " * cmd, "", K, O, true, arg1, arg2)
 	gmt("destroy")
 	return r
 end

@@ -87,7 +87,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && return monolitic("pscontour", cmd0, arg1)
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :bo :c :d :do :e :p :t :yx :params], first)
@@ -114,7 +114,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	if (!occursin(" -W", cmd) && !occursin(" -I", cmd))  cmd *= " -W"  end	# Use default pen
 
-	return finish_PS_module(d, "pscontour " * cmd, "-D", output, fname_ext, opt_T, K, O, true, arg1, arg2, arg3)
+	return finish_PS_module(d, "pscontour " * cmd, "-D", K, O, true, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------

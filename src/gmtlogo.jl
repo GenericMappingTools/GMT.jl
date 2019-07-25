@@ -41,7 +41,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("gmtlogo", cmd0, arg1)
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, = parse_R("", d, O)
 	cmd, = parse_J(cmd, d, "-Jx1", true, O)
@@ -50,7 +50,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
-	cmd = finish_PS(d, cmd, output, K, O)
+	#cmd = finish_PS(d, cmd, output, K, O)
 
 	do_julia    = haskey(d, :julia)
 	do_GMTjulia = haskey(d, :GMTjulia)
@@ -61,12 +61,12 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
 		do_show = false
 		if (do_GMTjulia && haskey(d, :show))  delete!(d, :show);  do_show = true  end	# Too soon
-		fmt = fname_ext
+		#fmt = fname_ext
 		if (do_GMTjulia && haskey(d, :fmt))		# Too soon to set the format. Need to finish the PS first
 			fmt = d[:fmt];	delete!(d, :fmt);
-			fname_ext = "ps"
+			#fname_ext = "ps"
 		end
-		r = finish_PS_module(d, "psxy " * c * cmd, "", output, fname_ext, opt_T, K, O, false, t)
+		r = finish_PS_module(d, "psxy " * c * cmd, "", K, O, true, t)
 		if (r !== nothing && startswith(r, "psxy"))  return r  end
 		if (do_GMTjulia)
 			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
@@ -75,7 +75,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		end
 	else
 		if (!occursin("-D", cmd))  cmd = " -Dx0/0+w5c " * cmd	end
-		return finish_PS_module(d, "gmtlogo " * cmd, "", output, fname_ext, opt_T, K, O, false)
+		return finish_PS_module(d, "gmtlogo " * cmd, "", K, O, true)
 	end
 end
 

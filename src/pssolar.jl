@@ -53,7 +53,7 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && N_args == 0 && return monolitic("pssolar", cmd0, arg1)
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
 	cmd = parse_common_opts(d, cmd, [:bo :c :h :o :p :t :UVXY :params], first)
@@ -65,12 +65,12 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd *= opt_pen(d, 'W', [:W :pen])
 
 	opt_extra = ""
-	if (occursin( "-I", cmd) || occursin("-I", cmd0))
-		output = "";    opt_extra = "-I"
+	if (occursin("-I", cmd) || occursin("-I", cmd0))
+		opt_extra = "-I"
 		cmd = replace(cmd, opt_J => "")
 	end
-	cmd, K = finish_PS_nested(d, "pssolar " * cmd, output, K, O, [:coast])
-	return finish_PS_module(d, cmd, opt_extra, output, fname_ext, opt_T, K, O, false, arg1, arg2)
+	cmd, K = finish_PS_nested(d, "pssolar " * cmd, "", K, O, [:coast])
+	return finish_PS_module(d, cmd, opt_extra, K, O, true, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

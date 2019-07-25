@@ -33,7 +33,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O)
 	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
@@ -146,28 +146,33 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	cmd = check_caller(d, cmd, opt_S, opt_W, sub_module, O)
 
 	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
-		cmd = finish_PS(d, cmd * opt_W * opt_UVXY, output, K, O)
+		#cmd = finish_PS(d, cmd * opt_W * opt_UVXY, output, K, O)
+		cmd *= opt_W * opt_UVXY
 
 	elseif (opt_W == "" && opt_S != "")						# We have a symbol request
 		if (opt_Wmarker != "" && opt_W == "") opt_Gsymb *= " -W" * opt_Wmarker  end		# reuse var name
 		if (opt_ML != "")  cmd *= opt_ML  end				# If we have a symbol outline pen
-		cmd = finish_PS(d, cmd * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
+		#cmd = finish_PS(d, cmd * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
+		cmd *= opt_S * opt_Gsymb * opt_UVXY
 
 	elseif (opt_W != "" && opt_S != "")						# We have both line/polygon and a symbol
 		if (occursin(opt_Gsymb, cmd))  opt_Gsymb = ""  end
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
-			cmd = finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
+			#cmd = finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
+			cmd *= opt_W * opt_S * opt_Gsymb * opt_UVXY
 		else
 			if (opt_Wmarker != "")  opt_Wmarker = " -W" * opt_Wmarker  end		# Set Symbol edge color 
 			cmd1 = cmd * opt_W * opt_UVXY
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
 			if (opt_c != "")  cmd2 = replace(cmd2, opt_c => "")  end			# Not in scond call (subplots)
 			if (opt_ML != "")  cmd1 = cmd1 * opt_ML  end	# If we have a symbol outline pen
-			cmd = [finish_PS(d, cmd1, output, true, O); finish_PS(d, cmd2, output, K, true)]
+			#cmd = [finish_PS(d, cmd1, "", true, O); finish_PS(d, cmd2, "", K, true)]
+			cmd = [cmd1; cmd2]
 		end
 
 	else
-		cmd = finish_PS(d, cmd * opt_UVXY, output, K, O)
+		#cmd = finish_PS(d, cmd * opt_UVXY, output, K, O)
+		cmd *= opt_UVXY
 	end
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
@@ -188,7 +193,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	put_in_legend_bag(d, cmd, arg1)
 
-	r = finish_PS_module(d, gmt_proggy .* cmd, "", output, fname_ext, opt_T, K, O, false, arg1, arg2)
+	r = finish_PS_module(d, gmt_proggy .* cmd, "", K, O, true, arg1, arg2)
 	if (got_pattern || occursin("-Sk", opt_S))  gmt("destroy")  end 	# Apparently patterns are screweing the session
 	return r
 end

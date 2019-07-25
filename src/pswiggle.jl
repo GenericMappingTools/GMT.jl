@@ -67,7 +67,7 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && return monolitic("pswiggle", cmd0, arg1)
 
 	d = KW(kwargs)
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:c :e :f :g :p :t :yx :F :UVXY :params], first)
@@ -83,7 +83,7 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd *= opt_pen(d, 'W', [:W :pen])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 
-	return finish_PS_module(d, "pswiggle " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1)
+	return finish_PS_module(d, "pswiggle " * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

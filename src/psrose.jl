@@ -99,7 +99,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		return gmt("psrose " * cmd, arg1)
 	end
 
-	output, opt_T, fname_ext, K, O = fname_out(d, first)		# OUTPUT may have been an extension only
+    K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
 	if (GMTver < 6)  cmd = replace(cmd, opt_J => "")  end	# GMT5 doesn't accept a -J
@@ -120,7 +120,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= opt_pen(d, 'W', [:W :pen])
 
-	return finish_PS_module(d, "psrose " * cmd, "", output, fname_ext, opt_T, K, O, true, arg1, arg2)
+	return finish_PS_module(d, "psrose " * cmd, "", K, O, true, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------
