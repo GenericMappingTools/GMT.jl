@@ -148,7 +148,8 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 	opt_J = "";		mnemo = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
 		opt_J, mnemo = build_opt_J(val)
-	elseif (IamModern)			# Subplots do not rely is the classic default mechanism
+	elseif (IamModern && ((val = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])[1]) === nothing))
+		# Subplots do not rely is the classic default mechanism
 		return cmd, ""
 	end
 	if (!map && opt_J != "")
@@ -1872,7 +1873,7 @@ function fname_out(d::Dict)
 	fname = ""
 	EXT = FMT
 	if ((val = find_in_dict(d, [:savefig :name])[1]) !== nothing)
-		fname, EXT = splitext(val)
+		fname, EXT = splitext(string(val))
 		if (EXT == "")  EXT = FMT
 		else            EXT = EXT[2:end]
 		end
@@ -1918,7 +1919,7 @@ function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", is3D=fa
 	cmd, opt_di = parse_di(cmd, d)		# If data missing data other than NaN
 	cmd, opt_h  = parse_h(cmd, d)
 	if (isa(data_kw, String))
-		if (opt_R == "")				# Then we must read the file to determine -R
+		if (!IamModern && opt_R == "")				# Then we must read the file to determine -R
 			lixo, opt_bi = parse_bi("", d)	# See if user says file is binary
 			if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
 				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * " " * data_kw)
@@ -2105,6 +2106,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
+	if (IamModern)  cmd = replace(cmd, " -R " => " ")  end
 	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
 	isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
@@ -2195,7 +2197,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra, K::Bool, O::Bool, finish::Boo
 
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
 	global img_mem_layout = add_opt("", "", d, [:layout])
-	global usedConfPar
+	global usedConfPar, IamModern
 
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
@@ -2211,11 +2213,13 @@ function finish_PS_module(d::Dict, cmd, opt_extra, K::Bool, O::Bool, finish::Boo
 		usedConfPar = false;	gmt("destroy")
 	end
 
-	if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
-		P = showfig(d, output, fname_ext, "", K)
-		gmt("destroy")							# Returning a PS screws the session
-	elseif ((haskey(d, :show) && d[:show] != 0) || fname != "")
-		showfig(d, output, fname_ext, opt_T, K, fname)
+	if (!IamModern)
+		if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
+			P = showfig(d, output, fname_ext, "", K)
+			gmt("destroy")							# Returning a PS screws the session
+		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "")
+			showfig(d, output, fname_ext, opt_T, K, fname)
+		end
 	end
 	return P
 end

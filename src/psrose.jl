@@ -104,8 +104,8 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "")
 	if (GMTver < 6)  cmd = replace(cmd, opt_J => "")  end	# GMT5 doesn't accept a -J
 	cmd = parse_common_opts(d, cmd, [:UVXY :c :e :p :t :yx :params], first)
-    cmd = parse_these_opts(cmd, d, [[:A :sector], [:D :shift], [:F :no_scale], [:L :labels], [:M],
-                [:Q :alpha], [:S :radius], [:T :orientation], [:Z :scale]])
+	cmd = parse_these_opts(cmd, d, [[:A :sector], [:D :shift], [:F :no_scale], [:L :labels], [:M],
+	                                [:Q :alpha], [:S :radius], [:T :orientation], [:Z :scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
