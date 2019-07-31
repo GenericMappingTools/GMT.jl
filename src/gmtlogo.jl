@@ -50,8 +50,6 @@ function logo(cmd0::String=""; first=true, kwargs...)
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
-	#cmd = finish_PS(d, cmd, output, K, O)
-
 	do_julia    = haskey(d, :julia)
 	do_GMTjulia = haskey(d, :GMTjulia)
 	if (do_julia || do_GMTjulia)
@@ -61,17 +59,22 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
 		do_show = false
 		if (do_GMTjulia && haskey(d, :show))  delete!(d, :show);  do_show = true  end	# Too soon
-		#fmt = fname_ext
-		if (do_GMTjulia && haskey(d, :fmt))		# Too soon to set the format. Need to finish the PS first
-			fmt = d[:fmt];	delete!(d, :fmt);
-			#fname_ext = "ps"
+		fmt = FMT
+		if (do_GMTjulia)
+			if (haskey(d, :fmt))	# Too soon to set the format. Need to finish the PS first
+				fmt = d[:fmt];	delete!(d, :fmt);
+			end
+			savefig = nothing
+			if ((val = find_in_dict(d, [:savefig :name], true)[1]) !== nothing)		#  Also too early for savefig
+				savefig = val
+			end
 		end
 		r = finish_PS_module(d, "psxy " * c * cmd, "", K, O, true, t)
 		if (r !== nothing && startswith(r, "psxy"))  return r  end
 		if (do_GMTjulia)
 			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
 			opt_F = @sprintf("+f%d,NewCenturySchlbk-Italic",letter_height)
-			text!(text_record(t[1:3,1:2], ["G", "T", "M"]), R=[], J=[], F=opt_F, fmt=fmt, show=do_show)
+			text!(text_record(t[1:3,1:2], ["G", "T", "M"]), R=[], J=[], F=opt_F, fmt=fmt, name=savefig, show=do_show)
 		end
 	else
 		if (!occursin("-D", cmd))  cmd = " -Dx0/0+w5c " * cmd	end
