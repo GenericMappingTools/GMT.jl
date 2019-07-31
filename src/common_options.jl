@@ -1894,8 +1894,8 @@ function fname_out(d::Dict)
 	if     (ext == "ps")   EXT = ext
 	elseif (ext == "pdf")  opt_T = " -Tf";	EXT = ext
 	elseif (ext == "eps")  opt_T = " -Te";	EXT = ext
-	elseif (ext == "png")  opt_T = " -Tg";	EXT = ext
 	elseif (EXT == "PNG")  opt_T = " -TG";	EXT = "png"		# Don't want it to be .PNG
+	elseif (ext == "png")  opt_T = " -Tg";	EXT = ext
 	elseif (ext == "jpg")  opt_T = " -Tj";	EXT = ext
 	elseif (ext == "tif")  opt_T = " -Tt";	EXT = ext
 	elseif (ext == "pdg")  opt_T = " -Tf -Qp";	EXT = "pdf"
@@ -2217,7 +2217,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra, K::Bool, O::Bool, finish::Boo
 		if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
 			P = showfig(d, output, fname_ext, "", K)
 			gmt("destroy")							# Returning a PS screws the session
-		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "")
+		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "" || opt_T != "")
 			showfig(d, output, fname_ext, opt_T, K, fname)
 		end
 	end

@@ -240,6 +240,7 @@ if (got_it)					# Otherwise go straight to end
 	logo(D="x0/0+w2i")
 	logo(julia=8)
 	logo(GMTjulia=8, fmt=:png, Vd=2)
+	logo(GMTjulia=2, savefig="logo.PNG")
 	logo!(julia=8, Vd=2)
 	logo!("", julia=8, Vd=2)
 
