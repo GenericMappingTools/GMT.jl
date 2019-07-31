@@ -2271,7 +2271,7 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 	elseif (legend_type === nothing)
 		lab = ["y1"]
 	else
-		lab = [@sprintf("y%d", size(legend_type.label ,1))]
+		lab = [@sprintf("y%d", size(legend_type.label, 1))]
 	end
 
 	if ((isa(cmd_, Array{String, 1}) && !occursin("-O", cmd_[1])) || (isa(cmd_, String) && !occursin("-O", cmd_)))
