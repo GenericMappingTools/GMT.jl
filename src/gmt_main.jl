@@ -117,6 +117,10 @@ function gmt(cmd::String, args...)
 		global IamModern = false
 	elseif (r == "" && n_argin == 0) # Just requesting usage message, add -? to options
 		r = "-?"
+	elseif (n_argin > 1 && g_module == "psscale")		# Happens with nested calls like in grdimage
+		if (!isa(args[1], GMTcpt) && isa(args[2], GMTcpt))
+			args = [args[2]];		n_argin = 1
+		end
 	end
 
 	try

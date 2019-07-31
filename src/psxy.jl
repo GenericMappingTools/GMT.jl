@@ -87,8 +87,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		cmd = add_opt(cmd, 'L', d, [:L :labels])
 	else
 		cmd = add_opt(cmd, 'L', d, [:L :close],
-			(left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b",
-			 pen=("+p",add_opt_pen)))
+			(left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
 		if (occursin("-L", cmd) && !occursin("-G", cmd) && !occursin("+p", cmd))  cmd *= "+p0.5p"  end
 	end
 
@@ -98,7 +97,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	opt_W = add_opt_pen(d, [:W :pen], "W")
-	if (occursin("+c", opt_W) && !occursin("-C", cmd))
+	if (occursin("+c", opt_W) || occursin("+c", cmd) && !occursin("-C", cmd))
 		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
 	end
 

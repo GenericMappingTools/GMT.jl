@@ -4,11 +4,11 @@ Plot error bars with different color control
 
 ```julia
 C = makecpt(cmap=:rainbow, range=(0,6,1));
-t = [1	1	1	1
-    2	2	2	1
-    3	3	3	1
-    4	4	4	1
-    5	5	5	1];
+t = [1 1 1 1
+    2 2 2 1
+    3 3 3 1
+    4 4 4 1
+    5 5 5 1];
 plot(t, limits=(0,6,0,6), figsize=7, frame=:noannot, marker=:circle, ms=0.5,
      color=C, ml=0.25, error_bars=(x=:x, pen=(2,:red)), y_off=5)
 plot!(t, frame=:noannot, marker=:circle, ms=0.5, color=C, ml=0.25,
