@@ -90,10 +90,10 @@ Optional Arguments
    [Default].
 
 - **I** or *shade* or *intensity* : -- *shade=grid* **|** *shade=azim* **|** *shade=(azimuth=az, norm=params, auto=true)*\
-   Gives the name of a grid with intensities in the (-1,+1) range, or a constant intensity to apply everywhere
+   Provide the name of a grid with intensities in the (-1,+1) range, or a constant intensity to apply everywhere
    (affects the ambient light). Alternatively, derive an intensity grid from the input data grid *grd\_z* via a
-   call to `grdgradient`; use `shade=(azimuth=az,)` or ``shade=(azimuth=az, norm=params)`` to specify azimuth
-   and intensity arguments for that module or just give ``shade=(auto=true,)`` to select the default arguments
+   call to `grdgradient`; use `shade=az` or ``shade=(azimuth=az, norm=params)`` to specify azimuth
+   and intensity arguments for that module or just give ``shade=true`` to select the default arguments
    *(azim=-45,nom=:t1)*. If you want a more specific intensity scenario then run grdgradient separately first.
 
 - **M** or *monochrome* : -- *monochrome=true*\

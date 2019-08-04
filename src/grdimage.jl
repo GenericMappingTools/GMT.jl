@@ -95,9 +95,9 @@ function common_shade(d, cmd, arg1, arg2, arg3, arg4, prog)
 	# Used both by grdimage and grdview
 	if ((val = find_in_dict(d, [:I :shade :intensity])[1]) !== nothing)
 		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
-			if (isa(val, String) || isa(val, Symbol))
+			if (isa(val, String) || isa(val, Symbol) || isa(val, Bool))
 				val = arg2str(val)
-				val == "default" ? cmd *= " -I+a-45+nt1" : cmd *= " -I" * val
+				(val == "" || val == "default" || val == "auto") ? cmd *= " -I+a-45+nt1" : cmd *= " -I" * val
 			else
 				cmd = add_opt(cmd, 'I', d, [:I :shade :intensity],
 				              (auto="_+", azim="+a", azimuth="+a", norm="+n", default="_+d+a-45+nt1"))
