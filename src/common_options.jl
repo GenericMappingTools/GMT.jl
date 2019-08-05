@@ -267,8 +267,9 @@ end
 function auto_JZ(cmd)
 	# Add the -JZ option to modules that should not need it (e.g. pscoast) when used after a
 	# -R with 6 elements. Without this a simple -J fails with a complain that ... -JZ is needed
-	global current_view
-	if (current_view !== nothing && !occursin("-JZ", cmd) && !occursin("-Jz", cmd))  cmd *= " -JZ0.01"  end
+	if (GMTver < 6 && current_view !== nothing && !occursin("-JZ", cmd) && !occursin("-Jz", cmd))
+		cmd *= " -JZ0.01"
+	end
 	return cmd
 end
 

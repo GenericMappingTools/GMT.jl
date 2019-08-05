@@ -84,8 +84,6 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 logo!(cmd0::String=""; first=false, kw...) = logo(cmd0; first=first, kw...)
-logo(; first=true, kw...) = logo(""; first=first, kw...)
-logo!(; first=false, kw...) = logo(""; first=first, kw...)
 
 # -------------------------------------------------------------------------
 function jlogo(L=5)
