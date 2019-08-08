@@ -1558,7 +1558,7 @@ function helper3_axes(arg, primo, axe)
 
 	temp = "GMTjl_custom_" * primo
 	if (axe != "") temp *= axe  end
-	@static Sys.iswindows() ? fname = tempdir() * temp * ".txt" : fname = tempdir() * "/" * temp * ".txt"
+	fname = joinpath(tempdir(), temp * ".txt")
 	fid = open(fname, "w")
 	if (label != "")
 		for k = 1:n_annot
@@ -1890,7 +1890,7 @@ function fname_out(d::Dict)
 
 	opt_T = "";
 	if (EXT == "pdfg" || EXT == "gpdf")  EXT = "pdg"  end	# Trick to keep the ext with only 3 chars (for GeoPDFs)
-	@static Sys.iswindows() ? def_name = tempdir() * "GMTjl_tmp.ps" : def_name = tempdir() * "/" * "GMTjl_tmp.ps"
+	def_name = joinpath(tempdir(), "GMTjl_tmp.ps")
 	ext = lowercase(EXT)
 	if     (ext == "ps")   EXT = ext
 	elseif (ext == "pdf")  opt_T = " -Tf";	EXT = ext
