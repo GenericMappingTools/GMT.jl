@@ -509,7 +509,6 @@ if (got_it)					# Otherwise go straight to end
 
 	# MAKECPT
 	cpt = makecpt(range="-1/1/0.1");
-	@assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
 	if (GMTver >= 6)
 		makecpt(rand(10,1), E="", C=:rainbow);
 		@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
