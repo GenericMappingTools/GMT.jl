@@ -59,7 +59,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
 
-	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
+	cmd, opt_B, = parse_BJR(d, "", "grdview", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :f :n :p :t :params], first)
 	cmd = add_opt(cmd, 'S', d, [:S :smooth])
 	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)
@@ -68,7 +68,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt(cmd, 'Q', d, [:Q :surf :surftype],
 				  (mesh=("m", add_opt_fill), waterfall=("mx", add_opt_fill), surface="_s",
 				   surf="_s", img="i", image="i", nan_alpha="_c", monochrome="_+m"))
-	cmd = add_opt(cmd, 'W', d, [:W :pens], (contour=("c", add_opt_pen),
+	cmd = add_opt(cmd, 'W', d, [:W :pens :pen], (contour=("c", add_opt_pen),
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
 	cmd = add_opt(cmd, 'T', d, [:T :no_interp], (skip="_+s", outlines=("+o", add_opt_pen)) )
 

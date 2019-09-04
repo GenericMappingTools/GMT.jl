@@ -502,13 +502,13 @@ if (got_it)					# Otherwise go straight to end
 	@show("IMSHOW")
 	# IMSHOW
 	imshow(rand(128,128),show=false)
+	imshow(rand(128,128), view=:default, Vd=2)
 	imshow(G, axis=:a, shade="+a45",show=false)
 	imshow(rand(128,128), shade="+a45",show=false)
 	if (GMTver >= 6)  imshow("lixo.tif",show=false)  end
 
 	# MAKECPT
 	cpt = makecpt(range="-1/1/0.1");
-	@assert((size(cpt.colormap,1) == 20) && (cpt.colormap[1,:] == [0.875, 0.0, 1.0]))
 	if (GMTver >= 6)
 		makecpt(rand(10,1), E="", C=:rainbow);
 		@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)

@@ -10,32 +10,32 @@ Parameters
 
 - $(GMT.opt_J)
 - $(GMT.opt_R)
-- **A** : **polygon** : -- Str or [] --
+- **A** | **polygon** => -- Str or [] --
 
     No plotting is performed. Instead, we determine the geographical coordinates of the polygon
     outline for the (possibly oblique) rectangular map domain. 
     [`-A`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#a)
 - $(GMT.opt_B)
-- **D** : **inset** : -- Str --
+- **D** | **inset** => -- Str --
 
     Draw a simple map insert box on the map. Requires -F.
     [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#d)
-- **F** : **box** : -- Str --
+- **F** | **box** => -- Str --
 
     Without further options, draws a rectangular border around any map insert (D), map scale (L)
     or map rose (T)
     [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#f)
 - $(GMT.opt_Jz)
-- **L** : **map_scale** : -- Str --
+- **L** | **map_scale** => -- Str --
 
     Draw a map scale.
     [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#l)
 - $(GMT.opt_P)
-- **Td** : **rose`** : -- Str --
+- **Td** | **rose** => -- Str --
 
     Draws a map directional rose on the map at the location defined by the reference and anchor points.
     [`-Td`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#t)
-- **Tm** : **compass** : -- Str --
+- **Tm** | **compass** => -- Str --
 
     Draws a map magnetic rose on the map at the location defined by the reference and anchor points.
     [`-Tm`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#t)

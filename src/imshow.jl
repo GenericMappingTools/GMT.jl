@@ -38,9 +38,7 @@ function imshow(arg1; first=true, kw...)
 	end
 
 	d = KW(kw)
-	if (!haskey(d, :show))  see = true			# No explicit 'show' keyword, so we set it to true here
-	else                    see = d[:show]		# OK, there was one. Use whatever the user decided
-	end
+	see = (!haskey(d, :show)) ? true : see = d[:show]	# No explicit 'show' keyword means show=true
 
 	if (is_image)
 		if (haskey(d, :D) || haskey(d, :img_in) || haskey(d, :image_in))	# OK, user set -D so don't repeat
@@ -49,22 +47,27 @@ function imshow(arg1; first=true, kw...)
 			grdimage(G; first=first, D=1, show=see, kw...)
 		end
 	else
-		grdimage(G; first=first, show=see, kw...)
+		imshow(G; first=first, kw...)
 	end
 end
 
 function imshow(arg1::GMTgrid; first=true, kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)
-	if (!haskey(d, :show))  grdimage("", arg1; first=first, show=true, kw...)
-	else                    grdimage("", arg1; first=first, kw...)
+	see = (!haskey(d, :show)) ? true : see = d[:show]	# No explicit 'show' keyword means show=true
+	opt_p = parse_common_opts(d, "", [:p], first)
+	if (opt_p == "")
+		grdimage("", arg1; first=first, show=see, kw...)
+	else
+		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 5
+		srf = ((val = find_in_dict(d, [:Q :surf :surftype])[1]) !== nothing) ? val : "i100"
+		grdview("", arg1; first=first, show=see, p=opt_p[4:end], JZ=zsize, Q=srf, kw...)
 	end
 end
 
 function imshow(arg1::GMTimage; first=true, kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)
-	if (!haskey(d, :show))  grdimage("", arg1; first=first, D=true, show=true, kw...)
-	else                    grdimage("", arg1; first=first, D=true, kw...)
-	end
+	see = (!haskey(d, :show)) ? true : see = d[:show]	# No explicit 'show' keyword means show=true
+	grdimage("", arg1; first=first, D=true, show=see, kw...)
 end
