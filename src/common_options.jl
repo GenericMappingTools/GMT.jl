@@ -369,7 +369,8 @@ end
 function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
 	global IamModern
-	def_fig_axes_ = (IamModern) ? "" : def_fig_axes	# def_fig_axes is a global const
+	def_fig_axes_  = (IamModern) ? "" : def_fig_axes	# def_fig_axes is a global const
+	def_fig_axes3_ = (IamModern) ? "" : def_fig_axes3	# def_fig_axes is a global const
 
 	# These four are aliases
 	extra_parse = true
@@ -444,8 +445,8 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 		end
 	end
 
-	if (opt_B != def_fig_axes_)  opt_B *= this_opt_B
-	elseif (this_opt_B != "")    opt_B  = this_opt_B
+	if (opt_B != def_fig_axes_ && opt_B != def_fig_axes3_)  opt_B *= this_opt_B
+	elseif (this_opt_B != "")  opt_B = this_opt_B
 	end
 
 	return cmd * opt_B, opt_B
@@ -461,7 +462,7 @@ function parse_BJR(d::Dict, cmd::String, caller, O, defaultJ="", del=false)
 	def_fig_axes_ = (IamModern) ? "" : def_fig_axes	# def_fig_axes is a global const
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
-		if (caller == "plot3d" || caller == "bar3" || caller == "scatter3")
+		if (occursin("3", caller) || caller == "grdview")
 			def_fig_axes3_ = (IamModern) ? "" : def_fig_axes3
 			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes3_), del)
 		else
@@ -689,6 +690,8 @@ function parse_common_opts(d, cmd, opts, first=true)
 	if (opt_p !== nothing)		# Restrict the contents of this block to when -p was used
 		if (opt_p != "")
 			if (opt_p == " -pnone")  current_view = nothing;	cmd = cmd[1:end-7];	opt_p = ""
+			elseif (startswith(opt_p, " -pa") || startswith(opt_p, " -pd") || startswith(opt_p, " -p3"))
+				current_view = " -p210/30";	cmd = replace(cmd, opt_p => "") * current_view		# auto, def, 3d
 			else                     current_view = opt_p
 			end
 		elseif (!first && current_view !== nothing)
@@ -1348,6 +1351,7 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	if (haskey(d, :none)) return " -B0"  end
 
 	secondary ? primo = 's' : primo = 'p'			# Primary or secondary axis
+	if (z)  primo = ""  end							# Z axis have no primary/secondary
 	x ? axe = "x" : y ? axe = "y" : z ? axe = "z" : axe = ""	# Are we dealing with a specific axis?
 
 	opt = " -B"

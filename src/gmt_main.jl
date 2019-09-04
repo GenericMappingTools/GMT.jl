@@ -1,6 +1,3 @@
-global API			# OK, so next times we'll use this one
-global grd_mem_layout
-
 mutable struct GMTgrid 	# The type holding a local header and data of a GMT grid
 	proj4::String
 	wkt::String
@@ -88,8 +85,6 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
 """
 function gmt(cmd::String, args...)
 	global API
-	global grd_mem_layout
-	global img_mem_layout
 
 	# ----------- Minimal error checking ------------------------
 	n_argin = length(args)
