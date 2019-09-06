@@ -60,17 +60,17 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
 [GMT](https://github.com/GenericMappingTools/gmt) program. It's the user responsability to do that.
 
   * Windows64
-      It's better to install the [GMT6 version](https://github.com/GenericMappingTools/gmt/releases/download/6.0.0rc3/GMT-6.0.0rc3-win64.exe)
+      It's better to install the [GMT6 version](https://github.com/GenericMappingTools/gmt/releases/download/6.0.0rc4/GMT-6.0.0rc4-win64.exe)
 
   * Windows32
 
-      Download and install the official version at (the [..._win32.exe](https://github.com/GenericMappingTools/gmt/releases/download/6.0.0rc3/GMT-6.0.0rc3-win32.exe))
+      Download and install the official version at (the [..._win32.exe](https://github.com/GenericMappingTools/gmt/releases/download/6.0.0rc4/GMT-6.0.0rc4-win32.exe))
 
   * Unix
   
       Follow instructions at <https://github.com/GenericMappingTools/gmt#install-gmt>
 
-  * In any case, since *GMT* produces PostScript you need a PS visualizer
+  * Since *GMT* produces PostScript you need a PS interpreter. Windows installer como with ghostcript but on Mac/Linux you need to:
 
       Install `Ghostscript` and `ghostview` at <https://www.ghostscript.com/download/gsdnld.html>
 
