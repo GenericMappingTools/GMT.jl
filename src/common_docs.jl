@@ -1,171 +1,171 @@
 const GMTdoc = "http://docs.generic-mapping-tools.org/latest/"
 
-const opt_C = "**C** : **color** : **cmap** : -- Str --		``Flags = [cpt |master[+izinc] |color1,color2[,*color3*,…]]``
+const opt_C = "**C** | **color** | **cmap** : [Type => Str]		``Arg = [cpt |master[+izinc] |color1,color2[,*color3*,…]]``
 
     Give a CPT name or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those
     colors automatically.
-    [`-C`](http://docs.generic-mapping-tools.org/latest/grdimage.html#c)"
+    (http://docs.generic-mapping-tools.org/latest/grdimage.html#c)"
 
-const opt_J = "**J** : **proj** : -- ::String --
+const opt_J = "**J** | **proj** : [Type => String]
 
     Select map projection. Defaults to 12x8 cm with linear (non-projected) maps.
-    [`-J`](http://docs.generic-mapping-tools.org/latest/gmt.html#j-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#j-full)"
 
-const opt_Jz = "**Jz** : **z_axis** : -- ::String --
+const opt_Jz = "**Jz** | **z_axis** : [Type => String]
 
     Set z-axis scaling. 
-    [`-Jz`](http://docs.generic-mapping-tools.org/latest/gmt.html#jz-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#jz-full)"
 
-const opt_R = "**R** : **region** : **limits** : -- Str or list or GMTgrid|image --		``Flags = xmin/xmax/ymin/ymax[+r][+uunit]``
+const opt_R = "**R** | **region** | **limits** : [Type => Str or list or GMTgrid|image]		``Arg = (xmin,xmax,ymin,ymax)``
 
     Specify the region of interest. Set to data minimum BoundinBox if not provided.
-    [`-R`](http://docs.generic-mapping-tools.org/latest/gmt.html#r-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#r-full)"
 
-const opt_B = "**B** : **axis** : -- Str -- 
+const opt_B = "**B** | **axis** : [Type => Str] 
 
     Set map boundary frame and axes attributes.
-    [`-B`](http://docs.generic-mapping-tools.org/latest/gmt.html#b-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#b-full)"
 
-const opt_P = "**P** : **portrait** : --- Bool or [] --
+const opt_P = "**P** | **portrait** : [Type => Bool or []]
 
     Tell GMT to **NOT** draw in portriat mode (that is, make a Landscape plot)"
 
-const opt_U = "**U** : **stamp** : -- Str or Bool or [] --	`Flags = [[just]/dx/dy/][c|label]`
+const opt_U = "**U** | **stamp** : [Type => Str or Bool or []]	``Arg = [[just]/dx/dy/][c|label]``
 
     Draw GMT time stamp logo on plot.
-    [`-U`](http://docs.generic-mapping-tools.org/latest/gmt.html#u-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#u-full)"
 
-const opt_V = "**V** : **verbose** : -- Bool or Str --		``Flags = [level]``
+const opt_V = "**V** | **verbose** : [Type => Bool or Str]		``Arg = [level]``
 
     Select verbosity level, which will send progress reports to stderr.
-    [`-V`](http://docs.generic-mapping-tools.org/latest/gmt.html#v-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#v-full)"
 
-const opt_X = "**X** : **x_offset** : -- Str --     ``Flags = [a|c|f|r][x-shift[u]]``" 
+const opt_X = "**X** | **x_offset** : [Type => Str]     ``Arg = [a|c|f|r][x-shift[u]]``" 
 
-const opt_Y = "**Y** : **y_offset** : -- Str --     ``Flags = [a|c|f|r][y-shift[u]]``
+const opt_Y = "**Y** | **y_offset** : [Type => Str]     ``Arg = [a|c|f|r][y-shift[u]]``
 
     Shift plot origin relative to the current origin by (x-shift,y-shift) and optionally
     append the length unit (c, i, or p). 
-    [`-Y`](http://docs.generic-mapping-tools.org/latest/gmt.html#xy-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#xy-full)"
 
-const opt_a = "**a** : **aspatial** : -- Str --			``Flags = [col=]name[…]``
+const opt_a = "**a** | **aspatial** : [Type => Str]			``Arg = [col=]name[…]``
 
     Control how aspatial data are handled in GMT during input and output.
-    [`-a`](http://docs.generic-mapping-tools.org/latest/gmt.html#aspatial-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#aspatial-full)"
 
-const opt_b = "**b** : **binary** : -- Str --
+const opt_b = "**b** | **binary** : [Type => Str]
 
-    [`-b`](http://docs.generic-mapping-tools.org/latest/gmt.html#b-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#b-full)"
 
-const opt_bi = "**bi** : **binary_in** : -- Str --			``Flags = [ncols][type][w][+L|+B]``
+const opt_bi = "**bi** | **binary_in** : [Type => Str]			``Arg = [ncols][type][w][+L|+B]``
 
     Select native binary format for primary input (secondary inputs are always ASCII).
-    [`-bi`](http://docs.generic-mapping-tools.org/latest/gmt.html#bi-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#bi-full)"
 
-const opt_bo = "**bo** : **binary_out** : -- Str --			``Flags = [ncols][type][w][+L|+B]``
+const opt_bo = "**bo** | **binary_out** : [Type => Str]			``Arg = [ncols][type][w][+L|+B]``
 
     Select native binary output.
-    [`-bo`](http://docs.generic-mapping-tools.org/latest/gmt.html#bo-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#bo-full)"
 
-const opt_c = "**c** : **nodata** : -- Str --				``Flags = row,col``
+const opt_c = "**c** | **nodata** : [Type => Str]				``Arg = row,col``
 
     Used to advance to the selected subplot panel. Only allowed when in subplot mode.
-    [`-c`](http://docs.generic-mapping-tools.org/latest/gmt.html#c-full)"
+    http://docs.generic-mapping-tools.org/latest/gmt.html#c-full)"
 
-const opt_d = "**d** : **nodata** : -- Str or Number --		``Flags = [i|o]nodata``
+const opt_d = "**d** | **nodata** : [Type => Str or Number]		``Arg = [i|o]nodata``
 
     Control how user-coded missing data values are translated to official NaN values in GMT.
-    [`-d`](http://docs.generic-mapping-tools.org/latest/gmt.html#d-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#d-full)"
 
-const opt_di = "**di** : **nodata_in** : -- Str or Number --      ``Flags = nodata``
+const opt_di = "**di** | **nodata_in** : [Type => Str or Number]      ``Arg = nodata``
 
     Examine all input columns and if any item equals nodata we interpret this value as a
     missing data item and substitute the value NaN.
-    [`-di`](http://docs.generic-mapping-tools.org/latest/gmt.html#di-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#di-full)"
 
-const opt_do = "**do** : **nodata_out** : -- Str or Number --     ``Flags = nodata``
+const opt_do = "**do** | **nodata_out** : [Type => Str or Number]     ``Arg = nodata``
 
     Examine all output columns and if any item equals NAN substitute it with
     the chosen missing data value.
-    [`-do`](http://docs.generic-mapping-tools.org/latest/gmt.html#do-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#do-full)"
 
-const opt_e = "**e** : **pattern** : -- Str --        ``Flags = [~]”pattern” | -e[~]/regexp/[i]``
+const opt_e = "**e** | **pattern** : [Type => Str]        ``Arg = [~]”pattern” | -e[~]/regexp/[i]``
 
     Only accept ASCII data records that contains the specified pattern.
-    [`-e`](http://docs.generic-mapping-tools.org/latest/gmt.html#e-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#e-full)"
 
-const opt_f = "**f** : **colinfo** : -- Str --        ``Flags = [i|o]colinfo``
+const opt_f = "**f** | **colinfo** : [Type => Str]        ``Arg = [i|o]colinfo``
 
     Specify the data types of input and/or output columns (time or geographical data).
-    [`-f`](http://docs.generic-mapping-tools.org/latest/gmt.html#f-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#f-full)"
 
-const opt_g = "**g** : **gaps** : -- Str --           ``Flags = [a]x|y|d|X|Y|D|[col]z[+|-]gap[u]``
+const opt_g = "**g** | **gaps** : [Type => Str]           ``Arg = [a]x|y|d|X|Y|D|[col]z[+|-]gap[u]``
 
     Examine the spacing between consecutive data points in order to impose breaks in the line.
-    [`-g`](http://docs.generic-mapping-tools.org/latest/gmt.html#g-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#g-full)"
 
-const opt_h = "**h** : **header** : -- Str --        ``Flags = [i|o][n][+c][+d][+rremark][+ttitle]``
+const opt_h = "**h** | **header** : [Type => Str]        ``Arg = [i|o][n][+c][+d][+rremark][+ttitle]``
 
     Primary input file(s) has header record(s).
-    [`-h`](http://docs.generic-mapping-tools.org/latest/gmt.html#h-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#h-full)"
 
-const opt_i = "**i** : **incol** : -- Str --      ``Flags = cols[+l][+sscale][+ooffset][,…]``
+const opt_i = "**i** | **incol** : [Type => Str]      ``Arg = cols[+l][+sscale][+ooffset][,…]``
 
     Select specific data columns for primary input, in arbitrary order.
-    [`-i`](http://docs.generic-mapping-tools.org/latest/gmt.html#icols-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#icols-full)"
 
-const opt_j = "**j** : **cart_dist** : -- Str --     ``Flags = e|f|g``
+const opt_j = "**j** | **cart_dist** : [Type => Str]     ``Arg = e|f|g``
 
     Determine how spherical distances are calculated in modules that support this.
-    [`-j`](http://docs.generic-mapping-tools.org/latest/gmt.html#j-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#j-full)"
 
-const opt_n = "**n** : **interp** : **interpol** : -- Str --         ``Flags = [b|c|l|n][+a][+bBC][+c][+tthreshold]``
+const opt_n = "**n** | **interp** | **interpol** : [Type => Str]         ``Arg = [b|c|l|n][+a][+bBC][+c][+tthreshold]``
 
     Select grid interpolation mode by adding b for B-spline smoothing, c for bicubic interpolation,
     l for bilinear interpolation, or n for nearest-neighbor value.
-    [`-n`](http://docs.generic-mapping-tools.org/latest/gmt.html#n-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#n-full)"
 
-const opt_o = "**o** : **outcol** : -- Str --     ``Flags = cols[,…]``
+const opt_o = "**o** | **outcol** : [Type => Str]     ``Arg = cols[,…]``
 
     Select specific data columns for primary output, in arbitrary order.
-    [`-o`](http://docs.generic-mapping-tools.org/latest/gmt.html#ocols-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#ocols-full)"
 
-const opt_p = "**p** : **view** : **perspective** : -- Str or List --   `Flags = [x|y|z]azim[/elev[/zlevel]][+wlon0/lat0[/z0]][+vx0/y0]`
+const opt_p = "**p** | **view** | **perspective** : [Type => Str or List]   `Arg = [x|y|z]azim[/elev[/zlevel]][+wlon0/lat0[/z0]][+vx0/y0]`
 
     Selects perspective view and sets the azimuth and elevation of the viewpoint [180/90].
-    [`-p`](http://docs.generic-mapping-tools.org/latest/gmt.html#perspective-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#perspective-full)"
 
-const opt_r = "**r** : **reg** : **registration** : -- Bool or [] --
+const opt_r = "**r** | **reg** | **registration** : [Type => Bool or []]
 
     Force pixel node registration [Default is gridline registration].
-    [`-r`](http://docs.generic-mapping-tools.org/latest/gmt.html#r-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#r-full)"
 
-const opt_s = "**s** : **skip_NaN** : -- Str --       ``Flags = [cols][a|r]``
+const opt_s = "**s** | **skip_NaN** : [Type => Str]       ``Arg = [cols][a|r]``
 
     Suppress output for records whose z-value equals NaN.
-    [`-s`](http://docs.generic-mapping-tools.org/latest/gmt.html#s-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#s-full)"
 
-const opt_t = "**t** : **alpha** : **transparency** : -- Str --   ``Flags = transp``
+const opt_t = "**t** | **alpha** | **transparency** : [Type => Str]   ``Arg = transp``
 
     Set PDF transparency level for an overlay, in (0-100] percent range. [Default is 0, i.e., opaque].
-    [`-t`](http://docs.generic-mapping-tools.org/latest/gmt.html#t-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#t-full)"
 
-const opt_x = "**x** : **cores** : **n_threads** : -- Str or Number --  ``Flags = [[-]n]``
+const opt_x = "**x** | **cores** | **n_threads** : [Type => Str or Number]  ``Arg = [[-]n]``
 
     Limit the number of cores to be used in any OpenMP-enabled multi-threaded algorithms.
-    [`-x`](http://docs.generic-mapping-tools.org/latest/gmt.html#x-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#x-full)"
 
-const opt_swap_xy = "**yx** : Str or Bool or [] --     ``Flags = [i|o]``
+const opt_swap_xy = "**yx** : [Type => Str or Bool or []]     ``Arg = [i|o]``
 
     Swap 1st and 2nd column on input and/or output.
-    [`-:`](http://docs.generic-mapping-tools.org/latest/gmt.html#colon-full)"
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#colon-full)"
 
-const opt_write = "**write** : **|>** : Str --     ``Flags = fname``
+const opt_write = "**write** | **|>** : [Type => Str]     ``Arg = fname``
 
     Save result to ASCII file instead of returning to a Julia variable. Give file name as argument.
     Use the bo option to save as a binary file."
 
-const opt_append = "**append** : Str --     ``Flags = fname``
+const opt_append = "**append** : [Type => Str]     ``Arg = fname``
 
     Append result to an existing file named ``fname`` instead of returning to a Julia variable.
     Use the bo option to save as a binary file."
