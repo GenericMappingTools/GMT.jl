@@ -187,7 +187,7 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 	return cmd, opt_J
 end
 
-function helper_append_figsize(d, opt_J, O)
+function helper_append_figsize(d::Dict, opt_J::String, O::Bool)
 	val, symb = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])
 	if (val === nothing)  return ""  end
 	val = arg2str(val)
@@ -205,7 +205,7 @@ function helper_append_figsize(d, opt_J, O)
 	return opt_J
 end
 
-function append_figsize(d, opt_J, width="", scale=false)
+function append_figsize(d::Dict, opt_J::String, width="", scale=false)
 	# Appending either a fig width or fig scale depending on what projection.
 	# Sometimes we need to separate with a '/' others not. If WIDTH == "" we
 	# use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
@@ -264,7 +264,7 @@ function build_opt_J(Val)
 	return out, mnemo
 end
 
-function auto_JZ(cmd)
+function auto_JZ(cmd::String)
 	# Add the -JZ option to modules that should not need it (e.g. pscoast) when used after a
 	# -R with 6 elements. Without this a simple -J fails with a complain that ... -JZ is needed
 	if (GMTver < 6 && current_view !== nothing && !occursin("-JZ", cmd) && !occursin("-Jz", cmd))
@@ -453,7 +453,7 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_BJR(d::Dict, cmd::String, caller, O, defaultJ="", del=false)
+function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ="", del=false)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(cmd, d, O, del)
 	cmd, opt_J = parse_J(cmd, d, defaultJ, true, O, del)
@@ -651,7 +651,7 @@ function parse_helper(cmd::String, d::Dict, symbs, opt::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_common_opts(d, cmd, opts, first=true)
+function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first=true)
 	global current_view
 	opt_p = nothing
 	for opt in opts
@@ -704,7 +704,7 @@ function parse_common_opts(d, cmd, opts, first=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_these_opts(cmd, d, opts)
+function parse_these_opts(cmd::String, d::Dict, opts)
 	# Parse a group of options that individualualy would had been parsed as (example):
 	# cmd = add_opt(cmd, 'A', d, [:A :horizontal])
 	for opt in opts
@@ -1141,7 +1141,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=noth
 	return cmd, arg1, arg2, N_args
 end
 # ---------------------
-function helper_add_cpt(cmd, opt, N_args, arg1, arg2, val, store)
+function helper_add_cpt(cmd::String, opt, N_args, arg1, arg2, val, store)
 	# Helper function to avoid repeating 3 times the same code in add_opt_cpt
 	(N_args == 0) ? arg1 = val : arg2 = val;	N_args += 1
 	if (store)  global current_cpt = val  end
@@ -1173,7 +1173,7 @@ function add_opt_fill(cmd::String, d::Dict, symbs, opt="")
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2=nothing, arg3=nothing, prog="")
+function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname, arg1, arg2=nothing, arg3=nothing, prog="")
 	# Get CPT either from keyword input of from current_cpt.
 	# Also puts -R in cmd when accessing grids from grdimage|view|contour, etc... (due to a GMT bug that doesn't do it)
 	# Used CMD0 = "" to use this function from within non-grd modules
@@ -1700,7 +1700,7 @@ function vector4_attrib(; kwargs...)
 end
 
 # -----------------------------------
-function helper_vec_loc(d, symb, cmd)
+function helper_vec_loc(d::Dict, symb, cmd::String)
 	# Helper function to the 'begin', 'middle', 'end' vector attrib function
 	t = string(d[symb])
 	if     (t == "line"      )	cmd *= "t"
@@ -1912,7 +1912,7 @@ function fname_out(d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function read_data(d::Dict, fname::String, cmd, arg, opt_R="", opt_i="", is3D=false)
+function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", opt_i="", is3D=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
 	global IamModern
@@ -2192,7 +2192,7 @@ function put_in_slot(cmd::String, val, opt::Char, args)
 end
 
 ## ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd, opt_extra, K::Bool, O::Bool, finish::Bool, args...)
+function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
 	
@@ -2344,7 +2344,7 @@ function digests_legend_bag(d::Dict)
 end
 
 # --------------------------------------------------------------------------------------------------
-function scan_opt(cmd, opt)
+function scan_opt(cmd::String, opt::String)
 	# Scan the CMD string for the OPT option. Note OPT mut be a 2 chars -X GMT option.
 	out = ""
 	if ((ind = findfirst(opt, cmd)) !== nothing)  out, = strtok(cmd[ind[1]+2:end])  end
@@ -2352,7 +2352,7 @@ function scan_opt(cmd, opt)
 end
 
 # --------------------------------------------------------------------------------------------------
-function break_pen(pen)
+function break_pen(pen::AbstractString)
 	# Break a pen string in its form thick,color,style into its constituints
 	# Absolutely minimalist. Will fail if -Wwidth,color,style pattern is not followed.
 
