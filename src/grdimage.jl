@@ -8,39 +8,39 @@ Full option list at [`grdimage`](http://gmt.soest.hawaii.edu/doc/latest/grdimage
 Parameters
 ----------
 
-- **A** : **img_out** : **image_out** : -- Str --
+- **A** | **img_out** | **image_out** : [Type => Str]
 
     Save an image in a raster format instead of PostScript.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#a)
+    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#a)
 - $(GMT.opt_J)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
-- **D** : **img_in** : **image_in** : -- Str or [] --
+- **D** | **img_in** | **image_in** : [Type => Str]
 
     Specifies that the grid supplied is an image file to be read via GDAL.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#d)
-- **E** : **dpi** : -- Int or [] --  
+    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#d)
+- **E** | **dpi** : [Type => Int]
 
     Sets the resolution of the projected grid that will be created.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#e)
-- **G** : -- Str or Int --
+    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#e)
+- **G** : [Type => Int]
 
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#g)
-- **I** : **shade** : **intensity** : -- Str or GMTgrid --
+    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#g)
+- **I** | **shade** | **intensity** : [Type => Bool | Str | GMTgrid]
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#i)
-- **M** : **monochrome** : -- Bool or [] --
+    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#i)
+- **M** | **monochrome** : [Type => Bool]
 
     Force conversion to monochrome image using the (television) YIQ transformation.
-    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#m)
-- **N** : **noclip** : -- Bool or [] --
+    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#m)
+- **N** | **noclip** : [Type => Bool]
 
     Do not clip the image at the map boundary.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#n)
+    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#n)
 - $(GMT.opt_P)
-- **Q** : **nan_t** : **nan_alpha** : -- Bool or [] --
+- **Q** | **nan_t** | **nan_alpha** : [Type => Bool]
 
     Make grid nodes with z = NaN transparent, using the colormasking feature in PostScript Level 3.
 - $(GMT.opt_R)
@@ -91,7 +91,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_shade(d, cmd, arg1, arg2, arg3, arg4, prog)
+function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 	# Used both by grdimage and grdview
 	if ((val = find_in_dict(d, [:I :shade :intensity])[1]) !== nothing)
 		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier

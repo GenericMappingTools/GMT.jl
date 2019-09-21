@@ -372,7 +372,7 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function GMT_IJP(row::Integer, col, mx, padTop, padLeft)
+function GMT_IJP(row::Integer, col::Integer, mx, padTop, padLeft)
 # Function for indecing into a GMT grid [with pad]
 # padTop (hdr.pad[GMT.GMT_YHI]) and padLeft (hdr.pad[GMT.GMT_XLO]) are normally equal
 	#ij = (row + padTop) * mx + col + padLeft		# in C
@@ -380,7 +380,7 @@ function GMT_IJP(row::Integer, col, mx, padTop, padLeft)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function MEXG_IJ(row, col, ny)
+function MEXG_IJ(row::Integer, col::Integer, ny)
 	# Get the ij that corresponds to (row,col) [no pad involved]
 	#ij = col * ny + ny - row - 1		in C
 	ij = col * ny - row + 1
