@@ -30,7 +30,7 @@ const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like pro
 const def_fig_axes3 = " -Baf -Bza -BWSenZ"  #		"" but for 3D views
 
 export
-	FMT, gmt,
+	GMTver, FMT, gmt,
 	arrows, arrows!, bar, bar!, bar3, bar3!, lines, lines!, legend, legend!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
 	contour, contour!, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
