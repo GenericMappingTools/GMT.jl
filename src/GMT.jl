@@ -30,7 +30,7 @@ const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like pro
 const def_fig_axes3 = " -Baf -Bza -BWSenZ"  #		"" but for 3D views
 
 export
-	GMTver, FMT, gmt,
+	FMT, gmt,
 	arrows, arrows!, bar, bar!, bar3, bar3!, lines, lines!, legend, legend!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
 	contour, contour!, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
@@ -146,6 +146,17 @@ if (!foundGMT)
 		println("\t\t https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download")
 	else
 		println("https://gmt.soest.hawaii.edu/projects/gmt/wiki/BuildingGMT")
+	end
+end
+
+function __init__()
+	ver = Meta.parse(readlines(`gmt --version`)[1][1:3])
+	if (ver != GMTver)
+		println("\n\tYou seem to have changed your installed GMT version. Current version")
+		println("\treports to be $ver but previously it was $GMTver. To fix this you need to")
+		println("\tmake sure that GMT.jl recompiles again, otherwise fatal errors will occur.")
+		t = joinpath(@__DIR__, "deps", "GMT.jl")
+		println("\tA dirty way to force that is to make an irrelevant change in (and revert it after)\n\t$t")
 	end
 end
 
