@@ -149,4 +149,15 @@ if (!foundGMT)
 	end
 end
 
+function __init__()
+	ver = Meta.parse(readlines(`gmt --version`)[1][1:3])
+	if (ver != GMTver)
+		println("\n\tYou seem to have changed your installed GMT version. Current version")
+		println("\treports to be $ver but previously it was $GMTver. To fix this you need to")
+		println("\tmake sure that GMT.jl recompiles again, otherwise fatal errors will occur.")
+		t = joinpath(@__DIR__, "deps", "GMT.jl")
+		println("\tA dirty way to force that is to make an irrelevant change in (and revert it after)\n\t$t")
+	end
+end
+
 end # module
