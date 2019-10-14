@@ -11,18 +11,18 @@ Parameters
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
-- **C** : **clearance** : -- Str --
+- **C** | **clearance** : [Type => Str]
 
     Sets the clearance between the legend frame and the internal items [4p/4p].
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#c)
-- **D** : **refpoint** : -- Str --  `Flags=[g|j|J|n|x]refpoint+wwidth[/height][+jjustify][+lspacing][+odx[/dy]]`
+    (http://gmt.soest.hawaii.edu/doc/latest/pstext.html#c)
+- **D** | **refpoint** | **pos** | **position** : [Type => Str]  `Arg=[g|j|J|n|x]refpoint+wwidth[/height][+jjustify][+lspacing][+odx[/dy]]`
 
     Defines the reference point on the map for the legend using one of four coordinate systems.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#d)
-- **F** : **box** : -- Str or number --   `Flags=[+cclearances][+gfill][+i[[gap/]pen]][+p[pen]][+r[radius]][+s[[dx/dy/][shade]]]`
+    (http://gmt.soest.hawaii.edu/doc/latest/pstext.html#d)
+- **F** | **box** : [Type => Str | Number]   `Arg=[+cclearances][+gfill][+i[[gap/]pen]][+p[pen]][+r[radius]][+s[[dx/dy/][shade]]]`
 
     Without further options, draws a rectangular border around the legend using *MAP_FRAME_PEN*.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#f)
+    (http://gmt.soest.hawaii.edu/doc/latest/pstext.html#f)
 - $(GMT.opt_Jz)
 - $(GMT.opt_P)
 - $(GMT.opt_U)

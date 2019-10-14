@@ -3,41 +3,41 @@
 
 Time domain filtering of 1-D data tables.
 
-Full option list at [`filter1d`](http://gmt.soest.hawaii.edu/doc/latest/filter1d.html)
+Full option list at [`filter1d`]($(GMTdoc)filter1d.html)
 
 Parameters
 ----------
 
-- **F** : **filter_type** : -- Str --   Flags = type width[modifiers]
+- **F** | **filter_type** : [Type => Str]   `Arg = type width[modifiers]`
 
     Sets the filter type. Choose among convolution and non-convolution filters. Append the
     filter code followed by the full filter width in same units as time column.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/filter1d.html#f)
-- **D** : **inc** : -- Number --        Flags = increment
+    ($(GMTdoc)filter1d.html#f)
+- **D** | **inc** : [Type => Number]        `Arg = increment`
 
     ``increment`` is used when series is NOT equidistantly sampled. Then increment will be the abscissae resolution.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/filter1d.html#d)
-- **E** : **ends** : -- Bool or [] --
+    ($(GMTdoc)filter1d.html#d)
+- **E** | **ends** : [Type => Bool | []]
 
     Include Ends of time series in output. Default loses half the filter-width of data at each end.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/filter1d.html#e)
-- **N** : **time_col** : -- Int --      Flags = t_col
+    ($(GMTdoc)filter1d.html#e)
+- **N** | **time_col** : [Type => Int]      `Arg = t_col`
 
     Indicates which column contains the independent variable (time). The left-most column
     is # 0, the right-most is # (n_cols - 1). [Default is 0].
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/filter1d.html#n)
-- **Q** : **quality** : -- Number --    Flags = q_factor
+    ($(GMTdoc)filter1d.html#n)
+- **Q** | **quality** : [Type => Number]    `Arg = q_factor`
 
     Assess Quality of output value by checking mean weight in convolution. Enter q_factor between 0 and 1.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/filter1d.html#q)
-- **S** : **symetry** : -- Number --    Flags = symmetry_factor
+    ($(GMTdoc)filter1d.html#q)
+- **S** | **symetry** : [Type => Number]    `Arg = symmetry_factor`
 
     Checks symmetry of data about window center. Enter a factor between 0 and 1.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/filter1d.html#s)
-- **T** : **equi_space** : -- List or Str --     Flags = [min/max/]inc[+a|n]
+    ($(GMTdoc)filter1d.html#s)
+- **T** | **equi_space** : [Type => List | Str]     `Arg = [min/max/]inc[+a|n]`
 
     Make evenly spaced time-steps from min to max by inc [Default uses input times].
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/filter1d.html#t)
+    ($(GMTdoc)filter1d.html#t)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)

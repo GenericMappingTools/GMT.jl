@@ -6,6 +6,7 @@ Grid type
     type GMTgrid                  # The type holding a local header and data of a GMT grid
        proj4::String              # Projection string in PROJ4 syntax (Optional)
        wkt::String                # Projection string in WKT syntax (Optional)
+       epsg::Int                  # EPSG code
        range::Array{Float64,1}    # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
        inc::Array{Float64,1}      # 1x2 vector with [x_inc y_inc]
        registration::Int          # Registration type: 0 -> Grid registration; 1 -> Pixel registration
@@ -29,13 +30,12 @@ Image type
     type GMTimage                 # The type holding a local header and data of a GMT image
        proj4::String              # Projection string in PROJ4 syntax (Optional)
        wkt::String                # Projection string in WKT syntax (Optional)
+       epsg::Int                  # EPSG code
        range::Array{Float64,1}    # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
        inc::Array{Float64,1}      # 1x2 vector with [x_inc y_inc]
        registration::Int          # Registration type: 0 -> Grid registration; 1 -> Pixel registration
        nodata::Float64            # The value of nodata
-       title::String              # Title (Optional)
-       comment::String            # Remark (Optional)
-       command::String            # Command used to create the image (Optional)
+       color_interp::String       # If equal to "Gray" an indexed image with no cmap will get a gray cmap
        datatype::String           # 'uint8' or 'int8' (needs checking)
        x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates
        y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates

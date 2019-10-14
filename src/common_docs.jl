@@ -119,6 +119,11 @@ const opt_j = "**j** | **cart_dist** : [Type => Str]     ``Arg = e|f|g``
     Determine how spherical distances are calculated in modules that support this.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#j-full)"
 
+const opt_l = "**l** | **legend** : [Type => Str]     ``Arg = [label][+dpen][+ffont][+ggap][+hheader][+jjust][+ncols][+ssize][+v[pen]][+wwidth][+xscale``
+
+    Add a map legend entry to the session legend information file for the current plot.
+    ($(GMTdoc)gmt.html#l-full)"
+
 const opt_n = "**n** | **interp** | **interpol** : [Type => Str]         ``Arg = [b|c|l|n][+a][+bBC][+c][+tthreshold]``
 
     Select grid interpolation mode by adding b for B-spline smoothing, c for bicubic interpolation,

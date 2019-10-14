@@ -3,35 +3,36 @@
 
 Calculate and plot the day-night terminator and the civil, nautical and astronomical twilights.
 
+Full option list at [`solar`]($(GMTdoc)solar.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_J)
 - $(GMT.opt_B)
-- **C** : **formated** : -- ::Bool --
+- **C** | **formated** : [Type => Bool]
 
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#c)
-- **G** : **fill** : -- Number or Str --
+    ($(GMTdoc)solar.html#c)
+- **G** | **fill** : [Type => Str | Number]
 
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#g)
-- **I** : **sun** : -- ::Bool or ::Tuple or ::NamedTuple --
+    ($(GMTdoc)solar.html#g)
+- **I** | **sun** : [Type => Bool | Tuple | NamedTuple]
 
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#i)
+    ($(GMTdoc)solar.html#i)
 - $(GMT.opt_P)
-- **M** : **dump** : -- ::Bool --
+- **M** | **dump** : [Type => Bool]
 
-    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#M)
+    ($(GMTdoc)solar.html#m)
 - $(GMT.opt_R)
-- **N** : **invert** : -- ::Bool --
+- **N** | **invert** : [Type => Bool]
 
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#n)
-- **T** : **terminators** : -- ::Bool or ::Tuple or ::NamedTuple --
+    ($(GMTdoc)solar.html#n)
+- **T** | **terminators** : [Type => Bool | Tuple | NamedTuple]
 
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#t)
-- **W** : **pen** : -- Str or tuple --
+    ($(GMTdoc)solar.html#t)
+- **W** | **pen** : [Type => Str | Tuple]
 
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/pssolar.html#w)
+    ($(GMTdoc)solar.html#w)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -41,9 +42,6 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
-
-[`Full man page`](https://genericmappingtools.github.io/GMT.jl/latest/solar/)
-[`GMT man page`](http://gmt.soest.hawaii.edu/doc/latest/solar.html)
 """
 function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

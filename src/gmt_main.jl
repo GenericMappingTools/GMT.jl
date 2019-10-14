@@ -1,6 +1,7 @@
 mutable struct GMTgrid 	# The type holding a local header and data of a GMT grid
 	proj4::String
 	wkt::String
+	epsg::Int
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
 	registration::Int
@@ -21,13 +22,12 @@ end
 mutable struct GMTimage 	# The mutable struct holding a local header and data of a GMT image
 	proj4::String
 	wkt::String
+	epsg::Int
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
 	registration::Int
 	nodata::Float64
-	title::String
-	remark::String
-	command::String
+	color_interp::String
 	datatype::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
@@ -444,7 +444,7 @@ function get_grid(API::Ptr{Nothing}, object)
 	#t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
 
 	# Return grids via a float matrix in a struct
-	out = GMTgrid("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y, z, "", "", "", "")
+	out = GMTgrid("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y, z, "", "", "", "")
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT != C_NULL)    out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)      end
@@ -484,19 +484,18 @@ function get_image(API::Ptr{Nothing}, object)
 
 	is4bytes = false
 	if (occursin("0", img_mem_layout) || occursin("1", img_mem_layout))
-		t  = unsafe_wrap(Array, I.data, ny * nx * nz)
+		t  = deepcopy(unsafe_wrap(Array, I.data, ny * nx * nz))
 		is4bytes = true
 	#elseif (occursin("TCP", img_mem_layout))		# BIP case for Images.jl
 	elseif (img_mem_layout != "" && img_mem_layout[3] == 'P')	# Like the "TCP" BIP case for Images.jl
-		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), nz, ny, nx)
+		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), nz, ny, nx)	# Apparently the reshape() creates a copy as we need
 	else
 		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), ny, nx, nz)
 	end
 
 	if (I.colormap != C_NULL)       # Indexed image has a color map (PROBABLY NEEDS TRANSPOSITION)
 		n_colors = Int64(I.n_indexed_colors)
-		colormap = unsafe_wrap(Array, I.colormap, n_colors * 4)
-		#colormap = reshape(colormap, 4, n_colors)'
+		colormap =  deepcopy(unsafe_wrap(Array, I.colormap, n_colors * 4))
 	else
 		colormap = vec(zeros(Clong,1,3))	# Because we need an array
 		n_colors = 0
@@ -505,13 +504,13 @@ function get_image(API::Ptr{Nothing}, object)
 	# Return image via a uint8 matrix in a struct
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	if (is4bytes)
-		out = GMTimage("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
+		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", X, Y,
 	                      t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
 	elseif (gmt_hdr.n_bands <= 3)
-		out = GMTimage("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
+		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", X, Y,
 	                      t, "", "", "", colormap, n_colors, zeros(UInt8,ny,nx), layout) 	# <== Ver o que fazer com o alpha
 	else 			# RGB(A) image
-		out = GMTimage("", "", zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y,
+		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", X, Y,
 	                      t[:,:,1:3], "", "", "", colormap, n_colors, t[:,:,4], layout)
 	end
 	if (GMTver < 6)
@@ -773,10 +772,8 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr)
 
 	if (X.family == GMT_IS_GRID)			# Get a grid from Julia or a dummy one to hold GMT output
 		X.object =  grid_init(API, module_input, ptr, X.direction)
-		GMT_Report(API, GMT_MSG_DEBUG, "GMTJL_Set_Object: Got Grid\n")
 	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Julia or a dummy one to hold GMT output
 		X.object = image_init(API, module_input, ptr, X.direction)
-		GMT_Report(API, GMT_MSG_DEBUG, "GMTJL_Set_Object: Got Image\n");
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
 		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
 		if (GMTver < 6.0 && X.direction == GMT_IN && (isa(ptr, Array{Any}) || (eltype(ptr) == String)))	# Got text input
@@ -789,15 +786,12 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr)
 		X.family = actual_family[1]
 	elseif (X.family == GMT_IS_TEXTSET)		# Get a textset from Julia or a dummy one to hold GMT output
 		X.object = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
-		GMT_Report(API, GMT_MSG_DEBUG, "GMTJL_Set_Object: Got TEXTSET\n")
 	elseif (X.family == GMT_IS_PALETTE)		# Get a palette from Julia or a dummy one to hold GMT output
 		X.object = palette_init(API, module_input, ptr, X.direction)
-		GMT_Report(API, GMT_MSG_DEBUG, "GMTJL_Set_Object: Got CPT\n")
 	elseif (X.family == GMT_IS_POSTSCRIPT)	# Get a PostScript struct from Matlab or a dummy one to hold GMT output
 		X.object = ps_init(API, module_input, ptr, X.direction)
-		GMT_Report(API, GMT_MSG_DEBUG, "GMTJL_Set_Object: Got POSTSCRIPT\n")
 	else
-		GMT_Report(API, GMT_MSG_NORMAL, @sprintf("GMTJL_Set_Object: Bad data type (%d)\n", X.family))
+		error(@sprintf("GMTJL_Set_Object: Bad data type (%d)\n", X.family))
 	end
 	if (X.object == NULL)	error("GMT: Failure to register the resource")	end
 
@@ -860,7 +854,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function grid_init(API::Ptr{Nothing}, module_input, Grid, grd, hdr, pad::Int=2)
-# We are given a Julia grid and can determine its size, etc.
+# We are given a Julia grid and use it to fill the GMT_GRID structure
 
 	if (isa(Grid, Array{GMT.GMTgrid,1}))  Grid = Grid[1]  end
 	if (isa(Grid, GMTgrid))
@@ -899,6 +893,13 @@ function grid_init(API::Ptr{Nothing}, module_input, Grid, grd, hdr, pad::Int=2)
 		end
 	end
 
+	if (Grid.title != "")    h.title   = map(UInt8, (Grid.title...,))    end
+	if (Grid.remark != "")   h.remark  = map(UInt8, (Grid.remark...,))   end
+	if (Grid.command != "")  h.command = map(UInt8, (Grid.command...,))  end
+	if (Grid.proj4 != "")    h.ProjRefPROJ4 = pointer(Grid.proj4)  end
+	if (Grid.wkt != "")      h.ProjRefWKT   = pointer(Grid.wkt)    end
+	if (Grid.epsg != 0)      h.ProjRefEPSG  = Int32(Grid.epsg)     end
+
 	unsafe_store!(Gb.header, h)
 	unsafe_store!(G, Gb)
 
@@ -921,17 +922,13 @@ function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_I
 		return I
 	end
 
-	if (isa(img_box, GMTimage))
-		return image_init(API, img_box)
-	else
-		error("image_init: input is not a IMAGE container type")
-	end
+	if (!isa(img_box, GMTimage))  error("image_init: input is not a IMAGE container type")  end
+	return image_init(API, img_box)
 end
 
 # ---------------------------------------------------------------------------------------------------
 function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
-# Used to Create an empty Image container to hold a GMT image.
-# We are given a Julia image and can determine its size, etc.
+# We are given a Julia image and use it to fill the GMT_IMAGE structure
 
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_pages = size(Img.image, 3)
 	dim = pointer([n_cols, n_rows, n_pages])
@@ -942,6 +939,9 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	Ib = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
 
 	Ib.data = pointer(Img.image)
+	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
+	Ib.n_indexed_colors = Img.n_colors
+	if (Img.color_interp != "")  Ib.color_interp = pointer(Img.color_interp)  end
 	if (GMTver < 6)
 		Ib.alloc_mode = UInt32(GMT.GMT_ALLOC_EXTERNALLY)	# Since array was allocated by Julia
 	else
@@ -950,6 +950,10 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	h = unsafe_load(Ib.header)
 	h.z_min = Img.range[5]			# Set the z_min, z_max
 	h.z_max = Img.range[6]
+	h.mem_layout = map(UInt8, (Img.layout...,))
+	if (Img.proj4 != "")    h.ProjRefPROJ4 = pointer(Img.proj4)  end
+	if (Img.wkt != "")      h.ProjRefWKT   = pointer(Img.wkt)    end
+	if (Img.epsg != 0)      h.ProjRefEPSG  = Int32(Img.epsg)     end
 	h.mem_layout = map(UInt8, (Img.layout...,))
 	unsafe_store!(Ib.header, h)
 	unsafe_store!(I, Ib)
@@ -1162,7 +1166,7 @@ function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
 
 	# Dimensions are known from the input pointer
 
-	if (!isa(cpt, GMTcpt))  error("Expected a CPT structure for input")  end
+	if (!isa(cpt, GMTcpt))  error(@sprintf("Expected a CPT structure for input but got a %s", typeof(cpt)))  end
 
 	n_colors = size(cpt.colormap, 1)	# n_colors != n_ranges for continuous CPTs
 	n_ranges = size(cpt.range, 1)
@@ -1640,25 +1644,52 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=noth
 end
 
 # ---------------------------------------------------------------------------------------------------
-function mat2img(mat::Array{UInt8}, proj4::String="", wkt::String="")
-	# Take a 2D array of uint8 and turn it into a GMTimage.  NOT FINISHED YEY
+function mat2img(mat::Array{UInt8}; hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+	# Take a 2D array of uint8 and turn it into a GMTimage.
+	color_interp = "";
+	if (cmap !== nothing)
+		colormap = vec(zeros(Clong,256*4))
+		k = 1
+		for m = 1:size(cmap.colormap,1)
+			for n = 1:3
+				colormap[k] = Int32(round(cmap.colormap[m,n] * 255));	k += 1
+			end
+			k += 1		# Space of the alpha col
+		end
+	else
+		if (size(mat,3) == 1)  color_interp = "Gray"  end
+		colormap = vec(zeros(Clong,1,3))	# Because we need an array
+	end
+
 	nx = size(mat, 2);		ny = size(mat, 1);
-	x  = collect(1:nx);		y = collect(1:ny)
-	colormap = vec(zeros(Clong,1,3))	# Because we need an array
-	I = GMTimage(proj4, wkt, [1.0, nx, 1, ny, minimum(mat), maximum(mat)], [1.0, 1.0], 0, NaN, "", "", "", "",
-	             x,y,mat, "", "", "", colormap, 0, zeros(UInt8,ny,nx), "TRPa")
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, 1, hdr)
+	
+	I = GMTimage(proj4, wkt, 0, hdr, [x_inc, y_inc], 1, NaN, color_interp, "uint8",
+	             x,y,mat, "x", "y", "", colormap, 0, zeros(UInt8,ny,nx), "TRPa")
 end
 
 # ---------------------------------------------------------------------------------------------------
 """
-G = mat2grid(mat, reg=0, hdr=nothing, proj4::String="", wkt::String="")
+G = mat2grid(mat; reg=0, hdr=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="", cmd::String="")
     Take a 2D Z array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax ref xinc yinc] header descriptor
     and return a grid GMTgrid type.
 	Optionaly, the HDR arg may be ommited and it will computed from Z alone, but than x=1:ncol, y=1:nrow
 	When HDR is not used, REG == 0 means create a grid registration grid and REG == 1, a pixel registered grid.
 """
-function mat2grid(mat, reg=0, hdr=nothing, proj4::String="", wkt::String="")
+function mat2grid(mat; reg=0, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
 # Take a 2D array of floats and turn it into a GMTgrid
+
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr)
+	if (!isa(mat, Float32))  z = Float32.(mat)
+	else                     z = mat
+	end
+
+	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg, NaN, tit, rem, cmd, "", x, y, z, "x", "y", "z", "")
+end
+
+# ---------------------------------------------------------------------------------------------------
+function grdimg_hdr_xy(mat, reg, hdr)
+# Generate x,y coors array and compute/update header plus increments for grids/images
 	nx = size(mat, 2);		ny = size(mat, 1);
 
 	if (hdr === nothing)
@@ -1679,19 +1710,14 @@ function mat2grid(mat, reg=0, hdr=nothing, proj4::String="", wkt::String="")
 		x_inc = (hdr[2] - hdr[1]) / (nx - one_or_zero)
 		y_inc = (hdr[4] - hdr[3]) / (ny - one_or_zero)
 	end
-
-	if (!isa(mat, Float32))  z = Float32.(mat)
-	else                     z = mat
-	end
-
-	G = GMTgrid(proj4, wkt, hdr[1:6], [x_inc, y_inc], reg, NaN, "", "", "", "", x, y, z, "x", "y", "z", "")
+	return x, y, hdr, x_inc, y_inc
 end
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:+(G1::GMTgrid, G2::GMTgrid)
 # Add two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z)) error("Grids have different sizes, so they cannot be added.") end
-	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 				 G1.command, G1.datatype, G1.x, G1.y, G1.z .+ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G3.range[5] = minimum(G3.z)
 	G3.range[6] = maximum(G3.z)
@@ -1700,7 +1726,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:+(G1::GMTgrid, shift::Number)
-	G2 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z .+ shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G2.range[5:6] .+= shift
 	return G2
@@ -1711,7 +1737,7 @@ function Base.:-(G1::GMTgrid, G2::GMTgrid)
 # Subtract two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z)) error("Grids have different sizes, so they cannot be subtracted.")
 	end
-	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z .- G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G3.range[5] = minimum(G3.z)
 	G3.range[6] = maximum(G3.z)
@@ -1720,7 +1746,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:-(G1::GMTgrid, shift::Number)
-	G2 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z .- shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G2.range[5:6] .-= shift
 	return G2
@@ -1731,7 +1757,7 @@ function Base.:*(G1::GMTgrid, G2::GMTgrid)
 # Multiply two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z)) error("Grids have different sizes, so they cannot be multiplied.")
 	end
-	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z .* G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G3.range[5] = minimum(G3.z)
 	G3.range[6] = maximum(G3.z)
@@ -1740,7 +1766,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:*(G1::GMTgrid, scale::Number)
-	G2 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z .* scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G2.range[5:6] .*= scale
 	return G2
@@ -1750,7 +1776,7 @@ end
 function Base.:/(G1::GMTgrid, G2::GMTgrid)
 # Divide two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z))  error("Grids have different sizes, so they cannot be divided.")  end
-	G3 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z ./ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G3.range[5] = minimum(G3.z)
 	G3.range[6] = maximum(G3.z)
@@ -1759,7 +1785,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:/(G1::GMTgrid, scale::Number)
-	G2 = GMTgrid(G1.proj4, G1.wkt, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z ./ scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G2.range[5:6] ./= scale
 	return G2

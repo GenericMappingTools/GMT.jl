@@ -127,30 +127,30 @@ When saving grids we have a large panoply of formats at our disposal.
 Parameters
 ----------
 
-- **id** : -- Str --  
+- **id** :  [Type => Str] 
 
     Use an ``id`` code when not not saving a grid into a standard COARDS-compliant netCDF grid. This ``id``
     is made up of two characters like ``ef`` to save in ESRI Arc/Info ASCII Grid Interchange format (ASCII float).
-    See the full list of ids at https://gmt.soest.hawaii.edu/doc/latest/grdconvert.html#format-identifier.
+    See the full list of ids at $(GMTdoc)grdconvert.html#format-identifier.
 
-    [`-G`](https://gmt.soest.hawaii.edu/doc/latest/grdconvert.html#g)
-- **scale** : **offset** -- Number --
+    ($(GMTdoc)grdconvert.html#g)
+- **scale** | **offset** : [Type => Number]
 
     You may optionally ask to scale the data and then offset them with the specified amounts.
     These modifiers are particularly practical when storing the data as integers, by first removing an offset
     and then scaling down the values.
-- **nan** : **novalue** : **invalid** : **missing** -- Number --
+- **nan** | **novalue** | **invalid** | **missing** : [Type => Number]
 
     Lets you supply a value that represents an invalid grid entry, i.e., ‘Not-a-Number’.
-- **gdal** : -- Bool or [] --
+- **gdal** : [Type => Bool]
 
     Force the use of the GDAL library to write the grid (to be used only with grids).
-    [](https://gmt.soest.hawaii.edu/doc/latest/GMT_Docs.html#grid-file-format-specifications)
-- **driver** : -- Str --  
+    ($(GMTdoc)GMT_Docs.html#grid-file-format-specifications)
+- **driver** : [Type => Str]
 
     When saving in other than the netCDF format we must tell the GDAL library what is wished format.
     That is done by specifying the driver name used by GDAL itself (e.g., netCDF, GTiFF, etc...).
-- **datatype** : -- Str --  		Flags = u8|u16|i16|u32|i32|float32
+- **datatype** : [Type => Str] 		Flags = u8|u16|i16|u32|i32|float32
 
     When saving with GDAL we can specify the data type from u8|u16|i16|u32|i32|float32 where ‘i’ and ‘u’ denote
     signed and unsigned integers respectively.

@@ -4,7 +4,7 @@
 Plots text strings of variable size, font type, and orientation. Various map projections are
 provided, with the option to draw and annotate the map boundaries.
 
-Full option list at [`pstext`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html)
+Full option list at [`pstext`]($(GMTdoc)pstext.html)
 
 Parameters
 ----------
@@ -12,56 +12,56 @@ Parameters
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
-- **A** : **azimuths** : -- Bool or [] --
+- **A** | **azimuths** : [Type => Bool]
 
     Angles are given as azimuths; convert them to directions using the current projection.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#a)
-- **C** : **clearance** : -- Str --
+    ($(GMTdoc)text.html#a)
+- **C** | **clearance** : [Type => Str]
 
     Sets the clearance between the text and the surrounding box [15%].
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#c)
-- **D** : **offset** : -- Str --
+    ($(GMTdoc)text.html#c)
+- **D** | **offset** : [Type => Str]
 
     Offsets the text from the projected (x,y) point by dx,dy [0/0].
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#d)
-- **F** : **attrib** : -- Str or Tuple --
+    ($(GMTdoc)text.html#d)
+- **F** | **attrib** : [Type => Str | Tuple]
 
     Specify up to three text attributes (font, angle, and justification).
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#f)
-- **G** : **fill** : -- Number or Str --
+    ($(GMTdoc)text.html#f)
+- **G** | **fill** : [Type => Str | Number]
 
     Sets the shade or color used for filling the text box [Default is no fill].
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#g)
+    ($(GMTdoc)text.html#g)
 - $(GMT.opt_Jz)
-- **L** : **list** : -- Bool or [] --
+- **L** | **list** : [Type => Bool]
 
     Lists the font-numbers and font-names available, then exits.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#l)
-- **M** : **paragraph** : --- Str or [] --
+    ($(GMTdoc)text.html#l)
+- **M** | **paragraph** : [Type => Str | []]
 
     Paragraph mode.
-    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#m)
-- **N** : **noclip** : **no_clip** : --- Str or [] --
+    ($(GMTdoc)text.html#m)
+- **N** | **noclip** : **no_clip** : [Type => Str | []]
 
     Do NOT clip text at map boundaries.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#n)
+    ($(GMTdoc)text.html#n)
 - $(GMT.opt_P)
-- **Q** : **change_case** : --- Str --
+- **Q** | **change_case** : [Type => Str]
 
     Change all text to either lower or upper case.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#q)
-- **T** : **text_box** : --- Str --
+    ($(GMTdoc)text.html#q)
+- **T** | **text_box** : [Type => Str]
 
     Specify the shape of the textbox when using G and/or W.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#t)
-- **W** : **line_attribs** : -- Str --
+    ($(GMTdoc)text.html#t)
+- **W** | **line_attribs** : [Type => Str]
 
     Sets the pen used to draw a rectangle around the text string.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#w)
-- **Z** : **threeD** : -- Str --
+    ($(GMTdoc)text.html#w)
+- **Z** | **threeD** : [Type => Str]
 
     For 3-D projections: expect each item to have its own level given in the 3rd column.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#z)
+    ($(GMTdoc)text.html#z)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

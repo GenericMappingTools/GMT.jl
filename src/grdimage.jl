@@ -3,7 +3,7 @@
 
 Produces a gray-shaded (or colored) map by plotting rectangles centered on each grid node and assigning them a gray-shade (or color) based on the z-value.
 
-Full option list at [`grdimage`](http://gmt.soest.hawaii.edu/doc/latest/grdimage.html)
+Full option list at [`grdimage`]($(GMTdoc)grdimage.html)
 
 Parameters
 ----------
@@ -11,34 +11,34 @@ Parameters
 - **A** | **img_out** | **image_out** : [Type => Str]
 
     Save an image in a raster format instead of PostScript.
-    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#a)
+    ($(GMTdoc)grdimage.html#a)
 - $(GMT.opt_J)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
 - **D** | **img_in** | **image_in** : [Type => Str]
 
     Specifies that the grid supplied is an image file to be read via GDAL.
-    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#d)
+    ($(GMTdoc)grdimage.html#d)
 - **E** | **dpi** : [Type => Int]
 
     Sets the resolution of the projected grid that will be created.
-    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#e)
+    ($(GMTdoc)grdimage.html#e)
 - **G** : [Type => Int]
 
-    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#g)
+    ($(GMTdoc)grdimage.html#g)
 - **I** | **shade** | **intensity** : [Type => Bool | Str | GMTgrid]
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
-    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#i)
+    ($(GMTdoc)grdimage.html#i)
 - **M** | **monochrome** : [Type => Bool]
 
     Force conversion to monochrome image using the (television) YIQ transformation.
-    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#m)
+    ($(GMTdoc)grdimage.html#m)
 - **N** | **noclip** : [Type => Bool]
 
     Do not clip the image at the map boundary.
-    (http://gmt.soest.hawaii.edu/doc/latest/grdimage.html#n)
+    ($(GMTdoc)grdimage.html#n)
 - $(GMT.opt_P)
 - **Q** | **nan_t** | **nan_alpha** : [Type => Bool]
 

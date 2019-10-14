@@ -595,6 +595,7 @@ end
 # ---------------------------------------------------------------------------------
 parse_i(cmd::String, d::Dict) = parse_helper(cmd, d, [:i :incol], " -i")
 parse_j(cmd::String, d::Dict) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
+parse_l(cmd::String, d::Dict) = parse_helper(cmd, d, [:j :legend], " -l")
 
 # ---------------------------------------------------------------------------------
 function parse_n(cmd::String, d::Dict)
@@ -669,6 +670,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first=tr
 		elseif (opt == :h)  cmd, = parse_h(cmd, d)
 		elseif (opt == :i)  cmd, = parse_i(cmd, d)
 		elseif (opt == :j)  cmd, = parse_j(cmd, d)
+		elseif (opt == :l)  cmd, = parse_l(cmd, d)
 		elseif (opt == :n)  cmd, = parse_n(cmd, d)
 		elseif (opt == :o)  cmd, = parse_o(cmd, d)
 		elseif (opt == :p)  cmd, opt_p = parse_p(cmd, d)
@@ -1201,7 +1203,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		if ((val = find_in_dict(d, [:G :drapefile])[1]) !== nothing)
 			if (isa(val, Tuple) && length(val) == 3)  get_cpt = false  end	# Playing safe
 		end
-	elseif (prog == "grdimage" && (isempty_(arg3) && !occursin("-D", cmd)))
+	elseif (prog == "grdimage" && (arg3 === nothing && !occursin("-D", cmd)))
 		get_cpt = true		# This still lieve out the case when the r,g,b were sent as a text.
 	elseif (prog == "grdcontour" || prog == "pscontour")	# Here C means Contours but we cheat, so always check if C, color, ... is present
 		get_cpt = true;		cpt_opt_T = ""		# This is hell. And what if I want to auto generate a cpt?
@@ -2138,7 +2140,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	# OPT_T holds the psconvert -T option, again when not PS
 	# FNAME is for when using the savefig option
 
-	global current_cpt = nothing		# Always reset to empty when fig is finalized
+	#global current_cpt = nothing		# Always reset to empty when fig is finalized
 	global current_view = nothing
 	if (opt_T != "")
 		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end		# Close the PS file first
@@ -2195,7 +2197,7 @@ end
 function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
-	
+
 	output, opt_T, fname_ext, fname, ret_ps = fname_out(d)
 	if (ret_ps)  output = ""  end		# Here we don't want to save to file
 	if (finish) cmd = finish_PS(d, cmd, output, K, O)  end
@@ -2206,9 +2208,18 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
+			if (k > 1 && startswith(cmd[k], "psscale") && !isa(args[1], GMT.GMTcpt))	# Example: imshow(I, cmap=C, colorbar=true)
+				cmd2, arg1, = add_opt_cpt(d, cmd[k], [:C :color :cmap], 'C', 0, nothing, nothing, false, false, "", true)
+				if (arg1 === nothing)
+					@warn("No cmap found to use in colorbar. Ignoring this command.");	continue
+				end
+				P = gmt(cmd[k], arg1)
+				continue
+			end
 			P = gmt(cmd[k], args...)
 		end
 	else
+		#if (IamModern && startswith(cmd, "ps"))  cmd = cmd[3:end]  end
 		P = gmt(cmd, args...)
 	end
 
@@ -2404,7 +2415,7 @@ function peaks(; N=49, grid=true)
 		x = collect(range(-3,stop=3,length=N))
 		y = deepcopy(x)
 		z = Float32.(z)
-		G = GMTgrid("", "", [x[1], x[end], y[1], y[end], minimum(z), maximum(z)], [x[2]-x[1], y[2]-y[1]],
+		G = GMTgrid("", "", 0, [x[1], x[end], y[1], y[end], minimum(z), maximum(z)], [x[2]-x[1], y[2]-y[1]],
 					0, NaN, "", "", "", "", x, y, z, "x", "y", "z", "")
 		return G
 	else

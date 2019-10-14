@@ -3,24 +3,23 @@
 
 Find mean position and great [or small] circle fit to points on a sphere.
 
-Full option list at [`fitcircle`](http://gmt.soest.hawaii.edu/doc/latest/fitcircle.html)
+Full option list at [`fitcircle`]($(GMTdoc)fitcircle.html)
 
 Parameters
 ----------
 
-- **L** : **norm** : -- Int or [] --
+- **L** : **norm** : [Type => Int | []]
 
     Specify the desired norm as 1 or 2, or use [] or 3 to see both solutions.
-	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/fitcircle.html#d)
+    ($(GMTdoc)fitcircle.html#l)
+- **F** : **coord** : **coordinates** : [Type => Str]	`Arg = f|m|n|s|c`
 
-- **F** : **coord** : **coordinates** : -- Str --	Flags = f|m|n|s|c
-
-    Only return data coordinates, and append flags to specify which coordinates you would like.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/fitcircle.html#f)
-- **S** : **symetry** : -- Number --    Flags = symmetry_factor
+    Only return data coordinates, and append Arg to specify which coordinates you would like.
+    ($(GMTdoc)fitcircle.html#f)
+- **S** : **symetry** : [Type => Number]    `Arg = symmetry_factor`
 
     Attempt to
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/fitcircle.html#s)
+    ($(GMTdoc)fitcircle.html#s)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)

@@ -3,58 +3,58 @@
 
 Reads (length,azimuth) pairs from file and plot a windmask diagram.
 
-Full option list at [`psmask`](http://gmt.soest.hawaii.edu/doc/latest/mask.html)
+Full option list at [`psmask`]($(GMTdoc)mask.html)
 
 Parameters
 ----------
 
-- **I** : **inc** : -- Str or Number --
+- **I** : **inc** : [Type => Number | Str]
 
     Set the grid spacing.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#I)
+    ($(GMTdoc)mask.html#i)
 - $(GMT.opt_R)
 
 - $(GMT.opt_B)
-- **C** : **end_clip_path** : -- Bool or [] --
+- **C** | **end_clip_path** : [Type => Bool]
 
     Mark end of existing clip path. No input file is needed.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#C)
-- **D** : **dump** : -- Str --
+    ($(GMTdoc)mask.html#c)
+- **D** | **dump** : [Type => Str]
 
     Dump the (x,y) coordinates of each clipping polygon to one or more output files
     (or stdout if template is not given).
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#d)
-- **F** : **oriented_polygons** : -- Str or [] --
+    ($(GMTdoc)mask.html#d)
+- **F** | **oriented_polygons** : [Type => Str | []]
 
     Force clip contours (polygons) to be oriented so that data points are to the left (-Fl [Default]) or right (-Fr) 
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#f)
-- **G** : **fill** : -- Number or Str --
+    ($(GMTdoc)mask.html#f)
+- **G** | **fill** : [Type => Number | Str]
 
     Set fill shade, color or pattern for positive and/or negative masks [Default is no fill].
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#g)
+    ($(GMTdoc)mask.html#g)
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
-- **L** : **node_grid** : -- Str --
+- **L** | **node_grid** : [Type => Str]
 
     Save the internal grid with ones (data constraint) and zeros (no data) to the named nodegrid.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#l)
-- **N** : **invert** : -- Bool or [] --
+    ($(GMTdoc)mask.html#l)
+- **N** | **invert** : [Type => Bool]
 
     Invert the sense of the test, i.e., clip regions where there is data coverage.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#n)
+    ($(GMTdoc)mask.html#n)
 - $(GMT.opt_P)
-- **Q** : **cut_number** : -- Number or Str --
+- **Q** | **cut_number** : [Type => Number | Str]
 
     Do not dump polygons with less than cut number of points [Dumps all polygons].
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#q)
-- **S** : **search_radius** : -- Number or Str --
+    ($(GMTdoc)mask.html#q)
+- **S** | **search_radius** : [Type => Number | Str]
 
     Sets radius of influence. Grid nodes within radius of a data point are considered reliable.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#s)
-- **T** : **tiles** : -- Bool or [] --
+    ($(GMTdoc)mask.html#s)
+- **T** | **tiles** : [Type => Bool]
 
     Plot tiles instead of clip polygons. Use -G to set tile color or pattern. Cannot be used with -D.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/psmask.html#t)
+    ($(GMTdoc)mask.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

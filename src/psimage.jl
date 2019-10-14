@@ -3,30 +3,30 @@
 
 Place images or EPS files on maps.
 
-Full option list at [`psimage`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html)
+Full option list at [`psimage`]($(GMTdoc)image.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_B)
-- **D** : **ref_point** : -- Str --  
+- **D** | **ref_point** : [Type => Str]
 
     Sets reference point on the map for the image using one of four coordinate systems.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html#d)
-- **F** : **box** : -- Str or [] --
+    ($(GMTdoc)image.html#d)
+- **F** | **box** : [Type => Str | []]
 
     Without further options, draws a rectangular border around the image using MAP_FRAME_PEN.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html#f)
-- **I** : **invert_1bit** : -- Number or Str --
+    ($(GMTdoc)image.html#f)
+- **I** | **invert_1bit** : [Type => Str | Number]
 
     Invert 1-bit image before plotting.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html#i)
+    ($(GMTdoc)image.html#i)
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
-- **M** : **monochrome** : -- Bool or [] --
+- **M** | **monochrome** : [Type => Bool]
 
     Convert color image to monochrome grayshades using the (television) YIQ-transformation.
-    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/psimage.html#m)
+    ($(GMTdoc)image.html#m)
 - $(GMT.opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)

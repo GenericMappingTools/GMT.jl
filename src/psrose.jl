@@ -3,72 +3,72 @@
 
 Reads (length,azimuth) pairs and plot a windrose diagram.
 
-Full option list at [`psrose`](http://gmt.soest.hawaii.edu/doc/latest/rose.html)
+Full option list at [`psrose`]($(GMTdoc)rose.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_J)
-- **A** : **sector** : -- Str or number --
+- **A** | **sector** : [Type => Str | Number]
 
     Gives the sector width in degrees for sector and rose diagram.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#a)
+    ($(GMTdoc)rose.html#a)
 - $(GMT.opt_B)
-- **C** : **color** : -- Str or GMTcpt --
+- **C** | **color** : [Type => Str | GMTcpt]
 
     Give a CPT. The mid x-value for each bar is used to look-up the bar color.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#c)
-- **E** : **vectors** : -- Str --
+    ($(GMTdoc)rose.html#c)
+- **E** | **vectors** : [Type => Str]
 
     Plot vectors showing the principal directions given in the mode_file file.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#e)
-- **D** : **shift** : -- Bool or [] --
+    ($(GMTdoc)rose.html#e)
+- **D** | **shift** : [Type => Bool]
 
     Shift sectors so that they are centered on the bin interval (e.g., first sector is centered on 0 degrees).
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#d)
-- **F** : **no_scale** : -- Bool or [] --
+    ($(GMTdoc)rose.html#d)
+- **F** | **no_scale** : [Type => Bool]
 
     Do not draw the scale length bar [Default plots scale in lower right corner].
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#f)
-- **G** : **fill** : -- Number or Str --
+    ($(GMTdoc)rose.html#f)
+- **G** | **fill** : [Type => Str | Number]
 
     Selects shade, color or pattern for filling the sectors [Default is no fill].
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#g)
-- **I** : **inquire** : -- Bool or [] --
+    ($(GMTdoc)rose.html#g)
+- **I** : **inquire** : [Type => Bool]
 
     Inquire. Computes statistics needed to specify a useful -R. No plot is generated.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#i)
-- **L** : **labels** : -- Number or Str --
+    ($(GMTdoc)rose.html#i)
+- **L** : **labels** : [Type => Str | Number]
 
     Specify labels for the 0, 90, 180, and 270 degree marks.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#l)
-- **M** : -- Bool or [] --
+    ($(GMTdoc)rose.html#l)
+- **M** : [Type => Bool]
 
     Used with -C to modify vector parameters.
-    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#m)
+    ($(GMTdoc)rose.html#m)
 - $(GMT.opt_P)
-- **Q** : **alpha** : -- Str or [] --
+- **Q** | **alpha** : [Type => Str | []]
 
     Sets the confidence level used to determine if the mean resultant is significant.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#q)
+    ($(GMTdoc)rose.html#q)
 - $(GMT.opt_R)
-- **S** : **radius** : -- Bool or [] --
+- **S** | **radius** : [Type => Bool]
 
     Specifies radius of plotted circle (append a unit from c|i|p).
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#s)
-- **T** : **orientation** : -- Bool or [] --
+    ($(GMTdoc)rose.html#s)
+- **T** : **orientation** : [Type => Bool]
 
     Specifies that the input data are orientation data (i.e., have a 180 degree ambiguity)
     instead of true 0-360 degree directions [Default].
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#t)
-- **W** : **pen** : -- Str or tuple --
+    ($(GMTdoc)rose.html#t)
+- **W** | **pen** : [Type => Str | Tuple]
 
     Set pen attributes for sector outline or rose plot. [Default is no outline].
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#w)
-- **Z** : **scale** : -- Str --
+    ($(GMTdoc)rose.html#w)
+- **Z** | **scale** : [Type => Str]
 
     Multiply the data radii by scale.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/rose.html#z)
+    ($(GMTdoc)rose.html#z)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

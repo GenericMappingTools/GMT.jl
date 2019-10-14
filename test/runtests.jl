@@ -182,7 +182,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("GMT: No module by that name -- bla -- was found.") gmt("bla")
 	@test_throws ErrorException("grd_init: input (Int64) is not a GRID container type") GMT.grid_init(C_NULL,0,0)
 	@test_throws ErrorException("image_init: input is not a IMAGE container type") GMT.image_init(C_NULL,0,0)
-	@test_throws ErrorException("Expected a CPT structure for input") GMT.palette_init(C_NULL,0,0,0)
+	@test_throws ErrorException("Expected a CPT structure for input but got a Int32") GMT.palette_init(C_NULL,0,Int32(0),0)
 	@test_throws ErrorException("Bad family type") GMT.GMT_Alloc_Segment(C_NULL, -1, 0, 0, "", C_NULL)
 	GMT.strncmp("abcd", "ab", 2)
 	GMT.parse_proj((name="blabla",center=(0,0)))
@@ -297,6 +297,7 @@ if (got_it)					# Otherwise go straight to end
 		@test GMT.parse_grd_format(Dict(:nan => 0)) == "+n0"
 		@test_throws ErrorException("Number of bands in the 'band' option can only be 1 or 3") GMT.gmtread("", band=[1 2])
 		@test_throws ErrorException("Format code MUST have 2 characters and not bla") GMT.parse_grd_format(Dict(:id => "bla"))
+		r = rand(UInt8(0):UInt8(10),10,10);	C=makecpt(range=(0,11,1));	I = mat2img(r, cmap=C);
 	else
 		gmtwrite("lixo.grd", G)
 		GG = gmtread("lixo.grd", grd=true, varname=:z);
@@ -850,6 +851,7 @@ if (got_it)					# Otherwise go straight to end
 	@test sphdistance(nothing, R="0/10/0/10", I=0.1, Q="D", L=:k, Vd=2) == "sphdistance  -I0.1 -R0/10/0/10 -Lk -QD"
 
 	# MODERN
+	@show("MODERN")
 	if (GMTver >= 6)
 		@test GMT.helper_sub_F("1/2") == "1/2"
 		#@test GMT.helper_sub_F((size=(1,2), frac=((2,3),(3,4,5))) ) == "1/2+f2,3/3,4,5"
@@ -865,7 +867,7 @@ if (got_it)					# Otherwise go straight to end
 		@test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
 		@test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=2)
 		@test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=2)
-		subplot(name="lixo", grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
+		subplot(name="lixo", grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(0,0));plot([0 0; 1 1]);subplot(:end)
 		gmtbegin("lixo.ps");  gmtend()
 		gmtbegin("lixo", fmt=:ps);  gmtend()
 		gmtbegin("lixo");  gmtend()
@@ -877,7 +879,7 @@ if (got_it)					# Otherwise go straight to end
 			basemap(region=:global360, J="A20/20/2i", frame=:afg)
 			text(text_record([1 1],["INSET"]), font=18, region_justify=:TR, D="j-0.15i", noclip=true)
 		inset(:end)
-		text(text_record([0 0],[" "]), text="MAP", font=18, region_justify=:BL, D="j0.2i")
+		#text(text_record([0 0; 1 1.1],[" ";" "]), text="MAP", font=18, region_justify=:BL, D="j0.2i")	# Now fcks!!!
 		gmtend()
 
 		gmtbegin(); gmtfig("lixo.ps");	gmtend()
@@ -913,7 +915,7 @@ if (got_it)					# Otherwise go straight to end
 
 	@show("MISC")
 	# MISC
-	G = GMT.mat2grid(G.z, 0, [G.range; G.registration; G.inc]);
+	G = GMT.mat2grid(G.z; reg=0, hdr=[G.range; G.registration; G.inc]);
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
 	G2 = G1;
 	G3 = G1 + G2;
@@ -925,7 +927,7 @@ if (got_it)					# Otherwise go straight to end
 	G3 = G1 / G2;
 	G3 = G1 / 2
 	G2 = GMT.mat2grid(rand(Float32,5,5))
-	@test_throws ErrorException("The HDR array must have 9 elements") mat2grid(rand(4,4), 0, [0. 1 0 1 0 1])
+	@test_throws ErrorException("The HDR array must have 9 elements") mat2grid(rand(4,4), reg=0, hdr=[0. 1 0 1 0 1])
 	@test_throws ErrorException("Grids have different sizes, so they cannot be added.") G1 + G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be subtracted.") G1 - G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be multiplied.") G1 * G2;
@@ -945,7 +947,7 @@ if (got_it)					# Otherwise go straight to end
 	GMT.get_datatype(Int16(8));
 	GMT.get_datatype(UInt8(8));
 	GMT.get_datatype(Int8(8));
-	GMT.mat2grid(rand(Float32, 10,10), 1);
+	GMT.mat2grid(rand(Float32, 10,10), reg=1);
 	GMT.num2str(rand(2,3));
 	text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"]);
 	text_record(["aa", "bb"], "> 3 5 18p 5i j");

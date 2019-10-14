@@ -33,6 +33,8 @@ function imshow(arg1; first=true, kw...)
 			is_image = true
 		end
 		G = arg1
+	elseif (isa(arg1, Array{UInt8}))
+		G = mat2img(arg1; kw...)
 	else
 		G = mat2grid(arg1)
 	end
