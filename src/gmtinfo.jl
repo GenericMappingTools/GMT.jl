@@ -3,49 +3,49 @@
 
 Reads files and finds the extreme values in each of the columns.
 
-Full option list at [`gmtinfo`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html)
+Full option list at [`gmtinfo`]($(GMTdoc)gmtinfo.html)
 
 Parameters
 ----------
 
-- **A** : -- Str --
+- **A** : [Type => Str]
 
     Specify how the range should be reported.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#a)
-- **C** : **per_column** : -- Bool or [] --
+    ($(GMTdoc)gmtinfo.html#a)
+- **C** | **per_column** : [Type => Bool]
 
     Report the min/max values per column in separate columns [Default uses <min/max> format].
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#c)
-- **D** : **center** : -- Bool or [] --  
+    ($(GMTdoc)gmtinfo.html#c)
+- **D** | **center** : [Type => Bool]
 
     Modifies results obtained by -I by shifting the region to better align with the center of the data.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#d)
-- **E** : **get_record** : -- Str or [] --
+    ($(GMTdoc)gmtinfo.html#d)
+- **E** | **get_record** : [Type => Str | []]
 
     Returns the record whose column col contains the minimum (l) or maximum (h) value. 
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#e)
-- **F** : **counts** : -- Str or [] --
+    ($(GMTdoc)gmtinfo.html#e)
+- **F** | **counts** : [Type => Str | []]
 
     Returns the counts of various records depending on the appended mode.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#f)
-- **I** : **inc** : -- Number or Str --
+    ($(GMTdoc)gmtinfo.html#f)
+- **I** | **inc** : [Type => Str | Number]
 
     Report the min/max of the first n columns to the nearest multiple of the provided increments
     and output results in the form -Rw/e/s/n 
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#i)
-- **L** : **common_limits** : -- Bool or [] --
+    ($(GMTdoc)gmtinfo.html#i)
+- **L** | **common_limits** : [Type => Bool]
 
     Determines common limits across tables or segments.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#l)
-- **S** : **for_error_bars** : -- Str or [] --
+    ($(GMTdoc)gmtinfo.html#l)
+- **S** | **for_error_bars** : [Type => Str | []]
 
     Add extra space for error bars. Useful together with I option and when later plotting with `plot E`.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#s)
-- **T** : **nearest_multiple** : -- Number or Str --
+    ($(GMTdoc)gmtinfo.html#s)
+- **T** | **nearest_multiple** : [Type => Str | Number]
 
     Report the min/max of the first (0’th) column to the nearest multiple of dz and output this as
     the string -Tzmin/zmax/dz.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#t)
+    ($(GMTdoc)gmtinfo.html#t)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)

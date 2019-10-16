@@ -3,36 +3,36 @@
 
 Time domain filtering of 1-D data tables.
 
-Full option list at [`gmtvector`](http://gmt.soest.hawaii.edu/doc/latest/gmtvector.html)
+Full option list at [`gmtvector`]($(GMTdoc)gmtvector.html)
 
 Parameters
 ----------
 
-- **A** : **single_vec** : -- Str --   Flags = m[conf]|vector
+- **A** | **single_vec** : [Type => Str]   `Arg = m[conf]|vector`
 
     Specify a single, primary vector instead of reading tables.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/gmtvector.html#a)
-- **C** : **cartesian** : -- Str or [] --        Flags = [i|o]
+    ($(GMTdoc)gmtvector.html#a)
+- **C** | **cartesian** : [Type => Str | []]        `Arg = [i|o]`
 
     Select Cartesian coordinates on input and output.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/gmtvector.html#c)
-- **E** : **geod2geoc** : -- Bool or [] --
+    ($(GMTdoc)gmtvector.html#c)
+- **E** | **geod2geoc** : [Type => Bool]
 
     Convert input geographic coordinates from geodetic to geocentric and output geographic
     coordinates from geocentric to geodetic.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/gmtvector.html#e)
-- **N** : **normalize** : -- Bool or [] --
+    ($(GMTdoc)gmtvector.html#e)
+- **N** | **normalize** : [Type => Bool]
 
     Normalize the resultant vectors prior to reporting the output.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/gmtvector.html#n)
-- **S** : **secondary_vec** : -- Str or List --    Flags = [vector]
+    ($(GMTdoc)gmtvector.html#n)
+- **S** | **secondary_vec** : [Type => Str | List]    `Arg = [vector]`
 
     Specify a single, secondary vector in the same format as the first vector.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/gmtvector.html#s)
-- **T** : **transform** : -- List or Str --     Flags = a|d|D|paz|s|r[arg|R|x]
+    ($(GMTdoc)gmtvector.html#s)
+- **T** | **transform** : [Type => Str | List]     `Arg = a|d|D|paz|s|r[arg|R|x]`
 
     Specify the vector transformation of interest.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/gmtvector.html#t)
+    ($(GMTdoc)gmtvector.html#t)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)

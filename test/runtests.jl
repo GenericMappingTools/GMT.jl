@@ -879,7 +879,7 @@ if (got_it)					# Otherwise go straight to end
 			basemap(region=:global360, J="A20/20/2i", frame=:afg)
 			text(text_record([1 1],["INSET"]), font=18, region_justify=:TR, D="j-0.15i", noclip=true)
 		inset(:end)
-		#text(text_record([0 0; 1 1.1],[" ";" "]), text="MAP", font=18, region_justify=:BL, D="j0.2i")	# Now fcks!!!
+		text(text_record([0 0; 1 1.1],[" ";" "]), text="MAP", font=18, region_justify=:BL, D="j0.2i")
 		gmtend()
 
 		gmtbegin(); gmtfig("lixo.ps");	gmtend()

@@ -3,15 +3,15 @@
 
 Line reduction using the Douglas-Peucker algorithm.
 
-Full option list at [`gmtsimplify`](http://gmt.soest.hawaii.edu/doc/latest/gmtsimplify.html)
+Full option list at [`gmtsimplify`]($(GMTdoc)gmtsimplify.html)
 
 Parameters
 ----------
 
-- **T** : **tol** : **tolerance** : -- Number or Str --    Flags = tolerance[unit]
+- **T** | **tol** | **tolerance** : [Type => Str | Number]    `Arg = tolerance[unit]`
 
     Specifies the maximum mismatch tolerance in the user units. If the data is not Cartesian then append the distance unit.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/gmtsimplify.html#t)
+    ($(GMTdoc)gmtsimplify.html#t)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)

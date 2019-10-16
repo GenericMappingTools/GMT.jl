@@ -3,79 +3,80 @@
 
 Make linear or histogram-equalized color palette table from grid
 
-Full option list at [`grd2cpt`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html)
+Full option list at [`grd2cpt`]($(GMTdoc)grd2cpt.html)
 
 Parameters
 ----------
 
-- **A** : **alpha** : **transparency** : -- Str --
+- **A** | **alpha** | **transparency** : [Type => Str]
 
     Sets a constant level of transparency (0-100) for all color slices.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#a)
+    ($(GMTdoc)grd2cpt.html#a)
 - $(GMT.opt_C)
-- **D** : -- Str or [] --			Flags = [i|o]
+- **D** : [Type => Str | []]			`Arg = [i|o]`
 
     Select the back- and foreground colors to match the colors for lowest and highest
     z-values in the output CPT. 
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#d)
-- **E** : **nlevels** : -- Int or [] --		Flags = [nlevels]
+    ($(GMTdoc)grd2cpt.html#d)
+- **E** | **nlevels** : [Type => Int | []]		`Arg = [nlevels]`
 
     Create a linear color table by using the grid z-range as the new limits in the CPT.
     Alternatively, append nlevels and we will resample the color table into nlevels equidistant slices.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#e)
-- **F** : **force_rgb** : -- Str or [] --		Flags = [R|r|h|c][+c]]
+    ($(GMTdoc)grd2cpt.html#e)
+- **F** | **force_rgb** : [Type => Str | []]		`Arg = [R|r|h|c][+c]]`
 
     Force output CPT to written with r/g/b codes, gray-scale values or color name.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#f)
-- **G** : **truncate** : -- Str --              Flags = zlo/zhi
+    ($(GMTdoc)grd2cpt.html#f)
+- **G** | **truncate** : [Type => Str]             `Arg = zlo/zhi`
 
     Truncate the incoming CPT so that the lowest and highest z-levels are to zlo and zhi.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#g)
-- **I** : **inverse** : **reverse** : -- Str --	Flags = [c][z]
+    ($(GMTdoc)grd2cpt.html#g)
+- **I** | **inverse** | **reverse** : [Type => Str]	    `Arg = [c][z]`
 
     Reverse the sense of color progression in the master CPT.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#i)
-- **L** : **range** : -- Str --			Flags = minlimit/maxlimit
+    ($(GMTdoc)grd2cpt.html#i)
+- **L** | **range** : [Type => Str]			`Arg = minlimit/maxlimit`
 
     Limit range of CPT to minlimit/maxlimit, and don’t count data outside this range when estimating CDF(Z).
     [Default uses min and max of data.]
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#l)
-- **M** : **overrule_bg** -- Bool or [] --
+    ($(GMTdoc)grd2cpt.html#l)
+- **M** | **overrule_bg** [Type => Bool]
 
     Overrule background, foreground, and NaN colors specified in the master CPT with the values of
     the parameters COLOR_BACKGROUND, COLOR_FOREGROUND, and COLOR_NAN.
-    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#m)
-- **N** : **no_bg** : **nobg** : -- Bool or [] --
+    ($(GMTdoc)grd2cpt.html#m)
+- **N** | **no_bg** | **nobg** : [Type => Bool]
 
     Do not write out the background, foreground, and NaN-color fields.
-- **Q** : **log** : -- Bool or [] --
+    ($(GMTdoc)grd2cpt.html#n)
+- **Q** | **log** : [Type => Bool]
 
     Selects a logarithmic interpolation scheme [Default is linear].
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#q)
-- **C** : **row_col** : -- Bool --
+    ($(GMTdoc)grd2cpt.html#q)
+- **C** | **row_col** : [Type => Bool]
 
     Replace the x- and y-coordinates on output with the corresponding column and row numbers.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#c)
+    ($(GMTdoc)grd2cpt.html#c)
 - $(GMT.opt_R)
-- **S** : **steps** : -- Bool or [] or Str --			Flags = zstart/zstop/zinc or n
+- **S** | **steps** : [Type => Bool | Str]			`Arg = zstart/zstop/zinc or n`
 
     Set steps in CPT. Calculate entries in CPT from zstart to zstop in steps of (zinc). Default
     chooses arbitrary values by a crazy scheme based on equidistant values for a Gaussian CDF.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#s)
-- **T** : **symetric** : -- Str --			Flags = -|+|_|=
+    ($(GMTdoc)grd2cpt.html#s)
+- **T** | **symetric** : [Type => Str]			`Arg = -|+|_|=`
 
     Force the color table to be symmetric about zero (from -R to +R).
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#t)
+    ($(GMTdoc)grd2cpt.html#t)
 - $(GMT.opt_V)
-- **W** : **wrap** : **categorical** : -- Bool or Str or [] --      Flags = [w]
+- **W** | **wrap** | **categorical** : [Type => Bool | Str | []]      `Arg = [w]`
 
     Do not interpolate the input color table but pick the output colors starting at the
     beginning of the color table, until colors for all intervals are assigned.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#w)
-- **Z** : **continuous** : -- Bool or [] --
+    ($(GMTdoc)grd2cpt.html#w)
+- **Z** | **continuous** : [Type => Bool]
 
     Creates a continuous CPT [Default is discontinuous, i.e., constant colors for each interval].
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grd2cpt.html#z)
+    ($(GMTdoc)grd2cpt.html#z)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 """

@@ -278,7 +278,8 @@ function gmt(cmd::String, args...)
 	# 9. Destroy linked option list
 	GMT_Destroy_Options(API, pLL)
 
-	if (g_module == "begin" || g_module == "end")  gmt("destroy")  end		# Because of whitches
+	if (IamModern)  GMT_Destroy_Session(API);	API = nothing  end	# Needed, otherwise history is not updated
+	#if (IamModern)  gmt_put_history(API);	end		# Needed, otherwise history is not updated
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)
