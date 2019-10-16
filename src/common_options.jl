@@ -2219,7 +2219,6 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 			P = gmt(cmd[k], args...)
 		end
 	else
-		#if (IamModern && startswith(cmd, "ps"))  cmd = cmd[3:end]  end
 		P = gmt(cmd, args...)
 	end
 

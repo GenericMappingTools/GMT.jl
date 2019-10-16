@@ -3,33 +3,33 @@
 
 Connect individual lines whose end points match within tolerance
 
-Full option list at [`gmtconnect`](http://gmt.soest.hawaii.edu/doc/latest/gmtconnect.html)
+Full option list at [`gmtconnect`]($(GMTdoc)gmtconnect.html)
 
 Parameters
 ----------
 
-- **C** : **closed** : -- Str or [] --        Flags = [closed]
+- **C** | **closed** : [Type => Str | []]        `Arg = [closed]`
 
     Write all the closed polygons to closed [gmtgmtconnect_closed.txt] and return all other
     segments as they are. No gmtconnection takes place.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/gmtconnect.html#c)
-- **D** : **dump** : -- Str or [] --   Flags = [template]
+    ($(GMTdoc)gmtconnect.html#c)
+- **D** | **dump** : [Type => Str | []]   `Arg = [template]`
 
     For multiple segment data, dump each segment to a separate output file
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmtconnect.html#d)
-- **L** : **linkfile** : -- Str or [] --      Flags = [linkfile]
+    ($(GMTdoc)gmtconnect.html#d)
+- **L** | **linkfile** : [Type => Str | []]      `Arg = [linkfile]`
 
     Writes the link information to the specified file [gmtgmtconnect_link.txt].
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/gmtconnect.html#l)
-- **Q** : **list_file** : -- Str or [] --      Flags =  [listfile]
+    ($(GMTdoc)gmtconnect.html#l)
+- **Q** | **list_file** : [Type => Str | []]      `Arg =  [listfile]`
 
     Used with **D** to write a list file with the names of the individual output files.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/gmtconnect.html#q)
-- **T** : **tolerance ** : -- List or Str --    Flags = [cutoff[unit][/nn_dist]]
+    ($(GMTdoc)gmtconnect.html#q)
+- **T** | **tolerance ** : [Type => Str | List]    `Arg = [cutoff[unit][/nn_dist]]`
 
     Specifies the separation tolerance in the data coordinate units [0]; append distance unit.
     If two lines has end-points that are closer than this cutoff they will be joined.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/gmtconnect.html#t)
+    ($(GMTdoc)gmtconnect.html#t)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)

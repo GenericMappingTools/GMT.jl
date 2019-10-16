@@ -5,24 +5,24 @@ Plots the GMT logo on a map. By default, the GMT logo is 5 cm wide and 2.5 cm hi
 positioned relative to the current plot origin. Use various options to change this and to place
 a transparent or opaque rectangular map panel behind the GMT logo.
 
-Full option list at [`gmtlogo`](http://gmt.soest.hawaii.edu/doc/latest/gmtlogo.html)
+Full option list at [`gmtlogo`]($(GMTdoc)gmtlogo.html)
 
 Parameters
 ----------
 
-- **D** : **pos** : **position** : -- Str --
+- **D** | **pos** | **position** : [Type => Str]
 
     Sets reference point on the map for the image using one of four coordinate systems.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmtlogo.html#d)
-- **F** : **box** : -- Str --
+    ($(GMTdoc)gmtlogo.html#d)
+- **F** | **box** : [Type => Str]
 
     Without further options, draws a rectangular border around the GMT logo using MAP_FRAME_PEN.
     or map rose (T)
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/gmtlogo.html#f)
-- **julia** : -- Number --
+    ($(GMTdoc)gmtlogo.html#f)
+- **julia** : [Type => Number]
 
     Create the Julia instead of the GMT logo. Provide circle diameter in centimeters
-- **GMTjulia** : -- Number --
+- **GMTjulia** : [Type => Number]
 
     Create the GMT Julia GMT logo. Provide circle diameter in centimeters
 - $(GMT.opt_J)

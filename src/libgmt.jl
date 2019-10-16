@@ -409,3 +409,9 @@ function gmt_ogrread(API::Ptr{Cvoid}, fname::String)
 	GMT_ = GMT_Get_Ctrl(API)
 	ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}), GMT_, fname)
 end
+
+#=
+function gmt_put_history(API::Ptr{Cvoid})
+	ccall((:gmt_put_history, thelib), Cint, (Cstring,), GMT_Get_Ctrl(API))
+end
+=#

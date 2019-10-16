@@ -3,19 +3,19 @@
 
 Adjust individual GMT defaults settings in the current directory’s gmt.conf file.
 
-Full option list at [`gmtset`](http://gmt.soest.hawaii.edu/doc/latest/gmtset.html)
+Full option list at [`gmtset`]($(GMTdoc)gmtset.html)
 
 Parameters
 ----------
 
-- **D** : **units** : -- Str or [] --  
+- **D** | **units** : [Type => Str | []]
 
     Modify the GMT defaults based on the system settings. Append u for US defaults or s for SI defaults.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#d)
-- **G** : **defaultsfile** : -- Str --
+    ($(GMTdoc)gmtinfo.html#d)
+- **G** | **defaultsfile** : [Type => Str]
 
     Name of specific gmt.conf file to read and modify. 
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/gmtinfo.html#g)
+    ($(GMTdoc)gmtinfo.html#g)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 """

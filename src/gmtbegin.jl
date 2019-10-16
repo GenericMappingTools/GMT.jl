@@ -13,6 +13,7 @@ function gmtbegin(name::String=""; fmt=nothing, verbose=nothing)
 	cmd = "begin"       # Default name (GMTplot.ps) is set in gmt_main()
 	if (name != "")  cmd *= " " * get_format(name, fmt)  end
 	if (verbose !== nothing)  cmd *= " -V" * string(verbose)  end
+	gmt("destroy")		# Always start with a clean session
 	gmt(cmd)
 	return nothing
 end
@@ -27,6 +28,7 @@ function gmtend(show=nothing; verbose=nothing)
 	if (show !== nothing)  cmd *= " show"  end
 	if (verbose !== nothing)  cmd *= " -V" * string(verbose)  end
 	gmt(cmd)
+	gmt("destroy")		# Lieve it in a clean state
 	return nothing
 end
  
