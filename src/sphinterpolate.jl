@@ -17,7 +17,7 @@ Parameters
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
     ($(GMTdoc)sphinterpolate.html#i)
-- **Q** | **tension** :: [Type => Number | Str]     Flags = mode[/options]
+- **Q** | **tension** :: [Type => Number | Str]     ``Arg = mode[/options]``
 
     Specify one of four ways to calculate tension factors to preserve local shape properties or satisfy arc constraints.
     ($(GMTdoc)sphinterpolate.html#q)

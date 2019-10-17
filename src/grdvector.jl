@@ -19,7 +19,7 @@ Parameters
 
     Sets color or shade for vector interiors [Default is no fill].
     ($(GMTdoc)grdvector.html#g)
-- **I** | **inc** :: [Type => Sytr | Number]	`Flags=[x]dx[/dy]`
+- **I** | **inc** :: [Type => Sytr | Number]	``Arg=[x]dx[/dy]``
 
     Only plot vectors at nodes every x_inc, y_inc apart (must be multiples of original grid spacing).
     ($(GMTdoc)grdvector.html#i)
@@ -33,7 +33,7 @@ Parameters
     ($(GMTdoc)grdvector.html#q)
 - $(GMT.opt_P)
 - $(GMT.opt_R)
-- **S** | **vec_scale** :: [Type => Str | Number]		`Flags = [i|l]scale[unit]``
+- **S** | **vec_scale** :: [Type => Str | Number]		``Arg = [i|l]scale[unit]``
 
     Sets scale for vector plot length in data units per plot distance measurement unit [1].
     ($(GMTdoc)grdvector.html#s)

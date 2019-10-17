@@ -12,7 +12,7 @@ Parameters
 
     For large data sets you can save some memory (at the expense of more processing).
     ($(GMTdoc)sphdistance.html#a)
-- **E** | **what_quantity** :: [Type => Str]   Flags = d|n|z[dist]
+- **E** | **what_quantity** :: [Type => Str]   ``Arg = d|n|z[dist]``
 
     Specify the quantity that should be assigned to the grid nodes.
     ($(GMTdoc)sphdistance.html#e)
@@ -25,16 +25,16 @@ Parameters
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
     ($(GMTdoc)sphdistance.html#i)
-- **L** | **dist_unit** :: [Type => Str]      Flags = d|e|f|k|M|n|u
+- **L** | **dist_unit** :: [Type => Str]      ``Arg = d|e|f|k|M|n|u``
 
     Specify the unit used for distance calculations.
     ($(GMTdoc)sphdistance.html#l)
-- **N** | **nodes** :: [Type => Str]      Flags = nodes
+- **N** | **nodes** :: [Type => Str]      ``Arg = nodes``
 
     Read the information pertaining to each Voronoi polygon (the unique node lon, lat and polygon area)
     from a separate file.
     ($(GMTdoc)sphdistance.html#n)
-- **Q** | **voronoi** :: [Type => Str]     Flags = voronoifile
+- **Q** | **voronoi** :: [Type => Str]     ``Arg = voronoifile``
 
     Append the name of a file with pre-calculated Voronoi polygons.
     ($(GMTdoc)sphdistance.html#q)

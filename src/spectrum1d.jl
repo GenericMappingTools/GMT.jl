@@ -8,24 +8,24 @@ Full option list at [`spectrum1d`]($(GMTdoc)spectrum1d.html)
 Parameters
 ----------
 
-- **S** | **size** :: [Type => Str]        Flags = segment_size
+- **S** | **size** :: [Type => Str]        ``Arg = segment_size``
 
     ``segment_size`` is a radix-2 number of samples per window for ensemble averaging.
     ($(GMTdoc)spectrum1d.html#s)
-- **C** | **response_fun** :: [Type => Str | []]        Flags = [xycnpago]
+- **C** | **response_fun** :: [Type => Str | []]        ``Arg = [xycnpago]``
 
     Read the first two columns of input as samples of two time-series, X(t) and Y(t).
     Consider Y(t) to be the output and X(t) the input in a linear system with noise.
     ($(GMTdoc)spectrum1d.html#c)
-- **D** | **sample_dist** :: [Type => Number]   Flags = dt
+- **D** | **sample_dist** :: [Type => Number]   ``Arg = dt``
 
     Set the spacing between samples in the time-series [Default = 1].
     ($(GMTdoc)spectrum1d.html#d)
-- **L** | **leave_trend** :: [Type => Str | []]     Flags = [h|m]
+- **L** | **leave_trend** :: [Type => Str | []]     ``Arg = [h|m]``
 
     Leave trend alone. By default, a linear trend will be removed prior to the transform.
     ($(GMTdoc)spectrum1d.html#l)
-- **N** | **time_col** :: [Type => Int]      Flags = t_col
+- **N** | **time_col** :: [Type => Int]      ``Arg = t_col``
 
     Indicates which
     ($(GMTdoc)spectrum1d.html#n)

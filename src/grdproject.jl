@@ -9,11 +9,11 @@ Parameters
 ----------
 
 - $(GMT.opt_J)
-- **C** | **center** :: [Type => Str | []]      Flags = [dx/dy]
+- **C** | **center** :: [Type => Str | []]      ``Arg = [dx/dy]``
 
     Let projected coordinates be relative to projection center [Default is relative to lower left corner].
     ($(GMTdoc)grdproject.html#c)
-- **D** | **inc** :: [Type => Str | number]     Flags = xinc[unit][+e|n][/yinc[unit][+e|n]]
+- **D** | **inc** :: [Type => Str | number]     ``Arg = xinc[unit][+e|n][/yinc[unit][+e|n]]``
 
     Set the grid spacing for the new grid. Append m for arc minute, s for arc second.
     ($(GMTdoc)grdproject.html#d)
@@ -21,7 +21,7 @@ Parameters
 
     Set the resolution for the new grid in dots per inch.
     ($(GMTdoc)grdproject.html#e)
-- **F** | **one2one** :: [Type => Str]           Flags = [c|i|p|e|f|k|M|n|u]
+- **F** | **one2one** :: [Type => Str]           ``Arg = [c|i|p|e|f|k|M|n|u]``
 
     Force 1:1 scaling, i.e., output (or input, see -I) data are in actual projected meters [e].
     ($(GMTdoc)grdproject.html#f)
@@ -34,7 +34,7 @@ Parameters
 
     Do the Inverse transformation, from rectangular to geographical.
     ($(GMTdoc)grdproject.html#i)
-- **M** | **projected_unit** :: [Type => Str]    Flags = c|i|p
+- **M** | **projected_unit** :: [Type => Str]    ``Arg = c|i|p``
 
     Append c, i, or p to indicate that cm, inch, or point should be the projected measure unit.
     ($(GMTdoc)grdproject.html#m)

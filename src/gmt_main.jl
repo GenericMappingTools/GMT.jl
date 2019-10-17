@@ -84,7 +84,7 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
     gmt("pscoast -R-10/0/35/45 -B1 -W1 -Gbrown -JM14c -P -V > lixo.ps")
 """
 function gmt(cmd::String, args...)
-	global API
+	global API, img_mem_layout, grd_mem_layout
 
 	# ----------- Minimal error checking ------------------------
 	n_argin = length(args)

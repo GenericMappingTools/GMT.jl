@@ -8,25 +8,25 @@ Full option list at [`grdvolume`]($(GMTdoc)grdvolume.html)
 Parameters
 ----------
 
-- **C** | **cont** | **contour** :: [Type => Str | List]   Flags = cval or low/high/delta or rlow/high or rcval
+- **C** | **cont** | **contour** :: [Type => Str | List]   ``Arg = cval or low/high/delta or rlow/high or rcval``
 
     Find area, volume and mean height (volume/area) inside the cval contour.
     ($(GMTdoc)grdvolume.html#c)
-- **L** | **base_level** :: [Type => Number]          Flags = base
+- **L** | **base_level** :: [Type => Number]          ``Arg = base``
 
     Also add in the volume from the level of the contour down to base [Default base is contour].
     ($(GMTdoc)grdvolume.html#l)
 - $(GMT.opt_R)
-- **S** | **unit** :: [Type => Str]              Flags = e|f|k|M|n|u
+- **S** | **unit** :: [Type => Str]              ``Arg = e|f|k|M|n|u``
 
     For geographical grids, append a unit from e|f|k|M|n|u [Default is meter (e)].
     ($(GMTdoc)grdvolume.html#s)
-- **T** :: [Type => Str]                        Flags = [c|h]
+- **T** :: [Type => Str]                        ``Arg = [c|h]``
 
     Determine the single contour that maximized the average height (= volume/area).
     ($(GMTdoc)grdvolume.html#t)
 - $(GMT.opt_V)
-- **Z** | **scale** :: [Type => Str or List]     Flags = fact[/shift]
+- **Z** | **scale** :: [Type => Str or List]     ``Arg = fact[/shift]``
 
     Optionally subtract shift before scaling data by fact. [Default is no scaling].
     ($(GMTdoc)grdvolume.html#z)
