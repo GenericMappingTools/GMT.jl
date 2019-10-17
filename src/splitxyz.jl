@@ -4,38 +4,38 @@
 Reads a series of (x,y[,z]) records [or optionally (x,y,z,d,h)] and splits this into separate lists
 of (x,y[,z]) series, such that each series has a nearly constant azimuth through the x,y plane.
 
-Full option list at [`splitxyz`](http://gmt.soest.hawaii.edu/doc/latest/splitxyz.html)
+Full option list at [`splitxyz`]($(GMTdoc)splitxyz.html)
 
 Parameters
 ----------
 
-- **A** : **azim_tol** : -- Str or Array --  
+- **A** | **azim_tol** :: [Type => Str | Array]  
 
     Write out only those segments which are within +/- tolerance degrees of azimuth in heading,
     measured clockwise from North, [0 - 360].
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/splitxyz.html#a)
-- **C** : **course_change** : -- Number --
+    ($(GMTdoc)splitxyz.html#a)
+- **C** | **course_change** :: [Type => Number]
 
     Terminate a segment when a course change exceeding course_change degrees of heading is detected.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/splitxyz.html#c)
-- **D** : **min_dist** : **min_distance** -- Number --
+    ($(GMTdoc)splitxyz.html#c)
+- **D** | **min_dist** | **min_distance** :: [Type => Number]
 
     Do not write a segment out unless it is at least minimum_distance units long.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/splitxyz.html#d)
-- **F** : **filter** : -- Str or Array --
+    ($(GMTdoc)splitxyz.html#d)
+- **F** | **filter** :: [Type => Str | Array]
 
     Filter the z values and/or the x,y values, assuming these are functions of d coordinate.
     xy_filter and z_filter are filter widths in distance units.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/splitxyz.html#f)
-- **Q** : **xyzdh** : -- Str --
+    ($(GMTdoc)splitxyz.html#f)
+- **Q** | **xyzdh** :: [Type => Str]
 
     Specify your desired output using any combination of xyzdh, in any order.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/splitxyz.html#q)
-- **S** : **dh** : **dist_head** : -- Bool or [] --
+    ($(GMTdoc)splitxyz.html#q)
+- **S** | **dh** | **dist_head** :: [Type => Bool]
 
     Both d and h are supplied. In this case, input contains x,y,z,d,h. [Default expects (x,y,z) input,
     and d,h are computed from delta x, delta y.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/splitxyz.html#s)
+    ($(GMTdoc)splitxyz.html#s)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)

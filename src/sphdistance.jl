@@ -3,41 +3,41 @@
 
 Create Voronoi distance, node, or natural nearest-neighbor grid on a sphere
 
-Full option list at [`sphdistance`](http://gmt.soest.hawaii.edu/doc/latest/sphdistance .html)
+Full option list at [`sphdistance`]($(GMTdoc)sphdistance.html)
 
 Parameters
 ----------
 
-- **C** : **save_mem** : -- Bool or [] --
+- **C** | **save_mem** :: [Type => Bool]
 
     For large data sets you can save some memory (at the expense of more processing).
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/sphdistance.html#c)
-- **E** : **what_quantity** : -- Str --   Flags = d|n|z[dist]
+    ($(GMTdoc)sphdistance.html#a)
+- **E** | **what_quantity** :: [Type => Str]   Flags = d|n|z[dist]
 
     Specify the quantity that should be assigned to the grid nodes.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/sphdistance.html#e)
-- **G** : **grid** : **outgrid** : -- Str --
+    ($(GMTdoc)sphdistance.html#e)
+- **G** | **grid** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = sphdistance(....) form.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/sphdistance.html#g)
-- **I** : **inc** : -- Str or Number --
+    ($(GMTdoc)sphdistance.html#g)
+- **I** | **inc** :: [Type => Str or Number]
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/sphdistance.html#i)
-- **L** : **dist_unit** : -- Str --      Flags = d|e|f|k|M|n|u
+    ($(GMTdoc)sphdistance.html#i)
+- **L** | **dist_unit** :: [Type => Str]      Flags = d|e|f|k|M|n|u
 
     Specify the unit used for distance calculations.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/sphdistance.html#l)
-- **N** : **nodes** : -- Str --      Flags = nodes
+    ($(GMTdoc)sphdistance.html#l)
+- **N** | **nodes** :: [Type => Str]      Flags = nodes
 
     Read the information pertaining to each Voronoi polygon (the unique node lon, lat and polygon area)
     from a separate file.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/sphdistance.html#n)
-- **Q** : **voronoi** : -- Str --     Flags = voronoifile
+    ($(GMTdoc)sphdistance.html#n)
+- **Q** | **voronoi** :: [Type => Str]     Flags = voronoifile
 
     Append the name of a file with pre-calculated Voronoi polygons.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/sphdistance .html#q)
+    ($(GMTdoc)sphdistance.html#q)
 - $(GMT.opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_b)

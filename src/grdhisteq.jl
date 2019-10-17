@@ -4,28 +4,28 @@
 Find the data values which divide a given grid file into patches of equal area. One common use of
 grdhisteq is in a kind of histogram equalization of an image.
 
-Full option list at [`grdhisteq`](http://gmt.soest.hawaii.edu/doc/latest/grdhisteq.html)
+Full option list at [`grdhisteq`]($(GMTdoc)grdhisteq.html)
 
 Parameters
 ----------
 
-- **D** : **dump** : -- Str or [] --
+- **D** | **dump** :: [Type => Str or []]
 
     Dump level information to file, or standard output if no file is provided.
-	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdhisteq.html#d)
-- **G** : **outgrid** : -- Str --
+    ($(GMTdoc)grdhisteq.html#d)
+- **G** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdhisteq(....) form.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdhisteq.html#g)
-- **N** : **gaussian** : -- Number or [] --
+    ($(GMTdoc)grdhisteq.html#g)
+- **N** | **gaussian** :: [Type => Number or []]
 
     Gaussian output.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdhisteq.html#n)
-- **Q** : **quadratic** : -- Bool --
+    ($(GMTdoc)grdhisteq.html#n)
+- **Q** | **quadratic** :: [Type => Bool]
 
     Quadratic output. Selects quadratic histogram equalization. [Default is linear].
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdhisteq.html#q)
+    ($(GMTdoc)grdhisteq.html#q)
 - $(GMT.opt_R)
 - $(GMT.opt_V)
 """

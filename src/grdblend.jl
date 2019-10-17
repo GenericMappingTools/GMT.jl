@@ -4,44 +4,44 @@
 Reads a listing of grid files and blend parameters, or up to 2 GTMgrid types, and creates
 a grid by blending the other grids using cosine-taper weights.
 
-Full option list at [`grdblend`](http://gmt.soest.hawaii.edu/doc/latest/grdblend.html)
+Full option list at [`grdblend`]($(GMTdoc)grdblend.html)
 
 Parameters
 ----------
 
-- **I** : **inc** : -- Str or Number --
+- **I** | **inc** :: [Type => Str or Number --
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdblend.html#i)
+    ($(GMTdoc)grdblend.html#i)
 - $(GMT.opt_R)
-- **G** : **outgrid** : -- Str --
+- **G** | **outgrid** :: [Type => Str --
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdblend(....) form.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdblend.html#g)
+    ($(GMTdoc)grdblend.html#g)
 
-- **C** : **clobber** : -- Str or [] --      Flags = f|l|o|u[±]
+- **C** | **clobber** :: [Type => Str or [] --      Flags = f|l|o|u[±]
 
     Clobber mode: Instead of blending, simply pick the value of one of the grids that covers a node.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdproject.html#c)
-- **N** : **nodata** : -- Str or Number --
+    ($(GMTdoc)grdproject.html#c)
+- **N** | **nodata** :: [Type => Str or Number --
 
     No data. Set nodes with no input grid to this value [Default is NaN].
-	[`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdblend.html#n)
-- **Q** : **headless** : -- Bool or [] --
+    ($(GMTdoc)grdblend.html#n)
+- **Q** | **headless** :: [Type => Bool]
 
     Create plain header-less grid file (for use with external tools). Requires that the output
     grid file is a native format (i.e., not netCDF). DO NOT USE WITH **G**.
-	[`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdblend.html#q)
-- **W** : **no_blend** : -- Str or [] --
+    ($(GMTdoc)grdblend.html#q)
+- **W** | **no_blend** :: [Type => Str or [] --
 
     Do not blend, just output the weights used for each node [Default makes the blend].
     Append ``z`` to write the weight*z sum instead.
-	[`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdblend.html#w)
-- **Z** : **scale** : -- Number --
+    ($(GMTdoc)grdblend.html#w)
+- **Z** | **scale** :: [Type => Number --
 
     Scale output values by scale before writing to file.
-	[`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grdblend.html#z)
+    ($(GMTdoc)grdblend.html#z)
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 - $(GMT.opt_n)

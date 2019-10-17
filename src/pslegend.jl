@@ -3,7 +3,7 @@
 
 Make legends that can be overlaid on maps. It reads specific legend-related information from input or file file.
 
-Full option list at [`legend`](http://gmt.soest.hawaii.edu/doc/latest/pslegend.html)
+Full option list at [`legend`]($(GMTdoc)legend.html)
 
 Parameters
 ----------
@@ -11,18 +11,18 @@ Parameters
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
-- **C** | **clearance** : [Type => Str]
+- **C** | **clearance** :: [Type => Str]
 
     Sets the clearance between the legend frame and the internal items [4p/4p].
-    (http://gmt.soest.hawaii.edu/doc/latest/pstext.html#c)
-- **D** | **refpoint** | **pos** | **position** : [Type => Str]  `Arg=[g|j|J|n|x]refpoint+wwidth[/height][+jjustify][+lspacing][+odx[/dy]]`
+    ($(GMTdoc)legend.html#c)
+- **D** | **refpoint** | **pos** | **position** :: [Type => Str]  `Arg=[g|j|J|n|x]refpoint+wwidth[/height][+jjustify][+lspacing][+odx[/dy]]`
 
     Defines the reference point on the map for the legend using one of four coordinate systems.
-    (http://gmt.soest.hawaii.edu/doc/latest/pstext.html#d)
-- **F** | **box** : [Type => Str | Number]   `Arg=[+cclearances][+gfill][+i[[gap/]pen]][+p[pen]][+r[radius]][+s[[dx/dy/][shade]]]`
+    ($(GMTdoc)legend.html#d)
+- **F** | **box** :: [Type => Str | Number]   `Arg=[+cclearances][+gfill][+i[[gap/]pen]][+p[pen]][+r[radius]][+s[[dx/dy/][shade]]]`
 
     Without further options, draws a rectangular border around the legend using *MAP_FRAME_PEN*.
-    (http://gmt.soest.hawaii.edu/doc/latest/pstext.html#f)
+    ($(GMTdoc)legend.html#f)
 - $(GMT.opt_Jz)
 - $(GMT.opt_P)
 - $(GMT.opt_U)

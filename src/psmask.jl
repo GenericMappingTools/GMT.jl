@@ -8,50 +8,50 @@ Full option list at [`psmask`]($(GMTdoc)mask.html)
 Parameters
 ----------
 
-- **I** : **inc** : [Type => Number | Str]
+- **I** | **inc** :: [Type => Number | Str]
 
     Set the grid spacing.
     ($(GMTdoc)mask.html#i)
 - $(GMT.opt_R)
 
 - $(GMT.opt_B)
-- **C** | **end_clip_path** : [Type => Bool]
+- **C** | **end_clip_path** :: [Type => Bool]
 
     Mark end of existing clip path. No input file is needed.
     ($(GMTdoc)mask.html#c)
-- **D** | **dump** : [Type => Str]
+- **D** | **dump** :: [Type => Str]
 
     Dump the (x,y) coordinates of each clipping polygon to one or more output files
     (or stdout if template is not given).
     ($(GMTdoc)mask.html#d)
-- **F** | **oriented_polygons** : [Type => Str | []]
+- **F** | **oriented_polygons** :: [Type => Str | []]
 
     Force clip contours (polygons) to be oriented so that data points are to the left (-Fl [Default]) or right (-Fr) 
     ($(GMTdoc)mask.html#f)
-- **G** | **fill** : [Type => Number | Str]
+- **G** | **fill** :: [Type => Number | Str]
 
     Set fill shade, color or pattern for positive and/or negative masks [Default is no fill].
     ($(GMTdoc)mask.html#g)
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
-- **L** | **node_grid** : [Type => Str]
+- **L** | **node_grid** :: [Type => Str]
 
     Save the internal grid with ones (data constraint) and zeros (no data) to the named nodegrid.
     ($(GMTdoc)mask.html#l)
-- **N** | **invert** : [Type => Bool]
+- **N** | **invert** :: [Type => Bool]
 
     Invert the sense of the test, i.e., clip regions where there is data coverage.
     ($(GMTdoc)mask.html#n)
 - $(GMT.opt_P)
-- **Q** | **cut_number** : [Type => Number | Str]
+- **Q** | **cut_number** :: [Type => Number | Str]
 
     Do not dump polygons with less than cut number of points [Dumps all polygons].
     ($(GMTdoc)mask.html#q)
-- **S** | **search_radius** : [Type => Number | Str]
+- **S** | **search_radius** :: [Type => Number | Str]
 
     Sets radius of influence. Grid nodes within radius of a data point are considered reliable.
     ($(GMTdoc)mask.html#s)
-- **T** | **tiles** : [Type => Bool]
+- **T** | **tiles** :: [Type => Bool]
 
     Plot tiles instead of clip polygons. Use -G to set tile color or pattern. Cannot be used with -D.
     ($(GMTdoc)mask.html#t)

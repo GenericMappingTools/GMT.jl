@@ -9,50 +9,50 @@ Parameters
 ----------
 
 - $(GMT.opt_R)
-- **A** | **area** : [Type => Str | Number]
+- **A** | **area** :: [Type => Str | Number]
 
     Features with an area smaller than min_area in km^2 or of hierarchical level that is
     lower than min_level or higher than max_level will not be plotted.
     ($(GMTdoc)gmtselect.html#a)
-- **C** | **dist2pt** : [Type => Str]   `Arg = pointfile+ddist[unit]`
+- **C** | **dist2pt** :: [Type => Str]   `Arg = pointfile+ddist[unit]`
 
     Pass all records whose location is within dist of any of the points in the ASCII file pointfile.
     If dist is zero then the 3rd column of pointfile must have each point’s individual radius of influence.
     ($(GMTdoc)gmtselect.html#c)
-- **D** | **res** | **resolution** : [Type => Str]      `Arg = c|l|i|h|f`
+- **D** | **res** | **resolution** :: [Type => Str]      `Arg = c|l|i|h|f`
 
     Ignored unless N is set. Selects the resolution of the coastline data set to use
     ((f)ull, (h)igh, (i)ntermediate, (l)ow, or (c)rude).
     ($(GMTdoc)gmtselect.html#d)
-- **E** | **boundary** : [Type => Str | []]            `Arg = [fn]`
+- **E** | **boundary** :: [Type => Str | []]            `Arg = [fn]`
 
     Specify how points exactly on a polygon boundary should be considered.
     ($(GMTdoc)gmtselect.html#e)
-- **F** | **polygon** : [Type => Str | GMTdaset | Mx2 array]     `Arg = polygonfile`
+- **F** | **polygon** :: [Type => Str | GMTdaset | Mx2 array]     `Arg = polygonfile`
 
     Pass all records whose location is within one of the closed polygons in the multiple-segment
     file ``polygonfile`` or a GMTdataset type or a Mx2 array defining the polygon.
     ($(GMTdoc)gmtselect.html#f)
-- **G** | **gridmask** : [Type => Str | GRDgrid]        `Arg = gridmask`
+- **G** | **gridmask** :: [Type => Str | GRDgrid]        `Arg = gridmask`
 
     Pass all locations that are inside the valid data area of the grid gridmask.
     Nodes that are outside are either NaN or zero.
     ($(GMTdoc)gmtselect.html#g)
-- **I** | **reverse** : [Type => Str | []]    `Arg = [cflrsz]`
+- **I** | **reverse** :: [Type => Str | []]    `Arg = [cflrsz]`
 
     Reverses the sense of the test for each of the criteria specified.
     ($(GMTdoc)gmtselect.html#i)
 - $(GMT.opt_J)
-- **L** | **dist2line** : [Type => Str]    `Arg = linefile+ddist[unit][+p]`
+- **L** | **dist2line** :: [Type => Str]    `Arg = linefile+ddist[unit][+p]`
 
     Pass all records whose location is within dist of any of the line segments in the ASCII
     multiple-segment file linefile.
     ($(GMTdoc)gmtselect.html#l)
-- **N** | **mask** : [Type => Str | List]     `Arg = ocean/land/lake/island/pond or wet/dry`
+- **N** | **mask** :: [Type => Str | List]     `Arg = ocean/land/lake/island/pond or wet/dry`
 
     Pass all records whose location is inside specified geographical features.
     ($(GMTdoc)gmtselect.html#n)
-- **Z** | **in_range** : [Type => Str | List]     `Arg = min[/max][+a][+ccol][+i]`
+- **Z** | **in_range** :: [Type => Str | List]     `Arg = min[/max][+a][+ccol][+i]`
 
     Pass all records whose 3rd column (z; col = 2) lies within the given range or is NaN.
     ($(GMTdoc)gmtselect.html#z)

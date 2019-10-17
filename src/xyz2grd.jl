@@ -8,32 +8,32 @@ Full option list at [`xyz2grd`]($(GMTdoc)xyz2grd.html)
 Parameters
 ----------
 
-- **I** | **inc** : [Type => Str | Number]     `Arg = xinc[unit][+e|n][/yinc[unit][+e|n]]`
+- **I** | **inc** :: [Type => Str | Number]     `Arg = xinc[unit][+e|n][/yinc[unit][+e|n]]`
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
     ($(GMTdoc)xyz2grd.html#i)
 - $(GMT.opt_R)
-- **A** | **multiple_nodes** : [Type => Str]      `Arg = [d|f|l|m|n|r|S|s|u|z]`
+- **A** | **multiple_nodes** :: [Type => Str]      `Arg = [d|f|l|m|n|r|S|s|u|z]`
 
     By default we will calculate mean values if multiple entries fall on the same node.
     Use A to change this behavior.
     ($(GMTdoc)xyz2grd.html#a)
-- **D** | **header** : [Type => Str]  `Arg = [+xxname][+yyname][+zzname][+sscale][+ooffset][+ninvalid][+ttitle][+rremark]`
+- **D** | **header** :: [Type => Str]  `Arg = [+xxname][+yyname][+zzname][+sscale][+ooffset][+ninvalid][+ttitle][+rremark]`
 
     Output edges
     ($(GMTdoc)xyz2grd.html#d)
-- **G** | **outgrid** : [Type => Str]
+- **G** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdclip(....) form.
     ($(GMTdoc)xyz2grd.html#g)
 - $(GMT.opt_J)
-- **S** | **swap** : [Type => Str | []]        `Arg = [zfile]`
+- **S** | **swap** :: [Type => Str | []]        `Arg = [zfile]`
 
     Swap the byte-order of the input only. No grid file is produced.
     ($(GMTdoc)xyz2grd.html#s)
 - $(GMT.opt_V)
-- **Z** | **flags** : [Type => Str]
+- **Z** | **flags** :: [Type => Str]
 
     Read a 1-column table. This assumes that all the nodes are present and sorted according to specified ordering convention contained in. ``flags``.
     ($(GMTdoc)xyz2grd.html#z)

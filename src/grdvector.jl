@@ -5,55 +5,55 @@ Takes two 2-D grid files which represents the x- and y-components of a vector fi
 a vector field plot by drawing vectors with orientation and length according to the information
 in the files. Alternatively, polar coordinate r, theta grids may be given instead.
 
-Full option list at [`grdvector`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html)
+Full option list at [`grdvector`]($(GMTdoc)grdvector.html)
 
 Parameters
 ----------
 
-- **A** : **polar** : -- Bool or [] --  
+- **A** | **polar** :: [Type => Bool]  
 
     The grid contain polar (r, theta) components instead of Cartesian (x, y) [Default is Cartesian components].
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#a)
+    ($(GMTdoc)grdvector.html#a)
 - $(GMT.opt_B)
-- **G** : **fill** : -- Str or Number --
+- **G** | **fill** :: [Type => Str | Number]
 
     Sets color or shade for vector interiors [Default is no fill].
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#g)
-- **I** : **inc** : -- Sytr or Number --	`Flags=[x]dx[/dy]`
+    ($(GMTdoc)grdvector.html#g)
+- **I** | **inc** :: [Type => Sytr | Number]	`Flags=[x]dx[/dy]`
 
     Only plot vectors at nodes every x_inc, y_inc apart (must be multiples of original grid spacing).
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#i)
-- **N** : **noclip** : **no_clip** : -- Bool or [] --
+    ($(GMTdoc)grdvector.html#i)
+- **N** | **noclip** | **no_clip** :: [Type => Bool]
 
     Do NOT clip symbols that fall outside map border 
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#n)
-- **Q** : **vec** : **vector** : **arrow** : -- Str --
+    ($(GMTdoc)grdvector.html#n)
+- **Q** | **vec** | **vector** | **arrow** :: [Type => Str]
 
     Modify vector parameters. For vector heads, append vector head size [Default is 0, i.e., stick-plot].
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#q)
+    ($(GMTdoc)grdvector.html#q)
 - $(GMT.opt_P)
 - $(GMT.opt_R)
-- **S** : **vec_scale** : -- Str or Number --		`Flags = [i|l]scale[unit]``
+- **S** | **vec_scale** :: [Type => Str | Number]		`Flags = [i|l]scale[unit]``
 
     Sets scale for vector plot length in data units per plot distance measurement unit [1].
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#s)
-- **T** : -- Bool or [] --
+    ($(GMTdoc)grdvector.html#s)
+- **T** :: [Type => Bool]
 
     Means the azimuths of Cartesian data sets should be adjusted according to the signs of the
     scales in the x- and y-directions [Leave alone].
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#t)
+    ($(GMTdoc)grdvector.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
-- **W** : **pen** : -- Str or Number --
+- **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#w)
+    ($(GMTdoc)grdvector.html#w)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
-- **Z** : **azimuth** : -- [] or Bool --
+- **Z** | **azimuth** :: [Type => Bool]
 
     The theta grid provided contains azimuths rather than directions (implies -A).
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grdvector.html#z)
+    ($(GMTdoc)grdvector.html#z)
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """

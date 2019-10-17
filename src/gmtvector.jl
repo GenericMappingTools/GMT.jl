@@ -8,28 +8,28 @@ Full option list at [`gmtvector`]($(GMTdoc)gmtvector.html)
 Parameters
 ----------
 
-- **A** | **single_vec** : [Type => Str]   `Arg = m[conf]|vector`
+- **A** | **single_vec** :: [Type => Str]   `Arg = m[conf]|vector`
 
     Specify a single, primary vector instead of reading tables.
     ($(GMTdoc)gmtvector.html#a)
-- **C** | **cartesian** : [Type => Str | []]        `Arg = [i|o]`
+- **C** | **cartesian** :: [Type => Str | []]        `Arg = [i|o]`
 
     Select Cartesian coordinates on input and output.
     ($(GMTdoc)gmtvector.html#c)
-- **E** | **geod2geoc** : [Type => Bool]
+- **E** | **geod2geoc** :: [Type => Bool]
 
     Convert input geographic coordinates from geodetic to geocentric and output geographic
     coordinates from geocentric to geodetic.
     ($(GMTdoc)gmtvector.html#e)
-- **N** | **normalize** : [Type => Bool]
+- **N** | **normalize** :: [Type => Bool]
 
     Normalize the resultant vectors prior to reporting the output.
     ($(GMTdoc)gmtvector.html#n)
-- **S** | **secondary_vec** : [Type => Str | List]    `Arg = [vector]`
+- **S** | **secondary_vec** :: [Type => Str | List]    `Arg = [vector]`
 
     Specify a single, secondary vector in the same format as the first vector.
     ($(GMTdoc)gmtvector.html#s)
-- **T** | **transform** : [Type => Str | List]     `Arg = a|d|D|paz|s|r[arg|R|x]`
+- **T** | **transform** :: [Type => Str | List]     `Arg = a|d|D|paz|s|r[arg|R|x]`
 
     Specify the vector transformation of interest.
     ($(GMTdoc)gmtvector.html#t)

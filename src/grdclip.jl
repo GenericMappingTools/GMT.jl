@@ -5,41 +5,41 @@ Clip the range of grid values. will set values < low to below and/or values > hi
 You can also specify one or more intervals where all values should be set to ``between``,
 or replace individual values.
 
-Full option list at [`grdclip`](http://gmt.soest.hawaii.edu/doc/latest/grdclip.html)
+Full option list at [`grdclip`]($(GMTdoc)grdclip.html)
 
 Parameters
 ----------
 
-- **cmd0** -- Str --
+- **cmd0** :: [Type => Str]
 
     Either the input file name or the full monolitic options string. Do not use this
     when the grid (a GMTgrid type) is passed via the ``arg1`` argument.
-- **G** : **outgrid** : -- Str --
+- **G** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdclip(....) form.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdclip.html#g)
+    ($(GMTdoc)grdclip.html#g)
 - $(GMT.opt_R)
-- **above** : **high** -- Array or Str --
+- **above** | **high** :: [Type => Array | Str]
 
     Two elements array with ``high`` and ``above`` or a string with "high/above".
     It sets all data[i] > ``high`` to ``above``.
-- **below** : **low** -- Array or Str --
+- **below** | **low** :: [Type => Array | Str]
 
     Two elements array with ``low`` and ``below`` or a string with "low/below".
     It sets all data[i] < ``low`` to ``below``.
-- **between** -- Array or Str --
+- **between** :: [Type => Array | Str]
 
     Three elements array with ``low, high`` and ``between`` or a string with "low/high/between".
     It sets all data[i] >= ``low`` and <= ``high`` to ``between``.
-- **old** : **new** -- Array or Str --
+- **old** | **new** :: [Type => Array | Str]
 
     Two elements array with ``old`` and ``new`` or a string with "old/new".
     It sets all data[i] == ``old`` to ``new``.
-- **S** -- Str --
+- **S** :: [Type => Str]
 
     Condense all replacement options above in a single string.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdclip.html#t)
+    ($(GMTdoc)grdclip.html#s)
 - $(GMT.opt_V)
 
 -   Examples:

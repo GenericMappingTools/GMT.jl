@@ -10,19 +10,19 @@ Full option list at [`gmtlogo`]($(GMTdoc)gmtlogo.html)
 Parameters
 ----------
 
-- **D** | **pos** | **position** : [Type => Str]
+- **D** | **pos** | **position** :: [Type => Str]
 
     Sets reference point on the map for the image using one of four coordinate systems.
     ($(GMTdoc)gmtlogo.html#d)
-- **F** | **box** : [Type => Str]
+- **F** | **box** :: [Type => Str]
 
     Without further options, draws a rectangular border around the GMT logo using MAP_FRAME_PEN.
     or map rose (T)
     ($(GMTdoc)gmtlogo.html#f)
-- **julia** : [Type => Number]
+- **julia** :: [Type => Number]
 
     Create the Julia instead of the GMT logo. Provide circle diameter in centimeters
-- **GMTjulia** : [Type => Number]
+- **GMTjulia** :: [Type => Number]
 
     Create the GMT Julia GMT logo. Provide circle diameter in centimeters
 - $(GMT.opt_J)

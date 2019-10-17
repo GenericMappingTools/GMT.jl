@@ -3,82 +3,82 @@
 
 Convert GMT data tables to KML files for Google Earth
 
-Full option list at [`gmt2kml`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html)
+Full option list at [`gmt2kml`]($(GMTdoc)gmt2kml.html)
 
 Parameters
 ----------
 
-- **A** : **altitude_mode** : -- Str --       Flags = a|g|s[alt|xscale]
+- **A** | **altitude_mode** :: [Type => Str]       ``Arg = a|g|s[alt|xscale]``
 
     Select one of three altitude modes recognized by Google Earth that determines the altitude (in m)
     of the feature: ``a`` absolute altitude, ``g`` altitude relative to sea surface or ground,
     ``s`` altitude relative to seafloor or ground.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#A)
+    ($(GMTdoc)gmt2kml.html#a)
 - $(GMT.opt_C)
-- **D** : **descript** : -- Str --   Flags = descriptfile
+- **D** | **descript** :: [Type => Str]   ``Arg = descriptfile``
 
     File with HTML snippets that will be included as part of the main description content for the KML file.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#d)
-- **E** : **extrude** : -- Str or [] --   Flags = [altitude]
+    ($(GMTdoc)gmt2kml.html#d)
+- **E** | **extrude** :: [Type => Str | []]  ``Arg = [altitude]``
 
     Extrude feature down to ground level.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#e)
-- **F** : **feature_type** : -- Str --   Flags = e|s|t|l|p|w
+    ($(GMTdoc)gmt2kml.html#e)
+- **F** | **feature_type** :: [Type => Str]  ``Arg = e|s|t|l|p|w``
 
     Sets the feature type. Choose from points (event, symbol, or timespan), line, polygon, or wiggle.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#f)
-- **G** : **fill** : -- Str --  Flags = f|nfill
+    ($(GMTdoc)gmt2kml.html#f)
+- **G** | **fill** :: [Type => Str]  ``Arg = f|nfill``
 
     Sets color fill (G=:f) or label font color (G=:n).
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#g)
-- **I** : **icon** : -- Str --      Flags = icon
+    ($(GMTdoc)gmt2kml.html#g)
+- **I** | **icon** :: [Type => Str]      ``Arg = icon``
 
     Specify the URL to an alternative icon that should be used for the symbol
     [Default is a Google Earth circle].
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#i)
-- **K** : **not_finished** : -- Bool or [] --
+    ($(GMTdoc)gmt2kml.html#i)
+- **K** | **not_finished** :: [Type => Bool]
 
     Allow more KML code to be appended to the output later [finalize the KML file].
-    [`-K`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#i)
-- **L** : **extended_data** : -- Str --      Flags = name1,name2,…
+    ($(GMTdoc)gmt2kml.html#k)
+- **L** | **extended_data** :: [Type => Str]      ``Arg = name1,name2,…``
 
     Extended data given. Append one or more column names separated by commas.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#l)
-- **N** : **feature_name** : -- Str or Number --      Flags = [t|col |name_template|name]
+    ($(GMTdoc)gmt2kml.html#l)
+- **N** | **feature_name** :: [Type => Str | Number]      ``Arg = [t|col |name_template|name]``
 
     By default, if segment headers contain a -L”label string” then we use that for the name of the KML feature.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#n)
-- **O** : **overlay** : -- Bool or [] --
+    ($(GMTdoc)gmt2kml.html#n)
+- **O** | **overlay** :: [Type => Bool]
 
     Append KML code to an existing KML file [initialize a new KML file].
-    [`-O`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#n)
-- **Qa** : **wiggles** : -- Str --      Flags =  azimuth
+    ($(GMTdoc)gmt2kml.html#o)
+- **Qa** | **wiggles** :: [Type => Str]      ``Arg =  azimuth``
 
     Option in support of wiggle plots (requires F=:w).
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#q)
-- **Qs** : **wiggle_scale** : -- Number or Str --      Flags =  scale[unit]
+    ($(GMTdoc)gmt2kml.html#q)
+- **Qs** | **wiggle_scale** :: [Type => Str | Number]      ``Arg =  scale[unit]``
 
     Required setting for wiggle plots (i.e., it requires F=:w). Sets a wiggle scale
     in z-data units per the user’s units
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#q)
+    ($(GMTdoc)gmt2kml.html#q)
 - $(GMT.opt_R)
-- **S** : **scale** : -- Str --      Flags =  c|nscale
+- **S** | **scale** :: [Type => Str]      ``Arg =  c|nscale``
 
     Scale icons or labels. Here, S=:c sets a scale for the symbol icon, whereas S=:n sets
     a scale for the name labels
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#s)
-- **T** : **title ** : -- Str --    Flags = title[/foldername]
+    ($(GMTdoc)gmt2kml.html#s)
+- **T** | **title ** :: [Type => Str]    ``Arg = title[/foldername]``
 
     Sets the document title [default is unset]. Optionally, append /FolderName;
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#t)
-- **W** : **pen** : -- Str or [] --      Flags =  [pen][attr]
+    ($(GMTdoc)gmt2kml.html#t)
+- **W** | **pen** :: [Type => Str | []]      ``Arg =  [pen][attr]``
 
     Set pen attributes for lines, wiggles or polygon outlines.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#w)
-- **Z** : **attrib** : -- Str --      Flags =  args
+    ($(GMTdoc)gmt2kml.html#w)
+- **Z** | **attrib** :: [Type => Str]      ``Arg =  args``
 
     Set one or more attributes of the Document and Region tags.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/gmt2kml.html#z)
+    ($(GMTdoc)gmt2kml.html#z)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)

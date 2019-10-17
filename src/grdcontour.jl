@@ -4,68 +4,68 @@
 Reads a 2-D grid file or a GMTgrid type and produces a contour map by tracing each
 contour through the grid.
 
-Full option list at [`pscontour`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html)
+Full option list at [`grdcontour`]($(GMTdoc)grdcontour.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_J)
-- **A** : **annot** : -- Str or Number --       Flags = [-|[+]annot_int][labelinfo]
+- **A** | **annot** :: [Type => Str or Number]       Flags = [-|[+]annot_int][labelinfo]
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#a)
+    ($(GMTdoc)grdcontour.html#a)
 - $(GMT.opt_B)
-- **C** : **cont** : **contours** : **levels** : -- Str or Number --
+- **C** | **cont** | **contours** | **levels** :: [Type => Str or Number]
 
     Contours to be drawn.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#c)
-- **D** : **dump** : -- Str --
+    ($(GMTdoc)grdcontour.html#c)
+- **D** | **dump** :: [Type => Str]
 
     Dump contours as data line segments; no plotting takes place.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#d)
-- **F** : **force** : -- Str or [] --
+    ($(GMTdoc)grdcontour.html#d)
+- **F** | **force** :: [Type => Str | []]
 
     Force dumped contours to be oriented so that higher z-values are to the left (-Fl [Default]) or right.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#f)
-- **G** : **labels** : -- Str --
+    ($(GMTdoc)grdcontour.html#f)
+- **G** | **labels** :: [Type => Str]
 
     Controls the placement of labels along the quoted lines.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#g)
+    ($(GMTdoc)grdcontour.html#g)
 - $(GMT.opt_Jz)
-- **L** : **range** : -- Str --
+- **L** | **range** :: [Type => Str]
 
     Limit range: Do not draw contours for data values below low or above high.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#l)
-- **N** : **fill** : -- Bool or [] --
+    ($(GMTdoc)grdcontour.html#l)
+- **N** | **fill** :: [Type => Bool]
 
     Fill the area between contours using the discrete color table given by cpt.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#n)
+    ($(GMTdoc)grdcontour.html#n)
 - $(GMT.opt_P)
-- **Q** : **cut** : -- Str or Number --
+- **Q** | **cut** :: [Type => Str | Number]
 
     Do not draw contours with less than cut number of points.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#q)
-- **S** : **smooth** : -- Number --
+    ($(GMTdoc)grdcontour.html#q)
+- **S** | **smooth** :: [Type => Number]
 
     Used to resample the contour lines at roughly every (gridbox_size/smoothfactor) interval.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#s)
-- **T** : **ticks** : -- Str --
+    ($(GMTdoc)grdcontour.html#s)
+- **T** | **ticks** :: [Type => Str]
 
     Draw tick marks pointing in the downward direction every *gap* along the innermost closed contours.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#t)
+    ($(GMTdoc)grdcontour.html#t)
 - $(GMT.opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
-- **W** : **pen** : -- Str or Number --
+- **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#w)
+    ($(GMTdoc)grdcontour.html#w)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
-- **Z** : **scale** : -- Str --
+- **Z** | **scale** :: [Type => Str]
 
     Use to subtract shift from the data and multiply the results by factor before contouring starts.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grdcontour.html#z)
+    ($(GMTdoc)grdcontour.html#z)
 - $(GMT.opt_bo)
 - $(GMT.opt_do)
 - $(GMT.opt_e)

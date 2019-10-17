@@ -8,7 +8,7 @@ Full option list at [`gmtsimplify`]($(GMTdoc)gmtsimplify.html)
 Parameters
 ----------
 
-- **T** | **tol** | **tolerance** : [Type => Str | Number]    `Arg = tolerance[unit]`
+- **T** | **tol** | **tolerance** :: [Type => Str | Number]    `Arg = tolerance[unit]`
 
     Specifies the maximum mismatch tolerance in the user units. If the data is not Cartesian then append the distance unit.
     ($(GMTdoc)gmtsimplify.html#t)

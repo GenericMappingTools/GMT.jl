@@ -5,58 +5,58 @@ Reads one or more ASCII [or binary] files (or standard input) containing x,y[,z]
 triangulation, i.e., it find how the points should be connected to give the most equilateral
 triangulation possible. 
 
-Full option list at [`triangulate`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html)
+Full option list at [`triangulate`]($(GMTdoc)triangulate.html)
 
 Parameters
 ----------
-- **C** : **slope_grid** : -- Number --
+- **C** | **slope_grid** :: [Type => Number]
 
     Read a slope grid (in degrees) and compute the propagated uncertainty in the
     bathymetry using the CURVE algorithm
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#c)
-- **D** : **derivatives** : -- Str --
+    ($(GMTdoc)triangulate.html#a)
+- **D** | **derivatives** :: [Type => Str]
 
     Take either the x- or y-derivatives of surface represented by the planar facets (only used when G is set).
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#a)
-- **E** : **empty** : -- Str or Number --
+    ($(GMTdoc)triangulate.html#d)
+- **E** | **empty** :: [Type => Str | Number]
 
     Set the value assigned to empty nodes when G is set [NaN].
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#e)
-- **G** : **grid** : **outgrid** : -- Str or [] --
+    ($(GMTdoc)triangulate.html#e)
+- **G** | **grid** | **outgrid** :: [Type => Str | []]
 
     Use triangulation to grid the data onto an even grid (specified with R I).
     Append the name of the output grid file.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#g)
-- **I** : **inc** : -- Str or Number --
+    ($(GMTdoc)triangulate.html#g)
+- **I** | **inc** :: [Type => Str | Number]
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#i)
+    ($(GMTdoc)triangulate.html#i)
 - $(GMT.opt_J)
-- **M** : **network** : -- Bool or [] --
+- **M** | **network** :: [Type => Bool]
 
     Output triangulation network as multiple line segments separated by a segment header record.
-    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#m)
-- **N** : **ids** : -- Bool or [] --
+    ($(GMTdoc)triangulate.html#m)
+- **N** | **ids** :: [Type => Bool]
 
     Used in conjunction with G to also write the triplets of the ids of all the Delaunay vertices
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#n)
-- **Q** : **voronoi** : -- Str or [] --
+    ($(GMTdoc)triangulate.html#n)
+- **Q** | **voronoi** :: [Type => Str | []]
 
     Output the edges of the Voronoi cells instead [Default is Delaunay triangle edges]
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#q)
+    ($(GMTdoc)triangulate.html#q)
 - $(GMT.opt_R)
-- **S** : **triangles** : -- Bool or [] --  
+- **S** | **triangles** :: [Type => Bool]  
 
     Output triangles as polygon segments separated by a segment header record. Requires Delaunay triangulation.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#s)
-- **T** : **edges** : -- Bool or [] --
+    ($(GMTdoc)triangulate.html#s)
+- **T** | **edges** :: [Type => Bool]
 
     Output edges or polygons even if gridding has been selected with the G option
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#t)
+    ($(GMTdoc)triangulate.html#t)
 - $(GMT.opt_V)
-- **Z** : **xyz** : **triplets** : -- Bool or [] --
+- **Z** | **xyz** | **triplets** :: [Type => Bool]
 
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/triangulate.html#z)
+    ($(GMTdoc)triangulate.html#z)
 - $(GMT.opt_bi)
 - $(GMT.opt_bo)
 - $(GMT.opt_di)

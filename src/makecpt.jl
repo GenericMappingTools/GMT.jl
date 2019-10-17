@@ -3,64 +3,65 @@
 
 Make static color palette tables (CPTs).
 
-Full option list at [`makecpt`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html)
+Full option list at [`makecpt`]($(GMTdoc)makecpt.html)
 
-- **A** : **alpha** : **transparency** : -- Str --
+- **A** | **alpha** | **transparency** :: [Type => Str]
 
     Sets a constant level of transparency (0-100) for all color slices.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#a)
+    ($(GMTdoc)makecpt.html#a)
 - $(GMT.opt_C)
-- **D** : -- Str or [] --			Flags = [i|o]
+- **D** :: [Type => Str | []]			`Arg = [i|o]`
 
     Select the back- and foreground colors to match the colors for lowest and highest
     z-values in the output CPT. 
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#d)
-- **E** : **data_levels** : -- Int or [] --		Flags = [nlevels]
+    ($(GMTdoc)makecpt.html#d)
+- **E** | **data_levels** :: [Type => Int | []]		`Arg = [nlevels]`
 
     Implies reading data table(s) from file or arrays. We use the last data column to
     determine the data range
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#e)
-- **F** : **force_rgb** : -- Str or [] --		Flags = [R|r|h|c][+c]]
+    ($(GMTdoc)makecpt.html#e)
+- **F** | **force_rgb** :: [Type => Str | []]		`Arg = [R|r|h|c][+c]]`
 
     Force output CPT to written with r/g/b codes, gray-scale values or color name.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#f)
-- **G** : **truncate** : -- Str --              Flags = zlo/zhi
+    ($(GMTdoc)makecpt.html#f)
+- **G** | **truncate** :: [Type => Str]              `Arg = zlo/zhi`
 
     Truncate the incoming CPT so that the lowest and highest z-levels are to zlo and zhi.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#g)
-- **I** : **inverse** : **reverse** : -- Str --	Flags = [c][z]
+    ($(GMTdoc)makecpt.html#g)
+- **I** | **inverse** | **reverse** :: [Type => Str]	`Arg = [c][z]`
 
     Reverse the sense of color progression in the master CPT.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#i)
-- **M** : **overrule_bg** -- Bool or [] --
+    ($(GMTdoc)makecpt.html#i)
+- **M** | **overrule_bg** :: [Type => Bool]
 
     Overrule background, foreground, and NaN colors specified in the master CPT with the values of
     the parameters COLOR_BACKGROUND, COLOR_FOREGROUND, and COLOR_NAN.
-    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#m)
-- **N** : **no_bg** : **nobg** : -- Bool or [] --
+    ($(GMTdoc)makecpt.html#m)
+- **N** | **no_bg** | **nobg** :: [Type => Bool]
 
     Do not write out the background, foreground, and NaN-color fields.
-- **Q** : **log** : -- Bool or [] or Str --			Flags = [i|o]
+    ($(GMTdoc)makecpt.html#n)
+- **Q** | **log** :: [Type => Bool | Str]			`Arg = [i|o]`
 
     Selects a logarithmic interpolation scheme [Default is linear].
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#q)
-- **S** : **auto** : -- Bool or [] or Str --			Flags = [mode]
+    ($(GMTdoc)makecpt.html#q)
+- **S** | **auto** :: [Type => Bool | Str]			`Arg = [mode]`
 
     Determine a suitable range for the -T option from the input table(s) (or stdin).
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#s)
-- **T** : **range** : -- Str --			Flags = [min/max/inc[+b|l|n]|file|list]
+    ($(GMTdoc)makecpt.html#s)
+- **T** | **range** :: [Type => Str]			`Arg = [min/max/inc[+b|l|n]|file|list]`
 
     Defines the range of the new CPT by giving the lowest and highest z-value and interval.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#t)
-- **W** : **wrap** : **categorical** : -- Bool or Str or [] --      Flags = [w]
+    ($(GMTdoc)makecpt.html#t)
+- **W** | **wrap** | **categorical** :: [Type => Bool | Str | []]      `Arg = [w]`
 
     Do not interpolate the input color table but pick the output colors starting at the
     beginning of the color table, until colors for all intervals are assigned.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#w)
-- **Z** : **continuous** : -- Bool or [] --
+    ($(GMTdoc)makecpt.html#w)
+- **Z** | **continuous** :: [Type => Bool]
 
     Creates a continuous CPT [Default is discontinuous, i.e., constant colors for each interval].
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/makecpt.html#z)
+    ($(GMTdoc)makecpt.html#z)
 - $(GMT.opt_bi)
 - $(GMT.opt_di)
 - $(GMT.opt_i)

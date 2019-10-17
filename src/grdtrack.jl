@@ -4,39 +4,39 @@
 Interpolates the grid(s) at the positions in the table and writes out the table with the
 interpolated values added as (one or more) new columns.
 
-Full option list at [`grdtrack`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html)
+Full option list at [`grdtrack`]($(GMTdoc)/grdtrack.html)
 
 Parameters
 ----------
 
-- **A** : **interp_path** : -- Str --
+- **A** | **interp_path** :: [Type => Str]
 
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#a)
-- **C** : **equidistant ** : -- Str --
+    ($(GMTdoc)grdtrack.html#a)
+- **C** | **equidistant ** :: [Type => Str]
 
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#c)
-- **D** : **dfile** : -- Str --  
+    ($(GMTdoc)grdtrack.html#c)
+- **D** | **dfile** :: [Type => Str]  
 
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#d)
-- **E** : **by_coord** : -- Str --
+    ($(GMTdoc)grdtrack.html#d)
+- **E** | **by_coord** :: [Type => Str]
 
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#e)
-- **G** : **grid** : -- Str or GMTgrid or Tuple(GMTgrid's) --
+    ($(GMTdoc)grdtrack.html#e)
+- **G** | **grid** :: [Type => Str | GMTgrid | Tuple(GMTgrid's)]
 
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#g)
-- **N** : **no_skip** : -- Bool or [] --
+    ($(GMTdoc)grdtrack.html#g)
+- **N** | **no_skip** :: [Type => Bool]
 
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#n)
+    ($(GMTdoc)grdtrack.html#n)
 - $(GMT.opt_R)
-- **S** : **stack** : -- Str --
+- **S** | **stack** :: [Type => Str]
 
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#s)
-- **T** : **radius** : -- Number, Str or [] --
+    ($(GMTdoc)grdtrack.html#s)
+- **T** | **radius** :: [Type => Number, Str | []]
 
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#t)
-- **Z** : **z_only** : -- Bool or [] --
+    ($(GMTdoc)grdtrack.html#t)
+- **Z** | **z_only** :: [Type => Bool]
 
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grdtrack.html#z)
+    ($(GMTdoc)grdtrack.html#z)
 - $(GMT.opt_V)
 - $(GMT.opt_bi)
 - $(GMT.opt_bo)

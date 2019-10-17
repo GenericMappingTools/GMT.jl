@@ -3,33 +3,33 @@
 
 Reads one 2-D grid and returns xyz-triplets.
 
-Full option list at [`grdvolume`](http://gmt.soest.hawaii.edu/doc/latest/grdvolume.html)
+Full option list at [`grdvolume`]($(GMTdoc)grdvolume.html)
 
 Parameters
 ----------
 
-- **C** : **cont** : **contour** : -- Str or List --   Flags = cval or low/high/delta or rlow/high or rcval
+- **C** | **cont** | **contour** :: [Type => Str | List]   Flags = cval or low/high/delta or rlow/high or rcval
 
     Find area, volume and mean height (volume/area) inside the cval contour.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdvolume.html#c)
-- **L** : **base_level** : -- Number --           Flags = base
+    ($(GMTdoc)grdvolume.html#c)
+- **L** | **base_level** :: [Type => Number]          Flags = base
 
     Also add in the volume from the level of the contour down to base [Default base is contour].
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/grdvolume.html#l)
+    ($(GMTdoc)grdvolume.html#l)
 - $(GMT.opt_R)
-- **S** : **unit** : -- Str --              Flags = e|f|k|M|n|u
+- **S** | **unit** :: [Type => Str]              Flags = e|f|k|M|n|u
 
     For geographical grids, append a unit from e|f|k|M|n|u [Default is meter (e)].
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdvolume.html#s)
-- **T** : -- Str --                         Flags = [c|h]
+    ($(GMTdoc)grdvolume.html#s)
+- **T** :: [Type => Str]                        Flags = [c|h]
 
     Determine the single contour that maximized the average height (= volume/area).
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdvolume.html#t)
+    ($(GMTdoc)grdvolume.html#t)
 - $(GMT.opt_V)
-- **Z** : **scale** : -- Str or List --     Flags = fact[/shift]
+- **Z** | **scale** :: [Type => Str or List]     Flags = fact[/shift]
 
     Optionally subtract shift before scaling data by fact. [Default is no scaling].
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grdvolume.html#z)
+    ($(GMTdoc)grdvolume.html#z)
 - $(GMT.opt_f)
 - $(GMT.opt_o)
 """

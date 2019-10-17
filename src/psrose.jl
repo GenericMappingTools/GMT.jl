@@ -9,63 +9,63 @@ Parameters
 ----------
 
 - $(GMT.opt_J)
-- **A** | **sector** : [Type => Str | Number]
+- **A** | **sector** :: [Type => Str | Number]
 
     Gives the sector width in degrees for sector and rose diagram.
     ($(GMTdoc)rose.html#a)
 - $(GMT.opt_B)
-- **C** | **color** : [Type => Str | GMTcpt]
+- **C** | **color** :: [Type => Str | GMTcpt]
 
     Give a CPT. The mid x-value for each bar is used to look-up the bar color.
     ($(GMTdoc)rose.html#c)
-- **E** | **vectors** : [Type => Str]
+- **E** | **vectors** :: [Type => Str]
 
     Plot vectors showing the principal directions given in the mode_file file.
     ($(GMTdoc)rose.html#e)
-- **D** | **shift** : [Type => Bool]
+- **D** | **shift** :: [Type => Bool]
 
     Shift sectors so that they are centered on the bin interval (e.g., first sector is centered on 0 degrees).
     ($(GMTdoc)rose.html#d)
-- **F** | **no_scale** : [Type => Bool]
+- **F** | **no_scale** :: [Type => Bool]
 
     Do not draw the scale length bar [Default plots scale in lower right corner].
     ($(GMTdoc)rose.html#f)
-- **G** | **fill** : [Type => Str | Number]
+- **G** | **fill** :: [Type => Str | Number]
 
     Selects shade, color or pattern for filling the sectors [Default is no fill].
     ($(GMTdoc)rose.html#g)
-- **I** : **inquire** : [Type => Bool]
+- **I** | **inquire** :: [Type => Bool]
 
     Inquire. Computes statistics needed to specify a useful -R. No plot is generated.
     ($(GMTdoc)rose.html#i)
-- **L** : **labels** : [Type => Str | Number]
+- **L** | **labels** :: [Type => Str | Number]
 
     Specify labels for the 0, 90, 180, and 270 degree marks.
     ($(GMTdoc)rose.html#l)
-- **M** : [Type => Bool]
+- **M** :: [Type => Bool]
 
     Used with -C to modify vector parameters.
     ($(GMTdoc)rose.html#m)
 - $(GMT.opt_P)
-- **Q** | **alpha** : [Type => Str | []]
+- **Q** | **alpha** :: [Type => Str | []]
 
     Sets the confidence level used to determine if the mean resultant is significant.
     ($(GMTdoc)rose.html#q)
 - $(GMT.opt_R)
-- **S** | **radius** : [Type => Bool]
+- **S** | **radius** :: [Type => Bool]
 
     Specifies radius of plotted circle (append a unit from c|i|p).
     ($(GMTdoc)rose.html#s)
-- **T** : **orientation** : [Type => Bool]
+- **T** | **orientation** :: [Type => Bool]
 
     Specifies that the input data are orientation data (i.e., have a 180 degree ambiguity)
     instead of true 0-360 degree directions [Default].
     ($(GMTdoc)rose.html#t)
-- **W** | **pen** : [Type => Str | Tuple]
+- **W** | **pen** :: [Type => Str | Tuple]
 
     Set pen attributes for sector outline or rose plot. [Default is no outline].
     ($(GMTdoc)rose.html#w)
-- **Z** | **scale** : [Type => Str]
+- **Z** | **scale** :: [Type => Str]
 
     Multiply the data radii by scale.
     ($(GMTdoc)rose.html#z)

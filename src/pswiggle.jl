@@ -3,52 +3,52 @@
 
 Reads (length,azimuth) pairs from file and plot a windwiggle diagram.
 
-Full option list at [`pswiggle`](http://gmt.soest.hawaii.edu/doc/latest/wiggle.html)
+Full option list at [`pswiggle`]($(GMTdoc)wiggle.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_R)
-- **Z** : **scale** : -- Number or Str --
+- **Z** | **scale** :: [Type => Number | Str]
 
     Gives anomaly scale in data-units/distance-unit.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/wiggle.html#z)
-- **A** : **azimuth** : -- Str or number --
+    ($(GMTdoc)wiggle.html#a)
+- **A** | **azimuth** :: [Type => Str | number]
 
     Sets the preferred positive azimuth. Positive wiggles will “gravitate” towards that direction.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/wiggle.html#a)
+    ($(GMTdoc)wiggle.html#a)
 - $(GMT.opt_B)
-- **C** : **center** : -- Number --
+- **C** | **center** :: [Type => Number]
 
     Subtract center from the data set before plotting [0].
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/wiggle.html#c)
-- **D** : **scale_bar** : -- Str --
+    ($(GMTdoc)wiggle.html#c)
+- **D** | **scale_bar** :: [Type => Str]
 
     Defines the reference point on the map for the vertical scale bar using one of four coordinate systems.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/wiggle.html#d)
-- **F** : **box** : -- Str --
+    ($(GMTdoc)wiggle.html#d)
+- **F** | **box** :: [Type => Str]
 
     Without further options, draws a rectangular border around the vertical scale bar.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/wiggle.html#f)
-- **G** : **fill** : -- Number or Str --
+    ($(GMTdoc)wiggle.html#f)
+- **G** | **fill** :: [Type => Number | Str]
 
     Set fill shade, color or pattern for positive and/or negative wiggles [Default is no fill].
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/wiggle.html#g)
-- **I** : **fixed_azim** : -- Number --
+    ($(GMTdoc)wiggle.html#g)
+- **I** | **fixed_azim** :: [Type => Number]
 
     Set a fixed azimuth projection for wiggles [Default uses track azimuth, but see -A].
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/wiggle.html#i)
+    ($(GMTdoc)wiggle.html#i)
 - $(GMT.opt_J)
 - $(GMT.opt_P)
-- **T** : **track** : -- Number or Str or Tuple or [] --
+- **T** | **track** :: [Type => Number or Str | Tuple | []]
 
     Draw track [Default is no track]. Append pen attributes to use [Defaults: width = 0.25p, color =
     black, style = solid].
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/wiggle.html#t)
-- **W** : **pen** : -- Number or Str or tuple or [] --
+    ($(GMTdoc)wiggle.html#t)
+- **W** | **pen** :: [Type => Number | Str | tuple | []]
 
     Specify outline pen attributes [Default is no outline].
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/wiggle.html#w)
+    ($(GMTdoc)wiggle.html#w)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

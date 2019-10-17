@@ -12,53 +12,53 @@ Parameters
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
-- **A** | **azimuths** : [Type => Bool]
+- **A** | **azimuths** :: [Type => Bool]
 
     Angles are given as azimuths; convert them to directions using the current projection.
     ($(GMTdoc)text.html#a)
-- **C** | **clearance** : [Type => Str]
+- **C** | **clearance** :: [Type => Str]
 
     Sets the clearance between the text and the surrounding box [15%].
     ($(GMTdoc)text.html#c)
-- **D** | **offset** : [Type => Str]
+- **D** | **offset** :: [Type => Str]
 
     Offsets the text from the projected (x,y) point by dx,dy [0/0].
     ($(GMTdoc)text.html#d)
-- **F** | **attrib** : [Type => Str | Tuple]
+- **F** | **attrib** :: [Type => Str | Tuple]
 
     Specify up to three text attributes (font, angle, and justification).
     ($(GMTdoc)text.html#f)
-- **G** | **fill** : [Type => Str | Number]
+- **G** | **fill** :: [Type => Str | Number]
 
     Sets the shade or color used for filling the text box [Default is no fill].
     ($(GMTdoc)text.html#g)
 - $(GMT.opt_Jz)
-- **L** | **list** : [Type => Bool]
+- **L** | **list** :: [Type => Bool]
 
     Lists the font-numbers and font-names available, then exits.
     ($(GMTdoc)text.html#l)
-- **M** | **paragraph** : [Type => Str | []]
+- **M** | **paragraph** :: [Type => Str | []]
 
     Paragraph mode.
     ($(GMTdoc)text.html#m)
-- **N** | **noclip** : **no_clip** : [Type => Str | []]
+- **N** | **noclip** | **no_clip** :: [Type => Str | []]
 
     Do NOT clip text at map boundaries.
     ($(GMTdoc)text.html#n)
 - $(GMT.opt_P)
-- **Q** | **change_case** : [Type => Str]
+- **Q** | **change_case** :: [Type => Str]
 
     Change all text to either lower or upper case.
     ($(GMTdoc)text.html#q)
-- **T** | **text_box** : [Type => Str]
+- **T** | **text_box** :: [Type => Str]
 
     Specify the shape of the textbox when using G and/or W.
     ($(GMTdoc)text.html#t)
-- **W** | **line_attribs** : [Type => Str]
+- **W** | **line_attribs** :: [Type => Str]
 
     Sets the pen used to draw a rectangle around the text string.
     ($(GMTdoc)text.html#w)
-- **Z** | **threeD** : [Type => Str]
+- **Z** | **threeD** :: [Type => Str]
 
     For 3-D projections: expect each item to have its own level given in the 3rd column.
     ($(GMTdoc)text.html#z)

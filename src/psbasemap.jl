@@ -3,42 +3,42 @@
 
 Plot base maps and frames.
 
-Full option list at [`psbasemap`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html)
+Full option list at [`psbasemap`]($(GMTdoc)basemap.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_J)
 - $(GMT.opt_R)
-- **A** | **polygon** => -- Str or [] --
+- **A** | **polygon** :: [Type => Str | []]
 
     No plotting is performed. Instead, we determine the geographical coordinates of the polygon
     outline for the (possibly oblique) rectangular map domain. 
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#a)
+    ($(GMTdoc)basemap.html#a)
 - $(GMT.opt_B)
-- **D** | **inset** => -- Str --
+- **D** | **inset** :: [Type => Str]
 
     Draw a simple map insert box on the map. Requires -F.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#d)
-- **F** | **box** => -- Str --
+    ($(GMTdoc)basemap.html#d)
+- **F** | **box** :: [Type => Str]
 
     Without further options, draws a rectangular border around any map insert (D), map scale (L)
     or map rose (T)
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#f)
+    ($(GMTdoc)basemap.html#f)
 - $(GMT.opt_Jz)
-- **L** | **map_scale** => -- Str --
+- **L** | **map_scale** :: [Type => Str]
 
     Draw a map scale.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#l)
+    ($(GMTdoc)basemap.html#l)
 - $(GMT.opt_P)
-- **Td** | **rose** => -- Str --
+- **Td** | **rose** :: [Type => Str]
 
     Draws a map directional rose on the map at the location defined by the reference and anchor points.
-    [`-Td`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#t)
-- **Tm** | **compass** => -- Str --
+    ($(GMTdoc)basemap.html#t)
+- **Tm** | **compass** :: [Type => Str]
 
     Draws a map magnetic rose on the map at the location defined by the reference and anchor points.
-    [`-Tm`](http://gmt.soest.hawaii.edu/doc/latest/psbasemap.html#t)
+    ($(GMTdoc)basemap.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

@@ -8,11 +8,11 @@ Full option list at [`gmtset`]($(GMTdoc)gmtset.html)
 Parameters
 ----------
 
-- **D** | **units** : [Type => Str | []]
+- **D** | **units** :: [Type => Str | []]
 
     Modify the GMT defaults based on the system settings. Append u for US defaults or s for SI defaults.
     ($(GMTdoc)gmtinfo.html#d)
-- **G** | **defaultsfile** : [Type => Str]
+- **G** | **defaultsfile** :: [Type => Str]
 
     Name of specific gmt.conf file to read and modify. 
     ($(GMTdoc)gmtinfo.html#g)

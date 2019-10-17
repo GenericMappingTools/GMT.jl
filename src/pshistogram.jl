@@ -3,66 +3,66 @@
 
 Reads file and examines the first data column to calculate histogram parameters based on the bin-width provided.
 
-Full option list at [`pshistogram`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html)
+Full option list at [`pshistogram`]($(GMTdoc)histogram.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_J)
-- **W** : **bin** : **width** : -- Number or Str --
+- **W** | **bin** | **width** :: [Type => Number | Str]
 
     Sets the bin width used for histogram calculations.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#w)
-- **A** : **horizontal** : -- Bool or [] --
+    ($(GMTdoc)histogram.html#w)
+- **A** | **horizontal** :: [Type => Bool]
 
     Plot the histogram horizontally from x = 0 [Default is vertically from y = 0].
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#a)
+    ($(GMTdoc)histogram.html#a)
 - $(GMT.opt_B)
-- **C** : **color** : -- Str or GMTcpt --
+- **C** | **color** :: [Type => Str | GMTcpt]
 
     Give a CPT. The mid x-value for each bar is used to look-up the bar color.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#c)
-- **D** : **annot** : **annotate** : -- Str or [] --
+    ($(GMTdoc)histogram.html#c)
+- **D** | **annot** | **annotate** :: [Type => Str | []]
 
     Annotate each bar with the count it represents.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#d)
-- **F** : **center** : -- Bool or [] --
+    ($(GMTdoc)histogram.html#d)
+- **F** | **center** :: [Type => Bool or []]
 
     Center bin on each value. [Default is left edge].
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#f)
-- **G** : **fill** : -- Number or Str --
+    ($(GMTdoc)histogram.html#f)
+- **G** | **fill** :: [Type => Number | Str]
 
     Select filling of bars [if no G, L or C set G=100].
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#g)
-- **I** : **inquire** : -- Bool or [] --
+    ($(GMTdoc)histogram.html#g)
+- **I** | **inquire** :: [Type => Bool]
 
     Inquire about min/max x and y after binning.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#i)
-- **L** : **labels** : -- Str or [] --
+    ($(GMTdoc)histogram.html#i)
+- **L** | **labels** :: [Type => Str | []]
 
     Draw bar outline using the specified pen thickness [if no G, L or C set L=0.5].
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#l)
-- **N** : **normal** : -- Str --
+    ($(GMTdoc)histogram.html#l)
+- **N** | **normal** :: [Type => Str]
 
     Draw the equivalent normal distribution; append desired pen [0.5p,black].
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#n)
+    ($(GMTdoc)histogram.html#n)
 - $(GMT.opt_P)
-- **Q** : **alpha** : -- Number or [] --
+- **Q** | **alpha** :: [Type => Number | []]
 
     Sets the confidence level used to determine if the mean resultant is significant.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#q)
-- **R** : **region** : -- Str --
+    ($(GMTdoc)histogram.html#q)
+- **R** | **region** :: [Type => Str]
 
     Specifies the ‘region’ of interest in (r,azimuth) space. r0 is 0, r1 is max length in units.
-    [`-R`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#r)
-- **S** : **stairs** : -- Str or number --
+    ($(GMTdoc)histogram.html#r)
+- **S** | **stairs** :: [Type => Str | number]
 
     Draws a stairs-step diagram which does not include the internal bars of the default histogram.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#s)
-- **Z** : **kind** : -- Number or Str --
+    ($(GMTdoc)histogram.html#s)
+- **Z** | **kind** :: [Type => Number | Str]
 
     Choose between 6 types of histograms.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/pshistogram.html#z)
+    ($(GMTdoc)histogram.html#z)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

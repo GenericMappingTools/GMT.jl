@@ -4,42 +4,42 @@
 Compute the directional derivative in a given direction, or to find the direction [and the magnitude]
 of the vector gradient of the data.
 
-Full option list at [`grdgradient`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html)
+Full option list at [`grdgradient`]($(GMTdoc)grdgradient.html)
 
 Parameters
 ----------
 
-- **A** : **azim** : -- Str or Number --    Flags = azim[/azim2]
+- **A** | **azim** :: [Type => Str | Number]    Flags = azim[/azim2]
 
     Azimuthal direction for a directional derivative. 
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html#a)
-- **D** : **find_dir** : -- Str --      Flags = [a][c][o][n]
+    ($(GMTdoc)grdgradient.html#a)
+- **D** | **find_dir** :: [Type => Str]      Flags = [a][c][o][n]
 
     Find the direction of the positive (up-slope) gradient of the data.
-	[`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html#d)
-- **G** : **outgrid** : -- Str --
+    ($(GMTdoc)grdgradient.html#d)
+- **G** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdgradient(....) form.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html#g)
-- **E** : **lambert** : -- Str --    Flags = [m|s|p]azim/elev[+aambient][+ddiffuse][+pspecular][+sshine] 
+    ($(GMTdoc)grdgradient.html#g)
+- **E** | **lambert** :: [Type => Str]    Flags = [m|s|p]azim/elev[+aambient][+ddiffuse][+pspecular][+sshine] 
 
     Compute Lambertian radiance appropriate to use with grdimage and grdview.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#e)
-- **N** : **norm** : **normalize** : -- Str --     Flags = [e|t][amp][+ssigma][+ooffset]
+    ($(GMTdoc)grdgradient.html#e)
+- **N** | **norm** | **normalize** :: [Type => Str]     Flags = [e|t][amp][+ssigma][+ooffset]
 
     Normalization. [Default is no normalization.] The actual gradients g are offset and scaled
     to produce normalized gradients.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html#n)
-- **Q** : **save_stats** : -- Str --		Flags = c|r|R
+    ($(GMTdoc)grdgradient.html#n)
+- **Q** | **save_stats** :: [Type => Str]		Flags = c|r|R
 
     Controls how normalization via N is carried out.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html#q)
+    ($(GMTdoc)grdgradient.html#q)
 - $(GMT.opt_R)
-- **S** : **slopegrid** : -- Str --
+- **S** | **slopegrid** :: [Type => Str]
 
     Name of output grid file with scalar magnitudes of gradient vectors. Requires D but makes G optional.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdgradient.html#s)
+    ($(GMTdoc)grdgradient.html#s)
 - $(GMT.opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_f)

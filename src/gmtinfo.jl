@@ -8,40 +8,40 @@ Full option list at [`gmtinfo`]($(GMTdoc)gmtinfo.html)
 Parameters
 ----------
 
-- **A** : [Type => Str]
+- **A** :: [Type => Str]
 
     Specify how the range should be reported.
     ($(GMTdoc)gmtinfo.html#a)
-- **C** | **per_column** : [Type => Bool]
+- **C** | **per_column** :: [Type => Bool]
 
     Report the min/max values per column in separate columns [Default uses <min/max> format].
     ($(GMTdoc)gmtinfo.html#c)
-- **D** | **center** : [Type => Bool]
+- **D** | **center** :: [Type => Bool]
 
     Modifies results obtained by -I by shifting the region to better align with the center of the data.
     ($(GMTdoc)gmtinfo.html#d)
-- **E** | **get_record** : [Type => Str | []]
+- **E** | **get_record** :: [Type => Str | []]
 
     Returns the record whose column col contains the minimum (l) or maximum (h) value. 
     ($(GMTdoc)gmtinfo.html#e)
-- **F** | **counts** : [Type => Str | []]
+- **F** | **counts** :: [Type => Str | []]
 
     Returns the counts of various records depending on the appended mode.
     ($(GMTdoc)gmtinfo.html#f)
-- **I** | **inc** : [Type => Str | Number]
+- **I** | **inc** :: [Type => Str | Number]
 
     Report the min/max of the first n columns to the nearest multiple of the provided increments
     and output results in the form -Rw/e/s/n 
     ($(GMTdoc)gmtinfo.html#i)
-- **L** | **common_limits** : [Type => Bool]
+- **L** | **common_limits** :: [Type => Bool]
 
     Determines common limits across tables or segments.
     ($(GMTdoc)gmtinfo.html#l)
-- **S** | **for_error_bars** : [Type => Str | []]
+- **S** | **for_error_bars** :: [Type => Str | []]
 
     Add extra space for error bars. Useful together with I option and when later plotting with `plot E`.
     ($(GMTdoc)gmtinfo.html#s)
-- **T** | **nearest_multiple** : [Type => Str | Number]
+- **T** | **nearest_multiple** :: [Type => Str | Number]
 
     Report the min/max of the first (0’th) column to the nearest multiple of dz and output this as
     the string -Tzmin/zmax/dz.
