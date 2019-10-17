@@ -9,22 +9,22 @@ Full option list at [`grdblend`]($(GMTdoc)grdblend.html)
 Parameters
 ----------
 
-- **I** | **inc** :: [Type => Str or Number --
+- **I** | **inc** :: [Type => Str | Number]
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
     ($(GMTdoc)grdblend.html#i)
 - $(GMT.opt_R)
-- **G** | **outgrid** :: [Type => Str --
+- **G** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdblend(....) form.
     ($(GMTdoc)grdblend.html#g)
 
-- **C** | **clobber** :: [Type => Str or [] --      Flags = f|l|o|u[±]
+- **C** | **clobber** :: [Type => Str | []]      ``Arg = f|l|o|u[±]``
 
     Clobber mode: Instead of blending, simply pick the value of one of the grids that covers a node.
     ($(GMTdoc)grdproject.html#c)
-- **N** | **nodata** :: [Type => Str or Number --
+- **N** | **nodata** :: [Type => Str | Number]
 
     No data. Set nodes with no input grid to this value [Default is NaN].
     ($(GMTdoc)grdblend.html#n)
@@ -33,12 +33,12 @@ Parameters
     Create plain header-less grid file (for use with external tools). Requires that the output
     grid file is a native format (i.e., not netCDF). DO NOT USE WITH **G**.
     ($(GMTdoc)grdblend.html#q)
-- **W** | **no_blend** :: [Type => Str or [] --
+- **W** | **no_blend** :: [Type => Str | []]
 
     Do not blend, just output the weights used for each node [Default makes the blend].
     Append ``z`` to write the weight*z sum instead.
     ($(GMTdoc)grdblend.html#w)
-- **Z** | **scale** :: [Type => Number --
+- **Z** | **scale** :: [Type => Number]
 
     Scale output values by scale before writing to file.
     ($(GMTdoc)grdblend.html#z)

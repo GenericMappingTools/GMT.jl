@@ -24,7 +24,7 @@ Parameters
 
     Set the shade, color, or pattern for lakes and river-lakes.
     ($(GMTdoc)coast.html#c)
-- **D** | **res** | **resolution** :: [Type => Str]		Flags = c|l|i|h|f|a
+- **D** | **res** | **resolution** :: [Type => Str]		``Arg = c|l|i|h|f|a``
 
     Selects the resolution of the data set to use ((f)ull, (h)igh, (i)ntermediate, (l)ow, (c)rude), or (a)uto).
     ($(GMTdoc)coast.html#d)
@@ -59,7 +59,7 @@ Parameters
     Draw political boundaries. Specify the type of boundary and [optionally] append pen attributes
     ($(GMTdoc)coast.html#n)
 - $(GMT.opt_P)
-- **clip** :: [Type => Str]		Flags = land|water|end
+- **clip** :: [Type => Str]		``Arg = land|water|end``
 
     To clip land do *clip=:land*, *clip=:water* clips water. Use *end* to mark end of existing clip path.
     No projection information is needed.

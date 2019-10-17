@@ -21,13 +21,13 @@ Parameters
     to initialize nodes outside current region [Default is NaN].
     ($(GMTdoc)grdcut.html#n)
 - $(GMT.opt_R)
-- **S** | **circ_subregion** :: [Type => Str]    Flags = [n]lon/lat/radius[unit]
+- **S** | **circ_subregion** :: [Type => Str]    ``Arg = [n]lon/lat/radius[unit]``
 
     Specify an origin and radius; append a distance unit and we determine the corresponding
     rectangular region so that all grid nodes on or inside the circle are contained in the subset.
     ($(GMTdoc)grdcut.html#s)
 - $(GMT.opt_V)
-- **Z** | **z_subregion** :: [Type => Str]       Flags = [n|N |r][min/max]
+- **Z** | **z_subregion** :: [Type => Str]       ``Arg = [n|N |r][min/max]``
 
     Determine a new rectangular region so that all nodes outside this region are also outside
     the given z-range.

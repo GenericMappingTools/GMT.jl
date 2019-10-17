@@ -9,12 +9,12 @@ Parameters
 ----------
 
 - $(GMT.opt_J)
-- **A** | **annot** :: [Type => Str | Number]       Flags = [-|[+]annot_int][labelinfo]
+- **A** | **annot** :: [Type => Str | Number]       ``Arg = [-|[+]annot_int][labelinfo]``
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
     ($(GMTdoc)contour.html#a)
 - $(GMT.opt_B)
-- **C** | **cont** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  Flags = [+]cont_int
+- **C** | **cont** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
     Contours contours to be drawn may be specified in one of three possible ways.
     ($(GMTdoc)contour.html#c)
@@ -45,15 +45,15 @@ Parameters
     Do NOT clip contours or image at the boundaries [Default will clip to fit inside region].
     ($(GMTdoc)contour.html#n)
 - $(GMT.opt_P)
-- **Q** | **cut** :: [Type => Str | Number]         Flags = [cut[unit]][+z]]
+- **Q** | **cut** :: [Type => Str | Number]         ``Arg = [cut[unit]][+z]]``
 
     Do not draw contours with less than cut number of points.
     ($(GMTdoc)contour.html#q)
-- **S** | **skip** :: [Type => Str | []]            Flags = [p|t]
+- **S** | **skip** :: [Type => Str | []]            ``Arg = [p|t]``
 
     Skip all input xyz points that fall outside the region.
     ($(GMTdoc)contour.html#s)
-- **T** | **ticks** :: [Type => Str]                 Flags = [+|-][+a][+dgap[/length]][+l[labels]]
+- **T** | **ticks** :: [Type => Str]                 ``Arg = [+|-][+a][+dgap[/length]][+l[labels]]``
 
     Draw tick marks pointing in the downward direction every *gap* along the innermost closed contours.
     ($(GMTdoc)contour.html#t)

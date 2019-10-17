@@ -8,21 +8,21 @@ Full option list at [`sample1d`]($(GMTdoc)sample1d.html)
 Parameters
 ----------
 
-- **A** | **resamp** :: [Type => Str]        Flags = f|p|m|r|R
+- **A** | **resamp** :: [Type => Str]        ``Arg = f|p|m|r|R``
 
     For track resampling (if -T…unit is set) we can select how this is to be performed.
     ($(GMTdoc)sample1d.html#a)
-- **F** | **interp_type** :: [Type => Str]   Flags = l|a|c|n[+1|+2]
+- **F** | **interp_type** :: [Type => Str]   ``Arg = l|a|c|n[+1|+2]``
 
     Choose from l (Linear), a (Akima spline), c (natural cubic spline), and n (no interpolation:
     nearest point) [Default is Akima].
     ($(GMTdoc)sample1d.html#f)
-- **N** | **time_col** :: [Type => Int]      Flags = t_col
+- **N** | **time_col** :: [Type => Int]      ``Arg = t_col``
 
     Indicates which column contains the independent variable (time). The left-most column
     is # 0, the right-most is # (n_cols - 1). [Default is 0].
     ($(GMTdoc)sample1d.html#n)
-- **T** | **equi_space** :: [Type => List | Str]     Flags = [min/max/]inc[+a|n]] or file|list
+- **T** | **equi_space** :: [Type => List | Str]     ``Arg = [min/max/]inc[+a|n]] or file|list``
 
     Evaluate the best-fit regression model at the equidistant points implied by the arguments.
     ($(GMTdoc)sample1d.html#t)

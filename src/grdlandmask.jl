@@ -24,7 +24,7 @@ Parameters
 
     Selects the resolution of the data set to use ((f)ull, (h)igh, (i)ntermediate, (l)ow, and (c)rude).
     ($(GMTdoc)grdlandmask.html#d)
-- **E** | **bordervalues** :: [Type => Str | List]    Flags = cborder/lborder/iborder/pborder or bordervalue
+- **E** | **bordervalues** :: [Type => Str | List]    ``Arg = cborder/lborder/iborder/pborder or bordervalue``
 
     Nodes that fall exactly on a polygon boundary should be considered to be outside the polygon
     [Default considers them to be inside].
@@ -34,7 +34,7 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdlandmask(....) form.
     ($(GMTdoc)grdlandmask.html#g)
-- **N** | **mask_geog** :: [Type => Str | List]    Flags = wet/dry or ocean/land/lake/island/pond
+- **N** | **mask_geog** :: [Type => Str | List]    ``Arg = wet/dry or ocean/land/lake/island/pond``
 
     Sets the values that will be assigned to nodes. Values can be any number, including the textstring NaN
     ($(GMTdoc)grdlandmask.html#n)

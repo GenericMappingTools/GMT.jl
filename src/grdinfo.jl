@@ -21,7 +21,7 @@ Parameters
 
     Report grid domain and x/y-increments in world mapping format.
     ($(GMTdoc)grdinfo.html#f)
-- **I** | **nearest** :: [Type => Number | Str]     Flags = [dx[/dy]|b|i|r]
+- **I** | **nearest** :: [Type => Number | Str]     ``Arg = [dx[/dy]|b|i|r]``
 
     Report the min/max of the region to the nearest multiple of dx and dy, and output
     this in the form -Rw/e/s/n

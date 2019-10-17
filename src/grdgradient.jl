@@ -9,11 +9,11 @@ Full option list at [`grdgradient`]($(GMTdoc)grdgradient.html)
 Parameters
 ----------
 
-- **A** | **azim** :: [Type => Str | Number]    Flags = azim[/azim2]
+- **A** | **azim** :: [Type => Str | Number]    ``Arg = azim[/azim2]``
 
     Azimuthal direction for a directional derivative. 
     ($(GMTdoc)grdgradient.html#a)
-- **D** | **find_dir** :: [Type => Str]      Flags = [a][c][o][n]
+- **D** | **find_dir** :: [Type => Str]      ``Arg = [a][c][o][n]``
 
     Find the direction of the positive (up-slope) gradient of the data.
     ($(GMTdoc)grdgradient.html#d)
@@ -22,16 +22,16 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdgradient(....) form.
     ($(GMTdoc)grdgradient.html#g)
-- **E** | **lambert** :: [Type => Str]    Flags = [m|s|p]azim/elev[+aambient][+ddiffuse][+pspecular][+sshine] 
+- **E** | **lambert** :: [Type => Str]    ``Arg = [m|s|p]azim/elev[+aambient][+ddiffuse][+pspecular][+sshine] ``
 
     Compute Lambertian radiance appropriate to use with grdimage and grdview.
     ($(GMTdoc)grdgradient.html#e)
-- **N** | **norm** | **normalize** :: [Type => Str]     Flags = [e|t][amp][+ssigma][+ooffset]
+- **N** | **norm** | **normalize** :: [Type => Str]     ``Arg = [e|t][amp][+ssigma][+ooffset]``
 
     Normalization. [Default is no normalization.] The actual gradients g are offset and scaled
     to produce normalized gradients.
     ($(GMTdoc)grdgradient.html#n)
-- **Q** | **save_stats** :: [Type => Str]		Flags = c|r|R
+- **Q** | **save_stats** :: [Type => Str]		``Arg = c|r|R``
 
     Controls how normalization via N is carried out.
     ($(GMTdoc)grdgradient.html#q)

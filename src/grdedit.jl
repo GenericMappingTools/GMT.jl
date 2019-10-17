@@ -17,11 +17,11 @@ Parameters
 
     Clear the command history from the grid header.
     ($(GMTdoc)grdedit.html#c)
-- **D** | **header** :: [Type => Str]    Flags = [+xxname][+yyname][+zzname][+sscale][+ooffset][+ninvalid][+ttitle][+rremark
+- **D** | **header** :: [Type => Str]    ``Arg = [+xxname][+yyname][+zzname][+sscale][+ooffset][+ninvalid][+ttitle][+rremark``
 
     Change these header parameters.
     ($(GMTdoc)grdedit.html#d)
-- **E** | **header** :: [Type => Str]    Flags = [a|h|l|r|t|v]
+- **E** | **header** :: [Type => Str]    ``Arg = [a|h|l|r|t|v]``
 
     Transform the grid in one of six ways and (for l|r|t) interchange the x and y information
     ($(GMTdoc)grdedit.html#e)

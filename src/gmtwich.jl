@@ -20,7 +20,7 @@ Parameters
 
 	Instead of reporting the paths, print the directories that contains the files.
     ($(GMTdoc)gmtwhich.html#d)
-- **G** | **download** :: [Type => Str | []]      Flags = [c|l|u]
+- **G** | **download** :: [Type => Str | []]      ``Arg = [c|l|u]``
 
 	If a file argument is a downloadable file (either a full URL, a @file for downloading from
 	the GMT Site Cache, or @earth_relief_*.grd) we will try to download the file if it is not

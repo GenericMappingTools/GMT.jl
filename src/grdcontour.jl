@@ -10,7 +10,7 @@ Parameters
 ----------
 
 - $(GMT.opt_J)
-- **A** | **annot** :: [Type => Str or Number]       Flags = [-|[+]annot_int][labelinfo]
+- **A** | **annot** :: [Type => Str or Number]       ``Arg = [-|[+]annot_int][labelinfo]``
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
     ($(GMTdoc)grdcontour.html#a)

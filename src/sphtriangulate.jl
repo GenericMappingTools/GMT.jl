@@ -20,15 +20,15 @@ Parameters
 
     Skip the last (repeated) input vertex at the end of a closed segment if it equals the first point in the segment.
     ($(GMTdoc)sphtriangulate.html#d)
-- **L** | **unit** :: [Type => Str]          Flags = e|f|k|m|n|u|d
+- **L** | **unit** :: [Type => Str]          ``Arg = e|f|k|m|n|u|d``
 
     Specify the unit used for distance and area calculations.
     ($(GMTdoc)sphtriangulate.html#l)
-- **N** | **nodes** :: [Type => Str]         Flags = ``nfile``
+- **N** | **nodes** :: [Type => Str]         ``Arg = `file``
 
     Write the information pertaining to each polygon to a separate file.
     ($(GMTdoc)sphtriangulate.html#n)
-- **Q** | **voronoi** :: [Type => Str]     Flags = d|v
+- **Q** | **voronoi** :: [Type => Str]     ``Arg = d|v``
 
     Append d for Delaunay triangles or v for Voronoi polygons [Delaunay].
     ($(GMTdoc)sphtriangulate.html#q)
