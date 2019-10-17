@@ -3,33 +3,33 @@
 
 Reads (length,azimuth) pairs from file and plot a windclip diagram.
 
-Full option list at [`psclip`](http://gmt.soest.hawaii.edu/doc/latest/psclip.html)
+Full option list at [`psclip`]($(GMTdoc)psclip.html)
 
 Parameters
 ----------
 
-- **C** : **end_clip_path** : -- Bool or [] --
+- **C** | **end_clip_path** :: [Type => Bool]
 
     Mark end of existing clip path. No input file is needed.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psclip.html#C)
+    ($(GMTdoc)psclip.html#c)
 - $(GMT.opt_J)
 
-- **A** : **inc** : -- Str or [] --
+- **A** | **inc** :: [Type => Str or []]
 
     By default, geographic line segments are connected as great circle arcs. To connect them as straight lines, use **A** 
-	[`-A`](http://gmt.soest.hawaii.edu/doc/latest/psclip.html#A)
+    ($(GMTdoc)psclip.html#a)
 - $(GMT.opt_B)
 - $(GMT.opt_Jz)
-- **N** : **invert** : -- Bool or [] --
+- **N** | **invert** :: [Type => Bool]
 
     Invert the sense of the test, i.e., clip regions where there is data coverage.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/psclip.html#n)
+    ($(GMTdoc)psclip.html#n)
 - $(GMT.opt_P)
 - $(GMT.opt_R)
-- **T** : **clip_limits** : -- Bool or [] --
+- **T** | **clip_limits** :: [Type => Bool]
 
     Rather than read any input files, simply turn on clipping for the current map region.
-	[`-T`](http://gmt.soest.hawaii.edu/doc/latest/psclip.html#t)
+    ($(GMTdoc)psclip.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

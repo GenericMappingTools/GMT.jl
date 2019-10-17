@@ -5,60 +5,60 @@ Reads randomly-spaced (x,y,z) triples and produces a binary grid file of gridded
 	
 		(1 - T) * L (L (z)) + T * L (z) = 0
 
-Full option list at [`surface`](http://gmt.soest.hawaii.edu/doc/latest/surface.html)
+Full option list at [`surface`]($(GMTdoc)surface.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_R)
-- **I** : **inc** : -- Str or Number --
+- **I** | **inc** :: [Type => Str | Number]
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#i)
-- **A** : **aspect_ratio** : -- Number --
+    ($(GMTdoc)surface.html#i)
+- **A** | **aspect_ratio** :: [Type => Number]
 
     Aspect ratio. If desired, grid anisotropy can be added to the equations.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#a)
-- **C** : **convergence** : -- Number --
+    ($(GMTdoc)surface.html#a)
+- **C** | **convergence** :: [Type => Number]
 
     Convergence limit. Iteration is assumed to have converged when the maximum absolute change in any
     grid value is less than convergence_limit.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#c)
-- **G** : **outgrid** : -- Str --
+    ($(GMTdoc)surface.html#c)
+- **G** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = surface(....) form.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#g)
-- **Ll** : **lower** : -- Str or Number --
+    ($(GMTdoc)surface.html#g)
+- **Ll** | **lower** :: [Type => Str | Number]
 
     Impose limits on the output solution. lower sets the lower bound. lower can be the name of a grid
     file with lower bound values, a fixed value, d to set to minimum input value,
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#l)
-- **Lu** : **upper** : -- Str or Number --
+    ($(GMTdoc)surface.html#l)
+- **Lu** | **upper** :: [Type => Str | Number]
 
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#l)
-- **N** : **max_iter** : -- Number --
+    ($(GMTdoc)surface.html#l)
+- **N** | **max_iter** :: [Type => Number]
 
     Number of iterations. Iteration will cease when convergence_limit is reached or when number of
     iterations reaches max_iterations.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#n)
-- **Q** : **suggest** : -- Bool --
+    ($(GMTdoc)surface.html#n)
+- **Q** | **suggest** :: [Type => Bool]
 
     Suggest grid dimensions which have a highly composite greatest common factor.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#q)
-- **S** : **search_radius** : -- Number or Str --  
+    ($(GMTdoc)surface.html#q)
+- **S** | **search_radius** :: [Type => Number | Str]  
 
     Sets the resolution of the projected grid that will be created.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#s)
-- **T** : **tension** : -- Number or Str --
+    ($(GMTdoc)surface.html#s)
+- **T** | **tension** :: [Type => Number | Str]
 
     Tension factor[s]. These must be between 0 and 1.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#t)
+    ($(GMTdoc)surface.html#t)
 - $(GMT.opt_V)
-- **Z** : **over_relaxation** : -- Str or GMTgrid --
+- **Z** | **over_relaxation** :: [Type => Str | GMTgrid]
 
     Over-relaxation factor. This parameter is used to accelerate the convergence; it is a number between 1 and 2.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/surface.html#z)
+    ($(GMTdoc)surface.html#z)
 - $(GMT.opt_a)
 - $(GMT.opt_bi)
 - $(GMT.opt_di)

@@ -4,16 +4,16 @@
 Combine grids ``grid1`` and ``grid2`` into ``grid3`` by pasting them together along their common edge.
 Both grids must have the same dx, dy and have one edge in common.
 
-Full option list at [`grdpaste`](http://gmt.soest.hawaii.edu/doc/latest/grdpaste.html)
+Full option list at [`grdpaste`]($(GMTdoc)grdpaste.html)
 
 Parameters
 ----------
 
-- **G** : **outgrid** : -- Str --
+- **G** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdpaste(....) form.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdpaste.html#g)
+    ($(GMTdoc)grdpaste.html#g)
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """

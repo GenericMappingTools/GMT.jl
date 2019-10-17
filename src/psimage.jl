@@ -9,21 +9,21 @@ Parameters
 ----------
 
 - $(GMT.opt_B)
-- **D** | **ref_point** : [Type => Str]
+- **D** | **ref_point** :: [Type => Str]
 
     Sets reference point on the map for the image using one of four coordinate systems.
     ($(GMTdoc)image.html#d)
-- **F** | **box** : [Type => Str | []]
+- **F** | **box** :: [Type => Str | []]
 
     Without further options, draws a rectangular border around the image using MAP_FRAME_PEN.
     ($(GMTdoc)image.html#f)
-- **I** | **invert_1bit** : [Type => Str | Number]
+- **I** | **invert_1bit** :: [Type => Str | Number]
 
     Invert 1-bit image before plotting.
     ($(GMTdoc)image.html#i)
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
-- **M** | **monochrome** : [Type => Bool]
+- **M** | **monochrome** :: [Type => Bool]
 
     Convert color image to monochrome grayshades using the (television) YIQ-transformation.
     ($(GMTdoc)image.html#m)

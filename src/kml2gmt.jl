@@ -3,20 +3,20 @@
 
 kml2gmt - Extract GMT table data from Google Earth KML files
 
-Full option list at [`kml2gmt`](http://gmt.soest.hawaii.edu/doc/latest/kml2gmt.html)
+Full option list at [`kml2gmt`]($(GMTdoc)kml2gmt.html)
 
 Parameters
 ----------
 
-- **F** : **select** : -- Str --        Flags = s|l|p
+- **F** | **select** :: [Type => Str]        ``Arg = s|l|p``
 
     Specify a particular feature type to output. Choose from points (s), line (l), or polygon (p).
     By default we output all geometries.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/kml2gmt.html#f)
-- **Z** : **altitudes** : -- Bool or [] --
+    ($(GMTdoc)kml2gmt.html#f)
+- **Z** | **altitudes** :: [Type => Bool]
 
     Output the altitude coordinates as GMT z coordinates [Default will output just longitude and latitude].
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/kml2gmt.html#z)
+    ($(GMTdoc)kml2gmt.html#z)
 - $(GMT.opt_V)
 - $(GMT.opt_bo)
 - $(GMT.opt_do)

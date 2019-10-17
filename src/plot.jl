@@ -4,51 +4,55 @@
 reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
 polygons, or symbols at those locations on a map.
 
-Full option list at [`psxy`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html)
+Full option list at [`psxy`]($(GMTdoc)plot.html)
 
 Parameters
 ----------
 
-- **A** : **straight_lines** : -- Str --  
+- **A** | **straight_lines** :: [Type => Str] 
 
 	By default, geographic line segments are drawn as great circle arcs.
 	To draw them as straight lines, use the -A flag.
+    ($(GMTdoc)plot.html#a)
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
-- **D** : **offset** : -- Str --
+- **D** | **offset** :: [Type => Str]
 
     Offset the plot symbol or line locations by the given amounts dx/dy.
-- **E** : **error_bars** : -- Str --
+    ($(GMTdoc)plot.html#d)
+- **E** | **error_bars** :: [Type => Str]
 
     Draw symmetrical error bars.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#e)
-- **F** : **conn** : **connection** : -- Str --
+    ($(GMTdoc)plot.html#e)
+- **F** | **conn** | **connection** :: [Type => Str]
 
     Alter the way points are connected
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#f)
-- **G** : **fill** : **markerfacecolor** : **MarkerFaceColor** : -- Str --
+    ($(GMTdoc)plot.html#f)
+- **G** | **fill** | **markerfacecolor** | **MarkerFaceColor** :: [Type => Str]
 
     Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
     color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
     'fill' for the polygons and 'markerfacecolor' for filling the symbols. Same applyies for W bellow
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#g)
-- **I** : **intens** : -- Str or number --
+    ($(GMTdoc)plot.html#g)
+- **I** | **intens** :: [Type => Str | number]
 
     Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating illumination.
-- **L** : **closed_polygon** : -- Str --
+    ($(GMTdoc)plot.html#i)
+- **L** | **closed_polygon** :: [Type => Str]
 
     Force closed polygons. 
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#l)
-- **N** : **no_clip** : --- Str or [] --
+    ($(GMTdoc)plot.html#l)
+- **N** | **no_clip** :: [Type => Str or []]
 
     Do NOT clip symbols that fall outside map border 
+    ($(GMTdoc)plot.html#n)
 - $(GMT.opt_P)
-- **S** : **symbol** : **marker** : **Marker** : -- Str --
+- **S** | **symbol** | **marker** | **Marker** :: [Type => Str]
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s)
+    ($(GMTdoc)plot.html#s)
     Alternatively select a sub-set of symbols using the aliases: **marker** or **Marker** and values:
 
     + **-**, **x_dash**
@@ -71,9 +75,9 @@ Parameters
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
 	points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
 
-- **W** : **pen** : **markeredgecolor** : -- Str --
+- **W** | **pen** | **markeredgecolor** :: [Type => Str --
     Set pen attributes for lines or the outline of symbols
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w)
+    ($(GMTdoc)plot.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
     If your plot has polygons and symbols, use **W** or **pen** for the polygons and
     **markeredgecolor** for filling the symbols. Similar to S above.
@@ -81,7 +85,7 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
-- **axis** : **aspect** : -- Str --
+- **axis** | **aspect** :: [Type => Str --
     When equal to "equal" makes a square plot.
 - $(GMT.opt_a)
 - $(GMT.opt_bi)
@@ -120,54 +124,57 @@ plot3d(arg1::Array; kwargs...)
 reads (x,y,z) triplets from files [or standard input] and generates PostScript code that will plot lines,
 polygons, or symbols at those locations in 3-D.
 
-Full option list at [`psxyz`](http://gmt.soest.hawaii.edu/doc/latest/psxyz.html)
+Full option list at [`plot3d`]($(GMTdoc)plot3d.html)
 
 Parameters
 ----------
 
-- **A** : **straight_lines** : -- Str --  
+- **A** | **straight_lines** :: [Type => Str]  
 
     By default, geographic line segments are drawn as great circle arcs. To draw them as straight lines, use the -A flag.
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
-- **C** : **color** : -- Str --
+- **C** | **color** :: [Type => Str]
 
     Give a CPT or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those colors automatically.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psxyz.html#c)
-- **D** : **offset** : -- Str --
+    ($(GMTdoc)plot3d.html#c)
+- **D** | **offset** :: [Type => Str]
 
     Offset the plot symbol or line locations by the given amounts dx/dy.
-- **E** : **error_bars** : -- Str --
+    ($(GMTdoc)plot3d.html#d)
+- **E** | **error_bars** :: [Type => Str]
 
     Draw symmetrical error bars.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/psxyz.html#e)
-- **F** : **conn** : **connection** : -- Str --
+    ($(GMTdoc)plot3d.html#e)
+- **F** | **conn** | **connection** :: [Type => Str]
 
     Alter the way points are connected
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psxyz.html#f)
-- **G** : **fill** : **markerfacecolor** : **MarkerFaceColor** : -- Str --
+    ($(GMTdoc)plot3d.html#f)
+- **G** | **fill** | **markerfacecolor** | **MarkerFaceColor** :: [Type => Str]
 
     Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
     color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
     'fill' for the polygons and 'markerfacecolor' for filling the symbols. Same applyies for W bellow
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psxyz.html#g)
-- **I** : **intens** : -- Str or number --
+    ($(GMTdoc)plot3d.html#g)
+- **I** | **intens** :: [Type => Str or number]
 
     Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating illumination.
-- **L** : **closed_polygon** : -- Str --
+    ($(GMTdoc)plot3d.html#i)
+- **L** | **closed_polygon** :: [Type => Str]
 
     Force closed polygons. 
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psxyz.html#l)
-- **N** : **no_clip** : --- Str or [] --
+    ($(GMTdoc)plot3d.html#l)
+- **N** | **no_clip** :: [Type => Str | []]
 
     Do NOT clip symbols that fall outside map border 
+    ($(GMTdoc)plot3d.html#n)
 - $(GMT.opt_P)
-- **S** : **symbol** : **marker** : **Marker** : -- Str --
+- **S** | **symbol** | **marker** | **Marker** :: [Type => Str]
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psxyz.html#s)
+    ($(GMTdoc)plot3d.html#s)
     Alternatively select a sub-set of symbols using the aliases: **marker** or **Marker** and values:
 
     + **-**, **x_dash**
@@ -185,9 +192,9 @@ Parameters
     + **t**, **^**, **triangle**
     + **x**, **cross**
     + **y**, **y_dash**
-- **W** : **line_attribs** : **markeredgecolor** : **MarkerEdgeColor** : -- Str --
+- **W** | **line_attribs** | **markeredgecolor** | **MarkerEdgeColor** :: [Type => Str]
     Set pen attributes for lines or the outline of symbols
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxyz.html#w)
+    ($(GMTdoc)plot3d.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
     If your plot has polygons and symbols, use **W** or **line_attribs** for the polygons and
     **markeredgecolor** or **MarkerEdgeColor** for filling the symbols. Similar to S above.
@@ -234,19 +241,19 @@ consult the ``plot`` module.
 Parameters
 ----------
 
-- **G** : **fill** : **markerfacecolor** : -- Str --
+- **G** | **fill** | **markerfacecolor** :: [Type => Str]
 
     Select color or pattern for filling of symbols or polygons.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#g)
-- **N** : **no_clip** : -- Str or [] --
+    ($(GMTdoc)plot.html#g)
+- **N** | **no_clip** :: [Type => Str | []]
 
     Do NOT clip symbols that fall outside map border 
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#n)
+    ($(GMTdoc)plot.html#n)
 - $(GMT.opt_P)
-- **S** : -- Str --
+- **S** :: [Type => Str]
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#s)
+    ($(GMTdoc)plot.html#s)
 
     Alternatively select a sub-set of symbols using the aliases: **symbol** or **marker** and values:
 
@@ -269,13 +276,13 @@ Parameters
     and select their sizes with the **markersize** or **size** keyword [default is 8p].
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
     points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT=:c,)*	
-- **W** : **pen** : **markeredgecolor** : -- Str --
+- **W** | **pen** | **markeredgecolor** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psxy.html#w)
+    ($(GMTdoc)plot.html#w)
 
 [`Full man page`](https://genericmappingtools.github.io/GMT.jl/latest/scatter/)
-[`GMT man page`](http://gmt.soest.hawaii.edu/doc/latest/plot.html)
+[`GMT man page`]($(GMTdoc)plot.html)
 """
 scatter(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "scatter",  true, false, kw...)
 scatter!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "scatter",  false, false, kw...)
@@ -307,15 +314,15 @@ Reads a file or (x,y) pairs and plots vertical bars extending from base to y.
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
-- **fill** : -- Str --
+- **fill** :: [Type => Str --
 
     Select color or pattern for filling the bars
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#g)
-- **base** : **bottom** : -- Str or Num --		``key=value``
+    ($(GMTdoc)plot.html#g)
+- **base** | **bottom** :: [Type => Str | Num]		``key=value``
 
     By default, base = ymin. Use this option to change that value. If base is not appended then we read it.
     from the last input data column.
-- **size** : **width** : -- Str or Num --		``key=value``
+- **size** | **width** :: [Type => Str | Num]		``key=value``
 
     The size or width is the bar width. Append u if size is in x-units. When *width* is used the default is plot-distance units.
 
@@ -343,11 +350,11 @@ Read a grid file, a grid or a MxN matrix and plots vertical bars extending from 
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
-- **fill** : -- Str --		``key=color``
+- **fill** :: [Type => Str]		``key=color``
 
     Select color or pattern for filling the bars
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#g)
-- **base** : -- Str or Num --		``key=value``
+    ($(GMTdoc)plot.html#g)
+- **base** :: [Type => Str | Num]		``key=value``
 
     By default, base = ymin. Use this option to change that value. If base is not appended then we read it.
 - $(GMT.opt_p)
@@ -462,10 +469,10 @@ The full *arrow* options list can be consulted at [Vector Attributes](@ref)
 - $(GMT.opt_B)
 - $(GMT.opt_J)
 - $(GMT.opt_R)
-- **W** : **pen** : **line_attrib** : -- Str --
+- **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#w)
+    ($(GMTdoc)plot.html#w)
 
 Example:
 
@@ -519,10 +526,10 @@ Reads a file or (x,y) pairs and plots a collection of different line with decora
 - $(GMT.opt_B)
 - $(GMT.opt_J)
 - $(GMT.opt_R)
-- **W** : **pen** : **line_attrib** : -- Str --
+- **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/plot.html#w)
+    ($(GMTdoc)plot.html#w)
 
 Example:
 

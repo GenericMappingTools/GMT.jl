@@ -8,33 +8,33 @@ Full option list at [`subplot`](http://docs.generic-mapping-tools.org/latest/sub
 Parameters
 ----------
 
-- **grid** : -- Str or Tuple
+- **grid** :: [Type => Str | Tuple
 
     Specifies the number of rows and columns of subplots. Ex grid=(2,3)
-- **F** : **dims** : **dimensions** : **size** : **sizes** : -- Str or Tuple, NamedTuple --
+- **F** | **dims** | **dimensions** | **size** | **sizes** :: [Type => Str | Tuple, NamedTuple]
 
     Specify the dimensions of the figure.
     [`-F`](http://docs.generic-mapping-tools.org/latest/subplot.html#f)
-- **A** : **autolabel** : **fixedlabel** : -- Str or number --
+- **A** | **autolabel** | **fixedlabel** :: [Type => Str | number]
 
     Specify automatic tagging of each subplot. This sets the tag of the first, top-left subplot and others follow sequentially.
     [`-A`](http://docs.generic-mapping-tools.org/latest/subplot.html#a)
 - $(GMT.opt_B)
-- **C** : **clearance** : -- Str or number --
+- **C** | **clearance** :: [Type => Str | number]
 
     Reserve a space of dimension clearance between the margin and the subplot on the specified side. Settings specified under **begin** directive apply to all panels.
     [`-C`](http://docs.generic-mapping-tools.org/latest/subplot.html#c)
 - $(GMT.opt_J)
-- **M** : **margins** : -- Str --
+- **M** | **margins** :: [Type => Str]
 
     The margin space that is added around each subplot beyond the automatic space allocated for tick marks, annotations, and labels.
     [`-M`](http://docs.generic-mapping-tools.org/latest/subplot.html#m)
 - $(GMT.opt_R)
-- **SC** : **SR** : **row_axes** : **col_axes** : -- Str or NamedTuple --
+- **SC** | **SR** | **row_axes** | **col_axes** :: [Type => Str | NamedTuple]
 
     Set subplot layout for shared axes. Set separately for rows (SR) and columns (SC).
     [`-S`](http://docs.generic-mapping-tools.org/latest/subplot.html#s)
-- **T** : **title** : -- Str --
+- **T** | **title** :: [Type => Str]
 
     While individual subplots can have titles, the entire figure may also have a overarching title.
     [`-T`](http://docs.generic-mapping-tools.org/latest/subplot.html#t)

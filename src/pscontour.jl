@@ -3,73 +3,73 @@
 
 Reads a table data and produces a raw contour plot by triangulation.
 
-Full option list at [`contour`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html)
+Full option list at [`contour`]($(GMTdoc)contour.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_J)
-- **A** : **annot** : -- Str or Number --       Flags = [-|[+]annot_int][labelinfo]
+- **A** | **annot** :: [Type => Str | Number]       Flags = [-|[+]annot_int][labelinfo]
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#a)
+    ($(GMTdoc)contour.html#a)
 - $(GMT.opt_B)
-- **C** : **cont** : **contours** : **levels** : -- Str or Number or GMTcpt --  Flags = [+]cont_int
+- **C** | **cont** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  Flags = [+]cont_int
 
     Contours contours to be drawn may be specified in one of three possible ways.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#c)
-- **D** : **dump** : -- Str --
+    ($(GMTdoc)contour.html#c)
+- **D** | **dump** :: [Type => Str]
 
     Dump contours as data line segments; no plotting takes place.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#d)
-- **E** : **index** : -- Str or Mx3 array --
+    ($(GMTdoc)contour.html#d)
+- **E** | **index** :: [Type => Str | Mx3 array]
 
     Give name of file with network information. Each record must contain triplets of node
     numbers for a triangle.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#e)
-- **G** : **labels** : -- Str --
+    ($(GMTdoc)contour.html#e)
+- **G** | **labels** :: [Type => Str]
 
     Controls the placement of labels along the quoted lines.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#g)
-- **I** : **fill** : **colorize** : -- Bool or [] --
+    ($(GMTdoc)contour.html#g)
+- **I** | **fill** | **colorize** :: [Type => Bool]
 
     Color the triangles using the color scale provided via **C**.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#i)
+    ($(GMTdoc)contour.html#i)
 - $(GMT.opt_Jz)
-- **L** : **mesh** : -- Str or Number --
+- **L** | **mesh** :: [Type => Str | Number]
 
     Draw the underlying triangular mesh using the specified pen attributes (if not provided, use default pen)
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#l)
-- **N** : **no_clip** : --- Bool or [] --
+    ($(GMTdoc)contour.html#l)
+- **N** | **no_clip** :: [Type => Bool]
 
     Do NOT clip contours or image at the boundaries [Default will clip to fit inside region].
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pstext.html#n)
+    ($(GMTdoc)contour.html#n)
 - $(GMT.opt_P)
-- **Q** : **cut** : -- Str or Number --         Flags = [cut[unit]][+z]]
+- **Q** | **cut** :: [Type => Str | Number]         Flags = [cut[unit]][+z]]
 
     Do not draw contours with less than cut number of points.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#q)
-- **S** : **skip** : -- Str or [] --            Flags = [p|t]
+    ($(GMTdoc)contour.html#q)
+- **S** | **skip** :: [Type => Str | []]            Flags = [p|t]
 
     Skip all input xyz points that fall outside the region.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#s)
-- **T** : **ticks** : -- Str --                 Flags = [+|-][+a][+dgap[/length]][+l[labels]]
+    ($(GMTdoc)contour.html#s)
+- **T** | **ticks** :: [Type => Str]                 Flags = [+|-][+a][+dgap[/length]][+l[labels]]
 
     Draw tick marks pointing in the downward direction every *gap* along the innermost closed contours.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#t)
+    ($(GMTdoc)contour.html#t)
 - $(GMT.opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
-- **W** : **pen** : -- Str or Number --
+- **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#w)
+    ($(GMTdoc)contour.html#w)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
-- **Z** : **scale** : -- Str --
+- **Z** | **scale** :: [Type => Str]
 
     Use to subtract shift from the data and multiply the results by factor before contouring starts.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/pscontour.html#z)
+    ($(GMTdoc)contour.html#z)
 - $(GMT.opt_bi)
 - $(GMT.opt_bo)
 - $(GMT.opt_d)

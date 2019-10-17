@@ -9,28 +9,28 @@ Parameters
 ----------
 
 - $(GMT.opt_R)
-- **I** | **inc** : [Type => Str | Number]
+- **I** | **inc** :: [Type => Str | Number]
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
     ($(GMTdoc)blockmean.html#i)
-- **A** | **fields** : [Type => Str]
+- **A** | **fields** :: [Type => Str]
 
     Select which fields to write to individual grids. Append comma-separated codes for available
     fields: **z** (the mean data z, but see **-S**), **s** (standard deviation), **l** (lowest value),
     **h** (highest value) and **w** (the output weight; requires **-W**). [Default is just **z**].
     ($(GMTdoc)blockmean.html#a)
-- **C** | **center** : [Type => Bool]
+- **C** | **center** :: [Type => Bool]
 
     Use the center of the block as the output location [Default uses the mean location]. Not used when **-A**
     ($(GMTdoc)blockmean.html#c)
-- **E** | **extend** : [Type => Str | []]
+- **E** | **extend** :: [Type => Str | []]
 
     Provide Extended report which includes s (the standard deviation about the mean), l, the lowest
     value, and h, the high value for each block. Output order becomes x,y,z,s,l,h[,w]. [Default
     outputs x,y,z[,w]. See -W for w output. If -Ep is used we assume weights are 1/(sigma squared)
     and s becomes the propagated error of the mean.
     ($(GMTdoc)blockmean.html#e)
-- **G** | **grid** | **gridfile** : [Type => Str | []]
+- **G** | **grid** | **gridfile** :: [Type => Str | []]
 
     Write one or more fields directly to grids on disk; no table data are return. If more than one
     fields are specified via **A** then grdfile must contain the format flag %s so that we can embed the
@@ -41,7 +41,7 @@ Parameters
     Use S=:n to report the number of points inside each block, S=:s to report the sum of all z-values 
     inside a block, S=:w to report the sum of weights [Default (or S=:m reports mean value].
     ($(GMTdoc)blockmean.html#s)
-- **W** | **weights** : [Type => Str | []]
+- **W** | **weights** :: [Type => Str | []]
 
     Unweighted input and output have 3 columns x,y,z; Weighted i/o has 4 columns x,y,z,w. Weights can
     be used in input to construct weighted mean values for each block.

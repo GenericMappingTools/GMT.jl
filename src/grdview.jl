@@ -5,43 +5,43 @@ Reads a 2-D grid and produces a 3-D perspective plot by drawing a mesh, painting
 colored/grayshaded surface made up of polygons, or by scanline conversion of these polygons
 to a raster image.
 
-Full option list at [`grdview`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html)
+Full option list at [`grdview`]($(GMTdoc)grdview.html)
 
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
-- **G** : **drapefile** : -- Str or GMTgrid or a Tuple with 3 GMTgrid types --
+- **G** | **drapefile** :: [Type => Str | GMTgrid | a Tuple with 3 GMTgrid types]
 
     Drape the image in drapefile on top of the relief provided by relief_file.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#g)
-- **I** : **shade** : **intensity** : **intensfileintens** : -- Str or GMTgrid --
+    ($(GMTdoc)grdview.html#g)
+- **I** | **shade** | **intensity** | **intensfileintens** :: [Type => Str | GMTgrid]
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#i)
-- **N** : **plane** : -- Str or Int --
+    ($(GMTdoc)grdview.html#i)
+- **N** | **plane** :: [Type => Str | Int]
 
     Draws a plane at this z-level.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#n)
+    ($(GMTdoc)grdview.html#n)
 - $(GMT.opt_P)
-- **Q** : **surftype** : **surf_type** : -- Str or Int --
+- **Q** | **surftype** | **surf_type** :: [Type => Str | Int]
 
     Specify **m** for mesh plot, **s* for surface, **i** for image.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#q)
-- **S** : **smooth** : -- Number --
+    ($(GMTdoc)grdview.html#q)
+- **S** | **smooth** :: [Type => Number]
 
     Smooth the contours before plotting.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#s)
-- **T** : **no_interp** : -- Str --
+    ($(GMTdoc)grdview.html#s)
+- **T** | **no_interp** :: [Type => Str]
 
     Plot image without any interpolation.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#t)
-- **W** : **pens** : -- Str --
+    ($(GMTdoc)grdview.html#t)
+- **W** | **pens** :: [Type => Str]
 
     Draw contour, mesh or facade. Append pen attributes.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdview.html#w)
+    ($(GMTdoc)grdview.html#w)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

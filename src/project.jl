@@ -8,20 +8,20 @@ Full option list at [`project`](http://docs.generic-mapping-tools.org/latest/pro
 Parameters
 ----------
 
-- **C** | **origin** | **start_pt** : [Type => list/tuple]    ``Arg = (x,y)``
+- **C** | **origin** | **start_pt** :: [Type => list/tuple]    ``Arg = (x,y)``
 
     Sets the origin of the projection, in Definition 1 or 2.
     (http://docs.generic-mapping-tools.org/latest/project.html#c)
 
-- **A** | **azim** : [Type => Number]    ``Arg = azimuth``
+- **A** | **azim** :: [Type => Number]    ``Arg = azimuth``
 
     Defines the azimuth of the projection (Definition 1).
     (http://docs.generic-mapping-tools.org/latest/project.html#a)
-- **E** | **end_pt** : [Type => list/tuple]    ``Arg = (bx,by)``
+- **E** | **end_pt** :: [Type => list/tuple]    ``Arg = (bx,by)``
 
     bx,by defines the end point of the projection path (Definition 2).
     (http://docs.generic-mapping-tools.org/latest/project.html#e)
-- **F** | **out_flags** : [Type => Str]    ``Arg = xyzpqrs``
+- **F** | **out_flags** :: [Type => Str]    ``Arg = xyzpqrs``
 
     Specify your desired output using any combination of xyzpqrs, in any order [Default is xyzpqrs].
     (http://docs.generic-mapping-tools.org/latest/project.html#f)
@@ -29,27 +29,27 @@ Parameters
 
     Generate mode. No input is read. Create (r, s, p) output points every dist units of p. See Q option.
     (http://docs.generic-mapping-tools.org/latest/project.html#g)
-- **L** | **length_control** : [Type => Number or list/tuple]    ``Arg = [w|l_min/l_max]``
+- **L** | **length_control** :: [Type => Number or list/tuple]    ``Arg = [w|l_min/l_max]``
 
     Length controls. Project only those points whose p coordinate is within l_min < p < l_max.
     (http://docs.generic-mapping-tools.org/latest/project.html#l)
-- **N** | **flat_earth** : [Type => Bool or []]
+- **N** | **flat_earth** :: [Type => Bool or []]
 
     Flat Earth. Make a Cartesian coordinate transformation in the plane. [Default uses spherical trigonometry.]
     (http://docs.generic-mapping-tools.org/latest/project.html#n)
-- **Q** | **km** : [Type => Bool or []]
+- **Q** | **km** :: [Type => Bool or []]
 
     Map type units.
     (http://docs.generic-mapping-tools.org/latest/project.html#q)
-- **S** | **sort** : [Type => Bool or []]
+- **S** | **sort** :: [Type => Bool or []]
 
     Sort the output into increasing p order. Useful when projecting random data into a sequential profile.
     (http://docs.generic-mapping-tools.org/latest/project.html#s)
-- **T** | **pole** : [Type => list/tuple]    ``Arg = (px,py)``
+- **T** | **pole** :: [Type => list/tuple]    ``Arg = (px,py)``
 
     px,py sets the position of the rotation pole of the projection. (Definition 3).
     (http://docs.generic-mapping-tools.org/latest/project.html#t)
-- **W** | **width_control** : [Type => list/tuple]    ``Arg = (w_min,w_max)``
+- **W** | **width_control** :: [Type => list/tuple]    ``Arg = (w_min,w_max)``
 
     Width controls. Project only those points whose q coordinate is within w_min < q < w_max.
     (http://docs.generic-mapping-tools.org/latest/project.html#w)

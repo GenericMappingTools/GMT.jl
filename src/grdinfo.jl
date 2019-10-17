@@ -3,41 +3,41 @@
 
 Reads a 2-D grid file and reports metadata and various statistics for the (x,y,z) data in the grid file
 
-Full option list at [`grdinfo`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html)
+Full option list at [`grdinfo`]($(GMTdoc)grdinfo.html)
 
 Parameters
 ----------
 
-- **C** : **numeric** : -- Str or Number --
+- **C** | **numeric** :: [Type => Str | Number]
 
     Formats the report using tab-separated fields on a single line.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#c)
-- **D** : **tiles** : -- Number or Str --  
+    ($(GMTdoc)grdinfo.html#c)
+- **D** | **tiles** :: [Type => Number | Str]  
 
     Divide a single grid’s domain (or the -R domain, if no grid given) into tiles of size
     dx times dy (set via -I).
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#d)
-- **F** : -- Bool or [] --
+    ($(GMTdoc)grdinfo.html#d)
+- **F** :: [Type => Bool]
 
     Report grid domain and x/y-increments in world mapping format.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#f)
-- **I** : **nearest** : -- Number or Str --     Flags = [dx[/dy]|b|i|r]
+    ($(GMTdoc)grdinfo.html#f)
+- **I** | **nearest** :: [Type => Number | Str]     Flags = [dx[/dy]|b|i|r]
 
     Report the min/max of the region to the nearest multiple of dx and dy, and output
     this in the form -Rw/e/s/n
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#i)
-- **L** : **force_scan** : -- Number or Str --
+    ($(GMTdoc)grdinfo.html#i)
+- **L** | **force_scan** :: [Type => Number | Str]
 
     Report stats after actually scanning the data.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#l)
-- **M** : **minmax_pos** : -- Bool or [] --
+    ($(GMTdoc)grdinfo.html#l)
+- **M** | **minmax_pos** :: [Type => Bool]
 
     Find and report the location of min/max z-values.
-    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#m)
+    ($(GMTdoc)grdinfo.html#m)
 - $(GMT.opt_R)
-- **T** : **zmin_max** : -- Number or Str --
+- **T** | **zmin_max** :: [Type => Number | Str]
     Determine min and max z-value.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdinfo.html#t)
+    ($(GMTdoc)grdinfo.html#t)
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """

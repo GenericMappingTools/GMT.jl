@@ -3,32 +3,32 @@
 
 Spherical gridding in tension of data on a sphere
 
-Full option list at [`sphinterpolate`](http://gmt.soest.hawaii.edu/doc/latest/sphinterpolate .html)
+Full option list at [`sphinterpolate`]($(GMTdoc)sphinterpolate .html)
 
 Parameters
 ----------
 
-- **G** : **outgrid** : -- Str --
+- **G** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = sphinterpolate(....) form.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/sphinterpolate.html#g)
-- **I** : **inc** : -- Str or Number --
+    ($(GMTdoc)sphinterpolate.html#g)
+- **I** | **inc** :: [Type => Str or Number]
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/sphinterpolate.html#i)
-- **Q** : **tension** : -- Number or Str --     Flags = mode[/options]
+    ($(GMTdoc)sphinterpolate.html#i)
+- **Q** | **tension** :: [Type => Number | Str]     Flags = mode[/options]
 
     Specify one of four ways to calculate tension factors to preserve local shape properties or satisfy arc constraints.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/sphinterpolate .html#q)
-- **T** : **var_tension** : -- Bool or Str --
+    ($(GMTdoc)sphinterpolate.html#q)
+- **T** | **var_tension** :: [Type => Bool | Str]
 
     Use variable tension (ignored with -Q0 [constant]
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/sphinterpolate.html#t)
-- **Z** : **scale** : -- Bool or Str --
+    ($(GMTdoc)sphinterpolate.html#t)
+- **Z** | **scale** :: [Type => Bool | Str]
 
     Before interpolation, scale data by the maximum data range [no scaling].
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/sphinterpolate.html#z)
+    ($(GMTdoc)sphinterpolate.html#z)
 - $(GMT.opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_bi)

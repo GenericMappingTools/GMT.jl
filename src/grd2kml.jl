@@ -4,49 +4,49 @@
 Reads a 2-D grid file and makes a quadtree of PNG images and KML wrappers for Google Earth
 using the selected tile size [256x256 pixels].
 
-Full option list at [`grd2kml`](http://gmt.soest.hawaii.edu/doc/latest/grd2kml.html)
+Full option list at [`grd2kml`]($(GMTdoc)grd2kml.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_C)
-- **E** : **url** : -- Str --		Flags = `url``
+- **E** | **url** :: [Type => Str]		`Arg = url`
 
     Instead of hosting the files locally, prepend a site URL. The top-level prefix.kml file
     will then use this URL to find the other files it references.``
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/grd2kml.html#e)
-- **F** : **filter** : -- Str --
+    ($(GMTdoc)grd2kml.html#e)
+- **F** | **filter** :: [Type => Str]
 
     Specifies the filter to use for the downsampling of the grid for more distant viewing.
     Choose among boxcar, cosine arch, gaussian, or median [Gaussian].
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/grd2kml.html#f)
-- **H** : **sub_pixel** : -- Int --         Flags = ``factor`
+    ($(GMTdoc)grd2kml.html#e)
+- **H** | **sub_pixel** :: [Type => Int]         `Arg = factor`
 
     Improve the quality of rasterization by passing the sub-pixel smoothing factor to psconvert.
-    [`-H`](http://gmt.soest.hawaii.edu/doc/latest/grd2kml.html#h)
-- **I** : **shade** : **intensity** : **intensfile** : -- Str or GMTgrid --
+    ($(GMTdoc)grd2kml.html#h)
+- **I** | **shade** | **intensity** | **intensfile** :: [Type => Str | GMTgrid]
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/grd2kml.html#i)
-- **L** : **tile_size** : -- Number --			Flags = `tilesize`
+    ($(GMTdoc)grd2kml.html#i)
+- **L** | **tile_size** :: [Type => Number]			`Arg = tilesize`
 
     Sets the fixed size of the image building blocks. Must be an integer that is radix 2.
     Typical values are 256 or 512 [256].
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/grd2kml.html#l)
-- **N** : **prefix** -- Str --		            Flags = `prefix`
+    ($(GMTdoc)grd2kml.html#l)
+- **N** | **prefix** [Type => Str]		            `Arg = prefix`
 
     Sets a unique name prefixed used for the top-level KML filename and the directory where all
     referenced KML files and PNG images will be written [GMT_Quadtree].
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grd2kml.html#n)
-- **Q** : **nan_t** : **nan_alpha** : -- Bool or [] --
+    ($(GMTdoc)grd2kml.html#n)
+- **Q** | **nan_t** | **nan_alpha** :: [Type => Bool]
 
     Make grid nodes with z = NaN transparent, using the color-masking feature in PostScript Level 3.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/grd2kml.html#q)
-- **T** : **title** : -- Str --			        Flags = `title`
+    ($(GMTdoc)grd2kml.html#q)
+- **T** | **title** :: [Type => Str]		        `Arg = title`
 
     Sets the title of the top-level document (i.e., its description).
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grd2kml.html#t)
+    ($(GMTdoc)grd2kml.html#t)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)

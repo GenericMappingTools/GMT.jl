@@ -3,27 +3,27 @@
 
 Reads one 2-D grid and returns xyz-triplets.
 
-Full option list at [`grd2xyz`](http://gmt.soest.hawaii.edu/doc/latest/grd2xyz.html)
+Full option list at [`grd2xyz`]($(GMTdoc)grd2xyz.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_J)
-- **C** : **row_col** : -- Bool --
+- **C** | **row_col** :: [Type => Bool]
 
     Replace the x- and y-coordinates on output with the corresponding column and row numbers.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/grd2xyz.html#c)
+    ($(GMTdoc)grd2xyz.html#c)
 - $(GMT.opt_R)
 - $(GMT.opt_V)
-- **W** : **weight** : -- Str --           Flags = [a|weight]
+- **W** | **weight** :: [Type => Str]           `Arg = [a|weight]`
 
     Write out x,y,z,w, where w is the supplied weight (or 1 if not supplied) [Default writes x,y,z only].
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/grd2xyz.html#w)
-- **Z** : **flags** : -- Str --
+    ($(GMTdoc)grd2xyz.html#w)
+- **Z** | **flags** :: [Type => Str]
 
     Write a 1-column table. Output will be organized according to the specified ordering
     convention contained in ``flags``.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/grd2xyz.html#z)
+    ($(GMTdoc)grd2xyz.html#z)
 - $(GMT.opt_write)
 - $(GMT.opt_append)
 - $(GMT.opt_bo)

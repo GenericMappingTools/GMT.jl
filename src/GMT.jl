@@ -138,14 +138,12 @@ if (!foundGMT)
 	println("some of the links may change in a near future.\n\n")
 	if (Sys.iswindows() && Sys.WORD_SIZE == 64)
 		println("1) Download and install the official version at (the '..._win64.exe':")
-		println("\t\t https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download")
-		println("\n2) Or even better, download and install the GMT6dev version at:")
-		println("\t\t http://w3.ualg.pt/~jluis/downloads/gmt.html")
+		println("\t\t https://github.com/GenericMappingTools/gmt/releases")
 	elseif (Sys.iswindows() && Sys.WORD_SIZE == 32)
 		println("Download and install the official version at (the '..._win32.exe':")
-		println("\t\t https://gmt.soest.hawaii.edu/projects/gmt/wiki/Download")
+		println("\t\t https://github.com/GenericMappingTools/gmt/releases")
 	else
-		println("https://gmt.soest.hawaii.edu/projects/gmt/wiki/BuildingGMT")
+		println("https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md")
 	end
 end
 

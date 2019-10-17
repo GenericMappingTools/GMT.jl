@@ -10,27 +10,27 @@ Parameters
 
 - $(GMT.opt_J)
 - $(GMT.opt_B)
-- **C** | **formated** : [Type => Bool]
+- **C** | **formated** :: [Type => Bool]
 
     ($(GMTdoc)solar.html#c)
-- **G** | **fill** : [Type => Str | Number]
+- **G** | **fill** :: [Type => Str | Number]
 
     ($(GMTdoc)solar.html#g)
-- **I** | **sun** : [Type => Bool | Tuple | NamedTuple]
+- **I** | **sun** :: [Type => Bool | Tuple | NamedTuple]
 
     ($(GMTdoc)solar.html#i)
 - $(GMT.opt_P)
-- **M** | **dump** : [Type => Bool]
+- **M** | **dump** :: [Type => Bool]
 
     ($(GMTdoc)solar.html#m)
 - $(GMT.opt_R)
-- **N** | **invert** : [Type => Bool]
+- **N** | **invert** :: [Type => Bool]
 
     ($(GMTdoc)solar.html#n)
-- **T** | **terminators** : [Type => Bool | Tuple | NamedTuple]
+- **T** | **terminators** :: [Type => Bool | Tuple | NamedTuple]
 
     ($(GMTdoc)solar.html#t)
-- **W** | **pen** : [Type => Str | Tuple]
+- **W** | **pen** :: [Type => Str | Tuple]
 
     ($(GMTdoc)solar.html#w)
 - $(GMT.opt_U)

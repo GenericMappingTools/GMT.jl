@@ -60,14 +60,13 @@ function inset(fim=nothing; stop=false, kwargs...)
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:c :F :V_params], true)
 	cmd = parse_these_opts(cmd, d, [[:M :margins]])
-    cmd = parse_type_anchor(d, cmd, [[:D :inset :inset_box]])
+	cmd = parse_type_anchor(d, cmd, [[:D :inset :inset_box]])
 
 	do_show = false
 	if (fim !== nothing)
 		t = lowercase(string(fim))
-		if     (t == "end" || t == "stop")  stop = true
-		elseif (t == "show")  stop = true;  do_show = true
-		end
+		if (t == "end" || t == "stop" || t == "show")  stop = true  end
+		if (t == "show")  do_show = true  end
 	end
 
 	if (!stop)

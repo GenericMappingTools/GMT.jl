@@ -8,39 +8,39 @@ Full option list at [`grdimage`]($(GMTdoc)grdimage.html)
 Parameters
 ----------
 
-- **A** | **img_out** | **image_out** : [Type => Str]
+- **A** | **img_out** | **image_out** :: [Type => Str]
 
     Save an image in a raster format instead of PostScript.
     ($(GMTdoc)grdimage.html#a)
 - $(GMT.opt_J)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
-- **D** | **img_in** | **image_in** : [Type => Str]
+- **D** | **img_in** | **image_in** :: [Type => Str]
 
     Specifies that the grid supplied is an image file to be read via GDAL.
     ($(GMTdoc)grdimage.html#d)
-- **E** | **dpi** : [Type => Int]
+- **E** | **dpi** :: [Type => Int]
 
     Sets the resolution of the projected grid that will be created.
     ($(GMTdoc)grdimage.html#e)
-- **G** : [Type => Int]
+- **G** :: [Type => Int]
 
     ($(GMTdoc)grdimage.html#g)
-- **I** | **shade** | **intensity** : [Type => Bool | Str | GMTgrid]
+- **I** | **shade** | **intensity** :: [Type => Bool | Str | GMTgrid]
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
     ($(GMTdoc)grdimage.html#i)
-- **M** | **monochrome** : [Type => Bool]
+- **M** | **monochrome** :: [Type => Bool]
 
     Force conversion to monochrome image using the (television) YIQ transformation.
     ($(GMTdoc)grdimage.html#m)
-- **N** | **noclip** : [Type => Bool]
+- **N** | **noclip** :: [Type => Bool]
 
     Do not clip the image at the map boundary.
     ($(GMTdoc)grdimage.html#n)
 - $(GMT.opt_P)
-- **Q** | **nan_t** | **nan_alpha** : [Type => Bool]
+- **Q** | **nan_t** | **nan_alpha** :: [Type => Bool]
 
     Make grid nodes with z = NaN transparent, using the colormasking feature in PostScript Level 3.
 - $(GMT.opt_R)

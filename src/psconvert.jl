@@ -3,77 +3,77 @@
 
 Place images or EPS files on maps.
 
-Full option list at [`psconvert`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html)
+Full option list at [`psconvert`]($(GMTdoc)psconvert.html)
 
 Parameters
 ----------
 
-- **A** : **adjust** : **crop** : -- Str or Number --  
+- **A** | **adjust** | **crop** :: [Type => Str or Number]  
 
     Adjust the BoundingBox and HiResBoundingBox to the minimum required by the image content.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#a)
-- **C** : **gs_option** : -- Str or Array os strings --
+    ($(GMTdoc)psconvert.html#a)
+- **C** | **gs_option** :: [Type => Str or Array os strings]
 
     Specify a single, or an araay of, custom option that will be passed on to GhostScript as is.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#c)
-- **D** : **out_dir*** : *output_dir** : -- Str --
+    ($(GMTdoc)psconvert.html#c)
+- **D** | **out_dir*** | *output_dir** :: [Type => Str]
 
     Sets an alternative output directory (which must exist) [Default is the same directory
     as the PS files].
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#d)
-- **E** : **dpi** : -- Number --
+    ($(GMTdoc)psconvert.html#d)
+- **E** | **dpi** :: [Type => Number]
 
     Set raster resolution in dpi [default = 720 for PDF, 300 for others].
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#e)
-- **F** : **:out_name** : **output_name** : -- Str --
+    ($(GMTdoc)psconvert.html#e)
+- **F** | **:out_name** | **output_name** :: [Type => Str]
 
     Force the output file name.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#f)
-- **G** : **ghost_path** : -- Bool or [] --
+    ($(GMTdoc)psconvert.html#f)
+- **G** | **ghost_path** :: [Type => Bool]
 
     Full path to your GhostScript executable.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#g)
-- **I** : **icc_gray** : -- Bool or [] --
+    ($(GMTdoc)psconvert.html#g)
+- **I** | **icc_gray** :: [Type => Bool]
 
     Enforce gray-shades by using ICC profiles.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#i)
-- **in_memory** : -- Bool or [] --
+    ($(GMTdoc)psconvert.html#i)
+- **in_memory** :: [Type => Bool]
 
     Process a in memory PS file. No other input file should be provided.
     Currently works on Windows only.
-- **L** : **list_file** : -- Str --
+- **L** | **list_file** :: [Type => Str]
 
     The listfile is an ASCII file with the names of the PostScript files to be converted.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#l)
-- **Q** : **anti_aliasing** : -- Str --
+    ($(GMTdoc)psconvert.html#l)
+- **Q** | **anti_aliasing** :: [Type => Str]
 
     Set the anti-aliasing options for graphics or text. Append the size of the subsample box
     (1, 2, or 4) [4]. This option is set by default.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#q)
-- **S** : **gs_command** : -- Bool or [] --
+    ($(GMTdoc)psconvert.html#q)
+- **S** | **gs_command** :: [Type => Bool]
 
     Print to standard error the GhostScript command after it has been executed.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#s)
-- **T** : **format** : -- Str --
+    ($(GMTdoc)psconvert.html#s)
+- **T** | **format** :: [Type => Str]
 
     b|e|E|f|F|j|g|G|m|s|t Sets the output format, where b = BMP, e = EPS, E = EPS with PageSize command,
     f = PDF, F = multi-page PDF, j = JPEG, g = PNG, G = transparent PNG (untouched regions are
     transparent), m = PPM,  and t = TIFF [default is JPEG].
     Alternatively, the format may be set with the *fmt* keyword, e.g. *fmt=:png*.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#t)
-- **W** : **world_file** : -- Str --
+    ($(GMTdoc)psconvert.html#t)
+- **W** | **world_file** :: [Type => Str]
 
     Write a ESRI type world file suitable to make (e.g) .tif files be recognized as geotiff by
     software that know how to do it. 
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#w)
-- **kml** -- Str or [] --
+    ($(GMTdoc)psconvert.html#w)
+- **kml** :: [Type => Str | []]
 
     Create a minimalist KML file that allows loading the image in GoogleEarth.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#w)
-- **Z** : **del_input_ps** : -- Bool or [] --
+    ($(GMTdoc)psconvert.html#w)
+- **Z** | **del_input_ps** :: [Type => Bool]
 
     Remove the input PostScript file(s) after the conversion.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/psconvert.html#z)
+    ($(GMTdoc)psconvert.html#z)
 - $(GMT.opt_V)
 """
 function psconvert(cmd0::String="", arg1=nothing; kwargs...)

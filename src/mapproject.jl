@@ -3,7 +3,7 @@
 
 Forward and inverse map transformations, datum conversions and geodesy.
 
-Full option list at [`mapproject`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html)
+Full option list at [`mapproject`]($(GMTdoc)mapproject.html)
 
 Parameters
 ----------
@@ -11,59 +11,59 @@ Parameters
 - $(GMT.opt_R)
 - $(GMT.opt_J)
 
-- **A** : **origin** : -- Str --    Flags = b|B|f|F|o|O[lon0/lat0][+v]
+- **A** | **origin** :: [Type => Str]    ``Arg = b|B|f|F|o|O[lon0/lat0][+v]``
 
     Calculate azimuth along track or to the optional fixed point set with lon0/lat0.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#a)
-- **C** : **center** : -- Str or list or [] --    Flags = [dx/dy]
+    ($(GMTdoc)mapproject.html#a)
+- **C** | **center** :: [Type => Str | List | []]     ``Arg = [dx/dy]``
 
     Set center of projected coordinates to be at map projection center [Default is lower left corner].
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#c)
-- **D** : **override_units** : -- Str --    Flags = c|i|p
+    ($(GMTdoc)mapproject.html#c)
+- **D** | **override_units** :: [Type => Str]    ``Arg = c|i|p``
 
     Temporarily override PROJ_LENGTH_UNIT and use c (cm), i (inch), or p (points) instead.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#d)
-- **E** : **geod2ecef** : -- Str or [] --    Flags = [datum]
+    ($(GMTdoc)mapproject.html#d)
+- **E** | **geod2ecef** :: [Type => Str | []]    ``Arg = [datum]``
 
     Convert from geodetic (lon, lat, height) to Earth Centered Earth Fixed (ECEF) (x,y,z) coordinates.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#e)
-- **F** : **one2one** : -- Str or [] --    Flags = [unit]
+    ($(GMTdoc)mapproject.html#e)
+- **F** | **one2one** :: [Type => Str | []]    ``Arg = [unit]``
 
     Force 1:1 scaling, i.e., output (or input, see I) data are in actual projected meters.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#f)
-- **G** : **track_distances** : -- Str or List --    Flags = [lon0/lat0][+a][+i][+u[+|-]unit][+v]
+    ($(GMTdoc)mapproject.html#f)
+- **G** | **track_distances** :: [Type => Str | List]    ``Arg = [lon0/lat0][+a][+i][+u[+|-]unit][+v]``
 
     Calculate distances along track or to the optional fixed point set with G="lon0/lat0".
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#g)
-- **L** : **dist2line** : -- Str --    Flags = line.xy[+u[+|-]unit][+p]
+    ($(GMTdoc)mapproject.html#g)
+- **L** | **dist2line** :: [Type => Str]   ``Arg = line.xy[+u[+|-]unit][+p]``
 
     Determine the shortest distance from the input data points to the line(s) given in the
     ASCII multisegment file line.xy.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#l)
-- **N** : **geod2aux** : -- Str or [] --       Flags = [a|c|g|m]
+    ($(GMTdoc)mapproject.html#l)
+- **N** | **geod2aux** :: [Type => Str | []]       ``Arg = [a|c|g|m]``
 
     Convert from geodetic latitudes to one of four different auxiliary latitudes (longitudes are unaffected).
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#n)
-- **Q** : **list** : -- Str or [] --           Flags = [d|e]
+    ($(GMTdoc)mapproject.html#n)
+- **Q** | **list** :: [Type => Str | []]           ``Arg = [d|e]``
 
     List all projection parameters. To only list datums, use Q=:d, to only list ellipsoids, use Q=:e.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#q)
-- **S** : **supress** : -- Bool or [] --
+    ($(GMTdoc)mapproject.html#q)
+- **S** | **supress** :: [Type => Bool]
 
     Suppress points that fall outside the region.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#s)
-- **T** : **change_datum** : -- Str --    Flags = [h]from[/to]
+    ($(GMTdoc)mapproject.html#s)
+- **T** | **change_datum** :: [Type => Str]    ``Arg = [h]from[/to]``
 
     Coordinate conversions between datums from and to using the standard Molodensky transformation.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#t)
-- **W** : **map_size** : -- Str or [] --    Flags = [w|h]
+    ($(GMTdoc)mapproject.html#t)
+- **W** | **map_size** :: [Type => Str | []]    ``Arg = [w|h]``
 
     Prints map width and height on standard output. No input files are read.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#w)
-- **Z** : **travel_times** : -- Str or Number --    Flags = [speed][+a][+i][+f][+tepoch]
+    ($(GMTdoc)mapproject.html#w)
+- **Z** | **travel_times** :: [Type => Str | Number]    ``Arg = [speed][+a][+i][+f][+tepoch]``
 
     Calculate travel times along track as specified with -G.
-    [`-Z`](http://gmt.soest.hawaii.edu/doc/latest/mapproject.html#z)
+    ($(GMTdoc)mapproject.html#z)
 
 - $(GMT.opt_V)
 - $(GMT.opt_b)

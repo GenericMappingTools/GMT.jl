@@ -8,15 +8,15 @@ Full option list at [`fitcircle`]($(GMTdoc)fitcircle.html)
 Parameters
 ----------
 
-- **L** : **norm** : [Type => Int | []]
+- **L** | **norm** :: [Type => Int | []]
 
     Specify the desired norm as 1 or 2, or use [] or 3 to see both solutions.
     ($(GMTdoc)fitcircle.html#l)
-- **F** : **coord** : **coordinates** : [Type => Str]	`Arg = f|m|n|s|c`
+- **F** | **coord** | **coordinates** :: [Type => Str]	`Arg = f|m|n|s|c`
 
     Only return data coordinates, and append Arg to specify which coordinates you would like.
     ($(GMTdoc)fitcircle.html#f)
-- **S** : **symetry** : [Type => Number]    `Arg = symmetry_factor`
+- **S** | **symetry** :: [Type => Number]    `Arg = symmetry_factor`
 
     Attempt to
     ($(GMTdoc)fitcircle.html#s)

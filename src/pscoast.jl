@@ -6,81 +6,81 @@ Plots grayshaded, colored, or textured land-masses [or water-masses] on
 maps and [optionally] draws coastlines, rivers, and political
 boundaries. A map projection must be supplied.
 
-Full option list at [`pscoast`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html)
+Full option list at [`coast`]($(GMTdoc)coast.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_J)
 - $(GMT.opt_R)
-- **A** : **area** : -- Str or Number --
+- **A** | **area** :: [Type => Str or Number]
 
     Features with an area smaller than min_area in km^2 or of
     hierarchical level that is lower than min_level or higher than
     max_level will not be plotted.
-    [`-A`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#a)
+    ($(GMTdoc)coast.html#a)
 - $(GMT.opt_B)
-- **C** : **river_fill** : -- Str --
+- **C** | **river_fill** :: [Type => Str]
 
     Set the shade, color, or pattern for lakes and river-lakes.
-    [`-C`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#c)
-- **D** : **res** : **resolution** : -- Str --		Flags = c|l|i|h|f|a
+    ($(GMTdoc)coast.html#c)
+- **D** | **res** | **resolution** :: [Type => Str]		Flags = c|l|i|h|f|a
 
     Selects the resolution of the data set to use ((f)ull, (h)igh, (i)ntermediate, (l)ow, (c)rude), or (a)uto).
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#d)
-- **E** : **DCW** : -- Str --
+    ($(GMTdoc)coast.html#d)
+- **E** | **DCW** :: [Type => Str]
 
     Select painting or dumping country polygons from the Digital Chart of the World.
-    [`-E`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#e)
+    ($(GMTdoc)coast.html#e)
     + Tuple("code", Str); Tuple("code" [,"fill"], (pen)); Tuple((...),(...),...)
     + ex: ("PT",(0.5,"red","--")); (("PT","gblue",(0.5,"red"),("ES",(0.5,"yellow")))
-- **F** : **box** : -- Str --
+- **F** | **box** :: [Type => Str]
 
     Draws a rectangular border around the map scale or rose.
-    [`-F`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#f)
-- **G** : **land** : -- Str --
+    ($(GMTdoc)coast.html#f)
+- **G** | **land** :: [Type => Str]
 
     Select filling or clipping of “dry” areas.
-    [`-G`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#g)
-- **I** : **rivers** : -- Str --
+    ($(GMTdoc)coast.html#g)
+- **I** | **rivers** :: [Type => Str]
 
     Draw rivers. Specify the type of rivers and [optionally] append pen attributes.
-    [`-I`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#i)
-- **L** : **map_scale** : -- Str --
+    ($(GMTdoc)coast.html#i)
+- **L** | **map_scale** :: [Type => Str]
 
     Draw a map scale.
-    [`-L`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#l)
-- **M** : **dump** : -- Str --
+    ($(GMTdoc)coast.html#l)
+- **M** | **dump** :: [Type => Str]
 
     Dumps a single multisegment ASCII output. No plotting occurs.
-    [`-M`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#m)
-- **N** : **borders** : -- Str --
+    ($(GMTdoc)coast.html#m)
+- **N** | **borders** :: [Type => Str]
 
     Draw political boundaries. Specify the type of boundary and [optionally] append pen attributes
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#n)
+    ($(GMTdoc)coast.html#n)
 - $(GMT.opt_P)
-- **clip** : -- Str --		Flags = land|water|end
+- **clip** :: [Type => Str]		Flags = land|water|end
 
     To clip land do *clip=:land*, *clip=:water* clips water. Use *end* to mark end of existing clip path.
     No projection information is needed.
-    [`-Q`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#q)
-- **S** : **water** : **ocean** : -- Str --
+    ($(GMTdoc)coast.html#q)
+- **S** | **water** | **ocean** :: [Type => Str]
 
     Select filling or clipping of “wet” areas.
-    [`-S`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#s)
-- **Td** : **rose`** : -- Str --
+    ($(GMTdoc)coast.html#s)
+- **Td** | **rose`** :: [Type => Str]
 
     Draws a map directional rose on the map at the location defined by the reference and anchor points.
-    [`-Td`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#t)
-- **Tm** : **compass** : -- Str --
+    ($(GMTdoc)coast.html#t)
+- **Tm** | **compass** :: [Type => Str]
 
     Draws a map magnetic rose on the map at the location defined by the reference and anchor points.
-    [`-Tm`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#t)
+    ($(GMTdoc)coast.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
-- **W** : **shore** : -- Str --
+- **W** | **shore** :: [Type => Str]
     Draw shorelines [Default is no shorelines]. Append pen attributes.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/pscoast.html#w)
+    ($(GMTdoc)coast.html#w)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - $(GMT.opt_bo)

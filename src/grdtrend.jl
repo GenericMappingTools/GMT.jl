@@ -4,27 +4,27 @@
 reads a 2-D grid file and fits a low-order polynomial trend to these data by
 [optionally weighted] least-squares.
 
-Full option list at [`grdtrend`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html)
+Full option list at [`grdtrend`]($(GMTdoc)grdtrend.html)
 
 Parameters
 ----------
 
-- **N** : **model** : -- Str or Number --
+- **N** | **model** :: [Type => Str | Number]
 
     Sets the number of model parameters to fit.
-    [`-N`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#n)
-- **D** : **diff** : -- Str or [] --
+    ($(GMTdoc)grdtrend.html#n)
+- **D** | **diff** :: [Type => Str | []]
 
     Compute the difference (input data - trend). Optionaly provide a file name to save result on disk.
-    [`-D`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#d)
-- **T** : **trend** : -- Str or [] --
+    ($(GMTdoc)grdtrend.html#d)
+- **T** | **trend** :: [Type => Str | []]
 
     Compute the trend surface. Optionaly provide a file name to save result on disk.
-    [`-T`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#t)
-- **W** : **weights** : -- Str --
+    ($(GMTdoc)grdtrend.html#t)
+- **W** | **weights** :: [Type => Str]
 
     If weight.nc exists, it will be read and used to solve a weighted least-squares problem.
-    [`-W`](http://gmt.soest.hawaii.edu/doc/latest/grdtrend.html#w)
+    ($(GMTdoc)grdtrend.html#w)
 - $(GMT.opt_R)
 - $(GMT.opt_V)
 """

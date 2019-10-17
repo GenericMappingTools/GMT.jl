@@ -8,36 +8,36 @@ Parameters
 ----------
 
 Specify data type.  Choose among:
-- **grd** : **grid** : -- Any --
+- **grd** | **grid** :: [Type => Any]
 
     Load a grid.
-- **img** : **image** : -- Any --
+- **img** | **image** :: [Type => Any]
 
     Load an image.
-- **cpt** : **cmap** : -- Any --
+- **cpt** | **cmap** :: [Type => Any]
 
     Load a GMT color palette.
-- **dataset** : **table** : -- Any --
+- **dataset** | **table** :: [Type => Any]
 
     Load a dataset (a table of numbers).
-- **ps** : -- Any --
+- **ps** :: [Type => Any]
 
     Load a PostScript file
-- **gdal** : -- Any --
+- **gdal** :: [Type => Any]
 
     Force reading the file via GDAL. Should only be used to read grids.
-- **varname** : -- String --
+- **varname** :: [Type => Str]
 
     When netCDF files have more than one 2D (or higher) variables use *varname* to pick the wished variable.
     e.g. varname=:slp to read the variable named 'slp'. This option defaults data type to 'grid'
-- **layer** : **band** : -- Str, Number, Array --
+- **layer** | **band** :: [Type => Str, Number, Array]
 
     When files are multiband or nc files with 3D or 4D arrays, we access them via these keywords.
     layer=4 reads the fourth layer (or band) of the file. But the file can be a grid or an image. If it is a
     grid layer can be a scalar (to read 3D arrays) or an array of two elements (to read a 4D array).
     If file is an image 'layer' can be a 1 or a 1x3 array (to read a RGB image). Not that in this later case
     bands do not need to be contiguous. A band=[0,5,2] composes an RGB out of those bands. See more at
-    (https://gmt.soest.hawaii.edu/doc/latest/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files)
+    $(GMTdoc)/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files)
 
 - $(GMT.opt_R)
 - $(GMT.opt_V)
@@ -127,30 +127,30 @@ When saving grids we have a large panoply of formats at our disposal.
 Parameters
 ----------
 
-- **id** :  [Type => Str] 
+- **id** ::  [Type => Str] 
 
     Use an ``id`` code when not not saving a grid into a standard COARDS-compliant netCDF grid. This ``id``
     is made up of two characters like ``ef`` to save in ESRI Arc/Info ASCII Grid Interchange format (ASCII float).
     See the full list of ids at $(GMTdoc)grdconvert.html#format-identifier.
 
     ($(GMTdoc)grdconvert.html#g)
-- **scale** | **offset** : [Type => Number]
+- **scale** | **offset** :: [Type => Number]
 
     You may optionally ask to scale the data and then offset them with the specified amounts.
     These modifiers are particularly practical when storing the data as integers, by first removing an offset
     and then scaling down the values.
-- **nan** | **novalue** | **invalid** | **missing** : [Type => Number]
+- **nan** | **novalue** | **invalid** | **missing** :: [Type => Number]
 
     Lets you supply a value that represents an invalid grid entry, i.e., ‘Not-a-Number’.
-- **gdal** : [Type => Bool]
+- **gdal** :: [Type => Bool]
 
     Force the use of the GDAL library to write the grid (to be used only with grids).
     ($(GMTdoc)GMT_Docs.html#grid-file-format-specifications)
-- **driver** : [Type => Str]
+- **driver** :: [Type => Str]
 
     When saving in other than the netCDF format we must tell the GDAL library what is wished format.
     That is done by specifying the driver name used by GDAL itself (e.g., netCDF, GTiFF, etc...).
-- **datatype** : [Type => Str] 		Flags = u8|u16|i16|u32|i32|float32
+- **datatype** :: [Type => Str] 		``Arg = u8|u16|i16|u32|i32|float32``
 
     When saving with GDAL we can specify the data type from u8|u16|i16|u32|i32|float32 where ‘i’ and ‘u’ denote
     signed and unsigned integers respectively.
