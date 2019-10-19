@@ -939,6 +939,7 @@ if (got_it)					# Otherwise go straight to end
 	mat2ds(rand(6,6), color=[:red :blue]);
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"]);
+	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a"]);
 
 	GMT.get_datatype([]);
 	GMT.get_datatype(Float32(8));
