@@ -785,7 +785,7 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr)
 			X.object = dataset_init_(API, module_input, ptr, X.direction, actual_family)
 		end
 		X.family = actual_family[1]
-	elseif (X.family == GMT_IS_TEXTSET)		# Get a textset from Julia or a dummy one to hold GMT output
+	elseif (GMTver < 6.0 && X.family == GMT_IS_TEXTSET)		# Get a textset from Julia or a dummy one to hold GMT output
 		X.object = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
 	elseif (X.family == GMT_IS_PALETTE)		# Get a palette from Julia or a dummy one to hold GMT output
 		X.object = palette_init(API, module_input, ptr, X.direction)
@@ -819,7 +819,7 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 		ptr = get_grid(API, X.object)
 	elseif (X.family == GMT_IS_DATASET)		# A GMT table; make it a matrix and the pos'th output item
 		ptr = get_dataset(API, X.object)
-	elseif (X.family == GMT_IS_TEXTSET)		# A GMT textset; make it a cell and the pos'th output item
+	elseif (GMTver < 6.0 && X.family == GMT_IS_TEXTSET)		# A GMT textset; make it a cell and the pos'th output item
 		ptr = get_textset_(API, X.object)
 	elseif (X.family == GMT_IS_PALETTE)		# A GMT CPT; make it a colormap and the pos'th output item
 		ptr = get_palette(API, X.object)
@@ -909,7 +909,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_IN)
-	# ...
+# ...
 	global img_mem_layout
 
 	if (isempty_(img_box))			# Just tell image_init() to allocate an empty container
@@ -918,7 +918,7 @@ function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_I
 		                    C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 		if (img_mem_layout != "")
 			mem_layout = length(img_mem_layout) == 3 ? img_mem_layout * "a" : img_mem_layout
-			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);		# State how we wish to receive images from GDAL
+			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);
 		end
 		return I
 	end
@@ -1015,14 +1015,11 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 		D = dataset_init(API, module_input, Darr, direction, actual_family)
 		return D
 	end
+
 	# We come here if we did not receive a matrix
-	#if (!isa(Darr, GMTdataset)) error("Expected a GMTdataset type for input")	end
 	dim = [1, 0, 0, 0]
 	dim[GMT.GMT_SEG+1] = length(Darr)				# Number of segments
 	if (dim[GMT.GMT_SEG+1] == 0)	error("Input has zero segments where it can't be")	end
-	if (length(Darr[1].data) == 0 && length(Darr[1].text) == 0)
-		error("Both 'data' array and 'text' arrays are NULL!")
-	end
 	dim[GMT.GMT_COL+1] = size(Darr[1].data, 2)		# Number of columns
 
 # NEW
@@ -1037,7 +1034,6 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 		error("Failure to alloc GMT destination dataset")
 	end
 	DS = unsafe_load(convert(Ptr{GMT_DATASET}, D))
-	GMT_Report(API, GMT_MSG_DEBUG, @sprintf("dataset_init_: Allocated GMT dataset %s\n", D))
 
 	DT = unsafe_load(unsafe_load(DS.table))				# GMT.GMT_DATATABLE
 
@@ -1360,7 +1356,7 @@ function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
 		return GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 
-	if (!isa(ps, GMTps))  error("Expected a PS structure for input")  end
+	(!isa(ps, GMTps)) && error("Expected a PS structure for input")
 
 	# Passing dim[0] = 0 since we dont want any allocation of a PS string
 	pdim = pointer([0])
@@ -1599,7 +1595,7 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=noth
 	if (hdr !== nothing && isa(hdr, String))	# Accept one only but expand to n_ds with the remaining as blanks
 		bak = hdr;	hdr = fill("", n_ds);	hdr[1] = bak
 	elseif (hdr !== nothing && length(hdr) != n_ds)
-		error("The headers vector can only have length = 1 or same number of MAT Y columns")
+		error("The header vector can only have length = 1 or same number of MAT Y columns")
 	end
 
 	if (color == :cycle || color == "cycle")
