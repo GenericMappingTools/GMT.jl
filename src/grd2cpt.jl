@@ -13,7 +13,7 @@ Parameters
     Sets a constant level of transparency (0-100) for all color slices.
     ($(GMTdoc)grd2cpt.html#a)
 - $(GMT.opt_C)
-- **D** :: [Type => Str | []]			`Arg = [i|o]`
+- **D** | **bg** | **background** :: [Type => Str | []]			`Arg = [i|o]`
 
     Select the back- and foreground colors to match the colors for lowest and highest
     z-values in the output CPT. 

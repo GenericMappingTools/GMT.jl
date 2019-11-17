@@ -30,7 +30,7 @@ Parameters
     outputs x,y,z[,w]. See -W for w output. If -Ep is used we assume weights are 1/(sigma squared)
     and s becomes the propagated error of the mean.
     ($(GMTdoc)blockmean.html#e)
-- **G** | **grid** | **gridfile** :: [Type => Str | []]
+- **G** | **outgrid** :: [Type => Str | []]
 
     Write one or more fields directly to grids on disk; no table data are return. If more than one
     fields are specified via **A** then grdfile must contain the format flag %s so that we can embed the
@@ -102,7 +102,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 
-	cmd = parse_these_opts(cmd, d, [[:A :fields], [:C :center], [:G :grid :gridfile], [:I :inc], [:W :weights]])
+	cmd = parse_these_opts(cmd, d, [[:A :fields], [:C :center], [:G :outgrid :grid], [:I :inc], [:W :weights]])
 	if (occursin("-G", cmd) && !occursin("-A", cmd))
 		cmd = cmd * " -Az"					# So that we can use plain -G to mean write grid 
 	end
@@ -110,7 +110,7 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 		@warn("Computing grids is only possible with GMT version >= 6")
 		return nothing
 	end
-	cmd = parse_common_opts(d, cmd, [:R :V_params :bi :di :e :f :h :i :o :r :yx])
+	cmd = parse_common_opts(d, cmd, [:R :V_params :bi :di :e :f :h :i :o :r :yx :params])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	if (occursin("-G", cmd))			# GMT API does not allow a -G from externals

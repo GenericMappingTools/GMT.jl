@@ -89,7 +89,7 @@ Parameters
 """
 function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
-	length(kwargs) == 0 && clip == nothing && return monolitic("pscoast", cmd0)
+	length(kwargs) == 0 && clip === nothing && return monolitic("pscoast", cmd0)
 
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance

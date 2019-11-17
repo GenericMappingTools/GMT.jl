@@ -6,22 +6,23 @@ const opt_C = "**C** | **color** | **cmap** :: [Type => Str]		``Arg = [cpt |mast
     colors automatically.
     (http://docs.generic-mapping-tools.org/latest/grdimage.html#c)"
 
-const opt_J = "**J** | **proj** :: [Type => String]
+const opt_J = "**J** | **proj** | **projection** :: [Type => String]
 
     Select map projection. Defaults to 12x8 cm with linear (non-projected) maps.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#j-full)"
 
-const opt_Jz = "**Jz** | **z_axis** :: [Type => String]
+const opt_Jz = "**Jz** | **zscale** | **zsize** :: [Type => String]"
+const opt_JZ = "**JZ** | **zsize** :: [Type => String]
 
     Set z-axis scaling. 
     (http://docs.generic-mapping-tools.org/latest/gmt.html#jz-full)"
 
-const opt_R = "**R** | **region** | **limits** :: [Type => Str or list or GMTgrid|image]		``Arg = (xmin,xmax,ymin,ymax)``
+const opt_R = "**R** | **region** | **limits** :: [Type => Str or list or GMTgrid|image]	``Arg = (xmin,xmax,ymin,ymax)``
 
     Specify the region of interest. Set to data minimum BoundinBox if not provided.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#r-full)"
 
-const opt_B = "**B** | **axis** :: [Type => Str] 
+const opt_B = "**B** | **frame** | **axis** | **xaxis yaxis**:: [Type => Str] 
 
     Set map boundary frame and axes attributes.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#b-full)"
@@ -40,9 +41,9 @@ const opt_V = "**V** | **verbose** :: [Type => Bool or Str]		``Arg = [level]``
     Select verbosity level, which will send progress reports to stderr.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#v-full)"
 
-const opt_X = "**X** | **x_offset** :: [Type => Str]     ``Arg = [a|c|f|r][x-shift[u]]``" 
+const opt_X = "**X** | **xoff** | **x_off** | **x_offset** :: [Type => Str]     ``Arg = [a|c|f|r][x-shift[u]]``" 
 
-const opt_Y = "**Y** | **y_offset** :: [Type => Str]     ``Arg = [a|c|f|r][y-shift[u]]``
+const opt_Y = "**Y** | **yoff** | **y_off** | **y_offset** :: [Type => Str]     ``Arg = [a|c|f|r][y-shift[u]]``
 
     Shift plot origin relative to the current origin by (x-shift,y-shift) and optionally
     append the length unit (c, i, or p). 
@@ -67,7 +68,7 @@ const opt_bo = "**bo** | **binary_out** :: [Type => Str]			``Arg = [ncols][type]
     Select native binary output.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#bo-full)"
 
-const opt_c = "**c** | **nodata** :: [Type => Str]				``Arg = row,col``
+const opt_c = "**c** | **panel** :: [Type => Str]				``Arg = row,col``
 
     Used to advance to the selected subplot panel. Only allowed when in subplot mode.
     http://docs.generic-mapping-tools.org/latest/gmt.html#c-full)"
@@ -114,7 +115,7 @@ const opt_i = "**i** | **incol** :: [Type => Str]      ``Arg = cols[+l][+sscale]
     Select specific data columns for primary input, in arbitrary order.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#icols-full)"
 
-const opt_j = "**j** | **cart_dist** :: [Type => Str]     ``Arg = e|f|g``
+const opt_j = "**j** | **spheric_dist** | **spherical_dist** :: [Type => Str]     ``Arg = e|f|g``
 
     Determine how spherical distances are calculated in modules that support this.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#j-full)"

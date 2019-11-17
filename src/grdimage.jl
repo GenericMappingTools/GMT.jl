@@ -23,7 +23,7 @@ Parameters
 
     Sets the resolution of the projected grid that will be created.
     ($(GMTdoc)grdimage.html#e)
-- **G** :: [Type => Int]
+- **G** | **bit_color** :: [Type => Int]
 
     ($(GMTdoc)grdimage.html#g)
 - **I** | **shade** | **intensity** :: [Type => Bool | Str | GMTgrid]
@@ -63,7 +63,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
-	cmd = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G],
+	cmd = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G :bit_color],
 				[:M :monochrome], [:N :noclip], [:Q :nan_t :nan_alpha], ["," :mem :mem_layout]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted

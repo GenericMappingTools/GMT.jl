@@ -9,20 +9,20 @@ Full option list at [`psxy`]($(GMTdoc)plot.html)
 Parameters
 ----------
 
-- **A** | **straight_lines** :: [Type => Str] 
+- **A** | **steps** | **straight_lines** :: [Type => Str] 
 
 	By default, geographic line segments are drawn as great circle arcs.
-	To draw them as straight lines, use the -A flag.
+	To draw them as straight lines, use this option.
     ($(GMTdoc)plot.html#a)
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
 - $(GMT.opt_C)
-- **D** | **offset** :: [Type => Str]
+- **D** | **shift** | **offset** :: [Type => Str]
 
     Offset the plot symbol or line locations by the given amounts dx/dy.
     ($(GMTdoc)plot.html#d)
-- **E** | **error_bars** :: [Type => Str]
+- **E** | **error** | **error_bars** :: [Type => Str]
 
     Draw symmetrical error bars.
     ($(GMTdoc)plot.html#e)
@@ -30,7 +30,7 @@ Parameters
 
     Alter the way points are connected
     ($(GMTdoc)plot.html#f)
-- **G** | **fill** | **markerfacecolor** | **MarkerFaceColor** :: [Type => Str]
+- **G** | **fill** | **markerfacecolor** | **MarkerFaceColor** | **mc** :: [Type => Str]
 
     Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
     color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
@@ -40,11 +40,11 @@ Parameters
 
     Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating illumination.
     ($(GMTdoc)plot.html#i)
-- **L** | **closed_polygon** :: [Type => Str]
+- **L** | **close** :: [Type => Str]
 
     Force closed polygons. 
     ($(GMTdoc)plot.html#l)
-- **N** | **no_clip** :: [Type => Str or []]
+- **N** | **no_clip** | **noclip** :: [Type => Str or []]
 
     Do NOT clip symbols that fall outside map border 
     ($(GMTdoc)plot.html#n)
@@ -129,9 +129,9 @@ Full option list at [`plot3d`]($(GMTdoc)plot3d.html)
 Parameters
 ----------
 
-- **A** | **straight_lines** :: [Type => Str]  
+- **A** | **steps** | **straight_lines** :: [Type => Str]  
 
-    By default, geographic line segments are drawn as great circle arcs. To draw them as straight lines, use the -A flag.
+    By default, geographic line segments are drawn as great circle arcs. To draw them as straight lines, use this option.
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
 - $(GMT.opt_R)
@@ -192,7 +192,7 @@ Parameters
     + **t**, **^**, **triangle**
     + **x**, **cross**
     + **y**, **y_dash**
-- **W** | **line_attribs** | **markeredgecolor** | **MarkerEdgeColor** :: [Type => Str]
+- **W** | **pen** | **line_attribs** | **markeredgecolor** | **MarkerEdgeColor** :: [Type => Str]
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot3d.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
