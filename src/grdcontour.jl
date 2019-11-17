@@ -36,7 +36,7 @@ Parameters
 
     Limit range: Do not draw contours for data values below low or above high.
     ($(GMTdoc)grdcontour.html#l)
-- **N** | **fill** :: [Type => Bool]
+- **N** | **fill** | **colorize** :: [Type => Bool]
 
     Fill the area between contours using the discrete color table given by cpt.
     ($(GMTdoc)grdcontour.html#n)
@@ -99,7 +99,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		cmd = add_opt(cmd, 'C', d, [:C :cont :contours :levels])
 	end
 
-	if ((val = find_in_dict(d, [:N :fill])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:N :fill :colorize])[1]) !== nothing)
 		if (isa(val, GMTcpt))
 			if (!isempty_(arg2))	# Already have one cpt in arg2, replace it by new one
 				arg2 = nothing

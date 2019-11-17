@@ -59,7 +59,7 @@ function inset(fim=nothing; stop=false, kwargs...)
  
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:c :F :V_params], true)
-	cmd = parse_these_opts(cmd, d, [[:M :margins]])
+	cmd = parse_these_opts(cmd, d, [[:M :margins], [:N :no_clip]])
 	cmd = parse_type_anchor(d, cmd, [[:D :inset :inset_box]])
 
 	do_show = false

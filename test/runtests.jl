@@ -397,6 +397,10 @@ if (got_it)					# Otherwise go straight to end
 	G2=grdfft(G, upward=800); 	# Use G of previous test
 	G2=grdfft(G, G, E=[]);
 
+	# GRDFILL
+	G1=grdmask([3 3], R="0/6/0/6", I=1, N="10/NaN/NaN", S=0);
+	G2=grdfill(G, algo=:n);
+
 	# GRDFILTER
 	G2=grdfilter(G, filter="m600", distflag=4, inc=0.5); # Use G of previous test
 
@@ -412,6 +416,9 @@ if (got_it)					# Otherwise go straight to end
 	# GRDLANDMASK
 	G2 = grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
 	G2 = grdlandmask("-R-10/4/37/45 -Dc -I0.1");			# Monolithitc
+
+	# GRDMASK
+	G2 = grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2, Vd=1);
 
 	# GRDPASTE
 	G3 = gmt("grdmath", "-R10/20/0/10 -I1 X");
@@ -877,12 +884,12 @@ if (got_it)					# Otherwise go straight to end
 		gmtbegin();  gmtend()
 
 		gmtbegin("lixo.ps")
-		basemap(region=(0,40,20,60), proj=:merc, figsize=16, frame=(annot=:afg, fill=:lightgreen))
-		inset(D="jTR+w2.5i+o0.2i", F="+gpink+p0.5p", margins=0.6)
-			basemap(region=:global360, J="A20/20/2i", frame=:afg)
-			text(text_record([1 1],["INSET"]), font=18, region_justify=:TR, D="j-0.15i", noclip=true)
-		inset(:end)
-		text(text_record([0 0; 1 1.1],[" ";" "]), text="MAP", font=18, region_justify=:BL, D="j0.2i")
+			basemap(region=(0,40,20,60), proj=:merc, figsize=16, frame=(annot=:afg, fill=:lightgreen))
+			inset(D="jTR+w2.5i+o0.2i", F="+gpink+p0.5p", margins=0.6)
+				basemap(region=:global360, J="A20/20/2i", frame=:afg)
+				text(text_record([1 1],["INSET"]), font=18, region_justify=:TR, D="j-0.15i", noclip=true)
+			inset(:end)
+			text(text_record([0 0; 1 1.1],[" ";" "]), text="MAP", font=18, region_justify=:BL, D="j0.2i")
 		gmtend()
 
 		gmtbegin(); gmtfig("lixo.ps");	gmtend()

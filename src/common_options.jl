@@ -275,7 +275,10 @@ end
 
 function parse_proj(p::String)
 	# See "p" is a string with a projection name. If yes, convert it into the corresponding -J syntax
-	if (p[1] == '+' || startswith(p, "epsg") || occursin('/', p) || length(p) < 3)  return p,false  end
+	if (p[1] == '+' || startswith(p, "epsg") || startswith(p, "EPSG") || occursin('/', p) || length(p) < 3)
+		p = replace(p, " " => "")		# Remove the spaces from proj4 strings
+		return p,false
+	end
 	mnemo = true			# True when the projection name used one of the below mnemonics
 	s = lowercase(p)
 	if     (s == "aea"   || s == "albers")                 out = "B0/0"
@@ -622,7 +625,7 @@ parse_s(cmd::String, d::Dict) = parse_helper(cmd, d, [:s :skip_NaN], " -s")
 # ---------------------------------------------------------------------------------------------------
 # Parse the global -: option. Return CMD same as input if no -: option in args
 # But because we can't have a variable called ':' we use only the aliases
-parse_swap_xy(cmd::String, d::Dict) = parse_helper(cmd, d, [:swap_xy :xy :yx], " -:")
+parse_swap_xy(cmd::String, d::Dict) = parse_helper(cmd, d, [:yx :swap_xy], " -:")
 
 # ---------------------------------------------------------------------------------------------------
 function parse_r(cmd::String, d::Dict)
@@ -710,6 +713,7 @@ function parse_these_opts(cmd::String, d::Dict, opts)
 	# Parse a group of options that individualualy would had been parsed as (example):
 	# cmd = add_opt(cmd, 'A', d, [:A :horizontal])
 	for opt in opts
+		#println("-", opt[1], "   ", opt[2])
 		cmd = add_opt(cmd, string(opt[1]), d, opt)
 	end
 	return cmd

@@ -38,7 +38,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O)
 	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :p :t :yx :params], first)
-	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :noclip :no_clip]])
+	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	if (is_ternary)  cmd = add_opt(cmd, 'M', d, [:M :no_plot])  end
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
 	cmd, opt_c = parse_c(cmd, d)	# Need opt_c because we may need to remove it from double calls
@@ -59,7 +59,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	# Error Bars?
 	got_Ebars = false
-	val, symb = find_in_dict(d, [:E :error :error_bars :error_bars])
+	val, symb = find_in_dict(d, [:E :error :error_bars])
 	if (val !== nothing)
 		cmd, arg1 = add_opt(add_opt, (cmd, 'E', d, [symb]),
 					        (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, arg1)

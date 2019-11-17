@@ -37,7 +37,7 @@ Parameters
 
     Sets scale for vector plot length in data units per plot distance measurement unit [1].
     ($(GMTdoc)grdvector.html#s)
-- **T** :: [Type => Bool]
+- **T** | **sign_scale** :: [Type => Bool]
 
     Means the azimuths of Cartesian data sets should be adjusted according to the signs of the
     scales in the x- and y-directions [Leave alone].
@@ -67,7 +67,7 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params], first)
 	cmd = parse_these_opts(cmd, d, [[:A :polar], [:I :inc], [:N :noclip :no_clip], [:S :vec_scale],
-				[:T], [:Z :azimuth]])
+				[:T :sign_scale], [:Z :azimuth]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 

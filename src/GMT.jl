@@ -36,15 +36,15 @@ export
 	contour, contour!, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
 	gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwhich, 
 	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft,
-	grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdlandmask, grdpaste, grdproject,
-	grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume, greenspline,
+	grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdfill, grdlandmask, grdmask, grdpaste,
+	grdproject, grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume, greenspline,
 	mat2ds, mat2grid, mat2img, histogram, histogram!, image, image!, imshow, kml2gmt, logo, logo!,
 	makecpt, mask, mask!, mapproject, nearneighbor, plot, plot!, plot3d, plot3d!, project,
 	pscontour, pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, 
-	pshistogram, pshistogram!, psimage, psimage!, psmask, psmask!, psrose, psrose!, psscale, psscale!, 
-	pssolar, pssolar!, psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, 
-	psxyz!, regress, rose, rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d,
-	sphdistance, sphinterpolate, sphtriangulate, surface, ternary, ternary!,
+	pshistogram, pshistogram!, psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!,
+	psscale, psscale!, pssolar, pssolar!, psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!,
+	psxy, psxy!, psxyz, psxyz!, regress, rose, rose!, sample1d, scatter, scatter!, scatter3, scatter3!,
+	solar, solar!, spectrum1d, sphdistance, sphinterpolate, sphtriangulate, surface, ternary, ternary!,
 	text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd,
 	gmtbegin, gmtend, subplot, gmtfig, inset,
@@ -81,21 +81,23 @@ include("grdcut.jl")
 include("grdedit.jl")
 include("grdcontour.jl")
 include("grdfft.jl")
+include("grdfill.jl")
 include("grdfilter.jl")
 include("grdhisteq.jl")
 include("grdinfo.jl")
 include("grdimage.jl")
 include("grdgradient.jl")
 include("grdlandmask.jl")
+include("grdmask.jl")
 include("grdpaste.jl")
 include("grdproject.jl")
 include("grdsample.jl")
-include("greenspline.jl")
 include("grdtrack.jl")
 include("grdtrend.jl")
 include("grdvector.jl")
 include("grdview.jl")
 include("grdvolume.jl")
+include("greenspline.jl")
 include("imshow.jl")
 include("kml2gmt.jl")
 include("makecpt.jl")

@@ -41,7 +41,7 @@ Parameters
 
     Paragraph mode.
     ($(GMTdoc)text.html#m)
-- **N** | **noclip** | **no_clip** :: [Type => Str | []]
+- **N** | **no_clip** | **noclip** :: [Type => Str | []]
 
     Do NOT clip text at map boundaries.
     ($(GMTdoc)text.html#n)
@@ -54,7 +54,7 @@ Parameters
 
     Specify the shape of the textbox when using G and/or W.
     ($(GMTdoc)text.html#t)
-- **W** | **line_attribs** :: [Type => Str]
+- **W** | **pen** :: [Type => Str]
 
     Sets the pen used to draw a rectangle around the text string.
     ($(GMTdoc)text.html#w)
@@ -90,7 +90,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:c :e :f :p :t :yx :JZ :UVXY :params], first)
 	cmd = auto_JZ(cmd)		# Add -JZ if perspective for the case -R.../z_min/z_max
 	cmd = parse_these_opts(cmd, d, [[:A :azimuths], [:L :list], [:M :paragraph],
-	                 [:N :noclip :no_clip], [:Q :change_case], [:T :text_box], [:Z :threeD]])
+	                 [:N :no_clip :noclip], [:Q :change_case], [:T :text_box], [:Z :threeD]])
 	cmd = add_opt(cmd, 'C', d, [:C :clearance], (margin="#", round="_+tO", concave="_+tc", convex="_+tC"))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided

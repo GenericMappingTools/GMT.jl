@@ -8,7 +8,7 @@ Full option list at [`gmtinfo`]($(GMTdoc)gmtinfo.html)
 Parameters
 ----------
 
-- **A** :: [Type => Str]
+- **A** | **ranges** :: [Type => Str]
 
     Specify how the range should be reported.
     ($(GMTdoc)gmtinfo.html#a)
@@ -66,8 +66,8 @@ function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:V_params :e :f :o :r :yx])
-	cmd = parse_these_opts(cmd, d, [[:A], [:C :per_column], [:D :center], [:E :get_record], [:F :counts],
-		[:L :common_limits], [:S :for_error_bars]])
+	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :per_column], [:D :center], [:E :get_record], [:F :counts],
+	                                [:L :common_limits], [:S :for_error_bars]])
     cmd = add_opt(cmd, 'I', d, [:I :inc],
                   (exact=("e", nothing, 1), polyg=("b", nothing, 1), surface=("s", nothing, 1),
                    fft=("d", nothing, 1), inc=("", arg2str, 2)), false, true)
