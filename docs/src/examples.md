@@ -10,7 +10,7 @@ plot(1:10, rand(10), lw=1, lc=:blue, fmt=:png, marker=:square,
 ```
 
 ```@raw html
-<img src="figures/hello-world.png" alt="Hello world" width="500" class="center"/>
+<img src="../figures/hello-world.png" alt="Hello world" width="500" class="center"/>
 ```
 
 A few notes about this example. Because we didn't specify the figure size (with the ``figsize`` keyword) a default value of 12x8 cm (not counting labels and title) was used. The ``fmt=:png`` selected the
@@ -38,7 +38,7 @@ is a Lambert projection (*laea* stands for *Lambert Azimuthal Equal Area*) with 
 center at 300 degrees East, 30 degrees North.
 
 ```@raw html
-<img src="figures/hello-round-world.png" alt="Hello round world" width="400" class="center"/>
+<img src="../figures/hello-round-world.png" alt="Hello round world" width="400" class="center"/>
 ```
 
 Note that now the first command, the ``coast``, does not have the ``show`` keyword.
@@ -62,7 +62,7 @@ grdcontour(G, cont=1, annot=2, fmt=:png, show=true)
 ```
 
 ```@raw html
-<img src="figures/hello-bw-contour.png" alt="Simple black&white contour" width="500" class="center"/>
+<img src="../figures/hello-bw-contour.png" alt="Simple black&white contour" width="500" class="center"/>
 ```
 
 Now with colored contours. To make it colored we need to generate a color map and use it. Notice
@@ -76,7 +76,7 @@ grdcontour(G, fmt=:png, pen=(colored=true,), show=true)
 ```
 
 ```@raw html
-<img src="figures/hello-color-contour.png" alt="Simple color contour" width="500" class="center"/>
+<img src="../figures/hello-color-contour.png" alt="Simple color contour" width="500" class="center"/>
 ```
 
 ## Color images
@@ -97,7 +97,7 @@ colorbar!(pos=(anchor=:TC,length=(12.5,0.6), horizontal=true, offset=(0,1.0)),
 ```
 
 ```@raw html
-<img src="figures/hello-shaded-world.jpg" alt="Hello shaded world" width="500" class="center"/>
+<img src="../figures/hello-shaded-world.jpg" alt="Hello shaded world" width="500" class="center"/>
 ```
 
 ## Perspective view
@@ -112,7 +112,7 @@ grdview("@tut_relief.nc", proj=:Mercator, zsize=1, shade=(azim=100, norm="e0.8")
 ```
 
 ```@raw html
-<img src="figures/hello-view-world.jpg" alt="Hello 3D view world" width="600" class="center"/>
+<img src="../figures/hello-view-world.jpg" alt="Hello 3D view world" width="600" class="center"/>
 ```
 
 Above we used the *Peaks* function to create a contour plot. Let us use that grid again and
@@ -124,7 +124,7 @@ bar3(G, lw=:thinnest, color=cmap, fmt=:png, show=true)
 ```
 
 ```@raw html
-<img src="figures/bar3-peaks.png" alt="Hello bar3D" width="500" class="center"/>
+<img src="../figures/bar3-peaks.png" alt="Hello bar3D" width="500" class="center"/>
 ```
 
 ## Warp image in geographical projection

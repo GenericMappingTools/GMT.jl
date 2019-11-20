@@ -979,6 +979,27 @@ function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function add_opt_1char(cmd::String, d::Dict, symbs, del::Bool=false)
+	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
+	# If DEL == true we remove the found key.
+	# The keyword value must be a string, symbol or a tuple of them. We only retain the first character of each item
+	# Ex:  GMT.add_opt_1char("", Dict(:N => ("abc", "sw", "x"), :Q=>"datum"), [[:N :geod2aux], [:Q :list]]) == " -Nasx -Qd"
+	for opt in symbs
+		if ((val = find_in_dict(d, opt, del)[1]) === nothing)  continue  end
+		args = ""
+		if (isa(val, String) || isa(val, Symbol))
+			if ((args = arg2str(val)) != "")  args = args[1]  end
+		elseif (isa(val, Tuple))
+			for k = 1:length(val)
+				args *= arg2str(val[k])[1]
+			end
+		end
+		cmd = string(cmd, " -", opt[1], args)
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false, arg=nothing)
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == true we remove the found key.
@@ -1021,6 +1042,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false
 		args = arg2str(val)
 	end
 
+	#cmd = (opt != "") ? string(cmd, " -", opt, args) : string(cmd, args)
 	if (opt != "")  cmd = string(cmd, " -", opt, args)
 	else            cmd = string(cmd, args)
 	end
@@ -1182,7 +1204,7 @@ end
 function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname, arg1, arg2=nothing, arg3=nothing, prog="")
 	# Get CPT either from keyword input of from current_cpt.
 	# Also puts -R in cmd when accessing grids from grdimage|view|contour, etc... (due to a GMT bug that doesn't do it)
-	# Used CMD0 = "" to use this function from within non-grd modules
+	# Use CMD0 = "" to use this function from within non-grd modules
 	global current_cpt
 	cpt_opt_T = ""
 	if (isa(arg1, GMTgrid))			# GMT bug, -R will not be stored in gmt.history

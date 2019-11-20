@@ -26,7 +26,7 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
     Draws a plane at this z-level.
     ($(GMTdoc)grdview.html#n)
 - $(GMT.opt_P)
-- **Q** | **surftype** | **surf_type** :: [Type => Str | Int]
+- **Q** | **surftype** | **surf** :: [Type => Str | Int]
 
     Specify **m** for mesh plot, **s* for surface, **i** for image.
     ($(GMTdoc)grdview.html#q)

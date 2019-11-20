@@ -20,7 +20,7 @@ Parameters
 function grdpaste(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :f :params])
+	cmd = parse_common_opts(d, "", [:V_params :f])
 	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
 
 	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)

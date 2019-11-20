@@ -99,6 +99,8 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_units((2,:p)) == "2p"
 	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
 	@test GMT.add_opt((symb=:circle, size=7, unit=:point), (symb="1", size="", unit="1")) == "c7p"
+	@test GMT.add_opt_1char("", Dict(:N=>"abc"), [[:N :geod2aux]]) == " -Na"
+	@test GMT.add_opt_1char("", Dict(:N => ("abc", "sw", "x"), :Q=>"datum"), [[:N :geod2aux], [:Q :list]]) == " -Nasx -Qd"
 	r = GMT.add_opt_fill("", Dict(:G=>(inv_pattern=12,fg="white",bg=[1,2,3], dpi=10) ), [:G :fill], 'G');
 	@test r == " -GP12+b1/2/3+fwhite+r10"
 	@test GMT.add_opt_fill("", Dict(:G=>:red), [:G :fill], 'G') == " -Gred"
@@ -291,6 +293,7 @@ if (got_it)					# Otherwise go straight to end
 		I = gmtread("lixo.tif", img=true, layout="TCP");
 		I = gmtread("lixo.tif", img=true, band=0);
 		I = gmtread("lixo.tif", img=true, band=[0 1 2]);
+		show(I);
 		imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
 		gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
 		@show("           2")
@@ -528,6 +531,10 @@ if (got_it)					# Otherwise go straight to end
 	# MAPPROJECT
 	mapproject([-10 40], J=:u29, C=true, F=true);
 	mapproject(region=(-15,35,30,48), proj=:merc, figsize=5, map_size=true);
+	@test mapproject([1.0 1; 2 2], L=(line=[1.0 0; 4 3], unit=:c), Vd=2) ==  "mapproject  -L+uc "
+	@test mapproject([1.0 1; 2 2], L=[1.0 0; 4 3], Vd=2) == "mapproject  -L "
+	@test mapproject([1.0 1; 2 2], L="lixo.dat", Vd=2) == "mapproject  -Llixo.dat "
+	@test_throws ErrorException("Bad argument to dist2line option.") mapproject([1.0 1; 2 2], L=(1.0,0), Vd=2)
 
 	@show("PLOT")
 	# PLOT
@@ -943,7 +950,9 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Grids have different sizes, so they cannot be multiplied.") G1 * G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be divided.") G1 / G2;
 	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle), leg=true, Vd=2)
-	mat2ds(rand(6,6), color=[:red :blue]);
+	D = mat2ds(rand(6,6), color=[:red :blue]);
+	display(D[1]);
+	display(D);
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"]);
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a"]);
@@ -1003,6 +1012,7 @@ if (got_it)					# Otherwise go straight to end
 		markeredgecolor=0, size=0.05, markerfacecolor="cyan")
 
 	G = GMT.peaks()
+	show(G);
 	grdcontour(G, cont=1, annot=2, axis="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
 	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
