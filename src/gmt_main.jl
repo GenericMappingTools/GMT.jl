@@ -449,6 +449,9 @@ function get_grid(API::Ptr{Nothing}, object)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT != C_NULL)    out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)      end
+	out.title   = String([gmt_hdr.title...])
+	out.remark  = String([gmt_hdr.remark...])
+	out.command = String([gmt_hdr.command...])
 
 	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays
 	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
@@ -474,12 +477,6 @@ function get_image(API::Ptr{Nothing}, object)
 	gmt_hdr = unsafe_load(I.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
 
-#=	# Not yet implemented on the GMT side
-	X = zeros(nx);		t = pointer_to_array(I.x, nx)
-	[X[col] = t[col] for col = 1:nx]
-	Y = zeros(ny);		t = pointer_to_array(I.y, ny)
-	[Y[col] = t[col] for col = 1:ny]
-=#
 	X  = range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx)
 	Y  = range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny)
 
@@ -1786,6 +1783,60 @@ function Base.:/(G1::GMTgrid, scale::Number)
 	             G1.command, G1.datatype, G1.x, G1.y, G1.z ./ scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G2.range[5:6] ./= scale
 	return G2
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:show(io::IO, G::GMTgrid)
+	(G.title   != "" && G.title[1]   != '\0') && println("title: ", rstrip(G.title, '\0'))
+	(G.remark  != "" && G.remark[1]  != '\0') && println("remark: ", rstrip(G.remark, '\0'))
+	(G.command != "" && G.command[1] != '\0') && println("command: ", rstrip(G.command, '\0'))
+	println((G.registration == 0) ? "Gridline " : "Pixel ", "node registration used")
+	println("x_min: ", G.range[1], "\tx_max :", G.range[2], "\tx_inc :", G.inc[1], "\tn_columns :", size(G.z,2))
+	println("y_min: ", G.range[3], "\ty_max :", G.range[4], "\ty_inc :", G.inc[2], "\tn_rows :", size(G.z,1))
+	println("z_min: ", G.range[5], "\tz_max :", G.range[6])
+	(G.proj4 != "") && println("PROJ: ", G.proj4)
+	(G.wkt   != "") && println("WKT: ", G.wkt)
+	(G.epsg  != 0)  && println("EPSG: ", G.epsg)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:show(io::IO, G::GMTimage)
+	println((G.registration == 0) ? "Gridline " : "Pixel ", "node registration used")
+	println("x_min: ", G.range[1], "\tx_max :", G.range[2], "\tx_inc :", G.inc[1], "\tn_columns :", size(G.image,2))
+	println("y_min: ", G.range[3], "\ty_max :", G.range[4], "\ty_inc :", G.inc[2], "\tn_rows :", size(G.image,1))
+	println("z_min: ", G.range[5], "\tz_max :", G.range[6])
+	(G.proj4 != "") && println("PROJ: ", G.proj4)
+	(G.wkt   != "") && println("WKT: ", G.wkt)
+	(G.epsg  != 0)  && println("EPSG: ", G.epsg)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:show(io::IO, ::MIME"text/plain", D::Array{GMTdataset})
+	println(typeof(D), " with ", length(D), " segments")
+	(~isempty(D[1].comment)) && println("Comment:\t", D[1].comment)
+	(D[1].proj4 != "") && println("PROJ: ", D[1].proj4)
+	(D[1].wkt   != "") && println("WKT: ", D[1].wkt)
+	for k = 1:length(D)
+		(D[k].header != "") && println("Header",k, ":\t", D[k].header)
+	end
+	println("First segment DATA")
+	display(D[1].data)
+	if (~isempty(D[1].text))
+		println("First segment TEXT")
+		display(D[1].text)
+	end
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:show(io::IO, D::GMTdataset)
+	(~isempty(D.comment)) && println("Comment:\t", D.comment)
+	(D.proj4  != "") && println("PROJ: ", D.proj4)
+	(D.wkt    != "") && println("WKT: ", D.wkt)
+	(D.header != "") && println("Header:\t", D.header)
+	display(D.data)
+	if (~isempty(D.text))
+		display(D.text)
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------

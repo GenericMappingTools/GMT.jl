@@ -35,6 +35,10 @@ Parameters
 
     Calculate distances along track or to the optional fixed point set with G="lon0/lat0".
     ($(GMTdoc)mapproject.html#g)
+- **I** | **inverse** :: [Type => Bool]
+
+    Do the Inverse transformation, i.e., get (longitude,latitude) from (x,y) data.
+    ($(GMTdoc)mapproject.html#i)
 - **L** | **dist2line** :: [Type => Str]   ``Arg = line.xy[+u[+|-]unit][+p]``
 
     Determine the shortest distance from the input data points to the line(s) given in the
@@ -78,27 +82,59 @@ Parameters
 - $(GMT.opt_s)
 - $(GMT.opt_swap_xy)
 """
-function mapproject(cmd0::String="", arg1=nothing; kwargs...)
+function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("mapproject", cmd0, arg1)
+	length(kwargs) == 0 && return monolitic("mapproject", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :p :s :yx])
-	cmd = parse_these_opts(cmd, d, [[:A :azim], [:C :center], [:D :override_units], [:E :geod2ecef],
-				[:F :one2one], [:G :track_distances], [:I :inverse], [:L :dist2line], [:N :geod2aux],
-	            [:Q :list], [:S :supress], [:T :change_datum], [:W :map_size], [:Z :travel_times]])
+	cmd = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef], [:I :inverse], [:S :supress], #[:L :dist2line],
+	                                [:T :change_datum], [:W :map_size], [:Z :travel_times]])
+	cmd = add_opt_1char(cmd, d, [[:D :override_units], [:F :one2one], [:Q :list], [:N :geod2aux]])
+
+	cmd = add_opt(cmd, 'A', d, [:A :azim],
+	              (fixed_pt=("", arg2str), back=("b", nothing, 1), back_geocentric=("B", nothing, 1), forward=("f", nothing, 1), forward_geocentric=("F", nothing, 1), orientation=("o", nothing, 1), orientation_geocentric=("O", nothing, 1), unit="+u1", var_pt="_+v"))
+	cmd = add_opt(cmd, 'G', d, [:G :track_distances],
+	              (fixed_pt=("", arg2str, 1), accumulated="_+a", incremental="_+i", unit="+u1", var_pt="_+v"))
+
+	if ((val = find_in_dict(d, [:L :dist2line])[1]) !== nothing)
+		plus = ""
+		if (isa(val, String) || isa(val, Symbol))
+			cmd *= " -L" * arg2str(val)
+			to_slot = false
+		elseif (isa(val, NamedTuple))
+			di = nt2dict(val)
+			if ((val = find_in_dict(di, [:line])[1]) === nothing)  error(":line member cannot be missing")  end
+			if ((unit = find_in_dict(di, [:unit])[1]) !== nothing)  plus = "+u" * arg2str(unit)[1]  end
+			if (haskey(di, :fractional_pt))  plus *= "+p"  end
+			to_slot = true
+		elseif (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{GMT.GMTdataset,1}))
+			to_slot = true
+		else
+			error("Bad argument to dist2line option.")
+		end
+		if (to_slot)
+			cmd, N_used = put_in_slot(cmd, val, 'L', [arg1, arg2])
+			(N_used == 1) ? arg1 = val : arg2 = val
+			cmd *= plus
+		end
+	end
+
 	if (!occursin("-G", cmd))
 		map = occursin(" -W", cmd) ? true : false
-		cmd, = parse_J(cmd, d, "", map)		# Do not append a default fig size
+		cmd, = parse_J(cmd, d, " ", map)		# Do not append a default fig size
 	end
 
 	if (occursin(" -W", cmd))				# No input data in this case
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end	
 		gmt("mapproject " * cmd)
 	else
-		common_grd(d, cmd0, cmd, "mapproject ", arg1)
+	    #cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
+		common_grd(d, cmd0, cmd, "mapproject ", arg1, arg2)
 	end
 end
 
 # ---------------------------------------------------------------------------------------------------
-mapproject(arg1, cmd0::String=""; kw...) = mapproject(cmd0, arg1; kw...)
+mapproject(arg1, arg2=nothing, cmd0::String=""; kw...) = mapproject(cmd0, arg1, arg2; kw...)
+
+#mapproject(, G=(fixed_pt=[1 2], unit=:n,accumulated=1,incremental=1), azim=(fixed_pt=(3,4),forward=1), Vd=2) = "mapproject  -Af3/4 -G1/2+un+a+i"

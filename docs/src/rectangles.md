@@ -33,7 +33,7 @@ This variation creates rectangles with 0, 30% and 70% transparency as well as di
 ```julia
 using GMT
 rect = [0.5 0.5; 0.5 7; 2.5 7; 2.5 0.5; 0.5 0.5];
-plot(rect, region=[0 10 0 10], lw=0.5, fill=:blue, axis=:a, axis=:equal")
+plot(rect, region=[0 10 0 10], lw=0.5, fill=:blue, axis=:a, axis=:equal)
 plot!([3 0].+rect, lw=1, ls="--", fill=:blue, transparency=30)
 plot!([6 0].+rect, lw=2, lc=:red, fill=:blue, transparency=70, fmt=:png, show=true)
 ```
