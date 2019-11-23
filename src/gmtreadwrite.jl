@@ -2,7 +2,15 @@
 	gmtread(fname::String, data; kwargs...)
 
 Read GMT object from file. The object is one of "grid" or "grd", "image" or "img",
-"data" or "table", "cmap" or "cpt" and "ps" (for postscript).
+"data" or "table", "cmap" or "cpt" and "ps" (for postscript), and OGR formats (shp, kml, json).
+Use a type specificatin to force a certain reading path (e.g. grd=true to read grids) or take
+the chance of letting the data type be guessed via the file extension. Known extensions are:
+Grids:      .grd
+Images:     .jpg, .png, .tif, .bmp
+Datasets:   .dat, .txt, .csv
+Datasets:   .shp, .kml, .json
+CPT:        .cpt
+PostScript: .ps, .eps
 
 Parameters
 ----------
@@ -20,6 +28,9 @@ Specify data type.  Choose among:
 - **dataset** | **table** :: [Type => Any]
 
     Load a dataset (a table of numbers).
+- **ogr** :: [Type => Any]
+
+    Load a dataset via GDAL OGR (a table of numbers). Many things can happen here.
 - **ps** :: [Type => Any]
 
     Load a PostScript file
@@ -47,7 +58,7 @@ Specify data type.  Choose among:
 Example: to read a nc called 'lixo.grd'
 
     G = gmtread("lixo.grd", grd=true);
-	
+
 to read a jpg image with the bands reversed (this example is currently broken in GMT5. Needs GMT6dev)
 
     I = gmtread("image.jpg", band=[2,1,0]);
@@ -67,7 +78,8 @@ function gmtread(fname::String; kwargs...)
 	end
 	if (opt_T == "")  opt_T = add_opt("", "Td", d, [:dataset :table])  end
 	if (opt_T == "")  opt_T = add_opt("", "Tc", d, [:cpt :cmap])  end
-	if (opt_T == "")  opt_T = add_opt("", "Tp", d, [:ps])  end
+	if (opt_T == "")  opt_T = add_opt("", "Tp", d, [:ps])   end
+	if (opt_T == "")  opt_T = add_opt("", "To", d, [:ogr])  end
 
 	if (haskey(d, :varname))				# See if we have a nc varname / layer request
 		if (isempty(opt_T))
@@ -97,7 +109,9 @@ function gmtread(fname::String; kwargs...)
 	end
 
 	if (opt_T == "")
-		error("Must select one input data type (grid, image, dataset, cmap or ps)")
+		if ((opt_T = guess_T_from_ext(fname)) === nothing)		# Try some guesses
+			error("Must select one input data type (grid, image, dataset, cmap or ps)")
+		end
 	else
 		opt_T = opt_T[1:4]      				# Remove whatever was given as argument to type kwarg
 	end
@@ -109,11 +123,39 @@ function gmtread(fname::String; kwargs...)
 		end
 	end
 
-	if (opt_T == " -Td" && !isempty(opt_bi))  cmd *= opt_bi  end		# Read from binary file
-	cmd *= opt_T
-	(haskey(d, :Vd)) && println(@sprintf("\tread %s %s", fname, cmd))
+	if (opt_T != " -To")			# All others but OGR
+		if (opt_T == " -Td" && !isempty(opt_bi))  cmd *= opt_bi  end		# Read from binary file
+		cmd *= opt_T
+		if (haskey(d, :Vd))
+			println(@sprintf("\tread %s %s", fname, cmd))
+			if (d[:Vd] == 2)  return nothing  end
+		end
+		O = gmt("read " * fname * cmd)
+	else
+		if (haskey(d, :Vd))
+			println(@sprintf("\togrread %s", fname))
+			if (d[:Vd] == 2)  return nothing  end
+		end
+		API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
+		O = ogr2GMTdataset(gmt_ogrread(API, fname))
+	end
+end
 
-	O = gmt("read " * fname * cmd)
+# ---------------------------------------------------------------------------------
+function guess_T_from_ext(fname::String)
+	# Guess the -T option from a couple of known extensions
+	fname, ext = splitext(fname)
+	if (ext == "")  return nothing  end
+	ext = lowercase(ext[2:end])
+	if     (ext == "grd")  out = " -Tg";
+	elseif (ext == "cpt")  out = " -Tc";
+	elseif (ext == "ps"  || ext == "eps")  out = " -Tp";
+	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"]) !== nothing)  out = " -Td";
+	elseif (findfirst(isequal(ext), ["jpg", "png", "tif", "bmp"]) !== nothing)  out = " -Ti";
+	elseif (findfirst(isequal(ext), ["shp", "kml", "json"]) !== nothing)  out = " -To";
+	else
+		out = nothing
+	end
 end
 
 """

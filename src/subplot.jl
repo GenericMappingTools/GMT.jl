@@ -8,7 +8,7 @@ Full option list at [`subplot`](http://docs.generic-mapping-tools.org/latest/sub
 Parameters
 ----------
 
-- **grid** :: [Type => Str | Tuple
+- **grid** :: [Type => Str | Tuple | Array]
 
     Specifies the number of rows and columns of subplots. Ex grid=(2,3)
 - **F** | **dims** | **dimensions** | **size** | **sizes** :: [Type => Str | Tuple, NamedTuple]

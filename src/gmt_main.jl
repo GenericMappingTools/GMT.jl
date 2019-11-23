@@ -1225,6 +1225,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function text_init_(API::Ptr{Nothing}, module_input, Darr, dir::Integer, family::Integer=GMT_IS_TEXTSET)
 #
+if (GMTver < 6.0)
 	if (dir == GMT_OUT)
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		return GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, GMT_CREATE_MODE, NULL, NULL, NULL, 0, 0, NULL)
@@ -1287,6 +1288,7 @@ function text_init_(API::Ptr{Nothing}, module_input, Darr, dir::Integer, family:
 	end
 
 	return T
+end
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1551,9 +1553,7 @@ function text_record(data, text, hdr=nothing)
 		end
 	elseif (isa(text, Array{Array}) || isa(text, Array{Array{String,1}}))
 		nl_t = length(text);	nl_d = length(data)
-		if (nl_d > 0 && nl_d != nl_t)
-			error("Number of data points (coordinates) is not equal to number of text strings.")
-		end
+		(nl_d > 0 && nl_d != nl_t) && error("Number of data points is not equal to number of text strings.")
 		T = Array{GMTdataset, 1}(undef,nl_t)
 		for k = 1:nl_t
 			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), text[k], (hdr === nothing ? "" : hdr[k]), Array{String,1}(), "", "")
@@ -1834,9 +1834,7 @@ function Base.:show(io::IO, D::GMTdataset)
 	(D.wkt    != "") && println("WKT: ", D.wkt)
 	(D.header != "") && println("Header:\t", D.header)
 	display(D.data)
-	if (~isempty(D.text))
-		display(D.text)
-	end
+	(~isempty(D.text)) && display(D.text)
 end
 
 # ---------------------------------------------------------------------------------------------------
