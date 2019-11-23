@@ -231,7 +231,7 @@ if (got_it)					# Otherwise go straight to end
 		kml2gmt("lixo.kml", Z=true);
 		kml2gmt(nothing, "lixo.kml", Z=true);	# yes, cheating
 		gmtread("lixo.kml", Vd=2);
-		gmtread("lixo.kml");
+		#gmtread("lixo.kml");		# Because Travis CI oldness
 		rm("lixo.kml")
 	end
 
