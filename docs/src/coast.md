@@ -36,8 +36,8 @@ Optional Arguments
 - **B** or *axis* or *frame*\
    Set map boundary frame and axes attributes. More at [axis](@ref)
 
-- **C** or *river\_fill* : -- *river\_fill=fill* **|** *river\_fill=(lake=true, river\_lake=true, fill)*\
-   Set the shade, color, or pattern for lakes and river-lakes [Default is the fill chosen for "wet" areas (*water*)]. Optionally, specify separate fills by using **river\_fill=(lake=true, fill)** for lakes and **river\_fill=(river\_lake=true, fill)** for river-lakes. To repeate the **river\_fill** option use a tuple of tuples.
+- **C** or *river\_fill* : -- *river\_fill=fill* **|** *river\_fill=(lake=true, river\_lake=true, fill=fill)*\
+   Set the shade, color, or pattern for lakes and river-lakes [Default is the fill chosen for "wet" areas (*water*)]. Optionally, specify separate fills by using **river\_fill=(lake=true, fill=fill)** for lakes and **river\_fill=(river\_lake=true, fill=fill)** for river-lakes. To repeate the **river\_fill** option use a tuple of tuples.
 
 - **clip** : -- *clip=:land* **|**  *clip=:water|ocean* **|** *clip=:end*\
    **clip=:land** or **clip=:water|ocean** starts a clipping path. **clip=:end** marks end of existing clip path. No projection information is needed. Also supply **X** and **Y** settings if you have moved since the clip started.

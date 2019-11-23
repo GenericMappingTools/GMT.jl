@@ -16,7 +16,7 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
 
     Drape the image in drapefile on top of the relief provided by relief_file.
     ($(GMTdoc)grdview.html#g)
-- **I** | **shade** | **intensity** | **intensfileintens** :: [Type => Str | GMTgrid]
+- **I** | **shade** | **intensity** :: [Type => Str | GMTgrid]
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
@@ -68,6 +68,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt(cmd, 'Q', d, [:Q :surf :surftype],
 				  (mesh=("m", add_opt_fill), waterfall=("mx", add_opt_fill), surface="_s",
 				   surf="_s", img="i", image="i", nan_alpha="_c", monochrome="_+m"))
+				   #genFun((:water,:mesh),(fun1,fun2),(flag1,flag2))
 	cmd = add_opt(cmd, 'W', d, [:W :pens :pen], (contour=("c", add_opt_pen),
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
 	cmd = add_opt(cmd, 'T', d, [:T :no_interp], (skip="_+s", outlines=("+o", add_opt_pen)) )

@@ -306,10 +306,13 @@ if (got_it)					# Otherwise go straight to end
 		GG = gmtread("lixo.grd", grd=true, varname=:z);
 	end
 	@show("           3")
-	@test_throws ErrorException("Must select one input data type (grid, image, dataset, cmap or ps)") GG = gmtread("lixo.grd");
+	@test_throws ErrorException("Must select one input data type (grid, image, dataset, cmap or ps)") GG = gmtread("lixo.gr");
 	cpt = makecpt(T="-6/8/1");
 	gmtwrite("lixo.cpt", cpt)
 	cpt = gmtread("lixo.cpt", cpt=true);
+	cpt = gmtread("lixo.cpt", cpt=true, Vd=2);
+	cpt = gmtread("lixo.cpt", Vd=2);
+	cpt = gmtread("lixo.cpt");
 	gmtwrite("lixo.dat", [1 2 10; 3 4 20])
 	D = gmtread("lixo.dat", i="0,1s10", table=true);
 	@test(sum(D[1].data) == 64.0)
@@ -503,6 +506,7 @@ if (got_it)					# Otherwise go straight to end
 		grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
 		gmtwrite("lixo.grd", I)
 		grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
+		grdview(rand(128,128), G="lixo", I=I, J=:X12, JZ=5, Q=:i, view="145/30", Vd=2)
 	end
 
 	@show("GREENSPLINE")
@@ -653,6 +657,7 @@ if (got_it)					# Otherwise go straight to end
 	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue, limits=(0.5,5.5,0,40), frame=:none, error_bars=(y=men_std,), Vd=2)
 	if (GMTver >= 6)
 		T = mat2ds([1.0 0.446143; 2.0 0.581746; 3.0 0.268978], text=[" "; " "; " "]);
+		display(T)
 		bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=2)
 		T = mat2ds([1.0 0.446143 0; 2.0 0.581746 0; 3.0 0.268978 0], text=[" "; " "; " "]);
 		bar(T, color=:rainbow, figsize=(14,8), mz=[3 2 1], Vd=2)
