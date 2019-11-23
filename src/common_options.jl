@@ -545,9 +545,18 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_c(cmd::String, d::Dict)
+	# Most of the work here is because GMT counts from 0 but here we count from 1, so conversions needed
 	opt_val = ""
 	if ((val = find_in_dict(d, [:c :panel])[1]) !== nothing)
-		if (isa(val, Tuple) || isa(val, Array{<:Number}))  opt_val = arg2str(val, ',')  end
+		if (isa(val, Tuple) || isa(val, Array{<:Number}) || isa(val, Integer))
+			opt_val = arg2str(val .- 1, ',')
+		elseif (isa(val, String))
+			if ((ind = findfirst(",", val)) !== nothing)	# Shit, user really likes complicating
+				opt_val = string(parse(Int, val[1:ind[1]-1]) - 1, ',', parse(Int, val[ind[1]+1:end]) - 1)
+			else
+				opt_val = string(parse(Int, val) - 1)
+			end
+		end
 		cmd *= " -c" * opt_val
 	end
 	return cmd, opt_val
@@ -1984,7 +1993,11 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", opt_i="",
 				end
 			end
 		end
-		if (opt_R != "tight")  info[1].data = round_wesn(info[1].data)  end
+		if (opt_R != "tight")
+			dx = (info[1].data[2] - info[1].data[1]) * 0.005;	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
+			info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
+			info[1].data = round_wesn(info[1].data)	# Add a pad force it not-tight
+		end
 		if (is3D)
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
 			                 info[1].data[3], info[1].data[4], info[1].data[5], info[1].data[6])
@@ -2007,9 +2020,11 @@ function round_wesn(wesn, geo::Bool=false)
 	range = [0.0, 0.0]
 	if (wesn[1] == wesn[2])
 		wesn[1] -= abs(wesn[1]) * 0.1;	wesn[2] += abs(wesn[2]) * 0.1
+		if (wesn[1] == wesn[2])  wesn[1] = -0.1;	wesn[2] = 0.1;	end		# x was = 0
 	end
 	if (wesn[3] == wesn[4])
 		wesn[3] -= abs(wesn[3]) * 0.1;	wesn[4] += abs(wesn[4]) * 0.1
+		if (wesn[3] == wesn[4])  wesn[3] = -0.1;	wesn[4] = 0.1;	end		# y was = 0
 	end
 	range[1] = wesn[2] - wesn[1]
 	range[2] = wesn[4] - wesn[3]
