@@ -47,6 +47,11 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.arg2str(("aa",2,3)) == "aa/2/3"
 	@test GMT.arg2str(Dict(:shaded => "-4p/-6p/grey20@40"), [:shaded]) == "-4p/-6p/grey20@40"
 	@test_throws ErrorException("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was DataType") GMT.arg2str(typeof(1))
+	@test  GMT.parse_c("", Dict(:c => (1,2)))[1] == " -c0,1"
+	@test  GMT.parse_c("", Dict(:c => [1,2]))[1] == " -c0,1"
+	@test  GMT.parse_c("", Dict(:c => "1,2"))[1] == " -c0,1"
+	@test  GMT.parse_c("", Dict(:c => 1))[1] == " -c0"
+	@test  GMT.parse_c("", Dict(:c => "1"))[1] == " -c0"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="meter")),[:I :inc], "I") == " -I1.5e/2.6e"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="m")),[:I :inc], "I") == " -I1.5m/2.6m"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="data")),[:I :inc], "I") == " -I1.5/2.6u"
@@ -156,9 +161,9 @@ if (got_it)					# Otherwise go straight to end
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(10,:red),bot=true), Vd=2);
-	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10,red+yb")
+	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R-0.2/1.2/-0.2/1.2 -L+p10,red+yb")
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=2);
-	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R0/1/0/1.2 -L+p10+cl+yb")
+	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R-0.2/1.2/-0.2/1.2 -L+p10+cl+yb")
 	@test startswith(psxy([0.0, 1],[0, 1.1], figsize=(10,12), aspect=:equal, Vd=2), "psxy  -JX10/12")
 	@test startswith(psxy([0.0, 1],[0, 1.1], figsize=10, aspect=:equal, Vd=2), "psxy  -JX10/0")
 	@test startswith(psxy([0.0, 1],[0, 1.1], aspect=:equal, Vd=2), "psxy  -JX12c/0")
@@ -225,6 +230,8 @@ if (got_it)					# Otherwise go straight to end
 		gmtwrite("lixo.kml", K)
 		kml2gmt("lixo.kml", Z=true);
 		kml2gmt(nothing, "lixo.kml", Z=true);	# yes, cheating
+		gmtread("lixo.kml", Vd=2);
+		gmtread("lixo.kml");
 		rm("lixo.kml")
 	end
 
@@ -311,7 +318,6 @@ if (got_it)					# Otherwise go straight to end
 	gmtwrite("lixo.cpt", cpt)
 	cpt = gmtread("lixo.cpt", cpt=true);
 	cpt = gmtread("lixo.cpt", cpt=true, Vd=2);
-	cpt = gmtread("lixo.cpt", Vd=2);
 	cpt = gmtread("lixo.cpt");
 	gmtwrite("lixo.dat", [1 2 10; 3 4 20])
 	D = gmtread("lixo.dat", i="0,1s10", table=true);
@@ -843,7 +849,7 @@ if (got_it)					# Otherwise go straight to end
 	T = text_record(t,"> 3 5 18p 5i j");
 	pstext!(T, F="+f16p,Times-Roman,red+jTC", M=true)
 	pstext!(T, font=(16,"Times-Roman",:red), justify=:TC, M=true)
-	@test startswith(GMT.text([1 2 3; 4 5 6], Vd=2), "pstext  -JX12c/0 -Baf -BWSen -R1/4/2/5")
+	@test startswith(GMT.text([1 2 3; 4 5 6], Vd=2), "pstext  -JX12c/0 -Baf -BWSen -R0.5/4.5/1.5/5.5")
 	@test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=2)
 
 	# PSWIGGLE
@@ -889,7 +895,7 @@ if (got_it)					# Otherwise go straight to end
 		@test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
 		@test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=2)
 		@test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=2)
-		subplot(name="lixo", grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(0,0));plot([0 0; 1 1]);subplot(:end)
+		subplot(name="lixo", grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
 		gmtbegin("lixo.ps");  gmtend()
 		gmtbegin("lixo", fmt=:ps);  gmtend()
 		gmtbegin("lixo");  gmtend()

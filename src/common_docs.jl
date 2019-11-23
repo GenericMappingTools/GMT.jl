@@ -68,9 +68,10 @@ const opt_bo = "**bo** | **binary_out** :: [Type => Str]			``Arg = [ncols][type]
     Select native binary output.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#bo-full)"
 
-const opt_c = "**c** | **panel** :: [Type => Str]				``Arg = row,col``
+const opt_c = "**c** | **panel** :: [Type => Tuple | Array | Number | String]	``Arg = row,col``
 
     Used to advance to the selected subplot panel. Only allowed when in subplot mode.
+    Attention, row,col start counting at 1 (contrary to GMT, where they start at 0)
     http://docs.generic-mapping-tools.org/latest/gmt.html#c-full)"
 
 const opt_d = "**d** | **nodata** :: [Type => Str or Number]		``Arg = [i|o]nodata``
