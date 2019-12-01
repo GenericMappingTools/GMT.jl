@@ -136,8 +136,10 @@ function gmtread(fname::String; kwargs...)
 			println(@sprintf("\togrread %s", fname))
 			if (d[:Vd] == 2)  return nothing  end
 		end
-		API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
-		O = ogr2GMTdataset(gmt_ogrread(API, fname))
+		# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
+		if (Sys.iswindows() && check_url_name(fname))  run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)  end
+		API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
+		O = ogr2GMTdataset(gmt_ogrread(API2, fname))
 	end
 end
 
