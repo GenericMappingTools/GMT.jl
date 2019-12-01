@@ -67,8 +67,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 	cmd = add_opt(cmd, 'Q', d, [:Q :surf :surftype],
 				  (mesh=("m", add_opt_fill), waterfall=("mx", add_opt_fill), surface="_s",
-				   surf="_s", img="i", image="i", nan_alpha="_c", monochrome="_+m"))
-				   #genFun((:water,:mesh),(fun1,fun2),(flag1,flag2))
+				   surf="_s", img="i", image="i", nan_alpha="_c", monochrome="_+m", water=(new=true, rows="my", cols="mx", fill=add_opt_fill)))
 	cmd = add_opt(cmd, 'W', d, [:W :pens :pen], (contour=("c", add_opt_pen),
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
 	cmd = add_opt(cmd, 'T', d, [:T :no_interp], (skip="_+s", outlines=("+o", add_opt_pen)) )

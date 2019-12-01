@@ -37,7 +37,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O)
 	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
-	cmd = parse_common_opts(d, cmd, [:a :e :f :g :p :t :yx :params], first)
+	cmd = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :yx :params], first)
 	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	if (is_ternary)  cmd = add_opt(cmd, 'M', d, [:M :no_plot])  end
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
@@ -46,7 +46,11 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	# If a file name sent in, read it and compute a tight -R if this was not provided
 	if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
 	cmd, arg1, opt_R, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
-	
+
+	if ((isa(arg1, GMTdataset) && arg1.proj4 != "" || isa(arg1, Vector{GMTdataset}) &&
+		     arg1[1].proj4 != "") && opt_J == " -JX" * def_fig_size)
+		cmd = replace(cmd, opt_J => "-JX12c/0")		# If projected it's a axis equal for sure
+	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd *= " -JZ6c"		# Default -JZ
 	end
@@ -160,7 +164,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			#cmd = finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
 			cmd *= opt_W * opt_S * opt_Gsymb * opt_UVXY
 		else
-			if (opt_Wmarker != "")  opt_Wmarker = " -W" * opt_Wmarker  end		# Set Symbol edge color 
+			if (opt_Wmarker != "")  opt_Wmarker = " -W" * opt_Wmarker  end		# Set Symbol edge color
 			cmd1 = cmd * opt_W * opt_UVXY
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
 			if (opt_c != "")  cmd2 = replace(cmd2, opt_c => "")  end			# Not in scond call (subplots)
@@ -241,7 +245,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, 
 			end
 		elseif (!got_Ebars)		# The Error bars case is very multi. Don't try to guess then.
 			if (opt_i == "")  cmd = @sprintf("%s -i0-%d,%d,%d-%d", cmd, 1+is3D, 1+is3D, 2+is3D, n_col-1)
-			else              @warn(warn2);		@goto noway 
+			else              @warn(warn2);		@goto noway
 			end
 		end
 	end
@@ -267,7 +271,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, 
 			end
 			just_C = cmd[len+2:end];	reset_i = ""
 			if ((ind = findfirst(" -i", just_C)) !== nothing)
-				reset_i = just_C[ind[1]:end] 
+				reset_i = just_C[ind[1]:end]
 				just_C  = just_C[1:ind[1]-1]
 			end
 			arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
@@ -308,7 +312,7 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 				if (N > 0)  marca, arg1, msg = helper_markers(opt, t[2], arg1, N, cst)  end
 				if (msg != "")  error(msg)  end
 				if (length(t) == 3 && isa(t[3], NamedTuple))
-					if (marca == "w" || marca == "W")	# Ex (spiderweb): marker=(:pie, [...], (inner=1,)) 
+					if (marca == "w" || marca == "W")	# Ex (spiderweb): marker=(:pie, [...], (inner=1,))
 						marca *= add_opt(t[3], (inner="/", arc="+a", radial="+r", size=("", arg2str, 1), pen=("+p", add_opt_pen)) )
 					elseif (marca == "m" || marca == "M")
 						marca *= vector_attrib(t[3])
@@ -400,7 +404,7 @@ function helper2_markers(opt, alias)
 	if (opt == alias[1])			# User used only the one letter syntax
 		marca = alias[1]
 	else
-		for k = 2:length(alias)		# Loop because of cases like ["w" "pie" "web"] 
+		for k = 2:length(alias)		# Loop because of cases like ["w" "pie" "web"]
 			o2 = alias[k][1:min(2,length(alias[k]))]	# check the first 2 chars and Ro, Rotrect or RotRec are all good
 			if (startswith(opt, o2))  marca = alias[1]; break  end		# Good when, for example, marker=:Pie
 		end
@@ -441,7 +445,7 @@ function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller
 		if (haskey(d, :noshade) && occursin("-So", cmd))
 			cmd = replace(cmd, "-So" => "-SO", count=1)
 		end
-		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd *= " -G0/115/190"	end	
+		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd *= " -G0/115/190"	end
 		if (!occursin(" -J", cmd))  cmd *= " -JX12c/0"  end
 	end
 
@@ -474,7 +478,7 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u=fal
 	end
 
 	if (opt != "")				# Still need to finish parsing this
-		flag_u = no_u ? "" : 'u' 
+		flag_u = no_u ? "" : 'u'
 		if ((ind = findfirst("+", opt)) !== nothing)	# See if need to insert a 'u'
 			if (!isletter(opt[ind[1]-1]))  opt = opt[1:ind[1]-1] * flag_u * opt[ind[1]:end]  end
 		else

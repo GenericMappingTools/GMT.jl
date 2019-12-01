@@ -47,11 +47,13 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.arg2str(("aa",2,3)) == "aa/2/3"
 	@test GMT.arg2str(Dict(:shaded => "-4p/-6p/grey20@40"), [:shaded]) == "-4p/-6p/grey20@40"
 	@test_throws ErrorException("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was DataType") GMT.arg2str(typeof(1))
-	@test  GMT.parse_c("", Dict(:c => (1,2)))[1] == " -c0,1"
-	@test  GMT.parse_c("", Dict(:c => [1,2]))[1] == " -c0,1"
-	@test  GMT.parse_c("", Dict(:c => "1,2"))[1] == " -c0,1"
-	@test  GMT.parse_c("", Dict(:c => 1))[1] == " -c0"
-	@test  GMT.parse_c("", Dict(:c => "1"))[1] == " -c0"
+	@test GMT.parse_c("", Dict(:c => (1,2)))[1] == " -c0,1"
+	@test GMT.parse_c("", Dict(:c => [1,2]))[1] == " -c0,1"
+	@test GMT.parse_c("", Dict(:c => "1,2"))[1] == " -c0,1"
+	@test GMT.parse_c("", Dict(:c => 1))[1] == " -c0"
+	@test GMT.parse_c("", Dict(:c => "1"))[1] == " -c0"
+	@test GMT.parse_l("", Dict(:l => "ai ai"))[1] == " -l\"ai ai\""
+	@test GMT.parse_l("", Dict(:l => (text="ai ai", gap=3)))[1] == " -l\"ai ai\"+g3"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="meter")),[:I :inc], "I") == " -I1.5e/2.6e"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="m")),[:I :inc], "I") == " -I1.5m/2.6m"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="data")),[:I :inc], "I") == " -I1.5/2.6u"
@@ -195,6 +197,7 @@ if (got_it)					# Otherwise go straight to end
 	GMT.parse_proj((name="blabla",center=(0,0)))
 
 	@test GMT.parse_j("", Dict(:spheric_dist => "f"))[1] == " -jf"
+	GMT.check_url_name("blabla");
 
 	# ---------------------------------------------------------------------------------------------------
 

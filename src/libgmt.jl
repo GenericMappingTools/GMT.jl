@@ -410,6 +410,10 @@ function gmt_ogrread(API::Ptr{Cvoid}, fname::String)
 	ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}), GMT_, fname)
 end
 
+function check_url_name(fname::String)
+	ccall((:gmtlib_check_url_name, thelib), Bool, (Ptr{UInt8},), fname)
+end
+
 #=
 function gmt_put_history(API::Ptr{Cvoid})
 	ccall((:gmt_put_history, thelib), Cint, (Cstring,), GMT_Get_Ctrl(API))

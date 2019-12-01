@@ -105,7 +105,7 @@ function build_opt_R(arg::NamedTuple)
 
 	if ((val = find_in_dict(d, [:adjust :pad :extend :expand])[1]) !== nothing)
 		if (isa(val, String) || isa(val, Number))  t = string(val)
-		elseif (isa(val, Array{<:Number}) || isa(val, Tuple)) 
+		elseif (isa(val, Array{<:Number}) || isa(val, Tuple))
 			t = join([@sprintf("%.15g/",x) for x in val])
 			t = rstrip(t, '/')		# and remove last '/'
 		else
@@ -211,7 +211,7 @@ function append_figsize(d::Dict, opt_J::String, width="", scale=false)
 	# use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
 	if (width == "")
 		width = split(def_fig_size, '/')[1]
-	elseif ( ((val = find_in_dict(d, [:aspect :axis])[1]) !== nothing) && (val == "equal" || val == :equal)) 
+	elseif ( ((val = find_in_dict(d, [:aspect :axis])[1]) !== nothing) && (val == "equal" || val == :equal))
 		if (occursin("/", width))
 			@warn("Ignoring the axis 'equal' request because figsize with Width and Height already provided.")
 		else
@@ -607,7 +607,21 @@ end
 # ---------------------------------------------------------------------------------
 parse_i(cmd::String, d::Dict) = parse_helper(cmd, d, [:i :incol], " -i")
 parse_j(cmd::String, d::Dict) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
-parse_l(cmd::String, d::Dict) = parse_helper(cmd, d, [:j :legend], " -l")
+#parse_l(cmd::String, d::Dict) = parse_helper(cmd, d, [:l :legend], " -l")
+
+# ---------------------------------------------------------------------------------
+function parse_l(cmd::String, d::Dict)
+	cmd_ = add_opt("", 'l', d, [:l :legend],
+		(text=("", arg2str, 1), pen=("+d", add_opt_pen), gap="+g", font=("+f", font), justify="+j", header="+h", ncols="+n", size="+s", width="+w", scale="+x"), false)
+	# Now make sure blanks in legen text are wrapped in ""
+	if ((ind = findfirst("+", cmd_)) !== nothing)
+		cmd_ = " -l" * str_with_blancs(cmd_[4:ind[1]-1]) * cmd_[ind[1]:end]
+	elseif (cmd_ != "")
+		cmd_ = " -l" * str_with_blancs(cmd_[4:end])
+	end
+	cmd *= cmd_
+	return cmd, cmd_
+end
 
 # ---------------------------------------------------------------------------------
 function parse_n(cmd::String, d::Dict)
@@ -901,7 +915,7 @@ function parse_arg_and_pen(arg::Tuple, sep="/", pen=true, opt="")
 	else	error("parse_arg_and_pen: Nonsense first argument")
 	end
 	if (length(arg) > 1)
-		if (isa(arg[2], Tuple))  s *= sep * (pen ? parse_pen(arg[2]) : get_color(arg[2])) 
+		if (isa(arg[2], Tuple))  s *= sep * (pen ? parse_pen(arg[2]) : get_color(arg[2]))
 		else                     s *= sep * string(arg[2])		# Whatever that is
 		end
 	end
@@ -1059,6 +1073,30 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=false
 	return cmd
 end
 
+#= ---------------------------------------------------------------------------------------------------
+function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)
+	d = nt2dict(mapa)
+	if (!haskey(d, this_key))  return  end	# Should be a error?
+	out = ""
+	key = keys(user_input)					# user_input = (rows=1, fill=:red)
+	val_namedTup = d[this_key]				# water=(new=true, rows="my", cols="mx", fill=add_opt_fill)
+	d = nt2dict(val_namedTup)
+	for k = 1:length(user_input)
+		if (haskey(d, key[k]))
+			val = d[key[k]]
+			if (isa(val, Function))
+				if (val == add_opt_fill)
+					out *= val(Dict(key[k] => user_input[key[k]]))
+				end
+			else
+				out *= string(d[key[k]])
+			end
+		end
+	end
+	return out
+end
+=#
+
 # ---------------------------------------------------------------------------------------------------
 function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 	# Generic parser of options passed in a NT and whose last element is anther NT with the mapping
@@ -1080,7 +1118,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 					local_opt = (d[key[k]][2] == helper_decorated) ? true : nothing		# 'true' means getting a single argout
 					cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), local_opt)
 				end
-			else						# 
+			else						#
 				if (length(d[key[k]]) == 2)		# Run the function
 					cmd *= d[key[k]][1] * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])
 				else					# This branch is to deal with options -Td, -Tm, -L and -D of basemap & psscale
@@ -1091,6 +1129,8 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 					order[ind_o]    = d[key[k]][3];				# Store the order of this sub-option
 				end
 			end
+		#elseif (isa(d[key[k]], NamedTuple))		#
+			#cmd *= genFun(key[k], nt[k], mapa)
 		elseif (d[key[k]] == "1")		# Means that only first char in value is retained. Used with units
 			t = arg2str(nt[k])
 			if (t != "")  cmd *= t[1]
@@ -1137,7 +1177,7 @@ end
 function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
 	# Crazzy shit to allow increasing the arg1 matrix
 	n_rows, n_cols = size(mat)
-	mat = reshape(mat, :)	
+	mat = reshape(mat, :)
 	cmd = fun(t1..., t2, del, mat)
 	mat = reshape(mat, n_rows, :)
 	return cmd, mat
@@ -1187,6 +1227,10 @@ function helper_add_cpt(cmd::String, opt, N_args, arg1, arg2, val, store)
 end
 
 # ---------------------------------------------------------------------------------------------------
+#add_opt_fill(d::Dict, opt::String="") = add_opt_fill("", d, [d[collect(keys(d))[1]]], opt)	# Use ONLY when len(d) == 1
+function add_opt_fill(d::Dict, opt::String="")
+	add_opt_fill(d, [collect(keys(d))[1]], opt)	# Use ONLY when len(d) == 1
+end
 add_opt_fill(d::Dict, symbs, opt="") = add_opt_fill("", d, symbs, opt)
 function add_opt_fill(cmd::String, d::Dict, symbs, opt="")
 	# Deal with the area fill attributes option. Normally, -G
@@ -1981,7 +2025,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", opt_i="",
 
 	if (data_kw !== nothing)  arg = data_kw  end		# Finaly move the data into ARG
 
-	if (!IamModern && (opt_R == "" || opt_R[1] == '/'))
+	if (!IamModern && (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight"))
 		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h, arg)		# Here we are reading from an original GMTdataset or Array
 		if (opt_R != "" && opt_R[1] == '/')	# Modify what will be reported as a -R string
 			# Example "/-0.1/0.1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
@@ -1993,10 +2037,12 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", opt_i="",
 				end
 			end
 		end
-		if (opt_R != "tight")
+		if (opt_R != " -Rtight")
 			dx = (info[1].data[2] - info[1].data[1]) * 0.005;	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
 			info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
-			info[1].data = round_wesn(info[1].data)	# Add a pad force it not-tight
+			info[1].data = round_wesn(info[1].data)	# Add a pad if not-tight
+		else
+			cmd = replace(cmd, " -Rtight" => "")	# Must remove old -R
 		end
 		if (is3D)
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
@@ -2409,9 +2455,9 @@ function break_pen(pen::AbstractString)
 
 	ps = split(pen, ',')
 	nc = length(ps)
-	if     (nc == 1)  penT = ps[1];    penC = "";       penS = "";	
-	elseif (nc == 2)  penT = ps[1];    penC = ps[2];    penS = "";	
-	else              penT = ps[1];    penC = ps[2];    penS = ps[3];	
+	if     (nc == 1)  penT = ps[1];    penC = "";       penS = "";
+	elseif (nc == 2)  penT = ps[1];    penC = ps[2];    penS = "";
+	else              penT = ps[1];    penC = ps[2];    penS = ps[3];
 	end
 	return penT, penC, penS
 end
