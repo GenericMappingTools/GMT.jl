@@ -149,7 +149,7 @@ function guess_T_from_ext(fname::String)
 	fname, ext = splitext(fname)
 	if (ext == "")  return nothing  end
 	ext = lowercase(ext[2:end])
-	if     (ext == "grd")  out = " -Tg";
+	if     (ext == "grd" || ext == "nc")  out = " -Tg";
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps"  || ext == "eps")  out = " -Tp";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"]) !== nothing)  out = " -Td";

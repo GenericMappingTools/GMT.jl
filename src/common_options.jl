@@ -378,12 +378,26 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 	# These four are aliases
 	extra_parse = true
 	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
-		if (val == :none || val == "none")		# User explicitly said NO AXES
-			return cmd, ""
-		elseif (val == :noannot || val == :bare || val == "noannot" || val == "bare")
-			return cmd * " -B0", " -B0"
-		elseif (val == :same || val == "same")	# User explicitly said "Same as previous -B"
-			return cmd * " -B", " -B"
+		if (isa(val, String) || isa(val, Symbol))
+			val = string(val)					# In case it was a symbol
+			if (val == "none")					# User explicitly said NO AXES
+				return cmd, ""
+			elseif (val == "noannot" || val == "bare")
+				return cmd * " -B0", " -B0"
+			elseif (val == "same")				# User explicitly said "Same as previous -B"
+				return cmd * " -B", " -B"
+			elseif (startswith(val, "auto"))
+				if     (occursin("XYZg", val)) val = " -Bafg -Bzag -BWSenZ"
+				elseif (occursin("XYZ", val))  val = def_fig_axes3
+				elseif (occursin("XYg", val))  val = " -Bafg -BWSen"
+				elseif (occursin("XY", val))   val = def_fig_axes
+				elseif (occursin("Xg", val))   val = " -Bafg -BwSen"
+				elseif (occursin("X", val))    val = " -Baf -BwSen"
+				elseif (occursin("Yg", val))   val = " -Bafg -BWsen"
+				elseif (occursin("Y", val))    val = " -Baf -BWsen"
+				elseif (val == "auto")         val = def_fig_axes		# 2D case
+				end
+			end
 		end
 		if (isa(val, NamedTuple)) opt_B = axis(val);	extra_parse = false
 		else                      opt_B = string(val)
@@ -1996,7 +2010,9 @@ end
 function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", opt_i="", is3D=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
-	global IamModern
+	#global IamModern
+	force_get_R = false		# Becuase of a GMT6.0 BUG, modern mode does not compute -R automatically
+	if (IamModern && FirstModern)  global FirstModern = false; force_get_R = true  end
 	data_kw = nothing
 	if (haskey(d, :data))  data_kw = d[:data]  end
 	if (fname != "")       data_kw = fname     end
@@ -2005,7 +2021,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", opt_i="",
 	cmd, opt_di = parse_di(cmd, d)		# If data missing data other than NaN
 	cmd, opt_h  = parse_h(cmd, d)
 	if (isa(data_kw, String))
-		if (!IamModern && opt_R == "")				# Then we must read the file to determine -R
+		if (!IamModern && opt_R == "")		# Then we must read the file to determine -R
 			lixo, opt_bi = parse_bi("", d)	# See if user says file is binary
 			if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
 				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * " " * data_kw)
@@ -2025,7 +2041,8 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", opt_i="",
 
 	if (data_kw !== nothing)  arg = data_kw  end		# Finaly move the data into ARG
 
-	if (!IamModern && (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight"))
+	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
+	if ((!IamModern && no_R) || (force_get_R && no_R))
 		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h, arg)		# Here we are reading from an original GMTdataset or Array
 		if (opt_R != "" && opt_R[1] == '/')	# Modify what will be reported as a -R string
 			# Example "/-0.1/0.1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
@@ -2103,9 +2120,16 @@ function round_wesn(wesn, geo::Bool=false)
 				if ((s * range[side] / inc) > 10.0) inc *= 2.0	end		# 2 arcsec
 				if ((s * range[side] / inc) > 10.0) inc *= 2.5	end		# 5 arcsec
 			end
+			wesn[item] = (floor(s * wesn[item] / inc) * inc) / s;	item += 1;
+			wesn[item] = (ceil(s * wesn[item] / inc) * inc) / s;	item += 1;
+		else
+			# Round BB to the next fifth of a decade.
+			one_fifth_dec = inc / 5					# One fifth of a decade
+			x = (floor(wesn[item] / inc) * inc);
+			wesn[item] = x - ceil((x - wesn[item]) / one_fifth_dec) * one_fifth_dec;	item += 1
+			x = (ceil(wesn[item] / inc) * inc);
+			wesn[item] = x - floor((x - wesn[item]) / one_fifth_dec) * one_fifth_dec;	item += 1
 		end
-		wesn[item] = (floor(s * wesn[item] / inc) * inc) / s;	item += 1;
-		wesn[item] = (ceil(s * wesn[item] / inc) * inc) / s;	item += 1;
 	end
 	return wesn
 end
@@ -2309,7 +2333,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 		P = gmt(cmd, args...)
 	end
 
-	digests_legend_bag(d)			# Plot the legend if requested
+	if (!IamModern)  digests_legend_bag(d)  end			# Plot the legend if requested
 
 	if (usedConfPar)				# Hacky shit to force start over when --PAR options were use
 		usedConfPar = false;	gmt("destroy")

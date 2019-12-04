@@ -49,7 +49,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	if ((isa(arg1, GMTdataset) && arg1.proj4 != "" || isa(arg1, Vector{GMTdataset}) &&
 		     arg1[1].proj4 != "") && opt_J == " -JX" * def_fig_size)
-		cmd = replace(cmd, opt_J => "-JX12c/0")		# If projected it's a axis equal for sure
+		cmd = replace(cmd, opt_J => "-JX12c/0")		# If projected, it's a axis equal for sure
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd *= " -JZ6c"		# Default -JZ
@@ -149,19 +149,16 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	cmd = check_caller(d, cmd, opt_S, opt_W, sub_module, O)
 
 	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
-		#cmd = finish_PS(d, cmd * opt_W * opt_UVXY, output, K, O)
 		cmd *= opt_W * opt_UVXY
 
 	elseif (opt_W == "" && opt_S != "")						# We have a symbol request
 		if (opt_Wmarker != "" && opt_W == "") opt_Gsymb *= " -W" * opt_Wmarker  end		# reuse var name
 		if (opt_ML != "")  cmd *= opt_ML  end				# If we have a symbol outline pen
-		#cmd = finish_PS(d, cmd * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
 		cmd *= opt_S * opt_Gsymb * opt_UVXY
 
 	elseif (opt_W != "" && opt_S != "")						# We have both line/polygon and a symbol
 		if (occursin(opt_Gsymb, cmd))  opt_Gsymb = ""  end
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
-			#cmd = finish_PS(d, cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY, output, K, O)
 			cmd *= opt_W * opt_S * opt_Gsymb * opt_UVXY
 		else
 			if (opt_Wmarker != "")  opt_Wmarker = " -W" * opt_Wmarker  end		# Set Symbol edge color
@@ -169,12 +166,10 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
 			if (opt_c != "")  cmd2 = replace(cmd2, opt_c => "")  end			# Not in scond call (subplots)
 			if (opt_ML != "")  cmd1 = cmd1 * opt_ML  end	# If we have a symbol outline pen
-			#cmd = [finish_PS(d, cmd1, "", true, O); finish_PS(d, cmd2, "", K, true)]
 			cmd = [cmd1; cmd2]
 		end
 
 	else
-		#cmd = finish_PS(d, cmd * opt_UVXY, output, K, O)
 		cmd *= opt_UVXY
 	end
 
@@ -194,7 +189,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		end
 	end
 
-	put_in_legend_bag(d, cmd, arg1)
+	if (!IamModern)  put_in_legend_bag(d, cmd, arg1)  end
 
 	r = finish_PS_module(d, gmt_proggy .* cmd, "", K, O, true, arg1, arg2)
 	if (got_pattern || occursin("-Sk", opt_S))  gmt("destroy")  end 	# Apparently patterns are screweing the session

@@ -32,7 +32,8 @@ function imshow(arg1; first=true, kw...)
 		if (ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif")
 			is_image = true
 		end
-		G = arg1
+		#G = gmtread(arg1)			# If it screws ...
+		G = arg1					# BUG. THIS TRIGGERS AN INFINITE RECURSION LOOP 
 	elseif (isa(arg1, Array{UInt8}))
 		G = mat2img(arg1; kw...)
 	else
