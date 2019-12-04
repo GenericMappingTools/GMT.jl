@@ -157,15 +157,16 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_B("", d)[1] == " -BWSen+taiai -Bpx+lai+sBlaBla -BpxaUfg10 -Bpyclixo.txt -Bsxa5f1 -Bsya2"
 	@test GMT.parse_B("",Dict(:B=>:same))[1] == " -B"
 	@test GMT.parse_B("", Dict(:title => :bla))[1] == " -Baf -BWSen+tbla"
+	@test GMT.parse_B("", Dict(:frame => :auto, :title => :bla))[1] == " -Baf -BWSen+tbla"
 	GMT.helper2_axes("lolo");
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
 
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(10,:red),bot=true), Vd=2);
-	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R-0.2/1.2/-0.2/1.2 -L+p10,red+yb")
+	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10,red+yb")
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=2);
-	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R-0.2/1.2/-0.2/1.2 -L+p10+cl+yb")
+	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10+cl+yb")
 	@test startswith(psxy([0.0, 1],[0, 1.1], figsize=(10,12), aspect=:equal, Vd=2), "psxy  -JX10/12")
 	@test startswith(psxy([0.0, 1],[0, 1.1], figsize=10, aspect=:equal, Vd=2), "psxy  -JX10/0")
 	@test startswith(psxy([0.0, 1],[0, 1.1], aspect=:equal, Vd=2), "psxy  -JX12c/0")
@@ -852,7 +853,7 @@ if (got_it)					# Otherwise go straight to end
 	T = text_record(t,"> 3 5 18p 5i j");
 	pstext!(T, F="+f16p,Times-Roman,red+jTC", M=true)
 	pstext!(T, font=(16,"Times-Roman",:red), justify=:TC, M=true)
-	@test startswith(GMT.text([1 2 3; 4 5 6], Vd=2), "pstext  -JX12c/0 -Baf -BWSen -R0.5/4.5/1.5/5.5")
+	@test startswith(GMT.text([1 2 3; 4 5 6], Vd=2), "pstext  -JX12c/0 -Baf -BWSen -R0.9/4.1/1.9/5.1")
 	@test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=2)
 
 	# PSWIGGLE
@@ -1017,13 +1018,11 @@ if (got_it)					# Otherwise go straight to end
 	@show("EXAMPLES")
 	# EXAMPLES
 	plot(1:10,rand(10), lw=1, lc="blue", marker="square",
-	markeredgecolor=:white, size=0.2, markerfacecolor="red", title="Hello World",
-		xlabel="Spoons", ylabel="Forks")
+	markeredgecolor=:white, size=0.2, markerfacecolor="red", title="Hello World", xlabel="Spoons", ylabel="Forks")
 
 	x = range(0, stop=2pi, length=180);	seno = sin.(x/0.2)*45;
 	coast(region="g", proj="A300/30/6c", axis="g", resolution="c", land="navy")
-	plot!(collect(x)*60, seno, lw=0.5, lc="red", marker="circle",
-		markeredgecolor=0, size=0.05, markerfacecolor="cyan")
+	plot!(collect(x)*60, seno, lw=0.5, lc="red", marker="circle", markeredgecolor=0, size=0.05, markerfacecolor="cyan")
 
 	G = GMT.peaks()
 	show(G);

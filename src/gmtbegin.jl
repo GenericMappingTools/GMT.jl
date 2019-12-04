@@ -10,6 +10,7 @@ As an alternative use 'fmt' as a string or symbol containing the format (ps, pdf
 By default name="GMTplot" and fmt="ps"
 """
 function gmtbegin(name::String=""; fmt=nothing, verbose=nothing)
+	global FirstModern = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
 	cmd = "begin"       # Default name (GMTplot.ps) is set in gmt_main()
 	if (name != "")  cmd *= " " * get_format(name, fmt)  end
 	if (verbose !== nothing)  cmd *= " -V" * string(verbose)  end
@@ -41,7 +42,6 @@ Set attributes for the current modern mode session figure.
 'opts' Sets one or more comma-separated options (and possibly arguments) that can be passed to psconvert when preparing this figure.
 """
 function gmtfig(name::String; fmt=nothing, opts="")
-	global IamModern
 	if (!IamModern)  error("Not in modern mode. Must run 'gmtbegin' first")  end
  
 	cmd = "figure"       # Default name (GMTplot.ps) is set in gmt_main()
@@ -53,8 +53,6 @@ function gmtfig(name::String; fmt=nothing, opts="")
 end
 
 function inset(fim=nothing; stop=false, kwargs...)
-
-	global IamModern
 	if (!IamModern)  error("Not in modern mode. Must run 'gmtbegin' first")  end
  
 	d = KW(kwargs)
