@@ -21,7 +21,7 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
     ($(GMTdoc)grdview.html#i)
-- **N** | **plane** :: [Type => Str | Int]
+- **N** | **plane** :: [Type => Str | Int]		``Arg = (level [,fill])``
 
     Draws a plane at this z-level.
     ($(GMTdoc)grdview.html#n)
@@ -30,15 +30,15 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
 
     Specify **m** for mesh plot, **s* for surface, **i** for image.
     ($(GMTdoc)grdview.html#q)
-- **S** | **smooth** :: [Type => Number]
+- **S** | **smoothfactor** :: [Type => Number]
 
-    Smooth the contours before plotting.
+    Used to resample the contour lines at roughly every (gridbox_size/smoothfactor) interval..
     ($(GMTdoc)grdview.html#s)
-- **T** | **no_interp** :: [Type => Str]
+- **T** | **no_interp** :: [Type => Str | NT]	``Arg = (skip=Bool, outlines=Bool|pen)``
 
     Plot image without any interpolation.
     ($(GMTdoc)grdview.html#t)
-- **W** | **pens** :: [Type => Str]
+- **W** | **pens** | **pen** :: [Type => Str]	``Arg = (contour=Bool|pen, mesh=Bool|pen, facade=Bool|pen)``
 
     Draw contour, mesh or facade. Append pen attributes.
     ($(GMTdoc)grdview.html#w)
@@ -66,8 +66,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		cmd *= " -N" * parse_arg_and_pen(val, "+g", false)
 	end
 	cmd = add_opt(cmd, 'Q', d, [:Q :surf :surftype],
-				  (mesh=("m", add_opt_fill), waterfall=("mx", add_opt_fill), surface="_s",
-				   surf="_s", img="i", image="i", nan_alpha="_c", monochrome="_+m", water=(new=true, rows="my", cols="mx", fill=add_opt_fill)))
+				  (mesh=("m", add_opt_fill), surface="_s", surf="_s", img=("i",arg2str), image="i", nan_alpha="_c", monochrome="_+m", waterfall=(rows="my", cols="mx", fill=add_opt_fill)))
 	cmd = add_opt(cmd, 'W', d, [:W :pens :pen], (contour=("c", add_opt_pen),
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
 	cmd = add_opt(cmd, 'T', d, [:T :no_interp], (skip="_+s", outlines=("+o", add_opt_pen)) )

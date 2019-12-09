@@ -160,4 +160,9 @@ function __init__()
 	end
 end
 
+#include("precompile_GMT_i.jl")
+#_precompile_i_()
+#include("precompile_GMT_c.jl")
+#_precompile_c_()
+
 end # module

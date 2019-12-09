@@ -56,7 +56,7 @@ Optional Arguments
     projection is not oblique, the frontal facade between the plane and the data perimeter is colored.
     See -Wf for setting the pen used for the outline.
 
-- **Q** or *surf* or *surftype* : *surftype=(mesh=true, waterfall=true, surface=true, image=true, nan\_alpha=true, monochrome=true)*\
+- **Q** or *surf* or *surftype* : *surftype=(mesh=true, waterfall=(:rows | :cols [,fill]), surface=true, image=true, nan\_alpha=true, monochrome=true)*\
     Select one of following settings. For any of these choices, you may force a monochrome image by setting
     ``monochrome=true``. Colors are then converted to shades of gray using the (monochrome television) YIQ
     transformation. Note: pay attention to always use a tuple, even when only one option is used. This is
@@ -64,7 +64,7 @@ Optional Arguments
 
 > - Specify ``mesh=true`` for mesh plot [Default], and optionally set a color (see [Setting color](@ref)), with ``mesh=color``, for a different mesh paint.
 
-> - Specify ``waterfall=true`` or my for waterfall plots (row or column profiles). Specify color as for plain *mesh*.
+> - Specify ``waterfall=:rows`` or ``:cols`` for waterfall plots (row or column profiles). Specify fill color or patterns with a second argument. For example ``waterfall=(:rows, :red)``
 
 > - Specify ``surface=true`` for surface plot, and optionally add *mesh=true* to have mesh lines drawn on top of surface.
 
