@@ -1,12 +1,12 @@
 """
     imshow(arg1; kw...)
 
-Is a simple front end to the [`grdimage`](@ref) program that accepts GMTgrid, GMTimage, 2D array 
-of floats or strings with file names of grids or images. The normal options of the *grdimage* program
-also apply here but some clever guessing of suitable necessary parameters is done if they are not
-provided. Contrary to other image producing modules the "show' keyword is not necessary to display the
-image. Here it is set by default. If user wants to use *imshow* to create layers of a more complex fig
-he can use *show=false* for the intermediate layers.
+Is a simple front end to the [`grdimage`](@ref)  [`grdview`](@ref) programs that accepts GMTgrid, GMTimage,
+2D array of floats or strings with file names of grids or images. The normal options of the *grdimage*
+and *grdview* programs also apply here but some clever guessing of suitable necessary parameters is done
+if they are not provided. Contrary to other image producing modules the "show' keyword is not necessary to
+display the image. Here it is set by default. If user wants to use *imshow* to create layers of a more complex
+fig he can use *show=false* for the intermediate layers.
 
 # Examples
 ```julia-repl
@@ -32,8 +32,7 @@ function imshow(arg1; first=true, kw...)
 		if (ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif")
 			is_image = true
 		end
-		#G = gmtread(arg1)			# If it screws ...
-		G = arg1					# BUG. THIS TRIGGERS AN INFINITE RECURSION LOOP 
+		G = gmtread(arg1)			# If it screws ...
 	elseif (isa(arg1, Array{UInt8}))
 		G = mat2img(arg1; kw...)
 	else
