@@ -16,7 +16,7 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
 
     Drape the image in drapefile on top of the relief provided by relief_file.
     ($(GMTdoc)grdview.html#g)
-- **I** | **shade** | **intensity** :: [Type => Str | GMTgrid]
+- **I** | **shade** | **intensity** :: [Type => Str | GMTgrid]		``Arg = GMTgrid | filename```
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
@@ -26,9 +26,9 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
     Draws a plane at this z-level.
     ($(GMTdoc)grdview.html#n)
 - $(GMT.opt_P)
-- **Q** | **surftype** | **surf** :: [Type => Str | Int]
+- **Q** | **surftype** | **surf** :: [Type => Str | Int] ``Arg = mesh=Bool, surface=Boll, image=Bool, wterfall=(:rows|cols,[fill])``
 
-    Specify **m** for mesh plot, **s* for surface, **i** for image.
+    Specify **m** for mesh plot, **s** for surface, **i** for image.
     ($(GMTdoc)grdview.html#q)
 - **S** | **smoothfactor** :: [Type => Number]
 

@@ -116,6 +116,8 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,dashed+cl+cf+s+o5"
 	d = Dict(:W=>(offset=5, bezier=true, cline="", ctext=true, pen=("10p",:red,:dashed), arrow=(lenght=0.1,)));
 	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,dashed+cl+cf+s+o5+v"
+	GMT.add_opt_cpt(Dict(:a=>1), "", [:b], 'A', 0, nothing, nothing, false, true, "-T0/10/1");
+	GMT.add_opt_cpt(Dict(:a=>:red), "", [:a], 'A', 0, nothing, nothing, false, true, "-T0/10/1");
 
 	r = vector_attrib(len=2.2,stop=[],norm="0.25i",shape=:arrow,half_arrow=:right,
 	                  justify=:end,fill=:none,trim=0.1,endpoint=true,uv=6.6);
@@ -198,7 +200,11 @@ if (got_it)					# Otherwise go straight to end
 	GMT.parse_proj((name="blabla",center=(0,0)))
 
 	@test GMT.parse_j("", Dict(:spheric_dist => "f"))[1] == " -jf"
+	@test GMT.parse_t("", Dict(:t=>0.2))[1] == " -t20.0"
+	@test GMT.parse_t("", Dict(:t=>20))[1]  == " -t20"
 	GMT.check_url_name("blabla");
+	GMT.auto_JZ("");
+	GMT.helper2_axes("");
 
 	# ---------------------------------------------------------------------------------------------------
 
@@ -512,6 +518,8 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(r, "grdview  -R -J -p120/30 -N-6+glightgray -Qsmred")
 	r = grdview(G, surf=(waterfall=(:rows,:red),surf=true, mesh=true, img=50), Vd=2);
 	@test startswith(r, "grdview  -JX12c/0 -Baf -Bza -BWSenZ -Qmyredsmi50")
+	@test startswith(grdview(G, surf=(waterfall=:rows,), Vd=2), "grdview  -JX12c/0 -Baf -Bza -BWSenZ -Qmy")
+	@test startswith(grdview(G, surf=(waterfall=(rows=true, fill=:red),), Vd=2), "grdview  -JX12c/0 -Baf -Bza -BWSenZ -Qmyred")
 	@test_throws ErrorException("Wrong way of setting the drape (G) option.")  grdview(rand(16,16), G=(1,2))
 	if (GMTver >= 6)		# Crashes GMT5
 		I = mat2grid(rand(Float32,128,128))
