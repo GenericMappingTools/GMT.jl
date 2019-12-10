@@ -391,10 +391,14 @@ function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 				elseif (occursin("XYZ", val))  val = def_fig_axes3
 				elseif (occursin("XYg", val))  val = " -Bafg -BWSen"
 				elseif (occursin("XY", val))   val = def_fig_axes
+				elseif (occursin("LB", val))   val = " -Baf -BLB"
+				elseif (occursin("L",  val))   val = " -Baf -BL"
+				elseif (occursin("R",  val))   val = " -Baf -BR"
+				elseif (occursin("B",  val))   val = " -Baf -BB"
 				elseif (occursin("Xg", val))   val = " -Bafg -BwSen"
-				elseif (occursin("X", val))    val = " -Baf -BwSen"
+				elseif (occursin("X",  val))   val = " -Baf -BwSen"
 				elseif (occursin("Yg", val))   val = " -Bafg -BWsen"
-				elseif (occursin("Y", val))    val = " -Baf -BWsen"
+				elseif (occursin("Y",  val))   val = " -Baf -BWsen"
 				elseif (val == "auto")         val = def_fig_axes		# 2D case
 				end
 			end
@@ -621,7 +625,6 @@ end
 # ---------------------------------------------------------------------------------
 parse_i(cmd::String, d::Dict) = parse_helper(cmd, d, [:i :incol], " -i")
 parse_j(cmd::String, d::Dict) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
-#parse_l(cmd::String, d::Dict) = parse_helper(cmd, d, [:l :legend], " -l")
 
 # ---------------------------------------------------------------------------------
 function parse_l(cmd::String, d::Dict)
@@ -676,8 +679,14 @@ parse_x(cmd::String, d::Dict) = parse_helper(cmd, d, [:x :cores :n_threads], " -
 
 # ---------------------------------------------------------------------------------------------------
 function parse_t(cmd::String, d::Dict)
-	# Parse the global -t option. Return CMD same as input if no -t option in args
-	parse_helper(cmd, d, [:t :alpha :transparency], " -t")
+	opt_val = ""
+	if ((val = find_in_dict(d, [:t :alpha :transparency])[1]) !== nothing)
+		t = (isa(val, String)) ? parse(Float32, val) : val
+		if (t < 1) t *= 100  end
+		opt_val = string(" -t", t)
+		cmd *= opt_val
+	end
+	return cmd, opt_val
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1389,9 +1398,8 @@ end
 function font(d::Dict, symbs)
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		font(val)
-	else
-		# Should not come here anymore, collect returns the dict members in arbitrary order
-		font(collect(values(d))[1])
+	#else	# Should not come here anymore, collect returns the dict members in arbitrary order
+		#font(collect(values(d))[1])
 	end
 end
 function font(val)
