@@ -139,5 +139,5 @@ only shot and so, by default, it has the *show* keyword hardwire to *true*.
     coast!(shore=(1,:white), resolution=:c, figsize=15, fmt=:png, show=true)
 
 ```@raw html
-<img src="http://w3.ualg.pt/~jluis/jessy.png" alt="SinuJessica" width="600" class="center"/>
+<img src="http://w3.ualg.pt/~jluis/jessy_.png" alt="SinuJessica" width="600" class="center"/>
 ```
