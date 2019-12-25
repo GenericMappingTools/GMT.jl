@@ -24,6 +24,7 @@ global multi_col    = false			# To allow plottig multiple columns at once
 global IamModern    = false			# To know if we are in modern mode
 global IamSubplot   = false			# To know if we are in subplot mode
 global usedConfPar  = false			# Hacky solution for the session's memory trouble
+global convert_syntax = false		# Only convert to hard core GMT syntax (like Vd=2)
 const FMT = "ps"
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
@@ -39,7 +40,7 @@ export
 	grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdfill, grdlandmask, grdmask, grdpaste,
 	grdproject, grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume, greenspline,
 	mat2ds, mat2grid, mat2img, histogram, histogram!, image, image!, imshow, kml2gmt, logo, logo!,
-	makecpt, mask, mask!, mapproject, nearneighbor, plot, plot!, plot3d, plot3d!, project,
+	makecpt, mask, mask!, mapproject, movie, nearneighbor, plot, plot!, plot3d, plot3d!, project,
 	pscontour, pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, 
 	pshistogram, pshistogram!, psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!,
 	psscale, psscale!, pssolar, pssolar!, psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!,
@@ -102,6 +103,7 @@ include("imshow.jl")
 include("kml2gmt.jl")
 include("makecpt.jl")
 include("mapproject.jl")
+include("movie.jl")
 include("nearneighbor.jl")
 include("plot.jl")
 include("project.jl")
@@ -151,10 +153,10 @@ end
 
 function __init__()
 	ver = Meta.parse(readlines(`gmt --version`)[1][1:3])
-	if (ver != GMTver)
+	if (ver != GMTver && abs(ver - GNTver) > 0.5)	# Warn only when detecting a GMT5 vs GMT6 change
 		println("\n\tYou seem to have changed your installed GMT version. Current version")
 		println("\treports to be $ver but previously it was $GMTver. To fix this you need to")
-		println("\tmake sure that GMT.jl recompiles again, otherwise fatal errors will occur.")
+		println("\tmake sure that GMT.jl recompiles again, otherwise fatal errors may occur.")
 		t = joinpath(@__DIR__, "deps", "GMT.jl")
 		println("\tA dirty way to force that is to make an irrelevant change in (and revert it after)\n\t$t")
 	end
