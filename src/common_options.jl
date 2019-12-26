@@ -1231,7 +1231,11 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=noth
 			end
 		end
 	elseif (def && opt_T != "")		# Requested the use of the default color map (here Jet, instead of rainbow)
-		cpt = makecpt(opt_T * " -Cjet")
+		if (haskey(d, :this_cpt) && d[:this_cpt] != "")		# A specific CPT name was requested
+			cpt = makecpt(opt_T * " -C" * d[:this_cpt])
+		else
+			cpt = makecpt(opt_T * " -Cjet")
+		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 	elseif (in_bag)					# If everything else has failed and we have one in the Bag, return it
 		global current_cpt
@@ -1337,8 +1341,12 @@ function add_opt_module(d::Dict, symbs)
 				end
 			elseif (isa(val, Number) && (val != 0))		# Allow setting coast=true || colorbar=true
 				if     (symbs[k] == :coast)    r = coast!(W=0.5, Vd=2)
-				elseif (symbs[k] == :colorbar) r = colorbar!(pos=(anchor=:MR,), B=:a, Vd=2)
+				elseif (symbs[k] == :colorbar) r = colorbar!(pos=(anchor="MR",), B="af", Vd=2)
 				end
+			elseif (symbs[k] == :colorbar && (isa(val, String) || isa(val, Symbol)))
+				t = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
+				anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
+				r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
 			end
 		end
 		if (r != nothing)  append!(out, [r])  end
@@ -2020,9 +2028,10 @@ end
 function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", opt_i="", is3D=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
-	#global IamModern
-	force_get_R = false		# Becuase of a GMT6.0 BUG, modern mode does not compute -R automatically
-	if (IamModern && FirstModern)  global FirstModern = false; force_get_R = true  end
+	#force_get_R = false		# Because of a GMT6.0 BUG, modern mode does not compute -R automatically
+	#if (IamModern && FirstModern)  global FirstModern = false; force_get_R = true  end
+	if (IamModern && FirstModern)  global FirstModern = false;  end
+	force_get_R = (IamModern && GMTver > 6) ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
 	data_kw = nothing
 	if (haskey(d, :data))  data_kw = d[:data]  end
 	if (fname != "")       data_kw = fname     end
@@ -2154,13 +2163,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 		got_fname = 1
 	end
 
-	# Check if we need to save to file
-	if     (haskey(d, :>))      cmd = string(cmd, " > ", d[:>])
-	elseif (haskey(d, :|>))     cmd = string(cmd, " > ", d[:|>])
-	elseif (haskey(d, :write))  cmd = string(cmd, " > ", d[:write])
-	elseif (haskey(d, :>>))     cmd = string(cmd, " > ", d[:>>])
-	elseif (haskey(d, :write_append))  cmd = string(cmd, " > ", d[:write_append])
-	end
+	write_data(d, cmd)			# Check if we need to save to file
 
 	tipo = length(args)
 	if (tipo == 1)
@@ -2220,6 +2223,16 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function write_data(d::Dict, cmd::String)
+	# Check if we need to save to file (redirect stdout)
+	if     (haskey(d, :|>))      cmd = string(cmd, " > ", d[:|>])
+	elseif (haskey(d, :write))   cmd = string(cmd, " > ", d[:write])
+	elseif (haskey(d, :append))  cmd = string(cmd, " >> ", d[:append])
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, args...)
 	n_args = 0
 	for k = 1:length(args) if (args[k] !== nothing)  n_args += 1  end  end	# Drop the nothings
@@ -2243,14 +2256,28 @@ end
 # ---------------------------------------------------------------------------------------------------
 function dbg_print_cmd(d::Dict, cmd)
 	# Print the gmt command when the Vd=1 kwarg was used
-	if (haskey(d, :Vd))
-		if (d[:Vd] == :cmd || d[:Vd] == 2)		# For testing puposes, return the GMT command
+	if (haskey(d, :Vd) || convert_syntax)
+		if (convert_syntax)
+			return update_cmds_history(cmd)
+		elseif (d[:Vd] == 2)		# For testing puposes, return the GMT command
 			return cmd
 		else
 			println(@sprintf("\t%s", cmd))
 		end
 	end
 	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function update_cmds_history(cmd)
+	# Separate into fun to work as a function barrier for var stability
+	global cmds_history
+	if (length(cmds_history) == 1 && cmds_history[1] == "")		# First time here
+		cmds_history[1] = cmd
+	else
+		push!(cmds_history, cmd)
+	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
