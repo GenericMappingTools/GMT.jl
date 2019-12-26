@@ -57,7 +57,7 @@ Specify data type.  Choose among:
 
 Example: to read a nc called 'lixo.grd'
 
-    G = gmtread("lixo.grd", grd=true);
+    G = gmtread("lixo.grd");
 
 to read a jpg image with the bands reversed (this example is currently broken in GMT5. Needs GMT6dev)
 
@@ -147,14 +147,18 @@ end
 function guess_T_from_ext(fname::String)
 	# Guess the -T option from a couple of known extensions
 	fname, ext = splitext(fname)
-	if (ext == "")  return nothing  end
+	if (ext == "")			# A SUBDATASET encoded fname?
+		if (occursin("nc=gd?", fname))  return " -Tg"
+		else                            return nothing
+		end
+	end
 	ext = lowercase(ext[2:end])
-	if     (ext == "grd" || ext == "nc")  out = " -Tg";
-	elseif (ext == "cpt")  out = " -Tc";
-	elseif (ext == "ps"  || ext == "eps")  out = " -Tp";
-	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"]) !== nothing)  out = " -Td";
+	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
+	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "png", "tif", "bmp"]) !== nothing)  out = " -Ti";
-	elseif (findfirst(isequal(ext), ["shp", "kml", "json"]) !== nothing)  out = " -To";
+	elseif (findfirst(isequal(ext), ["shp", "kml", "json"])  !== nothing)  out = " -To";
+	elseif (ext == "cpt")  out = " -Tc";
+	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	else
 		out = nothing
 	end

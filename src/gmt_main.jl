@@ -1184,7 +1184,10 @@ function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
 
 	Pb = unsafe_load(P)		# GMT.GMT_PALETTE
 
-	if (!isnan(cpt.hinge))   Pb.mode = Pb.mode & GMT.GMT_CPT_HINGED  end
+	if (!isnan(cpt.hinge))
+		Pb.hinge = cpt.hinge
+		Pb.mode = Pb.mode & GMT.GMT_CPT_HINGED
+	end
 
 	if (cpt.model == "rgb")      Pb.model = GMT_RGB
 	elseif (cpt.model == "hsv")  Pb.model = GMT_HSV
@@ -1855,3 +1858,4 @@ logspace(start, stop, length=100) = exp10.(range(start, stop=stop, length=length
 contains(haystack, needle) = occursin(needle, haystack)
 #contains(s::AbstractString, r::Regex, offset::Integer) = occursin(r, s, offset=offset)
 fields(arg) = fieldnames(typeof(arg))
+#feval(fn_str, args...) = eval(Symbol(fn_str))(args...)

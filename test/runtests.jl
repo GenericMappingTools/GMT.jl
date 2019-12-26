@@ -543,6 +543,7 @@ if (got_it)					# Otherwise go straight to end
 	if (GMTver >= 6)
 		imshow("lixo.tif",show=false)
 		imshow(rand(UInt8(0):UInt8(255),256,256), colorbar=true, show=false)
+		imshow(rand(UInt8(0):UInt8(255),256,256), colorbar="bottom", show=false)
 	end
 
 	# MAKECPT
@@ -925,6 +926,13 @@ if (got_it)					# Otherwise go straight to end
 		gmtend()
 
 		gmtbegin(); gmtfig("lixo.ps");	gmtend()
+
+		movie("main_sc.jl", pre="pre_sc.jl", C="7.2ix4.8ix100", N=:anim04, T="flight_path.txt", L="f+o0.1i", F=:mp4, A="+l+s10", Vd=2)
+		if (Sys.iswindows())
+			rm("pre_script.bat");		rm("main_script.bat")
+		else
+			rm("pre_script.sh");		rm("main_script.sh")
+		end
 	end
 
 	# SURFACE
@@ -1049,8 +1057,10 @@ if (got_it)					# Otherwise go straight to end
 	rm("lixo.tif")
 	rm("lixo.cpt")
 	rm("lixo.dat")
+	rm("logo.png")
 	if (GMTver >= 6)
 		rm("lixo.eps")
+		rm("lixo.jpg")
 	end
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NULL`)  end
 

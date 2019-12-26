@@ -76,8 +76,8 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
     # If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, " ")
 	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
-	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :force_rgb],
-	                      [:G :truncate], [:I :inverse :reverse], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :auto], [:T :range], [:W :wrap :categorical], [:Z :continuous]])
+	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :force_rgb], [:G :truncate],
+	                                [:I :inverse :reverse], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :auto], [:T :range], [:W :wrap :categorical], [:Z :continuous]])
 
 	if ((val = find_in_dict(d, [:E :data_levels])[1]) !== nothing)
 		if (arg1 === nothing)  error("E option requires that a data table is provided as well")
@@ -85,11 +85,12 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 		end
 	end
 
-	global IamModern
-	if (IamModern && ((val = find_in_dict(d, [:H :getcpt])[1]) === nothing))  cmd *= " -H"  end
+	#global IamModern
+	if (IamModern && ((val = find_in_dict(d, [:H :save])[1]) === nothing))  cmd *= " -H"  end
 	if (haskey(d, :cptname))  cmd *=  " > " * d[:cptname]  end
+	cmd = "makecpt " * cmd
 	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
-	global current_cpt = gmt("makecpt " * cmd, arg1)
+	global current_cpt = gmt(cmd, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

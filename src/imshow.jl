@@ -18,7 +18,7 @@ julia> imshow(G, frame="a", shade="+a45")
 julia> imshow(rand(128,128))
 
 # Display a web downloaded jpeg image wrapped into a sinusoidal projection
-julia> imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg", region="d", frame="g", proj="I15", img_in="r", fmt=:jpg) 
+julia> imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg", region="d", frame="g", proj="I15", img_in="r", fmt=:jpg)
 ```
 See also: [`grdimage`](@ref)
 """
@@ -32,7 +32,7 @@ function imshow(arg1; first=true, kw...)
 		if (ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif")
 			is_image = true
 		end
-		G = gmtread(arg1)			# If it screws ... 
+		G = (arg1[1] == '@') ? arg1 : gmtread(arg1)			# If it screws ...
 	elseif (isa(arg1, Array{UInt8}))
 		G = mat2img(arg1; kw...)
 	else
@@ -49,7 +49,9 @@ function imshow(arg1; first=true, kw...)
 			grdimage(G; first=first, D=1, show=see, kw...)
 		end
 	else
-		imshow(G; first=first, kw...)
+		if (isa(G, String))  grdimage(G; first=first, show=see, kw...)		# String when fname is @xxxx
+		else                 imshow(G; first=first, kw...)
+		end
 	end
 end
 

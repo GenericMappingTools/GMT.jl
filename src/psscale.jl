@@ -61,7 +61,7 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && return monolitic("psscale", cmd0, arg1)
 
 	d = KW(kwargs)
-    K, O = set_KO(first)		# Set the K O dance
+	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, "")
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)
@@ -70,16 +70,17 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	#cmd = add_opt(cmd, "D", d, [:D :pos :position],
 	#    (map=("g", nothing, 1), inside=("j", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), length="+w",
     #     triangles="+e", justify="+j", offset="+o", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n"))
-    cmd = parse_type_anchor(d, cmd, [:D :pos :position])
+	cmd = parse_type_anchor(d, cmd, [:D :pos :position])
 
-    cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
-	if (!occursin("-C", cmd))	# If given no CPT, try to see if we have a current one stored in global
-		if ((global cpt = current_cpt) !== nothing)
+	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
+	if (!isa(arg1, GMTcpt) && !occursin("-C", cmd))	# If given no CPT, try to see if we have a current one stored in global
+		if ((cpt = current_cpt) !== nothing)
 			cmd *= " -C";	arg1 = cpt
 		end
 	end
 
 	cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
+	if (!occursin(" -D", cmd))  cmd *= " -Dx8c/1c+w12c/0.5c+jTC+h"  end      #  So that we can call it with just a CPT
 
 	r = finish_PS_module(d, "psscale " * cmd, "", K, O, true, arg1)
 	gmt("destroy")      # Probably because of the rasters in cpt

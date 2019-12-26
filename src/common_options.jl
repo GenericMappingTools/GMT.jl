@@ -1240,7 +1240,11 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=noth
 			end
 		end
 	elseif (def && opt_T != "")		# Requested the use of the default color map (here Jet, instead of rainbow)
-		cpt = makecpt(opt_T * " -Cjet")
+		if (haskey(d, :this_cpt) && d[:this_cpt] != "")		# A specific CPT name was requested
+			cpt = makecpt(opt_T * " -C" * d[:this_cpt])
+		else
+			cpt = makecpt(opt_T * " -Cjet")
+		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 	elseif (in_bag)					# If everything else has failed and we have one in the Bag, return it
 		global current_cpt
@@ -1346,8 +1350,12 @@ function add_opt_module(d::Dict, symbs)
 				end
 			elseif (isa(val, Number) && (val != 0))		# Allow setting coast=true || colorbar=true
 				if     (symbs[k] == :coast)    r = coast!(W=0.5, Vd=2)
-				elseif (symbs[k] == :colorbar) r = colorbar!(pos=(anchor=:MR,), B=:a, Vd=2)
+				elseif (symbs[k] == :colorbar) r = colorbar!(pos=(anchor="MR",), B="af", Vd=2)
 				end
+			elseif (symbs[k] == :colorbar && (isa(val, String) || isa(val, Symbol)))
+				t = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
+				anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
+				r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
 			end
 		end
 		if (r != nothing)  append!(out, [r])  end
@@ -2028,9 +2036,10 @@ end
 function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", opt_i="", is3D=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
-	#global IamModern
-	force_get_R = false		# Becuase of a GMT6.0 BUG, modern mode does not compute -R automatically
-	if (IamModern && FirstModern)  global FirstModern = false; force_get_R = true  end
+	#force_get_R = false		# Because of a GMT6.0 BUG, modern mode does not compute -R automatically
+	#if (IamModern && FirstModern)  global FirstModern = false; force_get_R = true  end
+	if (IamModern && FirstModern)  global FirstModern = false;  end
+	force_get_R = (IamModern && GMTver > 6) ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
 	data_kw = nothing
 	if (haskey(d, :data))  data_kw = d[:data]  end
 	if (fname != "")       data_kw = fname     end
@@ -2162,13 +2171,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 		got_fname = 1
 	end
 
-	# Check if we need to save to file
-	if     (haskey(d, :>))      cmd = string(cmd, " > ", d[:>])
-	elseif (haskey(d, :|>))     cmd = string(cmd, " > ", d[:|>])
-	elseif (haskey(d, :write))  cmd = string(cmd, " > ", d[:write])
-	elseif (haskey(d, :>>))     cmd = string(cmd, " > ", d[:>>])
-	elseif (haskey(d, :write_append))  cmd = string(cmd, " > ", d[:write_append])
-	end
+	write_data(d, cmd)			# Check if we need to save to file
 
 	tipo = length(args)
 	if (tipo == 1)
@@ -2228,6 +2231,16 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function write_data(d::Dict, cmd::String)
+	# Check if we need to save to file (redirect stdout)
+	if     (haskey(d, :|>))      cmd = string(cmd, " > ", d[:|>])
+	elseif (haskey(d, :write))   cmd = string(cmd, " > ", d[:write])
+	elseif (haskey(d, :append))  cmd = string(cmd, " >> ", d[:append])
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, args...)
 	n_args = 0
 	for k = 1:length(args) if (args[k] !== nothing)  n_args += 1  end  end	# Drop the nothings
@@ -2251,14 +2264,28 @@ end
 # ---------------------------------------------------------------------------------------------------
 function dbg_print_cmd(d::Dict, cmd)
 	# Print the gmt command when the Vd=1 kwarg was used
-	if (haskey(d, :Vd))
-		if (d[:Vd] == :cmd || d[:Vd] == 2)		# For testing puposes, return the GMT command
+	if (haskey(d, :Vd) || convert_syntax)
+		if (convert_syntax)
+			return update_cmds_history(cmd)
+		elseif (d[:Vd] == 2)		# For testing puposes, return the GMT command
 			return cmd
 		else
 			println(@sprintf("\t%s", cmd))
 		end
 	end
 	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function update_cmds_history(cmd)
+	# Separate into fun to work as a function barrier for var stability
+	global cmds_history
+	if (length(cmds_history) == 1 && cmds_history[1] == "")		# First time here
+		cmds_history[1] = cmd
+	else
+		push!(cmds_history, cmd)
+	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2593,326 +2620,3 @@ function toc(V=true)
     if (V)  println("elapsed time: ", t, " seconds")  end
     return t
 end
-
-#= ----------------------------------------------------------------------------------------
-"""
-    assoc!(d, k, v)
-
-is the same as `d[k] = v` but returns `d` rather than `v`.
-"""
-assoc!(d, k, v) = (d[k] = v; d)
-
-function allbindings(pat, bs)
-	if isa(pat, QuoteNode)
-	  return allbindings(pat.value, bs)
-	end
-	return isbinding(pat) || (isslurp(pat) && pat ≠ :__) ? push!(bs, bname(pat)) :
-	isa(pat, TypeBind) ? push!(bs, pat.name) :
-	isa(pat, OrBind) ? (allbindings(pat.pat1, bs); allbindings(pat.pat2, bs)) :
-	istb(pat) ? push!(bs, tbname(pat)) :
-	isexpr(pat, :$) ? bs :
-	isa(pat, Expr) ? map(pat -> allbindings(pat, bs), [pat.head, pat.args...]) :
-	bs
-end
-
-totype(s::Symbol) = string(s)[1] in 'A':'Z' ? s : Expr(:quote, s)
-
-function tbnew(s::Symbol)
-	istb(s) || return s
-	ts = map(Symbol, split(string(s), "_"))
-	name = popfirst!(ts)
-	ts = map(totype, ts)
-	Expr(:$, :(MacroTools.TypeBind($(Expr(:quote, name)), Set{Any}([$(ts...)]))))
-end
-
-struct TypeBind
-	name::Symbol
-	ts::Set{Any}
-end
-
-struct OrBind
-	pat1
-	pat2
-end
-
-mutable struct MatchError
-  pat
-  ex
-end
-
-or_(a, b) = OrBind(a, b)
-or_(p...) = foldl(or_, p)
-
-istb(s) = false
-istb(s::Symbol) = !(endswith(string(s), "_") || endswith(string(s), "_str")) && occursin("_", string(s))
-
-tbname(s::Symbol) = Symbol(split(string(s), "_")[1])
-tbname(s::TypeBind) = s.name
-
-nomatch(pat, ex) = throw(MatchError(pat, ex))
-
-function store!(env, name, ex)
-	haskey(env, name) && !(env[name] == ex) && nomatch(name, ex)
-	assoc!(env, name, ex)
-end
-
-function match_inner(pat, ex, env)
-	pat == ex || nomatch(pat, ex)
-	return env
-end
-
-match_inner(pat::QuoteNode, ex::QuoteNode, env) = match(pat.value, ex.value, env)
-
-isslurp(s) = false
-isslurp(s::Symbol) = s == :__ || occursin(r"[^_]__$", string(s))
-
-allbindings(pat) = (bs = Any[]; allbindings(pat, bs); bs)
-
-function bindinglet(bs, body)
-	ex = :(let $(esc(:env)) = env, $((:($(esc(b)) = get(env, $(Expr(:quote, b)), nothing)) for b in bs)...)
-			 $body
-		   end)
-	return ex
-end
-
-isbinding(s) = false
-isbinding(s::Symbol) = occursin(r"[^_]_(_str)?$", string(s))
-
-subtb(s) = s
-subtb(s::Symbol) = tbnew(s)
-subtb(s::Expr) = isexpr(s, :line) ? s : Expr(subtb(s.head), map(subtb, s.args)...)
-
-isor(ex) = isexpr(ex, :call) && ex.args[1] in (:or_, :|)
-
-function ornew(ex)
-	isor(ex) || return ex
-	or_(ex.args[2:end]...)
-end
-
-subor(s) = s
-subor(s::Symbol) = s
-subor(s::Expr) = isor(s) ? subor(ornew(s)) : Expr(s.head, map(subor, s.args)...)
-subor(s::OrBind) = OrBind(subor(s.pat1), subor(s.pat2))
-
-function bname(s::Symbol)
-	Symbol(Base.match(r"^@?(.*?)_+(_str)?$", string(s)).captures[1])
-end
-
-macro capture(ex, pat)
-  bs = allbindings(pat)
-  pat = subtb(subor(pat))
-  quote
-    $([:($(esc(b)) = nothing) for b in bs]...)
-    env = trymatch($(Expr(:quote, pat)), $(esc(ex)))
-    if env === nothing
-      false
-    else
-      $([:($(esc(b)) = get(env, $(Expr(:quote, b)), nothing)) for b in bs]...)
-      true
-    end
-  end
-end
-
-function makeclause(pat, yes, els = nothing)
-	bs = allbindings(pat)
-	pat = subtb(subor(pat))
-	quote
-	  env = trymatch($(Expr(:quote, pat)), ex)
-	  if env != nothing
-		$(bindinglet(bs, esc(yes)))
-	  else
-		$els
-	  end
-	end
-end
-
-function clauses(ex)
-	line = nothing
-	clauses = []
-	for l in ex.args
-	  isline(l) && (line = l; continue)
-	  env = trymatch(:(pat_ => yes_), l)
-	  env === nothing && error("Invalid match clause $l")
-	  pat, yes = env[:pat], env[:yes]
-	  push!(clauses, (pat, :($line;$yes)))
-	end
-	return clauses
-end
-
-blockunify(a, b) =
-  isexpr(a, :block) && !isexpr(b, :block) ? (a, Expr(:block, b)) :
-  !isexpr(a, :block) && isexpr(b, :block) ? (Expr(:block, a), b) :
-  (a, b)
-
-function normalise(ex)
-  ex = unblock(ex)
-  isexpr(ex, :inert) && (ex = Expr(:quote, ex.args[1]))
-  isa(ex, QuoteNode) && (ex = Expr(:quote, ex.value))
-  isexpr(ex, :kw) && (ex = Expr(:(=), ex.args...))
-  return ex
-end
-
-"""
-    rmlines(x)
-
-Remove the line nodes from a block or array of expressions.
-
-Compare `quote end` vs `rmlines(quote end)`
-
-### Examples
-
-To work with nested blocks:
-
-```julia
-prewalk(rmlines, ex)
-```
-"""
-rmlines(x) = x
-function rmlines(x::Expr)
-  # Do not strip the first argument to a macrocall, which is
-  # required.
-  if x.head == :macrocall && length(x.args) >= 2
-    Expr(x.head, x.args[1], nothing, filter(x->!isline(x), x.args[3:end])...)
-  else
-    Expr(x.head, filter(x->!isline(x), x.args)...)
-  end
-end
-
-"""
-    unblock(expr)
-
-Remove outer `begin` blocks from an expression, if the block is
-redundant (i.e. contains only a single expression).
-"""
-function unblock(ex)
-  isexpr(ex, :block) || return ex
-  exs = rmlines(ex).args
-  length(exs) == 1 || return ex
-  return unblock(exs[1])
-end
-
-# No longer removed from macro calls
-match(::LineNumberNode, ::LineNumberNode, _) = nothing
-
-function match(pat, ex, env)
-  pat = normalise(pat)
-  pat == :_ && return env
-  isbinding(pat) && return store!(env, bname(pat), ex)
-  ex = normalise(ex)
-  pat, ex = blockunify(pat, ex)
-  isslurp(pat) && return store!(env, bname(pat), Any[ex])
-  return match_inner(pat, ex, env)
-end
-
-match(pat, ex) = match(pat, ex, Dict())
-
-function ismatch(pat, ex)
-  try
-    match(pat, ex)
-    return true
-  catch e
-    isa(e, MatchError) ? (return false) : rethrow()
-  end
-end
-
-function trymatch(pat, ex)
-	try
-	  match(pat, ex)
-	catch e
-	  isa(e, MatchError) ? (return) : rethrow()
-	end
-end
-
-macro match(ex, lines)
-	@assert isexpr(lines, :block)
-	result = quote
-	  ex = $(esc(ex))
-	end
-
-	@static if VERSION < v"0.7.0-"
-	  body = foldr((clause, body) -> makeclause(clause..., body), nothing, clauses(lines))
-	else
-	  body = foldr((clause, body) -> makeclause(clause..., body), clauses(lines); init=nothing)
-	end
-
-	push!(result.args, body)
-	return result
-end
-
-"""
-    isexpr(x, ts...)
-
-Convenient way to test the type of a Julia expression.
-Expression heads and types are supported, so for example
-you can call
-
-    isexpr(expr, String, :string)
-
-to pick up on all string-like expressions.
-"""
-isexpr(x::Expr) = true
-isexpr(x) = false
-isexpr(x::Expr, ts...) = x.head in ts
-isexpr(x, ts...) = any(T->isa(T, Type) && isa(x, T), ts)
-
-isline(ex) = isexpr(ex, :line) || isa(ex, LineNumberNode)
-
-"""
-    splitarg(arg)
-Match function arguments (whether from a definition or a function call) such as
-`x::Int=2` and return `(arg_name, arg_type, is_splat, default)`. `arg_name` and
-`default` are `nothing` when they are absent. For example:
-```julia
-> map(splitarg, (:(f(a=2, x::Int=nothing, y, args...))).args[2:end])
-4-element Array{Tuple{Symbol,Symbol,Bool,Any},1}:
- (:a, :Any, false, 2)
- (:x, :Int, false, :nothing)
- (:y, :Any, false, nothing)
- (:args, :Any, true, nothing)
-```
-"""
-function splitarg(arg_expr)
-    splitvar(arg) =
-        @match arg begin
-            ::T_ => (nothing, T)
-            name_::T_ => (name, T)
-            x_ => (x, :Any)
-        end
-    (is_splat = @capture(arg_expr, arg_expr2_...)) || (arg_expr2 = arg_expr)
-    if @capture(arg_expr2, arg_ = default_)
-        @assert default !== nothing "splitarg cannot handle `nothing` as a default. Use a quoted `nothing` if possible. (MacroTools#35)"
-        return (splitvar(arg)..., is_splat, default)
-    else
-        return (splitvar(arg_expr2)..., is_splat, nothing)
-    end
-end
-
-using MacroTools: @capture, splitarg
-
-macro pun(ex)
-    ret = if @capture ex (f_(args__; kw__))
-        kw = map(kw) do kwarg
-            key, typ, splat, val = splitarg(kwarg)
-            if splat
-                kwarg
-            elseif val === nothing
-                :($key = $key)
-            else
-                kwarg
-            end
-        end
-        :(
-            $(f)($(args...); $(kw...))
-        )
-    else
-        ex
-    end
-    esc(ret)
-end
-
-function f(args...;kw...)
-    println("="^80)
-    @show args
-    @show kw
-end
-=#
