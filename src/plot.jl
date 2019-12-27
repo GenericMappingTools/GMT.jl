@@ -75,7 +75,8 @@ Parameters
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
 	points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
 
-- **W** | **pen** | **markeredgecolor** :: [Type => Str --
+- **W** | **pen** | **markeredgecolor** :: [Type => Str]
+
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
@@ -571,6 +572,86 @@ ternary(arg1;  kw...)  = ternary("", arg1; first=true, kw...)
 ternary!(arg1; kw...)  = ternary("", arg1; first=false, kw...)
 const psternary  = ternary            # Aliases
 const psternary! = ternary!           # Aliases
+
+
+"""
+    events(cmd0::String, arg1=nothing; kwargs...)
+
+Plot event symbols and labels for a moment in time
+
+Full option list at [`events`]($(GMTdoc)events.html)
+
+Parameters
+----------
+
+- **T** | **now** :: [Type => Int | Str]
+
+    Set the current plot time. If absolute times are used you must also use -fT.
+    ($(GMTdoc)events.html#t)
+- $(GMT.opt_B)
+- $(GMT.opt_C)
+- **D** | **shift** | **offset** :: [Type => Str]	``Arg = [j|J]dx[/dy][+v[pen]]``
+
+    Offset the text from the projected (x,y) point by dx,dy [0/0].
+    ($(GMTdoc)events.html#d)
+- **E** | **knots** :: [Type => Str]	``Arg = s|t[+o|Odt][+rdt][+pdt][+ddt][+fdt][+ldt]``
+
+    Set the time knots for the symbol or text time-functions.
+    ($(GMTdoc)events.html#e)
+- **G** | **fill** :: [Type => Str | Int | Touple]
+
+    Set constant shade or color for all symbols.
+    ($(GMTdoc)events.html#g)
+- $(GMT.opt_J)
+- **L** | **duration** :: [Type => Bool | Number | Str]		``Arg = [length|t]``
+
+    Specify the length (i.e., duration) of the event.
+    ($(GMTdoc)events.html#l)
+- **M** | **rise** :: [Type => Str]		``Arg = i|s|t[val1][+cval2]``
+
+    Modify the initial intensity, size magnification, or transparency of the symbol during the rise interval.
+    ($(GMTdoc)events.html#m)
+- **Q** | **save** :: [Type => Number]
+
+    Save the intermediate event symbols and labels to permanent files instead of removing them when done.
+    ($(GMTdoc)events.html#q)
+- $(GMT.opt_R)
+- **W** | **pen** | **markeredgecolor** :: [Type => Str]
+
+    Specify symbol outline pen attributes [Default is no outline].
+    ($(GMTdoc)events.html#w)
+- $(GMT.opt_U)
+- $(GMT.opt_V)
+- $(GMT.opt_X)
+- $(GMT.opt_Y)
+- $(GMT.opt_bi)
+- $(GMT.opt_di)
+- $(GMT.opt_e)
+- $(GMT.opt_f)
+- $(GMT.opt_h)
+- $(GMT.opt_i)
+- $(GMT.opt_p)
+- $(GMT.opt_swap_xy)
+"""
+# ------------------------------------------------------------------------------------------------------
+function events(cmd0::String="", arg1=nothing; kwargs...)
+	# events share a lot of options with plot
+	d = KW(kwargs)
+	cmd = add_opt("", "T", d, [:T :now], nothing, true)
+	if (!occursin("-T", cmd))  error("The 'now' (T) option is mandatory")  end
+	cmd = add_opt(cmd, "E", d, [:E :knots],
+		(symbol=("s", nothing, 1), text=("t", nothing, 1), shift_startEnd = "+o", shift_start="+O", raise="+r", plateau="+p", decay="+d", fade="+f", text_duration="+l"), true)
+	cmd = add_opt(cmd, "M", d, [:M :rise],
+		(intensity=("i", arg2str, 1), size=("s", arg2str, 1), transparency=("t", arg2str, 1), coda="+c"), true)
+	cmd = add_opt(cmd, "L", d, [:L :duration], nothing, true)
+	cmd = add_opt(cmd, "Q", d, [:Q :save], nothing, true)
+	cmd = add_opt(cmd, 'D', d, [:D :offset],
+		(away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)), true)
+	cmd = add_opt(cmd, 'F', d, [:F :attrib],
+		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"), false, true)
+	common_plot_xyz(cmd0, arg1, "events|" * cmd, true, false, d...)
+end
+const psevents = events            # Alias
 
 # ------------------------------------------------------------------------------------------------------
 function cat_1_arg(arg)
