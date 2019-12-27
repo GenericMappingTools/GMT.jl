@@ -23,6 +23,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 				sub_module = caller[1:ind[1]-1]
 				cmd = caller[ind[1]+1:end]
 				caller = sub_module		# Because of parse_BJR()
+				if (caller == "events")  gmt_proggy = "events "  end
 			else
 				cmd = caller
 				caller = "others"		# It was piggy-backed
