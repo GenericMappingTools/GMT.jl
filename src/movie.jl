@@ -126,5 +126,4 @@ function write_script(fname)
 		close(fid)
 		return fname
 	end
-	return nothing
 end

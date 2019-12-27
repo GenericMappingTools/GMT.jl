@@ -933,6 +933,7 @@ if (got_it)					# Otherwise go straight to end
 		else
 			rm("pre_script.sh");		rm("main_script.sh")
 		end
+		events("", R=:g, J="G200/5/6i", B=:af, S="E-", C=true, T="2018-05-01T", E="s+r2+d6", M=((size=5,coda=0.5),(intensity=true,)), Vd=2);
 	end
 
 	# SURFACE
