@@ -1118,7 +1118,6 @@ function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)
 	end
 	return out
 end
-##
 
 # ---------------------------------------------------------------------------------------------------
 function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
@@ -1138,7 +1137,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 				if (d[key[k]][2] == add_opt_fill)
 					cmd *= d[key[k]][1] * d[key[k]][2]("", Dict(key[k] => nt[k]), [key[k]])
 				else
-					local_opt = (d[key[k]][2] == helper_decorated) ? true : nothing		# 'true' means getting a single argout
+					local_opt = (d[key[k]][2] == helper_decorated) ? true : nothing		# 'true' means single argout
 					cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), local_opt)
 				end
 			else						#
