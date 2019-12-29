@@ -116,10 +116,16 @@ end
 # -----------------------------------------------------------------------------------------------
 function write_script(fname)
 	if (cmds_history[1] != "")
-		fname *= Sys.iswindows() ? ".bat" : ".sh"		# Just add extension
+		if (!Sys.iswindows())  fname *= ".bat";	b = "%";	e = "%"
+		else                  fname *= ".sh";	b = "\\\${";	e = "}"
+		end
+		par_list = ["MOVIE_DPU", "MOVIE_HEIGHT", "MOVIE_RATE", "MOVIE_NFRAMES", "MOVIE_FRAME", "MOVIE_TAG", "MOVIE_NAME", "MOVIE_WIDTH", "MOVIE_COL0", "MOVIE_COL1", "MOVIE_COL2", "MOVIE_COL4", "MOVIE_TEXT", "MOVIE_WORD0", "MOVIE_WORD1", "MOVIE_WORD2", "MOVIE_WORD3"]
 		fid = open(fname, "w")
 		println(fid, "gmt begin")
 		for cmd in cmds_history
+			for par in par_list
+				if (occursin(par, cmd))  cmd = replace(cmd, par => b * par * e)  end
+			end
 			println(fid, "\t",cmd)
 		end
 		println(fid, "gmt end")
