@@ -205,6 +205,8 @@ if (got_it)					# Otherwise go straight to end
 	GMT.check_url_name("blabla");
 	GMT.auto_JZ("");
 	GMT.helper2_axes("");
+	@test GMT.axis(ylabel="bla") == " -Bpy+lbla";
+	@test GMT.axis(Yhlabel="bla") == " -Bpy+Lbla";
 
 	# ---------------------------------------------------------------------------------------------------
 
