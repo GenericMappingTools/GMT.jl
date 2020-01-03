@@ -207,6 +207,9 @@ if (got_it)					# Otherwise go straight to end
 	GMT.helper2_axes("");
 	@test GMT.axis(ylabel="bla") == " -Bpy+lbla";
 	@test GMT.axis(Yhlabel="bla") == " -Bpy+Lbla";
+	@test GMT.axis(scale="exp") == " -Bpp";
+	@test GMT.axis(phase_add=10) == " -Bp+10";
+	@test GMT.axis(phase_sub=10) == " -Bp-10";
 
 	# ---------------------------------------------------------------------------------------------------
 
