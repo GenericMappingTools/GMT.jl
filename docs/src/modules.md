@@ -28,11 +28,15 @@ happens with the output image file. By not directly specifying any format we are
 output image format which is PostScript (actually, except for *grdimage -A*, the only
 format that *GMT* can write). But we can select other formats by using the *fmt* keyword, for example
 *fmt="jpg"*, or *fmt=:png* or *fmt=:pdf*. In such cases, the *ghostscript* program (you need to have
-it installed) will take care of converting the *ps* file into the selected format. Note that we used
-either strings ("") or symbols (:) to represent the format. Here the rule is we can use symbols for
-any string argument that can be safely written as a symbol. Example, this is valid =:abc, but this
-is not =:+a (apparently parser will try to add to *a*). The use of symbols may be preferred for a
-question of laziness (less typing).
+it installed) will take care of converting the *ps* file into the selected format.
+
+When runing from Jupyter notebooks one does not need to worry about the image format. In fact the only
+allowed is *png* but that is taken care automatically, meaning that any *fmt=xxx* will be ignored.
+
+Note that we used either strings ("") or symbols (:) to represent the format. Here the rule is we can use
+symbols for any string argument that can be safely written as a symbol. Example, this is valid =:abc,
+but this is not =:+a (apparently parser will try to add to *a*). The use of symbols may be preferred for
+a question of laziness (less typing).
 
 The above example, however, does not use any input data (*coast* knows how to find its own data). One
 way of providing it to modules that work on them is to send in a file name with the data to operate on.
@@ -168,7 +172,7 @@ Actually, the default format is chosen by the contents of the global **FMT** var
 the *GMT.jl* file. Eventually this will evolve to using an environment variable but for the moment users
 will have to edit that file to set a different default format.
 
-A very interesting alternative is to set **FMT=""**, that is to not specify any image format. This will
+An interesting alternative is to set **FMT=""**, that is to not specify any image format. This will
 result in *NOT* saving any file on disk but to keep the PS figure internally stored in the program's memory. 
 In other words, the figure is built and kept in memory only. This allows converting to another format
 directly without the use of an intermediary disk file. The conversion is performed by the *psconvert* *GMT*
@@ -179,7 +183,7 @@ module that would be used like this (to convert to PDF):
 The issue with this solution, that could be implemented internally without user intervention, is that it
 currently only works on Windows.
 
-Another interesting alternative to a file format is the option to create RGB images with *psconvert* and
+Another alternative to a file format is the option to create RGB images with *psconvert* and
 return it to Julia as a [Image type](@ref) type.
 
     I = psconvert(in_memory=true, adjust=true)
