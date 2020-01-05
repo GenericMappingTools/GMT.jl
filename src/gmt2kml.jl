@@ -67,7 +67,7 @@ Parameters
     Scale icons or labels. Here, S=:c sets a scale for the symbol icon, whereas S=:n sets
     a scale for the name labels
     ($(GMTdoc)gmt2kml.html#s)
-- **T** | **title ** :: [Type => Str]    ``Arg = title[/foldername]``
+- **T** | **title** :: [Type => Str]    ``Arg = title[/foldername]``
 
     Sets the document title [default is unset]. Optionally, append /FolderName;
     ($(GMTdoc)gmt2kml.html#t)

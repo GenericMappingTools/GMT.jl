@@ -154,12 +154,12 @@ end
 function __init__()
 	try
 		ver = Meta.parse(readlines(`gmt --version`)[1][1:3])
-		if (ver != GMTver && abs(ver - GNTver) > 0.5)	# Warn only when detecting a GMT5 vs GMT6 change
+		if (ver != GMTver && abs(ver - GMTver) > 0.5)	# Warn only when detecting a GMT5 vs GMT6 change
+			t = joinpath(homedir(), ".julia", "compiled", "v1.xxx", "GMT")
 			println("\n\tYou seem to have changed your installed GMT version. Current version")
 			println("\treports to be $ver but previously it was $GMTver. To fix this you need to")
 			println("\tmake sure that GMT.jl recompiles again, otherwise fatal errors may occur.")
-			t = joinpath(@__DIR__, "deps", "GMT.jl")
-			println("\tA dirty way to force that is to make an irrelevant change in (and revert it after)\n\t$t")
+			println("\tPlease delete the contents of the\n\n\t\t$t\n\n\tdirectory and start a new Julia session.")
 		end
 	catch
 	end
