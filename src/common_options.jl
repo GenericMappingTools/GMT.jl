@@ -2291,12 +2291,13 @@ end
 function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=false, fname="")
 	# Take a PS file, convert it with psconvert (unless opt_T == "" meaning file is PS)
 	# and display it in default system viewer
-	# FNAME_EXT hold the extension when not PS
+	# FNAME_EXT holds the extension when not PS
 	# OPT_T holds the psconvert -T option, again when not PS
 	# FNAME is for when using the savefig option
 
 	#global current_cpt = nothing		# Always reset to empty when fig is finalized
 	global current_view = nothing
+	if (isdefined(Main, :IJulia) && Main.IJulia.inited)	 opt_T = " -Tg"; fname_ext = "png"  end		# In Jupyter png only
 	if (opt_T != "")
 		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end		# Close the PS file first
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
@@ -2314,9 +2315,13 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	end
 
 	if (haskey(d, :show) && d[:show] != 0)
-		@static if (Sys.iswindows()) run(ignorestatus(`explorer $out`))
-		elseif (Sys.isapple()) run(`open $(out)`)
-		elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
+		if (isdefined(Main, :IJulia) && Main.IJulia.inited)				# From Jupyter?
+			display("image/png", read(out))
+		else
+			@static if (Sys.iswindows()) run(ignorestatus(`explorer $out`))
+			elseif (Sys.isapple()) run(`open $(out)`)
+			elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
+			end
 		end
 	end
 end
