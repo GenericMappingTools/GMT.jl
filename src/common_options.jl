@@ -959,6 +959,10 @@ function arg2str(arg, sep='/')
 	# SEP is the char separator used when ARG is a tuple ot array of numbers
 	if (isa(arg, AbstractString) || isa(arg, Symbol))
 		out = string(arg)
+		if (occursin(" ", out) && !startswith(out, "\""))	# Wrap it in quotes
+			out = "\"" * out * "\""
+		end
+		return out
 	elseif ((isa(arg, Bool) && arg) || isempty_(arg))
 		out = ""
 	elseif (isa(arg, Number))		# Have to do it after the Bool test above because Bool is a Number too
@@ -1701,7 +1705,7 @@ end
 function str_with_blancs(str)
 	# If the STR string has spaces enclose it with quotes
 	out = string(str)
-	if (occursin(" ", out))  out = string("\"", out, "\"")  end
+	if (occursin(" ", out) && !startswith(out, "\""))  out = string("\"", out, "\"")  end
 	return out
 end
 
@@ -2032,7 +2036,7 @@ function fname_out(d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", opt_i="", is3D=false)
+function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
 	#force_get_R = false		# Because of a GMT6.0 BUG, modern mode does not compute -R automatically
