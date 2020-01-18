@@ -46,6 +46,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.arg2str((1,2,3)) == "1/2/3"
 	@test GMT.arg2str(("aa",2,3)) == "aa/2/3"
 	@test GMT.arg2str(Dict(:shaded => "-4p/-6p/grey20@40"), [:shaded]) == "-4p/-6p/grey20@40"
+	@test GMT.arg2str(Dict(:shaded => "aa bb"), [:shaded]) == "\"aa bb\""
 	@test_throws ErrorException("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was DataType") GMT.arg2str(typeof(1))
 	@test GMT.parse_c("", Dict(:c => (1,2)))[1] == " -c0,1"
 	@test GMT.parse_c("", Dict(:c => [1,2]))[1] == " -c0,1"
@@ -383,7 +384,7 @@ if (got_it)					# Otherwise go straight to end
 	end
 
 	# GRDCLIP
-	G2=grdclip(G,above="5/6", low=[2 2], between=[3 4 4.5]);	 # Use G of previous test
+	G2=grdclip(G,above="5/6", low=[2 2], between=[3 4.5 4]);	 # Use G of previous test
 	@test_throws ErrorException("Wrong number of elements in S option") G2=grdclip(G,above="5/6", low=[2], between=[3 4 4.5]);
 	@test_throws ErrorException("OPT_S: argument must be a string or a two elements array.") G2=grdclip(G,above=5, low=[2 2]);
 

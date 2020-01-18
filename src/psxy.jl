@@ -9,7 +9,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	N_args = (arg1 === nothing) ? 0 : 1
 
 	is_ternary = (caller == "ternary") ? true : false
-	if (is3D)	        gmt_proggy = "psxyz "
+	if     (is3D)       gmt_proggy = "psxyz "
 	elseif (is_ternary) gmt_proggy = "psternary "
 	else		        gmt_proggy = "psxy "
 	end
@@ -37,7 +37,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O)
-	if (is3D)	cmd,opt_JZ = parse_JZ(cmd, d)	end
+	if (is3D)	cmd, opt_JZ  = parse_JZ(cmd, d)  end
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :yx :params], first)
 	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	if (is_ternary)  cmd = add_opt(cmd, 'M', d, [:M :no_plot])  end
@@ -415,9 +415,9 @@ end
 function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller::String, O::Bool)
 	# Set sensible defaults for the sub-modules "scatter" & "bar"
 	if (caller == "scatter")
-		if (opt_S == "")  cmd *= " -Sc7p"  end
+		if (opt_S == "")  cmd *= " -Sc5p"  end
 	elseif (caller == "scatter3")
-		if (opt_S == "")  cmd *= " -Su7p"  end
+		if (opt_S == "")  cmd *= " -Su2p"  end
 	elseif (caller == "lines")
 		if (!occursin("+p", cmd) && opt_W == "") cmd *= " -W0.25p"  end # Do not leave without a pen specification
 	elseif (caller == "bar")

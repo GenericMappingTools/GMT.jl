@@ -229,6 +229,8 @@ function plot3d!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; 
 	arg = hcat(arg1[:], arg2[:], arg3[:])
 	common_plot_xyz("", arg, "plot3d", false, true, kw...)
 end
+const plot3  = plot3d			# Alias
+const plot3! = plot3d!
 # ------------------------------------------------------------------------------------------------------
 
 """

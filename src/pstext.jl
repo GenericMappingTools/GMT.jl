@@ -99,19 +99,6 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		arg1 = [GMTdataset(arg1, Array{String,1}(), "", Array{String,1}(), "", "")]
 	end
 
-	# Here we must test if the GMTdataset has text or if a numeric column is to be used as such
-	if ((isa(arg1, GMTdataset) && isempty(arg1.text)) || (isa(arg1, Array{GMT.GMTdataset,1}) && isempty(arg1[1].text)) )
-		if (isa(arg1, GMTdataset))  arg1 = [arg1]  end
-		for n = 1:length(arg1)
-			nr, nc = size(arg1[n].data)
-			if (nc < 3)  error("TEXT: input file must have at least three columns")  end
-			arg1[n].text = Array{String,1}(undef, nr)
-			for k = 1:nr
-				arg1[n].text[k] = @sprintf("%.16g", arg1[n].data[k,3])
-			end
-		end
-	end
-
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1)
 
 	cmd = add_opt(cmd, 'D', d, [:D :offset], (away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)), true)
@@ -120,12 +107,30 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= add_opt_pen(d, [:W :pen], "W")
 
+	if (!occursin(" -F", cmd))		# Test if the GMTdataset has text or if a numeric column is to be used as such
+		if ((isa(arg1, GMTdataset) && isempty(arg1.text)) || (isa(arg1, Array{GMT.GMTdataset,1}) && isempty(arg1[1].text)) )
+			if (isa(arg1, GMTdataset))  arg1 = [arg1]  end
+			for n = 1:length(arg1)
+				nr, nc = size(arg1[n].data)
+				if (nc < 3)  error("TEXT: input file must have at least three columns")  end
+				arg1[n].text = Array{String,1}(undef, nr)
+				for k = 1:nr
+					arg1[n].text[k] = @sprintf("%.16g", arg1[n].data[k,3])
+				end
+			end
+		end
+	end
+
 	r = finish_PS_module(d, "pstext " * cmd, "", K, O, true, arg1, arg2)
 	gmt("destroy")
 	return r
 end
 
 # ---------------------------------------------------------------------------------------------------
+#function text(arg::DataFrame, cols...; first=true, kw...)
+#	arg1 = text_record([arg.cols[1] arg.col[2]], [arg.col[3]])
+#	text("", arg1; first=first, kw...)
+#end
 text!(cmd0::String="", arg1=nothing; first=false, kw...) = text(cmd0, arg1; first=false, kw...)
 text(arg1;  first=true, kw...)  = text("", arg1; first=first, kw...)
 text!(arg1; first=false, kw...) = text("", arg1; first=first, kw...)
