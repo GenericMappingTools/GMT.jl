@@ -1668,16 +1668,17 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-G = mat2grid(mat; reg=0, hdr=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="", cmd::String="")
-    Take a 2D Z array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax ref xinc yinc] header descriptor
-    and return a grid GMTgrid type.
+G = mat2grid(mat; reg=0, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="", cmd::String="")
+    Take a 2D Z array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
+	and return a grid GMTgrid type.
+	Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
 	Optionaly, the HDR arg may be ommited and it will computed from Z alone, but than x=1:ncol, y=1:nrow
 	When HDR is not used, REG == 0 means create a grid registration grid and REG == 1, a pixel registered grid.
 """
-function mat2grid(mat; reg=0, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
+function mat2grid(mat; reg=0, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
 # Take a 2D array of floats and turn it into a GMTgrid
 
-	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr)
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y)
 	if (!isa(mat, Float32))  z = Float32.(mat)
 	else                     z = mat
 	end
@@ -1686,11 +1687,18 @@ function mat2grid(mat; reg=0, hdr=nothing, proj4::String="", wkt::String="", eps
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdimg_hdr_xy(mat, reg, hdr)
+function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 # Generate x,y coors array and compute/update header plus increments for grids/images
 	nx = size(mat, 2);		ny = size(mat, 1);
 
-	if (hdr === nothing)
+	if (x !== nothing && y !== nothing)		# But not tested if they are equi-spaced as they MUST be
+		if (length(x) != size(mat,2) || length(y) != size(mat,1))
+			error("size of x,y vectors incompatible with 2D array size")
+		end
+		zmin, zmax = extrema(mat)
+		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
+		x_inc = x[2] - x[1];	y_inc = y[2] - y[1]
+	elseif (hdr === nothing)
 		zmin, zmax = extrema(mat)
 		if (reg == 0)  x  = collect(1:nx);		 y = collect(1:ny)
 		else           x  = collect(0.5:nx+0.5); y = collect(0.5:ny+0.5)

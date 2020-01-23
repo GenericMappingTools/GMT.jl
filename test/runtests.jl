@@ -464,6 +464,7 @@ if (got_it)					# Otherwise go straight to end
 	G  = gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
 	G2 = grdtrend(G, model=3);
 	W = mat2grid(ones(Float32, size(G.z,1), size(G.z,2)));
+	W = mat2grid(rand(16,16), x=11:26, y=1:16);
 	G2 = grdtrend(G, model=3, diff=[], trend=true);
 	#G2 = grdtrend(G, model="3+r", W=W);
 	G2 = grdtrend(G, model="3+r", W=(W,0), Vd=2);
