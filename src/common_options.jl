@@ -828,22 +828,39 @@ end
 # ---------------------------------------------------------------------------------------------------
 function add_opt_pen(d::Dict, symbs, opt="", del::Bool=false)
 	# Build a pen option. Input can be either a full hard core string or spread in lw, lc, lw, etc or a tuple
-	if (opt != "")  opt = " -" * opt  end 	# Will become -W<pen>, for example
+
+	if (opt != "")  opt = " -" * opt  end	# Will become -W<pen>, for example
 	out = ""
 	pen = build_pen(d, del)					# Either a full pen string or empty ("") (Seeks for lw, lc, etc)
 	if (pen != "")
 		out = opt * pen
 	else
 		if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-			if (isa(val, Tuple))			# Like this it can hold the pen, not extended atts
-				out = opt * parse_pen(val)	# Should be a better function
-			elseif (isa(val, NamedTuple))	# Make a recursive call. Will screw if used in mix mode
-				d2 = nt2dict(val)			# Decompose the NT and feed into this-self
+			if (isa(val, Tuple))				# Like this it can hold the pen, not extended atts
+				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
+					for v in val
+						d2 = nt2dict(v)			# Decompose the NT and feed into this-self
+						out *= opt * add_opt_pen(d2, symbs, "")
+					end
+				else
+					out = opt * parse_pen(val)	# Should be a better function
+				end
+			elseif (isa(val, NamedTuple))		# Make a recursive call. Will screw if used in mix mode
+				d2 = nt2dict(val)				# Decompose the NT and feed into this-self
 				return opt * add_opt_pen(d2, symbs, "")
 			else
 				out = opt * arg2str(val)
 			end
 		end
+	end
+
+	if (out == "")		# All further options prepend or append to an existing pen. So, if empty we are donne here.
+		return out
+	end
+
+	# -W in ps|grdcontour may have extra flags at the begining but take care to not prepend on a blank
+	if     (out[1] != ' ' && haskey(d, :cont) || haskey(d, :contour))  out = "c" * out
+	elseif (out[1] != ' ' && haskey(d, :annot))                        out = "a" * out
 	end
 
 	# Some -W take extra options to indicate that color comes from CPT
@@ -2299,7 +2316,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	# OPT_T holds the psconvert -T option, again when not PS
 	# FNAME is for when using the savefig option
 
-	#global current_cpt = nothing		# Always reset to empty when fig is finalized
+	global current_cpt = nothing		# Reset to empty when fig is finalized
 	global current_view = nothing
 	if (isdefined(Main, :IJulia) && Main.IJulia.inited)	 opt_T = " -Tg"; fname_ext = "png"  end		# In Jupyter png only
 	if (opt_T != "")
