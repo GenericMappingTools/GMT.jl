@@ -59,7 +59,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
 		do_show = false
 		if (do_GMTjulia && haskey(d, :show))  delete!(d, :show);  do_show = true  end	# Too soon
-		fmt = FMT
+		fmt = FMT[1]
 		if (do_GMTjulia)
 			if (haskey(d, :fmt))	# Too soon to set the format. Need to finish the PS first
 				fmt = d[:fmt];	delete!(d, :fmt);

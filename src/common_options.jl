@@ -2017,14 +2017,14 @@ function fname_out(d::Dict)
 	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 
 	fname = ""
-	EXT = FMT
+	EXT = FMT[1]
 	if ((val = find_in_dict(d, [:savefig :name])[1]) !== nothing)
 		fname, EXT = splitext(string(val))
-		if (EXT == "")  EXT = FMT
+		if (EXT == "")  EXT = FMT[1]
 		else            EXT = EXT[2:end]
 		end
 	end
-	if (EXT == FMT && haskey(d, :fmt))  EXT = string(d[:fmt])  end
+	if (EXT == FMT[1] && haskey(d, :fmt))  EXT = string(d[:fmt])  end
 	if (EXT == "" && !Sys.iswindows())  error("Return an image is only for Windows")  end
 	if (1 == length(EXT) > 3)  error("Bad graphics file extension")  end
 

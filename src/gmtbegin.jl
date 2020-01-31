@@ -86,10 +86,10 @@ function get_format(name, fmt=nothing, d=nothing)
 		fname *= " " * string(fmt)      # No checking
 	elseif (d !== nothing)
 		if (haskey(d, :fmt))  fname *= " " * string(d[:fmt])
-		else                  fname *= " " * FMT		# Then use default format
+		else                  fname *= " " * FMT[1]		# Then use default format
 		end
 	else
-		fname *= " " * FMT
+		fname *= " " * FMT[1]
 	end
 	return fname
 end
