@@ -106,7 +106,7 @@ function gmt(cmd::String, args...)
 	g_module, r = strtok(cmd)
 
 	if (g_module == "begin")		# Use this default fig name instead of "gmtsession"
-		if (r == "")  r = "GMTplot " * FMT  end
+		if (r == "")  r = "GMTplot " * FMT[1]  end
 		global IamModern = true
 	elseif (g_module == "end")
 		global IamModern = false

@@ -25,7 +25,7 @@ global IamModern    = false			# To know if we are in modern mode
 global IamSubplot   = false			# To know if we are in subplot mode
 global usedConfPar  = false			# Hacky solution for the session's memory trouble
 global convert_syntax = false		# Only convert to hard core GMT syntax (like Vd=2)
-const FMT = "ps"
+const global FMT = ["ps"]
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3 = " -Baf -Bza -BWSenZ"  #		"" but for 3D views
@@ -161,6 +161,10 @@ function __init__()
 			println("\tmake sure that GMT.jl recompiles again, otherwise fatal errors may occur.")
 			println("\tPlease delete the contents of the\n\n\t\t$t\n\n\tdirectory and start a new Julia session.")
 		end
+	catch
+	end
+	try
+		FMT[1] = ENV["JULIA_GMT_IMGFMT"]
 	catch
 	end
 end
