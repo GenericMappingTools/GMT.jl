@@ -5,7 +5,6 @@ const psxyz! = plot3d!
 
 # ---------------------------------------------------------------------------------------------------
 function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
-	global multi_col
 	N_args = (arg1 === nothing) ? 0 : 1
 
 	is_ternary = (caller == "ternary") ? true : false
@@ -175,8 +174,8 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
-	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{<:Number,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col || haskey(d, :multicol)) )
-		multi_col = false							# Reset because this is a use-only-once option
+	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{<:Number,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)) )
+		multi_col[1] = false							# Reset because this is a use-only-once option
 		penC = "";		penS = "";	cycle=:cycle
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
 		if (opt_W != "")  penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))  end
@@ -190,7 +189,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		end
 	end
 
-	if (!IamModern)  put_in_legend_bag(d, cmd, arg1)  end
+	if (!IamModern[1])  put_in_legend_bag(d, cmd, arg1)  end
 
 	r = finish_PS_module(d, gmt_proggy .* cmd, "", K, O, true, arg1, arg2)
 	if (got_pattern || occursin("-Sk", opt_S))  gmt("destroy")  end 	# Apparently patterns are screweing the session

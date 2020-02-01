@@ -42,7 +42,7 @@ Set attributes for the current modern mode session figure.
 'opts' Sets one or more comma-separated options (and possibly arguments) that can be passed to psconvert when preparing this figure.
 """
 function gmtfig(name::String; fmt=nothing, opts="")
-	if (!IamModern)  error("Not in modern mode. Must run 'gmtbegin' first")  end
+	if (!IamModern[1])  error("Not in modern mode. Must run 'gmtbegin' first")  end
  
 	cmd = "figure"       # Default name (GMTplot.ps) is set in gmt_main()
 	if (name == "")  error("figure name cannot be empty")   end
@@ -53,7 +53,7 @@ function gmtfig(name::String; fmt=nothing, opts="")
 end
 
 function inset(fim=nothing; stop=false, kwargs...)
-	if (!IamModern)  error("Not in modern mode. Must run 'gmtbegin' first")  end
+	if (!IamModern[1])  error("Not in modern mode. Must run 'gmtbegin' first")  end
  
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:c :F :V_params], true)

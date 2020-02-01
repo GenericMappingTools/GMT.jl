@@ -18,13 +18,12 @@ end
 
 function parse_R(cmd::String, d::Dict, O=false, del=false)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
-	global IamModern
 	opt_R = ""
 	val, symb = find_in_dict(d, [:R :region :limits])
 	if (val !== nothing)
 		opt_R = build_opt_R(val)
 		if (del) delete!(d, symb) end
-	elseif (IamModern)
+	elseif (IamModern[1])
 		return cmd, ""
 	end
 
@@ -144,11 +143,10 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=false)
 	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
 	# Default to 12c if no size is provided.
 	# If MAP == false, do not try to append a fig size
-	global IamModern
 	opt_J = "";		mnemo = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
 		opt_J, mnemo = build_opt_J(val)
-	elseif (IamModern && ((val = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])[1]) === nothing))
+	elseif (IamModern[1] && ((val = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])[1]) === nothing))
 		# Subplots do not rely is the classic default mechanism
 		return cmd, ""
 	end
@@ -267,7 +265,7 @@ end
 function auto_JZ(cmd::String)
 	# Add the -JZ option to modules that should not need it (e.g. pscoast) when used after a
 	# -R with 6 elements. Without this a simple -J fails with a complain that ... -JZ is needed
-	if (GMTver < 6 && current_view !== nothing && !occursin("-JZ", cmd) && !occursin("-Jz", cmd))
+	if (GMTver < 6 && current_view[1] != "" && !occursin("-JZ", cmd) && !occursin("-Jz", cmd))
 		cmd *= " -JZ0.01"
 	end
 	return cmd
@@ -371,9 +369,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict, opt_B::String="", del=false)
 
-	global IamModern
-	def_fig_axes_  = (IamModern) ? "" : def_fig_axes	# def_fig_axes is a global const
-	def_fig_axes3_ = (IamModern) ? "" : def_fig_axes3	# def_fig_axes is a global const
+	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes	# def_fig_axes is a global const
+	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3	# def_fig_axes is a global const
 
 	# These four are aliases
 	extra_parse = true
@@ -479,12 +476,11 @@ function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ="", d
 	cmd, opt_R = parse_R(cmd, d, O, del)
 	cmd, opt_J = parse_J(cmd, d, defaultJ, true, O, del)
 
-	global IamModern
-	def_fig_axes_ = (IamModern) ? "" : def_fig_axes	# def_fig_axes is a global const
+	def_fig_axes_ = (IamModern[1]) ? "" : def_fig_axes	# def_fig_axes is a global const
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (occursin("3", caller) || caller == "grdview")
-			def_fig_axes3_ = (IamModern) ? "" : def_fig_axes3
+			def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3
 			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes3_), del)
 		else
 			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes_), del)	# For overlays, default is no axes
@@ -702,7 +698,6 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first=true)
-	global current_view
 	opt_p = nothing
 	for opt in opts
 		if     (opt == :a)  cmd, = parse_a(cmd, d)
@@ -740,15 +735,15 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first=tr
 	end
 	if (opt_p !== nothing)		# Restrict the contents of this block to when -p was used
 		if (opt_p != "")
-			if (opt_p == " -pnone")  current_view = nothing;	cmd = cmd[1:end-7];	opt_p = ""
+			if (opt_p == " -pnone")  current_view[1] = "";	cmd = cmd[1:end-7];	opt_p = ""
 			elseif (startswith(opt_p, " -pa") || startswith(opt_p, " -pd") || startswith(opt_p, " -p3"))
-				current_view = " -p210/30";	cmd = replace(cmd, opt_p => "") * current_view		# auto, def, 3d
-			else                     current_view = opt_p
+				current_view[1] = " -p210/30";	cmd = replace(cmd, opt_p => "") * current_view[1]		# auto, def, 3d
+			else                     current_view[1] = opt_p
 			end
-		elseif (!first && current_view !== nothing)
-			cmd *= current_view
+		elseif (!first && current_view[1] != "")
+			cmd *= current_view[1]
 		elseif (first)
-			current_view = nothing		# Ensure we start empty
+			current_view[1] = ""		# Ensure we start empty
 		end
 	end
 	return cmd
@@ -820,7 +815,7 @@ function parse_params(cmd::String, d::Dict)
 		elseif (isa(val, Tuple))
 			cmd *= " --" * string(val[1]) * "=" * string(val[2])
 		end
-		global usedConfPar = true
+		usedConfPar[1] = true
 	end
 	return cmd
 end
@@ -1015,8 +1010,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
-	global IamModern
-	if (IamModern)  return cmd  end		# In Modern mode this fun does not play
+	if (IamModern[1])  return cmd  end		# In Modern mode this fun does not play
 	if (isa(cmd, Array{String,1}))		# Need a recursive call here
 		for k = 1:length(cmd)
 			KK = K;		OO = O
@@ -2057,9 +2051,8 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
 	#force_get_R = false		# Because of a GMT6.0 BUG, modern mode does not compute -R automatically
-	#if (IamModern && FirstModern)  global FirstModern = false; force_get_R = true  end
-	if (IamModern && FirstModern)  global FirstModern = false;  end
-	force_get_R = (IamModern && GMTver > 6) ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
+	if (IamModern[1] && FirstModern)  global FirstModern = false;  end
+	force_get_R = (IamModern[1] && GMTver > 6) ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
 	data_kw = nothing
 	if (haskey(d, :data))  data_kw = d[:data]  end
 	if (fname != "")       data_kw = fname     end
@@ -2068,7 +2061,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	cmd, opt_di = parse_di(cmd, d)		# If data missing data other than NaN
 	cmd, opt_h  = parse_h(cmd, d)
 	if (isa(data_kw, String))
-		if (!IamModern && opt_R == "")		# Then we must read the file to determine -R
+		if (!IamModern[1] && opt_R == "")		# Then we must read the file to determine -R
 			lixo, opt_bi = parse_bi("", d)	# See if user says file is binary
 			if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
 				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * " " * data_kw)
@@ -2089,7 +2082,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	if (data_kw !== nothing)  arg = data_kw  end		# Finaly move the data into ARG
 
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
-	if ((!IamModern && no_R) || (force_get_R && no_R))
+	if ((!IamModern[1] && no_R) || (force_get_R && no_R))
 		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h, arg)		# Here we are reading from an original GMTdataset or Array
 		if (opt_R != "" && opt_R[1] == '/')	# Modify what will be reported as a -R string
 			# Example "/-0.1/0.1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
@@ -2275,7 +2268,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
-	if (IamModern)  cmd = replace(cmd, " -R " => " ")  end
+	if (IamModern[1])  cmd = replace(cmd, " -R " => " ")  end
 	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
 	isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
@@ -2284,8 +2277,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function dbg_print_cmd(d::Dict, cmd)
 	# Print the gmt command when the Vd=1 kwarg was used
-	if (haskey(d, :Vd) || convert_syntax)
-		if (convert_syntax)
+	if (haskey(d, :Vd) || convert_syntax[1])
+		if (convert_syntax[1])
 			return update_cmds_history(cmd)
 		elseif (d[:Vd] == 2)		# For testing puposes, return the GMT command
 			return cmd
@@ -2317,7 +2310,6 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	# FNAME is for when using the savefig option
 
 	global current_cpt = nothing		# Reset to empty when fig is finalized
-	global current_view = nothing
 	if (isdefined(Main, :IJulia) && Main.IJulia.inited)	 opt_T = " -Tg"; fname_ext = "png"  end		# In Jupyter png only
 	if (opt_T != "")
 		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end		# Close the PS file first
@@ -2384,8 +2376,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 	if (finish) cmd = finish_PS(d, cmd, output, K, O)  end
 
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
-	global img_mem_layout = add_opt("", "", d, [:layout])
-	global usedConfPar, IamModern
+	img_mem_layout[1] = add_opt("", "", d, [:layout])
 
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
@@ -2403,13 +2394,13 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 		P = gmt(cmd, args...)
 	end
 
-	if (!IamModern)  digests_legend_bag(d)  end			# Plot the legend if requested
+	if (!IamModern[1])  digests_legend_bag(d)  end			# Plot the legend if requested
 
-	if (usedConfPar)				# Hacky shit to force start over when --PAR options were use
-		usedConfPar = false;	gmt("destroy")
+	if (usedConfPar[1])				# Hacky shit to force start over when --PAR options were use
+		usedConfPar[1] = false;		gmt("destroy")
 	end
 
-	if (!IamModern)
+	if (!IamModern[1])
 		if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
 			P = showfig(d, output, fname_ext, "", K)
 			gmt("destroy")							# Returning a PS screws the session

@@ -16,15 +16,15 @@ catch
 end
 
 global legend_type = nothing
-global img_mem_layout = ""			# "TCP"	 For Images.jl. The default is "TRBa"
-global grd_mem_layout = ""			# "BRP" is the default for GMT PS images.
 global current_cpt  = nothing		# To store the current palette
-global current_view = nothing		# To store the current viewpoint (-p)
-global multi_col    = false			# To allow plottig multiple columns at once
-global IamModern    = false			# To know if we are in modern mode
-global IamSubplot   = false			# To know if we are in subplot mode
-global usedConfPar  = false			# Hacky solution for the session's memory trouble
-global convert_syntax = false		# Only convert to hard core GMT syntax (like Vd=2)
+const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
+const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
+const global current_view   = [""]			# To store the current viewpoint (-p)
+const global multi_col   = Array{Bool,1}(undef,1)		# To allow plottig multiple columns at once (init to false)
+const global IamModern   = Array{Bool,1}(undef,1)		# To know if we are in modern mode
+const global IamSubplot  = Array{Bool,1}(undef,1)		# To know if we are in subplot mode
+const global usedConfPar = Array{Bool,1}(undef,1)		# Hacky solution for the session's memory trouble
+const global convert_syntax = Array{Bool,1}(undef,1)	# To only convert to hard core GMT syntax (like Vd=2)
 const global FMT = ["ps"]
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs

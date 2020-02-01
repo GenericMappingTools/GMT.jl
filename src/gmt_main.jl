@@ -84,7 +84,7 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
     gmt("pscoast -R-10/0/35/45 -B1 -W1 -Gbrown -JM14c -P -V > lixo.ps")
 """
 function gmt(cmd::String, args...)
-	global API, img_mem_layout, grd_mem_layout
+	global API
 
 	# ----------- Minimal error checking ------------------------
 	n_argin = length(args)
@@ -107,9 +107,9 @@ function gmt(cmd::String, args...)
 
 	if (g_module == "begin")		# Use this default fig name instead of "gmtsession"
 		if (r == "")  r = "GMTplot " * FMT[1]  end
-		global IamModern = true
+		IamModern[1] = true
 	elseif (g_module == "end")
-		global IamModern = false
+		IamModern[1] = false
 	elseif (r == "" && n_argin == 0) # Just requesting usage message, add -? to options
 		r = "-?"
 	elseif (n_argin > 1 && g_module == "psscale")		# Happens with nested calls like in grdimage
@@ -157,9 +157,9 @@ function gmt(cmd::String, args...)
 	end
 	#=
 	if ((g_module == "psconvert" || g_module == "grdimage") && occursin("-%", r))	# It has also a mem layout request
-		r, img_mem_layout, grd_mem_layout = parse_mem_layouts(r)
-		if (g_module == "grdimage" && img_mem_layout != "")
-			mem_layout = length(img_mem_layout) == 3 ? img_mem_layout * "a" : img_mem_layout
+		r, img_mem_layout[1], grd_mem_layout[1] = parse_mem_layouts(r)
+		if (g_module == "grdimage" && img_mem_layout[1] != "")
+			mem_layout = length(img_mem_layout[1]) == 3 ? img_mem_layout[1] * "a" : img_mem_layout[1]
 			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);		# Tell grdimage to give us the image with this mem layout
 		end
 	end
@@ -180,7 +180,7 @@ function gmt(cmd::String, args...)
 				r *= " -Tc"
 			end
 		end
-		r, img_mem_layout, grd_mem_layout = parse_mem_layouts(r)
+		r, img_mem_layout[1], grd_mem_layout[1] = parse_mem_layouts(r)
 	end
 
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
@@ -188,7 +188,7 @@ function gmt(cmd::String, args...)
 		if (occursin("-Ti", r))
 			GMT_Set_Default(API, "API_PAD", "0")
 		end
-		r, img_mem_layout, grd_mem_layout =  parse_mem_layouts(r)
+		r, img_mem_layout[1], grd_mem_layout[1] =  parse_mem_layouts(r)
 	end
 
 	# 3. Convert command line arguments to a linked GMT option list
@@ -278,8 +278,8 @@ function gmt(cmd::String, args...)
 	# 9. Destroy linked option list
 	GMT_Destroy_Options(API, pLL)
 
-	if (IamModern)  GMT_Destroy_Session(API);	API = nothing  end	# Needed, otherwise history is not updated
-	#if (IamModern)  gmt_put_history(API);	end		# Needed, otherwise history is not updated
+	if (IamModern[1])  GMT_Destroy_Session(API);	API = nothing  end	# Needed, otherwise history is not updated
+	#if (IamModern[1])  gmt_put_history(API);	end	# Needed, otherwise history is not updated
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)
@@ -322,26 +322,26 @@ end
 function parse_mem_layouts(cmd)
 # See if a specific grid or image mem layout is requested. If found return its value and also
 # strip the corresponding option from the CMD string (otherwise GMT would scream)
-	grd_mem_layout = "";	img_mem_layout = ""
+	grd_mem_layout[1] = "";	img_mem_layout[1] = ""
 
 	if ((ind = findfirst( "-%", cmd)) !== nothing)
-		img_mem_layout, resto = strtok(cmd[ind[1]+2:end])
-		if (length(img_mem_layout) < 3 || length(img_mem_layout) > 4)
-			error(@sprintf("Memory layout option must have 3 characters and not %s", img_mem_layout))
+		img_mem_layout[1], resto = strtok(cmd[ind[1]+2:end])
+		if (length(img_mem_layout[1]) < 3 || length(img_mem_layout[1]) > 4)
+			error(@sprintf("Memory layout option must have 3 characters and not %s", img_mem_layout[1]))
 		end
 		cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 	end
-	if (isempty(img_mem_layout))				# Only if because we can't have a double request
+	if (isempty(img_mem_layout[1]))				# Only if because we can't have a double request
 		if ((ind = findfirst( "-&", cmd)) !== nothing)
-			grd_mem_layout, resto = strtok(cmd[ind[1]+2:end])
-			if (length(grd_mem_layout) < 2)
-				error(@sprintf("Memory layout option must have at least 2 chars and not %s", grd_mem_layout))
+			grd_mem_layout[1], resto = strtok(cmd[ind[1]+2:end])
+			if (length(grd_mem_layout[1]) < 2)
+				error(@sprintf("Memory layout option must have at least 2 chars and not %s", grd_mem_layout[1]))
 			end
 			cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 		end
 	end
-	img_mem_layout = string(img_mem_layout);	grd_mem_layout = string(grd_mem_layout);	# We don't want substrings
-	return cmd, img_mem_layout, grd_mem_layout
+	img_mem_layout[1] = string(img_mem_layout[1]);	grd_mem_layout[1] = string(grd_mem_layout[1]);	# We don't want substrings
+	return cmd, img_mem_layout[1], grd_mem_layout[1]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -391,7 +391,6 @@ end
 function get_grid(API::Ptr{Nothing}, object)
 # Given an incoming GMT grid G, build a Julia type and assign the output components.
 # Note: Incoming GMT grid has standard padding while Julia grid has none.
-	global grd_mem_layout
 
 	G = unsafe_load(convert(Ptr{GMT_GRID}, object))
 	if (G.data == C_NULL)  error("get_grid: programming error, output matrix is empty")  end
@@ -420,9 +419,9 @@ function get_grid(API::Ptr{Nothing}, object)
 				z[MEXG_IJ(row, col, ny)] = t[ij]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
 			end
 		end
-	elseif (startswith(grd_mem_layout, "TR") || startswith(grd_mem_layout, "BR"))	# Keep the Row Major but stored in Column Major
+	elseif (startswith(grd_mem_layout[1], "TR") || startswith(grd_mem_layout[1], "BR"))	# Keep the Row Major but stored in Column Major
 		ind_y = 1:ny		# Start assuming "TR"
-		if (startswith(grd_mem_layout, "BR"))  ind_y = ny:-1:1  end	# Bottom up
+		if (startswith(grd_mem_layout[1], "BR"))  ind_y = ny:-1:1  end	# Bottom up
 		k = 1
 		for row = ind_y
 			for col = 1:nx
@@ -431,7 +430,7 @@ function get_grid(API::Ptr{Nothing}, object)
 				k = k + 1
 			end
 		end
-		grd_mem_layout = ""			# Reset because this variable is global
+		grd_mem_layout[1] = ""			# Reset because this variable is global
 	else
 		for col = 1:nx
 			for row = 1:ny
@@ -439,7 +438,7 @@ function get_grid(API::Ptr{Nothing}, object)
 				z[row,col] = t[ij]
 			end
 		end
-		grd_mem_layout = ""
+		grd_mem_layout[1] = ""
 	end
 
 	#t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
@@ -469,7 +468,6 @@ end
 function get_image(API::Ptr{Nothing}, object)
 # Given an incoming GMT image, build a Julia type and assign the output components.
 # Note: Incoming GMT image may have standard padding while Julia image has none.
-	global img_mem_layout
 
 	I = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
 	if (I.data == C_NULL)  error("get_image: programming error, output matrix is empty")  end
@@ -481,11 +479,11 @@ function get_image(API::Ptr{Nothing}, object)
 	Y  = range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny)
 
 	is4bytes = false
-	if (occursin("0", img_mem_layout) || occursin("1", img_mem_layout))
+	if (occursin("0", img_mem_layout[1]) || occursin("1", img_mem_layout[1]))
 		t  = deepcopy(unsafe_wrap(Array, I.data, ny * nx * nz))
 		is4bytes = true
-	#elseif (occursin("TCP", img_mem_layout))		# BIP case for Images.jl
-	elseif (img_mem_layout != "" && img_mem_layout[3] == 'P')	# Like the "TCP" BIP case for Images.jl
+	#elseif (occursin("TCP", img_mem_layout[1]))		# BIP case for Images.jl
+	elseif (img_mem_layout[1] != "" && img_mem_layout[1][3] == 'P')	# Like the "TCP" BIP case for Images.jl
 		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), nz, ny, nx)	# Apparently the reshape() creates a copy as we need
 	else
 		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), ny, nx, nz)
@@ -907,14 +905,13 @@ end
 # ---------------------------------------------------------------------------------------------------
 function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_IN)
 # ...
-	global img_mem_layout
 
 	if (isempty_(img_box))			# Just tell image_init() to allocate an empty container
 		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_CREATE_MODE,
 		                    C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
-		if (img_mem_layout != "")
-			mem_layout = length(img_mem_layout) == 3 ? img_mem_layout * "a" : img_mem_layout
+		if (img_mem_layout[1] != "")
+			mem_layout = length(img_mem_layout[1]) == 3 ? img_mem_layout[1] * "a" : img_mem_layout[1]
 			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);
 		end
 		return I
@@ -962,7 +959,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 #= This doesn't seem to be used anymore. Stage it for a while and then remove
 function image_init(API::Ptr{Nothing}, img, hdr::Array{Float64}, pad::Int=0)
-	global img_mem_layout
 
 	n_rows = size(img, 1);		n_cols = size(img, 2);		n_pages = size(img, 3)
 	dim = pointer([n_cols, n_rows, n_pages])
@@ -981,8 +977,8 @@ function image_init(API::Ptr{Nothing}, img, hdr::Array{Float64}, pad::Int=0)
 	h = unsafe_load(Ib.header)
 	h.z_min = hdr[5]			# Set the z_min, z_max
 	h.z_max = hdr[6]
-	if (!isempty(img_mem_layout))
-		h.mem_layout = map(UInt8, (img_mem_layout * "a"...,))	# The memory layout order
+	if (!isempty(img_mem_layout[1]))
+		h.mem_layout = map(UInt8, (img_mem_layout[1] * "a"...,))	# The memory layout order
 	end
 	unsafe_store!(Ib.header, h)
 	unsafe_store!(I, Ib)
