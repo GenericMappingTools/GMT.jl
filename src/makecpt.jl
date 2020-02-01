@@ -85,8 +85,7 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 		end
 	end
 
-	#global IamModern
-	if (IamModern && ((val = find_in_dict(d, [:H :save])[1]) === nothing))  cmd *= " -H"  end
+	if (IamModern[1] && ((val = find_in_dict(d, [:H :save])[1]) === nothing))  cmd *= " -H"  end
 	if (haskey(d, :cptname))  cmd *=  " > " * d[:cptname]  end
 	cmd = "makecpt " * cmd
 	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end

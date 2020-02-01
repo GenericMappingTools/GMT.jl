@@ -41,7 +41,6 @@ Parameters
 """
 function subplot(fim=nothing; stop=false, kwargs...)
 
-	global IamModern, IamSubplot
 	global FirstModern = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
  
 	d = KW(kwargs)
@@ -83,7 +82,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		cmd = arg2str(d[:grid], 'x') * " " * cmd
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 
-		if (!IamModern)			# If we are not in modern mode, issue a gmt("begin") first
+		if (!IamModern[1])			# If we are not in modern mode, issue a gmt("begin") first
 			fname = ""			# Default name (GMTplot.ps) is set in gmt_main()
 			if ((val = find_in_dict(d, [:name :savefig])[1]) !== nothing)
 				fname = get_format(string(val), nothing, d)		# Get the fig name and format.
@@ -91,9 +90,9 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			gmt("begin " * fname)
 		end
 		gmt("subplot begin " * cmd);
-		IamSubplot = true
+		IamSubplot[1] = true
 	elseif (do_set)
-		if (!IamSubplot)  error("Cannot call subplot(set, ...) before setting dimensions")  end
+		if (!IamSubplot[1])  error("Cannot call subplot(set, ...) before setting dimensions")  end
 		lix, pane = parse_c(cmd, d)
 		cmd = pane * cmd				# Here we don't wanr the "-c" part
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
@@ -103,7 +102,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		try
 			gmt("subplot end");		gmt("end" * show);		catch
 		end
-		IamModern = false;		IamSubplot = false
+		IamModern[1] = false;		IamSubplot[1] = false
 	end
 	return nothing
 end
