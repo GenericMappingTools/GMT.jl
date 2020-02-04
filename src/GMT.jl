@@ -15,7 +15,7 @@ catch
 	global const GMTver = 5.0
 end
 
-global legend_type = nothing
+global legend_type  = nothing
 global current_cpt  = nothing		# To store the current palette
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
@@ -160,6 +160,9 @@ function __init__()
 			println("\treports to be $ver but previously it was $GMTver. To fix this you need to")
 			println("\tmake sure that GMT.jl recompiles again, otherwise fatal errors may occur.")
 			println("\tPlease delete the contents of the\n\n\t\t$t\n\n\tdirectory and start a new Julia session.")
+		end
+		if (GMTver >= 6)
+			run(`gmt clear sessions`)	# Clear eventual trash let behind
 		end
 	catch
 	end
