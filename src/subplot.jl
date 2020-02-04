@@ -47,7 +47,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	# In case :title exists we must use and delete it to avoid double parsing
 	cmd = ((val = find_in_dict(d, [:T :title], true)[1]) !== nothing) ? " -T\"" * val * "\"" : ""
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "", false, " ")
-	cmd = parse_common_opts(d, cmd, [:c :params], true)
+	cmd = parse_common_opts(d, cmd, [:params], true)
 	cmd = parse_these_opts(cmd, d, [[:M :margins]])
 	cmd = add_opt(cmd, "A", d, [:A :autolabel :fixedlabel],
                   (Anchor=("+J", arg2str), anchor=("+j", arg2str), label="", clearance=("+c", arg2str), justify="+j", fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), offset=("+o", arg2str), roman="_+r", Roman="_+R", vertical="_+v"))
@@ -68,6 +68,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	end
 
 	do_set = false;		do_show = false
+@show(fim)
 	if (fim !== nothing)
 		t = lowercase(string(fim))
 		if     (t == "end" || t == "stop")  stop = true
@@ -94,7 +95,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	elseif (do_set)
 		if (!IamSubplot[1])  error("Cannot call subplot(set, ...) before setting dimensions")  end
 		lix, pane = parse_c(cmd, d)
-		cmd = pane * cmd				# Here we don't wanr the "-c" part
+		cmd = pane * cmd				# Here we don't want the "-c" part
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 		gmt("subplot set " * cmd)
 	else
