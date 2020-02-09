@@ -41,7 +41,7 @@ Parameters
 """
 function subplot(fim=nothing; stop=false, kwargs...)
 
-	global FirstModern = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
+	FirstModern[1] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
  
 	d = KW(kwargs)
 	# In case :title exists we must use and delete it to avoid double parsing

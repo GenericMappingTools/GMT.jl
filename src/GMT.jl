@@ -22,6 +22,7 @@ const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
 const global current_view   = [""]			# To store the current viewpoint (-p)
 const global multi_col   = Array{Bool,1}(undef,1)		# To allow plottig multiple columns at once (init to false)
 const global IamModern   = Array{Bool,1}(undef,1)		# To know if we are in modern mode
+const global FirstModern = Array{Bool,1}(undef,1)		# To know 
 const global IamSubplot  = Array{Bool,1}(undef,1)		# To know if we are in subplot mode
 const global usedConfPar = Array{Bool,1}(undef,1)		# Hacky solution for the session's memory trouble
 const global convert_syntax = Array{Bool,1}(undef,1)	# To only convert to hard core GMT syntax (like Vd=2)

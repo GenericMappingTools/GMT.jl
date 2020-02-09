@@ -285,7 +285,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
-	marca = "";		N = 0
+	marca = Array{String,1}(undef,1)
+	marca = [""];		N = 0
 	for symb in symbs
 		if (haskey(d, symb))
 			t = d[symb]
@@ -305,13 +306,13 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 				elseif (o == "w" || o == "pie" || o == "web" || o == "wedge")  opt = "w";  N = 2
 				elseif (o == "W" || o == "Pie" || o == "Web" || o == "Wedge")  opt = "W";  N = 2
 				end
-				if (N > 0)  marca, arg1, msg = helper_markers(opt, t[2], arg1, N, cst)  end
+				if (N > 0)  marca[1], arg1, msg = helper_markers(opt, t[2], arg1, N, cst)  end
 				if (msg != "")  error(msg)  end
 				if (length(t) == 3 && isa(t[3], NamedTuple))
-					if (marca == "w" || marca == "W")	# Ex (spiderweb): marker=(:pie, [...], (inner=1,))
-						marca *= add_opt(t[3], (inner="/", arc="+a", radial="+r", size=("", arg2str, 1), pen=("+p", add_opt_pen)) )
-					elseif (marca == "m" || marca == "M")
-						marca *= vector_attrib(t[3])
+					if (marca[1] == "w" || marca[1] == "W")	# Ex (spiderweb): marker=(:pie, [...], (inner=1,))
+						marca[1] *= add_opt(t[3], (inner="/", arc="+a", radial="+r", size=("", arg2str, 1), pen=("+p", add_opt_pen)) )
+					elseif (marca[1] == "m" || marca[1] == "M")
+						marca[1] *= vector_attrib(t[3])
 					end
 				end
 			elseif (isa(t, NamedTuple))		# e.g. marker=(pie=true, inner=1, ...)
@@ -327,132 +328,136 @@ function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
 				elseif (key == :m || key == :matang)  opt = "m"
 				end
 				if (opt == "w" || opt == "W")
-					marca = opt * add_opt(t, (size=("", arg2str, 1), inner="/", arc="+a", radial="+r", pen=("+p", add_opt_pen)))
+					marca[1] = opt * add_opt(t, (size=("", arg2str, 1), inner="/", arc="+a", radial="+r", pen=("+p", add_opt_pen)))
 				elseif (opt == "b" || opt == "B")
-					marca = opt * add_opt(t, (size=("", arg2str, 1), base="+b", Base="+B"))
+					marca[1] = opt * add_opt(t, (size=("", arg2str, 1), base="+b", Base="+B"))
 				elseif (opt == "l")
-					marca = opt * add_opt(t, (size=("", arg2str, 1), letter="+t", justify="+j", font=("+f", font)))
+					marca[1] = opt * add_opt(t, (size=("", arg2str, 1), letter="+t", justify="+j", font=("+f", font)))
 				elseif (opt == "m" || opt == "M")
-					marca = opt * add_opt(t, (size=("", arg2str, 1), arrow=("", vector_attrib)))
+					marca[1] = opt * add_opt(t, (size=("", arg2str, 1), arrow=("", vector_attrib)))
 				elseif (opt == "k" || opt == "K")
-					marca = opt * add_opt(t, (custom="", size="/"))
+					marca[1] = opt * add_opt(t, (custom="", size="/"))
 				end
 			else
 				if (isa(t, Symbol))	t = string(t)	end
-				if     (t == "-" || t == "x-dash")    marca = "-"
-				elseif (t == "+" || t == "plus")      marca = "+"
-				elseif (t == "a" || t == "*" || t == "star")  marca = "a"
-				elseif (t == "k" || t == "custom")    marca = "k"
-				elseif (t == "x" || t == "cross")     marca = "x"
-				elseif (t[1] == 'c' || t[1] == 'C')   marca = "c"
-				elseif (t == "d" || t == "diamond")   marca = "d"
-				elseif (t == "g" || t == "octagon")   marca = "g"
-				elseif (t == "h" || t == "hexagon")   marca = "h"
-				elseif (t == "i" || t == "v" || t == "inverted_tri")  marca = "i"
-				elseif (t == "l" || t == "letter")    marca = "l"
-				elseif (t == "n" || t == "pentagon")  marca = "n"
-				elseif (t == "p" || t == "." || t == "point")  marca = "p"
-				elseif (t == "s" || t == "square")    marca = "s"
-				elseif (t == "t" || t == "^" || t == "triangle")  marca = "t"
-				elseif (t == "T" || t == "Triangle")  marca = "T"
-				elseif (is3D && (t == "u" || t == "cube"))  marca = "u"
-				elseif (t == "y" || t == "y-dash")    marca = "y"
+				if     (t == "-" || t == "x-dash")    marca[1] = "-"
+				elseif (t == "+" || t == "plus")      marca[1] = "+"
+				elseif (t == "a" || t == "*" || t == "star")  marca[1] = "a"
+				elseif (t == "k" || t == "custom")    marca[1] = "k"
+				elseif (t == "x" || t == "cross")     marca[1] = "x"
+				elseif (t[1] == 'c' || t[1] == 'C')   marca[1] = "c"
+				elseif (t == "d" || t == "diamond")   marca[1] = "d"
+				elseif (t == "g" || t == "octagon")   marca[1] = "g"
+				elseif (t == "h" || t == "hexagon")   marca[1] = "h"
+				elseif (t == "i" || t == "v" || t == "inverted_tri")  marca[1] = "i"
+				elseif (t == "l" || t == "letter")    marca[1] = "l"
+				elseif (t == "n" || t == "pentagon")  marca[1] = "n"
+				elseif (t == "p" || t == "." || t == "point")  marca[1] = "p"
+				elseif (t == "s" || t == "square")    marca[1] = "s"
+				elseif (t == "t" || t == "^" || t == "triangle")  marca[1] = "t"
+				elseif (t == "T" || t == "Triangle")  marca[1] = "T"
+				elseif (is3D && (t == "u" || t == "cube"))  marca[1] = "u"
+				elseif (t == "y" || t == "y-dash")    marca[1] = "y"
 				end
 				# Still need to check the simpler forms of these
-				if (marca == "")  marca = helper2_markers(t, ["e" "ellipse"])   end
-				if (marca == "")  marca = helper2_markers(t, ["E" "Ellipse"])   end
-				if (marca == "")  marca = helper2_markers(t, ["j" "rotrect"])   end
-				if (marca == "")  marca = helper2_markers(t, ["J" "RotRect"])   end
-				if (marca == "")  marca = helper2_markers(t, ["m" "matangle"])  end
-				if (marca == "")  marca = helper2_markers(t, ["M" "Matangle"])  end
-				if (marca == "")  marca = helper2_markers(t, ["r" "rectangle"])   end
-				if (marca == "")  marca = helper2_markers(t, ["R" "RRectangle"])  end
-				if (marca == "")  marca = helper2_markers(t, ["v" "vector"])  end
-				if (marca == "")  marca = helper2_markers(t, ["V" "Vector"])  end
-				if (marca == "")  marca = helper2_markers(t, ["w" "pie" "web"])  end
-				if (marca == "")  marca = helper2_markers(t, ["W" "Pie" "Web"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["e" "ellipse"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["E" "Ellipse"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["j" "rotrect"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["J" "RotRect"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["m" "matangle"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["M" "Matangle"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["r" "rectangle"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["R" "RRectangle"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["v" "vector"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["V" "Vector"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["w" "pie" "web"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["W" "Pie" "Web"])  end
 			end
 			if (del)  delete!(d, symb)  end
 			break
 		end
 	end
-	return marca, arg1, N > 0
+	return marca[1], arg1, N > 0
 end
 
 function helper_markers(opt, ext, arg1, N, cst)
 	# Helper function to deal with the cases where one sends marker's extra columns via command
 	# Example that will land and be processed here:  marker=(:Ellipse, [30 10 15])
 	# N is the number of extra columns
-	marca = "";		msg = ""
+	marca = Array{String,1}(undef,1)
+	marca = [""];	 msg = ""
 	if (size(ext,2) == N && arg1 !== nothing)
 		S = Symbol(opt)
-		marca, arg1 = add_opt(add_opt, (opt, "", Dict(S => (par=ext,)), [S]), (par="|",), true, arg1)
+		marca[1], arg1 = add_opt(add_opt, (opt, "", Dict(S => (par=ext,)), [S]), (par="|",), true, arg1)
 	elseif (cst && length(ext) == 1)
-		marca = opt * "-" * string(ext)
+		marca[1] = opt * "-" * string(ext)
 	else
 		msg = string("Wrong number of extra columns for marker (", opt, "). Got ", size(ext,2), " but expected ", N)
 	end
-	return marca, arg1, msg
+	return marca[1], arg1, msg
 end
 
 function helper2_markers(opt, alias)
-	marca = ""
+	marca = Array{String,1}(undef,1)
+	marca = [""]
 	if (opt == alias[1])			# User used only the one letter syntax
-		marca = alias[1]
+		marca[1] = alias[1]
 	else
 		for k = 2:length(alias)		# Loop because of cases like ["w" "pie" "web"]
 			o2 = alias[k][1:min(2,length(alias[k]))]	# check the first 2 chars and Ro, Rotrect or RotRec are all good
-			if (startswith(opt, o2))  marca = alias[1]; break  end		# Good when, for example, marker=:Pie
+			if (startswith(opt, o2))  marca[1] = alias[1]; break  end		# Good when, for example, marker=:Pie
 		end
 	end
 
 	# If we still have found nothing, assume that OPT is a full GMT opt string (e.g. W/5+a30+r45+p2,red)
-	if (marca == "" && opt[1] == alias[1][1])  marca = opt  end
-	return marca
+	if (marca[1] == "" && opt[1] == alias[1][1])  marca[1] = opt  end
+	return marca[1]
 end
 
 # ---------------------------------------------------------------------------------------------------
-function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller::String, O::Bool)
+function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, caller::String, O::Bool)
 	# Set sensible defaults for the sub-modules "scatter" & "bar"
+	cmd = Array{String,1}(undef,1)
+	cmd[1] = _cmd
 	if (caller == "scatter")
-		if (opt_S == "")  cmd *= " -Sc5p"  end
+		if (opt_S == "")  cmd[1] *= " -Sc5p"  end
 	elseif (caller == "scatter3")
-		if (opt_S == "")  cmd *= " -Su2p"  end
+		if (opt_S == "")  cmd[1] *= " -Su2p"  end
 	elseif (caller == "lines")
-		if (!occursin("+p", cmd) && opt_W == "") cmd *= " -W0.25p"  end # Do not leave without a pen specification
+		if (!occursin("+p", cmd[1]) && opt_W == "") cmd[1] *= " -W0.25p"  end # Do not leave without a pen specification
 	elseif (caller == "bar")
 		if (opt_S == "")
 			if (haskey(d, :bar))
-				cmd = GMT.parse_bar_cmd(d, :bar, cmd, "Sb")
+				cmd[1] = GMT.parse_bar_cmd(d, :bar, cmd[1], "Sb")
 			elseif (haskey(d, :hbar))
-				cmd = GMT.parse_bar_cmd(d, :hbar, cmd, "SB")
+				cmd[1] = GMT.parse_bar_cmd(d, :hbar, cmd[1], "SB")
 			else
 				opt = add_opt("", "",  d, [:width])		# No need to purge because width is not a psxy option
 				if (opt == "")	opt = "0.8"	end			# The default
-				cmd *= " -Sb" * opt * "u"
+				cmd[1] *= " -Sb" * opt * "u"
 
 				optB = add_opt("", "",  d, [:base])
 				if (optB == "")	optB = "0"	end
-				cmd *= "+b" * optB
+				cmd[1] *= "+b" * optB
 			end
 		end
-		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd *= " -G0/115/190"	end		# Default color
+		if (!occursin(" -G", cmd[1]) && !occursin(" -C", cmd[1]))  cmd[1] *= " -G0/115/190"	end		# Default color
 	elseif (caller == "bar3")
-		if (haskey(d, :noshade) && occursin("-So", cmd))
-			cmd = replace(cmd, "-So" => "-SO", count=1)
+		if (haskey(d, :noshade) && occursin("-So", cmd[1]))
+			cmd[1] = replace(cmd[1], "-So" => "-SO", count=1)
 		end
-		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd *= " -G0/115/190"	end
-		if (!occursin(" -J", cmd))  cmd *= " -JX12c/0"  end
+		if (!occursin(" -G", cmd[1]) && !occursin(" -C", cmd[1]))  cmd[1] *= " -G0/115/190"	end
+		if (!occursin(" -J", cmd[1]))  cmd[1] *= " -JX12c/0"  end
 	end
 
 	if (occursin('3', caller))
-		if (!occursin(" -B", cmd) && !O)  cmd *= def_fig_axes3  end	# For overlays default is no axes
-		if (!occursin(" -p", cmd))  cmd *= " -p200/30"  end
+		if (!occursin(" -B", cmd[1]) && !O)  cmd[1] *= def_fig_axes3  end	# For overlays default is no axes
+		if (!occursin(" -p", cmd[1]))  cmd[1] *= " -p200/30"  end
 	#else
-		#if (!occursin(" -B", cmd) && !O)  cmd *= def_fig_axes   end
+		#if (!occursin(" -B", cmd[1]) && !O)  cmd[1] *= def_fig_axes   end
 	end
 
-	return cmd
+	return cmd[1]
 end
 
 # ---------------------------------------------------------------------------------------------------
