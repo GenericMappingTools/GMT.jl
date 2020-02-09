@@ -10,7 +10,7 @@ As an alternative use 'fmt' as a string or symbol containing the format (ps, pdf
 By default name="GMTplot" and fmt="ps"
 """
 function gmtbegin(name::String=""; fmt=nothing, verbose=nothing)
-	global FirstModern = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
+	FirstModern[1] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
 	cmd = "begin"       # Default name (GMTplot.ps) is set in gmt_main()
 	if (name != "")  cmd *= " " * get_format(name, fmt)  end
 	if (verbose !== nothing)  cmd *= " -V" * string(verbose)  end

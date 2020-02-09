@@ -97,8 +97,8 @@ function movie(cmd0::String=""; pre="", post="", kwargs...)
 	if (pre  != "" && ((preName = jl_sc_2_shell_sc(pre,  "pre_script"))  !== nothing))  cmd *= " -Sb" * preName  end
 	if (post != "" && ((posName = jl_sc_2_shell_sc(post, "post_script")) !== nothing))  cmd *= " -Sf" * posName  end
 
-	global FirstModern, cmds_history
-	IamModern[1] = false; FirstModern = false; convert_syntax[1] = false; cmds_history = [""]
+	global cmds_history
+	IamModern[1] = false; FirstModern[1] = false; convert_syntax[1] = false; cmds_history = [""]
 
 	cmd = "movie " * mainName * cmd				# In any case we need this
 	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
@@ -107,8 +107,8 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function jl_sc_2_shell_sc(name::String, name2::String)
-	global FirstModern, cmds_history
-	IamModern[1] = true; FirstModern = true; convert_syntax[1] = true; cmds_history = [""]
+	global cmds_history
+	IamModern[1] = true; FirstModern[1] = true; convert_syntax[1] = true; cmds_history = [""]
 	include(name)
 	fname = write_script(name2)
 end
