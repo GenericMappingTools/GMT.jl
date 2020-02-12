@@ -18,13 +18,14 @@ function GMT_Create_Data(API::Ptr{Cvoid}, family, geometry, mode, dim=C_NULL, we
 	elseif (family == GMT_IS_MATRIX|GMT_VIA_MATRIX) ret_type = Ptr{GMT_MATRIX}
 	elseif (family == GMT_IS_VECTOR)     ret_type = Ptr{GMT_VECTOR}
 	elseif (family == GMT_IS_POSTSCRIPT) ret_type = Ptr{GMT_POSTSCRIPT}
-	else                                 ret_type = Ptr{Cvoid}		# Should be error instead
+	else                                 error("Unknown family type")
 	end
 
 	ptr = ccall((:GMT_Create_Data, thelib), Ptr{Cvoid}, (Cstring, UInt32, UInt32, UInt32, Ptr{UInt64},
 		Ptr{Cdouble}, Ptr{Cdouble}, UInt32, Cint, Ptr{Cvoid}), API, family, geometry, mode, dim, wesn, inc,
 		registration, pad, data)
 
+	if (ptr == C_NULL)  error("Failure to allocate GMT resource")  end
 	convert(ret_type, ptr)
 end
 

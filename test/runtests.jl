@@ -1022,7 +1022,7 @@ if (got_it)					# Otherwise go straight to end
 		PS = plot(rand(3,2), ps=1);
 		API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 		GMT.ps_init(API, "", PS, 0);
-		@test_throws ErrorException("Failure to alloc GMT source TEXTSET for input") GMT.text_init(API, "", "aaaa", 0);
+		@test_throws ErrorException("Failure to allocate GMT resource") GMT.text_init(API, "", "aaaa", 0);
 		gmt("destroy")
 
 		# Test ogr2GMTdataset
