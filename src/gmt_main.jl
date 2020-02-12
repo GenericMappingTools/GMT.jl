@@ -857,10 +857,8 @@ function grid_init(API::Ptr{Nothing}, module_input, Grid, grd, hdr, pad::Int=2)
 		grd = Grid.z
 		hdr = [Grid.range; Grid.registration; Grid.inc]
 	end
-	if ((G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_ALL, C_NULL,
-	                         hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)) == C_NULL)
-		error("grid_init: Failure to alloc GMT source matrix for input")
-	end
+	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_ALL, C_NULL,
+	                    hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)
 
 	n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
 	Gb = unsafe_load(G)			# Gb = GMT_GRID (constructor with 1 method)
@@ -927,10 +925,8 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_pages = size(Img.image, 3)
 	dim = pointer([n_cols, n_rows, n_pages])
-	if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_ALL, dim,
-							 Img.range[1:4], Img.inc, UInt32(Img.registration), pad)) == C_NULL)
-		error("image_init: Failure to alloc GMT source image for input")
-	end
+	I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_ALL, dim,
+	                    Img.range[1:4], Img.inc, UInt32(Img.registration), pad)
 	Ib = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
 
 	Ib.data = pointer(Img.image)
@@ -1021,12 +1017,10 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 	else
 		mode = GMT_NO_STRINGS;
 	end
-	
+
 	pdim = pointer(dim)
-	if ((D = GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, mode, pdim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-		error("Failure to alloc GMT destination dataset")
-	end
-	DS = unsafe_load(convert(Ptr{GMT_DATASET}, D))
+	D = GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, mode, pdim, C_NULL, C_NULL, 0, 0, C_NULL)
+	DS = unsafe_load(D)
 
 	DT = unsafe_load(unsafe_load(DS.table))				# GMT.GMT_DATATABLE
 
@@ -1094,13 +1088,9 @@ function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, 
 	if (direction == GMT_IN) 	# Dimensions are known, extract them and set dim array for a GMT_MATRIX resource */
 		dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
 		if (GMTver < 6.0)
-			if ((M = GMT_Create_Data(API, GMT_IS_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-				error("Failure to alloc GMT source matrix")
-			end
+			M = GMT_Create_Data(API, GMT_IS_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)
 		else
-			if ((M = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-				error("Failure to alloc GMT source matrix")
-			end
+			M = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)
 			actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
 		end
 
@@ -1120,7 +1110,7 @@ function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, 
 		elseif (eltype(ptr) == Int16)		Mb._type = UInt32(GMT.GMT_SHORT)
 		elseif (eltype(ptr) == UInt8)		Mb._type = UInt32(GMT.GMT_UCHAR)
 		elseif (eltype(ptr) == Int8)		Mb._type = UInt32(GMT.GMT_CHAR)
-		elseif (ptr == nothing)		# Do nothing here (-G of project comes here) but looks dangerous
+		elseif (ptr === nothing)		# Do nothing here (-G of project comes here) but looks dangerous
 		else
 			println("Type \"", typeof(ptr), "\" not allowed")
 			error("only integer or floating point types allowed in input. Others need to be added")
@@ -1167,9 +1157,7 @@ function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
 		one = 1
 	end
 
-	if ((P = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-		error("Failure to alloc GMT source CPT for input")
-	end
+	P = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), C_NULL, C_NULL, 0, 0, C_NULL)
 
 	if (one != 0)  mutateit(API, P, "is_continuous", one)  end
 
@@ -1235,9 +1223,7 @@ if (GMTver < 6.0)
 		dim[GMT.GMT_SEG+1] = length(Darr)		# Number of segments
 		if (dim[GMT.GMT_SEG+1] == 0) error("Input has zero segments where it can't be")	end
 		pdim = pointer(dim)
-		if ((T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_PLP, 0, pdim, C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-			error("Failure to alloc GMT destination dataset.")
-		end
+		T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_PLP, 0, pdim, C_NULL, C_NULL, 0, 0, C_NULL)
 		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("text_init_: Allocated GMT textset %s", T))
 
 		TS = unsafe_load(convert(Ptr{GMT_TEXTSET}, T))
@@ -1320,9 +1306,7 @@ function text_init(API::Ptr{Nothing}, module_input, txt, dir::Integer, family::I
 			if (rec > 1) dim[3] = rec end  # User gave row-vector of cells
 		end
 
-		if ((T = GMT_Create_Data(API, family, GMT_IS_NONE, 0, pointer(dim), C_NULL, C_NULL, 0, 0, C_NULL)) == C_NULL)
-			error("Failure to alloc GMT source TEXTSET for input")
-		end
+		T = GMT_Create_Data(API, family, GMT_IS_NONE, 0, pointer(dim), C_NULL, C_NULL, 0, 0, C_NULL)
 		mutateit(API, T, "alloc_mode", GMT_ALLOC_EXTERNALLY)	# Don't know if this is still used
 
 		T0 = unsafe_load(T)				# GMT.GMT_TEXTSET
@@ -1358,9 +1342,7 @@ function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
 
 	# Passing dim[0] = 0 since we dont want any allocation of a PS string
 	pdim = pointer([0])
-	if ((P = GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, 0, pdim, NULL, NULL, 0, 0, NULL)) == NULL)
-		error("gmtmex_ps_init: Failure to alloc GMT POSTSCRIPT source for input")
-	end
+	P = GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, 0, pdim, NULL, NULL, 0, 0, NULL)
 
 	P0 = unsafe_load(P)		# GMT.GMT_POSTSCRIPT
 
