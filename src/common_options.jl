@@ -893,7 +893,7 @@ function add_opt_pen(d::Dict, symbs, opt::String="", del::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function opt_pen(d::Dict, opt::Char, symbs)
+function opt_pen(d::Dict, opt::Char, symbs)::String
 	# Create an option string of the type -Wpen
 	out = ""
 	pen = build_pen(d)						# Either a full pen string or empty ("")
@@ -914,7 +914,7 @@ function opt_pen(d::Dict, opt::Char, symbs)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_pen(pen::Tuple)
+function parse_pen(pen::Tuple)::String
 	# Convert an empty to 3 args tuple containing (width[c|i|p]], [color], [style[c|i|p|])
 	len = length(pen)
 	s = arg2str(pen[1])					# First arg is different because there is no leading ','
@@ -926,23 +926,23 @@ function parse_pen(pen::Tuple)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_pen_color(d::Dict, symbs=nothing, del::Bool=false)
+function parse_pen_color(d::Dict, symbs=nothing, del::Bool=false)::String
 	# Need this as a separate fun because it's used from modules
 	lc = ""
 	if (symbs === nothing)  symbs = [:lc :linecolor]  end
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-		lc = get_color(val)
+		lc = string(get_color(val))
 	end
 	return lc
 end
 
 # ---------------------------------------------------------------------------------------------------
-function build_pen(d::Dict, del::Bool=false)
+function build_pen(d::Dict, del::Bool=false)::String
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
 	lw = add_opt("", "", d, [:lw :linewidth], nothing, del)	# Line width
 	ls = add_opt("", "", d, [:ls :linestyle], nothing, del)	# Line style
-	lc = parse_pen_color(d, [:lc :linecolor], del)
+	lc = string(parse_pen_color(d, [:lc :linecolor], del))
 	out = ""
 	if (lw != "" || lc != "" || ls != "")
 		out = lw * "," * lc * "," * ls
@@ -952,7 +952,7 @@ function build_pen(d::Dict, del::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_arg_and_pen(arg::Tuple, sep="/", pen=true, opt="")
+function parse_arg_and_pen(arg::Tuple, sep="/", pen=true, opt="")::String
 	# Parse an ARG of the type (arg, (pen)) and return a string. These may be used in pscoast -I & -N
 	# OPT is the option code letter including the leading - (e.g. -I or -N). This is only used when
 	# the ARG tuple has 4, 6, etc elements (arg1,(pen), arg2,(pen), arg3,(pen), ...)
@@ -1131,7 +1131,8 @@ end
 function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)
 	d = nt2dict(mapa)
 	if (!haskey(d, this_key))  return  end	# Should be a error?
-	out = ""
+	out = Array{String,1}(undef,1)
+	out = [""]
 	key = keys(user_input)					# user_input = (rows=1, fill=:red)
 	val_namedTup = d[this_key]				# water=(rows="my", cols="mx", fill=add_opt_fill)
 	d = nt2dict(val_namedTup)
@@ -1140,14 +1141,14 @@ function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)
 			val = d[key[k]]
 			if (isa(val, Function))
 				if (val == add_opt_fill)
-					out *= val(Dict(key[k] => user_input[key[k]]))
+					out[1] *= val(Dict(key[k] => user_input[key[k]]))
 				end
 			else
-				out *= string(d[key[k]])
+				out[1] *= string(d[key[k]])
 			end
 		end
 	end
-	return out
+	return out[1]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1299,14 +1300,14 @@ function add_opt_fill(d::Dict, opt::String="")
 	add_opt_fill(d, [collect(keys(d))[1]], opt)	# Use ONLY when len(d) == 1
 end
 add_opt_fill(d::Dict, symbs, opt="") = add_opt_fill("", d, symbs, opt)
-function add_opt_fill(cmd::String, d::Dict, symbs, opt="")
+function add_opt_fill(cmd::String, d::Dict, symbs, opt="")::String
 	# Deal with the area fill attributes option. Normally, -G
 	if ((val = find_in_dict(d, symbs)[1]) === nothing)  return cmd  end
-	if (opt != "")  opt = " -" * opt  end
+	if (opt != "")  opt = string(" -", opt)  end
 
 	if (isa(val, NamedTuple))
 		d2 = nt2dict(val)
-		cmd *= string(opt)
+		cmd *= opt
 		if     (haskey(d2, :pattern))     cmd *= 'p' * add_opt("", "", d2, [:pattern])
 		elseif (haskey(d2, :inv_pattern)) cmd *= 'P' * add_opt("", "", d2, [:inv_pattern])
 		else   error("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member")
@@ -1316,7 +1317,7 @@ function add_opt_fill(cmd::String, d::Dict, symbs, opt="")
 		if ((val2 = find_in_dict(d2, [:fg :foreground])[1]) !== nothing)  cmd *= "+f" * get_color(val2)  end
 		if (haskey(d2, :dpi))  cmd = string(cmd, "+r", d2[:dpi])  end
 	else
-		cmd *= opt * get_color(val)
+		cmd *= string(opt, get_color(val))
 	end
 	return cmd
 end
@@ -1402,7 +1403,7 @@ function get_color(val)
 	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
 	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return isa(val, Bool) ? "" : string(val)  end
 
-	out = Array{Bool,1}(undef,1)
+	out = Array{String,1}(undef,1)
 	out = [""]
 	if (isa(val, Tuple))
 		for k = 1:length(val)
@@ -2493,6 +2494,7 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 		isa(cmd_, String) ? append!(legend_type.cmd, [cmd_]) : append!(legend_type.cmd, cmd_)
 		append!(legend_type.label, lab)
 	end
+	return nothing
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -2543,6 +2545,7 @@ function digests_legend_bag(d::Dict)
 		legend!(text_record(leg), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fs))
 		legend_type = nothing			# Job done, now empty the bag
 	end
+	return nothing
 end
 
 # --------------------------------------------------------------------------------------------------
