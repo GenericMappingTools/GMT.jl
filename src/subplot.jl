@@ -68,7 +68,6 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	end
 
 	do_set = false;		do_show = false
-@show(fim)
 	if (fim !== nothing)
 		t = lowercase(string(fim))
 		if     (t == "end" || t == "stop")  stop = true

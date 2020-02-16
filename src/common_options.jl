@@ -2068,7 +2068,7 @@ function fname_out(d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=false)
+function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=false, get_info=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
 	#force_get_R = false		# Because of a GMT6.0 BUG, modern mode does not compute -R automatically
@@ -2082,7 +2082,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	cmd, opt_di = parse_di(cmd, d)		# If data missing data other than NaN
 	cmd, opt_h  = parse_h(cmd, d)
 	if (isa(data_kw, String))
-		if (!IamModern[1] && opt_R == "")		# Then we must read the file to determine -R
+		if ((!IamModern[1] && opt_R == "") || get_info)		# Then we must read the file to determine -R
 			lixo, opt_bi = parse_bi("", d)	# See if user says file is binary
 			if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
 				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * " " * data_kw)
@@ -2102,6 +2102,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 
 	if (data_kw !== nothing)  arg = data_kw  end		# Finaly move the data into ARG
 
+	info = nothing
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
 	if ((!IamModern[1] && no_R) || (force_get_R && no_R))
 		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h, arg)		# Here we are reading from an original GMTdataset or Array
@@ -2132,7 +2133,11 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 		cmd *= opt_R
 	end
 
-	return cmd, arg, opt_R, opt_i
+	if (get_info && info === nothing)
+		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h, arg)
+	end
+
+	return cmd, arg, opt_R, info, opt_i
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -45,7 +45,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	#if (!first && current_view[1] != "" && !occursin("-p", cmd))  cmd *= current_view[1]  end
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R = read_data(d, cmd0, cmd, arg1, opt_R)
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 
 	#cmd = add_opt(cmd, 'D', d, [:D :pos :position :refpoint],
 	#			  (map=("g", nothing, 1), inside=("j", nothing, 1), paper=("x", nothing, 1),

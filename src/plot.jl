@@ -659,7 +659,7 @@ const psevents = events            # Alias
 function cat_1_arg(arg)
 	# Add a first column with 1:n to all args that are not GMTdatasets
 	(isa(arg, Array{GMT.GMTdataset,1}) || isa(arg, GMT.GMTdataset))  &&  return arg
-	if (isa(arg, Vector) || isa(arg, UnitRange) || isa(arg, StepRangeLen))
+	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
 		arg = hcat(1:size(arg,1), arg)
 	#if (isa(arg, Vector) || isa(arg, Matrix) || isa(arg, UnitRange) || isa(arg, StepRangeLen))
 		#if     (!isa(arg, Matrix))                       arg = hcat(1:length(arg), arg)
@@ -676,8 +676,8 @@ end
 function cat_2_arg2(arg1, arg2)
 	# Cat two vectors (or tuples) or a vector (or tuple) and a matrix in a Mx2 matrix
 
-	if ((isa(arg1, Vector) || isa(arg1, UnitRange) || isa(arg1, StepRangeLen) || isa(arg1, NTuple) || isa(arg1, Matrix)) &&
-		(isa(arg2, Vector) || isa(arg2, UnitRange) || isa(arg2, StepRangeLen) || isa(arg2, NTuple) || isa(arg2, Matrix)) )
+	if ((isa(arg1, Vector) || typeof(arg1) <: AbstractRange || isa(arg1, NTuple) || isa(arg1, Matrix)) &&
+		(isa(arg2, Vector) || typeof(arg2) <: AbstractRange || isa(arg2, NTuple) || isa(arg2, Matrix)) )
 
 		if (isa(arg1, NTuple))  arg1 = collect(arg1)  end
 		if (isa(arg2, NTuple))  arg2 = collect(arg2)  end

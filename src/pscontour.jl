@@ -96,7 +96,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_contour_AGTW(d::Dict, cmd::String)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
-	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
+	cmd, arg1, opt_R, info = read_data(d, cmd0, cmd, arg1, opt_R, false, true)
 	cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing), arg1, nothing, nothing, "pscontour")
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
@@ -114,7 +114,16 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	if (!occursin(" -W", cmd) && !occursin(" -I", cmd))  cmd *= " -W"  end	# Use default pen
 
-	return finish_PS_module(d, "pscontour " * cmd, "-D", K, O, true, arg1, arg2, arg3)
+	if (occursin("-I", cmd) && !occursin("-C", cmd))
+		opt_T = (current_cpt === nothing) ? @sprintf(" -T%.14g/%.14g/9+n", info[1].data[5], info[1].data[6]) : ""
+		if (N_used <= 1)
+			cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C], 'C', N_used, arg1, arg2, true, true, opt_T, true)
+		else
+			cmd, arg2, arg3, = add_opt_cpt(d, cmd, [:C], 'C', N_used, arg2, arg3, true, true, opt_T, true)
+		end
+	end
+	cmd, K = finish_PS_nested(d, "pscontour " * cmd, "", K, O, [:coast :colorbar])
+	return finish_PS_module(d, cmd, "-D", K, O, true, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------
