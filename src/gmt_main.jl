@@ -1366,8 +1366,9 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES})
 	OGR_F = unsafe_load(in)
 	n_max = OGR_F.n_rows * OGR_F.n_cols * OGR_F.n_layers
 	D = Array{GMTdataset, 1}(undef, OGR_F.n_filled)
+	hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,k))) for k = 1:OGR_F.att_number]) : ""
 	D[1] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-		Array{String,1}(), "", Array{String,1}(), OGR_F.proj4 != C_NULL ? unsafe_string(OGR_F.proj4) : "",
+		Array{String,1}(), hdr, Array{String,1}(), OGR_F.proj4 != C_NULL ? unsafe_string(OGR_F.proj4) : "",
 		OGR_F.wkt != C_NULL ? unsafe_string(OGR_F.wkt) : "")
 	next = 2
 	if (OGR_F.np == 0)			# Shit, first feature has no points. Must find first non empty since n_filled is still valid
@@ -1383,8 +1384,9 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES})
 	for k = next:n_max
 		OGR_F = unsafe_load(in, k)
 		if (OGR_F.np > 0)
+			hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,i))) for i = 1:OGR_F.att_number]) : ""
 			D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-				Array{String,1}(), "", Array{String,1}(), "", "")
+				Array{String,1}(), hdr, Array{String,1}(), "", "")
 			n = n + 1
 		end
 	end
