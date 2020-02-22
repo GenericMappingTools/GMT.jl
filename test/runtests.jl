@@ -545,7 +545,7 @@ if (got_it)					# Otherwise go straight to end
 	# IMSHOW
 	imshow(rand(128,128),show=false)
 	imshow(rand(128,128), view=:default, Vd=2)
-	imshow(G, axis=:a, shade="+a45",show=false)
+	imshow(G, axis=:a, shade="+a45",show=false, contour=true)
 	imshow(rand(128,128), shade="+a45",show=false)
 	if (GMTver >= 6)
 		imshow("lixo.tif",show=false)

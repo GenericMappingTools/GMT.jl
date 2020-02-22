@@ -277,6 +277,7 @@ end
 
 function parse_proj(p::String)
 	# See "p" is a string with a projection name. If yes, convert it into the corresponding -J syntax
+	if (p == "")  return p,false  end
 	if (p[1] == '+' || startswith(p, "epsg") || startswith(p, "EPSG") || occursin('/', p) || length(p) < 3)
 		p = replace(p, " " => "")		# Remove the spaces from proj4 strings
 		return p,false
@@ -1367,8 +1368,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function add_opt_module(d::Dict, symbs)
-	#  SYMBS should contain a module name 'coast' or 'colorbar', and if present in D,
-	# 'val' must be a NamedTuple with the module's arguments.
+	#  SYMBS should contain a module name (e.g. 'coast' or 'colorbar'), and if present in D,
+	# 'val' can be a NamedTuple with the module's arguments or a 'true'.
 	out = Array{String,1}()
 	for k = 1:length(symbs)
 		r = nothing
@@ -1398,7 +1399,7 @@ function add_opt_module(d::Dict, symbs)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_color(val)
+function get_color(val)::String
 	# Parse a color input. Always return a string
 	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
 	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return isa(val, Bool) ? "" : string(val)  end
@@ -2029,7 +2030,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function fname_out(d::Dict)
-	# Create an file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
+	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 
 	fname = ""
 	EXT = FMT[1]
@@ -2403,6 +2404,12 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
 	img_mem_layout[1] = add_opt("", "", d, [:layout])
+
+	if (fname_ext != "ps" && fname_ext != "eps")	# Exptend to a larger paper size (5 x A0)
+		if (isa(cmd, Array{String, 1}))  cmd[1] *= " --PS_MEDIA=11900x16840"
+		else                             cmd    *= " --PS_MEDIA=11900x16840"
+		end
+	end
 
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)

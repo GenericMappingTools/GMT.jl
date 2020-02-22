@@ -12,7 +12,10 @@ fig he can use *show=false* for the intermediate layers.
 ```julia-repl
 # Plot vertical shaded illuminated view of the Mexican hat
 julia> G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
-julia> imshow(G, frame="a", shade="+a45")
+julia> imshow(G, shade="+a45")
+
+# Same as above but add automatic contours
+julia> imshow(G, shade="+a45", contour=true)
 
 # Plot a random heat map
 julia> imshow(rand(128,128))
@@ -59,6 +62,10 @@ function imshow(arg1::GMTgrid; first=true, kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)
 	see = (!haskey(d, :show)) ? true : see = d[:show]	# No explicit 'show' keyword means show=true
+	if ((cont_opts = find_in_dict(d, [:contour])[1]) !== nothing)
+		new_see = see
+		see = false			# because here we know that 'see' has to wait till last command
+	end
 	opt_p = parse_common_opts(d, "", [:p], first)
 	if (opt_p == "")
 		grdimage("", arg1; first=first, show=see, kw...)
@@ -66,6 +73,11 @@ function imshow(arg1::GMTgrid; first=true, kw...)
 		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 5
 		srf = ((val = find_in_dict(d, [:Q :surf :surftype])[1]) !== nothing) ? val : "i100"
 		grdview("", arg1; first=first, show=see, p=opt_p[4:end], JZ=zsize, Q=srf, kw...)
+	end
+	if (isa(cont_opts, Bool))				# Automatic contours
+		grdcontour!(arg1; J="", show=new_see)
+	elseif (isa(cont_opts, NamedTuple))		# Expect a (cont=..., annot=..., ...)
+		grdcontour!(arg1; J="", show=new_see, cont_opts...)
 	end
 end
 
