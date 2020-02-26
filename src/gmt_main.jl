@@ -1436,7 +1436,7 @@ function get_datatype(var)
 	if (eltype(var) == Int16) 	return INT16_CLASS	end
 	if (eltype(var) == UInt8) 	return UINT8_CLASS	end
 	if (eltype(var) == Int8) 	return INT8_CLASS	end
-	if (var == nothing)			return DOUBLE_CLASS	end		# Motivated by project -G
+	if (var === nothing)		return DOUBLE_CLASS	end		# Motivated by project -G
 
 	println("Unable to discovery this data type - Default to double")
 	return DOUBLE_CLASS

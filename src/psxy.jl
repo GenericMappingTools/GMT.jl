@@ -39,7 +39,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
 	if (is3D)	cmd, opt_JZ  = parse_JZ(cmd, d)  end
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :yx :params], first)
-	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
+	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip], [:Z :level]])
 	if (is_ternary)  cmd = add_opt(cmd, 'M', d, [:M :no_plot])  end
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
 	cmd, opt_c = parse_c(cmd, d)	# Need opt_c because we may need to remove it from double calls
@@ -47,6 +47,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	# If a file name sent in, read it and compute a tight -R if this was not provided
 	if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
 	cmd, arg1, opt_R, lixo, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
+	if (N_args == 0)  N_args = 1  end		# Since the above always return a arg1 != nothing
 
 	if ((isa(arg1, GMTdataset) && arg1.proj4 != "" || isa(arg1, Vector{GMTdataset}) &&
 		     arg1[1].proj4 != "") && opt_J == " -JX" * def_fig_size)
@@ -240,9 +241,9 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, 
 			else                           arg1[1].data = hcat(arg1[1].data[:,1:2+is3D], mz[:], arg1[1].data[:,3+is3D:end])
 			end
 		elseif (!got_Ebars)		# The Error bars case is very multi. Don't try to guess then.
-			if (opt_i == "")  cmd = @sprintf("%s -i0-%d,%d,%d-%d", cmd, 1+is3D, 1+is3D, 2+is3D, n_col-1)
-			else              @warn(warn2);		@goto noway
-			end
+			#if (opt_i == "")  cmd = @sprintf("%s -i0-%d,%d,%d-%d", cmd, 1+is3D, 1+is3D, 2+is3D, n_col-1)
+			#else              @warn(warn2);		@goto noway
+			#end
 		end
 	end
 
