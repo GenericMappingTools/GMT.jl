@@ -1338,7 +1338,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	if (isa(arg1, GMTgrid) || cmd0 != "")
 		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap])[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
-			cpt_opt_T = @sprintf(" -T%.14g/%.14g/128+n", range[5], range[6])
+			cpt_opt_T = @sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
 		end
 		if (opt_R == "")
 			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
