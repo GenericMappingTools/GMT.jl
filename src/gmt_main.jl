@@ -412,7 +412,7 @@ function get_grid(API::Ptr{Nothing}, object)
 	t = unsafe_wrap(Array, G.data, my * mx)
 	z = zeros(Float32, ny, nx)
 
-	if (isempty(grd_mem_layout))
+	if (grd_mem_layout[1] == "")
 		for col = 1:nx
 			for row = 1:ny
 				ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
