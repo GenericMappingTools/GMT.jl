@@ -24,6 +24,11 @@ Parameters
     Convergence limit. Iteration is assumed to have converged when the maximum absolute change in any
     grid value is less than convergence_limit.
     ($(GMTdoc)surface.html#c)
+- **D** | **breakline** :: [Type => String | NamedTuple]     `Arg = breakline[+z[level]] | (data=Array, [zlevel=x])`
+
+    Use xyz data in the breakline file as a ‘soft breakline’, that is a line whose vertices will be used to
+    constrain the nearest grid nodes without any further interpolation.
+    ($(GMTdoc)surface.html#d)
 - **G** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
@@ -73,13 +78,14 @@ function surface(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("surface", cmd0, arg1)
 
-	d = KW(kwargs)
+	d = KW(kwargs);     arg2 = nothing
 	cmd = parse_common_opts(d, "", [:R :I :V_params :a :bi :di :e :f :h :i :r :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:G :grid :outgrid], 
-				[:Ll :lower], [:Lu :upper], [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension],
-				[:Z :over_relaxation]])
+	                                [:Ll :lower], [:Lu :upper], [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension], [:Z :over_relaxation]])
+	cmd, args, n, = add_opt(cmd, 'D', d, [:D :breakline], :data, [arg1, arg2], (zlevel="+z",))
+	if (n > 0)  arg1, arg2 = args[:]  end
 
-	common_grd(d, cmd0, cmd, "surface ", arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "surface ", arg1, arg2)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

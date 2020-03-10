@@ -5,6 +5,7 @@ const psxyz! = plot3d!
 
 # ---------------------------------------------------------------------------------------------------
 function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
+	arg3 = nothing
 	N_args = (arg1 === nothing) ? 0 : 1
 
 	is_ternary = (caller == "ternary") ? true : false
@@ -39,7 +40,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
 	if (is3D)	cmd, opt_JZ  = parse_JZ(cmd, d)  end
 	cmd = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :yx :params], first)
-	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip], [:Z :level]])
+	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	if (is_ternary)  cmd = add_opt(cmd, 'M', d, [:M :no_plot])  end
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
 	cmd, opt_c = parse_c(cmd, d)	# Need opt_c because we may need to remove it from double calls
@@ -77,8 +78,17 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1)
 	#cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, nothing, true, true, "", true)
 
-	# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
-	cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, arg1, arg2)
+	cmd, args, n, got_Zvars = add_opt(cmd, 'Z', d, [:Z :level], :data, [arg1, arg2, arg3], (outline="_+l", fill="_+f"))
+	if (n > 0)
+		arg1, arg2, arg3 = args[:]
+		N_args = n
+	end
+
+	mcc = false
+	if (!got_Zvars)									# Otherwise we don't care about color columns
+		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
+		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, arg1, arg2)
+	end
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :MarkerFaceColor :mc], 'G')	# Filling of symbols
@@ -193,7 +203,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	if (!IamModern[1])  put_in_legend_bag(d, cmd, arg1)  end
 
-	r = finish_PS_module(d, gmt_proggy .* cmd, "", K, O, true, arg1, arg2)
+	r = finish_PS_module(d, gmt_proggy .* cmd, "", K, O, true, arg1, arg2, arg3)
 	if (got_pattern || occursin("-Sk", opt_S))  gmt("destroy")  end 	# Apparently patterns are screweing the session
 	return r
 end

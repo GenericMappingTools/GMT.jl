@@ -767,12 +767,15 @@ else
 	const GMT_MATRIX = GMT_MATRIX_v6
 end
 
+# Virtual file name length
+VF_LEN = (GMTver < 6.1) ? 16 : 32
+
 mutable struct GMT_RESOURCE
 	family::UInt32          # GMT data family, i.e., GMT_IS_DATASET, GMT_IS_GRID, etc.
 	geometry::UInt32        # One of the recognized GMT geometries
 	direction::UInt32       # Either GMT_IN or GMT_OUT
 	option::Ptr{GMT_OPTION} # Pointer to the corresponding module option
-	name::NTuple{16,UInt8}  # Object ID returned by GMT_Register_IO
+	name::NTuple{VF_LEN,UInt8}  # Object ID returned by GMT_Register_IO
 	pos::Cint               # Corresponding index into external object in|out arrays
 	mode::Cint              # Either primary (0) or secondary (1) resource
 	object::Ptr{Cvoid}      # Pointer to the actual GMT object

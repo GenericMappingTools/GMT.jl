@@ -15,7 +15,7 @@ Parameters
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
     ($(GMTdoc)greenspline.html#i)
-- **A** | **gradient** :: [Type => Str]		``Arg = gradfile+f1|2|3|4|5``
+- **A** | **gradient** :: [Type => Str | Array]		``Arg = gradfile+f1|2|3|4|5 | (data=Array, format=x)``
 
     The solution will partly be constrained by surface gradients v = v*n, where v is the
     gradient magnitude and n its unit vector direction.
@@ -44,7 +44,7 @@ Parameters
 
     Do not remove a linear (1-D) or planer (2-D) trend when -D selects mode 0-3.
     ($(GMTdoc)greenspline.html#l)
-- **N** | **nodes** :: [Type => Number]			``Arg = nodefile``
+- **N** | **nodes** :: [Type => Number | Array]			``Arg = nodefile``
 
     ASCII file with coordinates of desired output locations x in the first column(s).
     ($(GMTdoc)greenspline.html#n)
@@ -83,13 +83,16 @@ function greenspline(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("greenspline", cmd0, arg1)
 
-    d = KW(kwargs)
+	d = KW(kwargs);     arg2 = nothing;     arg3 = nothing
 	cmd = parse_common_opts(d, "", [:R :V_params :bi :d :e :f :h :i :o :r :x :yx])
-	cmd = parse_these_opts(cmd, d, [[:A :gradient], [:C :approx :approximate], [:D :mode], [:E :misfit],
-				[:G :grid], [:I :inc], [:L :leave_trend], [:N :nodes], [:Q :dir_derivative], [:S :splines],
-				[:T :mask], [:W :uncertainties]])
+	cmd = parse_these_opts(cmd, d, [[:C :approx :approximate], [:D :mode], [:E :misfit],
+	                                [:G :grid], [:I :inc], [:L :leave_trend], [:Q :dir_derivative], [:S :splines], [:T :mask], [:W :uncertainties]])
+	cmd, args, n, = add_opt(cmd, 'A', d, [:A :gradient], :data, [arg1, arg2], (format="+f",))
+	if (n > 0)  arg1, arg2 = args[:]  end
+	cmd, args, n, = add_opt(cmd, 'N', d, [:N :nodes], :data, [arg1, arg2, arg3], (x="",))
+	if (n > 0)  arg1, arg2, arg3 = args[:]  end
 
-	common_grd(d, cmd0, cmd, "greenspline ", arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "greenspline ", arg1, arg2, arg3)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
