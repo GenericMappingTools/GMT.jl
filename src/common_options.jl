@@ -1249,6 +1249,51 @@ function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_opts::NamedTuple)
+	# This version specializes in the case where an option may transmit an array, or read a file, with optional flags.
+	# When optional flags are used we need to use NamedTuples (the NT_OPTS arg). In that case the NEED_SYMB
+	# is the keyword name (a symbol) whose value holds the array. An error is raised if this symbol is missing in D
+	# ARGS is a 1-to-3 array of GMT types with in which some may be NOTHING. The value is an array, it will be
+	# stored in first non-empty element of ARGS.
+	# Example where this is used (plot -Z):  Z=(outline=true, data=[1, 4])
+
+	N_used = 0;		got_one = false
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		to_slot = true
+		if (isa(val, NamedTuple))
+			di = nt2dict(val)
+			if ((val = find_in_dict(di, [need_symb])[1]) === nothing)
+				error(string(need_symb, " member cannot be missing"))
+			end
+			if (isa(val, Number) || isa(val, String))	# So that this (psxy) also works:	Z=(outline=true, data=3)
+				opt *= string(val)
+				to_slot = false
+			end
+			cmd = add_opt(cmd, opt, d, symbs, nt_opts)
+		elseif (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{GMT.GMTdataset,1}) || typeof(val) <: AbstractRange)
+			if (typeof(val) <: AbstractRange)  val = collect(val)  end
+			cmd *= " -" * opt
+		elseif (isa(val, String) || isa(val, Symbol))
+			cmd *= " -" * opt * arg2str(val)
+			to_slot = false
+		else
+			error(@sprintf("Bad argument type (%s) to option %s", typeof(val), opt))
+		end
+		if (to_slot)
+			for k = 1:length(args)
+				if (args[k] === nothing)
+					args[k] = val
+					N_used = k - 1
+					break
+				end
+			end
+		end
+		got_one = true
+	end
+	return cmd, args, N_used, got_one
+end
+
+# ---------------------------------------------------------------------------------------------------
 function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=nothing, arg2=nothing,
 	                 store=false, def=false, opt_T="", in_bag=false)
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
