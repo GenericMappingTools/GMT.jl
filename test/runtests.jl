@@ -287,8 +287,7 @@ if (got_it)					# Otherwise go straight to end
 	@show("GMTSELECT")
 	# GMTSELECT
 	gmtselect([2 2], R=(0,3,0,3));		# But is bugged when answer is []
-	gmtselect([1.0 2], C=([1 2],10), Vd=1);
-	@test gmtselect([1 2], C=("aa",10), Vd=2) == "gmtselect  -Caa+d10"
+	@test gmtselect([1 2], C=(pts="aa",dist=10), Vd=2) == "gmtselect  -Caa+d10"
 	@test gmtselect([1 2], C=(pts=[1 2],dist=10), Vd=2) == "gmtselect  -C+d10"
 	@test gmtselect([1 2], C="aa+d0", Vd=2) == "gmtselect  -Caa+d0"
 	@test gmtselect([1 2], C=(pts=[1 2],dist=10), L=(line=[1 2;3 4], dist=10), Vd=2) == "gmtselect  -C+d10 -L+d10"
@@ -425,6 +424,7 @@ if (got_it)					# Otherwise go straight to end
 	G2=grdfft(G, upward=800); 	# Use G of previous test
 	G2=grdfft(G, G, E=[]);
 
+	@show("GRDFIL")
 	# GRDFILL
 	G1=grdmask([3 3], R="0/6/0/6", I=1, N="10/NaN/NaN", S=0);
 	G2=grdfill(G, algo=:n);
@@ -566,7 +566,7 @@ if (got_it)					# Otherwise go straight to end
 	@test mapproject([1.0 1; 2 2], L=(line=[1.0 0; 4 3], unit=:c), Vd=2) ==  "mapproject  -L+uc "
 	@test mapproject([1.0 1; 2 2], L=[1.0 0; 4 3], Vd=2) == "mapproject  -L "
 	@test mapproject([1.0 1; 2 2], L="lixo.dat", Vd=2) == "mapproject  -Llixo.dat "
-	@test_throws ErrorException("Bad argument to dist2line option.") mapproject([1.0 1; 2 2], L=(1.0,0), Vd=2)
+	@test_throws ErrorException("Bad argument type (Tuple{Float64,Int64}) to option L") mapproject([1.0 1; 2 2], L=(1.0,0), Vd=2)
 
 	@show("PLOT")
 	# PLOT

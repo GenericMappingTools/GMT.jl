@@ -31,7 +31,7 @@ Parameters
     the result directly on disk. Otherwise, just use the G = grdedit(....) form.
     ($(GMTdoc)grdedit.html#g)
 - $(GMT.opt_J)
-- **N** | **replace** :: [Type => Str | Mx3 array]
+- **N** | **replace** :: [Type => Str | Mx3 array]      ``Arg = replace=fname | replace=Array``
 
     Read the ASCII (or binary) file table and replace the corresponding nodal values in the
     grid with these x,y,z values. Alternatively, provide a Mx3 matrix with values to be changed. 
@@ -58,12 +58,14 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdedit", cmd0, arg1)
 
-	d = KW(kwargs)
+	d = KW(kwargs);     arg2 = nothing
 	cmd = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:G :outgrid],
-				[:N :replace], [:S :wrap], [:T :toggle]])
+	                                [:S :wrap], [:T :toggle]])
+	cmd, args, n, = add_opt(cmd, 'N', d, [:N :replace], :data, [arg1, arg2], (x="",))
+	if (n > 0)  arg1, arg2 = args[:]  end
 
-	common_grd(d, cmd0, cmd, "grdedit ", arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdedit ", arg1, arg2)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

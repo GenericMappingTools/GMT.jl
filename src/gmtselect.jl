@@ -14,7 +14,7 @@ Parameters
     Features with an area smaller than min_area in km^2 or of hierarchical level that is
     lower than min_level or higher than max_level will not be plotted.
     ($(GMTdoc)gmtselect.html#a)
-- **C** | **dist2pt** :: [Type => Str]   `Arg = pointfile+ddist[unit]`
+- **C** | **dist2pt** :: [Type => Str | NamedTuple]   `Arg = pointfile+ddist[unit] | (pts=Array, dist=xx)`
 
     Pass all records whose location is within dist of any of the points in the ASCII file pointfile.
     If dist is zero then the 3rd column of pointfile must have each point’s individual radius of influence.
@@ -43,7 +43,7 @@ Parameters
     Reverses the sense of the test for each of the criteria specified.
     ($(GMTdoc)gmtselect.html#i)
 - $(GMT.opt_J)
-- **L** | **dist2line** :: [Type => Str]    `Arg = linefile+ddist[unit][+p]`
+- **L** | **dist2line** :: [Type => Str | NamedTuple]    `Arg = linefile+ddist[unit][+p] | (pts=Array, dist=xx, ortho=_)`
 
     Pass all records whose location is within dist of any of the line segments in the ASCII
     multiple-segment file linefile.
@@ -79,41 +79,12 @@ function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kw
 	                [:G :gridmask], [:I :reverse], [:N :mask], [:Z :in_range]])
 	#cmd = add_opt(cmd, 'N', d, [:N :mask], (ocean=("", arg2str, 1), land=("", arg2str, 2)) )
 
-	cmd, arg2 = dist2PtLine(d, cmd, 'C')
-	cmd, arg3 = dist2PtLine(d, cmd, 'L')
-	if (arg1 === nothing)  arg1 = arg2;  arg2 = arg3;  arg3 = nothing  end
-	if (arg2 === nothing && arg3 !== nothing)  arg2 = arg3  end
+	cmd, args, n, = add_opt(cmd, 'C', d, [:C :dist2pt :dist], :pts, [arg1, arg2], (dist="+d",))
+	if (n > 0)  arg1, arg2 = args[:]  end
+	cmd, args, n, = add_opt(cmd, 'L', d, [:L :dist2line], :line, [arg1, arg2, arg3], (dist="+d", ortho="_+p"))
+	if (n > 0)  arg1, arg2, arg3 = args[:]  end
 
 	common_grd(d, cmd0, cmd, "gmtselect ", arg1, arg2, arg3)		# Finish build cmd and run it
-end
-
-function dist2PtLine(d, cmd, opt)
-	# Accept (GMTdataset[,dist [,whatever]]); or (fname[,dist [,whatever]]); or 'fname' or full GMT syntax (string)
-	# Accept dist2line|dist2pt(line=fname|dataset, pts=fname|datset [,dist=value [,ortho=whatever]])
-	arg = nothing
-	opt == 'C' ? symbs = [:C :dist2pt :dist] : symbs = [:L :dist2line]
-	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		cmd *= " -" * opt
-		if (isa(val, NamedTuple))
-			d = nt2dict(val)
-			if ((target = find_in_dict(d, [:line :pts])[1]) === nothing)  error(":line or :pts member cannot be missing")  end
-			dist = "+d0"		# The default when dist is not provided
-			if ((dist = find_in_dict(d, [:dist])[1]) !== nothing)  dist = "+d" * arg2str(dist)  end
-			(isa(target, String) || isa(target, String)) ? cmd *= target : arg = target
-			cmd *= dist
-			if (haskey(d, :ortho))  cmd *= "+p"  end
-		elseif (isa(val, Tuple))
-			if (isa(val[1], String) || isa(val[1], Symbol))
-				cmd = string(cmd, val[1], "+d", val[2])
-			else
-				cmd = string(cmd, "+d", val[2]);	arg = val[1]
-			end
-			if (length(val) == 3)  cmd *= "+p"  end
-		elseif (isa(val, String) || isa(val, Symbol))
-			cmd *= string(val)
-		end
-	end
-	return cmd, arg
 end
 
 # ---------------------------------------------------------------------------------------------------

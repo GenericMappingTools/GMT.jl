@@ -86,7 +86,14 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
-- **axis** | **aspect** :: [Type => Str --
+
+- **Z** | **level** :: [Type => Str | NamedTuple]	`Arg = value|file[+f|+l] | (data=Array|Number, outline=_, fill=_)`
+
+    Paint polygons after the level given as a cte or a vector with same size of number of polygons. Needs a color map.
+    ($(GMTdoc)plot.html#z)
+
+- **axis** | **aspect** :: [Type => Str]
+
     When equal to "equal" makes a square plot.
 - $(GMT.opt_a)
 - $(GMT.opt_bi)

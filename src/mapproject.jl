@@ -39,7 +39,7 @@ Parameters
 
     Do the Inverse transformation, i.e., get (longitude,latitude) from (x,y) data.
     ($(GMTdoc)mapproject.html#i)
-- **L** | **dist2line** :: [Type => Str]   ``Arg = line.xy[+u[+|-]unit][+p]``
+- **L** | **dist2line** :: [Type => Str | NamedTuple]   ``Arg = line.xy[+u[+|-]unit][+p] | (line=Array,unit=x,fractional_pt=_)``
 
     Determine the shortest distance from the input data points to the line(s) given in the
     ASCII multisegment file line.xy.
@@ -97,27 +97,10 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd = add_opt(cmd, 'G', d, [:G :track_distances],
 	              (fixed_pt=("", arg2str, 1), accumulated="_+a", incremental="_+i", unit="+u1", var_pt="_+v"))
 
-	if ((val = find_in_dict(d, [:L :dist2line])[1]) !== nothing)
-		plus = ""
-		if (isa(val, String) || isa(val, Symbol))
-			cmd *= " -L" * arg2str(val)
-			to_slot = false
-		elseif (isa(val, NamedTuple))
-			di = nt2dict(val)
-			if ((val = find_in_dict(di, [:line])[1]) === nothing)  error(":line member cannot be missing")  end
-			if ((unit = find_in_dict(di, [:unit])[1]) !== nothing)  plus = "+u" * arg2str(unit)[1]  end
-			if (haskey(di, :fractional_pt))  plus *= "+p"  end
-			to_slot = true
-		elseif (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{GMT.GMTdataset,1}))
-			to_slot = true
-		else
-			error("Bad argument to dist2line option.")
-		end
-		if (to_slot)
-			cmd, N_used = put_in_slot(cmd, val, 'L', [arg1, arg2])
-			(N_used == 1) ? arg1 = val : arg2 = val
-			cmd *= plus
-		end
+	args = [arg1, arg2]
+	cmd, args, n, = add_opt(cmd, 'L', d, [:L :dist2line], :line, args, (unit="+u1", fractional_pt="_+p"))
+	if (n > 0)
+		arg1, arg2 = args[:]
 	end
 
 	if (!occursin("-G", cmd))
