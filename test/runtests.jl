@@ -567,6 +567,7 @@ if (got_it)					# Otherwise go straight to end
 	@test mapproject([1.0 1; 2 2], L=[1.0 0; 4 3], Vd=2) == "mapproject  -L "
 	@test mapproject([1.0 1; 2 2], L="lixo.dat", Vd=2) == "mapproject  -Llixo.dat "
 	@test_throws ErrorException("Bad argument type (Tuple{Float64,Int64}) to option L") mapproject([1.0 1; 2 2], L=(1.0,0), Vd=2)
+	@test_throws ErrorException("line member cannot be missing") mapproject(mapproject([1.0 1; 2 2], L=(lina=[1.0 0; 4 3], unit=:c), Vd=2))
 
 	@show("PLOT")
 	# PLOT

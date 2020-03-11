@@ -70,13 +70,24 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("gmtspatial", cmd0, arg1)
 
-	d = KW(kwargs)
+	d = KW(kwargs);     arg2 = nothing;     arg3 = nothing;     arg4 = nothing
 	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :g :h :i :o :yx])
-	cmd = parse_these_opts(cmd, d, [[:A :nn :nearest_neighbor], [:C :clip], [:D :duplicates], [:E :handedness],
-				[:F :force_polygons], [:I :intersections], [:N :in_polyg], [:Q :area :length],
-				[:S :polyg_process], [:T :truncate]])
+    cmd = parse_these_opts(cmd, d, [[:A :nn :nearest_neighbor], [:C :clip], [:E :handedness], [:F :force_polygons],
+                                    [:I :intersections], [:Q :area :length], [:S :polyg_process]])
 
-	common_grd(d, cmd0, cmd, "gmtspatial ", arg1)		# Finish build cmd and run it
+	cmd, args, n, = add_opt(cmd, 'D', d, [:D :duplicates], :data, [arg1, arg2], (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
+    if (n > 0)
+        arg1, arg2 = args[:]
+        cmd *= "+f"
+    end
+    
+	cmd, args, n, = add_opt(cmd, 'N', d, [:N :in_polyg], :data, [arg1, arg2, arg3], (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z"))
+	if (n > 0)  arg1, arg2, arg3 = args[:]  end
+    
+	cmd, args, n, = add_opt(cmd, 'T', d, [:T :truncate], :data, [arg1, arg2, arg3, arg4], (x="",))
+	if (n > 0)  arg1, arg2, arg3, arg4 = args[:]  end
+
+	common_grd(d, cmd0, cmd, "gmtspatial ", arg1, arg2, arg3, arg4)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
