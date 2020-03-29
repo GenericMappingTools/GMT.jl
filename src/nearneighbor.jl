@@ -16,7 +16,7 @@ Parameters
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
     ($(GMTdoc)nearneighbor.html#i)
-- **N** | **sectors** :: [Type => Number | Str]
+- **N** | **sectors** | **nn** | **nearest** :: [Type => Number | Str | Bool (for nn or nearest)]
 
     The circular area centered on each node is divided into `sectors` sectors.
     ($(GMTdoc)nearneighbor.html#n)
@@ -56,8 +56,10 @@ function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 	cmd = parse_common_opts(d, "", [:R :I :V_params :bi :di :e :f :h :i :n :r :yx])
-	cmd = parse_these_opts(cmd, d, [[:E :empty], [:G :outgrid], [:N :ids],
-	                                [:S :search_radius], [:Z :weights], [:A]])
+	cmd = parse_these_opts(cmd, d, [[:E :empty], [:G :outgrid], [:S :search_radius], [:Z :weights], [:A]])
+    cmd = add_opt(cmd, 'N', d, [:N :sectors], (n="", min_sectors="+m"), true)
+    opt = add_opt("", 'N', d, [:N :nn :nearest])
+    if (opt != "")  cmd *= " -Nn"  end
 
 	common_grd(d, cmd0, cmd, "nearneighbor ", arg1)		# Finish build cmd and run it
 end
