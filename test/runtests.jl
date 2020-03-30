@@ -979,14 +979,14 @@ if (got_it)					# Otherwise go straight to end
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
 	G2 = G1;
 	G3 = G1 + G2;
-	G3 = G1 + 1
+	G3 = G1 + 1;
 	G3 = G1 - G2;
-	G3 = G1 - 1
+	G3 = G1 - 1;
 	G3 = G1 * G2;
-	G3 = G1 * 2
+	G3 = G1 * 2;
 	G3 = G1 / G2;
-	G3 = G1 / 2
-	G2 = GMT.mat2grid(rand(Float32,5,5))
+	G3 = G1 / 2;
+	G2 = GMT.mat2grid(rand(Float32,5,5));
 	@test_throws ErrorException("The HDR array must have 9 elements") mat2grid(rand(4,4), reg=0, hdr=[0. 1 0 1 0 1])
 	@test_throws ErrorException("Grids have different sizes, so they cannot be added.") G1 + G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be subtracted.") G1 - G2;
@@ -1034,6 +1034,15 @@ if (got_it)					# Otherwise go straight to end
 		rm("lixo.gmt")
 	end
 
+	if (GMTver >= 6.1)
+		check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
+		C = makecpt(range=(0,9,1));
+		I = mat2img(check, cmap=C);
+		image_alpha!(I, alpha_ind=5);
+		image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
+		image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
+	end
+
 	GMT.linspace(1,1,100);
 	GMT.logspace(1,5);
 	GMT.fakedata(50,1);
@@ -1052,7 +1061,7 @@ if (got_it)					# Otherwise go straight to end
 	coast(region="g", proj="A300/30/6c", axis="g", resolution="c", land="navy")
 	plot!(collect(x)*60, seno, lw=0.5, lc="red", marker="circle", markeredgecolor=0, size=0.05, markerfacecolor="cyan")
 
-	G = GMT.peaks()
+	G = GMT.peaks();
 	show(G);
 	grdcontour(G, cont=1, annot=2, axis="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
