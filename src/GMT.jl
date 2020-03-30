@@ -40,7 +40,7 @@ export
 	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft,
 	grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdfill, grdlandmask, grdmask, grdpaste,
 	grdproject, grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume, greenspline,
-	mat2ds, mat2grid, mat2img, histogram, histogram!, image, image!, imshow, kml2gmt, logo, logo!,
+	mat2ds, mat2grid, mat2img, histogram, histogram!, image, image!, image_alpha!, imshow, kml2gmt, logo, logo!,
 	makecpt, mask, mask!, mapproject, movie, nearneighbor, plot, plot!, plot3, plot3!, plot3d, plot3d!, project,
 	pscontour, pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, psevents,
 	pshistogram, pshistogram!, psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!,

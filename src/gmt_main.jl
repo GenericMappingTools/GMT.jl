@@ -504,7 +504,7 @@ function get_image(API::Ptr{Nothing}, object)
 	                      t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
 	elseif (gmt_hdr.n_bands <= 3)
 		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", X, Y,
-	                      t, "", "", "", colormap, n_colors, zeros(UInt8,ny,nx), layout) 	# <== Ver o que fazer com o alpha
+	                      t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout) 	# <== Ver o que fazer com o alpha
 	else 			# RGB(A) image
 		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", X, Y,
 	                      t[:,:,1:3], "", "", "", colormap, n_colors, t[:,:,4], layout)
@@ -932,7 +932,8 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	Ib.data = pointer(Img.image)
 	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
 	Ib.n_indexed_colors = Img.n_colors
-	if (Img.color_interp != "")  Ib.color_interp = pointer(Img.color_interp)  end
+	if (Img.color_interp != "")    Ib.color_interp = pointer(Img.color_interp)  end
+	if (size(Img.alpha) != (1,1))  Ib.alpha = pointer(Img.alpha)  end
 	if (GMTver < 6)
 		Ib.alloc_mode = UInt32(GMT.GMT_ALLOC_EXTERNALLY)	# Since array was allocated by Julia
 	else
@@ -1624,15 +1625,22 @@ end
 # ---------------------------------------------------------------------------------------------------
 function mat2img(mat::Array{UInt8}; hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
-	color_interp = "";
+	color_interp = "";		n_colors = 0;
 	if (cmap !== nothing)
-		colormap = vec(zeros(Clong,256*4))
-		k = 1
-		for m = 1:size(cmap.colormap,1)
-			for n = 1:3
-				colormap[k] = Int32(round(cmap.colormap[m,n] * 255));	k += 1
+		have_alpha = !all(cmap.alpha .== 0.0)
+		nc = have_alpha ? 4 : 3
+		colormap = vec(zeros(Clong, 256 * nc))
+		n_colors = 256;			# Because for GDAL we always send 256 even if they are not all filled
+		for n = 1:3
+			for m = 1:size(cmap.colormap, 1)
+				colormap[m + (n-1)*n_colors] = Int32(round(cmap.colormap[m,n] * 255));
 			end
-			k += 1		# Space of the alpha col
+		end
+		if (have_alpha)			# Have alpha color(s)
+			for m = 1:size(cmap.colormap, 1)
+				colormap[m + 3*n_colors] = Int32(round(cmap.colormap[m,4] * 255));
+			end
+			n_colors *= 1000				# Flag that we have alpha colors in an indexed image
 		end
 	else
 		if (size(mat,3) == 1)  color_interp = "Gray"  end
@@ -1642,8 +1650,52 @@ function mat2img(mat::Array{UInt8}; hdr=nothing, proj4::String="", wkt::String="
 	nx = size(mat, 2);		ny = size(mat, 1);
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, 1, hdr)
 	
+	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TRPa"
 	I = GMTimage(proj4, wkt, 0, hdr, [x_inc, y_inc], 1, NaN, color_interp, "uint8",
-	             x,y,mat, "x", "y", "", colormap, 0, zeros(UInt8,ny,nx), "TRPa")
+	             x,y,mat, "x", "y", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    I = image_alpha(img::GMTimage; alpha_ind::Integer, alpha_vec::Integer, alpha_band::UInt8)
+
+Change the alpha transparency of the GMTimage object ``img``. If the image is indexed, one can either
+change just the color index that will be made transparent by uing ``alpha_ind=n`` or provide a vector
+of transaparency values in the range [0 255]; This vector can be shorter than the orginal number of colors.
+Use ``alpha_band``. to change, or add, the alpha of true color images (RGB).
+
+    Example1: change to the third color in cmap to represent the new transparent color
+        image_alpha(img, alpha_ind=3)
+
+    Example2: change to the first 6 colors in cmap by assigning them random values
+        image_alpha(img, alpha_vec=round.(Int32,rand(6).*255))
+"""
+function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec=nothing, alpha_band=nothing)
+	# Change the alpha transparency of an image
+	n_colors = img.n_colors
+	if (n_colors > 100000)  n_colors = Int(floor(n_colors / 1000))  end
+	if (alpha_ind !== nothing)			# Change the index of the alpha color
+		if (alpha_ind < 0 || alpha_ind > 255)  error("Alpha color index must be in the [0 255] interval")  end
+		img.n_colors = n_colors * 1000 + Int32(alpha_ind)
+	elseif (alpha_vec !== nothing)		# Replace/add the alpha column of the colormap matrix. Allow also shorter vectors
+		@assert(isa(alpha_vec, Array{<:Integer}))
+		if (length(alpha_vec) > n_colors)  error("Length of alpha vector is larger than the number of colors")  end
+		n_col = div(length(img.colormap), n_colors)
+		vec = convert.(Int32, alpha_vec)
+		if (n_col == 4)  img.colormap[(end-length(vec)+1):end] = vec;
+		else             img.colormap = [img.colormap; [vec[:]; round.(Int32, ones(n_colors - length(vec)) .* 255)]]
+		end
+		img.n_colors = n_colors * 1000
+	elseif (alpha_band !== nothing)		# Replace the entire alpha band
+		@assert(isa(alpha_band, Array{<:UInt8, 2}))
+		ny1, nx1, = size(img.image)
+		ny2, nx2  = size(alpha_band)
+		if (ny1 != ny2 || nx1 != nx2) error("alpha channel has wrong dimensions")  end
+		if (size(img.image, 3) != 3)  @warn("Adding alpha band is restricted to true color images (RGB)")
+		else                          img.alpha = alpha_band
+		end
+	end
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
