@@ -113,7 +113,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	opt_W = add_opt_pen(d, [:W :pen], "W")
-	if (occursin("+c", opt_W) || occursin("+c", cmd) && !occursin("-C", cmd))
+	if ((occursin("+c", opt_W) || occursin("+c", cmd)) && !occursin("-C", cmd))
 		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
 	end
 
