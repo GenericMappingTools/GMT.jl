@@ -39,7 +39,7 @@ Parameters
 
     Do the Inverse transformation, i.e., get (longitude,latitude) from (x,y) data.
     ($(GMTdoc)mapproject.html#i)
-- **L** | **dist2line** :: [Type => Str | NamedTuple]   ``Arg = line.xy[+u[+|-]unit][+p] | (line=Array,unit=x,fractional_pt=_)``
+- **L** | **dist2line** :: [Type => Str | NamedTuple]   ``Arg = line.xy[+u[+|-]unit][+p] | (line=Matrix, unit=x, fractional_pt=_,cartesian=true, projected=true)``
 
     Determine the shortest distance from the input data points to the line(s) given in the
     ASCII multisegment file line.xy.
@@ -87,7 +87,7 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("mapproject", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :p :s :yx])
+	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :j :o :p :s :yx])
 	cmd = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef], [:I :inverse], [:S :supress], #[:L :dist2line],
 	                                [:T :change_datum], [:W :map_size], [:Z :travel_times]])
 	cmd = add_opt_1char(cmd, d, [[:D :override_units], [:F :one2one], [:Q :list], [:N :geod2aux]])
@@ -98,7 +98,7 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	              (fixed_pt=("", arg2str, 1), accumulated="_+a", incremental="_+i", unit="+u1", var_pt="_+v"))
 
 	args = [arg1, arg2]
-	cmd, args, n, = add_opt(cmd, 'L', d, [:L :dist2line], :line, args, (unit="+u1", fractional_pt="_+p"))
+	cmd, args, n, = add_opt(cmd, 'L', d, [:L :dist2line], :line, args, (unit="+u1", cartesian="_+uc", project="_+uC", fractional_pt="_+p"))
 	if (n > 0)
 		arg1, arg2 = args[:]
 	end
