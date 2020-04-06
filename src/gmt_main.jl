@@ -1857,6 +1857,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function Base.:show(io::IO, ::MIME"text/plain", D::Array{GMTdataset})
 	println(typeof(D), " with ", length(D), " segments")
+	if (length(D) == 0)  return  end
 	(~isempty(D[1].comment)) && println("Comment:\t", D[1].comment)
 	(D[1].proj4 != "") && println("PROJ: ", D[1].proj4)
 	(D[1].wkt   != "") && println("WKT: ", D[1].wkt)

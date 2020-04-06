@@ -132,14 +132,21 @@ function gmtread(fname::String; kwargs...)
 		end
 		O = gmt("read " * fname * cmd)
 	else
+		opt_R = parse_R("", d)[1]
 		if (haskey(d, :Vd))
-			println(@sprintf("\togrread %s", fname))
+			println(@sprintf("\togrread %s %s", fname, opt_R))
 			if (d[:Vd] == 2)  return nothing  end
 		end
 		# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
 		if (Sys.iswindows() && check_url_name(fname))  run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)  end
 		API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
-		O = ogr2GMTdataset(gmt_ogrread(API2, fname))
+		if (GMTver >= 6.1)
+			x = opt_R2num(opt_R)		# See if we have a limits request
+			lims = (x === nothing) ? C_NULL : x
+			O = ogr2GMTdataset(gmt_ogrread(API2, fname, lims))
+		else
+			O = ogr2GMTdataset(gmt_ogrread(API2, fname))
+		end
 	end
 end
 
@@ -155,8 +162,8 @@ function guess_T_from_ext(fname::String)
 	ext = lowercase(ext[2:end])
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
-	elseif (findfirst(isequal(ext), ["jpg", "png", "tif", "bmp"]) !== nothing)  out = " -Ti";
-	elseif (findfirst(isequal(ext), ["shp", "kml", "json"])  !== nothing)  out = " -To";
+	elseif (findfirst(isequal(ext), ["jpg", "png", "tif", "bmp"]) 	!== nothing)  out = " -Ti";
+	elseif (findfirst(isequal(ext), ["shp", "kml", "json", "gmt"])  !== nothing)  out = " -To";
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	else
