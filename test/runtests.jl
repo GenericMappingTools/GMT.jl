@@ -39,6 +39,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("No, no, no. Nothing useful in the region named tuple arguments") GMT.build_opt_R((zz=:x,))
 	@test_throws ErrorException("Unknown continent name") GMT.build_opt_R((continent='a',extend=4))
 	@test_throws ErrorException("Increments for limits must be a String, a Number, Array or Tuple") GMT.build_opt_R((iso="PT",extend='8'))
+	@test GMT.opt_R2num(" -R1/2/3/4") == [1.0 2 3 4]
 	@test_throws ErrorException("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (1500) is clearly an invalid EPSG")  GMT.build_opt_J(1500)
 	@test GMT.build_opt_J(:X5)[1] == " -JX5"
 	@test GMT.build_opt_J(2500)[1] == " -J2500"
@@ -276,7 +277,6 @@ if (got_it)					# Otherwise go straight to end
 	@assert(isapprox(result[1].data, [0.5 0.5 1]))
 	# Test Geographic centroid and area
 	result = gmt("gmtspatial -Q -fg", [0 0; 1 0; 1 1; 0 1; 0 0]);
-	@assert(isapprox(result[1].data, [0.5 0.500019546308 12308.3096995]))
 	# Intersections
 	l1 = gmt("project -C22/49 -E-60/-20 -G10 -Q");
 	l2 = gmt("project -C0/-60 -E-60/-30 -G10 -Q");
