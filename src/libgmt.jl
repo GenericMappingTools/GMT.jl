@@ -406,9 +406,13 @@ function gmt_getpen(API::Ptr{Cvoid}, buffer, P)
 	ccall((:gmt_getpen, thelib), Cint, (Cstring, Ptr{Cuint}, Ref{GMT_PEN}), GMT_, buffer, P)
 end
 
-function gmt_ogrread(API::Ptr{Cvoid}, fname::String)
+function gmt_ogrread(API::Ptr{Cvoid}, fname::String, region=C_NULL)
 	GMT_ = GMT_Get_Ctrl(API)
-	ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}), GMT_, fname)
+	if (GMTver >= 6.1)
+		ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}, Ptr{Cdouble}), GMT_, fname, region)
+	else
+		ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}), GMT_, fname)
+	end
 end
 
 function check_url_name(fname::String)
