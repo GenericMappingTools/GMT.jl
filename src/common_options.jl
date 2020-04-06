@@ -127,6 +127,23 @@ function build_opt_R(arg::NamedTuple)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function opt_R2num(opt_R::String)
+	# Take a -R option string and convert it to numeric
+	if (opt_R == "")  return nothing  end
+	if (endswith(opt_R, "Rg"))  return [0.0 360. -90. 90.]  end
+	if (endswith(opt_R, "Rd"))  return [-180.0 180. -90. 90.]  end
+	rs = split(opt_R, '/')
+	limits = zeros(1,length(rs))
+	fst = 0
+	if ((ind = findfirst("R", rs[1])) !== nothing)  fst = ind[1]  end
+	limits[1] = parse(Float64, rs[1][fst+1:end])
+	for k = 2:length(rs)
+		limits[k] = parse(Float64, rs[k])
+	end
+	return limits
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_JZ(cmd::String, d::Dict, del=false)
 	opt_J = ""
 	val, symb = find_in_dict(d, [:JZ :Jz :zscale :zsize])
