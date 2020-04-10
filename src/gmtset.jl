@@ -33,6 +33,7 @@ function gmtset(cmd0::String=""; kwargs...)
 	for k = 1:length(d)
 		if (key[k] == :Vd)	continue	end
 		cmd *= " " * string(key[k]) * " " * string(d[key[k]])
+		delete!(d, key[k])
 	end
 
 	cmd = "gmtset " * cmd

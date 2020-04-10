@@ -71,8 +71,8 @@ function gmtread(fname::String; kwargs...)
 
 	# Process these first so they may take precedence over defaults set below
 	opt_T = add_opt("", "Tg", d, [:grd :grid])
-	if (opt_T != "")
-		(haskey(d, :gdal)) && (fname = fname * "=gd")     # Force read via GDAL
+	if (opt_T != "")		# Force read via GDAL
+		if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)  fname = fname * "=gd"  end
 	else
 		opt_T = add_opt("", "Ti", d, [:img :image])
 	end
@@ -81,12 +81,12 @@ function gmtread(fname::String; kwargs...)
 	if (opt_T == "")  opt_T = add_opt("", "Tp", d, [:ps])   end
 	if (opt_T == "")  opt_T = add_opt("", "To", d, [:ogr])  end
 
-	if (haskey(d, :varname))				# See if we have a nc varname / layer request
-		if (isempty(opt_T))
-			(haskey(d, :gdal)) && (fname = fname * "=gd")     # Force read via GDAL
+	if ((varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
+		if (isempty(opt_T))			# Force read via GDAL
+			if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)  fname = fname * "=gd"  end
 			opt_T = " -Tg"
 		end
-		fname = fname * "?" * arg2str(d[:varname])
+		fname = fname * "?" * arg2str(varname)
 		if ((val = find_in_dict(d, [:layer :band])[1]) !== nothing)
 			if (isa(val, Number))     fname *= @sprintf("[%d]", val)
 			elseif (isa(val, Array))  fname *= @sprintf("[%d,%d]", val[1], val[2])	# A 4D array
@@ -117,26 +117,19 @@ function gmtread(fname::String; kwargs...)
 	end
 
 	if (opt_T == " -Ti" || opt_T == " -Tg")		# See if we have a mem layout request
-		if (haskey(d, :layout))
-			t = arg2str(d[:layout])
-			cmd = (opt_T == " -Ti") ? cmd * " -%" * t : cmd * " -&" * t
+		if ((val = find_in_dict(d, [:layout])[1]) !== nothing)
+			cmd = (opt_T == " -Ti") ? cmd * " -%" * arg2str(val) : cmd * " -&" * arg2str(val)
 		end
 	end
 
 	if (opt_T != " -To")			# All others but OGR
 		if (opt_T == " -Td" && !isempty(opt_bi))  cmd *= opt_bi  end		# Read from binary file
 		cmd *= opt_T
-		if (haskey(d, :Vd))
-			println(@sprintf("\tread %s %s", fname, cmd))
-			if (d[:Vd] == 2)  return nothing  end
-		end
+		if (dbg_print_cmd(d, cmd) !== nothing)  return "gmtread " * cmd  end
 		O = gmt("read " * fname * cmd)
 	else
 		opt_R = parse_R("", d)[1]
-		if (haskey(d, :Vd))
-			println(@sprintf("\togrread %s %s", fname, opt_R))
-			if (d[:Vd] == 2)  return nothing  end
-		end
+		if (dbg_print_cmd(d, cmd) !== nothing)  return "ogrread " * cmd  end
 		# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
 		if (Sys.iswindows() && check_url_name(fname))  run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)  end
 		API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
@@ -262,17 +255,18 @@ function gmtwrite(fname::String, data; kwargs...)
 			fname *= fmt
 			opt_T = " -Tg"
 		end
+	else
+		error("Input data of unknown data type $(typeof(data))")
 	end
 	cmd = cmd * opt_T
 
 	if (opt_T == " -Ti" || opt_T == " -Tg")		# See if we have a mem layout request
-		if (haskey(d, :layout))
-			t = arg2str(d[:layout])
-			cmd = (opt_T == " -Ti") ? cmd * " -%" * t : cmd * " -&" * t
+		if ((val = find_in_dict(d, [:layout])[1]) !== nothing)
+			cmd = (opt_T == " -Ti") ? cmd * " -%" * arg2str(val) : cmd * " -&" * arg2str(val)
 		end
 	end
 
-	(haskey(d, :Vd)) && println(@sprintf("\twrite %s %s", fname, cmd))
+	if (dbg_print_cmd(d, cmd) !== nothing)  return "gmtwrite " * fname * cmd  end
 
 	gmt("write " * fname * cmd, data)
 	return nothing
@@ -297,14 +291,17 @@ function parse_grd_format(d::Dict)
 			break
 		end
 	end
-	if (haskey(d, :scale))  out *= "+s" * arg2str(d[:scale])  end
-	if (haskey(d, :offset)) out *= "+o" * arg2str(d[:offset]) end
+	if ((val = find_in_dict(d, [:scale])[1]) !== nothing)   out *= "+s" * arg2str(val)  end
+	if ((val = find_in_dict(d, [:offset])[1]) !== nothing)  out *= "+o" * arg2str(val)  end
 	if ((val = find_in_dict(d, [:nan :novalue :invalid :missing])[1]) !== nothing)
 		out *= "+n" * arg2str(val)
 	end
-	if (haskey(d, :driver))
-		out *= ":" * arg2str(d[:driver])
-		if (haskey(d, :datatype))  out *= "/" * arg2str(d[:datatype])  end
+	if ((val = find_in_dict(d, [:driver])[1]) !== nothing)
+		out *= ":" * arg2str(val)
+		if ((val = find_in_dict(d, [:datatype])[1]) !== nothing)
+			out *= "/" * arg2str(val)
+		end
 	end
+	del_from_dict(d, [:id :gdal])
 	return out
 end

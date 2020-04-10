@@ -90,8 +90,8 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 				[:Z :del_input_ps]])
 	cmd = parse_V_params(cmd, d)
 
-	if (haskey(d, :fmt))
-		fmt = isa(d[:fmt], Symbol) ? string(d[:fmt]) : d[:fmt]
+	if ((val = find_in_dict(d, [:fmt])[1]) !== nothing)
+		fmt = isa(val, Symbol) ? string(val) : val
 		if     (fmt == "pdf")  cmd *= " -Tf"
 		elseif (fmt == "eps")  cmd *= " -Te"
 		elseif (fmt == "png")  cmd *= " -Tg"
@@ -117,6 +117,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	if (haskey(d, :in_memory))
 		(arg1 === nothing) ? cmd *= " =" : arg1 = nothing	# in_memory and input file are incompat. File wins
+		delete!(d, :in_memory)
 	end
 
 	# In case DATA holds a file name, copy it into cmd.

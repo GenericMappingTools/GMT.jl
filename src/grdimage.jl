@@ -95,14 +95,14 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 	# Used both by grdimage and grdview
-	if ((val = find_in_dict(d, [:I :shade :intensity])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:I :shade :intensity], false)[1]) !== nothing)
 		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
 			if (isa(val, String) || isa(val, Symbol) || isa(val, Bool))
 				val = arg2str(val)
 				(val == "" || val == "default" || val == "auto") ? cmd *= " -I+a-45+nt1" : cmd *= " -I" * val
 			else
 				cmd = add_opt(cmd, 'I', d, [:I :shade :intensity],
-				              (auto="_+", azim="+a", azimuth="+a", norm="+n", default="_+d+a-45+nt1"))
+							  (auto="_+", azim="+a", azimuth="+a", norm="+n", default="_+d+a-45+nt1"))
 			end
 		else
 			if (prog == "grdimage")  cmd, N_used = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3, arg4])
@@ -114,6 +114,7 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 			elseif (N_used == 4)  arg4 = val	# grdview doesn't have this case but no harm to not test for that
 			end
 		end
+		del_from_dict(d, [:I :shade :intensity])
 	end
 	return cmd, arg1, arg2, arg3, arg4
 end
