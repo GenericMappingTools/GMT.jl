@@ -97,8 +97,8 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd = add_opt(cmd, 'G', d, [:G :track_distances],
 	              (fixed_pt=("", arg2str, 1), accumulated="_+a", incremental="_+i", unit="+u1", var_pt="_+v"))
 
-	args = [arg1, arg2]
-	cmd, args, n, = add_opt(cmd, 'L', d, [:L :dist2line], :line, args, (unit="+u1", cartesian="_+uc", project="_+uC", fractional_pt="_+p"))
+    cmd, args, n, = add_opt(cmd, 'L', d, [:L :dist2line], :line, Array{Any,1}([arg1, arg2]),
+                            (unit="+u1", cartesian="_+uc", project="_+uC", fractional_pt="_+p"))
 	if (n > 0)
 		arg1, arg2 = args[:]
 	end

@@ -89,7 +89,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt("", 'I', d, [:I :inquire])
 	if (cmd != "")
 		cmd = add_opt(cmd, 'W', d, [:W :bin :width])
-		(haskey(d, :Vd)) && println(@sprintf("\tpshistogram %s", cmd))
+		if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end
 		return gmt("pshistogram " * cmd, arg1)
 	end
 
@@ -98,7 +98,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "histogram", O, " -JX12c/12c")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :yx :params], first)
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:D :annot :annotate], [:F :center],
-				[:Q :cumulative], [:S :stairs]])
+	                                [:Q :cumulative], [:S :stairs]])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = add_opt(cmd, 'Z', d, [:Z :kind],
 		(counts="0", freq="1", log_count="2", log_freq="3", log10_count="4", log10_freq="5", weights="+w"))

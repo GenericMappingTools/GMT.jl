@@ -90,7 +90,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:c :e :f :p :t :yx :JZ :UVXY :params], first)
 	cmd = auto_JZ(cmd)		# Add -JZ if perspective for the case -R.../z_min/z_max
 	cmd = parse_these_opts(cmd, d, [[:A :azimuths], [:L :list], [:M :paragraph],
-	                 [:N :no_clip :noclip], [:Q :change_case], [:T :text_box], [:Z :threeD]])
+	                                [:N :no_clip :noclip], [:Q :change_case], [:T :text_box], [:Z :threeD]])
 	cmd = add_opt(cmd, 'C', d, [:C :clearance], (margin="#", round="_+tO", concave="_+tc", convex="_+tC"))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
@@ -103,7 +103,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd = add_opt(cmd, 'D', d, [:D :offset], (away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)), true)
 	cmd = add_opt(cmd, 'F', d, [:F :attrib],
-		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"), false, true)
+		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"), true, true)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= add_opt_pen(d, [:W :pen], "W")
 

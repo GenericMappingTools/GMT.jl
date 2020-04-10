@@ -79,9 +79,9 @@ function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kw
 	                [:G :gridmask], [:I :reverse], [:N :mask], [:Z :in_range]])
 	#cmd = add_opt(cmd, 'N', d, [:N :mask], (ocean=("", arg2str, 1), land=("", arg2str, 2)) )
 
-	cmd, args, n, = add_opt(cmd, 'C', d, [:C :dist2pt :dist], :pts, [arg1, arg2], (dist="+d",))
+	cmd, args, n, = add_opt(cmd, 'C', d, [:C :dist2pt :dist], :pts, Array{Any,1}([arg1, arg2]), (dist="+d",))
 	if (n > 0)  arg1, arg2 = args[:]  end
-	cmd, args, n, = add_opt(cmd, 'L', d, [:L :dist2line], :line, [arg1, arg2, arg3], (dist="+d", ortho="_+p"))
+	cmd, args, n, = add_opt(cmd, 'L', d, [:L :dist2line], :line, Array{Any,1}([arg1, arg2, arg3]), (dist="+d", ortho="_+p"))
 	if (n > 0)  arg1, arg2, arg3 = args[:]  end
 
 	common_grd(d, cmd0, cmd, "gmtselect ", arg1, arg2, arg3)		# Finish build cmd and run it

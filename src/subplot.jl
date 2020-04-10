@@ -45,7 +45,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
  
 	d = KW(kwargs)
 	# In case :title exists we must use and delete it to avoid double parsing
-	cmd = ((val = find_in_dict(d, [:T :title], true)[1]) !== nothing) ? " -T\"" * val * "\"" : ""
+	cmd = ((val = find_in_dict(d, [:T :title])[1]) !== nothing) ? " -T\"" * val * "\"" : ""
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "", false, " ")
 	cmd = parse_common_opts(d, cmd, [:params], true)
 	cmd = parse_these_opts(cmd, d, [[:M :margins]])
@@ -58,9 +58,10 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	cmd = add_opt(cmd, "", d, [:C :clearance],
 				  (left=(" -Cw", arg2str), right=(" -Ce", arg2str), bott=(" -Cs", arg2str), bottom=(" -Cs", arg2str), top=(" -Cn", arg2str)))
 
-	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing)
 		if (isa(val, NamedTuple) && haskey(nt2dict(val), :width))	# Preferred way
 			cmd *= " -F" * helper_sub_F(val)		# VAL = (width=x, height=x, fwidth=(...), fheight=(...))
+			del_from_dict(d, [:F :dims :dimensions :size :sizes])
 		else
 			cmd = add_opt(cmd, "F", d, [:F :dims :dimensions :size :sizes],
 			              (panels=("s", nothing, 1), size=("", helper_sub_F), sizes=("", helper_sub_F), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F)))
@@ -78,12 +79,16 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	# ------------------------------ End parsing inputs --------------------------------
 
 	if (!stop && !do_set)
-		if (!haskey(d, :grid))  error("SUBPLOT: 'grid' keyword is mandatory")  end
-		cmd = arg2str(d[:grid], 'x') * " " * cmd
+		#if (!haskey(d, :grid))  error("SUBPLOT: 'grid' keyword is mandatory")  end
+		#cmd = arg2str(d[:grid], 'x') * " " * cmd
+		if ((val = find_in_dict(d, [:grid])[1]) === nothing)
+			error("SUBPLOT: 'grid' keyword is mandatory")
+		end
+		cmd = arg2str(val, 'x') * " " * cmd
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 
 		if (!IamModern[1])			# If we are not in modern mode, issue a gmt("begin") first
-			fname = ""			# Default name (GMTplot.ps) is set in gmt_main()
+			fname = ""				# Default name (GMTplot.ps) is set in gmt_main()
 			if ((val = find_in_dict(d, [:name :savefig])[1]) !== nothing)
 				fname = get_format(string(val), nothing, d)		# Get the fig name and format.
 			end

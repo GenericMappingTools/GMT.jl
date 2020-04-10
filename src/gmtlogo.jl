@@ -50,22 +50,22 @@ function logo(cmd0::String=""; first=true, kwargs...)
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
-	do_julia    = haskey(d, :julia)
-	do_GMTjulia = haskey(d, :GMTjulia)
+	do_julia, do_GMTjulia = false, false
+	if ((val_j = find_in_dict(d, [:julia])[1]) !== nothing)     do_julia    = true  end
+	if ((val_G = find_in_dict(d, [:GMTjulia])[1]) !== nothing)  do_GMTjulia = true  end
 	if (do_julia || do_GMTjulia)
-		if (do_julia)	r = d[:julia]	else	r = d[:GMTjulia]	end
+		if (do_julia)	r = val_j	else	r = val_G	end
 		c,t,r2 = jlogo(r)			# r2 is the diameter of the inner circle
 		if (!occursin("-R", cmd))  cmd = @sprintf("-R0/%f/0/%f ", 2r, 2r) * cmd  end
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
 		do_show = false
 		if (do_GMTjulia && haskey(d, :show))  delete!(d, :show);  do_show = true  end	# Too soon
-		fmt = FMT[1]
+		fmt = nothing
 		if (do_GMTjulia)
-			if (haskey(d, :fmt))	# Too soon to set the format. Need to finish the PS first
-				fmt = d[:fmt];	delete!(d, :fmt);
-			end
+			# Too soon to set the format. Need to finish the PS first
+			if ((val = find_in_dict(d, [:fmt])[1]) !== nothing)  fmt = arg2str(val)  end
 			savefig = nothing
-			if ((val = find_in_dict(d, [:savefig :name], true)[1]) !== nothing)		#  Also too early for savefig
+			if ((val = find_in_dict(d, [:savefig :name])[1]) !== nothing)		#  Also too early for savefig
 				savefig = val
 			end
 		end
@@ -74,7 +74,11 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		if (do_GMTjulia)
 			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
 			opt_F = @sprintf("+f%d,NewCenturySchlbk-Italic",letter_height)
-			text!(text_record(t[1:3,1:2], ["G", "T", "M"]), R=[], J=[], F=opt_F, fmt=fmt, name=savefig, show=do_show)
+			if (fmt !== nothing)
+				text!(text_record(t[1:3,1:2], ["G", "T", "M"]), R=[], J=[], F=opt_F, fmt=fmt, name=savefig, show=do_show)
+			else
+				text!(text_record(t[1:3,1:2], ["G", "T", "M"]), R=[], J=[], F=opt_F, name=savefig, show=do_show)
+			end
 		end
 	else
 		if (!occursin("-D", cmd))  cmd = " -Dx0/0+w5c " * cmd	end

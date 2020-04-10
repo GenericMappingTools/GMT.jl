@@ -48,7 +48,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	# If a file name sent in, read it and compute a tight -R if this was not provided
 	if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
 	cmd, arg1, opt_R, lixo, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
-	if (N_args == 0)  N_args = 1  end		# Since the above always return a arg1 != nothing
+	if (N_args == 0 && arg1 !== nothing)  N_args = 1  end
 
 	if ((isa(arg1, GMTdataset) && arg1.proj4 != "" || isa(arg1, Vector{GMTdataset}) &&
 		     arg1[1].proj4 != "") && opt_J == " -JX" * def_fig_size)
@@ -119,7 +119,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	opt_S = add_opt("", 'S', d, [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
-		marca, arg1, more_cols = get_marker_name(d, [:marker :Marker :shape], is3D, false, arg1)
+		marca, arg1, more_cols = get_marker_name(d, [:marker :Marker :shape], is3D, true, arg1)
 		if ((val = find_in_dict(d, [:markersize :MarkerSize :ms :size])[1]) !== nothing)
 			if (marca == "")  marca = "c"  end		# If a marker name was not selected, defaults to circle
 			if (isa(val, AbstractArray))
@@ -137,6 +137,15 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			# If data comes from a file, then no automatic symbol size is added
 			op = lowercase(marca[1])
 			if (!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw"))  opt_S *= "7p"  end
+		end
+	else
+		val, symb = find_in_dict(d, [:markersize :MarkerSize :ms :size])
+		if (val !== nothing)
+			@warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
+		end
+		val, symb = find_in_dict(d, [:marker :Marker :shape])
+		if (val !== nothing)
+			@warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
 		end
 	end
 
@@ -295,7 +304,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, 
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_marker_name(d::Dict, symbs, is3D, del=false, arg1=nothing)
+function get_marker_name(d::Dict, symbs, is3D, del=true, arg1=nothing)
 	marca = Array{String,1}(undef,1)
 	marca = [""];		N = 0
 	for symb in symbs
@@ -455,7 +464,8 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 		if (!occursin(" -G", cmd[1]) && !occursin(" -C", cmd[1]))  cmd[1] *= " -G0/115/190"	end		# Default color
 	elseif (caller == "bar3")
 		if (haskey(d, :noshade) && occursin("-So", cmd[1]))
-			cmd[1] = replace(cmd[1], "-So" => "-SO", count=1)
+			cmd[1] = replace(cmd[1], "-So" => "-SO", count=1);
+			delete!(d, :noshade)
 		end
 		if (!occursin(" -G", cmd[1]) && !occursin(" -C", cmd[1]))  cmd[1] *= " -G0/115/190"	end
 		if (!occursin(" -J", cmd[1]))  cmd[1] *= " -JX12c/0"  end
@@ -481,7 +491,7 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u=fal
 	opt =""
 	if (haskey(d, key))
 		if (isa(d[key], String))
-			cmd *= " -" * optS * d[key]
+			cmd *= " -" * optS * d[key];	delete!(d, key)
 		elseif (isa(d[key], NamedTuple))
 			opt = add_opt("", optS, d, [key], (width="",unit="1",base="+b",height="+B",nbands="+z",Nbands="+Z"))
 		else

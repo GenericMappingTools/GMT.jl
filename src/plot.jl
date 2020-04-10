@@ -404,8 +404,8 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		else
 			# 0.85 is the % of inc width of bars
 			opt_S = @sprintf(" -So%.8gu/%.8gu", arg1.inc[1]*0.85, arg1.inc[2]*0.85)
-			if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands])
-			elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands])
+			if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands]);	delete!(d, :nbands)
+			elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands]);	delete!(d, :Nbands)
 			end
 		end
 		opt, = parse_R("", d, !first)
@@ -436,8 +436,8 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 			end
 		end
 		#if (opt_S != "" && !isletter(opt_S[end]))   opt_S = opt_S * 'u'  end
-		if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands])
-		elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands])
+		if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands]);	delete!(d, :nbands)
+		elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands]);	delete!(d, :Nbands)
 		end
 	end
 
@@ -500,10 +500,10 @@ function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	GMT.common_plot_xyz(cmd0, arg1, cmd, first, false, d...)
 end
 
-function helper_arrows(d::Dict, del::Bool=false)
+function helper_arrows(d::Dict, del::Bool=true)
 	# Helper function to set the vector head attributes
 	cmd = ""
-	val, symb = find_in_dict(d, [:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector])
+	val, symb = find_in_dict(d, [:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], del)
 	if (val !== nothing)
 		code = 'v'
 		if (symb == :geovec || symb == :geovector)
@@ -519,7 +519,6 @@ function helper_arrows(d::Dict, del::Bool=false)
 		elseif (symb == :arrow4 || symb == :vector4)  cmd = code * vector4_attrib(val)
 		else                       cmd = code * vector_attrib(val)
 		end
-		if (del)  delete!(d, symb)  end
 	end
 	return cmd
 end
@@ -549,10 +548,8 @@ Example:
 function lines(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
-	if (haskey(d, :decorated))
-		if (isa(d[:decorated], String))  cmd = d[:decorated]	# A hard core GMT string with options, including -S
-		else                             cmd = decorated(d[:decorated])
-		end
+	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
+		cmd = (isa(val, String)) ? val : decorated(val)
 	else
 		cmd = "lines"
 	end
@@ -569,9 +566,9 @@ lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
 
 
 # ------------------------------------------------------------------------------------------------------
-function ternary(cmd0::String="", arg1=nothing; kwargs...)
+function ternary(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# A wrapper for psternary
-	common_plot_xyz(cmd0, arg1, "ternary", true, false, kwargs...)
+	common_plot_xyz(cmd0, arg1, "ternary", first, false, kwargs...)
 end
 #ternary!(cmd0::String="", arg1=nothing; kw...) = ternary(cmd0, arg1; first=false, kw...)
 function ternary!(cmd0::String="", arg1=nothing; kw...)
@@ -646,18 +643,18 @@ Parameters
 function events(cmd0::String="", arg1=nothing; kwargs...)
 	# events share a lot of options with plot
 	d = KW(kwargs)
-	cmd = add_opt("", "T", d, [:T :now], nothing, true)
+	cmd = add_opt("", "T", d, [:T :now])
 	if (!occursin("-T", cmd))  error("The 'now' (T) option is mandatory")  end
 	cmd = add_opt(cmd, "E", d, [:E :knots],
-		(symbol=("s", nothing, 1), text=("t", nothing, 1), shift_startEnd = "+o", shift_start="+O", raise="+r", plateau="+p", decay="+d", fade="+f", text_duration="+l"), true)
+		(symbol=("s", nothing, 1), text=("t", nothing, 1), shift_startEnd = "+o", shift_start="+O", raise="+r", plateau="+p", decay="+d", fade="+f", text_duration="+l"))
 	cmd = add_opt(cmd, "M", d, [:M :rise],
-		(intensity=("i", arg2str, 1), size=("s", arg2str, 1), transparency=("t", arg2str, 1), coda="+c"), true)
-	cmd = add_opt(cmd, "L", d, [:L :duration], nothing, true)
-	cmd = add_opt(cmd, "Q", d, [:Q :save], nothing, true)
+		(intensity=("i", arg2str, 1), size=("s", arg2str, 1), transparency=("t", arg2str, 1), coda="+c"))
+	cmd = add_opt(cmd, "L", d, [:L :duration])
+	cmd = add_opt(cmd, "Q", d, [:Q :save])
 	cmd = add_opt(cmd, 'D', d, [:D :offset],
-		(away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)), true)
+		(away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)))
 	cmd = add_opt(cmd, 'F', d, [:F :attrib],
-		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"), false, true)
+		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"), false)
 	common_plot_xyz(cmd0, arg1, "events|" * cmd, true, false, d...)
 end
 const psevents = events            # Alias

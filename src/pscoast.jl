@@ -94,7 +94,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
 
-	maybe_more = false				# If latter set to true, search for lc & lc pen settings
+	maybe_more = false			# If latter set to true, search for lc & lc pen settings
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0")
 	cmd = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
 	cmd = auto_JZ(cmd)		# Add -JZ if perspective for the case -R.../z_min/z_max
@@ -117,16 +117,17 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	# Parse these three options that can be made to respond to same code`
 	symbs = [[:I :rivers], [:N :borders], [:W :shore]];	flags ="INW"
 	for k = 1:3
-		if ((val = find_in_dict(d, symbs[k])[1]) !== nothing)
+		if ((val = find_in_dict(d, symbs[k], false)[1]) !== nothing)
 			if (isa(val, NamedTuple) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
 				cmd = add_opt(cmd, flags[k], d, symbs[k], (type="/#", level="/#", pen=("", add_opt_pen)))
 			elseif (isa(val, Tuple))  cmd *= " -" * flags[k] * parse_pen(val)
 			else                      cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
 			end
+			del_from_dict(d, symbs[k])		# Now we can delete the kwarg
 		end
 	end
 
-	if ((val = find_in_dict(d, [:E :DCW])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:E :DCW], false)[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))
 			cmd = string(cmd, " -E", val)			# Simple case, ex E="PT,+gblue"
 		elseif (isa(val, NamedTuple))
@@ -135,6 +136,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		elseif (isa(val, Tuple))
 			cmd = parse_dcw(cmd, val)
 		end
+		del_from_dict(d, [:E :DCW])
 	end
 
 	if (!occursin("-C",cmd) && !occursin("-E",cmd) && !occursin("-G",cmd) && !occursin("-I",cmd) &&
