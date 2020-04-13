@@ -24,9 +24,10 @@ end
 
 Ends a GMT session in modern mode (GMT >= 6) and optionaly shows the figure
 """
-function gmtend(show=nothing; verbose=nothing)
+function gmtend(arg=nothing; show=false, verbose=nothing)
+	# To show either do gmtend(whatever) or gmt(show=true)
 	cmd = "end"
-	if (show !== nothing)  cmd *= " show"  end
+	if (arg !== nothing || show != 0)  cmd *= " show"  end
 	if (verbose !== nothing)  cmd *= " -V" * string(verbose)  end
 	gmt(cmd)
 	gmt("destroy")		# Lieve it in a clean state
