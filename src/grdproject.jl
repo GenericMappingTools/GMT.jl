@@ -48,7 +48,8 @@ function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdproject", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :J :V_params :n :r])
+    cmd = parse_common_opts(d, "", [:R :V_params :n :r])
+    cmd = parse_J(cmd, d, "", false)[1];       # Parse J separately because we need to set map=false (no size append)
 	cmd = parse_these_opts(cmd, d, [[:C :center], [:D :inc], [:E :dpi], [:F :one2one],
 	                                [:G :outgrid], [:I :inverse], [:M :projected_unit]])
 
