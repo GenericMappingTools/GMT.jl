@@ -57,7 +57,7 @@ to show
 Install
 =======
 
-    ]add GMT
+    ] add GMT
 
 A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT** install the
 [GMT](https://github.com/GenericMappingTools/gmt) program. It's the user responsability to do that.
@@ -81,7 +81,8 @@ On OSX, with a manual GMT build and dependencies obtained with Homebrew (that ar
 /user/local/lib), I had to help Julia finding MY *libgmt.dylib*, with (this line should than be
 added to the ~/.julia/config/startup.jl file)
 
-    push!(Libdl.DL_LOAD_PATH, "/Users/j/programs/gmt5/lib")
+    using Libdl
+    push!(Libdl.DL_LOAD_PATH, "/Users/j/programs/gmt6/lib")
 
 Using
 =====
