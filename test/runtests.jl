@@ -1101,6 +1101,7 @@ if (got_it)					# Otherwise go straight to end
 	grdcontour(G, cont=1, annot=2, axis="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
 	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
+	D = grdcontour(G, cont=[-2,0,5], dump=true);
 
 	# Remove garbage
 	rm("gmt.history")
