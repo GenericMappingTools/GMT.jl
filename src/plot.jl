@@ -40,7 +40,7 @@ Parameters
 
     Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating illumination.
     ($(GMTdoc)plot.html#i)
-- **L** | **close** :: [Type => Str]
+- **L** | **close** | **polygon** :: [Type => Str]
 
     Force closed polygons. 
     ($(GMTdoc)plot.html#l)
