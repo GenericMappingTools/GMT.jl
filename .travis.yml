@@ -44,7 +44,7 @@ before_install:
       - tar -xvzf dcw-gmt-1.1.4.tar.gz
       - mkdir build
       - cd build
-      - cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt -DGSHHG_ROOT=$HOME/gmt/gshhg-gmt-2.3.7
+      - cmake --config Release .. -DSUPPORT_EXEC_IN_BINARY_DIR=TRUE -DGMT_ENABLE_OPENMP=ON -DCMAKE_INSTALL_PREFIX=$HOME/gmt -DGSHHG_ROOT=$HOME/gmt/gshhg-gmt-2.3.7
       - make -j && make install
       - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/gmt/lib"
       - cd /home/travis/build/GenericMappingTools/GMT.jl
