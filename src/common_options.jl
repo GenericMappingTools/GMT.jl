@@ -1313,7 +1313,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_o
 		elseif (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{GMT.GMTdataset,1}) || typeof(val) <: AbstractRange)
 			if (typeof(val) <: AbstractRange)  val = collect(val)  end
 			cmd *= " -" * opt
-		elseif (isa(val, String) || isa(val, Symbol))
+		elseif (isa(val, String) || isa(val, Symbol) || isa(val, Number))
 			cmd *= " -" * opt * arg2str(val)
 			to_slot = false
 		else
