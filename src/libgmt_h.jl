@@ -837,6 +837,7 @@ mutable struct OGR_FEATURES
 	is3D::Cint
 	np::Cuint
 	att_number::Cint
+	n_islands::Cint				# Number of islands in a polygon
 	name::Ptr{UInt8} 
 	wkt::Ptr{UInt8} 
 	proj4::Ptr{UInt8} 
