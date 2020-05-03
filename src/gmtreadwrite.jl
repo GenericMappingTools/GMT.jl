@@ -156,7 +156,7 @@ function guess_T_from_ext(fname::String)
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "png", "tif", "bmp"]) 	!== nothing)  out = " -Ti";
-	elseif (findfirst(isequal(ext), ["shp", "kml", "json", "gmt"])  !== nothing)  out = " -To";
+	elseif (findfirst(isequal(ext), ["shp", "kml", "json", "geojson", "gmt"])  !== nothing)  out = " -To";
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	else
