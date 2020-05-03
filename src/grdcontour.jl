@@ -76,8 +76,8 @@ Parameters
 """
 function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdcontour", cmd0, arg1)
-	arg2 = nothing
+	length(kwargs) == 0 && cmd0 != "" && return monolitic("grdcontour", cmd0, arg1)
+	arg2 = arg3 = nothing
 
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
@@ -95,10 +95,6 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	#cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
 	cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
 
-	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
-		cmd = add_opt(cmd, 'C', d, [:C :cont :contours :levels])
-	end
-
 	if ((val = find_in_dict(d, [:N :fill :colorize])[1]) !== nothing)
 		if (isa(val, GMTcpt))
 			if (!isempty_(arg2))	# Already have one cpt in arg2, replace it by new one
@@ -110,11 +106,28 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
+	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
+		cmd, args, n, = add_opt(cmd, 'C', d, [:C :cont :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
+		if (n > 0)
+			for k = 3:-1:1
+				if (args[k] === nothing)  continue  end
+				if (isa(args[k], Array{<:Number}))
+					cmd *= arg2str(args[k], ',')
+					if (length(args[k]) == 1)  cmd *= ","  end		# A single contour needs to end with a ","
+					break
+				elseif (isa(args[k], GMTcpt))
+					arg1, arg2, arg3 = args[:]
+					break
+				end
+			end
+		end
+	end
+
 	opt_extra = "";		do_finish = true
 	if (occursin("-D", cmd))
 		opt_extra = "-D";		do_finish = false;	cmd = replace(cmd, opt_J => "")
 	end
-    return finish_PS_module(d, "grdcontour " * cmd, opt_extra, K, O, do_finish, arg1, arg2)
+    return finish_PS_module(d, "grdcontour " * cmd, opt_extra, K, O, do_finish, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------
