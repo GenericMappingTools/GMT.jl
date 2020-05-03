@@ -28,9 +28,9 @@ Parameters
 
     Generate mode. No input is read. Create (r, s, p) output points every dist units of p. See Q option.
     ($(GMTdoc)project.html#g)
-- **L** | **length_control** :: [Type => Number or list/tuple]    ``Arg = [w|l_min/l_max]``
+- **L** | **length_control** :: [Type => Number or list/tuple]    ``Arg = [w|l_{min}/l_{max}]``
 
-    Length controls. Project only those points whose p coordinate is within l_min < p < l_max.
+    Length controls. Project only those points whose p coordinate is within l\\_min < p < l\\_max.
     ($(GMTdoc)project.html#l)
 - **N** | **flat_earth** :: [Type => Bool or []]
 
@@ -48,9 +48,9 @@ Parameters
 
     px,py sets the position of the rotation pole of the projection. (Definition 3).
     ($(GMTdoc)project.html#t)
-- **W** | **width_control** :: [Type => list/tuple]    ``Arg = (w_min,w_max)``
+- **W** | **width_control** :: [Type => list/tuple]    ``Arg = (w_{min},w_{max})``
 
-    Width controls. Project only those points whose q coordinate is within w_min < q < w_max.
+    Width controls. Project only those points whose q coordinate is within w\\_min < q < w\\_max.
     ($(GMTdoc)project.html#w)
 
 - $(GMT.opt_write)
