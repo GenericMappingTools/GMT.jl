@@ -4,8 +4,7 @@ language: julia
 sudo: false
 
 os:
-  #- linux
-  - osx
+  - linux
 julia:
   - 1.1.0
   #- 1.2
