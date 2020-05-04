@@ -1081,7 +1081,7 @@ end
 function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, actual_family)
 # Used to create containers to hold or receive data:
 # direction == GMT_IN:  Create empty Matrix container, associate it with mex data matrix, and use as GMT input.
-# direction == GMT_OUT: Create empty Vector container, let GMT fill it out, and use for Mex output.
+# direction == GMT_OUT: Create empty Vector container, let GMT fill it out, and use for output.
 # Note that in GMT these will be considered DATASETs via GMT_MATRIX or GMT_VECTOR.
 # If direction is GMT_IN then we are given a Julia matrix and can determine size, etc.
 # If output then we dont know size so all we do is specify data type.
@@ -1362,32 +1362,56 @@ function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function ogr2GMTdataset(in::Ptr{OGR_FEATURES})
+function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 	(in == NULL)  && return nothing
 	OGR_F = unsafe_load(in)
 	n_max = OGR_F.n_rows * OGR_F.n_cols * OGR_F.n_layers
-	D = Array{GMTdataset, 1}(undef, OGR_F.n_filled)
-	hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,k))) for k = 1:OGR_F.att_number]) : ""
-	D[1] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-		Array{String,1}(), hdr, Array{String,1}(), OGR_F.proj4 != C_NULL ? unsafe_string(OGR_F.proj4) : "",
-		OGR_F.wkt != C_NULL ? unsafe_string(OGR_F.wkt) : "")
-	next = 2
-	if (OGR_F.np == 0)			# Shit, first feature has no points. Must find first non empty since n_filled is still valid
-		n = 2
-		while (OGR_F.np == 0)
-			OGR_F = unsafe_load(in,n)
-			n = n + 1
+	n_total_segments = OGR_F.n_filled
+
+	if (!drop_islands)
+		# First count the number of islands. Need to know the size to put in the D pre-allocation
+		n_islands = OGR_F.n_islands
+		for k = 2:n_max
+			OGR_F = unsafe_load(in, k)
+			n_islands += OGR_F.n_islands
 		end
-		D[1].data = [unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)]
-		next = n
+		n_total_segments += n_islands
 	end
-	n = 2
-	for k = next:n_max
+
+	D = Array{GMTdataset, 1}(undef, n_total_segments)
+
+	n = 1
+	for k = 1:n_max
 		OGR_F = unsafe_load(in, k)
+		if (k == 1)
+			proj4 = OGR_F.proj4 != C_NULL ? unsafe_string(OGR_F.proj4) : ""
+			wkt   = OGR_F.wkt != C_NULL ? unsafe_string(OGR_F.wkt) : ""
+		else
+			proj4 = wkt = ""
+		end
 		if (OGR_F.np > 0)
 			hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,i))) for i = 1:OGR_F.att_number]) : ""
-			D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-				Array{String,1}(), hdr, Array{String,1}(), "", "")
+			if (hdr != "")  hdr = rstrip(hdr, ',')  end		# Strip last ','
+			if (OGR_F.n_islands == 0)
+				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
+				                   Array{String,1}(), hdr, Array{String,1}(), proj4, wkt)
+			else
+				# In this case, for the time being, I'm droping the islands
+				islands = reshape(unsafe_wrap(Array, OGR_F.islands, 2 * (OGR_F.n_islands+1)), OGR_F.n_islands+1, 2) 
+				np_main = islands[1,2]+1		# Number of points of outer ring
+				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main)],
+				                   Array{String,1}(), hdr, Array{String,1}(), proj4, wkt)
+
+				if (!drop_islands)
+					for k = 2:size(islands,2)		# 2 because first row holds the outer ring indexes 
+						n = n + 1
+						off = islands[k,1] * 8
+						len = islands[k,2] - islands[k,1] + 1
+						D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x+off, len) unsafe_wrap(Array, OGR_F.y+off, len)],
+						                   Array{String,1}(), " -Ph", Array{String,1}(), proj4, wkt)
+					end
+				end
+			end
 			n = n + 1
 		end
 	end
@@ -1720,7 +1744,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
-# Generate x,y coors array and compute/update header plus increments for grids/images
+# Generate x,y coords array and compute/update header plus increments for grids/images
 	nx = size(mat, 2);		ny = size(mat, 1);
 
 	if (x !== nothing && y !== nothing)		# But not tested if they are equi-spaced as they MUST be
@@ -1749,6 +1773,61 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 		y_inc = (hdr[4] - hdr[3]) / (ny - one_or_zero)
 	end
 	return x, y, hdr, x_inc, y_inc
+end
+
+# ---------------------------------------------------------------------------------------------------
+function make_zvals_vec(D, user_ids::Array{String,1}, vals)
+	# USER_IDS is a string array with the ids (names in header) of the GMTdataset D 
+	# VALS is a vector with the the numbers to be used in plot -Z to color the polygons.
+	# Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
+	# The elements of ZVALS are made up from the VALS but it can be larger if there are segments with
+	# no headers. In that case it replicates the previously known value until it finds a new segment ID.
+	n_user_ids = length(user_ids)
+	@assert(n_user_ids == length(vals))
+	ind, data_ids = get_segment_ids(D)
+	if (ind[1] != 1)  error("This function requires that first segment hasa a header with an id")  end
+	n_data_ids = length(data_ids)
+	if (n_user_ids > n_data_ids)
+		@warn("Number of segment IDs requested is larger than segments with headers in data")
+	end
+
+	zvals = Array{Int,1}(undef, length(D))
+	n = 1
+	for k = 1:n_user_ids
+		for d_id in data_ids
+			if startswith(user_ids[k], d_id)	# Find first occurence of user_ids[k] in a segment header
+				last = (k < n_data_ids) ? ind[k+1]-1 : length(D)
+				[zvals[j] = vals[k] for j = ind[k]:last]		# Repeat the last VAL for segments with no headers
+				n = last + 1					# Prepare for next new VAL
+				break
+			end
+		end
+	end
+	return zvals
+end
+
+# ---------------------------------------------------------------------------------------------------
+function edit_segment_headers!(D, vals, opt)
+	# Add an option OPT to segment headers with a val from VALS. Number of elements of VALS must
+	# be equal to the number of segments in D that have a header.
+	ind, ids = get_segment_ids(D)
+	for k = 1:length(ind)
+		D[ind[k]].header *= string(opt, vals[k])
+	end
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function get_segment_ids(D)
+	# Get segment ids (first text after the '>') and the idices of those segments
+	d = Dict(k => D[k].header for k = 1:length(D))
+	tf = Array{Bool,1}(undef,length(D))			# pre-allocate
+	[tf[k] = (d[k] !== "" && d[k][1] != ' ') ? true : false for k = 1:length(D)];	# Mask of non-empty headers
+	ind = collect(1:length(D))
+	ind = ind[tf]			# OK, now we have the indices of the segments with headers != ""
+	ids = Array{String,1}(undef,length(ind))	# pre-allocate
+	[ids[k] = d[ind[k]] for k = 1:length(ind)]	# indices of non-empty segments
+	return ind, ids
 end
 
 # ---------------------------------------------------------------------------------------------------

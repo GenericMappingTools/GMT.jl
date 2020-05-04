@@ -102,7 +102,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	if (is_ternary)			# Means we are in the psternary mode
 		cmd = add_opt(cmd, 'L', d, [:L :labels])
 	else
-		cmd = add_opt(cmd, 'L', d, [:L :close],
+		cmd = add_opt(cmd, 'L', d, [:L :close :polygon],
 			(left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
 		if (occursin("-L", cmd) && !occursin("-G", cmd) && !occursin("+p", cmd))  cmd *= "+p0.5p"  end
 	end
