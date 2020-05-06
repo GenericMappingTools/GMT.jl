@@ -30,7 +30,7 @@ before_install:
       - pwd
       - sudo apt-get install subversion build-essential cmake libcurl4-gnutls-dev libnetcdf-dev libgdal1-dev libfftw3-dev libpcre3-dev liblapack-dev ghostscript
       #- git clone https://github.com/GenericMappingTools/gmt.git $HOME/gmt
-      - git clone -b external-lib-access --single-branc hhttps://github.com/joa-quim/gmt.git $HOME/gmt
+      - git clone -b external-lib-access --single-branc https://github.com/joa-quim/gmt.git $HOME/gmt
       - PATH="$HOME/gmt/bin:$PATH"
       - export PATH
       - echo 'export PATH="$HOME/gmt/bin:$PATH"' >>~/.bash_profile
