@@ -24,8 +24,8 @@ if (got_it)					# Otherwise go straight to end
 
 	# -------------------- Test common_options ----------------------------------------
 	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)))[1] == " -R1/2/3/4/5/6"
-#	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
-#	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
+	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
+	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
 	@test GMT.build_opt_R(:d) == " -Rd"
 	@test GMT.build_opt_R([]) == ""
 	@test GMT.build_opt_R((bb=:global,)) == " -R-180/180/-90/90"
