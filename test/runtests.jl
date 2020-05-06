@@ -737,8 +737,7 @@ if (got_it)					# Otherwise go straight to end
 	# Test ogrread. STUPID OLD Linux for travis is still on GDAL 1.11
 	if (GMTver >= 6)
 		#API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
-		#GMT.gmt_ogrread(API, "lixo.gmt");
-		gmtread("lixo.gmt");
+		#gmtread("lixo.gmt");
 	end
 
 	@show("PROJECT")
