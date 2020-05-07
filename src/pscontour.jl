@@ -16,7 +16,7 @@ Parameters
 - $(GMT.opt_B)
 - **C** | **cont** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
-    Contours contours to be drawn may be specified in one of three possible ways.
+    Contours to be drawn may be specified in one of three possible ways.
     ($(GMTdoc)contour.html#c)
 - **D** | **dump** :: [Type => Str]
 
@@ -100,7 +100,20 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing), arg1, nothing, nothing, "pscontour")
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
-		cmd = add_opt(cmd, 'C', d, [:cont :contours :levels])
+		cmd, args, n, = add_opt(cmd, 'C', d, [:C :cont :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
+		if (n > 0)
+			for k = 3:-1:1
+				if (args[k] === nothing)  continue  end
+				if (isa(args[k], Array{<:Number}))
+					cmd *= arg2str(args[k], ',')
+					if (length(args[k]) == 1)  cmd *= ","  end		# A single contour needs to end with a ","
+					break
+				elseif (isa(args[k], GMTcpt))
+					arg1, arg2, arg3 = args[:]
+					break
+				end
+			end
+		end
 	end
 
 	if ((val = find_in_dict(d, [:E :index])[1]) !== nothing)
@@ -112,7 +125,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	if (!occursin(" -W", cmd) && !occursin(" -I", cmd))  cmd *= " -W"  end	# Use default pen
+	if (!occursin(" -W", cmd) && !occursin(" -I", cmd) && !occursin(" -D", cmd))  cmd *= " -W"  end	# Use default pen
 
 	if (occursin("-I", cmd) && !occursin("-C", cmd))
 		info[1].data[5], info[1].data[6] = round_wesn([info[1].data[5], info[1].data[6], info[1].data[5], info[1].data[6]])
