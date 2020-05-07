@@ -830,6 +830,7 @@ if (got_it)					# Otherwise go straight to end
 	contour!([x[:] y[:] z[:]], cont=1, Vd=dbg2)
 	contour!([x[:] y[:] z[:]], cont=1, E="lixo", Vd=dbg2)	# Cheating E opt because Vd=dbg2 prevents its usage
 	contour!("", [x[:] y[:] z[:]], cont=1, Vd=dbg2)
+	D = contour([x[:] y[:] z[:]], cont=[1,3,5], dump=true);
 
 	@show("PSIMAGE")
 	# PSIMAGE
