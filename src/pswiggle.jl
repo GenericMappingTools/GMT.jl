@@ -70,7 +70,7 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:c :e :f :g :p :t :yx :F :UVXY :params], first)
+	cmd = parse_common_opts(d, cmd, [:c :e :f :g :p :t :F :UVXY :params], first)
 	cmd = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided

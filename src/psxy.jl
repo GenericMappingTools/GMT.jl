@@ -39,7 +39,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	def_J = (is_ternary) ? " -JX12c/0" : ""
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
 	if (is3D)	cmd, opt_JZ  = parse_JZ(cmd, d)  end
-	cmd = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :yx :params], first)
+	cmd = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :params], first)
 	cmd = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	if (is_ternary)  cmd = add_opt(cmd, 'M', d, [:M :no_plot])  end
 	opt_UVXY = parse_UVXY("", d)	# Need it separate to not risk to double include it.
