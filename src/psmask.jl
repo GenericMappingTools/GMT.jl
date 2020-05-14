@@ -76,7 +76,7 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
-	cmd = parse_common_opts(d, cmd, [:I :UVXY :JZ :c :e :p :r :t :yx :params], first)
+	cmd = parse_common_opts(d, cmd, [:I :UVXY :JZ :c :e :p :r :t :params], first)
 	cmd = parse_these_opts(cmd, d, [[:C :end_clip_path], [:D :dump], [:F :oriented_polygons],
 	                [:L :node_grid], [:N :invert], [:Q :cut_number], [:S :search_radius], [:T :tiles]])
 

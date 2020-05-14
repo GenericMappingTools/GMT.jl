@@ -87,7 +87,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:c :e :f :p :t :yx :JZ :UVXY :params], first)
+	cmd = parse_common_opts(d, cmd, [:c :e :f :p :t :JZ :UVXY :params], first)
 	cmd = auto_JZ(cmd)		# Add -JZ if perspective for the case -R.../z_min/z_max
 	cmd = parse_these_opts(cmd, d, [[:A :azimuths], [:L :list], [:M :paragraph],
 	                                [:N :no_clip :noclip], [:Q :change_case], [:T :text_box], [:Z :threeD]])

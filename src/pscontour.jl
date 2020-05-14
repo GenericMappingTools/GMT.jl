@@ -90,7 +90,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:UVXY :bo :c :d :do :e :p :t :yx :params], first)
+	cmd = parse_common_opts(d, cmd, [:UVXY :bo :c :d :do :e :p :t :params], first)
 	cmd = parse_these_opts(cmd, d, [[:D :dump], [:I :fill :colorize], [:N :no_clip], [:Q :cut], [:S :skip]])
 	cmd *= add_opt_pen(d, [:L :mesh], "L")
 	cmd = parse_contour_AGTW(d::Dict, cmd::String)

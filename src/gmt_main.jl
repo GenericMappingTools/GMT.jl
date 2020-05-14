@@ -702,8 +702,8 @@ function get_dataset(API::Ptr{Nothing}, object)
 	D = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
 	seg_out = 0
+	T = unsafe_wrap(Array, D.table, D.n_tables)
 	for tbl = 1:D.n_tables
-		T = unsafe_wrap(Array, D.table, tbl)
 		DT = unsafe_load(T[tbl])
 		for seg = 1:DT.n_segments
 			S  = unsafe_wrap(Array, DT.segment, seg)

@@ -2173,18 +2173,20 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	cmd, opt_i  = parse_i(cmd, d)		# If data is to be read as binary
 	cmd, opt_di = parse_di(cmd, d)		# If data missing data other than NaN
 	cmd, opt_h  = parse_h(cmd, d)
+	cmd, opt_yx = parse_swap_xy(cmd, d)
+	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
 	if (isa(data_kw, String))
 		if ((!IamModern[1] && opt_R == "") || get_info)		# Then we must read the file to determine -R
 			lixo, opt_bi = parse_bi("", d)	# See if user says file is binary
 			if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
-				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * " " * data_kw)
+				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
 				if (opt_i != "")			# Remove the -i option from cmd. It has done its job
 					cmd = replace(cmd, opt_i => "")
 					opt_i = ""
 				end
 				if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
 			else
-				data_kw = gmt("read -Td " * opt_bi * opt_di * opt_h * " " * data_kw)
+				data_kw = gmt("read -Td " * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
 			end
 		else							# No need to find -R so let the GMT module read the file
 			cmd = data_kw * " " * cmd
@@ -2197,7 +2199,10 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	info = nothing
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
 	if ((!IamModern[1] && no_R) || (force_get_R && no_R))
-		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h, arg)		# Here we are reading from an original GMTdataset or Array
+		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h * opt_yx, arg)		# Here we are reading from an original GMTdataset or Array
+		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
+			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
+		end
 		if (opt_R != "" && opt_R[1] == '/')	# Modify what will be reported as a -R string
 			# Example "/-0.1/0.1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
 			rs = split(opt_R, '/')
@@ -2226,7 +2231,10 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	end
 
 	if (get_info && info === nothing)
-		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h, arg)
+		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h * opt_yx, arg)
+		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
+			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
+		end
 	end
 
 	return cmd, arg, opt_R, info, opt_i
