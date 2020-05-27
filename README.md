@@ -79,10 +79,12 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
 
 On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at
 /user/local/lib), I had to help Julia finding MY *libgmt.dylib*, with (this line should than be
-added to the ~/.julia/config/startup.jl file)
+added to the ~/.julia/config/startup.jl file). Linux users have may have the same issue and this
+solution has been reported to work too, though an alternative is to add the GMT lib location to
+``LD_LIBRARY_PATH`` (e.g. export ``LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/gmt/lib``)
 
     using Libdl
-    push!(Libdl.DL_LOAD_PATH, "/Users/j/programs/gmt6/lib")
+    push!(Libdl.DL_LOAD_PATH, "/path/to/gmt6/lib")
 
 Using
 =====
