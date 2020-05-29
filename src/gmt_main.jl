@@ -32,7 +32,6 @@ mutable struct GMTimage 	# The mutable struct holding a local header and data of
 	x::Array{Float64,1}
 	y::Array{Float64,1}
 	image::Union{Array{UInt8}, Array{UInt16}}
-#	image::Array{UInt16}
 	x_unit::String
 	y_unit::String
 	z_unit::String
