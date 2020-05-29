@@ -64,7 +64,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
 	cmd = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G :bit_color],
-				[:M :monochrome], [:N :noclip], [:Q :nan_t :nan_alpha], ["," :mem :mem_layout]])
+	                                [:M :monochrome], [:N :noclip], [:Q :nan_t :nan_alpha], ["," :mem :mem_layout]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	if (got_fname == 0 && isa(arg1, Tuple))			# Then it must be using the three r,g,b grids
@@ -82,7 +82,14 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
 
-	if (isa(arg1, GMTimage) && !occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
+	if (isa(arg1, GMTimage))
+		if (!occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
+		if (isa(arg1.image, Array{UInt16}))
+			arg1 = mat2img(arg1; d...)				# Get a new UInt8 scaled image
+			if (haskey(d, :histo_bounds))  delete!(d, :histo_bounds)  end
+		end
+	end
+	#if (isa(arg1, GMTimage) && !occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
 	cmd = "grdimage " * cmd				# In any case we need this
 	do_finish = false
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
