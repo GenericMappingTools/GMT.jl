@@ -625,7 +625,7 @@ mutable struct GMT_IMAGE_v6
 	colormap::Ptr{Cint}
 	n_indexed_colors::Cint
 	header::Ptr{GMT_GRID_HEADER}
-	data::Ptr{Cuchar}
+	data::Ptr{Cvoid}
 	alpha::Ptr{Cuchar}
 	color_interp::Ptr{UInt8}
 	x::Ptr{Cdouble}

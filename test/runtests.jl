@@ -192,6 +192,12 @@ if (got_it)					# Otherwise go straight to end
 	GMT.GMTdataset([0.0 0]);
 	GMT.GMTdataset([0.0 0], Array{String,1}());
 
+	img16 = rand(UInt16, 32, 32, 3);
+	GMT.mat2img(img16);
+	GMT.mat2img(img16, histo_bounds=8440);
+	GMT.mat2img(img16, histo_bounds=[8440 13540]);
+	GMT.mat2img(img16, histo_bounds=[8440 13540 800 20000 1000 30000]);
+
 	@test_throws ErrorException("Memory layout option must have 3 characters and not 1") GMT.parse_mem_layouts("-%1")
 	@test_throws ErrorException("Memory layout option must have at least 2 chars and not 1") GMT.parse_mem_layouts("-&1")
 	@test GMT.parse_mem_layouts("-&BR")[3] == "BR"
@@ -364,7 +370,7 @@ if (got_it)					# Otherwise go straight to end
 	# GRDINFO
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 	r=gmt("grdinfo -C", G);
-	@assert(r[1].data == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
+	@assert(r[1].data[1:1,1:10] == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
 	r2=grdinfo(G, C=true, V=true);
 	@assert(r[1].data == r2[1].data)
 
@@ -627,6 +633,9 @@ if (got_it)					# Otherwise go straight to end
 	plot([0.5 1 1.75 5 85], region=(0,5,0,5), figsize=12, marker=(matang=true, arrow=(length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=dbg2)
 	plot([2.5 2.5], region=(0,4,0,4), figsize=12, marker=(:matang, [2 50 350], (length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=dbg2)
 	plot([1 1], limits=(0,6,0,6), figsize=7, marker=:circle, ms=0.5, error_bars=(x=:x, cline=true), Vd=dbg2)	# Warning line
+	plot(rand(5,3), region=[0,1,0,1])
+	hlines!([0.2, 0.6], pen=(1, :red))
+	vlines!([0.2, 0.6], pen=(1, :red))
 
 	@show("PLOT3D")
 	plot3d(rand(5,3), marker=:cube)

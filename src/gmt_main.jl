@@ -31,7 +31,7 @@ mutable struct GMTimage 	# The mutable struct holding a local header and data of
 	datatype::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-	image::Array{UInt8}
+	image::Union{Array{UInt8}, Array{UInt16}}
 	x_unit::String
 	y_unit::String
 	z_unit::String
@@ -471,6 +471,11 @@ function get_image(API::Ptr{Nothing}, object)
 
 	I = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
 	if (I.data == C_NULL)  error("get_image: programming error, output matrix is empty")  end
+	if (I._type <= 1)
+		data = convert(Ptr{Cuchar}, I.data)
+	elseif (I._type == 3)
+		data = convert(Ptr{Cushort}, I.data)
+	end
 
 	gmt_hdr = unsafe_load(I.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
@@ -480,13 +485,18 @@ function get_image(API::Ptr{Nothing}, object)
 
 	is4bytes = false
 	if (occursin("0", img_mem_layout[1]) || occursin("1", img_mem_layout[1]))
-		t  = deepcopy(unsafe_wrap(Array, I.data, ny * nx * nz))
+		t  = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
 		is4bytes = true
-	#elseif (occursin("TCP", img_mem_layout[1]))		# BIP case for Images.jl
-	elseif (img_mem_layout[1] != "" && img_mem_layout[1][3] == 'P')	# Like the "TCP" BIP case for Images.jl
-		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), nz, ny, nx)	# Apparently the reshape() creates a copy as we need
 	else
-		t  = reshape(unsafe_wrap(Array, I.data, ny * nx * nz), ny, nx, nz)
+		if (img_mem_layout[1] != "" && img_mem_layout[1][3] == 'P')	# Like the "TCP" BIP case for Images.jl
+			o = (nz == 1) ? (ny, nx) : (nz, ny, nx)
+		else
+			o = (nz == 1) ? (ny, nx) : (ny, nx, nz)
+		end
+		t  = reshape(unsafe_wrap(Array, data, ny * nx * nz), o)
+		#t  = reshape(unsafe_wrap(Array, data, ny * nx * nz), nz, ny, nx)	# Apparently the reshape() creates a copy as we need
+	#else
+		#t  = reshape(unsafe_wrap(Array, data, ny * nx * nz), ny, nx, nz)
 	end
 
 	if (I.colormap != C_NULL)       # Indexed image has a color map (PROBABLY NEEDS TRANSPOSITION)
@@ -499,14 +509,15 @@ function get_image(API::Ptr{Nothing}, object)
 
 	# Return image via a uint8 matrix in a struct
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
+	cinterp = unsafe_string(I.color_interp)
 	if (is4bytes)
-		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", X, Y,
+		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, "", X, Y,
 	                      t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
 	elseif (gmt_hdr.n_bands <= 3)
-		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", X, Y,
+		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, "", X, Y,
 	                      t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout) 	# <== Ver o que fazer com o alpha
 	else 			# RGB(A) image
-		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", X, Y,
+		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, "", X, Y,
 	                      t[:,:,1:3], "", "", "", colormap, n_colors, t[:,:,4], layout)
 	end
 	if (GMTver < 6)
@@ -517,11 +528,11 @@ function get_image(API::Ptr{Nothing}, object)
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
-	if (gmt_hdr.ProjRefWKT != C_NULL)  out.ProjRefWKT = unsafe_string(gmt_hdr.ProjRefWKT) end
+	if (gmt_hdr.ProjRefWKT   != C_NULL)  out.wkt   = unsafe_string(gmt_hdr.ProjRefWKT)    end
+	if (gmt_hdr.ProjRefEPSG  != 0)       out.epsg  = unsafe_string(gmt_hdr.ProjRefEPSG)   end
 
 	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
 	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
-	out.nodata       = gmt_hdr.nan_value
 	out.registration = gmt_hdr.registration
 
 	return out
@@ -1578,6 +1589,7 @@ text_record(text::Array{String}, hdr::String) = text_record(Array{Float64,2}(und
 # ---------------------------------------------------------------------------------------------------
 """
 D = mat2ds(mat; x=nothing, hdr=nothing, color=nothing)
+
 	Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 	same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
 	`hdr` optional String vector with either one or n_rows multisegment headers.
@@ -1585,7 +1597,7 @@ D = mat2ds(mat; x=nothing, hdr=nothing, color=nothing)
 	cycled.
 """
 function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing)
-	
+
 	if (txt  !== nothing)  return text_record(mat, txt,  hdr)  end
 	if (text !== nothing)  return text_record(mat, text, hdr)  end
 
@@ -1647,7 +1659,16 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=noth
 end
 
 # ---------------------------------------------------------------------------------------------------
-function mat2img(mat::Array{UInt8}; hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+"""
+G = mat2img(mat; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+
+    Take a 2D 'mat' array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
+	and return a grid GMTimage type.
+	Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
+	Optionaly, the HDR arg may be ommited and it will computed from 'mat' alone, but then x=1:ncol, y=1:nrow
+	When 'mat' is a 3D UInt16 array we compute a UInt8 RGB image. In that case 'cmap' is ignored. 
+"""
+function mat2img(mat::Array{UInt8}; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	color_interp = "";		n_colors = 0;
 	if (cmap !== nothing)
@@ -1672,21 +1693,88 @@ function mat2img(mat::Array{UInt8}; hdr=nothing, proj4::String="", wkt::String="
 	end
 
 	nx = size(mat, 2);		ny = size(mat, 1);
-	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, 1, hdr)
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, 1, hdr, x, y)
 	
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TRPa"
-	I = GMTimage(proj4, wkt, 0, hdr, [x_inc, y_inc], 1, NaN, color_interp, "uint8",
+	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], 1, NaN, color_interp, "uint8",
 	             x,y,mat, "x", "y", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout)
 end
 
 # ---------------------------------------------------------------------------------------------------
-"""
-    I = image_alpha(img::GMTimage; alpha_ind::Integer, alpha_vec::Integer, alpha_band::UInt8)
+function mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", kw...)
+	# Take an array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
+	# If the kw variable histo_bounds is used we stretch the intervals in histo_bounds to [0 255].
+	# Use this option to stretch the image histogram.
+	# If histo_bounds is a scalar, scale the values > histo_bounds to [0 255]
+	# histo_bounds = [v1 v2] scales all values >= v1 && <= v2 to [0 255]
+	# histo_bounds = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
+	d = KW(kw)
+	img = Array{UInt8}(undef,size(mat));
+	if ((vals = find_in_dict(d, [:histo_bounds], false)[1]) !== nothing)
+		len = length(vals)
+		if (isa(mat, Array{UInt16,3}))  ny, nx, nz = size(mat);
+		else                            ny, nx = size(mat);		nz = 1
+		end
+		if (len > 2*nz)  error("histo_bounds has more elements then allowed by image dimensions")  end
+		if (len != 1 && len != 2 && len != 6)
+			error(@sprintf("Bad hist_bounds argument. It must be a 1, 2 or 6 elements array and not %d", len))
+		end
 
-Change the alpha transparency of the GMTimage object ``img``. If the image is indexed, one can either
-change just the color index that will be made transparent by uing ``alpha_ind=n`` or provide a vector
-of transaparency values in the range [0 255]; This vector can be shorter than the orginal number of colors.
-Use ``alpha_band``. to change, or add, the alpha of true color images (RGB).
+		val = (len == 1) ? convert(UInt16, vals)::UInt16 : convert(Array{UInt16}, vals)::Array{UInt16}
+		if (len == 1)
+			#val = parse(UInt16, @sprintf("%d", vals))	# Only way found to remove type instability
+			sc = 255 / (65535 - val)
+			@inbounds for k = 1:length(img)
+				img[k] = (mat[k] < val) ? 0 : round(UInt8, (mat[k] - val) * sc)
+			end
+		elseif (len == 2)
+			val = [parse(UInt16, @sprintf("%d", vals[1])) parse(UInt16, @sprintf("%d", vals[2]))]
+			sc = 255 / (val[2] - val[1])
+			@inbounds for k = 1:length(img)
+				img[k] = (mat[k] < val[1]) ? 0 : ((mat[k] > val[2]) ? 255 : UInt8(round((mat[k]-val[1])*sc)))
+			end
+		else	# len = 6
+			#val = zeros(UInt16, 1, len)
+			#[val[k] = parse(UInt16, @sprintf("%d", vals[k])) for k = 1:len]	# This does NOT avoid type instability
+			#for k = 1:len  val[k] = parse(UInt16, @sprintf("%d", vals[k]))  end		# List comprehensions make it sloow too
+			nxy = nx * ny
+			v1 = [1 3 5];	v2 = [2 4 6]
+			sc = [255 / (val[2] - val[1]), 255 / (val[4] - val[3]), 255 / (val[6] - val[5])]
+			@inbounds for n = 1:nz, k = 1+(n-1)*nxy:n*nxy
+				img[k] = (mat[k] < val[v1[n]]) ? 0 : ((mat[k] > val[v2[n]]) ? 255 : round(UInt8, (mat[k]-val[v1[n]])*sc[n]))
+			end
+		end
+	else
+		sc = 255/65535
+		@inbounds @simd for k = 1:length(img)
+			img[k] = round(UInt8, mat[k]*sc)
+		end
+	end
+	mat2img(img; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, d...)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function mat2img(img::GMTimage; kw...)
+	# Scale a UInt16 GMTimage to UInt8. Return a new object but with all old image parameters
+	if (!isa(img.image, Array{UInt16}))  return img  end		# Nothing to do
+	I = mat2img(img.image; kw...)
+	I.proj4 = img.proj4;	I.wkt = img.wkt;	I.epsg = img.epsg
+	I.range = img.range;	I.inc = img.inc;	I.registration = img.registration
+	I.nodata = img.nodata;	I.color_interp = img.color_interp;	I.datatype = img.datatype
+	I.x_unit = img.x_unit;	I.y_unit = img.y_unit;	I.z_unit = img.z_unit;
+	I.x = img.x;	I.y = img.y;	I.colormap = img.colormap;
+	I.n_colors = img.n_colors;		I.alpha = img.alpha;	I.layout = img.layout;
+	return I
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+I = image_alpha!(img::GMTimage; alpha_ind::Integer, alpha_vec::Integer, alpha_band::UInt8)
+
+    Change the alpha transparency of the GMTimage object 'img' If the image is indexed, one can either
+    change just the color index that will be made transparent by uing 'alpha_ind=n' or provide a vector
+    of transaparency values in the range [0 255]; This vector can be shorter than the orginal number of colors.
+    Use 'alpha_band' to change, or add, the alpha of true color images (RGB).
 
     Example1: change to the third color in cmap to represent the new transparent color
         image_alpha(img, alpha_ind=3)
@@ -1725,10 +1813,11 @@ end
 # ---------------------------------------------------------------------------------------------------
 """
 G = mat2grid(mat; reg=0, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="", cmd::String="")
-    Take a 2D Z array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
+
+    Take a 2D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
 	and return a grid GMTgrid type.
 	Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
-	Optionaly, the HDR arg may be ommited and it will computed from Z alone, but than x=1:ncol, y=1:nrow
+	Optionaly, the HDR arg may be ommited and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
 	When HDR is not used, REG == 0 means create a grid registration grid and REG == 1, a pixel registered grid.
 """
 function mat2grid(mat; reg=0, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
@@ -1978,4 +2067,5 @@ logspace(start, stop, length=100) = exp10.(range(start, stop=stop, length=length
 contains(haystack, needle) = occursin(needle, haystack)
 #contains(s::AbstractString, r::Regex, offset::Integer) = occursin(r, s, offset=offset)
 fields(arg) = fieldnames(typeof(arg))
+fields(arg::Array) = fieldnames(typeof(arg[1]))
 #feval(fn_str, args...) = eval(Symbol(fn_str))(args...)

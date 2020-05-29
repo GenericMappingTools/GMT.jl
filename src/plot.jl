@@ -564,6 +564,82 @@ lines(arg; kw...) = lines("", cat_1_arg(arg); first=true, kw...)
 lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
+"""
+    hlines(arg; decorated=(...), kwargs...)
+
+Plots one or a collection of horizontal lines with eventual decorations
+
+- $(GMT.opt_B)
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- **W** | **pen** | **line_attrib** :: [Type => Str]
+
+    Set pen attributes for the horizontal lines
+    ($(GMTdoc)plot.html#w)
+
+Example:
+
+    plot(rand(5,3))
+    hlines!([0.2, 0.6], pen=(1, :red), show=true)
+"""
+function hlines(arg1; first=true, kwargs...)
+	# A lines plotting method of plot
+	d = KW(kwargs)
+	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
+		cmd = (isa(val, String)) ? val : decorated(val)
+	else
+		cmd = "lines"
+	end
+	mat = ones(2, length(arg1))
+	[mat[1,k] = mat[2,k] = arg1[k] for k = 1:length(arg1)]
+	x = [-1e50, 1e50];
+	D = mat2ds(mat, x=x)
+
+	common_plot_xyz("", D, cmd, first, false, d...)
+end
+hlines!(arg; kw...) = hlines(arg; first=false, kw...)
+# ------------------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------------------
+"""
+    vlines(arg; decorated=(...), kwargs...)
+
+Plots one or a collection of horizontal lines with eventual decorations
+
+- $(GMT.opt_B)
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- **W** | **pen** | **line_attrib** :: [Type => Str]
+
+    Set pen attributes for the horizontal lines
+    ($(GMTdoc)plot.html#w)
+
+Example:
+
+    plot(rand(5,3), region=[0,1,0,1])
+    vlines!([0.2, 0.6], pen=(1, :red), show=true)
+"""
+function vlines(arg1; first=true, kwargs...)
+	# A lines plotting method of plot
+	d = KW(kwargs)
+	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
+		cmd = (isa(val, String)) ? val : decorated(val)
+	else
+		cmd = "lines"
+	end
+	mat = ones(2, length(arg1))
+	mat[1,:] = mat[2,:] = arg1
+	x = [-1e50, 1e50];
+	D = mat2ds(mat, x=x)
+	# Now we need tp swapp x / y columns because the vlines case is more complicated to implement.
+	for k = 1:length(arg1)
+		D[k].data[:,1], D[k].data[:,2] = D[k].data[:,2], D[k].data[:,1]
+	end
+
+	common_plot_xyz("", D, cmd, first, false, d...)
+end
+vlines!(arg; kw...) = vlines(arg; first=false, kw...)
+# ------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------
 function ternary(cmd0::String="", arg1=nothing; first=true, kwargs...)

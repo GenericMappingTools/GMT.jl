@@ -2731,8 +2731,7 @@ end
 # --------------------------------------------------------------------------------------------------
 function monolitic(prog::String, cmd0::String, args...)
 	# Run this module in the monolithic way. e.g. [outs] = gmt("module args",[inputs])
-	cmd0 = prog * " " * cmd0
-	return gmt(cmd0, args...)
+	return gmt(prog * " " * cmd0, args...)
 end
 
 # --------------------------------------------------------------------------------------------------
