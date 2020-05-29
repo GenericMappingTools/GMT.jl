@@ -31,9 +31,13 @@ const def_fig_size  = "12c/8c"              # Default fig size for plot like pro
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3 = " -Baf -Bza -BWSenZ"  #		"" but for 3D views
 
+if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
+    @eval Base.Experimental.@optlevel 1
+end
+
 export
 	GMTver, FMT, gmt,
-	arrows, arrows!, bar, bar!, bar3, bar3!, lines, lines!, legend, legend!,
+	arrows, arrows!, bar, bar!, bar3, bar3!, hlines, hlines!, lines, lines!, legend, legend!, vlines, vlines!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
 	contour, contour!, events, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
 	gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwhich, 
@@ -50,6 +54,7 @@ export
 	text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd,
 	gmtbegin, gmtend, subplot, gmtfig, inset,
+	image_alpha!, mat2ds, mat2grid, mat2img,
 	linspace, logspace, contains, fields, tic, toc
 
 include("common_docs.jl")
