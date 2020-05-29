@@ -36,11 +36,11 @@ before_install:
       - echo 'export PATH="$HOME/gmt/bin:$PATH"' >>~/.bash_profile
       - cd $HOME/gmt
       #- wget ftp://ftp.soest.hawaii.edu/gshhg/gshhg-gmt-2.3.7.tar.gz
-      - wget http://w3.ualg.pt/~jluis/ftp/gshhg-gmt-2.3.7.tar.gz
-      #- wget https://mirrors.ustc.edu.cn/gmt/gshhg-gmt-2.3.7.tar.gz
+      #- wget http://w3.ualg.pt/~jluis/ftp/gshhg-gmt-2.3.7.tar.gz
+      - wget https://mirrors.ustc.edu.cn/gmt/gshhg-gmt-2.3.7.tar.gz
       - tar -xvzf gshhg-gmt-2.3.7.tar.gz
-      - wget http://w3.ualg.pt/~jluis/ftp/dcw-gmt-1.1.4.tar.gz
-      #- wget https://mirrors.ustc.edu.cn/gmt/dcw-gmt-1.1.4.tar.gz
+      #- wget http://w3.ualg.pt/~jluis/ftp/dcw-gmt-1.1.4.tar.gz
+      - wget https://mirrors.ustc.edu.cn/gmt/dcw-gmt-1.1.4.tar.gz
       - tar -xvzf dcw-gmt-1.1.4.tar.gz
       - mkdir build
       - cd build
