@@ -1,6 +1,19 @@
-#@static Sys.iswindows() ? (const thelib = "c:/v/build5/src/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
-#@static Sys.iswindows() ? (const thelib = "C:/progs_cygw/GMTdev/gmt5/5.4/WIN64/bin/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
+#@static Sys.iswindows() ? (const thelib = "C:/progs_cygw/GMTdev/gmt5/5.4/WIN64/bin/gmt_w64") : (const thelib = "libgmt")
 @static Sys.iswindows() ? (Sys.WORD_SIZE == 64 ? (const thelib = "gmt_w64") : (const thelib = "gmt_w32")) : (const thelib = "libgmt")  # Name of GMT shared lib.
+
+function get_GMT_sharelib()
+	# For *nix OSes. Find the gmt shared lib
+	s = readlines(`which gmt`);
+	if isempty(s)  throw(error("which gmt error!"))  end
+	@static Sys.islinux() ? lib = split(readlines(pipeline(`ldd $s`, `grep libgmt`))[1])[3] :
+	       (Sys.isapple() ? lib = split(readlines(pipeline(`otool -L $s`, `grep libgmt`))[1])[1] :
+	        lib = "libgmt")		# Default for other unixs
+	return lib
+end
+
+@static Sys.iswindows() ? 
+		(Sys.WORD_SIZE == 64 ? (const thelib = "gmt_w64") : (const thelib = "gmt_w32")) : 
+		const thelib = get_GMT_sharelib()
 
 function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Cvoid}=C_NULL)
 	ccall( (:GMT_Create_Session, thelib), Ptr{Cvoid}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Cvoid}), tag, pad, mode, print_func)
