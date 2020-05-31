@@ -8,7 +8,7 @@ function get_GMT_sharelib()
 	@static Sys.islinux() ? lib = split(readlines(pipeline(`ldd $s`, `grep libgmt`))[1])[3] :
 	       (Sys.isapple() ? lib = split(readlines(pipeline(`otool -L $s`, `grep libgmt`))[1])[1] :
 	        lib = "libgmt")		# Default for other unixs
-	return lib
+	return String(lib)
 end
 
 @static Sys.iswindows() ? 
