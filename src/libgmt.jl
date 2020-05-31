@@ -1,6 +1,71 @@
 #@static Sys.iswindows() ? (const thelib = "c:/v/build5/src/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
 #@static Sys.iswindows() ? (const thelib = "C:/progs_cygw/GMTdev/gmt5/5.4/WIN64/bin/gmt_w64") : (const thelib = "libgmt")  # Name of GMT shared lib.
-@static Sys.iswindows() ? (Sys.WORD_SIZE == 64 ? (const thelib = "gmt_w64") : (const thelib = "gmt_w32")) : (const thelib = "libgmt")  # Name of GMT shared lib.
+
+function get_GMT_dylib()
+	# inner functions for clearness
+    function get_real_path(s)
+        if endswith(s, '\n')
+            s = s[1:end - 1]
+        end
+        if islink(s)
+            g1 = readlink(s)
+            if startswith(g1, '/')
+                g = g1
+            else
+                g = abspath(joinpath(dirname(s), g1))
+            end
+            return get_real_path(g)
+        else
+            return s
+        end
+    end
+    function get_GMT_lib(s::String)
+        s = get_real_path(s)
+        g = abspath(string(dirname(s), "/../lib"))
+        return g
+    end
+    function get_GMT_lib()
+        g = read(`which gmt`, String)
+        if isempty(g) throw(error("which gmt error!")) end
+        get_GMT_lib(g)
+    end
+
+    function get_GMT_dylib(p)
+        fn = joinpath(p, "libgmt.dylib")
+        if isfile(fn)
+            return fn
+        else
+            a = readdir(p)
+            if isempty(a) throw(error("no gmt!")) end
+            for ia in a
+			iab = basename(ia)
+			startswith(iab, "libgmt") || continue
+			endswith(iab, ".dylib") || continue
+			iscorrect = true
+			# only number and dot e.g. .6.0.0 in libgmt.6.0.0.dylib
+                for iabi in iab[7:end - 7]
+                    isnumeric(iabi) && continue
+                    iabi == '.' && continue
+                    iscorrect  = false 
+                    break
+                end
+                if iscorrect return ia end
+            end
+        end
+        throw(error("no gmt!"))
+        return ""
+    end
+    p = get_GMT_lib()
+    get_GMT_dylib(p)
+end
+
+@static Sys.iswindows() ? 
+		(Sys.WORD_SIZE == 64 ? 
+			(const thelib = "gmt_w64") : 
+			(const thelib = "gmt_w32")) : 
+		(Sys.isapple() ?
+			(const thelib = get_GMT_dylib()) :
+			(const thelib = "libgmt"))  # Name of GMT shared lib.
 
 function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Cvoid}=C_NULL)
 	ccall( (:GMT_Create_Session, thelib), Ptr{Cvoid}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Cvoid}), tag, pad, mode, print_func)
