@@ -59,7 +59,9 @@ export
 
 include("common_docs.jl")
 include("libgmt_h.jl")
-include("libgmt.jl")
+if (foundGMT)
+	include("libgmt.jl")
+end
 include("gmt_main.jl")
 include("common_options.jl")
 include("gmtbegin.jl")
