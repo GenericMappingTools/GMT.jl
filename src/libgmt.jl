@@ -3,8 +3,11 @@
 
 function get_GMT_sharelib()
 	# For *nix OSes. Find the gmt shared lib
-	s = readlines(`which gmt`);
-	if isempty(s)  throw(error("which gmt error!"))  end
+	try
+		global s = readlines(`which gmt`);
+	catch			# Return here so that the automatic registering of new versions does not fail
+		return "libgmt"		# No need for a warning here because it will be issued by GMT.jl
+	end
 	@static Sys.islinux() ? lib = split(readlines(pipeline(`ldd $s`, `grep libgmt`))[1])[3] :
 	       (Sys.isapple() ? lib = split(readlines(pipeline(`otool -L $s`, `grep libgmt`))[1])[1] :
 	        lib = "libgmt")		# Default for other unixs
