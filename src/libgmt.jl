@@ -4,7 +4,7 @@
 function get_GMT_sharelib()
 	# For *nix OSes. Find the gmt shared lib
 	try
-		s = readlines(`which gmt`);
+		global s = readlines(`which gmt`);
 	catch			# Return here so that the automatic registering of new versions does not fail
 		return "libgmt"		# No need for a warning here because it will be issued by GMT.jl
 	end
