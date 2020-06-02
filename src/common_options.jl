@@ -886,15 +886,24 @@ function add_opt_pen(d::Dict, symbs, opt::String="", del::Bool=true)
 			if (isa(val, Tuple))				# Like this it can hold the pen, not extended atts
 				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
 					for v in val
-						d2 = nt2dict(v)			# Decompose the NT and feed into this-self
+						d2 = nt2dict(v)			# Decompose the NT and feed it into this-self
 						out[1] *= opt * add_opt_pen(d2, symbs, "", false)
 					end
 				else
 					out[1] = opt * parse_pen(val)	# Should be a better function
 				end
 			elseif (isa(val, NamedTuple))		# Make a recursive call. Will screw if used in mix mode
+				# This branch is very convoluted and fragile
 				d2 = nt2dict(val)				# Decompose the NT and feed into this-self
-				return opt * add_opt_pen(d2, symbs, "", false)
+				#return opt * add_opt_pen(d2, symbs, "", false)
+				t = add_opt_pen(d2, symbs, "", false)
+				if (t == "")
+					d = nt2dict(val)
+					out[1] = opt
+				else
+					out[1] = opt * t
+					d = Dict{Symbol,Any}()		# Just let it go straight to end. Returning here seems bugged
+				end
 			else
 				out[1] = opt * arg2str(val)
 			end
@@ -913,8 +922,8 @@ function add_opt_pen(d::Dict, symbs, opt::String="", del::Bool=true)
 	# Some -W take extra options to indicate that color comes from CPT
 	if (haskey(d, :colored))  out[1] *= "+c"
 	else
-		if (haskey(d, :cline))  out[1] *= "+cl"  end
-		if (haskey(d, :ctext) || haskey(d, :csymbol))  out[1] *= "+cf"  end
+		if ((val = find_in_dict(d, [:cline :color_line :colot_lines])[1]) !== nothing)  out[1] *= "+cl"  end
+		if ((val = find_in_dict(d, [:ctext :color_text :csymbol :color_symbols :color_symbol])[1]) !== nothing)  out[1] *= "+cf"  end
 	end
 	if (haskey(d, :bezier))  out[1] *= "+s"  end
 	if (haskey(d, :offset))  out[1] *= "+o" * arg2str(d[:offset])   end
