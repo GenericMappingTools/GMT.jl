@@ -1365,7 +1365,12 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=noth
 			else
 				opt_C = " -" * opt * get_color(val)		# This is pre-made GMT cpt
 				cmd *= opt_C
-				if (store)  global current_cpt = makecpt(opt_C)  end
+				if (store)
+					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
+						global current_cpt = makecpt(opt_C)
+					catch
+					end
+				end
 			end
 		end
 	elseif (def && opt_T != "")		# Requested the use of the default color map (here Jet, instead of rainbow)
