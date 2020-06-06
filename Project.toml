@@ -1,7 +1,7 @@
 name = "GMT"
 uuid = "5752ebe1-31b9-557e-87aa-f909b540aa54"
 authors = ["Joaquim Luis <jluis@ualg.pt>"]
-version = "0.20.0"
+version = "0.20.1"
 
 [deps]
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
