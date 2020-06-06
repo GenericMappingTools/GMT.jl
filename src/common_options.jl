@@ -1363,7 +1363,14 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=noth
 				cpt = makecpt(opt_T * " -C" * get_color(val))
 				cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 			else
-				cmd *= " -" * opt * get_color(val)
+				opt_C = " -" * opt * get_color(val)		# This is pre-made GMT cpt
+				cmd *= opt_C
+				if (store)
+					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
+						global current_cpt = makecpt(opt_C)
+					catch
+					end
+				end
 			end
 		end
 	elseif (def && opt_T != "")		# Requested the use of the default color map (here Jet, instead of rainbow)
@@ -1431,7 +1438,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		info = grdinfo(cmd0 * " -C");	range = info[1].data
 	end
 	if (isa(arg1, GMTgrid) || cmd0 != "")
-		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap])[1]) === nothing)
+		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
 			cpt_opt_T = @sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
 		end
