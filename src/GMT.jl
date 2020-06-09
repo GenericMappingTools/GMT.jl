@@ -170,7 +170,17 @@ function __init__()
 			println("\tPlease delete the contents of the\n\n\t\t$t\n\n\tdirectory and start a new Julia session.")
 		end
 		if (GMTver >= 6)
-			run(`gmt clear sessions`)	# Clear eventual trash let behind
+			# run(`gmt clear sessions`)	# Clear eventual trash let behind
+			sp = joinpath(homedir(), ".gmt/sessions/")
+			dirs = readdir(sp)
+			session_dirs = filter(x->startswith(x, "gmt6."), dirs)
+			n = datetime2unix(now(UTC))
+			for sd in session_dirs
+				fp = joinpath(sp, sd)
+				if n - mtime(fp) > 3600 # created 1 hour before
+					rm(fp, recursive = true)
+				end
+			end
 		end
 	catch
 	end
