@@ -281,6 +281,8 @@ function gmt(cmd::String, args...)
 	if (IamModern[1])  GMT_Destroy_Session(API);	API = nothing  end	# Needed, otherwise history is not updated
 	#if (IamModern[1])  gmt_put_history(API);	end	# Needed, otherwise history is not updated
 
+	img_mem_layout[1] = "";		grd_mem_layout[1] = ""		# Reset to not afect next readings
+
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)
 		return nothing
@@ -471,10 +473,8 @@ function get_image(API::Ptr{Nothing}, object)
 
 	I = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
 	if (I.data == C_NULL)  error("get_image: programming error, output matrix is empty")  end
-	if (I._type <= 1)
-		data = convert(Ptr{Cuchar}, I.data)
-	elseif (I._type == 3)
-		data = convert(Ptr{Cushort}, I.data)
+	if     (I._type <= 1)  data = convert(Ptr{Cuchar}, I.data)
+	elseif (I._type == 3)  data = convert(Ptr{Cushort}, I.data)
 	end
 
 	gmt_hdr = unsafe_load(I.header)
@@ -483,20 +483,19 @@ function get_image(API::Ptr{Nothing}, object)
 	X  = range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx)
 	Y  = range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny)
 
+	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	is4bytes = false
-	if (occursin("0", img_mem_layout[1]) || occursin("1", img_mem_layout[1]))
+	if (occursin("0", img_mem_layout[1]) || occursin("1", img_mem_layout[1]))	# WTF is 0 or 1?
 		t  = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
 		is4bytes = true
 	else
-		if (img_mem_layout[1] != "" && img_mem_layout[1][3] == 'P')	# Like the "TCP" BIP case for Images.jl
+		if (img_mem_layout[1] != "")  layout = img_mem_layout[1][1:3] * layout[4]  end	# 4rth id data determined
+		if (layout != "" && layout[1] == 'I')		# The special layout for using this image in Images.jl
 			o = (nz == 1) ? (ny, nx) : (nz, ny, nx)
 		else
 			o = (nz == 1) ? (ny, nx) : (ny, nx, nz)
 		end
-		t  = reshape(unsafe_wrap(Array, data, ny * nx * nz), o)
-		#t  = reshape(unsafe_wrap(Array, data, ny * nx * nz), nz, ny, nx)	# Apparently the reshape() creates a copy as we need
-	#else
-		#t  = reshape(unsafe_wrap(Array, data, ny * nx * nz), ny, nx, nz)
+		t  = reshape(unsafe_wrap(Array, data, ny * nx * nz), o)	# Apparently the reshape() creates a copy as we need
 	end
 
 	if (I.colormap != C_NULL)       # Indexed image has a color map (PROBABLY NEEDS TRANSPOSITION)
@@ -508,18 +507,10 @@ function get_image(API::Ptr{Nothing}, object)
 	end
 
 	# Return image via a uint8 matrix in a struct
-	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	cinterp = unsafe_string(I.color_interp)
-	if (is4bytes)
-		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, "", X, Y,
-	                      t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
-	elseif (gmt_hdr.n_bands <= 3)
-		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, "", X, Y,
-	                      t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout) 	# <== Ver o que fazer com o alpha
-	else 			# RGB(A) image
-		out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, "", X, Y,
-	                      t[:,:,1:3], "", "", "", colormap, n_colors, t[:,:,4], layout)
-	end
+	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, "", X, Y,
+	               t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
+
 	if (GMTver < 6)
 		I.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# So that GMT's Garbageman does not free I.data
 	else
@@ -935,8 +926,12 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 # We are given a Julia image and use it to fill the GMT_IMAGE structure
 
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_pages = size(Img.image, 3)
+	family = GMT_IS_IMAGE
+	if (GMTver >= 6.1 && (n_pages == 2 || n_pages == 4))	# Then we want the alpha layer together with data
+		family = family | GMT_IMAGE_ALPHA_LAYER
+	end
 	dim = pointer([n_cols, n_rows, n_pages])
-	I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_ALL, dim,
+	I = GMT_Create_Data(API, family, GMT_IS_SURFACE, GMT_GRID_ALL, dim,
 	                    Img.range[1:4], Img.inc, UInt32(Img.registration), pad)
 	Ib = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
 
@@ -944,7 +939,9 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
 	Ib.n_indexed_colors = Img.n_colors
 	if (Img.color_interp != "")    Ib.color_interp = pointer(Img.color_interp)  end
-	if (size(Img.alpha) != (1,1))  Ib.alpha = pointer(Img.alpha)  end
+	if (size(Img.alpha) != (1,1))  Ib.alpha = pointer(Img.alpha)
+	else                           Ib.alpha = C_NULL
+	end
 	if (GMTver < 6)
 		Ib.alloc_mode = UInt32(GMT.GMT_ALLOC_EXTERNALLY)	# Since array was allocated by Julia
 	else
@@ -957,9 +954,15 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	if (Img.proj4 != "")    h.ProjRefPROJ4 = pointer(Img.proj4)  end
 	if (Img.wkt != "")      h.ProjRefWKT   = pointer(Img.wkt)    end
 	if (Img.epsg != 0)      h.ProjRefEPSG  = Int32(Img.epsg)     end
-	h.mem_layout = map(UInt8, (Img.layout...,))
 	unsafe_store!(Ib.header, h)
 	unsafe_store!(I, Ib)
+
+	if (!startswith(Img.layout, "BRP"))
+		img = deepcopy(Img.image)
+		GMT_Change_Layout(API, GMT_IS_IMAGE, "BRP", 0, I, img);		# Convert to BRP
+		Ib.data = pointer(img)
+		unsafe_store!(I, Ib)
+	end
 
 	return I
 end
@@ -1023,7 +1026,6 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 	if (dim[GMT.GMT_SEG+1] == 0)	error("Input has zero segments where it can't be")	end
 	dim[GMT.GMT_COL+1] = size(Darr[1].data, 2)		# Number of columns
 
-# NEW
 	if (length(Darr[1].text) != 0)	# This segment also has a cell array of strings
 		mode = GMT_WITH_STRINGS;
 	else
@@ -1054,7 +1056,6 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 			unsafe_copyto!(unsafe_load(Sb.data, col), pointer(Darr[seg].data[:,col]), Sb.n_rows)
 		end
 
-# NEW
 		if (mode == GMT_WITH_STRINGS)	# Add in the trailing strings
 			for row = 1:Sb.n_rows
 				unsafe_store!(Sb.text, GMT_Duplicate_String(API, Darr[seg].text[row]), row)
@@ -1694,8 +1695,11 @@ function mat2img(mat::Array{UInt8}; x=nothing, y=nothing, hdr=nothing, proj4::St
 
 	nx = size(mat, 2);		ny = size(mat, 1);
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, 1, hdr, x, y)
-	
-	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TRPa"
+
+	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
+	d = KW(kw)
+	if ((val = find_in_dict(d, [:layout])[1]) !== nothing)  mem_layout = string(val)  end
+
 	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], 1, NaN, color_interp, "uint8",
 	             x,y,mat, "x", "y", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout)
 end
@@ -1771,7 +1775,7 @@ end
 """
 I = image_alpha!(img::GMTimage; alpha_ind::Integer, alpha_vec::Integer, alpha_band::UInt8)
 
-    Change the alpha transparency of the GMTimage object 'img' If the image is indexed, one can either
+    Change the alpha transparency of the GMTimage object 'img'. If the image is indexed, one can either
     change just the color index that will be made transparent by uing 'alpha_ind=n' or provide a vector
     of transaparency values in the range [0 255]; This vector can be shorter than the orginal number of colors.
     Use 'alpha_band' to change, or add, the alpha of true color images (RGB).

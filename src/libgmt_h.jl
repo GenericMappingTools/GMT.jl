@@ -78,6 +78,9 @@ const GMT_IS_POSTSCRIPT = 4
 const GMT_IS_TEXTSET = 5
 const GMT_IS_MATRIX = 6 - (GMTver >= 6)		# FCK, I hate this
 const GMT_IS_VECTOR = 7 - (GMTver >= 6)
+
+const GMT_IMAGE_ALPHA_LAYER = 8192		# Place any alpha layer in the image band, not alpha array
+
 # begin enum GMT_enum_comment
 const GMT_COMMENT_IS_TEXT = 0
 # end enum GMT_enum_comment

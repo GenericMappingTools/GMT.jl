@@ -1,6 +1,7 @@
 module GMT
 
 using Printf
+using Dates
 
 # Need to know what GMT version is available or if none at all to warn users on how to
 # install GMT.
@@ -39,10 +40,10 @@ export
 	GMTver, FMT, gmt,
 	arrows, arrows!, bar, bar!, bar3, bar3!, hlines, hlines!, lines, lines!, legend, legend!, vlines, vlines!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
-	contour, contour!, events, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtregress, 
+	contour, contour!, events, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert, gmtinfo, gmtmath, gmtregress, 
 	gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwhich, 
-	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft,
-	grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdfill, grdlandmask, grdmask, grdpaste,
+	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft, grdfilter,
+	grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdfill, grdlandmask, grdmath, grdmask, grdpaste,
 	grdproject, grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume, greenspline,
 	mat2ds, mat2grid, mat2img, histogram, histogram!, image, image!, image_alpha!, imshow, kml2gmt, logo, logo!,
 	makecpt, mask, mask!, mapproject, movie, nearneighbor, plot, plot!, plot3, plot3!, plot3d, plot3d!, project,
@@ -92,6 +93,7 @@ include("grdcontour.jl")
 include("grdfft.jl")
 include("grdfill.jl")
 include("grdfilter.jl")
+include("grdgmtmath.jl")
 include("grdhisteq.jl")
 include("grdinfo.jl")
 include("grdimage.jl")
@@ -169,8 +171,17 @@ function __init__()
 			println("\tmake sure that GMT.jl recompiles again, otherwise fatal errors may occur.")
 			println("\tPlease delete the contents of the\n\n\t\t$t\n\n\tdirectory and start a new Julia session.")
 		end
-		if (GMTver >= 6)
-			run(`gmt clear sessions`)	# Clear eventual trash let behind
+		if (GMTver >= 6.1)		# Delete stray sessions left behind by old failed process. Thanks to @htyeim
+			sp = readlines(`gmt --show-userdir`)[1] * "/sessions"
+			dirs = readdir(sp)
+			session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
+			n = datetime2unix(now(UTC))
+			for sd in session_dirs
+				fp = joinpath(sp, sd)
+				if n - mtime(fp) > 3600 # created 1 hour before
+					rm(fp, recursive = true)
+				end
+			end			
 		end
 	catch
 	end
