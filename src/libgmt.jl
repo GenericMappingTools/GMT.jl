@@ -33,7 +33,7 @@ function GMT_Create_Data(API::Ptr{Cvoid}, family, geometry, mode, dim=C_NULL, we
 	elseif (family == GMT_IS_TEXTSET)    ret_type = Ptr{GMT_TEXTSET}
 	elseif (family == GMT_IS_GRID)       ret_type = Ptr{GMT_GRID}
 	elseif (family == GMT_IS_CPT)        ret_type = Ptr{GMT_PALETTE}
-	elseif (family == GMT_IS_IMAGE)      ret_type = Ptr{GMT_IMAGE}
+	elseif (family == GMT_IS_IMAGE || family == GMT_IS_IMAGE|GMT_IMAGE_ALPHA_LAYER)	ret_type = Ptr{GMT_IMAGE}
 	elseif (family == GMT_IS_MATRIX)     ret_type = Ptr{GMT_MATRIX}
 	elseif (family == GMT_IS_MATRIX|GMT_VIA_MATRIX) ret_type = Ptr{GMT_MATRIX}
 	elseif (family == GMT_IS_VECTOR)     ret_type = Ptr{GMT_VECTOR}
@@ -356,12 +356,12 @@ end
 function GMT_Destroy_Group(API::Ptr{Cvoid}, obj::Ptr{Cvoid}, n_items::Integer)
 	ccall((:GMT_Destroy_Group, thelib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Cuint), API, obj, n_items)
 end
+=#
 
-function GMT_Change_Layout(API::Ptr{Cvoid}, family::Integer, code, mode::Integer, obj::Ptr{Cvoid}, data::Ptr{Cvoid}=C_NULL, alpha::Ptr{Cvoid}=C_NULL)
+function GMT_Change_Layout(API::Ptr{Cvoid}, family::Integer, code::String, mode::Integer, obj, data=C_NULL, alpha=C_NULL)
 	ccall((:GMT_Change_Layout, thelib), Cint, (Ptr{Cvoid}, Cuint, Ptr{UInt8}, Cuint, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}),
 	      API, family, code, mode, obj, data, alpha)
 end
-=#
 
 function GMT_Duplicate_String(API::Ptr{Cvoid}, str)
 	ccall((:GMT_Duplicate_String, thelib), Ptr{UInt8}, (Cstring, Ptr{UInt8}), API, str)
@@ -421,10 +421,8 @@ function GMT_Get_Version(major, minor, patch)
 end
 
 function GMT_Get_Ctrl(API::Ptr{Cvoid})
-	if (GMTver > 6.0)
-		ccall((:gmtlib_get_ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
-	else
-		ccall((:GMT_Get_Ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
+	if (GMTver > 6.0)  ccall((:gmtlib_get_ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
+	else               ccall((:GMT_Get_Ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
 	end
 end
 
@@ -440,10 +438,6 @@ function gmt_ogrread(API::Ptr{Cvoid}, fname::String, region=C_NULL)
 	else
 		ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}), GMT_, fname)
 	end
-end
-
-function check_url_name(fname::String)
-	ccall((:gmtlib_check_url_name, thelib), Bool, (Ptr{UInt8},), fname)
 end
 
 #=
