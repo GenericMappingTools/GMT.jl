@@ -213,7 +213,6 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_j("", Dict(:spheric_dist => "f"))[1] == " -jf"
 	@test GMT.parse_t("", Dict(:t=>0.2))[1] == " -t20.0"
 	@test GMT.parse_t("", Dict(:t=>20))[1]  == " -t20"
-	GMT.check_url_name("blabla");
 	GMT.auto_JZ("");
 	GMT.helper2_axes("");
 	@test GMT.axis(ylabel="bla") == " -Bpy+lbla";
