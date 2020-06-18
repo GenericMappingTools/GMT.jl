@@ -109,7 +109,7 @@ end
 function jl_sc_2_shell_sc(name::String, name2::String)
 	global cmds_history
 	IamModern[1] = true; FirstModern[1] = true; convert_syntax[1] = true; cmds_history = [""]
-	include(name)
+	include(name)	# This include plus the convert_syntax = true will put all cmds in 'name' into cmds_history
 	fname = write_script(name2)
 end
 
