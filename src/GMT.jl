@@ -1,6 +1,7 @@
 module GMT
 
 using Printf
+using Dates
 
 # Need to know what GMT version is available or if none at all to warn users on how to
 # install GMT.
@@ -169,8 +170,17 @@ function __init__()
 			println("\tmake sure that GMT.jl recompiles again, otherwise fatal errors may occur.")
 			println("\tPlease delete the contents of the\n\n\t\t$t\n\n\tdirectory and start a new Julia session.")
 		end
-		if (GMTver >= 6)
-			run(`gmt clear sessions`)	# Clear eventual trash let behind
+		if (GMTver >= 6.1)		# Delete stray sessions left behind by old failed process. Thanks to @htyeim
+			sp = readlines(`gmt --show-userdir`)[1] * "/sessions"
+			dirs = readdir(sp)
+			session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
+			n = datetime2unix(now(UTC))
+			for sd in session_dirs
+				fp = joinpath(sp, sd)
+				if n - mtime(fp) > 3600 # created 1 hour before
+					rm(fp, recursive = true)
+				end
+			end			
 		end
 	catch
 	end
