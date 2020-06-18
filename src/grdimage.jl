@@ -72,9 +72,13 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	end
 
 	if (isa(arg1, Array{<:Number}))
-		arg1 = mat2grid(arg1)
-		if (isa(arg2, Array{<:Number}))  arg2 = mat2grid(arg2)  end
-		if (isa(arg3, Array{<:Number}))  arg3 = mat2grid(arg3)  end
+		if (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16}))
+			arg1 = mat2img(arg1; d...)
+		else
+			arg1 = mat2grid(arg1)
+			if (isa(arg2, Array{<:Number}))  arg2 = mat2grid(arg2)  end
+			if (isa(arg3, Array{<:Number}))  arg3 = mat2grid(arg3)  end
+		end
 	end
 
 	#if (GMTver > 6 && occursin("earth_relief_", cmd0))  push!(d, :this_cpt => "geo")  end	# Make this the default CPT
@@ -85,7 +89,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	if (isa(arg1, GMTimage))
 		if (!occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
 		if (isa(arg1.image, Array{UInt16}))
-			arg1 = mat2img(arg1; d...)				# Get a new UInt8 scaled image
+			arg1 = mat2img(arg1; d...)					# Get a new UInt8 scaled image
 			if (haskey(d, :histo_bounds))  delete!(d, :histo_bounds)  end
 		end
 	end
