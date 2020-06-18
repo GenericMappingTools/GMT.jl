@@ -1373,11 +1373,13 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=noth
 				end
 			end
 		end
-	elseif (def && opt_T != "")		# Requested the use of the default color map (here Jet, instead of rainbow)
+	elseif (def && opt_T != "")		# Requested the use of the default color map (Turbo or Jet depending on GMTver)
+		if (IamModern[1])  opt_T *= " -H"  end		# Piggy back this otherwise we get no CPT back in Modern
 		if (haskey(d, :this_cpt) && d[:this_cpt] != "")		# A specific CPT name was requested
 			cpt = makecpt(opt_T * " -C" * d[:this_cpt])
 		else
-			cpt = makecpt(opt_T * " -Cjet")
+			opt_T = (GMTver >= 6) ? opt_T * " -Cturbo" : opt_T * " -Cjet"
+			cpt = makecpt(opt_T)
 		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 	elseif (in_bag)					# If everything else has failed and we have one in the Bag, return it
@@ -1432,17 +1434,17 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	# Use CMD0 = "" to use this function from within non-grd modules
 	global current_cpt
 	cpt_opt_T = ""
-	if (isa(arg1, GMTgrid))			# GMT bug, -R will not be stored in gmt.history
+	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage))			# GMT bug, -R will not be stored in gmt.history
 		range = arg1.range
 	elseif (cmd0 != "")
 		info = grdinfo(cmd0 * " -C");	range = info[1].data
 	end
-	if (isa(arg1, GMTgrid) || cmd0 != "")
+	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || cmd0 != "")
 		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
 			cpt_opt_T = @sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
 		end
-		if (opt_R == "")
+		if (opt_R == "" && (!IamModern[1] || (IamModern[1] && FirstModern[1])) )	# No -R ovewrite by accident
 			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
 		end
 	end
@@ -1454,7 +1456,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		if ((val = find_in_dict(d, [:G :drapefile], false)[1]) !== nothing)
 			if (isa(val, Tuple) && length(val) == 3)  get_cpt = false  end	# Playing safe
 		end
-	elseif (prog == "grdimage" && (arg3 === nothing && !occursin("-D", cmd)))
+	elseif (prog == "grdimage" && !isa(arg1, GMTimage) && (arg3 === nothing && !occursin("-D", cmd)))
 		get_cpt = true		# This still lieve out the case when the r,g,b were sent as a text.
 	elseif (prog == "grdcontour" || prog == "pscontour")	# Here C means Contours but we cheat, so always check if C, color, ... is present
 		get_cpt = true;		cpt_opt_T = ""		# This is hell. And what if I want to auto generate a cpt?
@@ -1465,6 +1467,8 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	if (get_cpt)
 		cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2, true, true, cpt_opt_T, in_bag)
 	end
+
+	if (IamModern[1] && FirstModern[1])  FirstModern[1] = false;  end
 	return cmd, N_used, arg1, arg2, arg3
 end
 
@@ -2534,6 +2538,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
 	img_mem_layout[1] = add_opt("", "", d, [:layout])
+	if (img_mem_layout[1] == "images")  img_mem_layout[1] = "I   "  end	# Special layout for Images.jl
 
 	if (fname_ext != "ps" && fname_ext != "eps")	# Exptend to a larger paper size (5 x A0)
 		if (isa(cmd, Array{String, 1}))  cmd[1] *= " --PS_MEDIA=11900x16840"
