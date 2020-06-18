@@ -1363,11 +1363,12 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=noth
 				cpt = makecpt(opt_T * " -C" * get_color(val))
 				cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 			else
-				opt_C = " -" * opt * get_color(val)		# This is pre-made GMT cpt
+				c = get_color(val)
+				opt_C = " -" * opt * c		# This is pre-made GMT cpt
 				cmd *= opt_C
-				if (store)
+				if (store && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's number and -Cn is not valid
 					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
-						global current_cpt = makecpt(opt_C)
+						global current_cpt = makecpt(opt_C * " -Vq")
 					catch
 					end
 				end
@@ -2424,7 +2425,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function dbg_print_cmd(d::Dict, cmd)
-	# Print the gmt command when the Vd=1 kwarg was used
+	# Print the gmt command when the Vd>=1 kwarg was used.
+	# In case of convert_syntax = true, just put the cmds in a global var 'cmds_history' used in movie
 	if ( ((Vd = find_in_dict(d, [:Vd])[1]) !== nothing) || convert_syntax[1])
 		if (convert_syntax[1])
 			return update_cmds_history(cmd)
