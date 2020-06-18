@@ -470,7 +470,7 @@ if (got_it)					# Otherwise go straight to end
 	G2 = grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
 
 	# GRDPASTE
-	G3 = gmt("grdmath", "-R10/20/0/10 -I1 X");
+	G3 = grdmath("-R10/20/0/10 -I1 X");
 	G2 = grdpaste(G,G3);
 
 	@show("GRDPROJECT")
@@ -881,7 +881,7 @@ if (got_it)					# Otherwise go straight to end
 
 	@show("PSMASK")
 	# PSMASK
-	D = gmt("gmtmath -T-90/90/10 -N2/1 0");
+	D = gmtmath("-T-90/90/10 -N2/1 0");
 	mask(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, B="xafg180 yafg10")
 	mask!(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=dbg2)
 	mask!("", D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=dbg2)
@@ -951,6 +951,7 @@ if (got_it)					# Otherwise go straight to end
 	if (GMTver >= 6)
 		@test GMT.helper_sub_F("1/2") == "1/2"
 		#@test GMT.helper_sub_F((size=(1,2), frac=((2,3),(3,4,5))) ) == "1/2+f2,3/3,4,5"
+		println("    SUBPLOT1")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), Vd=dbg2), "-F1/2")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=("1i",2), Vd=dbg2), "-F1i/2")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), name="lixo.ps", Vd=dbg2), "-F1/2+f2,3/3,4,5")
@@ -963,12 +964,14 @@ if (got_it)					# Otherwise go straight to end
 		@test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
 		@test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=dbg2)
 		@test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=dbg2)
+		println("    SUBPLOT2")
 		subplot(name="lixo", grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
 		gmtbegin("lixo.ps");  gmtend()
 		gmtbegin("lixo", fmt=:ps);  gmtend()
 		gmtbegin("lixo");  gmtend()
 		gmtbegin();  gmtend()
 
+		println("    BEGINEND")
 		gmtbegin("lixo.ps")
 			basemap(region=(0,40,20,60), proj=:merc, figsize=16, frame=(annot=:afg, fill=:lightgreen))
 			inset(D="jTR+w2.5i+o0.2i", F="+gpink+p0.5p", margins=0.6)
@@ -980,16 +983,18 @@ if (got_it)					# Otherwise go straight to end
 
 		gmtbegin(); gmtfig("lixo.ps");	gmtend()
 
+		println("    MOVIE")
 		movie("main_sc.jl", pre="pre_sc.jl", C="7.2ix4.8ix100", N=:anim04, T="flight_path.txt", L="f+o0.1i", F=:mp4, A="+l+s10", Vd=dbg2)
 		if (Sys.iswindows())
 			rm("pre_script.bat");		rm("main_script.bat")
 		else
 			rm("pre_script.sh");		rm("main_script.sh")
 		end
+		println("    EVENTS")
 		events("", R=:g, J="G200/5/6i", B=:af, S="E-", C=true, T="2018-05-01T", E="s+r2+d6", M=((size=5,coda=0.5),(intensity=true,)), Vd=dbg2);
 	end
 
-	@show("SURFACE")
+	println("SURFACE")
 	# SURFACE
 	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
 	@assert(size(G.z) == (151, 151))
@@ -1006,6 +1011,7 @@ if (got_it)					# Otherwise go straight to end
 	G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, S=10, r=true);
 
 	# XYZ2GRD
+	println("XYZ2GRD")
 	D=grd2xyz(G); # Use G of previous test
 	xyz2grd(D, R="0/150/0/150", I=1, r=true);
 	xyz2grd(D, xlim=(0,150), ylim=(0,150), I=1, r=true);
@@ -1014,11 +1020,11 @@ if (got_it)					# Otherwise go straight to end
 	D = gmt("gmtmath -T10/110/1 T 50 DIV 2 POW 2 MUL T 60 DIV ADD 4 ADD 0 0.25 NRAND ADD T 25 DIV 2 MUL PI MUL COS 2 MUL 2 ADD ADD");
 	trend1d(D, N="p2,F1+o0+l25", F=:xm);
 
-	@show("TREND2D")
+	println("TREND2D")
 	# TREND2D
 	trend2d(D, F=:xyr, N=3);
 
-	@show("MISC")
+	println("MISC")
 	# MISC
 	G = GMT.mat2grid(G.z; reg=0, hdr=[G.range; G.registration; G.inc]);
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
@@ -1097,7 +1103,7 @@ if (got_it)					# Otherwise go straight to end
 	tic();toc()
 	@test_throws ErrorException("`toc()` without `tic()`") toc()
 
-	@show("EXAMPLES")
+	println("EXAMPLES")
 	# EXAMPLES
 	plot(1:10,rand(10), lw=1, lc="blue", marker="square", markeredgecolor=:white, size=0.2, markerfacecolor="red", title="Hello World", xlabel="Spoons", ylabel="Forks")
 
