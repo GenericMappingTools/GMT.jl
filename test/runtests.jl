@@ -244,12 +244,12 @@ if (got_it)					# Otherwise go straight to end
 	# FILTER1D
 	filter1d([collect((1.0:50)) rand(50)], F="m15");
 
-	@show("FITCIRCLE")
+	println("	FITCIRCLE")
 	# FITCIRCLE
 	d = [-3.2488 -1.2735; 7.46259 6.6050; 0.710402 3.0484; 6.6633 4.3121; 12.188 18.570; 8.807 14.397; 17.045 12.865; 19.688 30.128; 31.823 33.685; 39.410 32.460; 48.194 47.114; 62.446 46.528; 59.865 46.453; 68.739 50.164; 64.334 32.984];
 	fitcircle(d, L=3);
 
-	@show("GMT2KML & KML2GMT")
+	println("	GMT2KML & KML2GMT")
 	# GMT2KML & KML2GMT
 	if (GMTver >= 6)
 		D = gmt("pscoast -R-5/-3/56/58 -Jm1i -M -W0.25p -Di");
@@ -262,20 +262,20 @@ if (got_it)					# Otherwise go straight to end
 		rm("lixo.kml")
 	end
 
-	@show("GMTCONNECT")
+	println("	GMTCONNECT")
 	# GMTCONNECT
 	gmtconnect([0 0; 1 1], [1.1 1.1; 2 2], T=0.5);
 
-	@show("GMTCONVERT")
+	println("	GMTCONVERT")
 	# GMTCONVERT
 	gmtconvert([1.1 2; 3 4], o=0)
 
-	@show("GMTREGRESS")
+	println("	GMTREGRESS")
 	# GMTREGRESS
 	d = [0 5.9 1e3 1; 0.9 5.4 1e3 1.8; 1.8 4.4 5e2 4; 2.6 4.6 8e2 8; 3.3 3.5 2e2 2e1; 4.4 3.7 8e1 2e1; 5.2 2.8 6e1 7e1; 6.1 2.8 2e1 7e1; 6.5 2.4 1.8 1e2; 7.4 1.5 1 5e2];
 	regress(d, E=:y, F=:xm, N=2, T="-0.5/8.5/2+n");
 
-	@show("GMTLOGO")
+	println("	GMTLOGO")
 	# GMTLOGO
 	logo(D="x0/0+w2i")
 	logo(julia=8)
@@ -284,7 +284,7 @@ if (got_it)					# Otherwise go straight to end
 	logo!(julia=8, Vd=dbg2)
 	logo!("", julia=8, Vd=dbg2)
 
-	@show("GMTSPATIAL")
+	println("	GMTSPATIAL")
 	# GMTSPATIAL
 	# Test  Cartesian centroid and area
 	result = gmt("gmtspatial -Q", [0 0; 1 0; 1 1; 0 1; 0 0]);
@@ -298,7 +298,7 @@ if (got_it)					# Otherwise go straight to end
 	d = [-300 -3500; -200 -800; 400 -780; 500 -3400; -300 -3500];
 	gmtspatial(d, C=true, R="0/100/-3100/-3000");
 
-	@show("GMTSELECT")
+	println("	GMTSELECT")
 	# GMTSELECT
 	gmtselect([2 2], R=(0,3,0,3));		# But is bugged when answer is []
 	@test gmtselect([1 2], C=(pts="aa",dist=10), Vd=dbg2) == "gmtselect  -Caa+d10"
@@ -306,15 +306,15 @@ if (got_it)					# Otherwise go straight to end
 	@test gmtselect([1 2], C="aa+d0", Vd=dbg2) == "gmtselect  -Caa+d0"
 	@test gmtselect([1 2], C=(pts=[1 2],dist=10), L=(line=[1 2;3 4], dist=10), Vd=dbg2) == "gmtselect  -C+d10 -L+d10"
 
-	@show("GMTSET")
+	println("	GMTSET")
 	# GMTSET
 	gmtset(MAP_FRAME_WIDTH=0.2)
 
-	@show("GMTSIMPLIFY")
+	println("	GMTSIMPLIFY")
 	# GMTSIMPLIFY
 	gmtsimplify([0.0 0; 1.1 1.1; 2 2.2; 3.3 3], T="3k")
 
-	@show("GMTREADWRITE")
+	println("	GMTREADWRITE")
 	# GMTREADWRITE
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 	if (GMTver >= 6)
@@ -348,6 +348,7 @@ if (got_it)					# Otherwise go straight to end
 	cpt = gmtread("lixo.cpt", cpt=true, Vd=dbg2);
 	cpt = gmtread("lixo.cpt");
 	gmtwrite("lixo.dat", [1 2 10; 3 4 20])
+	plot("lixo.dat", lala=1, Vd=2)		# Using plot here because the availability of a data file
 	D = gmtread("lixo.dat", i="0,1s10", table=true);
 	@test(sum(D[1].data) == 64.0)
 	gmtwrite("lixo.dat", D)
@@ -357,7 +358,7 @@ if (got_it)					# Otherwise go straight to end
 	gmt("grdinfo lixo.tif");
 	@test_throws ErrorException("First argument cannot be empty. It must contain the file name to write.") gmtwrite("",[1 2]);
 
-	@show("GMTVECTOR")
+	println("	GMTVECTOR")
 	# GMTVECTOR
 	d = [0 0; 0 90; 135 45; -30 -60];
 	gmtvector(d, T=:D, S="0/0", f=:g);
@@ -365,7 +366,7 @@ if (got_it)					# Otherwise go straight to end
 	# GMTWICH
 	gmtwhich("lixo.dat", C=true);
 
-	@show("GRDINFO")
+	println("	GRDINFO")
 	# GRDINFO
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 	r=gmt("grdinfo -C", G);
@@ -373,7 +374,7 @@ if (got_it)					# Otherwise go straight to end
 	r2=grdinfo(G, C=true, V=true);
 	@assert(r[1].data == r2[1].data)
 
-	@show("GRD2CPT")
+	println("	GRD2CPT")
 	# GRD2CPT
 	G=gmt("grdmath", "-R0/10/0/10 -I2 X");
 	C=grd2cpt(G);
@@ -385,10 +386,10 @@ if (got_it)					# Otherwise go straight to end
 	D2=grd2xyz("lixo.grd");
 	@assert(sum(D1[1].data) == sum(D2[1].data))
 
-	@show("GRDBLEND")
+	println("	GRDBLEND")
 	# GRDBLEND
 	if (GMTver >= 6)
-		@show("GRD2KML")
+		println("	GRD2KML")
 		# GRD2KML
 		G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");
 		grd2kml(G, I="+", N="NULL")
@@ -397,13 +398,13 @@ if (got_it)					# Otherwise go straight to end
 		G2=grdblend(G,G3);
 	end
 
-	@show("GRDCLIP")
+	println("	GRDCLIP")
 	# GRDCLIP
 	G2=grdclip(G,above="5/6", low=[2 2], between=[3 4.5 4]);	 # Use G of previous test
 	@test_throws ErrorException("Wrong number of elements in S option") G2=grdclip(G,above="5/6", low=[2], between=[3 4 4.5]);
 	@test_throws ErrorException("OPT_S: argument must be a string or a two elements array.") G2=grdclip(G,above=5, low=[2 2]);
 
-	@show("GRDCONTOUR")
+	println("	GRDCONTOUR")
 	# GRDCONTOUR
 	G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 	C = grdcontour(G, C="+0.7", D=[]);
@@ -425,7 +426,7 @@ if (got_it)					# Otherwise go straight to end
 		grdcontour!("", G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=dbg2)
 	end
 
-	@show("GRDCUT")
+	println("	GRDCUT")
 	# GRDCUT
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
 	G2=grdcut(G, limits=[3 9 2 8]);
@@ -436,32 +437,32 @@ if (got_it)					# Otherwise go straight to end
 	# GRDEDIT
 	grdedit(G, C=true);
 
-	@show("GRDFFT")
+	println("	GRDFFT")
 	# GRDFFT
 	G2=grdfft(G, upward=800); 	# Use G of previous test
 	G2=grdfft(G, G, E=[]);
 
-	@show("GRDFIL")
+	println("	GRDFIL")
 	# GRDFILL
 	G1=grdmask([3 3], R="0/6/0/6", I=1, N="10/NaN/NaN", S=0);
 	G2=grdfill(G, algo=:n);
 
-	@show("GRDFILTER")
+	println("	GRDFILTER")
 	# GRDFILTER
 	G2=grdfilter(G, filter="m600", distflag=4, inc=0.5); # Use G of previous test
 
-	@show("GRDGRADIENT")
+	println("	GRDGRADIENT")
 	# GRDGRADIENT
 	G2=grdgradient(G, azim="0/270", normalize="e0.6");
 	if (GMTver >= 6)
 		G2=grdgradient(G, azim="0/270", normalize="e0.6", Q=:save, Vd=dbg2);
 	end
 
-	@show("GRDHISTEQ")
+	println("	GRDHISTEQ")
 	# GRDHISTEQ
 	G2 = grdhisteq(G, gaussian=[]);	# Use G of previous test
 
-	@show("GRDLANDMASK")
+	println("	GRDLANDMASK")
 	# GRDLANDMASK
 	G2 = grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
 	G2 = grdlandmask("-R-10/4/37/45 -Dc -I0.1");			# Monolithitc
@@ -473,7 +474,7 @@ if (got_it)					# Otherwise go straight to end
 	G3 = grdmath("-R10/20/0/10 -I1 X");
 	G2 = grdpaste(G,G3);
 
-	@show("GRDPROJECT")
+	println("	GRDPROJECT")
 	# GRDPROJECT	-- Works but does not save projection info in header
 	G2 = grdproject(G, proj="u29/1:1", F=[], C=[]); 		# Use G of previous test
 	G2 = grdproject("-Ju29/1:1 -F -C", G);					# Monolithic
@@ -481,7 +482,7 @@ if (got_it)					# Otherwise go straight to end
 	# GRDSAMPLE
 	G2 = grdsample(G, inc=0.5);		# Use G of previous test
 
-	@show("GRDTREND")
+	println("	GRDTREND")
 	# GRDTREND
 	G  = gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
 	G2 = grdtrend(G, model=3);
@@ -491,7 +492,7 @@ if (got_it)					# Otherwise go straight to end
 	#G2 = grdtrend(G, model="3+r", W=W);
 	G2 = grdtrend(G, model="3+r", W=(W,0), Vd=dbg2);
 
-	@show("GRDTRACK")
+	println("	GRDTRACK")
 	# GRDTRACK
 	#G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 	G = gmt("grdmath -R-2/2/-2/2 -I1 1");
@@ -506,7 +507,7 @@ if (got_it)					# Otherwise go straight to end
 	D = grdtrack([0 0], G=(G,G));
 	@assert(D[1].data == [0.0 0 1 1])
 
-	@show("GRDVECTOR")
+	println("	GRDVECTOR")
 	# GRDVECTOR
 	G = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL");
 	dzdy = gmt("grdmath ? DDY", G);
@@ -518,7 +519,7 @@ if (got_it)					# Otherwise go straight to end
 	r = grdvector!("", 1, 2, I=0.2, vec="0.25+e+n0.66", W=1, S=12, Vd=dbg2);
 	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.66 -W1")
 
-	@show("GRDVOLUME")
+	println("	GRDVOLUME")
 	# GRDVOLUME
 	grdvolume(G);
 
@@ -530,7 +531,9 @@ if (got_it)					# Otherwise go straight to end
 	grdimage!("", G, J="X10", Vd=dbg2);
 	Gr=mat2grid(rand(Float32, 128, 128)*255); Gg=mat2grid(rand(Float32, 128, 128)*255); Gb=mat2grid(rand(Float32, 128, 128)*255);
 
-	@show("GRDIMAGE")
+	println("	GRDIMAGE")
+	grdimage(rand(UInt8,64,64), Vd=2);
+	grdimage(rand(UInt16,64,64), Vd=2);
 	grdimage(rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, J="X10")
 	grdimage(data=(Gr,Gg,Gb), J=:X10, I=mat2grid(rand(Float32,128,128)), Vd=dbg2)
 	grdimage(rand(Float32, 128, 128), shade=(default=30,), coast=(W=1,), Vd=dbg2)
@@ -540,7 +543,7 @@ if (got_it)					# Otherwise go straight to end
 	gmtwrite("lixo.grd", G)
 	grdimage("lixo.grd", proj=:Winkel, colorbar=true, coast=true)
 
-	@show("GRDVIEW")
+	println("	GRDVIEW")
 	PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 	gmt("destroy")
 	grdview!("",G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=dbg2);
@@ -561,12 +564,12 @@ if (got_it)					# Otherwise go straight to end
 		grdview(rand(128,128), G="lixo", I=I, J=:X12, JZ=5, Q=:i, view="145/30", Vd=dbg2)
 	end
 
-	@show("GREENSPLINE")
+	println("	GREENSPLINE")
 	# GREENSPLINE
 	d = [0 6.44; 1820 8.61; 2542 5.24; 2889 5.73; 3460 3.81; 4586 4.05; 6020 2.95; 6841 2.57; 7232 3.37; 10903 3.84; 11098 2.86; 11922 1.22; 12530 1.09; 14065 2.36; 14937 2.24; 16244 2.05; 17632 2.23; 19002 0.42; 20860 0.87; 22471 1.26];
 	greenspline(d, R="-2000/25000", I=100, S=:l, D=0, Vd=dbg2)
 
-	@show("IMSHOW")
+	println("	IMSHOW")
 	# IMSHOW
 	imshow(rand(128,128),show=false)
 	imshow(rand(128,128), view=:default, Vd=dbg2)
@@ -578,7 +581,7 @@ if (got_it)					# Otherwise go straight to end
 		imshow(rand(UInt8(0):UInt8(255),256,256), colorbar="bottom", show=false)
 	end
 
-	@show("MAKECPT")
+	println("	MAKECPT")
 	# MAKECPT
 	cpt = makecpt(range="-1/1/0.1");
 	if (GMTver >= 6)
@@ -586,7 +589,7 @@ if (got_it)					# Otherwise go straight to end
 		@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
 	end
 
-	@show("MAPPROJECT")
+	println("	MAPPROJECT")
 	# MAPPROJECT
 	mapproject([-10 40], J=:u29, C=true, F=true);
 	mapproject(region=(-15,35,30,48), proj=:merc, figsize=5, map_size=true);
@@ -596,7 +599,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Bad argument type (Tuple{Float64,Int64}) to option L") mapproject([1.0 1; 2 2], L=(1.0,0), Vd=dbg2)
 	@test_throws ErrorException("line member cannot be missing") mapproject(mapproject([1.0 1; 2 2], L=(lina=[1.0 0; 4 3], unit=:c), Vd=dbg2))
 
-	@show("PLOT")
+	println("	PLOT")
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", xlabel="Spoons", ylabel="Forks", savefig="lixo")
 	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=[:red, :green, :blue, :yellow], ls=:dashdot), leg=true, label="Bla")
@@ -636,7 +639,7 @@ if (got_it)					# Otherwise go straight to end
 	hlines!([0.2, 0.6], pen=(1, :red))
 	vlines!([0.2, 0.6], pen=(1, :red))
 
-	@show("PLOT3D")
+	println("	PLOT3D")
 	plot3d(rand(5,3), marker=:cube)
 	plot3d!(rand(5,3), marker=:cube, Vd=dbg2)
 	plot3d("", rand(5,3), Vd=dbg2)
@@ -644,7 +647,7 @@ if (got_it)					# Otherwise go straight to end
 	plot3d(1:10, rand(10), rand(10), Vd=dbg2)
 	plot3d!(1:10, rand(10), rand(10), Vd=dbg2)
 
-	@show("ARROWS")
+	println("	ARROWS")
 	# ARROWS
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,stop=1,shape=0.5,fill=:red), J=:X14, B=:a, pen="6p")
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,stop=:tail,shape=0.5), J=:X14, B=:a, pen="6p")
@@ -655,7 +658,7 @@ if (got_it)					# Otherwise go straight to end
 	@test occursin("-SvB4p/18p/7.5p", arrows([1 0 45 4], R="0/6/-1/1", J="x2.5", lw=1, arrow4=(align=:mid, head=("4p","18p", "7.5p"), double=true), Vd=dbg2))
 	@test occursin("-Svs4p/18p/7.5p", arrows([1 0 45 4], R="0/6/-1/1", J="x2.5", lw=1, arrow4=(align=:pt, head="4p/18p/7.5p"), Vd=dbg2))
 
-	@show("LINES")
+	println("	LINES")
 	# LINES
 	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
 	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af, box_pos="+p0.5", leg_pos=(offset=0.5,), leg=:TL)
@@ -671,7 +674,7 @@ if (got_it)					# Otherwise go straight to end
 	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=dbg2);
 	@test startswith(r, "psxy  -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -R0/6.0/-1/0.7 -JX40/8 -B+g220 --PS_MEDIA=A1 -W2,sienna")
 
-	@show("SCATTER")
+	println("	SCATTER")
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
@@ -693,7 +696,7 @@ if (got_it)					# Otherwise go straight to end
 	scatter3(1:10, rand(10), rand(10), fill=:red, B=:a, Vd=dbg2)
 	scatter3!(1:10, rand(10), rand(10), Vd=dbg2)
 
-	@show("BARPLOT")
+	println("	BARPLOT")
 	# BARPLOT
 	bar(sort(randn(10)), G=0, B=:a)
 	bar(rand(20),bar=(width=0.5,), Vd=dbg2)
@@ -724,7 +727,7 @@ if (got_it)					# Otherwise go straight to end
 	end
 	mat2ds([0 0],["aa"]);
 
-	@show("BAR3")
+	println("	BAR3")
 	# BAR3
 	G = gmt("grdmath -R-15/15/-15/15 -I1 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 	gmtwrite("lixo.grd", G)
@@ -748,14 +751,14 @@ if (got_it)					# Otherwise go straight to end
 		#gmtread("lixo.gmt");
 	end
 
-	@show("PROJECT")
+	println("	PROJECT")
 	# PROJECT
 	if (GMTver >= 6)
 		project(C="15/15", T="85/40", G="1/110", L="-20/60");	# Fails in GMT5
 		project(nothing, C="15/15", T="85/40", G="1/110", L="-20/60");	# bit of cheating
 	end
 
-	@show("PSBASEMAP")
+	println("	PSBASEMAP")
 	# PSBASEMAP
 	basemap(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth")
 	basemap!(region="0/100/0/5000", proj="x1p0.5/-0.001", B="x1p+l\"Crustal age\" y500+lDepth", Vd=dbg2)
@@ -787,14 +790,14 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(r, "psbasemap  -R1/1000/0/1 -JX8l -Bpa1f2p")
 	@test_throws ErrorException("slanted option: Only 'parallel' is allowed for the y-axis") basemap(yaxis=(slanted=:o,), Vd=dbg2)
 
-	@show("PSCLIP")
+	println("	PSCLIP")
 	# PSCLIP
 	d = [0.2 0.2; 0.2 0.8; 0.8 0.8; 0.8 0.2; 0.2 0.2];
 	psclip(d, J="X3i", R="0/1/0/1", N=true);
 	psclip!(d, J="X3i", R="0/1/0/1", Vd=dbg2);
 	psclip!("", d, J="X3i", R="0/1/0/1", Vd=dbg2);
 
-	@show("PSCONVERT")
+	println("	PSCONVERT")
 	# PSCONVERT
 	gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
 	if (GMTver >= 6)
@@ -810,7 +813,7 @@ if (got_it)					# Otherwise go straight to end
 	gmt("psconvert -A lixo.ps");
 	gmt("write lixo.ps", P)		# Test also this case in gmt_main
 
-	@show("PSCOAST")
+	println("	PSCOAST")
 	# PSCOAST
 	coast(R=[-10 1 36 45], J=:M12c, B="a", shore=1, E=("PT",(10,"green")), D=:c, borders="1/0.5p")
 	coast(R=[-10 1 36 45], J="M12c", B="a", shore=1, E=(("PT",(20,"green"),"+gcyan"),("ES","+gblue")), fmt="ps")
@@ -831,7 +834,7 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(r, "pscoast  -JM12c -Baf -BWSen -EGB,IT,FR+gblue+p0.25,red -EES,PT,GR+gyellow -Da")
 	@test_throws ErrorException("In Overlay mode you cannot change a fig scale and NOT repeat the projection") coast!(region=(-20,60,-90,90), scale=0.03333, Vd=dbg2)
 
-	@show("PSCONTOUR")
+	println("	PSCONTOUR")
 	# PSCONTOUR
 	x,y,z=GMT.peaks(grid=false);
 	contour([x[:] y[:] z[:]], cont=1, annot=2, axis="a")
@@ -840,14 +843,14 @@ if (got_it)					# Otherwise go straight to end
 	contour!("", [x[:] y[:] z[:]], cont=1, Vd=dbg2)
 	D = contour([x[:] y[:] z[:]], cont=[1,3,5], dump=true);
 
-	@show("PSIMAGE")
+	println("	PSIMAGE")
 	# PSIMAGE
 	if (GMTver >= 6)
 		psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
 		psimage!("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7, Vd=dbg2)
 	end
 
-	@show("PSSCALE")
+	println("	PSSCALE")
 	# PSSCALE
 	C = makecpt(T="-200/1000/100", C="rainbow");
 	colorbar(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps", par=(MAP_FRAME_WIDTH=0.2,))
@@ -856,20 +859,20 @@ if (got_it)					# Otherwise go straight to end
 	colorbar(C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=dbg2)
 	colorbar!(C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=dbg2)
 
-	@show("PSHISTOGRAM")
+	println("	PSHISTOGRAM")
 	# PSHISTOGRAM
 	histogram(randn(1000),W=0.1,center=true,B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
 	histogram!("", randn(1000),W=0.1,center=true,N="1+p0.5", Vd=dbg2)
 	histogram!(randn(1000),W=0.1,center=true,N=(2,(1,:red)), Vd=dbg2)
 
-	@show("PSLEGEND")
+	println("	PSLEGEND")
 	# PSLEGEND
 	T = text_record(["P", "T d = [0 0; 1 1; 2 1; 3 0.5; 2 0.25]"]);
 	legend(T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", F="+p+ggray")
 	legend!(T, R="-3/3/-3/3", J=:X12, D="g-1.8/2.6+w12c+jTL", Vd=dbg2)
 	legend!("", T, R="-3/3/-3/3", J=:X12, D="g-1.8/2.6+w12c+jTL", Vd=dbg2)
 
-	@show("PSROSE")
+	println("	PSROSE")
 	# PSROSE
 	data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3;; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
 	rose(data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=1, D=1, S=4)
@@ -879,14 +882,14 @@ if (got_it)					# Otherwise go straight to end
 		rose(data, A=20, I=1);		# Broken in GMT5`
 	end
 
-	@show("PSMASK")
+	println("	PSMASK")
 	# PSMASK
 	D = gmtmath("-T-90/90/10 -N2/1 0");
 	mask(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, B="xafg180 yafg10")
 	mask!(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=dbg2)
 	mask!("", D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=dbg2)
 
-	@show("PSSOLAR")
+	println("	PSSOLAR")
 	# PSSOLAR
 	#D=solar(I="-7.93/37.079+d2016-02-04T10:01:00");
 	#@assert(D[1].text[end] == "\tDuration = 10:27")
@@ -894,13 +897,13 @@ if (got_it)					# Otherwise go straight to end
 	solar!(R="d", W=1, J="Q0/14c", T="dc", Vd=dbg2)
 	solar(sun=(date="2016-02-09T16:00:00",), formated=true);
 
-	@show("PSTERNARY")
+	println("	PSTERNARY")
 	# PSTERNARY
 	ternary([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", X=:c, B=:a, S="c0.1c");
 	ternary!([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", shape=:square, ms=0.1, markerline=1,Vd=dbg2);
 	ternary!("", [0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", ms=0.1, lw=1,markeredgecolor=:red, Vd=dbg2);
 
-	@show("PSTEXT")
+	println("	PSTEXT")
 	# PSTEXT
 	text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps",savefig="lixo.ps")
 	text!(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",Vd=dbg2)
@@ -916,7 +919,7 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(GMT.text([1 2 3; 4 5 6], Vd=dbg2), "pstext  -JX12c/0 -Baf -BWSen -R0.9/4.1/1.9/5.1")
 	@test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=dbg2)
 
-	@show("PSWIGGLE")
+	println("	PSWIGGLE")
 	# PSWIGGLE
 	t=[0 7; 1 8; 8 3; 10 7];
 	t1=gmt("sample1d -I5k", t); t2 = gmt("mapproject -G+uk", t1); t3 = gmt("math ? -C2 10 DIV COS", t2);
@@ -928,26 +931,26 @@ if (got_it)					# Otherwise go straight to end
 	d = [-5 74; 38 68; 42 73; 43 76; 44 73];
 	sample1d(d, T="2c", A=:r);	
 
-	@show("SPECTRUM1D")
+	println("	SPECTRUM1D")
 	# SPECTRUM1D
 	D = gmt("gmtmath -T0/10239/1 T 10240 DIV 360 MUL 400 MUL COSD");
 	spectrum1d(D, S=256, W=true, par=(GMT_FFT=:brenner), N=true, i=1);
 
-	@show("SPHTRIANGULATE")
+	println("	SPHTRIANGULATE")
 	# SPHTRIANGULATE
 	D = sphtriangulate(rand(10,3));		# One dataset per triangle????
 
-	@show("SPHINTERPOLATE")
+	println("	SPHINTERPOLATE")
 	# SPHINTERPOLATE
 	sphinterpolate(rand(10,3), I=0.1, R="0/1/0/1");
 
-	@show("SPHDISTANCE")
+	println("	SPHDISTANCE")
 	# SPHDISTANCE  (would fail with: Could not obtain node-information from the segment headers)
 	G = sphdistance(R="0/10/0/10", I=0.1, Q=D, L=:k, Vd=dbg2);	# But works with data from sph_3.sh test
 	@test sphdistance(nothing, R="0/10/0/10", I=0.1, Q="D", L=:k, Vd=dbg2) == "sphdistance  -I0.1 -R0/10/0/10 -Lk -QD"
 
 	# MODERN
-	@show("MODERN")
+	println("	MODERN")
 	if (GMTver >= 6)
 		@test GMT.helper_sub_F("1/2") == "1/2"
 		#@test GMT.helper_sub_F((size=(1,2), frac=((2,3),(3,4,5))) ) == "1/2+f2,3/3,4,5"
@@ -1005,13 +1008,15 @@ if (got_it)					# Otherwise go straight to end
 	end
 
 	# TRIANGULATE
+	println("	TRIANGULATE")
 	G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
 
 	# NEARNEIGHBOR
+	println("	NEARNEIGHBOR")
 	G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, S=10, r=true);
 
 	# XYZ2GRD
-	println("XYZ2GRD")
+	println("	XYZ2GRD")
 	D=grd2xyz(G); # Use G of previous test
 	xyz2grd(D, R="0/150/0/150", I=1, r=true);
 	xyz2grd(D, xlim=(0,150), ylim=(0,150), I=1, r=true);
@@ -1020,11 +1025,11 @@ if (got_it)					# Otherwise go straight to end
 	D = gmt("gmtmath -T10/110/1 T 50 DIV 2 POW 2 MUL T 60 DIV ADD 4 ADD 0 0.25 NRAND ADD T 25 DIV 2 MUL PI MUL COS 2 MUL 2 ADD ADD");
 	trend1d(D, N="p2,F1+o0+l25", F=:xm);
 
-	println("TREND2D")
+	println("	TREND2D")
 	# TREND2D
 	trend2d(D, F=:xyr, N=3);
 
-	println("MISC")
+	println("	MISC")
 	# MISC
 	G = GMT.mat2grid(G.z; reg=0, hdr=[G.range; G.registration; G.inc]);
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
@@ -1103,7 +1108,7 @@ if (got_it)					# Otherwise go straight to end
 	tic();toc()
 	@test_throws ErrorException("`toc()` without `tic()`") toc()
 
-	println("EXAMPLES")
+	println("	EXAMPLES")
 	# EXAMPLES
 	plot(1:10,rand(10), lw=1, lc="blue", marker="square", markeredgecolor=:white, size=0.2, markerfacecolor="red", title="Hello World", xlabel="Spoons", ylabel="Forks")
 

@@ -126,7 +126,7 @@ function write_script(fname)
 			for par in par_list
 				if (occursin(par, cmd))  cmd = replace(cmd, par => b * par * e)  end
 			end
-			println(fid, "\t",cmd)
+			println(fid, "\t gmt ",cmd)
 		end
 		println(fid, "gmt end")
 		close(fid)

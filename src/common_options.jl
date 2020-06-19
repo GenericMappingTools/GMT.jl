@@ -1160,10 +1160,8 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true,
 			if (mapa[2] == helper_decorated)  args[1] = mapa[2](val, true)		# 'true' => single argout
 			else                              args[1] = mapa[2](val)			# Case not yet invented
 			end
-		elseif (isa(val, String))
-			args[1] = val
-		else
-			error("The option argument must be a NamedTuple, not a simple Tuple")
+		elseif (isa(val, String))  args[1] = val
+		else                       error("The option argument must be a NamedTuple, not a simple Tuple")
 		end
 	else
 		args[1] = arg2str(val)
