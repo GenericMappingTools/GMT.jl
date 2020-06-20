@@ -2471,7 +2471,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	# FNAME is for when using the savefig option
 
 	global current_cpt = nothing		# Reset to empty when fig is finalized
-	if (isdefined(Main, :IJulia) && Main.IJulia.inited)	 opt_T = " -Tg"; fname_ext = "png"  end		# In Jupyter png only
+	if (fname == "" && isdefined(Main, :IJulia) && Main.IJulia.inited)	 opt_T = " -Tg"; fname_ext = "png"  end		# In Jupyter, png only
 	if (opt_T != "")
 		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end		# Close the PS file first
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
@@ -2489,10 +2489,12 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	end
 
 	if (haskey(d, :show) && d[:show] != 0)
-		if (isdefined(Main, :IJulia) && Main.IJulia.inited)				# From Jupyter?
-			display("image/png", read(out))
+		if (isdefined(Main, :IJulia) && Main.IJulia.inited)		# From Jupyter?
+			if (fname == "") display("image/png", read(out))
+			else             @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
+			end
 		else
-			@static if (Sys.iswindows()) run(ignorestatus(`explorer $out`))
+			@static if (Sys.iswindows()) out = replace(out, "/" => "\\"); run(ignorestatus(`explorer $out`))
 			elseif (Sys.isapple()) run(`open $(out)`)
 			elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
 			end
