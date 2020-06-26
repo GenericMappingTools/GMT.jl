@@ -88,6 +88,7 @@ function movie(cmd0::String=""; pre="", post="", kwargs...)
 
 	if (cmd0 == "")  error("A main script is mandatory")  end
 	if ((mainName = jl_sc_2_shell_sc(cmd0, "main_script")) === nothing)  error("Main script has nothing useful")  end
+	#mainName = (Sys.iswindows()) ? "main_script.bat" : "main_script.sh"
 
 	cmd = parse_common_opts(d, "", [:V_params :x])
 	cmd = parse_these_opts(cmd, d, [[:C :canvas], [:N :name], [:T :frames]])
