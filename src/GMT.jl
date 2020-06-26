@@ -26,7 +26,7 @@ const global IamModern   = Array{Bool,1}(undef,1)		# To know if we are in modern
 const global FirstModern = Array{Bool,1}(undef,1)		# To know 
 const global IamSubplot  = Array{Bool,1}(undef,1)		# To know if we are in subplot mode
 const global usedConfPar = Array{Bool,1}(undef,1)		# Hacky solution for the session's memory trouble
-const global convert_syntax = Array{Bool,1}(undef,1)	# To only convert to hard core GMT syntax (like Vd=2)
+const global convert_syntax = Array{Bool,1}(undef,1);convert_syntax[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
 const global FMT = ["ps"]
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
