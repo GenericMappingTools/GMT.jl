@@ -136,7 +136,8 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 			opt_S = " -S" * marca
 			# If data comes from a file, then no automatic symbol size is added
 			op = lowercase(marca[1])
-			if (!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw"))  opt_S *= "7p"  end
+			def_size = (op == 'p') ? "3p" : "7p"
+			if (!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw"))  opt_S *= def_size  end
 		end
 	else
 		val, symb = find_in_dict(d, [:markersize :MarkerSize :ms :size])
