@@ -211,8 +211,12 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 			opt_J[1] = append_figsize(d, opt_J[1])
 		elseif (!isnumeric(opt_J[1][end]) && (length(opt_J[1]) < 6 || (isletter(opt_J[1][5]) && !isnumeric(opt_J[1][6]))) )
 			if ((val = find_in_dict(d, [:aspect :axis])[1]) !== nothing)  val = string(val)  end
-			if (val == "equal")  opt_J[1] *= split(def_fig_size, '/')[1] * "/0"
-			else                 opt_J[1] *= def_fig_size
+			if (!IamSubplot[1])
+				if (val == "equal")  opt_J[1] *= split(def_fig_size, '/')[1] * "/0"
+				else                 opt_J[1] *= def_fig_size
+				end
+			else
+				opt_J[1] *= "/?"
 			end
 		#elseif (length(opt_J[1]) == 4 || (length(opt_J[1]) >= 5 && isletter(opt_J[1][5])))
 			#if (length(opt_J[1][1]) < 6 || !isnumeric(opt_J[1][6]))
@@ -249,7 +253,7 @@ function append_figsize(d::Dict, opt_J::String, width="", scale=false)
 	# Sometimes we need to separate with a '/' others not. If WIDTH == "" we
 	# use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
 	if (width == "")
-		width = split(def_fig_size, '/')[1]
+		width = (IamSubplot[1]) ? "?" : split(def_fig_size, '/')[1]		# In subplot "?" is auto width
 	elseif ( ((val = find_in_dict(d, [:aspect :axis], false)[1]) !== nothing) && (val == "equal" || val == :equal))
 		del_from_dict(d, [:aspect :axis])		# Delete this kwarg but only after knowing its val
 		if (occursin("/", width))
@@ -415,14 +419,14 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 
-	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes	# def_fig_axes is a global const
+	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes		# def_fig_axes is a global const
 	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3	# def_fig_axes is a global const
 
 	opt_B = Array{String,1}(undef,1)
 	opt_B[1] = _opt_B
 
 	# These four are aliases
-	extra_parse = true
+	extra_parse = true;
 	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))
 			val = string(val)					# In case it was a symbol
@@ -463,7 +467,6 @@ function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 		if (opt_B[1] == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis], false)[1] === nothing))
 			opt_B[1] = def_fig_axes_
 		else
-			#if (opt_B[1] == def_fig_axes)  opt_B[1] = ""  end		# opt_B[1] = def_fig_axes from argin but no good here
 			if !( ((ind = findlast("-B",opt_B[1])) !== nothing || (ind = findlast(" ",opt_B[1])) !== nothing) &&
 				  (occursin(r"[WESNwesntlbu+g+o]",opt_B[1][ind[1]:end])) )
 				t = " " * t;		# Do not glue, for example, -Bg with :title
@@ -507,8 +510,7 @@ function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 			elseif (symb == :xaxis2)  this_opt_B = axis(d[symb], x=true, secondary=true) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :yaxis)   this_opt_B = axis(d[symb], y=true) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :yaxis2)  this_opt_B = axis(d[symb], y=true, secondary=true) * this_opt_B;	delete!(d, symb)
-			elseif (symb == :zaxis)   this_opt_B = axis(d[symb], z=true) * this_opt_B;	delete!(d, symb)
-			end
+			elseif (symb == :zaxis)   this_opt_B = axis(d[symb], z=true) * this_opt_B;	delete!(d, symb)			end
 		end
 	end
 
@@ -1226,7 +1228,10 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 				else					# This branch is to deal with options -Td, -Tm, -L and -D of basemap & psscale
 					ind_o += 1
 					if (d[key[k]][2] === nothing)  cmd_hold[ind_o] = d[key[k]][1]	# Only flag char and order matters
-					else                           cmd_hold[ind_o] = d[key[k]][1] * d[key[k]][2](nt[k])		# Run the fun
+					elseif (length(d[key[k]][1]) == 2 && d[key[k]][1][1] == '-' && !isa(nt[k], Tuple))	# e.g. -L (&g, arg2str, 1)
+						cmd_hold[ind_o] = string(d[key[k]][1][2])	# where g<scalar>
+					else		# Run the fun
+						cmd_hold[ind_o] = (d[key[k]][1] == "") ? d[key[k]][2](nt[k]) : d[key[k]][1][end] * d[key[k]][2](nt[k])
 					end
 					order[ind_o]    = d[key[k]][3];				# Store the order of this sub-option
 				end
@@ -1276,8 +1281,8 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 		elseif (length(cmd_hold[last]) > 2)		# Temp patch to avoid parsing single char flags
 			rs = split(cmd_hold[last], '/')
 			if (length(rs) == 2)
-				x = parse(Float64, rs[1]);		y = parse(Float64, rs[2]);
-				if (0 <= x <= 1.0 && 0 <= y <= 1.0 && !occursin(r"[gjJxn]", string(cmd[1])))  cmd = "n" * cmd  end		# Otherwise, either a paper coord or error
+				x = tryparse(Float64, rs[1]);		y = tryparse(Float64, rs[2]);
+				if (x !== nothing && y !== nothing && 0 <= x <= 1.0 && 0 <= y <= 1.0 && !occursin(r"[gjJxn]", string(cmd[1])))  cmd = "n" * cmd  end		# Otherwise, either a paper coord or error
 			end
 		end
 	end
@@ -1408,7 +1413,11 @@ function add_opt_fill(cmd::String, d::Dict, symbs, opt="", del=true)::String
 	# Deal with the area fill attributes option. Normally, -G
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)  return cmd  end
 	if (opt != "")  opt = string(" -", opt)  end
+	return add_opt_fill(val, cmd, opt)
+end
 
+function add_opt_fill(val, cmd::String="",  opt="")::String
+	# This version can be called directy with VAL as a NT or a string
 	if (isa(val, NamedTuple))
 		d2 = nt2dict(val)
 		cmd *= opt
@@ -2182,9 +2191,9 @@ end
 function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=false, get_info=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
-	#force_get_R = false		# Because of a GMT6.0 BUG, modern mode does not compute -R automatically
 	if (IamModern[1] && FirstModern[1])  FirstModern[1] = false;  end
-	force_get_R = (IamModern[1] && GMTver > 6) ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
+	#force_get_R = (IamModern[1] && GMTver > 6) ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
+	force_get_R = true		# Due to a GMT6.0 BUG, modern mode does not compute -R automatically and 6.1 is not good too
 	data_kw = nothing
 	if (haskey(d, :data))  data_kw = d[:data]  end
 	if (fname != "")       data_kw = fname     end
@@ -2195,7 +2204,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	cmd, opt_yx = parse_swap_xy(cmd, d)
 	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
 	if (isa(data_kw, String))
-		if ((!IamModern[1] && opt_R == "") || get_info)		# Then we must read the file to determine -R
+		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])	# Then we must read the file to determine -R
 			lixo, opt_bi = parse_bi("", d)	# See if user says file is binary
 			if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
 				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
@@ -2217,7 +2226,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 
 	info = nothing
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
-	if ((!IamModern[1] && no_R) || (force_get_R && no_R))
+	if (((!IamModern[1] && no_R) || (force_get_R && no_R)) && !convert_syntax[1])
 		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h * opt_yx, arg)		# Here we are reading from an original GMTdataset or Array
 		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
 			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
@@ -2249,7 +2258,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 		cmd *= opt_R
 	end
 
-	if (get_info && info === nothing)
+	if (get_info && info === nothing && !convert_syntax[1])
 		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h * opt_yx, arg)
 		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
 			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
@@ -2473,7 +2482,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	global current_cpt = nothing		# Reset to empty when fig is finalized
 	if (fname == "" && isdefined(Main, :IJulia) && Main.IJulia.inited)	 opt_T = " -Tg"; fname_ext = "png"  end		# In Jupyter, png only
 	if (opt_T != "")
-		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end		# Close the PS file first
+		if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T)
 		out = fname_ps[1:end-2] * fname_ext
