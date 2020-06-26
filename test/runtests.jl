@@ -958,7 +958,7 @@ if (got_it)					# Otherwise go straight to end
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), Vd=dbg2), "-F1/2")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=("1i",2), Vd=dbg2), "-F1i/2")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), name="lixo.ps", Vd=dbg2), "-F1/2+f2,3/3,4,5")
-		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(width=1,height=5,fwidth=(0.5,1),fheight=(10,), name="lixo"), Vd=dbg2), "-F1/5+f0.5,1/10")
+		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(width=1,height=5,fwidth=(0.5,1),fheight=(10,), fill=:red, outline=(3,:red)), Vd=dbg2), "-F1/5+f0.5,1/10+gred+p3,red")
 		@test GMT.helper_sub_F((width=1,)) == "1/0"
 		#@test GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1),fheight=(10,))) == "1/5+f0.5,1/10"
 		@test_throws ErrorException("SUBPLOT: when using 'fwidth' must also set 'fheight'") GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1)))
@@ -997,7 +997,7 @@ if (got_it)					# Otherwise go straight to end
 		events("", R=:g, J="G200/5/6i", B=:af, S="E-", C=true, T="2018-05-01T", E="s+r2+d6", M=((size=5,coda=0.5),(intensity=true,)), Vd=dbg2);
 	end
 
-	println("SURFACE")
+	println("	SURFACE")
 	# SURFACE
 	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
 	@assert(size(G.z) == (151, 151))
