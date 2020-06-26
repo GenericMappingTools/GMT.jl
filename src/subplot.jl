@@ -64,7 +64,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			del_from_dict(d, [:F :dims :dimensions :size :sizes])
 		else
 			cmd = add_opt(cmd, "F", d, [:F :dims :dimensions :size :sizes],
-			              (panels=("s", nothing, 1), size=("", helper_sub_F), sizes=("", helper_sub_F), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F)))
+			              (panels=("s", nothing, 1), size=("", helper_sub_F), sizes=("", helper_sub_F), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F), clearance=("+c", arg2str), outine=("+p", add_opt_pen), fill=("+g", add_opt_fill), divlines=("+w", add_opt_pen)))
 		end
 	end
 
@@ -91,6 +91,8 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			fname = ""				# Default name (GMTplot.ps) is set in gmt_main()
 			if ((val = find_in_dict(d, [:name :savefig])[1]) !== nothing)
 				fname = get_format(string(val), nothing, d)		# Get the fig name and format.
+			elseif ((val = find_in_dict(d, [:fmt])[1]) !== nothing)
+				fname = "GMTplot " * string(val)
 			end
 			gmt("begin " * fname)
 		end
@@ -116,7 +118,7 @@ end
 function helper_sub_F(arg, dumb=nothing)
 	# dims=(1,2)
 	# dims=(size=(1,2), frac=((2,3),(3,4,5)))
-	# dims=(width=xx, height=yy, fwidth=(), fheight=())
+	# dims=(width=xx, height=yy, fwidth=(), fheight=(), fill=:red, outline=(3,:red))
 	out = ""
 	if (isa(arg, String))
 		out = arg2str(arg)
@@ -142,6 +144,10 @@ function helper_sub_F(arg, dumb=nothing)
 				if (!haskey(d, :fheight))  error("SUBPLOT: when using 'fwidth' must also set 'fheight'")  end
 				out *= '/' * arg2str(d[:fheight], ',')
 			end
+			if ((val = find_in_dict(d, [:fill], false)[1]) !== nothing)  out *= "+g" * add_opt_fill(val)  end
+			if ((val = find_in_dict(d, [:clearance], false)[1]) !== nothing)  out *= "+c" * arg2str(val)  end
+			if (haskey(d, :outline))   out *= "+p" * add_opt_pen(d, [:outline])  end
+			if (haskey(d, :divlines))  out *= "+w" * add_opt_pen(d, [:divlines]) end
 		end
 	end
 	if (out == "")  error("SUBPLOT: garbage in DIMS option")  end
