@@ -139,12 +139,12 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		del_from_dict(d, [:E :DCW])
 	end
 
-	if (!occursin("-C",cmd) && !occursin("-E",cmd) && !occursin("-G",cmd) && !occursin("-I",cmd) &&
-		!occursin("-M",cmd) && !occursin("-N",cmd) && !occursin("-Q",cmd) && !occursin("-S",cmd) && !occursin("-W",cmd))
+	if (!occursin(" -C",cmd) && !occursin(" -E",cmd) && !occursin(" -G",cmd) && !occursin(" -I",cmd) &&
+		!occursin(" -M",cmd) && !occursin(" -N",cmd) && !occursin(" -Q",cmd) && !occursin(" -S",cmd) && !occursin(" -W",cmd))
 		cmd *= " -W0.5p"
 	end
 	if (!occursin("-D",cmd))  cmd *= " -Da"  end		# Then pick automatic
-	finish = !occursin("-M ",cmd) ? true : false		# Otherwise the dump would be redirected to GMTjl_tmp.ps
+	finish = !occursin(" -M ",cmd) ? true : false		# Otherwise the dump would be redirected to GMTjl_tmp.ps
 
 	return finish_PS_module(d, "pscoast " * cmd, "", K, O, finish)
 end

@@ -221,6 +221,18 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.axis(phase_add=10) == " -Bp+10";
 	@test GMT.axis(phase_sub=10) == " -Bp-10";
 
+	r,o = GMT.prepare2geotif(Dict(:geotif => :trans), "pscoast  -Rd -JX12cd/0 -Baf -BWSen -W0.5p -Da", "", false);
+	@test startswith(r,"pscoast  -Rd -JX30cd/0 -W0.5p -Da  -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254")
+	@test o == " -TG -W+g"
+	r,o = GMT.prepare2geotif(Dict(:kml => :trans), "pscoast  -Rd -JX12cd/0 -Baf -BWSen -W0.5p -Da", "", false);
+	@test startswith(r,"pscoast  -Rd -JX30cd/0 -W0.5p -Da  -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254")
+	@test o == " -TG -W+k"
+	o = GMT.prepare2geotif(Dict(:kml => "+tLoLo"), "pscoast  -Rd -JX12cd/0 -Baf -W0.5p -Da", "", false)[2];
+	@test o == " -TG -W+k+tLoLo"
+	o = GMT.prepare2geotif(Dict(:kml => (title=:Lolo, layer=:bla, fade=(1,2), URL="http")), "pscoast  -Rd -JX12 -Baf -W0.5p -Da", "", false)[2];
+	@test o == " -TG -W+k+tLolo+nbla+f1/2+uhttp"
+	coast(region=:global, kml=:trans, proj=:merc,Vd=dbg2)
+
 	# ---------------------------------------------------------------------------------------------------
 
 	gmt("gmtset -");

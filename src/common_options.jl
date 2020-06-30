@@ -1105,6 +1105,47 @@ function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function prepare2geotif(d::Dict, cmd, opt_T::String, O::Bool)
+	# Prepare automatic settings to allow creating a GeoTIF or a KML from a PS map
+	# Makes use of psconvert -W option -W
+	function helper2geotif(cmd::String)
+		# Strip all -B's and add convenient settings for creating GeoTIFF's and KLM's
+		opts = split(cmd, " ");		cmd  = ""
+		for opt in opts
+			if     (startswith(opt, "-JX12c"))  cmd *= "-JX30cd/0 "		# Default size is too small
+			elseif (!startswith(opt, "-B"))     cmd *= opt * " "
+			end
+		end
+		cmd *= " -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254"
+	end
+
+	if (!O && ((val = find_in_dict(d, [:geotif])[1]) !== nothing))		# Only first layer
+		if (isa(cmd, Array{String,1})) cmd[1] = helper2geotif(cmd[1])
+		else                           cmd    = helper2geotif(cmd)
+		end
+		if (startswith(string(val), "trans"))  opt_T = " -TG -W+g"  end	# A transparent GeoTIFF
+	elseif (!O && ((val = find_in_dict(d, [:kml])[1]) !== nothing))		# Only first layer
+		if (!occursin("-JX", cmd) && !occursin("-Jx", cmd))
+			@warn("Creating KML requires the use of a cartesian projection of geographical coordinates. Not your case")
+			return cmd, opt_T
+		end
+		if (isa(cmd, Array{String,1})) cmd[1] = helper2geotif(cmd[1])
+		else                           cmd    = helper2geotif(cmd)
+		end
+		if (isa(val, String) || isa(val, Symbol))	# A transparent KML
+			if (startswith(string(val), "trans"))  opt_T = " -TG -W+k"
+			else                                   opt_T = string(" -TG -W+k", val)		# Whatever 'val' is
+			end
+		elseif (isa(val, NamedTuple))
+			# [+tdocname][+nlayername][+ofoldername][+aaltmode[alt]][+lminLOD/maxLOD][+fminfade/maxfade][+uURL]
+			opt_T = add_opt(" -TG -W+k", "", Dict(:kml => val), [:kml],
+							(title="+t", layer="+n", layername="+n", folder="+o", foldername="+o", altmode="+a", LOD=("+l", arg2str), fade=("+f", arg2str), URL="+u"))
+		end
+	end
+	return cmd, opt_T
+end
+
+# ---------------------------------------------------------------------------------------------------
 function add_opt_1char(cmd::String, d::Dict, symbs, del::Bool=true)
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == true we remove the found key.
@@ -2179,6 +2220,8 @@ function fname_out(d::Dict, del=false)
 	elseif (ext == "png")  opt_T = " -Tg";	EXT = ext
 	elseif (ext == "jpg")  opt_T = " -Tj";	EXT = ext
 	elseif (ext == "tif")  opt_T = " -Tt";	EXT = ext
+	elseif (ext == "tiff") opt_T = " -Tt -W+g";	EXT = ext
+	elseif (ext == "kml")  opt_T = " -Tt -W+k";	EXT = ext
 	elseif (ext == "pdg")  opt_T = " -Tf -Qp";	EXT = "pdf"
 	else   error(@sprintf("Unknown graphics file extension (.%s)", EXT))
 	end
@@ -2192,8 +2235,8 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
 	if (IamModern[1] && FirstModern[1])  FirstModern[1] = false;  end
-	#force_get_R = (IamModern[1] && GMTver > 6) ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
-	force_get_R = true		# Due to a GMT6.0 BUG, modern mode does not compute -R automatically and 6.1 is not good too
+	force_get_R = (IamModern[1] && GMTver > 6) ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
+	#force_get_R = true		# Due to a GMT6.0 BUG, modern mode does not compute -R automatically and 6.1 is not good too
 	data_kw = nothing
 	if (haskey(d, :data))  data_kw = d[:data]  end
 	if (fname != "")       data_kw = fname     end
@@ -2544,7 +2587,8 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
 
 	output, opt_T, fname_ext, fname, ret_ps = fname_out(d, true)
-	if (ret_ps)  output = ""  end		# Here we don't want to save to file
+	if (ret_ps)  output = ""  end						# Here we don't want to save to file
+	cmd, opt_T = prepare2geotif(d, cmd, opt_T, O)		# Settings for the GeoTIFF and KML cases
 	if (finish) cmd = finish_PS(d, cmd, output, K, O)  end
 
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
