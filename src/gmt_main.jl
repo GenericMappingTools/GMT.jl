@@ -507,7 +507,7 @@ function get_image(API::Ptr{Nothing}, object)
 	end
 
 	# Return image via a uint8 matrix in a struct
-	cinterp = unsafe_string(I.color_interp)
+	cinterp = (I.color_interp != C_NULL) ? unsafe_string(I.color_interp) : ""
 	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, "", X, Y,
 	               t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
 
