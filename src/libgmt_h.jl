@@ -44,8 +44,8 @@ const GMT_OPT_INFILE = 60
 # end enum GMT_enum_opt
 
 # begin enum GMT_enum_method
+const GMT_IS_REFERENCE = 4		# Entity is a memory location that should be referenced */
 const GMT_IS_OUTPUT = 1024
-# end enum GMT_enum_method
 
 # begin enum GMT_enum_via
 const GMT_VIA_NONE = 0
