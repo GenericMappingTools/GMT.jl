@@ -68,17 +68,18 @@ function imshow(arg1::GMTgrid; first=true, kw...)
 	end
 	opt_p = parse_common_opts(d, "", [:p], first)
 	if (opt_p == "")
-		grdimage("", arg1; first=first, show=see, d...)
+		R = grdimage("", arg1; first=first, show=see, d...)
 	else
 		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 5
 		srf = ((val = find_in_dict(d, [:Q :surf :surftype])[1]) !== nothing) ? val : "i100"
-		grdview("", arg1; first=first, show=see, p=opt_p[4:end], JZ=zsize, Q=srf, d...)
+		R = grdview("", arg1; first=first, show=see, p=opt_p[4:end], JZ=zsize, Q=srf, d...)
 	end
 	if (isa(cont_opts, Bool))				# Automatic contours
-		grdcontour!(arg1; J="", show=new_see)
+		R = grdcontour!(arg1; J="", show=new_see)
 	elseif (isa(cont_opts, NamedTuple))		# Expect a (cont=..., annot=..., ...)
-		grdcontour!(arg1; J="", show=new_see, cont_opts...)
+		R = grdcontour!(arg1; J="", show=new_see, cont_opts...)
 	end
+	return R
 end
 
 function imshow(arg1::GMTimage; first=true, kw...)

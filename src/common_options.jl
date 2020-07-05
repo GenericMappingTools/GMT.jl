@@ -210,7 +210,7 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 		elseif (mnemo)							# Proj name was obtained from a name mnemonic and no size. So use default
 			opt_J[1] = append_figsize(d, opt_J[1])
 		elseif (!isnumeric(opt_J[1][end]) && (length(opt_J[1]) < 6 || (isletter(opt_J[1][5]) && !isnumeric(opt_J[1][6]))) )
-			if ((val = find_in_dict(d, [:aspect :axis])[1]) !== nothing)  val = string(val)  end
+			if ((val = find_in_dict(d, [:aspect])[1]) !== nothing)  val = string(val)  end
 			if (!IamSubplot[1])
 				if (val == "equal")  opt_J[1] *= split(def_fig_size, '/')[1] * "/0"
 				else                 opt_J[1] *= def_fig_size
@@ -1334,6 +1334,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
 	# Crazzy shit to allow increasing the arg1 matrix
+	if (mat === nothing)  return  fun(t1..., t2, del, mat), mat  end	# psxy error_bars may send mat = nothing
 	n_rows, n_cols = size(mat)
 	mat = reshape(mat, :)
 	cmd = fun(t1..., t2, del, mat)
@@ -2190,7 +2191,7 @@ function fname_out(d::Dict, del=false)
 
 	fname = ""
 	EXT = FMT[1]
-	if ((val = find_in_dict(d, [:savefig :name], del)[1]) !== nothing)
+	if ((val = find_in_dict(d, [:savefig :figname :name], del)[1]) !== nothing)
 		fname, EXT = splitext(string(val))
 		if (EXT == "")  EXT = FMT[1]
 		else            EXT = EXT[2:end]
@@ -2482,7 +2483,7 @@ function dbg_print_cmd(d::Dict, cmd)
 			return update_cmds_history(cmd)
 		elseif (Vd >= 0)
 			if (Vd >= 2)	# Delete these first before reporting
-				del_from_dict(d, [[:show], [:leg :legend], [:box_pos], [:leg_pos]])
+				del_from_dict(d, [[:show], [:leg :legend], [:box_pos], [:leg_pos], [:figname], [:name], [:savefig]])
 			end
 			if (length(d) > 0)
 				dd = deepcopy(d)		# Make copy so that we can harmlessly delete those below

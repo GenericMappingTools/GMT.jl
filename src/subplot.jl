@@ -30,7 +30,7 @@ Parameters
     The margin space that is added around each subplot beyond the automatic space allocated for tick marks, annotations, and labels.
     [`-M`](http://docs.generic-mapping-tools.org/latest/subplot.html#m)
 - $(GMT.opt_R)
-- **SC** | **SR** | **row_axes** | **col_axes** :: [Type => Str | NamedTuple]
+- **SC** | **SR** | **col_axes** | **row_axes** :: [Type => Str | NamedTuple]
 
     Set subplot layout for shared axes. Set separately for rows (SR) and columns (SC).
     [`-S`](http://docs.generic-mapping-tools.org/latest/subplot.html#s)
@@ -49,14 +49,15 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "", false, " ")
 	cmd = parse_common_opts(d, cmd, [:params], true)
 	cmd = parse_these_opts(cmd, d, [[:M :margins]])
-	cmd = add_opt(cmd, "A", d, [:A :autolabel :fixedlabel],
+	cmd = add_opt(cmd, "A", d, [:A :autolabel],
                   (Anchor=("+J", arg2str), anchor=("+j", arg2str), label="", clearance=("+c", arg2str), justify="+j", fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), offset=("+o", arg2str), roman="_+r", Roman="_+R", vertical="_+v"))
 	cmd = add_opt(cmd, "SC", d, [:SC :col_axes],
 	              (top=("t", nothing, 1), bott=("b", nothing, 1), bottom=("b", nothing, 1), label="+l"))
 	cmd = add_opt(cmd, "SR", d, [:SR :row_axes],
 	              (left=("l", nothing, 1), right=("r", nothing, 1), label="+l", parallel="_+p", row_title="_+t", top_row_title="_+tc"))
-	cmd = add_opt(cmd, "", d, [:C :clearance],
+	opt_C = add_opt("", "", d, [:C :clearance],
 				  (left=(" -Cw", arg2str), right=(" -Ce", arg2str), bott=(" -Cs", arg2str), bottom=(" -Cs", arg2str), top=(" -Cn", arg2str)))
+	cmd = add_opt(cmd, "Fs", d, [:panels_size :panel_size])
 
 	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing)
 		if (isa(val, NamedTuple) && haskey(nt2dict(val), :width))	# Preferred way
@@ -64,7 +65,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			del_from_dict(d, [:F :dims :dimensions :size :sizes])
 		else
 			cmd = add_opt(cmd, "F", d, [:F :dims :dimensions :size :sizes],
-			              (panels=("s", nothing, 1), size=("", helper_sub_F), sizes=("", helper_sub_F), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F), clearance=("+c", arg2str), outine=("+p", add_opt_pen), fill=("+g", add_opt_fill), divlines=("+w", add_opt_pen)))
+			              (panels=("-s", helper_sub_F, 1), size=("-f", helper_sub_F, 1), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F), clearance=("+c", arg2str), outine=("+p", add_opt_pen), fill=("+g", add_opt_fill), divlines=("+w", add_opt_pen)))
 		end
 	end
 
@@ -75,16 +76,16 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		elseif (t == "show")  stop = true;  do_show = true
 		elseif (t == "set")   do_set = true
 		end
+	else
+		IamModern[1] = false;	IamSubplot[1] = false		# Make sure we always start a clean session
 	end
 	# ------------------------------ End parsing inputs --------------------------------
 
 	if (!stop && !do_set)
-		#if (!haskey(d, :grid))  error("SUBPLOT: 'grid' keyword is mandatory")  end
-		#cmd = arg2str(d[:grid], 'x') * " " * cmd
 		if ((val = find_in_dict(d, [:grid])[1]) === nothing)
 			error("SUBPLOT: 'grid' keyword is mandatory")
 		end
-		cmd = arg2str(val, 'x') * " " * cmd
+		cmd = arg2str(val, 'x') * " " * cmd * opt_C			# Also add the eventual global -C clearance option
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 
 		if (!IamModern[1])			# If we are not in modern mode, issue a gmt("begin") first
@@ -102,6 +103,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		if (!IamSubplot[1])  error("Cannot call subplot(set, ...) before setting dimensions")  end
 		lix, pane = parse_c(cmd, d)
 		cmd = pane * cmd				# Here we don't want the "-c" part
+		cmd = add_opt(cmd, 'A', d, [:fixedlabel]) * opt_C			# Also add the eventual this panel -C clearance option
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 		gmt("subplot set " * cmd)
 	else
@@ -117,38 +119,42 @@ end
 # --------------------------------------------------------------------------
 function helper_sub_F(arg, dumb=nothing)
 	# dims=(1,2)
-	# dims=(size=(1,2), frac=((2,3),(3,4,5)))
+	# dims=(panels=(1,2), frac=((2,3),(3,4,5)))
 	# dims=(width=xx, height=yy, fwidth=(), fheight=(), fill=:red, outline=(3,:red))
 	out = ""
 	if (isa(arg, String))
 		out = arg2str(arg)
 	elseif (isa(arg, NamedTuple) || isa(arg, Dict))
 		d = (isa(arg, NamedTuple)) ? nt2dict(arg) : arg
-		val, symb = find_in_dict(d, [:size :sizes :frac :fractions])	# ex: dims=(size=(1,2), frac=((2,3),(3,4,5)))
-		if (val !== nothing)
-			if (isa(val, Tuple{Tuple, Tuple}))		# ex: dims=(panels=true, sizes=((2,4),(2.5,5,1.25)))
+		if ((val = find_in_dict(d, [:panels])[1]) !== nothing)
+			if (isa(val, Tuple{Tuple, Tuple}))		# ex: dim=(panels=((2,4),(2.5,5,1.25)),)
 				out *= arg2str(val[1], ',') * '/' * arg2str(val[2], ',')
 			else
-				if (symb == :size || symb == :sizes)  out = arg2str(val)
-				else                                  error("'frac' option must be a tuple(tuple, tuple)")
-				end
+				out = arg2str(val)
 			end
-		else
-			if (!haskey(d, :width))  error("SUBPLOT: 'width' is a mandatory parameter")  end
-			out = string(d[:width], '/')
+		end
+		if ((val = find_in_dict(d, [:frac :fractions])[1]) !== nothing)		# ex: dims=(frac=((2,3),(3,4,5)))
+			if (isa(val, Tuple{Tuple, Tuple}))  out *= arg2str(val[1], ',') * '/' * arg2str(val[2], ',')
+			else                                error("'frac' option must be a tuple(tuple, tuple)")
+			end
+		end
+		if (haskey(d, :width))
+			out *= string(d[:width], '/')
 			if (!haskey(d, :height))  out *= '0'	# Allow this for geog cases
 			else                      out *= string(d[:height])
 			end
-			if (haskey(d, :fwidth))
-				out *= "+f" * arg2str(d[:fwidth], ',')
-				if (!haskey(d, :fheight))  error("SUBPLOT: when using 'fwidth' must also set 'fheight'")  end
-				out *= '/' * arg2str(d[:fheight], ',')
-			end
-			if ((val = find_in_dict(d, [:fill], false)[1]) !== nothing)  out *= "+g" * add_opt_fill(val)  end
-			if ((val = find_in_dict(d, [:clearance], false)[1]) !== nothing)  out *= "+c" * arg2str(val)  end
-			if (haskey(d, :outline))   out *= "+p" * add_opt_pen(d, [:outline])  end
-			if (haskey(d, :divlines))  out *= "+w" * add_opt_pen(d, [:divlines]) end
 		end
+		if (haskey(d, :fwidth))
+			out *= "+f" * arg2str(d[:fwidth], ',')
+			if (!haskey(d, :fheight))  error("SUBPLOT: when using 'fwidth' must also set 'fheight'")  end
+			out *= '/' * arg2str(d[:fheight], ',')
+		end
+		if ((val = find_in_dict(d, [:fill], false)[1]) !== nothing)  out *= "+g" * add_opt_fill(val)  end
+		if ((val = find_in_dict(d, [:clearance], false)[1]) !== nothing)  out *= "+c" * arg2str(val)  end
+		if (haskey(d, :outline))   out *= "+p" * add_opt_pen(d, [:outline])  end
+		if (haskey(d, :divlines))  out *= "+w" * add_opt_pen(d, [:divlines]) end
+	elseif (isa(arg, Tuple))		# Hopefully only for the "dims=(panels=(xsize, ysize),)"
+		out = arg2str(arg)
 	end
 	if (out == "")  error("SUBPLOT: garbage in DIMS option")  end
 	return out

@@ -233,6 +233,7 @@ if (got_it)					# Otherwise go straight to end
 	@test o == " -TG -W+k+tLolo+nbla+f1/2+uhttp"
 	coast(region=:global, kml=:trans, proj=:merc,Vd=dbg2)
 
+	resetGMT()
 	# ---------------------------------------------------------------------------------------------------
 
 	gmt("gmtset -");
@@ -404,7 +405,7 @@ if (got_it)					# Otherwise go straight to end
 		println("	GRD2KML")
 		# GRD2KML
 		G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");
-		grd2kml(G, I="+", N="NULL")
+		grd2kml(G, I="+", N="NULL", V="q")
 
 		G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y");
 		G2=grdblend(G,G3);
@@ -689,7 +690,7 @@ if (got_it)					# Otherwise go straight to end
 	println("	SCATTER")
 	# SCATTER
 	sizevec = [s for s = 1:10] ./ 10;
-	scatter(1:10, 1:10, markersize = sizevec, axis=:equal, B=:a, marker=:square, fill=:green)
+	scatter(1:10, 1:10, markersize = sizevec, aspect=:equal, B=:a, marker=:square, fill=:green)
 	scatter(rand(10), leg=:bottomrigh, fill=:red)	# leg wrong on purpose
 	scatter(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3, show=1, Vd=dbg2)
 	scatter(rand(50),rand(50), markersize=rand(50), zcolor=rand(50), aspect=:equal, alpha=50, Vd=dbg2)
@@ -965,16 +966,14 @@ if (got_it)					# Otherwise go straight to end
 	println("	MODERN")
 	if (GMTver >= 6)
 		@test GMT.helper_sub_F("1/2") == "1/2"
-		#@test GMT.helper_sub_F((size=(1,2), frac=((2,3),(3,4,5))) ) == "1/2+f2,3/3,4,5"
 		println("    SUBPLOT1")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), Vd=dbg2), "-F1/2")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=("1i",2), Vd=dbg2), "-F1i/2")
-		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), name="lixo.ps", Vd=dbg2), "-F1/2+f2,3/3,4,5")
+		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), figname="lixo.ps", Vd=dbg2), "-Ff1/2+f2,3/3,4,5")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(width=1,height=5,fwidth=(0.5,1),fheight=(10,), fill=:red, outline=(3,:red)), Vd=dbg2), "-F1/5+f0.5,1/10+gred+p3,red")
 		@test GMT.helper_sub_F((width=1,)) == "1/0"
 		#@test GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1),fheight=(10,))) == "1/5+f0.5,1/10"
 		@test_throws ErrorException("SUBPLOT: when using 'fwidth' must also set 'fheight'") GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1)))
-		@test_throws ErrorException("SUBPLOT: 'width' is a mandatory parameter") GMT.helper_sub_F((height=5,))
 		@test_throws ErrorException("'frac' option must be a tuple(tuple, tuple)") subplot(grid=(1,1),  F=(size=(1,2), frac=((2,3))), Vd=dbg2)
 		@test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
 		@test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=dbg2)

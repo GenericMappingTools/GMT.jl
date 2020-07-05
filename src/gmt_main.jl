@@ -1924,6 +1924,16 @@ function get_segment_ids(D)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function resetGMT()
+	# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
+	IamModern[1] = false;	FirstModern[1] = false;		IamSubplot[1] = false;	usedConfPar[1] = false;
+	multi_col[1] = false;	convert_syntax[1] = false;	current_view[1] = ""
+	img_mem_layout[1] = "";	grd_mem_layout[1] = "";
+	current_cpt  = nothing;	legend_type  = nothing
+	gmt("destroy")
+end
+
+# ---------------------------------------------------------------------------------------------------
 function Base.:+(G1::GMTgrid, G2::GMTgrid)
 # Add two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z)) error("Grids have different sizes, so they cannot be added.") end

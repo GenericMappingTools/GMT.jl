@@ -45,7 +45,7 @@ Parameters
     Measure the area of all polygons or length of line segments.
     ($(GMTdoc)gmtspatial.html#q)
 - $(GMT.opt_R)
-- **S** | **polyg_process** :: [Type => Str]     `Arg = h|i|j|s|u`
+- **S** | **polygons** :: [Type => Str]     `Arg = h|i|j|s|u`
 
     Spatial processing of polygons.
     ($(GMTdoc)gmtspatial.html#s)
@@ -73,7 +73,8 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 	d = KW(kwargs);     arg2 = nothing;     arg3 = nothing;     arg4 = nothing
 	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:A :nn :nearest_neighbor], [:C :clip], [:E :handedness], [:F :force_polygons],
-	                                [:I :intersections], [:Q :area :length], [:S :polyg_process]])
+	                                [:I :intersections], [:Q :area :length]])
+	cmd = add_opt(cmd, "S", d, [:S :polygons :polyg_process], (buffer="+b", holes="_+h", dateline="_+s"))
 
 	cmd, args, n, = add_opt(cmd, 'D', d, [:D :duplicates], :data, Array{Any,1}([arg1, arg2]), (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
 	if (n > 0)

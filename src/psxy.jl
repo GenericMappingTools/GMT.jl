@@ -66,11 +66,12 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 
 	# Error Bars?
 	got_Ebars = false
-	val, symb = find_in_dict(d, [:E :error :error_bars])
+	val, symb = find_in_dict(d, [:E :error :error_bars], false)
 	if (val !== nothing)
 		cmd, arg1 = add_opt(add_opt, (cmd, 'E', d, [symb]),
 					        (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, arg1)
 		got_Ebars = true
+		del_from_dict(d, [symb])
 	end
 
 	# Look for color request. Do it after error bars because they may add a column
