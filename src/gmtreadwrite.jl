@@ -147,9 +147,9 @@ end
 function guess_T_from_ext(fname::String)
 	# Guess the -T option from a couple of known extensions
 	fname, ext = splitext(fname)
-	if (ext == "")			# A SUBDATASET encoded fname?
-		if (occursin("nc=gd?", fname))  return " -Tg"
-		else                            return nothing
+	if (length(ext) >= 5)			# A SUBDATASET encoded fname?
+		if (occursin("?", ext))  return " -Tg"
+		else                     return nothing
 		end
 	end
 	ext = lowercase(ext[2:end])
