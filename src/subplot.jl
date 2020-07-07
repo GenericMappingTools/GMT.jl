@@ -90,7 +90,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 
 		if (!IamModern[1])			# If we are not in modern mode, issue a gmt("begin") first
 			fname = ""				# Default name (GMTplot.ps) is set in gmt_main()
-			if ((val = find_in_dict(d, [:name :savefig])[1]) !== nothing)
+			if ((val = find_in_dict(d, [:figname :name :savefig])[1]) !== nothing)
 				fname = get_format(string(val), nothing, d)		# Get the fig name and format.
 			elseif ((val = find_in_dict(d, [:fmt])[1]) !== nothing)
 				fname = "GMTplot " * string(val)
@@ -124,10 +124,14 @@ function helper_sub_F(arg, dumb=nothing)
 	out = ""
 	if (isa(arg, String))
 		out = arg2str(arg)
-	elseif (isa(arg, NamedTuple) || isa(arg, Dict))
-		d = (isa(arg, NamedTuple)) ? nt2dict(arg) : arg
+	elseif (isa(arg, NamedTuple) || isa(arg, Dict) || isa(arg, Tuple{Tuple, Tuple}))
+		# Need first case because for example dims=(panels=((2,4),(2.5,5,1.25)),) shows up here only as
+		# arg = ((2, 4), (2.5, 5, 1.25)) because this function was called from within add_opt()
+		if (isa(arg, Tuple{Tuple, Tuple}))  d = Dict(:panels => arg)
+		else                                d = (isa(arg, NamedTuple)) ? nt2dict(arg) : arg
+		end
 		if ((val = find_in_dict(d, [:panels])[1]) !== nothing)
-			if (isa(val, Tuple{Tuple, Tuple}))		# ex: dim=(panels=((2,4),(2.5,5,1.25)),)
+			if (isa(val, Tuple{Tuple, Tuple}))		# ex: dims=(panels=((2,4),(2.5,5,1.25)),)
 				out *= arg2str(val[1], ',') * '/' * arg2str(val[2], ',')
 			else
 				out = arg2str(val)
