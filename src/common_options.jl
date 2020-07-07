@@ -2528,6 +2528,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	if (opt_T != "")
 		if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
+		gmt("destroy")
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T)
 		out = fname_ps[1:end-2] * fname_ext
 		if (fname != "")

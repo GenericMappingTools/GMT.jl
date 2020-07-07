@@ -971,6 +971,7 @@ if (got_it)					# Otherwise go straight to end
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=("1i",2), Vd=dbg2), "-F1i/2")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), figname="lixo.ps", Vd=dbg2), "-Ff1/2+f2,3/3,4,5")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(width=1,height=5,fwidth=(0.5,1),fheight=(10,), fill=:red, outline=(3,:red)), Vd=dbg2), "-F1/5+f0.5,1/10+gred+p3,red")
+		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", dims=(panels=((2,4),(2.5,5,1.25)),fill=:red), Vd=dbg2), "-Fs2,4/2.5,5,1.25+gred")
 		@test GMT.helper_sub_F((width=1,)) == "1/0"
 		#@test GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1),fheight=(10,))) == "1/5+f0.5,1/10"
 		@test_throws ErrorException("SUBPLOT: when using 'fwidth' must also set 'fheight'") GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1)))
@@ -979,7 +980,7 @@ if (got_it)					# Otherwise go straight to end
 		@test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=dbg2)
 		@test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=dbg2)
 		println("    SUBPLOT2")
-		subplot(name="lixo", grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
+		subplot(name="lixo", fmt=:ps, grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
 		gmtbegin("lixo.ps");  gmtend()
 		gmtbegin("lixo", fmt=:ps);  gmtend()
 		gmtbegin("lixo");  gmtend()
