@@ -87,7 +87,7 @@ makedocs(
 		"Manual" => [
 			"monolitic.md",
 			"modules.md",
-			"Common options"       => "common_opts.md",
+			"Common options"   => "common_opts.md",
 			"General features" => [
 				"arrows_control.md",
 				"color.md",
@@ -110,6 +110,7 @@ makedocs(
 			"scatter.md",
 			"scatter3.md",
 			"solar.md",
+			"subplot.md",
 			"text.md",
 		],
 		"The GMT types"            => "types.md",
