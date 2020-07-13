@@ -38,6 +38,9 @@ Parameters
 
     While individual subplots can have titles, the entire figure may also have a overarching title.
     [`-T`](http://docs.generic-mapping-tools.org/latest/subplot.html#t)
+- $(GMT.opt_V)
+- $(GMT.opt_X)
+- $(GMT.opt_Y)
 """
 function subplot(fim=nothing; stop=false, kwargs...)
 
@@ -50,14 +53,14 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:params], true)
 	cmd = parse_these_opts(cmd, d, [[:M :margins]])
 	cmd = add_opt(cmd, "A", d, [:A :autolabel],
-                  (Anchor=("+J", arg2str), anchor=("+j", arg2str), label="", clearance=("+c", arg2str), justify="+j", fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), offset=("+o", arg2str), roman="_+r", Roman="_+R", vertical="_+v"))
+                  (Anchor=("+J", arg2str), anchor=("+j", arg2str), label="", clearance=("+c", arg2str), fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), offset=("+o", arg2str), roman="_+r", Roman="_+R", vertical="_+v"))
 	cmd = add_opt(cmd, "SC", d, [:SC :col_axes],
-	              (top=("t", nothing, 1), bott=("b", nothing, 1), bottom=("b", nothing, 1), label="+l"))
+	              (top=("t", nothing, 1), bott=("b", nothing, 1), bottom=("b", nothing, 1), label="+l", grid=("+w", add_opt_pen)))
 	cmd = add_opt(cmd, "SR", d, [:SR :row_axes],
-	              (left=("l", nothing, 1), right=("r", nothing, 1), label="+l", parallel="_+p", row_title="_+t", top_row_title="_+tc"))
+	              (left=("l", nothing, 1), right=("r", nothing, 1), label="+l", parallel="_+p", row_title="_+t", top_row_title="_+tc", grid=("+w", add_opt_pen)))
 	opt_C = add_opt("", "", d, [:C :clearance],
 				  (left=(" -Cw", arg2str), right=(" -Ce", arg2str), bott=(" -Cs", arg2str), bottom=(" -Cs", arg2str), top=(" -Cn", arg2str)))
-	cmd = add_opt(cmd, "Fs", d, [:panels_size :panel_size])
+	cmd = add_opt(cmd, "Fs", d, [:panels_size :panel_size :panel_sizes])
 
 	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing)
 		if (isa(val, NamedTuple) && haskey(nt2dict(val), :width))	# Preferred way
@@ -77,7 +80,8 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		elseif (t == "set")   do_set = true
 		end
 	else
-		IamModern[1] = false;	IamSubplot[1] = false		# Make sure we always start a clean session
+		IamModern[1] = false;	IamSubplot[1] = false			# Make sure we always start a clean session
+		if (!stop && length(kwargs) == 0)  stop = true  end		# To account for the subplot() call case
 	end
 	# ------------------------------ End parsing inputs --------------------------------
 
@@ -107,7 +111,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 		gmt("subplot set " * cmd)
 	else
-		(do_show || haskey(d, :show)) ? show = " show" : show = ""
+		show = (do_show || haskey(d, :show)) ? " show" : ""
 		try
 			gmt("subplot end");		gmt("end" * show);		catch
 		end
@@ -117,19 +121,15 @@ function subplot(fim=nothing; stop=false, kwargs...)
 end
 
 # --------------------------------------------------------------------------
-function helper_sub_F(arg, dumb=nothing)
+function helper_sub_F(arg, dumb=nothing)::String
 	# dims=(1,2)
 	# dims=(panels=(1,2), frac=((2,3),(3,4,5)))
 	# dims=(width=xx, height=yy, fwidth=(), fheight=(), fill=:red, outline=(3,:red))
 	out = ""
 	if (isa(arg, String))
 		out = arg2str(arg)
-	elseif (isa(arg, NamedTuple) || isa(arg, Dict) || isa(arg, Tuple{Tuple, Tuple}))
-		# Need first case because for example dims=(panels=((2,4),(2.5,5,1.25)),) shows up here only as
-		# arg = ((2, 4), (2.5, 5, 1.25)) because this function was called from within add_opt()
-		if (isa(arg, Tuple{Tuple, Tuple}))  d = Dict(:panels => arg)
-		else                                d = (isa(arg, NamedTuple)) ? nt2dict(arg) : arg
-		end
+	elseif (isa(arg, NamedTuple) || isa(arg, Dict) || isa(arg, Tuple{Tuple, Tuple}) || isa(arg, Tuple{Tuple, Number}))
+		d = mura_arg(arg)
 		if ((val = find_in_dict(d, [:panels])[1]) !== nothing)
 			if (isa(val, Tuple{Tuple, Tuple}))		# ex: dims=(panels=((2,4),(2.5,5,1.25)),)
 				out *= arg2str(val[1], ',') * '/' * arg2str(val[2], ',')
@@ -162,4 +162,16 @@ function helper_sub_F(arg, dumb=nothing)
 	end
 	if (out == "")  error("SUBPLOT: garbage in DIMS option")  end
 	return out
+end
+
+# --------------------------------------------------------------------------
+function mura_arg(arg)::Dict
+	# Barrier function to contain a possible type instability
+	if (isa(arg, Tuple{Tuple, Number}))  arg = (arg[1], (arg[2],))  end	# This looks terrible type instable
+	# Need first case because for example dims=(panels=((2,4),(2.5,5,1.25)),) shows up here only as
+	# arg = ((2, 4), (2.5, 5, 1.25)) because this function was called from within add_opt()
+	if (isa(arg, Tuple{Tuple, Tuple}))  d = Dict(:panels => arg)
+	else                                d = (isa(arg, NamedTuple)) ? nt2dict(arg) : arg
+	end
+	d
 end

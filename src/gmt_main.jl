@@ -144,14 +144,17 @@ function gmt(cmd::String, args...)
 
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F.
 	# The problem is that we can't use nargout to decide what to do, so we use -T to solve the ambiguity.
+	need2destroy = false
 	if (g_module == "psconvert" && !occursin("-F", r))
 		if (!occursin("-T", r))
-			r *= " -F"
+			r *= " -F";			need2destroy = true
 		else				# Hmm, have to find if any of 'e' or 'f' are used as -T flags
+			return_img = true
+			if (endswith(r, " *"))  r = r[1:end-2];	return_img = false;  end	# Trick to avoid reading back img
 			ind = findfirst("-T", r)
 			tok = lowercase(strtok(r[ind[2]:end])[1])
-			if (!occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
-				r *= " -F"
+			if (return_img && !occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
+				r *= " -F";		need2destroy = true
 			end
 		end
 	end
@@ -181,6 +184,8 @@ function gmt(cmd::String, args...)
 			end
 		end
 		r, img_mem_layout[1], grd_mem_layout[1] = parse_mem_layouts(r)
+	elseif (occursin("read", g_module) && (occursin("-Ti", r) || occursin("-Tg", r)))
+		need2destroy = true
 	end
 
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
@@ -282,6 +287,9 @@ function gmt(cmd::String, args...)
 	#if (IamModern[1])  gmt_put_history(API);	end	# Needed, otherwise history is not updated
 
 	img_mem_layout[1] = "";		grd_mem_layout[1] = ""		# Reset to not afect next readings
+
+	# GMT6.1.0 f up and now we must be very careful to not let the GMT breaking screw us
+	if (need2destroy)  gmt("destroy")  end
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)

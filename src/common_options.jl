@@ -203,7 +203,7 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 		if ((s = helper_append_figsize(d, opt_J[1], O)) != "")		# Takes care of both fig scales and fig sizes
 			opt_J[1] = s
 		elseif (default != "" && opt_J[1] == " -JX")
-			opt_J[1] = default  					# -JX was a working default
+			opt_J[1] = IamSubplot[1] ? " -JX?" : default  			# -JX was a working default
 		elseif (occursin("+width=", opt_J[1]))		# OK, a proj4 string, don't touch it. Size already in.
 		elseif (occursin("+proj", opt_J[1]))		# A proj4 string but no size info. Use default size
 			opt_J[1] *= "+width=" * split(def_fig_size, '/')[1]
@@ -215,7 +215,7 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 				if (val == "equal")  opt_J[1] *= split(def_fig_size, '/')[1] * "/0"
 				else                 opt_J[1] *= def_fig_size
 				end
-			else
+			elseif (!occursin("?", opt_J[1]))	# If we dont have one ? for size/scale already
 				opt_J[1] *= "/?"
 			end
 		#elseif (length(opt_J[1]) == 4 || (length(opt_J[1]) >= 5 && isletter(opt_J[1][5])))
@@ -230,14 +230,19 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 	return cmd, opt_J[1]
 end
 
-function helper_append_figsize(d::Dict, opt_J::String, O::Bool)
-	val, symb = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])
-	if (val === nothing)  return ""  end
-	val = arg2str(val)
+function helper_append_figsize(d::Dict, opt_J::String, O::Bool)::String
+	val_, symb = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])
+	if (val_ === nothing)  return ""  end
+	val::String = arg2str(val_)
 	if (occursin("scale", arg2str(symb)))		# We have a fig SCALE request
-		if (opt_J == " -JX")  isletter(val[1]) ? opt_J = " -J" * val : opt_J = " -Jx" * val	# FRAGILE
+		if     (IamSubplot[1] && val == "auto")       val = "?"
+		elseif (IamSubplot[1] && val == "auto,auto")  val = "?/?"
+		end
+		if (opt_J == " -JX")
+			val = check_axesswap(d, val)
+			isletter(val[1]) ? opt_J = " -J" * val : opt_J = " -Jx" * val		# FRAGILE
 		elseif (O && opt_J == " -J")  error("In Overlay mode you cannot change a fig scale and NOT repeat the projection")
-		else                  opt_J = append_figsize(d, opt_J, val, true)
+		else                          opt_J = append_figsize(d, opt_J, val, true)
 		end
 	else										# A fig SIZE request
 		if (haskey(d, :units))  val *= d[:units][1]  end
@@ -254,8 +259,10 @@ function append_figsize(d::Dict, opt_J::String, width="", scale=false)
 	# use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
 	if (width == "")
 		width = (IamSubplot[1]) ? "?" : split(def_fig_size, '/')[1]		# In subplot "?" is auto width
-	elseif ( ((val = find_in_dict(d, [:aspect :axis], false)[1]) !== nothing) && (val == "equal" || val == :equal))
-		del_from_dict(d, [:aspect :axis])		# Delete this kwarg but only after knowing its val
+	elseif (IamSubplot[1] && (width == "auto" || width == "auto,auto"))	# In subplot one can say figsize="auto" or figsize="auto,auto"
+		width = (width == "auto") ? "?" : "?/?"
+	elseif ( ((val = find_in_dict(d, [:aspect], false)[1]) !== nothing) && (val == "equal" || val == :equal))
+		del_from_dict(d, [:aspect])		# Delete this kwarg but only after knowing its val
 		if (occursin("/", width))
 			@warn("Ignoring the axis 'equal' request because figsize with Width and Height already provided.")
 		else
@@ -263,11 +270,13 @@ function append_figsize(d::Dict, opt_J::String, width="", scale=false)
 		end
 	end
 
-	if (isnumeric(opt_J[end]) && ~startswith(opt_J, " -JXp"))    opt_J *= "/" * width
+	slash = "";		de = ""
+	if (opt_J[end] == 'd')  opt_J = opt_J[1:end-1];		de = "d"  end
+	if (isnumeric(opt_J[end]) && ~startswith(opt_J, " -JXp"))    slash = "/";#opt_J *= "/" * width
 	else
-		if (occursin("Cyl_", opt_J) || occursin("Poly", opt_J))  opt_J *= "/" * width
-		elseif (startswith(opt_J, " -JU") && length(opt_J) > 4)  opt_J *= "/" * width
-		else		# Must parse for logx, logy, loglog, etc
+		if (occursin("Cyl_", opt_J) || occursin("Poly", opt_J))  slash = "/";#opt_J *= "/" * width
+		elseif (startswith(opt_J, " -JU") && length(opt_J) > 4)  slash = "/";#opt_J *= "/" * width
+		else								# Must parse for logx, logy, loglog, etc
 			if (startswith(opt_J, " -JXl") || startswith(opt_J, " -JXp") ||
 				startswith(opt_J, " -JXT") || startswith(opt_J, " -JXt"))
 				ax = opt_J[6];	flag = opt_J[5];
@@ -282,16 +291,59 @@ function append_figsize(d::Dict, opt_J::String, width="", scale=false)
 					width *= flag
 				end
 			end
-			opt_J *= width
+			#opt_J *= width
 		end
 	end
+	width = check_axesswap(d, width)
+	opt_J *= slash * width * de
 	if (scale)  opt_J = opt_J[1:3] * lowercase(opt_J[4]) * opt_J[5:end]  end 		# Turn " -JX" to " -Jx"
 	return opt_J
 end
 
+function check_axesswap(d::Dict, width::AbstractString)
+	# Deal with the case that we want to invert the axis sense
+	# axesswap(x=true, y=true) OR  axesswap("x", :y) OR axesswap(:xy)
+	if (width == "" || (val = find_in_dict(d, [:inverse_axes :axesswap :axes_swap])[1]) === nothing)
+		return width
+	end
+
+	swap_x = false;		swap_y = false;
+	if (isa(val, NamedTuple))
+		for k in keys(val)
+			if     (k == :x)  swap_x = true
+			elseif (k == :y)  swap_y = true
+			elseif (k == :xy) swap_x = true;  swap_y = true
+			end
+		end
+	elseif (isa(val, Tuple))
+		for k in val
+			if     (string(k) == "x")  swap_x = true
+			elseif (string(k) == "y")  swap_y = true
+			elseif (string(k) == "xy") swap_x = true;  swap_y = true
+			end
+		end
+	elseif (isa(val, String) || isa(val, Symbol))
+		if     (string(val) == "x")  swap_x = true
+		elseif (string(val) == "y")  swap_y = true
+		elseif (string(val) == "xy") swap_x = true;  swap_y = true
+		end
+	end
+
+	if (occursin("/", width))
+		sizes = split(width,"/")
+		if (swap_x) sizes[1] = "-" * sizes[1]  end
+		if (swap_y) sizes[2] = "-" * sizes[2]  end
+		width = sizes[1] * "/" * sizes[2]
+	else
+		width = "-" * width
+	end
+	if (occursin("?-", width))  width = replace(width, "?-" => "-?")  end 	# It may, from subplots
+	return width
+end
+
 function build_opt_J(Val)
 	out = Array{String,1}(undef,1)
-	out = [""];	mnemo = false
+	out = [""];		mnemo = false
 	if (isa(Val, String) || isa(Val, Symbol))
 		prj, mnemo = parse_proj(string(Val))
 		out[1] = " -J" * prj
@@ -344,6 +396,7 @@ function parse_proj(p::String)
 	elseif (s == "omercp"|| s == "obliquemerc3")           out[1] = "Oc"
 	elseif (startswith(s, "cyl_") || startswith(s, "cylindricalster"))  out[1] = "Cyl_stere"
 	elseif (startswith(s, "cass"))   out[1] = "C0/0"
+	elseif (startswith(s, "geo"))    out[1] = "Xd"		# Linear geogs
 	elseif (startswith(s, "gnom"))   out[1] = "F0/0"
 	elseif (startswith(s, "ham"))    out[1] = "H"
 	elseif (startswith(s, "lin"))    out[1] = "X"
@@ -615,11 +668,14 @@ function parse_c(cmd::String, d::Dict)
 	if ((val = find_in_dict(d, [:c :panel])[1]) !== nothing)
 		if (isa(val, Tuple) || isa(val, Array{<:Number}) || isa(val, Integer))
 			opt_val = arg2str(val .- 1, ',')
-		elseif (isa(val, String))
+		elseif (isa(val, String) || isa(val, Symbol))
+			val = string(val)		# In case it was a symbol
 			if ((ind = findfirst(",", val)) !== nothing)	# Shit, user really likes complicating
 				opt_val = string(parse(Int, val[1:ind[1]-1]) - 1, ',', parse(Int, val[ind[1]+1:end]) - 1)
 			else
-				opt_val = string(parse(Int, val) - 1)
+				if (val == "" || val == "next")  opt_val = ""
+				else                             opt_val = string(parse(Int, val) - 1)
+				end
 			end
 		end
 		cmd *= " -c" * opt_val
@@ -1588,7 +1644,8 @@ function get_color(val)::String
 			out[1] = @sprintf("%s,%d/%d/%d", out[1], copia[k,1], copia[k,2], copia[k,3])
 		end
 	else
-		error(@sprintf("GOT_COLOR, got an unsupported data type: %s", typeof(val)))
+		@warn(@sprintf("got this bad data type: %s", typeof(val)))	# Need to split because f julia change in 6.1
+		error("GOT_COLOR, got an unsupported data type")
 	end
 	return out[1]
 end
@@ -2487,7 +2544,7 @@ function dbg_print_cmd(d::Dict, cmd)
 			end
 			if (length(d) > 0)
 				dd = deepcopy(d)		# Make copy so that we can harmlessly delete those below
-				del_from_dict(dd, [[:show], [:leg :legend], [:box_pos], [:leg_pos]])
+				del_from_dict(dd, [[:show], [:leg :legend], [:box_pos], [:leg_pos], [:fmt :savefig :figname :name]])
 				prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 				if (length(dd) > 0)
 					println("Warning: the following options were not consumed in $prog => ", keys(dd))
@@ -2528,8 +2585,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	if (opt_T != "")
 		if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
-		gmt("destroy")
-		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T)
+		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
 		out = fname_ps[1:end-2] * fname_ext
 		if (fname != "")
 			out = mv(out, fname, force=true)
