@@ -105,7 +105,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.get_color(:red) == "red"
 	@test GMT.get_color((:red,:blue)) == "red,blue"
 	@test GMT.get_color((200,300)) == "200,300"
-	@test_throws ErrorException("GOT_COLOR, got an unsupported data type: Array{Int64,1}") GMT.get_color([1,2])
+	@test_throws ErrorException("GOT_COLOR, got an unsupported data type") GMT.get_color([1,2])
 	@test_throws ErrorException("Color tuples must have only one or three elements") GMT.get_color(((0.2,0.3),))
 	@test GMT.parse_unit_unit("data") == "u"
 	@test GMT.parse_units((2,:p)) == "2p"
@@ -232,6 +232,12 @@ if (got_it)					# Otherwise go straight to end
 	o = GMT.prepare2geotif(Dict(:kml => (title=:Lolo, layer=:bla, fade=(1,2), URL="http")), "pscoast  -Rd -JX12 -Baf -W0.5p -Da", "", false)[2];
 	@test o == " -TG -W+k+tLolo+nbla+f1/2+uhttp"
 	coast(region=:global, kml=:trans, proj=:merc,Vd=dbg2)
+
+	@test (GMT.check_axesswap(Dict(:axesswap => (y=1,)), "?") == "-?")
+	@test (GMT.check_axesswap(Dict(:axesswap => ("x", :y)), "?/?") == "-?/-?")
+	@test (GMT.check_axesswap(Dict(:axesswap => (xy=1,)), "?/?") == "-?/-?")
+	@test (GMT.check_axesswap(Dict(:axesswap => ("xy")), "?/?") == "-?/-?")
+	@test (GMT.check_axesswap(Dict(:axesswap => ("y")), "?/?") == "?/-?")
 
 	resetGMT()
 	# ---------------------------------------------------------------------------------------------------
@@ -972,6 +978,7 @@ if (got_it)					# Otherwise go straight to end
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), figname="lixo.ps", Vd=dbg2), "-Ff1/2+f2,3/3,4,5")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(width=1,height=5,fwidth=(0.5,1),fheight=(10,), fill=:red, outline=(3,:red)), Vd=dbg2), "-F1/5+f0.5,1/10+gred+p3,red")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", dims=(panels=((2,4),(2.5,5,1.25)),fill=:red), Vd=dbg2), "-Fs2,4/2.5,5,1.25+gred")
+		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", F=(panels=((5,8),8),), Vd=dbg2), "-Fs5,8/8")
 		@test GMT.helper_sub_F((width=1,)) == "1/0"
 		#@test GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1),fheight=(10,))) == "1/5+f0.5,1/10"
 		@test_throws ErrorException("SUBPLOT: when using 'fwidth' must also set 'fheight'") GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1)))
