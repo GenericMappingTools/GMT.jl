@@ -29,7 +29,7 @@ Parameters
 - **S** or *symbol* or *marker* or *Marker* or *shape* : --  Default is `cube` with size of 7 points
    - *symbol=symbol string*\
       A full GMT compact string.
-   - *symbol=(symb=??, size=??, unit=??)*\
+   - *symbol=(symb=..., size=..., unit=...)*\
       Where *symb* is one [Symbols](@ref) like `:circle`, *size* is
       symbol size in cm, unless *unit* is specified i.e. `:points`
 
@@ -44,7 +44,7 @@ Parameters
    of azimuth and elevation. The azimuth is the horizontal rotation about the z-axis as measured in degrees
    from the positive y-axis. That is, from North. This option is not yet fully expanded. Current alternatives
    are:
-     - *view=??*\
+     - *view=...*\
         A full GMT compact string with the full set of options.
      - *view=(azim,elev)*\
         A two elements tuple with azimuth and elevation
