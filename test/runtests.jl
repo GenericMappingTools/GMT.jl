@@ -1020,7 +1020,9 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	SURFACE")
 	# SURFACE
+	GMT.resetGMT()
 	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
+	@show(G)
 	@assert(size(G.z) == (151, 151))
 
 	# SPLITXYZ (fails)
