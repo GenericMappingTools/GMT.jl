@@ -42,6 +42,10 @@ Parameters
 
     Set the display frame rate in frames per seconds for the final animation [24].
     ($(GMTdoc)movie.html#d)
+- **E** | **titlepage** :: [Type => Str | tuple]
+
+    Give a titlepage script that creates a static title page for the movie [no title]. 
+    ($(GMTdoc)movie.html#e)
 - **F** | **format** :: [Type => Str]	``Arg = format[+ooptions]``
 
     Set the format of the final video product. Choose either mp4 (MPEG-4 movie) or webm (WebM movie).
@@ -58,6 +62,10 @@ Parameters
 
     Insert the contents of includefile into the movie_init script that is accessed by all movie scripts.
     ($(GMTdoc)movie.html#i)
+- **K** | **fading** :: [Type => Number | Str | Tuple]	``Arg = [+f[i|o]fade[s]][+gfill][+p] ]``
+
+    Add fading in and out for the main animation sequence [no fading].
+    ($(GMTdoc)movie.html#k)
 - **L** | **label** :: [Type => Str]
 
     Automatic labeling of individual frames.
@@ -66,10 +74,22 @@ Parameters
 
     Select a single frame for a cover page. This frame will be written to the current directory.
     ($(GMTdoc)movie.html#m)
+- **P** | **progress** :: [Type => Str | Tuple]
+
+    Automatic placement of progress indicator(s).
+    ($(GMTdoc)movie.html#p)
 - **Q** | **debug** :: [Type => Bool | Str]		``Arg = [s]``
 
     Debugging: Leave all files and directories we create behind for inspection.
     ($(GMTdoc)movie.html#q)
+- **Sb** | **background** :: [Type => Str | Function]
+
+    Optional background script or bg PS file [GMT6.1 only]
+    ($(GMTdoc)movie.html#s)
+- **Sf** | **foreground** :: [Type => Str | Function]
+
+    Optional foreground script or fg PS file [GMT6.1 only]
+    ($(GMTdoc)movie.html#s)
 - **W** | **work_dir** :: [Type => Str]
 
 	By default, all temporary files and frame PNG file are built in the subdirectory prefix set via **name**.
@@ -82,21 +102,43 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_x)
 """
-function movie(cmd0::String=""; pre="", post="", kwargs...)
+function movie(main; pre=nothing, post=nothing, kwargs...)
 
 	d = KW(kwargs)
 
-	if (cmd0 == "")  error("A main script is mandatory")  end
-	if ((mainName = jl_sc_2_shell_sc(cmd0, "main_script")) === nothing)  error("Main script has nothing useful")  end
-	#mainName = (Sys.iswindows()) ? "main_script.bat" : "main_script.sh"
+	if (isa(main, Function) || isa(main, String))
+		if ((mainName = jl_sc_2_shell_sc(main, "main_script")) === nothing)  error("Main script has nothing useful")  end
+	else
+		error("A main script is mandatory")
+	end
 
 	cmd = parse_common_opts(d, "", [:V_params :x])
-	cmd = parse_these_opts(cmd, d, [[:C :canvas], [:N :name], [:T :frames]])
-	cmd = parse_these_opts(cmd, d, [[:A :gif], [:D :frame_rate], [:F :format], [:G :fill],
-				[:H :scale], [:I :includefile], [:L :label], [:M :cover_page], [:Q :debug], [:W :work_dir], [:Z :clean]])
+	cmd = parse_these_opts(cmd, d, [[:C :canvas], [:N :name]])
+	cmd = parse_these_opts(cmd, d, [[:D :frame_rate], [:H :scale], [:I :includefile], [:L :label], [:M :cover_page],
+	                                [:Q :debug], [:W :work_dir], [:Z :clean]])
+	cmd = add_opt(cmd, "A", d, [:A :gif], (loop="+l", infinite="_+l", stride="+s"))
+	cmd = add_opt(cmd, "E", d, [:E :titlepage], (title=("",arg2str,1), duration="+d", fade="+f", fill=("+g", add_opt_fill)))
+	cmd = add_opt(cmd, "F", d, [:F :format], (format=("",arg2str,1), transparent="_+t", options="+o"))
+	cmd = add_opt(cmd, "G", d, [:G :fill], (fill=("",add_opt_fill,1), pen=("+p", add_opt_pen)))
+	cmd = add_opt(cmd, "K", d, [:K :fading], (fade="+f", fill=("+g", add_opt_fill), preserve="_+p"))
+	cmd = add_opt(cmd, "P", d, [:P :progress],
+				  (indicator=("1", nothing, 1), annot="+a", font=("+f", font), justify="+j", offset=("+o", arg2str), width="+w", fill=("+g", add_opt_fill), Fill=("+G", add_opt_fill), pen=("+p", add_opt_pen), Pen=("+P", add_opt_pen)))
+	cmd = add_opt(cmd, "T", d, [:T :frames],
+				  (range=("", arg2str, 1), n_frames="_+n", first="+s", tag_width="+p", split_words="+w"))
 
-	if (pre  != "" && ((preName = jl_sc_2_shell_sc(pre,  "pre_script"))  !== nothing))  cmd *= " -Sb" * preName  end
-	if (post != "" && ((posName = jl_sc_2_shell_sc(post, "post_script")) !== nothing))  cmd *= " -Sf" * posName  end
+	if ((val = find_in_dict(d, [:Sb :background])[1]) !== nothing)
+		cmd = helper_fgbg(cmd, val, "bg_script", " -Sb")
+	end
+	if ((val = find_in_dict(d, [:Sf :foreground])[1]) !== nothing)
+		cmd = helper_fgbg(cmd, val, "fg_script", " -Sf")
+	end
+
+	if (pre !== nothing && isa(pre, Function) || isa(pre, String))
+		if ((preName = jl_sc_2_shell_sc(pre,  "pre_script"))  !== nothing)  cmd *= " -Sb" * preName  end
+	end
+	if (post !== nothing && isa(post, Function) || isa(post, String))
+		if ((posName = jl_sc_2_shell_sc(post,  "pre_script"))  !== nothing)  cmd *= " -Sf" * posName  end
+	end
 
 	global cmds_history
 	IamModern[1] = false; FirstModern[1] = false; convert_syntax[1] = false; cmds_history = [""]
@@ -107,10 +149,27 @@ function movie(cmd0::String=""; pre="", post="", kwargs...)
 end
 
 # --------------------------------------------------------------------------------------------------
-function jl_sc_2_shell_sc(name::String, name2::String)
+function helper_fgbg(cmd::String, val, sc_name::String, opt::String)
+	# VAL is the contents of either -Sf or -Sb options
+	# OPT = " -Sb" or " -Sf"
+	if (isa(val, Function) || (isa(val, String) && endswith(val, ".jl")))
+		if ((bg_sc = jl_sc_2_shell_sc(val, sc_name)) === nothing)  error("$sc_name script has nothing useful")  end
+		cmd *= opt * bg_sc
+	elseif (isa(val, String) && val != "")
+		cmd *= opt * val
+	end
+	return cmd
+end
+
+# --------------------------------------------------------------------------------------------------
+function jl_sc_2_shell_sc(name, name2::String)
 	global cmds_history
 	IamModern[1] = true; FirstModern[1] = true; convert_syntax[1] = true; cmds_history = [""]
-	include(name)	# This include plus the convert_syntax = true will put all cmds in 'name' into cmds_history
+	if (isa(name, String))
+		include(name)	# This include plus the convert_syntax = true will put all cmds in 'name' into cmds_history
+	else
+		name()			# Run the function, which must be defined ...
+	end
 	fname = write_script(name2)
 end
 

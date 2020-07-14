@@ -1006,7 +1006,9 @@ if (got_it)					# Otherwise go straight to end
 		gmtbegin(); gmtfig("lixo.ps");	gmtend()
 
 		println("    MOVIE")
-		movie("main_sc.jl", pre="pre_sc.jl", C="7.2ix4.8ix100", N=:anim04, T="flight_path.txt", L="f+o0.1i", F=:mp4, A="+l+s10", Vd=dbg2)
+		movie("main_sc.jl", pre="pre_sc.jl", C="7.2ix4.8ix100", N=:anim04, T="flight_path.txt", L="f+o0.1i", F=:mp4, A="+l+s10", Sf="", Vd=dbg2)
+		@test GMT.helper_fgbg("", "bla", "bla", " -Sf") == " -Sfbla"
+		@test_throws ErrorException("bla script has nothing useful") GMT.helper_fgbg("", rand, "bla", " -Sf")
 		if (Sys.iswindows())
 			rm("pre_script.bat");		rm("main_script.bat")
 		else
@@ -1018,6 +1020,7 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	SURFACE")
 	# SURFACE
+	GMT.resetGMT()
 	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
 	@assert(size(G.z) == (151, 151))
 
