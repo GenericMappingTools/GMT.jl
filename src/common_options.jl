@@ -443,7 +443,12 @@ function parse_proj(p::NamedTuple)
 	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
 		if     (isa(val, String))  center = val
 		elseif (isa(val, Number))  center = @sprintf("%.12g", val)
-		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)  center = @sprintf("%.12g/%.12g", val[1], val[2])
+		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)
+			if (isa(val, Array))  center = @sprintf("%.12g/%.12g", val[1], val[2])
+			else		# Accept also strings in tuple (Needed for movie)
+				center  = (isa(val[1], String)) ? val[1] * "/" : @sprintf("%.12g/", val[1])
+				center *= (isa(val[2], String)) ? val[2] : @sprintf("%.12g", val[2])
+			end
 		end
 	end
 
