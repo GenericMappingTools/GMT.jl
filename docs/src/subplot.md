@@ -44,7 +44,7 @@ Optional Arguments
     Use **anchor** or **Anchor** **=refpoint** to specify where the tag should be placed in the subplot [TL, meaning TopLeft].
     **Note**: **anchor** sets the justification of the tag to *refpoint* (suitable for interior tags)
     while **Anchor** instead selects the mirror opposite (suitable for exterior tags).
-    - Append **clearance=dx** or **clearance=(dx,dy)** to set the clearance between the tag and a surrounding text box\ requested via **fill** or **pen** [3p/3p, i.e., 15% of the `FONT_TAG` size dimension].
+    - Append **clearance=dx** or **clearance=(dx,dy)** to set the clearance between the tag and a surrounding text box requested via **fill** or **pen** [3p/3p, i.e., 15% of the `FONT_TAG` size dimension].
     - Append **fill=color** to paint the tag's text box with *color* [no painting].
     - Append **offset=dx** or **offset=(dx,dy)** to offset the tag's reference point in the direction implied by the justification [4p/4p, i.e., 20% of the `FONT_TAG` size].
     - Append **pen=pen** to draw the outline of the tag's text box using selected *pen* [no outline].
@@ -56,7 +56,7 @@ Optional Arguments
    Set map boundary frame and axes attributes. More at [axis](@ref)
 
 - **C** or **clearance** : -- *clearance=(left=val, right=val, bott=val, bottom=val, top=val))*\
-    Reserve a space of dimension *val* between the margin and the subplot on the specified side, using *side* values from **left=val**, **right=val**, **bottom=val**, or **top=val**. No *side* means all sides. Can specify more than one side. Such space will be left untouched by the main map plotting but can be accessed by modules that plot scales, bars, text, etc. Settings specified under **begin** directive apply to all subplots, while settings under **set** only apply to the selected (active) subplot.  **Note**: Common options **X_off** and **Y_off** are not available during subplots; use **clearance** instead.
+    Reserve a space of dimension *val* between the margin and the subplot on the specified side, using *side* values from **left=val**, **right=val**, **bottom=val**, or **top=val**. No *side* means all sides. Can specify more than one side. Such space will be left untouched by the main map plotting but can be accessed by modules that plot scales, bars, text, etc. Settings specified under **begin** directive apply to all subplots, while settings under **set** only apply to the selected (active) subplot.  **Note**: Common options **x_off** and **y_off** are not available during subplots; use **clearance** instead.
 
 - **J** or **proj** : *proj=<parameters>*\
    Select map projection. More at [proj](@ref)
@@ -91,7 +91,7 @@ Optional Arguments
 
 - **T** or **title** : -- *title="Heading"*\
     While individual subplots can have titles (see **-S** or **axes**), the entire figure may also have a
-    overarching *heading* [no heading]. Font is determined by setting `FONT\_HEADING`.
+    overarching *heading* [no heading]. Font is determined by setting `FONT_HEADING`.
 
 
 Synopsis (set mode)
@@ -100,7 +100,7 @@ Synopsis (set mode)
 - **subplot(:set, panel=..., fixedlabel="Label", clearance=...)**\
 
 Before you start plotting you must first select the active subplot.
-**Note**: If any **fifsize** or **figscale** option is passed with **auto** as width or scale when plotting subplots,
+**Note**: If any **figsize** or **figscale** option is passed with **auto** as width or scale when plotting subplots,
 then the dimensions of the map are automatically determined by the subplot size and your region.
 For Cartesian plots: If you want the scale to apply *equally* to both dimensions
 then you must specify **proj=:linear, figscale="auto"** [The default **figsize="auto"** will fill the subplot by using unequal scales].
