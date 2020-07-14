@@ -431,7 +431,7 @@ As another simple example, this will create mp4 movie with 25 scroling numbers l
 
 ```julia
     function main_sc()
-    	text(limits=(0,1,0,1), proj=:linear, figsize=10, font="200p", justify=:CM, text="MOVIE_FRAME", axes=:noannot, X=0, Y=0)
+    	text(limits=(0,1,0,1), proj=:linear, figsize=10, font="200p", region_justify=:CM, text="MOVIE_FRAME", axes=:noannot, X=0, Y=0)
     end
     movie(main_sc, canvas="10cx10cx30", name=:count, frames=25, fill=:pink, format=:mp4, frame_rate=4, clean=true)
 ```
