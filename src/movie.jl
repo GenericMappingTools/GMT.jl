@@ -1,5 +1,5 @@
 """
-    movie(main::String; pre="", post="", kwargs...)
+    movie(main; pre=nothing, post=nothing, kwargs...)
 
 Create animation sequences and movies.
 
@@ -116,7 +116,7 @@ function movie(main; pre=nothing, post=nothing, kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:C :canvas], [:N :name]])
 	cmd = parse_these_opts(cmd, d, [[:D :frame_rate], [:H :scale], [:I :includefile], [:L :label], [:M :cover_page],
 	                                [:Q :debug], [:W :work_dir], [:Z :clean]])
-	cmd = add_opt(cmd, "A", d, [:A :gif], (loop="+l", infinite="_+l", stride="+s"))
+	cmd = add_opt(cmd, "A", d, [:A :gif], (loop="+l", stride="+s"))
 	cmd = add_opt(cmd, "E", d, [:E :titlepage], (title=("",arg2str,1), duration="+d", fade="+f", fill=("+g", add_opt_fill)))
 	cmd = add_opt(cmd, "F", d, [:F :format], (format=("",arg2str,1), transparent="_+t", options="+o"))
 	cmd = add_opt(cmd, "G", d, [:G :fill], (fill=("",add_opt_fill,1), pen=("+p", add_opt_pen)))
@@ -124,7 +124,7 @@ function movie(main; pre=nothing, post=nothing, kwargs...)
 	cmd = add_opt(cmd, "P", d, [:P :progress],
 				  (indicator=("1", nothing, 1), annot="+a", font=("+f", font), justify="+j", offset=("+o", arg2str), width="+w", fill=("+g", add_opt_fill), Fill=("+G", add_opt_fill), pen=("+p", add_opt_pen), Pen=("+P", add_opt_pen)))
 	cmd = add_opt(cmd, "T", d, [:T :frames],
-				  (range=("", arg2str, 1), n_frames="_+n", first="+s", tag_width="+p", split_words="+w"))
+				  (range=("", arg2str, 1), n_frames="_+n", nframes="_+n", first="+s", tag_width="+p", split_words="+w"))
 
 	if ((val = find_in_dict(d, [:Sb :background])[1]) !== nothing)
 		cmd = helper_fgbg(cmd, val, "bg_script", " -Sb")

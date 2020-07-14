@@ -980,7 +980,7 @@ if (got_it)					# Otherwise go straight to end
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", dims=(panels=((2,4),(2.5,5,1.25)),fill=:red), Vd=dbg2), "-Fs2,4/2.5,5,1.25+gred")
 		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", F=(panels=((5,8),8),), Vd=dbg2), "-Fs5,8/8")
 		@test GMT.helper_sub_F((width=1,)) == "1/0"
-		#@test GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1),fheight=(10,))) == "1/5+f0.5,1/10"
+		@test GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1),fheight=(10,))) == "1/5+f0.5,1/10"
 		@test_throws ErrorException("SUBPLOT: when using 'fwidth' must also set 'fheight'") GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1)))
 		@test_throws ErrorException("'frac' option must be a tuple(tuple, tuple)") subplot(grid=(1,1),  F=(size=(1,2), frac=((2,3))), Vd=dbg2)
 		@test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
@@ -1009,6 +1009,7 @@ if (got_it)					# Otherwise go straight to end
 		movie("main_sc.jl", pre="pre_sc.jl", C="7.2ix4.8ix100", N=:anim04, T="flight_path.txt", L="f+o0.1i", F=:mp4, A="+l+s10", Sf="", Vd=dbg2)
 		@test GMT.helper_fgbg("", "bla", "bla", " -Sf") == " -Sfbla"
 		@test_throws ErrorException("bla script has nothing useful") GMT.helper_fgbg("", rand, "bla", " -Sf")
+		GMT.resetGMT()		# This one is needed to reset the broken state left by calling helper_fgbg() directly
 		if (Sys.iswindows())
 			rm("pre_script.bat");		rm("main_script.bat")
 		else
@@ -1020,7 +1021,6 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	SURFACE")
 	# SURFACE
-	GMT.resetGMT()
 	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
 	@assert(size(G.z) == (151, 151))
 
