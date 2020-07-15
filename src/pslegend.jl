@@ -35,7 +35,8 @@ Parameters
 """
 function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("pslegend", cmd0, arg1)
+    gmt_proggy = (IamModern[1]) ? "legend "  : "pslegend "
+	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
@@ -53,7 +54,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position :refpoint])
 	cmd = add_opt(cmd, 'C', d, [:C :clearance])
 
-	r = finish_PS_module(d, "pslegend " * cmd, "", K, O, true, arg1)
+	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 	gmt("destroy")
 	return r
 end

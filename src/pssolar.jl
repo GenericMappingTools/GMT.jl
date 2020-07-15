@@ -48,7 +48,8 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
 
-	length(kwargs) == 0 && N_args == 0 && return monolitic("pssolar", cmd0, arg1)
+    gmt_proggy = (IamModern[1]) ? "solar "  : "pssolar "
+	length(kwargs) == 0 && N_args == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
@@ -66,7 +67,7 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (occursin("-I", cmd) || occursin("-I", cmd0))
 		opt_extra = "-I";		do_finish = false;	cmd = replace(cmd, opt_J => "")
 	end
-	cmd, K = finish_PS_nested(d, "pssolar " * cmd, "", K, O, [:coast])
+	cmd, K = finish_PS_nested(d, gmt_proggy * cmd, "", K, O, [:coast])
 	return finish_PS_module(d, cmd, opt_extra, K, O, do_finish, arg1, arg2)
 end
 

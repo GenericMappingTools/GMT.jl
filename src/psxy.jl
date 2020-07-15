@@ -9,9 +9,9 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	N_args = (arg1 === nothing) ? 0 : 1
 
 	is_ternary = (caller == "ternary") ? true : false
-	if     (is3D)       gmt_proggy = "psxyz "
-	elseif (is_ternary) gmt_proggy = "psternary "
-	else		        gmt_proggy = "psxy "
+	if     (is3D)       gmt_proggy = (IamModern[1]) ? "plot3d "  : "psxyz "
+	elseif (is_ternary) gmt_proggy = (IamModern[1]) ? "ternary " : "psternary "
+	else		        gmt_proggy = (IamModern[1]) ? "plot "    : "psxy "
 	end
 
 	(occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)

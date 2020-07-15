@@ -84,7 +84,8 @@ Parameters
 """
 function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("pscontour", cmd0, arg1)
+    gmt_proggy = (IamModern[1]) ? "contour "  : "pscontour "
+	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
@@ -136,7 +137,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			cmd, arg2, arg3, = add_opt_cpt(d, cmd, [:C], 'C', N_used, arg2, arg3, true, true, opt_T, true)
 		end
 	end
-	cmd, K = finish_PS_nested(d, "pscontour " * cmd, "", K, O, [:coast :colorbar])
+	cmd, K = finish_PS_nested(d, gmt_proggy * cmd, "", K, O, [:coast :colorbar])
 	return finish_PS_module(d, cmd, "-D", K, O, true, arg1, arg2, arg3)
 end
 

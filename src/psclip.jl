@@ -47,7 +47,8 @@ Parameters
 """
 function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("psclip", cmd0, arg1)
+    gmt_proggy = (IamModern[1]) ? "clip "  : "psclip "
+	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
@@ -59,7 +60,7 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R)
 
-	return finish_PS_module(d, "psclip " * cmd, "", K, O, true, arg1)
+	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

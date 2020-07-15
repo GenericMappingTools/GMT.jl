@@ -89,7 +89,8 @@ Parameters
 """
 function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
-	length(kwargs) == 0 && clip === nothing && return monolitic("pscoast", cmd0)
+    gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
+	length(kwargs) == 0 && clip === nothing && return monolitic(gmt_proggy, cmd0)
 
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
@@ -146,7 +147,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	if (!occursin("-D",cmd))  cmd *= " -Da"  end		# Then pick automatic
 	finish = !occursin(" -M ",cmd) ? true : false		# Otherwise the dump would be redirected to GMTjl_tmp.ps
 
-	return finish_PS_module(d, "pscoast " * cmd, "", K, O, finish)
+	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, finish)
 end
 
 # ---------------------------------------------------------------------------------------------------

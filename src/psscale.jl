@@ -58,7 +58,8 @@ Full option list at [`psscale`]($(GMTdoc)psscale.html)
 """
 function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("psscale", cmd0, arg1)
+    gmt_proggy = (IamModern[1]) ? "colorbar "  : "psscale "
+	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
 	K, O = set_KO(first)		# Set the K O dance
@@ -82,7 +83,7 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
 	if (!occursin(" -D", cmd))  cmd *= " -Dx8c/1c+w12c/0.5c+jTC+h"  end      #  So that we can call it with just a CPT
 
-	r = finish_PS_module(d, "psscale " * cmd, "", K, O, true, arg1)
+	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 	gmt("destroy")      # Probably because of the rasters in cpt
 	return r
 end
