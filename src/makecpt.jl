@@ -28,6 +28,11 @@ Full option list at [`makecpt`]($(GMTdoc)makecpt.html)
 
     Truncate the incoming CPT so that the lowest and highest z-levels are to zlo and zhi.
     ($(GMTdoc)makecpt.html#g)
+- **H** | **save** :: [Type => Bool]
+
+    Modern mode only: Write the CPT to disk [Default saves the CPT as the session current CPT].
+    Required for scripts used to make animations via movie where we must pass named CPT files.
+    ($(GMTdoc)makecpt.html#h)
 - **I** | **inverse** | **reverse** :: [Type => Str]	`Arg = [c][z]`
 
     Reverse the sense of color progression in the master CPT.

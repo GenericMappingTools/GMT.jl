@@ -81,7 +81,8 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = isempty_(arg1) ? 0 : 1
 
-	length(kwargs) == 0 && return monolitic("pshistogram", cmd0, arg1, arg2)
+    gmt_proggy = (IamModern[1]) ? "histogram "  : "pshistogram "
+	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1, arg2)
 
 	d = KW(kwargs)
 
@@ -90,7 +91,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (cmd != "")
 		cmd = add_opt(cmd, 'W', d, [:W :bin :width])
 		if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end
-		return gmt("pshistogram " * cmd, arg1)
+		return gmt(gmt_proggy * cmd, arg1)
 	end
 
     K, O = set_KO(first)		# Set the K O dance
@@ -128,7 +129,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	return finish_PS_module(d, "pshistogram " * cmd, "", K, O, true, arg1, arg2)
+	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

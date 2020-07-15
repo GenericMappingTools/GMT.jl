@@ -79,7 +79,8 @@ Parameters
 """
 function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("pstext", cmd0, arg1)
+    gmt_proggy = (IamModern[1]) ? "text "  : "pstext "
+	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	N_args = (arg1 === nothing) ? 0 : 1
 
@@ -121,7 +122,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	r = finish_PS_module(d, "pstext " * cmd, "", K, O, true, arg1, arg2)
+	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
 	gmt("destroy")
 	return r
 end

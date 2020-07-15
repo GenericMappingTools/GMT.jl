@@ -37,7 +37,8 @@ Parameters
 """
 function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("psimage", cmd0, arg1)
+    gmt_proggy = (IamModern[1]) ? "image "  : "psimage "
+	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
@@ -49,7 +50,7 @@ function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 
-	return finish_PS_module(d, "psimage " * cmd, "", K, O, true, arg1)
+	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -64,7 +64,8 @@ Parameters
 """
 function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("pswiggle", cmd0, arg1)
+    gmt_proggy = (IamModern[1]) ? "wiggle "  : "pswiggle "
+	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
@@ -83,7 +84,7 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd *= opt_pen(d, 'W', [:W :pen])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 
-	return finish_PS_module(d, "pswiggle " * cmd, "", K, O, true, arg1)
+	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

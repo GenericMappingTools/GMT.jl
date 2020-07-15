@@ -117,7 +117,7 @@ Optional Arguments
     **preserve=true** to *preserve* these frames by fading over only the first and last (repeated) animation frames
     instead. We fade from and to black by default; append **fill=color** to use another terminal fade color.
 
-- **L** or **label** : -- *label=str*\
+- **L** or **label** : -- *label=str* (not yet translated to keywords)\
     Automatic labeling of individual frames. Places the chosen label at the frame perimeter:
     **e** selects the elapsed time in seconds as the label; append **+sscale** to set the length
     in seconds of each frame [Default is 1/*framerate*],

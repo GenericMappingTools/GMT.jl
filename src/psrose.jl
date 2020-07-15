@@ -84,7 +84,8 @@ Parameters
 """
 function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("psrose", cmd0, arg1)
+    gmt_proggy = (IamModern[1]) ? "rose "  : "psrose "
+	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
@@ -120,7 +121,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= opt_pen(d, 'W', [:W :pen])
 
-	return finish_PS_module(d, "psrose " * cmd, "", K, O, true, arg1, arg2)
+	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------
