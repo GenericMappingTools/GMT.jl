@@ -53,8 +53,8 @@ function sphdistance(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("sphdistance ", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:I :R :V_params :b :d :e :h :i :r :yx])
-	cmd = parse_these_opts(cmd, d, [[:C :save_mem], [:E :what_quantity], [:G :grid :outgrid], [:L :dist_unit]])
+	cmd, = parse_common_opts(d, "", [:I :R :V_params :b :d :e :h :i :r :yx])
+	cmd  = parse_these_opts(cmd, d, [[:C :save_mem], [:E :what_quantity], [:G :grid :outgrid], [:L :dist_unit]])
 
 	(arg1 === nothing) ? N_used = 0 : N_used = 1
 	symbs = [[:Q :voronoi], [:N :nodes]];	flags = "QN"	# Process option -Q & -N

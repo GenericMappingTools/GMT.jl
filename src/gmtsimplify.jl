@@ -30,8 +30,8 @@ function gmtsimplify(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("gmtsimplify", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
-	cmd = add_opt(cmd, 'T', d, [:T :tol :tolerance])
+	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
+	cmd  = add_opt(cmd, 'T', d, [:T :tol :tolerance])
 
 	common_grd(d, cmd0, cmd, "gmtsimplify ", arg1)		# Finish build cmd and run it
 end

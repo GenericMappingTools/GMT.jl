@@ -55,8 +55,8 @@ function basemap(cmd0::String="", arg1=nothing; first=true, kwargs...)
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :bo :c :f :p :t :params], first)
-    cmd = parse_these_opts(cmd, d, [[:A :polygon]])
+	cmd, = parse_common_opts(d, cmd, [:F :UVXY :JZ :bo :c :f :p :t :params], first)
+    cmd  = parse_these_opts(cmd, d, [[:A :polygon]])
     #-D[unit]xmin/xmax/ymin/ymax[r][+sfile][+t] | -D[g|j|J|n|x]refpoint+wwidth[/height][+jjustify][+odx[/dy]][+sfile][+t]
 	#cmd = parse_TdTmL(d, cmd)
     cmd = parse_type_anchor(d, cmd, [[:Td :rose], [:Tm :compass], [:L :map_scale], [:D :inset]])

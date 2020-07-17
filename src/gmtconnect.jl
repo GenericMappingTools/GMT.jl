@@ -48,8 +48,8 @@ function gmtconnect(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtconnect", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
-	cmd = parse_these_opts(cmd, d, [[:C :closed], [:D :dump], [:L :linkfile], [:Q :list_file], [:T :tolerance]])
+	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
+	cmd  = parse_these_opts(cmd, d, [[:C :closed], [:D :dump], [:L :linkfile], [:Q :list_file], [:T :tolerance]])
 
 	common_grd(d, cmd0, cmd, "gmtconnect ", arg1)		# Finish build cmd and run it
 end

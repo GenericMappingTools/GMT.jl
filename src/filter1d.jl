@@ -56,7 +56,7 @@ function filter1d(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("filter1d", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
+	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:F :filter_type], [:D :inc], [:E :ends], [:N :time_col],
 	                       [:Q :quality], [:S :symetry], [:T :equi_space]])
 

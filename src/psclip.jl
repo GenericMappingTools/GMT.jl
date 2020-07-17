@@ -47,15 +47,15 @@ Parameters
 """
 function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-    gmt_proggy = (IamModern[1]) ? "clip "  : "psclip "
+	gmt_proggy = (IamModern[1]) ? "clip "  : "psclip "
 	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
-    K, O = set_KO(first)		# Set the K O dance
+	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :g :p :t :yx :params], first)
-	cmd = parse_these_opts(cmd, d, [[:A :straight_lines], [:C :end_clip_path], [:N :invert], [:T :clip_limits]])
+	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :g :p :t :yx :params], first)
+	cmd  = parse_these_opts(cmd, d, [[:A :straight_lines], [:C :end_clip_path], [:N :invert], [:T :clip_limits]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R)

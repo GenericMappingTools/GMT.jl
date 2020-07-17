@@ -91,14 +91,16 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:UVXY :bo :c :d :do :e :p :t :params], first)
-	cmd = parse_these_opts(cmd, d, [[:D :dump], [:I :fill :colorize], [:N :no_clip], [:Q :cut], [:S :skip]])
+	cmd, = parse_common_opts(d, cmd, [:UVXY :bo :c :d :do :e :p :t :params], first)
+	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:I :fill :colorize], [:N :no_clip], [:Q :cut], [:S :skip]])
 	cmd *= add_opt_pen(d, [:L :mesh], "L")
-	cmd = parse_contour_AGTW(d::Dict, cmd::String)
+	cmd  = parse_contour_AGTW(d::Dict, cmd::String)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, info = read_data(d, cmd0, cmd, arg1, opt_R, false, true)
-	cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing), arg1, nothing, nothing, "pscontour")
+	N_used = (arg1 === nothing) ? 0 : 1
+	cmd, N_used_, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing), arg1, nothing, nothing, "pscontour")
+	N_used += N_used_
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
 		cmd, args, n, = add_opt(cmd, 'C', d, [:C :cont :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
@@ -119,7 +121,8 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	if ((val = find_in_dict(d, [:E :index])[1]) !== nothing)
 		cmd *= " -E"
-		if (isa(val, Array{Int}))   # Now need to find the free slot where to store the indices array
+		#if (isa(val, Array{Int}))   # Now need to find the free slot where to store the indices array
+		if (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{GMTdataset}))   # Now need to find the free slot where to store the indices array
 			(N_used == 0) ? arg1 = val : (N_used == 1 ? arg2 = val : arg3 = val)
 		else
 			cmd *= arg2str(val)

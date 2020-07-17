@@ -49,12 +49,12 @@ function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdgradient", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :f :n])
-	cmd = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:G :outgrid], [:S :slopegrid]])
-	cmd = add_opt(cmd, 'E', d, [:E :lambert], 
-	      (manip=("m", nothing, 1), simple=("s", nothing, 1), peucker=("p", nothing, 1), view=("", arg2str), ambient="+a", difuse="+d", specular="+p", shine="+s") )
-	cmd = add_opt(cmd, 'N', d, [:N :norm :normalize],
-		  (laplace=("e", nothing, 1), cauchy=("t", nothing, 1), amp="", sigma="+s", offset="+o"))
+	cmd, = parse_common_opts(d, "", [:R :V_params :f :n])
+	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:G :outgrid], [:S :slopegrid]])
+	cmd  = add_opt(cmd, 'E', d, [:E :lambert], 
+	       (manip=("m", nothing, 1), simple=("s", nothing, 1), peucker=("p", nothing, 1), view=("", arg2str), ambient="+a", difuse="+d", specular="+p", shine="+s") )
+	cmd  = add_opt(cmd, 'N', d, [:N :norm :normalize],
+		   (laplace=("e", nothing, 1), cauchy=("t", nothing, 1), amp="", sigma="+s", offset="+o"))
     if ((val = find_in_dict(d, [:Q :save_stats])[1]) !== nothing)
 		val = string(val)[1]
 		if (val == 's')  val = 'c'  end

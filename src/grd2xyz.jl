@@ -38,8 +38,8 @@ function grd2xyz(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2xyz", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :bo :d :f :h :o :s])
-    cmd = parse_these_opts(cmd, d, [[:C :row_col], [:W :weight], [:Z :flags]])
+	cmd, = parse_common_opts(d, "", [:R :V_params :bo :d :f :h :o :s])
+    cmd  = parse_these_opts(cmd, d, [[:C :row_col], [:W :weight], [:Z :flags]])
 
 	common_grd(d, cmd0, cmd, "grd2xyz ", arg1)		# Finish build cmd and run it
 end

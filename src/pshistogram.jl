@@ -97,12 +97,12 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "histogram", O, " -JX12c/12c")
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :params], first)
-	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:D :annot :annotate], [:F :center],
-	                                [:Q :cumulative], [:S :stairs]])
-	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = add_opt(cmd, 'Z', d, [:Z :kind],
-		(counts="0", freq="1", log_count="2", log_freq="3", log10_count="4", log10_freq="5", weights="+w"))
+	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :params], first)
+	cmd  = parse_these_opts(cmd, d, [[:A :horizontal], [:D :annot :annotate], [:F :center],
+	                                 [:Q :cumulative], [:S :stairs]])
+	cmd  = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd  = add_opt(cmd, 'Z', d, [:Z :kind],
+		   (counts="0", freq="1", log_count="2", log_freq="3", log10_count="4", log10_freq="5", weights="+w"))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	if (opt_R == "")  opt_R = " "  end		# So it doesn't try to find the -R in next call

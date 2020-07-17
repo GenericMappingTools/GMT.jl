@@ -58,9 +58,9 @@ function grd2kml(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2kml", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :f])
-	cmd = parse_these_opts(cmd, d, [[:E :url], [:F :filter], [:H :sub_pixel], [:L :tile_size],
-	                                [:N :prefix], [:Q :nan_t :nan_alpha], [:T :title]])
+	cmd, = parse_common_opts(d, "", [:V_params :f])
+	cmd  = parse_these_opts(cmd, d, [[:E :url], [:F :filter], [:H :sub_pixel], [:L :tile_size],
+	                                 [:N :prefix], [:Q :nan_t :nan_alpha], [:T :title]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2)

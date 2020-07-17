@@ -86,10 +86,9 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 
-	cmd = parse_common_opts(d, "", [:R :V_params])
-	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:E :nlevels],
-				[:G :truncate], [:F :force_rgb], [:I :inverse :reverse], [:L :limit], [:M :overrule_bg],
-				[:N :no_bg :nobg], [:Q :log], [:S :steps], [:T :symetric], [:W :no_interp], [:Z :continuous]])
+	cmd, = parse_common_opts(d, "", [:R :V_params])
+	cmd  = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:E :nlevels],
+	                                 [:G :truncate], [:F :force_rgb], [:I :inverse :reverse], [:L :limit], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :steps], [:T :symetric], [:W :no_interp], [:Z :continuous]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2

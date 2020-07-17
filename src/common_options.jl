@@ -810,36 +810,36 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first=true)
-	opt_p = nothing
+	opt_p = nothing;	o = ""
 	for opt in opts
-		if     (opt == :a)  cmd, = parse_a(cmd, d)
-		elseif (opt == :b)  cmd, = parse_b(cmd, d)
-		elseif (opt == :c)  cmd, = parse_c(cmd, d)
-		elseif (opt == :bi) cmd, = parse_bi(cmd, d)
-		elseif (opt == :bo) cmd, = parse_bo(cmd, d)
-		elseif (opt == :d)  cmd, = parse_d(cmd, d)
-		elseif (opt == :di) cmd, = parse_di(cmd, d)
-		elseif (opt == :do) cmd, = parse_do(cmd, d)
-		elseif (opt == :e)  cmd, = parse_e(cmd, d)
-		elseif (opt == :f)  cmd, = parse_f(cmd, d)
-		elseif (opt == :g)  cmd, = parse_g(cmd, d)
-		elseif (opt == :h)  cmd, = parse_h(cmd, d)
-		elseif (opt == :i)  cmd, = parse_i(cmd, d)
-		elseif (opt == :j)  cmd, = parse_j(cmd, d)
-		elseif (opt == :l)  cmd, = parse_l(cmd, d)
-		elseif (opt == :n)  cmd, = parse_n(cmd, d)
-		elseif (opt == :o)  cmd, = parse_o(cmd, d)
+		if     (opt == :a)  cmd, o = parse_a(cmd, d)
+		elseif (opt == :b)  cmd, o = parse_b(cmd, d)
+		elseif (opt == :c)  cmd, o = parse_c(cmd, d)
+		elseif (opt == :bi) cmd, o = parse_bi(cmd, d)
+		elseif (opt == :bo) cmd, o = parse_bo(cmd, d)
+		elseif (opt == :d)  cmd, o = parse_d(cmd, d)
+		elseif (opt == :di) cmd, o = parse_di(cmd, d)
+		elseif (opt == :do) cmd, o = parse_do(cmd, d)
+		elseif (opt == :e)  cmd, o = parse_e(cmd, d)
+		elseif (opt == :f)  cmd, o = parse_f(cmd, d)
+		elseif (opt == :g)  cmd, o = parse_g(cmd, d)
+		elseif (opt == :h)  cmd, o = parse_h(cmd, d)
+		elseif (opt == :i)  cmd, o = parse_i(cmd, d)
+		elseif (opt == :j)  cmd, o = parse_j(cmd, d)
+		elseif (opt == :l)  cmd, o = parse_l(cmd, d)
+		elseif (opt == :n)  cmd, o = parse_n(cmd, d)
+		elseif (opt == :o)  cmd, o = parse_o(cmd, d)
 		elseif (opt == :p)  cmd, opt_p = parse_p(cmd, d)
-		elseif (opt == :r)  cmd, = parse_r(cmd, d)
-		elseif (opt == :s)  cmd, = parse_s(cmd, d)
-		elseif (opt == :x)  cmd, = parse_x(cmd, d)
-		elseif (opt == :t)  cmd, = parse_t(cmd, d)
-		elseif (opt == :yx) cmd, = parse_swap_xy(cmd, d)
-		elseif (opt == :R)  cmd, = parse_R(cmd, d)
+		elseif (opt == :r)  cmd, o = parse_r(cmd, d)
+		elseif (opt == :s)  cmd, o = parse_s(cmd, d)
+		elseif (opt == :x)  cmd, o = parse_x(cmd, d)
+		elseif (opt == :t)  cmd, o = parse_t(cmd, d)
+		elseif (opt == :yx) cmd, o = parse_swap_xy(cmd, d)
+		elseif (opt == :R)  cmd, o = parse_R(cmd, d)
 		elseif (opt == :F)  cmd  = parse_F(cmd, d)
 		elseif (opt == :I)  cmd  = parse_inc(cmd, d, [:I :inc], 'I')
-		elseif (opt == :J)  cmd, = parse_J(cmd, d)
-		elseif (opt == :JZ) cmd, = parse_JZ(cmd, d)
+		elseif (opt == :J)  cmd, o = parse_J(cmd, d)
+		elseif (opt == :JZ) cmd, o = parse_JZ(cmd, d)
 		elseif (opt == :UVXY) cmd = parse_UVXY(cmd, d)
 		elseif (opt == :V_params) cmd = parse_V_params(cmd, d)
 		elseif (opt == :params) cmd = parse_params(cmd, d)
@@ -858,7 +858,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first=tr
 			current_view[1] = ""		# Ensure we start empty
 		end
 	end
-	return cmd
+	return cmd, o
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -928,6 +928,8 @@ function parse_params(cmd::String, d::Dict)
 			end
 		elseif (isa(val, Tuple))
 			_cmd[1] *= " --" * string(val[1]) * "=" * string(val[2])
+		else
+			@warn("Paramers option BAD usage: is neither a Tuple or a NamedTuple")
 		end
 		usedConfPar[1] = true
 	end
@@ -2304,14 +2306,14 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	if (haskey(d, :data))  data_kw = d[:data]  end
 	if (fname != "")       data_kw = fname     end
 
-	cmd, opt_i  = parse_i(cmd, d)		# If data is to be read as binary
+	cmd, opt_i  = parse_i(cmd, d)		# If data is to be read with some colomn order
+	cmd, opt_bi = parse_bi(cmd, d)		# If data is to be read as binary
 	cmd, opt_di = parse_di(cmd, d)		# If data missing data other than NaN
 	cmd, opt_h  = parse_h(cmd, d)
 	cmd, opt_yx = parse_swap_xy(cmd, d)
 	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
 	if (isa(data_kw, String))
 		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])	# Then we must read the file to determine -R
-			lixo, opt_bi = parse_bi("", d)	# See if user says file is binary
 			if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
 				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
 				if (opt_i != "")			# Remove the -i option from cmd. It has done its job
@@ -2333,7 +2335,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	info = nothing
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
 	if (((!IamModern[1] && no_R) || (force_get_R && no_R)) && !convert_syntax[1])
-		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h * opt_yx, arg)		# Here we are reading from an original GMTdataset or Array
+		info = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)		# Here we are reading from an original GMTdataset or Array
 		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
 			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
 		end
@@ -2365,7 +2367,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	end
 
 	if (get_info && info === nothing && !convert_syntax[1])
-		info = gmt("gmtinfo -C" * opt_i * opt_di * opt_h * opt_yx, arg)
+		info = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)
 		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
 			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
 		end

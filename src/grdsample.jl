@@ -35,8 +35,8 @@ function grdsample(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdsample", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :f :n :r :x])
-	cmd = parse_these_opts(cmd, d, [[:G :outgrid], [:I :inc], [:T :toggle]])
+	cmd, = parse_common_opts(d, "", [:R :V_params :f :n :r :x])
+	cmd  = parse_these_opts(cmd, d, [[:G :outgrid], [:I :inc], [:T :toggle]])
 
 	common_grd(d, cmd0, cmd, "grdsample ", arg1)		# Finish build cmd and run it
 end

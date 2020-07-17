@@ -27,8 +27,8 @@ function kml2gmt(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("kml2gmt", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :bo :do :yx])
-	cmd = parse_these_opts(cmd, d, [[:F :select], [:Z :altitudes], [:E :extended]])
+	cmd, = parse_common_opts(d, "", [:V_params :bo :do :yx])
+	cmd  = parse_these_opts(cmd, d, [[:F :select], [:Z :altitudes], [:E :extended]])
 
 	common_grd(d, cmd0, cmd, "kml2gmt ", arg1)		# Finish build cmd and run it
 end

@@ -47,9 +47,9 @@ function grdlandmask(cmd0::String=""; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdlandmask", cmd0, nothing)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :r :x])
-	cmd = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :bordervalues], [:I :inc],
-	                                [:G :outgrid], [:N :mask_geog]])
+	cmd, = parse_common_opts(d, "", [:R :V_params :r :x])
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :bordervalues], [:I :inc],
+	                                 [:G :outgrid], [:N :mask_geog]])
 
 	return common_grd(d, "grdlandmask " * cmd, nothing)		# Finish build cmd and run it
 end

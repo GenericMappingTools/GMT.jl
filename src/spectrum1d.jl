@@ -54,9 +54,9 @@ function spectrum1d(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("spectrum1d", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :yx])
-	cmd = parse_these_opts(cmd, d, [[:C :response_fun], [:D :sample_dist], [:L :leave_trend], [:N :time_col],
-				[:S :size], [:T], [:W :wavelength]])
+	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :yx])
+	cmd  = parse_these_opts(cmd, d, [[:C :response_fun], [:D :sample_dist], [:L :leave_trend], [:N :time_col],
+	                                 [:S :size], [:T], [:W :wavelength]])
 
 	common_grd(d, cmd0, cmd, "spectrum1d ", arg1)		# Finish build cmd and run it
 end

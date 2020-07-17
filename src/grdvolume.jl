@@ -38,8 +38,8 @@ function grdvolume(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdvolume", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :f :o])
-	cmd = parse_these_opts(cmd, d, [[:C :cont :contour], [:L :base_level], [:S :unit], [:T], [:Z :scale]])
+	cmd, = parse_common_opts(d, "", [:R :V_params :f :o])
+	cmd  = parse_these_opts(cmd, d, [[:C :cont :contour], [:L :base_level], [:S :unit], [:T], [:Z :scale]])
 
 	common_grd(d, cmd0, cmd, "grdvolume ", arg1)		# Finish build cmd and run it
 end

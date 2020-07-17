@@ -74,9 +74,9 @@ function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kw
 	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1, arg2, arg3)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
-	cmd = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary], [:F :polygon],
-	                [:G :gridmask], [:I :reverse], [:N :mask], [:Z :in_range]])
+	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary], [:F :polygon],
+	                                 [:G :gridmask], [:I :reverse], [:N :mask], [:Z :in_range]])
 	#cmd = add_opt(cmd, 'N', d, [:N :mask], (ocean=("", arg2str, 1), land=("", arg2str, 2)) )
 
 	cmd, args, n, = add_opt(cmd, 'C', d, [:C :dist2pt :dist], :pts, Array{Any,1}([arg1, arg2]), (dist="+d",))

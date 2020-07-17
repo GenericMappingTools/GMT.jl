@@ -48,19 +48,19 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
 
-    gmt_proggy = (IamModern[1]) ? "solar "  : "pssolar "
+	gmt_proggy = (IamModern[1]) ? "solar "  : "pssolar "
 	length(kwargs) == 0 && N_args == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
-    K, O = set_KO(first)		# Set the K O dance
+	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
-	cmd = parse_common_opts(d, cmd, [:bo :c :h :o :p :t :UVXY :params], first)
-	cmd = parse_these_opts(cmd, d, [[:C :formated], [:M :dump], [:N :invert]])
+	cmd, = parse_common_opts(d, cmd, [:bo :c :h :o :p :t :UVXY :params], first)
+	cmd  = parse_these_opts(cmd, d, [[:C :formated], [:M :dump], [:N :invert]])
 
-	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = add_opt(cmd, 'I', d, [:I :sun], (pos="",date="+d",TZ="+z"))
-	cmd = add_opt(cmd, 'T', d, [:T :terminators], (term="",date="+d",TZ="+z"))
+	cmd  = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd  = add_opt(cmd, 'I', d, [:I :sun], (pos="",date="+d",TZ="+z"))
+	cmd  = add_opt(cmd, 'T', d, [:T :terminators], (term="",date="+d",TZ="+z"))
 	cmd *= opt_pen(d, 'W', [:W :pen])
 
 	opt_extra = "";		do_finish = true
