@@ -798,6 +798,22 @@ function parse_t(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_write(cmd::String, d::Dict)
+	if ((val = find_in_dict(d, [:write :savefile :|>], true)[1]) !== nothing)
+		cmd *=  " > " * val
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_append(cmd::String, d::Dict)
+	if ((val = find_in_dict(d, [:append], true)[1]) !== nothing)
+		cmd *=  " >> " * val
+	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_helper(cmd::String, d::Dict, symbs, opt::String)
 	# Helper function to the parse_?() global options.
 	opt_val = ""
@@ -840,9 +856,11 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first=tr
 		elseif (opt == :I)  cmd  = parse_inc(cmd, d, [:I :inc], 'I')
 		elseif (opt == :J)  cmd, o = parse_J(cmd, d)
 		elseif (opt == :JZ) cmd, o = parse_JZ(cmd, d)
-		elseif (opt == :UVXY) cmd = parse_UVXY(cmd, d)
+		elseif (opt == :UVXY)     cmd = parse_UVXY(cmd, d)
 		elseif (opt == :V_params) cmd = parse_V_params(cmd, d)
-		elseif (opt == :params) cmd = parse_params(cmd, d)
+		elseif (opt == :params)   cmd = parse_params(cmd, d)
+		elseif (opt == :write)    cmd = parse_write(cmd, d)
+		elseif (opt == :append)   cmd = parse_append(cmd, d)
 		end
 	end
 	if (opt_p !== nothing)		# Restrict the contents of this block to when -p was used

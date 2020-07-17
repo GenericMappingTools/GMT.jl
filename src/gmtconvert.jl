@@ -68,6 +68,7 @@ Parameters
 - $(GMT.opt_write)
 - $(GMT.opt_append)
 - $(GMT.opt_b)
+- $(GMT.opt_bo)
 - $(GMT.opt_d)
 - $(GMT.opt_e)
 - $(GMT.opt_f)
@@ -83,8 +84,7 @@ function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtconvert", cmd0, arg1)
 
 	d = KW(kwargs)
-
-	cmd, = parse_common_opts(d, "", [:V_params :a :b :d :e :f :g :h :i :o :s :yx])
+	cmd, = parse_common_opts(d, "", [:V_params :write :append :a :b :bo :d :e :f :g :h :i :o :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :h_cat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
 	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :select_num], [:S :select_hdr], [:T :suppress], [:W :word2num], [:Z :range]])
 
