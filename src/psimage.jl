@@ -37,16 +37,16 @@ Parameters
 """
 function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-    gmt_proggy = (IamModern[1]) ? "image "  : "psimage "
+	gmt_proggy = (IamModern[1]) ? "image "  : "psimage "
 	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
-    K, O = set_KO(first)		# Set the K O dance
+	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
-	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :c :p :t :params], first)
-	cmd = parse_type_anchor(d, cmd, [[:D :ref_point]])
-	cmd = parse_these_opts(cmd, d,  [[:G :bit_color], [:I :invert_1bit], [:M :monochrome]])
+	cmd, = parse_common_opts(d, cmd, [:F :UVXY :JZ :c :p :t :params], first)
+	cmd  = parse_type_anchor(d, cmd, [[:D :ref_point]])
+	cmd  = parse_these_opts(cmd, d,  [[:G :bit_color], [:I :invert_1bit], [:M :monochrome]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 

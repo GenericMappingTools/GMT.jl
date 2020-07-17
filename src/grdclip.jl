@@ -56,13 +56,13 @@ function grdclip(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdclip", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params])
-	cmd = add_opt(cmd, 'G', d, [:G :outgrid])
-	cmd = add_opt(cmd, 'S', d, [:S])
-	cmd = opt_S(d, cmd, [:high :above], 'a')
-	cmd = opt_S(d, cmd, [:low :below], 'b')
-	cmd = opt_S(d, cmd, [:old :new], 'r')
-	cmd = opt_S(d, cmd, [:between], 'i')
+	cmd, = parse_common_opts(d, "", [:R :V_params])
+	cmd  = add_opt(cmd, 'G', d, [:G :outgrid])
+	cmd  = add_opt(cmd, 'S', d, [:S])
+	cmd  = opt_S(d, cmd, [:high :above], 'a')
+	cmd  = opt_S(d, cmd, [:low :below], 'b')
+	cmd  = opt_S(d, cmd, [:old :new], 'r')
+	cmd  = opt_S(d, cmd, [:between], 'i')
 
 	common_grd(d, cmd0, cmd, "grdclip ", arg1)		# Finish build cmd and run it
 end

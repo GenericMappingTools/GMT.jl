@@ -112,7 +112,7 @@ function movie(main; pre=nothing, post=nothing, kwargs...)
 		error("A main script is mandatory")
 	end
 
-	cmd = parse_common_opts(d, "", [:V_params :x])
+	cmd, = parse_common_opts(d, "", [:V_params :x])
 	cmd = parse_these_opts(cmd, d, [[:C :canvas], [:N :name]])
 	cmd = parse_these_opts(cmd, d, [[:D :frame_rate], [:H :scale], [:I :includefile], [:L :label], [:M :cover_page],
 	                                [:Q :debug], [:W :work_dir], [:Z :clean]])
@@ -180,15 +180,19 @@ function write_script(fname)
 		else                  fname *= ".sh";	b = "\${";	e = "}"
 		end
 		par_list = ["MOVIE_DPU", "MOVIE_HEIGHT", "MOVIE_RATE", "MOVIE_NFRAMES", "MOVIE_FRAME", "MOVIE_TAG", "MOVIE_NAME", "MOVIE_WIDTH", "MOVIE_COL0", "MOVIE_COL1", "MOVIE_COL2", "MOVIE_COL4", "MOVIE_TEXT", "MOVIE_WORD0", "MOVIE_WORD1", "MOVIE_WORD2", "MOVIE_WORD3"]
+		got_begin = false
+		for cmd in cmds_history			# Check if we have a gmtbegin.
+			if (occursin("gmtbegin", cmd))  got_begin = true;  break  end
+		end
 		fid = open(fname, "w")
-		println(fid, "gmt begin")
+		if (!got_begin) println(fid, "gmt begin")  end
 		for cmd in cmds_history
 			for par in par_list
 				if (occursin(par, cmd))  cmd = replace(cmd, par => b * par * e)  end
 			end
 			println(fid, "\t gmt ",cmd)
 		end
-		println(fid, "gmt end")
+		if (!got_begin) println(fid, "gmt end")  end
 		close(fid)
 		return fname
 	end

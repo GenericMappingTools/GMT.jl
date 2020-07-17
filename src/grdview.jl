@@ -60,8 +60,8 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, = parse_BJR(d, "", "grdview", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :f :n :p :t :params], first)
-	cmd = add_opt(cmd, 'S', d, [:S :smooth])
+	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :f :n :p :t :params], first)
+	cmd  = add_opt(cmd, 'S', d, [:S :smooth])
 	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)
 		cmd *= " -N" * parse_arg_and_pen(val, "+g", false)
 	end

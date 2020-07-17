@@ -36,8 +36,8 @@ function grdfill(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdfill", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :f])
-	cmd = parse_these_opts(cmd, d, [[:A :algo], [:G :outgrid], [:L :list], [:N :nodata]])
+	cmd, = parse_common_opts(d, "", [:R :V_params :f])
+	cmd  = parse_these_opts(cmd, d, [[:A :algo], [:G :outgrid], [:L :list], [:N :nodata]])
 
 	common_grd(d, cmd0, cmd, "grdfill ", arg1)		# Finish build cmd and run it
 end

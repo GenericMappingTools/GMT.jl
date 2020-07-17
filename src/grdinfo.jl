@@ -46,9 +46,9 @@ function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && !isa(arg1, GMTgrid) && return monolitic("grdinfo", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :f])
-	cmd = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:I :nearest],
-				[:L :force_scan], [:M :minmax_pos], [:T :zmin_max]])
+	cmd, = parse_common_opts(d, "", [:R :V_params :f])
+	cmd  = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:I :nearest],
+	                                 [:L :force_scan], [:M :minmax_pos], [:T :zmin_max]])
 
 	common_grd(d, cmd0, cmd, "grdinfo ", arg1)		# Finish build cmd and run it
 end

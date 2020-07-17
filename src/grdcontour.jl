@@ -83,10 +83,10 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t], first)
-	cmd = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
-	cmd = parse_contour_AGTW(d::Dict, cmd::String)
-	cmd = add_opt(cmd, 'Z', d, [:Z :scale], (factor="+s", shift="+o", periodic="_+p"))
+	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t], first)
+	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
+	cmd  = parse_contour_AGTW(d::Dict, cmd::String)
+	cmd  = add_opt(cmd, 'Z', d, [:Z :scale], (factor="+s", shift="+o", periodic="_+p"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end

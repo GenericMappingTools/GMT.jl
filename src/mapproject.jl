@@ -87,10 +87,10 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("mapproject", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :j :o :p :s :yx])
-	cmd = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef], [:I :inverse], [:S :supress], #[:L :dist2line],
-	                                [:T :change_datum], [:W :map_size], [:Z :travel_times]])
-	cmd = add_opt_1char(cmd, d, [[:D :override_units], [:F :one2one], [:Q :list], [:N :geod2aux]])
+	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :j :o :p :s :yx])
+	cmd  = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef], [:I :inverse], [:S :supress], #[:L :dist2line],
+	                                 [:T :change_datum], [:W :map_size], [:Z :travel_times]])
+	cmd  = add_opt_1char(cmd, d, [[:D :override_units], [:F :one2one], [:Q :list], [:N :geod2aux]])
 
 	cmd = add_opt(cmd, 'A', d, [:A :azim],
 	              (fixed_pt=("", arg2str), back=("b", nothing, 1), back_geocentric=("B", nothing, 1), forward=("f", nothing, 1), forward_geocentric=("F", nothing, 1), orientation=("o", nothing, 1), orientation_geocentric=("O", nothing, 1), unit="+u1", var_pt="_+v"))

@@ -50,8 +50,8 @@ function sphtriangulate(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("sphtriangulate ", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :h :i :yx])
-	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :skip], [:L :unit], [:N :nodes], [:Q :voronoi], [:T]])
+	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :h :i :yx])
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :skip], [:L :unit], [:N :nodes], [:Q :voronoi], [:T]])
 
 	common_grd(d, cmd0, cmd, "sphtriangulate ", arg1)		# Finish build cmd and run it
 end

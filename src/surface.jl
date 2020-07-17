@@ -79,9 +79,9 @@ function surface(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("surface", cmd0, arg1)
 
 	d = KW(kwargs);     arg2 = nothing
-	cmd = parse_common_opts(d, "", [:R :I :V_params :a :bi :di :e :f :h :i :r :yx])
-	cmd = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:G :grid :outgrid], 
-	                                [:Ll :lower], [:Lu :upper], [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension], [:Z :over_relaxation]])
+	cmd, = parse_common_opts(d, "", [:R :I :V_params :a :bi :di :e :f :h :i :r :yx])
+	cmd  = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:G :grid :outgrid], 
+	                                 [:Ll :lower], [:Lu :upper], [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension], [:Z :over_relaxation]])
 	cmd, args, n, = add_opt(cmd, 'D', d, [:D :breakline], :data, Array{Any,1}([arg1, arg2]), (zlevel="+z",))
 	if (n > 0)  arg1, arg2 = args[:]  end
 

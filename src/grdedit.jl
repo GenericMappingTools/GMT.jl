@@ -59,9 +59,9 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdedit", cmd0, arg1)
 
 	d = KW(kwargs);     arg2 = nothing
-	cmd = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :yx])
-	cmd = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:G :outgrid],
-	                                [:S :wrap], [:T :toggle]])
+	cmd, = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :yx])
+	cmd  = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:G :outgrid],
+	                                 [:S :wrap], [:T :toggle]])
 	cmd, args, n, = add_opt(cmd, 'N', d, [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))
 	if (n > 0)  arg1, arg2 = args[:]  end
 

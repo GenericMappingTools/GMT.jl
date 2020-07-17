@@ -58,19 +58,19 @@ Full option list at [`psscale`]($(GMTdoc)psscale.html)
 """
 function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-    gmt_proggy = (IamModern[1]) ? "colorbar "  : "psscale "
+	gmt_proggy = (IamModern[1]) ? "colorbar "  : "psscale "
 	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
 	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, "")
-	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)
-	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
+	cmd, = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)
+	cmd  = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
 	                                [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
 	#cmd = add_opt(cmd, "D", d, [:D :pos :position],
 	#    (map=("g", nothing, 1), inside=("j", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), length="+w",
-    #     triangles="+e", justify="+j", offset="+o", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n"))
+	#     triangles="+e", justify="+j", offset="+o", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n"))
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position])
 
 	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)

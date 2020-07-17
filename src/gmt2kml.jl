@@ -96,10 +96,9 @@ function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 
-	cmd = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :yx])
-	cmd = parse_these_opts(cmd, d, [[:A :altitude_mode], [:D :descript], [:E :extrude], [:F :feature_type],
-		[:I :icon], [:K :not_finished], [:L :extended_data], [:N :feature_name], [:O :overlay], [:Qa :wiggles],
-		[:Qs :wiggle_scale], [:S :scale], [:T :title], [:Z :attrib]])
+	cmd, = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :yx])
+	cmd  = parse_these_opts(cmd, d, [[:A :altitude_mode], [:D :descript], [:E :extrude], [:F :feature_type],
+	                                 [:I :icon], [:K :not_finished], [:L :extended_data], [:N :feature_name], [:O :overlay], [:Qa :wiggles], [:Qs :wiggle_scale], [:S :scale], [:T :title], [:Z :attrib]])
 
 	cmd = add_opt(cmd, 'G', d, [:G :fill])
 	cmd *= add_opt_pen(d, [:W :pen], "W")

@@ -59,9 +59,9 @@ function regress(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("gmtregress", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :o :yx])
-    cmd = parse_these_opts(cmd, d, [[:A :all_slopes], [:C :confidence_level], [:E :regression_type], [:N :norm],
-                [:F :column_combination], [:S :restrict], [:T :equi_space], [:W :weighted]])
+	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :o :yx])
+    cmd  = parse_these_opts(cmd, d, [[:A :all_slopes], [:C :confidence_level], [:E :regression_type], [:N :norm],
+                                     [:F :column_combination], [:S :restrict], [:T :equi_space], [:W :weighted]])
 
 	common_grd(d, cmd0, cmd, "gmtregress ", arg1)		# Finish build cmd and run it
 end

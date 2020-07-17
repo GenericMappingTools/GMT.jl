@@ -65,7 +65,7 @@ function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("gmtinfo", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd = parse_common_opts(d, "", [:V_params :e :f :o :r :yx])
+	cmd, = parse_common_opts(d, "", [:V_params :e :f :o :r :yx])
 	if (endswith(cmd, "-:"))  cmd *= "i"  end		# Need to be -:i not -: to not swap output too
 	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :per_column], [:D :center], [:E :get_record], [:F :counts],
 	                                [:L :common_limits], [:S :for_error_bars]])

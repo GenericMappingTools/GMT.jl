@@ -89,21 +89,21 @@ Parameters
 """
 function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
-    gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
+	gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
 	length(kwargs) == 0 && clip === nothing && return monolitic(gmt_proggy, cmd0)
 
 	d = KW(kwargs)
-    K, O = set_KO(first)		# Set the K O dance
+	K, O = set_KO(first)		# Set the K O dance
 
 	maybe_more = false			# If latter set to true, search for lc & lc pen settings
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0")
-	cmd = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
-	cmd = auto_JZ(cmd)		# Add -JZ if perspective for the case -R.../z_min/z_max
-	cmd = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution], [:M :dump]])
+	cmd, = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
+	cmd  = auto_JZ(cmd)		# Add -JZ if perspective for the case -R.../z_min/z_max
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution], [:M :dump]])
 	#cmd = parse_TdTmL(d, cmd)
-    cmd = parse_type_anchor(d, cmd, [[:Td :rose], [:Tm :compass], [:L :map_scale]])
-	cmd = add_opt_fill(cmd, d, [:G :land], 'G')
-	cmd = add_opt_fill(cmd, d, [:S :water :ocean], 'S')
+    cmd  = parse_type_anchor(d, cmd, [[:Td :rose], [:Tm :compass], [:L :map_scale]])
+	cmd  = add_opt_fill(cmd, d, [:G :land], 'G')
+	cmd  = add_opt_fill(cmd, d, [:S :water :ocean], 'S')
 
 	if (clip !== nothing)
 		clip = string(clip)
