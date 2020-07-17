@@ -953,7 +953,7 @@ if (got_it)					# Otherwise go straight to end
 	println("	SPECTRUM1D")
 	# SPECTRUM1D
 	D = gmt("gmtmath -T0/10239/1 T 10240 DIV 360 MUL 400 MUL COSD");
-	spectrum1d(D, S=256, W=true, par=(GMT_FFT=:brenner), N=true, i=1);
+	spectrum1d(D, S=256, W=true, par=(GMT_FFT=:brenner,), N=true, i=1);
 
 	println("	SPHTRIANGULATE")
 	# SPHTRIANGULATE
