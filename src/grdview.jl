@@ -34,7 +34,7 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
 
     Used to resample the contour lines at roughly every (gridbox_size/smoothfactor) interval..
     ($(GMTdoc)grdview.html#s)
-- **T** | **no_interp** :: [Type => Str | NT]	``Arg = (skip=Bool, outlines=Bool|pen)``
+- **T** | **tiles** | **no_interp** :: [Type => Str | NT]	``Arg = (skip|skip_nan=Bool, outlines=Bool|pen)``
 
     Plot image without any interpolation.
     ($(GMTdoc)grdview.html#t)
@@ -60,7 +60,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, = parse_BJR(d, "", "grdview", O, " -JX12c/0")
-	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :f :n :p :t :params], first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :c :f :n :p :t :params], first)
 	cmd  = add_opt(cmd, 'S', d, [:S :smooth])
 	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)
 		cmd *= " -N" * parse_arg_and_pen(val, "+g", false)
@@ -69,7 +69,10 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 				  (mesh=("m", add_opt_fill), surface="_s", surf="_s", img=("i",arg2str), image="i", nan_alpha="_c", monochrome="_+m", waterfall=(rows="my", cols="mx", fill=add_opt_fill)))
 	cmd = add_opt(cmd, 'W', d, [:W :pens :pen], (contour=("c", add_opt_pen),
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
-	cmd = add_opt(cmd, 'T', d, [:T :no_interp], (skip="_+s", outlines=("+o", add_opt_pen)) )
+	cmd = add_opt(cmd, 'T', d, [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)) )
+	if (!occursin(" -T", cmd))  cmd, = parse_JZ(cmd, d)
+	else                        del_from_dict(d, [:JZ])			# Means, even if we had one, ignore silently
+	end
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 
@@ -100,7 +103,10 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-    return finish_PS_module(d, "grdview " * cmd, "", K, O, true, arg1, arg2, arg3, arg4, arg5)
+	cmd = "grdview " * cmd				# In any case we need this
+	cmd, K = finish_PS_nested(d, cmd, "", K, O, [:coast :colorbar :basemap])
+
+    return finish_PS_module(d, cmd, "", K, O, true, arg1, arg2, arg3, arg4, arg5)
 end
 
 # ---------------------------------------------------------------------------------------------------
