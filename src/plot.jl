@@ -593,7 +593,7 @@ function hlines(arg1; first=true, kwargs...)
 	mat = ones(2, length(arg1))
 	[mat[1,k] = mat[2,k] = arg1[k] for k = 1:length(arg1)]
 	x = [-1e50, 1e50];
-	D = mat2ds(mat, x=x)
+	D = mat2ds(mat, x=x, multi=true)
 
 	common_plot_xyz("", D, cmd, first, false, d...)
 end
@@ -630,7 +630,7 @@ function vlines(arg1; first=true, kwargs...)
 	mat = ones(2, length(arg1))
 	mat[1,:] = mat[2,:] = arg1
 	x = [-1e50, 1e50];
-	D = mat2ds(mat, x=x)
+	D = mat2ds(mat, x=x, multi=true)
 	# Now we need tp swapp x / y columns because the vlines case is more complicated to implement.
 	for k = 1:length(arg1)
 		D[k].data[:,1], D[k].data[:,2] = D[k].data[:,2], D[k].data[:,1]
