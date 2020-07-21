@@ -5,12 +5,6 @@ const GMT_SESSION_NORMAL   = 0   # Typical mode to GMT_Create_Session
 const GMT_SESSION_NOEXIT   = 1   # Call return and not exit when error
 const GMT_SESSION_EXTERNAL = 2   # Called by an external API (e.g., Matlab, Julia, Python).
 const GMT_SESSION_COLMAJOR = 4   # External API uses column-major formats (e.g., Julai, MATLAB, Fortran). [Row-major format]
-const GMT_SESSION_LOGERRORS = 8
-const GMT_SESSION_RUNMODE  = 16	 # If set enable GMT's modern runmode. [Classic]
-const GMT_SESSION_BEGIN    = 32  # Begin a new session. [Sets modern mode]
-const GMT_SESSION_END      = 64  # End a session. [Ends modern mode]
-const GMT_SESSION_CLEAR    = 128 # Clear session files/directories
-const GMT_SESSION_FIGURE   = 256 # Add a figure to the session queue. [Modern mode only]
 # begin enum GMT_enum_runmode
 const GMT_CLASSIC        = 0     # Select Classic GMT behavior with -O -K -R -J
 const GMT_MODERN         = 1     # Select Modern behavior where -O -K are disabled and -R -J optional if possible
@@ -66,7 +60,6 @@ const GMT_READ_NORMAL = 0	# Normal read mode [Default]
 const GMT_READ_DATA   = 1	# Read ASCII data record and return double array
 const GMT_READ_TEXT   = 2	# Read ASCII data record and return text string
 const GMT_READ_MIXED  = 3   # Read ASCII data record and return double array but tolerate conversion errors
-const GMT_READ_FILEBREAK = 4
 
 # begin enum GMT_enum_family
 const GMT_IS_DATASET = 0
@@ -117,25 +110,13 @@ const GMT_STRICT_CONVERSION = 1024
 const GMT_LAX_CONVERSION = 2048
 # end enum GMT_enum_write
 # begin enum GMT_enum_verbose
-const GMT_MSG_QUIET = 0
-const GMT_MSG_NORMAL = 1
-const GMT_MSG_TICTOC = 2
-const GMT_MSG_COMPAT = 3
-const GMT_MSG_VERBOSE = 4
-const GMT_MSG_LONG_VERBOSE = 5
 const GMT_MSG_DEBUG = 6
 # end enum GMT_enum_verbose
-# begin enum GMT_enum_reg
-const GMT_GRID_NODE_REG = 0
-const GMT_GRID_PIXEL_REG = 1
-# end enum GMT_enum_reg
 # begin enum GMT_enum_gridindex
 const GMT_XLO = 0
 const GMT_XHI = 1
 const GMT_YLO = 2
 const GMT_YHI = 3
-const GMT_ZLO = 4
-const GMT_ZHI = 5
 # end enum GMT_enum_gridindex
 # begin enum GMT_enum_dimindex
 const GMT_TBL = 0

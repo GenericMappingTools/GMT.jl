@@ -53,7 +53,7 @@ function imshow(arg1; first=true, kw...)
 		end
 	else
 		if (isa(G, String))  grdimage(G; first=first, show=see, kw...)		# String when fname is @xxxx
-		else                 imshow(G; first=first, kw...)
+		else                 imshow(G; first=first, kw...)					# Call the specialized method
 		end
 	end
 end
@@ -66,13 +66,19 @@ function imshow(arg1::GMTgrid; first=true, kw...)
 		new_see = see
 		see = false			# because here we know that 'see' has to wait till last command
 	end
-	opt_p = parse_common_opts(d, "", [:p], first)
-	if (opt_p == "")
+	opt_p, = parse_common_opts(d, "", [:p], first)
+	til = find_in_dict(d, [:T :no_interp :tiles])[1]
+	if (opt_p == "" && til === nothing)
 		R = grdimage("", arg1; first=first, show=see, d...)
 	else
 		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 5
 		srf = ((val = find_in_dict(d, [:Q :surf :surftype])[1]) !== nothing) ? val : "i100"
-		R = grdview("", arg1; first=first, show=see, p=opt_p[4:end], JZ=zsize, Q=srf, d...)
+		if (til !== nothing)		# This forces some others
+			srf = nothing			# These are mutually exclusive
+			zsize = nothing
+			opt_p = " -p180/90"
+		end
+		R = grdview("", arg1; first=first, show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...)
 	end
 	if (isa(cont_opts, Bool))				# Automatic contours
 		R = grdcontour!(arg1; J="", show=new_see)

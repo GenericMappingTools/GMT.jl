@@ -976,38 +976,6 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 end
 
 # ---------------------------------------------------------------------------------------------------
-#= This doesn't seem to be used anymore. Stage it for a while and then remove
-function image_init(API::Ptr{Nothing}, img, hdr::Array{Float64}, pad::Int=0)
-
-	n_rows = size(img, 1);		n_cols = size(img, 2);		n_pages = size(img, 3)
-	dim = pointer([n_cols, n_rows, n_pages])
-	if ((I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_GRID_ALL, dim,
-	                         C_NULL, C_NULL, UInt32(hdr[7]), pad)) == C_NULL)
-		error("image_init: Failure to alloc GMT source image for input")
-	end
-	Ib = unsafe_load(I)			# Ib = GMT_IMAGE (constructor with 1 method)
-
-	Ib.data = pointer(img)
-	if (GMTver < 6)
-		Ib.alloc_mode = UInt32(GMT.GMT_ALLOC_EXTERNALLY)		# Since array was allocated by Julia
-	else
-		GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)
-	end
-	h = unsafe_load(Ib.header)
-	h.z_min = hdr[5]			# Set the z_min, z_max
-	h.z_max = hdr[6]
-	if (!isempty(img_mem_layout[1]))
-		h.mem_layout = map(UInt8, (img_mem_layout[1] * "a"...,))	# The memory layout order
-	end
-	unsafe_store!(Ib.header, h)
-	unsafe_store!(I, Ib)
-	GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Image %s in parser\n", I))
-
-	return I
-end
-=#
-
-# ---------------------------------------------------------------------------------------------------
 function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer, actual_family)
 # Create containers to hold or receive data tables:
 # direction == GMT_IN:  Create empty GMT_DATASET container, fill from Julia, and use as GMT input.
@@ -1115,7 +1083,6 @@ function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, 
 			actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
 		end
 
-		GMT_Report(API, GMT.GMT_MSG_DEBUG, @sprintf("Allocate GMT Matrix %s in gmtjl_parser\n", M) )
 		Mb = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)
 		tipo = get_datatype(ptr)
 		Mb.n_rows    = size(ptr,1)
@@ -1597,24 +1564,29 @@ text_record(text::Array{String}, hdr::String) = text_record(Array{Float64,2}(und
 
 # ---------------------------------------------------------------------------------------------------
 """
-D = mat2ds(mat; x=nothing, hdr=nothing, color=nothing)
+D = mat2ds(mat; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing, multi=false)
 
 	Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 	same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
 	`hdr` optional String vector with either one or n_rows multisegment headers.
 	`color` optional array with color names. Its length can be smaller than n_rows, case in which colors will be
 	cycled.
+	`ls`    Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
+	`txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
+	        can an array with same size as ``mat``rows or be a string (will be reapeated n_rows times.) 
+	`multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
+	first column and 2, first and 3, etc. Convinient when want to plot a matrix where each column is a line. 
 """
-function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing)
+function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing, multi=false)
 
 	if (txt  !== nothing)  return text_record(mat, txt,  hdr)  end
 	if (text !== nothing)  return text_record(mat, text, hdr)  end
 
 	if (x === nothing)
-		n_ds = size(mat, 2) - 1
+		n_ds = (multi) ? size(mat, 2) - 1 : 1
 		xx = nothing
 	else
-		n_ds = size(mat, 2)
+		n_ds = (multi) ? size(mat, 2) : 1
 		xx = (x == :ny || x == "ny") ? collect(1:size(mat, 1)) : x
 		if (length(xx) != size(mat, 1))  error("Number of X coordinates and MAT number of rows are not equal")  end
 	end
@@ -1654,14 +1626,20 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=noth
 	end
 
 	if (xx === nothing)
-		for k = 1:n_ds
-			D[k] = GMTdataset(mat[:,[1,k+1]], Array{String,1}(), (hdr === nothing ? "" : hdr[k]),
-			                  Array{String,1}(), "", "")
+		if (!multi)
+			D[1] = GMTdataset(mat, String[], (hdr === nothing ? "" : hdr[1]), String[], "", "")
+		else
+			for k = 1:n_ds
+				D[k] = GMTdataset(mat[:,[1,k+1]], String[], (hdr === nothing ? "" : hdr[k]), String[], "", "")
+			end
 		end
 	else
-		for k = 1:n_ds
-			D[k] = GMTdataset(hcat(xx,mat[:,k]), Array{String,1}(), (hdr === nothing ? "" : hdr[k]),
-			                  Array{String,1}(), "", "")
+		if (!multi)
+			D[1] = GMTdataset(hcat(xx,mat), String[], (hdr === nothing ? "" : hdr[1]), String[], "", "")
+		else
+			for k = 1:n_ds
+				D[k] = GMTdataset(hcat(xx,mat[:,k]), String[], (hdr === nothing ? "" : hdr[k]), String[], "", "")
+			end
 		end
 	end
 	return D
@@ -1824,23 +1802,33 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-G = mat2grid(mat; reg=0, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="", cmd::String="")
+G = mat2grid(mat; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="", cmd::String="")
 
     Take a 2D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
 	and return a grid GMTgrid type.
 	Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
 	Optionaly, the HDR arg may be ommited and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
-	When HDR is not used, REG == 0 means create a grid registration grid and REG == 1, a pixel registered grid.
+	When HDR is not used, REG == nothing [default] means create a gridline registration grid and REG == 1,
+	or REG="pixel" a pixel registered grid.
 """
-function mat2grid(mat; reg=0, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
+function mat2grid(mat; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
 # Take a 2D array of floats and turn it into a GMTgrid
 
-	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y)
+	if (reg === nothing)  reg_ = 0
+	elseif (isa(reg, String) || isa(reg, Symbol))
+		t = lowercase(string(reg))
+		reg_ = (t != "pixel") ? 0 : 1
+	elseif (isa(reg, Number))
+		reg_ = (reg == 0) ? 0 : 1
+	else			# Instead of erroring
+		reg_ = 0
+	end
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
 	if (!isa(mat, Float32))  z = Float32.(mat)
 	else                     z = mat
 	end
 
-	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg, NaN, tit, rem, cmd, "", x, y, z, "x", "y", "z", "")
+	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, "", x, y, z, "x", "y", "z", "")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1849,15 +1837,26 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 	nx = size(mat, 2);		ny = size(mat, 1);
 
 	if (x !== nothing && y !== nothing)		# But not tested if they are equi-spaced as they MUST be
-		if (length(x) != size(mat,2) || length(y) != size(mat,1))
+		if ((length(x) != size(mat,2) || length(y) != size(mat,1)) && (length(x) != 2 || length(y) != 2))
 			error("size of x,y vectors incompatible with 2D array size")
 		end
+		one_or_zero = reg == 0 ? 1 : 0
+		if (length(x) != 2)			# Check that REGistration and coords are compatible
+			if (reg == 1 && round((x[end] - x[1]) / (x[2] - x[1])) != nx)	# Gave REG = pix but xx say grid
+				@warn("Gave REGistration = 'pixel' but X coordinates say it's gridline. Keeping later reg.")
+				one_or_zero = 1
+			end
+		else
+			x = range(x[1], stop=x[2], length=nx+reg)
+			y = range(y[1], stop=y[2], length=ny+reg)
+		end
+		x_inc = (x[end] - x[1]) / (nx - one_or_zero)
+		y_inc = (y[end] - y[1]) / (ny - one_or_zero)
 		zmin, zmax = extrema(mat)
 		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
-		x_inc = x[2] - x[1];	y_inc = y[2] - y[1]
 	elseif (hdr === nothing)
 		zmin, zmax = extrema(mat)
-		if (reg == 0)  x  = collect(1:nx);		 y = collect(1:ny)
+		if (reg == 0)  x  = collect(1:nx);		y = collect(1:ny)
 		else           x  = collect(0.5:nx+0.5); y = collect(0.5:ny+0.5)
 		end
 		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]

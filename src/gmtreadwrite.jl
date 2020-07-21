@@ -227,7 +227,7 @@ function gmtwrite(fname::String, data; kwargs...)
 		cmd, = parse_f(cmd, d)
 	elseif (isa(data, GMTimage))
 		opt_T = " -Ti"
-		fname *= parse_grd_format(d)		# If we have format requests
+		fname *= parse_grd_format(d)			# If we have format requests
 	elseif (isa(data, GMTdataset))
 		opt_T = " -Td"
 		cmd, = parse_bo(cmd, d)					# Write to binary file

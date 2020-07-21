@@ -203,7 +203,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
 		if (opt_W != "")  penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))  end
 		if (penC  != "")  cycle = [penC]  end
-		arg1 = mat2ds(arg1, color=cycle, ls=penS)	# Convert to multi-segment GMTdataset
+		arg1 = mat2ds(arg1, color=cycle, ls=penS, multi=true)	# Convert to multi-segment GMTdataset
 		D = gmt("gmtinfo -C", arg1)					# But now also need to update the -R string
 		if (isa(cmd, Array))						# Replace old -R by the new one
 			cmd[1] = replace(cmd[1], opt_R => " -R" * arg2str(round_wesn(D[1].data)))
