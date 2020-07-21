@@ -2616,7 +2616,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 			out = mv(out, fname, force=true)
 		end
 	elseif (fname_ps != "")
-		if (K) gmt("psxy -T -R0/1/0/1 -JX1 -O >> " * fname_ps)  end		# Close the PS file first
+		if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
 		out = fname_ps
 		if (fname != "")
 			out = mv(out, fname, force=true)
@@ -2667,7 +2667,7 @@ end
 ## ---------------------------------------------------------------------------------------------------
 function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
 	# FNAME_EXT hold the extension when not PS
-	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view a img file
+	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
 	output, opt_T, fname_ext, fname, ret_ps = fname_out(d, true)
 	if (ret_ps)  output = ""  end						# Here we don't want to save to file
@@ -2686,7 +2686,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
-			if (k > 1 && startswith(cmd[k], "psscale") && !isa(args[1], GMT.GMTcpt))	# Example: imshow(I, cmap=C, colorbar=true)
+			if (k > 1 && startswith(cmd[k], "psscale") && !isa(args[1], GMTcpt))	# Example: imshow(I, cmap=C, colorbar=true)
 				cmd2, arg1, = add_opt_cpt(d, cmd[k], [:C :color :cmap], 'C', 0, nothing, nothing, false, false, "", true)
 				if (arg1 === nothing)
 					@warn("No cmap found to use in colorbar. Ignoring this command.");	continue
