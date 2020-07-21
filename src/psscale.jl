@@ -95,3 +95,5 @@ colorbar!(cmd0::String="", arg1=nothing; first=false, kw...) = colorbar(cmd0, ar
 
 const psscale  = colorbar         # Alias
 const psscale! = colorbar!        # Alias
+const colorscale  = colorbar      # Alias
+const colorscale! = colorbar!     # Alias
