@@ -507,6 +507,7 @@ if (got_it)					# Otherwise go straight to end
 	G2 = grdtrend(G, model=3);
 	W = mat2grid(ones(Float32, size(G.z,1), size(G.z,2)));
 	W = mat2grid(rand(16,16), x=11:26, y=1:16);
+	mat2grid([3 4 5; 1 2 5; 5 5 5], reg=:pixel, x=[1 3], y=[1 3]);
 	G2 = grdtrend(G, model=3, diff=[], trend=true);
 	#G2 = grdtrend(G, model="3+r", W=W);
 	G2 = grdtrend(G, model="3+r", W=(W,0), Vd=dbg2);
@@ -621,7 +622,7 @@ if (got_it)					# Otherwise go straight to end
 	println("	PLOT")
 	# PLOT
 	plot(collect(1:10),rand(10), lw=1, lc="blue", fmt=:ps, marker="circle", markeredgecolor=0, size=0.2, markerfacecolor="red", title="Bla Bla", xlabel="Spoons", ylabel="Forks", savefig="lixo")
-	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=[:red, :green, :blue, :yellow], ls=:dashdot), leg=true, label="Bla")
+	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=[:red, :green, :blue, :yellow], ls=:dashdot, multi=true), leg=true, label="Bla")
 	plot("",hcat(collect(1:10)[:],rand(10,1)))
 	plot!("",hcat(collect(1:10)[:],rand(10,1)), Vd=dbg2)
 	plot(hcat(collect(1:10)[:],rand(10,1)), Vd=dbg2)
@@ -1032,6 +1033,7 @@ if (got_it)					# Otherwise go straight to end
 	# TRIANGULATE
 	println("	TRIANGULATE")
 	G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
+	triangulate(rand(5,3), R="0/150/0/150", voronoi=:pol, Vd=2);
 
 	# NEARNEIGHBOR
 	println("	NEARNEIGHBOR")
@@ -1070,13 +1072,12 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Grids have different sizes, so they cannot be subtracted.") G1 - G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be multiplied.") G1 * G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be divided.") G1 / G2;
-	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle), legend=true, Vd=dbg2)
+	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle, multi=true), legend=true, Vd=dbg2)
 	D = mat2ds(rand(6,6), color=[:red :blue]);
-	display(D[1]);
 	display(D);
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
-	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"]);
-	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a"]);
+	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"], multi=true);
+	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
 
 	GMT.get_datatype([]);
 	GMT.get_datatype(Float32(8));
