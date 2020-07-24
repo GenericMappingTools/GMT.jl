@@ -434,7 +434,7 @@ if (got_it)					# Otherwise go straight to end
 	C = grdcontour("lixo.grd", C="+0.7", D=[]);
 	@assert((size(C[1].data,1) == 21) && abs(-0.6 - C[1].data[1,1]) < 1e-8)
 	r = grdcontour("lixo.grd", cont=10, A=(int=50,labels=(font=7,)), G=(dist="4i",), L=(-1000,-1), W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), T=(gap=("0.1i","0.02i"),), Vd=dbg2);
-	@test startswith(r, "grdcontour lixo.grd  -JX12c/0 -Baf -BWSen -L-1000/-1 -A50+f7 -Gd4i -T+d0.1i/0.02i -Wcthinnest,- -Wathin,- -C10")
+	@test startswith(r, "grdcontour lixo.grd  -JX12c/0 -Baf -BWSen -L-1000/-1 -A50+f7 -Gd4i -T+d0.1i/0.02i -Wcthinnest,- -Wathin,- -R-15/15/-15/15 -C10")
 	r = grdcontour("lixo.grd", A="50+f7p", G="d4i", W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), Vd=dbg2);
 	@test startswith(r, "grdcontour lixo.grd  -JX12c/0 -Baf -BWSen -A50+f7p -Gd4i -Wcthinnest,- -Wathin,-")
 	G = GMT.peaks()

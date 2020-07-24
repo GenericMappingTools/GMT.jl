@@ -59,7 +59,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
 
-	cmd, opt_B, = parse_BJR(d, "", "grdview", O, " -JX12c/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "grdview", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :f :n :p :t :params], first)
 	cmd  = add_opt(cmd, 'S', d, [:S :smooth])
 	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)
@@ -78,7 +78,8 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	if (isa(arg1, Array{<:Number}))  arg1 = mat2grid(arg1)  end
 
-	cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdview")
+	#cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdview")
+	cmd, N_used, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdview")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdview")
 
 	if ((val = find_in_dict(d, [:G :drapefile])[1]) !== nothing)

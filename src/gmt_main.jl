@@ -209,9 +209,9 @@ function gmt(cmd::String, args...)
 	else             pLL = pointer([NULL])
 	end
 
-	n_items = pointer([0])
-	X = GMT_Encode_Options(API, g_module, n_argin, pLL, n_items)	# This call also changes LL
-	n_items = unsafe_load(n_items)
+	n_itemsP = pointer([0])
+	X = GMT_Encode_Options(API, g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
+	n_items = unsafe_load(n_itemsP)
 	if (X == NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
 		(n_items > 65000) ? n_items = 0 : error("Failure to encode Julia command options") 
 	end
@@ -1212,7 +1212,6 @@ if (GMTver < 6.0)
 		if (dim[GMT.GMT_SEG+1] == 0) error("Input has zero segments where it can't be")	end
 		pdim = pointer(dim)
 		T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_PLP, 0, pdim, C_NULL, C_NULL, 0, 0, C_NULL)
-		GMT_Report(API, GMT_MSG_DEBUG, @sprintf("text_init_: Allocated GMT textset %s", T))
 
 		TS = unsafe_load(convert(Ptr{GMT_TEXTSET}, T))
 		TT = unsafe_load(unsafe_load(TS.table))				# GMT.GMT_TEXTTABLE

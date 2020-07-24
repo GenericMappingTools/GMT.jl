@@ -83,11 +83,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 
 	#if (GMTver > 6 && occursin("earth_relief_", cmd0))  push!(d, :this_cpt => "geo")  end	# Make this the default CPT
 
-	if (convert_syntax[1])		# Here we cannot rist to execute any code. Just parsing. Movie stuff
-		cmd, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C')
-	else
-		cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
-	end
+	cmd, N_used, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
 
 	if (isa(arg1, GMTimage))
@@ -132,6 +128,18 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 		del_from_dict(d, [:I :shade :intensity])
 	end
 	return cmd, arg1, arg2, arg3, arg4
+end
+
+# ---------------------------------------------------------------------------------------------------
+function common_get_R_cpt(d::Dict, cmd0::String, cmd::String, opt_R, got_fname, arg1, arg2, arg3, prog::String)
+	# Used by several proggys
+	if (convert_syntax[1])		# Here we cannot rist to execute any code. Just parsing. Movie stuff
+		cmd, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C')
+		N_used = !isempty_(arg1) + !isempty_(arg2) + !isempty_(arg3)
+	else
+		cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, prog)
+	end
+	return cmd, N_used, arg1, arg2, arg3
 end
 
 # ---------------------------------------------------------------------------------------------------

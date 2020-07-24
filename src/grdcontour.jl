@@ -82,7 +82,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d = KW(kwargs)
     K, O = set_KO(first)		# Set the K O dance
 
-	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
 	cmd  = parse_contour_AGTW(d::Dict, cmd::String)
@@ -91,18 +91,22 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
 
-	#N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
-	#cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
-	cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
+	#cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
+	cmd, N_used, arg1, arg2, = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
 
-	if ((val = find_in_dict(d, [:N :fill :colorize])[1]) !== nothing)
+	got_N_cpt = false		# Shits because 6.1 still cannot process N=cpt (6.1.1 can)
+	if ((val = find_in_dict(d, [:N :fill :colorize], false)[1]) !== nothing)
 		if (isa(val, GMTcpt))
-			if (!isempty_(arg2))	# Already have one cpt in arg2, replace it by new one
-				arg2 = nothing
+			N = (N_used > 1) ? 1 : N_used		# Trickery because add_opt_cpt() is not able to deal with 3 argX
+			if (isa(arg1, GMTgrid))
+				cmd, arg2, arg3, = add_opt_cpt(d, cmd, [:N :fill :colorize], 'N', N, arg2, arg3)
+			else
+				cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:N :fill :colorize], 'N', N, arg1, arg2)
 			end
-			cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:N :fill], 'N', N_used, arg1, arg2)
+			got_N_cpt = true
 		else
 			cmd *= " -N"
+			del_from_dict(d, [:N :fill :colorize])
 		end
 	end
 
@@ -123,11 +127,22 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
+	# -N option is bugged up to 6.1.1 because it lacked the apropriate KEY, so trickery is needed.
+	if (occursin(" -N", cmd))
+		if (occursin(" -C", cmd) && (isa(arg1, GMTcpt) || isa(arg2, GMTcpt)))
+			if (!got_N_cpt)		# C=cpt, N=true. Must replicate the CPT into N
+				isa(arg1, GMTcpt) ? arg2 = arg1 : arg3 = arg2
+			end
+		end
+	elseif (GMTver <= 6.1 && got_N_cpt && !occursin(" -C", cmd))	# N=cpt and no C. Work around the bug
+		d[:C] = isa(arg1, GMTcpt) ? arg1 : arg2
+	end
+
 	opt_extra = "";		do_finish = true
 	if (occursin("-D", cmd))
 		opt_extra = "-D";		do_finish = false;	cmd = replace(cmd, opt_J => "")
 	end
-	cmd, K = finish_PS_nested(d, "grdcontour " * cmd, "", K, O, [:coast :colorbar])
+	cmd, K = finish_PS_nested(d, "grdcontour " * cmd, "", K, O, [:coast :colorbar :colorscale])
 	return finish_PS_module(d, cmd, opt_extra, K, O, do_finish, arg1, arg2, arg3)
 end
 

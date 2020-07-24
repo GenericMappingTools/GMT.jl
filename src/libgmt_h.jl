@@ -5,10 +5,7 @@ const GMT_SESSION_NORMAL   = 0   # Typical mode to GMT_Create_Session
 const GMT_SESSION_NOEXIT   = 1   # Call return and not exit when error
 const GMT_SESSION_EXTERNAL = 2   # Called by an external API (e.g., Matlab, Julia, Python).
 const GMT_SESSION_COLMAJOR = 4   # External API uses column-major formats (e.g., Julai, MATLAB, Fortran). [Row-major format]
-# begin enum GMT_enum_runmode
-const GMT_CLASSIC        = 0     # Select Classic GMT behavior with -O -K -R -J
-const GMT_MODERN         = 1     # Select Modern behavior where -O -K are disabled and -R -J optional if possible
-# begin enum GMT_enum_type
+
 const GMT_CHAR = 0
 const GMT_UCHAR = 1
 const GMT_SHORT = 2
@@ -20,18 +17,6 @@ const GMT_ULONG = 7
 const GMT_FLOAT = 8
 const GMT_DOUBLE = 9
 const GMT_TEXT = 10
-const GMT_DATETIME = 11
-const GMT_N_TYPES = 12
-const GMT_VIA_CHAR = 100         # int8_t, 1-byte signed integer type */
-const GMT_VIA_UCHAR = 200        # uint8_t, 1-byte unsigned integer type */
-const GMT_VIA_SHORT = 300        # int16_t, 2-byte signed integer type */
-const GMT_VIA_USHORT = 400       # uint16_t, 2-byte unsigned integer type */
-const GMT_VIA_INT = 500          # int32_t, 4-byte signed integer type */
-const GMT_VIA_UINT = 600         # uint32_t, 4-byte unsigned integer type */
-const GMT_VIA_LONG = 700         # int64_t, 8-byte signed integer type */
-const GMT_VIA_ULONG = 800        # uint64_t, 8-byte unsigned integer type */
-const GMT_VIA_FLOAT = 900        # 4-byte data float type */
-const GMT_VIA_DOUBLE = 1000
 # end enum GMT_enum_type
 # begin enum GMT_enum_opt
 const GMT_OPT_INFILE = 60
@@ -42,21 +27,15 @@ const GMT_IS_REFERENCE = 4		# Entity is a memory location that should be referen
 const GMT_IS_OUTPUT = 1024
 
 # begin enum GMT_enum_via
-const GMT_VIA_NONE = 0
 const GMT_VIA_MODULE_INPUT = 64
-const GMT_VIA_VECTOR = 128
 const GMT_VIA_MATRIX = 256
 # end enum GMT_enum_via
 
 # GMT_enum_container
-const GMT_CONTAINER_AND_DATA = 0    # Create|Read|write both container and the data array
-const GMT_CONTAINER_ONLY     = 1    # Create|read|write the container but no data array
-const GMT_DATA_ONLY          = 2    # Create|Read|write the container's array only
 const GMT_WITH_STRINGS       = 32   # Allocate string array also [DATASET, MATRIX, VECTOR only]
 const GMT_NO_STRINGS         = 0 
 
 # GMT_enum_read
-const GMT_READ_NORMAL = 0	# Normal read mode [Default]
 const GMT_READ_DATA   = 1	# Read ASCII data record and return double array
 const GMT_READ_TEXT   = 2	# Read ASCII data record and return text string
 const GMT_READ_MIXED  = 3   # Read ASCII data record and return double array but tolerate conversion errors
@@ -95,31 +74,17 @@ const GMT_MODULE_CMD      = 0
 # begin enum GMT_io_enum
 const GMT_IN = 0
 const GMT_OUT = 1
-const GMT_ERR = 2
 # end enum GMT_io_enum
 # begin enum GMT_enum_dimensions
 const GMT_X = 0
 const GMT_Y = 1
-const GMT_Z = 2
 # end enum GMT_enum_dimensions
 
 const GMT_ALLOC_EXTERNALLY = 0    # Allocated outside of GMT: We cannot reallocate or free this memory
-const GMT_ALLOC_INTERNALLY = 1    # Allocated by GMT: We may reallocate as needed and free when no longer needed
 # begin enum GMT_enum_write
-const GMT_STRICT_CONVERSION = 1024
 const GMT_LAX_CONVERSION = 2048
 # end enum GMT_enum_write
-# begin enum GMT_enum_verbose
-const GMT_MSG_DEBUG = 6
-# end enum GMT_enum_verbose
-# begin enum GMT_enum_gridindex
-const GMT_XLO = 0
-const GMT_XHI = 1
-const GMT_YLO = 2
-const GMT_YHI = 3
-# end enum GMT_enum_gridindex
 # begin enum GMT_enum_dimindex
-const GMT_TBL = 0
 const GMT_SEG = 1
 const GMT_ROW = 2
 const GMT_COL = 3
@@ -142,10 +107,8 @@ const UINT8_CLASS  = 10
 
 # begin enum GMT_enum_fmt
 if (GMTver < 6.0)
-	const GMT_IS_ROW_FORMAT = 0
 	const GMT_IS_COL_FORMAT = 1
 else
-	const GMT_IS_ROW_FORMAT = 1
 	const GMT_IS_COL_FORMAT = 2
 end
 # end enum GMT_enum_fmt
@@ -166,10 +129,7 @@ const GMT_HSV = 2
 # end enum GMT_enum_color
 
 # GMT_enum_cptflags
-const GMT_CPT_NO_BNF     = 1
-const GMT_CPT_EXTEND_BNF = 2
 const GMT_CPT_HINGED     = 4
-const GMT_CPT_TIME       = 8
 
 struct GMT_OPTION			# Structure for a single GMT command option
 	option::UInt8			# 1-char command line -<option> (e.g. D in -D) identifying the option (* if file)
