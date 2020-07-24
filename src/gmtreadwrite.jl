@@ -25,7 +25,7 @@ Specify data type.  Choose among:
 - **cpt** | **cmap** :: [Type => Any]
 
     Load a GMT color palette.
-- **dataset** | **table** :: [Type => Any]
+- **data** | **dataset** | **table** :: [Type => Any]
 
     Load a dataset (a table of numbers).
 - **ogr** :: [Type => Any]
@@ -76,7 +76,7 @@ function gmtread(fname::String; kwargs...)
 	else
 		opt_T = add_opt("", "Ti", d, [:img :image])
 	end
-	if (opt_T == "")  opt_T = add_opt("", "Td", d, [:dataset :table])  end
+	if (opt_T == "")  opt_T = add_opt("", "Td", d, [:data :dataset :table])  end
 	if (opt_T == "")  opt_T = add_opt("", "Tc", d, [:cpt :cmap])  end
 	if (opt_T == "")  opt_T = add_opt("", "Tp", d, [:ps])   end
 	if (opt_T == "")  opt_T = add_opt("", "To", d, [:ogr])  end
