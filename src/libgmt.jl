@@ -368,7 +368,8 @@ function GMT_Duplicate_String(API::Ptr{Cvoid}, str)
 end
 
 function GMT_Open_VirtualFile(API::Ptr{Cvoid}, family::Integer, geometry::Integer, dir::Integer, data, name)
-	if (GMTver >= 6.1)  dir |= GMT_IS_REFERENCE  end
+	#if (GMTver >= 6.1)  dir |= GMT_IS_REFERENCE  end
+	if (GMTver >= 6.1)  dir |= GMT_Get_Enum(API, "GMT_IS_REFERENCE")  end
 	ccall((:GMT_Open_VirtualFile, thelib), Cint, (Cstring, UInt32, UInt32, UInt32, Ptr{Cvoid}, Ptr{UInt8}), API, family, geometry, dir, data, name)
 end
 function GMT_Close_VirtualFile(API::Ptr{Cvoid}, str)
@@ -403,8 +404,6 @@ function GMT_Error_Message(API::Ptr{Cvoid})
 end
 =#
 
-# ------------------ Development function in 5.4.0 ------------------------------------------------------------
-
 # -------------------------------------------------------------------------------------------------------------
 function GMT_Set_AllocMode(API::Ptr{Cvoid}, family::Int, object)
 	ccall((:GMT_Set_AllocMode, thelib), Cint, (Cstring, UInt32, Ptr{Cvoid}), API, family, object)
@@ -412,6 +411,10 @@ end
 
 function gmt_manage_workflow(API::Ptr{Cvoid}, mode::Int, texto)
 	ccall((:gmt_manage_workflow, thelib), Cint, (Cstring, UInt32, Cstring), API, mode, texto)
+end
+
+function GMT_Get_Enum(API::Ptr{Cvoid}, enum_name::String)
+	ccall((:GMT_Get_Enum, thelib), Cint, (Cstring, Ptr{UInt8}), API, enum_name)
 end
 
 function GMT_Get_Version()
