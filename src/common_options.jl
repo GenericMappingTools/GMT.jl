@@ -1471,7 +1471,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=nothing, arg2=nothing,
-	                 store=false, def=false, opt_T="", in_bag=false)
+	                 store::Bool=false, def::Bool=false, opt_T::String="", in_bag::Bool=false)
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	# SYMBS is normally: [:C :color :cmap]
 	# N_args only applyies to when a GMTcpt was transmitted. Than it's either 0, case in which
@@ -1597,6 +1597,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	end
 	if (get_cpt)
 		cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2, true, true, cpt_opt_T, in_bag)
+		N_used = !isempty_(arg1) + !isempty_(arg2)
 	end
 
 	if (IamModern[1] && FirstModern[1])  FirstModern[1] = false;  end
