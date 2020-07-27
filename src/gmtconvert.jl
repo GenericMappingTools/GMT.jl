@@ -49,7 +49,7 @@ Parameters
 
     Only output those segments whose header record contains the specified text string.
     ($(GMTdoc)gmtconvert.html#s)
-- **T** | **suppress ** :: [Type => Str | []]    ``Arg = [h|d]``
+- **T** | **suppress** :: [Type => Str | []]    ``Arg = [h|d]``
 
     Suppress the writing of certain records on output. Append h to suppress segment headers
     [Default] or d to suppress duplicate data records. Use T=:hd to suppress both types of records.
