@@ -12,7 +12,7 @@ Parameters
 - **A** | **interp_path** :: [Type => Str]
 
     ($(GMTdoc)grdtrack.html#a)
-- **C** | **equidistant ** :: [Type => Str]
+- **C** | **equidistant** :: [Type => Str]
 
     ($(GMTdoc)grdtrack.html#c)
 - **D** | **dfile** :: [Type => Str]  
@@ -70,7 +70,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 			for k = 1:length(grid_tuple)  cmd *= " -G"  end		# Need as many -G as numel(grid_tuple)
 		elseif (isa(grid_tuple, GMT.GMTgrid))
 			cmd = string(cmd, " -G")
-			if     (isempty_(arg1))  arg1 = grid_tuple;
+			if (isempty_(arg1))  arg1 = grid_tuple;
 			elseif (isempty_(arg2))  arg2 = grid_tuple;
 			else   error(string("Can't send the Grid data via G and input array"))
 			end
@@ -96,7 +96,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	end
 
 	if (isa(grid_tuple, Tuple))
-		return common_grd(d, "grdtrack " * cmd, (got_fname != 0) ? grid_tuple : tuple(arg1,grid_tuple...))
+		return common_grd(d, "grdtrack " * cmd, (got_fname != 0) ? grid_tuple : tuple(arg1, grid_tuple...))
 	else
 		return common_grd(d, "grdtrack " * cmd, arg1, arg2)
 	end
