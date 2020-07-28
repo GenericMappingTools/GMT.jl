@@ -1112,7 +1112,7 @@ end
 function arg2str(arg, sep='/')
 	# Convert an empty, a numeric or string ARG into a string ... if it's not one to start with
 	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
-	# SEP is the char separator used when ARG is a tuple ot array of numbers
+	# SEP is the char separator used when ARG is a tuple or array of numbers
 	out = Array{String,1}(undef,1)
 	out = [""]
 	if (isa(arg, AbstractString) || isa(arg, Symbol))
@@ -2202,8 +2202,17 @@ function helper_decorated(d::Dict, compose=false)
 				for k = 2:size(val,1)
 					optD = string(optD,',',val[k,1],'/',val[k,2],'/',val[k,3],'/',val[k,4])
 				end
-			elseif (isa(val, Tuple) || isa(val, String))
-				optD = flag * arg2str(val)
+			elseif (isa(val, Tuple))
+				if (length(val) == 2 && (isa(val[1], String) || isa(val[1], Symbol)) )
+					t1 = string(val[1]);	t2 = string(val[2])		# t1/t2 can also be 2 char or a LongWord justification
+					t1 = startswith(t1, "min") ? "Z-" : justify(t1)
+					t2 = startswith(t2, "max") ? "Z+" : justify(t2)
+					optD = flag * t1 * "/" * t2
+				else
+					optD = flag * arg2str(val)
+				end
+			elseif (isa(val, String))
+				optD = flag * val
 			else
 				@warn("DECORATED: lines option. Unknown option data type. Ignoring this.")
 			end
@@ -2872,15 +2881,16 @@ function justify(arg)
 	# Take a string or symbol in ARG and return the two chars justification code.
 	if (isa(arg, Symbol))  arg = string(arg)  end
 	if (length(arg) == 2)  return arg  end 		# Assume it's already the 2 chars code (no further checking)
-	if     (arg == "topleft"      || arg == "TopLeft")       out = "TL"
-	elseif (arg == "middleleft"   || arg == "MiddleLeft")    out = "ML"
-	elseif (arg == "bottomleft"   || arg == "BottomLeft")    out = "BL"
-	elseif (arg == "topcenter"    || arg == "TopCenter")     out = "TC"
-	elseif (arg == "middlecenter" || arg == "MiddleCenter")  out = "MC"
-	elseif (arg == "bottomcenter" || arg == "BottomCenter")  out = "BC"
-	elseif (arg == "topcright"    || arg == "TopRight")      out = "TR"
-	elseif (arg == "middleright"  || arg == "MiddleRight")   out = "MR"
-	elseif (arg == "bottomright"  || arg == "BottomRight")   out = "BR"
+	arg = lowercase(arg)
+	if     (startswith(arg, "topl"))     out = "TL"
+	elseif (startswith(arg, "middlel"))  out = "ML"
+	elseif (startswith(arg, "bottoml"))  out = "BL"
+	elseif (startswith(arg, "topc"))     out = "TC"
+	elseif (startswith(arg, "middlec"))  out = "MC"
+	elseif (startswith(arg, "bottomc"))  out = "BC"
+	elseif (startswith(arg, "topr"))     out = "TR"
+	elseif (startswith(arg, "middler"))  out = "MR"
+	elseif (startswith(arg, "bottomr"))  out = "BR"
 	else
 		@warn("Justification code provided ($arg) is not valid. Defaulting to TopRight")
 		out = "TR"
