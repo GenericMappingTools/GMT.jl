@@ -184,8 +184,8 @@ function __init__()
 				end
 			end			
 		end
-		#global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
-		#if (API == C_NULL)  error("Failure to create a GMT Session")  end
+		global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
+		if (API == C_NULL)  error("Failure to create a GMT Session")  end
 	catch
 	end
 	try
