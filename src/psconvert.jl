@@ -16,7 +16,7 @@ Parameters
 
     Specify a single, or an araay of, custom option that will be passed on to GhostScript as is.
     ($(GMTdoc)psconvert.html#c)
-- **D** | **out_dir*** | *output_dir** :: [Type => Str]
+- **D** | **out_dir** | **output_dir** :: [Type => Str]
 
     Sets an alternative output directory (which must exist) [Default is the same directory
     as the PS files].
