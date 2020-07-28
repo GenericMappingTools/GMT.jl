@@ -12,7 +12,7 @@ Parameters
 - **A** | **interp_path** :: [Type => Str]
 
     ($(GMTdoc)grdtrack.html#a)
-- **C** | **equidistant ** :: [Type => Str]
+- **C** | **equidistant** :: [Type => Str]
 
     ($(GMTdoc)grdtrack.html#c)
 - **D** | **dfile** :: [Type => Str]  
@@ -96,7 +96,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	end
 
 	if (isa(grid_tuple, Tuple))
-		return common_grd(d, "grdtrack " * cmd, (got_fname != 0) ? grid_tuple : tuple(arg1,grid_tuple...))
+		return common_grd(d, "grdtrack " * cmd, (got_fname != 0) ? grid_tuple : tuple(arg1, grid_tuple...))
 	else
 		return common_grd(d, "grdtrack " * cmd, arg1, arg2)
 	end

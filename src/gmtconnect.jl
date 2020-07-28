@@ -25,7 +25,7 @@ Parameters
 
     Used with **D** to write a list file with the names of the individual output files.
     ($(GMTdoc)gmtconnect.html#q)
-- **T** | **tolerance ** :: [Type => Str | List]    `Arg = [cutoff[unit][/nn_dist]]`
+- **T** | **tolerance** :: [Type => Str | List]    `Arg = [cutoff[unit][/nn_dist]]`
 
     Specifies the separation tolerance in the data coordinate units [0]; append distance unit.
     If two lines has end-points that are closer than this cutoff they will be joined.
