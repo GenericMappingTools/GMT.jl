@@ -129,6 +129,7 @@ function gmt(cmd::String, args...)
 	end
 
 	# 2. In case this was a clean up call or a begin/end from the modern mode
+@show(API)
 	gmt_manage_workflow(API, 0, NULL)		# Force going here to see if we are in middle of a MODERN session
 
 	# Make sure this is a valid module
