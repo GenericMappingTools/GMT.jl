@@ -15,9 +15,9 @@ Parameters
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
     ($(GMTdoc)grdcontour.html#a)
 - $(GMT.opt_B)
-- **C** | **cont** | **contours** | **levels** :: [Type => Str or Number]
+- **C** | **cont** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
-    Contours to be drawn.
+    Contours to be drawn may be specified in one of three possible ways.
     ($(GMTdoc)grdcontour.html#c)
 - **D** | **dump** :: [Type => Str]
 
@@ -127,7 +127,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	# -N option is bugged up to 6.1.1 because it lacked the apropriate KEY, so trickery is needed.
+	# -N option is bugged up to 6.1.0 because it lacked the apropriate KEY, so trickery is needed.
 	if (occursin(" -N", cmd))
 		if (occursin(" -C", cmd) && (isa(arg1, GMTcpt) || isa(arg2, GMTcpt)))
 			if (!got_N_cpt)		# C=cpt, N=true. Must replicate the CPT into N
@@ -149,8 +149,17 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_contour_AGTW(d::Dict, cmd::String)
 	# Common to both grd and ps contour
-	cmd = add_opt(cmd, 'A', d, [:A :annot], (disable=("-", nothing, 1), single=("+", nothing, 1),
-	                                         int="", interval="", labels=("", parse_quoted)) )
+	if ((val = find_in_dict(d, [:A :annot],false)[1]) !== nothing && isa(val, Array{<:Number}))
+		cmd *= " -A" * arg2str(val, ',')
+		del_from_dict(d, [:A :annot])
+	elseif (isa(val, String) || isa(val, Symbol))
+		arg = string(val)
+		cmd *= (arg == "none") ? " -A-" : " -A" * arg
+		del_from_dict(d, [:A :annot])
+	else
+		cmd = add_opt(cmd, 'A', d, [:A :annot], (disable=("_-", nothing, 1), none=("_-", nothing, 1), single=("+", nothing, 1),
+		                                         int="", interval="", labels=("", parse_quoted)) )
+	end
 	cmd = add_opt(cmd, 'G', d, [:G :labels], ("", helper_decorated))
 	cmd = add_opt(cmd, 'T', d, [:T :ticks], (local_high=("h", nothing, 1), local_low=("l", nothing, 1),
 	                                         labels="+l", closed="_+a", gap="+d") )
