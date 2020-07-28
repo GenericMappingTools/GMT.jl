@@ -14,7 +14,7 @@ Parameters
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
     ($(GMTdoc)contour.html#a)
 - $(GMT.opt_B)
-- **C** | **cont** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
+- **C** | **cont** | **contour** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
     Contours to be drawn may be specified in one of three possible ways.
     ($(GMTdoc)grdcontour.html#c)
@@ -77,7 +77,7 @@ contourf(G, C, contour=1, annot=[-2, 0, 2, 5], fmt=:png, show=1)
 contourf(G, C, annot=:none, fmt=:png, show=1)
 
 d = [0 2 5; 1 4 5; 2 0.5 5; 3 3 9; 4 4.5 5; 4.2 1.2 5; 6 3 1; 8 1 5; 9 4.5 5];
-contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, mesh=(0.25,:black,:dashed), labels=(line=(:min,:max),), fmt=:png, show=1)
+contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), fmt=:png, show=1)
 """
 function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
 
@@ -85,7 +85,7 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 	CPT_arg = (isa(arg1, GMTcpt)) ? arg1 : (isa(arg2, GMTcpt) ? arg2 : nothing)		# Fish a CPT, if any.
 
 	CPT = nothing;		C_contours = "";	C_int = 0;
-	if ((val = find_in_dict(d, [:C :cont :contours :levels])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:C :cont :contour :contours :levels])[1]) !== nothing)
 		if (isa(val, GMTcpt))
 			CPT = val
 		elseif (isa(val, Array{<:Number}))

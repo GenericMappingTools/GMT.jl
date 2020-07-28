@@ -260,8 +260,8 @@ if (got_it)					# Otherwise go straight to end
 	D = blockmean(region=[0 2 0 2], inc=1,  reg=true, d);
 	D = blockmode(region=[0 2 0 2], inc=1,  reg=true, d);
 
-	println("	CONTOUR")
-	# CONTOUR
+	println("	CONTOURF")
+	# CONTOURF
 	G = GMT.peaks();
 	C = makecpt(T=(-7,9,2));
 	contourf(G, Vd=dbg2)

@@ -15,7 +15,7 @@ Parameters
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
     ($(GMTdoc)grdcontour.html#a)
 - $(GMT.opt_B)
-- **C** | **cont** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
+- **C** | **cont** | **contour** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
     Contours to be drawn may be specified in one of three possible ways.
     ($(GMTdoc)grdcontour.html#c)
@@ -111,7 +111,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
-		cmd, args, n, = add_opt(cmd, 'C', d, [:C :cont :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
+		cmd, args, n, = add_opt(cmd, 'C', d, [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
 		if (n > 0)
 			for k = 3:-1:1
 				if (args[k] === nothing)  continue  end
