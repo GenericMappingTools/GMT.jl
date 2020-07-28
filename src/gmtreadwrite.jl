@@ -112,6 +112,7 @@ function gmtread(fname::String; kwargs...)
 		if ((opt_T = guess_T_from_ext(fname)) === nothing)		# Try some guesses
 			error("Must select one input data type (grid, image, dataset, cmap or ps)")
 		end
+		if (opt_T == " -Tg" && haskey(d, :ignore_grd))  return nothing  end 	# contourf uses this
 	else
 		opt_T = opt_T[1:4]      				# Remove whatever was given as argument to type kwarg
 	end
