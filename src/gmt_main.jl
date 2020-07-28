@@ -130,6 +130,7 @@ try
 catch
 	API = GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL
 							 + GMT.GMT_SESSION_COLMAJOR)
+@show(API)
 	if (API == C_NULL)  error("Failure to create a GMT Session")  end
 end
 
