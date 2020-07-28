@@ -41,7 +41,7 @@ Parameters
 
     Add extra space for error bars. Useful together with I option and when later plotting with `plot E`.
     ($(GMTdoc)gmtinfo.html#s)
-- **T** | **nearest_multiple** :: [Type => Str | Number]
+- **T** | **nearest_multiple** :: [Type => Str | Number]    ``Arg = dz[+ccol]``
 
     Report the min/max of the first (0’th) column to the nearest multiple of dz and output this as
     the string -Tzmin/zmax/dz.
