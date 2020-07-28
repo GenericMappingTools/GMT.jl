@@ -40,7 +40,7 @@ export
 	GMTver, FMT, gmt,
 	arrows, arrows!, bar, bar!, bar3, bar3!, hlines, hlines!, lines, lines!, legend, legend!, vlines, vlines!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
-	colorscale, colorscale!, contour, contour!, events, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert,
+	colorscale, colorscale!, contour, contour!, contourf, events, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert,
 	gmtinfo, gmtmath, gmtregress, gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwhich, 
 	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft, grdfilter,
 	grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdfill, grdlandmask, grdmath, grdmask, grdpaste,
@@ -67,7 +67,7 @@ include("gmt_main.jl")
 include("common_options.jl")
 include("gmtbegin.jl")
 include("blocks.jl")
-#include("contourf.jl")
+include("contourf.jl")
 include("filter1d.jl")
 include("fitcircle.jl")
 include("gmt2kml.jl")
@@ -179,18 +179,22 @@ function __init__()
 			n = datetime2unix(now(UTC))
 			for sd in session_dirs
 				fp = joinpath(sp, sd)
-				if n - mtime(fp) > 3600 # created 1 hour before
+				if n - mtime(fp) > 3600 		# created 1 hour before
 					rm(fp, recursive = true)
 				end
 			end			
 		end
+		global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
+		if (API == C_NULL)  error("Failure to create a GMT Session")  end
 	catch
 	end
 	try
-		FMT[1] = ENV["JULIA_GMT_IMGFMT"]
+		FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]
 	catch
 	end
 end
+
+include("get_enums.jl")
 
 include("precompile_GMT_i.jl")
 _precompile_()
