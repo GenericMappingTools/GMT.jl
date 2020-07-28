@@ -260,6 +260,15 @@ if (got_it)					# Otherwise go straight to end
 	D = blockmean(region=[0 2 0 2], inc=1,  reg=true, d);
 	D = blockmode(region=[0 2 0 2], inc=1,  reg=true, d);
 
+	println("	CONTOUR")
+	# CONTOUR
+	G = GMT.peaks();
+	C = makecpt(T=(-7,9,2));
+	contourf(G, Vd=dbg2)
+	contourf(G, C, contour=[-2, 0, 2, 5], Vd=dbg2)
+	d = [0 2 5; 1 4 5; 2 0.5 5; 3 3 9; 4 4.5 5; 4.2 1.2 5; 6 3 1; 8 1 5; 9 4.5 5];
+	contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), Vd=dbg2)
+
 	# FILTER1D
 	filter1d([collect((1.0:50)) rand(50)], F="m15");
 
@@ -1079,16 +1088,16 @@ if (got_it)					# Otherwise go straight to end
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"], multi=true);
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
 
-	GMT.get_datatype([]);
-	GMT.get_datatype(Float32(8));
-	GMT.get_datatype(UInt64(8));
-	GMT.get_datatype(Int64(8));
-	GMT.get_datatype(UInt32(8));
-	GMT.get_datatype(Int32(8));
-	GMT.get_datatype(UInt16(8));
-	GMT.get_datatype(Int16(8));
-	GMT.get_datatype(UInt8(8));
-	GMT.get_datatype(Int8(8));
+	#GMT.get_datatype([]);
+	#GMT.get_datatype(Float32(8));
+	#GMT.get_datatype(UInt64(8));
+	#GMT.get_datatype(Int64(8));
+	#GMT.get_datatype(UInt32(8));
+	#GMT.get_datatype(Int32(8));
+	#GMT.get_datatype(UInt16(8));
+	#GMT.get_datatype(Int16(8));
+	#GMT.get_datatype(UInt8(8));
+	#GMT.get_datatype(Int8(8));
 	GMT.mat2grid(rand(Float32, 10,10), reg=1);
 	GMT.num2str(rand(2,3));
 	text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"]);
@@ -1102,7 +1111,6 @@ if (got_it)					# Otherwise go straight to end
 		PS = plot(rand(3,2), ps=1);
 		API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 		GMT.ps_init(API, "", PS, 0);
-		@test_throws ErrorException("Failure to allocate GMT resource") GMT.text_init(API, "", "aaaa", 0);
 		gmt("destroy")
 
 		# Test ogr2GMTdataset

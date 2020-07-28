@@ -52,8 +52,10 @@ algorithms.
    Give the coordinates of the end points for one or more straight line segments.
    Symbols will be placed where these lines intersect the decorated lines. *xx* format is a Mx4 array
    with the coordinates of the line's end points. The format of each line specification is
-   [start_x start_y stop_x stop_y]. These can be replaced by by a 2-character key that uses the justification
-   format employed in text to indicate a point on the frame or center of the map, given as [**LCR**][**BMT**]. In addition, you can use **Z-**, **Z+** to mean the global minimum and maximum locations in the grid (*i.e. line="Z-/Z+"*).
+   [start_x start_y stop_x stop_y]. These can be replaced by either a 2-character key that uses the justification
+   format employed in text to indicate a point on the frame or center of the map, given as [**LCR**][**BMT**] or
+   their explicit versions (for example *line=(:TopLeft,:BottomRight)*). In addition, you can use **min**, **max**
+   to mean the global minimum and maximum locations in the grid (*i.e. line=(:min,:max)*).
 - *Line=xx*\
    Like *line* But will interpret the point pairs as defining great circles.
 - *n_labels=xx* or *:n_symbols=xx*\
