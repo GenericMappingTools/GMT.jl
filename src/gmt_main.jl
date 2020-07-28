@@ -118,10 +118,20 @@ function gmt(cmd::String, args...)
 		end
 	end
 
+#=
 	if (!isa(API, Ptr{Nothing}))
 		API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 		if (API == C_NULL)  error("Failure to create a GMT Session")  end
 	end
+=#
+try
+	a = API
+	if (!isa(API, Ptr{Nothing}))  error("The 'API' is not a Ptr{Nothing}. Creating a new one.")  end
+catch
+	API = GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL
+							 + GMT.GMT_SESSION_COLMAJOR)
+	if (API == C_NULL)  error("Failure to create a GMT Session")  end
+end
 
 	if (g_module == "destroy")
 		GMT_Destroy_Session(API);	API = nothing
