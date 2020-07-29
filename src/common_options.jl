@@ -1008,7 +1008,7 @@ function add_opt_pen(d::Dict, symbs, opt::String="", del::Bool=true)
 		if ((val = find_in_dict(d, [:cline :color_line :colot_lines])[1]) !== nothing)  out[1] *= "+cl"  end
 		if ((val = find_in_dict(d, [:ctext :color_text :csymbol :color_symbols :color_symbol])[1]) !== nothing)  out[1] *= "+cf"  end
 	end
-	if (haskey(d, :bezier))  out[1] *= "+s"  end
+	if (haskey(d, :bezier))  out[1] *= "+s";  del_from_dict(d, [:bezier])  end
 	if (haskey(d, :offset))  out[1] *= "+o" * arg2str(d[:offset])   end
 
 	if (out[1] != "")		# Search for eventual vec specs, but only if something above has activated -W
