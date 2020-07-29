@@ -109,18 +109,11 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
-	if (GMTver >= 6)
-		cmd   = add_opt(cmd, 'T', d, [:T :bin :width])
-		cmd   = add_opt(cmd, 'L', d, [:L :out_range])
-		cmd  *= add_opt_pen(d, [:W :pen], "W")
-		if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-I", cmd))
-			cmd *= " -L0.5p -G150"		# If no -L, -G, -I or -C set these defaults
-		end
-	else
-		cmd = add_opt(cmd, 'W', d, [:W :bin :width]) * add_opt_pen(d, [:L :pen], "L")
-		if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-L", cmd) && !occursin("-I", cmd))
-			cmd *= " -L0.5p -G150"		# If no -L, -G, -I or -C set these defaults
-		end
+	cmd   = add_opt(cmd, 'T', d, [:T :bin :width])
+	cmd   = add_opt(cmd, 'L', d, [:L :out_range])
+	cmd  *= add_opt_pen(d, [:W :pen], "W")
+	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-I", cmd))
+		cmd *= " -L0.5p -G150"		# If no -L, -G, -I or -C set these defaults
 	end
 
 	if ((val = find_in_dict(d, [:N :normal])[1]) !== nothing)

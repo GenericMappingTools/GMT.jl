@@ -24,7 +24,7 @@ Parameters
 
     Improve the quality of rasterization by passing the sub-pixel smoothing factor to psconvert.
     ($(GMTdoc)grd2kml.html#h)
-- **I** | **shade** | **intensity** | **intensfile** :: [Type => Str | GMTgrid]
+- **I** | **shade** | **shading** | **intensity** :: [Type => Str | GMTgrid]
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.

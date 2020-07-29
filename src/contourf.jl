@@ -204,11 +204,13 @@ end
 # ---------------------------------------------------------------------------------------------------
 function auto_contour_interval(range)
 	# Do the same as GMT C
-	x = 10 ^ (floor(log10(range)) - 1.0)
+	x  = 10 ^ (floor(log10(range)) - 1.0)
 	nx = div(range, x, RoundNearest)
 	x *= (nx > 40) ? 5 : (nx > 20 ? 2 : 1)
 	return x		# Contour intervals
 end
 
 # ---------------------------------------------------------------------------------------------------
-contourf(arg1, arg2=nothing, cmd0::String=""; kw...) = contourf(cmd0, arg1, arg2; first=true, kw...)
+contourf!(cmd0::String="", arg1=nothing, arg2=nothing; kw...) = contourf(cmd0, arg1, arg2; first=false, kw...)
+contourf(arg1, arg2=nothing; kw...) = contourf("", arg1, arg2; first=true, kw...)
+contourf!(arg1, arg2=nothing; kw...) = contourf("", arg1, arg2; first=false, kw...)

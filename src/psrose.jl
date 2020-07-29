@@ -103,7 +103,6 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c")
-	if (GMTver < 6)  cmd = replace(cmd, opt_J => "")  end	# GMT5 doesn't accept a -J
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :e :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :sector], [:D :shift], [:F :no_scale], [:L :labels], [:M],
 	                                 [:Q :alpha], [:S :radius], [:T :orientation], [:Z :scale]])
@@ -112,12 +111,8 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	if (isa(arg1, Array{GMT.GMTdataset,1}))  arg1 = arg1[1].data  end	# WHY I HAVE TO DO THIS?
 
-	if (GMTver >= 6)		# This changed letter between 5 and 6
-		cmd = add_opt(cmd, 'E', d, [:E :vectors])
-		cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
-	else
-		cmd = add_opt(cmd, 'C', d, [:C :vectors])
-	end
+	cmd = add_opt(cmd, 'E', d, [:E :vectors])
+	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= opt_pen(d, 'W', [:W :pen])
 

@@ -16,7 +16,7 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
 
     Drape the image in drapefile on top of the relief provided by relief_file.
     ($(GMTdoc)grdview.html#g)
-- **I** | **shade** | **intensity** :: [Type => Str | GMTgrid]		``Arg = GMTgrid | filename```
+- **I** | **shade** | **shading** | **intensity** :: [Type => Str | GMTgrid]		``Arg = GMTgrid | filename``
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.

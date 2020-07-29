@@ -363,7 +363,6 @@ function GMT_Duplicate_String(API::Ptr{Cvoid}, str)
 end
 
 function GMT_Open_VirtualFile(API::Ptr{Cvoid}, family::Integer, geometry::Integer, dir::Integer, data, name)
-	#if (GMTver >= 6.1)  dir |= GMT_IS_REFERENCE  end
 	if (GMTver >= 6.1)  dir |= GMT_Get_Enum(API, "GMT_IS_REFERENCE")  end
 	ccall((:GMT_Open_VirtualFile, thelib), Cint, (Cstring, UInt32, UInt32, UInt32, Ptr{Cvoid}, Ptr{UInt8}), API, family, geometry, dir, data, name)
 end
