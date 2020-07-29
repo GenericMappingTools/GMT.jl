@@ -3,6 +3,9 @@
 const KW = Dict{Symbol,Any}
 nt2dict(nt::NamedTuple) = nt2dict(; nt...)
 nt2dict(; kw...) = Dict(kw)
+# Need the Symbol.() below in oder to work from PyCall
+# A darker an probably more efficient way is: ((; kw...) -> kw.data)(; d...) but breaks in PyCall
+dict2nt(d::Dict) = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
 
 function find_in_dict(d::Dict, symbs, del=true)
 	# See if D contains any of the symbols in SYMBS. If yes, return corresponding value
@@ -359,15 +362,6 @@ function build_opt_J(Val)
 		out[1] = " -J"
 	end
 	return out[1], mnemo
-end
-
-function auto_JZ(cmd::String)
-	# Add the -JZ option to modules that should not need it (e.g. pscoast) when used after a
-	# -R with 6 elements. Without this a simple -J fails with a complain that ... -JZ is needed
-	if (GMTver < 6 && current_view[1] != "" && !occursin("-JZ", cmd) && !occursin("-Jz", cmd))
-		cmd *= " -JZ0.01"
-	end
-	return cmd
 end
 
 function parse_proj(p::String)
@@ -1157,7 +1151,7 @@ end
 function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
 	if (IamModern[1])  return cmd  end		# In Modern mode this fun does not play
-	if (isa(cmd, Array{String,1}))		# Need a recursive call here
+	if (isa(cmd, Array{String,1}))			# Need a recursive call here
 		for k = 1:length(cmd)
 			KK = K;		OO = O
 			if (!occursin(" >", cmd[k]))	# Nested calls already have the redirection set
@@ -1248,7 +1242,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs, del::Bool=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true, arg=nothing)
+function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true, arg=nothing)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
 	# ARG, is a special case to append to a matrix (complicated thing in Julia)
@@ -1270,6 +1264,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true,
 	end
 
 	args = Array{String,1}(undef,1)
+	if (isa(val, Dict))  val = dict2nt(val)  end	# For Py usage
 	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
 		args[1] = add_opt(val, mapa, arg)
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
@@ -1500,12 +1495,12 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=noth
 				end
 			end
 		end
-	elseif (def && opt_T != "")		# Requested the use of the default color map (Turbo or Jet depending on GMTver)
+	elseif (def && opt_T != "")						# Requested the use of the default color map
 		if (IamModern[1])  opt_T *= " -H"  end		# Piggy back this otherwise we get no CPT back in Modern
 		if (haskey(d, :this_cpt) && d[:this_cpt] != "")		# A specific CPT name was requested
 			cpt = makecpt(opt_T * " -C" * d[:this_cpt])
 		else
-			opt_T = (GMTver >= 6) ? opt_T * " -Cturbo" : opt_T * " -Cjet"
+			opt_T *= " -Cturbo"
 			cpt = makecpt(opt_T)
 		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
@@ -1567,10 +1562,10 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	cpt_opt_T = ""
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage))			# GMT bug, -R will not be stored in gmt.history
 		range = arg1.range
-	elseif (cmd0 != "")
+	elseif (cmd0 != "" && cmd0[1] != '@')
 		info = grdinfo(cmd0 * " -C");	range = info[1].data
 	end
-	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || cmd0 != "")
+	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || (cmd0 != "" && cmd0[1] != '@'))
 		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
 			cpt_opt_T = @sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
@@ -2025,15 +2020,7 @@ function vector_attrib(;kwargs...)
 		end
 	end
 
-	if (haskey(d, :norm))
-		if (GMTver < 6 && isa(d[:norm], String) && !isletter(d[:norm][end]))	# Avoid Bug in 5.X
-			cmd = string(cmd, "+n", parse(Float64, d[:norm]) / 2.54, "i")
-		elseif (GMTver < 6 && isa(d[:norm], Number))
-			cmd = string(cmd, "+n", d[:norm] / 2.54, "i")
-		else
-			cmd = string(cmd, "+n", d[:norm])
-		end
-	end
+	if (haskey(d, :norm))  cmd = string(cmd, "+n", d[:norm])  end
 
 	if (haskey(d, :pole))  cmd *= "+o" * arg2str(d[:pole])  end
 	if (haskey(d, :pen))
@@ -2342,16 +2329,12 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
 	if (isa(data_kw, String))
 		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])	# Then we must read the file to determine -R
-			if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
-				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
-				if (opt_i != "")			# Remove the -i option from cmd. It has done its job
-					cmd = replace(cmd, opt_i => "")
-					opt_i = ""
-				end
-				if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
-			else
-				data_kw = gmt("read -Td " * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
+			data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
+			if (opt_i != "")			# Remove the -i option from cmd. It has done its job
+				cmd = replace(cmd, opt_i => "")
+				opt_i = ""
 			end
+			if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
 		else							# No need to find -R so let the GMT module read the file
 			cmd = data_kw * " " * cmd
 			data_kw = nothing			# Prevent that it goes (repeated) into 'arg'
@@ -2618,7 +2601,8 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	global current_cpt = nothing		# Reset to empty when fig is finalized
 	if (fname == "" && isdefined(Main, :IJulia) && Main.IJulia.inited)	 opt_T = " -Tg"; fname_ext = "png"  end		# In Jupyter, png only
 	if (opt_T != "")
-		if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
+		#if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
+		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
 		out = fname_ps[1:end-2] * fname_ext
@@ -2626,7 +2610,8 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 			out = mv(out, fname, force=true)
 		end
 	elseif (fname_ps != "")
-		if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
+		#if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
+		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
 		out = fname_ps
 		if (fname != "")
 			out = mv(out, fname, force=true)
@@ -2645,6 +2630,18 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 			end
 		end
 	end
+end
+
+# ---------------------------------------------------------------------------------------------------
+function close_PS_file(fname::AbstractString)
+	# Do the equivalesx of "psxy -T -O"
+	fid = open(fname, "a")
+	write(fid, "\n0 A\nFQ\nO0\n0 0 TM\n\n")
+	write(fid, "%%BeginObject PSL_Layer_2\n0 setlinecap\n0 setlinejoin\n3.32550952342 setmiterlimit\n%%EndObject\n")
+	write(fid, "\ngrestore\nPSL_movie_label_completion /PSL_movie_label_completion {} def\n")
+	write(fid, "PSL_movie_prog_indicator_completion /PSL_movie_prog_indicator_completion {} def\n")
+	write(fid, "%PSL_Begin_Trailer\n%%PageTrailer\nU\nshowpage\n\n%%Trailer\n\nend\n%%EOF")
+	close(fid)
 end
 
 # ---------------------------------------------------------------------------------------------------
