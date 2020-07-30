@@ -189,6 +189,7 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 	opt_J = Array{String,1}(undef,1)
 	opt_J = [""];		mnemo = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		opt_J[1], mnemo = build_opt_J(val)
 	elseif (IamModern[1] && ((val = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size], del)[1]) === nothing))
 		# Subplots do not rely is the classic default mechanism
@@ -311,6 +312,7 @@ function check_axesswap(d::Dict, width::AbstractString)
 	end
 
 	swap_x = false;		swap_y = false;
+	if (isa(val, Dict))  val = dict2nt(val)  end
 	if (isa(val, NamedTuple))
 		for k in keys(val)
 			if     (k == :x)  swap_x = true
@@ -480,6 +482,7 @@ function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 	# These four are aliases
 	extra_parse = true;
 	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		if (isa(val, String) || isa(val, Symbol))
 			val = string(val)					# In case it was a symbol
 			if (val == "none")					# User explicitly said NO AXES
@@ -556,7 +559,8 @@ function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 	# We can have one or all of them. Deal separatelly here to allow way code to keep working
 	this_opt_B = "";
 	for symb in [:yaxis2 :xaxis2 :axis2 :zaxis :yaxis :xaxis]
-		if (haskey(d, symb) && isa(d[symb], NamedTuple))
+		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict)))
+			if (isa(d[symb], Dict))  d[symb] = dict2nt(d[symb])  end
 			if     (symb == :axis2)   this_opt_B = axis(d[symb], secondary=true);	delete!(d, symb)
 			elseif (symb == :xaxis)   this_opt_B = axis(d[symb], x=true) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :xaxis2)  this_opt_B = axis(d[symb], x=true, secondary=true) * this_opt_B;	delete!(d, symb)
@@ -885,10 +889,11 @@ function parse_these_opts(cmd::String, d::Dict, opts, del=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_inc(cmd::String, d::Dict, symbs, opt, del=true)
+function parse_inc(cmd::String, d::Dict, symbs, opt, del=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
 			x = "";	y = "";	u = "";	e = false
 			fn = fieldnames(typeof(val))
@@ -933,6 +938,7 @@ function parse_params(cmd::String, d::Dict)
 	_cmd = Array{String,1}(undef,1)		# Otherwise Traceur insists this fun was returning a Any
 	_cmd = [cmd]
 	if ((val = find_in_dict(d, [:conf :par :params], true)[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
 			fn = fieldnames(typeof(val))
 			for k = 1:length(fn)		# Suspect that this is higly inefficient but N is small
@@ -960,6 +966,7 @@ function add_opt_pen(d::Dict, symbs, opt::String="", del::Bool=true)
 		out[1] = opt * pen
 	else
 		if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
+			if (isa(val, Dict))  val = dict2nt(val)  end
 			if (isa(val, Tuple))				# Like this it can hold the pen, not extended atts
 				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
 					for v in val
@@ -1211,8 +1218,9 @@ function prepare2geotif(d::Dict, cmd, opt_T::String, O::Bool)
 			if (startswith(string(val), "trans"))  opt_T = " -TG -W+k"
 			else                                   opt_T = string(" -TG -W+k", val)		# Whatever 'val' is
 			end
-		elseif (isa(val, NamedTuple))
+		elseif (isa(val, NamedTuple) || isa(val, Dict))
 			# [+tdocname][+nlayername][+ofoldername][+aaltmode[alt]][+lminLOD/maxLOD][+fminfade/maxfade][+uURL]
+			if (isa(val, Dict))  val = dict2nt(val)  end
 			opt_T = add_opt(" -TG -W+k", "", Dict(:kml => val), [:kml],
 							(title="+t", layer="+n", layername="+n", folder="+o", foldername="+o", altmode="+a", LOD=("+l", arg2str), fade=("+f", arg2str), URL="+u"))
 		end
@@ -1319,7 +1327,7 @@ function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
+function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	# Generic parser of options passed in a NT and whose last element is anther NT with the mapping
 	# between expanded sub-options names and the original GMT flags.
 	# ARG, is a special case to append to a matrix (complicated thing in Julia)
@@ -1331,6 +1339,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 	cmd = "";		cmd_hold = Array{String,1}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
 	for k = 1:length(key)				# Loop over the keys of option's tuple
 		if (!haskey(d, key[k]))  continue  end
+		if (isa(nt[k], Dict))  nt[k] = dict2nt(nt[k])  end
 		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(nt[k], NamedTuple))
 				if (d[key[k]][2] == add_opt_fill)
@@ -1430,6 +1439,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_o
 	N_used = 0;		got_one = false
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		to_slot = true
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
 			di = nt2dict(val)
 			if ((val = find_in_dict(di, [need_symb], false)[1]) === nothing)
@@ -1530,6 +1540,7 @@ add_opt_fill(d::Dict, symbs, opt="") = add_opt_fill("", d, symbs, opt)
 function add_opt_fill(cmd::String, d::Dict, symbs, opt="", del=true)::String
 	# Deal with the area fill attributes option. Normally, -G
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)  return cmd  end
+	if (isa(val, Dict))  val = dict2nt(val)  end
 	if (opt != "")  opt = string(" -", opt)  end
 	return add_opt_fill(val, cmd, opt)
 end
@@ -1608,6 +1619,7 @@ function add_opt_module(d::Dict, symbs)
 		r = nothing
 		if (haskey(d, symbs[k]))
 			val = d[symbs[k]]
+			if (isa(val, Dict))  val = dict2nt(val)  end
 			if (isa(val, NamedTuple))
 				nt = (val..., Vd=2)
 				if     (symbs[k] == :coast)    r = coast!(; nt...)
@@ -1747,6 +1759,7 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	opt = Array{String,1}(undef,1)					# To force type stability
 	opt = [" -B"]
 	if ((val = find_in_dict(d, [:frame :axes])[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		opt[1] *= helper0_axes(val)
 	end
 
@@ -1923,8 +1936,8 @@ function helper3_axes(arg, primo, axe)
 		pos = arg
 		n_annot = length(pos)
 		tipo = fill('a', n_annot)			# Default to annotate
-	elseif (isa(arg, NamedTuple))
-		d = nt2dict(arg)
+	elseif (isa(arg, NamedTuple) || isa(arg, Dict))
+		if (isa(arg, NamedTuple))  d = nt2dict(arg)  end
 		if (!haskey(d, :pos))
 			error("Custom annotations NamedTuple must contain the member 'pos'")
 		end
@@ -2068,6 +2081,7 @@ function vector4_attrib(; kwargs...)
 
 	if (haskey(d, :norm))  cmd = string(cmd, "n", d[:norm])  end
 	if ((val = find_in_dict(d, [:head])[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
 			ha = "0.075c";	hl = "0.3c";	hw = "0.25c"
 			dh = nt2dict(val)
@@ -2221,7 +2235,6 @@ function helper_decorated(d::Dict, compose=false)
 end
 
 # -------------------------------------------------
-#parse_quoted(nt::NamedTuple) = parse_quoted(;nt...)
 function parse_quoted(d::Dict, opt)
 	# This function is isolated from () above to allow calling it seperately from grdcontour
 	# In fact both -A and -G grdcontour options are almost equal to a decorated line in psxy.
