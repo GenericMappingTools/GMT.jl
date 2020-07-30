@@ -159,6 +159,7 @@ function __init__()
 		println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must uptdate.")
 		return
 	end
+	try			# Becuse the sessions dir may not exist 
 	if (GMTver >= 6.1)		# Delete stray sessions left behind by old failed process. Thanks to @htyeim
 		sp = readlines(`gmt --show-userdir`)[1] * "/sessions"
 		dirs = readdir(sp)
@@ -170,6 +171,8 @@ function __init__()
 				rm(fp, recursive = true)
 			end
 		end			
+	end
+	catch
 	end
 	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 	if (API == C_NULL)  error("Failure to create a GMT Session")  end
