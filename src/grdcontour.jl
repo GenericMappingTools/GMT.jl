@@ -151,6 +151,7 @@ function parse_contour_AGTW(d::Dict, cmd::String)
 	# Common to both grd and ps contour
 	if ((val = find_in_dict(d, [:A :annot],false)[1]) !== nothing && isa(val, Array{<:Number}))
 		cmd *= " -A" * arg2str(val, ',')
+		if (!occursin(",", cmd))  cmd *= ","  end
 		del_from_dict(d, [:A :annot])
 	elseif (isa(val, String) || isa(val, Symbol))
 		arg = string(val)
