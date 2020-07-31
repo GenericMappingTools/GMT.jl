@@ -106,10 +106,6 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 	if (occursin("-G", cmd) && !occursin("-A", cmd))
 		cmd = cmd * " -Az"					# So that we can use plain -G to mean write grid 
 	end
-	if (GMTver < 6 && occursin("-A", cmd))
-		@warn("Computing grids is only possible with GMT version >= 6")
-		return nothing
-	end
 	cmd, = parse_common_opts(d, cmd, [:R :V_params :bi :di :e :f :h :i :o :r :yx])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)

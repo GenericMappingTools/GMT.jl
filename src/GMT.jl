@@ -3,17 +3,13 @@ module GMT
 using Printf
 using Dates
 
-# Need to know what GMT version is available or if none at all to warn users on how to
-# install GMT.
+# Need to know what GMT version is available or if none at all to warn users on how to install GMT.
 try
-	#write("gmtversion__.txt", read(`gmt --version`))
-	#global const GMTver = Meta.parse(read("gmtversion__.txt", String)[1:3])
-	#rm("gmtversion__.txt")
-	global const GMTver = Meta.parse(readlines(`gmt --version`)[1][1:3])
-	global foundGMT = true
+	#global const GMTver = Meta.parse(readlines(`gmt --version`)[1][1:3])
+	v =split(readlines(`gmt --version`)[1][1:5],'.')
+	global const GMTver = Meta.parse(v[1] * '.' * v[2]) + (Meta.parse(v[3]) * 0.01)
 catch
-	global foundGMT = false
-	global const GMTver = 5.0
+	global const GMTver = 0.0
 end
 
 global legend_type  = nothing
@@ -40,19 +36,18 @@ export
 	GMTver, FMT, gmt,
 	arrows, arrows!, bar, bar!, bar3, bar3!, hlines, hlines!, lines, lines!, legend, legend!, vlines, vlines!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
-	colorscale, colorscale!, contour, contour!, events, filter1d, fitcircle, gmt2kml,  gmtconnect, gmtconvert,
-	gmtinfo, gmtmath, gmtregress, gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial, gmtvector, gmtwrite, gmtwhich, 
-	grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut, grdedit, grdfft, grdfilter,
-	grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdfill, grdlandmask, grdmath, grdmask, grdpaste,
-	grdproject, grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume, greenspline,
-	mat2grid, mat2img, histogram, histogram!, image, image!, image_alpha!, imshow, kml2gmt, logo, logo!,
-	makecpt, mask, mask!, mapproject, movie, nearneighbor, plot, plot!, plot3, plot3!, plot3d, plot3d!, project,
-	pscontour, pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, psevents,
-	pshistogram, pshistogram!, psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!,
-	psscale, psscale!, pssolar, pssolar!, psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!,
-	psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose, rose!, sample1d, scatter, scatter!, scatter3, scatter3!,
-	solar, solar!, spectrum1d, sphdistance, sphinterpolate, sphtriangulate, surface, ternary, ternary!,
-	text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
+	colorscale, colorscale!, contour, contour!, contourf, contourf!, events, filter1d, fitcircle, gmt2kml,
+	gmtconnect, gmtconvert, gmtinfo, gmtmath, gmtregress, gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial,
+	gmtvector, gmtwrite, gmtwhich, grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut,
+	grdedit, grdfft, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdfill, grdlandmask, grdmath,
+	grdmask, grdpaste, grdproject, grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume,
+	greenspline, mat2grid, mat2img, histogram, histogram!, image, image!, image_alpha!, imshow, kml2gmt, logo, logo!,
+	makecpt, mask, mask!, mapproject, movie, nearneighbor, plot, plot!, plot3, plot3!, plot3d, plot3d!, project, pscontour,
+	pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
+	psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
+	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
+	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
+	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd,
 	gmtbegin, gmtend, subplot, gmtfig, inset,
 	image_alpha!, mat2ds, mat2grid, mat2img,
@@ -60,14 +55,14 @@ export
 
 include("common_docs.jl")
 include("libgmt_h.jl")
-if (foundGMT)
+if (GMTver >= 6)
 	include("libgmt.jl")
 end
 include("gmt_main.jl")
 include("common_options.jl")
 include("gmtbegin.jl")
 include("blocks.jl")
-#include("contourf.jl")
+include("contourf.jl")
 include("filter1d.jl")
 include("fitcircle.jl")
 include("gmt2kml.jl")
@@ -146,51 +141,48 @@ include("trend1d.jl")
 include("trend2d.jl")
 include("xyz2grd.jl")
 
-if (!foundGMT)
-	println("\n\nYou don't seem to have GMT installed and I don't currently install it automatically,")
-	println("so you will have to do it yourself. Please follow instructions bellow but please note")
-	println("that since GMT is migrating to Github (https://github.com/GenericMappingTools/gmt),")
-	println("some of the links may change in a near future.\n\n")
-	if (Sys.iswindows() && Sys.WORD_SIZE == 64)
-		println("1) Download and install the official version at (the '..._win64.exe':")
-		println("\t\t https://github.com/GenericMappingTools/gmt/releases")
-	elseif (Sys.iswindows() && Sys.WORD_SIZE == 32)
-		println("Download and install the official version at (the '..._win32.exe':")
-		println("\t\t https://github.com/GenericMappingTools/gmt/releases")
-	else
-		println("https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md")
+function __init__()
+	if (GMTver == 0.0)
+		println("\n\nYou don't seem to have GMT installed and I don't currently install it automatically,")
+		println("so you will have to do it yourself. Please follow instructions bellow.")
+		if (Sys.iswindows() && Sys.WORD_SIZE == 64)
+			println("1) Download and install the official version at (the '..._win64.exe':")
+			println("\t\t https://github.com/GenericMappingTools/gmt/releases")
+		elseif (Sys.iswindows() && Sys.WORD_SIZE == 32)
+			println("Download and install the official version at (the '..._win32.exe':")
+			println("\t\t https://github.com/GenericMappingTools/gmt/releases")
+		else
+			println("https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md")
+		end
+		return
+	elseif (5 <= GMTver < 6.0)
+		println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must uptdate.")
+		return
+	end
+	try			# Becuse the sessions dir may not exist 
+	if (GMTver >= 6.1)		# Delete stray sessions left behind by old failed process. Thanks to @htyeim
+		sp = readlines(`gmt --show-userdir`)[1] * "/sessions"
+		dirs = readdir(sp)
+		session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
+		n = datetime2unix(now(UTC))
+		for sd in session_dirs
+			fp = joinpath(sp, sd)
+			if n - mtime(fp) > 3600 		# created 1 hour before
+				rm(fp, recursive = true)
+			end
+		end			
+	end
+	catch
+	end
+	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
+	if (API == C_NULL)  error("Failure to create a GMT Session")  end
+	try
+		FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]
+	catch
 	end
 end
 
-function __init__()
-	try
-		ver = Meta.parse(readlines(`gmt --version`)[1][1:3])
-		if (ver != GMTver && abs(ver - GMTver) > 0.5)	# Warn only when detecting a GMT5 vs GMT6 change
-			t = joinpath(homedir(), ".julia", "compiled", "v1.xxx", "GMT")
-			println("\n\tYou seem to have changed your installed GMT version. Current version")
-			println("\treports to be $ver but previously it was $GMTver. To fix this you need to")
-			println("\tmake sure that GMT.jl recompiles again, otherwise fatal errors may occur.")
-			println("\tPlease delete the contents of the\n\n\t\t$t\n\n\tdirectory and start a new Julia session.")
-		end
-		if (GMTver >= 6.1)		# Delete stray sessions left behind by old failed process. Thanks to @htyeim
-			sp = readlines(`gmt --show-userdir`)[1] * "/sessions"
-			dirs = readdir(sp)
-			session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
-			n = datetime2unix(now(UTC))
-			for sd in session_dirs
-				fp = joinpath(sp, sd)
-				if n - mtime(fp) > 3600 # created 1 hour before
-					rm(fp, recursive = true)
-				end
-			end			
-		end
-	catch
-	end
-	try
-		FMT[1] = ENV["JULIA_GMT_IMGFMT"]
-	catch
-	end
-end
+include("get_enums.jl")
 
 include("precompile_GMT_i.jl")
 _precompile_()

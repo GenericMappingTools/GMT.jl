@@ -26,7 +26,7 @@ Parameters
 - **G** | **bit_color** :: [Type => Int]
 
     ($(GMTdoc)grdimage.html#g)
-- **I** | **shade** | **intensity** :: [Type => Bool | Str | GMTgrid]
+- **I** | **shade** | **shading** | **intensity** :: [Type => Bool | Str | GMTgrid]
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
@@ -81,7 +81,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		end
 	end
 
-	#if (GMTver > 6 && occursin("earth_relief_", cmd0))  push!(d, :this_cpt => "geo")  end	# Make this the default CPT
+	#if (GMTver >= 6.1 && occursin("earth_relief_", cmd0))  push!(d, :this_cpt => "geo")  end	# Make this the default CPT
 
 	cmd, N_used, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
@@ -106,13 +106,13 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 	# Used both by grdimage and grdview
-	if ((val = find_in_dict(d, [:I :shade :intensity], false)[1]) !== nothing)
+	if ((val = find_in_dict(d, [:I :shade :shading :intensity], false)[1]) !== nothing)
 		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
 			if (isa(val, String) || isa(val, Symbol) || isa(val, Bool))
 				val = arg2str(val)
 				(val == "" || val == "default" || val == "auto") ? cmd *= " -I+a-45+nt1" : cmd *= " -I" * val
 			else
-				cmd = add_opt(cmd, 'I', d, [:I :shade :intensity],
+				cmd = add_opt(cmd, 'I', d, [:I :shading :shade :intensity],
 							  (auto="_+", azim="+a", azimuth="+a", norm="+n", default="_+d+a-45+nt1"))
 			end
 		else
@@ -125,7 +125,7 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 			elseif (N_used == 4)  arg4 = val	# grdview doesn't have this case but no harm to not test for that
 			end
 		end
-		del_from_dict(d, [:I :shade :intensity])
+		del_from_dict(d, [:I :shade :shading :intensity])
 	end
 	return cmd, arg1, arg2, arg3, arg4
 end

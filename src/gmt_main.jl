@@ -118,12 +118,8 @@ function gmt(cmd::String, args...)
 		end
 	end
 
-	try
-		a = API
-		if (!isa(API, Ptr{Nothing}))  error("The 'API' is not a Ptr{Nothing}. Creating a new one.")  end
-	catch
-		API = GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL
-		                         + GMT.GMT_SESSION_COLMAJOR)
+	if (!isa(API, Ptr{Nothing}) || API == C_NULL)
+		API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 		if (API == C_NULL)  error("Failure to create a GMT Session")  end
 	end
 
@@ -133,9 +129,7 @@ function gmt(cmd::String, args...)
 	end
 
 	# 2. In case this was a clean up call or a begin/end from the modern mode
-	if (GMTver >= 6.0)
-		gmt_manage_workflow(API, 0, NULL)		# Force going here to see if we are in middle of a MODERN session
-	end
+	gmt_manage_workflow(API, 0, NULL)		# Force going here to see if we are in middle of a MODERN session
 
 	# Make sure this is a valid module
 	if ((status = GMT_Call_Module(API, g_module, GMT_MODULE_EXIST, C_NULL)) != 0)
@@ -238,9 +232,8 @@ function gmt(cmd::String, args...)
 
 	# 6. Run GMT module; give usage message if errors arise during parsing
 	status = GMT_Call_Module(API, g_module, GMT_MODULE_OPT, LL)
-	if (status != GMT_NOERROR)
-		if (status == GMT_SYNOPSIS || status == GMT_OPT_USAGE || status == GMT_MODULE_USAGE ||
-			status == GMT_MODULE_SYNOPSIS || status == GMT_MODULE_LIST || status == GMT_MODULE_PURPOSE)
+	if (status != 0)
+		if ((status < 0) || status == GMT_SYNOPSIS || status == Int('?'))
 			return
 		end
 		error("Something went wrong when calling the module. GMT error number = ", status)
@@ -271,7 +264,7 @@ function gmt(cmd::String, args...)
 		ppp = X[k].object
 		name = String([X[k].name...])				# Because X.name is a NTuple
 		if (GMT_Close_VirtualFile(API, name) != 0)  error("GMT: Failed to close virtual file")  end
-		if (GMT_Destroy_Data(API, Ref([X[k].object], 1)) != GMT_NOERROR)
+		if (GMT_Destroy_Data(API, Ref([X[k].object], 1)) != 0)
 			error("Failed to destroy object used in the interface bewteen GMT and Julia")
 		else 		# Success, now make sure we dont destroy the same pointer more than once
 			for kk = k+1:n_items
@@ -519,11 +512,7 @@ function get_image(API::Ptr{Nothing}, object)
 	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, "", X, Y,
 	               t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
 
-	if (GMTver < 6)
-		I.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# So that GMT's Garbageman does not free I.data
-	else
-		GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
-	end
+	GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
@@ -593,92 +582,6 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
 	out.hinge = (C.has_hinge != 0) ? C.hinge : NaN;
 
 	return out
-end
-
-# ---------------------------------------------------------------------------------------------------
-function get_textset_(API::Ptr{Nothing}, object::Ptr{Nothing})
-# Given a GMT GMT_TEXTSET T, build a Julia array of segment structure and assign values.
-# Each segment will have 6 items:
-# header:	Text string with the segment header (could be empty)
-# data:	Matrix with any converted data for this segment (n_rows by n_columns)
-# text:	Cell array with the text items
-# comment:	Cell array with any comments
-# proj4:	String with any proj4 information
-# wkt:		String with any WKT information
-
-	if (object == C_NULL)  error("programming error, textset is NULL")  end
-
-	T = unsafe_load(convert(Ptr{GMT_TEXTSET}, object))		# GMT_TEXTSET
-	flag = [GMT.GMT_LAX_CONVERSION, 0, 0]
-	n_columns = 0
-	have_numerical = false
-
-	D = GMT_Convert_Data(API, object, GMT_IS_TEXTSET, NULL, GMT_IS_DATASET, Ref(pointer(flag),1))	# Ptr{Nothing}
-
-	if (D != NULL)											# Ptr{GMT_DATASET}
-		DS = unsafe_load(convert(Ptr{GMT_DATASET}, D))		# GMT_DATASET
-		Dtab = unsafe_load(unsafe_load(DS.table))			# GMT_DATATABLE
-		Dseg = unsafe_load(unsafe_load(Dtab.segment))		# GMT_DATASEGMENT
-		pCols = pointer_to_array(Dseg.data, DS.n_columns)	# Pointer to the columns
-		for col = 1:DS.n_columns							# Now determine number of non-NaN columns from first row
-			if (!isnan(unsafe_load(pCols[col])))  n_columns = n_columns + 1  end
-		end
-		have_numerical = true
-	end
-
-	seg_out = 0
-	for tbl = 1:T.n_tables
-		Ttab = unsafe_load(unsafe_load(T.table), tbl)	# GMT.GMT_TEXTTABLE
-		for seg = 1:Ttab.n_segments
-			Ttab_Seg = unsafe_load(unsafe_load(Ttab.segment), seg)		# GMT_TEXTSEGMENT
-			if (Ttab_Seg.n_rows > 0)  seg_out = seg_out + 1  end
-		end
-	end
-
-	Ttab_1 = unsafe_load(unsafe_load(T.table), 1)
-	n_headers = Ttab_1.n_headers
-
-	Darr = [GMTdataset() for i = 1:seg_out]			# Create the array of DATASETS
-
-	seg_out = 1
-	Tab = unsafe_wrap(Array, T.table, T.n_tables)		# D.n_tables-element Array{Ptr{GMT.GMT_DATATABLE},1}
-	for tbl = 1:T.n_tables
-		Ttab = unsafe_load(unsafe_load(T.table), tbl)	# GMT.GMT_TEXTTABLE
-		for seg = 1:Ttab.n_segments
-			Ttab_Seg = unsafe_load(unsafe_load(Ttab.segment), seg)		# GMT_TEXTSEGMENT
-			if (Ttab_Seg.n_rows == 0)	continue 	end # Skip empty segments
-
-			if (have_numerical)							# We have numerial data to consider
-				Dtab_Seg = unsafe_load(unsafe_load(Dtab.segment), seg)	# Shorthand to the corresponding data segment
-				dest = zeros(Ttab_Seg.n_rows, n_columns)
-				for col = 1:n_columns					# Copy the data columns
-					unsafe_copy!(pointer(dest, Ttab_Seg.n_rows * (col - 1) + 1), unsafe_load(Dtab_Seg.data, col), Ttab_Seg.n_rows)
-				end
-				Darr[seg].data = dest
-			end
-
-			if (!have_numerical)
-				dest = Array{String}(undef, Ttab_Seg.n_rows)
-				for row = 1:Ttab_Seg.n_rows
-					t = unsafe_load(Ttab_Seg.data, row)	# Ptr{UInt8}
-					dest[row] = unsafe_string(t)
-				end
-				Darr[seg_out].text = dest
-			end
-
-			#headers = pointer_to_array(Ttab_1.header, Ttab_1.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
-			headers = unsafe_wrap(Array, Ttab_1.header, Ttab_1.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
-			dest = Array{String}(undef, length(headers))
-			for k = 1:n_headers
-				dest[k] = unsafe_string(headers[k])
-			end
-			Darr[seg_out].comment = dest
-
-			seg_out = seg_out + 1
-		end
-	end
-
-	return Darr
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -782,16 +685,9 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr)
 		X.object = image_init(API, module_input, ptr, X.direction)
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
 		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
-		if (GMTver < 6.0 && X.direction == GMT_IN && (isa(ptr, Array{Any}) || (eltype(ptr) == String)))	# Got text input
-			X.object = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
-			actual_family = GMT_IS_TEXTSET
-		else		# Got something for which a dataset container is appropriate
-			actual_family = [GMT_IS_DATASET]		# Default but may change to matrix
-			X.object = dataset_init_(API, module_input, ptr, X.direction, actual_family)
-		end
+		actual_family = [GMT_IS_DATASET]		# Default but may change to matrix
+		X.object = dataset_init_(API, module_input, ptr, X.direction, actual_family)
 		X.family = actual_family[1]
-	elseif (GMTver < 6.0 && X.family == GMT_IS_TEXTSET)		# Get a textset from Julia or a dummy one to hold GMT output
-		X.object = text_init_(API, module_input, ptr, X.direction, GMT_IS_TEXTSET)
 	elseif (X.family == GMT_IS_PALETTE)		# Get a palette from Julia or a dummy one to hold GMT output
 		X.object = palette_init(API, module_input, ptr, X.direction)
 	elseif (X.family == GMT_IS_POSTSCRIPT)	# Get a PostScript struct from Matlab or a dummy one to hold GMT output
@@ -802,10 +698,10 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr)
 	if (X.object == NULL)	error("GMT: Failure to register the resource")	end
 
 	name = String([X.name...])
-	if (GMT_Open_VirtualFile(API, X.family, X.geometry, X.direction, X.object, name) != GMT_NOERROR) # Make filename with embedded object ID */
+	if (GMT_Open_VirtualFile(API, X.family, X.geometry, X.direction, X.object, name) != 0) # Make filename with embedded object ID */
 		error("GMT: Failure to open virtual file")
 	end
-	if (GMT_Expand_Option(API, X.option, name) != GMT_NOERROR)	# Replace ? in argument with name
+	if (GMT_Expand_Option(API, X.option, name) != 0)	# Replace ? in argument with name
 		error("GMT: Failure to expand filename marker (?)")
 	end
 	X.name = map(UInt8, (name...,))
@@ -824,8 +720,6 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 		ptr = get_grid(API, X.object)
 	elseif (X.family == GMT_IS_DATASET)		# A GMT table; make it a matrix and the pos'th output item
 		ptr = get_dataset(API, X.object)
-	elseif (GMTver < 6.0 && X.family == GMT_IS_TEXTSET)		# A GMT textset; make it a cell and the pos'th output item
-		ptr = get_textset_(API, X.object)
 	elseif (X.family == GMT_IS_PALETTE)		# A GMT CPT; make it a colormap and the pos'th output item
 		ptr = get_palette(API, X.object)
 	elseif (X.family == GMT_IS_IMAGE)		# A GMT Image; make it the pos'th output item
@@ -950,11 +844,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	if (size(Img.alpha) != (1,1))  Ib.alpha = pointer(Img.alpha)
 	else                           Ib.alpha = C_NULL
 	end
-	if (GMTver < 6)
-		Ib.alloc_mode = UInt32(GMT.GMT_ALLOC_EXTERNALLY)	# Since array was allocated by Julia
-	else
-		GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)
-	end
+	GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)
 	h = unsafe_load(Ib.header)
 	h.z_min = Img.range[5]			# Set the z_min, z_max
 	h.z_max = Img.range[6]
@@ -1048,12 +938,10 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 			end
 		end
 
-		if (GMTver >= 6.0)
-			if (mode == GMT_WITH_STRINGS)
-				DS.type_ = (DS.n_columns != 0) ? GMT_READ_MIXED : GMT_READ_TEXT
-			else
-				DS.type_ = GMT_READ_DATA
-			end
+		if (mode == GMT_WITH_STRINGS)
+			DS.type_ = (DS.n_columns != 0) ? GMT_READ_MIXED : GMT_READ_TEXT
+		else
+			DS.type_ = GMT_READ_DATA
 		end
 
 		unsafe_store!(S, Sb)
@@ -1076,15 +964,11 @@ function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, 
 
 	if (direction == GMT_IN) 	# Dimensions are known, extract them and set dim array for a GMT_MATRIX resource */
 		dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
-		if (GMTver < 6.0)
-			M = GMT_Create_Data(API, GMT_IS_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)
-		else
-			M = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)
-			actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
-		end
+		M = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)
+		actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
 
 		Mb = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)
-		tipo = get_datatype(ptr)
+		#tipo = get_datatype(ptr)
 		Mb.n_rows    = size(ptr,1)
 		Mb.n_columns = size(ptr,2)
 
@@ -1105,11 +989,7 @@ function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, 
 		end
 		Mb.data = pointer(ptr)
 		Mb.dim  = Mb.n_rows		# Data from Julia is in column major
-		if (GMTver < 6)
-			Mb.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY;	# Since matrix was allocated by Julia
-		else
-			GMT_Set_AllocMode(API, GMT_IS_MATRIX, M)
-		end
+		GMT_Set_AllocMode(API, GMT_IS_MATRIX, M)
 		Mb.shape = GMT.GMT_IS_COL_FORMAT;			# Julia order is column major
 		unsafe_store!(M, Mb)
 		return M
@@ -1181,138 +1061,15 @@ function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
 		z_high = cpt.range[j,2]
 
 		annot = 3						# Enforce annotations for now
-		if (GMTver < 6.0)
-			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low,
-			              glut.hsv_high, glut.hsv_diff, annot, glut.skip, glut.fill, glut.label)
-		else
-			# For now send NULL for the new param 'key'
-			lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low,
-			              glut.hsv_high, glut.hsv_diff, annot, glut.skip, glut.fill, glut.label, NULL)
-		end
+		# For now send NULL for the new param 'key'
+		lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low,
+		              glut.hsv_high, glut.hsv_diff, annot, glut.skip, glut.fill, glut.label, NULL)
 
 		unsafe_store!(Pb.data, lut, j)
 	end
 	unsafe_store!(P, Pb)
 
 	return P
-end
-
-# ---------------------------------------------------------------------------------------------------
-function text_init_(API::Ptr{Nothing}, module_input, Darr, dir::Integer, family::Integer=GMT_IS_TEXTSET)
-#
-if (GMTver < 6.0)
-	if (dir == GMT_OUT)
-		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
-		return GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, GMT_CREATE_MODE, NULL, NULL, NULL, 0, 0, NULL)
-	end
-
-	if (isa(Darr, Array{GMTdataset,1}))
-		dim = [1 0 0]
-		dim[GMT.GMT_SEG+1] = length(Darr)		# Number of segments
-		if (dim[GMT.GMT_SEG+1] == 0) error("Input has zero segments where it can't be")	end
-		pdim = pointer(dim)
-		T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_PLP, 0, pdim, C_NULL, C_NULL, 0, 0, C_NULL)
-
-		TS = unsafe_load(convert(Ptr{GMT_TEXTSET}, T))
-		TT = unsafe_load(unsafe_load(TS.table))				# GMT.GMT_TEXTTABLE
-
-		for seg = 1:dim[GMT.GMT_SEG+1] 						# Each incoming structure is a new data segment
-			dim[GMT.GMT_ROW+1] = size(Darr[seg].data, 1)	# Number of rows in matrix
-			TSv = convert(Ptr{Nothing}, unsafe_load(TT.segment, seg))		# TT.segment = Ptr{Ptr{GMT.GMT_TEXTSEGMENT}}
-
-			if (length(Darr[seg].text) == 0)
-				add_text = false
-			else
-				dim[GMT_ROW+1] = size(Darr[seg].text,1)		# Number of rows found
-				add_text = true
-			end
-			n_cols = size(Darr[seg].data, 2)				# Number of data cols, if any
-
-			# Allocate new text segment and hook it up to the table
-			S = GMT_Alloc_Segment(API, GMT_IS_TEXTSET, dim[GMT.GMT_ROW+1], 0, Darr[seg].header, TSv) # Ptr{GMT_TEXTSET}
-			Sb = unsafe_load(S)								# GMT_TEXTSEGMENT;		Sb.data -> Ptr{Ptr{UInt8}}
-
-			# Combine any data and cell arrays into text records
-			for row = 1:Sb.n_rows
-				# First deal with the [optional] data matrix for leading columns
-				if (n_cols > 0)
-					buff = join([@sprintf("%s\t", Darr[seg].data[row,k]) for k=1:n_cols])
-				end
-				if (add_text)  buff = buff * Darr[seg].text[row]	# Then append the optional text strings
-				else           buff = rstrip(buff)					# Strip last '\t'
-				end
-				unsafe_store!(Sb.data, GMT_Duplicate_String(API, buff), row)	# This allows shared mem
-			end
-
-			if (seg == 1 && length(Darr[1].comment) > 0)	# First segment may have dataset information
-				for k = 1:size(Darr[1].comment,1)
-					if (GMT_Set_Comment(API, GMT_IS_TEXTSET, GMT_COMMENT_IS_TEXT, convert(Ptr{Nothing}, pointer(Darr[1].comment[k])),
-					                    convert(Ptr{Nothing}, T)) != 0)
-						println("text_init_: Failed to set a textset header")
-					end
-				end
-			end
-			unsafe_store!(S, Sb)
-			unsafe_store!(TT.segment, S, seg)
-		end
-	else
-		T = text_init(API, module_input, Darr, dir)
-	end
-
-	return T
-end
-end
-
-# ---------------------------------------------------------------------------------------------------
-function text_init(API::Ptr{Nothing}, module_input, txt, dir::Integer, family::Integer=GMT_IS_TEXTSET)
-	# Used to Create an empty Textset container to hold a GMT TEXTSET.
- 	# If direction is GMT_IN then we are given a Julia cell array and can determine its size, etc.
-	# If direction is GMT_OUT then we allocate an empty GMT TEXTSET as a destination.
-
-	# Disclaimer: This code is absolutely diabolic. Thanks to immutables.
-
-	if (dir == GMT_IN)	# Dimensions are known from the input pointer
-
-		#if (module_input) family |= GMT_VIA_MODULE_INPUT;	gmtmex_parser.c has this which is not ported yet
-
-		if (!isa(txt, Array{String}) && isa(txt, String))
-			txt = [txt]
-		elseif (isa(txt[1], Number))
-			txt = num2str(txt)			# Convert the numeric matrix into a cell array of strings
-		end
-		if (VERSION.minor > 4)
-			if (!isa(txt, Array{String}) && !(eltype(txt) == String))
-				error(@sprintf("Expected a Cell array or a String for input, got a \"%s\"", typeof(txt)))
-			end
-		end
-
-		dim = [1 1 0]
-		dim[3] = size(txt, 1)
-		if (dim[3] == 1)                # Check if we got a transpose arrangement or just one record
-			rec = size(txt, 2)          # Also possibly number of records
-			if (rec > 1) dim[3] = rec end  # User gave row-vector of cells
-		end
-
-		T = GMT_Create_Data(API, family, GMT_IS_NONE, 0, pointer(dim), C_NULL, C_NULL, 0, 0, C_NULL)
-		mutateit(API, T, "alloc_mode", GMT_ALLOC_EXTERNALLY)	# Don't know if this is still used
-
-		T0 = unsafe_load(T)				# GMT.GMT_TEXTSET
-
-		TTABLE  = unsafe_load(unsafe_load(T0.table,1),1)		# ::GMT.GMT_TEXTTABLE
-		S0 = unsafe_load(unsafe_load(TTABLE.segment,1),1)		# ::GMT.GMT_TEXTSEGMENT
-
-		for rec = 1:dim[3]
-			unsafe_store!(S0.data, pointer(txt[rec]), rec)
-		end
-
-		mutateit(API, unsafe_load(TTABLE.segment,1), "n_rows", dim[3])
-
-	else 	# Just allocate an empty container to hold an output grid (signal this by passing NULLs)
-		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
-		T = GMT_Create_Data(API, GMT_IS_TEXTSET, GMT_IS_NONE, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
-	end
-
-	return T
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1336,12 +1093,7 @@ function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
 	P0.n_bytes = ps.length
 	P0.mode = ps.mode
 	P0.data = pointer(ps.postscript)
-	if (GMTver < 6)
-		P0.alloc_mode = GMT.GMT_ALLOC_EXTERNALLY 	# Hence we are not allowed to free it
-		P0.n_alloc = 0			# But nothing was actually allocated here - just passing pointer from Julia
-	else
-		GMT_Set_AllocMode(API, GMT_IS_POSTSCRIPT, P)
-	end
+	GMT_Set_AllocMode(API, GMT_IS_POSTSCRIPT, P)
 
 	unsafe_store!(P, P0)
 	return P
@@ -1413,28 +1165,9 @@ function convert_string(str)
 	end
 	out = join([Char(str.(n)) for n=1:k])
 end
-
-# ---------------------------------------------------------------------------------------------------
-function GMTJL_type(API::Ptr{Nothing})		# Set default export type
-	value = "        "		# 8 spaces
-	GMT_Get_Default(API, "GMT_EXPORT_TYPE", value)
-	if (strncmp(value, "double", 6)) return DOUBLE_CLASS	end
-	if (strncmp(value, "single", 6)) return SINGLE_CLASS	end
-	if (strncmp(value, "long",   4)) return  INT64_CLASS	end
-	if (strncmp(value, "ulong",  5)) return UINT64_CLASS	end
-	if (strncmp(value, "int",    3)) return  INT32_CLASS	end
-	if (strncmp(value, "uint",   4)) return UINT32_CLASS	end
-	if (strncmp(value, "short",  5)) return  INT16_CLASS	end
-	if (strncmp(value, "ushort", 6)) return UINT16_CLASS	end
-	if (strncmp(value, "char",   4)) return   INT8_CLASS	end
-	if (strncmp(value, "uchar",  5)) return  UINT8_CLASS	end
-
-	println("Unable to interpret GMT_EXPORT_TYPE - Default to double")
-	return DOUBLE_CLASS
-end
 =#
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function get_datatype(var)
 # Get the data type of VAR
 	if (eltype(var) == Float64) return DOUBLE_CLASS	end
@@ -1452,6 +1185,7 @@ function get_datatype(var)
 	println("Unable to discovery this data type - Default to double")
 	return DOUBLE_CLASS
 end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function strncmp(str1, str2, num)
@@ -1517,24 +1251,6 @@ end
 function text_record(data, text, hdr=nothing)
 	# Create a text record to send to pstext. DATA is the Mx2 coordinates array.
 	# TEXT is a string or a cell array
-	if (GMTver < 6.0)		# Convert to the old cell array of strings format
-		if (!isempty(data))
-			nl = size(data,1)
-			t = Array{String}(undef,nl,1)
-			if (nl == 1)
-				t[1] = string(@sprintf("%.10g %.10g", data[1,1], data[1,2]), " ", text)
-			else
-				for k = 1:nl
-					t[k] = @sprintf("%.10g %.10g %s", data[k,1], data[k,2], text[k])
-				end
-			end
-		else
-			if (isa(text, String))  t = [text]
-			else					t = text
-			end
-		end
-		return t
-	end
 
 	if (isa(data, Array{Float64,1}))  data = data[:,:]  end 	# Needs to be 2D
 

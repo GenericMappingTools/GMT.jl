@@ -14,13 +14,11 @@ if (got_it)					# Otherwise go straight to end
 	const dbg2 = 3			# Either 2 or 3. 3 to test the used kwargs
 	const dbg0 = 0			# With 0 prints only the non-consumed options. Set to -1 to ignore this Vd
 
-	if (GMTver >= 6)
-		GMT.GMT_Get_Version();
-		ma=[0];mi=[0];pa=[0];
-		GMT.GMT_Get_Version(ma,mi,pa);
-		API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
-		GMT.GMT_Get_Ctrl(API);
-	end
+	GMT.GMT_Get_Version();
+	ma=[0];mi=[0];pa=[0];
+	GMT.GMT_Get_Version(ma,mi,pa);
+	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
+	GMT.GMT_Get_Ctrl(API);
 
 	# -------------------- Test common_options ----------------------------------------
 	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)))[1] == " -R1/2/3/4/5/6"
@@ -213,7 +211,6 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_j("", Dict(:spheric_dist => "f"))[1] == " -jf"
 	@test GMT.parse_t("", Dict(:t=>0.2))[1] == " -t20.0"
 	@test GMT.parse_t("", Dict(:t=>20))[1]  == " -t20"
-	GMT.auto_JZ("");
 	GMT.helper2_axes("");
 	@test GMT.axis(ylabel="bla") == " -Bpy+lbla";
 	@test GMT.axis(Yhlabel="bla") == " -Bpy+Lbla";
@@ -260,6 +257,15 @@ if (got_it)					# Otherwise go straight to end
 	D = blockmean(region=[0 2 0 2], inc=1,  reg=true, d);
 	D = blockmode(region=[0 2 0 2], inc=1,  reg=true, d);
 
+	println("	CONTOURF")
+	# CONTOURF
+	G = GMT.peaks();
+	C = makecpt(T=(-7,9,2));
+	contourf(G, Vd=dbg2)
+	contourf(G, C, contour=[-2, 0, 2, 5], Vd=dbg2)
+	d = [0 2 5; 1 4 5; 2 0.5 5; 3 3 9; 4 4.5 5; 4.2 1.2 5; 6 3 1; 8 1 5; 9 4.5 5];
+	contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), Vd=dbg2)
+
 	# FILTER1D
 	filter1d([collect((1.0:50)) rand(50)], F="m15");
 
@@ -270,16 +276,14 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	GMT2KML & KML2GMT")
 	# GMT2KML & KML2GMT
-	if (GMTver >= 6)
-		D = gmt("pscoast -R-5/-3/56/58 -Jm1i -M -W0.25p -Di");
-		K = gmt2kml(D, F=:l, W=(1,:red));
-		gmtwrite("lixo.kml", K)
-		kml2gmt("lixo.kml", Z=true);
-		kml2gmt(nothing, "lixo.kml", Z=true);	# yes, cheating
-		gmtread("lixo.kml", Vd=dbg2);
-		#gmtread("lixo.kml");		# Because Travis CI oldness
-		rm("lixo.kml")
-	end
+	D = gmt("pscoast -R-5/-3/56/58 -Jm1i -M -W0.25p -Di");
+	K = gmt2kml(D, F=:l, W=(1,:red));
+	gmtwrite("lixo.kml", K)
+	kml2gmt("lixo.kml", Z=true);
+	kml2gmt(nothing, "lixo.kml", Z=true);	# yes, cheating
+	gmtread("lixo.kml", Vd=dbg2);
+	#gmtread("lixo.kml");		# Because Travis CI oldness
+	rm("lixo.kml")
 
 	println("	GMTCONNECT")
 	# GMTCONNECT
@@ -336,30 +340,25 @@ if (got_it)					# Otherwise go straight to end
 	println("	GMTREADWRITE")
 	# GMTREADWRITE
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
-	if (GMTver >= 6)
-		gmtwrite("lixo.grd", G,  scale=10, offset=-10)
-		GG = gmtread("lixo.grd", grd=true, varname=:z);
-		GG = gmtread("lixo.grd", varname=:z);
-		GG = gmtread("lixo.grd", grd=true, layout=:TR);
-		GG = gmtread("lixo.grd", grd=true, layout=:TC);
-		#GG = gmtread("lixo.grd", grd=true, layer=1);	# This crashes GMT or GDAL in Linux
-		@test(sum(G.z[:] - GG.z[:]) == 0)
-		gmtwrite("lixo.grd", rand(5,5), id=:cf, layout=:TC)
-		gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
-		I = gmtread("lixo.tif", img=true, layout="TCP");
-		I = gmtread("lixo.tif", img=true, band=0);
-		I = gmtread("lixo.tif", img=true, band=[0 1 2]);
-		show(I);
-		imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
-		gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
-		@test GMT.parse_grd_format(Dict(:nan => 0)) == "+n0"
-		@test_throws ErrorException("Number of bands in the 'band' option can only be 1 or 3") GMT.gmtread("", band=[1 2])
-		@test_throws ErrorException("Format code MUST have 2 characters and not bla") GMT.parse_grd_format(Dict(:id => "bla"))
-		r = rand(UInt8(0):UInt8(10),10,10);	C=makecpt(range=(0,11,1));	I = mat2img(r, cmap=C);
-	else
-		gmtwrite("lixo.grd", G)
-		GG = gmtread("lixo.grd", grd=true, varname=:z);
-	end
+	gmtwrite("lixo.grd", G,  scale=10, offset=-10)
+	GG = gmtread("lixo.grd", grd=true, varname=:z);
+	GG = gmtread("lixo.grd", varname=:z);
+	GG = gmtread("lixo.grd", grd=true, layout=:TR);
+	GG = gmtread("lixo.grd", grd=true, layout=:TC);
+	#GG = gmtread("lixo.grd", grd=true, layer=1);	# This crashes GMT or GDAL in Linux
+	@test(sum(G.z[:] - GG.z[:]) == 0)
+	gmtwrite("lixo.grd", rand(5,5), id=:cf, layout=:TC)
+	gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
+	I = gmtread("lixo.tif", img=true, layout="TCP");
+	I = gmtread("lixo.tif", img=true, band=0);
+	I = gmtread("lixo.tif", img=true, band=[0 1 2]);
+	show(I);
+	imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
+	gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
+	@test GMT.parse_grd_format(Dict(:nan => 0)) == "+n0"
+	@test_throws ErrorException("Number of bands in the 'band' option can only be 1 or 3") GMT.gmtread("", band=[1 2])
+	@test_throws ErrorException("Format code MUST have 2 characters and not bla") GMT.parse_grd_format(Dict(:id => "bla"))
+	r = rand(UInt8(0):UInt8(10),10,10);	C=makecpt(range=(0,11,1));	I = mat2img(r, cmap=C);
 	@test_throws ErrorException("Must select one input data type (grid, image, dataset, cmap or ps)") GG = gmtread("lixo.gr");
 	cpt = makecpt(T="-6/8/1");
 	gmtwrite("lixo.cpt", cpt)
@@ -407,15 +406,13 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	GRDBLEND")
 	# GRDBLEND
-	if (GMTver >= 6)
-		println("	GRD2KML")
-		# GRD2KML
-		G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");
-		grd2kml(G, I="+", N="NULL", V="q")
+	println("	GRD2KML")
+	# GRD2KML
+	G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");
+	grd2kml(G, I="+", N="NULL", V="q")
 
-		G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y");
-		G2=grdblend(G,G3);
-	end
+	G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y");
+	G2=grdblend(G,G3);
 
 	println("	GRDCLIP")
 	# GRDCLIP
@@ -439,11 +436,9 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(r, "grdcontour lixo.grd  -JX12c/0 -Baf -BWSen -A50+f7p -Gd4i -Wcthinnest,- -Wathin,-")
 	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
-	if (GMTver >= 6)
-		grdcontour(G, axis="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[])
-		grdcontour!(G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=true, Vd=dbg2)
-		grdcontour!("", G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=dbg2)
-	end
+	grdcontour(G, axis="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[])
+	grdcontour!(G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=true, Vd=dbg2)
+	grdcontour!("", G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=dbg2)
 
 	println("	GRDCUT")
 	# GRDCUT
@@ -473,9 +468,7 @@ if (got_it)					# Otherwise go straight to end
 	println("	GRDGRADIENT")
 	# GRDGRADIENT
 	G2=grdgradient(G, azim="0/270", normalize="e0.6");
-	if (GMTver >= 6)
-		G2=grdgradient(G, azim="0/270", normalize="e0.6", Q=:save, Vd=dbg2);
-	end
+	G2=grdgradient(G, azim="0/270", normalize="e0.6", Q=:save, Vd=dbg2);
 
 	println("	GRDHISTEQ")
 	# GRDHISTEQ
@@ -535,7 +528,7 @@ if (got_it)					# Otherwise go straight to end
 	grdvector(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
 	grdvector!(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), W="1p", S=12, Vd=dbg2)
 	r = grdvector!("",dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65), W="1p", S=12, Vd=dbg2);
-	if (GMTver >= 6)  @test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.65 -W1p")  end
+	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.65 -W1p")
 	r = grdvector!("", 1, 2, I=0.2, vec="0.25+e+n0.66", W=1, S=12, Vd=dbg2);
 	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.66 -W1")
 
@@ -576,13 +569,11 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(grdview(G, surf=(waterfall=:rows,), Vd=dbg2), "grdview  -JX12c/0 -Baf -Bza -BWSenZ -Qmy")
 	@test startswith(grdview(G, surf=(waterfall=(rows=true, fill=:red),), Vd=dbg2), "grdview  -JX12c/0 -Baf -Bza -BWSenZ -Qmyred")
 	@test_throws ErrorException("Wrong way of setting the drape (G) option.")  grdview(rand(16,16), G=(1,2))
-	if (GMTver >= 6)		# Crashes GMT5
-		I = mat2grid(rand(Float32,128,128));
-		grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
-		gmtwrite("lixo.grd", I)
-		grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
-		grdview(rand(128,128), G="lixo", I=I, J=:X12, JZ=5, Q=:i, view="145/30", Vd=dbg2)
-	end
+	I = mat2grid(rand(Float32,128,128));
+	grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
+	gmtwrite("lixo.grd", I)
+	grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
+	grdview(rand(128,128), G="lixo", I=I, J=:X12, JZ=5, Q=:i, view="145/30", Vd=dbg2)
 
 	println("	GREENSPLINE")
 	# GREENSPLINE
@@ -595,19 +586,15 @@ if (got_it)					# Otherwise go straight to end
 	imshow(rand(128,128), view=:default, Vd=dbg2)
 	imshow(G, axis=:a, shade="+a45",show=false, contour=true)
 	imshow(rand(128,128), shade="+a45",show=false)
-	if (GMTver >= 6)
-		imshow("lixo.tif",show=false)
-		imshow(rand(UInt8(0):UInt8(255),256,256), colorbar=true, show=false)
-		imshow(rand(UInt8(0):UInt8(255),256,256), colorbar="bottom", show=false)
-	end
+	imshow("lixo.tif",show=false)
+	imshow(rand(UInt8(0):UInt8(255),256,256), colorbar=true, show=false)
+	imshow(rand(UInt8(0):UInt8(255),256,256), colorbar="bottom", show=false)
 
 	println("	MAKECPT")
 	# MAKECPT
 	cpt = makecpt(range="-1/1/0.1");
-	if (GMTver >= 6)
-		makecpt(rand(10,1), E="", C=:rainbow);
-		@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
-	end
+	makecpt(rand(10,1), E="", C=:rainbow);
+	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
 
 	println("	MAPPROJECT")
 	# MAPPROJECT
@@ -739,12 +726,10 @@ if (got_it)					# Otherwise go straight to end
 	men_means, men_std = (20, 35, 30, 35, 27), (2, 3, 4, 1, 2);
 	x = collect(1:length(men_means));
 	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue, limits=(0.5,5.5,0,40), frame=:none, error_bars=(y=men_std,), Vd=dbg2)
-	if (GMTver >= 6)
-		T = mat2ds([1.0 0.446143; 2.0 0.581746; 3.0 0.268978], text=[" "; " "; " "]);
-		bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=dbg2)
-		T = mat2ds([1.0 0.446143 0; 2.0 0.581746 0; 3.0 0.268978 0], text=[" "; " "; " "]);
-		bar(T, color=:rainbow, figsize=(14,8), mz=[3 2 1], Vd=dbg2)
-	end
+	T = mat2ds([1.0 0.446143; 2.0 0.581746; 3.0 0.268978], text=[" "; " "; " "]);
+	bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=dbg2)
+	T = mat2ds([1.0 0.446143 0; 2.0 0.581746 0; 3.0 0.268978 0], text=[" "; " "; " "]);
+	bar(T, color=:rainbow, figsize=(14,8), mz=[3 2 1], Vd=dbg2)
 	mat2ds([0 0],["aa"]);
 
 	println("	BAR3")
@@ -766,17 +751,13 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("BAR3: When NOT providing *width* data must contain at least 5 columns.") bar3("lixo.gmt", dataset=true)
 
 	# Test ogrread. STUPID OLD Linux for travis is still on GDAL 1.11
-	if (GMTver >= 6)
-		#API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
-		#gmtread("lixo.gmt");
-	end
+	#API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
+	#gmtread("lixo.gmt");
 
 	println("	PROJECT")
 	# PROJECT
-	if (GMTver >= 6)
-		project(C="15/15", T="85/40", G="1/110", L="-20/60");	# Fails in GMT5
-		project(nothing, C="15/15", T="85/40", G="1/110", L="-20/60");	# bit of cheating
-	end
+	project(C="15/15", T="85/40", G="1/110", L="-20/60");	# Fails in GMT5
+	project(nothing, C="15/15", T="85/40", G="1/110", L="-20/60");	# bit of cheating
 
 	println("	PSBASEMAP")
 	# PSBASEMAP
@@ -820,10 +801,8 @@ if (got_it)					# Otherwise go straight to end
 	println("	PSCONVERT")
 	# PSCONVERT
 	gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
-	if (GMTver >= 6)
-		psconvert("lixo.ps", adjust=true, fmt="eps", C="-dDOINTERPOLATE")
-		psconvert("lixo.ps", adjust=true, fmt="eps", C=["-dDOINTERPOLATE" "-dDOINTERPOLATE"])
-	end
+	psconvert("lixo.ps", adjust=true, fmt="eps", C="-dDOINTERPOLATE")
+	psconvert("lixo.ps", adjust=true, fmt="eps", C=["-dDOINTERPOLATE" "-dDOINTERPOLATE"])
 	psconvert("lixo.ps", adjust=true, fmt="tif")
 	psconvert("lixo.ps", adjust=true, Vd=dbg2)
 	P = gmtread("lixo.ps", ps=true);
@@ -865,10 +844,8 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	PSIMAGE")
 	# PSIMAGE
-	if (GMTver >= 6)
-		psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
-		psimage!("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7, Vd=dbg2)
-	end
+	psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
+	psimage!("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7, Vd=dbg2)
 
 	println("	PSSCALE")
 	# PSSCALE
@@ -898,9 +875,7 @@ if (got_it)					# Otherwise go straight to end
 	rose(data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=1, D=1, S=4)
 	rose!(data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=dbg2)
 	rose!("",data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=dbg2)
-	if (GMTver >= 6)
-		rose(data, A=20, I=1);		# Broken in GMT5`
-	end
+	rose(data, A=20, I=1);		# Broken in GMT5`
 
 	println("	PSMASK")
 	# PSMASK
@@ -971,54 +946,52 @@ if (got_it)					# Otherwise go straight to end
 
 	# MODERN
 	println("	MODERN")
-	if (GMTver >= 6)
-		@test GMT.helper_sub_F("1/2") == "1/2"
-		println("    SUBPLOT1")
-		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), Vd=dbg2), "-F1/2")
-		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=("1i",2), Vd=dbg2), "-F1i/2")
-		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), figname="lixo.ps", Vd=dbg2), "-Ff1/2+f2,3/3,4,5")
-		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(width=1,height=5,fwidth=(0.5,1),fheight=(10,), fill=:red, outline=(3,:red)), Vd=dbg2), "-F1/5+f0.5,1/10+gred+p3,red")
-		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", dims=(panels=((2,4),(2.5,5,1.25)),fill=:red), Vd=dbg2), "-Fs2,4/2.5,5,1.25+gred")
-		@test endswith(subplot(grid=(1,1), limits="0/5/0/5", F=(panels=((5,8),8),), Vd=dbg2), "-Fs5,8/8")
-		@test GMT.helper_sub_F((width=1,)) == "1/0"
-		@test GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1),fheight=(10,))) == "1/5+f0.5,1/10"
-		@test_throws ErrorException("SUBPLOT: when using 'fwidth' must also set 'fheight'") GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1)))
-		@test_throws ErrorException("'frac' option must be a tuple(tuple, tuple)") subplot(grid=(1,1),  F=(size=(1,2), frac=((2,3))), Vd=dbg2)
-		@test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
-		@test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=dbg2)
-		@test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=dbg2)
-		println("    SUBPLOT2")
-		subplot(name="lixo", fmt=:ps, grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
-		gmtbegin("lixo.ps");  gmtend()
-		gmtbegin("lixo", fmt=:ps);  gmtend()
-		gmtbegin("lixo");  gmtend()
-		gmtbegin();  gmtend()
+	@test GMT.helper_sub_F("1/2") == "1/2"
+	println("    SUBPLOT1")
+	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), Vd=dbg2), "-F1/2")
+	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=("1i",2), Vd=dbg2), "-F1i/2")
+	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), figname="lixo.ps", Vd=dbg2), "-Ff1/2+f2,3/3,4,5")
+	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(width=1,height=5,fwidth=(0.5,1),fheight=(10,), fill=:red, outline=(3,:red)), Vd=dbg2), "-F1/5+f0.5,1/10+gred+p3,red")
+	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", dims=(panels=((2,4),(2.5,5,1.25)),fill=:red), Vd=dbg2), "-Fs2,4/2.5,5,1.25+gred")
+	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", F=(panels=((5,8),8),), Vd=dbg2), "-Fs5,8/8")
+	@test GMT.helper_sub_F((width=1,)) == "1/0"
+	@test GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1),fheight=(10,))) == "1/5+f0.5,1/10"
+	@test_throws ErrorException("SUBPLOT: when using 'fwidth' must also set 'fheight'") GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1)))
+	@test_throws ErrorException("'frac' option must be a tuple(tuple, tuple)") subplot(grid=(1,1),  F=(size=(1,2), frac=((2,3))), Vd=dbg2)
+	@test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
+	@test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=dbg2)
+	@test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=dbg2)
+	println("    SUBPLOT2")
+	subplot(name="lixo", fmt=:ps, grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
+	gmtbegin("lixo.ps");  gmtend()
+	gmtbegin("lixo", fmt=:ps);  gmtend()
+	gmtbegin("lixo");  gmtend()
+	gmtbegin();  gmtend()
 
-		println("    BEGINEND")
-		gmtbegin("lixo.ps")
-			basemap(region=(0,40,20,60), proj=:merc, figsize=16, frame=(annot=:afg, fill=:lightgreen))
-			inset(D="jTR+w2.5i+o0.2i", F="+gpink+p0.5p", margins=0.6)
-			basemap(region=:global360, J="A20/20/2i", frame=:afg)
-			text(text_record([1 1],["INSET"]), font=18, region_justify=:TR, D="j-0.15i", noclip=true)
-			inset(:end)
-			text(text_record([0 0; 1 1.1],[" ";" "]), text="MAP", font=18, region_justify=:BL, D="j0.2i")
-		gmtend()
+	println("    BEGINEND")
+	gmtbegin("lixo.ps")
+		basemap(region=(0,40,20,60), proj=:merc, figsize=16, frame=(annot=:afg, fill=:lightgreen))
+		inset(D="jTR+w2.5i+o0.2i", F="+gpink+p0.5p", margins=0.6)
+		basemap(region=:global360, J="A20/20/2i", frame=:afg)
+		text(text_record([1 1],["INSET"]), font=18, region_justify=:TR, D="j-0.15i", noclip=true)
+		inset(:end)
+		text(text_record([0 0; 1 1.1],[" ";" "]), text="MAP", font=18, region_justify=:BL, D="j0.2i")
+	gmtend()
 
-		gmtbegin(); gmtfig("lixo.ps");	gmtend()
+	gmtbegin(); gmtfig("lixo.ps");	gmtend()
 
-		println("    MOVIE")
-		movie("main_sc.jl", pre="pre_sc.jl", C="7.2ix4.8ix100", N=:anim04, T="flight_path.txt", L="f+o0.1i", F=:mp4, A="+l+s10", Sf="", Vd=dbg2)
-		@test GMT.helper_fgbg("", "bla", "bla", " -Sf") == " -Sfbla"
-		@test_throws ErrorException("bla script has nothing useful") GMT.helper_fgbg("", rand, "bla", " -Sf")
-		GMT.resetGMT()		# This one is needed to reset the broken state left by calling helper_fgbg() directly
-		if (Sys.iswindows())
-			rm("pre_script.bat");		rm("main_script.bat")
-		else
-			rm("pre_script.sh");		rm("main_script.sh")
-		end
-		println("    EVENTS")
-		events("", R=:g, J="G200/5/6i", B=:af, S="E-", C=true, T="2018-05-01T", E="s+r2+d6", M=((size=5,coda=0.5),(intensity=true,)), Vd=dbg2);
+	println("    MOVIE")
+	movie("main_sc.jl", pre="pre_sc.jl", C="7.2ix4.8ix100", N=:anim04, T="flight_path.txt", L="f+o0.1i", F=:mp4, A="+l+s10", Sf="", Vd=dbg2)
+	@test GMT.helper_fgbg("", "bla", "bla", " -Sf") == " -Sfbla"
+	@test_throws ErrorException("bla script has nothing useful") GMT.helper_fgbg("", rand, "bla", " -Sf")
+	GMT.resetGMT()		# This one is needed to reset the broken state left by calling helper_fgbg() directly
+	if (Sys.iswindows())
+		rm("pre_script.bat");		rm("main_script.bat")
+	else
+		rm("pre_script.sh");		rm("main_script.sh")
 	end
+	println("    EVENTS")
+	events("", R=:g, J="G200/5/6i", B=:af, S="E-", C=true, T="2018-05-01T", E="s+r2+d6", M=((size=5,coda=0.5),(intensity=true,)), Vd=dbg2);
 
 	println("	SURFACE")
 	# SURFACE
@@ -1026,9 +999,7 @@ if (got_it)					# Otherwise go straight to end
 	@assert(size(G.z) == (151, 151))
 
 	# SPLITXYZ (fails)
-	if (GMTver >= 6)
-		splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
-	end
+	splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
 
 	# TRIANGULATE
 	println("	TRIANGULATE")
@@ -1079,16 +1050,16 @@ if (got_it)					# Otherwise go straight to end
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"], multi=true);
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
 
-	GMT.get_datatype([]);
-	GMT.get_datatype(Float32(8));
-	GMT.get_datatype(UInt64(8));
-	GMT.get_datatype(Int64(8));
-	GMT.get_datatype(UInt32(8));
-	GMT.get_datatype(Int32(8));
-	GMT.get_datatype(UInt16(8));
-	GMT.get_datatype(Int16(8));
-	GMT.get_datatype(UInt8(8));
-	GMT.get_datatype(Int8(8));
+	#GMT.get_datatype([]);
+	#GMT.get_datatype(Float32(8));
+	#GMT.get_datatype(UInt64(8));
+	#GMT.get_datatype(Int64(8));
+	#GMT.get_datatype(UInt32(8));
+	#GMT.get_datatype(Int32(8));
+	#GMT.get_datatype(UInt16(8));
+	#GMT.get_datatype(Int16(8));
+	#GMT.get_datatype(UInt8(8));
+	#GMT.get_datatype(Int8(8));
 	GMT.mat2grid(rand(Float32, 10,10), reg=1);
 	GMT.num2str(rand(2,3));
 	text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"]);
@@ -1098,22 +1069,19 @@ if (got_it)					# Otherwise go straight to end
 	text_record([["aa", "bb"],["cc", "dd", "ee"]]);
 
 	# TEST THE API DIRECTLY (basically to improve coverage under GMT6)
-	if (GMTver >= 6)
-		PS = plot(rand(3,2), ps=1);
-		API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
-		GMT.ps_init(API, "", PS, 0);
-		@test_throws ErrorException("Failure to allocate GMT resource") GMT.text_init(API, "", "aaaa", 0);
-		gmt("destroy")
+	PS = plot(rand(3,2), ps=1);
+	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
+	GMT.ps_init(API, "", PS, 0);
+	gmt("destroy")
 
-		# Test ogr2GMTdataset
-		D = gmtconvert([1.0 2 3; 2 3 4], a="2=lolo+gPOINT");	# Ther's a bug in GMT for this. No data points are printed
-		gmtwrite("lixo.gmt", D)
-		@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", write="a.bin", Vd=2) == "gmtconvert  > a.bin -bo3f"
-		@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", append="a.bin", Vd=2) == "gmtconvert  >> a.bin -bo3f"
-		#API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
-		#GMT.ogr2GMTdataset(GMT.gmt_ogrread(API, "lixo.gmt"));
-		rm("lixo.gmt")
-	end
+	# Test ogr2GMTdataset
+	D = gmtconvert([1.0 2 3; 2 3 4], a="2=lolo+gPOINT");	# Ther's a bug in GMT for this. No data points are printed
+	gmtwrite("lixo.gmt", D)
+	@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", write="a.bin", Vd=2) == "gmtconvert  > a.bin -bo3f"
+	@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", append="a.bin", Vd=2) == "gmtconvert  >> a.bin -bo3f"
+	#API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
+	#GMT.ogr2GMTdataset(GMT.gmt_ogrread(API, "lixo.gmt"));
+	rm("lixo.gmt")
 
 	if (GMTver >= 6.1)
 		check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
@@ -1158,10 +1126,8 @@ if (got_it)					# Otherwise go straight to end
 	rm("lixo.cpt")
 	rm("lixo.dat")
 	rm("logo.png")
-	if (GMTver >= 6)
-		rm("lixo.eps")
-		rm("lixo.jpg")
-	end
+	rm("lixo.eps")
+	rm("lixo.jpg")
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NULL`)  end
 
 end					# End valid testing zone

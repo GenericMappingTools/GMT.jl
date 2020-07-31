@@ -3,6 +3,9 @@
 const KW = Dict{Symbol,Any}
 nt2dict(nt::NamedTuple) = nt2dict(; nt...)
 nt2dict(; kw...) = Dict(kw)
+# Need the Symbol.() below in oder to work from PyCall
+# A darker an probably more efficient way is: ((; kw...) -> kw.data)(; d...) but breaks in PyCall
+dict2nt(d::Dict) = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
 
 function find_in_dict(d::Dict, symbs, del=true)
 	# See if D contains any of the symbols in SYMBS. If yes, return corresponding value
@@ -186,6 +189,7 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 	opt_J = Array{String,1}(undef,1)
 	opt_J = [""];		mnemo = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		opt_J[1], mnemo = build_opt_J(val)
 	elseif (IamModern[1] && ((val = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size], del)[1]) === nothing))
 		# Subplots do not rely is the classic default mechanism
@@ -308,6 +312,7 @@ function check_axesswap(d::Dict, width::AbstractString)
 	end
 
 	swap_x = false;		swap_y = false;
+	if (isa(val, Dict))  val = dict2nt(val)  end
 	if (isa(val, NamedTuple))
 		for k in keys(val)
 			if     (k == :x)  swap_x = true
@@ -359,15 +364,6 @@ function build_opt_J(Val)
 		out[1] = " -J"
 	end
 	return out[1], mnemo
-end
-
-function auto_JZ(cmd::String)
-	# Add the -JZ option to modules that should not need it (e.g. pscoast) when used after a
-	# -R with 6 elements. Without this a simple -J fails with a complain that ... -JZ is needed
-	if (GMTver < 6 && current_view[1] != "" && !occursin("-JZ", cmd) && !occursin("-Jz", cmd))
-		cmd *= " -JZ0.01"
-	end
-	return cmd
 end
 
 function parse_proj(p::String)
@@ -486,6 +482,7 @@ function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 	# These four are aliases
 	extra_parse = true;
 	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		if (isa(val, String) || isa(val, Symbol))
 			val = string(val)					# In case it was a symbol
 			if (val == "none")					# User explicitly said NO AXES
@@ -562,7 +559,8 @@ function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 	# We can have one or all of them. Deal separatelly here to allow way code to keep working
 	this_opt_B = "";
 	for symb in [:yaxis2 :xaxis2 :axis2 :zaxis :yaxis :xaxis]
-		if (haskey(d, symb) && isa(d[symb], NamedTuple))
+		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict)))
+			if (isa(d[symb], Dict))  d[symb] = dict2nt(d[symb])  end
 			if     (symb == :axis2)   this_opt_B = axis(d[symb], secondary=true);	delete!(d, symb)
 			elseif (symb == :xaxis)   this_opt_B = axis(d[symb], x=true) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :xaxis2)  this_opt_B = axis(d[symb], x=true, secondary=true) * this_opt_B;	delete!(d, symb)
@@ -891,10 +889,11 @@ function parse_these_opts(cmd::String, d::Dict, opts, del=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_inc(cmd::String, d::Dict, symbs, opt, del=true)
+function parse_inc(cmd::String, d::Dict, symbs, opt, del=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
 			x = "";	y = "";	u = "";	e = false
 			fn = fieldnames(typeof(val))
@@ -939,6 +938,7 @@ function parse_params(cmd::String, d::Dict)
 	_cmd = Array{String,1}(undef,1)		# Otherwise Traceur insists this fun was returning a Any
 	_cmd = [cmd]
 	if ((val = find_in_dict(d, [:conf :par :params], true)[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
 			fn = fieldnames(typeof(val))
 			for k = 1:length(fn)		# Suspect that this is higly inefficient but N is small
@@ -966,6 +966,7 @@ function add_opt_pen(d::Dict, symbs, opt::String="", del::Bool=true)
 		out[1] = opt * pen
 	else
 		if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
+			if (isa(val, Dict))  val = dict2nt(val)  end
 			if (isa(val, Tuple))				# Like this it can hold the pen, not extended atts
 				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
 					for v in val
@@ -1008,7 +1009,7 @@ function add_opt_pen(d::Dict, symbs, opt::String="", del::Bool=true)
 		if ((val = find_in_dict(d, [:cline :color_line :colot_lines])[1]) !== nothing)  out[1] *= "+cl"  end
 		if ((val = find_in_dict(d, [:ctext :color_text :csymbol :color_symbols :color_symbol])[1]) !== nothing)  out[1] *= "+cf"  end
 	end
-	if (haskey(d, :bezier))  out[1] *= "+s"  end
+	if (haskey(d, :bezier))  out[1] *= "+s";  del_from_dict(d, [:bezier])  end
 	if (haskey(d, :offset))  out[1] *= "+o" * arg2str(d[:offset])   end
 
 	if (out[1] != "")		# Search for eventual vec specs, but only if something above has activated -W
@@ -1112,7 +1113,7 @@ end
 function arg2str(arg, sep='/')
 	# Convert an empty, a numeric or string ARG into a string ... if it's not one to start with
 	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
-	# SEP is the char separator used when ARG is a tuple ot array of numbers
+	# SEP is the char separator used when ARG is a tuple or array of numbers
 	out = Array{String,1}(undef,1)
 	out = [""]
 	if (isa(arg, AbstractString) || isa(arg, Symbol))
@@ -1157,7 +1158,7 @@ end
 function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
 	if (IamModern[1])  return cmd  end		# In Modern mode this fun does not play
-	if (isa(cmd, Array{String,1}))		# Need a recursive call here
+	if (isa(cmd, Array{String,1}))			# Need a recursive call here
 		for k = 1:length(cmd)
 			KK = K;		OO = O
 			if (!occursin(" >", cmd[k]))	# Nested calls already have the redirection set
@@ -1217,8 +1218,9 @@ function prepare2geotif(d::Dict, cmd, opt_T::String, O::Bool)
 			if (startswith(string(val), "trans"))  opt_T = " -TG -W+k"
 			else                                   opt_T = string(" -TG -W+k", val)		# Whatever 'val' is
 			end
-		elseif (isa(val, NamedTuple))
+		elseif (isa(val, NamedTuple) || isa(val, Dict))
 			# [+tdocname][+nlayername][+ofoldername][+aaltmode[alt]][+lminLOD/maxLOD][+fminfade/maxfade][+uURL]
+			if (isa(val, Dict))  val = dict2nt(val)  end
 			opt_T = add_opt(" -TG -W+k", "", Dict(:kml => val), [:kml],
 							(title="+t", layer="+n", layername="+n", folder="+o", foldername="+o", altmode="+a", LOD=("+l", arg2str), fade=("+f", arg2str), URL="+u"))
 		end
@@ -1248,7 +1250,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs, del::Bool=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true, arg=nothing)
+function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true, arg=nothing)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
 	# ARG, is a special case to append to a matrix (complicated thing in Julia)
@@ -1270,6 +1272,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true,
 	end
 
 	args = Array{String,1}(undef,1)
+	if (isa(val, Dict))  val = dict2nt(val)  end	# For Py usage
 	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
 		args[1] = add_opt(val, mapa, arg)
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
@@ -1324,7 +1327,7 @@ function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
+function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	# Generic parser of options passed in a NT and whose last element is anther NT with the mapping
 	# between expanded sub-options names and the original GMT flags.
 	# ARG, is a special case to append to a matrix (complicated thing in Julia)
@@ -1336,6 +1339,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)
 	cmd = "";		cmd_hold = Array{String,1}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
 	for k = 1:length(key)				# Loop over the keys of option's tuple
 		if (!haskey(d, key[k]))  continue  end
+		if (isa(nt[k], Dict))  nt[k] = dict2nt(nt[k])  end
 		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(nt[k], NamedTuple))
 				if (d[key[k]][2] == add_opt_fill)
@@ -1435,6 +1439,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_o
 	N_used = 0;		got_one = false
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		to_slot = true
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
 			di = nt2dict(val)
 			if ((val = find_in_dict(di, [need_symb], false)[1]) === nothing)
@@ -1500,12 +1505,12 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=noth
 				end
 			end
 		end
-	elseif (def && opt_T != "")		# Requested the use of the default color map (Turbo or Jet depending on GMTver)
+	elseif (def && opt_T != "")						# Requested the use of the default color map
 		if (IamModern[1])  opt_T *= " -H"  end		# Piggy back this otherwise we get no CPT back in Modern
 		if (haskey(d, :this_cpt) && d[:this_cpt] != "")		# A specific CPT name was requested
 			cpt = makecpt(opt_T * " -C" * d[:this_cpt])
 		else
-			opt_T = (GMTver >= 6) ? opt_T * " -Cturbo" : opt_T * " -Cjet"
+			opt_T *= " -Cturbo"
 			cpt = makecpt(opt_T)
 		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
@@ -1535,6 +1540,7 @@ add_opt_fill(d::Dict, symbs, opt="") = add_opt_fill("", d, symbs, opt)
 function add_opt_fill(cmd::String, d::Dict, symbs, opt="", del=true)::String
 	# Deal with the area fill attributes option. Normally, -G
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)  return cmd  end
+	if (isa(val, Dict))  val = dict2nt(val)  end
 	if (opt != "")  opt = string(" -", opt)  end
 	return add_opt_fill(val, cmd, opt)
 end
@@ -1567,10 +1573,10 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	cpt_opt_T = ""
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage))			# GMT bug, -R will not be stored in gmt.history
 		range = arg1.range
-	elseif (cmd0 != "")
+	elseif (cmd0 != "" && cmd0[1] != '@')
 		info = grdinfo(cmd0 * " -C");	range = info[1].data
 	end
-	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || cmd0 != "")
+	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || (cmd0 != "" && cmd0[1] != '@'))
 		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
 			cpt_opt_T = @sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
@@ -1613,6 +1619,7 @@ function add_opt_module(d::Dict, symbs)
 		r = nothing
 		if (haskey(d, symbs[k]))
 			val = d[symbs[k]]
+			if (isa(val, Dict))  val = dict2nt(val)  end
 			if (isa(val, NamedTuple))
 				nt = (val..., Vd=2)
 				if     (symbs[k] == :coast)    r = coast!(; nt...)
@@ -1752,6 +1759,7 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	opt = Array{String,1}(undef,1)					# To force type stability
 	opt = [" -B"]
 	if ((val = find_in_dict(d, [:frame :axes])[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		opt[1] *= helper0_axes(val)
 	end
 
@@ -1928,8 +1936,8 @@ function helper3_axes(arg, primo, axe)
 		pos = arg
 		n_annot = length(pos)
 		tipo = fill('a', n_annot)			# Default to annotate
-	elseif (isa(arg, NamedTuple))
-		d = nt2dict(arg)
+	elseif (isa(arg, NamedTuple) || isa(arg, Dict))
+		if (isa(arg, NamedTuple))  d = nt2dict(arg)  end
 		if (!haskey(d, :pos))
 			error("Custom annotations NamedTuple must contain the member 'pos'")
 		end
@@ -2025,15 +2033,7 @@ function vector_attrib(;kwargs...)
 		end
 	end
 
-	if (haskey(d, :norm))
-		if (GMTver < 6 && isa(d[:norm], String) && !isletter(d[:norm][end]))	# Avoid Bug in 5.X
-			cmd = string(cmd, "+n", parse(Float64, d[:norm]) / 2.54, "i")
-		elseif (GMTver < 6 && isa(d[:norm], Number))
-			cmd = string(cmd, "+n", d[:norm] / 2.54, "i")
-		else
-			cmd = string(cmd, "+n", d[:norm])
-		end
-	end
+	if (haskey(d, :norm))  cmd = string(cmd, "+n", d[:norm])  end
 
 	if (haskey(d, :pole))  cmd *= "+o" * arg2str(d[:pole])  end
 	if (haskey(d, :pen))
@@ -2081,6 +2081,7 @@ function vector4_attrib(; kwargs...)
 
 	if (haskey(d, :norm))  cmd = string(cmd, "n", d[:norm])  end
 	if ((val = find_in_dict(d, [:head])[1]) !== nothing)
+		if (isa(val, Dict))  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
 			ha = "0.075c";	hl = "0.3c";	hw = "0.25c"
 			dh = nt2dict(val)
@@ -2202,8 +2203,17 @@ function helper_decorated(d::Dict, compose=false)
 				for k = 2:size(val,1)
 					optD = string(optD,',',val[k,1],'/',val[k,2],'/',val[k,3],'/',val[k,4])
 				end
-			elseif (isa(val, Tuple) || isa(val, String))
-				optD = flag * arg2str(val)
+			elseif (isa(val, Tuple))
+				if (length(val) == 2 && (isa(val[1], String) || isa(val[1], Symbol)) )
+					t1 = string(val[1]);	t2 = string(val[2])		# t1/t2 can also be 2 char or a LongWord justification
+					t1 = startswith(t1, "min") ? "Z-" : justify(t1)
+					t2 = startswith(t2, "max") ? "Z+" : justify(t2)
+					optD = flag * t1 * "/" * t2
+				else
+					optD = flag * arg2str(val)
+				end
+			elseif (isa(val, String))
+				optD = flag * val
 			else
 				@warn("DECORATED: lines option. Unknown option data type. Ignoring this.")
 			end
@@ -2225,7 +2235,6 @@ function helper_decorated(d::Dict, compose=false)
 end
 
 # -------------------------------------------------
-#parse_quoted(nt::NamedTuple) = parse_quoted(;nt...)
 function parse_quoted(d::Dict, opt)
 	# This function is isolated from () above to allow calling it seperately from grdcontour
 	# In fact both -A and -G grdcontour options are almost equal to a decorated line in psxy.
@@ -2333,16 +2342,12 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=fals
 	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
 	if (isa(data_kw, String))
 		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])	# Then we must read the file to determine -R
-			if (GMTver >= 6)				# Due to a bug in GMT5, gmtread has no -i option
-				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
-				if (opt_i != "")			# Remove the -i option from cmd. It has done its job
-					cmd = replace(cmd, opt_i => "")
-					opt_i = ""
-				end
-				if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
-			else
-				data_kw = gmt("read -Td " * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
+			data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
+			if (opt_i != "")			# Remove the -i option from cmd. It has done its job
+				cmd = replace(cmd, opt_i => "")
+				opt_i = ""
 			end
+			if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
 		else							# No need to find -R so let the GMT module read the file
 			cmd = data_kw * " " * cmd
 			data_kw = nothing			# Prevent that it goes (repeated) into 'arg'
@@ -2609,7 +2614,8 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 	global current_cpt = nothing		# Reset to empty when fig is finalized
 	if (fname == "" && isdefined(Main, :IJulia) && Main.IJulia.inited)	 opt_T = " -Tg"; fname_ext = "png"  end		# In Jupyter, png only
 	if (opt_T != "")
-		if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
+		#if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
+		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
 		out = fname_ps[1:end-2] * fname_ext
@@ -2617,7 +2623,8 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 			out = mv(out, fname, force=true)
 		end
 	elseif (fname_ps != "")
-		if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
+		#if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
+		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
 		out = fname_ps
 		if (fname != "")
 			out = mv(out, fname, force=true)
@@ -2636,6 +2643,18 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 			end
 		end
 	end
+end
+
+# ---------------------------------------------------------------------------------------------------
+function close_PS_file(fname::AbstractString)
+	# Do the equivalesx of "psxy -T -O"
+	fid = open(fname, "a")
+	write(fid, "\n0 A\nFQ\nO0\n0 0 TM\n\n")
+	write(fid, "%%BeginObject PSL_Layer_2\n0 setlinecap\n0 setlinejoin\n3.32550952342 setmiterlimit\n%%EndObject\n")
+	write(fid, "\ngrestore\nPSL_movie_label_completion /PSL_movie_label_completion {} def\n")
+	write(fid, "PSL_movie_prog_indicator_completion /PSL_movie_prog_indicator_completion {} def\n")
+	write(fid, "%PSL_Begin_Trailer\n%%PageTrailer\nU\nshowpage\n\n%%Trailer\n\nend\n%%EOF")
+	close(fid)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2872,15 +2891,16 @@ function justify(arg)
 	# Take a string or symbol in ARG and return the two chars justification code.
 	if (isa(arg, Symbol))  arg = string(arg)  end
 	if (length(arg) == 2)  return arg  end 		# Assume it's already the 2 chars code (no further checking)
-	if     (arg == "topleft"      || arg == "TopLeft")       out = "TL"
-	elseif (arg == "middleleft"   || arg == "MiddleLeft")    out = "ML"
-	elseif (arg == "bottomleft"   || arg == "BottomLeft")    out = "BL"
-	elseif (arg == "topcenter"    || arg == "TopCenter")     out = "TC"
-	elseif (arg == "middlecenter" || arg == "MiddleCenter")  out = "MC"
-	elseif (arg == "bottomcenter" || arg == "BottomCenter")  out = "BC"
-	elseif (arg == "topcright"    || arg == "TopRight")      out = "TR"
-	elseif (arg == "middleright"  || arg == "MiddleRight")   out = "MR"
-	elseif (arg == "bottomright"  || arg == "BottomRight")   out = "BR"
+	arg = lowercase(arg)
+	if     (startswith(arg, "topl"))     out = "TL"
+	elseif (startswith(arg, "middlel"))  out = "ML"
+	elseif (startswith(arg, "bottoml"))  out = "BL"
+	elseif (startswith(arg, "topc"))     out = "TC"
+	elseif (startswith(arg, "middlec"))  out = "MC"
+	elseif (startswith(arg, "bottomc"))  out = "BC"
+	elseif (startswith(arg, "topr"))     out = "TR"
+	elseif (startswith(arg, "middler"))  out = "MR"
+	elseif (startswith(arg, "bottomr"))  out = "BR"
 	else
 		@warn("Justification code provided ($arg) is not valid. Defaulting to TopRight")
 		out = "TR"

@@ -14,7 +14,7 @@ Parameters
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
     ($(GMTdoc)contour.html#a)
 - $(GMT.opt_B)
-- **C** | **cont** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
+- **C** | **cont** | **contour** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
     Contours to be drawn may be specified in one of three possible ways.
     ($(GMTdoc)contour.html#c)
@@ -103,7 +103,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_used += N_used_
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
-		cmd, args, n, = add_opt(cmd, 'C', d, [:C :cont :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
+		cmd, args, n, = add_opt(cmd, 'C', d, [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
 		if (n > 0)
 			for k = 3:-1:1
 				if (args[k] === nothing)  continue  end
@@ -121,7 +121,6 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	if ((val = find_in_dict(d, [:E :index])[1]) !== nothing)
 		cmd *= " -E"
-		#if (isa(val, Array{Int}))   # Now need to find the free slot where to store the indices array
 		if (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{GMTdataset}))   # Now need to find the free slot where to store the indices array
 			(N_used == 0) ? arg1 = val : (N_used == 1 ? arg2 = val : arg3 = val)
 		else

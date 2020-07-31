@@ -101,6 +101,7 @@ makedocs(
 			"bar3.md",
 			"coast.md",
 			"colorbar.md",
+			"contourf.md",
 			"grdcontour.md",
 			"grdimage.md",
 			"grdgradient.md",

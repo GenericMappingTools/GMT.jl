@@ -98,7 +98,6 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	maybe_more = false			# If latter set to true, search for lc & lc pen settings
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0")
 	cmd, = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
-	cmd  = auto_JZ(cmd)		# Add -JZ if perspective for the case -R.../z_min/z_max
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution], [:M :dump]])
 	#cmd = parse_TdTmL(d, cmd)
     cmd  = parse_type_anchor(d, cmd, [[:Td :rose], [:Tm :compass], [:L :map_scale]])
@@ -119,7 +118,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	symbs = [[:I :rivers], [:N :borders], [:W :shore]];	flags ="INW"
 	for k = 1:3
 		if ((val = find_in_dict(d, symbs[k], false)[1]) !== nothing)
-			if (isa(val, NamedTuple) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
+			if (isa(val, NamedTuple) || isa(val, Dict) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
 				cmd = add_opt(cmd, flags[k], d, symbs[k], (type="/#", level="/#", pen=("", add_opt_pen)))
 			elseif (isa(val, Tuple))  cmd *= " -" * flags[k] * parse_pen(val)
 			else                      cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
@@ -131,7 +130,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	if ((val = find_in_dict(d, [:E :DCW], false)[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))
 			cmd = string(cmd, " -E", val)			# Simple case, ex E="PT,+gblue"
-		elseif (isa(val, NamedTuple))
+		elseif (isa(val, NamedTuple) || isa(val, Dict))
 			cmd = add_opt(cmd, "E", d, [:DCW :E], (country="", name="", continent="=",
 			                                       pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))
 		elseif (isa(val, Tuple))
@@ -153,9 +152,10 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_dcw(cmd::String, val::Tuple)
 	for k = 1:length(val)
-		if (isa(val[k], NamedTuple))
+		if (isa(val[k], NamedTuple) || isa(val[k], Dict))
+			if (isa(val[k], Dict))  val[k] = dict2nt(val[k])  end
 			cmd *= add_opt("", "E", Dict(:DCW => val[k]), [:DCW],
-				(country="", name="", continent="=", pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))
+			               (country="", name="", continent="=", pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))
 		elseif (isa(val[k], Tuple))
 			cmd *= parse_dcw(val[k])
 		else

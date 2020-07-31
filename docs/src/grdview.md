@@ -70,7 +70,7 @@ Optional Arguments
 
 > - Specify ``image=true`` for image plot. Optionally use ``image=dpi`` to set the effective dpi resolution for the rasterization [100].
 
-> - Specify ``nan\_alpha=true`` to do similar the aame as ``image=true`` but will make nodes with z = NaN transparent, using the colormasking feature in PostScript Level 3.
+> - Specify ``nan\_alpha=true``, same as ``image=true`` but will make nodes with ``z = NaN`` transparent, using the colormasking feature in PostScript Level 3.
 
 - **R** or *region* or *limits* : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
    **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more\
@@ -95,7 +95,7 @@ Optional Arguments
 - **V** or *verbose* : *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)
 
-- **W** or *pens*\
+- **W** or **pen** or **pens**\
 > - **pens=(contour=true,)**\
 >>   Draw contour lines on top of surface or mesh (not image). Use ``pens=(contour=true, pen)`` to set pen
 >>   attributes used for the contours. [Default: width = 0.75p, color = black, style = solid].

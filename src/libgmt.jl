@@ -26,13 +26,12 @@ function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Cv
 	ccall( (:GMT_Create_Session, thelib), Ptr{Cvoid}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Cvoid}), tag, pad, mode, print_func)
 end
 
-function GMT_Create_Data(API::Ptr{Cvoid}, family, geometry, mode, dim=C_NULL, wesn=C_NULL,
+function GMT_Create_Data(API::Ptr{Cvoid}, family::Integer, geometry, mode, dim=C_NULL, wesn=C_NULL,
                          inc=C_NULL, registration=0, pad=2, data::Ptr{Cvoid}=C_NULL)
 
 	if (family == GMT_IS_DATASET)        ret_type = Ptr{GMT_DATASET}
-	elseif (family == GMT_IS_TEXTSET)    ret_type = Ptr{GMT_TEXTSET}
 	elseif (family == GMT_IS_GRID)       ret_type = Ptr{GMT_GRID}
-	elseif (family == GMT_IS_CPT)        ret_type = Ptr{GMT_PALETTE}
+	elseif (family == GMT_IS_PALETTE)    ret_type = Ptr{GMT_PALETTE}
 	elseif (family == GMT_IS_IMAGE || family == GMT_IS_IMAGE|GMT_IMAGE_ALPHA_LAYER)	ret_type = Ptr{GMT_IMAGE}
 	elseif (family == GMT_IS_MATRIX)     ret_type = Ptr{GMT_MATRIX}
 	elseif (family == GMT_IS_MATRIX|GMT_VIA_MATRIX) ret_type = Ptr{GMT_MATRIX}
@@ -58,11 +57,9 @@ function GMT_Read_Data(API::Ptr{Cvoid}, family, method, geometry, mode, wesn, in
 
 	if (family == GMT_IS_DATASET)
 		ret_type = Ptr{GMT_DATASET}
-	elseif (family == GMT_IS_TEXTSET)
-		ret_type = Ptr{GMT_TEXTSET}
 	elseif (family == GMT_IS_GRID)
 		ret_type = Ptr{GMT_GRID}
-	elseif (family == GMT_IS_CPT)
+	elseif (family == GMT_IS_PALETTE)
 		ret_type = Ptr{GMT_PALETTE}
 	elseif (family == GMT_IS_IMAGE)
 		ret_type = Ptr{GMT_IMAGE}
@@ -126,7 +123,7 @@ function GMT_Destroy_Data(API::Ptr{Cvoid}, object)
 	ccall( (:GMT_Destroy_Data, thelib), Cint, (Cstring, Ptr{Cvoid}), API, object)
 end
 
-function GMT_Set_Comment(API::Ptr{Cvoid}, family::Int, mode::Int, arg::Ptr{Cvoid}, data::Ptr{Cvoid})
+function GMT_Set_Comment(API::Ptr{Cvoid}, family::Integer, mode, arg::Ptr{Cvoid}, data::Ptr{Cvoid})
 	ccall( (:GMT_Set_Comment, thelib), Cint, (Cstring, UInt32, UInt32, Ptr{Cvoid}, Ptr{Cvoid}), API, family, mode, arg, data)
 end
 
@@ -181,7 +178,7 @@ function GMT_Get_Default(API::Ptr{Cvoid}, keyword::String, value)
     ccall((:GMT_Get_Default, thelib), Cint, (Cstring, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 end
 
-function GMT_Call_Module(API::Ptr{Cvoid}, _module=C_NULL, mode::Int=0, args=C_NULL)
+function GMT_Call_Module(API::Ptr{Cvoid}, _module=C_NULL, mode=0, args=C_NULL)
 	if (isa(args,String))	args = pointer(args)	end
 	ccall((:GMT_Call_Module, thelib), Cint, (Cstring, Ptr{UInt8}, Cint, Ptr{Cvoid}), API, _module, mode, args)
 end
@@ -259,7 +256,7 @@ function GMT_FFT_2D(API::Ptr{Cvoid}, data::Ptr{Cfloat}, nx::UInt32, ny::UInt32, 
 end
 =#
 
-function GMT_Report(API, vlevel::Int, txt)
+function GMT_Report(API, vlevel::Integer, txt)
 	ccall((:GMT_Report, thelib), Cvoid, (Cstring, Cint, Ptr{UInt8}), API, vlevel, txt)
 end
 
@@ -303,7 +300,7 @@ function GMT_blind_change_struct(API::Ptr{Cvoid}, X, what, keyword::String, off:
 	end
 end
 
-function GMT_Convert_Data(API::Ptr{Cvoid}, In::Ptr{Cvoid}, family_in::Int, out::Ptr{Cvoid}, family_out::Int, flag)
+function GMT_Convert_Data(API::Ptr{Cvoid}, In::Ptr{Cvoid}, family_in::Integer, out::Ptr{Cvoid}, family_out::Integer, flag)
 	ccall((:GMT_Convert_Data, thelib), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}, UInt32, Ptr{Cvoid}, UInt32, Ptr{UInt32}), API, In,
 				 family_in, out, family_out, flag)
 end
@@ -333,11 +330,9 @@ function GMT_Set_Index(API::Ptr{Cvoid}, header::Ptr{GMT_GRID_HEADER}, code)
 end
 =#
 
-function GMT_Alloc_Segment(API::Ptr{Cvoid}, family::Int, n_rows::Int, n_columns::Int, header, S::Ptr{Cvoid})
+function GMT_Alloc_Segment(API::Ptr{Cvoid}, family::Integer, n_rows::Integer, n_columns::Integer, header, S::Ptr{Cvoid})
 	if (family == GMT_IS_DATASET || family == GMT_WITH_STRINGS)
 		ret_type = Ptr{GMT_DATASEGMENT}
-	elseif (family == GMT_IS_TEXTSET)
-		ret_type = Ptr{GMT_TEXTSEGMENT}
 	else
 		error("Bad family type")
 	end
@@ -368,7 +363,6 @@ function GMT_Duplicate_String(API::Ptr{Cvoid}, str)
 end
 
 function GMT_Open_VirtualFile(API::Ptr{Cvoid}, family::Integer, geometry::Integer, dir::Integer, data, name)
-	#if (GMTver >= 6.1)  dir |= GMT_IS_REFERENCE  end
 	if (GMTver >= 6.1)  dir |= GMT_Get_Enum(API, "GMT_IS_REFERENCE")  end
 	ccall((:GMT_Open_VirtualFile, thelib), Cint, (Cstring, UInt32, UInt32, UInt32, Ptr{Cvoid}, Ptr{UInt8}), API, family, geometry, dir, data, name)
 end
@@ -405,7 +399,7 @@ end
 =#
 
 # -------------------------------------------------------------------------------------------------------------
-function GMT_Set_AllocMode(API::Ptr{Cvoid}, family::Int, object)
+function GMT_Set_AllocMode(API::Ptr{Cvoid}, family, object)
 	ccall((:GMT_Set_AllocMode, thelib), Cint, (Cstring, UInt32, Ptr{Cvoid}), API, family, object)
 end
 

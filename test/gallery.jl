@@ -113,11 +113,7 @@ function ex02(g_root_dir, out_path)
 	gmt("grdimage @HI_topo_02.nc -I+a0 -R -J -B+t\"H@#awaiian@# T@#opo and @#G@#eoid@#\"" *
 	    " -B10 -E50 -O -K -C -Y4.5i --MAP_TITLE_OFFSET=0.5i >> " * ps, t_cpt)
 	gmt("psscale -DJRM+o0.6i/0+mc -R -J -O -K -I0.3 -Bx2+lTOPO -By+lkm >> " * ps, t_cpt)
-	if (GMTver < 6)
-		T = Any["-0.4 7.5 a)", "-0.4 3.0 b)"]
-	else
-		T = text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"])
-	end
+	T = text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"])
 	gmt("pstext -R0/8.5/0/11 -Jx1i -F+f30p,Helvetica-Bold+jCB -O -N -Y-4.5i >> " * ps, T)
 	rm("gmt.conf")
 	return ps, d_path
@@ -270,11 +266,7 @@ function ex04(g_root_dir, out_path)
 	gmt("pstext -R0/10/0/10 -Jx1i -F+f60p,ZapfChancery-MediumItalic+jCB -O >> " *  ps,
 		text_record([3.25 5.75], "H@#awaiian@# R@#idge@#"))
 
-	if (GMTver < 6)
-		t_cpt = d_path * "topo.cpt";	g_cpt =  d_path * "geoid.cpt"
-	else
-		t_cpt = "@topo_04.cpt";			g_cpt = "@geoid_04.cpt"
-	end
+	t_cpt = "@topo_04.cpt";			g_cpt = "@geoid_04.cpt"
 	ps = out_path * "example_04c.ps"
 	gmt("grdimage @HI_geoid_04.nc -I+nt0.75+a0 -R195/210/18/25 -JM6.75i -p60/30 -C" * g_cpt * " -E100 -K -P -X1.25i -Y1.25i > " * ps)
 	gmt("pscoast -R -J -p -B2 -BNEsw -Gblack -O -K >> " * ps)
@@ -412,16 +404,9 @@ function ex10(g_root_dir, out_path)
 			array[row,col] = Float64(str[row,col])
 		end
 	end
-	if (GMTver < 6)
-		t = Array{Any}(nl,1)
-		for k = 1:nl
-			t[k] = @sprintf("%d %d %d\n",array[k,1], array[k,2], sum(array[k,3:end]))
-		end
-	else
-		tt = Array{Any}(undef, nl)
-		for k = 1:nl  tt[k] = @sprintf("%d",sum(array[k,3:end])) end
-		t = text_record(array, tt)
-	end
+	tt = Array{Any}(undef, nl)
+	for k = 1:nl  tt[k] = @sprintf("%d",sum(array[k,3:end])) end
+	t = text_record(array, tt)
 	gmt("pstext -R -J -O -K -p -Gwhite@30 -D-0.25i/0 -F+f30p,Helvetica-Bold,firebrick=thinner+jRM >> " * ps, t)
 	gmt("psxyz " * d_path * "languages.txt -R-180/180/-90/90/0/2500 -J -JZ2.5i -So0.3i -Gpurple -Wthinner" *
 		" --FONT_TITLE=30p,Times-Bold --MAP_TITLE_OFFSET=-0.7i -O -K -p --FORMAT_GEO_MAP=dddF" *
@@ -457,30 +442,14 @@ function ex11(g_root_dir, out_path)
 
 	gmt("grdimage -JX2.5i/-2.5i -R -K -O -X0.5i >> " * ps, x_nc, y_nc, c_nc)
 	gmt("psxy -Wthinner,white,- @rays_11.txt -J -R -K -O >> " * ps)
-	if (GMTver < 6)
-		T = Any[
-			"128 128 -45 12p 60\\217"
-			"102  26 -90 12p 0.4"
-			"204  26 -90 12p 0.8"
-			"10  140 180 16p G"]
-	else
-		T = text_record([128 128 -45; 102  26 -90; 204  26 -90; 10  140 180], ["12p 60\\217"; "12p 0.4"; "12p 0.8"; "16p G"])
-	end
+	T = text_record([128 128 -45; 102  26 -90; 204  26 -90; 10  140 180], ["12p 60\\217"; "12p 0.4"; "12p 0.8"; "16p G"])
 	gmt("pstext --FONT=white -J -R -K -O -F+a+f >> " * ps, T)
 	gmt("psxy -N -Sv0.15i+s+e -Gwhite -W2p,white -J -R -K -O >> " * ps, [0 0 0 128])
 
 	gmt("grdimage -JX2.5i/2.5i -R -K -O -Y2.5i >> " * ps, x_nc, c_nc, y_nc)
 	gmt("psxy -Wthinner,white,- @rays_11.txt -J -R -K -O >> " * ps)
-	if (GMTver < 6)
-		T = Any[
-			"128 128 45 12p  300\\217"
-			"26  102  0 12p  0.4"
-			"26  204  0 12p  0.8"
-			"140  10 -90 16p R"
-			"100 100 -45 16p V"]
-	else
-		T = text_record([128 128 45; 26 102 0; 26 204 0; 140 10 -90; 100 100 -45], ["12p 300\\217"; "12p 0.4"; "12p 0.8"; "16p R"; "16p V"]);
-	end
+
+	T = text_record([128 128 45; 26 102 0; 26 204 0; 140 10 -90; 100 100 -45], ["12p 300\\217"; "12p 0.4"; "12p 0.8"; "16p R"; "16p V"]);
 	gmt("pstext --FONT=white -J -R -K -O -F+a+f >> " * ps, T)
 
 	gmt("psxy -N -Sv0.15i+s+e -Gwhite -W2p,white -J -R -K -O >> " * ps, [0 0 128 0])
@@ -488,15 +457,8 @@ function ex11(g_root_dir, out_path)
 
 	gmt("grdimage -JX-2.5i/2.5i -R -K -O -X-2.5i >> " * ps, c_nc, x_nc, y_nc)
 	gmt("psxy -Wthinner,white,- @rays_11.txt -J -R -K -O >> " * ps)
-	if (GMTver < 6)
-		T = Any[
-			"128 128 135 12p 180\\217"
-			"102  26 90 12p  0.4"
-			"204  26 90 12p  0.8"
-			"10  140  0 16p  B"]
-	else
-		T = text_record([128 128 135; 102  26 90; 204  26 90; 10  140  0], ["12p 180\\217"; "12p 0.4"; "12p 0.8"; "16p B"]);
-	end
+
+	T = text_record([128 128 135; 102  26 90; 204  26 90; 10  140  0], ["12p 180\\217"; "12p 0.4"; "12p 0.8"; "16p B"]);
 	gmt("pstext --FONT=white -J -R -K -O -F+a+f >> " * ps, T)
 
 	gmt("psxy -N -Sv0.15i+s+e -Gwhite -W2p,white -J -R -K -O >> " * ps, [0 0 0 128])
@@ -511,28 +473,12 @@ function ex11(g_root_dir, out_path)
 
 	gmt("grdimage -JX-2.5i/-2.5i -R -K -O -X2.5i -Y2.5i >> " * ps, x_nc, y_nc, c_nc)
 	gmt("psxy -Wthinner,black,- @rays_11.txt -J -R -K -O >> " * ps)
-	if (GMTver < 6)
-		T = Any[
-			"128 128 225 12p 240\\217"
-			"102  26 270 12p 0.4"
-			"204  26 270 12p 0.8"]
-	else
-		T = text_record([128 128 225; 102  26 270; 204  26 270], ["12p 240\\217"; "12p 0.4"; "12p 0.8"])
-	end
+	T = text_record([128 128 225; 102  26 270; 204  26 270], ["12p 240\\217"; "12p 0.4"; "12p 0.8"])
 	gmt("pstext -J -R -K -O -F+a+f >> " * ps, T)
 
 	gmt("grdimage -JX2.5i/-2.5i -R -K -O -X2.5i >> " * ps, c_nc, y_nc, x_nc)
 	gmt("psxy -Wthinner,black,- @rays_11.txt -J -R -K -O >> " * ps)
-	if (GMTver < 6)
-		T = Any[
-			"128 128 -45 12p 0\\217"
-			"26  102   0 12p 0.4"
-			"26  204   0 12p 0.8"
-			"100 100  45 16p S"
-			"204  66  90 16p H"]
-	else
-		T = text_record([128 128 -45; 26 102 0; 26 204 0; 100 100  45; 204 66 90], ["12p 0\\217"; "12p 0.4"; "12p 0.8"; "16p S"; "16p H"])
-	end
+	T = text_record([128 128 -45; 26 102 0; 26 204 0; 100 100  45; 204 66 90], ["12p 0\\217"; "12p 0.4"; "12p 0.8"; "16p S"; "16p H"])
 	gmt("pstext -J -R -K -O -F+a+f >> " * ps, T)
 
 	gmt("psxy -N -Sv0.15i+s+e -Gblack -W2p -J -R -O -K >> " * ps, [0 0 90 90])
@@ -540,15 +486,7 @@ function ex11(g_root_dir, out_path)
 
 	gmt("grdimage -JX-2.5i/2.5i -R -K -O -X-2.5i -Y2.5i >> " * ps, x_nc, c_nc, y_nc)
 	gmt("psxy -Wthinner,black,- @rays_11.txt -J -R -K -O >> " * ps)
-	if (GMTver < 6)
-		T = Any[
-			"128 128 135 12p 120\\217"
-			"26  102 180 12p 0.4"
-			"26  204 180 12p 0.8"
-			"200 200 225 16p GMT 5"]
-	else
-		T = text_record([128 128 135; 26  102 180; 26  204 180; 200 200 225], ["12p 120\\217"; "12p 0.4"; "12p 0.8"; "16p GMT 5"])
-	end
+	T = text_record([128 128 135; 26  102 180; 26  204 180; 200 200 225], ["12p 120\\217"; "12p 0.4"; "12p 0.8"; "16p GMT 5"])
 	gmt("pstext -J -R -O -F+a+f >> " * ps, T)
 
 	rm("gmt.conf")
@@ -632,18 +570,11 @@ function ex14(g_root_dir, out_path)
 	# Reformat to one decimal for annotation purposes
 	#t = cellstr(num2str(mean_xyz,'%g %g %.1f'));	# Round to nearest 0.1 and convert to cells
 	nl = size(mean_xyz[1].data,1)
-	if (GMTver < 6)
-		t = Array{Any}(nl,1)
-		for k = 1:nl
-			t[k] = @sprintf("%f %f %.1f", mean_xyz[1].data[k,1], mean_xyz[1].data[k,2], mean_xyz[1].data[k,3])
-		end
-	else
-		tt = Array{Any}(undef, nl)
-		for k = 1:nl
-			tt[k] = @sprintf("%.1f", mean_xyz[1].data[k,3])
-		end
-		t = text_record(mean_xyz[1].data, tt);
+	tt = Array{Any}(undef, nl)
+	for k = 1:nl
+		tt[k] = @sprintf("%.1f", mean_xyz[1].data[k,3])
 	end
+	t = text_record(mean_xyz[1].data, tt);
 	gmt("pstext -R -J -D0.15c/0 -F+f6p+jLM -O -K -Gwhite -W -C0.01i -N >> " * ps, t)
 
 	# Then gmt surface and contour the data
@@ -712,9 +643,7 @@ function ex16(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex16/"
 	ps = out_path * "example_16.ps"
 
-	if (GMTver < 6)  cpt = d_path * "ex16.cpt";
-	else             cpt = "@ex_16.cpt";
-	end
+	cpt = "@ex_16.cpt";
 	gmt("gmtset FONT_ANNOT_PRIMARY 9p PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
 	gmt("destroy")
 
@@ -755,11 +684,7 @@ function ex17(g_root_dir, out_path)
 	gmt("grdimage @india_geoid.nc -I+a45+nt1 -JM6.5i -C -P -K > " * ps, geoid_cpt)
 
 	# Then use gmt pscoast to initiate clip path for land
-	if (GMTver < 6.0)
-		gmt("pscoast -R" * d_path * "india_geoid.nc -J -O -K -Dl -Gc >> " * ps)
-	else
-		gmt("pscoast -R@india_geoid.nc -J -O -K -Dl -Gc >> " * ps)
-	end
+	gmt("pscoast -R@india_geoid.nc -J -O -K -Dl -Gc >> " * ps)
 
 	# Now generate topography image w/shading
 	fid = open("gray.cpt","w");		println(fid, "-10000 150 10000 150");	close(fid)
@@ -805,11 +730,7 @@ function ex18(g_root_dir, out_path)
 	GAK_gulf_grav_i = gmt("grdgradient @AK_gulf_grav.nc -Nt1 -A45");
 	gmt("grdimage @AK_gulf_grav.nc -I -JM5.5i -C -B2f1 -P -K -X1.5i" *
 		" -Y5.85i > " * ps, GAK_gulf_grav_i, grav_cpt)
-	if (GMTver < 6.0)
-		gmt("pscoast -R" * d_path * "AK_gulf_grav.nc -J -O -K -Di -Ggray -Wthinnest >> " * ps)
-	else
-		gmt("pscoast -R@AK_gulf_grav.nc -J -O -K -Di -Ggray -Wthinnest >> " * ps)
-	end
+	gmt("pscoast -R@AK_gulf_grav.nc -J -O -K -Di -Ggray -Wthinnest >> " * ps)
 	gmt("psscale -DJBC+o0/0.4i -R -J -C -Bx20f10 -By+l\"mGal\" -O -K >> " * ps, grav_cpt)
 	gmt("pstext -R -J -O -K -D0.1i/0.1i -F+f12p,Helvetica-Bold+jLB >> " * ps, text_record(pratt, "Pratt"))
 	gmt("psxy -R -J -O -K -SE- -Wthinnest >> " * ps, pratt)
@@ -841,11 +762,7 @@ function ex18(g_root_dir, out_path)
 
 	Gmask = gmt("grdmath -R " * @sprintf("%f %f", pratt[1], pratt[2]) * " SDIST =")
 	Gmask = gmt("grdclip -Sa200/NaN -Sb200/1", Gmask)
-	if (GMTver < 6)
-		Gtmp = gmt("grdmath " * d_path * "AK_gulf_grav.nc ? MUL =", Gmask);
-	else
-		Gtmp = gmt("grdmath @AK_gulf_grav.nc ? MUL =", Gmask);
-	end
+	Gtmp = gmt("grdmath @AK_gulf_grav.nc ? MUL =", Gmask);
 	area = gmt("grdvolume -C50 -Sk", Gtmp); 	# | cut -f2`
 	volume = gmt("grdvolume -C50 -Sk -fg", Gtmp); # | cut -f3`
 
@@ -886,18 +803,10 @@ function ex19(g_root_dir, out_path)
 	gmt("pstext -R -J -O -K -F+f18p,Helvetica-Bold,green=thinnest >> " * ps, text_record([0 -30], "Honolulu, Hawaii, April 1, 2018"))
 
 	# Then show example of color patterns and placing a PostScript image
-	if (GMTver < 6)
-		gmt("pscoast -R -J -O -K -Dc -A5000 -Gp86+fred+byellow+r100 -Sp100/" * d_path * "circuit.ras -B0 -Y-3.25i >> " * ps)
-	else
-		gmt("pscoast -R -J -O -K -Dc -A5000 -Gp86+fred+byellow+r100 -Sp@circuit.png+r100 -B0 -Y-3.25i >> " * ps)
-	end
+	gmt("pscoast -R -J -O -K -Dc -A5000 -Gp86+fred+byellow+r100 -Sp@circuit.png+r100 -B0 -Y-3.25i >> " * ps)
 	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,lightgreen=thinner >> " * ps, text_record([0 30], "SILLY USES OF"))
 	gmt("pstext -R -J -O -K -F+f32p,Helvetica-Bold,magenta=thinner >> " * ps, text_record([0 -30], "COLOR PATTERNS"))
-	if (GMTver < 6)
-		gmt("psimage -DjCM+w3i -R -J " * d_path * "GMT_covertext.eps -O -K >> " * ps)
-	else
-		gmt("psimage -DjCM+w3i -R -J @GMT_covertext.eps -O -K >> " * ps)
-	end
+	gmt("psimage -DjCM+w3i -R -J @GMT_covertext.eps -O -K >> " * ps)
 
 	# Finally repeat 1st plot but exchange the patterns
 	gmt("grdimage -J -C -O -K -Y-3.25i -B0 -nl >> " * ps, Glon, lon_cpt)
@@ -940,11 +849,7 @@ function ex20(g_root_dir, out_path)
 
 	# Overlay a few bullseyes at NY, Cairo, and Perth
 	cities = [-74 40.45 0.5; 31.15 30.03 0.5; 115.49 -31.58 0.5; -56.16 -34.9 0.5]
-	if (GMTver < 6)
-		gmt("psxy -R -J -Sk" * d_path * "bullseye -O >> " * ps, cities)
-	else
-		gmt("psxy -R -J -Sk@bullseye -O >> " * ps, cities)
-	end
+	gmt("psxy -R -J -Sk@bullseye -O >> " * ps, cities)
 	rm("gmt.conf")
 	return ps, d_path
 end
@@ -1058,14 +963,9 @@ function ex22(g_root_dir, out_path)
 	# 
 	# Count the number of events (to be used in title later. one less due to header)
 
-	if (GMTver < 6)
-		n = 77
-		USGS = d_path * "USGS.ras"
-	else
-		n = gmt("info @neic_quakes_22.txt -h1 -Fi -o2")
-		n = n[1].data[1]
-		USGS = "@USGS.png"
-	end
+	n = gmt("info @neic_quakes_22.txt -h1 -Fi -o2")
+	n = n[1].data[1]
+	USGS = "@USGS.png"
 	
 	# Pull out the first and last timestamp to use in legend title
 	#gmt("info -h1 -f0T -i0 @neic_quakes_22.txt -C --TIME_UNIT=d -I1 -o0 --FORMAT_CLOCK_OUT=- > F.txt")
@@ -1155,23 +1055,9 @@ function ex23(g_root_dir, out_path)
 		"-Wcthinnest,white,- >> " * ps, Gdist)
 	
 	# Location info for 5 other cities + label justification
-	if (GMTver < 6)
-		cities = Array{Any}(5)
-		cities[1] = "105.87 21.02 LM HANOI"
-		cities[2] = "282.95 -12.1 LM LIMA"
-		cities[3] = "178.42 -18.13 LM SUVA"
-		cities[4] = "237.67 47.58 RM SEATTLE"
-		cities[5] = "28.20 -25.75 LM PRETORIA"
-		fid = open("cities.txt","w")
-		for k = 1:5
-			println(fid, cities[k])
-		end
-		close(fid)
-	else
-		cities = [105.87 21.02; 282.95  -12.1; 178.42 -18.13; 237.67 47.58; 28.20 -25.75];
-		just_names = ["LM HANOI", "LM LIMA", "LM SUVA", "RM SEATTLE", "LM PRETORIA"];
-		D = text_record(cities, just_names)
-	end
+	cities = [105.87 21.02; 282.95  -12.1; 178.42 -18.13; 237.67 47.58; 28.20 -25.75];
+	just_names = ["LM HANOI", "LM LIMA", "LM SUVA", "RM SEATTLE", "LM PRETORIA"];
+	D = text_record(cities, just_names)
 
 	# For each of the cities, plot great circle arc to Rome with gmt psxy
 	gmt("psxy -R -J -O -K -Wthickest,red >> " * ps, [lon lat; 105.87 21.02])
@@ -1181,30 +1067,15 @@ function ex23(g_root_dir, out_path)
 	gmt("psxy -R -J -O -K -Wthickest,red >> " * ps, [lon lat; 28.20 -25.75])
 
 	# Plot red squares at cities and plot names:
-	if (GMTver < 6)
-		gmt("psxy -R -J -O -K -Ss0.2 -Gred -Wthinnest cities.txt >> " * ps)
-		gmt("pstext -R -J -O -K -Dj0.15/0 -F+f12p,Courier-Bold,red+j -N >> " * ps, cities)
-	else
-		gmt("psxy -R -J -O -K -Ss0.2 -Gred -Wthinnest >> " * ps, cities)
-		gmt("pstext -R -J -O -K -Dj0.15/0 -F+f12p,Courier-Bold,red+j -N >> " * ps, D)
-	end
+	gmt("psxy -R -J -O -K -Ss0.2 -Gred -Wthinnest >> " * ps, cities)
+	gmt("pstext -R -J -O -K -Dj0.15/0 -F+f12p,Courier-Bold,red+j -N >> " * ps, D)
 
 	# Place a yellow star at Rome
 	gmt("psxy -R -J -O -K -Sa0.2i -Gyellow -Wthin >> " * ps, [12.5 41.99])
 
 	# Sample the distance grid at the cities and use the distance in km for labels
-	if (GMTver < 6)
-		dist = gmt("grdtrack cities.txt -G", Gdist);
-		t = Array{Any}(5);
-		for k = 1:5
-			t[k] = @sprintf("%f %f %d", dist[1].data[k,1], dist[1].data[k,2], dist[1].data[k,end]);
-		end
-		gmt("pstext -R -J -O -D0/-0.2i -N -Gwhite -W -C0.02i -F+f12p,Helvetica-Bold+jCT >> " * ps, t)
-		rm("cities.txt");
-	else
-		dist = gmt("grdtrack -G", D, Gdist);
-		gmt("pstext -R -J -O -D0/-0.2i -N -Gwhite -W -C0.02i -F+f12p,Helvetica-Bold+jCT+z%.0f >> " * ps, dist)
-	end
+	dist = gmt("grdtrack -G", D, Gdist);
+	gmt("pstext -R -J -O -D0/-0.2i -N -Gwhite -W -C0.02i -F+f12p,Helvetica-Bold+jCT+z%.0f >> " * ps, dist)
 	rm("gmt.conf")
 	return ps, d_path
 end
@@ -1222,28 +1093,16 @@ function ex24(g_root_dir, out_path)
 	gmt("destroy")
 	dateline = [180 0; 180 -90];
 
-	if (GMTver < 6)
-		fid = open("point.txt", "w");	println(fid, "147:13 -42:48 6000 Hobart");	close(fid);
-		T = "147:13 -42:48 Hobart"
-	else
-		T= text_record([147.216666666667 -42.8], "Hobart")
-	end
+	T= text_record([147.216666666667 -42.8], "Hobart")
 
 	R = gmt("gmtinfo -I10 @oz_quakes_24.txt");
 	gmt("pscoast " * R[1].text[1] * " -JM9i -K -Gtan -Sdarkblue -Wthin,white -Dl -A500 -Ba20f10g10 -BWeSn > " * ps)
 	gmt("psxy -R -J -O -K @oz_quakes_24.txt -Sc0.05i -Gred >> " * ps)
 	t = gmt("gmtselect @oz_quakes_24.txt -L+d1000k -Nk/s -C+d3000k -fg -R -Il", dateline, [147.216666666667 -42.8])
 	gmt("psxy -R -JM -O -K -Sc0.05i -Ggreen >> " * ps, t)
-	if (GMTver < 6)
-		gmt("psxy point.txt -R -J -O -K -SE- -Wfat,white >> " * ps)
-		gmt("pstext -R -J -O -K -F+f14p,Helvetica-Bold,white+jLT -D0.1i/-0.1i >> " * ps, T)
-		gmt("psxy -R -J -O -K point.txt -Wfat,white -S+0.2i >> " * ps)
-		rm("point.txt");
-	else
-		gmt("psxy -R -J -O -K -SE- -Wfat,white >> " * ps, [147.2166666666666667 -42.8 6000])
-		gmt("pstext -R -J -O -K -F+f14p,Helvetica-Bold,white+jLT -D0.1i/-0.1i >> " * ps, T)
-		gmt("psxy -R -J -O -K -Wfat,white -S+0.2i >> " * ps, [147.216666666666667 -42.8 6000])
-	end
+	gmt("psxy -R -J -O -K -SE- -Wfat,white >> " * ps, [147.2166666666666667 -42.8 6000])
+	gmt("pstext -R -J -O -K -F+f14p,Helvetica-Bold,white+jLT -D0.1i/-0.1i >> " * ps, T)
+	gmt("psxy -R -J -O -K -Wfat,white -S+0.2i >> " * ps, [147.216666666666667 -42.8 6000])
 	gmt("psxy -R -J -O -Wfat,white -A >> " * ps, dateline)
 	rm("gmt.conf")
 	return ps, d_path
@@ -1378,9 +1237,7 @@ function ex28(g_root_dir, out_path)
 
 	gmt("gmtset -Du")
 	gmt("destroy")
-	if (GMTver < 6)  Kilauea = d_path * "Kilauea.utm.nc"
-	else             Kilauea = "@Kilauea.utm.nc"
-	end
+	Kilauea = "@Kilauea.utm.nc"
 	# Get intensity grid and set up a color table
 	GKilauea_utm_i = gmt("grdgradient @Kilauea.utm.nc -Nt1 -A45 -G")
 	Kilauea_cpt = gmt("makecpt -Ccopper -T0/1500")
@@ -1467,18 +1324,9 @@ function ex30(g_root_dir, out_path)
 
 	# Indicate the x-angle = 120 degrees
 	gmt("psxy   -R -J -O -K -W0.5p,- >> " * ps, [120 -1.25; 120 1.25])
-	if (GMTver < 6)
-		T = [
-			"360 1 18p,Times-Roman RB x = cos(@%12%a@%%)"
-			"360 0 18p,Times-Roman RB y = sin(@%12%a@%%)"
-			"120 -1.25 14p,Times-Roman LB 120\\312"
-			"370 -1.35 24p,Symbol LT a"
-			"-5 1.85 24p,Times-Roman RT x,y"]
-	else
-		T = text_record([360 1; 360 0; 120 -1.25; 370 -1.35; -5 1.85],
-			["18p,Times-Roman RB x = cos(@%12%a@%%)", "18p,Times-Roman RB y = sin(@%12%a@%%)", 
-			"14p,Times-Roman LB 120\\312", "24p,Symbol LT a", "24p,Times-Roman RT x,y"])
-	end
+	T = text_record([360 1; 360 0; 120 -1.25; 370 -1.35; -5 1.85],
+		["18p,Times-Roman RB x = cos(@%12%a@%%)", "18p,Times-Roman RB y = sin(@%12%a@%%)", 
+		"14p,Times-Roman LB 120\\312", "24p,Symbol LT a", "24p,Times-Roman RT x,y"])
 
 	gmt("pstext -R -J -O -K -Dj0.2c -N -F+f+j >> " * ps, T)
 
@@ -1513,16 +1361,8 @@ function ex30(g_root_dir, out_path)
 		-0.3333 0.57735
 		-0.3333 0])
 
-	if (GMTver < 6)
-		T = [
-			"-0.16666 0         0  12p,Times-Roman CT x"
-			"-0.3333  0.2888675 0  12p,Times-Roman RM y"
-			"0.22     0.27     -30 12p,Symbol CB a"
-			"-0.33333 0.6       30 12p,Times-Roman LB 120\\312"]
-	else
-		T = text_record([-0.16666 0 0; -0.3333 0.2888675 0; 0.22 0.27 -30; -0.33333 0.6 30],
-			["12p,Times-Roman CT x", "12p,Times-Roman RM y", "12p,Symbol CB a", "12p,Times-Roman LB 120\\312"])
-	end
+	T = text_record([-0.16666 0 0; -0.3333 0.2888675 0; 0.22 0.27 -30; -0.33333 0.6 30],
+		["12p,Times-Roman CT x", "12p,Times-Roman RM y", "12p,Symbol CB a", "12p,Times-Roman LB 120\\312"])
 	gmt("pstext -R-1/1/-1/1 -J -O -K -Dj0.05i -F+a+f+j >> " * ps, T)
 
 	gmt("psxy -R -J -O -Sm0.15i+e -W1p -Gblack >> " * ps, [0 0 0.5 0 120])
@@ -1597,11 +1437,7 @@ function ex32(g_root_dir, out_path)
 	println(fid, "07:07:03 50:43:09 Bonn")
 	close(fid)
 	t = gmt("grdtrack -G@topo_32.nc cities.txt")
-	if (GMTver < 6)
-		gmt("psxyz -i0,1,3 " * Rplot * " -J -JZ -p -Sc7p -W1p,white -Gred -K -O >> " * ps, t)
-	else
-		gmt("psxyz " * Rplot * " -J -JZ -p -Sc7p -W1p,white -Gred -K -O >> " * ps, t)
-	end
+	gmt("psxyz " * Rplot * " -J -JZ -p -Sc7p -W1p,white -Gred -K -O >> " * ps, t)
 	gmt("pstext " * Rplot * " -J -JZ -p -F+f12p,Helvetica-Bold,red+jRM -Dj0.1i/0.0i -O cities.txt >> " * ps)
 	rm("cities.txt");	rm("euflag.cpt");	rm("gmt.conf")
 	return ps, d_path
@@ -1619,9 +1455,7 @@ function ex33(g_root_dir, out_path)
 	# gmt grdcut etopo1m_grd.nc -R118W/107W/49S/42S -Gspac.nc
 	gmt("gmtset -Du")
 	gmt("destroy")
-	if (GMTver < 6)  spac = d_path * "spac.nc"
-	else             spac = "@spac_33.nc"
-	end
+	spac = "@spac_33.nc"
 	z_cpt = gmt("makecpt -Crainbow -T-5000/-2000")
 	Gspac_int = gmt("grdgradient @spac_33.nc -A15 -Ne0.75 -G")
 	gmt("grdimage @spac_33.nc -I -C -JM6i -P -Baf -K -Xc --FORMAT_GEO_MAP=dddF > " * ps, Gspac_int, z_cpt)
@@ -1737,14 +1571,7 @@ function ex37(g_root_dir, out_path)
 	z_cpt  = gmt("makecpt -Crainbow -T-5000/-3000")
 	g_cpt  = gmt("makecpt -Crainbow -T-50/25")
 	bbox_t = gmt("grdinfo -Ib " * T)	# Trouble here bbox_t is a cell array of text and we need it to be a matrix
-	if (GMTver < 6)
-		bbox = zeros(4,2)
-		for k = 1:4
-			bbox[k,:] = float(split(bbox_t[1].text[k+1]))
-		end
-	else
-		bbox = bbox_t
-	end
+	bbox = bbox_t
 	GG_int = gmt("grdgradient -A0 -Nt1 -G " * G)
 	GT_int = gmt("grdgradient -A0 -Nt1 -G " * T)
 	scl    = "1.4e-5"
@@ -1794,9 +1621,7 @@ function ex38(g_root_dir, out_path)
 
 	gmt("gmtset -Du")
 	gmt("destroy")
-	if (GMTver < 6)  topo = d_path * "topo.nc"
-	else             topo = "@topo_38.nc"
-	end
+	topo = "@topo_38.nc"
 	t_cpt = gmt("makecpt -Crainbow -T0/1700");
 	c_cpt = gmt("makecpt -Crainbow -T0/15/1");
 	Gout  = gmt("grdhisteq @topo_38.nc -C16")
@@ -1901,9 +1726,7 @@ function ex41(g_root_dir, out_path)
 	d_path = g_root_dir * "doc/examples/ex41/"
 	ps = out_path * "example_41.ps"
 
-	if (GMTver < 6)  symb = d_path * "my_symbol"
-	else             symb = "@symbol_41"
-	end
+	symb = "@symbol_41"
 	gmt("gmtset FONT_ANNOT_PRIMARY 12p FONT_LABEL 12p PROJ_LENGTH_UNIT inch PS_CHAR_ENCODING Standard+ PS_MEDIA letter")
 	gmt("destroy")
 	C = gmt("makecpt -Cred,orange,yellow,green,bisque,cyan,magenta,white,gray -T1/10/1 -N")
@@ -2053,9 +1876,7 @@ function ex46(g_root_dir, out_path)
 	gmt("gmtset -Du")
 	gmt("destroy")
 
-	if (GMTver < 6)  symb = d_path * "sunglasses"
-	else             symb = "@sunglasses"
-	end
+	symb = "@sunglasses"
 	gmt("pscoast -Rd -JKs0/10i -Dl -A5000 -W0.5p -N1/0.5p,gray -S175/210/255 -Bafg --MAP_FRAME_TYPE=plain -K -Xc > " * ps)
 	gmt("pssolar -R  -J -Td+d2016-02-09T16:00:00 -Gnavy@95 -K -O >> " * ps)
 	gmt("pssolar -R  -J -Tc+d2016-02-09T16:00:00 -Gnavy@85 -K -O >> " * ps)
