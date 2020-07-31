@@ -28,21 +28,25 @@ Parameters
     Controls the placement of labels along the quoted lines.
     ($(GMTdoc)contour.html#g)
 - $(GMT.opt_J)
-- $(GMT.opt_Jz)
 - $(GMT.opt_P)
 - **Q** | **cut** :: [Type => Str | Number]         ``Arg = [cut[unit]][+z]]``
 
     Do not draw contours with less than cut number of points.
     ($(GMTdoc)contour.html#q)
+- $(GMT.opt_R)
 - **S** | **skip** :: [Type => Str | []]            ``Arg = [p|t]``
 
-    Skip all input xyz points that fall outside the region.
+    Skip all input xyz points that fall outside the region (Used when input data is a table).
     ($(GMTdoc)contour.html#s)
+- **S** | **smooth** :: [Type => Number]
+
+    Used to resample the contour lines at roughly every (gridbox_size/smoothfactor) interval.
+    (Used when input data is a grid)
+    ($(GMTdoc)grdcontour.html#s)
 - **T** | **ticks** :: [Type => Str]                 ``Arg = [+|-][+a][+dgap[/length]][+l[labels]]``
 
     Draw tick marks pointing in the downward direction every *gap* along the innermost closed contours.
     ($(GMTdoc)contour.html#t)
-- $(GMT.opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - **W** | **pen** :: [Type => Str | Number]
@@ -66,10 +70,12 @@ Parameters
 Examples
 --------
 
+```jldoctest
 G = GMT.peaks();
 C = makecpt(T=(-7,9,2));
 
 contourf(G, fmt=:png, show=1)
+contourf(G, C=[-2, 0, 2, 5], fmt=:png, show=1)
 contourf(G, C, contour=[-2, 0, 2, 5], fmt=:png, show=1)
 contourf(G, C, annot=[-2, 0, 2, 5], fmt=:png, show=1)
 contourf(G, C, annot=2, fmt=:png, show=1)
@@ -78,6 +84,7 @@ contourf(G, C, annot=:none, fmt=:png, show=1)
 
 d = [0 2 5; 1 4 5; 2 0.5 5; 3 3 9; 4 4.5 5; 4.2 1.2 5; 6 3 1; 8 1 5; 9 4.5 5];
 contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), fmt=:png, show=1)
+```
 """
 function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
 
@@ -93,6 +100,7 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 				CPT = makecpt(T=arg2str(val,','), M=true, par=(COLOR_BACKGROUND="white", COLOR_FOREGROUND="white"))
 			else						# We already have one CPT so VAL is interpreted as contours values
 				C_contours = arg2str(val,',')
+				if (!occursin(",", C_contours))  C_contours *= ","  end
 			end
 		else
 			t = string(val)
@@ -147,7 +155,13 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 		if ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing)  savefig = val  end
 
 		d[:C] = CPT;	d[:Q] = "s";	done = false#	d[:W] = "c"
-		if ((C_int == 0) && (opt_A == "none" || opt_A == :none))  d[:W] = "c";  done = true  end	# Then no need grdcontour
+		if ((C_int == 0) && (opt_A == "none" || opt_A == :none))	# Then no need grdcontour
+			if (show)  d[:show] = true  end
+			if (fmt !== nothing) d[:fmt] = fmt  end
+			if (savefig != "")   d[:savefig] = savefig  end
+			if (opt_W !== nothing)  d[:W] = opt_W  end
+			d[:W] = "c";  done = true
+		end
 		grdview(cmd0, arg1; first=first, d...)
 		del_from_dict(d, [[:C :z], [:Q], [:W]])
 		if (done)  return  end
