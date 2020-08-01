@@ -112,7 +112,7 @@ function gmt(cmd::String, args...)
 		IamModern[1] = false
 	elseif (r == "" && n_argin == 0) # Just requesting usage message, add -? to options
 		r = "-?"
-	elseif (n_argin > 1 && g_module == "psscale")		# Happens with nested calls like in grdimage
+	elseif (n_argin > 1 && (g_module == "psscale" || g_module == "colorbar"))	# Happens with nested calls like in grdimage
 		if (!isa(args[1], GMTcpt) && isa(args[2], GMTcpt))
 			args = [args[2]];		n_argin = 1
 		end
@@ -1417,9 +1417,8 @@ function mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::S
 	img = Array{UInt8}(undef,size(mat));
 	if ((vals = find_in_dict(d, [:histo_bounds], false)[1]) !== nothing)
 		len = length(vals)
-		if (isa(mat, Array{UInt16,3}))  ny, nx, nz = size(mat);
-		else                            ny, nx = size(mat);		nz = 1
-		end
+		nz = 1
+		isa(mat, Array{UInt16,3}) ? (ny, nx, nz) = size(mat) : (ny, nx) = size(mat)
 		if (len > 2*nz)  error("histo_bounds has more elements then allowed by image dimensions")  end
 		if (len != 1 && len != 2 && len != 6)
 			error(@sprintf("Bad hist_bounds argument. It must be a 1, 2 or 6 elements array and not %d", len))
@@ -1427,7 +1426,6 @@ function mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::S
 
 		val = (len == 1) ? convert(UInt16, vals)::UInt16 : convert(Array{UInt16}, vals)::Array{UInt16}
 		if (len == 1)
-			#val = parse(UInt16, @sprintf("%d", vals))	# Only way found to remove type instability
 			sc = 255 / (65535 - val)
 			@inbounds for k = 1:length(img)
 				img[k] = (mat[k] < val) ? 0 : round(UInt8, (mat[k] - val) * sc)
@@ -1439,9 +1437,6 @@ function mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::S
 				img[k] = (mat[k] < val[1]) ? 0 : ((mat[k] > val[2]) ? 255 : UInt8(round((mat[k]-val[1])*sc)))
 			end
 		else	# len = 6
-			#val = zeros(UInt16, 1, len)
-			#[val[k] = parse(UInt16, @sprintf("%d", vals[k])) for k = 1:len]	# This does NOT avoid type instability
-			#for k = 1:len  val[k] = parse(UInt16, @sprintf("%d", vals[k]))  end		# List comprehensions make it sloow too
 			nxy = nx * ny
 			v1 = [1 3 5];	v2 = [2 4 6]
 			sc = [255 / (val[2] - val[1]), 255 / (val[4] - val[3]), 255 / (val[6] - val[5])]
