@@ -190,12 +190,15 @@ if (got_it)					# Otherwise go straight to end
 	GMT.GMTdataset([0.0 0]);
 	GMT.GMTdataset([0.0 0], Array{String,1}());
 
-	img16 = rand(UInt16, 32, 32, 3);
-	GMT.mat2img(img16);
+	img16 = rand(UInt16, 16, 16, 3);
+	I = GMT.mat2img(img16);
+	I.image = img16;
+	GMT.mat2img(I);
 	GMT.mat2img(img16, histo_bounds=8440);
 	GMT.mat2img(img16, histo_bounds=[8440 13540]);
 	GMT.mat2img(img16, histo_bounds=[8440 13540 800 20000 1000 30000]);
 
+	@test_throws ErrorException("Bad hist_bounds argument. It must be a 1, 2 or 6 elements array and not 3") GMT.mat2img(img16, histo_bounds=[8440 13540 0]);
 	@test_throws ErrorException("Memory layout option must have 3 characters and not 1") GMT.parse_mem_layouts("-%1")
 	@test_throws ErrorException("Memory layout option must have at least 2 chars and not 1") GMT.parse_mem_layouts("-&1")
 	@test GMT.parse_mem_layouts("-&BR")[3] == "BR"
@@ -260,11 +263,20 @@ if (got_it)					# Otherwise go straight to end
 	println("	CONTOURF")
 	# CONTOURF
 	G = GMT.peaks();
+	gmtwrite("lixo.grd", G)
 	C = makecpt(T=(-7,9,2));
+	contourf("lixo.grd", Vd=dbg2)
 	contourf(G, Vd=dbg2)
+	contourf!(G, C=C, Vd=dbg2)
+	contourf("lixo.grd", contour=[-2, 0, 2, 5], Vd=dbg2)
+	contourf!("lixo.grd", contour=[-2, 0, 2, 5], grd=true, Vd=dbg2)
 	contourf(G, C, contour=[-2, 0, 2, 5], Vd=dbg2)
+	contourf(G, C, annot=:none, Vd=dbg2)
 	d = [0 2 5; 1 4 5; 2 0.5 5; 3 3 9; 4 4.5 5; 4.2 1.2 5; 6 3 1; 8 1 5; 9 4.5 5];
 	contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), Vd=dbg2)
+	C = makecpt(range=(0,10,1));
+	contourf(d, C, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), Vd=dbg2)
+	contourf(d, C=C, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), Vd=dbg2)
 
 	# FILTER1D
 	filter1d([collect((1.0:50)) rand(50)], F="m15");
@@ -730,7 +742,8 @@ if (got_it)					# Otherwise go straight to end
 	bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=dbg2)
 	T = mat2ds([1.0 0.446143 0; 2.0 0.581746 0; 3.0 0.268978 0], text=[" "; " "; " "]);
 	bar(T, color=:rainbow, figsize=(14,8), mz=[3 2 1], Vd=dbg2)
-	mat2ds([0 0],["aa"]);
+	D = mat2ds([0 0],["aa"]);
+	show(D);
 
 	println("	BAR3")
 	# BAR3
