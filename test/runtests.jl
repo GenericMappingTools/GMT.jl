@@ -197,6 +197,11 @@ if (got_it)					# Otherwise go straight to end
 	GMT.mat2img(img16, histo_bounds=8440);
 	GMT.mat2img(img16, histo_bounds=[8440 13540]);
 	GMT.mat2img(img16, histo_bounds=[8440 13540 800 20000 1000 30000]);
+	
+	D = mat2ds([0 0; 1 1],["a", "b"]);	D.header = "a";
+	GMT.make_zvals_vec(D, ["a", "b"], [1,2]);
+	GMT.edit_segment_headers!([D], [1], "0")
+	GMT.edit_segment_headers!(D, [1], "0")
 
 	@test_throws ErrorException("Bad hist_bounds argument. It must be a 1, 2 or 6 elements array and not 3") GMT.mat2img(img16, histo_bounds=[8440 13540 0]);
 	@test_throws ErrorException("Memory layout option must have 3 characters and not 1") GMT.parse_mem_layouts("-%1")
@@ -208,12 +213,15 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("image_init: input is not a IMAGE container type") GMT.image_init(C_NULL,0,0)
 	@test_throws ErrorException("Expected a CPT structure for input but got a Int32") GMT.palette_init(C_NULL,0,Int32(0),0)
 	@test_throws ErrorException("Bad family type") GMT.GMT_Alloc_Segment(C_NULL, -1, 0, 0, "", C_NULL)
+	@test_throws ErrorException("Expected a PS structure for input") GMT.ps_init(C_NULL, 0, 0, 0)
+	@test_throws ErrorException("size of x,y vectors incompatible with 2D array size") GMT.grdimg_hdr_xy(rand(3,3), 0, 0, [1 2], [1])
 	GMT.strncmp("abcd", "ab", 2)
 	GMT.parse_proj((name="blabla",center=(0,0)))
 
 	@test GMT.parse_j("", Dict(:spheric_dist => "f"))[1] == " -jf"
 	@test GMT.parse_t("", Dict(:t=>0.2))[1] == " -t20.0"
 	@test GMT.parse_t("", Dict(:t=>20))[1]  == " -t20"
+	@test GMT.parse_contour_AGTW(Dict(:A => [1]), "") == " -A1,"
 	GMT.helper2_axes("");
 	@test GMT.axis(ylabel="bla") == " -Bpy+lbla";
 	@test GMT.axis(Yhlabel="bla") == " -Bpy+Lbla";
@@ -851,6 +859,7 @@ if (got_it)					# Otherwise go straight to end
 	x,y,z=GMT.peaks(grid=false);
 	contour([x[:] y[:] z[:]], cont=1, annot=2, axis="a")
 	contour!([x[:] y[:] z[:]], cont=1, Vd=dbg2)
+	contour!([x[:] y[:] z[:]], I=true,Vd=dbg2)
 	contour!([x[:] y[:] z[:]], cont=1, E="lixo", Vd=dbg2)	# Cheating E opt because Vd=dbg2 prevents its usage
 	contour!("", [x[:] y[:] z[:]], cont=1, Vd=dbg2)
 	D = contour([x[:] y[:] z[:]], cont=[1,3,5], dump=true);
@@ -904,6 +913,7 @@ if (got_it)					# Otherwise go straight to end
 	solar(R="d", W=1, J="Q0/14c", B="a", T="dc")
 	solar!(R="d", W=1, J="Q0/14c", T="dc", Vd=dbg2)
 	solar(sun=(date="2016-02-09T16:00:00",), formated=true);
+	t = pssolar(sun=(date="2016-02-09T16:00:00",), formated=true);
 
 	println("	PSTERNARY")
 	# PSTERNARY
