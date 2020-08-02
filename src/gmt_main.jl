@@ -1595,18 +1595,19 @@ function make_zvals_vec(D, user_ids::Array{String,1}, vals)
 	n_user_ids = length(user_ids)
 	@assert(n_user_ids == length(vals))
 	ind, data_ids = get_segment_ids(D)
-	if (ind[1] != 1)  error("This function requires that first segment hasa a header with an id")  end
+	if (ind[1] != 1)  error("This function requires that first segment has a a header with an id")  end
 	n_data_ids = length(data_ids)
 	if (n_user_ids > n_data_ids)
 		@warn("Number of segment IDs requested is larger than segments with headers in data")
 	end
 
-	zvals = Array{Int,1}(undef, length(D))
+	n_seg = (isa(D, Array)) ? length(D) : 1
+	zvals = Array{Int,1}(undef, n_seg)
 	n = 1
 	for k = 1:n_user_ids
 		for d_id in data_ids
 			if startswith(user_ids[k], d_id)	# Find first occurence of user_ids[k] in a segment header
-				last = (k < n_data_ids) ? ind[k+1]-1 : length(D)
+				last = (k < n_data_ids) ? ind[k+1]-1 : n_seg
 				[zvals[j] = vals[k] for j = ind[k]:last]		# Repeat the last VAL for segments with no headers
 				n = last + 1					# Prepare for next new VAL
 				break
@@ -1617,12 +1618,17 @@ function make_zvals_vec(D, user_ids::Array{String,1}, vals)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function edit_segment_headers!(D, vals, opt)
-	# Add an option OPT to segment headers with a val from VALS. Number of elements of VALS must
-	# be equal to the number of segments in D that have a header.
+function edit_segment_headers!(D, vals::Array, opt)
+	# Add an option OPT to segment headers with a val from VALS. Number of elements of VALS must be
+	# equal to the number of segments in D that have a header. If numel(val) == 1 must encapsulate it in []
+
 	ind, ids = get_segment_ids(D)
-	for k = 1:length(ind)
-		D[ind[k]].header *= string(opt, vals[k])
+	if (isa(D, Array))
+		for k = 1:length(ind)
+			D[ind[k]].header *= string(opt, vals[k])
+		end
+	else
+		D.header *= string(opt, vals[1])
 	end
 	return nothing
 end
@@ -1630,10 +1636,12 @@ end
 # ---------------------------------------------------------------------------------------------------
 function get_segment_ids(D)
 	# Get segment ids (first text after the '>') and the idices of those segments
-	d = Dict(k => D[k].header for k = 1:length(D))
-	tf = Array{Bool,1}(undef,length(D))			# pre-allocate
-	[tf[k] = (d[k] !== "" && d[k][1] != ' ') ? true : false for k = 1:length(D)];	# Mask of non-empty headers
-	ind = collect(1:length(D))
+	if (isa(D, Array))  n = length(D);	d = Dict(k => D[k].header for k = 1:n)
+	else                n = 1;			d = Dict(1 => D.header)
+	end
+	tf = Array{Bool,1}(undef,n)			# pre-allocate
+	[tf[k] = (d[k] !== "" && d[k][1] != ' ') ? true : false for k = 1:n];	# Mask of non-empty headers
+	ind = collect(1:n)
 	ind = ind[tf]			# OK, now we have the indices of the segments with headers != ""
 	ids = Array{String,1}(undef,length(ind))	# pre-allocate
 	[ids[k] = d[ind[k]] for k = 1:length(ind)]	# indices of non-empty segments
