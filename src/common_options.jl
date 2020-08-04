@@ -1440,6 +1440,11 @@ function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_o
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		to_slot = true
 		if (isa(val, Dict))  val = dict2nt(val)  end
+		if (isa(val, Tuple) && length(val) == 2)
+			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
+			val = dict2nt(Dict(need_symb=>val[1], keys(nt_opts)[1]=>val[2]))
+			d[:C] = val		# Need to patch also the input option
+		end
 		if (isa(val, NamedTuple))
 			di = nt2dict(val)
 			if ((val = find_in_dict(di, [need_symb], false)[1]) === nothing)
@@ -2741,7 +2746,7 @@ end
 # --------------------------------------------------------------------------------------------------
 function show_non_consumed(d::Dict, cmd)
 	# First delete some that could not have been delete earlier (from legend for example)
-	del_from_dict(d, [[:show], [:leg :legend], [:box_pos], [:leg_pos]])
+	del_from_dict(d, [[:show], [:leg :legend], [:box_pos], [:leg_pos], [:P :portrait]])
 	if (length(d) > 0)
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
