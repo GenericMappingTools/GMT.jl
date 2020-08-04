@@ -416,6 +416,7 @@ if (got_it)					# Otherwise go straight to end
 	# GRD2CPT
 	G=gmt("grdmath", "-R0/10/0/10 -I2 X");
 	C=grd2cpt(G);
+	grd2cpt(G, cptname="lixo.cpt")
 
 	# GRD2XYZ (It's tested near the end)
 	#D=grd2xyz(G); # Use G of previous test
@@ -613,7 +614,7 @@ if (got_it)					# Otherwise go straight to end
 	println("	MAKECPT")
 	# MAKECPT
 	cpt = makecpt(range="-1/1/0.1");
-	makecpt(rand(10,1), E="", C=:rainbow);
+	makecpt(rand(10,1), E="", C=:rainbow, cptname="lixo.cpt");
 	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
 
 	println("	MAPPROJECT")
