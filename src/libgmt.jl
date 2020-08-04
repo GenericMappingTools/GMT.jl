@@ -20,7 +20,12 @@ end
 		const thelib = get_GMT_sharelib()
 =#
 
-const thelib = string(chop(read(`gmt --show-library`, String)))
+try
+	global const thelib = ENV["GMT_LIBRARY"]
+catch
+	global const thelib = string(chop(read(`gmt --show-library`, String)))
+end
+#const thelib = string(chop(read(`gmt --show-library`, String)))
 
 function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Cvoid}=C_NULL)
 	ccall( (:GMT_Create_Session, thelib), Ptr{Cvoid}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Cvoid}), tag, pad, mode, print_func)
