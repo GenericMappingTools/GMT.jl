@@ -14,7 +14,7 @@ Parameters
     Features with an area smaller than min_area in km^2 or of hierarchical level that is
     lower than min_level or higher than max_level will not be plotted.
     ($(GMTdoc)gmtselect.html#a)
-- **C** | **dist2pt** :: [Type => Str | NamedTuple]   `Arg = pointfile+ddist[unit] | (pts=Array, dist=xx)`
+- **C** | **dist2pt** | **dist** :: [Type => Str | NamedTuple]   `Arg = pointfile+ddist[unit] | (pts=Array, dist=xx)`
 
     Pass all records whose location is within dist of any of the points in the ASCII file pointfile.
     If dist is zero then the 3rd column of pointfile must have each point’s individual radius of influence.

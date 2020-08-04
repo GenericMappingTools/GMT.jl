@@ -136,6 +136,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		elseif (isa(val, Tuple))
 			cmd = parse_dcw(cmd, val)
 		end
+		if (GMTver >= 6.1)  cmd *= " -Vq"  end		# Suppress annoying warnings regarding filling syntax with +r<dpi>
 		del_from_dict(d, [:E :DCW])
 	end
 

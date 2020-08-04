@@ -85,7 +85,6 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2cpt", cmd0, arg1)
 
 	d = KW(kwargs)
-
 	cmd, = parse_common_opts(d, "", [:R :V_params])
 	cmd  = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:E :nlevels],
 	                                 [:G :truncate], [:F :force_rgb], [:I :inverse :reverse], [:L :limit], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :steps], [:T :symetric], [:W :no_interp], [:Z :continuous]])
@@ -93,7 +92,11 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1)
-	if (IamModern[1] && ((val = find_in_dict(d, [:H :getcpt])[1]) === nothing))  cmd *= " -H"  end
+	if ((val = find_in_dict(d, [:cptname :cmapname])[1]) !== nothing)
+		if (IamModern[1])  cmd *= " -H"  end
+		cmd *=  " > " * string(val)
+	elseif (IamModern[1])  cmd *= " -H"
+	end
 	global current_cpt = common_grd(d, "grd2cpt " * cmd, arg1, arg2)
 end
 

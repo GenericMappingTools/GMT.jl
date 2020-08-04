@@ -90,8 +90,11 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 		end
 	end
 
-	if (IamModern[1] && ((val = find_in_dict(d, [:H :save])[1]) !== nothing))  cmd *= " -H"  end
-	if (haskey(d, :cptname))  cmd *=  " > " * d[:cptname]  end
+	if ((val = find_in_dict(d, [:cptname :cmapname])[1]) !== nothing)
+		if (IamModern[1])  cmd *= " -H"  end
+		cmd *=  " > " * string(val)
+	elseif (IamModern[1])  cmd *= " -H"
+	end
 	cmd = "makecpt " * cmd
 	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 	global current_cpt = gmt(cmd, arg1)
