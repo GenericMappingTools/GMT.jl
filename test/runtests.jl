@@ -247,6 +247,7 @@ if (got_it)					# Otherwise go straight to end
 	@test (GMT.check_axesswap(Dict(:axesswap => ("xy")), "?/?") == "-?/-?")
 	@test (GMT.check_axesswap(Dict(:axesswap => ("y")), "?/?") == "?/-?")
 
+	gmtbegin()
 	resetGMT()
 	# ---------------------------------------------------------------------------------------------------
 
@@ -860,10 +861,11 @@ if (got_it)					# Otherwise go straight to end
 	x,y,z=GMT.peaks(grid=false);
 	contour([x[:] y[:] z[:]], cont=1, annot=2, axis="a")
 	contour!([x[:] y[:] z[:]], cont=1, Vd=dbg2)
-	contour!([x[:] y[:] z[:]], I=true,Vd=dbg2)
 	contour!([x[:] y[:] z[:]], cont=1, E="lixo", Vd=dbg2)	# Cheating E opt because Vd=dbg2 prevents its usage
 	contour!("", [x[:] y[:] z[:]], cont=1, Vd=dbg2)
 	D = contour([x[:] y[:] z[:]], cont=[1,3,5], dump=true);
+	contour([x[:] y[:] z[:]],cont=[-2,0,3], Vd=dbg2)
+	@test_throws ErrorException("fill option rquires passing a CPT") contour("lixo.dat",cont=[-2,0,3], I=true)
 
 	println("	PSIMAGE")
 	# PSIMAGE
@@ -972,6 +974,7 @@ if (got_it)					# Otherwise go straight to end
 	println("	MODERN")
 	@test GMT.helper_sub_F("1/2") == "1/2"
 	println("    SUBPLOT1")
+	subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), name=:png)
 	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), Vd=dbg2), "-F1/2")
 	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=("1i",2), Vd=dbg2), "-F1i/2")
 	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(size=(1,2), frac=((2,3),(3,4,5))), figname="lixo.ps", Vd=dbg2), "-Ff1/2+f2,3/3,4,5")
