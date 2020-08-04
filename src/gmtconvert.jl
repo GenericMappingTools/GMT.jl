@@ -49,7 +49,7 @@ Parameters
 
     Only output those segments whose header record contains the specified text string.
     ($(GMTdoc)gmtconvert.html#s)
-- **T** | **suppress** :: [Type => Str | []]    ``Arg = [h|d]``
+- **T** | **suppress** | **skip** :: [Type => Str | []]    ``Arg = [h|d]``
 
     Suppress the writing of certain records on output. Append h to suppress segment headers
     [Default] or d to suppress duplicate data records. Use T=:hd to suppress both types of records.
@@ -86,7 +86,7 @@ function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 	d = KW(kwargs)
 	cmd, = parse_common_opts(d, "", [:V_params :write :append :a :b :bo :d :e :f :g :h :i :o :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :h_cat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
-	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :select_num], [:S :select_hdr], [:T :suppress], [:W :word2num], [:Z :range]])
+	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :select_num], [:S :select_hdr], [:T :suppress :skip], [:W :word2num], [:Z :range]])
 
 	common_grd(d, cmd0, cmd, "gmtconvert ", arg1)		# Finish build cmd and run it
 end
