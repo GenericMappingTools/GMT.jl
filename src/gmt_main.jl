@@ -1654,8 +1654,33 @@ function resetGMT()
 	IamModern[1] = false;	FirstModern[1] = false;		IamSubplot[1] = false;	usedConfPar[1] = false;
 	multi_col[1] = false;	convert_syntax[1] = false;	current_view[1] = ""
 	img_mem_layout[1] = "";	grd_mem_layout[1] = "";
-	current_cpt  = nothing;	legend_type  = nothing
+	global current_cpt  = nothing;	global legend_type  = nothing
 	gmt("destroy")
+	clear_sessions()
+end
+
+# ---------------------------------------------------------------------------------------------------
+function clear_sessions(age=0)
+	# Delete stray sessions left behind by old failed process. Thanks to @htyeim
+	# AGE is in seconds
+	# Windows version of ``gmt clear sessions`` fails in 6.0 and it errors if no sessions dir
+	try		# Becuse the sessions dir may not exist 
+		if (GMTver >= 6.1)
+			sp = readlines(`gmt --show-userdir`)[1] * "/sessions"
+			dirs = readdir(sp)
+			session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
+			n = datetime2unix(now(UTC))
+			for sd in session_dirs
+				fp = joinpath(sp, sd)
+				if (n - mtime(fp) > age) 		# created age seconds before
+					rm(fp, recursive = true)
+				end
+			end
+		else
+			run(`gmt clear sessions`)
+		end
+	catch
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------
