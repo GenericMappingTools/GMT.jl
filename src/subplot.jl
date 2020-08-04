@@ -86,18 +86,18 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	# ------------------------------ End parsing inputs --------------------------------
 
 	if (!stop && !do_set)
-		if ((val = find_in_dict(d, [:grid])[1]) === nothing)
+		if ((val_ = find_in_dict(d, [:grid])[1]) === nothing)
 			error("SUBPLOT: 'grid' keyword is mandatory")
 		end
-		cmd = arg2str(val, 'x') * " " * cmd * opt_C			# Also add the eventual global -C clearance option
+		cmd = arg2str(val_, 'x') * " " * cmd * opt_C			# Also add the eventual global -C clearance option
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 
 		if (!IamModern[1])			# If we are not in modern mode, issue a gmt("begin") first
 			fname = ""				# Default name (GMTplot.ps) is set in gmt_main()
-			if ((val = find_in_dict(d, [:figname :name :savefig])[1]) !== nothing)
-				fname = get_format(string(val), nothing, d)		# Get the fig name and format.
-			elseif ((val = find_in_dict(d, [:fmt])[1]) !== nothing)
-				fname = "GMTplot " * string(val)
+			if ((val_ = find_in_dict(d, [:figname :name :savefig])[1]) !== nothing)
+				fname = get_format(string(val_), nothing, d)		# Get the fig name and format.
+			elseif ((val_ = find_in_dict(d, [:fmt])[1]) !== nothing)
+				fname = "GMTplot " * string(val_)
 			end
 			gmt("begin " * fname)
 		end

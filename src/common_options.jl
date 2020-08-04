@@ -1610,7 +1610,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	end
 	if (get_cpt)
 		cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2, true, true, cpt_opt_T, in_bag)
-		N_used = !isempty_(arg1) + !isempty_(arg2)
+		N_used = (arg1 !== nothing) + (arg2 !== nothing)
 	end
 
 	if (IamModern[1] && FirstModern[1])  FirstModern[1] = false;  end

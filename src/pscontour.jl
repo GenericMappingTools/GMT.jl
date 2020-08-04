@@ -98,9 +98,8 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, info = read_data(d, cmd0, cmd, arg1, opt_R, false, true)
-	N_used = (arg1 === nothing) ? 0 : 1
 	cmd, N_used_, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing), arg1, nothing, nothing, "pscontour")
-	N_used += N_used_
+	N_used = (arg1 !== nothing) + (arg2 !== nothing) + (arg3 !== nothing)
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
 		cmd, args, n, = add_opt(cmd, 'C', d, [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
@@ -117,6 +116,10 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 				end
 			end
 		end
+	end
+
+	if (occursin(" -I", cmd) && (!isa(arg1, GMTcpt) && !isa(arg2, GMTcpt) && !isa(arg3, GMTcpt)))
+		error("fill option rquires passing a CPT")
 	end
 
 	if ((val = find_in_dict(d, [:E :index])[1]) !== nothing)
