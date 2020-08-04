@@ -118,10 +118,6 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	if (occursin(" -I", cmd) && (!isa(arg1, GMTcpt) && !isa(arg2, GMTcpt) && !isa(arg3, GMTcpt)))
-		error("fill option rquires passing a CPT")
-	end
-
 	if ((val = find_in_dict(d, [:E :index])[1]) !== nothing)
 		cmd *= " -E"
 		if (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{GMTdataset}))   # Now need to find the free slot where to store the indices array
@@ -142,6 +138,11 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			cmd, arg2, arg3, = add_opt_cpt(d, cmd, [:C], 'C', N_used, arg2, arg3, true, true, opt_T, true)
 		end
 	end
+
+	if (occursin(" -I", cmd) && (!isa(arg1, GMTcpt) && !isa(arg2, GMTcpt) && !isa(arg3, GMTcpt)))
+		error("fill option rquires passing a CPT")
+	end
+
 	cmd, K = finish_PS_nested(d, gmt_proggy * cmd, "", K, O, [:coast :colorbar])
 	return finish_PS_module(d, cmd, "-D", K, O, true, arg1, arg2, arg3)
 end
