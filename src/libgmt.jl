@@ -19,13 +19,9 @@ end
 		(Sys.WORD_SIZE == 64 ? (const thelib = "gmt_w64") : (const thelib = "gmt_w32")) : 
 		const thelib = get_GMT_sharelib()
 =#
-
-try
-	# This form is needed when debugging with Xcode
-	global const thelib = ENV["GMT_LIBRARY"]
-catch
-	global const thelib = string(chop(read(`gmt --show-library`, String)))
-end
+const thelib = haskey(ENV,"GMT_LIBRARY") ?
+		ENV["GMT_LIBRARY"] :
+		string(chop(read(`gmt --show-library`, String)))
 
 function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Cvoid}=C_NULL)
 	ccall( (:GMT_Create_Session, thelib), Ptr{Cvoid}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Cvoid}), tag, pad, mode, print_func)
