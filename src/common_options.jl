@@ -492,7 +492,7 @@ function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 			elseif (val == "same")				# User explicitly said "Same as previous -B"
 				return cmd * " -B", " -B"
 			elseif (startswith(val, "auto"))
-				if     (occursin("XYZg", val)) val = " -Bafg -Bzag -BWSenZ"
+				if     (occursin("XYZg", val)) val = (GMTver <= 6.1) ? " -Bafg -Bzafg -BWSenZ+b" : " -Bafg -Bzafg -BWSenZ+b"
 				elseif (occursin("XYZ", val))  val = def_fig_axes3
 				elseif (occursin("XYg", val))  val = " -Bafg -BWSen"
 				elseif (occursin("XY", val))   val = def_fig_axes
@@ -949,8 +949,9 @@ function parse_params(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_pen(d::Dict, symbs, opt::String="", del::Bool=true)
-	# Build a pen option. Input can be either a full hard core string or spread in lw, lc, lw, etc or a tuple
+function add_opt_pen(d::Dict, symbs, opt::String="", sub::Bool=true, del::Bool=true)
+	# Build a pen option. Input can be either a full hard core string or spread in lw, lc, ls, etc or a tuple
+	# If SUB is true (lw, lc, ls) are not seeked because we are parsing a sub-option
 
 	if (opt != "")  opt = " -" * opt  end	# Will become -W<pen>, for example
 	out = Array{String,1}(undef,1)
@@ -965,7 +966,7 @@ function add_opt_pen(d::Dict, symbs, opt::String="", del::Bool=true)
 				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
 					for v in val
 						d2 = nt2dict(v)			# Decompose the NT and feed it into this-self
-						out[1] *= opt * add_opt_pen(d2, symbs, "", false)
+						out[1] *= opt * add_opt_pen(d2, symbs, "", true, false)
 					end
 				else
 					out[1] = opt * parse_pen(val)	# Should be a better function
@@ -973,8 +974,7 @@ function add_opt_pen(d::Dict, symbs, opt::String="", del::Bool=true)
 			elseif (isa(val, NamedTuple))		# Make a recursive call. Will screw if used in mix mode
 				# This branch is very convoluted and fragile
 				d2 = nt2dict(val)				# Decompose the NT and feed into this-self
-				#return opt * add_opt_pen(d2, symbs, "", false)
-				t = add_opt_pen(d2, symbs, "", false)
+				t = add_opt_pen(d2, symbs, "", true, false)
 				if (t == "")
 					d = nt2dict(val)
 					out[1] = opt
@@ -1766,6 +1766,11 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	#if (haskey(d, :fill))    opt *= "+g" * get_color(d[:fill])  end
 	val, symb = find_in_dict(d, [:fill :bg :background], false)
 	if (val !== nothing)     opt[1] *= "+g" * add_opt_fill(d, [symb])  end	# Works, but patterns can screw
+	if (GMTver > 6.1)
+		if ((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing)  opt[1] = add_opt_fill(val, opt[1], "+x")  end
+		if ((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing)  opt[1] = add_opt_fill(val, opt[1], "+y")  end
+		if ((p = add_opt_pen(d, [:wall_outline], "+w")) != "")  opt[1] *= p  end
+	end
 	if (haskey(d, :cube))    opt[1] *= "+b"  end
 	if (haskey(d, :noframe)) opt[1] *= "+n"  end
 	if (haskey(d, :pole))    opt[1] *= "+o" * arg2str(d[:pole])  end

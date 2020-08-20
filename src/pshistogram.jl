@@ -111,7 +111,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd   = add_opt(cmd, 'T', d, [:T :bin :width])
 	cmd   = add_opt(cmd, 'L', d, [:L :out_range])
-	cmd  *= add_opt_pen(d, [:W :pen], "W")
+	cmd  *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
 	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-I", cmd))
 		cmd *= " -L0.5p -G150"		# If no -L, -G, -I or -C set these defaults
 	end

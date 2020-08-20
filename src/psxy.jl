@@ -113,7 +113,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		opt_Wmarker = "0.5p," * arg2str(val)		# 0.25p is too thin?
 	end
 
-	opt_W = add_opt_pen(d, [:W :pen], "W")
+	opt_W = add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
 	if ((occursin("+c", opt_W) || occursin("+c", cmd)) && !occursin("-C", cmd))
 		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
 	end

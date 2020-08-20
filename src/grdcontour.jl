@@ -166,7 +166,7 @@ function parse_contour_AGTW(d::Dict, cmd::String)
 	                                         labels="+l", closed="_+a", gap="+d") )
 	#cmd = add_opt(cmd, 'W', d, [:W :pen], (cont="_c", contour="_c", annot="_a", pen=("", add_opt_pen),
 	                                       #colored="_+c", cline="_+cl", ctext="_+cf"))
-	cmd *= add_opt_pen(d, [:W :pen], "W")
+	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
 end
 
 # ---------------------------------------------------------------------------------------------------
