@@ -9,7 +9,6 @@ mutable struct GMTgrid 	# The type holding a local header and data of a GMT grid
 	title::String
 	remark::String
 	command::String
-	datatype::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
 	z::Array{Float32,2}
@@ -28,7 +27,6 @@ mutable struct GMTimage 	# The mutable struct holding a local header and data of
 	registration::Int
 	nodata::Float64
 	color_interp::String
-	datatype::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
 	image::Union{Array{UInt8}, Array{UInt16}}
@@ -447,7 +445,7 @@ function get_grid(API::Ptr{Nothing}, object)
 	#t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
 
 	# Return grids via a float matrix in a struct
-	out = GMTgrid("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", "", X, Y, z, "", "", "", "")
+	out = GMTgrid("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", X, Y, z, "", "", "", "")
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT != C_NULL)    out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)      end
@@ -509,7 +507,7 @@ function get_image(API::Ptr{Nothing}, object)
 
 	# Return image via a uint8 matrix in a struct
 	cinterp = (I.color_interp != C_NULL) ? unsafe_string(I.color_interp) : ""
-	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, "", X, Y,
+	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, X, Y,
 	               t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
@@ -1401,7 +1399,7 @@ function mat2img(mat::Array{UInt8}; x=nothing, y=nothing, hdr=nothing, proj4::St
 	d = KW(kw)
 	if ((val = find_in_dict(d, [:layout])[1]) !== nothing)  mem_layout = string(val)  end
 
-	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], 1, NaN, color_interp, "uint8",
+	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], 1, NaN, color_interp,
 	             x,y,mat, "x", "y", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout)
 end
 
@@ -1460,7 +1458,7 @@ function mat2img(img::GMTimage; kw...)
 	I = mat2img(img.image; kw...)
 	I.proj4 = img.proj4;	I.wkt = img.wkt;	I.epsg = img.epsg
 	I.range = img.range;	I.inc = img.inc;	I.registration = img.registration
-	I.nodata = img.nodata;	I.color_interp = img.color_interp;	I.datatype = img.datatype
+	I.nodata = img.nodata;	I.color_interp = img.color_interp;
 	I.x_unit = img.x_unit;	I.y_unit = img.y_unit;	I.z_unit = img.z_unit;
 	I.x = img.x;	I.y = img.y;	I.colormap = img.colormap;
 	I.n_colors = img.n_colors;		I.alpha = img.alpha;	I.layout = img.layout;
@@ -1538,7 +1536,7 @@ function mat2grid(mat; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::St
 	else                     z = mat
 	end
 
-	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, "", x, y, z, "x", "y", "z", "")
+	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, z, "x", "y", "z", "")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1688,7 +1686,7 @@ function Base.:+(G1::GMTgrid, G2::GMTgrid)
 # Add two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z)) error("Grids have different sizes, so they cannot be added.") end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-				 G1.command, G1.datatype, G1.x, G1.y, G1.z .+ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+				 G1.command, G1.x, G1.y, G1.z .+ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G3.range[5] = minimum(G3.z)
 	G3.range[6] = maximum(G3.z)
 	return G3
@@ -1697,7 +1695,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function Base.:+(G1::GMTgrid, shift::Number)
 	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-	             G1.command, G1.datatype, G1.x, G1.y, G1.z .+ shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	             G1.command, G1.x, G1.y, G1.z .+ shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G2.range[5:6] .+= shift
 	return G2
 end
@@ -1708,7 +1706,7 @@ function Base.:-(G1::GMTgrid, G2::GMTgrid)
 	if (size(G1.z) != size(G2.z)) error("Grids have different sizes, so they cannot be subtracted.")
 	end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-	             G1.command, G1.datatype, G1.x, G1.y, G1.z .- G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	             G1.command, G1.x, G1.y, G1.z .- G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G3.range[5] = minimum(G3.z)
 	G3.range[6] = maximum(G3.z)
 	return G3
@@ -1717,7 +1715,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function Base.:-(G1::GMTgrid, shift::Number)
 	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-	             G1.command, G1.datatype, G1.x, G1.y, G1.z .- shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	             G1.command, G1.x, G1.y, G1.z .- shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G2.range[5:6] .-= shift
 	return G2
 end
@@ -1728,7 +1726,7 @@ function Base.:*(G1::GMTgrid, G2::GMTgrid)
 	if (size(G1.z) != size(G2.z)) error("Grids have different sizes, so they cannot be multiplied.")
 	end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-	             G1.command, G1.datatype, G1.x, G1.y, G1.z .* G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	             G1.command, G1.x, G1.y, G1.z .* G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G3.range[5] = minimum(G3.z)
 	G3.range[6] = maximum(G3.z)
 	return G3
@@ -1737,7 +1735,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function Base.:*(G1::GMTgrid, scale::Number)
 	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-	             G1.command, G1.datatype, G1.x, G1.y, G1.z .* scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	             G1.command, G1.x, G1.y, G1.z .* scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G2.range[5:6] .*= scale
 	return G2
 end
@@ -1747,7 +1745,7 @@ function Base.:/(G1::GMTgrid, G2::GMTgrid)
 # Divide two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z))  error("Grids have different sizes, so they cannot be divided.")  end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-	             G1.command, G1.datatype, G1.x, G1.y, G1.z ./ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	             G1.command, G1.x, G1.y, G1.z ./ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G3.range[5] = minimum(G3.z)
 	G3.range[6] = maximum(G3.z)
 	return G3
@@ -1756,7 +1754,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function Base.:/(G1::GMTgrid, scale::Number)
 	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-	             G1.command, G1.datatype, G1.x, G1.y, G1.z ./ scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	             G1.command, G1.x, G1.y, G1.z ./ scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G2.range[5:6] ./= scale
 	return G2
 end

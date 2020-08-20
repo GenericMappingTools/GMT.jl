@@ -14,7 +14,6 @@ Grid type
        title::String              # Title (Optional)
        comment::String            # Remark (Optional)
        command::String            # Command used to create the grid (Optional)
-       datatype::String           # 'float' or 'double'
        x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates
        y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates
        z::Array{Float32,2}        # [n_rows x n_columns] grid array
@@ -36,7 +35,6 @@ Image type
        registration::Int          # Registration type: 0 -> Grid registration; 1 -> Pixel registration
        nodata::Float64            # The value of nodata
        color_interp::String       # If equal to "Gray" an indexed image with no cmap will get a gray cmap
-       datatype::String           # 'uint8' or 'int8' (needs checking)
        x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates
        y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates
        image::Array{UInt8,3}      # [n_rows x n_columns x n_bands] image array
