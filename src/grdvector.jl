@@ -81,7 +81,7 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 		else                   cmd *= " -Q" * vector_attrib(val)
 		end
 	end
-	cmd *= add_opt_pen(d, [:W :pen], "W")
+	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
 
     return finish_PS_module(d, "grdvector " * cmd, "", K, O, true, arg1, arg2)
 end
