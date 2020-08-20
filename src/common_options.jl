@@ -907,14 +907,8 @@ function parse_inc(cmd::String, d::Dict, symbs, opt, del=true)::String
 			if (x == "") error("Need at least the x increment")	end
 			cmd = string(cmd, " -", opt, x)
 			if (u != "")
-				if (u == "m" || u == "minutes" || u == "s" || u == "seconds" ||
-					u == "f" || u == "foot"    || u == "k" || u == "km" || u == "n" || u == "nautical")
-					cmd *= u[1]
-				elseif (u == "e" || u == "meter") cmd *= "e";	u = "e"
-				elseif (u == "M" || u == "mile")  cmd *= "M";	u = "M"
-				elseif (u == "nodes")             cmd *= "+n";	u = "+n"
-				elseif (u == "data")              u = "u";		# For the `scatter` modules
-				end
+				u = parse_unit_unit(u)
+				if (u != "u")  cmd *= u  end	# "u" is only for the `scatter` modules
 			end
 			if (e)  cmd *= "+e"  end
 			if (y != "")
@@ -922,8 +916,8 @@ function parse_inc(cmd::String, d::Dict, symbs, opt, del=true)::String
 				if (e)  cmd *= "+e"  end		# Should never have this and u != ""
 			end
 		else
-			if (opt != "")  cmd = string(cmd, " -", opt, arg2str(val))
-			else            cmd = string(cmd, arg2str(val))
+			if (opt != "")  cmd  = string(cmd, " -", opt, arg2str(val))
+			else            cmd *= arg2str(val)
 			end
 		end
 	end
@@ -1731,8 +1725,7 @@ function parse_units(val)
 end
 
 # ---------------------------
-function parse_unit_unit(str)
-	out = ""
+function parse_unit_unit(str)::String
 	if (isa(str, Symbol))  str = string(str)  end
 	if (!isa(str, String))
 		error(@sprintf("Argument data type must be String or Symbol but was: %s", typeof(str)))
@@ -1744,7 +1737,6 @@ function parse_unit_unit(str)
 	elseif (str == "data")                 out = "u";		# For the `scatter` modules
 	else                                   out = string(str[1])		# To be type-stable
 	end
-
 	return out
 end
 # ---------------------------------------------------------------------------------------------------
