@@ -107,6 +107,7 @@ makedocs(
 			"grdgradient.md",
 			"grdview.md",
 			"lines.md",
+			"makecpt.md",
 			"movie.md",
 			"plot.md",
 			"scatter.md",

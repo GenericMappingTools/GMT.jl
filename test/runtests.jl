@@ -247,6 +247,12 @@ if (got_it)					# Otherwise go straight to end
 	@test (GMT.check_axesswap(Dict(:axesswap => ("xy")), "?/?") == "-?/-?")
 	@test (GMT.check_axesswap(Dict(:axesswap => ("y")), "?/?") == "?/-?")
 
+	@test (GMT.parse_opt_range("", Dict(:T => (1,2,0.1,:num)), "") == "1/2/0.1+n")
+	@test (GMT.parse_opt_range("", Dict(:T => (1,2,0.1,:num)), "T") == " -T1/2/0.1+n")
+	@test (GMT.parse_opt_range("", Dict(:T => (1,2,0.1,:log1))) == "1/2/0.1+l")
+	@test (GMT.parse_opt_range("", Dict(:T => [1])) == "1,")
+	GMT.parse_opt_range("", Dict(:T => (1,2,0.1,:mum,:log2)))	# Prints a warning
+
 	gmtbegin()
 	resetGMT()
 	# ---------------------------------------------------------------------------------------------------

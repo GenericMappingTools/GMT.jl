@@ -23,7 +23,7 @@ Parameters
     Create a linear color table by using the grid z-range as the new limits in the CPT.
     Alternatively, append nlevels and we will resample the color table into nlevels equidistant slices.
     ($(GMTdoc)grd2cpt.html#e)
-- **F** | **force_rgb** :: [Type => Str | []]		`Arg = [R|r|h|c][+c]]`
+- **F** | **color_model** :: [Type => Str | []]		`Arg = [R|r|h|c][+c]]`
 
     Force output CPT to written with r/g/b codes, gray-scale values or color name.
     ($(GMTdoc)grd2cpt.html#f)
@@ -40,7 +40,7 @@ Parameters
     Limit range of CPT to minlimit/maxlimit, and don’t count data outside this range when estimating CDF(Z).
     [Default uses min and max of data.]
     ($(GMTdoc)grd2cpt.html#l)
-- **M** | **overrule_bg** [Type => Bool]
+- **M** | **overrule_bg** :: [Type => Bool]
 
     Overrule background, foreground, and NaN colors specified in the master CPT with the values of
     the parameters COLOR_BACKGROUND, COLOR_FOREGROUND, and COLOR_NAN.
@@ -53,19 +53,16 @@ Parameters
 
     Selects a logarithmic interpolation scheme [Default is linear].
     ($(GMTdoc)grd2cpt.html#q)
-- **C** | **row_col** :: [Type => Bool]
-
-    Replace the x- and y-coordinates on output with the corresponding column and row numbers.
-    ($(GMTdoc)grd2cpt.html#c)
 - $(GMT.opt_R)
-- **S** | **steps** :: [Type => Bool | Str]			`Arg = zstart/zstop/zinc or n`
+- **S** | **symetric** :: [Type => Str]			`Arg = h|l|m|u`
+
+    Force the color table to be symmetric about zero (from -R to +R).
+    ($(GMTdoc)grd2cpt.html#s)
+
+- **T** | **range** :: [Type => Str]			`Arg = (min,max,inc) or = "n"`
 
     Set steps in CPT. Calculate entries in CPT from zstart to zstop in steps of (zinc). Default
     chooses arbitrary values by a crazy scheme based on equidistant values for a Gaussian CDF.
-    ($(GMTdoc)grd2cpt.html#s)
-- **T** | **symetric** :: [Type => Str]			`Arg = -|+|_|=`
-
-    Force the color table to be symmetric about zero (from -R to +R).
     ($(GMTdoc)grd2cpt.html#t)
 - $(GMT.opt_V)
 - **W** | **wrap** | **categorical** :: [Type => Bool | Str | []]      `Arg = [w]`
@@ -85,18 +82,14 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2cpt", cmd0, arg1)
 
 	d = KW(kwargs)
-	cmd, = parse_common_opts(d, "", [:R :V_params])
-	cmd  = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:E :nlevels],
-	                                 [:G :truncate], [:F :force_rgb], [:I :inverse :reverse], [:L :limit], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :steps], [:T :symetric], [:W :no_interp], [:Z :continuous]])
+    cmd, = parse_common_opts(d, "", [:R :V_params])
+	cmd = helper_cpt(d, cmd)
+	if ((val = find_in_dict(d, [:E :nlevels])[1]) !== nothing)  cmd *= " -E" * arg2str(val)  end
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1)
-	if ((val = find_in_dict(d, [:cptname :cmapname])[1]) !== nothing)
-		if (IamModern[1])  cmd *= " -H"  end
-		cmd *=  " > " * string(val)
-	elseif (IamModern[1])  cmd *= " -H"
-	end
+
 	global current_cpt = common_grd(d, "grd2cpt " * cmd, arg1, arg2)
 end
 
