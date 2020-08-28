@@ -492,7 +492,7 @@ function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 			elseif (val == "same")				# User explicitly said "Same as previous -B"
 				return cmd * " -B", " -B"
 			elseif (startswith(val, "auto"))
-				if     (occursin("XYZg", val)) val = (GMTver <= 6.1) ? " -Bafg -Bzafg -BWSenZ+b" : " -Bafg -Bzafg -BWSenZ+b"
+				if     (occursin("XYZg", val)) val = (GMTver <= 6.1) ? " -Bafg -Bzafg -B+b" : " -Bafg -Bzafg -B+w"
 				elseif (occursin("XYZ", val))  val = def_fig_axes3
 				elseif (occursin("XYg", val))  val = " -Bafg -BWSen"
 				elseif (occursin("XY", val))   val = def_fig_axes

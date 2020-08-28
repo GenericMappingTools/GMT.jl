@@ -171,7 +171,7 @@ To make a minimalistic 3x3 basemap layout called panels.pdf, try::
 and a 2x2 with some symbols and showing more ways of setting the panel sizes and selection
 
 ```julia
-    subplot(grid=(2,2), panels_size=8, region=(0, 100, 0, 80), margins="5p", autolabel=true, col_axes=(bott=true,), row_axes=(left=true,), axes="wstr", name="panels.pdf", Vd=1)
+    subplot(grid=(2,2), panels_size=8, region=(0, 100, 0, 80), margins="5p", autolabel=true, col_axes=(bott=true,), row_axes=(left=true,), axes="wstr", name="panels.pdf")
         subplot(:set)
         basemap(region=(0,80,0,50))
         subplot(:set)

@@ -593,9 +593,9 @@ if (got_it)					# Otherwise go straight to end
 	r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), view="120/30", Vd=dbg2);
 	@test startswith(r, "grdview  -R -J -p120/30 -N-6+glightgray -Qsmred")
 	r = grdview(G, surf=(waterfall=(:rows,:red),surf=true, mesh=true, img=50), Vd=dbg2);
-	@test startswith(r, "grdview  -JX12c/0 -Baf -Bza -BWSenZ -Qmyredsmi50")
-	@test startswith(grdview(G, surf=(waterfall=:rows,), Vd=dbg2), "grdview  -JX12c/0 -Baf -Bza -BWSenZ -Qmy")
-	@test startswith(grdview(G, surf=(waterfall=(rows=true, fill=:red),), Vd=dbg2), "grdview  -JX12c/0 -Baf -Bza -BWSenZ -Qmyred")
+	@test startswith(r, "grdview  -JX12c/0 -Baf -Bza -Qmyredsmi50")
+	@test startswith(grdview(G, surf=(waterfall=:rows,), Vd=dbg2), "grdview  -JX12c/0 -Baf -Bza -Qmy")
+	@test startswith(grdview(G, surf=(waterfall=(rows=true, fill=:red),), Vd=dbg2), "grdview  -JX12c/0 -Baf -Bza -Qmyred")
 	@test_throws ErrorException("Wrong way of setting the drape (G) option.")  grdview(rand(16,16), G=(1,2))
 	I = mat2grid(rand(Float32,128,128));
 	grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
@@ -617,6 +617,19 @@ if (got_it)					# Otherwise go straight to end
 	imshow("lixo.tif",show=false)
 	imshow(rand(UInt8(0):UInt8(255),256,256), colorbar=true, show=false)
 	imshow(rand(UInt8(0):UInt8(255),256,256), colorbar="bottom", show=false)
+	x = range(-10, 10, length = 30);
+	f(x,y) = sqrt(x^2 + y^2);
+	imshow(x,x,f, Vd=dbg2);
+	imshow(x,f, Vd=dbg2);
+	imshow(f, x, Vd=dbg2);
+	imshow(f, x, x, Vd=dbg2);
+	imshow(-2:0.1:2, -1:0.1:3,"rosenbrock", Vd=dbg2);
+	imshow(-2:0.1:2, "rosenbrock", Vd=dbg2);
+	imshow("lixo", Vd=dbg2);
+	GMT.mat2grid("ackley");
+	GMT.mat2grid("egg");
+	GMT.mat2grid("sombrero");
+	GMT.mat2grid("rosenbrock");
 
 	println("	MAKECPT")
 	# MAKECPT
@@ -987,7 +1000,7 @@ if (got_it)					# Otherwise go straight to end
 	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=(width=1,height=5,fwidth=(0.5,1),fheight=(10,), fill=:red, outline=(3,:red)), Vd=dbg2), "-F1/5+f0.5,1/10+gred+p3,red")
 	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", frame="west", dims=(panels=((2,4),(2.5,5,1.25)),fill=:red), Vd=dbg2), "-Fs2,4/2.5,5,1.25+gred")
 	@test endswith(subplot(grid=(1,1), limits="0/5/0/5", F=(panels=((5,8),8),), Vd=dbg2), "-Fs5,8/8")
-	@test GMT.helper_sub_F((width=1,)) == "1/0"
+	@test GMT.helper_sub_F((width=1,)) == "1/1"
 	@test GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1),fheight=(10,))) == "1/5+f0.5,1/10"
 	@test_throws ErrorException("SUBPLOT: when using 'fwidth' must also set 'fheight'") GMT.helper_sub_F((width=1,height=5,fwidth=(0.5,1)))
 	@test_throws ErrorException("'frac' option must be a tuple(tuple, tuple)") subplot(grid=(1,1),  F=(size=(1,2), frac=((2,3))), Vd=dbg2)

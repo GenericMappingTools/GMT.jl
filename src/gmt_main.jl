@@ -1539,6 +1539,52 @@ function mat2grid(mat; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::St
 	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, z, "x", "y", "z", "")
 end
 
+function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
+	z = Array{Float32,2}(undef,length(y),length(x))
+	for i = 1:length(x)
+		for j = 1:length(y)
+			z[j,i] = f(x[j],y[i])
+		end
+	end
+	mat2grid(z; reg=reg, x=x, y=y, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem, cmd=cmd)
+end
+
+#function mat2grid(f::String, x=nothing, y=nothing; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
+function mat2grid(f::String, x=nothing, y=nothing)
+	# Something is very wrong here. If I don't give different names to functions they override
+	# And if I add named vars it annoyingly warns
+	#	WARNING: Method definition f2(Any, Any) in module GMT at C:\Users\joaqu\.julia\dev\GMT\src\gmt_main.jl:1556 overwritten on the same line.
+	if (startswith(f, "ack"))				# Ackley (inverted) https://en.wikipedia.org/wiki/Ackley_function
+		f_ack(x,y) = 20 * exp(-0.2 * sqrt(0.5 * (x^2 + y^2))) + exp(0.5*(cos(2pi*x) + cos(2pi*y))) - 22.718281828459045
+		if (x === nothing)  x = -5:0.05:5;	y = -5:0.05:5;  end
+		mat2grid(f_ack, x, y)
+	elseif (startswith(f, "egg"))
+		f_egg(x, y) = (sin(x*10) + cos(y*10)) / 4
+		if (x === nothing)  x = -1:0.01:1;	y = -1:0.01:1;  end
+		mat2grid(f_egg, x, y)
+	elseif (startswith(f, "para"))
+		f_parab(x,y) = x^2 + y^2
+		if (x === nothing)  x = -2:0.05:2;	y = -2:0.05:2;  end
+		mat2grid(f_parab, x, y)
+	elseif (startswith(f, "rosen"))			# rosenbrock
+		f_rosen(x,y) = (1 - x)^2 + 100 * (y - x^2)^2
+		if (x === nothing)  x = -2:0.05:2;	y = -1:0.05:3;  end
+		mat2grid(f_rosen, x, y)
+	elseif (startswith(f, "somb"))			# sombrero
+		f_somb(x,y) = cos(sqrt(x^2 + y^2) * 2pi / 8) * exp(-sqrt(x^2 + y^2) / 10)
+		if (x === nothing)  x = -15:0.2:15;	y = -15:0.2:15;  end
+		mat2grid(f_somb, x, y)
+	else
+		@warn("Unknown surface '$f'. Just giving you a parabola.")
+		mat2grid("para")
+	end
+end
+
+function mat2grid_(f::String, x=nothing, y=nothing; reg=nothing)
+	fun(x,y) = cos(sqrt(x^2 + y^2) * 2pi / 8) * exp(-sqrt(x^2 + y^2) / 10)
+	if (x === nothing)  x = -15:0.2:15;	y = -15:0.2:15;  end
+	#mat2grid(fun, x, y; reg=reg)
+end
 # ---------------------------------------------------------------------------------------------------
 function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 # Generate x,y coords array and compute/update header plus increments for grids/images
