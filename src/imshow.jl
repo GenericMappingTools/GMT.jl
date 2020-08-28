@@ -25,17 +25,21 @@ julia> imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabb
 ```
 See also: [`grdimage`](@ref)
 """
-function imshow(arg1; first=true, kw...)
+function imshow(arg1, x=nothing, y=nothing; kw...)
 	# Take a 2D array of floats and turn it into a GMTgrid or if input is a string assume it's a file name
 	# In this later case try to figure if it's a grid or an image and act accordingly.
 	is_image = false
 	if (isa(arg1, String))		# If it's string it has to be a file name. Check extension to see if is an image
 		ffname, ext = splitext(arg1)
-		ext = lowercase(ext)
-		if (ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif")
-			is_image = true
+		if (ext == "" && arg1[1] != '@' && !isfile(arg1))
+			G = mat2grid(arg1, x, y)
+		else
+			ext = lowercase(ext)
+			if (ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif")
+				is_image = true
+			end
+			G = (arg1[1] == '@') ? arg1 : gmtread(arg1)			# If it screws ...
 		end
-		G = (arg1[1] == '@') ? arg1 : gmtread(arg1)			# If it screws ...
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
 		G = mat2img(arg1; kw...)
 	else
@@ -47,18 +51,18 @@ function imshow(arg1; first=true, kw...)
 
 	if (is_image)
 		if (haskey(d, :D) || haskey(d, :img_in) || haskey(d, :image_in))	# OK, user set -D so don't repeat
-			grdimage(G; first=first, show=see, kw...)
+			grdimage(G; show=see, kw...)
 		else
-			grdimage(G; first=first, D=1, show=see, kw...)
+			grdimage(G; D=1, show=see, kw...)
 		end
 	else
-		if (isa(G, String))  grdimage(G; first=first, show=see, kw...)		# String when fname is @xxxx
-		else                 imshow(G; first=first, kw...)					# Call the specialized method
+		if (isa(G, String))  grdimage(G; show=see, kw...)		# String when fname is @xxxx
+		else                 imshow(G; kw...)					# Call the specialized method
 		end
 	end
 end
 
-function imshow(arg1::GMTgrid; first=true, kw...)
+function imshow(arg1::GMTgrid; kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)
 	see = (!haskey(d, :show)) ? true : see = d[:show]	# No explicit 'show' keyword means show=true
@@ -66,19 +70,19 @@ function imshow(arg1::GMTgrid; first=true, kw...)
 		new_see = see
 		see = false			# because here we know that 'see' has to wait till last command
 	end
-	opt_p, = parse_common_opts(d, "", [:p], first)
+	opt_p, = parse_common_opts(d, "", [:p], true)
 	til = find_in_dict(d, [:T :no_interp :tiles])[1]
 	if (opt_p == "" && til === nothing)
-		R = grdimage("", arg1; first=first, show=see, d...)
+		R = grdimage("", arg1; show=see, d...)
 	else
-		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 5
+		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 8
 		srf = ((val = find_in_dict(d, [:Q :surf :surftype])[1]) !== nothing) ? val : "i100"
 		if (til !== nothing)		# This forces some others
 			srf = nothing			# These are mutually exclusive
 			zsize = nothing
 			opt_p = " -p180/90"
 		end
-		R = grdview("", arg1; first=first, show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...)
+		R = grdview("", arg1; show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...)
 	end
 	if (isa(cont_opts, Bool))				# Automatic contours
 		R = grdcontour!(arg1; J="", show=new_see)
@@ -88,9 +92,19 @@ function imshow(arg1::GMTgrid; first=true, kw...)
 	return R
 end
 
-function imshow(arg1::GMTimage; first=true, kw...)
+function imshow(arg1::GMTimage; kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)
 	see = (!haskey(d, :show)) ? true : see = d[:show]	# No explicit 'show' keyword means show=true
-	grdimage("", arg1; first=first, D=true, show=see, kw...)
+	grdimage("", arg1; D=true, show=see, kw...)
 end
+
+function imshow(x, y, f::Function; kw...)
+	G = mat2grid(f, x, y)
+	imshow(G; kw...)
+end
+imshow(x, f::Function; kw...) = imshow(x, x, f::Function; kw...) 
+imshow(f::Function, x; kw...) = imshow(x, x, f::Function; kw...) 
+imshow(f::Function, x, y; kw...) = imshow(x, y, f::Function; kw...) 
+imshow(x, y, f::String; kw...) = imshow(f::String, x, y; kw...) 
+imshow(x, f::String; kw...) = imshow(f::String, x, x; kw...) 
