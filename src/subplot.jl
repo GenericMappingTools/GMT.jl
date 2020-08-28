@@ -144,7 +144,7 @@ function helper_sub_F(arg, dumb=nothing)::String
 		end
 		if (haskey(d, :width))
 			out *= string(d[:width], '/')
-			if (!haskey(d, :height))  out *= '0'	# Allow this for geog cases
+			if (!haskey(d, :height))  out *= string(d[:width])
 			else                      out *= string(d[:height])
 			end
 		end
