@@ -26,7 +26,7 @@ const global convert_syntax = Array{Bool,1}(undef,1);convert_syntax[1] = false	#
 const global FMT = ["ps"]
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
-const def_fig_axes3 = " -Baf -Bza -BWSenZ"  #		"" but for 3D views
+const def_fig_axes3 = " -Baf -Bza"  		#		"" but for 3D views
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
     @eval Base.Experimental.@optlevel 1
