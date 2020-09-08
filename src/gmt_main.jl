@@ -1519,9 +1519,10 @@ G = mat2grid(mat; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::String=
 	When HDR is not used, REG == nothing [default] means create a gridline registration grid and REG == 1,
 	or REG="pixel" a pixel registered grid.
 """
-function mat2grid(mat; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
+function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
 # Take a 2D array of floats and turn it into a GMTgrid
 
+	if (!isa(mat[1], Real))  error("input matrix must be of Real numbers")  end
 	if (reg === nothing)  reg_ = 0
 	elseif (isa(reg, String) || isa(reg, Symbol))
 		t = lowercase(string(reg))
@@ -1551,8 +1552,7 @@ end
 
 #function mat2grid(f::String, x=nothing, y=nothing; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
 function mat2grid(f::String, x=nothing, y=nothing)
-	# Something is very wrong here. If I don't give different names to functions they override
-	# And if I add named vars it annoyingly warns
+	# Something is very wrong here. If I add named vars it annoyingly warns
 	#	WARNING: Method definition f2(Any, Any) in module GMT at C:\Users\joaqu\.julia\dev\GMT\src\gmt_main.jl:1556 overwritten on the same line.
 	if (startswith(f, "ack"))				# Ackley (inverted) https://en.wikipedia.org/wiki/Ackley_function
 		f_ack(x,y) = 20 * exp(-0.2 * sqrt(0.5 * (x^2 + y^2))) + exp(0.5*(cos(2pi*x) + cos(2pi*y))) - 22.718281828459045
@@ -1580,11 +1580,6 @@ function mat2grid(f::String, x=nothing, y=nothing)
 	end
 end
 
-function mat2grid_(f::String, x=nothing, y=nothing; reg=nothing)
-	fun(x,y) = cos(sqrt(x^2 + y^2) * 2pi / 8) * exp(-sqrt(x^2 + y^2) / 10)
-	if (x === nothing)  x = -15:0.2:15;	y = -15:0.2:15;  end
-	#mat2grid(fun, x, y; reg=reg)
-end
 # ---------------------------------------------------------------------------------------------------
 function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 # Generate x,y coords array and compute/update header plus increments for grids/images
@@ -1779,10 +1774,20 @@ function Base.:*(G1::GMTgrid, G2::GMTgrid)
 end
 
 # ---------------------------------------------------------------------------------------------------
+Base.:-(G1::GMTgrid) = -1 * G1
+Base.:*(scale::Number, G1::GMTgrid) = Base.:*(G1::GMTgrid, scale::Number)
 function Base.:*(G1::GMTgrid, scale::Number)
 	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 	             G1.command, G1.x, G1.y, G1.z .* scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
 	G2.range[5:6] .*= scale
+	return G2
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:^(G1::GMTgrid, scale::Number)
+	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
+	             G1.command, G1.x, G1.y, G1.z .^ scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout)
+	G2.range[5:6] .^= scale
 	return G2
 end
 
