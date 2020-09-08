@@ -86,7 +86,7 @@ To plot a horizontal color scale (12 cm long; 0.5 cm wide) at the reference poin
 
 ```julia
     makecpt(range=(-200,1000,100), cmap=:rainbow)
-    colorbar(pos=(paper=true, anchor=(8,1), size=(12,0.5), justify=:TC, horizontal=true)
+    colorbar(pos=(paper=true, anchor=(8,1), size=(12,0.5), justify=:TC, horizontal=true),
             frame=(annot=:auto, ticks=:auto, xlabel="topography", ylabel=:km), show=true)
 ```
 
