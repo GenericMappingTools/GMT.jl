@@ -253,6 +253,10 @@ if (got_it)					# Otherwise go straight to end
 	@test (GMT.parse_opt_range("", Dict(:T => [1])) == "1,")
 	GMT.parse_opt_range("", Dict(:T => (1,2,0.1,:mum,:log2)))	# Prints a warning
 
+	# Test here is to the showfig fun
+	grdimage([1 2;3 4])
+	showfig(savefig="lixo.png",show=false)
+
 	gmtbegin()
 	resetGMT()
 	# ---------------------------------------------------------------------------------------------------

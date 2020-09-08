@@ -46,8 +46,7 @@ algorithms.
   *xx* may be a scalar or a string. Use strings when appending the units c (cm), i (inch), or p (points).
 - *distmap=xx*\
    Like above but specify distances in map units and append the unit; choose among e (m),
-   f (foot), k (km), M (mile), n (nautical mile) or u (US survey foot), and d (arc degree), m (arc minute),
-   or s (arc second)
+   k (km), n (nautical mile), and d (arc degree), m (arc minute), or s (arc second)
 - *line=xx*\
    Give the coordinates of the end points for one or more straight line segments.
    Symbols will be placed where these lines intersect the decorated lines. *xx* format is a Mx4 array
