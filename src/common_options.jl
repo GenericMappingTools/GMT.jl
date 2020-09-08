@@ -527,7 +527,11 @@ function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 				t = " " * t;		# Do not glue, for example, -Bg with :title
 			end
 		end
-		opt_B[1] *= t;		extra_parse = true
+		if (val = find_in_dict(d, [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], false)[1] === nothing)
+			opt_B[1] *= t;		extra_parse = true
+		else
+			opt_B[1] = t;
+		end
 	end
 
 	# These are not and we can have one or all of them. NamedTuples are dealt at the end
@@ -950,13 +954,13 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function add_opt_pen(d::Dict, symbs, opt::String="", sub::Bool=true, del::Bool=true)
-	# Build a pen option. Input can be either a full hard core string or spread in lw, lc, ls, etc or a tuple
+	# Build a pen option. Input can be either a full hard core string or spread in lw (or lt), lc, ls, etc or a tuple
 	# If SUB is true (lw, lc, ls) are not seeked because we are parsing a sub-option
 
 	if (opt != "")  opt = " -" * opt  end	# Will become -W<pen>, for example
 	out = Array{String,1}(undef,1)
 	out = [""]
-	pen = build_pen(d, del)					# Either a full pen string or empty ("") (Seeks for lw, lc, etc)
+	pen = build_pen(d, del)					# Either a full pen string or empty ("") (Seeks for lw (or lt), lc, etc)
 	if (pen != "")
 		out[1] = opt * pen
 	else
@@ -1068,6 +1072,7 @@ function build_pen(d::Dict, del::Bool=false)::String
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
 	lw = add_opt("", "", d, [:lw :linewidth], nothing, del)	# Line width
+	if (lw == "")  lw = add_opt("", "", d, [:lt :linethick :linethickness], nothing, del)  end	# Line width
 	ls = add_opt("", "", d, [:ls :linestyle], nothing, del)	# Line style
 	lc = string(parse_pen_color(d, [:lc :linecolor], del))
 	out = ""
@@ -2033,7 +2038,9 @@ function vector_attrib(;kwargs...)
 
 	if (haskey(d, :fill))
 		if (d[:fill] == "none" || d[:fill] == :none) cmd *= "+g-"
-		else	cmd *= "+g" * get_color(d[:fill])		# MUST GET TESTS TO THIS
+		else
+			cmd *= "+g" * get_color(d[:fill])		# MUST GET TESTS TO THIS
+			if (!haskey(d, :pen))  cmd = cmd * "+p"  end 	# Let FILL paint the whole header (contrary to >= GMT6.1)
 		end
 	end
 
@@ -2647,6 +2654,14 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 			end
 		end
 	end
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Use only to close PS fig and optionally convert/show
+function showfig(; kwargs...)
+	d = KW(kwargs)
+	if (!haskey(d, :show))  d[:show] = true  end		# The default is to show
+	finish_PS_module(d, "psxy -R0/1/0/1 -JX0.001c -T -O", "", false, true, true)
 end
 
 # ---------------------------------------------------------------------------------------------------
