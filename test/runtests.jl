@@ -1085,6 +1085,9 @@ if (got_it)					# Otherwise go straight to end
 	G3 = G1 - 1;
 	G3 = G1 * G2;
 	G3 = G1 * 2;
+	G3 = 2 * G1;
+	G3 = G1 ^ 2;
+	G3 = -G1;
 	G3 = G1 / G2;
 	G3 = G1 / 2;
 	G2 = GMT.mat2grid(rand(Float32,5,5));

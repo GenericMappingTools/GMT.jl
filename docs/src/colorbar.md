@@ -14,7 +14,9 @@ Required Arguments
 
 - **D** or **pos** or **position** : -- *pos=(map=true, inside=true, outside=true, norm=true, paper=true, anchor=XX, size=XX, triangles=true, justify=code, offset=XX, horizontal=true, move\_annot=true[:a|:l|:u], neon=true, nan=true)*\
 
-    Defines the reference point on the map for the color scale using one of four coordinate systems: (1) Use **map=true** for map (user) coordinates, (2) use **inside=true** or **outside=true** (the default) for setting **anchor** via a 2-char justification code that refers to the (invisible) map domain rectangle, (3) use **norm=true** for normalized (0-1) coordinates, or (4) use **paper=true** for plot coordinates (inches, cm, etc.).  All but **paper=true** requires both **region** and **proj** to be specified. For **inside** or **outside** with codes TC, BC, ML, MR (i.e., centered on one of the map sides) we pre-calculate all further settings.  Specifically, the *length* is set to 80% of the map side, horizontal or vertical depends on the side, the offset is `MAP_LABEL_OFFSET` for **outside** with an extra offset `MAP_FRAME_WIDTH` for **outside**, and annotations are placed on the side of the scale facing away from the map frame. However, you can override any of these with these modifiers.
+    Defines the reference point on the map for the color scale using one of four coordinate systems: (1) Use **map=true** for map (user) coordinates, (2) use **inside=true** or **outside=true** (the default) for setting **anchor** via a 2-char justification code that refers to the (invisible) map domain rectangle, (3) use **norm=true** for normalized (0-1) coordinates, or (4) use **paper=true** for plot coordinates (inches, cm, etc.). All but **paper=true** requires both **region** and **proj** to be specified.
+    
+    For **inside** or **outside** with codes TC, BC, ML, MR (i.e., centered on one of the map sides) we pre-calculate all further settings. Specifically, the *length* is set to 80% of the map side, horizontal or vertical depends on the side, the offset is `MAP_LABEL_OFFSET` for **outside** with an extra offset `MAP_FRAME_WIDTH` for **outside**, and annotations are placed on the side of the scale facing away from the map frame. However, you can override any of these with these modifiers.
     Use **size=(length,width)** to set the color bar size. If *width* is not specified then it is set to 4% of the given *length*. Give a negative *length* to reverse the scale bar. Use **horizontal=true** to get a horizontal scale [Default is vertical]. By default, the anchor point on the scale is assumed to be the bottom left corner (BL), but this can be changed by **justify=code** where *code* is a 2-char justification code (see [text](@ref)). Note: with the default **outside=true**, the *justify* defaults to the same as **anchor**, if **inside=true** is used then *justify* defaults to the mirror opposite of **anchor**. Finally,add **offset=(dx,dy)** to offset the color scale by *dx*, *dy* away from the **anchor** point in the direction implied by *justify* (or the direction implied by **inside** or **outside**).
     Add sidebar triangles for back- and/or foreground colors with **triangles=true**. Use **triangles=:f** (foreground) or **triangles=:b** (background) for only one sidebar triangle [Default gives both]. Optionally,append triangle height [Default is half the barwidth].
     Move text to opposite side with **move\_annot=true[:a|:l|:u]**. Horizontal scale bars: Move annotations and labels above the scale bar [Default is below]; the unit remains on the left. Vertical scale bars: Move annotations and labels to the left of the scale bar [Default is to the right]; the unit remains below. Append one or more of **a**, **l** or **u** to control which of the annotations, label, and unit that will be moved to the opposite side. Use **neon=true** if you want to print a vertical label as a column of characters (does not work with special characters). Append **nan=true** to plot a rectangle with the NaN color at the start of the bar, use *text* instead of *true* to change label from NaN.
@@ -93,13 +95,13 @@ To plot a horizontal color scale (12 cm long; 0.5 cm wide) at the reference poin
 To append a vertical color scale (7.5 cm long; 1.25 cm wide) to the right of a plot that is 6 inch wide and 4 inch high, using illumination, and show back- and foreground colors, and annotating every 5 units, we provide the reference point and select the left-mid anchor point via
 
 ```julia
-    colorbar(pos=(paper=true, anchor="6.5i", justify=(:LM,"2i"), size=(7.5,1.2), triangles=true),
-            cmap="colors.cpt", shade=true, xaxis(annot=5, label=:BATHYMETRY), ylabel=:m, show=1)
+    colorbar(pos=(paper=true, anchor="6.5i/2i", justify=(:LM,"2i"), size=(7.5,1.2), triangles=true),
+            cmap=:geo, shade=true, xaxis=(annot=1000, label=:BATHYMETRY), ylabel=:m, show=1)
 ```
 
 To overlay a horizontal color scale (10 centimeters long and default width) above a
 Mercator map produced by a previous call, ensuring a 2 cm offset from the map frame, use
 
 ```julia
-    colorbar!(pos=(justify=:CT, width=10, offset=(0,2), horizontal=true), cmap="colors.cpt", show=1)
+    colorbar!(region=(0,10,0,10), pos=(justify=:CT, width=10, offset=(0,2), horizontal=true), cmap="colors.cpt", show=1)
 ```
