@@ -1437,22 +1437,21 @@ function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_o
 
 	N_used = 0;		got_one = false
 	val,symb = find_in_dict(d, symbs, false)
-	#if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 	if (val !== nothing)
 		to_slot = true
 		if (isa(val, Dict))  val = dict2nt(val)  end
 		if (isa(val, Tuple) && length(val) == 2)
 			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
-			val_ = dict2nt(Dict(need_symb=>val[1], keys(nt_opts)[1]=>val[2]))
-			d[symb] = val_		# Need to patch also the input option
+			val = dict2nt(Dict(need_symb=>val[1], keys(nt_opts)[1]=>val[2]))
+			d[symb] = val		# Need to patch also the input option
 		end
 		if (isa(val, NamedTuple))
 			di = nt2dict(val)
-			if ((val_ = find_in_dict(di, [need_symb], false)[1]) === nothing)
+			if ((val = find_in_dict(di, [need_symb], false)[1]) === nothing)
 				error(string(need_symb, " member cannot be missing"))
 			end
-			if (isa(val_, Number) || isa(val_, String))	# So that this (psxy) also works:	Z=(outline=true, data=3)
-				opt *= string(val_)
+			if (isa(val, Number) || isa(val, String))	# So that this (psxy) also works:	Z=(outline=true, data=3)
+				opt *= string(val)
 				to_slot = false
 			end
 			cmd = add_opt(cmd, opt, d, symbs, nt_opts)
@@ -1663,7 +1662,7 @@ function get_color(val)::String
 			if (isa(val[k], Tuple) && (length(val[k]) == 3))
 				s = 1
 				if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255  end	# colors in [0 1]
-				out[1] *= @sprintf("%d/%d/%d,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
+				out[1] *= @sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
 			elseif (isa(val[k], Symbol) || isa(val[k], String) || isa(val[k], Number))
 				out[1] *= string(val[k],",")
 			else
@@ -1678,9 +1677,9 @@ function get_color(val)::String
 		else
 			copia = val
 		end
-		out[1] = @sprintf("%d/%d/%d", copia[1,1], copia[1,2], copia[1,3])
+		out[1] = @sprintf("%.0f/%.0f/%.0f", copia[1,1], copia[1,2], copia[1,3])
 		for k = 2:size(copia, 1)
-			out[1] = @sprintf("%s,%d/%d/%d", out[1], copia[k,1], copia[k,2], copia[k,3])
+			out[1] = @sprintf("%s,%.0f/%.0f/%.0f", out[1], copia[k,1], copia[k,2], copia[k,3])
 		end
 	else
 		@warn(@sprintf("got this bad data type: %s", typeof(val)))	# Need to split because f julia change in 6.1
