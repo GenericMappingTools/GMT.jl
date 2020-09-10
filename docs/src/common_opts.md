@@ -178,7 +178,7 @@ The entire parameters collection is displayed in the following table
 |               | up_full       | Str or Symb   | Same for z axis |
 |               | WESNwesn...   | Str or Symb   | The classic GMT syntax |
 | corners       | 1234          | Str or Symb   | Vertical axis |
-| scondary      | true or false | Bool          | Secondary axis info |
+| secondary     | true or false | Bool          | Secondary axis info |
 | fill          | `color`       | Str or Symb   | Paint interior |
 | cube          | anything      | Sym or Bool   | Draw outline of the 3-D cube |
 | noframe       | anything      | Sym or Bool   | No frame and annotations at all |
