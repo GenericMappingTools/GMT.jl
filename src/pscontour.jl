@@ -137,10 +137,9 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		else
 			cmd, arg2, arg3, = add_opt_cpt(d, cmd, [:C], 'C', N_used, arg2, arg3, true, true, opt_T, true)
 		end
-	end
-
-	if (occursin(" -I", cmd) && (!isa(arg1, GMTcpt) && !isa(arg2, GMTcpt) && !isa(arg3, GMTcpt)))
-		error("fill option rquires passing a CPT")
+		if (occursin(" -I", cmd) && (!isa(arg1, GMTcpt) && !isa(arg2, GMTcpt) && !isa(arg3, GMTcpt)))
+			error("fill option rquires passing a CPT")
+		end
 	end
 
 	cmd, K = finish_PS_nested(d, gmt_proggy * cmd, "", K, O, [:coast :colorbar])
