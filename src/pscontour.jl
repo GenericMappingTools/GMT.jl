@@ -140,10 +140,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	if (occursin(" -I", cmd) && (!isa(arg1, GMTcpt) && !isa(arg2, GMTcpt) && !isa(arg3, GMTcpt)))
-		# If arg to a -C ends with .cpt, accept it
-		if ((ind = findfirst("-C", cmd)) !== nothing && !endswith(split(cmd[ind[2]+1:end])[1], ".cpt"))
-			error("fill option rquires passing a CPT")
-		end
+		error("fill option rquires passing a CPT")
 	end
 
 	cmd, K = finish_PS_nested(d, gmt_proggy * cmd, "", K, O, [:coast :colorbar])
