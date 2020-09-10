@@ -528,10 +528,11 @@ function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 			end
 		end
 		if (val = find_in_dict(d, [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], false)[1] === nothing)
-			opt_B[1] *= t;		extra_parse = true
+			opt_B[1] *= t;
 		else
 			opt_B[1] = t;
 		end
+		extra_parse = true
 	end
 
 	# These are not and we can have one or all of them. NamedTuples are dealt at the end
