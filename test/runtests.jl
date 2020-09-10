@@ -648,7 +648,7 @@ if (got_it)					# Otherwise go straight to end
 	@test mapproject([1.0 1; 2 2], L=(line=[1.0 0; 4 3], unit=:c), Vd=dbg2) ==  "mapproject  -L+uc "
 	@test mapproject([1.0 1; 2 2], L=[1.0 0; 4 3], Vd=dbg2) == "mapproject  -L "
 	@test mapproject([1.0 1; 2 2], L="lixo.dat", Vd=dbg2) == "mapproject  -Llixo.dat "
-	@test_throws ErrorException("Bad argument type (Tuple{Float64,Int64}) to option L") mapproject([1.0 1; 2 2], L=(1.0,0), Vd=dbg2)
+	#@test_throws ErrorException("Bad argument type (Tuple{Float64,Int64}) to option L") mapproject([1.0 1; 2 2], L=(1.0,0), Vd=dbg2)
 	@test_throws ErrorException("line member cannot be missing") mapproject(mapproject([1.0 1; 2 2], L=(lina=[1.0 0; 4 3], unit=:c), Vd=dbg2))
 
 	println("	PLOT")
@@ -888,7 +888,7 @@ if (got_it)					# Otherwise go straight to end
 	contour!("", [x[:] y[:] z[:]], cont=1, Vd=dbg2)
 	D = contour([x[:] y[:] z[:]], cont=[1,3,5], dump=true);
 	contour([x[:] y[:] z[:]],cont=[-2,0,3], Vd=dbg2)
-	@test_throws ErrorException("fill option rquires passing a CPT") contour("lixo.dat",cont=[-2,0,3], I=true)
+	@test_throws ErrorException("fill option rquires passing a CPT") contour(rand(5,2),cont=[-2,0,3], I=true)
 
 	println("	PSIMAGE")
 	# PSIMAGE
