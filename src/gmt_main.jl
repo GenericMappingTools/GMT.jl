@@ -11,7 +11,8 @@ mutable struct GMTgrid 	# The type holding a local header and data of a GMT grid
 	command::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-	z::Array{Float32,2}
+#	z::Array{Float32,2}
+	z::Array{Real,2}
 	x_unit::String
 	y_unit::String
 	z_unit::String
@@ -116,8 +117,9 @@ function gmt(cmd::String, args...)
 		end
 	end
 
+	pad = 2
 	if (!isa(API, Ptr{Nothing}) || API == C_NULL)
-		API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
+		API = GMT_Create_Session("GMT", pad, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 		if (API == C_NULL)  error("Failure to create a GMT Session")  end
 	end
 
@@ -225,7 +227,7 @@ function gmt(cmd::String, args...)
 	for k = 1:n_items					# Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0) error("GMT: Expects a Matrix for input") end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : nothing
-		GMTJL_Set_Object(API, X[k], ptr)	# Set object pointer
+		GMTJL_Set_Object(API, X[k], ptr, pad)	# Set object pointer
 	end
 
 	# 6. Run GMT module; give usage message if errors arise during parsing
@@ -672,13 +674,13 @@ function get_dataset(API::Ptr{Nothing}, object)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr)
+function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)
 	# Create the object container and hook as X->object
 	oo = unsafe_load(X.option)
 	module_input = (oo.option == GMT.GMT_OPT_INFILE)
 
 	if (X.family == GMT_IS_GRID)			# Get a grid from Julia or a dummy one to hold GMT output
-		X.object =  grid_init(API, module_input, ptr, X.direction)
+		X.object =  grid_init(API, module_input, ptr, X.direction, pad)
 	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Julia or a dummy one to hold GMT output
 		X.object = image_init(API, module_input, ptr, X.direction)
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
@@ -733,32 +735,34 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN)
+function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN, pad::Int=2)
 # If GRD_BOX is empty just allocate (GMT) an empty container and return
 # If GRD_BOX is not empty it must contain a GMTgrid type.
 
 	if (isempty_(grd_box))			# Just tell grid_init() to allocate an empty container
-		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
-		return GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_CREATE_MODE,
+		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
+		return GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT,
 		                       C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 
-	if (isa(grd_box, GMTgrid) || isa(grd_box, Array{GMT.GMTgrid,1}))
-		return grid_init(API, module_input, grd_box, nothing, nothing)
+	if (isa(grd_box, GMTgrid) || isa(grd_box, Array{GMTgrid,1}))
+		return grid_init(API, module_input, grd_box, pad)
 	else
 		error(@sprintf("grd_init: input (%s) is not a GRID container type", typeof(grd_box)))
 	end
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grid_init(API::Ptr{Nothing}, module_input, Grid, grd, hdr, pad::Int=2)
+function grid_init(API::Ptr{Nothing}, module_input, Grid::Array{GMTgrid,1}, pad::Int=2)
+	grid_init(API, module_input, Grid[1], pad)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function grid_init(API::Ptr{Nothing}, module_input, Grid::GMTgrid, pad::Int=2)
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
-	if (isa(Grid, Array{GMT.GMTgrid,1}))  Grid = Grid[1]  end
-	if (isa(Grid, GMTgrid))
-		grd = Grid.z
-		hdr = [Grid.range; Grid.registration; Grid.inc]
-	end
+	grd = Grid.z
+	hdr = [Grid.range; Grid.registration; Grid.inc]
 	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_ALL, C_NULL,
 	                    hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)
 
@@ -767,26 +771,29 @@ function grid_init(API::Ptr{Nothing}, module_input, Grid, grd, hdr, pad::Int=2)
 	h = unsafe_load(Gb.header)
 	t = unsafe_wrap(Array, Gb.data, h.size)
 
-	for col = 1:n_cols
-		for row = 1:n_rows
-			ij = GMT_IJP(row, col, mx, pad, pad)
-			t[ij] = grd[MEXG_IJ(row, col, n_rows)]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
+	k = 1
+	if (isa(grd, Float32))
+		for col = 1:n_cols, row = n_rows:-1:1
+			#ij = GMT_IJP(row, col, mx, pad, pad)	# ij = ((row-1) + padTop) * mx + col + padLeft
+			t[GMT_IJP(row, col, mx, pad, pad)] = grd[k];		k += 1
+		end
+	else
+		for col = 1:n_cols, row = n_rows:-1:1
+			t[GMT_IJP(row, col, mx, pad, pad)] = Float32(grd[k]);		k += 1
 		end
 	end
 
 	h.z_min = hdr[5]			# Set the z_min, z_max
 	h.z_max = hdr[6]
 
-	if (isa(Grid, GMTgrid))
-		try
-			h.x_unit = map(UInt8, (Grid.x_unit...,))
-			h.y_unit = map(UInt8, (Grid.y_unit...,))
-			h.z_unit = map(UInt8, (Grid.z_unit...,))
-		catch
-			h.x_unit = map(UInt8, (string("x", repeat("\0",79))...,))
-			h.y_unit = map(UInt8, (string("y", repeat("\0",79))...,))
-			h.z_unit = map(UInt8, (string("z", repeat("\0",79))...,))
-		end
+	try
+		h.x_unit = map(UInt8, (Grid.x_unit...,))
+		h.y_unit = map(UInt8, (Grid.y_unit...,))
+		h.z_unit = map(UInt8, (Grid.z_unit...,))
+	catch
+		h.x_unit = map(UInt8, (string("x", repeat("\0",79))...,))
+		h.y_unit = map(UInt8, (string("y", repeat("\0",79))...,))
+		h.z_unit = map(UInt8, (string("z", repeat("\0",79))...,))
 	end
 
 	if (Grid.title != "")    h.title   = map(UInt8, (Grid.title...,))    end
@@ -807,8 +814,8 @@ function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_I
 # ...
 
 	if (isempty_(img_box))			# Just tell image_init() to allocate an empty container
-		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
-		I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_CREATE_MODE,
+		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
+		I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_IS_OUTPUT,
 		                    C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 		if (img_mem_layout[1] != "")
 			mem_layout = length(img_mem_layout[1]) == 3 ? img_mem_layout[1] * "a" : img_mem_layout[1]
@@ -873,8 +880,8 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 # If output then we dont know size so we set dimensions to zero.
 
 	if (direction == GMT_OUT)
-		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
-		return GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
+		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
+		return GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 
 	if (Darr == C_NULL) error("Input is empty where it can't be.")	end
@@ -994,8 +1001,8 @@ function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, 
 
 	else	# To receive data from GMT we use a GMT_VECTOR resource instead
 		# There are no dimensions and we are just getting an empty container for output
-		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
-		return GMT_Create_Data(API, GMT_IS_VECTOR, GMT_IS_PLP, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
+		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
+		return GMT_Create_Data(API, GMT_IS_VECTOR, GMT_IS_PLP, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 end
 
@@ -1006,8 +1013,8 @@ function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
 	# If direction is GMT_OUT then we allocate an empty GMT CPT as a destination.
 
 	if (dir == GMT_OUT)
-		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
-		return GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
+		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
+		return GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 
 	# Dimensions are known from the input pointer
@@ -1076,8 +1083,8 @@ function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
 # If direction is GMT_IN then we are given a Julia structure with known sizes.
 # If direction is GMT_OUT then we allocate an empty GMT POSTSCRIPT as a destination.
 	if (dir == GMT_OUT)
-		GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
-		return GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, GMT_CREATE_MODE, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
+		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
+		return GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 
 	(!isa(ps, GMTps)) && error("Expected a PS structure for input")
@@ -1232,6 +1239,7 @@ function num2str(mat)
 end
 
 # ---------------------------------------------------------------------------------------------------
+#=
 """
 Inquire about GMT version. Will return 5.3 for all versions up to this one and the truth for rest
 """
@@ -1244,6 +1252,7 @@ function get_GMTversion(API::Ptr{Nothing})
 		ver = Meta.parse(value[1:3])
 	end
 end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function text_record(data, text, hdr=nothing)
@@ -1533,11 +1542,8 @@ function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothi
 		reg_ = 0
 	end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
-	if (!isa(mat, Float32))  z = Float32.(mat)
-	else                     z = mat
-	end
 
-	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, z, "x", "y", "z", "")
+	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, mat, "x", "y", "z", "")
 end
 
 function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
@@ -1550,7 +1556,6 @@ function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String=
 	mat2grid(z; reg=reg, x=x, y=y, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem, cmd=cmd)
 end
 
-#function mat2grid(f::String, x=nothing, y=nothing; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
 function mat2grid(f::String, x=nothing, y=nothing)
 	# Something is very wrong here. If I add named vars it annoyingly warns
 	#	WARNING: Method definition f2(Any, Any) in module GMT at C:\Users\joaqu\.julia\dev\GMT\src\gmt_main.jl:1556 overwritten on the same line.
