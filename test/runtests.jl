@@ -422,6 +422,7 @@ if (got_it)					# Otherwise go straight to end
 	@assert(r[1].data[1:1,1:10] == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
 	r2=grdinfo(G, C=true, V=true);
 	@assert(r[1].data == r2[1].data)
+	grdinfo(mat2grid(rand(4,4)));		# Test the doubles branch in grid_init
 
 	println("	GRD2CPT")
 	# GRD2CPT
@@ -648,7 +649,7 @@ if (got_it)					# Otherwise go straight to end
 	@test mapproject([1.0 1; 2 2], L=(line=[1.0 0; 4 3], unit=:c), Vd=dbg2) ==  "mapproject  -L+uc "
 	@test mapproject([1.0 1; 2 2], L=[1.0 0; 4 3], Vd=dbg2) == "mapproject  -L "
 	@test mapproject([1.0 1; 2 2], L="lixo.dat", Vd=dbg2) == "mapproject  -Llixo.dat "
-	#@test_throws ErrorException("Bad argument type (Tuple{Float64,Int64}) to option L") mapproject([1.0 1; 2 2], L=(1.0,0), Vd=dbg2)
+	@test_throws ErrorException("Bad argument type (Tuple{Array{Float64,2}}) to option L") mapproject([1.0 1; 2 2], L=([1.0 0],), Vd=dbg2)
 	@test_throws ErrorException("line member cannot be missing") mapproject(mapproject([1.0 1; 2 2], L=(lina=[1.0 0; 4 3], unit=:c), Vd=dbg2))
 
 	println("	PLOT")
