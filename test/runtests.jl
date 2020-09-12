@@ -96,9 +96,9 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Nonsense in W option") GMT.opt_pen(Dict(:a => [1 2]),'W', [:a])
 	@test GMT.get_color(((1,2,3),)) == "1/2/3"
 	@test GMT.get_color(((1,2,3),100)) == "1/2/3,100"
-	@test GMT.get_color(((0.1,0.2,0.3),)) == "26/51/77"
+	@test GMT.get_color(((0.1,0.2,0.35),)) == "26/51/89"
 	@test GMT.get_color([1 2 3]) == "1/2/3"
-	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.7]) == "102/128/204,26/51/179"
+	@test GMT.get_color([0.4 0.5 0.8; 0.1 0.2 0.75]) == "102/128/204,26/51/191"
 	@test GMT.get_color([1 2 3; 3 4 5; 6 7 8]) == "1/2/3,3/4/5,6/7/8"
 	@test GMT.get_color(:red) == "red"
 	@test GMT.get_color((:red,:blue)) == "red,blue"
@@ -649,7 +649,7 @@ if (got_it)					# Otherwise go straight to end
 	@test mapproject([1.0 1; 2 2], L=(line=[1.0 0; 4 3], unit=:c), Vd=dbg2) ==  "mapproject  -L+uc "
 	@test mapproject([1.0 1; 2 2], L=[1.0 0; 4 3], Vd=dbg2) == "mapproject  -L "
 	@test mapproject([1.0 1; 2 2], L="lixo.dat", Vd=dbg2) == "mapproject  -Llixo.dat "
-	@test_throws ErrorException("Bad argument type (Tuple{Array{Float64,2}}) to option L") mapproject([1.0 1; 2 2], L=([1.0 0],), Vd=dbg2)
+	@test_throws ErrorException("Bad argument type (Tuple{}) to option L") mapproject([1.0 1; 2 2], L=(), Vd=dbg2)
 	@test_throws ErrorException("line member cannot be missing") mapproject(mapproject([1.0 1; 2 2], L=(lina=[1.0 0; 4 3], unit=:c), Vd=dbg2))
 
 	println("	PLOT")
@@ -884,12 +884,13 @@ if (got_it)					# Otherwise go straight to end
 	# PSCONTOUR
 	x,y,z=GMT.peaks(grid=false);
 	contour([x[:] y[:] z[:]], cont=1, annot=2, axis="a")
+	contour([x[:] y[:] z[:]], I=true, axis="a", Vd=dbg2)
 	contour!([x[:] y[:] z[:]], cont=1, Vd=dbg2)
 	contour!([x[:] y[:] z[:]], cont=1, E="lixo", Vd=dbg2)	# Cheating E opt because Vd=dbg2 prevents its usage
 	contour!("", [x[:] y[:] z[:]], cont=1, Vd=dbg2)
 	D = contour([x[:] y[:] z[:]], cont=[1,3,5], dump=true);
 	contour([x[:] y[:] z[:]],cont=[-2,0,3], Vd=dbg2)
-	@test_throws ErrorException("fill option rquires passing a CPT") contour(rand(5,2),cont=[-2,0,3], I=true)
+	#@test_throws ErrorException("fill option rquires passing a CPT") contour(rand(5,2),cont=[-2,0,3], I=true)
 
 	println("	PSIMAGE")
 	# PSIMAGE
@@ -1091,6 +1092,12 @@ if (got_it)					# Otherwise go straight to end
 	G3 = -G1;
 	G3 = G1 / G2;
 	G3 = G1 / 2;
+	G1 = mat2grid([0.0 1; 2 3]);
+	G2 = mat2grid([4 5; 6 7]);
+	cos(G1); cosd(G1); sin(G1); sind(G1); tan(G1); tand(G1);
+	cos!(G1); cosd!(G1); sin!(G1); sind!(G1); tan!(G1); tand!(G1);
+	prod!(G1,G2); prod!(G1,2); prod!(2,G1);
+	sum!(G1,G2); sum!(G1,2);
 	G2 = GMT.mat2grid(rand(Float32,5,5));
 	@test_throws ErrorException("The HDR array must have 9 elements") mat2grid(rand(4,4), reg=0, hdr=[0. 1 0 1 0 1]);
 	@test_throws ErrorException("Grids have different sizes, so they cannot be added.") G1 + G2;
