@@ -1,4 +1,4 @@
-mutable struct GMTgrid 	# The type holding a local header and data of a GMT grid
+mutable struct GMTgrid#{T,N} <: AbstractArray{T,N} 	# The type holding a local header and data of a GMT grid
 	proj4::String
 	wkt::String
 	epsg::Int
@@ -11,13 +11,14 @@ mutable struct GMTgrid 	# The type holding a local header and data of a GMT grid
 	command::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-#	z::Array{Float32,2}
-	z::Array{Real,2}
+	z::Union{Array{Float32,2}, Array{Float64,2}}
 	x_unit::String
 	y_unit::String
 	z_unit::String
 	layout::String
 end
+#Base.size(G::GMTgrid) = size(G.z)
+#Base.getindex(G::GMTgrid) = getindex(G.arr)
 
 mutable struct GMTimage 	# The mutable struct holding a local header and data of a GMT image
 	proj4::String
@@ -740,7 +741,6 @@ function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN
 # If GRD_BOX is not empty it must contain a GMTgrid type.
 
 	if (isempty_(grd_box))			# Just tell grid_init() to allocate an empty container
-		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		return GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT,
 		                       C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
@@ -814,7 +814,6 @@ function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_I
 # ...
 
 	if (isempty_(img_box))			# Just tell image_init() to allocate an empty container
-		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		I = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_IS_OUTPUT,
 		                    C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 		if (img_mem_layout[1] != "")
@@ -880,7 +879,6 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 # If output then we dont know size so we set dimensions to zero.
 
 	if (direction == GMT_OUT)
-		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		return GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 
@@ -1001,7 +999,6 @@ function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, 
 
 	else	# To receive data from GMT we use a GMT_VECTOR resource instead
 		# There are no dimensions and we are just getting an empty container for output
-		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		return GMT_Create_Data(API, GMT_IS_VECTOR, GMT_IS_PLP, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 end
@@ -1013,7 +1010,6 @@ function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
 	# If direction is GMT_OUT then we allocate an empty GMT CPT as a destination.
 
 	if (dir == GMT_OUT)
-		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		return GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 
@@ -1083,7 +1079,6 @@ function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
 # If direction is GMT_IN then we are given a Julia structure with known sizes.
 # If direction is GMT_OUT then we allocate an empty GMT POSTSCRIPT as a destination.
 	if (dir == GMT_OUT)
-		#GMT_CREATE_MODE = (get_GMTversion(API) > 5.3) ? GMT_IS_OUTPUT : 0
 		return GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 
@@ -1542,8 +1537,9 @@ function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothi
 		reg_ = 0
 	end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
+	z = (isa(mat, Float32) || isa(mat, Float64)) ? mat : Float32.(mat)
 
-	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, mat, "x", "y", "z", "")
+	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, z, "x", "y", "z", "")
 end
 
 function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
