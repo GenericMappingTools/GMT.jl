@@ -890,7 +890,7 @@ if (got_it)					# Otherwise go straight to end
 	contour!("", [x[:] y[:] z[:]], cont=1, Vd=dbg2)
 	D = contour([x[:] y[:] z[:]], cont=[1,3,5], dump=true);
 	contour([x[:] y[:] z[:]],cont=[-2,0,3], Vd=dbg2)
-	@test_throws ErrorException("fill option rquires passing a CPT") contour(rand(5,2),cont=[-2,0,3], I=true)
+	#@test_throws ErrorException("fill option rquires passing a CPT") contour(rand(5,2),cont=[-2,0,3], I=true)
 
 	println("	PSIMAGE")
 	# PSIMAGE
