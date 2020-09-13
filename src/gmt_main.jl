@@ -1,4 +1,4 @@
-mutable struct GMTgrid#{T,N} <: AbstractArray{T,N} 	# The type holding a local header and data of a GMT grid
+mutable struct GMTgrid{T,N} <: AbstractArray{T,N}
 	proj4::String
 	wkt::String
 	epsg::Int
@@ -11,16 +11,30 @@ mutable struct GMTgrid#{T,N} <: AbstractArray{T,N} 	# The type holding a local h
 	command::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-	z::Union{Array{Float32,2}, Array{Float64,2}}
+	z::Array{T,N}
 	x_unit::String
 	y_unit::String
 	z_unit::String
 	layout::String
 end
-#Base.size(G::GMTgrid) = size(G.z)
-#Base.getindex(G::GMTgrid) = getindex(G.arr)
+Base.size(G::GMTgrid) = size(G.z)
+Base.getindex(G::GMTgrid{T,N}, inds::Vararg{Int,N}) where {T,N} = G.z[inds...]
+Base.setindex!(G::GMTgrid{T,N}, val, inds::Vararg{Int,N}) where {T,N} = G.z[inds...] = val
 
-mutable struct GMTimage 	# The mutable struct holding a local header and data of a GMT image
+Base.BroadcastStyle(::Type{<:GMTgrid}) = Broadcast.ArrayStyle{GMTgrid}()
+function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTgrid}}, ::Type{ElType}) where ElType
+	G = find4similar(bc)		# Scan the inputs for the GMTgrid:
+	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.x, G.y, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.z_unit, G.layout)
+end
+
+find4similar(bc::Base.Broadcast.Broadcasted) = find4similar(bc.args)
+find4similar(args::Tuple) = find4similar(find4similar(args[1]), Base.tail(args))
+find4similar(x) = x
+find4similar(::Tuple{}) = nothing
+find4similar(G::GMTgrid, rest) = G
+find4similar(::Any, rest) = find4similar(rest)
+
+mutable struct GMTimage 	# The type holding a local header and data of a GMT image
 	proj4::String
 	wkt::String
 	epsg::Int
@@ -410,8 +424,8 @@ function get_grid(API::Ptr{Nothing}, object)
 	Y = zeros(ny);		t = pointer_to_array(G.y, ny)
 	[Y[col] = t[col] for col = 1:ny]
 =#
-	X  = range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx)
-	Y  = range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny)
+	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx))
+	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny))
 
 	t = unsafe_wrap(Array, G.data, my * mx)
 	z = zeros(Float32, ny, nx)
@@ -482,8 +496,8 @@ function get_image(API::Ptr{Nothing}, object)
 	gmt_hdr = unsafe_load(I.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
 
-	X  = range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx)
-	Y  = range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny)
+	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx))
+	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny))
 
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	is4bytes = false
@@ -1537,7 +1551,7 @@ function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothi
 		reg_ = 0
 	end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
-	z = (isa(mat, Float32) || isa(mat, Float64)) ? mat : Float32.(mat)
+	z = (isa(mat, Array{Float32,2}) || isa(mat, Array{Float64,2})) ? mat : Float32.(mat)
 
 	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, z, "x", "y", "z", "")
 end
@@ -1597,8 +1611,8 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 				one_or_zero = 1
 			end
 		else
-			x = range(x[1], stop=x[2], length=nx+reg)
-			y = range(y[1], stop=y[2], length=ny+reg)
+			x = collect(range(x[1], stop=x[2], length=nx+reg))
+			y = collect(range(y[1], stop=y[2], length=ny+reg))
 		end
 		x_inc = (x[end] - x[1]) / (nx - one_or_zero)
 		y_inc = (y[end] - y[1]) / (ny - one_or_zero)
@@ -1606,22 +1620,26 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
 	elseif (hdr === nothing)
 		zmin, zmax = extrema(mat)
-		if (reg == 0)  x  = collect(1:nx);		y = collect(1:ny)
-		else           x  = collect(0.5:nx+0.5); y = collect(0.5:ny+0.5)
+		if (reg == 0)  x  = collect(1.0:nx);		y = collect(1.0:ny)
+		else           x  = collect(0.5:nx+0.5);	y = collect(0.5:ny+0.5)
 		end
 		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
 		x_inc = 1.0;	y_inc = 1.0
 	elseif (length(hdr) != 9)
 		error("The HDR array must have 9 elements")
 	else
-		x = range(hdr[1], stop=hdr[2], length=nx)
-		y = range(hdr[3], stop=hdr[4], length=ny)
+		x = collect(range(hdr[1], stop=hdr[2], length=nx))
+		y = collect(range(hdr[3], stop=hdr[4], length=ny))
 		# Recompute the x|y_inc to make sure they are right.
 		reg = hdr[7]
 		one_or_zero = reg == 0 ? 1 : 0
 		x_inc = (hdr[2] - hdr[1]) / (nx - one_or_zero)
 		y_inc = (hdr[4] - hdr[3]) / (ny - one_or_zero)
 	end
+	if (isa(x, UnitRange))  x = collect(x)  end			# The AbstractArrays are much less forgivable
+	if (isa(y, UnitRange))  y = collect(y)  end
+	if (!isa(x, Array{Float64}))  x = Float64.(x)  end
+	if (!isa(y, Array{Float64}))  y = Float64.(y)  end
 	return x, y, hdr, x_inc, y_inc
 end
 
