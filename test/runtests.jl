@@ -192,8 +192,6 @@ if (got_it)					# Otherwise go straight to end
 
 	img16 = rand(UInt16, 16, 16, 3);
 	I = GMT.mat2img(img16);
-	I.image = img16;
-	GMT.mat2img(I);
 	GMT.mat2img(img16, histo_bounds=8440);
 	GMT.mat2img(img16, histo_bounds=[8440 13540]);
 	GMT.mat2img(img16, histo_bounds=[8440 13540 800 20000 1000 30000]);
@@ -1078,37 +1076,10 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	MISC")
 	# MISC
-#=
-	G = GMT.mat2grid(G.z; reg=0, hdr=[G.range; G.registration; G.inc]);
-	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
-	G2 = G1;
-	G3 = G1 + G2;
-	G3 = G1 + 1;
-	G3 = 1 + G1;
-	G3 = G1 - G2;
-	G3 = G1 - 1;
-	G3 = G1 * G2;
-	G3 = G1 * 2;
-	G3 = 2 * G1;
-	G3 = G1 ^ 2;
-	G3 = -G1;
-	G3 = G1 / G2;
-	G3 = G1 / 2;
-	G1 = mat2grid([0.0 1; 2 3]);
-	G2 = mat2grid([4 5; 6 7]);
-	cos(G1); cosd(G1); sin(G1); sind(G1); tan(G1); tand(G1);
-	cos!(G1); cosd!(G1); sin!(G1); sind!(G1); tan!(G1); tand!(G1);
-	prod!(G1,G2); prod!(G1,2); prod!(2,G1);
-	sum!(G1,G2); sum!(G1,2); sum!(2, G1);
-=#
 	G2 = GMT.mat2grid(rand(4,4));
 	G2 = GMT.mat2grid(rand(Float32,4,4));
 	G2 = GMT.mat2grid(rand(Int32,4,4));
 	@test_throws ErrorException("The HDR array must have 9 elements") mat2grid(rand(4,4), reg=0, hdr=[0. 1 0 1 0 1]);
-	#@test_throws ErrorException("Grids have different sizes, so they cannot be added.") G1 + G2;
-	#@test_throws ErrorException("Grids have different sizes, so they cannot be subtracted.") G1 - G2;
-	#@test_throws ErrorException("Grids have different sizes, so they cannot be multiplied.") G1 * G2;
-	#@test_throws ErrorException("Grids have different sizes, so they cannot be divided.") G1 / G2;
 	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle, multi=true), legend=true, Vd=dbg2)
 	D = mat2ds(rand(6,6), color=[:red :blue]);
 	display(D);

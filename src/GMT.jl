@@ -50,7 +50,6 @@ export
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, subplot, gmtfig, inset, showfig,
 	image_alpha!, mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc
-	#cos!, cosd!, sin!, sind!, tan!, tand!
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -58,7 +57,6 @@ if (GMTver >= 6)
 	include("libgmt.jl")
 end
 include("gmt_main.jl")
-#include("grd_operations.jl")
 include("common_options.jl")
 include("gmtbegin.jl")
 include("blocks.jl")

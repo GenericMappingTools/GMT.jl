@@ -5,7 +5,7 @@ mutable struct GMTgrid{T,N} <: AbstractArray{T,N}
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
 	registration::Int
-	nodata::Float64
+	nodata::Union{Float64, Float32}
 	title::String
 	remark::String
 	command::String
@@ -34,18 +34,19 @@ find4similar(::Tuple{}) = nothing
 find4similar(G::GMTgrid, rest) = G
 find4similar(::Any, rest) = find4similar(rest)
 
-mutable struct GMTimage 	# The type holding a local header and data of a GMT image
+mutable struct GMTimage{T,N} <: AbstractArray{T,N} 	# The type holding a local header and data of a GMT image
 	proj4::String
 	wkt::String
 	epsg::Int
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
 	registration::Int
-	nodata::Float64
+	nodata::Union{Float64, Float32}
 	color_interp::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-	image::Union{Array{UInt8}, Array{UInt16}}
+#	image::Union{Array{UInt8}, Array{UInt16}}
+	image::Array{T,N}
 	x_unit::String
 	y_unit::String
 	z_unit::String
@@ -54,6 +55,16 @@ mutable struct GMTimage 	# The type holding a local header and data of a GMT ima
 	alpha::Array{UInt8,2}
 	layout::String
 end
+Base.size(I::GMTimage) = size(I.image)
+Base.getindex(I::GMTimage{T,N}, inds::Vararg{Int,N}) where {T,N} = I.image[inds...]
+Base.setindex!(I::GMTimage{T,N}, val, inds::Vararg{Int,N}) where {T,N} = I.z[inds...] = val
+
+Base.BroadcastStyle(::Type{<:GMTimage}) = Broadcast.ArrayStyle{GMTimage}()
+function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTimage}}, ::Type{ElType}) where ElType
+	I = find4similar(bc)		# Scan the inputs for the GMTimage:
+	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.x, I.y, similar(Array{ElType}, axes(bc)), I.x_unit, I.y_unit, I.z_unit, I.colormap, I.n_colors, I.alpha, I.layout)
+end
+find4similar(I::GMTimage, rest) = I
 
 mutable struct GMTcpt
 	colormap::Array{Float64,2}
@@ -767,9 +778,8 @@ function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grid_init(API::Ptr{Nothing}, module_input, Grid::Array{GMTgrid,1}, pad::Int=2)
+grid_init(API::Ptr{Nothing}, module_input, Grid::Array{GMTgrid,1}, pad::Int=2) =
 	grid_init(API, module_input, Grid[1], pad)
-end
 
 # ---------------------------------------------------------------------------------------------------
 function grid_init(API::Ptr{Nothing}, module_input, Grid::GMTgrid, pad::Int=2)
