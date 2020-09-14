@@ -57,6 +57,7 @@ if (GMTver >= 6)
 	include("libgmt.jl")
 end
 include("gmt_main.jl")
+include("grd_operations.jl")
 include("common_options.jl")
 include("gmtbegin.jl")
 include("blocks.jl")

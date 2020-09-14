@@ -57,7 +57,7 @@ mutable struct GMTimage{T,N} <: AbstractArray{T,N} 	# The type holding a local h
 end
 Base.size(I::GMTimage) = size(I.image)
 Base.getindex(I::GMTimage{T,N}, inds::Vararg{Int,N}) where {T,N} = I.image[inds...]
-Base.setindex!(I::GMTimage{T,N}, val, inds::Vararg{Int,N}) where {T,N} = I.z[inds...] = val
+Base.setindex!(I::GMTimage{T,N}, val, inds::Vararg{Int,N}) where {T,N} = I.image[inds...] = val
 
 Base.BroadcastStyle(::Type{<:GMTimage}) = Broadcast.ArrayStyle{GMTimage}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTimage}}, ::Type{ElType}) where ElType
@@ -86,7 +86,8 @@ mutable struct GMTps
 	comment::Array{String,1}	# Cell array with any comments
 end
 
-mutable struct GMTdataset
+mutable struct GMTdataset#{T<:Float64,N} <: AbstractArray{T,N}
+#	data::Array{T,N}
 	data::Array{Float64,2}
 	text::Array{String,1}
 	header::String
@@ -98,6 +99,25 @@ mutable struct GMTdataset
 	GMTdataset(data) = new(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
 	GMTdataset() = new(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 end
+
+#=
+GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, text, string(), Array{String,1}(), string(), string())
+GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], string(), Array{String,1}(), string(), string())
+GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
+GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
+
+Base.size(D::GMTdataset) = size(D.data)
+Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = D.data[inds...]
+Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int,N}) where {T,N} = D.data[inds...] = val
+
+Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
+function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}}, ::Type{ElType}) where ElType
+	D = find4similar(bc)		# Scan the inputs for the GMTimage:
+	GMTimage(similar(Array{ElType}, axes(bc)), D.text, D.header, D.comment, D.proj4, D.wkt)
+end
+find4similar(D::GMTdataset, rest) = D
+=#
+
 
 """
 Call a GMT module. Usage:
@@ -983,7 +1003,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, actual_family)
 # Used to create containers to hold or receive data:
-# direction == GMT_IN:  Create empty Matrix container, associate it with mex data matrix, and use as GMT input.
+# direction == GMT_IN:  Create empty Matrix container, associate it with julia data matrix, and use as GMT input.
 # direction == GMT_OUT: Create empty Vector container, let GMT fill it out, and use for output.
 # Note that in GMT these will be considered DATASETs via GMT_MATRIX or GMT_VECTOR.
 # If direction is GMT_IN then we are given a Julia matrix and can determine size, etc.
@@ -1278,7 +1298,8 @@ function text_record(data, text, hdr=nothing)
 	# Create a text record to send to pstext. DATA is the Mx2 coordinates array.
 	# TEXT is a string or a cell array
 
-	if (isa(data, Array{Float64,1}))  data = data[:,:]  end 	# Needs to be 2D
+	if (isa(data, Vector))  data = data[:,:]  end 	# Needs to be 2D
+	if (!isa(data, Array{Float64}))  data = Float64.(data)  end
 
 	if (isa(text, String))
 		T = GMTdataset(data, [text], "", Array{String,1}(), "", "")
@@ -1328,7 +1349,7 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=noth
 		xx = nothing
 	else
 		n_ds = (multi) ? size(mat, 2) : 1
-		xx = (x == :ny || x == "ny") ? collect(1:size(mat, 1)) : x
+		xx = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : x
 		if (length(xx) != size(mat, 1))  error("Number of X coordinates and MAT number of rows are not equal")  end
 	end
 
@@ -1366,6 +1387,7 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=noth
 		end
 	end
 
+	if (!isa(mat, Array{Float64}))  mat = Float64.(mat)  end
 	if (xx === nothing)
 		if (!multi)
 			D[1] = GMTdataset(mat, String[], (hdr === nothing ? "" : hdr[1]), String[], "", "")
