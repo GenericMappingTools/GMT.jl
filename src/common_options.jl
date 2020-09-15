@@ -1456,7 +1456,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_o
 				to_slot = false
 			end
 			cmd = add_opt(cmd, opt, d, symbs, nt_opts)
-		elseif (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{GMT.GMTdataset,1}) || typeof(val) <: AbstractRange)
+		elseif (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{<:GMTdataset,1}) || typeof(val) <: AbstractRange)
 			if (typeof(val) <: AbstractRange)  val = collect(val)  end
 			cmd *= " -" * opt
 		elseif (isa(val, String) || isa(val, Symbol) || isa(val, Number))
@@ -2779,7 +2779,7 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 	global legend_type
 
 	cmd_ = cmd									# Starts to be just a shallow copy
-	if (isa(arg, Array{GMT.GMTdataset,1}))		# Multi-segments can have different settings per line
+	if (isa(arg, Array{<:GMTdataset,1}))		# Multi-segments can have different settings per line
 		(isa(cmd, String)) ? cmd_ = deepcopy([cmd]) : cmd_ = deepcopy(cmd)
 		lix, penC, penS = break_pen(scan_opt(arg[1].header, "-W"))
 		penT, penC_, penS_ = break_pen(scan_opt(cmd_[end], "-W"))

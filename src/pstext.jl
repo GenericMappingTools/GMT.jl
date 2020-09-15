@@ -108,7 +108,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
 
 	if (!occursin(" -F", cmd))		# Test if the GMTdataset has text or if a numeric column is to be used as such
-		if ((isa(arg1, GMTdataset) && isempty(arg1.text)) || (isa(arg1, Array{GMT.GMTdataset,1}) && isempty(arg1[1].text)) )
+		if ((isa(arg1, GMTdataset) && isempty(arg1.text)) || (isa(arg1, Array{<:GMTdataset,1}) && isempty(arg1[1].text)) )
 			if (isa(arg1, GMTdataset))  arg1 = [arg1]  end
 			for n = 1:length(arg1)
 				nr, nc = size(arg1[n].data)

@@ -34,7 +34,7 @@ find4similar(::Tuple{}) = nothing
 find4similar(G::GMTgrid, rest) = G
 find4similar(::Any, rest) = find4similar(rest)
 
-mutable struct GMTimage{T,N} <: AbstractArray{T,N} 	# The type holding a local header and data of a GMT image
+mutable struct GMTimage{T,N} <: AbstractArray{T,N}
 	proj4::String
 	wkt::String
 	epsg::Int
@@ -86,21 +86,21 @@ mutable struct GMTps
 	comment::Array{String,1}	# Cell array with any comments
 end
 
-mutable struct GMTdataset#{T<:Float64,N} <: AbstractArray{T,N}
-#	data::Array{T,N}
-	data::Array{Float64,2}
+mutable struct GMTdataset{T,N} <: AbstractArray{T,N}
+	data::Array{T,N}
+#	data::Array{Float64,2}
 	text::Array{String,1}
 	header::String
 	comment::Array{String,1}
 	proj4::String
 	wkt::String
-	GMTdataset(data, text, header, comment, proj4, wkt) = new(data, text, header, comment, proj4, wkt)
-	GMTdataset(data, text) = new(data, text, string(), Array{String,1}(), string(), string())
-	GMTdataset(data) = new(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
-	GMTdataset() = new(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
+	#GMTdataset(data, text, header, comment, proj4, wkt) = new(data, text, header, comment, proj4, wkt)
+	#GMTdataset(data, text) = new(data, text, string(), Array{String,1}(), string(), string())
+	#GMTdataset(data) = new(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
+	#GMTdataset() = new(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 end
 
-#=
+##
 GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, text, string(), Array{String,1}(), string(), string())
 GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], string(), Array{String,1}(), string(), string())
 GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
@@ -113,10 +113,10 @@ Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int,N}) where {T,N} = D.dat
 Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}}, ::Type{ElType}) where ElType
 	D = find4similar(bc)		# Scan the inputs for the GMTimage:
-	GMTimage(similar(Array{ElType}, axes(bc)), D.text, D.header, D.comment, D.proj4, D.wkt)
+	GMTdataset(similar(Array{ElType}, axes(bc)), D.text, D.header, D.comment, D.proj4, D.wkt)
 end
 find4similar(D::GMTdataset, rest) = D
-=#
+##
 
 
 """
@@ -215,7 +215,7 @@ function gmt(cmd::String, args...)
 				r *= " -Tg"
 			elseif (isa(args[1], GMTimage))
 				r *= " -Ti"
-			elseif (isa(args[1], Array{GMTdataset}) || isa(args[1], GMTdataset))
+			elseif (isa(args[1], Array{<:GMTdataset}) || isa(args[1], GMTdataset))
 				r *= " -Td"
 			elseif (isa(args[1], GMTps))
 				r *= " -Tp"
@@ -928,7 +928,7 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 
 	if (Darr == C_NULL) error("Input is empty where it can't be.")	end
 	if (isa(Darr, GMTdataset))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
-	if (!(isa(Darr, Array{GMTdataset,1})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
+	if (!(isa(Darr, Array{<:GMTdataset,1})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
 		D = dataset_init(API, module_input, Darr, direction, actual_family)
 		return D
 	end
@@ -1799,7 +1799,7 @@ function Base.:show(io::IO, G::GMTimage)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function Base.:show(io::IO, ::MIME"text/plain", D::Array{GMTdataset})
+function Base.:show(io::IO, ::MIME"text/plain", D::Array{<:GMTdataset})
 	println(typeof(D), " with ", length(D), " segments")
 	if (length(D) == 0)  return  end
 	(~isempty(D[1].comment)) && println("Comment:\t", D[1].comment)

@@ -379,8 +379,8 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 	d = KW(kwargs)
 	opt_z = ""
 
-	if (isa(arg, Array{GMT.GMTdataset,1}))  arg1 = arg[1]	# It makes no sense accepting > 1 datasets
-	else                                    arg1 = arg	# Make a copy that may or not become a new thing
+	if (isa(arg, Array{<:GMTdataset,1}))  arg1 = arg[1]	# It makes no sense accepting > 1 datasets
+	else                                  arg1 = arg	# Make a copy that may or not become a new thing
 	end
 
 	if (isa(arg1, Array))
@@ -738,7 +738,7 @@ const psevents = events            # Alias
 # ------------------------------------------------------------------------------------------------------
 function cat_1_arg(arg)
 	# Add a first column with 1:n to all args that are not GMTdatasets
-	(isa(arg, Array{GMT.GMTdataset,1}) || isa(arg, GMT.GMTdataset))  &&  return arg
+	(isa(arg, Array{<:GMTdataset,1}) || isa(arg, GMTdataset))  &&  return arg
 	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
 		arg = hcat(1:size(arg,1), arg)
 	#if (isa(arg, Vector) || isa(arg, Matrix) || isa(arg, UnitRange) || isa(arg, StepRangeLen))
@@ -766,8 +766,8 @@ function cat_2_arg2(arg1, arg2)
 		arg = hcat(arg1, arg2)
 		if (size(arg,2) > 2)  global multi_col[1] = true  end
 		return arg
-	elseif (!isa(arg1, Array{GMT.GMTdataset,1}) && !isa(arg1, GMT.GMTdataset) &&
-		    !isa(arg2, Array{GMT.GMTdataset,1}) && !isa(arg2, GMT.GMTdataset) )
+	elseif (!isa(arg1, Array{<:GMTdataset,1}) && !isa(arg1, GMTdataset) &&
+		    !isa(arg2, Array{<:GMTdataset,1}) && !isa(arg2, GMTdataset) )
 		error(@sprintf("Unknown types (%s) and (%s) in cat_2_arg2() function", typeof(arg1), typeof(arg2)))
 	end
 

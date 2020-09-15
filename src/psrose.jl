@@ -109,7 +109,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
-	if (isa(arg1, Array{GMT.GMTdataset,1}))  arg1 = arg1[1].data  end	# WHY I HAVE TO DO THIS?
+	if (isa(arg1, Array{<:GMTdataset,1}))  arg1 = arg1[1].data  end	# WHY I HAVE TO DO THIS?
 
 	cmd = add_opt(cmd, 'E', d, [:E :vectors])
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)

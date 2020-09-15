@@ -61,7 +61,7 @@ function sphdistance(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	for k = 1:2
 		if ((val = find_in_dict(d, symbs[k])[1]) !== nothing)
 			cmd *= " -" * flags[k]
-			if (isa(val, GMTdataset) || isa(val, Array{GMTdataset}) || (isa(val, Array{<:Number}) && k == 2) )
+			if (isa(val, GMTdataset) || isa(val, Array{<:GMTdataset}) || (isa(val, Array{<:Number}) && k == 2) )
 				(N_used == 0) ? arg1 = val : arg2 = val
 			else
 				cmd *= arg2str(val)

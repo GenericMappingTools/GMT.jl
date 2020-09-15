@@ -1106,10 +1106,12 @@ if (got_it)					# Otherwise go straight to end
 	G2 = GMT.mat2grid(rand(4,4));
 	G1 .* G2;
 	getindex(G1,1);
-	setindex!(G1, [-1 -1],1:2,)
+	setindex!(G1, [-1 -1],1:2)
 	size(G1)
 	GMT.find4similar(G1,0)
+	GMT.find4similar(1)
 	GMT.find4similar(())
+	GMT.find4similar((0,1))
 	GMT.find4similar([],0)
 	I = mat2img(rand(UInt8,4,4,3))
 	GMT.find4similar(I,0)
@@ -1118,8 +1120,13 @@ if (got_it)					# Otherwise go straight to end
 	setindex!(I, [101 1],1:2,)
 	I .+ 0
 
-	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle, multi=true), legend=true, Vd=dbg2)
 	D = mat2ds(rand(6,6), color=[:red :blue]);
+	size(D[1])
+	getindex(D[1], 1)
+	setindex!(D[1], 1, 1)
+	GMT.find4similar(D,0)
+
+	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle, multi=true), legend=true, Vd=dbg2)
 	display(D);
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"], multi=true);
