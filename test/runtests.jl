@@ -1108,21 +1108,21 @@ if (got_it)					# Otherwise go straight to end
 	getindex(G1,1);
 	setindex!(G1, [-1 -1],1:2)
 	size(G1)
+	GMT.find4similar(G1,0)
+	GMT.find4similar(1)
+	GMT.find4similar(())
+	GMT.find4similar((0,1))
+	GMT.find4similar([],0)
 	I = mat2img(rand(UInt8,4,4,3))
+	GMT.find4similar(I,0)
 	size(I)
 	getindex(I,1);
 	setindex!(I, [101 1],1:2,)
 	I .+ 0
 
-	GMT.GMTdataset();
-	D = mat2ds(rand(6,6), color=[:red :blue]);
-	size(D[1])
-	getindex(D[1], 1)
-	setindex!(D[1], 1, 1)
-	D .+ 10
-
-	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle, multi=true), legend=true, Vd=dbg2)
-	display(D);
+	D = mat2ds(GMT.fakedata(4,4)
+	show(D);
+	plot(D, x=:ny, color=:cycle, multi=true), legend=true, Vd=dbg2)
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"], multi=true);
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
@@ -1142,7 +1142,7 @@ if (got_it)					# Otherwise go straight to end
 	gmt("destroy")
 
 	# Test ogr2GMTdataset
-	D = gmtconvert([1.0 2 3; 2 3 4], a="2=lolo+gPOINT");	# Ther's a bug in GMT for this. No data points are printed
+	D = gmtconvert([1.0 2 3; 2 3 4], a="2=lolo+gPOINT");	# There's a bug in GMT for this. No data points are printed
 	gmtwrite("lixo.gmt", D)
 	@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", write="a.bin", Vd=2) == "gmtconvert  > a.bin -bo3f"
 	@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", append="a.bin", Vd=2) == "gmtconvert  >> a.bin -bo3f"
