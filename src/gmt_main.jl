@@ -47,9 +47,6 @@ mutable struct GMTimage{T,N} <: AbstractArray{T,N}
 	y::Array{Float64,1}
 #	image::Union{Array{UInt8}, Array{UInt16}}
 	image::Array{T,N}
-	x_unit::String
-	y_unit::String
-	z_unit::String
 	colormap::Array{Clong,1}
 	n_colors::Int
 	alpha::Array{UInt8,2}
@@ -62,7 +59,7 @@ Base.setindex!(I::GMTimage{T,N}, val, inds::Vararg{Int,N}) where {T,N} = I.image
 Base.BroadcastStyle(::Type{<:GMTimage}) = Broadcast.ArrayStyle{GMTimage}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTimage}}, ::Type{ElType}) where ElType
 	I = find4similar(bc.args)		# Scan the inputs for the GMTimage:
-	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.x, I.y, similar(Array{ElType}, axes(bc)), I.x_unit, I.y_unit, I.z_unit, I.colormap, I.n_colors, I.alpha, I.layout)
+	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.x, I.y, similar(Array{ElType}, axes(bc)), I.colormap, I.n_colors, I.alpha, I.layout)
 end
 find4similar(I::GMTimage, rest) = I
 
@@ -541,7 +538,7 @@ function get_image(API::Ptr{Nothing}, object)
 	# Return image via a uint8 matrix in a struct
 	cinterp = (I.color_interp != C_NULL) ? unsafe_string(I.color_interp) : ""
 	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, X, Y,
-	               t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
+	               t, colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)
@@ -781,10 +778,6 @@ function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN
 		error(@sprintf("grd_init: input (%s) is not a GRID container type", typeof(grd_box)))
 	end
 end
-
-# ---------------------------------------------------------------------------------------------------
-grid_init(API::Ptr{Nothing}, module_input, Grid::Array{GMTgrid,1}, pad::Int=2) =
-	grid_init(API, module_input, Grid[1], pad)
 
 # ---------------------------------------------------------------------------------------------------
 function grid_init(API::Ptr{Nothing}, module_input, Grid::GMTgrid, pad::Int=2)
@@ -1435,7 +1428,7 @@ function mat2img(mat::Array{UInt8}; x=nothing, y=nothing, hdr=nothing, proj4::St
 	if ((val = find_in_dict(d, [:layout])[1]) !== nothing)  mem_layout = string(val)  end
 
 	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], 1, NaN, color_interp,
-	             x,y,mat, "x", "y", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout)
+	             x,y,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1568,7 +1561,6 @@ function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothi
 		reg_ = 0
 	end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
-	#z = (isa(mat, Array{Float32,2}) || isa(mat, Array{Float64,2})) ? mat : Float32.(mat)
 
 	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, mat, "x", "y", "z", "")
 end
