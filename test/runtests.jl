@@ -192,8 +192,8 @@ if (got_it)					# Otherwise go straight to end
 
 	img16 = rand(UInt16, 16, 16, 3);
 	I = GMT.mat2img(img16);
-	I.image = img16;
-	GMT.mat2img(I);
+#	I.image = img16;
+#	GMT.mat2img(I);
 	GMT.mat2img(img16, histo_bounds=8440);
 	GMT.mat2img(img16, histo_bounds=[8440 13540]);
 	GMT.mat2img(img16, histo_bounds=[8440 13540 800 20000 1000 30000]);
@@ -1094,36 +1094,42 @@ if (got_it)					# Otherwise go straight to end
 	G3 = G1 / G2;
 	G3 = G1 / 2;
 	G1 = mat2grid([0.0 1; 2 3]);
-	G2 = mat2grid([4 5; 6 7]);
-	cos(G1); cosd(G1); sin(G1); sind(G1); tan(G1); tand(G1);
-	cos!(G1); cosd!(G1); sin!(G1); sind!(G1); tan!(G1); tand!(G1);
-	prod!(G1,G2); prod!(G1,2); prod!(2,G1);
-	sum!(G1,G2); sum!(G1,2); sum!(2, G1);
-	G2 = GMT.mat2grid(rand(4,4));
-	G2 = GMT.mat2grid(rand(Float32,4,4));
-	G2 = GMT.mat2grid(rand(Int32,4,4));
+	G2 = mat2grid([4 5; 6 7; 8 9]);
 	@test_throws ErrorException("The HDR array must have 9 elements") mat2grid(rand(4,4), reg=0, hdr=[0. 1 0 1 0 1]);
 	@test_throws ErrorException("Grids have different sizes, so they cannot be added.") G1 + G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be subtracted.") G1 - G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be multiplied.") G1 * G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be divided.") G1 / G2;
-	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle, multi=true), legend=true, Vd=dbg2)
-	D = mat2ds(rand(6,6), color=[:red :blue]);
+	G1 = GMT.mat2grid(rand(4,4));
+	G2 = GMT.mat2grid(rand(Float32,4,4));
+	G2 = GMT.mat2grid(rand(Int32,4,4));
+	G2 = GMT.mat2grid(rand(4,4));
+	G1 .* G2;
+	getindex(G1,1);
+	setindex!(G1, [-1 -1],1:2)
+	size(G1)
+	GMT.find4similar(G1,0)
+	GMT.find4similar(1)
+	GMT.find4similar(())
+	GMT.find4similar((0,1))
+	GMT.find4similar([],0)
+	I = mat2img(rand(UInt8,4,4,3))
+	GMT.find4similar(I,0)
+	size(I)
+	getindex(I,1);
+	setindex!(I, [101 1],1:2,)
+	I .+ 0
+
+	GMT.GMTdataset();
+	GMT.GMTdataset(rand(2,2), "lixo");
+	D = mat2ds(GMT.fakedata(4,4), x=:ny, color=:cycle, multi=true)
+	show(D);
 	display(D);
+	plot(D, legend=true, Vd=dbg2)
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"], multi=true);
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
 
-	#GMT.get_datatype([]);
-	#GMT.get_datatype(Float32(8));
-	#GMT.get_datatype(UInt64(8));
-	#GMT.get_datatype(Int64(8));
-	#GMT.get_datatype(UInt32(8));
-	#GMT.get_datatype(Int32(8));
-	#GMT.get_datatype(UInt16(8));
-	#GMT.get_datatype(Int16(8));
-	#GMT.get_datatype(UInt8(8));
-	#GMT.get_datatype(Int8(8));
 	GMT.mat2grid(rand(Float32, 10,10), reg=1);
 	GMT.num2str(rand(2,3));
 	text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"]);
@@ -1139,7 +1145,7 @@ if (got_it)					# Otherwise go straight to end
 	gmt("destroy")
 
 	# Test ogr2GMTdataset
-	D = gmtconvert([1.0 2 3; 2 3 4], a="2=lolo+gPOINT");	# Ther's a bug in GMT for this. No data points are printed
+	D = gmtconvert([1.0 2 3; 2 3 4], a="2=lolo+gPOINT");	# There's a bug in GMT for this. No data points are printed
 	gmtwrite("lixo.gmt", D)
 	@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", write="a.bin", Vd=2) == "gmtconvert  > a.bin -bo3f"
 	@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", append="a.bin", Vd=2) == "gmtconvert  >> a.bin -bo3f"

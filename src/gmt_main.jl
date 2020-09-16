@@ -1,45 +1,67 @@
-mutable struct GMTgrid#{T,N} <: AbstractArray{T,N} 	# The type holding a local header and data of a GMT grid
+mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	proj4::String
 	wkt::String
 	epsg::Int
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
 	registration::Int
-	nodata::Float64
+	nodata::Union{Float64, Float32}
 	title::String
 	remark::String
 	command::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-	z::Union{Array{Float32,2}, Array{Float64,2}}
+	z::Array{T,N}
 	x_unit::String
 	y_unit::String
 	z_unit::String
 	layout::String
 end
-#Base.size(G::GMTgrid) = size(G.z)
-#Base.getindex(G::GMTgrid) = getindex(G.arr)
+Base.size(G::GMTgrid) = size(G.z)
+Base.getindex(G::GMTgrid{T,N}, inds::Vararg{Int,N}) where {T,N} = G.z[inds...]
+Base.setindex!(G::GMTgrid{T,N}, val, inds::Vararg{Int,N}) where {T,N} = G.z[inds...] = val
 
-mutable struct GMTimage 	# The mutable struct holding a local header and data of a GMT image
+Base.BroadcastStyle(::Type{<:GMTgrid}) = Broadcast.ArrayStyle{GMTgrid}()
+function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTgrid}}, ::Type{ElType}) where ElType
+	G = find4similar(bc.args)		# Scan the inputs for the GMTgrid:
+	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.x, G.y, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.z_unit, G.layout)
+end
+
+find4similar(bc::Base.Broadcast.Broadcasted) = find4similar(bc.args)
+find4similar(args::Tuple) = find4similar(find4similar(args[1]), Base.tail(args))
+find4similar(x) = x
+find4similar(::Tuple{}) = nothing
+find4similar(G::GMTgrid, rest) = G
+find4similar(::Any, rest) = find4similar(rest)
+
+mutable struct GMTimage{T,N} <: AbstractArray{T,N}
 	proj4::String
 	wkt::String
 	epsg::Int
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
 	registration::Int
-	nodata::Float64
+	nodata::Union{Float64, Float32}
 	color_interp::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-	image::Union{Array{UInt8}, Array{UInt16}}
-	x_unit::String
-	y_unit::String
-	z_unit::String
+#	image::Union{Array{UInt8}, Array{UInt16}}
+	image::Array{T,N}
 	colormap::Array{Clong,1}
 	n_colors::Int
 	alpha::Array{UInt8,2}
 	layout::String
 end
+Base.size(I::GMTimage) = size(I.image)
+Base.getindex(I::GMTimage{T,N}, inds::Vararg{Int,N}) where {T,N} = I.image[inds...]
+Base.setindex!(I::GMTimage{T,N}, val, inds::Vararg{Int,N}) where {T,N} = I.image[inds...] = val
+
+Base.BroadcastStyle(::Type{<:GMTimage}) = Broadcast.ArrayStyle{GMTimage}()
+function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTimage}}, ::Type{ElType}) where ElType
+	I = find4similar(bc.args)		# Scan the inputs for the GMTimage:
+	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.x, I.y, similar(Array{ElType}, axes(bc)), I.colormap, I.n_colors, I.alpha, I.layout)
+end
+find4similar(I::GMTimage, rest) = I
 
 mutable struct GMTcpt
 	colormap::Array{Float64,2}
@@ -68,11 +90,16 @@ mutable struct GMTdataset
 	comment::Array{String,1}
 	proj4::String
 	wkt::String
-	GMTdataset(data, text, header, comment, proj4, wkt) = new(data, text, header, comment, proj4, wkt)
-	GMTdataset(data, text) = new(data, text, string(), Array{String,1}(), string(), string())
-	GMTdataset(data) = new(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
-	GMTdataset() = new(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
+	#GMTdataset(data, text, header, comment, proj4, wkt) = new(data, text, header, comment, proj4, wkt)
+	#GMTdataset(data, text) = new(data, text, string(), Array{String,1}(), string(), string())
+	#GMTdataset(data) = new(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
+	#GMTdataset() = new(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 end
+
+GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, text, string(), Array{String,1}(), string(), string())
+GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], string(), Array{String,1}(), string(), string())
+GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
+GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 
 """
 Call a GMT module. Usage:
@@ -170,7 +197,7 @@ function gmt(cmd::String, args...)
 				r *= " -Tg"
 			elseif (isa(args[1], GMTimage))
 				r *= " -Ti"
-			elseif (isa(args[1], Array{GMTdataset}) || isa(args[1], GMTdataset))
+			elseif (isa(args[1], Array{<:GMTdataset}) || isa(args[1], GMTdataset))
 				r *= " -Td"
 			elseif (isa(args[1], GMTps))
 				r *= " -Tp"
@@ -410,8 +437,8 @@ function get_grid(API::Ptr{Nothing}, object)
 	Y = zeros(ny);		t = pointer_to_array(G.y, ny)
 	[Y[col] = t[col] for col = 1:ny]
 =#
-	X  = range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx)
-	Y  = range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny)
+	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx))
+	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny))
 
 	t = unsafe_wrap(Array, G.data, my * mx)
 	z = zeros(Float32, ny, nx)
@@ -482,8 +509,8 @@ function get_image(API::Ptr{Nothing}, object)
 	gmt_hdr = unsafe_load(I.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
 
-	X  = range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx)
-	Y  = range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny)
+	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx))
+	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny))
 
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	is4bytes = false
@@ -511,7 +538,7 @@ function get_image(API::Ptr{Nothing}, object)
 	# Return image via a uint8 matrix in a struct
 	cinterp = (I.color_interp != C_NULL) ? unsafe_string(I.color_interp) : ""
 	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, X, Y,
-	               t, "", "", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
+	               t, colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)
@@ -753,11 +780,6 @@ function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grid_init(API::Ptr{Nothing}, module_input, Grid::Array{GMTgrid,1}, pad::Int=2)
-	grid_init(API, module_input, Grid[1], pad)
-end
-
-# ---------------------------------------------------------------------------------------------------
 function grid_init(API::Ptr{Nothing}, module_input, Grid::GMTgrid, pad::Int=2)
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
@@ -884,7 +906,7 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 
 	if (Darr == C_NULL) error("Input is empty where it can't be.")	end
 	if (isa(Darr, GMTdataset))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
-	if (!(isa(Darr, Array{GMTdataset,1})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
+	if (!(isa(Darr, Array{<:GMTdataset,1})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
 		D = dataset_init(API, module_input, Darr, direction, actual_family)
 		return D
 	end
@@ -959,7 +981,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, actual_family)
 # Used to create containers to hold or receive data:
-# direction == GMT_IN:  Create empty Matrix container, associate it with mex data matrix, and use as GMT input.
+# direction == GMT_IN:  Create empty Matrix container, associate it with julia data matrix, and use as GMT input.
 # direction == GMT_OUT: Create empty Vector container, let GMT fill it out, and use for output.
 # Note that in GMT these will be considered DATASETs via GMT_MATRIX or GMT_VECTOR.
 # If direction is GMT_IN then we are given a Julia matrix and can determine size, etc.
@@ -1254,7 +1276,8 @@ function text_record(data, text, hdr=nothing)
 	# Create a text record to send to pstext. DATA is the Mx2 coordinates array.
 	# TEXT is a string or a cell array
 
-	if (isa(data, Array{Float64,1}))  data = data[:,:]  end 	# Needs to be 2D
+	if (isa(data, Vector))  data = data[:,:]  end 	# Needs to be 2D
+	if (!isa(data, Array{Float64}))  data = Float64.(data)  end
 
 	if (isa(text, String))
 		T = GMTdataset(data, [text], "", Array{String,1}(), "", "")
@@ -1304,7 +1327,7 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=noth
 		xx = nothing
 	else
 		n_ds = (multi) ? size(mat, 2) : 1
-		xx = (x == :ny || x == "ny") ? collect(1:size(mat, 1)) : x
+		xx = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : x
 		if (length(xx) != size(mat, 1))  error("Number of X coordinates and MAT number of rows are not equal")  end
 	end
 
@@ -1342,6 +1365,7 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=noth
 		end
 	end
 
+	if (!isa(mat, Array{Float64}))  mat = Float64.(mat)  end
 	if (xx === nothing)
 		if (!multi)
 			D[1] = GMTdataset(mat, String[], (hdr === nothing ? "" : hdr[1]), String[], "", "")
@@ -1404,7 +1428,7 @@ function mat2img(mat::Array{UInt8}; x=nothing, y=nothing, hdr=nothing, proj4::St
 	if ((val = find_in_dict(d, [:layout])[1]) !== nothing)  mem_layout = string(val)  end
 
 	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], 1, NaN, color_interp,
-	             x,y,mat, "x", "y", "", colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout)
+	             x,y,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1537,9 +1561,8 @@ function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothi
 		reg_ = 0
 	end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
-	z = (isa(mat, Float32) || isa(mat, Float64)) ? mat : Float32.(mat)
 
-	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, z, "x", "y", "z", "")
+	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, mat, "x", "y", "z", "")
 end
 
 function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
@@ -1597,8 +1620,8 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 				one_or_zero = 1
 			end
 		else
-			x = range(x[1], stop=x[2], length=nx+reg)
-			y = range(y[1], stop=y[2], length=ny+reg)
+			x = collect(range(x[1], stop=x[2], length=nx+reg))
+			y = collect(range(y[1], stop=y[2], length=ny+reg))
 		end
 		x_inc = (x[end] - x[1]) / (nx - one_or_zero)
 		y_inc = (y[end] - y[1]) / (ny - one_or_zero)
@@ -1606,22 +1629,26 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
 	elseif (hdr === nothing)
 		zmin, zmax = extrema(mat)
-		if (reg == 0)  x  = collect(1:nx);		y = collect(1:ny)
-		else           x  = collect(0.5:nx+0.5); y = collect(0.5:ny+0.5)
+		if (reg == 0)  x  = collect(1.0:nx);		y = collect(1.0:ny)
+		else           x  = collect(0.5:nx+0.5);	y = collect(0.5:ny+0.5)
 		end
 		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
 		x_inc = 1.0;	y_inc = 1.0
 	elseif (length(hdr) != 9)
 		error("The HDR array must have 9 elements")
 	else
-		x = range(hdr[1], stop=hdr[2], length=nx)
-		y = range(hdr[3], stop=hdr[4], length=ny)
+		x = collect(range(hdr[1], stop=hdr[2], length=nx))
+		y = collect(range(hdr[3], stop=hdr[4], length=ny))
 		# Recompute the x|y_inc to make sure they are right.
 		reg = hdr[7]
 		one_or_zero = reg == 0 ? 1 : 0
 		x_inc = (hdr[2] - hdr[1]) / (nx - one_or_zero)
 		y_inc = (hdr[4] - hdr[3]) / (ny - one_or_zero)
 	end
+	if (isa(x, UnitRange))  x = collect(x)  end			# The AbstractArrays are much less forgivable
+	if (isa(y, UnitRange))  y = collect(y)  end
+	if (!isa(x, Array{Float64}))  x = Float64.(x)  end
+	if (!isa(y, Array{Float64}))  y = Float64.(y)  end
 	return x, y, hdr, x_inc, y_inc
 end
 
@@ -1749,7 +1776,7 @@ function Base.:show(io::IO, G::GMTimage)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function Base.:show(io::IO, ::MIME"text/plain", D::Array{GMTdataset})
+function Base.:show(io::IO, ::MIME"text/plain", D::Array{<:GMTdataset})
 	println(typeof(D), " with ", length(D), " segments")
 	if (length(D) == 0)  return  end
 	(~isempty(D[1].comment)) && println("Comment:\t", D[1].comment)

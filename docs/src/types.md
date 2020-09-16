@@ -38,9 +38,6 @@ Image type
        x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates
        y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates
        image::Array{UInt8,3}      # [n_rows x n_columns x n_bands] image array
-       x_units::String            # Units of XX axis (Optional)
-       y_units::String            # Units of YY axis (Optional)
-       z_units::String            # Units of ZZ axis (Optional) ==> MAKES NO SENSE
        colormap::Array{Clong,1}   # 
        alpha::Array{UInt8,2}      # A [n_rows x n_columns] alpha array
        layout::String             # A four character string describing the image memory layout
