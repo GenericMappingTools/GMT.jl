@@ -23,16 +23,10 @@ Base.setindex!(G::GMTgrid{T,N}, val, inds::Vararg{Int,N}) where {T,N} = G.z[inds
 
 Base.BroadcastStyle(::Type{<:GMTgrid}) = Broadcast.ArrayStyle{GMTgrid}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTgrid}}, ::Type{ElType}) where ElType
-	G = find4similar(bc)		# Scan the inputs for the GMTgrid:
+	G = bc.args[1]
+	!(typeof(G) <: GMT.GMTgrid) && error("BAD USAGE. You need to use the dot operator. E.g. cos.(G) instead of cos(G)")
 	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.x, G.y, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.z_unit, G.layout)
 end
-
-find4similar(bc::Base.Broadcast.Broadcasted) = find4similar(bc.args)
-find4similar(args::Tuple) = find4similar(find4similar(args[1]), Base.tail(args))
-find4similar(x) = x
-find4similar(::Tuple{}) = nothing
-find4similar(G::GMTgrid, rest) = G
-find4similar(::Any, rest) = find4similar(rest)
 
 mutable struct GMTimage{T,N} <: AbstractArray{T,N}
 	proj4::String
@@ -61,10 +55,10 @@ Base.setindex!(I::GMTimage{T,N}, val, inds::Vararg{Int,N}) where {T,N} = I.image
 
 Base.BroadcastStyle(::Type{<:GMTimage}) = Broadcast.ArrayStyle{GMTimage}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTimage}}, ::Type{ElType}) where ElType
-	I = find4similar(bc)		# Scan the inputs for the GMTimage:
+	I = bc.args[1]
+	!(typeof(I) <: GMT.GMTimage) && error("BAD USAGE. You need to use the dot operator. E.g. cos.(I) instead of cos(I)")
 	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.x, I.y, similar(Array{ElType}, axes(bc)), I.x_unit, I.y_unit, I.z_unit, I.colormap, I.n_colors, I.alpha, I.layout)
 end
-find4similar(I::GMTimage, rest) = I
 
 mutable struct GMTcpt
 	colormap::Array{Float64,2}
@@ -100,7 +94,6 @@ mutable struct GMTdataset{T,N} <: AbstractArray{T,N}
 	#GMTdataset() = new(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 end
 
-##
 GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, text, string(), Array{String,1}(), string(), string())
 GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], string(), Array{String,1}(), string(), string())
 GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
@@ -112,11 +105,10 @@ Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int,N}) where {T,N} = D.dat
 
 Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}}, ::Type{ElType}) where ElType
-	D = find4similar(bc)		# Scan the inputs for the GMTimage:
+	D = bc.args[1]
+	!(typeof(I) <: GMT.GMTdataset) && error("BAD USAGE. You need to use the dot operator. E.g. cos.(D) instead of cos(D)")
 	GMTdataset(similar(Array{ElType}, axes(bc)), D.text, D.header, D.comment, D.proj4, D.wkt)
 end
-find4similar(D::GMTdataset, rest) = D
-##
 
 
 """
@@ -1583,9 +1575,9 @@ function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothi
 		reg_ = 0
 	end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
-	z = (isa(mat, Array{Float32,2}) || isa(mat, Array{Float64,2})) ? mat : Float32.(mat)
+	#z = (isa(mat, Array{Float32,2}) || isa(mat, Array{Float64,2})) ? mat : Float32.(mat)
 
-	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, z, "x", "y", "z", "")
+	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, mat, "x", "y", "z", "")
 end
 
 function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")

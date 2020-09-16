@@ -18,21 +18,6 @@ function Base.:+(G1::GMTgrid, shift::Real)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function Base.:sum!(G1::GMTgrid, G2::GMTgrid)
-	(size(G1.z) != size(G2.z)) && error("Grids have different sizes, so they cannot be added.")
-	G1.z .= G1.z .+ G2.z
-	G1.range[5] = minimum(G1.z);	G1.range[6] = maximum(G1.z)
-	return G1
-end
-
-# ---------------------------------------------------------------------------------------------------
-Base.:sum!(shift::Real, G1::GMTgrid) = Base.:sum!(G1::GMTgrid, shift::Real)
-function Base.:sum!(G1::GMTgrid, shift::Real)
-	G1.z .+= shift;		G1.range[5:6] .+= shift
-	return G1
-end
-
-# ---------------------------------------------------------------------------------------------------
 function Base.:-(G1::GMTgrid, G2::GMTgrid)
 # Subtract two grids, element by element. Inherit header parameters from G1 grid
 	(size(G1.z) != size(G2.z)) && error("Grids have different sizes, so they cannot be subtracted.")

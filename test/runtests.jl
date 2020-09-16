@@ -1108,23 +1108,18 @@ if (got_it)					# Otherwise go straight to end
 	getindex(G1,1);
 	setindex!(G1, [-1 -1],1:2)
 	size(G1)
-	GMT.find4similar(G1,0)
-	GMT.find4similar(1)
-	GMT.find4similar(())
-	GMT.find4similar((0,1))
-	GMT.find4similar([],0)
 	I = mat2img(rand(UInt8,4,4,3))
-	GMT.find4similar(I,0)
 	size(I)
 	getindex(I,1);
 	setindex!(I, [101 1],1:2,)
 	I .+ 0
 
+	GMT.GMTdataset();
 	D = mat2ds(rand(6,6), color=[:red :blue]);
 	size(D[1])
 	getindex(D[1], 1)
 	setindex!(D[1], 1, 1)
-	GMT.find4similar(D,0)
+	D .+ 10
 
 	plot(mat2ds(GMT.fakedata(6,6), x=:ny, color=:cycle, multi=true), legend=true, Vd=dbg2)
 	display(D);
