@@ -192,8 +192,9 @@ if (got_it)					# Otherwise go straight to end
 
 	img16 = rand(UInt16, 16, 16, 3);
 	I = GMT.mat2img(img16);
-#	I.image = img16;
-#	GMT.mat2img(I);
+	img16 = rand(UInt16, 4, 4, 3);
+	I = GMT.GMTimage("", "", 0, [1.,4,1,4,0,255], [1., 1], 1, NaN, "", collect(1.:4),collect(1.:4),img16, vec(zeros(Clong,1,3)), 0, Array{UInt8,2}(undef,1,1), "TCBa")
+	GMT.mat2img(I);
 	GMT.mat2img(img16, histo_bounds=8440);
 	GMT.mat2img(img16, histo_bounds=[8440 13540]);
 	GMT.mat2img(img16, histo_bounds=[8440 13540 800 20000 1000 30000]);
@@ -1108,6 +1109,11 @@ if (got_it)					# Otherwise go straight to end
 	getindex(G1,1);
 	setindex!(G1, [-1 -1],1:2)
 	size(G1)
+
+	Base.BroadcastStyle(typeof(G1))
+	Base.getindex(G1,1)
+	Base.similar(G1)
+
 	GMT.find4similar(G1,0)
 	GMT.find4similar(1)
 	GMT.find4similar(())
