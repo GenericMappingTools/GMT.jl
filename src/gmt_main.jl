@@ -1487,7 +1487,6 @@ function mat2img(img::GMTimage; kw...)
 	I.proj4 = img.proj4;	I.wkt = img.wkt;	I.epsg = img.epsg
 	I.range = img.range;	I.inc = img.inc;	I.registration = img.registration
 	I.nodata = img.nodata;	I.color_interp = img.color_interp;
-	I.x_unit = img.x_unit;	I.y_unit = img.y_unit;	I.z_unit = img.z_unit;
 	I.x = img.x;	I.y = img.y;	I.colormap = img.colormap;
 	I.n_colors = img.n_colors;		I.alpha = img.alpha;	I.layout = img.layout;
 	return I

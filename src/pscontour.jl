@@ -97,8 +97,11 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd  = parse_contour_AGTW(d::Dict, cmd::String)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
+	arg2 = nothing;		arg3 = nothing
 	cmd, arg1, opt_R, info = read_data(d, cmd0, cmd, arg1, opt_R, false, true)
-	cmd, N_used_, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing), arg1, nothing, nothing, "pscontour")
+	if (occursin(" -I", cmd))			# Only try to load cpt if -I was set
+		cmd, N_used_, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing), arg1, arg2, arg3, "pscontour")
+	end
 	N_used = (arg1 !== nothing) + (arg2 !== nothing) + (arg3 !== nothing)
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
@@ -120,7 +123,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	if ((val = find_in_dict(d, [:E :index])[1]) !== nothing)
 		cmd *= " -E"
-		if (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{<:GMTdataset}))   # Now need to find the free slot where to store the indices array
+		if (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{GMTdataset}))   # Now need to find the free slot where to store the indices array
 			(N_used == 0) ? arg1 = val : (N_used == 1 ? arg2 = val : arg3 = val)
 		else
 			cmd *= arg2str(val)
@@ -139,12 +142,12 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	if (occursin(" -I", cmd) && (!isa(arg1, GMTcpt) && !isa(arg2, GMTcpt) && !isa(arg3, GMTcpt)))
-		# If arg to a -C ends with .cpt, accept it
-		if ((ind = findfirst("-C", cmd)) !== nothing && !endswith(split(cmd[ind[2]+1:end])[1], ".cpt"))
-			error("fill option rquires passing a CPT")
-		end
-	end
+#	if (occursin(" -I", cmd) && (!isa(arg1, GMTcpt) && !isa(arg2, GMTcpt) && !isa(arg3, GMTcpt)))
+#		# If arg to a -C ends with .cpt, accept it
+#		if ((ind = findfirst("-C", cmd)) !== nothing && !endswith(split(cmd[ind[2]+1:end])[1], ".cpt"))
+#			error("fill option rquires passing a CPT")
+#		end
+#	end
 
 	cmd, K = finish_PS_nested(d, gmt_proggy * cmd, "", K, O, [:coast :colorbar])
 	return finish_PS_module(d, cmd, "-D", K, O, true, arg1, arg2, arg3)
