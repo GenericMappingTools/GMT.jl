@@ -1120,7 +1120,7 @@ if (got_it)					# Otherwise go straight to end
 	setindex!(I, [101 1],1:2,)
 	I .+ 0
 
-	D = mat2ds(GMT.fakedata(4,4)
+	D = mat2ds(GMT.fakedata(4,4))
 	show(D);
 	plot(D, x=:ny, color=:cycle, multi=true), legend=true, Vd=dbg2)
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
