@@ -34,7 +34,7 @@ find4similar(::Tuple{}) = nothing
 find4similar(G::GMTgrid, rest) = G
 find4similar(::Any, rest) = find4similar(rest)
 
-mutable struct GMTimage{T,N} <: AbstractArray{T,N}
+mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	proj4::String
 	wkt::String
 	epsg::Int
@@ -513,10 +513,8 @@ function get_image(API::Ptr{Nothing}, object)
 	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny))
 
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
-	is4bytes = false
 	if (occursin("0", img_mem_layout[1]) || occursin("1", img_mem_layout[1]))	# WTF is 0 or 1?
 		t  = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
-		is4bytes = true
 	else
 		if (img_mem_layout[1] != "")  layout = img_mem_layout[1][1:3] * layout[4]  end	# 4rth id data determined
 		if (layout != "" && layout[1] == 'I')		# The special layout for using this image in Images.jl
@@ -723,15 +721,13 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)
 	else
 		error(@sprintf("GMTJL_Set_Object: Bad data type (%d)\n", X.family))
 	end
-	if (X.object == NULL)	error("GMT: Failure to register the resource")	end
+	(X.object == NULL) && error("GMT: Failure to register the resource")
 
 	name = String([X.name...])
-	if (GMT_Open_VirtualFile(API, X.family, X.geometry, X.direction, X.object, name) != 0) # Make filename with embedded object ID */
-		error("GMT: Failure to open virtual file")
-	end
-	if (GMT_Expand_Option(API, X.option, name) != 0)	# Replace ? in argument with name
-		error("GMT: Failure to expand filename marker (?)")
-	end
+	# Make filename with embedded object ID
+	(GMT_Open_VirtualFile(API, X.family, X.geometry, X.direction, X.object, name) != 0) && error("GMT: Failure to open virtual file") 
+	# Replace ? in argument with name
+	(GMT_Expand_Option(API, X.option, name) != 0) && error("GMT: Failure to expand filename marker (?)") 
 	X.name = map(UInt8, (name...,))
 
 	return X
@@ -741,9 +737,8 @@ end
 function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 	name = String([X.name...])
 	# In line-by-line modules it is possible no output is produced, hence we make an exception for DATASET
-	if ((X.object = GMT_Read_VirtualFile(API, name)) == NULL && X.family != GMT_IS_DATASET)
+	((X.object = GMT_Read_VirtualFile(API, name)) == NULL && X.family != GMT_IS_DATASET) &&
 		error(@sprintf("GMT: Error reading virtual file %s from GMT", name))
-	end
 	if (X.family == GMT_IS_GRID)         	# A GMT grid; make it the pos'th output item
 		ptr = get_grid(API, X.object)
 	elseif (X.family == GMT_IS_DATASET)		# A GMT table; make it a matrix and the pos'th output item
@@ -1304,7 +1299,7 @@ text_record(text::Array{String}, hdr::String) = text_record(Array{Float64,2}(und
 
 # ---------------------------------------------------------------------------------------------------
 """
-D = mat2ds(mat; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing, multi=false)
+D = mat2ds(mat, [txt]; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing, multi=false)
 
 	Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 	same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
@@ -1313,7 +1308,7 @@ D = mat2ds(mat; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing,
 	cycled.
 	`ls`    Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
 	`txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
-	        can an array with same size as ``mat``rows or be a string (will be reapeated n_rows times.) 
+	        can be an array with same size as ``mat``rows or a string (will be reapeated n_rows times.) 
 	`multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
 	first column and 2, first and 3, etc. Convinient when want to plot a matrix where each column is a line. 
 """
@@ -1545,11 +1540,46 @@ G = mat2grid(mat; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::String=
 	Optionaly, the HDR arg may be ommited and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
 	When HDR is not used, REG == nothing [default] means create a gridline registration grid and REG == 1,
 	or REG="pixel" a pixel registered grid.
+
+	Other methods of this function do:
+
+G = mat2grid([val]; hdr=hdr_vec, reg=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="")
+
+	Create Float GMTgrid with size, coordinates and increment determined by the contents of the HDR var. This
+	array, which is now MANDATORY, has either the same meaning as above OR, alternatively, containng only
+	[xmin xmax ymin ymax xinc yinc]
+	VAL is the value that will be fill the matrix (default VAL = Float32(0)). To get a Float64 array use, for
+	example, VAL = 1.0 Ay other non Float64 will be converted to Float32
+	Example: mat2grid(1, hdr=[0. 5 0 5 1 1])
+
+G = mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+
+	Whre F is a function and X,Y the vectors coordinates defining it's domain. Creates a Float32 GMTgrid with
+	size determined by the sizes of the X & Y vectors.
+	Example: f(x,y) = x^2 + y^2;  G = mat2grid(f, x = -2:0.05:2, y = -2:0.05:2)
+
+G = mat2grid(f::String, x=nothing, y=nothing)
+	Whre F is a pre-set function name. Currently available:
+		"ackley", "eggbox", "sombrero", "parabola" and "rosenbrock" 
+	X,Y are vectors coordinates defining the function's domain, but default values are provided for each function.
+	creates a Float32 GMTgrid.
+	Example: G = mat2grid("sombrero")
+		
 """
+function mat2grid(val::Number=Float32(0); reg=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+	(hdr === nothing) && error("When creating grid type with no data the 'hdr' arg cannot be missing")
+	(!isa(hdr, Array{Float64})) && (hdr = Float64.(hdr))
+	(!isa(val, AbstractFloat)) && (val = Float32(val))		# We only want floats here
+	if (length(hdr) == 6)
+		hdr = [hdr[1], hdr[2], hdr[3], hdr[4], val, val, reg === nothing ? 0. : 1., hdr[5], hdr[6]]
+	end
+	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
+end
+
 function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
 # Take a 2D array of floats and turn it into a GMTgrid
 
-	if (!isa(mat[1], Real))  error("input matrix must be of Real numbers")  end
+	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
 	if (reg === nothing)  reg_ = 0
 	elseif (isa(reg, String) || isa(reg, Symbol))
 		t = lowercase(string(reg))
@@ -1561,17 +1591,26 @@ function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothi
 	end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
 
+	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
+	# and the MAT must be finally computed.
+	nx = size(mat, 2);		ny = size(mat, 1);
+	if (ny == 1 && nx == 2 && mat[1] === nothing)
+		fill_val = mat[2]
+		mat = zeros(eltype(fill_val), length(y), length(x))
+		(fill_val != 0) && fill!(mat, fill_val)
+	end
+
 	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, mat, "x", "y", "z", "")
 end
 
-function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
+function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
 	z = Array{Float32,2}(undef,length(y),length(x))
 	for i = 1:length(x)
 		for j = 1:length(y)
 			z[j,i] = f(x[j],y[i])
 		end
 	end
-	mat2grid(z; reg=reg, x=x, y=y, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem, cmd=cmd)
+	mat2grid(z; reg=reg, x=x, y=y, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
 end
 
 function mat2grid(f::String, x=nothing, y=nothing)
@@ -1633,14 +1672,19 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 		end
 		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
 		x_inc = 1.0;	y_inc = 1.0
-	elseif (length(hdr) != 9)
-		error("The HDR array must have 9 elements")
 	else
+		(length(hdr) != 9) && error("The HDR array must have 9 elements")
+		(!isa(hdr, Array{Float64})) && (hdr = Float64.(hdr))
+		one_or_zero = (hdr[7] == 0) ? 1 : 0
+		if (ny == 1 && nx == 2 && mat[1] === nothing)
+			# In this case the 'mat' is a tricked matrix with [nothing val]. Compute nx,ny from header
+			# The final matrix will be computed in the main mat2grid method
+			nx = Int(round((hdr[2] - hdr[1]) / hdr[8] + one_or_zero))
+			ny = Int(round((hdr[4] - hdr[3]) / hdr[9] + one_or_zero))
+		end
 		x = collect(range(hdr[1], stop=hdr[2], length=nx))
 		y = collect(range(hdr[3], stop=hdr[4], length=ny))
 		# Recompute the x|y_inc to make sure they are right.
-		reg = hdr[7]
-		one_or_zero = reg == 0 ? 1 : 0
 		x_inc = (hdr[2] - hdr[1]) / (nx - one_or_zero)
 		y_inc = (hdr[4] - hdr[3]) / (ny - one_or_zero)
 	end
