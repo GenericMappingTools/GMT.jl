@@ -382,6 +382,7 @@ if (got_it)					# Otherwise go straight to end
 	gmtwrite("lixo.grd", rand(5,5), id=:cf, layout=:TC)
 	gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
 	I = gmtread("lixo.tif", img=true, layout="TCP");
+	I = gmtread("lixo.tif", img=true, layout="ICP");
 	I = gmtread("lixo.tif", img=true, band=0);
 	I = gmtread("lixo.tif", img=true, band=[0 1 2]);
 	show(I);
@@ -1106,14 +1107,14 @@ if (got_it)					# Otherwise go straight to end
 	G2 = GMT.mat2grid(rand(Int32,4,4));
 	G2 = GMT.mat2grid(rand(4,4));
 	G1 .* G2;
-	getindex(G1,1);
+	getindex(G1,1:2);
 	setindex!(G1, [-1 -1],1:2)
 	size(G1)
 
 	Base.BroadcastStyle(typeof(G1))
 	Base.getindex(G1,1)
-	Base.similar(G1)
 
+	GMT.find4similar(G1)
 	GMT.find4similar(G1,0)
 	GMT.find4similar(1)
 	GMT.find4similar(())
@@ -1122,14 +1123,15 @@ if (got_it)					# Otherwise go straight to end
 	I = mat2img(rand(UInt8,4,4,3))
 	GMT.find4similar(I,0)
 	size(I)
+	Base.BroadcastStyle(typeof(I))
 	getindex(I,1);
-	setindex!(I, [101 1],1:2,)
-	I .+ 0
+	setindex!(I, [101 1],1:2)
+	I .+ UInt8(0)
 
 	GMT.GMTdataset();
 	GMT.GMTdataset(rand(2,2), "lixo");
 	D = mat2ds(GMT.fakedata(4,4), x=:ny, color=:cycle, multi=true)
-	show(D);
+	D[1].text = ["lixo", "l", "p", "q"];
 	display(D);
 	plot(D, legend=true, Vd=dbg2)
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
@@ -1137,6 +1139,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
 
 	GMT.mat2grid(rand(Float32, 10,10), reg=1);
+	GMT.mat2grid(1, hdr=[0. 5 0 5 1 1])
 	GMT.num2str(rand(2,3));
 	text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"]);
 	text_record(["aa", "bb"], "> 3 5 18p 5i j");
