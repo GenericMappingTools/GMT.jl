@@ -114,7 +114,7 @@ end
 
 # -------------------------------------------------------------------------------------------
 function parse_opt_range(cmd::String, d::Dict, opt::String="")::String
-	if ((val = find_in_dict(d, [:T :range :inc])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:T :range :inc :bin])[1]) !== nothing)
 		if (isa(val, Tuple))
 			n = length(val)
 			out = arg2str(val[1:min(n,3)])
