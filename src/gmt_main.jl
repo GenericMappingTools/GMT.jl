@@ -291,13 +291,11 @@ function gmt(cmd::String, args...)
 	for k = 1:n_items
 		ppp = X[k].object
 		name = String([X[k].name...])				# Because X.name is a NTuple
-		if (GMT_Close_VirtualFile(API, name) != 0)  error("GMT: Failed to close virtual file")  end
-		if (GMT_Destroy_Data(API, Ref([X[k].object], 1)) != 0)
-			error("Failed to destroy object used in the interface bewteen GMT and Julia")
-		else 		# Success, now make sure we dont destroy the same pointer more than once
-			for kk = k+1:n_items
-				if (X[kk].object == ppp) 	X[kk].object = NULL;	end
-			end
+		(GMT_Close_VirtualFile(API, name) != 0) && error("GMT: Failed to close virtual file")
+		(GMT_Destroy_Data(API, Ref([X[k].object], 1)) != 0) && error("Failed to destroy GMT<->Julia interface object")
+		# Success, now make sure we dont destroy the same pointer more than once
+		for kk = k+1:n_items
+			if (X[kk].object == ppp) 	X[kk].object = NULL;	end
 		end
 	end
 
@@ -1004,8 +1002,7 @@ function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, 
 		elseif (eltype(ptr) == Int8)		Mb._type = UInt32(GMT.GMT_CHAR)
 		elseif (ptr === nothing)		# Do nothing here (-G of project comes here) but looks dangerous
 		else
-			println("Type \"", typeof(ptr), "\" not allowed")
-			error("only integer or floating point types allowed in input. Others need to be added")
+			error("only integer or floating point types allowed in input. Not this: $(typeof(ptr))")
 		end
 		Mb.data = pointer(ptr)
 		Mb.dim  = Mb.n_rows		# Data from Julia is in column major
@@ -1389,9 +1386,10 @@ G = mat2img(mat; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::Strin
 	and return a grid GMTimage type.
 	Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
 	Optionaly, the HDR arg may be ommited and it will computed from 'mat' alone, but then x=1:ncol, y=1:nrow
-	When 'mat' is a 3D UInt16 array we compute a UInt8 RGB image. In that case 'cmap' is ignored. 
+	When 'mat' is a 3D UInt16 array we automatically compute a UInt8 RGB image. In that case 'cmap' is ignored.
+	But if no conversion is wanted use option 'noconv=true'
 """
-function mat2img(mat::Array{UInt8}; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+function mat2img(mat::Array{<:Unsigned}, dumb=0; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	color_interp = "";		n_colors = 0;
 	if (cmap !== nothing)
@@ -1435,6 +1433,9 @@ function mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::S
 	# histo_bounds = [v1 v2] scales all values >= v1 && <= v2 to [0 255]
 	# histo_bounds = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
 	d = KW(kw)
+	if ((val = find_in_dict(d, [:noconv])[1]) !== nothing)		# No conversion to UInt8 is wished
+		return mat2img(mat, 1; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, d...)
+	end
 	img = Array{UInt8}(undef,size(mat));
 	if ((vals = find_in_dict(d, [:histo_bounds], false)[1]) !== nothing)
 		len = length(vals)
