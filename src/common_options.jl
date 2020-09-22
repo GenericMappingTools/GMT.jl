@@ -2725,13 +2725,20 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
-			if (k > 1 && startswith(cmd[k], "psscale") && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
+			is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
+			#is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
+			if (k > 1 && is_psscale && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
 				cmd2, arg1, = add_opt_cpt(d, cmd[k], [:C :color :cmap], 'C', 0, nothing, nothing, false, false, "", true)
 				if (arg1 === nothing)
 					@warn("No cmap found to use in colorbar. Ignoring this command.");	continue
 				end
 				P = gmt(cmd[k], arg1)
 				continue
+			#elseif (k > 1 && is_pscoast && (isa(args[1], GMTimage) || isa(args[1], GMTgrid)))
+				#proj4 = args[1].proj4
+				#if ((proj4 != "") && !startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
+					#cmd[k] = replace(cmd[k], " -J" => " -J" * "\"" * proj4 * "\"")
+				#end
 			end
 			P = gmt(cmd[k], args...)
 		end
