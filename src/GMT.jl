@@ -167,7 +167,9 @@ function __init__()
 	end
 end
 
-include("get_enums.jl")
+if (GMTver >= 6)		# Needed to cheat the autoregister autobot
+	include("get_enums.jl")
+end
 
 include("precompile_GMT_i.jl")
 _precompile_()
