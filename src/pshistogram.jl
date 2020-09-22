@@ -94,17 +94,22 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d = KW(kwargs)
 
+	cmd = add_opt("", 'Z', d, [:Z :kind],
+				  (counts="0", freq="1", log_count="2", log_freq="3", log10_count="4", log10_freq="5", weights="+w"))
+	opt_Z = cmd
+	opt_T = parse_opt_range(cmd, d, "")		# [:T :range :inc :bin]
+
 	# If inquire, no plotting so do it and return
-	# The sitution is a bit confusing because -W changed meaning. Old -W is now -T and -W became pen
-	cmd = add_opt("", "I", d, [:I :inquire :bins], (all="O", no_zero="o"))
-	if (cmd != "")
-		#cmd = add_opt(cmd, 'W', d, [:W :bin :width])
-		cmd = parse_opt_range(cmd, d, "T")
+	opt_I = add_opt(cmd, "I", d, [:I :inquire :bins], (all="O", no_zero="o"))
+	if (opt_I != "")
+		cmd *= opt_I
 		if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end
 		cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
 		if (isa(arg1, GMTimage))		# If it's an image with no bin option, default to bin=1
-			(!occursin(" -T", cmd)) && (cmd *= " -T1")
-			arg1 = arg1.image[:]
+			arg1, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
+		else
+			cmd *= opt_Z
+			(opt_T != "") && (cmd *= " -T" * opt_T)
 		end
 		return gmt(gmt_proggy * cmd, arg1)
 	end
@@ -115,19 +120,18 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :horizontal], [:D :annot :annotate], [:F :center], [:Q :cumulative], [:S :stairs]])
 	cmd  = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd  = add_opt(cmd, 'Z', d, [:Z :kind],
-		   (counts="0", freq="1", log_count="2", log_freq="3", log10_count="4", log10_freq="5", weights="+w"))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	(opt_R == "") && (opt_R = " ")			# So it doesn't try to find the -R in next call
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
-	cmd = parse_opt_range(cmd, d, "T")		# [:T :range :inc :bin]
 	cmd   = add_opt(cmd, 'L', d, [:L :out_range])
-	cmd  *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
-	if (!occursin("-G", cmd) && !occursin("-C", cmd))
-		cmd *= " -W0.3p -G150"		# If no -G or -C set these defaults
+	cmd  *= add_opt_pen(d, [:W :pen], "W", true)     	# TRUE to also seek (lw|lt,lc,ls)
+	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-S", cmd))
+		cmd *= " -W0.3p -G150"
+	elseif (occursin("-S", cmd) && !occursin("-W", cmd))
+		cmd *= " -W0.3p"
 	end
 
 	if ((val = find_in_dict(d, [:N :normal])[1]) !== nothing)
@@ -136,12 +140,99 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
+	limit_L = nothing
 	if (isa(arg1, GMTimage))		# If it's an image with no bin option, default to bin=1
-		(!occursin(" -T", cmd)) && (cmd *= " -T1")
-		arg1 = arg1.image[:]
+		do_clip = (isa(arg1[1], UInt16) && (val = find_in_dict(d, [:full_histo])[1]) === nothing) ? true : false
+		do_auto = (isa(arg1[1], UInt16) && (val_auto = find_in_dict(d, [:auto])[1]) !== nothing) ? true : false
+		hst, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
+		do_clip && (all(hst[3:10,2] .== 0)) && (hst[1,2] = 0; hst[2,2] = 0)
+		if (do_auto)
+			limit_L, limit_R = find_histo_limits(arg1, val_auto, 200)
+		end
+		arg1 = hst		# We want to send the histogram, not the GMTimage
+	else
+		(opt_T != "") && (opt_T = " -T" * opt_T)		# It lacked the -T so that it could be used in loc_histo()
+		cmd *= opt_T * opt_Z
 	end
 
-	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
+	# The following looks a bit messy but results from the wish of auto plotting verical lines with the limits
+	show_ = false;		fmt_ = "ps";		savefig_ = nothing
+	if (limit_L !== nothing)
+		(haskey(d, :show)) && (show_ = (d[:show] != 0))		# Backup the :show val
+		d[:show] = false
+		(haskey(d, :fmt)) && (fmt_ = d[:fmt]; delete!(d, :fmt))		# Backup the :show val
+		((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) && (savefig_ = val)
+	end
+
+	out2 = nothing;		Vd_ = 0		# Backup values
+	(haskey(d, :Vd)) && (Vd_ = d[:Vd])
+	out1 = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
+	if (limit_L !== nothing)
+		if (opt_R == " ")
+			mm = extrema(hst, dims=1)
+			opt_R = " -R$(mm[1][1])/$(mm[1][2])/0/$(mm[2][2])"
+		end
+		vlines!([limit_L], pen="0.5p,blue,dashed", decorated=(quoted=true, n_labels=1, const_label="$limit_L", font=9, pen=(0.5,:red)), R=opt_R[4:end], Vd=Vd_)
+		out2 = vlines!([limit_R], pen="0.5p,blue,dashed", decorated=(quoted=true, n_labels=1, const_label="$limit_R", font=9, pen=(0.5,:red)), R=opt_R[4:end], fmt=fmt_, savefig=savefig_, show=show_, Vd=Vd_)
+	end
+	out = (out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
+
+end
+
+function find_histo_limits(in, thresholds=nothing, width=250)
+	# Find the histogram limits of a UInt16 GMTimage that allow to better stretch the histogram
+	# THRESHOLDS is an optional Tuple input containing the left and right thresholds, in percentage,
+	# between which the histogram values will be retained. Defaults are (0,0.5)
+	# WIDTH is bin width used to obtain a rough histogram that is used to compute the limits.
+	hst = loc_histo(in, "", string(width), "")[1]
+	if (size(hst,1) >= 5)
+		all(hst[2:5,2] .== 0) && (hst[1,2] = 0)	# Here we always check for high counts in zero bin
+	end
+	max_ = maximum(hst, dims=1)[2]
+	(max_ == 0) && error("This histogram had nothing but countings ONLY in first bin. No point to proceed.")
+	thresh_l = 0.0;		thresh_r = 0.005
+	if (isa(thresholds, Tuple) && length(thresholds) == 2)
+		thresh_l, thresh_r = thresholds[:] ./ 100
+	end
+	thresh_l *= max_
+	thresh_r *= max_
+	kl = 1;		kr = size(hst,1)
+	while (hst[kl,2] == 0 || hst[kl,2] < thresh_l)  kl += 1  end
+	while (hst[kr,2] == 0 || hst[kr,2] < thresh_r)  kr -= 1  end
+	return Int(hst[kl,1]), Int(hst[kr,1] + width)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function loc_histo(in, cmd, opt_T, opt_Z)
+	# Very simple function to compute histograms of images (integers) with bin = 1
+	# We put the countings in a Mx2 arrray to trick GMT (pshistogram) to think it's recieving a weighted input.
+	if (isa(in, GMTimage))
+		(!isa(in[1], UInt16) && !isa(in[1], UInt8)) && error("Only UInt8 or UInt16 image types allowed here")
+
+		inc = (opt_T != "") ? Float64(Meta.parse(opt_T)) : 1.0
+		(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
+
+		n_bins = (isa(in[1], UInt8)) ? 256 : Int(ceil((maximum(in) + 1) / inc))	# For UInt8 use the full [0 255] range
+		hst = zeros(n_bins,2)
+		pshst_wall!(in, hst, inc, n_bins)
+
+		cmd = (opt_Z == "") ? cmd * " -Z0" : cmd * opt_Z
+		(!occursin("+w", cmd)) && (cmd *= "+w")		# Pretending to be weighted is crutial for the trick
+
+		return hst, cmd * " -T0/$(n_bins * inc)/$inc"
+	end
+end
+
+function pshst_wall!(in, hst, inc, n_bins)
+	# Function barrier for type instability. With the body of this in calling fun the 'inc' var
+	# introduces a mysterious type instability and execution times multiply by 3.
+	if (inc == 1)
+		@inbounds for k = 1:length(in)  hst[in[k]+1, 2] += 1  end
+	else
+		@inbounds for k = 1:length(in)  hst[Int(floor(in[k]/inc)+1), 2] += 1  end
+	end
+	[@inbounds hst[k,1] = inc*(k-1) for k = 1:n_bins]
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------

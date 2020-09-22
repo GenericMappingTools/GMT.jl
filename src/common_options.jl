@@ -1168,7 +1168,7 @@ function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
 		end
 		return cmd
 	end
-	if (!O && ((val = find_in_dict(d, [:P :portrait])[1]) === nothing))  cmd *= " -P"  end
+	(!O && ((val = find_in_dict(d, [:P :portrait])[1]) === nothing)) && (cmd *= " -P")
 
 	if (K && !O)              opt = " -K"
 	elseif (K && O)           opt = " -K -O"
@@ -2709,9 +2709,9 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
 	output, opt_T, fname_ext, fname, ret_ps = fname_out(d, true)
-	if (ret_ps)  output = ""  end						# Here we don't want to save to file
+	(ret_ps) && (output = "")  							# Here we don't want to save to file
 	cmd, opt_T = prepare2geotif(d, cmd, opt_T, O)		# Settings for the GeoTIFF and KML cases
-	if (finish) cmd = finish_PS(d, cmd, output, K, O)  end
+	(finish) && (cmd = finish_PS(d, cmd, output, K, O))
 
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
 	img_mem_layout[1] = add_opt("", "", d, [:layout])
@@ -2725,7 +2725,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
-			if (k > 1 && startswith(cmd[k], "psscale") && !isa(args[1], GMTcpt))	# Example: imshow(I, cmap=C, colorbar=true)
+			if (k > 1 && startswith(cmd[k], "psscale") && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
 				cmd2, arg1, = add_opt_cpt(d, cmd[k], [:C :color :cmap], 'C', 0, nothing, nothing, false, false, "", true)
 				if (arg1 === nothing)
 					@warn("No cmap found to use in colorbar. Ignoring this command.");	continue
@@ -2783,8 +2783,8 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 		(isa(cmd, String)) ? cmd_ = deepcopy([cmd]) : cmd_ = deepcopy(cmd)
 		lix, penC, penS = break_pen(scan_opt(arg[1].header, "-W"))
 		penT, penC_, penS_ = break_pen(scan_opt(cmd_[end], "-W"))
-		if (penC == "")  penC = penC_  end
-		if (penS == "")  penS = penS_  end
+		(penC == "") && (penC = penC_)
+		(penS == "") && (penS = penS_)
 		cmd_[end] = "-W" * penT * ',' * penC * ',' * penS * " " * cmd_[end]	# Trick to make the parser find this pen
 		pens = Array{String,1}(undef,length(arg)-1)
 		for k = 1:length(arg)-1
