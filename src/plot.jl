@@ -582,9 +582,10 @@ Example:
     plot(rand(5,3))
     hlines!([0.2, 0.6], pen=(1, :red), show=true)
 """
-function hlines(arg1; first=true, kwargs...)
+function hlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
+	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
 	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
 		cmd = (isa(val, String)) ? val : decorated(val)
 	else
@@ -592,19 +593,21 @@ function hlines(arg1; first=true, kwargs...)
 	end
 	mat = ones(2, length(arg1))
 	[mat[1,k] = mat[2,k] = arg1[k] for k = 1:length(arg1)]
-	x = [-1e50, 1e50];
+	if ((opt_R = parse_R("", d)[2]) != "")  x = vec(opt_R2num(opt_R)[1:2])
+	else                                    x = [-1e50, 1e50];
+	end
 	D = mat2ds(mat, x=x, multi=true)
 
 	common_plot_xyz("", D, cmd, first, false, d...)
 end
-hlines!(arg; kw...) = hlines(arg; first=false, kw...)
+hlines!(arg=nothing; kw...) = hlines(arg; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------
 """
     vlines(arg; decorated=(...), kwargs...)
 
-Plots one or a collection of horizontal lines with eventual decorations
+Plots one or a collection of vertical lines with eventual decorations
 
 - $(GMT.opt_B)
 - $(GMT.opt_J)
@@ -619,9 +622,10 @@ Example:
     plot(rand(5,3), region=[0,1,0,1])
     vlines!([0.2, 0.6], pen=(1, :red), show=true)
 """
-function vlines(arg1; first=true, kwargs...)
+function vlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
+	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
 	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
 		cmd = (isa(val, String)) ? val : decorated(val)
 	else
@@ -629,7 +633,9 @@ function vlines(arg1; first=true, kwargs...)
 	end
 	mat = ones(2, length(arg1))
 	mat[1,:] = mat[2,:] = arg1
-	x = [-1e50, 1e50];
+	if ((opt_R = parse_R("", d)[2]) != "")  x = vec(opt_R2num(opt_R)[3:4])
+	else                                    x = [-1e50, 1e50];
+	end
 	D = mat2ds(mat, x=x, multi=true)
 	# Now we need tp swapp x / y columns because the vlines case is more complicated to implement.
 	for k = 1:length(arg1)
@@ -638,7 +644,7 @@ function vlines(arg1; first=true, kwargs...)
 
 	common_plot_xyz("", D, cmd, first, false, d...)
 end
-vlines!(arg; kw...) = vlines(arg; first=false, kw...)
+vlines!(arg=nothing; kw...) = vlines(arg; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------
