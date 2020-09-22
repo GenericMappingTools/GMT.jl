@@ -1380,14 +1380,24 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-G = mat2img(mat; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+I = mat2img(mat::Array{<:Unsigned}; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 
     Take a 2D 'mat' array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
-	and return a grid GMTimage type.
+	and return a GMTimage type.
 	Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
 	Optionaly, the HDR arg may be ommited and it will computed from 'mat' alone, but then x=1:ncol, y=1:nrow
 	When 'mat' is a 3D UInt16 array we automatically compute a UInt8 RGB image. In that case 'cmap' is ignored.
 	But if no conversion is wanted use option 'noconv=true'
+
+I = mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", kw...)
+
+	Take a 'mat' array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
+	If the kw variable 'stretch' is used, we stretch the intervals in 'stretch' to [0 255].
+	Use this option to stretch the image histogram.
+	If 'stretch' is a scalar, scale the values > 'stretch' to [0 255]
+	stretch = [v1 v2] scales all values >= v1 && <= v2 to [0 255]
+	stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
+	stretch = :auto | "auto" | true | 1 will do an automatic stretching from values obtained from histogram thresholds
 """
 function mat2img(mat::Array{<:Unsigned}, dumb=0; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
@@ -1427,23 +1437,27 @@ end
 # ---------------------------------------------------------------------------------------------------
 function mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", kw...)
 	# Take an array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
-	# If the kw variable histo_bounds is used we stretch the intervals in histo_bounds to [0 255].
+	# If the kw variable 'stretch' is used, we stretch the intervals in 'stretch' to [0 255].
 	# Use this option to stretch the image histogram.
-	# If histo_bounds is a scalar, scale the values > histo_bounds to [0 255]
-	# histo_bounds = [v1 v2] scales all values >= v1 && <= v2 to [0 255]
-	# histo_bounds = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
+	# If 'stretch' is a scalar, scale the values > 'stretch' to [0 255]
+	# stretch = [v1 v2] scales all values >= v1 && <= v2 to [0 255]
+	# stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
 	d = KW(kw)
 	if ((val = find_in_dict(d, [:noconv])[1]) !== nothing)		# No conversion to UInt8 is wished
 		return mat2img(mat, 1; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, d...)
 	end
 	img = Array{UInt8}(undef,size(mat));
-	if ((vals = find_in_dict(d, [:histo_bounds], false)[1]) !== nothing)
-		len = length(vals)
+	if ((vals = find_in_dict(d, [:histo_bounds :stretch], false)[1]) !== nothing)
 		nz = 1
 		isa(mat, Array{UInt16,3}) ? (ny, nx, nz) = size(mat) : (ny, nx) = size(mat)
-		if (len > 2*nz)  error("histo_bounds has more elements then allowed by image dimensions")  end
+
+		(vals == "auto" || vals == :auto || (isa(vals, Bool) && vals) || (isa(vals, Number))) &&
+			(vals = [find_histo_limits(mat)...])	# Out is a tuple, convert to vector
+		len = length(vals)
+
+		(len > 2*nz) && error("'stretch' has more elements then allowed by image dimensions")
 		if (len != 1 && len != 2 && len != 6)
-			error(@sprintf("Bad hist_bounds argument. It must be a 1, 2 or 6 elements array and not %d", len))
+			error("Bad 'stretch' argument. It must be a 1, 2 or 6 elements array and not $len")
 		end
 
 		val = (len == 1) ? convert(UInt16, vals)::UInt16 : convert(Array{UInt16}, vals)::Array{UInt16}
