@@ -156,10 +156,12 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	# The following looks a bit messy but results from the wish of auto plotting verical lines with the limits
-	show_ = false;
+	show_ = false;		fmt_ = "ps";		savefig_ = nothing
 	if (limit_L !== nothing)
 		(haskey(d, :show)) && (show_ = (d[:show] != 0))		# Backup the :show val
 		d[:show] = false
+		(haskey(d, :fmt)) && (fmt_ = d[:fmt]; delete!(d, :fmt))		# Backup the :show val
+		((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) && (savefig_ = val)
 	end
 
 	out2 = nothing;		Vd_ = 0		# Backup values
@@ -171,7 +173,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			opt_R = " -R$(mm[1][1])/$(mm[1][2])/0/$(mm[2][2])"
 		end
 		vlines!([limit_L], pen="0.5p,blue,dashed", decorated=(quoted=true, n_labels=1, const_label="$limit_L", font=9, pen=(0.5,:red)), R=opt_R[4:end], Vd=Vd_)
-		out2 = vlines!([limit_R], pen="0.5p,blue,dashed", decorated=(quoted=true, n_labels=1, const_label="$limit_R", font=9, pen=(0.5,:red)), R=opt_R[4:end], show=show_, Vd=Vd_)
+		out2 = vlines!([limit_R], pen="0.5p,blue,dashed", decorated=(quoted=true, n_labels=1, const_label="$limit_R", font=9, pen=(0.5,:red)), R=opt_R[4:end], fmt=fmt_, savefig=savefig_, show=show_, Vd=Vd_)
 	end
 	out = (out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
 

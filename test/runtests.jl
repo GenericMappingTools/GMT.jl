@@ -921,7 +921,8 @@ if (got_it)					# Otherwise go straight to end
 	histogram(I, I=:o);
 	#I16 = mat2img(UInt16.([0 1 3 4; 5 6 7 8; 0 1 10 11]),noconv=1);
 	I16 = mat2img(rand(UInt16,8,8),noconv=1);
-	histogram(I, auto=true, show=0);
+	histogram(I16, auto=true);
+	histogram(I16, S=1, Vd=dbg2);
 	histogram(I16, I=:O);
 
 	println("	PSLEGEND")
