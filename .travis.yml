@@ -39,7 +39,7 @@ before_install:
       - wget https://github.com/GenericMappingTools/gshhg-gmt/releases/download/2.3.7/gshhg-gmt-2.3.7.tar.gz
       - tar -xvzf gshhg-gmt-2.3.7.tar.gz
       #- wget http://w3.ualg.pt/~jluis/ftp/dcw-gmt-1.1.4.tar.gz
-      - wget https://github.com/GenericMappingTools/gshhg-gmt/releases/download/1.1.4/dcw-gmt-1.1.4.tar.gz
+      - wget https://github.com/GenericMappingTools/dcw-gmt/releases/download/1.1.4/dcw-gmt-1.1.4.tar.gz
       - tar -xvzf dcw-gmt-1.1.4.tar.gz
       - mkdir build
       - cd build
