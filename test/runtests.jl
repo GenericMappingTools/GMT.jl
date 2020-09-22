@@ -199,13 +199,14 @@ if (got_it)					# Otherwise go straight to end
 	GMT.mat2img(img16, histo_bounds=8440);
 	GMT.mat2img(img16, histo_bounds=[8440 13540]);
 	GMT.mat2img(img16, histo_bounds=[8440 13540 800 20000 1000 30000]);
+	GMT.mat2img(rand(UInt16,32,32,3),stretch=:auto);
 	
 	D = mat2ds([0 0; 1 1],["a", "b"]);	D.header = "a";
 	GMT.make_zvals_vec(D, ["a", "b"], [1,2]);
 	GMT.edit_segment_headers!([D], [1], "0")
 	GMT.edit_segment_headers!(D, [1], "0")
 
-	@test_throws ErrorException("Bad hist_bounds argument. It must be a 1, 2 or 6 elements array and not 3") GMT.mat2img(img16, histo_bounds=[8440 13540 0]);
+	@test_throws ErrorException("Bad 'stretch' argument. It must be a 1, 2 or 6 elements array and not 3") GMT.mat2img(img16, histo_bounds=[8440 13540 0]);
 	@test_throws ErrorException("Memory layout option must have 3 characters and not 1") GMT.parse_mem_layouts("-%1")
 	@test_throws ErrorException("Memory layout option must have at least 2 chars and not 1") GMT.parse_mem_layouts("-&1")
 	@test GMT.parse_mem_layouts("-&BR")[3] == "BR"
@@ -922,6 +923,7 @@ if (got_it)					# Otherwise go straight to end
 	#I16 = mat2img(UInt16.([0 1 3 4; 5 6 7 8; 0 1 10 11]),noconv=1);
 	I16 = mat2img(rand(UInt16,8,8),noconv=1);
 	histogram(I16, auto=true);
+	histogram(I16, zoom=true, Vd=dbg2);
 	histogram(I16, S=1, Vd=dbg2);
 	histogram(I16, I=:O);
 

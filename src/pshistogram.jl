@@ -129,7 +129,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd   = add_opt(cmd, 'L', d, [:L :out_range])
 	cmd  *= add_opt_pen(d, [:W :pen], "W", true)     	# TRUE to also seek (lw|lt,lc,ls)
 	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-S", cmd))
-		cmd *= " -W0.3p -G150"
+		cmd *= " -G150"
 	elseif (occursin("-S", cmd) && !occursin("-W", cmd))
 		cmd *= " -W0.3p"
 	end
@@ -143,11 +143,21 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	limit_L = nothing
 	if (isa(arg1, GMTimage))		# If it's an image with no bin option, default to bin=1
 		do_clip = (isa(arg1[1], UInt16) && (val = find_in_dict(d, [:full_histo])[1]) === nothing) ? true : false
-		do_auto = (isa(arg1[1], UInt16) && (val_auto = find_in_dict(d, [:auto])[1]) !== nothing) ? true : false
+		do_auto = ((val_auto = find_in_dict(d, [:auto])[1]) !== nothing) ? true : false
+		do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false
+		(do_zoom && !do_auto) && (val_auto = nothing)	# I.e. 'zoom' sets also the auto mode
 		hst, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
 		do_clip && (all(hst[3:10,2] .== 0)) && (hst[1,2] = 0; hst[2,2] = 0)
-		if (do_auto)
+		if (do_auto || do_zoom)
 			limit_L, limit_R = find_histo_limits(arg1, val_auto, 200)
+			if (do_zoom)
+				mm = extrema(hst, dims=1)		# 1×2 Array{Tuple{UInt16,UInt16},2}
+				x_max = min(limit_R * 1.15, hst[end,1])		# 15% to the right but not fall the cliff
+				opt_R_ = " -R$(limit_L*0.85)/$x_max/0/$(mm[2][2] * 1.1) "
+				(opt_R != " ") && @warn("'zoom' option overrides the requested region limits and sets its own")
+				cmd = replace(cmd, opt_R => opt_R_, count=1)
+				opt_R = opt_R_					# It will be needed further down in vlines
+			end
 		end
 		arg1 = hst		# We want to send the histogram, not the GMTimage
 	else
@@ -155,7 +165,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		cmd *= opt_T * opt_Z
 	end
 
-	# The following looks a bit messy but results from the wish of auto plotting verical lines with the limits
+	# The following looks a bit messy but it's needed to auto plotting verical lines with the limits
 	show_ = false;		fmt_ = "ps";		savefig_ = nothing
 	if (limit_L !== nothing)
 		(haskey(d, :show)) && (show_ = (d[:show] != 0))		# Backup the :show val
@@ -164,11 +174,15 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) && (savefig_ = val)
 	end
 
-	out2 = nothing;		Vd_ = 0		# Backup values
+	out2 = nothing;		Vd_ = 0				# Backup values
 	(haskey(d, :Vd)) && (Vd_ = d[:Vd])
+	
+	# Plot the histogram
 	out1 = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
+
+	# And if wished, plot the two vertical lines with the limits annotated in them
 	if (limit_L !== nothing)
-		if (opt_R == " ")
+		if (opt_R == " ")					# Set a region for the vlines
 			mm = extrema(hst, dims=1)
 			opt_R = " -R$(mm[1][1])/$(mm[1][2])/0/$(mm[2][2])"
 		end
@@ -179,12 +193,19 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 end
 
-function find_histo_limits(in, thresholds=nothing, width=250)
+# ---------------------------------------------------------------------------------------------------
+function find_histo_limits(In, thresholds=nothing, width=200)
 	# Find the histogram limits of a UInt16 GMTimage that allow to better stretch the histogram
 	# THRESHOLDS is an optional Tuple input containing the left and right thresholds, in percentage,
-	# between which the histogram values will be retained. Defaults are (0,0.5)
+	# between which the histogram values will be retained. Defaults are (0,0.5) percent
 	# WIDTH is bin width used to obtain a rough histogram that is used to compute the limits.
-	hst = loc_histo(in, "", string(width), "")[1]
+	if (isa(In, Array{UInt16,3}) || isa(In, Array{UInt8,3}))
+		L1 = find_histo_limits(view(In,:,:,1), thresholds, width)
+		L2 = find_histo_limits(view(In,:,:,2), thresholds, width)
+		L3 = find_histo_limits(view(In,:,:,3), thresholds, width)
+		return (L1[1], L1[2], L2[1], L2[2], L3[1], L3[2])
+	end
+	hst = loc_histo(In, "", string(width), "")[1]
 	if (size(hst,1) >= 5)
 		all(hst[2:5,2] .== 0) && (hst[1,2] = 0)	# Here we always check for high counts in zero bin
 	end
@@ -199,28 +220,26 @@ function find_histo_limits(in, thresholds=nothing, width=250)
 	kl = 1;		kr = size(hst,1)
 	while (hst[kl,2] == 0 || hst[kl,2] < thresh_l)  kl += 1  end
 	while (hst[kr,2] == 0 || hst[kr,2] < thresh_r)  kr -= 1  end
-	return Int(hst[kl,1]), Int(hst[kr,1] + width)
+	return Int(hst[kl,1]), Int(min(hst[kr,1] + width, hst[end,1]))
 end
 
 # ---------------------------------------------------------------------------------------------------
-function loc_histo(in, cmd, opt_T, opt_Z)
-	# Very simple function to compute histograms of images (integers) with bin = 1
+function loc_histo(in, cmd::String="", opt_T="", opt_Z::String="")
+	# Very simple function to compute histograms of images (integers)
 	# We put the countings in a Mx2 arrray to trick GMT (pshistogram) to think it's recieving a weighted input.
-	if (isa(in, GMTimage))
-		(!isa(in[1], UInt16) && !isa(in[1], UInt8)) && error("Only UInt8 or UInt16 image types allowed here")
+	(!isa(in[1], UInt16) && !isa(in[1], UInt8)) && error("Only UInt8 or UInt16 image types allowed here")
 
-		inc = (opt_T != "") ? Float64(Meta.parse(opt_T)) : 1.0
-		(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
+	inc = (opt_T != "") ? Float64(Meta.parse(opt_T)) : 1.0
+	(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
 
-		n_bins = (isa(in[1], UInt8)) ? 256 : Int(ceil((maximum(in) + 1) / inc))	# For UInt8 use the full [0 255] range
-		hst = zeros(n_bins,2)
-		pshst_wall!(in, hst, inc, n_bins)
+	n_bins = (isa(in[1], UInt8)) ? 256 : Int(ceil((maximum(in) + 1) / inc))	# For UInt8 use the full [0 255] range
+	hst = zeros(n_bins,2)
+	pshst_wall!(in, hst, inc, n_bins)
 
-		cmd = (opt_Z == "") ? cmd * " -Z0" : cmd * opt_Z
-		(!occursin("+w", cmd)) && (cmd *= "+w")		# Pretending to be weighted is crutial for the trick
+	cmd = (opt_Z == "") ? cmd * " -Z0" : cmd * opt_Z
+	(!occursin("+w", cmd)) && (cmd *= "+w")		# Pretending to be weighted is crutial for the trick
 
-		return hst, cmd * " -T0/$(n_bins * inc)/$inc"
-	end
+	return hst, cmd * " -T0/$(n_bins * inc)/$inc"
 end
 
 function pshst_wall!(in, hst, inc, n_bins)

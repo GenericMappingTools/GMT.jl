@@ -124,11 +124,9 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		if ((val = find_in_dict(d, [:markersize :MarkerSize :ms :size])[1]) !== nothing)
 			if (marca == "")  marca = "c"  end		# If a marker name was not selected, defaults to circle
 			if (isa(val, AbstractArray))
-				if (length(val) == size(arg1,1))
-					arg1 = hcat(arg1, val[:])
-				else
+				(length(val) != size(arg1,1)) &&
 					error("The size array must have the same number of elements rows in the data")
-				end
+				arg1 = hcat(arg1, val[:])
 			else
 				marca *= arg2str(val);
 			end
@@ -142,13 +140,9 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 		end
 	else
 		val, symb = find_in_dict(d, [:markersize :MarkerSize :ms :size])
-		if (val !== nothing)
-			@warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
-		end
+		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
 		val, symb = find_in_dict(d, [:marker :Marker :shape])
-		if (val !== nothing)
-			@warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
-		end
+		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
 	end
 
 	opt_ML = ""
@@ -163,9 +157,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 				@warn("markerline overrides markeredgecolor")
 			end
 		end
-		if (opt_W != "" && opt_ML != "")
-			@warn("You cannot use both markerline and W or pen keys.")
-		end
+		(opt_W != "" && opt_ML != "") && @warn("You cannot use both markerline and W or pen keys.")
 	end
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
