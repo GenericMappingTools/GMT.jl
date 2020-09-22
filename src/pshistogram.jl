@@ -1,7 +1,12 @@
 """
 	histogram(cmd0::String="", arg1=nothing; kwargs...)
 
-Reads file and examines the first data column to calculate histogram parameters based on the bin-width provided.
+Examines the first data column to calculate histogram parameters based on the bin-width provided.
+Alternatively, show histograms of GMTimage objects directly. In this case, the options 'auto=true'
+or 'thresholds=(0, 0.1)' will find the histogram bounds of UInt16 images convenient for contrast
+enhancement (histogram stretch). The values represent the percentage of countings used to estimate
+the boundings. The option 'zoom=true' will set 'auto=true' and show histogram only on the region
+of interest.
 
 Full option list at [`pshistogram`]($(GMTdoc)histogram.html)
 
@@ -143,8 +148,8 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	limit_L = nothing
 	if (isa(arg1, GMTimage))		# If it's an image with no bin option, default to bin=1
 		do_clip = (isa(arg1[1], UInt16) && (val = find_in_dict(d, [:full_histo])[1]) === nothing) ? true : false
-		do_auto = ((val_auto = find_in_dict(d, [:auto])[1]) !== nothing) ? true : false
-		do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false
+		do_auto = ((val_auto = find_in_dict(d, [:auto :threshols])[1]) !== nothing) ? true : false	# Automatic bounds detetion
+		do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false	# Automatic zoom to interesting region
 		(do_zoom && !do_auto) && (val_auto = nothing)	# I.e. 'zoom' sets also the auto mode
 		hst, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
 		do_clip && (all(hst[3:10,2] .== 0)) && (hst[1,2] = 0; hst[2,2] = 0)
