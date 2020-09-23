@@ -627,6 +627,8 @@ if (got_it)					# Otherwise go straight to end
 	imshow("lixo.tif",show=false)
 	imshow(rand(UInt8(0):UInt8(255),256,256), colorbar=true, show=false)
 	imshow(rand(UInt8(0):UInt8(255),256,256), colorbar="bottom", show=false)
+	I = mat2img(rand(UInt8,32,32),x=[220800 453600], y=[3.5535e6 3.7902e6], proj4="+proj=utm+zone=28+datum=WGS84");
+	imshow(I, coast=(land=:red,), show=false)
 	x = range(-10, 10, length = 30);
 	f(x,y) = sqrt(x^2 + y^2);
 	imshow(x,x,f, Vd=dbg2);
