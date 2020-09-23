@@ -199,10 +199,10 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 		return cmd * opt_J[1], opt_J[1]
 	end
 
-	if (O && opt_J[1] == "")  opt_J[1] = " -J"  end
+	(O && opt_J[1] == "") && (opt_J[1] = " -J")
 
 	if (!O)
-		if (opt_J[1] == "")  opt_J[1] = " -JX"  end
+		(opt_J[1] == "") && (opt_J[1] = " -JX")
 		# If only the projection but no size, try to get it from the kwargs.
 		if ((s = helper_append_figsize(d, opt_J[1], O)) != "")		# Takes care of both fig scales and fig sizes
 			opt_J[1] = s
@@ -249,7 +249,7 @@ function helper_append_figsize(d::Dict, opt_J::String, O::Bool)::String
 		else                          opt_J = append_figsize(d, opt_J, val, true)
 		end
 	else										# A fig SIZE request
-		if (haskey(d, :units))  val *= d[:units][1]  end
+		(haskey(d, :units)) && (val *= d[:units][1])
 		if (occursin("+proj", opt_J)) opt_J *= "+width=" * val
 		else                          opt_J = append_figsize(d, opt_J, val)
 		end
@@ -295,7 +295,6 @@ function append_figsize(d::Dict, opt_J::String, width="", scale=false)
 					width *= flag
 				end
 			end
-			#opt_J *= width
 		end
 	end
 	width = check_axesswap(d, width)
@@ -2726,7 +2725,8 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 	if (isa(cmd, Array{String, 1}))
 		for k = 1:length(cmd)
 			is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
-			#is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
+			is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
+			is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
 			if (k > 1 && is_psscale && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
 				cmd2, arg1, = add_opt_cpt(d, cmd[k], [:C :color :cmap], 'C', 0, nothing, nothing, false, false, "", true)
 				if (arg1 === nothing)
@@ -2734,11 +2734,22 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 				end
 				P = gmt(cmd[k], arg1)
 				continue
-			#elseif (k > 1 && is_pscoast && (isa(args[1], GMTimage) || isa(args[1], GMTgrid)))
-				#proj4 = args[1].proj4
-				#if ((proj4 != "") && !startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
-					#cmd[k] = replace(cmd[k], " -J" => " -J" * "\"" * proj4 * "\"")
-				#end
+			elseif (k > 1 && (is_pscoast || is_basemap) && (isa(args[1], GMTimage) || isa(args[1], GMTgrid)))
+				proj4 = args[1].proj4
+				if ((proj4 != "") && !startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
+					opt_J = replace(proj4, " " => "")
+					lims = args[1].range
+					D = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
+					mm = extrema(D[1].data, dims=1)
+					opt_R = @sprintf(" -R%f/%f/%f/%f+r ", mm[1][1],mm[2][1],mm[1][2],mm[2][2])
+					o = scan_opt(cmd[1], "-J")
+					if     (o[1] == 'X')  size_ = "+width=" * o[2:end]
+					elseif (o[1] == 'x')  size_ = "+scale=" * o[2:end]
+					else   @warn("Could not find the right fig size used. Result will be wrong");  size_ = ""
+					end
+					cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
+					cmd[k] = replace(cmd[k], " -R" => opt_R)
+				end
 			end
 			P = gmt(cmd[k], args...)
 		end
