@@ -77,22 +77,28 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("makecpt", cmd0, arg1)	# Monolithic mode
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params])
 
     # If file name sent in, read it and compute a tight -R if this was not provided 
     cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
 	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
-
 	cmd = helper_cpt(d, cmd)
-	if ((val = find_in_dict(d, [:E :nlevels])[1]) !== nothing)
-		if (arg1 === nothing)  error("E option requires that a data table is provided as well")
-		else                   cmd *= " -E" * arg2str(val)
-		end
-	end
+	cmd = parse_E_mkcpt(d, [:E :nlevels], cmd, arg1)
 
 	cmd = "makecpt " * cmd
-	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
+	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 	global current_cpt = gmt(cmd, arg1)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_E_mkcpt(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1)
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Number")
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		(arg1 === nothing) && error("E option requires that a data table is provided as well")
+		cmd *= " -E" * arg2str(val)
+	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -105,7 +111,7 @@ function helper_cpt(d::Dict, cmd::String)
 	if ((val = find_in_dict(d, [:meter2unit])[1]) !== nothing)  cmd *= "+U" * parse_unit_unit(val)  end
 	if ((val = find_in_dict(d, [:unit2meter])[1]) !== nothing)  cmd *= "+u" * parse_unit_unit(val)  end
 	if ((val = find_in_dict(d, [:cptname :cmapname])[1]) !== nothing)
-		if (IamModern[1])  cmd *= " -H"  end
+		(IamModern[1]) && (cmd *= " -H")
 		cmd *=  " > " * string(val)
 	elseif (IamModern[1])  cmd *= " -H"
 	end
@@ -114,7 +120,9 @@ end
 
 # -------------------------------------------------------------------------------------------
 function parse_opt_range(cmd::String, d::Dict, opt::String="")::String
-	if ((val = find_in_dict(d, [:T :range :inc :bin])[1]) !== nothing)
+	symbs = [:T :range :inc :bin]
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | Array | String | Number")	# Just print the options
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, Tuple))
 			n = length(val)
 			out = arg2str(val[1:min(n,3)])

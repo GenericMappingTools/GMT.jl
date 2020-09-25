@@ -34,6 +34,7 @@ function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
 	end
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
     K, O = set_KO(first)		# Set the K O dance
 
 	def_J = (is_ternary) ? " -JX12c/0" : ""

@@ -59,7 +59,8 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	arg4 = nothing		# For the r,g,b + intensity case
 
 	d = KW(kwargs)
-    K, O = set_KO(first)		# Set the K O dance
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
+    K, O = set_KO(first)			# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
@@ -76,8 +77,8 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 			arg1 = mat2img(arg1; d...)
 		else
 			arg1 = mat2grid(arg1)
-			if (isa(arg2, Array{<:Number}))  arg2 = mat2grid(arg2)  end
-			if (isa(arg3, Array{<:Number}))  arg3 = mat2grid(arg3)  end
+			(isa(arg2, Array{<:Number})) && (arg2 = mat2grid(arg2))
+			(isa(arg3, Array{<:Number})) && (arg3 = mat2grid(arg3))
 		end
 	end
 
@@ -93,7 +94,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 			if (haskey(d, :histo_bounds))  delete!(d, :histo_bounds)  end
 		end
 	end
-	#if (isa(arg1, GMTimage) && !occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
+
 	cmd = "grdimage " * cmd				# In any case we need this
 	do_finish = false
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
@@ -106,7 +107,10 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 	# Used both by grdimage and grdview
-	if ((val = find_in_dict(d, [:I :shade :shading :intensity], false)[1]) !== nothing)
+	symbs = [:I :shade :shading :intensity]
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTgrid | String"), arg1, arg2, arg3, arg4
+
+	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
 			if (isa(val, String) || isa(val, Symbol) || isa(val, Bool))
 				val = arg2str(val)

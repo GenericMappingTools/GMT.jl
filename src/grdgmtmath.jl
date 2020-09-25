@@ -11,7 +11,7 @@ function grdmath(cmd::String, args...)
 
 	d = KW()
 	cmd = "grdmath " * cmd
-	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# The real useful bit od this fun
+	(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# The real useful bit od this fun
 	gmt(cmd, args...)
 end
 
@@ -28,6 +28,6 @@ function gmtmath(cmd::String, args...)
 
 	d = KW()
 	cmd = "gmtmath " * cmd
-	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
+	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 	gmt(cmd, args...)
 end

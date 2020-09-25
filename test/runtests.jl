@@ -270,6 +270,7 @@ if (got_it)					# Otherwise go straight to end
 	@assert(r[1].data == [5.0 5 5 5 5 5])
 	r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
 	@assert(r[1].data == [5.0 5 5 5 5 5])
+	gmtinfo(h=0)
 
 	# BLOCK*s
 	d = [0.1 1.5 1; 0.5 1.5 2; 0.9 1.5 3; 0.1 0.5 4; 0.5 0.5 5; 0.9 0.5 6; 1.1 1.5 7; 1.5 1.5 8; 1.9 1.5 9; 1.1 0.5 10; 1.5 0.5 11; 1.9 0.5 12];

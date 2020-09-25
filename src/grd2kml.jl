@@ -58,6 +58,7 @@ function grd2kml(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2kml", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :f])
 	cmd  = parse_these_opts(cmd, d, [[:E :url], [:F :filter], [:H :sub_pixel], [:L :tile_size],
 	                                 [:N :prefix], [:Q :nan_t :nan_alpha], [:T :title]])

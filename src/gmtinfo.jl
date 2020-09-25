@@ -65,8 +65,9 @@ function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("gmtinfo", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :e :f :o :r :yx])
-	if (endswith(cmd, "-:"))  cmd *= "i"  end		# Need to be -:i not -: to not swap output too
+	(endswith(cmd, "-:")) && (cmd *= "i")    # Need to be -:i not -: to not swap output too
 	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :per_column], [:D :center], [:E :get_record], [:F :counts],
 	                                [:L :common_limits], [:S :for_error_bars]])
 	cmd = add_opt(cmd, 'I', d, [:I :inc],

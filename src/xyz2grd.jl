@@ -51,10 +51,10 @@ function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("xyz2grd", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :h :i :r :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:G :outgrid], [:I :inc],
 	                                 [:S :swap], [:Z :flags]])
-
 	common_grd(d, cmd0, cmd, "xyz2grd ", arg1)		# Finish build cmd and run it
 end
 

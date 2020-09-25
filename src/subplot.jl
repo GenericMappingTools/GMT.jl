@@ -47,6 +47,8 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	FirstModern[1] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
  
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
+
 	# In case :title exists we must use and delete it to avoid double parsing
 	cmd = ((val = find_in_dict(d, [:T :title])[1]) !== nothing) ? " -T\"" * val * "\"" : ""
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "", false, " ")

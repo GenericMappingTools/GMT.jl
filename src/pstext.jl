@@ -85,6 +85,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_args = (arg1 === nothing) ? 0 : 1
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
@@ -112,7 +113,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			if (isa(arg1, GMTdataset))  arg1 = [arg1]  end
 			for n = 1:length(arg1)
 				nr, nc = size(arg1[n].data)
-				if (nc < 3)  error("TEXT: input file must have at least three columns")  end
+				(nc < 3) && error("TEXT: input file must have at least three columns")
 				arg1[n].text = Array{String,1}(undef, nr)
 				for k = 1:nr
 					arg1[n].text[k] = @sprintf("%.16g", arg1[n].data[k,3])

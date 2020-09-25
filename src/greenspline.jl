@@ -84,6 +84,7 @@ function greenspline(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("greenspline", cmd0, arg1)
 
 	d = KW(kwargs);     arg2 = nothing;     arg3 = nothing
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :d :e :f :h :i :o :r :x :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :approx :approximate], [:D :mode], [:E :misfit],
 	                                 [:G :grid], [:I :inc], [:L :leave_trend], [:Q :dir_derivative], [:S :splines], [:T :mask], [:W :uncertainties]])

@@ -83,8 +83,9 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 	if (!isempty(cmd0)) && (arg1 === nothing)  arg1 = cmd0  end
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd = add_opt("", 'A', d, [:A :adjust :crop])
-	if (cmd == " -A")  cmd = cmd * "1p"  end		# If just -A default to -A1p
+	(cmd == " -A") && (cmd = cmd * "1p")			# If just -A default to -A1p
 	cmd = parse_these_opts(cmd, d, [[:D :out_dir :output_dir], [:E :dpi], [:F :out_name :output_name],
 	                                [:G :ghost_path], [:I :icc_gray], [:L :list_file], [:P :portrait], [:Q :anti_aliasing], [:S :gs_command], [:Z :del_input_ps]])
 	cmd = parse_V_params(cmd, d)
@@ -112,7 +113,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 	end
 
 	cmd = add_opt(cmd, 'W', d, [:W :world_file])
-	if (haskey(d, :kml))  cmd *= " -W+k" * d[:kml]  end
+	(haskey(d, :kml)) && (cmd *= " -W+k" * d[:kml])
 
 	if (haskey(d, :in_memory))
 		(arg1 === nothing) ? cmd *= " =" : arg1 = nothing	# in_memory and input file are incompat. File wins

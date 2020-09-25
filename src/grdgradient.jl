@@ -49,19 +49,27 @@ function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdgradient", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :f :n])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:G :outgrid], [:S :slopegrid]])
 	cmd  = add_opt(cmd, 'E', d, [:E :lambert], 
 	       (manip=("m", nothing, 1), simple=("s", nothing, 1), peucker=("p", nothing, 1), view=("", arg2str), ambient="+a", difuse="+d", specular="+p", shine="+s") )
 	cmd  = add_opt(cmd, 'N', d, [:N :norm :normalize],
-		   (laplace=("e", nothing, 1), cauchy=("t", nothing, 1), amp="", sigma="+s", offset="+o"))
-    if ((val = find_in_dict(d, [:Q :save_stats])[1]) !== nothing)
-		val = string(val)[1]
-		if (val == 's')  val = 'c'  end
-        if (val == 'c' || val == 'r' || val == 'R')  cmd *= " -Q" * val  end
-    end
+           (laplace=("e", nothing, 1), cauchy=("t", nothing, 1), amp="", sigma="+s", offset="+o"))
+	cmd = parse_Q_grdgrad(d, [:Q :save_stats], cmd)
 
 	common_grd(d, cmd0, cmd, "grdgradient ", arg1)		# Finish build cmd and run it
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_Q_grdgrad(d::Dict, symbs::Array{<:Symbol}, cmd::String)
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "String")
+    if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		val = string(val)[1]
+		(val == 's') && (val = 'c')
+		(val == 'c' || val == 'r' || val == 'R') && (cmd *= " -Q" * val)
+    end
+    return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------

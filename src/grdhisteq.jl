@@ -34,9 +34,9 @@ function grdhisteq(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdhisteq", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params])
 	cmd  = parse_these_opts(cmd, d, [[:C :n_cells], [:D :dump], [:G :outgrid], [:N :gaussian], [:Q :quadratic]])
-
 	common_grd(d, cmd0, cmd, "grdhisteq ", arg1)		# Finish build cmd and run it
 end
 

@@ -91,6 +91,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_args = (arg1 === nothing) ? 0 : 1
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 
 	# If inquire, no plotting so do it and return
 	cmd = add_opt("", 'I', d, [:I :inquire])
