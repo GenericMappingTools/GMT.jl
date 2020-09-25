@@ -102,10 +102,10 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt("", 'Z', d, [:Z :kind],
 				  (counts="0", freq="1", log_count="2", log_freq="3", log10_count="4", log10_freq="5", weights="+w"))
 	opt_Z = cmd
-	opt_T = parse_opt_range(cmd, d, "")		# [:T :range :inc :bin]
+	opt_T = parse_opt_range("", d, "")		# [:T :range :inc :bin]
 
 	# If inquire, no plotting so do it and return
-	opt_I = add_opt(cmd, "I", d, [:I :inquire :bins], (all="O", no_zero="o"))
+	opt_I = add_opt("", "I", d, [:I :inquire :bins], (all="O", no_zero="o"))
 	if (opt_I != "")
 		cmd *= opt_I
 		if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end
