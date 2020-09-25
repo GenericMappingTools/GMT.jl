@@ -8,6 +8,10 @@ Full option list at [`sphinterpolate`]($(GMTdoc)sphinterpolate .html)
 Parameters
 ----------
 
+- **D** | **duplicates** :: [Type => Bool]
+
+    Delete any duplicate points [Default assumes there are no duplicates].
+    ($(GMTdoc)sphinterpolate.html#d)
 - **G** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
@@ -46,7 +50,7 @@ function sphinterpolate(cmd0::String="", arg1=nothing; kwargs...)
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :di :e :h :i :r :yx])
-	cmd  = parse_these_opts(cmd, d, [[:G :outgrid], [:I :inc], [:Q :tension], [:T :nodetable], [:Z :scale]])
+	cmd  = parse_these_opts(cmd, d, [[:D :duplicates], [:G :outgrid], [:I :inc], [:Q :tension], [:T :nodetable], [:Z :scale]])
 
 	common_grd(d, cmd0, cmd, "sphinterpolate ", arg1)		# Finish build cmd and run it
 end

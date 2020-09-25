@@ -195,15 +195,13 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 	#opt_J = Array{String,1}(undef,1)
 	opt_J = [""];		mnemo = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
-		if (isa(val, Dict))  val = dict2nt(val)  end
+		isa(val, Dict) && (val = dict2nt(val))
 		opt_J[1], mnemo = build_opt_J(val)
 	elseif (IamModern[1] && ((val = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size], del)[1]) === nothing))
 		# Subplots do not rely is the classic default mechanism
 		return cmd, ""
 	end
-	if (!map && opt_J[1] != "")
-		return cmd * opt_J[1], opt_J[1]
-	end
+	(!map && opt_J[1] != "") && return cmd * opt_J[1], opt_J[1]
 
 	(O && opt_J[1] == "") && (opt_J[1] = " -J")
 
@@ -220,7 +218,7 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 		elseif (mnemo)							# Proj name was obtained from a name mnemonic and no size. So use default
 			opt_J[1] = append_figsize(d, opt_J[1])
 		elseif (!isnumeric(opt_J[1][end]) && (length(opt_J[1]) < 6 || (isletter(opt_J[1][5]) && !isnumeric(opt_J[1][6]))) )
-			if ((val = find_in_dict(d, [:aspect])[1]) !== nothing)  val = string(val)  end
+			((val = find_in_dict(d, [:aspect])[1]) !== nothing) && (val = string(val))
 			if (!IamSubplot[1])
 				if (val == "equal")  opt_J[1] *= split(def_fig_size, '/')[1] * "/0"
 				else                 opt_J[1] *= def_fig_size
@@ -317,7 +315,7 @@ function check_axesswap(d::Dict, width::AbstractString)
 	end
 
 	swap_x = false;		swap_y = false;
-	if (isa(val, Dict))  val = dict2nt(val)  end
+	isa(val, Dict) && (val = dict2nt(val))
 	if (isa(val, NamedTuple))
 		for k in keys(val)
 			if     (k == :x)  swap_x = true
@@ -489,7 +487,7 @@ function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
 	# These four are aliases
 	extra_parse = true;
 	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
-		if (isa(val, Dict))  val = dict2nt(val)  end
+		isa(val, Dict) && (val = dict2nt(val))
 		if (isa(val, String) || isa(val, Symbol))
 			val = string(val)					# In case it was a symbol
 			if (val == "none")					# User explicitly said NO AXES
@@ -905,7 +903,7 @@ function parse_inc(cmd::String, d::Dict, symbs, opt, del=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-		if (isa(val, Dict))  val = dict2nt(val)  end
+		isa(val, Dict) && (val = dict2nt(val))
 		if (isa(val, NamedTuple))
 			x = "";	y = "";	u = "";	e = false
 			fn = fieldnames(typeof(val))
@@ -944,7 +942,7 @@ function parse_params(cmd::String, d::Dict)
 	_cmd = Array{String,1}(undef,1)		# Otherwise Traceur insists this fun was returning a Any
 	_cmd = [cmd]
 	if ((val = find_in_dict(d, [:conf :par :params], true)[1]) !== nothing)
-		if (isa(val, Dict))  val = dict2nt(val)  end
+		isa(val, Dict) && (val = dict2nt(val))
 		if (isa(val, NamedTuple))
 			fn = fieldnames(typeof(val))
 			for k = 1:length(fn)		# Suspect that this is higly inefficient but N is small
@@ -975,7 +973,7 @@ function add_opt_pen(d::Dict, symbs, opt::String="", sub::Bool=true, del::Bool=t
 		out[1] = opt * pen
 	else
 		if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-			if (isa(val, Dict))  val = dict2nt(val)  end
+			isa(val, Dict) && (val = dict2nt(val))
 			if (isa(val, Tuple))				# Like this it can hold the pen, not extended atts
 				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
 					for v in val
@@ -1228,7 +1226,7 @@ function prepare2geotif(d::Dict, cmd, opt_T::String, O::Bool)
 			end
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
 			# [+tdocname][+nlayername][+ofoldername][+aaltmode[alt]][+lminLOD/maxLOD][+fminfade/maxfade][+uURL]
-			if (isa(val, Dict))  val = dict2nt(val)  end
+			isa(val, Dict) && (val = dict2nt(val))
 			opt_T = add_opt(" -TG -W+k", "", Dict(:kml => val), [:kml],
 							(title="+t", layer="+n", layername="+n", folder="+o", foldername="+o", altmode="+a", LOD=("+l", arg2str), fade=("+f", arg2str), URL="+u"))
 		end
@@ -1281,7 +1279,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true,
 	end
 
 	args = Array{String,1}(undef,1)
-	if (isa(val, Dict))  val = dict2nt(val)  end	# For Py usage
+	isa(val, Dict) && (val = dict2nt(val))	# For Py usage
 	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
 		args[1] = add_opt(val, mapa, arg)
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
@@ -1449,7 +1447,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_o
 	val,symb = find_in_dict(d, symbs, false)
 	if (val !== nothing)
 		to_slot = true
-		if (isa(val, Dict))  val = dict2nt(val)  end
+		isa(val, Dict) && (val = dict2nt(val))
 		if (isa(val, Tuple) && length(val) == 2)
 			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
 			val = dict2nt(Dict(need_symb=>val[1], keys(nt_opts)[1]=>val[2]))
@@ -1559,7 +1557,7 @@ function add_opt_fill(cmd::String, d::Dict, symbs, opt="", del=true)::String
 	# Deal with the area fill attributes option. Normally, -G
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)  return cmd  end
-	if (isa(val, Dict))  val = dict2nt(val)  end
+	isa(val, Dict) && (val = dict2nt(val))
 	if (opt != "")  opt = string(" -", opt)  end
 	return add_opt_fill(val, cmd, opt)
 end
@@ -1638,7 +1636,7 @@ function add_opt_module(d::Dict, symbs)
 		r = nothing
 		if (haskey(d, symbs[k]))
 			val = d[symbs[k]]
-			if (isa(val, Dict))  val = dict2nt(val)  end
+			isa(val, Dict) && (val = dict2nt(val))
 			if (isa(val, NamedTuple))
 				nt = (val..., Vd=2)
 				if     (symbs[k] == :coast)    r = coast!(; nt...)
@@ -1776,7 +1774,7 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
 	opt = Array{String,1}(undef,1)					# To force type stability
 	opt = [" -B"]
 	if ((val = find_in_dict(d, [:frame :axes])[1]) !== nothing)
-		if (isa(val, Dict))  val = dict2nt(val)  end
+		isa(val, Dict) && (val = dict2nt(val))
 		opt[1] *= helper0_axes(val)
 	end
 
@@ -1874,38 +1872,21 @@ function helper0_axes(arg)
 	# bottom|bot|b_t(icks); right|r_t(icks); t(op)_t(icks); up_t(icks) => s, e, n, z
 	# bottom|bot|b_b(are);  right|r_b(are);  t(op)_b(are);  up_b(are)  => b, r, t, u
 
-	if (isa(arg, String) || isa(arg, Symbol))	# Assume that a WESNwesn string was already sent in.
-		return string(arg)
-	end
+	(isa(arg, String) || isa(arg, Symbol)) && return string(arg) # Assume that a WESNwesn was already sent in.
 
 	if (!isa(arg, Tuple))
 		error(@sprintf("The 'axes' argument must be a String, Symbol or a Tuple but was (%s)", typeof(arg)))
 	end
 
-	opt = ""
+	opt = "";	lbrtu = "lbrtu";	WSENZ = "WSENZ";	wsenz = "wsenz";	lbrtu = "lbrtu"
 	for k = 1:length(arg)
 		t = string(arg[k])		# For the case it was a symbol
 		if (occursin("_f", t))
-			if     (t[1] == 'l')  opt *= "W"
-			elseif (t[1] == 'b')  opt *= "S"
-			elseif (t[1] == 'r')  opt *= "E"
-			elseif (t[1] == 't')  opt *= "N"
-			elseif (t[1] == 'u')  opt *= "Z"
-			end
+			for n = 1:5  (t[1] == lbrtu[n]) && (opt *= WSENZ[n]; continue)  end
 		elseif (occursin("_t", t))
-			if     (t[1] == 'l')  opt *= "w"
-			elseif (t[1] == 'b')  opt *= "s"
-			elseif (t[1] == 'r')  opt *= "e"
-			elseif (t[1] == 't')  opt *= "n"
-			elseif (t[1] == 'u')  opt *= "z"
-			end
+			for n = 1:5  (t[1] == lbrtu[n]) && (opt *= wsenz[n]; continue)  end
 		elseif (occursin("_b", t))
-			if     (t[1] == 'l')  opt *= "l"
-			elseif (t[1] == 'b')  opt *= "b"
-			elseif (t[1] == 'r')  opt *= "r"
-			elseif (t[1] == 't')  opt *= "t"
-			elseif (t[1] == 'u')  opt *= "u"
-			end
+			for n = 1:5  (t[1] == lbrtu[n]) && (opt *= lbrtu[n]; continue)  end
 		end
 	end
 	return opt
@@ -1915,7 +1896,7 @@ end
 function helper1_axes(arg)
 	# Used by annot, ticks and grid to accept also 'auto' and "" to mean automatic
 	out = arg2str(arg)
-	if (out != "" && out[1] == 'a')  out = ""  end
+	(out != "" && out[1] == 'a') && (out = "")
 	return out
 end
 # ------------------------
@@ -1960,9 +1941,7 @@ function helper3_axes(arg, primo, axe)
 		tipo = fill('a', n_annot)			# Default to annotate
 	elseif (isa(arg, NamedTuple) || isa(arg, Dict))
 		if (isa(arg, NamedTuple))  d = nt2dict(arg)  end
-		if (!haskey(d, :pos))
-			error("Custom annotations NamedTuple must contain the member 'pos'")
-		end
+		!haskey(d, :pos) && error("Custom annotations NamedTuple must contain the member 'pos'")
 		pos = d[:pos]
 		n_annot = length(pos)
 		if ((val = find_in_dict(d, [:type_ :type])[1]) !== nothing)
@@ -2105,7 +2084,7 @@ function vector4_attrib(; kwargs...)
 
 	if (haskey(d, :norm))  cmd = string(cmd, "n", d[:norm])  end
 	if ((val = find_in_dict(d, [:head])[1]) !== nothing)
-		if (isa(val, Dict))  val = dict2nt(val)  end
+		isa(val, Dict) && (val = dict2nt(val))
 		if (isa(val, NamedTuple))
 			ha = "0.075c";	hl = "0.3c";	hw = "0.25c"
 			dh = nt2dict(val)

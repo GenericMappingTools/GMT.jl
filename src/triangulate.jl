@@ -75,15 +75,22 @@ function triangulate(cmd0::String="", arg1=nothing; kwargs...)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :I :V_params :bi :bo :di :e :f :h :i :r :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :slope_grid], [:D :derivatives], [:E :empty], [:G :grid :outgrid], [:M :network],
-	                                 [:N :ids], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])
-	if ((val = find_in_dict(d, [:Q :voronoi])[1]) !== nothing)
-		cmd *= " -Q";   val_ = string(val)
-		if (startswith(val_, "pol"))  cmd *= "n"  end
-	end
+                                     [:N :ids], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])
+	cmd = parse_Q_tri(d, [:Q :voronoi], cmd)
 	if (occursin("-I", cmd) && occursin("-R", cmd) && !occursin("-G", cmd)) cmd *= " -G"  end
 	if (!occursin("-G", cmd)) cmd, = parse_J(cmd, d)  end
 
 	common_grd(d, cmd0, cmd, "triangulate ", arg1)		# Finish build cmd and run it
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_Q_tri(d::Dict, symbs::Array{Symbol}, cmd::String)
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Bool | String")	# Just print the options
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		cmd *= " -Q";   val_ = string(val)
+		(startswith(val_, "pol")) && (cmd *= "n")
+    end
+    return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -16,9 +16,9 @@ Parameters
 
     For large data sets you can save some memory (at the expense of more processing).
     ($(GMTdoc)sphtriangulate.html#c)
-- **D** | **skip** :: [Type => Bool]
+- **D** | **duplicates** | **skip** :: [Type => Bool]
 
-    Skip the last (repeated) input vertex at the end of a closed segment if it equals the first point in the segment.
+    Delete any duplicate points [Default assumes there are no duplicates].
     ($(GMTdoc)sphtriangulate.html#d)
 - **L** | **unit** :: [Type => Str]          ``Arg = e|f|k|m|n|u|d``
 
@@ -52,8 +52,7 @@ function sphtriangulate(cmd0::String="", arg1=nothing; kwargs...)
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :h :i :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :skip], [:L :unit], [:N :nodes], [:Q :voronoi], [:T]])
-
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :duplicates :skip], [:L :unit], [:N :nodes], [:Q :voronoi], [:T]])
 	common_grd(d, cmd0, cmd, "sphtriangulate ", arg1)		# Finish build cmd and run it
 end
 

@@ -12,6 +12,10 @@ Parameters
 
     For large data sets you can save some memory (at the expense of more processing).
     ($(GMTdoc)sphdistance.html#a)
+- **D** | **duplicates** :: [Type => Bool]
+
+    Delete any duplicate points [Default assumes there are no duplicates].
+    ($(GMTdoc)sphdistance.html#d)
 - **E** | **what_quantity** :: [Type => Str]   ``Arg = d|n|z[dist]``
 
     Specify the quantity that should be assigned to the grid nodes.
@@ -55,10 +59,18 @@ function sphdistance(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:I :R :V_params :b :d :e :h :i :r :yx])
-	cmd  = parse_these_opts(cmd, d, [[:C :save_mem], [:E :what_quantity], [:G :grid :outgrid], [:L :dist_unit]])
+	cmd  = parse_these_opts(cmd, d, [[:C :save_mem], [:D :duplicates], [:E :what_quantity], [:G :grid :outgrid], [:L :dist_unit]])
+	cmd, arg1, arg2 = parse_QN_sphdst(d, [[:Q :voronoi], [:N :nodes]], cmd, arg1, arg2)
 
-	(arg1 === nothing) ? N_used = 0 : N_used = 1
-	symbs = [[:Q :voronoi], [:N :nodes]];	flags = "QN"	# Process option -Q & -N
+	common_grd(d, "sphdistance " * cmd, arg1, arg2)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_QN_sphdst(d::Dict, symbs::Array{Array{Symbol,2},1}, cmd::String, arg1, arg2)
+	(show_kwargs[1]) && print_kwarg_opts(symbs[1], "Array{GMTdataset} | GMTdataset | Array | Number | String")
+	(show_kwargs[1]) && return print_kwarg_opts(symbs[3], "Array{GMTdataset} | GMTdataset | Array | Number | String")
+	N_used = (arg1 === nothing) ?  0 : 1
+	flags ="QN"			# Process option -Q & -N
 	for k = 1:2
 		if ((val = find_in_dict(d, symbs[k])[1]) !== nothing)
 			cmd *= " -" * flags[k]
@@ -69,8 +81,7 @@ function sphdistance(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 			end
 		end
 	end
-
-	common_grd(d, "sphdistance " * cmd, arg1, arg2)
+	return cmd, arg1, arg2
 end
 
 # ---------------------------------------------------------------------------------------------------
