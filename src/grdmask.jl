@@ -52,10 +52,10 @@ function grdmask(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdmask", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :a :e :f :g :j :n :yx :r :x])
 	cmd  = parse_these_opts(cmd, d, [[:A :steps :straight_lines], [:I :inc], [:G :outgrid],
 	                                 [:N :out_edge_in], [:S :search_radius]])
-
 	return common_grd(d, "grdmask " * cmd, arg1)		# Finish build cmd and run it
 end
 

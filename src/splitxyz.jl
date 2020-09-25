@@ -55,10 +55,10 @@ function splitxyz(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("splitxyz", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :bi :bo :di :do :e :f :g :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim_tol], [:C :course_change], [:D :min_dist :min_distance], [:F :filter],
 	                                 [:Q :xyzdh], [:S :dh :dist_head]])
-
 	common_grd(d, cmd0, cmd, "splitxyz ", arg1)		# Finish build cmd and run it
 end
 

@@ -61,6 +61,7 @@ function blockmean(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("blockmean", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd = parse_these_opts("", d, [[:E :extended], [:S :npts :number_of_points]])
 	return common_blocks(cmd0, arg1, d, cmd, "blockmean", kwargs...)
 end
@@ -78,6 +79,7 @@ function blockmedian(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("blockmedian", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd = parse_these_opts("", d, [[:E :extended], [:Q :quick], [:T :quantile]])
 	return common_blocks(cmd0, arg1, d, cmd, "blockmedian", kwargs...)
 end
@@ -95,6 +97,7 @@ function blockmode(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("blockmode", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd = parse_these_opts("", d, [[:E :extended], [:D :histogram_binning], [:Q :quick]])
 	return common_blocks(cmd0, arg1, d, cmd, "blockmode", kwargs...)
 end
@@ -109,9 +112,7 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 	cmd, = parse_common_opts(d, cmd, [:R :V_params :bi :di :e :f :h :i :o :r :yx])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
-	if (occursin("-G", cmd))			# GMT API does not allow a -G from externals
-		cmd = replace(cmd, "-G" => "")
-	end
+    (occursin("-G", cmd)) && (cmd = replace(cmd, "-G" => ""))   # GMT API does not allow a -G from externals
 	return common_grd(d, proggy * " " * cmd, arg1)		# Finish build cmd and run it
 end
 

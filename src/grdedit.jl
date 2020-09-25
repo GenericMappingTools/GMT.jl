@@ -59,6 +59,7 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdedit", cmd0, arg1)
 
 	d = KW(kwargs);     arg2 = nothing
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:G :outgrid],
 	                                 [:S :wrap], [:T :toggle]])

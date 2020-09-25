@@ -94,10 +94,11 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
 
-    gmt_proggy = (IamModern[1]) ? "histogram "  : "pshistogram "
+	gmt_proggy = (IamModern[1]) ? "histogram "  : "pshistogram "
 	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1, arg2)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 
 	cmd = add_opt("", 'Z', d, [:Z :kind],
 				  (counts="0", freq="1", log_count="2", log_freq="3", log10_count="4", log10_freq="5", weights="+w"))
@@ -119,12 +120,13 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		return gmt(gmt_proggy * cmd, arg1)
 	end
 
-    K, O = set_KO(first)		# Set the K O dance
+	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "histogram", O, " -JX12c/12c")
-	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:A :horizontal], [:D :annot :annotate], [:F :center], [:Q :cumulative], [:S :stairs]])
-	cmd  = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :params], first)[1]
+	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:D :annot :annotate], [:F :center], [:Q :cumulative], [:S :stairs]])
+	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd = parse_N_hstg(d, [:N :normal], cmd)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	(opt_R == "") && (opt_R = " ")			# So it doesn't try to find the -R in next call
@@ -137,12 +139,6 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		cmd *= " -G150"
 	elseif (occursin("-S", cmd) && !occursin("-W", cmd))
 		cmd *= " -W0.3p"
-	end
-
-	if ((val = find_in_dict(d, [:N :normal])[1]) !== nothing)
-		if (isa(val, Number) || isa(val, String))  cmd  = string(cmd, " -N", val)
-		elseif (isa(val, Tuple))                   cmd *= " -N" * parse_arg_and_pen(val)
-		end
 	end
 
 	limit_L = nothing
@@ -196,6 +192,18 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 	out = (out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
 
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_N_hstg(d::Dict, symbs::Array{<:Symbol}, cmd::String)
+	# Move this to a fun so that it can be accessed by the helping machinery
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | String | Number")	# Just print the options
+	if ((val = find_in_dict(d, [:N :normal])[1]) !== nothing)
+		if (isa(val, Number) || isa(val, String))  cmd  = string(cmd, " -N", val)
+		elseif (isa(val, Tuple))                   cmd *= " -N" * parse_arg_and_pen(val)
+		end
+	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------

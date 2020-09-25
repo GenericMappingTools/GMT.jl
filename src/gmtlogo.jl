@@ -41,6 +41,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 
 	length(kwargs) == 0 && return monolitic("gmtlogo", cmd0, arg1)
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, = parse_R("", d, O)
@@ -51,8 +52,8 @@ function logo(cmd0::String=""; first=true, kwargs...)
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
 	do_julia, do_GMTjulia = false, false
-	if ((val_j = find_in_dict(d, [:julia])[1]) !== nothing)     do_julia    = true  end
-	if ((val_G = find_in_dict(d, [:GMTjulia])[1]) !== nothing)  do_GMTjulia = true  end
+	((val_j = find_in_dict(d, [:julia])[1]) !== nothing) && (do_julia = true)
+	((val_G = find_in_dict(d, [:GMTjulia])[1]) !== nothing) && (do_GMTjulia = true)
 	if (do_julia || do_GMTjulia)
 		if (do_julia)	r = val_j	else	r = val_G	end
 		c,t,r2 = jlogo(r)			# r2 is the diameter of the inner circle
@@ -63,14 +64,14 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		fmt = nothing
 		if (do_GMTjulia)
 			# Too soon to set the format. Need to finish the PS first
-			if ((val = find_in_dict(d, [:fmt])[1]) !== nothing)  fmt = arg2str(val)  end
+			((val = find_in_dict(d, [:fmt])[1]) !== nothing) && (fmt = arg2str(val))
 			savefig = nothing
 			if ((val = find_in_dict(d, [:savefig :name])[1]) !== nothing)		#  Also too early for savefig
 				savefig = val
 			end
 		end
 		r = finish_PS_module(d, "psxy " * c * cmd, "", K, O, true, t)
-		if (r !== nothing && startswith(r, "psxy"))  return r  end
+		(r !== nothing && startswith(r, "psxy")) && return r
 		if (do_GMTjulia)
 			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
 			opt_F = @sprintf("+f%d,NewCenturySchlbk-Italic",letter_height)

@@ -57,6 +57,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
     K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "grdview", O, " -JX12c/0")
@@ -76,12 +77,21 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 
-	if (isa(arg1, Array{<:Number}))  arg1 = mat2grid(arg1)  end
+	(isa(arg1, Array{<:Number})) && (arg1 = mat2grid(arg1))
 
-	#cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdview")
 	cmd, N_used, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdview")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdview")
+	cmd, arg1, arg2, arg3, arg4, arg5 = parse_G_grdview(d, [:G :drapefile], cmd, arg1, arg2, arg3, arg4, arg5)
 
+	cmd = "grdview " * cmd				# In any case we need this
+	cmd, K = finish_PS_nested(d, cmd, "", K, O, [:coast :colorbar :basemap])
+
+    return finish_PS_module(d, cmd, "", K, O, true, arg1, arg2, arg3, arg4, arg5)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1, arg2, arg3, arg4, arg5)
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
 	if ((val = find_in_dict(d, [:G :drapefile])[1]) !== nothing)
 		if (isa(val, String))				# Uff, simple. Either a file name or a -A type modifier
 			cmd *= " -G" * val
@@ -103,11 +113,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			error("Wrong way of setting the drape (G) option.")
 		end
 	end
-
-	cmd = "grdview " * cmd				# In any case we need this
-	cmd, K = finish_PS_nested(d, cmd, "", K, O, [:coast :colorbar :basemap])
-
-    return finish_PS_module(d, cmd, "", K, O, true, arg1, arg2, arg3, arg4, arg5)
+	return cmd, arg1, arg2, arg3, arg4, arg5
 end
 
 # ---------------------------------------------------------------------------------------------------

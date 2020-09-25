@@ -59,40 +59,28 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	length(kwargs) == 0 && isempty_(arg1) && return monolitic("grdtrack", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :interp_path], [:C :equidistant ], [:D :dfile], [:E :by_coord],
 	                                 [:N :no_skip], [:S :stack], [:T :radius], [:Z :z_only]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
-
-	if ((grid_tuple = find_in_dict(d, [:G :grid])[1]) !== nothing)
-		if (isa(grid_tuple, Tuple))
-			for k = 1:length(grid_tuple)  cmd *= " -G"  end		# Need as many -G as numel(grid_tuple)
-		elseif (isa(grid_tuple, GMT.GMTgrid))
-			cmd = string(cmd, " -G")
-			if     (isempty_(arg1))  arg1 = grid_tuple;
-			elseif (isempty_(arg2))  arg2 = grid_tuple;
-			else   error(string("Can't send the Grid data via G and input array"))
-			end
-		else
-			cmd = string(cmd, " -G", arg2str(grid_tuple))
-		end
-	end
+	cmd, grid_tuple, arg1, arg2 = parse_G_grdtrk(d, [:G :grid], cmd, arg1, arg2)
 
 	# Because we allow arg1 and arg2 to either exist or not and also contain data & grid in any order
 	if (!isempty_(arg1) && !isempty_(arg2))
 		arg1_is_table = false;	arg2_is_table = false;	arg1_is_grid = false;	arg2_is_grid = false
-		if (isa(arg1, GMTgrid))		arg1_is_grid = true		end
-		if (isa(arg2, Array) || isa(arg2, GMTdataset))  arg2_is_table = true	end
+		(isa(arg1, GMTgrid)) && (arg1_is_grid = true)
+		(isa(arg2, Array) || isa(arg2, GMTdataset)) && (arg2_is_table = true)
 		if (arg2_is_table && arg1_is_grid)			# Swap the arg1, arg2
 			tmp = arg1;		arg1 = arg2;	arg2 = tmp
 		end
 	end
 
-	if (isa(arg1, GMTgrid) || isa(arg2, GMTgrid) && !occursin("-G", cmd))  cmd *= " -G"  end
+	(isa(arg1, GMTgrid) || isa(arg2, GMTgrid) && !occursin("-G", cmd)) && (cmd *= " -G")
 	if (cmd0 != "" && !isa(arg1, GMTgrid) && !isa(arg1, Array{GMTgrid}) && !occursin("-G", cmd))
 		cmd = " -G" * cmd
-		if (isa(arg1, String))  cmd *= " " * arg1  end
+		(isa(arg1, String)) && (cmd *= " " * arg1)
 	end
 
 	if (isa(grid_tuple, Tuple))
@@ -101,6 +89,27 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 		return common_grd(d, "grdtrack " * cmd, arg1, arg2)
 	end
 
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_G_grdtrk(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1, arg2)
+
+	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), nothing,arg1,arg2)
+
+	if ((grid_tuple = find_in_dict(d, symbs)[1]) !== nothing)
+		if (isa(grid_tuple, Tuple))
+			for k = 1:length(grid_tuple)  cmd *= " -G"  end		# Need as many -G as numel(grid_tuple)
+		elseif (isa(grid_tuple, GMTgrid))
+			cmd *= " -G"
+			if     (arg1 === nothing)  arg1 = grid_tuple;
+			elseif (arg2 === nothing)  arg2 = grid_tuple;
+			else   error("Can't send the Grid data via G and input array")
+			end
+		else
+			cmd = string(cmd, " -G", arg2str(grid_tuple))
+		end
+	end
+	return cmd, grid_tuple, arg1, arg2
 end
 
 # ---------------------------------------------------------------------------------------------------

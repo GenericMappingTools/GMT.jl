@@ -56,6 +56,7 @@ function grdclip(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdclip", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params])
 	cmd  = add_opt(cmd, 'G', d, [:G :outgrid])
 	cmd  = add_opt(cmd, 'S', d, [:S])

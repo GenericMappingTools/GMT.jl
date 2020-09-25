@@ -93,6 +93,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	length(kwargs) == 0 && clip === nothing && return monolitic(gmt_proggy, cmd0)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	K, O = set_KO(first)		# Set the K O dance
 
 	maybe_more = false			# If latter set to true, search for lc & lc pen settings
@@ -114,8 +115,26 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		end
 	end
 
-	# Parse these three options that can be made to respond to same code`
-	symbs = [[:I :rivers], [:N :borders], [:W :shore]];	flags ="INW"
+	# Parse these three options that can be made to respond to same code
+	cmd = parse_INW_coast(d, [[:I :rivers], [:N :borders], [:W :shore]], cmd)
+	cmd = parse_E_coast(d, [:E :DCW], cmd)
+
+	if (!occursin(" -C",cmd) && !occursin(" -E",cmd) && !occursin(" -G",cmd) && !occursin(" -I",cmd) &&
+		!occursin(" -M",cmd) && !occursin(" -N",cmd) && !occursin(" -Q",cmd) && !occursin(" -S",cmd) && !occursin(" -W",cmd))
+		cmd *= " -W0.5p"
+	end
+	(!occursin("-D",cmd)) && (cmd *= " -Da")			# Then pick automatic
+	finish = !occursin(" -M ",cmd) ? true : false		# Otherwise the dump would be redirected to GMTjl_tmp.ps
+
+	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, finish)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_INW_coast(d::Dict, symbs::Array{Array{Symbol,2},1}, cmd::String)
+	(show_kwargs[1]) && print_kwarg_opts(symbs[1], "NamedTuple | Tuple | Dict | String")
+	(show_kwargs[1]) && print_kwarg_opts(symbs[2], "NamedTuple | Tuple | Dict | String")
+	(show_kwargs[1]) && return print_kwarg_opts(symbs[3], "NamedTuple | Tuple | Dict | String")
+	flags ="INW"
 	for k = 1:3
 		if ((val = find_in_dict(d, symbs[k], false)[1]) !== nothing)
 			if (isa(val, NamedTuple) || isa(val, Dict) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
@@ -126,8 +145,13 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 			del_from_dict(d, symbs[k])		# Now we can delete the kwarg
 		end
 	end
+	return cmd
+end
 
-	if ((val = find_in_dict(d, [:E :DCW], false)[1]) !== nothing)
+# ---------------------------------------------------------------------------------------------------
+function parse_E_coast(d::Dict, symbs::Array{<:Symbol}, cmd::String)
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
+	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))
 			cmd = string(cmd, " -E", val)			# Simple case, ex E="PT,+gblue"
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
@@ -137,17 +161,9 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 			cmd = parse_dcw(cmd, val)
 		end
 		if (GMTver >= 6.1)  cmd *= " -Vq"  end		# Suppress annoying warnings regarding filling syntax with +r<dpi>
-		del_from_dict(d, [:E :DCW])
+		del_from_dict(d, symbs)
 	end
-
-	if (!occursin(" -C",cmd) && !occursin(" -E",cmd) && !occursin(" -G",cmd) && !occursin(" -I",cmd) &&
-		!occursin(" -M",cmd) && !occursin(" -N",cmd) && !occursin(" -Q",cmd) && !occursin(" -S",cmd) && !occursin(" -W",cmd))
-		cmd *= " -W0.5p"
-	end
-	if (!occursin("-D",cmd))  cmd *= " -Da"  end		# Then pick automatic
-	finish = !occursin(" -M ",cmd) ? true : false		# Otherwise the dump would be redirected to GMTjl_tmp.ps
-
-	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, finish)
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -44,6 +44,7 @@ function sphinterpolate(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("sphinterpolate ", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :di :e :h :i :r :yx])
 	cmd  = parse_these_opts(cmd, d, [[:G :outgrid], [:I :inc], [:Q :tension], [:T :nodetable], [:Z :scale]])
 

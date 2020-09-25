@@ -59,6 +59,7 @@ function regress(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("gmtregress", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :o :yx])
     cmd  = parse_these_opts(cmd, d, [[:A :all_slopes], [:C :confidence_level], [:E :regression_type], [:N :norm],
                                      [:F :column_combination], [:S :restrict], [:T :equi_space], [:W :weighted]])

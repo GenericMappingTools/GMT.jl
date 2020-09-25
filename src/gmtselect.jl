@@ -74,6 +74,7 @@ function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kw
 	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1, arg2, arg3)
 
 	d = KW(kwargs)
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary], [:F :polygon],
 	                                 [:G :gridmask], [:I :reverse], [:N :mask], [:Z :in_range]])

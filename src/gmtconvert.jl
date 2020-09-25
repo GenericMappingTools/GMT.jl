@@ -84,6 +84,7 @@ function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtconvert", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :write :append :a :b :bo :d :e :f :g :h :i :o :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :h_cat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
 	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :select_num], [:S :select_hdr], [:T :suppress :skip], [:W :word2num], [:Z :range]])

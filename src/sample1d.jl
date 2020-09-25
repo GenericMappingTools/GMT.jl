@@ -48,6 +48,7 @@ function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("sample1d", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :resamp], [:F :interp_type], [:N :time_col], [:T :inc :range], [:W :weights_col]])
 

@@ -33,28 +33,19 @@ function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdtrend", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 
 	cmd, = parse_R("", d)
 	cmd = parse_V_params(cmd, d)
 	cmd = parse_these_opts(cmd, d, [[:D :diff], [:T :trend]])
 	opt_N = add_opt("", "N", d, [:N :model], (n="", n_model="", robust="_+r"), true, true)
-	if (opt_N == "")  error("The 'model' parameter is mandatory")  end
+	(opt_N == "" && !show_kwargs[1]) && error("The 'model' parameter is mandatory")
 	cmd *= opt_N
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
-	if (isa(arg1, Array{<:Number}))  arg1 = mat2grid(arg1)  end
+	(isa(arg1, Array{<:Number})) && (arg1 = mat2grid(arg1))
 
-	if ((val = find_in_dict(d, [:W :weights])[1]) !== nothing)
-		if (isa(val, String) || isa(val, Symbol))
-			cmd *= " -W" * arg2str(val)
-		else
-			if (isa(val, Tuple) && length(val) == 2 && (isa(val, GMTgrid) || isa(val, Array{GMT.GMTgrid,1})))
-				val = val[1];	cmd *= "+s"
-			end
-			cmd, N_used = put_in_slot(cmd, val, 'W', [arg1, arg2])
-			(N_used == 1) ? arg1 = val : arg2 = val
-		end
-	end
+	cmd, arg1, arg2 = parse_W_grdtrend(d, [:W :weights], cmd, arg1, arg2)
 
 	if (occursin("-D", cmd) && occursin("-T", cmd))
 		@warn("Usage error, both difference and trend were required. Ignoring the trend request.")
@@ -63,6 +54,25 @@ function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	end
 
 	return common_grd(d, "grdtrend " * cmd, arg1, arg2)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_W_grdtrend(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1, arg2)
+
+	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "Tuple | String"), arg1,arg2)
+
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		if (isa(val, String) || isa(val, Symbol))
+			cmd *= " -W" * arg2str(val)
+		else
+			if (isa(val, Tuple) && length(val) == 2 && (isa(val[1], GMTgrid) || isa(val[1], Array{GMTgrid,1})))
+				val = val[1];	cmd *= "+s"
+			end
+			cmd, N_used = put_in_slot(cmd, val, 'W', [arg1, arg2])
+			(N_used == 1) ? arg1 = val : arg2 = val
+		end
+	end
+	return cmd, arg1, arg2
 end
 
 # ---------------------------------------------------------------------------------------------------

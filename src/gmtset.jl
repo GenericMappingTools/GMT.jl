@@ -24,6 +24,7 @@ function gmtset(cmd0::String=""; kwargs...)
 	length(kwargs) == 0 && return monolitic("gmtset", cmd0)
 
 	d = KW(kwargs)
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd = parse_V("", d)
 
 	cmd = add_opt(cmd, 'D', d, [:D :units], nothing, true)
@@ -31,7 +32,7 @@ function gmtset(cmd0::String=""; kwargs...)
  
 	key = collect(keys(d))
 	for k = 1:length(d)
-		if (key[k] == :Vd)	continue	end
+		(key[k] == :Vd)	&& continue
 		cmd *= " " * string(key[k]) * " " * string(d[key[k]])
 		delete!(d, key[k])
 	end

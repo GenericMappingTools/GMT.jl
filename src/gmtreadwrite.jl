@@ -66,6 +66,7 @@ to read a jpg image with the bands reversed (this example is currently broken in
 function gmtread(fname::String; kwargs...)
 
 	d = KW(kwargs)
+	help_show_options(d)					# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :f :i :h])
 	cmd, opt_bi = parse_bi(cmd, d)
 
@@ -219,6 +220,7 @@ function gmtwrite(fname::String, data; kwargs...)
 	end
 
 	d = KW(kwargs)
+	help_show_options(d)					# Check if user wants ONLY the HELP mode
 	cmd, opt_R = parse_R("", d)
 	cmd = parse_V_params(cmd, d)
 

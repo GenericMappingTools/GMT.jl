@@ -62,6 +62,7 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 	length(kwargs) == 0 && return monolitic("grdvector", cmd0, arg1, arg2)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
@@ -73,17 +74,22 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 
 	N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
-
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd = parse_Q_grdvec(d, [:Q :vec :vector :arrow], cmd)
+	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
 
-	if ((val = find_in_dict(d, [:Q :vec :vector :arrow], true)[1]) !== nothing)	# and delete to no be reused in :W
+    return finish_PS_module(d, "grdvector " * cmd, "", K, O, true, arg1, arg2)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol}, cmd::String)
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | String")
+    if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, String))  cmd *= " -Q" * val		# An hard core GMT string directly with options
 		else                   cmd *= " -Q" * vector_attrib(val)
 		end
 	end
-	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
-
-    return finish_PS_module(d, "grdvector " * cmd, "", K, O, true, arg1, arg2)
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------

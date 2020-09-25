@@ -38,6 +38,7 @@ function grd2xyz(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2xyz", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :bo :d :f :h :o :s])
     cmd  = parse_these_opts(cmd, d, [[:C :row_col], [:W :weight], [:Z :flags]])
 

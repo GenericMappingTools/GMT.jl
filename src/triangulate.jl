@@ -72,6 +72,7 @@ function triangulate(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("triangulate", cmd0, arg1)
 
 	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :I :V_params :bi :bo :di :e :f :h :i :r :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :slope_grid], [:D :derivatives], [:E :empty], [:G :grid :outgrid], [:M :network],
 	                                 [:N :ids], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])

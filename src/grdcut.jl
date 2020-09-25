@@ -39,6 +39,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdcut", cmd0, arg1)
 
     d = KW(kwargs)
+	help_show_options(d)			# Check if user wants ONLY the HELP mode
     cmd, = parse_common_opts(d, "", [:R :V_params :f])
     opt_J, = parse_J("", d)
     if (!startswith(opt_J, " -JX"))  cmd *= opt_J  end
