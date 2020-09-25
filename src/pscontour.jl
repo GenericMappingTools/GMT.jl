@@ -109,7 +109,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		cmd, args, n, = add_opt(cmd, 'C', d, [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
 		if (n > 0)
 			for k = 3:-1:1
-				if (args[k] === nothing)  continue  end
+				(args[k] === nothing) && continue
 				if (isa(args[k], Array{<:Number}))
 					cmd *= arg2str(args[k], ',')
 					if (length(args[k]) == 1)  cmd *= ","  end		# A single contour needs to end with a ","
