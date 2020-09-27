@@ -61,4 +61,4 @@ A scatter of ten points plotted as black cubes of 7 points size using the defaul
 See also
 --------
 
-The [`GMT man page`](https://gmt.soest.hawaii.edu/doc/latest/plot.html)
+The [`GMT man page`](http://docs.generic-mapping-tools.org/latest/plot.html)

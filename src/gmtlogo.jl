@@ -42,7 +42,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 	length(kwargs) == 0 && return monolitic("gmtlogo", cmd0, arg1)
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
-    K, O = set_KO(first)		# Set the K O dance
+	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, = parse_R("", d, O)
 	cmd, = parse_J(cmd, d, "-Jx1", true, O)

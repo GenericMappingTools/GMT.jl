@@ -106,4 +106,4 @@ But it is much nicer if we paint the terminators
 See also
 --------
 
-The [`GMT man page`](https://gmt.soest.hawaii.edu/doc/latest/solar.html)
+The [`GMT man page`](http://docs.generic-mapping-tools.org/latest/solar.html)

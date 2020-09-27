@@ -22,7 +22,7 @@ Parameters
    More at [axis](@ref)
 
 - **C** or **color** or **cmap** : *color=cpt*\
-   Give a CPT or specify **color="color1,color2 [,color3 ,...]"** or **color=((r1,g1,b1),(r2,g2,b2),...)** to build a linear continuous CPT from those colors automatically, where *z* starts at 0 and is incremented by one for each color. In this case *color_n* can be a [r g b] triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc ). If **-S** is set, let symbol fill color be determined by the z-value in the third column. Additional fields are shifted over by one column (optional size would be 4th rather than 3rd field, etc.). If **-S** is not set, then it expects the user to supply a multisegment file where each segment header contains a **-Z**\ *val* string. The *val* will control the color of the line or polygon (if **-L** is set) via the CPT.
+   Give a CPT or specify **color="color1,color2 [,color3 ,...]"** or **color=((r1,g1,b1),(r2,g2,b2),...)** to build a linear continuous CPT from those colors automatically, where *z* starts at 0 and is incremented by one for each color. In this case *color_n* can be a [r g b] triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc ). If **symbol** is set, let symbol fill color be determined by the z-value in the third column. Additional fields are shifted over by one column (optional size would be 4th rather than 3rd field, etc.). If **symbol** is not set, then it expects the user to supply a multisegment file where each segment header contains a **-Z**\ *val* string. The *val* will control the color of the line or polygon (if **close** is set) via the CPT.
 
 - **D** or *shift* or *offset* : *offset=(dx,dy)* **|** *offset=dx*\
    Offset the plot symbol or line locations by the given amounts *dx,dy* [Default is no offset]. If *dy* is not given it is set equal to *dx*.
@@ -56,10 +56,10 @@ Parameters
 - **G** or *markerfacecolor* or *mc* or *fill*\
    Select color or pattern for filling of symbols or polygons [Default is no fill]. Note that plot will search for *fill* and *pen* settings in all the segment headers (when passing a GMTdaset or file of a multi-segment dataset) and let any values thus found over-ride the command line settings (but those must be provided in the terse GMT syntax). See [Setting color](@ref) for extend color selection (including colormap generation).
 
-- **-I** or **shade** : -- *shade=intens*\
+- **I** or **shade** : -- *shade=intens*\
     Use the supplied *intens* value (nominally in the -1 to +1 range) to modulate the fill color by simulating illumination [none]. If no intensity is provided (*e.g.* **shade=""**) we will instead read *intens* from the first data column after the symbol parameters (if given).
 
-- **-L** or *close* : -- *close=(sym=true, asym=true, envelope=true, left=true, right=true, x0=x0, top=true, bot=true, y0=y0, pen=pen)*\
+- **L** or *close* : -- *close=(sym=true, asym=true, envelope=true, left=true, right=true, x0=x0, top=true, bot=true, y0=y0, pen=pen)*\
     Force closed polygons. Alternatively, add modifiers to build a polygon from a line segment.
     Add **sym=true** to build symmetrical envelope around y(x) using deviations dy(x) given in extra column 3.
     Add **asym=true** to build asymmetrical envelope around y(x) using deviations dy1(x) and dy2(x) from extra columns 3-4.
