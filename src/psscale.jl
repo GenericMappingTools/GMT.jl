@@ -59,7 +59,7 @@ Full option list at [`psscale`]($(GMTdoc)psscale.html)
 function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	gmt_proggy = (IamModern[1]) ? "colorbar "  : "psscale "
-	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
+	(length(kwargs) == 0) && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
