@@ -107,11 +107,8 @@ function movie(main; pre=nothing, post=nothing, kwargs...)
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 
-	if (isa(main, Function) || isa(main, String))
-		if ((mainName = jl_sc_2_shell_sc(main, "main_script")) === nothing)  error("Main script has nothing useful")  end
-	else
-		error("A main script is mandatory")
-	end
+	(!isa(main, Function) && !isa(main, String)) && error("A main script is mandatory")
+	((mainName = jl_sc_2_shell_sc(main, "main_script")) === nothing) && error("Main script has nothing useful")
 
 	cmd, = parse_common_opts(d, "", [:V_params :x])
 	cmd = parse_these_opts(cmd, d, [[:C :canvas], [:N :name]])
@@ -145,7 +142,7 @@ function movie(main; pre=nothing, post=nothing, kwargs...)
 	IamModern[1] = false; FirstModern[1] = false; convert_syntax[1] = false; cmds_history = [""]
 
 	cmd = "movie " * mainName * cmd				# In any case we need this
-	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
+	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 	gmt(cmd)
 end
 
