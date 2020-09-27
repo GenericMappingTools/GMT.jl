@@ -91,7 +91,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		if (!occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
 		if (isa(arg1.image, Array{UInt16}))
 			arg1 = mat2img(arg1; d...)					# Get a new UInt8 scaled image
-			if (haskey(d, :histo_bounds))  delete!(d, :histo_bounds)  end
+			find_in_dict(d, [:histo_bounds :stretch])[1]	# Delete them if they exist
 		end
 	end
 
