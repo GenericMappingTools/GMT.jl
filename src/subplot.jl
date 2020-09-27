@@ -92,21 +92,20 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			error("SUBPLOT: 'grid' keyword is mandatory")
 		end
 		cmd = arg2str(val_, 'x') * " " * cmd * opt_C			# Also add the eventual global -C clearance option
-		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
+		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 
 		if (!IamModern[1])			# If we are not in modern mode, issue a gmt("begin") first
-			fname = ""				# Default name (GMTplot.ps) is set in gmt_main()
+			# Default name (GMTplot.ps) is set in gmt_main()
+			fname = ((val_ = find_in_dict(d, [:fmt])[1]) !== nothing) ? string("GMTplot ", val_) : ""
 			if ((val_ = find_in_dict(d, [:figname :name :savefig])[1]) !== nothing)
 				fname = get_format(string(val_), nothing, d)		# Get the fig name and format.
-			elseif ((val_ = find_in_dict(d, [:fmt])[1]) !== nothing)
-				fname = "GMTplot " * string(val_)
 			end
 			gmt("begin " * fname)
 		end
 		gmt("subplot begin " * cmd);
 		IamSubplot[1] = true
 	elseif (do_set)
-		if (!IamSubplot[1])  error("Cannot call subplot(set, ...) before setting dimensions")  end
+		(!IamSubplot[1]) && error("Cannot call subplot(set, ...) before setting dimensions")
 		lix, pane = parse_c(cmd, d)
 		cmd = pane * cmd				# Here we don't want the "-c" part
 		cmd = add_opt(cmd, 'A', d, [:fixedlabel]) * opt_C			# Also add the eventual this panel -C clearance option
@@ -140,19 +139,16 @@ function helper_sub_F(arg, dumb=nothing)::String
 			end
 		end
 		if ((val = find_in_dict(d, [:frac :fractions])[1]) !== nothing)		# ex: dims=(frac=((2,3),(3,4,5)))
-			if (isa(val, Tuple{Tuple, Tuple}))  out *= arg2str(val[1], ',') * '/' * arg2str(val[2], ',')
-			else                                error("'frac' option must be a tuple(tuple, tuple)")
-			end
+			!isa(val, Tuple{Tuple, Tuple}) && error("'frac' option must be a tuple(tuple, tuple)")
+			out *= arg2str(val[1], ',') * '/' * arg2str(val[2], ',')			
 		end
 		if (haskey(d, :width))
 			out *= string(d[:width], '/')
-			if (!haskey(d, :height))  out *= string(d[:width])
-			else                      out *= string(d[:height])
-			end
+			out = (!haskey(d, :height)) ? string(out, d[:width]) : string(out, d[:height])
 		end
 		if (haskey(d, :fwidth))
 			out *= "+f" * arg2str(d[:fwidth], ',')
-			if (!haskey(d, :fheight))  error("SUBPLOT: when using 'fwidth' must also set 'fheight'")  end
+			(!haskey(d, :fheight)) && error("SUBPLOT: when using 'fwidth' must also set 'fheight'")
 			out *= '/' * arg2str(d[:fheight], ',')
 		end
 		if ((val = find_in_dict(d, [:fill], false)[1]) !== nothing)  out *= "+g" * add_opt_fill(val)  end
@@ -162,14 +158,14 @@ function helper_sub_F(arg, dumb=nothing)::String
 	elseif (isa(arg, Tuple))		# Hopefully only for the "dims=(panels=(xsize, ysize),)"
 		out = arg2str(arg)
 	end
-	if (out == "")  error("SUBPLOT: garbage in DIMS option")  end
+	(out == "") && error("SUBPLOT: garbage in DIMS option")
 	return out
 end
 
 # --------------------------------------------------------------------------
 function mura_arg(arg)::Dict
 	# Barrier function to contain a possible type instability
-	if (isa(arg, Tuple{Tuple, Number}))  arg = (arg[1], (arg[2],))  end	# This looks terrible type instable
+	if (isa(arg, Tuple{Tuple, Number}))  arg = (arg[1], (arg[2],))  end	# This looks terribly type instable
 	# Need first case because for example dims=(panels=((2,4),(2.5,5,1.25)),) shows up here only as
 	# arg = ((2, 4), (2.5, 5, 1.25)) because this function was called from within add_opt()
 	if (isa(arg, Tuple{Tuple, Tuple}))  d = Dict(:panels => arg)
