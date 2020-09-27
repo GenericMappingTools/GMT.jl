@@ -14,24 +14,20 @@ Parameters
 ----------
 
 - $(GMT.opt_J)
-- **W** | **bin** | **width** :: [Type => Number | Str]
-
-    Sets the bin width used for histogram calculations.
-    ($(GMTdoc)histogram.html#w)
 - **A** | **horizontal** :: [Type => Bool]
 
     Plot the histogram horizontally from x = 0 [Default is vertically from y = 0].
     ($(GMTdoc)histogram.html#a)
 - $(GMT.opt_B)
-- **C** | **color** :: [Type => Str | GMTcpt]
+- **C** | **color** | **cmap** :: [Type => Str | GMTcpt]
 
     Give a CPT. The mid x-value for each bar is used to look-up the bar color.
     ($(GMTdoc)histogram.html#c)
-- **D** | **annot** | **annotate** :: [Type => Str | []]
+- **D** | **annot** | **annotate** | **counts** :: [Type => Str | Tuple]
 
     Annotate each bar with the count it represents.
     ($(GMTdoc)histogram.html#d)
-- **F** | **center** :: [Type => Bool or []]
+- **F** | **center** :: [Type => Bool]
 
     Center bin on each value. [Default is left edge].
     ($(GMTdoc)histogram.html#f)
@@ -47,14 +43,14 @@ Parameters
 
     Handling of extreme values that fall outside the range set by **T**.
     ($(GMTdoc)histogram.html#l)
-- **N** | **normal** :: [Type => Str]
+- **N** | **distribution** :: [Type => Str]
 
     Draw the equivalent normal distribution; append desired pen [0.5p,black].
     ($(GMTdoc)histogram.html#n)
 - $(GMT.opt_P)
-- **Q** | **alpha** :: [Type => Number | []]
+- **Q** | **cumulative** :: [Type => Bool | "r"]
 
-    Sets the confidence level used to determine if the mean resultant is significant.
+    Draw a cumulative histogram. Append r to instead compute the reverse cumulative histogram.
     ($(GMTdoc)histogram.html#q)
 - **R** | **region** :: [Type => Str]
 
@@ -83,6 +79,7 @@ Parameters
 - $(GMT.opt_bi)
 - $(GMT.opt_di)
 - $(GMT.opt_e)
+- $(GMT.opt_f)
 - $(GMT.opt_h)
 - $(GMT.opt_i)
 - $(GMT.opt_p)
@@ -122,18 +119,20 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	K, O = set_KO(first)		# Set the K O dance
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "histogram", O, " -JX12c/12c")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "histogram", O, " -JX12c/12c")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :params], first)[1]
-	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:D :annot :annotate], [:F :center], [:Q :cumulative], [:S :stairs]])
+	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = parse_N_hstg(d, [:N :normal], cmd)
+	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate :counts], (beneath="_+b", font="+f", offset="+o", vertical="_+r"))
+	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
+	(show_kwargs[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	(opt_R == "") && (opt_R = " ")			# So it doesn't try to find the -R in next call
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
-	cmd   = add_opt(cmd, 'L', d, [:L :out_range])
+	cmd   = add_opt(cmd, 'L', d, [:L :out_range], (first="l", last="h", both="b"))
 	cmd  *= add_opt_pen(d, [:W :pen], "W", true)     	# TRUE to also seek (lw|lt,lc,ls)
 	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-S", cmd))
 		cmd *= " -G150"
@@ -192,18 +191,6 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 	out = (out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
 
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_N_hstg(d::Dict, symbs::Array{<:Symbol}, cmd::String)
-	# Move this to a fun so that it can be accessed by the helping machinery
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | String | Number")	# Just print the options
-	if ((val = find_in_dict(d, [:N :normal])[1]) !== nothing)
-		if (isa(val, Number) || isa(val, String))  cmd  = string(cmd, " -N", val)
-		elseif (isa(val, Tuple))                   cmd *= " -N" * parse_arg_and_pen(val)
-		end
-	end
-	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------

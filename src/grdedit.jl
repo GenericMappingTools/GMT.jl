@@ -47,6 +47,9 @@ Parameters
     Make necessary changes in the header to convert a gridline-registered grid to a pixel-registered
     grid, or vice-versa.
     ($(GMTdoc)grdedit.html#t)
+- **up_minmax** [Type => Bool]
+
+    When input arg is a GMTgrid opbject checks the header has the crrect z min/max values.
 - $(GMT.opt_V)
 - $(GMT.opt_bi)
 - $(GMT.opt_di)
@@ -60,11 +63,13 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs);     arg2 = nothing
 	help_show_options(d)			# Check if user wants ONLY the HELP mode
+    (isa(arg1, GMTgrid) && haskey(d, :up_minmax)) && (arg1.range[5:6] .= extrema(arg1); return)  # Update the z_min|max
+
 	cmd, = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:G :outgrid],
 	                                 [:S :wrap], [:T :toggle]])
 	cmd, args, n, = add_opt(cmd, 'N', d, [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))
-	if (n > 0)  arg1, arg2 = args[:]  end
+    if (n > 0)  arg1, arg2 = args[:]  end
 
 	common_grd(d, cmd0, cmd, "grdedit ", arg1, arg2)		# Finish build cmd and run it
 end

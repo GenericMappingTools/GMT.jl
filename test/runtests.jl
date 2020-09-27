@@ -340,6 +340,17 @@ if (got_it)					# Otherwise go straight to end
 	logo(julia=8)
 	logo(GMTjulia=8, fmt=:png, Vd=dbg2)
 	logo(GMTjulia=2, savefig="logo.PNG")
+	logo(GMTjulia=2, savefig="logo.PNG", fmt=:PNG)
+	logo!(julia=8, Vd=dbg2)
+	logo!("", julia=8, Vd=dbg2)
+
+	println("	GMTSPATIAL")
+	# GMTSPATIAL
+	# Test  Cartesian centroid and area
+	result = gmt("gmtspatial -Q", [0 0; 1 0; 1 1; 0 1; 0 0]);
+	@assert(isapprox(result[1].data, [0.5 0.5 1]))
+	# Test Geographic centroid and area
+	result = gmt("gmtspatial -Q -fg", [0 0; 1 0; 1 1; 0 1; 0 0]);
 	logo!(julia=8, Vd=dbg2)
 	logo!("", julia=8, Vd=dbg2)
 
@@ -450,7 +461,7 @@ if (got_it)					# Otherwise go straight to end
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");
 	grd2kml(G, I="+", N="NULL", V="q")
 
-	G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y");
+	G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y -Vq");
 	G2=grdblend(G,G3);
 
 	println("	GRDCLIP")
@@ -850,7 +861,7 @@ if (got_it)					# Otherwise go straight to end
 	println("	PSCLIP")
 	# PSCLIP
 	d = [0.2 0.2; 0.2 0.8; 0.8 0.8; 0.8 0.2; 0.2 0.2];
-	psclip(d, J="X3i", R="0/1/0/1", N=true);
+	psclip(d, J="X3i", R="0/1/0/1", N=true, V=:q);
 	psclip!(d, J="X3i", R="0/1/0/1", Vd=dbg2);
 	psclip!("", d, J="X3i", R="0/1/0/1", Vd=dbg2);
 
@@ -919,7 +930,7 @@ if (got_it)					# Otherwise go straight to end
 	# PSHISTOGRAM
 	histogram(randn(1000),T=0.1,center=true,B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
 	histogram!("", randn(1000),T=0.1,center=true,N="1+p0.5", Vd=dbg2)
-	histogram!(randn(1000),T=0.1,center=true,N=(2,(1,:red)), Vd=dbg2)
+	histogram!(randn(1000),T=0.1,center=true,N=(mode=1,pen=(1,:red)), Vd=dbg2)
 	I = mat2img(rand(UInt8,4,4));
 	histogram(I, Vd=dbg2);
 	histogram(I, I=:o);
@@ -1065,7 +1076,7 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	SURFACE")
 	# SURFACE
-	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100);
+	G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100, V=:q);
 	@assert(size(G.z) == (151, 151))
 
 	# SPLITXYZ (fails)

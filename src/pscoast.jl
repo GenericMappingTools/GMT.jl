@@ -116,7 +116,10 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	end
 
 	# Parse these three options that can be made to respond to same code
-	cmd = parse_INW_coast(d, [[:I :rivers], [:N :borders], [:W :shore]], cmd)
+	cmd = parse_INW_coast(d, [[:I :rivers], [:N :borders], [:W :shore]], cmd, "INW")
+	(show_kwargs[1]) && print_kwarg_opts([:I :rivers],  "NamedTuple | Tuple | Dict | String")
+	(show_kwargs[1]) && print_kwarg_opts([:N :borders], "NamedTuple | Tuple | Dict | String")
+	(show_kwargs[1]) && print_kwarg_opts([:W :shore],   "NamedTuple | Tuple | Dict | String")
 	cmd = parse_E_coast(d, [:E :DCW], cmd)
 
 	if (!occursin(" -C",cmd) && !occursin(" -E",cmd) && !occursin(" -G",cmd) && !occursin(" -I",cmd) &&
@@ -130,15 +133,13 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_INW_coast(d::Dict, symbs::Array{Array{Symbol,2},1}, cmd::String)
-	(show_kwargs[1]) && print_kwarg_opts(symbs[1], "NamedTuple | Tuple | Dict | String")
-	(show_kwargs[1]) && print_kwarg_opts(symbs[2], "NamedTuple | Tuple | Dict | String")
-	(show_kwargs[1]) && return print_kwarg_opts(symbs[3], "NamedTuple | Tuple | Dict | String")
-	flags ="INW"
-	for k = 1:3
+function parse_INW_coast(d::Dict, symbs::Array{Array{Symbol,2},1}, cmd::String, flags::String)
+	# This function is also used by pshistogram (opt -N). Must be length(flags) == length(symbs)
+	(length(symbs) != length(flags)) && error("Length of symbs must be equal to number of chars in FLAGS")
+	for k = 1:length(symbs)
 		if ((val = find_in_dict(d, symbs[k], false)[1]) !== nothing)
 			if (isa(val, NamedTuple) || isa(val, Dict) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
-				cmd = add_opt(cmd, flags[k], d, symbs[k], (type="/#", level="/#", pen=("", add_opt_pen)))
+				cmd = add_opt(cmd, flags[k], d, symbs[k], (type="/#", level="/#", mode="+p#", pen=("", add_opt_pen)))
 			elseif (isa(val, Tuple))  cmd *= " -" * flags[k] * parse_pen(val)
 			else                      cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
 			end

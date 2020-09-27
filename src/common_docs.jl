@@ -142,6 +142,11 @@ const opt_p = "**p** | **view** | **perspective** :: [Type => Str or List]   ``A
     Selects perspective view and sets the azimuth and elevation of the viewpoint [180/90].
     (http://docs.generic-mapping-tools.org/latest/gmt.html#perspective-full)"
 
+const opt_q = "**q** | **inrow** :: [Type => Str]       ``Arg = [i|o][~]rows[+ccol][+a|f|s]``
+
+    Select specific data rows to be read (-qi [Default]) or written (-qo) [all]. 
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#q-full)"
+
 const opt_r = "**r** | **reg** | **registration** :: [Type => Bool or []]
 
     Force pixel node registration [Default is gridline registration].
