@@ -1451,7 +1451,7 @@ function mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::S
 		nz = 1
 		isa(mat, Array{UInt16,3}) ? (ny, nx, nz) = size(mat) : (ny, nx) = size(mat)
 
-		(vals == "auto" || vals == :auto || (isa(vals, Bool) && vals) || (isa(vals, Number))) &&
+		(vals == "auto" || vals == :auto || (isa(vals, Bool) && vals) || (isa(vals, Number) && vals == 1)) &&
 			(vals = [find_histo_limits(mat)...])	# Out is a tuple, convert to vector
 		len = length(vals)
 
@@ -1522,11 +1522,11 @@ function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec=nothing, alpha
 	n_colors = img.n_colors
 	if (n_colors > 100000)  n_colors = Int(floor(n_colors / 1000))  end
 	if (alpha_ind !== nothing)			# Change the index of the alpha color
-		if (alpha_ind < 0 || alpha_ind > 255)  error("Alpha color index must be in the [0 255] interval")  end
+		(alpha_ind < 0 || alpha_ind > 255) && error("Alpha color index must be in the [0 255] interval")
 		img.n_colors = n_colors * 1000 + Int32(alpha_ind)
 	elseif (alpha_vec !== nothing)		# Replace/add the alpha column of the colormap matrix. Allow also shorter vectors
 		@assert(isa(alpha_vec, Array{<:Integer}))
-		if (length(alpha_vec) > n_colors)  error("Length of alpha vector is larger than the number of colors")  end
+		(length(alpha_vec) > n_colors) && error("Length of alpha vector is larger than the number of colors")
 		n_col = div(length(img.colormap), n_colors)
 		vec = convert.(Int32, alpha_vec)
 		if (n_col == 4)  img.colormap[(end-length(vec)+1):end] = vec;
@@ -1537,10 +1537,9 @@ function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec=nothing, alpha
 		@assert(isa(alpha_band, Array{<:UInt8, 2}))
 		ny1, nx1, = size(img.image)
 		ny2, nx2  = size(alpha_band)
-		if (ny1 != ny2 || nx1 != nx2) error("alpha channel has wrong dimensions")  end
-		if (size(img.image, 3) != 3)  @warn("Adding alpha band is restricted to true color images (RGB)")
-		else                          img.alpha = alpha_band
-		end
+		(ny1 != ny2 || nx1 != nx2) && error("alpha channel has wrong dimensions")
+		(size(img.image, 3) != 3) ? @warn("Adding alpha band is restricted to true color images (RGB)") :
+		                            img.alpha = alpha_band
 	end
 	return nothing
 end
@@ -1668,10 +1667,9 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 		end
 		one_or_zero = reg == 0 ? 1 : 0
 		if (length(x) != 2)			# Check that REGistration and coords are compatible
-			if (reg == 1 && round((x[end] - x[1]) / (x[2] - x[1])) != nx)	# Gave REG = pix but xx say grid
-				@warn("Gave REGistration = 'pixel' but X coordinates say it's gridline. Keeping later reg.")
-				one_or_zero = 1
-			end
+			(reg == 1 && round((x[end] - x[1]) / (x[2] - x[1])) != nx) &&		# Gave REG = pix but xx say grid
+				(@warn("Gave REGistration = 'pixel' but X coordinates say it's gridline. Keeping later reg.");
+				one_or_zero = 1)
 		else
 			x = collect(range(x[1], stop=x[2], length=nx+reg))
 			y = collect(range(y[1], stop=y[2], length=ny+reg))
