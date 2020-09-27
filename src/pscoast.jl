@@ -90,7 +90,7 @@ Parameters
 function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
 	gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
-	length(kwargs) == 0 && clip === nothing && return monolitic(gmt_proggy, cmd0)
+	(length(kwargs) == 0 && clip === nothing) && return monolitic(gmt_proggy, cmd0)
 
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
