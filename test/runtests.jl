@@ -1139,7 +1139,7 @@ if (got_it)					# Otherwise go straight to end
 	size(G1)
 
 	Base.BroadcastStyle(typeof(G1))
-	Base.getindex(G1,1)
+	getindex(G1,1)
 
 	GMT.find4similar(G1)
 	GMT.find4similar(G1,0)
