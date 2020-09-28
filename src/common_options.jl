@@ -42,7 +42,6 @@ function parse_R(cmd::String, d::Dict, O=false, del=false)
 	
 	(show_kwargs[1]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
 
-	#opt_R = Array{String,1}(undef,1)
 	opt_R = [""]
 	val, symb = find_in_dict(d, [:R :region :limits])
 	if (val !== nothing)
@@ -94,7 +93,6 @@ end
 
 function build_opt_R(arg::NamedTuple)
 	# Option -R can also be diabolicly complicated. Try to addres it. Stil misses the Time part.
-	#BB = Array{String,1}(undef,1)
 	BB = [""]
 	d = nt2dict(arg)					# Convert to Dict
 	if ((val = find_in_dict(d, [:bb :limits :region])[1]) !== nothing)
@@ -138,18 +136,13 @@ function build_opt_R(arg::NamedTuple)
 		else
 			error("Increments for limits must be a String, a Number, Array or Tuple")
 		end
-		if (haskey(d, :adjust))  BB[1] *= "+r" * t
-		else                     BB[1] *= "+R" * t
-		end
+		BB[1] = (haskey(d, :adjust)) ? BB[1] * "+r" * t : BB[1] * "+R" * t
 	end
 
 	if (haskey(d, :unit))  BB[1] *= "+u" * string(d[:unit])[1]  end	# (e.g., -R-200/200/-300/300+uk)
 
-	if (BB[1] == "")
-		error("No, no, no. Nothing useful in the region named tuple arguments")
-	else
-		return " -R" * BB[1]
-	end
+	(BB[1] == "") && error("No, no, no. Nothing useful in the region named tuple arguments")
+	return " -R" * BB[1]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -192,7 +185,6 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 	
 	(show_kwargs[1]) && return (print_kwarg_opts([:J :proj :projection], "NamedTuple | String"), "")
 
-	#opt_J = Array{String,1}(undef,1)
 	opt_J = [""];		mnemo = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
 		isa(val, Dict) && (val = dict2nt(val))
@@ -350,7 +342,6 @@ function check_axesswap(d::Dict, width::AbstractString)
 end
 
 function build_opt_J(Val)
-	#out = Array{String,1}(undef,1)
 	out = [""];		mnemo = false
 	if (isa(Val, String) || isa(Val, Symbol))
 		prj, mnemo = parse_proj(string(Val))
@@ -376,7 +367,6 @@ function parse_proj(p::String)
 		p = replace(p, " " => "")		# Remove the spaces from proj4 strings
 		return p,false
 	end
-	out = Array{String,1}(undef,1)
 	out = [""];
 	mnemo = true			# True when the projection name used one of the below mnemonics
 	s = lowercase(p)
@@ -474,7 +464,7 @@ function parse_proj(p::NamedTuple)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)
+function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)::Tuple{String,String}
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axis :axes :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
@@ -935,7 +925,7 @@ function parse_inc(cmd::String, d::Dict, symbs, opt, del=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_params(cmd::String, d::Dict)
+function parse_params(cmd::String, d::Dict)::String
 	# Parse the gmt.conf parameters when used from within the modules. Return a --PAR=val string
 	# The input to this kwarg can be a tuple (e.g. (PAR,val)) or a NamedTuple (P1=V1, P2=V2,...)
 
@@ -966,7 +956,6 @@ function add_opt_pen(d::Dict, symbs, opt::String="", sub::Bool=true, del::Bool=t
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | String | Number")	# Just print the options
 
 	if (opt != "")  opt = " -" * opt  end	# Will become -W<pen>, for example
-	out = Array{String,1}(undef,1)
 	out = [""]
 	pen = build_pen(d, del)					# Either a full pen string or empty ("") (Seeks for lw (or lt), lc, etc)
 	if (pen != "")
@@ -1116,11 +1105,10 @@ function arg2str(d::Dict, symbs)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function arg2str(arg, sep='/')
+function arg2str(arg, sep='/')::String
 	# Convert an empty, a numeric or string ARG into a string ... if it's not one to start with
 	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
 	# SEP is the char separator used when ARG is a tuple or array of numbers
-	out = Array{String,1}(undef,1)
 	out = [""]
 	if (isa(arg, AbstractString) || isa(arg, Symbol))
 		out[1] = string(arg)
@@ -1261,13 +1249,16 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true,
 	# If DEL == false we do not remove the found key.
 	# ARG, is a special case to append to a matrix (complicated thing in Julia)
 	# ARG can also be a Bool, in which case when MAPA is a NT we expand each of its members as sep options
+	# If ARG is a string, then the keys of MAPA can be used as values of SYMB and are replaced by vals of MAPA
+	#    Example (hitogram -Z): add_opt("", 'Z', d, [:Z :kind], (counts="0", freq="1",...)) Z=freq => -Z1
+	#  But this only works when sub-options have default values. i.e. they are aliases
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
+
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)
 		if (isa(arg, Bool) && isa(mapa, NamedTuple))	# Make each mapa[i] a mapa[i]key=mapa[i]val
-			cmd_ = Array{String,1}(undef,1)
-			cmd_ = [""]
+			local cmd_ = [""]
 			for k in keys(mapa)
-				if ((val_ = find_in_dict(d, [k], false)[1]) === nothing)  continue  end
+				((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue
 				if (isa(mapa[k], Tuple))  cmd_[1] *= mapa[k][1] * mapa[k][2](d, [k])
 				else                      cmd_[1] *= mapa[k] * arg2str(val_)
 				end
@@ -1276,6 +1267,18 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true,
 			if (cmd_[1] != "")  cmd *= " -" * opt * cmd_[1]  end
 		end
 		return cmd
+	elseif (isa(arg, String) && isa(mapa, NamedTuple))	# Use the mapa KEYS as possibe values of 'val'
+		local cmd_ = ""
+		for k in keys(mapa)
+			if (string(val) == string(k))
+				cmd_ = " -" * opt
+				#(length(mapa[k][1]) == 0) && error("Need alias valu. Cannot be empty")
+				first_ind = (mapa[k][1] == "_") ? 2 : 1
+				cmd_ *= mapa[k][first_ind:end]
+				break
+			end
+		end
+		(cmd_ != "") && return cmd * cmd_	# Otherwise continue to see if the other (NT) form was provided
 	end
 
 	args = Array{String,1}(undef,1)
@@ -1310,10 +1313,9 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true,
 end
 
 # ---------------------------------------------------------------------------------------------------
-function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)
+function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)::String
 	d = nt2dict(mapa)
 	if (!haskey(d, this_key))  return  end	# Should be a error?
-	out = Array{String,1}(undef,1)
 	out = [""]
 	key = keys(user_input)					# user_input = (rows=1, fill=:red)
 	val_namedTup = d[this_key]				# water=(rows="my", cols="mx", fill=add_opt_fill)
@@ -1667,7 +1669,6 @@ function get_color(val)::String
 	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
 	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return isa(val, Bool) ? "" : string(val)  end
 
-	out = Array{String,1}(undef,1)
 	out = [""]
 	if (isa(val, Tuple))
 		for k = 1:length(val)
@@ -1760,7 +1761,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 axis(nt::NamedTuple; x=false, y=false, z=false, secondary=false) = axis(;x=x, y=y, z=z, secondary=secondary, nt...)
-function axis(;x=false, y=false, z=false, secondary=false, kwargs...)
+function axis(;x=false, y=false, z=false, secondary=false, kwargs...)::String
 	# Build the (terrible) -B option
 	d = KW(kwargs)
 
