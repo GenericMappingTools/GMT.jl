@@ -34,6 +34,9 @@ Optional Arguments
 - **D** or **annot** or **annotate** or **count** : -- *annot=true* **|** *annot=(beneath=|font=|offset=|vertical=,)*\
    Annotate each bar with the count it represents. Add any of the following options: Use **annot=(beneath=true,)** to place the labels beneath the bars instead of above; use **annot=(font="font",)** to change to another font than the default annotation font; use **annot=(offset=val,)** to change the offset between bar and label [6p]; use **annot=(vertical=true,)** to rotate the labels from horizontal to vertical.
 
+- **E** or **width** : -- *width=val* **|** *width=(width=val, offset=val)*\ 
+   Use an alternative histogram bar width than the default set via **bin**, and optionally shift all bars by an offset. Here width is either an alternative width in data units, or the user may append a valid plot dimension unit ("c|i|p") for a fixed dimension instead. Optionally, all bins may be shifted along the axis by offset. As for width, it may be given in data units of plot dimension units by appending the relevant unit.
+
 - **F** or **center** : -- *center=true*\ 
    Center bin on each value. [Default is left edge].
 
@@ -68,13 +71,13 @@ Optional Arguments
 - **Q** or **cumulative** : -- *cumulative=true **|** cumulative="r"*\
    Draw a cumulative histogram. Append **r** to instead compute the reverse cumulative histogram.
 
-- **R** or **region** or **limits** : -- *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more\ 
+- **R** or **region** or **limits** : -- *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more\
    Specify the region of interest. More at [limits](@ref)
 
 - **S** or **stairs** : -- *stairs=true*\
    Draws a stairs-step diagram which does not include the internal bars of the default histogram. Uses *pen*.
 
-- **T** or **range** : -- *range=(min,max,inc[,:number,:log2,:log10])* **|** *range=[list]* **|** *range=file*\
+- **T** or **range** or **bin** : -- *range=(min,max,inc[,:number,:log2,:log10])* **|** *range=[list]* **|** *range=file*\
    Defines the range of the new CPT by giving the lowest and highest z-value (and optionally an interval). If **range**
    is not given, the existing range in the master CPT will be used intact. The values produces defines the color
    slice boundaries. If *:number* is added as a fourth element then *inc* is meant to indicate the number of
@@ -166,8 +169,8 @@ Since no y-range was specified, **histogram** will calculate *ymax* in even incr
 To plot the histogram of a Landsat image, pick good bounds for contrast enhancement and show them
 
 ```julia
-	I = gmtread("landsat.tif")
-	histogram(I, zoom=true, show=true);
+    I = gmtread("landsat.tif")
+    histogram(I, zoom=true, show=true);
 ```
 
 See also

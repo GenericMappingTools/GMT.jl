@@ -930,6 +930,7 @@ if (got_it)					# Otherwise go straight to end
 	println("	PSHISTOGRAM")
 	# PSHISTOGRAM
 	histogram(randn(1000),T=0.1,center=true,B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
+	histogram(randn(100),T=0.1,center=true, Z=:counts, Vd=dbg2)
 	histogram!("", randn(1000),T=0.1,center=true,N="1+p0.5", Vd=dbg2)
 	histogram!(randn(1000),T=0.1,center=true,N=(mode=1,pen=(1,:red)), Vd=dbg2)
 	I = mat2img(rand(UInt8,4,4));
