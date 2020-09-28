@@ -1293,12 +1293,11 @@ function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true,
 		end
 		return cmd * args[1]
 	elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
+		(!isa(val, NamedTuple) && !isa(val, String)) &&
+			error("The option argument must be a NamedTuple, not a simple Tuple")
 		if (isa(val, NamedTuple))
-			if (mapa[2] == helper_decorated)  args[1] = mapa[2](val, true)		# 'true' => single argout
-			else                              args[1] = mapa[2](val)			# Case not yet invented
-			end
+			args[1] = (mapa[2] == helper_decorated) ? mapa[2](val, true) : args[1] = mapa[2](val)	# 2nd case not yet inv
 		elseif (isa(val, String))  args[1] = val
-		else                       error("The option argument must be a NamedTuple, not a simple Tuple")
 		end
 	else
 		args[1] = arg2str(val)
@@ -1732,21 +1731,16 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_units(val)
 	# Parse a units string in the form d|e|f|k|n|M|n|s or expanded
-	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return string(val)  end
+	(isa(val, String) || isa(val, Symbol) || isa(val, Number)) && return string(val)
 
-	if (isa(val, Tuple) && (length(val) == 2))
-		return string(val[1], parse_unit_unit(val[2]))
-	else
-		error(@sprintf("PARSE_UNITS, got and unsupported data type: %s", typeof(val)))
-	end
+	!(isa(val, Tuple) && (length(val) == 2)) && error(@sprintf("PARSE_UNITS, got and unsupported data type: %s", typeof(val)))
+	return string(val[1], parse_unit_unit(val[2]))
 end
 
 # ---------------------------
 function parse_unit_unit(str)::String
-	if (isa(str, Symbol))  str = string(str)  end
-	if (!isa(str, String))
-		error(@sprintf("Argument data type must be String or Symbol but was: %s", typeof(str)))
-	end
+	(isa(str, Symbol)) && (str = string(str))
+	(!isa(str, String)) && error(@sprintf("Argument data type must be String or Symbol but was: %s", typeof(str)))
 
 	if     (str == "e" || str == "meter")  out = "e";
 	elseif (str == "M" || str == "mile")   out = "M";
