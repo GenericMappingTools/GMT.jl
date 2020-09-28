@@ -4,6 +4,8 @@
 Reads the header information in a binary 2-D grid file and replaces the information with
 values provided on the command line.
 
+If single input is a G GMTgrid object, it will update the z_min|max values of the G.range member
+
 Full option list at [`grdedit`]($(GMTdoc)grdedit.html)
 
 Parameters
@@ -47,9 +49,6 @@ Parameters
     Make necessary changes in the header to convert a gridline-registered grid to a pixel-registered
     grid, or vice-versa.
     ($(GMTdoc)grdedit.html#t)
-- **up_minmax** [Type => Bool]
-
-    When input arg is a GMTgrid opbject checks the header has correct z min/max values.
 - $(GMT.opt_V)
 - $(GMT.opt_bi)
 - $(GMT.opt_di)
@@ -63,7 +62,7 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs);     arg2 = nothing
 	help_show_options(d)			# Check if user wants ONLY the HELP mode
-    (isa(arg1, GMTgrid) && haskey(d, :up_minmax)) && (arg1.range[5:6] .= extrema(arg1); return arg1)  # Update the z_min|max
+    (isa(arg1, GMTgrid) && length(kwargs) == 0) && (arg1.range[5:6] .= extrema(arg1); return arg1)  # Update the z_min|max
 
 	cmd, = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:G :outgrid],
