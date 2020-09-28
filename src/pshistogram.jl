@@ -27,6 +27,10 @@ Parameters
 
     Annotate each bar with the count it represents.
     ($(GMTdoc)histogram.html#d)
+- **E** | **width** :: [Type => Bool]			`Arg = width[+ooffset]`
+
+    Use an alternative histogram bar width than the default set via T, and optionally shift all bars by an offset.
+    ($(GMTdoc)histogram.html#e)
 - **F** | **center** :: [Type => Bool]
 
     Center bin on each value. [Default is left edge].
@@ -97,9 +101,9 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 
-	cmd = add_opt("", 'Z', d, [:Z :kind],
-				  (counts="0", freq="1", log_count="2", log_freq="3", log10_count="4", log10_freq="5", weights="+w"))
-	opt_Z = cmd
+	cmd = ""
+	opt_Z = add_opt("", 'Z', d, [:Z :kind], (counts="0", count="0", freq="1", log_count="2", log_freq="3",
+	                                         log10_count="4", log10_freq="5", weights="+w"), true, "")
 	opt_T = parse_opt_range("", d, "")		# [:T :range :inc :bin]
 
 	# If inquire, no plotting so do it and return
@@ -126,6 +130,8 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate :counts], (beneath="_+b", font="+f", offset="+o", vertical="_+r"))
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
 	(show_kwargs[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
+
+	(GMTver >= 6.2) && (cmd = add_opt(cmd, 'E', d, [:E :width], (width="", off="+o", offset="+o")))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	(opt_R == "") && (opt_R = " ")			# So it doesn't try to find the -R in next call
