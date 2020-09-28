@@ -19,13 +19,13 @@ Full option list at [`psscale`]($(GMTdoc)psscale.html)
 
     Truncate the incoming CPT so that the lowest and highest z-levels are to zlo and zhi.
     ($(GMTdoc)psscale.html#g)
-- **I** | **shade** :: [Type => Number | []] 
+- **I** | **shade** :: [Type => Number | Str]
 
     Add illumination effects.
     ($(GMTdoc)psscale.html#i)
 - $(GMT.opt_J)
 - $(GMT.opt_Jz)
-- **L** | **equal** | **equal_size** :: [Type => Str | []]
+- **L** | **equal** | **equal_size** :: [Type => Str | Bool]		`Arg = [i][gap]`
 
     Gives equal-sized color rectangles. Default scales rectangles according to the z-range in the CPT.
     ($(GMTdoc)psscale.html#l)
@@ -81,8 +81,8 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))
-	if (!occursin(" -D", cmd))  cmd *= " -Dx8c/1c+w12c/0.5c+jTC+h"  end      #  So that we can call it with just a CPT
+	cmd = add_opt(cmd, 'L', d, [:L :equal :equal_size], (range="i", gap=""))	# Aditive
+	(!occursin(" -D", cmd)) && (cmd *= " -Dx8c/1c+w12c/0.5c+jTC+h")				#  So that we can call it with just a CPT
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 	gmt("destroy")      # Probably because of the rasters in cpt
