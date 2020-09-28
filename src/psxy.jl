@@ -254,10 +254,9 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, 
 			elseif (isa(arg1,GMTdataset))  arg1.data = hcat(arg1.data[:,1:2+is3D], mz[:], arg1.data[:,3+is3D:end])
 			else                           arg1[1].data = hcat(arg1[1].data[:,1:2+is3D], mz[:], arg1[1].data[:,3+is3D:end])
 			end
-		elseif (!got_Ebars)		# The Error bars case is very multi. Don't try to guess then.
-			#if (opt_i == "")  cmd = @sprintf("%s -i0-%d,%d,%d-%d", cmd, 1+is3D, 1+is3D, 2+is3D, n_col-1)
-			#else              @warn(warn2);		@goto noway
-			#end
+		elseif (got_Ebars)		# The Error bars case is very multi. Don't try to guess then.
+			(opt_i != "") && (@warn(warn2);	@goto noway)
+			cmd = @sprintf("%s -i0-%d,%d,%d-%d", cmd, 1+is3D, 1+is3D, 2+is3D, n_col-1)
 		end
 	end
 
@@ -388,7 +387,7 @@ function get_marker_name(d::Dict, symbs, is3D, del=true, arg1=nothing)
 				if (marca[1] == "")  marca[1] = helper2_markers(t, ["w" "pie" "web"])  end
 				if (marca[1] == "")  marca[1] = helper2_markers(t, ["W" "Pie" "Web"])  end
 			end
-			if (del)  delete!(d, symb)  end
+			(del) && delete!(d, symb)
 			break
 		end
 	end
