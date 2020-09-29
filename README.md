@@ -5,13 +5,13 @@ Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMapp
 
 | **Documentation**                       | **Build Status (Julia 1.4)**              | **Discourse Forum**   |
 |:---------------------------------------:|:-----------------------------------------:|:---------------------:|
-| [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] |
+| [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] |
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://genericmappingtools.github.io/GMT.jl/latest
 
-[travis-img]: https://travis-ci.org/GenericMappingTools/GMT.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/GenericMappingTools/GMT.jl
+[travis-img]: https://travis-ci.com/GenericMappingTools/GMT.jl.svg?branch=master
+[travis-url]: https://travis-ci.com/GenericMappingTools/GMT.jl
 
 [appveyor-img]: https://ci.appveyor.com/api/projects/status/usjewfb5v48m18kh/branch/master?svg=true
 [appveyor-url]: https://ci.appveyor.com/project/joa-quim/gmt-jl-suu4y/branch/master
