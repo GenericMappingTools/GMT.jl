@@ -5,6 +5,7 @@ sudo: false
 
 os:
   - linux
+dist: focal
 julia:
   - 1.4
   - nightly
