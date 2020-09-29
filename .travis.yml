@@ -7,6 +7,7 @@ os:
   - linux
 julia:
   - 1.4
+  - nightly
 matrix:
   allow_failures:
     - julia: nightly
@@ -34,6 +35,7 @@ before_install:
       - export PATH
       - echo 'export PATH="$HOME/gmt/bin:$PATH"' >>~/.bash_profile
       - cd $HOME/gmt
+      - gdalinfo --version
       #- wget ftp://ftp.soest.hawaii.edu/gshhg/gshhg-gmt-2.3.7.tar.gz
       #- wget http://w3.ualg.pt/~jluis/ftp/gshhg-gmt-2.3.7.tar.gz
       - wget https://github.com/GenericMappingTools/gshhg-gmt/releases/download/2.3.7/gshhg-gmt-2.3.7.tar.gz
