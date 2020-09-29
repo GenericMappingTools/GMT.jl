@@ -1015,7 +1015,7 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	SPHTRIANGULATE")
 	# SPHTRIANGULATE
-	D = sphtriangulate(rand(10,3));		# One dataset per triangle????
+	D = sphtriangulate(rand(10,3), V=:q);		# One dataset per triangle????
 
 	println("	SPHINTERPOLATE")
 	# SPHINTERPOLATE

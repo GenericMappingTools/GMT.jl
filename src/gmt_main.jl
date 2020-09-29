@@ -1594,14 +1594,12 @@ function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothi
 # Take a 2D array of floats and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
-	if (reg === nothing)  reg_ = 0
-	elseif (isa(reg, String) || isa(reg, Symbol))
+	reg_ = 0
+	if (isa(reg, String) || isa(reg, Symbol))
 		t = lowercase(string(reg))
 		reg_ = (t != "pixel") ? 0 : 1
 	elseif (isa(reg, Number))
 		reg_ = (reg == 0) ? 0 : 1
-	else			# Instead of erroring
-		reg_ = 0
 	end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
 
@@ -1668,8 +1666,7 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 		one_or_zero = reg == 0 ? 1 : 0
 		if (length(x) != 2)			# Check that REGistration and coords are compatible
 			(reg == 1 && round((x[end] - x[1]) / (x[2] - x[1])) != nx) &&		# Gave REG = pix but xx say grid
-				(@warn("Gave REGistration = 'pixel' but X coordinates say it's gridline. Keeping later reg.");
-				one_or_zero = 1)
+				(@warn("Gave REGistration = 'pixel' but X coordinates say it's gridline. Keeping later reg."); one_or_zero = 1)
 		else
 			x = collect(range(x[1], stop=x[2], length=nx+reg))
 			y = collect(range(y[1], stop=y[2], length=ny+reg))
