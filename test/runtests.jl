@@ -819,8 +819,8 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("BAR3: When NOT providing *width* data must contain at least 5 columns.") bar3("lixo.gmt", dataset=true)
 
 	# Test ogrread. STUPID OLD Linux for travis is still on GDAL 1.11
-	#API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
-	#gmtread("lixo.gmt");
+	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
+	gmtread("lixo.gmt");
 
 	println("	PROJECT")
 	# PROJECT
