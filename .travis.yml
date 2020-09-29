@@ -5,10 +5,9 @@ sudo: false
 
 os:
   - linux
-dist: disco
+dist: eoan
 julia:
   - 1.5
-  - nightly
 matrix:
   allow_failures:
     - julia: nightly
