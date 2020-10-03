@@ -108,18 +108,23 @@ Parameters
 - $(GMT.opt_swap_xy)
 """
 function plot(arg1; first=true, kw...)
-	#if ( (isa(arg1, Vector) || isa(arg1, UnitRange)) ||
-		 #(isa(arg1, Matrix) && ((size(arg1,1) == 1 || size(arg1,2) == 1) && length(arg1) != 2)) )
-		#arg1 = cat_1_arg(arg1)
-	#end
-	#common_plot_xyz("", arg1, "plot", first, false, kw...)
 	common_plot_xyz("", cat_1_arg(arg1), "plot", first, false, kw...)
 end
 plot!(arg1; kw...) = plot(arg1; first=false, kw...)
 
+function plot(f::Function, range_x=nothing; first=true, kw...)
+	rang = gen_coords4funs(range_x, "x"; kw...)
+	common_plot_xyz("", cat_2_arg2(rang, [f(x) for x in rang]), "plot", first, false, kw...)
+end
+plot!(f::Function, rang=nothing; kw...) = plot(f, rang; first=false, kw...)
+
+function plot(f1::Function, f2::Function, range_t=nothing; first=true, kw...)	# Parametric version
+	common_plot_xyz("", help_parametric_2f(f1, f2, range_t; is3D=false, kw...), "plot", first, false, kw...)
+end
+plot!(f1::Function, f2::Function, range_t=nothing; kw...) = plot(f1, f2, range_t; first=false, kw...)
+
 plot(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "plot", true, false, kw...)
 plot!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "plot", false, false, kw...)
-
 plot(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "plot", true, false, kw...)
 plot!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "plot", false, false, kw...)
 plot(arg1::Number, arg2::Number; kw...)  = common_plot_xyz("", cat_2_arg2([arg1], [arg2]), "plot", true, false, kw...)
@@ -220,6 +225,10 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+
+Example:
+
+    plot3d(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, show=true, aspect3=:equal)
 """
 plot3d(arg1; kw...)  = common_plot_xyz("", cat_1_arg(arg1), "plot3d", true, true, kw...)
 plot3d!(arg1; kw...) = common_plot_xyz("", cat_1_arg(arg1), "plot3d", false, true, kw...)
@@ -228,14 +237,21 @@ plot3d(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "plo
 plot3d!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "plot3d", false, true, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-function plot3d(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
-	arg = hcat(arg1[:], arg2[:], arg3[:])
-	common_plot_xyz("", arg, "plot3d", true, true, kw...)
+function plot3d(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; first=true, kw...)
+	common_plot_xyz("", hcat(arg1[:], arg2[:], arg3[:]), "plot3d", first, true, kw...)
 end
-function plot3d!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
-	arg = hcat(arg1[:], arg2[:], arg3[:])
-	common_plot_xyz("", arg, "plot3d", false, true, kw...)
+plot3d!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...) = plot3d(arg1, arg2, arg3; first=false, kw...)
+
+function plot3d(f1::Function, f2::Function, range_t=nothing; first=true, kw...)
+	common_plot_xyz("", help_parametric_2f(f1, f2, range_t; kw...), "plot3d", first, true, kw...)
 end
+plot3d!(f1::Function, f2::Function, range_t=nothing; kw...) = plot3d(f1, f2, range_t; first=false, kw...)
+
+function plot3d(f1::Function, f2::Function, f3::Function, range_t=nothing; first=true, kw...)
+	common_plot_xyz("", help_parametric_3f(f1, f2, f3, range_t; kw...), "plot3d", first, true, kw...)
+end
+plot3d!(f1::Function, f2::Function, f3::Function, range_t=nothing; kw...) = plot3d(f1, f2, f3, range_t; first=false, kw...)
+
 const plot3  = plot3d			# Alias
 const plot3! = plot3d!
 # ------------------------------------------------------------------------------------------------------
@@ -294,7 +310,18 @@ Parameters
 [`Full man page`](https://genericmappingtools.github.io/GMT.jl/latest/scatter/)
 [`GMT man page`]($(GMTdoc)plot.html)
 """
-scatter(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "scatter",  true, false, kw...)
+function scatter(f::Function, range_x=nothing; first=true, kw...)
+	rang = gen_coords4funs(range_x, "x"; kw...)
+	common_plot_xyz("", cat_2_arg2(rang, [f(x) for x in rang]), "scatter",  first, false, kw...)
+end
+scatter!(f::Function, rang=nothing; kw...) = scatter(f, rang; first=false, kw...)
+
+function scatter(f1::Function, f2::Function, range_t=nothing; first=true, kw...)	# Parametric version
+	common_plot_xyz("", help_parametric_2f(f1, f2, range_t; is3D=false, kw...), "scatter",  first, false, kw...)
+end
+scatter!(f1::Function, f2::Function, range_t=nothing; kw...) = scatter(f1, f2, range_t; first=false, kw...)
+
+scatter(cmd0::String="", arg1=nothing; first=true, kw...)  = common_plot_xyz(cmd0, arg1, "scatter",  first, false, kw...)
 scatter!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "scatter",  false, false, kw...)
 
 scatter(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "scatter", true, false, kw...)
@@ -306,15 +333,31 @@ scatter!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "scatt
 # ------------------------------------------------------------------------------------------------------
 scatter3(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "scatter3",  true, true, kw...)
 scatter3!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "scatter3",  false, true, kw...)
+
 scatter3(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "scatte3", true, false, kw...)
 scatter3!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "scatte3", false, false, kw...)
+
 function scatter3(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
 	common_plot_xyz("", hcat(arg1, arg2, arg3), "scatter3", true, true, kw...)
 end
 function scatter3!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
 	common_plot_xyz("", hcat(arg1, arg2, arg3), "scatter3", false, true, kw...)
 end
+
+function scatter3(f1::Function, f2::Function, range_t=nothing; first=true, kw...)
+	common_plot_xyz("", help_parametric_2f(f1, f2, range_t; kw...), "scatter3", first, true, kw...)
+end
+scatter3!(f1::Function, f2::Function, range_t=nothing; kw...) = scatter3(f1, f2, range_t; first=false, kw...)
+
+function scatter3(f1::Function, f2::Function, f3::Function, range_t=nothing; first=true, kw...)
+	common_plot_xyz("", help_parametric_3f(f1, f2, f3, range_t; kw...), "scatter3", first, true, kw...)
+end
+scatter3!(f1::Function, f2::Function, f3::Function, range_t=nothing; kw...) = scatter3(f1, f2, f3, range_t; first=false, kw...)
+
+const scatter3d  = scatter3			# Alias
+const scatter3d! = scatter3!
 # ------------------------------------------------------------------------------------------------------
+
 
 """
     bar(cmd0::String="", arg1=nothing; kwargs...)
@@ -346,7 +389,13 @@ function bar(cmd0::String="", arg=nothing; first=true, kw...)
 end
 bar!(cmd0::String="", arg=nothing; kw...) = bar(cmd0, arg; first=false, kw...)
 
-bar(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "bar", true, false, kw...)
+function bar(f::Function, range_x=nothing; first=true, kw...)
+	rang = gen_coords4funs(range_x, "x"; kw...)
+	bar("", cat_2_arg2(rang, [f(x) for x in rang]); first=first, kw...)
+end
+bar!(f::Function, rang=nothing; kw...) = bar(f, rang; first=false, kw...)
+
+bar(arg1, arg2; first=true, kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "bar", first, false, kw...)
 bar!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "bar", false, false, kw...)
 bar(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "bar", true, false, kw...)
 bar!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "bar", false, false, kw...)
@@ -486,7 +535,7 @@ The full *arrow* options list can be consulted at [Vector Attributes](@ref)
 
 Example:
 
-	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), J=14, axis=:a, pen="6p", show=true)
+	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p", show=true)
 """
 function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# A arrows plotting method of plot
@@ -540,10 +589,14 @@ Reads a file or (x,y) pairs and plots a collection of different line with decora
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot.html#w)
 
-Example:
+Examples:
 
     lines([0, 10]; [0, 20], limits=(-2,12,-2,22), proj="M2.5", pen=1, fill=:red,
-          decorated=(dist=(val=1,size=0.25), symbol=:box), show=true)
+		  decorated=(dist=(val=1,size=0.25), symbol=:box), show=true)
+
+    lines(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), region=(-4,7,-5.5,2.5), lw=2, lc=:sienna,
+          decorated=(quoted=true, const_label=" In Vino Veritas  - In Aqua, Rãs & Toads", font=(25,"Times-Italic"),
+                     curved=true, pen=(0.5,:red)), aspect=:equal, fmt=:png, show=true)
 """
 function lines(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
@@ -557,6 +610,17 @@ function lines(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	common_plot_xyz(cmd0, arg1, cmd, first, false, d...)
 end
 lines!(cmd0::String="", arg=nothing; kw...) = lines(cmd0, arg; first=false, kw...)
+
+function lines(f::Function, range_x=nothing; first=true, kw...)
+	rang = gen_coords4funs(range_x, "x"; kw...)
+	lines("", cat_2_arg2(rang, [f(x) for x in rang]); first=first, kw...)
+end
+lines!(f::Function, rang=nothing; kw...) = lines(f, rang; first=false, kw...)
+
+function lines(f1::Function, f2::Function, range_t=nothing; first=true, kw...)	# Parametric version
+	lines("", help_parametric_2f(f1, f2, range_t; is3D=false, kw...); first=first, kw...)
+end
+lines!(f1::Function, f2::Function, range_t=nothing; kw...) = lines(f1, f2, range_t; first=false, kw...)
 
 lines(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=true, kw...)
 lines!(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=false, kw...)
@@ -652,10 +716,7 @@ function ternary(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# A wrapper for psternary
 	common_plot_xyz(cmd0, arg1, "ternary", first, false, kwargs...)
 end
-#ternary!(cmd0::String="", arg1=nothing; kw...) = ternary(cmd0, arg1; first=false, kw...)
-function ternary!(cmd0::String="", arg1=nothing; kw...)
-	ternary(cmd0, arg1; first=false, kw...)
-end
+ternary!(cmd0::String="", arg1=nothing; kw...) = ternary(cmd0, arg1; first=false, kw...)
 ternary(arg1;  kw...)  = ternary("", arg1; first=true, kw...)
 ternary!(arg1; kw...)  = ternary("", arg1; first=false, kw...)
 const psternary  = ternary            # Aliases
@@ -776,5 +837,40 @@ function cat_2_arg2(arg1, arg2)
 		    !isa(arg2, Array{<:GMTdataset,1}) && !isa(arg2, GMTdataset) )
 		error(@sprintf("Unknown types (%s) and (%s) in cat_2_arg2() function", typeof(arg1), typeof(arg2)))
 	end
-
 end
+
+# ------------------------------------------------------------------------------------------------------
+function gen_coords4funs(rang=nothing, axis="x"; kw...)
+	# Generate axes coordenates to use when plot functions
+
+	if (rang === nothing)
+		symb = (axis == "x") ? [:xlim] : [:ylim]
+		if ((val = find_in_dict(KW(kw), symb)[1]) !== nothing)
+		(!isa(val, Tuple) && !isa(val, Array{<:Real})) && error("$(string(symb[1])) must be a tuple or array, not '$(typeof(val))'")
+			(length(val) != 2) && error("$(string(symb[1])) must have 2 elements")
+			rang = linspace(val[1], val[2], 200)
+		else
+			rang = linspace(-5, 5)
+		end
+	elseif (isa(rang, Real))
+		rang = linspace(-rang, rang)
+	end
+	return rang
+end
+
+# ------------------------------------------------------------------------------------------------------
+# Common code shared by the functions that accept parametric equations
+function help_parametric_2f(f1::Function, f2::Function, range_t=nothing; is3D=true, kw...)
+	# This function is shared by both the 2D & 3D cases
+	t = collect(gen_coords4funs(range_t, "x"; kw...));
+	x = [f1(x) for x in t];		y = [f2(y) for y in t]
+	out = (is3D) ? hcat(x[:], y[:], t[:]) : hcat(x[:], y[:])
+	return out
+end
+
+function help_parametric_3f(f1::Function, f2::Function, f3::Function, range_t=nothing; kw...)
+	t = collect(gen_coords4funs(range_t, "x"; kw...));
+	x = [f1(x) for x in t];		y = [f2(y) for y in t];		z = [f3(z) for z in t]
+	return hcat(x[:], y[:], z[:])
+end
+# ------------------------------------------------------------------------------------------------------
