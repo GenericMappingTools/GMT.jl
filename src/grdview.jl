@@ -82,7 +82,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, arg2, arg3, arg4, arg5 = parse_G_grdview(d, [:G :drapefile], cmd, arg1, arg2, arg3, arg4, arg5)
 
 	cmd = "grdview " * cmd				# In any case we need this
-	cmd, K = finish_PS_nested(d, cmd, "", K, O, [:coast :colorbar :basemap])
+	cmd, K = finish_PS_nested(d, cmd, K, O, [:coast :colorbar :basemap])
 
     return finish_PS_module(d, cmd, "", K, O, true, arg1, arg2, arg3, arg4, arg5)
 end
