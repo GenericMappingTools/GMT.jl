@@ -8,6 +8,11 @@ if they are not provided. Contrary to other image producing modules the "show' k
 display the image. Here it is set by default. If user wants to use *imshow* to create layers of a more complex
 fig he can use *show=false* for the intermediate layers.
 
+This module uses some internal logic to decide whether use `grdimge` or `grdview`. Namely, when the `view`
+option is used `grdview` is choosed and a default vertical scale is assigned. However, sometimes we want
+a rotated plot, optionallt tilted, but not 3D view. In that case use the option `flat=true`, which forces
+the use of `grdimage`.
+
 # Examples
 ```julia-repl
 # Plot vertical shaded illuminated view of the Mexican hat
@@ -30,7 +35,7 @@ function imshow(arg1, x=nothing, y=nothing; kw...)
 	# In this later case try to figure if it's a grid or an image and act accordingly.
 	is_image = false
 	if (isa(arg1, String))		# If it's string it has to be a file name. Check extension to see if is an image
-		ffname, ext = splitext(arg1)
+		ext = splitext(arg1)[2]
 		if (ext == "" && arg1[1] != '@' && !isfile(arg1))
 			G = mat2grid(arg1, x, y)
 		else
@@ -72,7 +77,9 @@ function imshow(arg1::GMTgrid; kw...)
 	end
 	opt_p, = parse_common_opts(d, "", [:p], true)
 	til = find_in_dict(d, [:T :no_interp :tiles])[1]
-	if (opt_p == "" && til === nothing)
+	flat = (find_in_dict(d, [:flat])[1] !== nothing)		# If true, force the use of grdimage
+	if (flat || (opt_p == "" && til === nothing))
+		(flat && opt_p != "") && (d[:p] = opt_p[4:end])		# Restore the meanwhile deleted -p option
 		R = grdimage("", arg1; show=see, d...)
 	else
 		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 8

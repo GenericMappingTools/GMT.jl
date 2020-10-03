@@ -4,7 +4,7 @@ const psxyz  = plot3d
 const psxyz! = plot3d!
 
 # ---------------------------------------------------------------------------------------------------
-function common_plot_xyz(cmd0, arg1, caller, first, is3D, kwargs...)
+function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kwargs...)
 	arg3 = nothing
 	N_args = (arg1 === nothing) ? 0 : 1
 

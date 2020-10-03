@@ -166,13 +166,21 @@ end
 function parse_JZ(cmd::String, d::Dict, del=true)
 	symbs = [:JZ :Jz :zscale :zsize]
 	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "String | Number"), "")
-	opt_J = ""
-	val, symb = find_in_dict(d, symbs, del)
-	if (val !== nothing)
-		if (symb == :JZ || symb == :zsize)  opt_J = " -JZ" * arg2str(val)
-		else                                opt_J = " -Jz" * arg2str(val)
+	opt_J = "";		seek_JZ = true
+	if ((val = find_in_dict(d, [:aspect3])[1]) !== nothing)
+		o = scan_opt(cmd, "-J")
+		(o[1] != 'X' || o[end] == 'd') &&  @warn("aspect3 works only in linear projections (and no geog), ignoring it.") 
+		if (o[1] == 'X' && o[end] != 'd')
+			opt_J = " -JZ" * split(o[2:end],'/')[1];		seek_JZ = false
+			cmd *= opt_J
 		end
-		cmd *= opt_J
+	end
+	if (seek_JZ)
+		val, symb = find_in_dict(d, symbs, del)
+		if (val !== nothing)
+			opt_J = (symb == :JZ || symb == :zsize) ? " -JZ" * arg2str(val) : " -Jz" * arg2str(val)
+			cmd *= opt_J
+		end
 	end
 	return cmd, opt_J
 end
@@ -210,10 +218,11 @@ function parse_J(cmd::String, d::Dict, default="", map=true, O=false, del=true)
 		elseif (mnemo)							# Proj name was obtained from a name mnemonic and no size. So use default
 			opt_J[1] = append_figsize(d, opt_J[1])
 		elseif (!isnumeric(opt_J[1][end]) && (length(opt_J[1]) < 6 || (isletter(opt_J[1][5]) && !isnumeric(opt_J[1][6]))) )
-			((val = find_in_dict(d, [:aspect])[1]) !== nothing) && (val = string(val))
 			if (!IamSubplot[1])
-				if (val == "equal")  opt_J[1] *= split(def_fig_size, '/')[1] * "/0"
-				else                 opt_J[1] *= def_fig_size
+				if ( ((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
+					opt_J[1] *= split(def_fig_size, '/')[1] * "/0"
+				else
+					opt_J[1] *= def_fig_size
 				end
 			elseif (!occursin("?", opt_J[1]))	# If we dont have one ? for size/scale already
 				opt_J[1] *= "/?"
@@ -261,13 +270,9 @@ function append_figsize(d::Dict, opt_J::String, width="", scale=false)
 		width = (IamSubplot[1]) ? "?" : split(def_fig_size, '/')[1]		# In subplot "?" is auto width
 	elseif (IamSubplot[1] && (width == "auto" || width == "auto,auto"))	# In subplot one can say figsize="auto" or figsize="auto,auto"
 		width = (width == "auto") ? "?" : "?/?"
-	elseif ( ((val = find_in_dict(d, [:aspect], false)[1]) !== nothing) && (val == "equal" || val == :equal))
-		del_from_dict(d, [:aspect])		# Delete this kwarg but only after knowing its val
-		if (occursin("/", width))
-			@warn("Ignoring the axis 'equal' request because figsize with Width and Height already provided.")
-		else
-			width *= "/0"
-		end
+	elseif ( ((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
+		(occursin("/", width)) && @warn("Ignoring the 'aspect' request because fig's Width and Height already provided.")
+		!occursin("/", width) && (width *= "/0")
 	end
 
 	slash = "";		de = ""
@@ -1141,7 +1146,7 @@ function set_KO(first::Bool)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_nested(d::Dict, cmd::String, output::String, K::Bool, O::Bool, nested_calls)
+function finish_PS_nested(d::Dict, cmd::String, K::Bool, O::Bool, nested_calls::Array{Symbol})
 	# Finish the PS creating command, but check also if we have any nested module calls like 'coast', 'colorbar', etc
 	if ((cmd2 = add_opt_module(d, nested_calls)) !== nothing)  K = true  end
 	if (cmd2 !== nothing)  cmd = [cmd; cmd2]  end
@@ -2322,7 +2327,7 @@ function fname_out(d::Dict, del=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D=false, get_info=false)
+function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D::Bool=false, get_info::Bool=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
 

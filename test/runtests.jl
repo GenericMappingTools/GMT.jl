@@ -69,6 +69,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_inc("", Dict(:inc => "2"),[:I :inc], "") == "2"
 	@test GMT.parse_JZ("", Dict(:JZ => "5c"))[1] == " -JZ5c"
 	@test GMT.parse_JZ("", Dict(:Jz => "5c"))[1] == " -Jz5c"
+	@test GMT.parse_JZ(" -JX10", Dict(:aspect3 => 1))[1] == " -JX10 -JZ10"
 	@test GMT.parse_J("", Dict(:J => "X5"), "", false)[1] == " -JX5"
 	@test GMT.parse_J("", Dict(:a => ""), "", true, true)[1] == " -J"
 	@test GMT.parse_J("", Dict(:J => "X", :figsize => 10))[1] == " -JX10"
@@ -708,6 +709,13 @@ if (got_it)					# Otherwise go straight to end
 	plot([2.5 2.5], region=(0,4,0,4), figsize=12, marker=(:matang, [2 50 350], (length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=dbg2)
 	plot([1 1], limits=(0,6,0,6), figsize=7, marker=:circle, ms=0.5, error_bars=(x=:x, cline=true), Vd=dbg2)	# Warning line
 	plot(rand(5,3), region=[0,1,0,1])
+	plot(x -> x^3 - 2x^2 + 3x - 1, xlim=(-5,5), Vd=dbg2)
+	plot(x -> x^3 - 2x^2 + 3x - 1, -10:10, Vd=dbg2)
+	plot!(x -> x^3 - 2x^2 + 3x - 1, 10, Vd=dbg2)
+	plot!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
+	bar!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
+	lines!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
+	scatter!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	hlines!([0.2, 0.6], pen=(1, :red))
 	vlines!([0.2, 0.6], pen=(1, :red))
 
@@ -718,6 +726,10 @@ if (got_it)					# Otherwise go straight to end
 	plot3d!("", rand(5,3), Vd=dbg2)
 	plot3d(1:10, rand(10), rand(10), Vd=dbg2)
 	plot3d!(1:10, rand(10), rand(10), Vd=dbg2)
+	plot3d!(x -> sin(x), y -> cos(y), 0:pi/50:10pi, Vd=dbg2)
+	plot3d!(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, aspect=:equal, Vd=dbg2)
+	scatter3!(x -> sin(x), y -> cos(y), 0:pi/50:10pi, Vd=dbg2)
+	scatter3!(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, Vd=dbg2)
 
 	println("	ARROWS")
 	# ARROWS
