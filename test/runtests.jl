@@ -258,6 +258,9 @@ if (got_it)					# Otherwise go straight to end
 	@test (GMT.parse_opt_range("", Dict(:T => [1])) == "1,")
 	GMT.parse_opt_range("", Dict(:T => (1,2,0.1,:mum,:log2)))	# Prints a warning
 
+	GMT.GMT_PEN();
+	GMT.GMT_PEN(0.0, 0.0, (0.0, 0.0, 0.0, 0.0), map(UInt8, (repeat('\0', 128)...,)), 0, 0, (pointer([0]), pointer([0])));
+
 	# Test here is to the showfig fun
 	grdimage([1 2;3 4])
 	showfig(savefig="lixo.png",show=false)
@@ -713,9 +716,12 @@ if (got_it)					# Otherwise go straight to end
 	plot(x -> x^3 - 2x^2 + 3x - 1, -10:10, Vd=dbg2)
 	plot!(x -> x^3 - 2x^2 + 3x - 1, 10, Vd=dbg2)
 	plot!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
+	plot!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
 	bar!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	lines!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
+	lines!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
 	scatter!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
+	scatter!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
 	hlines!([0.2, 0.6], pen=(1, :red))
 	vlines!([0.2, 0.6], pen=(1, :red))
 
