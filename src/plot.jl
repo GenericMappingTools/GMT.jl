@@ -509,11 +509,9 @@ bar3!(arg1; kw...) = bar3("", arg1; first=false, kw...)
 """
     arrows(cmd0::String="", arg1=nothing; arrow=(...), kwargs...)
 
-Reads a file or (x,y) pairs and plots an arrow field
-
-When the keyword *arrow=(...)* or *vector=(...)* is used, the direction (in degrees counter-clockwise
-from horizontal) and length must be found in columns 3 and 4, and size, if not specified on the
-command-line, should be present in column 5. The size is the length of the vector head. Vector stem
+Plots an arrow field. When the keyword *arrow=(...)* or *vector=(...)* is used, the direction (in degrees
+counter-clockwise from horizontal) and length must be found in columns 3 and 4, and size, if not specified
+on the command-line, should be present in column 5. The size is the length of the vector head. Vector stem
 width is set by option *pen* or *line_attrib*.
 
 The *vecmap=(...)* variation is similar to above except azimuth (in degrees east of north) should be
@@ -826,16 +824,16 @@ function cat_2_arg2(arg1, arg2)
 	if ((isa(arg1, Vector) || typeof(arg1) <: AbstractRange || isa(arg1, NTuple) || isa(arg1, Matrix)) &&
 		(isa(arg2, Vector) || typeof(arg2) <: AbstractRange || isa(arg2, NTuple) || isa(arg2, Matrix)) )
 
-		if (isa(arg1, NTuple))  arg1 = collect(arg1)  end
-		if (isa(arg2, NTuple))  arg2 = collect(arg2)  end
-		if (size(arg1,1) == 1 && size(arg1,2) != 1)  arg1 = arg1[:]  end
-		if (size(arg2,1) == 1 && size(arg2,2) != 1)  arg2 = arg2[:]  end
+		(isa(arg1, NTuple)) && (arg1 = collect(arg1))
+		(isa(arg2, NTuple)) && (arg2 = collect(arg2))
+		(size(arg1,1) == 1 && size(arg1,2) != 1) && (arg1 = arg1[:])
+		(size(arg2,1) == 1 && size(arg2,2) != 1) && (arg2 = arg2[:])
 		arg = hcat(arg1, arg2)
 		if (size(arg,2) > 2)  global multi_col[1] = true  end
 		return arg
 	elseif (!isa(arg1, Array{<:GMTdataset,1}) && !isa(arg1, GMTdataset) &&
-		    !isa(arg2, Array{<:GMTdataset,1}) && !isa(arg2, GMTdataset) )
-		error(@sprintf("Unknown types (%s) and (%s) in cat_2_arg2() function", typeof(arg1), typeof(arg2)))
+		!isa(arg2, Array{<:GMTdataset,1}) && !isa(arg2, GMTdataset) )
+		error("Unknown types ($(typeof(arg1))) and ($(typeof(arg2))) in cat_2_arg2() function")
 	end
 end
 

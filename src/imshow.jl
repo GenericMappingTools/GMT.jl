@@ -40,9 +40,7 @@ function imshow(arg1, x=nothing, y=nothing; kw...)
 			G = mat2grid(arg1, x, y)
 		else
 			ext = lowercase(ext)
-			if (ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif")
-				is_image = true
-			end
+			(ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif") && (is_image = true)
 			G = (arg1[1] == '@') ? arg1 : gmtread(arg1)			# If it screws ...
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))

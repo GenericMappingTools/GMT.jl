@@ -205,9 +205,12 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 		end
 	end
 
-	if (!IamModern[1])  put_in_legend_bag(d, cmd, arg1)  end
+	(!IamModern[1]) && put_in_legend_bag(d, cmd, arg1)
 
-	r = finish_PS_module(d, gmt_proggy .* cmd, "", K, O, true, arg1, arg2, arg3)
+	cmd = gmt_proggy .* cmd				# In any case we need this
+	cmd, K = finish_PS_nested(d, cmd, K, O, [:coast :colorbar :logo])
+
+	r = finish_PS_module(d, cmd, "", K, O, true, arg1, arg2, arg3)
 	if (got_pattern || occursin("-Sk", opt_S))  gmt("destroy")  end 	# Apparently patterns are screweing the session
 	return r
 end
