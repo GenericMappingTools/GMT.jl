@@ -47,7 +47,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 	cmd, = parse_R("", d, O)
 	cmd, = parse_J(cmd, d, "-Jx1", true, O)
 
-	cmd = add_opt(cmd, 'D', d, [:D :pos :position])
+	cmd = parse_type_anchor(d, cmd, [:D :pos :position])
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shade="+s"))
 
@@ -55,7 +55,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 	((val_j = find_in_dict(d, [:julia])[1]) !== nothing) && (do_julia = true)
 	((val_G = find_in_dict(d, [:GMTjulia])[1]) !== nothing) && (do_GMTjulia = true)
 	if (do_julia || do_GMTjulia)
-		if (do_julia)	r = val_j	else	r = val_G	end
+		r = (do_julia) ? val_j : val_G
 		c,t,r2 = jlogo(r)			# r2 is the diameter of the inner circle
 		if (!occursin("-R", cmd))  cmd = @sprintf("-R0/%f/0/%f ", 2r, 2r) * cmd  end
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
@@ -82,7 +82,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 			end
 		end
 	else
-		if (!occursin("-D", cmd))  cmd = " -Dx0/0+w5c " * cmd	end
+		(!occursin("-D", cmd)) && (cmd = " -Dx0/0+w5c " * cmd)
 		return finish_PS_module(d, "gmtlogo " * cmd, "", K, O, true)
 	end
 end
