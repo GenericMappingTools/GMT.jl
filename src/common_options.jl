@@ -153,8 +153,7 @@ function opt_R2num(opt_R::String)
 	(endswith(opt_R, "Rd")) && return [-180.0 180. -90. 90.]
 	rs = split(opt_R, '/')
 	limits = zeros(1,length(rs))
-	fst = 0
-	((ind = findfirst("R", rs[1])) !== nothing) && (fst = ind[1])
+	fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
 	limits[1] = parse(Float64, rs[1][fst+1:end])
 	for k = 2:length(rs)
 		limits[k] = parse(Float64, rs[k])
@@ -938,6 +937,7 @@ function parse_params(cmd::String, d::Dict)::String
 	_cmd = [cmd]
 	if ((val = find_in_dict(d, [:conf :par :params], true)[1]) !== nothing)
 		isa(val, Dict) && (val = dict2nt(val))
+		(!isa(val, NamedTuple) && !isa(val, Tuple)) && @warn("BAD usage: Parameter is neither a Tuple or a NamedTuple")
 		if (isa(val, NamedTuple))
 			fn = fieldnames(typeof(val))
 			for k = 1:length(fn)		# Suspect that this is higly inefficient but N is small
@@ -945,8 +945,6 @@ function parse_params(cmd::String, d::Dict)::String
 			end
 		elseif (isa(val, Tuple))
 			_cmd[1] *= " --" * string(val[1]) * "=" * string(val[2])
-		else
-			@warn("Paramers option BAD usage: is neither a Tuple or a NamedTuple")
 		end
 		usedConfPar[1] = true
 	end
@@ -1146,7 +1144,7 @@ function set_KO(first::Bool)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_nested(d::Dict, cmd::String, K::Bool, O::Bool, nested_calls::Array{Symbol})
+function finish_PS_nested(d::Dict, cmd, K::Bool, O::Bool, nested_calls::Array{Symbol})
 	# Finish the PS creating command, but check also if we have any nested module calls like 'coast', 'colorbar', etc
 	if ((cmd2 = add_opt_module(d, nested_calls)) !== nothing)  K = true  end
 	if (cmd2 !== nothing)  cmd = [cmd; cmd2]  end
@@ -1156,7 +1154,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
-	if (IamModern[1])  return cmd  end		# In Modern mode this fun does not play
+	(IamModern[1]) && return cmd  			# In Modern mode this fun does not play
 	if (isa(cmd, Array{String,1}))			# Need a recursive call here
 		for k = 1:length(cmd)
 			KK = K;		OO = O
@@ -1648,10 +1646,12 @@ function add_opt_module(d::Dict, symbs)
 				if     (symbs[k] == :coast)    r = coast!(; nt...)
 				elseif (symbs[k] == :colorbar) r = colorbar!(; nt...)
 				elseif (symbs[k] == :basemap)  r = basemap!(; nt...)
+				elseif (symbs[k] == :logo)     r = logo!(; nt...)
 				end
 			elseif (isa(val, Number) && (val != 0))		# Allow setting coast=true || colorbar=true
 				if     (symbs[k] == :coast)    r = coast!(W=0.5, Vd=2)
 				elseif (symbs[k] == :colorbar) r = colorbar!(pos=(anchor="MR",), B="af", Vd=2)
+				elseif (symbs[k] == :logo)     r = logo!(Vd=2)
 				end
 			elseif (symbs[k] == :colorbar && (isa(val, String) || isa(val, Symbol)))
 				t = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
@@ -1864,7 +1864,7 @@ function axis(;x=false, y=false, z=false, secondary=false, kwargs...)::String
 end
 
 # ------------------------
-function helper0_axes(arg)
+function helper0_axes(arg)::String
 	# Deal with the available ways of specifying the WESN(Z),wesn(z),lbrt(u)
 	# The solution is very enginious and allows using "left_full", "l_full" or only "l_f"
 	# to mean 'W'. Same for others:
@@ -1874,9 +1874,8 @@ function helper0_axes(arg)
 
 	(isa(arg, String) || isa(arg, Symbol)) && return string(arg) # Assume that a WESNwesn was already sent in.
 
-	if (!isa(arg, Tuple))
+	(!isa(arg, Tuple)) &&
 		error(@sprintf("The 'axes' argument must be a String, Symbol or a Tuple but was (%s)", typeof(arg)))
-	end
 
 	opt = "";	lbrtu = "lbrtu";	WSENZ = "WSENZ";	wsenz = "wsenz";	lbrtu = "lbrtu"
 	for k = 1:length(arg)
@@ -1893,14 +1892,14 @@ function helper0_axes(arg)
 end
 
 # ------------------------
-function helper1_axes(arg)
+function helper1_axes(arg)::String
 	# Used by annot, ticks and grid to accept also 'auto' and "" to mean automatic
 	out = arg2str(arg)
 	(out != "" && out[1] == 'a') && (out = "")
 	return out
 end
 # ------------------------
-function helper2_axes(arg)
+function helper2_axes(arg)::String
 	# Used by
 	out = arg2str(arg)
 	if (out == "")
@@ -1931,7 +1930,7 @@ function helper2_axes(arg)
 	return out
 end
 # ------------------------
-function helper3_axes(arg, primo, axe)
+function helper3_axes(arg, primo, axe)::String
 	# Parse the custom annotations arg, save result into a tmp file and return its name
 
 	label = ""
@@ -2198,10 +2197,8 @@ function helper_decorated(d::Dict, compose=false)
 		val, symb = find_in_dict(d, [:line :Line])
 		flag = (symb == :line) ? 'l' : 'L'
 		if (val !== nothing)
-			if (isa(val, Array{<:Number}))
-				if (size(val,2) !=4)
-					error("DECORATED: 'line' option. When array, it must be an Mx4 one")
-				end
+			if (isa(val, Array{<:Real}))
+				(size(val,2) !=4) && error("DECORATED: 'line' option. When array, it must be an Mx4 one")
 				optD = string(flag,val[1,1],'/',val[1,2],'/',val[1,3],'/',val[1,4])
 				for k = 2:size(val,1)
 					optD = string(optD,',',val[k,1],'/',val[k,2],'/',val[k,3],'/',val[k,4])
@@ -2281,20 +2278,18 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
-function fname_out(d::Dict, del=false)
+function fname_out(d::Dict, del::Bool=false)
 	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 
 	fname = ""
 	EXT = FMT[1]
 	if ((val = find_in_dict(d, [:savefig :figname :name], del)[1]) !== nothing)
 		fname, EXT = splitext(string(val))
-		if (EXT == "")  EXT = FMT[1]
-		else            EXT = EXT[2:end]
-		end
+		EXT = (EXT == "") ? FMT[1] : EXT[2:end]
 	end
 	if (EXT == FMT[1] && haskey(d, :fmt))
 		EXT = string(d[:fmt])
-		if (del)  delete!(d, :fmt)  end
+		(del) && delete!(d, :fmt)
 	end
 	if (EXT == "" && !Sys.iswindows())  error("Return an image is only for Windows")  end
 	if (1 == length(EXT) > 3)  error("Bad graphics file extension")  end
@@ -2302,7 +2297,7 @@ function fname_out(d::Dict, del=false)
 	ret_ps = false				# To know if we want to return or save PS in mem
 	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
 		fname = "";		EXT = "ps";		ret_ps = true
-		if (del)  delete!(d, :ps)  end
+		(del) && delete!(d, :ps)
 	end
 
 	opt_T = "";
@@ -2521,11 +2516,8 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 	elseif (tipo == 3)			# Three inputs
 		# Accepts "input1 input2 input3"; arg1, arg2, arg3; data=(input1,input2,input3)
 		if (got_fname != 0)
-			if (args[1] === nothing && data_kw === nothing)
-				return cmd, 1, args[1], args[2], args[3]			# got_fname = 1 => all data is in cmd
-			else
-				error("Cannot mix input as file names and numeric data.")
-			end
+			(args[1] !== nothing || data_kw !== nothing) && error("Cannot mix input as file names and numeric data.")
+			return cmd, 1, args[1], args[2], args[3]			# got_fname = 1 => all data is in cmd
 		else
 			if (args[1] === nothing && args[2] === nothing && args[3] === nothing)
 				return cmd, 0, args[1], args[2], args[3]			# got_fname = 0 => ???
@@ -2625,16 +2617,12 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K=
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
 		out = fname_ps[1:end-2] * fname_ext
-		if (fname != "")
-			out = mv(out, fname, force=true)
-		end
+		(fname != "") && (out = mv(out, fname, force=true))
 	elseif (fname_ps != "")
 		#if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
 		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
 		out = fname_ps
-		if (fname != "")
-			out = mv(out, fname, force=true)
-		end
+		(fname != "") && (out = mv(out, fname, force=true))
 	end
 
 	if (haskey(d, :show) && d[:show] != 0)
@@ -2896,7 +2884,7 @@ function digests_legend_bag(d::Dict, del=false)
 end
 
 # --------------------------------------------------------------------------------------------------
-function scan_opt(cmd::String, opt::String)
+function scan_opt(cmd::String, opt::String)::String
 	# Scan the CMD string for the OPT option. Note OPT mut be a 2 chars -X GMT option.
 	out = ""
 	if ((ind = findfirst(opt, cmd)) !== nothing)  out, = strtok(cmd[ind[1]+2:end])  end
@@ -2933,8 +2921,7 @@ function justify(arg)
 	elseif (startswith(arg, "middler"))  out = "MR"
 	elseif (startswith(arg, "bottomr"))  out = "BR"
 	else
-		@warn("Justification code provided ($arg) is not valid. Defaulting to TopRight")
-		out = "TR"
+		@warn("Justification code provided ($arg) is not valid. Defaulting to TopRight");	out = "TR"
 	end
 	return out
 end
