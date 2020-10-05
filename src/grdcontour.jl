@@ -81,7 +81,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)			# Check if user wants ONLY the HELP mode
-    K, O = set_KO(first)		# Set the K O dance
+	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t], first)
@@ -115,8 +115,8 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		cmd, args, n, = add_opt(cmd, 'C', d, [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
 		if (n > 0)
 			for k = 3:-1:1
-				if (args[k] === nothing)  continue  end
-				if (isa(args[k], Array{<:Number}))
+				(args[k] === nothing) && continue
+				if (isa(args[k], Array{<:Real}))
 					cmd *= arg2str(args[k], ',')
 					if (length(args[k]) == 1)  cmd *= ","  end		# A single contour needs to end with a ","
 					break
@@ -143,12 +143,12 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (occursin("-D", cmd))
 		opt_extra = "-D";		do_finish = false;	cmd = replace(cmd, opt_J => "")
 	end
-	cmd, K = finish_PS_nested(d, "grdcontour " * cmd, K, O, [:coast :colorbar :colorscale])
+	cmd, K = finish_PS_nested(d, "grdcontour " * cmd, K, O)
 	return finish_PS_module(d, cmd, opt_extra, K, O, do_finish, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_contour_AGTW(d::Dict, cmd::String)
+function parse_contour_AGTW(d::Dict, cmd::String)::String
 	# Common to both grd and ps contour
 	if ((val = find_in_dict(d, [:A :annot],false)[1]) !== nothing && isa(val, Array{<:Number}))
 		cmd *= " -A" * arg2str(val, ',')

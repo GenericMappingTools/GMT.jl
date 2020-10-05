@@ -110,9 +110,7 @@ function gmtread(fname::String; kwargs...)
 	end
 
 	if (opt_T == "")
-		if ((opt_T = guess_T_from_ext(fname)) === nothing)		# Try some guesses
-			error("Must select one input data type (grid, image, dataset, cmap or ps)")
-		end
+		((opt_T = guess_T_from_ext(fname)) == "") && error("Must select one input data type (grid, image, dataset, cmap or ps)")
 		if (opt_T == " -Tg" && haskey(d, :ignore_grd))  return nothing  end 	# contourf uses this
 	else
 		opt_T = opt_T[1:4]      				# Remove whatever was given as argument to type kwarg
@@ -133,7 +131,7 @@ function gmtread(fname::String; kwargs...)
 		opt_R = parse_R("", d)[1]
 		if (dbg_print_cmd(d, cmd) !== nothing)  return "ogrread " * cmd  end
 		# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
-		if (Sys.iswindows())  run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)  end
+		(Sys.iswindows())  && run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)
 		API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
 		if (GMTver >= 6.1)
 			x = opt_R2num(opt_R)		# See if we have a limits request
@@ -146,13 +144,11 @@ function gmtread(fname::String; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------
-function guess_T_from_ext(fname::String)
+function guess_T_from_ext(fname::String)::String
 	# Guess the -T option from a couple of known extensions
 	fname, ext = splitext(fname)
 	if (length(ext) >= 5)			# A SUBDATASET encoded fname?
-		if (occursin("?", ext))  return " -Tg"
-		else                     return nothing
-		end
+		return (occursin("?", ext)) ? " -Tg" : ""
 	end
 	ext = lowercase(ext[2:end])
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
@@ -162,7 +158,7 @@ function guess_T_from_ext(fname::String)
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	else
-		out = nothing
+		out = ""
 	end
 end
 
@@ -215,9 +211,7 @@ Example: write the GMTgrid 'G' object into a nc file called 'lixo.grd'
 """
 function gmtwrite(fname::String, data; kwargs...)
 
-	if (fname == "")
-		error("First argument cannot be empty. It must contain the file name to write.")
-	end
+	(fname == "") && error("First argument cannot be empty. It must contain the file name to write.")
 
 	d = KW(kwargs)
 	help_show_options(d)					# Check if user wants ONLY the HELP mode
@@ -276,7 +270,7 @@ function gmtwrite(fname::String, data; kwargs...)
 end
 
 # -----------------------------------------------------------------------------------------------
-function parse_grd_format(d::Dict)
+function parse_grd_format(d::Dict)::String
 # Scan options to fill any of  [=<id>][+s<scale>][+o<offset>][+n<nan>][:<driver>[/<dataType>]
 # that control the grid/image output format
 	out = ""
@@ -286,9 +280,7 @@ function parse_grd_format(d::Dict)
 				out = "=gd"
 			else
 				t = arg2str(d[sym])
-				if (length(t) != 2)
-					error(@sprintf("Format code MUST have 2 characters and not %s", t))
-				end
+				(length(t) != 2) && error(@sprintf("Format code MUST have 2 characters and not %s", t))
 				out = "=" * t
 			end
 			break
@@ -301,9 +293,7 @@ function parse_grd_format(d::Dict)
 	end
 	if ((val = find_in_dict(d, [:driver])[1]) !== nothing)
 		out *= ":" * arg2str(val)
-		if ((val = find_in_dict(d, [:datatype])[1]) !== nothing)
-			out *= "/" * arg2str(val)
-		end
+		((val = find_in_dict(d, [:datatype])[1]) !== nothing) && (out *= "/" * arg2str(val))
 	end
 	del_from_dict(d, [:id :gdal])
 	return out

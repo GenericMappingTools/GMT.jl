@@ -182,7 +182,7 @@ if (got_it)					# Otherwise go straight to end
 	GMT.get_marker_name(Dict(:y => "y"), [:y], false)
 	@test_throws ErrorException("Argument of the *bar* keyword can be only a string or a NamedTuple.") GMT.parse_bar_cmd(Dict(:a => 0), :a, "", "")
 
-	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((post=1:5,), 'p', "x")
+	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((post=1:5,), "p", "x")
 
 	GMT.round_wesn([1.333 17.4678 6.66777 33.333], true);
 	GMT.round_wesn([1 1 2 2]);
@@ -347,6 +347,7 @@ if (got_it)					# Otherwise go straight to end
 	logo(GMTjulia=2, savefig="logo.PNG", fmt=:PNG)
 	logo!(julia=8, Vd=dbg2)
 	logo!("", julia=8, Vd=dbg2)
+	@test startswith(logo(pos=(anchor=(0,0),justify=:CM, offset=(1.5,0)), Vd=dbg2), "gmtlogo -Jx1 -Dg0/0+jCM+o1.5/0")
 
 	println("	GMTSPATIAL")
 	# GMTSPATIAL
@@ -408,6 +409,7 @@ if (got_it)					# Otherwise go straight to end
 	imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
 	gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
 	@test GMT.parse_grd_format(Dict(:nan => 0)) == "+n0"
+	@test_throws ErrorException("Input data of unknown data type Int64") GMT.gmtwrite(" ", 1)
 	@test_throws ErrorException("Number of bands in the 'band' option can only be 1 or 3") GMT.gmtread("", band=[1 2])
 	@test_throws ErrorException("Format code MUST have 2 characters and not bla") GMT.parse_grd_format(Dict(:id => "bla"))
 	r = rand(UInt8(0):UInt8(10),10,10);	C=makecpt(range=(0,11,1));	I = mat2img(r, cmap=C);
@@ -733,7 +735,7 @@ if (got_it)					# Otherwise go straight to end
 	plot3d(1:10, rand(10), rand(10), Vd=dbg2)
 	plot3d!(1:10, rand(10), rand(10), Vd=dbg2)
 	plot3d!(x -> sin(x), y -> cos(y), 0:pi/50:10pi, Vd=dbg2)
-	plot3d!(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, aspect=:equal, Vd=dbg2)
+	plot3d!(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, Vd=dbg2)
 	scatter3!(x -> sin(x), y -> cos(y), 0:pi/50:10pi, Vd=dbg2)
 	scatter3!(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, Vd=dbg2)
 
@@ -839,6 +841,7 @@ if (got_it)					# Otherwise go straight to end
 	# Test ogrread. STUPID OLD Linux for travis is still on GDAL 1.11
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 	gmtread("lixo.gmt");
+	GMT.GMT_Get_Default(API, "API_VERSION", "        ");
 
 	println("	PROJECT")
 	# PROJECT
@@ -860,7 +863,7 @@ if (got_it)					# Otherwise go straight to end
 	        par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=dbg2)
 	r = basemap(rose=(anchor="10:35/0.7", width=1, fancy=2, offset=0.4), Vd=dbg2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdg10:35/0.7+w1+f2+o0.4")
-	r = basemap(rose=(anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=dbg2);
+	r = basemap(rose=(norm=true, anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=dbg2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdn0.5/0.7+w1+f2+o0.4")
 	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=dbg2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdjTR+w1+f2+o0.4")
