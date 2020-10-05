@@ -1042,12 +1042,12 @@ function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
 
 	P = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), C_NULL, C_NULL, 0, 0, C_NULL)
 
-	if (one != 0)  mutateit(API, P, "is_continuous", one)  end
+	(one != 0) && mutateit(API, P, "is_continuous", one)
 
 	if (cpt.depth == 1)      mutateit(API, P, "is_bw", 1)
 	elseif (cpt.depth == 8)  mutateit(API, P, "is_gray", 1)
 	end
-	if (!isnan(cpt.hinge))   mutateit(API, P, "has_hinge", 1)  end
+	!isnan(cpt.hinge) && mutateit(API, P, "has_hinge", 1)
 
 	Pb = unsafe_load(P)		# GMT.GMT_PALETTE
 
@@ -1228,9 +1228,7 @@ function mutateit(API::Ptr{Nothing}, t_type, member::String, val)
 	ind = findfirst(isequal(Symbol(member)), fieldnames(dt))	# Find the index of the "is_continuous" member
 	# This would work too
 	# ind = ccall(:jl_field_index, Cint, (Any, Any, Cint), dt, symbol(member), 1) + 1
-	if (isa(val, AbstractString))  p_val = pointer(val)		# No idea why I have to do this
-	else                           p_val = pointer([val])
-	end
+	p_val = (isa(val, AbstractString)) ? pointer(val) : pointer([val])		# No idea why I have to do this
 	GMT_blind_change_struct(API, p_type, p_val, @sprintf("%s",ft[ind]), fo[ind])
 	typeof(p_type); 	typeof(p_val)		# Just to be sure that GC doesn't kill them before their due time
 end

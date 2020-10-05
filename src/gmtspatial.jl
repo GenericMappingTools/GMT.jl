@@ -79,8 +79,7 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd, args, n, = add_opt(cmd, 'D', d, [:D :duplicates], :data, Array{Any,1}([arg1, arg2]), (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
 	if (n > 0)
-		arg1, arg2 = args[:]
-		cmd *= "+f"
+		arg1, arg2 = args[:];   cmd *= "+f"
 	end
  
 	cmd, args, n, = add_opt(cmd, 'N', d, [:N :in_polyg], :data, Array{Any,1}([arg1, arg2, arg3]), (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z"))

@@ -821,20 +821,16 @@ end
 function cat_2_arg2(arg1, arg2)
 	# Cat two vectors (or tuples) or a vector (or tuple) and a matrix in a Mx2 matrix
 
-	if ((isa(arg1, Vector) || typeof(arg1) <: AbstractRange || isa(arg1, NTuple) || isa(arg1, Matrix)) &&
-		(isa(arg2, Vector) || typeof(arg2) <: AbstractRange || isa(arg2, NTuple) || isa(arg2, Matrix)) )
-
-		(isa(arg1, NTuple)) && (arg1 = collect(arg1))
-		(isa(arg2, NTuple)) && (arg2 = collect(arg2))
-		(size(arg1,1) == 1 && size(arg1,2) != 1) && (arg1 = arg1[:])
-		(size(arg2,1) == 1 && size(arg2,2) != 1) && (arg2 = arg2[:])
-		arg = hcat(arg1, arg2)
-		if (size(arg,2) > 2)  global multi_col[1] = true  end
-		return arg
-	elseif (!isa(arg1, Array{<:GMTdataset,1}) && !isa(arg1, GMTdataset) &&
-		!isa(arg2, Array{<:GMTdataset,1}) && !isa(arg2, GMTdataset) )
+	!((isa(arg1, Vector) || typeof(arg1) <: AbstractRange || isa(arg1, NTuple) || isa(arg1, Matrix)) && (isa(arg2, Vector) || typeof(arg2) <: AbstractRange || isa(arg2, NTuple) || isa(arg2, Matrix)) ) &&
 		error("Unknown types ($(typeof(arg1))) and ($(typeof(arg2))) in cat_2_arg2() function")
-	end
+
+	(isa(arg1, NTuple)) && (arg1 = collect(arg1))
+	(isa(arg2, NTuple)) && (arg2 = collect(arg2))
+	(size(arg1,1) == 1 && size(arg1,2) != 1) && (arg1 = arg1[:])
+	(size(arg2,1) == 1 && size(arg2,2) != 1) && (arg2 = arg2[:])
+	arg = hcat(arg1, arg2)
+	if (size(arg,2) > 2)  global multi_col[1] = true  end
+	return arg
 end
 
 # ------------------------------------------------------------------------------------------------------

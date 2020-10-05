@@ -72,13 +72,13 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, arg1, arg2, arg3)
 	end
 
-	if (isa(arg1, Array{<:Number}))
+	if (isa(arg1, Array{<:Real}))
 		if (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16}))
 			arg1 = mat2img(arg1; d...)
 		else
 			arg1 = mat2grid(arg1)
-			(isa(arg2, Array{<:Number})) && (arg2 = mat2grid(arg2))
-			(isa(arg3, Array{<:Number})) && (arg3 = mat2grid(arg3))
+			(isa(arg2, Array{<:Real})) && (arg2 = mat2grid(arg2))
+			(isa(arg3, Array{<:Real})) && (arg3 = mat2grid(arg3))
 		end
 	end
 
@@ -89,16 +89,12 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 
 	if (isa(arg1, GMTimage))
 		if (!occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
-		if (isa(arg1.image, Array{UInt16}))
-			arg1 = mat2img(arg1; d...)					# Get a new UInt8 scaled image
-			find_in_dict(d, [:histo_bounds :stretch])[1]	# Delete them if they exist
-		end
 	end
 
 	cmd = "grdimage " * cmd				# In any case we need this
 	do_finish = false
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
-		cmd, K = finish_PS_nested(d, cmd, K, O, [:coast :colorbar :basemap])
+		cmd, K = finish_PS_nested(d, cmd, K, O)
 		do_finish = true
 	end
 	return finish_PS_module(d, cmd, "", K, O, do_finish, arg1, arg2, arg3, arg4)
