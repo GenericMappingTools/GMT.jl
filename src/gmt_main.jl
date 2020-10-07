@@ -348,7 +348,7 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function parse_mem_layouts(cmd)
+function parse_mem_layouts(cmd::AbstractString)
 # See if a specific grid or image mem layout is requested. If found return its value and also
 # strip the corresponding option from the CMD string (otherwise GMT would scream)
 	grd_mem_layout[1] = "";	img_mem_layout[1] = ""
@@ -499,7 +499,7 @@ function get_image(API::Ptr{Nothing}, object)
 # Note: Incoming GMT image may have standard padding while Julia image has none.
 
 	I = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
-	if (I.data == C_NULL)  error("get_image: programming error, output matrix is empty")  end
+	(I.data == C_NULL) && error("get_image: programming error, output matrix is empty")
 	if     (I._type <= 1)  data = convert(Ptr{Cuchar}, I.data)
 	elseif (I._type == 3)  data = convert(Ptr{Cushort}, I.data)
 	end
@@ -567,7 +567,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
 
 	C = unsafe_load(convert(Ptr{GMT_PALETTE}, object))
 
-	if (C.data == C_NULL)  error("get_palette: programming error, output CPT is empty")  end
+	(C.data == C_NULL) && error("get_palette: programming error, output CPT is empty")
 
 	if (C.model & GMT_HSV != 0)       model = "hsv"
 	elseif (C.model & GMT_CMYK != 0)  model = "cmyk"
@@ -701,21 +701,21 @@ end
 function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)
 	# Create the object container and hook as X->object
 	oo = unsafe_load(X.option)
-	module_input = (oo.option == GMT.GMT_OPT_INFILE)
+	#module_input = (oo.option == GMT.GMT_OPT_INFILE)
 
 	if (X.family == GMT_IS_GRID)			# Get a grid from Julia or a dummy one to hold GMT output
-		X.object =  grid_init(API, module_input, ptr, X.direction, pad)
+		X.object =  grid_init(API, ptr, X.direction, pad)
 	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Julia or a dummy one to hold GMT output
-		X.object = image_init(API, module_input, ptr, X.direction)
+		X.object = image_init(API, ptr, X.direction)
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
 		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
 		actual_family = [GMT_IS_DATASET]		# Default but may change to matrix
-		X.object = dataset_init_(API, module_input, ptr, X.direction, actual_family)
+		X.object = dataset_init_(API, ptr, X.direction, actual_family)
 		X.family = actual_family[1]
 	elseif (X.family == GMT_IS_PALETTE)		# Get a palette from Julia or a dummy one to hold GMT output
-		X.object = palette_init(API, module_input, ptr, X.direction)
+		X.object = palette_init(API, ptr, X.direction)
 	elseif (X.family == GMT_IS_POSTSCRIPT)	# Get a PostScript struct from Matlab or a dummy one to hold GMT output
-		X.object = ps_init(API, module_input, ptr, X.direction)
+		X.object = ps_init(API, ptr, X.direction)
 	else
 		error(@sprintf("GMTJL_Set_Object: Bad data type (%d)\n", X.family))
 	end
@@ -756,7 +756,7 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN, pad::Int=2)
+function grid_init(API::Ptr{Nothing}, grd_box, dir::Integer=GMT_IN, pad::Int=2)
 # If GRD_BOX is empty just allocate (GMT) an empty container and return
 # If GRD_BOX is not empty it must contain a GMTgrid type.
 
@@ -765,15 +765,13 @@ function grid_init(API::Ptr{Nothing}, module_input, grd_box, dir::Integer=GMT_IN
 		                       C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 
-	if (isa(grd_box, GMTgrid) || isa(grd_box, Array{GMTgrid,1}))
-		return grid_init(API, module_input, grd_box, pad)
-	else
+	(!isa(grd_box, GMTgrid) && !isa(grd_box, Array{GMTgrid,1})) &&
 		error(@sprintf("grd_init: input (%s) is not a GRID container type", typeof(grd_box)))
-	end
+	return grid_init(API, grd_box, pad)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grid_init(API::Ptr{Nothing}, module_input, Grid::GMTgrid, pad::Int=2)
+function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
 	grd = Grid.z
@@ -825,7 +823,7 @@ function grid_init(API::Ptr{Nothing}, module_input, Grid::GMTgrid, pad::Int=2)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_IN)
+function image_init(API::Ptr{Nothing}, img_box, dir::Integer=GMT_IN)
 # ...
 
 	if (isempty_(img_box))			# Just tell image_init() to allocate an empty container
@@ -838,7 +836,7 @@ function image_init(API::Ptr{Nothing}, module_input, img_box, dir::Integer=GMT_I
 		return I
 	end
 
-	if (!isa(img_box, GMTimage))  error("image_init: input is not a IMAGE container type")  end
+	(!isa(img_box, GMTimage)) && error("image_init: input is not a IMAGE container type")
 	return image_init(API, img_box)
 end
 
@@ -885,7 +883,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer, actual_family)
+function dataset_init_(API::Ptr{Nothing}, Darr, direction::Integer, actual_family)
 # Create containers to hold or receive data tables:
 # direction == GMT_IN:  Create empty GMT_DATASET container, fill from Julia, and use as GMT input.
 #	Input from Julia may be a structure or a plain matrix
@@ -897,10 +895,10 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 		return GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
 
-	if (Darr == C_NULL) error("Input is empty where it can't be.")	end
+	(Darr == C_NULL) && error("Input is empty where it can't be.")
 	if (isa(Darr, GMTdataset))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
 	if (!(isa(Darr, Array{<:GMTdataset,1})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
-		D = dataset_init(API, module_input, Darr, direction, actual_family)
+		D = dataset_init(API, Darr, direction, actual_family)
 		return D
 	end
 
@@ -972,7 +970,7 @@ function dataset_init_(API::Ptr{Nothing}, module_input, Darr, direction::Integer
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, actual_family)
+function dataset_init(API::Ptr{Nothing}, ptr, direction::Integer, actual_family)
 # Used to create containers to hold or receive data:
 # direction == GMT_IN:  Create empty Matrix container, associate it with julia data matrix, and use as GMT input.
 # direction == GMT_OUT: Create empty Vector container, let GMT fill it out, and use for output.
@@ -1018,7 +1016,7 @@ function dataset_init(API::Ptr{Nothing}, module_input, ptr, direction::Integer, 
 end
 
 # ---------------------------------------------------------------------------------------------------
-function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
+function palette_init(API::Ptr{Nothing}, cpt, dir::Integer)
 	# Used to Create an empty CPT container to hold a GMT CPT.
  	# If direction is GMT_IN then we are given a Julia CPT and can determine its size, etc.
 	# If direction is GMT_OUT then we allocate an empty GMT CPT as a destination.
@@ -1029,7 +1027,7 @@ function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
 
 	# Dimensions are known from the input pointer
 
-	if (!isa(cpt, GMTcpt))  error(@sprintf("Expected a CPT structure for input but got a %s", typeof(cpt)))  end
+	(!isa(cpt, GMTcpt)) && error(@sprintf("Expected a CPT structure for input but got a %s", typeof(cpt))) 
 
 	n_colors = size(cpt.colormap, 1)	# n_colors != n_ranges for continuous CPTs
 	n_ranges = size(cpt.range, 1)
@@ -1088,7 +1086,7 @@ function palette_init(API::Ptr{Nothing}, module_input, cpt, dir::Integer)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function ps_init(API::Ptr{Nothing}, module_input, ps, dir::Integer)
+function ps_init(API::Ptr{Nothing}, ps, dir::Integer)
 # Used to Create an empty POSTSCRIPT container to hold a GMT POSTSCRIPT object.
 # If direction is GMT_IN then we are given a Julia structure with known sizes.
 # If direction is GMT_OUT then we allocate an empty GMT POSTSCRIPT as a destination.
@@ -1202,7 +1200,7 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function strncmp(str1, str2, num)
+function strncmp(str1::String, str2::String, num)
 	# Pseudo strncmp
 	a = str1[1:min(num,length(str1))] == str2
 end
@@ -1309,11 +1307,11 @@ D = mat2ds(mat, [txt]; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=n
 """
 function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing, multi=false)
 
-	if (txt  !== nothing)  return text_record(mat, txt,  hdr)  end
-	if (text !== nothing)  return text_record(mat, text, hdr)  end
+	(txt  !== nothing) && return text_record(mat, txt,  hdr)
+	(text !== nothing) && return text_record(mat, text, hdr)
 
 	if (x === nothing)
-		n_ds = (multi) ? size(mat, 2) - 1 : 1
+		n_ds = (ndims(mat) == 3) ? size(mat,3) : ((multi) ? size(mat, 2) - 1 : 1)
 		xx = nothing
 	else
 		n_ds = (multi) ? size(mat, 2) : 1
@@ -1357,7 +1355,11 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=noth
 
 	if (!isa(mat, Array{Float64}))  mat = Float64.(mat)  end
 	if (xx === nothing)
-		if (!multi)
+		if (ndims(mat) == 3)
+			for k = 1:n_ds
+				D[k] = GMTdataset(view(mat,:,:,k), String[], (hdr === nothing ? "" : hdr[k]), String[], "", "")
+			end
+		elseif (!multi)
 			D[1] = GMTdataset(mat, String[], (hdr === nothing ? "" : hdr[1]), String[], "", "")
 		else
 			for k = 1:n_ds
@@ -1454,9 +1456,8 @@ function mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::S
 		len = length(vals)
 
 		(len > 2*nz) && error("'stretch' has more elements then allowed by image dimensions")
-		if (len != 1 && len != 2 && len != 6)
+		(len != 1 && len != 2 && len != 6) &&
 			error("Bad 'stretch' argument. It must be a 1, 2 or 6 elements array and not $len")
-		end
 
 		val = (len == 1) ? convert(UInt16, vals)::UInt16 : convert(Array{UInt16}, vals)::Array{UInt16}
 		if (len == 1)
@@ -1490,7 +1491,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function mat2img(img::GMTimage; kw...)
 	# Scale a UInt16 GMTimage to UInt8. Return a new object but with all old image parameters
-	if (!isa(img.image, Array{UInt16}))  return img  end		# Nothing to do
+	(!isa(img.image, Array{UInt16}))  && return img		# Nothing to do
 	I = mat2img(img.image; kw...)
 	I.proj4 = img.proj4;	I.wkt = img.wkt;	I.epsg = img.epsg
 	I.range = img.range;	I.inc = img.inc;	I.registration = img.registration
@@ -1675,8 +1676,8 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
 	elseif (hdr === nothing)
 		zmin, zmax = extrema(mat)
-		if (reg == 0)  x  = collect(1.0:nx);		y = collect(1.0:ny)
-		else           x  = collect(0.5:nx+0.5);	y = collect(0.5:ny+0.5)
+		if (reg == 0)  x = collect(1.0:nx);		y = collect(1.0:ny)
+		else           x = collect(0.5:nx+0.5);	y = collect(0.5:ny+0.5)
 		end
 		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
 		x_inc = 1.0;	y_inc = 1.0
@@ -1713,11 +1714,10 @@ function make_zvals_vec(D, user_ids::Array{String,1}, vals)
 	n_user_ids = length(user_ids)
 	@assert(n_user_ids == length(vals))
 	ind, data_ids = get_segment_ids(D)
-	if (ind[1] != 1)  error("This function requires that first segment has a a header with an id")  end
+	(ind[1] != 1) && error("This function requires that first segment has a a header with an id")
 	n_data_ids = length(data_ids)
-	if (n_user_ids > n_data_ids)
+	(n_user_ids > n_data_ids) &&
 		@warn("Number of segment IDs requested is larger than segments with headers in data")
-	end
 
 	n_seg = (isa(D, Array)) ? length(D) : 1
 	zvals = Array{Int,1}(undef, n_seg)
@@ -1829,7 +1829,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function Base.:show(io::IO, ::MIME"text/plain", D::Array{<:GMTdataset})
 	println(typeof(D), " with ", length(D), " segments")
-	if (length(D) == 0)  return  end
+	(length(D) == 0) && return
 	(~isempty(D[1].comment)) && println("Comment:\t", D[1].comment)
 	(D[1].proj4 != "") && println("PROJ: ", D[1].proj4)
 	(D[1].wkt   != "") && println("WKT: ", D[1].wkt)

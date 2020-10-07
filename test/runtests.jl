@@ -215,10 +215,10 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("GMT: No module by that name -- bla -- was found.") gmt("bla")
 	@test_throws ErrorException("grd_init: input (Int64) is not a GRID container type") GMT.grid_init(C_NULL,0,0)
 	@test_throws ErrorException("image_init: input is not a IMAGE container type") GMT.image_init(C_NULL,0,0)
-	@test_throws ErrorException("Expected a CPT structure for input but got a Int32") GMT.palette_init(C_NULL,0,Int32(0),0)
+	@test_throws ErrorException("Expected a CPT structure for input but got a Int32") GMT.palette_init(C_NULL,Int32(0),0)
 	@test_throws ErrorException("Bad family type") GMT.GMT_Alloc_Segment(C_NULL, -1, 0, 0, "", C_NULL)
 	@test_throws ErrorException("Unknown family type") GMT.GMT_Create_Data(C_NULL, -99, 0, 0)
-	@test_throws ErrorException("Expected a PS structure for input") GMT.ps_init(C_NULL, 0, 0, 0)
+	@test_throws ErrorException("Expected a PS structure for input") GMT.ps_init(C_NULL, 0, 0)
 	@test_throws ErrorException("size of x,y vectors incompatible with 2D array size") GMT.grdimg_hdr_xy(rand(3,3), 0, 0, [1 2], [1])
 	GMT.strncmp("abcd", "ab", 2)
 	GMT.parse_proj((name="blabla",center=(0,0)))
@@ -669,7 +669,7 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	MAPPROJECT")
 	# MAPPROJECT
-	mapproject([-10 40], J=:u29, C=true, F=true);
+	mapproject([-10 40], J=:u29, C=true, F=true, V=:q);
 	mapproject(region=(-15,35,30,48), proj=:merc, figsize=5, map_size=true);
 	@test mapproject([1.0 1; 2 2], L=(line=[1.0 0; 4 3], unit=:c), Vd=dbg2) ==  "mapproject  -L+uc "
 	@test mapproject([1.0 1; 2 2], L=[1.0 0; 4 3], Vd=dbg2) == "mapproject  -L "
@@ -762,7 +762,7 @@ if (got_it)					# Otherwise go straight to end
 	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 	D = histogram(randn(100), I=:o, T=0.1);
 	@test_throws ErrorException("Something went wrong when calling the module. GMT error number = 71") histogram(randn(100), I=:o, V=:q, W=0.1);
-	lines(D, steps=(x=true,), close=(bot="",))
+	lines(D, steps=(x=true,), close=(bot=true,))
 	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
 	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=dbg2);
 	@test startswith(r, "psxy  -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -R0/6.0/-1/0.7 -JX40/8 -B+g220 --PS_MEDIA=A1 -W2,sienna")
@@ -1200,7 +1200,7 @@ if (got_it)					# Otherwise go straight to end
 	# TEST THE API DIRECTLY (basically to improve coverage under GMT6)
 	PS = plot(rand(3,2), ps=1);
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
-	GMT.ps_init(API, "", PS, 0);
+	GMT.ps_init(API, PS, 0);
 	gmt("destroy")
 
 	# Test ogr2GMTdataset

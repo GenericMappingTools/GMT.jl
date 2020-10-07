@@ -372,7 +372,7 @@ function parse_proj(p::String)
 		return p,false
 	end
 	out = [""];
-	mnemo = true			# True when the projection name used one of the below mnemonics
+	mnemo::Bool = true			# True when the projection name used one of the below mnemonics
 	s = lowercase(p)
 	if     (s == "aea"   || s == "albers")                 out[1] = "B0/0"
 	elseif (s == "cea"   || s == "cylindricalequalarea")   out[1] = "Y0/0"
@@ -2276,7 +2276,7 @@ end
 function fname_out(d::Dict, del::Bool=false)
 	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 
-	fname = ""
+	fname::String = ""
 	EXT = FMT[1]
 	if ((val = find_in_dict(d, [:savefig :figname :name], del)[1]) !== nothing)
 		fname, EXT = splitext(string(val))
@@ -2289,7 +2289,7 @@ function fname_out(d::Dict, del::Bool=false)
 	(EXT == "" && !Sys.iswindows()) && error("Return an image is only for Windows")
 	(1 == length(EXT) > 3) && error("Bad graphics file extension")
 
-	ret_ps = false				# To know if we want to return or save PS in mem
+	ret_ps::Bool = false		# To know if we want to return or save PS in mem
 	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
 		fname = "";		EXT = "ps";		ret_ps = true
 		(del) && delete!(d, :ps)
@@ -2881,8 +2881,7 @@ end
 # --------------------------------------------------------------------------------------------------
 function scan_opt(cmd::String, opt::String)::String
 	# Scan the CMD string for the OPT option. Note OPT mut be a 2 chars -X GMT option.
-	out = ""
-	if ((ind = findfirst(opt, cmd)) !== nothing)  out, = strtok(cmd[ind[1]+2:end])  end
+	out = ((ind = findfirst(opt, cmd)) !== nothing) ? strtok(cmd[ind[1]+2:end])[1] : ""
 	return out
 end
 

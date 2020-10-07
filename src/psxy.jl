@@ -104,9 +104,10 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	if (is_ternary)			# Means we are in the psternary mode
 		cmd = add_opt(cmd, 'L', d, [:L :labels])
 	else
-		cmd = add_opt(cmd, 'L', d, [:L :close :polygon],
-			(left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
-		if (occursin("-L", cmd) && !occursin("-G", cmd) && !occursin("+p", cmd))  cmd *= "+p0.5p"  end
+		opt_L = add_opt("", 'L', d, [:L :close :polygon],
+		                (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
+		(length(opt_L) > 3 && !occursin("-G", cmd) && !occursin("+p", cmd)) && (opt_L *= "+p0.5p")
+		cmd *= opt_L
 	end
 
 	opt_Wmarker = ""
@@ -128,7 +129,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 				(length(val) != size(arg1,1)) &&
 					error("The size array must have the same number of elements rows in the data")
 				arg1 = hcat(arg1, val[:])
-			else
+			elseif (string(val) != "indata")
 				marca *= arg2str(val);
 			end
 			opt_S = " -S" * marca
@@ -136,7 +137,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 			opt_S = " -S" * marca
 			# If data comes from a file, then no automatic symbol size is added
 			op = lowercase(marca[1])
-			def_size = (op == 'p') ? "3p" : "7p"
+			def_size = (op == 'p') ? "3p" : "7p"	# 'p' here stands for symbol points, not units
 			if (!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw"))  opt_S *= def_size  end
 		end
 	else
@@ -190,7 +191,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	end
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
-	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{<:Number,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)) )
+	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{<:Real,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)) )
 		multi_col[1] = false							# Reset because this is a use-only-once option
 		penC = "";		penS = "";	cycle=:cycle
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
@@ -211,16 +212,16 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	cmd, K = finish_PS_nested(d, cmd, K, O)
 
 	r = finish_PS_module(d, cmd, "", K, O, true, arg1, arg2, arg3)
-	if (got_pattern || occursin("-Sk", opt_S))  gmt("destroy")  end 	# Apparently patterns are screweing the session
+	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
 	return r
 end
 
 # ---------------------------------------------------------------------------------------------------
-function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, arg1, arg2)
+function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, arg1, arg2)
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 	# N_ARGS will be == n_prev+1 when a -Ccpt was used. Otherwise they are equal.
 
-	if (arg1 === nothing || isa(arg1, GMT.GMTcpt))  return cmd, arg1, arg2, N_args, false  end		# Play safe
+	(arg1 === nothing || isa(arg1, GMT.GMTcpt)) && return cmd, arg1, arg2, N_args, false  # Play safe
 
 	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
 	if (!(N_args > n_prev || len < length(cmd)) && mz === nothing)	# No color request, so return right away
@@ -301,7 +302,7 @@ function make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, 
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_marker_name(d::Dict, symbs, is3D, del=true, arg1=nothing)
+function get_marker_name(d::Dict, symbs::Array{Symbol}, is3D::Bool, del::Bool=true, arg1=nothing)
 	marca = Array{String,1}(undef,1)
 	marca = [""];		N = 0
 	for symb in symbs
@@ -324,7 +325,7 @@ function get_marker_name(d::Dict, symbs, is3D, del=true, arg1=nothing)
 				elseif (o == "W" || o == "Pie" || o == "Web" || o == "Wedge")  opt = "W";  N = 2
 				end
 				if (N > 0)  marca[1], arg1, msg = helper_markers(opt, t[2], arg1, N, cst)  end
-				if (msg != "")  error(msg)  end
+				(msg != "") && error(msg)
 				if (length(t) == 3 && isa(t[3], NamedTuple))
 					if (marca[1] == "w" || marca[1] == "W")	# Ex (spiderweb): marker=(:pie, [...], (inner=1,))
 						marca[1] *= add_opt(t[3], (inner="/", arc="+a", radial="+r", size=("", arg2str, 1), pen=("+p", add_opt_pen)) )
@@ -397,7 +398,7 @@ function get_marker_name(d::Dict, symbs, is3D, del=true, arg1=nothing)
 	return marca[1], arg1, N > 0
 end
 
-function helper_markers(opt, ext, arg1, N, cst)
+function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)
 	# Helper function to deal with the cases where one sends marker's extra columns via command
 	# Example that will land and be processed here:  marker=(:Ellipse, [30 10 15])
 	# N is the number of extra columns
