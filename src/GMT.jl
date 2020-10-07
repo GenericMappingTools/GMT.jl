@@ -142,21 +142,19 @@ include("trend2d.jl")
 include("xyz2grd.jl")
 
 function __init__()
+	(5 <= GMTver < 6.0) &&
+		(println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must uptdate."); return)
+
 	if (GMTver == 0.0)
-		println("\n\nYou don't seem to have GMT installed and I don't currently install it automatically,")
-		println("so you will have to do it yourself. Please follow instructions bellow.")
+		println("\n\nYou don't seem to have GMT installed and I don't install it automatically,\nso you will have to do it yourself.")
+		t = "\n\t\t https://github.com/GenericMappingTools/gmt/releases"
 		if (Sys.iswindows() && Sys.WORD_SIZE == 64)
-			println("1) Download and install the official version at (the '..._win64.exe':")
-			println("\t\t https://github.com/GenericMappingTools/gmt/releases")
+			println("Download and install the official version at (the '..._win64.exe':" * t)
 		elseif (Sys.iswindows() && Sys.WORD_SIZE == 32)
-			println("Download and install the official version at (the '..._win32.exe':")
-			println("\t\t https://github.com/GenericMappingTools/gmt/releases")
+			println("Download and install the official version at (the '..._win32.exe':" * t)
 		else
 			println("https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md")
 		end
-		return
-	elseif (5 <= GMTver < 6.0)
-		println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must uptdate.")
 		return
 	end
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
@@ -168,9 +166,7 @@ function __init__()
 	end
 end
 
-if (GMTver >= 6)		# Needed to cheat the autoregister autobot
-	include("get_enums.jl")
-end
+(GMTver >= 6) && include("get_enums.jl")	# Needed to cheat the autoregister autobot
 
 include("precompile_GMT_i.jl")
 _precompile_()
