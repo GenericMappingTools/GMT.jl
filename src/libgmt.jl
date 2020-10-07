@@ -418,17 +418,17 @@ function GMT_Get_Ctrl(API::Ptr{Cvoid})
 	end
 end
 
+#=
 function gmt_getpen(API::Ptr{Cvoid}, buffer, P)
 	GMT_ = GMT_Get_Ctrl(API)
 	ccall((:gmt_getpen, thelib), Cint, (Cstring, Ptr{Cuint}, Ref{GMT_PEN}), GMT_, buffer, P)
 end
+=#
 
 function gmt_ogrread(API::Ptr{Cvoid}, fname::String, region=C_NULL)
 	GMT_ = GMT_Get_Ctrl(API)
-	if (GMTver >= 6.1)
-		ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}, Ptr{Cdouble}), GMT_, fname, region)
-	else
-		ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}), GMT_, fname)
+	if (GMTver == 6.0)  ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}), GMT_, fname)
+	else                ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}, Ptr{Cdouble}), GMT_, fname, region)
 	end
 end
 

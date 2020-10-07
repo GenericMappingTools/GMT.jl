@@ -124,12 +124,8 @@ function movie(main; pre=nothing, post=nothing, kwargs...)
 	cmd = add_opt(cmd, "T", d, [:T :frames],
 				  (range=("", arg2str, 1), n_frames="_+n", nframes="_+n", first="+s", tag_width="+p", split_words="+w"))
 
-	if ((val = find_in_dict(d, [:Sb :background])[1]) !== nothing)
-		cmd = helper_fgbg(cmd, val, "bg_script", " -Sb")
-	end
-	if ((val = find_in_dict(d, [:Sf :foreground])[1]) !== nothing)
-		cmd = helper_fgbg(cmd, val, "fg_script", " -Sf")
-	end
+	((val = find_in_dict(d, [:Sb :background])[1]) !== nothing) && (cmd = helper_fgbg(cmd, val, "bg_script", " -Sb"))
+	((val = find_in_dict(d, [:Sf :foreground])[1]) !== nothing) && (cmd = helper_fgbg(cmd, val, "fg_script", " -Sf"))
 
 	if (pre !== nothing && isa(pre, Function) || isa(pre, String))
 		if ((preName = jl_sc_2_shell_sc(pre,  "pre_script"))  !== nothing)  cmd *= " -Sb" * preName  end
@@ -151,7 +147,7 @@ function helper_fgbg(cmd::String, val, sc_name::String, opt::String)
 	# VAL is the contents of either -Sf or -Sb options
 	# OPT = " -Sb" or " -Sf"
 	if (isa(val, Function) || (isa(val, String) && endswith(val, ".jl")))
-		if ((bg_sc = jl_sc_2_shell_sc(val, sc_name)) === nothing)  error("$sc_name script has nothing useful")  end
+		((bg_sc = jl_sc_2_shell_sc(val, sc_name)) === nothing) && error("$sc_name script has nothing useful")
 		cmd *= opt * bg_sc
 	elseif (isa(val, String) && val != "")
 		cmd *= opt * val
