@@ -57,7 +57,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_c("", Dict(:c => 1))[1] == " -c0"
 	@test GMT.parse_c("", Dict(:c => "1"))[1] == " -c0"
 	@test GMT.parse_l("", Dict(:l => "ai ai"))[2] == " -l\"ai ai\""
-	@test GMT.parse_l("", Dict(:l => (text="ai ai", gap=3)))[2] == " -l\"ai ai\"+g3"
+	@test GMT.parse_n("", Dict(:n => (bicubic=true,antialiasing=true,bc=:g)))[2] == " -nc+a+bg"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="meter")),[:I :inc], "I") == " -I1.5e/2.6e"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="m")),[:I :inc], "I") == " -I1.5m/2.6m"
 	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="data")),[:I :inc], "I") == " -I1.5/2.6u"
@@ -261,6 +261,8 @@ if (got_it)					# Otherwise go straight to end
 	GMT.GMT_PEN();
 	GMT.GMT_PEN(0.0, 0.0, (0.0, 0.0, 0.0, 0.0), map(UInt8, (repeat('\0', 128)...,)), 0, 0, (pointer([0]), pointer([0])));
 
+	gmthelp([:n :sphinterpolate])
+
 	# Test here is to the showfig fun
 	grdimage([1 2;3 4])
 	showfig(savefig="lixo.png",show=false)
@@ -274,7 +276,7 @@ if (got_it)					# Otherwise go straight to end
 	@assert(r[1].data == [5.0 5 5 5 5 5])
 	r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
 	@assert(r[1].data == [5.0 5 5 5 5 5])
-	gmtinfo(h=0)
+	gmtinfo(help=0)
 
 	# BLOCK*s
 	d = [0.1 1.5 1; 0.5 1.5 2; 0.9 1.5 3; 0.1 0.5 4; 0.5 0.5 5; 0.9 0.5 6; 1.1 1.5 7; 1.5 1.5 8; 1.9 1.5 9; 1.1 0.5 10; 1.5 0.5 11; 1.9 0.5 12];
@@ -871,7 +873,7 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdjTR+w1+f2+o0.4")
 	r = basemap(compass=(anchor=:TR, width=1, dec=-14, offset=0.4), Vd=dbg2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TmjTR+w1+d-14+o0.4")
-	r = basemap(L=(anchor=:TR, width=1, align=:top, fancy=0.4), Vd=dbg2);
+	r = basemap(L=(anchor=:TR, length=1, align=:top, fancy=0.4), Vd=dbg2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -LjTR+w1+at+f")
 	@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=dbg2), "psbasemap  -JX12c/0 -Bpa10+ap")
 	r = basemap(region=(1,1000,0,1), proj=:logx, figsize=(8,0.7), frame=(annot=1, ticks=2, grid=3, scale=:pow), Vd=dbg2);
