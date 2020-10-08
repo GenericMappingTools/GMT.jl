@@ -90,7 +90,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd  = add_opt(cmd, 'Z', d, [:Z :scale], (factor="+s", shift="+o", periodic="_+p"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
-	if (isa(arg1, Array{<:Number}))		arg1 = mat2grid(arg1)	end
+	if (isa(arg1, Array{<:Real}))		arg1 = mat2grid(arg1)	end
 
 	#cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
 	cmd, N_used, arg1, arg2, = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
@@ -159,8 +159,8 @@ function parse_contour_AGTW(d::Dict, cmd::String)::String
 		cmd *= (arg == "none") ? " -A-" : " -A" * arg
 		del_from_dict(d, [:A :annot])
 	else
-		cmd = add_opt(cmd, 'A', d, [:A :annot], (disable=("_-", nothing, 1), none=("_-", nothing, 1), single=("+", nothing, 1),
-		                                         int="", interval="", labels=("", parse_quoted)) )
+		cmd = add_opt(cmd, 'A', d, [:A :annot],
+		              (disable=("_-", nothing, 1), none=("_-", nothing, 1), single=("+", nothing, 1), int="", interval="", labels=("", parse_quoted)) )
 	end
 	cmd = add_opt(cmd, 'G', d, [:G :labels], ("", helper_decorated))
 	cmd = add_opt(cmd, 'T', d, [:T :ticks], (local_high=("h", nothing, 1), local_low=("l", nothing, 1),
