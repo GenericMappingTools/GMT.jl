@@ -15,7 +15,7 @@ Parameters
 
     Sets the clearance between the legend frame and the internal items [4p/4p].
     ($(GMTdoc)legend.html#c)
-- **D** | **refpoint** | **pos** | **position** :: [Type => Str]  `Arg=[g|j|J|n|x]refpoint+wwidth[/height][+jjustify][+lspacing][+odx[/dy]]`
+- **D** | **pos** | **position** :: [Type => Str]  `Arg=[g|j|J|n|x]refpoint+wwidth[/height][+jjustify][+lspacing][+odx[/dy]]`
 
     Defines the reference point on the map for the legend using one of four coordinate systems.
     ($(GMTdoc)legend.html#d)
@@ -48,10 +48,9 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 
-	#cmd = add_opt(cmd, 'D', d, [:D :pos :position :refpoint],
-	#			  (map=("g", nothing, 1), inside=("j", nothing, 1), paper=("x", nothing, 1),
-	#			  anchor=("", arg2str, 2), width="+w", justify="+j", spacing="+l", offset="+o"))
-	cmd = parse_type_anchor(d, cmd, [:D :pos :position :refpoint])
+	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
+	                        (map=("g", nothing, 1), inside=("j", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
+	#cmd = parse_type_anchor(d, cmd, [:D :pos :position])
 	cmd = add_opt(cmd, 'C', d, [:C :clearance])
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)

@@ -49,7 +49,7 @@ export
 	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
-	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, subplot, gmtfig, inset, showfig,
+	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	image_alpha!, mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc
 
 include("common_docs.jl")
@@ -142,8 +142,7 @@ include("trend2d.jl")
 include("xyz2grd.jl")
 
 function __init__()
-	(5 <= GMTver < 6.0) &&
-		(println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must uptdate."); return)
+	(5 <= GMTver < 6.0) && (println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must uptdate."); return)
 
 	if (GMTver == 0.0)
 		println("\n\nYou don't seem to have GMT installed and I don't install it automatically,\nso you will have to do it yourself.")
@@ -159,11 +158,12 @@ function __init__()
 	end
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
 	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
-	if (API == C_NULL)  error("Failure to create a GMT Session")  end
-	try
-		FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]
-	catch
-	end
+	(API == C_NULL) && error("Failure to create a GMT Session")
+	haskey(ENV,"JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
+	#try
+		#FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]
+	#catch
+	#end
 end
 
 (GMTver >= 6) && include("get_enums.jl")	# Needed to cheat the autoregister autobot

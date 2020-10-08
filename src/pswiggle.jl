@@ -78,9 +78,8 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 
-	cmd = add_opt(cmd, "D", d, [:D :scale_bar],
-        (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width="+w", justify="+j", label_left="_+al", labels="+l", label="+l", offset="+o"))
-    #cmd = parse_type_anchor(d, cmd, [[:D :scale_bar]])
+	cmd = parse_type_anchor(d, cmd, [:D :scale_bar],
+                            (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", label_left="_+al", labels="+l", label="+l", offset=("+o", arg2str)), 'j')
 	cmd *= opt_pen(d, 'T', [:T :track])
 	cmd *= opt_pen(d, 'W', [:W :pen])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')

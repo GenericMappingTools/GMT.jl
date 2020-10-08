@@ -609,6 +609,34 @@ function parse_F(cmd::String, d::Dict)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_Td(d::Dict, cmd::String)
+	cmd = parse_type_anchor(d, cmd, [:Td :rose],
+							(map=("g", nothing, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), width="+w", justify="+j", fancy="+f", labels="+l", label="+l", offset=("+o", arg2str)), 'j')
+end
+function parse_Tm(d::Dict, cmd::String)
+	cmd = parse_type_anchor(d, cmd, [:Tm :compass],
+	                        (map=("g", nothing, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), width="+w", dec="+d", justify="+j", rose_primary=("+i", add_opt_pen), rose_secondary=("+p", add_opt_pen), labels="+l", label="+l", annot=("+t", arg2str), offset=("+o", arg2str)), 'j')
+end
+function parse_L(d::Dict, cmd::String)
+	cmd = parse_type_anchor(d, cmd, [:L :map_scale],
+	                        (map=("g", nothing, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), scale_at_lat="+c", length="+w", width="+w", align="+a1", justify="+j", fancy="_+f", label="+l", offset=("+o", arg2str), units="_+u", vertical="_+v"), 'j')
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_type_anchor(d::Dict, cmd::String, symbs::Array{Symbol}, mapa::NamedTuple, def_CS::Char, del::Bool=true)
+	# SYMBS: [:D :pos :position] | ...
+	# MAPA is the NamedTuple of suboptions
+	# def_CS is the default "Coordinate system". Colorbar has 'J', logo has 'g', many have 'j'
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
+	opt = add_opt("", "", d, symbs, mapa, del)
+	if (opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
+		opt = def_CS * opt
+	end
+	if (opt != "")  cmd *= " -" * string(symbs[1]) * opt  end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
 	# Parse the global -U, -X, -Y options. Return CMD same as input if no option OPT in args
 	# ALIASES: [:X :x_off :x_offset] (same for Y) or [:U :time_stamp :stamp]
@@ -739,7 +767,7 @@ parse_j(cmd::String, d::Dict) = parse_helper(cmd, d, [:j :spheric_dist :spherica
 # ---------------------------------------------------------------------------------
 function parse_l(cmd::String, d::Dict)
 	cmd_ = add_opt("", 'l', d, [:l :legend],
-		(text=("", arg2str, 1), pen=("+d", add_opt_pen), gap="+g", font=("+f", font), justify="+j", header="+h", ncols="+n", size="+s", width="+w", scale="+x"), false)
+		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), false)
 	# Now make sure blanks in legen text are wrapped in ""
 	if ((ind = findfirst("+", cmd_)) !== nothing)
 		cmd_ = " -l" * str_with_blancs(cmd_[4:ind[1]-1]) * cmd_[ind[1]:end]
@@ -753,7 +781,10 @@ end
 # ---------------------------------------------------------------------------------
 function parse_n(cmd::String, d::Dict)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
-	parse_helper(cmd, d, [:n :interp :interpol], " -n")
+	#parse_helper(cmd, d, [:n :interp :interpol], " -n")
+	cmd_ = add_opt("", 'n', d, [:n :interp :interpol], 
+	               (B_spline=("b", nothing, 1), bicubic=("c", nothing, 1), bilinear=("l", nothing, 1), near_neighbor=("n", nothing, 1), antialiasing="_+a", bc="+b", clipz="_+c", threshold="+t"))
+	return cmd * cmd_, cmd_
 end
 
 # ---------------------------------------------------------------------------------
@@ -1465,7 +1496,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_o
 				to_slot = false
 			end
 			cmd = add_opt(cmd, opt, d, symbs, nt_opts)
-		elseif (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{<:GMTdataset,1}) || typeof(val) <: AbstractRange)
+		elseif (isa(val, Array{<:Real}) || isa(val, GMTdataset) || isa(val, Array{<:GMTdataset,1}) || typeof(val) <: AbstractRange)
 			if (typeof(val) <: AbstractRange)  val = collect(val)  end
 			cmd *= " -" * opt
 		elseif (isa(val, String) || isa(val, Symbol) || isa(val, Number))
@@ -1584,7 +1615,7 @@ function add_opt_fill(val, cmd::String="",  opt="")::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname, arg1, arg2=nothing, arg3=nothing, prog="")
+function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname, arg1, arg2=nothing, arg3=nothing, prog::String="")
 	# Get CPT either from keyword input of from current_cpt.
 	# Also puts -R in cmd when accessing grids from grdimage|view|contour, etc... (due to a GMT bug that doesn't do it)
 	# Use CMD0 = "" to use this function from within non-grd modules
@@ -1956,8 +1987,7 @@ function helper3_axes(arg, primo::String, axe::String)::String
 			label = d[:label]
 		end
 	else
-		@warn("Argument of the custom annotations must be an N-array or a NamedTuple")
-		return ""
+		@warn("Argument of the custom annotations must be an N-array or a NamedTuple");		return ""
 	end
 
 	temp = "GMTjl_custom_" * primo
@@ -2426,7 +2456,7 @@ function round_wesn(wesn, geo::Bool=false)
 
 	item = 1
 	for side = 1:2
-		if (set[side]) continue		end		# Done above */
+		(set[side]) && continue			# Done above */
 		mag = round(log10(range[side])) - 1.0
 		inc = 10.0^mag
 		if ((range[side] / inc) > 10.0) inc *= 2.0	end	# Factor of 2 in the rounding
@@ -2988,11 +3018,11 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function help_show_options(d::Dict)
-	(find_in_dict(d, [:h :help :?])[1] !== nothing) && (show_kwargs[1] = true)	# Put in HELP mode
+	(find_in_dict(d, [:help :?])[1] !== nothing) && (show_kwargs[1] = true)	# Put in HELP mode
 end
 
 # --------------------------------------------------------------------------------------------------
-function print_kwarg_opts(symbs, mapa=nothing)
+function print_kwarg_opts(symbs, mapa=nothing)::String
 	# Print the kwargs options
 	opt = "Option: " * join([@sprintf("%s, or ",x) for x in symbs])[1:end-5]
 	if (isa(mapa, NamedTuple))
@@ -3006,4 +3036,25 @@ function print_kwarg_opts(symbs, mapa=nothing)
 	end
 	println(opt)
 	return ""		# Must return != nothing so that dbg_print_cmd() signals stop progam's execution
+end
+
+# --------------------------------------------------------------------------------------------------
+function gmthelp(opt)
+	show_kwargs[1] = true
+	if (isa(opt, Array{Symbol}))
+		for o in opt  gmthelp(o)  end
+	else
+		o = string(opt)
+		try
+			if (length(o) <= 2)
+				getfield(GMT, Symbol(string("parse_",o)))("",Dict());
+			else
+				getfield(GMT, Symbol(o))(Dict(:help => 1));
+			end
+		catch
+			println("   ==>  '$o' is not a valid option/module name, or not yet implemented")
+		end
+	end
+	show_kwargs[1] = false
+	return nothing
 end
