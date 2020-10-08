@@ -380,9 +380,8 @@ function strtok(args, delim::String=" ")
 
 	@label restart
 	ind = findfirst(delim, args)
-	if (ind === nothing)
-		return lstrip(args,collect(delim)), r		# Always clip delimiters at the begining
-	elseif (startswith(args, delim))
+	(ind === nothing) && return lstrip(args,collect(delim)), r		# Always clip delimiters at the begining
+	if (startswith(args, delim))
 		args = lstrip(args,collect(delim)) 			# Otherwise delim would be return as a token
 		@goto restart
 	end
@@ -616,16 +615,14 @@ function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})
 # length:	Byte length of postscript
 # mode:	1 has header, 2 has trailer, 3 is complete
 # comment:	Cell array with any comments
-	if (object == C_NULL)  error("get_PS: programming error, input object is NULL")  end
+	(object == C_NULL) && error("get_PS: programming error, input object is NULL")
 
 	P = unsafe_load(convert(Ptr{GMT_POSTSCRIPT}, object))
 	out = GMTps(unsafe_string(P.data), Int(P.n_bytes), Int(P.mode), [])	# NEED TO FILL THE COMMENT
-
-	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_dataset(API::Ptr{Nothing}, object)
+function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})
 # Given a GMT DATASET D, build an array of segment structure and assign values.
 # Each segment will have 6 items:
 # header:	Text string with the segment header (could be empty)
@@ -635,7 +632,7 @@ function get_dataset(API::Ptr{Nothing}, object)
 # proj4:	String with any proj4 information
 # wkt:		String with any WKT information
 
-	if (object == C_NULL)  return GMTdataset()  end		# No output produced - return a null data set
+	(object == C_NULL) && return GMTdataset()		# No output produced - return a null data set
 	D = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
 	seg_out = 0
@@ -660,7 +657,7 @@ function get_dataset(API::Ptr{Nothing}, object)
 		S = unsafe_wrap(Array, DT.segment, DT.n_segments)	# n_segments-element Array{Ptr{GMT.GMT_DATASEGMENT},1}
 		for seg = 1:DT.n_segments
 			DS = unsafe_load(S[seg])						# GMT.GMT_DATASEGMENT
-			if (DS.n_rows == 0) continue 	end				# Skip empty segments
+			(DS.n_rows == 0) && continue 					# Skip empty segments
 
 			C = unsafe_wrap(Array, DS.data, DS.n_columns)	# DS.data = Ptr{Ptr{Float64}}; C = Array{Ptr{Float64},1}
 			dest = zeros(Float64, DS.n_rows, DS.n_columns)
@@ -908,11 +905,7 @@ function dataset_init_(API::Ptr{Nothing}, Darr, direction::Integer, actual_famil
 	if (dim[GMT.GMT_SEG+1] == 0)	error("Input has zero segments where it can't be")	end
 	dim[GMT.GMT_COL+1] = size(Darr[1].data, 2)		# Number of columns
 
-	if (length(Darr[1].text) != 0)	# This segment also has a cell array of strings
-		mode = GMT_WITH_STRINGS;
-	else
-		mode = GMT_NO_STRINGS;
-	end
+	mode = (length(Darr[1].text) != 0) ? GMT_WITH_STRINGS : GMT_NO_STRINGS
 
 	pdim = pointer(dim)
 	D = GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, mode, pdim, C_NULL, C_NULL, 0, 0, C_NULL)
@@ -1399,7 +1392,7 @@ I = mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::String
 	stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
 	stretch = :auto | "auto" | true | 1 will do an automatic stretching from values obtained from histogram thresholds
 """
-function mat2img(mat::Array{<:Unsigned}, dumb=0; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	color_interp = "";		n_colors = 0;
 	if (cmap !== nothing)
@@ -1579,7 +1572,7 @@ G = mat2grid(f::String, x=nothing, y=nothing)
 	Example: G = mat2grid("sombrero")
 		
 """
-function mat2grid(val::Number=Float32(0); reg=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
 	(hdr === nothing) && error("When creating grid type with no data the 'hdr' arg cannot be missing")
 	(!isa(hdr, Array{Float64})) && (hdr = Float64.(hdr))
 	(!isa(val, AbstractFloat)) && (val = Float32(val))		# We only want floats here
@@ -1778,7 +1771,7 @@ function resetGMT()
 end
 
 # ---------------------------------------------------------------------------------------------------
-function clear_sessions(age=0)
+function clear_sessions(age::Int=0)
 	# Delete stray sessions left behind by old failed process. Thanks to @htyeim
 	# AGE is in seconds
 	# Windows version of ``gmt clear sessions`` fails in 6.0 and it errors if no sessions dir
