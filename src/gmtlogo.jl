@@ -44,8 +44,8 @@ function logo(cmd0::String=""; first=true, kwargs...)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	K, O = set_KO(first)		# Set the K O dance
 
-	cmd, = parse_R("", d, O)
-	cmd, = parse_J(cmd, d, "-Jx1", true, O)
+	cmd, = parse_R(d, "", O)
+	cmd, = parse_J(d, cmd, "-Jx1", true, O)
 
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
 	                        (map=("-g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("-n", arg2str, 1), paper=("-x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str)), 'g')

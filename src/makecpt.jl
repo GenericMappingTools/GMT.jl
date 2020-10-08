@@ -106,7 +106,7 @@ function helper_cpt(d::Dict, cmd::String)
 	# Common to both make & grd cpt
 	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :color_model], [:G :truncate],
 	                                [:I :inverse :reverse], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :auto], [:W :wrap :categorical], [:Z :continuous]])
-	cmd = parse_opt_range(cmd, d, "T")
+	cmd = parse_opt_range(d, cmd, "T")
 	if ((val = find_in_dict(d, [:hinge])[1]) !== nothing)       cmd *= string("+h", val)  end
 	if ((val = find_in_dict(d, [:meter2unit])[1]) !== nothing)  cmd *= "+U" * parse_unit_unit(val)  end
 	if ((val = find_in_dict(d, [:unit2meter])[1]) !== nothing)  cmd *= "+u" * parse_unit_unit(val)  end
@@ -119,7 +119,7 @@ function helper_cpt(d::Dict, cmd::String)
 end
 
 # -------------------------------------------------------------------------------------------
-function parse_opt_range(cmd::String, d::Dict, opt::String="")::String
+function parse_opt_range(d::Dict, cmd::String, opt::String="")::String
 	symbs = [:T :range :inc :bin]
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | Array | String | Number")	# Just print the options
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)

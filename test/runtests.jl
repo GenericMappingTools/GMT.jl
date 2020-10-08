@@ -22,7 +22,7 @@ if (got_it)					# Otherwise go straight to end
 
 	# -------------------- Test common_options ----------------------------------------
 	GMT.dict2nt(Dict(:a =>1, :b => 2))
-	@test GMT.parse_R("", Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)))[1] == " -R1/2/3/4/5/6"
+	@test GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")[1] == " -R1/2/3/4/5/6"
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
 	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
 	@test GMT.build_opt_R(:d) == " -Rd"
@@ -51,47 +51,47 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.arg2str(Dict(:shaded => "-4p/-6p/grey20@40"), [:shaded]) == "-4p/-6p/grey20@40"
 	@test GMT.arg2str(Dict(:shaded => "aa bb"), [:shaded]) == "\"aa bb\""
 	@test_throws ErrorException("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was DataType") GMT.arg2str(typeof(1))
-	@test GMT.parse_c("", Dict(:c => (1,2)))[1] == " -c0,1"
-	@test GMT.parse_c("", Dict(:c => [1,2]))[1] == " -c0,1"
-	@test GMT.parse_c("", Dict(:c => "1,2"))[1] == " -c0,1"
-	@test GMT.parse_c("", Dict(:c => 1))[1] == " -c0"
-	@test GMT.parse_c("", Dict(:c => "1"))[1] == " -c0"
-	@test GMT.parse_l("", Dict(:l => "ai ai"))[2] == " -l\"ai ai\""
-	@test GMT.parse_n("", Dict(:n => (bicubic=true,antialiasing=true,bc=:g)))[2] == " -nc+a+bg"
-	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="meter")),[:I :inc], "I") == " -I1.5e/2.6e"
-	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="m")),[:I :inc], "I") == " -I1.5m/2.6m"
-	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="data")),[:I :inc], "I") == " -I1.5/2.6u"
-	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, extend="data")),[:I :inc], "I") == " -I1.5+e/2.6+e"
-	@test GMT.parse_inc("", Dict(:inc => (x=1.5, y=2.6, unit="nodes")),[:I :inc], "I") == " -I1.5+n/2.6+n"
-	@test GMT.parse_inc("", Dict(:inc => (2,4)),[:I :inc], "I") == " -I2/4"
-	@test GMT.parse_inc("", Dict(:inc => [2 4]),[:I :inc], "I") == " -I2/4"
-	@test GMT.parse_inc("", Dict(:inc => "2"),[:I :inc], "I") == " -I2"
-	@test GMT.parse_inc("", Dict(:inc => "2"),[:I :inc], "") == "2"
-	@test GMT.parse_JZ("", Dict(:JZ => "5c"))[1] == " -JZ5c"
-	@test GMT.parse_JZ("", Dict(:Jz => "5c"))[1] == " -Jz5c"
-	@test GMT.parse_JZ(" -JX10", Dict(:aspect3 => 1))[1] == " -JX10 -JZ10"
-	@test GMT.parse_J("", Dict(:J => "X5"), "", false)[1] == " -JX5"
-	@test GMT.parse_J("", Dict(:a => ""), "", true, true)[1] == " -J"
-	@test GMT.parse_J("", Dict(:J => "X", :figsize => 10))[1] == " -JX10"
-	@test GMT.parse_J("", Dict(:J => "X", :scale => "1:10"))[1] == " -Jx1:10"
-	@test GMT.parse_J("", Dict(:proj => "Ks0/15"))[1] == " -JKs0/15"
-	@test GMT.parse_J("", Dict(:scale=>"1:10"))[1] == " -Jx1:10"
-	@test GMT.parse_J("", Dict(:s=>"1:10"), " -JU")[1] == " -JU"
-	@test GMT.parse_J("", Dict(:J => "Merc", :figsize => 10), "", true, true)[1] == " -JM10"
-	@test GMT.parse_J("", Dict(:J => "+proj=merc"))[1] == " -J+proj=merc+width=12c"
-	@test GMT.parse_J("", Dict(:J => (name=:albers, parallels=[45 65])), "", false)[1] == " -JB0/0/45/65"
-	@test GMT.parse_J("", Dict(:J => (name=:albers, center=[10 20], parallels=[45 65])), "", false)[1] == " -JB10/20/45/65"
-	@test GMT.parse_J("", Dict(:J => "winkel"), "", false)[1] == " -JR"
-	@test GMT.parse_J("", Dict(:J => "M0/0"), "", false)[1] == " -JM0/0"
-	@test GMT.parse_J("", Dict(:J => (name=:merc,center=10)), "", false)[1] == " -JM10"
-	@test GMT.parse_J("", Dict(:J => (name=:merc,parallels=10)), "", false)[1] == " -JM0/0/10"
-	@test GMT.parse_J("", Dict(:J => (name=:Cyl_,center=(0,45))), "", false)[1] == " -JCyl_stere/0/45"
-	@test_throws ErrorException("When projection arguments are in a NamedTuple the projection 'name' keyword is madatory.") GMT.parse_J("", Dict(:J => (parallels=[45 65],)), "", false)
-	@test_throws ErrorException("When projection is a named tuple you need to specify also 'center' and|or 'parallels'") GMT.parse_J("", Dict(:J => (name=:merc,)), "", false)
-	r = GMT.parse_params("", Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")));
+	@test GMT.parse_c(Dict(:c => (1,2)), "")[1] == " -c0,1"
+	@test GMT.parse_c(Dict(:c => [1,2]), "")[1] == " -c0,1"
+	@test GMT.parse_c(Dict(:c => "1,2"), "")[1] == " -c0,1"
+	@test GMT.parse_c(Dict(:c => 1), "")[1] == " -c0"
+	@test GMT.parse_c(Dict(:c => "1"), "")[1] == " -c0"
+	@test GMT.parse_l(Dict(:l => "ai ai"), "")[2] == " -l\"ai ai\""
+	@test GMT.parse_n(Dict(:n => (bicubic=true,antialiasing=true,bc=:g)), "")[2] == " -nc+a+bg"
+	@test GMT.parse_inc(Dict(:inc => (x=1.5, y=2.6, unit="meter")),"", [:I :inc], "I") == " -I1.5e/2.6e"
+	@test GMT.parse_inc(Dict(:inc => (x=1.5, y=2.6, unit="m")),"", [:I :inc], "I") == " -I1.5m/2.6m"
+	@test GMT.parse_inc(Dict(:inc => (x=1.5, y=2.6, unit="data")),"", [:I :inc], "I") == " -I1.5/2.6u"
+	@test GMT.parse_inc(Dict(:inc => (x=1.5, y=2.6, extend="data")),"", [:I :inc], "I") == " -I1.5+e/2.6+e"
+	@test GMT.parse_inc(Dict(:inc => (x=1.5, y=2.6, unit="nodes")),"", [:I :inc], "I") == " -I1.5+n/2.6+n"
+	@test GMT.parse_inc(Dict(:inc => (2,4)),"", [:I :inc], "I") == " -I2/4"
+	@test GMT.parse_inc(Dict(:inc => [2 4]),"", [:I :inc], "I") == " -I2/4"
+	@test GMT.parse_inc(Dict(:inc => "2"),"", [:I :inc], "I") == " -I2"
+	@test GMT.parse_inc(Dict(:inc => "2"),"", [:I :inc], "") == "2"
+	@test GMT.parse_JZ(Dict(:JZ => "5c"), "")[1] == " -JZ5c"
+	@test GMT.parse_JZ(Dict(:Jz => "5c"), "")[1] == " -Jz5c"
+	@test GMT.parse_JZ(Dict(:aspect3 => 1), " -JX10")[1] == " -JX10 -JZ10"
+	@test GMT.parse_J(Dict(:J => "X5"), "", "", false)[1] == " -JX5"
+	@test GMT.parse_J(Dict(:a => ""), "", "", true, true)[1] == " -J"
+	@test GMT.parse_J(Dict(:J => "X", :figsize => 10), "")[1] == " -JX10"
+	@test GMT.parse_J(Dict(:J => "X", :scale => "1:10"), "")[1] == " -Jx1:10"
+	@test GMT.parse_J(Dict(:proj => "Ks0/15"), "")[1] == " -JKs0/15"
+	@test GMT.parse_J(Dict(:scale=>"1:10"), "")[1] == " -Jx1:10"
+	@test GMT.parse_J(Dict(:s=>"1:10"), "", " -JU")[1] == " -JU"
+	@test GMT.parse_J(Dict(:J => "Merc", :figsize => 10), "", "", true, true)[1] == " -JM10"
+	@test GMT.parse_J(Dict(:J => "+proj=merc"), "")[1] == " -J+proj=merc+width=12c"
+	@test GMT.parse_J(Dict(:J => (name=:albers, parallels=[45 65])), "", "", false)[1] == " -JB0/0/45/65"
+	@test GMT.parse_J(Dict(:J => (name=:albers, center=[10 20], parallels=[45 65])), "", "", false)[1] == " -JB10/20/45/65"
+	@test GMT.parse_J(Dict(:J => "winkel"), "", "", false)[1] == " -JR"
+	@test GMT.parse_J(Dict(:J => "M0/0"), "", "", false)[1] == " -JM0/0"
+	@test GMT.parse_J(Dict(:J => (name=:merc,center=10)), "","", false)[1] == " -JM10"
+	@test GMT.parse_J(Dict(:J => (name=:merc,parallels=10)), "","", false)[1] == " -JM0/0/10"
+	@test GMT.parse_J(Dict(:J => (name=:Cyl_,center=(0,45))), "", "", false)[1] == " -JCyl_stere/0/45"
+	@test_throws ErrorException("When projection arguments are in a NamedTuple the projection 'name' keyword is madatory.") GMT.parse_J(Dict(:J => (parallels=[45 65],)), "", "", false)
+	@test_throws ErrorException("When projection is a named tuple you need to specify also 'center' and|or 'parallels'") GMT.parse_J(Dict(:J => (name=:merc,)), "", "", false)
+	r = GMT.parse_params(Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")), "");
 	@test r == " --MAP_FRAME_WIDTH=0.2 --IO=lixo --OI=xoli"
-	@test GMT.parse_params("", Dict(:par => (:MAP_FRAME_WIDTH,0.2))) == " --MAP_FRAME_WIDTH=0.2"
-	@test GMT.parse_params("", Dict(:par => ("MAP_FRAME_WIDTH",0.2))) == " --MAP_FRAME_WIDTH=0.2"
+	@test GMT.parse_params(Dict(:par => (:MAP_FRAME_WIDTH,0.2)), "") == " --MAP_FRAME_WIDTH=0.2"
+	@test GMT.parse_params(Dict(:par => ("MAP_FRAME_WIDTH",0.2)), "") == " --MAP_FRAME_WIDTH=0.2"
 	@test GMT.opt_pen(Dict(:lw => 5, :lc => :red),'W', nothing) == " -W5,red"
 	@test GMT.opt_pen(Dict(:lw => 5),'W', nothing) == " -W5"
 	@test GMT.opt_pen(Dict(:a => (10,:red)),'W', [:a]) == " -W10,red"
@@ -161,10 +161,10 @@ if (got_it)					# Otherwise go straight to end
 
 	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
 	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",), :yaxis2=>(annot=2,));
-	@test GMT.parse_B("", d)[1] == " -BpxaUfg10 -BWSen+taiai -Bpx+lai+sBlaBla -Bpyclixo.txt -Bsxa5f1 -Bsya2"
-	@test GMT.parse_B("",Dict(:B=>:same))[1] == " -B"
-	@test GMT.parse_B("", Dict(:title => :bla))[1] == " -Baf -BWSen+tbla"
-	@test GMT.parse_B("", Dict(:frame => :auto, :title => :bla))[1] == " -Baf -BWSen+tbla"
+	@test GMT.parse_B(d, "")[1] == " -BpxaUfg10 -BWSen+taiai -Bpx+lai+sBlaBla -Bpyclixo.txt -Bsxa5f1 -Bsya2"
+	@test GMT.parse_B(Dict(:B=>:same), "")[1] == " -B"
+	@test GMT.parse_B(Dict(:title => :bla), "")[1] == " -Baf -BWSen+tbla"
+	@test GMT.parse_B(Dict(:frame => :auto, :title => :bla), "")[1] == " -Baf -BWSen+tbla"
 	GMT.helper2_axes("lolo");
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
 
@@ -223,9 +223,9 @@ if (got_it)					# Otherwise go straight to end
 	GMT.strncmp("abcd", "ab", 2)
 	GMT.parse_proj((name="blabla",center=(0,0)))
 
-	@test GMT.parse_j("", Dict(:spheric_dist => "f"))[1] == " -jf"
-	@test GMT.parse_t("", Dict(:t=>0.2))[1] == " -t20.0"
-	@test GMT.parse_t("", Dict(:t=>20))[1]  == " -t20"
+	@test GMT.parse_j(Dict(:spheric_dist => "f"), "")[1] == " -jf"
+	@test GMT.parse_t(Dict(:t=>0.2), "")[1] == " -t20.0"
+	@test GMT.parse_t(Dict(:t=>20), "")[1]  == " -t20"
 	@test GMT.parse_contour_AGTW(Dict(:A => [1]), "") == " -A1,"
 	GMT.helper2_axes("");
 	@test GMT.axis(ylabel="bla") == " -Bpy+lbla";
@@ -252,11 +252,11 @@ if (got_it)					# Otherwise go straight to end
 	@test (GMT.check_axesswap(Dict(:axesswap => ("xy")), "?/?") == "-?/-?")
 	@test (GMT.check_axesswap(Dict(:axesswap => ("y")), "?/?") == "?/-?")
 
-	@test (GMT.parse_opt_range("", Dict(:T => (1,2,0.1,:num)), "") == "1/2/0.1+n")
-	@test (GMT.parse_opt_range("", Dict(:T => (1,2,0.1,:num)), "T") == " -T1/2/0.1+n")
-	@test (GMT.parse_opt_range("", Dict(:T => (1,2,0.1,:log1))) == "1/2/0.1+l")
-	@test (GMT.parse_opt_range("", Dict(:T => [1])) == "1,")
-	GMT.parse_opt_range("", Dict(:T => (1,2,0.1,:mum,:log2)))	# Prints a warning
+	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:num)), "", "") == "1/2/0.1+n")
+	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:num)), "", "T") == " -T1/2/0.1+n")
+	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:log1)), "") == "1/2/0.1+l")
+	@test (GMT.parse_opt_range(Dict(:T => [1]), "") == "1,")
+	GMT.parse_opt_range(Dict(:T => (1,2,0.1,:mum,:log2)), "")	# Prints a warning
 
 	GMT.GMT_PEN();
 	GMT.GMT_PEN(0.0, 0.0, (0.0, 0.0, 0.0, 0.0), map(UInt8, (repeat('\0', 128)...,)), 0, 0, (pointer([0]), pointer([0])));

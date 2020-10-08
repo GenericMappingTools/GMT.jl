@@ -106,7 +106,7 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	if (!occursin("-G", cmd))
 		map = occursin(" -W", cmd) ? true : false
-		cmd, = parse_J(cmd, d, " ", map)		# Do not append a default fig size
+		cmd, = parse_J(d, cmd, " ", map)		# Do not append a default fig size
 	end
 
 	if (occursin(" -W", cmd))				# No input data in this case

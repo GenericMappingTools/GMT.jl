@@ -37,7 +37,7 @@ function del_from_dict(d::Dict, symbs::Array{Symbol})
 	end
 end
 
-function parse_R(cmd::String, d::Dict, O::Bool=false, del::Bool=false)
+function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=false)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	
 	(show_kwargs[1]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
@@ -162,7 +162,7 @@ function opt_R2num(opt_R::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_JZ(cmd::String, d::Dict, del::Bool=true)
+function parse_JZ(d::Dict, cmd::String, del::Bool=true)
 	symbs = [:JZ :Jz :zscale :zsize]
 	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "String | Number"), "")
 	opt_J = "";		seek_JZ = true
@@ -185,7 +185,7 @@ function parse_JZ(cmd::String, d::Dict, del::Bool=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_J(cmd::String, d::Dict, default::String="", map::Bool=true, O::Bool=false, del::Bool=true)
+function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bool=false, del::Bool=true)
 	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
 	# Default to 12c if no size is provided.
 	# If MAP == false, do not try to append a fig size
@@ -468,7 +468,7 @@ function parse_proj(p::NamedTuple)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_B(cmd::String, d::Dict, _opt_B::String="", del=true)::Tuple{String,String}
+function parse_B(d::Dict, cmd::String, _opt_B::String="", del=true)::Tuple{String,String}
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axis :axes :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
@@ -584,45 +584,46 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ="", del::Bool=true)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
-	cmd, opt_R = parse_R(cmd, d, O, del)
-	cmd, opt_J = parse_J(cmd, d, defaultJ, true, O, del)
+	cmd, opt_R = parse_R(d, cmd, O, del)
+	cmd, opt_J = parse_J(d, cmd, defaultJ, true, O, del)
 
 	def_fig_axes_ = (IamModern[1]) ? "" : def_fig_axes	# def_fig_axes is a global const
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (occursin("3", caller) || caller == "grdview")
 			def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3
-			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes3_), del)
+			cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes3_), del)
 		else
-			cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes_), del)	# For overlays, default is no axes
+			cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes_), del)	# For overlays, default is no axes
 		end
 	else
-		cmd, opt_B = parse_B(cmd, d, (O ? "" : def_fig_axes_), del)
+		cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes_), del)
 	end
 	return cmd, opt_B, opt_J, opt_R
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_F(cmd::String, d::Dict)::String
+function parse_F(d::Dict, cmd::String)::String
 	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shaded=("+s", arg2str)) )
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_Td(d::Dict, cmd::String)
+function parse_Td(d::Dict, cmd::String)::String
 	cmd = parse_type_anchor(d, cmd, [:Td :rose],
 							(map=("g", nothing, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), width="+w", justify="+j", fancy="+f", labels="+l", label="+l", offset=("+o", arg2str)), 'j')
 end
-function parse_Tm(d::Dict, cmd::String)
+function parse_Tm(d::Dict, cmd::String)::String
 	cmd = parse_type_anchor(d, cmd, [:Tm :compass],
 	                        (map=("g", nothing, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), width="+w", dec="+d", justify="+j", rose_primary=("+i", add_opt_pen), rose_secondary=("+p", add_opt_pen), labels="+l", label="+l", annot=("+t", arg2str), offset=("+o", arg2str)), 'j')
 end
-function parse_L(d::Dict, cmd::String)
+function parse_L(d::Dict, cmd::String)::String
 	cmd = parse_type_anchor(d, cmd, [:L :map_scale],
 	                        (map=("g", nothing, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), scale_at_lat="+c", length="+w", width="+w", align="+a1", justify="+j", fancy="_+f", label="+l", offset=("+o", arg2str), units="_+u", vertical="_+v"), 'j')
 end
 
 # ---------------------------------------------------------------------------------------------------
+#parse_type_anchor(::String, ::Dict) = parse_type_anchor(Dict(), "", [:a], (a=0,), 'a')
 function parse_type_anchor(d::Dict, cmd::String, symbs::Array{Symbol}, mapa::NamedTuple, def_CS::Char, del::Bool=true)
 	# SYMBS: [:D :pos :position] | ...
 	# MAPA is the NamedTuple of suboptions
@@ -647,7 +648,7 @@ function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_V(cmd::String, d::Dict)::String
+function parse_V(d::Dict, cmd::String)::String
 	# Parse the global -V option. Return CMD same as input if no -V option in args
 	if ((val = find_in_dict(d, [:V :verbose], true)[1]) !== nothing)
 		if (isa(val, Bool) && val) cmd *= " -V"
@@ -658,15 +659,15 @@ function parse_V(cmd::String, d::Dict)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_V_params(cmd::String, d::Dict)
+function parse_V_params(d::Dict, cmd::String)
 	# Parse the global -V option and the --PAR=val. Return CMD same as input if no options in args
-	cmd = parse_V(cmd, d)
-	return parse_params(cmd, d)
+	cmd = parse_V(d, cmd)
+	return parse_params(d, cmd)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_UVXY(cmd::String, d::Dict)
-	cmd = parse_V(cmd, d)
+function parse_UVXY(d::Dict, cmd::String)
+	cmd = parse_V(d, cmd)
 	cmd = parse_UXY(cmd, d, [:X :xoff :x_off :x_offset], 'X')
 	cmd = parse_UXY(cmd, d, [:Y :yoff :y_off :y_offset], 'Y')
 	cmd = parse_UXY(cmd, d, [:U :stamp :time_stamp], 'U')
@@ -674,30 +675,30 @@ function parse_UVXY(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_a(cmd::String, d::Dict)
+function parse_a(d::Dict, cmd::String)
 	# Parse the global -a option. Return CMD same as input if no -a option in args
 	parse_helper(cmd, d, [:a :aspatial], " -a")
 end
 
-function parse_b(cmd::String, d::Dict)
+function parse_b(d::Dict, cmd::String)
 	# Parse the global -b option. Return CMD same as input if no -b option in args
 	parse_helper(cmd, d, [:b :binary], " -b")
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_bi(cmd::String, d::Dict)
+function parse_bi(d::Dict, cmd::String)
 	# Parse the global -bi option. Return CMD same as input if no -bi option in args
 	parse_helper(cmd, d, [:bi :binary_in], " -bi")
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_bo(cmd::String, d::Dict)
+function parse_bo(d::Dict, cmd::String)
 	# Parse the global -bo option. Return CMD same as input if no -bo option in args
 	parse_helper(cmd, d, [:bo :binary_out], " -bo")
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_c(cmd::String, d::Dict)
+function parse_c(d::Dict, cmd::String)
 	# Most of the work here is because GMT counts from 0 but here we count from 1, so conversions needed
 	opt_val = ""
 	if ((val = find_in_dict(d, [:c :panel])[1]) !== nothing)
@@ -719,53 +720,53 @@ function parse_c(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_d(cmd::String, d::Dict)
+function parse_d(d::Dict, cmd::String)
 	# Parse the global -di option. Return CMD same as input if no -di option in args
 	parse_helper(cmd, d, [:d :nodata], " -d")
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_di(cmd::String, d::Dict)
+function parse_di(d::Dict, cmd::String)
 	# Parse the global -di option. Return CMD same as input if no -di option in args
 	parse_helper(cmd, d, [:di :nodata_in], " -di")
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_do(cmd::String, d::Dict)
+function parse_do(d::Dict, cmd::String)
 	# Parse the global -do option. Return CMD same as input if no -do option in args
 	parse_helper(cmd, d, [:do :nodata_out], " -do")
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_e(cmd::String, d::Dict)
+function parse_e(d::Dict, cmd::String)
 	# Parse the global -e option. Return CMD same as input if no -e option in args
 	parse_helper(cmd, d, [:e :pattern], " -e")
 end
 
 # ---------------------------------------------------------------------------------
-function parse_f(cmd::String, d::Dict)
+function parse_f(d::Dict, cmd::String)
 	# Parse the global -f option. Return CMD same as input if no -f option in args
 	parse_helper(cmd, d, [:f :colinfo], " -f")
 end
 
 # ---------------------------------------------------------------------------------
-function parse_g(cmd::String, d::Dict)
+function parse_g(d::Dict, cmd::String)
 	# Parse the global -g option. Return CMD same as input if no -g option in args
 	parse_helper(cmd, d, [:g :gaps], " -g")
 end
 
 # ---------------------------------------------------------------------------------
-function parse_h(cmd::String, d::Dict)
+function parse_h(d::Dict, cmd::String)
 	# Parse the global -h option. Return CMD same as input if no -h option in args
 	parse_helper(cmd, d, [:h :header], " -h")
 end
 
 # ---------------------------------------------------------------------------------
-parse_i(cmd::String, d::Dict) = parse_helper(cmd, d, [:i :incol], " -i")
-parse_j(cmd::String, d::Dict) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
+parse_i(d::Dict, cmd::String) = parse_helper(cmd, d, [:i :incol], " -i")
+parse_j(d::Dict, cmd::String) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
 
 # ---------------------------------------------------------------------------------
-function parse_l(cmd::String, d::Dict)
+function parse_l(d::Dict, cmd::String)
 	cmd_ = add_opt("", 'l', d, [:l :legend],
 		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), false)
 	# Now make sure blanks in legen text are wrapped in ""
@@ -779,7 +780,7 @@ function parse_l(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------
-function parse_n(cmd::String, d::Dict)
+function parse_n(d::Dict, cmd::String)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
 	#parse_helper(cmd, d, [:n :interp :interpol], " -n")
 	cmd_ = add_opt("", 'n', d, [:n :interp :interpol], 
@@ -788,38 +789,38 @@ function parse_n(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------
-function parse_o(cmd::String, d::Dict)
+function parse_o(d::Dict, cmd::String)
 	# Parse the global -o option. Return CMD same as input if no -o option in args
 	parse_helper(cmd, d, [:o :outcol], " -o")
 end
 
 # ---------------------------------------------------------------------------------
-function parse_p(cmd::String, d::Dict)
+function parse_p(d::Dict, cmd::String)
 	# Parse the global -p option. Return CMD same as input if no -p option in args
 	parse_helper(cmd, d, [:p :view :perspective], " -p")
 end
 
 # ---------------------------------------------------------------------------------------------------
 # Parse the global -s option. Return CMD same as input if no -s option in args
-parse_s(cmd::String, d::Dict) = parse_helper(cmd, d, [:s :skip_NaN], " -s")
+parse_s(d::Dict, cmd::String) = parse_helper(cmd, d, [:s :skip_NaN], " -s")
 
 # ---------------------------------------------------------------------------------------------------
 # Parse the global -: option. Return CMD same as input if no -: option in args
 # But because we can't have a variable called ':' we use only the aliases
-parse_swap_xy(cmd::String, d::Dict) = parse_helper(cmd, d, [:yx :swap_xy], " -:")
+parse_swap_xy(d::Dict, cmd::String) = parse_helper(cmd, d, [:yx :swap_xy], " -:")
 
 # ---------------------------------------------------------------------------------------------------
-function parse_r(cmd::String, d::Dict)
+function parse_r(d::Dict, cmd::String)
 	# Parse the global -r option. Return CMD same as input if no -r option in args
 	parse_helper(cmd, d, [:r :reg :registration], " -r")
 end
 
 # ---------------------------------------------------------------------------------------------------
 # Parse the global -x option. Return CMD same as input if no -x option in args
-parse_x(cmd::String, d::Dict) = parse_helper(cmd, d, [:x :cores :n_threads], " -x")
+parse_x(d::Dict, cmd::String) = parse_helper(cmd, d, [:x :cores :n_threads], " -x")
 
 # ---------------------------------------------------------------------------------------------------
-function parse_t(cmd::String, d::Dict)
+function parse_t(d::Dict, cmd::String)
 	opt_val = ""
 	if ((val = find_in_dict(d, [:t :alpha :transparency])[1]) !== nothing)
 		t = (isa(val, String)) ? parse(Float32, val) : val
@@ -831,7 +832,7 @@ function parse_t(cmd::String, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_write(cmd::String, d::Dict)::String
+function parse_write(d::Dict, cmd::String)::String
 	if ((val = find_in_dict(d, [:write :savefile :|>], true)[1]) !== nothing)
 		cmd *=  " > " * val
 	end
@@ -839,7 +840,7 @@ function parse_write(cmd::String, d::Dict)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_append(cmd::String, d::Dict)::String
+function parse_append(d::Dict, cmd::String)::String
 	if ((val = find_in_dict(d, [:append], true)[1]) !== nothing)
 		cmd *=  " >> " * val
 	end
@@ -862,39 +863,39 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 	(show_kwargs[1]) && return (print_kwarg_opts(opts, "(Common options)"),"")	# Just print the options
 	opt_p = nothing;	o = ""
 	for opt in opts
-		if     (opt == :a)  cmd, o = parse_a(cmd, d)
-		elseif (opt == :b)  cmd, o = parse_b(cmd, d)
-		elseif (opt == :c)  cmd, o = parse_c(cmd, d)
-		elseif (opt == :bi) cmd, o = parse_bi(cmd, d)
-		elseif (opt == :bo) cmd, o = parse_bo(cmd, d)
-		elseif (opt == :d)  cmd, o = parse_d(cmd, d)
-		elseif (opt == :di) cmd, o = parse_di(cmd, d)
-		elseif (opt == :do) cmd, o = parse_do(cmd, d)
-		elseif (opt == :e)  cmd, o = parse_e(cmd, d)
-		elseif (opt == :f)  cmd, o = parse_f(cmd, d)
-		elseif (opt == :g)  cmd, o = parse_g(cmd, d)
-		elseif (opt == :h)  cmd, o = parse_h(cmd, d)
-		elseif (opt == :i)  cmd, o = parse_i(cmd, d)
-		elseif (opt == :j)  cmd, o = parse_j(cmd, d)
-		elseif (opt == :l)  cmd, o = parse_l(cmd, d)
-		elseif (opt == :n)  cmd, o = parse_n(cmd, d)
-		elseif (opt == :o)  cmd, o = parse_o(cmd, d)
-		elseif (opt == :p)  cmd, opt_p = parse_p(cmd, d)
-		elseif (opt == :r)  cmd, o = parse_r(cmd, d)
-		elseif (opt == :s)  cmd, o = parse_s(cmd, d)
-		elseif (opt == :x)  cmd, o = parse_x(cmd, d)
-		elseif (opt == :t)  cmd, o = parse_t(cmd, d)
-		elseif (opt == :yx) cmd, o = parse_swap_xy(cmd, d)
-		elseif (opt == :R)  cmd, o = parse_R(cmd, d)
-		elseif (opt == :F)  cmd  = parse_F(cmd, d)
-		elseif (opt == :I)  cmd  = parse_inc(cmd, d, [:I :inc], 'I')
-		elseif (opt == :J)  cmd, o = parse_J(cmd, d)
-		elseif (opt == :JZ) cmd, o = parse_JZ(cmd, d)
-		elseif (opt == :UVXY)     cmd = parse_UVXY(cmd, d)
-		elseif (opt == :V_params) cmd = parse_V_params(cmd, d)
-		elseif (opt == :params)   cmd = parse_params(cmd, d)
-		elseif (opt == :write)    cmd = parse_write(cmd, d)
-		elseif (opt == :append)   cmd = parse_append(cmd, d)
+		if     (opt == :a)  cmd, o = parse_a(d, cmd)
+		elseif (opt == :b)  cmd, o = parse_b(d, cmd)
+		elseif (opt == :c)  cmd, o = parse_c(d, cmd)
+		elseif (opt == :bi) cmd, o = parse_bi(d, cmd)
+		elseif (opt == :bo) cmd, o = parse_bo(d, cmd)
+		elseif (opt == :d)  cmd, o = parse_d(d, cmd)
+		elseif (opt == :di) cmd, o = parse_di(d, cmd)
+		elseif (opt == :do) cmd, o = parse_do(d, cmd)
+		elseif (opt == :e)  cmd, o = parse_e(d, cmd)
+		elseif (opt == :f)  cmd, o = parse_f(d, cmd)
+		elseif (opt == :g)  cmd, o = parse_g(d, cmd)
+		elseif (opt == :h)  cmd, o = parse_h(d, cmd)
+		elseif (opt == :i)  cmd, o = parse_i(d, cmd)
+		elseif (opt == :j)  cmd, o = parse_j(d, cmd)
+		elseif (opt == :l)  cmd, o = parse_l(d, cmd)
+		elseif (opt == :n)  cmd, o = parse_n(d, cmd)
+		elseif (opt == :o)  cmd, o = parse_o(d, cmd)
+		elseif (opt == :p)  cmd, opt_p = parse_p(d, cmd)
+		elseif (opt == :r)  cmd, o = parse_r(d, cmd)
+		elseif (opt == :s)  cmd, o = parse_s(d, cmd)
+		elseif (opt == :x)  cmd, o = parse_x(d, cmd)
+		elseif (opt == :t)  cmd, o = parse_t(d, cmd)
+		elseif (opt == :yx) cmd, o = parse_swap_xy(d, cmd)
+		elseif (opt == :R)  cmd, o = parse_R(d, cmd)
+		elseif (opt == :F)  cmd  = parse_F(d, cmd)
+		elseif (opt == :I)  cmd  = parse_inc(d, cmd, [:I :inc], 'I')
+		elseif (opt == :J)  cmd, o = parse_J(d, cmd)
+		elseif (opt == :JZ) cmd, o = parse_JZ(d, cmd)
+		elseif (opt == :UVXY)     cmd = parse_UVXY(d, cmd)
+		elseif (opt == :V_params) cmd = parse_V_params(d, cmd)
+		elseif (opt == :params)   cmd = parse_params(d, cmd)
+		elseif (opt == :write)    cmd = parse_write(d, cmd)
+		elseif (opt == :append)   cmd = parse_append(d, cmd)
 		end
 	end
 	if (opt_p !== nothing)		# Restrict the contents of this block to when -p was used
@@ -924,7 +925,7 @@ function parse_these_opts(cmd::String, d::Dict, opts, del=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_inc(cmd::String, d::Dict, symbs, opt, del::Bool=true)::String
+function parse_inc(d::Dict, cmd::String, symbs, opt, del::Bool=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
@@ -960,7 +961,7 @@ function parse_inc(cmd::String, d::Dict, symbs, opt, del::Bool=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_params(cmd::String, d::Dict)::String
+function parse_params(d::Dict, cmd::String)::String
 	# Parse the gmt.conf parameters when used from within the modules. Return a --PAR=val string
 	# The input to this kwarg can be a tuple (e.g. (PAR,val)) or a NamedTuple (P1=V1, P2=V2,...)
 
@@ -2360,11 +2361,11 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D::Boo
 	if (haskey(d, :data))  data_kw = d[:data]  end
 	if (fname != "")       data_kw = fname     end
 
-	cmd, opt_i  = parse_i(cmd, d)		# If data is to be read with some colomn order
-	cmd, opt_bi = parse_bi(cmd, d)		# If data is to be read as binary
-	cmd, opt_di = parse_di(cmd, d)		# If data missing data other than NaN
-	cmd, opt_h  = parse_h(cmd, d)
-	cmd, opt_yx = parse_swap_xy(cmd, d)
+	cmd, opt_i  = parse_i(d, cmd)		# If data is to be read with some colomn order
+	cmd, opt_bi = parse_bi(d, cmd)		# If data is to be read as binary
+	cmd, opt_di = parse_di(d, cmd)		# If data missing data other than NaN
+	cmd, opt_h  = parse_h(d, cmd)
+	cmd, opt_yx = parse_swap_xy(d, cmd)
 	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
 	if (isa(data_kw, String))
 		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])	# Then we must read the file to determine -R
@@ -3047,12 +3048,12 @@ function gmthelp(opt)
 		o = string(opt)
 		try
 			if (length(o) <= 2)
-				getfield(GMT, Symbol(string("parse_",o)))("",Dict());
+				getfield(GMT, Symbol(string("parse_",o)))(Dict(), "");
 			else
-				getfield(GMT, Symbol(o))(Dict(:help => 1));
+				getfield(GMT, Symbol(o))(help=1);
 			end
 		catch
-			println("   ==>  '$o' is not a valid option/module name, or not yet implemented")
+			println("   ==>  '$o' is not a valid option/module name, or its help is not yet implemented")
 		end
 	end
 	show_kwargs[1] = false

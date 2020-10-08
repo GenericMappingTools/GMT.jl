@@ -457,7 +457,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 			elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands]);	delete!(d, :Nbands)
 			end
 		end
-		opt, = parse_R("", d, !first)
+		opt, = parse_R(d, "", !first)
 		if (opt == "" || opt == " -R")			# OK, no R but we know it here so put it in 'd'
 			if (arg1.registration == 1)			# Fine, grid is already pixel reg
 				push!(d, :R => arg1.range)
@@ -475,7 +475,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		if (opt_base == "")  push!(d, :base => z_min)  end	# Make base = z_min
 		arg1 = gmt("grd2xyz", arg1)[1]			# Now arg1 is a GMTdataset
 	else
-		opt_S = parse_inc("", d, [:S :width], "So", true)
+		opt_S = parse_inc(d, "", [:S :width], "So", true)
 		if (opt_S == "")
 			opt_S = parse_bar_cmd(d, :bar, "", "So", true)
 		end
@@ -655,7 +655,7 @@ function hlines(arg1=nothing; first=true, kwargs...)
 	end
 	mat = ones(2, length(arg1))
 	[mat[1,k] = mat[2,k] = arg1[k] for k = 1:length(arg1)]
-	if ((opt_R = parse_R("", d)[2]) != "")  x = vec(opt_R2num(opt_R)[1:2])
+	if ((opt_R = parse_R(d, "")[2]) != "")  x = vec(opt_R2num(opt_R)[1:2])
 	else                                    x = [-1e50, 1e50];
 	end
 	D = mat2ds(mat, x=x, multi=true)
@@ -695,7 +695,7 @@ function vlines(arg1=nothing; first=true, kwargs...)
 	end
 	mat = ones(2, length(arg1))
 	mat[1,:] = mat[2,:] = arg1
-	if ((opt_R = parse_R("", d)[2]) != "")  x = vec(opt_R2num(opt_R)[3:4])
+	if ((opt_R = parse_R(d, "")[2]) != "")  x = vec(opt_R2num(opt_R)[3:4])
 	else                                    x = [-1e50, 1e50];
 	end
 	D = mat2ds(mat, x=x, multi=true)

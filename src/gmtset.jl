@@ -25,7 +25,7 @@ function gmtset(cmd0::String=""; kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)			# Check if user wants ONLY the HELP mode
-	cmd = parse_V("", d)
+	cmd = parse_V(d, "")
 
 	cmd = add_opt(cmd, 'D', d, [:D :units], nothing, true)
 	cmd = add_opt(cmd, 'G', d, [:G :defaultsfile], nothing, true)
