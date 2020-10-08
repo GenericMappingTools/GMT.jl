@@ -16,7 +16,7 @@ Parameters
     outline for the (possibly oblique) rectangular map domain. 
     ($(GMTdoc)basemap.html#a)
 - $(GMT.opt_B)
-- **D** | **inset** :: [Type => Str]
+- **D** | **inset** | **inset_box** :: [Type => Str]
 
     Draw a simple map insert box on the map. Requires -F.
     ($(GMTdoc)basemap.html#d)
@@ -59,57 +59,12 @@ function basemap(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:F :UVXY :JZ :bo :c :f :p :t :params], first)
     cmd  = parse_these_opts(cmd, d, [[:A :polygon]])
-    #-D[unit]xmin/xmax/ymin/ymax[r][+sfile][+t] | -D[g|j|J|n|x]refpoint+wwidth[/height][+jjustify][+odx[/dy]][+sfile][+t]
-	#cmd = parse_TdTmL(d, cmd)
-    cmd = parse_type_anchor(d, cmd, [[:Td :rose], [:Tm :compass], [:L :map_scale], [:D :inset]])
-
-	return finish_PS_module(d, "psbasemap " * cmd, "", K, O, true, arg1)
-end
-
-#= ---------------------------------------------------------------------------------------------------
-function parse_TdTmL(d::Dict, cmd::String)
-	cmd = add_opt(cmd, "Td", d, [:Td :rose],
-        (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width="+w", justify="+j",
-         fancy="+f", labels="+l", label="+l", offset="+o"))
-	cmd = add_opt(cmd, "Tm", d, [:Tm :compass],
-        (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width="+w", dec="+d", justify="+j",
-         rose_primary=("+i", add_opt_pen), rose_secondary=("+p", add_opt_pen), labels="+l", label="+l", annot="+t", offset="+o"))
-	cmd = add_opt(cmd, "L", d, [:L :map_scale],
-        (map=("g", nothing, 1), inside=("j", nothing, 1), norm=("n", nothing, 1), paper=("x", nothing, 1),
-         anchor=("", arg2str, 2), dec="+d", scale_at_lat="+c", length="+w",
-         align="+a1", justify="+j", fancy="_+f", label="+l", offset="+o", units="_+u", vertical="_+v"))
-end
-=#
-
-# ---------------------------------------------------------------------------------------------------
-function parse_type_anchor(d::Dict, cmd::String, symbs::Array{Symbol}, mapa::NamedTuple, def_CS::Char, del::Bool=true)
-	# SYMBS: [:D :pos :position] | ...
-	# MAPA is the NamedTuple of sunoptions
-	# def_CS is the default "Coordinate system". Colorbar has 'J', logo has 'g', many have 'j'
-	opt = add_opt("", "", d, symbs, mapa, del)
-	if (opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
-		opt = def_CS * opt
-	end
-	if (opt != "")  cmd *= " -" * string(symbs[1]) * opt  end
-	return cmd
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_type_anchor(d::Dict, cmd::String, symbs, del::Bool=true)
-	# SYMBS: [:Td :rose] | [:Tm :compass] | [:L :map_scale] | [:D :inset] [:D :pos :position]
-	# or     [[:Td :rose], [:Tm :compass], ...]
-	if (isa(symbs, Array{Symbol,2}))  symbs = [symbs]  end      # So that we can always do a loop
-	for k = 1:length(symbs)
-		opt = add_opt("", "", d, symbs[k],
-	                  (map=("-g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("-n", arg2str, 1), paper=("-x", arg2str, 1), anchor=("", arg2str, 2), annot="+t", dec="+d", dpi="+r", labels="+l", label="+l", length="+w", width="+w", size="+w", align="+a1", justify="+j", fancy="+f", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n", offset=("+o", arg2str), replicate="+n", rose_primary=("+i", add_opt_pen), rose_secondary=("+p", add_opt_pen), save="+s", scale_at_lat="+c", spacing="+l", translate="_+t", triangles="+e", units="_+u", vertical="_+v"), del)
-		if (opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
-			if (symbs[k][2] == :pos || symbs[k][2] == :position)  opt = 'J' * opt   # Colorbar default is outside
-			else                                                  opt = 'j' * opt   # All others are inside
-			end
-		end
-		if (opt != "")  cmd *= " -" * string(symbs[k][1]) * opt  end
-	end
-	return cmd
+	cmd  = parse_Td(d, cmd)
+	cmd  = parse_Tm(d, cmd)
+	cmd  = parse_L(d, cmd)
+	cmd = parse_type_anchor(d, cmd, [:D :inset :inset_box],
+	                        (map=("-g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("-n", arg2str, 1), paper=("-x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str), save="+s", translate="_+t", units="_+u"), 'j')
+	finish_PS_module(d, "psbasemap " * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
