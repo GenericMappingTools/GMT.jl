@@ -34,7 +34,7 @@ function gmtwhich(cmd0::String; kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)			# Check if user wants ONLY the HELP mode
-	cmd = parse_V_params("", d)
+	cmd = parse_V_params(d, "")
     cmd = parse_these_opts(cmd, d, [[:A :with_permissions], [:C :confirm], [:D :report_dir], [:G :download]])
 
 	common_grd(d, cmd0, cmd, "gmtwhich ", nothing)		# Finish build cmd and run it

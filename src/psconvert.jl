@@ -88,7 +88,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 	(cmd == " -A") && (cmd = cmd * "1p")			# If just -A default to -A1p
 	cmd = parse_these_opts(cmd, d, [[:D :out_dir :output_dir], [:E :dpi], [:F :out_name :output_name],
 	                                [:G :ghost_path], [:I :icc_gray], [:L :list_file], [:P :portrait], [:Q :anti_aliasing], [:S :gs_command], [:Z :del_input_ps]])
-	cmd = parse_V_params(cmd, d)
+	cmd = parse_V_params(d, cmd)
 
 	if ((val = find_in_dict(d, [:fmt])[1]) !== nothing)
 		fmt = isa(val, Symbol) ? string(val) : val

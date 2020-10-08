@@ -51,7 +51,7 @@ function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :n :r])
 	if ((val = find_in_dict(d, [:J :proj :projection], false)[1]) !== nothing)  # Here we don't want any default value
-		cmd = parse_J(cmd, d, "", false)[1];
+		cmd = parse_J(d, cmd, "", false)[1];
 	end
 	cmd = parse_these_opts(cmd, d, [[:C :center], [:D :inc], [:E :dpi], [:F :one2one],
 	                                [:G :outgrid], [:I :inverse], [:M :projected_unit]])

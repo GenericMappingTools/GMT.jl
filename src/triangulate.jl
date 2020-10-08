@@ -78,7 +78,7 @@ function triangulate(cmd0::String="", arg1=nothing; kwargs...)
                                      [:N :ids], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])
 	cmd = parse_Q_tri(d, [:Q :voronoi], cmd)
 	if (occursin("-I", cmd) && occursin("-R", cmd) && !occursin("-G", cmd)) cmd *= " -G"  end
-	if (!occursin("-G", cmd)) cmd, = parse_J(cmd, d)  end
+	if (!occursin("-G", cmd)) cmd, = parse_J(d, cmd)  end
 
 	common_grd(d, cmd0, cmd, "triangulate ", arg1)		# Finish build cmd and run it
 end

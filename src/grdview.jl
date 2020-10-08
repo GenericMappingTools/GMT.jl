@@ -71,7 +71,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt(cmd, 'W', d, [:W :pens :pen], (contour=("c", add_opt_pen),
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
 	cmd = add_opt(cmd, 'T', d, [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)) )
-	(!occursin(" -T", cmd)) ? cmd = parse_JZ(cmd, d)[1] : del_from_dict(d, [:JZ])	# Means, even if we had one, ignore silently
+	(!occursin(" -T", cmd)) ? cmd = parse_JZ(d, cmd)[1] : del_from_dict(d, [:JZ])	# Means, even if we had one, ignore silently
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 

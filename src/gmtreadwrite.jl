@@ -68,7 +68,7 @@ function gmtread(fname::String; kwargs...)
 	d = KW(kwargs)
 	help_show_options(d)					# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :f :i :h])
-	cmd, opt_bi = parse_bi(cmd, d)
+	cmd, opt_bi = parse_bi(d, cmd)
 
 	# Process these first so they may take precedence over defaults set below
 	opt_T = add_opt("", "Tg", d, [:grd :grid])
@@ -128,7 +128,7 @@ function gmtread(fname::String; kwargs...)
 		if (dbg_print_cmd(d, cmd) !== nothing)  return "gmtread " * cmd  end
 		O = gmt("read " * fname * cmd)
 	else
-		opt_R = parse_R("", d)[1]
+		opt_R = parse_R(d, "")[1]
 		if (dbg_print_cmd(d, cmd) !== nothing)  return "ogrread " * cmd  end
 		# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
 		(Sys.iswindows())  && run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)
@@ -215,19 +215,19 @@ function gmtwrite(fname::String, data; kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)					# Check if user wants ONLY the HELP mode
-	cmd, opt_R = parse_R("", d)
-	cmd = parse_V_params(cmd, d)
+	cmd, opt_R = parse_R(d, "")
+	cmd = parse_V_params(d, cmd)
 
 	if (isa(data, GMTgrid))
 		opt_T = " -Tg"
 		fname = fname * parse_grd_format(d)		# If we have format requests
-		cmd, = parse_f(cmd, d)
+		cmd, = parse_f(d, cmd)
 	elseif (isa(data, GMTimage))
 		opt_T = " -Ti"
 		fname *= parse_grd_format(d)			# If we have format requests
 	elseif (isa(data, GMTdataset))
 		opt_T = " -Td"
-		cmd, = parse_bo(cmd, d)					# Write to binary file
+		cmd, = parse_bo(d, cmd)					# Write to binary file
 	elseif (isa(data, GMTcpt))
 		opt_T = " -Tc"
 	elseif (isa(data, GMTps))
@@ -236,7 +236,7 @@ function gmtwrite(fname::String, data; kwargs...)
 		fmt = parse_grd_format(d)				# See if we have format requests
 		if (fmt == "")							# If no format, write a dataset
 			opt_T = " -Td"
-			cmd, = parse_bo(cmd, d)				# Write to binary file
+			cmd, = parse_bo(d, cmd)				# Write to binary file
 		else
 			data = mat2img(data)
 			fname *= fmt
@@ -246,7 +246,7 @@ function gmtwrite(fname::String, data; kwargs...)
 		fmt = parse_grd_format(d)				# See if we have format requests
 		if (fmt == "")							# If no format, write a dataset
 			opt_T = " -Td"
-			cmd, = parse_bo(cmd, d)				# Write to binary file
+			cmd, = parse_bo(d, cmd)				# Write to binary file
 		else
 			data = mat2grid(data)
 			fname *= fmt
