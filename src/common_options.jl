@@ -372,8 +372,7 @@ function parse_proj(p::String)
 		return p,false
 	end
 	out = [""];
-	mnemo::Bool = true			# True when the projection name used one of the below mnemonics
-	s = lowercase(p)
+	s = lowercase(p);		mnemo = true	# True when the projection name used one of the below mnemonics
 	if     (s == "aea"   || s == "albers")                 out[1] = "B0/0"
 	elseif (s == "cea"   || s == "cylindricalequalarea")   out[1] = "Y0/0"
 	elseif (s == "laea"  || s == "lambertazimuthal")       out[1] = "A0/0"
@@ -680,22 +679,17 @@ function parse_a(d::Dict, cmd::String)
 	parse_helper(cmd, d, [:a :aspatial], " -a")
 end
 
-function parse_b(d::Dict, cmd::String)
+# ---------------------------------------------------------------------------------------------------
+function parse_b(d::Dict, cmd::String, symbs::Array{Symbol}=[:b :binary])
 	# Parse the global -b option. Return CMD same as input if no -b option in args
-	parse_helper(cmd, d, [:b :binary], " -b")
+	cmd_ = add_opt("", symbs[1], d, symbs, 
+	               (ncols=("", arg2str, 1), type=("", data_type, 2), swapp_bytes="_w", little_endian="_+l", big_endian="+b"))
+	return cmd * cmd_, cmd_
 end
-
+parse_bi(d::Dict, cmd::String) = parse_b(d, cmd, [:bi :binary_in])
+parse_bo(d::Dict, cmd::String) = parse_b(d, cmd, [:bo :binary_out])
 # ---------------------------------------------------------------------------------------------------
-function parse_bi(d::Dict, cmd::String)
-	# Parse the global -bi option. Return CMD same as input if no -bi option in args
-	parse_helper(cmd, d, [:bi :binary_in], " -bi")
-end
 
-# ---------------------------------------------------------------------------------------------------
-function parse_bo(d::Dict, cmd::String)
-	# Parse the global -bo option. Return CMD same as input if no -bo option in args
-	parse_helper(cmd, d, [:bo :binary_out], " -bo")
-end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_c(d::Dict, cmd::String)
@@ -720,12 +714,14 @@ function parse_c(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_d(d::Dict, cmd::String)
-	# Parse the global -di option. Return CMD same as input if no -di option in args
+function parse_d(d::Dict, cmd::String, symbs::Array{Symbol}=[:d :nodata])
+	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "$(symbs[2])=val"),"")
 	parse_helper(cmd, d, [:d :nodata], " -d")
 end
+parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
+parse_do(d::Dict, cmd::String) = parse_d(d, cmd, [:do :nodata_out])
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function parse_di(d::Dict, cmd::String)
 	# Parse the global -di option. Return CMD same as input if no -di option in args
 	parse_helper(cmd, d, [:di :nodata_in], " -di")
@@ -736,6 +732,7 @@ function parse_do(d::Dict, cmd::String)
 	# Parse the global -do option. Return CMD same as input if no -do option in args
 	parse_helper(cmd, d, [:do :nodata_out], " -do")
 end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function parse_e(d::Dict, cmd::String)
@@ -782,7 +779,6 @@ end
 # ---------------------------------------------------------------------------------
 function parse_n(d::Dict, cmd::String)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
-	#parse_helper(cmd, d, [:n :interp :interpol], " -n")
 	cmd_ = add_opt("", 'n', d, [:n :interp :interpol], 
 	               (B_spline=("b", nothing, 1), bicubic=("c", nothing, 1), bilinear=("l", nothing, 1), near_neighbor=("n", nothing, 1), antialiasing="_+a", bc="+b", clipz="_+c", threshold="+t"))
 	return cmd * cmd_, cmd_
@@ -850,6 +846,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_helper(cmd::String, d::Dict, symbs, opt::String)
 	# Helper function to the parse_?() global options.
+	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val = ""
 	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
 		opt_val = opt * arg2str(val)
@@ -1186,8 +1183,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
 	# Finish a PS creating command. All PS creating modules should use this.
-	(IamModern[1]) && return cmd  			# In Modern mode this fun does not play
-	if (isa(cmd, Array{String,1}))			# Need a recursive call here
+	IamModern[1] && return cmd  			# In Modern mode this fun does not play
+	if (isa(cmd, Vector{String}))			# Need a recursive call here
 		for k = 1:length(cmd)
 			KK = K;		OO = O
 			if (!occursin(" >", cmd[k]))	# Nested calls already have the redirection set
@@ -1522,7 +1519,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_o
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=nothing, arg2=nothing,
+function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1=nothing, arg2=nothing,
 	                 store::Bool=false, def::Bool=false, opt_T::String="", in_bag::Bool=false)
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	# SYMBS is normally: [:C :color :cmap]
@@ -1573,7 +1570,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args=0, arg1=noth
 	return cmd, arg1, arg2, N_args
 end
 # ---------------------
-function helper_add_cpt(cmd::String, opt, N_args, arg1, arg2, val, store)
+function helper_add_cpt(cmd::String, opt, N_args::Int, arg1, arg2, val, store::Bool)
 	# Helper function to avoid repeating 3 times the same code in add_opt_cpt
 	(N_args == 0) ? arg1 = val : arg2 = val;	N_args += 1
 	if (store)  global current_cpt = val  end
@@ -1587,7 +1584,7 @@ function add_opt_fill(d::Dict, opt::String="")
 	add_opt_fill(d, [collect(keys(d))[1]], opt)	# Use ONLY when len(d) == 1
 end
 add_opt_fill(d::Dict, symbs, opt="") = add_opt_fill("", d, symbs, opt)
-function add_opt_fill(cmd::String, d::Dict, symbs, opt="", del=true)::String
+function add_opt_fill(cmd::String, d::Dict, symbs, opt="", del::Bool=true)::String
 	# Deal with the area fill attributes option. Normally, -G
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
@@ -1784,6 +1781,23 @@ function parse_unit_unit(str)::String
 end
 # ---------------------------------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------------------------------
+function data_type(val)
+	# Parse data type for using in -b
+	str = string(val)
+	if     (str =="char" || str =="int8")  out = "c"
+	elseif (str == "uint8")   out = "u"
+	elseif (str == "int16")   out = "h"
+	elseif (str == "uint16")  out = "H"
+	elseif (str == "int32")   out = "i"
+	elseif (str == "uint32")  out = "I"
+	elseif (str == "int64")   out = "l"
+	elseif (str == "uint64")  out = "L"
+	elseif (str == "float" || str == "float")  out = "f"
+	elseif (str == "double")  out = "d"
+	else                      out = "d"
+	end
+end
 
 # ---------------------------------------------------------------------------------------------------
 axis(nt::NamedTuple; x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) = axis(;x=x, y=y, z=z, secondary=secondary, nt...)
@@ -2307,8 +2321,7 @@ end
 function fname_out(d::Dict, del::Bool=false)
 	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 
-	fname::String = ""
-	EXT = FMT[1]
+	EXT = FMT[1];	fname = ""
 	if ((val = find_in_dict(d, [:savefig :figname :name], del)[1]) !== nothing)
 		fname, EXT = splitext(string(val))
 		EXT = (EXT == "") ? FMT[1] : EXT[2:end]
@@ -2320,7 +2333,7 @@ function fname_out(d::Dict, del::Bool=false)
 	(EXT == "" && !Sys.iswindows()) && error("Return an image is only for Windows")
 	(1 == length(EXT) > 3) && error("Bad graphics file extension")
 
-	ret_ps::Bool = false		# To know if we want to return or save PS in mem
+	ret_ps = false				# To know if we want to return or save PS in mem
 	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
 		fname = "";		EXT = "ps";		ret_ps = true
 		(del) && delete!(d, :ps)
@@ -3019,7 +3032,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function help_show_options(d::Dict)
-	(find_in_dict(d, [:help :?])[1] !== nothing) && (show_kwargs[1] = true)	# Put in HELP mode
+	(find_in_dict(d, [:help])[1] !== nothing) && (show_kwargs[1] = true)	# Put in HELP mode
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -3028,12 +3041,19 @@ function print_kwarg_opts(symbs, mapa=nothing)::String
 	opt = "Option: " * join([@sprintf("%s, or ",x) for x in symbs])[1:end-5]
 	if (isa(mapa, NamedTuple))
 		keys_ = keys(mapa)
-		sub_opt = join([@sprintf("%s=?, ",x) for x in keys_])
-		opt *= " = (" * sub_opt * ")"
+		vals = Vector{String}(undef, length(keys_))
+		for k = 1:length(keys_)
+			t = mapa[keys_[k]]
+			vals[k] = (isa(t, Tuple)) ? "?(" * t[1] : "?(" * t
+			if (length(vals[k]) > 2 && vals[k][3] == '_')  vals[k] = "Any(" * vals[k][4:end]  end
+		end
+		sub_opt = join([@sprintf("%s=%s), ",keys_[k], vals[k]) for k = 1:length(keys_)])
+		#sub_opt = join([@sprintf("%s=?, ",x) for x in keys_])
+		opt *= " => (" * sub_opt * ")"
 	elseif (isa(mapa, String))
-		opt *= " = " * mapa
+		opt *= " => " * mapa
 	else
-		opt *= " = Tuple | String | Number | Bool [Possibly not specialized yet]"
+		opt *= " => Tuple | String | Number | Bool [Possibly not yet expanded]"
 	end
 	println(opt)
 	return ""		# Must return != nothing so that dbg_print_cmd() signals stop progam's execution
