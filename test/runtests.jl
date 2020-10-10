@@ -51,12 +51,18 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.arg2str(Dict(:shaded => "-4p/-6p/grey20@40"), [:shaded]) == "-4p/-6p/grey20@40"
 	@test GMT.arg2str(Dict(:shaded => "aa bb"), [:shaded]) == "\"aa bb\""
 	@test_throws ErrorException("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was DataType") GMT.arg2str(typeof(1))
+	@test GMT.parse_b(Dict(:b => (ncols=2, swapp_bytes=true, little_endian=true, type=:char)), "")[2] == " -b2cw+l"
+	@test GMT.parse_b(Dict(:b => (ncols=2, type=:double)), "")[2] == " -b2d"
+	@test GMT.parse_b(Dict(:b => (ncols=2, type=:ai)), "")[2] == " -b2d"
+	@test GMT.parse_bi(Dict(:bi => (ncols=2, type=:float)), "")[2] == " -bi2f"
+	@test GMT.parse_bo(Dict(:bo => (ncols=2, type=:int16)), "")[2] == " -bo2h"
 	@test GMT.parse_c(Dict(:c => (1,2)), "")[1] == " -c0,1"
 	@test GMT.parse_c(Dict(:c => [1,2]), "")[1] == " -c0,1"
 	@test GMT.parse_c(Dict(:c => "1,2"), "")[1] == " -c0,1"
 	@test GMT.parse_c(Dict(:c => 1), "")[1] == " -c0"
 	@test GMT.parse_c(Dict(:c => "1"), "")[1] == " -c0"
 	@test GMT.parse_l(Dict(:l => "ai ai"), "")[2] == " -l\"ai ai\""
+	@test GMT.parse_l(Dict(:l => (text="ai ai", vspace=3)), "")[2] == " -l\"ai ai\"+G3"
 	@test GMT.parse_n(Dict(:n => (bicubic=true,antialiasing=true,bc=:g)), "")[2] == " -nc+a+bg"
 	@test GMT.parse_inc(Dict(:inc => (x=1.5, y=2.6, unit="meter")),"", [:I :inc], "I") == " -I1.5e/2.6e"
 	@test GMT.parse_inc(Dict(:inc => (x=1.5, y=2.6, unit="m")),"", [:I :inc], "I") == " -I1.5m/2.6m"
@@ -134,6 +140,7 @@ if (got_it)					# Otherwise go straight to end
 	@test r == " -S~d0.8i/0.1i:+sa1+d+gblue+n1+w20+p0.5,green"
 	r = decorated(n_symbols=5, symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, quoted=1);
 	@test r == " -Sqn5:+p0.5,green"
+	GMT.decorated((symbol="aiai",))		# Trigger a warning
 
 	r = decorated(dist=("0.4i",0.25), angle=7, clearance=(2,3), debug=1, delay=1, font=10, color=:red, justify=:TC, const_label=:Ai, pen=(0.5,:red), fill=:blue, nudge=(3,4), rounded=1, unit=:TT, min_rad=0.5, curved=1, n_data=20, prefix="Pre", suffices="a,b", label=(:map_dist,"d"), quoted=1)
 	@test r == " -Sqd0.4i/0.25:+a7+d+c2/3+e+f10+gred+jTC+lAi+n3/4+o+r0.5+uTT+v+w20+=Pre+xa,b+LDd+p0.5,red"
@@ -149,6 +156,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_quoted(Dict(:label => :input), "") == "+Lf"
 	@test_throws ErrorException("Wrong content for the :label option. Must be only :header or :input") GMT.parse_quoted(Dict(:label => :x), "")
 	@test_throws ErrorException("Wrong content for the :label option. Must be only :plot_dist or :map_dist") GMT.parse_quoted(Dict(:label => (:x,)), "")
+	GMT.parse_quoted(Dict(:label => 1),"")		# Trigger a warning
 	GMT.helper_arrows(Dict(:geovec => "bla"));
 	GMT.helper_arrows(Dict(:vecmap => "bla"));
 
@@ -183,6 +191,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Argument of the *bar* keyword can be only a string or a NamedTuple.") GMT.parse_bar_cmd(Dict(:a => 0), :a, "", "")
 
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((post=1:5,), "p", "x")
+	GMT.helper3_axes(1,"","")		# Trigger a warning
 
 	GMT.round_wesn([1.333 17.4678 6.66777 33.333], true);
 	GMT.round_wesn([1 1 2 2]);
@@ -467,7 +476,7 @@ if (got_it)					# Otherwise go straight to end
 	println("	GRD2KML")
 	# GRD2KML
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");
-	grd2kml(G, I="+", N="NULL", V="q")
+	grd2kml(G, I="+", N="NUL", V="q")
 
 	G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y -Vq");
 	G2=grdblend(G,G3);
@@ -1260,6 +1269,6 @@ if (got_it)					# Otherwise go straight to end
 	rm("logo.png")
 	rm("lixo.eps")
 	rm("lixo.jpg")
-	#@static if (Sys.iswindows())  run(`rmdir /S /Q NULL`)  end
+	#@static if (Sys.iswindows())  run(`rmdir /S /Q NUL`)  end
 
 end					# End valid testing zone

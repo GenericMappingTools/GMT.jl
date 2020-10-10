@@ -160,10 +160,6 @@ function __init__()
 	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 	(API == C_NULL) && error("Failure to create a GMT Session")
 	haskey(ENV,"JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
-	#try
-		#FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]
-	#catch
-	#end
 end
 
 (GMTver >= 6) && include("get_enums.jl")	# Needed to cheat the autoregister autobot
