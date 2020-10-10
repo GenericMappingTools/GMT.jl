@@ -56,7 +56,7 @@ That is, both of this will work: D = grdtrack([0 0], G);  or  D = grdtrack(G, [0
 """
 function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-	length(kwargs) == 0 && isempty_(arg1) && return monolitic("grdtrack", cmd0, arg1)
+	length(kwargs) == 0 && arg1 === nothing && return monolitic("grdtrack", cmd0, arg1)
 
 	d = KW(kwargs)
 	help_show_options(d)			# Check if user wants ONLY the HELP mode
@@ -68,7 +68,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd, grid_tuple, arg1, arg2 = parse_G_grdtrk(d, [:G :grid], cmd, arg1, arg2)
 
 	# Because we allow arg1 and arg2 to either exist or not and also contain data & grid in any order
-	if (!isempty_(arg1) && !isempty_(arg2))
+	if (arg1 !== nothing && arg2 !== nothing)
 		arg1_is_table = false;	arg2_is_table = false;	arg1_is_grid = false;	arg2_is_grid = false
 		(isa(arg1, GMTgrid)) && (arg1_is_grid = true)
 		(isa(arg2, Array) || isa(arg2, GMTdataset)) && (arg2_is_table = true)
