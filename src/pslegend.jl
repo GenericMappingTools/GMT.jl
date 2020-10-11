@@ -51,7 +51,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
 	                        (map=("g", nothing, 1), inside=("j", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
 	#cmd = parse_type_anchor(d, cmd, [:D :pos :position])
-	cmd = add_opt(cmd, 'C', d, [:C :clearance])
+	cmd = add_opt(d, cmd, 'C', [:C :clearance])
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 	gmt("destroy")

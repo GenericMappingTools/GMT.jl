@@ -42,7 +42,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	if (is3D)	cmd, opt_JZ  = parse_JZ(d, cmd)  end
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
-	if (is_ternary)  cmd = add_opt(cmd, 'M', d, [:M :no_plot])  end
+	if (is_ternary)  cmd = add_opt(d, cmd, 'M', [:M :no_plot])  end
 	opt_UVXY = parse_UVXY(d, "")	# Need it separate to not risk to double include it.
 	cmd, opt_c = parse_c(d, cmd)	# Need opt_c because we may need to remove it from double calls
 
@@ -59,8 +59,8 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 		cmd *= " -JZ6c"		# Default -JZ
 	end
 
-	cmd = add_opt(cmd, 'A', d, [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
-	opt_F = add_opt("", "", d, [:F :conn :connection],
+	cmd = add_opt(d, cmd, 'A', [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
+	opt_F = add_opt(d, "", "", [:F :conn :connection],
 	                (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpoint=("r", nothing, 1),  ignore_hdr="_a", single_group="_f", segments="_s", segments_reset="_r", anchor=("", arg2str)))
 	if (length(opt_F) > 1 && !occursin("/", opt_F))  opt_F = opt_F[1]  end	# Allow con=:net or con=(1,2)
 	if (opt_F != "")  cmd *= " -F" * opt_F  end
@@ -69,7 +69,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	got_Ebars = false
 	val, symb = find_in_dict(d, [:E :error :error_bars], false)
 	if (val !== nothing)
-		cmd, arg1 = add_opt(add_opt, (cmd, 'E', d, [symb]),
+		cmd, arg1 = add_opt(add_opt, (d, cmd, 'E', [symb]),
 					        (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, arg1)
 		got_Ebars = true
 		del_from_dict(d, [symb])
@@ -80,7 +80,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1)
 	#cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, nothing, true, true, "", true)
 
-	cmd, args, n, got_Zvars = add_opt(cmd, 'Z', d, [:Z :level], :data, [arg1, arg2, arg3], (outline="_+l", fill="_+f"))
+	cmd, args, n, got_Zvars = add_opt(d, cmd, 'Z', [:Z :level], :data, [arg1, arg2, arg3], (outline="_+l", fill="_+f"))
 	if (n > 0)
 		arg1, arg2, arg3 = args[:]
 		N_args = n
@@ -102,9 +102,9 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	end
 
 	if (is_ternary)			# Means we are in the psternary mode
-		cmd = add_opt(cmd, 'L', d, [:L :labels])
+		cmd = add_opt(d, cmd, 'L', [:L :labels])
 	else
-		opt_L = add_opt("", 'L', d, [:L :close :polygon],
+		opt_L = add_opt(d, "", 'L', [:L :close :polygon],
 		                (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
 		(length(opt_L) > 3 && !occursin("-G", cmd) && !occursin("+p", cmd)) && (opt_L *= "+p0.5p")
 		cmd *= opt_L
@@ -120,7 +120,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
 	end
 
-	opt_S = add_opt("", 'S', d, [:S :symbol], (symb="1", size="", unit="1"))
+	opt_S = add_opt(d, "", 'S', [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
 		marca, arg1, more_cols = get_marker_name(d, [:marker :Marker :shape], is3D, true, arg1)
 		if ((val = find_in_dict(d, [:markersize :MarkerSize :ms :size])[1]) !== nothing)
@@ -406,7 +406,7 @@ function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)
 	marca = [""];	 msg = ""
 	if (size(ext,2) == N && arg1 !== nothing)
 		S = Symbol(opt)
-		marca[1], arg1 = add_opt(add_opt, (opt, "", Dict(S => (par=ext,)), [S]), (par="|",), true, arg1)
+		marca[1], arg1 = add_opt(add_opt, (Dict(S => (par=ext,)), opt, "", [S]), (par="|",), true, arg1)
 	elseif (cst && length(ext) == 1)
 		marca[1] = opt * "-" * string(ext)
 	else
@@ -450,11 +450,11 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 			elseif (haskey(d, :hbar))
 				cmd[1] = GMT.parse_bar_cmd(d, :hbar, cmd[1], "SB")
 			else
-				opt = add_opt("", "",  d, [:width])		# No need to purge because width is not a psxy option
+				opt = add_opt(d, "", "",  [:width])		# No need to purge because width is not a psxy option
 				if (opt == "")	opt = "0.8"	end			# The default
 				cmd[1] *= " -Sb" * opt * "u"
 
-				optB = add_opt("", "",  d, [:base])
+				optB = add_opt(d, "", "",  [:base])
 				if (optB == "")	optB = "0"	end
 				cmd[1] *= "+b" * optB
 			end
@@ -491,7 +491,7 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u=fal
 		if (isa(d[key], String))
 			cmd *= " -" * optS * d[key];	delete!(d, key)
 		elseif (isa(d[key], NamedTuple))
-			opt = add_opt("", optS, d, [key], (width="",unit="1",base="+b",height="+B",nbands="+z",Nbands="+Z"))
+			opt = add_opt(d, "", optS, [key], (width="",unit="1",base="+b",height="+B",nbands="+z",Nbands="+Z"))
 		else
 			error("Argument of the *bar* keyword can be only a string or a NamedTuple.")
 		end

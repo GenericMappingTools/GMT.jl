@@ -46,7 +46,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=false)
 	val, symb = find_in_dict(d, [:R :region :limits])
 	if (val !== nothing)
 		opt_R[1] = build_opt_R(val)
-		if (del) delete!(d, symb) end
+		(del) && delete!(d, symb)
 	elseif (IamModern[1])
 		return cmd, ""
 	end
@@ -69,7 +69,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=false)
 		end
 		(R != "" && c == 4) && (opt_R[1] = R)
 	end
-	(O && isempty(opt_R[1])) && (opt_R[1] = " -R")
+	(O && opt_R[1] == "") && (opt_R[1] = " -R")
 	cmd = cmd * opt_R[1]
 	return cmd, opt_R[1]
 end
@@ -96,7 +96,7 @@ function build_opt_R(arg::NamedTuple)::String
 	BB = [""]
 	d = nt2dict(arg)					# Convert to Dict
 	if ((val = find_in_dict(d, [:bb :limits :region])[1]) !== nothing)
-		if ((isa(val, Array{<:Number}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
+		if ((isa(val, Array{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 			if (haskey(d, :diag))		# The diagonal case
 				BB[1] = @sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
 			else
@@ -603,7 +603,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_F(d::Dict, cmd::String)::String
-	cmd = add_opt(cmd, 'F', d, [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
+	cmd = add_opt(d, cmd, 'F', [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shaded=("+s", arg2str)) )
 end
 
@@ -628,7 +628,7 @@ function parse_type_anchor(d::Dict, cmd::String, symbs::Array{Symbol}, mapa::Nam
 	# MAPA is the NamedTuple of suboptions
 	# def_CS is the default "Coordinate system". Colorbar has 'J', logo has 'g', many have 'j'
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
-	opt = add_opt("", "", d, symbs, mapa, del)
+	opt = add_opt(d, "", "", symbs, mapa, del)
 	if (opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
 		opt = def_CS * opt
 	end
@@ -682,7 +682,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_b(d::Dict, cmd::String, symbs::Array{Symbol}=[:b :binary])
 	# Parse the global -b option. Return CMD same as input if no -b option in args
-	cmd_ = add_opt("", symbs[1], d, symbs, 
+	cmd_ = add_opt(d, "", symbs[1], symbs, 
 	               (ncols=("", arg2str, 1), type=("", data_type, 2), swapp_bytes="_w", little_endian="_+l", big_endian="+b"))
 	return cmd * cmd_, cmd_
 end
@@ -721,19 +721,6 @@ end
 parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
 parse_do(d::Dict, cmd::String) = parse_d(d, cmd, [:do :nodata_out])
 
-#= ---------------------------------------------------------------------------------------------------
-function parse_di(d::Dict, cmd::String)
-	# Parse the global -di option. Return CMD same as input if no -di option in args
-	parse_helper(cmd, d, [:di :nodata_in], " -di")
-end
-
-# ---------------------------------------------------------------------------------------------------
-function parse_do(d::Dict, cmd::String)
-	# Parse the global -do option. Return CMD same as input if no -do option in args
-	parse_helper(cmd, d, [:do :nodata_out], " -do")
-end
-=#
-
 # ---------------------------------------------------------------------------------------------------
 function parse_e(d::Dict, cmd::String)
 	# Parse the global -e option. Return CMD same as input if no -e option in args
@@ -764,7 +751,7 @@ parse_j(d::Dict, cmd::String) = parse_helper(cmd, d, [:j :spheric_dist :spherica
 
 # ---------------------------------------------------------------------------------
 function parse_l(d::Dict, cmd::String)
-	cmd_ = add_opt("", 'l', d, [:l :legend],
+	cmd_ = add_opt(d, "", 'l', [:l :legend],
 		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), false)
 	# Now make sure blanks in legen text are wrapped in ""
 	if ((ind = findfirst("+", cmd_)) !== nothing)
@@ -779,7 +766,7 @@ end
 # ---------------------------------------------------------------------------------
 function parse_n(d::Dict, cmd::String)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
-	cmd_ = add_opt("", 'n', d, [:n :interp :interpol], 
+	cmd_ = add_opt(d, "", 'n', [:n :interp :interpol], 
 	               (B_spline=("b", nothing, 1), bicubic=("c", nothing, 1), bilinear=("l", nothing, 1), near_neighbor=("n", nothing, 1), antialiasing="_+a", bc="+b", clipz="_+c", threshold="+t"))
 	return cmd * cmd_, cmd_
 end
@@ -914,9 +901,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_these_opts(cmd::String, d::Dict, opts, del=true)
 	# Parse a group of options that individualualy would had been parsed as (example):
-	# cmd = add_opt(cmd, 'A', d, [:A :horizontal])
+	# cmd = add_opt(d, cmd, 'A', [:A :horizontal])
 	for opt in opts
-		cmd = add_opt(cmd, string(opt[1]), d, opt, nothing, del)
+		cmd = add_opt(d, cmd, string(opt[1]), opt, nothing, del)
 	end
 	return cmd
 end
@@ -1099,9 +1086,9 @@ end
 function build_pen(d::Dict, del::Bool=false)::String
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
-	lw = add_opt("", "", d, [:lw :linewidth], nothing, del)	# Line width
-	if (lw == "")  lw = add_opt("", "", d, [:lt :linethick :linethickness], nothing, del)  end	# Line width
-	ls = add_opt("", "", d, [:ls :linestyle], nothing, del)	# Line style
+	lw = add_opt(d, "", "", [:lw :linewidth], nothing, del)	# Line width
+	if (lw == "")  lw = add_opt(d, "", "", [:lt :linethick :linethickness], nothing, del)  end	# Line width
+	ls = add_opt(d, "", "", [:ls :linestyle], nothing, del)	# Line style
 	lc = string(parse_pen_color(d, [:lc :linecolor], del))
 	out = ""
 	if (lw != "" || lc != "" || ls != "")
@@ -1247,7 +1234,7 @@ function prepare2geotif(d::Dict, cmd, opt_T::String, O::Bool)
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
 			# [+tdocname][+nlayername][+ofoldername][+aaltmode[alt]][+lminLOD/maxLOD][+fminfade/maxfade][+uURL]
 			isa(val, Dict) && (val = dict2nt(val))
-			opt_T = add_opt(" -TG -W+k", "", Dict(:kml => val), [:kml],
+			opt_T = add_opt(Dict(:kml => val), " -TG -W+k", "", [:kml],
 							(title="+t", layer="+n", layername="+n", folder="+o", foldername="+o", altmode="+a", LOD=("+l", arg2str), fade=("+f", arg2str), URL="+u"))
 		end
 	end
@@ -1276,13 +1263,13 @@ function add_opt_1char(cmd::String, d::Dict, symbs, del::Bool=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(cmd::String, opt, d::Dict, symbs, mapa=nothing, del::Bool=true, arg=nothing)::String
+function add_opt(d::Dict, cmd::String, opt, symbs, mapa=nothing, del::Bool=true, arg=nothing)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
 	# ARG, is a special case to append to a matrix (complicated thing in Julia)
 	# ARG can also be a Bool, in which case when MAPA is a NT we expand each of its members as sep options
 	# If ARG is a string, then the keys of MAPA can be used as values of SYMB and are replaced by vals of MAPA
-	#    Example (hitogram -Z): add_opt("", 'Z', d, [:Z :kind], (counts="0", freq="1",...)) Z=freq => -Z1
+	#    Example (hitogram -Z): add_opt(d, "", 'Z', [:Z :kind], (counts="0", freq="1",...)) Z=freq => -Z1
 	#  But this only works when sub-options have default values. i.e. they are aliases
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
 
@@ -1468,7 +1455,7 @@ function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_opts::NamedTuple, del=true)
+function add_opt(d::Dict, cmd::String, opt, symbs, need_symb::Symbol, args, nt_opts::NamedTuple, del=true)
 	# This version specializes in the case where an option may transmit an array, or read a file, with optional flags.
 	# When optional flags are used we need to use NamedTuples (the NT_OPTS arg). In that case the NEED_SYMB
 	# is the keyword name (a symbol) whose value holds the array. An error is raised if this symbol is missing in D
@@ -1493,7 +1480,7 @@ function add_opt(cmd::String, opt, d::Dict, symbs, need_symb::Symbol, args, nt_o
 				opt *= string(val)
 				to_slot = false
 			end
-			cmd = add_opt(cmd, opt, d, symbs, nt_opts)
+			cmd = add_opt(d, cmd, opt, symbs, nt_opts)
 		elseif (isa(val, Array{<:Real}) || isa(val, GMTdataset) || isa(val, Array{<:GMTdataset,1}) || typeof(val) <: AbstractRange)
 			if (typeof(val) <: AbstractRange)  val = collect(val)  end
 			cmd *= " -" * opt
@@ -1598,8 +1585,8 @@ function add_opt_fill(val, cmd::String="",  opt="")::String
 	if (isa(val, NamedTuple))
 		d2 = nt2dict(val)
 		cmd *= opt
-		if     (haskey(d2, :pattern))     cmd *= 'p' * add_opt("", "", d2, [:pattern])
-		elseif (haskey(d2, :inv_pattern)) cmd *= 'P' * add_opt("", "", d2, [:inv_pattern])
+		if     (haskey(d2, :pattern))     cmd *= 'p' * add_opt(d2, "", "", [:pattern])
+		elseif (haskey(d2, :inv_pattern)) cmd *= 'P' * add_opt(d2, "", "", [:inv_pattern])
 		else   error("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member")
 		end
 
@@ -2035,7 +2022,7 @@ vector_attrib(d::Dict, lixo=nothing) = vector_attrib(; d...)	# When comming from
 vector_attrib(t::NamedTuple) = vector_attrib(; t...)
 function vector_attrib(;kwargs...)::String
 	d = KW(kwargs)
-	cmd = add_opt("", "", d, [:len :length])
+	cmd = add_opt(d, "", "", [:len :length])
 	if (haskey(d, :angle))  cmd = string(cmd, "+a", d[:angle])  end
 	if (haskey(d, :middle))
 		cmd *= "+m";
@@ -2736,7 +2723,7 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 	(finish) && (cmd = finish_PS(d, cmd, output, K, O))
 
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
-	img_mem_layout[1] = add_opt("", "", d, [:layout])
+	img_mem_layout[1] = add_opt(d, "", "", [:layout])
 	if (img_mem_layout[1] == "images")  img_mem_layout[1] = "I   "  end	# Special layout for Images.jl
 
 	if (fname_ext != "ps" && fname_ext != "eps")	# Exptend to a larger paper size (5 x A0)
@@ -2899,7 +2886,7 @@ function digests_legend_bag(d::Dict, del::Bool=false)
 		end
 
 		lab_width = maximum(length.(legend_type.label[:])) * fs / 72 * 2.54 * 0.55 + 0.15	# Guess label width in cm
-		if ((opt_D = add_opt("", "", d, [:leg_pos :legend_pos :legend_position],
+		if ((opt_D = add_opt(d, "", "", [:leg_pos :legend_pos :legend_position],
 			(map_coord="g",plot_coord="x",norm="n",pos="j",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
 			just = (isa(val, String) || isa(val, Symbol)) ? justify(val) : "TR"		# "TR" is the default
 			opt_D = @sprintf("j%s+w%.3f+o0.1", just, symbW*1.2 + lab_width)
@@ -2909,7 +2896,7 @@ function digests_legend_bag(d::Dict, del::Bool=false)
 			if (!occursin("+o", opt_D))  opt_D *= "+o0.1"  end
 		end
 
-		if ((opt_F = add_opt("", "", d, [:box_pos :box_position],
+		if ((opt_F = add_opt(d, "", "", [:box_pos :box_position],
 			(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"))) == "")
 			opt_F = "+p0.5+gwhite"
 		else

@@ -177,7 +177,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
 
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
-	@test GMT.add_opt("", "", d, [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
+	@test GMT.add_opt(d, "", "", [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(10,:red),bot=true), Vd=dbg2);
 	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10,red+yb")
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=dbg2);
@@ -1085,7 +1085,7 @@ if (got_it)					# Otherwise go straight to end
 
 	println("    BEGINEND")
 	gmtbegin("lixo.ps")
-		basemap(region=(0,40,20,60), proj=:merc, figsize=16, frame=(annot=:afg, fill=:lightgreen))
+		basemap(region=(0,40,20,60), proj=:merc, figsize=16, frame=(annot=:afg, fill=:lightgreen), Vd=1)
 		inset(D="jTR+w2.5i+o0.2i", F="+gpink+p0.5p", margins=0.6)
 		basemap(region=:global360, J="A20/20/2i", frame=:afg)
 		text(text_record([1 1],["INSET"]), font=18, region_justify=:TR, D="j-0.15i", noclip=true)

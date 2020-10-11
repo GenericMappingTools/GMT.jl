@@ -445,7 +445,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		end
 	end
 
-	opt_base = add_opt("", "",  d, [:base])	# No need to purge because base is not a psxy option
+	opt_base = add_opt(d, "", "", [:base])	# No need to purge because base is not a psxy option
 
 	if (isa(arg1, GMTgrid))
 		if (haskey(d, :bar))
@@ -490,7 +490,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		end
 	end
 
-	opt_base = add_opt("", "",  d, [:base])		# Do this again because :base may have been added above
+	opt_base = add_opt(d, "", "", [:base])		# Do this again because :base may have been added above
 	if (opt_base == "")
 		z_min = (isa(arg1, Array)) ? minimum(view(arg1, :, 3)) : minimum(view(arg1.data, :, 3))
 		opt_S = @sprintf("%s+b%.8g", opt_S, z_min)
@@ -784,17 +784,17 @@ Parameters
 function events(cmd0::String="", arg1=nothing; kwargs...)
 	# events share a lot of options with plot
 	d = KW(kwargs)
-	cmd = add_opt("", "T", d, [:T :now])
+	cmd = add_opt(d, "", "T", [:T :now])
 	if (!occursin("-T", cmd))  error("The 'now' (T) option is mandatory")  end
-	cmd = add_opt(cmd, "E", d, [:E :knots],
+	cmd = add_opt(d, cmd, "E", [:E :knots],
 		(symbol=("s", nothing, 1), text=("t", nothing, 1), shift_startEnd = "+o", shift_start="+O", raise="+r", plateau="+p", decay="+d", fade="+f", text_duration="+l"))
-	cmd = add_opt(cmd, "M", d, [:M :rise],
+	cmd = add_opt(d, cmd, "M", [:M :rise],
 		(intensity=("i", arg2str, 1), size=("s", arg2str, 1), transparency=("t", arg2str, 1), coda="+c"))
-	cmd = add_opt(cmd, "L", d, [:L :duration])
-	cmd = add_opt(cmd, "Q", d, [:Q :save])
-	cmd = add_opt(cmd, 'D', d, [:D :offset],
+	cmd = add_opt(d, cmd, "L", [:L :duration])
+	cmd = add_opt(d, cmd, "Q", [:Q :save])
+	cmd = add_opt(d, cmd, 'D', [:D :offset],
 		(away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)))
-	cmd = add_opt(cmd, 'F', d, [:F :attrib],
+	cmd = add_opt(d, cmd, 'F', [:F :attrib],
 		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"), false)
 	common_plot_xyz(cmd0, arg1, "events|" * cmd, true, false, d...)
 end

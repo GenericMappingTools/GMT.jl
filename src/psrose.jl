@@ -94,9 +94,9 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 
 	# If inquire, no plotting so do it and return
-	cmd = add_opt("", 'I', d, [:I :inquire])
+	cmd = add_opt(d, "", 'I', [:I :inquire])
 	if (cmd != "")
-		cmd = add_opt(cmd, 'A', d, [:A :sector])
+		cmd = add_opt(d, cmd, 'A', [:A :sector])
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 		return gmt("psrose " * cmd, arg1)
 	end
@@ -112,7 +112,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	if (isa(arg1, Array{<:GMTdataset,1}))  arg1 = arg1[1].data  end	# WHY I HAVE TO DO THIS?
 
-	cmd = add_opt(cmd, 'E', d, [:E :vectors])
+	cmd = add_opt(d, cmd, 'E', [:E :vectors])
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= opt_pen(d, 'W', [:W :pen])

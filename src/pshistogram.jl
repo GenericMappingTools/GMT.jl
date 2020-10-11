@@ -102,12 +102,12 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 
 	cmd = ""
-	opt_Z = add_opt("", 'Z', d, [:Z :kind], (counts="0", count="0", freq="1", log_count="2", log_freq="3",
+	opt_Z = add_opt(d, "", 'Z', [:Z :kind], (counts="0", count="0", freq="1", log_count="2", log_freq="3",
 	                                         log10_count="4", log10_freq="5", weights="+w"), true, "")
 	opt_T = parse_opt_range(d, "", "")		# [:T :range :inc :bin]
 
 	# If inquire, no plotting so do it and return
-	opt_I = add_opt("", "I", d, [:I :inquire :bins], (all="O", no_zero="o"))
+	opt_I = add_opt(d, "", "I", [:I :inquire :bins], (all="O", no_zero="o"))
 	if (opt_I != "")
 		cmd *= opt_I
 		if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end
@@ -127,18 +127,18 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = add_opt(cmd, 'D', d, [:D :annot :annotate :counts], (beneath="_+b", font="+f", offset="+o", vertical="_+r"))
+	cmd = add_opt(d, cmd, 'D', [:D :annot :annotate :counts], (beneath="_+b", font="+f", offset="+o", vertical="_+r"))
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
 	(show_kwargs[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 
-	(GMTver >= 6.2) && (cmd = add_opt(cmd, 'E', d, [:E :width], (width="", off="+o", offset="+o")))
+	(GMTver >= 6.2) && (cmd = add_opt(d, cmd, 'E', [:E :width], (width="", off="+o", offset="+o")))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	(opt_R == "") && (opt_R = " ")			# So it doesn't try to find the -R in next call
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
-	cmd   = add_opt(cmd, 'L', d, [:L :out_range], (first="l", last="h", both="b"))
+	cmd   = add_opt(d, cmd, 'L', [:L :out_range], (first="l", last="h", both="b"))
 	cmd  *= add_opt_pen(d, [:W :pen], "W", true)     	# TRUE to also seek (lw|lt,lc,ls)
 	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-S", cmd))
 		cmd *= " -G150"

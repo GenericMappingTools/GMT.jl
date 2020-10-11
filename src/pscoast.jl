@@ -140,7 +140,7 @@ function parse_INW_coast(d::Dict, symbs::Array{Array{Symbol,2},1}, cmd::String, 
 	for k = 1:length(symbs)
 		if ((val = find_in_dict(d, symbs[k], false)[1]) !== nothing)
 			if (isa(val, NamedTuple) || isa(val, Dict) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
-				cmd = add_opt(cmd, flags[k], d, symbs[k], (type="/#", level="/#", mode="+p#", pen=("", add_opt_pen)))
+				cmd = add_opt(d, cmd, flags[k], symbs[k], (type="/#", level="/#", mode="+p#", pen=("", add_opt_pen)))
 			elseif (isa(val, Tuple))  cmd *= " -" * flags[k] * parse_pen(val)
 			else                      cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
 			end
@@ -157,7 +157,7 @@ function parse_E_coast(d::Dict, symbs::Array{<:Symbol}, cmd::String)
 		if (isa(val, String) || isa(val, Symbol))
 			cmd = string(cmd, " -E", val)			# Simple case, ex E="PT,+gblue"
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
-			cmd = add_opt(cmd, "E", d, [:DCW :E], (country="", name="", continent="=",
+			cmd = add_opt(d, cmd, "E", [:DCW :E], (country="", name="", continent="=",
 			                                       pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))
 		elseif (isa(val, Tuple))
 			cmd = parse_dcw(cmd, val)
@@ -173,7 +173,7 @@ function parse_dcw(cmd::String, val::Tuple)
 	for k = 1:length(val)
 		if (isa(val[k], NamedTuple) || isa(val[k], Dict))
 			if (isa(val[k], Dict))  val[k] = dict2nt(val[k])  end
-			cmd *= add_opt("", "E", Dict(:DCW => val[k]), [:DCW],
+			cmd *= add_opt(Dict(:DCW => val[k]), "", "E", [:DCW],
 			               (country="", name="", continent="=", pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))
 		elseif (isa(val[k], Tuple))
 			cmd *= parse_dcw(val[k])
