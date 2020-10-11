@@ -84,7 +84,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
-	cmd = add_opt("", 'A', d, [:A :adjust :crop])
+	cmd = add_opt(d, "", 'A', [:A :adjust :crop])
 	(cmd == " -A") && (cmd = cmd * "1p")			# If just -A default to -A1p
 	cmd = parse_these_opts(cmd, d, [[:D :out_dir :output_dir], [:E :dpi], [:F :out_name :output_name],
 	                                [:G :ghost_path], [:I :icc_gray], [:L :list_file], [:P :portrait], [:Q :anti_aliasing], [:S :gs_command], [:Z :del_input_ps]])
@@ -99,7 +99,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 		elseif (fmt == "tif")  cmd *= " -Tt"
 		end
 	else
-		cmd = add_opt(cmd, 'T', d, [:T :format])
+		cmd = add_opt(d, cmd, 'T', [:T :format])
 	end
 
 	if ((val = find_in_dict(d, [:C :gs_option])[1]) !== nothing)
@@ -112,7 +112,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 		end
 	end
 
-	cmd = add_opt(cmd, 'W', d, [:W :world_file])
+	cmd = add_opt(d, cmd, 'W', [:W :world_file])
 	(haskey(d, :kml)) && (cmd *= " -W+k" * d[:kml])
 
 	if (haskey(d, :in_memory))

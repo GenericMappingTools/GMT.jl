@@ -38,7 +38,7 @@ function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd, = parse_R(d, "")
 	cmd = parse_V_params(d, cmd)
 	cmd = parse_these_opts(cmd, d, [[:D :diff], [:T :trend]])
-	opt_N = add_opt("", "N", d, [:N :model], (n="", n_model="", robust="_+r"), true, true)
+	opt_N = add_opt(d, "", "N", [:N :model], (n="", n_model="", robust="_+r"), true, true)
 	(opt_N == "" && !show_kwargs[1]) && error("The 'model' parameter is mandatory")
 	cmd *= opt_N
 

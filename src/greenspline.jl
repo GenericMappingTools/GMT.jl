@@ -88,9 +88,9 @@ function greenspline(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :d :e :f :h :i :o :r :x :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :approx :approximate], [:D :mode], [:E :misfit],
 	                                 [:G :grid], [:I :inc], [:L :leave_trend], [:Q :dir_derivative], [:S :splines], [:T :mask], [:W :uncertainties]])
-	cmd, args, n, = add_opt(cmd, 'A', d, [:A :gradient], :data, Array{Any,1}([arg1, arg2]), (format="+f",))
+	cmd, args, n, = add_opt(d, cmd, 'A', [:A :gradient], :data, Array{Any,1}([arg1, arg2]), (format="+f",))
 	if (n > 0)  arg1, arg2 = args[:]  end
-	cmd, args, n, = add_opt(cmd, 'N', d, [:N :nodes], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
+	cmd, args, n, = add_opt(d, cmd, 'N', [:N :nodes], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
 	if (n > 0)  arg1, arg2, arg3 = args[:]  end
 
 	common_grd(d, cmd0, cmd, "greenspline ", arg1, arg2, arg3)		# Finish build cmd and run it

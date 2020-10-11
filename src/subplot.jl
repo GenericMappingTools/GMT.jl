@@ -25,7 +25,7 @@ Parameters
     Reserve a space of dimension clearance between the margin and the subplot on the specified side. Settings specified under **begin** directive apply to all panels.
     [`-C`](http://docs.generic-mapping-tools.org/latest/subplot.html#c)
 - $(GMT.opt_J)
-- **M** | **margins** :: [Type => Str]
+- **M** | **margin** | **margins** :: [Type => Str]
 
     The margin space that is added around each subplot beyond the automatic space allocated for tick marks, annotations, and labels.
     [`-M`](http://docs.generic-mapping-tools.org/latest/subplot.html#m)
@@ -53,23 +53,23 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	cmd = ((val = find_in_dict(d, [:T :title])[1]) !== nothing) ? " -T\"" * val * "\"" : ""
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "", false, " ")
 	cmd, = parse_common_opts(d, cmd, [:params], true)
-	cmd  = parse_these_opts(cmd, d, [[:M :margins]])
-	cmd  = add_opt(cmd, "A", d, [:A :autolabel],
+	cmd  = parse_these_opts(cmd, d, [[:M :margin :margins]])
+	cmd  = add_opt(d, cmd, "A", [:A :autolabel],
                   (Anchor=("+J", arg2str), anchor=("+j", arg2str), label="", clearance=("+c", arg2str), fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), offset=("+o", arg2str), roman="_+r", Roman="_+R", vertical="_+v"))
-	cmd = add_opt(cmd, "SC", d, [:SC :col_axes],
+	cmd = add_opt(d, cmd, "SC", [:SC :col_axes],
 	              (top=("t", nothing, 1), bott=("b", nothing, 1), bottom=("b", nothing, 1), label="+l", grid=("+w", add_opt_pen)))
-	cmd = add_opt(cmd, "SR", d, [:SR :row_axes],
+	cmd = add_opt(d, cmd, "SR", [:SR :row_axes],
 	              (left=("l", nothing, 1), right=("r", nothing, 1), label="+l", parallel="_+p", row_title="_+t", top_row_title="_+tc", grid=("+w", add_opt_pen)))
-	opt_C = add_opt("", "", d, [:C :clearance],
+	opt_C = add_opt(d, "", "", [:C :clearance],
 				  (left=(" -Cw", arg2str), right=(" -Ce", arg2str), bott=(" -Cs", arg2str), bottom=(" -Cs", arg2str), top=(" -Cn", arg2str)))
-	cmd = add_opt(cmd, "Fs", d, [:panels_size :panel_size :panel_sizes])
+	cmd = add_opt(d, cmd, "Fs", [:Fs :panels_size :panel_size :panel_sizes])
 
-	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing)
+	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing || show_kwargs[1])
 		if (isa(val, NamedTuple) && haskey(nt2dict(val), :width))	# Preferred way
 			cmd *= " -F" * helper_sub_F(val)		# VAL = (width=x, height=x, fwidth=(...), fheight=(...))
 			del_from_dict(d, [:F :dims :dimensions :size :sizes])
 		else
-			cmd = add_opt(cmd, "F", d, [:F :dims :dimensions :size :sizes],
+			cmd = add_opt(d, cmd, "F", [:F :dims :dimensions :size :sizes],
 			              (panels=("-s", helper_sub_F, 1), size=("-f", helper_sub_F, 1), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F), clearance=("+c", arg2str), outine=("+p", add_opt_pen), fill=("+g", add_opt_fill), divlines=("+w", add_opt_pen)))
 		end
 	end
@@ -88,9 +88,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	# ------------------------------ End parsing inputs --------------------------------
 
 	if (!stop && !do_set)
-		if ((val_ = find_in_dict(d, [:grid])[1]) === nothing)
-			error("SUBPLOT: 'grid' keyword is mandatory")
-		end
+		((val_ = find_in_dict(d, [:grid])[1]) === nothing) && error("SUBPLOT: 'grid' keyword is mandatory")
 		cmd = arg2str(val_, 'x') * " " * cmd * opt_C			# Also add the eventual global -C clearance option
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 
@@ -108,7 +106,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		(!IamSubplot[1]) && error("Cannot call subplot(set, ...) before setting dimensions")
 		lix, pane = parse_c(d, cmd)
 		cmd = pane * cmd				# Here we don't want the "-c" part
-		cmd = add_opt(cmd, 'A', d, [:fixedlabel]) * opt_C			# Also add the eventual this panel -C clearance option
+		cmd = add_opt(d, cmd, 'A', [:fixedlabel]) * opt_C			# Also add the eventual this panel -C clearance option
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 		gmt("subplot set " * cmd)
 	else

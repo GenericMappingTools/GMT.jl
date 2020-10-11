@@ -32,7 +32,7 @@ function gmtsimplify(cmd0::String="", arg1=nothing; kwargs...)
 	d = KW(kwargs)
 	help_show_options(d)			# Check if user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
-	cmd  = add_opt(cmd, 'T', d, [:T :tol :tolerance])
+	cmd  = add_opt(d, cmd, 'T', [:T :tol :tolerance])
 
 	common_grd(d, cmd0, cmd, "gmtsimplify ", arg1)		# Finish build cmd and run it
 end

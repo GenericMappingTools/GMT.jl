@@ -75,17 +75,17 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :nn :nearest_neighbor], [:C :clip], [:E :handedness], [:F :force_polygons],
 	                                 [:I :intersections], [:Q :area :length]])
-	cmd = add_opt(cmd, "S", d, [:S :polygons :polyg_process], (buffer="+b", holes="_+h", dateline="_+s"))
+	cmd = add_opt(d, cmd, "S", [:S :polygons :polyg_process], (buffer="+b", holes="_+h", dateline="_+s"))
 
-	cmd, args, n, = add_opt(cmd, 'D', d, [:D :duplicates], :data, Array{Any,1}([arg1, arg2]), (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
+	cmd, args, n, = add_opt(d, cmd, 'D', [:D :duplicates], :data, Array{Any,1}([arg1, arg2]), (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
 	if (n > 0)
 		arg1, arg2 = args[:];   cmd *= "+f"
 	end
  
-	cmd, args, n, = add_opt(cmd, 'N', d, [:N :in_polyg], :data, Array{Any,1}([arg1, arg2, arg3]), (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z"))
+	cmd, args, n, = add_opt(d, cmd, 'N', [:N :in_polyg], :data, Array{Any,1}([arg1, arg2, arg3]), (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z"))
 	if (n > 0)  arg1, arg2, arg3 = args[:]  end
 
-	cmd, args, n, = add_opt(cmd, 'T', d, [:T :truncate], :data, Array{Any,1}([arg1, arg2, arg3, arg4]), (x="",))
+	cmd, args, n, = add_opt(d, cmd, 'T', [:T :truncate], :data, Array{Any,1}([arg1, arg2, arg3, arg4]), (x="",))
 	if (n > 0)  arg1, arg2, arg3, arg4 = args[:]  end
 
 	common_grd(d, cmd0, cmd, "gmtspatial ", arg1, arg2, arg3, arg4)		# Finish build cmd and run it

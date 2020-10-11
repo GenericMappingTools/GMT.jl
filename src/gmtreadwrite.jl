@@ -71,16 +71,16 @@ function gmtread(fname::String; kwargs...)
 	cmd, opt_bi = parse_bi(d, cmd)
 
 	# Process these first so they may take precedence over defaults set below
-	opt_T = add_opt("", "Tg", d, [:grd :grid])
+	opt_T = add_opt(d, "", "Tg", [:grd :grid])
 	if (opt_T != "")		# Force read via GDAL
 		if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)  fname = fname * "=gd"  end
 	else
-		opt_T = add_opt("", "Ti", d, [:img :image])
+		opt_T = add_opt(d, "", "Ti", [:img :image])
 	end
-	if (opt_T == "")  opt_T = add_opt("", "Td", d, [:data :dataset :table])  end
-	if (opt_T == "")  opt_T = add_opt("", "Tc", d, [:cpt :cmap])  end
-	if (opt_T == "")  opt_T = add_opt("", "Tp", d, [:ps])   end
-	if (opt_T == "")  opt_T = add_opt("", "To", d, [:ogr])  end
+	if (opt_T == "")  opt_T = add_opt(d, "", "Td", [:data :dataset :table])  end
+	if (opt_T == "")  opt_T = add_opt(d, "", "Tc", [:cpt :cmap])  end
+	if (opt_T == "")  opt_T = add_opt(d, "", "Tp", [:ps])   end
+	if (opt_T == "")  opt_T = add_opt(d, "", "To", [:ogr])  end
 
 	if ((varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
 		if (isempty(opt_T))			# Force read via GDAL
