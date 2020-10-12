@@ -201,7 +201,7 @@ function parse_dcw(val::Tuple)
 end
 
 # ---------------------------------------------------------------------------------------------------
-coast!(cmd0::String=""; clip=nothing, first=false, kw...) = coast(cmd0; clip=clip, first=first, kw...)
+coast!(cmd0::String=""; clip=nothing, kw...) = coast(cmd0; clip=clip, first=false, kw...)
 
-const pscoast  = coast			# Alias for GMT5
-const pscoast! = coast!			# Alias for GMT5
+const pscoast  = coast			# Alias
+const pscoast! = coast!

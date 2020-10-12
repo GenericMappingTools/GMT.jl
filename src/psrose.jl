@@ -121,9 +121,9 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-rose!(cmd0::String="", arg1=nothing; first=false, kw...) = rose(cmd0, arg1; first=first, kw...)
-rose(arg1,  cmd0::String=""; first=true, kw...)  = rose(cmd0, arg1; first=first, kw...)
-rose!(arg1, cmd0::String=""; first=false, kw...) = rose(cmd0, arg1; first=first, kw...)
+rose!(cmd0::String="", arg1=nothing; kw...) = rose(cmd0, arg1; first=false, kw...)
+rose(arg1,  cmd0::String=""; kw...)  = rose(cmd0, arg1; first=true, kw...)
+rose!(arg1, cmd0::String=""; kw...) = rose(cmd0, arg1; first=false, kw...)
 
 const psrose  = rose 			# Alias
 const psrose! = rose!			# Alias

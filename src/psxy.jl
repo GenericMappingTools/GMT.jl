@@ -106,7 +106,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	else
 		opt_L = add_opt(d, "", 'L', [:L :close :polygon],
 		                (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
-		(length(opt_L) > 3 && !occursin("-G", cmd) && !occursin("+p", cmd)) && (opt_L *= "+p0.5p")
+		if (length(opt_L) > 3 && !occursin("-G", cmd) && !occursin("+p", cmd))  opt_L *= "+p0.5p"  end
 		cmd *= opt_L
 	end
 
@@ -206,7 +206,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 		end
 	end
 
-	(!IamModern[1]) && put_in_legend_bag(d, cmd, arg1)
+	if (!IamModern[1])  put_in_legend_bag(d, cmd, arg1)  end
 
 	cmd = gmt_proggy .* cmd				# In any case we need this
 	cmd, K = finish_PS_nested(d, cmd, K, O)
@@ -259,13 +259,13 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 			else                           arg1[1].data = hcat(arg1[1].data[:,1:2+is3D], mz[:], arg1[1].data[:,3+is3D:end])
 			end
 		elseif (got_Ebars)		# The Error bars case is very multi. Don't try to guess then.
-			(opt_i != "") && (@warn(warn2);	@goto noway)
+			if (opt_i != "")  @warn(warn2);	@goto noway  end
 			cmd = @sprintf("%s -i0-%d,%d,%d-%d", cmd, 1+is3D, 1+is3D, 2+is3D, n_col-1)
 		end
 	end
 
 	if (N_args == n_prev)		# No cpt transmitted, so need to compute one
-		if (GMTver >= 7)		# 7 because this solution is currently still bugged
+		if (GMTver >= 77)		# 7 because this solution is currently still bugged
 			#=
 			if (mz !== nothing)
 				arg2 = gmt("makecpt -E " * cmd[len+2:end], mz[:])
@@ -357,7 +357,7 @@ function get_marker_name(d::Dict, symbs::Array{Symbol}, is3D::Bool, del::Bool=tr
 					marca[1] = opt * add_opt(t, (custom="", size="/"))
 				end
 			else
-				if (isa(t, Symbol))	t = string(t)	end
+				t = string(t)
 				if     (t == "-" || t == "x-dash")    marca[1] = "-"
 				elseif (t == "+" || t == "plus")      marca[1] = "+"
 				elseif (t == "a" || t == "*" || t == "star")  marca[1] = "a"
@@ -378,18 +378,18 @@ function get_marker_name(d::Dict, symbs::Array{Symbol}, is3D::Bool, del::Bool=tr
 				elseif (t == "y" || t == "y-dash")    marca[1] = "y"
 				end
 				# Still need to check the simpler forms of these
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["e" "ellipse"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["E" "Ellipse"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["j" "rotrect"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["J" "RotRect"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["m" "matangle"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["M" "Matangle"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["r" "rectangle"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["R" "RRectangle"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["v" "vector"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["V" "Vector"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["w" "pie" "web"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["W" "Pie" "Web"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["e", "ellipse"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["E", "Ellipse"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["j", "rotrect"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["J", "RotRect"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["m", "matangle"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["M", "Matangle"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["r", "rectangle"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["R", "RRectangle"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["v", "vector"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["V", "Vector"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["w", "pie", "web"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t, ["W", "Pie", "Web"])  end
 			end
 			(del) && delete!(d, symb)
 			break
@@ -415,8 +415,8 @@ function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)
 	return marca[1], arg1, msg
 end
 
-function helper2_markers(opt, alias)
-	marca = Array{String,1}(undef,1)
+function helper2_markers(opt::String, alias::Vector{String})::String
+	marca = Vector{String}(undef,1)
 	marca = [""]
 	if (opt == alias[1])			# User used only the one letter syntax
 		marca[1] = alias[1]
@@ -433,9 +433,9 @@ function helper2_markers(opt, alias)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, caller::String, O::Bool)
+function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, caller::String, O::Bool)::String
 	# Set sensible defaults for the sub-modules "scatter" & "bar"
-	cmd = Array{String,1}(undef,1)
+	cmd = Vector{String}(undef,1)
 	cmd[1] = _cmd
 	if (caller == "scatter")
 		if (opt_S == "")  cmd[1] *= " -Sc5p"  end
@@ -480,7 +480,7 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u=false)
+function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u::Bool=false)::String
 	# Deal with parsing the 'bar' & 'hbar' keywors of psxy. Also called by plot/bar3. For this
 	# later module if input is not a string or NamedTuple the scatter options must be processed in bar3().
 	# KEY is either :bar or :hbar

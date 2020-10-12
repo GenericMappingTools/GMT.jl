@@ -261,10 +261,9 @@ function pshst_wall!(in, hst, inc, n_bins)
 end
 
 # ---------------------------------------------------------------------------------------------------
-histogram!(cmd0::String="", arg1=nothing; first=false, kw...) = histogram(cmd0, arg1; first=first, kw...)
-
-histogram(arg1; first=true, kw...) = histogram("", arg1; first=first, kw...)
-histogram!(arg1; first=false, kw...) = histogram("", arg1; first=first, kw...)
+histogram!(cmd0::String="", arg1=nothing; kw...) = histogram(cmd0, arg1; first=false, kw...)
+histogram(arg1; kw...)  = histogram("", arg1; first=true, kw...)
+histogram!(arg1; kw...) = histogram("", arg1; first=false, kw...)
 
 const pshistogram  = histogram			# Alias
 const pshistogram! = histogram!			# Alias

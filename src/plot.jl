@@ -620,9 +620,9 @@ function lines(f1::Function, f2::Function, range_t=nothing; first=true, kw...)	#
 end
 lines!(f1::Function, f2::Function, range_t=nothing; kw...) = lines(f1, f2, range_t; first=false, kw...)
 
-lines(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=true, kw...)
+lines(arg1, arg2; kw...)  = lines("", cat_2_arg2(arg1, arg2); first=true, kw...)
 lines!(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=false, kw...)
-lines(arg; kw...) = lines("", cat_1_arg(arg); first=true, kw...)
+lines(arg; kw...)  = lines("", cat_1_arg(arg); first=true, kw...)
 lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
@@ -824,10 +824,10 @@ function cat_2_arg2(arg1, arg2)
 	!((isa(arg1, Vector) || typeof(arg1) <: AbstractRange || isa(arg1, NTuple) || isa(arg1, Matrix)) && (isa(arg2, Vector) || typeof(arg2) <: AbstractRange || isa(arg2, NTuple) || isa(arg2, Matrix)) ) &&
 		error("Unknown types ($(typeof(arg1))) and ($(typeof(arg2))) in cat_2_arg2() function")
 
-	(isa(arg1, NTuple)) && (arg1 = collect(arg1))
-	(isa(arg2, NTuple)) && (arg2 = collect(arg2))
-	(size(arg1,1) == 1 && size(arg1,2) != 1) && (arg1 = arg1[:])
-	(size(arg2,1) == 1 && size(arg2,2) != 1) && (arg2 = arg2[:])
+	if (isa(arg1, NTuple))  arg1 = collect(arg1)  end
+	if (isa(arg2, NTuple))  arg2 = collect(arg2)  end
+	if (size(arg1,1) == 1 && size(arg1,2) != 1)  arg1 = arg1[:]  end
+	if (size(arg2,1) == 1 && size(arg2,2) != 1)  arg2 = arg2[:]  end
 	arg = hcat(arg1, arg2)
 	if (size(arg,2) > 2)  global multi_col[1] = true  end
 	return arg

@@ -142,7 +142,7 @@ include("trend2d.jl")
 include("xyz2grd.jl")
 
 function __init__()
-	(5 <= GMTver < 6.0) && (println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must uptdate."); return)
+	if (5 <= GMTver < 6.0)  println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must uptdate."); return  end
 
 	if (GMTver == 0.0)
 		println("\n\nYou don't seem to have GMT installed and I don't install it automatically,\nso you will have to do it yourself.")
@@ -158,11 +158,11 @@ function __init__()
 	end
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
 	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
-	(API == C_NULL) && error("Failure to create a GMT Session")
-	haskey(ENV,"JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
+	if (API == C_NULL)  error("Failure to create a GMT Session")  end
+	if haskey(ENV,"JULIA_GMT_IMGFORMAT")  FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]  end
 end
 
-(GMTver >= 6) && include("get_enums.jl")	# Needed to cheat the autoregister autobot
+if (GMTver >= 6)  include("get_enums.jl")  end	# Needed to cheat the autoregister autobot
 
 include("precompile_GMT_i.jl")
 _precompile_()

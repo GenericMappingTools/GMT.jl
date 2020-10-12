@@ -91,9 +91,9 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-mask!(cmd0::String="", arg1=nothing; first=false, kw...) = mask(cmd0, arg1; first=first, kw...)
-mask(arg1,  cmd0::String=""; first=true, kw...)  = mask(cmd0, arg1; first=first, kw...)
-mask!(arg1, cmd0::String=""; first=false, kw...) = mask(cmd0, arg1; first=first, kw...)
+mask!(cmd0::String="", arg1=nothing; kw...) = mask(cmd0, arg1; first=false, kw...)
+mask(arg1,  cmd0::String=""; kw...)  = mask(cmd0, arg1; first=true, kw...)
+mask!(arg1, cmd0::String=""; kw...) = mask(cmd0, arg1; first=false, kw...)
 
 const psmask  = mask			# Alias
 const psmask! = mask!			# Alias

@@ -155,9 +155,9 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-contour!(cmd0::String="", arg1=nothing; first=false, kw...) = contour(cmd0, arg1; first=false, kw...)
-contour(arg1, cmd0::String=""; first=true, kw...) = contour(cmd0, arg1; first=first, kw...)
-contour!(arg1, cmd0::String=""; first=false, kw...) = contour(cmd0, arg1; first=false, kw...)
+contour!(cmd0::String="", arg1=nothing; kw...) = contour(cmd0, arg1; first=false, kw...)
+contour(arg1, cmd0::String=""; kw...) = contour(cmd0, arg1; first=true, kw...)
+contour!(arg1, cmd0::String=""; kw...) = contour(cmd0, arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 const pscontour  = contour
