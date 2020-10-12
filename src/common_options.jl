@@ -46,7 +46,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=false)
 	val, symb = find_in_dict(d, [:R :region :limits])
 	if (val !== nothing)
 		opt_R[1] = build_opt_R(val)
-		(del) && delete!(d, symb)
+		if (del)  delete!(d, symb)  end
 	elseif (IamModern[1])
 		return cmd, ""
 	end
@@ -67,9 +67,9 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=false)
 			end
 			del_from_dict(d, [:xlim])
 		end
-		(R != "" && c == 4) && (opt_R[1] = R)
+		if (R != "" && c == 4)  opt_R[1] = R  end
 	end
-	(O && opt_R[1] == "") && (opt_R[1] = " -R")
+	if (O && opt_R[1] == "")  opt_R[1] = " -R"  end
 	cmd = cmd * opt_R[1]
 	return cmd, opt_R[1]
 end
@@ -148,9 +148,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function opt_R2num(opt_R::String)
 	# Take a -R option string and convert it to numeric
-	(opt_R == "") && return nothing
-	(endswith(opt_R, "Rg")) && return [0.0 360. -90. 90.]
-	(endswith(opt_R, "Rd")) && return [-180.0 180. -90. 90.]
+	if (opt_R == "")  return nothing  end
+	if (endswith(opt_R, "Rg"))  return [0.0 360. -90. 90.]  end
+	if (endswith(opt_R, "Rd"))  return [-180.0 180. -90. 90.]  end
 	rs = split(opt_R, '/')
 	limits = zeros(1,length(rs))
 	fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
@@ -194,18 +194,18 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 
 	opt_J = [""];		mnemo = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
-		isa(val, Dict) && (val = dict2nt(val))
+		if isa(val, Dict)  val = dict2nt(val)  end
 		opt_J[1], mnemo = build_opt_J(val)
 	elseif (IamModern[1] && ((val = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size], del)[1]) === nothing))
 		# Subplots do not rely is the classic default mechanism
 		return cmd, ""
 	end
-	(!map && opt_J[1] != "") && return cmd * opt_J[1], opt_J[1]
+	if (!map && opt_J[1] != "")  return cmd * opt_J[1], opt_J[1]  end
 
-	(O && opt_J[1] == "") && (opt_J[1] = " -J")
+	if (O && opt_J[1] == "")  opt_J[1] = " -J"  end
 
 	if (!O)
-		(opt_J[1] == "") && (opt_J[1] = " -JX")
+		if (opt_J[1] == "")  opt_J[1] = " -JX"  end
 		# If only the projection but no size, try to get it from the kwargs.
 		if ((s = helper_append_figsize(d, opt_J[1], O)) != "")		# Takes care of both fig scales and fig sizes
 			opt_J[1] = s
@@ -253,7 +253,7 @@ function helper_append_figsize(d::Dict, opt_J::String, O::Bool)::String
 		else                          opt_J = append_figsize(d, opt_J, val, true)
 		end
 	else										# A fig SIZE request
-		(haskey(d, :units)) && (val *= d[:units][1])
+		if (haskey(d, :units))  val *= d[:units][1]  end
 		if (occursin("+proj", opt_J)) opt_J *= "+width=" * val
 		else                          opt_J = append_figsize(d, opt_J, val)
 		end
@@ -271,7 +271,7 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 		width = (width == "auto") ? "?" : "?/?"
 	elseif ( ((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
 		(occursin("/", width)) && @warn("Ignoring the 'aspect' request because fig's Width and Height already provided.")
-		!occursin("/", width) && (width *= "/0")
+		if !occursin("/", width)  width *= "/0"  end
 	end
 
 	slash = "";		de = ""
@@ -311,7 +311,7 @@ function check_axesswap(d::Dict, width::AbstractString)
 	end
 
 	swap_x = false;		swap_y = false;
-	isa(val, Dict) && (val = dict2nt(val))
+	if isa(val, Dict)  val = dict2nt(val)  end
 	if (isa(val, NamedTuple))
 		for k in keys(val)
 			if     (k == :x)  swap_x = true
@@ -480,7 +480,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del=true)::Tuple{Strin
 	# These four are aliases
 	extra_parse = true;
 	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
-		isa(val, Dict) && (val = dict2nt(val))
+		if isa(val, Dict)  val = dict2nt(val)  end
 		if (isa(val, String) || isa(val, Symbol))
 			val = string(val)					# In case it was a symbol
 			if (val == "none")					# User explicitly said NO AXES
@@ -913,7 +913,7 @@ function parse_inc(d::Dict, cmd::String, symbs, opt, del::Bool=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-		isa(val, Dict) && (val = dict2nt(val))
+		if isa(val, Dict)  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
 			x = "";	y = "";	u = "";	e = false
 			fn = fieldnames(typeof(val))
@@ -952,7 +952,7 @@ function parse_params(d::Dict, cmd::String)::String
 	_cmd = Array{String,1}(undef,1)		# Otherwise Traceur insists this fun was returning a Any
 	_cmd = [cmd]
 	if ((val = find_in_dict(d, [:conf :par :params], true)[1]) !== nothing)
-		isa(val, Dict) && (val = dict2nt(val))
+		if isa(val, Dict)  val = dict2nt(val)  end
 		(!isa(val, NamedTuple) && !isa(val, Tuple)) && @warn("BAD usage: Parameter is neither a Tuple or a NamedTuple")
 		if (isa(val, NamedTuple))
 			fn = fieldnames(typeof(val))
@@ -981,7 +981,7 @@ function add_opt_pen(d::Dict, symbs, opt::String="", sub::Bool=true, del::Bool=t
 		out[1] = opt * pen
 	else
 		if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-			isa(val, Dict) && (val = dict2nt(val))
+			if isa(val, Dict)  val = dict2nt(val)  end
 			if (isa(val, Tuple))				# Like this it can hold the pen, not extended atts
 				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
 					for v in val
@@ -1181,7 +1181,7 @@ function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
 		end
 		return cmd
 	end
-	(!O && ((val = find_in_dict(d, [:P :portrait])[1]) === nothing)) && (cmd *= " -P")
+	if (!O && ((val = find_in_dict(d, [:P :portrait])[1]) === nothing))  cmd *= " -P"  end
 
 	if (K && !O)              opt = " -K"
 	elseif (K && O)           opt = " -K -O"
@@ -1233,7 +1233,7 @@ function prepare2geotif(d::Dict, cmd, opt_T::String, O::Bool)
 			end
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
 			# [+tdocname][+nlayername][+ofoldername][+aaltmode[alt]][+lminLOD/maxLOD][+fminfade/maxfade][+uURL]
-			isa(val, Dict) && (val = dict2nt(val))
+			if isa(val, Dict)  val = dict2nt(val)  end
 			opt_T = add_opt(Dict(:kml => val), " -TG -W+k", "", [:kml],
 							(title="+t", layer="+n", layername="+n", folder="+o", foldername="+o", altmode="+a", LOD=("+l", arg2str), fade=("+f", arg2str), URL="+u"))
 		end
@@ -1301,7 +1301,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs, mapa=nothing, del::Bool=true,
 	end
 
 	args = Array{String,1}(undef,1)
-	isa(val, Dict) && (val = dict2nt(val))	# For Py usage
+	if isa(val, Dict)  val = dict2nt(val)  end	# For Py usage
 	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
 		args[1] = add_opt(val, mapa, arg)
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
@@ -1342,7 +1342,7 @@ function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)::Str
 		if (haskey(d, key[k]))
 			val = d[key[k]]
 			if (isa(val, Function))
-				(val == add_opt_fill) && (out[1] *= val(Dict(key[k] => user_input[key[k]])) )
+				if (val == add_opt_fill) out[1] *= val(Dict(key[k] => user_input[key[k]]))  end
 			else
 				out[1] *= string(d[key[k]])
 			end
@@ -1467,7 +1467,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs, need_symb::Symbol, args, nt_o
 	val,symb = find_in_dict(d, symbs, false)
 	if (val !== nothing)
 		to_slot = true
-		isa(val, Dict) && (val = dict2nt(val))
+		if isa(val, Dict)  val = dict2nt(val)  end
 		if (isa(val, Tuple) && length(val) == 2)
 			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
 			val = dict2nt(Dict(need_symb=>val[1], keys(nt_opts)[1]=>val[2]))
@@ -1517,7 +1517,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 	# OPT_T, when != "", contains a min/max/n_slices/+n string to calculate a cpt with n_slices colors between [min max]
 	# IN_BAG, if true means that, if not empty, we return the contents of `current_cpt`
 	
-	(show_kwargs[1]) && (return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args)
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
 
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, GMT.GMTcpt))
@@ -1575,7 +1575,7 @@ function add_opt_fill(cmd::String, d::Dict, symbs, opt="", del::Bool=true)::Stri
 	# Deal with the area fill attributes option. Normally, -G
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
-	isa(val, Dict) && (val = dict2nt(val))
+	if isa(val, Dict)  val = dict2nt(val)  end
 	if (opt != "")  opt = string(" -", opt)  end
 	return add_opt_fill(val, cmd, opt)
 end
@@ -1654,7 +1654,7 @@ function add_opt_module(d::Dict, symbs)
 		r = nothing
 		if (haskey(d, symbs[k]))
 			val = d[symbs[k]]
-			isa(val, Dict) && (val = dict2nt(val))
+			if isa(val, Dict)  val = dict2nt(val)  end
 			if (isa(val, NamedTuple))
 				nt = (val..., Vd=2)
 				if     (symbs[k] == :coast)    r = coast!(; nt...)
@@ -1738,7 +1738,7 @@ function font(val)
 		s = parse_units(val[1])
 		if (length(val) > 1)
 			s = string(s,',',val[2])
-			(length(val) > 2) && (s = string(s, ',', get_color(val[3])) )
+			if (length(val) > 2)  s = string(s, ',', get_color(val[3]))  end
 		end
 	end
 	return s
@@ -1755,8 +1755,8 @@ end
 
 # ---------------------------
 function parse_unit_unit(str)::String
-	(isa(str, Symbol)) && (str = string(str))
-	(!isa(str, String)) && error(@sprintf("Argument data type must be String or Symbol but was: %s", typeof(str)))
+	if (isa(str, Symbol))  str = string(str)  end
+	!isa(str, String) && error(@sprintf("Argument data type must be String or Symbol but was: %s", typeof(str)))
 
 	if     (str == "e" || str == "meter")  out = "e";
 	elseif (str == "M" || str == "mile")   out = "M";
@@ -1802,7 +1802,7 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	opt = Array{String,1}(undef,1)					# To force type stability
 	opt = [" -B"]
 	if ((val = find_in_dict(d, [:frame :axes])[1]) !== nothing)
-		isa(val, Dict) && (val = dict2nt(val))
+		if isa(val, Dict)  val = dict2nt(val)  end
 		opt[1] *= helper0_axes(val)
 	end
 
@@ -1923,7 +1923,7 @@ end
 function helper1_axes(arg)::String
 	# Used by annot, ticks and grid to accept also 'auto' and "" to mean automatic
 	out = arg2str(arg)
-	(out != "" && out[1] == 'a') && (out = "")
+	if (out != "" && out[1] == 'a')  out = ""  end
 	return out
 end
 # ------------------------
@@ -2110,7 +2110,7 @@ function vector4_attrib(; kwargs...)::String
 
 	if (haskey(d, :norm))  cmd = string(cmd, "n", d[:norm])  end
 	if ((val = find_in_dict(d, [:head])[1]) !== nothing)
-		isa(val, Dict) && (val = dict2nt(val))
+		if isa(val, Dict)  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
 			ha = "0.075c";	hl = "0.3c";	hw = "0.25c"
 			dh = nt2dict(val)
@@ -2574,14 +2574,14 @@ function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, args...)
 	elseif (n_args == 2)  cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, args[1], args[2])
 	elseif (n_args == 3)  cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, args[1], args[2], args[3])
 	end
-	(arg1 !== nothing && isa(arg1, Array{<:Number}) && startswith(prog, "grd")) && (arg1 = mat2grid(arg1))
+	if (arg1 !== nothing && isa(arg1, Array{<:Number}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
 	(n_args <= 1) ? common_grd(d, prog * cmd, arg1) : (n_args == 2) ? common_grd(d, prog * cmd, arg1, arg2) : common_grd(d, prog * cmd, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, args...)
 	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
-	(IamModern[1]) && (cmd = replace(cmd, " -R " => " "))
+	if (IamModern[1])  cmd = replace(cmd, " -R " => " ")  end
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
 	R = isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
@@ -2594,7 +2594,7 @@ function dbg_print_cmd(d::Dict, cmd)
 	# Print the gmt command when the Vd>=1 kwarg was used.
 	# In case of convert_syntax = true, just put the cmds in a global var 'cmds_history' used in movie
 	
-	(show_kwargs[1]) && (show_kwargs[1] = false; return "")	# If in HELP mode
+	if (show_kwargs[1])  show_kwargs[1] = false; return ""  end	# If in HELP mode
 
 	if ( ((Vd = find_in_dict(d, [:Vd])[1]) !== nothing) || convert_syntax[1])
 		(convert_syntax[1]) && return update_cmds_history(cmd)	# For movies mainly.
@@ -2643,12 +2643,12 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
 		out = fname_ps[1:end-2] * fname_ext
-		(fname != "") && (out = mv(out, fname, force=true))
+		if (fname != "")  out = mv(out, fname, force=true)  end
 	elseif (fname_ps != "")
 		#if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
 		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
 		out = fname_ps
-		(fname != "") && (out = mv(out, fname, force=true))
+		if (fname != "")  out = mv(out, fname, force=true)  end
 	end
 
 	if (haskey(d, :show) && d[:show] != 0)
@@ -2718,9 +2718,9 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
 	output, opt_T, fname_ext, fname, ret_ps = fname_out(d, true)
-	(ret_ps) && (output = "")  							# Here we don't want to save to file
+	if (ret_ps)  output = ""  end  						# Here we don't want to save to file
 	cmd, opt_T = prepare2geotif(d, cmd, opt_T, O)		# Settings for the GeoTIFF and KML cases
-	(finish) && (cmd = finish_PS(d, cmd, output, K, O))
+	if (finish)  cmd = finish_PS(d, cmd, output, K, O)  end
 
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
 	img_mem_layout[1] = add_opt(d, "", "", [:layout])
@@ -2809,8 +2809,8 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 		(isa(cmd, String)) ? cmd_ = deepcopy([cmd]) : cmd_ = deepcopy(cmd)
 		lix, penC, penS = break_pen(scan_opt(arg[1].header, "-W"))
 		penT, penC_, penS_ = break_pen(scan_opt(cmd_[end], "-W"))
-		(penC == "") && (penC = penC_)
-		(penS == "") && (penS = penS_)
+		if (penC == "")  penC = penC_  end
+		if (penS == "")  penS = penS_  end
 		cmd_[end] = "-W" * penT * ',' * penC * ',' * penS * " " * cmd_[end]	# Trick to make the parser find this pen
 		pens = Array{String,1}(undef,length(arg)-1)
 		for k = 1:length(arg)-1
@@ -3005,7 +3005,7 @@ end
 function _toq()
     t1 = time_ns()
     timers = get(task_local_storage(), :TIMERS, ())
-    (timers === ()) && (error("`toc()` without `tic()`"))
+    (timers === ()) && error("`toc()` without `tic()`")
     t0 = timers[1]::UInt64
     task_local_storage(:TIMERS, timers[2])
     (t1-t0)/1e9
@@ -3019,7 +3019,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function help_show_options(d::Dict)
-	(find_in_dict(d, [:help])[1] !== nothing) && (show_kwargs[1] = true)	# Put in HELP mode
+	if (find_in_dict(d, [:help])[1] !== nothing)  show_kwargs[1] = true  end	# Put in HELP mode
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -3035,7 +3035,6 @@ function print_kwarg_opts(symbs, mapa=nothing)::String
 			if (length(vals[k]) > 2 && vals[k][3] == '_')  vals[k] = "Any(" * vals[k][4:end]  end
 		end
 		sub_opt = join([@sprintf("%s=%s), ",keys_[k], vals[k]) for k = 1:length(keys_)])
-		#sub_opt = join([@sprintf("%s=?, ",x) for x in keys_])
 		opt *= " => (" * sub_opt * ")"
 	elseif (isa(mapa, String))
 		opt *= " => " * mapa

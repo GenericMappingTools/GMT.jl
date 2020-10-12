@@ -50,7 +50,6 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
 	                        (map=("g", nothing, 1), inside=("j", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
-	#cmd = parse_type_anchor(d, cmd, [:D :pos :position])
 	cmd = add_opt(d, cmd, 'C', [:C :clearance])
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
@@ -59,9 +58,9 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-legend!(cmd0::String="", arg1=nothing; first=false, kw...) = legend(cmd0, arg1;first=false, kw...)
-legend(arg1; first=true, kw...)   = legend("", arg1; first=first, kw...)
-legend!(arg1; first=false, kw...) = legend("", arg1; first=first, kw...)
+legend!(cmd0::String="", arg1=nothing; kw...) = legend(cmd0, arg1;first=false, kw...)
+legend(arg1; kw...)   = legend("", arg1; first=true, kw...)
+legend!(arg1; kw...) = legend("", arg1; first=false, kw...)
 
 const pslegend  = legend			# Alias
 const pslegend! = legend!			# Alias

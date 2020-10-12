@@ -65,9 +65,9 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-clip!(cmd0::String="", arg1=nothing; first=false, kw...) = clip(cmd0, arg1; first=first, kw...)
-clip(arg1, cmd0::String=""; first=true, kw...)   = clip(cmd0, arg1; first=first, kw...)
-clip!(arg1, cmd0::String=""; first=false, kw...) = clip(cmd0, arg1; first=first, kw...)
+clip!(cmd0::String="", arg1=nothing; kw...) = clip(cmd0, arg1; first=false, kw...)
+clip(arg1, cmd0::String=""; kw...)  = clip(cmd0, arg1; first=true, kw...)
+clip!(arg1, cmd0::String=""; kw...) = clip(cmd0, arg1; first=false, kw...)
 
 psclip  = clip			# Alias
 psclip! = clip!			# Alias

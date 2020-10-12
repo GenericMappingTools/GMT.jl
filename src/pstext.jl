@@ -132,9 +132,9 @@ end
 #	arg1 = text_record([arg.cols[1] arg.col[2]], [arg.col[3]])
 #	text("", arg1; first=first, kw...)
 #end
-text!(cmd0::String="", arg1=nothing; first=false, kw...) = text(cmd0, arg1; first=false, kw...)
-text(arg1;  first=true, kw...)  = text("", arg1; first=first, kw...)
-text!(arg1; first=false, kw...) = text("", arg1; first=first, kw...)
+text!(cmd0::String="", arg1=nothing; kw...) = text(cmd0, arg1; first=false, kw...)
+text(arg1;  kw...) = text("", arg1; first=true, kw...)
+text!(arg1; kw...) = text("", arg1; first=false, kw...)
 
 const pstext  = text			# Alias
 const pstext! = text!			# Alias
