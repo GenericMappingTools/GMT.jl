@@ -1481,7 +1481,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs, need_symb::Symbol, args, nt_o
 				to_slot = false
 			end
 			cmd = add_opt(d, cmd, opt, symbs, nt_opts)
-		elseif (isa(val, Array{<:Real}) || isa(val, GMTdataset) || isa(val, Array{<:GMTdataset,1}) || typeof(val) <: AbstractRange)
+		elseif (isa(val, Array{<:Real}) || isa(val, GMTdataset) || isa(val, Vector{<:GMTdataset}) || isa(val, GMTcpt) || typeof(val) <: AbstractRange)
 			if (typeof(val) <: AbstractRange)  val = collect(val)  end
 			cmd *= " -" * opt
 		elseif (isa(val, String) || isa(val, Symbol) || isa(val, Number))

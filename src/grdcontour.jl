@@ -86,7 +86,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :e :f :h :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
-	cmd  = parse_contour_AGTW(d::Dict, cmd::String)
+	cmd  = parse_contour_AGTW(d::Dict, cmd::String)[1]
 	cmd  = add_opt(d, cmd, 'Z', [:Z :scale], (factor="+s", shift="+o", periodic="_+p"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
@@ -148,9 +148,9 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_contour_AGTW(d::Dict, cmd::String)::String
+function parse_contour_AGTW(d::Dict, cmd::String)
 	# Common to both grd and ps contour
-	if ((val = find_in_dict(d, [:A :annot],false)[1]) !== nothing && isa(val, Array{<:Number}))
+	if ((val = find_in_dict(d, [:A :annot],false)[1]) !== nothing && isa(val, Array{<:Real}))
 		cmd *= " -A" * arg2str(val, ',')
 		if (!occursin(",", cmd))  cmd *= ","  end
 		del_from_dict(d, [:A :annot])
@@ -165,12 +165,11 @@ function parse_contour_AGTW(d::Dict, cmd::String)::String
 	cmd = add_opt(d, cmd, 'G', [:G :labels], ("", helper_decorated))
 	cmd = add_opt(d, cmd, 'T', [:T :ticks], (local_high=("h", nothing, 1), local_low=("l", nothing, 1),
 	                                         labels="+l", closed="_+a", gap="+d") )
-	#cmd = add_opt(d, cmd, 'W', [:W :pen], (cont="_c", contour="_c", annot="_a", pen=("", add_opt_pen),
-	                                       #colored="_+c", cline="_+cl", ctext="_+cf"))
-	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
+	opt_W = add_opt_pen(d, [:W :pen], "W", true)    # TRUE to also seek (lw,lc,ls)
+	return cmd * opt_W, opt_W
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdcontour!(cmd0::String="", arg1=nothing; first=false, kw...) = grdcontour(cmd0, arg1; first=false, kw...)
-grdcontour(arg1, cmd0::String=""; first=true, kw...) = grdcontour(cmd0, arg1; first=first, kw...)
-grdcontour!(arg1, cmd0::String=""; first=false, kw...) = grdcontour(cmd0, arg1; first=false, kw...)
+grdcontour!(cmd0::String="", arg1=nothing; kw...) = grdcontour(cmd0, arg1; first=false, kw...)
+grdcontour(arg1, cmd0::String=""; kw...) = grdcontour(cmd0, arg1; first=true, kw...)
+grdcontour!(arg1, cmd0::String=""; kw...) = grdcontour(cmd0, arg1; first=false, kw...)
