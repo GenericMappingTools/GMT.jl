@@ -110,7 +110,7 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	end
 
 	if (occursin(" -W", cmd))				# No input data in this case
-		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end	
+		(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 		gmt("mapproject " * cmd)
 	else
 	    #cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)

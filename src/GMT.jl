@@ -165,6 +165,7 @@ end
 if (GMTver >= 6)  include("get_enums.jl")  end	# Needed to cheat the autoregister autobot
 
 include("precompile_GMT_i.jl")
+#include("c:\\v\\precompile\\precompile_GMT.jl")
 _precompile_()
 
 end # module

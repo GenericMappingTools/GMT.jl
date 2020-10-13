@@ -1309,7 +1309,7 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=noth
 	else
 		n_ds = (multi) ? size(mat, 2) : 1
 		xx = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : x
-		if (length(xx) != size(mat, 1))  error("Number of X coordinates and MAT number of rows are not equal")  end
+		(length(xx) != size(mat, 1))  && error("Number of X coordinates and MAT number of rows are not equal")
 	end
 
 	if (hdr !== nothing && isa(hdr, String))	# Accept one only but expand to n_ds with the remaining as blanks
