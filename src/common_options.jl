@@ -1168,19 +1168,21 @@ function finish_PS_nested(d::Dict, cmd, K::Bool, O::Bool, nested_calls::Array{Sy
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
+function finish_PS(d::Dict, cmd::Vector{String}, output::String, K::Bool, O::Bool)::Vector{String}
 	# Finish a PS creating command. All PS creating modules should use this.
 	IamModern[1] && return cmd  			# In Modern mode this fun does not play
-	if (isa(cmd, Vector{String}))			# Need a recursive call here
-		for k = 1:length(cmd)
-			KK = K;		OO = O
-			if (!occursin(" >", cmd[k]))	# Nested calls already have the redirection set
-				if (k > 1)  KK = true;	OO = true  end
-				cmd[k] = finish_PS(d, cmd[k], output, KK, OO)
-			end
+	for k = 1:length(cmd)
+		KK = K;		OO = O
+		if (!occursin(" >", cmd[k]))	# Nested calls already have the redirection set
+			if (k > 1)  KK = true;	OO = true  end
+			cmd[k] = finish_PS(d, cmd[k], output, KK, OO)
 		end
-		return cmd
 	end
+	return cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)::String
 	if (!O && ((val = find_in_dict(d, [:P :portrait])[1]) === nothing))  cmd *= " -P"  end
 
 	if (K && !O)              opt = " -K"
@@ -1200,7 +1202,7 @@ function finish_PS(d::Dict, cmd, output::String, K::Bool, O::Bool)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function prepare2geotif(d::Dict, cmd, opt_T::String, O::Bool)
+function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::Tuple{Vector{String}, String}
 	# Prepare automatic settings to allow creating a GeoTIF or a KML from a PS map
 	# Makes use of psconvert -W option -W
 	function helper2geotif(cmd::String)::String
@@ -1215,18 +1217,14 @@ function prepare2geotif(d::Dict, cmd, opt_T::String, O::Bool)
 	end
 
 	if (!O && ((val = find_in_dict(d, [:geotif])[1]) !== nothing))		# Only first layer
-		if (isa(cmd, Array{String,1})) cmd[1] = helper2geotif(cmd[1])
-		else                           cmd    = helper2geotif(cmd)
-		end
+		cmd[1] = helper2geotif(cmd[1])
 		if (startswith(string(val), "trans"))  opt_T = " -TG -W+g"  end	# A transparent GeoTIFF
 	elseif (!O && ((val = find_in_dict(d, [:kml])[1]) !== nothing))		# Only first layer
-		if (!occursin("-JX", cmd) && !occursin("-Jx", cmd))
+		if (!occursin("-JX", cmd[1]) && !occursin("-Jx", cmd[1]))
 			@warn("Creating KML requires the use of a cartesian projection of geographical coordinates. Not your case")
 			return cmd, opt_T
 		end
-		if (isa(cmd, Array{String,1})) cmd[1] = helper2geotif(cmd[1])
-		else                           cmd    = helper2geotif(cmd)
-		end
+		cmd[1] = helper2geotif(cmd[1])
 		if (isa(val, String) || isa(val, Symbol))	# A transparent KML
 			if (startswith(string(val), "trans"))  opt_T = " -TG -W+k"
 			else                                   opt_T = string(" -TG -W+k", val)		# Whatever 'val' is
@@ -1247,6 +1245,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs, del::Bool=true)::String
 	# If DEL == true we remove the found key.
 	# The keyword value must be a string, symbol or a tuple of them. We only retain the first character of each item
 	# Ex:  GMT.add_opt_1char("", Dict(:N => ("abc", "sw", "x"), :Q=>"datum"), [[:N :geod2aux], [:Q :list]]) == " -Nasx -Qd"
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Str | Symb | Tuple")
 	for opt in symbs
 		if ((val = find_in_dict(d, opt, del)[1]) === nothing)  continue  end
 		args = ""
@@ -2457,7 +2456,7 @@ function round_wesn(wesn, geo::Bool=false)
 
 	item = 1
 	for side = 1:2
-		(set[side]) && continue			# Done above */
+		set[side] && continue			# Done above */
 		mag = round(log10(range[side])) - 1.0
 		inc = 10.0^mag
 		if ((range[side] / inc) > 10.0) inc *= 2.0	end	# Factor of 2 in the rounding
@@ -2486,6 +2485,15 @@ function round_wesn(wesn, geo::Bool=false)
 	end
 	return wesn
 end
+
+#= ---------------------------------------------------------------------------------------------------
+function round_pretty(val)
+	fraction = 1
+	log = floor(log10(val))
+	if (log > 1)  fraction = 4  end		# This keeps from adding digits after the decimal
+	round(val * fraction * 10^ -log) / fraction / 10^-log
+end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function find_data(d::Dict, cmd0::String, cmd::String, args...)
@@ -2590,7 +2598,8 @@ function common_grd(d::Dict, cmd::String, args...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dbg_print_cmd(d::Dict, cmd)
+dbg_print_cmd(d::Dict, cmd::String) = dbg_print_cmd(d, [cmd])
+function dbg_print_cmd(d::Dict, cmd::Vector{String})
 	# Print the gmt command when the Vd>=1 kwarg was used.
 	# In case of convert_syntax = true, just put the cmds in a global var 'cmds_history' used in movie
 	
@@ -2609,20 +2618,21 @@ function dbg_print_cmd(d::Dict, cmd)
 			prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 			(length(dd) > 0) && println("Warning: the following options were not consumed in $prog => ", keys(dd))
 		end
-		(Vd == 1) && println(@sprintf("\t%s", cmd))
-		(Vd >= 2) && return cmd
+		(Vd == 1) && println("\t", length(cmd) == 1 ? cmd[1] : cmd)
+		(Vd >= 2) && return length(cmd) == 1 ? cmd[1] : cmd
 	end
 	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
-function update_cmds_history(cmd)
+function update_cmds_history(cmd::Vector{String})
 	# Separate into fun to work as a function barrier for var stability
 	global cmds_history
+	cmd_ = cmd[1]			# AND WHAT ABOUT THE OTHER ELEMENTS? DO THEY EXIST?
 	if (length(cmds_history) == 1 && cmds_history[1] == "")		# First time here
-		cmds_history[1] = cmd
+		cmds_history[1] = cmd_
 	else
-		push!(cmds_history, cmd)
+		push!(cmds_history, cmd_)
 	end
 	return cmd
 end
@@ -2712,8 +2722,10 @@ function put_in_slot(cmd::String, val, opt::Char, args)
 	return cmd, k
 end
 
-## ---------------------------------------------------------------------------------------------------
-function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
+# ---------------------------------------------------------------------------------------------------
+finish_PS_module(d::Dict, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =
+	finish_PS_module(d, [cmd], opt_extra, K, O, finish, args...)
+function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
@@ -2722,47 +2734,41 @@ function finish_PS_module(d::Dict, cmd, opt_extra::String, K::Bool, O::Bool, fin
 	cmd, opt_T = prepare2geotif(d, cmd, opt_T, O)		# Settings for the GeoTIFF and KML cases
 	if (finish)  cmd = finish_PS(d, cmd, output, K, O)  end
 
-	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end 	# For tests only
+	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return length(r) == 1 ? r[1] : r  end 	# For tests only
 	img_mem_layout[1] = add_opt(d, "", "", [:layout])
 	if (img_mem_layout[1] == "images")  img_mem_layout[1] = "I   "  end	# Special layout for Images.jl
 
 	if (fname_ext != "ps" && fname_ext != "eps")	# Exptend to a larger paper size (5 x A0)
-		if (isa(cmd, Array{String, 1}))  cmd[1] *= " --PS_MEDIA=11900x16840"
-		else                             cmd    *= " --PS_MEDIA=11900x16840"
-		end
+		cmd[1] *= " --PS_MEDIA=11900x16840"
 	end
 
-	if (isa(cmd, Array{String, 1}))
-		for k = 1:length(cmd)
-			is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
-			is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
-			is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
-			if (k > 1 && is_psscale && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
-				cmd2, arg1, = add_opt_cpt(d, cmd[k], [:C :color :cmap], 'C', 0, nothing, nothing, false, false, "", true)
-				(arg1 === nothing) && (@warn("No cmap found to use in colorbar. Ignoring this command."); continue)
-				P = gmt(cmd[k], arg1)
-				continue
-			elseif (k > 1 && (is_pscoast || is_basemap) && (isa(args[1], GMTimage) || isa(args[1], GMTgrid)))
-				proj4 = args[1].proj4
-				if ((proj4 != "") && !startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
-					opt_J = replace(proj4, " " => "")
-					lims = args[1].range
-					D = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
-					mm = extrema(D[1].data, dims=1)
-					opt_R = @sprintf(" -R%f/%f/%f/%f+r ", mm[1][1],mm[2][1],mm[1][2],mm[2][2])
-					o = scan_opt(cmd[1], "-J")
-					if     (o[1] == 'x')  size_ = "+scale=" * o[2:end]
-					elseif (o[1] == 'X')  size_ = "+width=" * o[2:end]
-					else   @warn("Could not find the right fig size used. Result will be wrong");  size_ = ""
-					end
-					cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
-					cmd[k] = replace(cmd[k], " -R" => opt_R)
+	for k = 1:length(cmd)
+		is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
+		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
+		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
+		if (k > 1 && is_psscale && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
+			cmd2, arg1, = add_opt_cpt(d, cmd[k], [:C :color :cmap], 'C', 0, nothing, nothing, false, false, "", true)
+			(arg1 === nothing) && (@warn("No cmap found to use in colorbar. Ignoring this command."); continue)
+			P = gmt(cmd[k], arg1)
+			continue
+		elseif (k > 1 && (is_pscoast || is_basemap) && (isa(args[1], GMTimage) || isa(args[1], GMTgrid)))
+			proj4 = args[1].proj4
+			if ((proj4 != "") && !startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
+				opt_J = replace(proj4, " " => "")
+				lims = args[1].range
+				D  = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
+				mm = extrema(D[1].data, dims=1)
+				opt_R = @sprintf(" -R%f/%f/%f/%f+r ", mm[1][1],mm[2][1],mm[1][2],mm[2][2])
+				o = scan_opt(cmd[1], "-J")
+				if     (o[1] == 'x')  size_ = "+scale=" * o[2:end]
+				elseif (o[1] == 'X')  size_ = "+width=" * o[2:end]
+				else   @warn("Could not find the right fig size used. Result will be wrong");  size_ = ""
 				end
+				cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
+				cmd[k] = replace(cmd[k], " -R" => opt_R)
 			end
-			P = gmt(cmd[k], args...)
 		end
-	else
-		P = gmt(cmd, args...)
+		P = gmt(cmd[k], args...)
 	end
 
 	if (!IamModern[1])  digests_legend_bag(d, true)  end		# Plot the legend if requested

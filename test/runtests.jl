@@ -243,15 +243,15 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.axis(phase_add=10) == " -Bp+10";
 	@test GMT.axis(phase_sub=10) == " -Bp-10";
 
-	r,o = GMT.prepare2geotif(Dict(:geotif => :trans), "pscoast  -Rd -JX12cd/0 -Baf -BWSen -W0.5p -Da", "", false);
-	@test startswith(r,"pscoast  -Rd -JX30cd/0 -W0.5p -Da  -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254")
+	r,o = GMT.prepare2geotif(Dict(:geotif => :trans), ["pscoast  -Rd -JX12cd/0 -Baf -BWSen -W0.5p -Da"], "", false);
+	@test startswith(r[1],"pscoast  -Rd -JX30cd/0 -W0.5p -Da  -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254")
 	@test o == " -TG -W+g"
-	r,o = GMT.prepare2geotif(Dict(:kml => :trans), "pscoast  -Rd -JX12cd/0 -Baf -BWSen -W0.5p -Da", "", false);
-	@test startswith(r,"pscoast  -Rd -JX30cd/0 -W0.5p -Da  -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254")
+	r,o = GMT.prepare2geotif(Dict(:kml => :trans), ["pscoast  -Rd -JX12cd/0 -Baf -BWSen -W0.5p -Da"], "", false);
+	@test startswith(r[1],"pscoast  -Rd -JX30cd/0 -W0.5p -Da  -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254")
 	@test o == " -TG -W+k"
-	o = GMT.prepare2geotif(Dict(:kml => "+tLoLo"), "pscoast  -Rd -JX12cd/0 -Baf -W0.5p -Da", "", false)[2];
+	o = GMT.prepare2geotif(Dict(:kml => "+tLoLo"), ["pscoast  -Rd -JX12cd/0 -Baf -W0.5p -Da"], "", false)[2];
 	@test o == " -TG -W+k+tLoLo"
-	o = GMT.prepare2geotif(Dict(:kml => (title=:Lolo, layer=:bla, fade=(1,2), URL="http")), "pscoast  -Rd -JX12 -Baf -W0.5p -Da", "", false)[2];
+	o = GMT.prepare2geotif(Dict(:kml => (title=:Lolo, layer=:bla, fade=(1,2), URL="http")), ["pscoast  -Rd -JX12 -Baf -W0.5p -Da"], "", false)[2];
 	@test o == " -TG -W+k+tLolo+nbla+f1/2+uhttp"
 	coast(region=:global, kml=:trans, proj=:merc,Vd=dbg2)
 
@@ -285,7 +285,7 @@ if (got_it)					# Otherwise go straight to end
 	@assert(r[1].data == [5.0 5 5 5 5 5])
 	r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
 	@assert(r[1].data == [5.0 5 5 5 5 5])
-	gmtinfo(help=0)
+	#gmtinfo(help=0)
 
 	# BLOCK*s
 	d = [0.1 1.5 1; 0.5 1.5 2; 0.9 1.5 3; 0.1 0.5 4; 0.5 0.5 5; 0.9 0.5 6; 1.1 1.5 7; 1.5 1.5 8; 1.9 1.5 9; 1.1 0.5 10; 1.5 0.5 11; 1.9 0.5 12];
@@ -1085,7 +1085,7 @@ if (got_it)					# Otherwise go straight to end
 
 	println("    BEGINEND")
 	gmtbegin("lixo.ps")
-		basemap(region=(0,40,20,60), proj=:merc, figsize=16, frame=(annot=:afg, fill=:lightgreen), Vd=1)
+		basemap(region=(0,40,20,60), proj=:merc, figsize=16, frame=(annot=:afg, fill=:lightgreen))
 		inset(D="jTR+w2.5i+o0.2i", F="+gpink+p0.5p", margins=0.6)
 		basemap(region=:global360, J="A20/20/2i", frame=:afg)
 		text(text_record([1 1],["INSET"]), font=18, region_justify=:TR, D="j-0.15i", noclip=true)

@@ -806,11 +806,7 @@ function cat_1_arg(arg)
 	(isa(arg, Array{<:GMTdataset,1}) || isa(arg, GMTdataset))  &&  return arg
 	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
 		arg = hcat(1:size(arg,1), arg)
-	#if (isa(arg, Vector) || isa(arg, Matrix) || isa(arg, UnitRange) || isa(arg, StepRangeLen))
-		#if     (!isa(arg, Matrix))                       arg = hcat(1:length(arg), arg)
-		#elseif ((isa(arg, Matrix) && size(arg,1) == 1))  arg = hcat(1:length(arg), arg')
-		#else                                             arg = hcat(1:size(arg,1), arg)
-		#end
+		#arg = hcat(collect(eltype(arg), 1:size(arg,1)), arg)
 	elseif (isa(arg, NTuple))
 		arg = hcat(1:length(arg), collect(arg))
 	end

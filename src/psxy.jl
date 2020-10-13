@@ -129,6 +129,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 				(length(val) != size(arg1,1)) &&
 					error("The size array must have the same number of elements rows in the data")
 				arg1 = hcat(arg1, val[:])
+				#arg1 = hcat(arg1, convert(eltype(arg1), val[:]))
 			elseif (string(val) != "indata")
 				marca *= arg2str(val);
 			end
