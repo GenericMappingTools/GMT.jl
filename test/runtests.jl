@@ -974,6 +974,9 @@ if (got_it)					# Otherwise go straight to end
 	histogram(I16, zoom=true, Vd=dbg2);
 	histogram(I16, S=1, Vd=dbg2);
 	histogram(I16, I=:O);
+	G = GMT.peaks();
+	histogram(G, Vd=dbg2);
+	histogram(G, T=0.3, Vd=dbg2);
 
 	println("	PSLEGEND")
 	# PSLEGEND

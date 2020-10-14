@@ -101,7 +101,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing;		arg3 = nothing
 	cmd, arg1, opt_R, info = read_data(d, cmd0, cmd, arg1, opt_R, false, true)
 	if (occursin(" -I", cmd) || occursin("+c", opt_W))			# Only try to load cpt if -I was set
-		cmd, N_used_, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing), arg1, arg2, arg3, "pscontour")
+		cmd, N_used_, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing ? 1 : 0), arg1, arg2, arg3, "pscontour")
 	end
 	N_used = (arg1 !== nothing) + (arg2 !== nothing) + (arg3 !== nothing)
 

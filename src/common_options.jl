@@ -1476,15 +1476,15 @@ function add_opt(d::Dict, cmd::String, opt, symbs, need_symb::Symbol, args, nt_o
 			di = nt2dict(val)
 			((val = find_in_dict(di, [need_symb], false)[1]) === nothing) && error(string(need_symb, " member cannot be missing"))
 			if (isa(val, Number) || isa(val, String))	# So that this (psxy) also works:	Z=(outline=true, data=3)
-				opt *= string(val)
+				opt::String = string(opt,val)
 				to_slot = false
 			end
 			cmd = add_opt(d, cmd, opt, symbs, nt_opts)
 		elseif (isa(val, Array{<:Real}) || isa(val, GMTdataset) || isa(val, Vector{<:GMTdataset}) || isa(val, GMTcpt) || typeof(val) <: AbstractRange)
 			if (typeof(val) <: AbstractRange)  val = collect(val)  end
-			cmd *= " -" * opt
+			cmd::String = string(cmd, " -", opt)
 		elseif (isa(val, String) || isa(val, Symbol) || isa(val, Number))
-			cmd *= " -" * opt * arg2str(val)
+			cmd = string(cmd, " -", opt * arg2str(val))
 			to_slot = false
 		else
 			error(@sprintf("Bad argument type (%s) to option %s", typeof(val), opt))
@@ -1599,7 +1599,7 @@ function add_opt_fill(val, cmd::String="",  opt="")::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname, arg1, arg2=nothing, arg3=nothing, prog::String="")
+function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2=nothing, arg3=nothing, prog::String="")
 	# Get CPT either from keyword input of from current_cpt.
 	# Also puts -R in cmd when accessing grids from grdimage|view|contour, etc... (due to a GMT bug that doesn't do it)
 	# Use CMD0 = "" to use this function from within non-grd modules
@@ -1608,12 +1608,12 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage))			# GMT bug, -R will not be stored in gmt.history
 		range = arg1.range
 	elseif (cmd0 != "" && cmd0[1] != '@')
-		info = grdinfo(cmd0 * " -C");	range = info[1].data
+		info::Array{GMT.GMTdataset,1} = grdinfo(cmd0 * " -C");	range = info[1].data
 	end
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || (cmd0 != "" && cmd0[1] != '@'))
 		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
-			cpt_opt_T = @sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
+			cpt_opt_T::String = @sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
 		end
 		if (opt_R == "" && (!IamModern[1] || (IamModern[1] && FirstModern[1])) )	# No -R ovewrite by accident
 			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
@@ -2756,9 +2756,9 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			if ((proj4 != "") && !startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
 				opt_J = replace(proj4, " " => "")
 				lims = args[1].range
-				D  = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
+				D::Vector{GMTdataset} = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
 				mm = extrema(D[1].data, dims=1)
-				opt_R = @sprintf(" -R%f/%f/%f/%f+r ", mm[1][1],mm[2][1],mm[1][2],mm[2][2])
+				opt_R::String = @sprintf(" -R%f/%f/%f/%f+r ", mm[1][1],mm[2][1],mm[1][2],mm[2][2])
 				o = scan_opt(cmd[1], "-J")
 				if     (o[1] == 'x')  size_ = "+scale=" * o[2:end]
 				elseif (o[1] == 'X')  size_ = "+width=" * o[2:end]
