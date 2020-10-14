@@ -30,7 +30,7 @@ const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like pro
 const def_fig_axes3 = " -Baf -Bza"  		#		"" but for 3D views
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
-    @eval Base.Experimental.@optlevel 1
+	@eval Base.Experimental.@optlevel 1
 end
 
 export
@@ -165,7 +165,6 @@ end
 if (GMTver >= 6)  include("get_enums.jl")  end	# Needed to cheat the autoregister autobot
 
 include("precompile_GMT_i.jl")
-#include("c:\\v\\precompile\\precompile_GMT.jl")
 _precompile_()
 
 end # module

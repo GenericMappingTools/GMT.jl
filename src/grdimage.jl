@@ -131,7 +131,7 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_get_R_cpt(d::Dict, cmd0::String, cmd::String, opt_R, got_fname, arg1, arg2, arg3, prog::String)
+function common_get_R_cpt(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2, arg3, prog::String)
 	# Used by several proggys
 	if (convert_syntax[1])		# Here we cannot rist to execute any code. Just parsing. Movie stuff
 		cmd, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C')
@@ -146,5 +146,5 @@ end
 grdimage!(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kw...) =
 	grdimage(cmd0, arg1, arg2, arg3; first=false, kw...) 
 
-grdimage(arg1,  arg2=nothing, arg3=nothing; kw...)  = grdimage("", arg1, arg2, arg3; first=true, kw...)
+grdimage(arg1,  arg2=nothing, arg3=nothing; kw...) = grdimage("", arg1, arg2, arg3; first=true, kw...)
 grdimage!(arg1, arg2=nothing, arg3=nothing; kw...) = grdimage("", arg1, arg2, arg3; first=false, kw...)
