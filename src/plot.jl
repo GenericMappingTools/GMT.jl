@@ -805,10 +805,10 @@ function cat_1_arg(arg)
 	# Add a first column with 1:n to all args that are not GMTdatasets
 	(isa(arg, Array{<:GMTdataset,1}) || isa(arg, GMTdataset))  &&  return arg
 	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
-		arg = hcat(1:size(arg,1), arg)
-		#arg = hcat(collect(eltype(arg), 1:size(arg,1)), arg)
+		#arg = hcat(collect(1:size(arg,1)), arg)
+		arg = hcat(collect(eltype(arg), 1:size(arg,1)), arg)
 	elseif (isa(arg, NTuple))
-		arg = hcat(1:length(arg), collect(arg))
+		arg = hcat(collect(eltype(arg), 1:length(arg)), collect(arg))
 	end
 	return arg
 end
