@@ -52,7 +52,7 @@ Parameters
 	Sets the confidence level used to determine if the mean resultant is significant.
 	($(GMTdoc)rose.html#q)
 - $(GMT.opt_R)
-- **S** | **radius** :: [Type => Bool]
+- **S** | **norm** | **normalize** :: [Type => Bool]
 
 	Specifies radius of plotted circle (append a unit from c|i|p).
 	($(GMTdoc)rose.html#s)
@@ -105,8 +105,9 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :e :p :t :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:A :sector], [:D :shift], [:F :no_scale], [:L :labels], [:M],
-	                                 [:Q :alpha], [:S :radius], [:T :orientation], [:Z :scale]])
+	cmd  = parse_these_opts(cmd, d, [[:D :shift], [:F :no_scale], [:L :labels], [:M],
+	                                 [:Q :alpha], [:S :norm :normalize], [:T :orientation], [:Z :scale]])
+	cmd = add_opt(d, cmd, 'A', [:A :sector], (width="", rose="_+r"))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
