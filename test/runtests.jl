@@ -117,6 +117,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_units((2,:p)) == "2p"
 	@test GMT.add_opt((a=(1,0.5),b=2), (a="+a",b="-b")) == "+a1/0.5-b2"
 	@test GMT.add_opt((symb=:circle, size=7, unit=:point), (symb="1", size="", unit="1")) == "c7p"
+	@test GMT.add_opt(Dict(:L => "pen"), "", "L", [:L], (pen="_+p",)) == " -L+p"
 	@test GMT.add_opt_1char("", Dict(:N=>"abc"), [[:N :geod2aux]]) == " -Na"
 	@test GMT.add_opt_1char("", Dict(:N => ("abc", "sw", "x"), :Q=>"datum"), [[:N :geod2aux], [:Q :list]]) == " -Nasx -Qd"
 	r = GMT.add_opt_fill("", Dict(:G=>(inv_pattern=12,fg="white",bg=[1,2,3], dpi=10) ), [:G :fill], 'G');
