@@ -63,6 +63,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	opt_C = add_opt(d, "", "", [:C :clearance],
 				  (left=(" -Cw", arg2str), right=(" -Ce", arg2str), bott=(" -Cs", arg2str), bottom=(" -Cs", arg2str), top=(" -Cn", arg2str)))
 	cmd = add_opt(d, cmd, "Fs", [:Fs :panels_size :panel_size :panel_sizes])
+	cmd = add_opt(d, cmd, "Ff", [:Ff :splot_size])
 
 	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing || show_kwargs[1])
 		if (isa(val, NamedTuple) && haskey(nt2dict(val), :width))	# Preferred way
