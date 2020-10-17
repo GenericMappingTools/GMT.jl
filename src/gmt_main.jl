@@ -1582,7 +1582,7 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String=
 	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
 end
 
-function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
+function mat2grid(mat::DenseMatrix, xx=nothing, yy=nothing; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
 # Take a 2D array of floats and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
@@ -1593,6 +1593,8 @@ function mat2grid(mat::DenseMatrix; reg=nothing, x=nothing, y=nothing, hdr=nothi
 	elseif (isa(reg, Number))
 		reg_ = (reg == 0) ? 0 : 1
 	end
+	if (x === nothing && xx !== nothing)  x = xx  end
+	if (y === nothing && yy !== nothing)  y = yy  end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
 
 	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
@@ -1611,7 +1613,7 @@ function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String=
 	z = Array{Float32,2}(undef,length(y),length(x))
 	for i = 1:length(x)
 		for j = 1:length(y)
-			z[j,i] = f(x[j],y[i])
+			z[j,i] = f(x[i],y[j])
 		end
 	end
 	mat2grid(z; reg=reg, x=x, y=y, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
