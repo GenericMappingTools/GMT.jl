@@ -46,7 +46,7 @@ function imshow(arg1, x=nothing, y=nothing; kw...)
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
 		G = mat2img(arg1; kw...)
 	else
-		G = mat2grid(arg1, reg=1)			# For displaying, pixel registration is more appropriate
+		G = mat2grid(arg1, x, y, reg=1)			# For displaying, pixel registration is more appropriate
 	end
 
 	d = KW(kw)

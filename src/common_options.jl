@@ -467,7 +467,7 @@ function parse_proj(p::NamedTuple)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_B(d::Dict, cmd::String, _opt_B::String="", del=true)::Tuple{String,String}
+function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple{String,String}
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axis :axes :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
@@ -516,6 +516,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del=true)::Tuple{Strin
 	if (haskey(d, :title))   t *= "+t"   * replace(str_with_blancs(d[:title]), ' '=>'\U00AF');   delete!(d, :title);	end
 	if (haskey(d, :xlabel))  t *= " x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\U00AF');   delete!(d, :xlabel);	end
 	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\U00AF');   delete!(d, :ylabel);	end
+	if (haskey(d, :zlabel))  t *= " z+l" * replace(str_with_blancs(d[:zlabel]),' '=>'\U00AF');   delete!(d, :zlabel);	end
 	if (t != "")
 		if (opt_B[1] == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis], false)[1] === nothing))
 			opt_B[1] = def_fig_axes_
@@ -1278,7 +1279,10 @@ function add_opt(d::Dict, cmd::String, opt, symbs, mapa=nothing, del::Bool=true,
 			for k in keys(mapa)
 				((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue
 				if (isa(mapa[k], Tuple))  cmd_[1] *= mapa[k][1] * mapa[k][2](d, [k])
-				else                      cmd_[1] *= mapa[k] * arg2str(val_)
+				else
+					if (mapa[k][1] == '_')  cmd_[1] *= mapa[k][2:end]		# Keep omly the flag
+					else                    cmd_[1] *= mapa[k] * arg2str(val_)
+					end
 				end
 				del_from_dict(d, [k])		# Now we can delete the key
 			end
@@ -1319,12 +1323,22 @@ function add_opt(d::Dict, cmd::String, opt, symbs, mapa=nothing, del::Bool=true,
 		end
 	else
 		args[1] = arg2str(val)
+		if isa(mapa, NamedTuple)		# Let aa=(bb=true,...) be addressed as aa=:bb
+			s = Symbol(args[1])
+			for k in keys(mapa)
+				if (s != k)  continue  end
+				v = mapa[k]
+				if (isa(v, String) && (v[1] == '_'))	# Only the modifier matters
+					args[1] = v[2:end]
+				elseif (isa(v, Tuple) && length(v) == 3 && v[2] === nothing)	# A ("t", nothing, 1) type
+					args[1] = v[1]
+				end
+				break
+			end
+		end
 	end
 
-	#cmd = (opt != "") ? string(cmd, " -", opt, args) : string(cmd, args)
-	if (opt != "")  cmd = string(cmd, " -", opt, args[1])
-	else            cmd = string(cmd, args[1])
-	end
+	cmd = (opt != "") ? string(cmd, " -", opt, args[1]) : string(cmd, args[1])
 
 	return cmd
 end
@@ -1796,7 +1810,7 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 
 	secondary ? primo = "s" : primo = "p"			# Primary or secondary axis
 	if (z)  primo = ""  end							# Z axis have no primary/secondary
-	x ? axe = "x" : y ? axe = "y" : z ? axe = "z" : axe = ""	# Are we dealing with a specific axis?
+	axe = x ? "x" : (y ? "y" : (z ? "z" : ""))		# Are we dealing with a specific axis?
 
 	opt = Array{String,1}(undef,1)					# To force type stability
 	opt = [" -B"]
@@ -1833,7 +1847,7 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 		if (haskey(d, :ylabel))
 			opt[1] *= " -B" * primo * "y+l" * str_with_blancs(arg2str(d[:ylabel])) * ax_sup
 		elseif (haskey(d, :Yhlabel))
-			axe != "y" ? opt_L = "y+L" : opt_L = "+L"
+			opt_L = (axe != "y") ? "y+L" : "+L"
 			opt[1] *= " -B" * primo * axe * opt_L  * str_with_blancs(arg2str(d[:Yhlabel])) * ax_sup
 		end
 	end
@@ -1853,7 +1867,7 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 		if (s != "")
 			if (!isnumeric(s[1]) && s[1] != '-' && s[1] != '+')
 				s = s[1]
-				if (axe == "y" && s != 'p')  error("slanted option: Only 'parallel' is allowed for the y-axis")  end
+				(axe == "y" && s != 'p') && error("slanted option: Only 'parallel' is allowed for the y-axis")
 			end
 			ints[1] *= "+a" * s
 		end
@@ -2367,13 +2381,13 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D::Boo
 	cmd, opt_yx = parse_swap_xy(d, cmd)
 	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
 	if (isa(data_kw, String))
-		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])	# Then we must read the file to determine -R
-			data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
-			if (opt_i != "")			# Remove the -i option from cmd. It has done its job
-				cmd = replace(cmd, opt_i => "")
-				opt_i = ""
+		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])		# Must read file to find -R
+			if (!IamSubplot[1] || GMTver >= 6.2)		# Protect against a GMT bug
+				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
+				# Remove the these options from cmd. Their is done
+				if (opt_i != "")  cmd = replace(cmd, opt_i => "");	opt_i = ""  end
+				if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
 			end
-			if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
 		else							# No need to find -R so let the GMT module read the file
 			cmd = data_kw * " " * cmd
 			data_kw = nothing			# Prevent that it goes (repeated) into 'arg'
