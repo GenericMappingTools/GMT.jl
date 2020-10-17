@@ -452,7 +452,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 			opt_S = parse_bar_cmd(d, :bar, "", "So")
 		else
 			# 0.85 is the % of inc width of bars
-			opt_S = @sprintf(" -So%.8gu/%.8gu", arg1.inc[1]*0.85, arg1.inc[2]*0.85)
+			opt_S::String = @sprintf(" -So%.8gu/%.8gu", arg1.inc[1]*0.85, arg1.inc[2]*0.85)
 			if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands]);	delete!(d, :nbands)
 			elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands]);	delete!(d, :Nbands)
 			end
