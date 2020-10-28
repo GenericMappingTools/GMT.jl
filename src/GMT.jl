@@ -151,8 +151,10 @@ function __init__()
 			println("Download and install the official version at (the '..._win64.exe':" * t)
 		elseif (Sys.iswindows() && Sys.WORD_SIZE == 32)
 			println("Download and install the official version at (the '..._win32.exe':" * t)
+		elseif (Sys.isapple())
+			println("Install GMT with Homebrew: brew install gmt ghostscript ffmpeg")
 		else
-			println("https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md")
+			println("https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md#linux")
 		end
 		return
 	end
