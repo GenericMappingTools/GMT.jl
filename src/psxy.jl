@@ -16,7 +16,12 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 
 	(occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
 
+	d = KW(kwargs)
+	help_show_options(d)				# Check if user wants ONLY the HELP mode
+    K, O = set_KO(first)				# Set the K O dance
+
 	cmd = "";	sub_module = ""			# Will change to "scatter", etc... if called by sub-modules
+	g_bar_fill = nothing				# May hold a sequence of colors for gtroup Bar plots
 	if (caller != "")
 		if (occursin(" -", caller))		# some sub-modues use this piggy-backed call
 			if ((ind = findfirst("|", caller)) !== nothing)	# A mixed case with "caler|partiall_command"
@@ -30,12 +35,16 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 			end
 		else
 			sub_module = caller
+			if (sub_module == "bar")
+				gval = find_in_dict(d, [:fill], false)[1]	# Used for group colors
+				if     (isa(gval, Array{String}) && length(gval) > 1)  g_bar_fill = gval	# Given an array of fills
+				elseif ((isa(gval, Array{Int}) || isa(gval, Tuple)) && length(gval) > 1)	# Patterns
+					g_bar_fill = Vector{String}(undef, length(gval))
+					[g_bar_fill[k] = string('p',gval[k]) for k = 1:length(gval)]
+				end
+			end
 		end
 	end
-
-	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
-    K, O = set_KO(first)		# Set the K O dance
 
 	def_J = (is_ternary) ? " -JX12c/0" : ""
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
@@ -47,6 +56,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	cmd, opt_c = parse_c(d, cmd)	# Need opt_c because we may need to remove it from double calls
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
+	got_usr_R = (opt_R != "") ? true : false		# To know is the user set -R or we guessed it from data
 	if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
 	cmd, arg1, opt_R, lixo, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
 	if (N_args == 0 && arg1 !== nothing)  N_args = 1  end
@@ -92,7 +102,9 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, arg1, arg2)
 	end
 
-	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	if (g_bar_fill === nothing)						# Otherwise bar fill colors are dealt somewhere else
+		cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	end
 	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :MarkerFaceColor :mc], 'G')	# Filling of symbols
 
 	# To track a still existing bug in sessions management at GMT lib level
@@ -156,15 +168,14 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 			else                  opt_ML = " -W" * arg2str(val)
 			end
 			if (opt_Wmarker != "")
-				opt_Wmarker = ""
-				@warn("markerline overrides markeredgecolor")
+				@warn("markerline overrides markeredgecolor");		opt_Wmarker = ""
 			end
 		end
 		(opt_W != "" && opt_ML != "") && @warn("You cannot use both markerline and W or pen keys.")
 	end
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
-	cmd = check_caller(d, cmd, opt_S, opt_W, sub_module, O)
+	cmd = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
 
 	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
 		cmd *= opt_W * opt_UVXY
@@ -193,7 +204,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
 	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{<:Real,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)) )
-		multi_col[1] = false							# Reset because this is a use-only-once option
+		multi_col[1] = false						# Reset because this is a use-only-once option
 		penC = "";		penS = "";	cycle=:cycle
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
 		if (opt_W != "")  penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))  end
@@ -205,9 +216,11 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 		else
 			cmd = replace(cmd, opt_R => " -R" * arg2str(round_wesn(D[1].data)))
 		end
+	elseif (sub_module == "bar" && isa(arg1, Array{<:Real,2}) && size(arg1,2) > 2)
+		cmd, arg1 = bar_group(d, cmd, opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 	end
 
-	if (!IamModern[1])  put_in_legend_bag(d, cmd, arg1)  end
+	(!IamModern[1]) && put_in_legend_bag(d, cmd, arg1)
 
 	cmd = gmt_proggy .* cmd				# In any case we need this
 	cmd, K = finish_PS_nested(d, cmd, K, O)
@@ -215,6 +228,69 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	r = finish_PS_module(d, cmd, "", K, O, true, arg1, arg2, arg3)
 	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::Bool, got_usr_R::Bool, arg1)
+	# Convert input array into a multi-segment Dataset where each segment is an element of a bar group
+	# Example, plot two groups of 3 bars each: bar([0 1 2 3; 1 2 3 4], xlabel="BlaBla")
+	if (got_Ebars)
+		opt_E = scan_opt(cmd, "-E")
+		((ind = findfirst("+", opt_E)) !== nothing) && (opt_E = opt_E[1:ind[1]-1])	# Strip eventual modifiers
+		if ( ((ind = findfirst("X", opt_E)) !== nothing) || ((ind = findfirst("Y", opt_E)) !== nothing) )
+			return cmd, arg1
+		end
+		n_xy_bars = (findfirst("x", opt_E) !== nothing) + (findfirst("y", opt_E) !== nothing)
+		n_cols = size(arg1,2)
+		((n_cols - n_xy_bars) == 2) && return cmd, arg1			# Only one-bar groups
+		(iseven(n_cols)) && error("Wrong number of columns in error bars array (or prog error)")
+		n = Int((n_cols - 1) / 2)
+		_arg = arg1[:, 1:(n+1)]
+		bars_cols = arg1[:,(n + 2):end]		# We'll use this to appent to the multi-segments
+	else
+		_arg = deepcopy(arg1)		# Make a copy because data is going to be modified
+		bars_cols = nothing
+	end
+
+	if (g_bar_fill === nothing && findfirst("-G0/115/190", cmd) !== nothing)	# Remove the auto color
+		cmd = replace(cmd, " -G0/115/190" => "")
+		g_bar_fill = true			# Just anything non array to trigger the cyclic color schema
+	end
+
+	# Convert to a multi-segment GMTdataset. There will be as many segments as elements in a group
+	# and as many rows in a segment as the number of groups (number of bars if groups had only one bar)
+	_arg = mat2ds(_arg, fill=g_bar_fill, multi=true)
+	(g_bar_fill !== nothing) && delete!(d, :fill)
+
+	if (bars_cols !== nothing)
+		for k = 1:length(_arg)		# Loop over number of bars in each group and append the error bar
+			_arg[k].data = reshape(append!(_arg[k].data[:], bars_cols[:,k]), size(_arg[k].data,1), :)
+		end
+	end
+
+	# Must fish-and-break-and-rebuils -S option
+	opt_S = scan_opt(cmd, "-S")
+	sub_b = ((ind = findfirst("+", opt_S)) !== nothing) ? opt_S[ind[1]:end] : ""	# The +Base modifier
+	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
+	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[3:end])	# Bar width
+	n_in_group = length(_arg)					# Number of bars in the group
+	new_bw = bw / n_in_group
+	new_opt_S = "-S" * opt_S[1] * "$(new_bw)u"
+	cmd = replace(cmd, "-S"*opt_S => new_opt_S)
+
+	g_shifts = linspace((-bw + new_bw)/2, (bw - new_bw)/2, n_in_group)
+	for k = 1:n_in_group
+		[_arg[k].data[n,1] += g_shifts[k] for n = 1:size(_arg[k].data,1)]
+	end
+	if (!got_usr_R)								# Need to recompute -R
+		info = gmt("gmtinfo -C", _arg)
+		dx = (info[1].data[2] - info[1].data[1]) * 0.005 + new_bw/2;
+		info[1].data[1] -= dx;	info[1].data[2] += dx;		info[1].data[4] *= 1.025
+		info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
+		new_opt_R = @sprintf(" -R%.12g/%.12g/0/%.12g", info[1].data[1], info[1].data[2], info[1].data[4])
+		cmd = replace(cmd, opt_R => new_opt_R)
+	end
+	return cmd, _arg
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -247,13 +323,13 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 			end
 		else
 			if (opt_i != "")  @warn(warn2);		@goto noway		end
-			cmd = @sprintf("%s -i0-%d,%d", cmd, 1+is3D, 1+is3D)
+			cmd *= " -i0-$(1+is3D),$(1+is3D)"
 			if ((val = find_in_dict(d, [:markersize :ms :size])[1]) !== nothing)
-				cmd = @sprintf("%s-%d", cmd, 2+is3D)	# Because we know that an extra col will be added later
+				cmd *= "-$(2+is3D)"		# Because we know that an extra col will be added later
 			end
 		end
 	else
-		if (mz !== nothing)			# Here we must insert the color col right after the coords
+		if (mz !== nothing)				# Here we must insert the color col right after the coords
 			if (length(mz) != n_rows)  @warn(warn1); @goto noway  end
 			if     (isa(arg1, Array))      arg1 = hcat(arg1[:,1:2+is3D], mz[:], arg1[:,3+is3D:end])
 			elseif (isa(arg1,GMTdataset))  arg1.data = hcat(arg1.data[:,1:2+is3D], mz[:], arg1.data[:,3+is3D:end])
@@ -261,7 +337,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 			end
 		elseif (got_Ebars)		# The Error bars case is very multi. Don't try to guess then.
 			if (opt_i != "")  @warn(warn2);	@goto noway  end
-			cmd = @sprintf("%s -i0-%d,%d,%d-%d", cmd, 1+is3D, 1+is3D, 2+is3D, n_col-1)
+			cmd *= " -i0-$(1+is3D),$(1+is3D),$(2+is3D)-$(n_col-1)"
 		end
 	end
 
@@ -434,7 +510,7 @@ function helper2_markers(opt::String, alias::Vector{String})::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, caller::String, O::Bool)::String
+function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, caller::String, g_bar_fill, O::Bool)::String
 	# Set sensible defaults for the sub-modules "scatter" & "bar"
 	cmd = Vector{String}(undef,1)
 	cmd[1] = _cmd
@@ -447,20 +523,18 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 	elseif (caller == "bar")
 		if (opt_S == "")
 			if (haskey(d, :bar))
-				cmd[1] = GMT.parse_bar_cmd(d, :bar, cmd[1], "Sb")
+				cmd[1] = parse_bar_cmd(d, :bar, cmd[1], "Sb")
 			elseif (haskey(d, :hbar))
-				cmd[1] = GMT.parse_bar_cmd(d, :hbar, cmd[1], "SB")
+				cmd[1] = parse_bar_cmd(d, :hbar, cmd[1], "SB")
 			else
-				opt = add_opt(d, "", "",  [:width])		# No need to purge because width is not a psxy option
-				if (opt == "")	opt = "0.8"	end			# The default
+				opt = (haskey(d, :width)) ? add_opt(d, "", "",  [:width]) : "0.8"	# The default
 				cmd[1] *= " -Sb" * opt * "u"
 
-				optB = add_opt(d, "", "",  [:base])
-				if (optB == "")	optB = "0"	end
+				optB = (haskey(d, :base)) ? add_opt(d, "", "",  [:base]) : "0"
 				cmd[1] *= "+b" * optB
 			end
 		end
-		if (!occursin(" -G", cmd[1]) && !occursin(" -C", cmd[1]))  cmd[1] *= " -G0/115/190"	end		# Default color
+		(g_bar_fill === nothing && !occursin(" -G", cmd[1]) && !occursin(" -C", cmd[1])) && (cmd[1] *= " -G0/115/190")	# Default color
 	elseif (caller == "bar3")
 		if (haskey(d, :noshade) && occursin("-So", cmd[1]))
 			cmd[1] = replace(cmd[1], "-So" => "-SO", count=1);
