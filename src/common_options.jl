@@ -478,13 +478,16 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	opt_B[1] = _opt_B
 
 	# These four are aliases
-	extra_parse = true;
+	extra_parse = true;		have_a_none = false
 	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
 		if isa(val, Dict)  val = dict2nt(val)  end
 		if (isa(val, String) || isa(val, Symbol))
 			val = string(val)					# In case it was a symbol
 			if (val == "none")					# User explicitly said NO AXES
-				return cmd, ""
+				if     (haskey(d, :xlabel))  val = "-BS";	have_a_none = true		# Unless labels are wanted, but
+				elseif (haskey(d, :ylabel))  val = "-BW";	have_a_none = true		# GMT Bug forces using tricks
+				else   return cmd, ""
+				end
 			elseif (val == "noannot" || val == "bare")
 				return cmd * " -B0", " -B0"
 			elseif (val == "same")				# User explicitly said "Same as previous -B"
@@ -570,13 +573,15 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 			elseif (symb == :xaxis2)  this_opt_B = axis(d[symb], x=true, secondary=true) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :yaxis)   this_opt_B = axis(d[symb], y=true) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :yaxis2)  this_opt_B = axis(d[symb], y=true, secondary=true) * this_opt_B;	delete!(d, symb)
-			elseif (symb == :zaxis)   this_opt_B = axis(d[symb], z=true) * this_opt_B;	delete!(d, symb)			end
+			elseif (symb == :zaxis)   this_opt_B = axis(d[symb], z=true) * this_opt_B;	delete!(d, symb)
+			end
 		end
 	end
 
 	if (opt_B[1] != def_fig_axes_ && opt_B[1] != def_fig_axes3_)  opt_B[1] = this_opt_B * opt_B[1]
 	elseif (this_opt_B != "")  opt_B[1] = this_opt_B
 	end
+	(have_a_none) && (opt_B[1] *= " --MAP_FRAME_PEN=0.001,white")	# Need to resort to this sad trick
 
 	return cmd * opt_B[1], opt_B[1]
 end
@@ -900,7 +905,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_these_opts(cmd::String, d::Dict, opts, del=true)
+function parse_these_opts(cmd::String, d::Dict, opts, del::Bool=true)::String
 	# Parse a group of options that individualualy would had been parsed as (example):
 	# cmd = add_opt(d, cmd, 'A', [:A :horizontal])
 	for opt in opts
@@ -1100,7 +1105,7 @@ function build_pen(d::Dict, del::Bool=false)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_arg_and_pen(arg::Tuple, sep="/", pen=true, opt="")::String
+function parse_arg_and_pen(arg::Tuple, sep="/", pen::Bool=true, opt="")::String
 	# Parse an ARG of the type (arg, (pen)) and return a string. These may be used in pscoast -I & -N
 	# OPT is the option code letter including the leading - (e.g. -I or -N). This is only used when
 	# the ARG tuple has 4, 6, etc elements (arg1,(pen), arg2,(pen), arg3,(pen), ...)
@@ -1140,13 +1145,12 @@ function arg2str(arg, sep='/')::String
 	elseif (isa(arg, Number))		# Have to do it after the Bool test above because Bool is a Number too
 		out[1] = @sprintf("%.15g", arg)
 	elseif (isa(arg, Array{<:Number}) || (isa(arg, Tuple) && !isa(arg[1], String)) )
-		#out[1] = join([@sprintf("%.15g/",x) for x in arg])
 		out[1] = join([string(x, sep) for x in arg])
 		out[1] = rstrip(out[1], sep)		# Remove last '/'
 	elseif (isa(arg, Tuple) && isa(arg[1], String))		# Maybe better than above but misses nice %.xxg
 		out[1] = join(arg, sep)
 	else
-		error(@sprintf("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was %s", typeof(arg)))
+		error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
 	end
 	return out[1]
 end
@@ -1501,7 +1505,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs, need_symb::Symbol, args, nt_o
 			cmd = string(cmd, " -", opt * arg2str(val))
 			to_slot = false
 		else
-			error(@sprintf("Bad argument type (%s) to option %s", typeof(val), opt))
+			error("Bad argument type ($(typeof(val))) to option $opt")
 		end
 		if (to_slot)
 			for k = 1:length(args)
@@ -1627,7 +1631,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || (cmd0 != "" && cmd0[1] != '@'))
 		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
-			cpt_opt_T::String = @sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
+			cpt_opt_T = @sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
 		end
 		if (opt_R == "" && (!IamModern[1] || (IamModern[1] && FirstModern[1])) )	# No -R ovewrite by accident
 			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
@@ -1659,7 +1663,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_module(d::Dict, symbs)
+function add_opt_module(d::Dict, symbs::Array{Symbol})
 	#  SYMBS should contain a module name (e.g. 'coast' or 'colorbar'), and if present in D,
 	# 'val' can be a NamedTuple with the module's arguments or a 'true'.
 	out = Array{String,1}()
@@ -1725,7 +1729,7 @@ function get_color(val)::String
 			out[1] = @sprintf("%s,%.0f/%.0f/%.0f", out[1], copia[k,1], copia[k,2], copia[k,3])
 		end
 	else
-		@warn(@sprintf("got this bad data type: %s", typeof(val)))	# Need to split because f julia change in 6.1
+		@warn("got this bad data type: $(typeof(val))")	# Need to split because f julia change in 6.1
 		error("GOT_COLOR, got an unsupported data type")
 	end
 	return out[1]
@@ -1735,8 +1739,6 @@ end
 function font(d::Dict, symbs)
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		font(val)
-	#else	# Should not come here anymore, collect returns the dict members in arbitrary order
-		#font(collect(values(d))[1])
 	end
 end
 function font(val)
@@ -1744,7 +1746,7 @@ function font(val)
 	# TODO: either add a NammedTuple option and/or guess if 2nd arg is the font name or the color
 	# And this: Optionally, you may append =pen to the fill value in order to draw the text outline with
 	# the specified pen; if used you may optionally skip the filling of the text by setting fill to -.
-	if (isa(val, String) || isa(val, Number))  return string(val)  end
+	(isa(val, String) || isa(val, Number)) && return string(val)
 
 	s = ""
 	if (isa(val, Tuple))
@@ -1762,14 +1764,14 @@ function parse_units(val)
 	# Parse a units string in the form d|e|f|k|n|M|n|s or expanded
 	(isa(val, String) || isa(val, Symbol) || isa(val, Number)) && return string(val)
 
-	!(isa(val, Tuple) && (length(val) == 2)) && error(@sprintf("PARSE_UNITS, got and unsupported data type: %s", typeof(val)))
+	!(isa(val, Tuple) && (length(val) == 2)) && error("PARSE_UNITS, got and unsupported data type: $(typeof(val))")
 	return string(val[1], parse_unit_unit(val[2]))
 end
 
 # ---------------------------
 function parse_unit_unit(str)::String
 	if (isa(str, Symbol))  str = string(str)  end
-	!isa(str, String) && error(@sprintf("Argument data type must be String or Symbol but was: %s", typeof(str)))
+	!isa(str, String) && error("Argument data type must be String or Symbol but was: $(typeof(val))")
 
 	if     (str == "e" || str == "meter")  out = "e";
 	elseif (str == "M" || str == "mile")   out = "M";
@@ -1916,7 +1918,7 @@ function helper0_axes(arg)::String
 	(isa(arg, String) || isa(arg, Symbol)) && return string(arg) # Assume that a WESNwesn was already sent in.
 
 	(!isa(arg, Tuple)) &&
-		error(@sprintf("The 'axes' argument must be a String, Symbol or a Tuple but was (%s)", typeof(arg)))
+		error("The 'axes' argument must be a String, Symbol or a Tuple but was ($(typeof(arg)))")
 
 	opt = "";	lbrtu = "lbrtu";	WSENZ = "WSENZ";	wsenz = "wsenz";	lbrtu = "lbrtu"
 	for k = 1:length(arg)
@@ -2353,7 +2355,7 @@ function fname_out(d::Dict, del::Bool=false)
 	elseif (ext == "tiff") opt_T = " -Tt -W+g";	EXT = ext
 	elseif (ext == "kml")  opt_T = " -Tt -W+k";	EXT = ext
 	elseif (ext == "pdg")  opt_T = " -Tf -Qp";	EXT = "pdf"
-	else   error(@sprintf("Unknown graphics file extension (.%s)", EXT))
+	else   error("Unknown graphics file extension (.$EXT)")
 	end
 
 	if (fname != "")  fname *= "." * EXT  end
@@ -2699,7 +2701,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function close_PS_file(fname::AbstractString)
-	# Do the equivalesx of "psxy -T -O"
+	# Do the equivalent of "psxy -T -O"
 	fid = open(fname, "a")
 	write(fid, "\n0 A\nFQ\nO0\n0 0 TM\n\n")
 	write(fid, "%%BeginObject PSL_Layer_2\n0 setlinecap\n0 setlinejoin\n3.32550952342 setmiterlimit\n%%EndObject\n")
@@ -2772,7 +2774,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				lims = args[1].range
 				D::Vector{GMTdataset} = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
 				mm = extrema(D[1].data, dims=1)
-				opt_R::String = @sprintf(" -R%f/%f/%f/%f+r ", mm[1][1],mm[2][1],mm[1][2],mm[2][2])
+				xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = mm[1][1],mm[2][1],mm[1][2],mm[2][2]
+				opt_R::String = @sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
 				o = scan_opt(cmd[1], "-J")
 				if     (o[1] == 'x')  size_ = "+scale=" * o[2:end]
 				elseif (o[1] == 'X')  size_ = "+width=" * o[2:end]
@@ -2933,7 +2936,6 @@ end
 function scan_opt(cmd::String, opt::String)::String
 	# Scan the CMD string for the OPT option. Note OPT mut be a 2 chars -X GMT option.
 	out = ((ind = findfirst(opt, cmd)) !== nothing) ? strtok(cmd[ind[1]+2:end])[1] : ""
-	return out
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -2999,9 +3001,10 @@ end
 meshgrid(v::AbstractVector) = meshgrid(v, v)
 function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}) where T
 	m, n = length(vy), length(vx)
-	vx = reshape(vx, 1, n)
-	vy = reshape(vy, m, 1)
-	(repeat(vx, m, 1), repeat(vy, 1, n))
+	#vx = reshape(vx, 1, n)
+	#vy = reshape(vy, m, 1)
+	#(repeat(vx, m, 1), repeat(vy, 1, n))
+	(vx' .* ones(m), vy .* ones(n)')
 end
 
 function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}, vz::AbstractVector{T}) where T

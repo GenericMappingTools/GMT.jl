@@ -65,7 +65,8 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G :bit_color],
-	                                 [:M :monochrome], [:N :noclip], [:Q :nan_t :nan_alpha], ["," :mem :mem_layout]])
+	                                 [:M :monochrome], [:N :noclip], [:Q :nan_t :nan_alpha]])
+	cmd = add_opt(d, cmd, ",", ["," :mem :mem_layout], nothing)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	if (got_fname == 0 && isa(arg1, Tuple))			# Then it must be using the three r,g,b grids

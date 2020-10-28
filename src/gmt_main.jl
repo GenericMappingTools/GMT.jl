@@ -264,7 +264,7 @@ function gmt(cmd::String, args...)
 		if ((status < 0) || status == GMT_SYNOPSIS || status == Int('?'))
 			return
 		end
-		error("Something went wrong when calling the module. GMT error number = ", status)
+		error("Something went wrong when calling the module. GMT error number =")
 	end
 
 	# 7. Hook up module GMT outputs to Julia array
@@ -421,7 +421,7 @@ function get_grid(API::Ptr{Nothing}, object)
 # Note: Incoming GMT grid has standard padding while Julia grid has none.
 
 	G = unsafe_load(convert(Ptr{GMT_GRID}, object))
-	if (G.data == C_NULL)  error("get_grid: programming error, output matrix is empty")  end
+	(G.data == C_NULL) && error("get_grid: programming error, output matrix is empty")
 
 	gmt_hdr = unsafe_load(G.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
@@ -1290,15 +1290,15 @@ D = mat2ds(mat, [txt]; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=n
 	Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 	same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
 	`hdr` optional String vector with either one or n_rows multisegment headers.
-	`color` optional array with color names. Its length can be smaller than n_rows, case in which colors will be
-	cycled.
+	`color` optional array os strings with color names/values. Its length can be smaller than n_rows, case in
+	which colors will be cycled.
 	`ls`    Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
 	`txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
 	        can be an array with same size as ``mat``rows or a string (will be reapeated n_rows times.) 
 	`multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
 	first column and 2, first and 3, etc. Convinient when want to plot a matrix where each column is a line. 
 """
-function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing, multi=false)
+function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=nothing, text=nothing, multi=false)
 
 	(txt  !== nothing) && return text_record(mat, txt,  hdr)
 	(text !== nothing) && return text_record(mat, text, hdr)
@@ -1309,40 +1309,56 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, ls=noth
 	else
 		n_ds = (multi) ? size(mat, 2) : 1
 		xx = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : x
-		(length(xx) != size(mat, 1))  && error("Number of X coordinates and MAT number of rows are not equal")
+		(length(xx) != size(mat, 1)) && error("Number of X coordinates and MAT number of rows are not equal")
 	end
 
 	if (hdr !== nothing && isa(hdr, String))	# Accept one only but expand to n_ds with the remaining as blanks
-		bak = hdr;	hdr = fill("", n_ds);	hdr[1] = bak
+		bak = hdr;		hdr = Base.fill("", n_ds);	hdr[1] = bak
 	elseif (hdr !== nothing && length(hdr) != n_ds)
 		error("The header vector can only have length = 1 or same number of MAT Y columns")
 	end
 
-	if (color == :cycle || color == "cycle")
-		color = ["0/0/0", "230/159/0", "86/180/233", "0/158/115", "240/228/66", "0/114/178", "213/94/0", "204/121/167"]
+	if (color !== nothing)
+		_color::Array{String} = isa(color, Array{String}) ? color : ["0/0/0", "230/159/0", "86/180/233", "0/158/115", "240/228/66", "0/114/178", "213/94/0", "204/121/167"]
+	end
+	if (fill !== nothing)
+		_fill::Array{String} = isa(fill, Array{String}) ? fill : ["230/159/0", "86/180/233", "0/158/115", "240/228/66", "0/114/178", "213/94/0", "204/121/167", "0/255/0"]
 	end
 
 	D = Array{GMTdataset, 1}(undef, n_ds)
 	if (color !== nothing)
-		n_colors = length(color)
+		n_colors = length(_color)
 		if (hdr === nothing)
 			hdr = Array{String,1}(undef, n_ds)
-			for k = 1:n_ds
-				if ((n = k % n_colors) == 0)  n = n_colors  end
-				hdr[k] = " -W," * arg2str(color[n])
-			end
+			#for k = 1:n_ds
+				#if ((n = k % n_colors) == 0)  n = n_colors  end
+				#hdr[k] = " -W," * arg2str(color[n])
+			#end
+			[hdr[k] = " -W," * arg2str(_color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
 		else
-			for k = 1:n_ds
-				if ((n = k % n_colors) == 0)  n = n_colors  end
-				hdr[k] *= " -W," * arg2str(color[n])
-			end
+			#for k = 1:n_ds
+				#if ((n = k % n_colors) == 0)  n = n_colors  end
+				#hdr[k] *= " -W," * arg2str(color[n])
+			#end
+			[hdr[k] *= " -W," * arg2str(_color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
 		end
 	end
+
 	if (ls !== nothing && ls != "")
 		if (isa(ls, AbstractString) || isa(ls, Symbol))
-			for k = 1:n_ds   hdr[k] = string(hdr[k], ',', ls)   end
+			[hdr[k] = string(hdr[k], ',', ls) for k = 1:n_ds]
 		else
-			for k = 1:n_ds   hdr[k] = string(hdr[k], ',', ls[k])   end
+			[hdr[k] = string(hdr[k], ',', ls[k]) for k = 1:n_ds]
+		end
+	end
+
+	if (fill !== nothing)				# Paint the polygons (in case of)
+		n_colors = length(_fill)
+		if (hdr === nothing)
+			hdr = Array{String,1}(undef, n_ds)
+			[hdr[k]  = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
+		else
+			[hdr[k] *= " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
 		end
 	end
 
@@ -1698,6 +1714,17 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 	if (!isa(y, Array{Float64}))  y = Float64.(y)  end
 	return x, y, hdr, x_inc, y_inc
 end
+
+#= ---------------------------------------------------------------------------------------------------
+function mksymbol(f::Function, cmd0::String="", arg1=nothing; kwargs...)
+	# Make a fig and convert it to EPS so it can be used as a custom symbol is plot(3)
+	d = KW(kwargs)
+	t = ((val = find_in_dict(d, [:symbname :symb_name :symbol])[1]) !== nothing) ? string(val) : "GMTsymbol"
+	d[:savefig] = t * ".eps"
+	f(cmd0, arg1; d...)
+end
+mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function make_zvals_vec(D, user_ids::Array{String,1}, vals)
