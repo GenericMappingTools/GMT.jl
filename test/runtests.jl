@@ -773,7 +773,7 @@ if (got_it)					# Otherwise go straight to end
 	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
 	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 	D = histogram(randn(100), I=:o, T=0.1);
-	@test_throws ErrorException("Something went wrong when calling the module. GMT error number = 71") histogram(randn(100), I=:o, V=:q, W=0.1);
+	@test_throws ErrorException("Something went wrong when calling the module. GMT error number =") histogram(randn(100), I=:o, V=:q, W=0.1);
 	lines(D, steps=(x=true,), close=(bot=true,))
 	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
 	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=dbg2);
@@ -824,6 +824,8 @@ if (got_it)					# Otherwise go straight to end
 	men_means, men_std = (20, 35, 30, 35, 27), (2, 3, 4, 1, 2);
 	x = collect(1:length(men_means));
 	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue, limits=(0.5,5.5,0,40), frame=:none, error_bars=(y=men_std,), Vd=dbg2)
+	bar([0. 1 2 3; 1 2 3 4], error_bars=(y=[0.1 0.2 0.33; 0.2 0.3 0.4],), Vd=dbg2)
+	bar([0. 1 2 3; 1 2 3 4], fill=(1,2,3), Vd=dbg2)
 	T = mat2ds([1.0 0.446143; 2.0 0.581746; 3.0 0.268978], text=[" "; " "; " "]);
 	bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=dbg2)
 	T = mat2ds([1.0 0.446143 0; 2.0 0.581746 0; 3.0 0.268978 0], text=[" "; " "; " "]);
