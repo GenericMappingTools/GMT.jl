@@ -1285,13 +1285,14 @@ text_record(text::Array{String}, hdr::String) = text_record(Array{Float64,2}(und
 
 # ---------------------------------------------------------------------------------------------------
 """
-D = mat2ds(mat, [txt]; x=nothing, hdr=nothing, color=nothing, ls=nothing, text=nothing, multi=false)
+D = mat2ds(mat, [txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=nothing, text=nothing, multi=false)
 
 	Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 	same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
 	`hdr` optional String vector with either one or n_rows multisegment headers.
 	`color` optional array os strings with color names/values. Its length can be smaller than n_rows, case in
 	which colors will be cycled.
+	`fill`  Optional string array with color names or array of ints for patterns. Used to paint polygons
 	`ls`    Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
 	`txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
 	        can be an array with same size as ``mat``rows or a string (will be reapeated n_rows times.) 
@@ -1330,16 +1331,8 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, fill=no
 		n_colors = length(_color)
 		if (hdr === nothing)
 			hdr = Array{String,1}(undef, n_ds)
-			#for k = 1:n_ds
-				#if ((n = k % n_colors) == 0)  n = n_colors  end
-				#hdr[k] = " -W," * arg2str(color[n])
-			#end
 			[hdr[k] = " -W," * arg2str(_color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
 		else
-			#for k = 1:n_ds
-				#if ((n = k % n_colors) == 0)  n = n_colors  end
-				#hdr[k] *= " -W," * arg2str(color[n])
-			#end
 			[hdr[k] *= " -W," * arg2str(_color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
 		end
 	end
@@ -1385,6 +1378,44 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, fill=no
 		end
 	end
 	return D
+end
+
+# ---------------------------------------------------------------------------------------------------
+function ds2ds(D::GMTdataset; kwargs...)
+	# Take one DS and split it in an array of DS, one for each row and optionally add -G,fill>
+	# So far only for internal use but may grow in function of needs
+	d = KW(kwargs)
+
+	#multi = "r"		# Default split by rows
+	#if ((val = find_in_dict(d, [:multi])[1]) !== nothing)  multi = "c"  end		# Then by columns
+	if ((val = find_in_dict(d, [:fill])[1]) !== nothing)
+		_fill::Array{String} = isa(val, Array{String}) ? val : ["230/159/0", "86/180/233", "0/158/115", "240/228/66", "0/114/178", "213/94/0", "204/121/167", "0/255/0"]
+	else
+		_fill = nothing
+	end
+
+	if ((val = find_in_dict(d, [:color_wrap])[1]) !== nothing)	# color_wrap is a kind of private option for bar-stack
+		n_colors = Int(val)
+	elseif (_fill !== nothing)
+		n_colors = length(_fill)
+	end
+
+	n_ds = size(D.data, 1)
+	if (_fill !== nothing)				# Paint the polygons (in case of)
+		hdr = Vector{String}(undef, n_ds)
+		[hdr[k] = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
+		if (D.header != "")  hdr[1] = D.header * hdr[1]  end
+	end
+
+	Dm = Array{GMTdataset, 1}(undef, n_ds)
+	for k = 1:n_ds
+		Dm[k] = GMTdataset(D.data[k:k, :], String[], (_fill === nothing ? "" : hdr[k]), String[], "", "")
+	end
+	Dm[1].comment = D.comment;	Dm[1].proj4 = D.proj4;	Dm[1].wkt = D.wkt
+	if (size(D.text) == n_ds)
+		[Dm.text[k] = D.text[k] for k = 1:n_ds]
+	end
+	Dm
 end
 
 # ---------------------------------------------------------------------------------------------------
