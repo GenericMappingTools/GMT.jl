@@ -826,6 +826,7 @@ if (got_it)					# Otherwise go straight to end
 	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue, limits=(0.5,5.5,0,40), frame=:none, error_bars=(y=men_std,), Vd=dbg2)
 	bar([0. 1 2 3; 1 2 3 4], error_bars=(y=[0.1 0.2 0.33; 0.2 0.3 0.4],), Vd=dbg2)
 	bar([0. 1 2 3; 1 2 3 4], fill=(1,2,3), Vd=dbg2)
+	bar([0. 1 2 3; 1 2 3 4], stack=1, Vd=dbg2)
 	T = mat2ds([1.0 0.446143; 2.0 0.581746; 3.0 0.268978], text=[" "; " "; " "]);
 	bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=dbg2)
 	T = mat2ds([1.0 0.446143 0; 2.0 0.581746 0; 3.0 0.268978 0], text=[" "; " "; " "]);
