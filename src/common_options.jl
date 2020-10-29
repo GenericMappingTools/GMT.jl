@@ -2701,7 +2701,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function close_PS_file(fname::AbstractString)
+	(GMTver >= 6.2) ? gmt("psxy -T -O >> " * fname) : gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname)
 	# Do the equivalent of "psxy -T -O"
+	#=
 	fid = open(fname, "a")
 	write(fid, "\n0 A\nFQ\nO0\n0 0 TM\n\n")
 	write(fid, "%%BeginObject PSL_Layer_2\n0 setlinecap\n0 setlinejoin\n3.32550952342 setmiterlimit\n%%EndObject\n")
@@ -2709,6 +2711,7 @@ function close_PS_file(fname::AbstractString)
 	write(fid, "PSL_movie_prog_indicator_completion /PSL_movie_prog_indicator_completion {} def\n")
 	write(fid, "%PSL_Begin_Trailer\n%%PageTrailer\nU\nshowpage\n\n%%Trailer\n\nend\n%%EOF")
 	close(fid)
+	=#
 end
 
 # ---------------------------------------------------------------------------------------------------
