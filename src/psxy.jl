@@ -7,7 +7,6 @@ const psxyz! = plot3d!
 function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kwargs...)
 	arg3 = nothing
 	N_args = (arg1 === nothing) ? 0 : 1
-
 	is_ternary = (caller == "ternary") ? true : false
 	if     (is3D)       gmt_proggy = (IamModern[1]) ? "plot3d "  : "psxyz "
 	elseif (is_ternary) gmt_proggy = (IamModern[1]) ? "ternary " : "psternary "
@@ -237,9 +236,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::B
 	if (got_Ebars)
 		opt_E = scan_opt(cmd, "-E")
 		((ind = findfirst("+", opt_E)) !== nothing) && (opt_E = opt_E[1:ind[1]-1])	# Strip eventual modifiers
-		if ( ((ind = findfirst("X", opt_E)) !== nothing) || ((ind = findfirst("Y", opt_E)) !== nothing) )
-			return cmd, arg1
-		end
+		(((ind = findfirst("X", opt_E)) !== nothing) || ((ind = findfirst("Y", opt_E)) !== nothing)) && return cmd, arg1
 		n_xy_bars = (findfirst("x", opt_E) !== nothing) + (findfirst("y", opt_E) !== nothing)
 		n_cols = size(arg1,2)
 		((n_cols - n_xy_bars) == 2) && return cmd, arg1			# Only one-bar groups
@@ -252,6 +249,24 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::B
 		bars_cols = nothing
 	end
 
+	do_multi = true;	do_bar_stack = false		# True for grouped; false for stacked groups
+	if ((val = find_in_dict(d, [:stack :stacked])[1]) !== nothing)
+		# Take this (two groups of 3 bars) [0 1 2 3; 1 2 3 4]  and compute this (the same but stacked)
+		# [0 1 0; 0 3 1; 0 6 3; 1 2 0; 1 5 2; 1 9 4]
+		nl = size(_arg,2)-1				# N layers in stack
+		tmp = zeros(size(_arg,1)*nl, 3)
+		for m = 1:size(_arg, 1)			# Loop over number of groups
+			t = cumsum(_arg[m, 2:end])		# 2:end because first is the x coordinate
+			for n = 1:nl				# Loop over number of layers (n bars in a group)
+				tmp[(m-1)*nl+n,1] = _arg[m,1]
+				tmp[(m-1)*nl+n,2] = t[n]
+			end
+			[tmp[(m-1)*nl+n,3] = t[n-1] for n = 2:nl]	# The 'base' column (first is always 0)
+		end
+		_arg = tmp
+		do_multi = false;		do_bar_stack = true
+	end
+
 	if (g_bar_fill === nothing && findfirst("-G0/115/190", cmd) !== nothing)	# Remove the auto color
 		cmd = replace(cmd, " -G0/115/190" => "")
 		g_bar_fill = true			# Just anything non array to trigger the cyclic color schema
@@ -259,29 +274,34 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::B
 
 	# Convert to a multi-segment GMTdataset. There will be as many segments as elements in a group
 	# and as many rows in a segment as the number of groups (number of bars if groups had only one bar)
-	_arg = mat2ds(_arg, fill=g_bar_fill, multi=true)
+	_arg = mat2ds(_arg, fill=g_bar_fill, multi=do_multi)
+	if (do_bar_stack)  _arg = ds2ds(_arg[1], fill=g_bar_fill, color_wrap=nl)  end	# 'nl' was defined in due time
 	(g_bar_fill !== nothing) && delete!(d, :fill)
 
-	if (bars_cols !== nothing)
-		for k = 1:length(_arg)		# Loop over number of bars in each group and append the error bar
+	if (bars_cols !== nothing)		# Loop over number of bars in each group and append the error bar
+		for k = 1:length(_arg)
 			_arg[k].data = reshape(append!(_arg[k].data[:], bars_cols[:,k]), size(_arg[k].data,1), :)
 		end
 	end
 
-	# Must fish-and-break-and-rebuils -S option
+	# Must fish-and-break-and-rebuild -S option
 	opt_S = scan_opt(cmd, "-S")
 	sub_b = ((ind = findfirst("+", opt_S)) !== nothing) ? opt_S[ind[1]:end] : ""	# The +Base modifier
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
 	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[3:end])	# Bar width
 	n_in_group = length(_arg)					# Number of bars in the group
-	new_bw = bw / n_in_group
+	new_bw = (do_bar_stack) ? bw : bw / n_in_group	# In bar-stack width does not change
 	new_opt_S = "-S" * opt_S[1] * "$(new_bw)u"
-	cmd = replace(cmd, "-S"*opt_S => new_opt_S)
+	#cmd = replace(cmd, "-S"*opt_S => new_opt_S)	# This retains the +b0 part
+	cmd = (do_bar_stack) ? replace(cmd, "-S"*opt_S*sub_b => new_opt_S*"+b") : replace(cmd, "-S"*opt_S => new_opt_S)
 
-	g_shifts = linspace((-bw + new_bw)/2, (bw - new_bw)/2, n_in_group)
-	for k = 1:n_in_group
-		[_arg[k].data[n,1] += g_shifts[k] for n = 1:size(_arg[k].data,1)]
+	if (!do_bar_stack)							# 'Horizontal stack'
+		g_shifts = linspace((-bw + new_bw)/2, (bw - new_bw)/2, n_in_group)
+		for k = 1:n_in_group
+			[_arg[k].data[n,1] += g_shifts[k] for n = 1:size(_arg[k].data,1)]
+		end
 	end
+
 	if (!got_usr_R)								# Need to recompute -R
 		info = gmt("gmtinfo -C", _arg)
 		dx = (info[1].data[2] - info[1].data[1]) * 0.005 + new_bw/2;
@@ -493,7 +513,6 @@ function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)
 end
 
 function helper2_markers(opt::String, alias::Vector{String})::String
-	marca = Vector{String}(undef,1)
 	marca = [""]
 	if (opt == alias[1])			# User used only the one letter syntax
 		marca[1] = alias[1]
@@ -547,8 +566,6 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 	if (occursin('3', caller))
 		if (!occursin(" -B", cmd[1]) && !O)  cmd[1] *= def_fig_axes3  end	# For overlays default is no axes
 		if (!occursin(" -p", cmd[1]))  cmd[1] *= " -p200/30"  end
-	#else
-		#if (!occursin(" -B", cmd[1]) && !O)  cmd[1] *= def_fig_axes   end
 	end
 
 	return cmd[1]
@@ -560,7 +577,7 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u::Bo
 	# later module if input is not a string or NamedTuple the scatter options must be processed in bar3().
 	# KEY is either :bar or :hbar
 	# OPTS is either "Sb", "SB" or "So"
-	# NO_U if true means to NO automatic adding of flag 'u'
+	# NO_U if true means to NOT automatic adding of flag 'u'
 	opt =""
 	if (haskey(d, key))
 		if (isa(d[key], String))
