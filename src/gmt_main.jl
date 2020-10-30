@@ -1292,7 +1292,7 @@ D = mat2ds(mat, [txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=n
 	`hdr` optional String vector with either one or n_rows multisegment headers.
 	`color` optional array os strings with color names/values. Its length can be smaller than n_rows, case in
 	which colors will be cycled.
-	`fill`  Optional string array with color names or array of ints for patterns. Used to paint polygons
+	`fill`  Optional string array with color names or array of "patterns"
 	`ls`    Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
 	`txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
 	        can be an array with same size as ``mat``rows or a string (will be reapeated n_rows times.) 
@@ -1388,20 +1388,17 @@ function ds2ds(D::GMTdataset; kwargs...)
 
 	#multi = "r"		# Default split by rows
 	#if ((val = find_in_dict(d, [:multi])[1]) !== nothing)  multi = "c"  end		# Then by columns
-	if ((val = find_in_dict(d, [:fill])[1]) !== nothing)
-		_fill::Array{String} = isa(val, Array{String}) ? val : ["230/159/0", "86/180/233", "0/158/115", "240/228/66", "0/114/178", "213/94/0", "204/121/167", "0/255/0"]
-	else
-		_fill = nothing
+	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
+		_fill::Array{String} = isa(fill_val, Array{String}) ? fill_val : ["230/159/0", "86/180/233", "0/158/115", "240/228/66", "0/114/178", "213/94/0", "204/121/167", "0/255/0"]
 	end
 
+	(fill_val !== nothing) && (n_colors = length(_fill))
 	if ((val = find_in_dict(d, [:color_wrap])[1]) !== nothing)	# color_wrap is a kind of private option for bar-stack
 		n_colors = Int(val)
-	elseif (_fill !== nothing)
-		n_colors = length(_fill)
 	end
 
 	n_ds = size(D.data, 1)
-	if (_fill !== nothing)				# Paint the polygons (in case of)
+	if (fill_val !== nothing)				# Paint the polygons (in case of)
 		hdr = Vector{String}(undef, n_ds)
 		[hdr[k] = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
 		if (D.header != "")  hdr[1] = D.header * hdr[1]  end

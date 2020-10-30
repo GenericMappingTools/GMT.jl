@@ -34,11 +34,11 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 			end
 		else
 			sub_module = caller
-			if (sub_module == "bar")
-				gval = find_in_dict(d, [:fill], false)[1]	# Used for group colors
+			if (sub_module == "bar")	# Needs to be processed here to destinguish from the more general 'fill'
+				gval = find_in_dict(d, [:fill :fillcolor], false)[1]	# Used for group colors
 				if     (isa(gval, Array{String}) && length(gval) > 1)  g_bar_fill = gval	# Given an array of fills
-				elseif ((isa(gval, Array{Int}) || isa(gval, Tuple)) && length(gval) > 1)	# Patterns
-					g_bar_fill = Vector{String}(undef, length(gval))
+				elseif ((isa(gval, Array{Int}) || (isa(gval, Tuple)) && eltype(gval) == Int) && length(gval) > 1)
+					g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
 					[g_bar_fill[k] = string('p',gval[k]) for k = 1:length(gval)]
 				end
 			end
@@ -245,7 +245,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::B
 		_arg = arg1[:, 1:(n+1)]
 		bars_cols = arg1[:,(n + 2):end]		# We'll use this to appent to the multi-segments
 	else
-		_arg = deepcopy(arg1)		# Make a copy because data is going to be modified
+		_arg = deepcopy(arg1)			# Make a copy because data is going to be modified
 		bars_cols = nothing
 	end
 
@@ -256,7 +256,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::B
 		nl = size(_arg,2)-1				# N layers in stack
 		tmp = zeros(size(_arg,1)*nl, 3)
 		for m = 1:size(_arg, 1)			# Loop over number of groups
-			t = cumsum(_arg[m, 2:end])		# 2:end because first is the x coordinate
+			t = cumsum(_arg[m, 2:end])	# 2:end because first is the x coordinate
 			for n = 1:nl				# Loop over number of layers (n bars in a group)
 				tmp[(m-1)*nl+n,1] = _arg[m,1]
 				tmp[(m-1)*nl+n,2] = t[n]

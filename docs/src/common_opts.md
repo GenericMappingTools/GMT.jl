@@ -99,7 +99,7 @@ Note for geographic axes **m** and **s** instead mean arc minutes and arc second
 All entities that are language-specific are under control by [GMT\_LANGUAGE](http://gmt.soest.hawaii.edu/doc/latest/gmt.conf.html#gmt-language). 
 
 For custom annotations and intervals, let *intervals* be given as *custom="intfile"*, where
-*intfile* contains any number of records with *coord * *type* [*label*]. Here, *type* is one or more
+*intfile* contains any number of records with *coord type* [*label*]. Here, *type* is one or more
 letters from **a** or **i**, **f**, and **g**. For **a** or **i** you must supply a *label* that will
 be plotted at the *coord* location.
 
