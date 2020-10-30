@@ -1409,7 +1409,9 @@ function ds2ds(D::GMTdataset; kwargs...)
 		Dm[k] = GMTdataset(D.data[k:k, :], String[], (_fill === nothing ? "" : hdr[k]), String[], "", "")
 	end
 	Dm[1].comment = D.comment;	Dm[1].proj4 = D.proj4;	Dm[1].wkt = D.wkt
-	if (size(D.text) == n_ds)[Dm.text[k] = D.text[k] for k = 1:n_ds] end
+	if (size(D.text) == n_ds)
+		[Dm.text[k] = D.text[k] for k = 1:n_ds]
+	end
 	Dm
 end
 
