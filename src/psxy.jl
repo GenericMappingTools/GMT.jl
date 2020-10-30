@@ -37,7 +37,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 			if (sub_module == "bar")	# Needs to be processed here to destinguish from the more general 'fill'
 				gval = find_in_dict(d, [:fill :fillcolor], false)[1]	# Used for group colors
 				if     (isa(gval, Array{String}) && length(gval) > 1)  g_bar_fill = gval	# Given an array of fills
-				elseif ((isa(gval, Array{Int}) || (isa(gval, Tuple)) && eltype(fill_val) == Int) && length(gval) > 1)
+				elseif ((isa(gval, Array{Int}) || (isa(gval, Tuple)) && eltype(gval) == Int) && length(gval) > 1)
 					g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
 					[g_bar_fill[k] = string('p',gval[k]) for k = 1:length(gval)]
 				end
