@@ -521,7 +521,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\U00AF');   delete!(d, :ylabel);	end
 	if (haskey(d, :zlabel))  t *= " z+l" * replace(str_with_blancs(d[:zlabel]),' '=>'\U00AF');   delete!(d, :zlabel);	end
 	if (t != "")
-		if (opt_B[1] == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis], false)[1] === nothing))
+		if (opt_B[1] == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis :xticks :yticks :zticks], false)[1] === nothing))
 			opt_B[1] = def_fig_axes_
 		else
 			if !( ((ind = findlast("-B",opt_B[1])) !== nothing || (ind = findlast(" ",opt_B[1])) !== nothing) &&
@@ -529,7 +529,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 				t = " " * t;		# Do not glue, for example, -Bg with :title
 			end
 		end
-		if (val = find_in_dict(d, [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], false)[1] === nothing)
+		if (val = find_in_dict(d, [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2 :xticks :yticks :zticks], false)[1] === nothing)
 			opt_B[1] *= t;
 		else
 			opt_B[1] = t;
@@ -539,7 +539,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 
 	# These are not and we can have one or all of them. NamedTuples are dealt at the end
 	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2]
-		if (haskey(d, symb) && !isa(d[symb], NamedTuple))
+		if (haskey(d, symb) && !isa(d[symb], NamedTuple) && !isa(d[symb], Dict))
 			opt_B[1] = string(d[symb], " ", opt_B[1])
 		end
 	end
@@ -568,12 +568,21 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	for symb in [:yaxis2 :xaxis2 :axis2 :zaxis :yaxis :xaxis]
 		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict)))
 			if (isa(d[symb], Dict))  d[symb] = dict2nt(d[symb])  end
-			if     (symb == :axis2)   this_opt_B = axis(d[symb], secondary=true);	delete!(d, symb)
+			if     (symb == :axis2)   this_opt_B = axis(d[symb], secondary=true);		delete!(d, symb)
 			elseif (symb == :xaxis)   this_opt_B = axis(d[symb], x=true) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :xaxis2)  this_opt_B = axis(d[symb], x=true, secondary=true) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :yaxis)   this_opt_B = axis(d[symb], y=true) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :yaxis2)  this_opt_B = axis(d[symb], y=true, secondary=true) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :zaxis)   this_opt_B = axis(d[symb], z=true) * this_opt_B;	delete!(d, symb)
+			end
+		end
+	end
+	# These can come up outside of an ?axis tuple, so need to be sekeed too.
+	for symb in [:xticks :yticks :zticks]
+		if (haskey(d, symb))
+			if     (symb == :xticks)  this_opt_B = " -Bpxc" * xticks(d[symb]) * this_opt_B;	delete!(d, symb)
+			elseif (symb == :yticks)  this_opt_B = " -Bpyc" * yticks(d[symb]) * this_opt_B;	delete!(d, symb)
+			elseif (symb == :zticks)  this_opt_B = " -Bpzc" * zticks(d[symb]) * this_opt_B;	delete!(d, symb)
 			end
 		end
 	end
@@ -1810,11 +1819,10 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	# Before anything else
 	(haskey(d, :none)) && return " -B0"
 
-	secondary ? primo = "s" : primo = "p"			# Primary or secondary axis
+	primo = secondary ? "s" : "p"					# Primary or secondary axis
 	if (z)  primo = ""  end							# Z axis have no primary/secondary
 	axe = x ? "x" : (y ? "y" : (z ? "z" : ""))		# Are we dealing with a specific axis?
 
-	opt = Array{String,1}(undef,1)					# To force type stability
 	opt = [" -B"]
 	if ((val = find_in_dict(d, [:frame :axes])[1]) !== nothing)
 		if isa(val, Dict)  val = dict2nt(val)  end
@@ -1855,8 +1863,7 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	end
 
 	# intervals
-	ints = Array{String,1}(undef,1)		# To force type stability
-	ints[1] = ""
+	ints = [""]
 	if (haskey(d, :annot))      ints[1] *= "a" * helper1_axes(d[:annot])  end
 	if (haskey(d, :annot_unit)) ints[1] *= helper2_axes(d[:annot_unit])   end
 	if (haskey(d, :ticks))      ints[1] *= "f" * helper1_axes(d[:ticks])  end
@@ -1877,9 +1884,10 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	if (haskey(d, :custom))
 		if (isa(d[:custom], String))  ints[1] *= 'c' * d[:custom]
 		else
-			if ((r = helper3_axes(d[:custom], primo, axe)) != "")  ints[1] = ints[1] * 'c' * r  end
+			if ((r = helper3_axes(d[:custom], primo, axe)) != "")  ints[1] *= 'c' * r  end
 		end
-		# Should find a way to also accept custom=GMTdataset
+	elseif (haskey(d, :customticks))			# These ticks are custom axis
+		if ((r = ticks(d[:customticks]; axis=axe, primary=primo)) != "")  ints[1] *= 'c' * r  end
 	elseif (haskey(d, :pi))
 		if (isa(d[:pi], Number))
 			ints[1] = string(ints[1], d[:pi], "pi")		# (n)pi
@@ -1972,7 +1980,7 @@ function helper2_axes(arg)::String
 	end
 	return out
 end
-# ------------------------
+# ------------------------------------------------------------
 function helper3_axes(arg, primo::String, axe::String)::String
 	# Parse the custom annotations arg, save result into a tmp file and return its name
 
@@ -1985,23 +1993,39 @@ function helper3_axes(arg, primo::String, axe::String)::String
 		if (isa(arg, NamedTuple))  d = nt2dict(arg)  end
 		!haskey(d, :pos) && error("Custom annotations NamedTuple must contain the member 'pos'")
 		pos = d[:pos]
-		n_annot = length(pos)
-		if ((val = find_in_dict(d, [:type_ :type])[1]) !== nothing)
+		n_annot = length(pos);		got_tipo = false
+		if ((val = find_in_dict(d, [:type])[1]) !== nothing)
 			if (isa(val, Char) || isa(val, String) || isa(val, Symbol))
-				tipo = Array{Any,1}(undef, n_annot)
-				for k = 1:n_annot  tipo[k] = val  end
+				tipo = Vector{String}(undef, n_annot)
+				[tipo[k] = string(val) for k = 1:n_annot]	# Repeat the same 'type' n_annot times
 			else
 				tipo = val		# Assume it's a good guy, otherwise ...
 			end
-		else
-			tipo = fill('a', n_annot)		# Default to annotate
+			got_tipo = true
 		end
 
 		if (haskey(d, :label))
-			if (!isa(d[:label], Array) || length(d[:label]) != n_annot)
+			if (length(d[:label]) != n_annot)
 				error("Number of labels in custom annotations must be the same as the 'pos' element")
 			end
 			label = d[:label]
+			tipo = Vector{String}(undef, n_annot)
+			for k = 1:n_annot
+				if (label[k][1] != '/')
+					tipo[k] = "a"
+				else
+					t = split(label[k])
+					tipo[k] = t[1][2:end]
+					if (length(t) > 1)
+						label[k] = join([t[n] * " " for n =2:length(t)])
+						label[k] = rstrip(label[k], ' ')		# and remove last ' '
+					else
+						label[k] = ""
+					end
+				end
+			end
+		elseif (!got_tipo)
+			tipo = fill("a", n_annot)		# Default to annotate
 		end
 	else
 		@warn("Argument of the custom annotations must be an N-array or a NamedTuple");		return ""
@@ -2022,6 +2046,22 @@ function helper3_axes(arg, primo::String, axe::String)::String
 	end
 	close(fid)
 	return fname
+end
+
+# ---------------------------------------------------
+xticks(labels, pos=nothing) = ticks(labels, pos; axis="x")
+yticks(labels, pos=nothing) = ticks(labels, pos; axis="y")
+zticks(labels, pos=nothing) = ticks(labels, pos; axis="z")
+function ticks(labels, pos=nothing; axis="x", primary="p")
+	# Simple plot of custom ticks.
+	# LABELS can be an Array or Tuple of strinfs or symbols with the labels to be plotted at ticks in POS
+	if (isa(labels, Tuple) && length(labels) == 2 && isa(labels[1], AbstractArray))
+		r = helper3_axes((pos=labels[1], label=labels[2]), primary, axis)
+	else
+		_pos = (pos === nothing) ? (1:length(labels)) : pos
+		r = helper3_axes((pos=_pos, label=labels), primary, axis)
+	end
+	r
 end
 # ---------------------------------------------------------------------------------------------------
 
