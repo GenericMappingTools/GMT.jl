@@ -2011,7 +2011,7 @@ function helper3_axes(arg, primo::String, axe::String)::String
 			label = d[:label]
 			tipo = Vector{String}(undef, n_annot)
 			for k = 1:n_annot
-				if (label[k][1] != '/')
+				if (isa(label[k], Symbol) || label[k][1] != '/')
 					tipo[k] = "a"
 				else
 					t = split(label[k])
