@@ -1299,18 +1299,19 @@ D = mat2ds(mat, [txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=n
 	`multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
 	first column and 2, first and 3, etc. Convinient when want to plot a matrix where each column is a line. 
 """
-function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=nothing, text=nothing, multi=false)
+function mat2ds(mat, txt=nothing; hdr=nothing, multi::Bool=false, kwargs...)
+	d = KW(kwargs)
 
 	(txt  !== nothing) && return text_record(mat, txt,  hdr)
-	(text !== nothing) && return text_record(mat, text, hdr)
+	((text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, text, hdr)
 
-	if (x === nothing)
-		n_ds = (ndims(mat) == 3) ? size(mat,3) : ((multi) ? size(mat, 2) - 1 : 1)
-		xx = nothing
-	else
+	if ((x = find_in_dict(d, [:x])[1]) !== nothing)
 		n_ds = (multi) ? size(mat, 2) : 1
 		xx = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : x
 		(length(xx) != size(mat, 1)) && error("Number of X coordinates and MAT number of rows are not equal")
+	else
+		n_ds = (ndims(mat) == 3) ? size(mat,3) : ((multi) ? size(mat, 2) - 1 : 1)
+		xx = nothing
 	end
 
 	if (hdr !== nothing && isa(hdr, String))	# Accept one only but expand to n_ds with the remaining as blanks
@@ -1319,25 +1320,23 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, fill=no
 		error("The header vector can only have length = 1 or same number of MAT Y columns")
 	end
 
-	if (color !== nothing)
-		_color::Array{String} = isa(color, Array{String}) ? color : ["0/0/0", "230/159/0", "86/180/233", "0/158/115", "240/228/66", "0/114/178", "213/94/0", "204/121/167"]
+	if ((color = find_in_dict(d, [:color])[1]) !== nothing)
+		_color::Array{String} = isa(color, Array{String}) ? color : ["0/0/0", "#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"]
 	end
-	if (fill !== nothing)
-		_fill::Array{String} = isa(fill, Array{String}) ? fill : ["230/159/0", "86/180/233", "0/158/115", "240/228/66", "0/114/178", "213/94/0", "204/121/167", "0/255/0"]
-	end
+	_fill = helper_ds_fill(d)
 
 	D = Array{GMTdataset, 1}(undef, n_ds)
 	if (color !== nothing)
 		n_colors = length(_color)
 		if (hdr === nothing)
 			hdr = Array{String,1}(undef, n_ds)
-			[hdr[k] = " -W," * arg2str(_color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
+			[hdr[k]  = " -W," * arg2str(_color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
 		else
 			[hdr[k] *= " -W," * arg2str(_color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
 		end
 	end
 
-	if (ls !== nothing && ls != "")
+	if ((ls = find_in_dict(d, [:ls :linestyle])[1]) !== nothing && ls != "")
 		if (isa(ls, AbstractString) || isa(ls, Symbol))
 			[hdr[k] = string(hdr[k], ',', ls) for k = 1:n_ds]
 		else
@@ -1345,7 +1344,7 @@ function mat2ds(mat, txt=nothing; x=nothing, hdr=nothing, color=nothing, fill=no
 		end
 	end
 
-	if (fill !== nothing)				# Paint the polygons (in case of)
+	if (_fill !== nothing)				# Paint the polygons (in case of)
 		n_colors = length(_fill)
 		if (hdr === nothing)
 			hdr = Array{String,1}(undef, n_ds)
@@ -1388,20 +1387,17 @@ function ds2ds(D::GMTdataset; kwargs...)
 
 	#multi = "r"		# Default split by rows
 	#if ((val = find_in_dict(d, [:multi])[1]) !== nothing)  multi = "c"  end		# Then by columns
-	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
-		_fill::Array{String} = isa(fill_val, Array{String}) ? fill_val : ["230/159/0", "86/180/233", "0/158/115", "240/228/66", "0/114/178", "213/94/0", "204/121/167", "0/255/0"]
-	end
+	_fill = helper_ds_fill(d)
 
-	(fill_val !== nothing) && (n_colors = length(_fill))
 	if ((val = find_in_dict(d, [:color_wrap])[1]) !== nothing)	# color_wrap is a kind of private option for bar-stack
 		n_colors = Int(val)
 	end
 
 	n_ds = size(D.data, 1)
-	if (fill_val !== nothing)				# Paint the polygons (in case of)
+	if (_fill !== nothing)				# Paint the polygons (in case of)
 		hdr = Vector{String}(undef, n_ds)
 		[hdr[k] = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
-		if (D.header != "")  hdr[1] = D.header * hdr[1]  end
+		if (D.header != "")  hdr[1] = D.header * hdr[1]  end	# Copy eventual contents of first header
 	end
 
 	Dm = Array{GMTdataset, 1}(undef, n_ds)
@@ -1409,10 +1405,26 @@ function ds2ds(D::GMTdataset; kwargs...)
 		Dm[k] = GMTdataset(D.data[k:k, :], String[], (_fill === nothing ? "" : hdr[k]), String[], "", "")
 	end
 	Dm[1].comment = D.comment;	Dm[1].proj4 = D.proj4;	Dm[1].wkt = D.wkt
-	if (size(D.text) == n_ds)
-		[Dm.text[k] = D.text[k] for k = 1:n_ds]
-	end
+	(size(D.text) == n_ds) && [Dm.text[k] = D.text[k] for k = 1:n_ds]
 	Dm
+end
+
+# ------------------------------
+function helper_ds_fill(d::Dict)
+	# Shared by ds2ds & mat2ds
+	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
+		_fill::Array{String} = isa(fill_val, Array{String}) ? fill_val : ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
+		n_colors = length(_fill)
+		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
+			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end
+			_alpha = Vector{String}(undef, n_colors)
+			na = min(length(alpha_val), n_colors)
+			[_alpha[k] = join(string('@',alpha_val[k])) for k = 1:na]
+			(na < n_colors) && [_alpha[k] = "" for k = na+1:n_colors]
+			[_fill[k] *= _alpha[k] for k = 1:n_colors]		# And finaly apply the transparency
+		end
+		_fill
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------

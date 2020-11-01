@@ -384,7 +384,9 @@ Example:
     bar(sort(randn(10)), fill=:black, axis=:auto, show=true)
 """
 function bar(cmd0::String="", arg=nothing; first=true, kw...)
-	if (cmd0 == "") arg = cat_1_arg(arg)  end	# If ARG is a vector, prepend it with a 1:N x column
+	d = KW(kw)
+	do_cat = (haskey(d, :stack) || haskey(d, :stacked) && isvector(arg) && length(arg) > 2) ? false : true
+	if (cmd0 == "" && do_cat) arg = cat_1_arg(arg)  end	# If ARG is a vector, prepend it with a 1:N x column
 	GMT.common_plot_xyz(cmd0, arg, "bar", first, false, kw...)
 end
 bar!(cmd0::String="", arg=nothing; kw...) = bar(cmd0, arg; first=false, kw...)
@@ -397,7 +399,7 @@ bar!(f::Function, rang=nothing; kw...) = bar(f, rang; first=false, kw...)
 
 bar(arg1, arg2; first=true, kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "bar", first, false, kw...)
 bar!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "bar", false, false, kw...)
-bar(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "bar", true, false, kw...)
+bar(arg; kw...)  = bar("", arg; kw...)
 bar!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "bar", false, false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
@@ -810,6 +812,8 @@ function cat_1_arg(arg)
 	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
 		#arg = hcat(collect(1:size(arg,1)), arg)
 		arg = hcat(collect(eltype(arg), 1:size(arg,1)), arg)
+	#elseif (isa(arg, Array) && size(arg,1) == 1)		# Accept also row arrays. CAN'T IT BREAKS plot([1 1])
+		#arg = hcat(collect(eltype(arg), 1:length(arg)), arg')
 	elseif (isa(arg, NTuple))
 		arg = hcat(collect(eltype(arg), 1:length(arg)), collect(arg))
 	end

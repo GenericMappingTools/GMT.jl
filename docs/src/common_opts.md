@@ -103,6 +103,16 @@ For custom annotations and intervals, let *intervals* be given as *custom="intfi
 letters from **a** or **i**, **f**, and **g**. For **a** or **i** you must supply a *label* that will
 be plotted at the *coord* location.
 
+A simpler way of controling the ticks and annotations with custom settings is to use the *xticks* option
+(same for *yticks* and *zticks*). Here, one give a tuple with annotations interval and labels. E.g.
+*xticks=(1:5, ["a", "b", "c", "d"]) where first element is an AbstractArray and second an array or tuple of
+strings or symbols. The more elaborate effect described above for the *custom* options is achieved here by
+escaping the **a** or **i**, **f**, and **g** codes with a forward slash in a text string. Example:
+xticks=(1:5, ["a", "f", "/ag e", "f", "/ag @~p@~"]). Here "/ag e" means annotate the third value with *e*
+and add a grid line. These *x|y|zticks* options work only for the primary axes. To change the secondary use
+the *customtics* form. *E.g.* *xaxis2=(customticks(...),)*. Note that the *ticks* keyword is already taken
+to control the ticks interval hence the need to use a different one (*customticks*).
+
 For non-geographical projections: Give negative scale (in *proj="x scale"* or axis length
 (in *proj="X map width"* to change the direction of increasing coordinates (i.e., to make the y-axis
 positive down).
@@ -191,6 +201,10 @@ The entire parameters collection is displayed in the following table
 | xlabel        | x-axis label  | Str or Symb   | Add a label to X axis |
 | ylabel        | y-axis label  | Str or Symb   | Add a label to Y axis |
 | zlabel        | z-axis label  | Str or Symb   | Add a label to Z axis |
+| xticks        | x-axis ticks  | Tuple         | Add custom ticks/annotations to X axis |
+| yticks        | y-axis ticks  | Tuple         | Add custom ticks/annotations to Y axis |
+| zticks        | z-axis ticks  | Tuple         | Add custom ticks/annotations to Z axis |
+| customticks   | x|y|z  ticks  | Tuple         | Same as ?ticks but used inside x|y|zaxis() |
 | seclabel      | second label  | Str or Symb   | Add a seconadry label to X|Y|Z axis |
 | annot         | annot interval| Symb or Num   | Annot stride interval |
 | ticks         | tick interval | Symb or Num   | Tick interval |

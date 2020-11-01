@@ -56,7 +56,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
 	got_usr_R = (opt_R != "") ? true : false		# To know is the user set -R or we guessed it from data
-	if (opt_R == "" && sub_module == "bar")  opt_R = "///0"  end	# Make sure y_min = 0
+	if (opt_R == "" && sub_module == "bar")  opt_R = "/-0.4/0.4/0"  end	# Make sure y_min = 0
 	cmd, arg1, opt_R, lixo, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
 	if (N_args == 0 && arg1 !== nothing)  N_args = 1  end
 
@@ -215,7 +215,8 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 		else
 			cmd = replace(cmd, opt_R => " -R" * arg2str(round_wesn(D[1].data)))
 		end
-	elseif (sub_module == "bar" && isa(arg1, Array{<:Real,2}) && size(arg1,2) > 2)
+	#elseif (sub_module == "bar" && ((isa(arg1, Array{<:Real,2}) && size(arg1,2) > 2) || haskey(d, :stacked)) )
+	elseif (sub_module == "bar")
 		cmd, arg1 = bar_group(d, cmd, opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 	end
 
@@ -233,6 +234,10 @@ end
 function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::Bool, got_usr_R::Bool, arg1)
 	# Convert input array into a multi-segment Dataset where each segment is an element of a bar group
 	# Example, plot two groups of 3 bars each: bar([0 1 2 3; 1 2 3 4], xlabel="BlaBla")
+	if !((isa(arg1, Array{<:Real,2}) && size(arg1,2) > 2) || haskey(d, :stack) || haskey(d, :stacked))
+		return cmd, arg1		# No group bars, just plain bars
+	end
+
 	if (got_Ebars)
 		opt_E = scan_opt(cmd, "-E")
 		((ind = findfirst("+", opt_E)) !== nothing) && (opt_E = opt_E[1:ind[1]-1])	# Strip eventual modifiers
@@ -255,13 +260,19 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::B
 		# [0 1 0; 0 3 1; 0 6 3; 1 2 0; 1 5 2; 1 9 4]
 		nl = size(_arg,2)-1				# N layers in stack
 		tmp = zeros(size(_arg,1)*nl, 3)
+
 		for m = 1:size(_arg, 1)			# Loop over number of groups
-			t = cumsum(_arg[m, 2:end])	# 2:end because first is the x coordinate
-			for n = 1:nl				# Loop over number of layers (n bars in a group)
+			tmp[(m-1)*nl+1,1] = _arg[m,1];		tmp[(m-1)*nl+1,2] = _arg[m,2];	# 3rd col is zero
+			for n = 2:nl				# Loop over number of layers (n bars in a group)
 				tmp[(m-1)*nl+n,1] = _arg[m,1]
-				tmp[(m-1)*nl+n,2] = t[n]
+				if (sign(tmp[(m-1)*nl+n-1,2]) == sign(_arg[m,n+1]))		# Because when we have neg & pos, case is diff
+					tmp[(m-1)*nl+n,2] = tmp[(m-1)*nl+n-1,2] + _arg[m,n+1]
+					tmp[(m-1)*nl+n,3] = tmp[(m-1)*nl+n-1,2]
+				else
+					tmp[(m-1)*nl+n,2] = _arg[m,n+1]
+					tmp[(m-1)*nl+n,3] = 0
+				end
 			end
-			[tmp[(m-1)*nl+n,3] = t[n-1] for n = 2:nl]	# The 'base' column (first is always 0)
 		end
 		_arg = tmp
 		do_multi = false;		do_bar_stack = true
@@ -274,8 +285,9 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::B
 
 	# Convert to a multi-segment GMTdataset. There will be as many segments as elements in a group
 	# and as many rows in a segment as the number of groups (number of bars if groups had only one bar)
-	_arg = mat2ds(_arg, fill=g_bar_fill, multi=do_multi)
-	if (do_bar_stack)  _arg = ds2ds(_arg[1], fill=g_bar_fill, color_wrap=nl)  end	# 'nl' was defined in due time
+	alpha = find_in_dict(d, [:alpha :fillalpha :transparency])[1]
+	_arg = mat2ds(_arg, fill=g_bar_fill, multi=do_multi, fillalpha=alpha)
+	if (do_bar_stack)  _arg = ds2ds(_arg[1], fill=g_bar_fill, color_wrap=nl, fillalpha=alpha)  end
 	(g_bar_fill !== nothing) && delete!(d, :fill)
 
 	if (bars_cols !== nothing)		# Loop over number of bars in each group and append the error bar
@@ -304,10 +316,13 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::B
 
 	if (!got_usr_R)								# Need to recompute -R
 		info = gmt("gmtinfo -C", _arg)
+		(info[1].data[3] > 0) && (info[1].data[3] = 0)		# If not negative then must be 0
 		dx = (info[1].data[2] - info[1].data[1]) * 0.005 + new_bw/2;
-		info[1].data[1] -= dx;	info[1].data[2] += dx;		info[1].data[4] *= 1.025
+		dy = (info[1].data[4] - info[1].data[3]) * 0.005;
+		info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[4] += dy;
+		(info[1].data[3] != 0) && (info[1].data[3] -= dy);
 		info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
-		new_opt_R = @sprintf(" -R%.12g/%.12g/0/%.12g", info[1].data[1], info[1].data[2], info[1].data[4])
+		new_opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2], info[1].data[3], info[1].data[4])
 		cmd = replace(cmd, opt_R => new_opt_R)
 	end
 	return cmd, _arg

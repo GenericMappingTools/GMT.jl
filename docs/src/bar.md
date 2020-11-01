@@ -4,7 +4,10 @@
 
 Reads (x,y) pairs and plots a bar graph. This module is a subset of `plot` to make it simpler to draw bar
 plots. So not all (fine) controlling parameters are listed here. For a finer control, user should
-consult the `plot` module. 
+consult the `plot` module.
+
+If input is a MxN array and N > 2 it will plot a bar-group with M groups and N-1 bars in each group (first
+column holds always the coordinates).
 
 Parameters
 ----------
@@ -52,6 +55,14 @@ Parameters
    cannot use *width* or *base* to change just those defaults (the use of it is restricted to the vertical
    bars case).
 
+- *fill=["color1", "color2", ...]* **|** *fill=("color1", "color2", ...)* **|** *fill=(1,2,...)*\
+   List of colors used to wrapp the bars inside each group. When using numbers that means patterns codes.
+
+- *fillalpha=[...]*\
+   When *fill* was used, control the transparency level. Numbers v=can be flots <= 1.0 or integeres in 0-100 range.
+
+- *stack*\
+   Plot a vertically stacked group plot
 
 Examples
 --------
@@ -60,6 +71,21 @@ A simple bar plot with 10 bars and automatic limits.
 
 ```julia
     bar(rand(10), show=true)
+```
+
+A bar group with selected colors and transparency.
+```julia
+    bar([0. 1 2 3; 1 2 3 4], fillalpha=[0.3 0.5 0.7], show=1,  fmt=:png, fill=["red" "green" "blue"], fmt=:png)
+```
+
+A bar group with bars filled with patterns.
+```julia
+    bar([0 1 2 3; 1 2 3 4], fill=(1,2,3), show=1, fmt=:png)
+```
+
+A bar group with error bars
+```julia
+    bar([0. 1 2 3; 1 2 3 4], error_bars=(y=[0.1 0.2 0.33; 0.2 0.3 0.4],), show=1, fmt=:png)
 ```
 
 See also
