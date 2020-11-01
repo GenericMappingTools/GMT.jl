@@ -2409,12 +2409,12 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D::Boo
 
 	(show_kwargs[1]) && return cmd, arg, opt_R, "", ""		# In HELP mode we do nothing here
 
-	if (IamModern[1] && FirstModern[1])  FirstModern[1] = false;  end
+	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
 	force_get_R = (IamModern[1] && GMTver > 6) ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
 	#force_get_R = true		# Due to a GMT6.0 BUG, modern mode does not compute -R automatically and 6.1 is not good too
 	data_kw = nothing
-	if (haskey(d, :data))  data_kw = d[:data]  end
-	if (fname != "")       data_kw = fname     end
+	(haskey(d, :data)) && (data_kw = d[:data])
+	(fname != "") && (data_kw = fname)
 
 	cmd, opt_i  = parse_i(d, cmd)		# If data is to be read with some colomn order
 	cmd, opt_bi = parse_bi(d, cmd)		# If data is to be read as binary
@@ -2449,9 +2449,10 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D::Boo
 			# Example "/-0.1/0.1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
 			rs = split(opt_R, '/')
 			for k = 2:length(rs)
-				if (rs[k] != "")
-					x = parse(Float64, rs[k])
-					(x == 0.0) ? info[1].data[k-1] = x : info[1].data[k-1] += x
+				(rs[k] == "") && continue
+				x = parse(Float64, rs[k])
+				if (x == 0.0)
+					info[1].data[k-1] = (info[1].data[k-1] > 0) ? 0 : info[1].data[k-1]
 				end
 			end
 		end
@@ -2550,6 +2551,12 @@ function round_pretty(val)
 	round(val * fraction * 10^ -log) / fraction / 10^-log
 end
 =#
+
+# ---------------------------------------------------------------------------------------------------
+function isvector(x)::Bool
+	# Return true if x is a vector in the Matlab sense
+	isa(x, Vector) || (isa(x, Array) && ( ((size(x,1) == 1) && size(x,2) > 1) || ((size(x,1) > 1) && size(x,2) == 1) ))
+end
 
 # ---------------------------------------------------------------------------------------------------
 function find_data(d::Dict, cmd0::String, cmd::String, args...)
