@@ -455,7 +455,6 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		else
 			# 0.85 is the % of inc width of bars
 			w1::Float64, w2::Float64 = arg1.inc[1]*0.85, arg1.inc[2]*0.85
-			#opt_S = @sprintf(" -So%.8gu/%.8gu", w1, w2)
 			opt_S = " -So$(w1)u/$(w2)u"
 			if     (haskey(d, :nbands))  opt_z = string("+z", d[:nbands]);	delete!(d, :nbands)
 			elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands]);	delete!(d, :Nbands)
@@ -497,7 +496,6 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 	opt_base = add_opt(d, "", "", [:base])		# Do this again because :base may have been added above
 	if (opt_base == "")
 		_z_min::Float32 = (isa(arg1, Array)) ? minimum(view(arg1, :, 3)) : minimum(view(arg1.data, :, 3))
-		#opt_S = @sprintf("%s+b%.8g", opt_S, _z_min)
 		opt_S *= "+b$_z_min" 
 	else
 		opt_S *= "+b" * opt_base
