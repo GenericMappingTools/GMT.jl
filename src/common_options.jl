@@ -1580,6 +1580,11 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 			cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, current_cpt, false)
 		end
 	end
+	if (occursin(" -C", cmd))
+		if ((val = find_in_dict(d, [:hinge])[1]) !== nothing)       cmd *= string("+h", val)  end
+		if ((val = find_in_dict(d, [:meter2unit])[1]) !== nothing)  cmd *= "+U" * parse_unit_unit(val)  end
+		if ((val = find_in_dict(d, [:unit2meter])[1]) !== nothing)  cmd *= "+u" * parse_unit_unit(val)  end
+	end
 	return cmd, arg1, arg2, N_args
 end
 # ---------------------
@@ -1796,7 +1801,8 @@ end
 function data_type(val)
 	# Parse data type for using in -b
 	str = string(val)
-	if     (str =="char" || str =="int8")  out = "c"
+#=
+	if     (str == "char" || str =="int8")  out = "c"
 	elseif (str == "uint8")   out = "u"
 	elseif (str == "int16")   out = "h"
 	elseif (str == "uint16")  out = "H"
@@ -1808,6 +1814,9 @@ function data_type(val)
 	elseif (str == "double")  out = "d"
 	else                      out = "d"
 	end
+=#
+	d = Dict("char" => "c", "int8" => "c", "uint8" => "u", "int16" => "h", "uint16" => "H", "int32" => "i", "uint32" => "I", "int64" => "l", "uint64" => "L", "float" => "f", "single" => "f", "double" => "d")
+	out = haskey(d, str) ? d[str] : "d"
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2913,7 +2922,8 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 	elseif (legend_type === nothing)
 		lab = ["y1"]
 	else
-		lab = [@sprintf("y%d", size(legend_type.label, 1))]
+		lab = ["y$(size(legend_type.label, 1))"]
+		#lab = [@sprintf("y%d", size(legend_type.label, 1))]
 	end
 
 	if ((isa(cmd_, Array{String, 1}) && !occursin("-O", cmd_[1])) || (isa(cmd_, String) && !occursin("-O", cmd_)))
