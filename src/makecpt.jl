@@ -107,9 +107,6 @@ function helper_cpt(d::Dict, cmd::String)
 	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :color_model], [:G :truncate],
 	                                [:I :inverse :reverse], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :auto], [:W :wrap :categorical], [:Z :continuous]])
 	cmd = parse_opt_range(d, cmd, "T")
-	if ((val = find_in_dict(d, [:hinge])[1]) !== nothing)       cmd *= string("+h", val)  end
-	if ((val = find_in_dict(d, [:meter2unit])[1]) !== nothing)  cmd *= "+U" * parse_unit_unit(val)  end
-	if ((val = find_in_dict(d, [:unit2meter])[1]) !== nothing)  cmd *= "+u" * parse_unit_unit(val)  end
 	if ((val = find_in_dict(d, [:cptname :cmapname])[1]) !== nothing)
 		(IamModern[1]) && (cmd *= " -H")
 		cmd *=  " > " * string(val)

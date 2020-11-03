@@ -83,8 +83,10 @@ mutable struct GMTps
 	comment::Array{String,1}	# Cell array with any comments
 end
 
-mutable struct GMTdataset
-	data::Array{Float64,2}
+#mutable struct GMTdataset
+	#data::Array{Float64,2}
+mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
+	data::Array{T,N}
 	text::Array{String,1}
 	header::String
 	comment::Array{String,1}
@@ -95,6 +97,16 @@ mutable struct GMTdataset
 	#GMTdataset(data) = new(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
 	#GMTdataset() = new(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 end
+Base.size(D::GMTdataset) = size(D.data)
+Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = D.data[inds...]
+Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int,N}) where {T,N} = D.data[inds...] = val
+
+Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
+function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}}, ::Type{ElType}) where ElType
+	D = find4similar(bc.args)		# Scan the inputs for the GMTdataset:
+	GMTdataset(D.data, D.text, D.header, D.comment, D.proj4, D.wkt)
+end
+find4similar(D::GMTdataset, rest) = D
 
 GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, text, string(), Array{String,1}(), string(), string())
 GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], string(), Array{String,1}(), string(), string())
@@ -356,7 +368,7 @@ function parse_mem_layouts(cmd::AbstractString)
 	if ((ind = findfirst( "-%", cmd)) !== nothing)
 		img_mem_layout[1], resto = strtok(cmd[ind[1]+2:end])
 		if (length(img_mem_layout[1]) < 3 || length(img_mem_layout[1]) > 4)
-			error(@sprintf("Memory layout option must have 3 characters and not %s", img_mem_layout[1]))
+			error("Memory layout option must have 3 characters and not $(img_mem_layout[1])")
 		end
 		cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 	end
@@ -364,7 +376,7 @@ function parse_mem_layouts(cmd::AbstractString)
 		if ((ind = findfirst( "-&", cmd)) !== nothing)
 			grd_mem_layout[1], resto = strtok(cmd[ind[1]+2:end])
 			if (length(grd_mem_layout[1]) < 2)
-				error(@sprintf("Memory layout option must have at least 2 chars and not %s", grd_mem_layout[1]))
+				error("Memory layout option must have at least 2 chars and not $(grd_mem_layout[1])")
 			end
 			cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 		end
@@ -714,7 +726,7 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)
 	elseif (X.family == GMT_IS_POSTSCRIPT)	# Get a PostScript struct from Matlab or a dummy one to hold GMT output
 		X.object = ps_init(API, ptr, X.direction)
 	else
-		error(@sprintf("GMTJL_Set_Object: Bad data type (%d)\n", X.family))
+		error("GMTJL_Set_Object: Bad data type ($(X.family))")
 	end
 	(X.object == NULL) && error("GMT: Failure to register the resource")
 
@@ -733,7 +745,7 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 	name = String([X.name...])
 	# In line-by-line modules it is possible no output is produced, hence we make an exception for DATASET
 	((X.object = GMT_Read_VirtualFile(API, name)) == NULL && X.family != GMT_IS_DATASET) &&
-		error(@sprintf("GMT: Error reading virtual file %s from GMT", name))
+		error("GMT: Error reading virtual file $name from GMT")
 	if (X.family == GMT_IS_GRID)         	# A GMT grid; make it the pos'th output item
 		ptr = get_grid(API, X.object)
 	elseif (X.family == GMT_IS_DATASET)		# A GMT table; make it a matrix and the pos'th output item
@@ -763,7 +775,7 @@ function grid_init(API::Ptr{Nothing}, grd_box, dir::Integer=GMT_IN, pad::Int=2)
 	end
 
 	(!isa(grd_box, GMTgrid) && !isa(grd_box, Array{GMTgrid,1})) &&
-		error(@sprintf("grd_init: input (%s) is not a GRID container type", typeof(grd_box)))
+		error("grd_init: input ($(typeof(grd_box))) is not a GRID container type")
 	return grid_init(API, grd_box, pad)
 end
 
@@ -1020,7 +1032,7 @@ function palette_init(API::Ptr{Nothing}, cpt, dir::Integer)
 
 	# Dimensions are known from the input pointer
 
-	(!isa(cpt, GMTcpt)) && error(@sprintf("Expected a CPT structure for input but got a %s", typeof(cpt))) 
+	(!isa(cpt, GMTcpt)) && error("Expected a CPT structure for input but got a $(typeof(cpt))") 
 
 	n_colors = size(cpt.colormap, 1)	# n_colors != n_ranges for continuous CPTs
 	n_ranges = size(cpt.range, 1)
@@ -1231,7 +1243,7 @@ function num2str(mat)
 	out = Array{String}(undef, n_rows)
 	for nr = 1:n_rows
 		out[nr] = join([@sprintf("%s\t", mat[nr,k]) for k=1:n_cols-1])
-		out[nr] = out[nr] * @sprintf("%s", mat[nr,n_cols])
+		out[nr] = string(out[nr], mat[nr,n_cols])
 	end
 	return out
 end
@@ -1276,7 +1288,7 @@ function text_record(data, text, hdr=nothing)
 			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), text[k], (hdr === nothing ? "" : hdr[k]), Array{String,1}(), "", "")
 		end
 	else
-		error(@sprintf("Wrong type (%s) for the 'text' argin", typeof(text)))
+		error("Wrong type ($(typeof(text))) for the 'text' argin")
 	end
 	return T
 end

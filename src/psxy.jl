@@ -79,7 +79,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	val, symb = find_in_dict(d, [:E :error :error_bars], false)
 	if (val !== nothing)
 		cmd, arg1 = add_opt(add_opt, (d, cmd, 'E', [symb]),
-					        (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, arg1)
+                            (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, isa(arg1, GMTdataset) ? arg1.data : (isa(arg1, Array{GMTdataset}) ? arg1[1].data : arg1) )
 		got_Ebars = true
 		del_from_dict(d, [symb])
 	end
@@ -234,7 +234,8 @@ end
 function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::Bool, got_usr_R::Bool, arg1)
 	# Convert input array into a multi-segment Dataset where each segment is an element of a bar group
 	# Example, plot two groups of 3 bars each: bar([0 1 2 3; 1 2 3 4], xlabel="BlaBla")
-	if !((isa(arg1, Array{<:Real,2}) && size(arg1,2) > 2) || haskey(d, :stack) || haskey(d, :stacked))
+	if !( isa(arg1, Array{<:Real,2}) || (eltype(arg1) <: GMTdataset &&
+		 (isa(arg1, Array{GMTdataset}) ? size(arg1[1],2) > 2 : size(arg1,2))) )
 		return cmd, arg1		# No group bars, just plain bars
 	end
 
@@ -247,10 +248,10 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::B
 		((n_cols - n_xy_bars) == 2) && return cmd, arg1			# Only one-bar groups
 		(iseven(n_cols)) && error("Wrong number of columns in error bars array (or prog error)")
 		n = Int((n_cols - 1) / 2)
-		_arg = arg1[:, 1:(n+1)]
+		_arg = arg1[:, 1:(n+1)]				# No need to care with GMTdatasets because case was dealt in 'got_Ebars'
 		bars_cols = arg1[:,(n + 2):end]		# We'll use this to appent to the multi-segments
 	else
-		_arg = deepcopy(arg1)			# Make a copy because data is going to be modified
+		_arg = isa(arg1, GMTdataset) ? deepcopy(arg1.data) : (isa(arg1, Array{GMTdataset}) ? deepcopy(arg1[1].data) : deepcopy(arg1))
 		bars_cols = nothing
 	end
 
@@ -286,7 +287,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::B
 	# Convert to a multi-segment GMTdataset. There will be as many segments as elements in a group
 	# and as many rows in a segment as the number of groups (number of bars if groups had only one bar)
 	alpha = find_in_dict(d, [:alpha :fillalpha :transparency])[1]
-	_arg = mat2ds(_arg, fill=g_bar_fill, multi=do_multi, fillalpha=alpha)
+	_arg = mat2ds(_arg; fill=g_bar_fill, multi=do_multi, fillalpha=alpha)
 	if (do_bar_stack)  _arg = ds2ds(_arg[1], fill=g_bar_fill, color_wrap=nl, fillalpha=alpha)  end
 	(g_bar_fill !== nothing) && delete!(d, :fill)
 
@@ -302,9 +303,9 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill, got_Ebars::B
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
 	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[3:end])	# Bar width
 	n_in_group = length(_arg)					# Number of bars in the group
-	new_bw = (do_bar_stack) ? bw : bw / n_in_group	# In bar-stack width does not change
+	gap = ((val = find_in_dict(d, [:gap])[1]) !== nothing) ? val/100 : 0	# Gap between bars in a group
+	new_bw = (do_bar_stack) ? bw : bw / n_in_group * (1 - gap)	# 'width' does not change in bar-stack
 	new_opt_S = "-S" * opt_S[1] * "$(new_bw)u"
-	#cmd = replace(cmd, "-S"*opt_S => new_opt_S)	# This retains the +b0 part
 	cmd = (do_bar_stack) ? replace(cmd, "-S"*opt_S*sub_b => new_opt_S*"+b") : replace(cmd, "-S"*opt_S => new_opt_S)
 
 	if (!do_bar_stack)							# 'Horizontal stack'

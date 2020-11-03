@@ -824,7 +824,7 @@ if (got_it)					# Otherwise go straight to end
 	men_means, men_std = (20, 35, 30, 35, 27), (2, 3, 4, 1, 2);
 	x = collect(1:length(men_means));
 	bar(x.-0.35/2, collect(men_means), width=0.35, color=:lightblue, limits=(0.5,5.5,0,40), frame=:none, error_bars=(y=men_std,), Vd=dbg2)
-	bar([0. 1 2 3; 1 2 3 4], error_bars=(y=[0.1 0.2 0.33; 0.2 0.3 0.4],), Vd=dbg2)
+	bar([0. 1 2 3; 1 2 3 4], error_bars=(y=[0.1 0.2 0.33; 0.2 0.3 0.4],), fillalpha=[0.3 0.5 0.7], Vd=dbg2)
 	bar([0. 1 2 3; 1 2 3 4], fill=(1,2,3), Vd=dbg2)
 	bar([0. 1 2 3; 1 2 3 4], stack=1, Vd=dbg2)
 	bar(1:5, [20 25; 35 32; 30 34; 35 20; 27 25], fill=["lightblue", "brown"], xaxis=(ticks=(:G1, :G2, :G3, "G4"),), Vd=dbg2)
@@ -1204,6 +1204,10 @@ if (got_it)					# Otherwise go straight to end
 	GMT.GMTdataset(rand(2,2), "lixo");
 	D = mat2ds(GMT.fakedata(4,4), x=:ny, color=:cycle, multi=true)
 	D[1].text = ["lixo", "l", "p", "q"];
+	GMT.find4similar(D[1],0)
+	getindex(D[1],1);
+	setindex!(D[1], 1,1)
+	Base.BroadcastStyle(typeof(D[1]))
 	display(D);
 	plot(D, legend=true, Vd=dbg2)
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
