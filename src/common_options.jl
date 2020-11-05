@@ -590,7 +590,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	if (opt_B[1] != def_fig_axes_ && opt_B[1] != def_fig_axes3_)  opt_B[1] = this_opt_B * opt_B[1]
 	elseif (this_opt_B != "")  opt_B[1] = this_opt_B
 	end
-	(have_a_none) && (opt_B[1] *= " --MAP_FRAME_PEN=0.001,white")	# Need to resort to this sad trick
+	(have_a_none) && (opt_B[1] *= " --MAP_FRAME_PEN=0.001,white@100")	# Need to resort to this sad trick
 
 	return cmd * opt_B[1], opt_B[1]
 end
@@ -3098,6 +3098,24 @@ function toc(V=true)
     t = _toq()
     (V) && println("elapsed time: ", t, " seconds")
     return t
+end
+
+# --------------------------------------------------------------------------------------------------
+function extrema_nan(A)
+	# Incredibly Julia ignores the NaN nature and incredibly min(1,NaN) = NaN, so need to ... fck
+	if (eltype(A) <: AbstractFloat)  return minimum_nan(A), maximum_nan(A)
+	else                             return extrema(A)
+	end
+end
+function minimum_nan(A)
+	if (eltype(A) <: AbstractFloat)  return minimum(x->isnan(x) ?  Inf : x,A);
+	else                             return minimum(A);
+	end
+end
+function maximum_nan(A)
+	if (eltype(A) <: AbstractFloat)  return maximum(x->isnan(x) ? -Inf : x,A);
+	else                             return maximum(A);
+	end
 end
 
 # --------------------------------------------------------------------------------------------------
