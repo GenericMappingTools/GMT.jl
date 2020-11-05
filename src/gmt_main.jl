@@ -1735,10 +1735,10 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 		end
 		x_inc = (x[end] - x[1]) / (nx - one_or_zero)
 		y_inc = (y[end] - y[1]) / (ny - one_or_zero)
-		zmin, zmax = extrema(mat)
+		zmin, zmax = extrema_nan(mat)
 		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
 	elseif (hdr === nothing)
-		zmin, zmax = extrema(mat)
+		zmin, zmax = extrema_nan(mat)
 		if (reg == 0)  x = collect(1.0:nx);		y = collect(1.0:ny)
 		else           x = collect(0.5:nx+0.5);	y = collect(0.5:ny+0.5)
 		end
