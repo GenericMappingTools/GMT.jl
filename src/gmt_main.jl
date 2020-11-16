@@ -88,7 +88,7 @@ end
 mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 	data::Array{T,N}
 	text::Array{String,1}
-	header::String
+	header::AbstractString
 	comment::Array{String,1}
 	proj4::String
 	wkt::String
@@ -1779,7 +1779,7 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function make_zvals_vec(D, user_ids::Array{String,1}, vals)
+function make_zvals_vec(D, user_ids::Array{String,1}, vals::Array{<:Real}, sub_head::Int=0)
 	# USER_IDS is a string array with the ids (names in header) of the GMTdataset D 
 	# VALS is a vector with the the numbers to be used in plot -Z to color the polygons.
 	# Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
@@ -1793,14 +1793,22 @@ function make_zvals_vec(D, user_ids::Array{String,1}, vals)
 	(n_user_ids > n_data_ids) &&
 		@warn("Number of segment IDs requested is larger than segments with headers in data")
 
+	if (sub_head != 0)
+		[data_ids[k] = split(data_ids[k],',')[sub_head]  for k = 1:length(ind)]
+	end
+ 
 	n_seg = (isa(D, Array)) ? length(D) : 1
-	zvals = Array{Int,1}(undef, n_seg)
+	zvals = fill(NaN, n_seg)
+	#combinado = Array{Any,2}(undef, n_seg, 2)
 	n = 1
-	for k = 1:n_user_ids
-		for d_id in data_ids
-			if startswith(user_ids[k], d_id)	# Find first occurence of user_ids[k] in a segment header
+	for k = 1:n_data_ids
+		for m = 1:n_user_ids
+			if startswith(data_ids[k], user_ids[m])			# Find first occurence of user_ids[k] in a segment header
 				last = (k < n_data_ids) ? ind[k+1]-1 : n_seg
-				[zvals[j] = vals[k] for j = ind[k]:last]		# Repeat the last VAL for segments with no headers
+				[zvals[j] = vals[m] for j = ind[k]:last]		# Repeat the last VAL for segments with no headers
+				#[combinado[j,1] = vals[m] for j = ind[k]:last]
+				#[combinado[j,2] = user_ids[m] for j = ind[k]:last]
+				#println("k = ", k, " m = ",m, " pol_id = ", data_ids[k], ";  usr id = ", user_ids[m], " Racio = ", vals[m], " i1 = ", ind[k], " i2 = ",last)
 				n = last + 1					# Prepare for next new VAL
 				break
 			end
