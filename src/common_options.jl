@@ -2720,20 +2720,19 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	global current_cpt = nothing		# Reset to empty when fig is finalized
 	if (fname == "" && isdefined(Main, :IJulia) && Main.IJulia.inited)	 opt_T = " -Tg"; fname_ext = "png"  end		# In Jupyter, png only
 	if (opt_T != "")
-		#if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
 		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
 		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
 		out = fname_ps[1:end-2] * fname_ext
 		if (fname != "")  out = mv(out, fname, force=true)  end
 	elseif (fname_ps != "")
-		#if (K) gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname_ps)  end		# Close the PS file first
 		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
 		out = fname_ps
 		if (fname != "")  out = mv(out, fname, force=true)  end
 	end
 
 	if (haskey(d, :show) && d[:show] != 0)
+		#isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
 		if (isdefined(Main, :IJulia) && Main.IJulia.inited)		# From Jupyter?
 			if (fname == "") display("image/png", read(out))
 			else             @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
@@ -2993,7 +2992,7 @@ function digests_legend_bag(d::Dict, del::Bool=false)
 end
 
 # --------------------------------------------------------------------------------------------------
-function scan_opt(cmd::String, opt::String)::String
+function scan_opt(cmd::AbstractString, opt::String)::String
 	# Scan the CMD string for the OPT option. Note OPT mut be a 2 chars -X GMT option.
 	out = ((ind = findfirst(opt, cmd)) !== nothing) ? strtok(cmd[ind[1]+2:end])[1] : ""
 end
