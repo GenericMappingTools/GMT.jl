@@ -859,6 +859,7 @@ if (got_it)					# Otherwise go straight to end
 	# Test ogrread. STUPID OLD Linux for travis is still on GDAL 1.11
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 	gmtread("lixo.gmt");
+	GMT.gmt_ogrread(API, "lixo.gmt", C_NULL);		# Keep testing the old gmt_ogrread API.
 	GMT.GMT_Get_Default(API, "API_VERSION", "        ");
 
 	println("	PROJECT")

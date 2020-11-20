@@ -363,6 +363,13 @@ else
 	end
 end
 
+struct OGRREAD_CTRL
+	info::Cint					# If != 0 gmt_ogrread will return only Info
+	layer::Cint					# If > 0 will return only data from that layer. Use negative to return all layers
+	name::Ptr{UInt8}			# Vector file name
+	region::NTuple{6,Cdouble}	# For when a sub-region is required
+end
+
 #=
 mutable struct GMTAPI_CTRL
 	# Master controller which holds all GMT API related information at run-time for a single session.

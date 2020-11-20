@@ -67,7 +67,8 @@ function gmtread(fname::String; kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)					# Check if user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:R :V_params :f :i :h])
+	cmd, opt_R = parse_R(d, "")
+	cmd = parse_common_opts(d, cmd, [:V_params :f :i :h])[1]
 	cmd, opt_bi = parse_bi(d, cmd)
 
 	# Process these first so they may take precedence over defaults set below
@@ -82,6 +83,7 @@ function gmtread(fname::String; kwargs...)
 	if (opt_T == "")  opt_T = add_opt(d, "", "Tp", [:ps])   end
 	if (opt_T == "")  opt_T = add_opt(d, "", "To", [:ogr])  end
 
+	ogr_layer = Int32(0)			# Used only with ogrread. Means by default read only the first layer
 	if ((varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
 		if (isempty(opt_T))			# Force read via GDAL
 			if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)  fname = fname * "=gd"  end
@@ -95,17 +97,21 @@ function gmtread(fname::String; kwargs...)
 		end
 	else									# See if we have a bands request
 		if ((val = find_in_dict(d, [:layer :band])[1]) !== nothing)
-			fname = fname * "+b"
-			if (isa(val, String) || isa(val, Symbol) || isa(val, Number))
-				fname = string(fname, val)
-			elseif (isa(val, Array) || isa(val, Tuple))
-				if (length(val) == 3)
-					fname = fname * @sprintf("%d,%d,%d", val[1], val[2], val[3])
-				else
-					error("Number of bands in the 'band' option can only be 1 or 3")
+			if ((lix = guess_T_from_ext(fname)) == " -To")		# See if it's a OGR layer request
+				ogr_layer = Int32(val - 1)	# -1 because it's going to be sent to C (zero based)
+			else
+				fname = fname * "+b"
+				if (isa(val, String) || isa(val, Symbol) || isa(val, Number))
+					fname = string(fname, val)
+				elseif (isa(val, Array) || isa(val, Tuple))
+					if (length(val) == 3)
+						fname = fname * @sprintf("%d,%d,%d", val[1], val[2], val[3])
+					else
+						error("Number of bands in the 'band' option can only be 1 or 3")
+					end
 				end
+				(opt_T == "") && (opt_T = " -Ti")
 			end
-			if (isempty(opt_T))	opt_T = " -Ti"	end
 		end
 	end
 
@@ -128,15 +134,19 @@ function gmtread(fname::String; kwargs...)
 		if (dbg_print_cmd(d, cmd) !== nothing)  return "gmtread " * cmd  end
 		O = gmt("read " * fname * cmd)
 	else
-		opt_R = parse_R(d, "")[1]
 		if (dbg_print_cmd(d, cmd) !== nothing)  return "ogrread " * cmd  end
 		# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
 		(Sys.iswindows())  && run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)
 		API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
 		if (GMTver >= 6.1)
 			x = opt_R2num(opt_R)		# See if we have a limits request
-			lims = (x === nothing) ? C_NULL : x
-			O = ogr2GMTdataset(gmt_ogrread(API2, fname, lims))
+			if (GMTver >= 6.2)
+				lims = (x === nothing) ? (0.0, 0, 0, 0, 0, 0) : tuple(hcat(x,[0.0 0])...)
+				ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
+				O = ogr2GMTdataset(gmt_ogrread(API2, pointer([ctrl])))
+			else
+				O = ogr2GMTdataset(gmt_ogrread(API2, fname, (x === nothing) ? C_NULL : x))
+			end
 		else
 			O = ogr2GMTdataset(gmt_ogrread(API2, fname))
 		end
@@ -147,14 +157,14 @@ end
 function guess_T_from_ext(fname::String)::String
 	# Guess the -T option from a couple of known extensions
 	fname, ext = splitext(fname)
-	if (length(ext) >= 5)			# A SUBDATASET encoded fname?
+	if (length(ext) > 8 || occursin("?", ext))			# A SUBDATASET encoded fname?
 		return (occursin("?", ext)) ? " -Tg" : ""
 	end
 	ext = lowercase(ext[2:end])
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "png", "tif", "tiff", "bmp"]) 	!== nothing)  out = " -Ti";
-	elseif (findfirst(isequal(ext), ["shp", "kml", "json", "geojson", "gmt"])  !== nothing)  out = " -To";
+	elseif (findfirst(isequal(ext), ["shp", "kml", "json", "geojson", "gmt", "gpkg"]) !== nothing)  out = " -To";
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	else
