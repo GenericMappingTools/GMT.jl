@@ -113,6 +113,8 @@ GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], stri
 GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
 GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 
+#struct WrapperPluto fname::String end
+
 """
 Call a GMT module. Usage:
 
@@ -1133,7 +1135,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		n_total_segments += n_islands
 	end
 
-	D = Array{GMTdataset, 1}(undef, n_total_segments)
+	D = Vector{GMTdataset}(undef, n_total_segments)
 
 	n = 1
 	for k = 1:n_max
@@ -1170,6 +1172,8 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 			n = n + 1
 		end
 	end
+	#@show(n_total_segments, n-1)
+	(n_total_segments > (n-1)) && deleteat!(D, n:n_total_segments)
 	return D
 end
 
@@ -1212,10 +1216,10 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function mutateit(API::Ptr{Nothing}, t_type, member::String, val)
-	# Mutate the member 'member' of an immutable type whose pointer is T_TYPE
+	# Mutate the member 'member' of an immutable struct whose pointer is T_TYPE
 	# VAL is the new value of the MEMBER field.
 	# It's up to the user to guarantie that MEMBER and VAL have the same data type
-	# T_TYPE can actually be either a variable of a certain type or a pointer to it.
+	# T_TYPE can actually be either a variable of a certain struct or a pointer to it.
 	# In latter case, we fish the specific datatype from it.
 	if (isa(t_type, Ptr))
 		x_type = unsafe_load(t_type)
@@ -1799,15 +1803,12 @@ function make_zvals_vec(D, user_ids::Array{String,1}, vals::Array{<:Real}, sub_h
  
 	n_seg = (isa(D, Array)) ? length(D) : 1
 	zvals = fill(NaN, n_seg)
-	#combinado = Array{Any,2}(undef, n_seg, 2)
 	n = 1
 	for k = 1:n_data_ids
 		for m = 1:n_user_ids
 			if startswith(data_ids[k], user_ids[m])			# Find first occurence of user_ids[k] in a segment header
 				last = (k < n_data_ids) ? ind[k+1]-1 : n_seg
 				[zvals[j] = vals[m] for j = ind[k]:last]		# Repeat the last VAL for segments with no headers
-				#[combinado[j,1] = vals[m] for j = ind[k]:last]
-				#[combinado[j,2] = user_ids[m] for j = ind[k]:last]
 				#println("k = ", k, " m = ",m, " pol_id = ", data_ids[k], ";  usr id = ", user_ids[m], " Racio = ", vals[m], " i1 = ", ind[k], " i2 = ",last)
 				n = last + 1					# Prepare for next new VAL
 				break
@@ -1824,9 +1825,10 @@ function edit_segment_headers!(D, vals::Array, opt)
 
 	ind, ids = get_segment_ids(D)
 	if (isa(D, Array))
-		for k = 1:length(ind)
-			D[ind[k]].header *= string(opt, vals[k])
-		end
+		#for k = 1:length(ind)
+			#D[ind[k]].header *= string(opt, vals[k])
+		#end
+		[D[ind[k]].header *= string(opt, vals[k])  for k = 1:length(ind)]
 	else
 		D.header *= string(opt, vals[1])
 	end
@@ -1915,9 +1917,28 @@ function Base.:show(io::IO, ::MIME"text/plain", D::Array{<:GMTdataset})
 	(~isempty(D[1].comment)) && println("Comment:\t", D[1].comment)
 	(D[1].proj4 != "") && println("PROJ: ", D[1].proj4)
 	(D[1].wkt   != "") && println("WKT: ", D[1].wkt)
-	for k = 1:length(D)
-		(D[k].header != "") && println("Header",k, ":\t", D[k].header)
+	#for k = 1:length(D)
+		#(D[k].header != "") && println("Header",k, ":\t", D[k].header)
+	#end
+
+	# Do not print all headers as they may be many. But because there can be empty headers the mat complexify
+	n_from_top = k = 1
+	while (n_from_top < min(length(D), 11) && k <= length(D))		# Print the at most first 10 non empty
+		(D[k].header != "") ? (println("Header",k, ":\t", D[k].header); k += 1; n_from_top += 1) : k += 1
 	end
+	if (n_from_top < length(D))		# If we have more segments print the at most last 10
+		n_from_bot = 1
+		for k = length(D):-1:1		# Find the (max) last 10 non empty
+			(D[k].header != "") && (n_from_bot += 1)
+			n_from_bot > 10 && break
+		end
+		println("...")
+		n = max(n_from_top + 1, length(D) - n_from_bot + 1) + 1		# Make sure to print only non yet printed
+		for k = n:length(D)
+			(D[k].header != "") && println("Header",k, ":\t", D[k].header)
+		end
+	end
+
 	println("First segment DATA")
 	display(D[1].data)
 	if (~isempty(D[1].text))
