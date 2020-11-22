@@ -2732,11 +2732,13 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	end
 
 	if (haskey(d, :show) && d[:show] != 0)
-		#isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
 		if (isdefined(Main, :IJulia) && Main.IJulia.inited)		# From Jupyter?
 			if (fname == "") display("image/png", read(out))
 			else             @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
 			end
+		elseif isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
+			#show(stdout, "image/png", WrapperPluto(out))
+			return WrapperPluto(out)
 		else
 			@static if (Sys.iswindows()) out = replace(out, "/" => "\\"); run(ignorestatus(`explorer $out`))
 			elseif (Sys.isapple()) run(`open $(out)`)
@@ -2744,6 +2746,11 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 			end
 		end
 	end
+end
+
+function Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto)
+	println(wp.fname)
+	write(io, read(wp.fname))
 end
 
 # ---------------------------------------------------------------------------------------------------

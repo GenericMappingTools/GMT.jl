@@ -113,7 +113,7 @@ GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], stri
 GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
 GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 
-#struct WrapperPluto fname::String end
+struct WrapperPluto fname::String end
 
 """
 Call a GMT module. Usage:
@@ -1478,9 +1478,7 @@ function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=nothing, y=nothing, hdr=
 			end
 		end
 		if (have_alpha)			# Have alpha color(s)
-			for m = 1:size(cmap.colormap, 1)
-				colormap[m + 3*n_colors] = Int32(round(cmap.colormap[m,4] * 255));
-			end
+			[colormap[m + 3*n_colors] = Int32(round(cmap.colormap[m,4] * 255)) for m = 1:size(cmap.colormap, 1)]
 			n_colors *= 1000				# Flag that we have alpha colors in an indexed image
 		end
 	else
