@@ -1955,6 +1955,9 @@ function Base.:show(io::IO, D::GMTdataset)
 	(~isempty(D.text)) && display(D.text)
 end
 
+# ---------- For Pluto ------------------------------------------------------------------------------
+Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.fname))
+
 # ---------------------------------------------------------------------------------------------------
 function fakedata(sz...)
 	# 'Stolen' from Plots.fakedata()

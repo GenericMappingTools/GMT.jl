@@ -2718,7 +2718,10 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	# FNAME is for when using the savefig option
 
 	global current_cpt = nothing		# Reset to empty when fig is finalized
-	if (fname == "" && isdefined(Main, :IJulia) && Main.IJulia.inited)	 opt_T = " -Tg"; fname_ext = "png"  end		# In Jupyter, png only
+	if (fname == "" && (isdefined(Main, :IJulia) && Main.IJulia.inited) ||
+	                    isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module)
+		opt_T = " -Tg"; fname_ext = "png"		# In Jupyter or Pluto, png only
+	end
 	if (opt_T != "")
 		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
@@ -2737,8 +2740,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 			else             @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
 			end
 		elseif isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
-			#show(stdout, "image/png", WrapperPluto(out))
-			return WrapperPluto(out)
+			return WrapperPluto(out)		# This return must make it all way down to base so that Plut displays it
 		else
 			@static if (Sys.iswindows()) out = replace(out, "/" => "\\"); run(ignorestatus(`explorer $out`))
 			elseif (Sys.isapple()) run(`open $(out)`)
@@ -2746,11 +2748,6 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 			end
 		end
 	end
-end
-
-function Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto)
-	println(wp.fname)
-	write(io, read(wp.fname))
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2864,7 +2861,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			P = showfig(d, output, fname_ext, "", K)
 			gmt("destroy")							# Returning a PS screws the session
 		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "" || opt_T != "")
-			showfig(d, output, fname_ext, opt_T, K, fname)
+			P = showfig(d, output, fname_ext, opt_T, K, fname)		# Also return something here for the case we are in Pluto
 		end
 	end
 	show_non_consumed(d, cmd)
