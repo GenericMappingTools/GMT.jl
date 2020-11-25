@@ -2862,6 +2862,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			gmt("destroy")							# Returning a PS screws the session
 		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "" || opt_T != "")
 			P = showfig(d, output, fname_ext, opt_T, K, fname)		# Also return something here for the case we are in Pluto
+			(typeof(P) == Base.Process) && (P = nothing)			# Don't want spurious message on REPL when plotting
 		end
 	end
 	show_non_consumed(d, cmd)
