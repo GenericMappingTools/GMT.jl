@@ -1,7 +1,7 @@
 name = "GMT"
 uuid = "5752ebe1-31b9-557e-87aa-f909b540aa54"
 authors = ["Joaquim Luis <jluis@ualg.pt>"]
-version = "0.27.0"
+version = "0.28.0"
 
 [deps]
 Dates  = "ade2ca70-3891-5945-98fb-dc099432e06a"
