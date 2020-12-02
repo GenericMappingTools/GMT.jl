@@ -142,7 +142,7 @@ include("trend2d.jl")
 include("xyz2grd.jl")
 
 function __init__()
-	if (5 <= GMTver < 6.0)  println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must uptdate."); return  end
+	if (5 <= GMTver < 6.0)  println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must update."); return  end
 
 	if (GMTver == 0.0)
 		println("\n\nYou don't seem to have GMT installed and I don't install it automatically,\nso you will have to do it yourself.")
