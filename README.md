@@ -71,7 +71,7 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
 
   * Unix
   
-      Follow instructions at <https://github.com/GenericMappingTools/gmt#install-gmt>
+      Follow instructions at <https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md>
 
   * Since *GMT* produces PostScript you need a PS interpreter. Windows installer comes with ghostcript but on Mac/Linux you need to:
 
