@@ -85,7 +85,7 @@ function gmtread(fname::String; kwargs...)
 
 	ogr_layer = Int32(0)			# Used only with ogrread. Means by default read only the first layer
 	if ((varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
-		if (isempty(opt_T))			# Force read via GDAL
+		if (opt_T == "")			# Force read via GDAL
 			if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)  fname = fname * "=gd"  end
 			opt_T = " -Tg"
 		end
@@ -129,12 +129,12 @@ function gmtread(fname::String; kwargs...)
 	end
 
 	if (opt_T != " -To")			# All others but OGR
-		if (opt_T == " -Td" && !isempty(opt_bi))  cmd *= opt_bi  end		# Read from binary file
+		if (opt_T == " -Td" && opt_bi != "")  cmd *= opt_bi  end		# Read from binary file
 		cmd *= opt_T
 		if (dbg_print_cmd(d, cmd) !== nothing)  return "gmtread " * cmd  end
 		O = gmt("read " * fname * cmd)
 	else
-		if (dbg_print_cmd(d, cmd) !== nothing)  return "ogrread " * cmd  end
+		if (dbg_print_cmd(d, cmd) !== nothing)  return "ogrread " * fname * " " * cmd  end
 		# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
 		(Sys.iswindows())  && run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)
 		API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
