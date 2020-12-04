@@ -822,6 +822,7 @@ end
 function cat_2_arg2(arg1, arg2)
 	# Cat two vectors (or tuples) or a vector (or tuple) and a matrix in a Mx2 matrix
 
+	arg2 === nothing && return arg1
 	!((isa(arg1, Vector) || typeof(arg1) <: AbstractRange || isa(arg1, NTuple) || isa(arg1, Matrix)) && (isa(arg2, Vector) || typeof(arg2) <: AbstractRange || isa(arg2, NTuple) || isa(arg2, Matrix)) ) &&
 		error("Unknown types ($(typeof(arg1))) and ($(typeof(arg2))) in cat_2_arg2() function")
 
