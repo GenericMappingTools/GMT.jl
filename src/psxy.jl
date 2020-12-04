@@ -378,7 +378,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	end
 
 	if (N_args == n_prev)		# No cpt transmitted, so need to compute one
-		if (GMTver >= 77)		# 7 because this solution is currently still bugged
+		if (GMTver >= v"77")		# 7 because this solution is currently still bugged
 			#=
 			if (mz !== nothing)
 				arg2 = gmt("makecpt -E " * cmd[len+2:end], mz[:])

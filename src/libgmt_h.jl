@@ -1,7 +1,7 @@
 const Void = Cvoid
 const NULL = C_NULL
 
-#=
+#= 
 # These are not used anymore, I think.
 const DOUBLE_CLASS = 1
 const SINGLE_CLASS = 2
@@ -12,8 +12,7 @@ const UINT32_CLASS = 6
 const INT16_CLASS  = 7
 const UINT16_CLASS = 8
 const INT8_CLASS   = 9
-const UINT8_CLASS  = 10
-=#
+const UINT8_CLASS  = 10 =#
 
 struct GMT_OPTION			# Structure for a single GMT command option
 	option::UInt8			# 1-char command line -<option> (e.g. D in -D) identifying the option (* if file)
@@ -30,7 +29,7 @@ mutable struct GMT_PEN		# Structure to hold pen attributes
 	# For line modifications
 	mode::UInt32			# Line-type: PSL_LINEAR [0; default] or PSL_BEZIER [1]
 	cptmode::UInt32		# How a cpt affects pens and fills: 0-none, 1=use CPT for line, 2 = use CPT for fill, 3 = both
-	#end::NTuple{2,GMT_LINE_END}
+	# end::NTuple{2,GMT_LINE_END}
 	end_::NTuple{2,Ptr{Cvoid}}		# This is a dangereous thing. If accessed, will crash Julia
 	GMT_PEN(width, offset, rgb, style, mode, cptmode, end_) = new(width, offset, rgb, style, mode, cptmode, end_)
 	GMT_PEN() = new(0.0, 0.0, (0.0, 0.0, 0.0, 0.0), map(UInt8, (repeat('\0', 128)...,)), 0, 0, (pointer([0]), pointer([0])))
@@ -217,7 +216,7 @@ struct GMT_VECTOR
 	registration::UInt32
 	_type::Ptr{UInt32}
 	range::NTuple{2,Cdouble}
-	#data::Ptr{GMT_UNIVECTOR}
+	# data::Ptr{GMT_UNIVECTOR}
 	data::Ptr{Ptr{Cvoid}}
 	text::Ptr{Ptr{UInt8}};			# Pointer to optional array of strings [NULL]
 	command::NTuple{320,UInt8}
@@ -254,7 +253,7 @@ mutable struct GMT_MATRIX
 end
 
 # Virtual file name length
-VF_LEN = (GMTver < 6.1) ? 16 : 32
+VF_LEN = (GMTver < v"6.1") ? 16 : 32
 
 mutable struct GMT_RESOURCE
 	family::UInt32          # GMT data family, i.e., GMT_IS_DATASET, GMT_IS_GRID, etc.
@@ -292,10 +291,10 @@ struct GMTAPI_DATA_OBJECT
 	wesn::NTuple{4,Cdouble}	# Grid domain limits
 	resource::Ptr{Cvoid}			# Points to registered filename, memory location, etc., where data can be obtained from with GMT_Get_Data.
 	data::Ptr{Cvoid}				# Points to GMT object that was read from a resource
-	#FILE *fp;					# Pointer to source/destination stream [For rec-by-rec procession, NULL if memory location]
+	# FILE *fp;					# Pointer to source/destination stream [For rec-by-rec procession, NULL if memory location]
 	fp::Ptr{Cvoid}				# Pointer to source/destination stream [For rec-by-rec procession, NULL if memory location]
 	filename::Ptr{UInt8}		# Filename, stream, of file handle (otherwise NULL)
-	#Cvoid *(*import) (struct GMT_CTRL *, FILE *, uint64_t *, int *);	# Pointer to input function (for DATASET/TEXTSET only)
+	# Cvoid *(*import) (struct GMT_CTRL *, FILE *, uint64_t *, int *);	# Pointer to input function (for DATASET/TEXTSET only)
 	ifun::Ptr{Cvoid} 			# Pointer to input function (for DATASET/TEXTSET only)
 	# Start of temporary variables for API debug - They are only set when building GMT with /DEBUG
 	G::Ptr{Cvoid}				# struct GMT_GRID *G;
@@ -314,7 +313,7 @@ struct Gmt_libinfo
 	handle::Ptr{Cvoid}	# Handle to the shared library, returned by dlopen or dlopen_special */
 end
 
-if (GMTver >= 6.1)
+if (GMTver >= v"6.1")
 	mutable struct OGR_FEATURES
 		n_rows::Cint
 		n_cols::Cint
@@ -370,7 +369,7 @@ struct OGRREAD_CTRL
 	region::NTuple{6,Cdouble}	# For when a sub-region is required
 end
 
-#=
+#= 
 mutable struct GMTAPI_CTRL
 	# Master controller which holds all GMT API related information at run-time for a single session.
 	# Users can run several GMT sessions concurrently; each session requires its own structure.
@@ -411,5 +410,4 @@ mutable struct GMTAPI_CTRL
 	do_not_exit::UInt32			# 0 by default, mieaning it is OK to call exit  (may be reset by external APIs like MEX to call return instead)
 	lib::Ptr{Gmt_libinfo}		# List of shared libs to consider
 	n_shared_libs::UInt32		# How many in lib
-end
-=#
+end =#
