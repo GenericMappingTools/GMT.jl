@@ -425,6 +425,12 @@ function gmt_getpen(API::Ptr{Cvoid}, buffer, P)
 end
 =#
 
+function gmtlib_setparameter(API::Ptr{Cvoid}, keyword::String, value::String)
+	ccall((:gmtlib_setparameter, thelib), Cuint, (Cstring, Ptr{UInt8}, Ptr{UInt8}, Bool), GMT_Get_Ctrl(API), keyword, value, true)
+end
+
+reset_defaults(API::Ptr{Cvoid}) = ccall((:gmt_conf, thelib), Cvoid, (Cstring,), GMT_Get_Ctrl(API))
+
 function gmt_ogrread(API::Ptr{Cvoid}, fname::String, region=C_NULL)
 	GMT_ = GMT_Get_Ctrl(API)
 	if (GMTver == 6.0)  ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}), GMT_, fname)
