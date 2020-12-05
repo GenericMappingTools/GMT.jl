@@ -102,13 +102,13 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 
 	cmd = ""
-	opt_Z = add_opt(d, "", 'Z', [:Z :kind], (counts="0", count="0", freq="1", log_count="2", log_freq="3",
-	                                         log10_count="4", log10_freq="5", weights="+w"), true, "")
+	opt_Z = add_opt(d, "", 'Z', [:Z :kind], (counts = "0", count = "0", freq = "1", log_count = "2", log_freq = "3",
+	                                         log10_count = "4", log10_freq = "5", weights = "+w"), true, "")
 	opt_T = parse_opt_range(d, "", "")		# [:T :range :inc :bin]
 	(isa(arg1, GMTimage) || isa(arg1, GMTgrid)) && occursin("/", opt_T) && error("here 'inc' must be a scalar")
 
 	# If inquire, no plotting so do it and return
-	opt_I = add_opt(d, "", "I", [:I :inquire :bins], (all="O", no_zero="o"))
+	opt_I = add_opt(d, "", "I", [:I :inquire :bins], (all = "O", no_zero = "o"))
 	if (opt_I != "")
 		cmd *= opt_I
 		if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end
@@ -128,23 +128,23 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = add_opt(d, cmd, 'D', [:D :annot :annotate :counts], (beneath="_+b", font="+f", offset="+o", vertical="_+r"))
+	cmd = add_opt(d, cmd, 'D', [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
 	(show_kwargs[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 	(isa(arg1, GMTimage) || isa(arg1, GMTgrid)) && occursin("/", opt_T) && error("here 'inc' must be a scalar")
 
-	if (GMTver >= 6.2)  cmd = add_opt(d, cmd, 'E', [:E :width], (width="", off="+o", offset="+o"))  end
+	if (GMTver >= v"6.2")  cmd = add_opt(d, cmd, 'E', [:E :width], (width = "", off = "+o", offset = "+o"))  end
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	if (opt_R == "")  opt_R = " "  end			# So it doesn't try to find the -R in next call
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
 
-	cmd  = add_opt(d, cmd, 'L', [:L :out_range], (first="l", last="h", both="b"))
+	cmd  = add_opt(d, cmd, 'L', [:L :out_range], (first = "l", last = "h", both = "b"))
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)     	# TRUE to also seek (lw|lt,lc,ls)
 	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-S", cmd))
 		cmd *= " -G150"
-	elseif (occursin("-S", cmd) && !occursin("-W", cmd))
+    	elseif (occursin("-S", cmd) && !occursin("-W", cmd))
 		cmd *= " -W0.3p"
 	end
 
@@ -161,14 +161,14 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			if (do_zoom)
 				mm = extrema(hst, dims=1)		# 1×2 Array{Tuple{UInt16,UInt16},2}
 				x_max = min(limit_R * 1.15, hst[end,1])		# 15% to the right but not fall the cliff
-				opt_R_ = " -R$(limit_L*0.85)/$x_max/0/$(mm[2][2] * 1.1) "
+				opt_R_ = " -R$(limit_L * 0.85)/$x_max/0/$(mm[2][2] * 1.1) "
 				(opt_R != " ") && @warn("'zoom' option overrides the requested region limits and sets its own")
 				cmd = replace(cmd, opt_R => opt_R_, count=1)
 				opt_R = opt_R_					# It will be needed further down in vlines
 			end
 		end
 		arg1 = hst		# We want to send the histogram, not the GMTimage
-	elseif (isa(arg1, GMTgrid))
+    	elseif (isa(arg1, GMTgrid))
 		if (opt_T != "")
 			inc = parse(Float64, opt_T) + eps()		# + EPS to avoid the extra last bin at right with 1 count only
 			n_bins = Int(ceil((arg1.range[6] - arg1.range[5]) / inc))
@@ -177,15 +177,15 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			inc = (arg1.range[6] - arg1.range[5]) / n_bins + eps()
 		end
 		(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
-		hst = zeros(n_bins,2)
-		@inbounds for k = 1:length(arg1)  hst[Int(floor((arg1[k]-arg1.range[5])/inc)+1), 2] += 1  end
-		[@inbounds hst[k,1] = arg1.range[5] + inc*(k-1) for k = 1:n_bins]
+		hst = zeros(n_bins, 2)
+		@inbounds for k = 1:length(arg1)  hst[Int(floor((arg1[k] - arg1.range[5]) / inc) + 1), 2] += 1  end
+		[@inbounds hst[k,1] = arg1.range[5] + inc * (k - 1) for k = 1:n_bins]
 
 		cmd = (opt_Z == "") ? cmd * " -Z0" : cmd * opt_Z
 		if (!occursin("+w", cmd))  cmd *= "+w"  end		# Pretending to be weighted is crutial for the trick
 		cmd *= " -T$(arg1.range[5])/$(arg1.range[6])/$inc"
 		arg1 = hst		# We want to send the histogram, not the GMTgrid
-	else
+    	else
 		if (opt_T != "")  opt_T = " -T" * opt_T  end	# It lacked the -T so that it could be used in loc_histo()
 		cmd *= opt_T * opt_Z
 	end
@@ -211,8 +211,8 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			mm = extrema(hst, dims=1)
 			opt_R = " -R$(mm[1][1])/$(mm[1][2])/0/$(mm[2][2])"
 		end
-		vlines!([limit_L], pen="0.5p,blue,dashed", decorated=(quoted=true, n_labels=1, const_label="$limit_L", font=9, pen=(0.5,:red)), R=opt_R[4:end], Vd=Vd_)
-		out2 = vlines!([limit_R], pen="0.5p,blue,dashed", decorated=(quoted=true, n_labels=1, const_label="$limit_R", font=9, pen=(0.5,:red)), R=opt_R[4:end], fmt=fmt_, savefig=savefig_, show=show_, Vd=Vd_)
+		vlines!([limit_L], pen="0.5p,blue,dashed", decorated=(quoted = true, n_labels = 1, const_label = "$limit_L", font = 9, pen = (0.5, :red)), R=opt_R[4:end], Vd=Vd_)
+		out2 = vlines!([limit_R], pen="0.5p,blue,dashed", decorated=(quoted = true, n_labels = 1, const_label = "$limit_R", font = 9, pen = (0.5, :red)), R=opt_R[4:end], fmt=fmt_, savefig=savefig_, show=show_, Vd=Vd_)
 	end
 	out = (out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
 
@@ -225,13 +225,13 @@ function find_histo_limits(In, thresholds=nothing, width=200)
 	# between which the histogram values will be retained. Defaults are (0,0.5) percent
 	# WIDTH is bin width used to obtain a rough histogram that is used to compute the limits.
 	if (isa(In, Array{UInt16,3}) || isa(In, Array{UInt8,3}))
-		L1 = find_histo_limits(view(In,:,:,1), thresholds, width)
-		L2 = find_histo_limits(view(In,:,:,2), thresholds, width)
-		L3 = find_histo_limits(view(In,:,:,3), thresholds, width)
+		L1 = find_histo_limits(view(In, :, :, 1), thresholds, width)
+		L2 = find_histo_limits(view(In, :, :, 2), thresholds, width)
+		L3 = find_histo_limits(view(In, :, :, 3), thresholds, width)
 		return (L1[1], L1[2], L2[1], L2[2], L3[1], L3[2])
 	end
 	hst = loc_histo(In, "", string(width), "")[1]
-	if (size(hst,1) >= 5)
+	if (size(hst, 1) >= 5)
 		all(hst[2:5,2] .== 0) && (hst[1,2] = 0)	# Here we always check for high counts in zero bin
 	end
 	max_ = maximum(hst, dims=1)[2]
@@ -242,7 +242,7 @@ function find_histo_limits(In, thresholds=nothing, width=200)
 	end
 	thresh_l *= max_
 	thresh_r *= max_
-	kl = 1;		kr = size(hst,1)
+	kl = 1;		kr = size(hst, 1)
 	while (hst[kl,2] == 0 || hst[kl,2] < thresh_l)  kl += 1  end
 	while (hst[kr,2] == 0 || hst[kr,2] < thresh_r)  kr -= 1  end
 	return Int(hst[kl,1]), Int(min(hst[kr,1] + width, hst[end,1]))
@@ -258,7 +258,7 @@ function loc_histo(in, cmd::String="", opt_T::String="", opt_Z::String="")
 	(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
 
 	n_bins = (isa(in[1], UInt8)) ? 256 : Int(ceil((maximum(in) + 1) / inc))	# For UInt8 use the full [0 255] range
-	hst = zeros(n_bins,2)
+	hst = zeros(n_bins, 2)
 	pshst_wall!(in, hst, inc, n_bins)
 
 	cmd = (opt_Z == "") ? cmd * " -Z0" : cmd * opt_Z
@@ -271,11 +271,11 @@ function pshst_wall!(in, hst, inc, n_bins::Int)
 	# Function barrier for type instability. With the body of this in calling fun the 'inc' var
 	# introduces a mysterious type instability and execution times multiply by 3.
 	if (inc == 1)
-		@inbounds for k = 1:length(in)  hst[in[k]+1, 2] += 1  end
-	else
-		@inbounds for k = 1:length(in)  hst[Int(floor(in[k]/inc)+1), 2] += 1  end
+		@inbounds for k = 1:length(in)  hst[in[k] + 1, 2] += 1  end
+    	else
+		@inbounds for k = 1:length(in)  hst[Int(floor(in[k] / inc) + 1), 2] += 1  end
 	end
-	[@inbounds hst[k,1] = inc*(k-1) for k = 1:n_bins]
+	[@inbounds hst[k,1] = inc * (k - 1) for k = 1:n_bins]
 	return nothing
 end
 

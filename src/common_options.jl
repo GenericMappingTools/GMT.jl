@@ -493,7 +493,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 			elseif (val == "same")				# User explicitly said "Same as previous -B"
 				return cmd * " -B", " -B"
 			elseif (startswith(val, "auto"))
-				if     (occursin("XYZg", val)) val = (GMTver <= 6.1) ? " -Bafg -Bzafg -B+b" : " -Bafg -Bzafg -B+w"
+				if     (occursin("XYZg", val)) val = (GMTver <= v"6.1") ? " -Bafg -Bzafg -B+b" : " -Bafg -Bzafg -B+w"
 				elseif (occursin("XYZ", val))  val = def_fig_axes3
 				elseif (occursin("XYg", val))  val = " -Bafg -BWSen"
 				elseif (occursin("XY", val))   val = def_fig_axes
@@ -1842,7 +1842,7 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	#if (haskey(d, :fill))    opt *= "+g" * get_color(d[:fill])  end
 	val, symb = find_in_dict(d, [:fill :bg :background], false)
 	if (val !== nothing)     opt[1] *= "+g" * add_opt_fill(d, [symb])  end	# Works, but patterns can screw
-	if (GMTver > 6.1)
+	if (GMTver > v"6.1")
 		if ((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing)  opt[1] = add_opt_fill(val, opt[1], "+x")  end
 		if ((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing)  opt[1] = add_opt_fill(val, opt[1], "+y")  end
 		if ((p = add_opt_pen(d, [:wall_outline], "+w")) != "")  opt[1] *= p  end
@@ -2419,7 +2419,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D::Boo
 	(show_kwargs[1]) && return cmd, arg, opt_R, "", ""		# In HELP mode we do nothing here
 
 	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
-	force_get_R = (IamModern[1] && GMTver > 6) ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
+	force_get_R = (IamModern[1] && GMTver > v"6") ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
 	#force_get_R = true		# Due to a GMT6.0 BUG, modern mode does not compute -R automatically and 6.1 is not good too
 	data_kw = nothing
 	(haskey(d, :data)) && (data_kw = d[:data])
@@ -2433,7 +2433,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D::Boo
 	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
 	if (isa(data_kw, String))
 		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])		# Must read file to find -R
-			if (!IamSubplot[1] || GMTver >= 6.2)		# Protect against a GMT bug
+			if (!IamSubplot[1] || GMTver >= v"6.2")		# Protect against a GMT bug
 				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
 				# Remove the these options from cmd. Their is done
 				if (opt_i != "")  cmd = replace(cmd, opt_i => "");	opt_i = ""  end
@@ -2760,7 +2760,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function close_PS_file(fname::AbstractString)
-	(GMTver >= 6.2) ? gmt("psxy -T -O >> " * fname) : gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname)
+	(GMTver >= v"6.2") ? gmt("psxy -T -O >> " * fname) : gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname)
 	# Do the equivalent of "psxy -T -O"
 	#=
 	fid = open(fname, "a")

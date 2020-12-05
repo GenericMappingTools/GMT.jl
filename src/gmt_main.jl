@@ -857,7 +857,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_pages = size(Img.image, 3)
 	family = GMT_IS_IMAGE
-	if (GMTver >= 6.1 && (n_pages == 2 || n_pages == 4))	# Then we want the alpha layer together with data
+	if (GMTver >= v"6.1" && (n_pages == 2 || n_pages == 4))	# Then we want the alpha layer together with data
 		family = family | GMT_IMAGE_ALPHA_LAYER
 	end
 	dim = pointer([n_cols, n_rows, n_pages])
@@ -1865,7 +1865,7 @@ function clear_sessions(age::Int=0)
 	# AGE is in seconds
 	# Windows version of ``gmt clear sessions`` fails in 6.0 and it errors if no sessions dir
 	try		# Becuse the sessions dir may not exist 
-		if (GMTver >= 6.1)
+		if (GMTver >= v"6.1")
 			sp = readlines(`gmt --show-userdir`)[1] * "/sessions"
 			dirs = readdir(sp)
 			session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
