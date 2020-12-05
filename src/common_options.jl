@@ -46,7 +46,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=false)
 	val, symb = find_in_dict(d, [:R :region :limits])
 	if (val !== nothing)
 		opt_R[1] = build_opt_R(val)
-		if (del)  delete!(d, symb)  end
+		(del) && delete!(d, symb)
 	elseif (IamModern[1])
 		return cmd, ""
 	end
@@ -82,7 +82,7 @@ function build_opt_R(Val)::String		# Generic function that deals with all but Na
 		elseif (r == "same")       return " -R"
 		else                       return " -R" * r
 		end
-	elseif ((isa(Val, Array{<:Number}) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
+	elseif ((isa(Val, Array{<:Real}) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
 		out = arg2str(Val)
 		return " -R" * rstrip(out, '/')		# Remove last '/'
 	elseif (isa(Val, GMTgrid) || isa(Val, GMTimage))
@@ -100,7 +100,7 @@ function build_opt_R(arg::NamedTuple)::String
 			if (haskey(d, :diag))		# The diagonal case
 				BB[1] = @sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
 			else
-				BB[1] = join([@sprintf("%.15g/",x) for x in val])
+				BB[1] = join([@sprintf("%.15g/", Float64(x)) for x in val])
 				BB[1] = rstrip(BB[1], '/')		# and remove last '/'
 			end
 		elseif (isa(val, String) || isa(val, Symbol))
@@ -130,8 +130,8 @@ function build_opt_R(arg::NamedTuple)::String
 
 	if ((val = find_in_dict(d, [:adjust :pad :extend :expand])[1]) !== nothing)
 		if (isa(val, String) || isa(val, Number))  t = string(val)
-		elseif (isa(val, Array{<:Number}) || isa(val, Tuple))
-			t = join([@sprintf("%.15g/",x) for x in val])
+		elseif (isa(val, Array{<:Real}) || isa(val, Tuple))
+			t = join([@sprintf("%.15g/", Float64(x)) for x in val])
 			t = rstrip(t, '/')		# and remove last '/'
 		else
 			error("Increments for limits must be a String, a Number, Array or Tuple")
@@ -523,7 +523,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	if (t != "")
 		if (opt_B[1] == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis :xticks :yticks :zticks], false)[1] === nothing))
 			opt_B[1] = def_fig_axes_
-		else
+		elseif (opt_B[1] != "")			# Because  findlast("-B","") Errors!!!!!
 			if !( ((ind = findlast("-B",opt_B[1])) !== nothing || (ind = findlast(" ",opt_B[1])) !== nothing) &&
 				  (occursin(r"[WESNwesntlbu+g+o]",opt_B[1][ind[1]:end])) )
 				t = " " * t;		# Do not glue, for example, -Bg with :title
@@ -910,6 +910,10 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 			current_view[1] = ""		# Ensure we start empty
 		end
 	end
+	if ((val = find_in_dict(d, [:theme])[1]) !== nothing)
+		isa(val, NamedTuple) && theme(string(val[1]); nt2dict(val)...)
+		(isa(val, String) || isa(val, Symbol)) && theme(string(val))
+	end
 	return cmd, o
 end
 
@@ -1151,9 +1155,9 @@ function arg2str(arg, sep='/')::String
 		end
 	elseif ((isa(arg, Bool) && arg) || isempty_(arg))
 		out[1] = ""
-	elseif (isa(arg, Number))		# Have to do it after the Bool test above because Bool is a Number too
+	elseif (isa(arg, Real))		# Have to do it after the Bool test above because Bool is a Number too
 		out[1] = @sprintf("%.15g", arg)
-	elseif (isa(arg, Array{<:Number}) || (isa(arg, Tuple) && !isa(arg[1], String)) )
+	elseif (isa(arg, Array{<:Real}) || (isa(arg, Tuple) && !isa(arg[1], String)) )
 		out[1] = join([string(x, sep) for x in arg])
 		out[1] = rstrip(out[1], sep)		# Remove last '/'
 	elseif (isa(arg, Tuple) && isa(arg[1], String))		# Maybe better than above but misses nice %.xxg
@@ -2747,7 +2751,9 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 			elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
 			end
 		end
+		(ThemeIsOn[1]) && (reset_defaults(API);	ThemeIsOn[1] = false)
 	end
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
