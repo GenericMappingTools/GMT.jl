@@ -6,7 +6,9 @@ using Dates
 # Need to know what GMT version is available or if none at all to warn users on how to install GMT.
 function get_GMTver()
 	try
-		return VersionNumber(readlines(`gmt --version`)[1])
+		ver = readlines(`gmt --version`)[1]
+		ind = findfirst('_', ver)
+		return (ind === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind - 1])
 	catch
 		return v"0.0"
 	end
