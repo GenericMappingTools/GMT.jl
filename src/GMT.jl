@@ -4,27 +4,29 @@ using Printf
 using Dates
 
 # Need to know what GMT version is available or if none at all to warn users on how to install GMT.
-try
-	#global const GMTver = Meta.parse(readlines(`gmt --version`)[1][1:3])
-	v =split(readlines(`gmt --version`)[1][1:5],'.')
-	global const GMTver = Meta.parse(v[1] * '.' * v[2]) + (Meta.parse(v[3]) * 0.01)
-catch
-	global const GMTver = 0.0
+function get_GMTver()
+	try
+		ver = readlines(`gmt --version`)[1]
+		ind = findfirst('_', ver)
+		return (ind === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind - 1])
+	catch
+		return v"0.0"
+	end
 end
+const GMTver = get_GMTver()
 
 global legend_type  = nothing
 global current_cpt  = nothing		# To store the current palette
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
 const global current_view   = [""]			# To store the current viewpoint (-p)
-const global multi_col   = Array{Bool,1}(undef,1)		# To allow plottig multiple columns at once (init to false)
-const global IamModern   = Array{Bool,1}(undef,1)		# To know if we are in modern mode
-const global FirstModern = Array{Bool,1}(undef,1)		# To know 
-const global IamSubplot  = Array{Bool,1}(undef,1)		# To know if we are in subplot mode
-const global usedConfPar = Array{Bool,1}(undef,1)		# Hacky solution for the session's memory trouble
-const global ThemeIsOn   = Array{Bool,1}(undef,1)		# To know if we have an active plot theme
-const global convert_syntax = Array{Bool,1}(undef,1);convert_syntax[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
-const global show_kwargs = Array{Bool,1}(undef,1);show_kwargs[1] = false	# To just print the kwargs of a option call)
+const global multi_col   = Array{Bool,1}(undef, 1)		# To allow plottig multiple columns at once (init to false)
+const global IamModern   = Array{Bool,1}(undef, 1)		# To know if we are in modern mode
+const global FirstModern = Array{Bool,1}(undef, 1)		# To know 
+const global IamSubplot  = Array{Bool,1}(undef, 1)		# To know if we are in subplot mode
+const global usedConfPar = Array{Bool,1}(undef, 1)		# Hacky solution for the session's memory trouble
+const global convert_syntax = Array{Bool,1}(undef, 1);convert_syntax[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
+const global show_kwargs = Array{Bool,1}(undef, 1);show_kwargs[1] = false	# To just print the kwargs of a option call)
 const global FMT = ["ps"]
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
@@ -34,8 +36,7 @@ if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optle
 	@eval Base.Experimental.@optlevel 1
 end
 
-export
-	GMTver, FMT, gmt,
+export GMTver, FMT, gmt,
 	arrows, arrows!, bar, bar!, bar3, bar3!, hlines, hlines!, lines, lines!, legend, legend!, vlines, vlines!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
 	colorscale, colorscale!, contour, contour!, contourf, contourf!, events, filter1d, fitcircle, gmt2kml,
@@ -55,7 +56,7 @@ export
 
 include("common_docs.jl")
 include("libgmt_h.jl")
-if (GMTver >= 6)
+if (GMTver >= v"6")
 	include("libgmt.jl")
 end
 include("gmt_main.jl")
@@ -144,9 +145,9 @@ include("trend2d.jl")
 include("xyz2grd.jl")
 
 function __init__()
-	if (5 <= GMTver < 6.0)  println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must uptdate."); return  end
+	if (v"5" <= GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must update."); return  end
 
-	if (GMTver == 0.0)
+	if (GMTver == v"0.0")
 		println("\n\nYou don't seem to have GMT installed and I don't install it automatically,\nso you will have to do it yourself.")
 		t = "\n\t\t https://github.com/GenericMappingTools/gmt/releases"
 		if (Sys.iswindows() && Sys.WORD_SIZE == 64)
@@ -163,10 +164,10 @@ function __init__()
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
 	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 	if (API == C_NULL)  error("Failure to create a GMT Session")  end
-	if haskey(ENV,"JULIA_GMT_IMGFORMAT")  FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]  end
+	if haskey(ENV, "JULIA_GMT_IMGFORMAT")  FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]  end
 end
 
-if (GMTver >= 6)  include("get_enums.jl")  end	# Needed to cheat the autoregister autobot
+if (GMTver >= v"6")  include("get_enums.jl")  end	# Needed to cheat the autoregister autobot
 
 include("precompile_GMT_i.jl")
 _precompile_()

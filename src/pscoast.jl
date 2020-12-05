@@ -162,7 +162,7 @@ function parse_E_coast(d::Dict, symbs::Array{<:Symbol}, cmd::String)
 		elseif (isa(val, Tuple))
 			cmd = parse_dcw(cmd, val)
 		end
-		if (GMTver >= 6.1)  cmd *= " -Vq"  end		# Suppress annoying warnings regarding filling syntax with +r<dpi>
+		if (GMTver >= v"6.1")  cmd *= " -Vq"  end		# Suppress annoying warnings regarding filling syntax with +r<dpi>
 		del_from_dict(d, symbs)
 	end
 	return cmd
