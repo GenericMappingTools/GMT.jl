@@ -705,10 +705,12 @@ if (got_it)					# Otherwise go straight to end
 	plot(1:10,rand(10)*3, S="c7p", color=:rainbow, zcolor=rand(10)*3)
 	plot(1:2pi, rand(6), xaxis=(pi=1,), Vd=dbg2)
 	plot(1:2pi, rand(6), xaxis=(pi=(1,2),), Vd=dbg2)
-	plot(1:4, rand(4,4), leg=true)
 	plot([5 5], region=(0,10,0,10), frame=(annot=:a, ticks=:a, grid=5), figsize=10, symbol=:p, markerline=0.5, fill=:lightblue, E=(Y=[2 3 6 9],pen=1,cap="10p"), Vd=dbg2);
 	plot(rand(10,4), S=:c, ms=0.2, markeredgecolor=:red, ml=2, Vd=dbg2)
 	plot(rand(10,4), S=:c, ms=0.2, marker=:star, ml=2, W=1, Vd=dbg2)
+	plot([0.0 0; 1.1 1], theme=(name=:dark, bg_color="gray"), lc=:white, Vd=dbg2)
+	#plot([0.0 0; 1.1 1], theme=(name=:modern,), Vd=dbg2)
+	plot(1:4, rand(4,4), theme=(name=:nikles,), leg=true)	# Also resets default conf
 	@test startswith(plot!([1 1], marker=(:r, [2 3]), Vd=dbg2), "psxy  -R -J -Sr")
 	@test_throws ErrorException("Wrong number of extra columns for marker (r). Got 3 but expected 2") plot!([1 1], marker=(:r, [2 3 4]), Vd=dbg2)
 	@test_throws ErrorException("Unknown graphics file extension (.ppf)") plot(rand(5,2), savefig="la.ppf")
