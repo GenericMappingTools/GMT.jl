@@ -1241,7 +1241,7 @@ if (got_it)					# Otherwise go straight to end
 	#GMT.ogr2GMTdataset(GMT.gmt_ogrread(API, "lixo.gmt"));
 	rm("lixo.gmt")
 
-	if (GMTver >= 6.1)
+	if (GMTver >= v"6.1")
 		check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
 		C = makecpt(range=(0,9,1));
 		I = mat2img(check, cmap=C);
