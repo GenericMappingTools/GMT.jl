@@ -65,8 +65,7 @@ to read a jpg image with the bands reversed (this example is currently broken in
 """
 function gmtread(fname::String; kwargs...)
 
-	d = KW(kwargs)
-	help_show_options(d)					# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, opt_R = parse_R(d, "")
 	cmd = parse_common_opts(d, cmd, [:V_params :f :i :h])[1]
 	cmd, opt_bi = parse_bi(d, cmd)
@@ -136,7 +135,7 @@ function gmtread(fname::String; kwargs...)
 	else
 		if (dbg_print_cmd(d, cmd) !== nothing)  return "ogrread " * fname * " " * cmd  end
 		# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
-		(Sys.iswindows())  && run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)
+		(Sys.iswindows()) && run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)
 		API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
 		if (GMTver >= v"6.1")
 			x = opt_R2num(opt_R)		# See if we have a limits request
@@ -223,8 +222,7 @@ function gmtwrite(fname::String, data; kwargs...)
 
 	(fname == "") && error("First argument cannot be empty. It must contain the file name to write.")
 
-	d = KW(kwargs)
-	help_show_options(d)					# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, opt_R = parse_R(d, "")
 	cmd = parse_V_params(d, cmd)
 
@@ -235,7 +233,7 @@ function gmtwrite(fname::String, data; kwargs...)
 	elseif (isa(data, GMTimage))
 		opt_T = " -Ti"
 		fname *= parse_grd_format(d)			# If we have format requests
-	elseif (isa(data, GMTdataset))
+	elseif (isa(data, GMTdataset) || isa(data, Array{<:GMTdataset}))
 		opt_T = " -Td"
 		cmd, = parse_bo(d, cmd)					# Write to binary file
 	elseif (isa(data, GMTcpt))

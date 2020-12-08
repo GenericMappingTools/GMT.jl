@@ -54,18 +54,18 @@ Parameters
 """
 function grd2kml(cmd0::String="", arg1=nothing; kwargs...)
 
-    arg2 = nothing;     arg3 = nothing;     # for CPT and/or illum
+	arg2 = nothing;     arg3 = nothing;     # for CPT and/or illum
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2kml", cmd0, arg1, arg2)
 
-	d = KW(kwargs)
-	help_show_options(d)			# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+
 	cmd, = parse_common_opts(d, "", [:V_params :f])
 	cmd  = parse_these_opts(cmd, d, [[:E :url], [:F :filter], [:H :sub_pixel], [:L :tile_size],
 	                                 [:N :prefix], [:Q :nan_t :nan_alpha], [:T :title]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2)
-    cmd, arg1, arg2, arg3 = common_shade(d, cmd, arg1, arg2, arg3, nothing, "grd2kml")
+	cmd, arg1, arg2, arg3 = common_shade(d, cmd, arg1, arg2, arg3, nothing, "grd2kml")
 	common_grd(d, "grd2kml " * cmd, arg1, arg2, arg3)		# Finish build cmd and run it
 end
 

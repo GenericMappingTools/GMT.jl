@@ -98,8 +98,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	gmt_proggy = (IamModern[1]) ? "histogram "  : "pshistogram "
 	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1, arg2)
 
-	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = ""
 	opt_Z = add_opt(d, "", 'Z', [:Z :kind], (counts = "0", count = "0", freq = "1", log_count = "2", log_freq = "3",
@@ -121,8 +120,6 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 		return gmt(gmt_proggy * cmd, arg1)
 	end
-
-	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "histogram", O, " -JX12c/12c")
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :params], first)[1]

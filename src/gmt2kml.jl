@@ -94,8 +94,7 @@ function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmt2kml", cmd0, arg1)
 
-	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :altitude_mode], [:D :descript], [:E :extrude], [:F :feature_type],

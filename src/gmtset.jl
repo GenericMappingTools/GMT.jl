@@ -23,10 +23,9 @@ function gmtset(cmd0::String=""; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("gmtset", cmd0)
 
-	d = KW(kwargs)
-	help_show_options(d)			# Check if user wants ONLY the HELP mode
-	cmd = parse_V(d, "")
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
+	cmd = parse_V(d, "")
 	cmd = add_opt(d, cmd, 'D', [:D :units], nothing, true)
 	cmd = add_opt(d, cmd, 'G', [:G :defaultsfile], nothing, true)
  

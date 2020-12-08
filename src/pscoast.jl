@@ -92,9 +92,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
 	(length(kwargs) == 0 && clip === nothing) && return monolitic(gmt_proggy, cmd0)
 
-	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
-	K, O = set_KO(first)		# Set the K O dance
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	maybe_more = false			# If latter set to true, search for lc & lc pen settings
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0")

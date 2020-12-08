@@ -89,7 +89,6 @@ contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), fmt=:pn
 function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
 
 	d = KW(kwargs)
-	#help_show_options(d)		# HELP mode
 	CPT_arg = (isa(arg1, GMTcpt)) ? arg1 : (isa(arg2, GMTcpt) ? arg2 : nothing)		# Fish a CPT, if any.
 
 	CPT = nothing;		C_contours = "";	C_int = 0;

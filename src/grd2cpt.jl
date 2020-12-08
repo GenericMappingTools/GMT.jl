@@ -81,8 +81,8 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2cpt", cmd0, arg1)
 
-	d = KW(kwargs)
-	help_show_options(d)			# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+
     cmd, = parse_common_opts(d, "", [:R :V_params])
 	cmd = helper_cpt(d, cmd)
 	if ((val = find_in_dict(d, [:E :nlevels])[1]) !== nothing)  cmd *= " -E" * arg2str(val)  end

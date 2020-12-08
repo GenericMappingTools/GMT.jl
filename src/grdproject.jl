@@ -47,8 +47,7 @@ function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdproject", cmd0, arg1)
 
-	d = KW(kwargs)
-	help_show_options(d)			# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :n :r])
 	if ((val = find_in_dict(d, [:J :proj :projection], false)[1]) !== nothing)  # Here we don't want any default value
 		cmd = parse_J(d, cmd, "", false)[1];

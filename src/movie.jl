@@ -104,8 +104,7 @@ Parameters
 """
 function movie(main; pre=nothing, post=nothing, kwargs...)
 
-	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	(!isa(main, Function) && !isa(main, String)) && error("A main script is mandatory")
 	((mainName = jl_sc_2_shell_sc(main, "main_script")) === nothing) && error("Main script has nothing useful")

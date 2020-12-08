@@ -82,8 +82,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	if (!isempty(cmd0)) && (arg1 === nothing)  arg1 = cmd0  end
 
-	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd = add_opt(d, "", 'A', [:A :adjust :crop])
 	(cmd == " -A") && (cmd = cmd * "1p")			# If just -A default to -A1p
 	cmd = parse_these_opts(cmd, d, [[:D :out_dir :output_dir], [:E :dpi], [:F :out_name :output_name],

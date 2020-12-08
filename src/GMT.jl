@@ -155,10 +155,8 @@ function __init__()
 	if (GMTver == v"0.0")
 		println("\n\nYou don't seem to have GMT installed and I don't install it automatically,\nso you will have to do it yourself.")
 		t = "\n\t\t https://github.com/GenericMappingTools/gmt/releases"
-		if (Sys.iswindows() && Sys.WORD_SIZE == 64)
+		if (Sys.iswindows())
 			println("Download and install the official version at (the '..._win64.exe':" * t)
-		elseif (Sys.iswindows() && Sys.WORD_SIZE == 32)
-			println("Download and install the official version at (the '..._win32.exe':" * t)
 		elseif (Sys.isapple())
 			println("Install GMT with Homebrew: brew install gmt ghostscript ffmpeg")
 		else

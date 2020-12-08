@@ -56,8 +56,8 @@ function sphdistance(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("sphdistance ", cmd0, arg1, arg2)
 
-	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+
 	cmd, = parse_common_opts(d, "", [:I :R :V_params :b :d :e :h :i :r :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :save_mem], [:D :duplicates], [:E :what_quantity], [:G :grid :outgrid], [:L :dist_unit]])
 	cmd, arg1, arg2 = parse_QN_sphdst(d, [[:Q :voronoi], [:N :nodes]], cmd, arg1, arg2)

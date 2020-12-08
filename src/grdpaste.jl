@@ -19,8 +19,7 @@ Parameters
 """
 function grdpaste(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-	d = KW(kwargs)
-	help_show_options(d)			# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :f])
 	cmd  = add_opt(d, cmd, 'G', [:G :outgrid])
 

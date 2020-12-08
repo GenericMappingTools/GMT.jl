@@ -61,9 +61,7 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 
 	length(kwargs) == 0 && return monolitic("grdvector", cmd0, arg1, arg2)
 
-	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
-	K, O = set_KO(first)		# Set the K O dance
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :f :p :t :params], first)

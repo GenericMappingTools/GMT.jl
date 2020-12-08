@@ -78,8 +78,9 @@ function surface(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("surface", cmd0, arg1)
 
-	d = KW(kwargs);     arg2 = nothing
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	arg2 = nothing
+	
 	cmd, = parse_common_opts(d, "", [:R :I :V_params :a :bi :di :e :f :h :i :r :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:G :grid :outgrid], 
 	                                 [:Ll :lower], [:Lu :upper], [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension], [:Z :over_relaxation]])

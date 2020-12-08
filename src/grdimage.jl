@@ -58,9 +58,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdimage", cmd0, arg1, arg2, arg3)
 	arg4 = nothing		# For the r,g,b + intensity case
 
-	d = KW(kwargs)
-	help_show_options(d)			# Check if user wants ONLY the HELP mode
-    K, O = set_KO(first)			# Set the K O dance
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
