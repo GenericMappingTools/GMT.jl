@@ -79,9 +79,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	length(kwargs) == 0 && cmd0 != "" && return monolitic("grdcontour", cmd0, arg1)
 	arg2 = arg3 = nothing
 
-	d = KW(kwargs)
-	help_show_options(d)			# Check if user wants ONLY the HELP mode
-	K, O = set_KO(first)		# Set the K O dance
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :c :e :f :h :p :t], first)

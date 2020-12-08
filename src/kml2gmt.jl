@@ -26,8 +26,8 @@ function kml2gmt(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("kml2gmt", cmd0, arg1)
 
-	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+
 	cmd, = parse_common_opts(d, "", [:V_params :bo :do :yx])
 	cmd  = parse_these_opts(cmd, d, [[:F :select], [:Z :altitudes], [:E :extended]])
 	common_grd(d, cmd0, cmd, "kml2gmt ", arg1)		# Finish build cmd and run it

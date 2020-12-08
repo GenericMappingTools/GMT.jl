@@ -32,8 +32,8 @@ function gmtwhich(cmd0::String; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtwhich", cmd0)
 
-	d = KW(kwargs)
-	help_show_options(d)			# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+
 	cmd = parse_V_params(d, "")
     cmd = parse_these_opts(cmd, d, [[:A :with_permissions], [:C :confirm], [:D :report_dir], [:G :download]])
 

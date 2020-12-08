@@ -431,6 +431,8 @@ if (got_it)					# Otherwise go straight to end
 	cpt = gmtread("lixo.cpt", cpt=true);
 	cpt = gmtread("lixo.cpt", cpt=true, Vd=dbg2);
 	cpt = gmtread("lixo.cpt");
+	gmtwrite("lixo.dat", mat2ds([1 2 10; 3 4 20]))
+	gmtwrite("lixo.dat", convert.(UInt8, [1 2 3; 2 3 4]))
 	gmtwrite("lixo.dat", [1 2 10; 3 4 20])
 	plot("lixo.dat", lala=1, Vd=2)		# Using plot here because the availability of a data file
 	D = gmtread("lixo.dat", i="0,1s10", table=true);
@@ -1156,8 +1158,11 @@ if (got_it)					# Otherwise go straight to end
 	println("	PSMECA")
 	meca([0.0 3.0 0.0 0 45 90 5 0 0], fill=:black, region=(-1,4,0,6), proj=:Merc, Vd=dbg2)
 	meca!([0.0 3.0 0.0 0 45 90 5 0 0], fill=:black, region=(-1,4,0,6), proj=:Merc, Vd=dbg2)
+	@test_throws ErrorException("Must select one convention") meca!("", [0.0 3 0 0 45 90 5 0 0 0], fill=:black, region=(-1,4,0,6), proj=:Merc)
 	@test_throws ErrorException("Specifying cross-section type is mandatory") coupe([0.0 3 0 0 45 90 5 0 0], region=(-1,4,0,6))
 	velo(mat2ds([0. -8 0 0 4 6 0.5; -8 5 3 3 0 0 0.5], ["4x6", "3x3"]), pen=(0.6,:red), fill_wedges=:green, outlines=true, Se="0.2/0.39/18", arrow="0.3c+p1p+e+gred", region=(-15,10,-10,10), Vd=dbg2)
+
+	@test_throws ErrorException("Must select one convention (S options. Run gmthelp(velo) to learn about them)") velo!(mat2ds([0. -8 0 0 4 6 0.5; -8 5 3 3 0 0 0.5], ["4x6", "3x3"]), region=(-15,10,-10,10))
 
 	println("	MISC")
 	# MISC

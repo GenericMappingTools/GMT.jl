@@ -90,8 +90,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
 
-	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	# If inquire, no plotting so do it and return
 	cmd = add_opt(d, "", 'I', [:I :inquire])
@@ -100,8 +99,6 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 		return gmt("psrose " * cmd, arg1)
 	end
-
-	K, O = set_KO(first)		# Set the K O dance
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :e :p :t :params], first)

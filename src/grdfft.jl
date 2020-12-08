@@ -58,8 +58,7 @@ function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdfft", cmd0, arg1, arg2)
 
-	d = KW(kwargs)
-	help_show_options(d)			# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:V_params :f])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :upward], [:D :dfdz], [:E :radial_power], [:F :filter],

@@ -83,8 +83,7 @@ function imshow(arg1::GMTgrid; kw...)
 		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 8
 		srf = ((val = find_in_dict(d, [:Q :surf :surftype])[1]) !== nothing) ? val : "i100"
 		if (til !== nothing)		# This forces some others
-			srf = nothing			# These are mutually exclusive
-			zsize = nothing
+			srf = zsise = nothing	# These are mutually exclusive
 			opt_p = " -p180/90"
 		end
 		R = grdview("", arg1; show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...)

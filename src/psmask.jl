@@ -72,10 +72,9 @@ Parameters
 function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
     gmt_proggy = (IamModern[1]) ? "mask "  : "psmask "
-	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
-	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
-    K, O = set_KO(first)		# Set the K O dance
+    length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
+
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
 	cmd, = parse_common_opts(d, cmd, [:I :UVXY :JZ :c :e :p :r :t :params], first)

@@ -15,9 +15,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 
 	(occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
 
-	d = KW(kwargs)
-	help_show_options(d)				# Check if user wants ONLY the HELP mode
-    K, O = set_KO(first)				# Set the K O dance
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = "";	sub_module = ""			# Will change to "scatter", etc... if called by sub-modules
 	g_bar_fill = nothing				# May hold a sequence of colors for gtroup Bar plots

@@ -293,12 +293,12 @@ function GMT_blind_change_struct(API::Ptr{Cvoid}, X, what, keyword::String, off:
 		ccall((:gmtlib_blind_change_struct, thelib), Cint, (Cstring, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}, Csize_t), API, X, what, keyword, off) : ccall((:GMT_blind_change_struct, thelib), Cint, (Cstring, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}, Csize_t), API, X, what, keyword, off)
 end
 
+#= 
 function GMT_Convert_Data(API::Ptr{Cvoid}, In::Ptr{Cvoid}, family_in::Integer, out::Ptr{Cvoid}, family_out::Integer, flag)
 	ccall((:GMT_Convert_Data, thelib), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}, UInt32, Ptr{Cvoid}, UInt32, Ptr{UInt32}), API, In,
 				 family_in, out, family_out, flag)
 end
 
-#= 
 function GMT_blind_change_struct_(API::Ptr{Cvoid}, X, what, keyword::String)
 	ccall((:GMT_blind_change_struct_, thelib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}),
 				 API, X, what, keyword)
@@ -406,7 +406,7 @@ end
 
 function GMT_Get_Ctrl(API::Ptr{Cvoid})
 	if (GMTver > v"6.0")  ccall((:gmtlib_get_ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
-	else               ccall((:GMT_Get_Ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
+	else                  ccall((:GMT_Get_Ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
 	end
 end
 

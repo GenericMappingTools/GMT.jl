@@ -60,8 +60,8 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdedit", cmd0, arg1)
 
-	d = KW(kwargs);     arg2 = nothing
-	help_show_options(d)			# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	arg2 = nothing
 	(isa(arg1, GMTgrid) && length(kwargs) == 0) && (arg1.range[5:6] .= extrema(arg1); return arg1)  # Update the z_min|max
 
 	cmd, = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :yx])

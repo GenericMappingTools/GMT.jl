@@ -41,7 +41,7 @@ function init_module(first::Bool, kwargs...)
 	# All ps modules need these 3 lines
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
-	K, O = set_KO(first)		# Set the K O dance
+	K = true; O = !first
 	return d, K, O
 end
 
@@ -1176,15 +1176,6 @@ function arg2str(arg, sep='/')::String
 		error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
 	end
 	return out[1]
-end
-
-# ---------------------------------------------------------------------------------------------------
-function set_KO(first::Bool)
-	# Set the O K pair dance
-	if (first)  K = true;	O = false
-	else        K = true;	O = true;
-	end
-	return K, O
 end
 
 # ---------------------------------------------------------------------------------------------------

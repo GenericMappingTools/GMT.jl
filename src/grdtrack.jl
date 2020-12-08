@@ -58,8 +58,8 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	length(kwargs) == 0 && arg1 === nothing && return monolitic("grdtrack", cmd0, arg1)
 
-	d = KW(kwargs)
-	help_show_options(d)			# Check if user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :interp_path], [:C :equidistant ], [:D :dfile], [:E :by_coord],
 	                                 [:N :no_skip], [:S :stack], [:T :radius], [:Z :z_only]])
