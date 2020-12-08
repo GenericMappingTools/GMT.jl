@@ -49,8 +49,9 @@ function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :resamp], [:F :interp_type], [:N :time_col], [:T :inc :range], [:W :weights_col]])
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])[1]
+	cmd = parse_these_opts(cmd, d, [[:A :resamp], [:F :interp_type], [:N :time_col], [:W :weights_col]])
+	cmd = parse_opt_range(d, cmd, "T")
 
 	common_grd(d, cmd0, cmd, "sample1d ", arg1)		# Finish build cmd and run it
 end
