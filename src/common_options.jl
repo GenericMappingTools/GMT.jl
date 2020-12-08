@@ -37,6 +37,14 @@ function del_from_dict(d::Dict, symbs::Array{Symbol})
 	end
 end
 
+function init_module(first::Bool, kwargs...)
+	# All ps modules need these 3 lines
+	d = KW(kwargs)
+	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	K, O = set_KO(first)		# Set the K O dance
+	return d, K, O
+end
+
 function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=false)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	
@@ -1060,6 +1068,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function opt_pen(d::Dict, opt::Char, symbs)::String
 	# Create an option string of the type -Wpen
+	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | String | Number")	# Just print the options
+
 	out = ""
 	pen = build_pen(d)						# Either a full pen string or empty ("")
 	if (!isempty(pen))
@@ -3169,8 +3179,9 @@ function gmthelp(opt)
 			else
 				getfield(GMT, Symbol(o))(help=1);
 			end
-		catch
+		catch err
 			println("   ==>  '$o' is not a valid option/module name, or its help is not yet implemented")
+			println("   LastError ==>  '$err'")
 		end
 	end
 	show_kwargs[1] = false

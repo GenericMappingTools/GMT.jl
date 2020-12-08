@@ -1301,7 +1301,7 @@ text_record(text::Array{String}, hdr::String) = text_record(Array{Float64,2}(und
 
 # ---------------------------------------------------------------------------------------------------
 """
-D = mat2ds(mat, [txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=nothing, text=nothing, multi=false)
+D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=nothing, text=nothing, multi=false)
 
 	Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 	same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.

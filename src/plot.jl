@@ -552,6 +552,8 @@ end
 
 function helper_arrows(d::Dict, del::Bool=true)
 	# Helper function to set the vector head attributes
+	(show_kwargs[1]) && return print_kwarg_opts([:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], "NamedTuple | String")
+
 	cmd = ""
 	val, symb = find_in_dict(d, [:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], del)
 	if (val !== nothing)

@@ -356,7 +356,7 @@ if (got_it)					# Otherwise go straight to end
 	logo(julia=8)
 	logo(GMTjulia=8, fmt=:png, Vd=dbg2)
 	logo(GMTjulia=2, savefig="logo.PNG")
-	logo(GMTjulia=2, savefig="logo.PNG", fmt=:PNG)
+	logo(GMTjulia=2, fmt=:PNG)
 	logo!(julia=8, Vd=dbg2)
 	logo!("", julia=8, Vd=dbg2)
 	@test startswith(logo(pos=(anchor=(0,0),justify=:CM, offset=(1.5,0)), Vd=dbg2), "gmtlogo -Jx1 -Dg0/0+jCM+o1.5/0")
@@ -1152,6 +1152,12 @@ if (got_it)					# Otherwise go straight to end
 	println("	TREND2D")
 	# TREND2D
 	trend2d(D, F=:xyr, N=3);
+
+	println("	PSMECA")
+	meca([0.0 3.0 0.0 0 45 90 5 0 0], fill=:black, region=(-1,4,0,6), proj=:Merc, Vd=dbg2)
+	meca!([0.0 3.0 0.0 0 45 90 5 0 0], fill=:black, region=(-1,4,0,6), proj=:Merc, Vd=dbg2)
+	@test_throws ErrorException("Specifying cross-section type is mandatory") coupe([0.0 3 0 0 45 90 5 0 0], region=(-1,4,0,6))
+	velo(mat2ds([0. -8 0 0 4 6 0.5; -8 5 3 3 0 0 0.5], ["4x6", "3x3"]), pen=(0.6,:red), fill_wedges=:green, outlines=true, Se="0.2/0.39/18", arrow="0.3c+p1p+e+gred", region=(-15,10,-10,10), Vd=dbg2)
 
 	println("	MISC")
 	# MISC
