@@ -122,7 +122,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	if ((val = find_in_dict(d, [:E :index])[1]) !== nothing)
 		cmd *= " -E"
-		if (isa(val, Array{<:Number}) || isa(val, GMTdataset) || isa(val, Array{GMTdataset}))   # Now need to find the free slot where to store the indices array
+		if (isa(val, Array{<:Real}) || isa(val, GMTdataset) || isa(val, Array{GMTdataset}))   # Now need to find the free slot where to store the indices array
 			(N_used == 0) ? arg1 = val : (N_used == 1 ? arg2 = val : arg3 = val)
 		else
 			cmd *= arg2str(val)
