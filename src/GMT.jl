@@ -54,7 +54,7 @@ export
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
-	pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
+	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
 	mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc
 
 include("common_docs.jl")
@@ -147,10 +147,12 @@ include("trend1d.jl")
 include("trend2d.jl")
 include("xyz2grd.jl")
 include("seis/psmeca.jl")
-include("seis/psvelo.jl")
+include("geodesy/psvelo.jl")
+include("geodesy/earthtide.jl")
+(GMTver >= v"6.2") && include("potential/gmtgravmag3d.jl")
 
 function __init__()
-	if (v"5" <= GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23). Must update."); return  end
+	if (GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
 
 	if (GMTver == v"0.0")
 		println("\n\nYou don't seem to have GMT installed and I don't install it automatically,\nso you will have to do it yourself.")
