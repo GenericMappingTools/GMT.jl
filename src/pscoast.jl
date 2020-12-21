@@ -115,10 +115,10 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	end
 
 	# Parse these three options that can be made to respond to same code
-	cmd = parse_INW_coast(d, [[:I :rivers], [:N :borders], [:W :shore]], cmd, "INW")
+	cmd = parse_INW_coast(d, [[:I :rivers], [:N :borders], [:W :shore :shorelines]], cmd, "INW")
 	(show_kwargs[1]) && print_kwarg_opts([:I :rivers],  "NamedTuple | Tuple | Dict | String")
 	(show_kwargs[1]) && print_kwarg_opts([:N :borders], "NamedTuple | Tuple | Dict | String")
-	(show_kwargs[1]) && print_kwarg_opts([:W :shore],   "NamedTuple | Tuple | Dict | String")
+	(show_kwargs[1]) && print_kwarg_opts([:W :shore :shorelines],   "NamedTuple | Tuple | Dict | String")
 	cmd = parse_E_coast(d, [:E :DCW], cmd)
 
 	if (!occursin(" -C",cmd) && !occursin(" -E",cmd) && !occursin(" -G",cmd) && !occursin(" -I",cmd) &&
