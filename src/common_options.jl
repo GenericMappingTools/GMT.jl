@@ -7,8 +7,9 @@ nt2dict(; kw...) = Dict(kw)
 # A darker an probably more efficient way is: ((; kw...) -> kw.data)(; d...) but breaks in PyCall
 dict2nt(d::Dict) = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
 
-function find_in_dict(d::Dict, symbs, del::Bool=true)
+function find_in_dict(d::Dict, symbs, del::Bool=true, help_str::String="")
 	# See if D contains any of the symbols in SYMBS. If yes, return corresponding value
+	(show_kwargs[1] && help_str != "") && return (print_kwarg_opts(symbs, help_str), "")
 	for symb in symbs
 		if (haskey(d, symb))
 			val = d[symb]
