@@ -104,15 +104,17 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 
-	cmd = parse_these_opts(cmd, d, [[:A :fields], [:C :center], [:G :outgrid :grid], [:I :inc], [:W :weights]])
-	if (occursin("-G", cmd) && !occursin("-A", cmd))
+	cmd = parse_these_opts(cmd, d, [[:A :fields], [:C :center], [:I :inc], [:W :weights]])
+	opt_G = add_opt(d, "", 'G', [:G :grid :outgrid])
+
+	if (opt_G != "" && !occursin("-A", cmd))
 		cmd = cmd * " -Az"					# So that we can use plain -G to mean write grid 
 	end
+	(length(opt_G) > 3) && (cmd *= opt_G)	# G=true will give " -G", which we'll ignore  (Have to)
 	cmd, = parse_common_opts(d, cmd, [:R :V_params :bi :di :e :f :h :i :o :r :yx])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
-    (occursin("-G", cmd)) && (cmd = replace(cmd, "-G" => ""))   # GMT API does not allow a -G from externals
-	return common_grd(d, proggy * " " * cmd, arg1)		# Finish build cmd and run it
+	common_grd(d, proggy * " " * cmd, arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
