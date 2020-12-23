@@ -29,6 +29,7 @@ const global ThemeIsOn   = Vector{Bool}(undef, 1)		# To know if we have an activ
 const global convert_syntax = Vector{Bool}(undef, 1);convert_syntax[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
 const global show_kwargs = Vector{Bool}(undef, 1);show_kwargs[1] = false	# To just print the kwargs of a option call)
 const global FMT = ["ps"]
+const global box_str = [""]
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3 = " -Baf -Bza"  		#		"" but for 3D views
@@ -47,8 +48,9 @@ export
 	grdedit, grdfft, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdfill, grdlandmask, grdmath,
 	grdmask, grdpaste, grdproject, grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume,
 	greenspline, mat2grid, mat2img, histogram, histogram!, image, image!, image_alpha!, imshow, kml2gmt, logo, logo!,
-	makecpt, mask, mask!, mapproject, movie, nearneighbor, plot, plot!, plot3, plot3!, plot3d, plot3d!, project, pscontour,
-	pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
+	makecpt, mask, mask!, mapproject, movie, nearneighbor, plot, plot!, plot3, plot3!, plot3d, plot3d!, plotyy,
+	project, pscontour, pscontour!, psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!,
+	psevents, pshistogram, pshistogram!,
 	psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
 	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
