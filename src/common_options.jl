@@ -2418,7 +2418,7 @@ function fname_out(d::Dict, del::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D::Bool=false, get_info::Bool=false)
+function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
 
@@ -2460,21 +2460,33 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R="", is3D::Boo
 		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
 			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
 		end
-		if (opt_R != "" && opt_R[1] == '/')	# Modify what will be reported as a -R string
-			# Example "/-0.1/0.1/0//" will extend x axis +/- 0.1, set y_min=0 and no change to y_max
+		if (opt_R != "" && opt_R[1] == '/')			# Modify what will be reported as a -R string
 			rs = split(opt_R, '/')
-			for k = 2:length(rs)
-				(rs[k] == "") && continue
-				x = parse(Float64, rs[k])
-				if (x == 0.0)
-					info[1].data[k-1] = (info[1].data[k-1] > 0) ? 0 : info[1].data[k-1]
+			if (!occursin("?", opt_R))
+				# Example "///0/" will set y_min=0 if info.data[3] > 0 and no other changes otherwise
+				for k = 2:length(rs)
+					(rs[k] == "") && continue
+					x = parse(Float64, rs[k])
+					if (x == 0.0)
+						info[1].data[k-1] = (info[1].data[k-1] > 0) ? 0 : info[1].data[k-1]
+					end
+				end
+			else
+				# Example: "/1/2/?/?"  Retain x_min = 1 & x_max = 2 and get y_min|max from data. Used by plotyy
+				for k = 2:length(rs)
+					(rs[k] != "?") && (info[1].data[k-1] = parse(Float64, rs[k]))	# Keep value already in previous -R
 				end
 			end
 		end
 		if (opt_R != " -Rtight")
-			dx = (info[1].data[2] - info[1].data[1]) * 0.005;	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
-			info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
-			info[1].data = round_wesn(info[1].data)	# Add a pad if not-tight
+			if (!occursin("?", opt_R))
+				dx = (info[1].data[2] - info[1].data[1]) * 0.005;	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
+				info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
+				info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
+			else
+				t = round_wesn(deepcopy(info[1].data))		# Add a pad
+				[info[1].data[k-1] = t[k-1] for k = 2:length(rs) if (rs[k] == "?")]
+			end
 		else
 			cmd = replace(cmd, " -Rtight" => "")	# Must remove old -R
 		end
@@ -2680,7 +2692,7 @@ dbg_print_cmd(d::Dict, cmd::String) = dbg_print_cmd(d, [cmd])
 function dbg_print_cmd(d::Dict, cmd::Vector{String})
 	# Print the gmt command when the Vd>=1 kwarg was used.
 	# In case of convert_syntax = true, just put the cmds in a global var 'cmds_history' used in movie
-	
+
 	if (show_kwargs[1])  show_kwargs[1] = false; return ""  end	# If in HELP mode
 
 	if ( ((Vd = find_in_dict(d, [:Vd])[1]) !== nothing) || convert_syntax[1])

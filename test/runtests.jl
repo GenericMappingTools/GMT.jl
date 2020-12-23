@@ -318,6 +318,9 @@ if (got_it)					# Otherwise go straight to end
 	contourf(d, C, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), Vd=dbg2)
 	contourf(d, C=C, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), Vd=dbg2)
 
+	println("	EARTHTIDE")
+	earthtide();
+
 	# FILTER1D
 	filter1d([collect((1.0:50)) rand(50)], F="m15");
 
@@ -344,6 +347,9 @@ if (got_it)					# Otherwise go straight to end
 	println("	GMTCONVERT")
 	# GMTCONVERT
 	gmtconvert([1.1 2; 3 4], o=0)
+
+	println("	GMTGRAVMAG3D")
+	gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/0/-10/40", Vd=dbg2);
 
 	println("	GMTREGRESS")
 	# GMTREGRESS
@@ -742,6 +748,8 @@ if (got_it)					# Otherwise go straight to end
 	scatter!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
 	hlines!([0.2, 0.6], pen=(1, :red))
 	vlines!([0.2, 0.6], pen=(1, :red))
+
+	plotyy([1 1; 2 2], [1.5 1.5; 3 3], R="0.8/3/0/5", title="Ai", ylabel=:Bla, xlabel=:Ble, seclabel=:Bli, Vd=dbg2);
 
 	println("	PLOT3D")
 	plot3d(rand(5,3), marker=:cube)

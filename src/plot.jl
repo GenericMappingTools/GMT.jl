@@ -131,10 +131,56 @@ plot(arg1::Number, arg2::Number; kw...)  = common_plot_xyz("", cat_2_arg2([arg1]
 plot!(arg1::Number, arg2::Number; kw...) = common_plot_xyz("", cat_2_arg2([arg1], [arg2]), "plot", false, false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
+
+"""
+plotyy(arg1, arg2; kwargs...)
+
+Example:
+```julia
+plotyy([1 1; 2 2], [1.5 1.5; 3 3], R="0.8/3/0/5", title="Ai", ylabel=:Bla, xlabel=:Ble, seclabel=:Bli, show=1)
+```
+"""
+function plotyy(arg1, arg2; first=true, kw...)
+	d = KW(kw)
+	(haskey(d, :xlabel)) ? (xlabel = string(d[:xlabel]);	delete!(d, :xlabel)) : xlabel = ""	# Only to used at the end
+	(haskey(d, :seclabel)) ? (seclabel = string(d[:seclabel]);	delete!(d, :seclabel)) : seclabel = ""
+	((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? (fmt = arg2str(val)) : fmt = FMT[1]
+	((val = find_in_dict(d, [:savefig :name])[1]) !== nothing) ? (savefig = arg2str(val)) : savefig = nothing
+	Vd = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0
+
+	cmd, opt_B = parse_B(d, "", " -Baf -BW")
+	if (opt_B != " -Baf -BW")
+		if (occursin(" -Bx", opt_B) || occursin(" -By", opt_B) || occursin("+t", opt_B))
+			d[:B] = replace(opt_B, "-B" => "")
+		else
+			d[:B] = " af W"
+		end
+	else
+		d[:B] = " af W"
+	end
+	(Vd != 0) && (d[:Vd] = Vd)
+	d[:lc] = "#0072BD"
+	(haskey(d, :show)) ? (delete!(d, :show);  do_show = true) : do_show = false
+	d[:par] = (MAP_FRAME_PEN="#0072BD", MAP_TICK_PEN="#0072BD", FONT_ANNOT_PRIMARY="#0072BD", FONT_LABEL="#0072BD")
+	r1 = common_plot_xyz("", cat_1_arg(arg1), "plotyy", first, false, d...)
+
+	(Vd != 0) && (d[:Vd] = Vd)
+	d[:B] = " af E"			# Also remember that previous -B was consumed in first call
+	d[:lc]  = "#D95319"
+	(seclabel != "") && (d[:ylabel] = seclabel)
+	d[:par] = (MAP_FRAME_PEN="#D95319", MAP_TICK_PEN="#D95319", FONT_ANNOT_PRIMARY="#D95319", FONT_LABEL="#D95319")
+	r2 = common_plot_xyz("", cat_1_arg(arg2), "plotyy", false, false, d...)
+
+	opt_B = (xlabel != "") ? "af Sn x+l" * xlabel : "af Sn"
+	r3 = basemap!(J="", R="", B=opt_B, Vd=Vd, fmt=fmt, name=savefig, show=do_show)
+	return (Vd == 2) ? [r1;r2;r3] : nothing
+end
+# ------------------------------------------------------------------------------------------------------
+
 """
 plot3d(arg1::Array; kwargs...)
 
-reads (x,y,z) triplets from files [or standard input] and generates PostScript code that will plot lines,
+reads (x,y,z) triplets and generates PostScript code that will plot lines,
 polygons, or symbols at those locations in 3-D.
 
 Full option list at [`plot3d`]($(GMTdoc)plot3d.html)

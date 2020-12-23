@@ -6,7 +6,7 @@ Compute the gravity/magnetic anomaly of a 3-D body by the method of Okabe.
 Full option list at [`gmtgravmag3d`]($(GMTdoc)gmtgravmag3d.html)
 
 ```julia
-	G = gmtgravmag3d();
+	G = gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/0/-10/40");
 	imshow(G)
 ```
 """
