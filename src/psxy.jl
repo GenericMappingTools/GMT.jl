@@ -57,8 +57,8 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	if (opt_R == "" && sub_module == "bar")  opt_R = "/-0.4/0.4/0"  end	# Make sure y_min = 0
 	if (O && caller == "plotyy")
 		cmd = replace(cmd, opt_R => "")			# Must remove old opt_R because a new one will be constructed
-		ind = findall("/", box_str[1])[2]		# 'box_str' was set in first call
-		opt_R = '/' * box_str[1][4:ind] * "?/?"	# Will become /x_min/x_max/?/?
+		ind = collect(findall("/", box_str[1])[2])		# 'box_str' was set in first call
+		opt_R = '/' * box_str[1][4:ind[1]] * "?/?"	# Will become /x_min/x_max/?/?
 	end
 	cmd, arg1, opt_R, lixo, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
 	if (N_args == 0 && arg1 !== nothing)  N_args = 1  end
