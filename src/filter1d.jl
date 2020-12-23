@@ -61,6 +61,7 @@ function filter1d(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:F :filter_type], [:D :inc], [:E :ends], [:N :time_col],
 	                       [:Q :quality], [:S :symetry], [:T :equi_space]])
 
+	(isvector(arg1)) && (arg1 = cat_1_arg(arg1))	# Accept vectors (GMT should do that too)
 	common_grd(d, cmd0, cmd, "filter1d ", arg1)		# Finish build cmd and run it
 end
 
