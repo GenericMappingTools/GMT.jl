@@ -38,6 +38,10 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
+      - name: Checkout
+        uses: actions/checkout@v2
+        if: matrix.run_in_pr == true || github.event_name != 'pull_request'
+
       - name: Install GMT dependencies
         run: bash ci/install-dependencies-linux.sh
         #run: |
@@ -45,11 +49,11 @@ jobs:
           # The following command converts $RUNNER_OS to lowercase
           #os=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')
           #bash ci/install-dependencies-linux.sh
-        env:
-          RUN_TESTS: ${{ matrix.RUN_TESTS }}
-          BUILD_DOCS: ${{ matrix.BUILD_DOCS }}
-          PACKAGE: ${{ matrix.PACKAGE }}
-          EXCLUDE_OPTIONAL : ${{ matrix.EXCLUDE_OPTIONAL }}
+        #env:
+          #RUN_TESTS: ${{ matrix.RUN_TESTS }}
+          #BUILD_DOCS: ${{ matrix.BUILD_DOCS }}
+          #PACKAGE: ${{ matrix.PACKAGE }}
+          #EXCLUDE_OPTIONAL : ${{ matrix.EXCLUDE_OPTIONAL }}
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - name: Cache GSHHG and DCW data
@@ -71,9 +75,9 @@ jobs:
           else
             bash ci/config-gmt-windows.sh
           fi
-        env:
-          RUN_TESTS: ${{ matrix.RUN_TESTS }}
-          BUILD_DOCS: ${{ matrix.BUILD_DOCS }}
+        #env:
+          #RUN_TESTS: ${{ matrix.RUN_TESTS }}
+          #BUILD_DOCS: ${{ matrix.BUILD_DOCS }}
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - name: Compile GMT (Linux/macOS)
