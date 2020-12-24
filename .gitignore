@@ -4,3 +4,4 @@
 docs/build/
 docs/site/
 test/gmt.history
+.travis.yml
