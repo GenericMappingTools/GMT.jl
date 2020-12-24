@@ -32,6 +32,16 @@ jobs:
           - ubuntu-latest
         arch:
           - x64
+        include:
+          # Linux
+          - name: Linux - Compile only
+            os: ubuntu-latest
+            run_in_pr : true
+            BUILD_DOCS  : false
+            DEPLOY_DOCS : false
+            PACKAGE     : false
+            RUN_TESTS   : false
+
     steps:
       #- name: Cancel Previous Runs
         #uses: styfle/cancel-workflow-action@0.6.0
