@@ -5,12 +5,8 @@ function theme(name; kwargs...)
 	bg_color = ((val = find_in_dict(d, [:bg_color])[1]) !== nothing) ? string(val) : ""
 	color = ((val = find_in_dict(d, [:fg_color])[1]) !== nothing) ? string(val) : ""
 	if (name == :dark || name == "dark")
-		if (font == "")  fonts = ["AvantGarde-Book", "AvantGarde-Demi", "Helvetica"]	# The GMT settings
-		else             fonts = [font, font, font]
-		end
-		if (color == "") colors = ["gray92", "gray86"]		# The GMT settings
-		else             colors = [color, color]
-		end
+		fonts  = (font == "")  ? ["AvantGarde-Book", "AvantGarde-Demi", "Helvetica"] : [font, font, font]
+		colors = (color == "") ? ["gray92", "gray86"] : [color, color]
 		(bg_color == "") && (bg_color = "5/5/35")
 
 		gmtlib_setparameter(API, "FONT_ANNOT_PRIMARY", "12p,$(fonts[1]),$(colors[1])")

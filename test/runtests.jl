@@ -320,6 +320,8 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	EARTHTIDE")
 	earthtide();
+	earthtide(S="");
+	earthtide(L=(0,0));
 
 	# FILTER1D
 	filter1d([collect((1.0:50)) rand(50)], F="m15");
@@ -350,6 +352,7 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	GMTGRAVMAG3D")
 	gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/0/-10/40", Vd=dbg2);
+	@test_throws ErrorException("Missing one of 'index', 'raw_triang' or 'str' data") gmtgravmag3d(I=1.0);
 
 	println("	GMTREGRESS")
 	# GMTREGRESS
@@ -1170,7 +1173,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Specifying cross-section type is mandatory") coupe([0.0 3 0 0 45 90 5 0 0], region=(-1,4,0,6))
 	velo(mat2ds([0. -8 0 0 4 6 0.5; -8 5 3 3 0 0 0.5], ["4x6", "3x3"]), pen=(0.6,:red), fill_wedges=:green, outlines=true, Se="0.2/0.39/18", arrow="0.3c+p1p+e+gred", region=(-15,10,-10,10), Vd=dbg2)
 
-	@test_throws ErrorException("Must select one convention (S options. Run gmthelp(velo) to learn about them)") velo!(mat2ds([0. -8 0 0 4 6 0.5; -8 5 3 3 0 0 0.5], ["4x6", "3x3"]), region=(-15,10,-10,10))
+	@test_throws ErrorException("Must select one convention (S options. Run gmthelp(velo) to learn about them)") velo!("",mat2ds([0. -8 0 0 4 6 0.5; -8 5 3 3 0 0 0.5], ["4x6", "3x3"]), region=(-15,10,-10,10))
 
 	println("	MISC")
 	# MISC
