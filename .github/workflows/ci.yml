@@ -43,7 +43,7 @@ jobs:
           # $RUNNER_OS can be Linux, macOS or Windows
           # The following command converts $RUNNER_OS to lowercase
           os=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')
-          bash ci/install-dependencies-${os}.sh
+          bash ci/install-dependencies-linux.sh
         env:
           RUN_TESTS: ${{ matrix.RUN_TESTS }}
           BUILD_DOCS: ${{ matrix.BUILD_DOCS }}
