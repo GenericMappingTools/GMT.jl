@@ -25,8 +25,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.4' # Replace this with the minimum Julia version that your package supports. E.g. if your package requires Julia 1.5 or higher, change this to '1.5'.
-          - '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
+          - '1.5' # Replace this with the minimum Julia version that your package supports. E.g. if your package requires Julia 1.5 or higher, change this to '1.5'.
+          #- '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
           #- 'nightly'
         os:
           - ubuntu-latest
@@ -39,11 +39,12 @@ jobs:
           access_token: ${{ github.token }}
 
       - name: Install GMT dependencies
-        run: |
+        run: bash ci/install-dependencies-linux.sh
+        #run: |
           # $RUNNER_OS can be Linux, macOS or Windows
           # The following command converts $RUNNER_OS to lowercase
-          os=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')
-          bash ci/install-dependencies-linux.sh
+          #os=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')
+          #bash ci/install-dependencies-linux.sh
         env:
           RUN_TESTS: ${{ matrix.RUN_TESTS }}
           BUILD_DOCS: ${{ matrix.BUILD_DOCS }}
