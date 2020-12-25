@@ -43,22 +43,21 @@ jobs:
             RUN_TESTS   : false
 
     steps:
-      #- name: Cancel Previous Runs
-        #uses: styfle/cancel-workflow-action@0.6.0
-        #with:
-          #access_token: ${{ github.token }}
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{ github.token }}
 
       - name: Checkout
         uses: actions/checkout@v2
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - name: Install GMT dependencies
-        run: bash ci/install-dependencies-linux.sh
-        #run: |
+        run: |
           # $RUNNER_OS can be Linux, macOS or Windows
           # The following command converts $RUNNER_OS to lowercase
-          #os=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')
-          #bash ci/install-dependencies-linux.sh
+          os=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')
+          bash ci/install-dependencies-${os}.sh
         #env:
           #RUN_TESTS: ${{ matrix.RUN_TESTS }}
           #BUILD_DOCS: ${{ matrix.BUILD_DOCS }}
@@ -74,44 +73,8 @@ jobs:
           key: coastline-${{ hashFiles('ci/download-coastlines.sh') }}
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
-      - name: Download coastlines
-        run: bash ci/download-coastlines.sh
-        if: steps.cache-coastline.outputs.cache-hit != 'true' && (matrix.run_in_pr == true || github.event_name != 'pull_request')
-
-      - name: Configure GMT
-        run: |
-          if [ "$RUNNER_OS" != "Windows" ]; then
-            bash ci/config-gmt-unix.sh
-          else
-            bash ci/config-gmt-windows.sh
-          fi
-        #env:
-          #RUN_TESTS: ${{ matrix.RUN_TESTS }}
-          #BUILD_DOCS: ${{ matrix.BUILD_DOCS }}
-        if: matrix.run_in_pr == true || github.event_name != 'pull_request'
-
-      - name: Compile GMT (Linux/macOS)
-        run: |
-          mkdir build
-          cd build
-          cmake -G Ninja ..
-          cmake --build .
-        if: runner.os != 'Windows' && (matrix.run_in_pr == true || github.event_name != 'pull_request')
-
-      # Move downloaded files to ~/.gmt directory and list them
-      - name: Move and list downloaded remote files
-        run: |
-          mkdir -p ~/.gmt
-          mv .gmt/* ~/.gmt
-          ls -lRh ~/.gmt
-        if: matrix.run_in_pr == true || github.event_name != 'pull_request'
-  
       - name: Install GMT
-        run: |
-          cd build
-          cmake --build . --target install
-          # Add GMT PATH to bin
-          echo "${INSTALLDIR}/bin" >> $GITHUB_PATH
+        run: bash ci/build-gmt.sh
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - uses: actions/checkout@v2
@@ -135,8 +98,6 @@ jobs:
       - uses: codecov/codecov-action@v1
         with:
           file: lcov.info
-
-
   
   docs:
     name: Documentation
