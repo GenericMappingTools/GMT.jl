@@ -37,10 +37,6 @@ jobs:
           - name: Linux - Compile only
             os: ubuntu-latest
             run_in_pr : true
-            BUILD_DOCS  : false
-            DEPLOY_DOCS : false
-            PACKAGE     : false
-            RUN_TESTS   : false
 
     steps:
       - name: Cancel Previous Runs
@@ -58,11 +54,6 @@ jobs:
           # The following command converts $RUNNER_OS to lowercase
           os=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')
           bash ci/install-dependencies-${os}.sh
-        #env:
-          #RUN_TESTS: ${{ matrix.RUN_TESTS }}
-          #BUILD_DOCS: ${{ matrix.BUILD_DOCS }}
-          #PACKAGE: ${{ matrix.PACKAGE }}
-          #EXCLUDE_OPTIONAL : ${{ matrix.EXCLUDE_OPTIONAL }}
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - name: Cache GSHHG and DCW data
@@ -74,7 +65,10 @@ jobs:
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - name: Install GMT
-        run: bash ci/build-gmt.sh
+        run: |
+          bash ci/build-gmt.sh
+          # Add GMT PATH to bin
+          echo "${INSTALLDIR}/bin" >> $GITHUB_PATH
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - uses: actions/checkout@v2
