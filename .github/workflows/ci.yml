@@ -68,7 +68,8 @@ jobs:
         run: |
           bash ci/build-gmt.sh
           # Add GMT PATH to bin
-          echo "${INSTALLDIR}/bin" >> $GITHUB_PATH
+          GMT_INSTALL_DIR=${GMT_INSTALL_DIR:-${HOME}/gmt-install-dir}
+          echo "${GMT_INSTALL_DIR}/bin" >> $GITHUB_PATH
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - name: Check a few simple commands
