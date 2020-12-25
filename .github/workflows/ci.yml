@@ -19,7 +19,7 @@ jobs:
 
     env:
       COASTLINEDIR: ${{ github.workspace }}/coastline
-      INSTALLDIR: ${{ github.workspace }}/gmt-install-dir
+      JULIA_NUM_THREADS: 2
 
     strategy:
       fail-fast: false
@@ -75,14 +75,7 @@ jobs:
       - name: Check a few simple commands
         run: |
           set -x -e
-          echo $PATH
-          echo $GITHUB_PATH
           gmt --version
-          gmt-config --all
-          gmt defaults -Vd
-          gmt pscoast -R0/10/0/10 -JM6i -Ba -Ggray -ENG+p1p,blue -P -Vd > test.ps
-          gmt begin && gmt coast -R0/10/0/10 -JM6i -Ba -Ggray -ENG+p1p,blue -Vd && gmt end
-          gmt earthtide -T2018-06-18T12:00:00 -Gsolid_tide_up.grd
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - uses: actions/checkout@v2
@@ -118,6 +111,7 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Pkg
+            Pkg.add(Documenter)
             Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()'
       - run: |
