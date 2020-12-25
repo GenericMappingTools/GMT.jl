@@ -154,7 +154,7 @@ include("geodesy/earthtide.jl")
 (GMTver >= v"6.2") && include("potential/gmtgravmag3d.jl")
 
 function __init__()
-	if (GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
+	if (v"5.0" < GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
 
 	if (GMTver == v"0.0")
 		println("\n\nYou don't seem to have GMT installed and I don't install it automatically,\nso you will have to do it yourself.")

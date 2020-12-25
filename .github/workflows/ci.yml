@@ -1,0 +1,125 @@
+name: CI
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+    tags: '*'
+defaults:
+  run:
+    # default to use bash shell
+    shell: bash
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
+
+    env:
+      COASTLINEDIR: ${{ github.workspace }}/coastline
+      JULIA_NUM_THREADS: 2
+
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.5' # Replace this with the minimum Julia version that your package supports. E.g. if your package requires Julia 1.5 or higher, change this to '1.5'.
+          #- '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
+          #- 'nightly'
+        os:
+          - ubuntu-latest
+        arch:
+          - x64
+        include:
+          # Linux
+          - name: Linux - Compile only
+            os: ubuntu-latest
+            run_in_pr : true
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        if: matrix.run_in_pr == true || github.event_name != 'pull_request'
+
+      - name: Install GMT dependencies
+        run: |
+          # $RUNNER_OS can be Linux, macOS or Windows
+          # The following command converts $RUNNER_OS to lowercase
+          os=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')
+          bash ci/install-dependencies-${os}.sh
+        if: matrix.run_in_pr == true || github.event_name != 'pull_request'
+
+      - name: Cache GSHHG and DCW data
+        uses: actions/cache@v2
+        id: cache-coastline
+        with:
+          path: ${{ env.COASTLINEDIR }}
+          key: coastline-${{ hashFiles('ci/download-coastlines.sh') }}
+        if: matrix.run_in_pr == true || github.event_name != 'pull_request'
+
+      - name: Install GMT
+        run: |
+          bash ci/build-gmt.sh
+          # Add GMT PATH to bin
+          GMT_INSTALL_DIR=${GMT_INSTALL_DIR:-${HOME}/gmt-install-dir}
+          echo "${GMT_INSTALL_DIR}/bin" >> $GITHUB_PATH
+        if: matrix.run_in_pr == true || github.event_name != 'pull_request'
+
+      - name: Check a few simple commands
+        run: |
+          set -x -e
+          gmt --version
+        if: matrix.run_in_pr == true || github.event_name != 'pull_request'
+
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: actions/cache@v1
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v1
+        with:
+          file: lcov.info
+  
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: '1'
+      - run: |
+          julia --project=docs -e '
+            using Pkg
+            Pkg.add("Documenter")
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()'
+      #- run: |
+          #julia --project=docs -e '
+            #using Documenter: doctest
+            #using GMT
+            #doctest(GMT)' # change MYPACKAGE to the name of your package
+      - run: julia --project=docs docs/make.jl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
