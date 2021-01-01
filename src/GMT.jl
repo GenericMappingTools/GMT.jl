@@ -3,15 +3,20 @@ module GMT
 using Printf
 using Dates
 
+struct CTRLstruct
+	limits::Vector{Float64}
+end
+
 # Need to know what GMT version is available or if none at all to warn users on how to install GMT.
 function get_GMTver()
+	out = v"0.0"
 	try
 		ver = readlines(`gmt --version`)[1]
 		ind = findfirst('_', ver)
-		return (ind === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
+		out = (ind === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 	catch
-		return v"0.0"
 	end
+	return out
 end
 const GMTver = get_GMTver()
 
@@ -33,6 +38,7 @@ const global box_str = [""]
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3 = " -Baf -Bza"  		#		"" but for 3D views
+const global CTRL = CTRLstruct(zeros(6))
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
 	@eval Base.Experimental.@optlevel 1
@@ -154,17 +160,14 @@ include("geodesy/earthtide.jl")
 (GMTver >= v"6.2") && include("potential/gmtgravmag3d.jl")
 
 function __init__()
-	if (v"5.0" < GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
+	if (v"5.0" <= GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
 
 	if (GMTver == v"0.0")
-		println("\n\nYou don't seem to have GMT installed and I don't install it automatically,\nso you will have to do it yourself.")
+		println("\n\nYou don't seem to have GMT installed and I don't install it automatically.\nYou will have to do it yourself.")
 		t = "\n\t\t https://github.com/GenericMappingTools/gmt/releases"
-		if (Sys.iswindows())
-			println("Download and install the official version at (the '..._win64.exe':" * t)
-		elseif (Sys.isapple())
-			println("Install GMT with Homebrew: brew install gmt ghostscript ffmpeg")
-		else
-			println("https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md#linux")
+		if (Sys.iswindows())    println("Download and install the official version at (the '..._win64.exe':" * t)
+		elseif (Sys.isapple())  println("Install GMT with Homebrew: brew install gmt ghostscript ffmpeg")
+		else                    println("https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md#linux")
 		end
 		return
 	end
@@ -172,6 +175,8 @@ function __init__()
 	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 	if (API == C_NULL)  error("Failure to create a GMT Session")  end
 	if haskey(ENV, "JULIA_GMT_IMGFORMAT")  FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]  end
+	f = joinpath(readlines(`gmt --show-userdir`)[1], "theme_jl.txt")
+	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 end
 
 if (GMTver >= v"6")  include("get_enums.jl")  end	# Needed to cheat the autoregister autobot
