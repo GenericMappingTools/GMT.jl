@@ -46,16 +46,14 @@ function init_module(first::Bool, kwargs...)
 	return d, K, O
 end
 
-function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=false)
+function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	
 	(show_kwargs[1]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
 
 	opt_R = [""]
-	val, symb = find_in_dict(d, [:R :region :limits])
-	if (val !== nothing)
+	if ((val = find_in_dict(d, [:R :region :limits], del)[1]) !== nothing)
 		opt_R[1] = build_opt_R(val)
-		(del) && delete!(d, symb)
 	elseif (IamModern[1])
 		return cmd, ""
 	end
@@ -63,7 +61,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=false)
 	if (opt_R[1] == "")		# See if we got the region as tuples of xlim, ylim [zlim]
 		R = "";		c = 0
 		if (haskey(d, :xlim) && isa(d[:xlim], Tuple) && length(d[:xlim]) == 2)
-			R = @sprintf(" -R%.15g/%.15g", d[:xlim][1], d[:xlim][2])
+			R = sprintf(" -R%.15g/%.15g", d[:xlim][1], d[:xlim][2])
 			c += 2
 			if (haskey(d, :ylim) && isa(d[:ylim], Tuple) && length(d[:ylim]) == 2)
 				R = @sprintf("%s/%.15g/%.15g", R, d[:ylim][1], d[:ylim][2])
@@ -79,6 +77,14 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=false)
 		if (R != "" && c == 4)  opt_R[1] = R  end
 	end
 	if (O && opt_R[1] == "")  opt_R[1] = " -R"  end
+	if (opt_R[1] != "")			# Save limits in numeric
+		try
+			limits = opt_R2num(opt_R[1])
+			CTRL.limits[1:length(limits)] = limits
+		catch
+			CTRL.limits[1] = CTRL.limits[2] = CTRL.limits[3] = CTRL.limits[4] = 0
+		end
+	end
 	cmd = cmd * opt_R[1]
 	return cmd, opt_R[1]
 end
@@ -95,7 +101,7 @@ function build_opt_R(Val)::String		# Generic function that deals with all but Na
 		out = arg2str(Val)
 		return " -R" * rstrip(out, '/')		# Remove last '/'
 	elseif (isa(Val, GMTgrid) || isa(Val, GMTimage))
-		return @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
+		return sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
 	end
 	return ""
 end
@@ -107,7 +113,7 @@ function build_opt_R(arg::NamedTuple)::String
 	if ((val = find_in_dict(d, [:bb :limits :region])[1]) !== nothing)
 		if ((isa(val, Array{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 			if (haskey(d, :diag))		# The diagonal case
-				BB[1] = @sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
+				BB[1] = sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
 			else
 				BB[1] = join([@sprintf("%.15g/", Float64(x)) for x in val])
 				BB[1] = rstrip(BB[1], '/')		# and remove last '/'
@@ -120,7 +126,7 @@ function build_opt_R(arg::NamedTuple)::String
 			end
 		end
 	elseif ((val = find_in_dict(d, [:bb_diag :limits_diag :region_diag :LLUR])[1]) !== nothing)	# Alternative way of saying "+r"
-		BB[1] = @sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
+		BB[1] = sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
 	elseif ((val = find_in_dict(d, [:continent :cont])[1]) !== nothing)
 		val = uppercase(string(val))
 		if     (startswith(val, "AF"))  BB[1] = "=AF"
@@ -160,12 +166,30 @@ function opt_R2num(opt_R::String)
 	if (opt_R == "")  return nothing  end
 	if (endswith(opt_R, "Rg"))  return [0.0 360. -90. 90.]  end
 	if (endswith(opt_R, "Rd"))  return [-180.0 180. -90. 90.]  end
-	rs = split(opt_R, '/')
-	limits = zeros(1,length(rs))
-	fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
-	limits[1] = parse(Float64, rs[1][fst+1:end])
-	for k = 2:length(rs)
-		limits[k] = parse(Float64, rs[k])
+	if (findfirst("/", opt_R) !== nothing)
+		isdiag = false
+		if ((ind = findfirst("+r", opt_R)) !== nothing)		# Diagonal mode
+			opt_R = opt_R[1:ind[1]-1];	isdiag = true			# Strip the "+r"
+		end
+		rs = split(opt_R, '/')
+		limits = zeros(length(rs))
+		fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
+		limits[1] = parse(Float64, rs[1][fst+1:end])
+		for k = 2:length(rs)
+			limits[k] = parse(Float64, rs[k])
+		end
+		if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
+	elseif (opt_R != " -R")		# One of those complicated -R forms. Just ask GMT the limits (but slow. It takes 0.2 s)
+		kml = gmt("gmt2kml " * opt_R, [0 0])[1]
+		limits = zeros(4)
+		t = kml.text[28][12:end];	ind = findfirst("<", t)		# north
+		limits[4] = parse(Float64, t[1:(ind[1]-1)])
+		t = kml.text[29][12:end];	ind = findfirst("<", t)		# south
+		limits[3] = parse(Float64, t[1:(ind[1]-1)])
+		t = kml.text[30][11:end];	ind = findfirst("<", t)		# east
+		limits[2] = parse(Float64, t[1:(ind[1]-1)])
+		t = kml.text[31][11:end];	ind = findfirst("<", t)		# east
+		limits[1] = parse(Float64, t[1:(ind[1]-1)])
 	end
 	return limits
 end
@@ -195,18 +219,18 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bool=false, del::Bool=true)
-	# Build the option -J string. Make it simply -J if overlay mode (-O) and no new -J is fished here
+	# Build the option -J string. Make it simply -J if in overlay mode (-O) and no new -J is fished here
 	# Default to 12c if no size is provided.
 	# If MAP == false, do not try to append a fig size
-	
+
 	(show_kwargs[1]) && return (print_kwarg_opts([:J :proj :projection], "NamedTuple | String"), "")
 
 	opt_J = [""];		mnemo = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
-		if isa(val, Dict)  val = dict2nt(val)  end
+		isa(val, Dict) && (val = dict2nt(val))
 		opt_J[1], mnemo = build_opt_J(val)
 	elseif (IamModern[1] && ((val = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size], del)[1]) === nothing))
-		# Subplots do not rely is the classic default mechanism
+		# Subplots do not rely in the classic default mechanism
 		return cmd, ""
 	end
 	if (!map && opt_J[1] != "")  return cmd * opt_J[1], opt_J[1]  end
@@ -214,6 +238,10 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 	if (O && opt_J[1] == "")  opt_J[1] = " -J"  end
 
 	if (!O)
+		if (default == "guess" && opt_J[1] == "")
+			opt_J[1] = guess_proj(CTRL.limits[1:2], CTRL.limits[3:4])
+			mnemo = true		# To force append fig size
+		end
 		if (opt_J[1] == "")  opt_J[1] = " -JX"  end
 		# If only the projection but no size, try to get it from the kwargs.
 		if ((s = helper_append_figsize(d, opt_J[1], O)) != "")		# Takes care of both fig scales and fig sizes
@@ -357,8 +385,12 @@ end
 function build_opt_J(Val)
 	out = [""];		mnemo = false
 	if (isa(Val, String) || isa(Val, Symbol))
-		prj, mnemo = parse_proj(string(Val))
-		out[1] = " -J" * prj
+		if (string(Val) == "guess")
+			out[1], mnemo = guess_proj(CTRL.limits[1:2], CTRL.limits[3:4]), true
+		else
+			prj, mnemo = parse_proj(string(Val))
+			out[1] = " -J" * prj
+		end
 	elseif (isa(Val, NamedTuple))
 		prj, mnemo = parse_proj(Val)
 		out[1] = " -J" * prj
@@ -374,7 +406,7 @@ function build_opt_J(Val)
 end
 
 function parse_proj(p::String)
-	# See "p" is a string with a projection name. If yes, convert it into the corresponding -J syntax
+	# See "p" if is a string with a projection name. If yes, convert it into the corresponding -J syntax
 	if (p == "")  return p,false  end
 	if (p[1] == '+' || startswith(p, "epsg") || startswith(p, "EPSG") || occursin('/', p) || length(p) < 3)
 		p = replace(p, " " => "")		# Remove the spaces from proj4 strings
@@ -443,12 +475,12 @@ function parse_proj(p::NamedTuple)
 	center = ""
 	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
 		if     (isa(val, String))  center = val
-		elseif (isa(val, Number))  center = @sprintf("%.12g", val)
+		elseif (isa(val, Number))  center = sprintf("%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)
-			if (isa(val, Array))  center = @sprintf("%.12g/%.12g", val[1], val[2])
+			if (isa(val, Array))  center = sprintf("%.12g/%.12g", val[1], val[2])
 			else		# Accept also strings in tuple (Needed for movie)
-				center  = (isa(val[1], String)) ? val[1] * "/" : @sprintf("%.12g/", val[1])
-				center *= (isa(val[2], String)) ? val[2] : @sprintf("%.12g", val[2])
+				center  = (isa(val[1], String)) ? val[1] * "/" : sprintf("%.12g/", val[1])
+				center *= (isa(val[2], String)) ? val[2] : sprintf("%.12g", val[2])
 			end
 		end
 	end
@@ -458,7 +490,7 @@ function parse_proj(p::NamedTuple)
 	parallels = ""
 	if ((val = find_in_dict(d, [:parallel :parallels])[1]) !== nothing)
 		if     (isa(val, String))  parallels = "/" * val
-		elseif (isa(val, Number))  parallels = @sprintf("/%.12g", val)
+		elseif (isa(val, Number))  parallels = sprintf("/%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && (length(val) <= 3 || length(val) == 6))
 			parallels = join([@sprintf("/%.12g",x) for x in val])
 		end
@@ -473,6 +505,37 @@ function parse_proj(p::NamedTuple)
 	else                                     prj = prj[1]   * center
 	end
 	return prj, mnemo
+end
+
+# ---------------------------------------------------------------------------------------------------
+function guess_proj(lonlim, latlim)
+	# Select a projection based on map limits. Follows closely the Matlab behavior
+
+	if (lonlim == [0.0 0.0] && latlim == [0.0 0.0])
+		@warn("Numeric values of 'CTRL.limits' not available. Cannot use the 'guess' option (Must specify a projection)")
+		return(" -JX12cd/0")
+	end
+	if (latlim == [-90, 90] && (lonlim[2]-lonlim[1]) > 359.99)	# Whole Earth
+		proj = string(" -JN", sum(lonlim)/2)		# Robinson
+	elseif (maximum(abs.(latlim)) < 30)
+		proj = string(" -JM")						# Mercator
+	elseif abs(latlim[2]-latlim[1]) <= 90 && abs(sum(latlim)) > 20 && maximum(abs.(latlim)) < 90
+		# doesn't extend to the pole, not straddling equator
+		parallels = latlim .+ diff(latlim) .* [1/6 -1/6]
+		proj = string(" -JD", sum(lonlim)/2, '/', sum(latlim)/2, '/', parallels[1], '/', parallels[2])	# eqdc
+	elseif abs(latlim[2]-latlim[1]) < 85 && maximum(abs.(latlim)) < 90	# doesn't extend to the pole, not straddling equator
+		proj = string(" -JI", '/', sum(lonlim)/2)						# Sinusoidal
+	elseif (maximum(latlim) == 90 && minimum(latlim) >= 75)
+		proj = string(" -JS", sum(lonlim)/2, "/90")						# General Stereographic - North Pole
+	elseif (minimum(latlim) == -90 && maximum(latlim) <= -75)
+		proj = string(" -JS", sum(lonlim)/2, "/-90")					# General Stereographic - South Pole
+	elseif maximum(abs.(latlim)) == 90 && abs(lonlim[2]-lonlim[1]) < 180
+		proj = string(" -JPoly", sum(lonlim)/2, '/', sum(latlim)/2)		# Polyconic
+	elseif maximum(abs.(latlim)) == 90 && abs(latlim[2]-latlim[1]) < 90
+		proj = string(" -JE", sum(lonlim)/2, '/', 90 * sign(latlim[2]))	# azimuthalequidistant
+	else
+		proj = string(" -JJ", sum(lonlim)/2)							# Miller
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -605,7 +668,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ="", del::Bool=true)
+function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::String="", del::Bool=true)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(d, cmd, O, del)
 	cmd, opt_J = parse_J(d, cmd, defaultJ, true, O, del)
@@ -1167,7 +1230,7 @@ function arg2str(arg, sep='/')::String
 	elseif ((isa(arg, Bool) && arg) || isempty_(arg))
 		out[1] = ""
 	elseif (isa(arg, Real))		# Have to do it after the Bool test above because Bool is a Number too
-		out[1] = @sprintf("%.15g", arg)
+		out[1] = sprintf("%.15g", arg)
 	elseif (isa(arg, Array{<:Real}) || (isa(arg, Tuple) && !isa(arg[1], String)) )
 		out[1] = join([string(x, sep) for x in arg])
 		out[1] = rstrip(out[1], sep)		# Remove last '/'
@@ -1651,10 +1714,10 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || (cmd0 != "" && cmd0[1] != '@'))
 		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
-			cpt_opt_T = @sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
+			cpt_opt_T = sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
 		end
 		if (opt_R == "" && (!IamModern[1] || (IamModern[1] && FirstModern[1])) )	# No -R ovewrite by accident
-			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
+			cmd *= sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
 		end
 	end
 
@@ -2494,7 +2557,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
 			                 info[1].data[3], info[1].data[4], info[1].data[5], info[1].data[6])
 		else
-			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
+			opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
 			                 info[1].data[3], info[1].data[4])
 		end
 		cmd *= opt_R
@@ -2857,7 +2920,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				D::Vector{GMTdataset} = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
 				mm = extrema(D[1].data, dims=1)
 				xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = mm[1][1],mm[2][1],mm[1][2],mm[2][2]
-				opt_R::String = @sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
+				opt_R::String = sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
 				o = scan_opt(cmd[1], "-J")
 				if     (o[1] == 'x')  size_ = "+scale=" * o[2:end]
 				elseif (o[1] == 'X')  size_ = "+width=" * o[2:end]
@@ -2947,7 +3010,6 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 		lab = ["y1"]
 	else
 		lab = ["y$(size(legend_type.label, 1))"]
-		#lab = [@sprintf("y%d", size(legend_type.label, 1))]
 	end
 
 	if ((isa(cmd_, Array{String, 1}) && !occursin("-O", cmd_[1])) || (isa(cmd_, String) && !occursin("-O", cmd_)))

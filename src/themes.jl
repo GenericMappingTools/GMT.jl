@@ -1,10 +1,10 @@
 function theme(name; kwargs...)
-	reset_defaults(API)
 	d = KW(kwargs)
 	font = ((val = find_in_dict(d, [:font])[1]) !== nothing) ? string(val) : ""
 	bg_color = ((val = find_in_dict(d, [:bg_color])[1]) !== nothing) ? string(val) : ""
 	color = ((val = find_in_dict(d, [:fg_color])[1]) !== nothing) ? string(val) : ""
 	if (name == :dark || name == "dark")
+		reset_defaults(API)
 		fonts  = (font == "")  ? ["AvantGarde-Book", "AvantGarde-Demi", "Helvetica"] : [font, font, font]
 		colors = (color == "") ? ["gray92", "gray86"] : [color, color]
 		(bg_color == "") && (bg_color = "5/5/35")
@@ -27,6 +27,7 @@ function theme(name; kwargs...)
 		ThemeIsOn[1] = true
 #=
 	elseif (name == :modern || name == "modern")
+		reset_defaults(API)
 		if (font == "")  fonts = ["AvantGarde-Book", "AvantGarde-Demi", "Helvetica"]	# The GMT settings
 		else             fonts = [font, font, font]
 		end
@@ -54,10 +55,15 @@ function theme(name; kwargs...)
 		gmtlib_setparameter(API, "MAP_TITLE_OFFSET", "auto")
 		gmtlib_setparameter(API, "MAP_VECTOR_SHAPE", "auto")
 		gmtlib_setparameter(API, "PS_PAGE_COLOR", "$bg_color")
-		ThemeIsOn[1] = true
 =#
-	else
-		ThemeIsOn[1] = false			# Because we called reset_defaults() above
 	end
+	isOn = true				# Means this theme will reset to defaults in showfig()
+	if (haskey(d, :save) || haskey(d, "save"))
+		f = joinpath(readlines(`gmt --show-userdir`)[1], "theme_jl.txt")
+		(isfile(f)) && rm(f)
+		(name == :none || name == "none") ? reset_defaults(API) : write(f, string(name))
+		isOn = false		# So we wont reset defaults in showfig()
+	end
+	ThemeIsOn[1] = isOn
 	return nothing
 end

@@ -437,3 +437,18 @@ end
 function gmt_put_history(API::Ptr{Cvoid})
 	ccall((:gmt_put_history, thelib), Cint, (Cstring,), GMT_Get_Ctrl(API))
 end =#
+
+
+function sprintf(format::String, x...)
+	strp = Ref{Ptr{Cchar}}(0)
+	if (length(x) == 1)
+		len = ccall(:asprintf, Cint, (Ptr{Ptr{Cchar}}, Cstring, Cdouble...), strp, format, x[1])
+	elseif (length(x) == 2)
+		len = ccall(:asprintf, Cint, (Ptr{Ptr{Cchar}}, Cstring, Cdouble, Cdouble...), strp, format, x[1], x[2])
+	elseif (length(x) == 4)
+		len = ccall(:asprintf, Cint, (Ptr{Ptr{Cchar}}, Cstring, Cdouble, Cdouble, Cdouble, Cdouble...), strp, format, x[1], x[2], x[3], x[4])
+	end
+	str = unsafe_string(strp[],len)
+	Libc.free(strp[])
+	return str
+end
