@@ -41,7 +41,7 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("No, no, no. Nothing useful in the region named tuple arguments") GMT.build_opt_R((zz=:x,))
 	@test_throws ErrorException("Unknown continent name") GMT.build_opt_R((continent='a',extend=4))
 	@test_throws ErrorException("Increments for limits must be a String, a Number, Array or Tuple") GMT.build_opt_R((iso="PT",extend='8'))
-	@test GMT.opt_R2num(" -R1/2/3/4") == [1.0 2 3 4]
+	@test GMT.opt_R2num(" -R1/2/3/4") == [1.0, 2, 3, 4]
 	@test_throws ErrorException("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (1500) is clearly an invalid EPSG")  GMT.build_opt_J(1500)
 	@test GMT.build_opt_J(:X5)[1] == " -JX5"
 	@test GMT.build_opt_J(2500)[1] == " -J2500"
@@ -353,6 +353,7 @@ if (got_it)					# Otherwise go straight to end
 	println("	GMTGRAVMAG3D")
 	gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/0/-10/40", Vd=dbg2);
 	@test_throws ErrorException("Missing one of 'index', 'raw_triang' or 'str' data") gmtgravmag3d(I=1.0);
+	@test_throws ErrorException("For grid output MUST specify grid increment ('I' or 'inc')") gmtgravmag3d(Tv=true);
 
 	println("	GMTREGRESS")
 	# GMTREGRESS
@@ -466,7 +467,7 @@ if (got_it)					# Otherwise go straight to end
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 	r=gmt("grdinfo -C", G);
 	@assert(r[1].data[1:1,1:10] == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
-	r2=grdinfo(G, C=true, V=true);
+	r2=grdinfo(G, C=true, V=:q);
 	@assert(r[1].data == r2[1].data)
 	grdinfo(mat2grid(rand(4,4)));		# Test the doubles branch in grid_init
 
@@ -488,7 +489,7 @@ if (got_it)					# Otherwise go straight to end
 	println("	GRD2KML")
 	# GRD2KML
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");
-	grd2kml(G, I="+", N="NUL", V="q")
+	grd2kml(G, I="+", N="NUL", V="q", Vd=dbg2)
 
 	G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y -Vq");
 	G2=grdblend(G,G3);
@@ -721,7 +722,7 @@ if (got_it)					# Otherwise go straight to end
 	plot(rand(10,4), S=:c, ms=0.2, marker=:star, ml=2, W=1, Vd=dbg2)
 	plot([0.0 0; 1.1 1], theme=(name=:dark, bg_color="gray"), lc=:white, Vd=dbg2)
 	#plot([0.0 0; 1.1 1], theme=(name=:modern,), Vd=dbg2)
-	plot(1:4, rand(4,4), theme=(name=:nikles,), leg=true)	# Also resets default conf
+	plot(1:4, rand(4,4), theme=(name=:none, save=true), leg=true)	# Resets default conf and delete the theme_jl file
 	@test startswith(plot!([1 1], marker=(:r, [2 3]), Vd=dbg2), "psxy  -R -J -Sr")
 	@test_throws ErrorException("Wrong number of extra columns for marker (r). Got 3 but expected 2") plot!([1 1], marker=(:r, [2 3 4]), Vd=dbg2)
 	@test_throws ErrorException("Unknown graphics file extension (.ppf)") plot(rand(5,2), savefig="la.ppf")
@@ -781,7 +782,7 @@ if (got_it)					# Otherwise go straight to end
 	# LINES
 	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
 	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af, box_pos="+p0.5", leg_pos=(offset=0.5,), leg=:TL)
-	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", vec=(size=0.65, fill=:red), Vd=dbg2)
+	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", Vd=dbg2)
 	lines(1:10,rand(10), W=0.25, Vd=dbg2)
 	lines!(1:10,rand(10), W=0.25, Vd=dbg2)
 	lines!("", rand(10), W=0.25, Vd=dbg2)
@@ -924,7 +925,7 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	PSCONVERT")
 	# PSCONVERT
-	gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d > lixo.ps")
+	gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d -Vq > lixo.ps")
 	psconvert("lixo.ps", adjust=true, fmt="eps", C="-dDOINTERPOLATE")
 	psconvert("lixo.ps", adjust=true, fmt="eps", C=["-dDOINTERPOLATE" "-dDOINTERPOLATE"])
 	psconvert("lixo.ps", adjust=true, fmt="tif")
@@ -944,15 +945,16 @@ if (got_it)					# Otherwise go straight to end
 	coast(R=[-10 1 36 45], J="M", B="a", E="PT,+gblue", borders="a", rivers="a", Vd=dbg2)
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), water=:blue, clip=:land, Vd=dbg2)
 	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), clip=:stop, rivers="1/0.5p", Vd=dbg2)
+	coast(region=(continent=:AN,), Vd=dbg2)
 	@test GMT.parse_dcw("", ((country=:PT, pen=(2,:red), fill=:blue), (country=:ES, pen=(2,:blue)) )) == " -EPT+p2,red+gblue -EES+p2,blue"
 	r = coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60), frame=(annot=30, grid=15), res=:crude, area=10000, land=:tan, ocean=:cyan, shore=:thinnest, figsize=10, Vd=dbg2);
 	@test startswith(r, "pscoast  -Rg -JF-120/35/60/10 -Bpa30g15 -A10000 -Dcrude -Gtan -Scyan -Wthinnest")
 	r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hello Round World", Vd=dbg2);
 	@test startswith(r, "pscoast  -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude")
-	@test startswith(coast(R=:g, W=(level=1,pen=(2,:green)), Vd=dbg2), "pscoast  -Rg -JX12cd/0 -Baf -BWSen -W1/2,green")
-	@test startswith(coast(R=:g, W=(2,:green), Vd=dbg2), "pscoast  -Rg -JX12cd/0 -Baf -BWSen -W2,green")
+	@test startswith(coast(R=:g, W=(level=1,pen=(2,:green)), Vd=dbg2), "pscoast  -Rg -JN180.0/12c -Baf -BWSen -W1/2,green")
+	@test startswith(coast(R=:g, W=(2,:green), Vd=dbg2), "pscoast  -Rg -JN180.0/12c -Baf -BWSen -W2,green")
 	r = coast(R=:g, N=((level=1,pen=(2,:green)), (level=3,pen=(4,:blue, "--"))), Vd=dbg2);
-	@test startswith(r, "pscoast  -Rg -JX12cd/0 -Baf -BWSen -N1/2,green -N3/4,blue,--")
+	@test startswith(r, "pscoast  -Rg -JN180.0/12c -Baf -BWSen -N1/2,green -N3/4,blue,--")
 	r = coast(proj=:Mercator, DCW=((country="GB,IT,FR", fill=:blue, pen=(0.25,:red)), (country="ES,PT,GR", fill=:yellow)), Vd=dbg2);
 	@test startswith(r, "pscoast  -JM12c -Baf -BWSen -EGB,IT,FR+gblue+p0.25,red -EES,PT,GR+gyellow")
 	@test_throws ErrorException("In Overlay mode you cannot change a fig scale and NOT repeat the projection") coast!(region=(-20,60,-90,90), scale=0.03333, Vd=dbg2)
@@ -1120,7 +1122,7 @@ if (got_it)					# Otherwise go straight to end
 		text(text_record([0 0; 1 1.1],[" ";" "]), text="MAP", font=18, region_justify=:BL, D="j0.2i")
 	gmtend()
 
-	gmtbegin(); gmtfig("lixo.ps");	gmtend()
+	gmtbegin(); gmtfig("lixo.ps -Vq");	gmtend()
 
 	println("    MOVIE")
 	movie("main_sc.jl", pre="pre_sc.jl", C="7.2ix4.8ix100", N=:anim04, T="flight_path.txt", L="f+o0.1i", F=:mp4, A="+l+s10", Sf="", Vd=dbg2)
@@ -1298,11 +1300,12 @@ if (got_it)					# Otherwise go straight to end
 	D = grdcontour(G, cont=[-2,0,5], dump=true);
 
 	# Remove garbage
+	println("	REMOVE GARBAGE")
 	rm("gmt.history")
 	rm("gmt.conf")
 	rm("lixo.ps")
 	rm("lixo.png")
-	rm("lixo.grd")
+	#rm("lixo.grd")
 	rm("lixo.tif")
 	rm("lixo.cpt")
 	rm("lixo.dat")
