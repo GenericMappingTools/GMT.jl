@@ -239,8 +239,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 
 	if (!O)
 		if (default == "guess" && opt_J[1] == "")
-			opt_J[1] = guess_proj(CTRL.limits[1:2], CTRL.limits[3:4])
-			mnemo = true		# To force append fig size
+			opt_J[1] = guess_proj(CTRL.limits[1:2], CTRL.limits[3:4]);	mnemo = true	# To force append fig size
 		end
 		if (opt_J[1] == "")  opt_J[1] = " -JX"  end
 		# If only the projection but no size, try to get it from the kwargs.
@@ -1255,7 +1254,7 @@ function finish_PS(d::Dict, cmd::Vector{String}, output::String, K::Bool, O::Boo
 	# Finish a PS creating command. All PS creating modules should use this.
 	IamModern[1] && return cmd  			# In Modern mode this fun does not play
 	for k = 1:length(cmd)
-		KK = K;		OO = O
+		KK = deepcopy(K);		OO = O
 		if (!occursin(" >", cmd[k]))	# Nested calls already have the redirection set
 			if (k > 1)  KK = true;	OO = true  end
 			cmd[k] = finish_PS(d, cmd[k], output, KK, OO)
@@ -1268,10 +1267,11 @@ end
 function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)::String
 	if (!O && ((val = find_in_dict(d, [:P :portrait])[1]) === nothing))  cmd *= " -P"  end
 
-	if (K && !O)              opt = " -K"
-	elseif (K && O)           opt = " -K -O"
-	else                      opt = ""
-	end
+	#if (K && !O)              opt = " -K"
+	#elseif (K && O)           opt = " -K -O"
+	#else                      opt = ""
+	#end
+	opt = (K && !O) ? " -K" : ((K && O) ? " -K -O" : "")
 
 	if (output != "")
 		if (K && !O)          cmd *= opt * " > " * output
@@ -2064,8 +2064,7 @@ function helper3_axes(arg, primo::String, axe::String)::String
 
 	label = ""
 	if (isa(arg, AbstractArray))
-		pos = arg
-		n_annot = length(pos)
+		pos, n_annot = arg, length(pos)
 		tipo = fill('a', n_annot)			# Default to annotate
 	elseif (isa(arg, NamedTuple) || isa(arg, Dict))
 		if (isa(arg, NamedTuple))  d = nt2dict(arg)  end
@@ -2453,7 +2452,7 @@ function fname_out(d::Dict, del::Bool=false)
 	(EXT == "" && !Sys.iswindows()) && error("Return an image is only for Windows")
 	(1 == length(EXT) > 3) && error("Bad graphics file extension")
 
-	ret_ps = false				# To know if we want to return or save PS in mem
+	ret_ps = (0 > 1)			# To know if we want to return or save PS in mem
 	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
 		fname = "";		EXT = "ps";		ret_ps = true
 		(del) && delete!(d, :ps)
@@ -2611,11 +2610,11 @@ function round_wesn(wesn, geo::Bool=false)
 		s = 1.0
 		if (geo) 	# Use arc integer minutes or seconds if possible
 			if (inc < 1.0 && inc > 0.05) 				# Nearest arc minute
-				s = 60.0;		inc = 1.0
+				s = 60.0+0.;		inc = 1.0
 				if ((s * range[side] / inc) > 10.0) inc *= 2.0	end		# 2 arcmin
 				if ((s * range[side] / inc) > 10.0) inc *= 2.5	end		# 5 arcmin
 			elseif (inc < 0.1 && inc > 0.005) 			# Nearest arc second
-				s = 3600.0;		inc = 1.0
+				s = 3600.0+0.;		inc = 1.0
 				if ((s * range[side] / inc) > 10.0) inc *= 2.0	end		# 2 arcsec
 				if ((s * range[side] / inc) > 10.0) inc *= 2.5	end		# 5 arcsec
 			end
@@ -3036,7 +3035,7 @@ function digests_legend_bag(d::Dict, del::Bool=false)
 		(legend_type === nothing) && @warn("This module does not support automatic legends") && return
 
 		fs = 10					# Font size in points
-		symbW = 0.75			# Symbol width. Default to 0.75 cm (good for lines)
+		symbW = 0.75+0.			# Symbol width. Default to 0.75 cm (good for lines)
 		nl  = length(legend_type.label)
 		leg = Array{String,1}(undef,nl)
 		for k = 1:nl											# Loop over number of entries
@@ -3194,14 +3193,10 @@ function extrema_nan(A)
 	end
 end
 function minimum_nan(A)
-	if (eltype(A) <: AbstractFloat)  return minimum(x->isnan(x) ?  Inf : x,A);
-	else                             return minimum(A);
-	end
+	return (eltype(A) <: AbstractFloat) ? minimum(x->isnan(x) ?  Inf : x,A) : minimum(A)
 end
 function maximum_nan(A)
-	if (eltype(A) <: AbstractFloat)  return maximum(x->isnan(x) ? -Inf : x,A);
-	else                             return maximum(A);
-	end
+	return (eltype(A) <: AbstractFloat) ? maximum(x->isnan(x) ? -Inf : x,A) : maximum(A)
 end
 
 # --------------------------------------------------------------------------------------------------

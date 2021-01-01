@@ -271,6 +271,13 @@ if (got_it)					# Otherwise go straight to end
 	GMT.GMT_PEN();
 	GMT.GMT_PEN(0.0, 0.0, (0.0, 0.0, 0.0, 0.0), map(UInt8, (repeat('\0', 128)...,)), 0, 0, (pointer([0]), pointer([0])));
 
+	GMT.guess_proj([0., 0.0], [0.0, 0.])
+	GMT.guess_proj([0., 20.], [0.0, 20.])
+	GMT.guess_proj([0., 20.], [35.0, 45.])
+	GMT.guess_proj([0., 20.], [80.0, 90.])
+	GMT.guess_proj([0., 20.], [-90.0, -80.])
+	GMT.guess_proj([0., 20.], [-6.0, 90.])
+
 	gmthelp([:n :sphinterpolate])
 
 	# Test here is to the showfig fun
@@ -631,7 +638,7 @@ if (got_it)					# Otherwise go straight to end
 	grdimage(data=(Gr,Gg,Gb), J=:X10, I=mat2grid(rand(Float32,128,128)), Vd=dbg2)
 	grdimage(rand(Float32, 128, 128), shade=(default=30,), coast=(W=1,), Vd=dbg2)
 	grdimage(rand(Float32, 128, 128), colorbar=(color=:rainbow, pos=(anchor=:RM,length=8)), Vd=dbg2)
-	grdimage("lixo.grd", coast=true, colorbar=true, Vd=dbg2)
+	grdimage("lixo.grd", coast=true, colorbar=true, logo=true, Vd=dbg2)
 	G = gmt("grdmath -Rg -fg -I5 X");
 	gmtwrite("lixo.grd", G)
 	grdimage("lixo.grd", proj=:Winkel, colorbar=true, coast=true)
@@ -945,7 +952,8 @@ if (got_it)					# Otherwise go straight to end
 	coast(R=[-10 1 36 45], J="M", B="a", E="PT,+gblue", borders="a", rivers="a", Vd=dbg2)
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), water=:blue, clip=:land, Vd=dbg2)
 	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), clip=:stop, rivers="1/0.5p", Vd=dbg2)
-	coast(region=(continent=:AN,), Vd=dbg2)
+	coast(region=(continent=:AN,), Vd=dbg2);
+	coast(region="-10/36/-7/41+r", proj=:guess, Vd=dbg2);
 	@test GMT.parse_dcw("", ((country=:PT, pen=(2,:red), fill=:blue), (country=:ES, pen=(2,:blue)) )) == " -EPT+p2,red+gblue -EES+p2,blue"
 	r = coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60), frame=(annot=30, grid=15), res=:crude, area=10000, land=:tan, ocean=:cyan, shore=:thinnest, figsize=10, Vd=dbg2);
 	@test startswith(r, "pscoast  -Rg -JF-120/35/60/10 -Bpa30g15 -A10000 -Dcrude -Gtan -Scyan -Wthinnest")
@@ -973,8 +981,8 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	PSIMAGE")
 	# PSIMAGE
-	#psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
-	#psimage!("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7, Vd=dbg2)
+	psimage("lixo.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
+	psimage!("lixo.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7, Vd=dbg2)
 
 	println("	PSSCALE")
 	# PSSCALE
