@@ -973,8 +973,8 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	PSIMAGE")
 	# PSIMAGE
-	psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
-	psimage!("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7, Vd=dbg2)
+	#psimage("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
+	#psimage!("@warning.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7, Vd=dbg2)
 
 	println("	PSSCALE")
 	# PSSCALE
