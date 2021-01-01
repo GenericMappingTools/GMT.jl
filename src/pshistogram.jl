@@ -118,6 +118,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			cmd *= opt_Z
 			if (opt_T != "")  cmd *= " -T" * opt_T  end
 		end
+		cmd = parse_V(d, cmd)
 		return gmt(gmt_proggy * cmd, arg1)
 	end
 
