@@ -452,3 +452,10 @@ function sprintf(format::String, x...)
 	Libc.free(strp[])
 	return str
 end
+
+function get_common_R(API::Ptr{Cvoid})
+	R = COMMON_R((false,false,false,false), false, 0, 0, 0, (0., 0., 0., 0., 0., 0.), (0., 0., 0., 0.), (0., 0.), map(UInt8, (string(repeat(" ",256))...,)))
+	Rp = pointer([R])
+	ccall((:gmtlib_get_common_R, thelib), Cint, (Cstring, Ptr{COMMON_R}), API, Rp)
+	return unsafe_load(Rp)
+end
