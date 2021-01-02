@@ -56,7 +56,7 @@ mutable struct GMT_GRID_HEADER
 	size::Csize_t 			# Actual number of items required to hold this grid (= mx * my)
 	bits::UInt32
 	complex_mode::UInt32
-	_type::UInt32
+	type::UInt32
 	n_bands::UInt32
 	mx::UInt32 				# Actual dimensions of the grid in memory, allowing for the padding
 	my::UInt32
@@ -175,7 +175,7 @@ mutable struct GMT_PALETTE
 end
 
 mutable struct GMT_IMAGE
-	_type::UInt32
+	type::UInt32
 	colormap::Ptr{Cint}
 	n_indexed_colors::Cint
 	header::Ptr{GMT_GRID_HEADER}
@@ -214,7 +214,7 @@ struct GMT_VECTOR
 	n_rows::UInt64
 	n_headers::UInt32
 	registration::UInt32
-	_type::Ptr{UInt32}
+	type::Ptr{UInt32}
 	range::NTuple{2,Cdouble}
 	# data::Ptr{GMT_UNIVECTOR}
 	data::Ptr{Ptr{Cvoid}}
@@ -237,7 +237,7 @@ mutable struct GMT_MATRIX
 	registration::UInt32
 	dim::Csize_t
 	size::Csize_t
-	_type::UInt32
+	type::UInt32
 	range::NTuple{6,Cdouble}
 	inc::NTuple{3,Cdouble}
 #	data::GMT_UNIVECTOR
@@ -367,6 +367,18 @@ struct OGRREAD_CTRL
 	layer::Cint					# If > 0 will return only data from that layer. Use negative to return all layers
 	name::Ptr{UInt8}			# Vector file name
 	region::NTuple{6,Cdouble}	# For when a sub-region is required
+end
+
+struct COMMON_R
+	active::NTuple{4,Bool}
+	oblique::Bool
+	registration::Csize_t
+	row_oder::Cint
+	mode::Cuint
+	wesn::NTuple{6,Cdouble}
+	wesn_orig::NTuple{4,Cdouble}
+	inc::NTuple{2,Cdouble}
+	string::NTuple{256,UInt8}
 end
 
 #= 

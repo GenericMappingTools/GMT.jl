@@ -513,8 +513,8 @@ function get_image(API::Ptr{Nothing}, object)
 
 	I = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
 	(I.data == C_NULL) && error("get_image: programming error, output matrix is empty")
-	if     (I._type <= 1)  data = convert(Ptr{Cuchar}, I.data)
-	elseif (I._type == 3)  data = convert(Ptr{Cushort}, I.data)
+	if     (I.type <= 1)  data = convert(Ptr{Cuchar}, I.data)
+	elseif (I.type == 3)  data = convert(Ptr{Cushort}, I.data)
 	end
 
 	gmt_hdr = unsafe_load(I.header)
@@ -540,8 +540,7 @@ function get_image(API::Ptr{Nothing}, object)
 		n_colors = Int64(I.n_indexed_colors)
 		colormap =  deepcopy(unsafe_wrap(Array, I.colormap, n_colors * 4))
 	else
-		colormap = vec(zeros(Clong,1,3))	# Because we need an array
-		n_colors = 0
+		colormap, n_colors = vec(zeros(Clong,1,3)), 0	# Because we need an array
 	end
 
 	# Return image via a uint8 matrix in a struct
@@ -582,10 +581,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
 
 	(C.data == C_NULL) && error("get_palette: programming error, output CPT is empty")
 
-	if (C.model & GMT_HSV != 0)       model = "hsv"
-	elseif (C.model & GMT_CMYK != 0)  model = "cmyk"
-	else                              model = "rgb"
-	end
+	model = (C.model & GMT_HSV != 0) ? "hsv" : ((C.model & GMT_CMYK != 0) ? "cmyk" : "rgb")
 	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 
 	out = GMTcpt(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), zeros(2)*NaN, zeros(3,3), 8, 0.0,
@@ -995,19 +991,18 @@ function dataset_init(API::Ptr{Nothing}, ptr, direction::Integer, actual_family)
 		Mb.n_rows    = size(ptr,1)
 		Mb.n_columns = size(ptr,2)
 
-		if (eltype(ptr)     == Float64)		Mb._type = UInt32(GMT.GMT_DOUBLE)
-		elseif (eltype(ptr) == Float32)		Mb._type = UInt32(GMT.GMT_FLOAT)
-		elseif (eltype(ptr) == UInt64)		Mb._type = UInt32(GMT.GMT_ULONG)
-		elseif (eltype(ptr) == Int64)		Mb._type = UInt32(GMT.GMT_LONG)
-		elseif (eltype(ptr) == UInt32)		Mb._type = UInt32(GMT.GMT_UINT)
-		elseif (eltype(ptr) == Int32)		Mb._type = UInt32(GMT.GMT_INT)
-		elseif (eltype(ptr) == UInt16)		Mb._type = UInt32(GMT.GMT_USHORT)
-		elseif (eltype(ptr) == Int16)		Mb._type = UInt32(GMT.GMT_SHORT)
-		elseif (eltype(ptr) == UInt8)		Mb._type = UInt32(GMT.GMT_UCHAR)
-		elseif (eltype(ptr) == Int8)		Mb._type = UInt32(GMT.GMT_CHAR)
-		elseif (ptr === nothing)		# Do nothing here (-G of project comes here) but looks dangerous
+		if (eltype(ptr)     == Float64)		Mb.type = UInt32(GMT.GMT_DOUBLE)
+		elseif (eltype(ptr) == Float32)		Mb.type = UInt32(GMT.GMT_FLOAT)
+		elseif (eltype(ptr) == UInt64)		Mb.type = UInt32(GMT.GMT_ULONG)
+		elseif (eltype(ptr) == Int64)		Mb.type = UInt32(GMT.GMT_LONG)
+		elseif (eltype(ptr) == UInt32)		Mb.type = UInt32(GMT.GMT_UINT)
+		elseif (eltype(ptr) == Int32)		Mb.type = UInt32(GMT.GMT_INT)
+		elseif (eltype(ptr) == UInt16)		Mb.type = UInt32(GMT.GMT_USHORT)
+		elseif (eltype(ptr) == Int16)		Mb.type = UInt32(GMT.GMT_SHORT)
+		elseif (eltype(ptr) == UInt8)		Mb.type = UInt32(GMT.GMT_UCHAR)
+		elseif (eltype(ptr) == Int8)		Mb.type = UInt32(GMT.GMT_CHAR)
 		else
-			error("only integer or floating point types allowed in input. Not this: $(typeof(ptr))")
+			error("Only integer or floating point types allowed in input. Not this: $(typeof(ptr))")
 		end
 		Mb.data = pointer(ptr)
 		Mb.dim  = Mb.n_rows		# Data from Julia is in column major
@@ -1061,10 +1056,7 @@ function palette_init(API::Ptr{Nothing}, cpt, dir::Integer)
 		Pb.mode = Pb.mode & GMT.GMT_CPT_HINGED
 	end
 
-	if (cpt.model == "rgb")      Pb.model = GMT_RGB
-	elseif (cpt.model == "hsv")  Pb.model = GMT_HSV
-	else                         Pb.model = GMT_CMYK
-	end
+	Pb.model = (cpt.model == "rgb") ? GMT_RGB : ((cpt.model == "hsv") ? GMT_HSV : GMT_CMYK)
 
 	b = (GMT.GMT_BFN((cpt.bfn[1,1], cpt.bfn[1,2], cpt.bfn[1,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
 	     GMT.GMT_BFN((cpt.bfn[2,1], cpt.bfn[2,2], cpt.bfn[2,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),

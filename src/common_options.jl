@@ -1254,7 +1254,7 @@ function finish_PS(d::Dict, cmd::Vector{String}, output::String, K::Bool, O::Boo
 	# Finish a PS creating command. All PS creating modules should use this.
 	IamModern[1] && return cmd  			# In Modern mode this fun does not play
 	for k = 1:length(cmd)
-		KK = deepcopy(K);		OO = O
+		KK, OO = K, O
 		if (!occursin(" >", cmd[k]))	# Nested calls already have the redirection set
 			if (k > 1)  KK = true;	OO = true  end
 			cmd[k] = finish_PS(d, cmd[k], output, KK, OO)
@@ -1267,10 +1267,6 @@ end
 function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)::String
 	if (!O && ((val = find_in_dict(d, [:P :portrait])[1]) === nothing))  cmd *= " -P"  end
 
-	#if (K && !O)              opt = " -K"
-	#elseif (K && O)           opt = " -K -O"
-	#else                      opt = ""
-	#end
 	opt = (K && !O) ? " -K" : ((K && O) ? " -K -O" : "")
 
 	if (output != "")
@@ -2452,7 +2448,7 @@ function fname_out(d::Dict, del::Bool=false)
 	(EXT == "" && !Sys.iswindows()) && error("Return an image is only for Windows")
 	(1 == length(EXT) > 3) && error("Bad graphics file extension")
 
-	ret_ps = (0 > 1)			# To know if we want to return or save PS in mem
+	ret_ps = false				# To know if we want to return or save PS in mem
 	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
 		fname = "";		EXT = "ps";		ret_ps = true
 		(del) && delete!(d, :ps)
@@ -2610,11 +2606,11 @@ function round_wesn(wesn, geo::Bool=false)
 		s = 1.0
 		if (geo) 	# Use arc integer minutes or seconds if possible
 			if (inc < 1.0 && inc > 0.05) 				# Nearest arc minute
-				s = 60.0+0.;		inc = 1.0
+				s, inc = 60.0, 1.0
 				if ((s * range[side] / inc) > 10.0) inc *= 2.0	end		# 2 arcmin
 				if ((s * range[side] / inc) > 10.0) inc *= 2.5	end		# 5 arcmin
 			elseif (inc < 0.1 && inc > 0.005) 			# Nearest arc second
-				s = 3600.0+0.;		inc = 1.0
+				s, inc = 3600.0, 1.0
 				if ((s * range[side] / inc) > 10.0) inc *= 2.0	end		# 2 arcsec
 				if ((s * range[side] / inc) > 10.0) inc *= 2.5	end		# 5 arcsec
 			end
@@ -3035,7 +3031,7 @@ function digests_legend_bag(d::Dict, del::Bool=false)
 		(legend_type === nothing) && @warn("This module does not support automatic legends") && return
 
 		fs = 10					# Font size in points
-		symbW = 0.75+0.			# Symbol width. Default to 0.75 cm (good for lines)
+		symbW = 3/4 			# Symbol width. Default to 0.75 cm (good for lines)
 		nl  = length(legend_type.label)
 		leg = Array{String,1}(undef,nl)
 		for k = 1:nl											# Loop over number of entries

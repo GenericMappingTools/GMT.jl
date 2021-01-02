@@ -271,12 +271,19 @@ if (got_it)					# Otherwise go straight to end
 	GMT.GMT_PEN();
 	GMT.GMT_PEN(0.0, 0.0, (0.0, 0.0, 0.0, 0.0), map(UInt8, (repeat('\0', 128)...,)), 0, 0, (pointer([0]), pointer([0])));
 
-	GMT.guess_proj([0., 0.0], [0.0, 0.])
+	GMT.guess_proj([0.0 0.0], [0.0 0.0])
 	GMT.guess_proj([0., 20.], [0.0, 20.])
 	GMT.guess_proj([0., 20.], [35.0, 45.])
 	GMT.guess_proj([0., 20.], [80.0, 90.])
 	GMT.guess_proj([0., 20.], [-90.0, -80.])
 	GMT.guess_proj([0., 20.], [-6.0, 90.])
+
+	GMT.dataset_init(API, 0., 1, 0);
+	GMT.dataset_init(API, [Int8(1), Int8(2)], 0, [0])
+	@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(API, ' ', 0, [0])
+	@test_throws ErrorException("Wrong type (Int64) for the 'text' argin") GMT.text_record(rand(2,2), 0)
+
+	GMT.show_non_consumed(Dict(:lala => 0), "prog")
 
 	gmthelp([:n :sphinterpolate])
 
@@ -451,7 +458,6 @@ if (got_it)					# Otherwise go straight to end
 	gmtwrite("lixo.dat", mat2ds([1 2 10; 3 4 20]))
 	gmtwrite("lixo.dat", convert.(UInt8, [1 2 3; 2 3 4]))
 	gmtwrite("lixo.dat", [1 2 10; 3 4 20])
-	plot("lixo.dat", lala=1, Vd=2)		# Using plot here because the availability of a data file
 	D = gmtread("lixo.dat", i="0,1s10", table=true);
 	@test(sum(D[1].data) == 64.0)
 	gmtwrite("lixo.dat", D)
@@ -476,7 +482,8 @@ if (got_it)					# Otherwise go straight to end
 	@assert(r[1].data[1:1,1:10] == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
 	r2=grdinfo(G, C=true, V=:q);
 	@assert(r[1].data == r2[1].data)
-	grdinfo(mat2grid(rand(4,4)));		# Test the doubles branch in grid_init
+	grdinfo(mat2grid(rand(4,4)));				# Test the doubles branch in grid_init
+	grdinfo(mat2grid(rand(Float32,4,4)));		# Test the float branch in grid_init
 
 	println("	GRD2CPT")
 	# GRD2CPT
