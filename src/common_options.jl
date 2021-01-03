@@ -3031,7 +3031,7 @@ function digests_legend_bag(d::Dict, del::Bool=false)
 		(legend_type === nothing) && @warn("This module does not support automatic legends") && return
 
 		fs = 10					# Font size in points
-		symbW = 3/4 			# Symbol width. Default to 0.75 cm (good for lines)
+		symbW = 0.75			# Symbol width. Default to 0.75 cm (good for lines)
 		nl  = length(legend_type.label)
 		leg = Array{String,1}(undef,nl)
 		for k = 1:nl											# Loop over number of entries

@@ -283,9 +283,13 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(API, ' ', 0, [0])
 	@test_throws ErrorException("Wrong type (Int64) for the 'text' argin") GMT.text_record(rand(2,2), 0)
 
-	GMT.show_non_consumed(Dict(:lala => 0), "prog")
+	GMT.show_non_consumed(Dict(:lala => 0), "prog");
+	GMT.dbg_print_cmd(Dict(:lala => 0, :Vd=>2), "prog");
+
+	GMT.justify("aiai")		# A warning
 
 	gmthelp([:n :sphinterpolate])
+	gmthelp(:wW)
 
 	# Test here is to the showfig fun
 	grdimage([1 2;3 4])
@@ -960,7 +964,8 @@ if (got_it)					# Otherwise go straight to end
 	coast(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), water=:blue, clip=:land, Vd=dbg2)
 	coast!(R="-10/0/35/45", J="M12c", W=(0.5,"red"), B=:a, N=(type=1,pen=(1,"green")), clip=:stop, rivers="1/0.5p", Vd=dbg2)
 	coast(region=(continent=:AN,), Vd=dbg2);
-	coast(region="-10/36/-7/41+r", proj=:guess, Vd=dbg2);
+	coast(region="-10/36/-7/41+r", proj=:guess);
+	GMT.GMT_Get_Common(API, 'R');
 	@test GMT.parse_dcw("", ((country=:PT, pen=(2,:red), fill=:blue), (country=:ES, pen=(2,:blue)) )) == " -EPT+p2,red+gblue -EES+p2,blue"
 	r = coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60), frame=(annot=30, grid=15), res=:crude, area=10000, land=:tan, ocean=:cyan, shore=:thinnest, figsize=10, Vd=dbg2);
 	@test startswith(r, "pscoast  -Rg -JF-120/35/60/10 -Bpa30g15 -A10000 -Dcrude -Gtan -Scyan -Wthinnest")

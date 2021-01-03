@@ -161,10 +161,6 @@ function GMT_Option(API::Ptr{Cvoid}, options)
 	ccall((:GMT_Option, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}), API, options)
 end
 
-function GMT_Get_Common(API::Ptr{Cvoid}, option::UInt32, par::Ptr{Cdouble})
-	ccall((:GMT_Get_Common, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{Cdouble}), API, option, par)
-end
-
 function GMT_Get_Value(API::Ptr{Cvoid}, arg::String, par::Ptr{Cdouble})
 	ccall((:GMT_Get_Value, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cdouble}), API, arg, par)
 end
@@ -172,12 +168,18 @@ function GMT_Get_Values(API::Ptr{Cvoid}, arg::String, par::Ptr{Cdouble}, maxpar:
 	ccall((:GMT_Get_Values, thelib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cdouble}, Cint), API, arg, par, maxpar)
 end =#
 
+function GMT_Get_Common(API::Ptr{Cvoid}, option::Char)
+	buffer = Vector{Float64}(undef, 4)
+	n_par = ccall((:GMT_Get_Common, thelib), Cint, (Ptr{Cvoid}, UInt32, Ptr{Cdouble}), API, option, buffer)
+	return buffer, n_par
+end
+
 function GMT_Get_Default(API::Ptr{Cvoid}, keyword::String, value)
     ccall((:GMT_Get_Default, thelib), Cint, (Cstring, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 end
 
 function GMT_Call_Module(API::Ptr{Cvoid}, _module=C_NULL, mode=0, args=C_NULL)
-	(isa(args, String)) && (args = pointer(args))
+	#(isa(args, String)) && (args = pointer(args))
 	ccall((:GMT_Call_Module, thelib), Cint, (Cstring, Ptr{UInt8}, Cint, Ptr{Cvoid}), API, _module, mode, args)
 end
 
@@ -405,9 +407,11 @@ function GMT_Get_Version(major, minor, patch)
 end
 
 function GMT_Get_Ctrl(API::Ptr{Cvoid})
-	if (GMTver > v"6.0")  ccall((:gmtlib_get_ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
-	else                  ccall((:GMT_Get_Ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
-	end
+	#if (GMTver > v"6.0")  ccall((:gmtlib_get_ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
+	#else                  ccall((:GMT_Get_Ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
+	#end
+	(GMTver > v"6.0") ? ccall((:gmtlib_get_ctrl, thelib), Ptr{Cvoid}, (Cstring,), API) :
+	                    ccall((:GMT_Get_Ctrl, thelib), Ptr{Cvoid}, (Cstring,), API)
 end
 
 #= 
@@ -453,9 +457,11 @@ function sprintf(format::String, x...)
 	return str
 end
 
+#=
 function get_common_R(API::Ptr{Cvoid})
 	R = COMMON_R((false,false,false,false), false, 0, 0, 0, (0., 0., 0., 0., 0., 0.), (0., 0., 0., 0.), (0., 0.), map(UInt8, (string(repeat(" ",256))...,)))
 	Rp = pointer([R])
 	ccall((:gmtlib_get_common_R, thelib), Cint, (Cstring, Ptr{COMMON_R}), API, Rp)
 	return unsafe_load(Rp)
 end
+=#
