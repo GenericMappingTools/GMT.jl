@@ -10,6 +10,7 @@ makedocs(
 	format = Documenter.HTML(assets = ["assets/custom.css"]),
 	pages = Any[
 		"Introduction"             => "usage.md",
+		"Quick Learn"              => "quick_learn.md",
 		"Some examples"            => "examples.md",
 		"Draw rectangles examples" => "rectangles.md",
 		"Draw frames examples"     => "frames.md",

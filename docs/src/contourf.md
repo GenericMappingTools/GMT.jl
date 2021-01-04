@@ -45,9 +45,9 @@ Optional Arguments
 
    2. If ``cont_int`` is a constant or an array it means plot those contour intervals. This works also to draw
       single contours. *E.g.* **contour=[0]** will draw only the zero contour. The **annot** option offers the same
-	  possibility so they may be used together to plot a single annotated contour and another single non-annotated contour,
-	  as in **anot=[10], cont=[5]** that plots an annotated 10 contour and an non-annotated 5 contour. If **annot** is set
-	  and **cont** is not, then the contour interval is set equal to the specified annotation interval.
+	   possibility so they may be used together to plot a single annotated contour and another single non-annotated contour,
+	   as in **anot=[10], cont=[5]** that plots an annotated 10 contour and an non-annotated 5 contour. If **annot** is set
+	   and **cont** is not, then the contour interval is set equal to the specified annotation interval.
 
 	If no **contour** option and no *GMTcpt* are passed then for grid a default color map is computed and all of
 	those automatically contours are drwan. Also, no *GMTcpt* and **contour=[array]** computes a cmap with only the

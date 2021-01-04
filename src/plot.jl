@@ -69,11 +69,11 @@ Parameters
     + **s**, **square**
     + **t**, **^**, **triangle**
     + **x**, **cross**
-	+ **y**, **y_dash**
+    + **y**, **y_dash**
 
     and select their sizes with the **markersize** or **size** keyword [default is 7p].
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
-	points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
+    points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
 
 - **W** | **pen** | **markeredgecolor** :: [Type => Str]
 
