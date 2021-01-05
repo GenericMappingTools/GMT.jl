@@ -66,7 +66,6 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
       Install the [GMT6 version](https://github.com/GenericMappingTools/gmt/releases/download/6.1.1/gmt-6.1.1-win64.exe)
 
   * Windows32
-
       [..._win32.exe](https://github.com/GenericMappingTools/gmt/releases/download/6.1.1/GMT-6.1.1-win32.exe)
 
   * Unix
@@ -76,15 +75,6 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
   * Since *GMT* produces PostScript you need a PS interpreter. Windows installer comes with ghostcript but on Mac/Linux you need to:
 
       Install `Ghostscript` and `ghostview` at <https://www.ghostscript.com/download/gsdnld.html>
-
-On OSX, with a manual GMT build and dependencies obtained with Homebrew (that are installed at
-/user/local/lib), I had to help Julia finding MY *libgmt.dylib*, with (this line should than be
-added to the ~/.julia/config/startup.jl file). Linux users have may have the same issue and this
-solution has been reported to work too, though an alternative is to add the GMT lib location to
-``LD_LIBRARY_PATH`` (e.g. export ``LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/gmt/lib``)
-
-    using Libdl
-    push!(Libdl.DL_LOAD_PATH, "/path/to/gmt6/lib")
 
 Using
 =====
@@ -105,7 +95,11 @@ is most than wellcome.
 Documentation
 =============
 
-[Latest Docs](https://www.generic-mapping-tools.org/gmt/latest/)
+[Quick Learn](https://genericmappingtools.github.io/GMT.jl/latest/quick_learn)
+
+[GMT.jl docs](https://genericmappingtools.github.io/GMT.jl/latest)
+
+[GMT Docs](https://www.generic-mapping-tools.org/gmt/latest/)
 
 Examples
 ========
