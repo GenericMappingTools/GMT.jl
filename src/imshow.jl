@@ -39,25 +39,26 @@ function imshow(arg1, x=nothing, y=nothing; kw...)
 		if (ext == "" && arg1[1] != '@' && !isfile(arg1))
 			G = mat2grid(arg1, x, y)
 		else
+			G = arg1
 			ext = lowercase(ext)
 			(ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif") && (is_image = true)
-			G = (arg1[1] == '@') ? arg1 : gmtread(arg1)			# If it screws ...
+			#G = (arg1[1] == '@') ? arg1 : gmtread(arg1)			# If it screws ...
+			ginfo = grdinfo(arg1, C=:n)
+			if (ginfo[1].data[2] != ginfo[1].data[9] && ginfo[1].data[4] != ginfo[1].data[10])
+				CTRL.limits[1:4] = ginfo[1].data[1:4]	# To be used by eventual J=:guess
+			end
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
 		G = mat2img(arg1; kw...)
 	else
-		G = mat2grid(arg1, x, y, reg=1)			# For displaying, pixel registration is more appropriate
+		G = mat2grid(arg1, x, y, reg=1)					# For displaying, pixel registration is more appropriate
 	end
 
 	d = KW(kw)
 	see = (!haskey(d, :show)) ? true : see = d[:show]	# No explicit 'show' keyword means show=true
 
 	if (is_image)
-		if (haskey(d, :D) || haskey(d, :img_in) || haskey(d, :image_in))	# OK, user set -D so don't repeat
-			grdimage(G; show=see, kw...)
-		else
-			grdimage(G; D=1, show=see, kw...)
-		end
+		grdimage(G; show=see, kw...)
 	else
 		if (isa(G, String))  grdimage(G; show=see, kw...)		# String when fname is @xxxx
 		else                 imshow(G; kw...)					# Call the specialized method
