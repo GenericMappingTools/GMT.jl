@@ -122,7 +122,7 @@ function gmtread(fname::String; kwargs...)
 	end
 
 	if (opt_T == " -Ti" || opt_T == " -Tg")		# See if we have a mem layout request
-		if ((val = find_in_dict(d, [:layout])[1]) !== nothing)
+		if ((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing)
 			cmd = (opt_T == " -Ti") ? cmd * " -%" * arg2str(val) : cmd * " -&" * arg2str(val)
 		end
 	end
@@ -266,7 +266,7 @@ function gmtwrite(fname::String, data; kwargs...)
 	cmd = cmd * opt_T
 
 	if (opt_T == " -Ti" || opt_T == " -Tg")		# See if we have a mem layout request
-		if ((val = find_in_dict(d, [:layout])[1]) !== nothing)
+		if ((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing)
 			cmd = (opt_T == " -Ti") ? cmd * " -%" * arg2str(val) : cmd * " -&" * arg2str(val)
 		end
 	end
