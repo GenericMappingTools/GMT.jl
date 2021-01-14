@@ -60,11 +60,15 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
+	if (!O && (val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(arg1, GMTimage) || isa(arg1, GMTgrid)))
+		d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", arg1.range[1], arg1.range[2], arg1.range[3], arg1.range[4])
+	end
+
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G :bit_color],
 	                                 [:M :monochrome], [:N :noclip], [:Q :nan_t :nan_alpha]])
-	cmd = add_opt(d, cmd, ",", ["," :mem :mem_layout], nothing)
+	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	if (got_fname == 0 && isa(arg1, Tuple))			# Then it must be using the three r,g,b grids
@@ -86,7 +90,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	cmd, N_used, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
 
-	if (isa(arg1, GMTimage))
+	if (isa(arg1, GMTimage) && !occursin("-Q", cmd))
 		if (!occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
 	end
 
