@@ -5,6 +5,7 @@ using Dates
 
 struct CTRLstruct
 	limits::Vector{Float64}
+	proj_linear::Vector{Bool}		# To know if images sent to GMT need Pad
 end
 
 # Need to know what GMT version is available or if none at all to warn users on how to install GMT.
@@ -38,7 +39,7 @@ const global box_str = [""]
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3 = " -Baf -Bza"  		#		"" but for 3D views
-const global CTRL = CTRLstruct(zeros(6))
+const global CTRL = CTRLstruct(zeros(6), [false])
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
 	@eval Base.Experimental.@optlevel 1
@@ -63,6 +64,7 @@ export
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
+	mbimport, mbgetdata, mbsvplist, mblevitus,
 	mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc
 
 include("common_docs.jl")
@@ -157,6 +159,10 @@ include("xyz2grd.jl")
 include("seis/psmeca.jl")
 include("geodesy/psvelo.jl")
 include("geodesy/earthtide.jl")
+include("MB/mbimport.jl")
+include("MB/mbgetdata.jl")
+include("MB/mbsvplist.jl")
+include("MB/mblevitus.jl")
 (GMTver >= v"6.2") && include("potential/gmtgravmag3d.jl")
 
 function __init__()

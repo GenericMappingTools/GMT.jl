@@ -111,7 +111,7 @@ const opt_h = "**h** | **header** :: [Type => Str]        ``Arg = [i|o][n][+c][+
     Primary input file(s) has header record(s).
     (http://docs.generic-mapping-tools.org/latest/gmt.html#h-full)"
 
-const opt_i = "**i** | **incol** :: [Type => Str]      ``Arg = cols[+l][+sscale][+ooffset][,…]``
+const opt_i = "**i** | **incols** :: [Type => Str]      ``Arg = cols[+l][+sscale][+ooffset][,…]``
 
     Select specific data columns for primary input, in arbitrary order.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#icols-full)"
@@ -132,7 +132,7 @@ const opt_n = "**n** | **interp** | **interpol** :: [Type => Str]         ``Arg 
     l for bilinear interpolation, or n for nearest-neighbor value.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#n-full)"
 
-const opt_o = "**o** | **outcol** :: [Type => Str]     ``Arg = cols[,…]``
+const opt_o = "**o** | **outcols** :: [Type => Str]     ``Arg = cols[,…]``
 
     Select specific data columns for primary output, in arbitrary order.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#ocols-full)"

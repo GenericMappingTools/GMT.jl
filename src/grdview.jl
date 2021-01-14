@@ -58,6 +58,10 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
+	if (!O && (val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(arg1, GMTimage) || isa(arg1, GMTgrid)))
+		d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", arg1.range[1], arg1.range[2], arg1.range[3], arg1.range[4])
+	end
+
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "grdview", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :f :n :p :t :params], first)
 	cmd  = add_opt(d, cmd, 'S', [:S :smooth])
@@ -70,6 +74,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
 	cmd = add_opt(d, cmd, 'T', [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)) )
 	(!occursin(" -T", cmd)) ? cmd = parse_JZ(d, cmd)[1] : del_from_dict(d, [:JZ])	# Means, even if we had one, ignore silently
+	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 

@@ -194,15 +194,13 @@ function gmt(cmd::String, args...)
 			end
 		end
 	end
-	#=
-	if ((g_module == "psconvert" || g_module == "grdimage") && occursin("-%", r))	# It has also a mem layout request
+	if (occursin("-%", r) || occursin("-&", r))			# It has also a mem layout request
 		r, img_mem_layout[1], grd_mem_layout[1] = parse_mem_layouts(r)
-		if (g_module == "grdimage" && img_mem_layout[1] != "")
-			mem_layout = length(img_mem_layout[1]) == 3 ? img_mem_layout[1] * "a" : img_mem_layout[1]
-			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);		# Tell grdimage to give us the image with this mem layout
-		end
+		(img_mem_layout[1] != "") && (mem_layout = img_mem_layout[1];	mem_kw = "API_IMAGE_LAYOUT")
+		(grd_mem_layout[1] != "") && (mem_layout = grd_mem_layout[1];	mem_kw = "API_GRID_LAYOUT")
+		(img_mem_layout[1] != "" && mem_layout[end] != 'a')  && (mem_layout *= "a")
+		GMT_Set_Default(API, mem_kw, mem_layout);		# Tell module to give us the image/grid with this mem layout
 	end
-	=#
 
 	# 2++ Add -T to gmtwrite if user did not explicitly give -T. Seek also for MEM layout requests
 	if (occursin("write", g_module))
@@ -226,9 +224,7 @@ function gmt(cmd::String, args...)
 
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
 	if (occursin("read", g_module) && (r != "") && occursin("-T", r))		# It parses the 'layout' key
-		if (occursin("-Ti", r))
-			GMT_Set_Default(API, "API_PAD", "0")
-		end
+		(occursin("-Ti", r)) && GMT_Set_Default(API, "API_PAD", "0")
 		r, img_mem_layout[1], grd_mem_layout[1] =  parse_mem_layouts(r)
 	end
 
@@ -558,6 +554,8 @@ function get_image(API::Ptr{Nothing}, object)
 	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
 	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
 	out.registration = gmt_hdr.registration
+	reg = round(Int, (X[end] - X[1]) / gmt_hdr.inc[1]) == (nx - 1)		# Confirm registration
+	(reg && gmt_hdr.registration == 1) && (out.registration = 0)
 
 	return out
 end
@@ -771,10 +769,10 @@ function grid_init(API::Ptr{Nothing}, grd_box, dir::Integer=GMT_IN, pad::Int=2)
 		return GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT,
 		                       C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
-
 	(!isa(grd_box, GMTgrid) && !isa(grd_box, Array{GMTgrid,1})) &&
 		error("grd_init: input ($(typeof(grd_box))) is not a GRID container type")
-	return grid_init(API, grd_box, pad)
+
+	grid_init(API, grd_box, pad)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -794,7 +792,6 @@ function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 	k = 1
 	if (isa(grd, Float32))
 		for col = 1:n_cols, row = n_rows:-1:1
-			#ij = GMT_IJP(row, col, mx, pad, pad)	# ij = ((row-1) + padTop) * mx + col + padLeft
 			t[GMT_IJP(row, col, mx, pad, pad)] = grd[k];		k += 1
 		end
 	else
@@ -851,17 +848,41 @@ end
 function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 # We are given a Julia image and use it to fill the GMT_IMAGE structure
 
-	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_pages = size(Img.image, 3)
+	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_bands = size(Img.image, 3)
 	family = GMT_IS_IMAGE
-	if (GMTver >= v"6.1" && (n_pages == 2 || n_pages == 4))	# Then we want the alpha layer together with data
+	if (GMTver >= v"6.1" && (n_bands == 2 || n_bands == 4))	# Then we want the alpha layer together with data
 		family = family | GMT_IMAGE_ALPHA_LAYER
 	end
-	dim = pointer([n_cols, n_rows, n_pages])
+	dim = pointer([n_cols, n_rows, n_bands])
+	#(!CTRL.proj_linear[1]) && (pad = 2)
 	I = GMT_Create_Data(API, family, GMT_IS_SURFACE, GMT_GRID_ALL, dim,
 	                    Img.range[1:4], Img.inc, UInt32(Img.registration), pad)
 	Ib = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
+	h = unsafe_load(Ib.header)
 
-	Ib.data = pointer(Img.image)
+#=
+	if (pad == 2)
+		t = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
+		mx = n_cols + 2pad;
+		nRGBA = 3				# Should be 3 or 4 depending on alpha layer but this later wont work
+		colVec = Vector{Int}(undef, n_cols)
+		for band = 1:n_bands
+			[colVec[n] = (n-1) * nRGBA + band-1 for n = 1:n_cols]
+			k = 1
+			for row = 1:n_rows
+				off = nRGBA * pad + (pad + row - 1) * nRGBA * mx + 1	# Don't bloody ask!
+				for col = 1:n_cols
+					t[colVec[col] + off] = Img.image[band + (k-1) * nRGBA];		k += 1
+				end
+			end
+		end
+	else
+=#
+		#t = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), length(Img.image))
+		#[t[k] = Img.image[k] for k = 1:length(Img.image)]
+		Ib.data = pointer(Img.image)
+	#end
+
 	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
 	Ib.n_indexed_colors = Img.n_colors
 	if (Img.color_interp != "")    Ib.color_interp = pointer(Img.color_interp)  end
@@ -869,7 +890,6 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	else                           Ib.alpha = C_NULL
 	end
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)
-	h = unsafe_load(Ib.header)
 	h.z_min = Img.range[5]			# Set the z_min, z_max
 	h.z_max = Img.range[6]
 	h.mem_layout = map(UInt8, (Img.layout...,))
@@ -1164,7 +1184,6 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 			n = n + 1
 		end
 	end
-	#@show(n_total_segments, n-1)
 	(n_total_segments > (n-1)) && deleteat!(D, n:n_total_segments)
 	return D
 end
@@ -1845,7 +1864,7 @@ function resetGMT()
 	# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
 	IamModern[1] = false;	FirstModern[1] = false;		IamSubplot[1] = false;	usedConfPar[1] = false;
 	multi_col[1] = false;	convert_syntax[1] = false;	current_view[1] = "";	show_kwargs[1] = false;
-	img_mem_layout[1] = "";	grd_mem_layout[1] = "";
+	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = false;
 	global current_cpt  = nothing;	global legend_type  = nothing
 	gmt("destroy")
 	clear_sessions()
