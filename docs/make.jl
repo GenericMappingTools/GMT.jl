@@ -8,14 +8,6 @@ makedocs(
 	sitename = "GMT",
 	#assets = ["assets/custom.css"],
 	#format = Documenter.HTML(assets = ["assets/custom.css"]),
-
-	format = Documenter.HTML(edit_link = "master",
-		prettyurls = get(ENV, "CI", nothing) == "true",
-		assets = [
-			joinpath("assets", "custom.css"),
-	   ]
-	),
-
 	pages = Any[
 		"Introduction"             => "usage.md",
 		"Quick Learn"              => "quick_learn.md",
