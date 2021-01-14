@@ -110,9 +110,9 @@ function build_opt_R(arg::NamedTuple)::String
 	# Option -R can also be diabolicly complicated. Try to addres it. Stil misses the Time part.
 	BB = [""]
 	d = nt2dict(arg)					# Convert to Dict
-	if ((val = find_in_dict(d, [:bb :limits :region])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:bb :limits :region :BoundingBox])[1]) !== nothing)
 		if ((isa(val, Array{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
-			if (haskey(d, :diag))		# The diagonal case
+			if (haskey(d, :diag) || haskey(d, :diagonal))		# The diagonal case
 				BB[1] = sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
 			else
 				BB[1] = join([@sprintf("%.15g/", Float64(x)) for x in val])
@@ -233,6 +233,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		# Subplots do not rely in the classic default mechanism
 		return cmd, ""
 	end
+	CTRL.proj_linear[1] = (length(opt_J[1]) >= 4 && (opt_J[1][4] == 'X' || opt_J[1][4] == 'x' || opt_J[1][4] == 'Q' || opt_J[1][4] == 'q')) ? true : false
 	if (!map && opt_J[1] != "")  return cmd * opt_J[1], opt_J[1]  end
 
 	if (O && opt_J[1] == "")  opt_J[1] = " -J"  end
@@ -257,7 +258,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 				if ( ((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
 					opt_J[1] *= split(def_fig_size, '/')[1] * "/0"
 				else
-					opt_J[1] *= def_fig_size
+					opt_J[1] = (!startswith(opt_J[1], " -JX")) ? append_figsize(d, opt_J[1]) : opt_J[1] * def_fig_size
 				end
 			elseif (!occursin("?", opt_J[1]))	# If we dont have one ? for size/scale already
 				opt_J[1] *= "/?"
@@ -270,6 +271,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 	else										# For when a new size is entered in a middle of a script
 		if ((s = helper_append_figsize(d, opt_J[1], O)) != "")  opt_J[1] = s  end
 	end
+	CTRL.proj_linear[1] = (length(opt_J[1]) >= 4 && (opt_J[1][4] == 'X' || opt_J[1][4] == 'x' || opt_J[1][4] == 'Q' || opt_J[1][4] == 'q')) ? true : false
 	cmd *= opt_J[1]
 	return cmd, opt_J[1]
 end
@@ -510,9 +512,9 @@ end
 function guess_proj(lonlim, latlim)
 	# Select a projection based on map limits. Follows closely the Matlab behavior
 
-	if (lonlim == [0.0 0.0] && latlim == [0.0 0.0])
+	if (lonlim[1] == 0.0 && lonlim[2] == 0.0 && latlim[1] == 0.0 && latlim[2] == 0.0)
 		@warn("Numeric values of 'CTRL.limits' not available. Cannot use the 'guess' option (Must specify a projection)")
-		return(" -JX12cd/0")
+		return(" -JX")
 	end
 	if (latlim == [-90, 90] && (lonlim[2]-lonlim[1]) > 359.99)	# Whole Earth
 		proj = string(" -JN", sum(lonlim)/2)		# Robinson
@@ -725,7 +727,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
 	# Parse the global -U, -X, -Y options. Return CMD same as input if no option OPT in args
-	# ALIASES: [:X :x_off :x_offset] (same for Y) or [:U :time_stamp :stamp]
+	# ALIASES: [:X :x_off :x_offset] (same for Y) or [:U :time_stamp :timestamp]
 	if ((val = find_in_dict(d, aliases, true)[1]) !== nothing)
 		cmd = string(cmd, " -", opt, val)
 	end
@@ -753,9 +755,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_UVXY(d::Dict, cmd::String)
 	cmd = parse_V(d, cmd)
-	cmd = parse_UXY(cmd, d, [:X :xoff :x_off :x_offset], 'X')
-	cmd = parse_UXY(cmd, d, [:Y :yoff :y_off :y_offset], 'Y')
-	cmd = parse_UXY(cmd, d, [:U :stamp :time_stamp], 'U')
+	cmd = parse_UXY(cmd, d, [:X :xoff :x_off :x_offset :xshift], 'X')
+	cmd = parse_UXY(cmd, d, [:Y :yoff :y_off :y_offset :yshift], 'Y')
+	cmd = parse_UXY(cmd, d, [:U :time_stamp :timestamp], 'U')
 	return cmd
 end
 
@@ -832,7 +834,7 @@ function parse_h(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------
-parse_i(d::Dict, cmd::String) = parse_helper(cmd, d, [:i :incol], " -i")
+parse_i(d::Dict, cmd::String) = parse_helper(cmd, d, [:i :incols], " -i")
 parse_j(d::Dict, cmd::String) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
 
 # ---------------------------------------------------------------------------------
@@ -860,7 +862,7 @@ end
 # ---------------------------------------------------------------------------------
 function parse_o(d::Dict, cmd::String)
 	# Parse the global -o option. Return CMD same as input if no -o option in args
-	parse_helper(cmd, d, [:o :outcol], " -o")
+	parse_helper(cmd, d, [:o :outcols], " -o")
 end
 
 # ---------------------------------------------------------------------------------
@@ -3232,9 +3234,9 @@ function gmthelp(opt)
 		o = string(opt)
 		try
 			if (length(o) <= 2)
-				getfield(GMT, Symbol(string("parse_",o)))(Dict(), "");
+				getfield(GMT, Symbol(string("parse_",o)))(Dict(), "")
 			else
-				getfield(GMT, Symbol(o))(help=1);
+				getfield(GMT, Symbol(o))(help=1)
 			end
 		catch err
 			println("   ==>  '$o' is not a valid option/module name, or its help is not yet implemented")
