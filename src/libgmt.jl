@@ -178,7 +178,7 @@ function GMT_Get_Default(API::Ptr{Cvoid}, keyword::String, value)
     ccall((:GMT_Get_Default, thelib), Cint, (Cstring, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 end
 
-function GMT_Call_Module(API::Ptr{Cvoid}, _module=C_NULL, mode=0, args=C_NULL)
+function GMT_Call_Module(API::Ptr{Cvoid}, _module::AbstractString, mode=0, args=C_NULL)
 	#(isa(args, String)) && (args = pointer(args))
 	ccall((:GMT_Call_Module, thelib), Cint, (Cstring, Ptr{UInt8}, Cint, Ptr{Cvoid}), API, _module, mode, args)
 end
