@@ -1308,6 +1308,13 @@ println("MERDA1")
 	tic();toc()
 	@test_throws ErrorException("`toc()` without `tic()`") toc()
 
+	# MODERN
+	println("	MB")
+	mbgetdata("aa", Vd=2)
+	mbimport("aa", Vd=2)
+	mbsvplist("aa", Vd=2)
+	mblevitus(Vd=2)
+
 	println("	EXAMPLES")
 	# EXAMPLES
 	plot(1:10,rand(10), lw=1, lc="blue", marker="square", markeredgecolor=:white, size=0.2, markerfacecolor="red", title="Hello World", xlabel="Spoons", ylabel="Forks")
