@@ -445,6 +445,7 @@ if (got_it)					# Otherwise go straight to end
 	I = gmtread("lixo.tif", img=true, layout="ICP");
 	I = gmtread("lixo.tif", img=true, band=0);
 	I = gmtread("lixo.tif", img=true, band=[0 1 2]);
+println("MERDA1")
 	show(I);
 	imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
 	gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
@@ -663,9 +664,9 @@ if (got_it)					# Otherwise go straight to end
 	r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), view="120/30", Vd=dbg2);
 	@test startswith(r, "grdview  -R -J -p120/30 -N-6+glightgray -Qsmred")
 	r = grdview(G, surf=(waterfall=(:rows,:red),surf=true, mesh=true, img=50), Vd=dbg2);
-	@test startswith(r, "grdview  -JX12c/0 -Baf -Bza -Qmyredsmi50")
-	@test startswith(grdview(G, surf=(waterfall=:rows,), Vd=dbg2), "grdview  -JX12c/0 -Baf -Bza -Qmy")
-	@test startswith(grdview(G, surf=(waterfall=(rows=true, fill=:red),), Vd=dbg2), "grdview  -JX12c/0 -Baf -Bza -Qmyred")
+	@test startswith(r, "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -Qmyredsmi50")
+	@test startswith(grdview(G, surf=(waterfall=:rows,), Vd=dbg2), "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -Qmy")
+	@test startswith(grdview(G, surf=(waterfall=(rows=true, fill=:red),), Vd=dbg2), "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -Qmyred")
 	@test_throws ErrorException("Wrong way of setting the drape (G) option.")  grdview(rand(16,16), G=(1,2))
 	I = mat2grid(rand(Float32,128,128));
 	grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
@@ -698,6 +699,9 @@ if (got_it)					# Otherwise go straight to end
 	imshow(-2:0.1:2, -1:0.1:3,"rosenbrock", Vd=dbg2);
 	imshow(-2:0.1:2, "rosenbrock", Vd=dbg2);
 	imshow("lixo", Vd=dbg2);
+	#mat = reshape(UInt8.([255 0 0 0 0 0 0 0 0 0 0 0 0 255 0 0 0 0 0 0 0 0 0 0 0 0 255]), 3,3,3);
+	#I = mat2img(mat, hdr=[0.0 3 0 3 0 255 1 1 1]);
+	#imshow(I, J=:Merc, show=false)
 	GMT.mat2grid("ackley");
 	GMT.mat2grid("egg");
 	GMT.mat2grid("sombrero");
@@ -1007,7 +1011,7 @@ if (got_it)					# Otherwise go straight to end
 
 	println("	PSHISTOGRAM")
 	# PSHISTOGRAM
-	histogram(randn(1000),T=0.1,center=true,B=:a,N=0, x_offset=1, y_offset=1, stamp=[], t=50)
+	histogram(randn(1000),T=0.1,center=true,B=:a,N=0, x_offset=1, y_offset=1, timestamp=[], t=50)
 	histogram(randn(100),T=0.1,center=true, Z=:counts, Vd=dbg2)
 	histogram!("", randn(1000),T=0.1,center=true,N="1+p0.5", Vd=dbg2)
 	histogram!(randn(1000),T=0.1,center=true,N=(mode=1,pen=(1,:red)), Vd=dbg2)
