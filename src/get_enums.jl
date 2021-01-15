@@ -24,6 +24,9 @@ enu = GMT_Get_Enum(API, "GMT_IS_OUTPUT");	const global GMT_IS_OUTPUT  = (enu != 
 enu = GMT_Get_Enum(API, "GMT_VIA_MATRIX");	const global GMT_VIA_MATRIX = (enu != -99999) ? enu : 256
 
 # GMT_enum_container
+enu = GMT_Get_Enum(API, "GMT_CONTAINER_AND_DATA");	const global GMT_CONTAINER_AND_DATA  = (enu != -99999) ? enu : 0
+enu = GMT_Get_Enum(API, "GMT_CONTAINER_ONLY");	const global GMT_CONTAINER_ONLY  = (enu != -99999) ? enu : 1
+enu = GMT_Get_Enum(API, "GMT_DATA_ONLY");		const global GMT_DATA_ONLY  = (enu != -99999) ? enu : 2
 enu = GMT_Get_Enum(API, "GMT_WITH_STRINGS");	const global GMT_WITH_STRINGS  = (enu != -99999) ? enu : 32
 enu = GMT_Get_Enum(API, "GMT_NO_STRINGS");		const global GMT_NO_STRINGS  = (enu != -99999) ? enu : 0
 
@@ -60,7 +63,7 @@ enu = GMT_Get_Enum(API, "GMT_SEG");	const global GMT_SEG = (enu != -99999) ? enu
 enu = GMT_Get_Enum(API, "GMT_ROW");	const global GMT_ROW = (enu != -99999) ? enu : 2
 enu = GMT_Get_Enum(API, "GMT_COL");	const global GMT_COL = (enu != -99999) ? enu : 3
 
-const global GMT_GRID_ALL = 0		# This one is a #define
+#const global GMT_GRID_ALL = 0		# This one is a #define
 
 # begin enum GMT_enum_fmt
 enu = GMT_Get_Enum(API, "GMT_IS_COL_FORMAT");	const global GMT_IS_COL_FORMAT = (enu != -99999) ? enu : 2
