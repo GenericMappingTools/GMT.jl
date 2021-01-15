@@ -781,7 +781,7 @@ function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 
 	grd = Grid.z
 	hdr = [Grid.range; Grid.registration; Grid.inc]
-	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_GRID_ALL, C_NULL,
+	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_CONTAINER_AND_DATA, C_NULL,
 	                    hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)
 
 	n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
@@ -853,18 +853,20 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	if (GMTver >= v"6.1" && (n_bands == 2 || n_bands == 4))	# Then we want the alpha layer together with data
 		family = family | GMT_IMAGE_ALPHA_LAYER
 	end
-	dim = pointer([n_cols, n_rows, n_bands])
-	#(!CTRL.proj_linear[1]) && (pad = 2)
-	I = GMT_Create_Data(API, family, GMT_IS_SURFACE, GMT_GRID_ALL, dim,
-	                    Img.range[1:4], Img.inc, UInt32(Img.registration), pad)
+	(!CTRL.proj_linear[1]) && (pad = 2)
+	mode = (pad == 2) ? GMT_CONTAINER_AND_DATA : GMT_CONTAINER_ONLY
+
+	I = GMT_Create_Data(API, family, GMT_IS_SURFACE, mode, pointer([n_cols, n_rows, n_bands]),
+	                    Img.range[1:4], Img.inc, Img.registration, pad)
 	Ib = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
 	h = unsafe_load(Ib.header)
 
-#=
+##
+#	@show(pad, Img.layout)
 	if (pad == 2)
-		t = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
+		img_padded = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
 		mx = n_cols + 2pad;
-		nRGBA = 3				# Should be 3 or 4 depending on alpha layer but this later wont work
+		nRGBA = (n_bands == 1) ? 1 : ((n_bands == 3) ? 3 : 4)	# Don't know if RGBA will work`
 		colVec = Vector{Int}(undef, n_cols)
 		for band = 1:n_bands
 			[colVec[n] = (n-1) * nRGBA + band-1 for n = 1:n_cols]
@@ -872,16 +874,17 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 			for row = 1:n_rows
 				off = nRGBA * pad + (pad + row - 1) * nRGBA * mx + 1	# Don't bloody ask!
 				for col = 1:n_cols
-					t[colVec[col] + off] = Img.image[band + (k-1) * nRGBA];		k += 1
+					img_padded[colVec[col] + off] = Img.image[band + (k-1) * nRGBA];	k += 1
 				end
 			end
 		end
+		CTRL.proj_linear[1] = true		# Use only once and reset back to linear
 	else
-=#
+##
 		#t = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), length(Img.image))
 		#[t[k] = Img.image[k] for k = 1:length(Img.image)]
 		Ib.data = pointer(Img.image)
-	#end
+	end
 
 	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
 	Ib.n_indexed_colors = Img.n_colors
@@ -889,7 +892,8 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	if (size(Img.alpha) != (1,1))  Ib.alpha = pointer(Img.alpha)
 	else                           Ib.alpha = C_NULL
 	end
-	GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)
+
+	(pad == 0) && GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)	# Otherwise memory already belongs to GMT
 	h.z_min = Img.range[5]			# Set the z_min, z_max
 	h.z_max = Img.range[6]
 	h.mem_layout = map(UInt8, (Img.layout...,))
@@ -900,7 +904,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	unsafe_store!(I, Ib)
 
 	if (!startswith(Img.layout, "BRP"))
-		img = deepcopy(Img.image)
+		img = (pad == 0) ? deepcopy(Img.image) : img_padded
 		GMT_Change_Layout(API, GMT_IS_IMAGE, "BRP", 0, I, img);		# Convert to BRP
 		Ib.data = pointer(img)
 		unsafe_store!(I, Ib)
