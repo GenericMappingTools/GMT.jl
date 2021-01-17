@@ -436,7 +436,7 @@ function get_grid(API::Ptr{Nothing}, object)
 	gmt_hdr = unsafe_load(G.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
 	padTop = Int(gmt_hdr.pad[4]);	padLeft = Int(gmt_hdr.pad[1]);
-	mx = Int(gmt_hdr.mx);		my = Int(gmt_hdr.my)
+	mx = Int(gmt_hdr.mx);			my = Int(gmt_hdr.my)
 
 #=	# Not yet implemented on the GMT side
 	X = zeros(nx);		t = pointer_to_array(G.x, nx)
@@ -444,8 +444,8 @@ function get_grid(API::Ptr{Nothing}, object)
 	Y = zeros(ny);		t = pointer_to_array(G.y, ny)
 	[Y[col] = t[col] for col = 1:ny]
 =#
-	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx))
-	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny))
+	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=(nx + gmt_hdr.registration)))
+	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=(ny + gmt_hdr.registration)))
 
 	t = unsafe_wrap(Array, G.data, my * mx)
 	z = zeros(Float32, ny, nx)
@@ -516,8 +516,8 @@ function get_image(API::Ptr{Nothing}, object)
 	gmt_hdr = unsafe_load(I.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
 
-	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=nx))
-	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=ny))
+	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=(nx + gmt_hdr.registration)))
+	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=(ny + gmt_hdr.registration)))
 
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	if (occursin("0", img_mem_layout[1]) || occursin("1", img_mem_layout[1]))	# WTF is 0 or 1?
@@ -861,9 +861,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	Ib = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
 	h = unsafe_load(Ib.header)
 
-##
-#	@show(pad, Img.layout)
-	if (pad == 2)
+	if (pad == 2)					# When we need to project
 		img_padded = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
 		mx = n_cols + 2pad;
 		nRGBA = (n_bands == 1) ? 1 : ((n_bands == 3) ? 3 : 4)	# Don't know if RGBA will work`
@@ -880,7 +878,6 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 		end
 		CTRL.proj_linear[1] = true		# Use only once and reset back to linear
 	else
-##
 		#t = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), length(Img.image))
 		#[t[k] = Img.image[k] for k = 1:length(Img.image)]
 		Ib.data = pointer(Img.image)
@@ -1485,11 +1482,11 @@ function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=nothing, y=nothing, hdr=
 	if (cmap !== nothing)
 		have_alpha = !all(cmap.alpha .== 0.0)
 		nc = have_alpha ? 4 : 3
-		colormap = vec(zeros(Clong, 256 * nc))
+		colormap = zeros(Clong, 256 * nc)
 		n_colors = 256;			# Because for GDAL we always send 256 even if they are not all filled
-		for n = 1:3
-			for m = 1:size(cmap.colormap, 1)
-				colormap[m + (n-1)*n_colors] = Int32(round(cmap.colormap[m,n] * 255));
+		@inbounds for n = 1:3	# Write 'colormap' row-wise
+			@inbounds for m = 1:size(cmap.colormap, 1)
+				colormap[m + (n-1)*n_colors] = round(Int32, cmap.colormap[m,n] * 255);
 			end
 		end
 		if (have_alpha)			# Have alpha color(s)
@@ -1498,7 +1495,7 @@ function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=nothing, y=nothing, hdr=
 		end
 	else
 		if (size(mat,3) == 1)  color_interp = "Gray"  end
-		colormap = vec(zeros(Clong,1,3))	# Because we need an array
+		colormap = zeros(Clong,3)			# Because we need an array
 	end
 
 	nx = size(mat, 2);		ny = size(mat, 1);
@@ -1506,7 +1503,7 @@ function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=nothing, y=nothing, hdr=
 
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
 	d = KW(kw)
-	if ((val = find_in_dict(d, [:layout])[1]) !== nothing)  mem_layout = string(val)  end
+	if ((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing)  mem_layout = string(val)  end
 
 	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], 1, NaN, color_interp,
 	             x,y,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout)
@@ -1619,6 +1616,26 @@ function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec=nothing, alpha
 		                            img.alpha = alpha_band
 	end
 	return nothing
+end
+
+"""
+I = ind2rgb(I)
+
+    Convert an indexed image I to RGB. It uses the internal colormap to do the conversion.
+"""
+# ---------------------------------------------------------------------------------------------------
+function ind2rgb(img::GMTimage)
+	# ...
+	(size(img.image, 3) >= 3) && return img 	# Image is already RGB(A)
+	imgRGB = zeros(UInt8,size(img.image,1), size(img.image,2), 3)
+	n = 1
+	for k = 1:length(img.image)
+		start_c = img.image[k] * 4
+		for c = 1:3
+			imgRGB[n] = img.colormap[start_c+c];	n += 1
+		end
+	end
+	mat2img(imgRGB, x=img.x, y=img.y, proj4=img.proj4, wkt=img.wkt, mem_layout="BRPa")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1739,7 +1756,7 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 	nx = size(mat, 2);		ny = size(mat, 1);
 
 	if (x !== nothing && y !== nothing)		# But not tested if they are equi-spaced as they MUST be
-		if ((length(x) != size(mat,2) || length(y) != size(mat,1)) && (length(x) != 2 || length(y) != 2))
+		if ((length(x) != (nx+reg) || length(y) != (ny+reg)) && (length(x) != 2 || length(y) != 2))
 			error("size of x,y vectors incompatible with 2D array size")
 		end
 		one_or_zero = reg == 0 ? 1 : 0
