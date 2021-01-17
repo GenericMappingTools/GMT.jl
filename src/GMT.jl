@@ -39,7 +39,7 @@ const global box_str = [""]
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3 = " -Baf -Bza"  		#		"" but for 3D views
-const global CTRL = CTRLstruct(zeros(6), [false])
+const global CTRL = CTRLstruct(zeros(6), [true])
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
 	@eval Base.Experimental.@optlevel 1

@@ -233,7 +233,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		# Subplots do not rely in the classic default mechanism
 		return cmd, ""
 	end
-	CTRL.proj_linear[1] = (length(opt_J[1]) >= 4 && (opt_J[1][4] == 'X' || opt_J[1][4] == 'x' || opt_J[1][4] == 'Q' || opt_J[1][4] == 'q')) ? true : false
+	CTRL.proj_linear[1] = (length(opt_J[1]) >= 4 && opt_J[1][4] != 'X' && opt_J[1][4] != 'x' && opt_J[1][4] != 'Q' && opt_J[1][4] != 'q') ? false : true
 	if (!map && opt_J[1] != "")  return cmd * opt_J[1], opt_J[1]  end
 
 	if (O && opt_J[1] == "")  opt_J[1] = " -J"  end
@@ -271,7 +271,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 	else										# For when a new size is entered in a middle of a script
 		if ((s = helper_append_figsize(d, opt_J[1], O)) != "")  opt_J[1] = s  end
 	end
-	CTRL.proj_linear[1] = (length(opt_J[1]) >= 4 && (opt_J[1][4] == 'X' || opt_J[1][4] == 'x' || opt_J[1][4] == 'Q' || opt_J[1][4] == 'q')) ? true : false
+	CTRL.proj_linear[1] = (length(opt_J[1]) >= 4 && opt_J[1][4] != 'X' && opt_J[1][4] != 'x' && opt_J[1][4] != 'Q' && opt_J[1][4] != 'q') ? false : true
 	cmd *= opt_J[1]
 	return cmd, opt_J[1]
 end
