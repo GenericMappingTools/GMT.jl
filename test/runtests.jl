@@ -445,7 +445,6 @@ if (got_it)					# Otherwise go straight to end
 	I = gmtread("lixo.tif", img=true, layout="ICP");
 	I = gmtread("lixo.tif", img=true, band=0);
 	I = gmtread("lixo.tif", img=true, band=[0 1 2]);
-println("MERDA1")
 	show(I);
 	imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
 	gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
@@ -1293,6 +1292,7 @@ println("MERDA1")
 		check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
 		C = makecpt(range=(0,9,1));
 		I = mat2img(check, cmap=C);
+		rgb = GMT.ind2rgb(I);
 		image_alpha!(I, alpha_ind=5);
 		image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
 		image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
@@ -1308,8 +1308,8 @@ println("MERDA1")
 	tic();toc()
 	@test_throws ErrorException("`toc()` without `tic()`") toc()
 
-	# MODERN
-	println("	MB")
+	# MB-System
+	println("	MB-System")
 	mbgetdata("aa", Vd=2)
 	mbimport("aa", Vd=2)
 	mbsvplist("aa", Vd=2)
