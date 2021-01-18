@@ -102,9 +102,9 @@ Optional Arguments
 - **N** or **noclip** : -- *noclip=true*\
     Do not clip the image at the map boundary (only relevant for non-rectangular maps).
 
-- **Q** or *nan\_t* or *nan\_alpha* : *nan\_alpha=true*\
-    Make grid nodes with z = NaN transparent, using the color-masking feature in PostScript Level 3
-    (the PS device must support PS Level 3).
+- **Q** or *nan\_alpha* or *alpha\_color*: *nan\_alpha=true* or *alpha\_color=true|(r,g,b)*\
+    Make grid nodes with z = NaN transparent. If input is an image *alpha\_color* picks one color (default is
+    black) and makes it transparent (requires GMT6.2 and above).
 
 - **R** or **region** or **limits** : -- *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
    **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more 
