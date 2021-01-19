@@ -643,8 +643,8 @@ if (got_it)					# Otherwise go straight to end
 	Gr=mat2grid(rand(Float32, 128, 128)*255); Gg=mat2grid(rand(Float32, 128, 128)*255); Gb=mat2grid(rand(Float32, 128, 128)*255);
 
 	println("	GRDIMAGE")
-	grdimage(rand(UInt8,64,64), Vd=2);
-	grdimage(rand(UInt16,64,64), Vd=2);
+	grdimage(rand(UInt8,64,64), Vd=dbg2);
+	grdimage(rand(UInt16,64,64), Vd=dbg2);
 	grdimage(rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, J="X10")
 	grdimage(data=(Gr,Gg,Gb), J=:X10, I=mat2grid(rand(Float32,128,128)), Vd=dbg2)
 	grdimage(rand(Float32, 128, 128), shade=(default=30,), coast=(W=1,), Vd=dbg2)

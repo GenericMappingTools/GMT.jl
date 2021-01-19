@@ -59,12 +59,13 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	arg4 = nothing		# For the r,g,b + intensity case
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 
-	if (!O && (val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(arg1, GMTimage) || isa(arg1, GMTgrid)))
-		d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", arg1.range[1], arg1.range[2], arg1.range[3], arg1.range[4])
-	end
-
+	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
+	(!has_opt_B && (isa(arg1, GMTimage) && isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes) &&
+		(cmd = replace(cmd, opt_B => ""))	# Dont plot axes for plain images if that was not required
+
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G :bit_color],
 	                                 [:M :monochrome], [:N :noclip], [:Q :nan_alpha :alpha_color]])
@@ -88,7 +89,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	# if (GMTver >= v"6.1" && occursin("earth_relief_", cmd0))  push!(d, :this_cpt => "geo")  end	# Make this the default CPT
 
 	cmd, N_used, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
-	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
+	cmd, arg1, arg2, arg3, arg4   = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
 
 	if (isa(arg1, GMTimage) && !occursin("-Q", cmd))
 		if (!occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
@@ -104,6 +105,20 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	
 	return finish_PS_module(d, cmd, "", K, O, do_finish, arg1, arg2, arg3, arg4)
 end
+
+# ---------------------------------------------------------------------------------------------------
+function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
+	# Set -R in 'd' under several conditions. We may need this to make -J=:guess to work
+	O && return
+	if ((val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(I_G, GMTimage) || isa(I_G, GMTgrid)))
+		if (isa(I_G, GMTgrid) || !isimgsize(I_G))
+			d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", I_G.range[1], I_G.range[2], I_G.range[3], I_G.range[4])
+		end
+	elseif ((isa(cmd0, String) && cmd0 != "") && (CTRL.limits[1:4] != zeros(4) || snif_GI_set_CTRLlimits(cmd0)) )
+		d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
+	end
+end
+isimgsize(I_G) = (I_G.range[2] - I_G.range[1]) == size(I_G,2) && (I_G.range[4] - I_G.range[3]) == size(I_G,1) 
 
 # ---------------------------------------------------------------------------------------------------
 function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)

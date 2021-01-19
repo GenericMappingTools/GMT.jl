@@ -57,12 +57,13 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 
-	if (!O && (val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(arg1, GMTimage) || isa(arg1, GMTgrid)))
-		d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", arg1.range[1], arg1.range[2], arg1.range[3], arg1.range[4])
-	end
-
+	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "grdview", O, " -JX12c/0")
+	(!has_opt_B && (isa(arg1, GMTimage) && isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes) &&
+		(cmd = replace(cmd, opt_B => ""))	# Dont plot axes for plain images if that was not required
+
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :f :n :p :t :params], first)
 	cmd  = add_opt(d, cmd, 'S', [:S :smooth])
 	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)
