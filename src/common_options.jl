@@ -852,10 +852,21 @@ function parse_l(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------
-function parse_n(d::Dict, cmd::String)
+function parse_n(d::Dict, cmd::String, gmtcompat::Bool=false)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
+	# The GMTCOMPAT arg is used to reverse the default aliasing in GMT, which is ON by default
+	# However, practise has shown that this makes projecting images significantly slower with not clear benefits
 	cmd_ = add_opt(d, "", 'n', [:n :interp :interpol], 
-	               (B_spline=("b", nothing, 1), bicubic=("c", nothing, 1), bilinear=("l", nothing, 1), near_neighbor=("n", nothing, 1), antialiasing="_+a", bc="+b", clipz="_+c", threshold="+t"))
+				   (B_spline=("b", nothing, 1), bicubic=("c", nothing, 1), bilinear=("l", nothing, 1), near_neighbor=("n", nothing, 1), aliasing="_+a", antialiasing="_-a", bc="+b", clipz="_+c", threshold="+t"))
+	# Some gymnics to make aliasing de default (contrary to GMT default). Use antialiasing=Any to revert this.
+	if (!gmtcompat)
+		if (cmd_ != "" && !occursin("+a", cmd_)) 
+			cmd_ = (occursin("-a", cmd_)) ? replace(cmd_, "-a" => "") : cmd_ * "+a"
+			(cmd_ == " -n") && (cmd_ = "")	# Happens when only n="-a" was transmitted.
+		elseif (cmd_ == "")
+			cmd_ *= " -n+a"		# Default to no-aliasing. Antialising on map projection is very slow and often not needed.
+		end
+	end
 	return cmd * cmd_, cmd_
 end
 

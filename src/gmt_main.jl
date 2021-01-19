@@ -463,19 +463,18 @@ function get_grid(API::Ptr{Nothing}, object)
 		k = 1
 		for row = ind_y
 			for col = 1:nx
-				ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
-				z[k] = t[ij]
+				z[k] = t[GMT_IJP(row, col, mx, padTop, padLeft)]
 				k = k + 1
 			end
 		end
 		grd_mem_layout[1] = ""			# Reset because this variable is global
 	else
-		for col = 1:nx
-			for row = 1:ny
-				ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
-				z[row,col] = t[ij]
-			end
-		end
+		#for col = 1:nx
+			#for row = 1:ny
+				#z[row,col] = t[GMT_IJP(row, col, mx, padTop, padLeft)]
+			#end
+		#end
+		[z[row,col] = t[GMT_IJP(row, col, mx, padTop, padLeft)] for col = 1:nx, row = 1:ny]
 		grd_mem_layout[1] = ""
 	end
 
@@ -876,7 +875,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 				end
 			end
 		end
-		CTRL.proj_linear[1] = true		# Use only once and reset back to linear
+		#CTRL.proj_linear[1] = true		# Use only once and reset back to linear
 	else
 		#t = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), length(Img.image))
 		#[t[k] = Img.image[k] for k = 1:length(Img.image)]

@@ -40,9 +40,9 @@ Parameters
     Do not clip the image at the map boundary.
     ($(GMTdoc)grdimage.html#n)
 - $(GMT.opt_P)
-- **Q** | **nan_t** | **nan_alpha** :: [Type => Bool]
+- **Q** | **alpha_color** | **nan_alpha** :: [Type => Bool | Tuple | Str]	``Q = true | Q = (r,g,b)``
 
-    Make grid nodes with z = NaN transparent, using the colormasking feature in PostScript Level 3.
+	Make grid nodes with z = NaN transparent, or pick a color for transparency in a image.
 - $(GMT.opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
@@ -67,7 +67,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G :bit_color],
-	                                 [:M :monochrome], [:N :noclip], [:Q :nan_t :nan_alpha]])
+	                                 [:M :monochrome], [:N :noclip], [:Q :nan_alpha :alpha_color]])
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
@@ -101,6 +101,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		do_finish = true
 	end
 	(isa(arg1, GMTimage) && GMTver < v"6.2" && !occursin("-A", cmd)) && (arg1 = ind2rgb(arg1))	# Prev to 6.2 indexed imgs lost colors
+	
 	return finish_PS_module(d, cmd, "", K, O, do_finish, arg1, arg2, arg3, arg4)
 end
 

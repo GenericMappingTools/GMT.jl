@@ -63,7 +63,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_c(Dict(:c => "1"), "")[1] == " -c0"
 	@test GMT.parse_l(Dict(:l => "ai ai"), "")[2] == " -l\"ai ai\""
 	@test GMT.parse_l(Dict(:l => (text="ai ai", vspace=3)), "")[2] == " -l\"ai ai\"+G3"
-	@test GMT.parse_n(Dict(:n => (bicubic=true,antialiasing=true,bc=:g)), "")[2] == " -nc+a+bg"
+	@test GMT.parse_n(Dict(:n => (bicubic=true,antialiasing=true,bc=:g)), "")[2] == " -nc+bg"
 	@test GMT.parse_inc(Dict(:inc => (x=1.5, y=2.6, unit="meter")),"", [:I :inc], "I") == " -I1.5e/2.6e"
 	@test GMT.parse_inc(Dict(:inc => (x=1.5, y=2.6, unit="m")),"", [:I :inc], "I") == " -I1.5m/2.6m"
 	@test GMT.parse_inc(Dict(:inc => (x=1.5, y=2.6, unit="data")),"", [:I :inc], "I") == " -I1.5/2.6u"
@@ -211,7 +211,7 @@ if (got_it)					# Otherwise go straight to end
 	GMT.mat2img(img16, histo_bounds=[8440 13540]);
 	GMT.mat2img(img16, histo_bounds=[8440 13540 800 20000 1000 30000]);
 	GMT.mat2img(rand(UInt16,32,32,3),stretch=:auto);
-	
+
 	D = mat2ds([0 0; 1 1],["a", "b"]);	D.header = "a";
 	GMT.make_zvals_vec(D, ["a", "b"], [1,2]);
 	GMT.edit_segment_headers!([D], [1], "0")
@@ -661,11 +661,11 @@ if (got_it)					# Otherwise go straight to end
 	grdview!(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=dbg2);
 	grdview!(G, G=G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=dbg2);
 	r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), view="120/30", Vd=dbg2);
-	@test startswith(r, "grdview  -R -J -p120/30 -N-6+glightgray -Qsmred")
+	@test startswith(r, "grdview  -R -J -n+a -p120/30 -N-6+glightgray -Qsmred")
 	r = grdview(G, surf=(waterfall=(:rows,:red),surf=true, mesh=true, img=50), Vd=dbg2);
-	@test startswith(r, "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -Qmyredsmi50")
-	@test startswith(grdview(G, surf=(waterfall=:rows,), Vd=dbg2), "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -Qmy")
-	@test startswith(grdview(G, surf=(waterfall=(rows=true, fill=:red),), Vd=dbg2), "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -Qmyred")
+	@test startswith(r, "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -n+a -Qmyredsmi50")
+	@test startswith(grdview(G, surf=(waterfall=:rows,), Vd=dbg2), "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -n+a -Qmy")
+	@test startswith(grdview(G, surf=(waterfall=(rows=true, fill=:red),), Vd=dbg2), "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -n+a -Qmyred")
 	@test_throws ErrorException("Wrong way of setting the drape (G) option.")  grdview(rand(16,16), G=(1,2))
 	I = mat2grid(rand(Float32,128,128));
 	grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
@@ -698,9 +698,9 @@ if (got_it)					# Otherwise go straight to end
 	imshow(-2:0.1:2, -1:0.1:3,"rosenbrock", Vd=dbg2);
 	imshow(-2:0.1:2, "rosenbrock", Vd=dbg2);
 	imshow("lixo", Vd=dbg2);
-	#mat = reshape(UInt8.([255 0 0 0 0 0 0 0 0 0 0 0 0 255 0 0 0 0 0 0 0 0 0 0 0 0 255]), 3,3,3);
-	#I = mat2img(mat, hdr=[0.0 3 0 3 0 255 1 1 1]);
-	#imshow(I, J=:Merc, show=false)
+	mat = reshape(UInt8.([255 0 0 0 0 0 0 0 0 0 0 0 0 255 0 0 0 0 0 0 0 0 0 0 0 0 255]), 3,3,3);
+	I = mat2img(mat, hdr=[0.0 3 0 3 0 255 1 1 1]);
+	imshow(I, J=:Merc, show=false)
 	GMT.mat2grid("ackley");
 	GMT.mat2grid("egg");
 	GMT.mat2grid("sombrero");
