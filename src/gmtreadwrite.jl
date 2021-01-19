@@ -162,7 +162,7 @@ function guess_T_from_ext(fname::String)::String
 	ext = lowercase(ext[2:end])
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
-	elseif (findfirst(isequal(ext), ["jpg", "png", "tif", "tiff", "bmp"]) 	!== nothing)  out = " -Ti";
+	elseif (findfirst(isequal(ext), ["jpg", "png", "tif", "tiff", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
 	elseif (findfirst(isequal(ext), ["shp", "kml", "json", "geojson", "gmt", "gpkg"]) !== nothing)  out = " -To";
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";

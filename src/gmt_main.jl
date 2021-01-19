@@ -1489,7 +1489,7 @@ function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=nothing, y=nothing, hdr=
 			end
 		end
 		if (have_alpha)			# Have alpha color(s)
-			[colormap[m + 3*n_colors] = Int32(round(cmap.colormap[m,4] * 255)) for m = 1:size(cmap.colormap, 1)]
+			[colormap[m + 3*n_colors] = round(Int32, cmap.colormap[m,4] * 255) for m = 1:size(cmap.colormap, 1)]
 			n_colors *= 1000				# Flag that we have alpha colors in an indexed image
 		end
 	else

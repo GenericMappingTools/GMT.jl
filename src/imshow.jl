@@ -42,11 +42,7 @@ function imshow(arg1, x=nothing, y=nothing; kw...)
 			G = arg1
 			ext = lowercase(ext)
 			(ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif") && (is_image = true)
-			#G = (arg1[1] == '@') ? arg1 : gmtread(arg1)			# If it screws ...
-			ginfo = grdinfo(arg1, C=:n)
-			if (ginfo[1].data[2] != ginfo[1].data[9] && ginfo[1].data[4] != ginfo[1].data[10])
-				CTRL.limits[1:4] = ginfo[1].data[1:4]	# To be used by eventual J=:guess
-			end
+			snif_GI_set_CTRLlimits(arg1)			# Set CTRL.limits to be eventually used by J=:guess
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
 		G = mat2img(arg1; kw...)
@@ -108,6 +104,20 @@ function imshow(x, y, f::Function; kw...)
 	G = mat2grid(f, x, y)
 	imshow(G; kw...)
 end
+
+function snif_GI_set_CTRLlimits(G_I)::Bool
+	# Set CTRL.limits to be eventually used by J=:guess
+	(G_I == "") && return false
+	ginfo = grdinfo(G_I, C=:n)
+	if (ginfo[1].data[2] != ginfo[1].data[9] && ginfo[1].data[4] != ginfo[1].data[10])
+		CTRL.limits[1:4] = ginfo[1].data[1:4]
+		return true
+	else
+		CTRL.limits[1:6] = zeros(6)
+	end
+	return false
+end
+
 imshow(x, f::Function; kw...) = imshow(x, x, f::Function; kw...) 
 imshow(f::Function, x; kw...) = imshow(x, x, f::Function; kw...) 
 imshow(f::Function, x, y; kw...) = imshow(x, y, f::Function; kw...) 
