@@ -31,7 +31,7 @@ const opt_P = "**P** | **portrait** :: [Type => Bool or []]
 
     Tell GMT to **NOT** draw in portriat mode (that is, make a Landscape plot)"
 
-const opt_U = "**U** | **stamp** :: [Type => Str or Bool or []]	``Arg = [[just]/dx/dy/][c|label]``
+const opt_U = "**U** | **time_stamp** | **timestamp** :: [Type => Str or Bool or []]	``Arg = [[just]/dx/dy/][c|label]``
 
     Draw GMT time stamp logo on plot.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#u-full)"
@@ -41,9 +41,9 @@ const opt_V = "**V** | **verbose** :: [Type => Bool or Str]		``Arg = [level]``
     Select verbosity level, which will send progress reports to stderr.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#v-full)"
 
-const opt_X = "**X** | **xoff** | **x_off** | **x_offset** :: [Type => Str]     ``Arg = [a|c|f|r][x-shift[u]]``" 
+const opt_X = "**X** | **xoff** | **x_off** | **x_offset** | **xshift** :: [Type => Str]     ``Arg = [a|c|f|r][x-shift[u]]``" 
 
-const opt_Y = "**Y** | **yoff** | **y_off** | **y_offset** :: [Type => Str]     ``Arg = [a|c|f|r][y-shift[u]]``
+const opt_Y = "**Y** | **yoff** | **y_off** | **y_offset** | **yshift** :: [Type => Str]     ``Arg = [a|c|f|r][y-shift[u]]``
 
     Shift plot origin relative to the current origin by (x-shift,y-shift) and optionally
     append the length unit (c, i, or p). 

@@ -288,8 +288,8 @@ basemap(region="-30/30/-20/20", figsize=(12,8),
 
    - *R=xx*, *region=xx* or *limits=xx* -- where *xx* is a string is interpreted as a GMT **-R** syntax string.
    - *bb*, *lmits*, *region* -- a four (or six) elements array or tuple with *xmin, xmax, ymin, ymax [zmin zmax]*
-   - *bb=global* or *bb=:d* -- shorthand for *bb=[-180 180 -90 90] 
-   - *bb=global360* or *bb=:g* -- shorthand for *bb=[0 360 -90 90] 
+   - *bb=global* or *bb=:d* -- shorthand for *bb=[-180 180 -90 90]*
+   - *bb=global360* or *bb=:g* -- shorthand for *bb=[0 360 -90 90]*
    - *bb_diag*, *limits_diag*, *region_diag* or *LLUR* -- a four elements array with *xmin, ymin, xmax, ymax*
    - *diag=true* -- makes the *bb* mean *bb_diag*
    - *cont* or *continents=continent name* where *continent name* is any of: *Africa*, *Antarctica*,
@@ -394,9 +394,9 @@ See [GMT Map Projections](@ref) for a list of projection examples
 
 --------------------------
 
-# stamp
+# time_stamp
 
-- *U* **|** *stamp* **|** *time_stamp* : *stamp=(just="code", pos=(dx,dy), label="label", com=true)*
+- *U* **|** *time_stamp* **|** *timestamp* : *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*
 
    Draw Unix System time stamp on plot. By adding [*just*\ ]\ */dx/dy/*, the
    user may specify the justification of the stamp and where the stamp
@@ -430,11 +430,11 @@ See [GMT Map Projections](@ref) for a list of projection examples
 
 # x_off
 
-- *X* **|** *x_off*  **|** *x_offset* : *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*
+- *X* **|** *x_off*  **|** *xoff*  **|** *x_offset* **|** *xshift* : *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*
 
 # y_off
 
-- *Y* **|** *y_off*  **|** *y_offset* : *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*
+- *Y* **|** *y_off* y**|** *xoff*  **|** *y_offset* **|** *yshift* : *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*
 
    Shift plot origin relative to the current origin by (*x-shift*, *y-shift*) and optionally append the
    length unit (**c**, **i**, or **p**). This second case (with units) implies that *x-shift* must be a
@@ -465,14 +465,15 @@ See [GMT Map Projections](@ref) for a list of projection examples
 
 # interp
 
-- **n** **|** *interp* **|** *interpol* : *interp="[b|c|l|n][+a][+bBC][+c][+tthreshold]"*\
+- **n** **|** *interp* **|** *interpol* : *interp=(B_spline=true, bicubic=true, bilinear=true, near_neighbor=true, aliasing=true, antialiasing=true, bc=?, clipz=true, threshold=?)*\
 
-   Select grid interpolation mode by adding b for B-spline smoothing, c for bicubic interpolation,
-   l for bilinear interpolation, or n for nearest-neighbor value (for example to plot categorical data).
-   Optionally, append +a to switch off antialiasing (where supported). Append +bBC to override the boundary
-   conditions used, adding g for geographic, p for periodic, or n for natural boundary conditions. For the
-   latter two you may append x or y to specify just one direction, otherwise both are assumed. Append +c
-   to clip the interpolated grid to input z-min/max [Default may exceed limits]. Append +tthreshold to
+   Select grid interpolation mode by adding *B-spline* smoothing, *bicubic* interpolation,
+   *bilinear* interpolation, or *near-neighbor* (for example to plot categorical data).
+   Optionally, append *antialiasing* to switch on antialiasing (where supported) or *aliasing* to leave it out
+   (in grdproject). Append *bc* to override the boundary
+   conditions used, adding **g** for geographic, **p** for periodic, or **n** for natural boundary conditions. For the
+   latter two you may append x or y to specify just one direction, otherwise both are assumed. Append *clipz*
+   to clip the interpolated grid to input z-min/max [Default may exceed limits]. Append *threshold=val* to
    control how close to nodes with NaNs the interpolation will go. A threshold of 1.0 requires all (4 or 16)
    nodes involved in interpolation to be non-NaN. 0.5 will interpolate about half way from a non-NaN value;
    0.1 will go about 90% of the way, etc. [Default is bicubic interpolation with antialiasing and a threshold
