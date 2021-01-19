@@ -29,13 +29,13 @@ jobs:
           #- '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
           #- 'nightly'
         os:
-          - ubuntu-eoan
+          - ubuntu-18.04
         arch:
           - x64
         include:
           # Linux
           - name: Linux - Compile only
-            os: ubuntu-eoan
+            os: ubuntu-18.04
             run_in_pr : true
 
     steps:
