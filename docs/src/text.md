@@ -58,8 +58,8 @@ Optional Arguments
 - **Q** or **change\_case** : -- *change\_case=:lower* **|** *change\_case=:upper*\
     Change all text to either **change\_case=:lower** or **change\_case=:upper** case [Default leaves all text as is].
 
-- **U** or **stamp** : *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [stamp](@ref)
+- **U** or **time_stamp** : *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
+   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
 
 - **V** or **verbose** : *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)

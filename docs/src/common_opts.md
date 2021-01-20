@@ -404,8 +404,8 @@ See [GMT Map Projections](@ref) for a list of projection examples
    For example, BL/0/0 will align the lower left corner of the time
    stamp with the lower left corner of the plot [LL]. Optionally, append a
    *label*, or **c** (which will plot the command string.). The GMT
-   parameters `MAP\_LOGO`, `MAP\_LOGO\_POS`, and
-   `FORMAT\_TIME\_STAMP` can affect the appearance; see the
+   parameters `MAP_LOGO`, `MAP_LOGO_POS`, and
+   `FORMAT_TIME_STAMP` can affect the appearance; see the
    `gmt.conf` man page for details. The time string will be in the
    locale set by the environment variable **TZ** (generally local time).
 
