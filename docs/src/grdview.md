@@ -89,8 +89,8 @@ Optional Arguments
    to draw the tile outlines. If the default pen is not to your liking, use ``outlines=pen``
    (see [Pen attributes](@ref)). As this option produces a flat surface it cannot be combined with -JZ or -Jz.
 
-- **U** or *stamp* : -- *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [stamp](@ref)
+- **U** or *time_stamp* : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
+   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
 
 - **V** or *verbose* : -- *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)

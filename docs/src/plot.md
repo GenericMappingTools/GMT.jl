@@ -106,8 +106,8 @@ Parameters
    You can also append one or more additional line attribute modifiers: **offset=val** will start and stop drawing the line the given distance offsets from the end point. Append unit **u** from **c** | **i** | **p** to indicate plot distance on the map or append map distance units instead (see below);
    **bezier=true** will draw the line using a Bezier spline; *vspecs* will place a vector head at the ends of the lines. You can use **vec\_start** and **vec\_stop** to specify separate vector specs at each end [shared specs]. See the [Vector Attributes](@ref) for more information.
 
-- **U** or *stamp* : *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [stamp](@ref)
+- **U** or *time_stamp* : *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
+   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
 
 - **V** or *verbose* : *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)

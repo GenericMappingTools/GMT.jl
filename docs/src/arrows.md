@@ -37,8 +37,8 @@ Parameters
    the vector head. Vector stem width is set by *pen*. By default, a vector head of 0.5 cm is set but see
    [Vector Attributes](@ref) for overwriting this default and specifying other attributes.
 
-- **U** or *stamp* : -- *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [stamp](@ref)
+- **U** or *time_stamp* : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
+   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
 
 - **V** or *verbose* : -- *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)

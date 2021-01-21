@@ -111,8 +111,8 @@ Optional Arguments
   (Numbers in **annot**, **cont**, **range** refer to values after this scaling has occurred.) Use ``periodic=true``
   to indicate that this grid file contains z-values that are periodic in 360 degrees (e.g., phase data, angular distributions) and that special precautions must be taken when determining 0-contours.
 
-- **U** or **stamp** : -- *stamp=true* **|** *stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [stamp](@ref)
+- **U** or **time_stamp** : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
+   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
 
 - **V** or **verbose** : -- *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)
