@@ -3,7 +3,7 @@ using Documenter, GMT
 makedocs(
 	modules = [GMT],
 	sitename = "GMT",
-	#format = Documenter.HTML(assets = ["assets/custom.css"]),
+	format = Documenter.HTML(assets = ["assets/custom.css"]),
 	pages = Any[
 		"Introduction"             => "usage.md",
 		"Quick Learn"              => "quick_learn.md",
@@ -121,6 +121,6 @@ makedocs(
 
 deploydocs(
 	repo   = "github.com/GenericMappingTools/GMT.jl.git",
-	#target  = "build",
+	target  = "build",
 	push_preview = true,
 )
