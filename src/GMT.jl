@@ -2,6 +2,7 @@ module GMT
 
 using Printf
 using Dates
+using Statistics
 
 struct CTRLstruct
 	limits::Vector{Float64}
@@ -65,7 +66,7 @@ export
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
 	mbimport, mbgetdata, mbsvplist, mblevitus,
-	mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc
+	mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, geodetic2enu
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -156,6 +157,7 @@ include("triangulate.jl")
 include("trend1d.jl")
 include("trend2d.jl")
 include("xyz2grd.jl")
+include("utils_project.jl")
 include("seis/psmeca.jl")
 include("geodesy/psvelo.jl")
 include("geodesy/earthtide.jl")
