@@ -148,7 +148,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 #		end
 #	end
 
-	cmd, K = finish_PS_nested(d, gmt_proggy * cmd, K, O)
+	cmd, K = finish_PS_nested(d, gmt_proggy * cmd, K)
 	return finish_PS_module(d, cmd, "-D", K, O, true, arg1, arg2, arg3)
 end
 

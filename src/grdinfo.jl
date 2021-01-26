@@ -21,6 +21,11 @@ Parameters
 
     Report grid domain and x/y-increments in world mapping format.
     ($(GMTdoc)grdinfo.html#f)
+- **G** | **force_download** :: [Type => Bool]
+
+    Force (possible) download and mosaicing of all tiles of tiled global remote grids in order
+    to report the requested information.
+    ($(GMTdoc)grdinfo.html#g)
 - **I** | **nearest** :: [Type => Number | Str]     ``Arg = [dx[/dy]|b|i|r]``
 
     Report the min/max of the region to the nearest multiple of dx and dy, and output
@@ -47,7 +52,7 @@ function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :f])
-	cmd  = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:I :nearest],
+	cmd  = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:G :force_download], [:I :nearest],
 	                                 [:L :force_scan], [:M :minmax_pos], [:T :zmin_max]])
 	common_grd(d, cmd0, cmd, "grdinfo ", arg1)		# Finish build cmd and run it
 end

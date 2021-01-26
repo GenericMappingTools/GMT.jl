@@ -1,7 +1,7 @@
 """
 	rose(cmd0::String="", arg1=nothing; kwargs...)
 
-Reads (length,azimuth) pairs and plot a windrose diagram.
+Reads (length,azimuth) pairs and plot a windrose diagram (polar histograms).
 
 Full option list at [`psrose`]($(GMTdoc)rose.html)
 
@@ -42,7 +42,7 @@ Parameters
 
 	Specify labels for the 0, 90, 180, and 270 degree marks.
 	($(GMTdoc)rose.html#l)
-- **M** :: [Type => Bool]
+- **M** | **vector_params** :: [Type => Str]
 
 	Used with -C to modify vector parameters.
 	($(GMTdoc)rose.html#m)
@@ -102,7 +102,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :e :p :t :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:D :shift], [:F :no_scale], [:L :labels], [:M],
+	cmd  = parse_these_opts(cmd, d, [[:D :shift], [:F :no_scale], [:L :labels], [:M :vector_params],
 	                                 [:Q :alpha], [:S :norm :normalize], [:T :orientation], [:Z :scale]])
 	cmd = add_opt(d, cmd, 'A', [:A :sector], (width="", rose="_+r"))
 

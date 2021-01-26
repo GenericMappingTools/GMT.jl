@@ -192,8 +192,8 @@ basemap(region=("1997T","1999T",0,1), figsize=(12,0.25),
 
 Note that while the year annotation is centered on the 1-year interval, the month annotations must
 be centered on the corresponding month and not the 3-month interval. The FORMAT\_DATE\_MAP selects
-month name only and FORMAT\_TIME\_PRIMARY_MAP selects the 1-character, upper case abbreviation of
-month names using the current language (selected by GMT_LANGUAGE).
+month name only and FORMAT\_TIME\_PRIMARY\_MAP selects the 1-character, upper case abbreviation of
+month names using the current language (selected by GMT\_LANGUAGE).
 
 !["B_time3"](figures/B_time3.png)
 

@@ -64,6 +64,7 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, "")
+	cmd  = parse_JZ(d, cmd)[1]
 	cmd, = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
 	                                [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
