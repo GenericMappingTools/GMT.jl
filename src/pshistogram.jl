@@ -18,6 +18,7 @@ Parameters
 
     Plot the histogram horizontally from x = 0 [Default is vertically from y = 0].
     ($(GMTdoc)histogram.html#a)
+- $(GMT.opt_Jz)
 - $(GMT.opt_B)
 - **C** | **color** | **cmap** :: [Type => Str | GMTcpt]
 
@@ -31,6 +32,10 @@ Parameters
 
     Use an alternative histogram bar width than the default set via T, and optionally shift all bars by an offset.
     ($(GMTdoc)histogram.html#e)
+- **binmethod** | *BinMethod** :: [Type => Str]			`Arg = method`
+
+	Binning algorithm: "scott", "fd", "sturges" or "sqrt" for floating point data. "second", "minute", "hour",
+	"day", "week", "month" or "year" for DateTime data.
 - **F** | **center** :: [Type => Bool]
 
     Center bin on each value. [Default is left edge].
@@ -96,7 +101,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_args = (arg1 === nothing) ? 0 : 1
 
 	gmt_proggy = (IamModern[1]) ? "histogram "  : "pshistogram "
-	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1, arg2)
+	(length(kwargs) == 0 && cmd0 != "") && return monolitic(gmt_proggy, cmd0, arg1, arg2)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
@@ -104,7 +109,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	opt_Z = add_opt(d, "", 'Z', [:Z :kind], (counts = "0", count = "0", freq = "1", log_count = "2", log_freq = "3",
 	                                         log10_count = "4", log10_freq = "5", weights = "+w"), true, "")
 	opt_T = parse_opt_range(d, "", "")		# [:T :range :inc :bin]
-	(isa(arg1, GMTimage) || isa(arg1, GMTgrid)) && occursin("/", opt_T) && error("here 'inc' must be a scalar")
+	(isa(arg1, GMTimage) || isa(arg1, GMTgrid)) && occursin("/", opt_T) && error("here 'bin' must be a scalar")
 
 	# If inquire, no plotting so do it and return
 	opt_I = add_opt(d, "", "I", [:I :inquire :bins], (all = "O", no_zero = "o"))
@@ -123,27 +128,41 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "histogram", O, " -JX12c/12c")
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :p :t :params], first)[1]
+	cmd, opt_JZ = parse_JZ(d, cmd)
+	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = add_opt(d, cmd, 'D', [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
 	(show_kwargs[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
-	(isa(arg1, GMTimage) || isa(arg1, GMTgrid)) && occursin("/", opt_T) && error("here 'inc' must be a scalar")
 
-	if (GMTver >= v"6.2")  cmd = add_opt(d, cmd, 'E', [:E :width], (width = "", off = "+o", offset = "+o"))  end
-
+	(GMTver >= v"6.2") && (cmd = add_opt(d, cmd, 'E', [:E :width], (width = "", off = "+o", offset = "+o")))
+	
 	# If file name sent in, read it and compute a tight -R if this was not provided
-	if (opt_R == "")  opt_R = " "  end			# So it doesn't try to find the -R in next call
+	is_datetime = isa(arg1, Array{<:DateTime})
+	(opt_R == "" && !isa(arg1, Vector{DateTime})) && (opt_R = " ")	# So it doesn't try to find the -R in next call
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
-	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
+	cmd, arg1, arg2,  = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
+
+	# If we still do not know the bin width, either use the GMT6.2 -E or BinMethod in binmethod()
+	if (opt_T == "" && !occursin(" -E", cmd) && (arg1 !== nothing) && !isa(arg1, GMTimage) && !isa(arg1, GMTgrid))
+		opt_T = binmethod(d, cmd, arg1, is_datetime)	# This comes without the " -T"
+		if (is_datetime)
+			t = gmt("pshistogram -I -T" * opt_T, arg1)	# Call with inquire option to know y_min|max
+			h = round_wesn(t[1].data)					# Only h[4] is needed
+			opt_R *= sprintf("/0/%.12g", h[4])			# Half -R was computed in read_data()
+			cmd *= opt_R * " -T" * opt_T
+			opt_T = ""		# Clear it because the GMTimage & GMTgrid use a version without "-T" that is added at end
+		end
+	end
 
 	cmd  = add_opt(d, cmd, 'L', [:L :out_range], (first = "l", last = "h", both = "b"))
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)     	# TRUE to also seek (lw|lt,lc,ls)
 	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-S", cmd))
-		cmd *= " -G150"
-    	elseif (occursin("-S", cmd) && !occursin("-W", cmd))
-		cmd *= " -W0.3p"
+		cmd *= " -G#0072BD"
+		!occursin("-W", cmd) && (cmd *= " -Wfaint")
+    elseif (occursin("-S", cmd) && !occursin("-W", cmd))
+		cmd *= " -Wfaint"
 	end
 
 	limit_L = nothing
@@ -166,7 +185,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			end
 		end
 		arg1 = hst		# We want to send the histogram, not the GMTimage
-    	elseif (isa(arg1, GMTgrid))
+    elseif (isa(arg1, GMTgrid))
 		if (opt_T != "")
 			inc = parse(Float64, opt_T) + eps()		# + EPS to avoid the extra last bin at right with 1 count only
 			n_bins = Int(ceil((arg1.range[6] - arg1.range[5]) / inc))
@@ -183,7 +202,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		if (!occursin("+w", cmd))  cmd *= "+w"  end		# Pretending to be weighted is crutial for the trick
 		cmd *= " -T$(arg1.range[5])/$(arg1.range[6])/$inc"
 		arg1 = hst		# We want to send the histogram, not the GMTgrid
-    	else
+	else
 		if (opt_T != "")  opt_T = " -T" * opt_T  end	# It lacked the -T so that it could be used in loc_histo()
 		cmd *= opt_T * opt_Z
 	end
@@ -198,7 +217,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	out2 = nothing;		Vd_ = 0				# Backup values
-	if (haskey(d, :Vd))  Vd_ = d[:Vd]  end
+	(haskey(d, :Vd)) && (Vd_ = d[:Vd])
 	
 	# Plot the histogram
 	out1 = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
@@ -265,6 +284,7 @@ function loc_histo(in, cmd::String="", opt_T::String="", opt_Z::String="")
 	return hst, cmd * " -T0/$(n_bins * inc)/$inc"
 end
 
+# ---------------------------------------------------------------------------------------------------
 function pshst_wall!(in, hst, inc, n_bins::Int)
 	# Function barrier for type instability. With the body of this in calling fun the 'inc' var
 	# introduces a mysterious type instability and execution times multiply by 3.
@@ -275,6 +295,48 @@ function pshst_wall!(in, hst, inc, n_bins::Int)
 	end
 	[@inbounds hst[k,1] = inc * (k - 1) for k = 1:n_bins]
 	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function binmethod(d::Dict, cmd::String, X, is_datetime::Bool)
+	# Compute bin width for a series of binning alghoritms or intervals when X (DateTime) comes in seconds
+	val = ((val_ = find_in_dict(d, [:binmethod :BinMethod])[1]) !== nothing) ? lowercase(string(val_)) : ""
+	(!is_datetime) && (min_max = extrema(X))		# X should already be sorted but don't trust that
+	if (val == "")
+		if (!is_datetime)
+			val = "scott"
+		else
+			min_max = extrema(X)		# X should already be sorted but don't trust that
+			rng = (min_max[2] - min_max[1])
+			if     (rng / (86400 * 365.25) < 120)  val = "year"
+			elseif (rng / (86400 * 31) < 120)      val = "month"
+			elseif (rng / (86400 * 7)  < 120)      val = "week"
+			elseif (rng / (86400) < 120)           val = "day"
+			elseif (rng / (3600)  < 120)           val = "hour"
+			elseif (rng / (60) < 120)              val = "minute"
+			else                                   val = "second"
+			end
+		end
+	end
+
+	n_bins = 0.0;	bin = 0
+	if     (val == "scott")   n_bins = 3.5 .* std(X) .* length(X)^(-1/3)
+	elseif (val == "fd")      n_bins = 2 .* IQR(X) .* length(X)^(-1/3)
+	elseif (val == "sturges") n_bins = ceil.(1 .+ log2.(length(X)))
+	elseif (val == "sqrt")    n_bins = ceil.(sqrt(length(X)))
+	elseif (val == "year")    bin = 86400 * 365.25
+	elseif (val == "month")   bin = 86400 * 31
+	elseif (val == "week")    bin = 86400 * 7
+	elseif (val == "day")     bin = 86400
+	elseif (val == "hour")    bin = 3600
+	elseif (val == "minute")  bin = 60
+	elseif (val == "second")  bin = 1
+	elseif (!is_datetime)     error("Unknown BinMethod $val")
+	end
+	if (bin == 0)
+		bin = (min_max[2] - min_max[1]) / n_bins	# Should be made a "pretty" number?
+	end
+	return sprintf("%.12g", bin)
 end
 
 # ---------------------------------------------------------------------------------------------------
