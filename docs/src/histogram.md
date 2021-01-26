@@ -37,6 +37,14 @@ Optional Arguments
 - **E** or **width** : -- *width=val* **|** *width=(width=val, offset=val)*\ 
    Use an alternative histogram bar width than the default set via **bin**, and optionally shift all bars by an offset. Here width is either an alternative width in data units, or the user may append a valid plot dimension unit ("c|i|p") for a fixed dimension instead. Optionally, all bins may be shifted along the axis by offset. As for width, it may be given in data units of plot dimension units by appending the relevant unit.
 
+- **binmethod** or **BinMethod** : -- *binmethod=mthod*\
+   Use a binning algorithm. For decimal data: "**scott**", optimal for data is close to being normally distributed. Also
+   appropriate for most other distributions. Uses a bin width of ``3.5*std(X(:))*numel(X)^(-1/3)``; "**fd**", uses a bin
+   width of ``2*IQR(X(:))*numel(X)^(-1/3)``, where IQR is the interquartile range of X; "**sturges**", chooses the number
+   of bins to be ``ceil(1 + log2(numel(X)))``. "**sqrt**", chooses the number of bins to be ``ceil(sqrt(numel(X)))``.
+
+   For DateTime data: "**second**", "**minute**", "**hour**", "**day**", "**week**", "**month**" or "**year**" 
+
 - **F** or **center** : -- *center=true*\ 
    Center bin on each value. [Default is left edge].
 
@@ -91,7 +99,7 @@ Optional Arguments
    countings are >= *low* & <= *high* percentage of the maximum histogram countings. The defaul values
    (which are used by **auto** and **zoom**) are **thresholds=(0,0.5)**
 
-- **U** or **time_stamp** : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
+- **U** or **time_stamp** or **timestamp** : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
    Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
 
 - **V** or **verbose** : -- *verbose=true* **|** *verbose=level*\

@@ -98,7 +98,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	cmd = "grdimage " * cmd				# In any case we need this
 	do_finish = false
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
-		cmd, K = finish_PS_nested(d, cmd, K, O)
+		cmd, K = finish_PS_nested(d, cmd, K)
 		do_finish = true
 	end
 	(isa(arg1, GMTimage) && GMTver < v"6.2" && !occursin("-A", cmd)) && (arg1 = ind2rgb(arg1))	# Prev to 6.2 indexed imgs lost colors

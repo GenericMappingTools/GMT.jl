@@ -96,12 +96,12 @@ const opt_e = "**e** | **pattern** :: [Type => Str]        ``Arg = [~]”pattern
     Only accept ASCII data records that contains the specified pattern.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#e-full)"
 
-const opt_f = "**f** | **colinfo** :: [Type => Str]        ``Arg = [i|o]colinfo``
+const opt_f = "**f** | **colinfo** | **coltypes** :: [Type => Str]        ``Arg = [i|o]colinfo``
 
     Specify the data types of input and/or output columns (time or geographical data).
     (http://docs.generic-mapping-tools.org/latest/gmt.html#f-full)"
 
-const opt_g = "**g** | **gaps** :: [Type => Str]           ``Arg = [a]x|y|d|X|Y|D|[col]z[+|-]gap[u]``
+const opt_g = "**g** | **gap** :: [Type => Str]           ``Arg = [a]x|y|d|X|Y|D|[col]z[+|-]gap[u]``
 
     Examine the spacing between consecutive data points in order to impose breaks in the line.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#g-full)"
@@ -111,7 +111,7 @@ const opt_h = "**h** | **header** :: [Type => Str]        ``Arg = [i|o][n][+c][+
     Primary input file(s) has header record(s).
     (http://docs.generic-mapping-tools.org/latest/gmt.html#h-full)"
 
-const opt_i = "**i** | **incols** :: [Type => Str]      ``Arg = cols[+l][+sscale][+ooffset][,…]``
+const opt_i = "**i** | **incols** | **incol** :: [Type => Str]      ``Arg = cols[+l][+sscale][+ooffset][,…]``
 
     Select specific data columns for primary input, in arbitrary order.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#icols-full)"
@@ -132,7 +132,7 @@ const opt_n = "**n** | **interp** | **interpol** :: [Type => Str]         ``Arg 
     l for bilinear interpolation, or n for nearest-neighbor value.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#n-full)"
 
-const opt_o = "**o** | **outcols** :: [Type => Str]     ``Arg = cols[,…]``
+const opt_o = "**o** | **outcols** | **outcol** :: [Type => Str]     ``Arg = cols[,…]``
 
     Select specific data columns for primary output, in arbitrary order.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#ocols-full)"
@@ -142,9 +142,14 @@ const opt_p = "**p** | **view** | **perspective** :: [Type => Str or List]   ``A
     Selects perspective view and sets the azimuth and elevation of the viewpoint [180/90].
     (http://docs.generic-mapping-tools.org/latest/gmt.html#perspective-full)"
 
-const opt_q = "**q** | **inrow** :: [Type => Str]       ``Arg = [i|o][~]rows[+ccol][+a|f|s]``
+const opt_q = "**q** | **inrow** | **inrows** :: [Type => Str]       ``Arg = [i|o][~]rows[+ccol][+a|f|s]``
 
     Select specific data rows to be read (-qi [Default]) or written (-qo) [all]. 
+    (http://docs.generic-mapping-tools.org/latest/gmt.html#q-full)"
+
+const opt_qo = "**qo** | **outrow** | **outrows** :: [Type => Str]       ``Arg = [i|o][~]rows[+ccol][+a|f|s]``
+
+    Select specific data rows to be written (-qo). 
     (http://docs.generic-mapping-tools.org/latest/gmt.html#q-full)"
 
 const opt_r = "**r** | **reg** | **registration** :: [Type => Bool or []]

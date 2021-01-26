@@ -45,7 +45,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 
 	def_J = (is_ternary) ? " -JX12c/0" : ""
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
-	if (is3D)	cmd, opt_JZ  = parse_JZ(d, cmd)  end
+	cmd, opt_JZ = parse_JZ(d, cmd)
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	if (is_ternary)  cmd = add_opt(d, cmd, 'M', [:M :no_plot])  end
@@ -126,7 +126,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	end
 
 	opt_Wmarker = ""
-	if ((val = find_in_dict(d, [:markeredgecolor :MarkerEdgeColor])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor])[1]) !== nothing)
 		opt_Wmarker = "0.5p," * arg2str(val)		# 0.25p is too thin?
 	end
 
@@ -153,7 +153,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 			opt_S = " -S" * marca
 			# If data comes from a file, then no automatic symbol size is added
 			op = lowercase(marca[1])
-			def_size = (op == 'p') ? "3p" : "7p"	# 'p' here stands for symbol points, not units
+			def_size = (op == 'p') ? "2p" : "7p"	# 'p' here stands for symbol points, not units
 			if (!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw"))  opt_S *= def_size  end
 		end
 	else
@@ -227,7 +227,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	(!IamModern[1]) && put_in_legend_bag(d, cmd, arg1)
 
 	cmd = gmt_proggy .* cmd				# In any case we need this
-	cmd, K = finish_PS_nested(d, cmd, K, O)
+	cmd, K = finish_PS_nested(d, cmd, K)
 
 	r = finish_PS_module(d, cmd, "", K, O, true, arg1, arg2, arg3)
 	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
@@ -406,6 +406,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 				just_C  = just_C[1:ind[1]-1]
 			end
 			arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
+			global current_cpt = arg2
 			if (occursin(" -C", cmd))  cmd = cmd[1:len+3]  end		# Strip the cpt name
 			if (reset_i != "")  cmd *= reset_i  end		# Reset -i, in case it existed
 		end

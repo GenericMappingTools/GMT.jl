@@ -21,6 +21,10 @@ Parameters
 
     Include Ends of time series in output. Default loses half the filter-width of data at each end.
     ($(GMTdoc)filter1d.html#e)
+- **L** | **gap_width** :: [Type => Number | Str]      `Arg = width`
+
+    Checks for Lack of data condition. If input data has a gap exceeding width then no output will be given at that point.
+    ($(GMTdoc)filter1d.html#l)
 - **N** | **time_col** :: [Type => Int]      `Arg = t_col`
 
     Indicates which column contains the independent variable (time). The left-most column
@@ -58,7 +62,7 @@ function filter1d(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
-	cmd = parse_these_opts(cmd, d, [[:F :filter_type], [:D :inc], [:E :ends], [:N :time_col],
+	cmd = parse_these_opts(cmd, d, [[:F :filter_type], [:D :inc], [:E :ends], [:L :gap_width], [:N :time_col],
 	                       [:Q :quality], [:S :symetry], [:T :equi_space]])
 
 	(isvector(arg1)) && (arg1 = cat_1_arg(arg1))	# Accept vectors (GMT should do that too)

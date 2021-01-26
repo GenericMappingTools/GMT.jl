@@ -174,6 +174,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_B(Dict(:B=>:same), "")[1] == " -B"
 	@test GMT.parse_B(Dict(:title => :bla), "")[1] == " -Baf -BWSen+tbla"
 	@test GMT.parse_B(Dict(:frame => :auto, :title => :bla), "")[1] == " -Baf -BWSen+tbla"
+	@test GMT.parse_B(Dict(:B=>:WS), "")[1] == " -BWS -Baf"
 	GMT.helper2_axes("lolo");
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
 
@@ -1026,6 +1027,8 @@ if (got_it)					# Otherwise go straight to end
 	G = GMT.peaks();
 	histogram(G, Vd=dbg2);
 	histogram(G, T=0.3, Vd=dbg2);
+	histogram(rand(10), Vd=dbg2);
+	@test_throws ErrorException("Unknown BinMethod lala") histogram(rand(100), binmethod="lala")
 
 	println("	PSLEGEND")
 	# PSLEGEND
@@ -1166,12 +1169,12 @@ if (got_it)					# Otherwise go straight to end
 	@assert(size(G.z) == (151, 151))
 
 	# SPLITXYZ (fails)
-	splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
+	splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g", Vd=dbg2)
 
 	# TRIANGULATE
 	println("	TRIANGULATE")
 	G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
-	triangulate(rand(5,3), R="0/150/0/150", voronoi=:pol, Vd=2);
+	triangulate(rand(5,3), R="0/150/0/150", voronoi=:pol, Vd=dbg2);
 
 	# NEARNEIGHBOR
 	println("	NEARNEIGHBOR")
@@ -1329,6 +1332,8 @@ if (got_it)					# Otherwise go straight to end
 	cpt = makecpt(T="-6/8/1");      # Create the color map
 	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
 	D = grdcontour(G, cont=[-2,0,5], dump=true);
+
+	GMT.geodetic2enu(-81.998,42.002,1000,-82,42,200);
 
 	# Remove garbage
 	println("	REMOVE GARBAGE")

@@ -75,7 +75,7 @@ Parameters
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
     points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT="c")*
 
-- **W** | **pen** | **markeredgecolor** :: [Type => Str]
+- **W** | **pen** | **markeredgecolor** | **mec** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot.html#w)
@@ -251,7 +251,7 @@ Parameters
     + **t**, **^**, **triangle**
     + **x**, **cross**
     + **y**, **y_dash**
-- **W** | **pen** | **line_attribs** | **markeredgecolor** | **MarkerEdgeColor** :: [Type => Str]
+- **W** | **pen** | **line_attribs** | **markeredgecolor** | **MarkerEdgeColor** | **mec**:: [Type => Str]
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot3d.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
@@ -348,7 +348,7 @@ Parameters
     and select their sizes with the **markersize** or **size** keyword [default is 8p].
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
     points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT=:c,)*	
-- **W** | **pen** | **markeredgecolor** :: [Type => Str]
+- **W** | **pen** | **markeredgecolor** | **mec** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot.html#w)
@@ -814,7 +814,7 @@ Parameters
     Save the intermediate event symbols and labels to permanent files instead of removing them when done.
     ($(GMTdoc)events.html#q)
 - $(GMT.opt_R)
-- **W** | **pen** | **markeredgecolor** :: [Type => Str]
+- **W** | **pen** | **markeredgecolor** | **mec** :: [Type => Str]
 
     Specify symbol outline pen attributes [Default is no outline].
     ($(GMTdoc)events.html#w)

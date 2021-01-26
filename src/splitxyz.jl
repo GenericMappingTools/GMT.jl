@@ -54,7 +54,7 @@ function splitxyz(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("splitxyz", cmd0, arg1)
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		    # Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :bi :bo :di :do :e :f :g :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim_tol], [:C :course_change], [:D :min_dist :min_distance], [:F :filter],
 	                                 [:Q :xyzdh], [:S :dh :dist_head]])
@@ -63,3 +63,4 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 splitxyz(arg1; kw...) = splitxyz("", arg1; kw...)
+const gmtsplit = splitxyz			# Alias
