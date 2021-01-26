@@ -23,7 +23,7 @@ Parameters
 
     Temporarily override PROJ_LENGTH_UNIT and use c (cm), i (inch), or p (points) instead.
     ($(GMTdoc)mapproject.html#d)
-- **E** | **geod2ecef** :: [Type => Str | []]    ``Arg = [datum]``
+- **E** | **geod2ecef** | **ecef** :: [Type => Str | []]    ``Arg = [datum]``
 
     Convert from geodetic (lon, lat, height) to Earth Centered Earth Fixed (ECEF) (x,y,z) coordinates.
     ($(GMTdoc)mapproject.html#e)
@@ -88,7 +88,7 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :j :o :p :s :yx])
-	cmd  = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef], [:I :inverse], [:S :supress], #[:L :dist2line],
+	cmd  = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef :ecef], [:I :inverse], [:S :supress], #[:L :dist2line],
 	                                 [:T :change_datum], [:W :map_size], [:Z :travel_times]])
 	cmd  = add_opt_1char(cmd, d, [[:D :override_units], [:F :one2one], [:Q :list], [:N :geod2aux]])
 
