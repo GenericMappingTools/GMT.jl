@@ -553,7 +553,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	# These four are aliases
 	extra_parse = true;		have_a_none = false
 	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
-		if isa(val, Dict)  val = dict2nt(val)  end
+		isa(val, Dict) && (val = dict2nt(val))
 		if (isa(val, String) || isa(val, Symbol))
 			val = string(val)					# In case it was a symbol
 			if (val == "none")					# User explicitly said NO AXES
@@ -566,8 +566,9 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 			elseif (val == "same")				# User explicitly said "Same as previous -B"
 				return cmd * " -B", " -B"
 			elseif (startswith(val, "auto"))
-				if     (occursin("XYZg", val)) val = (GMTver <= v"6.1") ? " -Bafg -Bzafg -B+b" : " -Bafg -Bzafg -B+w"
-				elseif (occursin("XYZ", val))  val = def_fig_axes3
+				is3D = false
+				if     (occursin("XYZg", val)) val = " -Bafg -Bzafg -B+" * ((GMTver <= v"6.1") ? "b" : "w");  is3D = true
+				elseif (occursin("XYZ", val))  val = def_fig_axes3;		is3D = true
 				elseif (occursin("XYg", val))  val = " -Bafg -BWSen"
 				elseif (occursin("XY", val))   val = def_fig_axes
 				elseif (occursin("LB", val))   val = " -Baf -BLB"
@@ -580,6 +581,9 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 				elseif (occursin("Y",  val))   val = " -Baf -BWsen"
 				elseif (val == "auto")         val = def_fig_axes		# 2D case
 				end
+				cmd = guess_WESN(d, cmd)
+			elseif (length(val) <= 5 && !occursin(" ", val) && occursin(r"[WESNwesnzZ]", val))
+				val *= " af"		# To prevent that setting B=:WSen removes all annots
 			end
 		end
 		if (isa(val, NamedTuple)) opt_B[1] = axis(val);	extra_parse = false
@@ -602,11 +606,12 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 				t = " " * t;		# Do not glue, for example, -Bg with :title
 			end
 		end
-		if (val = find_in_dict(d, [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2 :xticks :yticks :zticks], false)[1] === nothing)
-			opt_B[1] *= t;
-		else
-			opt_B[1] = t;
-		end
+		#if (val = find_in_dict(d, [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2 :xticks :yticks :zticks], false)[1] === nothing)
+			#opt_B[1] *= t;
+		#else
+			#opt_B[1] = t;
+		#end
+		opt_B[1] *= t;
 		extra_parse = true
 	end
 
@@ -666,6 +671,22 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	(have_a_none) && (opt_B[1] *= " --MAP_FRAME_PEN=0.001,white@100")	# Need to resort to this sad trick
 
 	return cmd * opt_B[1], opt_B[1]
+end
+
+# ---------------------------------------------------------------------------------------------------
+function guess_WESN(d::Dict, cmd::String)
+	# For automatic -B option settings add MAP_FRAME_AXES option such that only the two closest
+	# axes will be annotated. For now this function is only used in 3D modules.
+	if ((val = find_in_dict(d, [:p :view :perspective], false)[1]) !== nothing && isa(val, Tuple))
+		quadrant = mod(div(val[1], 90), 4)		# But since the angle is azim those are not the trig quadrants
+		if     (quadrant == 0)  axs = "wsNEZ"	# Trig first quadrant
+		elseif (quadrant == 1)  axs = "wSnEZ"	# Trig fourth quadrant
+		elseif (quadrant == 2)  axs = "WSneZ"	# Trig third quadrant
+		else   axs = "WseNZ"	# Trig fourth quadrant
+		end
+		cmd *= " --MAP_FRAME_AXES=" * axs
+	end
+	cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -818,13 +839,13 @@ end
 # ---------------------------------------------------------------------------------
 function parse_f(d::Dict, cmd::String)
 	# Parse the global -f option. Return CMD same as input if no -f option in args
-	parse_helper(cmd, d, [:f :colinfo], " -f")
+	parse_helper(cmd, d, [:f :colinfo :coltypes], " -f")
 end
 
 # ---------------------------------------------------------------------------------
 function parse_g(d::Dict, cmd::String)
 	# Parse the global -g option. Return CMD same as input if no -g option in args
-	parse_helper(cmd, d, [:g :gaps], " -g")
+	parse_helper(cmd, d, [:g :gap], " -g")
 end
 
 # ---------------------------------------------------------------------------------
@@ -834,7 +855,7 @@ function parse_h(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------
-parse_i(d::Dict, cmd::String) = parse_helper(cmd, d, [:i :incols], " -i")
+parse_i(d::Dict, cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i")
 parse_j(d::Dict, cmd::String) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
 
 # ---------------------------------------------------------------------------------
@@ -873,13 +894,19 @@ end
 # ---------------------------------------------------------------------------------
 function parse_o(d::Dict, cmd::String)
 	# Parse the global -o option. Return CMD same as input if no -o option in args
-	parse_helper(cmd, d, [:o :outcols], " -o")
+	parse_helper(cmd, d, [:o :outcols :outcol], " -o")
 end
 
 # ---------------------------------------------------------------------------------
 function parse_p(d::Dict, cmd::String)
 	# Parse the global -p option. Return CMD same as input if no -p option in args
 	parse_helper(cmd, d, [:p :view :perspective], " -p")
+end
+
+# ---------------------------------------------------------------------------------
+function parse_q(d::Dict, cmd::String)
+	parse_helper(cmd, d, [:q :inrow :inrows], " -q")
+	parse_helper(cmd, d, [:qo :outrow :outrows], " -qo")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -984,7 +1011,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 	if (opt_p !== nothing)		# Restrict the contents of this block to when -p was used
 		if (opt_p != "")
 			if (opt_p == " -pnone")  current_view[1] = "";	cmd = cmd[1:end-7];	opt_p = ""
-			elseif (startswith(opt_p, " -pa") || startswith(opt_p, " -pd") || startswith(opt_p, " -p3"))
+			elseif (startswith(opt_p, " -pa") || startswith(opt_p, " -pd"))
 				current_view[1] = " -p210/30";	cmd = replace(cmd, opt_p => "") * current_view[1]		# auto, def, 3d
 			else                     current_view[1] = opt_p
 			end
@@ -1255,7 +1282,7 @@ function arg2str(arg, sep='/')::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_nested(d::Dict, cmd, K::Bool, O::Bool, nested_calls::Array{Symbol}=[:coast :colorbar :colorscale :basemap :logo :text])
+function finish_PS_nested(d::Dict, cmd, K::Bool, nested_calls::Array{Symbol}=[:coast :colorbar :colorscale :basemap :logo :text])
 	# Finish the PS creating command, but check also if we have any nested module calls like 'coast', 'colorbar', etc
 	if ((cmd2 = add_opt_module(d, nested_calls)) !== nothing)  K = true  end
 	if (cmd2 !== nothing)  cmd = [cmd; cmd2]  end
@@ -2522,7 +2549,22 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 		end
 	end
 
-	if (data_kw !== nothing)  arg = data_kw  end		# Finaly move the data into ARG
+	(data_kw !== nothing) && (arg = data_kw)		# Finaly move the data into ARG
+
+	# See if we have DateTime objects
+	got_datetime, is_onecol = false, false
+	if (isa(arg, Vector{DateTime}))					# Must convert to numeric
+		min_max = round_datetime(extrema(arg))		# Good numbers for limits
+		arg = Dates.value.(arg) ./ 1000;			cmd *= " --TIME_SYSTEM=dr0001"
+		got_datetime, is_onecol = true, true
+	elseif (isa(arg, Matrix{Any}) && typeof(arg[1]) == DateTime)	# Matrix with DateTime in first col
+		min_max = round_datetime(extrema(view(arg, :, 1)))
+		arg[:,1] = Dates.value.(arg[:,1]) ./ 1000;	cmd *= " --TIME_SYSTEM=dr0001"
+		t = Array{Float64, 2}(undef, size(arg))
+		[t[k] = arg[k] for k in eachindex(arg)]
+		arg = t
+		got_datetime = true
+	end
 
 	info = nothing
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
@@ -2550,25 +2592,29 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 			end
 		end
 		if (opt_R != " -Rtight")
-			if (!occursin("?", opt_R))
+			if (!occursin("?", opt_R) && !is_onecol)		# is_onecol is true only for DateTime data
 				dx = (info[1].data[2] - info[1].data[1]) * 0.005;	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
 				info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
 				info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
-			else
+			elseif (!is_onecol)
 				t = round_wesn(deepcopy(info[1].data))		# Add a pad
 				[info[1].data[k-1] = t[k-1] for k = 2:length(rs) if (rs[k] == "?")]
 			end
 		else
 			cmd = replace(cmd, " -Rtight" => "")	# Must remove old -R
 		end
-		if (is3D)
+		if (got_datetime)
+			opt_R = " -R" * Dates.format(min_max[1], "yyyy-mm-ddTHH:MM:SS.s") * "/" *
+			        Dates.format(min_max[2], "yyyy-mm-ddTHH:MM:SS.s")
+			(!is_onecol) && (opt_R *= sprintf("/%.12g/%.12g", info[1].data[3], info[1].data[4]))
+		elseif (is3D)
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
 			                 info[1].data[3], info[1].data[4], info[1].data[5], info[1].data[6])
 		else
 			opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
 			                 info[1].data[3], info[1].data[4])
 		end
-		cmd *= opt_R
+		(!is_onecol) && (cmd *= opt_R)		# The onecol case (for histogram) has an imcomplete -R
 	end
 
 	if (get_info && info === nothing && !convert_syntax[1])
@@ -2641,12 +2687,30 @@ function round_wesn(wesn, geo::Bool=false)
 	return wesn
 end
 
+# ---------------------------------------------------------------------------------------------------
+"""
+Round a Vector or Tuple (2 elements) of DateTime type to a nearest nice number to use in plot limits
+"""
+round_datetime(val::Tuple{DateTime, DateTime}) = round_datetime([val[1], val[2]])
+function round_datetime(val::Array{DateTime})
+	r = Dates.value(val[end] - val[1])
+	if (r > 86400000 * 365.25)  rfac = Dates.Year;		add = Dates.Year(1)
+	elseif (r > 86400000 * 31)  rfac = Dates.Month;		add = Dates.Month(1)
+	elseif (r > 86400000 * 7)   rfac = Dates.Week;		add = Dates.Week(1)
+	elseif (r > 86400000)       rfac = Dates.Day;		add = Dates.Day(1)
+	elseif (r > 3600000)        rfac = Dates.Hour;		add = Dates.Hour(1)
+	elseif (r > 60000)          rfac = Dates.Minute;	add = Dates.Minute(1)
+	elseif (r > 1000)           rfac = Dates.Second;	add = Dates.Second(1)
+	else                        rfac = Dates.Millisecond;	add = Dates.Millisecond(1)
+	end
+	out = [floor(val[1], rfac)-add, ceil(val[end], rfac)+add]
+end
+
 #= ---------------------------------------------------------------------------------------------------
 function round_pretty(val)
-	fraction = 1
 	log = floor(log10(val))
-	if (log > 1)  fraction = 4  end		# This keeps from adding digits after the decimal
-	round(val * fraction * 10^ -log) / fraction / 10^-log
+	frac = (log > 1) ? 4 : 1		# This keeps from adding digits after the decimal
+	round(val * frac * 10^ -log) / frac / 10^-log
 end
 =#
 
@@ -2822,6 +2886,8 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		out = fname_ps
 		if (fname != "")  out = mv(out, fname, force=true)  end
 	end
+
+	CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = false;		# Reset these for safety
 
 	if (haskey(d, :show) && d[:show] != 0)
 		if (isdefined(Main, :IJulia) && Main.IJulia.inited)		# From Jupyter?
