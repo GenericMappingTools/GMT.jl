@@ -108,6 +108,7 @@ end
 function snif_GI_set_CTRLlimits(G_I)::Bool
 	# Set CTRL.limits to be eventually used by J=:guess
 	(G_I == "") && return false
+	(isa(G_I, String) && G_I[1] == '@') && return false		# Remote files are very dangerous to sniff in
 	ginfo = grdinfo(G_I, C=:n)
 	if (ginfo[1].data[2] != ginfo[1].data[9] && ginfo[1].data[4] != ginfo[1].data[10])
 		CTRL.limits[1:4] = ginfo[1].data[1:4]
