@@ -1169,12 +1169,12 @@ if (got_it)					# Otherwise go straight to end
 	@assert(size(G.z) == (151, 151))
 
 	# SPLITXYZ (fails)
-	splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g")
+	splitxyz([-14.0708 35.0730 0; -13.7546 35.5223 0; -13.7546 35.5223 0; -13.2886 35.7720 0; -13.2886 35.7720 0; -12.9391 36.3711 0], C=45, A="45/15", f="g", Vd=dbg2)
 
 	# TRIANGULATE
 	println("	TRIANGULATE")
 	G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1, grid=[]);
-	triangulate(rand(5,3), R="0/150/0/150", voronoi=:pol, Vd=2);
+	triangulate(rand(5,3), R="0/150/0/150", voronoi=:pol, Vd=dbg2);
 
 	# NEARNEIGHBOR
 	println("	NEARNEIGHBOR")
