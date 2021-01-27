@@ -1,5 +1,6 @@
 using GMT
 using Test
+using Dates
 
 try
 	run(`gmt --version`)	# Will fail if GMT is not installed.
@@ -1028,6 +1029,7 @@ if (got_it)					# Otherwise go straight to end
 	histogram(G, Vd=dbg2);
 	histogram(G, T=0.3, Vd=dbg2);
 	histogram(rand(10), Vd=dbg2);
+	histogram(collect(Dates.DateTime(Dates.now()):Dates.Hour(3):Dates.DateTime(Dates.now() + Dates.Month(1))))
 	@test_throws ErrorException("Unknown BinMethod lala") histogram(rand(100), binmethod="lala")
 
 	println("	PSLEGEND")
