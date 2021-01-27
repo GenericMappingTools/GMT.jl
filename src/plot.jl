@@ -30,7 +30,7 @@ Parameters
 
     Alter the way points are connected
     ($(GMTdoc)plot.html#f)
-- **G** | **fill** | **markerfacecolor** | **MarkerFaceColor** | **mc** :: [Type => Str]
+- **G** | **fill** | **markerfacecolor** | **MarkerFaceColor** | **markercolor** | **mc** :: [Type => Str]
 
     Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
     color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
@@ -211,7 +211,7 @@ Parameters
 
     Alter the way points are connected
     ($(GMTdoc)plot3d.html#f)
-- **G** | **fill** | **markerfacecolor** | **MarkerFaceColor** :: [Type => Str]
+- **G** | **fill** | **markerfacecolor** | **MarkerFaceColor** | **markercolor** | **mc** :: [Type => Str]
 
     Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
     color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use

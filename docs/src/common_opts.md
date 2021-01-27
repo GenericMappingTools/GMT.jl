@@ -1,4 +1,4 @@
-# axis
+# frame
 
 - *B* **|** *frame* **|** *axis* **|** *xaxis* **|** *xaxis2* **|** *yaxis* **|** ...
 
@@ -59,7 +59,7 @@ Use *Yhlabel=true* to force a horizontal label for *y*-axes (useful for very sho
 
 If the axis annotation should have a leading text prefix (e.g., dollar sign for those plots of your net worth)
 you can add *prefix="prefix"* For geographic maps the addition of degree symbols, etc. is automatic (and
-controlled by the GMT default setting [FORMAT\_GEO\_MAP](http://gmt.soest.hawaii.edu/doc/latest/gmt.conf.html#format-geo-map)).
+controlled by the GMT default setting [FORMAT\_GEO\_MAP](http://docs.generic-mapping-tools.org/latest/gmt.conf.html#format-geo-map)).
 However, for other plots you can add specific units by adding *label_unit="unit"*
 
 Annotations, ticks and grid intervals are specified with the *annot*, *ticks* and *grid* keywords, which take
@@ -394,9 +394,9 @@ See [GMT Map Projections](@ref) for a list of projection examples
 
 --------------------------
 
-# time_stamp
+# timestamp
 
-- *U* **|** *time_stamp* **|** *timestamp* : *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*
+- *U* **|** *timestamp* **|** *time_stamp* : *timestamp=(just="code", pos=(dx,dy), label="label", com=true)*
 
    Draw Unix System time stamp on plot. By adding [*just*\ ]\ */dx/dy/*, the
    user may specify the justification of the stamp and where the stamp
@@ -461,7 +461,7 @@ See [GMT Map Projections](@ref) for a list of projection examples
 # Spherical distance
 
 - **j | spheric_dist** : -- *spheric_dist=:e|:f|:g*\
-    Determine how spherical distances are calculated in modules that support this. By default (**spheric_dist=:g**) we perform great circle distance calculations and parameters such as distance increments or radii will be compared against calculated great circle distances. To simplify and speed up calculations you can select Flat Earth mode (**spheric_dist=:f**) which gives an approximate and fast result. Alternatively, you can select ellipsoidal (**spheric_dist=:e**) or geodesic mode for the highest precision (and slowest calculation time). All spherical distance calculations depends on the current ellipsoid (``PROJ\_ELLIPSOID``), the definition of the mean radius (``PROJ\_MEAN\_RADIUS``), and the specification of latitude type (``PROJ\_AUX\_LATITUDE``). Geodesic distance calculations is also controlled by method (``PROJ\_GEODESIC``).
+    Determine how spherical distances are calculated in modules that support this. By default (**spheric_dist=:g**) we perform great circle distance calculations and parameters such as distance increments or radii will be compared against calculated great circle distances. To simplify and speed up calculations you can select Flat Earth mode (**spheric_dist=:f**) which gives an approximate and fast result. Alternatively, you can select ellipsoidal (**spheric_dist=:e**) or geodesic mode for the highest precision (and slowest calculation time). All spherical distance calculations depends on the current ellipsoid (`PROJ_ELLIPSOID`), the definition of the mean radius (`PROJ_MEAN_RADIUS`), and the specification of latitude type (`PROJ_AUX_LATITUDE`). Geodesic distance calculations is also controlled by method (`PROJ_GEODESIC`).
 
 # interp
 

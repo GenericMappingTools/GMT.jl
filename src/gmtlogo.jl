@@ -16,7 +16,7 @@ Parameters
     ($(GMTdoc)gmtlogo.html#d)
 - **F** | **box** :: [Type => Str]
 
-    Without further options, draws a rectangular border around the GMT logo using MAP_FRAME_PEN.
+    Without further options, draws a rectangular border around the GMT logo using `MAP_FRAME_PEN`.
     or map rose (T)
     ($(GMTdoc)gmtlogo.html#f)
 - **julia** :: [Type => Number]
@@ -39,12 +39,13 @@ Parameters
 """
 function logo(cmd0::String=""; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtlogo", cmd0, arg1)
+	(cmd0 != "" && length(kwargs) == 0) && return monolitic("gmtlogo", cmd0)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_R(d, "", O)
 	cmd, = parse_J(d, cmd, "-Jx1", true, O)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :params], first)
 
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
 	                        (map=("-g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("-n", arg2str, 1), paper=("-x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str)), 'g')
@@ -76,9 +77,9 @@ function logo(cmd0::String=""; first=true, kwargs...)
 			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
 			opt_F = @sprintf("+f%d,NewCenturySchlbk-Italic",letter_height)
 			if (fmt !== nothing)
-				text!(text_record(t[1:3,1:2], ["G", "T", "M"]), R=[], J=[], F=opt_F, fmt=fmt, name=savefig, show=do_show)
+				text!(text_record(t[1:3,1:2], ["M", "T", "G"]), R=[], J=[], F=opt_F, fmt=fmt, name=savefig, show=do_show)
 			else
-				text!(text_record(t[1:3,1:2], ["G", "T", "M"]), R=[], J=[], F=opt_F, name=savefig, show=do_show)
+				text!(text_record(t[1:3,1:2], ["M", "T", "G"]), R=[], J=[], F=opt_F, name=savefig, show=do_show)
 			end
 		end
 	else

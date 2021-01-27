@@ -108,7 +108,7 @@ function common_plot_xyz(cmd0, arg1, caller::String, first::Bool, is3D::Bool, kw
 	if (g_bar_fill === nothing)						# Otherwise bar fill colors are dealt somewhere else
 		cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	end
-	opt_Gsymb = add_opt_fill("", d, [:G :markerfacecolor :MarkerFaceColor :mc], 'G')	# Filling of symbols
+	opt_Gsymb = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
 
 	# To track a still existing bug in sessions management at GMT lib level
 	got_pattern = false
@@ -481,6 +481,7 @@ function get_marker_name(d::Dict, symbs::Array{Symbol}, is3D::Bool, del::Bool=tr
 				elseif (t == "a" || t == "*" || t == "star")  marca[1] = "a"
 				elseif (t == "k" || t == "custom")    marca[1] = "k"
 				elseif (t == "x" || t == "cross")     marca[1] = "x"
+				elseif (is3D && (t == "u" || t == "cube"))  marca[1] = "u"	# Must come before next line
 				elseif (t[1] == 'c' || t[1] == 'C')   marca[1] = "c"
 				elseif (t == "d" || t == "diamond")   marca[1] = "d"
 				elseif (t == "g" || t == "octagon")   marca[1] = "g"
@@ -492,7 +493,6 @@ function get_marker_name(d::Dict, symbs::Array{Symbol}, is3D::Bool, del::Bool=tr
 				elseif (t == "s" || t == "square")    marca[1] = "s"
 				elseif (t == "t" || t == "^" || t == "triangle")  marca[1] = "t"
 				elseif (t == "T" || t == "Triangle")  marca[1] = "T"
-				elseif (is3D && (t == "u" || t == "cube"))  marca[1] = "u"
 				elseif (t == "y" || t == "y-dash")    marca[1] = "y"
 				end
 				# Still need to check the simpler forms of these

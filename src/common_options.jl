@@ -167,9 +167,9 @@ function opt_R2num(opt_R::String)
 	if (endswith(opt_R, "Rg"))  return [0.0 360. -90. 90.]  end
 	if (endswith(opt_R, "Rd"))  return [-180.0 180. -90. 90.]  end
 	if (findfirst("/", opt_R) !== nothing)
-		isdiag = false
 		if ((ind = findfirst("+r", opt_R)) !== nothing)		# Diagonal mode
-			opt_R = opt_R[1:ind[1]-1];	isdiag = true			# Strip the "+r"
+			opt_R = opt_R[1:ind[1]-1];	isdiag = true		# Strip the "+r"
+		else  isdiag = false
 		end
 		rs = split(opt_R, '/')
 		limits = zeros(length(rs))
