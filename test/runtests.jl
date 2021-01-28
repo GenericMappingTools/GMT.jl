@@ -279,6 +279,8 @@ if (got_it)					# Otherwise go straight to end
 	GMT.guess_proj([0., 20.], [80.0, 90.])
 	GMT.guess_proj([0., 20.], [-90.0, -80.])
 	GMT.guess_proj([0., 20.], [-6.0, 90.])
+	GMT.guess_WESN(Dict(:p=>(350,2)), "")
+	GMT.parse_q(Dict(:p=>(350,2)), "")
 
 	GMT.dataset_init(API, 0., 1, 0);
 	GMT.dataset_init(API, [Int8(1), Int8(2)], 0, [0])
@@ -867,7 +869,7 @@ if (got_it)					# Otherwise go straight to end
 	bar([0. 1 2 3; 1 2 3 4], fill=(1,2,3), Vd=dbg2)
 	bar([0. 1 2 3; 1 2 3 4], stack=1, Vd=dbg2)
 	bar(1:5, [20 25; 35 32; 30 34; 35 20; 27 25], fill=["lightblue", "brown"], xaxis=(ticks=(:G1, :G2, :G3, "G4"),), Vd=dbg2)
-	bar(1:5, [20 25; 35 32; 30 34; 35 20; 27 25], fill=["lightblue", "brown"], xticks=(:G1, :G2, :G3, :G4), Vd=dbg2)
+	bar(1:5, [20 25; 35 32; 30 34; 35 20; 27 25], fill=["lightblue", "brown"], xticks=(:G1, :G2, :G3, :G4), zticks=(:Z1,) Vd=dbg2)
 	bar(1:3,[-5 -15 20; 17 10 21; 10 5 15], stacked=1, Vd=dbg2)
 	T = mat2ds([1.0 0.446143; 2.0 0.581746; 3.0 0.268978], text=[" "; " "; " "]);
 	bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=dbg2)
@@ -1029,7 +1031,7 @@ if (got_it)					# Otherwise go straight to end
 	histogram(G, Vd=dbg2);
 	histogram(G, T=0.3, Vd=dbg2);
 	histogram(rand(10), Vd=dbg2);
-	histogram(collect(Dates.DateTime(Dates.now()):Dates.Hour(3):Dates.DateTime(Dates.now() + Dates.Month(1))))
+	histogram(collect(Dates.DateTime(Dates.now()):Dates.Second(1):Dates.DateTime(Dates.now() + Dates.Hour(2) + Dates.Minute(1))))
 	@test_throws ErrorException("Unknown BinMethod lala") histogram(rand(100), binmethod="lala")
 
 	println("	PSLEGEND")
