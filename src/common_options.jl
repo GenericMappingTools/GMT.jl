@@ -167,9 +167,9 @@ function opt_R2num(opt_R::String)
 	if (endswith(opt_R, "Rg"))  return [0.0 360. -90. 90.]  end
 	if (endswith(opt_R, "Rd"))  return [-180.0 180. -90. 90.]  end
 	if (findfirst("/", opt_R) !== nothing)
+		isdiag = false
 		if ((ind = findfirst("+r", opt_R)) !== nothing)		# Diagonal mode
 			opt_R = opt_R[1:ind[1]-1];	isdiag = true		# Strip the "+r"
-		else  isdiag = false
 		end
 		rs = split(opt_R, '/')
 		limits = zeros(length(rs))
@@ -682,7 +682,7 @@ function guess_WESN(d::Dict, cmd::String)
 		if     (quadrant == 0)  axs = "wsNEZ"	# Trig first quadrant
 		elseif (quadrant == 1)  axs = "wSnEZ"	# Trig fourth quadrant
 		elseif (quadrant == 2)  axs = "WSneZ"	# Trig third quadrant
-		else   axs = "WseNZ"	# Trig fourth quadrant
+		else   axs = "WseNZ"	# Trig second quadrant
 		end
 		cmd *= " --MAP_FRAME_AXES=" * axs
 	end
