@@ -1031,7 +1031,7 @@ if (got_it)					# Otherwise go straight to end
 	histogram(G, Vd=dbg2);
 	histogram(G, T=0.3, Vd=dbg2);
 	histogram(rand(10), Vd=dbg2);
-	histogram(collect(Dates.DateTime(Dates.now()):Dates.Second(1):Dates.DateTime(Dates.now() + Dates.Hour(2) + Dates.Minute(1))))
+	histogram(collect(Dates.DateTime(Dates.now()):Dates.Month(6):Dates.DateTime(Dates.now() + Dates.Year(20))))
 	@test_throws ErrorException("Unknown BinMethod lala") histogram(rand(100), binmethod="lala")
 
 	println("	PSLEGEND")

@@ -308,13 +308,13 @@ function binmethod(d::Dict, cmd::String, X, is_datetime::Bool)
 		else
 			min_max = extrema(X)		# X should already be sorted but don't trust that
 			rng = (min_max[2] - min_max[1])
-			if     (rng / (86400 * 365.25) < 120)  val = "year"
-			elseif (rng / (86400 * 31) < 120)      val = "month"
-			elseif (rng / (86400 * 7)  < 120)      val = "week"
-			elseif (rng / (86400) < 120)           val = "day"
-			elseif (rng / (3600)  < 120)           val = "hour"
-			elseif (rng / (60) < 120)              val = "minute"
-			else                                   val = "second"
+			if     (rng < 150)                 val = "second"
+			elseif (rng / (60) < 150)          val = "minute"
+			elseif (rng / (3600)  < 150)       val = "hour"
+			elseif (rng / (86400) < 150)       val = "day"
+			elseif (rng / (86400 * 7)  < 150)  val = "week"
+			elseif (rng / (86400 * 31) < 150)  val = "month"
+			else                               val = "year"
 			end
 		end
 	end
