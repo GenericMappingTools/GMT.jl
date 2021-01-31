@@ -1326,7 +1326,7 @@ D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=n
 	`multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
 	first column and 2, first and 3, etc. Convinient when want to plot a matrix where each column is a line. 
 """
-function mat2ds(mat, txt=nothing; hdr=nothing, multi::Bool=false, kwargs...)::Vector{GMTdataset}
+function mat2ds(mat, txt=nothing; hdr=nothing, multi::Bool=false, kwargs...)
 	d = KW(kwargs)
 
 	(txt !== nothing) && return text_record(mat, txt,  hdr)
@@ -1441,7 +1441,7 @@ function helper_ds_fill(d::Dict)
 	# Shared by ds2ds & mat2ds
 	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
 		_fill::Array{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? fill_val :
-		                       #["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
+		                       ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
 		n_colors = length(_fill)
 		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
 			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end

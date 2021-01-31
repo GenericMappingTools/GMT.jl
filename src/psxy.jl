@@ -37,7 +37,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 				if     (isa(gval, Array{String}) && length(gval) > 1)  append!(g_bar_fill, gval)
 				elseif ((isa(gval, Array{Int}) || (isa(gval, Tuple)) && eltype(gval) == Int) && length(gval) > 1)
 					g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
-					[g_bar_fill[k]::String = string('p',gval[k]) for k = 1:length(gval)]
+					[g_bar_fill[k] = string('p',gval[k]) for k = 1:length(gval)]
 				end
 			end
 		end
@@ -236,7 +236,7 @@ check_bar_group(arg1) = ( isa(arg1, Array{<:Real,2}) || (eltype(arg1) <: GMTdata
                           (isa(arg1, Array{GMTdataset}) ? size(arg1[1],2) > 2 : size(arg1,2) > 2)) )::Bool
 
 # ---------------------------------------------------------------------------------------------------
-function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String}, got_Ebars::Bool, got_usr_R::Bool, arg1)::Tuple{String, Vector{GMTdataset}}
+function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String}, got_Ebars::Bool, got_usr_R::Bool, arg1)
 	# Convert input array into a multi-segment Dataset where each segment is an element of a bar group
 	# Example, plot two groups of 3 bars each: bar([0 1 2 3; 1 2 3 4], xlabel="BlaBla")
 
