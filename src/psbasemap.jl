@@ -50,6 +50,7 @@ Parameters
 """
 function basemap(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
+	gmt_proggy = (IamModern[1]) ? "basemap "  : "psbasemap "
     length(kwargs) == 0 && return monolitic("psbasemap", cmd0, arg1)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
@@ -62,7 +63,8 @@ function basemap(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd  = parse_L(d, cmd)
 	cmd = parse_type_anchor(d, cmd, [:D :inset :inset_box],
 	                        (map=("-g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("-n", arg2str, 1), paper=("-x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str), save="+s", translate="_+t", units="_+u"), 'j')
-	finish_PS_module(d, "psbasemap " * cmd, "", K, O, true, arg1)
+	_cmd, K = finish_PS_nested(d, [gmt_proggy * cmd], K)
+	finish_PS_module(d, _cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

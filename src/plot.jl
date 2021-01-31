@@ -852,9 +852,11 @@ end
 const psevents = events            # Alias
 
 # ------------------------------------------------------------------------------------------------------
+cat_1_arg(arg::GMTdataset) = return arg				# Miserable attempts to force type stability
+cat_1_arg(arg::Vector{<:GMTdataset}) = return arg
 function cat_1_arg(arg)
 	# Add a first column with 1:n to all args that are not GMTdatasets
-	(isa(arg, Array{<:GMTdataset,1}) || isa(arg, GMTdataset))  &&  return arg
+	#(isa(arg, Vector{<:GMTdataset}) || isa(arg, GMTdataset))  &&  return arg
 	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
 		#arg = hcat(collect(1:size(arg,1)), arg)
 		arg = hcat(collect(eltype(arg), 1:size(arg,1)), arg)

@@ -66,8 +66,8 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (occursin("-I", cmd) || occursin("-I", cmd0))
 		opt_extra = "-I";		do_finish = false;	cmd = replace(cmd, opt_J => "")
 	end
-	cmd, K = finish_PS_nested(d, gmt_proggy * cmd, K, [:coast :logo :text])
-	return finish_PS_module(d, cmd, opt_extra, K, O, do_finish, arg1, arg2)
+	_cmd, K = finish_PS_nested(d, [gmt_proggy * cmd], K)
+	return finish_PS_module(d, _cmd, opt_extra, K, O, do_finish, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

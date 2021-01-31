@@ -12,18 +12,20 @@ Description
 Required Arguments
 ------------------
 
-- **J** or **proj** : *proj=<parameters>*\
-   Select map projection. More at [proj](@ref)
+- **textfile**\
+    This is one file containing 1 or more records with (*x*, *y*\ [, *font*, *angle*, *justify*], *text*). The attributes in brackets can alternatively be set directly via **attrib**. If no files are given, **text** will read standard input. *font* is a font specification with format [*size*,][\ *font*,][*color*\ ]where *size* is text size in points, *font* is the font to use, and *color* sets the font color. To draw outline fonts you append =\ *pen* to the font specification. The *angle* is measured in degrees counter-clockwise from horizontal, and *justify* sets the alignment. If *font* is not an integer, then it is taken to be a text string with the desired font name (see **list** for available fonts). The alignment refers to the part of the text string that will be mapped onto the (*x*,\ *y*) point. Choose a 2 character combination of L, C, R (for left, center, or right) and T, M, B for top, middle, or bottom. e.g., BL for lower left.
 
-- **R** or **region** or **limits** : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
-   **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more 
-   Specify the region of interest. More at [limits](@ref)
+- **textrecord**\
+    This a GMTdataset type that can be optained either with the `text_record(mat, txt)`, where `mat` is a *MxN* with the
+    *x,y(,z)* coordinates and `txt` a string vector with the desired text, or with the `mat2ds(mat, txt)` function,
+    where the arguments have the same meaning.
+
+- **([text], x=?, y=?)**\
+    As a third alternative provide the inpute data in a form of a string vector and `x` and `y` vector coordinates,
+    or just a `x=mat` where `mat` is *MxN* matix.
 
 Optional Arguments
 ------------------
-
-*textfiles*
-    This is one or more files containing 1 or more records with (*x*, *y*\ [, *font*, *angle*, *justify*], *text*). The attributes in brackets can alternatively be set directly via **attrib**. If no files are given, **text** will read standard input. *font* is a font specification with format [*size*,][\ *font*,][*color*\ ]where *size* is text size in points, *font* is the font to use, and *color* sets the font color. To draw outline fonts you append =\ *pen* to the font specification. The *angle* is measured in degrees counter-clockwise from horizontal, and *justify* sets the alignment. If *font* is not an integer, then it is taken to be a text string with the desired font name (see **list** for available fonts). The alignment refers to the part of the text string that will be mapped onto the (*x*,\ *y*) point. Choose a 2 character combination of L, C, R (for left, center, or right) and T, M, B for top, middle, or bottom. e.g., BL for lower left.
 
 - **A** or **azimuths** : -- *azimuths=true*\
     Angles are given as azimuths; convert them to directions using the current projection. 
@@ -46,6 +48,9 @@ Optional Arguments
 - **G** or **fill** : -- *fill=color* **|** *fill=:c*\
     Sets the shade or color used for filling the text box [Default is no fill]. Alternatively, use **fill=:c** to plot the text and then use the text dimensions (and **clearance**) to build clip paths and turn clipping on. This clipping can then be turned off later with `clip` **C**. To *not* plot the text but activate clipping, use **fill=:C** instead.
 
+- **J** or **proj** : *proj=<parameters>*\
+   Select map projection. More at [proj](@ref)
+
 - **L** or **list** : -- *list=true*\
     Lists the font-numbers and font-names available, then exits.
 
@@ -57,6 +62,15 @@ Optional Arguments
 
 - **Q** or **change\_case** : -- *change\_case=:lower* **|** *change\_case=:upper*\
     Change all text to either **change\_case=:lower** or **change\_case=:upper** case [Default leaves all text as is].
+
+- **R** or **region** or **limits** : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
+   **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more 
+   Specify the region of interest. More at [limits](@ref)
+
+- **S** or **shade** : *shade=true* **|** *shade=(dx,dy)* **|** *shade=shade*\
+    Plot an offset background shaded region beneath the text box. Here, *(dx,dy)* indicates the shift relative to
+    the text box in points [4p, 4p] and *shade* sets the fill color to use for shading [gray50]. Requires the
+    **fill** option.
 
 - **U** or **time_stamp** : *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
    Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
@@ -89,3 +103,7 @@ Examples
 To plot just the red outlines of the (lon lat text strings) stored in the file text.txt on a Mercator plot with the given specifications, use
 
     text("text.txt", region=(-30,30,-10,20), proj=:merc, figscale=0.25, font=(18,:Helvetica,"-=0.5p",:red), frame=(annot=5,), show=true)
+
+To plot just the "Hello World" and let the program estimate the *region*, do
+
+    text(["Hello World"], x=2.0, y=2.0, show=true)

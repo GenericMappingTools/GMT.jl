@@ -1293,14 +1293,14 @@ function text_record(data, text, hdr=nothing)
 		if (text[1][1] == '>')			# Alternative (but risky) way of setting the header content
 			T = GMTdataset(data, text[2:end], text[1], Array{String,1}(), "", "")
 		else
-			T = GMTdataset(data, text, (hdr === nothing ? "" : hdr), Array{String,1}(), "", "")
+			T = GMTdataset(data, text, (hdr === nothing ? "" : hdr), Vector{String}(), "", "")
 		end
-	elseif (isa(text, Array{Array}) || isa(text, Array{Array{String,1}}))
+	elseif (isa(text, Array{Array}) || isa(text, Array{Vector{String}}))
 		nl_t = length(text);	nl_d = length(data)
 		(nl_d > 0 && nl_d != nl_t) && error("Number of data points is not equal to number of text strings.")
-		T = Array{GMTdataset, 1}(undef,nl_t)
+		T = Vector{GMTdataset}(undef,nl_t)
 		for k = 1:nl_t
-			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), text[k], (hdr === nothing ? "" : hdr[k]), Array{String,1}(), "", "")
+			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), text[k], (hdr === nothing ? "" : hdr[k]), Vector{String}(), "", "")
 		end
 	else
 		error("Wrong type ($(typeof(text))) for the 'text' argin")
@@ -1329,7 +1329,7 @@ D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=n
 function mat2ds(mat, txt=nothing; hdr=nothing, multi::Bool=false, kwargs...)
 	d = KW(kwargs)
 
-	(txt  !== nothing) && return text_record(mat, txt,  hdr)
+	(txt !== nothing) && return text_record(mat, txt,  hdr)
 	((text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, text, hdr)
 
 	if ((x = find_in_dict(d, [:x])[1]) !== nothing)
@@ -1352,7 +1352,7 @@ function mat2ds(mat, txt=nothing; hdr=nothing, multi::Bool=false, kwargs...)
 	end
 	_fill = helper_ds_fill(d)
 
-	D = Array{GMTdataset, 1}(undef, n_ds)
+	D = Vector{GMTdataset}(undef, n_ds)
 	if (color !== nothing)
 		n_colors = length(_color)
 		if (hdr === nothing)
@@ -1371,7 +1371,7 @@ function mat2ds(mat, txt=nothing; hdr=nothing, multi::Bool=false, kwargs...)
 		end
 	end
 
-	if (_fill !== nothing)				# Paint the polygons (in case of)
+	if (!isempty(_fill))				# Paint the polygons (in case of)
 		n_colors = length(_fill)
 		if (hdr === nothing)
 			hdr = Array{String,1}(undef, n_ds)
@@ -1407,7 +1407,7 @@ function mat2ds(mat, txt=nothing; hdr=nothing, multi::Bool=false, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function ds2ds(D::GMTdataset; kwargs...)
+function ds2ds(D::GMTdataset; kwargs...)::Vector{GMTdataset}
 	# Take one DS and split it in an array of DS, one for each row and optionally add -G,fill>
 	# So far only for internal use but may grow in function of needs
 	d = KW(kwargs)
@@ -1421,15 +1421,15 @@ function ds2ds(D::GMTdataset; kwargs...)
 	end
 
 	n_ds = size(D.data, 1)
-	if (_fill !== nothing)				# Paint the polygons (in case of)
+	if (!isempty(_fill))				# Paint the polygons (in case of)
 		hdr = Vector{String}(undef, n_ds)
 		[hdr[k] = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
 		if (D.header != "")  hdr[1] = D.header * hdr[1]  end	# Copy eventual contents of first header
 	end
 
-	Dm = Array{GMTdataset, 1}(undef, n_ds)
+	Dm = Vector{GMTdataset}(undef, n_ds)
 	for k = 1:n_ds
-		Dm[k] = GMTdataset(D.data[k:k, :], String[], (_fill === nothing ? "" : hdr[k]), String[], "", "")
+		Dm[k] = GMTdataset(D.data[k:k, :], String[], (isempty(_fill) ? "" : hdr[k]), String[], "", "")
 	end
 	Dm[1].comment = D.comment;	Dm[1].proj4 = D.proj4;	Dm[1].wkt = D.wkt
 	(size(D.text) == n_ds) && [Dm.text[k] = D.text[k] for k = 1:n_ds]
@@ -1440,7 +1440,8 @@ end
 function helper_ds_fill(d::Dict)
 	# Shared by ds2ds & mat2ds
 	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
-		_fill::Array{String} = isa(fill_val, Array{String}) ? fill_val : ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
+		_fill::Array{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? fill_val :
+		                       ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
 		n_colors = length(_fill)
 		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
 			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end
@@ -1450,8 +1451,10 @@ function helper_ds_fill(d::Dict)
 			(na < n_colors) && [_alpha[k] = "" for k = na+1:n_colors]
 			[_fill[k] *= _alpha[k] for k = 1:n_colors]		# And finaly apply the transparency
 		end
-		_fill
+	else
+		_fill = Vector{String}()
 	end
+	return _fill
 end
 
 # ---------------------------------------------------------------------------------------------------

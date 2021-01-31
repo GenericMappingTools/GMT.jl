@@ -50,6 +50,10 @@ Parameters
 
     Change all text to either lower or upper case.
     ($(GMTdoc)text.html#q)
+- **S** | **shade** :: [Type => Str | Tuple | Bool]		``Arg = [dx/dy][/shade]``
+
+    Plot an offset background shaded region beneath the text box (GMT6.2).
+    ($(GMTdoc)text.html#s)
 - **T** | **text_box** :: [Type => Str]
 
     Specify the shape of the textbox when using G and/or W.
@@ -79,8 +83,8 @@ Parameters
 """
 function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-    gmt_proggy = (IamModern[1]) ? "text "  : "pstext "
-	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
+    gmt_proggy = (IamModern[1]) ? "text " : "pstext "
+	(cmd0 != "" && length(kwargs) == 0) && return monolitic(gmt_proggy, cmd0, arg1)
 
 	N_args = (arg1 === nothing) ? 0 : 1
 
@@ -89,7 +93,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:c :e :f :p :t :JZ :UVXY :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :azimuths], [:L :list], [:M :paragraph],
-	                                 [:N :no_clip :noclip], [:Q :change_case], [:T :text_box], [:Z :threeD]])
+	                                 [:N :no_clip :noclip], [:Q :change_case], [:S :shade], [:T :text_box], [:Z :threeD]])
 	cmd  = add_opt(d, cmd, 'C', [:C :clearance], (margin="#", round="_+tO", concave="_+tc", convex="_+tC"))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
@@ -114,7 +118,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 				(nc < 3) && error("TEXT: input file must have at least three columns")
 				arg1[n].text = Array{String,1}(undef, nr)
 				for k = 1:nr
-					arg1[n].text[k] = @sprintf("%.16g", arg1[n].data[k,3])
+					arg1[n].text[k] = sprintf("%.16g", arg1[n].data[k,3])
 				end
 			end
 		end
@@ -126,13 +130,20 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-#function text(arg::DataFrame, cols...; first=true, kw...)
-#	arg1 = text_record([arg.cols[1] arg.col[2]], [arg.col[3]])
-#	text("", arg1; first=first, kw...)
-#end
 text!(cmd0::String="", arg1=nothing; kw...) = text(cmd0, arg1; first=false, kw...)
 text(arg1;  kw...) = text("", arg1; first=true, kw...)
 text!(arg1; kw...) = text("", arg1; first=false, kw...)
+
+# ---------------------------------------------------------------------------------------------------
+function text(txt::Vector{String}; x=nothing, y=nothing, first=true, kwargs...)
+	# Versions to allow calling 
+	(x === nothing) && error("Must provide coordinates in eithe a x matrix or two x,y vectors.")
+	(length(txt) != length(x)) && error("Number of TEXT lines and coordinates must be the same,")
+	(y === nothing && size(x,2) == 1) && error("When Y is not transmitted, X must be a Matrix.")
+	D = (y === nothing) ? text_record(x, txt) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), txt)
+	text("", D; first=first, kwargs...)
+end
+text!(txt::Vector{String}; x=nothing, y=nothing, kw...) = text(txt; x=x, y=y, first=false, kw...)
 
 const pstext  = text			# Alias
 const pstext! = text!			# Alias

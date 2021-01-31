@@ -922,6 +922,7 @@ if (got_it)					# Otherwise go straight to end
 				   type=["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]),),
 			par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=dbg2)
 	basemap(region="416/542/0/6.2831852", proj="X-12/6.5", axis=(axes=(:left_full, :bot_full), fill=:lightblue), xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"), xaxis2=(customticks=([416.0; 443.7; 488.3; 542], ["/ig Devonian", "/ig Silurian", "/ig Ordovician", "/ig Cambrian"]),), yticks=([0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852], ["/a", "/a", "/f", "/ag e", "/f", "/ag @~p@~", "/f", "/f", "/f", "/ag 2@~p@~"]), par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=dbg2)
+	basemap(region=:PT, scatter=(data=[-15. 35], mc=:red), Vd=dbg2)
 	r = basemap(rose=(anchor="10:35/0.7", width=1, fancy=2, offset=0.4), Vd=dbg2);
 	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdg10:35/0.7+w1+f2+o0.4")
 	r = basemap(rose=(norm=true, anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=dbg2);
@@ -1084,6 +1085,7 @@ if (got_it)					# Otherwise go straight to end
 	T = text_record(t,"> 3 5 18p 5i j");
 	pstext!(T, F="+f16p,Times-Roman,red+jTC", M=true)
 	pstext!(T, font=(16,"Times-Roman",:red), justify=:TC, M=true)
+	pstext!(["MERDA"], x=2.0, y=2.0, Vd=2)
 	@test startswith(GMT.text([1 2 3; 4 5 6], Vd=dbg2), "pstext  -JX12c/0 -Baf -BWSen -R0.9/4.1/1.9/5.1")
 	@test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=dbg2)
 
