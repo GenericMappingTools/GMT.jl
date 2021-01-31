@@ -190,6 +190,8 @@ function opt_R2num(opt_R::String)
 		limits[2] = parse(Float64, t[1:(ind[1]-1)])
 		t = kml.text[31][11:end];	ind = findfirst("<", t)		# east
 		limits[1] = parse(Float64, t[1:(ind[1]-1)])
+	else
+		limits = zeros(4)
 	end
 	return limits
 end
@@ -801,20 +803,18 @@ parse_bo(d::Dict, cmd::String) = parse_b(d, cmd, [:bo :binary_out])
 
 
 # ---------------------------------------------------------------------------------------------------
-function parse_c(d::Dict, cmd::String)
+function parse_c(d::Dict, cmd::String)::Tuple{String, String}
 	# Most of the work here is because GMT counts from 0 but here we count from 1, so conversions needed
-	opt_val = ""
+	opt_val::String = ""
 	if ((val = find_in_dict(d, [:c :panel])[1]) !== nothing)
 		if (isa(val, Tuple) || isa(val, Array{<:Number}) || isa(val, Integer))
 			opt_val = arg2str(val .- 1, ',')
 		elseif (isa(val, String) || isa(val, Symbol))
-			val = string(val)		# In case it was a symbol
-			if ((ind = findfirst(",", val)) !== nothing)	# Shit, user really likes complicating
-				opt_val = string(parse(Int, val[1:ind[1]-1]) - 1, ',', parse(Int, val[ind[1]+1:end]) - 1)
-			else
-				if (val == "" || val == "next")  opt_val = ""
-				else                             opt_val = string(parse(Int, val) - 1)
-				end
+			_val::String = string(val)		# In case it was a symbol
+			if ((ind = findfirst(",", _val)) !== nothing)	# Shit, user really likes complicating
+				opt_val = string(parse(Int, val[1:ind[1]-1]) - 1, ',', parse(Int, _val[ind[1]+1:end]) - 1)
+			elseif (_val != "" && _val != "next")
+				opt_val = string(parse(Int, _val) - 1)
 			end
 		end
 		cmd *= " -c" * opt_val
@@ -1282,10 +1282,13 @@ function arg2str(arg, sep='/')::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_nested(d::Dict, cmd, K::Bool, nested_calls::Array{Symbol}=[:coast :colorbar :colorscale :basemap :logo :text])
+function finish_PS_nested(d::Dict, cmd::Vector{String}, K::Bool)
 	# Finish the PS creating command, but check also if we have any nested module calls like 'coast', 'colorbar', etc
-	if ((cmd2 = add_opt_module(d, nested_calls)) !== nothing)  K = true  end
-	if (cmd2 !== nothing)  cmd = [cmd; cmd2]  end
+	cmd2 = add_opt_module(d)
+	if (!isempty(cmd2))
+		K = true
+		append!(cmd, cmd2)
+	end
 	return cmd, K
 end
 
@@ -1782,38 +1785,44 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_module(d::Dict, symbs::Array{Symbol})
+function add_opt_module(d::Dict)
 	#  SYMBS should contain a module name (e.g. 'coast' or 'colorbar'), and if present in D,
 	# 'val' can be a NamedTuple with the module's arguments or a 'true'.
-	out = Array{String,1}()
-	for k = 1:length(symbs)
+	out = Vector{String}()
+	symbs = CTRL.callable
+	for symb in symbs
 		r = nothing
-		if (haskey(d, symbs[k]))
-			val = d[symbs[k]]
+		if (haskey(d, symb))
+			val = d[symb]
 			if isa(val, Dict)  val = dict2nt(val)  end
 			if (isa(val, NamedTuple))
 				nt = (val..., Vd=2)
-				if     (symbs[k] == :coast)    r = coast!(; nt...)
-				elseif (symbs[k] == :colorbar) r = colorbar!(; nt...)
-				elseif (symbs[k] == :basemap)  r = basemap!(; nt...)
-				elseif (symbs[k] == :logo)     r = logo!(; nt...)
-				elseif (symbs[k] == :text)     r = text!(; nt...)
+				if     (symb == :coast)    r = coast!(; nt...)
+				elseif (symb == :colorbar) r = colorbar!(; nt...)
+				elseif (symb == :basemap)  r = basemap!(; nt...)
+				elseif (symb == :logo)     r = logo!(; nt...)
+				elseif (symb == :text)     r = text!(; nt...)
+				elseif (symb == :arrows || symb == :lines || symb == :scatter || symb == :scatter3 || symb == :plot
+					   || symb == :plot3 || symb == :hlines || symb == :vlines)
+					_d = nt2dict(nt)
+					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; del_from_dict(d, [:data]))
+					r = scatter!(; nt...)
 				end
 			elseif (isa(val, Number) && (val != 0))		# Allow setting coast=true || colorbar=true
-				if     (symbs[k] == :coast)    r = coast!(W=0.5, Vd=2)
-				elseif (symbs[k] == :colorbar) r = colorbar!(pos=(anchor="MR",), B="af", Vd=2)
-				elseif (symbs[k] == :logo)     r = logo!(Vd=2)
+				if     (symb == :coast)    r = coast!(W=0.5, Vd=2)
+				elseif (symb == :colorbar) r = colorbar!(pos=(anchor="MR",), B="af", Vd=2)
+				elseif (symb == :logo)     r = logo!(Vd=2)
 				end
-			elseif (symbs[k] == :colorbar && (isa(val, String) || isa(val, Symbol)))
+			elseif (symb == :colorbar && (isa(val, String) || isa(val, Symbol)))
 				t = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
 				anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
 				r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
 			end
-			delete!(d, symbs[k])
+			delete!(d, symb)
 		end
 		(r !== nothing) && append!(out, [r])
 	end
-	return (out == []) ? nothing : out
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2526,7 +2535,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	force_get_R = (IamModern[1] && GMTver > v"6") ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
 	#force_get_R = true		# Due to a GMT6.0 BUG, modern mode does not compute -R automatically and 6.1 is not good too
 	data_kw = nothing
-	(haskey(d, :data)) && (data_kw = d[:data])
+	(haskey(d, :data)) && (data_kw = d[:data]; del_from_dict(d, [:data]))
 	(fname != "") && (data_kw = fname)
 
 	cmd, opt_i  = parse_i(d, cmd)		# If data is to be read with some colomn order
@@ -2566,10 +2575,11 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 		got_datetime = true
 	end
 
-	info = nothing
+	have_info = false
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
 	if (((!IamModern[1] && no_R) || (force_get_R && no_R)) && !convert_syntax[1])
-		info = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)		# Here we are reading from an original GMTdataset or Array
+		info::Vector{GMTdataset} = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)	# Here we are reading from an original GMTdataset or Array
+		have_info = true
 		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
 			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
 		end
@@ -2617,11 +2627,13 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 		(!is_onecol) && (cmd *= opt_R)		# The onecol case (for histogram) has an imcomplete -R
 	end
 
-	if (get_info && info === nothing && !convert_syntax[1])
+	if (get_info && !have_info && !convert_syntax[1])
 		info = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)
 		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
 			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
 		end
+	else
+		info = Vector{GMTdataset}()			# Need something to return
 	end
 
 	return cmd, arg, opt_R, info, opt_i
@@ -2629,7 +2641,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 round_wesn(wesn::Array{Int}, geo::Bool=false) = round_wesn(float(wesn),geo)
-function round_wesn(wesn, geo::Bool=false)
+function round_wesn(wesn::Array{Float64}, geo::Bool=false)::Array{Float64}
 	# Use data range to round to nearest reasonable multiples
 	# If wesn has 6 elements (is3D), last two are not modified.
 	set = zeros(Bool, 2)
@@ -3003,11 +3015,16 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
 				cmd[k] = replace(cmd[k], " -R" => opt_R)
 			end
+		elseif (k > 1 && !is_psscale && !is_pscoast && !is_basemap && CTRL.pocket_call[1] !== nothing)
+			# For nested calls that need to pass data
+			P = gmt(cmd[k], CTRL.pocket_call[1])
+			CTRL.pocket_call[1] = nothing					# Clear it right away
+			continue
 		end
 		P = gmt(cmd[k], args...)
 	end
 
-	if (!IamModern[1])  digests_legend_bag(d, true)  end		# Plot the legend if requested
+	(!IamModern[1]) && digests_legend_bag(d, true)			# Plot the legend if requested
 
 	if (usedConfPar[1])				# Hacky shit to force start over when --PAR options were use
 		usedConfPar[1] = false;		gmt("destroy")
@@ -3018,7 +3035,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			P = showfig(d, output, fname_ext, "", K)
 			gmt("destroy")							# Returning a PS screws the session
 		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "" || opt_T != "")
-			P = showfig(d, output, fname_ext, opt_T, K, fname)		# Also return something here for the case we are in Pluto
+			P = showfig(d, output, fname_ext, opt_T, K, fname)		# Return something here for the case we are in Pluto
 			(typeof(P) == Base.Process) && (P = nothing)			# Don't want spurious message on REPL when plotting
 		end
 	end
