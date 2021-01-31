@@ -95,15 +95,17 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		if (!occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
 	end
 
-	cmd = "grdimage " * cmd				# In any case we need this
 	do_finish = false
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
-		cmd, K = finish_PS_nested(d, cmd, K)
+		_cmd, K = finish_PS_nested(d, ["grdimage " * cmd], K)
 		do_finish = true
+	else
+		_cmd = ["grdimage " * cmd]
 	end
-	(isa(arg1, GMTimage) && GMTver < v"6.2" && !occursin("-A", cmd)) && (arg1 = ind2rgb(arg1))	# Prev to 6.2 indexed imgs lost colors
-	
-	return finish_PS_module(d, cmd, "", K, O, do_finish, arg1, arg2, arg3, arg4)
+	(isa(arg1, GMTimage) && GMTver < v"6.2" && !occursin("-A", _cmd[1])) && (arg1 = ind2rgb(arg1))	# Prev to 6.2 indexed imgs lost colors
+
+	_cmd, K = finish_PS_nested(d, _cmd, K)
+	return finish_PS_module(d, _cmd, "", K, O, do_finish, arg1, arg2, arg3, arg4)
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -141,8 +141,9 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (occursin("-D", cmd))
 		opt_extra = "-D";		do_finish = false;	cmd = replace(cmd, opt_J => "")
 	end
-	cmd, K = finish_PS_nested(d, "grdcontour " * cmd, K)
-	return finish_PS_module(d, cmd, opt_extra, K, O, do_finish, arg1, arg2, arg3)
+
+	_cmd, K = finish_PS_nested(d, ["grdcontour " * cmd], K)
+	finish_PS_module(d, _cmd, opt_extra, K, O, do_finish, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------

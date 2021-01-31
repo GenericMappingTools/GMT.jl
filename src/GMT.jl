@@ -7,6 +7,8 @@ using Statistics
 struct CTRLstruct
 	limits::Vector{Float64}
 	proj_linear::Vector{Bool}		# To know if images sent to GMT need Pad
+	callable::Array{Symbol}			# Modules that can be called inside other modules
+	pocket_call::Vector{Any}		# To temporarilly store data needed by modules sub-calls
 end
 
 # Need to know what GMT version is available or if none at all to warn users on how to install GMT.
@@ -40,7 +42,7 @@ const global box_str = [""]
 const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3 = " -Baf -Bza"  		#		"" but for 3D views
-const global CTRL = CTRLstruct(zeros(6), [true])
+const global CTRL = CTRLstruct(zeros(6), [true], [:coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing])
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
 	@eval Base.Experimental.@optlevel 1
