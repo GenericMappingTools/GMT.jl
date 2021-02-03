@@ -1888,6 +1888,7 @@ function resetGMT()
 	IamModern[1] = false;	FirstModern[1] = false;		IamSubplot[1] = false;	usedConfPar[1] = false;
 	multi_col[1] = false;	convert_syntax[1] = false;	current_view[1] = "";	show_kwargs[1] = false;
 	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = false;
+	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
 	global current_cpt  = nothing;	global legend_type  = nothing
 	gmt("destroy")
 	clear_sessions()
