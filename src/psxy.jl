@@ -53,7 +53,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd, opt_c = parse_c(d, cmd)	# Need opt_c because we may need to remove it from double calls
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
-	got_usr_R = (opt_R != "") ? true : false		# To know is the user set -R or we guessed it from data
+	got_usr_R = (opt_R != "") ? true : false		# To know if the user set -R or we guessed it from data
 	if (opt_R == "" && sub_module == "bar")  opt_R = "/-0.4/0.4/0"  end	# Make sure y_min = 0
 	if (O && caller == "plotyy")
 		cmd = replace(cmd, opt_R => "")			# Must remove old opt_R because a new one will be constructed
