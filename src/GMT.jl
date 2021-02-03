@@ -11,6 +11,12 @@ struct CTRLstruct
 	pocket_call::Vector{Any}		# To temporarilly store data needed by modules sub-calls
 end
 
+struct CTRLstruct2
+	first::Vector{Bool}				# Signlas that we are sarting a new plot (used to set params)
+	points::Vector{Bool}			# If maps are using points ass coordinates
+	fname::Vector{String}			# Store the full name of PS being constructed
+end
+
 # Need to know what GMT version is available or if none at all to warn users on how to install GMT.
 function get_GMTver()
 	out = v"0.0"
@@ -43,6 +49,7 @@ const def_fig_size  = "12c/8c"              # Default fig size for plot like pro
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3 = " -Baf -Bza"  		#		"" but for 3D views
 const global CTRL = CTRLstruct(zeros(6), [true], [:coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing])
+const global CTRLshapes = CTRLstruct2([true], [true], [""])
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
 	@eval Base.Experimental.@optlevel 1
@@ -168,6 +175,8 @@ include("MB/mbgetdata.jl")
 include("MB/mbsvplist.jl")
 include("MB/mblevitus.jl")
 (GMTver >= v"6.2") && include("potential/gmtgravmag3d.jl")
+
+include("drawing.jl")
 
 function __init__()
 	if (v"5.0" <= GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end

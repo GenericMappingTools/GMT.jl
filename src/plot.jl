@@ -20,7 +20,7 @@ Parameters
 - $(GMT.opt_C)
 - **D** | **shift** | **offset** :: [Type => Str]
 
-    Offset the plot symbol or line locations by the given amounts dx/dy.
+    Offset the plot symbol or line locations by the given amounts dx/dy in cm, inch or points.
     ($(GMTdoc)plot.html#d)
 - **E** | **error** | **error_bars** :: [Type => Str]
 
@@ -586,13 +586,9 @@ Example:
 """
 function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# A arrows plotting method of plot
-
 	d = KW(kwargs)
 	cmd = helper_arrows(d, true)	# Have to delete to avoid double parsing in -W
-	if (cmd == "")  cmd = " -Sv0.5+e+h0.5"	# Minimalist defaults
-	else            cmd = " -S" * cmd
-	end
-
+	cmd = (cmd == "") ? " -Sv0.5+e+h0.5" : " -S" * cmd
 	GMT.common_plot_xyz(cmd0, arg1, cmd, first, false, d...)
 end
 
@@ -610,9 +606,7 @@ function helper_arrows(d::Dict, del::Bool=true)
 			code = 'V'
 		end
 		if (isa(val, String))		# An hard core GMT string directly with options
-			if (val[1] != code)    cmd = code * val
-			else                   cmd = val		# The GMT string already had vector flag char
-			end
+			cmd = (val[1] != code) ? code * val : val	# In last case the GMT string already has vector flag char
 		elseif (isa(val, Number))  cmd = code * "$val"
 		elseif (symb == :arrow4 || symb == :vector4)  cmd = code * vector4_attrib(val)
 		else                       cmd = code * vector_attrib(val)
@@ -620,6 +614,7 @@ function helper_arrows(d::Dict, del::Bool=true)
 	end
 	return cmd
 end
+
 arrows!(cmd0::String="", arg1=nothing; kw...) = arrows(cmd0, arg1; first=false, kw...)
 arrows(arg1; kw...)  = arrows("", arg1; first=true, kw...)
 arrows!(arg1; kw...) = arrows("", arg1; first=false, kw...)

@@ -137,7 +137,7 @@ text!(arg1; kw...) = text("", arg1; first=false, kw...)
 # ---------------------------------------------------------------------------------------------------
 function text(txt::Vector{String}; x=nothing, y=nothing, first=true, kwargs...)
 	# Versions to allow calling 
-	(x === nothing) && error("Must provide coordinates in eithe a x matrix or two x,y vectors.")
+	(x === nothing) && error("Must provide coordinates in either a x matrix or two x,y vectors.")
 	(length(txt) != length(x)) && error("Number of TEXT lines and coordinates must be the same,")
 	(y === nothing && size(x,2) == 1) && error("When Y is not transmitted, X must be a Matrix.")
 	D = (y === nothing) ? text_record(x, txt) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), txt)
