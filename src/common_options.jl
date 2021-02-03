@@ -385,27 +385,27 @@ function check_axesswap(d::Dict, width::AbstractString)
 	return width
 end
 
-function build_opt_J(Val)
-	out = [""];		mnemo = false
+function build_opt_J(Val)::Tuple{String, Bool}
+	out = "";		mnemo = false
 	if (isa(Val, String) || isa(Val, Symbol))
 		if (string(Val) == "guess")
-			out[1], mnemo = guess_proj(CTRL.limits[1:2], CTRL.limits[3:4]), true
+			out, mnemo = guess_proj(CTRL.limits[1:2], CTRL.limits[3:4]), true
 		else
 			prj, mnemo = parse_proj(string(Val))
-			out[1] = " -J" * prj
+			out = " -J" * prj
 		end
 	elseif (isa(Val, NamedTuple))
 		prj, mnemo = parse_proj(Val)
-		out[1] = " -J" * prj
+		out = " -J" * prj
 	elseif (isa(Val, Number))
 		if (!(typeof(Val) <: Int) || Val < 2000)
 			error("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (" * string(Val) * ") is clearly an invalid EPSG")
 		end
-		out[1] = string(" -J", string(Val))
+		out = string(" -J", string(Val))
 	elseif (isempty(Val))
-		out[1] = " -J"
+		out = " -J"
 	end
-	return out[1], mnemo
+	return out, mnemo
 end
 
 function parse_proj(p::String)
@@ -1260,25 +1260,24 @@ function arg2str(arg, sep='/')::String
 	# Convert an empty, a numeric or string ARG into a string ... if it's not one to start with
 	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
 	# SEP is the char separator used when ARG is a tuple or array of numbers
-	out = [""]
 	if (isa(arg, AbstractString) || isa(arg, Symbol))
-		out[1] = string(arg)
-		if (occursin(" ", out[1]) && !startswith(out[1], "\""))	# Wrap it in quotes
-			out[1] = "\"" * out[1] * "\""
+		out = string(arg)
+		if (occursin(" ", out) && !startswith(out, "\""))	# Wrap it in quotes
+			out = "\"" * out * "\""
 		end
 	elseif ((isa(arg, Bool) && arg) || isempty_(arg))
-		out[1] = ""
+		out = ""
 	elseif (isa(arg, Real))		# Have to do it after the Bool test above because Bool is a Number too
-		out[1] = sprintf("%.15g", arg)
+		out = @sprintf("%.12g", arg)
 	elseif (isa(arg, Array{<:Real}) || (isa(arg, Tuple) && !isa(arg[1], String)) )
-		out[1] = join([string(x, sep) for x in arg])
-		out[1] = rstrip(out[1], sep)		# Remove last '/'
+		out = join([string(x, sep) for x in arg])
+		out = rstrip(out, sep)		# Remove last '/'
 	elseif (isa(arg, Tuple) && isa(arg[1], String))		# Maybe better than above but misses nice %.xxg
-		out[1] = join(arg, sep)
+		out = join(arg, sep)
 	else
 		error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
 	end
-	return out[1]
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2985,8 +2984,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	img_mem_layout[1] = add_opt(d, "", "", [:layout])
 	if (img_mem_layout[1] == "images")  img_mem_layout[1] = "I   "  end	# Special layout for Images.jl
 
-	if (fname_ext != "ps" && fname_ext != "eps")	# Exptend to a larger paper size (5 x A0)
-		cmd[1] *= " --PS_MEDIA=11900x16840"
+	if (fname_ext != "ps")						# Exptend to a larger paper size (5 x A0)
+		cmd[1] *= " --PS_MEDIA=16840x16840"
 	end
 
 	for k = 1:length(cmd)
