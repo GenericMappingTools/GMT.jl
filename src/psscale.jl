@@ -59,7 +59,7 @@ Full option list at [`psscale`]($(GMTdoc)psscale.html)
 function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	gmt_proggy = (IamModern[1]) ? "colorbar "  : "psscale "
-	(length(kwargs) == 0) && return monolitic(gmt_proggy, cmd0, arg1)
+	(length(kwargs) == 0 && cmd0 != "") && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
@@ -80,7 +80,7 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	cmd = add_opt(d, cmd, 'L', [:L :equal :equal_size], (range="i", gap=""))	# Aditive
-	(!occursin(" -D", cmd)) && (cmd *= " -Dx8c/1c+w12c/0.5c+jTC+h")				#  So that we can call it with just a CPT
+	(!occursin(" -D", cmd)) && (cmd *= " -DJMR")			#  So that we can call it with just a CPT
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 	gmt("destroy")      # Probably because of the rasters in cpt
