@@ -3070,17 +3070,18 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 		if (penC == "")  penC = penC_  end
 		if (penS == "")  penS = penS_  end
 		cmd_[end] = "-W" * penT * ',' * penC * ',' * penS * " " * cmd_[end]	# Trick to make the parser find this pen
-		pens = Array{String,1}(undef,length(arg)-1)
+		pens = Vector{String}(undef,length(arg)-1)
 		for k = 1:length(arg)-1
 			t = scan_opt(arg[k+1].header, "-W")
-			if     (t == "")      pens[k] = " -W0.5"
+			if     (t == "")      pens[k] = " -W0."
 			elseif (t[1] == ',')  pens[k] = " -W" * penT * t		# Can't have, e.g., ",,230/159/0" => Crash
-			else                  pens[k] = " -W" * penT * ',' * t
+			elseif (occursin(",",t))  pens[k] = " -W" * t  
+			else                  pens[k] = " -W" * penT * ',' * t	# Not sure what this case covers now
 			end
 		end
 		append!(cmd_, pens)			# Append the 'pens' var to the input arg CMD
 
-		lab = Array{String,1}(undef,length(arg))
+		lab = Vector{String}(undef,length(arg))
 		if ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)		# Have label(s)
 			if (!isa(val, Array))				# One single label, take it as a label prefix
 				for k = 1:length(arg)  lab[k] = string(val,k)  end
@@ -3101,12 +3102,12 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 		lab = ["y$(size(legend_type.label, 1))"]
 	end
 
-	if ((isa(cmd_, Array{String, 1}) && !occursin("-O", cmd_[1])) || (isa(cmd_, String) && !occursin("-O", cmd_)))
+	if ((isa(cmd_, Vector{String}) && !occursin("-O", cmd_[1])) || (isa(cmd_, String) && !occursin("-O", cmd_)))
 		legend_type = nothing					# Make sure that we always start with an empty one
 	end
 
 	if (legend_type === nothing)
-		legend_type = legend_bag(Array{String,1}(undef,1), Array{String,1}(undef,1))
+		legend_type = legend_bag(Vector{String}(undef,1), Vector{String}(undef,1))
 		legend_type.cmd = (isa(cmd_, String)) ? [cmd_] : cmd_
 		legend_type.label = lab
 	else
