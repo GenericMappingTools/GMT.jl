@@ -1319,6 +1319,8 @@ D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=n
 	`hdr` optional String vector with either one or n_rows multisegment headers.
 	`color` optional array os strings with color names/values. Its length can be smaller than n_rows, case in
 	which colors will be cycled.
+	`linethick`, or `lt` for selecting different line thicknesses. Work alike `color`, but should be 
+	        a vector of numbers, or just a single number that is then applied to all lines.
 	`fill`  Optional string array with color names or array of "patterns"
 	`ls`    Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
 	`txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
@@ -1326,11 +1328,13 @@ D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=n
 	`multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
 	first column and 2, first and 3, etc. Convinient when want to plot a matrix where each column is a line. 
 """
-function mat2ds(mat, txt=nothing; hdr=nothing, multi::Bool=false, kwargs...)
+function mat2ds(mat, txt=nothing; hdr=nothing, kwargs...)
 	d = KW(kwargs)
 
 	(txt !== nothing) && return text_record(mat, txt,  hdr)
 	((text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, text, hdr)
+
+	multi = (find_in_dict(d, [:multi :multicol])[1] !== nothing) ? true : false
 
 	if ((x = find_in_dict(d, [:x])[1]) !== nothing)
 		n_ds = (multi) ? size(mat, 2) : 1
@@ -1348,20 +1352,34 @@ function mat2ds(mat, txt=nothing; hdr=nothing, multi::Bool=false, kwargs...)
 	end
 
 	if ((color = find_in_dict(d, [:color])[1]) !== nothing)
-		_color::Array{String} = isa(color, Array{String}) ? color : ["0/0/0", "#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"]
+		_color::Array{String} = isa(color, Array{String}) ? color : ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"]
 	end
 	_fill = helper_ds_fill(d)
 
-	D = Vector{GMTdataset}(undef, n_ds)
+	# ---  Here we deal with line colors and line thickness. If not provided we override the GMR defaultb -Wthin ---
+	val = find_in_dict(d, [:lt :linethick :linethickness])[1]
+	_lt = (val === nothing) ? [0.5] : val
+	_lts = Vector{String}(undef, n_ds)
+	n_thick = length(_lt)
+	[_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])  for k = 1:n_ds]
+
 	if (color !== nothing)
 		n_colors = length(_color)
 		if (hdr === nothing)
 			hdr = Array{String,1}(undef, n_ds)
-			[hdr[k]  = " -W," * arg2str(_color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
+			[hdr[k]  = _lts[k] * string(",", _color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
 		else
-			[hdr[k] *= " -W," * arg2str(_color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
+			[hdr[k] *= _lts[k] * string(",", _color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
+		end
+	else						# Here we just overriding the GMT -W default that is too thin.
+		if (hdr === nothing)
+			hdr = Array{String,1}(undef, n_ds)
+			[hdr[k]  = _lts[k] for k = 1:n_ds]
+		else
+			[hdr[k] *= _lts[k] for k = 1:n_ds]
 		end
 	end
+	# ----------------------------------------
 
 	if ((ls = find_in_dict(d, [:ls :linestyle])[1]) !== nothing && ls != "")
 		if (isa(ls, AbstractString) || isa(ls, Symbol))
@@ -1380,6 +1398,8 @@ function mat2ds(mat, txt=nothing; hdr=nothing, multi::Bool=false, kwargs...)
 			[hdr[k] *= " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
 		end
 	end
+
+	D = Vector{GMTdataset}(undef, n_ds)
 
 	if (!isa(mat, Array{Float64}))  mat = Float64.(mat)  end
 	if (xx === nothing)
@@ -2007,8 +2027,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 linspace(start, stop, length=100) = range(start, stop=stop, length=length)
 logspace(start, stop, length=100) = exp10.(range(start, stop=stop, length=length))
-contains(haystack, needle) = occursin(needle, haystack)
-#contains(s::AbstractString, r::Regex, offset::Integer) = occursin(r, s, offset=offset)
 fields(arg) = fieldnames(typeof(arg))
 fields(arg::Array) = fieldnames(typeof(arg[1]))
 #feval(fn_str, args...) = eval(Symbol(fn_str))(args...)
