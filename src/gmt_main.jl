@@ -1320,7 +1320,7 @@ D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=n
 	`color` optional array os strings with color names/values. Its length can be smaller than n_rows, case in
 	which colors will be cycled.
 	`linethick`, or `lt` for selecting different line thicknesses. Work alike `color`, but should be 
-	        a vector of numbers, or just a single number that is then applied to all lines.
+	        a vector of numbers, or just a single number that is then appl	ied to all lines.
 	`fill`  Optional string array with color names or array of "patterns"
 	`ls`    Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
 	`txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
