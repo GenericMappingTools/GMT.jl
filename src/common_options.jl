@@ -1649,7 +1649,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 	# DEF, when true, means to use the default cpt (Turbo)
 	# OPT_T, when != "", contains a min/max/n_slices/+n string to calculate a cpt with n_slices colors between [min max]
 	# IN_BAG, if true means that, if not empty, we return the contents of `current_cpt`
-	
+
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
 
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
@@ -1664,11 +1664,13 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 				c = get_color(val)
 				opt_C = " -" * opt * c		# This is pre-made GMT cpt
 				cmd *= opt_C
-				if (store && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's number and -Cn is not valid
+				if (store && c != "" && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's number and -Cn is not valid
 					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
 						global current_cpt = makecpt(opt_C * " -Vq")
 					catch
 					end
+				elseif (in_bag && current_cpt !== nothing)	# If we have something in Bag, return it
+					cmd, arg1, arg2, N_args = helper_add_cpt(cmd, "", N_args, arg1, arg2, current_cpt, false)
 				end
 			end
 		end
@@ -1681,11 +1683,8 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 			cpt = makecpt(opt_T)
 		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
-	elseif (in_bag)					# If everything else has failed and we have one in the Bag, return it
-		global current_cpt
-		if (current_cpt !== nothing)
-			cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, current_cpt, false)
-		end
+	elseif (in_bag && current_cpt !== nothing)		# If everything else has failed and we have one in the Bag, return it
+		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, current_cpt, false)
 	end
 	if (occursin(" -C", cmd))
 		if ((val = find_in_dict(d, [:hinge])[1]) !== nothing)       cmd *= string("+h", val)  end
@@ -1699,7 +1698,7 @@ function helper_add_cpt(cmd::String, opt, N_args::Int, arg1, arg2, val, store::B
 	# Helper function to avoid repeating 3 times the same code in add_opt_cpt
 	(N_args == 0) ? arg1 = val : arg2 = val;	N_args += 1
 	if (store)  global current_cpt = val  end
-	cmd *= " -" * opt
+	(isa(opt, Char) || (isa(opt, String) && opt != "")) && (cmd *= " -" * opt)
 	return cmd, arg1, arg2, N_args
 end
 
@@ -2503,8 +2502,7 @@ function fname_out(d::Dict, del::Bool=false)
 	end
 
 	opt_T = "";
-	if (EXT == "pdfg" || EXT == "gpdf")  EXT = "pdg"  end	# Trick to keep the ext with only 3 chars (for GeoPDFs)
-	def_name = joinpath(tempdir(), "GMTjl_tmp.ps")
+	(EXT == "pdfg" || EXT == "gpdf") && (EXT = "pdg")	# Trick to keep the ext with only 3 chars (for GeoPDFs)
 	ext = lowercase(EXT)
 	if     (ext == "ps")   EXT = ext
 	elseif (ext == "pdf")  opt_T = " -Tf";	EXT = ext
@@ -2520,6 +2518,7 @@ function fname_out(d::Dict, del::Bool=false)
 	end
 
 	if (fname != "")  fname *= "." * EXT  end
+	def_name = joinpath(tempdir(), "GMTjl_tmp.ps")
 	return def_name, opt_T, EXT, fname, ret_ps
 end
 
