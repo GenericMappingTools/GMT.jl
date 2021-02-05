@@ -5,7 +5,7 @@ const psxyz! = plot3d!
 
 # ---------------------------------------------------------------------------------------------------
 function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool, kwargs...)
-	arg3 = nothing
+	arg2, arg3 = nothing, nothing
 	N_args = (arg1 === nothing) ? 0 : 1
 	is_ternary = (caller == "ternary") ? true : false
 	if     (is3D)       gmt_proggy = (IamModern[1]) ? "plot3d "  : "psxyz "
@@ -90,22 +90,21 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# Look for color request. Do it after error bars because they may add a column
 	len = length(cmd);	n_prev = N_args;
-	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1)
-	#cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, nothing, true, true, "", true)
-
 	cmd, args, n, got_Zvars = add_opt(d, cmd, 'Z', [:Z :level], :data, [arg1, arg2, arg3], (outline="_+l", fill="_+f"))
 	if (n > 0)
 		arg1, arg2, arg3 = args[:]
 		N_args = n
 	end
+	in_bag = (got_Zvars) ? true : false			# Other cases should add to this list
+	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2, true, true, "", in_bag)
 
 	mcc = false
-	if (!got_Zvars)									# Otherwise we don't care about color columns
+	if (!got_Zvars)								# Otherwise we don't care about color columns
 		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
 		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, arg1, arg2)
 	end
 
-	if (isempty(g_bar_fill))							# Otherwise bar fill colors are dealt somewhere else
+	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt somewhere else
 		cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	end
 	opt_Gsymb = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
@@ -204,18 +203,22 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	else
 		_cmd = [cmd * opt_UVXY]
 	end
+	
+	(got_Zvars && opt_S == "" && opt_W == "" && !occursin(" -G", _cmd[1])) && (_cmd[1] *= " -W0.5")
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
 	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{<:Real,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)) )
 		multi_col[1] = false						# Reset because this is a use-only-once option
+		(haskey(d, :multicol)) && delete!(d, :multicol)
 		penC = "";		penS = "";	cycle=:cycle
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
-		if (opt_W != "")  penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))  end
-		if (penC  != "")  cycle = [penC]  end
+		if (opt_W != "")  penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))
+		else              _cmd[1] *= " -W0.5"
+		end
+		if (penC != "")  cycle = [penC]  end
 		arg1 = mat2ds(arg1, color=cycle, ls=penS, multi=true)	# Convert to multi-segment GMTdataset
 		D = gmt("gmtinfo -C", arg1)					# But now also need to update the -R string
 		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(D[1].data)))
-	#elseif (sub_module == "bar" && ((isa(arg1, Array{<:Real,2}) && size(arg1,2) > 2) || haskey(d, :stacked)) )
 	elseif (sub_module == "bar" && check_bar_group(arg1))
 		_cmd[1], arg1 = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 	end

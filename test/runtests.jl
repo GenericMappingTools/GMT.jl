@@ -748,7 +748,8 @@ if (got_it)					# Otherwise go straight to end
 	plot([0.0 0; 1.1 1], theme=(name=:dark, bg_color="gray"), lc=:white, Vd=dbg2)
 	#plot([0.0 0; 1.1 1], theme=(name=:modern,), Vd=dbg2)
 	plot(1:4, rand(4,4), theme=(name=:none, save=true), leg=true)	# Resets default conf and delete the theme_jl file
-	@test startswith(plot!([1 1], marker=(:r, [2 3]), Vd=dbg2), "psxy  -R -J -Sr")
+	#@test startswith(plot!([1 1], marker=(:r, [2 3]), Vd=dbg2), "psxy  -R -J -Sr")
+	@test occursin(" -Sr", plot!([1 1], marker=(:r, [2 3]), Vd=dbg2))
 	@test_throws ErrorException("Wrong number of extra columns for marker (r). Got 3 but expected 2") plot!([1 1], marker=(:r, [2 3 4]), Vd=dbg2)
 	@test_throws ErrorException("Unknown graphics file extension (.ppf)") plot(rand(5,2), savefig="la.ppf")
 	@test startswith(plot!([1 1], marker=(:Web, [2 3], (inner=5, arc=30,radial=45, pen=(2,:red))), Vd=dbg2), "psxy  -R -J -SW/5+a30+r45+p2,red")
@@ -1310,7 +1311,6 @@ if (got_it)					# Otherwise go straight to end
 	GMT.linspace(1,1,100);
 	GMT.logspace(1,5);
 	GMT.fakedata(50,1);
-	GMT.contains("aiai", "ia");
 	GMT.meshgrid(1:5, 1:5, 1:5);
 	fields(7);
 	fields(rand(2,2))

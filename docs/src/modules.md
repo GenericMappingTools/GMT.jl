@@ -12,7 +12,7 @@ set the output format. Finally *kwargs* are keyword parameters used to set the i
 options. But contrary to the [Monolithic](@ref) usage, the one letter *GMT* option syntax may be
 replaced by more verbose aliases. To make it clear let us look at couple of examples.
 
-    coast(region="g", proj="A300/30/6c", axis="g", resolution="c", land="navy")
+    coast(region=:global, proj=(name=:laea, center=[300,30]), figsize=6,, axis="g", land="navy")
 
 This command creates a map in PotScript file called *GMTjl_tmp.ps* and save it in your system's
 *tmp* directory. For comparison, the same command could have been written, using the classical
@@ -42,7 +42,7 @@ The above example, however, does not use any input data (*coast* knows how to fi
 way of providing it to modules that work on them is to send in a file name with the data to operate on.
 This example
 
-    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:M12c, axis=:a, show=true)
+    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:merc, axis=:a, show=true)
 
 reads a the netCDF grid *tut_relief.nc* and displays it as a Mercator projected image. The '@' prefix
 is used by *GMT* to know that the grid file should be downloaded from a server and cached locally. This
@@ -52,8 +52,8 @@ ready with only one *GMT* module call. And that's why the *GMT* philosophy uses 
 to construct potentially highly complex figures. Next example illustrates a slightly more evolved
 example
 
-    topo = makecpt(color=:rainbow, range="1000/5000/500", Z=[]);
-    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:M12c, axis=:a, color=topo,
+    topo = makecpt(color=:rainbow, range=(1000,5000/500), Z=[]);
+    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:merc, axis=:a, color=topo,
              fmt=:jpg)
     colorbar!(position="jTC+w5i/0.25i+h+o0/-1i", region="@tut_relief.nc", color=topo,
            axis="y+lm", fmt=:jpg, show=true)
@@ -97,7 +97,7 @@ borders with different line colors and thickness. Here we cannot simple state *l
 program wouldn't know which of the shore line or borders this attribute applies to. The solution for
 this is to use tuples as values of corresponding keyword options.
 
-    coast(limits=[-10 0 35 45], proj=:M12c, shore=(0.5,"red"), axis=:a,
+    coast(limits=[-10 0 35 45], proj=:merc, shore=(0.5,"red"), axis=:a,
             show=1, borders=(1,(1,"green")))
 
 Here we used tuples to set the pen attributes, where the tuple may have 1 to 3 elements in the form
@@ -226,8 +226,8 @@ Alternatively, the numeric input can be sent via the *data* keyword whose value 
 expected input is composed by more than one variable. The same applies when an option is expected to
 receive more than one arguments (for example the three *R,G,B* in *grdview*). Examples:
 
-    grdimage(G, intens=I, J=:M6i, color=C, B="1 WSne", X=:c, Y=0.5, show=1)
+    grdimage(G, intens=I, J=:merc, color=C, B="1 WSne", X=:c, Y=0.5, show=1)
 
-    grdimage(data=G, intens=I, J=:M6i, color=C, B="1 WSne", X=:c, Y=0.5, show=1)
+    grdimage(data=G, intens=I, J=:merc, color=C, B="1 WSne", X=:c, Y=0.5, show=1)
 
-    grdview(G, intens=:+, J=:M4i, JZ="2i", p="145/35", G=(Gr,Gg,Gb), B="af WSne", Q=:i, show=1,)
+    grdview(G, intens=:+, J=:merc, zsize="2i", view=(145,35), G=(Gr,Gg,Gb), Q=:i, show=1)
