@@ -261,6 +261,11 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
+
+- **Z** | **level** :: [Type => Str | NamedTuple]	`Arg = value|file[+f|+l] | (data=Array|Number, outline=_, fill=_)`
+
+    Paint polygons after the level given as a cte or a vector with same size of number of polygons. Needs a color map.
+    ($(GMTdoc)plot3d.html#z)
 - $(GMT.opt_a)
 - $(GMT.opt_bi)
 - $(GMT.opt_di)
@@ -272,7 +277,7 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 
-Example:
+### Example:
 
     plot3d(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, show=true, aspect3=:equal)
 """
