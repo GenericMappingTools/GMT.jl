@@ -22,7 +22,7 @@ Optional Arguments
   Alternatively do *annot=(single=true, int=val)* to plot *val* as a single contour. The optional *labelinfo* controls the specifics of the label formatting and consists of a named tuple with the following control arguments [`Label formatting`](@ref label_format_quot)
 
 - **B** or **axis** or **frame**\
-  Set map boundary frame and axes attributes. More at [axis](@ref)
+  Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or **cont** or **contours** or **levels** : -- *cont=cont\_int*\
   The contours to be drawn may be specified in one of three possible ways:
@@ -112,7 +112,7 @@ Optional Arguments
   to indicate that this grid file contains z-values that are periodic in 360 degrees (e.g., phase data, angular distributions) and that special precautions must be taken when determining 0-contours.
 
 - **U** or **time_stamp** : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
+   Draw GMT time stamp logo on plot. More at [timestamp](@ref)
 
 - **V** or **verbose** : -- *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)

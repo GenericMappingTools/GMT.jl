@@ -48,7 +48,7 @@ Optional Arguments
    file is produced. (2) Any vector elements will be lost.
 
 - **B** or **axis** or *frame*\
-   Set map boundary frame and axes attributes. More at [axis](@ref)
+   Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or **color** or **cmap** : -- *color=cpt*\
    Where *cpt* is a *GMTcpt* type or a cpt file name (for *grd\_z* only). Alternatively, supply the name of
@@ -111,7 +111,7 @@ Optional Arguments
    Specify the region of interest. More at [limits](@ref)
 
 - **U** or **time_stamp** : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
+   Draw GMT time stamp logo on plot. More at [timestamp](@ref)
 
 - **V** or **verbose** : -- *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)

@@ -18,7 +18,7 @@ Parameters
 
 - **B** or *axis* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left, bottom and vertical
-  axes and just draw left and tp axes. More at [axis](@ref)
+  axes and just draw left and tp axes. More at [frame](@ref)
 
 - **J** or *proj* : *proj=<parameters>*\
   Select map projection. Default is linear and 12 cm width. More at [proj](@ref)

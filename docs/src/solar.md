@@ -13,7 +13,7 @@ Optional Arguments
 ------------------
 
 - **B** or *axis* or *frame*\
-  Set map boundary frame and axes attributes. More at [axis](@ref)
+  Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or *format* : *format=true*\
    Formats the report selected by *sun=??* using tab-separated fields on a single line. The
@@ -60,7 +60,7 @@ Optional Arguments
    the time zone via *TZ=tzone*. 
 
 - **U** or *time_stamp* : *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
+   Draw GMT time stamp logo on plot. More at [timestamp](@ref)
 
 - **V** or *verbose* : *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)

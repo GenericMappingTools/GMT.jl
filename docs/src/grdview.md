@@ -28,7 +28,7 @@ Optional Arguments
 ------------------
 
 - **B** or *axis* or *frame*\
-   Set map boundary frame and axes attributes. More at [axis](@ref)
+   Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or *color* or *cmap* : -- *color=cpt*\
    Where *cpt* is a *GMTcpt* type or a cpt file name. Alternatively, supply the name of a GMT color master
@@ -90,7 +90,7 @@ Optional Arguments
    (see [Pen attributes](@ref)). As this option produces a flat surface it cannot be combined with -JZ or -Jz.
 
 - **U** or *time_stamp* : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
+   Draw GMT time stamp logo on plot. More at [timestamp](@ref)
 
 - **V** or *verbose* : -- *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)

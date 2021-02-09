@@ -96,8 +96,15 @@ end
 function imshow(arg1::GMTimage; kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)
-	see = (!haskey(d, :show)) ? true : see = d[:show]	# No explicit 'show' keyword means show=true
-	grdimage("", arg1; D=true, show=see, kw...)
+	see = (!haskey(kw, :show)) ? true : see = kw[:show]	# No explicit 'show' keyword means show=true
+	if (isa(arg1.image, Array{UInt16}))
+		I = mat2img(arg1; kw...)
+		d = KW(kw)			# Needed because we can't delete from kwargs
+		(haskey(kw, :stretch) || haskey(kw, :histo_bounds)) && del_from_dict(d, [:histo_bounds :stretch])
+		grdimage("", I; D=true, show=see, d...)
+	else
+		grdimage("", arg1; D=true, show=see, kw...)
+	end
 end
 
 function imshow(x, y, f::Function; kw...)

@@ -14,7 +14,7 @@ Parameters
 
 - **B** or *axis* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
-  More at [axis](@ref)
+  More at [frame](@ref)
 
 - **J** or *proj* : *proj=<parameters>*\
   Select map projection. Default is linear and 14 cm width. More at [proj](@ref)
@@ -38,7 +38,7 @@ Parameters
    [Vector Attributes](@ref) for overwriting this default and specifying other attributes.
 
 - **U** or *time_stamp* : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
+
 
 - **V** or *verbose* : -- *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)
