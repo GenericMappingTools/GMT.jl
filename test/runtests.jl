@@ -280,6 +280,7 @@ if (got_it)					# Otherwise go straight to end
 	GMT.guess_proj([0., 20.], [-90.0, -80.])
 	GMT.guess_proj([0., 20.], [-6.0, 90.])
 	GMT.guess_WESN(Dict(:p=>(350,2)), "")
+	GMT.guess_WESN(Dict(:p=>"350/2"), "")
 	GMT.parse_q(Dict(:p=>(350,2)), "")
 
 	GMT.dataset_init(API, 0., 1, 0);

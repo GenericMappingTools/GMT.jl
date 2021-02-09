@@ -29,7 +29,7 @@ const opt_B = "**B** | **frame** | **axis** | **xaxis yaxis**:: [Type => Str]
 
 const opt_P = "**P** | **portrait** :: [Type => Bool or []]
 
-    Tell GMT to **NOT** draw in portriat mode (that is, make a Landscape plot)"
+    Tell GMT to **NOT** draw in portrait mode (that is, make a Landscape plot)"
 
 const opt_U = "**U** | **time_stamp** | **timestamp** :: [Type => Str or Bool or []]	``Arg = [[just]/dx/dy/][c|label]``
 

@@ -31,7 +31,7 @@ Optional Arguments
     Angles are given as azimuths; convert them to directions using the current projection. 
 
 - **B** or **axis** or *frame*\
-   Set map boundary frame and axes attributes. More at [axis](@ref)
+   Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **-C** or **clearance** : -- *clearance=true* **|** *clearance=(margin=(dx,dy), round=true, concave=true, comvex=true)*\
     Adjust the clearance between the text and the surrounding box [15%]. Only used if **pen** or **fill** are specified. Append the unit you want (**c**\ m, **i**\ nch, or **p**\ oint; if not given we consult
@@ -73,7 +73,7 @@ Optional Arguments
     **fill** option.
 
 - **U** or **time_stamp** : *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
+   Draw GMT time stamp logo on plot. More at [timestamp](@ref)
 
 - **V** or **verbose** : *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)

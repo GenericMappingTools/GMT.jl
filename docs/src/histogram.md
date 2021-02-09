@@ -26,7 +26,7 @@ Optional Arguments
 
 - **B** or *axis* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
-  More at [axis](@ref)
+  More at [frame](@ref)
 
 - **C** or **color** or **cmap** : -- *color=cpt*\
    Give a CPT or specify **color="color1,color2 [,color3 ,...]"** or **color=((r1,g1,b1),(r2,g2,b2),...)** to build a linear continuous CPT from those colors automatically. The mid x-value for each bar is used to look-up the bar color. If no argument is given then we select the current CPT.
@@ -100,7 +100,7 @@ Optional Arguments
    (which are used by **auto** and **zoom**) are **thresholds=(0,0.5)**
 
 - **U** or **time_stamp** or **timestamp** : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
+   Draw GMT time stamp logo on plot. More at [timestamp](@ref)
 
 - **V** or **verbose** : -- *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)

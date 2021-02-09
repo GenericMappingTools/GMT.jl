@@ -53,7 +53,7 @@ Optional Arguments
     - Append **vertical=true** to increase tag numbers vertically down columns [horizontally across rows].
 
 - **B** or **axis** or *frame*\
-   Set map boundary frame and axes attributes. More at [axis](@ref)
+   Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or **clearance** : -- *clearance=(left=val, right=val, bott=val, bottom=val, top=val))*\
     Reserve a space of dimension *val* between the margin and the subplot on the specified side, using *side* values from **left=val**, **right=val**, **bottom=val**, or **top=val**. No *side* means all sides. Can specify more than one side. Such space will be left untouched by the main map plotting but can be accessed by modules that plot scales, bars, text, etc. Settings specified under **begin** directive apply to all subplots, while settings under **set** only apply to the selected (active) subplot.  **Note**: Common options **x_off** and **y_off** are not available during subplots; use **clearance** instead.

@@ -19,7 +19,7 @@ Parameters
 
 - **B** or *axis* or *frame*\
    Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
-   More at [axis](@ref)
+   More at [frame](@ref)
 
 - **C** or **color** or **cmap** : *color=cpt*\
    Give a CPT or specify **color="color1,color2 [,color3 ,...]"** or **color=((r1,g1,b1),(r2,g2,b2),...)** to build a linear continuous CPT from those colors automatically, where *z* starts at 0 and is incremented by one for each color. In this case *color_n* can be a [r g b] triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc ). If **symbol** is set, let symbol fill color be determined by the z-value in the third column. Additional fields are shifted over by one column (optional size would be 4th rather than 3rd field, etc.). If **symbol** is not set, then it expects the user to supply a multisegment file where each segment header contains a **-Z**\ *val* string. The *val* will control the color of the line or polygon (if **close** is set) via the CPT.
@@ -107,7 +107,7 @@ Parameters
    **bezier=true** will draw the line using a Bezier spline; *vspecs* will place a vector head at the ends of the lines. You can use **vec\_start** and **vec\_stop** to specify separate vector specs at each end [shared specs]. See the [Vector Attributes](@ref) for more information.
 
 - **U** or *time_stamp* : *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
-   Draw GMT time stamp logo on plot. More at [time_stamp](@ref)
+   Draw GMT time stamp logo on plot. More at [timestamp](@ref)
 
 - **V** or *verbose* : *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)
