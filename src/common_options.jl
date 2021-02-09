@@ -679,8 +679,13 @@ end
 function guess_WESN(d::Dict, cmd::String)
 	# For automatic -B option settings add MAP_FRAME_AXES option such that only the two closest
 	# axes will be annotated. For now this function is only used in 3D modules.
-	if ((val = find_in_dict(d, [:p :view :perspective], false)[1]) !== nothing && isa(val, Tuple))
-		quadrant = mod(div(val[1], 90), 4)		# But since the angle is azim those are not the trig quadrants
+	if ((val = find_in_dict(d, [:p :view :perspective], false)[1]) !== nothing && (isa(val, Tuple) || isa(val, String)))
+		if (isa(val, String))					# imshows sends -p already digested. Must reverse
+			_val = tryparse(Float64, split(val, "/")[1])
+			quadrant = mod(div(_val, 90), 4)	# But since the angle is azim those are not the trig quadrants
+		else
+			quadrant = mod(div(val[1], 90), 4)
+		end
 		if     (quadrant == 0)  axs = "wsNEZ"	# Trig first quadrant
 		elseif (quadrant == 1)  axs = "wSnEZ"	# Trig fourth quadrant
 		elseif (quadrant == 2)  axs = "WSneZ"	# Trig third quadrant
