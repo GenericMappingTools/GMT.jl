@@ -95,7 +95,6 @@ end
 
 function imshow(arg1::GMTimage; kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
-	d = KW(kw)
 	see = (!haskey(kw, :show)) ? true : see = kw[:show]	# No explicit 'show' keyword means show=true
 	if (isa(arg1.image, Array{UInt16}))
 		I = mat2img(arg1; kw...)
