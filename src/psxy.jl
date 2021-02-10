@@ -43,12 +43,16 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		end
 	end
 
+	if (occursin('3', caller) && !haskey(d, :p) && !haskey(d, :view) && !haskey(d, :perspective))
+		d[:p] = "200/30"		# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
+	end
+
 	def_J = (is_ternary) ? " -JX12c/0" : ""
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
 	cmd, opt_JZ = parse_JZ(d, cmd)
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
-	if (is_ternary)  cmd = add_opt(d, cmd, 'M', [:M :no_plot])  end
+	(is_ternary) && (cmd = add_opt(d, cmd, 'M', [:M :no_plot]))
 	opt_UVXY = parse_UVXY(d, "")	# Need it separate to not risk to double include it.
 	cmd, opt_c = parse_c(d, cmd)	# Need opt_c because we may need to remove it from double calls
 
@@ -585,7 +589,6 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 
 	if (occursin('3', caller))
 		if (!occursin(" -B", cmd[1]) && !O)  cmd[1] *= def_fig_axes3  end	# For overlays default is no axes
-		if (!occursin(" -p", cmd[1]))  cmd[1] *= " -p200/30"  end
 	end
 
 	return cmd[1]

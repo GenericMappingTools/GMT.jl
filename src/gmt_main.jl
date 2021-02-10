@@ -1326,7 +1326,7 @@ D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=n
 	`txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
 	        can be an array with same size as ``mat``rows or a string (will be reapeated n_rows times.) 
 	`multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
-	first column and 2, first and 3, etc. Convinient when want to plot a matrix where each column is a line. 
+	first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
 """
 function mat2ds(mat, txt=nothing; hdr=nothing, kwargs...)
 	d = KW(kwargs)
@@ -1334,7 +1334,8 @@ function mat2ds(mat, txt=nothing; hdr=nothing, kwargs...)
 	(txt !== nothing) && return text_record(mat, txt,  hdr)
 	((text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, text, hdr)
 
-	multi = (find_in_dict(d, [:multi :multicol])[1] !== nothing) ? true : false
+	val = find_in_dict(d, [:multi :multicol])[1]
+	multi = (val === nothing) ? false : ((val) ? true : false)	# Like this it will error if val is not Bool
 
 	if ((x = find_in_dict(d, [:x])[1]) !== nothing)
 		n_ds = (multi) ? size(mat, 2) : 1
