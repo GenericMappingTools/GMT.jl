@@ -35,9 +35,12 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 			if (sub_module == "bar")	# Needs to be processed here to destinguish from the more general 'fill'
 				gval = find_in_dict(d, [:fill :fillcolor], false)[1]	# Used for group colors
 				if     (isa(gval, Array{String}) && length(gval) > 1)  append!(g_bar_fill, gval)
-				elseif ((isa(gval, Array{Int}) || (isa(gval, Tuple)) && eltype(gval) == Int) && length(gval) > 1)
+				elseif ((isa(gval, Array{Int}) || isa(gval, Tuple) && eltype(gval) == Int) && length(gval) > 1)
 					g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
 					[g_bar_fill[k] = string('p',gval[k]) for k = 1:length(gval)]
+				elseif (isa(gval, Tuple) && (eltype(gval) == String || eltype(gval) == Symbol) && length(gval) > 1)
+					g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
+					[g_bar_fill[k] = string(gval[k]) for k = 1:length(gval)]
 				end
 			end
 		end
@@ -57,12 +60,12 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd, opt_c = parse_c(d, cmd)	# Need opt_c because we may need to remove it from double calls
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
-	got_usr_R = (opt_R != "") ? true : false		# To know if the user set -R or we guessed it from data
+	got_usr_R = (opt_R != "") ? true : false			# To know if the user set -R or we guessed it from data
 	if (opt_R == "" && sub_module == "bar")  opt_R = "/-0.4/0.4/0"  end	# Make sure y_min = 0
 	if (O && caller == "plotyy")
-		cmd = replace(cmd, opt_R => "")			# Must remove old opt_R because a new one will be constructed
+		cmd = replace(cmd, opt_R => "")					# Must remove old opt_R because a new one will be constructed
 		ind = collect(findall("/", box_str[1])[2])		# 'box_str' was set in first call
-		opt_R = '/' * box_str[1][4:ind[1]] * "?/?"	# Will become /x_min/x_max/?/?
+		opt_R = '/' * box_str[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
 	end
 	cmd, arg1, opt_R, lixo, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
 	if (N_args == 0 && arg1 !== nothing)  N_args = 1  end
@@ -70,7 +73,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	if ((isa(arg1, GMTdataset) && arg1.proj4 != "" || isa(arg1, Vector{GMTdataset}) &&
 		     arg1[1].proj4 != "") && opt_J == " -JX" * def_fig_size)
-		cmd = replace(cmd, opt_J => "-JX12c/0")		# If projected, it's a axis equal for sure
+		cmd = replace(cmd, opt_J => "-JX12c/0")			# If projected, it's a axis equal for sure
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd *= " -JZ6c"		# Default -JZ
@@ -260,10 +263,11 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 		bars_cols = arg1[:,(n + 2):end]		# We'll use this to appent to the multi-segments
 	else
 		_arg = isa(arg1, GMTdataset) ? deepcopy(arg1.data) : (isa(arg1, Array{GMTdataset}) ? deepcopy(arg1[1].data) : deepcopy(arg1))
-		bars_cols = nothing
+		bars_cols = missing
 	end
 
-	do_multi = true;	do_bar_stack = false		# True for grouped; false for stacked groups
+	do_multi = true;	is_stack = false		# True for grouped; false for stacked groups
+	is_hbar = occursin("-SB", cmd)					# An horizontal bar plot
 	if ((val = find_in_dict(d, [:stack :stacked])[1]) !== nothing)
 		# Take this (two groups of 3 bars) [0 1 2 3; 1 2 3 4]  and compute this (the same but stacked)
 		# [0 1 0; 0 3 1; 0 6 3; 1 2 0; 1 5 2; 1 9 4]
@@ -283,8 +287,9 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 				end
 			end
 		end
+		(is_hbar) && (tmp = [tmp[:,2] tmp[:,1] tmp[:,3]])	# Horizontal bars must swap 1-2 cols
 		_arg = tmp
-		do_multi = false;		do_bar_stack = true
+		do_multi = false;		is_stack = true
 	end
 
 	if (isempty(g_bar_fill) && findfirst("-G0/115/190", cmd) !== nothing)		# Remove the auto color
@@ -295,10 +300,15 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	# and as many rows in a segment as the number of groups (number of bars if groups had only one bar)
 	alpha = find_in_dict(d, [:alpha :fillalpha :transparency])[1]
 	_argD = mat2ds(_arg; fill=g_bar_fill, multi=do_multi, fillalpha=alpha)
-	if (do_bar_stack)  _argD = ds2ds(_argD[1], fill=g_bar_fill, color_wrap=nl, fillalpha=alpha)  end
+	if (is_stack)  _argD = ds2ds(_argD[1], fill=g_bar_fill, color_wrap=nl, fillalpha=alpha)  end
+	if (is_hbar && !is_stack)					# Must swap first & second col
+		for k = 1:length(_argD)
+			_argD[k].data = [_argD[k].data[:,2] _argD[k].data[:,1]]
+		end
+	end
 	(!isempty(g_bar_fill)) && delete!(d, :fill)
 
-	if (bars_cols !== nothing)		# Loop over number of bars in each group and append the error bar
+	if (bars_cols !== missing)		# Loop over number of bars in each group and append the error bar
 		for k = 1:length(_argD)
 			_argD[k].data = reshape(append!(_argD[k].data[:], bars_cols[:,k]), size(_argD[k].data,1), :)
 		end
@@ -308,27 +318,35 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	opt_S = scan_opt(cmd, "-S")
 	sub_b = ((ind = findfirst("+", opt_S)) !== nothing) ? opt_S[ind[1]:end] : ""	# The +Base modifier
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
-	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[3:end])	# Bar width
+	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
 	n_in_group = length(_argD)					# Number of bars in the group
 	gap = ((val = find_in_dict(d, [:gap])[1]) !== nothing) ? val/100 : 0	# Gap between bars in a group
-	new_bw = (do_bar_stack) ? bw : bw / n_in_group * (1 - gap)	# 'width' does not change in bar-stack
+	new_bw = (is_stack) ? bw : bw / n_in_group * (1 - gap)	# 'width' does not change in bar-stack
 	new_opt_S = "-S" * opt_S[1] * "$(new_bw)u"
-	cmd = (do_bar_stack) ? replace(cmd, "-S"*opt_S*sub_b => new_opt_S*"+b") : replace(cmd, "-S"*opt_S => new_opt_S)
+	cmd = (is_stack) ? replace(cmd, "-S"*opt_S*sub_b => new_opt_S*"+b") : replace(cmd, "-S"*opt_S => new_opt_S)
 
-	if (!do_bar_stack)							# 'Horizontal stack'
+	if (!is_stack)								# 'Horizontal stack'
 		g_shifts = linspace((-bw + new_bw)/2, (bw - new_bw)/2, n_in_group)
+		col = (is_hbar) ? 2 : 1					# Horizontal and Vertical bars get shits in different columns
 		for k = 1:n_in_group
-			[_argD[k].data[n,1] += g_shifts[k] for n = 1:size(_argD[k].data,1)]
+			[_argD[k].data[n, col] += g_shifts[k] for n = 1:size(_argD[k].data,1)]
 		end
 	end
 
 	if (!got_usr_R)								# Need to recompute -R
 		info = gmt("gmtinfo -C", _argD)
 		(info[1].data[3] > 0) && (info[1].data[3] = 0)		# If not negative then must be 0
-		dx = (info[1].data[2] - info[1].data[1]) * 0.005 + new_bw/2;
-		dy = (info[1].data[4] - info[1].data[3]) * 0.005;
-		info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[4] += dy;
-		(info[1].data[3] != 0) && (info[1].data[3] -= dy);
+		if (!is_hbar)
+			dx = (info[1].data[2] - info[1].data[1]) * 0.005 + new_bw/2;
+			dy = (info[1].data[4] - info[1].data[3]) * 0.005;
+			info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[4] += dy;
+			(info[1].data[3] != 0) && (info[1].data[3] -= dy);
+		else
+			dx = (info[1].data[2] - info[1].data[1]) * 0.005
+			dy = (info[1].data[4] - info[1].data[3]) * 0.005 + new_bw/2;
+			info[1].data[1] = 0.0;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
+			(info[1].data[1] != 0) && (info[1].data[1] -= dx);
+		end
 		info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
 		new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info[1].data[1], info[1].data[2], info[1].data[3], info[1].data[4])
 		cmd = replace(cmd, opt_R => new_opt_R)
@@ -565,13 +583,18 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 		if (!occursin("+p", cmd[1]) && opt_W == "") cmd[1] *= " -W0.25p"  end # Do not leave without a pen specification
 	elseif (caller == "bar")
 		if (opt_S == "")
+			bar_type = 0
 			if (haskey(d, :bar))
-				cmd[1] = parse_bar_cmd(d, :bar, cmd[1], "Sb")
+				cmd[1], bar_opts = parse_bar_cmd(d, :bar, cmd[1], "Sb")
+				bar_type = 1;	delete!(d, :bar)
 			elseif (haskey(d, :hbar))
-				cmd[1] = parse_bar_cmd(d, :hbar, cmd[1], "SB")
-			else
+				cmd[1], bar_opts = parse_bar_cmd(d, :hbar, cmd[1], "SB")
+				bar_type =2;	delete!(d, :hbar)
+			end
+			if (bar_type == 0 || bar_opts == "")	# bar_opts == "" means only bar=true or hbar=true was used
 				opt = (haskey(d, :width)) ? add_opt(d, "", "",  [:width]) : "0.8"	# The default
-				cmd[1] *= " -Sb" * opt * "u"
+				_Stype = (bar_type == 2) ? " -SB" : " -Sb"
+				cmd[1] *= _Stype * opt * "u"
 
 				optB = (haskey(d, :base)) ? add_opt(d, "", "",  [:base]) : "0"
 				cmd[1] *= "+b" * optB
@@ -595,24 +618,26 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u::Bool=false)::String
+function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u::Bool=false)::Tuple{String, String}
 	# Deal with parsing the 'bar' & 'hbar' keywors of psxy. Also called by plot/bar3. For this
 	# later module if input is not a string or NamedTuple the scatter options must be processed in bar3().
 	# KEY is either :bar or :hbar
 	# OPTS is either "Sb", "SB" or "So"
 	# NO_U if true means to NOT automatic adding of flag 'u'
-	opt =""
+	opt ="";	got_str = false
 	if (haskey(d, key))
 		if (isa(d[key], String))
-			cmd *= " -" * optS * d[key];	delete!(d, key)
+			opt, got_str = d[key], true
+			cmd *= " -" * optS * opt;	delete!(d, key)
 		elseif (isa(d[key], NamedTuple))
 			opt = add_opt(d, "", optS, [key], (width="",unit="1",base="+b",height="+B",nbands="+z",Nbands="+Z"))
+		elseif (isa(d[key], Bool) && d[key])
 		else
 			error("Argument of the *bar* keyword can be only a string or a NamedTuple.")
 		end
 	end
 
-	if (opt != "")				# Still need to finish parsing this
+	if (opt != "" && !got_str)				# Still need to finish parsing this
 		flag_u = no_u ? "" : 'u'
 		if ((ind = findfirst("+", opt)) !== nothing)	# See if need to insert a 'u'
 			if (!isletter(opt[ind[1]-1]))  opt = opt[1:ind[1]-1] * flag_u * opt[ind[1]:end]  end
@@ -623,5 +648,5 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u::Bo
 		end
 		cmd *= opt
 	end
-	return cmd
+	return cmd, opt
 end
