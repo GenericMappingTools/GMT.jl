@@ -502,7 +502,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 
 	if (isa(arg1, GMTgrid))
 		if (haskey(d, :bar))
-			opt_S = parse_bar_cmd(d, :bar, "", "So")
+			opt_S = parse_bar_cmd(d, :bar, "", "So")[1]
 		else
 			# 0.85 is the % of inc width of bars
 			w1::Float64, w2::Float64 = arg1.inc[1]*0.85, arg1.inc[2]*0.85
@@ -531,7 +531,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 	else
 		opt_S = parse_inc(d, "", [:S :width], "So", true)
 		if (opt_S == "")
-			opt_S = parse_bar_cmd(d, :bar, "", "So", true)
+			opt_S = parse_bar_cmd(d, :bar, "", "So", true)[1]
 		end
 		if (opt_S == "")
 			if ((isa(arg1, Array) && size(arg1,2) < 5) || (isa(arg1, GMTdataset) && size(arg1.data,2) < 5))
