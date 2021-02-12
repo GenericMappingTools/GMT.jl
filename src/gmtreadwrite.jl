@@ -140,7 +140,7 @@ function gmtread(fname::String; kwargs...)
 		if (GMTver >= v"6.1")
 			x = opt_R2num(opt_R)		# See if we have a limits request
 			if (GMTver >= v"6.2")
-				lims = (x === nothing) ? (0.0, 0, 0, 0, 0, 0) : tuple(hcat(x,[0.0 0])...)
+				lims = (x === nothing) ? (0.0, 0.0, 0.0, 0.0, 0.0, 0.0) : tuple(vcat(x,[0.0, 0.0])...)
 				ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
 				O = ogr2GMTdataset(gmt_ogrread(API2, pointer([ctrl])))
 			else
