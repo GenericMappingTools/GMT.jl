@@ -97,13 +97,18 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# Look for color request. Do it after error bars because they may add a column
 	len = length(cmd);	n_prev = N_args;
-	cmd, args, n, got_Zvars = add_opt(d, cmd, 'Z', [:Z :level], :data, [arg1, arg2, arg3], (outline="_+l", fill="_+f"))
+	cmd, args, n, got_Zvars = add_opt(d, cmd, 'Z', [:Z :level], :data, Any[arg1, arg2, arg3], (outline="_+l", fill="_+f"))
 	if (n > 0)
 		arg1, arg2, arg3 = args[:]
 		N_args = n
 	end
 	in_bag = (got_Zvars) ? true : false			# Other cases should add to this list
-	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2, true, true, "", in_bag)
+	if (N_args < 2)
+		cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2, true, true, "", in_bag)
+	else			# Here we know that both arg1 & arg2 are already occupied, so must use arg3 only
+		cmd, arg3, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg3, nothing, true, true, "", in_bag)
+		N_args = 3
+	end
 
 	mcc = false
 	if (!got_Zvars)								# Otherwise we don't care about color columns
