@@ -64,15 +64,17 @@ end
 find4similar(I::GMTimage, rest) = I
 
 mutable struct GMTcpt
-	colormap::Array{Float64,2}
-	alpha::Array{Float64,1}
-	range::Array{Float64,2}
-	minmax::Array{Float64,1}
-	bfn::Array{Float64,2}
-	depth::Cint
-	hinge::Cdouble
-	cpt::Array{Float64,2}
-	model::String
+	colormap::Array{Float64,2}	# Mx3 matrix equal to the first three columns of cpt
+	alpha::Array{Float64,1}		# Vector of alpha values. One for each color.
+	range::Array{Float64,2}		# Mx2 matrix with z range for each slice
+	minmax::Array{Float64,1}	# Vector with zmin,zmax
+	bfn::Array{Float64,2}		# A 3x3(4?) matrix with BFN colors (one per row) in [0 1] interval
+	depth::Cint					# Color depth 24, 8, 1
+	hinge::Cdouble				# Z-value at discontinuous color break, or NaN
+	cpt::Array{Float64,2}		# Mx6 matrix with r1 g1 b1 r2 g2 b2 for z1 z2 of each slice
+	label::Vector{String}
+	key::Vector{String}
+	model::String				# String with color model rgb, hsv, or cmyk [rgb]
 	comment::Array{String,1}	# Cell array with any comments
 end
 
@@ -565,7 +567,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
 # Each segment will have 10 items:
 # colormap:	Nx3 array of colors usable in Matlab' colormap
 # alpha:	Nx1 array with transparency values
-# range:	Nx1 arran with z-values at color changes
+# range:	Nx2 arran with z-values at color changes
 # minmax:	2x1 array with min/max zvalues
 # bfn:		3x3 array with colors for background, forground, nan
 # depth	Color depth 24, 8, 1
@@ -582,7 +584,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
 	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 
 	out = GMTcpt(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), zeros(2)*NaN, zeros(3,3), 8, 0.0,
-	             zeros(C.n_colors,6), model, [])
+	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, [])
 
 	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
 		gmt_lut = unsafe_load(C.data, j)
@@ -591,9 +593,11 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
 			out.cpt[j, k]   = gmt_lut.rgb_low[k]
 			out.cpt[j, k+3] = gmt_lut.rgb_high[k]		# Not sure this is equal to the ML MEX case
 		end
-		out.alpha[j]       = gmt_lut.rgb_low[4]
-		out.range[j, 1]    = gmt_lut.z_low
-		out.range[j, 2]    = gmt_lut.z_high
+		out.alpha[j]    = gmt_lut.rgb_low[4]
+		out.range[j, 1] = gmt_lut.z_low
+		out.range[j, 2] = gmt_lut.z_high
+		out.label[j]    = (gmt_lut.label == C_NULL) ? "" : unsafe_string(gmt_lut.label)
+		out.key[j]      = (gmt_lut.key   == C_NULL) ? "" : unsafe_string(gmt_lut.key)
 	end
 	if (C.is_continuous != 0)    # Add last color
 		for k = 1:3 	out.colormap[n_colors, k] = gmt_lut.rgb_high[1]		end
@@ -717,7 +721,11 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)
 		X.object = dataset_init_(API, ptr, X.direction, actual_family)
 		X.family = actual_family[1]
 	elseif (X.family == GMT_IS_PALETTE)		# Get a palette from Julia or a dummy one to hold GMT output
-		X.object = palette_init(API, ptr, X.direction)
+		if (!isa(ptr, GMTcpt) && X.direction == GMT_OUT)	# To avoid letting call palette_init() with a nothing
+			X.object = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
+		else
+			X.object = palette_init(API, ptr)
+		end
 	elseif (X.family == GMT_IS_POSTSCRIPT)	# Get a PostScript struct from Matlab or a dummy one to hold GMT output
 		X.object = ps_init(API, ptr, X.direction)
 	else
@@ -932,7 +940,7 @@ function dataset_init_(API::Ptr{Nothing}, Darr, direction::Integer, actual_famil
 	# We come here if we did not receive a matrix
 	dim = [1, 0, 0, 0]
 	dim[GMT.GMT_SEG+1] = length(Darr)				# Number of segments
-	if (dim[GMT.GMT_SEG+1] == 0)	error("Input has zero segments where it can't be")	end
+	(dim[GMT.GMT_SEG+1] == 0) && error("Input has zero segments where it can't be")
 	dim[GMT.GMT_COL+1] = size(Darr[1].data, 2)		# Number of columns
 
 	mode = (length(Darr[1].text) != 0) ? GMT_WITH_STRINGS : GMT_NO_STRINGS
@@ -1038,18 +1046,12 @@ function dataset_init(API::Ptr{Nothing}, ptr, direction::Integer, actual_family)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function palette_init(API::Ptr{Nothing}, cpt, dir::Integer)
+function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)
 	# Used to Create an empty CPT container to hold a GMT CPT.
  	# If direction is GMT_IN then we are given a Julia CPT and can determine its size, etc.
 	# If direction is GMT_OUT then we allocate an empty GMT CPT as a destination.
 
-	if (dir == GMT_OUT)
-		return GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
-	end
-
 	# Dimensions are known from the input pointer
-
-	(!isa(cpt, GMTcpt)) && error("Expected a CPT structure for input but got a $(typeof(cpt))") 
 
 	n_colors = size(cpt.colormap, 1)	# n_colors != n_ranges for continuous CPTs
 	n_ranges = size(cpt.range, 1)
@@ -1068,10 +1070,11 @@ function palette_init(API::Ptr{Nothing}, cpt, dir::Integer)
 	elseif (cpt.depth == 8)  mutateit(API, P, "is_gray", 1)
 	end
 	!isnan(cpt.hinge) && mutateit(API, P, "has_hinge", 1)
+	(cpt.key[1] != "") && mutateit(API, P, "categorical", 2)
 
-	Pb = unsafe_load(P)		# GMT.GMT_PALETTE
+	Pb = unsafe_load(P)				# We now have a GMT.GMT_PALETTE
 
-	if (!isnan(cpt.hinge))
+	if (!isnan(cpt.hinge))			# If we have a hinge pass it in to the GMT owned struct
 		Pb.hinge = cpt.hinge
 		Pb.mode = Pb.mode & GMT.GMT_CPT_HINGED
 	end
@@ -1091,11 +1094,12 @@ function palette_init(API::Ptr{Nothing}, cpt, dir::Integer)
 		#rgb_high = (cpt.colormap[j+one,1], cpt.colormap[j+one,2], cpt.colormap[j+one,3], cpt.alpha[j+one])
 		z_low  = cpt.range[j,1]
 		z_high = cpt.range[j,2]
+		# GMT bug does not free "key" but frees "label" and does not see if memory is external. Hence crash or mem leaks
+		_key = (cpt.key[j] == "") ? glut.key : pointer(cpt.key[j])	# Can't do the same with label because GMT crash
 
-		annot = 3						# Enforce annotations for now
-		# For now send NULL for the new param 'key'
-		lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low,
-		              glut.hsv_high, glut.hsv_diff, annot, glut.skip, glut.fill, glut.label, NULL)
+		annot = (j == Pb.n_colors) ? 3 : 1				# Annotations L for all but last which is B(oth)
+		lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
+		              glut.hsv_diff, annot, glut.skip, glut.fill, glut.label, _key)
 
 		unsafe_store!(Pb.data, lut, j)
 	end
@@ -1836,7 +1840,7 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function make_zvals_vec(D, user_ids::Array{String,1}, vals::Array{<:Real}, sub_head::Int=0)
+function make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head::Int=0)::Vector{Float64}
 	# USER_IDS is a string array with the ids (names in header) of the GMTdataset D 
 	# VALS is a vector with the the numbers to be used in plot -Z to color the polygons.
 	# Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
@@ -1844,7 +1848,7 @@ function make_zvals_vec(D, user_ids::Array{String,1}, vals::Array{<:Real}, sub_h
 	# no headers. In that case it replicates the previously known value until it finds a new segment ID.
 	n_user_ids = length(user_ids)
 	@assert(n_user_ids == length(vals))
-	ind, data_ids = get_segment_ids(D)
+	data_ids, ind = get_segment_ids(D)
 	(ind[1] != 1) && error("This function requires that first segment has a a header with an id")
 	n_data_ids = length(data_ids)
 	(n_user_ids > n_data_ids) &&
@@ -1872,15 +1876,12 @@ function make_zvals_vec(D, user_ids::Array{String,1}, vals::Array{<:Real}, sub_h
 end
 
 # ---------------------------------------------------------------------------------------------------
-function edit_segment_headers!(D, vals::Array, opt)
+function edit_segment_headers!(D, vals::Array, opt::String)
 	# Add an option OPT to segment headers with a val from VALS. Number of elements of VALS must be
 	# equal to the number of segments in D that have a header. If numel(val) == 1 must encapsulate it in []
 
-	ind, ids = get_segment_ids(D)
+	ids, ind = get_segment_ids(D)
 	if (isa(D, Array))
-		#for k = 1:length(ind)
-			#D[ind[k]].header *= string(opt, vals[k])
-		#end
 		[D[ind[k]].header *= string(opt, vals[k])  for k = 1:length(ind)]
 	else
 		D.header *= string(opt, vals[1])
@@ -1888,19 +1889,25 @@ function edit_segment_headers!(D, vals::Array, opt)
 	return nothing
 end
 
+"""
+ids, ind = get_segment_ids(D)::Tuple{Vector{String}, Vector{Int}}
+
+Where D is a GMTdataset of a vector of them, returns the segment ids (first text after the '>') and
+the idices of those segments.
+"""
 # ---------------------------------------------------------------------------------------------------
-function get_segment_ids(D)
+function get_segment_ids(D)::Tuple{Vector{String}, Vector{Int}}
 	# Get segment ids (first text after the '>') and the idices of those segments
 	if (isa(D, Array))  n = length(D);	d = Dict(k => D[k].header for k = 1:n)
 	else                n = 1;			d = Dict(1 => D.header)
 	end
-	tf = Array{Bool,1}(undef,n)			# pre-allocate
+	tf = Vector{Bool}(undef,n)					# pre-allocate
 	[tf[k] = (d[k] !== "" && d[k][1] != ' ') ? true : false for k = 1:n];	# Mask of non-empty headers
-	ind = collect(1:n)
+	ind = 1:n
 	ind = ind[tf]			# OK, now we have the indices of the segments with headers != ""
-	ids = Array{String,1}(undef,length(ind))	# pre-allocate
+	ids = Vector{String}(undef,length(ind))		# pre-allocate
 	[ids[k] = d[ind[k]] for k = 1:length(ind)]	# indices of non-empty segments
-	return ind, ids
+	return ids, ind
 end
 
 # ---------------------------------------------------------------------------------------------------
