@@ -717,6 +717,9 @@ if (got_it)					# Otherwise go straight to end
 	cpt = makecpt(range="-1/1/0.1");
 	makecpt(rand(10,1), E="", C=:rainbow, cptname="lixo.cpt");
 	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
+	C = cpt4dcw("eu");
+	C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[1,4,1]);
+	C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
 
 	println("	MAPPROJECT")
 	# MAPPROJECT
@@ -988,7 +991,7 @@ if (got_it)					# Otherwise go straight to end
 	r = coast(R=:g, N=((level=1,pen=(2,:green)), (level=3,pen=(4,:blue, "--"))), Vd=dbg2);
 	@test startswith(r, "pscoast  -Rg -JN180.0/12c -Baf -BWSen -N1/2,green -N3/4,blue,--")
 	r = coast(proj=:Mercator, DCW=((country="GB,IT,FR", fill=:blue, pen=(0.25,:red)), (country="ES,PT,GR", fill=:yellow)), Vd=dbg2);
-	@test startswith(r, "pscoast  -JM12c -Baf -BWSen -EGB,IT,FR+gblue+p0.25,red -EES,PT,GR+gyellow")
+	@test startswith(r, "pscoast  -EGB,IT,FR+gblue+p0.25,red -EES,PT,GR+gyellow -Vq")
 	@test_throws ErrorException("In Overlay mode you cannot change a fig scale and NOT repeat the projection") coast!(region=(-20,60,-90,90), scale=0.03333, Vd=dbg2)
 
 	println("	PSCONTOUR")
