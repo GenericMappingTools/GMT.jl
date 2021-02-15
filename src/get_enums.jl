@@ -81,4 +81,8 @@ enu = GMT_Get_Enum(API, "GMT_HSV");		const global GMT_HSV = (enu != -99999) ? en
 # GMT_enum_cptflags
 enu = GMT_Get_Enum(API, "GMT_CPT_HINGED");	const global GMT_CPT_HINGED = (enu != -99999) ? enu : 4
 
+# GMT_enum_CPT
+enu = GMT_Get_Enum(API, "GMT_IS_PALETTE_KEY");		const global GMT_IS_PALETTE_KEY = (enu != -99999) ? enu : 1024
+enu = GMT_Get_Enum(API, "GMT_IS_PALETTE_LABEL");	const global GMT_IS_PALETTE_LABEL = (enu != -99999) ? enu : 2048
+
 GMT_Destroy_Session(API);

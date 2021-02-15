@@ -387,7 +387,7 @@ function GMT_Error_Message(API::Ptr{Cvoid})
 end =#
 
 # -------------------------------------------------------------------------------------------------------------
-function GMT_Set_AllocMode(API::Ptr{Cvoid}, family, object)
+function GMT_Set_AllocMode(API::Ptr{Cvoid}, family::Integer, object)
 	ccall((:GMT_Set_AllocMode, thelib), Cint, (Cstring, UInt32, Ptr{Cvoid}), API, family, object)
 end
 
@@ -429,7 +429,7 @@ reset_defaults(API::Ptr{Cvoid}) = ccall((:gmt_conf, thelib), Cvoid, (Cstring,), 
 function gmt_ogrread(API::Ptr{Cvoid}, fname::String, region=C_NULL)
 	GMT_ = GMT_Get_Ctrl(API)
 	if (GMTver == v"6.0")  ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}), GMT_, fname)
-	else                ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}, Ptr{Cdouble}), GMT_, fname, region)
+	else                   ccall((:gmt_ogrread, thelib), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}, Ptr{Cdouble}), GMT_, fname, region)
 	end
 end
 
@@ -442,6 +442,14 @@ function gmt_put_history(API::Ptr{Cvoid})
 	ccall((:gmt_put_history, thelib), Cint, (Cstring,), GMT_Get_Ctrl(API))
 end =#
 
+function GMT_Put_Strings(API::Ptr{Cvoid}, family::Integer, object::Ptr{Cvoid}, txt::Vector{String})
+	ccall((:GMT_Put_Strings, thelib), Cint, (Cstring, UInt32, Cstring, Ptr{Ptr{UInt8}}), API, family, object, txt)
+end
+
+function gmt_get_rgb_from_z(API::Ptr{Cvoid}, P::Ptr{GMT.GMT_PALETTE}, value::Cdouble, rgb::Vector{Float64})
+	GMT_ = GMT_Get_Ctrl(API)
+	ccall((:gmt_get_rgb_from_z, thelib), Cint, (Cstring, Ptr{Cvoid}, Cdouble, Ptr{Cdouble}), GMT_, P, value, rgb)
+end
 
 function sprintf(format::String, x...)
 	strp = Ref{Ptr{Cchar}}(0)

@@ -67,13 +67,13 @@ mutable struct GMTcpt
 	colormap::Array{Float64,2}	# Mx3 matrix equal to the first three columns of cpt
 	alpha::Array{Float64,1}		# Vector of alpha values. One for each color.
 	range::Array{Float64,2}		# Mx2 matrix with z range for each slice
-	minmax::Array{Float64,1}	# Vector with zmin,zmax
+	minmax::Array{Float64,1}	# Two elements Vector with zmin,zmax
 	bfn::Array{Float64,2}		# A 3x3(4?) matrix with BFN colors (one per row) in [0 1] interval
 	depth::Cint					# Color depth 24, 8, 1
 	hinge::Cdouble				# Z-value at discontinuous color break, or NaN
 	cpt::Array{Float64,2}		# Mx6 matrix with r1 g1 b1 r2 g2 b2 for z1 z2 of each slice
-	label::Vector{String}
-	key::Vector{String}
+	label::Vector{String}		# Labels of a Categorical CPT
+	key::Vector{String}			# Keys of a Categorical CPT
 	model::String				# String with color model rgb, hsv, or cmyk [rgb]
 	comment::Array{String,1}	# Cell array with any comments
 end
@@ -573,6 +573,8 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
 # depth	Color depth 24, 8, 1
 # hinge:	Z-value at discontinuous color break, or NaN
 # cpt:		Nx6 full GMT CPT array
+# label		# Labels of a Categorical CPT. Vector of strings, one for each color
+# key		# Keys of a Categorical CPT. Vector of strings, one for each color
 # model:	String with color model rgb, hsv, or cmyk [rgb]
 # comment:	Cell array with any comments
 
@@ -1047,11 +1049,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)
-	# Used to Create an empty CPT container to hold a GMT CPT.
- 	# If direction is GMT_IN then we are given a Julia CPT and can determine its size, etc.
-	# If direction is GMT_OUT then we allocate an empty GMT CPT as a destination.
-
-	# Dimensions are known from the input pointer
+	# Create and fill a GMT CPT.
 
 	n_colors = size(cpt.colormap, 1)	# n_colors != n_ranges for continuous CPTs
 	n_ranges = size(cpt.range, 1)
@@ -1062,7 +1060,7 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)
 		one = 1
 	end
 
-	P = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), C_NULL, C_NULL, 0, 0, C_NULL)
+	P::Ptr{GMT.GMT_PALETTE} = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), C_NULL, C_NULL, 0, 0, C_NULL)
 
 	(one != 0) && mutateit(API, P, "is_continuous", one)
 
@@ -1070,7 +1068,6 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)
 	elseif (cpt.depth == 8)  mutateit(API, P, "is_gray", 1)
 	end
 	!isnan(cpt.hinge) && mutateit(API, P, "has_hinge", 1)
-	(cpt.key[1] != "") && mutateit(API, P, "categorical", 2)
 
 	Pb = unsafe_load(P)				# We now have a GMT.GMT_PALETTE
 
@@ -1094,8 +1091,8 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)
 		#rgb_high = (cpt.colormap[j+one,1], cpt.colormap[j+one,2], cpt.colormap[j+one,3], cpt.alpha[j+one])
 		z_low  = cpt.range[j,1]
 		z_high = cpt.range[j,2]
-		# GMT bug does not free "key" but frees "label" and does not see if memory is external. Hence crash or mem leaks
-		_key = (cpt.key[j] == "") ? glut.key : pointer(cpt.key[j])	# Can't do the same with label because GMT crash
+		# GMT6.1 bug does not free "key" but frees "label" and does not see if memory is external. Hence crash or mem leaks
+		_key = (cpt.key[j] == "" || GMTver >= v"6.2") ? glut.key : pointer(cpt.key[j])	# All it's possible in GMT < 6.2
 
 		annot = (j == Pb.n_colors) ? 3 : 1				# Annotations L for all but last which is B(oth)
 		lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
@@ -1104,6 +1101,17 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)
 		unsafe_store!(Pb.data, lut, j)
 	end
 	unsafe_store!(P, Pb)
+
+	# For Categorical case was half broken till 6.2 so we must treat things differently
+	if (cpt.key[1] != "" && GMTver >= v"6.2")
+		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_KEY, convert(Ptr{Cvoid}, P), cpt.key);
+		if (cpt.label[1] != "")
+			GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_LABEL, convert(Ptr{Cvoid}, P), cpt.label);
+		end
+		mutateit(API, P, "categorical", 2)
+	elseif (cpt.key[1] != "")
+		mutateit(API, P, "categorical", 2)
+	end
 
 	return P
 end

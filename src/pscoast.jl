@@ -95,8 +95,10 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	maybe_more = false			# If latter set to true, search for lc & lc pen settings
-	#cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0")
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, "guess")
+	cmd = parse_E_coast(d, [:E :DCW], "")		# Process first to avoid warning about "guess"
+	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))
+		cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "", O, "guess")
+	end
 	cmd, = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution], [:M :dump]])
 	cmd  = parse_Td(d, cmd)
@@ -120,14 +122,13 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	(show_kwargs[1]) && print_kwarg_opts([:I :rivers],  "NamedTuple | Tuple | Dict | String")
 	(show_kwargs[1]) && print_kwarg_opts([:N :borders], "NamedTuple | Tuple | Dict | String")
 	(show_kwargs[1]) && print_kwarg_opts([:W :shore :shorelines],   "NamedTuple | Tuple | Dict | String")
-	cmd = parse_E_coast(d, [:E :DCW], cmd)
 
 	if (!occursin(" -C",cmd) && !occursin(" -E",cmd) && !occursin(" -G",cmd) && !occursin(" -I",cmd) &&
 		!occursin(" -M",cmd) && !occursin(" -N",cmd) && !occursin(" -Q",cmd) && !occursin(" -S",cmd) && !occursin(" -W",cmd))
 		cmd *= " -W0.5p"
 	end
 	(!occursin("-D",cmd)) && (cmd *= " -Da")			# Then pick automatic
-	finish = !occursin(" -M ",cmd) ? true : false		# Otherwise the dump would be redirected to GMTjl_tmp.ps
+	finish = !occursin(" -M",cmd) && !occursin("-E+l", cmd)  && !occursin("-E+L", cmd) ? true : false	# Otherwise the dump would be redirected to GMTjl_tmp.ps
 
 	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, finish)
 end

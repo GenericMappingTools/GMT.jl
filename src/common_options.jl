@@ -249,7 +249,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		if ((s = helper_append_figsize(d, opt_J[1], O)) != "")		# Takes care of both fig scales and fig sizes
 			opt_J[1] = s
 		elseif (default != "" && opt_J[1] == " -JX")
-			opt_J[1] = IamSubplot[1] ? " -JX?" : default  			# -JX was a working default
+			opt_J[1] = IamSubplot[1] ? " -JX?" : (default != "guess" ? default : opt_J[1]) 	# -JX was a working default
 		elseif (occursin("+width=", opt_J[1]))		# OK, a proj4 string, don't touch it. Size already in.
 		elseif (occursin("+proj", opt_J[1]))		# A proj4 string but no size info. Use default size
 			opt_J[1] *= "+width=" * split(def_fig_size, '/')[1]
@@ -1663,7 +1663,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 			cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, val, store)
 		else
 			if (opt_T != "")
-				cpt = makecpt(opt_T * " -C" * get_color(val))
+				cpt::GMTcpt = makecpt(opt_T * " -C" * get_color(val))
 				cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 			else
 				c = get_color(val)
@@ -1671,7 +1671,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 				cmd *= opt_C
 				if (store && c != "" && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's number and -Cn is not valid
 					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
-						global current_cpt = makecpt(opt_C * " -Vq")
+						global current_cp = makecpt(opt_C * " -Vq")
 					catch
 					end
 				elseif (in_bag && current_cpt !== nothing)	# If we have something in Bag, return it
