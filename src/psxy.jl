@@ -431,7 +431,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 				reset_i = just_C[ind[1]:end]
 				just_C  = just_C[1:ind[1]-1]
 			end
-			arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
+			arg2::GMTcpt = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
 			global current_cpt = arg2
 			if (occursin(" -C", cmd))  cmd = cmd[1:len+3]  end		# Strip the cpt name
 			if (reset_i != "")  cmd *= reset_i  end		# Reset -i, in case it existed
