@@ -95,7 +95,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	maybe_more = false			# If latter set to true, search for lc & lc pen settings
-	cmd = parse_E_coast(d, [:E :DCW], "")		# Process first to avoid warning about "guess"
+	cmd = parse_E_coast(d, [:E :DCW :dcw], "")		# Process first to avoid warning about "guess"
 	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))
 		cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "", O, "guess")
 	end

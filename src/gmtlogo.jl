@@ -62,7 +62,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
 		do_show = false
 		if (do_GMTjulia && haskey(d, :show))  delete!(d, :show);  do_show = true  end	# Too soon
-		fmt = nothing
+		fmt = ""
 		if (do_GMTjulia)
 			# Too soon to set the format. Need to finish the PS first
 			((val = find_in_dict(d, [:fmt])[1]) !== nothing) && (fmt = arg2str(val))
@@ -76,7 +76,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		if (do_GMTjulia)
 			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
 			opt_F = @sprintf("+f%d,NewCenturySchlbk-Italic",letter_height)
-			if (fmt !== nothing)
+			if (fmt != "")
 				text!(text_record(t[1:3,1:2], ["M", "T", "G"]), R=[], J=[], F=opt_F, fmt=fmt, name=savefig, show=do_show)
 			else
 				text!(text_record(t[1:3,1:2], ["M", "T", "G"]), R=[], J=[], F=opt_F, name=savefig, show=do_show)

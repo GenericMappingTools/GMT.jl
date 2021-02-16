@@ -45,7 +45,7 @@ const global convert_syntax = Vector{Bool}(undef, 1);convert_syntax[1] = false	#
 const global show_kwargs = Vector{Bool}(undef, 1);show_kwargs[1] = false	# To just print the kwargs of a option call)
 const global FMT = ["ps"]
 const global box_str = [""]
-const def_fig_size  = "12c/8c"              # Default fig size for plot like programs
+const def_fig_size  = "14c/9.5c"            # Default fig size for plot like programs. Approx 16/11
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3 = " -Baf -Bza"  		#		"" but for 3D views
 const global CTRL = CTRLstruct(zeros(6), [true], [:coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing])

@@ -50,7 +50,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		d[:p] = "200/30"		# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
 	end
 
-	def_J = (is_ternary) ? " -JX12c/0" : ""
+	def_J = (is_ternary) ? " -JX" * split(def_fig_size, '/')[1] * "/0" : ""		# Gives "-JX14c/0" 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
 	cmd, opt_JZ = parse_JZ(d, cmd)
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :params], first)
@@ -73,7 +73,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	if ((isa(arg1, GMTdataset) && arg1.proj4 != "" || isa(arg1, Vector{GMTdataset}) &&
 		     arg1[1].proj4 != "") && opt_J == " -JX" * def_fig_size)
-		cmd = replace(cmd, opt_J => "-JX12c/0")			# If projected, it's a axis equal for sure
+		cmd = replace(cmd, opt_J => "-JX" * split(def_fig_size, '/')[1] * "/0")	# If projected, it's a axis equal for sure
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd *= " -JZ6c"		# Default -JZ
@@ -370,6 +370,9 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	if (!(N_args > n_prev || len < length(cmd)) && mz === nothing)	# No color request, so return right away
 		return cmd, arg1, arg2, N_args, false
 	end
+		
+	# Filled polygons with -Z don't need extra col
+	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, arg2, N_args, false
 
 	if (isa(arg1, Array{<:Number}))  n_rows, n_col = size(arg1)
 	elseif (isa(arg1,GMTdataset))    n_rows, n_col = size(arg1.data)

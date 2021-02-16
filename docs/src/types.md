@@ -67,8 +67,10 @@ CPT type
         depth::Cint
         hinge::Cdouble
         cpt::Array{Float64,2}
+        label::Vector{String}     # Labels of a Categorical CPT
+        key::Vector{String}       # Keys of a Categorical CPT
         model::String
-        comment::Array{Any,1}   # Cell array with any comments
+        comment::Array{Any,1}     # Cell array with any comments
     end
 
 Postscript type

@@ -85,7 +85,7 @@ if (got_it)					# Otherwise go straight to end
 	@test GMT.parse_J(Dict(:scale=>"1:10"), "")[1] == " -Jx1:10"
 	@test GMT.parse_J(Dict(:s=>"1:10"), "", " -JU")[1] == " -JU"
 	@test GMT.parse_J(Dict(:J => "Merc", :figsize => 10), "", "", true, true)[1] == " -JM10"
-	@test GMT.parse_J(Dict(:J => "+proj=merc"), "")[1] == " -J+proj=merc+width=12c"
+	@test GMT.parse_J(Dict(:J => "+proj=merc"), "")[1] == " -J+proj=merc+width=" * split(GMT.def_fig_size, '/')[1]
 	@test GMT.parse_J(Dict(:J => (name=:albers, parallels=[45 65])), "", "", false)[1] == " -JB0/0/45/65"
 	@test GMT.parse_J(Dict(:J => (name=:albers, center=[10 20], parallels=[45 65])), "", "", false)[1] == " -JB10/20/45/65"
 	@test GMT.parse_J(Dict(:J => "winkel"), "", "", false)[1] == " -JR"
@@ -182,12 +182,12 @@ if (got_it)					# Otherwise go straight to end
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt(d, "", "", [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(10,:red),bot=true), Vd=dbg2);
-	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10,red+yb")
+	@test startswith(r,"psxy  -JX" * GMT.def_fig_size * " -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10,red+yb")
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=dbg2);
-	@test startswith(r,"psxy  -JX12c/8c -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10+cl+yb")
+	@test startswith(r,"psxy  -JX" * GMT.def_fig_size * " -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10+cl+yb")
 	@test startswith(psxy([0.0, 1],[0, 1.1], figsize=(10,12), aspect=:equal, Vd=dbg2), "psxy  -JX10/12")
 	@test startswith(psxy([0.0, 1],[0, 1.1], figsize=10, aspect=:equal, Vd=dbg2), "psxy  -JX10/0")
-	@test startswith(psxy([0.0, 1],[0, 1.1], aspect=:equal, Vd=dbg2), "psxy  -JX12c/0")
+	@test startswith(psxy([0.0, 1],[0, 1.1], aspect=:equal, Vd=dbg2), "psxy  -JX" * split(GMT.def_fig_size, '/')[1] * "/0")
 	psxy!([0 0; 1 1.1], Vd=dbg2);
 	psxy!("", [0 0; 1 1.1], Vd=dbg2);
 	GMT.get_marker_name(Dict(:y => "y"), [:y], false)
@@ -268,6 +268,8 @@ if (got_it)					# Otherwise go straight to end
 	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:log1)), "") == "1/2/0.1+l")
 	@test (GMT.parse_opt_range(Dict(:T => [1]), "") == "1,")
 	GMT.parse_opt_range(Dict(:T => (1,2,0.1,:mum,:log2)), "")	# Prints a warning
+	
+	GMT.round_datetime([DateTime(2013,1,1), DateTime(2013,1,1,0,0,1)]);
 
 	GMT.GMT_PEN();
 	GMT.GMT_PEN(0.0, 0.0, (0.0, 0.0, 0.0, 0.0), map(UInt8, (repeat('\0', 128)...,)), 0, 0, (pointer([0]), pointer([0])));
@@ -533,9 +535,9 @@ if (got_it)					# Otherwise go straight to end
 	C = grdcontour("lixo.grd", C="+0.7", D=[]);
 	@assert((size(C[1].data,1) == 21) && abs(-0.6 - C[1].data[1,1]) < 1e-8)
 	r = grdcontour("lixo.grd", cont=10, A=(int=50,labels=(font=7,)), G=(dist="4i",), L=(-1000,-1), W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), T=(gap=("0.1i","0.02i"),), Vd=dbg2);
-	@test startswith(r, "grdcontour lixo.grd  -JX12c/0 -Baf -BWSen -L-1000/-1 -A50+f7 -Gd4i -T+d0.1i/0.02i -Wcthinnest,- -Wathin,- -R-15/15/-15/15 -C10")
+	@test startswith(r, "grdcontour lixo.grd  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -L-1000/-1 -A50+f7 -Gd4i -T+d0.1i/0.02i -Wcthinnest,- -Wathin,- -R-15/15/-15/15 -C10")
 	r = grdcontour("lixo.grd", A="50+f7p", G="d4i", W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), Vd=dbg2);
-	@test startswith(r, "grdcontour lixo.grd  -JX12c/0 -Baf -BWSen -A50+f7p -Gd4i -Wcthinnest,- -Wathin,-")
+	@test startswith(r, "grdcontour lixo.grd  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -A50+f7p -Gd4i -Wcthinnest,- -Wathin,-")
 	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
 	grdcontour(G, axis="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[])
@@ -667,9 +669,9 @@ if (got_it)					# Otherwise go straight to end
 	r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), view="120/30", Vd=dbg2);
 	@test startswith(r, "grdview  -R -J -n+a -p120/30 -N-6+glightgray -Qsmred")
 	r = grdview(G, surf=(waterfall=(:rows,:red),surf=true, mesh=true, img=50), Vd=dbg2);
-	@test startswith(r, "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -n+a -Qmyredsmi50")
-	@test startswith(grdview(G, surf=(waterfall=:rows,), Vd=dbg2), "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -n+a -Qmy")
-	@test startswith(grdview(G, surf=(waterfall=(rows=true, fill=:red),), Vd=dbg2), "grdview  -R0/360/-90/90 -JX12c/0 -Baf -Bza -n+a -Qmyred")
+	@test startswith(r, "grdview  -R0/360/-90/90 -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -Bza -n+a -Qmyredsmi50")
+	@test startswith(grdview(G, surf=(waterfall=:rows,), Vd=dbg2), "grdview  -R0/360/-90/90 -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -Bza -n+a -Qmy")
+	@test startswith(grdview(G, surf=(waterfall=(rows=true, fill=:red),), Vd=dbg2), "grdview  -R0/360/-90/90 -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -Bza -n+a -Qmyred")
 	@test_throws ErrorException("Wrong way of setting the drape (G) option.")  grdview(rand(16,16), G=(1,2))
 	I = mat2grid(rand(Float32,128,128));
 	grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
@@ -762,10 +764,10 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(plot!([1 1], marker="W/5+a30", Vd=dbg2), "psxy  -R -J -SW/5+a30")
 	@test startswith(plot!([1 1], marker=:Web, Vd=dbg2), "psxy  -R -J -SW")
 	@test startswith(plot!([1 1], marker=:W, Vd=dbg2), "psxy  -R -J -SW")
-	@test startswith(plot([5 5], marker=(:E, 500), Vd=dbg2), "psxy  -JX12c/8c -Baf -BWSen -R4.5/5.5/4.5/5.5 -SE-500")
-	@test startswith(plot(region=(0,10,0,10), marker=(letter="blaBla", size="16p"), Vd=dbg2), "psxy  -R0/10/0/10 -JX12c/8c -Baf -BWSen -Sl16p+tblaBla")
-	@test startswith(plot([5 5], region=(0,10,0,10), marker=(bar=true, size=0.5, base=0,), Vd=dbg2), "psxy  -R0/10/0/10 -JX12c/8c -Baf -BWSen -Sb0.5+b0")
-	@test startswith(plot([5 5], region=(0,10,0,10), marker=(custom=:sun, size=0.5), Vd=dbg2), "psxy  -R0/10/0/10 -JX12c/8c -Baf -BWSen -Sksun/0.5")
+	@test startswith(plot([5 5], marker=(:E, 500), Vd=dbg2), "psxy  -JX" * GMT.def_fig_size * " -Baf -BWSen -R4.5/5.5/4.5/5.5 -SE-500")
+	@test startswith(plot(region=(0,10,0,10), marker=(letter="blaBla", size="16p"), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sl16p+tblaBla")
+	@test startswith(plot([5 5], region=(0,10,0,10), marker=(bar=true, size=0.5, base=0,), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sb0.5+b0")
+	@test startswith(plot([5 5], region=(0,10,0,10), marker=(custom=:sun, size=0.5), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sksun/0.5")
 	plot([5 5 0 45], region=(0,10,0,10), marker=(pie=true, arc=15, radial=30), Vd=dbg2)
 	plot([0.5 1 1.75 5 85], region=(0,5,0,5), figsize=12, marker=(matang=true, arrow=(length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=dbg2)
 	plot([2.5 2.5], region=(0,4,0,4), figsize=12, marker=(:matang, [2 50 350], (length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=dbg2)
@@ -931,18 +933,18 @@ if (got_it)					# Otherwise go straight to end
 	basemap(region="416/542/0/6.2831852", proj="X-12/6.5", axis=(axes=(:left_full, :bot_full), fill=:lightblue), xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"), xaxis2=(customticks=([416.0; 443.7; 488.3; 542], ["/ig Devonian", "/ig Silurian", "/ig Ordovician", "/ig Cambrian"]),), yticks=([0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852], ["/a", "/a", "/f", "/ag e", "/f", "/ag @~p@~", "/f", "/f", "/f", "/ag 2@~p@~"]), par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=dbg2)
 	basemap(region=:PT, scatter=(data=[-15. 35], mc=:red), Vd=dbg2)
 	r = basemap(rose=(anchor="10:35/0.7", width=1, fancy=2, offset=0.4), Vd=dbg2);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdg10:35/0.7+w1+f2+o0.4")
+	@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -Tdg10:35/0.7+w1+f2+o0.4")
 	r = basemap(rose=(norm=true, anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=dbg2);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -Tdn0.5/0.7+w1+f2+o0.4")
+	@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -Tdn0.5/0.7+w1+f2+o0.4")
 	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=dbg2);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdjTR+w1+f2+o0.4")
+	@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -TdjTR+w1+f2+o0.4")
 	r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=dbg2);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TdjTR+w1+f2+o0.4")
+	@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -TdjTR+w1+f2+o0.4")
 	r = basemap(compass=(anchor=:TR, width=1, dec=-14, offset=0.4), Vd=dbg2);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -TmjTR+w1+d-14+o0.4")
+	@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -TmjTR+w1+d-14+o0.4")
 	r = basemap(L=(anchor=:TR, length=1, align=:top, fancy=0.4), Vd=dbg2);
-	@test startswith(r,"psbasemap  -JX12c/0 -Baf -BWSen -LjTR+w1+at+f")
-	@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=dbg2), "psbasemap  -JX12c/0 -Bpa10+ap")
+	@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -LjTR+w1+at+f")
+	@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=dbg2), "psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Bpa10+ap")
 	r = basemap(region=(1,1000,0,1), proj=:logx, figsize=(8,0.7), frame=(annot=1, ticks=2, grid=3, scale=:pow), Vd=dbg2);
 	@test startswith(r, "psbasemap  -R1/1000/0/1 -JX8l/0.7 -Bpa1f2g3p")
 	r = basemap(region=(1,1000,0,1), proj=:logx, figsize=8, frame=(annot=1, ticks=2, scale=:pow), Vd=dbg2)
@@ -986,10 +988,10 @@ if (got_it)					# Otherwise go straight to end
 	@test startswith(r, "pscoast  -Rg -JF-120/35/60/10 -Bpa30g15 -A10000 -Dcrude -Gtan -Scyan -Wthinnest")
 	r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hello Round World", Vd=dbg2);
 	@test startswith(r, "pscoast  -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude")
-	@test startswith(coast(R=:g, W=(level=1,pen=(2,:green)), Vd=dbg2), "pscoast  -Rg -JN180.0/12c -Baf -BWSen -W1/2,green")
-	@test startswith(coast(R=:g, W=(2,:green), Vd=dbg2), "pscoast  -Rg -JN180.0/12c -Baf -BWSen -W2,green")
+	@test startswith(coast(R=:g, W=(level=1,pen=(2,:green)), Vd=dbg2), "pscoast  -Rg -JN180.0/" * split(GMT.def_fig_size, '/')[1] * " -Baf -BWSen -W1/2,green")
+	@test startswith(coast(R=:g, W=(2,:green), Vd=dbg2), "pscoast  -Rg -JN180.0/" * split(GMT.def_fig_size, '/')[1] * " -Baf -BWSen -W2,green")
 	r = coast(R=:g, N=((level=1,pen=(2,:green)), (level=3,pen=(4,:blue, "--"))), Vd=dbg2);
-	@test startswith(r, "pscoast  -Rg -JN180.0/12c -Baf -BWSen -N1/2,green -N3/4,blue,--")
+	@test startswith(r, "pscoast  -Rg -JN180.0/" * split(GMT.def_fig_size, '/')[1] * " -Baf -BWSen -N1/2,green -N3/4,blue,--")
 	r = coast(proj=:Mercator, DCW=((country="GB,IT,FR", fill=:blue, pen=(0.25,:red)), (country="ES,PT,GR", fill=:yellow)), Vd=dbg2);
 	@test startswith(r, "pscoast  -EGB,IT,FR+gblue+p0.25,red -EES,PT,GR+gyellow -Vq")
 	@test_throws ErrorException("In Overlay mode you cannot change a fig scale and NOT repeat the projection") coast!(region=(-20,60,-90,90), scale=0.03333, Vd=dbg2)
@@ -1093,7 +1095,7 @@ if (got_it)					# Otherwise go straight to end
 	pstext!(T, F="+f16p,Times-Roman,red+jTC", M=true)
 	pstext!(T, font=(16,"Times-Roman",:red), justify=:TC, M=true)
 	pstext!(["MERDA"], x=2.0, y=2.0, Vd=2)
-	@test startswith(GMT.text([1 2 3; 4 5 6], Vd=dbg2), "pstext  -JX12c/0 -Baf -BWSen -R0.9/4.1/1.9/5.1")
+	@test startswith(GMT.text([1 2 3; 4 5 6], Vd=dbg2), "pstext  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -R0.9/4.1/1.9/5.1")
 	@test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=dbg2)
 
 	println("	PSWIGGLE")
