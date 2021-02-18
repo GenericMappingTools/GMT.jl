@@ -1255,9 +1255,10 @@ function parse_arg_and_pen(arg::Tuple, sep="/", pen::Bool=true, opt="")::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function arg2str(d::Dict, symbs)
+function arg2str(d::Dict, symbs)::String
 	# Version that allow calls from add_opt()
-	if ((val = find_in_dict(d, symbs)[1]) !== nothing)  arg2str(val)  end
+	#if ((val = find_in_dict(d, symbs)[1]) !== nothing) arg2str(val) end
+	return ((val = find_in_dict(d, symbs)[1]) !== nothing) ? arg2str(val) : ""
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2610,7 +2611,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 				info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
 				info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
 			elseif (!is_onecol)
-				t = round_wesn(deepcopy(info[1].data))		# Add a pad
+				t = round_wesn(info[1].data)		# Add a pad
 				[info[1].data[k-1] = t[k-1] for k = 2:length(rs) if (rs[k] == "?")]
 			end
 		else
@@ -2643,10 +2644,17 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 end
 
 # ---------------------------------------------------------------------------------------------------
-round_wesn(wesn::Array{Int}, geo::Bool=false) = round_wesn(float(wesn),geo)
-function round_wesn(wesn::Array{Float64}, geo::Bool=false)::Array{Float64}
+round_wesn(wesn::Array{Int}, geo::Bool=false) = round_wesn(float(wesn), geo)
+function round_wesn(wesn::Array{Float64, 2}, geo::Bool=false)::Array{Float64, 2}
+	# When input is an one row matix return an output of same size
+	_wesn = wesn[:]
+	_wesn = round_wesn(_wesn, geo)
+	reshape(_wesn, 1, length(_wesn))
+end
+function round_wesn(_wesn::Vector{Float64}, geo::Bool=false)::Vector{Float64}
 	# Use data range to round to nearest reasonable multiples
 	# If wesn has 6 elements (is3D), last two are not modified.
+	wesn = deepcopy(_wesn)		# To not change the input
 	set = zeros(Bool, 2)
 	range = [0.0, 0.0]
 	if (wesn[1] == wesn[2])
