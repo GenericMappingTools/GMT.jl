@@ -15,6 +15,7 @@ makedocs(
 			"AGU"                   => "gallery/tables.md",
 			"Map projections"       => "gallery/mapprojs.md",
 			"Historical collection" => "gallery/historic.md",
+			"Color lines"           => "gallery/color_lines/color_lines.md",
 		],
 		hide("gallery/scripts_agu/arrows_I.md"),
 		hide("gallery/scripts_agu/arrows_II.md"),
