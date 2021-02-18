@@ -33,15 +33,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		else
 			sub_module = caller
 			if (sub_module == "bar")	# Needs to be processed here to destinguish from the more general 'fill'
-				gval = find_in_dict(d, [:fill :fillcolor], false)[1]	# Used for group colors
-				if     (isa(gval, Array{String}) && length(gval) > 1)  append!(g_bar_fill, gval)
-				elseif ((isa(gval, Array{Int}) || isa(gval, Tuple) && eltype(gval) == Int) && length(gval) > 1)
-					g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
-					[g_bar_fill[k] = string('p',gval[k]) for k = 1:length(gval)]
-				elseif (isa(gval, Tuple) && (eltype(gval) == String || eltype(gval) == Symbol) && length(gval) > 1)
-					g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
-					[g_bar_fill[k] = string(gval[k]) for k = 1:length(gval)]
-				end
+				g_bar_fill = helper_gbar_fill(d)
 			end
 		end
 	end
@@ -229,7 +221,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		end
 		if (penC != "")  cycle = [penC]  end
 		arg1 = mat2ds(arg1, color=cycle, ls=penS, multi=true)	# Convert to multi-segment GMTdataset
-		D = gmt("gmtinfo -C", arg1)					# But now also need to update the -R string
+		D::Vector{GMTdataset} = gmt("gmtinfo -C", arg1)			# But now also need to update the -R string
 		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(D[1].data)))
 	elseif (sub_module == "bar" && check_bar_group(arg1))
 		_cmd[1], arg1 = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
@@ -243,6 +235,26 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	r = finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3)
 	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function helper_gbar_fill(d::Dict)::Vector{String}
+	# This is in a function to try to hammer an insistence that g_bar_fill is a Any
+	# g_bar_fill may hold a sequence of colors for gtroup Bar plots
+	gval = find_in_dict(d, [:fill :fillcolor], false)[1]	# Used for group colors
+	if (isa(gval, Array{String}) && length(gval) > 1)
+		g_bar_fill = Vector{String}()
+		append!(g_bar_fill, gval)
+	elseif ((isa(gval, Array{Int}) || isa(gval, Tuple) && eltype(gval) == Int) && length(gval) > 1)
+		g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
+		[g_bar_fill[k] = string('p',gval[k]) for k = 1:length(gval)]
+	elseif (isa(gval, Tuple) && (eltype(gval) == String || eltype(gval) == Symbol) && length(gval) > 1)
+		g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
+		[g_bar_fill[k] = string(gval[k]) for k = 1:length(gval)]
+	else
+		g_bar_fill = Vector{String}()		# To have somthing to return
+	end
+	return g_bar_fill
 end
 
 # ---------------------------------------------------------------------------------------------------
