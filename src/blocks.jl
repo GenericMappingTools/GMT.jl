@@ -36,11 +36,20 @@ Parameters
     fields are specified via **A** then grdfile must contain the format flag %s so that we can embed the
     field code in the file names. If not provided but **A** is used, return 1 or more GMTgrid type(s).
     ($(GMTdoc)blockmean.html#g)
-- **S** | **npts** | **number_of_points** [Type => Str | []] 
+- **S** :: [Type => Str | Symb] 
 
     Use S=:n to report the number of points inside each block, S=:s to report the sum of all z-values 
     inside a block, S=:w to report the sum of weights [Default (or S=:m reports mean value].
     ($(GMTdoc)blockmean.html#s)
+- **npts** | **counts** :: [Type => Any] 
+
+    Report the number of points inside each block
+- **sum** :: [Type => Any] 
+
+    Report the sum of all z-values inside each block
+- **sum_weights** :: [Type => Any] 
+
+    Report the the sum of weights
 - **W** | **weights** :: [Type => Str | []]
 
     Unweighted input and output have 3 columns x,y,z; Weighted i/o has 4 columns x,y,z,w. Weights can
@@ -62,7 +71,12 @@ function blockmean(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
-	cmd = parse_these_opts("", d, [[:E :extended], [:S :npts :number_of_points]])
+	cmd = parse_these_opts("", d, [[:E :extended], [:S]])
+	if     (find_in_dict(d, [:npts :count])[1] !== nothing)  cmd *= " -Sn"
+    elseif (find_in_dict(d, [:sum])[1] !== nothing)          cmd *= " -Ss"
+    elseif (find_in_dict(d, [:sum_weights])[1] !== nothing)  cmd *= " -Sw"
+    end
+
 	return common_blocks(cmd0, arg1, d, cmd, "blockmean", kwargs...)
 end
 

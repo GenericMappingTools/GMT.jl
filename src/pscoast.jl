@@ -96,11 +96,12 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
 	maybe_more = false			# If latter set to true, search for lc & lc pen settings
 	cmd = parse_E_coast(d, [:E :DCW :dcw], "")		# Process first to avoid warning about "guess"
-	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))
+	cmd = add_opt(d, cmd, "M", [:M :dump])
+	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd) && !occursin("-M", cmd))
 		cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "", O, "guess")
 	end
 	cmd, = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution], [:M :dump]])
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution]])
 	cmd  = parse_Td(d, cmd)
 	cmd  = parse_Tm(d, cmd)
 	cmd  = parse_L(d, cmd)
