@@ -131,18 +131,20 @@ function mk_codes_values(codes::Vector{String}, vals; region::String="world")
 	return ky, vl
 end
 
-# --------------------------------------------------------------------------------------------------
-function choropleth(polygs::GMTdataset, colorval::Vector{<:Number}; kwargs...)
+#= --------------------------------------------------------------------------------------------------
+function choropleth(polygs::Vector{GMTdataset}, colorval::Vector{<:Real}; kwargs...)
+	d = KW(kwargs)
 	data_ids, ind = get_segment_ids(polygs)
 	zvals = make_zvals_vec(polygs, data_ids, colorval)
 	C::GMTcpt = makecpt(T=(1,6,1))		# <==================================================== ERRADO
 	((val = find_in_dict(d, [:fmt])[1]) !== nothing) && (fmt = arg2str(val))
 	fmt::String = ((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? arg2str(val) : "ps"   
-	see = (find_in_dict(d, [:fmt])[1] !== nothing) ? true : false
-	val, symb = find_in_dict(d, [:savefig :name])[1]
+	see = (find_in_dict(d, [:show])[1] !== nothing) ? true : false
+	val, symb = find_in_dict(d, [:savefig :name])
 	if (val === nothing)
-		plot(polygs, Z=zvals, L=true, G="+z", fmt=fmt, show=see)
+		plot(polygs, Z=zvals, L=true, G="+z", fmt=fmt, show=see, colorbar=true)
 	else
-		plot(polygs, Z=zvals, L=true, G="+z", name=string(d[symb]), fmt=fmt, show=see)
+		plot(polygs, Z=zvals, L=true, G="+z", name=string(d[symb]), fmt=fmt, show=see, colorbar=true)
 	end
 end
+=#
