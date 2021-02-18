@@ -112,10 +112,12 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	(isa(arg1, GMTimage) || isa(arg1, GMTgrid)) && occursin("/", opt_T) && error("here 'bin' must be a scalar")
 
 	# If inquire, no plotting so do it and return
-	opt_I = add_opt(d, "", "I", [:I :inquire :bins], (all = "O", no_zero = "o"))
+	opt_I = add_opt(d, "", "I", [:I :inquire :bins], (all = "_O", no_zero = "_o"))
 	if (opt_I != "")
 		cmd *= opt_I
-		if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return r  end
+		if ((r = dbg_print_cmd(d, cmd)) !== nothing)
+			return (!isa(arg1, GMTimage) && opt_T != "") ? r * " -T" * opt_T : r
+		end
 		cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
 		if (isa(arg1, GMTimage))		# If it's an image with no bin option, default to bin=1
 			arg1, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
