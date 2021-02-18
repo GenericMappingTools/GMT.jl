@@ -1,4 +1,4 @@
-## Line colors with custom CPT and auto color wrap
+# Line colors with custom CPT and auto color wrap
 
 In this example the lines color is set using a custom CPT. Pen thickness is assigned automatically.
 
@@ -17,20 +17,20 @@ for amp=0:10
 	y = amp .* sin.(x)
 	plot!(x, y, cmap=true, level=amp)
 end
-colorbar!(figname="clines1.png", show=true)
+colorbar!(show=true)
 ```
 
 ```@raw html
 <img src="../clines1.png" width="600" class="center"/>
 ```
 
-## Line colors with the automatic color scheme
+# Line colors with the automatic color scheme
 
 Here we are showing how to plot several lines at once and color them according to a circular color scheme comprised of 7 distinct colors. We start by generating a dummy matrix 8x5, where rows represent the vertex and the columns hold the lines. To tell the program that first column contains the coordinates and the remaining are all lines to be plotted we use the option **multicol**=*true*
 
 ```julia
 mat = GMT.fakedata(8, 5);
-lines(mat, multicol=true, figname="clines2.png", show=true)
+lines(mat, multicol=true, show=true)
 ```
 
 ```@raw html
@@ -48,7 +48,7 @@ D = mat2ds(mat, color=["brown", "green", "blue"], linethick=[2, 1.0, 0.5, 0.25],
 And now we just call *lines* (but using *plot* would have been the same) with the **D** argument.
 
 ```julia
-lines(D, figname="clines3.png", show=true)
+lines(D, show=true)
 ```
 
 ```@raw html
