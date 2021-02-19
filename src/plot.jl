@@ -151,6 +151,17 @@ function plotyy(arg1, arg2; first=true, kw...)
 	cmd, opt_B = parse_B(d, "", " -Baf -BW")
 	if (opt_B != " -Baf -BW")
 		if (occursin(" -Bx", opt_B) || occursin(" -By", opt_B) || occursin("+t", opt_B))
+			# OK, so here's the problem. Both title and label maybe multi-words, case in which they will have the
+			# form: "aa bb" but since they wont be fully parsed again by parse_B we loose the info about the sapces.
+			# The trick is to find and replace the sapces inside the " " chunks like parse_B does and let it undo
+			# the replacing without inserting extras -B, like the "aa -Bbb" that would otherwise result.
+			t = findall(isequal('"'), opt_B)	# Find indices of the " and hope they came in pairs.
+			if (!isempty(t))					# Have a title and maybe an ylabel (or vice-versa)
+				opt_B = opt_B[1:t[1]] * replace(opt_B[t[1]+1:t[2]-1], ' '=>'\U00AF') * opt_B[t[2]:end]
+				if (length(t) == 4)				# Have also an ylabel
+					opt_B = opt_B[1:t[3]] * replace(opt_B[t[3]+1:t[4]-1], ' '=>'\U00AF') * opt_B[t[4]:end]
+				end
+			end
 			d[:B] = replace(opt_B, "-B" => "")
 		else
 			d[:B] = " af W"
