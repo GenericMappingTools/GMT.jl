@@ -163,7 +163,6 @@ function plotyy(arg1, arg2; first=true, kw...)
 				end
 			end
 			d[:B] = replace(opt_B, "-B" => "")
-			d[:B] = replace(opt_B, "-B" => "")
 		else
 			d[:B] = " af W"
 		end
