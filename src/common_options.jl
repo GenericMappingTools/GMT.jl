@@ -631,8 +631,8 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 		while (r != "")
 			tok[k], r = GMT.strtok(r)
 			tok[k] = replace(tok[k], '\U00AF'=>' ')
-			if (!occursin("-B", tok[k]))  tok[k] = " -B" * tok[k] 	# Simple case, no quotes to break our heads
-			else                          tok[k] = " " * tok[k]
+			if (!occursin("-B", tok[k]) && tok[k][end] != '"') tok[k] = " -B" * tok[k]
+			else   tok[k] = " " * tok[k]
 			end
 			k = k + 1
 		end
@@ -3057,7 +3057,7 @@ end
 # --------------------------------------------------------------------------------------------------
 function show_non_consumed(d::Dict, cmd)
 	# First delete some that could not have been delete earlier (from legend for example)
-	del_from_dict(d, [[:show], [:leg :legend], [:box_pos], [:leg_pos], [:P :portrait]])
+	del_from_dict(d, [[:fmt], [:show], [:leg :legend], [:box_pos], [:leg_pos], [:P :portrait]])
 	if (length(d) > 0)
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
