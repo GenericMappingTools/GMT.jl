@@ -631,8 +631,8 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 		while (r != "")
 			tok[k], r = GMT.strtok(r)
 			tok[k] = replace(tok[k], '\U00AF'=>' ')
-			if (!occursin("-B", tok[k]) && tok[k][end] != '"') tok[k] = " -B" * tok[k]
-			else   tok[k] = " " * tok[k]
+			if (!occursin("-B", tok[k])) tok[k] = " -B" * tok[k]
+			else                         tok[k] = " " * tok[k]
 			end
 			k = k + 1
 		end
