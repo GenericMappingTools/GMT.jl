@@ -20,7 +20,7 @@ plot(x, y, aspect=:equal, show=true)
 ```
 
 ```@raw html
-<img src="../spir_archim.png" width="600" class="center"/>
+<img src="../spir_archim.png" width="400" class="center"/>
 ```
 
 ## Fermati spiral
@@ -33,7 +33,7 @@ plot(xf,yf, aspect=:equal, show=true)
 ```
 
 ```@raw html
-<img src="../spir_fermati.png" width="600" class="center"/>
+<img src="../spir_fermati.png" width="400" class="center"/>
 ```
 
 ## Sunflower
@@ -48,7 +48,7 @@ scatter(rho .* cos.(theta), rho .* sin.(theta), marker=:point, aspect=:equal, sh
 ```
 
 ```@raw html
-<img src="../sunflower1.png" width="600" class="center"/>
+<img src="../sunflower1.png" width="400" class="center"/>
 ```
 
 ## Another Sunflower
@@ -69,7 +69,7 @@ This time we will also color the seed points in function of *r*, the distance to
 ```
 
 ```@raw html
-<img src="../sunflower2.png" width="600" class="center"/>
+<img src="../sunflower2.png" width="400" class="center"/>
 ```
 
 ---
