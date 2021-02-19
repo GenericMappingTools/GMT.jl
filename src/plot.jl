@@ -165,12 +165,14 @@ function plotyy(arg1, arg2; first=true, kw...)
 	r1 = common_plot_xyz("", cat_1_arg(arg1), "plotyy", first, false, d...)
 
 	(Vd != 0) && (d[:Vd] = Vd)
-	d[:B] = " af E"			# Also remember that previous -B was consumed in first call
+	(seclabel != "" && occursin(" ", seclabel)) && (seclabel = "\"" * seclabel * "\"")
+	(seclabel != "") && (seclabel = " y+l" * seclabel)
+	d[:B] = " af E"	* seclabel		# Also remember that previous -B was consumed in first call
 	d[:lc]  = "#D95319"
-	(seclabel != "") && (d[:ylabel] = seclabel)
 	d[:par] = (MAP_FRAME_PEN="#D95319", MAP_TICK_PEN="#D95319", FONT_ANNOT_PRIMARY="#D95319", FONT_LABEL="#D95319")
 	r2 = common_plot_xyz("", cat_1_arg(arg2), "plotyy", false, false, d...)
 
+	(xlabel != "" && occursin(" ", xlabel)) && (xlabel = "\"" * xlabel * "\"")
 	opt_B = (xlabel != "") ? "af Sn x+l" * xlabel : "af Sn"
 	r3 = basemap!(J="", R="", B=opt_B, Vd=Vd, fmt=fmt, name=savefig, show=do_show)
 	return (Vd == 2) ? [r1;r2;r3] : nothing
