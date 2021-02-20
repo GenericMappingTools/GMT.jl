@@ -32,7 +32,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 			end
 		else
 			sub_module = caller
-			if (sub_module == "bar")	# Needs to be processed here to destinguish from the more general 'fill'
+			if (caller == "bar")		# Needs to be processed here to destinguish from the more general 'fill'
 				g_bar_fill = helper_gbar_fill(d)
 			end
 		end

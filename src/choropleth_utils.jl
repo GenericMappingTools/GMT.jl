@@ -66,12 +66,27 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function iso3to2_eu()
-Dict(
-	"AND"=>"AD", "ALB"=>"AL", "AUT"=>"AT", "ALA"=>"AX", "BIH"=>"BA", "BEL"=>"BE", "BGR"=>"BG", "BLR"=>"BY", "CHE"=>"CH",
+Dict("AND"=>"AD", "ALB"=>"AL", "AUT"=>"AT", "ALA"=>"AX", "BIH"=>"BA", "BEL"=>"BE", "BGR"=>"BG", "BLR"=>"BY", "CHE"=>"CH",
 	"CYP"=>"CY", "CZE"=>"CZ", "DEU"=>"DE", "DNK"=>"DK", "EST"=>"EE", "ESP"=>"ES", "FIN"=>"FI", "FRO"=>"FO", "FRA"=>"FR",
 	"GBR"=>"GB", "GGY"=>"GG", "GIB"=>"GI", "GRL"=>"GL", "GRC"=>"GR", "HRV"=>"HR", "HUN"=>"HU", "IRL"=>"IE", "IMN"=>"IM",
 	"ISL"=>"IS", "ITA"=>"IT", "JEY"=>"JE", "LIE"=>"LI", "LTU"=>"LT", "LUX"=>"LU", "LVA"=>"LV", "MCO"=>"MC", "MDA"=>"MD", "MNE"=>"ME", "MKD"=>"MK", "MLT"=>"MT", "NLD"=>"NL", "NOR"=>"NO", "POL"=>"PL", "PRT"=>"PT", "ROU"=>"RO", "SRB"=>"RS",
 	"SWE"=>"SE", "SVN"=>"SI", "SJM"=>"SJ", "SVK"=>"SK", "SMR"=>"SM", "VAT"=>"VA", "KSV"=>"XK") 
+end
+
+# --------------------------------------------------------------------------------------------------
+function iso3to2_af()
+Dict("AGO"=>"AO", "BFA"=>"BF", "BDI"=>"BI", "BEN"=>"BJ", "BVT"=>"BV", "BWA"=>"BW", "COD"=>"CD", "CAF"=>"CF", "COG"=>"CG",
+	 "CIV"=>"CI", "CMR"=>"CM", "CPV"=>"CV", "DJI"=>"DJ", "DZA"=>"DZ", "EGY"=>"EG", "ESH"=>"EH", "ERI"=>"ER", "ETH"=>"ET",
+	 "GAB"=>"GA", "GHA"=>"GH", "GMB"=>"GM", "GIN"=>"GN", "GNQ"=>"GQ", "GNB"=>"GW", "KEN"=>"KE", "COM"=>"KM", "LBR"=>"LR",
+	 "LSO"=>"LS", "LBY"=>"LY", "MAR"=>"MA", "MDG"=>"MG", "MLI"=>"ML", "MRT"=>"MR", "MUS"=>"MU", "MWI"=>"MW", "NAM"=>"NA",
+	 "NER"=>"NE", "NGA"=>"NG", "REU"=>"RE", "RWA"=>"RW", "SYC"=>"SC", "SDN"=>"SD", "SHN"=>"SH", "SLE"=>"SL", "SEN"=>"SN",
+	 "SOM"=>"SO", "SSD"=>"SS", "STP"=>"ST", "SWZ"=>"SZ", "TCD"=>"TD", "ATF"=>"TF", "TGO"=>"TG", "TUN"=>"TN", "TZA"=>"TZ",
+	 "UGA"=>"UG", "MYT"=>"YT", "ZAF"=>"ZA", "ZMB"=>"ZM", "ZWE"=>"ZW")
+end
+
+# --------------------------------------------------------------------------------------------------
+function iso3to2_na()
+	Dict( "CAN"=>"CA", "MEX"=>"MX", "USA"=>"US")
 end
 
 """
@@ -82,8 +97,7 @@ d = iso3to2_world()
 """
 # --------------------------------------------------------------------------------------------------
 function iso3to2_world()
-Dict(
-	"AFG"=>"AF", "ALA"=>"AX", "ALB"=>"AL", "DZA"=>"DZ", "ASM"=>"AS", "AND"=>"AD", "AGO"=>"AO", "AIA"=>"AI", "ATA"=>"AQ",
+Dict("AFG"=>"AF", "ALA"=>"AX", "ALB"=>"AL", "DZA"=>"DZ", "ASM"=>"AS", "AND"=>"AD", "AGO"=>"AO", "AIA"=>"AI", "ATA"=>"AQ",
 	"ATG"=>"AG", "ARG"=>"AR", "ARM"=>"AM", "ABW"=>"AW", "AUS"=>"AU", "AUT"=>"AT", "AZE"=>"AZ", "BHS"=>"BS", "BHR"=>"BH",
 	"BGD"=>"BD", "BRB"=>"BB", "BLR"=>"BY", "BEL"=>"BE", "BLZ"=>"BZ", "BEN"=>"BJ", "BMU"=>"BM", "BTN"=>"BT", "BOL"=>"BO",
 	"BES"=>"BQ", "BIH"=>"BA", "BWA"=>"BW", "BVT"=>"BV", "BRA"=>"BR", "IOT"=>"IO", "BRN"=>"BN", "BGR"=>"BG", "BFA"=>"BF",

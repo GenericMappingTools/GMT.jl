@@ -608,11 +608,6 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 				t = " " * t;		# Do not glue, for example, -Bg with :title
 			end
 		end
-		#if (val = find_in_dict(d, [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2 :xticks :yticks :zticks], false)[1] === nothing)
-			#opt_B[1] *= t;
-		#else
-			#opt_B[1] = t;
-		#end
 		opt_B[1] *= t;
 		extra_parse = true
 	end
@@ -2996,8 +2991,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	img_mem_layout[1] = add_opt(d, "", "", [:layout])
 	if (img_mem_layout[1] == "images")  img_mem_layout[1] = "I   "  end	# Special layout for Images.jl
 
-	if (fname_ext != "ps")						# Exptend to a larger paper size (5 x A0)
-		cmd[1] *= " --PS_MEDIA=16840x16840"
+	if (fname_ext != "ps")					# Exptend to a larger paper size (5 x A0)
+		cmd[1] *= " --PS_MEDIA=11920x16850"
 	end
 
 	for k = 1:length(cmd)

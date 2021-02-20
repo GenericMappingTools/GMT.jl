@@ -27,7 +27,7 @@ contourf(G, C, contour=[-2, 0, 2, 5], show=true)
 ```
 
 ```@raw html
-<img src="../contf_fig1.png" width="500" class="center"/>
+<img src="../contf_fig2.png" width="500" class="center"/>
 ```
 
 ### What if one has an *x,y,z* file instead of a grid?
@@ -43,7 +43,7 @@ contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), show=1)
 ```
 
 ```@raw html
-<img src="../contf_fig1.png" width="500" class="center"/>
+<img src="../contf_fig3.png" width="500" class="center"/>
 ```
 
 In the above since we did not specify a CPT the program picked the GMT's default one. But if we want use another one it's only a question of creating and passed it in.
