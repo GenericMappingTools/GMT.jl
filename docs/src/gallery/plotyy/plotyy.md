@@ -10,7 +10,7 @@ plotyy(y1, y2, title="Vibrating dishes", ylabel=:Knifes, xlabel=:Forks, seclabel
 ```
 
 ```@raw html
-<img src="../plotyy1.png" width="500" class="center"/>
+<img src="../plotyy1.png" width="600" class="center"/>
 ```
 
 Note that to make the command shorter and nicer to read we have used a less known option in GMT. The *secondary* label of an axes. In this example we also didn't set the *xx* coordinates so the program plotted from 1 to numbers of points.
@@ -22,7 +22,7 @@ plotyy([x[:] y1[:]], [x[:] y2[:]], title="Vibrating dishes", ylabel=:Knifes, xla
 ```
 
 ```@raw html
-<img src="../plotyy2.png" width="500" class="center"/>
+<img src="../plotyy2.png" width="600" class="center"/>
 ```
 
 ---

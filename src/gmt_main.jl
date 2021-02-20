@@ -1847,16 +1847,26 @@ end
 mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 =#
 
+"""
+make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head=0, upper=false, lower=false)
+
+	USER_IDS -> is a string vector with the ids (names in header) of the GMTdataset D 
+	VALS     -> is a vector with the the numbers to be used in plot -Z to color the polygons.
+	SUB_HEAD -> Position in header where field is to be found in the comma separated string.
+	Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
+	The elements of ZVALS are made up from the VALS but it can be larger if there are segments with
+	no headers. In that case it replicates the previously known value until it finds a new segment ID.
+
+	Returns a Vector{Float64} with the same length as the number of segments in D. The content is
+	made up after the contents of VALS but repeated such that each polygon of the same family, i.e.
+	with the same USER_ID, has the same value.
+"""
 # ---------------------------------------------------------------------------------------------------
-function make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head::Int=0)::Vector{Float64}
-	# USER_IDS is a string array with the ids (names in header) of the GMTdataset D 
-	# VALS is a vector with the the numbers to be used in plot -Z to color the polygons.
-	# Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
-	# The elements of ZVALS are made up from the VALS but it can be larger if there are segments with
-	# no headers. In that case it replicates the previously known value until it finds a new segment ID.
+function make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head::Int=0, case::Int=0)::Vector{Float64}
+
 	n_user_ids = length(user_ids)
 	@assert(n_user_ids == length(vals))
-	data_ids, ind = get_segment_ids(D)
+	data_ids, ind = get_segment_ids(D, case)
 	(ind[1] != 1) && error("This function requires that first segment has a a header with an id")
 	n_data_ids = length(data_ids)
 	(n_user_ids > n_data_ids) &&
@@ -1898,14 +1908,15 @@ function edit_segment_headers!(D, vals::Array, opt::String)
 end
 
 """
-ids, ind = get_segment_ids(D)::Tuple{Vector{String}, Vector{Int}}
+ids, ind = get_segment_ids(D, case=0)::Tuple{Vector{String}, Vector{Int}}
 
 Where D is a GMTdataset of a vector of them, returns the segment ids (first text after the '>') and
 the idices of those segments.
 """
 # ---------------------------------------------------------------------------------------------------
-function get_segment_ids(D)::Tuple{Vector{String}, Vector{Int}}
+function get_segment_ids(D, case::Int=0)::Tuple{Vector{String}, Vector{Int}}
 	# Get segment ids (first text after the '>') and the idices of those segments
+	# CASE -> If == 1 force return in LOWER case. If == 2 force upper case. Default (case = 0) dosen't touch
 	if (isa(D, Array))  n = length(D);	d = Dict(k => D[k].header for k = 1:n)
 	else                n = 1;			d = Dict(1 => D.header)
 	end
@@ -1914,7 +1925,13 @@ function get_segment_ids(D)::Tuple{Vector{String}, Vector{Int}}
 	ind = 1:n
 	ind = ind[tf]			# OK, now we have the indices of the segments with headers != ""
 	ids = Vector{String}(undef,length(ind))		# pre-allocate
-	[ids[k] = d[ind[k]] for k = 1:length(ind)]	# indices of non-empty segments
+	if (case == 1)
+		[ids[k] = lowercase(d[ind[k]]) for k = 1:length(ind)]	# indices of non-empty segments
+	elseif (case == 2)
+		[ids[k] = uppercase(d[ind[k]]) for k = 1:length(ind)]
+	else
+		[ids[k] = d[ind[k]] for k = 1:length(ind)]
+	end
 	return ids, ind
 end
 

@@ -723,6 +723,8 @@ if (got_it)					# Otherwise go straight to end
 	C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[1,4,1]);
 	C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
 	GMT.iso3to2_eu();
+	GMT.iso3to2_af();
+	GMT.iso3to2_na();
 	GMT.iso3to2_world();
 	GMT.mk_codes_values(["PRT", "ESP", "FRA"], [1.0, 2, 3], region="eu");
 
