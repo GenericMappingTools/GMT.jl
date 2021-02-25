@@ -17,16 +17,13 @@ using GMT
 
 const cacert = joinpath(@__DIR__, "cacert.pem")
 
-#const libgdal = "C:/programs/compa_libs/gdal_GIT/gdal/gdal_w64_d"
-#
 @static Sys.iswindows() ?
 	(Sys.WORD_SIZE == 64 ? (const libgdal = "gdal_w64") : (const libgdal = "gdal_w32")) : (
-		Sys.isapple() ? (const libgdal = Symbol(split(readlines(pipeline(`otool -L $gmtlib`, `grep libgdal`))[1])[1])) : (
-			Sys.isunix() ? (const libgdal = Symbol(split(readlines(pipeline(`ldd $gmtlib`, `grep libgdal`))[1])[3])) :
+		Sys.isapple() ? (const libgdal = Symbol(split(readlines(pipeline(`otool -L gmtlib`, `grep libgdal`))[1])[1])) : (
+			Sys.isunix() ? (const libgdal = Symbol(split(readlines(pipeline(`ldd gmtlib`, `grep libgdal`))[1])[3])) :
 			error("Don't know how to install this package in this OS.")
 		)
 	)
-#
 
 const GDT_Unknown = UInt32(0)
 const GDT_Byte = UInt32(1)
