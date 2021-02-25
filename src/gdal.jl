@@ -738,7 +738,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	end
 	importEPSG(code::Integer; kwargs...) = importEPSG!(newspatialref(; kwargs...), code)
 
-	newspatialref(wkt::AbstractString = ""; order=:trad) = maybesetaxisorder!(ISpatialRef(OSRNewSpatialReference(wkt)), order)
+	newspatialref(wkt::AbstractString = ""; order=:compliant) = maybesetaxisorder!(ISpatialRef(OSRNewSpatialReference(wkt)), order)
 
 	function importPROJ4!(spref::AbstractSpatialRef, projstr::AbstractString)
 		result = OSRImportFromProj4(spref.ptr, projstr)
