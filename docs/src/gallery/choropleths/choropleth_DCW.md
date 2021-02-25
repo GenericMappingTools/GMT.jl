@@ -41,4 +41,4 @@ plot(eu, cmap=C, fill="+z", proj=:guess, R="-76/36/26/84", title="Population den
 
 ---
 
-*Download a [Pluto Notebook here](contourf.jl)*
+*Download a [Pluto Notebook here](choropleth.jl)*
