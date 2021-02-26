@@ -16,7 +16,10 @@ makedocs(
 			"AGU"                   => "gallery/tables.md",
 			"Bar plots"             => "gallery/bars/bars.md",
 			"Color lines"           => "gallery/color_lines/color_lines.md",
-			"Choropleth maps"       => "gallery/choropleths/choro1_dcw.md",
+			"Choropleth maps"       => [
+										"Coutries (DCW)"    => "gallery/choropleths/choropleth_DCW.md",
+										"Covid in Portugal" => "gallery/choropleths/choropleth_cv19.md"
+										],
 			"Contourf"              => "gallery/contourf/contourf.md",
 			"Historical collection" => "gallery/historic.md",
 			"Landsat8"              => "gallery/Landsat8/histogram_stretch.md",
