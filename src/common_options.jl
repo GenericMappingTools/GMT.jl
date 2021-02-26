@@ -1596,6 +1596,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs, need_symb::Symbol, args, nt_o
 	# ARGS is a 1-to-3 array of GMT types with in which some may be NOTHING. The value is an array, it will be
 	# stored in first non-empty element of ARGS.
 	# Example where this is used (plot -Z):  Z=(outline=true, data=[1, 4])
+	(show_kwargs[1]) && return print_kwarg_opts(symbs)	# Just print the kwargs of this option call
 
 	N_used = 0;		got_one = false
 	val,symb = find_in_dict(d, symbs, false)
@@ -3006,6 +3007,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			continue
 		elseif (k > 1 && (is_pscoast || is_basemap) && (isa(args[1], GMTimage) || isa(args[1], GMTgrid)))
 			proj4 = args[1].proj4
+			(proj4 == "" && args[1].wkt != "") && (proj4 = toPROJ4(importWKT(args[1].wkt)))
 			if ((proj4 != "") && !startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
 				opt_J = replace(proj4, " " => "")
 				lims = args[1].range
