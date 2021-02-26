@@ -15,7 +15,7 @@ module Gdal
 
 using GMT
 
-const cacert = joinpath(@__DIR__, "cacert.pem")
+#const cacert = joinpath(@__DIR__, "cacert.pem")
 
 @static Sys.iswindows() ?
 	(Sys.WORD_SIZE == 64 ? (const libgdal = "gdal_w64") : (const libgdal = "gdal_w32")) : (
@@ -224,6 +224,7 @@ OSRImportFromEPSG(a1, a2) = aftercare(ccall((:OSRImportFromEPSG, libgdal), Cint,
 OSRNewSpatialReference(a1) = aftercare(ccall((:OSRNewSpatialReference, libgdal), Ptr{Cvoid}, (Cstring,), a1))
 
 function OSRSetAxisMappingStrategy(hSRS, strategy)
+	(Gdal.GDALVERSION[] < v"3.0.0") && return
 	aftercare(ccall((:OSRSetAxisMappingStrategy, libgdal), Cvoid, (Ptr{Cvoid}, UInt32), hSRS, strategy))
 end
 
@@ -351,17 +352,13 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	macro cplerr(code, message)
 		return quote
-			if $(esc(code)) != CE_None
-				error($message)
-			end
+			($(esc(code)) != CE_None) && error($message)
 		end
 	end
 
 	macro ogrerr(code, message)
 		return quote
-			if $(esc(code)) != OGRERR_NONE
-				error($message)
-			end
+			($(esc(code)) != OGRERR_NONE) && error($message)
 		end
 	end
 
@@ -738,7 +735,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	end
 	importEPSG(code::Integer; kwargs...) = importEPSG!(newspatialref(; kwargs...), code)
 
-	newspatialref(wkt::AbstractString = ""; order=:compliant) = maybesetaxisorder!(ISpatialRef(OSRNewSpatialReference(wkt)), order)
+	newspatialref(wkt::AbstractString = ""; order=:trad) = maybesetaxisorder!(ISpatialRef(OSRNewSpatialReference(wkt)), order)
 
 	function importPROJ4!(spref::AbstractSpatialRef, projstr::AbstractString)
 		result = OSRImportFromProj4(spref.ptr, projstr)
