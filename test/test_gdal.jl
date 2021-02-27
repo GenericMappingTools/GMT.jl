@@ -63,7 +63,7 @@ Gdal.GDALDestroyDriverManager()
 	ds_small = readgd("utmsmall.tif");
 	gdalinfo(ds_small, [""]);
 	gdalwarp(ds_small, [""]);
-	gdaldem(ds_small, "hillshade", [""]);
+	#gdaldem(ds_small, "hillshade", [""]);
 	gdaltranslate(ds_small, [""]);
 
 	ds_point = readgd("point.geojson");
