@@ -590,6 +590,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		rasterio!(dataset, buffer, collect(Cint, 1:nband), GF_Read)
 		return buffer
 	end
+	#read!(ds::IDataset, buffer::Array{<:Real, 3}) = read!(Dataset(ds.ptr), buffer)
 	
 	function read!(dataset::AbstractDataset, buffer::Matrix{<:Real}, i::Integer, xoffset::Integer,
 			yoffset::Integer, xsize::Integer, ysize::Integer)
@@ -677,9 +678,9 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	for (T,GT) in _GDALTYPE
 		eval(quote
-			function rasterio!(dataset::AbstractDataset, buffer::Array{$T, 3}, bands, xoffset::Integer, yoffset::Integer,
+			function rasterio!(dataset::AbstractDataset, buffer::Array{$T, 3}, bands, xoffset::Int, yoffset::Int,
 					xsize::Integer, ysize::Integer, access::UInt32=GF_Read, pxspace::Integer=0, linespace::Integer=0,
-					bandspace::Integer=0, extraargs=Ptr{GDAL.GDALRasterIOExtraArg}(C_NULL))
+					bandspace::Integer=0, extraargs=Ptr{GDALRasterIOExtraArg}(C_NULL))
 				(dataset == C_NULL) && error("Can't read invalid rasterband")
 				xbsize, ybsize, zbsize = size(buffer)
 				nband = length(bands)
@@ -694,7 +695,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 				return buffer
 			end
 	
-			function rasterio!(rasterband::AbstractRasterBand, buffer::Matrix{$T}, xoffset::Integer, yoffset::Integer,
+			function rasterio!(rasterband::AbstractRasterBand, buffer::Matrix{$T}, xoffset::Int, yoffset::Int,
 					xsize::Integer, ysize::Integer, access::UInt32=GF_Read, pxspace::Integer=0,
 					linespace::Integer=0, extraargs=Ptr{GDALRasterIOExtraArg}(C_NULL))
 				(rasterband == C_NULL) && error("Can't read invalid rasterband")
@@ -966,8 +967,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		end
 	end
 
-	Base.show(io::IO, raster::RasterDataset) = show(io, raster.ds)
-	Base.show(io::IO, ::MIME"text/plain", raster::RasterDataset) = show(io, raster.ds)
+	#Base.show(io::IO, raster::RasterDataset) = show(io, raster.ds)
+	#Base.show(io::IO, ::MIME"text/plain", raster::RasterDataset) = show(io, raster.ds)
 
 	function summarize(io::IO, rasterband::AbstractRasterBand)
 		(rasterband.ptr == C_NULL) && return print(io, "NULL RasterBand")
