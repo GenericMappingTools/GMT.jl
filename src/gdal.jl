@@ -525,6 +525,62 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return band
 	end
 
+	function destroy(layer::AbstractFeatureLayer)
+		layer.ptr = Ptr{Cvoid}(C_NULL)
+	end
+	
+	function destroy(layer::IFeatureLayer)
+		layer.ptr = Ptr{Cvoid}(C_NULL)
+		layer.ownedby = Dataset()
+		layer.spatialref = SpatialRef()
+	end
+
+#=
+	function destroy(feature::Feature)
+		GDAL.ogr_f_destroy(feature.ptr)
+		feature.ptr = C_NULL
+	end
+
+	function destroy(featuredefn::FeatureDefn)
+		GDAL.ogr_fd_destroy(featuredefn.ptr)
+		featuredefn.ptr = C_NULL
+		return featuredefn
+	end
+
+	function destroy(featuredefn::IFeatureDefnView)
+		featuredefn.ptr = C_NULL
+		return featuredefn
+	end
+
+	function destroy(geom::AbstractGeometry)
+		GDAL.ogr_g_destroygeometry(geom.ptr)
+		geom.ptr = C_NULL
+	end
+
+	function destroy(fielddefn::FieldDefn)
+		GDAL.ogr_fld_destroy(fielddefn.ptr)
+		fielddefn.ptr = C_NULL
+		return fielddefn
+	end
+	
+	function destroy(fielddefn::IFieldDefnView)
+		fielddefn.ptr = C_NULL
+		return fielddefn
+	end	
+
+	function destroy(geomdefn::GeomFieldDefn)
+		GDAL.ogr_gfld_destroy(geomdefn.ptr)
+		geomdefn.ptr = C_NULL
+		geomdefn.spatialref = SpatialRef()
+		return geomdefn
+	end
+
+	function destroy(geomdefn::IGeomFieldDefnView)
+		geomdefn.ptr = C_NULL
+		return geomdefn
+	end
+=#
+
 	function create(fname::AbstractString; driver::Driver=identifydriver(fname), width::Integer=0,
 		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=true)
 		r = GDALCreate(driver.ptr, fname, width, height, nbands, _GDALTYPE[dtype], options)
