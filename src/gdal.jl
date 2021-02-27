@@ -525,6 +525,62 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return band
 	end
 
+	function destroy(layer::AbstractFeatureLayer)
+		layer.ptr = Ptr{Cvoid}(C_NULL)
+	end
+	
+	function destroy(layer::IFeatureLayer)
+		layer.ptr = Ptr{Cvoid}(C_NULL)
+		layer.ownedby = Dataset()
+		layer.spatialref = SpatialRef()
+	end
+
+#=
+	function destroy(feature::Feature)
+		GDAL.ogr_f_destroy(feature.ptr)
+		feature.ptr = C_NULL
+	end
+
+	function destroy(featuredefn::FeatureDefn)
+		GDAL.ogr_fd_destroy(featuredefn.ptr)
+		featuredefn.ptr = C_NULL
+		return featuredefn
+	end
+
+	function destroy(featuredefn::IFeatureDefnView)
+		featuredefn.ptr = C_NULL
+		return featuredefn
+	end
+
+	function destroy(geom::AbstractGeometry)
+		GDAL.ogr_g_destroygeometry(geom.ptr)
+		geom.ptr = C_NULL
+	end
+
+	function destroy(fielddefn::FieldDefn)
+		GDAL.ogr_fld_destroy(fielddefn.ptr)
+		fielddefn.ptr = C_NULL
+		return fielddefn
+	end
+	
+	function destroy(fielddefn::IFieldDefnView)
+		fielddefn.ptr = C_NULL
+		return fielddefn
+	end	
+
+	function destroy(geomdefn::GeomFieldDefn)
+		GDAL.ogr_gfld_destroy(geomdefn.ptr)
+		geomdefn.ptr = C_NULL
+		geomdefn.spatialref = SpatialRef()
+		return geomdefn
+	end
+
+	function destroy(geomdefn::IGeomFieldDefnView)
+		geomdefn.ptr = C_NULL
+		return geomdefn
+	end
+=#
+
 	function create(fname::AbstractString; driver::Driver=identifydriver(fname), width::Integer=0,
 		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=true)
 		r = GDALCreate(driver.ptr, fname, width, height, nbands, _GDALTYPE[dtype], options)
@@ -590,6 +646,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		rasterio!(dataset, buffer, collect(Cint, 1:nband), GF_Read)
 		return buffer
 	end
+	#read!(ds::IDataset, buffer::Array{<:Real, 3}) = read!(Dataset(ds.ptr), buffer)
 	
 	function read!(dataset::AbstractDataset, buffer::Matrix{<:Real}, i::Integer, xoffset::Integer,
 			yoffset::Integer, xsize::Integer, ysize::Integer)
@@ -677,9 +734,9 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	for (T,GT) in _GDALTYPE
 		eval(quote
-			function rasterio!(dataset::AbstractDataset, buffer::Array{$T, 3}, bands, xoffset::Integer, yoffset::Integer,
+			function rasterio!(dataset::AbstractDataset, buffer::Array{$T, 3}, bands, xoffset::Int, yoffset::Int,
 					xsize::Integer, ysize::Integer, access::UInt32=GF_Read, pxspace::Integer=0, linespace::Integer=0,
-					bandspace::Integer=0, extraargs=Ptr{GDAL.GDALRasterIOExtraArg}(C_NULL))
+					bandspace::Integer=0, extraargs=Ptr{GDALRasterIOExtraArg}(C_NULL))
 				(dataset == C_NULL) && error("Can't read invalid rasterband")
 				xbsize, ybsize, zbsize = size(buffer)
 				nband = length(bands)
@@ -694,7 +751,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 				return buffer
 			end
 	
-			function rasterio!(rasterband::AbstractRasterBand, buffer::Matrix{$T}, xoffset::Integer, yoffset::Integer,
+			function rasterio!(rasterband::AbstractRasterBand, buffer::Matrix{$T}, xoffset::Int, yoffset::Int,
 					xsize::Integer, ysize::Integer, access::UInt32=GF_Read, pxspace::Integer=0,
 					linespace::Integer=0, extraargs=Ptr{GDALRasterIOExtraArg}(C_NULL))
 				(rasterband == C_NULL) && error("Can't read invalid rasterband")
@@ -966,8 +1023,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		end
 	end
 
-	Base.show(io::IO, raster::RasterDataset) = show(io, raster.ds)
-	Base.show(io::IO, ::MIME"text/plain", raster::RasterDataset) = show(io, raster.ds)
+	#Base.show(io::IO, raster::RasterDataset) = show(io, raster.ds)
+	#Base.show(io::IO, ::MIME"text/plain", raster::RasterDataset) = show(io, raster.ds)
 
 	function summarize(io::IO, rasterband::AbstractRasterBand)
 		(rasterband.ptr == C_NULL) && return print(io, "NULL RasterBand")
