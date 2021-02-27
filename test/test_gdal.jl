@@ -19,6 +19,7 @@ Gdal.GDALDestroyDriverManager()
 
 	dataset = creategd("", driver = getdriver("MEM"), width=240, height=180, nbands=1, dtype=Float64)
 	crs = toWKT(importPROJ4("+proj=latlong"));
+	crs = toWKT(importPROJ4("+proj=latlong"), true);
 	writegd!(dataset, rand(180,240), 1)
 	setproj!(dataset, crs)
 	setgeotransform!(dataset, [-4.016666666666667, 0.03333333333333333, 0.0, -3.01666666666, 0.0, 0.03333333333333333])
@@ -61,6 +62,7 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.OCTDestroyCoordinateTransformation(C_NULL);
 
 	ds_small = readgd("utmsmall.tif");
+	Gdal.getlayer(ds_small, 1);
 	gdalinfo(ds_small, [""]);
 	gdalwarp(ds_small, [""]);
 	gdaldem(ds_small, "hillshade", ["-q"]);
