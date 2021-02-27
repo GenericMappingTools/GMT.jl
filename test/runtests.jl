@@ -78,6 +78,7 @@ if (got_it)					# Otherwise go straight to end
 	rm("logo.png")
 	rm("lixo.eps")
 	rm("lixo.jpg")
+	rm("point.csv")
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NUL`)  end
 
 end					# End valid testing zone
