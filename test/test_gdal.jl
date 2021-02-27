@@ -23,7 +23,11 @@ Gdal.GDALDestroyDriverManager()
 	setproj!(dataset, crs)
 	setgeotransform!(dataset, [-4.016666666666667, 0.03333333333333333, 0.0, -3.01666666666, 0.0, 0.03333333333333333])
 
+	show(dataset)
+
 	#readgd(dataset);		# Ambiguo
+	band = getband(dataset);
+	readgd(band);
 	getproj(dataset)
 	band = getband(dataset)
 	Gdal.width(dataset)
@@ -37,6 +41,7 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.indexof(band)
 	Gdal.pixeltype(band)
 	Gdal.getcolorinterp(band)
+	Gdal.getgeotransform(dataset)
 
 	getdriver(dataset)
 	getdriver(5)
@@ -47,5 +52,33 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.shortname(getdriver("GTiff"));
 	Gdal.longname(getdriver("GTiff"));
 	Gdal.driveroptions("MEM");
+
+	Gdal.GDALError();
+	Gdal.CPLGetLastErrorNo();
+	Gdal.CPLGetLastErrorMsg();
+	Gdal.GDALGetColorInterpretationName(1);
+	Gdal.GDALGetPaletteInterpretationName(1);
+	Gdal.OCTDestroyCoordinateTransformation(C_NULL);
+
+	ds_small = readgd("utmsmall.tif");
+	gdalinfo(ds_small, [""]);
+	gdalwarp(ds_small, [""]);
+	#gdaldem(ds_small, "hillshade", [""]);
+	gdaltranslate(ds_small, [""]);
+
+	ds_point = readgd("point.geojson");
+	ds_grid = gdalgrid(ds_point, ["-of","MEM","-outsize","3", "10","-txe","100","100.3","-tye","0","0.1"]);
+	@test getgeotransform(ds_grid) ≈ [100.0,0.1,0.0,0.0,0.0,0.01]
+
+	ds_csv = gdalvectortranslate(ds_point, ["-f","CSV","-lco", "GEOMETRY=AS_XY"], dest = "point.csv");
+	#=
+	@test replace(read("point.csv", String), "\r" => "") == """
+	X,Y,FID,pointname
+	100,0,2,point-a
+	100.2785,0.0893,3,point-b
+	100,0,0,a
+	100.2785,0.0893,3,b
+	"""
+	=#
 
 end

@@ -74,8 +74,9 @@ export
 	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 	mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, geodetic2enu, cpt4dcw,
-	creategd, getband, getdriver, getproj, readraster, toPROJ4, toWKT, importPROJ4, importWKT, importEPSG, readgd, readgd!,
-	writegd!, setgeotransform!, setproj!
+	creategd, getband, getdriver, getproj, getgeotransform, toPROJ4, toWKT, importPROJ4, importWKT,
+	importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
+	readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!
 
 include("common_docs.jl")
 include("libgmt_h.jl")
