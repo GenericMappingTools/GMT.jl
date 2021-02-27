@@ -80,7 +80,7 @@ end
 function GDALError()
 	class = CPLGetLastErrorType()
 	code = CPLGetLastErrorNo()
-	msg = cplgetlasterrormsg()
+	msg = CPLGetLastErrorMsg()
 	GDALError(class, code, msg)
 end
 
@@ -201,7 +201,7 @@ function GDALRasterIOEx(hRBand, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, p
 end
 
 function GDALDatasetRasterIOEx(hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nBandCount, panBandCount, nPixelSpace, nLineSpace, nBandSpace, psExtraArg)
-    aftercare(ccall((:GDALDatasetRasterIOEx, libgdal), UInt32, (Ptr{Cvoid}, UInt32, Cint, Cint, Cint, Cint, Ptr{Cvoid}, Cint, Cint, UInt32, Cint, Ptr{Cint}, Clonglong, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}), hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nBandCount, panBandCount, nPixelSpace, nLineSpace, nBandSpace, psExtraArg))
+	aftercare(ccall((:GDALDatasetRasterIOEx, libgdal), UInt32, (Ptr{Cvoid}, UInt32, Cint, Cint, Cint, Cint, Ptr{Cvoid}, Cint, Cint, UInt32, Cint, Ptr{Cint}, Clonglong, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}), hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nBandCount, panBandCount, nPixelSpace, nLineSpace, nBandSpace, psExtraArg))
 end
 
 CPLSetConfigOption(a1, a2) = aftercare(ccall((:CPLSetConfigOption, libgdal), Cvoid, (Cstring, Cstring), a1, a2))
@@ -242,16 +242,68 @@ function OGR_L_GetFeatureCount(arg1, arg2)
 	aftercare(ccall((:OGR_L_GetFeatureCount, libgdal), Clonglong, (Ptr{Cvoid}, Cint), arg1, arg2))
 end
 
-function GDALWarp(pszDest, hDstDS, nSrcCount, pahSrcDS, psOptions, pbUsageError)
-	aftercare(ccall((:GDALWarp, libgdal), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}, Cint, Ptr{Ptr{Cvoid}}, Ptr{Cvoid}, Ptr{Cint}), pszDest, hDstDS, nSrcCount, pahSrcDS, psOptions, pbUsageError))
+function GDALInfoOptionsNew(pArgv, psOFB)
+	aftercare(ccall((:GDALInfoOptionsNew, libgdal), Ptr{Cvoid}, (Ptr{Cstring}, Ptr{Cvoid}), pArgv, psOFB))
 end
 
-function GDALWarpAppOptionsFree(psOptions)
-	aftercare(ccall((:GDALWarpAppOptionsFree, libgdal), Cvoid, (Ptr{Cvoid},), psOptions))
+GDALInfoOptionsFree(psO) = aftercare(ccall((:GDALInfoOptionsFree, libgdal), Cvoid, (Ptr{Cvoid},), psO))
+
+function GDALInfo(hDataset, psO)
+	aftercare(ccall((:GDALInfo, libgdal), Cstring, (Ptr{Cvoid}, Ptr{Cvoid}), hDataset, psO), true)
 end
 
-function GDALWarpAppOptionsNew(papszArgv, psOptionsForBinary)
-	aftercare(ccall((:GDALWarpAppOptionsNew, libgdal), Ptr{Cvoid}, (Ptr{Cstring}, Ptr{Cvoid}), papszArgv, psOptionsForBinary))
+function GDALTranslateOptionsNew(pArgv, psOFB)
+	aftercare(ccall((:GDALTranslateOptionsNew, libgdal), Ptr{Cvoid}, (Ptr{Cstring}, Ptr{Cvoid}), pArgv, psOFB))
+end
+
+function GDALTranslate(pszDestFilename, hSrcDataset, psOptions, pbUsageError)
+	aftercare(ccall((:GDALTranslate, libgdal), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cint}), pszDestFilename, hSrcDataset, psOptions, pbUsageError))
+end
+
+GDALTranslateOptionsFree(psO) = aftercare(ccall((:GDALTranslateOptionsFree, libgdal), Cvoid, (Ptr{Cvoid},), psO))
+
+function GDALDEMProcessingOptionsNew(pArgv, psOFB)
+	aftercare(ccall((:GDALDEMProcessingOptionsNew, libgdal), Ptr{Cvoid}, (Ptr{Cstring}, Ptr{Cvoid}), pArgv, psOFB))
+end
+
+function GDALDEMProcessingOptionsFree(psO)
+	aftercare(ccall((:GDALDEMProcessingOptionsFree, libgdal), Cvoid, (Ptr{Cvoid},), psO))
+end
+
+function GDALDEMProcessing(pszDestFilename, hSrcDataset, pszProcessing, pszColorFilename, psOptions, pbUE)
+	aftercare(ccall((:GDALDEMProcessing, libgdal), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}, Cstring, Cstring, Ptr{Cvoid}, Ptr{Cint}), pszDestFilename, hSrcDataset, pszProcessing, pszColorFilename, psOptions, pbUE))
+end
+
+function GDALGridOptionsNew(pArgv, psOFB)
+	aftercare(ccall((:GDALGridOptionsNew, libgdal), Ptr{Cvoid}, (Ptr{Cstring}, Ptr{Cvoid}), pArgv, psOFB))
+end
+
+GDALGridOptionsFree(psO) = aftercare(ccall((:GDALGridOptionsFree, libgdal), Cvoid, (Ptr{Cvoid},), psO))
+
+function GDALGrid(pDest, hSrcDS, psO, pbUE)
+	aftercare(ccall((:GDALGrid, libgdal), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cint}), pDest, hSrcDS, psO, pbUE))
+end
+
+function GDALVectorTranslateOptionsNew(pArgv, psOFB)
+	aftercare(ccall((:GDALVectorTranslateOptionsNew, libgdal), Ptr{Cvoid}, (Ptr{Cstring}, Ptr{Cvoid}), pArgv, psOFB))
+end
+
+function GDALVectorTranslateOptionsFree(psO)
+	aftercare(ccall((:GDALVectorTranslateOptionsFree, libgdal), Cvoid, (Ptr{Cvoid},), psO))
+end
+
+function GDALVectorTranslate(pszDest, hDstDS, nSrcCount, pahSrcDS, psO, pbUE)
+	aftercare(ccall((:GDALVectorTranslate, libgdal), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}, Cint, Ptr{Ptr{Cvoid}}, Ptr{Cvoid}, Ptr{Cint}), pszDest, hDstDS, nSrcCount, pahSrcDS, psO, pbUE))
+end
+
+function GDALWarp(pszDest, hDstDS, nSrcCount, pahSrcDS, psO, pbUE)
+	aftercare(ccall((:GDALWarp, libgdal), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}, Cint, Ptr{Ptr{Cvoid}}, Ptr{Cvoid}, Ptr{Cint}), pszDest, hDstDS, nSrcCount, pahSrcDS, psO, pbUE))
+end
+
+GDALWarpAppOptionsFree(psO) = aftercare(ccall((:GDALWarpAppOptionsFree, libgdal), Cvoid, (Ptr{Cvoid},), psO))
+
+function GDALWarpAppOptionsNew(pArgv, psOFB)
+	aftercare(ccall((:GDALWarpAppOptionsNew, libgdal), Ptr{Cvoid}, (Ptr{Cstring}, Ptr{Cvoid}), pArgv, psOFB))
 end
 
 # ------------------------------------------- ArchGDAL stuff ----------------------------------------------------------
@@ -312,12 +364,33 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		IRasterBand{t}(ptr, ownedby=ownedby)
 	end
 
+	mutable struct SpatialRef <: AbstractSpatialRef
+		ptr::Ptr{Cvoid}
+		SpatialRef(ptr::Ptr{Cvoid} = C_NULL) = new(ptr)
+	end
+
 	mutable struct ISpatialRef <: AbstractSpatialRef
 		ptr::Ptr{Cvoid}
 		function ISpatialRef(ptr::Ptr{Cvoid}=C_NULL)
 			spref = new(ptr)
 			finalizer(destroy, spref)
 			return spref
+		end
+	end
+
+	mutable struct FeatureLayer <: AbstractFeatureLayer
+		ptr::Ptr{Cvoid}
+	end
+
+	mutable struct IFeatureLayer <: AbstractFeatureLayer
+		ptr::Ptr{Cvoid}
+		ownedby::AbstractDataset
+		spatialref::AbstractSpatialRef
+		function IFeatureLayer(ptr::Ptr{Cvoid}=C_NULL; ownedby::AbstractDataset=Dataset(),
+				spatialref::AbstractSpatialRef=SpatialRef())
+			layer = new(ptr, ownedby, spatialref)
+			finalizer(destroy, layer)
+			return layer
 		end
 	end
 
@@ -452,23 +525,32 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return band
 	end
 
-	function create(filename::AbstractString; driver::Driver=identifydriver(filename), width::Integer=0,
-		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL))
-		result = GDALCreate(driver.ptr, filename, width, height, nbands, _GDALTYPE[dtype], options)
-		return IDataset(result)
+	function create(fname::AbstractString; driver::Driver=identifydriver(fname), width::Integer=0,
+		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=true)
+		r = GDALCreate(driver.ptr, fname, width, height, nbands, _GDALTYPE[dtype], options)
+		return (I) ? IDataset(r) : Dataset(r)
 	end
+	unsafe_create(fname::AbstractString; driver::Driver=identifydriver(fname), width::Integer=0,
+		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=false) =
+		create(fname; driver=driver, width=width, height=height, nbands=nbands, dtype=dtype, options=options, I=I)
 
-	function create(driver::Driver; filename::AbstractString=string("/vsimem/$(gensym())"), width::Integer=0,
-		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL))
-		result = GDALCreate(driver.ptr, filename, width, height, nbands, _GDALTYPE[dtype], options)
-		return IDataset(result)
+	function create(driver::Driver; fname::AbstractString=string("/vsimem/$(gensym())"), width::Integer=0,
+		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=true)
+		r = GDALCreate(driver.ptr, fname, width, height, nbands, _GDALTYPE[dtype], options)
+		return (I) ? IDataset(r) : Dataset(r)
 	end
+	unsafe_create(driver::Driver; fname::AbstractString=string("/vsimem/$(gensym())"), width::Integer=0,
+		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=false) =
+		create(driver; fname=fname, width=width, height=height, nbands=nbands, dtype=dtype, options=options, I=I)
 
 	function read(filename::AbstractString; flags = GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
-		alloweddrivers=Ptr{Cstring}(C_NULL), options=Ptr{Cstring}(C_NULL), siblingfiles=Ptr{Cstring}(C_NULL))
-		result = GDALOpenEx(filename, Int(flags), alloweddrivers, options, siblingfiles)
-		return IDataset(result)
+		alloweddrivers=Ptr{Cstring}(C_NULL), options=Ptr{Cstring}(C_NULL), siblingfiles=Ptr{Cstring}(C_NULL), I::Bool=true)
+		r = GDALOpenEx(filename, Int(flags), alloweddrivers, options, siblingfiles)
+		return (I) ? IDataset(r) : Dataset(r)
 	end
+	unsafe_read(fname::AbstractString; flags = GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, alloweddrivers=Ptr{Cstring}(C_NULL),
+		options=Ptr{Cstring}(C_NULL), siblingfiles=Ptr{Cstring}(C_NULL), I::Bool=false) =
+		read(fname=fname; flags=flags, alloweddrivers=alloweddrivers, options=options, siblingfiles=siblingfiles, I=I)
 
 	read!(rb::AbstractRasterBand, buffer::Matrix{<:Real}) = rasterio!(rb, buffer, GF_Read)
 
@@ -692,13 +774,63 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	options(drv::Driver) = GDALGetDriverCreationOptionList(drv.ptr)
 	driveroptions(name::AbstractString) = options(getdriver(name))
 
-	function gdalwarp(datasets::Vector{Dataset}, options = String[]; dest = "/vsimem/tmp")
+	function gdalwarp(datasets::Vector{Dataset}, options=String[]; dest = "/vsimem/tmp")
 		options = GDALWarpAppOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
 		result = GDALWarp(dest, C_NULL, length(datasets), [ds.ptr for ds in datasets], options, usage_error)
 		GDALWarpAppOptionsFree(options)
 		return Dataset(result)
 	end
+	gdalwarp(ds::Dataset, opts=String[]; dest="/vsimem/tmp") = gdalwarp([ds], opts; dest=dest)
+	gdalwarp(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalwarp([Dataset(ds.ptr)], opts; dest=dest)
+
+	function gdaltranslate(dataset::Dataset, options = String[]; dest = "/vsimem/tmp")
+		options = GDALTranslateOptionsNew(options, C_NULL)
+		usage_error = Ref{Cint}()
+		result = GDALTranslate(dest, dataset.ptr, options, usage_error)
+		GDALTranslateOptionsFree(options)
+		return Dataset(result)
+	end
+	gdaltranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdaltranslate(Dataset(ds.ptr), opts; dest=dest)
+
+	function gdalinfo(ds::Dataset, options=String[])
+		options = GDALInfoOptionsNew(options, C_NULL)
+		result = GDALInfo(ds.ptr, options)
+		GDALInfoOptionsFree(options)
+		return result
+	end
+	gdalinfo(ds::IDataset, opts=String[]) = gdalinfo(Dataset(ds.ptr), opts)
+
+	function gdaldem(dataset::Dataset, processing::String, options=String[]; dest="/vsimem/tmp", colorfile=C_NULL)
+		if processing == "color-relief"
+			@assert colorfile != C_NULL
+		end
+		options = GDALDEMProcessingOptionsNew(options, C_NULL)
+		usage_error = Ref{Cint}()
+		result = GDALDEMProcessing(dest, dataset.ptr, processing, colorfile, options, usage_error)
+		GDALDEMProcessingOptionsFree(options)
+		return Dataset(result)
+	end
+	gdaldem(ds::IDataset, processing::String, opts=String[]; dest="/vsimem/tmp", colorfile=C_NULL) = gdaldem(Dataset(ds.ptr), processing, opts; dest=dest, colorfile=colorfile)
+
+	function gdalgrid(dataset::Dataset, options=String[]; dest="/vsimem/tmp")
+		options = GDALGridOptionsNew(options, C_NULL)
+		usage_error = Ref{Cint}()
+		result = GDALGrid(dest, dataset.ptr, options, usage_error)
+		GDALGridOptionsFree(options)
+		return Dataset(result)
+	end
+	gdalgrid(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalgrid(Dataset(ds.ptr), opts; dest=dest)
+
+	function gdalvectortranslate(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp")
+		options = GDALVectorTranslateOptionsNew(options, C_NULL)
+		usage_error = Ref{Cint}()
+		result = GDALVectorTranslate(dest, C_NULL, length(datasets), [ds.ptr for ds in datasets], options, usage_error)
+		GDALVectorTranslateOptionsFree(options)
+		return Dataset(result)
+	end
+	gdalvectortranslate(ds::Dataset, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate([ds], opts; dest=dest)
+	gdalvectortranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest)
 
 	function toWKT(spref::AbstractSpatialRef)
 		wktptr = Ref{Cstring}()
@@ -850,14 +982,16 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	# ------------ Aliases ------------
 	const creategd = create
+	const ogr2ogr  = gdalvectortranslate
 	const readgd   = read
 	const readgd!  = read!
 	const writegd! = write!
 	# ---------------------------------
 
 	export
-		creategd, getband, getdriver, getproj, readraster, toPROJ4, toWKT, importPROJ4, importWKT, importEPSG,
-		readgd, readgd!, writegd!, setgeotransform!, setproj!
+		creategd, getband, getdriver, getproj, getgeotransform, toPROJ4, toWKT, importPROJ4, importWKT,
+		importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
+		readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!
 
 	const DRIVER_MANAGER = Ref{DriverManager}()
 	const GDALVERSION = Ref{VersionNumber}()
