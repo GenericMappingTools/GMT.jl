@@ -36,7 +36,7 @@ if (got_it)					# Otherwise go straight to end
 	d = [0 6.44; 1820 8.61; 2542 5.24; 2889 5.73; 3460 3.81; 4586 4.05; 6020 2.95; 6841 2.57; 7232 3.37; 10903 3.84; 11098 2.86; 11922 1.22; 12530 1.09; 14065 2.36; 14937 2.24; 16244 2.05; 17632 2.23; 19002 0.42; 20860 0.87; 22471 1.26];
 	greenspline(d, R="-2000/25000", I=100, S=:l, D=0, Vd=dbg2)
 
-	println("	MAKECPT")
+	#println("	MAKECPT")
 	cpt = makecpt(range="-1/1/0.1");
 	makecpt(rand(10,1), E="", C=:rainbow, cptname="lixo.cpt");
 	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
@@ -78,7 +78,7 @@ if (got_it)					# Otherwise go straight to end
 	rm("logo.png")
 	rm("lixo.eps")
 	rm("lixo.jpg")
-	rm("point.csv")
+	#rm("point.csv")
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NUL`)  end
 
 end					# End valid testing zone
