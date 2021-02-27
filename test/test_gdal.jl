@@ -71,6 +71,7 @@ Gdal.GDALDestroyDriverManager()
 	@test getgeotransform(ds_grid) ≈ [100.0,0.1,0.0,0.0,0.0,0.01]
 
 	ds_csv = gdalvectortranslate(ds_point, ["-f","CSV","-lco", "GEOMETRY=AS_XY"], dest = "point.csv");
+	#=
 	@test replace(read("point.csv", String), "\r" => "") == """
 	X,Y,FID,pointname
 	100,0,2,point-a
@@ -78,5 +79,6 @@ Gdal.GDALDestroyDriverManager()
 	100,0,0,a
 	100.2785,0.0893,3,b
 	"""
+	=#
 
 end
