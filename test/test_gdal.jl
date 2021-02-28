@@ -27,7 +27,7 @@ Gdal.GDALDestroyDriverManager()
 	show(dataset)
 
 	#readgd(dataset);		# Ambiguo
-	#band = getband(dataset);
+	band = getband(dataset);
 	readgd(band);
 	getproj(dataset)
 	band = getband(dataset)

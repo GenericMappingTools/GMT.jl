@@ -21,7 +21,7 @@ if (got_it)					# Otherwise go straight to end
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
 	GMT.GMT_Get_Ctrl(API);
 
-	#include("test_gdal.jl")			# Fcks the automatic registering because building docs fails
+	include("test_gdal.jl")			# Fcks the automatic registering because building docs fails
 	include("test_common_opts.jl")
 	include("test_B-GMTs.jl")
 	include("test_avatars.jl")
@@ -78,7 +78,7 @@ if (got_it)					# Otherwise go straight to end
 	rm("logo.png")
 	rm("lixo.eps")
 	rm("lixo.jpg")
-	#rm("point.csv")
+	rm("point.csv")
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NUL`)  end
 
 end					# End valid testing zone
