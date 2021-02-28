@@ -179,7 +179,6 @@ include("MB/mblevitus.jl")
 (GMTver >= v"6.2") && include("potential/gmtgravmag3d.jl")
 
 include("drawing.jl")
-include("gdal.jl")
 
 function __init__()
 	if (v"5.0" <= GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
@@ -203,6 +202,7 @@ end
 
 if (GMTver >= v"6")		# Needed to cheat the autoregister autobot
 	include("get_enums.jl")
+	include("gdal.jl")
 	using GMT.Gdal
 end
 
