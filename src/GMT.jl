@@ -181,8 +181,6 @@ include("MB/mblevitus.jl")
 include("drawing.jl")
 include("gdal.jl")
 
-using GMT.Gdal
-
 function __init__()
 	if (v"5.0" <= GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
 
@@ -203,7 +201,10 @@ function __init__()
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 end
 
-if (GMTver >= v"6")  include("get_enums.jl")  end	# Needed to cheat the autoregister autobot
+if (GMTver >= v"6")		# Needed to cheat the autoregister autobot
+	include("get_enums.jl")
+	using GMT.Gdal
+end
 
 include("precompile_GMT_i.jl")
 _precompile_()
