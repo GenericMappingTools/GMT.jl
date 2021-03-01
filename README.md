@@ -95,16 +95,16 @@ is most than wellcome.
 Documentation
 =============
 
-[Quick Learn](https://genericmappingtools.github.io/GMT.jl/latest/quick_learn)
+[Quick Learn](https://genericmappingtools.github.io/GMT.jl/dev/quick_learn)
 
-[GMT.jl docs](https://genericmappingtools.github.io/GMT.jl/latest)
+[GMT.jl docs](https://genericmappingtools.github.io/GMT.jl/dev)
 
 [GMT Docs](https://www.generic-mapping-tools.org/gmt/latest/)
 
 Examples
 ========
 
-[Some examples](https://genericmappingtools.github.io/GMT.jl/latest/examples)
+[Some examples](https://genericmappingtools.github.io/GMT.jl/dev/examples)
 
 License
 =======
