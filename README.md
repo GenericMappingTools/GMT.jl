@@ -3,12 +3,12 @@ GMT.jl
 
 Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMappingTools/gmt)
 
-| **Documentation**                       | **Build Status (Julia 1.4)**              | **Discourse Forum**   |
+| **Documentation**                       | **Build Status (Julia 1.5)**              | **Discourse Forum**   |
 |:---------------------------------------:|:-----------------------------------------:|:---------------------:|
 | [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] |
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://genericmappingtools.github.io/GMT.jl/latest
+[docs-latest-url]: https://genericmappingtools.github.io/GMT.jl/dev
 
 [travis-img]: https://travis-ci.com/GenericMappingTools/GMT.jl.svg?branch=master
 [travis-url]: https://travis-ci.com/GenericMappingTools/GMT.jl
