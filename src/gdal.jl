@@ -604,7 +604,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		r = GDALOpenEx(filename, Int(flags), alloweddrivers, options, siblingfiles)
 		return (I) ? IDataset(r) : Dataset(r)
 	end
-	unsafe_read(fname::AbstractString; flags = GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, alloweddrivers=Ptr{Cstring}(C_NULL),
+	unsafe_read(fname::AbstractString; flags=GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, alloweddrivers=Ptr{Cstring}(C_NULL),
 		options=Ptr{Cstring}(C_NULL), siblingfiles=Ptr{Cstring}(C_NULL), I::Bool=false) =
 		read(fname=fname; flags=flags, alloweddrivers=alloweddrivers, options=options, siblingfiles=siblingfiles, I=I)
 

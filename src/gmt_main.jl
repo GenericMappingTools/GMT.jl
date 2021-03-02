@@ -788,29 +788,34 @@ end
 function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
-	grd = Grid.z
+	mode = (Grid.layout != "BRB") ? GMT_CONTAINER_AND_DATA : GMT_CONTAINER_ONLY
+
 	hdr = [Grid.range; Grid.registration; Grid.inc]
 	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_CONTAINER_AND_DATA, C_NULL,
 	                    hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)
 
-	n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
-	Gb = unsafe_load(G)			# Gb = GMT_GRID (constructor with 1 method)
-	h = unsafe_load(Gb.header)
-	t = unsafe_wrap(Array, Gb.data, h.size)
+	if (mode == GMT_CONTAINER_AND_DATA)
+		grd = Grid.z
+		n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
+		Gb = unsafe_load(G)			# Gb = GMT_GRID (constructor with 1 method)
+		h = unsafe_load(Gb.header)
+		t = unsafe_wrap(Array, Gb.data, h.size)
 
-	k = 1
-	if (isa(grd, Float32))
-		for col = 1:n_cols, row = n_rows:-1:1
-			t[GMT_IJP(row, col, mx, pad, pad)] = grd[k];		k += 1
+		k = 1
+		if (isa(grd, Float32))
+			for col = 1:n_cols, row = n_rows:-1:1
+				t[GMT_IJP(row, col, mx, pad, pad)] = grd[k];		k += 1
+			end
+		else
+			for col = 1:n_cols, row = n_rows:-1:1
+				t[GMT_IJP(row, col, mx, pad, pad)] = Float32(grd[k]);		k += 1
+			end
 		end
 	else
-		for col = 1:n_cols, row = n_rows:-1:1
-			t[GMT_IJP(row, col, mx, pad, pad)] = Float32(grd[k]);		k += 1
-		end
+		G.data = pointer(Grid.z)
 	end
 
-	h.z_min = hdr[5]			# Set the z_min, z_max
-	h.z_max = hdr[6]
+	h.z_min, h.z_max = hdr[5], hdr[6]		# Set the z_min, z_max
 
 	try
 		h.x_unit = map(UInt8, (Grid.x_unit...,))
@@ -1834,6 +1839,26 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 	if (!isa(x, Array{Float64}))  x = Float64.(x)  end
 	if (!isa(y, Array{Float64}))  y = Float64.(y)  end
 	return x, y, hdr, x_inc, y_inc
+end
+
+# ---------------------------------------------------------------------------------------------------
+function gd2gmt_grid(dataset)
+	# Convert data in a GDAL dataset into a GMTgrid type
+	mat = readgd(dataset)
+	#mat = collect(reshape(mat, size(mat,1), size(mat,2))')
+	gt = getgeotransform(dataset)
+	x_inc, y_inc = gt[2], abs(gt[6])
+	x_min = gt[1] + x_inc/2
+	y_max = gt[4] - y_inc/2
+	x_max = x_min + (size(mat,1) - 1) * x_inc
+	y_min = y_max - (size(mat,2) - 1) * y_inc
+	z_min, z_max = extrema_nan(mat)
+	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, 0.0, x_inc, y_inc]
+	prj = getproj(dataset)
+	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
+	G = mat2grid(mat; hdr, proj4=prj)
+	G.layout = "BRB"
+
 end
 
 #= ---------------------------------------------------------------------------------------------------
