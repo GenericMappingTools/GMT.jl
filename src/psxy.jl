@@ -89,7 +89,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# Look for color request. Do it after error bars because they may add a column
 	len = length(cmd);	n_prev = N_args;
-	cmd, args, n, got_Zvars = add_opt(d, cmd, 'Z', [:Z :zcolor :level], :data, Any[arg1, arg2, arg3], (outline="_+l", fill="_+f"))
+	cmd, args, n, got_Zvars = add_opt(d, cmd, 'Z', [:Z :level], :data, Any[arg1, arg2, arg3], (outline="_+l", fill="_+f"))
 	if (n > 0)
 		arg1, arg2, arg3 = args[:]
 		N_args = n
