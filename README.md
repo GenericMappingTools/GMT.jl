@@ -3,12 +3,12 @@ GMT.jl
 
 Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMappingTools/gmt)
 
-| **Documentation**                       | **Build Status (Julia 1.4)**              | **Discourse Forum**   |
+| **Documentation**                       | **Build Status (Julia 1.5)**              | **Discourse Forum**   |
 |:---------------------------------------:|:-----------------------------------------:|:---------------------:|
 | [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] |
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://genericmappingtools.github.io/GMT.jl/latest
+[docs-latest-url]: https://genericmappingtools.github.io/GMT.jl/dev
 
 [travis-img]: https://travis-ci.com/GenericMappingTools/GMT.jl.svg?branch=master
 [travis-url]: https://travis-ci.com/GenericMappingTools/GMT.jl
@@ -95,16 +95,16 @@ is most than wellcome.
 Documentation
 =============
 
-[Quick Learn](https://genericmappingtools.github.io/GMT.jl/latest/quick_learn)
+[Quick Learn](https://genericmappingtools.github.io/GMT.jl/dev/quick_learn)
 
-[GMT.jl docs](https://genericmappingtools.github.io/GMT.jl/latest)
+[GMT.jl docs](https://genericmappingtools.github.io/GMT.jl/dev)
 
 [GMT Docs](https://www.generic-mapping-tools.org/gmt/latest/)
 
 Examples
 ========
 
-[Some examples](https://genericmappingtools.github.io/GMT.jl/latest/examples)
+[Some examples](https://genericmappingtools.github.io/GMT.jl/dev/examples)
 
 License
 =======

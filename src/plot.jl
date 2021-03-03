@@ -87,7 +87,7 @@ Parameters
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 
-- **Z** | **level** | **zcolor** :: [Type => Str | NamedTuple]	`Arg = value|file[+f|+l] | (data=Array|Number, outline=_, fill=_)`
+- **Z** | **level** :: [Type => Str | NamedTuple]	`Arg = value|file[+f|+l] | (data=Array|Number, outline=_, fill=_)`
 
     Paint polygons after the level given as a cte or a vector with same size of number of polygons. Needs a color map.
     ($(GMTdoc)plot.html#z)
