@@ -1668,7 +1668,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 				cmd *= opt_C
 				if (store && c != "" && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's number and -Cn is not valid
 					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
-						global current_cp = makecpt(opt_C * " -Vq")
+						global current_cpt = makecpt(opt_C * " -Vq")
 					catch
 					end
 				elseif (in_bag && current_cpt !== nothing)	# If we have something in Bag, return it
@@ -2543,6 +2543,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	cmd, opt_di = parse_di(d, cmd)		# If data missing data other than NaN
 	cmd, opt_h  = parse_h(d, cmd)
 	cmd, opt_yx = parse_swap_xy(d, cmd)
+	(CTRL.proj_linear[1]) && (opt_yx *= " -fc")			# To avoid the lib remembering last eventual geog case
 	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
 	if (isa(data_kw, String))
 		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])		# Must read file to find -R
@@ -2906,8 +2907,6 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		if (fname != "")  out = mv(out, fname, force=true)  end
 	end
 
-	CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = false;		# Reset these for safety
-
 	if (haskey(d, :show) && d[:show] != 0)
 		if (isdefined(Main, :IJulia) && Main.IJulia.inited)		# From Jupyter?
 			if (fname == "") display("image/png", read(out))
@@ -3058,7 +3057,8 @@ function show_non_consumed(d::Dict, cmd)
 	if (length(d) > 0)
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
-	end	
+	end
+	CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = false;		# Reset these for safety
 end
 
 # --------------------------------------------------------------------------------------------------
