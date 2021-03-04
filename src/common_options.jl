@@ -1753,7 +1753,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || (cmd0 != "" && cmd0[1] != '@'))
 		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
-			cpt_opt_T = sprintf(" -T%.16g/%.16g/128+n", range[5] - eps()*100, range[6] + eps()*100)
+			cpt_opt_T = sprintf(" -T%.12g/%.12g/128+n", range[5] - 1e-6, range[6] + 1e-6)
 		end
 		if (opt_R == "" && (!IamModern[1] || (IamModern[1] && FirstModern[1])) )	# No -R ovewrite by accident
 			cmd *= sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
