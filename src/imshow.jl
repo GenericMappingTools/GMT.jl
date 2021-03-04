@@ -30,7 +30,7 @@ julia> imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabb
 ```
 See also: [`grdimage`](@ref)
 """
-function imshow(arg1, x=nothing, y=nothing; kw...)
+function imshow(arg1, x=Vector{Float64}(), y=Vector{Float64}(); kw...)
 	# Take a 2D array of floats and turn it into a GMTgrid or if input is a string assume it's a file name
 	# In this later case try to figure if it's a grid or an image and act accordingly.
 	is_image = false

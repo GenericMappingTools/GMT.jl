@@ -604,9 +604,9 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		r = GDALOpenEx(filename, Int(flags), alloweddrivers, options, siblingfiles)
 		return (I) ? IDataset(r) : Dataset(r)
 	end
-	unsafe_read(fname::AbstractString; flags = GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, alloweddrivers=Ptr{Cstring}(C_NULL),
+	unsafe_read(fname::AbstractString; flags=GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, alloweddrivers=Ptr{Cstring}(C_NULL),
 		options=Ptr{Cstring}(C_NULL), siblingfiles=Ptr{Cstring}(C_NULL), I::Bool=false) =
-		read(fname=fname; flags=flags, alloweddrivers=alloweddrivers, options=options, siblingfiles=siblingfiles, I=I)
+		read(fname; flags=flags, alloweddrivers=alloweddrivers, options=options, siblingfiles=siblingfiles, I=I)
 
 	read!(rb::AbstractRasterBand, buffer::Matrix{<:Real}) = rasterio!(rb, buffer, GF_Read)
 
@@ -736,31 +736,43 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		eval(quote
 			function rasterio!(dataset::AbstractDataset, buffer::Array{$T, 3}, bands, xoffset::Int, yoffset::Int,
 					xsize::Integer, ysize::Integer, access::UInt32=GF_Read, pxspace::Integer=0, linespace::Integer=0,
-					bandspace::Integer=0, extraargs=Ptr{GDALRasterIOExtraArg}(C_NULL))
+					bandspace::Integer=0, extraargs=Ptr{GDALRasterIOExtraArg}(C_NULL), pad::Int=0)
 				(dataset == C_NULL) && error("Can't read invalid rasterband")
 				xbsize, ybsize, zbsize = size(buffer)
 				nband = length(bands)
 				bands = isa(bands, Vector{Cint}) ? bands : Cint.(collect(bands))
 				@assert nband == zbsize
-				result = ccall((:GDALDatasetRasterIOEx,libgdal), UInt32, (Ptr{Cvoid}, UInt32, Cint, Cint, Cint, Cint,
-							   Ptr{Cvoid}, Cint, Cint, UInt32, Cint, UInt32, Clonglong, Clonglong, Clonglong,
-							   Ptr{GDALRasterIOExtraArg}), dataset.ptr, access, xoffset, yoffset, xsize, ysize,
-							   pointer(buffer), xbsize, ybsize, $GT, nband, pointer(bands), pxspace, linespace,
-							   bandspace, extraargs)
+				poffset = 0
+				if (pad != 0)
+					linespace = xbsize * sizeof($T)
+					poffset = (pad * xbsize + pad) * sizeof($T)
+					xbsize, ybsize = xsize, ysize
+				end
+				result = ccall((:GDALDatasetRasterIOEx,libgdal), UInt32, 
+							   (Ptr{Cvoid}, UInt32, Cint, Cint, Cint, Cint, Ptr{Cvoid}, Cint, Cint, UInt32, Cint,
+							   UInt32, Clonglong, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}),
+							   dataset.ptr, access, xoffset, yoffset, xsize, ysize, pointer(buffer)+poffset, xbsize,
+							   ybsize, $GT, nband, pointer(bands), pxspace, linespace, bandspace, extraargs)
 				@cplerr result "Access in DatasetRasterIO failed."
 				return buffer
 			end
-	
+
 			function rasterio!(rasterband::AbstractRasterBand, buffer::Matrix{$T}, xoffset::Int, yoffset::Int,
 					xsize::Integer, ysize::Integer, access::UInt32=GF_Read, pxspace::Integer=0,
-					linespace::Integer=0, extraargs=Ptr{GDALRasterIOExtraArg}(C_NULL))
+					linespace::Integer=0, extraargs=Ptr{GDALRasterIOExtraArg}(C_NULL), pad::Int=0)
 				(rasterband == C_NULL) && error("Can't read invalid rasterband")
 				xbsize, ybsize = size(buffer)
+				poffset = 0
+				if (pad != 0)
+					linespace = xbsize * sizeof($T)
+					poffset = (pad * xbsize + pad) * sizeof($T)
+					xbsize, ybsize = xsize, ysize
+				end
 				result = ccall((:GDALRasterIOEx,libgdal),UInt32,
 					(Ptr{Cvoid},UInt32,Cint,Cint,Cint,Cint,Ptr{Cvoid}, Cint,Cint,UInt32,Clonglong, Clonglong,
 					Ptr{GDALRasterIOExtraArg}),
-					rasterband.ptr,access,xoffset, yoffset,xsize,ysize,pointer(buffer),xbsize,ybsize,$GT,pxspace,
-					linespace,extraargs)
+					rasterband.ptr,access,xoffset, yoffset,xsize,ysize,pointer(buffer)+poffset,xbsize,ybsize,$GT,
+					pxspace, linespace, extraargs)
 				@cplerr result "Access in RasterIO failed."
 				return buffer
 			end
@@ -824,7 +836,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	getband(dataset::AbstractDataset, i::Integer=1) = IRasterBand(GDALGetRasterBand(dataset.ptr, i), ownedby=dataset)
 	getband(ds::RasterDataset, i::Integer=1) = getband(ds.ds, i)
 	getproj(dataset::AbstractDataset) = GDALGetProjectionRef(dataset.ptr)
-	readraster(s::String; kwargs...) = RasterDataset(read(s; kwargs...))
+	#readraster(s::String; kwargs...) = RasterDataset(read(s; kwargs...))
+	readraster(args...; kwargs...) = RasterDataset(unsafe_read(args...; kwargs...))
 
 	shortname(drv::Driver) = GDALGetDriverShortName(drv.ptr)
 	longname(drv::Driver) = GDALGetDriverLongName(drv.ptr)

@@ -788,29 +788,36 @@ end
 function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
-	grd = Grid.z
+	mode = (Grid.layout != "TRB") ? GMT_CONTAINER_AND_DATA : GMT_CONTAINER_ONLY
+
 	hdr = [Grid.range; Grid.registration; Grid.inc]
-	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_CONTAINER_AND_DATA, C_NULL,
+	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, C_NULL,
 	                    hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)
 
-	n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
 	Gb = unsafe_load(G)			# Gb = GMT_GRID (constructor with 1 method)
 	h = unsafe_load(Gb.header)
-	t = unsafe_wrap(Array, Gb.data, h.size)
 
-	k = 1
-	if (isa(grd, Float32))
-		for col = 1:n_cols, row = n_rows:-1:1
-			t[GMT_IJP(row, col, mx, pad, pad)] = grd[k];		k += 1
+	if (mode == GMT_CONTAINER_AND_DATA)
+		grd = Grid.z
+		n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
+		t = unsafe_wrap(Array, Gb.data, h.size)
+
+		k = 1
+		if (isa(grd, Float32))
+			for col = 1:n_cols, row = n_rows:-1:1
+				t[GMT_IJP(row, col, mx, pad, pad)] = grd[k];		k += 1
+			end
+		else
+			for col = 1:n_cols, row = n_rows:-1:1
+				t[GMT_IJP(row, col, mx, pad, pad)] = Float32(grd[k]);		k += 1
+			end
 		end
 	else
-		for col = 1:n_cols, row = n_rows:-1:1
-			t[GMT_IJP(row, col, mx, pad, pad)] = Float32(grd[k]);		k += 1
-		end
+		Gb.data = pointer(Grid.z)
+		GMT_Set_AllocMode(API, GMT_IS_GRID, G)	# Otherwise memory already belongs to GMT
 	end
 
-	h.z_min = hdr[5]			# Set the z_min, z_max
-	h.z_max = hdr[6]
+	h.z_min, h.z_max = hdr[5], hdr[6]		# Set the z_min, z_max
 
 	try
 		h.x_unit = map(UInt8, (Grid.x_unit...,))
@@ -1292,7 +1299,7 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function text_record(data, text, hdr=nothing)
+function text_record(data, text, hdr=Vector{String}())
 	# Create a text record to send to pstext. DATA is the Mx2 coordinates array.
 	# TEXT is a string or a cell array
 
@@ -1300,19 +1307,19 @@ function text_record(data, text, hdr=nothing)
 	if (!isa(data, Array{Float64}))  data = Float64.(data)  end
 
 	if (isa(text, String))
-		T = GMTdataset(data, [text], "", Array{String,1}(), "", "")
+		T = GMTdataset(data, [text], "", Vector{String}(), "", "")
 	elseif (isa(text, Array{String}))
 		if (text[1][1] == '>')			# Alternative (but risky) way of setting the header content
-			T = GMTdataset(data, text[2:end], text[1], Array{String,1}(), "", "")
+			T = GMTdataset(data, text[2:end], text[1], Vector{String}(), "", "")
 		else
-			T = GMTdataset(data, text, (hdr === nothing ? "" : hdr), Vector{String}(), "", "")
+			T = GMTdataset(data, text, (isempty(hdr) ? "" : hdr), Vector{String}(), "", "")
 		end
 	elseif (isa(text, Array{Array}) || isa(text, Array{Vector{String}}))
 		nl_t = length(text);	nl_d = length(data)
 		(nl_d > 0 && nl_d != nl_t) && error("Number of data points is not equal to number of text strings.")
 		T = Vector{GMTdataset}(undef,nl_t)
 		for k = 1:nl_t
-			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), text[k], (hdr === nothing ? "" : hdr[k]), Vector{String}(), "", "")
+			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "")
 		end
 	else
 		error("Wrong type ($(typeof(text))) for the 'text' argin")
@@ -1340,10 +1347,10 @@ D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=n
 	`multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
 	first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
 """
-function mat2ds(mat, txt=nothing; hdr=nothing, kwargs...)
+function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), kwargs...)
 	d = KW(kwargs)
 
-	(txt !== nothing) && return text_record(mat, txt,  hdr)
+	(!isempty(txt)) && return text_record(mat, txt,  hdr)
 	((text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, text, hdr)
 
 	val = find_in_dict(d, [:multi :multicol])[1]
@@ -1355,12 +1362,12 @@ function mat2ds(mat, txt=nothing; hdr=nothing, kwargs...)
 		(length(xx) != size(mat, 1)) && error("Number of X coordinates and MAT number of rows are not equal")
 	else
 		n_ds = (ndims(mat) == 3) ? size(mat,3) : ((multi) ? size(mat, 2) - 1 : 1)
-		xx = nothing
+		xx = Vector{Float64}()
 	end
 
-	if (hdr !== nothing && isa(hdr, String))	# Accept one only but expand to n_ds with the remaining as blanks
+	if (!isempty(hdr) && isa(hdr, String))	# Accept one only but expand to n_ds with the remaining as blanks
 		bak = hdr;		hdr = Base.fill("", n_ds);	hdr[1] = bak
-	elseif (hdr !== nothing && length(hdr) != n_ds)
+	elseif (!isempty(hdr) && length(hdr) != n_ds)
 		error("The header vector can only have length = 1 or same number of MAT Y columns")
 	end
 
@@ -1378,15 +1385,15 @@ function mat2ds(mat, txt=nothing; hdr=nothing, kwargs...)
 
 	if (color !== nothing)
 		n_colors = length(_color)
-		if (hdr === nothing)
-			hdr = Array{String,1}(undef, n_ds)
+		if (isempty(hdr))
+			hdr = Vector{String}(undef, n_ds)
 			[hdr[k]  = _lts[k] * string(",", _color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
 		else
 			[hdr[k] *= _lts[k] * string(",", _color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
 		end
 	else						# Here we just overriding the GMT -W default that is too thin.
-		if (hdr === nothing)
-			hdr = Array{String,1}(undef, n_ds)
+		if (isempty(hdr))
+			hdr = Vector{String}(undef, n_ds)
 			[hdr[k]  = _lts[k] for k = 1:n_ds]
 		else
 			[hdr[k] *= _lts[k] for k = 1:n_ds]
@@ -1404,7 +1411,7 @@ function mat2ds(mat, txt=nothing; hdr=nothing, kwargs...)
 
 	if (!isempty(_fill))				# Paint the polygons (in case of)
 		n_colors = length(_fill)
-		if (hdr === nothing)
+		if (isempty(hdr))
 			hdr = Array{String,1}(undef, n_ds)
 			[hdr[k]  = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
 		else
@@ -1415,24 +1422,24 @@ function mat2ds(mat, txt=nothing; hdr=nothing, kwargs...)
 	D = Vector{GMTdataset}(undef, n_ds)
 
 	if (!isa(mat, Array{Float64}))  mat = Float64.(mat)  end
-	if (xx === nothing)
+	if (isempty(xx))
 		if (ndims(mat) == 3)
 			for k = 1:n_ds
-				D[k] = GMTdataset(view(mat,:,:,k), String[], (hdr === nothing ? "" : hdr[k]), String[], "", "")
+				D[k] = GMTdataset(view(mat,:,:,k), String[], (isempty(hdr) ? "" : hdr[k]), String[], "", "")
 			end
 		elseif (!multi)
-			D[1] = GMTdataset(mat, String[], (hdr === nothing ? "" : hdr[1]), String[], "", "")
+			D[1] = GMTdataset(mat, String[], (isempty(hdr) ? "" : hdr[1]), String[], "", "")
 		else
 			for k = 1:n_ds
-				D[k] = GMTdataset(mat[:,[1,k+1]], String[], (hdr === nothing ? "" : hdr[k]), String[], "", "")
+				D[k] = GMTdataset(mat[:,[1,k+1]], String[], (isempty(hdr) ? "" : hdr[k]), String[], "", "")
 			end
 		end
 	else
 		if (!multi)
-			D[1] = GMTdataset(hcat(xx,mat), String[], (hdr === nothing ? "" : hdr[1]), String[], "", "")
+			D[1] = GMTdataset(hcat(xx,mat), String[], (isempty(hdr) ? "" : hdr[1]), String[], "", "")
 		else
 			for k = 1:n_ds
-				D[k] = GMTdataset(hcat(xx,mat[:,k]), String[], (hdr === nothing ? "" : hdr[k]), String[], "", "")
+				D[k] = GMTdataset(hcat(xx,mat[:,k]), String[], (isempty(hdr) ? "" : hdr[k]), String[], "", "")
 			end
 		end
 	end
@@ -1511,7 +1518,7 @@ I = mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::String
 	stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
 	stretch = :auto | "auto" | true | 1 will do an automatic stretching from values obtained from histogram thresholds
 """
-function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	color_interp = "";		n_colors = 0;
 	if (cmap !== nothing)
@@ -1545,7 +1552,7 @@ function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=nothing, y=nothing, hdr=
 end
 
 # ---------------------------------------------------------------------------------------------------
-function mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", kw...)
+function mat2img(mat::Array{UInt16}; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", kw...)
 	# Take an array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
 	# If the kw variable 'stretch' is used, we stretch the intervals in 'stretch' to [0 255].
 	# Use this option to stretch the image histogram.
@@ -1675,7 +1682,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-G = mat2grid(mat; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="", cmd::String="")
+G = mat2grid(mat; reg=nothing, x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="", cmd::String="")
 
     Take a 2D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
 	and return a grid GMTgrid type.
@@ -1701,7 +1708,7 @@ G = mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", e
 	size determined by the sizes of the X & Y vectors.
 	Example: f(x,y) = x^2 + y^2;  G = mat2grid(f, x = -2:0.05:2, y = -2:0.05:2)
 
-G = mat2grid(f::String, x=nothing, y=nothing)
+G = mat2grid(f::String, x=[], y=[])
 	Whre F is a pre-set function name. Currently available:
 		"ackley", "eggbox", "sombrero", "parabola" and "rosenbrock" 
 	X,Y are vectors coordinates defining the function's domain, but default values are provided for each function.
@@ -1719,7 +1726,7 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String=
 	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
 end
 
-function mat2grid(mat::DenseMatrix, xx=nothing, yy=nothing; reg=nothing, x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
+function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
 # Take a 2D array of floats and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
@@ -1730,8 +1737,8 @@ function mat2grid(mat::DenseMatrix, xx=nothing, yy=nothing; reg=nothing, x=nothi
 	elseif (isa(reg, Number))
 		reg_ = (reg == 0) ? 0 : 1
 	end
-	if (x === nothing && xx !== nothing)  x = xx  end
-	if (y === nothing && yy !== nothing)  y = yy  end
+	if (isempty(x) && !isempty(xx))  x = xx  end
+	if (isempty(y) && !isempty(yy))  y = yy  end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
 
 	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
@@ -1756,28 +1763,28 @@ function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String=
 	mat2grid(z; reg=reg, x=x, y=y, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
 end
 
-function mat2grid(f::String, x=nothing, y=nothing)
+function mat2grid(f::String, x=Vector{Float64}(), y=Vector{Float64}())
 	# Something is very wrong here. If I add named vars it annoyingly warns
 	#	WARNING: Method definition f2(Any, Any) in module GMT at C:\Users\joaqu\.julia\dev\GMT\src\gmt_main.jl:1556 overwritten on the same line.
 	if (startswith(f, "ack"))				# Ackley (inverted) https://en.wikipedia.org/wiki/Ackley_function
 		f_ack(x,y) = 20 * exp(-0.2 * sqrt(0.5 * (x^2 + y^2))) + exp(0.5*(cos(2pi*x) + cos(2pi*y))) - 22.718281828459045
-		if (x === nothing)  x = -5:0.05:5;	y = -5:0.05:5;  end
+		if (isempty(x))  x = -5:0.05:5;	y = -5:0.05:5;  end
 		mat2grid(f_ack, x, y)
 	elseif (startswith(f, "egg"))
 		f_egg(x, y) = (sin(x*10) + cos(y*10)) / 4
-		if (x === nothing)  x = -1:0.01:1;	y = -1:0.01:1;  end
+		if (isempty(x))  x = -1:0.01:1;	y = -1:0.01:1;  end
 		mat2grid(f_egg, x, y)
 	elseif (startswith(f, "para"))
 		f_parab(x,y) = x^2 + y^2
-		if (x === nothing)  x = -2:0.05:2;	y = -2:0.05:2;  end
+		if (isempty(x))  x = -2:0.05:2;	y = -2:0.05:2;  end
 		mat2grid(f_parab, x, y)
 	elseif (startswith(f, "rosen"))			# rosenbrock
 		f_rosen(x,y) = (1 - x)^2 + 100 * (y - x^2)^2
-		if (x === nothing)  x = -2:0.05:2;	y = -1:0.05:3;  end
+		if (isempty(x))  x = -2:0.05:2;	y = -1:0.05:3;  end
 		mat2grid(f_rosen, x, y)
 	elseif (startswith(f, "somb"))			# sombrero
 		f_somb(x,y) = cos(sqrt(x^2 + y^2) * 2pi / 8) * exp(-sqrt(x^2 + y^2) / 10)
-		if (x === nothing)  x = -15:0.2:15;	y = -15:0.2:15;  end
+		if (isempty(x))  x = -15:0.2:15;	y = -15:0.2:15;  end
 		mat2grid(f_somb, x, y)
 	else
 		@warn("Unknown surface '$f'. Just giving you a parabola.")
@@ -1786,16 +1793,16 @@ function mat2grid(f::String, x=nothing, y=nothing)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
+function grdimg_hdr_xy(mat, reg, hdr, x=Vector{Float64}(), y=Vector{Float64}())
 # Generate x,y coords array and compute/update header plus increments for grids/images
 	nx = size(mat, 2);		ny = size(mat, 1);
 
-	if (x !== nothing && y !== nothing)		# But not tested if they are equi-spaced as they MUST be
+	if (!isempty(x) && !isempty(y))		# But not tested if they are equi-spaced as they MUST be
 		if ((length(x) != (nx+reg) || length(y) != (ny+reg)) && (length(x) != 2 || length(y) != 2))
 			error("size of x,y vectors incompatible with 2D array size")
 		end
 		one_or_zero = reg == 0 ? 1 : 0
-		if (length(x) != 2)			# Check that REGistration and coords are compatible
+		if (length(x) != 2)				# Check that REGistration and coords are compatible
 			(reg == 1 && round((x[end] - x[1]) / (x[2] - x[1])) != nx) &&		# Gave REG = pix but xx say grid
 				(@warn("Gave REGistration = 'pixel' but X coordinates say it's gridline. Keeping later reg."); one_or_zero = 1)
 		else
@@ -1831,9 +1838,34 @@ function grdimg_hdr_xy(mat, reg, hdr, x=nothing, y=nothing)
 	end
 	if (isa(x, UnitRange))  x = collect(x)  end			# The AbstractArrays are much less forgivable
 	if (isa(y, UnitRange))  y = collect(y)  end
-	if (!isa(x, Array{Float64}))  x = Float64.(x)  end
-	if (!isa(y, Array{Float64}))  y = Float64.(y)  end
+	if (!isa(x, Vector{Float64}))  x = Float64.(x)  end
+	if (!isa(y, Vector{Float64}))  y = Float64.(y)  end
 	return x, y, hdr, x_inc, y_inc
+end
+
+# ---------------------------------------------------------------------------------------------------
+function gd2gmt_grid(dataset)
+	# Convert data in a GDAL dataset into a GMTgrid type
+	xSize, ySize = Gdal.width(dataset), Gdal.height(dataset)
+	mat = zeros(Gdal.pixeltype(getband(dataset, 1)), xSize+4, ySize+4)
+	Gdal.rasterio!(dataset, mat, [1], 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, 0, C_NULL, 2)
+	#Gdal.rasterio!(getband(dataset, 1), mat, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, C_NULL, 2)
+
+	#mat = readgd(dataset)
+	#mat = collect(reshape(mat, size(mat,1), size(mat,2)))
+	gt = getgeotransform(dataset)
+	x_inc, y_inc = gt[2], abs(gt[6])
+	x_min = gt[1] + x_inc/2
+	y_max = gt[4] - y_inc/2
+	x_max = x_min + (size(mat,1) - 5) * x_inc
+	y_min = y_max - (size(mat,2) - 5) * y_inc
+	z_min, z_max = extrema_nan(mat)
+	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, 0.0, x_inc, y_inc]
+	prj = getproj(dataset)
+	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
+	G = mat2grid(mat; hdr, proj4=prj)
+	G.layout = "BRB"
+	return G
 end
 
 #= ---------------------------------------------------------------------------------------------------
