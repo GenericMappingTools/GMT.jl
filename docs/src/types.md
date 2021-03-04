@@ -21,6 +21,7 @@ Grid type
        y_units::String            # Units of YY axis (Optional)
        z_units::String            # Units of ZZ axis (Optional)
        layout::String             # A three character string describing the grid memory layout
+       pad::Int                   # When != 0 means that the array is placed in a padded array of PAD rows/cols
     end
 
 Image type
@@ -41,6 +42,7 @@ Image type
        colormap::Array{Clong,1}   # 
        alpha::Array{UInt8,2}      # A [n_rows x n_columns] alpha array
        layout::String             # A four character string describing the image memory layout
+       pad::Int                   # When != 0 means that the array is placed in a padded array of PAD rows/cols
     end
 
 Dataset type
