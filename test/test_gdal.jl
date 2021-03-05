@@ -25,7 +25,7 @@ Gdal.GDALDestroyDriverManager()
 	setgeotransform!(dataset, [-4.016666666666667, 0.03333333333333333, 0.0, -3.01666666666, 0.0, 0.03333333333333333])
 
 	show(dataset)
-	G = gd2gmt(dataset);
+	#G = gd2gmt(dataset);
 
 	#readgd(dataset);		# Ambiguo
 	band = getband(dataset);
