@@ -790,7 +790,7 @@ end
 function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
-	mode = (Grid.layout != "TRB") ? GMT_CONTAINER_AND_DATA : GMT_CONTAINER_ONLY
+	mode = (length(Grid.layout) > 1 && Grid.layout[2] == 'R') ? GMT_CONTAINER_ONLY : GMT_CONTAINER_AND_DATA
 
 	hdr = [Grid.range; Grid.registration; Grid.inc]
 	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, C_NULL,
@@ -868,6 +868,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 # We are given a Julia image and use it to fill the GMT_IMAGE structure
 
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_bands = size(Img.image, 3)
+	if (Img.layout[2] == 'R')  n_rows, n_cols = n_cols, n_rows  end
 	family = GMT_IS_IMAGE
 	if (GMTver >= v"6.1" && (n_bands == 2 || n_bands == 4))	# Then we want the alpha layer together with data
 		family = family | GMT_IMAGE_ALPHA_LAYER
@@ -1872,13 +1873,19 @@ function gd2gmt(dataset; band=1, bands=Vector{Int}(), pad=2)
 	if (isa(dataset, Gdal.AbstractRasterBand))
 		Gdal.rasterio!(dataset, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, C_NULL, pad)
 	else
-		Gdal.rasterio!(dataset, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, 0, C_NULL, pad)
+		ds = (isa(dataset, Gdal.RasterDataset)) ? dataset.ds : dataset
+		Gdal.rasterio!(ds, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, 0, C_NULL, pad)
 	end
 
 	#Gdal.rasterio!(getband(dataset, 1), mat, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, C_NULL, 2)
 	#mat = readgd(dataset)
 	#mat = collect(reshape(mat, size(mat,1), size(mat,2)))
-	gt = getgeotransform(dataset)
+
+	try
+		global gt = getgeotransform(dataset)
+	catch
+		global gt = [0.5, 1.0, 0.0, size(mat,1)+0.5, 0.0, 1.0]	# Resort to no coords
+	end
 	x_inc, y_inc = gt[2], abs(gt[6])
 	x_min, y_max = gt[1], gt[4]
 	(is_grid) && (x_min += x_inc/2;	 y_max -= y_inc/2)	# Maitain the GMT default that grids are gridline reg.
