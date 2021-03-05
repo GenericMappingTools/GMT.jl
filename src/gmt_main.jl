@@ -790,7 +790,7 @@ end
 function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
-	mode = (Grid.layout != "BRB") ? GMT_CONTAINER_AND_DATA : GMT_CONTAINER_ONLY
+	mode = (Grid.layout != "TRB") ? GMT_CONTAINER_AND_DATA : GMT_CONTAINER_ONLY
 
 	hdr = [Grid.range; Grid.registration; Grid.inc]
 	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, C_NULL,
@@ -817,6 +817,7 @@ function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 	else
 		Gb.data = pointer(Grid.z)
 		GMT_Set_AllocMode(API, GMT_IS_GRID, G)	# Otherwise memory already belongs to GMT
+		GMT_Set_Default(API, "API_GRID_LAYOUT", "TR");
 	end
 
 	h.z_min, h.z_max = hdr[5], hdr[6]		# Set the z_min, z_max
@@ -1889,12 +1890,14 @@ function gd2gmt(dataset; band=1, bands=Vector{Int}(), pad=2)
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
 	if (is_grid)
 		!isa(mat, Matrix) && (mat = reshape(mat, size(mat,1), size(mat,2)))
+		(eltype(mat) == Float64) && (mat = Float32.(mat))
 		O = mat2grid(mat; hdr=hdr, proj4=prj)
-		O.layout = "BRB"
+		O.layout = "TRB"
 	else
 		O = mat2img(mat; hdr=hdr, proj4=prj)
-		O.layout = "BRBa"
+		O.layout = "TRBa"
 	end
+	O.inc = [x_inc, y_inc]			# Reset because if pad != 0 they were recomputed inside the mat2? funs
 	O.pad = pad
 	return O
 end
