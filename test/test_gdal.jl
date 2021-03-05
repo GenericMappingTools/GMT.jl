@@ -17,14 +17,15 @@ Gdal.GDALDestroyDriverManager()
 	$n_ogr_driver OGR drivers found
 	"""
 
-	dataset = creategd("", driver = getdriver("MEM"), width=240, height=180, nbands=1, dtype=Float64)
+	dataset = creategd("", driver = getdriver("MEM"), width=241, height=181, nbands=1, dtype=Float64)
 	crs = toWKT(importPROJ4("+proj=latlong"));
 	crs = toWKT(importPROJ4("+proj=latlong"), true);
-	writegd!(dataset, rand(180,240), 1)
+	writegd!(dataset, rand(181,241), 1)
 	setproj!(dataset, crs)
 	setgeotransform!(dataset, [-4.016666666666667, 0.03333333333333333, 0.0, -3.01666666666, 0.0, 0.03333333333333333])
 
 	show(dataset)
+	G = gd2gmt(dataset);
 
 	#readgd(dataset);		# Ambiguo
 	band = getband(dataset);
