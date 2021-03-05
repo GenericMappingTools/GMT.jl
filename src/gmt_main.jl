@@ -16,6 +16,7 @@ mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	y_unit::String
 	z_unit::String
 	layout::String
+	pad::Int
 end
 Base.size(G::GMTgrid) = size(G.z)
 Base.getindex(G::GMTgrid{T,N}, inds::Vararg{Int,N}) where {T,N} = G.z[inds...]
@@ -24,7 +25,7 @@ Base.setindex!(G::GMTgrid{T,N}, val, inds::Vararg{Int,N}) where {T,N} = G.z[inds
 Base.BroadcastStyle(::Type{<:GMTgrid}) = Broadcast.ArrayStyle{GMTgrid}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTgrid}}, ::Type{ElType}) where ElType
 	G = find4similar(bc.args)		# Scan the inputs for the GMTgrid:
-	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.x, G.y, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.z_unit, G.layout)
+	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.x, G.y, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.z_unit, G.layout, G.pad)
 end
 
 find4similar(bc::Base.Broadcast.Broadcasted) = find4similar(bc.args)
@@ -51,6 +52,7 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	n_colors::Int
 	alpha::Array{UInt8,2}
 	layout::String
+	pad::Int
 end
 Base.size(I::GMTimage) = size(I.image)
 Base.getindex(I::GMTimage{T,N}, inds::Vararg{Int,N}) where {T,N} = I.image[inds...]
@@ -59,7 +61,7 @@ Base.setindex!(I::GMTimage{T,N}, val, inds::Vararg{Int,N}) where {T,N} = I.image
 Base.BroadcastStyle(::Type{<:GMTimage}) = Broadcast.ArrayStyle{GMTimage}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTimage}}, ::Type{ElType}) where ElType
 	I = find4similar(bc.args)		# Scan the inputs for the GMTimage:
-	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.x, I.y, similar(Array{ElType}, axes(bc)), I.colormap, I.n_colors, I.alpha, I.layout)
+	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.x, I.y, similar(Array{ElType}, axes(bc)), I.colormap, I.n_colors, I.alpha, I.layout, I.pad)
 end
 find4similar(I::GMTimage, rest) = I
 
@@ -483,7 +485,7 @@ function get_grid(API::Ptr{Nothing}, object)
 	#t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
 
 	# Return grids via a float matrix in a struct
-	out = GMTgrid("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", X, Y, z, "", "", "", "")
+	out = GMTgrid("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", X, Y, z, "", "", "", "", 0)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT != C_NULL)    out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)      end
@@ -543,7 +545,7 @@ function get_image(API::Ptr{Nothing}, object)
 	# Return image via a uint8 matrix in a struct
 	cinterp = (I.color_interp != C_NULL) ? unsafe_string(I.color_interp) : ""
 	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, X, Y,
-	               t, colormap, n_colors, Array{UInt8,2}(undef,1,1), layout)
+	               t, colormap, n_colors, Array{UInt8,2}(undef,1,1), layout, 0)
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)
@@ -778,7 +780,7 @@ function grid_init(API::Ptr{Nothing}, grd_box, dir::Integer=GMT_IN, pad::Int=2)
 		return GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT,
 		                       C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
 	end
-	(!isa(grd_box, GMTgrid) && !isa(grd_box, Array{GMTgrid,1})) &&
+	(!isa(grd_box, GMTgrid) && !isa(grd_box, Vector{GMTgrid})) &&
 		error("grd_init: input ($(typeof(grd_box))) is not a GRID container type")
 
 	grid_init(API, grd_box, pad)
@@ -815,6 +817,7 @@ function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 	else
 		Gb.data = pointer(Grid.z)
 		GMT_Set_AllocMode(API, GMT_IS_GRID, G)	# Otherwise memory already belongs to GMT
+		GMT_Set_Default(API, "API_GRID_LAYOUT", "TR");
 	end
 
 	h.z_min, h.z_max = hdr[5], hdr[6]		# Set the z_min, z_max
@@ -1499,7 +1502,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-I = mat2img(mat::Array{<:Unsigned}; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+I = mat2img(mat::Array{<:Unsigned}; x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 
     Take a 2D 'mat' array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
 	and return a GMTimage type.
@@ -1508,7 +1511,7 @@ I = mat2img(mat::Array{<:Unsigned}; x=nothing, y=nothing, hdr=nothing, proj4::St
 	When 'mat' is a 3D UInt16 array we automatically compute a UInt8 RGB image. In that case 'cmap' is ignored.
 	But if no conversion is wanted use option 'noconv=true'
 
-I = mat2img(mat::Array{UInt16}; x=nothing, y=nothing, hdr=nothing, proj4::String="", wkt::String="", kw...)
+I = mat2img(mat::Array{UInt16}; x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", kw...)
 
 	Take a 'mat' array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
 	If the kw variable 'stretch' is used, we stretch the intervals in 'stretch' to [0 255].
@@ -1548,7 +1551,7 @@ function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vec
 	if ((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing)  mem_layout = string(val)  end
 
 	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], 1, NaN, color_interp,
-	             x,y,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout)
+	             x,y,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1750,7 +1753,7 @@ function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); 
 		(fill_val != 0) && fill!(mat, fill_val)
 	end
 
-	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, mat, "x", "y", "z", "")
+	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, mat, "x", "y", "z", "", 0)
 end
 
 function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
@@ -1843,29 +1846,60 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Vector{Float64}(), y=Vector{Float64}())
 	return x, y, hdr, x_inc, y_inc
 end
 
-# ---------------------------------------------------------------------------------------------------
-function gd2gmt_grid(dataset)
-	# Convert data in a GDAL dataset into a GMTgrid type
-	xSize, ySize = Gdal.width(dataset), Gdal.height(dataset)
-	mat = zeros(Gdal.pixeltype(getband(dataset, 1)), xSize+4, ySize+4)
-	Gdal.rasterio!(dataset, mat, [1], 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, 0, C_NULL, 2)
-	#Gdal.rasterio!(getband(dataset, 1), mat, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, C_NULL, 2)
+"""
+O = gd2gmt(dataset; band=1, bands=[], pad=2)
 
+	Convert a GDAL raster dataset into either a GMTgrid (if type is Int16 or Float) or a GMTimage type
+	Use BAND to select a single band of the dataset. When you know that the dataset contains several
+	bands of an image, use the kwarg BANDS with a vector the wished bands (1, 3 or 4 bands only).
+"""
+# ---------------------------------------------------------------------------------------------------
+function gd2gmt(dataset; band=1, bands=Vector{Int}(), pad=2)
+	# Convert data in a GDAL dataset into a GMTgrid type
+	xSize, ySize, nBands = Gdal.width(dataset), Gdal.height(dataset), Gdal.nraster(dataset)
+	dType = Gdal.pixeltype(getband(dataset, 1))
+	is_grid = (sizeof(dType) >= 4 || dType == Int16) ? true : false		# Simple (too simple?) heuristic
+	if (is_grid)
+		(length(bands) > 1) && error("For grids only one band request is allowed")
+		(!isempty(bands)) && (band = bands[1])
+		in_bands = [band]
+	else
+		(length(bands) == 2 || length(bands) > 4) && error("For images only 1, 3 or 4 bands are allowed")
+		in_bands = (isempty(bands)) ? [band] : bands
+	end
+	ncol, nrow = xSize+2pad, ySize+2pad
+	mat = (dataset isa Gdal.AbstractRasterBand) ? zeros(dType, ncol, nrow) : zeros(dType, ncol, nrow, length(in_bands)) 
+	if (isa(dataset, Gdal.AbstractRasterBand))
+		Gdal.rasterio!(dataset, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, C_NULL, pad)
+	else
+		Gdal.rasterio!(dataset, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, 0, C_NULL, pad)
+	end
+
+	#Gdal.rasterio!(getband(dataset, 1), mat, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, C_NULL, 2)
 	#mat = readgd(dataset)
 	#mat = collect(reshape(mat, size(mat,1), size(mat,2)))
 	gt = getgeotransform(dataset)
 	x_inc, y_inc = gt[2], abs(gt[6])
-	x_min = gt[1] + x_inc/2
-	y_max = gt[4] - y_inc/2
-	x_max = x_min + (size(mat,1) - 5) * x_inc
-	y_min = y_max - (size(mat,2) - 5) * y_inc
-	z_min, z_max = extrema_nan(mat)
-	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, 0.0, x_inc, y_inc]
+	x_min, y_max = gt[1], gt[4]
+	(is_grid) && (x_min += x_inc/2;	 y_max -= y_inc/2)	# Maitain the GMT default that grids are gridline reg.
+	x_max = x_min + (size(mat,1) - 1 - 2pad) * x_inc
+	y_min = y_max - (size(mat,2) - 1 - 2pad) * y_inc
+	z_min, z_max = (is_grid) ? extrema_nan(mat) : extrema(mat)
+	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, Float64(is_grid), x_inc, y_inc]
 	prj = getproj(dataset)
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
-	G = mat2grid(mat; hdr, proj4=prj)
-	G.layout = "BRB"
-	return G
+	if (is_grid)
+		!isa(mat, Matrix) && (mat = reshape(mat, size(mat,1), size(mat,2)))
+		(eltype(mat) == Float64) && (mat = Float32.(mat))
+		O = mat2grid(mat; hdr=hdr, proj4=prj)
+		O.layout = "TRB"
+	else
+		O = mat2img(mat; hdr=hdr, proj4=prj)
+		O.layout = "TRBa"
+	end
+	O.inc = [x_inc, y_inc]			# Reset because if pad != 0 they were recomputed inside the mat2? funs
+	O.pad = pad
+	return O
 end
 
 #= ---------------------------------------------------------------------------------------------------
