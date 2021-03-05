@@ -17,6 +17,7 @@
    y_units::String            # Units of YY axis (Optional)
    z_units::String            # Units of ZZ axis (Optional)
    layout::String             # A three character string describing the grid memory layout
+   pad::Int                   # When != 0 means that the array is placed in a padded array of PAD rows/cols
 end</code></pre><h2 id="Image-type"><a class="docs-heading-anchor" href="#Image-type">Image type</a><a id="Image-type-1"></a><a class="docs-heading-anchor-permalink" href="#Image-type" title="Permalink"></a></h2><pre><code class="language-none">type GMTimage                 # The type holding a local header and data of a GMT image
    proj4::String              # Projection string in PROJ4 syntax (Optional)
    wkt::String                # Projection string in WKT syntax (Optional)
@@ -32,6 +33,7 @@ end</code></pre><h2 id="Image-type"><a class="docs-heading-anchor" href="#Image-
    colormap::Array{Clong,1}   # 
    alpha::Array{UInt8,2}      # A [n_rows x n_columns] alpha array
    layout::String             # A four character string describing the image memory layout
+   pad::Int                   # When != 0 means that the array is placed in a padded array of PAD rows/cols
 end</code></pre><h2 id="Dataset-type"><a class="docs-heading-anchor" href="#Dataset-type">Dataset type</a><a id="Dataset-type-1"></a><a class="docs-heading-anchor-permalink" href="#Dataset-type" title="Permalink"></a></h2><pre><code class="language-none">type GMTdataset
     data::Array{Float64,2}     # Mx2 Matrix with segment data
     text::Array{Any,1}         # Array with text after data coordinates (mandatory only when plotting Text)
@@ -57,4 +59,4 @@ end</code></pre><h2 id="Postscript-type"><a class="docs-heading-anchor" href="#P
     length::Int             # Byte length of postscript
     mode::Int               # 1 = Has header, 2 = Has trailer, 3 = Has both
     comment::Array{Any,1}   # Cell array with any comments
-end</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../text/">« text</a><a class="docs-footer-nextpage" href="../">Index »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 4 March 2021 03:12">Thursday 4 March 2021</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../text/">« text</a><a class="docs-footer-nextpage" href="../">Index »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Friday 5 March 2021 03:28">Friday 5 March 2021</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
