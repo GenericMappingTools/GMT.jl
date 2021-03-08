@@ -91,6 +91,9 @@ CPLErrorReset() = ccall((:CPLErrorReset, libgdal), Cvoid, ())
 CPLGetLastErrorType() = ccall((:CPLGetLastErrorType, libgdal), Cint, ())
 CPLGetLastErrorNo()   = ccall((:CPLGetLastErrorNo, libgdal), Cint, ())
 CPLGetLastErrorMsg()  = unsafe_string(ccall((:CPLGetLastErrorMsg, libgdal), Cstring, ()))
+CPLPushErrorHandler(arg1) = ccall((:CPLPushErrorHandler, libgdal), Cvoid, (Ptr{Cvoid},), arg1)
+CPLQuietErrorHandler(a1, a2, a3) = ccall((:CPLQuietErrorHandler, libgdal), Cvoid, (UInt32, Cint, Cstring), a1, a2, a3)
+CPLPopErrorHandler() = ccall((:CPLPopErrorHandler, libgdal), Cvoid, ())
 
 VSIFree(arg1) = aftercare(ccall((:VSIFree, libgdal), Cvoid, (Ptr{Cvoid},), arg1))
 
@@ -829,6 +832,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return dataset
 	end
 
+	write(ds::AbstractDataset, fname::AbstractString; kw...) = destroy(unsafe_copy(ds, filename=fname; kw...))
+
 	getdriver(dataset::AbstractDataset) = Driver(GDALGetDatasetDriver(dataset.ptr))
 	getdriver(i::Integer) = Driver(GDALGetDriver(i))
 	getdriver(name::AbstractString) = Driver(GDALGetDriverByName(name))
@@ -870,6 +875,12 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return result
 	end
 	gdalinfo(ds::IDataset, opts=String[]) = gdalinfo(Dataset(ds.ptr), opts)
+	function gdalinfo(fname::AbstractString, opts=String[])
+		CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))	# WTF is this needed?
+		o = gdalinfo(unsafe_read(fname; options=opts), opts)
+		CPLPopErrorHandler();
+		return o
+	end
 
 	function gdaldem(dataset::Dataset, processing::String, options=String[]; dest="/vsimem/tmp", colorfile=C_NULL)
 		if processing == "color-relief"

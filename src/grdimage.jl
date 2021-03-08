@@ -120,7 +120,10 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 		d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
 	end
 end
-isimgsize(I_G) = (I_G.range[2] - I_G.range[1]) == size(I_G,2) && (I_G.range[4] - I_G.range[3]) == size(I_G,1) 
+function isimgsize(I_G)
+	xy = (length(I_G.layout) > 1 && I_G.layout[2] == 'R') ? [1,2] : [2,1]	# 'R' means array is row major and first dim is xx
+	(I_G.range[2] - I_G.range[1]) == size(I_G, xy[1]) && (I_G.range[4] - I_G.range[3]) == size(I_G, xy[2])
+end
 
 # ---------------------------------------------------------------------------------------------------
 function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)

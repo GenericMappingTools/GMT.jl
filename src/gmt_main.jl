@@ -112,10 +112,13 @@ function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}
 end
 find4similar(D::GMTdataset, rest) = D
 
-GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, text, string(), Array{String,1}(), string(), string())
-GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], string(), Array{String,1}(), string(), string())
-GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
-GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
+GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, text, "", Vector{String}(), "", "")
+GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], "", Vector{String}(), "", "")
+GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Vector{String}(), "", Vector{String}(), "", "")
+GMTdataset(data::Array{Float32,2}, text::Vector{String}) = GMTdataset(data, text, "", Vector{String}(), "", "")
+GMTdataset(data::Array{Float32,2}, text::String) = GMTdataset(data, [text], "", Vector{String}(), "", "")
+GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Vector{String}(), "", Vector{String}(), "", "")
+GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Vector{String}(), "", Vector{String}(), "", "")
 
 struct WrapperPluto fname::String end
 
@@ -791,6 +794,7 @@ function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
 	mode = (length(Grid.layout) > 1 && Grid.layout[2] == 'R') ? GMT_CONTAINER_ONLY : GMT_CONTAINER_AND_DATA
+	(mode == GMT_CONTAINER_ONLY) && (pad = Grid.pad)		# Here we must follow what the Grid says it has
 
 	hdr = [Grid.range; Grid.registration; Grid.inc]
 	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, C_NULL,
@@ -805,7 +809,7 @@ function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 		t = unsafe_wrap(Array, Gb.data, h.size)
 
 		k = 1
-		if (isa(grd, Float32))
+		if (eltype(grd) == Float32)
 			for col = 1:n_cols, row = n_rows:-1:1
 				t[GMT_IJP(row, col, mx, pad, pad)] = grd[k];		k += 1
 			end
@@ -817,7 +821,7 @@ function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 	else
 		Gb.data = pointer(Grid.z)
 		GMT_Set_AllocMode(API, GMT_IS_GRID, G)	# Otherwise memory already belongs to GMT
-		GMT_Set_Default(API, "API_GRID_LAYOUT", "TR");
+		#GMT_Set_Default(API, "API_GRID_LAYOUT", "TR");
 	end
 
 	h.z_min, h.z_max = hdr[5], hdr[6]		# Set the z_min, z_max
@@ -881,7 +885,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	Ib = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
 	h = unsafe_load(Ib.header)
 
-	if (pad == 2)					# When we need to project
+	if (pad == 2 && Img.layout[2] != 'R')						# When we need to project
 		img_padded = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
 		mx = n_cols + 2pad;
 		nRGBA = (n_bands == 1) ? 1 : ((n_bands == 3) ? 3 : 4)	# Don't know if RGBA will work`
@@ -1845,68 +1849,6 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Vector{Float64}(), y=Vector{Float64}())
 	if (!isa(x, Vector{Float64}))  x = Float64.(x)  end
 	if (!isa(y, Vector{Float64}))  y = Float64.(y)  end
 	return x, y, hdr, x_inc, y_inc
-end
-
-"""
-O = gd2gmt(dataset; band=1, bands=[], pad=2)
-
-	Convert a GDAL raster dataset into either a GMTgrid (if type is Int16 or Float) or a GMTimage type
-	Use BAND to select a single band of the dataset. When you know that the dataset contains several
-	bands of an image, use the kwarg BANDS with a vector the wished bands (1, 3 or 4 bands only).
-"""
-# ---------------------------------------------------------------------------------------------------
-function gd2gmt(dataset; band=1, bands=Vector{Int}(), pad=2)
-	# Convert data in a GDAL dataset into a GMTgrid type
-	xSize, ySize, nBands = Gdal.width(dataset), Gdal.height(dataset), Gdal.nraster(dataset)
-	dType = Gdal.pixeltype(getband(dataset, 1))
-	is_grid = (sizeof(dType) >= 4 || dType == Int16) ? true : false		# Simple (too simple?) heuristic
-	if (is_grid)
-		(length(bands) > 1) && error("For grids only one band request is allowed")
-		(!isempty(bands)) && (band = bands[1])
-		in_bands = [band]
-	else
-		(length(bands) == 2 || length(bands) > 4) && error("For images only 1, 3 or 4 bands are allowed")
-		in_bands = (isempty(bands)) ? [band] : bands
-	end
-	ncol, nrow = xSize+2pad, ySize+2pad
-	mat = (dataset isa Gdal.AbstractRasterBand) ? zeros(dType, ncol, nrow) : zeros(dType, ncol, nrow, length(in_bands)) 
-	if (isa(dataset, Gdal.AbstractRasterBand))
-		Gdal.rasterio!(dataset, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, C_NULL, pad)
-	else
-		ds = (isa(dataset, Gdal.RasterDataset)) ? dataset.ds : dataset
-		Gdal.rasterio!(ds, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, 0, C_NULL, pad)
-	end
-
-	#Gdal.rasterio!(getband(dataset, 1), mat, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, C_NULL, 2)
-	#mat = readgd(dataset)
-	#mat = collect(reshape(mat, size(mat,1), size(mat,2)))
-
-	try
-		global gt = getgeotransform(dataset)
-	catch
-		global gt = [0.5, 1.0, 0.0, size(mat,1)+0.5, 0.0, 1.0]	# Resort to no coords
-	end
-	x_inc, y_inc = gt[2], abs(gt[6])
-	x_min, y_max = gt[1], gt[4]
-	(is_grid) && (x_min += x_inc/2;	 y_max -= y_inc/2)	# Maitain the GMT default that grids are gridline reg.
-	x_max = x_min + (size(mat,1) - 1 - 2pad) * x_inc
-	y_min = y_max - (size(mat,2) - 1 - 2pad) * y_inc
-	z_min, z_max = (is_grid) ? extrema_nan(mat) : extrema(mat)
-	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, Float64(is_grid), x_inc, y_inc]
-	prj = getproj(dataset)
-	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
-	if (is_grid)
-		!isa(mat, Matrix) && (mat = reshape(mat, size(mat,1), size(mat,2)))
-		(eltype(mat) == Float64) && (mat = Float32.(mat))
-		O = mat2grid(mat; hdr=hdr, proj4=prj)
-		O.layout = "TRB"
-	else
-		O = mat2img(mat; hdr=hdr, proj4=prj)
-		O.layout = "TRBa"
-	end
-	O.inc = [x_inc, y_inc]			# Reset because if pad != 0 they were recomputed inside the mat2? funs
-	O.pad = pad
-	return O
 end
 
 #= ---------------------------------------------------------------------------------------------------

@@ -76,7 +76,7 @@ export
 	gd2gmt, mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, geodetic2enu, cpt4dcw,
 	creategd, getband, getdriver, getproj, getgeotransform, toPROJ4, toWKT, importPROJ4, importWKT,
 	importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
-	readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!
+	readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, MODIS_L2
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -203,6 +203,7 @@ end
 if (GMTver >= v"6")		# Needed to cheat the autoregister autobot
 	include("get_enums.jl")
 	include("gdal.jl")
+	include("gdal_utils.jl")
 	using GMT.Gdal
 end
 
