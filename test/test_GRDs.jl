@@ -6,6 +6,10 @@
 	@assert(r[1].data == r2[1].data)
 	grdinfo(mat2grid(rand(4,4)));				# Test the doubles branch in grid_init
 	grdinfo(mat2grid(rand(Float32,4,4)));		# Test the float branch in grid_init
+	nx = 3; ny = 2; rang = [1, nx, 1, ny, 0.0,1]; x = collect(1.0:nx); y = collect(1.0:ny); inc = [1.0, 1];
+	zz = rand(1:nx,ny,nx); z = zeros(Float32, ny+4, nx+4); z[3:end-2, 3:end-2] = zz;
+	G = GMT.GMTgrid("","",0,rang, inc,0,NaN,"","","",x,y,deepcopy(collect(z')),"","","","TRB",2)
+	grdinfo(G);
 
 	println("	GRD2CPT")
 	G=gmt("grdmath", "-R0/10/0/10 -I2 X");
