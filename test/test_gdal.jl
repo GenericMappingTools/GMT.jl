@@ -72,6 +72,8 @@ Gdal.GDALDestroyDriverManager()
 	ds_point = readgd("point.geojson");
 	ds_grid = gdalgrid(ds_point, ["-of","MEM","-outsize","3", "10","-txe","100","100.3","-tye","0","0.1"]);
 	@test getgeotransform(ds_grid) ≈ [100.0,0.1,0.0,0.0,0.0,0.01]
+	show(ds_point)
+	Gdal.getlayer(ds_point, 0)
 	#readgd(ds_grid)
 
 	ds_csv = gdalvectortranslate(ds_point, ["-f","CSV","-lco", "GEOMETRY=AS_XY"], dest = "point.csv");
@@ -85,4 +87,30 @@ Gdal.GDALDestroyDriverManager()
 	"""
 	=#
 
+	Gdal.createmultipoint([(1251243.7361610543, 598078.7958668759), (1250318.7031934808, 606404.0925750365)]);
+
+	@test GMT.R_inc_to_gd([0.01], " -R-11/-1/33/45")[1] == "-txe";
+
+	dataset = Gdal.create(Gdal.getdriver("MEMORY"))
+	layer = Gdal.createlayer(name = "point_out", dataset = dataset, geom = Gdal.wkbPoint)
+	Gdal.addfielddefn!(layer, "Name", Gdal.OFTString, nwidth = 32)
+	featuredefn = Gdal.layerdefn(layer)
+	@test Gdal.getname(featuredefn) == "point_out"
+	@test Gdal.nfeature(layer) == 0
+	Gdal.createfeature(layer) do feature
+		Gdal.setfield!(feature, Gdal.findfieldindex(feature, "Name"), "myname")
+		Gdal.setgeom!(feature, Gdal.createpoint(100.123, 0.123))
+	end
+	@test Gdal.nfeature(layer) == 1
+
+	ds_src = Gdal.read("utmsmall.tif")
+	Gdal.write(ds_src, "/vsimem/utmsmall.tif")
+	ds_copy = Gdal.read("/vsimem/utmsmall.tif")
+	@test Gdal.read(ds_src) == Gdal.read(ds_copy)
+
+	line = Gdal.createlinestring()
+	Gdal.addpoint!(line, 1116651.439379124,  637392.6969887456)
+	Gdal.OGR_G_SetPoints(line.ptr, 3, [1.,2,3], sizeof(Float64), [4.,5,6], sizeof(Float64), [7.,8,9], sizeof(Float64))
+	xx = Gdal.getpoint(line, 1)
+	@test xx == (2.0, 5.0, 8.0)
 end
