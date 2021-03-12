@@ -167,7 +167,7 @@ end
 G = MODIS_L2(fname::String, sds_name::String=""; V::Bool=false, inc=0.0, kw...)
 """
 # ---------------------------------------------------------------------------------------------------
-function MODIS_L2(fname::String, sds_name::String=""; V::Bool=false, inc=0.0, kw...)
+function MODIS_L2(fname::String, sds_name::String=""; quality::Int=0, V::Bool=false, inc=0.0, kw...)
 
 	d = KW(kw)
 	(inc >= 1) && error("Silly value $(inc) for the resolution of L2 MODIS grid")
@@ -195,7 +195,11 @@ function MODIS_L2(fname::String, sds_name::String=""; V::Bool=false, inc=0.0, kw
 	# Get the arrays with the data
 	(V) && println("Start extracting lon, lat, " * sds_name * " from L2 file")
 	Gqual= gd2gmt(sds_qual)
-	qual = (Gqual.image .== 0)
+	if (quality >= 0)
+		qual = (Gqual.image .< quality + 1)		# Select Best (0), Best+Intermediate (1) or all (2) quality data
+	else
+		qual = (Gqual.image .> -quality - 1)	# Select only, Intermediate+Lousy (-1) or Lousy (-2)
+	end
 	qual = reshape(qual, size(qual,1), size(qual,2))
 	G = gd2gmt(sds_bnd)
 	bnd_vals = G.z[qual]
@@ -218,6 +222,7 @@ function MODIS_L2(fname::String, sds_name::String=""; V::Bool=false, inc=0.0, kw
 		opt_R = opt_R[4:end]		# Because it already came with " -R....." from parse_R()
 	end
 
+	#R_inc_to_gd([inc], opt_R)
 	G = nearneighbor([lon lat bnd_vals], I=0.01, R=opt_R, S=0.05)
 end
 
@@ -225,4 +230,16 @@ function helper_find_sds(sds::String, info::String, ind_EOLs::Vector{UnitRange{I
 	((ind = findfirst("/" * sds, info)) === nothing) && error("The band name -- " * sds * " -- does not exist")
 	k = 1;	while (ind_EOLs[k][1] < ind[1])  k += 1  end
 	return info[ind_EOLs[k-1][1]+3:ind_EOLs[k][1]-1]	# +3 because 1 = \n and the other 2 are blanks
+end
+
+function R_inc_to_gd(inc::Vector{Float64}, opt_R::String="", BB::Vector{Float64}=Vector{Float64}())
+	# Convert an opt_R string or BB vector + inc vector in the equivalent set of options for GDAL
+	if (opt_R != "")
+		ind = findfirst("R", opt_R)
+		BB = (ind !== nothing) ? tryparse.(Float64, split(opt_R[ind[1]+1:end], '/')) : tryparse.(Float64, split(opt_R, '/'))
+	end
+	nx = round(Int32, (BB[2] - BB[1]) / inc[1])
+	inc_y = (length(inc) == 1) ? inc[1] : inc[2]
+	ny = round(Int32, (BB[4] - BB[3]) / inc_y)
+	return ["-txe", "$(BB[1])", "$(BB[2])", "-tye", "$(BB[3])", "$(BB[4])", "-outsize", "$(nx)", "$(ny)"]
 end

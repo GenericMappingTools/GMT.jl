@@ -54,6 +54,94 @@ const GDAL_OF_VERBOSE_ERROR = 0x40			# Emit error message in case of failed open
 
 const OAMS_TRADITIONAL_GIS_ORDER = Int32(0)
 
+const OFTInteger = UInt32(0)
+const OFTIntegerList = UInt32(1)
+const OFTReal = UInt32(2)
+const OFTRealList = UInt32(3)
+const OFTString = UInt32(4)
+const OFTStringList = UInt32(5)
+const OFTWideString = UInt32(6)
+const OFTWideStringList = UInt32(7)
+const OFTBinary = UInt32(8)
+const OFTDate = UInt32(9)
+const OFTTime = UInt32(10)
+const OFTDateTime = UInt32(11)
+const OFTInteger64 = UInt32(12)
+const OFTInteger64List = UInt32(13)
+const OFTMaxType = UInt32(13)
+
+const wkbUnknown = UInt32(0)
+const wkbPoint = UInt32(1)
+const wkbLineString = UInt32(2)
+const wkbPolygon = UInt32(3)
+const wkbMultiPoint = UInt32(4)
+const wkbMultiLineString = UInt32(5)
+const wkbMultiPolygon = UInt32(6)
+const wkbGeometryCollection = UInt32(7)
+const wkbCircularString = UInt32(8)
+const wkbCompoundCurve = UInt32(9)
+const wkbCurvePolygon = UInt32(10)
+const wkbMultiCurve = UInt32(11)
+const wkbMultiSurface = UInt32(12)
+const wkbCurve = UInt32(13)
+const wkbSurface = UInt32(14)
+const wkbPolyhedralSurface = UInt32(15)
+const wkbTIN = UInt32(16)
+const wkbTriangle = UInt32(17)
+const wkbNone = UInt32(100)
+const wkbLinearRing = UInt32(101)
+const wkbCircularStringZ = UInt32(1008)
+const wkbCompoundCurveZ = UInt32(1009)
+const wkbCurvePolygonZ = UInt32(1010)
+const wkbMultiCurveZ = UInt32(1011)
+const wkbMultiSurfaceZ = UInt32(1012)
+const wkbCurveZ = UInt32(1013)
+const wkbSurfaceZ = UInt32(1014)
+const wkbPolyhedralSurfaceZ = UInt32(1015)
+const wkbTINZ = UInt32(1016)
+const wkbTriangleZ = UInt32(1017)
+const wkbPointM = UInt32(2001)
+const wkbLineStringM = UInt32(2002)
+const wkbPolygonM = UInt32(2003)
+const wkbMultiPointM = UInt32(2004)
+const wkbMultiLineStringM = UInt32(2005)
+const wkbMultiPolygonM = UInt32(2006)
+const wkbGeometryCollectionM = UInt32(2007)
+const wkbCircularStringM = UInt32(2008)
+const wkbCompoundCurveM = UInt32(2009)
+const wkbCurvePolygonM = UInt32(2010)
+const wkbMultiCurveM = UInt32(2011)
+const wkbMultiSurfaceM = UInt32(2012)
+const wkbCurveM = UInt32(2013)
+const wkbSurfaceM = UInt32(2014)
+const wkbPolyhedralSurfaceM = UInt32(2015)
+const wkbTINM = UInt32(2016)
+const wkbTriangleM = UInt32(2017)
+const wkbPointZM = UInt32(3001)
+const wkbLineStringZM = UInt32(3002)
+const wkbPolygonZM = UInt32(3003)
+const wkbMultiPointZM = UInt32(3004)
+const wkbMultiLineStringZM = UInt32(3005)
+const wkbMultiPolygonZM = UInt32(3006)
+const wkbGeometryCollectionZM = UInt32(3007)
+const wkbCircularStringZM = UInt32(3008)
+const wkbCompoundCurveZM = UInt32(3009)
+const wkbCurvePolygonZM = UInt32(3010)
+const wkbMultiCurveZM = UInt32(3011)
+const wkbMultiSurfaceZM = UInt32(3012)
+const wkbCurveZM = UInt32(3013)
+const wkbSurfaceZM = UInt32(3014)
+const wkbPolyhedralSurfaceZM = UInt32(3015)
+const wkbTINZM = UInt32(3016)
+const wkbTriangleZM = UInt32(3017)
+const wkbPoint25D = UInt32(2147483649)
+const wkbLineString25D = UInt32(2147483650)
+const wkbPolygon25D = UInt32(2147483651)
+const wkbMultiPoint25D = UInt32(2147483652)
+const wkbMultiLineString25D = UInt32(2147483653)
+const wkbMultiPolygon25D = UInt32(2147483654)
+const wkbGeometryCollection25D = UInt32(2147483655)
+
 struct GDALRasterIOExtraArg
 	nVersion::Cint
 	eResampleAlg::UInt32
@@ -91,11 +179,11 @@ CPLErrorReset() = ccall((:CPLErrorReset, libgdal), Cvoid, ())
 CPLGetLastErrorType() = ccall((:CPLGetLastErrorType, libgdal), Cint, ())
 CPLGetLastErrorNo()   = ccall((:CPLGetLastErrorNo, libgdal), Cint, ())
 CPLGetLastErrorMsg()  = unsafe_string(ccall((:CPLGetLastErrorMsg, libgdal), Cstring, ()))
-CPLPushErrorHandler(arg1) = ccall((:CPLPushErrorHandler, libgdal), Cvoid, (Ptr{Cvoid},), arg1)
+CPLPushErrorHandler(a1) = ccall((:CPLPushErrorHandler, libgdal), Cvoid, (Ptr{Cvoid},), a1)
 CPLQuietErrorHandler(a1, a2, a3) = ccall((:CPLQuietErrorHandler, libgdal), Cvoid, (UInt32, Cint, Cstring), a1, a2, a3)
 CPLPopErrorHandler() = ccall((:CPLPopErrorHandler, libgdal), Cvoid, ())
 
-VSIFree(arg1) = aftercare(ccall((:VSIFree, libgdal), Cvoid, (Ptr{Cvoid},), arg1))
+VSIFree(a1) = aftercare(ccall((:VSIFree, libgdal), Cvoid, (Ptr{Cvoid},), a1))
 
 function Base.showerror(io::IO, err::GDALError)
 	err = string("GDALError (", err.class, ", code ", err.code, "):\n\t", err.msg)
@@ -137,45 +225,42 @@ function maybe_throw()		# Check the last error type and throw a GDALError if it 
 	nothing
 end
 
-GDALDestroyDriver(arg1) = aftercare(ccall((:GDALDestroyDriver, libgdal), Cvoid, (Ptr{Cvoid},), arg1))
+GDALDestroyDriver(a1) = aftercare(ccall((:GDALDestroyDriver, libgdal), Cvoid, (Ptr{Cvoid},), a1))
 
-function GDALCreate(hDriver, arg1, arg2, arg3, arg4, arg5, arg6)
-	aftercare(ccall((:GDALCreate, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring, Cint, Cint, Cint, UInt32, Ptr{Cstring}), hDriver, arg1, arg2, arg3, arg4, arg5, arg6))
+function GDALCreate(hDriver, a1, a2, a3, a4, a5, a6)
+	aftercare(ccall((:GDALCreate, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring, Cint, Cint, Cint, UInt32, Ptr{Cstring}), hDriver, a1, a2, a3, a4, a5, a6))
 end
+
+GDALGetDataTypeByName(a1) = aftercare(ccall((:GDALGetDataTypeByName, libgdal), UInt32, (Cstring,), a1))
+GDALGetRasterBand(a1, a2) = aftercare(ccall((:GDALGetRasterBand, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), a1, a2))
 
 GDALSetProjection(a1, a2) = aftercare(ccall((:GDALSetProjection, libgdal), UInt32, (Ptr{Cvoid}, Cstring), a1, a2))
 
-function GDALGetRasterBand(arg1, arg2)
-	aftercare(ccall((:GDALGetRasterBand, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), arg1, arg2))
+GDALGetRasterDataType(a1) = aftercare(ccall((:GDALGetRasterDataType, libgdal), UInt32, (Ptr{Cvoid},), a1))
+GDALGetProjectionRef(a1) = aftercare(ccall((:GDALGetProjectionRef, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
+GDALGetDatasetDriver(a1) = aftercare(ccall((:GDALGetDatasetDriver, libgdal), Ptr{Cvoid}, (Ptr{Cvoid},), a1))
+GDALGetDriver(a1) = aftercare(ccall((:GDALGetDriver, libgdal), Ptr{Cvoid}, (Cint,), a1))
+GDALGetDriverByName(a1) = aftercare(ccall((:GDALGetDriverByName, libgdal), Ptr{Cvoid}, (Cstring,), a1))
+GDALGetDriverShortName(a1) = aftercare(ccall((:GDALGetDriverShortName, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
+GDALGetDriverLongName(a1) = aftercare(ccall((:GDALGetDriverLongName, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
+GDALGetDriverCreationOptionList(a1) = aftercare(ccall((:GDALGetDriverCreationOptionList, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
+GDALDatasetGetLayer(a1, a2) = aftercare(ccall((:GDALDatasetGetLayer, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), a1, a2))
+function GDALDatasetGetLayerByName(a1, a2)
+	aftercare(ccall((:GDALDatasetGetLayerByName, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), a1, a2))
 end
+GDALGetRasterBandXSize(a1) = aftercare(ccall((:GDALGetRasterBandXSize, libgdal), Cint, (Ptr{Cvoid},), a1))
+GDALGetRasterBandYSize(a1) = aftercare(ccall((:GDALGetRasterBandYSize, libgdal), Cint, (Ptr{Cvoid},), a1))
+GDALGetRasterXSize(a1)     = aftercare(ccall((:GDALGetRasterXSize, libgdal), Cint, (Ptr{Cvoid},), a1))
+GDALGetRasterYSize(a1)     = aftercare(ccall((:GDALGetRasterYSize, libgdal), Cint, (Ptr{Cvoid},), a1))
+GDALDatasetGetLayerCount(a1) = aftercare(ccall((:GDALDatasetGetLayerCount, libgdal), Cint, (Ptr{Cvoid},), a1))
+GDALGetRasterCount(a1)  = aftercare(ccall((:GDALGetRasterCount, libgdal), Cint, (Ptr{Cvoid},), a1))
+GDALGetFileList(a1)     = aftercare(ccall((:GDALGetFileList, libgdal), Ptr{Cstring}, (Ptr{Cvoid},), a1))
+GDALGetRasterAccess(a1) = aftercare(ccall((:GDALGetRasterAccess, libgdal), UInt32, (Ptr{Cvoid},), a1))
+GDALGetBandNumber(a1)   = aftercare(ccall((:GDALGetBandNumber, libgdal), Cint, (Ptr{Cvoid},), a1))
+GDALGetDriverCount()    = aftercare(ccall((:GDALGetDriverCount, libgdal), Cint, ()))
 
-GDALGetRasterDataType(arg1) = aftercare(ccall((:GDALGetRasterDataType, libgdal), UInt32, (Ptr{Cvoid},), arg1))
-GDALGetProjectionRef(arg1) = aftercare(ccall((:GDALGetProjectionRef, libgdal), Cstring, (Ptr{Cvoid},), arg1), false)
-GDALGetDatasetDriver(arg1) = aftercare(ccall((:GDALGetDatasetDriver, libgdal), Ptr{Cvoid}, (Ptr{Cvoid},), arg1))
-GDALGetDriver(arg1) = aftercare(ccall((:GDALGetDriver, libgdal), Ptr{Cvoid}, (Cint,), arg1))
-GDALGetDriverByName(arg1) = aftercare(ccall((:GDALGetDriverByName, libgdal), Ptr{Cvoid}, (Cstring,), arg1))
-GDALGetDriverShortName(arg1) = aftercare(ccall((:GDALGetDriverShortName, libgdal), Cstring, (Ptr{Cvoid},), arg1), false)
-GDALGetDriverLongName(arg1) = aftercare(ccall((:GDALGetDriverLongName, libgdal), Cstring, (Ptr{Cvoid},), arg1), false)
-GDALGetDriverCreationOptionList(arg1) = aftercare(ccall((:GDALGetDriverCreationOptionList, libgdal), Cstring, (Ptr{Cvoid},), arg1), false)
-function GDALDatasetGetLayer(arg1, arg2)
-	aftercare(ccall((:GDALDatasetGetLayer, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), arg1, arg2))
-end
-function GDALDatasetGetLayerByName(arg1, arg2)
-	aftercare(ccall((:GDALDatasetGetLayerByName, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), arg1, arg2))
-end
-GDALGetRasterBandXSize(arg1) = aftercare(ccall((:GDALGetRasterBandXSize, libgdal), Cint, (Ptr{Cvoid},), arg1))
-GDALGetRasterBandYSize(arg1) = aftercare(ccall((:GDALGetRasterBandYSize, libgdal), Cint, (Ptr{Cvoid},), arg1))
-GDALGetRasterXSize(arg1)     = aftercare(ccall((:GDALGetRasterXSize, libgdal), Cint, (Ptr{Cvoid},), arg1))
-GDALGetRasterYSize(arg1)     = aftercare(ccall((:GDALGetRasterYSize, libgdal), Cint, (Ptr{Cvoid},), arg1))
-GDALDatasetGetLayerCount(arg1) = aftercare(ccall((:GDALDatasetGetLayerCount, libgdal), Cint, (Ptr{Cvoid},), arg1))
-GDALGetRasterCount(arg1)  = aftercare(ccall((:GDALGetRasterCount, libgdal), Cint, (Ptr{Cvoid},), arg1))
-GDALGetFileList(arg1)     = aftercare(ccall((:GDALGetFileList, libgdal), Ptr{Cstring}, (Ptr{Cvoid},), arg1))
-GDALGetRasterAccess(arg1) = aftercare(ccall((:GDALGetRasterAccess, libgdal), UInt32, (Ptr{Cvoid},), arg1))
-GDALGetBandNumber(arg1)   = aftercare(ccall((:GDALGetBandNumber, libgdal), Cint, (Ptr{Cvoid},), arg1))
-GDALGetDriverCount()      = aftercare(ccall((:GDALGetDriverCount, libgdal), Cint, ()))
-
-function GDALGetRasterColorInterpretation(arg1)
-	aftercare(ccall((:GDALGetRasterColorInterpretation, libgdal), UInt32, (Ptr{Cvoid},), arg1))
+function GDALGetRasterColorInterpretation(a1)
+	aftercare(ccall((:GDALGetRasterColorInterpretation, libgdal), UInt32, (Ptr{Cvoid},), a1))
 end
 
 function GDALGetColorInterpretationName(a1)
@@ -185,11 +270,11 @@ function GDALGetPaletteInterpretationName(a1)
 	aftercare(ccall((:GDALGetPaletteInterpretationName, libgdal), Cstring, (UInt32,), a1), false)
 end
 
-function GDALGetGeoTransform(arg1, arg2)
-	aftercare(ccall((:GDALGetGeoTransform, libgdal), UInt32, (Ptr{Cvoid}, Ptr{Cdouble}), arg1, arg2))
+function GDALGetGeoTransform(a1, a2)
+	aftercare(ccall((:GDALGetGeoTransform, libgdal), UInt32, (Ptr{Cvoid}, Ptr{Cdouble}), a1, a2))
 end
-function GDALSetGeoTransform(arg1, arg2)
-	aftercare(ccall((:GDALSetGeoTransform, libgdal), UInt32, (Ptr{Cvoid}, Ptr{Cdouble}), arg1, arg2))
+function GDALSetGeoTransform(a1, a2)
+	aftercare(ccall((:GDALSetGeoTransform, libgdal), UInt32, (Ptr{Cvoid}, Ptr{Cdouble}), a1, a2))
 end
 
 function GDALOpenEx(pszFilename, nOpenFlags, papszAllowedDrivers, papszOpenOptions, papszSiblingFiles)
@@ -207,17 +292,24 @@ function GDALDatasetRasterIOEx(hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSiz
 	aftercare(ccall((:GDALDatasetRasterIOEx, libgdal), UInt32, (Ptr{Cvoid}, UInt32, Cint, Cint, Cint, Cint, Ptr{Cvoid}, Cint, Cint, UInt32, Cint, Ptr{Cint}, Clonglong, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}), hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nBandCount, panBandCount, nPixelSpace, nLineSpace, nBandSpace, psExtraArg))
 end
 
+function GDALDummyProgress(a1, a2, a3)
+	aftercare(ccall((:GDALDummyProgress, libgdal), Cint, (Cdouble, Cstring, Ptr{Cvoid}), a1, a2, a3))
+end
+function GDALCreateCopy(a1, a2, a3, a4, a5, a6, a7)
+	aftercare(ccall((:GDALCreateCopy, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring, Ptr{Cvoid}, Cint, Ptr{Cstring}, Ptr{Cvoid}, Ptr{Cvoid}), a1, a2, a3, a4, a5, a6, a7))
+end
+
 CPLSetConfigOption(a1, a2) = aftercare(ccall((:CPLSetConfigOption, libgdal), Cvoid, (Cstring, Cstring), a1, a2))
 
 OSRDestroySpatialReference(a1) = aftercare(ccall((:OSRDestroySpatialReference, libgdal), Cvoid, (Ptr{Cvoid},), a1))
-function OCTDestroyCoordinateTransformation(arg1)
-	aftercare(ccall((:OCTDestroyCoordinateTransformation, libgdal), Cvoid, (Ptr{Cvoid},), arg1))
+function OCTDestroyCoordinateTransformation(a1)
+	aftercare(ccall((:OCTDestroyCoordinateTransformation, libgdal), Cvoid, (Ptr{Cvoid},), a1))
 end
 
 OSRExportToWkt(a1, a2) = aftercare(ccall((:OSRExportToWkt, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cstring}), a1, a2))
 
-function OSRExportToPrettyWkt(arg1, arg2, arg3)
-	aftercare(ccall((:OSRExportToPrettyWkt, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cstring}, Cint), arg1, arg2, arg3))
+function OSRExportToPrettyWkt(a1, a2, a3)
+	aftercare(ccall((:OSRExportToPrettyWkt, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cstring}, Cint), a1, a2, a3))
 end
 
 OSRExportToProj4(a1, a2) = aftercare(ccall((:OSRExportToProj4, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cstring}), a1, a2))
@@ -231,18 +323,133 @@ function OSRSetAxisMappingStrategy(hSRS, strategy)
 	aftercare(ccall((:OSRSetAxisMappingStrategy, libgdal), Cvoid, (Ptr{Cvoid}, UInt32), hSRS, strategy))
 end
 
+OGR_F_Create(a1) = aftercare(ccall((:OGR_F_Create, libgdal), Ptr{Cvoid}, (Ptr{Cvoid},), a1))
+OGR_F_Destroy(a1) = aftercare(ccall((:OGR_F_Destroy, libgdal), Cvoid, (Ptr{Cvoid},), a1))
+OGR_F_GetGeometryRef(a1) = aftercare(ccall((:OGR_F_GetGeometryRef, libgdal), Ptr{Cvoid}, (Ptr{Cvoid},), a1))
+OGR_F_GetGeomFieldCount(hFeat) = aftercare(ccall((:OGR_F_GetGeomFieldCount, libgdal), Cint, (Ptr{Cvoid},), hFeat))
+OGR_F_GetFieldCount(a1) = aftercare(ccall((:OGR_F_GetFieldCount, libgdal), Cint, (Ptr{Cvoid},), a1))
+OGR_F_GetFieldDefnRef(a1, a2) = aftercare(ccall((:OGR_F_GetFieldDefnRef, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), a1, a2))
+OGR_F_GetFieldIndex(a1, a2) = aftercare(ccall((:OGR_F_GetFieldIndex, libgdal), Cint, (Ptr{Cvoid}, Cstring), a1, a2))
+OGR_F_IsFieldSet(a1, a2) = aftercare(ccall((:OGR_F_IsFieldSet, libgdal), Cint, (Ptr{Cvoid}, Cint), a1, a2))
+OGR_F_GetFieldAsInteger(a1, a2) = aftercare(ccall((:OGR_F_GetFieldAsInteger, libgdal), Cint, (Ptr{Cvoid}, Cint), a1, a2))
+OGR_F_GetFieldAsInteger64(a1, a2) = aftercare(ccall((:OGR_F_GetFieldAsInteger64, libgdal), Clonglong, (Ptr{Cvoid}, Cint), a1, a2))
+OGR_F_GetFieldAsDouble(a1, a2) = aftercare(ccall((:OGR_F_GetFieldAsDouble, libgdal), Cdouble, (Ptr{Cvoid}, Cint), a1, a2))
+OGR_F_GetFieldAsString(a1, a2) = aftercare(ccall((:OGR_F_GetFieldAsString, libgdal), Cstring, (Ptr{Cvoid}, Cint), a1, a2), false)
+OGR_F_GetFieldAsStringList(a1, a2) = aftercare(ccall((:OGR_F_GetFieldAsStringList, libgdal), Ptr{Cstring}, (Ptr{Cvoid}, Cint), a1, a2))
+function OGR_F_GetFieldAsIntegerList(a1, a2, a3)
+	aftercare(ccall((:OGR_F_GetFieldAsIntegerList, libgdal), Ptr{Cint}, (Ptr{Cvoid}, Cint, Ptr{Cint}), a1, a2, a3))
+end
+function OGR_F_GetFieldAsInteger64List(a1, a2, a3)
+	aftercare(ccall((:OGR_F_GetFieldAsInteger64List, libgdal), Ptr{Clonglong}, (Ptr{Cvoid}, Cint, Ptr{Cint}), a1, a2, a3))
+end
+function OGR_F_GetFieldAsDoubleList(a1, a2, a3)
+	aftercare(ccall((:OGR_F_GetFieldAsDoubleList, libgdal), Ptr{Cdouble}, (Ptr{Cvoid}, Cint, Ptr{Cint}), a1, a2, a3))
+end
+function OGR_F_GetFieldAsBinary(a1, a2, a3)
+	aftercare(ccall((:OGR_F_GetFieldAsBinary, libgdal), Ptr{Cuchar}, (Ptr{Cvoid}, Cint, Ptr{Cint}), a1, a2, a3))
+end
+function OGR_F_GetFieldAsDateTime(a1, a2, a3, a4, arg5, arg6, arg7, arg8, arg9)
+	aftercare(ccall((:OGR_F_GetFieldAsDateTime, libgdal), Cint, (Ptr{Cvoid}, Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), a1, a2, a3, a4, arg5, arg6, arg7, arg8, arg9))
+end
+function OGR_F_GetGeomFieldDefnRef(hFeat, iField)
+	aftercare(ccall((:OGR_F_GetGeomFieldDefnRef, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), hFeat, iField))
+end
+function OGR_F_GetGeomFieldRef(hFeat, iField)
+	aftercare(ccall((:OGR_F_GetGeomFieldRef, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), hFeat, iField))
+end
+OGR_F_SetGeometry(a1, a2) = aftercare(ccall((:OGR_F_SetGeometry, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), a1, a2))
+function OGR_F_SetGeomField(hFeat, iField, hGeom)
+	aftercare(ccall((:OGR_F_SetGeomField, libgdal), Cint, (Ptr{Cvoid}, Cint, Ptr{Cvoid}), hFeat, iField, hGeom))
+end
+
+OGR_FD_AddFieldDefn(a1, a2) = aftercare(ccall((:OGR_FD_AddFieldDefn, libgdal), Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}), a1, a2))
+OGR_FD_Destroy(a1) = aftercare(ccall((:OGR_FD_Destroy, libgdal), Cvoid, (Ptr{Cvoid},), a1))
+OGR_FD_GetFieldCount(a1) = aftercare(ccall((:OGR_FD_GetFieldCount, libgdal), Cint, (Ptr{Cvoid},), a1))
+OGR_FD_GetFieldDefn(a1, a2) = aftercare(ccall((:OGR_FD_GetFieldDefn, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), a1, a2))
+OGR_FD_GetFieldIndex(a1, a2) = aftercare(ccall((:OGR_FD_GetFieldIndex, libgdal), Cint, (Ptr{Cvoid}, Cstring), a1, a2))
 OGR_FD_GetName(a1) = aftercare(ccall((:OGR_FD_GetName, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
-OGR_L_GetName(a1)  = aftercare(ccall((:OGR_L_GetName, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
-OGR_Fld_GetNameRef(a1)    = aftercare(ccall((:OGR_Fld_GetNameRef, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
 OGR_FD_GetGeomType(a1)    = aftercare(ccall((:OGR_FD_GetGeomType, libgdal), UInt32, (Ptr{Cvoid},), a1))
-OGR_L_GetGeomType(a1)     = aftercare(ccall((:OGR_L_GetGeomType, libgdal), UInt32, (Ptr{Cvoid},), a1))
+OGR_FD_GetGeomFieldCount(hFDefn) = aftercare(ccall((:OGR_FD_GetGeomFieldCount, libgdal), Cint, (Ptr{Cvoid},), hFDefn))
+function OGR_FD_GetGeomFieldDefn(hFDefn, i)
+	aftercare(ccall((:OGR_FD_GetGeomFieldDefn, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), hFDefn, i))
+end
+OGR_Fld_Create(a1, a2) = aftercare(ccall((:OGR_Fld_Create, libgdal), Ptr{Cvoid}, (Cstring, UInt32), a1, a2))
+OGR_Fld_Destroy(a1) = aftercare(ccall((:OGR_Fld_Destroy, libgdal), Cvoid, (Ptr{Cvoid},), a1))
+OGR_Fld_GetDefault(hDefn) = aftercare(ccall((:OGR_Fld_GetDefault, libgdal), Cstring, (Ptr{Cvoid},), hDefn), false)
+OGR_Fld_GetNameRef(a1) = aftercare(ccall((:OGR_Fld_GetNameRef, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
+OGR_Fld_GetType(a1) = aftercare(ccall((:OGR_Fld_GetType, libgdal), UInt32, (Ptr{Cvoid},), a1))
+OGR_GFld_Destroy(a1) = aftercare(ccall((:OGR_GFld_Destroy, libgdal), Cvoid, (Ptr{Cvoid},), a1))
+OGR_GFld_GetType(a1) = aftercare(ccall((:OGR_GFld_GetType, libgdal), UInt32, (Ptr{Cvoid},), a1))
+function OGR_Fld_Set(a1, a2, a3, a4, a5, a6)
+	aftercare(ccall((:OGR_Fld_Set, libgdal), Cvoid, (Ptr{Cvoid}, Cstring, UInt32, Cint, Cint, UInt32), a1, a2, a3, a4, a5, a6))
+end
+OGR_G_AddGeometryDirectly(a1, a2) = aftercare(ccall((:OGR_G_AddGeometryDirectly, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), a1, a2))
+OGR_G_Clone(a1) = aftercare(ccall((:OGR_G_Clone, libgdal), Ptr{Cvoid}, (Ptr{Cvoid},), a1))
+OGR_G_CreateGeometry(arg1) = aftercare(ccall((:OGR_G_CreateGeometry, libgdal), Ptr{Cvoid}, (UInt32,), arg1))
+OGR_G_DestroyGeometry(a1) = aftercare(ccall((:OGR_G_DestroyGeometry, libgdal), Cvoid, (Ptr{Cvoid},), a1))
+OGR_G_ExportToWkt(a1, a2) = aftercare(ccall((:OGR_G_ExportToWkt, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cstring}), a1, a2))
 OGR_G_GetGeometryType(a1) = aftercare(ccall((:OGR_G_GetGeometryType, libgdal), UInt32, (Ptr{Cvoid},), a1))
+OGR_G_GetGeometryCount(a1) = aftercare(ccall((:OGR_G_GetGeometryCount, libgdal), Cint, (Ptr{Cvoid},), a1))
+OGR_G_GetPointCount(a1) = aftercare(ccall((:OGR_G_GetPointCount, libgdal), Cint, (Ptr{Cvoid},), a1))
+OGR_G_GetX(a1, a2) = aftercare(ccall((:OGR_G_GetX, libgdal), Cdouble, (Ptr{Cvoid}, Cint), a1, a2))
+OGR_G_GetY(a1, a2) = aftercare(ccall((:OGR_G_GetY, libgdal), Cdouble, (Ptr{Cvoid}, Cint), a1, a2))
+OGR_G_GetZ(a1, a2) = aftercare(ccall((:OGR_G_GetZ, libgdal), Cdouble, (Ptr{Cvoid}, Cint), a1, a2))
+function OGR_G_GetPoint(a1, iPoint, a2, a3, a4)
+	aftercare(ccall((:OGR_G_GetPoint, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}), a1, iPoint, a2, a3, a4))
+end
+function OGR_G_SetPoints(hGeom, nPointsIn, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride)
+	aftercare(ccall((:OGR_G_SetPoints, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Ptr{Cvoid}, Cint, Ptr{Cvoid}, Cint, Ptr{Cvoid}, Cint), hGeom, nPointsIn, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride))
+end
+OGR_L_GetFeatureCount(a1, a2) = aftercare(ccall((:OGR_L_GetFeatureCount, libgdal), Clonglong, (Ptr{Cvoid}, Cint), a1, a2))
+OGR_L_GetName(a1)  = aftercare(ccall((:OGR_L_GetName, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
+OGR_L_GetGeomType(a1)  = aftercare(ccall((:OGR_L_GetGeomType, libgdal), UInt32, (Ptr{Cvoid},), a1))
+OGR_L_GetLayerDefn(a1) = aftercare(ccall((:OGR_L_GetLayerDefn, libgdal), Ptr{Cvoid}, (Ptr{Cvoid},), a1))
+OGR_L_GetNextFeature(a1) = aftercare(ccall((:OGR_L_GetNextFeature, libgdal), Ptr{Cvoid}, (Ptr{Cvoid},), a1))
+OGR_L_ResetReading(a1) = aftercare(ccall((:OGR_L_ResetReading, libgdal), Cvoid, (Ptr{Cvoid},), a1))
+OGR_L_SetFeature(a1, a2) = aftercare(ccall((:OGR_L_SetFeature, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), a1, a2))
 #OGR_GetFieldTypeName(a1)  = aftercare(ccall((:OGR_GetFieldTypeName, libgdal), Cstring, (UInt32,), a1), false)
 #OGR_GetFieldSubTypeName(a1) = aftercare(ccall((:OGR_GetFieldSubTypeName, libgdal), Cstring, (UInt32,), a1), false)
 OGRGetDriverCount() = aftercare(ccall((:OGRGetDriverCount, libgdal), Cint, ()))
 
-function OGR_L_GetFeatureCount(arg1, arg2)
-	aftercare(ccall((:OGR_L_GetFeatureCount, libgdal), Clonglong, (Ptr{Cvoid}, Cint), arg1, arg2))
+function OGR_G_AddPoint(a1, a2, a3, a4)
+	aftercare(ccall((:OGR_G_AddPoint, libgdal), Cvoid, (Ptr{Cvoid}, Cdouble, Cdouble, Cdouble), a1, a2, a3, a4))
+end
+function OGR_G_AddPoint_2D(a1, a2, a3)
+	aftercare(ccall((:OGR_G_AddPoint_2D, libgdal), Cvoid, (Ptr{Cvoid}, Cdouble, Cdouble), a1, a2, a3))
+end
+
+function OGR_L_FindFieldIndex(a1, a2, bExactMatch)
+	aftercare(ccall((:OGR_L_FindFieldIndex, libgdal), Cint, (Ptr{Cvoid}, Cstring, Cint), a1, a2, bExactMatch))
+end
+function OGR_L_CreateField(a1, a2, a3)
+	aftercare(ccall((:OGR_L_CreateField, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Cint), a1, a2, a3))
+end
+
+OGR_F_SetFieldInteger(a1, a2, a3) = aftercare(ccall((:OGR_F_SetFieldInteger, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Cint), a1, a2, a3))
+OGR_F_SetFieldInteger64(a1, a2, a3) = aftercare(ccall((:OGR_F_SetFieldInteger64, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Clonglong), a1, a2, a3))
+OGR_F_SetFieldDouble(a1, a2, a3) = aftercare(ccall((:OGR_F_SetFieldDouble, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Cdouble), a1, a2, a3))
+OGR_F_SetFieldString(a1, a2, a3) = aftercare(ccall((:OGR_F_SetFieldString, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Cstring), a1, a2, a3))
+function OGR_F_SetFieldIntegerList(a1, a2, a3, a4)
+	aftercare(ccall((:OGR_F_SetFieldIntegerList, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Cint, Ptr{Cint}), a1, a2, a3, a4))
+end
+function OGR_F_SetFieldInteger64List(a1, a2, a3, a4)
+	aftercare(ccall((:OGR_F_SetFieldInteger64List, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Cint, Ptr{Clonglong}), a1, a2, a3, a4))
+end
+function OGR_F_SetFieldDoubleList(a1, a2, a3, a4)
+	aftercare(ccall((:OGR_F_SetFieldDoubleList, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Cint, Ptr{Cdouble}), a1, a2, a3, a4))
+end
+function OGR_F_SetFieldStringList(a1, a2, a3)
+	aftercare(ccall((:OGR_F_SetFieldStringList, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Ptr{Cstring}), a1, a2, a3))
+end
+function OGR_F_SetFieldBinary(a1, a2, a3, a4)
+	aftercare(ccall((:OGR_F_SetFieldBinary, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Cint, Ptr{Cvoid}), a1, a2, a3, a4))
+end
+function OGR_F_SetFieldDateTime(a1, a2, a3, a4, a5, a6, a7, a8, a9)
+	aftercare(ccall((:OGR_F_SetFieldDateTime, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Cint, Cint, Cint, Cint, Cint, Cint, Cint), a1, a2, a3, a4, a5, a6, a7, a8, a9))
+end
+
+function GDALDatasetCreateLayer(a1, a2, a3, a4, a5)
+	aftercare(ccall((:GDALDatasetCreateLayer, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring, Ptr{Cvoid}, UInt32, Ptr{Cstring}), a1, a2, a3, a4, a5))
 end
 
 function GDALInfoOptionsNew(pArgv, psOFB)
@@ -250,10 +457,7 @@ function GDALInfoOptionsNew(pArgv, psOFB)
 end
 
 GDALInfoOptionsFree(psO) = aftercare(ccall((:GDALInfoOptionsFree, libgdal), Cvoid, (Ptr{Cvoid},), psO))
-
-function GDALInfo(hDataset, psO)
-	aftercare(ccall((:GDALInfo, libgdal), Cstring, (Ptr{Cvoid}, Ptr{Cvoid}), hDataset, psO), true)
-end
+GDALInfo(hDataset, psO) = aftercare(ccall((:GDALInfo, libgdal), Cstring, (Ptr{Cvoid}, Ptr{Cvoid}), hDataset, psO), true)
 
 function GDALTranslateOptionsNew(pArgv, psOFB)
 	aftercare(ccall((:GDALTranslateOptionsNew, libgdal), Ptr{Cvoid}, (Ptr{Cstring}, Ptr{Cvoid}), pArgv, psOFB))
@@ -344,6 +548,19 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		ptr::Ptr{Cvoid}
 	end
 
+	mutable struct FieldDefn <: AbstractFieldDefn
+		ptr::Ptr{Cvoid}
+	end
+
+	mutable struct IFieldDefnView <: AbstractFieldDefn
+		ptr::Ptr{Cvoid}
+		function IFieldDefnView(ptr::Ptr{Cvoid} = C_NULL)
+			fielddefn = new(ptr)
+			finalizer(destroy, fielddefn)
+			return fielddefn
+		end
+	end
+
 	mutable struct RasterBand{T} <: AbstractRasterBand{T}
 		ptr::Ptr{Cvoid}
 	end
@@ -381,6 +598,20 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		end
 	end
 
+	mutable struct Geometry <: AbstractGeometry
+		ptr::Ptr{Cvoid}
+		Geometry(ptr::Ptr{Cvoid} = C_NULL) = new(ptr)
+	end
+	
+	mutable struct IGeometry <: AbstractGeometry
+		ptr::Ptr{Cvoid}
+		function IGeometry(ptr::Ptr{Cvoid} = C_NULL)
+			geom = new(ptr)
+			finalizer(destroy, geom)
+			return geom
+		end
+	end
+
 	mutable struct FeatureLayer <: AbstractFeatureLayer
 		ptr::Ptr{Cvoid}
 	end
@@ -394,6 +625,40 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 			layer = new(ptr, ownedby, spatialref)
 			finalizer(destroy, layer)
 			return layer
+		end
+	end
+
+	mutable struct Feature
+		ptr::Ptr{Cvoid}
+	end
+	
+	mutable struct FeatureDefn <: AbstractFeatureDefn
+		ptr::Ptr{Cvoid}
+	end
+	
+	mutable struct IFeatureDefnView <: AbstractFeatureDefn
+		ptr::Ptr{Cvoid}
+		function IFeatureDefnView(ptr::Ptr{Cvoid} = C_NULL)
+			featuredefn = new(ptr)
+			finalizer(destroy, featuredefn)
+			return featuredefn
+		end
+	end
+
+	mutable struct IGeomFieldDefnView <: AbstractGeomFieldDefn
+		ptr::Ptr{Cvoid}
+		function IGeomFieldDefnView(ptr::Ptr{Cvoid} = C_NULL)
+			geomdefn = new(ptr)
+			finalizer(destroy, geomdefn)
+			return geomdefn
+		end
+	end
+
+	mutable struct GeomFieldDefn <: AbstractGeomFieldDefn
+		ptr::Ptr{Cvoid}
+		spatialref::AbstractSpatialRef
+		function GeomFieldDefn(ptr::Ptr{Cvoid}=C_NULL; spatialref::AbstractSpatialRef = SpatialRef())
+			return new(ptr, spatialref)
 		end
 	end
 
@@ -426,10 +691,32 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		GDT_Float32    => Float32,
 		GDT_Float64    => Float64)
 
+	macro gdal(args...)
+		@assert length(args) > 0
+		@assert args[1].head == :(::)
+		fhead = (args[1].args[1], libgdal)
+		returntype = args[1].args[2]
+		argtypes = Expr(:tuple, [esc(a.args[2]) for a in args[2:end]]...)
+		args = [esc(a.args[1]) for a in args[2:end]]
+		return quote ccall($fhead, $returntype, $argtypes, $(args...)) end
+	end
+
 	macro cplerr(code, message)
 		return quote
 			($(esc(code)) != CE_None) && error($message)
 		end
+	end
+
+	macro cplwarn(code, message)
+		return quote
+			if $(esc(code)) != GDAL.CE_None
+				@warn $message
+			end
+		end
+	end
+
+	macro cplprogress(progressfunc)
+		@cfunction($(esc(progressfunc)),Cint,(Cdouble,Cstring,Ptr{Cvoid}))
 	end
 
 	macro ogrerr(code, message)
@@ -478,6 +765,74 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		result = GDALSetProjection(dataset.ptr, projstring)
 		@cplerr result "Could not set projection"
 		return dataset
+	end
+
+	function createlayer(; name::AbstractString="", dataset::AbstractDataset=create(getdriver("Memory")),
+		geom::UInt32=wkbUnknown, spatialref::AbstractSpatialRef=SpatialRef(), options=Ptr{Cstring}(C_NULL))
+		return IFeatureLayer(GDALDatasetCreateLayer(dataset.ptr, name, spatialref.ptr, geom, options),
+							 ownedby=dataset, spatialref=spatialref)
+	end
+	#= function unsafe_createlayer(; name::AbstractString="", dataset::AbstractDataset=create(getdriver("Memory")),
+		geom::UInt32=wkbUnknown, spatialref::AbstractSpatialRef=SpatialRef(), options=Ptr{Cstring}(C_NULL))
+	return FeatureLayer(GDAL.gdaldatasetcreatelayer(dataset.ptr, name, spatialref.ptr, geom, options))
+	end =#
+
+	unsafe_createfielddefn(name::AbstractString, etype::UInt32) = FieldDefn(OGR_Fld_Create(name, etype))
+
+	function addfielddefn!(layer::AbstractFeatureLayer, name::AbstractString, etype::UInt32; nwidth::Integer=0,
+						   nprecision::Integer=0, justify::UInt32=UInt32(0), approx::Bool=false)
+		fielddefn = unsafe_createfielddefn(name, etype)
+		setparams!(fielddefn, name, etype, nwidth=nwidth, nprecision=nprecision, justify=justify)
+		addfielddefn!(layer, fielddefn)
+		destroy(fielddefn)
+		layer
+	end
+
+	function addfielddefn!(featuredefn::FeatureDefn, fielddefn::FieldDefn)
+		OGR_FD_AddFieldDefn(featuredefn.ptr, fielddefn.ptr)
+		return featuredefn
+	end
+
+	function addfielddefn!(layer::AbstractFeatureLayer, field::AbstractFieldDefn, approx::Bool=false)
+		result = OGR_L_CreateField(layer.ptr, field.ptr, approx)
+		@ogrerr result "Failed to create new field"
+		return layer
+	end
+
+	function createfeature(f::Function, featuredefn::FeatureDefn)
+		feature = unsafe_createfeature(featuredefn)
+		reference(featuredefn)
+		try
+			f(feature)
+		finally
+			destroy(feature)
+			dereference(featuredefn)
+		end
+	end
+
+	unsafe_createfeature(layer::AbstractFeatureLayer) = unsafe_createfeature(layerdefn(layer))
+	unsafe_createfeature(featuredefn::AbstractFeatureDefn) = Feature(Ptr{Cvoid}(OGR_F_Create(featuredefn.ptr)))
+
+	function createfeature(f::Function, layer::AbstractFeatureLayer)
+		feature = unsafe_createfeature(layer)
+		try
+			f(feature)
+			setfeature!(layer, feature)
+		finally
+			destroy(feature)
+		end
+	end
+
+	function setfeature!(layer::AbstractFeatureLayer, feature::Feature)
+		result = OGR_L_SetFeature(layer.ptr, feature.ptr)
+		@ogrerr result "Failed to set feature."
+		return layer
+	end
+
+	function setparams!(fielddefn::FieldDefn, name::AbstractString, etype::UInt32;
+						nwidth::Integer=0, nprecision::Integer=0, justify::UInt32=UInt32(0))
+		OGR_Fld_Set(fielddefn.ptr, name, etype, nwidth, nprecision, justify)
+		return fielddefn
 	end
 
 	function _dataset_type(ds::AbstractDataset)
@@ -538,51 +893,49 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		layer.spatialref = SpatialRef()
 	end
 
-#=
-	function destroy(feature::Feature)
-		GDAL.ogr_f_destroy(feature.ptr)
-		feature.ptr = C_NULL
-	end
-
-	function destroy(featuredefn::FeatureDefn)
-		GDAL.ogr_fd_destroy(featuredefn.ptr)
-		featuredefn.ptr = C_NULL
-		return featuredefn
-	end
-
 	function destroy(featuredefn::IFeatureDefnView)
 		featuredefn.ptr = C_NULL
 		return featuredefn
 	end
 
+	function destroy(feature::Feature)
+		OGR_F_Destroy(feature.ptr)
+		feature.ptr = C_NULL
+	end
+
+	function destroy(featuredefn::FeatureDefn)
+		OGR_FD_Destroy(featuredefn.ptr)
+		featuredefn.ptr = C_NULL
+		return featuredefn
+	end
+
 	function destroy(geom::AbstractGeometry)
-		GDAL.ogr_g_destroygeometry(geom.ptr)
+		OGR_G_DestroyGeometry(geom.ptr)
 		geom.ptr = C_NULL
 	end
 
 	function destroy(fielddefn::FieldDefn)
-		GDAL.ogr_fld_destroy(fielddefn.ptr)
+		OGR_Fld_Destroy(fielddefn.ptr)
 		fielddefn.ptr = C_NULL
 		return fielddefn
 	end
-	
-	function destroy(fielddefn::IFieldDefnView)
-		fielddefn.ptr = C_NULL
-		return fielddefn
-	end	
 
 	function destroy(geomdefn::GeomFieldDefn)
-		GDAL.ogr_gfld_destroy(geomdefn.ptr)
+		OGR_GFld_Destroy(geomdefn.ptr)
 		geomdefn.ptr = C_NULL
 		geomdefn.spatialref = SpatialRef()
 		return geomdefn
 	end
 
+	function destroy(fielddefn::IFieldDefnView)
+		fielddefn.ptr = C_NULL
+		return fielddefn
+	end	
+
 	function destroy(geomdefn::IGeomFieldDefnView)
 		geomdefn.ptr = C_NULL
 		return geomdefn
 	end
-=#
 
 	function create(fname::AbstractString; driver::Driver=identifydriver(fname), width::Integer=0,
 		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=true)
@@ -834,6 +1187,13 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	write(ds::AbstractDataset, fname::AbstractString; kw...) = destroy(unsafe_copy(ds, filename=fname; kw...))
 
+	function unsafe_copy(dataset::AbstractDataset; filename::AbstractString=string("/vsimem/$(gensym())"),
+		driver::Driver=getdriver(dataset), strict::Bool=false, options=Ptr{Cstring}(C_NULL),
+		progressfunc::Function=GDALDummyProgress, progressdata=C_NULL)
+		return Dataset(GDALCreateCopy(driver.ptr, filename, dataset.ptr, strict, options,
+		               @cplprogress(progressfunc), progressdata))
+	end
+
 	getdriver(dataset::AbstractDataset) = Driver(GDALGetDatasetDriver(dataset.ptr))
 	getdriver(i::Integer) = Driver(GDALGetDriver(i))
 	getdriver(name::AbstractString) = Driver(GDALGetDriverByName(name))
@@ -841,6 +1201,28 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	getband(dataset::AbstractDataset, i::Integer=1) = IRasterBand(GDALGetRasterBand(dataset.ptr, i), ownedby=dataset)
 	getband(ds::RasterDataset, i::Integer=1) = getband(ds.ds, i)
 	getproj(dataset::AbstractDataset) = GDALGetProjectionRef(dataset.ptr)
+
+	getpoint(geom::AbstractGeometry, i::Integer) = getpoint!(geom, i, Ref{Cdouble}(), Ref{Cdouble}(), Ref{Cdouble}())
+	function getpoint!(geom::AbstractGeometry, i::Integer, x, y, z)
+		OGR_G_GetPoint(geom.ptr, i, x, y, z)
+		return (x[], y[], z[])
+	end
+	getx(geom::AbstractGeometry, i::Integer) = OGR_G_GetX(geom.ptr, i)
+	gety(geom::AbstractGeometry, i::Integer) = GDAL.ogr_g_gety(geom.ptr, i)
+	getz(geom::AbstractGeometry, i::Integer) = GDAL.ogr_g_getz(geom.ptr, i)
+#=
+function OGR_G_GetPoints(hGeom, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride)
+	aftercare(ccall((:OGR_G_GetPoints, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Cint, Ptr{Cvoid}, Cint, Ptr{Cvoid}, Cint),
+	                 hGeom, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride))
+end
+
+	getpoints(geom::AbstractGeometry) = getpoints!(geom, Ref{Cdouble}(), nx, Ref{Cdouble}(), nx, Ref{Cdouble}(), nz)
+	function getpoints!(hGeom::Ptr{Ptr{Cvoid}}, x, nXStride::Integer, y, nYStride::Integer, z, nZStride::Integer)
+		OGR_G_GetPoints(geom.ptr, x, nXstride, y, nYstride, z, nZstride)
+		return (x[], y[], z[])
+	end
+=#
+
 	#readraster(s::String; kwargs...) = RasterDataset(read(s; kwargs...))
 	readraster(args...; kwargs...) = RasterDataset(unsafe_read(args...; kwargs...))
 
@@ -927,6 +1309,15 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return unsafe_string(wktptr[])
 	end
 
+	function toWKT(geom::AbstractGeometry)
+		wkt_ptr = Ref(Cstring(C_NULL))
+		result = OGR_G_ExportToWkt(geom.ptr, wkt_ptr)
+		@ogrerr result "OGRErr $result: failed to export geometry to WKT"
+		wkt = unsafe_string(wkt_ptr[])
+		VSIFree(pointer(wkt_ptr[]))
+		return wkt
+	end
+
 	function toPROJ4(spref::AbstractSpatialRef)
 		projptr = Ref{Cstring}()
 		result = OSRExportToProj4(spref.ptr, projptr)
@@ -966,10 +1357,13 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		sr
 	end
 
-	getlayer(dataset::AbstractDataset, i::Integer) = IFeatureLayer(GDALDatasetGetLayer(dataset.ptr, i), ownedby=dataset)
-	function getlayer(dataset::AbstractDataset, name::AbstractString)
-		return IFeatureLayer(GDALDatasetGetLayerByName(dataset.ptr, name), ownedby = dataset)
+	getlayer(ds::AbstractDataset, i::Integer) = IFeatureLayer(GDALDatasetGetLayer(ds.ptr, i), ownedby=ds)
+	function getlayer(ds::AbstractDataset, name::AbstractString)
+		IFeatureLayer(GDALDatasetGetLayerByName(ds.ptr, name), ownedby = ds)
 	end
+	unsafe_getlayer(ds::AbstractDataset, i::Integer) = FeatureLayer(GDALDatasetGetLayer(ds.ptr, i))
+	unsafe_getlayer(ds::AbstractDataset, name::AbstractString) = FeatureLayer(GDAL.GDALDatasetGetLayerByName(ds.ptr, name))
+
 	width(band::AbstractRasterBand)    = GDALGetRasterBandXSize(band.ptr)
 	width(dataset::AbstractDataset)    = GDALGetRasterXSize(dataset.ptr)
 	height(band::AbstractRasterBand)   = GDALGetRasterBandYSize(band.ptr)
@@ -982,7 +1376,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	getname(featuredefn::AbstractFeatureDefn) = OGR_FD_GetName(featuredefn.ptr)
 	getname(layer::AbstractFeatureLayer)  = OGR_L_GetName(layer.ptr)
 	getname(fielddefn::AbstractFieldDefn) = OGR_Fld_GetNameRef(fielddefn.ptr)
-	getname(obj::UInt32)   = GDALGetColorInterpretationName(obj)
+	getname(obj::UInt32) = GDALGetColorInterpretationName(obj)
+	getname(geomdefn::AbstractGeomFieldDefn) = OGR_Fld_GetNameRef(geomdefn.ptr)
 	#getname(obj::GDALPaletteInterp) = GDALGetPaletteInterpretationName(obj)
 	#getname(obj::OGRFieldType)      = OGR_GetFieldTypeName(obj)
 	#getname(obj::OGRFieldSubType)   = OGR_GetFieldSubTypeName(obj)
@@ -991,11 +1386,347 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	getgeomtype(layer::AbstractFeatureLayer) = OGR_L_GetGeomType(layer.ptr)
 	getgeomtype(geom::AbstractGeometry)  = OGR_G_GetGeometryType(geom.ptr)
 
+	gettype(name::AbstractString) = GDALGetDataTypeByName(name)
+	gettype(fielddefn::AbstractFieldDefn) = OGR_Fld_GetType(fielddefn.ptr)
+	gettype(geomdefn::AbstractGeomFieldDefn) = OGR_GFld_GetType(geomdefn.ptr)
+
 	accessflag(band::AbstractRasterBand) = GDALGetRasterAccess(band.ptr)
 	indexof(band::AbstractRasterBand)    = GDALGetBandNumber(band.ptr)
 	pixeltype(band::AbstractRasterBand{T}) where T = T
 	getcolorinterp(band::AbstractRasterBand) = GDALGetRasterColorInterpretation(band.ptr)
 
+	asint(feature::Feature, i::Integer) = OGR_F_GetFieldAsInteger(feature.ptr, i)
+	asint64(feature::Feature, i::Integer) = OGR_F_GetFieldAsInteger64(feature.ptr, i)
+	asdouble(feature::Feature, i::Integer) = OGR_F_GetFieldAsDouble(feature.ptr, i)
+	asstring(feature::Feature, i::Integer) = OGR_F_GetFieldAsString(feature.ptr, i)
+	asstringlist(feature::Feature, i::Integer) = OGR_F_GetFieldAsStringList(feature.ptr, i)
+	function asintlist(feature::Feature, i::Integer)
+		n = Ref{Cint}()
+		ptr = OGR_F_GetFieldAsIntegerList(feature.ptr, i, n)
+		return (n.x == 0) ? Int32[] : unsafe_wrap(Array{Int32}, ptr, n.x)
+	end
+	function asint64list(feature::Feature, i::Integer)
+		n = Ref{Cint}()
+		ptr = OGR_F_GetFieldAsInteger64List(feature.ptr, i, n)
+		return (n.x == 0) ? Int64[] : unsafe_wrap(Array{Int64}, ptr, n.x)
+	end
+	function asdoublelist(feature::Feature, i::Integer)
+		n = Ref{Cint}()
+		ptr = OGR_F_GetFieldAsDoubleList(feature.ptr, i, n)
+		return (n.x == 0) ? Float64[] : unsafe_wrap(Array{Float64}, ptr, n.x)
+	end
+	function asbinary(feature::Feature, i::Integer)
+		n = Ref{Cint}()
+		ptr = OGR_F_GetFieldAsBinary(feature.ptr, i, n)
+		return (n.x == 0) ? UInt8[] : unsafe_wrap(Array{UInt8}, ptr, n.x)
+	end
+	function asdatetime(feature::Feature, i::Integer)
+		pyr = Ref{Cint}(); pmth = Ref{Cint}(); pday = Ref{Cint}()
+		phr = Ref{Cint}(); pmin = Ref{Cint}(); psec = Ref{Cint}(); ptz=Ref{Cint}()
+		result = Bool(OGR_F_GetFieldAsDateTime(feature.ptr, i, pyr, pmth, pday, phr, pmin, psec, ptz))
+		(result == false) && error("Failed to fetch datetime at index $i")
+		return DateTime(pyr[], pmth[], pday[], phr[], pmin[], psec[])
+	end
+
+	layerdefn(layer::AbstractFeatureLayer) = IFeatureDefnView(OGR_L_GetLayerDefn(layer.ptr))
+	ngeom(feature::Feature) = OGR_F_GetGeomFieldCount(feature.ptr)
+	ngeom(featuredefn::AbstractFeatureDefn) = OGR_FD_GetGeomFieldCount(featuredefn.ptr)
+	ngeom(layer::AbstractFeatureLayer) = ngeom(layerdefn(layer))
+	function ngeom(geom::AbstractGeometry)
+		n = OGR_G_GetPointCount(geom.ptr)
+		n == 0 ? OGR_G_GetGeometryCount(geom.ptr) : n
+	end
+	getgeomdefn(feature::Feature, i::Integer) = IGeomFieldDefnView(OGR_F_GetGeomFieldDefnRef(feature.ptr, i))
+	getgeomdefn(fdfn::FeatureDefn, i::Integer = 0) = GeomFieldDefn(OGR_FD_GetGeomFieldDefn(fdfn.ptr, i))
+	getgeomdefn(fdfn::IFeatureDefnView, i::Integer = 0) = IGeomFieldDefnView(OGR_FD_GetGeomFieldDefn(fdfn.ptr, i))
+
+	function getgeom(feature::Feature)
+		result = OGR_F_GetGeometryRef(feature.ptr)
+		return (result == C_NULL) ? IGeometry() : IGeometry(OGR_G_Clone(result))
+	end
+
+	function getgeom(feature::Feature, i::Integer)
+		result = OGR_F_GetGeomFieldRef(feature.ptr, i)
+		return (result == C_NULL) ? IGeometry() : IGeometry(OGR_G_Clone(result))
+	end
+
+	function setgeom!(feature::Feature, geom::AbstractGeometry)
+		result = OGR_F_SetGeometry(feature.ptr, geom.ptr)
+		@ogrerr result "OGRErr $result: Failed to set feature geometry."
+	end
+	function setgeom!(feature::Feature, i::Integer, geom::AbstractGeometry)
+		result = OGR_F_SetGeomField(feature.ptr, i, geom.ptr)
+		@ogrerr result "OGRErr $result: Failed to set feature geometry"
+		return feature
+	end
+
+	function addpoint!(geom::AbstractGeometry, x::Real, y::Real, z::Real)
+		OGR_G_AddPoint(geom.ptr, x, y, z);	return geom
+	end
+	function addpoint!(geom::AbstractGeometry, x::Real, y::Real)
+		OGR_G_AddPoint_2D(geom.ptr, x, y);	return geom
+	end
+
+	nfield(feature::Feature) = OGR_F_GetFieldCount(feature.ptr)
+	nfield(featuredefn::AbstractFeatureDefn) = OGR_FD_GetFieldCount(featuredefn.ptr)
+	nfield(layer::AbstractFeatureLayer) = nfield(layerdefn(layer))
+
+	getfielddefn(feature::Feature, i::Integer) = IFieldDefnView(OGR_F_GetFieldDefnRef(feature.ptr, i))
+	getfielddefn(featuredefn::FeatureDefn, i::Integer) = FieldDefn(OGR_FD_GetFieldDefn(featuredefn.ptr, i))
+	getfielddefn(featuredefn::IFeatureDefnView, i::Integer) = IFieldDefnView(OGR_FD_GetFieldDefn(featuredefn.ptr, i))
+
+	function getfield(feature::Feature, i::Integer)
+		if isfieldset(feature, i)
+			_fieldtype = gettype(getfielddefn(feature, i))
+			_fetchfield = get(_FETCHFIELD, _fieldtype, getdefault)
+			return _fetchfield(feature, i)
+		else
+			return getdefault(feature, i)
+		end
+	end
+	getfield(feature::Feature, name::Union{AbstractString, Symbol}) = getfield(feature, findfieldindex(feature, name))
+
+
+	function setfield!(feature::Feature, i::Integer, value::Cint)
+		OGR_F_SetFieldInteger(feature.ptr, i, value);	return feature
+	end
+	
+	function setfield!(feature::Feature, i::Integer, value::Int64)
+		OGR_F_SetFieldInteger64(feature.ptr, i, value);	return feature
+	end
+	
+	function setfield!(feature::Feature, i::Integer, value::Cdouble)
+		OGR_F_SetFieldDouble(feature.ptr, i, value);	return feature
+	end
+	
+	function setfield!(feature::Feature, i::Integer, value::AbstractString)
+		OGR_F_SetFieldString(feature.ptr, i, value);	return feature
+	end
+	
+	function setfield!(feature::Feature, i::Integer, value::Vector{Cint})
+		OGR_F_SetFieldIntegerList(feature.ptr, i, length(value), value);	return feature
+	end
+	
+	function setfield!(feature::Feature, i::Integer, value::Vector{Clonglong})
+		OGR_F_SetFieldInteger64List(feature.ptr, i, length(value), value);	return feature
+	end
+	
+	function setfield!(feature::Feature, i::Integer, value::Vector{Cdouble})
+		OGR_F_SetFieldDoubleList(feature.ptr, i, length(value), value);		return feature
+	end
+	
+	function setfield!(feature::Feature, i::Integer, value::Vector{T}) where T <: AbstractString
+		OGR_F_SetFieldStringList(feature.ptr, i, value);	return feature
+	end
+
+	function setfield!(feature::Feature, i::Integer, value::Vector{Cuchar})
+		OGR_F_SetFieldBinary(feature.ptr, i, sizeof(value), value);	return feature
+	end
+
+	#=
+	function setfield!(feature::Feature, i::Integer, dt::DateTime, tzflag::Int = 0)
+		OGR_F_SetFieldDateTime(feature.ptr, i, Dates.year(dt), Dates.month(dt), Dates.day(dt), Dates.hour(dt), Dates.minute(dt), Dates.second(dt), tzflag)
+		return feature
+	end
+	=#
+
+	isfieldset(feature::Feature, i::Integer) = Bool(OGR_F_IsFieldSet(feature.ptr, i))
+	getdefault(feature::Feature, i::Integer) = getdefault(getfielddefn(feature, i))
+
+	findfieldindex(feature::Feature, name::Union{AbstractString, Symbol}) = OGR_F_GetFieldIndex(feature.ptr, name)
+	findfieldindex(fdefn::AbstractFeatureDefn, name::Union{AbstractString, Symbol}) = OGR_FD_GetFieldIndex(fdefn.ptr, name)
+	function findfieldindex(layer::AbstractFeatureLayer, field::Union{AbstractString, Symbol}, exactmatch::Bool)
+		return OGR_L_FindFieldIndex(layer.ptr, field, exactmatch)
+	end
+
+	const _FETCHFIELD = Dict{UInt32, Function}(
+		OFTInteger       => asint,           #0-
+		OFTIntegerList   => asintlist,       #1-
+		OFTReal          => asdouble,        #2-
+		OFTRealList      => asdoublelist,    #3-
+		OFTString        => asstring,        #4-
+		OFTStringList    => asstringlist,    #5-
+		OFTBinary        => asbinary,        #8-
+		OFTDateTime      => asdatetime,      #11
+		OFTInteger64     => asint64,         #12-
+		OFTInteger64List => asint64list      #13-
+	)
+
+	function getdefault(fielddefn::AbstractFieldDefn)
+		result = @gdal(OGR_Fld_GetDefault::Cstring, fielddefn.ptr::Ptr{Cvoid})
+		return (result == C_NULL) ? "" : unsafe_string(result)
+	end
+
+	function resetreading!(layer::AbstractFeatureLayer)
+		OGR_L_ResetReading(layer.ptr)
+		return layer
+	end	
+
+	creategeom(geomtype::UInt32) = IGeometry(OGR_G_CreateGeometry(geomtype))
+	unsafe_creategeom(geomtype::UInt32) = Geometry(OGR_G_CreateGeometry(geomtype))
+
+#=
+	for gdalfunc in (
+			:boundary, :buffer, :centroid, :clone, :convexhull, :create,
+			:createcolortable, :createcoordtrans, :copy, :createfeaturedefn,
+			:createfielddefn, :creategeom, :creategeomcollection,
+			:creategeomfieldcollection, :creategeomdefn, :createlayer,
+			:createlinearring, :createlinestring, :createmultilinestring,
+			:createmultipoint, :createmultipolygon, :createmultipolygon_noholes,
+			:createpoint, :createpolygon, :createRAT, :createstylemanager,
+			:createstyletable, :createstyletool, :curvegeom, :delaunaytriangulation,
+			:difference, :forceto, :fromGML, :fromJSON, :fromWKB, :fromWKT,
+			:gdalbuildvrt, :gdaldem, :gdalgrid, :gdalnearblack, :gdalrasterize,
+			:gdaltranslate, :gdalvectortranslate, :gdalwarp, :getband,
+			:getcolortable, :getfeature, :getgeom, :getlayer, :getmaskband,
+			:getoverview, :getpart, :getspatialref, :importCRS, :intersection, :importEPSG,
+			:importEPSGA, :importESRI, :importPROJ4, :importWKT, :importXML,
+			:importURL, :lineargeom, :newspatialref, :nextfeature, :pointalongline,
+			:pointonsurface, :polygonfromedges, :polygonize, :read, :sampleoverview,
+			:simplify, :simplifypreservetopology, :symdifference, :union, :update,
+			:readraster,
+		)
+		eval(quote
+			function $(gdalfunc)(f::Function, args...; kwargs...)
+				obj = $(Symbol("unsafe_$gdalfunc"))(args...; kwargs...)
+				try
+					f(obj)
+				finally
+					destroy(obj)
+				end
+			end
+		end)
+	end
+=#
+
+	for (geom, wkbgeom) in ((:geomcollection,       wkbGeometryCollection),
+							(:linestring,           wkbLineString),
+							(:linearring,           wkbLinearRing),
+							(:multilinestring,      wkbMultiLineString),
+							(:multipoint,           wkbMultiPoint),
+							(:multipolygon,         wkbMultiPolygon),
+							(:multipolygon_noholes, wkbMultiPolygon),
+							(:point,                wkbPoint),
+							(:polygon,              wkbPolygon))
+		eval(quote
+			$(Symbol("create$geom"))() = creategeom($wkbgeom)
+			$(Symbol("unsafe_create$geom"))() = unsafe_creategeom($wkbgeom)
+		end)
+	end
+
+	for f in (:create, :unsafe_create)
+		for (args, typedargs) in ( ((:x,:y), (:(x::Real),:(y::Real))), ((:x,:y,:z), (:(x::Real),:(y::Real),:(z::Real))))
+			eval(quote
+				function $(Symbol("$(f)point"))($(typedargs...))
+					geom = $(Symbol("$(f)point"))()
+					addpoint!(geom, $(args...))
+					return geom
+				end
+			end)
+		end
+
+		for (args, typedargs) in ( ((:xs,:ys), (:(xs::Vector{Cdouble}), :(ys::Vector{Cdouble}))),
+				((:xs,:ys,:zs), (:(xs::Vector{Cdouble}), :(ys::Vector{Cdouble}), :(zs::Vector{Cdouble}))))
+			for geom in (:linestring, :linearring)
+				eval(quote
+					function $(Symbol("$f$geom"))($(typedargs...))
+						geom = $(Symbol("$f$geom"))()
+						for pt in zip($(args...))
+							addpoint!(geom, pt...)
+						end
+						return geom
+					end
+				end)
+			end
+
+			for (geom,component) in ((:polygon, :linearring),)
+				eval(quote
+					function $(Symbol("$f$geom"))($(typedargs...))
+						geom = $(Symbol("$f$geom"))()
+						subgeom = $(Symbol("unsafe_create$component"))($(args...))
+						result = OGR_G_AddGeometryDirectly(geom.ptr, subgeom.ptr)
+						@ogrerr result "Failed to add $component."
+						return geom
+					end
+				end)
+			end
+
+			for (geom,component) in ((:multipoint, :point),)
+				eval(quote
+					function $(Symbol("$f$geom"))($(typedargs...))
+						geom = $(Symbol("$f$geom"))()
+						for pt in zip($(args...))
+							subgeom = $(Symbol("unsafe_create$component"))(pt)
+							result = OGR_G_AddGeometryDirectly(geom.ptr, subgeom.ptr)
+							@ogrerr result "Failed to add point."
+						end
+						return geom
+					end
+				end)
+			end
+		end
+
+		for typeargs in (Vector{<:Real}, Tuple{<:Real,<:Real}, Tuple{<:Real,<:Real,<:Real})
+			eval(quote
+				function $(Symbol("$(f)point"))(coords::$typeargs)
+					geom = $(Symbol("$(f)point"))()
+					addpoint!(geom, coords...)
+					return geom
+				end
+			end)
+		end
+
+		for typeargs in (Vector{Tuple{Cdouble,Cdouble}}, Vector{Tuple{Cdouble,Cdouble,Cdouble}}, Vector{Vector{Cdouble}})
+			for geom in (:linestring, :linearring)
+				eval(quote
+					function $(Symbol("$f$geom"))(coords::$typeargs)
+						geom = $(Symbol("$f$geom"))()
+						for coord in coords
+							addpoint!(geom, coord...)
+						end
+						return geom
+					end
+				end)
+			end
+
+			for (geom,component) in ((:polygon, :linearring),)
+				eval(quote
+					function $(Symbol("$f$geom"))(coords::$typeargs)
+						geom = $(Symbol("$f$geom"))()
+						subgeom = $(Symbol("unsafe_create$component"))(coords)
+						result = OGR_G_AddGeometryDirectly(geom.ptr, subgeom.ptr)
+						@ogrerr result "Failed to add $component."
+						return geom
+					end
+				end)
+			end
+		end
+
+		for (variants,typeargs) in ( (((:multipoint, :point),),
+				(Vector{Tuple{Cdouble,Cdouble}}, Vector{Tuple{Cdouble,Cdouble,Cdouble}}, Vector{Vector{Cdouble}})),
+	
+				(((:polygon, :linearring), (:multilinestring, :linestring), (:multipolygon_noholes, :polygon)),
+				 (Vector{Vector{Tuple{Cdouble,Cdouble}}}, Vector{Vector{Tuple{Cdouble,Cdouble,Cdouble}}},
+				  Vector{Vector{Vector{Cdouble}}})),
+	
+				(((:multipolygon, :polygon),), (Vector{Vector{Vector{Tuple{Cdouble,Cdouble}}}},
+				  Vector{Vector{Vector{Tuple{Cdouble,Cdouble,Cdouble}}}}, Vector{Vector{Vector{Vector{Cdouble}}}}))
+			)
+			for typearg in typeargs, (geom, component) in variants
+				eval(quote
+					function $(Symbol("$f$geom"))(coords::$typearg)
+						geom = $(Symbol("$f$geom"))()
+						for coord in coords
+							subgeom = $(Symbol("unsafe_create$component"))(coord)
+							result = OGR_G_AddGeometryDirectly(geom.ptr, subgeom.ptr)
+							@ogrerr result "Failed to add $component."
+						end
+						return geom
+					end
+				end)
+			end
+		end
+	end
 
 	Base.size(band::AbstractRasterBand) = (width(band), height(band))
 	Base.size(dataset::RasterDataset) = dataset.size
@@ -1047,8 +1778,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		end
 	end
 
-	#Base.show(io::IO, raster::RasterDataset) = show(io, raster.ds)
-	#Base.show(io::IO, ::MIME"text/plain", raster::RasterDataset) = show(io, raster.ds)
+	Base.show(io::IO, raster::RasterDataset) = show(io, raster.ds)
+	Base.show(io::IO, ::MIME"text/plain", raster::RasterDataset) = show(io, raster.ds)
 
 	function summarize(io::IO, rasterband::AbstractRasterBand)
 		(rasterband.ptr == C_NULL) && return print(io, "NULL RasterBand")
@@ -1059,6 +1790,80 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		i = indexof(rasterband)
 		pxtype = pixeltype(rasterband)
 		println(io, "[$access] Band $i ($color): $xsize x $ysize ($pxtype)")
+	end
+
+	# assumes that the layer is reset, and will reset it after display
+	function Base.show(io::IO, layer::AbstractFeatureLayer)
+		layer.ptr == C_NULL && (return println(io, "NULL Layer"))
+		layergeomtype = getgeomtype(layer)
+		println(io, "Layer: $(getname(layer))")
+		featuredefn = layerdefn(layer)
+
+		# Print Geometries
+		n = ngeom(featuredefn)
+		ngeomdisplay = min(n, 3)
+		for i in 1:ngeomdisplay
+			gfd = getgeomdefn(featuredefn, i-1)
+			display = "  Geometry $(i-1) ($(getname(gfd))): [$(gettype(gfd))]"
+			if length(display) > 75
+				println(io, "$display[1:70]...")
+				continue
+			end
+			if ngeomdisplay == 1 # only support printing of a single geom column
+				for f in layer
+					geomwkt = toWKT(getgeom(f))
+					length(geomwkt) > 25 && (geomwkt = "$(geomwkt[1:20])...)")
+					newdisplay = "$display, $geomwkt"
+					if length(newdisplay) > 75
+						display = "$display, ..."
+						break
+					else
+						display = newdisplay
+					end
+				end
+			end
+			println(io, display)
+			resetreading!(layer)
+		end
+		n > 3 && println(io, "  ...\n  Number of Geometries: $n")
+
+		# Print Features
+		n = nfield(featuredefn)
+		nfielddisplay = min(n, 5)
+		for i in 1:nfielddisplay
+			fd = getfielddefn(featuredefn, i-1)
+			display = "     Field $(i-1) ($(getname(fd))): [$(gettype(fd))]"
+			if length(display) > 75
+				println(io, "$display[1:70]...")
+				continue
+			end
+			for f in layer
+				field = string(getfield(f, i-1))
+				length(field) > 25 && (field = "$(field[1:20])...")
+				newdisplay = "$display, $field"
+				if length(newdisplay) > 75
+					display = "$display, ..."
+					break
+				else
+					display = newdisplay
+				end
+			end
+			println(io, display)
+			resetreading!(layer)
+		end
+		n > 5 && print(io, "...\n Number of Fields: $n")
+	end
+
+	function Base.iterate(layer::AbstractFeatureLayer, state::Int=0)
+		layer.ptr == C_NULL && return nothing
+		state == 0 && resetreading!(layer)
+		ptr = OGR_L_GetNextFeature(layer.ptr)
+		if ptr == C_NULL
+			resetreading!(layer)
+			return nothing
+		else
+			return (Feature(ptr), state+1)
+		end
 	end
 
 	# ------------ Aliases ------------

@@ -11,8 +11,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 Base.:+(shift::Real, G1::GMTgrid) = Base.:+(G1::GMTgrid, shift::Real)
 function Base.:+(G1::GMTgrid, shift::Real)
+	_shift = convert(eltype(G1.z), shift)
 	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-				 G1.command, G1.x, G1.y, G1.z .+ shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
+				 G1.command, G1.x, G1.y, G1.z .+ _shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
 	G2.range[5:6] .+= shift
 	return G2
 end
@@ -29,8 +30,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:-(G1::GMTgrid, shift::Real)
+	_shift = convert(eltype(G1.z), shift)
 	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-				 G1.command, G1.x, G1.y, G1.z .- shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
+				 G1.command, G1.x, G1.y, G1.z .- _shift, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
 	G2.range[5:6] .-= shift
 	return G2
 end
@@ -49,8 +51,9 @@ end
 Base.:-(G1::GMTgrid) = -1 * G1
 Base.:*(scale::Real, G1::GMTgrid) = Base.:*(G1::GMTgrid, scale::Real)
 function Base.:*(G1::GMTgrid, scale::Real)
+	_scale = convert(eltype(G1.z), scale)
 	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-				 G1.command, G1.x, G1.y, G1.z .* scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
+				 G1.command, G1.x, G1.y, G1.z .* _scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
 	G2.range[5:6] .*= scale
 	return G2
 end
@@ -58,9 +61,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 Base.:^(G1::GMTgrid, scale::Int) = Base.:^(G1::GMTgrid, Float64(scale))
 function Base.:^(G1::GMTgrid, scale::Real)
-	scale = convert(eltype(G1.z), scale)
+	_scale = convert(eltype(G1.z), scale)
 	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-				 G1.command, G1.x, G1.y, G1.z.^scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
+				 G1.command, G1.x, G1.y, G1.z.^_scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
 	G2.range[5:6] .^= scale
 	return G2
 end
@@ -77,8 +80,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:/(G1::GMTgrid, scale::Real)
+	_scale = convert(eltype(G1.z), scale)
 	G2 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
-				 G1.command, G1.x, G1.y, G1.z ./ scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
+				 G1.command, G1.x, G1.y, G1.z ./ _scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
 	G2.range[5:6] ./= scale
 	return G2
 end
