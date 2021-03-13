@@ -24,6 +24,8 @@ function gd2gmt(dataset; band=1, bands=Vector{Int}(), sds::Int=0, pad=0)
 		Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 		dataset, scale_factor, add_offset, got_fill_val, fill_val = gd2gmt_helper(dataset, sds)
 		Gdal.CPLPopErrorHandler();
+	else
+		scale_factor, add_offset, got_fill_val, fill_val = Float32(1), Float32(0), false, Float32(0)
 	end
 
 	xSize, ySize, nBands = Gdal.width(dataset), Gdal.height(dataset), Gdal.nraster(dataset)
@@ -110,15 +112,12 @@ function gd2gmt_helper(dataset::AbstractString, sds)
 		end
 		(nn == 0) && error("SUBDATASET $(sds) not found in " * dataset)
 	end
-	ind = 0
-	if (startswith(dataset, "SUBDATASET_"))
-		((ind = findfirst('=', dataset)) === nothing) && error("Badly formed SUBDATASET string")
-	end
-	sds_name = dataset[ind+1:end]
+	sds_name = trim_SUBDATASET_str(dataset)
 	((dataset = Gdal.unsafe_read(sds_name)) == C_NULL) && error("GDAL failed to read " * sds_name)
 
 	# Hmmm, check also for scale_factor, add_offset, _FillValue
 	info = gdalinfo(dataset)
+	(info === nothing) && error("GDAL failed to find " * sds_name)
 	if ((ind = findfirst("  Metadata:", info)) !== nothing)
 		info = info[ind[1]+12 : end]			# Restrict the size of the string were to look
 		if ((ind = findfirst("scale_factor=", info)) !== nothing)	# OK, found one
@@ -129,15 +128,32 @@ function gd2gmt_helper(dataset::AbstractString, sds)
 				ind2 = findfirst('\n', info[ind[1]:end])
 				add_offset = tryparse(Float32, info[ind[1]+11 : ind[1] + ind2[1]-2])
 			end
-			if ((ind = findfirst("_FillValue=", info)) !== nothing)
-				ind2 = findfirst('\n', info[ind[1]:end])
-				fill_val = tryparse(Float32, info[ind[1]+11 : ind[1] + ind2[1]-2])
-				got_fill_val = true
-			end
+			fill_val, got_fill_val = get_FillValue(info)
 		end
 	end
 	return dataset, scale_factor, add_offset, got_fill_val, fill_val
 end
+
+# ---------------------------------------------------------------------------------------------------
+function trim_SUBDATASET_str(sds::String)
+	# If present, trim the initial "SUBDATASET_X_NAME=" som a subdataset string name
+	ind = 0
+	if (startswith(sds, "SUBDATASET_"))
+		((ind = findfirst('=', sds)) === nothing) && error("Badly formed SUBDATASET string")
+	end
+	sds_name = sds[ind+1:end]
+end
+
+# ---------------------------------------------------------------------------------------------------
+function get_FillValue(str::String)
+	# Search for a _FillValue in str. Return it if found or NaN otherwise. We use the second return
+	# value to tell between a true NaN as _FillValue and one that's only use for type stability
+	((ind = findfirst("_FillValue=", str)) === nothing) && return NaN, false
+	ind2 = findfirst('\n', str[ind[1]:end])
+	fill_val = tryparse(Float32, str[ind[1]+11 : ind[1] + ind2[1]-2])
+	return fill_val, true
+end
+
 """
 ds = gmt2gd(GI)
 
@@ -164,15 +180,38 @@ function gmt2gd(GI)
 end
 
 """
-G = MODIS_L2(fname::String, sds_name::String=""; V::Bool=false, inc=0.0, kw...)
+G = varspacegrid(fname::String, sds_name::String=""; V::Bool=false, inc=0.0, kw...)
+
+	Read one of those netCDF files that are not regulat grids but have instead the coordinates in the
+	LONGITUDE abd LATITUDE arrays. MODIS L2 files are a good example of this. Data in theses files are leyed
+	down on a regular grid and we must interpolate to get one. Normally the lon and lat arrays are called
+	'longitude' and 'latitude' (the CF convention) and these it's what is seeked for by default. But files
+	exist that pretend to comply to CF but use other names. In this case, use the kwargs 'xarray' & 'yarray'
+	to pass in the variable names. For example: xarray="XLONG", yarray="XLAT"
+	The other fundamental info to pass in is the name of the array to be read/interpolated. We do that via the
+	SDS_NAME arg.
+
+	The interpolation is so far done with 'nearneighbor'. Both the region (-R) and increment (-I) are estimated
+	from data but they can be set with 'region' and 'inc' kwargs as well.
+	For MODIS data we can select the quality flag to filter by data quality. By default the best quality (=0) is
+	used, but one can select another with the quality=val kwarg. Positive 'val' values select data of quality
+	<= quality, whilst negative 'val' values select only data with quality >= abs(val). This allows for example
+	to extract only the cloud coverage.
+
+	Examples:
+
+	G = MODIS_L2("AQUA_MODIS.20020717T135006.L2.SST.nc", "sst", V=true);
+
+	G = MODIS_L2("TXx-narr-annual-timavg.nc", "T2MAX", xarray="XLONG", yarray="XLAT", V=true);
 """
 # ---------------------------------------------------------------------------------------------------
-function MODIS_L2(fname::String, sds_name::String=""; quality::Int=0, V::Bool=false, inc=0.0, kw...)
+function varspacegrid(fname::String, sds_name::String=""; quality::Int=0, V::Bool=false, inc=0.0, kw...)
 
 	d = KW(kw)
 	(inc >= 1) && error("Silly value $(inc) for the resolution of L2 MODIS grid")
 	info = gdalinfo(fname)
 	((ind = findfirst("Subdatasets:", info)) === nothing) && error("This file " * fame * " is not a MODS L2 file")
+	is_MODIS = (findfirst("MODISA Level-2", info) !== nothing) ? true : false
 	info = info[ind[1]+12:end]		# Chop up the long string into smaller chunk where all needed info lives
 	ind = findlast("SUBDATASET_", info)
 	info = info[1:ind[1]]			# Chop even last SUBDATASET_X_DESC string that we wouldn't use anyway
@@ -187,28 +226,15 @@ function MODIS_L2(fname::String, sds_name::String=""; quality::Int=0, V::Bool=fa
 	(sds_name == "") && error("Must provide the band name to process. Try MODIS_L2(\"\", list=true) to print available bands")
 
 	# Get the arrays  SUBDATASET names
-	sds_bnd = helper_find_sds(sds_name, info, ind_EOLs)
-	sds_lon = helper_find_sds("longitude", info, ind_EOLs)
-	sds_lat = helper_find_sds("latitude", info, ind_EOLs)
-	sds_qual= helper_find_sds("qual_sst", info, ind_EOLs)
+	sds_z  = helper_find_sds(sds_name, info, ind_EOLs)		# Return the full SUBDATASET name
+	x_name = ((val = find_in_dict(d, [:xarray])[1]) !== nothing) ? string(val) : "longitude"
+	y_name = ((val = find_in_dict(d, [:yarray])[1]) !== nothing) ? string(val) : "latitude"
+	sds_qual = (is_MODIS) ? helper_find_sds("qual_" * sds_name, info, ind_EOLs) : ""
+	sds_lon = helper_find_sds(x_name, info, ind_EOLs)
+	sds_lat = helper_find_sds(y_name, info, ind_EOLs)
 
 	# Get the arrays with the data
-	(V) && println("Start extracting lon, lat, " * sds_name * " from L2 file")
-	Gqual= gd2gmt(sds_qual)
-	if (quality >= 0)
-		qual = (Gqual.image .< quality + 1)		# Select Best (0), Best+Intermediate (1) or all (2) quality data
-	else
-		qual = (Gqual.image .> -quality - 1)	# Select only, Intermediate+Lousy (-1) or Lousy (-2)
-	end
-	qual = reshape(qual, size(qual,1), size(qual,2))
-	G = gd2gmt(sds_bnd)
-	bnd_vals = G.z[qual]
-	G = gd2gmt(sds_lon)
-	lon = G.z[qual]
-	G = gd2gmt(sds_lat)
-	lat = G.z[qual]
-	(V) && println("Finished, now intepolate")
-	(inc == 0.0) && (inc = 0.01)	# The default resolution. ~1 km
+	lon, lat, z_vals, inc = get_xyz_qual(sds_lon, sds_lat, sds_z, quality, sds_qual, inc, V)
 
 	if ((opt_R = parse_R(d, "")[1]) == "")		# If != "" believe it makes sense as a -R option
 		inc_txt = split("$(inc)", '.')[2]		# To count the number of decimal digits to use in rounding
@@ -222,16 +248,20 @@ function MODIS_L2(fname::String, sds_name::String=""; quality::Int=0, V::Bool=fa
 		opt_R = opt_R[4:end]		# Because it already came with " -R....." from parse_R()
 	end
 
-	#R_inc_to_gd([inc], opt_R)
-	G = nearneighbor([lon lat bnd_vals], I=0.01, R=opt_R, S=0.05)
+	G = nearneighbor([lon lat z_vals], I=inc, R=opt_R, S=2*inc, Vd=(V) ? 1 : 0)
 end
+const MODIS_L2 = varspacegrid		# Alias
 
+# ---------------------------------------------------------------------------------------------------
 function helper_find_sds(sds::String, info::String, ind_EOLs::Vector{UnitRange{Int64}})::String
-	((ind = findfirst("/" * sds, info)) === nothing) && error("The band name -- " * sds * " -- does not exist")
+	if ((ind = findfirst("/" * sds, info)) === nothing)
+		((ind = findfirst(":" * sds, info)) === nothing) && error("The band name -- " * sds * " -- does not exist")
+	end
 	k = 1;	while (ind_EOLs[k][1] < ind[1])  k += 1  end
 	return info[ind_EOLs[k-1][1]+3:ind_EOLs[k][1]-1]	# +3 because 1 = \n and the other 2 are blanks
 end
 
+# ---------------------------------------------------------------------------------------------------
 function R_inc_to_gd(inc::Vector{Float64}, opt_R::String="", BB::Vector{Float64}=Vector{Float64}())
 	# Convert an opt_R string or BB vector + inc vector in the equivalent set of options for GDAL
 	if (opt_R != "")
@@ -242,4 +272,57 @@ function R_inc_to_gd(inc::Vector{Float64}, opt_R::String="", BB::Vector{Float64}
 	inc_y = (length(inc) == 1) ? inc[1] : inc[2]
 	ny = round(Int32, (BB[4] - BB[3]) / inc_y)
 	return ["-txe", "$(BB[1])", "$(BB[2])", "-tye", "$(BB[3])", "$(BB[4])", "-outsize", "$(nx)", "$(ny)"]
+end
+
+# ---------------------------------------------------------------------------------------------------
+function get_xyz_qual(sds_lon::String, sds_lat::String, sds_z::String, quality::Int, sds_qual::String="", inc=0., V=false)
+	# Get a Mx3 matrix with data to feed interpolator. Filter with quality if that's the case
+	# If INC != 0, also estimates a reasonable increment for interpolation
+	(V) && println("Extract lon, lat, " * sds_z * " from file")
+	G = gd2gmt(sds_z);		z_vals = G.z
+	if (sds_qual != "")
+		Gqual = gd2gmt(sds_qual)
+		if (quality >= 0)  qual = (Gqual.image .< quality + 1)		# Best (0), Best+Intermediate (1) or all (2)
+		else               qual = (Gqual.image .> -quality - 1)		# Pick only, Intermediate+Lousy (-1) or Lousy (-2)
+		end
+		qual = reshape(qual, size(qual,1), size(qual,2))
+		z_vals = z_vals[qual]
+		lon, lat, dx, dy = get_lon_lat_qual(sds_lon, sds_lat, qual, inc)
+	else
+		info = gdalinfo(trim_SUBDATASET_str(sds_z))
+		fill_val, got_fill_val = get_FillValue(info)
+		if (got_fill_val)
+			qual = (z_vals .!= fill_val)
+			z_vals = z_vals[qual]
+			lon, lat, dx, dy = get_lon_lat_qual(sds_lon, sds_lat, qual, inc)
+		else
+			G = gd2gmt(sds_lon);	lon = G.z
+			G = gd2gmt(sds_lat);	lat = G.z
+			(inc == 0.0) && (dx = diff(lon[:, round(Int, size(lon, 1)/2)]))
+			(inc == 0.0) && (dy = diff(lat[round(Int, size(lat, 2)/2), :]))
+		end
+	end
+	(inc == 0) && (inc = guess_increment_from_coordvecs(dx, dy))
+	(V) && println("Finished extraction ($(length(z_vals)) points), now intepolate")
+	return lon, lat, z_vals, inc
+end
+
+function get_lon_lat_qual(sds_lon::String, sds_lat::String, qual, inc)
+	# Another helper function to get only the lon, lat values that pass the 'qual' criteria
+	dx, dy = Vector{Float32}(), Vector{Float32}()
+	G = gd2gmt(sds_lon);
+	(inc == 0.0) && (dx = diff(G.z[:, round(Int, size(G.z, 1)/2)]))
+	lon = G.z[qual]
+	G = gd2gmt(sds_lat);
+	(inc == 0.0) && (dy = diff(G.z[round(Int, size(G.z,2)/2), :]))
+	lat = G.z[qual]
+	return lon, lat, dx, dy
+end
+
+# ---------------------------------------------------------------------------------------------------
+function guess_increment_from_coordvecs(dx, dy)
+	# Guess a good -I<inc> from the spacings in the x (lon), y(lat) arrays
+	x_mean = abs(Float64(mean(dx)));		y_mean = abs(Float64(mean(dy)));
+	xy_std = max(Float64(std(dx)), Float64(std(dy)))
+	inc = round((x_mean + y_mean) / 2; digits=round(Int, abs(log10(xy_std))))
 end
