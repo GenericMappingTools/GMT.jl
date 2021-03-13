@@ -383,6 +383,7 @@ OGR_GFld_GetType(a1) = aftercare(ccall((:OGR_GFld_GetType, libgdal), UInt32, (Pt
 function OGR_Fld_Set(a1, a2, a3, a4, a5, a6)
 	aftercare(ccall((:OGR_Fld_Set, libgdal), Cvoid, (Ptr{Cvoid}, Cstring, UInt32, Cint, Cint, UInt32), a1, a2, a3, a4, a5, a6))
 end
+OGR_G_AddGeometry(a1, a2) = aftercare(ccall((:OGR_G_AddGeometry, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), a1, a2))
 OGR_G_AddGeometryDirectly(a1, a2) = aftercare(ccall((:OGR_G_AddGeometryDirectly, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), a1, a2))
 OGR_G_Clone(a1) = aftercare(ccall((:OGR_G_Clone, libgdal), Ptr{Cvoid}, (Ptr{Cvoid},), a1))
 OGR_G_CreateGeometry(arg1) = aftercare(ccall((:OGR_G_CreateGeometry, libgdal), Ptr{Cvoid}, (UInt32,), arg1))
@@ -400,6 +401,13 @@ end
 function OGR_G_SetPoints(hGeom, nPointsIn, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride)
 	aftercare(ccall((:OGR_G_SetPoints, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Ptr{Cvoid}, Cint, Ptr{Cvoid}, Cint, Ptr{Cvoid}, Cint), hGeom, nPointsIn, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride))
 end
+function OGR_G_SetPoint(a1, iPt, a2, a3, a4)
+	aftercare(ccall((:OGR_G_SetPoint, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Cdouble, Cdouble, Cdouble), a1, iPt, a2, a3, a4))
+end
+function OGR_G_SetPoint_2D(a1, iPt, a2, a3)
+    aftercare(ccall((:OGR_G_SetPoint_2D, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Cdouble, Cdouble), a1, iPt, a2, a3))
+end
+OGR_L_CreateFeature(a1, a2) = aftercare(ccall((:OGR_L_CreateFeature, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), a1, a2))
 OGR_L_GetFeatureCount(a1, a2) = aftercare(ccall((:OGR_L_GetFeatureCount, libgdal), Clonglong, (Ptr{Cvoid}, Cint), a1, a2))
 OGR_L_GetName(a1)  = aftercare(ccall((:OGR_L_GetName, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
 OGR_L_GetGeomType(a1)  = aftercare(ccall((:OGR_L_GetGeomType, libgdal), UInt32, (Ptr{Cvoid},), a1))
@@ -418,11 +426,11 @@ function OGR_G_AddPoint_2D(a1, a2, a3)
 	aftercare(ccall((:OGR_G_AddPoint_2D, libgdal), Cvoid, (Ptr{Cvoid}, Cdouble, Cdouble), a1, a2, a3))
 end
 
-function OGR_L_FindFieldIndex(a1, a2, bExactMatch)
-	aftercare(ccall((:OGR_L_FindFieldIndex, libgdal), Cint, (Ptr{Cvoid}, Cstring, Cint), a1, a2, bExactMatch))
-end
 function OGR_L_CreateField(a1, a2, a3)
 	aftercare(ccall((:OGR_L_CreateField, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Cint), a1, a2, a3))
+end
+function OGR_L_FindFieldIndex(a1, a2, bExactMatch)
+	aftercare(ccall((:OGR_L_FindFieldIndex, libgdal), Cint, (Ptr{Cvoid}, Cstring, Cint), a1, a2, bExactMatch))
 end
 
 OGR_F_SetFieldInteger(a1, a2, a3) = aftercare(ccall((:OGR_F_SetFieldInteger, libgdal), Cvoid, (Ptr{Cvoid}, Cint, Cint), a1, a2, a3))
@@ -829,10 +837,24 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return layer
 	end
 
+	function addfeature!(layer::AbstractFeatureLayer, feature::Feature)
+		result = OGR_L_CreateFeature(layer.ptr, feature.ptr)
+		@ogrerr result "Failed to create and write feature in layer."
+		return layer
+	end
+
 	function setparams!(fielddefn::FieldDefn, name::AbstractString, etype::UInt32;
 						nwidth::Integer=0, nprecision::Integer=0, justify::UInt32=UInt32(0))
 		OGR_Fld_Set(fielddefn.ptr, name, etype, nwidth, nprecision, justify)
 		return fielddefn
+	end
+
+	function setpoint!(geom::AbstractGeometry, i::Integer, x::Real, y::Real, z::Real)
+		OGR_G_SetPoint(geom.ptr, i, x, y, z);	return geom
+	end
+
+	function setpoint!(geom::AbstractGeometry, i::Integer, x::Real, y::Real)
+		OGR_G_SetPoint_2D(geom.ptr, i, x, y);	return geom
 	end
 
 	function _dataset_type(ds::AbstractDataset)
@@ -1465,6 +1487,12 @@ end
 	end
 	function addpoint!(geom::AbstractGeometry, x::Real, y::Real)
 		OGR_G_AddPoint_2D(geom.ptr, x, y);	return geom
+	end
+
+	function addgeom!(geomcontainer::AbstractGeometry, subgeom::AbstractGeometry)
+		result = OGR_G_AddGeometry(geomcontainer.ptr, subgeom.ptr)
+		@ogrerr result "Failed to add geometry. The geometry type could be illegal"
+		return geomcontainer
 	end
 
 	nfield(feature::Feature) = OGR_F_GetFieldCount(feature.ptr)

@@ -113,4 +113,8 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.OGR_G_SetPoints(line.ptr, 3, [1.,2,3], sizeof(Float64), [4.,5,6], sizeof(Float64), [7.,8,9], sizeof(Float64))
 	xx = Gdal.getpoint(line, 1)
 	@test xx == (2.0, 5.0, 8.0)
+
+	G = GMT.peaks()
+	ds = gmt2gd(G)
+	#G  = gd2gmt(ds)
 end

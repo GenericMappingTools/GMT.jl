@@ -4,7 +4,7 @@ function theme(name; kwargs...)
 	bg_color = ((val = find_in_dict(d, [:bg_color])[1]) !== nothing) ? string(val) : ""
 	color = ((val = find_in_dict(d, [:fg_color])[1]) !== nothing) ? string(val) : ""
 	if (name == :dark || name == "dark")
-		reset_defaults(API)
+		#reset_defaults(API)
 		fonts  = (font == "")  ? ["AvantGarde-Book", "AvantGarde-Demi", "Helvetica"] : [font, font, font]
 		colors = (color == "") ? ["gray92", "gray86"] : [color, color]
 		(bg_color == "") && (bg_color = "5/5/35")
@@ -61,7 +61,7 @@ function theme(name; kwargs...)
 	if (haskey(d, :save) || haskey(d, "save"))
 		f = joinpath(readlines(`gmt --show-userdir`)[1], "theme_jl.txt")
 		(isfile(f)) && rm(f)
-		(name == :none || name == "none") ? reset_defaults(API) : write(f, string(name))
+		#(name == :none || name == "none") ? reset_defaults(API) : write(f, string(name))
 		isOn = false		# So we wont reset defaults in showfig()
 	end
 	ThemeIsOn[1] = isOn
