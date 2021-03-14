@@ -17,15 +17,16 @@ O = gd2gmt(dataset; band=1, bands=[], sds=0, pad=0)
 		G = gd2gmt("NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
 """
 # ---------------------------------------------------------------------------------------------------
-function gd2gmt(dataset; band=1, bands=Vector{Int}(), sds::Int=0, pad=0)
+function gd2gmt(_dataset; band=1, bands=Vector{Int}(), sds::Int=0, pad=0)
 
-	if (isa(dataset, AbstractString))	# A subdataset name or the full string "SUBDATASET_X_NAME=...."
+	if (isa(_dataset, AbstractString))	# A subdataset name or the full string "SUBDATASET_X_NAME=...."
 		# For some bloody reason it would print annoying (& false?) warning messages. Have to use brute force
 		Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
-		dataset, scale_factor, add_offset, got_fill_val, fill_val = gd2gmt_helper(dataset, sds)
+		dataset, scale_factor, add_offset, got_fill_val, fill_val = gd2gmt_helper(_dataset, sds)
 		Gdal.CPLPopErrorHandler();
 	else
 		scale_factor, add_offset, got_fill_val, fill_val = Float32(1), Float32(0), false, Float32(0)
+		dataset = _dataset
 	end
 
 	xSize, ySize, nBands = Gdal.width(dataset), Gdal.height(dataset), Gdal.nraster(dataset)
@@ -76,6 +77,7 @@ function gd2gmt(dataset; band=1, bands=Vector{Int}(), sds::Int=0, pad=0)
 	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, Float64(!is_grid), x_inc, y_inc]
 	prj = getproj(dataset)
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
+	(prj == "") && (prj = seek_wkt_in_gdalinfo(gdalinfo(dataset)))
 	if (is_grid)
 		!isa(mat, Matrix) && (mat = reshape(mat, size(mat,1), size(mat,2)))
 		(eltype(mat) == Float64) && (mat = Float32.(mat))
@@ -154,6 +156,15 @@ function get_FillValue(str::String)
 	return fill_val, true
 end
 
+# ---------------------------------------------------------------------------------------------------
+function seek_wkt_in_gdalinfo(info::String)
+	# Seek for a SRS string in gdalinfo info. Seems that files can have no explicit projinfo but still
+	# expose them with gdalinfo.
+	((ind = findfirst("SRS=GEO", info)) === nothing) && return ""
+	ind2 = findfirst('\n', view(info, ind[5]:length(info)))		# Find next EOL
+	proj4 = toPROJ4(importWKT(info[ind[5] : ind[5]+ind2[1]-2]))
+end
+
 """
 ds = gmt2gd(GI)
 
@@ -180,23 +191,32 @@ function gmt2gd(GI)
 end
 
 """
-G = varspacegrid(fname::String, sds_name::String=""; V::Bool=false, inc=0.0, kw...)
+G = varspacegrid(fname::String, sds_name::String=""; V::Bool=false, kw...)
 
-	Read one of those netCDF files that are not regulat grids but have instead the coordinates in the
-	LONGITUDE abd LATITUDE arrays. MODIS L2 files are a good example of this. Data in theses files are leyed
-	down on a regular grid and we must interpolate to get one. Normally the lon and lat arrays are called
-	'longitude' and 'latitude' (the CF convention) and these it's what is seeked for by default. But files
-	exist that pretend to comply to CF but use other names. In this case, use the kwargs 'xarray' & 'yarray'
+	Read one of those netCDF files that are not regular grids but have instead the coordinates in the
+	LONGITUDE abd LATITUDE arrays. MODIS L2 files are a good example of this. Data in theses files are
+	not layed down on a regular grid and we must interpolate to get one. Normally the lon and lat arrays
+	are called 'longitude' and 'latitude' and these it's what is seek for by default. But files exist
+	that pretend to comply to CF but use other names. In this case, use the kwargs 'xarray' & 'yarray'
 	to pass in the variable names. For example: xarray="XLONG", yarray="XLAT"
-	The other fundamental info to pass in is the name of the array to be read/interpolated. We do that via the
-	SDS_NAME arg.
+	The other fundamental info to pass in is the name of the array to be read/interpolated. We do that
+	via the SDS_NAME arg.
 
-	The interpolation is so far done with 'nearneighbor'. Both the region (-R) and increment (-I) are estimated
+	In simpler cases the variable to be interpolated lays down on a 2D array but it is also possible that
+	it is stored in a 3D array. If that is the case, use the keyword 'band' to select a band (ex: 'band=2')
+	Bands are numbered from 1.
+
+	The interpolation is done so far with 'nearneighbor'. Both the region (-R) and increment (-I) are estimated
 	from data but they can be set with 'region' and 'inc' kwargs as well.
 	For MODIS data we can select the quality flag to filter by data quality. By default the best quality (=0) is
 	used, but one can select another with the quality=val kwarg. Positive 'val' values select data of quality
 	<= quality, whilst negative 'val' values select only data with quality >= abs(val). This allows for example
 	to extract only the cloud coverage.
+
+	If instead of calculating a grid (returned as a GMTgrid type) user wants the x,y,z data intself, use the
+	keywords 'dataset', or 'outxyz' and the output will be in a GMTdataset (i.e. use 'dataset=true').
+
+	To inquire just the list of available arrays use 'list=true' or 'gdalinfo=true' to get the full file info.
 
 	Examples:
 
@@ -210,6 +230,7 @@ function varspacegrid(fname::String, sds_name::String=""; quality::Int=0, V::Boo
 	d = KW(kw)
 	(inc >= 1) && error("Silly value $(inc) for the resolution of L2 MODIS grid")
 	info = gdalinfo(fname)
+	(haskey(d, :gdalinfo)) && (return println(info))
 	((ind = findfirst("Subdatasets:", info)) === nothing) && error("This file " * fame * " is not a MODS L2 file")
 	is_MODIS = (findfirst("MODISA Level-2", info) !== nothing) ? true : false
 	info = info[ind[1]+12:end]		# Chop up the long string into smaller chunk where all needed info lives
@@ -218,15 +239,16 @@ function varspacegrid(fname::String, sds_name::String=""; quality::Int=0, V::Boo
 	ind_EOLs = findall("\n", info)
 
 	if (haskey(d, :list))
+		c = ((ind = findlast("/", info[ind_EOLs[1][1] : ind_EOLs[2][1]-1])) !== nothing) ? '/' : ':'
 		println("List of bands in this file:")
-		[println("\t",split(info[ind_EOLs[k-1][1] : ind_EOLs[k][1]-1], '/')[end]) for k = 2:2:length(ind_EOLs)]
+		[println("\t",split(info[ind_EOLs[k-1][1] : ind_EOLs[k][1]-1], c)[end]) for k = 2:2:length(ind_EOLs)]
 		return nothing
 	end
 
 	(sds_name == "") && error("Must provide the band name to process. Try MODIS_L2(\"\", list=true) to print available bands")
 
 	# Get the arrays  SUBDATASET names
-	sds_z  = helper_find_sds(sds_name, info, ind_EOLs)		# Return the full SUBDATASET name
+	sds_z  = helper_find_sds(sds_name, info, ind_EOLs)		# Return the full SUBDATASET name (a string)
 	x_name = ((val = find_in_dict(d, [:xarray])[1]) !== nothing) ? string(val) : "longitude"
 	y_name = ((val = find_in_dict(d, [:yarray])[1]) !== nothing) ? string(val) : "latitude"
 	sds_qual = (is_MODIS) ? helper_find_sds("qual_" * sds_name, info, ind_EOLs) : ""
@@ -234,7 +256,8 @@ function varspacegrid(fname::String, sds_name::String=""; quality::Int=0, V::Boo
 	sds_lat = helper_find_sds(y_name, info, ind_EOLs)
 
 	# Get the arrays with the data
-	lon, lat, z_vals, inc = get_xyz_qual(sds_lon, sds_lat, sds_z, quality, sds_qual, inc, V)
+	band = ((val = find_in_dict(d, [:band])[1]) !== nothing) ? Int(val) : 1
+	lon, lat, z_vals, inc, proj4 = get_xyz_qual(sds_lon, sds_lat, sds_z, quality, sds_qual, inc, band, V)
 
 	if ((opt_R = parse_R(d, "")[1]) == "")		# If != "" believe it makes sense as a -R option
 		inc_txt = split("$(inc)", '.')[2]		# To count the number of decimal digits to use in rounding
@@ -248,8 +271,16 @@ function varspacegrid(fname::String, sds_name::String=""; quality::Int=0, V::Boo
 		opt_R = opt_R[4:end]		# Because it already came with " -R....." from parse_R()
 	end
 
-	G = nearneighbor([lon lat z_vals], I=inc, R=opt_R, S=2*inc, Vd=(V) ? 1 : 0)
+	if (haskey(d, :outxyz) || haskey(d, :dataset))
+		O = mat2ds([lon lat z_vals])
+		O[1].proj4 = proj4
+	else
+		O = nearneighbor([lon lat z_vals], I=inc, R=opt_R, S=2*inc, Vd=(V) ? 1 : 0)
+		O.proj4 = proj4
+	end
+	return O
 end
+
 const MODIS_L2 = varspacegrid		# Alias
 
 # ---------------------------------------------------------------------------------------------------
@@ -275,11 +306,12 @@ function R_inc_to_gd(inc::Vector{Float64}, opt_R::String="", BB::Vector{Float64}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_xyz_qual(sds_lon::String, sds_lat::String, sds_z::String, quality::Int, sds_qual::String="", inc=0., V=false)
+function get_xyz_qual(sds_lon::String, sds_lat::String, sds_z::String, quality::Int, sds_qual::String="",
+	                  inc::Float64=0., band::Int=1, V::Bool=false)
 	# Get a Mx3 matrix with data to feed interpolator. Filter with quality if that's the case
 	# If INC != 0, also estimates a reasonable increment for interpolation
 	(V) && println("Extract lon, lat, " * sds_z * " from file")
-	G = gd2gmt(sds_z);		z_vals = G.z
+	G = gd2gmt(sds_z; band=band);		z_vals = G.z;		proj4 = G.proj4
 	if (sds_qual != "")
 		Gqual = gd2gmt(sds_qual)
 		if (quality >= 0)  qual = (Gqual.image .< quality + 1)		# Best (0), Best+Intermediate (1) or all (2)
@@ -288,6 +320,7 @@ function get_xyz_qual(sds_lon::String, sds_lat::String, sds_z::String, quality::
 		qual = reshape(qual, size(qual,1), size(qual,2))
 		z_vals = z_vals[qual]
 		lon, lat, dx, dy = get_lon_lat_qual(sds_lon, sds_lat, qual, inc)
+		(proj4 == "") && (proj4 = "+proj=longlat +datum=WGS84 +no_defs")	# Almost for sure that's always the case
 	else
 		info = gdalinfo(trim_SUBDATASET_str(sds_z))
 		fill_val, got_fill_val = get_FillValue(info)
@@ -301,10 +334,11 @@ function get_xyz_qual(sds_lon::String, sds_lat::String, sds_z::String, quality::
 			(inc == 0.0) && (dx = diff(lon[:, round(Int, size(lon, 1)/2)]))
 			(inc == 0.0) && (dy = diff(lat[round(Int, size(lat, 2)/2), :]))
 		end
+		(proj4 == "") && (proj4 = seek_wkt_in_gdalinfo(info))
 	end
 	(inc == 0) && (inc = guess_increment_from_coordvecs(dx, dy))
 	(V) && println("Finished extraction ($(length(z_vals)) points), now intepolate")
-	return lon, lat, z_vals, inc
+	return lon, lat, z_vals, inc, proj4
 end
 
 function get_lon_lat_qual(sds_lon::String, sds_lat::String, qual, inc)
