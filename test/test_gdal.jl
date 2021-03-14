@@ -116,5 +116,5 @@ Gdal.GDALDestroyDriverManager()
 
 	G = GMT.peaks()
 	ds = gmt2gd(G)
-	#G  = gd2gmt(ds)
+	G  = gd2gmt(ds)
 end

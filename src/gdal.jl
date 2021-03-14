@@ -1128,7 +1128,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 				end
 				result = ccall((:GDALDatasetRasterIOEx,libgdal), UInt32, 
 							   (Ptr{Cvoid}, UInt32, Cint, Cint, Cint, Cint, Ptr{Cvoid}, Cint, Cint, UInt32, Cint,
-							   UInt32, Clonglong, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}),
+							   Ptr{Cint}, Clonglong, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}),
 							   dataset.ptr, access, xoffset, yoffset, xsize, ysize, pointer(buffer)+poffset, xbsize,
 							   ybsize, $GT, nband, pointer(bands), pxspace, linespace, bandspace, extraargs)
 				@cplerr result "Access in DatasetRasterIO failed."
