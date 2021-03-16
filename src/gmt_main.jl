@@ -900,11 +900,12 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 				end
 			end
 		end
-		#CTRL.proj_linear[1] = true		# Use only once and reset back to linear
+		mem_owned_by_gmt = true
 	else
 		#t = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), length(Img.image))
 		#[t[k] = Img.image[k] for k = 1:length(Img.image)]
 		Ib.data = pointer(Img.image)
+		mem_owned_by_gmt = (pad == 0) ? false : true
 	end
 
 	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
@@ -914,7 +915,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	else                           Ib.alpha = C_NULL
 	end
 
-	(pad == 0) && GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)	# Otherwise memory already belongs to GMT
+	(!mem_owned_by_gmt) && GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)	# Tell GMT that memory is external
 	h.z_min = Img.range[5]			# Set the z_min, z_max
 	h.z_max = Img.range[6]
 	h.mem_layout = map(UInt8, (Img.layout...,))
@@ -925,7 +926,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	unsafe_store!(I, Ib)
 
 	if (!startswith(Img.layout, "BRP"))
-		img = (pad == 0) ? deepcopy(Img.image) : img_padded
+		img = (mem_owned_by_gmt) ? img_padded : deepcopy(Img.image)
 		GMT_Change_Layout(API, GMT_IS_IMAGE, "BRP", 0, I, img);		# Convert to BRP
 		Ib.data = pointer(img)
 		unsafe_store!(I, Ib)
@@ -1628,7 +1629,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-I = image_alpha!(img::GMTimage; alpha_ind::Integer, alpha_vec::Integer, alpha_band::UInt8)
+I = image_alpha!(img::GMTimage; alpha_ind::Integer, alpha_vec::Vector{Integer}, alpha_band::UInt8)
 
     Change the alpha transparency of the GMTimage object 'img'. If the image is indexed, one can either
     change just the color index that will be made transparent by uing 'alpha_ind=n' or provide a vector
@@ -1636,10 +1637,10 @@ I = image_alpha!(img::GMTimage; alpha_ind::Integer, alpha_vec::Integer, alpha_ba
     Use 'alpha_band' to change, or add, the alpha of true color images (RGB).
 
     Example1: change to the third color in cmap to represent the new transparent color
-        image_alpha(img, alpha_ind=3)
+        image_alpha!(img, alpha_ind=3)
 
     Example2: change to the first 6 colors in cmap by assigning them random values
-        image_alpha(img, alpha_vec=round.(Int32,rand(6).*255))
+        image_alpha!(img, alpha_vec=round.(Int32,rand(6).*255))
 """
 function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec=nothing, alpha_band=nothing)
 	# Change the alpha transparency of an image
@@ -1649,7 +1650,7 @@ function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec=nothing, alpha
 		(alpha_ind < 0 || alpha_ind > 255) && error("Alpha color index must be in the [0 255] interval")
 		img.n_colors = n_colors * 1000 + Int32(alpha_ind)
 	elseif (alpha_vec !== nothing)		# Replace/add the alpha column of the colormap matrix. Allow also shorter vectors
-		@assert(isa(alpha_vec, Array{<:Integer}))
+		@assert(isa(alpha_vec, Vector{<:Integer}))
 		(length(alpha_vec) > n_colors) && error("Length of alpha vector is larger than the number of colors")
 		n_col = div(length(img.colormap), n_colors)
 		vec = convert.(Int32, alpha_vec)
@@ -1955,7 +1956,7 @@ function resetGMT()
 	# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
 	IamModern[1] = false;	FirstModern[1] = false;		IamSubplot[1] = false;	usedConfPar[1] = false;
 	multi_col[1] = false;	convert_syntax[1] = false;	current_view[1] = "";	show_kwargs[1] = false;
-	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = false;
+	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = true;
 	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
 	global current_cpt  = nothing;	global legend_type  = nothing
 	gmt("destroy")
