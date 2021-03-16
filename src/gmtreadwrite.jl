@@ -230,9 +230,11 @@ function gmtwrite(fname::String, data; kwargs...)
 		opt_T = " -Tg"
 		fname = fname * parse_grd_format(d)		# If we have format requests
 		cmd, = parse_f(d, cmd)
+		CTRL.proj_linear[1] = true				# To force pad=0 and julia memory (no dup)
 	elseif (isa(data, GMTimage))
 		opt_T = " -Ti"
 		fname *= parse_grd_format(d)			# If we have format requests
+		CTRL.proj_linear[1] = true				# To force pad=0 and julia memory (no dup) in image_init()
 	elseif (isa(data, GMTdataset) || isa(data, Array{<:GMTdataset}))
 		opt_T = " -Td"
 		cmd, = parse_bo(d, cmd)					# Write to binary file

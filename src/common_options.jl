@@ -3058,7 +3058,7 @@ function show_non_consumed(d::Dict, cmd)
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
 	end
-	CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = false;		# Reset these for safety
+	CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = true;		# Reset these for safety
 end
 
 # --------------------------------------------------------------------------------------------------

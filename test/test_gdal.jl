@@ -117,4 +117,7 @@ Gdal.GDALDestroyDriverManager()
 	G = GMT.peaks()
 	ds = gmt2gd(G)
 	G  = gd2gmt(ds)
+	G = gd2gmt("utmsmall.tif");
+	#ds = gmt2gd(G)
+	gdalinfo(ds);
 end
