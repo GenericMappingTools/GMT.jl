@@ -9,7 +9,7 @@ Full option list at [`grdcut`]($(GMTdoc)grdcut.html)
 Parameters
 ----------
 
-- **G** | **outgrid** :: [Type => Str]
+- **G** | **outgrid** | **outfile** | **save** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdcut(....) form.
@@ -45,15 +45,19 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
     cmd, = parse_common_opts(d, "", [:R :V_params :f])
     opt_J, = parse_J(d, "")
     if (!startswith(opt_J, " -JX"))  cmd *= opt_J  end
-	cmd = parse_these_opts(cmd, d, [[:G :outgrid], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
+	cmd = parse_these_opts(cmd, d, [[:G :outgrid :outfile :save], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
 	(show_kwargs[1]) && return print_kwarg_opts([:img :usegdal], "Any")		# Just print the options
 	if (cmd0 != "" && ((find_in_dict(d, [:img :usegdal])[1]) !== nothing))
-		t = split(scan_opt(cmd, "-R"), '/')
-		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
 		(cmd0[1] == '@') && (cmd0 = gmtwhich(cmd0)[1].text[1])	# A remote file
 		ds = readgd(cmd0)
-		new_ds = gdaltranslate(ds, opts)
-		gd2gmt(new_ds)
+		t = split(scan_opt(cmd, "-R"), '/')
+		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
+		if ((outname = scan_opt(cmd, "-G")) == "")
+			gd2gmt(gdaltranslate(ds, opts))
+		else
+			gdaltranslate(ds, opts; dest=outname)
+			return nothing				# Since it wrote a file so nothing to return
+		end
 	else
 		common_grd(d, cmd0, cmd, "grdcut ", arg1)		# Finish build cmd and run it
 	end

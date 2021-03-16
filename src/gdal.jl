@@ -1124,7 +1124,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	for (T,GT) in _GDALTYPE
 		eval(quote
-			function rasterio!(dataset::AbstractDataset, buffer::Array{$T, 3}, bands, xoffset::Integer, yoffset::Integer,
+			function rasterio!(dataset::AbstractDataset, buffer::Array{$T, 3}, bands, xoffset::Int, yoffset::Int,
 					xsize::Integer, ysize::Integer, access::UInt32=GF_Read, pxspace::Integer=0, linespace::Integer=0,
 					bandspace::Integer=0, extraargs=Ptr{GDALRasterIOExtraArg}(C_NULL), pad::Int=0)
 				(dataset == C_NULL) && error("Can't read invalid rasterband")

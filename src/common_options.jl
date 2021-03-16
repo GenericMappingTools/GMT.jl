@@ -1467,8 +1467,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)::String
 	d = nt2dict(mapa)
-	(!haskey(d, this_key)) && return		# Should be a error?
-	out = [""]
+	(!haskey(d, this_key)) && return		# Should it be a error?
+	out = ""
 	key = keys(user_input)					# user_input = (rows=1, fill=:red)
 	val_namedTup = d[this_key]				# water=(rows="my", cols="mx", fill=add_opt_fill)
 	d = nt2dict(val_namedTup)
@@ -1476,13 +1476,13 @@ function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)::Str
 		if (haskey(d, key[k]))
 			val = d[key[k]]
 			if (isa(val, Function))
-				if (val == add_opt_fill) out[1] *= val(Dict(key[k] => user_input[key[k]]))  end
+				if (val == add_opt_fill) out *= val(Dict(key[k] => user_input[key[k]]))  end
 			else
-				out[1] *= string(d[key[k]])
+				out *= string(d[key[k]])
 			end
 		end
 	end
-	return out[1]
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
