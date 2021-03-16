@@ -154,6 +154,13 @@ struct GDALRasterIOExtraArg
 	dfYSize::Cdouble
 end
 
+struct GDALColorEntry
+	c1::Int16
+	c2::Int16
+	c3::Int16
+	c4::Int16
+end
+
 struct GDALError <: Exception
 	class::Cint
 	code::Cint
@@ -186,8 +193,7 @@ CPLPopErrorHandler() = ccall((:CPLPopErrorHandler, libgdal), Cvoid, ())
 VSIFree(a1) = aftercare(ccall((:VSIFree, libgdal), Cvoid, (Ptr{Cvoid},), a1))
 
 function Base.showerror(io::IO, err::GDALError)
-	err = string("GDALError (", err.class, ", code ", err.code, "):\n\t", err.msg)
-	println(io, err)
+	println(io, string("GDALError (", err.class, ", code ", err.code, "):\n\t", err.msg))
 end
 
 function aftercare(x)
@@ -252,6 +258,7 @@ GDALGetRasterBandXSize(a1) = aftercare(ccall((:GDALGetRasterBandXSize, libgdal),
 GDALGetRasterBandYSize(a1) = aftercare(ccall((:GDALGetRasterBandYSize, libgdal), Cint, (Ptr{Cvoid},), a1))
 GDALGetRasterXSize(a1)     = aftercare(ccall((:GDALGetRasterXSize, libgdal), Cint, (Ptr{Cvoid},), a1))
 GDALGetRasterYSize(a1)     = aftercare(ccall((:GDALGetRasterYSize, libgdal), Cint, (Ptr{Cvoid},), a1))
+GDALGetRasterColorTable(a1) = aftercare(ccall((:GDALGetRasterColorTable, libgdal), Ptr{Cvoid}, (Ptr{Cvoid},), a1))
 GDALDatasetGetLayerCount(a1) = aftercare(ccall((:GDALDatasetGetLayerCount, libgdal), Cint, (Ptr{Cvoid},), a1))
 GDALGetRasterCount(a1)  = aftercare(ccall((:GDALGetRasterCount, libgdal), Cint, (Ptr{Cvoid},), a1))
 GDALGetFileList(a1)     = aftercare(ccall((:GDALGetFileList, libgdal), Ptr{Cstring}, (Ptr{Cvoid},), a1))
@@ -269,6 +276,9 @@ end
 function GDALGetPaletteInterpretationName(a1)
 	aftercare(ccall((:GDALGetPaletteInterpretationName, libgdal), Cstring, (UInt32,), a1), false)
 end
+GDALGetPaletteInterpretation(a1) = aftercare(ccall((:GDALGetPaletteInterpretation, libgdal), UInt32, (Ptr{Cvoid},), a1))
+GDALGetColorEntryCount(a1) = aftercare(ccall((:GDALGetColorEntryCount, libgdal), Cint, (Ptr{Cvoid},), a1))
+GDALGetColorEntry(a1, a2) = aftercare(ccall((:GDALGetColorEntry, libgdal), Ptr{GDALColorEntry}, (Ptr{Cvoid}, Cint), a1, a2))
 
 function GDALGetGeoTransform(a1, a2)
 	aftercare(ccall((:GDALGetGeoTransform, libgdal), UInt32, (Ptr{Cvoid}, Ptr{Cdouble}), a1, a2))
@@ -386,7 +396,7 @@ end
 OGR_G_AddGeometry(a1, a2) = aftercare(ccall((:OGR_G_AddGeometry, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), a1, a2))
 OGR_G_AddGeometryDirectly(a1, a2) = aftercare(ccall((:OGR_G_AddGeometryDirectly, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), a1, a2))
 OGR_G_Clone(a1) = aftercare(ccall((:OGR_G_Clone, libgdal), Ptr{Cvoid}, (Ptr{Cvoid},), a1))
-OGR_G_CreateGeometry(arg1) = aftercare(ccall((:OGR_G_CreateGeometry, libgdal), Ptr{Cvoid}, (UInt32,), arg1))
+OGR_G_CreateGeometry(a1) = aftercare(ccall((:OGR_G_CreateGeometry, libgdal), Ptr{Cvoid}, (UInt32,), a1))
 OGR_G_DestroyGeometry(a1) = aftercare(ccall((:OGR_G_DestroyGeometry, libgdal), Cvoid, (Ptr{Cvoid},), a1))
 OGR_G_ExportToWkt(a1, a2) = aftercare(ccall((:OGR_G_ExportToWkt, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cstring}), a1, a2))
 OGR_G_GetGeometryType(a1) = aftercare(ccall((:OGR_G_GetGeometryType, libgdal), UInt32, (Ptr{Cvoid},), a1))
@@ -669,6 +679,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 			return new(ptr, spatialref)
 		end
 	end
+
+	mutable struct ColorTable ptr::Ptr{Cvoid} end
 
 	mutable struct DriverManager
 		function DriverManager()
@@ -1416,6 +1428,11 @@ end
 	indexof(band::AbstractRasterBand)    = GDALGetBandNumber(band.ptr)
 	pixeltype(band::AbstractRasterBand{T}) where T = T
 	getcolorinterp(band::AbstractRasterBand) = GDALGetRasterColorInterpretation(band.ptr)
+	getcolortable(band::AbstractRasterBand) = ColorTable(Ptr{Cvoid}(GDALGetRasterColorTable(band.ptr)))
+
+	paletteinterp(ct::ColorTable) = GDALGetPaletteInterpretation(ct.ptr)
+	ncolorentry(ct::ColorTable) = GDALGetColorEntryCount(ct.ptr)
+	getcolorentry(ct::ColorTable, i::Integer) = unsafe_load(GDALGetColorEntry(ct.ptr, i))
 
 	asint(feature::Feature, i::Integer) = OGR_F_GetFieldAsInteger(feature.ptr, i)
 	asint64(feature::Feature, i::Integer) = OGR_F_GetFieldAsInteger64(feature.ptr, i)

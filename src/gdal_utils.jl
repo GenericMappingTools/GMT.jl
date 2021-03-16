@@ -41,12 +41,15 @@ function gd2gmt(_dataset; band=1, bands=Vector{Int}(), sds::Int=0, pad=0)
 		in_bands = (isempty(bands)) ? [band] : bands
 	end
 	ncol, nrow = xSize+2pad, ySize+2pad
-	mat = (dataset isa Gdal.AbstractRasterBand) ? zeros(dType, ncol, nrow) : zeros(dType, ncol, nrow, length(in_bands)) 
+	mat = (dataset isa Gdal.AbstractRasterBand) ? zeros(dType, ncol, nrow) : zeros(dType, ncol, nrow, length(in_bands))
+	n_colors = 0
 	if (isa(dataset, Gdal.AbstractRasterBand))
 		Gdal.rasterio!(dataset, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, C_NULL, pad)
+		colormap, n_colors = get_cpt_from_colortable(dataset)
 	else
 		ds = (isa(dataset, Gdal.RasterDataset)) ? dataset.ds : dataset
 		Gdal.rasterio!(ds, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, 0, C_NULL, pad)
+		colormap, n_colors = get_cpt_from_colortable(ds)
 	end
 
 	# If we found a scale_factor above, apply it
@@ -86,6 +89,9 @@ function gd2gmt(_dataset; band=1, bands=Vector{Int}(), sds::Int=0, pad=0)
 	else
 		O = mat2img(mat; hdr=hdr, proj4=prj)
 		O.layout = "TRBa"
+		if (n_colors > 0)
+			O.colormap = colormap;	O.n_colors = n_colors
+		end
 	end
 	O.x, O.y = O.y, O.x			# Because mat2* thought mat were column-major but it's rwo-major
 	O.inc = [x_inc, y_inc]		# Reset because if pad != 0 they were recomputed inside the mat2? funs
@@ -134,6 +140,23 @@ function gd2gmt_helper(dataset::AbstractString, sds)
 		end
 	end
 	return dataset, scale_factor, add_offset, got_fill_val, fill_val
+end
+
+# ---------------------------------------------------------------------------------------------------
+function get_cpt_from_colortable(dataset)
+	# Extract the color info from a GDAL colortable and put it in a row vector for GMTimage.colormap
+	if (!isa(dataset, Gdal.AbstractRasterBand))  band = Gdal.getband(dataset)
+	else                                         band = dataset
+	end
+	ct = Gdal.getcolortable(band)
+	(ct.ptr == C_NULL) && return Vector{Clong}(), 0
+	n_colors = Gdal.ncolorentry(ct)
+	cmap, n = Vector{Clong}(undef, 4 * n_colors), 1
+	for k = 0:n_colors-1
+		c = Gdal.getcolorentry(ct, k)
+		cmap[n] = c.c1;	n += 1; cmap[n] = c.c2;	n += 1; cmap[n] = c.c3;	n += 1; cmap[n] = c.c4;	n += 1;
+	end
+	return cmap, n_colors
 end
 
 # ---------------------------------------------------------------------------------------------------
