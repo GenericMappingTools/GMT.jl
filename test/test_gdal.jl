@@ -121,7 +121,7 @@ Gdal.GDALDestroyDriverManager()
 	ds = gmt2gd(G)
 	gdalinfo(ds);
 
-	I = grdcut("C:/Users/joaqu/.julia/dev/GMT/test/utmsmall.tif", R="442000/445000/3747000/3750000", img=1);
-	grdcut("C:/Users/joaqu/.julia/dev/GMT/test/utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
-	grdcut("C:/Users/joaqu/.julia/dev/GMT/test/utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
+	I = grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1);
+	grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
+	grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
 end
