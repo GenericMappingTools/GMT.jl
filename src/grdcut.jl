@@ -14,6 +14,9 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdcut(....) form.
     ($(GMTdoc)grdcut.html#g)
+- **img** | **usegdal** :: [Type => Any]
+
+    Force the cut operation to be done by GDAL. Works for images where GMT fails or even crash.
 - $(GMT.opt_J)
 - **N** | **extend** :: [Type => Str or []]
 
@@ -43,8 +46,17 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
     opt_J, = parse_J(d, "")
     if (!startswith(opt_J, " -JX"))  cmd *= opt_J  end
 	cmd = parse_these_opts(cmd, d, [[:G :outgrid], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
-
-	common_grd(d, cmd0, cmd, "grdcut ", arg1)		# Finish build cmd and run it
+	(show_kwargs[1]) && return print_kwarg_opts([:img :usegdal], "Any")		# Just print the options
+	if (cmd0 != "" && ((find_in_dict(d, [:img :usegdal])[1]) !== nothing))
+		t = split(scan_opt(cmd, "-R"), '/')
+		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
+		(cmd0[1] == '@') && (cmd0 = gmtwhich(cmd0)[1].text[1])	# A remote file
+		ds = readgd(cmd0)
+		new_ds = gdaltranslate(ds, opts)
+		gd2gmt(new_ds)
+	else
+		common_grd(d, cmd0, cmd, "grdcut ", arg1)		# Finish build cmd and run it
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------
