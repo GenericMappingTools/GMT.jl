@@ -1911,6 +1911,8 @@ end
 		end
 	end
 
+	include("gdal_tools.jl")
+
 	# ------------ Aliases ------------
 	const creategd = create
 	const ogr2ogr  = gdalvectortranslate
