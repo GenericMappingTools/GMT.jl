@@ -65,9 +65,14 @@ Gdal.GDALDestroyDriverManager()
 	ds_small = readgd("utmsmall.tif");
 	Gdal.getlayer(ds_small, 1);
 	gdalinfo(ds_small, [""]);
-	gdalwarp(ds_small, [""]);
 	gdaldem(ds_small, "hillshade", ["-q"]);
 	gdaltranslate(ds_small, [""]);
+	gdaltranslate("utmsmall.tif", R="442000/445000/3747000/3750000");
+
+	gdalwarp(ds_small, [""]);
+	ds_warped = gdalwarp("utmsmall.tif", ["-of","MEM","-t_srs","EPSG:4326"], gdataset=true)
+	@test Gdal.width(ds_warped) == 109
+	@test Gdal.height(ds_warped) == 91
 
 	ds_point = readgd("point.geojson");
 	ds_grid = gdalgrid(ds_point, ["-of","MEM","-outsize","3", "10","-txe","100","100.3","-tye","0","0.1"]);
