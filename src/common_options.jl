@@ -1287,7 +1287,19 @@ function finish_PS_nested(d::Dict, cmd::Vector{String}, K::Bool)
 	cmd2 = add_opt_module(d)
 	if (!isempty(cmd2))
 		K = true
-		append!(cmd, cmd2)
+		if (startswith(cmd2[1], "clip"))		# Deal with the particular psclip case
+			ind = findfirst(" -R", cmd[1]);		opt_R = strtok(cmd[1][ind[1]:end])[1]
+			ind = findfirst(" -J", cmd[1]);		opt_J = strtok(cmd[1][ind[1]:end])[1]
+			t, opt_B = "psclip " * opt_R * " " * opt_J, ""
+			ind = findall(" -B", cmd[1])
+			if (!isempty(ind))
+				[opt_B *= " " * strtok(cmd[1][ind[k][1]:end])[1] for k = 1:length(ind)]
+				cmd[1] = replace(cmd[1], opt_B => "")
+			end
+			cmd = [t * opt_B; cmd; "psclip -C"]
+		else
+			append!(cmd, cmd2)
+		end
 	end
 	return cmd, K
 end
@@ -1789,8 +1801,7 @@ function add_opt_module(d::Dict)
 	#  SYMBS should contain a module name (e.g. 'coast' or 'colorbar'), and if present in D,
 	# 'val' can be a NamedTuple with the module's arguments or a 'true'.
 	out = Vector{String}()
-	symbs = CTRL.callable
-	for symb in symbs
+	for symb in CTRL.callable			# Loop over modules list that can be called inside other modules
 		r = nothing
 		if (haskey(d, symb))
 			val = d[symb]
@@ -1817,6 +1828,8 @@ function add_opt_module(d::Dict)
 				t = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
 				anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
 				r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
+			elseif (symb == :clip)
+				CTRL.pocket_call[1] = val;	r = "clip"
 			end
 			delete!(d, symb)
 		end
@@ -3026,6 +3039,13 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			# For nested calls that need to pass data
 			P = gmt(cmd[k], CTRL.pocket_call[1])
 			CTRL.pocket_call[1] = nothing					# Clear it right away
+			continue
+		elseif (k == 1 && CTRL.pocket_call[1] !== nothing && startswith(cmd[1], "psclip"))
+			P = gmt(cmd[k], CTRL.pocket_call[1])
+			CTRL.pocket_call[1] = nothing					# Clear it right away
+			continue
+		elseif (k == length(cmd) && startswith(cmd[k], "psclip"))
+			P = gmt(cmd[k])
 			continue
 		end
 		P = gmt(cmd[k], args...)
