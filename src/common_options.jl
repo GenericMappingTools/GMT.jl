@@ -1288,15 +1288,20 @@ function finish_PS_nested(d::Dict, cmd::Vector{String}, K::Bool)
 	if (!isempty(cmd2))
 		K = true
 		if (startswith(cmd2[1], "clip"))		# Deal with the particular psclip case
-			ind = findfirst(" -R", cmd[1]);		opt_R = strtok(cmd[1][ind[1]:end])[1]
-			ind = findfirst(" -J", cmd[1]);		opt_J = strtok(cmd[1][ind[1]:end])[1]
-			t, opt_B = "psclip " * opt_R * " " * opt_J, ""
-			ind = findall(" -B", cmd[1])
-			if (!isempty(ind))
-				[opt_B *= " " * strtok(cmd[1][ind[k][1]:end])[1] for k = 1:length(ind)]
-				cmd[1] = replace(cmd[1], opt_B => "")
+			if (isa(CTRL.pocket_call[1], Symbol) || isa(CTRL.pocket_call[1], String))	# Assume it's a clip=end
+				cmd = [cmd; "psclip -C"]
+				CTRL.pocket_call[1] = nothing
+			else
+				ind = findfirst(" -R", cmd[1]);		opt_R = strtok(cmd[1][ind[1]:end])[1]
+				ind = findfirst(" -J", cmd[1]);		opt_J = strtok(cmd[1][ind[1]:end])[1]
+				t, opt_B = "psclip " * opt_R * " " * opt_J, ""
+				ind = findall(" -B", cmd[1])
+				if (!isempty(ind))
+					[opt_B *= " " * strtok(cmd[1][ind[k][1]:end])[1] for k = 1:length(ind)]
+					cmd[1] = replace(cmd[1], opt_B => "")
+				end
+				cmd = [t * opt_B; cmd; "psclip -C"]
 			end
-			cmd = [t * opt_B; cmd; "psclip -C"]
 		else
 			append!(cmd, cmd2)
 		end
@@ -1797,7 +1802,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_module(d::Dict)
+function add_opt_module(d::Dict)::Vector{String}
 	#  SYMBS should contain a module name (e.g. 'coast' or 'colorbar'), and if present in D,
 	# 'val' can be a NamedTuple with the module's arguments or a 'true'.
 	out = Vector{String}()
@@ -3040,12 +3045,9 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			P = gmt(cmd[k], CTRL.pocket_call[1])
 			CTRL.pocket_call[1] = nothing					# Clear it right away
 			continue
-		elseif (k == 1 && CTRL.pocket_call[1] !== nothing && startswith(cmd[1], "psclip"))
-			P = gmt(cmd[k], CTRL.pocket_call[1])
-			CTRL.pocket_call[1] = nothing					# Clear it right away
-			continue
-		elseif (k == length(cmd) && startswith(cmd[k], "psclip"))
-			P = gmt(cmd[k])
+		elseif (startswith(cmd[k], "psclip"))
+			P = (CTRL.pocket_call[1] !== nothing) ? gmt(cmd[k], CTRL.pocket_call[1]) : gmt(cmd[k])
+			CTRL.pocket_call[1] = nothing					# For the case it was not yet empty
 			continue
 		end
 		P = gmt(cmd[k], args...)

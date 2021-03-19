@@ -1670,6 +1670,32 @@ function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec=nothing, alpha
 end
 
 """
+image_cpt!(img::GMTimage, cpt::GMTcpt, clear::Bool=false)
+
+	Add (or replace) a colormap to a GMTimage object from the colors in the cpt.
+	This should have effect only if IMG is indexed.
+	Use `image_cpt!(img, clear=true)` to remove a previously existant 'colormap' field in IMG
+"""
+# ---------------------------------------------------------------------------------------------------
+function image_cpt!(img::GMTimage, cpt::GMTcpt)
+	# Insert the cpt info in the img.colormap member
+	n = 1
+	colormap = fill(Int32(255), size(cpt.colormap,1) * 4)
+	for k = 1:size(cpt.colormap,1)
+		colormap[n:n+2] = round.(Int32, cpt.colormap[k,:] .* 255);	n += 3
+	end
+	img.colormap = colormap
+	img.n_colors = size(cpt.colormap,1)
+	return nothing
+end
+function image_cpt!(img::GMTimage; clear::Bool=true)
+	if (clear)
+		img.colormap, img.n_colors = fill(Int32(0), 3), 0
+	end
+	return nothing
+end
+
+"""
 I = ind2rgb(I)
 
     Convert an indexed image I to RGB. It uses the internal colormap to do the conversion.
