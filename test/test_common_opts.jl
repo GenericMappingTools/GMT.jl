@@ -258,6 +258,8 @@
 	GMT.guess_proj([0., 20.], [80.0, 90.])
 	GMT.guess_proj([0., 20.], [-90.0, -80.])
 	GMT.guess_proj([0., 20.], [-6.0, 90.])
+	GMT.guess_proj([0., 20.], [-30.0, 30.])
+	GMT.guess_proj([0., 20.], [-40.0, 60.])
 	GMT.guess_WESN(Dict(:p=>(350,2)), "")
 	GMT.guess_WESN(Dict(:p=>"350/2"), "")
 	GMT.parse_q(Dict(:p=>(350,2)), "")
