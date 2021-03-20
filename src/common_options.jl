@@ -527,7 +527,7 @@ function guess_proj(lonlim, latlim)
 		parallels = latlim .+ diff(latlim) .* [1/6 -1/6]
 		proj = string(" -JD", sum(lonlim)/2, '/', sum(latlim)/2, '/', parallels[1], '/', parallels[2])	# eqdc
 	elseif abs(latlim[2]-latlim[1]) < 85 && maximum(abs.(latlim)) < 90	# doesn't extend to the pole, not straddling equator
-		proj = string(" -JI", '/', sum(lonlim)/2)						# Sinusoidal
+		proj = string(" -JI", sum(lonlim)/2)							# Sinusoidal
 	elseif (maximum(latlim) == 90 && minimum(latlim) >= 75)
 		proj = string(" -JS", sum(lonlim)/2, "/90")						# General Stereographic - North Pole
 	elseif (minimum(latlim) == -90 && maximum(latlim) <= -75)

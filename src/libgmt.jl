@@ -454,6 +454,11 @@ function gmt_get_rgb_from_z(API::Ptr{Cvoid}, P::Ptr{GMT.GMT_PALETTE}, value::Cdo
 	ccall((:gmt_get_rgb_from_z, thelib), Cint, (Cstring, Ptr{Cvoid}, Cdouble, Ptr{Cdouble}), GMT_, P, value, rgb)
 end
 
+function gmt_free_mem(API::Ptr{Cvoid}, mem)
+	GMT_ = GMT_Get_Ctrl(API)
+	ccall((:gmt_free_func, thelib), Cvoid, (Cstring, Ptr{Cvoid}, Bool, Cstring), GMT_, mem, true, "Julia")
+end
+
 function sprintf(format::String, x...)
 	strp = Ref{Ptr{Cchar}}(0)
 	if (length(x) == 1)

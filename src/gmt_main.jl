@@ -304,6 +304,12 @@ function gmt(cmd::String, args...)
 		GMT_Set_Default(API, "API_PAD", "2")
 	end
 
+	# Due to the damn GMT pad I'm forced to a lot of trickery. One involves shitting on memory ownership
+	if (CTRL.gmt_mem_bag[1] != C_NULL)
+		gmt_free_mem(API, CTRL.gmt_mem_bag[1])		# Free a GMT owned memory that we pretended was ours
+		CTRL.gmt_mem_bag[1] = C_NULL
+	end
+
 	# 8. Free all GMT containers involved in this module call
 	for k = 1:n_items
 		ppp = X[k].object
@@ -879,6 +885,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	end
 	(!CTRL.proj_linear[1]) && (pad = 2)
 	mode = (pad == 2) ? GMT_CONTAINER_AND_DATA : GMT_CONTAINER_ONLY
+	(pad == 2 && Img.pad == 0 && Img.layout[2] == 'R') && (mode = GMT_CONTAINER_AND_DATA)	# Unfortunately
 
 	I = GMT_Create_Data(API, family, GMT_IS_SURFACE, mode, pointer([n_cols, n_rows, n_bands]),
 	                    Img.range[1:4], Img.inc, Img.registration, pad)
@@ -887,7 +894,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 
 	if (pad == 2 && Img.layout[2] != 'R')						# When we need to project
 		img_padded = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
-		mx = n_cols + 2pad;
+		mx = n_cols + 2pad
 		nRGBA = (n_bands == 1) ? 1 : ((n_bands == 3) ? 3 : 4)	# Don't know if RGBA will work`
 		colVec = Vector{Int}(undef, n_cols)
 		for band = 1:n_bands
@@ -901,12 +908,25 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 			end
 		end
 		mem_owned_by_gmt = true
+	elseif (pad == 2 && Img.pad == 0 && Img.layout[2] == 'R')	# Also need to project
+		img_padded = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
+		mx, k = n_cols + 2pad, 1
+		for band = 1:n_bands
+			off_band = (band - 1) * h.size
+			for row = 1:n_rows
+				off = pad * mx + (row - 1) * mx + pad + off_band
+				for col = 1:n_cols
+					img_padded[col + off] = Img.image[k];	k += 1
+				end
+			end
+		end
+		mem_owned_by_gmt = true
 	else
-		#t = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), length(Img.image))
-		#[t[k] = Img.image[k] for k = 1:length(Img.image)]
 		Ib.data = pointer(Img.image)
 		mem_owned_by_gmt = (pad == 0) ? false : true
 	end
+	
+	(mem_owned_by_gmt) && (CTRL.gmt_mem_bag[1] = Ib.data)	# Hold on the GMT owned array to be freed in gmt()
 
 	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
 	Ib.n_indexed_colors = Img.n_colors
@@ -915,7 +935,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	else                           Ib.alpha = C_NULL
 	end
 
-	(!mem_owned_by_gmt) && GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)	# Tell GMT that memory is external
+	GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)		# Tell GMT that memory is external
 	h.z_min = Img.range[5]			# Set the z_min, z_max
 	h.z_max = Img.range[6]
 	h.mem_layout = map(UInt8, (Img.layout...,))
