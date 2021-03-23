@@ -245,6 +245,8 @@ GDALSetProjection(a1, a2) = aftercare(ccall((:GDALSetProjection, libgdal), UInt3
 GDALGetRasterDataType(a1) = aftercare(ccall((:GDALGetRasterDataType, libgdal), UInt32, (Ptr{Cvoid},), a1))
 GDALGetProjectionRef(a1) = aftercare(ccall((:GDALGetProjectionRef, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
 GDALGetDatasetDriver(a1) = aftercare(ccall((:GDALGetDatasetDriver, libgdal), Ptr{Cvoid}, (Ptr{Cvoid},), a1))
+GDALGetDescription(a1) = aftercare(ccall((:GDALGetDescription, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
+GDALGetMetadata(a1, a2) = aftercare(ccall((:GDALGetMetadata, libgdal), Ptr{Cstring}, (Ptr{Cvoid}, Cstring), a1, a2))
 GDALGetDriver(a1) = aftercare(ccall((:GDALGetDriver, libgdal), Ptr{Cvoid}, (Cint,), a1))
 GDALGetDriverByName(a1) = aftercare(ccall((:GDALGetDriverByName, libgdal), Ptr{Cvoid}, (Cstring,), a1))
 GDALGetDriverShortName(a1) = aftercare(ccall((:GDALGetDriverShortName, libgdal), Cstring, (Ptr{Cvoid},), a1), false)
@@ -302,12 +304,18 @@ function GDALDatasetRasterIOEx(hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSiz
 	aftercare(ccall((:GDALDatasetRasterIOEx, libgdal), UInt32, (Ptr{Cvoid}, UInt32, Cint, Cint, Cint, Cint, Ptr{Cvoid}, Cint, Cint, UInt32, Cint, Ptr{Cint}, Clonglong, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}), hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nBandCount, panBandCount, nPixelSpace, nLineSpace, nBandSpace, psExtraArg))
 end
 
+function GDALSetRasterColorTable(a1, a2)
+	aftercare(ccall((:GDALSetRasterColorTable, libgdal), UInt32, (Ptr{Cvoid}, Ptr{Cvoid}), a1, a2))
+end
+
 function GDALDummyProgress(a1, a2, a3)
 	aftercare(ccall((:GDALDummyProgress, libgdal), Cint, (Cdouble, Cstring, Ptr{Cvoid}), a1, a2, a3))
 end
 function GDALCreateCopy(a1, a2, a3, a4, a5, a6, a7)
 	aftercare(ccall((:GDALCreateCopy, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring, Ptr{Cvoid}, Cint, Ptr{Cstring}, Ptr{Cvoid}, Ptr{Cvoid}), a1, a2, a3, a4, a5, a6, a7))
 end
+
+GDALCreateColorTable(a1) = aftercare(ccall((:GDALCreateColorTable, libgdal), Ptr{Cvoid}, (UInt32,), a1))
 
 CPLSetConfigOption(a1, a2) = aftercare(ccall((:CPLSetConfigOption, libgdal), Cvoid, (Cstring, Cstring), a1, a2))
 
@@ -470,6 +478,13 @@ function GDALDatasetCreateLayer(a1, a2, a3, a4, a5)
 	aftercare(ccall((:GDALDatasetCreateLayer, libgdal), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring, Ptr{Cvoid}, UInt32, Ptr{Cstring}), a1, a2, a3, a4, a5))
 end
 
+function GDALComputeMedianCutPCT(hRed, hGreen, hBlue, pfnIncPix, nColors, hColorTable, pfnProgress, pProgArg)
+	aftercare(ccall((:GDALComputeMedianCutPCT, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Cint, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), hRed, hGreen, hBlue, pfnIncPix, nColors, hColorTable, pfnProgress, pProgArg))
+end
+function GDALDitherRGB2PCT(hRed, hGreen, hBlue, hTarget, hColorTable, pfnProgress, pProgArg)
+	aftercare(ccall((:GDALDitherRGB2PCT, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), hRed, hGreen, hBlue, hTarget, hColorTable, pfnProgress, pProgArg))
+end
+
 function GDALInfoOptionsNew(pArgv, psOFB)
 	aftercare(ccall((:GDALInfoOptionsNew, libgdal), Ptr{Cvoid}, (Ptr{Cstring}, Ptr{Cvoid}), pArgv, psOFB))
 end
@@ -530,6 +545,10 @@ GDALWarpAppOptionsFree(psO) = aftercare(ccall((:GDALWarpAppOptionsFree, libgdal)
 function GDALWarpAppOptionsNew(pArgv, psOFB)
 	aftercare(ccall((:GDALWarpAppOptionsNew, libgdal), Ptr{Cvoid}, (Ptr{Cstring}, Ptr{Cvoid}), pArgv, psOFB))
 end
+
+#function GDALViewshedGenerate(hBand, pDriverName, pTargetName, pCreationOpts, obsX, obsY, obsH, dfTargetHeight, dfVisibleVal, dfInvVal, dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff, eMode, dfMaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts)
+    #aftercare(ccall((:GDALViewshedGenerate, thelib), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring, Cstring, Ptr{Cstring}, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, UInt32, Cdouble, Ptr{Cvoid}, Ptr{Cvoid}, UInt32, Ptr{Cstring}), hBand, pDriverName, pTargetName, pCreationOpts, obsX, obsY, obsH, dfTargetHeight, dfVisibleVal, dfInvVal, dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff, eMode, dfMaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts))
+#end
 
 # ------------------------------------------- ArchGDAL stuff ----------------------------------------------------------
 
@@ -729,7 +748,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	macro cplwarn(code, message)
 		return quote
-			if $(esc(code)) != GDAL.CE_None
+			if $(esc(code)) != CE_None
 				@warn $message
 			end
 		end
@@ -796,6 +815,14 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		geom::UInt32=wkbUnknown, spatialref::AbstractSpatialRef=SpatialRef(), options=Ptr{Cstring}(C_NULL))
 	return FeatureLayer(GDAL.gdaldatasetcreatelayer(dataset.ptr, name, spatialref.ptr, geom, options))
 	end =#
+
+	function ComputeMedianCutPCT(red::AbstractRasterBand, green::AbstractRasterBand, blue::AbstractRasterBand, nColors::Integer, hColorTable::ColorTable, pfnIncPix=C_NULL, pfnProg=C_NULL, pProgArg=C_NULL)
+		GDALComputeMedianCutPCT(red.ptr, green.ptr, blue.ptr, pfnIncPix, nColors, hColorTable.ptr, pfnProg, pProgArg)
+	end
+
+	function DitherRGB2PCT(red::AbstractRasterBand, green::AbstractRasterBand, blue::AbstractRasterBand, hTarget::AbstractRasterBand, hColorTable::ColorTable, pfnProg=C_NULL, pProgArg=C_NULL)
+		GDALDitherRGB2PCT(red.ptr, green.ptr, blue.ptr, hTarget.ptr, hColorTable.ptr, pfnProg, pProgArg)
+	end
 
 	unsafe_createfielddefn(name::AbstractString, etype::UInt32) = FieldDefn(OGR_Fld_Create(name, etype))
 
@@ -1242,8 +1269,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return (x[], y[], z[])
 	end
 	getx(geom::AbstractGeometry, i::Integer) = OGR_G_GetX(geom.ptr, i)
-	gety(geom::AbstractGeometry, i::Integer) = GDAL.ogr_g_gety(geom.ptr, i)
-	getz(geom::AbstractGeometry, i::Integer) = GDAL.ogr_g_getz(geom.ptr, i)
+	gety(geom::AbstractGeometry, i::Integer) = OGR_G_GetY(geom.ptr, i)
+	getz(geom::AbstractGeometry, i::Integer) = OGR_G_GetZ(geom.ptr, i)
 #=
 function OGR_G_GetPoints(hGeom, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride)
 	aftercare(ccall((:OGR_G_GetPoints, libgdal), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Cint, Ptr{Cvoid}, Cint, Ptr{Cvoid}, Cint),
@@ -1283,6 +1310,14 @@ end
 		return Dataset(result)
 	end
 	gdaltranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdaltranslate(Dataset(ds.ptr), opts; dest=dest)
+
+	#=
+	function gdalviewshed(dataset::Dataset, obsX, obsY, obsH=0, driver=C_NULL, pCreationOpts=String[], TargetHeight=0, VisibleVal=255, InvVal=0, OutOfRangeVal=NaN, nodata=NaN, CurvCoeff=0.85714, eMode=2, MaxDist=0, pfnProgress=C_NULL, pProgArg=0, heightMode=1, pExtraOpts=""; dest = "/vsimem/tmp")
+		result = GDALViewshedGenerate(dataset, driver, dest, pCreationOpts, obsX, obsY, obsH, TargetHeight, VisibleVal, InvVal, OutOfRangeVal, nodata, CurvCoeff, eMode, MaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts)
+		return Dataset(result)
+	end
+	gdalviewshed(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalviewshed(Dataset(ds.ptr), opts; dest=dest)
+	=#
 
 	function gdalinfo(ds::Dataset, options=String[])
 		options = GDALInfoOptionsNew(options, C_NULL)
@@ -1396,7 +1431,7 @@ end
 		IFeatureLayer(GDALDatasetGetLayerByName(ds.ptr, name), ownedby = ds)
 	end
 	unsafe_getlayer(ds::AbstractDataset, i::Integer) = FeatureLayer(GDALDatasetGetLayer(ds.ptr, i))
-	unsafe_getlayer(ds::AbstractDataset, name::AbstractString) = FeatureLayer(GDAL.GDALDatasetGetLayerByName(ds.ptr, name))
+	unsafe_getlayer(ds::AbstractDataset, name::AbstractString) = FeatureLayer(GDALDatasetGetLayerByName(ds.ptr, name))
 
 	width(band::AbstractRasterBand)    = GDALGetRasterBandXSize(band.ptr)
 	width(dataset::AbstractDataset)    = GDALGetRasterXSize(dataset.ptr)
@@ -1412,7 +1447,7 @@ end
 	getname(fielddefn::AbstractFieldDefn) = OGR_Fld_GetNameRef(fielddefn.ptr)
 	getname(obj::UInt32) = GDALGetColorInterpretationName(obj)
 	getname(geomdefn::AbstractGeomFieldDefn) = OGR_Fld_GetNameRef(geomdefn.ptr)
-	#getname(obj::GDALPaletteInterp) = GDALGetPaletteInterpretationName(obj)
+	#getname(obj::UInt32) = GDALGetPaletteInterpretationName(obj)
 	#getname(obj::OGRFieldType)      = OGR_GetFieldTypeName(obj)
 	#getname(obj::OGRFieldSubType)   = OGR_GetFieldSubTypeName(obj)
 
@@ -1429,10 +1464,17 @@ end
 	pixeltype(band::AbstractRasterBand{T}) where T = T
 	getcolorinterp(band::AbstractRasterBand) = GDALGetRasterColorInterpretation(band.ptr)
 	getcolortable(band::AbstractRasterBand) = ColorTable(Ptr{Cvoid}(GDALGetRasterColorTable(band.ptr)))
+	function setcolortable!(band::AbstractRasterBand, colortable::ColorTable)
+		result = GDALSetRasterColorTable(band.ptr, colortable.ptr)
+		@cplwarn result "CPLError $(result): action is unsupported by the driver"
+		return band
+	end
+	createcolortable(palette::UInt32) = ColorTable(GDALCreateColorTable(palette))	# WAS UNSAFE_
 
 	paletteinterp(ct::ColorTable) = GDALGetPaletteInterpretation(ct.ptr)
 	ncolorentry(ct::ColorTable) = GDALGetColorEntryCount(ct.ptr)
 	getcolorentry(ct::ColorTable, i::Integer) = unsafe_load(GDALGetColorEntry(ct.ptr, i))
+	metadata(obj; domain::AbstractString="") = GDALGetMetadata(obj.ptr, domain)
 
 	asint(feature::Feature, i::Integer) = OGR_F_GetFieldAsInteger(feature.ptr, i)
 	asint64(feature::Feature, i::Integer) = OGR_F_GetFieldAsInteger64(feature.ptr, i)

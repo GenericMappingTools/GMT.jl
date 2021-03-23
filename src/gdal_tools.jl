@@ -16,18 +16,55 @@ gdaltranslate(indata, opts=String[]; kwargs...)
 # ---------------------------------------------------------------------------------------------------
 function gdaltranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
 	# A version that uses a mix of GMT and GDL syntax
-	d, opts, got_GMT_opts = helper_GMT_opts_to_GDAL(opts, kwargs...)
-	helper_run_GDAL_fun(gdaltranslate, dest, d, indata, opts, got_GMT_opts)
+	helper_run_GDAL_fun(gdaltranslate, indata, dest, opts, "", kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
 function gdalwarp(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
-	d, opts, got_GMT_opts = helper_GMT_opts_to_GDAL(opts, kwargs...)
-	helper_run_GDAL_fun(gdalwarp, dest, d, indata, opts, got_GMT_opts)
+	helper_run_GDAL_fun(gdalwarp, indata, dest, opts, "", kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function helper_GMT_opts_to_GDAL(opts::Vector{String}, kwargs...)
+function gdaldem(indata, method::String, opts=String[]; dest="/vsimem/tmp", kwargs...)
+	helper_run_GDAL_fun(gdaldem, indata, dest, opts, method, kwargs...)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Vector{String}, method::String="", kwargs...)
+	# Helper function to run the GDAL function under 'some protection' and returning obj or saving in file
+
+	d, opts, got_GMT_opts = GMT_opts_to_GDAL(opts, kwargs...)
+
+	# For gdaldem color-relief we need a further arg that is the name of a cpt. So save one on disk
+	_cmap = C_NULL
+	if (f == gdaldem && ((cmap = GMT.find_in_dict(d, [:C :color :cmap])[1])) !== nothing)
+		if (!isa(_cmap, String))
+			_cmap = tempdir() * "/GMTtmp_cpt"
+			GMT.gmtwrite(_cmap, cmap)
+		else
+			_cmap = cmap
+		end
+	end
+
+	dataset = get_gdaldataset(indata)
+
+	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
+	if ((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "")
+		(method == "") ? f(dataset, opts; dest=outname) : f(dataset, method, opts; dest=outname, colorfile=_cmap)
+		destroy(dataset)	# Basically, close the file
+		o = nothing
+	else
+		o = (method == "") ? f(dataset, opts; dest=dest) : f(dataset, method, opts; dest=dest, colorfile=_cmap)
+		# If any GMT opt is used and not explicitly stated to return a GDAL datase, return a GMT type
+		n_bands = (got_GMT_opts && !haskey(d, :gdataset) && isa(o, AbstractRasterBand)) ? 1 : nraster(o)
+		(got_GMT_opts && !haskey(d, :gdataset)) && (o = gd2gmt(o, bands=collect(1:n_bands)))
+	end
+	CPLPopErrorHandler();
+	o
+end
+
+# ---------------------------------------------------------------------------------------------------
+function GMT_opts_to_GDAL(opts::Vector{String}, kwargs...)
 	# Helper function to process some GMT options and turn them into GDAL syntax
 	d = GMT.init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	((opt_R = GMT.parse_R(d, "")[1]) != "") && append!(opts, ["-projwin", split(opt_R[4:end], '/')[[1,4,2,3]]...])	# Ugly
@@ -39,26 +76,66 @@ function helper_GMT_opts_to_GDAL(opts::Vector{String}, kwargs...)
 	return d, opts, (opt_R != "" || opt_J != "" || opt_I != "")
 end
 
-# ---------------------------------------------------------------------------------------------------
-function helper_run_GDAL_fun(f::Function, dest::String, d::Dict, indata, opts::Vector{String}, got_GMT_opts::Bool)
-	# Helper function to run the GDAL function under 'some protection' and returning obj or saving in file
-	if isa(indata, AbstractString)		# Check also for remote files (those that start with a @)
-		_indata = (indata[1] == '@') ? Gdal.unsafe_read(gmtwhich(indata)[1].text[1]) : Gdal.unsafe_read(indata)
-	elseif (isa(indata, GMTgrid) || isa(indata, GMTimage))
-		_indata = gmt2gd(indata)
-	else
-		_indata = indata		# If it's not a GDAL dataset or convenient descendent, shit will follow soon
-	end
+#= ---------------------------------------------------------------------------------------------------
+function default_gdopts!(ds, opts::Vector{String})
+	# Assign some default options in function of the driver and data type
+	driver = shortname(getdriver(ds))
+	dt = GDALGetRasterDataType(ds.ptr)
+	(driver == "MEM" && dt < 6) && return nothing		# We have no defaults so far for integer data in MEM 
+	(dt == 1 && !any(startswith.(opts, "COMPRESS"))) && append!(opts, ["COMPRESS=DEFLATE", "PREDICTOR=2"])
+	(dt == 1 && !any(startswith.(opts, "TILED"))) && append!(opts, ["TILED=YES"])
+	(dt >= 6 && !any(startswith.(opts, "a_nodata"))) && append!(opts, ["-a_nodata","NaN"])
+	(driver == "netCDF") && append!(opts,["FORMAT=NC4", "COMPRESS=DEFLATE", "ZLEVEL=4"]) 
+end
+=#
 
-	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
-	if ((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "")
-		f(_indata, opts; dest=outname)
-		o = nothing
+# ---------------------------------------------------------------------------------------------------
+function get_gdaldataset(indata)
+	# Get a GDAL dataset from either a file name, a GMT grid or image, or a dataset itself
+	if isa(indata, AbstractString)		# Check also for remote files (those that start with a @)
+		ds = (indata[1] == '@') ? Gdal.unsafe_read(gmtwhich(indata)[1].text[1]) : Gdal.unsafe_read(indata)
+	elseif (isa(indata, GMT.GMTgrid) || isa(indata, GMT.GMTimage))
+		ds = gmt2gd(indata)
 	else
-		o = f(_indata, opts; dest=dest)
-		# If any GMT opt is used and not explicitly stated to return a GDAL datase, return a GMT type
-		(got_GMT_opts && !haskey(d, :gdataset)) && (o = gd2gmt(o))
+		ds = indata		# If it's not a GDAL dataset or convenient descendent, shit will follow soon
 	end
-	CPLPopErrorHandler();
-	o
+end
+
+"""
+dither(indata; n_colors=256, save="", gdataset=false)
+
+	Convert a 24bit RGB image to 8bit paletted.
+	- Use the 'save=fname' option to save the result to disk in a GeoTiff file "fname". Do not provide
+	  the extension, a '.tif' one will be appended.
+	- Use 'gdataset=true' to return a GDAL dataset. The default is to return a GMTimage object.
+	- Select the number of colors in the generated color table. Defaults to 256.
+"""
+# ---------------------------------------------------------------------------------------------------
+function dither(indata, opts=String[]; n_colors::Integer=8, save::String="", gdataset::Bool=false)
+	# ...
+	src_ds = get_gdaldataset(indata)
+	(nraster(src_ds) < 3) && error("Input image must have at least 3 bands")
+	r_band, g_band, b_band = getband(src_ds, 1), getband(src_ds, 2), getband(src_ds, 3)
+
+	drv_name = (save == "") ? "MEM" : "GTiff"
+	(save != "") && (save *= ".tif")
+	(drv_name != "MEM") && append!(opts, ["TILED=YES", "TILED=YES", "COMPRESS=DEFLATE", "PREDICTOR=2"])
+	dst_ds = create(save, driver=getdriver(drv_name), width=width(src_ds), height=height(src_ds),
+	                nbands=1, dtype=UInt8, options=opts)
+	try
+		setproj!(dst_ds, getproj(src_ds))
+		setgeotransform!(dst_ds, getgeotransform(src_ds))
+	catch
+	end
+	dst_band = getband(dst_ds, 1)
+	ct = createcolortable(UInt32(1))
+
+	ComputeMedianCutPCT(r_band, g_band, b_band, n_colors, ct)
+	setcolortable!(dst_band, ct)
+	DitherRGB2PCT(r_band, g_band, b_band, dst_band, ct)
+	if (save != "")						# Because a file was writen
+		destroy(dst_ds)
+		return nothing
+	end
+	(gdataset) ? dst_ds : gd2gmt(dst_ds)
 end
