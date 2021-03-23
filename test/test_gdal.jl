@@ -112,6 +112,8 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.write(ds_src, "/vsimem/utmsmall.tif")
 	ds_copy = Gdal.read("/vsimem/utmsmall.tif")
 	#@test Gdal.read(ds_src) == Gdal.read(ds_copy)
+	Gdal.metadata(ds_src)
+	Gdal.GDALGetDescription(ds_src.ptr)
 
 	line = Gdal.createlinestring()
 	Gdal.addpoint!(line, 1116651.439379124,  637392.6969887456)
@@ -129,4 +131,6 @@ Gdal.GDALDestroyDriverManager()
 	I = grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1);
 	grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
 	grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
+
+	I = Gdal.dither("rgbsmall.tif");
 end
