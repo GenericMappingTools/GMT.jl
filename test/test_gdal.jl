@@ -62,6 +62,7 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.GDALGetPaletteInterpretationName(1);
 	Gdal.OCTDestroyCoordinateTransformation(C_NULL);
 
+	gdalinfo("utmsmall.tif");
 	ds_small = readgd("utmsmall.tif");
 	Gdal.getlayer(ds_small, 1);
 	gdalinfo(ds_small, [""]);
@@ -133,4 +134,16 @@ Gdal.GDALDestroyDriverManager()
 	grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
 
 	I = Gdal.dither("rgbsmall.tif");
+
+	Gdal.IFieldDefnView(C_NULL);
+	Gdal.IGeomFieldDefnView(C_NULL);
+	Gdal.GeomFieldDefn(C_NULL);
+	Gdal.RasterBand(C_NULL);
+	Gdal.destroy(Gdal.Driver(C_NULL));
+	Gdal.destroy(Gdal.Feature(C_NULL));
+	Gdal.destroy(Gdal.CoordTransform(C_NULL));
+	Gdal.destroy(Gdal.FeatureDefn(C_NULL));
+	Gdal.destroy(Gdal.IFieldDefnView(C_NULL));
+	Gdal.destroy(Gdal.IGeomFieldDefnView(C_NULL));
+
 end
