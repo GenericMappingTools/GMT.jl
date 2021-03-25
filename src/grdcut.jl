@@ -9,6 +9,11 @@ Full option list at [`grdcut`]($(GMTdoc)grdcut.html)
 Parameters
 ----------
 
+- **F** | **clip** | **cutline** :: [Type => Str | GMTdaset | Mx2 array | NamedTuple]	`Arg = array|fname[+c] | (polygon=Array|Str, crop2cutline=Bool, invert=Bool)`
+
+    Specify a closed polygon (either a file or a dataset). All grid nodes outside the
+    polygon will be set to NaN (>= GMT6.2).
+    ($(GMTdoc)grdcut.html#f)
 - **G** | **outgrid** | **outfile** | **save** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
@@ -41,12 +46,17 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdcut", cmd0, arg1)
 
+	arg2 = nothing
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
     cmd, = parse_common_opts(d, "", [:R :V_params :f])
     opt_J, = parse_J(d, "")
     if (!startswith(opt_J, " -JX"))  cmd *= opt_J  end
 	cmd = parse_these_opts(cmd, d, [[:G :outgrid :outfile :save], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
+	cmd, args, n, = add_opt(d, cmd, 'F', [:F :clip :cutline], :polygon, Array{Any,1}([arg1, arg2]),
+	                        (crop2cutline="_+c", invert="_+i"))
+	if (n > 0)  arg1, arg2 = args[:]  end
 	(show_kwargs[1]) && return print_kwarg_opts([:img :usegdal], "Any")		# Just print the options
+
 	if (cmd0 != "" && ((find_in_dict(d, [:img :usegdal])[1]) !== nothing))
 		(cmd0[1] == '@') && (cmd0 = gmtwhich(cmd0)[1].text[1])	# A remote file
 		ds = readgd(cmd0)
@@ -59,7 +69,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 			return nothing				# Since it wrote a file so nothing to return
 		end
 	else
-		common_grd(d, cmd0, cmd, "grdcut ", arg1)		# Finish build cmd and run it
+		common_grd(d, cmd0, cmd, "grdcut ", arg1, arg2)		# Finish build cmd and run it
 	end
 end
 
