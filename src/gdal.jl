@@ -256,9 +256,7 @@ GDALGetDriverShortName(a1) = acare(ccall((:GDALGetDriverShortName, libgdal), Cst
 GDALGetDriverLongName(a1) = acare(ccall((:GDALGetDriverLongName, libgdal), Cstring, (pVoid,), a1), false)
 GDALGetDriverCreationOptionList(a1) = acare(ccall((:GDALGetDriverCreationOptionList, libgdal), Cstring, (pVoid,), a1), false)
 GDALDatasetGetLayer(a1, a2) = acare(ccall((:GDALDatasetGetLayer, libgdal), pVoid, (pVoid, Cint), a1, a2))
-function GDALDatasetGetLayerByName(a1, a2)
-	acare(ccall((:GDALDatasetGetLayerByName, libgdal), pVoid, (pVoid, Cstring), a1, a2))
-end
+GDALDatasetGetLayerByName(a1, a2) = acare(ccall((:GDALDatasetGetLayerByName, libgdal), pVoid, (pVoid, Cstring), a1, a2))
 GDALGetRasterBandXSize(a1) = acare(ccall((:GDALGetRasterBandXSize, libgdal), Cint, (pVoid,), a1))
 GDALGetRasterBandYSize(a1) = acare(ccall((:GDALGetRasterBandYSize, libgdal), Cint, (pVoid,), a1))
 GDALGetRasterXSize(a1)     = acare(ccall((:GDALGetRasterXSize, libgdal), Cint, (pVoid,), a1))
@@ -305,9 +303,7 @@ end
 
 GDALSetRasterColorTable(a1, a2) = acare(ccall((:GDALSetRasterColorTable, libgdal), UInt32, (pVoid, pVoid), a1, a2))
 
-function GDALDummyProgress(a1, a2, a3)
-	acare(ccall((:GDALDummyProgress, libgdal), Cint, (Cdouble, Cstring, pVoid), a1, a2, a3))
-end
+GDALDummyProgress(a1, a2, a3) = acare(ccall((:GDALDummyProgress, libgdal), Cint, (Cdouble, Cstring, pVoid), a1, a2, a3))
 function GDALCreateCopy(a1, a2, a3, a4, a5, a6, a7)
 	acare(ccall((:GDALCreateCopy, libgdal), pVoid, (pVoid, Cstring, pVoid, Cint, Ptr{Cstring}, pVoid, pVoid), a1, a2, a3, a4, a5, a6, a7))
 end
@@ -338,6 +334,7 @@ end
 
 OGR_F_Create(a1) = acare(ccall((:OGR_F_Create, libgdal), pVoid, (pVoid,), a1))
 OGR_F_Destroy(a1) = acare(ccall((:OGR_F_Destroy, libgdal), Cvoid, (pVoid,), a1))
+OGR_F_GetDefnRef(a1) = acare(ccall((:OGR_F_GetDefnRef, libgdal), pVoid, (pVoid,), a1))
 OGR_F_GetGeometryRef(a1) = acare(ccall((:OGR_F_GetGeometryRef, libgdal), pVoid, (pVoid,), a1))
 OGR_F_GetGeomFieldCount(hFeat) = acare(ccall((:OGR_F_GetGeomFieldCount, libgdal), Cint, (pVoid,), hFeat))
 OGR_F_GetFieldCount(a1) = acare(ccall((:OGR_F_GetFieldCount, libgdal), Cint, (pVoid,), a1))
@@ -416,9 +413,15 @@ function OGR_G_SetPoint(a1, iPt, a2, a3, a4)
 	acare(ccall((:OGR_G_SetPoint, libgdal), Cvoid, (pVoid, Cint, Cdouble, Cdouble, Cdouble), a1, iPt, a2, a3, a4))
 end
 function OGR_G_SetPoint_2D(a1, iPt, a2, a3)
-    acare(ccall((:OGR_G_SetPoint_2D, libgdal), Cvoid, (pVoid, Cint, Cdouble, Cdouble), a1, iPt, a2, a3))
+	acare(ccall((:OGR_G_SetPoint_2D, libgdal), Cvoid, (pVoid, Cint, Cdouble, Cdouble), a1, iPt, a2, a3))
 end
+
+OGR_G_ForceToPolygon(a1) = acare(ccall((:OGR_G_ForceToPolygon, libgdal), pVoid, (pVoid,), a1))
+OGR_G_ForceToMultiPolygon(a1) = acare(ccall((:OGR_G_ForceToMultiPolygon, libgdal), pVoid, (pVoid,), a1))
+OGR_G_ForceToMultiPoint(a1) = acare(ccall((:OGR_G_ForceToMultiPoint, libgdal), pVoid, (pVoid,), a1))
+
 OGR_L_CreateFeature(a1, a2) = acare(ccall((:OGR_L_CreateFeature, libgdal), Cint, (pVoid, pVoid), a1, a2))
+OGR_L_GetFeature(a1, a2) = acare(ccall((:OGR_L_GetFeature, libgdal), pVoid, (pVoid, Clonglong), a1, a2))
 OGR_L_GetFeatureCount(a1, a2) = acare(ccall((:OGR_L_GetFeatureCount, libgdal), Clonglong, (pVoid, Cint), a1, a2))
 OGR_L_GetName(a1)  = acare(ccall((:OGR_L_GetName, libgdal), Cstring, (pVoid,), a1), false)
 OGR_L_GetGeomType(a1)  = acare(ccall((:OGR_L_GetGeomType, libgdal), UInt32, (pVoid,), a1))
@@ -433,9 +436,7 @@ OGRGetDriverCount() = acare(ccall((:OGRGetDriverCount, libgdal), Cint, ()))
 function OGR_G_AddPoint(a1, a2, a3, a4)
 	acare(ccall((:OGR_G_AddPoint, libgdal), Cvoid, (pVoid, Cdouble, Cdouble, Cdouble), a1, a2, a3, a4))
 end
-function OGR_G_AddPoint_2D(a1, a2, a3)
-	acare(ccall((:OGR_G_AddPoint_2D, libgdal), Cvoid, (pVoid, Cdouble, Cdouble), a1, a2, a3))
-end
+OGR_G_AddPoint_2D(a1, a2, a3) = acare(ccall((:OGR_G_AddPoint_2D, libgdal), Cvoid, (pVoid, Cdouble, Cdouble), a1, a2, a3))
 
 OGR_L_CreateField(a1, a2, a3) = acare(ccall((:OGR_L_CreateField, libgdal), Cint, (pVoid, pVoid, Cint), a1, a2, a3))
 function OGR_L_FindFieldIndex(a1, a2, bExactMatch)
@@ -482,6 +483,10 @@ end
 
 GDALInfoOptionsFree(psO) = acare(ccall((:GDALInfoOptionsFree, libgdal), Cvoid, (pVoid,), psO))
 GDALInfo(hDataset, psO) = acare(ccall((:GDALInfo, libgdal), Cstring, (pVoid, pVoid), hDataset, psO), true)
+
+#function GDALIdentifyDriver(pFname, pFList)
+	#acare(ccall((:GDALIdentifyDriver, libgdal), pVoid, (Cstring, Ptr{Cstring}), pFname, pFList))
+#end
 
 function GDALTranslateOptionsNew(pArgv, psOFB)
 	acare(ccall((:GDALTranslateOptionsNew, libgdal), pVoid, (Ptr{Cstring}, pVoid), pArgv, psOFB))
@@ -534,7 +539,7 @@ function GDALWarpAppOptionsNew(pArgv, psOFB)
 end
 
 #function GDALViewshedGenerate(hBand, pDriverName, pTargetName, pCreationOpts, obsX, obsY, obsH, dfTargetHeight, dfVisibleVal, dfInvVal, dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff, eMode, dfMaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts)
-    #acare(ccall((:GDALViewshedGenerate, thelib), pVoid, (pVoid, Cstring, Cstring, Ptr{Cstring}, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, UInt32, Cdouble, pVoid, pVoid, UInt32, Ptr{Cstring}), hBand, pDriverName, pTargetName, pCreationOpts, obsX, obsY, obsH, dfTargetHeight, dfVisibleVal, dfInvVal, dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff, eMode, dfMaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts))
+	#acare(ccall((:GDALViewshedGenerate, thelib), pVoid, (pVoid, Cstring, Cstring, Ptr{Cstring}, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, UInt32, Cdouble, pVoid, pVoid, UInt32, Ptr{Cstring}), hBand, pDriverName, pTargetName, pCreationOpts, obsX, obsY, obsH, dfTargetHeight, dfVisibleVal, dfInvVal, dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff, eMode, dfMaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts))
 #end
 
 # ------------------------------------------- ArchGDAL stuff ----------------------------------------------------------
@@ -869,6 +874,9 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return layer
 	end
 
+	getfeaturedefn(feature::Feature) = IFeatureDefnView(OGR_F_GetDefnRef(feature.ptr))
+	unsafe_getfeature(layer::AbstractFeatureLayer, i::Integer) = Feature(pVoid(OGR_L_GetFeature(layer.ptr, i)))
+
 	function setparams!(fielddefn::FieldDefn, name::AbstractString, etype::UInt32;
 						nwidth::Integer=0, nprecision::Integer=0, justify::UInt32=UInt32(0))
 		OGR_Fld_Set(fielddefn.ptr, name, etype, nwidth, nprecision, justify)
@@ -981,6 +989,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		geomdefn.ptr = C_NULL
 		return geomdefn
 	end
+
+	identifydriver(fname::AbstractString) = Driver(GDALIdentifyDriver(fname, C_NULL))
 
 	function create(fname::AbstractString; driver::Driver=identifydriver(fname), width::Integer=0,
 		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=true)
@@ -1236,7 +1246,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		driver::Driver=getdriver(dataset), strict::Bool=false, options=Ptr{Cstring}(C_NULL),
 		progressfunc::Function=GDALDummyProgress, progressdata=C_NULL)
 		return Dataset(GDALCreateCopy(driver.ptr, filename, dataset.ptr, strict, options,
-		               @cplprogress(progressfunc), progressdata))
+					   @cplprogress(progressfunc), progressdata))
 	end
 
 	getdriver(dataset::AbstractDataset) = Driver(GDALGetDatasetDriver(dataset.ptr))
@@ -1258,7 +1268,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 #=
 function OGR_G_GetPoints(hGeom, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride)
 	acare(ccall((:OGR_G_GetPoints, libgdal), Cint, (pVoid, pVoid, Cint, pVoid, Cint, pVoid, Cint),
-	                 hGeom, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride))
+					 hGeom, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride))
 end
 
 	getpoints(geom::AbstractGeometry) = getpoints!(geom, Ref{Cdouble}(), nx, Ref{Cdouble}(), nx, Ref{Cdouble}(), nz)
@@ -1914,9 +1924,9 @@ end
 	# ---------------------------------
 
 	export
-		creategd, getband, getdriver, getproj, getgeotransform, toPROJ4, toWKT, importPROJ4, importWKT,
-		importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
-		readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!
+		creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
+		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
+		readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy
 
 	const DRIVER_MANAGER = Ref{DriverManager}()
 	const GDALVERSION = Ref{VersionNumber}()
