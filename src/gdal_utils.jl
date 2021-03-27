@@ -213,6 +213,61 @@ function gmt2gd(GI)
 	return ds
 end
 
+# ---------------------------------------------------------------------------------------------------
+function gmt2gd(D::Vector{GMTdataset}; save::String="", geometry::String="")
+	# ...
+	n_cols = size(D[1].data, 2)
+	(n_cols < 2) && error("GMTdataset must have at least 2 columns")
+
+	ds = creategd(getdriver("MEMORY"));
+	if     (D[1].proj4 != "")  sr = Gdal.importPROJ4(D[1].proj4)
+	elseif (D[1].wkt   != "")  sr = Gdal.importWKT(D[1].wkt)
+	else                       sr = Gdal.ISpatialRef(C_NULL)
+	end
+
+	geom_code, geom_cmd = (length(D) == 1) ? (Gdal.wkbLineString, Gdal.createlinestring()) : (Gdal.wkbMultiLineString, Gdal.createmultilinestring())
+
+	layer = Gdal.createlayer(name="layer1", dataset=ds, geom=geom_code, spatialref=sr);
+	feature = Gdal.unsafe_createfeature(layer)
+	geom = geom_cmd
+
+	for k = 1:length(D)
+		if (eltype(D[k]) == Float64)
+			x, y = D[k].data[:,1], D[k].data[:,2]
+			(n_cols > 2) && (z = D[k].data[:,3])
+		else
+			x, y = Float64.(D[k].data[:,1]), Float64.(D[k].data[:,2])
+			(n_cols > 2) && (z = Float64.(D[k].data[:,3]))
+		end
+		n_pts = size(D[k].data, 1)
+		if (n_cols == 2)  Gdal.OGR_G_SetPoints(geom.ptr, n_pts, x, 8, y, 8, C_NULL, 8)
+		else              Gdal.OGR_G_SetPoints(geom.ptr, n_pts, x, 8, y, 8, z, 8)
+		end
+		Gdal.setgeom!(feature, geom)
+	end
+	Gdal.setfeature!(layer, feature)
+	Gdal.destroy(feature)
+
+	# This is possibly a wasting solution implying a data copy but it's bloody simpler
+	if (lowercase(geometry) == "polygon")
+		_ds = (length(D) == 1) ? Gdal.OGR_G_ForceToPolygon(ds.ptr) : Gdal.OGR_G_ForceToMultiPolygon(ds.ptr)
+		destroy(ds);	ds = _ds
+	elseif (lowercase(geometry) == "point")
+		if (length(D) > 1)
+			_ds = Gdal.OGR_G_ForceToMultiPoint(ds.ptr);		destroy(ds);	ds = _ds
+		else
+			@warn("Cannot convert to a point geometry. Keeping the LineString")
+		end
+	end
+
+	if (save != "")
+		ds2 = ogr2ogr(ds, dest=save)
+		Gdal.destroy(ds2);	Gdal.destroy(ds)
+		return nothing
+	end
+	return ds
+end
+
 """
 G = varspacegrid(fname::String, sds_name::String=""; V::Bool=false, kw...)
 
