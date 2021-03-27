@@ -40,7 +40,7 @@ grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
 grdview(rand(128,128), G="lixo", I=I, J=:X12, JZ=5, Q=:i, view="145/30", Vd=dbg2)
 
 println("	IMSHOW")
-imshow(rand(128,128),show=false)
+imshow(rand(UInt16, 128,128),show=false)
 imshow(rand(128,128), view=:default, Vd=dbg2)
 imshow(G, axis=:a, shade="+a45",show=false, contour=true)
 imshow(G, clip=[-1. -1; 0 1; 1 -1], Vd=dbg2)
