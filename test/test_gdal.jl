@@ -135,6 +135,7 @@ Gdal.GDALDestroyDriverManager()
 
 	I = Gdal.dither("rgbsmall.tif");
 
+	Gdal.GDALGetDataTypeByName("GTiff");
 	Gdal.IFieldDefnView(C_NULL);
 	Gdal.IGeomFieldDefnView(C_NULL);
 	Gdal.GeomFieldDefn(C_NULL);
@@ -146,4 +147,13 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.destroy(Gdal.IFieldDefnView(C_NULL));
 	Gdal.destroy(Gdal.IGeomFieldDefnView(C_NULL));
 
+	ds = gmt2gd(mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0]))
+	Gdal.getx(Gdal.getgeom(Gdal.unsafe_getfeature(Gdal.getlayer(ds, 0),0)),1)
+	Gdal.gety(Gdal.getgeom(Gdal.unsafe_getfeature(Gdal.getlayer(ds, 0),0)),1)
+	Gdal.getz(Gdal.getgeom(Gdal.unsafe_getfeature(Gdal.getlayer(ds, 0),0)),1)
+
+	#Gdal.identifydriver("lixo.gmt")
+	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");
+	ds = gmt2gd(D)
+	ds = gmt2gd(D, geometry="Polygon")
 end
