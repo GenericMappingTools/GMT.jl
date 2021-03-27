@@ -1365,7 +1365,7 @@ D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=n
 	Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 	same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
 	`hdr` optional String vector with either one or n_rows multisegment headers.
-	`color` optional array os strings with color names/values. Its length can be smaller than n_rows, case in
+	`color` optional array of strings with color names/values. Its length can be smaller than n_rows, case in
 	which colors will be cycled.
 	`linethick`, or `lt` for selecting different line thicknesses. Work alike `color`, but should be 
 	        a vector of numbers, or just a single number that is then appl	ied to all lines.
@@ -1448,27 +1448,31 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), kwargs...)
 		end
 	end
 
+	prj = ((proj = find_in_dict(d, [:proj :proj4])[1]) !== nothing) ? proj : ""
+	(prj != "" && !startswith(prj, "+proj=")) && (prj = "+proj=" * prj)
+	wkt = ((wk = find_in_dict(d, [:wkt])[1]) !== nothing) ? wk : ""
+
 	D = Vector{GMTdataset}(undef, n_ds)
 
 	if (!isa(mat, Array{Float64}))  mat = Float64.(mat)  end
 	if (isempty(xx))
 		if (ndims(mat) == 3)
 			for k = 1:n_ds
-				D[k] = GMTdataset(view(mat,:,:,k), String[], (isempty(hdr) ? "" : hdr[k]), String[], "", "")
+				D[k] = GMTdataset(view(mat,:,:,k), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt)
 			end
 		elseif (!multi)
-			D[1] = GMTdataset(mat, String[], (isempty(hdr) ? "" : hdr[1]), String[], "", "")
+			D[1] = GMTdataset(mat, String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt)
 		else
 			for k = 1:n_ds
-				D[k] = GMTdataset(mat[:,[1,k+1]], String[], (isempty(hdr) ? "" : hdr[k]), String[], "", "")
+				D[k] = GMTdataset(mat[:,[1,k+1]], String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt)
 			end
 		end
 	else
 		if (!multi)
-			D[1] = GMTdataset(hcat(xx,mat), String[], (isempty(hdr) ? "" : hdr[1]), String[], "", "")
+			D[1] = GMTdataset(hcat(xx,mat), String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt)
 		else
 			for k = 1:n_ds
-				D[k] = GMTdataset(hcat(xx,mat[:,k]), String[], (isempty(hdr) ? "" : hdr[k]), String[], "", "")
+				D[k] = GMTdataset(hcat(xx,mat[:,k]), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt)
 			end
 		end
 	end
