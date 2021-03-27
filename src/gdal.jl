@@ -195,9 +195,8 @@ CPLPopErrorHandler() = ccall((:CPLPopErrorHandler, libgdal), Cvoid, ())
 
 VSIFree(a1) = acare(ccall((:VSIFree, libgdal), Cvoid, (pVoid,), a1))
 
-function Base.showerror(io::IO, err::GDALError)
+Base.showerror(io::IO, err::GDALError) =
 	println(io, string("GDALError (", err.class, ", code ", err.code, "):\n\t", err.msg))
-end
 
 function acare(x)
 	maybe_throw()
@@ -293,13 +292,11 @@ end
 GDALClose(a1) = acare(ccall((:GDALClose, libgdal), Cvoid, (pVoid,), a1))
 GDALVersionInfo(a1) = acare(ccall((:GDALVersionInfo, libgdal), Cstring, (Cstring,), a1), false)
 
-function GDALRasterIOEx(hRBand, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nPixelSpace, nLineSpace, psExtraArg)
+GDALRasterIOEx(hRBand, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nPixelSpace, nLineSpace, psExtraArg) =
 	acare(ccall((:GDALRasterIOEx, libgdal), UInt32, (pVoid, UInt32, Cint, Cint, Cint, Cint, UInt32, Cint, Cint, pVoid, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}), hRBand, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nPixelSpace, nLineSpace, psExtraArg))
-end
 
-function GDALDatasetRasterIOEx(hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nBandCount, panBandCount, nPixelSpace, nLineSpace, nBandSpace, psExtraArg)
+GDALDatasetRasterIOEx(hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nBandCount, panBandCount, nPixelSpace, nLineSpace, nBandSpace, psExtraArg) =
 	acare(ccall((:GDALDatasetRasterIOEx, libgdal), UInt32, (pVoid, UInt32, Cint, Cint, Cint, Cint, pVoid, Cint, Cint, UInt32, Cint, Ptr{Cint}, Clonglong, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}), hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nBandCount, panBandCount, nPixelSpace, nLineSpace, nBandSpace, psExtraArg))
-end
 
 GDALSetRasterColorTable(a1, a2) = acare(ccall((:GDALSetRasterColorTable, libgdal), UInt32, (pVoid, pVoid), a1, a2))
 
@@ -346,31 +343,30 @@ OGR_F_GetFieldAsInteger64(a1, a2) = acare(ccall((:OGR_F_GetFieldAsInteger64, lib
 OGR_F_GetFieldAsDouble(a1, a2) = acare(ccall((:OGR_F_GetFieldAsDouble, libgdal), Cdouble, (pVoid, Cint), a1, a2))
 OGR_F_GetFieldAsString(a1, a2) = acare(ccall((:OGR_F_GetFieldAsString, libgdal), Cstring, (pVoid, Cint), a1, a2), false)
 OGR_F_GetFieldAsStringList(a1, a2) = acare(ccall((:OGR_F_GetFieldAsStringList, libgdal), Ptr{Cstring}, (pVoid, Cint), a1, a2))
-function OGR_F_GetFieldAsIntegerList(a1, a2, a3)
+OGR_F_GetFieldAsIntegerList(a1, a2, a3) =
 	acare(ccall((:OGR_F_GetFieldAsIntegerList, libgdal), Ptr{Cint}, (pVoid, Cint, Ptr{Cint}), a1, a2, a3))
-end
-function OGR_F_GetFieldAsInteger64List(a1, a2, a3)
+
+OGR_F_GetFieldAsInteger64List(a1, a2, a3) =
 	acare(ccall((:OGR_F_GetFieldAsInteger64List, libgdal), Ptr{Clonglong}, (pVoid, Cint, Ptr{Cint}), a1, a2, a3))
-end
-function OGR_F_GetFieldAsDoubleList(a1, a2, a3)
+
+OGR_F_GetFieldAsDoubleList(a1, a2, a3) =
 	acare(ccall((:OGR_F_GetFieldAsDoubleList, libgdal), Ptr{Cdouble}, (pVoid, Cint, Ptr{Cint}), a1, a2, a3))
-end
-function OGR_F_GetFieldAsBinary(a1, a2, a3)
+
+OGR_F_GetFieldAsBinary(a1, a2, a3) =
 	acare(ccall((:OGR_F_GetFieldAsBinary, libgdal), Ptr{Cuchar}, (pVoid, Cint, Ptr{Cint}), a1, a2, a3))
-end
-function OGR_F_GetFieldAsDateTime(a1, a2, a3, a4, arg5, arg6, arg7, arg8, arg9)
+
+OGR_F_GetFieldAsDateTime(a1, a2, a3, a4, arg5, arg6, arg7, arg8, arg9) =
 	acare(ccall((:OGR_F_GetFieldAsDateTime, libgdal), Cint, (pVoid, Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), a1, a2, a3, a4, arg5, arg6, arg7, arg8, arg9))
-end
-function OGR_F_GetGeomFieldDefnRef(hFeat, iField)
+
+OGR_F_GetGeomFieldDefnRef(hFeat, iField) =
 	acare(ccall((:OGR_F_GetGeomFieldDefnRef, libgdal), pVoid, (pVoid, Cint), hFeat, iField))
-end
-function OGR_F_GetGeomFieldRef(hFeat, iField)
+
+OGR_F_GetGeomFieldRef(hFeat, iField) =
 	acare(ccall((:OGR_F_GetGeomFieldRef, libgdal), pVoid, (pVoid, Cint), hFeat, iField))
-end
+
 OGR_F_SetGeometry(a1, a2) = acare(ccall((:OGR_F_SetGeometry, libgdal), Cint, (pVoid, pVoid), a1, a2))
-function OGR_F_SetGeomField(hFeat, iField, hGeom)
+OGR_F_SetGeomField(hFeat, iField, hGeom) =
 	acare(ccall((:OGR_F_SetGeomField, libgdal), Cint, (pVoid, Cint, pVoid), hFeat, iField, hGeom))
-end
 
 OGR_FD_AddFieldDefn(a1, a2) = acare(ccall((:OGR_FD_AddFieldDefn, libgdal), Cvoid, (pVoid, pVoid), a1, a2))
 OGR_FD_Destroy(a1) = acare(ccall((:OGR_FD_Destroy, libgdal), Cvoid, (pVoid,), a1))
@@ -403,18 +399,17 @@ OGR_G_GetPointCount(a1) = acare(ccall((:OGR_G_GetPointCount, libgdal), Cint, (pV
 OGR_G_GetX(a1, a2) = acare(ccall((:OGR_G_GetX, libgdal), Cdouble, (pVoid, Cint), a1, a2))
 OGR_G_GetY(a1, a2) = acare(ccall((:OGR_G_GetY, libgdal), Cdouble, (pVoid, Cint), a1, a2))
 OGR_G_GetZ(a1, a2) = acare(ccall((:OGR_G_GetZ, libgdal), Cdouble, (pVoid, Cint), a1, a2))
-function OGR_G_GetPoint(a1, iPoint, a2, a3, a4)
+OGR_G_GetPoint(a1, iPoint, a2, a3, a4) =
 	acare(ccall((:OGR_G_GetPoint, libgdal), Cvoid, (pVoid, Cint, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}), a1, iPoint, a2, a3, a4))
-end
-function OGR_G_SetPoints(hGeom, nPointsIn, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride)
+
+OGR_G_SetPoints(hGeom, nPointsIn, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride) =
 	acare(ccall((:OGR_G_SetPoints, libgdal), Cvoid, (pVoid, Cint, pVoid, Cint, pVoid, Cint, pVoid, Cint), hGeom, nPointsIn, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride))
-end
-function OGR_G_SetPoint(a1, iPt, a2, a3, a4)
+
+OGR_G_SetPoint(a1, iPt, a2, a3, a4) =
 	acare(ccall((:OGR_G_SetPoint, libgdal), Cvoid, (pVoid, Cint, Cdouble, Cdouble, Cdouble), a1, iPt, a2, a3, a4))
-end
-function OGR_G_SetPoint_2D(a1, iPt, a2, a3)
+
+OGR_G_SetPoint_2D(a1, iPt, a2, a3) =
 	acare(ccall((:OGR_G_SetPoint_2D, libgdal), Cvoid, (pVoid, Cint, Cdouble, Cdouble), a1, iPt, a2, a3))
-end
 
 OGR_G_ForceToPolygon(a1) = acare(ccall((:OGR_G_ForceToPolygon, libgdal), pVoid, (pVoid,), a1))
 OGR_G_ForceToMultiPolygon(a1) = acare(ccall((:OGR_G_ForceToMultiPolygon, libgdal), pVoid, (pVoid,), a1))
@@ -433,53 +428,48 @@ OGR_L_SetFeature(a1, a2) = acare(ccall((:OGR_L_SetFeature, libgdal), Cint, (pVoi
 #OGR_GetFieldSubTypeName(a1) = acare(ccall((:OGR_GetFieldSubTypeName, libgdal), Cstring, (UInt32,), a1), false)
 OGRGetDriverCount() = acare(ccall((:OGRGetDriverCount, libgdal), Cint, ()))
 
-function OGR_G_AddPoint(a1, a2, a3, a4)
+OGR_G_AddPoint(a1, a2, a3, a4) =
 	acare(ccall((:OGR_G_AddPoint, libgdal), Cvoid, (pVoid, Cdouble, Cdouble, Cdouble), a1, a2, a3, a4))
-end
+
 OGR_G_AddPoint_2D(a1, a2, a3) = acare(ccall((:OGR_G_AddPoint_2D, libgdal), Cvoid, (pVoid, Cdouble, Cdouble), a1, a2, a3))
 
 OGR_L_CreateField(a1, a2, a3) = acare(ccall((:OGR_L_CreateField, libgdal), Cint, (pVoid, pVoid, Cint), a1, a2, a3))
-function OGR_L_FindFieldIndex(a1, a2, bExactMatch)
+OGR_L_FindFieldIndex(a1, a2, bExactMatch) =
 	acare(ccall((:OGR_L_FindFieldIndex, libgdal), Cint, (pVoid, Cstring, Cint), a1, a2, bExactMatch))
-end
 
 OGR_F_SetFieldInteger(a1, a2, a3) = acare(ccall((:OGR_F_SetFieldInteger, libgdal), Cvoid, (pVoid, Cint, Cint), a1, a2, a3))
 OGR_F_SetFieldInteger64(a1, a2, a3) = acare(ccall((:OGR_F_SetFieldInteger64, libgdal), Cvoid, (pVoid, Cint, Clonglong), a1, a2, a3))
 OGR_F_SetFieldDouble(a1, a2, a3) = acare(ccall((:OGR_F_SetFieldDouble, libgdal), Cvoid, (pVoid, Cint, Cdouble), a1, a2, a3))
 OGR_F_SetFieldString(a1, a2, a3) = acare(ccall((:OGR_F_SetFieldString, libgdal), Cvoid, (pVoid, Cint, Cstring), a1, a2, a3))
-function OGR_F_SetFieldIntegerList(a1, a2, a3, a4)
+OGR_F_SetFieldIntegerList(a1, a2, a3, a4) =
 	acare(ccall((:OGR_F_SetFieldIntegerList, libgdal), Cvoid, (pVoid, Cint, Cint, Ptr{Cint}), a1, a2, a3, a4))
-end
-function OGR_F_SetFieldInteger64List(a1, a2, a3, a4)
+
+OGR_F_SetFieldInteger64List(a1, a2, a3, a4) =
 	acare(ccall((:OGR_F_SetFieldInteger64List, libgdal), Cvoid, (pVoid, Cint, Cint, Ptr{Clonglong}), a1, a2, a3, a4))
-end
-function OGR_F_SetFieldDoubleList(a1, a2, a3, a4)
+
+OGR_F_SetFieldDoubleList(a1, a2, a3, a4) =
 	acare(ccall((:OGR_F_SetFieldDoubleList, libgdal), Cvoid, (pVoid, Cint, Cint, Ptr{Cdouble}), a1, a2, a3, a4))
-end
-function OGR_F_SetFieldStringList(a1, a2, a3)
+
+OGR_F_SetFieldStringList(a1, a2, a3) =
 	acare(ccall((:OGR_F_SetFieldStringList, libgdal), Cvoid, (pVoid, Cint, Ptr{Cstring}), a1, a2, a3))
-end
-function OGR_F_SetFieldBinary(a1, a2, a3, a4)
+
+OGR_F_SetFieldBinary(a1, a2, a3, a4) =
 	acare(ccall((:OGR_F_SetFieldBinary, libgdal), Cvoid, (pVoid, Cint, Cint, pVoid), a1, a2, a3, a4))
-end
-function OGR_F_SetFieldDateTime(a1, a2, a3, a4, a5, a6, a7, a8, a9)
+
+OGR_F_SetFieldDateTime(a1, a2, a3, a4, a5, a6, a7, a8, a9) =
 	acare(ccall((:OGR_F_SetFieldDateTime, libgdal), Cvoid, (pVoid, Cint, Cint, Cint, Cint, Cint, Cint, Cint, Cint), a1, a2, a3, a4, a5, a6, a7, a8, a9))
-end
 
-function GDALDatasetCreateLayer(a1, a2, a3, a4, a5)
+GDALDatasetCreateLayer(a1, a2, a3, a4, a5) =
 	acare(ccall((:GDALDatasetCreateLayer, libgdal), pVoid, (pVoid, Cstring, pVoid, UInt32, Ptr{Cstring}), a1, a2, a3, a4, a5))
-end
 
-function GDALComputeMedianCutPCT(hRed, hGreen, hBlue, pfnIncPix, nColors, hColorTable, pfnProgress, pProgArg)
+GDALComputeMedianCutPCT(hRed, hGreen, hBlue, pfnIncPix, nColors, hColorTable, pfnProgress, pProgArg) =
 	acare(ccall((:GDALComputeMedianCutPCT, libgdal), Cint, (pVoid, pVoid, pVoid, pVoid, Cint, pVoid, pVoid, pVoid), hRed, hGreen, hBlue, pfnIncPix, nColors, hColorTable, pfnProgress, pProgArg))
-end
-function GDALDitherRGB2PCT(hRed, hGreen, hBlue, hTarget, hColorTable, pfnProgress, pProgArg)
-	acare(ccall((:GDALDitherRGB2PCT, libgdal), Cint, (pVoid, pVoid, pVoid, pVoid, pVoid, pVoid, pVoid), hRed, hGreen, hBlue, hTarget, hColorTable, pfnProgress, pProgArg))
-end
 
-function GDALInfoOptionsNew(pArgv, psOFB)
+GDALDitherRGB2PCT(hRed, hGreen, hBlue, hTarget, hColorTable, pfnProgress, pProgArg) =
+	acare(ccall((:GDALDitherRGB2PCT, libgdal), Cint, (pVoid, pVoid, pVoid, pVoid, pVoid, pVoid, pVoid), hRed, hGreen, hBlue, hTarget, hColorTable, pfnProgress, pProgArg))
+
+GDALInfoOptionsNew(pArgv, psOFB) =
 	acare(ccall((:GDALInfoOptionsNew, libgdal), pVoid, (Ptr{Cstring}, pVoid), pArgv, psOFB))
-end
 
 GDALInfoOptionsFree(psO) = acare(ccall((:GDALInfoOptionsFree, libgdal), Cvoid, (pVoid,), psO))
 GDALInfo(hDataset, psO) = acare(ccall((:GDALInfo, libgdal), Cstring, (pVoid, pVoid), hDataset, psO), true)
@@ -488,9 +478,8 @@ GDALInfo(hDataset, psO) = acare(ccall((:GDALInfo, libgdal), Cstring, (pVoid, pVo
 	#acare(ccall((:GDALIdentifyDriver, libgdal), pVoid, (Cstring, Ptr{Cstring}), pFname, pFList))
 #end
 
-function GDALTranslateOptionsNew(pArgv, psOFB)
+GDALTranslateOptionsNew(pArgv, psOFB) =
 	acare(ccall((:GDALTranslateOptionsNew, libgdal), pVoid, (Ptr{Cstring}, pVoid), pArgv, psOFB))
-end
 
 function GDALTranslate(pszDestFilename, hSrcDataset, psOptions, pbUsageError)
 	acare(ccall((:GDALTranslate, libgdal), pVoid, (Cstring, pVoid, pVoid, Ptr{Cint}), pszDestFilename, hSrcDataset, psOptions, pbUsageError))
@@ -1421,9 +1410,9 @@ end
 	end
 
 	getlayer(ds::AbstractDataset, i::Integer) = IFeatureLayer(GDALDatasetGetLayer(ds.ptr, i), ownedby=ds)
-	function getlayer(ds::AbstractDataset, name::AbstractString)
+	getlayer(ds::AbstractDataset, name::AbstractString) =
 		IFeatureLayer(GDALDatasetGetLayerByName(ds.ptr, name), ownedby = ds)
-	end
+
 	unsafe_getlayer(ds::AbstractDataset, i::Integer) = FeatureLayer(GDALDatasetGetLayer(ds.ptr, i))
 	unsafe_getlayer(ds::AbstractDataset, name::AbstractString) = FeatureLayer(GDALDatasetGetLayerByName(ds.ptr, name))
 
@@ -1840,6 +1829,7 @@ end
 	end
 
 	# assumes that the layer is reset, and will reset it after display
+#=
 	function Base.show(io::IO, layer::AbstractFeatureLayer)
 		layer.ptr == C_NULL && (return println(io, "NULL Layer"))
 		layergeomtype = getgeomtype(layer)
@@ -1900,6 +1890,7 @@ end
 		end
 		n > 5 && print(io, "...\n Number of Fields: $n")
 	end
+=#
 
 	function Base.iterate(layer::AbstractFeatureLayer, state::Int=0)
 		layer.ptr == C_NULL && return nothing
