@@ -25,17 +25,19 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.5' # Replace this with the minimum Julia version that your package supports. E.g. if your package requires Julia 1.5 or higher, change this to '1.5'.
+          - '1.6' # Replace this with the minimum Julia version that your package supports. E.g. if your package requires Julia 1.5 or higher, change this to '1.5'.
           #- '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
           #- 'nightly'
         os:
-          - ubuntu-18.04
+          - ubuntu-latest
+          #- ubuntu-18.04
         arch:
           - x64
         include:
           # Linux
           - name: Linux - Compile only
-            os: ubuntu-18.04
+            #os: ubuntu-18.04
+            os: ubuntu-latest
             run_in_pr : true
 
     steps:
@@ -102,7 +104,8 @@ jobs:
   
   docs:
     name: Documentation
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    #runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
