@@ -156,4 +156,6 @@ Gdal.GDALDestroyDriverManager()
 	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");
 	ds = gmt2gd(D)
 	ds = gmt2gd(D, geometry="Polygon")
+	ogr2ogr(D, dest="lixo.gmt")
+	gmt2gd(D, save="lixo.gmt")
 end
