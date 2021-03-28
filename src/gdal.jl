@@ -246,6 +246,7 @@ GDALSetProjection(a1, a2) = acare(ccall((:GDALSetProjection, libgdal), UInt32, (
 
 GDALGetRasterDataType(a1) = acare(ccall((:GDALGetRasterDataType, libgdal), UInt32, (pVoid,), a1))
 GDALGetProjectionRef(a1) = acare(ccall((:GDALGetProjectionRef, libgdal), Cstring, (pVoid,), a1), false)
+GDALGetSpatialRef(a1) = acare(ccall((:GDALGetSpatialRef, libgdal), pVoid, (pVoid,), a1))
 GDALGetDatasetDriver(a1) = acare(ccall((:GDALGetDatasetDriver, libgdal), pVoid, (pVoid,), a1))
 GDALGetDescription(a1) = acare(ccall((:GDALGetDescription, libgdal), Cstring, (pVoid,), a1), false)
 GDALGetMetadata(a1, a2) = acare(ccall((:GDALGetMetadata, libgdal), Ptr{Cstring}, (pVoid, Cstring), a1, a2))
@@ -329,6 +330,8 @@ function OSRSetAxisMappingStrategy(hSRS, strategy)
 	acare(ccall((:OSRSetAxisMappingStrategy, libgdal), Cvoid, (pVoid, UInt32), hSRS, strategy))
 end
 
+OGRGetDriverByName(a1) = acare(ccall((:OGRGetDriverByName, libgdal), pVoid, (Cstring,), a1))
+
 OGR_F_Create(a1) = acare(ccall((:OGR_F_Create, libgdal), pVoid, (pVoid,), a1))
 OGR_F_Destroy(a1) = acare(ccall((:OGR_F_Destroy, libgdal), Cvoid, (pVoid,), a1))
 OGR_F_GetDefnRef(a1) = acare(ccall((:OGR_F_GetDefnRef, libgdal), pVoid, (pVoid,), a1))
@@ -393,6 +396,7 @@ OGR_G_Clone(a1) = acare(ccall((:OGR_G_Clone, libgdal), pVoid, (pVoid,), a1))
 OGR_G_CreateGeometry(a1) = acare(ccall((:OGR_G_CreateGeometry, libgdal), pVoid, (UInt32,), a1))
 OGR_G_DestroyGeometry(a1) = acare(ccall((:OGR_G_DestroyGeometry, libgdal), Cvoid, (pVoid,), a1))
 OGR_G_ExportToWkt(a1, a2) = acare(ccall((:OGR_G_ExportToWkt, libgdal), Cint, (pVoid, Ptr{Cstring}), a1, a2))
+OGR_G_GetCoordinateDimension(a1) = acare(ccall((:OGR_G_GetCoordinateDimension, libgdal), Cint, (pVoid,), a1))
 OGR_G_GetGeometryType(a1) = acare(ccall((:OGR_G_GetGeometryType, libgdal), UInt32, (pVoid,), a1))
 OGR_G_GetGeometryCount(a1) = acare(ccall((:OGR_G_GetGeometryCount, libgdal), Cint, (pVoid,), a1))
 OGR_G_GetPointCount(a1) = acare(ccall((:OGR_G_GetPointCount, libgdal), Cint, (pVoid,), a1))
@@ -1342,10 +1346,16 @@ end
 		usage_error = Ref{Cint}()
 		result = GDALVectorTranslate(dest, C_NULL, length(datasets), [ds.ptr for ds in datasets], options, usage_error)
 		GDALVectorTranslateOptionsFree(options)
+		if (dest != "/vsimem/tmp")
+			GDALClose(result)
+			return nothing
+		end
 		return Dataset(result)
 	end
 	gdalvectortranslate(ds::Dataset, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate([ds], opts; dest=dest)
 	gdalvectortranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest)
+	gdalvectortranslate(ds::GMT.GMTdataset, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest)
+	gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest)
 
 	function toWKT(spref::AbstractSpatialRef)
 		wktptr = Ref{Cstring}()
@@ -1445,6 +1455,9 @@ end
 	accessflag(band::AbstractRasterBand) = GDALGetRasterAccess(band.ptr)
 	indexof(band::AbstractRasterBand)    = GDALGetBandNumber(band.ptr)
 	pixeltype(band::AbstractRasterBand{T}) where T = T
+	getcoorddim(geom::AbstractGeometry) = OGR_G_GetCoordinateDimension(geom.ptr)
+
+
 	getcolorinterp(band::AbstractRasterBand) = GDALGetRasterColorInterpretation(band.ptr)
 	getcolortable(band::AbstractRasterBand) = ColorTable(pVoid(GDALGetRasterColorTable(band.ptr)))
 	function setcolortable!(band::AbstractRasterBand, colortable::ColorTable)
@@ -1892,6 +1905,7 @@ end
 	end
 =#
 
+	#Base.eltype(layer::AbstractFeatureLayer) = Feature
 	function Base.iterate(layer::AbstractFeatureLayer, state::Int=0)
 		layer.ptr == C_NULL && return nothing
 		state == 0 && resetreading!(layer)
@@ -1901,6 +1915,19 @@ end
 			return nothing
 		else
 			return (Feature(ptr), state+1)
+		end
+	end
+
+	# This function is quite similar to iterate above but for some f reason I can't call iterate (via enumerate)
+	# from gdal_utils (the annoying permanent "no method matching"), so I did this trick
+	function nextfeature(layer::AbstractFeatureLayer)
+		layer.ptr == C_NULL && return nothing
+		ptr = OGR_L_GetNextFeature(layer.ptr)
+		if ptr == C_NULL
+			resetreading!(layer)
+			return nothing
+		else
+			return Feature(ptr)
 		end
 	end
 

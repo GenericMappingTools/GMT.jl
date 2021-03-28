@@ -143,6 +143,29 @@ function gd2gmt_helper(dataset::AbstractString, sds)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function gd2gmt(dataset::Gdal.AbstractDataset)
+	# This version is for OGR formats only
+	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(dataset))) == C_NULL) && return gd2gmt(dataset; pad=0)
+
+	layer = getlayer(dataset, 0)
+	Gdal.resetreading!(layer)
+	while ((feature = Gdal.nextfeature(layer)) !== nothing)
+		for j = 0:Gdal.ngeom(feature)-1
+			geom = Gdal.getgeom(feature, j)
+			n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
+			if (n_dim == 2)  global mat = Array{Float64,2}(undef, Gdal.ngeom(geom), 2)
+			else             global mat = Array{Float64,2}(undef, Gdal.ngeom(geom), 3)
+			end
+			[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
+			[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
+			(n_dim == 3) && ([mat[k,2] = Gdal.getz(geom, k-1) for k = 1:n_pts])
+		end
+	end
+	#@show(getproj(dataset))
+	return mat2ds(mat)
+end
+
+# ---------------------------------------------------------------------------------------------------
 function get_cpt_from_colortable(dataset)
 	# Extract the color info from a GDAL colortable and put it in a row vector for GMTimage.colormap
 	if (!isa(dataset, Gdal.AbstractRasterBand))  band = Gdal.getband(dataset)
@@ -214,6 +237,7 @@ function gmt2gd(GI)
 end
 
 # ---------------------------------------------------------------------------------------------------
+gmt2gd(D::GMTdataset; save::String="", geometry::String="") = gmt2gd([D]; save=save, geometry=geometry)
 function gmt2gd(D::Vector{GMTdataset}; save::String="", geometry::String="")
 	# ...
 	n_cols = size(D[1].data, 2)
@@ -261,8 +285,8 @@ function gmt2gd(D::Vector{GMTdataset}; save::String="", geometry::String="")
 	end
 
 	if (save != "")
-		ds2 = ogr2ogr(ds, dest=save)
-		Gdal.destroy(ds2);	Gdal.destroy(ds)
+		ogr2ogr(ds, dest=save)
+		Gdal.destroy(ds)
 		return nothing
 	end
 	return ds
