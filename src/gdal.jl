@@ -390,12 +390,21 @@ OGR_GFld_GetType(a1) = acare(ccall((:OGR_GFld_GetType, libgdal), UInt32, (pVoid,
 function OGR_Fld_Set(a1, a2, a3, a4, a5, a6)
 	acare(ccall((:OGR_Fld_Set, libgdal), Cvoid, (pVoid, Cstring, UInt32, Cint, Cint, UInt32), a1, a2, a3, a4, a5, a6))
 end
+
+OGR_G_Centroid(a1, a2) = acare(ccall((:OGR_G_Centroid, libgdal), Cint, (pVoid, pVoid), a1, a2))
+OGR_G_Area(a1) = acare(ccall((:OGR_G_Area, libgdal), Cdouble, (pVoid,), a1))
+OGR_G_Length(a1) = acare(ccall((:OGR_G_Length, libgdal), Cdouble, (pVoid,), a1))
+OGR_G_Union(a1, a2) = acare(ccall((:OGR_G_Union, libgdal), pVoid, (pVoid, pVoid), a1, a2))
+OGR_G_Intersection(a1, a2) = acare(ccall((:OGR_G_Intersection, libgdal), pVoid, (pVoid, pVoid), a1, a2))
+OGR_G_Buffer(a1, a2, a3) = acare(ccall((:OGR_G_Buffer, libgdal), pVoid, (pVoid, Cdouble, Cint), a1, a2, a3))
+
 OGR_G_AddGeometry(a1, a2) = acare(ccall((:OGR_G_AddGeometry, libgdal), Cint, (pVoid, pVoid), a1, a2))
 OGR_G_AddGeometryDirectly(a1, a2) = acare(ccall((:OGR_G_AddGeometryDirectly, libgdal), Cint, (pVoid, pVoid), a1, a2))
 OGR_G_Clone(a1) = acare(ccall((:OGR_G_Clone, libgdal), pVoid, (pVoid,), a1))
 OGR_G_CreateGeometry(a1) = acare(ccall((:OGR_G_CreateGeometry, libgdal), pVoid, (UInt32,), a1))
 OGR_G_DestroyGeometry(a1) = acare(ccall((:OGR_G_DestroyGeometry, libgdal), Cvoid, (pVoid,), a1))
 OGR_G_ExportToWkt(a1, a2) = acare(ccall((:OGR_G_ExportToWkt, libgdal), Cint, (pVoid, Ptr{Cstring}), a1, a2))
+OGR_G_ExportToKML(a1, altMode) = acare(ccall((:OGR_G_ExportToKML, libgdal), Cstring, (pVoid, Cstring), a1, altMode), false)
 OGR_G_GetCoordinateDimension(a1) = acare(ccall((:OGR_G_GetCoordinateDimension, libgdal), Cint, (pVoid,), a1))
 OGR_G_GetGeometryType(a1) = acare(ccall((:OGR_G_GetGeometryType, libgdal), UInt32, (pVoid,), a1))
 OGR_G_GetGeometryCount(a1) = acare(ccall((:OGR_G_GetGeometryCount, libgdal), Cint, (pVoid,), a1))
@@ -425,6 +434,7 @@ OGR_L_GetFeatureCount(a1, a2) = acare(ccall((:OGR_L_GetFeatureCount, libgdal), C
 OGR_L_GetName(a1)  = acare(ccall((:OGR_L_GetName, libgdal), Cstring, (pVoid,), a1), false)
 OGR_L_GetGeomType(a1)  = acare(ccall((:OGR_L_GetGeomType, libgdal), UInt32, (pVoid,), a1))
 OGR_L_GetLayerDefn(a1) = acare(ccall((:OGR_L_GetLayerDefn, libgdal), pVoid, (pVoid,), a1))
+OGR_L_GetSpatialRef(a1) = acare(ccall((:OGR_L_GetSpatialRef, libgdal), pVoid, (pVoid,), a1))
 OGR_L_GetNextFeature(a1) = acare(ccall((:OGR_L_GetNextFeature, libgdal), pVoid, (pVoid,), a1))
 OGR_L_ResetReading(a1) = acare(ccall((:OGR_L_ResetReading, libgdal), Cvoid, (pVoid,), a1))
 OGR_L_SetFeature(a1, a2) = acare(ccall((:OGR_L_SetFeature, libgdal), Cint, (pVoid, pVoid), a1, a2))
@@ -465,6 +475,8 @@ OGR_F_SetFieldDateTime(a1, a2, a3, a4, a5, a6, a7, a8, a9) =
 
 GDALDatasetCreateLayer(a1, a2, a3, a4, a5) =
 	acare(ccall((:GDALDatasetCreateLayer, libgdal), pVoid, (pVoid, Cstring, pVoid, UInt32, Ptr{Cstring}), a1, a2, a3, a4, a5))
+
+GDALDatasetTestCapability(a1, a2) = acare(ccall((:GDALDatasetTestCapability, libgdal), Cint, (pVoid, Cstring), a1, a2))
 
 GDALComputeMedianCutPCT(hRed, hGreen, hBlue, pfnIncPix, nColors, hColorTable, pfnProgress, pProgArg) =
 	acare(ccall((:GDALComputeMedianCutPCT, libgdal), Cint, (pVoid, pVoid, pVoid, pVoid, Cint, pVoid, pVoid, pVoid), hRed, hGreen, hBlue, pfnIncPix, nColors, hColorTable, pfnProgress, pProgArg))
@@ -768,6 +780,12 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		:width, :height, :destroy, :getdriver, :filelist, :listcapability, 
 		:ngcp, :copy, :write, :testcapability, :setproj!, :buildoverviews!)
 		eval(:($(f)(x::RasterDataset, args...; kwargs...) = $(f)(x.ds, args...; kwargs...)))
+	end
+
+	testcapability(ds::AbstractDataset, ability::AbstractString) = Bool(GDALDatasetTestCapability(ds.ptr, ability))
+	function listcapability(dataset::AbstractDataset, capabilities = ("CreateLayer", "DeleteLayer",
+			"CreateGeomFieldAfterCreateLayer", "CurveGeometries", "Transactions", "EmulatedTransactions"))
+		return Dict{String, Bool}(c => testcapability(dataset, c) for c in capabilities)
 	end
 
 	function getgeotransform!(dataset::AbstractDataset, transform::Vector{Cdouble})
@@ -1249,6 +1267,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	getband(dataset::AbstractDataset, i::Integer=1) = IRasterBand(GDALGetRasterBand(dataset.ptr, i), ownedby=dataset)
 	getband(ds::RasterDataset, i::Integer=1) = getband(ds.ds, i)
 	getproj(dataset::AbstractDataset) = GDALGetProjectionRef(dataset.ptr)
+	getproj(layer::AbstractFeatureLayer) = SpatialRef(OGR_L_GetSpatialRef(layer.ptr))
 
 	getpoint(geom::AbstractGeometry, i::Integer) = getpoint!(geom, i, Ref{Cdouble}(), Ref{Cdouble}(), Ref{Cdouble}())
 	function getpoint!(geom::AbstractGeometry, i::Integer, x, y, z)
@@ -1357,6 +1376,23 @@ end
 	gdalvectortranslate(ds::GMT.GMTdataset, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest)
 	gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest)
 
+	buffer(geom::AbstractGeometry, dist::Real, quadsegs::Integer=30) = IGeometry(OGR_G_Buffer(geom.ptr, dist, quadsegs))
+	geomarea(geom::AbstractGeometry) = OGR_G_Area(geom.ptr)
+	geomlength(geom::AbstractGeometry) = OGR_G_Length(geom.ptr)
+	union(g1::AbstractGeometry, g2::AbstractGeometry) = IGeometry(OGR_G_Union(g1.ptr, g2.ptr))
+	intersection(g1::AbstractGeometry, g2::AbstractGeometry) = IGeometry(OGR_G_Intersection(g1.ptr, g2.ptr))
+
+	function centroid!(geom::AbstractGeometry, centroid::AbstractGeometry)
+		result = OGR_G_Centroid(geom.ptr, centroid.ptr)
+		@ogrerr result "Failed to compute the geometry centroid"
+		return centroid
+	end
+	function centroid(geom::AbstractGeometry)
+		point = createpoint()
+		centroid!(geom, point)
+		return point
+	end
+
 	function toWKT(spref::AbstractSpatialRef)
 		wktptr = Ref{Cstring}()
 		result = OSRExportToWkt(spref.ptr, wktptr)
@@ -1386,6 +1422,8 @@ end
 		@ogrerr result "Failed to export this SRS to PROJ.4 format"
 		return unsafe_string(projptr[])
 	end
+
+	toKML(geom::AbstractGeometry, altitudemode=C_NULL) = OGR_G_ExportToKML(geom.ptr, altitudemode)
 
 	function importWKT!(spref::AbstractSpatialRef, wktstr::AbstractString)
 		result = OSRImportFromWkt(spref.ptr, [wktstr])
@@ -1420,8 +1458,7 @@ end
 	end
 
 	getlayer(ds::AbstractDataset, i::Integer) = IFeatureLayer(GDALDatasetGetLayer(ds.ptr, i), ownedby=ds)
-	getlayer(ds::AbstractDataset, name::AbstractString) =
-		IFeatureLayer(GDALDatasetGetLayerByName(ds.ptr, name), ownedby = ds)
+	getlayer(ds::AbstractDataset, name::AbstractString) = IFeatureLayer(GDALDatasetGetLayerByName(ds.ptr, name), ownedby = ds)
 
 	unsafe_getlayer(ds::AbstractDataset, i::Integer) = FeatureLayer(GDALDatasetGetLayer(ds.ptr, i))
 	unsafe_getlayer(ds::AbstractDataset, name::AbstractString) = FeatureLayer(GDALDatasetGetLayerByName(ds.ptr, name))

@@ -143,26 +143,50 @@ function gd2gmt_helper(dataset::AbstractString, sds)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")
+	# Convert a geometry into a single GMTdataset
+	n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
+	if (n_dim == 2)  global mat = Array{Float64,2}(undef, Gdal.ngeom(geom), 2)
+	else             global mat = Array{Float64,2}(undef, Gdal.ngeom(geom), 3)
+	end
+	[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
+	[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
+	(n_dim == 3) && ([mat[k,2] = Gdal.getz(geom, k-1) for k = 1:n_pts])
+	GMTdataset(mat, String[], "", String[], proj, "")
+end
+
+# ---------------------------------------------------------------------------------------------------
 function gd2gmt(dataset::Gdal.AbstractDataset)
 	# This version is for OGR formats only
 	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(dataset))) == C_NULL) && return gd2gmt(dataset; pad=0)
 
-	layer = getlayer(dataset, 0)
-	Gdal.resetreading!(layer)
-	while ((feature = Gdal.nextfeature(layer)) !== nothing)
-		for j = 0:Gdal.ngeom(feature)-1
-			geom = Gdal.getgeom(feature, j)
-			n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
-			if (n_dim == 2)  global mat = Array{Float64,2}(undef, Gdal.ngeom(geom), 2)
-			else             global mat = Array{Float64,2}(undef, Gdal.ngeom(geom), 3)
+	D, ds = Vector{GMTdataset}(undef, howmany_segments(dataset)), 1
+	for k = 1:Gdal.nlayer(dataset)
+		layer = getlayer(dataset, 0)
+		Gdal.resetreading!(layer)
+		proj = ((p = getproj(layer)) != C_NULL) ? toPROJ4(p) : ""
+		while ((feature = Gdal.nextfeature(layer)) !== nothing)
+			for j = 0:Gdal.ngeom(feature)-1
+				D[ds] = gd2gmt(Gdal.getgeom(feature, j), proj)
+				ds += 1
 			end
-			[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
-			[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
-			(n_dim == 3) && ([mat[k,2] = Gdal.getz(geom, k-1) for k = 1:n_pts])
 		end
 	end
-	#@show(getproj(dataset))
-	return mat2ds(mat)
+	return D
+end
+
+# ---------------------------------------------------------------------------------------------------
+function howmany_segments(dataset::Gdal.AbstractDataset)
+	# Count the total number of geometries in dataset
+	n_tot = 0
+	for n1 = 1:Gdal.nlayer(dataset)
+		layer = getlayer(dataset, n1-1)
+		Gdal.resetreading!(layer)
+		while ((feature = Gdal.nextfeature(layer)) !== nothing)
+			n_tot += Gdal.ngeom(feature)
+		end
+	end
+	return n_tot
 end
 
 # ---------------------------------------------------------------------------------------------------

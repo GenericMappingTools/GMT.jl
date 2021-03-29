@@ -23,6 +23,7 @@ Gdal.GDALDestroyDriverManager()
 	writegd!(dataset, rand(181,241), 1)
 	setproj!(dataset, crs)
 	setgeotransform!(dataset, [-4.016666666666667, 0.03333333333333333, 0.0, -3.01666666666, 0.0, 0.03333333333333333])
+	Gdal.listcapability(dataset)
 
 	show(dataset)
 	#G = gd2gmt(dataset);
@@ -151,6 +152,7 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.getx(Gdal.getgeom(Gdal.unsafe_getfeature(Gdal.getlayer(ds, 0),0)),1)
 	Gdal.gety(Gdal.getgeom(Gdal.unsafe_getfeature(Gdal.getlayer(ds, 0),0)),1)
 	Gdal.getz(Gdal.getgeom(Gdal.unsafe_getfeature(Gdal.getlayer(ds, 0),0)),1)
+	Gdal.buffer(Gdal.getgeom(Gdal.unsafe_getfeature(Gdal.getlayer(ds, 0),0)), 0.2)
 
 	#Gdal.identifydriver("lixo.gmt")
 	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");
@@ -158,4 +160,7 @@ Gdal.GDALDestroyDriverManager()
 	ds = gmt2gd(D, geometry="Polygon")
 	ogr2ogr(D, dest="lixo.gmt")
 	gmt2gd(D, save="lixo.gmt")
+	ds = gmt2gd(D)
+	ds2=ogr2ogr(ds, ["-t_srs", "+proj=utm +zone=29", "-overwrite"])
+	gd2gmt(ds2)
 end
