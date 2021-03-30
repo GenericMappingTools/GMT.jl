@@ -143,8 +143,17 @@ function gd2gmt_helper(dataset::AbstractString, sds)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")
+function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{GMTdataset}
 	# Convert a geometry into a single GMTdataset
+	if (Gdal.getgeomtype(geom) == Gdal.wkbPolygon)		# getx() doesn't work for polygons
+		geom = Gdal.getgeom(geom,0)
+	elseif (Gdal.getgeomtype(geom) == Gdal.wkbMultiPolygon)
+		np = Gdal.ngeom(geom)
+		D = Vector{GMTdataset}(undef, np)
+		[D[k] = gd2gmt(Gdal.getgeom(geom,k-1), proj)[1] for k = 1:np]
+		return D
+	end
+
 	n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
 	if (n_dim == 2)  global mat = Array{Float64,2}(undef, Gdal.ngeom(geom), 2)
 	else             global mat = Array{Float64,2}(undef, Gdal.ngeom(geom), 3)
@@ -152,7 +161,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")
 	[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
 	[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
 	(n_dim == 3) && ([mat[k,2] = Gdal.getz(geom, k-1) for k = 1:n_pts])
-	GMTdataset(mat, String[], "", String[], proj, "")
+	[GMTdataset(mat, String[], "", String[], proj, "")]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -167,8 +176,11 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 		proj = ((p = getproj(layer)) != C_NULL) ? toPROJ4(p) : ""
 		while ((feature = Gdal.nextfeature(layer)) !== nothing)
 			for j = 0:Gdal.ngeom(feature)-1
-				D[ds] = gd2gmt(Gdal.getgeom(feature, j), proj)
-				ds += 1
+				_D = gd2gmt(Gdal.getgeom(feature, j), proj)
+				for d in _D
+					D[ds] = d
+					ds += 1
+				end
 			end
 		end
 	end
@@ -179,11 +191,14 @@ end
 function howmany_segments(dataset::Gdal.AbstractDataset)
 	# Count the total number of geometries in dataset
 	n_tot = 0
-	for n1 = 1:Gdal.nlayer(dataset)
-		layer = getlayer(dataset, n1-1)
+	for k = 1:Gdal.nlayer(dataset)
+		layer = getlayer(dataset, k-1)
 		Gdal.resetreading!(layer)
 		while ((feature = Gdal.nextfeature(layer)) !== nothing)
-			n_tot += Gdal.ngeom(feature)
+			# Count all geoms, including those in the Multis
+			for n = 1:Gdal.ngeom(feature)
+				n_tot += Gdal.ngeom(Gdal.getgeom(feature,n-1))
+			end
 		end
 	end
 	return n_tot
