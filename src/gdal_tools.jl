@@ -50,8 +50,8 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Vector{Str
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	if ((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "")
-		(method == "") ? f(dataset, opts; dest=outname) : f(dataset, method, opts; dest=outname, colorfile=_cmap)
-		destroy(dataset)	# Basically, close the file
+		r = (method == "") ? f(dataset, opts; dest=outname) : f(dataset, method, opts; dest=outname, colorfile=_cmap)
+		destroy(r)	# Basically, close the file
 		o = nothing
 	else
 		o = (method == "") ? f(dataset, opts; dest=dest) : f(dataset, method, opts; dest=dest, colorfile=_cmap)
