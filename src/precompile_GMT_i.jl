@@ -15,7 +15,6 @@ function _precompile_()
     @assert precompile(Tuple{typeof(copyto!),Array{Float64,1},Tuple{Float64,Int64,Int64}})
     @assert precompile(Tuple{typeof(haskey),Dict{Symbol,Any},String})
     @assert precompile(Tuple{typeof(merge),NamedTuple{(:first, :show),Tuple{Bool,Bool}},Base.Iterators.Pairs{Symbol,Bool,Tuple{Symbol},NamedTuple{(:show,),Tuple{Bool}}}})
-
     @assert precompile(Tuple{Core.kwftype(typeof(GMT.imshow)),NamedTuple{(:show,),Tuple{Bool}},typeof(imshow),String})
     @assert precompile(Tuple{typeof(GMT.add_opt),Dict{Symbol,Any},String,String,Array{Any,2}})
     @assert precompile(Tuple{typeof(GMT.add_opt_cpt),Dict{Symbol,Any},String,Array{Symbol,2},Char,Int64,Array{Float64,2}})
