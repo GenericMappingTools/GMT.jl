@@ -77,7 +77,7 @@ export
 	mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, geodetic2enu, cpt4dcw,
 	creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 	importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
-	readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
+	gdalrasterize, gdalbuildvrt, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
 	dither, gd2gmt, gmt2gd, varspacegrid, MODIS_L2
 
 include("common_docs.jl")
