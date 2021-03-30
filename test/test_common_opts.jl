@@ -1,5 +1,6 @@
 @testset "COMMON OPTS" begin
 	# -------------------- Test common_options ----------------------------------------
+	@test GMT.get_GMTver() >= v"6.0"
 	GMT.dict2nt(Dict(:a =>1, :b => 2))
 	@test GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")[1] == " -R1/2/3/4/5/6"
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");

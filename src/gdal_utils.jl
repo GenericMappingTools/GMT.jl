@@ -166,10 +166,10 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function gd2gmt(dataset::Gdal.AbstractDataset)
-	# This version is for OGR formats only
+	# This method is for OGR formats only
 	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(dataset))) == C_NULL) && return gd2gmt(dataset; pad=0)
 
-	D, ds = Vector{GMTdataset}(undef, howmany_segments(dataset)), 1
+	D, ds = Vector{GMTdataset}(undef, ngeom(dataset)), 1
 	for k = 1:Gdal.nlayer(dataset)
 		layer = getlayer(dataset, 0)
 		Gdal.resetreading!(layer)
@@ -188,7 +188,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function howmany_segments(dataset::Gdal.AbstractDataset)
+function ngeom(dataset::Gdal.AbstractDataset)
 	# Count the total number of geometries in dataset
 	n_tot = 0
 	for k = 1:Gdal.nlayer(dataset)
@@ -207,9 +207,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function get_cpt_from_colortable(dataset)
 	# Extract the color info from a GDAL colortable and put it in a row vector for GMTimage.colormap
-	if (!isa(dataset, Gdal.AbstractRasterBand))  band = Gdal.getband(dataset)
-	else                                         band = dataset
-	end
+	band = (!isa(dataset, Gdal.AbstractRasterBand)) ? Gdal.getband(dataset) : dataset
 	ct = Gdal.getcolortable(band)
 	(ct.ptr == C_NULL) && return Vector{Clong}(), 0
 	n_colors = Gdal.ncolorentry(ct)
@@ -316,11 +314,8 @@ function gmt2gd(D::Vector{GMTdataset}; save::String="", geometry::String="")
 		_ds = (length(D) == 1) ? Gdal.OGR_G_ForceToPolygon(ds.ptr) : Gdal.OGR_G_ForceToMultiPolygon(ds.ptr)
 		destroy(ds);	ds = _ds
 	elseif (lowercase(geometry) == "point")
-		if (length(D) > 1)
-			_ds = Gdal.OGR_G_ForceToMultiPoint(ds.ptr);		destroy(ds);	ds = _ds
-		else
-			@warn("Cannot convert to a point geometry. Keeping the LineString")
-		end
+		(length(D) == 1) && @warn("Cannot convert to a point geometry. Keeping the LineString")
+		_ds = Gdal.OGR_G_ForceToMultiPoint(ds.ptr);		destroy(ds);	ds = _ds
 	end
 
 	if (save != "")

@@ -67,6 +67,8 @@ Gdal.GDALDestroyDriverManager()
 	ds_small = readgd("utmsmall.tif");
 	Gdal.getlayer(ds_small, 1);
 	gdalinfo(ds_small, [""]);
+	gdaldem("utmsmall.tif", "hillshade", ["-q"], save="lixo.nc");
+	rm("lixo.nc")
 	gdaldem(ds_small, "hillshade", ["-q"]);
 	gdaltranslate(ds_small, [""]);
 	gdaltranslate("utmsmall.tif", R="442000/445000/3747000/3750000");
@@ -194,4 +196,8 @@ Gdal.GDALDestroyDriverManager()
 		line = Gdal.fromWKT(wkt)
 		@test Gdal.geomlength(line) ≈ 76121.94397805972
 	end
+
+	mp = Gdal.createmultipolygon_noholes(Vector{Tuple{Float64,Float64}}[
+     [(1204067., 634617.), (1204067., 620742.), (1215167., 620742.), (1215167., 634617.), (1204067., 634617.)],
+     [(1179553., 647105.), (1179553., 626292.), (1194354., 626292.), (1194354., 647105.), (1179553., 647105.)] ])
 end
