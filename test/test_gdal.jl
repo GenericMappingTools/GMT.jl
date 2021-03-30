@@ -70,6 +70,15 @@ Gdal.GDALDestroyDriverManager()
 	gdaldem(ds_small, "hillshade", ["-q"]);
 	gdaltranslate(ds_small, [""]);
 	gdaltranslate("utmsmall.tif", R="442000/445000/3747000/3750000");
+	ds_tiny = gdaltranslate(ds_small, ["-of","AAIGrid","-r","cubic","-tr","1200","1200"]) # resample to a 5×5 ascii grid
+	@test Gdal.read(ds_tiny, 1) == [128  171  127   93   83; 126  164  148  114  101;
+									161  175  177  164  140; 185  206  205  172  128;
+									193  205  209  181  122]
+	
+	ds_vrt = gdalbuildvrt([ds_tiny])
+	@test readgd(ds_vrt, 1) == [128  171  127   93   83; 126  164  148  114  101;
+								161  175  177  164  140; 185  206  205  172  128;
+								193  205  209  181  122]
 
 	gdalwarp(ds_small, [""]);
 	ds_warped = gdalwarp("utmsmall.tif", ["-of","MEM","-t_srs","EPSG:4326"], gdataset=true)
@@ -82,6 +91,9 @@ Gdal.GDALDestroyDriverManager()
 	show(ds_point)
 	Gdal.getlayer(ds_point, 0)
 	#readgd(ds_grid)
+
+	ds_rasterize = gdalrasterize(ds_point, ["-of","MEM","-tr","0.05","0.05"])
+	@test getgeotransform(ds_rasterize) ≈ [99.975,0.05,0.0,0.1143,0.0,-0.05]
 
 	ds_csv = gdalvectortranslate(ds_point, ["-f","CSV","-lco", "GEOMETRY=AS_XY"], dest = "point.csv");
 	#=
@@ -163,4 +175,23 @@ Gdal.GDALDestroyDriverManager()
 	ds = gmt2gd(D)
 	ds2=ogr2ogr(ds, ["-t_srs", "+proj=utm +zone=29", "-overwrite"])
 	gd2gmt(ds2)
+
+	wkt = "POLYGON ((1179091. 712782.,1161053. 667456.,1214705. 641092.,1228580. 682719.,1218405. 721108.,1179091. 712782.))"
+	@test Gdal.getgeomtype(Gdal.forceto(Gdal.fromWKT(wkt), Gdal.wkbMultiPolygon)) == Gdal.wkbMultiPolygon
+	wkt = "POINT (1198054.34 648493.09)";
+	bf = Gdal.buffer(Gdal.fromWKT(wkt), 500)
+	@test Gdal.getgeomtype(bf) == Gdal.wkbPolygon
+	show(bf)
+
+	@testset "Calculate the Area of a Geometry" begin
+		wkt = "POLYGON ((1162440. 672081., 1162440. 647105., 1195279. 647105., 1195279. 672081., 1162440. 672081.))"
+		poly = Gdal.fromWKT(wkt)
+		@test Gdal.geomarea(poly) ≈ 8.20186864e8
+	end
+
+	@testset "Calculate the Length of a Geometry" begin
+		wkt = "LINESTRING (1181866.263593049 615654.4222507705, 1205917.1207499576 623979.7189589312, 1227192.8790041457 643405.4112779726, 1224880.2965852122 665143.6860159477)"
+		line = Gdal.fromWKT(wkt)
+		@test Gdal.geomlength(line) ≈ 76121.94397805972
+	end
 end
