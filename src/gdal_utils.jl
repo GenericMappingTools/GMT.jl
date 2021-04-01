@@ -16,8 +16,7 @@ O = gd2gmt(dataset; band=1, bands=[], sds=0, pad=0)
 	or
 		G = gd2gmt("NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
 """
-# ---------------------------------------------------------------------------------------------------
-function gd2gmt(_dataset; band=1, bands=Vector{Int}(), sds::Int=0, pad=0)
+function gd2gmt(_dataset; band=0, bands=Vector{Int}(), sds::Int=0, pad=0)
 
 	if (isa(_dataset, AbstractString))	# A subdataset name or the full string "SUBDATASET_X_NAME=...."
 		# For some bloody reason it would print annoying (& false?) warning messages. Have to use brute force
@@ -29,16 +28,23 @@ function gd2gmt(_dataset; band=1, bands=Vector{Int}(), sds::Int=0, pad=0)
 		dataset = _dataset
 	end
 
-	xSize, ySize, nBands = Gdal.width(dataset), Gdal.height(dataset), Gdal.nraster(dataset)
+	n_dsbands = Gdal.nraster(dataset)
+	xSize, ySize, nBands = Gdal.width(dataset), Gdal.height(dataset), n_dsbands
 	dType = Gdal.pixeltype(getband(dataset, 1))
 	is_grid = (sizeof(dType) >= 4 || dType == Int16) ? true : false		# Simple (too simple?) heuristic
 	if (is_grid)
 		(length(bands) > 1) && error("For grids only one band request is allowed")
+		(band == 0) && (band = 1)		# The default 0 was only to lest us know if any other was selected
 		(!isempty(bands)) && (band = bands[1])
 		in_bands = [band]
+		(band > n_dsbands) && error("Selected band is larger then number of bands in this dataset")
 	else
 		(length(bands) == 2 || length(bands) > 4) && error("For images only 1, 3 or 4 bands are allowed")
-		in_bands = (isempty(bands)) ? [band] : bands
+		if     (!isempty(bands))                   in_bands = bands
+		elseif (band == 0 && 3 <= n_dsbands <= 4)  in_bands = collect(1:n_dsbands)
+		else                                       in_bands = (band == 0) ? [1] : [band]
+		end
+		(maximum(in_bands) > n_dsbands) && error("iOne selected band is larger then number of bands in this dataset")
 	end
 	ncol, nrow = xSize+2pad, ySize+2pad
 	mat = (dataset isa Gdal.AbstractRasterBand) ? zeros(dType, ncol, nrow) : zeros(dType, ncol, nrow, length(in_bands))
@@ -155,9 +161,8 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{GMTdataset
 	end
 
 	n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
-	if (n_dim == 2)  global mat = Array{Float64,2}(undef, Gdal.ngeom(geom), 2)
-	else             global mat = Array{Float64,2}(undef, Gdal.ngeom(geom), 3)
-	end
+	n = (n_dim == 2) ? 2 : 3
+	mat = Array{Float64,2}(undef, Gdal.ngeom(geom), n)
 	[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
 	[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
 	(n_dim == 3) && ([mat[k,2] = Gdal.getz(geom, k-1) for k = 1:n_pts])
@@ -169,7 +174,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	# This method is for OGR formats only
 	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(dataset))) == C_NULL) && return gd2gmt(dataset; pad=0)
 
-	D, ds = Vector{GMTdataset}(undef, ngeom(dataset)), 1
+	D, ds = Vector{GMTdataset}(undef, Gdal.ngeom(dataset)), 1
 	for k = 1:Gdal.nlayer(dataset)
 		layer = getlayer(dataset, 0)
 		Gdal.resetreading!(layer)
@@ -185,23 +190,6 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 		end
 	end
 	return D
-end
-
-# ---------------------------------------------------------------------------------------------------
-function ngeom(dataset::Gdal.AbstractDataset)
-	# Count the total number of geometries in dataset
-	n_tot = 0
-	for k = 1:Gdal.nlayer(dataset)
-		layer = getlayer(dataset, k-1)
-		Gdal.resetreading!(layer)
-		while ((feature = Gdal.nextfeature(layer)) !== nothing)
-			# Count all geoms, including those in the Multis
-			for n = 1:Gdal.ngeom(feature)
-				n_tot += Gdal.ngeom(Gdal.getgeom(feature,n-1))
-			end
-		end
-	end
-	return n_tot
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -248,14 +236,20 @@ function seek_wkt_in_gdalinfo(info::String)
 	proj4 = toPROJ4(importWKT(info[ind[5] : ind[5]+ind2[1]-2]))
 end
 
+# ---------------------------------------------------------------------------------------------------
 """
 ds = gmt2gd(GI)
 
 	Create GDAL dataset from the contents of GI that can be either a Grid or an Image
-"""
-# ---------------------------------------------------------------------------------------------------
-function gmt2gd(GI)
 
+ds = gmt2gd(D, save="", geometry="")
+
+	Create GDAL dataset from the contents of D, which can be a GMTdataset, a vector of GMTdataset ir a MxN array.
+	The SAVE keyword instructs GDAL to save the contents as an OGR file. Format is determined by file estension.
+	GEOMETRY can be a string with "polygon", where file will be converted to polygon/multipolygon depending
+	on D is a single or a multi-segment object, or "point" to convert to a multipoint geometry.
+"""
+function gmt2gd(GI)
 	if (isa(GI, GMTgrid))
 		ds = creategd("", driver = getdriver("MEM"), width=size(GI,2), height=size(GI,1), nbands=1, dtype=eltype(GI.z))
 		writegd!(ds, GI.z, 1)
@@ -274,49 +268,70 @@ function gmt2gd(GI)
 end
 
 # ---------------------------------------------------------------------------------------------------
+gmt2gd(D::Array{<:Real,2}; save::String="", geometry::String="") = gmt2gd(mat2ds(D); save=save, geometry=geometry)
 gmt2gd(D::GMTdataset; save::String="", geometry::String="") = gmt2gd([D]; save=save, geometry=geometry)
-function gmt2gd(D::Vector{GMTdataset}; save::String="", geometry::String="")
+function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	# ...
 	n_cols = size(D[1].data, 2)
 	(n_cols < 2) && error("GMTdataset must have at least 2 columns")
 
+	geometry = lowercase(geometry)
+	ispolyg = (geometry == "polygon");			ismultipolyg = (length(D) > 1)
+	isline  = occursin("line", geometry);		ismultiline  = (length(D) > 1)
+	ispoint = occursin("point", geometry);		ismultipoint = (length(D) > 1)
+	(!isline && !ispoint && length(D) == 1 && (D[1].data[1,1:2] == D[1].data[end,1:2])) && (ispolyg = true)
+
 	ds = creategd(getdriver("MEMORY"));
+	#ds = creategd(getdriver("ESRI Shapefile"), filename="/vsimem/mem.shp")
 	if     (D[1].proj4 != "")  sr = Gdal.importPROJ4(D[1].proj4)
 	elseif (D[1].wkt   != "")  sr = Gdal.importWKT(D[1].wkt)
 	else                       sr = Gdal.ISpatialRef(C_NULL)
 	end
 
-	geom_code, geom_cmd = (length(D) == 1) ? (Gdal.wkbLineString, Gdal.createlinestring()) : (Gdal.wkbMultiLineString, Gdal.createmultilinestring())
+	if (ispolyg)
+		geom_code, geom_cmd = (length(D) == 1) ? (Gdal.wkbPolygon, Gdal.createpolygon()) :
+		                                         (Gdal.wkbMultiPolygon, Gdal.createmultipolygon())
+	elseif (isline)
+		geom_code, geom_cmd = (length(D) == 1) ? (Gdal.wkbLineString, Gdal.createlinestring()) :
+		                                         (Gdal.wkbMultiLineString, Gdal.createmultilinestring())
+	else
+		geom_code, geom_cmd = (length(D) == 1) ? (Gdal.wkbPoint, Gdal.createpoint()) :
+		                                         (Gdal.wkbMultiPoint, Gdal.createmultipoint())
+	end
 
 	layer = Gdal.createlayer(name="layer1", dataset=ds, geom=geom_code, spatialref=sr);
 	feature = Gdal.unsafe_createfeature(layer)
 	geom = geom_cmd
 
-	for k = 1:length(D)
-		if (eltype(D[k]) == Float64)
-			x, y = D[k].data[:,1], D[k].data[:,2]
-			(n_cols > 2) && (z = D[k].data[:,3])
-		else
-			x, y = Float64.(D[k].data[:,1]), Float64.(D[k].data[:,2])
-			(n_cols > 2) && (z = Float64.(D[k].data[:,3]))
-		end
-		n_pts = size(D[k].data, 1)
-		if (n_cols == 2)  Gdal.OGR_G_SetPoints(geom.ptr, n_pts, x, 8, y, 8, C_NULL, 8)
-		else              Gdal.OGR_G_SetPoints(geom.ptr, n_pts, x, 8, y, 8, z, 8)
+	if (ispolyg)
+		if (ismultipolyg)
+			for k = 1:length(D)
+				poly = Gdal.creategeom(Gdal.wkbPolygon)
+				Gdal.addgeom!(geom, Gdal.addgeom!(poly, makering(D[k].data)))
+			end
+		else			# Polygons with islands
+			[Gdal.addgeom!(geom, makering(D[k].data)) for k = 1:length(D)]
 		end
 		Gdal.setgeom!(feature, geom)
+	else
+		for k = 1:length(D)
+			if (eltype(D[k]) == Float64)
+				x, y = D[k].data[:,1], D[k].data[:,2]
+				(n_cols > 2) && (z = D[k].data[:,3])
+			else
+				x, y = Float64.(D[k].data[:,1]), Float64.(D[k].data[:,2])
+				(n_cols > 2) && (z = Float64.(D[k].data[:,3]))
+			end
+			n_pts = size(D[k].data, 1)
+			if (n_cols == 2)  Gdal.OGR_G_SetPoints(geom.ptr, n_pts, x, 8, y, 8, C_NULL, 8)
+			else              Gdal.OGR_G_SetPoints(geom.ptr, n_pts, x, 8, y, 8, z, 8)
+			end
+			Gdal.setgeom!(feature, geom)
+		end
 	end
+
 	Gdal.setfeature!(layer, feature)
 	Gdal.destroy(feature)
-
-	# This is possibly a wasting solution implying a data copy but it's bloody simpler
-	if (lowercase(geometry) == "polygon")
-		_ds = (length(D) == 1) ? Gdal.OGR_G_ForceToPolygon(ds.ptr) : Gdal.OGR_G_ForceToMultiPolygon(ds.ptr)
-		destroy(ds);	ds = _ds
-	elseif (lowercase(geometry) == "point")
-		(length(D) == 1) && @warn("Cannot convert to a point geometry. Keeping the LineString")
-		_ds = Gdal.OGR_G_ForceToMultiPoint(ds.ptr);		destroy(ds);	ds = _ds
-	end
 
 	if (save != "")
 		ogr2ogr(ds, dest=save)
@@ -326,6 +341,22 @@ function gmt2gd(D::Vector{GMTdataset}; save::String="", geometry::String="")
 	return ds
 end
 
+		# This is possibly a wasting solution implying a data copy but it's bloody simpler
+		#if (conv2polyg)
+			#geom.ptr = (length(D) == 1) ? Gdal.OGR_G_ForceToPolygon(geom.ptr) : Gdal.OGR_G_ForceToMultiPolygon(geom.ptr)
+		#end
+
+function makering(data)
+	ring = Gdal.creategeom(Gdal.wkbLinearRing)
+	if (size(data,2) == 2)
+		[Gdal.addpoint!(ring, data[k,1], data[k,2]) for k = 1:size(data,1)]
+	else
+		[Gdal.addpoint!(ring, data[k,1], data[k,2], data[k,3]) for k = 1:size(data,1)]
+	end
+	ring
+end
+
+# ---------------------------------------------------------------------------------------------------
 """
 G = varspacegrid(fname::String, sds_name::String=""; V::Bool=false, kw...)
 
@@ -360,7 +391,6 @@ G = varspacegrid(fname::String, sds_name::String=""; V::Bool=false, kw...)
 
 	G = MODIS_L2("TXx-narr-annual-timavg.nc", "T2MAX", xarray="XLONG", yarray="XLAT", V=true);
 """
-# ---------------------------------------------------------------------------------------------------
 function varspacegrid(fname::String, sds_name::String=""; quality::Int=0, V::Bool=false, inc=0.0, kw...)
 
 	d = KW(kw)
@@ -495,4 +525,11 @@ function guess_increment_from_coordvecs(dx, dy)
 	x_mean = abs(Float64(mean(dx)));		y_mean = abs(Float64(mean(dy)));
 	xy_std = max(Float64(std(dx)), Float64(std(dy)))
 	inc = round((x_mean + y_mean) / 2; digits=round(Int, abs(log10(xy_std))))
+end
+
+# ---------------------------------------------------------------------------------------------------
+# This method needs to be here because in imshow.jl by the time it's included Gdal is not yet known
+function imshow(arg1::Gdal.AbstractDataset; kw...)
+	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(arg1))) != C_NULL) && return plot(gd2gmt(arg1), show=1)
+	imshow(gd2gmt(arg1), kw...)
 end
