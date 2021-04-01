@@ -1,5 +1,5 @@
 """
-gdaltranslate(indata, opts=String[]; kwargs...)
+gdaltranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
 
 	Convert raster data between different formats and other operations also provided by the GDAL
 	'gdal_translate' tool. Namely sub-region extraction and resampling.
@@ -13,13 +13,25 @@ gdaltranslate(indata, opts=String[]; kwargs...)
 	INDATA - Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
 	OPTS   - List of options. The accepted options are the ones of the gdal_translate utility.
 """
-# ---------------------------------------------------------------------------------------------------
 function gdaltranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
-	# A version that uses a mix of GMT and GDL syntax
 	helper_run_GDAL_fun(gdaltranslate, indata, dest, opts, "", kwargs...)
 end
-
 # ---------------------------------------------------------------------------------------------------
+
+"""
+	gdalwarp(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp", kw...)
+
+Image reprojection and warping function.
+
+### Parameters
+* **datasets**: The list of input datasets.
+* **options**: List of options (potentially including filename and open
+	options). The accepted options are the ones of the gdalwarp utility.
+* **kw** are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and save=fname options
+
+### Returns
+The output dataset.
+"""
 function gdalwarp(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
 	helper_run_GDAL_fun(gdalwarp, indata, dest, opts, "", kwargs...)
 end
@@ -49,12 +61,9 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Vector{Str
 	dataset = get_gdaldataset(indata)
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
-	if ((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "")
-		r = (method == "") ? f(dataset, opts; dest=outname) : f(dataset, method, opts; dest=outname, colorfile=_cmap)
-		destroy(r)	# Basically, close the file
-		o = nothing
-	else
-		o = (method == "") ? f(dataset, opts; dest=dest) : f(dataset, method, opts; dest=dest, colorfile=_cmap)
+	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
+	o = (method == "") ? f(dataset, opts; dest=dest) : f(dataset, method, opts; dest=dest, colorfile=_cmap)
+	if (o !== nothing)
 		# If any GMT opt is used and not explicitly stated to return a GDAL datase, return a GMT type
 		n_bands = (got_GMT_opts && !haskey(d, :gdataset) && isa(o, AbstractRasterBand)) ? 1 : nraster(o)
 		(got_GMT_opts && !haskey(d, :gdataset)) && (o = gd2gmt(o, bands=collect(1:n_bands)))
@@ -73,7 +82,7 @@ function GMT_opts_to_GDAL(opts::Vector{String}, kwargs...)
 		t = split(opt_I[4:end], '/')
 		(length(t) == 1) ? append!(opts, ["-tr", t[1], t[1]]) : append!(opts, ["-tr", t[1], t[2]])
 	end
-	return d, opts, (opt_R != "" || opt_J != "" || opt_I != "")
+	return d, opts, (opt_R != "" || length(opt_J) > 1 || opt_I != "")
 end
 
 #= ---------------------------------------------------------------------------------------------------

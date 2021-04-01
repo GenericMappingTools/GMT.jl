@@ -407,8 +407,9 @@ OGR_G_ExportToKML(a1, altMode) = acare(ccall((:OGR_G_ExportToKML, libgdal), Cstr
 OGR_G_ForceTo(hGeom, eTargetType, pOpts) =
 	acare(ccall((:OGR_G_ForceTo, libgdal), pVoid, (pVoid, UInt32, Ptr{Cstring}), hGeom, eTargetType, pOpts))
 OGR_G_GetCoordinateDimension(a1) = acare(ccall((:OGR_G_GetCoordinateDimension, libgdal), Cint, (pVoid,), a1))
-OGR_G_GetGeometryType(a1) = acare(ccall((:OGR_G_GetGeometryType, libgdal), UInt32, (pVoid,), a1))
 OGR_G_GetGeometryCount(a1) = acare(ccall((:OGR_G_GetGeometryCount, libgdal), Cint, (pVoid,), a1))
+OGR_G_GetGeometryType(a1) = acare(ccall((:OGR_G_GetGeometryType, libgdal), UInt32, (pVoid,), a1))
+OGR_G_GetGeometryName(a1) = acare(ccall((:OGR_G_GetGeometryName, libgdal), Cstring, (pVoid,), a1), false)
 OGR_G_GetGeometryRef(a1, a2) = acare(ccall((:OGR_G_GetGeometryRef, libgdal), pVoid, (pVoid, Cint), a1, a2))
 OGR_G_GetPointCount(a1) = acare(ccall((:OGR_G_GetPointCount, libgdal), Cint, (pVoid,), a1))
 OGR_G_GetX(a1, a2) = acare(ccall((:OGR_G_GetX, libgdal), Cdouble, (pVoid, Cint), a1, a2))
@@ -475,6 +476,8 @@ OGR_F_SetFieldBinary(a1, a2, a3, a4) =
 
 OGR_F_SetFieldDateTime(a1, a2, a3, a4, a5, a6, a7, a8, a9) =
 	acare(ccall((:OGR_F_SetFieldDateTime, libgdal), Cvoid, (pVoid, Cint, Cint, Cint, Cint, Cint, Cint, Cint, Cint), a1, a2, a3, a4, a5, a6, a7, a8, a9))
+
+OGR_Dr_DeleteDataSource(a1, a2) = acare(ccall((:OGR_Dr_DeleteDataSource, libgdal), Cint, (pVoid, Cstring), a1, a2))
 
 GDALDatasetCreateLayer(a1, a2, a3, a4, a5) =
 	acare(ccall((:GDALDatasetCreateLayer, libgdal), pVoid, (pVoid, Cstring, pVoid, UInt32, Ptr{Cstring}), a1, a2, a3, a4, a5))
@@ -1020,18 +1023,18 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=false) =
 		create(fname; driver=driver, width=width, height=height, nbands=nbands, dtype=dtype, options=options, I=I)
 
-	function create(driver::Driver; fname::AbstractString=string("/vsimem/$(gensym())"), width::Integer=0,
+	function create(driver::Driver; filename::AbstractString=string("/vsimem/$(gensym())"), width::Integer=0,
 		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=true)
-		r = GDALCreate(driver.ptr, fname, width, height, nbands, _GDALTYPE[dtype], options)
+		r = GDALCreate(driver.ptr, filename, width, height, nbands, _GDALTYPE[dtype], options)
 		return (I) ? IDataset(r) : Dataset(r)
 	end
-	unsafe_create(driver::Driver; fname::AbstractString=string("/vsimem/$(gensym())"), width::Integer=0,
+	unsafe_create(driver::Driver; filename::AbstractString=string("/vsimem/$(gensym())"), width::Integer=0,
 		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=false) =
-		create(driver; fname=fname, width=width, height=height, nbands=nbands, dtype=dtype, options=options, I=I)
+		create(driver; filename=filename, width=width, height=height, nbands=nbands, dtype=dtype, options=options, I=I)
 
-	function read(filename::AbstractString; flags = GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
+	function read(fname::AbstractString; flags = GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
 		alloweddrivers=Ptr{Cstring}(C_NULL), options=Ptr{Cstring}(C_NULL), siblingfiles=Ptr{Cstring}(C_NULL), I::Bool=true)
-		r = GDALOpenEx(filename, Int(flags), alloweddrivers, options, siblingfiles)
+		r = GDALOpenEx(fname, Int(flags), alloweddrivers, options, siblingfiles)
 		return (I) ? IDataset(r) : Dataset(r)
 	end
 	unsafe_read(fname::AbstractString; flags=GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, alloweddrivers=Ptr{Cstring}(C_NULL),
@@ -1263,9 +1266,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	function unsafe_copy(dataset::AbstractDataset; filename::AbstractString=string("/vsimem/$(gensym())"),
 		driver::Driver=getdriver(dataset), strict::Bool=false, options=Ptr{Cstring}(C_NULL),
-		progressfunc::Function=GDALDummyProgress, progressdata=C_NULL)
-		return Dataset(GDALCreateCopy(driver.ptr, filename, dataset.ptr, strict, options,
-					   @cplprogress(progressfunc), progressdata))
+		progressfunc::Function=GDALDummyProgress, progress=C_NULL)
+		Dataset(GDALCreateCopy(driver.ptr, filename, dataset.ptr, strict, options, @cplprogress(progressfunc), progress))
 	end
 
 	getdriver(dataset::AbstractDataset) = Driver(GDALGetDatasetDriver(dataset.ptr))
@@ -1305,22 +1307,30 @@ end
 	longname(drv::Driver) = GDALGetDriverLongName(drv.ptr)
 	options(drv::Driver) = GDALGetDriverCreationOptionList(drv.ptr)
 	driveroptions(name::AbstractString) = options(getdriver(name))
-
-	function gdalwarp(datasets::Vector{Dataset}, options=String[]; dest = "/vsimem/tmp")
+	
+	function gdalwarp(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp", save::AbstractString="")
+		(save != "") && (dest = save)
 		options = GDALWarpAppOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
 		result = GDALWarp(dest, C_NULL, length(datasets), [ds.ptr for ds in datasets], options, usage_error)
 		GDALWarpAppOptionsFree(options)
+		if (dest != "/vsimem/tmp")
+			GDALClose(result);		return nothing
+		end
 		return IDataset(result)
 	end
 	gdalwarp(ds::Dataset, opts=String[]; dest="/vsimem/tmp") = gdalwarp([ds], opts; dest=dest)
 	gdalwarp(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalwarp([Dataset(ds.ptr)], opts; dest=dest)
 
-	function gdaltranslate(dataset::Dataset, options = String[]; dest = "/vsimem/tmp")
+	function gdaltranslate(dataset::Dataset, options = String[]; dest = "/vsimem/tmp", save::AbstractString="")
+		(save != "") && (dest = save)
 		options = GDALTranslateOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
 		result = GDALTranslate(dest, dataset.ptr, options, usage_error)
 		GDALTranslateOptionsFree(options)
+		if (dest != "/vsimem/tmp")
+			GDALClose(result);		return nothing
+		end
 		return IDataset(result)
 	end
 	gdaltranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdaltranslate(Dataset(ds.ptr), opts; dest=dest)
@@ -1347,7 +1357,8 @@ end
 		return o
 	end
 
-	function gdaldem(dataset::Dataset, processing::String, options=String[]; dest="/vsimem/tmp", colorfile=C_NULL)
+	function gdaldem(dataset::Dataset, processing::String, options=String[]; dest="/vsimem/tmp", colorfile=C_NULL, save::AbstractString="")
+		(save != "") && (dest = save)
 		if processing == "color-relief"
 			@assert colorfile != C_NULL
 		end
@@ -1355,32 +1366,47 @@ end
 		usage_error = Ref{Cint}()
 		result = GDALDEMProcessing(dest, dataset.ptr, processing, colorfile, options, usage_error)
 		GDALDEMProcessingOptionsFree(options)
+		if (dest != "/vsimem/tmp")
+			GDALClose(result);		return nothing
+		end
 		return Dataset(result)
 	end
 	gdaldem(ds::IDataset, processing::String, opts=String[]; dest="/vsimem/tmp", colorfile=C_NULL) = gdaldem(Dataset(ds.ptr), processing, opts; dest=dest, colorfile=colorfile)
 
-	function gdalgrid(dataset::Dataset, options=String[]; dest="/vsimem/tmp")
+	function gdalgrid(dataset::Dataset, options=String[]; dest="/vsimem/tmp", save::AbstractString="")
+		(save != "") && (dest = save)
 		options = GDALGridOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
 		result = GDALGrid(dest, dataset.ptr, options, usage_error)
 		GDALGridOptionsFree(options)
+		if (dest != "/vsimem/tmp")
+			GDALClose(result);		return nothing
+		end
 		return Dataset(result)
 	end
 	gdalgrid(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalgrid(Dataset(ds.ptr), opts; dest=dest)
 
-	function gdalrasterize(dataset::AbstractDataset, options = String[]; dest = "/vsimem/tmp")
+	function gdalrasterize(dataset::AbstractDataset, options = String[]; dest = "/vsimem/tmp", save::AbstractString="")
+		(save != "") && (dest = save)
 		options = GDALRasterizeOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
 		result = GDALRasterize(dest, C_NULL, dataset.ptr, options, usage_error)
 		GDALRasterizeOptionsFree(options)
+		if (dest != "/vsimem/tmp")
+			GDALClose(result);		return nothing
+		end
 		return IDataset(result)
 	end
 
-	function gdalbuildvrt(datasets::Vector{<:AbstractDataset}, options = String[]; dest = "/vsimem/tmp")
+	function gdalbuildvrt(datasets::Vector{<:AbstractDataset}, options = String[]; dest = "/vsimem/tmp", save::AbstractString="")
+		(save != "") && (dest = save)
 		options = GDALBuildVRTOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
 		result = GDALBuildVRT(dest, length(datasets), [ds.ptr for ds in datasets], C_NULL, options, usage_error)
 		GDALBuildVRTOptionsFree(options)
+		if (dest != "/vsimem/tmp")
+			GDALClose(result);		return nothing
+		end
     	return IDataset(result)
 	end
 
@@ -1409,27 +1435,29 @@ end
 	end
 =#
 	
-	function gdalvectortranslate(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp")
+	function gdalvectortranslate(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp", save::AbstractString="")
+		(save != "") && (dest = save)
 		options = GDALVectorTranslateOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
 		result = GDALVectorTranslate(dest, C_NULL, length(datasets), [ds.ptr for ds in datasets], options, usage_error)
 		GDALVectorTranslateOptionsFree(options)
 		if (dest != "/vsimem/tmp")
-			GDALClose(result)
-			return nothing
+			GDALClose(result);		return nothing
 		end
 		return Dataset(result)
 	end
-	gdalvectortranslate(ds::Dataset, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate([ds], opts; dest=dest)
-	gdalvectortranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest)
-	gdalvectortranslate(ds::GMT.GMTdataset, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest)
-	gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts=String[]; dest="/vsimem/tmp") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest)
+	gdalvectortranslate(ds::Dataset, opts=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([ds], opts; dest=dest, save=save)
+	gdalvectortranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest, save=save)
+	gdalvectortranslate(ds::GMT.GMTdataset, opts=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
+	gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
 
 	buffer(geom::AbstractGeometry, dist::Real, quadsegs::Integer=30) = IGeometry(OGR_G_Buffer(geom.ptr, dist, quadsegs))
 	geomarea(geom::AbstractGeometry) = OGR_G_Area(geom.ptr)
 	geomlength(geom::AbstractGeometry) = OGR_G_Length(geom.ptr)
 	union(g1::AbstractGeometry, g2::AbstractGeometry) = IGeometry(OGR_G_Union(g1.ptr, g2.ptr))
 	intersection(g1::AbstractGeometry, g2::AbstractGeometry) = IGeometry(OGR_G_Intersection(g1.ptr, g2.ptr))
+
+	geomname(geom::AbstractGeometry) = OGR_G_GetGeometryName(geom.ptr)
 
 	function centroid!(geom::AbstractGeometry, centroid::AbstractGeometry)
 		result = OGR_G_Centroid(geom.ptr, centroid.ptr)
@@ -1474,6 +1502,7 @@ end
 	end
 
 	function toPROJ4(spref::AbstractSpatialRef)
+		(spref.ptr == C_NULL) && return ""
 		projptr = Ref{Cstring}()
 		result = OSRExportToProj4(spref.ptr, projptr)
 		@ogrerr result "Failed to export this SRS to PROJ.4 format"
@@ -1551,7 +1580,6 @@ end
 	pixeltype(band::AbstractRasterBand{T}) where T = T
 	getcoorddim(geom::AbstractGeometry) = OGR_G_GetCoordinateDimension(geom.ptr)
 
-
 	getcolorinterp(band::AbstractRasterBand) = GDALGetRasterColorInterpretation(band.ptr)
 	getcolortable(band::AbstractRasterBand) = ColorTable(pVoid(GDALGetRasterColorTable(band.ptr)))
 	function setcolortable!(band::AbstractRasterBand, colortable::ColorTable)
@@ -1607,6 +1635,24 @@ end
 		n = OGR_G_GetPointCount(geom.ptr)
 		n == 0 ? OGR_G_GetGeometryCount(geom.ptr) : n
 	end
+	function ngeom(dataset::Gdal.AbstractDataset)
+		# Count the total number of geometries in dataset
+		n_tot = 0
+		for k = 1:nlayer(dataset)
+			layer = getlayer(dataset, k-1)
+			resetreading!(layer)
+			while ((feature = nextfeature(layer)) !== nothing)
+				# Count all geoms, including those in the Multis
+				for n = 1:ngeom(feature)
+					n_multies = OGR_G_GetGeometryCount(getgeom(feature,n-1).ptr)
+					this_n = (n_multies == 0) ? 1 : n_multies
+					n_tot += this_n
+				end
+			end
+		end
+		return n_tot
+	end
+
 	getgeomdefn(feature::Feature, i::Integer) = IGeomFieldDefnView(OGR_F_GetGeomFieldDefnRef(feature.ptr, i))
 	getgeomdefn(fdfn::FeatureDefn, i::Integer = 0) = GeomFieldDefn(OGR_FD_GetGeomFieldDefn(fdfn.ptr, i))
 	getgeomdefn(fdfn::IFeatureDefnView, i::Integer = 0) = IGeomFieldDefnView(OGR_FD_GetGeomFieldDefn(fdfn.ptr, i))
@@ -1654,6 +1700,24 @@ end
 		result = OGR_G_AddGeometry(geomcontainer.ptr, subgeom.ptr)
 		@ogrerr result "Failed to add geometry. The geometry type could be illegal"
 		return geomcontainer
+	end
+
+	"""
+	wrapgeom(geom::AbstractGeometry, proj="")
+
+		Wrap an geometry type into a GDAL dataset. Optionaly provide the SRS (proj4) via the PROJ option.
+		Handy function for saving a geometry on disk or visualize it with plot()
+	"""
+	function wrapgeom(geom::AbstractGeometry, proj::String="")
+		(proj != "" && !startswith(proj, "+proj=")) && error("Projection info must be in proj4 format.")
+		ds = create(getdriver("MEMORY"))
+		sr = (proj == "") ? ISpatialRef(C_NULL) : importPROJ4(proj)
+		layer = createlayer(name="layer1", dataset=ds, geom=getgeomtype(geom), spatialref=sr)
+		feature = unsafe_createfeature(layer)
+		setgeom!(feature, geom)
+		setfeature!(layer, feature)
+		destroy(feature)
+		return ds
 	end
 
 	nfield(feature::Feature) = OGR_F_GetFieldCount(feature.ptr)
@@ -1766,6 +1830,10 @@ end
 
 	unsafe_clone(feature::Feature) = Feature(OGR_F_Clone(feature.ptr))
 
+	function deletedatasource(ds::AbstractDataset, name::AbstractString)
+		(OGR_Dr_DeleteDataSource(getdriver(ds).ptr, name) != OGRERR_NONE) && @warn("Failed to remove $name")
+	end
+
 	for (geom, wkbgeom) in ((:geomcollection,       wkbGeometryCollection),
 							(:linestring,           wkbLineString),
 							(:linearring,           wkbLinearRing),
@@ -1869,15 +1937,16 @@ end
 			end
 		end
 
-		for (variants,typeargs) in ( (((:multipoint, :point),),
-				(Vector{Tuple{Cdouble,Cdouble}}, Vector{Tuple{Cdouble,Cdouble,Cdouble}}, Vector{Vector{Cdouble}})),
+		for (variants,typeargs) in (
+				(((:multipoint, :point),),
+				 (Vector{Tuple{Cdouble,Cdouble}}, Vector{Tuple{Cdouble,Cdouble,Cdouble}}, Vector{Vector{Cdouble}})),
 	
 				(((:polygon, :linearring), (:multilinestring, :linestring), (:multipolygon_noholes, :polygon)),
 				 (Vector{Vector{Tuple{Cdouble,Cdouble}}}, Vector{Vector{Tuple{Cdouble,Cdouble,Cdouble}}},
 				  Vector{Vector{Vector{Cdouble}}})),
 	
 				(((:multipolygon, :polygon),), (Vector{Vector{Vector{Tuple{Cdouble,Cdouble}}}},
-				  Vector{Vector{Vector{Tuple{Cdouble,Cdouble,Cdouble}}}}, Vector{Vector{Vector{Vector{Cdouble}}}}))
+				  Vector{Vector{Vector{Tuple{Cdouble,Cdouble,Cdouble}}}}, Vector{Vector{Vector{Vector{Cdouble}}}}) )
 			)
 			for typearg in typeargs, (geom, component) in variants
 				eval(quote
