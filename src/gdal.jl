@@ -145,6 +145,20 @@ const wkbMultiLineString25D = UInt32(2147483653)
 const wkbMultiPolygon25D = UInt32(2147483654)
 const wkbGeometryCollection25D = UInt32(2147483655)
 
+const _FETCHGEOM = Dict{UInt32, String}(
+	wkbUnknown            => "Unknown",
+	wkbPoint              => "Point",
+	wkbLineString         => "Line String",
+	wkbPolygon            => "Polygon",
+	wkbMultiPoint         => "Multi Point",
+	wkbMultiLineString    => "Multi Line String",
+	wkbMultiPolygon       => "Multi Polygon",
+	wkbGeometryCollection => "Geometry Collection",
+	wkbCircularString     => "Circular String",
+	wkbCompoundCurve      => "Compound Curve",
+	wkbCurvePolygon       => "Curve Polygon"
+)
+
 struct GDALRasterIOExtraArg
 	nVersion::Cint
 	eResampleAlg::UInt32
@@ -255,8 +269,11 @@ GDALGetDriverByName(a1) = acare(ccall((:GDALGetDriverByName, libgdal), pVoid, (C
 GDALGetDriverShortName(a1) = acare(ccall((:GDALGetDriverShortName, libgdal), Cstring, (pVoid,), a1), false)
 GDALGetDriverLongName(a1) = acare(ccall((:GDALGetDriverLongName, libgdal), Cstring, (pVoid,), a1), false)
 GDALGetDriverCreationOptionList(a1) = acare(ccall((:GDALGetDriverCreationOptionList, libgdal), Cstring, (pVoid,), a1), false)
+GDALDatasetExecuteSQL(a1, a2, a3, a4) =
+	acare(ccall((:GDALDatasetExecuteSQL, libgdal), pVoid, (pVoid, Cstring, pVoid, Cstring), a1, a2, a3, a4))
 GDALDatasetGetLayer(a1, a2) = acare(ccall((:GDALDatasetGetLayer, libgdal), pVoid, (pVoid, Cint), a1, a2))
 GDALDatasetGetLayerByName(a1, a2) = acare(ccall((:GDALDatasetGetLayerByName, libgdal), pVoid, (pVoid, Cstring), a1, a2))
+GDALDatasetReleaseResultSet(a1, a2) = acare(ccall((:GDALDatasetReleaseResultSet, libgdal), Cvoid, (pVoid, pVoid), a1, a2))
 GDALGetRasterBandXSize(a1) = acare(ccall((:GDALGetRasterBandXSize, libgdal), Cint, (pVoid,), a1))
 GDALGetRasterBandYSize(a1) = acare(ccall((:GDALGetRasterBandYSize, libgdal), Cint, (pVoid,), a1))
 GDALGetRasterXSize(a1)     = acare(ccall((:GDALGetRasterXSize, libgdal), Cint, (pVoid,), a1))
@@ -286,8 +303,8 @@ function GDALGetGeoTransform(a1, a2)
 end
 GDALSetGeoTransform(a1, a2) = acare(ccall((:GDALSetGeoTransform, libgdal), UInt32, (pVoid, Ptr{Cdouble}), a1, a2))
 
-function GDALOpenEx(pszFilename, nOpenFlags, papszAllowedDrivers, papszOpenOptions, papszSiblingFiles)
-	acare(ccall((:GDALOpenEx, libgdal), pVoid, (Cstring, UInt32, Ptr{Cstring}, Ptr{Cstring}, Ptr{Cstring}), pszFilename, nOpenFlags, papszAllowedDrivers, papszOpenOptions, papszSiblingFiles))
+function GDALOpenEx(pFilename, nOpenFlags, pAllowedDrivers, pOpenOptions, pSiblingFiles)
+	acare(ccall((:GDALOpenEx, libgdal), pVoid, (Cstring, UInt32, Ptr{Cstring}, Ptr{Cstring}, Ptr{Cstring}), pFilename, nOpenFlags, pAllowedDrivers, pOpenOptions, pSiblingFiles))
 end
 
 GDALClose(a1) = acare(ccall((:GDALClose, libgdal), Cvoid, (pVoid,), a1))
@@ -650,7 +667,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	
 	mutable struct IGeometry <: AbstractGeometry
 		ptr::pVoid
-		function IGeometry(ptr::pVoid = C_NULL)
+		function IGeometry(ptr::pVoid=C_NULL)
 			geom = new(ptr)
 			finalizer(destroy, geom)
 			return geom
@@ -683,7 +700,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	
 	mutable struct IFeatureDefnView <: AbstractFeatureDefn
 		ptr::pVoid
-		function IFeatureDefnView(ptr::pVoid = C_NULL)
+		function IFeatureDefnView(ptr::pVoid=C_NULL)
 			featuredefn = new(ptr)
 			finalizer(destroy, featuredefn)
 			return featuredefn
@@ -692,7 +709,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	mutable struct IGeomFieldDefnView <: AbstractGeomFieldDefn
 		ptr::pVoid
-		function IGeomFieldDefnView(ptr::pVoid = C_NULL)
+		function IGeomFieldDefnView(ptr::pVoid=C_NULL)
 			geomdefn = new(ptr)
 			finalizer(destroy, geomdefn)
 			return geomdefn
@@ -702,7 +719,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	mutable struct GeomFieldDefn <: AbstractGeomFieldDefn
 		ptr::pVoid
 		spatialref::AbstractSpatialRef
-		function GeomFieldDefn(ptr::pVoid=C_NULL; spatialref::AbstractSpatialRef = SpatialRef())
+		function GeomFieldDefn(ptr::pVoid=C_NULL; spatialref::AbstractSpatialRef=SpatialRef())
 			return new(ptr, spatialref)
 		end
 	end
@@ -1307,7 +1324,37 @@ end
 	longname(drv::Driver) = GDALGetDriverLongName(drv.ptr)
 	options(drv::Driver) = GDALGetDriverCreationOptionList(drv.ptr)
 	driveroptions(name::AbstractString) = options(getdriver(name))
-	
+
+	function unsafe_executesql(dataset::AbstractDataset, query::AbstractString; dialect::AbstractString="",
+        spatialfilter::Geometry=Geometry(pVoid(C_NULL)))
+    	return FeatureLayer(pVoid(GDALDatasetExecuteSQL(dataset.ptr, query, spatialfilter.ptr, dialect)))
+	end
+	function executesql(f::Function, dataset::Dataset, args...)
+		result = unsafe_executesql(dataset, args...)
+		try
+			f(result)
+		finally
+			releaseresultset(dataset, result)
+		end
+	end
+
+	function releaseresultset(dataset::AbstractDataset, layer::FeatureLayer)
+		# This function should only be used to deallocate OGRLayers resulting from an
+		# ExecuteSQL() call on the same GDALDataset. Failure to deallocate a results set
+		# before destroying the GDALDataset may cause errors.
+		GDALDatasetReleaseResultSet(dataset.ptr, layer.ptr)
+		destroy(layer)
+	end
+
+	function inspect(query, filename)
+		# This function was 'stealed' from ArchGDAL future documentation
+		read(filename) do dataset
+			executesql(dataset, query) do results
+				print(results)
+			end
+		end
+	end
+
 	function gdalwarp(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp", save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALWarpAppOptionsNew(options, C_NULL)
@@ -1422,6 +1469,9 @@ end
 		:importEPSG, :importEPSGA, :importESRI, :importPROJ4, :importWKT, :importXML, :importURL, :lineargeom, :newspatialref,
 		:nextfeature, :pointalongline, :pointonsurface, :polygonfromedges, :polygonize, :read, :sampleoverview, :simplify,
 		:simplifypreservetopology, :symdifference, :union, :update, :readraster,)
+=#
+	# We don't have unsafe_ versions fot most of the above make the list much shorter
+	for gdalfunc in (:read,)
 		eval(quote
 			function $(gdalfunc)(f::Function, args...; kwargs...)
 				obj = $(Symbol("unsafe_$gdalfunc"))(args...; kwargs...)
@@ -1433,8 +1483,7 @@ end
 			end
 		end)
 	end
-=#
-	
+
 	function gdalvectortranslate(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp", save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALVectorTranslateOptionsNew(options, C_NULL)
@@ -1804,6 +1853,18 @@ end
 		OFTInteger64     => asint64,         #12-
 		OFTInteger64List => asint64list      #13-
 	)
+	const FETCHFIELD_ = Dict{UInt32, String}(
+		OFTInteger       => "Integer",
+		OFTIntegerList   => "IntegerList",
+		OFTReal          => "Real",
+		OFTRealList      => "RealList",
+		OFTString        => "String",
+		OFTStringList    => "StringList",
+		OFTBinary        => "Binary",
+		OFTDateTime      => "DateTime",
+		OFTInteger64     => "nteger64",
+		OFTInteger64List => "Integer64List"
+	)
 
 	function getdefault(fielddefn::AbstractFieldDefn)
 		result = @gdal(OGR_Fld_GetDefault::Cstring, fielddefn.ptr::pVoid)
@@ -2001,7 +2062,7 @@ end
 			ndisplay = min(nlayers, 5) # display up to 5 layers
 			for i = 1:ndisplay
 				layer = getlayer(dataset, i-1)
-				layergeomtype = getgeomtype(layer)
+				layergeomtype = get(_FETCHGEOM, getgeomtype(layer), getgeomtype(layer))
 				println(io, "  Layer $(i-1): $(getname(layer)) ($layergeomtype)")
 			end
 			if nlayers > 5
@@ -2029,7 +2090,7 @@ end
 	end
 
 	# assumes that the layer is reset, and will reset it after display
-#=
+##
 	function Base.show(io::IO, layer::AbstractFeatureLayer)
 		layer.ptr == C_NULL && (return println(io, "NULL Layer"))
 		layergeomtype = getgeomtype(layer)
@@ -2069,7 +2130,7 @@ end
 		nfielddisplay = min(n, 5)
 		for i in 1:nfielddisplay
 			fd = getfielddefn(featuredefn, i-1)
-			display = "     Field $(i-1) ($(getname(fd))): [$(gettype(fd))]"
+			display = "     Field $(i-1) ($(getname(fd))): [$(get(FETCHFIELD_, gettype(fd), "9999"))]"
 			if length(display) > 75
 				println(io, "$display[1:70]...")
 				continue
@@ -2090,8 +2151,37 @@ end
 		end
 		n > 5 && print(io, "...\n Number of Fields: $n")
 	end
-=#
+##
 
+
+	function Base.show(io::IO, featuredefn::AbstractFeatureDefn)
+		featuredefn.ptr == C_NULL && (return print(io, "NULL FeatureDefn"))
+		n = ngeom(featuredefn)
+		ngeomdisplay = min(n, 3)
+		for i in 1:ngeomdisplay
+			gfd = getgeomdefn(featuredefn, i-1)
+			println(io, "  Geometry (index $(i-1)): $gfd")
+		end
+		n > 3 && println(io, "  ...\n  Number of Geometries: $n")
+
+		n = nfield(featuredefn)
+		nfielddisplay = min(n, 5)
+		for i in 1:nfielddisplay
+			fd = getfielddefn(featuredefn, i-1)
+			println(io, "     Field (index $(i-1)): $fd")
+		end
+		n > 5 && print(io, "...\n Number of Fields: $n")
+	end
+
+	function Base.show(io::IO, fd::AbstractFieldDefn)
+		fd.ptr == C_NULL && (return print(io, "NULL FieldDefn"))
+		print(io, "$(getname(fd)) ($(gettype(fd)))")
+	end
+
+	function Base.show(io::IO, gfd::AbstractGeomFieldDefn)
+		gfd.ptr == C_NULL && (return print(io, "NULL GeomFieldDefn"))
+		print(io, "$(getname(gfd)) ($(gettype(gfd)))")
+	end
 
 	function Base.show(io::IO, feature::Feature)
 		feature.ptr == C_NULL && (return println(io, "NULL Feature"))

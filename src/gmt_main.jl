@@ -1360,21 +1360,21 @@ text_record(text::Array{String}, hdr::String) = text_record(Array{Float64,2}(und
 
 # ---------------------------------------------------------------------------------------------------
 """
-D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=nothing, text=nothing, multi=false)
+    D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=nothing, text=nothing, multi=false)
 
-	Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
-	same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
-	`hdr` optional String vector with either one or n_rows multisegment headers.
-	`color` optional array of strings with color names/values. Its length can be smaller than n_rows, case in
-	which colors will be cycled.
-	`linethick`, or `lt` for selecting different line thicknesses. Work alike `color`, but should be 
-	        a vector of numbers, or just a single number that is then appl	ied to all lines.
-	`fill`  Optional string array with color names or array of "patterns"
-	`ls`    Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
-	`txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
-	        can be an array with same size as ``mat``rows or a string (will be reapeated n_rows times.) 
-	`multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
-	first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
+Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
+same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
+- `hdr` optional String vector with either one or n_rows multisegment headers.
+- `color` optional array of strings with color names/values. Its length can be smaller than n_rows, case in
+   which colors will be cycled.
+- `linethick`, or `lt` for selecting different line thicknesses. Work alike `color`, but should be 
+   a vector of numbers, or just a single number that is then appl	ied to all lines.
+- `fill`  Optional string array with color names or array of "patterns"
+- `ls`    Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
+- `txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
+   can be an array with same size as ``mat``rows or a string (will be reapeated n_rows times.) 
+- `multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
+   first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
 """
 function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), kwargs...)
 	d = KW(kwargs)
@@ -1532,24 +1532,24 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-I = mat2img(mat::Array{<:Unsigned}; x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+    I = mat2img(mat::Array{<:Unsigned}; x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 
-    Take a 2D 'mat' array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
-	and return a GMTimage type.
-	Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
-	Optionaly, the HDR arg may be ommited and it will computed from 'mat' alone, but then x=1:ncol, y=1:nrow
-	When 'mat' is a 3D UInt16 array we automatically compute a UInt8 RGB image. In that case 'cmap' is ignored.
-	But if no conversion is wanted use option 'noconv=true'
+Take a 2D 'mat' array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
+and return a GMTimage type.
+Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
+Optionaly, the HDR arg may be ommited and it will computed from 'mat' alone, but then x=1:ncol, y=1:nrow
+When 'mat' is a 3D UInt16 array we automatically compute a UInt8 RGB image. In that case 'cmap' is ignored.
+But if no conversion is wanted use option 'noconv=true'
 
-I = mat2img(mat::Array{UInt16}; x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", kw...)
+    I = mat2img(mat::Array{UInt16}; x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", kw...)
 
-	Take a 'mat' array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
-	If the kw variable 'stretch' is used, we stretch the intervals in 'stretch' to [0 255].
-	Use this option to stretch the image histogram.
-	If 'stretch' is a scalar, scale the values > 'stretch' to [0 255]
-	stretch = [v1 v2] scales all values >= v1 && <= v2 to [0 255]
-	stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
-	stretch = :auto | "auto" | true | 1 will do an automatic stretching from values obtained from histogram thresholds
+Take a `mat` array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
+If the kw variable `stretch` is used, we stretch the intervals in `stretch` to [0 255].
+Use this option to stretch the image histogram.
+If `stretch` is a scalar, scale the values > `stretch` to [0 255]
+  stretch = [v1 v2] scales all values >= v1 && <= v2 to [0 255]
+  stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
+  stretch = :auto | "auto" | true | 1 will do an automatic stretching from values obtained from histogram thresholds
 """
 function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
@@ -1653,12 +1653,12 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-I = image_alpha!(img::GMTimage; alpha_ind::Integer, alpha_vec::Vector{Integer}, alpha_band::UInt8)
+    I = image_alpha!(img::GMTimage; alpha_ind::Integer, alpha_vec::Vector{Integer}, alpha_band::UInt8)
 
-    Change the alpha transparency of the GMTimage object 'img'. If the image is indexed, one can either
-    change just the color index that will be made transparent by uing 'alpha_ind=n' or provide a vector
-    of transaparency values in the range [0 255]; This vector can be shorter than the orginal number of colors.
-    Use 'alpha_band' to change, or add, the alpha of true color images (RGB).
+Change the alpha transparency of the GMTimage object 'img'. If the image is indexed, one can either
+change just the color index that will be made transparent by uing 'alpha_ind=n' or provide a vector
+of transaparency values in the range [0 255]; This vector can be shorter than the orginal number of colors.
+Use `alpha_band` to change, or add, the alpha of true color images (RGB).
 
     Example1: change to the third color in cmap to represent the new transparent color
         image_alpha!(img, alpha_ind=3)
@@ -1693,14 +1693,14 @@ function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec=nothing, alpha
 	return nothing
 end
 
-"""
-image_cpt!(img::GMTimage, cpt::GMTcpt, clear::Bool=false)
-
-	Add (or replace) a colormap to a GMTimage object from the colors in the cpt.
-	This should have effect only if IMG is indexed.
-	Use `image_cpt!(img, clear=true)` to remove a previously existant 'colormap' field in IMG
-"""
 # ---------------------------------------------------------------------------------------------------
+"""
+    image_cpt!(img::GMTimage, cpt::GMTcpt, clear::Bool=false)
+
+Add (or replace) a colormap to a GMTimage object from the colors in the cpt.
+This should have effect only if IMG is indexed.
+Use `image_cpt!(img, clear=true)` to remove a previously existent `colormap` field in IMG
+"""
 function image_cpt!(img::GMTimage, cpt::GMTcpt)
 	# Insert the cpt info in the img.colormap member
 	n = 1
@@ -1719,12 +1719,12 @@ function image_cpt!(img::GMTimage; clear::Bool=true)
 	return nothing
 end
 
-"""
-I = ind2rgb(I)
-
-    Convert an indexed image I to RGB. It uses the internal colormap to do the conversion.
-"""
 # ---------------------------------------------------------------------------------------------------
+"""
+    I = ind2rgb(I)
+
+Convert an indexed image I to RGB. It uses the internal colormap to do the conversion.
+"""
 function ind2rgb(img::GMTimage)
 	# ...
 	(size(img.image, 3) >= 3) && return img 	# Image is already RGB(A)
@@ -1741,39 +1741,42 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-G = mat2grid(mat; reg=nothing, x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="", cmd::String="")
+    G = mat2grid(mat; reg=nothing, x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="", cmd::String="")
 
-    Take a 2D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
-	and return a grid GMTgrid type.
-	Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
-	Optionaly, the HDR arg may be ommited and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
-	When HDR is not used, REG == nothing [default] means create a gridline registration grid and REG == 1,
-	or REG="pixel" a pixel registered grid.
+Take a 2D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
+and return a grid GMTgrid type.
+Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
+Optionaly, the HDR arg may be ommited and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
+When HDR is not used, REG == nothing [default] means create a gridline registration grid and REG == 1,
+or REG="pixel" a pixel registered grid.
 
-	Other methods of this function do:
+Other methods of this function do:
 
-G = mat2grid([val]; hdr=hdr_vec, reg=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="")
+    G = mat2grid([val]; hdr=hdr_vec, reg=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="")
 
-	Create Float GMTgrid with size, coordinates and increment determined by the contents of the HDR var. This
-	array, which is now MANDATORY, has either the same meaning as above OR, alternatively, containng only
-	[xmin xmax ymin ymax xinc yinc]
-	VAL is the value that will be fill the matrix (default VAL = Float32(0)). To get a Float64 array use, for
-	example, VAL = 1.0 Ay other non Float64 will be converted to Float32
-	Example: mat2grid(1, hdr=[0. 5 0 5 1 1])
+Create Float GMTgrid with size, coordinates and increment determined by the contents of the HDR var. This
+array, which is now MANDATORY, has either the same meaning as above OR, alternatively, containng only
+[xmin xmax ymin ymax xinc yinc]
+VAL is the value that will be fill the matrix (default VAL = Float32(0)). To get a Float64 array use, for
+example, VAL = 1.0 Ay other non Float64 will be converted to Float32
 
-G = mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+    Example: mat2grid(1, hdr=[0. 5 0 5 1 1])
 
-	Whre F is a function and X,Y the vectors coordinates defining it's domain. Creates a Float32 GMTgrid with
-	size determined by the sizes of the X & Y vectors.
-	Example: f(x,y) = x^2 + y^2;  G = mat2grid(f, x = -2:0.05:2, y = -2:0.05:2)
+    G = mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
 
-G = mat2grid(f::String, x=[], y=[])
-	Whre F is a pre-set function name. Currently available:
-		"ackley", "eggbox", "sombrero", "parabola" and "rosenbrock" 
-	X,Y are vectors coordinates defining the function's domain, but default values are provided for each function.
-	creates a Float32 GMTgrid.
-	Example: G = mat2grid("sombrero")
-		
+Where F is a function and X,Y the vectors coordinates defining it's domain. Creates a Float32 GMTgrid with
+size determined by the sizes of the X & Y vectors.
+
+    Example: f(x,y) = x^2 + y^2;  G = mat2grid(f, x = -2:0.05:2, y = -2:0.05:2)
+
+    G = mat2grid(f::String, x=[], y=[])
+
+Whre F is a pre-set function name. Currently available:
+   - "ackley", "eggbox", "sombrero", "parabola" and "rosenbrock" 
+X,Y are vectors coordinates defining the function's domain, but default values are provided for each function.
+creates a Float32 GMTgrid.
+
+    Example: G = mat2grid("sombrero")
 """
 function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
 	(hdr === nothing) && error("When creating grid type with no data the 'hdr' arg cannot be missing")
@@ -1913,21 +1916,21 @@ end
 mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 =#
 
-"""
-make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head=0, upper=false, lower=false)
-
-	USER_IDS -> is a string vector with the ids (names in header) of the GMTdataset D 
-	VALS     -> is a vector with the the numbers to be used in plot -Z to color the polygons.
-	SUB_HEAD -> Position in header where field is to be found in the comma separated string.
-	Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
-	The elements of ZVALS are made up from the VALS but it can be larger if there are segments with
-	no headers. In that case it replicates the previously known value until it finds a new segment ID.
-
-	Returns a Vector{Float64} with the same length as the number of segments in D. The content is
-	made up after the contents of VALS but repeated such that each polygon of the same family, i.e.
-	with the same USER_ID, has the same value.
-"""
 # ---------------------------------------------------------------------------------------------------
+"""
+    make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head=0, upper=false, lower=false)
+
+  - USER_IDS -> is a string vector with the ids (names in header) of the GMTdataset D 
+  - VALS     -> is a vector with the the numbers to be used in plot -Z to color the polygons.
+  - SUB_HEAD -> Position in header where field is to be found in the comma separated string.
+Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
+The elements of ZVALS are made up from the VALS but it can be larger if there are segments with
+no headers. In that case it replicates the previously known value until it finds a new segment ID.
+
+Returns a Vector{Float64} with the same length as the number of segments in D. The content is
+made up after the contents of VALS but repeated such that each polygon of the same family, i.e.
+with the same USER_ID, has the same value.
+"""
 function make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head::Int=0, case::Int=0)::Vector{Float64}
 
 	n_user_ids = length(user_ids)
@@ -1973,13 +1976,13 @@ function edit_segment_headers!(D, vals::Array, opt::String)
 	return nothing
 end
 
+# ---------------------------------------------------------------------------------------------------
 """
-ids, ind = get_segment_ids(D, case=0)::Tuple{Vector{String}, Vector{Int}}
+    ids, ind = get_segment_ids(D, case=0)::Tuple{Vector{String}, Vector{Int}}
 
 Where D is a GMTdataset of a vector of them, returns the segment ids (first text after the '>') and
 the idices of those segments.
 """
-# ---------------------------------------------------------------------------------------------------
 function get_segment_ids(D, case::Int=0)::Tuple{Vector{String}, Vector{Int}}
 	# Get segment ids (first text after the '>') and the idices of those segments
 	# CASE -> If == 1 force return in LOWER case. If == 2 force upper case. Default (case = 0) dosen't touch

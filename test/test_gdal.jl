@@ -172,11 +172,16 @@ Gdal.GDALDestroyDriverManager()
 	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");
 	ds = gmt2gd(D)
 	ds = gmt2gd(D, geometry="Polygon")
-	ogr2ogr(D, dest="lixo.gmt")
-	gmt2gd(D, save="lixo.gmt")
+	ogr2ogr(D, dest="lixo1.gmt")
+	gmt2gd(D, save="lixo2.gmt")
 	ds = gmt2gd(D)
 	ds2=ogr2ogr(ds, ["-t_srs", "+proj=utm +zone=29", "-overwrite"])
 	gd2gmt(ds2)
+
+	D1 = mat2ds([0.0 0.0; 1.0 1.0; 1.0 0.0; 0.0 0.0]);
+	gmt2gd(D1);		gmt2gd(D1, geometry="line");	gmt2gd(D1, geometry="point")
+	D2 = mat2ds([0.0 0.0 1.; 1.0 1.0 2.; 1.0 0.0 3.; 0.0 0.0 1.]);
+	gmt2gd(D2);		gmt2gd(D2, geometry="line");	gmt2gd(D2, geometry="point")
 
 	wkt = "POLYGON ((1179091. 712782.,1161053. 667456.,1214705. 641092.,1228580. 682719.,1218405. 721108.,1179091. 712782.))"
 	@test Gdal.getgeomtype(Gdal.forceto(Gdal.fromWKT(wkt), Gdal.wkbMultiPolygon)) == Gdal.wkbMultiPolygon
