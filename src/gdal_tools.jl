@@ -1,17 +1,20 @@
 """
-gdaltranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
+    gdaltranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
 
-	Convert raster data between different formats and other operations also provided by the GDAL
-	'gdal_translate' tool. Namely sub-region extraction and resampling.
-	The kwargs options accept the GMT region (-R), increment (-I), target SRS (-J) any of the keywords
-	'outgrid', 'outfile' or 'save' = outputname options to make this function save the result in disk
-	in the file 'outputname'. The file format is picked from the 'outputname' file extension.
-	When any of the GMT options is used and no output file name is provided it returns a GMT object
-	(either a grid or an image, depending on the input type). To force the return of a GDAL dataset
-	use the option 'gdataset=true'
+Convert raster data between different formats and other operations also provided by the GDAL
+'gdal_translate' tool. Namely sub-region extraction and resampling.
+The kwargs options accept the GMT region (-R), increment (-I), target SRS (-J) any of the keywords
+'outgrid', 'outfile' or 'save' = outputname options to make this function save the result in disk
+in the file 'outputname'. The file format is picked from the 'outputname' file extension.
+When any of the GMT options is used and no output file name is provided it returns a GMT object
+(either a grid or an image, depending on the input type). To force the return of a GDAL dataset
+use the option 'gdataset=true'
 
-	INDATA - Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
-	OPTS   - List of options. The accepted options are the ones of the gdal_translate utility.
+  - INDATA - Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
+  - OPTS   - List of options. The accepted options are the ones of the gdal_translate utility.
+
+### Returns
+A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
 """
 function gdaltranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
 	helper_run_GDAL_fun(gdaltranslate, indata, dest, opts, "", kwargs...)
@@ -19,7 +22,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 """
-	gdalwarp(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp", kw...)
+    gdalwarp(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp", kw...)
 
 Image reprojection and warping function.
 
@@ -30,13 +33,31 @@ Image reprojection and warping function.
 * **kw** are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and save=fname options
 
 ### Returns
-The output dataset.
+A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
 """
 function gdalwarp(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
 	helper_run_GDAL_fun(gdalwarp, indata, dest, opts, "", kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    gdaldem(dataset::Dataset, method::String, options=String[]; dest="/vsimem/tmp", colorfile)
+
+Tools to analyze and visualize DEMs.
+
+### Parameters
+* **dataset**: The source dataset.
+* **method**: the processing to apply (one of "hillshade", "slope",
+    "aspect", "color-relief", "TRI", "TPI", "Roughness").
+* **options**: List of options (potentially including filename and open
+    options). The accepted options are the ones of the gdaldem utility.
+
+# Keyword Arguments
+* **colorfile**: color file (mandatory for "color-relief" processing, should be empty otherwise).
+
+### Returns
+A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
+"""
 function gdaldem(indata, method::String, opts=String[]; dest="/vsimem/tmp", kwargs...)
 	helper_run_GDAL_fun(gdaldem, indata, dest, opts, method, kwargs...)
 end
@@ -110,16 +131,16 @@ function get_gdaldataset(indata)
 	end
 end
 
-"""
-dither(indata; n_colors=256, save="", gdataset=false)
-
-	Convert a 24bit RGB image to 8bit paletted.
-	- Use the 'save=fname' option to save the result to disk in a GeoTiff file "fname". Do not provide
-	  the extension, a '.tif' one will be appended.
-	- Use 'gdataset=true' to return a GDAL dataset. The default is to return a GMTimage object.
-	- Select the number of colors in the generated color table. Defaults to 256.
-"""
 # ---------------------------------------------------------------------------------------------------
+"""
+    dither(indata; n_colors=256, save="", gdataset=false)
+
+Convert a 24bit RGB image to 8bit paletted.
+- Use the 'save=fname' option to save the result to disk in a GeoTiff file "fname". Do not provide
+  the extension, a '.tif' one will be appended.
+- Use 'gdataset=true' to return a GDAL dataset. The default is to return a GMTimage object.
+- Select the number of colors in the generated color table. Defaults to 256.
+"""
 function dither(indata, opts=String[]; n_colors::Integer=8, save::String="", gdataset::Bool=false)
 	# ...
 	src_ds = get_gdaldataset(indata)

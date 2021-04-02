@@ -1,20 +1,20 @@
 """
-O = gd2gmt(dataset; band=1, bands=[], sds=0, pad=0)
+    O = gd2gmt(dataset; band=1, bands=[], sds=0, pad=0)
 
-	Convert a GDAL raster dataset into either a GMTgrid (if type is Int16 or Float) or a GMTimage type
-	Use BAND to select a single band of the dataset. When you know that the dataset contains several
-	bands of an image, use the kwarg BANDS with a vector the wished bands (1, 3 or 4 bands only).
+Convert a GDAL raster dataset into either a GMTgrid (if type is Int16 or Float) or a GMTimage type
+Use BAND to select a single band of the dataset. When you know that the dataset contains several
+bands of an image, use the kwarg BANDS with a vector the wished bands (1, 3 or 4 bands only).
 
-	When DATASET is a string it may contain the file name or the name of a subdataset. In former case
-	you can use the kwarg SDS to selec the subdataset numerically. Alternatively, provide the full SDS name.
-	For files with SDS with a scale_factor (e.g. MODIS data), that scale is applyied automaticaly.
+When DATASET is a string it may contain the file name or the name of a subdataset. In former case
+you can use the kwarg SDS to selec the subdataset numerically. Alternatively, provide the full SDS name.
+For files with SDS with a scale_factor (e.g. MODIS data), that scale is applyied automaticaly.
 
-	Examples:
-		G = gd2gmt("AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc", sds=1);
-	or
-		G = gd2gmt("SUBDATASET_1_NAME=NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
-	or
-		G = gd2gmt("NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
+    Examples:
+       G = gd2gmt("AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc", sds=1);
+    or
+       G = gd2gmt("SUBDATASET_1_NAME=NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
+    or
+       G = gd2gmt("NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
 """
 function gd2gmt(_dataset; band=0, bands=Vector{Int}(), sds::Int=0, pad=0)
 
@@ -238,16 +238,16 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-ds = gmt2gd(GI)
+    ds = gmt2gd(GI)
 
-	Create GDAL dataset from the contents of GI that can be either a Grid or an Image
+Create GDAL dataset from the contents of GI that can be either a Grid or an Image
 
-ds = gmt2gd(D, save="", geometry="")
+    ds = gmt2gd(D, save="", geometry="")
 
-	Create GDAL dataset from the contents of D, which can be a GMTdataset, a vector of GMTdataset ir a MxN array.
-	The SAVE keyword instructs GDAL to save the contents as an OGR file. Format is determined by file estension.
-	GEOMETRY can be a string with "polygon", where file will be converted to polygon/multipolygon depending
-	on D is a single or a multi-segment object, or "point" to convert to a multipoint geometry.
+Create GDAL dataset from the contents of D, which can be a GMTdataset, a vector of GMTdataset ir a MxN array.
+The SAVE keyword instructs GDAL to save the contents as an OGR file. Format is determined by file estension.
+GEOMETRY can be a string with "polygon", where file will be converted to polygon/multipolygon depending
+on D is a single or a multi-segment object, or "point" to convert to a multipoint geometry.
 """
 function gmt2gd(GI)
 	if (isa(GI, GMTgrid))
@@ -276,10 +276,17 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	(n_cols < 2) && error("GMTdataset must have at least 2 columns")
 
 	geometry = lowercase(geometry)
-	ispolyg = (geometry == "polygon");			ismultipolyg = (length(D) > 1)
-	isline  = occursin("line", geometry);		ismultiline  = (length(D) > 1)
-	ispoint = occursin("point", geometry);		ismultipoint = (length(D) > 1)
-	(!isline && !ispoint && length(D) == 1 && (D[1].data[1,1:2] == D[1].data[end,1:2])) && (ispolyg = true)
+	ispolyg  = occursin("poly", geometry);		ismultipolyg = (length(D) > 1)
+	isline   = occursin("line", geometry);		ismultiline  = (length(D) > 1)
+	ispoint  = occursin("point", geometry);		ismultipoint = (length(D) > 1)
+	(geometry != "" && !isline && !ispoint && !ispolyg) && error("Geometry $(geometry) not yet implemented")
+	if (!isline && !ispoint && !ispolyg)		# If all multi-segments are closed create a Polygon/MultiPolygon
+		ispolyg = true
+		for k = 1:length(D)
+			(D[k].data[1,1:2] != D[k].data[end,1:2]) && (ispolyg = false; break)
+		end
+		isline = !ispolyg						# Otherwise make a Line/MultiLine
+	end
 
 	ds = creategd(getdriver("MEMORY"));
 	#ds = creategd(getdriver("ESRI Shapefile"), filename="/vsimem/mem.shp")
@@ -313,21 +320,37 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 			[Gdal.addgeom!(geom, makering(D[k].data)) for k = 1:length(D)]
 		end
 		Gdal.setgeom!(feature, geom)
-	else
-		for k = 1:length(D)
-			if (eltype(D[k]) == Float64)
-				x, y = D[k].data[:,1], D[k].data[:,2]
-				(n_cols > 2) && (z = D[k].data[:,3])
-			else
-				x, y = Float64.(D[k].data[:,1]), Float64.(D[k].data[:,2])
-				(n_cols > 2) && (z = Float64.(D[k].data[:,3]))
+	elseif (isline)
+		if (ismultiline)
+			for k = 1:length(D)
+				line = Gdal.creategeom(Gdal.wkbLineString)
+				x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
+				(n_cols == 2) ? Gdal.OGR_G_SetPoints(line.ptr, size(D[k].data, 1), x, 8, y, 8, C_NULL, 8) :
+				                Gdal.OGR_G_SetPoints(line.ptr, size(D[k].data, 1), x, 8, y, 8, z, 8)
+        		Gdal.addgeom!(geom, line)
 			end
-			n_pts = size(D[k].data, 1)
-			if (n_cols == 2)  Gdal.OGR_G_SetPoints(geom.ptr, n_pts, x, 8, y, 8, C_NULL, 8)
-			else              Gdal.OGR_G_SetPoints(geom.ptr, n_pts, x, 8, y, 8, z, 8)
-			end
-			Gdal.setgeom!(feature, geom)
+		else
+			x,y,z = helper_gmt2gd_xyz(D[1], n_cols)
+			(n_cols == 2) ? Gdal.OGR_G_SetPoints(geom.ptr, size(D[1].data, 1), x, 8, y, 8, C_NULL, 8) :
+			                Gdal.OGR_G_SetPoints(geom.ptr, size(D[1].data, 1), x, 8, y, 8, z, 8)
 		end
+		Gdal.setgeom!(feature, geom)
+	elseif (ispoint)
+		if (ismultipoint)
+			for k = 1:length(D)
+				x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
+				if (n_cols == 2)
+					[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n])) for n = 1:length(x)]
+				else
+					[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n], z[n])) for n = 1:length(x)]
+				end
+			end
+		else
+			x,y,z = helper_gmt2gd_xyz(D[1], n_cols)
+			(n_cols == 2) ? Gdal.OGR_G_SetPoints(geom.ptr, size(D[1].data, 1), x, 8, y, 8, C_NULL, 8) :
+			                Gdal.OGR_G_SetPoints(geom.ptr, size(D[1].data, 1), x, 8, y, 8, z, 8)
+		end
+		Gdal.setgeom!(feature, geom)
 	end
 
 	Gdal.setfeature!(layer, feature)
@@ -341,10 +364,22 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	return ds
 end
 
-		# This is possibly a wasting solution implying a data copy but it's bloody simpler
-		#if (conv2polyg)
-			#geom.ptr = (length(D) == 1) ? Gdal.OGR_G_ForceToPolygon(geom.ptr) : Gdal.OGR_G_ForceToMultiPolygon(geom.ptr)
-		#end
+function helper_gmt2gd_xyz(D::GMTdataset, n_cols::Int)
+	# Helper funtion to split a matrix in x,y[z] and make sure doubles are returned
+	if (eltype(D) == Float64)
+		x, y = D.data[:,1], D.data[:,2]
+		(n_cols > 2) && (z = D.data[:,3])
+	else
+		x, y = Float64.(D.data[:,1]), Float64.(D.data[:,2])
+		(n_cols > 2) && (z = Float64.(D.data[:,3]))
+	end
+	return (n_cols == 3) ? (x, y, z) : (x, y, 0.0)
+end
+
+	# This is possibly a wasting solution implying a data copy but it's bloody simpler
+	#if (conv2polyg)
+		#geom.ptr = (length(D) == 1) ? Gdal.OGR_G_ForceToPolygon(geom.ptr) : Gdal.OGR_G_ForceToMultiPolygon(geom.ptr)
+	#end
 
 function makering(data)
 	ring = Gdal.creategeom(Gdal.wkbLinearRing)
@@ -358,38 +393,38 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-G = varspacegrid(fname::String, sds_name::String=""; V::Bool=false, kw...)
+    G = varspacegrid(fname::String, sds_name::String=""; V::Bool=false, kw...)
 
-	Read one of those netCDF files that are not regular grids but have instead the coordinates in the
-	LONGITUDE abd LATITUDE arrays. MODIS L2 files are a good example of this. Data in theses files are
-	not layed down on a regular grid and we must interpolate to get one. Normally the lon and lat arrays
-	are called 'longitude' and 'latitude' and these it's what is seek for by default. But files exist
-	that pretend to comply to CF but use other names. In this case, use the kwargs 'xarray' & 'yarray'
-	to pass in the variable names. For example: xarray="XLONG", yarray="XLAT"
-	The other fundamental info to pass in is the name of the array to be read/interpolated. We do that
-	via the SDS_NAME arg.
+Read one of those netCDF files that are not regular grids but have instead the coordinates in the
+LONGITUDE abd LATITUDE arrays. MODIS L2 files are a good example of this. Data in theses files are
+not layed down on a regular grid and we must interpolate to get one. Normally the lon and lat arrays
+are called 'longitude' and 'latitude' and these it's what is seek for by default. But files exist
+that pretend to comply to CF but use other names. In this case, use the kwargs 'xarray' & 'yarray'
+to pass in the variable names. For example: xarray="XLONG", yarray="XLAT"
+The other fundamental info to pass in is the name of the array to be read/interpolated. We do that
+via the SDS_NAME arg.
 
-	In simpler cases the variable to be interpolated lays down on a 2D array but it is also possible that
-	it is stored in a 3D array. If that is the case, use the keyword 'band' to select a band (ex: 'band=2')
-	Bands are numbered from 1.
+In simpler cases the variable to be interpolated lays down on a 2D array but it is also possible that
+it is stored in a 3D array. If that is the case, use the keyword 'band' to select a band (ex: 'band=2')
+Bands are numbered from 1.
 
-	The interpolation is done so far with 'nearneighbor'. Both the region (-R) and increment (-I) are estimated
-	from data but they can be set with 'region' and 'inc' kwargs as well.
-	For MODIS data we can select the quality flag to filter by data quality. By default the best quality (=0) is
-	used, but one can select another with the quality=val kwarg. Positive 'val' values select data of quality
-	<= quality, whilst negative 'val' values select only data with quality >= abs(val). This allows for example
-	to extract only the cloud coverage.
+The interpolation is done so far with 'nearneighbor'. Both the region (-R) and increment (-I) are estimated
+from data but they can be set with 'region' and 'inc' kwargs as well.
+For MODIS data we can select the quality flag to filter by data quality. By default the best quality (=0) is
+used, but one can select another with the quality=val kwarg. Positive 'val' values select data of quality
+<= quality, whilst negative 'val' values select only data with quality >= abs(val). This allows for example
+to extract only the cloud coverage.
 
-	If instead of calculating a grid (returned as a GMTgrid type) user wants the x,y,z data intself, use the
-	keywords 'dataset', or 'outxyz' and the output will be in a GMTdataset (i.e. use 'dataset=true').
+If instead of calculating a grid (returned as a GMTgrid type) user wants the x,y,z data intself, use the
+keywords 'dataset', or 'outxyz' and the output will be in a GMTdataset (i.e. use 'dataset=true').
 
-	To inquire just the list of available arrays use 'list=true' or 'gdalinfo=true' to get the full file info.
+To inquire just the list of available arrays use 'list=true' or 'gdalinfo=true' to get the full file info.
 
-	Examples:
+    Examples:
 
-	G = MODIS_L2("AQUA_MODIS.20020717T135006.L2.SST.nc", "sst", V=true);
+    G = MODIS_L2("AQUA_MODIS.20020717T135006.L2.SST.nc", "sst", V=true);
 
-	G = MODIS_L2("TXx-narr-annual-timavg.nc", "T2MAX", xarray="XLONG", yarray="XLAT", V=true);
+    G = MODIS_L2("TXx-narr-annual-timavg.nc", "T2MAX", xarray="XLONG", yarray="XLAT", V=true);
 """
 function varspacegrid(fname::String, sds_name::String=""; quality::Int=0, V::Bool=false, inc=0.0, kw...)
 
