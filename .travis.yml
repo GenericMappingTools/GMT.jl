@@ -7,7 +7,7 @@ os:
   - linux
 dist: eoan
 julia:
-  - 1.5
+  - 1.6
 matrix:
   allow_failures:
     - julia: nightly
