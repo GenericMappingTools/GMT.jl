@@ -1,5 +1,5 @@
 function _precompile_()
-    @assert ccall(:jl_generating_output, Cint, ()) == 1 || return nothing
+    #@assert ccall(:jl_generating_output, Cint, ()) == 1 || return nothing
     #precompile(Tuple{typeof(Base.Printf.ini_dec),Base.GenericIOBuffer{Array{UInt8,1}},Float64,Int64,String,Int64,Int64,Char,Array{UInt8,1}})
     @assert precompile(Tuple{typeof(Base.__cat),Array{Any,2},Tuple{Int64,Int64},Tuple{Bool,Bool},String,Vararg{Any,N} where N})
     @assert precompile(Tuple{typeof(Base.__cat),Array{Float64,1},Tuple{Int64},Tuple{Bool},Array{Float64,1},Vararg{Any,N} where N})
