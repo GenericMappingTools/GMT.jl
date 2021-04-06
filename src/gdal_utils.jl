@@ -27,7 +27,7 @@ function gd2gmt(_dataset; band=0, bands=Vector{Int}(), sds::Int=0, pad=0)
 		scale_factor, add_offset, got_fill_val, fill_val = Float32(1), Float32(0), false, Float32(0)
 		dataset = _dataset
 	end
-	(_dataset.ptr == C_NULL) && error("NULL dataset sent in")
+	(!isa(_dataset, String) && _dataset.ptr == C_NULL) && error("NULL dataset sent in")
 
 	n_dsbands = Gdal.nraster(dataset)
 	xSize, ySize, nBands = Gdal.width(dataset), Gdal.height(dataset), n_dsbands

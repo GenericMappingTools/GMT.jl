@@ -62,7 +62,7 @@ function gdaldem(indata, method::String, opts=String[]; dest="/vsimem/tmp", kwar
 	if (method == "hillshade")		# So far the only method that accept kwarg options
 		d = GMT.KW(kwargs)
 		band = ((val = GMT.find_in_dict(d, [:band])[1]) !== nothing) ? string(val) : "1"
-		opts = ["-compute_edges", "-b", band]
+		append!(opts, ["-compute_edges", "-b", band])
 		if ((val = GMT.find_in_dict(d, [:scale])[1]) === nothing)
 			if (isa(indata, GMT.GMTgrid) && (occursin("longlat", indata.proj4) || occursin("latlong", indata.proj4)) ||
 											grdinfo(indata, C="n")[1].data[end] == 1)
@@ -95,7 +95,8 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Vector{Str
 	_cmap = C_NULL
 	if (f == gdaldem && ((cmap = GMT.find_in_dict(d, [:C :color :cmap])[1])) !== nothing)
 		if ((isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMT.GMTcpt))
-			save_cpt4gdal(cmap, tempdir() * "/GMTtmp_cpt.cpt")	# GDAL pretend to recognise CPTs but it almost doesn't
+			_cmap = tempdir() * "/GMTtmp_cpt.cpt"
+			save_cpt4gdal(cmap, _cmap)	# GDAL pretend to recognise CPTs but it almost doesn't
 		else
 			_cmap = cmap
 		end
@@ -106,7 +107,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Vector{Str
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
 	o = (method == "") ? f(dataset, opts; dest=dest) : f(dataset, method, opts; dest=dest, colorfile=_cmap)
-	(o.ptr == C_NULL) && @warn("$(f) returned a NULL pointer.")
+	(o !== nothing && o.ptr == C_NULL) && @warn("$(f) returned a NULL pointer.")
 	if (o !== nothing)
 		# If not explicitly stated to return a GDAL datase, return a GMT type
 		n_bands = (got_GMT_opts && !haskey(d, :gdataset) && isa(o, AbstractRasterBand)) ? 1 : nraster(o)
