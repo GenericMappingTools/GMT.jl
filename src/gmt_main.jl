@@ -1091,9 +1091,8 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)
 	n_ranges = size(cpt.range, 1)
 	one = 0
 	if (n_colors > n_ranges)		# Continuous
-		n_ranges = n_colors;		# Actual length of colormap array
+		n_ranges, one = n_colors, 1;# Actual length of colormap array
 		n_colors = n_colors - 1;	# Number of CPT slices
-		one = 1
 	end
 
 	P::Ptr{GMT.GMT_PALETTE} = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), C_NULL, C_NULL, 0, 0, C_NULL)
@@ -1141,9 +1140,8 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)
 	# For Categorical case was half broken till 6.2 so we must treat things differently
 	if (cpt.key[1] != "" && GMTver >= v"6.2")
 		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_KEY, convert(Ptr{Cvoid}, P), cpt.key);
-		if (cpt.label[1] != "")
+		(cpt.label[1] != "") &&
 			GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_LABEL, convert(Ptr{Cvoid}, P), cpt.label);
-		end
 		mutateit(API, P, "categorical", 2)
 	elseif (cpt.key[1] != "")
 		mutateit(API, P, "categorical", 2)
