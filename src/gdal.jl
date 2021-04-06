@@ -13,7 +13,7 @@
 
 module Gdal
 
-using GMT
+using GMT, Printf
 
 #const cacert = joinpath(@__DIR__, "cacert.pem")
 
@@ -1416,7 +1416,7 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return Dataset(result)
+		return IDataset(result)
 	end
 	gdaldem(ds::IDataset, processing::String, opts=String[]; dest="/vsimem/tmp", colorfile=C_NULL) = gdaldem(Dataset(ds.ptr), processing, opts; dest=dest, colorfile=colorfile)
 
@@ -1429,7 +1429,7 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return Dataset(result)
+		return IDataset(result)
 	end
 	gdalgrid(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalgrid(Dataset(ds.ptr), opts; dest=dest)
 
@@ -1493,7 +1493,7 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return Dataset(result)
+		return IDataset(result)
 	end
 	gdalvectortranslate(ds::Dataset, opts=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([ds], opts; dest=dest, save=save)
 	gdalvectortranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest, save=save)
@@ -1893,6 +1893,7 @@ end
 
 	function deletedatasource(ds::AbstractDataset, name::AbstractString)
 		(OGR_Dr_DeleteDataSource(getdriver(ds).ptr, name) != OGRERR_NONE) && @warn("Failed to remove $name")
+		return nothing
 	end
 
 	for (geom, wkbgeom) in ((:geomcollection,       wkbGeometryCollection),
