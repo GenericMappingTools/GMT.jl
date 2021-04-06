@@ -27,6 +27,7 @@ function gd2gmt(_dataset; band=0, bands=Vector{Int}(), sds::Int=0, pad=0)
 		scale_factor, add_offset, got_fill_val, fill_val = Float32(1), Float32(0), false, Float32(0)
 		dataset = _dataset
 	end
+	(!isa(_dataset, String) && _dataset.ptr == C_NULL) && error("NULL dataset sent in")
 
 	n_dsbands = Gdal.nraster(dataset)
 	xSize, ySize, nBands = Gdal.width(dataset), Gdal.height(dataset), n_dsbands
@@ -567,4 +568,71 @@ end
 function imshow(arg1::Gdal.AbstractDataset; kw...)
 	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(arg1))) != C_NULL) && return plot(gd2gmt(arg1), show=1)
 	imshow(gd2gmt(arg1), kw...)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    blendimg!(color::GMTimage, shade::GMTimage, new=false)
+
+Blend the RGB `color` GMTimage with the `shade` intensity image (normally obtained with gdaldem)
+The `new` argument determines if we return a new RGB image or update the `color` argument.
+
+The blending method is the one explained in https://gis.stackexchange.com/questions/255537/merging-hillshade-dem-data-into-color-relief-single-geotiff-with-qgis-and-gdal/255574#255574
+"""
+function blendimg!(color::GMTimage, shade::GMTimage, new::Bool=false)
+
+	blend = (new) ? Array{UInt8,3}(undef, size(shade,1), size(shade,2), 3) : color.image
+
+	n_pix = length(shade)
+	if (color.layout[3] == 'B')			# Band interleaved
+		for n = 1:3
+			off = (n - 1) * n_pix
+			@inbounds @simd for k = 1:n_pix
+				t = shade.image[k] / 255
+				blend[k+off] = (t < 0.5) ? round(UInt8, 2t * color.image[k+off]) : round(UInt8, (1 - 2*(1 - t) * (1 - color.image[k+off]/255)) * 255)
+			end
+		end
+	else								# Assume Pixel interleaved
+		nk = 1
+		@inbounds @simd for k = 1:n_pix
+			t = shade.image[k] / 255
+			if (t < 0.5)
+				blend[nk] = round(UInt8, 2t * color.image[nk]);		nk += 1
+				blend[nk] = round(UInt8, 2t * color.image[nk]);		nk += 1
+				blend[nk] = round(UInt8, 2t * color.image[nk]);		nk += 1
+			else
+				blend[nk] = round(UInt8, (1 - 2*(1 - t) * (1 - color.image[nk]/255)) * 255);	nk += 1
+				blend[nk] = round(UInt8, (1 - 2*(1 - t) * (1 - color.image[nk]/255)) * 255);	nk += 1
+				blend[nk] = round(UInt8, (1 - 2*(1 - t) * (1 - color.image[nk]/255)) * 255);	nk += 1
+			end
+		end
+	end
+	if (new)
+		GMTimage(color.proj4, color.wkt, 0, color.range, color.inc, color.registration, color.nodata, color.color_interp, color.x, color.y, blend, color.colormap, color.n_colors, color.alpha, color.layout, color.pad)
+	else
+		color
+	end
+end
+
+"""
+	gdalshade(filename; kwargs...)
+
+Create a shaded relief with the GDAL method (color image blended with shaded intensity).
+
+- kwargs hold the keyword=value to pass the arguments to `gdaldem hilshade`
+
+Example:
+    I = gdalshade("hawaii_south.grd", C="faa.cpt", zfactor=4);
+
+### Returns
+A GMT Image
+"""
+function gdalshade(fname; kwargs...)
+	d = KW(kwargs)
+	band = ((val = find_in_dict(d, [:band], false)[1]) !== nothing) ? string(val) : "1"
+	cmap = find_in_dict(d, [:C :color :cmap])[1]	# The color cannot be passed to second call to gdaldem
+
+	A = gdaldem(fname, "color-relief", ["-b", band], C=cmap)
+	B = gdaldem(fname, "hillshade"; d...)
+	blendimg!(A, B)
 end

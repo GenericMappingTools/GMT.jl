@@ -67,8 +67,8 @@ Gdal.GDALDestroyDriverManager()
 	ds_small = readgd("utmsmall.tif");
 	Gdal.getlayer(ds_small, 1);
 	gdalinfo(ds_small, [""]);
-	gdaldem("utmsmall.tif", "hillshade", ["-q"], save="lixo.nc");
-	rm("lixo.nc")
+	#gdaldem("utmsmall.tif", "hillshade", ["-q"], save="lixo.nc");
+	#rm("lixo.nc")
 	gdaldem(ds_small, "hillshade", ["-q"]);
 	gdaltranslate(ds_small, [""]);
 	gdaltranslate("utmsmall.tif", R="442000/445000/3747000/3750000");
@@ -127,7 +127,7 @@ Gdal.GDALDestroyDriverManager()
 	ds_src = Gdal.read("utmsmall.tif")
 	Gdal.write(ds_src, "/vsimem/utmsmall.tif")
 	ds_copy = Gdal.read("/vsimem/utmsmall.tif")
-	#@test Gdal.read(ds_src) == Gdal.read(ds_copy)
+	@test Gdal.read(ds_src) == Gdal.read(ds_copy)
 	Gdal.metadata(ds_src)
 	Gdal.GDALGetDescription(ds_src.ptr)
 
@@ -138,6 +138,7 @@ Gdal.GDALDestroyDriverManager()
 	@test xx == (2.0, 5.0, 8.0)
 
 	G = GMT.peaks()
+	gdalshade(G, C=makecpt(T=(-7,8,1)), zfactor=2);
 	ds = gmt2gd(G)
 	G  = gd2gmt(ds)
 	G = gd2gmt("utmsmall.tif");
