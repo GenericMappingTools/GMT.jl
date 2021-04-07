@@ -120,6 +120,18 @@
 	GG = gmtread("lixo.grd", grd=true, layout=:TC);
 	#GG = gmtread("lixo.grd", grd=true, layer=1);	# This crashes GMT or GDAL in Linux
 	@test(sum(G.z[:] - GG.z[:]) == 0)
+
+	GG = mat2grid(reshape(collect(1.0:25), 5, 5));
+	gmtwrite("lixo.grd",GG)
+	Gr = gmtread("lixo.grd", layout="BCB");
+	@test Gr.z[1:5] == [1.0, 2.0, 3.0, 4.0, 5.0]
+	Gr = gmtread("lixo.grd", layout="TCB");
+	@test Gr.z[1:5] == [5.0, 4.0, 3.0, 2.0, 1.0]
+	Gr = gmtread("lixo.grd", layout="TRB");
+	@test Gr.z[1:5] == [5.0, 10.0, 15.0, 20.0, 25.0]
+	Gr = gmtread("lixo.grd", layout="BRB");
+	@test Gr.z[1:5] == [1.0, 6.0, 11.0, 16.0, 21.0]
+
 	gmtwrite("lixo.grd", rand(5,5), id=:cf, layout=:TC)
 	gmtwrite("lixo.tif", rand(UInt8,32,32,3), driver=:GTiff)
 	I = gmtread("lixo.tif", img=true, layout="TCP");

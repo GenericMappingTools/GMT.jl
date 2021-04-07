@@ -253,7 +253,11 @@ on D is a single or a multi-segment object, or "point" to convert to a multipoin
 function gmt2gd(GI)
 	if (isa(GI, GMTgrid))
 		ds = creategd("", driver = getdriver("MEM"), width=size(GI,2), height=size(GI,1), nbands=1, dtype=eltype(GI.z))
-		writegd!(ds, GI.z, 1)
+		if (GI.layout != "" && GI.layout[2] == 'C')
+			(GI.layout[1] == 'B') ? writegd!(ds, collect(reverse(GI.z, dims=1)'), 1) : writegd!(ds, collect(GI.z'), 1)
+		else
+			writegd!(ds, GI.z, 1)
+		end
 	elseif (isa(GI, GMTimage))
 		ds = creategd("", driver = getdriver("MEM"), width=size(GI,2), height=size(GI,1), nbands=size(GI,3),
 		              dtype=eltype(GI.image))

@@ -232,7 +232,7 @@ function gmt(cmd::String, args...)
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
 	if (occursin("read", g_module) && (r != "") && occursin("-T", r))		# It parses the 'layout' key
 		(occursin("-Ti", r)) && GMT_Set_Default(API, "API_PAD", "0")
-		r, img_mem_layout[1], grd_mem_layout[1] =  parse_mem_layouts(r)
+		#r, img_mem_layout[1], grd_mem_layout[1] =  parse_mem_layouts(r)	# It was called above
 	end
 
 	# 3. Convert command line arguments to a linked GMT option list
@@ -463,38 +463,35 @@ function get_grid(API::Ptr{Nothing}, object)
 	t = unsafe_wrap(Array, G.data, my * mx)
 	z = zeros(Float32, ny, nx)
 
-	if (grd_mem_layout[1] == "")
+	if (grd_mem_layout[1] == "" || startswith(grd_mem_layout[1], "BC"))
 		for col = 1:nx
 			for row = 1:ny
-				ij = GMT_IJP(row, col, mx, padTop, padLeft)		# This one is Int64
-				z[MEXG_IJ(row, col, ny)] = t[ij]	# Later, replace MEXG_IJ() by kk = col * ny - row + 1
+				ij = ((row-1) + padTop) * mx + col + padLeft		# Was GMT_IJP(row, col, mx, padTop, padLeft)
+				z[col * ny - row + 1] = t[ij]						# Was z[MEXG_IJ(row, col, ny)]
 			end
 		end
-	elseif (startswith(grd_mem_layout[1], "TR") || startswith(grd_mem_layout[1], "BR"))	# Keep the Row Major but stored in Column Major
+		layout = "BCB";
+	elseif (grd_mem_layout[1][2] == 'R')		# Store array in Row Major
 		ind_y = 1:ny		# Start assuming "TR"
 		if (startswith(grd_mem_layout[1], "BR"))  ind_y = ny:-1:1  end	# Bottom up
 		k = 1
 		for row = ind_y
+			tt = ((row-1) + padTop) * mx + padLeft
 			for col = 1:nx
-				z[k] = t[GMT_IJP(row, col, mx, padTop, padLeft)]
+				z[k] = t[col + tt]	# was t[GMT_IJP(row, col, mx, padTop, padLeft)]
 				k = k + 1
 			end
 		end
-		grd_mem_layout[1] = ""			# Reset because this variable is global
+		layout = grd_mem_layout[1][1:2]*'B';
 	else
-		#for col = 1:nx
-			#for row = 1:ny
-				#z[row,col] = t[GMT_IJP(row, col, mx, padTop, padLeft)]
-			#end
-		#end
-		[z[row,col] = t[GMT_IJP(row, col, mx, padTop, padLeft)] for col = 1:nx, row = 1:ny]
-		grd_mem_layout[1] = ""
+		# Was t[GMT_IJP(row, col, mx, padTop, padLeft)
+		[z[row,col] = t[((row-1) + padTop) * mx + col + padLeft] for col = 1:nx, row = 1:ny]
+		layout = "TCB";
 	end
-
-	#t  = reshape(pointer_to_array(G.data, ny * nx), ny, nx)
+	grd_mem_layout[1] = ""		# Reset because this variable is global
 
 	# Return grids via a float matrix in a struct
-	out = GMTgrid("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", X, Y, z, "", "", "", "", 0)
+	out = GMTgrid("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", X, Y, z, "", "", "", layout, 0)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT != C_NULL)    out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)      end
