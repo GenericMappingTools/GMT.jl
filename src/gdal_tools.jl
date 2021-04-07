@@ -80,9 +80,10 @@ function gdaldem(indata, method::String, opts=String[]; dest="/vsimem/tmp", kwar
 		((val = GMT.find_in_dict(d, [:alg])[1]) !== nothing) && append!(opts, ["-alg", string(val)])
 		((val = GMT.find_in_dict(d, [:Horn])[1]) !== nothing) && append!(opts, ["-alg", "Horn"])
 		((val = GMT.find_in_dict(d, [:Zeven :Zevenbergen])[1]) !== nothing) && append!(opts, ["-alg", "ZevenbergenThorne"])
-		((val = GMT.find_in_dict(d, [:Vd])[1]) !== nothing) && println(opts)
+		helper_run_GDAL_fun(gdaldem, indata, dest, opts, method, d...)
+	else
+		helper_run_GDAL_fun(gdaldem, indata, dest, opts, method, kwargs...)
 	end
-	helper_run_GDAL_fun(gdaldem, indata, dest, opts, method, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -90,6 +91,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Vector{Str
 	# Helper function to run the GDAL function under 'some protection' and returning obj or saving in file
 
 	d, opts, got_GMT_opts = GMT_opts_to_GDAL(opts, kwargs...)
+	((val = GMT.find_in_dict(d, [:Vd])[1]) !== nothing) && println(opts)
 
 	# For gdaldem color-relief we need a further arg that is the name of a cpt. So save one on disk
 	_cmap = C_NULL

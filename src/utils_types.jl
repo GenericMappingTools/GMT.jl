@@ -482,7 +482,7 @@ function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); 
 		(fill_val != 0) && fill!(mat, fill_val)
 	end
 
-	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, mat, "x", "y", "z", "", 0)
+	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, mat, "x", "y", "z", "BCB", 0)
 end
 
 function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
