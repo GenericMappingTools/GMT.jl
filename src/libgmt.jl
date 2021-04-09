@@ -480,4 +480,8 @@ function get_common_R(API::Ptr{Cvoid})
 	ccall((:gmtlib_get_common_R, thelib), Cint, (Cstring, Ptr{COMMON_R}), API, Rp)
 	return unsafe_load(Rp)
 end
+
+function terrain_filter(API::Ptr{Cvoid}, data, detail, nrows, ncols, xinc, yinc, coord_type, center_lat=0.0, progress=C_NULL)
+	ccall((:terrain_filter, thelib), Cvoid, (Cstring, Ptr{Cfloat}, Cdouble, Cint, Cint, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cvoid}), API, data, detail, nrows, ncols, xinc, yinc, coord_type, center_lat, progress)
+end
 =#

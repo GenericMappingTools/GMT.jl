@@ -4,7 +4,7 @@ function Base.:+(G1::GMTgrid, G2::GMTgrid)
 	(size(G1.z) != size(G2.z)) && error("Grids have different sizes, so they cannot be added.")
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 				 G1.command, G1.x, G1.y, G1.z .+ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
-	G3.range[5] = minimum(G3.z);	G3.range[6] = maximum(G3.z)
+	grd_min_max!(G3)		# Also take care of NaNs
 	return G3
 end
 
@@ -24,7 +24,7 @@ function Base.:-(G1::GMTgrid, G2::GMTgrid)
 	(size(G1.z) != size(G2.z)) && error("Grids have different sizes, so they cannot be subtracted.")
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 				 G1.command, G1.x, G1.y, G1.z .- G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
-	G3.range[5] = minimum(G3.z);	G3.range[6] = maximum(G3.z)
+	grd_min_max!(G3)		# Also take care of NaNs
 	return G3
 end
 
@@ -43,7 +43,7 @@ function Base.:*(G1::GMTgrid, G2::GMTgrid)
 	(size(G1.z) != size(G2.z)) && error("Grids have different sizes, so they cannot be multiplied.")
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 				 G1.command, G1.x, G1.y, G1.z .* G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
-	G3.range[5] = minimum(G3.z);	G3.range[6] = maximum(G3.z)
+	grd_min_max!(G3)		# Also take care of NaNs
 	return G3
 end
 
@@ -74,7 +74,7 @@ function Base.:/(G1::GMTgrid, G2::GMTgrid)
 	if (size(G1.z) != size(G2.z))  error("Grids have different sizes, so they cannot be divided.")  end
 	G3 = GMTgrid(G1.proj4, G1.wkt, G1.epsg, G1.range, G1.inc, G1.registration, G1.nodata, G1.title, G1.remark,
 				 G1.command, G1.x, G1.y, G1.z ./ G2.z, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
-	G3.range[5] = minimum(G3.z);	G3.range[6] = maximum(G3.z)
+	grd_min_max!(G3)		# Also take care of NaNs
 	return G3
 end
 
@@ -85,4 +85,11 @@ function Base.:/(G1::GMTgrid, scale::Real)
 				 G1.command, G1.x, G1.y, G1.z ./ _scale, G1.x_unit, G1.y_unit, G1.z_unit, G1.layout, G1.pad)
 	G2.range[5:6] ./= scale
 	return G2
+end
+
+# ---------------------------------------------------------------------------------------------------
+function grd_min_max!(G::GMTgrid)
+	# The non-nan version is way faster so use it as a proxy of NaNs and recompute if needed.
+	min = minimum(G.z);
+	!isnan(min) ? (G.range[5:6] = [min, maximum(G.z)]) : (G.range[5:6] = [minimum_nan(G.z), maximum_nan(G.z)])
 end
