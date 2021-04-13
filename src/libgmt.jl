@@ -425,8 +425,8 @@ function gmtlib_setparameter(API::Ptr{Cvoid}, keyword::String, value::String)
 end
 
 function reset_defaults(API::Ptr{Cvoid})
-	(GMTver >= v"6.2") ? ccall((:gmt_conf_SI, thelib), Cvoid, (Cstring,), GMT_Get_Ctrl(API)) :
-	                     ccall((:gmt_conf, thelib), Cvoid, (Cstring,), GMT_Get_Ctrl(API))
+	(GMTver > v"6.1.1") ? ccall((:gmt_conf_SI, thelib), Cvoid, (Cstring,), GMT_Get_Ctrl(API)) :
+	                      ccall((:gmt_conf, thelib), Cvoid, (Cstring,), GMT_Get_Ctrl(API))
 end
 
 function gmt_ogrread(API::Ptr{Cvoid}, fname::String, region=C_NULL)
@@ -480,8 +480,12 @@ function get_common_R(API::Ptr{Cvoid})
 	ccall((:gmtlib_get_common_R, thelib), Cint, (Cstring, Ptr{COMMON_R}), API, Rp)
 	return unsafe_load(Rp)
 end
-
-function terrain_filter(API::Ptr{Cvoid}, data, detail, nrows, ncols, xinc, yinc, coord_type, center_lat=0.0, progress=C_NULL)
-	ccall((:terrain_filter, thelib), Cvoid, (Cstring, Ptr{Cfloat}, Cdouble, Cint, Cint, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cvoid}), API, data, detail, nrows, ncols, xinc, yinc, coord_type, center_lat, progress)
-end
 =#
+
+function terrain_filter(data, detail, nrows, ncols, xinc, yinc, coord_type, center_lat=0.0, progress=C_NULL)
+	ccall((:terrain_filter, thelib), Cint, (Ptr{Cfloat}, Cdouble, Cint, Cint, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cvoid}), data, detail, nrows, ncols, xinc, yinc, coord_type, center_lat, progress)
+end
+
+function terrain_image_data(data, contrast, nrows, ncols, image_min=0., image_max=65535.0)
+	ccall((:terrain_image_data, thelib), Cint, (Ptr{Cfloat}, Cint, Cint, Cdouble, Cdouble, Cdouble), data, nrows, ncols, contrast, image_min, image_max)
+end

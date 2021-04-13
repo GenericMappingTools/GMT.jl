@@ -7,6 +7,7 @@ struct CTRLstruct
 	proj_linear::Vector{Bool}		# To know if images sent to GMT need Pad
 	callable::Array{Symbol}			# Modules that can be called inside other modules
 	pocket_call::Vector{Any}		# To temporarilly store data needed by modules sub-calls
+	pocket_B::Vector{String}		# To temporarilly store opt_B grid and fill color to be reworked in psclip
 	gmt_mem_bag::Vector{Ptr{Cvoid}}	# To temporarilly store a GMT owned memory to be freed in gmt()
 end
 
@@ -47,7 +48,7 @@ const global box_str = [""]
 const def_fig_size  = "14c/9.5c"            # Default fig size for plot like programs. Approx 16/11
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3 = " -Baf -Bza"  		#		"" but for 3D views
-const global CTRL = CTRLstruct(zeros(6), [true], [:clip, :coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing], [C_NULL])
+const global CTRL = CTRLstruct(zeros(6), [true], [:clip, :coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing], ["",""], [C_NULL])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
@@ -75,7 +76,7 @@ export
 	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 	mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, geodetic2enu, cpt4dcw,
-	creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
+	blendimg!, creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 	importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 	gdalrasterize, gdalbuildvrt, gdalshade, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
 	dither, gd2gmt, gmt2gd, varspacegrid, MODIS_L2
@@ -179,7 +180,7 @@ include("MB/mbimport.jl")
 include("MB/mbgetdata.jl")
 include("MB/mbsvplist.jl")
 include("MB/mblevitus.jl")
-(GMTver >= v"6.2") && include("potential/gmtgravmag3d.jl")
+(GMTver > v"6.1.1") && include("potential/gmtgravmag3d.jl")
 
 include("drawing.jl")
 

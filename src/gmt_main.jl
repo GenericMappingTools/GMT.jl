@@ -264,6 +264,7 @@ function gmt(cmd::String, args...)
 	for k = 1:n_items
 		XX[k] = unsafe_load(X, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
 	end
+	gmt_free_mem(API, X)
 	X = XX
 
 	# 5. Assign input sources (from Julia to GMT) and output destinations (from GMT to Julia)
@@ -1124,7 +1125,7 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)
 		z_low  = cpt.range[j,1]
 		z_high = cpt.range[j,2]
 		# GMT6.1 bug does not free "key" but frees "label" and does not see if memory is external. Hence crash or mem leaks
-		_key = (cpt.key[j] == "" || GMTver >= v"6.2") ? glut.key : pointer(cpt.key[j])	# All it's possible in GMT < 6.2
+		_key = (cpt.key[j] == "" || GMTver > v"6.1.1") ? glut.key : pointer(cpt.key[j])	# All it's possible in GMT < 6.2
 
 		annot = (j == Pb.n_colors) ? 3 : 1				# Annotations L for all but last which is B(oth)
 		lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
@@ -1135,7 +1136,7 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)
 	unsafe_store!(P, Pb)
 
 	# For Categorical case was half broken till 6.2 so we must treat things differently
-	if (cpt.key[1] != "" && GMTver >= v"6.2")
+	if (cpt.key[1] != "" && GMTver > v"6.1.1")
 		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_KEY, convert(Ptr{Cvoid}, P), cpt.key);
 		(cpt.label[1] != "") &&
 			GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_LABEL, convert(Ptr{Cvoid}, P), cpt.label);

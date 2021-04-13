@@ -148,6 +148,11 @@ Gdal.GDALDestroyDriverManager()
 	ds = gmt2gd(G)
 	gdalinfo(ds);
 
+	# Test that we recover the original.
+	G = mat2grid(reshape(collect(1.0:12), 3, 4));
+	Gv = gd2gmt(gmt2gd(G), layout="BCB");
+	@test G == Gv
+
 	I = grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1);
 	grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
 	grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
@@ -210,4 +215,17 @@ Gdal.GDALDestroyDriverManager()
 		[(1204067., 634617.), (1204067., 620742.), (1215167., 620742.), (1215167., 634617.), (1204067., 634617.)],
 		[(1179553., 647105.), (1179553., 626292.), (1194354., 626292.), (1194354., 647105.), (1179553., 647105.)] ])
 	Gdal.wrapgeom(mp)
+
+	I1 = mat2img(reshape(collect(UInt8(1):UInt8(20)), 4, 5))	#  layout = TCBa
+	I2 = mat2img(reshape(collect(UInt8(11):UInt8(30)), 4, 5))
+	GMT.blendimg!(I1, I2)
+	I2.layout = "BCBa"
+	GMT.blendimg!(I1, I2)
+	I2.layout = "BRBa"
+	GMT.blendimg!(I1, I2)
+	I2.layout = "TRBa"
+	GMT.blendimg!(I1, I2)
+	I1 = mat2img(reshape(collect(UInt8(1):UInt8(60)), 4, 5, 3))
+	I1.layout = "TRPa"
+	GMT.blendimg!(I1, I2)
 end

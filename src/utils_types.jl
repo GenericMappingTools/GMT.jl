@@ -262,6 +262,7 @@ function mat2img(mat::Array{UInt16}; x=Vector{Float64}(), y=Vector{Float64}(), h
 	# If 'stretch' is a scalar, scale the values > 'stretch' to [0 255]
 	# stretch = [v1 v2] scales all values >= v1 && <= v2 to [0 255]
 	# stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
+	# Use the keyword NOCONV to return GMTimage UInt16 type. I.e., no conversion to UInt8
 	d = KW(kw)
 	if ((val = find_in_dict(d, [:noconv])[1]) !== nothing)		# No conversion to UInt8 is wished
 		return mat2img(mat, 1; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, d...)
@@ -319,6 +320,13 @@ function mat2img(img::GMTimage; kw...)
 	I.x = img.x;	I.y = img.y;	I.colormap = img.colormap;
 	I.n_colors = img.n_colors;		I.alpha = img.alpha;	I.layout = img.layout;
 	return I
+end
+
+# ---------------------------------------------------------------------------------------------------
+# This method creates a new GMTimage but retains all the header data from the IMG object
+function mat2img(mat, img::GMTimage)
+	range = img.range;	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
+	GMTimage(img.proj4, img.wkt, img.epsg, range, img.inc, img.registration, img.nodata, img.color_interp, img.x, img.y, mat, img.colormap, img.n_colors, img.alpha, img.layout, img.pad)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -573,6 +581,17 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Vector{Float64}(), y=Vector{Float64}())
 	if (!isa(x, Vector{Float64}))  x = Float64.(x)  end
 	if (!isa(y, Vector{Float64}))  y = Float64.(y)  end
 	return x, y, hdr, x_inc, y_inc
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Convert the HDR vector from grid to pixel registration or vice-versa
+grid2pix(GI; pix=true) = grid2pix([GI.range; GI.registration; GI.inc], pix=pix)
+function grid2pix(hdr::Vector{Float64}; pix=true)
+	((pix && hdr[7] == 1) || (!pix && hdr[7] == 0)) && return hdr 		# Nothing to do
+	if (pix)  hdr[1] -= hdr[8]/2; hdr[2] += hdr[8]/2; hdr[3] -= hdr[9]/2; hdr[4] += hdr[9]/2;	hdr[7] = 1.
+	else      hdr[1] += hdr[8]/2; hdr[2] -= hdr[8]/2; hdr[3] += hdr[9]/2; hdr[4] -= hdr[9]/2;	hdr[7] = 0.
+	end
+	return hdr
 end
 
 #= ---------------------------------------------------------------------------------------------------

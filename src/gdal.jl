@@ -1369,7 +1369,7 @@ end
 	gdalwarp(ds::Dataset, opts=String[]; dest="/vsimem/tmp") = gdalwarp([ds], opts; dest=dest)
 	gdalwarp(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalwarp([Dataset(ds.ptr)], opts; dest=dest)
 
-	function gdaltranslate(dataset::Dataset, options = String[]; dest = "/vsimem/tmp", save::AbstractString="")
+	function gdaltranslate(dataset::Dataset, options=String[]; dest="/vsimem/tmp", save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALTranslateOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1380,7 +1380,10 @@ end
 		end
 		return IDataset(result)
 	end
-	gdaltranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdaltranslate(Dataset(ds.ptr), opts; dest=dest)
+	function gdaltranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp", save::AbstractString="")
+		(save != "") && (dest = save)
+		gdaltranslate(Dataset(ds.ptr), opts; dest=dest)
+	end
 
 	#=
 	function gdalviewshed(dataset::Dataset, obsX, obsY, obsH=0, driver=C_NULL, pCreationOpts=String[], TargetHeight=0, VisibleVal=255, InvVal=0, OutOfRangeVal=NaN, nodata=NaN, CurvCoeff=0.85714, eMode=2, MaxDist=0, pfnProgress=C_NULL, pProgArg=0, heightMode=1, pExtraOpts=""; dest = "/vsimem/tmp")
