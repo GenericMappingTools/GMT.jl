@@ -192,6 +192,7 @@
 	GMT.mat2img(img16, histo_bounds=[8440 13540]);
 	GMT.mat2img(img16, histo_bounds=[8440 13540 800 20000 1000 30000]);
 	GMT.mat2img(rand(UInt16,32,32,3),stretch=:auto);
+	GMT.mat2img(img16, I)
 
 	D = mat2ds([0 0; 1 1],["a", "b"]);	D.header = "a";
 	GMT.make_zvals_vec(D, ["a", "b"], [1,2]);
@@ -274,6 +275,9 @@
 	GMT.dbg_print_cmd(Dict(:lala => 0, :Vd=>2), "prog");
 
 	GMT.justify("aiai")		# A warning
+
+	GMT.grid2pix(GMT.peaks())
+	GMT.grid2pix([0., 1, 0, 1, 0, 1, 1, 1, 1], pix=false)
 
 	gmthelp([:n :sphinterpolate])
 	gmthelp(:wW)
