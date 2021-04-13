@@ -139,7 +139,7 @@ function gmtread(fname::String; kwargs...)
 		API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
 		if (GMTver >= v"6.1")
 			x = opt_R2num(opt_R)		# See if we have a limits request
-			if (GMTver >= v"6.2")
+			if (GMTver > v"6.1.1")
 				lims = (x === nothing) ? (0.0, 0.0, 0.0, 0.0, 0.0, 0.0) : tuple(vcat(x,[0.0, 0.0])...)
 				ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
 				O = ogr2GMTdataset(gmt_ogrread(API2, pointer([ctrl])))

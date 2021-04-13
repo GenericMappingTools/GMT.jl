@@ -180,7 +180,7 @@ include("MB/mbimport.jl")
 include("MB/mbgetdata.jl")
 include("MB/mbsvplist.jl")
 include("MB/mblevitus.jl")
-(GMTver >= v"6") && include("potential/gmtgravmag3d.jl")
+(GMTver > v"6.1.1") && include("potential/gmtgravmag3d.jl")
 
 include("drawing.jl")
 

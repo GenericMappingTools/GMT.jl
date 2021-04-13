@@ -2589,7 +2589,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
 	if (isa(data_kw, String))
 		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])		# Must read file to find -R
-			if (!IamSubplot[1] || GMTver >= v"6.2")		# Protect against a GMT bug
+			if (!IamSubplot[1] || GMTver > v"6.1.1")		# Protect against a GMT bug
 				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
 				# Remove the these options from cmd. Their is done
 				if (opt_i != "")  cmd = replace(cmd, opt_i => "");	opt_i = ""  end
@@ -2977,7 +2977,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function close_PS_file(fname::AbstractString)
-	(GMTver >= v"6.2") ? gmt("psxy -T -O >> " * fname) : gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname)
+	(GMTver > v"6.1.1") ? gmt("psxy -T -O >> " * fname) : gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname)
 	# Do the equivalent of "psxy -T -O"
 	#=
 	fid = open(fname, "a")
