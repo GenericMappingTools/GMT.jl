@@ -16,7 +16,7 @@ For files with SDS with a scale_factor (e.g. MODIS data), that scale is applyied
     or
        G = gd2gmt("NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
 """
-function gd2gmt(_dataset; band=0, bands=Vector{Int}(), sds::Int=0, pad=0)
+function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int=0, layout::String="")
 
 	if (isa(_dataset, AbstractString))	# A subdataset name or the full string "SUBDATASET_X_NAME=...."
 		# For some bloody reason it would print annoying (& false?) warning messages. Have to use brute force
@@ -59,6 +59,16 @@ function gd2gmt(_dataset; band=0, bands=Vector{Int}(), sds::Int=0, pad=0)
 		colormap, n_colors = get_cpt_from_colortable(ds)
 	end
 
+	(!isa(mat, Matrix) && size(mat,3) == 1) && (mat = reshape(mat, size(mat,1), size(mat,2)))	# Fck pain
+	if (layout != "")		# From GDAL it always come as a TR but not sure about the interleave
+		if     (startswith(layout, "BR"))  mat = reverse(mat, dims=1)		# Just flipUD
+		elseif (startswith(layout, "TC"))  mat = collect(mat')
+		elseif (startswith(layout, "BC"))  mat = reverse(mat', dims=1)
+		else   @warn("Unsuported layout ($(layout)) change")
+		end
+		layout = layout[1:2] * "B"		# Till further knowledge, assume it's always Band interleaved
+	end
+
 	# If we found a scale_factor above, apply it
 	if (scale_factor != 1)		# So we must do a scale+offset op
 		(got_fill_val) && (nodata = (mat .== fill_val))
@@ -75,32 +85,35 @@ function gd2gmt(_dataset; band=0, bands=Vector{Int}(), sds::Int=0, pad=0)
 	try
 		global gt = getgeotransform(dataset)
 	catch
-		global gt = [0.5, 1.0, 0.0, size(mat,2)+0.5, 0.0, 1.0]	# Resort to no coords
+		global gt = [0.5, 1.0, 0.0, ySize+0.5, 0.0, 1.0]	# Resort to no coords
 	end
 
 	x_inc, y_inc = gt[2], abs(gt[6])
 	x_min, y_max = gt[1], gt[4]
 	(is_grid) && (x_min += x_inc/2;	 y_max -= y_inc/2)	# Maitain the GMT default that grids are gridline reg.
-	x_max = x_min + (size(mat,1) - 1*is_grid - 2pad) * x_inc
-	y_min = y_max - (size(mat,2) - 1*is_grid - 2pad) * y_inc
+	x_max = x_min + (xSize - 1*is_grid - 2pad) * x_inc
+	y_min = y_max - (ySize - 1*is_grid - 2pad) * y_inc
 	z_min, z_max = (is_grid) ? extrema_nan(mat) : extrema(mat)
 	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, Float64(!is_grid), x_inc, y_inc]
 	prj = getproj(dataset)
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
 	(prj == "") && (prj = seek_wkt_in_gdalinfo(gdalinfo(dataset)))
 	if (is_grid)
-		!isa(mat, Matrix) && (mat = reshape(mat, size(mat,1), size(mat,2)))
+		#!isa(mat, Matrix) && (mat = reshape(mat, size(mat,1), size(mat,2)))
 		(eltype(mat) == Float64) && (mat = Float32.(mat))
 		O = mat2grid(mat; hdr=hdr, proj4=prj)
-		O.layout = "TRB"
+		O.layout = (layout == "") ? "TRB" : layout
 	else
+		#(size(mat,3) == 1) && (mat = reshape(mat, size(mat,1), size(mat,2)))
 		O = mat2img(mat; hdr=hdr, proj4=prj)
-		O.layout = "TRBa"
+		O.layout = (layout == "") ? "TRBa" : layout * "a"
 		if (n_colors > 0)
 			O.colormap = colormap;	O.n_colors = n_colors
 		end
 	end
-	O.x, O.y = O.y, O.x			# Because mat2* thought mat were column-major but it's rwo-major
+	if (O.layout[2] == 'R')
+		O.x, O.y = O.y, O.x		# Because mat2* thought mat were column-major but it's rwo-major
+	end
 	O.inc = [x_inc, y_inc]		# Reset because if pad != 0 they were recomputed inside the mat2? funs
 	O.pad = pad
 	return O
@@ -252,20 +265,25 @@ on D is a single or a multi-segment object, or "point" to convert to a multipoin
 """
 function gmt2gd(GI)
 	if (isa(GI, GMTgrid))
-		ds = creategd("", driver = getdriver("MEM"), width=size(GI,2), height=size(GI,1), nbands=1, dtype=eltype(GI.z))
+		ds = creategd("", driver=getdriver("MEM"), width=size(GI,2), height=size(GI,1), nbands=1, dtype=eltype(GI.z))
 		if (GI.layout != "" && GI.layout[2] == 'C')
 			(GI.layout[1] == 'B') ? writegd!(ds, collect(reverse(GI.z, dims=1)'), 1) : writegd!(ds, collect(GI.z'), 1)
 		else
 			writegd!(ds, GI.z, 1)
 		end
 	elseif (isa(GI, GMTimage))
-		ds = creategd("", driver = getdriver("MEM"), width=size(GI,2), height=size(GI,1), nbands=size(GI,3),
+		ds = creategd("", driver=getdriver("MEM"), width=size(GI,2), height=size(GI,1), nbands=size(GI,3),
 		              dtype=eltype(GI.image))
-		writegd!(ds, GI.image, Cint.(collect(1:size(GI,3))))
+		if (GI.layout != "" && GI.layout[2] == 'C')
+			indata = (GI.layout[1] == 'B') ? collect(reverse(GI.image, dims=1)') : collect(GI.image')
+		else
+			indata = GI.image
+		end
+		writegd!(ds, indata, isa(GI.image, Array{<:Real, 3}) ? Cint.(collect(1:size(GI,3))) : 1)
 	end
 	x_min, y_max = GI.range[1], GI.range[4]
 	(GI.registration == 0) && (x_min -= GI.inc[1]/2;  y_max += GI.inc[2]/2)
-	setgeotransform!(ds, [x_min, GI.inc[1], 0.0, y_max, 0.0, GI.inc[2]])
+	setgeotransform!(ds, [x_min, GI.inc[1], 0.0, y_max, 0.0, -GI.inc[2]])
 	if     (GI.wkt != "")    setproj!(ds, GI.wkt)
 	elseif (GI.proj4 != "")  setproj!(ds, toWKT(importPROJ4(GI.proj4), true))
 	end
@@ -576,14 +594,27 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    blendimg!(color::GMTimage, shade::GMTimage, new=false)
+    blendimg!(color::GMTimage, shade::GMTimage; new=false)
 
 Blend the RGB `color` GMTimage with the `shade` intensity image (normally obtained with gdaldem)
 The `new` argument determines if we return a new RGB image or update the `color` argument.
 
 The blending method is the one explained in https://gis.stackexchange.com/questions/255537/merging-hillshade-dem-data-into-color-relief-single-geotiff-with-qgis-and-gdal/255574#255574
+
+### Returns
+A GMT RGB Image
+
+    blendimg!(img1::GMTimage{UInt8, 2}, img2::GMTimage{UInt8, 2}; new=false, transparency=0.5)
+
+Blend two 2D UInt8 images using transparency. 
+  - **transparency** The default value, 0.5, gives equal weight to both images. 0.75 will make
+    `img` weight 3/4 of the total sum, and so forth.
+  - **new** If true returns a new GMTimage object, otherwise it cahnges the `img` content.
+
+### Returns
+A GMT intensity Image
 """
-function blendimg!(color::GMTimage, shade::GMTimage, new::Bool=false)
+function blendimg!(color::GMTimage{UInt8, 3}, shade::GMTimage; new=false)
 
 	blend = (new) ? Array{UInt8,3}(undef, size(shade,1), size(shade,2), 3) : color.image
 
@@ -611,11 +642,31 @@ function blendimg!(color::GMTimage, shade::GMTimage, new::Bool=false)
 			end
 		end
 	end
-	if (new)
-		GMTimage(color.proj4, color.wkt, 0, color.range, color.inc, color.registration, color.nodata, color.color_interp, color.x, color.y, blend, color.colormap, color.n_colors, color.alpha, color.layout, color.pad)
+	return (new) ? mat2img(blend, color) : color
+end
+
+function blendimg!(img1::GMTimage{UInt8, 2}, img2::GMTimage{UInt8, 2}; new=false, transparency=0.5)
+	# This method blends two UInt8 images with transparency
+	@assert length(img1) == length(img2)
+	same_layout = (img1.layout[1:2] == img2.layout[1:2])
+	blend = (new) ? Array{UInt8,2}(undef, size(img1,1), size(img1,2)) : img1.image
+	t, o = transparency, 1. - transparency
+	if (same_layout)
+		@inbounds @simd for k = 1:length(img1)
+			blend[k] = round(UInt8, t * img1.image[k] + o * img2.image[k])
+		end
 	else
-		color
+		flip, transp = img1.layout[1] != img2.layout[1], img1.layout[2] != img2.layout[2]
+		if     (flip && !transp)  blend = reverse(img2.image, dims=1)
+		elseif (!flip && transp)  blend = collect(img2.image')
+		else                      blend = reverse(img2.image', dims=1)
+		end
+		@inbounds @simd for k = 1:length(img1)
+			blend[k] = round(UInt8, t * img1.image[k] + o * blend[k])
+		end
+		(!new) && (img1.image = blend)
 	end
+	return (new) ? mat2img(blend, img1) : img1
 end
 
 """
@@ -623,7 +674,7 @@ end
 
 Create a shaded relief with the GDAL method (color image blended with shaded intensity).
 
-- kwargs hold the keyword=value to pass the arguments to `gdaldem hilshade`
+- kwargs hold the keyword=value to pass the arguments to `gdaldem hillshade`
 
 Example:
     I = gdalshade("hawaii_south.grd", C="faa.cpt", zfactor=4);
@@ -639,4 +690,35 @@ function gdalshade(fname; kwargs...)
 	A = gdaldem(fname, "color-relief", ["-b", band], C=cmap)
 	B = gdaldem(fname, "hillshade"; d...)
 	blendimg!(A, B)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    texture_img(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false)
+
+Compute the Texture Shading calling functions from the software from Leland Brown at
+http://www.textureshading.com/Home.html
+
+  - **detail** is the amount of texture detail. Lower values of detail retain more elevation information,
+    giving more sense of the overall, large structures and elevation trends in the terrain, at the expense
+	of fine texture detail. Higher detail enhances the texture but gives an overall "flatter" general appearance,
+	with elevation changes and large structure less apparent.
+  - **contrast** is a parameter called “vertical enhancement.” Higher numbers increase contrast in the midtones,
+    but may lose detail in the lightest and darkest features. Lower numbers highlight only the sharpest ridges
+	and deepest canyons but reduce contrast overall.
+  - **uint16** controls if output is a UIn16 or a UInt8 image (the dafault). Note that the original code writes
+    only UInt16 images bur if we want to combine this with with the hillshade computed with `gdaldem`, a UInt8
+	image is more handy.
+
+### Returns
+A UInt16 GMT Image
+"""
+function texture_img(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false)
+	texture = deepcopy(G.z)
+	terrain_filter(texture, detail, size(G,1), size(G,2), G.inc[1], G.inc[2], 0)
+	terrain_image_data(texture, contrast, size(G,1), size(G,2), 0.0, (uint16) ? 65535.0 : 255.0)
+	mat = (uint16) ? round.(UInt16, texture) : round.(UInt8, texture)
+	Go = mat2img(mat, hdr=grid2pix(G), proj4=G.proj4, wkt=G.wkt, noconv=true, layout=G.layout*"a")
+	Go.range[5:6] .= extrema(Go.image)
+	Go
 end
