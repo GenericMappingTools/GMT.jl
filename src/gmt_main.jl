@@ -264,6 +264,7 @@ function gmt(cmd::String, args...)
 	for k = 1:n_items
 		XX[k] = unsafe_load(X, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
 	end
+	gmt_free_mem(API, X)
 	X = XX
 
 	# 5. Assign input sources (from Julia to GMT) and output destinations (from GMT to Julia)
