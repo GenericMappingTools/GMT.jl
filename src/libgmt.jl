@@ -425,8 +425,8 @@ function gmtlib_setparameter(API::Ptr{Cvoid}, keyword::String, value::String)
 end
 
 function reset_defaults(API::Ptr{Cvoid})
-	(GMTver >= v"6.2") ? ccall((:gmt_conf_SI, thelib), Cvoid, (Cstring,), GMT_Get_Ctrl(API)) :
-	                     ccall((:gmt_conf, thelib), Cvoid, (Cstring,), GMT_Get_Ctrl(API))
+	(GMTver > v"6.1.1") ? ccall((:gmt_conf_SI, thelib), Cvoid, (Cstring,), GMT_Get_Ctrl(API)) :
+	                      ccall((:gmt_conf, thelib), Cvoid, (Cstring,), GMT_Get_Ctrl(API))
 end
 
 function gmt_ogrread(API::Ptr{Cvoid}, fname::String, region=C_NULL)
