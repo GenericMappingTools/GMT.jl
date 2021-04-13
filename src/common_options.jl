@@ -1287,20 +1287,32 @@ function finish_PS_nested(d::Dict, cmd::Vector{String}, K::Bool)
 	cmd2 = add_opt_module(d)
 	if (!isempty(cmd2))
 		K = true
-		if (startswith(cmd2[1], "clip"))		# Deal with the particular psclip case
+		if (startswith(cmd2[1], "clip"))		# Deal with the particular psclip case (Tricky)
 			if (isa(CTRL.pocket_call[1], Symbol) || isa(CTRL.pocket_call[1], String))	# Assume it's a clip=end
 				cmd = [cmd; "psclip -C"]
 				CTRL.pocket_call[1] = nothing
 			else
 				ind = findfirst(" -R", cmd[1]);		opt_R = strtok(cmd[1][ind[1]:end])[1]
 				ind = findfirst(" -J", cmd[1]);		opt_J = strtok(cmd[1][ind[1]:end])[1]
-				t, opt_B = "psclip " * opt_R * " " * opt_J, ""
+				extra = strtok(cmd2[1])[2] * " "	# When psclip recieved extra arguments
+				t, opt_B, opt_B1 = "psclip " * extra * opt_R * " " * opt_J, "", ""
 				ind = findall(" -B", cmd[1])
-				if (!isempty(ind))
+				if (!isempty(ind) && (findfirst("-N", extra) === nothing))
 					[opt_B *= " " * strtok(cmd[1][ind[k][1]:end])[1] for k = 1:length(ind)]
-					cmd[1] = replace(cmd[1], opt_B => "")
+					# Here we need to reset any -B parts that do NOT include the plotting area and which were clipped.
+					if (CTRL.pocket_B[1] == "" && CTRL.pocket_B[1] == "")
+						opt_B1 = opt_B * " -R -J"
+					else
+						(CTRL.pocket_B[1] != "") && (opt_B1 = replace(opt_B,  CTRL.pocket_B[1] => ""))	# grid
+						(CTRL.pocket_B[2] != "") && (opt_B1 = replace(opt_B1, CTRL.pocket_B[2] => ""))	# Fill
+						(occursin("-Bp ", opt_B1)) && (opt_B1 = replace(opt_B1, "-Bp " => ""))		# Delete stray -Bp 
+						opt_B1 = replace(opt_B1, "-B " => "")		#			""
+						(endswith(opt_B1, " -B")) && (opt_B1 = opt_B1[1:end-2])
+						(opt_B1 != "") && (opt_B1 *= " -R -J")		# When not-empty it needs the -R -J
+						CTRL.pocket_B[1] = CTRL.pocket_B[2] = ""	# Empty these guys
+					end
 				end
-				cmd = [t * opt_B; cmd; "psclip -C"]
+				cmd = [t; cmd; "psclip -C" * opt_B1]
 			end
 		else
 			append!(cmd, cmd2)
@@ -1813,11 +1825,19 @@ function add_opt_module(d::Dict)::Vector{String}
 			if isa(val, Dict)  val = dict2nt(val)  end
 			if (isa(val, NamedTuple))
 				nt = (val..., Vd=2)
-				if     (symb == :coast)    r = coast!(; nt...)
-				elseif (symb == :colorbar) r = colorbar!(; nt...)
-				elseif (symb == :basemap)  r = basemap!(; nt...)
-				elseif (symb == :logo)     r = logo!(; nt...)
-				elseif (symb == :text)     r = text!(; nt...)
+				if     (symb == :coast)     r = coast!(; nt...)
+				elseif (symb == :colorbar)  r = colorbar!(; nt...)
+				elseif (symb == :basemap)   r = basemap!(; nt...)
+				elseif (symb == :logo)      r = logo!(; nt...)
+				elseif (symb == :text)      r = text!(; nt...)
+				elseif (symb == :clip)		# Need lots of little shits to parse the clip options
+					CTRL.pocket_call[1] = val[1];
+					k,v = keys(nt), values(nt)
+					nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
+					r = clip!(; nt...)
+					r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
+					r = replace(r, " -R -J" => "")
+					r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'
 				elseif (symb == :arrows || symb == :lines || symb == :scatter || symb == :scatter3 || symb == :plot
 					   || symb == :plot3 || symb == :hlines || symb == :vlines)
 					_d = nt2dict(nt)
@@ -1973,7 +1993,11 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	if (haskey(d, :corners)) opt[1] *= string(d[:corners])  end	# 1234
 	#if (haskey(d, :fill))    opt *= "+g" * get_color(d[:fill])  end
 	val, symb = find_in_dict(d, [:fill :bg :background], false)
-	if (val !== nothing)     opt[1] *= "+g" * add_opt_fill(d, [symb])  end	# Works, but patterns can screw
+	if (val !== nothing)
+		tB = "+g" * add_opt_fill(d, [symb])
+		opt[1] *= tB					# Works, but patterns can screw
+		CTRL.pocket_B[2] = tB			# Save this one because we may need to revert it during psclip parsing
+	end
 	if (GMTver > v"6.1")
 		if ((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing)  opt[1] = add_opt_fill(val, opt[1], "+x")  end
 		if ((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing)  opt[1] = add_opt_fill(val, opt[1], "+y")  end
@@ -2009,7 +2033,7 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	if (haskey(d, :annot_unit)) ints[1] *= helper2_axes(d[:annot_unit])   end
 	if (haskey(d, :ticks))      ints[1] *= "f" * helper1_axes(d[:ticks])  end
 	if (haskey(d, :ticks_unit)) ints[1] *= helper2_axes(d[:ticks_unit])   end
-	if (haskey(d, :grid))       ints[1] *= "g" * helper1_axes(d[:grid])   end
+	if (haskey(d, :grid))       tB = "g" * helper1_axes(d[:grid]); ints[1] *= tB;	CTRL.pocket_B[1] = tB  end
 	if (haskey(d, :prefix))     ints[1] *= "+p" * str_with_blancs(arg2str(d[:prefix]))  end
 	if (haskey(d, :suffix))     ints[1] *= "+u" * str_with_blancs(arg2str(d[:suffix]))  end
 	if (haskey(d, :slanted))
@@ -3045,8 +3069,9 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			P = gmt(cmd[k], CTRL.pocket_call[1])
 			CTRL.pocket_call[1] = nothing					# Clear it right away
 			continue
-		elseif (startswith(cmd[k], "psclip"))
-			P = (CTRL.pocket_call[1] !== nothing) ? gmt(cmd[k], CTRL.pocket_call[1]) : gmt(cmd[k])
+		elseif (startswith(cmd[k], "psclip"))		# Shitty case. Pure (unique) psclip requires args. Compose cmd not
+			P = (CTRL.pocket_call[1] !== nothing) ? gmt(cmd[k], CTRL.pocket_call[1]) :
+			                                        (length(cmd) > 1) ? gmt(cmd[k]) : gmt(cmd[k], args...)
 			CTRL.pocket_call[1] = nothing					# For the case it was not yet empty
 			continue
 		end
