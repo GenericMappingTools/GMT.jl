@@ -59,7 +59,7 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R)
 
-	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
+	finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
