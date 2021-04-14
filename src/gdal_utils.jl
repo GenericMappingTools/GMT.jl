@@ -225,9 +225,7 @@ end
 function trim_SUBDATASET_str(sds::String)
 	# If present, trim the initial "SUBDATASET_X_NAME=" som a subdataset string name
 	ind = 0
-	if (startswith(sds, "SUBDATASET_"))
-		((ind = findfirst('=', sds)) === nothing) && error("Badly formed SUBDATASET string")
-	end
+	(startswith(sds, "SUBDATASET_") && (ind = findfirst('=', sds)) === nothing) && error("Badly formed SUBDATASET string")
 	sds_name = sds[ind+1:end]
 end
 
@@ -680,7 +678,7 @@ Example:
     I = gdalshade("hawaii_south.grd", C="faa.cpt", zfactor=4);
 
 ### Returns
-A GMT Image
+A GMT RGB Image
 """
 function gdalshade(fname; kwargs...)
 	d = KW(kwargs)
@@ -711,11 +709,12 @@ http://www.textureshading.com/Home.html
 	image is more handy.
 
 ### Returns
-A UInt16 GMT Image
+A UInt8 (or 16) GMT Image
 """
 function texture_img(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false)
 	texture = deepcopy(G.z)
 	terrain_filter(texture, detail, size(G,1), size(G,2), G.inc[1], G.inc[2], 0)
+	(startswith(G.proj4, "+proj=merc")) && fix_mercator(texture, detail, size(G,1), size(G,2), G.range[3], G.range[4])
 	terrain_image_data(texture, contrast, size(G,1), size(G,2), 0.0, (uint16) ? 65535.0 : 255.0)
 	mat = (uint16) ? round.(UInt16, texture) : round.(UInt8, texture)
 	Go = mat2img(mat, hdr=grid2pix(G), proj4=G.proj4, wkt=G.wkt, noconv=true, layout=G.layout*"a")
