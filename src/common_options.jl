@@ -167,9 +167,9 @@ function opt_R2num(opt_R::String)
 	if (endswith(opt_R, "Rg"))  return [0.0, 360., -90., 90.]  end
 	if (endswith(opt_R, "Rd"))  return [-180.0, 180., -90., 90.]  end
 	if (findfirst("/", opt_R) !== nothing)
-		isdiag = false
 		if ((ind = findfirst("+r", opt_R)) !== nothing)		# Diagonal mode
 			opt_R = opt_R[1:ind[1]-1];	isdiag = true		# Strip the "+r"
+		else	isdiag = false
 		end
 		rs = split(opt_R, '/')
 		limits = zeros(length(rs))
@@ -1126,8 +1126,7 @@ function add_opt_pen(d::Dict, symbs, opt::String="", sub::Bool=true, del::Bool=t
 				d2 = nt2dict(val)				# Decompose the NT and feed into this-self
 				t = add_opt_pen(d2, symbs, "", true, false)
 				if (t == "")
-					d = nt2dict(val)
-					out[1] = opt
+					d, out[1] = nt2dict(val), opt
 				else
 					out[1] = opt * t
 					d = Dict{Symbol,Any}()		# Just let it go straight to end. Returning here seems bugged
@@ -1282,15 +1281,13 @@ function arg2str(arg, sep='/')::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_nested(d::Dict, cmd::Vector{String}, K::Bool)
+function finish_PS_nested(d::Dict, cmd::Vector{String}, K::Bool=true)
 	# Finish the PS creating command, but check also if we have any nested module calls like 'coast', 'colorbar', etc
 	cmd2 = add_opt_module(d)
 	if (!isempty(cmd2))
-		K = true
 		if (startswith(cmd2[1], "clip"))		# Deal with the particular psclip case (Tricky)
 			if (isa(CTRL.pocket_call[1], Symbol) || isa(CTRL.pocket_call[1], String))	# Assume it's a clip=end
-				cmd = [cmd; "psclip -C"]
-				CTRL.pocket_call[1] = nothing
+				cmd, CTRL.pocket_call[1] = [cmd; "psclip -C"], nothing
 			else
 				ind = findfirst(" -R", cmd[1]);		opt_R = strtok(cmd[1][ind[1]:end])[1]
 				ind = findfirst(" -J", cmd[1]);		opt_J = strtok(cmd[1][ind[1]:end])[1]
@@ -1326,9 +1323,9 @@ function finish_PS(d::Dict, cmd::Vector{String}, output::String, K::Bool, O::Boo
 	# Finish a PS creating command. All PS creating modules should use this.
 	IamModern[1] && return cmd  			# In Modern mode this fun does not play
 	for k = 1:length(cmd)
-		KK, OO = K, O
 		if (!occursin(" >", cmd[k]))	# Nested calls already have the redirection set
-			if (k > 1)  KK = true;	OO = true  end
+			KK, OO = K, O
+			if (k > 1)  KK, OO = true, true  end
 			cmd[k] = finish_PS(d, cmd[k], output, KK, OO)
 		end
 	end
@@ -2539,10 +2536,11 @@ function fname_out(d::Dict, del::Bool=false)
 	(EXT == "" && !Sys.iswindows()) && error("Return an image is only for Windows")
 	(1 == length(EXT) > 3) && error("Bad graphics file extension")
 
-	ret_ps = false				# To know if we want to return or save PS in mem
 	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
-		fname = "";		EXT = "ps";		ret_ps = true
+		fname, EXT, ret_ps = "", "ps", true
 		(del) && delete!(d, :ps)
+	else
+		ret_ps = false			# To know if we want to return or save PS in mem
 	end
 
 	opt_T = "";
@@ -2614,8 +2612,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 		arg[:,1] = Dates.value.(arg[:,1]) ./ 1000;	cmd *= " --TIME_SYSTEM=dr0001"
 		t = Array{Float64, 2}(undef, size(arg))
 		[t[k] = arg[k] for k in eachindex(arg)]
-		arg = t
-		got_datetime = true
+		arg, got_datetime = t, true
 	end
 
 	have_info = false
@@ -2815,13 +2812,12 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 	elseif (tipo == 2)			# Two inputs (but second can be optional in some modules)
 		# Accepts "input1 input2"; "input1", arg1; "input1", data=input2; arg1, arg2; data=(input1,input2)
 		if (got_fname != 0)
-			if (args[1] === nothing && data_kw === nothing)
+			(args[1] === nothing && data_kw === nothing) &&
 				return cmd, 1, args[1], args[2]		# got_fname = 1 => all data is in cmd
-			elseif (args[1] !== nothing)
+			(args[1] !== nothing) &&
 				return cmd, 2, args[1], args[2]		# got_fname = 2 => data is in cmd and arg1
-			elseif (data_kw !== nothing && length(data_kw) == 1)
-				return cmd, 2, data_kw, args[2]	# got_fname = 2 => data is in cmd and arg1
-			end
+			(data_kw !== nothing && length(data_kw) == 1) &&
+				return cmd, 2, data_kw, args[2]		# got_fname = 2 => data is in cmd and arg1
 		else
 			if (args[1] !== nothing && args[2] !== nothing)
 				return cmd, 0, args[1], args[2]				# got_fname = 0 => all data is in arg1,2
@@ -2840,13 +2836,12 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 			(args[1] !== nothing || data_kw !== nothing) && error("Cannot mix input as file names and numeric data.")
 			return cmd, 1, args[1], args[2], args[3]			# got_fname = 1 => all data is in cmd
 		else
-			if (args[1] === nothing && args[2] === nothing && args[3] === nothing)
+			(args[1] === nothing && args[2] === nothing && args[3] === nothing) &&
 				return cmd, 0, args[1], args[2], args[3]			# got_fname = 0 => ???
-			elseif (data_kw !== nothing && length(data_kw) == 3)
+			(data_kw !== nothing && length(data_kw) == 3) &&
 				return cmd, 0, data_kw[1], data_kw[2], data_kw[3]	# got_fname = 0 => all data in arg1,2,3
-			else
-				return cmd, 0, args[1], args[2], args[3]
-			end
+
+			return cmd, 0, args[1], args[2], args[3]
 		end
 	end
 end

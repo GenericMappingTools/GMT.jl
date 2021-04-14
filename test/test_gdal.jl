@@ -69,7 +69,7 @@ Gdal.GDALDestroyDriverManager()
 	gdalinfo(ds_small, [""]);
 	#gdaldem("utmsmall.tif", "hillshade", ["-q"], save="lixo.nc");
 	#rm("lixo.nc")
-	gdaldem(ds_small, "hillshade", ["-q"]);
+	gdaldem(ds_small, "hillshade", ["-q", "-s", "1"]);
 	gdaltranslate(ds_small, [""]);
 	gdaltranslate("utmsmall.tif", R="442000/445000/3747000/3750000");
 	try		# Stupid Macports gdal does not have AAIGrid driver
@@ -86,6 +86,7 @@ Gdal.GDALDestroyDriverManager()
 	end
 
 	gdalwarp(ds_small, [""]);
+	ds_warped = gdalwarp("utmsmall.tif", ["-of","MEM","-t_srs","EPSG:4326"], I=0.005, gdataset=true)
 	ds_warped = gdalwarp("utmsmall.tif", ["-of","MEM","-t_srs","EPSG:4326"], gdataset=true)
 	@test Gdal.width(ds_warped) == 109
 	@test Gdal.height(ds_warped) == 91
@@ -227,5 +228,6 @@ Gdal.GDALDestroyDriverManager()
 	GMT.blendimg!(I1, I2)
 	I1 = mat2img(reshape(collect(UInt8(1):UInt8(60)), 4, 5, 3))
 	I1.layout = "TRPa"
+	I2.image[end] = UInt8(200)		# to make tests visit another if branch
 	GMT.blendimg!(I1, I2)
 end
