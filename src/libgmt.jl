@@ -482,10 +482,14 @@ function get_common_R(API::Ptr{Cvoid})
 end
 =#
 
-function terrain_filter(data, detail, nrows, ncols, xinc, yinc, coord_type, center_lat=0.0, progress=C_NULL)
+terrain_filter(data, detail, nrows, ncols, xinc, yinc, coord_type, center_lat=0.0, progress=C_NULL) =
 	ccall((:terrain_filter, thelib), Cint, (Ptr{Cfloat}, Cdouble, Cint, Cint, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cvoid}), data, detail, nrows, ncols, xinc, yinc, coord_type, center_lat, progress)
-end
 
-function terrain_image_data(data, contrast, nrows, ncols, image_min=0., image_max=65535.0)
+terrain_image_data(data, contrast, nrows, ncols, image_min=0., image_max=65535.0) =
 	ccall((:terrain_image_data, thelib), Cint, (Ptr{Cfloat}, Cint, Cint, Cdouble, Cdouble, Cdouble), data, nrows, ncols, contrast, image_min, image_max)
-end
+
+fix_mercator(data, detail, nrows, ncols, lat1, lat2) =
+	ccall((:fix_mercator, thelib), Cvoid, (Ptr{Cfloat}, Cdouble, Cint, Cint, Cdouble, Cdouble), data, nrows, ncols, detail, lat1, lat2)
+
+fix_polar_stereographic(data, detail, nrows, ncols, center_res) =
+	ccall((:fix_polar_stereographic, thelib), Cvoid, (Ptr{Cfloat}, Cdouble, Cint, Cint, Cdouble), data, nrows, ncols, detail, center_res)
