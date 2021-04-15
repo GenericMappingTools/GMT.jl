@@ -1784,20 +1784,24 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		end
 	end
 
-	N_used = got_fname == 0 ? 1 : 0					# To know whether a cpt will go to arg1 or arg2
-	get_cpt = false;	in_bag = true;		# IN_BAG means seek if current_cpt != nothing and return it
+	N_used = (got_fname == 0) ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
+	get_cpt = false;	in_bag = true;			# IN_BAG means seek if current_cpt != nothing and return it
 	if (prog == "grdview")
 		get_cpt = true
 		if ((val = find_in_dict(d, [:G :drapefile], false)[1]) !== nothing)
 			if (isa(val, Tuple) && length(val) == 3)  get_cpt = false  end	# Playing safe
 		end
-	elseif (prog == "grdimage" && !isa(arg1, GMTimage) && (arg3 === nothing && !occursin("-D", cmd)))
-		get_cpt = true		# This still lieve out the case when the r,g,b were sent as a text.
+	elseif (prog == "grdimage")
+		if (!isa(arg1, GMTimage) && (arg3 === nothing && !occursin("-D", cmd)) )
+			get_cpt = true		# This still lives out the case when the r,g,b were sent as a text.
+		else
+			@warn("You are possibly asking to assign a CPT to an image. That is not allowed by GMT. See function image_cpt!")
+		end
+	#elseif (prog == "grdimage" && !isa(arg1, GMTimage) && (arg3 === nothing && !occursin("-D", cmd)))
+		#get_cpt = true		# This still lieve out the case when the r,g,b were sent as a text.
 	elseif (prog == "grdcontour" || prog == "pscontour")	# Here C means Contours but we cheat, so always check if C, color, ... is present
 		get_cpt = true;		cpt_opt_T = ""		# This is hell. And what if I want to auto generate a cpt?
 		if (prog == "grdcontour" && !occursin("+c", cmd))  in_bag = false  end
-	#elseif (prog == "" && current_cpt !== nothing)		# Not yet used
-		#get_cpt = true
 	end
 	if (get_cpt)
 		cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2, true, true, cpt_opt_T, in_bag)
