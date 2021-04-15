@@ -324,9 +324,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # This method creates a new GMTimage but retains all the header data from the IMG object
-function mat2img(mat, img::GMTimage)
-	range = img.range;	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
-	GMTimage(img.proj4, img.wkt, img.epsg, range, img.inc, img.registration, img.nodata, img.color_interp, img.x, img.y, mat, img.colormap, img.n_colors, img.alpha, img.layout, img.pad)
+function mat2img(mat, I::GMTimage)
+	range = I.range;	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
+	GMTimage(I.proj4, I.wkt, I.epsg, range, I.inc, I.registration, I.nodata, I.color_interp, I.x, I.y, mat, I.colormap, I.n_colors, I.alpha, I.layout, I.pad)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -491,6 +491,19 @@ function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); 
 	end
 
 	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, mat, "x", "y", "z", "BCB", 0)
+end
+
+# This method creates a new GMTgrid but retains all the header data from the G object
+function mat2grid(mat::DenseMatrix, G::GMTgrid)
+	Go = GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.x, G.y, mat, G.x_unit, G.y_unit, G.z_unit, G.layout, G.pad)
+	grd_min_max!(Go)		# Also take care of NaNs
+	Go
+end
+function mat2grid(mat::DenseMatrix, I::GMTimage)
+	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, "", "", "", I.x, I.y, mat, "", "", "", I.layout, I.pad)
+	(length(Go.layout) == 4) && (Go.layout = Go.layout[1:3])	# No space for the a|A
+	grd_min_max!(Go)		# Also take care of NaNs
+	Go
 end
 
 function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
