@@ -167,9 +167,9 @@ function opt_R2num(opt_R::String)
 	if (endswith(opt_R, "Rg"))  return [0.0, 360., -90., 90.]  end
 	if (endswith(opt_R, "Rd"))  return [-180.0, 180., -90., 90.]  end
 	if (findfirst("/", opt_R) !== nothing)
+		isdiag = false
 		if ((ind = findfirst("+r", opt_R)) !== nothing)		# Diagonal mode
 			opt_R = opt_R[1:ind[1]-1];	isdiag = true		# Strip the "+r"
-		else	isdiag = false
 		end
 		rs = split(opt_R, '/')
 		limits = zeros(length(rs))
@@ -1324,9 +1324,7 @@ function finish_PS(d::Dict, cmd::Vector{String}, output::String, K::Bool, O::Boo
 	IamModern[1] && return cmd  			# In Modern mode this fun does not play
 	for k = 1:length(cmd)
 		if (!occursin(" >", cmd[k]))	# Nested calls already have the redirection set
-			KK, OO = K, O
-			if (k > 1)  KK, OO = true, true  end
-			cmd[k] = finish_PS(d, cmd[k], output, KK, OO)
+			cmd[k] = (k == 1) ? finish_PS(d, cmd[k], output, K, O) : finish_PS(d, cmd[k], output, true, true)
 		end
 	end
 	return cmd
@@ -2940,8 +2938,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		if (fname != "")  out = mv(out, fname, force=true)  end
 	elseif (fname_ps != "")
 		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
-		out = fname_ps
-		if (fname != "")  out = mv(out, fname, force=true)  end
+		out = (fname != "") ? mv(fname_ps, fname, force=true) : fname_ps
 	end
 
 	if (haskey(d, :show) && d[:show] != 0)
