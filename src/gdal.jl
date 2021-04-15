@@ -1393,13 +1393,13 @@ end
 	gdalviewshed(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalviewshed(Dataset(ds.ptr), opts; dest=dest)
 	=#
 
-	function gdalinfo(ds::Dataset, options=String[])
+	function gdalinfo(ds::Dataset, options::Vector{String}=String[])
 		options = GDALInfoOptionsNew(options, C_NULL)
 		result = GDALInfo(ds.ptr, options)
 		GDALInfoOptionsFree(options)
 		return result
 	end
-	gdalinfo(ds::IDataset, opts=String[]) = gdalinfo(Dataset(ds.ptr), opts)
+	gdalinfo(ds::IDataset, opts::Vector{String}=String[]) = gdalinfo(Dataset(ds.ptr), opts)
 	function gdalinfo(fname::AbstractString, opts=String[])
 		CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))	# WTF is this needed?
 		o = gdalinfo(unsafe_read(fname; options=opts), opts)
@@ -1407,7 +1407,7 @@ end
 		return o
 	end
 
-	function gdaldem(dataset::Dataset, processing::String, options=String[]; dest="/vsimem/tmp", colorfile=C_NULL, save::AbstractString="")
+	function gdaldem(dataset::Dataset, processing::String, options::Vector{String}=String[]; dest="/vsimem/tmp", colorfile=C_NULL, save::AbstractString="")
 		(save != "") && (dest = save)
 		if processing == "color-relief"
 			@assert colorfile != C_NULL
@@ -1421,9 +1421,9 @@ end
 		end
 		return IDataset(result)
 	end
-	gdaldem(ds::IDataset, processing::String, opts=String[]; dest="/vsimem/tmp", colorfile=C_NULL) = gdaldem(Dataset(ds.ptr), processing, opts; dest=dest, colorfile=colorfile)
+	gdaldem(ds::IDataset, processing::String, opts::Vector{String}=String[]; dest="/vsimem/tmp", colorfile=C_NULL) = gdaldem(Dataset(ds.ptr), processing, opts; dest=dest, colorfile=colorfile)
 
-	function gdalgrid(dataset::Dataset, options=String[]; dest="/vsimem/tmp", save::AbstractString="")
+	function gdalgrid(dataset::Dataset, options::Vector{String}=String[]; dest="/vsimem/tmp", save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALGridOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1434,9 +1434,9 @@ end
 		end
 		return IDataset(result)
 	end
-	gdalgrid(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalgrid(Dataset(ds.ptr), opts; dest=dest)
+	gdalgrid(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp") = gdalgrid(Dataset(ds.ptr), opts; dest=dest)
 
-	function gdalrasterize(dataset::AbstractDataset, options = String[]; dest = "/vsimem/tmp", save::AbstractString="")
+	function gdalrasterize(dataset::AbstractDataset, options::Vector{String}=String[]; dest = "/vsimem/tmp", save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALRasterizeOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1448,7 +1448,7 @@ end
 		return IDataset(result)
 	end
 
-	function gdalbuildvrt(datasets::Vector{<:AbstractDataset}, options = String[]; dest = "/vsimem/tmp", save::AbstractString="")
+	function gdalbuildvrt(datasets::Vector{<:AbstractDataset}, options::Vector{String}=String[]; dest = "/vsimem/tmp", save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALBuildVRTOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1487,7 +1487,7 @@ end
 		end)
 	end
 
-	function gdalvectortranslate(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp", save::AbstractString="")
+	function gdalvectortranslate(datasets::Vector{Dataset}, options::Vector{String}=String[]; dest="/vsimem/tmp", save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALVectorTranslateOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1498,10 +1498,10 @@ end
 		end
 		return IDataset(result)
 	end
-	gdalvectortranslate(ds::Dataset, opts=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([ds], opts; dest=dest, save=save)
-	gdalvectortranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest, save=save)
-	gdalvectortranslate(ds::GMT.GMTdataset, opts=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
-	gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
+	gdalvectortranslate(ds::Dataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([ds], opts; dest=dest, save=save)
+	gdalvectortranslate(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest, save=save)
+	gdalvectortranslate(ds::GMT.GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
+	gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
 
 	buffer(geom::AbstractGeometry, dist::Real, quadsegs::Integer=30) = IGeometry(OGR_G_Buffer(geom.ptr, dist, quadsegs))
 	geomarea(geom::AbstractGeometry) = OGR_G_Area(geom.ptr)
