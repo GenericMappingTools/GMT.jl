@@ -40,7 +40,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    gdaldem(dataset::Dataset, method::String, options=String[]; dest="/vsimem/tmp", colorfile, kw...)
+    gdaldem(dataset, method, options=String[]; dest="/vsimem/tmp", colorfile=name|GMTcpt, kw...)
 
 Tools to analyze and visualize DEMs.
 
@@ -58,7 +58,7 @@ Tools to analyze and visualize DEMs.
 ### Returns
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
 """
-function gdaldem(indata, method::String, opts=String[]; dest="/vsimem/tmp", kwargs...)
+function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/vsimem/tmp", kwargs...)
 	if (method == "hillshade")		# So far the only method that accept kwarg options
 		d = GMT.KW(kwargs)
 		band = ((val = GMT.find_in_dict(d, [:band])[1]) !== nothing) ? string(val) : "1"
@@ -96,11 +96,11 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Vector{Str
 	# For gdaldem color-relief we need a further arg that is the name of a cpt. So save one on disk
 	_cmap = C_NULL
 	if (f == gdaldem && ((cmap = GMT.find_in_dict(d, [:C :color :cmap])[1])) !== nothing)
-		if ((isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMT.GMTcpt))
-			_cmap = tempdir() * "/GMTtmp_cpt.cpt"
+		_cmap = tempdir() * "/GMTtmp_cpt.cpt"
+		if ( (isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMT.GMTcpt) )
 			save_cpt4gdal(cmap, _cmap)	# GDAL pretend to recognise CPTs but it almost doesn't
 		else
-			_cmap = cmap
+			_cmap = cmap			# Risky, assume it's something GDAL can read
 		end
 	end
 
