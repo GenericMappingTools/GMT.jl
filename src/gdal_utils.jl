@@ -262,15 +262,16 @@ GEOMETRY can be a string with "polygon", where file will be converted to polygon
 on D is a single or a multi-segment object, or "point" to convert to a multipoint geometry.
 """
 function gmt2gd(GI)
+	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (size(GI,1), size(GI,2))
 	if (isa(GI, GMTgrid))
-		ds = creategd("", driver=getdriver("MEM"), width=size(GI,2), height=size(GI,1), nbands=1, dtype=eltype(GI.z))
+		ds = creategd("", driver=getdriver("MEM"), width=width, height=height, nbands=1, dtype=eltype(GI.z))
 		if (GI.layout != "" && GI.layout[2] == 'C')
 			(GI.layout[1] == 'B') ? writegd!(ds, collect(reverse(GI.z, dims=1)'), 1) : writegd!(ds, collect(GI.z'), 1)
 		else
 			writegd!(ds, GI.z, 1)
 		end
 	elseif (isa(GI, GMTimage))
-		ds = creategd("", driver=getdriver("MEM"), width=size(GI,2), height=size(GI,1), nbands=size(GI,3),
+		ds = creategd("", driver=getdriver("MEM"), width=width, height=height, nbands=size(GI,3),
 		              dtype=eltype(GI.image))
 		if (GI.layout != "" && GI.layout[2] == 'C')
 			indata = (GI.layout[1] == 'B') ? collect(reverse(GI.image, dims=1)') : collect(GI.image')
