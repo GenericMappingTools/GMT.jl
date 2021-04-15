@@ -69,7 +69,7 @@ Gdal.GDALDestroyDriverManager()
 	gdalinfo(ds_small, [""]);
 	#gdaldem("utmsmall.tif", "hillshade", ["-q"], save="lixo.nc");
 	#rm("lixo.nc")
-	gdaldem(ds_small, "hillshade", ["-q", "-s", "1"]);
+	gdaldem(ds_small, "hillshade", ["-q"]);
 	gdaltranslate(ds_small, [""]);
 	gdaltranslate("utmsmall.tif", R="442000/445000/3747000/3750000");
 	try		# Stupid Macports gdal does not have AAIGrid driver
@@ -159,6 +159,7 @@ Gdal.GDALDestroyDriverManager()
 	grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
 
 	I = Gdal.dither("rgbsmall.tif");
+	Gdal.dither("rgbsmall.tif", save="lixo.tif");
 
 	Gdal.GDALGetDataTypeByName("GTiff");
 	Gdal.IFieldDefnView(C_NULL);
