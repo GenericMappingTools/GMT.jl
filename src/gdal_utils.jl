@@ -661,7 +661,7 @@ function blendimg!(img1::GMTimage, img2::GMTimage; new=false, transparency=0.5)
 			blend[k] = round(UInt8, t * img1.image[k] + o * img2.image[k])
 		end
 	else
-		(size(img1,3) == 1) && error("Sorry, blending RGB images of different mem layouts is not yet implemented")
+		#(size(img1,3) == 1) && error("Sorry, blending RGB images of different mem layouts is not yet implemented")
 		flip, transp = img1.layout[1] != img2.layout[1], img1.layout[2] != img2.layout[2]
 		if     (flip && !transp)  blend = reverse(img2.image, dims=1)
 		elseif (!flip && transp)  blend = collect(img2.image')
