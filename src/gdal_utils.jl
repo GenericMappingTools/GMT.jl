@@ -603,9 +603,9 @@ The blending method is the one explained in https://gis.stackexchange.com/questi
 ### Returns
 A GMT RGB Image
 
-    blendimg!(img1::GMTimage{UInt8, 2}, img2::GMTimage{UInt8, 2}; new=false, transparency=0.5)
+    blendimg!(img1::GMTimage, img2::GMTimage; new=false, transparency=0.5)
 
-Blend two 2D UInt8 images using transparency. 
+Blend two 2D UInt8 or 2 RGB images using transparency. 
   - **transparency** The default value, 0.5, gives equal weight to both images. 0.75 will make
     `img` weight 3/4 of the total sum, and so forth.
   - **new** If true returns a new GMTimage object, otherwise it cahnges the `img` content.
@@ -613,7 +613,7 @@ Blend two 2D UInt8 images using transparency.
 ### Returns
 A GMT intensity Image
 """
-function blendimg!(color::GMTimage{UInt8, 3}, shade::GMTimage; new=false)
+function blendimg!(color::GMTimage{UInt8, 3}, shade::GMTimage{UInt8, 2}; new=false)
 
 	blend = (new) ? Array{UInt8,3}(undef, size(shade,1), size(shade,2), 3) : color.image
 
@@ -644,17 +644,24 @@ function blendimg!(color::GMTimage{UInt8, 3}, shade::GMTimage; new=false)
 	return (new) ? mat2img(blend, color) : color
 end
 
-function blendimg!(img1::GMTimage{UInt8, 2}, img2::GMTimage{UInt8, 2}; new=false, transparency=0.5)
+function blendimg!(img1::GMTimage, img2::GMTimage; new=false, transparency=0.5)
 	# This method blends two UInt8 images with transparency
+	@assert eltype(img1) == eltype(img2)
 	@assert length(img1) == length(img2)
 	same_layout = (img1.layout[1:2] == img2.layout[1:2])
-	blend = (new) ? Array{UInt8,2}(undef, size(img1,1), size(img1,2)) : img1.image
+	#if (size(img1,3) == 1)
+		#blend = (new) ? Array{UInt8,2}(undef, size(img1,1), size(img1,2)) : img1.image
+	#else
+		#blend = (new) ? Array{UInt8,3}(undef, size(img1,1), size(img1,2), 3) : img1.image
+	#end
+	blend = (new) ? Array{eltype(img1), ndims(img1)}(undef, size(img1)) : img1.image
 	t, o = transparency, 1. - transparency
 	if (same_layout)
 		@inbounds @simd for k = 1:length(img1)
 			blend[k] = round(UInt8, t * img1.image[k] + o * img2.image[k])
 		end
 	else
+		(size(img1,3) == 1) && error("Sorry, blending RGB images of different mem layouts is not yet implemented")
 		flip, transp = img1.layout[1] != img2.layout[1], img1.layout[2] != img2.layout[2]
 		if     (flip && !transp)  blend = reverse(img2.image, dims=1)
 		elseif (!flip && transp)  blend = collect(img2.image')
@@ -689,6 +696,48 @@ function gdalshade(fname; kwargs...)
 	A = gdaldem(fname, "color-relief", ["-b", band], C=cmap)
 	B = gdaldem(fname, "hillshade"; d...)
 	blendimg!(A, B)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    gammacorrection(I::GMTimage, gamma; contrast=[0.0, 1.0], brightness=[0.0, 1.0])
+
+Apply a gamma correction to a 2D (intensity) GMTimage using the exponent `gamma`.
+Optionally set also `contrast` and/or `brightness`
+
+### Returns
+A GMT intensity Image
+"""
+function gammacorrection(I::GMTimage, gamma; contrast=[0.0, 1.0], brightness=[0.0, 1.0])
+
+	@assert 0.0 <= contrast[1] < 1.0;	@assert 0.0 < contrast[2] <= 1.0;	@assert contrast[2] > contrast[1]
+	@assert 0.0 <= brightness[1] < 1.0;	@assert 0.0 < brightness[2] <= 1.0;	@assert brightness[2] > brightness[1]
+	contrast_min, contrast_max, brightness_min, brightness_max = 0.0, 1.0, 0.0, 1.0
+	lut = (eltype(I) == UInt8) ? linspace(0.0, 1, 256) : linspace(0.0, 1, 65536)
+	lut = max.(contrast[1], min.(contrast[2], lut))
+	lut = ((lut .- contrast[1]) ./ (contrast[2] - contrast[1])) .^ gamma;
+	lut = lut .* (brightness[2] - brightness[1]) .+ brightness[1];		# If brightness[1] != 0 || brightness[2] != 1
+	lut = (eltype(I) == UInt8) ? round.(UInt8, lut .* 255) : round.(UInt16, lut .* 65536)
+	intlut(I, lut)
+end
+
+"""
+    intlut(I, lut)
+
+Creates an array containing new values of `I` based on the lookup table, `lut`. `I` can be a GMTimage or an uint matrix.
+The types of `I` and `lut` must be the same and the number of elements of `lut` is eaqual to intmax of that type.
+E.g. if eltype(lut) == UInt8 then it must contain 256 elements.
+
+### Returns
+An object of the same type as I
+"""
+function intlut(I, lut)
+	@assert eltype(I) == eltype(lut)
+	mat = Array{eltype(I), ndims(I)}(undef, size(I))
+	@inbounds for n = 1:length(I)
+		mat[n] = lut[I[n]+1]
+	end
+	return (isa(I, GMTimage)) ? mat2img(mat, I) : mat
 end
 
 # ---------------------------------------------------------------------------------------------------

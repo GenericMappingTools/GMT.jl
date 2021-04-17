@@ -143,6 +143,7 @@ Gdal.GDALDestroyDriverManager()
 
 	G = GMT.peaks()
 	gdalshade(G, C=makecpt(T=(-7,8,1)), zfactor=2);
+	GMT.gammacorrection(mat2img(rand(UInt8, 3,4)), 1.1)
 	ds = gmt2gd(G)
 	G  = gd2gmt(ds)
 	G = gd2gmt("utmsmall.tif");

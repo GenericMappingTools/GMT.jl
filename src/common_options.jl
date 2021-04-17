@@ -1794,7 +1794,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	elseif (prog == "grdimage")
 		if (!isa(arg1, GMTimage) && (arg3 === nothing && !occursin("-D", cmd)) )
 			get_cpt = true		# This still lives out the case when the r,g,b were sent as a text.
-		else
+		elseif (find_in_dict(d, [:C :color :cmap], false)[1] !== nothing)
 			@warn("You are possibly asking to assign a CPT to an image. That is not allowed by GMT. See function image_cpt!")
 		end
 	#elseif (prog == "grdimage" && !isa(arg1, GMTimage) && (arg3 === nothing && !occursin("-D", cmd)))
