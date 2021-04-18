@@ -135,6 +135,12 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.metadata(ds_src)
 	Gdal.GDALGetDescription(ds_src.ptr)
 
+	rb = Gdal.getband(ds_src, 1)
+	@test Gdal.getnodatavalue(rb) === nothing
+	Gdal.setnodatavalue!(rb, -100)
+	@test Gdal.getnodatavalue(rb) ≈ -100
+	Gdal.getcolorinterp(rb)
+
 	line = Gdal.createlinestring()
 	Gdal.addpoint!(line, 1116651.439379124,  637392.6969887456)
 	Gdal.OGR_G_SetPoints(line.ptr, 3, [1.,2,3], sizeof(Float64), [4.,5,6], sizeof(Float64), [7.,8,9], sizeof(Float64))
