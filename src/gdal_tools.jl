@@ -170,6 +170,8 @@ function get_gdaldataset(indata)
 	else
 		ds = indata		# If it's not a GDAL dataset or convenient descendent, shit will follow soon
 	end
+	(ds === nothing) && error("Error fetching the GDAL dataset from input $(typeof(indata))")
+	return ds
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -182,10 +184,12 @@ Convert a 24bit RGB image to 8bit paletted.
 - Use 'gdataset=true' to return a GDAL dataset. The default is to return a GMTimage object.
 - Select the number of colors in the generated color table. Defaults to 256.
 """
-function dither(indata, opts=String[]; n_colors::Integer=8, save::String="", gdataset::Bool=false)
+function dither(indata, opts=String[]; n_colors::Integer=256, save::String="", gdataset::Bool=false)
 	# ...
 	src_ds = get_gdaldataset(indata)
 	(nraster(src_ds) < 3) && error("Input image must have at least 3 bands")
+	(isa(indata, GMT.GMTimage) && !startswith(indata.layout, "TRB")) &&
+		error("Image memory layout must be `TRB` and not $(indata.layout). Load image with gdaltranslate()")
 	r_band, g_band, b_band = getband(src_ds, 1), getband(src_ds, 2), getband(src_ds, 3)
 
 	drv_name = (save == "") ? "MEM" : "GTiff"
