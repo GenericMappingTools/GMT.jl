@@ -373,18 +373,24 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    image_cpt!(img::GMTimage, cpt::GMTcpt, clear::Bool=false)
+    image_cpt!(img::GMTimage, cpt::GMTcpt, clear=false)
+or
+    image_cpt!(img::GMTimage, cpt::String, clear=false)
 
 Add (or replace) a colormap to a GMTimage object from the colors in the cpt.
 This should have effect only if IMG is indexed.
 Use `image_cpt!(img, clear=true)` to remove a previously existent `colormap` field in IMG
 """
+function image_cpt!(img::GMTimage, cpt::String)
+	C = gmtread(cpt)
+	image_cpt!(img, C)
+end
 function image_cpt!(img::GMTimage, cpt::GMTcpt)
 	# Insert the cpt info in the img.colormap member
 	n = 1
 	colormap = fill(Int32(255), size(cpt.colormap,1) * 4)
 	for k = 1:size(cpt.colormap,1)
-		colormap[n:n+2] = round.(Int32, cpt.colormap[k,:] .* 255);	n += 3
+		colormap[n:n+2] = round.(Int32, cpt.colormap[k,:] .* 255);	n += 4
 	end
 	img.colormap = colormap
 	img.n_colors = size(cpt.colormap,1)
