@@ -123,6 +123,8 @@ function gmtread(fname::String; kwargs...)
 
 	if (opt_T == " -Ti" || opt_T == " -Tg")		# See if we have a mem layout request
 		if ((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing)
+			(opt_T == " -Ti" && startswith(string(val), "TRB")) && return gdaltranslate(fname)
+			# MUST TAKE SOME ACTION HERE. FOR IMAGES I THINK ONLY THE "I" FOR IMAGES.JL IS REALLY POSSIBLE
 			cmd = (opt_T == " -Ti") ? cmd * " -%" * arg2str(val) : cmd * " -&" * arg2str(val)
 		end
 	end
@@ -150,6 +152,7 @@ function gmtread(fname::String; kwargs...)
 			O = ogr2GMTdataset(gmt_ogrread(API2, fname))
 		end
 	end
+	return O
 end
 
 # ---------------------------------------------------------------------------------
@@ -235,6 +238,7 @@ function gmtwrite(fname::String, data; kwargs...)
 		opt_T = " -Ti"
 		fname *= parse_grd_format(d)			# If we have format requests
 		CTRL.proj_linear[1] = true				# To force pad=0 and julia memory (no dup) in image_init()
+		transpcmap!(data, true)
 	elseif (isa(data, GMTdataset) || isa(data, Array{<:GMTdataset}))
 		opt_T = " -Td"
 		cmd, = parse_bo(d, cmd)					# Write to binary file
@@ -276,6 +280,7 @@ function gmtwrite(fname::String, data; kwargs...)
 	if (dbg_print_cmd(d, cmd) !== nothing)  return "gmtwrite " * fname * cmd  end
 
 	gmt("write " * fname * cmd, data)
+	(opt_T == " -Ti") && transpcmap!(data, false)		# Reset original cmap (in case it was changed)
 	return nothing
 end
 
@@ -307,4 +312,19 @@ function parse_grd_format(d::Dict)::String
 	end
 	del_from_dict(d, [:id :gdal])
 	return out
+end
+
+# -----------------------------------------------------------------------------------------------
+function transpcmap!(I::GMTimage, toGMT::Bool=true)
+	# So, the shit is in GMT when making lots it expects the colormap to be column-major (MEX inheritance)
+	# but gdalwrite it expects it to be row-major. So we must do some transpose work here.
+	(ndims(I) != 2 || I.n_colors <= 1 || eltype(I) == UInt16) && return nothing 	# Nothing to do
+	if (toGMT)
+		I.colormap = vec(collect(reshape(reshape(I.colormap, 4, I.n_colors)', I.n_colors * 4, 1)) )
+		I.n_colors *= 1000		#  Because gmtwrite uses a trick to know if cmap is Mx2 or Mx4
+	else
+		I.n_colors /= 1000		# Revert the trick 
+		I.colormap = vec(collect(reshape(reshape(I.colormap, I.n_colors, 4)', I.n_colors * 4, 1)) )
+	end
+	return nothing
 end
