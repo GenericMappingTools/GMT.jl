@@ -287,20 +287,17 @@ GDALGetBandNumber(a1)   = acare(ccall((:GDALGetBandNumber, libgdal), Cint, (pVoi
 GDALGetDriverCount()    = acare(ccall((:GDALGetDriverCount, libgdal), Cint, ()))
 
 GDALGetRasterColorInterpretation(a1) = acare(ccall((:GDALGetRasterColorInterpretation, libgdal), UInt32, (pVoid,), a1))
+GDALGetRasterNoDataValue(a1, a2) = acare(ccall((:GDALGetRasterNoDataValue, libgdal), Cdouble, (pVoid, Ptr{Cint}), a1, a2))
 
-function GDALGetColorInterpretationName(a1)
+GDALGetColorInterpretationName(a1) =
 	acare(ccall((:GDALGetColorInterpretationName, libgdal), Cstring, (UInt32,), a1), false)
-end
-function GDALGetPaletteInterpretationName(a1)
+GDALGetPaletteInterpretationName(a1) =
 	acare(ccall((:GDALGetPaletteInterpretationName, libgdal), Cstring, (UInt32,), a1), false)
-end
 GDALGetPaletteInterpretation(a1) = acare(ccall((:GDALGetPaletteInterpretation, libgdal), UInt32, (pVoid,), a1))
 GDALGetColorEntryCount(a1) = acare(ccall((:GDALGetColorEntryCount, libgdal), Cint, (pVoid,), a1))
 GDALGetColorEntry(a1, a2) = acare(ccall((:GDALGetColorEntry, libgdal), Ptr{GDALColorEntry}, (pVoid, Cint), a1, a2))
 
-function GDALGetGeoTransform(a1, a2)
-	acare(ccall((:GDALGetGeoTransform, libgdal), UInt32, (pVoid, Ptr{Cdouble}), a1, a2))
-end
+GDALGetGeoTransform(a1, a2) = acare(ccall((:GDALGetGeoTransform, libgdal), UInt32, (pVoid, Ptr{Cdouble}), a1, a2))
 GDALSetGeoTransform(a1, a2) = acare(ccall((:GDALSetGeoTransform, libgdal), UInt32, (pVoid, Ptr{Cdouble}), a1, a2))
 
 function GDALOpenEx(pFilename, nOpenFlags, pAllowedDrivers, pOpenOptions, pSiblingFiles)
@@ -317,6 +314,7 @@ GDALDatasetRasterIOEx(hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffe
 	acare(ccall((:GDALDatasetRasterIOEx, libgdal), UInt32, (pVoid, UInt32, Cint, Cint, Cint, Cint, pVoid, Cint, Cint, UInt32, Cint, Ptr{Cint}, Clonglong, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}), hDS, eRWFlag, nDSXOff, nDSYOff, nDSXSize, nDSYSize, pBuffer, nBXSize, nBYSize, eBDataType, nBandCount, panBandCount, nPixelSpace, nLineSpace, nBandSpace, psExtraArg))
 
 GDALSetRasterColorTable(a1, a2) = acare(ccall((:GDALSetRasterColorTable, libgdal), UInt32, (pVoid, pVoid), a1, a2))
+GDALSetRasterNoDataValue(a1, a2) = acare(ccall((:GDALSetRasterNoDataValue, libgdal), UInt32, (pVoid, Cdouble), a1, a2))
 
 GDALDummyProgress(a1, a2, a3) = acare(ccall((:GDALDummyProgress, libgdal), Cint, (Cdouble, Cstring, pVoid), a1, a2, a3))
 function GDALCreateCopy(a1, a2, a3, a4, a5, a6, a7)
@@ -324,6 +322,11 @@ function GDALCreateCopy(a1, a2, a3, a4, a5, a6, a7)
 end
 
 GDALCreateColorTable(a1) = acare(ccall((:GDALCreateColorTable, libgdal), pVoid, (UInt32,), a1))
+function GDALCreateColorRamp(hTable, nStartIndex, psStartColor, nEndIndex, psEndColor)
+	acare(ccall((:GDALCreateColorRamp, libgdal), Cvoid, (pVoid, Cint, Ptr{GDALColorEntry}, Cint, Ptr{GDALColorEntry}), hTable, nStartIndex, psStartColor, nEndIndex, psEndColor))
+end
+GDALSetColorEntry(a1, a2, a3) =
+	acare(ccall((:GDALSetColorEntry, libgdal), Cvoid, (pVoid, Cint, Ptr{GDALColorEntry}), a1, a2, a3))
 
 CPLSetConfigOption(a1, a2) = acare(ccall((:CPLSetConfigOption, libgdal), Cvoid, (Cstring, Cstring), a1, a2))
 
@@ -1640,6 +1643,23 @@ end
 		return band
 	end
 	createcolortable(palette::UInt32) = ColorTable(GDALCreateColorTable(palette))	# WAS UNSAFE_
+	function createcolorramp!(ct::ColorTable, startind::Integer, startcolor::GDALColorEntry, endind::Integer, endcolor::GDALColorEntry)
+    	return GDALCreateColorRamp(ct.ptr, startind, Ref{GDALColorEntry}(startcolor), endind, Ref{GDALColorEntry}(endcolor))
+	end
+	function setcolorentry!(ct::ColorTable, i::Integer, entry::GDALColorEntry)
+		GDALSetColorEntry(ct.ptr, i, Ref{GDALColorEntry}(entry))
+		return ct
+	end
+	function setnodatavalue!(band::AbstractRasterBand, value::Real)
+		result = GDALSetRasterNoDataValue(band.ptr, value)
+		@cplerr result "Could not set nodatavalue"
+		return band
+	end
+	function getnodatavalue(band::AbstractRasterBand)
+		hasnodatavalue = Ref(Cint(0))
+		nodatavalue = GDALGetRasterNoDataValue(band.ptr, hasnodatavalue)
+		return (Bool(hasnodatavalue[])) ? nodatavalue : nothing
+	end
 
 	paletteinterp(ct::ColorTable) = GDALGetPaletteInterpretation(ct.ptr)
 	ncolorentry(ct::ColorTable) = GDALGetColorEntryCount(ct.ptr)
@@ -2251,6 +2271,11 @@ end
 		end
 	end
 
+	function resetdrivers()			# Because some GMT functions call GDALDestroyDriverManager() 
+		DRIVER_MANAGER[] = DriverManager()
+		return nothing
+	end
+
 	include("gdal_tools.jl")
 
 	# ------------ Aliases ------------
@@ -2264,7 +2289,8 @@ end
 	export
 		creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
-		gdalrasterize, gdalbuildvrt, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy
+		gdalrasterize, gdalbuildvrt, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
+		dither
 
 	const DRIVER_MANAGER = Ref{DriverManager}()
 	const GDALVERSION = Ref{VersionNumber}()
