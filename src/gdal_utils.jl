@@ -18,6 +18,8 @@ For files with SDS with a scale_factor (e.g. MODIS data), that scale is applyied
 """
 function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int=0, layout::String="")
 
+	(isa(_dataset, GMTgrid) || isa(_dataset, GMTimage) || isa(_dataset, GMTdataset)) &&
+		error("Input is a $(typeof(_dataset)) instead of a GDAL dataset. Looking for gmt2gd?")
 	if (isa(_dataset, AbstractString))	# A subdataset name or the full string "SUBDATASET_X_NAME=...."
 		# For some bloody reason it would print annoying (& false?) warning messages. Have to use brute force
 		Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
@@ -45,7 +47,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 		elseif (band == 0 && 3 <= n_dsbands <= 4)  in_bands = collect(1:n_dsbands)
 		else                                       in_bands = (band == 0) ? [1] : [band]
 		end
-		(maximum(in_bands) > n_dsbands) && error("iOne selected band is larger then number of bands in this dataset")
+		(maximum(in_bands) > n_dsbands) && error("One selected band is larger then number of bands in this dataset")
 	end
 	ncol, nrow = xSize+2pad, ySize+2pad
 	mat = (dataset isa Gdal.AbstractRasterBand) ? zeros(dType, ncol, nrow) : zeros(dType, ncol, nrow, length(in_bands))
@@ -109,6 +111,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 		O.layout = (layout == "") ? "TRBa" : layout * "a"
 		if (n_colors > 0)
 			O.colormap = colormap;	O.n_colors = n_colors
+			((nodata = Gdal.getnodatavalue(Gdal.getband(dataset))) !== nothing) && (O.nodata = nodata)
 		end
 	end
 	if (O.layout[2] == 'R')
@@ -279,6 +282,20 @@ function gmt2gd(GI)
 			indata = GI.image
 		end
 		writegd!(ds, indata, isa(GI.image, Array{<:Real, 3}) ? Cint.(collect(1:size(GI,3))) : 1)
+
+		if (GI.n_colors > 0)
+			ct = Gdal.createcolortable(UInt32(1))	# RGB
+			n = 1
+			for k = 0:GI.n_colors-1
+				c1, c2, c3, c4 = GI.colormap[n],GI.colormap[n+1],GI.colormap[n+2],GI.colormap[n+3]
+				#Gdal.createcolorramp!(ct, k, Gdal.GDALColorEntry(c1,c2,c3,c4), k, Gdal.GDALColorEntry(c1,c2,c3,c4))
+				setcolorentry!(ct, k, Gdal.GDALColorEntry(c1,c2,c3,c4));
+				n += 4
+			end
+			Gdal.setcolortable!(Gdal.getband(ds), ct)
+			(!isnan(GI.nodata)) && (setnodatavalue!(Gdal.getband(ds), GI.nodata))
+		end
+
 	end
 	x_min, y_max = GI.range[1], GI.range[4]
 	(GI.registration == 0) && (x_min -= GI.inc[1]/2;  y_max += GI.inc[2]/2)
@@ -649,11 +666,6 @@ function blendimg!(img1::GMTimage, img2::GMTimage; new=false, transparency=0.5)
 	@assert eltype(img1) == eltype(img2)
 	@assert length(img1) == length(img2)
 	same_layout = (img1.layout[1:2] == img2.layout[1:2])
-	#if (size(img1,3) == 1)
-		#blend = (new) ? Array{UInt8,2}(undef, size(img1,1), size(img1,2)) : img1.image
-	#else
-		#blend = (new) ? Array{UInt8,3}(undef, size(img1,1), size(img1,2), 3) : img1.image
-	#end
 	blend = (new) ? Array{eltype(img1), ndims(img1)}(undef, size(img1)) : img1.image
 	t, o = transparency, 1. - transparency
 	if (same_layout)
