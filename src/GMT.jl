@@ -135,7 +135,6 @@ include("grdvector.jl")
 include("grdview.jl")
 include("grdvolume.jl")
 include("greenspline.jl")
-include("imshow.jl")
 include("kml2gmt.jl")
 include("makecpt.jl")
 include("mapproject.jl")
@@ -181,8 +180,15 @@ include("MB/mbgetdata.jl")
 include("MB/mbsvplist.jl")
 include("MB/mblevitus.jl")
 (GMTver > v"6.1.1") && include("potential/gmtgravmag3d.jl")
-
 include("drawing.jl")
+
+if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
+	include("get_enums.jl")
+	include("gdal.jl")
+	include("gdal_utils.jl")
+	using GMT.Gdal
+end
+include("imshow.jl")		# Include later because one method depends on knowing about GDAL
 
 function __init__()
 	if (v"5.0" <= GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
@@ -203,13 +209,6 @@ function __init__()
 	f = joinpath(readlines(`gmt --show-userdir`)[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 	gmtlib_setparameter(API, "COLOR_NAN", "255")			# Stop those uggly grays
-end
-
-if (GMTver >= v"6")		# Needed to cheat the autoregister autobot
-	include("get_enums.jl")
-	include("gdal.jl")
-	include("gdal_utils.jl")
-	using GMT.Gdal
 end
 
 include("precompile_GMT_i.jl")
