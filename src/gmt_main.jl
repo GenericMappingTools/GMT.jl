@@ -42,7 +42,7 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
 	registration::Int
-	nodata::Union{Float64, Float32}
+	nodata::Float64
 	color_interp::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
@@ -134,6 +134,8 @@ Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` 
 function gmt(cmd::String, args...)
 	global API
 
+	ressurectGDAL()			# Some GMT modules may have called GDALDestroyDriverManager() 
+
 	# ----------- Minimal error checking ------------------------
 	n_argin = length(args)
 	if (n_argin > 0)
@@ -145,7 +147,8 @@ function gmt(cmd::String, args...)
 				n_argin -= 1
 			end
 		end
-		while (n_argin > 0 && (args[n_argin] === nothing || args[n_argin] == []))  n_argin -= 1  end	# We may have trailing [] args in modules
+		# We may have trailing [] args in modules
+		while (n_argin > 0 && (args[n_argin] === nothing || args[n_argin] == []))  n_argin -= 1  end
 	end
 	# -----------------------------------------------------------
 
@@ -349,6 +352,11 @@ function gmt(cmd::String, args...)
 
 end
 
+# -----------------------------------------------------------------------------------------------
+function ressurectGDAL()	# Because GMT may call GDALDestroyDriverManager()
+	(Gdal.GDALGetDriverCount() == 0) && Gdal.resetdrivers()
+end
+
 #= ---------------------------------------------------------------------------------------------------
 function create_cmd(LL)
 	# Takes a LinkedList LL of gmt options created by GMT_Create_Options() and join them in a single
@@ -375,6 +383,7 @@ end
 function parse_mem_layouts(cmd::AbstractString)
 # See if a specific grid or image mem layout is requested. If found return its value and also
 # strip the corresponding option from the CMD string (otherwise GMT would scream)
+# The specific codes "-%" and "-&" are set in gmtreadwrite
 	grd_mem_layout[1] = "";	img_mem_layout[1] = ""
 
 	if ((ind = findfirst( "-%", cmd)) !== nothing)
@@ -533,16 +542,17 @@ function get_image(API::Ptr{Nothing}, object)
 	if (occursin("0", img_mem_layout[1]) || occursin("1", img_mem_layout[1]))	# WTF is 0 or 1?
 		t  = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
 	else
-		if (img_mem_layout[1] != "")  layout = img_mem_layout[1][1:3] * layout[4]  end	# 4rth id data determined
+		if (img_mem_layout[1] != "")  layout = img_mem_layout[1][1:3] * layout[4]  end	# 4rth is data determined
 		if (layout != "" && layout[1] == 'I')		# The special layout for using this image in Images.jl
 			o = (nz == 1) ? (ny, nx) : (nz, ny, nx)
 		else
 			o = (nz == 1) ? (ny, nx) : (ny, nx, nz)
+			(layout != "BRPa") && @warn("Only 'I' for Images.jl and 'BRP' MEM layouts are allowed.")
 		end
-		t  = reshape(unsafe_wrap(Array, data, ny * nx * nz), o)	# Apparently the reshape() creates a copy as we need
+		t  = reshape(unsafe_wrap(Array, data, ny * nx * nz), o)	# Apparently the reshape() creates a copy
 	end
 
-	if (I.colormap != C_NULL)       # Indexed image has a color map (PROBABLY NEEDS TRANSPOSITION)
+	if (I.colormap != C_NULL)       # Indexed image has a color map (Scanline)
 		n_colors = Int64(I.n_indexed_colors)
 		colormap =  deepcopy(unsafe_wrap(Array, I.colormap, n_colors * 4))
 	else
@@ -551,7 +561,7 @@ function get_image(API::Ptr{Nothing}, object)
 
 	# Return image via a uint8 matrix in a struct
 	cinterp = (I.color_interp != C_NULL) ? unsafe_string(I.color_interp) : ""
-	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, gmt_hdr.nan_value, cinterp, X, Y,
+	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, cinterp, X, Y,
 	               t, colormap, n_colors, Array{UInt8,2}(undef,1,1), layout, 0)
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
@@ -926,12 +936,18 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	
 	(mem_owned_by_gmt) && (CTRL.gmt_mem_bag[1] = Ib.data)	# Hold on the GMT owned array to be freed in gmt()
 
+	#if (0 < Img.n_colors <= 256)
+		#append!(Img.colormap, fill(Int32(255), (257 - Img.n_colors) * 4) )
+		#Img.n_colors = 256
+	#end
+	
 	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
 	Ib.n_indexed_colors = Img.n_colors
 	if (Img.color_interp != "")    Ib.color_interp = pointer(Img.color_interp)  end
-	if (size(Img.alpha) != (1,1))  Ib.alpha = pointer(Img.alpha)
-	else                           Ib.alpha = C_NULL
-	end
+	#if (size(Img.alpha) != (1,1))  Ib.alpha = pointer(Img.alpha)
+	#else                           Ib.alpha = C_NULL
+	#end
+	Ib.alpha = (size(Img.alpha) != (1,1)) ? pointer(Img.alpha) : C_NULL
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)		# Tell GMT that memory is external
 	h.z_min = Img.range[5]			# Set the z_min, z_max
@@ -1314,7 +1330,7 @@ function resetGMT()
 	multi_col[1] = false;	convert_syntax[1] = false;	current_view[1] = "";	show_kwargs[1] = false;
 	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = true;
 	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
-	global current_cpt  = nothing;	global legend_type  = nothing
+	global current_cpt  = nothing;	global legend_type  = nothing;	ressurectGDAL()
 	gmt("destroy")
 	clear_sessions()
 end

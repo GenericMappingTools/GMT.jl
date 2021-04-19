@@ -1797,8 +1797,6 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		elseif (find_in_dict(d, [:C :color :cmap], false)[1] !== nothing)
 			@warn("You are possibly asking to assign a CPT to an image. That is not allowed by GMT. See function image_cpt!")
 		end
-	#elseif (prog == "grdimage" && !isa(arg1, GMTimage) && (arg3 === nothing && !occursin("-D", cmd)))
-		#get_cpt = true		# This still lieve out the case when the r,g,b were sent as a text.
 	elseif (prog == "grdcontour" || prog == "pscontour")	# Here C means Contours but we cheat, so always check if C, color, ... is present
 		get_cpt = true;		cpt_opt_T = ""		# This is hell. And what if I want to auto generate a cpt?
 		if (prog == "grdcontour" && !occursin("+c", cmd))  in_bag = false  end
