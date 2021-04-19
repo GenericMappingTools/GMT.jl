@@ -30,7 +30,7 @@ julia> imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabb
 ```
 See also: [`grdimage`](@ref)
 """
-function imshow(arg1, x=Vector{Float64}(), y=Vector{Float64}(); kw...)
+function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractVector{Float64}=Vector{Float64}(); kw...)
 	# Take a 2D array of floats and turn it into a GMTgrid or if input is a string assume it's a file name
 	# In this later case try to figure if it's a grid or an image and act accordingly.
 	is_image = false
@@ -106,9 +106,16 @@ function imshow(arg1::GMTimage; kw...)
 	end
 end
 
-function imshow(x, y, f::Function; kw...)
-	G = mat2grid(f, x, y)
-	imshow(G; kw...)
+# This method needs to be here because in imshow.jl by the time it's included Gdal is not yet known
+#if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
+	function imshow(arg1::Gdal.AbstractDataset; kw...)
+		(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(arg1))) != C_NULL) && return plot(gd2gmt(arg1), show=1)
+		imshow(gd2gmt(arg1); kw...)
+	end
+#end
+
+function imshow(x::AbstractVector{Float64}, y::AbstractVector{Float64}, f::Function; kw...)
+	imshow(mat2grid(f, x, y); kw...)
 end
 
 function snif_GI_set_CTRLlimits(G_I)::Bool
@@ -125,8 +132,8 @@ function snif_GI_set_CTRLlimits(G_I)::Bool
 	return false
 end
 
-imshow(x, f::Function; kw...) = imshow(x, x, f::Function; kw...) 
-imshow(f::Function, x; kw...) = imshow(x, x, f::Function; kw...) 
-imshow(f::Function, x, y; kw...) = imshow(x, y, f::Function; kw...) 
-imshow(x, y, f::String; kw...) = imshow(f::String, x, y; kw...) 
-imshow(x, f::String; kw...) = imshow(f::String, x, x; kw...) 
+imshow(x::AbstractVector{Float64}, f::Function; kw...) = imshow(x, x, f::Function; kw...) 
+imshow(f::Function, x::AbstractVector{Float64}; kw...) = imshow(x, x, f::Function; kw...) 
+imshow(f::Function, x::AbstractVector{Float64}, y::AbstractVector{Float64}; kw...) = imshow(x, y, f::Function; kw...) 
+imshow(x::AbstractVector{Float64}, y::AbstractVector{Float64}, f::String; kw...) = imshow(f::String, x, y; kw...) 
+imshow(x::AbstractVector{Float64}, f::String; kw...) = imshow(f::String, x, x; kw...) 
