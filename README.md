@@ -106,6 +106,12 @@ Examples
 
 [Some examples](https://genericmappingtools.github.io/GMT.jl/dev/examples)
 
+Credits
+=======
+
+A lot of the GDAL interface functions rely on code from [GDAL.jl](https://github.com/JuliaGeo/GDAL.jl) by Martijn Visser
+and [ArchGDAL.jl](https://github.com/yeesian/ArchGDAL.jl) by Yeesian Ng, released under the MIT license.
+
 License
 =======
 
