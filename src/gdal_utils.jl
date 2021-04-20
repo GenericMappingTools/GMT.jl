@@ -602,13 +602,6 @@ function guess_increment_from_coordvecs(dx, dy)
 end
 
 # ---------------------------------------------------------------------------------------------------
-# This method needs to be here because in imshow.jl by the time it's included Gdal is not yet known
-function imshow(arg1::Gdal.AbstractDataset; kw...)
-	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(arg1))) != C_NULL) && return plot(gd2gmt(arg1), show=1)
-	imshow(gd2gmt(arg1), kw...)
-end
-
-# ---------------------------------------------------------------------------------------------------
 """
     blendimg!(color::GMTimage, shade::GMTimage; new=false)
 
@@ -773,13 +766,22 @@ http://www.textureshading.com/Home.html
 ### Returns
 A UInt8 (or 16) GMT Image
 """
-function texture_img(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false)
-	texture = deepcopy(G.z)
+function texture_img(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensity=false)
+	if (G.layout[2] == 'C')  texture = reverse(G.z', dims=1)
+	else                     texture = deepcopy(G.z)
+	end
 	terrain_filter(texture, detail, size(G,1), size(G,2), G.inc[1], G.inc[2], 0)
 	(startswith(G.proj4, "+proj=merc")) && fix_mercator(texture, detail, size(G,1), size(G,2), G.range[3], G.range[4])
+	(intensity) && (uint16 = true)
 	terrain_image_data(texture, contrast, size(G,1), size(G,2), 0.0, (uint16) ? 65535.0 : 255.0)
-	mat = (uint16) ? round.(UInt16, texture) : round.(UInt8, texture)
-	Go = mat2img(mat, hdr=grid2pix(G), proj4=G.proj4, wkt=G.wkt, noconv=true, layout=G.layout*"a")
-	Go.range[5:6] .= extrema(Go.image)
+	if (intensity)
+		texture = texture ./ 65535 .* 2 .- 1
+		Go = mat2grid(texture, G)
+		Go.range[5:6] .= extrema(Go.z)
+	else
+		mat = (uint16) ? round.(UInt16, texture) : round.(UInt8, texture)
+		Go = mat2img(mat, hdr=grid2pix(G), proj4=G.proj4, wkt=G.wkt, noconv=true, layout=G.layout*"a")
+		Go.range[5:6] .= extrema(Go.image)
+	end
 	Go
 end

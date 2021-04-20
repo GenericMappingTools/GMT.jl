@@ -807,12 +807,11 @@ end
 function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
-	mode = (length(Grid.layout) > 1 && Grid.layout[2] == 'R') ? GMT_CONTAINER_ONLY : GMT_CONTAINER_AND_DATA
+	mode = (Grid.layout != "" && Grid.layout[2] == 'R') ? GMT_CONTAINER_ONLY : GMT_CONTAINER_AND_DATA
 	(mode == GMT_CONTAINER_ONLY) && (pad = Grid.pad)		# Here we must follow what the Grid says it has
 
 	hdr = [Grid.range; Grid.registration; Grid.inc]
-	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, C_NULL,
-	                    hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)
+	G = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, C_NULL, hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)
 
 	Gb = unsafe_load(G)			# Gb = GMT_GRID (constructor with 1 method)
 	h = unsafe_load(Gb.header)

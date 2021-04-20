@@ -325,8 +325,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 # This method creates a new GMTimage but retains all the header data from the IMG object
 function mat2img(mat, I::GMTimage)
-	range = I.range;	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
-	GMTimage(I.proj4, I.wkt, I.epsg, range, I.inc, I.registration, I.nodata, I.color_interp, I.x, I.y, mat, I.colormap, I.n_colors, I.alpha, I.layout, I.pad)
+	range = deepcopy(I.range);	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
+	GMTimage(I.proj4, I.wkt, I.epsg, range, deepcopy(I.inc), I.registration, I.nodata, I.color_interp, deepcopy(I.x), deepcopy(I.y), mat, deepcopy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -501,7 +501,7 @@ end
 
 # This method creates a new GMTgrid but retains all the header data from the G object
 function mat2grid(mat::DenseMatrix, G::GMTgrid)
-	Go = GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.x, G.y, mat, G.x_unit, G.y_unit, G.z_unit, G.layout, G.pad)
+	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, deepcopy(G.x), deepcopy(G.y), mat, G.x_unit, G.y_unit, G.z_unit, G.layout, G.pad)
 	grd_min_max!(Go)		# Also take care of NaNs
 	Go
 end
