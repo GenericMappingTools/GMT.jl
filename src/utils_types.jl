@@ -127,23 +127,17 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), kwargs...)
 	if (!isa(mat, Array{Float64}))  mat = Float64.(mat)  end
 	if (isempty(xx))
 		if (ndims(mat) == 3)
-			for k = 1:n_ds
-				D[k] = GMTdataset(view(mat,:,:,k), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt)
-			end
+			[D[k] = GMTdataset(view(mat,:,:,k), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt) for k = 1:n_ds]
 		elseif (!multi)
 			D[1] = GMTdataset(mat, String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt)
 		else
-			for k = 1:n_ds
-				D[k] = GMTdataset(mat[:,[1,k+1]], String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt)
-			end
+			[D[k] = GMTdataset(mat[:,[1,k+1]], String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt) for k = 1:n_ds]
 		end
 	else
 		if (!multi)
 			D[1] = GMTdataset(hcat(xx,mat), String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt)
 		else
-			for k = 1:n_ds
-				D[k] = GMTdataset(hcat(xx,mat[:,k]), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt)
-			end
+			[D[k] = GMTdataset(hcat(xx,mat[:,k]), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt) for k = 1:n_ds]
 		end
 	end
 	return D
@@ -381,10 +375,7 @@ Add (or replace) a colormap to a GMTimage object from the colors in the cpt.
 This should have effect only if IMG is indexed.
 Use `image_cpt!(img, clear=true)` to remove a previously existent `colormap` field in IMG
 """
-function image_cpt!(img::GMTimage, cpt::String)
-	C = gmtread(cpt)
-	image_cpt!(img, C)
-end
+image_cpt!(img::GMTimage, cpt::String) = image_cpt!(img, gmtread(cpt))
 function image_cpt!(img::GMTimage, cpt::GMTcpt)
 	# Insert the cpt info in the img.colormap member
 	n = 1

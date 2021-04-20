@@ -134,6 +134,7 @@ Gdal.GDALDestroyDriverManager()
 	@test Gdal.read(ds_src) == Gdal.read(ds_copy)
 	Gdal.metadata(ds_src)
 	Gdal.GDALGetDescription(ds_src.ptr)
+	imshow(ds_src, Vd=dbg2)
 
 	rb = Gdal.getband(ds_src, 1)
 	@test Gdal.getnodatavalue(rb) === nothing
@@ -150,6 +151,7 @@ Gdal.GDALDestroyDriverManager()
 	G = GMT.peaks()
 	gdalshade(G, C=makecpt(T=(-7,8,1)), zfactor=2);
 	GMT.gammacorrection(mat2img(rand(UInt8, 3,4)), 1.1)
+	GMT.get_FillValue("_FillValue=9999")
 	ds = gmt2gd(G)
 	G  = gd2gmt(ds)
 	G = gd2gmt("utmsmall.tif");
@@ -166,6 +168,7 @@ Gdal.GDALDestroyDriverManager()
 	grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
 
 	I = Gdal.dither("rgbsmall.tif");
+	gmt2gd(I);
 	Gdal.dither("rgbsmall.tif", save="lixo.tif");
 
 	Gdal.GDALGetDataTypeByName("GTiff");

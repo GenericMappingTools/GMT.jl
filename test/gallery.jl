@@ -726,8 +726,8 @@ function ex18(g_root_dir, out_path)
 	# First generate gravity image w/ shading, label Pratt, and draw a circle
 	# of radius = 200 km centered on Pratt.
 
-	grav_cpt = gmt("makecpt -Crainbow -T-60/60");
-	GAK_gulf_grav_i = gmt("grdgradient @AK_gulf_grav.nc -Nt1 -A45");
+	grav_cpt = makecpt(color=:rainbow, range=(-60, 60));
+	GAK_gulf_grav_i = grdgradient("@AK_gulf_grav.nc", norm="t1", azim=45);
 	gmt("grdimage @AK_gulf_grav.nc -I -JM5.5i -C -B2f1 -P -K -X1.5i" *
 		" -Y5.85i > " * ps, GAK_gulf_grav_i, grav_cpt)
 	gmt("pscoast -R@AK_gulf_grav.nc -J -O -K -Di -Ggray -Wthinnest >> " * ps)

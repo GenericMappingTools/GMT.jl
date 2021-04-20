@@ -27,7 +27,8 @@
 	@test_throws ErrorException("Grids have different sizes, so they cannot be multiplied.") G1 * G2;
 	@test_throws ErrorException("Grids have different sizes, so they cannot be divided.") G1 / G2;
 	G1 = GMT.mat2grid(rand(4,4));
-	G2 = GMT.mat2grid(rand(Float32,4,4));
+	G2 = GMT.mat2grid(rand(Float32,4,4), G1);
+	G2 = mat2grid(rand(Float32,4,4), mat2img(rand(UInt16,32,32),x=[220800 453600], y=[3.5535e6 3.7902e6]));
 	G2 = GMT.mat2grid(rand(Int32,4,4));
 	G2 = GMT.mat2grid(rand(4,4));
 	G1 .* G2;
@@ -102,6 +103,8 @@
 		image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
 		image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
 		image_cpt!(I, C)
+		GMT.transpcmap!(I, true)
+		GMT.transpcmap!(I, false)
 		image_cpt!(I, clear=true)
 	end
 

@@ -1,5 +1,5 @@
 """
-    C = cpt4dcw(codes::String, vals::Vector{<:Number}; kwargs...)
+    C = cpt4dcw(codes::String, vals::Vector{<:Real}; kwargs...)
 
 Create a categorical CPT to use with the output of `coast(dcw=...)` to make Choropleth maps.
   - `codes` is a comma separated string with two chars country codes (ex: "PT,ES,FR,IT")
@@ -8,7 +8,7 @@ Optionally provide a CPT in the kwarg `cmap=CPT` with a range sufficient to tans
 As an alternative to the above provide a `makecpt` type `range` numeric vector to create a CPT.
 If none of these are provided a default `CPT = makecpt(range=(0,255,1))` will be used.
 """
-cpt4dcw(codes::String, vals::Vector{<:Real}; kwargs...) = cpt4dcw(split(codes,","), vals; kwargs)
+cpt4dcw(codes::String, vals::Vector{<:Real}; kwargs...) = cpt4dcw(split(codes,","), vals; kwargs...)
 function cpt4dcw(codes::Vector{<:AbstractString}, vals::Vector{<:Real}; kwargs...)
 	d = KW(kwargs)
 
@@ -16,7 +16,7 @@ function cpt4dcw(codes::Vector{<:AbstractString}, vals::Vector{<:Real}; kwargs..
 		C = val
 	elseif ((val = find_in_dict(d, [:range])[1]) !== nothing && isvector(val) && length(val) >= 2)
 		inc = (length(val) == 2) ? 1 : val[3]
-		C::GMTcpt = makecpt(T=(val[1], val[2], inc))
+		C = makecpt(T=(val[1], val[2], inc))
 	else
 		C = makecpt(T=(0,255,1))
 	end
