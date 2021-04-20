@@ -238,7 +238,7 @@ function get_FillValue(str::String)
 	# value to tell between a true NaN as _FillValue and one that's only use for type stability
 	((ind = findfirst("_FillValue=", str)) === nothing) && return NaN, false
 	ind2 = findfirst('\n', str[ind[1]:end])
-	fill_val = tryparse(Float32, str[ind[1]+11 : ind[1] + ind2[1]-2])
+	fill_val = (ind2 !== nothing) ? tryparse(Float32, str[ind[1]+11 : ind[1] + ind2[1]-2]) : tryparse(Float32, str[ind[1]+11:end])
 	return fill_val, true
 end
 
@@ -289,7 +289,7 @@ function gmt2gd(GI)
 			for k = 0:GI.n_colors-1
 				c1, c2, c3, c4 = GI.colormap[n],GI.colormap[n+1],GI.colormap[n+2],GI.colormap[n+3]
 				#Gdal.createcolorramp!(ct, k, Gdal.GDALColorEntry(c1,c2,c3,c4), k, Gdal.GDALColorEntry(c1,c2,c3,c4))
-				setcolorentry!(ct, k, Gdal.GDALColorEntry(c1,c2,c3,c4));
+				Gdal.setcolorentry!(ct, k, Gdal.GDALColorEntry(c1,c2,c3,c4));
 				n += 4
 			end
 			Gdal.setcolortable!(Gdal.getband(ds), ct)

@@ -148,9 +148,8 @@ function gmtread(fname::String; kwargs...)
 			else
 				O = ogr2GMTdataset(gmt_ogrread(API2, fname, (x === nothing) ? C_NULL : x))
 			end
-		else
-			O = ogr2GMTdataset(gmt_ogrread(API2, fname))
 		end
+		(GMTver == v"6.0") && (O = ogr2GMTdataset(gmt_ogrread(API2, fname)))
 	end
 	return O
 end
@@ -159,9 +158,7 @@ end
 function guess_T_from_ext(fname::String)::String
 	# Guess the -T option from a couple of known extensions
 	fname, ext = splitext(fname)
-	if (length(ext) > 8 || occursin("?", ext))			# A SUBDATASET encoded fname?
-		return (occursin("?", ext)) ? " -Tg" : ""
-	end
+	(length(ext) > 8 || occursin("?", ext)) && return (occursin("?", ext)) ? " -Tg" : "" # A SUBDATASET encoded fname?
 	ext = lowercase(ext[2:end])
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";

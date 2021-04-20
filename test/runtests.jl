@@ -42,13 +42,15 @@ if (got_it)					# Otherwise go straight to end
 	makecpt(rand(10,1), E="", C=:rainbow, cptname="lixo.cpt");
 	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
 	C = cpt4dcw("eu");
-	C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[1,4,1]);
+	C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
 	C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
+	@test_throws ErrorException("Unknown continent ue") cpt4dcw("ue")
 	GMT.iso3to2_eu();
 	GMT.iso3to2_af();
 	GMT.iso3to2_na();
 	GMT.iso3to2_world();
 	GMT.mk_codes_values(["PRT", "ESP", "FRA"], [1.0, 2, 3], region="eu");
+	@test_throws ErrorException("The region ue is invalid or has not been implemented yet.") GMT.mk_codes_values(["PRT"], [1.0], region="ue")
 
 	println("	MAPPROJECT")
 	mapproject([-10 40], J=:u29, C=true, F=true, V=:q);
