@@ -73,6 +73,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 
 	# If we found a scale_factor above, apply it
 	if (scale_factor != 1)		# So we must do a scale+offset op
+		#=
 		(got_fill_val) && (nodata = (mat .== fill_val))
 		if (eltype(mat) <: Integer)
 			mat = mat .* scale_factor .+ add_offset		# Also promotes (and pay) the array to float32
@@ -82,6 +83,8 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 			end
 		end
 		(got_fill_val) && (mat[nodata] .= NaN32)
+		=#
+		mat = gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val)
 	end
 
 	try
@@ -101,12 +104,10 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
 	(prj == "") && (prj = seek_wkt_in_gdalinfo(gdalinfo(dataset)))
 	if (is_grid)
-		#!isa(mat, Matrix) && (mat = reshape(mat, size(mat,1), size(mat,2)))
 		(eltype(mat) == Float64) && (mat = Float32.(mat))
 		O = mat2grid(mat; hdr=hdr, proj4=prj)
 		O.layout = (layout == "") ? "TRB" : layout
 	else
-		#(size(mat,3) == 1) && (mat = reshape(mat, size(mat,1), size(mat,2)))
 		O = mat2img(mat; hdr=hdr, proj4=prj)
 		O.layout = (layout == "") ? "TRBa" : layout * "a"
 		if (n_colors > 0)
@@ -120,6 +121,21 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	O.inc = [x_inc, y_inc]		# Reset because if pad != 0 they were recomputed inside the mat2? funs
 	O.pad = pad
 	return O
+end
+
+# ---------------------------------------------------------------------------------------------------
+function gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val)
+	# Apply a scale + offset
+	(got_fill_val) && (nodata = (mat .== fill_val))
+	if (eltype(mat) <: Integer)
+		mat = mat .* scale_factor .+ add_offset		# Also promotes (and pay) the array to float32
+	else
+		@inbounds @simd for k = 1:length(mat)
+			mat[k] = mat[k] * scale_factor + add_offset
+		end
+	end
+	(got_fill_val) && (mat[nodata] .= NaN32)
+	mat
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -598,7 +614,7 @@ function guess_increment_from_coordvecs(dx, dy)
 	# Guess a good -I<inc> from the spacings in the x (lon), y(lat) arrays
 	x_mean = abs(Float64(mean(dx)));		y_mean = abs(Float64(mean(dy)));
 	xy_std = max(Float64(std(dx)), Float64(std(dy)))
-	inc = round((x_mean + y_mean) / 2; digits=round(Int, abs(log10(xy_std))))
+	inc = (xy_std == 0) ? (x_mean + y_mean) / 2 : round((x_mean + y_mean) / 2; digits=round(Int, abs(log10(xy_std))))
 end
 
 # ---------------------------------------------------------------------------------------------------
