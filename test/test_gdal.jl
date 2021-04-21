@@ -151,12 +151,18 @@ Gdal.GDALDestroyDriverManager()
 	G = GMT.peaks()
 	gdalshade(G, C=makecpt(T=(-7,8,1)), zfactor=2);
 	GMT.gammacorrection(mat2img(rand(UInt8, 3,4)), 1.1)
-	GMT.get_FillValue("_FillValue=9999")
 	ds = gmt2gd(G)
 	G  = gd2gmt(ds)
 	G = gd2gmt("utmsmall.tif");
 	ds = gmt2gd(G)
 	gdalinfo(ds);
+
+	GMT.get_FillValue("_FillValue=9999")
+	GMT.helper_gmt2gd_xyz(GMT.GMTdataset(rand(Float32,3,3), String[], "", String[], "", ""),3)
+	@test GMT.guess_increment_from_coordvecs([1., 1, 1, 1], [1., 1, 1, 1]) == 1.0
+	@test GMT.helper_find_sds("AA", "xxxxxxxx:AA", findall("\n", @sprintf("aA\nbbbbbnnn\n"))) == "xxx:AA"
+	@test GMT.gd2gmt_helper_scalefac([1  1; 1 1], 2, 0, false, 0) == [2 2; 2 2]
+	@test GMT.gd2gmt_helper_scalefac([1. 1; 1 1], 2, 0, false, 0) == [2. 2.; 2. 2.]
 
 	# Test that we recover the original.
 	G = mat2grid(reshape(collect(1.0:12), 3, 4));
