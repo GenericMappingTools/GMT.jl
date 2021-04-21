@@ -4,13 +4,14 @@
 Convert raster data between different formats and other operations also provided by the GDAL
 'gdal_translate' tool. Namely sub-region extraction and resampling.
 The kwargs options accept the GMT region (-R), increment (-I), target SRS (-J) any of the keywords
-'outgrid', 'outfile' or 'save' = outputname options to make this function save the result in disk
+`outgrid`, `outfile` or `save` = outputname options to make this function save the result in disk
 in the file 'outputname'. The file format is picked from the 'outputname' file extension.
 When no output file name is provided it returns a GMT object (either a grid or an image, depending
-on the input type). To force the return of a GDAL dataset use the option 'gdataset=true'
+on the input type). To force the return of a GDAL dataset use the option `gdataset=true`
 
-  - INDATA - Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
-  - OPTS   - List of options. The accepted options are the ones of the gdal_translate utility.
+  - `INDATA` - Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
+  - `OPTS`   - List of options. The accepted options are the ones of the gdal_translate utility.
+               This list can be in the form of a vector of strings, or joined in a simgle string.
 
 ### Returns
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
@@ -26,10 +27,10 @@ end
 Image reprojection and warping function.
 
 ### Parameters
-* **datasets**: The list of input datasets.
-* **options**: List of options (potentially including filename and open
+* `datasets` The list of input datasets.
+* `options` List of options (potentially including filename and open
 	options). The accepted options are the ones of the gdalwarp utility.
-* **kw** are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and save=fname options
+* `kw` are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options
 
 ### Returns
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
@@ -45,20 +46,21 @@ end
 Tools to analyze and visualize DEMs.
 
 ### Parameters
-* **dataset**: The source dataset.
-* **method**: the processing to apply (one of "hillshade", "slope",
+* `dataset` The source dataset.
+* `method` the processing to apply (one of "hillshade", "slope",
     "aspect", "color-relief", "TRI", "TPI", "Roughness").
-* **options**: List of options (potentially including filename and open options).
+* `options` List of options (potentially including filename and open options).
     The accepted options are the ones of the gdaldem utility.
 
 # Keyword Arguments
-* **colorfile**: color file (mandatory for "color-relief" processing, should be empty otherwise).
-* **kw...**: keyword=value arguments when `method` is hillshade.
+* `colorfile` color file (mandatory for "color-relief" processing, should be empty otherwise).
+* `kw...` keyword=value arguments when `method` is hillshade.
 
 ### Returns
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
 """
-function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/vsimem/tmp", kwargs...)
+function gdaldem(indata, method::String, opts=String[]; dest="/vsimem/tmp", kwargs...)
+	opts = GDALopts2vec(opts)		# Guarantied to return a Vector{String}
 	if (method == "hillshade")		# So far the only method that accept kwarg options
 		d = GMT.KW(kwargs)
 		band = ((val = GMT.find_in_dict(d, [:band])[1]) !== nothing) ? string(val) : "1"
@@ -86,10 +88,27 @@ function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/v
 	end
 end
 
+"""
+    function ogr2ogr(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
+
+### Parameters
+* `dataset` The source dataset.
+* `options` List of options (potentially including filename and open
+	options). The accepted options are the ones of the gdalwarp utility.
+* `kw` are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options
+
+### Returns
+A GMT datase, or a GDAL dataset (or nothing if file was writen on disk).
+"""
+function gdalvectortranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
+	helper_run_GDAL_fun(gdalvectortranslate, indata, dest, opts, "", kwargs...)
+end
+
 # ---------------------------------------------------------------------------------------------------
-function helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Vector{String}, method::String="", kwargs...)
+function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kwargs...)
 	# Helper function to run the GDAL function under 'some protection' and returning obj or saving in file
 
+	opts = GDALopts2vec(opts)		# Guarantied to return a Vector{String}
 	d, opts, got_GMT_opts = GMT_opts_to_GDAL(opts, kwargs...)
 	((val = GMT.find_in_dict(d, [:Vd])[1]) !== nothing) && println(opts)
 
@@ -112,8 +131,12 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Vector{Str
 	(o !== nothing && o.ptr == C_NULL) && @warn("$(f) returned a NULL pointer.")
 	if (o !== nothing)
 		# If not explicitly stated to return a GDAL datase, return a GMT type
-		n_bands = (got_GMT_opts && !haskey(d, :gdataset) && isa(o, AbstractRasterBand)) ? 1 : nraster(o)
-		(!haskey(d, :gdataset)) && (o = gd2gmt(o, bands=collect(1:n_bands)))
+		if (f == ogr2ogr)
+			(!haskey(d, :gdataset)) && (o = gd2gmt(o))
+		else
+			n_bands = (got_GMT_opts && !haskey(d, :gdataset) && isa(o, AbstractRasterBand)) ? 1 : nraster(o)
+			(!haskey(d, :gdataset)) && (o = gd2gmt(o, bands=collect(1:n_bands)))
+		end
 	end
 	CPLPopErrorHandler();
 	o
@@ -145,6 +168,34 @@ function GMT_opts_to_GDAL(opts::Vector{String}, kwargs...)
 		(length(t) == 1) ? append!(opts, ["-tr", t[1], t[1]]) : append!(opts, ["-tr", t[1], t[2]])
 	end
 	return d, opts, (opt_R != "" || length(opt_J) > 1 || opt_I != "")
+end
+
+# ---------------------------------------------------------------------------------------------------
+function GDALopts2vec(opts)::Vector{String}
+	# Break up a string of options into a vector string as it's needed by GDAL lower level functions
+	(opts == "") && return String[]
+	(isempty(opts) || (isa(opts, Vector{String}) && length(opts) > 1)) && return opts	# if already a vec
+	(eltype(opts) != Char && eltype(opts) != String) && error("Options for GDAL must be a string or a vector of one string")
+	_opts = (isa(opts, Vector{String})) ? opts[1] : opts
+
+	ind = helper_opts2vec(_opts)
+	isempty(ind) && return split(_opts)			# Perfect, just a 'simple' options list, split and go
+	_opts = _opts[1:ind[1][1]-1] * replace(_opts[ind[1][1]+1 : ind[2][1]-1], ' ' => '\U00AF') * _opts[ind[2][1]+1 : end]
+
+	while (!isempty(helper_opts2vec(_opts)))	# See if we have more
+		ind = helper_opts2vec(_opts)
+		_opts = _opts[1:ind[1][1]-1] * replace(_opts[ind[1][1]+1 : ind[2][1]-1], ' ' => '\U00AF') * _opts[ind[2][1]+1 : end]
+	end
+
+	v = split(_opts)
+	[v[i] = replace(v[i], '\U00AF' => ' ') for i = 1:length(v)]		# Undo the utf8 char
+end
+
+function helper_opts2vec(opts::String)
+	ind = findall("\"", opts)
+	isempty(ind) && (ind = findall("'", opts))
+	(!isempty(ind) && rem(length(ind), 2) != 0) && error("Delimiting characters like $(opts[ind[1][1]]) must come in pairs")
+	return ind
 end
 
 #= ---------------------------------------------------------------------------------------------------
