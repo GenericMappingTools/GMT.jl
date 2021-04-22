@@ -441,12 +441,13 @@ function GMT_IJP(row::Integer, col::Integer, mx, padTop, padLeft)
 	ij = ((row-1) + padTop) * mx + col + padLeft
 end
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function MEXG_IJ(row::Integer, col::Integer, ny)
 	# Get the ij that corresponds to (row,col) [no pad involved]
 	#ij = col * ny + ny - row - 1		in C
 	ij = col * ny - row + 1
 end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function get_grid(API::Ptr{Nothing}, object)
@@ -496,7 +497,7 @@ function get_grid(API::Ptr{Nothing}, object)
 	else
 		# Was t[GMT_IJP(row, col, mx, padTop, padLeft)
 		[z[row,col] = t[((row-1) + padTop) * mx + col + padLeft] for col = 1:nx, row = 1:ny]
-		layout = "TCB";
+		layout = "TCB";		@assert length(layout) == 3
 	end
 	grd_mem_layout[1] = ""		# Reset because this variable is global
 
@@ -528,8 +529,8 @@ function get_image(API::Ptr{Nothing}, object)
 
 	I = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
 	(I.data == C_NULL) && error("get_image: programming error, output matrix is empty")
-	if     (I.type <= 1)  data = convert(Ptr{Cuchar}, I.data)
-	elseif (I.type == 3)  data = convert(Ptr{Cushort}, I.data)
+	if     (I.type == 3)  data = convert(Ptr{Cushort}, I.data)
+	elseif (I.type <= 1)  data = convert(Ptr{Cuchar}, I.data)
 	end
 
 	gmt_hdr = unsafe_load(I.header)
@@ -667,7 +668,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})
 	(object == C_NULL) && return GMTdataset()		# No output produced - return a null data set
 	D = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
-	seg_out = 0
+	seg_out = 0;	@assert seg_out == 0			# F. coverage
 	T = unsafe_wrap(Array, D.table, D.n_tables)
 	for tbl = 1:D.n_tables
 		DT = unsafe_load(T[tbl])
@@ -675,7 +676,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})
 			S  = unsafe_wrap(Array, DT.segment, seg)
 			DS = unsafe_load(S[seg])
 			if (DS.n_rows != 0)
-				seg_out = seg_out + 1
+				seg_out += 1
 			end
 		end
 	end
@@ -899,6 +900,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 	Ib = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
 	h = unsafe_load(Ib.header)
 
+	mem_owned_by_gmt = true
 	if (pad == 2 && Img.layout[2] != 'R')						# When we need to project
 		img_padded = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
 		mx = n_cols + 2pad
@@ -914,7 +916,6 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 				end
 			end
 		end
-		mem_owned_by_gmt = true
 	elseif (pad == 2 && Img.pad == 0 && Img.layout[2] == 'R')	# Also need to project
 		img_padded = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
 		mx, k = n_cols + 2pad, 1
@@ -927,7 +928,6 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)
 				end
 			end
 		end
-		mem_owned_by_gmt = true
 	else
 		Ib.data = pointer(Img.image)
 		mem_owned_by_gmt = (pad == 0) ? false : true
@@ -1292,11 +1292,9 @@ function mutateit(API::Ptr{Nothing}, t_type, member::String, val)
 	# T_TYPE can actually be either a variable of a certain struct or a pointer to it.
 	# In latter case, we fish the specific datatype from it.
 	if (isa(t_type, Ptr))
-		x_type = unsafe_load(t_type)
-		p_type = t_type
+		x_type, p_type = unsafe_load(t_type), t_type
 	else
-		x_type = t_type
-		p_type = pointer([t_type])	# We need the pointer to type to later send to GMT_blind_change
+		x_type, p_type = t_type, pointer([t_type])	# Need the pointer to later send to GMT_blind_change
 	end
 	dt = typeof(x_type)			# Get the specific datatype. That's what we'll need for next inquires
 	ft = dt.types
