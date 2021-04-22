@@ -2297,7 +2297,7 @@ end
 		(isproj4) ? (obj.proj4 = proj) : (obj.wkt = proj)
 		return nothing
 	end
-	function setproj!(tipo::AbstractArrayi, ref)
+	function setproj!(tipo::AbstractArray, ref)
 		(!isa(ref, GMT.GMTgrid) && !isa(ref, GMT.GMTimage) && !isa(ref, GMT.GMTdataset) && !isa(ref, Vector{GMT.GMTdataset})) &&
 			error("Wrong REFERENCE data type for this function. Must be a grid, image or dataset")
 		obj = (isa(ref, Vector{GMT.GMTdataset})) ? ref[1] : ref
