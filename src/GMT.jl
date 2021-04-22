@@ -190,10 +190,10 @@ if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
 end
 include("imshow.jl")		# Include later because one method depends on knowing about GDAL
 
-function __init__()
+function __init__(test::Bool=false)
 	if (v"5.0" <= GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
 
-	if (GMTver == v"0.0")
+	if (GMTver == v"0.0" || test)
 		println("\n\nYou don't seem to have GMT installed and I don't install it automatically.\nYou will have to do it yourself.")
 		t = "\n\t\t https://github.com/GenericMappingTools/gmt/releases"
 		if (Sys.iswindows())    println("Download and install the official version at (the '..._win64.exe':" * t)
