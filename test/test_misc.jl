@@ -36,6 +36,7 @@
 	setindex!(G1, [-1 -1],1:2)
 	size(G1)
 
+	GMT.WrapperPluto("aaa")
 	Base.BroadcastStyle(typeof(G1))
 	getindex(G1,1)
 
@@ -55,6 +56,9 @@
 
 	GMT.GMTdataset();
 	GMT.GMTdataset(rand(2,2), "lixo");
+	GMT.GMTdataset(rand(Float32, 2,2), ["aiai"])
+	GMT.GMTdataset(rand(Float32, 2,2), "aiai")
+	GMT.GMTdataset(rand(Float32, 2,2))
 	D = mat2ds(GMT.fakedata(4,4), x=:ny, color=:cycle, multi=true)
 	D[1].text = ["lixo", "l", "p", "q"];
 	GMT.find4similar(D[1],0)
@@ -75,6 +79,13 @@
 	text_record(["> 3 5 18p 5i j", "aa", "bb"]);
 	text_record(Array[["aa", "bb"],["cc", "dd", "ee"]]);
 	text_record([["aa", "bb"],["cc", "dd", "ee"]]);
+
+	G = mat2grid(rand(Float32, 4,4));
+	GMT.setproj!(G, "+proj=longlat")
+	@test G.proj4 == "+proj=longlat"
+	I = mat2img(rand(UInt8, 4,4));
+	GMT.setproj!(I, G)
+	@test I.proj4 == "+proj=longlat"
 
 	# TEST THE API DIRECTLY (basically to improve coverage under GMT6)
 	PS = plot(rand(3,2), ps=1);

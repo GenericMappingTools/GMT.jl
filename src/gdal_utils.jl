@@ -72,20 +72,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	end
 
 	# If we found a scale_factor above, apply it
-	if (scale_factor != 1)		# So we must do a scale+offset op
-		#=
-		(got_fill_val) && (nodata = (mat .== fill_val))
-		if (eltype(mat) <: Integer)
-			mat = mat .* scale_factor .+ add_offset		# Also promotes (and pay) the array to float32
-		else
-			@inbounds @simd for k = 1:length(mat)
-				mat[k] = mat[k] * scale_factor + add_offset
-			end
-		end
-		(got_fill_val) && (mat[nodata] .= NaN32)
-		=#
-		mat = gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val)
-	end
+	(scale_factor != 1) && (mat = gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val))
 
 	try
 		global gt = getgeotransform(dataset)
