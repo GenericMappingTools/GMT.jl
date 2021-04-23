@@ -236,6 +236,10 @@ Gdal.GDALDestroyDriverManager()
 		[(1179553., 647105.), (1179553., 626292.), (1194354., 626292.), (1194354., 647105.), (1179553., 647105.)] ])
 	Gdal.wrapgeom(mp)
 
+	gdalinfo("poly_spatialite.sqlite")
+	readgd("poly_spatialite.sqlite")
+	Gdal.inspect("SELECT HEX(GeomFromText('POINT(10 20)'))", "poly_spatialite.sqlite")
+
 	I1 = mat2img(reshape(collect(UInt8(1):UInt8(20)), 4, 5))	#  layout = TCBa
 	I2 = mat2img(reshape(collect(UInt8(11):UInt8(30)), 4, 5))
 	GMT.blendimg!(I1, I2)
