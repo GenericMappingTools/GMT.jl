@@ -834,12 +834,6 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return dataset
 	end
 
-	function setproj!(dataset::AbstractDataset, projstring::AbstractString)
-		result = GDALSetProjection(dataset.ptr, projstring)
-		@cplerr result "Could not set projection"
-		return dataset
-	end
-
 	function createlayer(; name::AbstractString="", dataset::AbstractDataset=create(getdriver("Memory")),
 		geom::UInt32=wkbUnknown, spatialref::AbstractSpatialRef=SpatialRef(), options=Ptr{Cstring}(C_NULL))
 		return IFeatureLayer(GDALDatasetCreateLayer(dataset.ptr, name, spatialref.ptr, geom, options),
@@ -1506,7 +1500,6 @@ end
 	gdalvectortranslate(ds::GMT.GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
 	gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
 
-	buffer(geom::AbstractGeometry, dist::Real, quadsegs::Integer=30) = IGeometry(OGR_G_Buffer(geom.ptr, dist, quadsegs))
 	geomarea(geom::AbstractGeometry) = OGR_G_Area(geom.ptr)
 	geomlength(geom::AbstractGeometry) = OGR_G_Length(geom.ptr)
 	union(g1::AbstractGeometry, g2::AbstractGeometry) = IGeometry(OGR_G_Union(g1.ptr, g2.ptr))
@@ -2276,35 +2269,8 @@ end
 		return nothing
 	end
 
+	include("gdal_extensions.jl")
 	include("gdal_tools.jl")
-
-	# ---------------------------------------------------------------------------------------------------
-	"""
-		setproj!(type, proj)
-
-	Set a referencing system to the `type` object. This object can be a `GMTgrid`, a `GMTimage` or a
-	`GMTdataset`.
-
-	- `proj` Is either a Proj4 string or a WKT. Alternatively, it can also be another grid, image or dataset
-			type, in which case its referencing system is copied into `type`
-	"""
-	function setproj!(tipo::AbstractArray, proj::String="")
-		(!isa(tipo, GMT.GMTgrid) && !isa(tipo, GMT.GMTimage) && !isa(tipo, GMT.GMTdataset) && !isa(tipo, Vector{GMT.GMTdataset})) &&
-			error("Wrong data type for this function. Must be a grid, image or dataset")
-		(proj == "") && error("the projection string cannot obviously be empty")
-		isproj4 = (startswith(proj, "+proj") !== nothing)
-		obj = (isa(tipo, Vector{GMT.GMTdataset})) ? tipo[1] : tipo
-		(isproj4) ? (obj.proj4 = proj) : (obj.wkt = proj)
-		return nothing
-	end
-	function setproj!(tipo::AbstractArray, ref)
-		(!isa(ref, GMT.GMTgrid) && !isa(ref, GMT.GMTimage) && !isa(ref, GMT.GMTdataset) && !isa(ref, Vector{GMT.GMTdataset})) &&
-			error("Wrong REFERENCE data type for this function. Must be a grid, image or dataset")
-		obj = (isa(ref, Vector{GMT.GMTdataset})) ? ref[1] : ref
-		((prj = obj.proj4) == "") && (prj = obj.wkt)
-		(prj == "") && error("The REFERENCE type is not referenced with either PROJ4 or WKT string")
-		setproj!(tipo, prj)
-	end
 
 	# ------------ Aliases ------------
 	const creategd = create
@@ -2318,7 +2284,7 @@ end
 		creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 		gdalrasterize, gdalbuildvrt, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
-		dither
+		dither, buffer
 
 	const DRIVER_MANAGER = Ref{DriverManager}()
 	const GDALVERSION = Ref{VersionNumber}()
