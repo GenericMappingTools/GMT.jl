@@ -6,19 +6,19 @@ function text_record(data, text, hdr=Vector{String}())
 	if (!isa(data, Array{Float64}))  data = Float64.(data)  end
 
 	if (isa(text, String))
-		T = GMTdataset(data, [text], "", Vector{String}(), "", "")
+		T = GMTdataset(data, [text], "", Vector{String}(), "", "", 0)
 	elseif (isa(text, Array{String}))
 		if (text[1][1] == '>')			# Alternative (but risky) way of setting the header content
-			T = GMTdataset(data, text[2:end], text[1], Vector{String}(), "", "")
+			T = GMTdataset(data, text[2:end], text[1], Vector{String}(), "", "", 0)
 		else
-			T = GMTdataset(data, text, (isempty(hdr) ? "" : hdr), Vector{String}(), "", "")
+			T = GMTdataset(data, text, (isempty(hdr) ? "" : hdr), Vector{String}(), "", "", 0)
 		end
 	elseif (isa(text, Array{Array}) || isa(text, Array{Vector{String}}))
 		nl_t = length(text);	nl_d = length(data)
 		(nl_d > 0 && nl_d != nl_t) && error("Number of data points is not equal to number of text strings.")
 		T = Vector{GMTdataset}(undef,nl_t)
 		for k = 1:nl_t
-			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "")
+			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "", 0)
 		end
 	else
 		error("Wrong type ($(typeof(text))) for the 'text' argin")
@@ -46,7 +46,7 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
      first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
 """
-function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), kwargs...)
+function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs...)
 	d = KW(kwargs)
 
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
@@ -127,24 +127,24 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), kwargs...)
 	if (!isa(mat, Array{Float64}))  mat = Float64.(mat)  end
 	if (isempty(xx))
 		if (ndims(mat) == 3)
-			[D[k] = GMTdataset(view(mat,:,:,k), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt) for k = 1:n_ds]
+			[D[k] = GMTdataset(view(mat,:,:,k), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
 		elseif (!multi)
-			D[1] = GMTdataset(mat, String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt)
+			D[1] = GMTdataset(mat, String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt, geom)
 		else
-			[D[k] = GMTdataset(mat[:,[1,k+1]], String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt) for k = 1:n_ds]
+			[D[k] = GMTdataset(mat[:,[1,k+1]], String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
 		end
 	else
 		if (!multi)
-			D[1] = GMTdataset(hcat(xx,mat), String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt)
+			D[1] = GMTdataset(hcat(xx,mat), String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt, geom)
 		else
-			[D[k] = GMTdataset(hcat(xx,mat[:,k]), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt) for k = 1:n_ds]
+			[D[k] = GMTdataset(hcat(xx,mat[:,k]), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
 		end
 	end
 	return D
 end
 
 # ---------------------------------------------------------------------------------------------------
-function ds2ds(D::GMTdataset; kwargs...)::Vector{GMTdataset}
+function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 	# Take one DS and split it in an array of DS, one for each row and optionally add -G,fill>
 	# So far only for internal use but may grow in function of needs
 	d = KW(kwargs)
@@ -166,7 +166,7 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{GMTdataset}
 
 	Dm = Vector{GMTdataset}(undef, n_ds)
 	for k = 1:n_ds
-		Dm[k] = GMTdataset(D.data[k:k, :], String[], (isempty(_fill) ? "" : hdr[k]), String[], "", "")
+		Dm[k] = GMTdataset(D.data[k:k, :], String[], (isempty(_fill) ? "" : hdr[k]), String[], "", "", 0)
 	end
 	Dm[1].comment = D.comment;	Dm[1].proj4 = D.proj4;	Dm[1].wkt = D.wkt
 	(size(D.text) == n_ds) && [Dm.text[k] = D.text[k] for k = 1:n_ds]

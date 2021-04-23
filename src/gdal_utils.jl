@@ -169,7 +169,7 @@ function gd2gmt_helper(dataset::AbstractString, sds)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{GMTdataset}
+function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdataset}
 	# Convert a geometry into a single GMTdataset
 	if (Gdal.getgeomtype(geom) == Gdal.wkbPolygon)		# getx() doesn't work for polygons
 		geom = Gdal.getgeom(geom,0)
@@ -186,7 +186,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{GMTdataset
 	[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
 	[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
 	(n_dim == 3) && ([mat[k,2] = Gdal.getz(geom, k-1) for k = 1:n_pts])
-	[GMTdataset(mat, String[], "", String[], proj, "")]
+	[GMTdataset(mat, String[], "", String[], proj, "", 0)]
 end
 
 # ---------------------------------------------------------------------------------------------------

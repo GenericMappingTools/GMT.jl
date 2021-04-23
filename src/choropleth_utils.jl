@@ -146,7 +146,7 @@ function mk_codes_values(codes::Vector{String}, vals; region::String="world")
 end
 
 #= --------------------------------------------------------------------------------------------------
-function choropleth(polygs::Vector{GMTdataset}, colorval::Vector{<:Real}; kwargs...)
+function choropleth(polygs::Vector{<:GMTdataset}, colorval::Vector{<:Real}; kwargs...)
 	d = KW(kwargs)
 	data_ids, ind = get_segment_ids(polygs)
 	zvals = make_zvals_vec(polygs, data_ids, colorval)

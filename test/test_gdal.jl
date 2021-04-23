@@ -94,9 +94,12 @@ Gdal.GDALDestroyDriverManager()
 	ds_point = readgd("point.geojson");
 	ds_grid = gdalgrid(ds_point, ["-of","MEM","-outsize","3", "10","-txe","100","100.3","-tye","0","0.1"]);
 	@test getgeotransform(ds_grid) ≈ [100.0,0.1,0.0,0.0,0.0,0.01]
+	ds_point = readgd("point.geojson");
+	layer = Gdal.getlayer(ds_point, 0);
+	feature = Gdal.nextfeature(layer)
+	@test Gdal.asdouble(feature, 0) ≈ 2.0
+	@test Gdal.asstring(feature, 1) == "point-a"
 	show(ds_point)
-	Gdal.getlayer(ds_point, 0)
-	#readgd(ds_grid)
 
 	ds_rasterize = gdalrasterize(ds_point, ["-of","MEM","-tr","0.05","0.05"])
 	@test getgeotransform(ds_rasterize) ≈ [99.975,0.05,0.0,0.1143,0.0,-0.05]
@@ -158,7 +161,7 @@ Gdal.GDALDestroyDriverManager()
 	gdalinfo(ds);
 
 	GMT.get_FillValue("_FillValue=9999")
-	GMT.helper_gmt2gd_xyz(GMT.GMTdataset(rand(Float32,3,3), String[], "", String[], "", ""),3)
+	GMT.helper_gmt2gd_xyz(GMT.GMTdataset(rand(Float32,3,3), String[], "", String[], "", "", 0),3)
 	@test GMT.guess_increment_from_coordvecs([1., 1, 1, 1], [1., 1, 1, 1]) == 1.0
 	@test GMT.helper_find_sds("AA", "xxxxxxxx:AA", findall("\n", @sprintf("aA\nbbbbbnnn\n"))) == "xxx:AA"
 	@test GMT.gd2gmt_helper_scalefac([1  1; 1 1], 2, 0, false, 0) == [2 2; 2 2]
@@ -195,6 +198,9 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.gety(Gdal.getgeom(Gdal.unsafe_getfeature(Gdal.getlayer(ds, 0),0)),1)
 	Gdal.getz(Gdal.getgeom(Gdal.unsafe_getfeature(Gdal.getlayer(ds, 0),0)),1)
 	Gdal.buffer(Gdal.getgeom(Gdal.unsafe_getfeature(Gdal.getlayer(ds, 0),0)), 0.2)
+	Gdal.GDALGetSpatialRef(ds.ptr)
+	Gdal.GDALDatasetGetLayerByName(ds.ptr, "0")
+	Gdal.GDALGetPaletteInterpretation(ds.ptr)
 
 	#Gdal.identifydriver("lixo.gmt")
 	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");

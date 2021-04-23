@@ -63,7 +63,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if (N_args == 0 && arg1 !== nothing)  N_args = 1  end
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
 
-	if ((isa(arg1, GMTdataset) && arg1.proj4 != "" || isa(arg1, Vector{GMTdataset}) &&
+	if ((isa(arg1, GMTdataset) && arg1.proj4 != "" || isa(arg1, Vector{<:GMTdataset}) &&
 		     arg1[1].proj4 != "") && opt_J == " -JX" * def_fig_size)
 		cmd = replace(cmd, opt_J => "-JX" * split(def_fig_size, '/')[1] * "/0")	# If projected, it's a axis equal for sure
 	end
@@ -82,7 +82,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	val, symb = find_in_dict(d, [:E :error :error_bars], false)
 	if (val !== nothing)
 		cmd, arg1 = add_opt(add_opt, (d, cmd, 'E', [symb]),
-                            (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, isa(arg1, GMTdataset) ? arg1.data : (isa(arg1, Array{GMTdataset}) ? arg1[1].data : arg1) )
+                            (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, isa(arg1, GMTdataset) ? arg1.data : (isa(arg1, Vector{<:GMTdataset}) ? arg1[1].data : arg1) )
 		got_Ebars = true
 		del_from_dict(d, [symb])
 	end
@@ -221,7 +221,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		end
 		if (penC != "")  cycle = [penC]  end
 		arg1 = mat2ds(arg1, color=cycle, ls=penS, multi=true)	# Convert to multi-segment GMTdataset
-		D::Vector{GMTdataset} = gmt("gmtinfo -C", arg1)			# But now also need to update the -R string
+		D::Vector{<:GMTdataset} = gmt("gmtinfo -C", arg1)			# But now also need to update the -R string
 		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(D[1].data)))
 	elseif (sub_module == "bar" && check_bar_group(arg1))
 		_cmd[1], arg1 = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
@@ -260,7 +260,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 # Check if a group bar request or just bars. Returns TRUE in first case and FALSE in second
 check_bar_group(arg1) = ( isa(arg1, Array{<:Real,2}) || (eltype(arg1) <: GMTdataset &&
-                          (isa(arg1, Array{GMTdataset}) ? size(arg1[1],2) > 2 : size(arg1,2) > 2)) )::Bool
+                          (isa(arg1, Vector{<:GMTdataset}) ? size(arg1[1],2) > 2 : size(arg1,2) > 2)) )::Bool
 
 # ---------------------------------------------------------------------------------------------------
 function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String}, got_Ebars::Bool, got_usr_R::Bool, arg1)
@@ -279,7 +279,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 		_arg = arg1[:, 1:(n+1)]				# No need to care with GMTdatasets because case was dealt in 'got_Ebars'
 		bars_cols = arg1[:,(n + 2):end]		# We'll use this to appent to the multi-segments
 	else
-		_arg = isa(arg1, GMTdataset) ? deepcopy(arg1.data) : (isa(arg1, Array{GMTdataset}) ? deepcopy(arg1[1].data) : deepcopy(arg1))
+		_arg = isa(arg1, GMTdataset) ? deepcopy(arg1.data) : (isa(arg1, Vector{<:GMTdataset}) ? deepcopy(arg1[1].data) : deepcopy(arg1))
 		bars_cols = missing
 	end
 
