@@ -34,11 +34,38 @@ function setproj!(dataset::AbstractDataset, projstring::AbstractString)
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    buffer(geom::AbstractGeometry, dist::Real, quadsegs::Integer = 30)
+or
+    buffer(geom::GMTdataset, dist::Real, quadsegs::Integer = 30)
+
+Compute buffer of geometry.
+
+Builds a new geometry containing the buffer region around the geometry on which
+it is invoked. The buffer is a polygon containing the region within the buffer
+distance of the original geometry.
+
+Some buffer sections are properly described as curves, but are converted to
+approximate polygons. The `quadsegs` parameter can be used to control how many
+segments should be used to define a 90 degree curve - a quadrant of a circle.
+A value of 30 is a reasonable default. Large values result in large numbers of
+vertices in the resulting buffer geometry while small numbers reduce the
+accuracy of the result.
+
+### Parameters
+* `geom`: the geometry. This can either be a GDAL type or a GMTdataset (or vector of it), or a Matrix
+* `dist`: the buffer distance to be applied. Should be expressed into the
+    same unit as the coordinates of the geometry.
+* `quadsegs`: the number of segments used to approximate a 90 degree (quadrant) of curvature.
+
+### Returns
+A GMT dataset when input is a Matrix or a GMT type, or a GDAL IGeometry otherwise
+"""
 buffer(geom::AbstractGeometry, dist::Real, quadsegs::Integer=30) = IGeometry(OGR_G_Buffer(geom.ptr, dist, quadsegs))
 function buffer(D::AbstractArray, dist::Real, quadsegs::Integer=30)
-	(isa(D, Matrix{<:Real})) && (D = mat2ds(D))
+	(isa(D, Vector{<:Real})) && error("Input data cannot be a Vector of numbers. In this case it must be a Matrix")
 	ds = gmt2gd(D)
-	geom = getgeom(ds)
+	geom = getgeom(unsafe_getfeature(getlayer(ds, 0),0))
 	ig = IGeometry(OGR_G_Buffer(geom.ptr, dist, quadsegs))
 	gd2gmt(ig)
 end
