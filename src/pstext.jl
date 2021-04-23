@@ -99,7 +99,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	if (isa(arg1, Array{<:Number}))
-		arg1 = [GMTdataset(arg1, Array{String,1}(), "", Array{String,1}(), "", "")]
+		arg1 = [GMTdataset(arg1, Array{String,1}(), "", Array{String,1}(), "", "", 0)]
 	end
 
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1)

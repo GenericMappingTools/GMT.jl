@@ -67,14 +67,14 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_QN_sphdst(d::Dict, symbs::Array{Array{Symbol,2},1}, cmd::String, arg1, arg2)
-	(show_kwargs[1]) && print_kwarg_opts(symbs[1], "Array{GMTdataset} | GMTdataset | Array | Number | String")
-	(show_kwargs[1]) && return print_kwarg_opts(symbs[3], "Array{GMTdataset} | GMTdataset | Array | Number | String")
+	(show_kwargs[1]) && print_kwarg_opts(symbs[1], "Vector{GMTdataset} | GMTdataset | Array | Number | String")
+	(show_kwargs[1]) && return print_kwarg_opts(symbs[3], "Vector{GMTdataset} | GMTdataset | Array | Number | String")
 	N_used = (arg1 === nothing) ?  0 : 1
 	flags ="QN"			# Process option -Q & -N
 	for k = 1:2
 		if ((val = find_in_dict(d, symbs[k])[1]) !== nothing)
 			cmd *= " -" * flags[k]
-			if (isa(val, GMTdataset) || isa(val, Array{<:GMTdataset}) || (isa(val, Array{<:Number}) && k == 2) )
+			if (isa(val, GMTdataset) || isa(val, Vector{<:GMTdataset}) || (isa(val, Array{<:Number}) && k == 2) )
 				(N_used == 0) ? arg1 = val : arg2 = val
 			else
 				cmd *= arg2str(val)

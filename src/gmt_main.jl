@@ -96,6 +96,7 @@ mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 	comment::Array{String,1}
 	proj4::String
 	wkt::String
+	geom::Integer
 	#GMTdataset(data, text, header, comment, proj4, wkt) = new(data, text, header, comment, proj4, wkt)
 	#GMTdataset(data, text) = new(data, text, string(), Array{String,1}(), string(), string())
 	#GMTdataset(data) = new(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
@@ -108,17 +109,17 @@ Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int,N}) where {T,N} = D.dat
 Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}}, ::Type{ElType}) where ElType
 	D = find4similar(bc.args)		# Scan the inputs for the GMTdataset:
-	GMTdataset(D.data, D.text, D.header, D.comment, D.proj4, D.wkt)
+	GMTdataset(D.data, D.text, D.header, D.comment, D.proj4, D.wkt, D.geom)
 end
 find4similar(D::GMTdataset, rest) = D
 
-GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, text, "", Vector{String}(), "", "")
-GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], "", Vector{String}(), "", "")
-GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Vector{String}(), "", Vector{String}(), "", "")
-GMTdataset(data::Array{Float32,2}, text::Vector{String}) = GMTdataset(data, text, "", Vector{String}(), "", "")
-GMTdataset(data::Array{Float32,2}, text::String) = GMTdataset(data, [text], "", Vector{String}(), "", "")
-GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Vector{String}(), "", Vector{String}(), "", "")
-GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Vector{String}(), "", Vector{String}(), "", "")
+GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, text, "", Vector{String}(), "", "", 0)
+GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], "", Vector{String}(), "", "", 0)
+GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Vector{String}(), "", Vector{String}(), "", "", 0)
+GMTdataset(data::Array{Float32,2}, text::Vector{String}) = GMTdataset(data, text, "", Vector{String}(), "", "", 0)
+GMTdataset(data::Array{Float32,2}, text::String) = GMTdataset(data, [text], "", Vector{String}(), "", "", 0)
+GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Vector{String}(), "", Vector{String}(), "", "", 0)
+GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Vector{String}(), "", Vector{String}(), "", "", 0)
 
 struct WrapperPluto fname::String end
 
@@ -983,7 +984,7 @@ function dataset_init_(API::Ptr{Nothing}, Darr, direction::Integer, actual_famil
 
 	(Darr == C_NULL) && error("Input is empty where it can't be.")
 	if (isa(Darr, GMTdataset))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
-	if (!(isa(Darr, Array{<:GMTdataset,1})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
+	if (!(isa(Darr, Vector{<:GMTdataset})))	# Got a matrix as input, pass data pointers via MATRIX to save memory
 		D = dataset_init(API, Darr, direction, actual_family)
 		return D
 	end
@@ -1222,13 +1223,13 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 			if (hdr != "")  hdr = rstrip(hdr, ',')  end		# Strip last ','
 			if (OGR_F.n_islands == 0)
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-				                   Array{String,1}(), hdr, Array{String,1}(), proj4, wkt)
+				                   Vector{String}(), hdr, Vector{String}(), proj4, wkt, 0)
 			else
 				# In this case, for the time being, I'm droping the islands
 				islands = reshape(unsafe_wrap(Array, OGR_F.islands, 2 * (OGR_F.n_islands+1)), OGR_F.n_islands+1, 2) 
 				np_main = islands[1,2]+1		# Number of points of outer ring
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main)],
-				                   Array{String,1}(), hdr, Array{String,1}(), proj4, wkt)
+				                   Vector{String}(), hdr, Vector{String}(), proj4, wkt, 0)
 
 				if (!drop_islands)
 					for k = 2:size(islands,2)		# 2 because first row holds the outer ring indexes 
@@ -1236,7 +1237,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 						off = islands[k,1] * 8
 						len = islands[k,2] - islands[k,1] + 1
 						D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x+off, len) unsafe_wrap(Array, OGR_F.y+off, len)],
-						                   Array{String,1}(), " -Ph", Array{String,1}(), proj4, wkt)
+						                   Vector{String}(), " -Ph", Vector{String}(), proj4, wkt, 0)
 					end
 				end
 			end
@@ -1382,7 +1383,7 @@ function Base.:show(io::IO, G::GMTimage)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function Base.:show(io::IO, ::MIME"text/plain", D::Array{<:GMTdataset})
+function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
 	println(typeof(D), " with ", length(D), " segments")
 	(length(D) == 0) && return
 	(~isempty(D[1].comment)) && println("Comment:\t", D[1].comment)
