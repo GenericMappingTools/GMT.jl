@@ -45,6 +45,7 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
      can be an array with same size as ``mat``rows or a string (will be reapeated n_rows times.) 
   - `multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
      first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
+  - `datatype` Keep the original data type of `mat`. Default, converts to Float64
 """
 function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs...)
 	d = KW(kwargs)
@@ -124,8 +125,11 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs.
 
 	D = Vector{GMTdataset}(undef, n_ds)
 
-	if (!isa(mat, Array{Float64}))  mat = Float64.(mat)  end
-	if (isempty(xx))
+	# By default convert to Doubles, except if instructed to NOT to do it.
+	(find_in_dict(d, [:datatype])[1] === nothing) && (eltype(mat) != Float64) && (mat = Float64.(mat))
+	geom = (geom == 0 && (2 <= length(mat) <= 3)) ? Gdal.wkbPoint : Gdal.wkbUnknown	# Guess geom
+	(multi && geom == 0 && size(mat,1) == 1) && (geom = Gdal.wkbPoint)	# One row with many columns and MULTI => Points
+	if (isempty(xx))				# No coordinates transmitted
 		if (ndims(mat) == 3)
 			[D[k] = GMTdataset(view(mat,:,:,k), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
 		elseif (!multi)
