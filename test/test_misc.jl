@@ -80,13 +80,6 @@
 	text_record(Array[["aa", "bb"],["cc", "dd", "ee"]]);
 	text_record([["aa", "bb"],["cc", "dd", "ee"]]);
 
-	G = mat2grid(rand(Float32, 4,4));
-	GMT.setproj!(G, "+proj=longlat")
-	@test G.proj4 == "+proj=longlat"
-	I = mat2img(rand(UInt8, 4,4));
-	GMT.setproj!(I, G)
-	@test I.proj4 == "+proj=longlat"
-
 	# TEST THE API DIRECTLY (basically to improve coverage under GMT6)
 	PS = plot(rand(3,2), ps=1);
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);

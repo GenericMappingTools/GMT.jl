@@ -24,6 +24,8 @@ if (got_it)					# Otherwise go straight to end
 
 	println("		Entering: test_gdal.jl")
 	include("test_gdal.jl")			# Fcks the automatic registering because building docs fails
+	println("		Entering: test_gd_ext.jl")
+	include("test_gd_ext.jl")
 	println("		Entering: test_common_opts.jl")
 	include("test_common_opts.jl")
 	println("		Entering: test_B-GMTs.jl")
