@@ -186,7 +186,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 	[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
 	[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
 	(n_dim == 3) && ([mat[k,2] = Gdal.getz(geom, k-1) for k = 1:n_pts])
-	[GMTdataset(mat, String[], "", String[], proj, "", 0)]
+	[GMTdataset(mat, String[], "", String[], proj, "", Gdal.getgeomtype(geom))]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -201,9 +201,12 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 		proj = ((p = getproj(layer)) != C_NULL) ? toPROJ4(p) : ""
 		while ((feature = Gdal.nextfeature(layer)) !== nothing)
 			for j = 0:Gdal.ngeom(feature)-1
-				_D = gd2gmt(Gdal.getgeom(feature, j), proj)
+				geom = Gdal.getgeom(feature, j)
+				_D = gd2gmt(geom, proj)
+				gt = Gdal.getgeomtype(geom)
 				for d in _D
 					D[ds] = d
+					D[ds].geom = gt
 					ds += 1
 				end
 			end
@@ -318,11 +321,12 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	(n_cols < 2) && error("GMTdataset must have at least 2 columns")
 
 	geometry = lowercase(geometry)
-	ispolyg  = occursin("poly", geometry);		ismultipolyg = (length(D) > 1)
-	isline   = occursin("line", geometry);		ismultiline  = (length(D) > 1)
-	ispoint  = occursin("point", geometry);		ismultipoint = (length(D) > 1)
+	ismulti  = (length(D) > 1)
+	ispolyg  = occursin("poly", geometry);
+	isline   = occursin("line", geometry);
+	ispoint  = occursin("point", geometry);
 	(geometry != "" && !isline && !ispoint && !ispolyg) && error("Geometry $(geometry) not yet implemented")
-	if (!isline && !ispoint && !ispolyg)		# If all multi-segments are closed create a Polygon/MultiPolygon
+	if (D[1].geom == 0 && !isline && !ispoint && !ispolyg)	# If all multi-segments are closed create a Polygon/MultiPolygon
 		ispolyg = true
 		for k = 1:length(D)
 			(D[k].data[1,1:2] != D[k].data[end,1:2]) && (ispolyg = false; break)
@@ -337,10 +341,10 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	else                       sr = Gdal.ISpatialRef(C_NULL)
 	end
 
-	if (ispolyg)
+	if (ispolyg || D[1].geom == Gdal.wkbPolygon || D[1].geom == Gdal.wkbMultiPolygon)	# If guessed or in Dataset
 		geom_code, geom_cmd = (length(D) == 1) ? (Gdal.wkbPolygon, Gdal.createpolygon()) :
 		                                         (Gdal.wkbMultiPolygon, Gdal.createmultipolygon())
-	elseif (isline)
+	elseif (isline || D[1].geom == Gdal.wkbLineString || D[1].geom == Gdal.wkbMultiLineString)
 		geom_code, geom_cmd = (length(D) == 1) ? (Gdal.wkbLineString, Gdal.createlinestring()) :
 		                                         (Gdal.wkbMultiLineString, Gdal.createmultilinestring())
 	else
@@ -352,8 +356,8 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	feature = Gdal.unsafe_createfeature(layer)
 	geom = geom_cmd
 
-	if (ispolyg)
-		if (ismultipolyg)
+	if (ispolyg || D[1].geom == Gdal.wkbPolygon || D[1].geom == Gdal.wkbMultiPolygon)
+		if (ismulti)
 			for k = 1:length(D)
 				poly = Gdal.creategeom(Gdal.wkbPolygon)
 				Gdal.addgeom!(geom, Gdal.addgeom!(poly, makering(D[k].data)))
@@ -362,8 +366,8 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 			[Gdal.addgeom!(geom, makering(D[k].data)) for k = 1:length(D)]
 		end
 		Gdal.setgeom!(feature, geom)
-	elseif (isline)
-		if (ismultiline)
+	elseif (isline || D[1].geom == Gdal.wkbLineString || D[1].geom == Gdal.wkbMultiLineString)
+		if (ismulti)
 			for k = 1:length(D)
 				line = Gdal.creategeom(Gdal.wkbLineString)
 				x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
@@ -377,8 +381,8 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 			                Gdal.OGR_G_SetPoints(geom.ptr, size(D[1].data, 1), x, 8, y, 8, z, 8)
 		end
 		Gdal.setgeom!(feature, geom)
-	elseif (ispoint)
-		if (ismultipoint)
+	elseif (ispoint || D[1].geom == Gdal.wkbPoint || D[1].geom == Gdal.wkbMultiPoint)
+		if (ismulti)
 			for k = 1:length(D)
 				x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
 				if (n_cols == 2)
@@ -393,6 +397,8 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 			                Gdal.OGR_G_SetPoints(geom.ptr, size(D[1].data, 1), x, 8, y, 8, z, 8)
 		end
 		Gdal.setgeom!(feature, geom)
+	else
+		@warn("Geometries with geometry code $(D[1].geom) are not yet implemented")
 	end
 
 	Gdal.setfeature!(layer, feature)
