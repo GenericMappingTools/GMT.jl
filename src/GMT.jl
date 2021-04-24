@@ -79,7 +79,7 @@ export
 	blendimg!, creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 	importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 	gdalrasterize, gdalbuildvrt, gdalshade, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
-	dither, buffer, gd2gmt, gmt2gd, varspacegrid, MODIS_L2
+	dither, buffer, centroid, gd2gmt, gmt2gd, intersection, intersects, polyunion, varspacegrid, MODIS_L2
 
 include("common_docs.jl")
 include("libgmt_h.jl")
