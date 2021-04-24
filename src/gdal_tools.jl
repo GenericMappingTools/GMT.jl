@@ -98,7 +98,7 @@ end
 * `kw` are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options
 
 ### Returns
-A GMT datase, or a GDAL dataset (or nothing if file was writen on disk).
+A GMT dataset, or a GDAL dataset (or nothing if file was writen on disk).
 """
 function gdalvectortranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
 	helper_run_GDAL_fun(gdalvectortranslate, indata, dest, opts, "", kwargs...)

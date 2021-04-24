@@ -79,7 +79,7 @@ export
 	blendimg!, creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 	importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 	gdalrasterize, gdalbuildvrt, gdalshade, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
-	dither, gd2gmt, gmt2gd, varspacegrid, MODIS_L2
+	dither, buffer, centroid, gd2gmt, gmt2gd, intersection, intersects, polyunion, varspacegrid, MODIS_L2
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -91,6 +91,7 @@ include("utils_types.jl")
 include("grd_operations.jl")
 include("common_options.jl")
 include("gmtbegin.jl")
+include("blendimg.jl")
 include("blocks.jl")
 include("contourf.jl")
 include("filter1d.jl")
@@ -195,8 +196,8 @@ function __init__(test::Bool=false)
 
 	if (GMTver == v"0.0" || test)
 		println("\n\nYou don't seem to have GMT installed and I don't install it automatically.\nYou will have to do it yourself.")
-		t = "\n\t\t https://github.com/GenericMappingTools/gmt/releases"
-		if (Sys.iswindows())    println("Download and install the official version at (the '..._win64.exe':" * t)
+		if (Sys.iswindows())    println("Download and install the official version at (the '..._win64.exe':" *
+		                                "\n\t\t https://github.com/GenericMappingTools/gmt/releases")
 		elseif (Sys.isapple())  println("Install GMT with Homebrew: brew install gmt ghostscript ffmpeg")
 		else                    println("https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md#linux")
 		end

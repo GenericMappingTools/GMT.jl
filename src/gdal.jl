@@ -426,6 +426,9 @@ OGR_G_ExportToWkt(a1, a2) = acare(ccall((:OGR_G_ExportToWkt, libgdal), Cint, (pV
 OGR_G_ExportToKML(a1, altMode) = acare(ccall((:OGR_G_ExportToKML, libgdal), Cstring, (pVoid, Cstring), a1, altMode), false)
 OGR_G_ForceTo(hGeom, eTargetType, pOpts) =
 	acare(ccall((:OGR_G_ForceTo, libgdal), pVoid, (pVoid, UInt32, Ptr{Cstring}), hGeom, eTargetType, pOpts))
+OGR_G_ForceToPolygon(a1) = acare(ccall((:OGR_G_ForceToPolygon, libgdal), pVoid, (pVoid,), a1))
+OGR_G_ForceToMultiPolygon(a1) = acare(ccall((:OGR_G_ForceToMultiPolygon, libgdal), pVoid, (pVoid,), a1))
+OGR_G_ForceToMultiPoint(a1) = acare(ccall((:OGR_G_ForceToMultiPoint, libgdal), pVoid, (pVoid,), a1))
 OGR_G_GetCoordinateDimension(a1) = acare(ccall((:OGR_G_GetCoordinateDimension, libgdal), Cint, (pVoid,), a1))
 OGR_G_GetGeometryCount(a1) = acare(ccall((:OGR_G_GetGeometryCount, libgdal), Cint, (pVoid,), a1))
 OGR_G_GetGeometryType(a1) = acare(ccall((:OGR_G_GetGeometryType, libgdal), UInt32, (pVoid,), a1))
@@ -438,6 +441,8 @@ OGR_G_GetZ(a1, a2) = acare(ccall((:OGR_G_GetZ, libgdal), Cdouble, (pVoid, Cint),
 OGR_G_GetPoint(a1, iPoint, a2, a3, a4) =
 	acare(ccall((:OGR_G_GetPoint, libgdal), Cvoid, (pVoid, Cint, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}), a1, iPoint, a2, a3, a4))
 
+OGR_G_Intersects(a1, a2) = acare(ccall((:OGR_G_Intersects, libgdal), Cint, (pVoid, pVoid), a1, a2))
+
 OGR_G_SetPoints(hGeom, nPointsIn, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride) =
 	acare(ccall((:OGR_G_SetPoints, libgdal), Cvoid, (pVoid, Cint, pVoid, Cint, pVoid, Cint, pVoid, Cint), hGeom, nPointsIn, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride))
 
@@ -446,10 +451,6 @@ OGR_G_SetPoint(a1, iPt, a2, a3, a4) =
 
 OGR_G_SetPoint_2D(a1, iPt, a2, a3) =
 	acare(ccall((:OGR_G_SetPoint_2D, libgdal), Cvoid, (pVoid, Cint, Cdouble, Cdouble), a1, iPt, a2, a3))
-
-OGR_G_ForceToPolygon(a1) = acare(ccall((:OGR_G_ForceToPolygon, libgdal), pVoid, (pVoid,), a1))
-OGR_G_ForceToMultiPolygon(a1) = acare(ccall((:OGR_G_ForceToMultiPolygon, libgdal), pVoid, (pVoid,), a1))
-OGR_G_ForceToMultiPoint(a1) = acare(ccall((:OGR_G_ForceToMultiPoint, libgdal), pVoid, (pVoid,), a1))
 
 OGR_L_CreateFeature(a1, a2) = acare(ccall((:OGR_L_CreateFeature, libgdal), Cint, (pVoid, pVoid), a1, a2))
 OGR_L_GetFeature(a1, a2) = acare(ccall((:OGR_L_GetFeature, libgdal), pVoid, (pVoid, Clonglong), a1, a2))
@@ -831,12 +832,6 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		@assert length(transform) == 6
 		result = GDALSetGeoTransform(dataset.ptr, pointer(transform))
 		@cplerr result "Failed to transform raster dataset"
-		return dataset
-	end
-
-	function setproj!(dataset::AbstractDataset, projstring::AbstractString)
-		result = GDALSetProjection(dataset.ptr, projstring)
-		@cplerr result "Could not set projection"
 		return dataset
 	end
 
@@ -1506,24 +1501,10 @@ end
 	gdalvectortranslate(ds::GMT.GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
 	gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
 
-	buffer(geom::AbstractGeometry, dist::Real, quadsegs::Integer=30) = IGeometry(OGR_G_Buffer(geom.ptr, dist, quadsegs))
 	geomarea(geom::AbstractGeometry) = OGR_G_Area(geom.ptr)
 	geomlength(geom::AbstractGeometry) = OGR_G_Length(geom.ptr)
-	union(g1::AbstractGeometry, g2::AbstractGeometry) = IGeometry(OGR_G_Union(g1.ptr, g2.ptr))
-	intersection(g1::AbstractGeometry, g2::AbstractGeometry) = IGeometry(OGR_G_Intersection(g1.ptr, g2.ptr))
 
 	geomname(geom::AbstractGeometry) = OGR_G_GetGeometryName(geom.ptr)
-
-	function centroid!(geom::AbstractGeometry, centroid::AbstractGeometry)
-		result = OGR_G_Centroid(geom.ptr, centroid.ptr)
-		@ogrerr result "Failed to compute the geometry centroid"
-		return centroid
-	end
-	function centroid(geom::AbstractGeometry)
-		point = createpoint()
-		centroid!(geom, point)
-		return point
-	end
 
 	function fromWKT(data::Vector{String})
 		geom = Ref{pVoid}()
@@ -2114,7 +2095,6 @@ end
 	end
 
 	# assumes that the layer is reset, and will reset it after display
-##
 	function Base.show(io::IO, layer::AbstractFeatureLayer)
 		layer.ptr == C_NULL && (return println(io, "NULL Layer"))
 		layergeomtype = getgeomtype(layer)
@@ -2175,8 +2155,6 @@ end
 		end
 		n > 5 && print(io, "...\n Number of Fields: $n")
 	end
-##
-
 
 	function Base.show(io::IO, featuredefn::AbstractFeatureDefn)
 		featuredefn.ptr == C_NULL && (return print(io, "NULL FeatureDefn"))
@@ -2276,35 +2254,8 @@ end
 		return nothing
 	end
 
+	include("gdal_extensions.jl")
 	include("gdal_tools.jl")
-
-	# ---------------------------------------------------------------------------------------------------
-	"""
-		setproj!(type, proj)
-
-	Set a referencing system to the `type` object. This object can be a `GMTgrid`, a `GMTimage` or a
-	`GMTdataset`.
-
-	- `proj` Is either a Proj4 string or a WKT. Alternatively, it can also be another grid, image or dataset
-			type, in which case its referencing system is copied into `type`
-	"""
-	function setproj!(tipo::AbstractArray, proj::String="")
-		(!isa(tipo, GMT.GMTgrid) && !isa(tipo, GMT.GMTimage) && !isa(tipo, GMT.GMTdataset) && !isa(tipo, Vector{GMT.GMTdataset})) &&
-			error("Wrong data type for this function. Must be a grid, image or dataset")
-		(proj == "") && error("the projection string cannot obviously be empty")
-		isproj4 = (startswith(proj, "+proj") !== nothing)
-		obj = (isa(tipo, Vector{GMT.GMTdataset})) ? tipo[1] : tipo
-		(isproj4) ? (obj.proj4 = proj) : (obj.wkt = proj)
-		return nothing
-	end
-	function setproj!(tipo::AbstractArray, ref)
-		(!isa(ref, GMT.GMTgrid) && !isa(ref, GMT.GMTimage) && !isa(ref, GMT.GMTdataset) && !isa(ref, Vector{GMT.GMTdataset})) &&
-			error("Wrong REFERENCE data type for this function. Must be a grid, image or dataset")
-		obj = (isa(ref, Vector{GMT.GMTdataset})) ? ref[1] : ref
-		((prj = obj.proj4) == "") && (prj = obj.wkt)
-		(prj == "") && error("The REFERENCE type is not referenced with either PROJ4 or WKT string")
-		setproj!(tipo, prj)
-	end
 
 	# ------------ Aliases ------------
 	const creategd = create
@@ -2318,7 +2269,7 @@ end
 		creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 		gdalrasterize, gdalbuildvrt, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
-		dither
+		dither, buffer, centroid, intersection, intersects, polyunion
 
 	const DRIVER_MANAGER = Ref{DriverManager}()
 	const GDALVERSION = Ref{VersionNumber}()
