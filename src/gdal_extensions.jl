@@ -69,3 +69,67 @@ function buffer(D::AbstractArray, dist::Real, quadsegs::Integer=30)
 	ig = IGeometry(OGR_G_Buffer(geom.ptr, dist, quadsegs))
 	gd2gmt(ig)
 end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    centroid(geom::AbstractGeometry)
+
+Compute the geometry centroid.
+
+The centroid is not necessarily within the geometry.
+
+(This method relates to the SFCOM ISurface::get_Centroid() method however the current implementation
+based on GEOS can operate on other geometry types such as multipoint, linestring, geometrycollection
+such as multipolygons. OGC SF SQL 1.1 defines the operation for surfaces (polygons). SQL/MM-Part 3
+defines the operation for surfaces and multisurfaces (multipolygons).)
+"""
+function centroid(geom::AbstractGeometry)
+	point = createpoint()
+	centroid!(geom, point)
+	return point
+end
+function centroid(D::AbstractArray)
+	(isa(D, Vector{<:Real})) && error("Input data cannot be a Vector of numbers. In this case it must be a Matrix")
+	ds = gmt2gd(D)
+	geom = getgeom(unsafe_getfeature(getlayer(ds, 0),0))
+	ig = centroid(geom)
+	gd2gmt(ig)
+end
+function centroid!(geom::AbstractGeometry, centroid::AbstractGeometry)
+	result = OGR_G_Centroid(geom.ptr, centroid.ptr)
+	@ogrerr result "Failed to compute the geometry centroid"
+	return centroid
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    intersection(g1::AbstractGeometry, g2::AbstractGeometry)
+
+Returns a new geometry representing the intersection of the geometries, or NULL
+if there is no intersection or an error occurs.
+
+Generates a new geometry which is the region of intersection of the two
+geometries operated on. The OGR_G_Intersects() function can be used to test if
+two geometries intersect.
+"""
+intersection(g1::AbstractGeometry, g2::AbstractGeometry) = IGeometry(OGR_G_Intersection(g1.ptr, g2.ptr))
+function intersection(D1, D2)
+	ds1 = gmt2gd(D1)
+	ds2 = gmt2gd(D2)
+	g1  = getgeom(unsafe_getfeature(getlayer(ds1, 0),0))
+	g2  = getgeom(unsafe_getfeature(getlayer(ds2, 0),0))
+	ig = intersection(g1, g2)
+	gd2gmt(ig)
+end
+
+"""
+    intersects(g1::AbstractGeometry, g2::AbstractGeometry)
+
+Returns whether the geometries intersect
+
+Determines whether two geometries intersect. If GEOS is enabled, then this is done in rigorous fashion
+otherwise`true` is returned if the envelopes (bounding boxes) of the two geometries overlap.
+"""
+intersects(g1::AbstractGeometry, g2::AbstractGeometry) = Bool(OGR_G_Intersects(g1.ptr, g2.ptr))
+
+polyunion(g1::AbstractGeometry, g2::AbstractGeometry) = IGeometry(OGR_G_Union(g1.ptr, g2.ptr))
