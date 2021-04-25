@@ -186,7 +186,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 	[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
 	[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
 	(n_dim == 3) && ([mat[k,2] = Gdal.getz(geom, k-1) for k = 1:n_pts])
-	[GMTdataset(mat, String[], "", String[], proj, "", Gdal.getgeomtype(geom))]
+	[GMTdataset(mat, String[], "", String[], proj, "", Gdal.wkbPolygon)]
 end
 
 # ---------------------------------------------------------------------------------------------------
