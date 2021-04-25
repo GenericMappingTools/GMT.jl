@@ -159,6 +159,22 @@ const _FETCHGEOM = Dict{UInt32, String}(
 	wkbCurvePolygon       => "Curve Polygon"
 )
 
+struct OGREnvelope
+	MinX::Cdouble
+	MaxX::Cdouble
+	MinY::Cdouble
+	MaxY::Cdouble
+end
+
+struct OGREnvelope3D
+	MinX::Cdouble
+	MaxX::Cdouble
+	MinY::Cdouble
+	MaxY::Cdouble
+	MinZ::Cdouble
+	MaxZ::Cdouble
+end
+
 struct GDALRasterIOExtraArg
 	nVersion::Cint
 	eResampleAlg::UInt32
@@ -410,18 +426,24 @@ OGR_GFld_GetType(a1) = acare(ccall((:OGR_GFld_GetType, libgdal), UInt32, (pVoid,
 OGR_Fld_Set(a1, a2, a3, a4, a5, a6) =
 	acare(ccall((:OGR_Fld_Set, libgdal), Cvoid, (pVoid, Cstring, UInt32, Cint, Cint, UInt32), a1, a2, a3, a4, a5, a6))
 
-OGR_G_Centroid(a1, a2) = acare(ccall((:OGR_G_Centroid, libgdal), Cint, (pVoid, pVoid), a1, a2))
 OGR_G_Area(a1) = acare(ccall((:OGR_G_Area, libgdal), Cdouble, (pVoid,), a1))
-OGR_G_Length(a1) = acare(ccall((:OGR_G_Length, libgdal), Cdouble, (pVoid,), a1))
-OGR_G_Union(a1, a2) = acare(ccall((:OGR_G_Union, libgdal), pVoid, (pVoid, pVoid), a1, a2))
-OGR_G_Intersection(a1, a2) = acare(ccall((:OGR_G_Intersection, libgdal), pVoid, (pVoid, pVoid), a1, a2))
-OGR_G_Buffer(a1, a2, a3) = acare(ccall((:OGR_G_Buffer, libgdal), pVoid, (pVoid, Cdouble, Cint), a1, a2, a3))
-
 OGR_G_AddGeometry(a1, a2) = acare(ccall((:OGR_G_AddGeometry, libgdal), Cint, (pVoid, pVoid), a1, a2))
 OGR_G_AddGeometryDirectly(a1, a2) = acare(ccall((:OGR_G_AddGeometryDirectly, libgdal), Cint, (pVoid, pVoid), a1, a2))
+OGR_G_Boundary(a1) = acare(ccall((:OGR_G_Boundary, libgdal), pVoid, (pVoid,), a1))
+OGR_G_Buffer(a1, a2, a3) = acare(ccall((:OGR_G_Buffer, libgdal), pVoid, (pVoid, Cdouble, Cint), a1, a2, a3))
+OGR_G_Centroid(a1, a2) = acare(ccall((:OGR_G_Centroid, libgdal), Cint, (pVoid, pVoid), a1, a2))
 OGR_G_Clone(a1) = acare(ccall((:OGR_G_Clone, libgdal), pVoid, (pVoid,), a1))
+OGR_G_Contains(a1, a2) = acare(ccall((:OGR_G_Contains, libgdal), Cint, (pVoid, pVoid), a1, a2))
+OGR_G_ConvexHull(a1) = acare(ccall((:OGR_G_ConvexHull, libgdal), pVoid, (pVoid,), a1))
 OGR_G_CreateGeometry(a1) = acare(ccall((:OGR_G_CreateGeometry, libgdal), pVoid, (UInt32,), a1))
+OGR_G_Crosses(a1, a2) = acare(ccall((:OGR_G_Crosses, libgdal), Cint, (pVoid, pVoid), a1, a2))
+OGR_G_DelaunayTriangulation(hThis, tol, edges) = acare(ccall((:OGR_G_DelaunayTriangulation, libgdal), pVoid, (pVoid, Cdouble, Cint), hThis, tol, edges))
 OGR_G_DestroyGeometry(a1) = acare(ccall((:OGR_G_DestroyGeometry, libgdal), Cvoid, (pVoid,), a1))
+OGR_G_Difference(a1, a2) = acare(ccall((:OGR_G_Difference, libgdal), pVoid, (pVoid, pVoid), a1, a2))
+OGR_G_Distance(a1, a2) = acare(ccall((:OGR_G_Distance, libgdal), Cdouble, (pVoid, pVoid), a1, a2))
+OGR_G_Disjoint(a1, a2) = acare(ccall((:OGR_G_Disjoint, libgdal), Cint, (pVoid, pVoid), a1, a2))
+OGR_G_Equals(a1, a2) = acare(ccall((:OGR_G_Equals, libgdal), Cint, (pVoid, pVoid), a1, a2))
+OGR_G_SymDifference(a1, a2) = acare(ccall((:OGR_G_SymDifference, libgdal), pVoid, (pVoid, pVoid), a1, a2))
 OGR_G_ExportToWkt(a1, a2) = acare(ccall((:OGR_G_ExportToWkt, libgdal), Cint, (pVoid, Ptr{Cstring}), a1, a2))
 OGR_G_ExportToKML(a1, altMode) = acare(ccall((:OGR_G_ExportToKML, libgdal), Cstring, (pVoid, Cstring), a1, altMode), false)
 OGR_G_ForceTo(hGeom, eTargetType, pOpts) =
@@ -430,6 +452,8 @@ OGR_G_ForceToPolygon(a1) = acare(ccall((:OGR_G_ForceToPolygon, libgdal), pVoid, 
 OGR_G_ForceToMultiPolygon(a1) = acare(ccall((:OGR_G_ForceToMultiPolygon, libgdal), pVoid, (pVoid,), a1))
 OGR_G_ForceToMultiPoint(a1) = acare(ccall((:OGR_G_ForceToMultiPoint, libgdal), pVoid, (pVoid,), a1))
 OGR_G_GetCoordinateDimension(a1) = acare(ccall((:OGR_G_GetCoordinateDimension, libgdal), Cint, (pVoid,), a1))
+OGR_G_GetEnvelope(a1, a2) = acare(ccall((:OGR_G_GetEnvelope, libgdal), Cvoid, (pVoid, Ptr{OGREnvelope}), a1, a2))
+OGR_G_GetEnvelope3D(a1, a2) = acare(ccall((:OGR_G_GetEnvelope3D, libgdal), Cvoid, (pVoid, Ptr{OGREnvelope3D}), a1, a2))
 OGR_G_GetGeometryCount(a1) = acare(ccall((:OGR_G_GetGeometryCount, libgdal), Cint, (pVoid,), a1))
 OGR_G_GetGeometryType(a1) = acare(ccall((:OGR_G_GetGeometryType, libgdal), UInt32, (pVoid,), a1))
 OGR_G_GetGeometryName(a1) = acare(ccall((:OGR_G_GetGeometryName, libgdal), Cstring, (pVoid,), a1), false)
@@ -441,7 +465,15 @@ OGR_G_GetZ(a1, a2) = acare(ccall((:OGR_G_GetZ, libgdal), Cdouble, (pVoid, Cint),
 OGR_G_GetPoint(a1, iPoint, a2, a3, a4) =
 	acare(ccall((:OGR_G_GetPoint, libgdal), Cvoid, (pVoid, Cint, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}), a1, iPoint, a2, a3, a4))
 
+OGR_G_Intersection(a1, a2) = acare(ccall((:OGR_G_Intersection, libgdal), pVoid, (pVoid, pVoid), a1, a2))
 OGR_G_Intersects(a1, a2) = acare(ccall((:OGR_G_Intersects, libgdal), Cint, (pVoid, pVoid), a1, a2))
+OGR_G_Length(a1) = acare(ccall((:OGR_G_Length, libgdal), Cdouble, (pVoid,), a1))
+OGR_G_Overlaps(a1, a2) = acare(ccall((:OGR_G_Overlaps, libgdal), Cint, (pVoid, pVoid), a1, a2))
+OGR_G_Polygonize(a1) = acare(ccall((:OGR_G_Polygonize, libgdal), pVoid, (pVoid,), a1))
+OGR_G_Touches(a1, a2) = acare(ccall((:OGR_G_Touches, libgdal), Cint, (pVoid, pVoid), a1, a2))
+OGR_G_Value(a1, dist) = acare(ccall((:OGR_G_Value, libgdal), pVoid, (pVoid, Cdouble), a1, dist))
+OGR_G_Union(a1, a2) = acare(ccall((:OGR_G_Union, libgdal), pVoid, (pVoid, pVoid), a1, a2))
+OGR_G_Within(a1, a2) = acare(ccall((:OGR_G_Within, libgdal), Cint, (pVoid, pVoid), a1, a2))
 
 OGR_G_SetPoints(hGeom, nPointsIn, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride) =
 	acare(ccall((:OGR_G_SetPoints, libgdal), Cvoid, (pVoid, Cint, pVoid, Cint, pVoid, Cint, pVoid, Cint), hGeom, nPointsIn, pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride))
@@ -1501,9 +1533,6 @@ end
 	gdalvectortranslate(ds::GMT.GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
 	gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
 
-	geomarea(geom::AbstractGeometry) = OGR_G_Area(geom.ptr)
-	geomlength(geom::AbstractGeometry) = OGR_G_Length(geom.ptr)
-
 	geomname(geom::AbstractGeometry) = OGR_G_GetGeometryName(geom.ptr)
 
 	function fromWKT(data::Vector{String})
@@ -2263,13 +2292,18 @@ end
 	const readgd   = read
 	const readgd!  = read!
 	const writegd! = write!
+	const delaunay = delaunaytriangulation
 	# ---------------------------------
 
 	export
 		creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 		gdalrasterize, gdalbuildvrt, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
-		dither, buffer, centroid, intersection, intersects, polyunion
+		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, toWKT,
+		convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize,
+		wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
+		wkbGeometryCollection
+
 
 	const DRIVER_MANAGER = Ref{DriverManager}()
 	const GDALVERSION = Ref{VersionNumber}()
