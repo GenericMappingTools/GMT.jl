@@ -23,6 +23,7 @@
 	@test Gdal.within(bf, bf2) == false
 	@test Gdal.contains(bf, bf2) == false
 	@test Gdal.overlaps(bf, bf2) == true
+	@test intersects(bf, [-1 -1;1 1]) == true
 
 	Gdal.geomarea(bf);
 	@test Gdal.geomlength([0 0; 1 1]) ≈ sqrt(2)
@@ -62,6 +63,7 @@
 					"POLYGON((0 1,0 2,10 2,10 1,0 1))",
 					"GEOMETRYCOLLECTION (POLYGON ((0.5 1.0,1 2,1 1,0.5 1.0)),POLYGON ((2 2,9 2,9.5 1.0,2 1,2 2)),LINESTRING (2 1,1 1),LINESTRING (1 2,2 2))")
 		=#
+		intersection([0 -1;0 1], [-1 -1;1 1])
 
 		@testset "Intersects" begin
 			test_predicate(Gdal.intersects, "POLYGON EMPTY", "POLYGON EMPTY", false)
