@@ -127,7 +127,7 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs.
 
 	# By default convert to Doubles, except if instructed to NOT to do it.
 	(find_in_dict(d, [:datatype])[1] === nothing) && (eltype(mat) != Float64) && (mat = Float64.(mat))
-	geom = (geom == 0 && (2 <= length(mat) <= 3)) ? Gdal.wkbPoint : Gdal.wkbUnknown	# Guess geom
+	geom = (geom == 0 && (2 <= length(mat) <= 3)) ? Gdal.wkbPoint : (geom == 0 ? Gdal.wkbUnknown : UInt32(geom))	# Guess geom
 	(multi && geom == 0 && size(mat,1) == 1) && (geom = Gdal.wkbPoint)	# One row with many columns and MULTI => Points
 	if (isempty(xx))				# No coordinates transmitted
 		if (ndims(mat) == 3)

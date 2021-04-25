@@ -55,6 +55,7 @@ Dataset type
         comment::Array{Any,1}      # Array with any dataset comments [empty after first segment]
         proj4::String              # Projection string in PROJ4 syntax (Optional)
         wkt::String                # Projection string in WKT syntax (Optional)
+        geom::Integer              # Geometry type. One of the GDAL's enum (wkbPoint, wkbPolygon, etc...)
     end
 
 CPT type

@@ -8,9 +8,34 @@
 	@test I.proj4 == "+proj=longlat"
 
 	bf = buffer([0 0], 1)
-	@test bf[1].geom == 2
+	@test bf[1].geom == Gdal.wkbPolygon
 	c = centroid(bf)
 	#@test c[1].data ≈ [0. 0.]
+	bf2 = buffer([0.5 0], 1);
+	polyunion(bf, bf2);
+	Gdal.difference(bf, bf2);
+	Gdal.symdifference(bf, bf2);
+	@test Gdal.distance(bf, bf2) == 0.0
+	@test Gdal.equals(bf, bf2) == false
+	@test Gdal.disjoint(bf, bf2) == false
+	@test Gdal.touches(bf, bf2) == false
+	@test Gdal.crosses(bf, bf2) == false
+	@test Gdal.within(bf, bf2) == false
+	@test Gdal.contains(bf, bf2) == false
+	@test Gdal.overlaps(bf, bf2) == true
+
+	Gdal.geomarea(bf);
+	@test Gdal.geomlength([0 0; 1 1]) ≈ sqrt(2)
+	Gdal.envelope(bf);
+	Gdal.envelope3d(bf);
+	Gdal.boundary(bf);
+	Gdal.convexhull(bf);
+	Gdal.pointalongline(bf, 0.3);
+	g1 = fromWKT("MULTIPOINT(0 0, 10 0, 10 10, 11 10)");
+	g2 = delaunay(g1,2.0,true);
+	@test toWKT(g2) == "MULTILINESTRING ((0 0,10 10),(0 0,10 0),(10 0,10 10))"
+	D1 = mat2ds([0 0;10 0;10 10;11 10], geom=wkbMultiPoint);
+	g2 = delaunay(D1,2.0,true, gdataset=true);		# Doesn't error but returns MULTILINESTRING EMPTY 
 
 	function test_method(f::Function, wkt1::AbstractString, wkt2::AbstractString, wkt3::AbstractString)
 		geom1 = Gdal.fromWKT(wkt1)
