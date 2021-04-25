@@ -75,11 +75,16 @@ export
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
 	mbimport, mbgetdata, mbsvplist, mblevitus,
-	mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, geodetic2enu, cpt4dcw,
-	blendimg!, creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
+	blendimg!, mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, geodetic2enu, cpt4dcw,
+	gd2gmt, gmt2gd, varspacegrid, MODIS_L2, gdalshade, 
+
+	creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 	importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
-	gdalrasterize, gdalbuildvrt, gdalshade, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
-	dither, buffer, centroid, gd2gmt, gmt2gd, intersection, intersects, polyunion, varspacegrid, MODIS_L2
+	gdalrasterize, gdalbuildvrt, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
+	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, toWKT,
+	convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize,
+	wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
+	wkbGeometryCollection
 
 include("common_docs.jl")
 include("libgmt_h.jl")
