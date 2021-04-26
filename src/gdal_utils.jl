@@ -171,22 +171,30 @@ end
 # ---------------------------------------------------------------------------------------------------
 function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdataset}
 	# Convert a geometry into a single GMTdataset
-	if (Gdal.getgeomtype(geom) == Gdal.wkbPolygon)		# getx() doesn't work for polygons
+	gmtype = Gdal.getgeomtype(geom)
+	if (gmtype == Gdal.wkbPolygon)		# getx() doesn't work for polygons
 		geom = Gdal.getgeom(geom,0)
-	elseif (Gdal.getgeomtype(geom) == Gdal.wkbMultiPolygon)
-		np = Gdal.ngeom(geom)
-		D = Vector{GMTdataset}(undef, np)
-		[D[k] = gd2gmt(Gdal.getgeom(geom,k-1), proj)[1] for k = 1:np]
+	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString)
+		n_pts = Gdal.ngeom(geom)
+		D = Vector{GMTdataset}(undef, n_pts)
+		[D[k] = gd2gmt(Gdal.getgeom(geom,k-1), proj)[1] for k = 1:n_pts]
 		return D
+	elseif (gmtype == wkbMultiPoint)
+		n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
+		mat = Array{Float64,2}(undef, n_pts, n_dim)
+		[mat[k,1] = Gdal.getx(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts]
+		[mat[k,2] = Gdal.gety(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts]
+		(n_dim == 3) && ([mat[k,2] = Gdal.getz(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts])
+		return [GMTdataset(mat, String[], "", String[], proj, "", gmtype)]
 	end
 
 	n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
 	n = (n_dim == 2) ? 2 : 3
-	mat = Array{Float64,2}(undef, Gdal.ngeom(geom), n)
+	mat = Array{Float64,2}(undef, n_pts, n)
 	[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
 	[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
-	(n_dim == 3) && ([mat[k,2] = Gdal.getz(geom, k-1) for k = 1:n_pts])
-	[GMTdataset(mat, String[], "", String[], proj, "", Gdal.wkbPolygon)]
+	(n_dim == 3) && ([mat[k,3] = Gdal.getz(geom, k-1) for k = 1:n_pts])
+	[GMTdataset(mat, String[], "", String[], proj, "", gmtype)]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -212,6 +220,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 			end
 		end
 	end
+	(length(D) != ds-1) && (D = D[1:ds-1])		# Happens with MultiPoints where we allocated D in excess
 	return D
 end
 
@@ -341,15 +350,17 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	else                       sr = Gdal.ISpatialRef(C_NULL)
 	end
 
-	if (ispolyg || D[1].geom == Gdal.wkbPolygon || D[1].geom == Gdal.wkbMultiPolygon)	# If guessed or in Dataset
-		geom_code, geom_cmd = (length(D) == 1) ? (Gdal.wkbPolygon, Gdal.createpolygon()) :
-		                                         (Gdal.wkbMultiPolygon, Gdal.createmultipolygon())
-	elseif (isline || D[1].geom == Gdal.wkbLineString || D[1].geom == Gdal.wkbMultiLineString)
-		geom_code, geom_cmd = (length(D) == 1) ? (Gdal.wkbLineString, Gdal.createlinestring()) :
-		                                         (Gdal.wkbMultiLineString, Gdal.createmultilinestring())
+	if (ispolyg || D[1].geom == wkbPolygon || D[1].geom == wkbMultiPolygon)	# If guessed or in Dataset
+		geom_code, geom_cmd = (!ismulti) ? (wkbPolygon, Gdal.createpolygon()) :
+		                                   (wkbMultiPolygon, Gdal.createmultipolygon())
+	elseif (isline || D[1].geom == wkbLineString || D[1].geom == wkbMultiLineString)
+		geom_code, geom_cmd = (!ismulti) ? (wkbLineString, Gdal.createlinestring()) :
+		                                   (wkbMultiLineString, Gdal.createmultilinestring())
+	elseif (D[1].geom == wkbMultiPoint || (ispoint && !ismulti))
+		geom_code, geom_cmd = wkbMultiPoint, Gdal.createmultipoint()
 	else
-		geom_code, geom_cmd = (length(D) == 1) ? (Gdal.wkbPoint, Gdal.createpoint()) :
-		                                         (Gdal.wkbMultiPoint, Gdal.createmultipoint())
+		geom_code, geom_cmd = (!ismulti) ? (wkbPoint, Gdal.createpoint()) :
+		                                   (wkbMultiPoint, Gdal.createmultipoint())
 	end
 
 	layer = Gdal.createlayer(name="layer1", dataset=ds, geom=geom_code, spatialref=sr);
@@ -381,8 +392,8 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 			                Gdal.OGR_G_SetPoints(geom.ptr, size(D[1].data, 1), x, 8, y, 8, z, 8)
 		end
 		Gdal.setgeom!(feature, geom)
-	elseif (ispoint || D[1].geom == Gdal.wkbPoint || D[1].geom == Gdal.wkbMultiPoint)
-		if (ismulti)
+	elseif (ispoint || D[1].geom == wkbPoint || D[1].geom == wkbMultiPoint)
+		if (D[1].geom == wkbMultiPoint || ismulti)
 			for k = 1:length(D)
 				x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
 				if (n_cols == 2)

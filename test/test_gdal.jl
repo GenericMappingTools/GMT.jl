@@ -159,6 +159,9 @@ Gdal.GDALDestroyDriverManager()
 	G = gd2gmt("utmsmall.tif");
 	ds = gmt2gd(G)
 	gdalinfo(ds);
+	D = mat2ds([0 0; 10 0; 10 10; 11 10], geom=4);
+	Dv = gd2gmt(gmt2gd(D));
+	@test D == Dv
 
 	GMT.get_FillValue("_FillValue=9999")
 	GMT.helper_gmt2gd_xyz(GMT.GMTdataset(rand(Float32,3,3), String[], "", String[], "", "", 0),3)
