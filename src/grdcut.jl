@@ -59,7 +59,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 
 	if (cmd0 != "" && ((find_in_dict(d, [:img :usegdal])[1]) !== nothing))
 		(cmd0[1] == '@') && (cmd0 = gmtwhich(cmd0)[1].text[1])	# A remote file
-		ds = readgd(cmd0)
+		ds = Gdal.read(cmd0)
 		t = split(scan_opt(cmd, "-R"), '/')
 		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
 		if ((outname = scan_opt(cmd, "-G")) == "")
