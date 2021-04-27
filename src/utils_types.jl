@@ -623,16 +623,16 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 """
     make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head=0, upper=false, lower=false)
 
-  - USER_IDS -> is a string vector with the ids (names in header) of the GMTdataset D 
-  - VALS     -> is a vector with the the numbers to be used in plot -Z to color the polygons.
-  - SUB_HEAD -> Position in header where field is to be found in the comma separated string.
+  - `user_ids` -> is a string vector with the ids (names in header) of the GMTdataset D 
+  - `vals`     -> is a vector with the the numbers to be used in plot -Z to color the polygons.
+  - `sub_head` -> Position in header where field is to be found in the comma separated string.
 Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
-The elements of ZVALS are made up from the VALS but it can be larger if there are segments with
+The elements of ZVALS are made up from the `vals` but it can be larger if there are segments with
 no headers. In that case it replicates the previously known value until it finds a new segment ID.
 
 Returns a Vector{Float64} with the same length as the number of segments in D. The content is
-made up after the contents of VALS but repeated such that each polygon of the same family, i.e.
-with the same USER_ID, has the same value.
+made up after the contents of `vals` but repeated such that each polygon of the same family, i.e.
+with the same `user_ids`, has the same value.
 """
 function make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head::Int=0, case::Int=0)::Vector{Float64}
 
