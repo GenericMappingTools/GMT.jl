@@ -2287,18 +2287,14 @@ end
 	include("gdal_tools.jl")
 
 	# ------------ Aliases ------------
-	const creategd = create
 	const ogr2ogr  = gdalvectortranslate
-	const readgd   = read
-	const readgd!  = read!
-	const writegd! = write!
 	const delaunay = delaunaytriangulation
 	# ---------------------------------
 
 	export
-		creategd, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
+		getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
-		gdalrasterize, gdalbuildvrt, readgd, readgd!, readraster, writegd!, setgeotransform!, setproj!, destroy,
+		gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy,
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, toWKT,
 		convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize,
 		wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,

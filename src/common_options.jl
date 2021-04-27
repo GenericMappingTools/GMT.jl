@@ -2569,7 +2569,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
 
-	(show_kwargs[1]) && return cmd, arg, opt_R, "", ""		# In HELP mode we do nothing here
+	(show_kwargs[1]) && return cmd, arg, opt_R, Vector{GMTdataset}(), ""		# In HELP mode we do nothing here
 
 	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
 	force_get_R = (IamModern[1] && GMTver > v"6") ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
@@ -2672,7 +2672,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
 			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
 		end
-	else
+	elseif (!have_info)
 		info = Vector{GMTdataset}()			# Need something to return
 	end
 

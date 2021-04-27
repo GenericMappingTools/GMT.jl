@@ -282,21 +282,21 @@ on D is a single or a multi-segment object, or "point" to convert to a multipoin
 function gmt2gd(GI)
 	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (size(GI,1), size(GI,2))
 	if (isa(GI, GMTgrid))
-		ds = creategd("", driver=getdriver("MEM"), width=width, height=height, nbands=1, dtype=eltype(GI.z))
+		ds = Gdal.create("", driver=getdriver("MEM"), width=width, height=height, nbands=1, dtype=eltype(GI.z))
 		if (GI.layout != "" && GI.layout[2] == 'C')
-			(GI.layout[1] == 'B') ? writegd!(ds, collect(reverse(GI.z, dims=1)'), 1) : writegd!(ds, collect(GI.z'), 1)
+			(GI.layout[1] == 'B') ? Gdal.write!(ds, collect(reverse(GI.z, dims=1)'), 1) : Gdal.write!(ds, collect(GI.z'), 1)
 		else
-			writegd!(ds, GI.z, 1)
+			Gdal.write!(ds, GI.z, 1)
 		end
 	elseif (isa(GI, GMTimage))
-		ds = creategd("", driver=getdriver("MEM"), width=width, height=height, nbands=size(GI,3),
+		ds = Gdal.create("", driver=getdriver("MEM"), width=width, height=height, nbands=size(GI,3),
 		              dtype=eltype(GI.image))
 		if (GI.layout != "" && GI.layout[2] == 'C')
 			indata = (GI.layout[1] == 'B') ? collect(reverse(GI.image, dims=1)') : collect(GI.image')
 		else
 			indata = GI.image
 		end
-		writegd!(ds, indata, isa(GI.image, Array{<:Real, 3}) ? Cint.(collect(1:size(GI,3))) : 1)
+		Gdal.write!(ds, indata, isa(GI.image, Array{<:Real, 3}) ? Cint.(collect(1:size(GI,3))) : 1)
 
 		if (GI.n_colors > 0)
 			ct = Gdal.createcolortable(UInt32(1))	# RGB
@@ -343,8 +343,8 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 		isline = !ispolyg						# Otherwise make a Line/MultiLine
 	end
 
-	ds = creategd(getdriver("MEMORY"));
-	#ds = creategd(getdriver("ESRI Shapefile"), filename="/vsimem/mem.shp")
+	ds = Gdal.create(getdriver("MEMORY"));
+	#ds = Gdal.create(getdriver("ESRI Shapefile"), filename="/vsimem/mem.shp")
 	if     (D[1].proj4 != "")  sr = Gdal.importPROJ4(D[1].proj4)
 	elseif (D[1].wkt   != "")  sr = Gdal.importWKT(D[1].wkt)
 	else                       sr = Gdal.ISpatialRef(C_NULL)
@@ -367,7 +367,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	feature = Gdal.unsafe_createfeature(layer)
 	geom = geom_cmd
 
-	if (ispolyg || D[1].geom == Gdal.wkbPolygon || D[1].geom == Gdal.wkbMultiPolygon)
+	if (ispolyg || D[1].geom == wkbPolygon || D[1].geom == wkbMultiPolygon)
 		if (ismulti)
 			for k = 1:length(D)
 				poly = Gdal.creategeom(Gdal.wkbPolygon)
@@ -377,10 +377,10 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 			[Gdal.addgeom!(geom, makering(D[k].data)) for k = 1:length(D)]
 		end
 		Gdal.setgeom!(feature, geom)
-	elseif (isline || D[1].geom == Gdal.wkbLineString || D[1].geom == Gdal.wkbMultiLineString)
+	elseif (isline || D[1].geom == wkbLineString || D[1].geom == wkbMultiLineString)
 		if (ismulti)
 			for k = 1:length(D)
-				line = Gdal.creategeom(Gdal.wkbLineString)
+				line = Gdal.creategeom(wkbLineString)
 				x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
 				(n_cols == 2) ? Gdal.OGR_G_SetPoints(line.ptr, size(D[k].data, 1), x, 8, y, 8, C_NULL, 8) :
 				                Gdal.OGR_G_SetPoints(line.ptr, size(D[k].data, 1), x, 8, y, 8, z, 8)
@@ -642,4 +642,58 @@ function gdalshade(fname; kwargs...)
 	A = gdaldem(fname, "color-relief", ["-b", band], C=cmap)
 	B = gdaldem(fname, "hillshade"; d...)
 	blendimg!(A, B)
+end
+
+"""
+    gdalread(fname::AbstractString, opts=String[]; gdataset=false, kwargs...)
+
+Read a raster or a vector file from a disk file and return the result either as a GMT type (the default)
+or a GDAL dataset.
+
+- `fname`: Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
+- `opts`:  List of options. The accepted options are the ones of the gdal_translate utility.
+           This list can be in the form of a vector of strings, or joined in a simgle string.
+- `gdataset`: If set to `true` forces the return of a GDAL dataset instead of a GMT type.
+- `kwargs`: This options accept the GMT region (-R) and increment (-I)
+
+### Returns
+A GMT grid/image or a GDAL dataset
+"""
+function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset=false, kw...)
+	(fname == "") && error("Input file name is missing.")
+	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
+	ds_t = Gdal.read(fname, I=false)
+	if (Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(ds_t))) == C_NULL)
+		ds = gdaltranslate(ds_t, optsP; kw...)
+	else
+		optsP = (isempty(optsP)) ? ["-overwrite"] : append!(optsP, "-overwrite")
+		ds = ogr2ogr(ds_t, optsP; kw...)
+	end
+	return (gdataset) ? ds : gd2gmt(ds)
+end
+
+"""
+    gdalwrite(data, fname::AbstractString, opts=String[]; kwargs...)
+or
+
+    gdalwrite(fname::AbstractString, data, opts=String[]; kwargs...)
+
+Write a raster or a vector file to disk
+
+- `fname`: Output file name. If not explicitly selected via `opts` the used driver will be picked from the file extension.
+- `data`:  The data to be saved in file. It can be a GMT type or a GDAL dataset.
+- `opts`:  List of options. The accepted options are the ones of the gdal_translate or ogr2ogr utility.
+           This list can be in the form of a vector of strings, or joined in a simgle string.
+- `kwargs`: This options accept the GMT region (-R) and increment (-I)
+"""
+gdalwrite(fname::AbstractString, data, optsP=String[]; opts=String[], kw...) = gdalwrite(data, fname, optsP; opts, kw...)
+function gdalwrite(data, fname::AbstractString, optsP=String[]; opts=String[], kw...)
+	(fname == "") && error("Output file name is missing.")
+	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
+	ds, = Gdal.get_gdaldataset(data)
+	if (Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(ds))) == C_NULL)
+		gdaltranslate(ds, optsP; dest=fname, kw...)
+	else
+		ogr2ogr(ds, optsP; dest=fname, kw...)
+	end
 end

@@ -17,10 +17,10 @@ Gdal.GDALDestroyDriverManager()
 	$n_ogr_driver OGR drivers found
 	"""
 
-	dataset = creategd("", driver = getdriver("MEM"), width=241, height=181, nbands=1, dtype=Float64)
+	dataset = Gdal.create("", driver = getdriver("MEM"), width=241, height=181, nbands=1, dtype=Float64)
 	crs = toWKT(importPROJ4("+proj=latlong"));
 	crs = toWKT(importPROJ4("+proj=latlong"), true);
-	writegd!(dataset, rand(181,241), 1)
+	Gdal.write!(dataset, rand(181,241), 1)
 	setproj!(dataset, crs)
 	setgeotransform!(dataset, [-4.016666666666667, 0.03333333333333333, 0.0, -3.01666666666, 0.0, 0.03333333333333333])
 	Gdal.listcapability(dataset)
@@ -28,9 +28,9 @@ Gdal.GDALDestroyDriverManager()
 	show(dataset)
 	#G = gd2gmt(dataset);
 
-	#readgd(dataset);		# Ambiguo
+	#Gdal.read(dataset);		# Ambiguo
 	band = getband(dataset);
-	readgd(band);
+	Gdal.read(band);
 	getproj(dataset)
 	band = getband(dataset)
 	Gdal.width(dataset)
@@ -64,7 +64,7 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.OCTDestroyCoordinateTransformation(C_NULL);
 
 	gdalinfo("utmsmall.tif");
-	ds_small = readgd("utmsmall.tif");
+	ds_small = Gdal.read("utmsmall.tif");
 	Gdal.getlayer(ds_small, 1);
 	gdalinfo(ds_small, [""]);
 	#gdaldem("utmsmall.tif", "hillshade", ["-q"], save="lixo.nc");
@@ -79,9 +79,9 @@ Gdal.GDALDestroyDriverManager()
 									193  205  209  181  122]
 	
 	ds_vrt = gdalbuildvrt([ds_tiny])
-	@test readgd(ds_vrt, 1) == [128  171  127   93   83; 126  164  148  114  101;
-								161  175  177  164  140; 185  206  205  172  128;
-								193  205  209  181  122]
+	@test Gdal.read(ds_vrt, 1) == [128  171  127   93   83; 126  164  148  114  101;
+									161  175  177  164  140; 185  206  205  172  128;
+									193  205  209  181  122]
 	catch
 	end
 
@@ -91,10 +91,10 @@ Gdal.GDALDestroyDriverManager()
 	@test Gdal.width(ds_warped) == 109
 	@test Gdal.height(ds_warped) == 91
 
-	ds_point = readgd("point.geojson");
+	ds_point = Gdal.read("point.geojson");
 	ds_grid = gdalgrid(ds_point, ["-of","MEM","-outsize","3", "10","-txe","100","100.3","-tye","0","0.1"]);
 	@test getgeotransform(ds_grid) ≈ [100.0,0.1,0.0,0.0,0.0,0.01]
-	ds_point = readgd("point.geojson");
+	ds_point = Gdal.read("point.geojson");
 	layer = Gdal.getlayer(ds_point, 0);
 	feature = Gdal.nextfeature(layer)
 	@test Gdal.asdouble(feature, 0) ≈ 2.0
@@ -181,7 +181,7 @@ Gdal.GDALDestroyDriverManager()
 
 	I = Gdal.dither("rgbsmall.tif");
 	gmt2gd(I);
-	Gdal.dither("rgbsmall.tif", save="lixo.tif");
+	Gdal.dither("rgbsmall.tif", save="lixo.ti");
 	Gdal.GDALopts2vec("aa bb 'vv pp' aa \"ad uuu\"");
 
 	Gdal.GDALGetDataTypeByName("GTiff");
@@ -207,8 +207,10 @@ Gdal.GDALDestroyDriverManager()
 
 	#Gdal.identifydriver("lixo.gmt")
 	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");
-	ds = gmt2gd(D)
+	ds = gmt2gd(D[1])
 	ds = gmt2gd(D, geometry="Polygon")
+	gmt2gd(mat2ds([0 10; 1 11; 0 10], x=[0, 1, 2], multi=true), geometry="line")
+	gmt2gd(mat2ds([0 10; 1 11; 0 10; 0 10], x=[0, 1, 2, 0], multi=true), geometry="polyg")
 	ogr2ogr(D, dest="lixo1.gmt")
 	gmt2gd(D, save="lixo2.gmt")
 	ds = gmt2gd(D)
@@ -246,7 +248,7 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.wrapgeom(mp)
 
 	gdalinfo("poly_spatialite.sqlite")
-	readgd("poly_spatialite.sqlite")
+	Gdal.read("poly_spatialite.sqlite")
 	Gdal.inspect("SELECT HEX(GeomFromText('POINT(10 20)'))", "poly_spatialite.sqlite")
 
 	I1 = mat2img(reshape(collect(UInt8(1):UInt8(20)), 4, 5))	#  layout = TCBa

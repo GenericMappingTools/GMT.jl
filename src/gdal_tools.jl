@@ -3,15 +3,15 @@
 
 Convert raster data between different formats and other operations also provided by the GDAL
 'gdal_translate' tool. Namely sub-region extraction and resampling.
-The kwargs options accept the GMT region (-R), increment (-I), target SRS (-J) any of the keywords
+The kwargs options accept the GMT region (-R), increment (-I), target SRS (-J), any of the keywords
 `outgrid`, `outfile` or `save` = outputname options to make this function save the result in disk
 in the file 'outputname'. The file format is picked from the 'outputname' file extension.
 When no output file name is provided it returns a GMT object (either a grid or an image, depending
 on the input type). To force the return of a GDAL dataset use the option `gdataset=true`
 
-  - `INDATA` - Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
-  - `OPTS`   - List of options. The accepted options are the ones of the gdal_translate utility.
-               This list can be in the form of a vector of strings, or joined in a simgle string.
+- `indata`: - Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
+- `opts`:   - List of options. The accepted options are the ones of the gdal_translate utility.
+              This list can be in the form of a vector of strings, or joined in a simgle string.
 
 ### Returns
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
@@ -123,7 +123,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 		end
 	end
 
-	dataset = get_gdaldataset(indata)
+	dataset, needclose = get_gdaldataset(indata)
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
@@ -132,17 +132,18 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	if (o !== nothing)
 		# If not explicitly stated to return a GDAL datase, return a GMT type
 		if (f == ogr2ogr)
-			(!haskey(d, :gdataset)) && (o = gd2gmt(o))
+			(haskey(d, :gdataset) && !d[:gdataset]) && (o = gd2gmt(o))
 		else
 			n_bands = (got_GMT_opts && !haskey(d, :gdataset) && isa(o, AbstractRasterBand)) ? 1 : nraster(o)
 			(!haskey(d, :gdataset)) && (o = gd2gmt(o, bands=collect(1:n_bands)))
 		end
 	end
+	(needclose) && GDALClose(dataset.ptr)
 	CPLPopErrorHandler();
 	o
 end
 
-# Because the GDAL reconnaissance  of GMT cpts is very very weak, we must re-write CPTs in a way that it can swallow
+# Because the GDAL reconnaissance of GMT cpts is very very weak, we must re-write CPTs in a way that it can swallow
 save_cpt4gdal(cpt::String, outname::String) = save_cpt4gdal(GMT.gmtread(cpt), outname)
 function save_cpt4gdal(cpt::GMT.GMTcpt, outname::String)
 	fid = open(outname, "w")
@@ -212,17 +213,19 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function get_gdaldataset(indata)
+function get_gdaldataset(data)
 	# Get a GDAL dataset from either a file name, a GMT grid or image, or a dataset itself
-	if isa(indata, AbstractString)		# Check also for remote files (those that start with a @)
-		ds = (indata[1] == '@') ? Gdal.unsafe_read(gmtwhich(indata)[1].text[1]) : Gdal.unsafe_read(indata)
-	elseif (isa(indata, GMT.GMTgrid) || isa(indata, GMT.GMTimage))
-		ds = gmt2gd(indata)
+	needclose = false
+	if isa(data, AbstractString)		# Check also for remote files (those that start with a @). MAY SCREW VIOLENTLY
+		ds = (data[1] == '@') ? Gdal.unsafe_read(gmtwhich(data)[1].text[1]) : Gdal.unsafe_read(data)
+		needclose = true			# For some reason file remains open and we must close it explicitly
+	elseif (isa(data, GMT.GMTgrid) || isa(data, GMT.GMTimage) || isa(data, GMT.GMTdataset) || isa(data, Vector{<:GMT.GMTdataset}))
+		ds = gmt2gd(data)
 	else
-		ds = indata		# If it's not a GDAL dataset or convenient descendent, shit will follow soon
+		ds = data		# If it's not a GDAL dataset or convenient descendent, shit will follow soon
 	end
-	(ds === nothing) && error("Error fetching the GDAL dataset from input $(typeof(indata))")
-	return ds
+	(ds === nothing) && error("Error fetching the GDAL dataset from input $(typeof(data))")
+	return ds, needclose
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -230,22 +233,36 @@ end
     dither(indata; n_colors=256, save="", gdataset=false)
 
 Convert a 24bit RGB image to 8bit paletted.
-- Use the 'save=fname' option to save the result to disk in a GeoTiff file "fname". Do not provide
-  the extension, a '.tif' one will be appended.
-- Use 'gdataset=true' to return a GDAL dataset. The default is to return a GMTimage object.
-- Select the number of colors in the generated color table. Defaults to 256.
+- Use the `save=fname` option to save the result to disk in a GeoTiff file `fname`. If `fname`
+  has no extension a `.tif` one will be appended. Alternatively give file names with extension
+  `.png` or `.nc` to save the file in one of those formats.
+- `gdataset=true`: to return a GDAL dataset. The default is to return a GMTimage object.
+- `n_colors`: Select the number of colors in the generated color table. Defaults to 256.
 """
 function dither(indata, opts=String[]; n_colors::Integer=256, save::String="", gdataset::Bool=false)
 	# ...
-	src_ds = get_gdaldataset(indata)
+	src_ds, needclose = get_gdaldataset(indata)
 	(nraster(src_ds) < 3) && error("Input image must have at least 3 bands")
 	(isa(indata, GMT.GMTimage) && !startswith(indata.layout, "TRB")) &&
 		error("Image memory layout must be `TRB` and not $(indata.layout). Load image with gdaltranslate()")
 	r_band, g_band, b_band = getband(src_ds, 1), getband(src_ds, 2), getband(src_ds, 3)
 
-	drv_name = (save == "") ? "MEM" : "GTiff"
-	(save != "") && (save *= ".tif")
-	(drv_name != "MEM") && append!(opts, ["TILED=YES", "TILED=YES", "COMPRESS=DEFLATE", "PREDICTOR=2"])
+	drv_name = "MEM"
+	if (save != "")
+		fn, ext = splitext(save)
+		ext = lowercase(ext)
+		if     (ext == "" || ext == ".tif" || ext == ".tiff")  drv_name = "GTiff"
+		elseif (ext == ".png") drv_name = "PNG"
+		elseif (ext == ".nc")  drv_name = "netCDF"
+		else
+			@warn("Format not supported. Only TIF, PNG or netCDF are allowed. Resorting to TIF")
+			drv_name = "GTiff"
+			save = fn * ".tif"
+		end
+		(ext == "") && (save *= ".tif")
+	end
+
+	(drv_name == "GTiff") && append!(opts, ["TILED=YES", "TILED=YES", "COMPRESS=DEFLATE", "PREDICTOR=2"])
 	dst_ds = create(save, driver=getdriver(drv_name), width=width(src_ds), height=height(src_ds),
 	                nbands=1, dtype=UInt8, options=opts)
 	try
@@ -259,6 +276,7 @@ function dither(indata, opts=String[]; n_colors::Integer=256, save::String="", g
 	ComputeMedianCutPCT(r_band, g_band, b_band, n_colors, ct)
 	setcolortable!(dst_band, ct)
 	DitherRGB2PCT(r_band, g_band, b_band, dst_band, ct)
+	(needclose) && GDALClose(src_ds.ptr)
 	if (save != "")						# Because a file was writen
 		destroy(dst_ds)
 		return nothing
