@@ -531,6 +531,7 @@ OGR_F_SetFieldDateTime(a1, a2, a3, a4, a5, a6, a7, a8, a9) =
 	acare(ccall((:OGR_F_SetFieldDateTime, libgdal), Cvoid, (pVoid, Cint, Cint, Cint, Cint, Cint, Cint, Cint, Cint), a1, a2, a3, a4, a5, a6, a7, a8, a9))
 
 OGR_Dr_DeleteDataSource(a1, a2) = acare(ccall((:OGR_Dr_DeleteDataSource, libgdal), Cint, (pVoid, Cstring), a1, a2))
+GDALDeleteDataset(a1, a2) = acare(ccall((:GDALDeleteDataset, libgdal), Cint, (pVoid, Cstring), a1, a2))
 
 GDALDatasetCreateLayer(a1, a2, a3, a4, a5) =
 	acare(ccall((:GDALDatasetCreateLayer, libgdal), pVoid, (pVoid, Cstring, pVoid, UInt32, Ptr{Cstring}), a1, a2, a3, a4, a5))

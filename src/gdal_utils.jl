@@ -668,7 +668,9 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 	else
 		optsP = (isempty(optsP)) ? ["-overwrite"] : append!(optsP, "-overwrite")
 		ds = ogr2ogr(ds_t, optsP; kw...)
+		Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
 	end
+	Gdal.GDALClose(ds_t.ptr)			# WTF it needs explicit close?
 	return (gdataset) ? ds : gd2gmt(ds)
 end
 
