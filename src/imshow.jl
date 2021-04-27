@@ -46,6 +46,8 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
 		G = mat2img(arg1; kw...)
+	elseif (isa(arg1, GMTdataset) || isa(arg1, Vector{<:GMTdataset}) || isa(arg1, Matrix{<:Real}))
+		return plot(arg1; show=true, kw...)
 	else
 		G = mat2grid(arg1, x, y, reg=1)							# For displaying, pixel registration is more appropriate
 	end
