@@ -119,7 +119,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 		if ( (isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMT.GMTcpt) )
 			save_cpt4gdal(cmap, _cmap)	# GDAL pretend to recognise CPTs but it almost doesn't
 		else
-			_cmap = cmap			# Risky, assume it's something GDAL can read
+			_cmap = cmap				# Risky, assume it's something GDAL can read
 		end
 	end
 
@@ -132,6 +132,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	if (o !== nothing)
 		# If not explicitly stated to return a GDAL datase, return a GMT type
 		if (f == ogr2ogr)
+			deletedatasource(o, "/vsimem/tmp")		# WTF do I need to do this?
 			(haskey(d, :gdataset) && !d[:gdataset]) && (o = gd2gmt(o))
 		else
 			n_bands = (got_GMT_opts && !haskey(d, :gdataset) && isa(o, AbstractRasterBand)) ? 1 : nraster(o)

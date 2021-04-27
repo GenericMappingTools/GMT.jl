@@ -31,6 +31,7 @@
 	Gdal.envelope3d(bf);
 	Gdal.boundary(bf);
 	Gdal.convexhull(bf);
+	bf[1].geom = wkbLineString;
 	Gdal.pointalongline(bf, 0.3);
 	g1 = fromWKT("MULTIPOINT(0 0, 10 0, 10 10, 11 10)");
 	g2 = delaunay(g1,2.0,true);
@@ -40,11 +41,11 @@
 	
 	D1 = mat2ds([0 0; 10 0; 10 10; 11 10]);
 	gdalwrite("lixo1.gmt", D1);
-	#D2 = gdalread("lixo1.gmt");
-	#@test D1 == D2
+	D2 = gdalread("lixo1.gmt");
+	@test D1 == D2
 	I1 = mat2img(UInt8.([1 2 3; 4 5 6; 7 8 9]));
 	gdalwrite("lixo.png", I1);
-	#I2 = gdalread("lixo.png");
+	I2 = gdalread("lixo.png");
 	#@test I == I2'		# Because the layout is different
 
 	function test_method(f::Function, wkt1::AbstractString, wkt2::AbstractString, wkt3::AbstractString)
