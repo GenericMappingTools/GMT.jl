@@ -183,35 +183,57 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
 	cmd = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
 
+	_cmd = build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
+	
+	(got_Zvars && opt_S == "" && opt_W == "" && !occursin(" -G", _cmd[1])) && (_cmd[1] *= " -W0.5")
+
+	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
+	arg1 = helper_multi_cols(d, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D, multi_col, _cmd,
+	                         sub_module, g_bar_fill, got_Ebars, got_usr_R)
+
+	(!IamModern[1]) && put_in_legend_bag(d, _cmd, arg1)
+
+	_cmd = gmt_proggy .* _cmd				# In any case we need this
+	_cmd, K = finish_PS_nested(d, _cmd, K)
+
+	r = finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3)
+	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
+	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
+	# Build the executble command vector
 	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
 		_cmd = [cmd * opt_W * opt_UVXY]
 
 	elseif (opt_W == "" && (opt_S != "" || opt_Gsymb != ""))	# We have a symbol request
-		if (opt_Wmarker != "" && opt_W == "") opt_Gsymb *= " -W" * opt_Wmarker  end		# reuse var name
+		(opt_Wmarker != "" && opt_W == "") && (opt_Gsymb *= " -W" * opt_Wmarker)	# reuse var name
 		(opt_ML != "") && (cmd *= opt_ML)					# If we have a symbol outline pen
 		_cmd = [cmd * opt_S * opt_Gsymb * opt_UVXY]
 
 	elseif (opt_W != "" && opt_S != "")						# We have both line/polygon and a symbol
-		if (occursin(opt_Gsymb, cmd))  opt_Gsymb = ""  end
+		(occursin(opt_Gsymb, cmd)) && (opt_Gsymb = "")
 		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
 			_cmd = [cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY]
 		else
-			if (opt_Wmarker != "")  opt_Wmarker = " -W" * opt_Wmarker  end		# Set Symbol edge color
+			(opt_Wmarker != "") && (opt_Wmarker = " -W" * opt_Wmarker)		# Set Symbol edge color
 			cmd1 = cmd * opt_W * opt_UVXY
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
-			if (opt_c != "")  cmd2 = replace(cmd2, opt_c => "")  end			# Not in scond call (subplots)
-			if (opt_ML != "")  cmd1 = cmd1 * opt_ML  end	# If we have a symbol outline pen
+			(opt_c != "")  && (cmd2 = replace(cmd2, opt_c => ""))  				# Not in scond call (subplots)
+			(opt_ML != "") && (cmd1 = cmd1 * opt_ML)				# If we have a symbol outline pen
 			_cmd = [cmd1; cmd2]
 		end
 
 	else
 		_cmd = [cmd * opt_UVXY]
 	end
-	
-	(got_Zvars && opt_S == "" && opt_W == "" && !occursin(" -G", _cmd[1])) && (_cmd[1] *= " -W0.5")
+end
 
+# ---------------------------------------------------------------------------------------------------
+function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D, multi_col, _cmd, sub_module, g_bar_fill, got_Ebars, got_usr_R)
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
-	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Array{<:Real,2}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)) )
+	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Matrix{<:Real}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)) )
 		multi_col[1] = false						# Reset because this is a use-only-once option
 		(haskey(d, :multicol)) && delete!(d, :multicol)
 		penC = "";		penS = "";	cycle=:cycle
@@ -226,15 +248,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	elseif (sub_module == "bar" && check_bar_group(arg1))
 		_cmd[1], arg1 = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 	end
-
-	(!IamModern[1]) && put_in_legend_bag(d, _cmd, arg1)
-
-	_cmd = gmt_proggy .* _cmd				# In any case we need this
-	_cmd, K = finish_PS_nested(d, _cmd, K)
-
-	r = finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3)
-	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
-	return r
+	return arg1
 end
 
 # ---------------------------------------------------------------------------------------------------
