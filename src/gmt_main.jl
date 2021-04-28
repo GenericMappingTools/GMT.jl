@@ -1216,20 +1216,20 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 			proj4 = OGR_F.proj4 != C_NULL ? unsafe_string(OGR_F.proj4) : ""
 			wkt   = OGR_F.wkt != C_NULL ? unsafe_string(OGR_F.wkt) : ""
 		else
-			proj4 = wkt = ""
+			proj4, wkt = "", ""
 		end
 		if (OGR_F.np > 0)
 			hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,i))) for i = 1:OGR_F.att_number]) : ""
 			if (hdr != "")  hdr = rstrip(hdr, ',')  end		# Strip last ','
 			if (OGR_F.n_islands == 0)
+				geom = (OGR_F.type == "Polygon") ? wkbPolygon : ((OGR_F.type == "LineString") ? wkbLineString : wkbPoint)
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-				                   Vector{String}(), hdr, Vector{String}(), proj4, wkt, 0)
+				                   Vector{String}(), hdr, Vector{String}(), proj4, wkt, geom)
 			else
-				# In this case, for the time being, I'm droping the islands
 				islands = reshape(unsafe_wrap(Array, OGR_F.islands, 2 * (OGR_F.n_islands+1)), OGR_F.n_islands+1, 2) 
 				np_main = islands[1,2]+1		# Number of points of outer ring
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main)],
-				                   Vector{String}(), hdr, Vector{String}(), proj4, wkt, 0)
+				                   Vector{String}(), hdr, Vector{String}(), proj4, wkt, wkbPolygon)
 
 				if (!drop_islands)
 					for k = 2:size(islands,2)		# 2 because first row holds the outer ring indexes 
@@ -1237,7 +1237,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 						off = islands[k,1] * 8
 						len = islands[k,2] - islands[k,1] + 1
 						D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x+off, len) unsafe_wrap(Array, OGR_F.y+off, len)],
-						                   Vector{String}(), " -Ph", Vector{String}(), proj4, wkt, 0)
+						                   Vector{String}(), " -Ph", Vector{String}(), proj4, wkt, wkbPolygon)
 					end
 				end
 			end
