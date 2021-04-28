@@ -1,21 +1,22 @@
 """
-	gmtread(fname::String, data; kwargs...)
+	gmtread(fname::String; kwargs...)
 
 Read GMT object from file. The object is one of "grid" or "grd", "image" or "img",
 "data" or "table", "cmap" or "cpt" and "ps" (for postscript), and OGR formats (shp, kml, json).
-Use a type specificatin to force a certain reading path (e.g. grd=true to read grids) or take
+Use a type specificatin to force a certain reading path (e.g. `grd=true` to read grids) or take
 the chance of letting the data type be guessed via the file extension. Known extensions are:
-Grids:      .grd
-Images:     .jpg, .png, .tif, .bmp
-Datasets:   .dat, .txt, .csv
-Datasets:   .shp, .kml, .json
-CPT:        .cpt
-PostScript: .ps, .eps
+
+- Grids:      .grd, .nc
+- Images:     .jpg, .png, .tif, .tiff, .bmp, .webp
+- Datasets:   .dat, .txt, .csv
+- Datasets:   .shp, .kml, .json, .geojson, .gmt, .gpkg
+- CPT:        .cpt
+- PostScript: .ps, .eps
 
 Parameters
 ----------
 
-Specify data type.  Choose among:
+Specify data type (with *type*=true, e.g. `img=true`).  Choose among:
 - **grd** | **grid** :: [Type => Any]
 
     Load a grid.
@@ -43,12 +44,13 @@ Specify data type.  Choose among:
     e.g. varname=:slp to read the variable named 'slp'. This option defaults data type to 'grid'
 - **layer** | **band** :: [Type => Str, Number, Array]
 
-    When files are multiband or nc files with 3D or 4D arrays, we access them via these keywords.
-    layer=4 reads the fourth layer (or band) of the file. But the file can be a grid or an image. If it is a
-    grid layer can be a scalar (to read 3D arrays) or an array of two elements (to read a 4D array).
-    If file is an image 'layer' can be a 1 or a 1x3 array (to read a RGB image). Not that in this later case
-    bands do not need to be contiguous. A band=[0,5,2] composes an RGB out of those bands. See more at
-    $(GMTdoc)/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files)
+When files are multiband or nc files with 3D or 4D arrays, we access them via these keywords.
+`layer=4` reads the fourth layer (or band) of the file. But the file can be a grid or an image. If it is a
+grid layer can be a scalar (to read 3D arrays) or an array of two elements (to read a 4D array).
+
+If file is an image `layer` can be a 1 or a 1x3 array (to read a RGB image). Not that in this later case
+bands do not need to be contiguous. A `band=[0,5,2]`` composes an RGB out of those bands. See more at
+$(GMTdoc)/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files)
 
 - $(GMT.opt_R)
 - $(GMT.opt_V)
@@ -132,25 +134,25 @@ function gmtread(fname::String; kwargs...)
 	if (opt_T != " -To")			# All others but OGR
 		if (opt_T == " -Td" && opt_bi != "")  cmd *= opt_bi  end		# Read from binary file
 		cmd *= opt_T
-		if (dbg_print_cmd(d, cmd) !== nothing)  return "gmtread " * cmd  end
-		O = gmt("read " * fname * cmd)
-	else
-		if (dbg_print_cmd(d, cmd) !== nothing)  return "ogrread " * fname * " " * cmd  end
-		# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
-		(Sys.iswindows()) && run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)
-		API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
-		if (GMTver >= v"6.1")
-			x = opt_R2num(opt_R)		# See if we have a limits request
-			if (GMTver > v"6.1.1")
-				lims = (x === nothing) ? (0.0, 0.0, 0.0, 0.0, 0.0, 0.0) : tuple(vcat(x,[0.0, 0.0])...)
-				ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
-				O = ogr2GMTdataset(gmt_ogrread(API2, pointer([ctrl])))
-			else
-				O = ogr2GMTdataset(gmt_ogrread(API2, fname, (x === nothing) ? C_NULL : x))
-			end
-		end
-		(GMTver == v"6.0") && (O = ogr2GMTdataset(gmt_ogrread(API2, fname)))
+		return (dbg_print_cmd(d, cmd) !== nothing) ? "gmtread " * cmd : gmt("read " * fname * cmd)
 	end
+
+	(dbg_print_cmd(d, cmd) !== nothing) && return "ogrread " * fname * " " * cmd
+	# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
+	(Sys.iswindows()) && run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)
+	API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
+	if (GMTver >= v"6.1")
+		x = opt_R2num(opt_R)		# See if we have a limits request
+		if (GMTver > v"6.1.1")
+			lims = (x === nothing) ? (0.0, 0.0, 0.0, 0.0, 0.0, 0.0) : tuple(vcat(x,[0.0, 0.0])...)
+			ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
+			O = ogr2GMTdataset(gmt_ogrread(API2, pointer([ctrl])))
+		else
+			O = ogr2GMTdataset(gmt_ogrread(API2, fname, (x === nothing) ? C_NULL : x))
+		end
+	end
+	(GMTver == v"6.0") && (O = ogr2GMTdataset(gmt_ogrread(API2, fname)))
+	ressurectGDAL()				# Because GMT called GDALDestroyDriverManager()
 	return O
 end
 
