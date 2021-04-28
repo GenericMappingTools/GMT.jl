@@ -217,13 +217,15 @@ end
 function get_gdaldataset(data)
 	# Get a GDAL dataset from either a file name, a GMT grid or image, or a dataset itself
 	needclose = false
-	if isa(data, AbstractString)		# Check also for remote files (those that start with a @). MAY SCREW VIOLENTLY
+	if isa(data, AbstractString)			# Check also for remote files (those that start with a @). MAY SCREW VIOLENTLY
 		ds = (data[1] == '@') ? Gdal.unsafe_read(gmtwhich(data)[1].text[1]) : Gdal.unsafe_read(data)
-		needclose = true			# For some reason file remains open and we must close it explicitly
+		needclose = true					# For some reason file remains open and we must close it explicitly
 	elseif (isa(data, GMT.GMTgrid) || isa(data, GMT.GMTimage) || isa(data, GMT.GMTdataset) || isa(data, Vector{<:GMT.GMTdataset}))
 		ds = gmt2gd(data)
+	elseif (isa(data, AbstractGeometry))	# VERY UNSISFACTORY. SHOULD BE ABLE TO GETPARENT (POSSIBLE?)
+		ds = wrapgeom(data)
 	else
-		ds = data		# If it's not a GDAL dataset or convenient descendent, shit will follow soon
+		ds = data							# If it's not a GDAL dataset or convenient descendent, shit will follow soon
 	end
 	(ds === nothing) && error("Error fetching the GDAL dataset from input $(typeof(data))")
 	return ds, needclose

@@ -164,10 +164,13 @@
 	gmt("grdinfo lixo.tif");
 	@test_throws ErrorException("First argument cannot be empty. It must contain the file name to write.") gmtwrite("",[1 2]);
 
+	# This gdalwrite screws deeply. Nex GMT errors with non-sensic reason and not reproducible in REPL
+	#gdalwrite("lixo1.gmt", fromWKT("POLYGON((0 0, 10 0, 10 10, 0 10, 0 0),(1 1, 1 2, 2 2, 2 1, 1 1))"))
+	gmtread("polyg_hole.gmt")
+
 	println("	GMTVECTOR")
-	# GMTVECTOR
 	d = [0 0; 0 90; 135 45; -30 -60];
 	gmtvector(d, T=:D, S="0/0", f=:g);
 
-	# GMTWICH
+	println("	GMTWICH")
 	gmtwhich("lixo.dat", C=true)

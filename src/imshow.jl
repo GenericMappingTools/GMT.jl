@@ -8,9 +8,9 @@ if they are not provided. Contrary to other image producing modules the "show' k
 display the image. Here it is set by default. If user wants to use *imshow* to create layers of a more complex
 fig he can use *show=false* for the intermediate layers.
 
-This module uses some internal logic to decide whether use `grdimge` or `grdview`. Namely, when the `view`
-option is used `grdview` is choosed and a default vertical scale is assigned. However, sometimes we want
-a rotated plot, optionallt tilted, but not 3D view. In that case use the option `flat=true`, which forces
+This module uses some internal logic to decide whether use `grdimge`, `grdview` or `plot`. Namely, when the
+`view` option is used `grdview` is choosed and a default vertical scale is assigned. However, sometimes we want
+a rotated plot, optionally tilted, but not 3D view. In that case use the option `flat=true`, which forces
 the use of `grdimage`.
 
 # Examples
@@ -46,7 +46,7 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
 		G = mat2img(arg1; kw...)
-	elseif (isa(arg1, GMTdataset) || isa(arg1, Vector{<:GMTdataset}) || isa(arg1, Matrix{<:Real}))
+	elseif (isa(arg1, GMTdataset) || isa(arg1, Vector{<:GMTdataset}) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 3))
 		return plot(arg1; show=true, kw...)
 	else
 		G = mat2grid(arg1, x, y, reg=1)							# For displaying, pixel registration is more appropriate
