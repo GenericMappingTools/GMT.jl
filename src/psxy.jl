@@ -74,7 +74,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd = add_opt(d, cmd, 'A', [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
 	opt_F = add_opt(d, "", "", [:F :conn :connection],
 	                (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpoint=("r", nothing, 1),  ignore_hdr="_a", single_group="_f", segments="_s", segments_reset="_r", anchor=("", arg2str)))
-	if (length(opt_F) > 1 && !occursin("/", opt_F))  opt_F = opt_F[1]  end	# Allow con=:net or con=(1,2)
+	if (opt_F != "" && !occursin("/", opt_F))  opt_F = string(opt_F[1])  end	# Allow con=:net or con=(1,2)
 	if (opt_F != "")  cmd *= " -F" * opt_F  end
 
 	# Error Bars?
@@ -114,10 +114,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	opt_Gsymb = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
 
 	# To track a still existing bug in sessions management at GMT lib level
-	got_pattern = false
-	if (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb))
-		got_pattern = true
-	end
+	got_pattern = (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb)) ? true : false
 
 	if (is_ternary)			# Means we are in the psternary mode
 		cmd = add_opt(d, cmd, 'L', [:L :labels])
@@ -140,7 +137,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	opt_S = add_opt(d, "", 'S', [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
-		marca, arg1, more_cols = get_marker_name(d, [:marker :Marker :shape], is3D, true, arg1)
+		marca, arg1, more_cols = get_marker_name(d, arg1, [:marker :Marker :shape], is3D, true)
 		if ((val = find_in_dict(d, [:markersize :MarkerSize :ms :size])[1]) !== nothing)
 			if (marca == "")  marca = "c"  end		# If a marker name was not selected, defaults to circle
 			if (isa(val, AbstractArray))
@@ -169,9 +166,9 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	opt_ML = ""
 	if (opt_S != "")
 		if ((val = find_in_dict(d, [:markerline :MarkerLine :ml])[1]) !== nothing)
-			if (isa(val, Tuple))  opt_ML = " -W" * parse_pen(val) # This can hold the pen, not extended atts
+			if (isa(val, Tuple))           opt_ML = " -W" * parse_pen(val) # This can hold the pen, not extended atts
 			elseif (isa(val, NamedTuple))  opt_ML = add_opt_pen(nt2dict(val), [:pen], "W")
-			else                  opt_ML = " -W" * arg2str(val)
+			else                           opt_ML = " -W" * arg2str(val)
 			end
 			if (opt_Wmarker != "")
 				@warn("markerline overrides markeredgecolor");		opt_Wmarker = ""
@@ -202,7 +199,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 end
 
 # ---------------------------------------------------------------------------------------------------
-function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
+function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)::Vector{String}
 	# Build the executble command vector
 	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
 		_cmd = [cmd * opt_W * opt_UVXY]
@@ -475,7 +472,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_marker_name(d::Dict, symbs::Array{Symbol}, is3D::Bool, del::Bool=true, arg1=nothing)
+function get_marker_name(d::Dict, arg1, symbs::Array{Symbol}, is3D::Bool, del::Bool=true)
 	marca = Array{String,1}(undef,1)
 	marca = [""];		N = 0
 	for symb in symbs

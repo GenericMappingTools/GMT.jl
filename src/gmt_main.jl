@@ -79,6 +79,9 @@ mutable struct GMTcpt
 	model::String				# String with color model rgb, hsv, or cmyk [rgb]
 	comment::Array{String,1}	# Cell array with any comments
 end
+GMTcpt() = GMTcpt(Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), 0, 0.0, Array{Float64,2}(undef,0,0), Vector{String}(), Vector{String}(), string(), Vector{String}())
+Base.size(C::GMTcpt) = size(C.range, 1)
+Base.isempty(C::GMTcpt) = (size(C) == 0)
 
 mutable struct GMTps
 	postscript::String			# Actual PS plot (text string)
@@ -86,9 +89,10 @@ mutable struct GMTps
 	mode::Int 					# 1 = Has header, 2 = Has trailer, 3 = Has both
 	comment::Array{String,1}	# Cell array with any comments
 end
+GMTps() = GMTps(string(), 0, 0, Vector{String}())
+Base.size(P::GMTps) = (P.length == 0)
+Base.isempty(P::GMTps) = (P.length == 0)
 
-#mutable struct GMTdataset
-	#data::Array{Float64,2}
 mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 	data::Array{T,N}
 	text::Array{String,1}
@@ -97,10 +101,6 @@ mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 	proj4::String
 	wkt::String
 	geom::Integer
-	#GMTdataset(data, text, header, comment, proj4, wkt) = new(data, text, header, comment, proj4, wkt)
-	#GMTdataset(data, text) = new(data, text, string(), Array{String,1}(), string(), string())
-	#GMTdataset(data) = new(data, Array{String,1}(), string(), Array{String,1}(), string(), string())
-	#GMTdataset() = new(Array{Float64,2}(undef,0,0), Array{String,1}(), string(), Array{String,1}(), string(), string())
 end
 Base.size(D::GMTdataset) = size(D.data)
 Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = D.data[inds...]
@@ -607,7 +607,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
 	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 
 	out = GMTcpt(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), zeros(2)*NaN, zeros(3,3), 8, 0.0,
-	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, [])
+	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, Vector{String}())
 
 	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
 		gmt_lut = unsafe_load(C.data, j)

@@ -55,6 +55,8 @@
 	I .+ UInt8(0)
 
 	GMT.GMTdataset();
+	isempty(GMT.GMTcpt())
+	isempty(GMT.GMTps())
 	GMT.GMTdataset(rand(2,2), "lixo");
 	GMT.GMTdataset(rand(Float32, 2,2), ["aiai"])
 	GMT.GMTdataset(rand(Float32, 2,2), "aiai")
