@@ -2564,8 +2564,24 @@ function fname_out(d::Dict, del::Bool=false)
 	return def_name, opt_T, EXT, fname, ret_ps
 end
 
+# These methods are function barriers to stop the type instability to propagate. Unfortunately, a similar
+# solution but at the end of the main function, that would cover all cases, is IRRITATINGLY ignored by Julia
+read_data(d::Dict, fname::String, cmd::String, arg::Vector{GMTdataset}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Vector{GMTdataset}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+
+read_data(d::Dict, fname::String, cmd::String, arg::GMTdataset, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, GMTdataset, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+
+read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Float64}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Matrix{Float64}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+
+read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Any}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Matrix{Float64}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+
+read_data(d::Dict, fname::String, cmd::String, arg::Vector{DateTime}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Vector{Float64}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+
+# This is the fall-back method. Unfortunately, I've not found a solution that covers the passing in of a file name
+# because we fall in the same situation as with passing the input data via the 'data' kw, and this one can have any type.
+read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false) = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+
 # ---------------------------------------------------------------------------------------------------
-function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
+function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided
 
@@ -2574,9 +2590,6 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
 	force_get_R = (IamModern[1] && GMTver > v"6") ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
 	#force_get_R = true		# Due to a GMT6.0 BUG, modern mode does not compute -R automatically and 6.1 is not good too
-	data_kw = nothing
-	(haskey(d, :data)) && (data_kw = d[:data]; del_from_dict(d, [:data]))
-	(fname != "") && (data_kw = fname)
 
 	cmd, opt_i  = parse_i(d, cmd)		# If data is to be read with some colomn order
 	cmd, opt_bi = parse_bi(d, cmd)		# If data is to be read as binary
@@ -2585,21 +2598,20 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	cmd, opt_yx = parse_swap_xy(d, cmd)
 	(CTRL.proj_linear[1]) && (opt_yx *= " -fc")			# To avoid the lib remembering last eventual geog case
 	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
-	if (isa(data_kw, String))
+	if (fname != "")
 		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])		# Must read file to find -R
 			if (!IamSubplot[1] || GMTver > v"6.1.1")		# Protect against a GMT bug
-				data_kw = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * data_kw)
-				# Remove the these options from cmd. Their is done
+				arg = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * fname)
+				# Remove the these options from cmd. Their job is done
 				if (opt_i != "")  cmd = replace(cmd, opt_i => "");	opt_i = ""  end
 				if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
 			end
 		else							# No need to find -R so let the GMT module read the file
-			cmd = data_kw * " " * cmd
-			data_kw = nothing			# Prevent that it goes (repeated) into 'arg'
+			cmd = fname * " " * cmd
 		end
+	elseif (haskey(d, :data))
+		arg = d[:data];		del_from_dict(d, [:data])
 	end
-
-	(data_kw !== nothing) && (arg = data_kw)		# Finaly move the data into ARG
 
 	# See if we have DateTime objects
 	got_datetime, is_onecol = false, false
