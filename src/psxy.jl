@@ -114,10 +114,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	opt_Gsymb = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
 
 	# To track a still existing bug in sessions management at GMT lib level
-	got_pattern = false
-	if (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb))
-		got_pattern = true
-	end
+	got_pattern = (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb)) ? true : false
 
 	if (is_ternary)			# Means we are in the psternary mode
 		cmd = add_opt(d, cmd, 'L', [:L :labels])
