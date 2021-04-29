@@ -176,6 +176,10 @@
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((post=1:5,), "p", "x")
 	GMT.helper3_axes(1,"","")		# Trigger a warning
 
+	dt = collect(Dates.DateTime(Dates.now()):Dates.Month(6):Dates.DateTime(Dates.now() + Dates.Year(10)));
+	GMT.read_data(Dict{Symbol, Any}(), "", "", dt)
+	GMT.read_data(Dict{Symbol, Any}(), "", "", [dt rand(length(dt))])
+
 	GMT.round_wesn([1.333 17.4678 6.66777 33.333], true);
 	GMT.round_wesn([1 1 2 2]);
 	GMT.round_wesn([1. 350 1. 180], true)
