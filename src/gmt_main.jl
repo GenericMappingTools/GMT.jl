@@ -90,7 +90,7 @@ mutable struct GMTps
 	comment::Array{String,1}	# Cell array with any comments
 end
 GMTps() = GMTps(string(), 0, 0, Vector{String}())
-Base.size(P::GMTps) = (P.length == 0)
+Base.size(P::GMTps) = P.length
 Base.isempty(P::GMTps) = (P.length == 0)
 
 mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
@@ -1046,8 +1046,7 @@ function dataset_init_(API::Ptr{Nothing}, Darr, direction::Integer, actual_famil
 		unsafe_store!(S, Sb)
 		unsafe_store!(DT.segment, S, seg)
 	end
-	DT.n_records = n_records
-	DS.n_records = n_records
+	DT.n_records, DS.n_records = n_records, n_records
 
 	return D
 end
@@ -1063,10 +1062,10 @@ function dataset_init(API::Ptr{Nothing}, ptr, direction::Integer, actual_family)
 
 	if (direction == GMT_IN) 	# Dimensions are known, extract them and set dim array for a GMT_MATRIX resource */
 		dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
-		M = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)
+		M::Ptr{GMT_MATRIX} = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)
 		actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
 
-		Mb = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)
+		Mb::GMT_MATRIX = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)
 		#tipo = get_datatype(ptr)
 		Mb.n_rows    = size(ptr,1)
 		Mb.n_columns = size(ptr,2)
@@ -1086,7 +1085,7 @@ function dataset_init(API::Ptr{Nothing}, ptr, direction::Integer, actual_family)
 		end
 		Mb.data = pointer(ptr)
 		Mb.dim  = Mb.n_rows		# Data from Julia is in column major
-		GMT_Set_AllocMode(API, GMT_IS_MATRIX, M)
+		ret::Cint = GMT_Set_AllocMode(API, GMT_IS_MATRIX, M)
 		Mb.shape = GMT.GMT_IS_COL_FORMAT;			# Julia order is column major
 		unsafe_store!(M, Mb)
 		return M
