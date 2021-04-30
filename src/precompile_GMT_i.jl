@@ -1,31 +1,18 @@
 function _precompile_()
-    #@assert ccall(:jl_generating_output, Cint, ()) == 1 || return nothing
-    #precompile(Tuple{typeof(Base.Printf.ini_dec),Base.GenericIOBuffer{Array{UInt8,1}},Float64,Int64,String,Int64,Int64,Char,Array{UInt8,1}})
-    @assert precompile(Tuple{typeof(Base.__cat),Array{Any,2},Tuple{Int64,Int64},Tuple{Bool,Bool},String,Vararg{Any,N} where N})
-    @assert precompile(Tuple{typeof(Base.__cat),Array{Float64,1},Tuple{Int64},Tuple{Bool},Array{Float64,1},Vararg{Any,N} where N})
-    @assert precompile(Tuple{typeof(Base.diff_names),NTuple{5,Symbol},Tuple{Symbol}})
-    @assert precompile(Tuple{typeof(Base.merge_names),NTuple{5,Symbol},Tuple{Symbol}})
-    @assert precompile(Tuple{typeof(Base.merge_types),NTuple{4,Symbol},Type{NamedTuple{(:clip, :first),Tuple{Nothing,Bool}}},Type{NamedTuple{(:W, :Vd),Tuple{Float64,Int64}}}})
-    @assert precompile(Tuple{typeof(Base.merge_types),NTuple{4,Symbol},Type{NamedTuple{(:first,),Tuple{Bool}}},Type{NamedTuple{(:F, :D, :par),Tuple{String,String,Tuple{Symbol,Int64}}}}})
-    @assert precompile(Tuple{typeof(Base.merge_types),NTuple{4,Symbol},Type{NamedTuple{(:first,),Tuple{Bool}}},Type{NamedTuple{(:pos, :B, :Vd),Tuple{NamedTuple{(:anchor,),Tuple{String}},String,Int64}}}})
-    @assert precompile(Tuple{typeof(Base.merge_types),Tuple{Symbol,Symbol},Type{NamedTuple{(:clip, :first),Tuple{Nothing,Bool}}},Type{NamedTuple{(),Tuple{}}}})
-    @assert precompile(Tuple{typeof(Base.merge_types),Tuple{Symbol,Symbol},Type{NamedTuple{(:first, :show),Tuple{Bool,Bool}}},Type{NamedTuple{(:show,),Tuple{Bool}}}})
-    @assert precompile(Tuple{typeof(Base.merge_types),Tuple{Symbol,Symbol},Type{NamedTuple{(:first,),Tuple{Bool}}},Type{NamedTuple{(:show,),Tuple{Bool}}}})
-    @assert precompile(Tuple{typeof(Base.merge_types),Tuple{Symbol},Type{NamedTuple{(:first,),Tuple{Bool}}},Type{NamedTuple{(),Tuple{}}}})
-    @assert precompile(Tuple{typeof(copyto!),Array{Float64,1},Tuple{Float64,Int64,Int64}})
-    @assert precompile(Tuple{typeof(haskey),Dict{Symbol,Any},String})
-    @assert precompile(Tuple{typeof(merge),NamedTuple{(:first, :show),Tuple{Bool,Bool}},Base.Iterators.Pairs{Symbol,Bool,Tuple{Symbol},NamedTuple{(:show,),Tuple{Bool}}}})
-    @assert precompile(Tuple{Core.kwftype(typeof(GMT.imshow)),NamedTuple{(:show,),Tuple{Bool}},typeof(imshow),String})
-    @assert precompile(Tuple{typeof(GMT.add_opt),Dict{Symbol,Any},String,String,Array{Any,2}})
-    @assert precompile(Tuple{typeof(GMT.add_opt_cpt),Dict{Symbol,Any},String,Array{Symbol,2},Char,Int64,Array{Float64,2}})
-    @assert precompile(Tuple{typeof(GMT.finish_PS_module),Dict{Symbol,Any},String,String,Bool,Bool,Bool,Array{Float64,2},Vararg{Any,N} where N})
-    @assert precompile(Tuple{typeof(GMT.get_marker_name),Dict{Symbol,Any},Array{Float64,2},Array{Symbol,2},Bool,Bool})
-    @assert precompile(Tuple{typeof(GMT.make_color_column),Dict{Symbol,Any},String,String,Int64,Int64,Int64,Bool,Bool,Array{Float64,2},Nothing})
-    @assert precompile(Tuple{typeof(GMT.put_in_legend_bag),Dict{Symbol,Any},String,Array{Float64,2}})
-    @assert precompile(Tuple{typeof(GMT.finish_PS_nested),Dict{Symbol,Any},Array{String,1},Bool})
-    @assert precompile(Tuple{typeof(GMT.round_wesn),Array{Float64,2}})
-    @assert precompile(Tuple{typeof(convert),Type{Ptr{GMT.GMT_MATRIX}},Ptr{Nothing}})
-    @assert precompile(Tuple{typeof(plot),Array{Float64,1},Array{Float64,1}})
-    @assert precompile(Tuple{typeof(setproperty!),GMT.GMT_GRID_HEADER,Symbol,NTuple{320,UInt8}})
-    @assert precompile(Tuple{typeof(setproperty!),GMT.GMT_GRID_HEADER,Symbol,NTuple{80,UInt8}})
+	ccall(:jl_generating_output, Cint, ()) == 1 || return nothing
+	Base.precompile(Tuple{typeof(plot),Matrix{Float64}})   # time: 11.283913
+	Base.precompile(Tuple{typeof(helper_multi_cols),Dict{Symbol, Any},Matrix{Float64},Bool,String,String,String,String,Bool,Vector{Bool},Vector{String},String,Vector{String},Bool,Bool})   # time: 0.2952042
+	Base.precompile(Tuple{typeof(finish_PS_module),Dict{Symbol, Any},Vector{String},String,Bool,Bool,Bool,Matrix{Float64},Vararg{Any, N} where N})   # time: 0.1380821
+	Base.precompile(Tuple{typeof(make_color_column),Dict{Symbol, Any},String,String,Int64,Int64,Int64,Bool,Bool,Matrix{Float64},Nothing})   # time: 0.1258531
+	Base.precompile(Tuple{typeof(sprintf),String,Float64,Vararg{Float64, N} where N})   # time: 0.0423703
+	Base.precompile(Tuple{typeof(get_marker_name),Dict{Symbol, Any},Matrix{Float64},Matrix{Symbol},Bool,Bool})   # time: 0.0417101
+	Base.precompile(Tuple{typeof(add_opt_cpt),Dict{Symbol, Any},String,Matrix{Symbol},Char,Int64,Matrix{Float64},Nothing,Bool,Bool,String,Bool})   # time: 0.0158795
+	Base.precompile(Tuple{typeof(put_in_legend_bag),Dict{Symbol, Any},Vector{String},Matrix{Float64}})   # time: 0.0101455
+
+	Base.precompile(Tuple{typeof(imshow),GMTgrid{Float32, 2}})   # time: 12.84012
+	Base.precompile(Tuple{typeof(finish_PS_module),Dict{Symbol, Any},Vector{String},String,Bool,Bool,Bool,GMTgrid{Float32, 2},Vararg{Any, N} where N})   # time: 0.1452611
+	Base.precompile(Tuple{Core.kwftype(typeof(grdimage)),NamedTuple{(:show,), Tuple{Bool}},typeof(grdimage),String,GMTgrid{Float32, 2}})   # time: 0.043773
+	Base.precompile(Tuple{typeof(common_get_R_cpt),Dict{Symbol, Any},String,String,String,Int64,GMTgrid{Float32, 2},Nothing,Nothing,String})   # time: 0.0355232
+	Base.precompile(Tuple{typeof(common_shade),Dict{Symbol, Any},String,GMTgrid{Float32, 2},GMTcpt,Nothing,Nothing,String})   # time: 0.0226077
+	Base.precompile(Tuple{typeof(GMTJL_Set_Object),Ptr{Nothing},GMT_RESOURCE,GMTcpt,Int64})   # time: 0.0116259
 end
