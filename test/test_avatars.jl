@@ -20,7 +20,7 @@
 	plot([0.0 0; 1.1 1], theme=(name=:dark, bg_color="gray"), lc=:white, Vd=dbg2)
 	#plot([0.0 0; 1.1 1], theme=(name=:modern,), Vd=dbg2)
 	plot(1:4, rand(4,4), theme=(name=:none, save=true), leg=true)	# Resets default conf and delete the theme_jl file
-	#@test startswith(plot!([1 1], marker=(:r, [2 3]), Vd=dbg2), "psxy  -R -J -Sr")
+	@test startswith(plot!([1 1], marker=(:r, [2 3]), Vd=dbg2), "psxy  -R -J -Sr")
 	xy = [0. 0.; 1 1; 2 1; 0 0];
 	plot(xy, region=(-1,3,-1,2), clip=(xy, N=true), frame=(axes=:WEsn, grid=0.2, fill=:darkgray), Vd=dbg2);
 	@test occursin(" -Sr", plot!([1 1], marker=(:r, [2 3]), Vd=dbg2))
@@ -40,6 +40,7 @@
 	plot([2.5 2.5], region=(0,4,0,4), figsize=12, marker=(:matang, [2 50 350], (length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=dbg2)
 	plot([1 1], limits=(0,6,0,6), figsize=7, marker=:circle, ms=0.5, error_bars=(x=:x, cline=true), Vd=dbg2)	# Warning line
 	plot(rand(5,3), region=[0,1,0,1])
+	plot("polyg_hole.gmt")
 	plot(x -> x^3 - 2x^2 + 3x - 1, xlim=(-5,5), Vd=dbg2)
 	plot(x -> x^3 - 2x^2 + 3x - 1, -10:10, Vd=dbg2)
 	plot!(x -> x^3 - 2x^2 + 3x - 1, 10, Vd=dbg2)
