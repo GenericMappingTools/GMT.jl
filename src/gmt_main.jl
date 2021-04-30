@@ -1052,48 +1052,37 @@ function dataset_init_(API::Ptr{Nothing}, Darr, direction::Integer, actual_famil
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dataset_init(API::Ptr{Nothing}, ptr, direction::Integer, actual_family)
-# Used to create containers to hold or receive data:
-# direction == GMT_IN:  Create empty Matrix container, associate it with julia data matrix, and use as GMT input.
-# direction == GMT_OUT: Create empty Vector container, let GMT fill it out, and use for output.
-# Note that in GMT these will be considered DATASETs via GMT_MATRIX or GMT_VECTOR.
-# If direction is GMT_IN then we are given a Julia matrix and can determine size, etc.
-# If output then we dont know size so all we do is specify data type.
+function dataset_init(API::Ptr{Nothing}, ptr, direction::Integer, actual_family)::Ptr{GMT_MATRIX}
+# Create empty Matrix container, associate it with julia data matrix, and use as GMT input.
 
-	if (direction == GMT_IN) 	# Dimensions are known, extract them and set dim array for a GMT_MATRIX resource */
-		dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
-		M::Ptr{GMT_MATRIX} = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)
-		actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
+	dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
+	M::Ptr{GMT_MATRIX} = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)
+	actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
 
-		Mb::GMT_MATRIX = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)
-		#tipo = get_datatype(ptr)
-		Mb.n_rows    = size(ptr,1)
-		Mb.n_columns = size(ptr,2)
+	Mb::GMT_MATRIX = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)
+	#tipo = get_datatype(ptr)
+	Mb.n_rows    = size(ptr,1)
+	Mb.n_columns = size(ptr,2)
 
-		if (eltype(ptr)     == Float64)		Mb.type = UInt32(GMT.GMT_DOUBLE)
-		elseif (eltype(ptr) == Float32)		Mb.type = UInt32(GMT.GMT_FLOAT)
-		elseif (eltype(ptr) == UInt64)		Mb.type = UInt32(GMT.GMT_ULONG)
-		elseif (eltype(ptr) == Int64)		Mb.type = UInt32(GMT.GMT_LONG)
-		elseif (eltype(ptr) == UInt32)		Mb.type = UInt32(GMT.GMT_UINT)
-		elseif (eltype(ptr) == Int32)		Mb.type = UInt32(GMT.GMT_INT)
-		elseif (eltype(ptr) == UInt16)		Mb.type = UInt32(GMT.GMT_USHORT)
-		elseif (eltype(ptr) == Int16)		Mb.type = UInt32(GMT.GMT_SHORT)
-		elseif (eltype(ptr) == UInt8)		Mb.type = UInt32(GMT.GMT_UCHAR)
-		elseif (eltype(ptr) == Int8)		Mb.type = UInt32(GMT.GMT_CHAR)
-		else
-			error("Only integer or floating point types allowed in input. Not this: $(typeof(ptr))")
-		end
-		Mb.data = pointer(ptr)
-		Mb.dim  = Mb.n_rows		# Data from Julia is in column major
-		ret::Cint = GMT_Set_AllocMode(API, GMT_IS_MATRIX, M)
-		Mb.shape = GMT.GMT_IS_COL_FORMAT;			# Julia order is column major
-		unsafe_store!(M, Mb)
-		return M
-
-	else	# To receive data from GMT we use a GMT_VECTOR resource instead
-		# There are no dimensions and we are just getting an empty container for output
-		return GMT_Create_Data(API, GMT_IS_VECTOR, GMT_IS_PLP, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
+	if (eltype(ptr)     == Float64)		Mb.type = UInt32(GMT.GMT_DOUBLE)
+	elseif (eltype(ptr) == Float32)		Mb.type = UInt32(GMT.GMT_FLOAT)
+	elseif (eltype(ptr) == UInt64)		Mb.type = UInt32(GMT.GMT_ULONG)
+	elseif (eltype(ptr) == Int64)		Mb.type = UInt32(GMT.GMT_LONG)
+	elseif (eltype(ptr) == UInt32)		Mb.type = UInt32(GMT.GMT_UINT)
+	elseif (eltype(ptr) == Int32)		Mb.type = UInt32(GMT.GMT_INT)
+	elseif (eltype(ptr) == UInt16)		Mb.type = UInt32(GMT.GMT_USHORT)
+	elseif (eltype(ptr) == Int16)		Mb.type = UInt32(GMT.GMT_SHORT)
+	elseif (eltype(ptr) == UInt8)		Mb.type = UInt32(GMT.GMT_UCHAR)
+	elseif (eltype(ptr) == Int8)		Mb.type = UInt32(GMT.GMT_CHAR)
+	else
+		error("Only integer or floating point types allowed in input. Not this: $(typeof(ptr))")
 	end
+	Mb.data = pointer(ptr)
+	Mb.dim  = Mb.n_rows		# Data from Julia is in column major
+	ret::Cint = GMT_Set_AllocMode(API, GMT_IS_MATRIX, M)
+	Mb.shape = GMT.GMT_IS_COL_FORMAT;			# Julia order is column major
+	unsafe_store!(M, Mb)
+	return M
 end
 
 # ---------------------------------------------------------------------------------------------------
