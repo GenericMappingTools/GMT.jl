@@ -95,6 +95,7 @@ if (got_it)					# Otherwise go straight to end
 	rm("lixo.jpg")
 	rm("point.csv")
 	rm("lixo1.gmt")
+	rm("lixo2.gmt")
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NUL`)  end
 
 end					# End valid testing zone

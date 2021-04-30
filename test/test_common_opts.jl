@@ -271,9 +271,7 @@
 	GMT.guess_WESN(Dict(:p=>"350/2"), "")
 	GMT.parse_q(Dict(:p=>(350,2)), "")
 
-	GMT.dataset_init(API, 0., 1, 0);
-	GMT.dataset_init(API, [Int8(1), Int8(2)], 0, [0])
-	@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(API, ' ', 0, [0])
+	#@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(API, ' ', [0])
 	@test_throws ErrorException("Wrong type (Int64) for the 'text' argin") GMT.text_record(rand(2,2), 0)
 
 	GMT.show_non_consumed(Dict(:lala => 0), "prog");
