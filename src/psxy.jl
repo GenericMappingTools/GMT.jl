@@ -240,7 +240,7 @@ function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D
 		end
 		if (penC != "")  cycle = [penC]  end
 		arg1 = mat2ds(arg1, color=cycle, ls=penS, multi=true)	# Convert to multi-segment GMTdataset
-		D::Vector{<:GMTdataset} = gmt("gmtinfo -C", arg1)			# But now also need to update the -R string
+		D::Vector{<:GMTdataset} = gmt("gmtinfo -C", arg1)		# But now also need to update the -R string
 		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(D[1].data)))
 	elseif (sub_module == "bar" && check_bar_group(arg1))
 		_cmd[1], arg1 = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
@@ -586,19 +586,19 @@ function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)
 end
 
 function helper2_markers(opt::String, alias::Vector{String})::String
-	marca = [""]
+	marca = ""
 	if (opt == alias[1])			# User used only the one letter syntax
-		marca[1] = alias[1]
+		marca = alias[1]
 	else
 		for k = 2:length(alias)		# Loop because of cases like ["w" "pie" "web"]
 			o2 = alias[k][1:min(2,length(alias[k]))]	# check the first 2 chars and Ro, Rotrect or RotRec are all good
-			if (startswith(opt, o2))  marca[1] = alias[1]; break  end		# Good when, for example, marker=:Pie
+			if (startswith(opt, o2))  marca = alias[1]; break  end		# Good when, for example, marker=:Pie
 		end
 	end
 
 	# If we still have found nothing, assume that OPT is a full GMT opt string (e.g. W/5+a30+r45+p2,red)
-	if (marca[1] == "" && opt[1] == alias[1][1])  marca[1] = opt  end
-	return marca[1]
+	(marca == "" && opt[1] == alias[1][1]) && (marca = opt)
+	return marca
 end
 
 # ---------------------------------------------------------------------------------------------------

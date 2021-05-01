@@ -1720,7 +1720,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 	return cmd, arg1, arg2, N_args
 end
 # ---------------------
-function helper_add_cpt(cmd::String, opt, N_args::Int, arg1, arg2, val, store::Bool)
+function helper_add_cpt(cmd::String, opt, N_args::Int, arg1, arg2, val::GMTcpt, store::Bool)
 	# Helper function to avoid repeating 3 times the same code in add_opt_cpt
 	(N_args == 0) ? arg1 = val : arg2 = val;	N_args += 1
 	if (store)  global current_cpt = val  end
@@ -3030,6 +3030,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
+	#while (length(args) > 1 && args[end] === nothing)  pop!(args)  end		# Remove trailing nothings
+
 	output, opt_T, fname_ext, fname, ret_ps = fname_out(d, true)
 	if (ret_ps)  output = ""  end  						# Here we don't want to save to file
 	cmd, opt_T = prepare2geotif(d, cmd, opt_T, O)		# Settings for the GeoTIFF and KML cases
@@ -3170,9 +3172,10 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 	end
 
 	if (legend_type === nothing)
-		legend_type = legend_bag(Vector{String}(undef,1), Vector{String}(undef,1))
-		legend_type.cmd = (isa(cmd_, String)) ? [cmd_] : cmd_
-		legend_type.label = lab
+		#legend_type = legend_bag(Vector{String}(undef,1), Vector{String}(undef,1))
+		#legend_type.cmd = (isa(cmd_, String)) ? [cmd_] : cmd_
+		#legend_type.label = lab
+		legend_type = legend_bag((isa(cmd_, String)) ? [cmd_] : cmd_, lab)
 	else
 		isa(cmd_, String) ? append!(legend_type.cmd, [cmd_]) : append!(legend_type.cmd, cmd_)
 		append!(legend_type.label, lab)
