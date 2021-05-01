@@ -52,7 +52,7 @@ Parameters
 
     Handling of extreme values that fall outside the range set by **T**.
     ($(GMTdoc)histogram.html#l)
-- **N** | **distribution** :: [Type => Str]
+- **N** | **distribution** | **normal** :: [Type => Str]
 
     Draw the equivalent normal distribution; append desired pen [0.5p,black].
     ($(GMTdoc)histogram.html#n)

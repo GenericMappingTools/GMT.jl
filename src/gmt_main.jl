@@ -451,14 +451,14 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function get_grid(API::Ptr{Nothing}, object)
+function get_grid(API::Ptr{Nothing}, object)::GMTgrid
 # Given an incoming GMT grid G, build a Julia type and assign the output components.
 # Note: Incoming GMT grid has standard padding while Julia grid has none.
 
-	G = unsafe_load(convert(Ptr{GMT_GRID}, object))
+	G::GMT_GRID = unsafe_load(convert(Ptr{GMT_GRID}, object))
 	(G.data == C_NULL) && error("get_grid: programming error, output matrix is empty")
 
-	gmt_hdr = unsafe_load(G.header)
+	gmt_hdr::GMT_GRID_HEADER = unsafe_load(G.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
 	padTop = Int(gmt_hdr.pad[4]);	padLeft = Int(gmt_hdr.pad[1]);
 	mx = Int(gmt_hdr.mx);			my = Int(gmt_hdr.my)
@@ -524,17 +524,17 @@ function get_grid(API::Ptr{Nothing}, object)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_image(API::Ptr{Nothing}, object)
+function get_image(API::Ptr{Nothing}, object)::GMTimage
 # Given an incoming GMT image, build a Julia type and assign the output components.
 # Note: Incoming GMT image may have standard padding while Julia image has none.
 
-	I = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
+	I::GMT_IMAGE = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
 	(I.data == C_NULL) && error("get_image: programming error, output matrix is empty")
 	if     (I.type == 3)  data = convert(Ptr{Cushort}, I.data)
 	elseif (I.type <= 1)  data = convert(Ptr{Cuchar}, I.data)
 	end
 
-	gmt_hdr = unsafe_load(I.header)
+	gmt_hdr::GMT_GRID_HEADER = unsafe_load(I.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
 
 	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=(nx + gmt_hdr.registration)))
@@ -542,7 +542,7 @@ function get_image(API::Ptr{Nothing}, object)
 
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	if (occursin("0", img_mem_layout[1]) || occursin("1", img_mem_layout[1]))	# WTF is 0 or 1?
-		t  = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
+		t = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
 	else
 		if (img_mem_layout[1] != "")  layout = img_mem_layout[1][1:3] * layout[4]  end	# 4rth is data determined
 		if (layout != "" && layout[1] == 'I')		# The special layout for using this image in Images.jl
@@ -551,7 +551,7 @@ function get_image(API::Ptr{Nothing}, object)
 			o = (nz == 1) ? (ny, nx) : (ny, nx, nz)
 			(layout != "BRPa") && @warn("Only 'I' for Images.jl and 'BRP' MEM layouts are allowed.")
 		end
-		t  = reshape(unsafe_wrap(Array, data, ny * nx * nz), o)	# Apparently the reshape() creates a copy
+		t = reshape(unsafe_wrap(Array, data, ny * nx * nz), o)	# Apparently the reshape() creates a copy
 	end
 
 	if (I.colormap != C_NULL)       # Indexed image has a color map (Scanline)
@@ -583,7 +583,7 @@ function get_image(API::Ptr{Nothing}, object)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
+function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 # Given a GMT CPT C, build a Julia type and assign values.
 # Each segment will have 10 items:
 # colormap:	Nx3 array of colors usable in Matlab' colormap
@@ -599,7 +599,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
 # model:	String with color model rgb, hsv, or cmyk [rgb]
 # comment:	Cell array with any comments
 
-	C = unsafe_load(convert(Ptr{GMT_PALETTE}, object))
+	C::GMT_PALETTE = unsafe_load(convert(Ptr{GMT_PALETTE}, object))
 
 	(C.data == C_NULL) && error("get_palette: programming error, output CPT is empty")
 
@@ -642,7 +642,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})
+function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTps
 # Given a GMT Postscript structure P, build a Julia PS type
 # Each segment will have 4 items:
 # postscript:	Text string with the entire PostScript plot
@@ -651,12 +651,12 @@ function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})
 # comment:	Cell array with any comments
 	(object == C_NULL) && error("get_PS: programming error, input object is NULL")
 
-	P = unsafe_load(convert(Ptr{GMT_POSTSCRIPT}, object))
+	P::GMT_POSTSCRIPT = unsafe_load(convert(Ptr{GMT_POSTSCRIPT}, object))
 	out = GMTps(unsafe_string(P.data), Int(P.n_bytes), Int(P.mode), [])	# NEED TO FILL THE COMMENT
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})
+function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset}
 # Given a GMT DATASET D, build an array of segment structure and assign values.
 # Each segment will have 6 items:
 # header:	Text string with the segment header (could be empty)
@@ -667,15 +667,15 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})
 # wkt:		String with any WKT information
 
 	(object == C_NULL) && return GMTdataset()		# No output produced - return a null data set
-	D = unsafe_load(convert(Ptr{GMT_DATASET}, object))
+	D::GMT_DATASET = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
-	seg_out = 0;	@assert seg_out == 0			# F. coverage
-	T = unsafe_wrap(Array, D.table, D.n_tables)
+	seg_out = 0;
+	T::Vector{Ptr{GMT.GMT_DATATABLE}} = unsafe_wrap(Array, D.table, D.n_tables)
 	for tbl = 1:D.n_tables
-		DT = unsafe_load(T[tbl])
+		DT::GMT_DATATABLE = unsafe_load(T[tbl])
 		for seg = 1:DT.n_segments
-			S  = unsafe_wrap(Array, DT.segment, seg)
-			DS = unsafe_load(S[seg])
+			S::Vector{Ptr{GMT.GMT_DATASEGMENT}} = unsafe_wrap(Array, DT.segment, seg)
+			DS::GMT_DATASEGMENT = unsafe_load(S[seg])
 			if (DS.n_rows != 0)
 				seg_out += 1
 			end
