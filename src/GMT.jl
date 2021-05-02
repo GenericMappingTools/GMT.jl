@@ -31,7 +31,6 @@ end
 const GMTver = get_GMTver()
 
 global legend_type  = nothing
-global current_cpt  = nothing		# To store the current palette
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
 const global current_view   = [""]			# To store the current viewpoint (-p)
@@ -195,6 +194,8 @@ if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
 	using GMT.Gdal
 end
 include("imshow.jl")		# Include later because one method depends on knowing about GDAL
+
+const global current_cpt = [GMTcpt()]		# To store the current palette
 
 function __init__(test::Bool=false)
 	if (v"5.0" <= GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
