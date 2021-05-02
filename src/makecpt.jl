@@ -87,7 +87,9 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd = "makecpt " * cmd
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
-	global current_cpt = gmt(cmd, arg1)
+	r = gmt(cmd, arg1)
+	current_cpt[1] = (r !== nothing) ? r : GMTcpt()
+    return r
 end
 
 # ---------------------------------------------------------------------------------------------------

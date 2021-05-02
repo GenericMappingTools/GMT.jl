@@ -1692,11 +1692,12 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 				cmd *= opt_C
 				if (store && c != "" && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's number and -Cn is not valid
 					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
-						global current_cpt = makecpt(opt_C * " -Vq")
+						r = makecpt(opt_C * " -Vq")
+						global current_cpt[1] = (r !== nothing) ? r : GMTcpt()
 					catch
 					end
-				elseif (in_bag && current_cpt !== nothing)	# If we have something in Bag, return it
-					cmd, arg1, arg2, N_args = helper_add_cpt(cmd, "", N_args, arg1, arg2, current_cpt, false)
+				elseif (in_bag && !isempty(current_cpt[1]))	# If we have something in Bag, return it
+					cmd, arg1, arg2, N_args = helper_add_cpt(cmd, "", N_args, arg1, arg2, current_cpt[1], false)
 				end
 			end
 		end
@@ -1709,8 +1710,8 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 			cpt = makecpt(opt_T)
 		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
-	elseif (in_bag && current_cpt !== nothing)		# If everything else has failed and we have one in the Bag, return it
-		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, current_cpt, false)
+	elseif (in_bag && !isempty(current_cpt[1]))		# If everything else has failed and we have one in the Bag, return it
+		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, current_cpt[1], false)
 	end
 	if (occursin(" -C", cmd))
 		if ((val = find_in_dict(d, [:hinge])[1]) !== nothing)       cmd *= string("+h", val)  end
@@ -1723,7 +1724,7 @@ end
 function helper_add_cpt(cmd::String, opt, N_args::Int, arg1, arg2, val::GMTcpt, store::Bool)
 	# Helper function to avoid repeating 3 times the same code in add_opt_cpt
 	(N_args == 0) ? arg1 = val : arg2 = val;	N_args += 1
-	if (store)  global current_cpt = val  end
+	if (store)  global current_cpt[1] = val  end
 	(isa(opt, Char) || (isa(opt, String) && opt != "")) && (cmd *= " -" * opt)
 	return cmd, arg1, arg2, N_args
 end
@@ -1775,7 +1776,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		info::Array{GMT.GMTdataset,1} = grdinfo(cmd0 * " -C");	range = info[1].data
 	end
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || (cmd0 != "" && cmd0[1] != '@'))
-		if (current_cpt === nothing && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
+		if (isempty(current_cpt[1]) && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
 			cpt_opt_T = sprintf(" -T%.12g/%.12g/128+n", range[5] - 1e-6, range[6] + 1e-6)
 		end
@@ -2939,7 +2940,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	# OPT_T holds the psconvert -T option, again when not PS
 	# FNAME is for when using the savefig option
 
-	global current_cpt = nothing		# Reset to empty when fig is finalized
+	global current_cpt[1] = GMTcpt()		# Reset to empty when fig is finalized
 	if (fname == "" && (isdefined(Main, :IJulia) && Main.IJulia.inited) ||
 	                    isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module)
 		opt_T = " -Tg"; fname_ext = "png"		# In Jupyter or Pluto, png only
@@ -3160,7 +3161,7 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 			for k = 1:length(arg)  lab[k] = string('y',k)  end
 		end
 	elseif ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)
-		lab = [val]
+		lab = [string(val)]
 	elseif (legend_type === nothing)
 		lab = ["y1"]
 	else
@@ -3173,8 +3174,6 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 
 	if (legend_type === nothing)
 		#legend_type = legend_bag(Vector{String}(undef,1), Vector{String}(undef,1))
-		#legend_type.cmd = (isa(cmd_, String)) ? [cmd_] : cmd_
-		#legend_type.label = lab
 		legend_type = legend_bag((isa(cmd_, String)) ? [cmd_] : cmd_, lab)
 	else
 		isa(cmd_, String) ? append!(legend_type.cmd, [cmd_]) : append!(legend_type.cmd, cmd_)

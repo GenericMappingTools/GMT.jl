@@ -396,9 +396,9 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	# Filled polygons with -Z don't need extra col
 	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, arg2, N_args, false
 
-	if (isa(arg1, Array{<:Number}))  n_rows, n_col = size(arg1)
-	elseif (isa(arg1,GMTdataset))    n_rows, n_col = size(arg1.data)
-	else                             n_rows, n_col = size(arg1[1].data)
+	if (isa(arg1, Array{<:Real}))  n_rows, n_col = size(arg1)
+	elseif (isa(arg1,GMTdataset))  n_rows, n_col = size(arg1.data)
+	else                           n_rows, n_col = size(arg1[1].data)
 	end
 
 	warn1 = string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it.")
@@ -457,7 +457,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 				just_C  = just_C[1:ind[1]-1]
 			end
 			arg2::GMTcpt = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
-			global current_cpt = arg2
+			global current_cpt[1] = arg2
 			if (occursin(" -C", cmd))  cmd = cmd[1:len+3]  end		# Strip the cpt name
 			if (reset_i != "")  cmd *= reset_i  end		# Reset -i, in case it existed
 		end
@@ -584,10 +584,10 @@ function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)
 end
 
 function helper2_markers(opt::String, alias::Vector{String})::String
+	marca = ""
 	if (opt == alias[1])			# User used only the one letter syntax
 		marca = alias[1]
 	else
-		marca = ""
 		for k = 2:length(alias)		# Loop because of cases like ["w" "pie" "web"]
 			o2 = alias[k][1:min(2,length(alias[k]))]	# check the first 2 chars and Ro, Rotrect or RotRec are all good
 			if (startswith(opt, o2))  marca = alias[1]; break  end		# Good when, for example, marker=:Pie
@@ -612,14 +612,13 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 		if (!occursin("+p", cmd[1]) && opt_W == "") cmd[1] *= " -W0.25p"  end # Do not leave without a pen specification
 	elseif (caller == "bar")
 		if (opt_S == "")
+			bar_type = 0
 			if (haskey(d, :bar))
 				cmd[1], bar_opts = parse_bar_cmd(d, :bar, cmd[1], "Sb")
 				bar_type = 1;	delete!(d, :bar)
 			elseif (haskey(d, :hbar))
 				cmd[1], bar_opts = parse_bar_cmd(d, :hbar, cmd[1], "SB")
-				bar_type =2;	delete!(d, :hbar)
-			else
-				bar_type = 0
+				bar_type = 2;	delete!(d, :hbar)
 			end
 			if (bar_type == 0 || bar_opts == "")	# bar_opts == "" means only bar=true or hbar=true was used
 				opt = (haskey(d, :width)) ? add_opt(d, "", "",  [:width]) : "0.8"	# The default
