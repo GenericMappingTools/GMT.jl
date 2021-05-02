@@ -231,9 +231,8 @@ end
 function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D, multi_col, _cmd, sub_module, g_bar_fill, got_Ebars, got_usr_R)
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
 	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Matrix{<:Real}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)) )
-		multi_col[1] = false						# Reset because this is a use-only-once option
+		penC, penS = "", "";	cycle=:cycle;	multi_col[1] = false	# Reset because this is a use-only-once option
 		(haskey(d, :multicol)) && delete!(d, :multicol)
-		penC = fckcoverage("");		penS = "";	cycle=:cycle
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
 		if (opt_W != "")  penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))
 		else              _cmd[1] *= " -W0.5"
@@ -585,10 +584,10 @@ function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)
 end
 
 function helper2_markers(opt::String, alias::Vector{String})::String
-	marca = fckcoverage("")
 	if (opt == alias[1])			# User used only the one letter syntax
 		marca = alias[1]
 	else
+		marca = ""
 		for k = 2:length(alias)		# Loop because of cases like ["w" "pie" "web"]
 			o2 = alias[k][1:min(2,length(alias[k]))]	# check the first 2 chars and Ro, Rotrect or RotRec are all good
 			if (startswith(opt, o2))  marca = alias[1]; break  end		# Good when, for example, marker=:Pie
@@ -613,13 +612,14 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 		if (!occursin("+p", cmd[1]) && opt_W == "") cmd[1] *= " -W0.25p"  end # Do not leave without a pen specification
 	elseif (caller == "bar")
 		if (opt_S == "")
-			bar_type = 0
 			if (haskey(d, :bar))
 				cmd[1], bar_opts = parse_bar_cmd(d, :bar, cmd[1], "Sb")
 				bar_type = 1;	delete!(d, :bar)
 			elseif (haskey(d, :hbar))
 				cmd[1], bar_opts = parse_bar_cmd(d, :hbar, cmd[1], "SB")
 				bar_type =2;	delete!(d, :hbar)
+			else
+				bar_type = 0
 			end
 			if (bar_type == 0 || bar_opts == "")	# bar_opts == "" means only bar=true or hbar=true was used
 				opt = (haskey(d, :width)) ? add_opt(d, "", "",  [:width]) : "0.8"	# The default
@@ -680,5 +680,3 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u::Bo
 	end
 	return cmd, opt
 end
-
-fckcoverage(x::String)::String = x
