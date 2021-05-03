@@ -133,7 +133,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 		# If not explicitly stated to return a GDAL datase, return a GMT type
 		if (f == ogr2ogr)
 			deletedatasource(o, "/vsimem/tmp")		# WTF do I need to do this?
-			(haskey(d, :gdataset) && !d[:gdataset]) && (o = gd2gmt(o))
+			!(haskey(d, :gdataset) && !d[:gdataset]) && (o = gd2gmt(o))
 		else
 			n_bands = (got_GMT_opts && !haskey(d, :gdataset) && isa(o, AbstractRasterBand)) ? 1 : nraster(o)
 			(!haskey(d, :gdataset)) && (o = gd2gmt(o, bands=collect(1:n_bands)))
@@ -220,9 +220,9 @@ function get_gdaldataset(data)
 	if isa(data, AbstractString)			# Check also for remote files (those that start with a @). MAY SCREW VIOLENTLY
 		ds = (data[1] == '@') ? Gdal.unsafe_read(gmtwhich(data)[1].text[1]) : Gdal.unsafe_read(data)
 		needclose = true					# For some reason file remains open and we must close it explicitly
-	elseif (isa(data, GMT.GMTgrid) || isa(data, GMT.GMTimage) || isa(data, GMT.GMTdataset) || isa(data, Vector{<:GMT.GMTdataset}))
+	elseif (isa(data, GMT.GMTgrid) || isa(data, GMT.GMTimage) || GMT.isGMTdataset(data) || isa(data, Matrix{<:Real}))
 		ds = gmt2gd(data)
-	elseif (isa(data, AbstractGeometry))	# VERY UNSISFACTORY. SHOULD BE ABLE TO GETPARENT (POSSIBLE?)
+	elseif (isa(data, AbstractGeometry))	# VERY UNSATISFACTORY. SHOULD BE ABLE TO GETPARENT (POSSIBLE?)
 		ds = wrapgeom(data)
 	else
 		ds = data							# If it's not a GDAL dataset or convenient descendent, shit will follow soon

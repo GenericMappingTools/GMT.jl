@@ -1179,7 +1179,7 @@ function ps_init(API::Ptr{Nothing}, ps, dir::Integer)::Ptr{GMT_POSTSCRIPT}
 end
 
 # ---------------------------------------------------------------------------------------------------
-# Convinient function to tell if x a GMTdataset (or vector of it) or not
+# Convenient function to tell if x a GMTdataset (or vector of it) or not
 isGMTdataset(x) = (isa(x, GMTdataset) || isa(x, Vector{<:GMTdataset}))
 
 # ---------------------------------------------------------------------------------------------------
