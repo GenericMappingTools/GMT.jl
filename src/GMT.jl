@@ -191,6 +191,7 @@ if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
 	include("get_enums.jl")
 	include("gdal.jl")
 	include("gdal_utils.jl")
+	include("proj_utils.jl")
 	using GMT.Gdal
 end
 include("imshow.jl")		# Include later because one method depends on knowing about GDAL
