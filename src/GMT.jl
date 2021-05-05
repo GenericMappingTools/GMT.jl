@@ -83,7 +83,9 @@ export
 	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, toWKT,
 	convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize,
 	wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
-	wkbGeometryCollection
+	wkbGeometryCollection,
+
+	geod, invgeod
 
 include("common_docs.jl")
 include("libgmt_h.jl")
