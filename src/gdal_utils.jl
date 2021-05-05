@@ -1,3 +1,5 @@
+const prj4WGS84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+
 """
     O = gd2gmt(dataset; band=1, bands=[], sds=0, pad=0)
 
@@ -721,13 +723,14 @@ If it isn't, pass the appropriate projection info via the `s_srs` option.
 ### Returns
 A Matrix if input is a Matrix or a GMTdadaset if input had that type
 """
-function lonlat2xy(lonlat::Matrix{<:Real}, t_srs::String; s_srs::String="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+lonlat2xy(xy::Vector{<:Real}, t_srs::String; s_srs::String=prj4WGS84) = vec(lonlat2xy(reshape(xy[:],1,length(xy)), t_srs; s_srs=s_srs))
+function lonlat2xy(lonlat::Matrix{<:Real}, t_srs::String; s_srs::String=prj4WGS84)
 	D = ogr2ogr(lonlat, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
 	return D[1].data		# Return only the array because that's what was sent in
 end
 
-lonlat2xy(D::GMTdataset, t_srs::String; s_srs::String="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs") = lonlat2xy([D], t_srs; s_srs=s_srs)
-function lonlat2xy(D::Vector{<:GMTdataset}, t_srs::String; s_srs::String="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+lonlat2xy(D::GMTdataset, t_srs::String; s_srs::String=prj4WGS84) = lonlat2xy([D], t_srs; s_srs=s_srs)
+function lonlat2xy(D::Vector{<:GMTdataset}, t_srs::String; s_srs::String=prj4WGS84)
 	(startswith(D[1].proj4, "+proj=longl") || startswith(D[1].proj4, "+proj=latlon")) && (s_srs = D[1].proj4)
 	o = ogr2ogr(D, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
 	(isa(o, Gdal.AbstractDataset)) && (o = gd2gmt(o))
@@ -752,13 +755,14 @@ If that isn't right, pass the appropriate projection info via the `t_srs` option
 ### Returns
 A Matrix if input is a Matrix or a GMTdadaset if input had that type
 """
-function xy2lonlat(xy::Matrix{<:Real}, s_srs::String; t_srs::String="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+xy2lonlat(xy::Vector{<:Real}, s_srs::String; t_srs::String=prj4WGS84) = vec(xy2lonlat(reshape(xy[:],1,length(xy)), s_srs; t_srs=t_srs))
+function xy2lonlat(xy::Matrix{<:Real}, s_srs::String; t_srs::String=prj4WGS84)
 	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
 	return D[1].data		# Return only the array because that's what was sent in
 end
 
 xy2lonlat(D::GMTdataset, s_srs::String=""; t_srs::String="+proj=longlat +ellps=WGS84") = xy2lonlat([D], s_srs; t_srs=t_srs)
-function xy2lonlat(D::Vector{<:GMTdataset}, s_srs::String=""; t_srs::String="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+function xy2lonlat(D::Vector{<:GMTdataset}, s_srs::String=""; t_srs::String=prj4WGS84)
 	(D[1].proj4 == "" && D[1].wkt == "" && s_srs == "") && error("No projection information whatsoever on the input data.")
 	if (s_srs != "") _s_srs = s_srs
 	else             _s_srs = (D[1].proj4 != "") ? D[1].proj4 : D[1].wkt
