@@ -1,104 +1,74 @@
+# Functions in this file have derived from some in the PROJ4.jl pacakge https://github.com/JuliaGeo/Proj4.jl
+# so part of the credit goes also for the authors of that package but the main function, "geod" was highly
+# modified and does a lot more than the proj4 'geod' model.
+
 @static Sys.iswindows() ?
-	(Sys.WORD_SIZE == 64 ? (const libproj = "proj_w64") : (const libproj = "proj_w32")) : 
-	(
-		Sys.isapple() ? (const libproj = Symbol(split(readlines(pipeline(`otool -L $gmtlib`, `grep libproj`))[1])[1])) :
-		(
-		    Sys.isunix() ? (const libproj = Symbol(split(readlines(pipeline(`ldd $gmtlib`, `grep libproj`))[1])[3])) :
-			error("Don't know how to install this package in this OS.")
+	(Sys.WORD_SIZE == 64 ? (const libproj = "proj_w64") : (const libproj = "proj_w32")) : (
+		Sys.isapple() ? (const libproj = Symbol(split(readlines(pipeline(`otool -L $(GMT.thelib)`, `grep libproj`))[1])[1])) : (
+			Sys.isunix() ? (const libproj = Symbol(split(readlines(pipeline(`ldd $(GMT.thelib)`, `grep libproj`))[1])[3])) :
+			error("Don't know how to use PROJ4 in this OS.")
 		)
 	)
 
-
-const PJ_LOG_FUNCTION = Ptr{Cvoid}
-const PJ = Cvoid
-
 struct PJ_INFO
-    major::Cint
-    minor::Cint
-    patch::Cint
-    release::Cstring
-    version::Cstring
-    searchpath::Cstring
-    paths::Ptr{Cstring}
-    path_count::Csize_t
-end
-
-struct Cdouble6
-    x1::Cdouble
-    x2::Cdouble
-    x3::Cdouble
-    x4::Cdouble
-    x5::Cdouble
-    x6::Cdouble
-end
-
-struct Cdouble15
-    x1::Cdouble
-    x2::Cdouble
-    x3::Cdouble
-    x4::Cdouble
-    x5::Cdouble
-    x6::Cdouble
-    x7::Cdouble
-    x8::Cdouble
-    x9::Cdouble
-    x10::Cdouble
-    x11::Cdouble
-    x12::Cdouble
-    x13::Cdouble
-    x14::Cdouble
-    x15::Cdouble
-end
-
-struct Cdouble21
-    x1::Cdouble
-    x2::Cdouble
-    x3::Cdouble
-    x4::Cdouble
-    x5::Cdouble
-    x6::Cdouble
-    x7::Cdouble
-    x8::Cdouble
-    x9::Cdouble
-    x10::Cdouble
-    x11::Cdouble
-    x12::Cdouble
-    x13::Cdouble
-    x14::Cdouble
-    x15::Cdouble
-    x16::Cdouble
-    x17::Cdouble
-    x18::Cdouble
-    x19::Cdouble
-    x20::Cdouble
-    x21::Cdouble
+	major::Cint
+	minor::Cint
+	patch::Cint
+	release::Cstring
+	version::Cstring
+	searchpath::Cstring
+	paths::Ptr{Cstring}
+	path_count::Csize_t
 end
 
 mutable struct geod_geodesic
 	a::Cdouble
 	f::Cdouble
-    f1::Cdouble
-    e2::Cdouble
-    ep2::Cdouble
-    n::Cdouble
-    b::Cdouble
-    c2::Cdouble
-    etol2::Cdouble
-
-    # Arrays of parameters must be expanded manually,
-    # currently (either inline, or in an immutable helper-type)
-    # In the future, some of these restrictions may be reduced/eliminated.
-    #A3x::Cdouble6
-    #C3x::Cdouble15
-    #C4x::Cdouble21
-
-    A3x::NTuple{6, Cdouble}
-    C3x::NTuple{15,Cdouble}
-    C4x::NTuple{21,Cdouble}
-
+	f1::Cdouble
+	e2::Cdouble
+	ep2::Cdouble
+	n::Cdouble
+	b::Cdouble
+	c2::Cdouble
+	etol2::Cdouble
+	A3x::NTuple{6, Cdouble}
+	C3x::NTuple{15,Cdouble}
+	C4x::NTuple{21,Cdouble}
 	geod_geodesic() = new()
 end
 
+"""
+    geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
+
+Solve the direct geodesic problem.
+
+Args:
+
+- `lonlat`:   - longitude, latitude (degrees) ∈ [-90, 90]
+- `azimuth`:  - azimuth (degrees) ∈ [-540, 540)
+- `distance`: - distance to move from (lat,lon); can be negative, Default is meters but see `unit`
+- `proj` or `s_srs`:  - the given projection whose ellipsoid we move along. Can be a proj4 string or an WKT
+- `epsg`:     - Alternative way of specifying the projection [Default is WGS84]
+- `dataset`:  - If true returns a GMTdataset instead of matrix
+- `unit`:     - If `distance` is not in meters use one of `unit=:km`, or `unit=:Nautical` or `unit=:Miles`
+
+The `distance` argument can be a scalar, a Vector, a Vector{Vector} or an AbstractRange. The `azimuth` can be
+a scalar or a Vector. 
+
+When `azimuth` is a Vector we always return a GMTdataset with the multiple lines. Use this together with a
+non-scalar `distance` to get lines with multiple points along the line. The number of points along line does
+not even need to be the same. For data, give the `distance` as a Vector{Vector} where each element of `distance`
+is a vector with the distances of the points along a line. In this case the number of `distance` elements
+must be equal to the number of `azimuth`. 
+
+### Returns
+- dest - destination after moving for [distance] metres in [azimuth] direction.
+- azi  - forward azimuth (degrees) at destination [dest].
+
+## Example: Compute two lines starting at (0,0) with lengths 111100 & 50000, heading at 15 and 45 degrees.
+
+    geod([0., 0], [15., 45], [[0, 10000, 50000, 111100.], [0., 50000]])[1]
+"""
 function geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
 	f = 1.0
 	if (unit != :m)
@@ -107,31 +77,57 @@ function geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::St
 	end
 	(unit != :m && f == 1.0) && @warn("Unknown unit ($_u). Ignoring it")
 
-	isa(distance, AbstractRange) && (distance = collect(distance))
+	isa(distance, AbstractRange) && (distance = collect(Float64, distance))
 	proj_string, projPJ_ptr, isgeog = helper_geod(proj, s_srs, epsg)
 	dest, azi = helper_gdirect(projPJ_ptr, lonlat, azim, distance, proj_string, isgeog, dataset, epsg, f)
 	proj_destroy(projPJ_ptr)
 	return dest, azi
 end
 
+"""
+    invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
+
+Solve the inverse geodesic problem.
+
+Args:
+
+- `lonlat1`:  - coordinates of point 1 in the given projection
+- `lonlat2`:  - coordinates of point 2 in the given projection
+- `proj` or `s_srs`:  - the given projection whose ellipsoid we move along. Can be a proj4 string or an WKT
+- `epsg`:     - Alternative way of specifying the projection [Default is WGS84]
+
+### Returns
+dist - distance between point 1 and point 2 (meters).
+azi1 - azimuth at point 1 (degrees) ∈ [-180, 180)
+azi2 - (forward) azimuth at point 2 (degrees) ∈ [-180, 180)
+
+Remarks:
+
+If either point is at a pole, the azimuth is defined by keeping the longitude fixed,
+writing lat = 90 +/- eps, and taking the limit as eps -> 0+.
+"""
 function invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
 	proj_string, projPJ_ptr, isgeog = helper_geod(proj, s_srs, epsg)
 	(!isgeog) && (lonlat1 = xy2lonlat(lonlat1, proj_string);	lonlat2 = xy2lonlat(lonlat2, proj_string))	# Convert to geogd first
 	dist, azi1, azi2 = Ref{Cdouble}(), Ref{Cdouble}(), Ref{Cdouble}()
 	ccall((:geod_inverse, libproj), Cvoid, (Ptr{Cvoid},Cdouble,Cdouble,Cdouble, Cdouble,Ptr{Cdouble},Ptr{Cdouble},Ptr{Cdouble}),
-	      pointer_from_objref(get_ellipsoid(projPJ_ptr)), lonlat1[2], lonlat1[1], lonlat2[2], lonlat2[1], dist, azi1, azi2)
+		  pointer_from_objref(get_ellipsoid(projPJ_ptr)), lonlat1[2], lonlat1[1], lonlat2[2], lonlat2[1], dist, azi1, azi2)
 	proj_destroy(projPJ_ptr)
 	return dist[], azi1[], azi2[]
 end
 
 function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dataset, epsg, f)
+	lonlat = Float64.(lonlat)
 	(!isgeog) && (lonlat = xy2lonlat(lonlat, proj_string))		# Need to convert to geogd first
 	ggd = get_ellipsoid(projPJ_ptr)
+	
+	(isvector(azim) && isa(dist, Real)) && (dist = [dist,])		# multi-points. Just make 'dist' a vector to reuse a case below 
+
 	if (isa(azim, Real) && isa(dist, Real))						# One line only with one end-point
 		dest, azi = _geod_direct!(get_ellipsoid(projPJ_ptr), copy(lonlat), azim, dist*f)
 		(!isgeog) && (dest = lonlat2xy(dest, proj_string))
 		(dataset) && (dest = helper_gdirect_SRS(dest, proj_string, epsg, wkbPoint))
-	elseif (isa(azim, Real) && isvector(dist))	# One line only with several points along it
+	elseif (isa(azim, Real) && isvector(dist))			# One line only with several points along it
 		dest, azi = Array{Float64}(undef, length(dist), 2), Vector{Float64}(undef, length(dist))
 		for k = 1:length(dist)
 			d, azi[k] = _geod_direct!(ggd, copy(lonlat), azim, dist[k]*f)
@@ -146,6 +142,7 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 			Vdist = Vector{Vector{Float64}}(undef, n_lines)
 			[Vdist[k] = dist for k = 1:n_lines]
 		else
+			(length(dist) != n_lines) && (proj_destroy(projPJ_ptr);error("Number of distance vectors MUST be equal to number of azimuths"))
 			Vdist = dist
 		end
 		D = Vector{GMTdataset}(undef, n_lines)
@@ -162,6 +159,7 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 		end
 		return D, nothing		# Here both the point coordinates and the azim are in the GMTdataset
 	else
+@show(typeof(azim), typeof(dist))
 		error("'azimuth' MUST be either a scalar or a 1-dim array, and 'distance' may also be a Vector{Vector}")
 	end
 	return dest, azi
@@ -178,11 +176,11 @@ function helper_gdirect_SRS(mat, proj_string::String, epsg::Integer, geom, D=GMT
 	D
 end
 
-function _geod_direct!(geod::geod_geodesic, lonlat::Vector{<:Real}, azim, distance)
+function _geod_direct!(geod::geod_geodesic, lonlat::Vector{Float64}, azim, distance)
 	p = pointer(lonlat)
 	azi = Ref{Cdouble}()		# the (forward) azimuth at the destination
 	ccall((:geod_direct, libproj), Cvoid, (Ptr{Cvoid},Cdouble,Cdouble,Cdouble,Cdouble,Ptr{Cdouble},Ptr{Cdouble}, Ptr{Cdouble}),
-	      pointer_from_objref(geod), lonlat[2], lonlat[1], azim, distance, p+sizeof(Cdouble), p, azi)
+		  pointer_from_objref(geod), lonlat[2], lonlat[1], azim, distance, p+sizeof(Cdouble), p, azi)
 	lonlat, azi[]
 end
 
@@ -208,23 +206,26 @@ function get_ellipsoid(projPJ_ptr::Ptr{Cvoid})::geod_geodesic
 	geod_geodesic(a, 1-sqrt(1-ecc2))
 end
 
-proj_info() = ccall((:proj_info, libproj), PJ_INFO, ())
-
 function proj_create(proj_string::String, ctx=C_NULL)
 	# Returns an Object that must be unreferenced with proj_destroy()
-    projPJ_ptr = ccall((:proj_create, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), ctx, proj_string)
-    (projPJ_ptr == C_NULL) && error("Could not parse projection: \"$proj_string\":")
-    projPJ_ptr
+	projPJ_ptr = ccall((:proj_create, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), ctx, proj_string)
+	(projPJ_ptr == C_NULL) && error("Could not parse projection: \"$proj_string\":")
+	projPJ_ptr
 end
 
 function proj_destroy(projPJ_ptr::Ptr{Cvoid})	# Free C datastructure associated with a projection.
-    @assert projPJ_ptr != C_NULL
-    ccall((:proj_destroy, libproj), Ptr{Cvoid}, (Ptr{Cvoid},), projPJ_ptr)
+	@assert projPJ_ptr != C_NULL
+	ccall((:proj_destroy, libproj), Ptr{Cvoid}, (Ptr{Cvoid},), projPJ_ptr)
 end
 
 function pj_get_spheroid_defn(proj_ptr::Ptr{Cvoid})
-    a = Ref{Cdouble}()		# major_axis
-    ecc2 = Ref{Cdouble}()	# eccentricity squared
-    ccall((:pj_get_spheroid_defn, libproj), Cvoid, (Ptr{Cvoid}, Ptr{Cdouble}, Ptr{Cdouble}), proj_ptr, a, ecc2)
-    a[], ecc2[]
+	a = Ref{Cdouble}()		# major_axis
+	ecc2 = Ref{Cdouble}()	# eccentricity squared
+	ccall((:pj_get_spheroid_defn, libproj), Cvoid, (Ptr{Cvoid}, Ptr{Cdouble}, Ptr{Cdouble}), proj_ptr, a, ecc2)
+	a[], ecc2[]
+end
+
+function proj_info()
+	pji = ccall((:proj_info, libproj), PJ_INFO, ())
+	println(unsafe_string(pji.release), "\n", "Located at: ", unsafe_string(pji.searchpath))
 end
