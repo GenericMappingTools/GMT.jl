@@ -723,6 +723,7 @@ If it isn't, pass the appropriate projection info via the `s_srs` option.
 ### Returns
 A Matrix if input is a Matrix or a GMTdadaset if input had that type
 """
+lonlat2xy(xy::Vector{<:Real}, t_srs::String; s_srs::String=prj4WGS84) = vec(lonlat2xy(reshape(xy[:],1,length(xy)), t_srs; s_srs=s_srs))
 function lonlat2xy(lonlat::Matrix{<:Real}, t_srs::String; s_srs::String=prj4WGS84)
 	D = ogr2ogr(lonlat, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
 	return D[1].data		# Return only the array because that's what was sent in
@@ -754,6 +755,7 @@ If that isn't right, pass the appropriate projection info via the `t_srs` option
 ### Returns
 A Matrix if input is a Matrix or a GMTdadaset if input had that type
 """
+xy2lonlat(xy::Vector{<:Real}, s_srs::String; t_srs::String=prj4WGS84) = vec(xy2lonlat(reshape(xy[:],1,length(xy)), s_srs; t_srs=t_srs))
 function xy2lonlat(xy::Matrix{<:Real}, s_srs::String; t_srs::String=prj4WGS84)
 	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
 	return D[1].data		# Return only the array because that's what was sent in
