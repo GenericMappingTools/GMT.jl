@@ -1531,11 +1531,7 @@ end
 	end
 	gdalvectortranslate(ds::Dataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([ds], opts; dest=dest, save=save)
 	gdalvectortranslate(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest, save=save)
-	function gdalvectortranslate(ds::GMT.GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="")
-		o = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
-		(dest == "/vsimem/tmp") && deletedatasource(o, "/vsimem/tmp")		# WTF do I need to do this?
-		o
-	end
+	gdalvectortranslate(ds::GMT.GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([ds], opts; dest=dest, save=save)
 	function gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="")
 		o = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
 		(dest == "/vsimem/tmp") && deletedatasource(o, "/vsimem/tmp")		# WTF do I need to do this?

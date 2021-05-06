@@ -217,6 +217,7 @@ Gdal.GDALDestroyDriverManager()
 	ds2=ogr2ogr(ds, ["-t_srs", "+proj=utm +zone=29", "-overwrite"])
 	gd2gmt(ds2)
 	ogr2ogr(D, "-t_srs '+proj=utm +zone=29' -overwrite")	# Returns a GMT datset directly
+	ogr2ogr(D[1], "-t_srs '+proj=utm +zone=29' -overwrite")
 
 	D1 = mat2ds([0.0 0.0; 1.0 1.0; 1.0 0.0; 0.0 0.0]);
 	gmt2gd(D1);		gmt2gd(D1, geometry="line");	gmt2gd(D1, geometry="point")
