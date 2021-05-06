@@ -76,8 +76,8 @@ function geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::St
 		f = (_u[1] == 'k') ? 1000. : ((_u[1] == 'n') ? 1852.0 : (startswith(_u, "mi") ? 1600.0 : 1.0))
 	end
 	(unit != :m && f == 1.0) && @warn("Unknown unit ($_u). Ignoring it")
-
 	isa(distance, AbstractRange) && (distance = collect(Float64, distance))
+
 	proj_string, projPJ_ptr, isgeog = helper_geod(proj, s_srs, epsg)
 	dest, azi = helper_gdirect(projPJ_ptr, lonlat, azim, distance, proj_string, isgeog, dataset, epsg, f)
 	proj_destroy(projPJ_ptr)
@@ -126,16 +126,17 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 	if (isa(azim, Real) && isa(dist, Real))						# One line only with one end-point
 		dest, azi = _geod_direct!(get_ellipsoid(projPJ_ptr), copy(lonlat), azim, dist*f)
 		(!isgeog) && (dest = lonlat2xy(dest, proj_string))
-		(dataset) && (dest = helper_gdirect_SRS(dest, proj_string, epsg, wkbPoint))
+		(dataset) && (dest = helper_gdirect_SRS(dest, proj_string, wkbPoint))
 	elseif (isa(azim, Real) && isvector(dist))			# One line only with several points along it
 		dest, azi = Array{Float64}(undef, length(dist), 2), Vector{Float64}(undef, length(dist))
 		for k = 1:length(dist)
 			d, azi[k] = _geod_direct!(ggd, copy(lonlat), azim, dist[k]*f)
 			dest[k, :] = (isgeog) ? d : lonlat2xy(d, proj_string)
 		end
-		(dataset) && (dest = helper_gdirect_SRS([dest azi], proj_string, epsg, wkbLineString))		# Return a GMTdataset
+		(dataset) && (dest = helper_gdirect_SRS([dest azi], proj_string, wkbLineString))		# Return a GMTdataset
 	elseif (isvector(azim) && isvector(dist))			# multi-lines with variable length and/or number of points
 		n_lines = length(azim)							# Number of lines
+		(!isa(dist, Vector)) && (dist = vec(dist))
 		(!isa(dist, Vector) && !isa(dist, Vector{<:Vector})) && error("The 'distances' input MUST be a Vector or a Vector{Vector}")
 		if (!isa(dist, Vector{<:Vector}))				# If not, make it a Vector{Vector} to use the same algo below
 			isa(dist, Matrix) && (dist = vec(dist))		# Because we accepted also 1-row or 1-col matrices
@@ -155,23 +156,20 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 				dest[np, 3] = azi		# Fck language that makes it a pain to try anything vectorized 
 			end
 			D[nl] = GMTdataset(dest, Vector{String}(), "", Vector{String}(), "", "", wkbLineString)
-			helper_gdirect_SRS(dest, proj_string, epsg, wkbLineString, D[nl])	# Just assign the SRS
+			helper_gdirect_SRS(dest, proj_string, wkbLineString, D[nl])	# Just assign the SRS
 		end
 		return D, nothing		# Here both the point coordinates and the azim are in the GMTdataset
 	else
-@show(typeof(azim), typeof(dist))
 		error("'azimuth' MUST be either a scalar or a 1-dim array, and 'distance' may also be a Vector{Vector}")
 	end
 	return dest, azi
 end
 
-function helper_gdirect_SRS(mat, proj_string::String, epsg::Integer, geom, D=GMTdataset())
+function helper_gdirect_SRS(mat, proj_string::String, geom, D=GMTdataset())
 	# Convert the output of geod_direct into a GMTdataset and, if possible, assign it a SRS
 	# If a 'D' is sent in, we only (eventually) assign it an SRS
 	isempty(D) && (D = GMTdataset([mat[1] mat[2]], Vector{String}(), "", Vector{String}(), "", "", geom))
-	if     (startswith(proj_string, "+proj"))   D.proj4 = proj_string
-	elseif (startswith(proj_string, "GEOGCS"))  D.wkt = proj_string
-	elseif (epsg > 2000)                        D.proj4 = toPROJ4(Gdal.importEPSG(epsg))
+	if     (startswith(proj_string, "+proj"))  D.proj4 = proj_string
 	end
 	D
 end
@@ -189,9 +187,10 @@ function helper_geod(proj::String, s_srs::String, epsg::Integer)::Tuple{String, 
 	# Return the projection string ans also if the projection is geogs.
 	if     (proj  != "")  prj_string = proj
 	elseif (s_srs != "")  prj_string = s_srs
-	elseif (epsg > 0)     prj_string = @sprintf("EPSG=%d", epsg)
-	else                  prj_string = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+	elseif (epsg > 0)     prj_string = toPROJ4(importEPSG(epsg))
+	else                  prj_string = "+proj=longlat +datum=WGS84 +no_defs"
 	end
+	(startswith(prj_string, "GEOGC")) && (prj_string = toPROJ4(importWKT(prj_string)))
 	prj_string, proj_create(prj_string), (startswith(prj_string, "+proj=longl") || startswith(prj_string, "+proj=latl") || epsg == 4326)
 end
 
@@ -209,9 +208,12 @@ end
 function proj_create(proj_string::String, ctx=C_NULL)
 	# Returns an Object that must be unreferenced with proj_destroy()
 	projPJ_ptr = ccall((:proj_create, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), ctx, proj_string)
-	(projPJ_ptr == C_NULL) && error("Could not parse projection: \"$proj_string\":")
+	(projPJ_ptr == C_NULL) && error("Could not parse projection: \"$proj_string\"")
 	projPJ_ptr
 end
+
+proj_create_crs_to_crs(s_crs, t_crs, area, ctx=C_NULL) =
+	ccall((:proj_create_crs_to_crs, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring, Cstring, Ptr{Cvoid}), ctx, s_crs, t_crs, area)
 
 function proj_destroy(projPJ_ptr::Ptr{Cvoid})	# Free C datastructure associated with a projection.
 	@assert projPJ_ptr != C_NULL
@@ -228,4 +230,33 @@ end
 function proj_info()
 	pji = ccall((:proj_info, libproj), PJ_INFO, ())
 	println(unsafe_string(pji.release), "\n", "Located at: ", unsafe_string(pji.searchpath))
+end
+
+#=
+function _transform!(src_ptr::Ptr{Cvoid}, dest_ptr::Ptr{Cvoid}, point_count::Integer, point_stride::Integer,
+                     x::Ptr{Cdouble}, y::Ptr{Cdouble}, z::Ptr{Cdouble})
+	@assert src_ptr != C_NULL && dest_ptr != C_NULL
+	err = ccall((:pj_transform, libproj), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Clong, Cint, Ptr{Cdouble}, Ptr{Cdouble},
+                Ptr{Cdouble}), src_ptr, dest_ptr, point_count, point_stride, x, y, z)
+	err != 0 && error("transform error: $(_strerrno(err))")
+end
+
+_transform!(s_ptr::Ptr{Cvoid}, t_ptr::Ptr{Cvoid}, pos::Vector{Cdouble}) = _transform!(s_ptr, t_ptr, reshape(pos, 1, length(pos)))
+function _transform!(s_ptr::Ptr{Cvoid}, t_ptr::Ptr{Cvoid}, position::Array{Cdouble,2})
+	@assert s_ptr != C_NULL && t_ptr != C_NULL
+	npoints, ndim = size(position)
+	@assert ndim >= 2
+
+	x = pointer(position)
+	y = x + sizeof(Cdouble)*npoints
+	z = (ndim == 2) ? Ptr{Cdouble}(C_NULL) : x + 2*sizeof(Cdouble)*npoints
+
+	_transform!(s_ptr, t_ptr, npoints, 1, x, y, z)
+	position
+end
+=#
+
+function is_latlong(proj_ptr::Ptr{Cvoid})
+	@assert proj_ptr != C_NULL
+	ccall((:pj_is_latlong, libproj), Cint, (Ptr{Cvoid},), proj_ptr) != 0
 end
