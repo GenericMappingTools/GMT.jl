@@ -213,7 +213,7 @@
 	@test_throws ErrorException("grd_init: input (Int64) is not a GRID container type") GMT.grid_init(C_NULL,0,0)
 	@test_throws ErrorException("image_init: input is not a IMAGE container type") GMT.image_init(C_NULL,0,0)
 	@test_throws ErrorException("Bad family type") GMT.GMT_Alloc_Segment(C_NULL, -1, 0, 0, "", C_NULL)
-	@test_throws ErrorException("Unknown family type") GMT.GMT_Create_Data(C_NULL, -99, 0, 0)
+	#@test_throws ErrorException("Unknown family type") GMT.GMT_Create_Data(C_NULL, -99, 0, 0)
 	@test_throws ErrorException("Expected a PS structure for input") GMT.ps_init(C_NULL, 0, 0)
 	@test_throws ErrorException("size of x,y vectors incompatible with 2D array size") GMT.grdimg_hdr_xy(rand(3,3), 0, 0, [1 2], [1])
 	GMT.strncmp("abcd", "ab", 2)
