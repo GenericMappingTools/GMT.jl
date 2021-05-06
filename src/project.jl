@@ -75,10 +75,8 @@ function project(cmd0::String="", arg1=nothing; kwargs...)
 	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :origin :start_pt], [:E :end_pt], [:F :out_flags],
 	                                 [:G :step :small_circle :no_input], [:L :length_control], [:N :flat_earth], [:Q :km], [:S :sort], [:T :pole],[:W :width_control]])
 
-	if (!occursin("-G", cmd))
-		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
-	else
-		cmd = write_data(d, cmd)                # Check if want save to file
+	if (!occursin("-G", cmd)) cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
+	else                      cmd = write_data(d, cmd)      # Check if want save to file
 	end
 	common_grd(d, "project " * cmd, arg1)		# Finish build cmd and run it
 end
