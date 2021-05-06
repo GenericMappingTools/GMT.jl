@@ -749,7 +749,7 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)
 		X.family = actual_family[1]
 	elseif (X.family == GMT_IS_PALETTE)		# Get a palette from Julia or a dummy one to hold GMT output
 		if (!isa(ptr, GMTcpt) && X.direction == GMT_OUT)	# To avoid letting call palette_init() with a nothing
-			X.object = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
+			X.object = convert(Ptr{GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 		else
 			X.object = palette_init(API, ptr)
 		end
@@ -800,8 +800,7 @@ function grid_init(API::Ptr{Nothing}, grd_box, dir::Integer=GMT_IN, pad::Int=2)
 # If GRD_BOX is not empty it must contain a GMTgrid type.
 
 	if (isempty_(grd_box))			# Just tell grid_init() to allocate an empty container
-		return GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT,
-		                       C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
+		return convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 	end
 	(!isa(grd_box, GMTgrid) && !isa(grd_box, Vector{GMTgrid})) &&
 		error("grd_init: input ($(typeof(grd_box))) is not a GRID container type")
@@ -817,7 +816,7 @@ function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)::Ptr{GMT_GRID}
 	(mode == GMT_CONTAINER_ONLY) && (pad = Grid.pad)		# Here we must follow what the Grid says it has
 
 	hdr = [Grid.range; Grid.registration; Grid.inc]
-	G::Ptr{GMT_GRID} = GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, C_NULL, hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad)
+	G = convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, NULL, hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad))
 
 	Gb::GMT_GRID = unsafe_load(G)			# Gb = GMT_GRID (constructor with 1 method)
 	h = unsafe_load(Gb.header)
@@ -873,8 +872,7 @@ function image_init(API::Ptr{Nothing}, img_box, dir::Integer=GMT_IN)::Ptr{GMT_IM
 # ...
 
 	if (isempty_(img_box))			# Just tell image_init() to allocate an empty container
-		I::Ptr{GMT_IMAGE} = GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_IS_OUTPUT,
-		                                    C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
+		I = convert(Ptr{GMT_IMAGE}, GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 		if (img_mem_layout[1] != "")
 			mem_layout = length(img_mem_layout[1]) == 3 ? img_mem_layout[1] * "a" : img_mem_layout[1]
 			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);
@@ -900,8 +898,8 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)::Ptr{GMT_IMAGE
 	mode = (pad == 2) ? GMT_CONTAINER_AND_DATA : GMT_CONTAINER_ONLY
 	(pad == 2 && Img.pad == 0 && Img.layout[2] == 'R') && (mode = GMT_CONTAINER_AND_DATA)	# Unfortunately
 
-	I::Ptr{GMT_IMAGE} = GMT_Create_Data(API, family, GMT_IS_SURFACE, mode, pointer([n_cols, n_rows, n_bands]),
-	                                    Img.range[1:4], Img.inc, Img.registration, pad)
+	I = convert(Ptr{GMT_IMAGE}, GMT_Create_Data(API, family, GMT_IS_SURFACE, mode, pointer([n_cols, n_rows, n_bands]),
+	                                            Img.range[1:4], Img.inc, Img.registration, pad))
 	Ib::GMT_IMAGE = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
 	h = unsafe_load(Ib.header)
 
@@ -983,7 +981,7 @@ function dataset_init(API::Ptr{Nothing}, Darr, direction::Integer)::Ptr{GMT_DATA
 # If output then we dont know size so we set dimensions to zero.
 
 	if (direction == GMT_OUT)
-		return GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
+		return convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 	end
 
 	(Darr == C_NULL) && error("Input is empty where it can't be.")
@@ -998,7 +996,7 @@ function dataset_init(API::Ptr{Nothing}, Darr, direction::Integer)::Ptr{GMT_DATA
 	mode = (length(Darr[1].text) != 0) ? GMT_WITH_STRINGS : GMT_NO_STRINGS
 
 	pdim = pointer(dim)
-	D::Ptr{GMT_DATASET} = GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, mode, pdim, C_NULL, C_NULL, 0, 0, C_NULL)
+	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, mode, pdim, NULL, NULL, 0, 0, NULL))
 	DS::GMT_DATASET = unsafe_load(D)
 
 	DT = unsafe_load(unsafe_load(DS.table))				# GMT.GMT_DATATABLE
@@ -1056,7 +1054,7 @@ function dataset_init(API::Ptr{Nothing}, ptr, actual_family::Vector{<:Integer}):
 # Create empty Matrix container, associate it with julia data matrix, and use as GMT input.
 
 	dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
-	M::Ptr{GMT_MATRIX} = GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, C_NULL, C_NULL, 0, 0, C_NULL)
+	M = convert(Ptr{GMT_MATRIX}, GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, NULL, NULL, 0, 0, NULL))
 	actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
 
 	Mb::GMT_MATRIX = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)
@@ -1097,7 +1095,7 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 		n_colors = n_colors - 1;	# Number of CPT slices
 	end
 
-	P::Ptr{GMT.GMT_PALETTE} = GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), C_NULL, C_NULL, 0, 0, C_NULL)
+	P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), NULL, NULL, 0, 0, NULL))
 
 	(one != 0) && mutateit(API, P, "is_continuous", one)
 
@@ -1158,14 +1156,14 @@ function ps_init(API::Ptr{Nothing}, ps, dir::Integer)::Ptr{GMT_POSTSCRIPT}
 # If direction is GMT_IN then we are given a Julia structure with known sizes.
 # If direction is GMT_OUT then we allocate an empty GMT POSTSCRIPT as a destination.
 	if (dir == GMT_OUT)
-		return GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, GMT_IS_OUTPUT, C_NULL, C_NULL, C_NULL, 0, 0, C_NULL)
+		return convert(Ptr{GMT_POSTSCRIPT}, GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 	end
 
 	(!isa(ps, GMTps)) && error("Expected a PS structure for input")
 
 	# Passing dim[0] = 0 since we dont want any allocation of a PS string
 	pdim = pointer([0])
-	P::Ptr{GMT_POSTSCRIPT} = GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, 0, pdim, NULL, NULL, 0, 0, NULL)
+	P = convert(Ptr{GMT_POSTSCRIPT}, GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, 0, pdim, NULL, NULL, 0, 0, NULL))
 
 	P0::GMT_POSTSCRIPT = unsafe_load(P)		# GMT.GMT_POSTSCRIPT
 
