@@ -26,9 +26,10 @@ function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Cv
 	ccall((:GMT_Create_Session, thelib), Ptr{Cvoid}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Cvoid}), tag, pad, mode, print_func)
 end
 
-function GMT_Create_Data(API::Ptr{Cvoid}, family::Integer, geometry, mode, dim=C_NULL, wesn=C_NULL,
-                         inc=C_NULL, registration=0, pad=2, data::Ptr{Cvoid}=C_NULL)
+function GMT_Create_Data(API::Ptr{Cvoid}, family::Integer, geometry, mode, dim=NULL, wesn=NULL,
+                         inc=NULL, registration=0, pad=2, data::Ptr{Cvoid}=NULL)
 
+#=
 	if (family == GMT_IS_DATASET)        ret_type = Ptr{GMT_DATASET}
 	elseif (family == GMT_IS_GRID)       ret_type = Ptr{GMT_GRID}
 	elseif (family == GMT_IS_PALETTE)    ret_type = Ptr{GMT_PALETTE}
@@ -39,18 +40,18 @@ function GMT_Create_Data(API::Ptr{Cvoid}, family::Integer, geometry, mode, dim=C
 	elseif (family == GMT_IS_POSTSCRIPT) ret_type = Ptr{GMT_POSTSCRIPT}
 	else                                 error("Unknown family type")
 	end
+=#
 
 	ptr = ccall((:GMT_Create_Data, thelib), Ptr{Cvoid}, (Cstring, UInt32, UInt32, UInt32, Ptr{UInt64},
 		Ptr{Cdouble}, Ptr{Cdouble}, UInt32, Cint, Ptr{Cvoid}), API, family, geometry, mode, dim, wesn, inc,
 		registration, pad, data)
 
-	if (ptr == C_NULL)  error("Failure to allocate GMT resource")  end
-	convert(ret_type, ptr)
+	(ptr == C_NULL) && error("Failure to allocate GMT resource")
+	#convert(ret_type, ptr)
+	ptr
 end
 
-function GMT_Destroy_Session(API::Ptr{Cvoid})
-	ccall((:GMT_Destroy_Session, thelib), Cint, (Cstring,), API)
-end
+GMT_Destroy_Session(API::Ptr{Cvoid}) = ccall((:GMT_Destroy_Session, thelib), Cint, (Cstring,), API)
 
 #=		Not used yet, so comment
 function GMT_Read_Data(API::Ptr{Cvoid}, family, method, geometry, mode, wesn, input=C_NULL, data=C_NULL)
