@@ -10,6 +10,9 @@
 		)
 	)
 
+abstract type _geodesic end
+mutable struct null_geodesic <: _geodesic end
+
 struct PJ_INFO
 	major::Cint
 	minor::Cint
@@ -21,7 +24,7 @@ struct PJ_INFO
 	path_count::Csize_t
 end
 
-mutable struct geod_geodesic
+mutable struct geod_geodesic <: _geodesic
 	a::Cdouble
 	f::Cdouble
 	f1::Cdouble
@@ -253,6 +256,24 @@ function _transform!(s_ptr::Ptr{Cvoid}, t_ptr::Ptr{Cvoid}, position::Array{Cdoub
 
 	_transform!(s_ptr, t_ptr, npoints, 1, x, y, z)
 	position
+end
+
+mutable struct Projection
+    #ctx::Context   # Projection context object
+    rep::Ptr{Cvoid} # Pointer to internal projPJ struct
+    geod::_geodesic
+end
+
+function Projection(proj_ptr::Ptr{Cvoid})
+    proj = Projection(proj_ptr, null_geodesic())
+    finalizer(freeProjection, proj)
+    proj
+end
+
+Projection(proj_string::String) = Projection(proj_create(proj_string))
+function freeProjection(proj::Projection)
+    proj_destroy(proj.rep)
+    proj.rep = C_NULL
 end
 =#
 
