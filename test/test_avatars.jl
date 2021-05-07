@@ -150,7 +150,7 @@
 	bar(T, color=:rainbow, figsize=(14,8), mz=[3 2 1], Vd=dbg2)
 	bar(1:5, (20, 35, 30, 35, 27), width=0.35, color=:lightblue,limits=(0.5,5.5,0,40),E=(y=(2,3,4,1,2),), Vd=dbg2)
 	D = mat2ds([0 0],["aa"]);
-	show(D);
+	sprint(print, D);
 
 	println("	BAR3")
 	G = gmt("grdmath -R-15/15/-15/15 -I1 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");

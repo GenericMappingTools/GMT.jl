@@ -101,7 +101,10 @@ Gdal.GDALDestroyDriverManager()
 	feature = Gdal.nextfeature(layer)
 	@test Gdal.asdouble(feature, 0) ≈ 2.0
 	@test Gdal.asstring(feature, 1) == "point-a"
-	show(ds_point)
+	sprint(print, feature)
+	sprint(print, Gdal.getfielddefn(feature, 1))
+	sprint(print, Gdal.getgeomdefn(feature, 0))
+	sprint(print, ds_point)
 
 	ds_rasterize = gdalrasterize(ds_point, ["-of","MEM","-tr","0.05","0.05"])
 	@test getgeotransform(ds_rasterize) ≈ [99.975,0.05,0.0,0.1143,0.0,-0.05]
@@ -134,6 +137,7 @@ Gdal.GDALDestroyDriverManager()
 	@test Gdal.nfeature(layer) == 1
 
 	ds_src = Gdal.read("utmsmall.tif")
+	isa(ds_src, Gdal.RasterDataset{UInt8})
 	Gdal.write(ds_src, "/vsimem/utmsmall.tif")
 	ds_copy = Gdal.read("/vsimem/utmsmall.tif")
 	@test Gdal.read(ds_src) == Gdal.read(ds_copy)
