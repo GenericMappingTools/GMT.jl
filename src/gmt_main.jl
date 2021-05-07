@@ -149,7 +149,7 @@ function gmt(cmd::String, args...)
 			end
 		end
 		# We may have trailing [] args in modules
-		while (n_argin > 0 && (args[n_argin] === nothing || args[n_argin] == []))  n_argin -= 1  end
+		while (n_argin > 0 && (args[n_argin] === nothing))  n_argin -= 1  end
 	end
 	# -----------------------------------------------------------
 
@@ -901,7 +901,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)::Ptr{GMT_IMAGE
 	I = convert(Ptr{GMT_IMAGE}, GMT_Create_Data(API, family, GMT_IS_SURFACE, mode, pointer([n_cols, n_rows, n_bands]),
 	                                            Img.range[1:4], Img.inc, Img.registration, pad))
 	Ib::GMT_IMAGE = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
-	h = unsafe_load(Ib.header)
+	h::GMT_GRID_HEADER = unsafe_load(Ib.header)
 
 	mem_owned_by_gmt = true
 	if (pad == 2 && Img.layout[2] != 'R')						# When we need to project
