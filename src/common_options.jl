@@ -1769,7 +1769,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	# Also puts -R in cmd when accessing grids from grdimage|view|contour, etc... (due to a GMT bug that doesn't do it)
 	# Use CMD0 = "" to use this function from within non-grd modules
 	global current_cpt
-	cpt_opt_T = ""
+	cpt_opt_T::String = ""
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage))			# GMT bug, -R will not be stored in gmt.history
 		range = arg1.range
 	elseif (cmd0 != "" && cmd0[1] != '@')

@@ -1657,7 +1657,7 @@ end
 		@cplwarn result "CPLError $(result): action is unsupported by the driver"
 		return band
 	end
-	createcolortable(palette::UInt32) = ColorTable(GDALCreateColorTable(palette))	# WAS UNSAFE_
+	createcolortable(palette::Integer) = ColorTable(GDALCreateColorTable(UInt32(palette)))	# WAS UNSAFE_
 	function createcolorramp!(ct::ColorTable, startind::Integer, startcolor::GDALColorEntry, endind::Integer, endcolor::GDALColorEntry)
     	return GDALCreateColorRamp(ct.ptr, startind, Ref{GDALColorEntry}(startcolor), endind, Ref{GDALColorEntry}(endcolor))
 	end
