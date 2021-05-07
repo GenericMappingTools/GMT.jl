@@ -810,9 +810,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	macro cplwarn(code, message)
 		return quote
-			if $(esc(code)) != CE_None
-				@warn $message
-			end
+			($(esc(code)) != CE_None) && @warn $message
 		end
 	end
 
@@ -1318,13 +1316,13 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		Dataset(GDALCreateCopy(driver.ptr, filename, dataset.ptr, strict, options, @cplprogress(progressfunc), progress))
 	end
 
-	getdriver(dataset::AbstractDataset) = Driver(GDALGetDatasetDriver(dataset.ptr))
+	getdriver(ds::AbstractDataset) = Driver(GDALGetDatasetDriver(ds.ptr))
 	getdriver(i::Integer) = Driver(GDALGetDriver(i))
 	getdriver(name::AbstractString) = Driver(GDALGetDriverByName(name))
 
 	getband(dataset::AbstractDataset, i::Integer=1) = IRasterBand(GDALGetRasterBand(dataset.ptr, i), ownedby=dataset)
 	getband(ds::RasterDataset, i::Integer=1) = getband(ds.ds, i)
-	getproj(dataset::AbstractDataset) = GDALGetProjectionRef(dataset.ptr)
+	getproj(ds::AbstractDataset) = GDALGetProjectionRef(ds.ptr)
 	getproj(layer::AbstractFeatureLayer) = SpatialRef(OGR_L_GetSpatialRef(layer.ptr))
 
 	getpoint(geom::AbstractGeometry, i::Integer) = getpoint!(geom, i, Ref{Cdouble}(), Ref{Cdouble}(), Ref{Cdouble}())
@@ -1348,7 +1346,7 @@ end
 	end
 =#
 
-	#readraster(s::String; kwargs...) = RasterDataset(read(s; kwargs...))
+	readraster(s::String; kwargs...) = RasterDataset(read(s; kwargs...))
 	readraster(args...; kwargs...) = RasterDataset(unsafe_read(args...; kwargs...))
 
 	shortname(drv::Driver) = GDALGetDriverShortName(drv.ptr)
