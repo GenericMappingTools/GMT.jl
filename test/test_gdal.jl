@@ -18,8 +18,10 @@ Gdal.GDALDestroyDriverManager()
 	"""
 
 	dataset = Gdal.create("", driver = getdriver("MEM"), width=241, height=181, nbands=1, dtype=Float64)
-	crs = toWKT(importPROJ4("+proj=latlong"));
 	crs = toWKT(importPROJ4("+proj=latlong"), true);
+	crs = toWKT(importPROJ4("+proj=latlong"));
+	importWKT(crs)
+	Gdal.importWKT!(importWKT(crs), toWKT(importPROJ4("+proj=latlong")))
 	Gdal.write!(dataset, rand(181,241), 1)
 	setproj!(dataset, crs)
 	setgeotransform!(dataset, [-4.016666666666667, 0.03333333333333333, 0.0, -3.01666666666, 0.0, 0.03333333333333333])
@@ -144,6 +146,9 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.setnodatavalue!(rb, -100)
 	@test Gdal.getnodatavalue(rb) ≈ -100
 	Gdal.getcolorinterp(rb)
+
+	ct = Gdal.createcolortable(1)		# GDAL.GPI_RGB = 1
+	Gdal.createcolorramp!(ct, 128, Gdal.GDALColorEntry(0,0,0,0), 255, Gdal.GDALColorEntry(0,0,255,0))
 
 	line = Gdal.createlinestring()
 	Gdal.addpoint!(line, 1116651.439379124,  637392.6969887456)
