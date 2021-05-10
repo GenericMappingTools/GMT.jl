@@ -1,7 +1,7 @@
 """
 	grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-Interpolates the grid(s) at the positions in the table and writes out the table with the
+Interpolates the grid(s) at the positions in the table and returns the table with the
 interpolated values added as (one or more) new columns.
 
 Full option list at [`grdtrack`]($(GMTdoc)/grdtrack.html)
@@ -9,17 +9,22 @@ Full option list at [`grdtrack`]($(GMTdoc)/grdtrack.html)
 Parameters
 ----------
 
-- **A** | **interp_path** :: [Type => Str]
+- **A** | **interp_path** :: [Type => Str]		`Arg = f|p|m|r|R[+l]`
 
+    For track resampling (if **C** or **E** are set) we can select how this is to be performed. 
     ($(GMTdoc)grdtrack.html#a)
-- **C** | **equidistant** :: [Type => Str]
+- **C** | **equidistant** :: [Type => Str]		`Arg = length/ds[/spacing][+a|+v][l|r]`
 
+    Use input line segments to create an equidistant and (optionally) equally-spaced set of crossing
+	profiles along which we sample the grid(s)
     ($(GMTdoc)grdtrack.html#c)
 - **D** | **dfile** :: [Type => Str]  
 
+    In concert with **C** we can save the (possibly resampled) original lines to the file dfile
     ($(GMTdoc)grdtrack.html#d)
 - **E** | **by_coord** :: [Type => Str]
 
+    Instead of reading input track coordinates, specify profiles via coordinates and modifiers.
     ($(GMTdoc)grdtrack.html#e)
 - **G** | **grid** :: [Type => Str | GMTgrid | Tuple(GMTgrid's)]
 
@@ -61,11 +66,11 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :interp_path], [:C :equidistant ], [:D :dfile], [:E :by_coord],
+	cmd  = parse_these_opts(cmd, d, [[:A :interp_path], [:C :equidistant], [:D :dfile], [:E :by_coord],
 	                                 [:N :no_skip], [:S :stack], [:T :radius], [:Z :z_only]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
-	cmd, grid_tuple, arg1, arg2 = parse_G_grdtrk(d, [:G :grid], cmd, arg1, arg2)
+	cmd, grid_tuple, arg1, arg2 = parse_G_grdtrk(d, [:G, :grid], cmd, arg1, arg2)
 
 	# Because we allow arg1 and arg2 to either exist or not and also contain data & grid in any order
 	if (arg1 !== nothing && arg2 !== nothing)
@@ -92,7 +97,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_G_grdtrk(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1, arg2)
+function parse_G_grdtrk(d::Dict, symbs::Vector{<:Symbol}, cmd::String, arg1, arg2)
 
 	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), nothing,arg1,arg2)
 
