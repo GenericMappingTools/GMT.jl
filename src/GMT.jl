@@ -61,7 +61,7 @@ export
 	colorscale, colorscale!, contour, contour!, contourf, contourf!, events, filter1d, fitcircle, gmt2kml,
 	gmtconnect, gmtconvert, gmtinfo, gmtmath, gmtregress, gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial,
 	gmtvector, gmtwrite, gmtwhich, grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdcut,
-	grdedit, grdfft, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdfill, grdlandmask, grdmath,
+	grdedit, grdfft, grdfill, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdinterpolate, grdlandmask, grdmath,
 	grdmask, grdpaste, grdproject, grdsample, grdtrack, grdtrend, grdvector, grdvector!, grdview, grdview!, grdvolume,
 	greenspline, mat2grid, mat2img, histogram, histogram!, image, image!, image_alpha!, image_cpt!, imshow, kml2gmt,
 	logo, logo!, makecpt, mask, mask!, mapproject, movie, nearneighbor, plot, plot!, plot3, plot3!, plot3d, plot3d!,
@@ -128,8 +128,9 @@ include("grdfill.jl")
 include("grdfilter.jl")
 include("grdgmtmath.jl")
 include("grdhisteq.jl")
-include("grdinfo.jl")
 include("grdimage.jl")
+include("grdinfo.jl")
+include("grdinterpolate.jl")
 include("grdgradient.jl")
 include("grdlandmask.jl")
 include("grdmask.jl")
