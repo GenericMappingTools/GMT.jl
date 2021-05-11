@@ -27,10 +27,9 @@ Gdal.GDALDestroyDriverManager()
 	setgeotransform!(dataset, [-4.016666666666667, 0.03333333333333333, 0.0, -3.01666666666, 0.0, 0.03333333333333333])
 	Gdal.listcapability(dataset)
 
-	show(dataset)
-	#G = gd2gmt(dataset);
+	#show(dataset)
+	sprint(print, dataset)
 
-	#Gdal.read(dataset);		# Ambiguo
 	band = getband(dataset);
 	Gdal.read(band);
 	getproj(dataset)
