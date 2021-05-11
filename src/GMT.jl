@@ -20,15 +20,53 @@ end
 # Need to know what GMT version is available or if none at all to warn users on how to install GMT.
 function get_GMTver()
 	out = v"0.0"
+	GMTbyConda = false
+	libgmt, libgdal, libproj = "", "", ""
 	try
 		ver = readlines(`gmt --version`)[1]
 		ind = findfirst('_', ver)
 		out = (ind === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 	catch
+		try
+			depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")
+			if isfile(depfile)
+				include(depfile)
+			else
+				Pkg.build(GMT)
+				include(depfile)
+			end
+			ver = readlines(`joinpath($(GMT_Conda_home), "gmt") --version`)[1]
+			ind = findfirst('_', ver)
+			out = (ind === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
+			GMTbyConda = true
+		catch
+		end
 	end
-	return out
+	return out, GMTbyConda
 end
-const GMTver = get_GMTver()
+_GMTver, GMTbyConda, _libgmt, _libgdal, _libproj = get_GMTver()
+
+if (!GMTbyConda)
+	const libgmt = haskey(ENV, "GMT_LIBRARY") ?  ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
+	@static Sys.iswindows() ?
+		(Sys.WORD_SIZE == 64 ? (const libgdal = "gdal_w64") : (const libgdal = "gdal_w32")) : (
+			Sys.isapple() ? (const libgdal = Symbol(split(readlines(pipeline(`otool -L $(libgmt)`, `grep libgdal`))[1])[1])) : (
+				Sys.isunix() ? (const libgdal = Symbol(split(readlines(pipeline(`ldd $(libgmt)`, `grep libgdal`))[1])[3])) :
+				error("Don't know how to install this package in this OS.")
+			)
+		)
+	@static Sys.iswindows() ?
+		(Sys.WORD_SIZE == 64 ? (const libproj = "proj_w64") : (const libproj = "proj_w32")) : (
+			Sys.isapple() ? (const libproj = Symbol(split(readlines(pipeline(`otool -L $(libgdal)`, `grep libproj`))[1])[1])) : (
+				Sys.isunix() ? (const libproj = Symbol(split(readlines(pipeline(`ldd $(libgdal)`, `grep libproj`))[1])[3])) :
+				error("Don't know how to use PROJ4 in this OS.")
+			)
+		)
+else
+	const libgmt, libgdal, libproj = _libgmt, _libgdal, _libproj 
+end
+const GMTver = _GMTver
+
 
 global legend_type  = nothing
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
