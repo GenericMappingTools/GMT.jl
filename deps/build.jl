@@ -10,7 +10,7 @@ if Sys.iswindows()
 	end
 	GMT_home = "C:\\programs\\gmt6\\bin"
 else
-	Conda.add_channel("gmt")
+	Conda.add_channel("conda-forge")
 	Conda.add("gmt")
 	GMT_home = Conda.LIBDIR
 end
