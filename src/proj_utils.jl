@@ -2,14 +2,6 @@
 # so part of the credit goes also for the authors of that package but the main function, "geod" was highly
 # modified and does a lot more than the proj4 'geod' model.
 
-@static Sys.iswindows() ?
-	(Sys.WORD_SIZE == 64 ? (const libproj = "proj_w64") : (const libproj = "proj_w32")) : (
-		Sys.isapple() ? (const libproj = Symbol(split(readlines(pipeline(`otool -L $(GMT.Gdal.libgdal)`, `grep libproj`))[1])[1])) : (
-			Sys.isunix() ? (const libproj = Symbol(split(readlines(pipeline(`ldd $(GMT.Gdal.libgdal)`, `grep libproj`))[1])[3])) :
-			error("Don't know how to use PROJ4 in this OS.")
-		)
-	)
-
 abstract type _geodesic end
 mutable struct null_geodesic <: _geodesic end
 

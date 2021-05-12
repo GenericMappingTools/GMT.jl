@@ -366,6 +366,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	end
 
 	layer = Gdal.createlayer(name="layer1", dataset=ds, geom=geom_code, spatialref=sr);
+@show(layer, ds, geom_code,sr)
 	feature = Gdal.unsafe_createfeature(layer)
 	geom = geom_cmd
 

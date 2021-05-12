@@ -17,14 +17,6 @@ using GMT, Printf
 
 #const cacert = joinpath(@__DIR__, "cacert.pem")
 
-@static Sys.iswindows() ?
-	(Sys.WORD_SIZE == 64 ? (const libgdal = "gdal_w64") : (const libgdal = "gdal_w32")) : (
-		Sys.isapple() ? (const libgdal = Symbol(split(readlines(pipeline(`otool -L $(GMT.thelib)`, `grep libgdal`))[1])[1])) : (
-			Sys.isunix() ? (const libgdal = Symbol(split(readlines(pipeline(`ldd $(GMT.thelib)`, `grep libgdal`))[1])[3])) :
-			error("Don't know how to install this package in this OS.")
-		)
-	)
-
 const pVoid   = Ptr{Cvoid}
 const pDouble = Ptr{Cdouble}
 
@@ -2308,6 +2300,13 @@ end
 	const GDALVERSION = Ref{VersionNumber}()
 
 	function __init__()
+
+		if !isfile(libgdal)
+			println("\nI detect that you had a previously working GMT.jl version but something has broken meanwhile.\n" *
+				"(like updating your GDAL or GMT instalation). Run this command in REPL and restart Julia." *
+				"\n\n\t\trun(`touch '$(pathof(GMT))'`)\n")
+			return
+		end
 
 		versionstring = GDALVersionInfo("RELEASE_NAME")
 		GDALVERSION[] = VersionNumber(versionstring)

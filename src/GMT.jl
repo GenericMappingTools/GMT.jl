@@ -1,6 +1,6 @@
 module GMT
 
-using Printf, Dates, Statistics
+using Printf, Dates, Statistics, Pkg
 
 struct CTRLstruct
 	limits::Vector{Float64}
@@ -21,51 +21,49 @@ end
 function get_GMTver()
 	out = v"0.0"
 	GMTbyConda = false
-	libgmt, libgdal, libproj = "", "", ""
-	try
+	_libgmt, _libgdal, _libproj = "", "", ""
+	try						# First try to find am existing GMT installation (RECOMENDED WAY)
 		ver = readlines(`gmt --version`)[1]
-		ind = findfirst('_', ver)
-		out = (ind === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
-	catch
+		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
+	catch					# If not, install GMT
 		try
-			depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")
+			depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 			if isfile(depfile)
-				include(depfile)
+				include(depfile)		# This loads the shared libs names
+				if (Sys.iswindows() && !isfile(GMT_home * "\\gmt.exe"))		# If GMT was removed but depfile still exists
+					Pkg.build("GMT");	include(depfile)
+				end
 			else
-				Pkg.build(GMT)
-				include(depfile)
+				Pkg.build("GMT");		include(depfile)
 			end
-			ver = readlines(`joinpath($(GMT_Conda_home), "gmt") --version`)[1]
-			ind = findfirst('_', ver)
-			out = (ind === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
+			ver = readlines(`$(joinpath("$(GMT_home)", "gmt")) --versio`)[1]
+			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 			GMTbyConda = true
-		catch
+		catch err2;		println(err2)
 		end
 	end
-	return out, GMTbyConda
+	return out, GMTbyConda, _libgmt, _libgdal, _libproj
 end
 _GMTver, GMTbyConda, _libgmt, _libgdal, _libproj = get_GMTver()
 
-if (!GMTbyConda)
-	const libgmt = haskey(ENV, "GMT_LIBRARY") ?  ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
+if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names already known at this point.
+	_libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
 	@static Sys.iswindows() ?
-		(Sys.WORD_SIZE == 64 ? (const libgdal = "gdal_w64") : (const libgdal = "gdal_w32")) : (
-			Sys.isapple() ? (const libgdal = Symbol(split(readlines(pipeline(`otool -L $(libgmt)`, `grep libgdal`))[1])[1])) : (
-				Sys.isunix() ? (const libgdal = Symbol(split(readlines(pipeline(`ldd $(libgmt)`, `grep libgdal`))[1])[3])) :
+		(Sys.WORD_SIZE == 64 ? (_libgdal = "gdal_w64.dll") : (_libgdal = "gdal_w32.dll")) : (
+			Sys.isapple() ? (_libgdal = Symbol(split(readlines(pipeline(`otool -L $(libgmt)`, `grep libgdal`))[1])[1])) : (
+				Sys.isunix() ? (_libgdal = Symbol(split(readlines(pipeline(`ldd $(libgmt)`, `grep libgdal`))[1])[3])) :
 				error("Don't know how to install this package in this OS.")
 			)
 		)
 	@static Sys.iswindows() ?
-		(Sys.WORD_SIZE == 64 ? (const libproj = "proj_w64") : (const libproj = "proj_w32")) : (
-			Sys.isapple() ? (const libproj = Symbol(split(readlines(pipeline(`otool -L $(libgdal)`, `grep libproj`))[1])[1])) : (
-				Sys.isunix() ? (const libproj = Symbol(split(readlines(pipeline(`ldd $(libgdal)`, `grep libproj`))[1])[3])) :
+		(Sys.WORD_SIZE == 64 ? (_libproj = "proj_w64.dll") : (_libproj = "proj_w32.dll")) : (
+			Sys.isapple() ? (_libproj = Symbol(split(readlines(pipeline(`otool -L $(libgdal)`, `grep libproj`))[1])[1])) : (
+				Sys.isunix() ? (_libproj = Symbol(split(readlines(pipeline(`ldd $(libgdal)`, `grep libproj`))[1])[3])) :
 				error("Don't know how to use PROJ4 in this OS.")
 			)
 		)
-else
-	const libgmt, libgdal, libproj = _libgmt, _libgdal, _libproj 
 end
-const GMTver = _GMTver
+const GMTver, libgmt, libgdal, libproj = _GMTver, _libgmt, _libgdal, _libproj 
 
 
 global legend_type  = nothing
@@ -93,7 +91,7 @@ if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optle
 end
 
 export
-	GMTver, FMT, gmt,
+	GMTver, FMT, gmt, libgdal,
 	arrows, arrows!, bar, bar!, bar3, bar3!, hlines, hlines!, lines, lines!, legend, legend!, vlines, vlines!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
 	colorscale, colorscale!, contour, contour!, contourf, contourf!, events, filter1d, fitcircle, gmt2kml,
@@ -239,8 +237,6 @@ include("imshow.jl")		# Include later because one method depends on knowing abou
 const global current_cpt = [GMTcpt()]		# To store the current palette
 
 function __init__(test::Bool=false)
-	if (v"5.0" <= GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
-
 	if (GMTver == v"0.0" || test)
 		println("\n\nYou don't seem to have GMT installed and I don't install it automatically.\nYou will have to do it yourself.")
 		if (Sys.iswindows())    println("Download and install the official version at (the '..._win64.exe':" *
@@ -250,6 +246,13 @@ function __init__(test::Bool=false)
 		end
 		return
 	end
+
+	if !isfile(libgmt)
+		println("\nI detect that you had a previously working GMT.jl version but something has broken meanwhile.\n" *
+		"(like updating your GMT instalation). Run this command in REPL and restart Julia.\n\n\t\trun(`touch '$(pathof(GMT))'`)\n")
+		return
+	end
+
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
 	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 	if (API == C_NULL)  error("Failure to create a GMT Session")  end
