@@ -4,9 +4,9 @@ depfile = joinpath(dirname(@__FILE__), "deps.jl")
 
 if Sys.iswindows()
 	if !isfile("C:\\programs\\gmt6\\bin\\gmt.exe")		# If we have none, download and install from installer
-		#fn = download("http://fct-gmt.ualg.pt/tmp/gmt-6.2.0_RC1-win64.exe", "GMTinstaller.exe")
+		fn = download("http://fct-gmt.ualg.pt/tmp/gmt-6.2.0_RC1-win64.exe", "GMTinstaller.exe")
 		run(`cmd /k GMTinstaller.exe /S`)
-		#rm(fn, force=true)
+		rm(fn, force=true)
 	end
 	GMT_home = "C:\\programs\\gmt6\\bin"
 else
