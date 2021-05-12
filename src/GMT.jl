@@ -21,10 +21,10 @@ end
 function get_GMTver()
 	out = v"0.0"
 	GMTbyConda = false
-	_libgmt, _libgdal, _libproj = "", "", ""
 	try						# First try to find am existing GMT installation (RECOMENDED WAY)
-		ver = readlines(`gmt --version`)[1]
+		ver = readlines(`gmtu --version`)[1]
 		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
+		global _libgmt, _libgdal, _libproj = "", "", ""
 	catch					# If not, install GMT
 		try
 			depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
@@ -44,9 +44,9 @@ function get_GMTver()
 	end
 	return out, GMTbyConda, _libgmt, _libgdal, _libproj
 end
-_GMTver, GMTbyConda, _libgmt, _libgdal, _libproj = get_GMTver()
+_GMTver, _GMTbyConda, _libgmt, _libgdal, _libproj = get_GMTver()
 
-if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names already known at this point.
+if (!_GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names already known at this point.
 	_libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
 	@static Sys.iswindows() ?
 		(Sys.WORD_SIZE == 64 ? (_libgdal = "gdal_w64.dll") : (_libgdal = "gdal_w32.dll")) : (
@@ -63,8 +63,9 @@ if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names a
 			)
 		)
 end
-const GMTver, libgmt, libgdal, libproj = _GMTver, _libgmt, _libgdal, _libproj 
+const GMTver, GMTbyConda, libgmt, libgdal, libproj = _GMTver, _GMTbyConda, _libgmt, _libgdal, _libproj 
 
+@show(GMTver, GMTbyConda, libgmt, libgdal, libproj)
 
 global legend_type  = nothing
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
@@ -238,7 +239,7 @@ const global current_cpt = [GMTcpt()]		# To store the current palette
 
 function __init__(test::Bool=false)
 	if (GMTver == v"0.0" || test)
-		println("\n\nYou don't seem to have GMT installed and I don't install it automatically.\nYou will have to do it yourself.")
+		println("\n\nYou don't seem to have GMT installed and the automatic installation also failed.\nYou will have to do it yourself.")
 		if (Sys.iswindows())    println("Download and install the official version at (the '..._win64.exe':" *
 		                                "\n\t\t https://github.com/GenericMappingTools/gmt/releases")
 		elseif (Sys.isapple())  println("Install GMT with Homebrew: brew install gmt ghostscript ffmpeg")
@@ -247,7 +248,7 @@ function __init__(test::Bool=false)
 		return
 	end
 
-	if !isfile(libgmt)
+	if !isfile(libgmt) || ( !Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)) )
 		println("\nI detect that you had a previously working GMT.jl version but something has broken meanwhile.\n" *
 		"(like updating your GMT instalation). Run this command in REPL and restart Julia.\n\n\t\trun(`touch '$(pathof(GMT))'`)\n")
 		return

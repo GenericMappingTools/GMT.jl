@@ -2301,13 +2301,6 @@ end
 
 	function __init__()
 
-		if !isfile(libgdal)
-			println("\nI detect that you had a previously working GMT.jl version but something has broken meanwhile.\n" *
-				"(like updating your GDAL or GMT instalation). Run this command in REPL and restart Julia." *
-				"\n\n\t\trun(`touch '$(pathof(GMT))'`)\n")
-			return
-		end
-
 		versionstring = GDALVersionInfo("RELEASE_NAME")
 		GDALVERSION[] = VersionNumber(versionstring)
 
