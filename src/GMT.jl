@@ -50,15 +50,15 @@ if (!_GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names 
 	_libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
 	@static Sys.iswindows() ?
 		(Sys.WORD_SIZE == 64 ? (_libgdal = "gdal_w64.dll") : (_libgdal = "gdal_w32.dll")) : (
-			Sys.isapple() ? (_libgdal = Symbol(split(readlines(pipeline(`otool -L $(_libgmt)`, `grep libgdal`))[1])[1])) : (
-				Sys.isunix() ? (_libgdal = Symbol(split(readlines(pipeline(`ldd $(_libgmt)`, `grep libgdal`))[1])[3])) :
+			Sys.isapple() ? (_libgdal = string(split(readlines(pipeline(`otool -L $(_libgmt)`, `grep libgdal`))[1])[1])) : (
+				Sys.isunix() ? (_libgdal = string(split(readlines(pipeline(`ldd $(_libgmt)`, `grep libgdal`))[1])[3])) :
 				error("Don't know how to install this package in this OS.")
 			)
 		)
 	@static Sys.iswindows() ?
 		(Sys.WORD_SIZE == 64 ? (_libproj = "proj_w64.dll") : (_libproj = "proj_w32.dll")) : (
-			Sys.isapple() ? (_libproj = Symbol(split(readlines(pipeline(`otool -L $(_libgdal)`, `grep libproj`))[1])[1])) : (
-				Sys.isunix() ? (_libproj = Symbol(split(readlines(pipeline(`ldd $(_libgdal)`, `grep libproj`))[1])[3])) :
+			Sys.isapple() ? (_libproj = string(split(readlines(pipeline(`otool -L $(_libgdal)`, `grep libproj`))[1])[1])) : (
+				Sys.isunix() ? (_libproj = string(split(readlines(pipeline(`ldd $(_libgdal)`, `grep libproj`))[1])[3])) :
 				error("Don't know how to use PROJ4 in this OS.")
 			)
 		)
