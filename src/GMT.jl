@@ -22,7 +22,7 @@ function get_GMTver()
 	out = v"0.0"
 	GMTbyConda = false
 	try						# First try to find am existing GMT installation (RECOMENDED WAY)
-		ver = readlines(`gmtu --version`)[1]
+		ver = readlines(`gmt --version`)[1]
 		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 		global _libgmt, _libgdal, _libproj = "", "", ""
 	catch					# If not, install GMT
