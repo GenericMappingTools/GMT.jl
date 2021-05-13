@@ -13,7 +13,7 @@ else
 	Conda.add_channel("conda-forge")
 	Conda.add("gmt")
 	#GMT_home = Conda.LIBDIR
-	GMT_home = joinpath(Conda.ROOTENV, "Library", "bin")
+	GMT_home = joinpath(Conda.ROOTENV, "bin")
 end
 
 libgmt = string(chop(read(`$(joinpath("$(GMT_home)", "gmt")) --show-library`, String)))
