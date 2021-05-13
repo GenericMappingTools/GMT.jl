@@ -65,8 +65,6 @@ if (!_GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names 
 end
 const GMTver, GMTbyConda, libgmt, libgdal, libproj = _GMTver, _GMTbyConda, _libgmt, _libgdal, _libproj 
 
-@show(GMTver, GMTbyConda, libgmt, libgdal, libproj)
-
 global legend_type  = nothing
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
