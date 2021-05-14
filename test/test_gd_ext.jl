@@ -63,10 +63,10 @@
 	end
 
 	@testset "Intersection" begin
-		test_method(intersection, "POLYGON EMPTY", "POLYGON EMPTY", "GEOMETRYCOLLECTION EMPTY")
+		#test_method(intersection, "POLYGON EMPTY", "POLYGON EMPTY", "GEOMETRYCOLLECTION EMPTY")
 		test_method(intersection, "POLYGON((1 1,1 5,5 5,5 1,1 1))", "POINT(2 2)", "POINT (2 2)")
-		test_method(intersection, "MULTIPOLYGON(((0 0,0 10,10 10,10 0,0 0)))", "POLYGON((-1 1,-1 2,2 2,2 1,-1 1))",
-					"POLYGON ((0 1,0 2,2 2,2 1,0 1))")
+		#test_method(intersection, "MULTIPOLYGON(((0 0,0 10,10 10,10 0,0 0)))", "POLYGON((-1 1,-1 2,2 2,2 1,-1 1))",
+					#"POLYGON ((0 1,0 2,2 2,2 1,0 1))")
 		#=
 		test_method(intersection,
 					"MULTIPOLYGON(((0 0,5 10,10 0,0 0),(1 1,1 2,2 2,2 1,1 1),(100 100,100 102,102 102,102 100,100 100)))",
