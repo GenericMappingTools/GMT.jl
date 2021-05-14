@@ -26,6 +26,7 @@ function get_GMTver()
 		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 		global _libgmt, _libgdal, _libproj = "", "", ""
 	catch err1;		println(err1)		# If not, install GMT
+		ENV["BUILD_CONDA_GMT"] = "1"
 		try
 			depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 			if isfile(depfile)
@@ -41,6 +42,7 @@ function get_GMTver()
 			GMTbyConda = true
 		catch err2;		println(err2)
 		end
+		ENV["BUILD_CONDA_GMT"] = ""
 	end
 	return out, GMTbyConda, _libgmt, _libgdal, _libproj
 end
