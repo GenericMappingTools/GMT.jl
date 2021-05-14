@@ -21,11 +21,11 @@ end
 function get_GMTver()
 	out = v"0.0"
 	GMTbyConda = false
-	try						# First try to find am existing GMT installation (RECOMENDED WAY)
+	try						# First try to find an existing GMT installation (RECOMENDED WAY)
 		ver = readlines(`gmt --version`)[1]
 		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 		global _libgmt, _libgdal, _libproj = "", "", ""
-	catch					# If not, install GMT
+	catch err1;		println(err1)		# If not, install GMT
 		try
 			depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 			if isfile(depfile)
