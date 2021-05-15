@@ -64,7 +64,7 @@
 	gmtconvert([1.1 2; 3 4], o=0)
 
 	println("	GMTGRAVMAG3D")
-	if (GMTver >= v"6.1.1")
+	if (GMTver > v"6.1.1")
 		gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/10/-10/40", Vd=dbg2);
 		@test_throws ErrorException("Missing one of 'index', 'raw_triang' or 'str' data") gmtgravmag3d(I=1.0);
 		@test_throws ErrorException("For grid output MUST specify grid increment ('I' or 'inc')") gmtgravmag3d(Tv=true);
