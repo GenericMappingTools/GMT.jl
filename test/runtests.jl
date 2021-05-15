@@ -2,6 +2,8 @@ using GMT, GMT.Drawing, GMT.Gdal
 using Test
 using Dates, Printf
 
+@testset "GMT" begin
+
 try
 	run(`gmt --version`)	# Will fail if GMT is not installed.
 	global got_it = true
@@ -12,8 +14,8 @@ end
 
 if (got_it)					# Otherwise go straight to end
 
-	const dbg2 = 3			# Either 2 or 3. 3 to test the used kwargs
-	const dbg0 = 0			# With 0 prints only the non-consumed options. Set to -1 to ignore this Vd
+	global dbg2 = 3			# Either 2 or 3. 3 to test the used kwargs
+	global dbg0 = 0			# With 0 prints only the non-consumed options. Set to -1 to ignore this Vd
 
 	GMT.GMT_Get_Version();
 	GMT._precompile_()
@@ -101,3 +103,5 @@ if (got_it)					# Otherwise go straight to end
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NUL`)  end
 
 end					# End valid testing zone
+
+end
