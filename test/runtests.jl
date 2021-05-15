@@ -24,9 +24,9 @@ if (got_it)					# Otherwise go straight to end
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
 	GMT.GMT_Get_Ctrl(API);
 
-	println("		Entering: test_proj4.jl")
-	include("test_proj4.jl")
 	if (GMTver > v"6.1.1")
+		println("		Entering: test_proj4.jl")
+		include("test_proj4.jl")
 		println("		Entering: test_gd_ext.jl")
 		include("test_gd_ext.jl")
 		println("		Entering: test_gdal.jl")
