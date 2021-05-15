@@ -92,7 +92,9 @@
 	# Test ogr2GMTdataset
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 	gmtread("lixo.gmt");		# This "lixo.gmt" was created in test_avatars.jl
-	GMT.gmt_ogrread(API, "lixo.gmt", C_NULL);		# Keep testing the old gmt_ogrread API.
+	if (GMTver > v"6.1.1")
+		GMT.gmt_ogrread(API, "lixo.gmt", C_NULL);		# Keep testing the old gmt_ogrread API.
+	end
 	GMT.GMT_Get_Default(API, "API_VERSION", "        ");
 	D = gmtconvert([1.0 2 3; 2 3 4], a="2=lolo+gPOINT");	# There's a bug in GMT for this. No data points are printed
 	gmtwrite("lixo.gmt", D)
