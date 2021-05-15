@@ -407,15 +407,19 @@ Convert an indexed image I to RGB. It uses the internal colormap to do the conve
 function ind2rgb(img::GMTimage)
 	# ...
 	(size(img.image, 3) >= 3) && return img 	# Image is already RGB(A)
-	imgRGB = zeros(UInt8,size(img.image,1), size(img.image,2), 3)
-	n = 1
-	for k = 1:length(img.image)
-		start_c = img.image[k] * 4
-		for c = 1:3
-			imgRGB[n] = img.colormap[start_c+c];	n += 1
+	if (img.n_colors == 0)				# If no cmap just replicate the first layer.
+		imgRGB = repeat(img.image, 1, 1, 3)
+	else
+		imgRGB = zeros(UInt8,size(img.image,1), size(img.image,2), 3)
+		n = 1
+		for k = 1:length(img.image)
+			start_c = img.image[k] * 4
+			for c = 1:3
+				imgRGB[n] = img.colormap[start_c+c];	n += 1
+			end
 		end
 	end
-	mat2img(imgRGB, x=img.x, y=img.y, proj4=img.proj4, wkt=img.wkt, mem_layout="BRPa")
+	mat2img(imgRGB, x=img.x, y=img.y, proj4=img.proj4, wkt=img.wkt, mem_layout=img.layout)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -584,8 +588,8 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Vector{Float64}(), y=Vector{Float64}())
 			nx = Int(round((hdr[2] - hdr[1]) / hdr[8] + one_or_zero))
 			ny = Int(round((hdr[4] - hdr[3]) / hdr[9] + one_or_zero))
 		end
-		x = collect(range(hdr[1], stop=hdr[2], length=nx))
-		y = collect(range(hdr[3], stop=hdr[4], length=ny))
+		x = collect(range(hdr[1], stop=hdr[2], length=(nx+Int(hdr[7])) ))
+		y = collect(range(hdr[3], stop=hdr[4], length=(ny+Int(hdr[7])) ))
 		# Recompute the x|y_inc to make sure they are right.
 		x_inc = (hdr[2] - hdr[1]) / (nx - one_or_zero)
 		y_inc = (hdr[4] - hdr[3]) / (ny - one_or_zero)
