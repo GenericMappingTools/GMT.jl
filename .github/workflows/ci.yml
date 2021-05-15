@@ -79,8 +79,6 @@ jobs:
           set -x -e
           gmt --version
           gmt --help
-          proj
-          gdalinfo --version
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - uses: actions/checkout@v2
