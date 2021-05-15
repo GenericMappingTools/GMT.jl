@@ -26,10 +26,15 @@ if (got_it)					# Otherwise go straight to end
 
 	println("		Entering: test_proj4.jl")
 	include("test_proj4.jl")
-	println("		Entering: test_gd_ext.jl")
-	include("test_gd_ext.jl")
-	println("		Entering: test_gdal.jl")
-	include("test_gdal.jl")			# Fcks the automatic registering because building docs fails
+	if (GMTver > v"6.1.1")
+		println("		Entering: test_gd_ext.jl")
+		include("test_gd_ext.jl")
+		println("		Entering: test_gdal.jl")
+		include("test_gdal.jl")			# Fcks the automatic registering because building docs fails
+		rm("point.csv")
+		rm("lixo1.gmt")
+		rm("lixo2.gmt")
+	end
 	println("		Entering: test_common_opts.jl")
 	include("test_common_opts.jl")
 	println("		Entering: test_B-GMTs.jl")
@@ -54,9 +59,9 @@ if (got_it)					# Otherwise go straight to end
 	greenspline(d, R="-2000/25000", I=100, S=:l, D=0, Vd=dbg2)
 
 	println("	MAKECPT")
-	cpt = makecpt(range="-1/1/0.1");
 	makecpt(rand(10,1), E="", C=:rainbow, cptname="lixo.cpt");
 	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
+	cpt = makecpt(range="-1/1/0.1");
 	C = cpt4dcw("eu");
 	C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
 	C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
@@ -97,9 +102,6 @@ if (got_it)					# Otherwise go straight to end
 	rm("logo.png")
 	rm("lixo.eps")
 	rm("lixo.jpg")
-	rm("point.csv")
-	rm("lixo1.gmt")
-	rm("lixo2.gmt")
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NUL`)  end
 
 end					# End valid testing zone
