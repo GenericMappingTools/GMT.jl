@@ -104,9 +104,6 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 			((nodata = Gdal.getnodatavalue(Gdal.getband(dataset))) !== nothing) && (O.nodata = nodata)
 		end
 	end
-	if (O.layout[2] == 'R')
-		O.x, O.y = O.y, O.x		# Because mat2* thought mat were column-major but it's rwo-major
-	end
 	O.inc = [x_inc, y_inc]		# Reset because if pad != 0 they were recomputed inside the mat2? funs
 	O.pad = pad
 	return O
