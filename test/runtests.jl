@@ -62,9 +62,11 @@ if (got_it)					# Otherwise go straight to end
 	makecpt(rand(10,1), E="", C=:rainbow, cptname="lixo.cpt");
 	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
 	cpt = makecpt(range="-1/1/0.1");
-	C = cpt4dcw("eu");
-	C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
-	C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
+	if (GMTver > v"6.1.1")
+		C = cpt4dcw("eu");
+		C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
+		C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
+	end
 	@test_throws ErrorException("Unknown continent ue") cpt4dcw("ue")
 	GMT.iso3to2_eu();
 	GMT.iso3to2_af();
