@@ -16,7 +16,7 @@ if (doit != "")
 		end
 		GMT_home = "C:\\programs\\gmt6\\bin"
 	else
-		Conda.add_channel("conda-forge")
+		Conda.add_channel("conda-forge/label/dev")
 		Conda.add("gmt")
 		#GMT_home = Conda.LIBDIR
 		GMT_home = joinpath(Conda.ROOTENV, "bin")
