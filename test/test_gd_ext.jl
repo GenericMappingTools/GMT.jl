@@ -1,4 +1,4 @@
-@testset "GDAL" begin
+@testset "GDALext" begin
 
 	G = mat2grid(rand(Float32, 4,4));
 	GMT.setproj!(G, "+proj=longlat")
