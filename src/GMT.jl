@@ -1,6 +1,6 @@
 module GMT
 
-using Printf, Dates, Statistics
+using Printf, Dates, Statistics, Pkg
 
 struct CTRLstruct
 	limits::Vector{Float64}
@@ -20,15 +20,53 @@ end
 # Need to know what GMT version is available or if none at all to warn users on how to install GMT.
 function get_GMTver()
 	out = v"0.0"
-	try
+	GMTbyConda = false
+	try						# First try to find an existing GMT installation (RECOMENDED WAY)
+		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
 		ver = readlines(`gmt --version`)[1]
-		ind = findfirst('_', ver)
-		out = (ind === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
-	catch
+		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
+		return out, GMTbyConda, "", "", "", ""
+	catch err1;		println(err1)		# If not, install GMT
+		ENV["INSTALL_GMT"] = "1"
+		try
+			depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
+			if isfile(depfile)
+				include(depfile)		# This loads the shared libs names
+				if (Sys.iswindows() && !isfile(_GMT_bindir * "\\gmt.exe"))		# If GMT was removed but depfile still exists
+					Pkg.build("GMT");	include(depfile)
+				end
+			else
+				Pkg.build("GMT");		include(depfile)
+			end
+			ver = readlines(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`)[1]
+			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
+			GMTbyConda = true
+		catch err2;		println(err2)
+			return out, GMTbyConda, "", "", "", ""
+		end
 	end
-	return out
+	return out, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir
 end
-const GMTver = get_GMTver()
+_GMTver, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir = get_GMTver()
+
+if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names already known at this point.
+	_libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
+	@static Sys.iswindows() ?
+		(Sys.WORD_SIZE == 64 ? (_libgdal = "gdal_w64.dll") : (_libgdal = "gdal_w32.dll")) : (
+			Sys.isapple() ? (_libgdal = string(split(readlines(pipeline(`otool -L $(_libgmt)`, `grep libgdal`))[1])[1])) : (
+				Sys.isunix() ? (_libgdal = string(split(readlines(pipeline(`ldd $(_libgmt)`, `grep libgdal`))[1])[3])) :
+				error("Don't know how to install this package in this OS.")
+			)
+		)
+	@static Sys.iswindows() ?
+		(Sys.WORD_SIZE == 64 ? (_libproj = "proj_w64.dll") : (_libproj = "proj_w32.dll")) : (
+			Sys.isapple() ? (_libproj = string(split(readlines(pipeline(`otool -L $(_libgdal)`, `grep libproj`))[1])[1])) : (
+				Sys.isunix() ? (_libproj = string(split(readlines(pipeline(`ldd $(_libgdal)`, `grep libproj`))[1])[3])) :
+				error("Don't know how to use PROJ4 in this OS.")
+			)
+		)
+end
+const GMTver, libgmt, libgdal, libproj, GMT_bindir = _GMTver, _libgmt, _libgdal, _libproj, _GMT_bindir
 
 global legend_type  = nothing
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
@@ -55,7 +93,7 @@ if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optle
 end
 
 export
-	GMTver, FMT, gmt,
+	GMTver, FMT, gmt, libgdal,
 	arrows, arrows!, bar, bar!, bar3, bar3!, hlines, hlines!, lines, lines!, legend, legend!, vlines, vlines!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
 	colorscale, colorscale!, contour, contour!, contourf, contourf!, events, filter1d, fitcircle, gmt2kml,
@@ -202,10 +240,8 @@ include("imshow.jl")		# Include later because one method depends on knowing abou
 const global current_cpt = [GMTcpt()]		# To store the current palette
 
 function __init__(test::Bool=false)
-	if (v"5.0" <= GMTver < v"6.0")  println("\n\tGMT version 5 is no longer supported (support ended at 0.23)."); return  end
-
 	if (GMTver == v"0.0" || test)
-		println("\n\nYou don't seem to have GMT installed and I don't install it automatically.\nYou will have to do it yourself.")
+		println("\n\nYou don't seem to have GMT installed and the automatic installation also failed.\nYou will have to do it yourself.")
 		if (Sys.iswindows())    println("Download and install the official version at (the '..._win64.exe':" *
 		                                "\n\t\t https://github.com/GenericMappingTools/gmt/releases")
 		elseif (Sys.isapple())  println("Install GMT with Homebrew: brew install gmt ghostscript ffmpeg")
@@ -213,11 +249,18 @@ function __init__(test::Bool=false)
 		end
 		return
 	end
+
+	if !isfile(libgmt) || ( !Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)) )
+		println("\nI detect that you had a previously working GMT.jl version but something has broken meanwhile.\n" *
+		"(like updating your GMT instalation). Run this command in REPL and restart Julia.\n\n\t\trun(`touch '$(pathof(GMT))'`)\n")
+		return
+	end
+
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
 	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 	if (API == C_NULL)  error("Failure to create a GMT Session")  end
 	if haskey(ENV, "JULIA_GMT_IMGFORMAT")  FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]  end
-	f = joinpath(readlines(`gmt --show-userdir`)[1], "theme_jl.txt")
+	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 	gmtlib_setparameter(API, "COLOR_NAN", "255")			# Stop those uggly grays
 end

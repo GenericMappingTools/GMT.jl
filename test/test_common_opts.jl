@@ -1,6 +1,6 @@
 @testset "COMMON OPTS" begin
 	# -------------------- Test common_options ----------------------------------------
-	@test GMT.get_GMTver() >= v"6.0"
+	@test GMT.get_GMTver()[1] >= v"6.0"
 	GMT.__init__(true);
 	GMT.dict2nt(Dict(:a =>1, :b => 2))
 	@test GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")[1] == " -R1/2/3/4/5/6"
@@ -271,7 +271,7 @@
 	GMT.guess_WESN(Dict(:p=>"350/2"), "")
 	GMT.parse_q(Dict(:p=>(350,2)), "")
 
-	@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(API, ' ', [0])
+	@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(GMT.API, ' ', [0])
 	@test_throws ErrorException("Wrong type (Int64) for the 'text' argin") GMT.text_record(rand(2,2), 0)
 
 	GMT.show_non_consumed(Dict(:lala => 0), "prog");

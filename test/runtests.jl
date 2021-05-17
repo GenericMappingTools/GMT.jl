@@ -2,6 +2,8 @@ using GMT, GMT.Drawing, GMT.Gdal
 using Test
 using Dates, Printf
 
+@testset "GMT" begin
+
 try
 	run(`gmt --version`)	# Will fail if GMT is not installed.
 	global got_it = true
@@ -12,8 +14,8 @@ end
 
 if (got_it)					# Otherwise go straight to end
 
-	const dbg2 = 3			# Either 2 or 3. 3 to test the used kwargs
-	const dbg0 = 0			# With 0 prints only the non-consumed options. Set to -1 to ignore this Vd
+	global dbg2 = 3			# Either 2 or 3. 3 to test the used kwargs
+	global dbg0 = 0			# With 0 prints only the non-consumed options. Set to -1 to ignore this Vd
 
 	GMT.GMT_Get_Version();
 	GMT._precompile_()
@@ -22,9 +24,9 @@ if (got_it)					# Otherwise go straight to end
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
 	GMT.GMT_Get_Ctrl(API);
 
-	println("		Entering: test_proj4.jl")
-	include("test_proj4.jl")
 	if (GMTver > v"6.1.1")
+		println("		Entering: test_proj4.jl")
+		include("test_proj4.jl")
 		println("		Entering: test_gd_ext.jl")
 		include("test_gd_ext.jl")
 		println("		Entering: test_gdal.jl")
@@ -60,9 +62,11 @@ if (got_it)					# Otherwise go straight to end
 	makecpt(rand(10,1), E="", C=:rainbow, cptname="lixo.cpt");
 	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
 	cpt = makecpt(range="-1/1/0.1");
-	C = cpt4dcw("eu");
-	C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
-	C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
+	if (GMTver > v"6.1.1")
+		C = cpt4dcw("eu");
+		C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
+		C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
+	end
 	@test_throws ErrorException("Unknown continent ue") cpt4dcw("ue")
 	GMT.iso3to2_eu();
 	GMT.iso3to2_af();
@@ -103,3 +107,5 @@ if (got_it)					# Otherwise go straight to end
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NUL`)  end
 
 end					# End valid testing zone
+
+end

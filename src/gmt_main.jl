@@ -1369,7 +1369,7 @@ function clear_sessions(age::Int=0)
 	# Windows version of ``gmt clear sessions`` fails in 6.0 and it errors if no sessions dir
 	try		# Becuse the sessions dir may not exist 
 		if (GMTver >= v"6.1")
-			sp = readlines(`gmt --show-userdir`)[1] * "/sessions"
+			sp = readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1] * "/sessions"
 			dirs = readdir(sp)
 			session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
 			n = datetime2unix(now(UTC))

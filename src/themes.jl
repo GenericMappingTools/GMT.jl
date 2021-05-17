@@ -59,7 +59,7 @@ function theme(name; kwargs...)
 	end
 	isOn = true				# Means this theme will reset to defaults in showfig()
 	if (haskey(d, :save) || haskey(d, "save"))
-		f = joinpath(readlines(`gmt --show-userdir`)[1], "theme_jl.txt")
+		f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
 		(isfile(f)) && rm(f)
 		#(name == :none || name == "none") ? reset_defaults(API) : write(f, string(name))
 		isOn = false		# So we wont reset defaults in showfig()

@@ -31,6 +31,7 @@ jobs:
         os:
           - ubuntu-latest
           #- ubuntu-18.04
+          - macos-latest
         arch:
           - x64
         include:
@@ -78,6 +79,7 @@ jobs:
         run: |
           set -x -e
           gmt --version
+          gmt --help
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - uses: actions/checkout@v2
