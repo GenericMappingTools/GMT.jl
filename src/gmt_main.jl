@@ -451,6 +451,32 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
+function get_cube(API::Ptr{Nothing}, object)
+
+	G::GMT_CUBE = unsafe_load(convert(Ptr{GMT_CUBE}, object))
+	(G.data == C_NULL) && error("get_cube: programming error, output matrix is empty")
+
+	gmt_hdr::GMT_GRID_HEADER = unsafe_load(G.header)
+	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
+	padTop = Int(gmt_hdr.pad[4]);	padLeft = Int(gmt_hdr.pad[1]);
+	mx = Int(gmt_hdr.mx);			my = Int(gmt_hdr.my)
+
+	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=(nx + gmt_hdr.registration)))
+	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=(ny + gmt_hdr.registration)))
+
+	z = unsafe_wrap(Array, G.data, my * mx * nz)
+
+	out = GMTgrid("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", X, Y, z, "", "", "", "TRB", 0)
+
+	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
+	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
+	out.nodata       = gmt_hdr.nan_value
+	out.registration = gmt_hdr.registration
+
+	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
 function get_grid(API::Ptr{Nothing}, object)::GMTgrid
 # Given an incoming GMT grid G, build a Julia type and assign the output components.
 # Note: Incoming GMT grid has standard padding while Julia grid has none.
@@ -459,7 +485,7 @@ function get_grid(API::Ptr{Nothing}, object)::GMTgrid
 	(G.data == C_NULL) && error("get_grid: programming error, output matrix is empty")
 
 	gmt_hdr::GMT_GRID_HEADER = unsafe_load(G.header)
-	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
+	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);
 	padTop = Int(gmt_hdr.pad[4]);	padLeft = Int(gmt_hdr.pad[1]);
 	mx = Int(gmt_hdr.mx);			my = Int(gmt_hdr.my)
 
@@ -736,6 +762,8 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)
 
 	if (X.family == GMT_IS_GRID)			# Get a grid from Julia or a dummy one to hold GMT output
 		X.object =  grid_init(API, ptr, X.direction, pad)
+	elseif (X.family == GMT_IS_CUBE)			# Get a grid from Julia or a dummy one to hold GMT output
+		X.object =  cube_init(API, ptr, pad)
 	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Julia or a dummy one to hold GMT output
 		X.object = image_init(API, ptr, X.direction)
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
@@ -778,6 +806,8 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 		error("GMT: Error reading virtual file $name from GMT")
 	if (X.family == GMT_IS_GRID)         	# A GMT grid; make it the pos'th output item
 		ptr = get_grid(API, X.object)
+	elseif (X.family == GMT_IS_CUBE)       	# A GMT cube; make it the pos'th output item
+		ptr = get_cube(API, X.object)
 	elseif (X.family == GMT_IS_DATASET)		# A GMT table; make it a matrix and the pos'th output item
 		ptr = get_dataset(API, X.object)
 	elseif (X.family == GMT_IS_PALETTE)		# A GMT CPT; make it a colormap and the pos'th output item
@@ -792,6 +822,15 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 		error("GMT: Internal Error - unsupported data type\n");
 	end
 	return ptr
+end
+
+# ---------------------------------------------------------------------------------------------------
+function cube_init(API::Ptr{Nothing}, grd_box, pad::Int=2)
+# If GRD_BOX is empty just allocate (GMT) an empty container and return
+
+	if (isempty_(grd_box))			# Just tell grid_init() to allocate an empty container
+		return convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------

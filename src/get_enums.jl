@@ -43,6 +43,7 @@ enu = GMT_Get_Enum(API, "GMT_IS_PALETTE");		const global GMT_IS_PALETTE = (enu !
 enu = GMT_Get_Enum(API, "GMT_IS_POSTSCRIPT");	const global GMT_IS_POSTSCRIPT = (enu != -99999) ? enu : 4
 enu = GMT_Get_Enum(API, "GMT_IS_MATRIX");		const global GMT_IS_MATRIX = (enu != -99999) ? enu : 5
 enu = GMT_Get_Enum(API, "GMT_IS_VECTOR");		const global GMT_IS_VECTOR = (enu != -99999) ? enu : 6
+enu = GMT_Get_Enum(API, "GMT_IS_CUBE");		const global GMT_IS_CUBE  = (enu != -99999) ? enu : 7
 
 enu = GMT_Get_Enum(API, "GMT_COMMENT_IS_TEXT");		const global GMT_COMMENT_IS_TEXT = (enu != -99999) ? enu : 0
 enu = GMT_Get_Enum(API, "GMT_IMAGE_ALPHA_LAYER");	const global GMT_IMAGE_ALPHA_LAYER = (enu != -99999) ? enu : 8192
@@ -71,6 +72,7 @@ enu = GMT_Get_Enum(API, "GMT_IS_COL_FORMAT");	const global GMT_IS_COL_FORMAT = (
 # begin enum GMT_enum_geometry
 enu = GMT_Get_Enum(API, "GMT_IS_PLP");	const global GMT_IS_PLP = (enu != -99999) ? enu : 7
 enu = GMT_Get_Enum(API, "GMT_IS_SURFACE");	const global GMT_IS_SURFACE = (enu != -99999) ? enu : 8
+enu = GMT_Get_Enum(API, "GMT_IS_VOLUME");	const global GMT_IS_VOLUME  = (enu != -99999) ? enu : 9
 enu = GMT_Get_Enum(API, "GMT_IS_NONE");	const global GMT_IS_NONE = (enu != -99999) ? enu : 16
 
 # begin enum GMT_enum_color

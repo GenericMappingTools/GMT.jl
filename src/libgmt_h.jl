@@ -78,6 +78,20 @@ mutable struct GMT_GRID
 	hidden::Ptr{Cvoid}
 end
 
+mutable struct GMT_CUBE
+	header::Ptr{GMT_GRID_HEADER}
+	data::Ptr{Cfloat}
+	x::Ptr{Cdouble}
+	y::Ptr{Cdouble}
+	hidden::Ptr{Cvoid}
+	mode::UInt32
+	z_range::NTuple{2,Cdouble}
+	z_inc::Cdouble
+	z::Ptr{Cdouble}
+	name::NTuple{80,UInt8}
+	units::NTuple{80,UInt8}
+end
+
 mutable struct GMT_DATASEGMENT
 	n_rows::UInt64
 	n_columns::UInt64
