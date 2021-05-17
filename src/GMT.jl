@@ -41,6 +41,7 @@ function get_GMTver()
 			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 			GMTbyConda = true
 		catch err2;		println(err2)
+			global _libgmt, _libgdal, _libproj = "", "", ""		# Assume the error was in build("GMT")
 		end
 		ENV["BUILD_CONDA_GMT"] = ""
 	end

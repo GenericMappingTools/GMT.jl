@@ -25,14 +25,14 @@ if (doit != "")
 	libgmt = string(chop(read(`$(joinpath("$(GMT_home)", "gmt")) --show-library`, String)))
 
 	@static Sys.iswindows() ? libgdal = "gdal_w64.dll" : (
-			Sys.isapple() ? (libgdal = string(split(readlines(pipeline(`otool -L $(libgmt)`, `grep libgdal`))[1])[1])) : (
+		Sys.isapple() ? (libgdal = joinpath(Conda.ROOTENV, "lib", string(split(readlines(pipeline(`otool -L $(libgmt)`, `grep libgdal`))[1])[1])[8:end]) )  : (
 				Sys.isunix() ? (libgdal = string(split(readlines(pipeline(`ldd $(libgmt)`, `grep libgdal`))[1])[3])) :
 				error("Don't know how to install this package in this OS.")
 			)
 		)
 
 	@static Sys.iswindows() ? libproj = "proj_w64.dll" : (
-			Sys.isapple() ? (libproj = string(split(readlines(pipeline(`otool -L $(libgdal)`, `grep libproj`))[1])[1])) : (
+		Sys.isapple() ? (libproj = joinpath(Conda.ROOTENV, "lib", string(split(readlines(pipeline(`otool -L $(libgdal)`, `grep libproj`))[1])[1])[8:end]) )  : (
 				Sys.isunix() ? (libproj = string(split(readlines(pipeline(`ldd $(libgdal)`, `grep libproj`))[1])[3])) :
 				error("Don't know how to use PROJ4 in this OS.")
 			)
