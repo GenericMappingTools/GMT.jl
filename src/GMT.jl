@@ -25,7 +25,7 @@ function get_GMTver()
 		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
 		ver = readlines(`gmt --version`)[1]
 		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
-		_libgmt, _libgdal, _libproj, _GMT_bindir = "", "", "", ""
+		return out, GMTbyConda, "", "", "", ""
 	catch err1;		println(err1)		# If not, install GMT
 		ENV["INSTALL_GMT"] = "1"
 		try
@@ -42,7 +42,7 @@ function get_GMTver()
 			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 			GMTbyConda = true
 		catch err2;		println(err2)
-			_libgmt, _libgdal, _libproj, _GMT_bindir = "", "", "", ""
+			return out, GMTbyConda, "", "", "", ""
 		end
 	end
 	return out, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir
