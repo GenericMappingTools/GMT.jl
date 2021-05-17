@@ -38,9 +38,9 @@ if (doit != "")
 
 	# Save shared names in file so that GMT.jl can read them at pre-compile time
 	open(depfile, "w") do f
-		println(f, "GMT_bindir = \"", escape_string(GMT_bindir), '"')
-		println(f, "libgmt  = \"", escape_string(libgmt), '"')
-		println(f, "libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
-		println(f, "libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
+		println(f, "_GMT_bindir = \"", escape_string(GMT_bindir), '"')
+		println(f, "_libgmt  = \"", escape_string(libgmt), '"')
+		println(f, "_libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
+		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
 	end
 end

@@ -21,7 +21,7 @@ end
 function get_GMTver()
 	out = v"0.0"
 	GMTbyConda = false
-	libgmt, libgdal, libproj, GMT_bindir = "", "", "", ""
+	_libgmt, _libgdal, _libproj, _GMT_bindir = "", "", "", ""
 	try						# First try to find an existing GMT installation (RECOMENDED WAY)
 		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
 		ver = readlines(`gmtu --version`)[1]
@@ -32,19 +32,19 @@ function get_GMTver()
 			depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 			if isfile(depfile)
 				include(depfile)		# This loads the shared libs names
-				if (Sys.iswindows() && !isfile(GMT_bindir * "\\gmt.exe"))		# If GMT was removed but depfile still exists
+				if (Sys.iswindows() && !isfile(_GMT_bindir * "\\gmt.exe"))		# If GMT was removed but depfile still exists
 					Pkg.build("GMT");	include(depfile)
 				end
 			else
 				Pkg.build("GMT");		include(depfile)
 			end
-			ver = readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --version`)[1]
+			ver = readlines(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`)[1]
 			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 			GMTbyConda = true
 		catch err2;		println(err2)
 		end
 	end
-	return out, GMTbyConda, libgmt, libgdal, libproj, GMT_bindir
+	return out, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir
 end
 _GMTver, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir = get_GMTver()
 
