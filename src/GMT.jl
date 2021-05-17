@@ -38,7 +38,7 @@ function get_GMTver()
 			else
 				Pkg.build("GMT");		include(depfile)
 			end
-			ver = readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --versio`)[1]
+			ver = readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --version`)[1]
 			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 			GMTbyConda = true
 		catch err2;		println(err2)
