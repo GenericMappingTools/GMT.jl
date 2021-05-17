@@ -1,11 +1,9 @@
-# ----------------------------------------------
 import Conda
 
-doit = get(ENV, "BUILD_CONDA_GMT", "")
+doit = get(ENV, "INSTALL_GMT", "")
 
 if (doit != "")
 
-	@show("INSTALLING GMT VIA CONDA")
 	depfile = joinpath(dirname(@__FILE__), "deps.jl")
 
 	if Sys.iswindows()
@@ -14,15 +12,15 @@ if (doit != "")
 			run(`cmd /k GMTinstaller.exe /S`)
 			rm(fn, force=true)
 		end
-		GMT_home = "C:\\programs\\gmt6\\bin"
+		GMT_bindir = "C:\\programs\\gmt6\\bin"
 	else
 		Conda.add_channel("conda-forge")
 		Conda.add("gmt")
-		#GMT_home = Conda.LIBDIR
-		GMT_home = joinpath(Conda.ROOTENV, "bin")
+		#GMT_bindir = Conda.LIBDIR
+		GMT_bindir = joinpath(Conda.ROOTENV, "bin")
 	end
 
-	libgmt = string(chop(read(`$(joinpath("$(GMT_home)", "gmt")) --show-library`, String)))
+	libgmt = string(chop(read(`$(joinpath("$(GMT_bindir)", "gmt")) --show-library`, String)))
 
 	@static Sys.iswindows() ? libgdal = "gdal_w64.dll" : (
 		Sys.isapple() ? (libgdal = joinpath(Conda.ROOTENV, "lib", string(split(readlines(pipeline(`otool -L $(libgmt)`, `grep libgdal`))[1])[1])[8:end]) )  : (
@@ -40,9 +38,9 @@ if (doit != "")
 
 	# Save shared names in file so that GMT.jl can read them at pre-compile time
 	open(depfile, "w") do f
-		println(f, "GMT_home = \"", escape_string(GMT_home), '"')
-		println(f, "_libgmt  = \"", escape_string(libgmt), '"')
-		println(f, "_libgdal = \"", escape_string(joinpath(GMT_home, libgdal)), '"')
-		println(f, "_libproj = \"", escape_string(joinpath(GMT_home, libproj)), '"')
+		println(f, "GMT_bindir = \"", escape_string(GMT_bindir), '"')
+		println(f, "libgmt  = \"", escape_string(libgmt), '"')
+		println(f, "libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
+		println(f, "libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
 	end
 end

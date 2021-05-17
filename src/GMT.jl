@@ -21,52 +21,51 @@ end
 function get_GMTver()
 	out = v"0.0"
 	GMTbyConda = false
+	libgmt, libgdal, libproj, GMT_bindir = "", "", "", ""
 	try						# First try to find an existing GMT installation (RECOMENDED WAY)
+		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
 		ver = readlines(`gmtu --version`)[1]
 		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
-		global _libgmt, _libgdal, _libproj = "", "", ""
 	catch err1;		println(err1)		# If not, install GMT
-		ENV["BUILD_CONDA_GMT"] = "1"
+		ENV["INSTALL_GMT"] = "1"
 		try
 			depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 			if isfile(depfile)
 				include(depfile)		# This loads the shared libs names
-				if (Sys.iswindows() && !isfile(GMT_home * "\\gmt.exe"))		# If GMT was removed but depfile still exists
+				if (Sys.iswindows() && !isfile(GMT_bindir * "\\gmt.exe"))		# If GMT was removed but depfile still exists
 					Pkg.build("GMT");	include(depfile)
 				end
 			else
 				Pkg.build("GMT");		include(depfile)
 			end
-			ver = readlines(`$(joinpath("$(GMT_home)", "gmt")) --versio`)[1]
+			ver = readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --versio`)[1]
 			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 			GMTbyConda = true
 		catch err2;		println(err2)
-			global _libgmt, _libgdal, _libproj = "", "", ""		# Assume the error was in build("GMT")
 		end
-		ENV["BUILD_CONDA_GMT"] = ""
 	end
-	return out, GMTbyConda, _libgmt, _libgdal, _libproj
+	return out, GMTbyConda, libgmt, libgdal, libproj, GMT_bindir
 end
-_GMTver, _GMTbyConda, _libgmt, _libgdal, _libproj = get_GMTver()
+GMTver, GMTbyConda, libgmt, libgdal, libproj, GMT_bindir = get_GMTver()
 
-if (!_GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names already known at this point.
-	_libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
+if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names already known at this point.
+	libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
 	@static Sys.iswindows() ?
-		(Sys.WORD_SIZE == 64 ? (_libgdal = "gdal_w64.dll") : (_libgdal = "gdal_w32.dll")) : (
-			Sys.isapple() ? (_libgdal = string(split(readlines(pipeline(`otool -L $(_libgmt)`, `grep libgdal`))[1])[1])) : (
-				Sys.isunix() ? (_libgdal = string(split(readlines(pipeline(`ldd $(_libgmt)`, `grep libgdal`))[1])[3])) :
+		(Sys.WORD_SIZE == 64 ? (libgdal = "gdal_w64.dll") : (libgdal = "gdal_w32.dll")) : (
+			Sys.isapple() ? (libgdal = string(split(readlines(pipeline(`otool -L $(libgmt)`, `grep libgdal`))[1])[1])) : (
+				Sys.isunix() ? (libgdal = string(split(readlines(pipeline(`ldd $(libgmt)`, `grep libgdal`))[1])[3])) :
 				error("Don't know how to install this package in this OS.")
 			)
 		)
 	@static Sys.iswindows() ?
-		(Sys.WORD_SIZE == 64 ? (_libproj = "proj_w64.dll") : (_libproj = "proj_w32.dll")) : (
-			Sys.isapple() ? (_libproj = string(split(readlines(pipeline(`otool -L $(_libgdal)`, `grep libproj`))[1])[1])) : (
-				Sys.isunix() ? (_libproj = string(split(readlines(pipeline(`ldd $(_libgdal)`, `grep libproj`))[1])[3])) :
+		(Sys.WORD_SIZE == 64 ? (libproj = "proj_w64.dll") : (libproj = "proj_w32.dll")) : (
+			Sys.isapple() ? (libproj = string(split(readlines(pipeline(`otool -L $(libgdal)`, `grep libproj`))[1])[1])) : (
+				Sys.isunix() ? (libproj = string(split(readlines(pipeline(`ldd $(libgdal)`, `grep libproj`))[1])[3])) :
 				error("Don't know how to use PROJ4 in this OS.")
 			)
 		)
 end
-const GMTver, GMTbyConda, libgmt, libgdal, libproj = _GMTver, _GMTbyConda, _libgmt, _libgdal, _libproj 
+#const GMTver, libgmt, libgdal, libproj, GMT_bindir = _GMTver, _libgmt, _libgdal, _libproj, _GMT_bindir
 
 global legend_type  = nothing
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
@@ -259,7 +258,7 @@ function __init__(test::Bool=false)
 	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 	if (API == C_NULL)  error("Failure to create a GMT Session")  end
 	if haskey(ENV, "JULIA_GMT_IMGFORMAT")  FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]  end
-	f = joinpath(readlines(`gmt --show-userdir`)[1], "theme_jl.txt")
+	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 	gmtlib_setparameter(API, "COLOR_NAN", "255")			# Stop those uggly grays
 end
