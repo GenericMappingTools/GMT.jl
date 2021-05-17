@@ -23,7 +23,7 @@ function get_GMTver()
 	GMTbyConda = false
 	try						# First try to find an existing GMT installation (RECOMENDED WAY)
 		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
-		ver = readlines(`gmtu --version`)[1]
+		ver = readlines(`gmt --version`)[1]
 		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 		_libgmt, _libgdal, _libproj, _GMT_bindir = "", "", "", ""
 	catch err1;		println(err1)		# If not, install GMT
