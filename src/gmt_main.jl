@@ -11,9 +11,11 @@ mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	command::String
 	x::Array{Float64,1}
 	y::Array{Float64,1}
+	v::Array{Float64,1}
 	z::Array{T,N}
 	x_unit::String
 	y_unit::String
+	v_unit::String
 	z_unit::String
 	layout::String
 	pad::Int
@@ -25,7 +27,7 @@ Base.setindex!(G::GMTgrid{T,N}, val, inds::Vararg{Int,N}) where {T,N} = G.z[inds
 Base.BroadcastStyle(::Type{<:GMTgrid}) = Broadcast.ArrayStyle{GMTgrid}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTgrid}}, ::Type{ElType}) where ElType
 	G = find4similar(bc.args)		# Scan the inputs for the GMTgrid:
-	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.x, G.y, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.z_unit, G.layout, G.pad)
+	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.x, G.y, G.v, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, G.pad)
 end
 
 find4similar(bc::Base.Broadcast.Broadcasted) = find4similar(bc.args)
@@ -234,8 +236,9 @@ function gmt(cmd::String, args...)
 	end
 
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
-	if (occursin("read", g_module) && (r != "") && occursin("-T", r))		# It parses the 'layout' key
-		(occursin("-Ti", r)) && GMT_Set_Default(API, "API_PAD", "0")
+	if (occursin("read", g_module) && occursin("-T", r))
+		#(occursin("-Ti", r)) && GMT_Set_Default(API, "API_PAD", "0")
+		(occursin("-Ti", r) || occursin("-Tg", r)) && GMT_Set_Default(API, "API_PAD", "0")
 		#r, img_mem_layout[1], grd_mem_layout[1] =  parse_mem_layouts(r)	# It was called above
 	end
 
@@ -272,8 +275,6 @@ function gmt(cmd::String, args...)
 	X = XX
 
 	# 5. Assign input sources (from Julia to GMT) and output destinations (from GMT to Julia)
-	name_PS = ""
-	object_ID = zeros(Int32, n_items)
 	for k = 1:n_items					# Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0) error("GMT: Expects a Matrix for input") end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : nothing
@@ -305,8 +306,8 @@ function gmt(cmd::String, args...)
 	end
 
 	# 2++- If gmtread -Ti than reset the session's pad value that was temporarily changed above (2+++)
-	if (occursin("read", g_module) && !isempty(r) && occursin("-Ti", r))
-		GMT_Set_Default(API, "API_PAD", "2")
+	if (occursin("read", g_module) && (occursin("-Ti", r) || occursin("-Tg", r)) )
+		GMT_Set_Default(API, "API_PAD", string(pad))
 	end
 
 	# Due to the damn GMT pad I'm forced to a lot of trickery. One involves shitting on memory ownership
@@ -451,57 +452,45 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function get_cube(API::Ptr{Nothing}, object)
-
-	G::GMT_CUBE = unsafe_load(convert(Ptr{GMT_CUBE}, object))
-	(G.data == C_NULL) && error("get_cube: programming error, output matrix is empty")
-
-	gmt_hdr::GMT_GRID_HEADER = unsafe_load(G.header)
-	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
-	padTop = Int(gmt_hdr.pad[4]);	padLeft = Int(gmt_hdr.pad[1]);
-	mx = Int(gmt_hdr.mx);			my = Int(gmt_hdr.my)
-
-	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=(nx + gmt_hdr.registration)))
-	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=(ny + gmt_hdr.registration)))
-
-	z = unsafe_wrap(Array, G.data, my * mx * nz)
-
-	out = GMTgrid("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", X, Y, z, "", "", "", "TRB", 0)
-
-	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
-	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
-	out.nodata       = gmt_hdr.nan_value
-	out.registration = gmt_hdr.registration
-
-	return out
-end
-
-# ---------------------------------------------------------------------------------------------------
-function get_grid(API::Ptr{Nothing}, object)::GMTgrid
+function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 # Given an incoming GMT grid G, build a Julia type and assign the output components.
 # Note: Incoming GMT grid has standard padding while Julia grid has none.
 
-	G::GMT_GRID = unsafe_load(convert(Ptr{GMT_GRID}, object))
-	(G.data == C_NULL) && error("get_grid: programming error, output matrix is empty")
+	if (!cube)  G = unsafe_load(convert(Ptr{GMT_GRID}, object))
+	else        G = unsafe_load(convert(Ptr{GMT_CUBE}, object))
+	end
+	(G.data == C_NULL) && error("Programming error, output matrix is empty")
 
 	gmt_hdr::GMT_GRID_HEADER = unsafe_load(G.header)
-	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);
+	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nb = Int(gmt_hdr.n_bands)
 	padTop = Int(gmt_hdr.pad[4]);	padLeft = Int(gmt_hdr.pad[1]);
 	mx = Int(gmt_hdr.mx);			my = Int(gmt_hdr.my)
 
-#=	# Not yet implemented on the GMT side
-	X = zeros(nx);		t = pointer_to_array(G.x, nx)
-	[X[col] = t[col] for col = 1:nx]
-	Y = zeros(ny);		t = pointer_to_array(G.y, ny)
-	[Y[col] = t[col] for col = 1:ny]
-=#
 	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=(nx + gmt_hdr.registration)))
 	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=(ny + gmt_hdr.registration)))
+	if (nb == 1)
+		V = [0.]
+	else
+		V = zeros(nb);		t = unsafe_wrap(Array, G.z, nb)
+		[V[n] = t[n] for n = 1:nb]
+	end
 
-	t = unsafe_wrap(Array, G.data, my * mx)
-	z = zeros(Float32, ny, nx)
+	t = unsafe_wrap(Array, G.data, my * mx * nb)
+	if !(nb > 1 && padLeft == 0)			# Otherwise we are in experimental ground (so far only CUBEs)
+		z = (nb == 1) ? Array{Float32}(undef, ny, nx) : Array{Float32}(undef, ny, nx, nb)  
+	end
 
-	if (grd_mem_layout[1] == "" || startswith(grd_mem_layout[1], "BC"))
+	if (nb > 1)			# A CUBE
+		if (padLeft == 0)
+			z, layout = reshape(t, nx, ny, nb), "TRB"
+		else
+			for k = 1:nb
+				offset = (k - 1) * gmt_hdr.size + padLeft
+				[z[row,col, k] = t[((ny-row) + padTop) * mx + col + offset] for row = 1:ny, col = 1:nx]
+			end
+			layout = "BCB";
+		end
+	elseif (grd_mem_layout[1] == "" || startswith(grd_mem_layout[1], "BC"))
 		for col = 1:nx
 			for row = 1:ny
 				ij = ((row-1) + padTop) * mx + col + padLeft		# Was GMT_IJP(row, col, mx, padTop, padLeft)
@@ -523,13 +512,14 @@ function get_grid(API::Ptr{Nothing}, object)::GMTgrid
 		layout = grd_mem_layout[1][1:2]*'B';
 	else
 		# Was t[GMT_IJP(row, col, mx, padTop, padLeft)
-		[z[row,col] = t[((row-1) + padTop) * mx + col + padLeft] for col = 1:nx, row = 1:ny]
-		layout = "TCB";		@assert length(layout) == 3
+		[z[row,col] = t[((row-1) + padTop) * mx + col + padLeft] for row = 1:ny, col = 1:nx]
+		layout = "TCB";
 	end
 	grd_mem_layout[1] = ""		# Reset because this variable is global
 
 	# Return grids via a float matrix in a struct
-	out = GMTgrid("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, "", "", "", X, Y, z, "", "", "", layout, 0)
+	rng, inc = (gmt_hdr.n_bands > 1) ? (fill(NaN,8), fill(NaN,3)) : (fill(NaN,6), fill(NaN,2))
+	out = GMTgrid("", "", 0, rng, inc, 0, NaN, "", "", "", X, Y, V, z, "", "", "", "", layout, 0)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT != C_NULL)    out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)      end
@@ -538,8 +528,9 @@ function get_grid(API::Ptr{Nothing}, object)::GMTgrid
 	out.command = String([gmt_hdr.command...])
 
 	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays
-	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
-	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
+	out.range[1:end] = (gmt_hdr.n_bands > 1) ? [gmt_hdr.wesn[1:4]..., gmt_hdr.z_min, gmt_hdr.z_max, G.z_range[:]...] :
+	                                           [gmt_hdr.wesn[1:4]..., gmt_hdr.z_min, gmt_hdr.z_max]
+	out.inc[1:end]   = (gmt_hdr.n_bands > 1) ? [gmt_hdr.inc[1], gmt_hdr.inc[2], G.z_inc] : [gmt_hdr.inc[1], gmt_hdr.inc[2]]
 	out.nodata       = gmt_hdr.nan_value
 	out.registration = gmt_hdr.registration
 	out.x_unit       = String(UInt8[gmt_hdr.x_unit...])
@@ -757,13 +748,13 @@ end
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)
 	# Create the object container and hook as X->object
-	oo = unsafe_load(X.option)
+	#oo = unsafe_load(X.option)
 	#module_input = (oo.option == GMT.GMT_OPT_INFILE)
 
 	if (X.family == GMT_IS_GRID)			# Get a grid from Julia or a dummy one to hold GMT output
-		X.object =  grid_init(API, ptr, X.direction, pad)
-	elseif (X.family == GMT_IS_CUBE)			# Get a grid from Julia or a dummy one to hold GMT output
-		X.object =  cube_init(API, ptr, pad)
+		X.object =  grid_init(API, X, ptr, pad, false)
+	elseif (X.family == GMT_IS_CUBE)		# Get a grid from Julia or a dummy one to hold GMT output
+		X.object =  grid_init(API, X, ptr, pad, true)
 	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Julia or a dummy one to hold GMT output
 		X.object = image_init(API, ptr, X.direction)
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
@@ -804,10 +795,11 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 	# In line-by-line modules it is possible no output is produced, hence we make an exception for DATASET
 	((X.object = GMT_Read_VirtualFile(API, name)) == NULL && X.family != GMT_IS_DATASET) &&
 		error("GMT: Error reading virtual file $name from GMT")
+
 	if (X.family == GMT_IS_GRID)         	# A GMT grid; make it the pos'th output item
-		ptr = get_grid(API, X.object)
+		ptr = get_grid(API, X.object, false)
 	elseif (X.family == GMT_IS_CUBE)       	# A GMT cube; make it the pos'th output item
-		ptr = get_cube(API, X.object)
+		ptr = get_grid(API, X.object, true)
 	elseif (X.family == GMT_IS_DATASET)		# A GMT table; make it a matrix and the pos'th output item
 		ptr = get_dataset(API, X.object)
 	elseif (X.family == GMT_IS_PALETTE)		# A GMT CPT; make it a colormap and the pos'th output item
@@ -825,54 +817,57 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function cube_init(API::Ptr{Nothing}, grd_box, pad::Int=2)
-# If GRD_BOX is empty just allocate (GMT) an empty container and return
-
-	if (isempty_(grd_box))			# Just tell grid_init() to allocate an empty container
-		return convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
-	end
-end
-
-# ---------------------------------------------------------------------------------------------------
-function grid_init(API::Ptr{Nothing}, grd_box, dir::Integer=GMT_IN, pad::Int=2)
+function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, grd_box, pad::Int=2, cube::Bool=false)
 # If GRD_BOX is empty just allocate (GMT) an empty container and return
 # If GRD_BOX is not empty it must contain a GMTgrid type.
 
 	if (isempty_(grd_box))			# Just tell grid_init() to allocate an empty container
-		return convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
+		return (cube) ? 
+			convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL)) :
+			convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 	end
 	(!isa(grd_box, GMTgrid) && !isa(grd_box, Vector{GMTgrid})) &&
 		error("grd_init: input ($(typeof(grd_box))) is not a GRID container type")
 
-	grid_init(API, grd_box, pad)
+	grid_init(API, X, grd_box, pad, cube)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)::Ptr{GMT_GRID}
+function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2, cube::Bool=false)::Ptr{GMT_GRID}
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
 	mode = (Grid.layout != "" && Grid.layout[2] == 'R') ? GMT_CONTAINER_ONLY : GMT_CONTAINER_AND_DATA
 	(mode == GMT_CONTAINER_ONLY) && (pad = Grid.pad)		# Here we must follow what the Grid says it has
+	n_bds = size(Grid.z, 3);
+	_cube = (cube || n_bds > 1) ? true : false
 
-	hdr = [Grid.range; Grid.registration; Grid.inc]
-	G = convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, NULL, hdr[1:4], hdr[8:9], UInt32(hdr[7]), pad))
+	if (_cube)
+		range = [Grid.range[1:4]; Grid.range[7:8]; Grid.range[5:6]]		# G.range has vertical axes range at the end
+		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, range, Grid.inc, UInt32(Grid.registration), pad))
+		X.family, X.geometry = GMT_IS_CUBE, GMT_IS_VOLUME
+	else
+		G = convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, NULL, Grid.range[1:4], Grid.inc[1:2], UInt32(Grid.registration), pad))
+	end
 
-	Gb::GMT_GRID = unsafe_load(G)			# Gb = GMT_GRID (constructor with 1 method)
+	Gb = unsafe_load(G)			# Gb = GMT_GRID | GMT_CUBE
 	h = unsafe_load(Gb.header)
 
 	if (mode == GMT_CONTAINER_AND_DATA)
 		grd = Grid.z
 		n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
-		t = unsafe_wrap(Array, Gb.data, h.size)
+		t = unsafe_wrap(Array, Gb.data, h.size * n_bds)
 
 		k = 1
-		if (eltype(grd) == Float32)
-			for col = 1:n_cols, row = n_rows:-1:1
-				t[GMT_IJP(row, col, mx, pad, pad)] = grd[k];		k += 1
-			end
-		else
-			for col = 1:n_cols, row = n_rows:-1:1
-				t[GMT_IJP(row, col, mx, pad, pad)] = Float32(grd[k]);		k += 1
+		for bnd = 1:n_bds
+			off = (bnd - 1) * h.size + pad
+			if (eltype(grd) == Float32)
+				for row = n_rows:-1:1, col = 1:n_cols
+					t[((row-1) + pad) * mx + col + off] = grd[k];		k += 1
+				end
+			else
+				for row = n_rows:-1:1, col = 1:n_cols
+					t[((row-1) + pad) * mx + col + off] = Float32(grd[k]);		k += 1
+				end
 			end
 		end
 	else
@@ -881,7 +876,7 @@ function grid_init(API::Ptr{Nothing}, Grid::GMTgrid, pad::Int=2)::Ptr{GMT_GRID}
 		#GMT_Set_Default(API, "API_GRID_LAYOUT", "TR");
 	end
 
-	h.z_min, h.z_max = hdr[5], hdr[6]		# Set the z_min, z_max
+	h.z_min, h.z_max = Grid.range[5], Grid.range[6]		# Set the z_min, z_max
 
 	try
 		h.x_unit = map(UInt8, (Grid.x_unit...,))

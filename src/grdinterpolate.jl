@@ -1,41 +1,45 @@
 """
 	grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-Interpolates the grid(s) at the positions in the table and writes out the table with the
-interpolated values added as (one or more) new columns.
+Interpolate a 3-D cube, 2-D grids or 1-D series from a 3-D data cube or stack of 2-D grids.
 
 Full option list at [`grdinterpolate`]($(GMTdoc)/grdinterpolate.html)
 
 Parameters
 ----------
 
-- **A** | **interp_path** :: [Type => Str]
+- **D** | **meta** | **metadata** :: [Type => Str | NamedTuple]  
 
-    ($(GMTdoc)grdinterpolate.html#a)
-- **C** | **equidistant** :: [Type => Str]
-
-    ($(GMTdoc)grdinterpolate.html#c)
-- **D** | **dfile** :: [Type => Str]  
-
+    Give one or more combinations for values xname, yname, zname (3rd dimension in cube), and dname
+    (data value name) and give the names of those variables and in square bracket their units
     ($(GMTdoc)grdinterpolate.html#d)
-- **E** | **by_coord** :: [Type => Str]
+- **E** | **crossection** :: [Type => Str | GMTdtaset | NamedTuple]
 
+    Specify a crossectinonal profile via a file or from specified line coordinates and modifiers. If a file,
+    it must be contain a single segment with either lon lat or lon lat dist records. These must be equidistant. 
     ($(GMTdoc)grdinterpolate.html#e)
-- **G** | **grid** :: [Type => Str | GMTgrid | Tuple(GMTgrid's)]
+- **F** | **interp_type** :: [Type => Str]   ``Arg = l|a|c|n[+1|+2]``
 
+    Choose from l (Linear), a (Akima spline), c (natural cubic spline), and n (no interpolation:
+    nearest point) [Default is Akima].
+- **G** | **outfile** | **outgrid** :: [Type => Str]
+
+    Output file name. If `range` only selects a single layer then the data cube collapses to a regular 2-D grid file
     ($(GMTdoc)grdinterpolate.html#g)
-- **N** | **no_skip** :: [Type => Bool]
-
-    ($(GMTdoc)grdinterpolate.html#n)
 - $(GMT.opt_R)
-- **S** | **stack** :: [Type => Str]
+- **S** | **stack** :: [Type => Str | Tuple | Dataset]	`Arg = x/y|pointfile[+hheader]`
 
+    Rather than compute gridded output, create tile/spatial series through the stacked grids at the given point (x/y)
+    or the list of points in pointfile. 
     ($(GMTdoc)grdinterpolate.html#s)
-- **T** | **radius** :: [Type => Number, Str | []]
+- **T** | **range** :: [Type => Str]			`Arg = [min/max/]inc[+i|n] |-Tfile|list`
 
+    Make evenly spaced time-steps from min to max by inc [Default uses input times].
     ($(GMTdoc)grdinterpolate.html#t)
-- **Z** | **z_only** :: [Type => Bool]
+- **Z** | **levels** :: [Type => range]			`Arg = [levels]`
 
+    The `levels` may be specified the same way as in `range`. If not given then we default to an integer
+    levels array starting at 0.
     ($(GMTdoc)grdinterpolate.html#z)
 - $(GMT.opt_V)
 - $(GMT.opt_bi)
@@ -48,6 +52,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_n)
 - $(GMT.opt_o)
+- $(GMT.opt_q)
 - $(GMT.opt_s)
 - $(GMT.opt_swap_xy)
 
@@ -65,7 +70,7 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 
 	cmd  = add_opt(d, cmd, 'D', [:D :meta :metadata],
            (xname="+x", yname="+y", zname="+z", dname="+d", scale="+s", offset="+o", nodata="+n", title="+t", remark="+r", varname="+v"))
-	cmd  = add_opt(d, cmd, 'F', [:F :interp],
+	cmd  = add_opt(d, cmd, 'F', [:F :interp_type],
            (linear="_l", akima="_a", cubic="_c", nearest="_n", first_derivative="+1", second_derivative="+2"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)

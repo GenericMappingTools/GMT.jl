@@ -8,7 +8,7 @@
 	grdinfo(mat2grid(rand(Float32,4,4)));		# Test the float branch in grid_init
 	nx = 3; ny = 2; rang = [1, nx, 1, ny, 0.0,1]; x = collect(1.0:nx); y = collect(1.0:ny); inc = [1.0, 1];
 	zz = rand(1:nx,ny,nx); z = zeros(Float32, ny+4, nx+4); z[3:end-2, 3:end-2] = zz;
-	G = GMT.GMTgrid("","",0,rang, inc,0,NaN,"","","",x,y,deepcopy(collect(z')),"","","","TRB",2)
+	G = GMT.GMTgrid("","",0,rang, inc,0,NaN,"","","",x,y,[0.],deepcopy(collect(z')),"","","","","TRB",2)
 	grdinfo(G);
 
 	println("	GRD2CPT")
@@ -82,6 +82,13 @@
 
 	println("	GRDHISTEQ")
 	G2 = grdhisteq(G, gaussian=[]);	# Use G of previous test
+
+	if (GMTver > v"6.1.1")
+		println("	GRDINTERPOLATE")
+		G = grdinterpolate("cube.nc", T=4)
+		C = grdinterpolate("cube.nc", T="3/4/0.25");
+		grdinfo(C)
+	end
 
 	println("	GRDLANDMASK")
 	G2 = grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
