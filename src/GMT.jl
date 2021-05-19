@@ -20,12 +20,11 @@ end
 # Need to know what GMT version is available or if none at all to warn users on how to install GMT.
 function get_GMTver()
 	out = v"0.0"
-	GMTbyConda = false
 	try						# First try to find an existing GMT installation (RECOMENDED WAY)
 		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
 		ver = readlines(`gmt --version`)[1]
 		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
-		return out, GMTbyConda, "", "", "", ""
+		return out, false, "", "", "", ""
 	catch err1;		println(err1)		# If not, install GMT
 		ENV["INSTALL_GMT"] = "1"
 		try
@@ -40,12 +39,11 @@ function get_GMTver()
 			end
 			ver = readlines(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`)[1]
 			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
-			GMTbyConda = true
+			return out, true, _libgmt, _libgdal, _libproj, _GMT_bindir
 		catch err2;		println(err2)
-			return out, GMTbyConda, "", "", "", ""
+			return out, false, "", "", "", ""
 		end
 	end
-	return out, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir
 end
 _GMTver, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir = get_GMTver()
 
