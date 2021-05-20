@@ -861,11 +861,11 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 		for bnd = 1:n_bds
 			off = (bnd - 1) * h.size + pad
 			if (eltype(grd) == Float32)
-				for row = n_rows:-1:1, col = 1:n_cols
+				for col = 1:n_cols, row = n_rows:-1:1
 					t[((row-1) + pad) * mx + col + off] = grd[k];		k += 1
 				end
 			else
-				for row = n_rows:-1:1, col = 1:n_cols
+				for col = 1:n_cols, row = n_rows:-1:1
 					t[((row-1) + pad) * mx + col + off] = Float32(grd[k]);		k += 1
 				end
 			end
