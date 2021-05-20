@@ -124,6 +124,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	end
 
 	dataset, needclose = get_gdaldataset(indata)
+	default_gdopts!(dataset, opts)		# Assign some default options in function of the driver and data type
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
@@ -200,18 +201,17 @@ function helper_opts2vec(opts::String)
 	return ind
 end
 
-#= ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------
 function default_gdopts!(ds, opts::Vector{String})
 	# Assign some default options in function of the driver and data type
 	driver = shortname(getdriver(ds))
 	dt = GDALGetRasterDataType(ds.ptr)
-	(driver == "MEM" && dt < 6) && return nothing		# We have no defaults so far for integer data in MEM 
+	(dt < 6  && startswith(lowercase(driver), "mem")) && return nothing		# We have no defaults so far for integer data in MEM 
 	(dt == 1 && !any(startswith.(opts, "COMPRESS"))) && append!(opts, ["COMPRESS=DEFLATE", "PREDICTOR=2"])
 	(dt == 1 && !any(startswith.(opts, "TILED"))) && append!(opts, ["TILED=YES"])
 	(dt >= 6 && !any(startswith.(opts, "a_nodata"))) && append!(opts, ["-a_nodata","NaN"])
 	(driver == "netCDF") && append!(opts,["FORMAT=NC4", "COMPRESS=DEFLATE", "ZLEVEL=4"]) 
 end
-=#
 
 # ---------------------------------------------------------------------------------------------------
 function get_gdaldataset(data)
