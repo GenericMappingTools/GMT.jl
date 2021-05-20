@@ -125,9 +125,7 @@ export
 
 include("common_docs.jl")
 include("libgmt_h.jl")
-if (GMTver >= v"6")
-	include("libgmt.jl")
-end
+(GMTver >= v"6") && include("libgmt.jl")
 include("gmt_main.jl")
 include("utils_types.jl")
 include("grd_operations.jl")
@@ -240,16 +238,16 @@ const global current_cpt = [GMTcpt()]		# To store the current palette
 function __init__(test::Bool=false)
 	if (GMTver == v"0.0" || test)
 		println("\n\nYou don't seem to have GMT installed and the automatic installation also failed.\nYou will have to do it yourself.")
-		if (Sys.iswindows())    println("Download and install the official version at (the '..._win64.exe':" *
-		                                "\n\t\t https://github.com/GenericMappingTools/gmt/releases")
-		elseif (Sys.isapple())  println("Install GMT with Homebrew: brew install gmt ghostscript ffmpeg")
-		else                    println("https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md#linux")
-		end
+		t = Sys.iswindows() ? "Download and install the official version at (the '..._win64.exe':" *
+		                      "\n\t\t https://github.com/GenericMappingTools/gmt/releases" : (
+		                      Sys.isapple() ? "Install GMT with Homebrew: brew install gmt ghostscript ffmpeg" :
+		                      "https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md#linux")
+		println(t)
 		return
 	end
 
 	if !isfile(libgmt) || ( !Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)) )
-		println("\nI detect that you had a previously working GMT.jl version but something has broken meanwhile.\n" *
+		println("\nDetected a previously working GMT.jl version but something has broken meanwhile.\n" *
 		"(like updating your GMT instalation). Run this command in REPL and restart Julia.\n\n\t\trun(`touch '$(pathof(GMT))'`)\n")
 		return
 	end
