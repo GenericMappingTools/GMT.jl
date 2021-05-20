@@ -435,13 +435,14 @@ function GMT_IJP(hdr::GMT_GRID_HEADER, row, col)
 end
 =#
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function GMT_IJP(row::Integer, col::Integer, mx, padTop, padLeft)
 # Function for indecing into a GMT grid [with pad]
 # padTop (hdr.pad[GMT.GMT_YHI]) and padLeft (hdr.pad[GMT.GMT_XLO]) are normally equal
 	#ij = (row + padTop) * mx + col + padLeft		# in C
 	ij = ((row-1) + padTop) * mx + col + padLeft
 end
+=#
 
 #= ---------------------------------------------------------------------------------------------------
 function MEXG_IJ(row::Integer, col::Integer, ny)
@@ -756,7 +757,7 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)
 	elseif (X.family == GMT_IS_CUBE)		# Get a grid from Julia or a dummy one to hold GMT output
 		X.object =  grid_init(API, X, ptr, pad, true)
 	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Julia or a dummy one to hold GMT output
-		X.object = image_init(API, ptr, X.direction)
+		X.object = image_init(API, ptr)
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
 		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
 		actual_family = [GMT_IS_DATASET]		# Default but may change to matrix
@@ -821,14 +822,11 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, grd_box, pad::Int=2, cube
 # If GRD_BOX is empty just allocate (GMT) an empty container and return
 # If GRD_BOX is not empty it must contain a GMTgrid type.
 
-	if (isempty_(grd_box))			# Just tell grid_init() to allocate an empty container
-		return (cube) ? 
-			convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL)) :
-			convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
-	end
-	(!isa(grd_box, GMTgrid) && !isa(grd_box, Vector{GMTgrid})) &&
-		error("grd_init: input ($(typeof(grd_box))) is not a GRID container type")
+	(isempty_(grd_box)) && return (cube) ?		# Just tell grid_init() to allocate an empty container
+		convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL)) :
+		convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 
+	!isa(grd_box, GMTgrid) && error("grd_init: input ($(typeof(grd_box))) is not a GRID container type")
 	grid_init(API, X, grd_box, pad, cube)
 end
 
@@ -902,7 +900,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 end
 
 # ---------------------------------------------------------------------------------------------------
-function image_init(API::Ptr{Nothing}, img_box, dir::Integer=GMT_IN)::Ptr{GMT_IMAGE}
+function image_init(API::Ptr{Nothing}, img_box)::Ptr{GMT_IMAGE}
 # ...
 
 	if (isempty_(img_box))			# Just tell image_init() to allocate an empty container
@@ -914,12 +912,12 @@ function image_init(API::Ptr{Nothing}, img_box, dir::Integer=GMT_IN)::Ptr{GMT_IM
 		return I
 	end
 
-	(!isa(img_box, GMTimage)) && error("image_init: input is not a IMAGE container type")
+	!isa(img_box, GMTimage) && error("image_init: input is not a IMAGE container type")
 	return image_init(API, img_box)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)::Ptr{GMT_IMAGE}
+function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 # We are given a Julia image and use it to fill the GMT_IMAGE structure
 
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_bands = size(Img.image, 3)
@@ -928,7 +926,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage, pad::Int=0)::Ptr{GMT_IMAGE
 	if (GMTver >= v"6.1" && (n_bands == 2 || n_bands == 4))	# Then we want the alpha layer together with data
 		family = family | GMT_IMAGE_ALPHA_LAYER
 	end
-	(!CTRL.proj_linear[1]) && (pad = 2)
+	pad = (!CTRL.proj_linear[1]) ? 2 : 0
 	mode = (pad == 2) ? GMT_CONTAINER_AND_DATA : GMT_CONTAINER_ONLY
 	(pad == 2 && Img.pad == 0 && Img.layout[2] == 'R') && (mode = GMT_CONTAINER_AND_DATA)	# Unfortunately
 
@@ -1171,7 +1169,7 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 	end
 	unsafe_store!(P, Pb)
 
-	# For Categorical case was half broken till 6.2 so we must treat things differently
+	# Categorical case was half broken till 6.2 so we must treat things differently
 	if (cpt.key[1] != "" && GMTver > v"6.1.1")
 		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_KEY, convert(Ptr{Cvoid}, P), cpt.key);
 		(cpt.label[1] != "") &&
