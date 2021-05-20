@@ -39,6 +39,10 @@ Parameters
 
     Find and report the location of min/max z-values.
     ($(GMTdoc)grdinfo.html#m)
+- **Q** | **cube** :: [Type => Bool]
+
+    Input files must be data 3-D netCDF data cube. Not compatible with **D**, **E**, **F**, and **Ib** (GMT6.2)
+    ($(GMTdoc)grdinfo.html#q)
 - $(GMT.opt_R)
 - **T** | **zmin_max** :: [Type => Number | Str]
     Determine min and max z-value.
@@ -53,7 +57,8 @@ function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :f])
 	cmd  = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:G :force_download], [:I :nearest],
-	                                 [:L :force_scan], [:M :minmax_pos], [:T :zmin_max]])
+	                                 [:L :force_scan], [:M :minmax_pos], [:Q :cube], [:T :zmin_max]])
+    (isa(arg1, GMTgrid) && size(arg1,3) > 1 && !occursin("-Q", cmd)) && (cmd *= " -Q")  # arg1 is a CUBE
 	common_grd(d, cmd0, cmd, "grdinfo ", arg1)		# Finish build cmd and run it
 end
 

@@ -29,7 +29,7 @@ Parameters
     Nodes that fall exactly on a polygon boundary should be considered to be outside the polygon
     [Default considers them to be inside].
     ($(GMTdoc)grdlandmask.html#e)
-- **G** | **outgrid** :: [Type => Str]
+- **G** | **outfile** | **outgrid** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdlandmask(....) form.
@@ -49,6 +49,6 @@ function grdlandmask(cmd0::String=""; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :r :x])
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :bordervalues], [:I :inc],
-	                                 [:G :outgrid], [:N :mask_geog]])
+	                                 [:G :outfile :outgrid], [:N :mask_geog]])
 	return common_grd(d, "grdlandmask " * cmd, nothing)		# Finish build cmd and run it
 end

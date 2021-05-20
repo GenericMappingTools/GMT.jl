@@ -153,6 +153,7 @@ function gmtread(fname::String; kwargs...)
 	end
 	(GMTver == v"6.0") && (O = ogr2GMTdataset(gmt_ogrread(API2, fname)))
 	ressurectGDAL()				# Because GMT called GDALDestroyDriverManager()
+	GMT_Destroy_Session(API2)
 	return O
 end
 
@@ -225,7 +226,7 @@ function gmtwrite(fname::String, data; kwargs...)
 	(fname == "") && error("First argument cannot be empty. It must contain the file name to write.")
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, opt_R = parse_R(d, "")
+	cmd, = parse_R(d, "")
 	cmd = parse_V_params(d, cmd)
 
 	if (isa(data, GMTgrid))
