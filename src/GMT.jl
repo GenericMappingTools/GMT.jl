@@ -17,6 +17,9 @@ struct CTRLstruct2
 	fname::Vector{String}			# Store the full name of PS being constructed
 end
 
+# Function to change data of GMT.jl and hence force a rebuild in next Julia session
+force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, "$(pathof(GMT))"`) : run(`touch '$(pathof(GMT))'`)
+
 # Need to know what GMT version is available or if none at all to warn users on how to install GMT.
 function get_GMTver()
 	out = v"0.0"
@@ -248,7 +251,7 @@ function __init__(test::Bool=false)
 
 	if !isfile(libgmt) || ( !Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)) )
 		println("\nDetected a previously working GMT.jl version but something has broken meanwhile.\n" *
-		"(like updating your GMT instalation). Run this command in REPL and restart Julia.\n\n\t\trun(`touch '$(pathof(GMT))'`)\n")
+		"(like updating your GMT instalation). Run this command in REPL and restart Julia.\n\n\t\tGMT.force_precompile()\n")
 		return
 	end
 

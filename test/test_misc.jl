@@ -143,7 +143,7 @@
 
 	G = GMT.peaks();
 	show(G);
-	mat2ds(rand(2,13), multi=true)
+	show(mat2ds(rand(2,13), multi=true));
 	grdcontour(G, cont=1, annot=2, axis="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
 	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")

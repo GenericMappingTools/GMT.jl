@@ -1,11 +1,13 @@
 ## Index
 
 ```@index
+Modules = [GMT, Drawing, Gdal]
+Order   = [:function, :type, :module]
 ```
 
 ## Functions
 
 ```@autodocs
-Modules = [GMT]
-Order   = [:function]
+Modules = [GMT, Drawing, Gdal]
+Order   = [:function, :type, :module]
 ```
