@@ -143,7 +143,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 end
 
 """
-Submodule where the symbols of `plot` were elevated to the catogory of functions.
+Submodule where the symbols of `plot` were elevated to the category of functions.
 The functions that are currently available are:
 
 - circle(x, y, diameter,    kw...)

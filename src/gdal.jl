@@ -2310,8 +2310,8 @@ end
 
 """
 Small subset of the GDAL and ArcGDAL packages but with no extra dependencies.
-For the time being this sub-module is not intended to much direct use so it has no further
-documentation. Interested people should consult the GDAL & ArchGDAL docs.
+For the time being this sub-module is not intended to much direct use except some
+documented functions. Interested people should consult the GDAL & ArchGDAL docs.
 """
 Gdal
 

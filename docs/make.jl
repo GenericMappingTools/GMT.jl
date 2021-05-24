@@ -1,4 +1,4 @@
-using Documenter, GMT
+using Documenter, GMT, GMT.Drawing, GMT.Gdal
 
 makedocs(
 	modules = [GMT],

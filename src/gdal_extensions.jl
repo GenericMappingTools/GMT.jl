@@ -477,5 +477,5 @@ end
 function helper_1geom(D)
 	(!isa(D, Matrix{<:Real}) && !isa(D, Matrix{<:Real}) && !isa(D, GMT.GMTdataset) && !isa(D, Vector{<:GMT.GMTdataset}) ) && error("Input mut be GMTdatset or Matrix{Real}")
 	ds = gmt2gd(D)
-	geom = getgeom(unsafe_getfeature(getlayer(ds, 0),0))
+	getgeom(unsafe_getfeature(getlayer(ds, 0),0))
 end
