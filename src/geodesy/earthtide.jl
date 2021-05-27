@@ -17,7 +17,7 @@ function earthtide(cmd0::String=""; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	
 	cmd = "earthtide " * parse_common_opts(d, "", [:R :I :V_params :r])[1]
-	cmd = parse_opt_range(d, cmd, "T")
+	cmd = parse_opt_range(d, cmd, "T")[1]
 	if ((opt_S = add_opt(d, "", 'S', [:S :sun_moon])) != "")
 		return finish_PS_module(d, cmd * opt_S, "", true, false, false)
 	elseif ((opt_L = add_opt(d, "", 'L', [:L :location])) != "")

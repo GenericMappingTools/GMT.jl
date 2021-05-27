@@ -248,11 +248,11 @@
 	@test (GMT.check_axesswap(Dict(:axesswap => ("xy")), "?/?") == "-?/-?")
 	@test (GMT.check_axesswap(Dict(:axesswap => ("y")), "?/?") == "?/-?")
 
-	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:num)), "", "") == "1/2/0.1+n")
-	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:num)), "", "T") == " -T1/2/0.1+n")
-	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:log1)), "") == "1/2/0.1+l")
-	@test (GMT.parse_opt_range(Dict(:T => [1]), "") == "1,")
-	GMT.parse_opt_range(Dict(:T => (1,2,0.1,:mum,:log2)), "")	# Prints a warning
+	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:num)), "", "")[1] == "1/2/0.1+n")
+	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:num)), "", "T")[1] == " -T1/2/0.1+n")
+	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:log1)), "")[1] == "1/2/0.1+l")
+	@test (GMT.parse_opt_range(Dict(:T => [1]), "")[1] == "1,")
+	GMT.parse_opt_range(Dict(:T => (1,2,0.1,:mum,:log2)), "")[1]	# Prints a warning
 	
 	GMT.round_datetime([DateTime(2013,1,1), DateTime(2013,1,1,0,0,1)]);
 
@@ -288,6 +288,10 @@
 	# Test here is to the showfig fun
 	grdimage([1 2;3 4])
 	showfig(savefig="lixo.png",show=false)
+
+	y = [NaN 2 3 4;5 6 NaN 8;9 10 11 12];
+	@test nanmean(y,1) == [7.0  6.0  7.0  8.0]
+	nanstd(y,1)
 
 	gmtbegin()
 	resetGMT()

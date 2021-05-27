@@ -78,7 +78,7 @@ Parameters
     ($(GMTdoc)coast.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
-- **W** | **shore** :: [Type => Str]
+- **W** | **shore** | **shorelines** | **coast**  :: [Type => Str]
     Draw shorelines [Default is no shorelines]. Append pen attributes.
     ($(GMTdoc)coast.html#w)
 - $(GMT.opt_X)
@@ -119,10 +119,10 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	end
 
 	# Parse these three options that can be made to respond to same code
-	cmd = parse_INW_coast(d, [[:I :rivers], [:N :borders], [:W :shore :shorelines]], cmd, "INW")
+	cmd = parse_INW_coast(d, [[:I :rivers], [:N :borders], [:W :shore :shorelines :coast]], cmd, "INW")
 	(show_kwargs[1]) && print_kwarg_opts([:I :rivers],  "NamedTuple | Tuple | Dict | String")
 	(show_kwargs[1]) && print_kwarg_opts([:N :borders], "NamedTuple | Tuple | Dict | String")
-	(show_kwargs[1]) && print_kwarg_opts([:W :shore :shorelines],   "NamedTuple | Tuple | Dict | String")
+	(show_kwargs[1]) && print_kwarg_opts([:W :shore :shorelines :coast],   "NamedTuple | Tuple | Dict | String")
 
 	if (!occursin(" -C",cmd) && !occursin(" -E",cmd) && !occursin(" -G",cmd) && !occursin(" -I",cmd) &&
 		!occursin(" -M",cmd) && !occursin(" -N",cmd) && !occursin(" -Q",cmd) && !occursin(" -S",cmd) && !occursin(" -W",cmd))

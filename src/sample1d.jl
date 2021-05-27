@@ -50,9 +50,9 @@ function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:A :resamp], [:F :interp_type], [:N :time_col], [:W :weights_col]])
-	cmd = parse_opt_range(d, cmd, "T")
+	cmd, Tvec = parse_opt_range(d, cmd, "T")
 
-	common_grd(d, cmd0, cmd, "sample1d ", arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "sample1d ", arg1, isempty(Tvec) ? nothing : Tvec)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

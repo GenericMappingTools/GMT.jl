@@ -88,7 +88,7 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 	elseif (n2 > 0)             arg2, arg3 = args[:]
 	end
 
-	cmd = parse_opt_range(d, cmd, "T")
+	cmd = parse_opt_range(d, cmd, "T")[1]
 
 	#!occursin("-G", cmd) && (cmd *= " -G")
 	if (isa(arg1, Tuple))

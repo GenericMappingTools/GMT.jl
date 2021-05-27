@@ -3354,7 +3354,10 @@ end
 function maximum_nan(A)
 	return (eltype(A) <: AbstractFloat) ? maximum(x->isnan(x) ? -Inf : x,A) : maximum(A)
 end
-
+nanmean(x)   = mean(filter(!isnan,x))
+nanmean(x,y) = mapslices(nanmean,x,dims=y)
+nanstd(x)    = std(filter(!isnan,x))
+nanstd(x,y)  = mapslices(nanstd,x,dims=y)
 # --------------------------------------------------------------------------------------------------
 function help_show_options(d::Dict)
 	if (find_in_dict(d, [:help])[1] !== nothing)  show_kwargs[1] = true  end	# Put in HELP mode

@@ -82,12 +82,12 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
     # If file name sent in, read it and compute a tight -R if this was not provided 
     cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
 	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
-	cmd = helper_cpt(d, cmd)
+	cmd, Tvec = helper_cpt(d, cmd)
 	cmd = parse_E_mkcpt(d, [:E :nlevels], cmd, arg1)
 
 	cmd = "makecpt " * cmd
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
-	r = gmt(cmd, arg1)
+	r = gmt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
 	current_cpt[1] = (r !== nothing) ? r : GMTcpt()
     return r
 end
@@ -107,19 +107,20 @@ function helper_cpt(d::Dict, cmd::String)
 	# Common to both make & grd cpt
 	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :color_model], [:G :truncate],
 	                                [:I :inverse :reverse], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :auto], [:W :wrap :categorical], [:Z :continuous]])
-	cmd = parse_opt_range(d, cmd, "T")
+	cmd, Tvec = parse_opt_range(d, cmd, "T")
 	if ((val = find_in_dict(d, [:cptname :cmapname])[1]) !== nothing)
 		(IamModern[1]) && (cmd *= " -H")
 		cmd *=  " > " * string(val)
 	elseif (IamModern[1])  cmd *= " -H"
 	end
-	return cmd
+	return cmd, Tvec
 end
 
 # -------------------------------------------------------------------------------------------
-function parse_opt_range(d::Dict, cmd::String, opt::String="")::String
+function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Vector{Float64}}
 	symbs = [:T :range :inc :bin]
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | Array | String | Number")	# Just print the options
+	Tvec = Vector{Float64}()
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, Tuple))
 			n = length(val)
@@ -134,16 +135,17 @@ function parse_opt_range(d::Dict, cmd::String, opt::String="")::String
 					end
 				end
 			end
-		elseif (isa(val, Array))
+		elseif (isa(val, Vector{<:Real}) || isa(val, Matrix{<:Real}))
 			out = arg2str(val,',')
 			if (length(val) == 1)  out *= ","  end
+			if (length(out) > 1023)  Tvec, out = vec(val), ""  end		# Should be temporary till all that use -T catch up with Vec
 		else
 			out = arg2str(val)		# Everything fits here if given as a string
 		end
 		if (opt != "")  out = " -" * opt  * out end
 		cmd *= out
 	end
-	return cmd
+	return cmd, Tvec
 end
 
 # ---------------------------------------------------------------------------------------------------

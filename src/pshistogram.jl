@@ -108,7 +108,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = ""
 	opt_Z = add_opt(d, "", 'Z', [:Z :kind], (counts = "0", count = "0", freq = "1", log_count = "2", log_freq = "3",
 	                                         log10_count = "4", log10_freq = "5", weights = "+w"), true, "")
-	opt_T = parse_opt_range(d, "", "")		# [:T :range :inc :bin]
+	opt_T = parse_opt_range(d, "", "")[1]		# [:T :range :inc :bin]
 	(isa(arg1, GMTimage) || isa(arg1, GMTgrid)) && occursin("/", opt_T) && error("here 'bin' must be a scalar")
 
 	# If inquire, no plotting so do it and return

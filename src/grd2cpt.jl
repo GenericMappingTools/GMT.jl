@@ -84,7 +84,7 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
     cmd, = parse_common_opts(d, "", [:R :V_params])
-	cmd = helper_cpt(d, cmd)
+	cmd = helper_cpt(d, cmd)[1]                 # Still left to be seen how to deal with an eventual Tvec (BUG here then)
 	if ((val = find_in_dict(d, [:E :nlevels])[1]) !== nothing)  cmd *= " -E" * arg2str(val)  end
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
