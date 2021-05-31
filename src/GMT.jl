@@ -81,7 +81,7 @@ const global usedConfPar = Vector{Bool}(undef, 1);usedConfPar[1] = false	# Hacky
 const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false	# To know if we have an active plot theme
 const global convert_syntax = Vector{Bool}(undef, 1);convert_syntax[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
 const global show_kwargs = Vector{Bool}(undef, 1);show_kwargs[1] = false	# To just print the kwargs of a option call)
-const global FMT = ["ps"]
+const global FMT = ["png"]
 const global box_str = [""]
 const def_fig_size  = "14c/9.5c"            # Default fig size for plot like programs. Approx 16/11
 const def_fig_axes  = " -Baf -BWSen"        # Default fig axes for plot like programs
