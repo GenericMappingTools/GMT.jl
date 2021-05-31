@@ -74,7 +74,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	# Because we allow arg1 and arg2 to either exist or not and also contain data & grid in any order
 	if (arg1 !== nothing && arg2 !== nothing)
-		arg1_is_table = false;	arg2_is_table = false;	arg1_is_grid = false;	arg2_is_grid = false
+		arg2_is_table = false;	arg1_is_grid = false
 		(isa(arg1, GMTgrid)) && (arg1_is_grid = true)
 		(isa(arg2, Array) || isa(arg2, GMTdataset)) && (arg2_is_table = true)
 		if (arg2_is_table && arg1_is_grid)			# Swap the arg1, arg2
