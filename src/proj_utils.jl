@@ -68,13 +68,15 @@ function geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::St
 	f = 1.0
 	if (unit != :m)
 		_u = lowercase(string(unit))		# Parse the units arg
-		f = (_u[1] == 'k') ? 1000. : ((_u[1] == 'n') ? 1852.0 : (startswith(_u, "mi") ? 1600.0 : 1.0))
+		f = (_u[1] == 'k') ? 1000. : ((_u[1] == 'n') ? 1852.0 : (startswith(_u, "mi") ? 1609.344 : 1.0))
 	end
 	(unit != :m && f == 1.0) && @warn("Unknown unit ($_u). Ignoring it")
-	isa(distance, AbstractRange) && (distance = collect(Float64, distance))
+	if isa(distance, AbstractRange)  _dist = collect(Float64, distance) .* f
+	else                             _dist = distance .* f
+	end
 
 	proj_string, projPJ_ptr, isgeog = helper_geod(proj, s_srs, epsg)
-	dest, azi = helper_gdirect(projPJ_ptr, lonlat, azim, distance, proj_string, isgeog, dataset, epsg, f)
+	dest, azi = helper_gdirect(projPJ_ptr, lonlat, azim, _dist, proj_string, isgeog, dataset)
 	proj_destroy(projPJ_ptr)
 	return dest, azi
 end
@@ -111,7 +113,37 @@ function invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String=
 	return dist[], azi1[], azi2[]
 end
 
-function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dataset, epsg, f)
+"""
+    circgeo(lonlat::Vector{<:Real}; radius=X, proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m, np=120)
+or
+
+    circgeo(lon, lat; radius=X, proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m, np=120)
+
+Args:
+
+- `lonlat`:   - longitude, latitude (degrees)
+- `radius`:   - The circle radius in meters (but see `unit`)
+- `proj` or `s_srs`:  - the given projection whose ellipsoid we move along. Can be a proj4 string or an WKT
+- `epsg`:     - Alternative way of specifying the projection [Default is WGS84]
+- `dataset`:  - If true returns a GMTdataset instead of matrix
+- `unit`:     - If `radius` is not in meters use one of `unit=:km`, or `unit=:Nautical` or `unit=:Miles`
+- `np`:       - Number of points into which the circle is descretized (Default = 120)
+
+### Returns
+- circ - A Mx2 matrix or GMTdataset with the circle coordinates
+
+## Example: Compute circle about the (0,0) point with a radius of 50 km
+
+    c = circgeo([0.,0], radius=50, unit=:k)
+"""
+circgeo(lon::Real, lat::Real; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=36) = circgeo([lon, lat]; radius=radius, proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit, np=np)
+function circgeo(lonlat::Vector{<:Real}; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=36)
+	(radius == 0) && error("Must provide circle Radius. Obvious, not?")
+	azim = collect(Float64, linspace(0, 360, np))
+	geod(lonlat, azim, radius; proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit)[1]
+end
+
+function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dataset)
 	lonlat = Float64.(lonlat)
 	(!isgeog) && (lonlat = xy2lonlat(lonlat, proj_string))		# Need to convert to geogd first
 	ggd = get_ellipsoid(projPJ_ptr)
@@ -119,16 +151,25 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 	(isvector(azim) && isa(dist, Real)) && (dist = [dist,])		# multi-points. Just make 'dist' a vector to reuse a case below 
 
 	if (isa(azim, Real) && isa(dist, Real))						# One line only with one end-point
-		dest, azi = _geod_direct!(get_ellipsoid(projPJ_ptr), copy(lonlat), azim, dist*f)
+		dest, azi = _geod_direct!(ggd, copy(lonlat), azim, dist)
 		(!isgeog) && (dest = lonlat2xy(dest, proj_string))
 		(dataset) && (dest = helper_gdirect_SRS(dest, proj_string, wkbPoint))
 	elseif (isa(azim, Real) && isvector(dist))			# One line only with several points along it
 		dest, azi = Array{Float64}(undef, length(dist), 2), Vector{Float64}(undef, length(dist))
 		for k = 1:length(dist)
-			d, azi[k] = _geod_direct!(ggd, copy(lonlat), azim, dist[k]*f)
+			d, azi[k] = _geod_direct!(ggd, copy(lonlat), azim, dist[k])
 			dest[k, :] = (isgeog) ? d : lonlat2xy(d, proj_string)
 		end
-		(dataset) && (dest = helper_gdirect_SRS([dest azi], proj_string, wkbLineString))		# Return a GMTdataset
+		(dataset) && (dest = helper_gdirect_SRS([dest azi], proj_string, wkbLineString))	# Return a GMTdataset
+	elseif (isvector(azim) && length(dist) == 1)		# A circle (dist has became a vector in 4rth line)
+		dest = Array{Float64}(undef, length(azim), 2)
+		for np = 1:length(azim)
+			d = _geod_direct!(ggd, copy(lonlat), azim[np], dist[1])[1]
+			dest[np, 1:2] = (isgeog) ? d : lonlat2xy(d, proj_string)
+		end
+		(dataset) &&		# Return a GMTdataset
+			(dest = GMTdataset(dest, Vector{String}(), "", Vector{String}(), startswith(proj_string, "+proj") ? proj_string : "", "", wkbPolygon))
+		azi = nothing
 	elseif (isvector(azim) && isvector(dist))			# multi-lines with variable length and/or number of points
 		n_lines = length(azim)							# Number of lines
 		(!isa(dist, Vector)) && (dist = vec(dist))
@@ -146,7 +187,7 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 			n_pts = length(Vdist[nl])					# Number of points in this line
 			dest = Array{Float64}(undef, n_pts, 3)		# Azimuth goes into the D too
 			for np = 1:n_pts
-				d, azi = _geod_direct!(ggd, copy(lonlat), azim[nl], Vdist[nl][np]*f)
+				d, azi = _geod_direct!(ggd, copy(lonlat), azim[nl], Vdist[nl][np])
 				dest[np, 1:2] = (isgeog) ? d : lonlat2xy(d, proj_string)
 				dest[np, 3] = azi		# Fck language that makes it a pain to try anything vectorized 
 			end
@@ -164,8 +205,7 @@ function helper_gdirect_SRS(mat, proj_string::String, geom, D=GMTdataset())
 	# Convert the output of geod_direct into a GMTdataset and, if possible, assign it a SRS
 	# If a 'D' is sent in, we only (eventually) assign it an SRS
 	isempty(D) && (D = GMTdataset([mat[1] mat[2]], Vector{String}(), "", Vector{String}(), "", "", geom))
-	if     (startswith(proj_string, "+proj"))  D.proj4 = proj_string
-	end
+	(startswith(proj_string, "+proj")) && (D.proj4 = proj_string)
 	D
 end
 
