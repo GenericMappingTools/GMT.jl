@@ -13,5 +13,6 @@
 	pj = GMT.proj_create_crs_to_crs("EPSG:4326", "+proj=utm +zone=32 +datum=WGS84", C_NULL)	# target, also EPSG:32632
 	@test GMT.is_latlong(GMT.proj_create("+proj=longlat +datum=WGS84 +no_defs"))
 	@test circgeo(0.,0, radius=50, dataset=true, unit=:k).data[1] == 0.0
-	buffergeo([0 0; 10 10], width=100, unit=:k)
+	buffergeo(mat2ds([0 0; 5 5])[1], width=100, unit=:k, tol=0)
+	buffergeo(mat2ds([178 73; -175 74]), width=100, unit=:k)
 end
