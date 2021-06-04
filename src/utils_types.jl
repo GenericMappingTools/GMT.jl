@@ -30,22 +30,26 @@ text_record(text::Array{String}, hdr::String) = text_record(Array{Float64,2}(und
 
 # ---------------------------------------------------------------------------------------------------
 """
-    D = mat2ds(mat [,txt]; x=nothing, hdr=nothing, color=nothing, fill=nothing, ls=nothing, text=nothing, multi=false)
+    D = mat2ds(mat [,txt]; x=nothing, text=nothing, multi=false, kwargs...)
 
 Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
+  - `txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
+     can be an array with same size as ``mat``rows or a string (will be reapeated n_rows times.) 
+  - `x`   An optional vector with the xx coordinates
   - `hdr` optional String vector with either one or n_rows multisegment headers.
   - `color` optional array of strings with color names/values. Its length can be smaller than n_rows, case in
      which colors will be cycled.
   - `linethick`, or `lt` for selecting different line thicknesses. Work alike `color`, but should be 
      a vector of numbers, or just a single number that is then appl	ied to all lines.
   - `fill`  Optional string array with color names or array of "patterns"
-  - `ls`    Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
-  - `txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
-     can be an array with same size as ``mat``rows or a string (will be reapeated n_rows times.) 
+  - `ls` | `linestyle`  Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
+  - `lt` | `linethick`  Line thickness.
   - `multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
      first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
   - `datatype` Keep the original data type of `mat`. Default, converts to Float64
+  - `proj` or `proj4`  A proj4 string for dataset SRS
+  - `wkt`  A WKT SRS
 """
 function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs...)
 	d = KW(kwargs)
