@@ -164,16 +164,16 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0)
+    buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=0.01)
 or
 
-    buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0)
+    buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=0.01)
 or
 
-    buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0)
+    buffergeo(line::Matrix; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0, tol=0.01)
 or
 
-    buffergeo(fname::String; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0)
+    buffergeo(fname::String; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0, tol=0.01)
 
 Computes a buffer arround a poly-line. This calculation is performed on a ellipsoidal Earth (or other planet)
 using the GeographicLib (via PROJ4) so it should be very accurate.
@@ -188,6 +188,8 @@ using the GeographicLib (via PROJ4) so it should be very accurate.
 - `flatend`   - Same as `flatstart` but for the buffer end
 - `proj`  - If line data is in Cartesians but with a known projection pass in a PROJ4 string to allow computing the buffer
 - `epsg`  - Same as `proj` but using an EPSG code
+- `tol`   - At the end simplify the buffer line with a Douglas-Peucker procedure. Use TOL=0 to NOT do the line
+            simplification, or use any other value thean the default 0.01.
 
 ### Returns
 A GMT dataset or a vector of it (when input is Vector{GMTdataset})
@@ -196,42 +198,42 @@ A GMT dataset or a vector of it (when input is Vector{GMTdataset})
 
     D = buffergeo([0 0; 10 10; 15 20], width=50000);
 """
-buffergeo(fname::String; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0) =
-	buffergeo(gmtread(fname); width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, epsg=epsg)
-buffergeo(D::GMTdataset; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0) =
-	buffergeo(D.data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D.proj4, epsg=epsg)[1]
-function buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0)
+buffergeo(fname::String; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=0.01) =
+	buffergeo(gmtread(fname); width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, epsg=epsg, tol=tol)
+buffergeo(D::GMTdataset; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=0.01) =
+	buffergeo(D.data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D.proj4, epsg=epsg, tol=tol)[1]
+function buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=0.01)
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
-		_D[k], = buffergeo(D[k].data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D[1].proj4, epsg=epsg)
+		_D[k], = buffergeo(D[k].data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend,
+		                   proj=D[1].proj4, epsg=epsg, tol=tol)
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
-function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0)
+function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0, tol=0.01)
 	# This function can still be optimized if one manage to reduce the number of times that proj_create() is called
 	# and a more clever choice of which points to compute on the circle. Points along the segment axis are ofc nover needed
 	(width == 0) && error("Must provide the buffer width. Obvious, not?")
 	dist, azim, = invgeod(line[1:end-1, :], line[2:end, :], proj=proj, epsg=epsg)	# Compute distances and azimuths between the polyline vertices
 	#(line[1, 1:2] == line[end, 1:2]) && (flatstart = flatend = false)		# Polygons can't have start/end flat edges
 	width *= dist_unit_factor(unit)
-	D = GMTdataset()				# Irritating need to make D visible out of the for loop
 	n_seg = length(azim)
 	for n = 1:n_seg
-		seg = [geod(line[n,:], azim[n], 0:width/2:dist[n], proj=proj, epsg=epsg)[1]; line[n+1:n+1,:]]
-		_D = GMTdataset()
+		seg = [geod(line[n,:], azim[n], 0:width/4:dist[n], proj=proj, epsg=epsg)[1]; line[n+1:n+1,:]]
 		n_vert = size(seg,1)
 		for k = 2:n_vert
 			if (k == 2)
 				c0 = circgeo(seg[1,:], radius=width, np=np, proj=proj, epsg=epsg);	trim_dateline!(c0, seg[1,1])
 				c  = circgeo(seg[2,:], radius=width, np=np, proj=proj, epsg=epsg);	trim_dateline!(c , seg[2,1])
-				_D = polyunion(c0, c)
+				global _D = polyunion(c0, c)
 				continue
 			end
 			c = circgeo(seg[k,:], radius=width, np=np, proj=proj, epsg=epsg)
 			trim_dateline!(c, seg[k,1])
 			_D = polyunion(_D, c)
 		end
-		if (n == 1)  D = _D
+		#linearize_buff_seg!(_D, seg)		# Attempt to see what a filterring by segment does ... 3x slower
+		if (n == 1)  global D = _D
 		else         D = polyunion(_D, D)
 		end
 	end
@@ -248,20 +250,33 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 	(proj == "" && epsg == 0) && (D[1].proj4 == "+proj=longlat +datum=WGS84 +no_defs")
 	(proj != "") && (D[1].proj4 = proj)
 	(epsg != 0) && (D[1].proj4 = toPROJ4(importEPSG(epsg)))
-	D
+	return (tol > 0) ? simplify(D, tol) : D		# If TOL > 0 do a DP simplify on final buffer
 end
 
 function trim_dateline!(mat, lon0)
 	# When the the mat polygon (a circle normally) crosses the dateline, trim it from the standpoint of its centroid
 	mi, ma = extrema(view(mat,:,1))
-	if ((ma - mi) > 180)		# Polygon crosses the daleline
-		if (lon0 > 0)			# and centroid is at the 11:xxx side
-			mat[view(mat,:,1) .< 0, 1] .= 180.
-		else
-			mat[view(mat,:,1) .> 0, 1] .= -180.
+	if ((ma - mi) > 180)		# Polygon crosses the dateline
+		if (lon0 > 0)  mat[view(mat,:,1) .< 0, 1] .= 180.  # and centroid is at the 11:xxx side
+		else           mat[view(mat,:,1) .> 0, 1] .= -180.
 		end
 	end
 end
+
+#=
+function linearize_buff_seg!(D::Vector{<:GMTdataset}, seg::Matrix{Float64})
+	# This a test/temp function that plays more fair with mapproject -L in the sense that we use the segment
+	# already interpolated along the geodetic and since the line is now segmented the difference between
+	# small circles (mapproject) and great circle arcs should be much smaller. However, mapproject -L still
+	# gives distances that in average ar in error off > 1-2 km
+	Ddist2line = mapproject(D, L=(line=seg, unit=:e))		# Find the distance from buffer points to input line
+	d_mean = mean(view(Ddist2line[1].data, :, 3))
+	ind = view(Ddist2line[1].data, :, 3) .>= d_mean * 1.0
+	ind[1], ind[end] = true, true			# Ensure first and last are not removed
+	D[1].data = D[1].data[ind, :]			# Remove all points that are less 1% above the mean
+	#@show(d_mean, size(_D[1]))
+end
+=#
 
 #=
 function buffergeo_(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0)
