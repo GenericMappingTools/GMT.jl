@@ -32,6 +32,7 @@ mutable struct geod_geodesic <: _geodesic
 	geod_geodesic() = new()
 end
 
+# -------------------------------------------------------------------------------------------------
 """
     geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
 
@@ -65,12 +66,7 @@ must be equal to the number of `azimuth`.
     geod([0., 0], [15., 45], [[0, 10000, 50000, 111100.], [0., 50000]])[1]
 """
 function geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
-	f = 1.0
-	if (unit != :m)
-		_u = lowercase(string(unit))		# Parse the units arg
-		f = (_u[1] == 'k') ? 1000. : ((_u[1] == 'n') ? 1852.0 : (startswith(_u, "mi") ? 1609.344 : 1.0))
-	end
-	(unit != :m && f == 1.0) && @warn("Unknown unit ($_u). Ignoring it")
+	f = dist_unit_factor(unit)
 	if isa(distance, AbstractRange)  _dist = collect(Float64, distance) .* f
 	else                             _dist = distance .* f
 	end
@@ -81,6 +77,18 @@ function geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::St
 	return dest, azi
 end
 
+function dist_unit_factor(unit=:m)
+	# Returns the factor that converts a length to meters, or 1 if unit is unknown
+	f = 1.0
+	if (unit != :m)
+		_u = lowercase(string(unit))		# Parse the units arg
+		f = (_u[1] == 'k') ? 1000. : ((_u[1] == 'n') ? 1852.0 : (startswith(_u, "mi") ? 1609.344 : 1.0))
+	end
+	(unit != :m && f == 1.0) && @warn("Unknown unit ($_u). Ignoring it")
+	f
+end
+
+# -------------------------------------------------------------------------------------------------
 """
     invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
 
@@ -103,16 +111,27 @@ Remarks:
 If either point is at a pole, the azimuth is defined by keeping the longitude fixed,
 writing lat = 90 +/- eps, and taking the limit as eps -> 0+.
 """
-function invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
+invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0) =
+	invgeod([lonlat1[1] lonlat1[2]], [lonlat2[1] lonlat2[2]]; proj=proj, s_srs=s_srs, epsg=epsg)
+function invgeod(lonlat1::Matrix{<:Real}, lonlat2::Matrix{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
+	@assert (size(lonlat1) == size(lonlat2) || size(lonlat2,1) == 1) "Both matrices must have same size or second have one row"
 	proj_string, projPJ_ptr, isgeog = helper_geod(proj, s_srs, epsg)
 	(!isgeog) && (lonlat1 = xy2lonlat(lonlat1, proj_string);	lonlat2 = xy2lonlat(lonlat2, proj_string))	# Convert to geogd first
+	d   = Vector{Float64}(undef, size(lonlat1,1))
+	az1 = Vector{Float64}(undef, size(lonlat1,1))
+	az2 = Vector{Float64}(undef, size(lonlat1,1))
 	dist, azi1, azi2 = Ref{Cdouble}(), Ref{Cdouble}(), Ref{Cdouble}()
-	ccall((:geod_inverse, libproj), Cvoid, (Ptr{Cvoid},Cdouble,Cdouble,Cdouble, Cdouble,Ptr{Cdouble},Ptr{Cdouble},Ptr{Cdouble}),
-		  pointer_from_objref(get_ellipsoid(projPJ_ptr)), lonlat1[2], lonlat1[1], lonlat2[2], lonlat2[1], dist, azi1, azi2)
+	for k = 1:size(lonlat1,1)
+		kk = (size(lonlat2,1) == 1) ? 1 : k			# To allow the "all against one" case
+		ccall((:geod_inverse, libproj), Cvoid, (Ptr{Cvoid},Cdouble,Cdouble,Cdouble, Cdouble,Ptr{Cdouble},Ptr{Cdouble},Ptr{Cdouble}),
+			  pointer_from_objref(get_ellipsoid(projPJ_ptr)), lonlat1[k,2], lonlat1[k,1], lonlat2[kk,2], lonlat2[kk,1], dist, azi1, azi2)
+		d[k], az1[k], az2[k] = dist[], azi1[], azi2[]
+	end
 	proj_destroy(projPJ_ptr)
-	return dist[], azi1[], azi2[]
+	return d, az1, az2
 end
 
+# -------------------------------------------------------------------------------------------------
 """
     circgeo(lonlat::Vector{<:Real}; radius=X, proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m, np=120)
 or
@@ -136,13 +155,164 @@ Args:
 
     c = circgeo([0.,0], radius=50, unit=:k)
 """
-circgeo(lon::Real, lat::Real; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=36) = circgeo([lon, lat]; radius=radius, proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit, np=np)
-function circgeo(lonlat::Vector{<:Real}; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=36)
+circgeo(lon::Real, lat::Real; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=120) = circgeo([lon, lat]; radius=radius, proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit, np=np)
+function circgeo(lonlat::Vector{<:Real}; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=120)
 	(radius == 0) && error("Must provide circle Radius. Obvious, not?")
 	azim = collect(Float64, linspace(0, 360, np))
 	geod(lonlat, azim, radius; proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit)[1]
 end
 
+# -------------------------------------------------------------------------------------------------
+"""
+    buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0)
+or
+
+    buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0)
+or
+
+    buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0)
+or
+
+    buffergeo(fname::String; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0)
+
+Computes a buffer arround a poly-line. This calculation is performed on a ellipsoidal Earth (or other planet)
+using the GeographicLib (via PROJ4) so it should be very accurate.
+
+### Parameters
+- `D` | `line` | fname: - the geometry. This can either be a GMTdataset (or vector of it), a Mx2 matrix or the name
+                          of file that can be read as a GMTdataset by `gmtread()`
+- `width`:  - the buffer width to be applied. Expressed meters (the default), km or Miles (see `unit`)
+- `unit`:   - If `width` is not in meters use one of `unit=:km`, or `unit=:Nautical` or `unit=:Miles`
+- `np`:     - Number of points into which circles are descretized (Default = 120)
+- `flatstart` - When computing buffers arround poly-lines make the start *flat* (no half-circle)
+- `flatend`   - Same as `flatstart` but for the buffer end
+- `proj`  - If line data is in Cartesians but with a known projection pass in a PROJ4 string to allow computing the buffer
+- `epsg`  - Same as `proj` but using an EPSG code
+
+### Returns
+A GMT dataset or a vector of it (when input is Vector{GMTdataset})
+
+## Example: Compute a buffer with 50000 width
+
+    D = buffergeo([0 0; 10 10; 15 20], width=50000);
+"""
+buffergeo(fname::String; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0) =
+	buffergeo(gmtread(fname); width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, epsg=epsg)
+buffergeo(D::GMTdataset; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0) =
+	buffergeo(D.data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D.proj4, epsg=epsg)[1]
+function buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0)
+	_D = Vector{GMTdataset}(undef, length(D))
+	for k = 1:length(D)
+		_D[k], = buffergeo(D[k].data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D[1].proj4, epsg=epsg)
+	end
+	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
+end
+function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0)
+	# This function can still be optimized if one manage to reduce the number of times that proj_create() is called
+	# and a more clever choice of which points to compute on the circle. Points along the segment axis are ofc nover needed
+	(width == 0) && error("Must provide the buffer width. Obvious, not?")
+	dist, azim, = invgeod(line[1:end-1, :], line[2:end, :], proj=proj, epsg=epsg)	# Compute distances and azimuths between the polyline vertices
+	#(line[1, 1:2] == line[end, 1:2]) && (flatstart = flatend = false)		# Polygons can't have start/end flat edges
+	width *= dist_unit_factor(unit)
+	D = GMTdataset()				# Irritating need to make D visible out of the for loop
+	n_seg = length(azim)
+	for n = 1:n_seg
+		seg = [geod(line[n,:], azim[n], 0:width/2:dist[n], proj=proj, epsg=epsg)[1]; line[n+1:n+1,:]]
+		_D = GMTdataset()
+		n_vert = size(seg,1)
+		for k = 2:n_vert
+			if (k == 2)
+				c0 = circgeo(seg[1,:], radius=width, np=np, proj=proj, epsg=epsg);	trim_dateline!(c0, seg[1,1])
+				c  = circgeo(seg[2,:], radius=width, np=np, proj=proj, epsg=epsg);	trim_dateline!(c , seg[2,1])
+				_D = polyunion(c0, c)
+				continue
+			end
+			c = circgeo(seg[k,:], radius=width, np=np, proj=proj, epsg=epsg)
+			trim_dateline!(c, seg[k,1])
+			_D = polyunion(_D, c)
+		end
+		if (n == 1)  D = _D
+		else         D = polyunion(_D, D)
+		end
+	end
+
+	# At this point we still have a "wavy" buffer resulting from the union of the circles. Ideally we should
+	# be able to use GMT's mapproject to find only the points that are at the exact 'width' distance from the
+	# line, but at this moment there seems to be an issue in GMT and distances are shorter. However with can
+	# do some cheap statistics to get read of the more inner points a get an almost perfec buffer.
+	Ddist2line = mapproject(D, L=(line=line, unit=:e))		# Find the distance from buffer points to input line
+	d_mean = mean(view(Ddist2line[1].data, :, 3))
+	ind = view(Ddist2line[1].data, :, 3) .> d_mean * 1.01
+	D[1].data = D[1].data[ind, :]			# Remove all points that are less 1% above the mean
+
+	(proj == "" && epsg == 0) && (D[1].proj4 == "+proj=longlat +datum=WGS84 +no_defs")
+	(proj != "") && (D[1].proj4 = proj)
+	(epsg != 0) && (D[1].proj4 = toPROJ4(importEPSG(epsg)))
+	D
+end
+
+function trim_dateline!(mat, lon0)
+	# When the the mat polygon (a circle normally) crosses the dateline, trim it from the standpoint of its centroid
+	mi, ma = extrema(view(mat,:,1))
+	if ((ma - mi) > 180)		# Polygon crosses the daleline
+		if (lon0 > 0)			# and centroid is at the 11:xxx side
+			mat[view(mat,:,1) .< 0, 1] .= 180.
+		else
+			mat[view(mat,:,1) .> 0, 1] .= -180.
+		end
+	end
+end
+
+#=
+function buffergeo_(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0)
+	(width == 0) && error("Must provide the buffer width. Obvious, not?")
+	(line[1, 1:2] == line[end, 1:2]) && (flatstart = flatend = false)		# Polygons can't have start/end flat edges
+	dist, azim, = invgeod(line[1:end-1, :], line[2:end, :])		# Compute distances and azimuths between the polyline vertices
+	width *= dist_unit_factor(unit)
+	D = GMTdataset()
+	n_seg = length(azim)
+	for n = 1:n_seg
+		#t1 = geod([line[n,  1], line[n,  2]], [azim[n]-90, azim[n]+90], width)[1]
+		#t2 = geod([line[n+1,1], line[n+1,2]], [azim[n]+90, azim[n]-90], width)[1]
+		#rec = [t1; t2; t1[1,1] t1[1,2]]		# Rectangle arround this line segment
+		rec = buff_segment_tube([line[n,1], line[n,2]], [line[n+1,1], line[n+1,2]], dist[n], azim[n], width, proj, epsg)
+		(n_seg == 1 && flatstart && flatend) && return mat2ds(rec, proj=proj)		# Kindof degenerate case. Just a rectangle
+
+		c = circgeo([line[n+1,1], line[n+1,2]], radius=width, np=np)
+		if (n == 1)
+			if (!flatstart)
+				c0 = circgeo([line[1,1], line[1,2]], radius=width, np=np)
+				D  = polyunion(polyunion(rec, c0), c)
+			else
+				c = circgeo([line[2,1], line[2,2]], radius=width, np=np)
+				D = polyunion(rec, c)
+			end
+		elseif (n == n_seg && flatend)		# Last segment
+			D = polyunion(D, rec)			# previous buffer + last rect
+		else
+			D = polyunion(D, polyunion(rec, c))	# Merge This segment + end circle `with previously build buffer
+		end
+	end
+	return D
+end
+
+function buff_segment_tube(p1::Vector{<:Real}, p2::Vector{<:Real}, dist, azim, width, proj, epsg)
+	# Compute a geodesic tube along the line segment from p1 to p2. Descritize the tube at 2width distance
+	# p1 & p2 are the segment vertices; 'dist' -> seg distance; 'azim' -> seg azimuth; 'width' -> buffer width
+	seg = [geod(p1, azim, 0:2width:dist, proj=proj, epsg=epsg)[1]; [p2[1] p2[2]]]	# Discretize segment at 2width steps
+	n_vert = size(seg,1)
+	tube = Array{Float64,2}(undef, 2*n_vert+1, 2)
+	for k = 1:n_vert
+		t = geod(seg[k,:], [azim-90, azim+90], width, proj=proj, epsg=epsg)[1]	# Returns a 2x2 matrix ([x1 y1; x2 y2])
+		tube[k,:] = t[1,:]
+		tube[2n_vert-k+1,:] = t[2,:]
+	end
+	tube[end,:] = tube[1,:]
+	tube
+end
+=#
+
+# -------------------------------------------------------------------------------------------------
 function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dataset)
 	lonlat = Float64.(lonlat)
 	(!isgeog) && (lonlat = xy2lonlat(lonlat, proj_string))		# Need to convert to geogd first
@@ -201,6 +371,7 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 	return dest, azi
 end
 
+# -------------------------------------------------------------------------------------------------
 function helper_gdirect_SRS(mat, proj_string::String, geom, D=GMTdataset())
 	# Convert the output of geod_direct into a GMTdataset and, if possible, assign it a SRS
 	# If a 'D' is sent in, we only (eventually) assign it an SRS
@@ -209,6 +380,7 @@ function helper_gdirect_SRS(mat, proj_string::String, geom, D=GMTdataset())
 	D
 end
 
+# -------------------------------------------------------------------------------------------------
 function _geod_direct!(geod::geod_geodesic, lonlat::Vector{Float64}, azim, distance)
 	p = pointer(lonlat)
 	azi = Ref{Cdouble}()		# the (forward) azimuth at the destination
@@ -217,6 +389,7 @@ function _geod_direct!(geod::geod_geodesic, lonlat::Vector{Float64}, azim, dista
 	lonlat, azi[]
 end
 
+# -------------------------------------------------------------------------------------------------
 function helper_geod(proj::String, s_srs::String, epsg::Integer)::Tuple{String, Ptr{Nothing}, Bool}
 	# 'proj' and 's_srs' are synonyms.
 	# Return the projection string ans also if the projection is geogs.
@@ -229,19 +402,23 @@ function helper_geod(proj::String, s_srs::String, epsg::Integer)::Tuple{String, 
 	prj_string, proj_create(prj_string), (startswith(prj_string, "+proj=longl") || startswith(prj_string, "+proj=latl") || epsg == 4326)
 end
 
+# -------------------------------------------------------------------------------------------------
 function geod_geodesic(a::Cdouble, f::Cdouble)::geod_geodesic
 	geod = geod_geodesic()
 	ccall((:geod_init, libproj), Cvoid, (Ptr{Cvoid}, Cdouble, Cdouble), pointer_from_objref(geod), a, f)
 	geod
 end
 
+# -------------------------------------------------------------------------------------------------
 function get_ellipsoid(projPJ_ptr::Ptr{Cvoid})::geod_geodesic
 	a, ecc2 = pj_get_spheroid_defn(projPJ_ptr)
 	geod_geodesic(a, 1-sqrt(1-ecc2))
 end
 
+# -------------------------------------------------------------------------------------------------
 function proj_create(proj_string::String, ctx=C_NULL)
 	# Returns an Object that must be unreferenced with proj_destroy()
+	# THIS GUY IS VERY EXPENSIVE. TRY TO MINIMIZE ITS USAGE.
 	projPJ_ptr = ccall((:proj_create, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), ctx, proj_string)
 	(projPJ_ptr == C_NULL) && error("Could not parse projection: \"$proj_string\"")
 	projPJ_ptr
@@ -250,11 +427,13 @@ end
 proj_create_crs_to_crs(s_crs, t_crs, area, ctx=C_NULL) =
 	ccall((:proj_create_crs_to_crs, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring, Cstring, Ptr{Cvoid}), ctx, s_crs, t_crs, area)
 
+# -------------------------------------------------------------------------------------------------
 function proj_destroy(projPJ_ptr::Ptr{Cvoid})	# Free C datastructure associated with a projection.
 	@assert projPJ_ptr != C_NULL
 	ccall((:proj_destroy, libproj), Ptr{Cvoid}, (Ptr{Cvoid},), projPJ_ptr)
 end
 
+# -------------------------------------------------------------------------------------------------
 function pj_get_spheroid_defn(proj_ptr::Ptr{Cvoid})
 	a = Ref{Cdouble}()		# major_axis
 	ecc2 = Ref{Cdouble}()	# eccentricity squared
@@ -262,6 +441,7 @@ function pj_get_spheroid_defn(proj_ptr::Ptr{Cvoid})
 	a[], ecc2[]
 end
 
+# -------------------------------------------------------------------------------------------------
 function proj_info()
 	pji = ccall((:proj_info, libproj), PJ_INFO, ())
 	println(unsafe_string(pji.release), "\n", "Located at: ", unsafe_string(pji.searchpath))

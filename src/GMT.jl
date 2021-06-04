@@ -120,11 +120,11 @@ export
 	importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 	gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy,
 	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, toWKT,
-	convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize,
+	convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 	wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
 	wkbGeometryCollection,
 
-	geod, invgeod, circgeo,
+	geod, invgeod, circgeo, buffergeo,
 
 	mean, std, nanmean, nanstd				# First two from Statistics. Uterly stupid need-to-do thing 
 

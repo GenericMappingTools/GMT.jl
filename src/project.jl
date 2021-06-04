@@ -63,6 +63,7 @@ Parameters
 - $(GMT.opt_g)
 - $(GMT.opt_h)
 - $(GMT.opt_i)
+- $(GMT.opt_o)
 - $(GMT.opt_s)
 - $(GMT.opt_swap_xy)
 """
@@ -71,9 +72,9 @@ function project(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("project", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :s :yx])
+	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :origin :start_pt], [:E :end_pt], [:F :out_flags],
-	                                 [:G :step :small_circle :no_input], [:L :length_control], [:N :flat_earth], [:Q :km], [:S :sort], [:T :pole],[:W :width_control]])
+	                                 [:G :step :small_circle :no_input], [:L :length_control], [:N :flat_earth], [:Q :km], [:S :sort], [:T :pole], [:W :width_control], [:Z :ellipse]])
 
 	if (!occursin("-G", cmd)) cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	else                      cmd = write_data(d, cmd)      # Check if want save to file
