@@ -35,7 +35,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    buffer(geom, dist::Real, quadsegs::Integer = 30; gdataset=false)
+    buffer(geom, dist::Real, quadsegs::Integer=30; gdataset=false)
 
 ### Parameters
 * `geom`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
@@ -241,6 +241,22 @@ function envelope3d(geom::AbstractGeometry)
     return envelope[]
 end
 envelope3d(D) = helper_geoms_run_fun(envelope3d, D, false)
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    simplify(geom::AbstractGeometry, tol::Real)
+
+Compute a simplified geometry.
+
+### Parameters
+* `geom`: the geometry.
+* `tol`: the distance tolerance for the simplification.
+"""
+simplify(geom::AbstractGeometry, tol::Real) = IGeometry(OGR_G_Simplify(geom.ptr, tol))
+function simplify(D, tol::Real; gdataset=false)
+	ig = simplify(helper_1geom(D), tol)
+	return (gdataset) ? ig : gd2gmt(ig)
+end
 
 # ---------------------------------------------------------------------------------------------------
 """
@@ -452,7 +468,6 @@ function helper_geoms_run_fun(f::Function, D1, D2, retds::Bool=true; gdataset=fa
 	# Helper function that checks if geoms intersect and then run the F function
 	# If GDATASET is true, return the GDAL dataset
 	g1, g2 = helper_2geoms(D1, D2)
-	(!intersects(g1, g2)) && @warn("These two geometries do not intersect")
 	ig = f(g1, g2)
 	(gdataset) && (retds = false)
 	return (retds) ? gd2gmt(ig) : ig
