@@ -38,6 +38,7 @@
 	@test toWKT(g2) == "MULTILINESTRING ((0 0,10 10),(0 0,10 0),(10 0,10 10))"
 	D1 = mat2ds([0 0;10 0;10 10;11 10], geom=wkbMultiPoint);
 	g2 = delaunay(D1,2.0,true, gdataset=true);		# Doesn't error but returns MULTILINESTRING EMPTY 
+	@test length(Gdal.simplify([0. 0; 1 1.1; 2.1 2], 0.2)[1]) == 4
 	
 	D1 = mat2ds([0 0; 10 0; 10 10; 11 10]);
 	gdalwrite("lixo1.gmt", D1);
