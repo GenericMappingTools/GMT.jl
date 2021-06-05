@@ -189,7 +189,7 @@ using the GeographicLib (via PROJ4) so it should be very accurate.
 - `proj`  - If line data is in Cartesians but with a known projection pass in a PROJ4 string to allow computing the buffer
 - `epsg`  - Same as `proj` but using an EPSG code
 - `tol`   - At the end simplify the buffer line with a Douglas-Peucker procedure. Use TOL=0 to NOT do the line
-            simplification, or use any other value thean the default 0.01.
+            simplification, or use any other value in degrees. Default computes it as 0.5% of buffer width.
 
 ### Returns
 A GMT dataset or a vector of it (when input is Vector{GMTdataset})
@@ -210,7 +210,7 @@ function buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
-function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0, tol=0.01)
+function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0, tol=-1.0)
 	# This function can still be optimized if one manage to reduce the number of times that proj_create() is called
 	# and a more clever choice of which points to compute on the circle. Points along the segment axis are ofc nover needed
 	(width == 0) && error("Must provide the buffer width. Obvious, not?")
@@ -232,7 +232,7 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 			trim_dateline!(c, seg[k,1])
 			_D = polyunion(_D, c)
 		end
-		#linearize_buff_seg!(_D, seg)		# Attempt to see what a filterring by segment does ... 3x slower
+		#linearize_buff_seg!(_D, seg)		# Attempt to see what a filtering by segment does ... 3x slower
 		if (n == 1)  global D = _D
 		else         D = polyunion(_D, D)
 		end
@@ -244,13 +244,15 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 	# do some cheap statistics to get read of the more inner points a get an almost perfec buffer.
 	Ddist2line = mapproject(D, L=(line=line, unit=:e))		# Find the distance from buffer points to input line
 	d_mean = mean(view(Ddist2line[1].data, :, 3))
-	ind = view(Ddist2line[1].data, :, 3) .> d_mean * 1.01
+	ind = view(Ddist2line[1].data, :, 3) .>= d_mean
+	ind[1], ind[end] = true, true			# Ensure first and last are not removed
 	D[1].data = D[1].data[ind, :]			# Remove all points that are less 1% above the mean
 
 	(proj == "" && epsg == 0) && (D[1].proj4 == "+proj=longlat +datum=WGS84 +no_defs")
 	(proj != "") && (D[1].proj4 = proj)
 	(epsg != 0) && (D[1].proj4 = toPROJ4(importEPSG(epsg)))
-	return (tol > 0) ? simplify(D, tol) : D		# If TOL > 0 do a DP simplify on final buffer
+	(tol < 0) && (tol = width * 0.005 / 111111)		# Tolerance as 0.5% of buffer with converted to degrees
+	return (tol > 0) ? simplify(D, tol) : D			# If TOL > 0 do a DP simplify on final buffer
 end
 
 function trim_dateline!(mat, lon0)
