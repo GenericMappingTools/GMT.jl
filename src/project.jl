@@ -52,6 +52,12 @@ Parameters
 
     Width controls. Project only those points whose q coordinate is within w\\_min < q < w\\_max.
     ($(GMTdoc)project.html#w)
+- **Z** | **ellipse** :: [Type => Number | Tuple | String]    ``Arg = major/minor/azimuth[+e|n]``
+
+    Make ellipse with major and minor axes given in km (unless **N** is given for a Cartesian ellipse) and the
+    azimuth of the major axis in degrees; used in conjunction with **origin** (sets its center) and **step**
+    (sets the distance increment).
+    ($(GMTdoc)project.html#z)
 
 - $(GMT.opt_write)
 - $(GMT.opt_append)
