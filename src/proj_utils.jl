@@ -133,20 +133,24 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    circgeo(lonlat::Vector{<:Real}; radius=X, proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m, np=120)
+    circgeo(lon, lat; radius=X, proj="", s_srs="", epsg=0, dataset=false, unit=:m, np=120, shape="")
 or
 
-    circgeo(lon, lat; radius=X, proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m, np=120)
+    circgeo(lonlat; radius=X, proj="", s_srs="", epsg=0, dataset=false, unit=:m, np=120, shape="")
 
 Args:
 
-- `lonlat`:   - longitude, latitude (degrees)
-- `radius`:   - The circle radius in meters (but see `unit`)
+- `lonlat`:   - longitude, latitude (degrees). If a Mx2 matrix, returns as many segments as number of rows.
+                Use this to compute multiple shapes at different positions. In this case output type is
+				always a vector of GMTdatasets.
+- `radius`:   - The circle radius in meters (but see `unit`) or circumscribing circle for the other shapes
 - `proj` or `s_srs`:  - the given projection whose ellipsoid we move along. Can be a proj4 string or an WKT
 - `epsg`:     - Alternative way of specifying the projection [Default is WGS84]
-- `dataset`:  - If true returns a GMTdataset instead of matrix
+- `dataset`:  - If true returns a GMTdataset instead of matrix (with single shapes)
 - `unit`:     - If `radius` is not in meters use one of `unit=:km`, or `unit=:Nautical` or `unit=:Miles`
 - `np`:       - Number of points into which the circle is descretized (Default = 120)
+- `shape`:    - Optional string/symbol with "triangle", "square", "pentagon" or "hexagon" (or just the first char)
+                to compute one of those geometries instead of a circle. `np` is ignored in these cases.
 
 ### Returns
 - circ - A Mx2 matrix or GMTdataset with the circle coordinates
@@ -156,17 +160,30 @@ Args:
     c = circgeo([0.,0], radius=50, unit=:k)
 """
 circgeo(lon::Real, lat::Real; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=120, shape="") =
-	circgeo([lon, lat]; radius=radius, proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit, np=np, shape=shape)
-function circgeo(lonlat::Vector{<:Real}; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=120, shape="")
+	circgeo([lon lat]; radius=radius, proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit, np=np, shape=shape)
+circgeo(lonlat::Vector{<:Real}; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=120, shape="") =
+	circgeo([lonlat[1] lonlat[2]]; radius=radius, proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit, np=np, shape=shape)
+
+function circgeo(lonlat::Matrix{<:Real}; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=120, shape="")
 	(radius == 0) && error("Must provide circle Radius. Obvious, not?")
 	_shape = lowercase(string(shape))
-	if     (_shape[1] == 't') azim = [0.,  120, 240, 0]				# Triangle
+	if     (_shape == "")     azim = collect(Float64, linspace(0, 360, np))	# The default (circle)
+	elseif (_shape[1] == 't') azim = [0.,  120, 240, 0]				# Triangle
 	elseif (_shape[1] == 's') azim = [45., 135, 225, 315, 45]		# Square
 	elseif (_shape[1] == 'p') azim = [0.,  72, 144, 216, 288, 360]	# Pentagon
 	elseif (_shape[1] == 'h') azim = [0.,  60, 120, 180, 240, 300, 360]	# Hexagon
-	else   azim = collect(Float64, linspace(0, 360, np))	# The default (circle)
+	else   error("Bad shape name ($(shape))")
 	end
-	geod(lonlat, azim, radius; proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit)[1]
+	n_shapes = size(lonlat, 1)
+	if (n_shapes > 1)	# Multiple shapes require a GMTdataset output
+		D = Array{GMTdataset}(undef, n_shapes)
+		for k = 1:n_shapes
+			D[k] = geod(lonlat[k,:], azim, radius; proj=proj, s_srs=s_srs, epsg=epsg, dataset=true, unit=unit)[1]
+		end
+	else		# Here the output may be a GMTdadaset or a simple Mx2 matrix depending on the 'dataset' value.
+		D = geod(lonlat[1,:], azim, radius; proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit)[1]
+	end
+	D
 end
 
 # -------------------------------------------------------------------------------------------------
