@@ -65,11 +65,11 @@ must be equal to the number of `azimuth`.
 
     geod([0., 0], [15., 45], [[0, 10000, 50000, 111100.], [0., 50000]])[1]
 """
-function geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
-	f = dist_unit_factor(unit)
-	if isa(distance, AbstractRange)  _dist = collect(Float64, distance) .* f
-	else                             _dist = distance .* f
-	end
+geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m) =
+	geod([lonlat[1] lonlat[2]], azim, distance; proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit)
+function geod(lonlat::Matrix{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
+	f = unit_factor(unit)
+	_dist = isa(distance, AbstractRange) ? collect(Float64, distance) .* f : distance .* f
 
 	proj_string, projPJ_ptr, isgeog = helper_geod(proj, s_srs, epsg)
 	dest, azi = helper_gdirect(projPJ_ptr, lonlat, azim, _dist, proj_string, isgeog, dataset)
@@ -77,7 +77,7 @@ function geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::St
 	return dest, azi
 end
 
-function dist_unit_factor(unit=:m)
+function unit_factor(unit=:m)
 	# Returns the factor that converts a length to meters, or 1 if unit is unknown
 	f = 1.0
 	if (unit != :m)
@@ -155,10 +155,17 @@ Args:
 
     c = circgeo([0.,0], radius=50, unit=:k)
 """
-circgeo(lon::Real, lat::Real; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=120) = circgeo([lon, lat]; radius=radius, proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit, np=np)
-function circgeo(lonlat::Vector{<:Real}; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=120)
+circgeo(lon::Real, lat::Real; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=120, shape="") =
+	circgeo([lon, lat]; radius=radius, proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit, np=np, shape=shape)
+function circgeo(lonlat::Vector{<:Real}; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=120, shape="")
 	(radius == 0) && error("Must provide circle Radius. Obvious, not?")
-	azim = collect(Float64, linspace(0, 360, np))
+	_shape = lowercase(string(shape))
+	if     (_shape[1] == 't') azim = [0.,  120, 240, 0]				# Triangle
+	elseif (_shape[1] == 's') azim = [45., 135, 225, 315, 45]		# Square
+	elseif (_shape[1] == 'p') azim = [0.,  72, 144, 216, 288, 360]	# Pentagon
+	elseif (_shape[1] == 'h') azim = [0.,  60, 120, 180, 240, 300, 360]	# Hexagon
+	else   azim = collect(Float64, linspace(0, 360, np))	# The default (circle)
+	end
 	geod(lonlat, azim, radius; proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit)[1]
 end
 
@@ -194,7 +201,7 @@ using the GeographicLib (via PROJ4) so it should be very accurate.
 ### Returns
 A GMT dataset or a vector of it (when input is Vector{GMTdataset})
 
-## Example: Compute a buffer with 50000 width
+## Example: Compute a buffer with 50000 m width
 
     D = buffergeo([0 0; 10 10; 15 20], width=50000);
 """
@@ -211,12 +218,12 @@ function buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
 function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0, tol=-1.0)
-	# This function can still be optimized if one manage to reduce the number of times that proj_create() is called
-	# and a more clever choice of which points to compute on the circle. Points along the segment axis are ofc nover needed
+	# This function can be a bit optimized with a clever choice of which points to compute on the circle.
+	# Points close to the segment axis are ofc nover needed.
 	(width == 0) && error("Must provide the buffer width. Obvious, not?")
-	dist, azim, = invgeod(line[1:end-1, :], line[2:end, :], proj=proj, epsg=epsg)	# Compute distances and azimuths between the polyline vertices
+	dist, azim, = invgeod(line[1:end-1, :], line[2:end, :], proj=proj, epsg=epsg)	# distances and azimuths between the polyline vertices
 	#(line[1, 1:2] == line[end, 1:2]) && (flatstart = flatend = false)		# Polygons can't have start/end flat edges
-	width *= dist_unit_factor(unit)
+	width *= unit_factor(unit)
 	n_seg = length(azim)
 	for n = 1:n_seg
 		seg = [geod(line[n,:], azim[n], 0:width/4:dist[n], proj=proj, epsg=epsg)[1]; line[n+1:n+1,:]]
@@ -232,7 +239,6 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 			trim_dateline!(c, seg[k,1])
 			_D = polyunion(_D, c)
 		end
-		#linearize_buff_seg!(_D, seg)		# Attempt to see what a filtering by segment does ... 3x slower
 		if (n == 1)  global D = _D
 		else         D = polyunion(_D, D)
 		end
@@ -265,70 +271,6 @@ function trim_dateline!(mat, lon0)
 	end
 end
 
-#=
-function linearize_buff_seg!(D::Vector{<:GMTdataset}, seg::Matrix{Float64})
-	# This a test/temp function that plays more fair with mapproject -L in the sense that we use the segment
-	# already interpolated along the geodetic and since the line is now segmented the difference between
-	# small circles (mapproject) and great circle arcs should be much smaller. However, mapproject -L still
-	# gives distances that in average ar in error off > 1-2 km
-	Ddist2line = mapproject(D, L=(line=seg, unit=:e))		# Find the distance from buffer points to input line
-	d_mean = mean(view(Ddist2line[1].data, :, 3))
-	ind = view(Ddist2line[1].data, :, 3) .>= d_mean * 1.0
-	ind[1], ind[end] = true, true			# Ensure first and last are not removed
-	D[1].data = D[1].data[ind, :]			# Remove all points that are less 1% above the mean
-	#@show(d_mean, size(_D[1]))
-end
-=#
-
-#=
-function buffergeo_(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0)
-	(width == 0) && error("Must provide the buffer width. Obvious, not?")
-	(line[1, 1:2] == line[end, 1:2]) && (flatstart = flatend = false)		# Polygons can't have start/end flat edges
-	dist, azim, = invgeod(line[1:end-1, :], line[2:end, :])		# Compute distances and azimuths between the polyline vertices
-	width *= dist_unit_factor(unit)
-	D = GMTdataset()
-	n_seg = length(azim)
-	for n = 1:n_seg
-		#t1 = geod([line[n,  1], line[n,  2]], [azim[n]-90, azim[n]+90], width)[1]
-		#t2 = geod([line[n+1,1], line[n+1,2]], [azim[n]+90, azim[n]-90], width)[1]
-		#rec = [t1; t2; t1[1,1] t1[1,2]]		# Rectangle arround this line segment
-		rec = buff_segment_tube([line[n,1], line[n,2]], [line[n+1,1], line[n+1,2]], dist[n], azim[n], width, proj, epsg)
-		(n_seg == 1 && flatstart && flatend) && return mat2ds(rec, proj=proj)		# Kindof degenerate case. Just a rectangle
-
-		c = circgeo([line[n+1,1], line[n+1,2]], radius=width, np=np)
-		if (n == 1)
-			if (!flatstart)
-				c0 = circgeo([line[1,1], line[1,2]], radius=width, np=np)
-				D  = polyunion(polyunion(rec, c0), c)
-			else
-				c = circgeo([line[2,1], line[2,2]], radius=width, np=np)
-				D = polyunion(rec, c)
-			end
-		elseif (n == n_seg && flatend)		# Last segment
-			D = polyunion(D, rec)			# previous buffer + last rect
-		else
-			D = polyunion(D, polyunion(rec, c))	# Merge This segment + end circle `with previously build buffer
-		end
-	end
-	return D
-end
-
-function buff_segment_tube(p1::Vector{<:Real}, p2::Vector{<:Real}, dist, azim, width, proj, epsg)
-	# Compute a geodesic tube along the line segment from p1 to p2. Descritize the tube at 2width distance
-	# p1 & p2 are the segment vertices; 'dist' -> seg distance; 'azim' -> seg azimuth; 'width' -> buffer width
-	seg = [geod(p1, azim, 0:2width:dist, proj=proj, epsg=epsg)[1]; [p2[1] p2[2]]]	# Discretize segment at 2width steps
-	n_vert = size(seg,1)
-	tube = Array{Float64,2}(undef, 2*n_vert+1, 2)
-	for k = 1:n_vert
-		t = geod(seg[k,:], [azim-90, azim+90], width, proj=proj, epsg=epsg)[1]	# Returns a 2x2 matrix ([x1 y1; x2 y2])
-		tube[k,:] = t[1,:]
-		tube[2n_vert-k+1,:] = t[2,:]
-	end
-	tube[end,:] = tube[1,:]
-	tube
-end
-=#
-
 # -------------------------------------------------------------------------------------------------
 function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dataset)
 	lonlat = Float64.(lonlat)
@@ -341,14 +283,14 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 		dest, azi = _geod_direct!(ggd, copy(lonlat), azim, dist)
 		(!isgeog) && (dest = lonlat2xy(dest, proj_string))
 		(dataset) && (dest = helper_gdirect_SRS(dest, proj_string, wkbPoint))
-	elseif (isa(azim, Real) && isvector(dist))			# One line only with several points along it
+	elseif (isa(azim, Real) && isvector(dist))					# One line only with several points along it
 		dest, azi = Array{Float64}(undef, length(dist), 2), Vector{Float64}(undef, length(dist))
 		for k = 1:length(dist)
 			d, azi[k] = _geod_direct!(ggd, copy(lonlat), azim, dist[k])
 			dest[k, :] = (isgeog) ? d : lonlat2xy(d, proj_string)
 		end
 		(dataset) && (dest = helper_gdirect_SRS([dest azi], proj_string, wkbLineString))	# Return a GMTdataset
-	elseif (isvector(azim) && length(dist) == 1)		# A circle (dist has became a vector in 4rth line)
+	elseif (isvector(azim) && length(dist) == 1)				# A circle (dist has became a vector in 4rth line)
 		dest = Array{Float64}(undef, length(azim), 2)
 		for np = 1:length(azim)
 			d = _geod_direct!(ggd, copy(lonlat), azim[np], dist[1])[1]
@@ -357,7 +299,7 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 		(dataset) &&		# Return a GMTdataset
 			(dest = GMTdataset(dest, Vector{String}(), "", Vector{String}(), startswith(proj_string, "+proj") ? proj_string : "", "", wkbPolygon))
 		azi = nothing
-	elseif (isvector(azim) && isvector(dist))			# multi-lines with variable length and/or number of points
+	elseif (isvector(azim) && isvector(dist))					# Multi-lines with variable length and/or number of points
 		n_lines = length(azim)							# Number of lines
 		(!isa(dist, Vector)) && (dist = vec(dist))
 		(!isa(dist, Vector) && !isa(dist, Vector{<:Vector})) && error("The 'distances' input MUST be a Vector or a Vector{Vector}")
@@ -398,7 +340,7 @@ function helper_gdirect_SRS(mat, proj_string::String, geom, D=GMTdataset())
 end
 
 # -------------------------------------------------------------------------------------------------
-function _geod_direct!(geod::geod_geodesic, lonlat::Vector{Float64}, azim, distance)
+function _geod_direct!(geod::geod_geodesic, lonlat, azim, distance)
 	p = pointer(lonlat)
 	azi = Ref{Cdouble}()		# the (forward) azimuth at the destination
 	ccall((:geod_direct, libproj), Cvoid, (Ptr{Cvoid},Cdouble,Cdouble,Cdouble,Cdouble,Ptr{Cdouble},Ptr{Cdouble}, Ptr{Cdouble}),
