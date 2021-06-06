@@ -2594,7 +2594,7 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 	force_get_R = (IamModern[1] && GMTver > v"6") ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
 	#force_get_R = true		# Due to a GMT6.0 BUG, modern mode does not compute -R automatically and 6.1 is not good too
 
-	cmd, opt_i  = parse_i(d, cmd)		# If data is to be read with some colomn order
+	cmd, opt_i  = parse_i(d, cmd)		# If data is to be read with some column order
 	cmd, opt_bi = parse_bi(d, cmd)		# If data is to be read as binary
 	cmd, opt_di = parse_di(d, cmd)		# If data missing data other than NaN
 	cmd, opt_h  = parse_h(d, cmd)
