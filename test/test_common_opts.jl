@@ -219,6 +219,7 @@
 	GMT.strncmp("abcd", "ab", 2)
 	GMT.parse_proj((name="blabla",center=(0,0)))
 
+	@test GMT.parse_i(Dict(:i=>(0,1,2,2)), "")[1] == " -i0,1,2,2"
 	@test GMT.parse_j(Dict(:spheric_dist => "f"), "")[1] == " -jf"
 	@test GMT.parse_t(Dict(:t=>0.2), "")[1] == " -t20.0"
 	@test GMT.parse_t(Dict(:t=>20), "")[1]  == " -t20"
