@@ -831,31 +831,11 @@ parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
 parse_do(d::Dict, cmd::String) = parse_d(d, cmd, [:do :nodata_out])
 
 # ---------------------------------------------------------------------------------------------------
-function parse_e(d::Dict, cmd::String)
-	# Parse the global -e option. Return CMD same as input if no -e option in args
-	parse_helper(cmd, d, [:e :pattern], " -e")
-end
-
-# ---------------------------------------------------------------------------------
-function parse_f(d::Dict, cmd::String)
-	# Parse the global -f option. Return CMD same as input if no -f option in args
-	parse_helper(cmd, d, [:f :colinfo :coltypes], " -f")
-end
-
-# ---------------------------------------------------------------------------------
-function parse_g(d::Dict, cmd::String)
-	# Parse the global -g option. Return CMD same as input if no -g option in args
-	parse_helper(cmd, d, [:g :gap], " -g")
-end
-
-# ---------------------------------------------------------------------------------
-function parse_h(d::Dict, cmd::String)
-	# Parse the global -h option. Return CMD same as input if no -h option in args
-	parse_helper(cmd, d, [:h :header], " -h")
-end
-
-# ---------------------------------------------------------------------------------
-parse_i(d::Dict, cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i")
+parse_e(d::Dict, cmd::String) = parse_helper(cmd, d, [:e :pattern], " -e")
+parse_f(d::Dict, cmd::String) = parse_helper(cmd, d, [:f :colinfo :coltypes], " -f")
+parse_g(d::Dict, cmd::String) = parse_helper(cmd, d, [:g :gap], " -g")
+parse_h(d::Dict, cmd::String) = parse_helper(cmd, d, [:h :header], " -h")
+parse_i(d::Dict, cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i", ',')
 parse_j(d::Dict, cmd::String) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
 
 # ---------------------------------------------------------------------------------
@@ -892,16 +872,10 @@ function parse_n(d::Dict, cmd::String, gmtcompat::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------
-function parse_o(d::Dict, cmd::String)
-	# Parse the global -o option. Return CMD same as input if no -o option in args
-	parse_helper(cmd, d, [:o :outcols :outcol], " -o")
-end
+parse_o(d::Dict, cmd::String) = parse_helper(cmd, d, [:o :outcols :outcol], " -o", ',')
 
 # ---------------------------------------------------------------------------------
-function parse_p(d::Dict, cmd::String)
-	# Parse the global -p option. Return CMD same as input if no -p option in args
-	parse_helper(cmd, d, [:p :view :perspective], " -p")
-end
+parse_p(d::Dict, cmd::String) = parse_helper(cmd, d, [:p :view :perspective], " -p")
 
 # ---------------------------------------------------------------------------------
 function parse_q(d::Dict, cmd::String)
@@ -957,12 +931,12 @@ function parse_append(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_helper(cmd::String, d::Dict, symbs, opt::String)
+function parse_helper(cmd::String, d::Dict, symbs, opt::String, sep='/')
 	# Helper function to the parse_?() global options.
 	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val = ""
 	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
-		opt_val = opt * arg2str(val)
+		opt_val = opt * arg2str(val, sep)
 		cmd *= opt_val
 	end
 	return cmd, opt_val
