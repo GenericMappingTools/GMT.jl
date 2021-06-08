@@ -129,9 +129,12 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		cmd *= " -W0.5p"
 	end
 	(!occursin("-D",cmd)) && (cmd *= " -Da")			# Then pick automatic
-	finish = !occursin(" -M",cmd) && !occursin("-E+l", cmd)  && !occursin("-E+L", cmd) ? true : false	# Otherwise the dump would be redirected to GMTjl_tmp.ps
+	finish = !occursin(" -M",cmd) && !occursin("-E+l", cmd) && !occursin("-E+L", cmd) ? true : false	# Otherwise the dump would be redirected to GMTjl_tmp.ps
+	if (finish)  _cmd, K = finish_PS_nested(d, [gmt_proggy * cmd], K)
+	else	     _cmd = [gmt_proggy * cmd]
+	end
 
-	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, finish)
+	finish_PS_module(d, _cmd, "", K, O, finish)
 end
 
 # ---------------------------------------------------------------------------------------------------
