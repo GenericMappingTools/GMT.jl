@@ -46,7 +46,9 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
 		G = mat2img(arg1; kw...)
-	elseif (isa(arg1, GMTdataset) || isa(arg1, Vector{<:GMTdataset}) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 3))
+	elseif (isa(arg1, GMTdataset) || isa(arg1, Vector{<:GMTdataset}) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4))
+		ginfo = gmt("gmtinfo -C", arg1)
+		CTRL.limits[1:4] = ginfo[1].data[1:4]
 		return plot(arg1; show=true, kw...)
 	else
 		G = mat2grid(arg1, x, y, reg=1)							# For displaying, pixel registration is more appropriate
@@ -115,14 +117,12 @@ if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
 	end
 end
 
-function imshow(x::AbstractVector{Float64}, y::AbstractVector{Float64}, f::Function; kw...)
-	imshow(mat2grid(f, x, y); kw...)
-end
+imshow(x::AbstractVector{Float64}, y::AbstractVector{Float64}, f::Function; kw...) = imshow(mat2grid(f, x, y); kw...)
 
 function snif_GI_set_CTRLlimits(G_I)::Bool
 	# Set CTRL.limits to be eventually used by J=:guess
 	(G_I == "") && return false
-	(isa(G_I, String) && G_I[1] == '@') && return false		# Remote files are very dangerous to sniff in
+	(isa(G_I, String) && (G_I[1] == '@' || startswith(G_I, "http"))) && return false	# Remote files are very dangerous to sniff in
 	ginfo = grdinfo(G_I, C=:n)
 	if (isa(ginfo, Vector{<:GMTdataset}) && ginfo[1].data[2] != ginfo[1].data[9] && ginfo[1].data[4] != ginfo[1].data[10])
 		CTRL.limits[1:4] = ginfo[1].data[1:4]

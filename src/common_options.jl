@@ -1167,7 +1167,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_pen(pen::Tuple)::String
 	# Convert an empty to 3 args tuple containing (width[c|i|p]], [color], [style[c|i|p|])
-	len = length(pen)
 	s = arg2str(pen[1])					# First arg is different because there is no leading ','
 	if (length(pen) > 1)
 		s *= ',' * get_color(pen[2])
@@ -1225,7 +1224,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 function arg2str(d::Dict, symbs)::String
 	# Version that allow calls from add_opt()
-	#if ((val = find_in_dict(d, symbs)[1]) !== nothing) arg2str(val) end
 	return ((val = find_in_dict(d, symbs)[1]) !== nothing) ? arg2str(val) : ""
 end
 
@@ -1579,7 +1577,7 @@ end
 function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
 	# Crazzy shit to allow increasing the arg1 matrix
 	(mat === nothing) && return fun(t1..., t2, del, mat), mat  # psxy error_bars may send mat = nothing
-	n_rows, n_cols = size(mat)
+	n_rows = size(mat, 1)
 	mat = reshape(mat, :)
 	cmd = fun(t1..., t2, del, mat)
 	mat = reshape(mat, n_rows, :)
@@ -1814,7 +1812,10 @@ function add_opt_module(d::Dict)::Vector{String}
 					   || symb == :plot3 || symb == :hlines || symb == :vlines)
 					_d = nt2dict(nt)
 					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; del_from_dict(d, [:data]))
-					r = scatter!(; nt...)
+					r = (symb == :arrows) ? arrows!(; nt...) : (symb == :lines) ? lines!(; nt...) :
+					(symb == :scatter) ? scatter!(; nt...) : (symb == :scatter3) ? scatter3!(; nt...) :
+					(symb == :plot) ? plot!(; nt...) : (symb == :plot3) ? plot3!(; nt...) :
+					(symb == :hlines) ? hlines!(; nt...) : vlines!(; nt...)
 				end
 			elseif (isa(val, Number) && (val != 0))		# Allow setting coast=true || colorbar=true
 				if     (symb == :coast)    r = coast!(W=0.5, Vd=2)
