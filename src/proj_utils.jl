@@ -16,6 +16,13 @@ struct PJ_INFO
 	path_count::Csize_t
 end
 
+struct PJ_ELLPS
+	id::Cstring
+	major::Cstring
+	ell::Cstring
+	name::Cstring
+end
+
 mutable struct geod_geodesic <: _geodesic
 	a::Cdouble
 	f::Cdouble
@@ -387,16 +394,19 @@ end
 
 # -------------------------------------------------------------------------------------------------
 function get_ellipsoid(projPJ_ptr::Ptr{Cvoid})::geod_geodesic
-	a, ecc2 = pj_get_spheroid_defn(projPJ_ptr)
-	geod_geodesic(a, 1-sqrt(1-ecc2))
+	#a, ecc2 = pj_get_spheroid_defn(projPJ_ptr)
+	#geod_geodesic(a, 1-sqrt(1-ecc2))
+	a, inv_f, = proj_ellipsoid_get_parameters(C_NULL, projPJ_ptr)
+	geod_geodesic(a, 1/inv_f)
 end
 
 # -------------------------------------------------------------------------------------------------
-function proj_create(proj_string::String, ctx=C_NULL)
+function proj_create(proj_str::String, ctx=C_NULL)
 	# Returns an Object that must be unreferenced with proj_destroy()
 	# THIS GUY IS VERY EXPENSIVE. TRY TO MINIMIZE ITS USAGE.
-	projPJ_ptr = ccall((:proj_create, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), ctx, proj_string)
-	(projPJ_ptr == C_NULL) && error("Could not parse projection: \"$proj_string\"")
+	#projPJ_ptr = ccall((:proj_create, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), ctx, proj_str)
+	projPJ_ptr = ccall((:proj_create, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), ctx, proj2wkt(proj_str))
+	(projPJ_ptr == C_NULL) && error("Could not parse projection: \"$proj_str\"")
 	projPJ_ptr
 end
 
@@ -409,13 +419,14 @@ function proj_destroy(projPJ_ptr::Ptr{Cvoid})	# Free C datastructure associated 
 	ccall((:proj_destroy, libproj), Ptr{Cvoid}, (Ptr{Cvoid},), projPJ_ptr)
 end
 
-# -------------------------------------------------------------------------------------------------
+#= -------------------------------------------------------------------------------------------------
 function pj_get_spheroid_defn(proj_ptr::Ptr{Cvoid})
 	a = Ref{Cdouble}()		# major_axis
 	ecc2 = Ref{Cdouble}()	# eccentricity squared
 	ccall((:pj_get_spheroid_defn, libproj), Cvoid, (Ptr{Cvoid}, Ptr{Cdouble}, Ptr{Cdouble}), proj_ptr, a, ecc2)
 	a[], ecc2[]
 end
+=#
 
 # -------------------------------------------------------------------------------------------------
 function proj_info()
@@ -463,9 +474,58 @@ function freeProjection(proj::Projection)
     proj_destroy(proj.rep)
     proj.rep = C_NULL
 end
-=#
 
 function is_latlong(proj_ptr::Ptr{Cvoid})
 	@assert proj_ptr != C_NULL
 	ccall((:pj_is_latlong, libproj), Cint, (Ptr{Cvoid},), proj_ptr) != 0
 end
+=#
+
+function proj_get_ellipsoid(proj_ptr::Ptr{Cvoid}, ctx=C_NULL)
+	# Returned object must be unreferenced with proj_destroy()
+	ccall((:proj_get_ellipsoid, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), ctx, proj_ptr)
+end
+
+function proj_ellipsoid_get_parameters(ellipsoid::Ptr{Cvoid}=NULL, proj_ptr::Ptr{Cvoid}=NULL, ctx=NULL)
+	# proj_ellipsoid_get_parameters(PJ_CONTEXT *ctx, const PJ *ellipsoid, double *out_semi_major_metre, double *out_semi_minor_metre, int *out_is_semi_minor_computed, double *out_inv_flattening)
+	semi_major = Ref{Cdouble}()		# semi-major axis in meters
+	semi_minor = Ref{Cdouble}()		# semi-minor axis in meters
+	inv_flattening = Ref{Cdouble}()		# semi-minor axis in meters
+	is_semi_minor_computed = Ref{Cint}()		#
+	need_destroy = (ellipsoid == NULL)
+	(ellipsoid == NULL) && (ellipsoid = proj_get_ellipsoid(proj_ptr))
+	ccall((:proj_ellipsoid_get_parameters, libproj), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cdouble}), ctx, ellipsoid, semi_major, semi_minor, is_semi_minor_computed, inv_flattening)
+	need_destroy && proj_destroy(ellipsoid)		# If it was created above
+	semi_major[], inv_flattening[], semi_minor[]
+end
+
+"""
+    proj2wkt(proj4_str::String, pretty::Bool=false)
+
+Convert a PROJ4 string into the WKT form. Use `pretty=true` to return a more human readable text.
+"""
+function proj2wkt(proj4_str::String; pretty::Bool=false)
+	!startswith(proj4_str, "+proj=") && error("$(proj4_str) is not a valid proj4 string")
+	toWKT(importPROJ4(proj4_str), pretty)
+end
+
+"""
+    wkt2proj(wkt_str::String)
+
+Convert a WKT SRS string into the PROJ4 form.
+"""
+wkt2proj(wkt_str::String) = toPROJ4(importWKT(wkt_str))
+
+"""
+    epsg2proj(code::Integer)
+
+Convert a EPSG code into the PROJ4 form.
+"""
+epsg2proj(code::Integer)  = toPROJ4(importEPSG(code))
+
+"""
+    epsg2wkt(code::Integer, pretty::Bool=false)
+
+Convert a EPSG code into the WKT form. Use `pretty=true` to return a more human readable text.
+"""
+epsg2wkt(code::Integer; pretty::Bool=false) = toWKT(importEPSG(code), pretty)
