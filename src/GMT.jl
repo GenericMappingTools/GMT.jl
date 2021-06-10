@@ -124,7 +124,7 @@ export
 	wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
 	wkbGeometryCollection,
 
-	geod, invgeod, circgeo, buffergeo,
+	geod, invgeod, circgeo, buffergeo, epsg2proj, epsg2wkt, proj2wkt, wkt2proj,
 
 	mean, std, nanmean, nanstd				# First two from Statistics. Uterly stupid need-to-do thing 
 
