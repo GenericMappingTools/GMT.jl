@@ -617,7 +617,7 @@ function guess_increment_from_coordvecs(dx, dy)
 	# Guess a good -I<inc> from the spacings in the x (lon), y(lat) arrays
 	x_mean = abs(Float64(mean(dx)));		y_mean = abs(Float64(mean(dy)));
 	xy_std = max(Float64(std(dx)), Float64(std(dy)))
-	inc = (xy_std == 0) ? (x_mean + y_mean) / 2 : round((x_mean + y_mean) / 2; digits=round(Int, abs(log10(xy_std))))
+	return (xy_std == 0) ? (x_mean + y_mean) / 2 : round((x_mean + y_mean) / 2, digits=round(Int, abs(log10(xy_std))))
 end
 
 # ---------------------------------------------------------------------------------------------------
