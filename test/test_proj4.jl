@@ -21,4 +21,7 @@
 	prj = epsg2proj(4326)
 	proj2wkt(prj)
 	wkt2proj(wkt)
+	loxo = loxodrome_direct(0,0,45, 10000)
+	loxo = loxodrome([0 0; 30 50], step=100, unit=:k);
+	dist, azim = GMT.loxodrome_inverse(0,0,5,5)
 end
