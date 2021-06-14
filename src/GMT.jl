@@ -124,7 +124,8 @@ export
 	wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
 	wkbGeometryCollection,
 
-	geod, invgeod, circgeo, buffergeo, epsg2proj, epsg2wkt, proj2wkt, wkt2proj,
+	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
+	orthodrome, proj2wkt, wkt2proj,
 
 	mean, std, nanmean, nanstd				# First two from Statistics. Uterly stupid need-to-do thing 
 
@@ -183,6 +184,7 @@ include("grdview.jl")
 include("grdvolume.jl")
 include("greenspline.jl")
 include("kml2gmt.jl")
+include("loxodromics.jl")
 include("makecpt.jl")
 include("mapproject.jl")
 include("movie.jl")
