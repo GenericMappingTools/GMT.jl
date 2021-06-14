@@ -41,13 +41,13 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
+    geod(lonlat, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
 
 Solve the direct geodesic problem.
 
 Args:
 
-- `lonlat`:   - longitude, latitude (degrees) ∈ [-90, 90]
+- `lonlat`:   - longitude, latitude (degrees). This can be a vector or a matrix with one row only.
 - `azimuth`:  - azimuth (degrees) ∈ [-540, 540)
 - `distance`: - distance to move from (lat,lon); can be negative, Default is meters but see `unit`
 - `proj` or `s_srs`:  - the given projection whose ellipsoid we move along. Can be a proj4 string or an WKT
@@ -195,10 +195,7 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=0.01)
-or
-
-    buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=0.01)
+    buffergeo(D::GMTdataset; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=0.01)
 or
 
     buffergeo(line::Matrix; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0, tol=0.01)
@@ -210,8 +207,8 @@ Computes a buffer arround a poly-line. This calculation is performed on a ellips
 using the GeographicLib (via PROJ4) so it should be very accurate.
 
 ### Parameters
-- `D` | `line` | fname: - the geometry. This can either be a GMTdataset (or vector of it), a Mx2 matrix or the name
-                          of file that can be read as a GMTdataset by `gmtread()`
+- `D` | `line` | fname: - the geometry. This can either be a GMTdataset (or vector of it), a Mx2 matrix, the name
+                          of file that can be read as a GMTdataset by `gmtread()` or a GDAL AbstractDataset object
 - `width`:  - the buffer width to be applied. Expressed meters (the default), km or Miles (see `unit`)
 - `unit`:   - If `width` is not in meters use one of `unit=:km`, or `unit=:Nautical` or `unit=:Miles`
 - `np`:     - Number of points into which circles are descretized (Default = 120)
@@ -231,8 +228,13 @@ A GMT dataset or a vector of it (when input is Vector{GMTdataset})
 """
 buffergeo(fname::String; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=-1.0) =
 	buffergeo(gmtread(fname); width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, epsg=epsg, tol=tol)
+
+buffergeo(ds::Gdal.AbstractDataset; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=-1.0) =
+	buffergeo(gmt2gd(ds); width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, epsg=epsg, tol=tol)
+
 buffergeo(D::GMTdataset; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=-1.0) =
 	buffergeo(D.data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D.proj4, epsg=epsg, tol=tol)[1]
+
 function buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=-1.0)
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
@@ -241,6 +243,7 @@ function buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
+
 function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=false, flatend=false, proj::String="", epsg::Integer=0, tol=-1.0)
 	# This function can be a bit optimized with a clever choice of which points to compute on the circle.
 	# Points close to the segment axis are ofc nover needed.
@@ -293,6 +296,120 @@ function trim_dateline!(mat, lon0)
 		else           mat[view(mat,:,1) .> 0, 1] .= -180.
 		end
 	end
+end
+
+# -------------------------------------------------------------------------------------------------
+"""
+    function orthodrome(D; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+
+Generate a orthodrome line(s) (shortest distace) on an ellipsoid. Input data can be two or more points.
+In later case each line segment is descretized at `step` increments,
+
+### Parameters
+
+- `D`: - the input points. This can either be a GMTdataset (or vector of it), a Mx2 matrix, the name
+         of file that can be read as a GMTdataset by `gmtread()` or a GDAL AbstractDataset object
+- `step`:  - Incremental distance at which the segment line is descretized in meters(the default), but see `unit`
+- `unit`:  - If `step` is not in meters use one of `unit=:km`, or `unit=:Nautical` or `unit=:Miles`
+- `np`:    - Number of intermediate points between poly-line vertices (alternative to `step`)
+- `proj`  - If line data is in Cartesians but with a known projection pass in a PROJ4 string
+- `epsg`  - Same as `proj` but using an EPSG code
+
+### Returns
+A Mx2 matrix with the on lat of the points along the orthodrome when input is a matrix. A GMT dataset
+or a vector of it (when input is Vector{GMTdataset}).
+
+## Example: Compute an orthodrome between points (0,0) and (30,50) discretized at 100 km steps.
+
+    mat = orthodrome([0 0; 30 50], step=100, unit=:k);
+"""
+orthodrome(fname::String; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
+	orthodrome(gmtread(fname); step=step, unit=unit, np=np, proj=proj, epsg=epsg)
+
+orthodrome(lon1::Real, lat1::Real, lon2::Real, lat2::Real; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
+	orthodrome([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg)
+
+orthodrome(ds::Gdal.AbstractDataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
+	orthodrome(gmt2gd(ds); step=step, unit=unit, np=np, proj=proj, epsg=epsg)
+
+function orthodrome(D::Vector{<:GMTdataset}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+	_D = Vector{GMTdataset}(undef, length(D))
+	for k = 1:length(D)
+		_D[k] = mat2ds(orthodrome(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj, epsg=epsg), D[k])
+	end
+	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
+end
+function orthodrome(D::GMTdataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+	mat2ds(orthodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg), D)
+end
+
+function orthodrome(line::Matrix{<:Real}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+	(step == 0 && np == 0) && error("Must provide either a 'step' or a 'np' (number of points).")
+	(size(line, 1) == 1) && error("Lines cannot have a single point.")
+	(np > 0 && size(line, 1) != 2) && error("Number of intermediate points cannot be used with polylines.")
+	step *= unit_factor(unit)
+	dist, azim, = invgeod(line[1:end-1, :], line[2:end, :], proj=proj, epsg=epsg)	# dist and azims between the polyline vertices
+	(np > 0) && (step = dist[1] / (np + 1))
+	seg = geod(line[1,:], azim[1], 0:step:dist[1], proj=proj, epsg=epsg)[1]
+	if (size(line, 1) == 2)
+		(hypot((seg[end,:] .- line[2,:])...) > 1) && (seg = [seg; line[2:2, :]])	# If increment does not land exactly in end point
+	else
+		for n = 2:size(line,1)-1
+			_seg = geod(line[n,:], azim[n], 0:step:dist[n], proj=proj, epsg=epsg)[1]
+			(hypot((_seg[end,:] .- line[n,:])...) > 1) && (_seg = [_seg; line[n+1:n+1, :]])
+			seg = [seg; _seg]			# Horrible but we can't know in advance the number of final points
+		end
+	end
+	seg
+end
+
+# -------------------------------------------------------------------------------------------------
+"""
+    function loxodrome(lon1,lat1,lon2,lat2; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+or
+
+    function loxodrome(D; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+
+Generate a loxodrome (rhumb line) on an ellipsoid. Input data can be two or more points.
+In later case each line segment is descretized at `step` increments,
+
+### Parameters
+
+- `D`: - the input points. This can either be a 2x2 matrix or a GMTdataset. Note that only the first 2 points are used.
+- `step`:  - Incremental distance at which the segment line is descretized in meters(the default), but see `unit`
+- `unit`:  - If `step` is not in meters use one of `unit=:km`, or `unit=:Nautical` or `unit=:Miles`
+- `np`:    - Number of intermediate points to be generated between end points (alternative to `step`)
+- `proj`  - If line data is in Cartesians but with a known projection pass in a PROJ4 string
+- `epsg`  - Same as `proj` but using an EPSG code
+
+### Returns
+A Mx2 matrix with the on lat of the points along the loxodrome when input is a matrix or the 2 pairs of points.
+A GMTdataset when the input is GMTdataset.
+
+## Example: Compute an loxodrome between points (0,0) and (30,50) discretized at 100 km steps.
+
+    loxo = loxodrome([0 0; 30 50], step=100, unit=:k);
+"""
+loxodrome(lon1::Real, lat1::Real, lon2::Real, lat2::Real; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
+	loxodrome([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg)
+
+function loxodrome(D::GMTdataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+	mat2ds(loxodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg), D)
+end
+
+function loxodrome(line::Matrix{<:Real}; step=0, np=0, unit=:m, proj::String="", epsg::Integer=0)
+	(step == 0 && np == 0) && error("Must provide either a 'step' or a 'np' (number of points).")
+	(size(line, 1) == 1) && error("Lines cannot have a single point.")
+	step *= unit_factor(unit)
+	dist, azim = loxodrome_inverse(line[1,1], line[1,2], line[2,1], line[2,2])
+	(np > 0) && (step = dist / (np + 1))
+	distances = collect(1:step:dist)
+	((dist - distances[end]) > 1) && append!(distances, dist)	# Make sure we don't loose destiny point
+	loxo = Array{Float64,2}(undef, length(distances), 2)
+	for k = 1:length(distances)
+		loxo[k, :] = loxodrome_direct(line[1,1], line[1,2], azim, distances[k])
+	end
+	loxo
 end
 
 # -------------------------------------------------------------------------------------------------
