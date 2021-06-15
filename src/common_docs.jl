@@ -8,7 +8,7 @@ const opt_C = "**C** | **color** | **cmap** :: [Type => Str]		``Arg = [cpt |mast
 
 const opt_J = "**J** | **proj** | **projection** :: [Type => String]
 
-    Select map projection. Defaults to 12x8 cm with linear (non-projected) maps.
+    Select map projection. Defaults to 14x9.5 cm with linear (non-projected) maps.
     (http://docs.generic-mapping-tools.org/latest/gmt.html#j-full)"
 
 const opt_Jz = "**Jz** | **zscale** | **zsize** :: [Type => String]"

@@ -335,12 +335,12 @@ orthodrome(ds::Gdal.AbstractDataset; step=0, unit=:m, np=0, proj::String="", eps
 function orthodrome(D::Vector{<:GMTdataset}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
-		_D[k] = mat2ds(orthodrome(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj, epsg=epsg), D[k])
+		_D[k] = mat2ds(orthodrome(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj, epsg=epsg))[1]
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
 function orthodrome(D::GMTdataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
-	mat2ds(orthodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg), D)
+	mat2ds(orthodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))[1]
 end
 
 function orthodrome(line::Matrix{<:Real}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
