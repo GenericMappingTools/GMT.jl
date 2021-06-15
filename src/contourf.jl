@@ -1,9 +1,8 @@
 """
 	contourf(cmd0::String="", arg1=nothing; kwargs...)
 
-Reads one or more ASCII [or binary] files (or standard input) containing x,y[,z] and performs Delaunay
-triangulation, i.e., it find how the points should be connected to give the most equilateral
-triangulation possible. 
+Performs Delaunay triangulation on x,y[,z] data, i.e., it find how the points should be connected
+to give the most equilateral triangulation possible. 
 
 Full option list at [`triangulate`]($(GMTdoc)triangulate.html)
 
@@ -74,16 +73,16 @@ Examples
     G = GMT.peaks();
     C = makecpt(T=(-7,9,2));
 
-    contourf(G, fmt=:png, show=1)
-    contourf(G, C=[-2, 0, 2, 5], fmt=:png, show=1)
-    contourf(G, C, contour=[-2, 0, 2, 5], fmt=:png, show=1)
-    contourf(G, C, annot=[-2, 0, 2, 5], fmt=:png, show=1)
-    contourf(G, C, annot=2, fmt=:png, show=1)
-    contourf(G, C, contour=1, annot=[-2, 0, 2, 5], fmt=:png, show=1)
-    contourf(G, C, annot=:none, fmt=:png, show=1)
+    contourf(G, show=1)
+    contourf(G, C=[-2, 0, 2, 5], show=1)
+    contourf(G, C, contour=[-2, 0, 2, 5], show=1)
+    contourf(G, C, annot=[-2, 0, 2, 5], show=1)
+    contourf(G, C, annot=2, show=1)
+    contourf(G, C, contour=1, annot=[-2, 0, 2, 5], show=1)
+    contourf(G, C, annot=:none, show=1)
 
     d = [0 2 5; 1 4 5; 2 0.5 5; 3 3 9; 4 4.5 5; 4.2 1.2 5; 6 3 1; 8 1 5; 9 4.5 5];
-    contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), fmt=:png, show=1)
+    contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), show=1)
 ```
 """
 function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)

@@ -774,8 +774,33 @@ vlines!(arg=nothing; kw...) = vlines(arg; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------
-function ternary(cmd0::String="", arg1=nothing; first=true, kwargs...)
+function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=false, clockwise::Bool=false, kwargs...)
 	# A wrapper for psternary
+	d = init_module(first, kwargs...)[1]
+	def_J = " -JX" * split(def_fig_size, '/')[1] * "/0"
+	opt_J = parse_J(d, "", def_J, true, false, false)[2]
+	if (image || haskey(d, :contourf))
+		t = tern2cart(isa(arg1, GMTdataset) ? arg1.data : isa(arg1, Vector{<:GMTdataset}) ? arg1[1].data : arg1 , clockwise)
+		!endswith(opt_J, "/0") && (opt_J *= "/0")			# Need the "/0". Very important.
+		if (haskey(d, :contourf))
+			#arg = d[:contourf]
+			#if (isa(arg, NamedTuple))
+			contourf(t, R=(0.0,1.0,0,sqrt(3)/2), B=:none, J=opt_J[4:end])
+			delete!(d, :contourf)
+		else
+			G = surface("-R0/1/0/0.865 -I0.005 -T0.3 -Vq", t)
+			Gmask = grdmask("-R0/1/0/0.865 -I0.005 -NNaN/1/1", [0.0 0; 0.5 0.865; 1 0; 0 0])
+			#G .*= Gmask
+			grdimage(G .* Gmask, B=:none, J=opt_J[4:end])
+		end
+		first = false
+	end
+	if (clockwise)
+		endswith(opt_J, "/0") && (opt_J = opt_J[1:end-2])		# Strip the trailing "/0". Very important.
+		d[:J] = "X-" * opt_J[5:end]
+		del_from_dict(d, [:proj :projection])		# To avoid non-consumed warnings
+		kwargs = d
+	end
 	common_plot_xyz(cmd0, arg1, "ternary", first, false, kwargs...)
 end
 ternary!(cmd0::String="", arg1=nothing; kw...) = ternary(cmd0, arg1; first=false, kw...)
@@ -784,6 +809,14 @@ ternary!(arg1; kw...)  = ternary("", arg1; first=false, kw...)
 const psternary  = ternary            # Aliases
 const psternary! = ternary!           # Aliases
 
+function tern2cart(abcz, reverse)
+	# coverts ternary to cartesian units. ABCZ is either a Mx3 (a,b,c) or Mx4 (a,b,c,z) matrix
+	a,b,c = !reverse ? (3,1,2) : (1,2,3)
+	s = view(abcz, :, a) + view(abcz, :, b) + view(abcz, :, c)	# s = (a + b + c)
+	x = 0.5 .* (2.0 .* view(abcz, :, b) + view(abcz, :, c)) ./ s
+	y = 0.5 .* sqrt(3.) .* view(abcz, :, c) ./ s
+	return (size(abcz,2) == 3) ? [x y] : [x y abcz[:,4]]
+end
 
 """
     events(cmd0::String, arg1=nothing; kwargs...)
