@@ -148,6 +148,16 @@ println("	PSTERNARY")
 ternary([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", X=:c, B=:a, S="c0.1c");
 ternary!([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", shape=:square, ms=0.1, markerline=1,Vd=dbg2);
 ternary!("", [0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", ms=0.1, lw=1,markeredgecolor=:red, Vd=dbg2);
+d = [0.16 0.331 0.509 9.344; 0.86 0.11  0.027 7.812; 0.25 0.167 0.579 3.766; 0.5 0.339 0.161 15.203];
+ternary(d, R="0/100/0/100/0/100", B="afg", contour=(annot=20, cont=10), clockwise=true)
+ternary(d, R="0/100/0/100/0/100", B="afg", contourf=true)
+ternary(d, R="0/100/0/100/0/100", B="afg", image=true, contour=true, Vd=dbg2)
+d = Dict(:a=>"", :frame => (annot=:a, grid=8, alabel=:a, blabel=:b, clabel=:c, suffix=" %"));
+GMT.parse_B4ternary!(d);
+@test d[:B] == " -Baag8+u\" %\"+la -Bbag8+u\" %\"+lb -Bcag8+u\" %\"+lc"
+d = Dict(:a=>"", :labels => (:a, :b, :c));
+GMT.parse_B4ternary!(d);
+@test d[:B] == " -Baafg+la -Bbafg+lb -Bcafg+lc"
 
 println("	PSTEXT")
 text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps",savefig="lixo.ps")

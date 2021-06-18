@@ -22,7 +22,11 @@
 	proj2wkt(prj)
 	wkt2proj(wkt)
 	loxo = loxodrome_direct(0,0,45, 10000)
-	loxo = loxodrome([0 0; 30 50], step=100, unit=:k);
-	orto = orthodrome(mat2ds([0 0; 30 50]), step=100, unit=:k);
+	loxo = loxodrome([0 0; 30 50], step=500, unit=:k);
+	loxo = loxodrome(mat2ds([0 0; 30 50])[1], step=500, unit=:k);
+	loxo = loxodrome(0, 0, 30, 50, step=500, unit=:k);
+	orto = orthodrome(mat2ds([0 0; 30 50]), step=500, unit=:k);
+	orthodrome(mat2ds([0 0; 15 25; 30 50])[1], step=500, unit=:k)
+	orthodrome(0, 0, 30, 50, step=500, unit=:k);
 	dist, azim = GMT.loxodrome_inverse(0,0,5,5)
 end

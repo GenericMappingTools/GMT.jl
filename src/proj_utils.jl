@@ -394,7 +394,7 @@ loxodrome(lon1::Real, lat1::Real, lon2::Real, lat2::Real; step=0, unit=:m, np=0,
 	loxodrome([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg)
 
 function loxodrome(D::GMTdataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
-	mat2ds(loxodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg), D)
+	mat2ds(loxodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))[1]
 end
 
 function loxodrome(line::Matrix{<:Real}; step=0, np=0, unit=:m, proj::String="", epsg::Integer=0)

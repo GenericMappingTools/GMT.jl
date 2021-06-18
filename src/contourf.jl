@@ -1,9 +1,8 @@
 """
 	contourf(cmd0::String="", arg1=nothing; kwargs...)
 
-Reads one or more ASCII [or binary] files (or standard input) containing x,y[,z] and performs Delaunay
-triangulation, i.e., it find how the points should be connected to give the most equilateral
-triangulation possible. 
+Performs Delaunay triangulation on x,y[,z] data, i.e., it find how the points should be connected
+to give the most equilateral triangulation possible. 
 
 Full option list at [`triangulate`]($(GMTdoc)triangulate.html)
 
@@ -74,21 +73,22 @@ Examples
     G = GMT.peaks();
     C = makecpt(T=(-7,9,2));
 
-    contourf(G, fmt=:png, show=1)
-    contourf(G, C=[-2, 0, 2, 5], fmt=:png, show=1)
-    contourf(G, C, contour=[-2, 0, 2, 5], fmt=:png, show=1)
-    contourf(G, C, annot=[-2, 0, 2, 5], fmt=:png, show=1)
-    contourf(G, C, annot=2, fmt=:png, show=1)
-    contourf(G, C, contour=1, annot=[-2, 0, 2, 5], fmt=:png, show=1)
-    contourf(G, C, annot=:none, fmt=:png, show=1)
+    contourf(G, show=1)
+    contourf(G, C=[-2, 0, 2, 5], show=1)
+    contourf(G, C, contour=[-2, 0, 2, 5], show=1)
+    contourf(G, C, annot=[-2, 0, 2, 5], show=1)
+    contourf(G, C, annot=2, show=1)
+    contourf(G, C, contour=1, annot=[-2, 0, 2, 5], show=1)
+    contourf(G, C, annot=:none, show=1)
 
     d = [0 2 5; 1 4 5; 2 0.5 5; 3 3 9; 4 4.5 5; 4.2 1.2 5; 6 3 1; 8 1 5; 9 4.5 5];
-    contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), fmt=:png, show=1)
+    contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), show=1)
 ```
 """
 function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
 
 	d = KW(kwargs)
+	dict_auto_add!(d)					# The ternary module may send options via another channel
 	CPT_arg = (isa(arg1, GMTcpt)) ? arg1 : (isa(arg2, GMTcpt) ? arg2 : nothing)		# Fish a CPT, if any.
 
 	CPT = nothing;		C_contours = "";	C_int = 0;
@@ -129,20 +129,20 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 		opt_A = find_in_dict(d, [:A :annot])[1]			# Will either have something or nothing
 		opt_G = find_in_dict(d, [:G :labels])[1]
 		opt_T = find_in_dict(d, [:T :ticks])[1]
-		opt_W = find_in_dict(d, [:W :pen])[1]
 		opt_L = find_in_dict(d, [:L :range])[1]
 		opt_Q = find_in_dict(d, [:Q :cut])[1]
 		opt_S = find_in_dict(d, [:S :smooth])[1]
 	end
+	opt_W = find_in_dict(d, [:W :pen])[1]
 
 	if (isa(arg1, GMTgrid) || cmd0 != "")
 		#isa(arg2, GMTcpt) ? d[:N] = arg2 : (isa(arg1, GMTcpt) ? d[:N] = arg1 : d[:N] = true)
 		if (CPT === nothing && CPT_arg === nothing)
 			if (cmd0 != "")
 				info = grdinfo(cmd0 * " -C")
-				C_inc, min, max = gen_contour_vals(info[1].data[5:6])
+				C_inc, min, max = gen_contour_vals(info[1].data[5:6], C_int)
 			else
-				C_inc, min, max = gen_contour_vals(arg1)
+				C_inc, min, max = gen_contour_vals(arg1, C_int)
 			end
 			CPT = makecpt(T=(min, max, C_inc))
 		elseif (CPT === nothing && CPT_arg !== nothing)
@@ -192,22 +192,25 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 			d[:C] = CPT;
 		else
 			D = gmtinfo(arg1, C=1)
-			C_inc, min, max = gen_contour_vals(D[1].data[5:6])
+			C_inc, min, max = gen_contour_vals(D[1].data[5:6], C_int)
 			d[:C] = makecpt(T=(min, max, C_inc))
 		end
 		d[:I] = true
+		(C_int != 0 && opt_W === nothing) && (opt_W = "0.25p")
+		(opt_W !== nothing) && (d[:W] = opt_W)
 		contour("", arg1; first=first, d...)
 	end
 
 end
 
 # ---------------------------------------------------------------------------------------------------
-function gen_contour_vals(in)
+function gen_contour_vals(in, C_int)
+	# If C_int (contour interval) != 0 use it otherwise guess one 
 	if (isa(in, GMTgrid))  low = in.range[5];	high = in.range[6]
 	else                   low = in[1];		high = in[2]
 	end
 	range = high - low
-	C_int = auto_contour_interval(range)
+	(C_int == 0) && (C_int = auto_contour_interval(range))
 	min = floor(low / C_int) * C_int;
 	if (min > low)  min -= C_int  end
 	max = ceil(high / C_int) * C_int;

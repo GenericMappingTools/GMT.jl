@@ -42,12 +42,20 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		d[:p] = "200/30"		# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
 	end
 
-	def_J = (is_ternary) ? " -JX" * split(def_fig_size, '/')[1] * "/0" : ""		# Gives "-JX14c/0" 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
+	if (is_ternary && !first) 	# Either a -J was set and we'll fish it here or no and we'll use the default.
+		def_J = " -JX" * split(def_fig_size, '/')[1]
+		cmd, opt_J = parse_J(d, cmd, def_J)
+		cmd, opt_R = parse_R(d, cmd, O)
+		cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes_))
+	else
+		def_J = (is_ternary) ? " -JX" * split(def_fig_size, '/')[1] : ""		# Gives "-JX14c" 
+		cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
+	end
+
 	cmd, opt_JZ = parse_JZ(d, cmd)
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
-	(is_ternary) && (cmd = add_opt(d, cmd, 'M', [:M :no_plot]))
+	(is_ternary) && (cmd = add_opt(d, cmd, 'M', [:M :dump]))
 	opt_UVXY = parse_UVXY(d, "")	# Need it separate to not risk to double include it.
 	cmd, opt_c = parse_c(d, cmd)	# Need opt_c because we may need to remove it from double calls
 
@@ -117,7 +125,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	got_pattern = (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb)) ? true : false
 
 	if (is_ternary)			# Means we are in the psternary mode
-		cmd = add_opt(d, cmd, 'L', [:L :labels])
+		cmd = add_opt(d, cmd, 'L', [:L :vertex_labels])
 	else
 		opt_L = add_opt(d, "", 'L', [:L :close :polygon],
 		                (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
@@ -193,7 +201,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	_cmd = gmt_proggy .* _cmd				# In any case we need this
 	_cmd, K = finish_PS_nested(d, _cmd, K)
 
-	r = finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3)
+	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
+	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3)
 	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
 	return r
 end

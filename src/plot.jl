@@ -774,17 +774,194 @@ vlines!(arg=nothing; kw...) = vlines(arg; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------
-function ternary(cmd0::String="", arg1=nothing; first=true, kwargs...)
+"""
+    ternary(cmd0="", arg1=nothing; image=false, clockwise=false, kwargs...)
+
+Reads (a,b,c[,z]) records from table [or file] and plots image and symbols at those locations on a ternary diagram.
+
+- **B** | **frame** :: [Type => NamedTuple | Str] --
+
+    For ternary diagrams the three sides are referred to as a (bottom), b (right), and c (left). The default is to
+    annotate and draw grid lines but without labeling the axes. But since labeling is a very important feature, you
+    can use the `labels` option that take as argument a 3 elements Tuple with the labels of the 3 axes. Further
+    control on annotations and grid spacing (on/off) is achieved by using the `frame=(annot=?, grid=?, alabel=?, blabel=?,
+    clabel=?, suffix=?)` form. Note that not all options of the general `frame` options are accepted in this module and for more
+    elaborated frame option selection you will have to resort to the pure GMT syntax in the form `frame="<arg> <arg> <arg>"`
+    ($(GMTdoc)psternary.html#b)
+- $(GMT.opt_C)
+- **G** | **fill** :: [Type => Str] --
+
+    Select color or pattern for filling the bars
+    ($(GMTdoc)psternary.html#c)
+- **L** | **vertex_labels** :: [Type => Str | Tuple of strings] --		`Arg = a/b/c`
+
+    Set the labels for the three diagram vertices where the component is 100% [none]. 
+    ($(GMTdoc)psternary.html#l)
+- **M** | **dump** :: [Type => Str]
+
+    Dumps the converted input (a,b,c[,z]) records to Cartesian (x,y,[,z]) records, where x, y
+    are normalized coordinates on the triangle (i.e., 0–1 in x and 0–sqrt(3)/2 in y). No plotting occurs.
+    ($(GMTdoc)coast.html#m)
+- **N** | **no_clip** | **noclip** :: [Type => Str or []]
+
+    Do NOT clip symbols that fall outside map border 
+    ($(GMTdoc)psternary.html#n)
+- **R** | **region** | **limits** :: [Type => Tuple | Str]
+
+    Give the min and max limits for each of the three axis a, b, and c. Default is (0,100,0,100,0,100)
+- $(GMT.opt_P)
+- **S** | **symbol** :: [Type => Str]
+
+    Plot individual symbols in a ternary diagram. If `S` is not given then we will instead plot lines
+    (requires `pen`) or polygons (requires `color` or `fill`). 
+    ($(GMTdoc)psternary.html#s)
+
+    Alternatively select a sub-set of symbols using the aliases: **symbol** or **marker** and values:
+
+    + **-**, **x_dash**
+    + **+**, **plus**
+    + **a**, *, **star**
+    + **c**, **circle**
+    + **d**, **diamond**
+    + **g**, **octagon**
+    + **h**, **hexagon**
+    + **i**, **v**, **inverted_tri**
+    + **n**, **pentagon**
+    + **p**, **.**, **point**
+    + **r**, **rectangle**
+    + **s**, **square**
+    + **t**, **^**, **triangle**
+    + **x**, **cross**
+    + **y**, **y_dash**
+
+    and select their sizes with the **markersize** or **size** keyword [default is 8p].
+    The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
+    points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT=:c,)*	
+- $(GMT.opt_U)
+- $(GMT.opt_V)
+- **W** | **pen** :: [Type => Str | Number]
+
+    Sets the attributes for the particular line.
+    ($(GMTdoc)psternary.html#w)
+- $(GMT.opt_X)
+- $(GMT.opt_Y)
+- $(GMT.opt_bi)
+- $(GMT.opt_di)
+- $(GMT.opt_e)
+- $(GMT.opt_f)
+- $(GMT.opt_g)
+- $(GMT.opt_h)
+- $(GMT.opt_i)
+- $(GMT.opt_p)
+- $(GMT.opt_q)
+- $(GMT.opt_t)
+
+Other than the above options, the `kwargs` input accepts still the following options
+- `image`: - Fills the ternary plot with an image computed automatically with `grdimage` from a grid interpolated with `surface`
+- `contour`: - This option works in two different ways. If used together with `image` it overlays a contour
+               by doing a call to `grdcontour`. However, if used alone it will call `contour` to do the contours.
+               The difference is important because this option can be used in *default mode* with `contour=true`
+               where the number and annotated contours is picked automatically, or the use can exert full control
+               by passing as argument a NamedTuple with all options appropriated to that module. *e.g.*
+               `contour=(cont=10, annot=20, pen=0.5)`
+- `contourf`: - Works a bit like the _standalone_ `contour`. If used with `contourf=true` call make a filled contour
+                using automatic parameters. The form `contourf=(...)` let us selects options of the contourf module.
+- `clockwise`: - Set it to `true` to indicate that positive axes directions be clock-wise
+                 [Default lets the a, b, c axes be positive in a counter-clockwise direction].
+"""
+function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=false, kwargs...)
 	# A wrapper for psternary
-	common_plot_xyz(cmd0, arg1, "ternary", first, false, kwargs...)
+	(cmd0 != "") && (arg1 = gmtread(cmd0))
+	d = init_module(first, kwargs...)[1]
+	opt_J = parse_J(d, "", " -JX" * split(def_fig_size, '/')[1] * "/0", true, false, false)[2]
+	opt_R = parse_R(d, "")[1]
+	d[:R] = (opt_R ==  "") ? "0/100/0/100/0/100" : opt_R[4:end]
+	parse_B4ternary!(d)
+	clockwise = haskey(d, :clockwise)
+	if (image || haskey(d, :contourf) || haskey(d, :contour))
+		t = tern2cart(isa(arg1, GMTdataset) ? arg1.data : isa(arg1, Vector{<:GMTdataset}) ? arg1[1].data : arg1, clockwise)
+		!endswith(opt_J, "/0") && (opt_J *= "/0")			# Need the "/0". Very important.
+		if (haskey(d, :contourf))
+			contourf(t, R=(0.0,1.0,0,sqrt(3)/2), B=:none, J=opt_J[4:end], backdoor=d[:contourf])
+			delete!(d, :contourf)
+		else
+			G = surface("-R0/1/0/0.865 -I0.005 -T0.5 -Vq", t)
+			Gmask = grdmask("-R0/1/0/0.865 -I0.005 -NNaN/1/1", [0.0 0; 0.5 0.865; 1 0; 0 0])
+			G *= Gmask
+			if (image)			# grdimage plus eventual contours
+				grdimage(G, B=:none, J=opt_J[4:end])
+				if (haskey(d, :contour))
+					grdcontour!(G, backdoor=d[:contour])
+					delete!(d, :contour)
+				end
+			else				# Only contours
+				pscontour(t, R=(0.0,1.0,0,sqrt(3)/2), B=:none, J=opt_J[4:end], backdoor=d[:contour])
+				delete!(d, :contour)
+			end
+		end
+		first = false
+	end
+	if (clockwise)
+		endswith(opt_J, "/0") && (opt_J = opt_J[1:end-2])		# Strip the trailing "/0". Very important.
+		d[:J] = "X-" * opt_J[5:end]
+		del_from_dict(d, [:proj :projection])		# To avoid non-consumed warnings
+		delete!(d, :clockwise)
+	end
+	if ((val = find_in_dict(d, [:par], false)[1]) === nothing)
+		d[:par] = (MAP_GRID_PEN_PRIMARY="thinnest,gray",)
+	end
+	common_plot_xyz(cmd0, arg1, "ternary", first, false, d...)
 end
+
+function parse_B4ternary!(d::Dict)
+	# Ternary accepts only a special brand of -B. Try to parse and/or build -B option
+	opt_B = parse_B(d, "", " -Bafg")[2]
+	if ((val = find_in_dict(d, [:labels])[1]) !== nothing)	# This should be the easier way
+		!(isa(val,Tuple) && length(val) == 3) && error("The `labels` option must be Tuple with 3 elements.")
+		# Here we may have opt_B = " -Bafg" or (for example) = " -Bpag8" and we need to keep only the axis info
+		opt_Bs = split(opt_B)							# This drops the leading ' '
+		x = (opt_Bs[1][3] == 'p') ? opt_Bs[1][4:end] : opt_Bs[1][3:end]
+		d[:B] = " -Ba$(x)+l" * string(val[1]) * " -Bb$(x)+l" * string(val[2]) * " -Bc$(x)+l" * string(val[3])
+		(length(opt_Bs) > 1) && @warn("Option `labels` forced dropping these other options $(opt_Bs[2:end])")
+	else		# Ui, try to parse a string like this: " -Bpag8+u\" %\" -Ba+la -Bb+lb -Bc+lc"
+		opt_Bs = split(opt_B, " -B")[2:end]				# 2:end because surprisingly the first is = ""
+		(2 == length(opt_Bs) > 4) && error("Bad frame option. Better stop now than error in GMT")
+		if (length(opt_Bs) == 1)  d[:B] = opt_B			# Accept whatever was selected
+		else (3 <= length(opt_Bs) <= 4)					# User may have used frame=(annot=?,grid=?, alabel=?,...)
+			if (length(opt_Bs) == 3) d[:B] = opt_B		# OK, silly no annotations,ticks,grid
+			else
+				x = opt_Bs[1][2:end]
+				d[:B] = " -Ba$(x)" * opt_Bs[2][2:end] * " -Bb$(x)" * opt_Bs[3][2:end] * " -Bc$(x)" * opt_Bs[4][2:end]
+			end
+		end
+	end
+end
+
+function tern2cart(abcz::Matrix{<:Real}, reverse::Bool)
+	# coverts ternary to cartesian units. ABCZ is either a Mx3 (a,b,c) or Mx4 (a,b,c,z) matrix
+	a,b,c = !reverse ? (3,1,2) : (1,2,3)
+	s = view(abcz, :, a) + view(abcz, :, b) + view(abcz, :, c)	# s = (a + b + c)
+	x = 0.5 .* (2.0 .* view(abcz, :, b) + view(abcz, :, c)) ./ s
+	y = 0.5 .* sqrt(3.) .* view(abcz, :, c) ./ s
+	return (size(abcz,2) == 3) ? [x y] : [x y abcz[:,4]]
+end
+
+function dict_auto_add!(d::Dict)
+	# If the Dict 'd' has a 'backdoor' member that is a NamedTuple, add its contents to the Dict
+	if ((val = find_in_dict(d, [:backdoor])[1]) !== nothing && isa(val, NamedTuple))
+		key = keys(val)
+		[d[key[n]] = val[n] for n = 1:length(val)]
+		delete!(d, :backdoor)
+	end
+end
+
 ternary!(cmd0::String="", arg1=nothing; kw...) = ternary(cmd0, arg1; first=false, kw...)
 ternary(arg1;  kw...)  = ternary("", arg1; first=true, kw...)
 ternary!(arg1; kw...)  = ternary("", arg1; first=false, kw...)
 const psternary  = ternary            # Aliases
 const psternary! = ternary!           # Aliases
 
-
+# ----------------------------------------------------------------------------------------------
 """
     events(cmd0::String, arg1=nothing; kwargs...)
 
