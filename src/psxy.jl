@@ -125,7 +125,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	got_pattern = (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb)) ? true : false
 
 	if (is_ternary)			# Means we are in the psternary mode
-		cmd = add_opt(d, cmd, 'L', [:L :labels])
+		cmd = add_opt(d, cmd, 'L', [:L :vertex_labels])
 	else
 		opt_L = add_opt(d, "", 'L', [:L :close :polygon],
 		                (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
