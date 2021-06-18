@@ -907,9 +907,9 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 		del_from_dict(d, [:proj :projection])		# To avoid non-consumed warnings
 		delete!(d, :clockwise)
 	end
-	#if ((val = find_in_dict(d, [:par], false)[1]) === nothing)
-		#d[:par] = (MAP_GRID_PEN_PRIMARY="thinnest,gray",)
-	#end
+	if ((val = find_in_dict(d, [:par], false)[1]) === nothing)
+		d[:par] = (MAP_GRID_PEN_PRIMARY="thinnest,gray",)
+	end
 	common_plot_xyz(cmd0, arg1, "ternary", first, false, d...)
 end
 
