@@ -549,8 +549,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes		# def_fig_axes is a global const
 	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3	# def_fig_axes is a global const
 
-	opt_B = Array{String,1}(undef,1)
-	opt_B[1] = _opt_B
+	opt_B = [_opt_B]
 
 	# These four are aliases
 	extra_parse = true;		have_a_none = false
@@ -704,7 +703,8 @@ function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::Stri
 			def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3
 			cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes3_), del)
 		else
-			cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes_), del)	# For overlays, default is no axes
+			xx = (O ? "" : caller != "ternary" ? def_fig_axes_ : string(split(def_fig_axes_)[1]))
+			cmd, opt_B = parse_B(d, cmd, xx, del)	# For overlays, default is no axes
 		end
 	else
 		cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes_), del)
@@ -1680,6 +1680,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1
 		else
 			opt_T *= " -Cturbo"
 			cpt = makecpt(opt_T)
+			cpt.bfn[3, :] = [1.0 1.0 1.0]	# Some deep bug, in occasions, returns grays on 2nd and on calls
 		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 	elseif (in_bag && !isempty(current_cpt[1]))		# If everything else has failed and we have one in the Bag, return it
@@ -1998,6 +1999,9 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 			opt_L = (axe != "y") ? "y+L" : "+L"
 			opt[1] *= " -B" * primo * axe * opt_L  * str_with_blancs(arg2str(d[:Yhlabel])) * ax_sup
 		end
+		haskey(d, :alabel) && (opt[1] *= " -Ba+l" * str_with_blancs(arg2str(d[:alabel])))	# For Ternary
+		haskey(d, :blabel) && (opt[1] *= " -Bb+l" * str_with_blancs(arg2str(d[:blabel])))
+		haskey(d, :clabel) && (opt[1] *= " -Bc+l" * str_with_blancs(arg2str(d[:clabel])))
 	end
 
 	# intervals
