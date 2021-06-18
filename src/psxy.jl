@@ -111,7 +111,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	mcc = false
-	if (!got_Zvars)								# Otherwise we don't care about color columns
+	if (!got_Zvars && !is_ternary)				# Otherwise we don't care about color columns
 		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
 		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, arg1, arg2)
 	end

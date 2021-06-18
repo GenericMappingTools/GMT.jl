@@ -910,7 +910,10 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	if ((val = find_in_dict(d, [:par], false)[1]) === nothing)
 		d[:par] = (MAP_GRID_PEN_PRIMARY="thinnest,gray",)
 	end
-	common_plot_xyz(cmd0, arg1, "ternary", first, false, d...)
+	if (GMTver <= v"6.2.0" && (val = find_in_dict(d, [:C :color :cmap], false)[1]) !== nothing && isa(val, GMTcpt))
+		_name = joinpath(tempdir(), "GMTjl_tmp.cpt");	gmtwrite(_name, val);	d[:C] = _name	# Workaround a bug in 6.2.0
+	end
+	common_plot_xyz("", arg1, "ternary", first, false, d...)
 end
 
 function parse_B4ternary!(d::Dict)
