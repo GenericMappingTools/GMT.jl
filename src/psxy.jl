@@ -42,14 +42,19 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		d[:p] = "200/30"		# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
 	end
 
+	if (is_ternary)
+		cmd, opt_B = cmd * d[:B], d[:B]			# B option was parsed in plot/ternary
+		delete!(d, :B)
+		cmd, opt_R = parse_R(d, cmd, O)
+	end
 	if (is_ternary && !first) 	# Either a -J was set and we'll fish it here or no and we'll use the default.
 		def_J = " -JX" * split(def_fig_size, '/')[1]
 		cmd, opt_J = parse_J(d, cmd, def_J)
-		cmd, opt_R = parse_R(d, cmd, O)
-		cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes_))
 	else
 		def_J = (is_ternary) ? " -JX" * split(def_fig_size, '/')[1] : ""		# Gives "-JX14c" 
-		cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
+		if (is_ternary)  cmd, opt_J = parse_J(d, cmd, def_J)
+		else             cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
+		end
 	end
 
 	cmd, opt_JZ = parse_JZ(d, cmd)
