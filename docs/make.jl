@@ -27,6 +27,7 @@ makedocs(
 			"Plotting functions"    => "gallery/plot_funs/plot_funs.md",
 			"Plotyy"                => "gallery/plotyy/plotyy.md",
 			"Spirals"               => "gallery/spirals/spirals.md",
+			"Ternary"               => "gallery/ternary/ternary.md",
 			"UTM and Geog axes"     => "gallery/UTM_Geog_annot/ex28.md",
 		],
 		hide("gallery/scripts_agu/arrows_I.md"),
