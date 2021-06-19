@@ -20,7 +20,7 @@ plot!(ortho, lw=0.5, marker=:circ, ms=0.1, fill=:black, show=true)
 ```
 
 Next we will draw geodesic circles with 500 km radius with center on the orthodrome vertices.
-And to do it we need ofc to compute those circles. We compute the circles with the `cirgeo` function. 
+And to do it we need ofc to compute those circles. We compute the circles with the `circgeo` function. 
 
 ```julia
 c = circgeo(ortho, radius=500, unit=:k);
