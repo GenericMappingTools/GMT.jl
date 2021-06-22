@@ -46,6 +46,15 @@ function init_module(first::Bool, kwargs...)
 	return d, K, O
 end
 
+function GMTsyntax_opt(d::Dict, cmd::String)::String
+	if haskey(d, :GMTopt)
+		o::String = d[:GMTopt]
+		cmd = (o[1] == ' ') ? cmd * o : cmd * " " * o
+		delete!(d, :GMTopt)
+	end
+	cmd
+end
+
 function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	
@@ -801,7 +810,6 @@ parse_bi(d::Dict, cmd::String) = parse_b(d, cmd, [:bi :binary_in])
 parse_bo(d::Dict, cmd::String) = parse_b(d, cmd, [:bo :binary_out])
 # ---------------------------------------------------------------------------------------------------
 
-
 # ---------------------------------------------------------------------------------------------------
 function parse_c(d::Dict, cmd::String)::Tuple{String, String}
 	# Most of the work here is because GMT counts from 0 but here we count from 1, so conversions needed
@@ -829,8 +837,6 @@ function parse_d(d::Dict, cmd::String, symbs::Array{Symbol}=[:d :nodata])
 end
 parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
 parse_do(d::Dict, cmd::String) = parse_d(d, cmd, [:do :nodata_out])
-
-# ---------------------------------------------------------------------------------------------------
 parse_e(d::Dict, cmd::String) = parse_helper(cmd, d, [:e :pattern], " -e")
 parse_f(d::Dict, cmd::String) = parse_helper(cmd, d, [:f :colinfo :coltypes], " -f")
 parse_g(d::Dict, cmd::String) = parse_helper(cmd, d, [:g :gap], " -g")
@@ -873,8 +879,6 @@ end
 
 # ---------------------------------------------------------------------------------
 parse_o(d::Dict, cmd::String) = parse_helper(cmd, d, [:o :outcols :outcol], " -o", ',')
-
-# ---------------------------------------------------------------------------------
 parse_p(d::Dict, cmd::String) = parse_helper(cmd, d, [:p :view :perspective], " -p")
 
 # ---------------------------------------------------------------------------------
@@ -1190,10 +1194,10 @@ end
 function build_pen(d::Dict, del::Bool=false)::String
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
-	lw = add_opt(d, "", "", [:lw :linewidth], nothing, del)	# Line width
+	lw = add_opt(d, "", "", [:lw :linewidth], nothing, del)		# Line width
 	if (lw == "")  lw = add_opt(d, "", "", [:lt :linethick :linethickness], nothing, del)  end	# Line width
-	ls = add_opt(d, "", "", [:ls :linestyle], nothing, del)	# Line style
-	lc = string(parse_pen_color(d, [:lc :linecolor], del))
+	ls = add_opt(d, "", "", [:ls :linestyle], nothing, del)		# Line style
+	lc = parse_pen_color(d, [:lc :linecolor], del)
 	out = ""
 	if (lw != "" || lc != "" || ls != "")
 		out = lw * "," * lc * "," * ls
@@ -1219,6 +1223,92 @@ function parse_arg_and_pen(arg::Tuple, sep="/", pen::Bool=true, opt="")::String
 	end
 	if (length(arg) >= 4) s *= " " * opt * parse_arg_and_pen((arg[3:end]))  end		# Recursive call
 	return s
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_ls_code!(d::Dict)
+	if ((val = find_in_dict(d, [:ls :linestyle])[1]) !== nothing)
+		if (isa(val, String) && (val[1] == '-' || val[1] == '.' || isnumeric(val[1])))
+			d[:ls] = val	# Assume it's a "--." or the more complex len_gap_len_gap... form. So reset it and return
+		else
+			o = mk_styled_line!(d, val)
+			(o !== nothing) && (d[:ls] = o)		# Means used an option like for example ls="DashDot"
+		end
+	end
+	return nothing
+end
+
+function mk_styled_line!(d::Dict, code::String)
+	# Parse the CODE string and generate line style. These line styles can be a single annotated line with symbols
+	# or two lines, one a plain line and the other the symbols to plot. This is achieved by tweaking the D dict
+	# and inserting in it the members that the common_plot_xyz function is expecting.
+	# To get the first type use CODEs as "LineCirc" or "DashDotSquare" or "LineTriang#". The last form will invert
+	# the way the symbol is plotted by drawing a white outline and a filled circle, making it similar to GitHub Traffic.
+	# The second form (annotated line) requires separating the style and marker name by a '&', '_' or '!'. The last
+	# two ways allow sending CODE as a Symbol (e.g. :line!circ). Enclose the "Symbol" in a pair of those markersize
+	# to create an annotated line instead. E.g. ls="Line&Bla Bla Bla&" 
+	_code = lowercase(code)
+	inv = !isletter(code[end])					# To know if we want to make white outline and fill = lc
+	is1line = (occursin("&", _code) || occursin("_", _code) || occursin("!", _code))	# e.g. line&Circ
+	decor_str = false
+	if (is1line && (_code[end] == '&' || _code[end] == '_' || _code[end] == '!') &&		# For case code="Dash&Bla Bla&"
+		(length(findall("&",_code)) == 2 || length(findall("_",_code)) == 2 || length(findall("!",_code)) == 2))
+		decor_str, inv = true, true				# Setting inv=true is an helper. It avoids reading the flag as part of text
+	end
+
+	if     (startswith(_code, "line"))        ls = "";     symbol = (length(_code) == 4)  ? "" : code[5 + is1line : end-inv]
+	elseif (startswith(_code, "dashdot"))     ls = "-.";   symbol = (length(_code) == 7)  ? "" : code[8 + is1line : end-inv]
+	elseif (startswith(_code, "dashdashdot")) ls = "--.";  symbol = (length(_code) == 11) ? "" : code[12+ is1line : end-inv]
+	elseif (startswith(_code, "dash"))        ls = "-";    symbol = (length(_code) == 4)  ? "" : code[5 + is1line : end-inv]
+	elseif (startswith(_code, "dotdotdash"))  ls = "..-";  symbol = (length(_code) == 10) ? "" : code[11+ is1line : end-inv]
+	elseif (startswith(_code, "dot"))         ls = ".";    symbol = (length(_code) == 3)  ? "" : code[4 + is1line : end-inv]
+	else   error("Bad line style declaration. Options are (for example with a Circle) [Line|DashDot|Dash|Dot]Circ")
+	end
+
+	(symbol == "") && return ls		# It means only the line style was transmitted. Return to allow use as ls="DashDot"
+
+	lc = parse_pen_color(d, [:lc :linecolor], false)
+	lw = add_opt(d, "", "", [:lw :linewidth])		# Line width
+	d[:ls] = ls										# The linestyle picked above
+	d[:lw] = (lw != "") ? lw : "0.75"
+
+	if (is1line)									# e.g. line&Circ or line_Triang or line!Square
+		if (decor_str)
+			d[:GMTopt] = line_decorated_with_string(symbol)
+		else	
+			d[:GMTopt] = line_decorated_with_symbol(lw=lw, lc=lc, symbol=symbol)
+		end
+	else											# e.g. lineCirc
+		marca = get_marker_name(Dict(:marker => symbol), nothing, [:marker], false)[1]	# This fun lieves in psxy.jl
+		(marca == "") && error("The selected symbol [$(symbol)] is invalid")
+		if (isletter(code[end]))
+			f = 4									# Multiplying factor for the symbol size
+			d[:ml], d[:mc] = (lc == "") ? d[:lw] : (d[:lw], lc), "white"	# MarkerLine and MarkerColor
+		else										# Invert the above. I.e. white outline and lc fill color
+			f = 5
+			d[:ml], d[:mc] = (d[:lw], "white"), lc
+		end
+		d[:symbol] = string(marca, round(f * parse(Float64,d[:lw]) * 2.54/72, digits=2))
+	end
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function line_decorated_with_symbol(; lw=0.75, lc="black", ms=0, symbol="circ", dist=0, fill="white")::String
+	# Create an Annotated line with few controls. We estimate the symbol size after the line thickness.
+	(lc == "") && (lc = "black")
+	_lw = (lw == "") ? 0.75 : isa(lw, String) ? parse(Float64, lw) : lw		# If last case is not numeric ...
+	ss = (ms != 0) ? ms : round(4 * _lw * 2.54/72, digits=2)
+	_dist = (dist == 0) ? 4ss : dist * ss
+	decorated(dist=_dist, symbol=symbol, size=ss, pen=(_lw,lc), fill=fill, dec2=true)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function line_decorated_with_string(str::AbstractString; dist=0)::String
+	# Create an Quoted line with few controls.
+	str_len = length(str) * 4 * 2.54/72		# Very rough estimate of line length assuming a font od ~9 pts
+	_dist = (dist == 0) ? max(3, round(str_len * 3, digits=1)) : dist	# Simple heuristic to estimate dist
+	decorated(dist=_dist, const_label=str, quoted=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2347,12 +2437,12 @@ function decorated(;kwargs...)::String
 
 	if (haskey(d, :dec2))				# -S~ mode (decorated, with symbols, lines).
 		cmd *= ":"
-		marca = get_marker_name(d, nothing, [:marker :symbol], false)[1]	# This fun lieves in psxy.jl
+		marca = get_marker_name(d, nothing, [:marker, :symbol], false)[1]	# This fun lieves in psxy.jl
 		if (marca == "")
 			cmd = "+sa0.5" * cmd
 		else
 			cmd *= "+s" * marca
-			if ((val = find_in_dict(d, [:size :markersize :symbsize :symbolsize])[1]) !== nothing)
+			if ((val = find_in_dict(d, [:size :ms :markersize :symbsize :symbolsize])[1]) !== nothing)
 				cmd *= arg2str(val);
 			end
 		end
