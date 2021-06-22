@@ -25,9 +25,9 @@ man page.
 
 Before diving more in the way options may be transmitted into the module, we have to understand what
 happens with the output image file. By not directly specifying any format we are using the default
-output image format which is PostScript (actually, except for *grdimage -A*, the only
-format that *GMT* can write). But we can select other formats by using the *fmt* keyword, for example
-*fmt="jpg"*, or *fmt=:png* or *fmt=:pdf*. In such cases, the *ghostscript* program (you need to have
+output image format which is PNG (actually, except for *grdimage -A*, the only format that
+*GMT* can write PostScript). But we can select other formats by using the *fmt* keyword, for example
+*fmt="jpg"* or *fmt=:pdf*. In such cases, the *ghostscript* program (you need to have
 it installed) will take care of converting the *ps* file into the selected format.
 
 When runing from Jupyter notebooks one does not need to worry about the image format. In fact the only
@@ -83,7 +83,7 @@ Setting line and symbol attributes has received, however, a set of aliases. So, 
 pen line attributes like *-W0.5,blue,--*, one can use the aliases *lw=0.5, lc="blue", ls="--"*. An
 example would be:
 
-    plot(collect(1:10),rand(10), lw=0.5, lc=:blue, ls="--", fmt=:png, marker=:circle,
+    plot(collect(1:10),rand(10), lw=0.5, lc=:blue, ls="--", marker=:circle,
          markeredgecolor=0, size=0.2, markerfacecolor=:red, title="Bla Bla",
          x_label=:Spoons, y_label=:Forks, show=true)
 
@@ -110,7 +110,7 @@ tuple-in-a-tuple because here we need also to specify the political boundary lev
 So, in summary, a *pen* attribute may be set in three different ways:
 
 1. With a text string that follows the *width*, *color*, *style* specs as explained in
-   [`Specifying pen attributes`] (http://gmt.soest.hawaii.edu/doc/latest/GMT_Docs.html#specifying-pen-attributes)
+   [`Specifying pen attributes`](https://docs.generic-mapping-tools.org/latest/cookbook/features.html#wpen-attrib)
 
 2. By using the **lw** or **linewidth** keyword where its value is either a number, meaning the
    line thickness in points, or a string like the *width* above; the color is set with the
