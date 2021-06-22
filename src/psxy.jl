@@ -60,9 +60,11 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd, opt_JZ = parse_JZ(d, cmd)
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :l :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
+	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)
+	cmd  = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
 	(is_ternary) && (cmd = add_opt(d, cmd, 'M', [:M :dump]))
-	opt_UVXY = parse_UVXY(d, "")	# Need it separate to not risk to double include it.
-	cmd, opt_c = parse_c(d, cmd)	# Need opt_c because we may need to remove it from double calls
+	opt_UVXY = parse_UVXY(d, "")		# Need it separate to not risk to double include it.
+	cmd, opt_c = parse_c(d, cmd)		# Need opt_c because we may need to remove it from double calls
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
 	got_usr_R = (opt_R != "") ? true : false			# To know if the user set -R or we guessed it from data
@@ -150,14 +152,13 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	opt_S = add_opt(d, "", 'S', [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
-		marca, arg1, more_cols = get_marker_name(d, arg1, [:marker :Marker :shape], is3D, true)
+		marca, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
 		if ((val = find_in_dict(d, [:markersize :MarkerSize :ms :size])[1]) !== nothing)
-			if (marca == "")  marca = "c"  end		# If a marker name was not selected, defaults to circle
+			(marca == "") && (marca = "c")			# If a marker name was not selected, defaults to circle
 			if (isa(val, AbstractArray))
 				(length(val) != size(arg1,1)) &&
 					error("The size array must have the same number of elements rows in the data")
 				arg1 = hcat(arg1, val[:])
-				#arg1 = hcat(arg1, convert(eltype(arg1), val[:]))
 			elseif (string(val) != "indata")
 				marca *= arg2str(val);
 			end
@@ -170,7 +171,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 			if (!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw"))  opt_S *= def_size  end
 		end
 	else
-		val, symb = find_in_dict(d, [:markersize :MarkerSize :ms :size])
+		val, symb = find_in_dict(d, [:ms :markersize :MarkerSize :size])
 		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
 		val, symb = find_in_dict(d, [:marker :Marker :shape])
 		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
@@ -178,7 +179,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	opt_ML = ""
 	if (opt_S != "")
-		if ((val = find_in_dict(d, [:markerline :MarkerLine :ml])[1]) !== nothing)
+		if ((val = find_in_dict(d, [:ml :markerline :MarkerLine])[1]) !== nothing)
 			if (isa(val, Tuple))           opt_ML = " -W" * parse_pen(val) # This can hold the pen, not extended atts
 			elseif (isa(val, NamedTuple))  opt_ML = add_opt_pen(nt2dict(val), [:pen], "W")
 			else                           opt_ML = " -W" * arg2str(val)
@@ -187,7 +188,6 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 				@warn("markerline overrides markeredgecolor");		opt_Wmarker = ""
 			end
 		end
-		(opt_W != "" && opt_ML != "") && @warn("You cannot use both markerline and W or pen keys.")
 	end
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
@@ -232,7 +232,7 @@ function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker,
 			cmd1 = cmd * opt_W * opt_UVXY
 			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
 			(opt_c != "")  && (cmd2 = replace(cmd2, opt_c => ""))  				# Not in scond call (subplots)
-			(opt_ML != "") && (cmd1 = cmd1 * opt_ML)				# If we have a symbol outline pen
+			(opt_ML != "") && (cmd2 = cmd2 * opt_ML)				# If we have a symbol outline pen
 			_cmd = [cmd1; cmd2]
 		end
 
@@ -485,7 +485,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_marker_name(d::Dict, arg1, symbs::Array{Symbol}, is3D::Bool, del::Bool=true)
+function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::Bool=true)
 	marca = Array{String,1}(undef,1)
 	marca = [""];		N = 0
 	for symb in symbs
