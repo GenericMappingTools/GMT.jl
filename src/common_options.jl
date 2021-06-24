@@ -1250,10 +1250,11 @@ function mk_styled_line!(d::Dict, code::String)
 	_code = lowercase(code)
 	inv = !isletter(code[end])					# To know if we want to make white outline and fill = lc
 	is1line = (occursin("&", _code) || occursin("_", _code) || occursin("!", _code))	# e.g. line&Circ
-	decor_str = false
 	if (is1line && (_code[end] == '&' || _code[end] == '_' || _code[end] == '!') &&		# For case code="Dash&Bla Bla&"
 		(length(findall("&",_code)) == 2 || length(findall("_",_code)) == 2 || length(findall("!",_code)) == 2))
 		decor_str, inv = true, true				# Setting inv=true is an helper. It avoids reading the flag as part of text
+	else
+		decor_str = false
 	end
 
 	if     (startswith(_code, "line"))        ls = "";     symbol = (length(_code) == 4)  ? "" : code[5 + is1line : end-inv]
@@ -1262,7 +1263,7 @@ function mk_styled_line!(d::Dict, code::String)
 	elseif (startswith(_code, "dash"))        ls = "-";    symbol = (length(_code) == 4)  ? "" : code[5 + is1line : end-inv]
 	elseif (startswith(_code, "dotdotdash"))  ls = "..-";  symbol = (length(_code) == 10) ? "" : code[11+ is1line : end-inv]
 	elseif (startswith(_code, "dot"))         ls = ".";    symbol = (length(_code) == 3)  ? "" : code[4 + is1line : end-inv]
-	else   error("Bad line style declaration. Options are (for example with a Circle) [Line|DashDot|Dash|Dot]Circ")
+	else   error("Bad line style. Options are (for example) [Line|DashDot|Dash|Dot]Circ")
 	end
 
 	(symbol == "") && return ls		# It means only the line style was transmitted. Return to allow use as ls="DashDot"
@@ -1285,8 +1286,7 @@ function mk_styled_line!(d::Dict, code::String)
 			f = 4									# Multiplying factor for the symbol size
 			d[:ml], d[:mc] = (lc == "") ? d[:lw] : (d[:lw], lc), "white"	# MarkerLine and MarkerColor
 		else										# Invert the above. I.e. white outline and lc fill color
-			f = 5
-			d[:ml], d[:mc] = (d[:lw], "white"), lc
+			d[:ml], d[:mc], f = (d[:lw], "white"), lc, 5
 		end
 		d[:symbol] = string(marca, round(f * parse(Float64,d[:lw]) * 2.54/72, digits=2))
 	end
@@ -1308,7 +1308,7 @@ function line_decorated_with_string(str::AbstractString; dist=0)::String
 	# Create an Quoted line with few controls.
 	str_len = length(str) * 4 * 2.54/72		# Very rough estimate of line length assuming a font od ~9 pts
 	_dist = (dist == 0) ? max(3, round(str_len * 3, digits=1)) : dist	# Simple heuristic to estimate dist
-	decorated(dist=_dist, const_label=str, quoted=true)
+	decorated(dist=_dist, const_label=str, quoted=true, curved=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
