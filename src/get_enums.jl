@@ -87,4 +87,9 @@ enu = GMT_Get_Enum(API, "GMT_CPT_HINGED");	const global GMT_CPT_HINGED = (enu !=
 enu = GMT_Get_Enum(API, "GMT_IS_PALETTE_KEY");		const global GMT_IS_PALETTE_KEY = (enu != -99999) ? enu : 1024
 enu = GMT_Get_Enum(API, "GMT_IS_PALETTE_LABEL");	const global GMT_IS_PALETTE_LABEL = (enu != -99999) ? enu : 2048
 
+# GMT_enum_workflowmode
+enu = GMT_Get_Enum(API, "GMT_USE_WORKFLOW");		const global GMT_USE_WORKFLOW = (enu != -99999) ? enu : 0
+enu = GMT_Get_Enum(API, "GMT_BEGIN_WORKFLOW");		const global GMT_BEGIN_WORKFLOW = (enu != -99999) ? enu : 1
+enu = GMT_Get_Enum(API, "GMT_END_WORKFLOW");		const global GMT_END_WORKFLOW = (enu != -99999) ? enu : 2
+
 GMT_Destroy_Session(API);

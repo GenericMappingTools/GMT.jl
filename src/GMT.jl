@@ -78,7 +78,7 @@ const global IamModern   = Vector{Bool}(undef, 1);IamModern[1] = false		# To kno
 const global FirstModern = Vector{Bool}(undef, 1);FirstModern[1] = false	# To know 
 const global IamSubplot  = Vector{Bool}(undef, 1);IamSubplot[1]  = false	# To know if we are in subplot mode
 const global usedConfPar = Vector{Bool}(undef, 1);usedConfPar[1] = false	# Hacky solution for the session's memory trouble
-const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false	# To know if we have an active plot theme
+const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false		# To know if we have an active plot theme
 const global convert_syntax = Vector{Bool}(undef, 1);convert_syntax[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
 const global show_kwargs = Vector{Bool}(undef, 1);show_kwargs[1] = false	# To just print the kwargs of a option call)
 const global FMT = ["png"]
@@ -261,10 +261,10 @@ function __init__(test::Bool=false)
 
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
 	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
-	if (API == C_NULL)  error("Failure to create a GMT Session")  end
-	if haskey(ENV, "JULIA_GMT_IMGFORMAT")  FMT[1] = ENV["JULIA_GMT_IMGFORMAT"]  end
-	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
-	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
+	(API == C_NULL) && error("Failure to create a GMT Session")
+	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
+	#f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
+	#(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 	gmtlib_setparameter(API, "COLOR_NAN", "255")			# Stop those uggly grays
 end
 
