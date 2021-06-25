@@ -1250,11 +1250,10 @@ function mk_styled_line!(d::Dict, code::String)
 	_code = lowercase(code)
 	inv = !isletter(code[end])					# To know if we want to make white outline and fill = lc
 	is1line = (occursin("&", _code) || occursin("_", _code) || occursin("!", _code))	# e.g. line&Circ
+	decor_str = false
 	if (is1line && (_code[end] == '&' || _code[end] == '_' || _code[end] == '!') &&		# For case code="Dash&Bla Bla&"
 		(length(findall("&",_code)) == 2 || length(findall("_",_code)) == 2 || length(findall("!",_code)) == 2))
 		decor_str, inv = true, true				# Setting inv=true is an helper. It avoids reading the flag as part of text
-	else
-		decor_str = false
 	end
 
 	if     (startswith(_code, "line"))        ls = "";     symbol = (length(_code) == 4)  ? "" : code[5 + is1line : end-inv]
