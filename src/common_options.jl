@@ -3039,7 +3039,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 			elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
 			end
 		end
-		(ThemeIsOn[1]) && (reset_defaults(API);	ThemeIsOn[1] = false)
+		(ThemeIsOn[1]) && (pure_modern();	ThemeIsOn[1] = false)
 	end
 	return nothing
 end

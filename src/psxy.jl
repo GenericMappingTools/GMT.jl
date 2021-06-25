@@ -201,6 +201,14 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	arg1 = helper_multi_cols(d, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D, multi_col, _cmd,
 	                         sub_module, g_bar_fill, got_Ebars, got_usr_R)
 
+	# Try to limit the damage of this Fker bug in 6.2.0
+	if (mcc || got_Ebars && (GMTver == v"6.2.0" && isGMTdataset(arg1) && occursin(" -i", cmd)) )
+		if (isa(arg1, GMTdataset))	arg1 = arg1.data
+		elseif (isa(arg1, Vector{<:GMTdataset}))
+			(length(arg1) > 1) && @warn("Due to a bug in GMT6.2.0 I'm forced to use only the first segment")
+			arg1 = arg1[1].data
+		end
+	end
 	(!IamModern[1]) && put_in_legend_bag(d, _cmd, arg1)
 
 	_cmd = gmt_proggy .* _cmd				# In any case we need this
@@ -406,7 +414,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	if (!(N_args > n_prev || len < length(cmd)) && mz === nothing)	# No color request, so return right away
 		return cmd, arg1, arg2, N_args, false
 	end
-		
+
 	# Filled polygons with -Z don't need extra col
 	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, arg2, N_args, false
 

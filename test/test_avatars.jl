@@ -151,6 +151,7 @@
 	bar(1:5, [20 25; 35 32; 30 34; 35 20; 27 25], fill=["lightblue", "brown"], xticks=(:G1, :G2, :G3, :G4), zticks=(:Z1,:Z2), Vd=dbg2)
 	bar(1:3,[-5 -15 20; 17 10 21; 10 5 15], stacked=1, Vd=dbg2)
 	bar([0. 1 2 3; 1 2 3 4], fill=("red", "green", "blue"), Vd=dbg2)
+	bar(rand(15), color=:rainbow, Y=3)
 	T = mat2ds([1.0 0.446143; 2.0 0.581746; 3.0 0.268978], text=[" "; " "; " "]);
 	bar(T, color=:rainbow, figsize=(14,8), title="Colored bars", Vd=dbg2)
 	T = mat2ds([1.0 0.446143 0; 2.0 0.581746 0; 3.0 0.268978 0], text=[" "; " "; " "]);

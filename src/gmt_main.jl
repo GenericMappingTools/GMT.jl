@@ -175,7 +175,8 @@ function gmt(cmd::String, args...)
 	pad = 2
 	if (!isa(API, Ptr{Nothing}) || API == C_NULL)
 		API = GMT_Create_Session("GMT", pad, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
-		if (API == C_NULL)  error("Failure to create a GMT Session")  end
+		(API == C_NULL) && error("Failure to create a GMT Session")
+		#pure_modern()			# Set the MODERN theme
 	end
 
 	if (g_module == "destroy")

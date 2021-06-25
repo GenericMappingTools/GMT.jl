@@ -57,7 +57,7 @@ function fonts_colors_settings(fonts, colors, bg_color)
 	gmtlib_setparameter(API, "FONT_TAG", "auto,$(fonts[1]),$(colors[1])")
 	gmtlib_setparameter(API, "FONT_TITLE", "auto,$(fonts[2]),$(colors[1])")
 	gmtlib_setparameter(API, "MAP_DEFAULT_PEN", "0.25p,$(colors[1])")
-	gmtlib_setparameter(API, "MAP_FRAME_PEN", "0.5p,$(colors[1])")
+	gmtlib_setparameter(API, "MAP_FRAME_PEN", "0.75,$(colors[1])")
 	gmtlib_setparameter(API, "MAP_GRID_PEN_PRIMARY", "auto,$(colors[1])")
 	gmtlib_setparameter(API, "MAP_GRID_PEN_SECONDARY", "auto,$(colors[2])")
 	gmtlib_setparameter(API, "MAP_TICK_PEN_PRIMARY", "auto,$(colors[1])")
@@ -68,10 +68,10 @@ end
 # ---------------------------------------------------------------------------------------------------
 function pure_modern()
 	# Set the MODERN mode settings
-	IamModern[1] && return nothing		# Already modern so nothing to do
+	#IamModern[1] && return nothing		# Already modern so nothing to do
 	swapmode(classic=false)				# Set GMT->current.setting.run_mode = GMT_MODERN
 	reset_defaults(API)					# Set the modern mode settings
-	gmtlib_setparameter(API, "MAP_FRAME_PEN", "0.5p")
+	gmtlib_setparameter(API, "MAP_FRAME_PEN", "0.75")
 	swapmode(classic=true)				# Reset GMT->current.setting.run_mode = GMT_CLASSIC
 end
 
