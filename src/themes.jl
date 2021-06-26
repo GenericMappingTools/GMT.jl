@@ -1,14 +1,41 @@
-function theme(name::String=""; kwargs...)
+"""
+    theme(name; kwrgs...)
+
+Offer themes support. NAME is the theme name. So far the three options are:
+
+- `modern`: - This is the default theme (same as GMT modern theme but with thinner FRAME_PEN [0.75p])
+- `classic`: - The GMT classic theme
+- `drak`: - A modern theme variation with dark background.
+
+On top of the modern mode variations (so far `dark` only) one can set the following `kwargs` options:
+
+- `noticks` or `no_ticks`: Axes will have annotations but no tick marks
+- `inner_ticks` or `innerticks`: - Ticks will be drawn inside the axes instead of outside.
+- `gray_grid` or `graygrid`: - When drawing grid line use `gray` instead of `black`
+- `save`: - Save the name in the directory printed in shell by ``gmt --show-userdir`` and make it permanent.
+- `reset`: - Remove the saved theme name and return to the default `modern` theme.
+
+Note: Except `save` and `reset`, the changes operated by the `kwargs` are temporary and operate only until
+an image is `show`(n) or saved.
+
+This function can be called alone, e.g. ``theme("dark")`` or as an option in the ``plot()`` module.
+"""
+function theme(name; kwargs...)
+	# Provide the support. 
 	d = KW(kwargs)
 	font = ((val = find_in_dict(d, [:font])[1]) !== nothing) ? string(val) : ""
 	bg_color = ((val = find_in_dict(d, [:bg_color])[1]) !== nothing) ? string(val) : ""
 	color = ((val = find_in_dict(d, [:fg_color])[1]) !== nothing) ? string(val) : ""
-	pure_modern()			# All themes are variations over the GMT_MODERN theme
 
-	if (name == :dark || name == "dark")
-		helper_theme_fonts_colors(font, color, bg_color, true)
-	elseif (font != "" || color != "")		# We wont consider bg_color important enough to trigger next call
-		helper_theme_fonts_colors(font, color, bg_color, false)
+	if (name == :classic || name == "classic")
+		theme_classic()
+	else
+		theme_modern()			# All other themes are variations over the GMT_MODERN theme
+		if (name == :dark || name == "dark")
+			helper_theme_fonts_colors(font, color, bg_color, true)
+		elseif (font != "" || color != "")		# We wont consider bg_color important enough to trigger next call
+			helper_theme_fonts_colors(font, color, bg_color, false)
+		end
 	end
 
 	if (find_in_dict(d, [:noticks :no_ticks])[1] !== nothing)
@@ -25,14 +52,12 @@ function theme(name::String=""; kwargs...)
 	end
 
 	isOn = true				# Means this theme will be reset to the default (modern) in showfig()
-	#=
 	if (haskey(d, :save) || haskey(d, "save"))
 		f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
 		(isfile(f)) && rm(f)
-		#(name == :none || name == "none") ? reset_defaults(API) : write(f, string(name))
+		(name == :reset || name == "reset") ? theme_modern() : write(f, string(name))
 		isOn = false		# So we wont reset defaults in showfig()
 	end
-	=#
 	ThemeIsOn[1] = isOn
 	return nothing
 end
@@ -66,17 +91,23 @@ function fonts_colors_settings(fonts, colors, bg_color)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function pure_modern()
+function theme_modern()
 	# Set the MODERN mode settings
-	#IamModern[1] && return nothing		# Already modern so nothing to do
-	swapmode(classic=false)				# Set GMT->current.setting.run_mode = GMT_MODERN
+	swapmode(API, classic=false)		# Set GMT->current.setting.run_mode = GMT_MODERN
 	reset_defaults(API)					# Set the modern mode settings
 	gmtlib_setparameter(API, "MAP_FRAME_PEN", "0.75")
-	swapmode(classic=true)				# Reset GMT->current.setting.run_mode = GMT_CLASSIC
+	!IamModern[1] && swapmode(API, classic=true)	# Reset GMT->current.setting.run_mode = GMT_CLASSIC
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
-function swapmode(; classic::Bool=true)
+function theme_classic()
+	swapmode(API, classic=true)			# Set GMT->current.setting.run_mode = GMT_CLASSIC
+	reset_defaults(API)					# Set the classic mode settings
+end
+
+# ---------------------------------------------------------------------------------------------------
+function swapmode(API; classic::Bool=true)
 	# GMT6.2 shot out the access the gmtinit_conf_classic() and gmtinit_conf_modern() functions
 	# (declared them GMT_LOCAL) and direct access to members of the API mega-structure is,
 	# for the time being, impractical so we must resort to tricks. This function changes the state
