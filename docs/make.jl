@@ -105,6 +105,7 @@ makedocs(
 				"color.md",
 				"decorated.md",
 				"symbols.md",
+				"themes.md",
 			],
 		],
 		"Modules manuals" => [
