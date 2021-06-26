@@ -5,7 +5,7 @@ const global GMT_SESSION_EXTERNAL = 2   # Called by an external API
 const global GMT_SESSION_COLMAJOR = 4   # External API uses column-major formats. [Row-major format]
 
 API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
-if (API == C_NULL)  error("Failure to create a GMT Session")  end
+(API == C_NULL) && error("Failure to create a GMT Session")
 
 enu = GMT_Get_Enum(API, "GMT_CHAR");	const global GMT_CHAR  = (enu != -99999) ? enu : 0
 enu = GMT_Get_Enum(API, "GMT_UCHAR");	const global GMT_UCHAR  = (enu != -99999) ? enu : 1
