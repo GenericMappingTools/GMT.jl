@@ -4,26 +4,11 @@ end
 
 function GMT_Create_Data(API::Ptr{Cvoid}, family::Integer, geometry, mode, dim=NULL, wesn=NULL,
                          inc=NULL, registration=0, pad=2, data::Ptr{Cvoid}=NULL)
-
-#=
-	if (family == GMT_IS_DATASET)        ret_type = Ptr{GMT_DATASET}
-	elseif (family == GMT_IS_GRID)       ret_type = Ptr{GMT_GRID}
-	elseif (family == GMT_IS_PALETTE)    ret_type = Ptr{GMT_PALETTE}
-	elseif (family == GMT_IS_IMAGE || family == GMT_IS_IMAGE | GMT_IMAGE_ALPHA_LAYER)	ret_type = Ptr{GMT_IMAGE}
-	elseif (family == GMT_IS_MATRIX)     ret_type = Ptr{GMT_MATRIX}
-	elseif (family == GMT_IS_MATRIX | GMT_VIA_MATRIX) ret_type = Ptr{GMT_MATRIX}
-	elseif (family == GMT_IS_VECTOR)     ret_type = Ptr{GMT_VECTOR}
-	elseif (family == GMT_IS_POSTSCRIPT) ret_type = Ptr{GMT_POSTSCRIPT}
-	else                                 error("Unknown family type")
-	end
-=#
-
 	ptr = ccall((:GMT_Create_Data, libgmt), Ptr{Cvoid}, (Cstring, UInt32, UInt32, UInt32, Ptr{UInt64},
 		Ptr{Cdouble}, Ptr{Cdouble}, UInt32, Cint, Ptr{Cvoid}), API, family, geometry, mode, dim, wesn, inc,
 		registration, pad, data)
 
 	(ptr == C_NULL) && error("Failure to allocate GMT resource")
-	#convert(ret_type, ptr)
 	ptr
 end
 

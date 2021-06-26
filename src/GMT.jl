@@ -113,8 +113,8 @@ export
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
 	mbimport, mbgetdata, mbsvplist, mblevitus,
-	blendimg!, lonlat2xy, xy2lonlat, mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, geodetic2enu,
-	cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, varspacegrid, MODIS_L2, 
+	blendimg!, lonlat2xy, xy2lonlat, mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, theme,
+	geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, varspacegrid, MODIS_L2, 
 
 	getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 	importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
@@ -262,10 +262,11 @@ function __init__(test::Bool=false)
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
 	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 	(API == C_NULL) && error("Failure to create a GMT Session")
+	theme_modern()				# Set the MODERN theme
 	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
-	#f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
-	#(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
-	gmtlib_setparameter(API, "COLOR_NAN", "255")			# Stop those uggly grays
+	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
+	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
+	gmtlib_setparameter(API, "COLOR_NAN", "255")				# Stop those uggly grays
 end
 
 include("precompile_GMT_i.jl")

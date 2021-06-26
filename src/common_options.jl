@@ -1238,7 +1238,7 @@ function parse_ls_code!(d::Dict)
 	return nothing
 end
 
-function mk_styled_line!(d::Dict, code::String)
+function mk_styled_line!(d::Dict, code)
 	# Parse the CODE string and generate line style. These line styles can be a single annotated line with symbols
 	# or two lines, one a plain line and the other the symbols to plot. This is achieved by tweaking the D dict
 	# and inserting in it the members that the common_plot_xyz function is expecting.
@@ -1246,7 +1246,8 @@ function mk_styled_line!(d::Dict, code::String)
 	# the way the symbol is plotted by drawing a white outline and a filled circle, making it similar to GitHub Traffic.
 	# The second form (annotated line) requires separating the style and marker name by a '&', '_' or '!'. The last
 	# two ways allow sending CODE as a Symbol (e.g. :line!circ). Enclose the "Symbol" in a pair of those markersize
-	# to create an annotated line instead. E.g. ls="Line&Bla Bla Bla&" 
+	# to create an annotated line instead. E.g. ls="Line&Bla Bla Bla&"
+	isa(code, Symbol) && (code = string(code))
 	_code = lowercase(code)
 	inv = !isletter(code[end])					# To know if we want to make white outline and fill = lc
 	is1line = (occursin("&", _code) || occursin("_", _code) || occursin("!", _code))	# e.g. line&Circ
@@ -3039,7 +3040,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 			elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
 			end
 		end
-		(ThemeIsOn[1]) && (pure_modern();	ThemeIsOn[1] = false)
+		(ThemeIsOn[1]) && (theme_modern();	ThemeIsOn[1] = false)
 	end
 	return nothing
 end

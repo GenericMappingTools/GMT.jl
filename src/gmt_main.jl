@@ -163,7 +163,7 @@ function gmt(cmd::String, args...)
 		if (r == "")  r = "GMTplot " * FMT[1]  end
 		IamModern[1] = true
 	elseif (g_module == "end")
-		IamModern[1] = false
+		#IamModern[1] = false
 	elseif (r == "" && n_argin == 0) # Just requesting usage message, add -? to options
 		r = "-?"
 	elseif (n_argin > 1 && (g_module == "psscale" || g_module == "colorbar"))	# Happens with nested calls like in grdimage
@@ -176,7 +176,7 @@ function gmt(cmd::String, args...)
 	if (!isa(API, Ptr{Nothing}) || API == C_NULL)
 		API = GMT_Create_Session("GMT", pad, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 		(API == C_NULL) && error("Failure to create a GMT Session")
-		#pure_modern()			# Set the MODERN theme
+		theme_modern()			# Set the MODERN theme
 	end
 
 	if (g_module == "destroy")
@@ -332,8 +332,13 @@ function gmt(cmd::String, args...)
 	# 9. Destroy linked option list
 	GMT_Destroy_Options(API, pLL)
 
-	if (IamModern[1])  GMT_Destroy_Session(API);	API = nothing  end	# Needed, otherwise history is not updated
 	#if (IamModern[1])  gmt_put_history(API);	end	# Needed, otherwise history is not updated
+	if (IamModern[1])
+		GMT_Destroy_Session(API)	# Needed, otherwise history is not updated
+		API = GMT_Create_Session("GMT", pad, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
+		(API == C_NULL) && error("Failure to create a GMT Session")
+		theme_modern()				# Set the MODERN theme
+	end
 
 	img_mem_layout[1] = "";		grd_mem_layout[1] = ""		# Reset to not afect next readings
 

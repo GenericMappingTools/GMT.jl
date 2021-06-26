@@ -46,7 +46,7 @@ psconvert("lixo.ps", adjust=true, Vd=dbg2)
 P = gmtread("lixo.ps", ps=true);
 gmtwrite("lixo.ps", P)
 psconvert(P, adjust=true, in_memory=true, Vd=dbg2)
-gmt("psconvert lixo.ps");
+gmt("psconvert -Tf lixo.ps");
 gmt("psconvert -A lixo.ps");
 gmt("write lixo.ps", P)		# Test also this case in gmt_main
 
@@ -178,6 +178,6 @@ pstext!(["MERDA"], x=2.0, y=2.0, Vd=2)
 println("	PSWIGGLE")
 t=[0 7; 1 8; 8 3; 10 7];
 t1=gmt("sample1d -I5k", t); t2 = gmt("mapproject -G+uk", t1); t3 = gmt("math ? -C2 10 DIV COS", t2);
-wiggle(t3,R="-1/11/0/12", J="M8",B="af WSne", W="0.25p", Z="4c", G="+green", T="0.5p", A=1, Y="0.75i", S="8/1/2")
+wiggle(t3,R="-1/11/0/12", J="M8",B="af WSne", W="0.25p", Z="4c", G="+green", T="0.5p", A=1, Y="0.75i")
 wiggle!(t3,R="-1/11/0/12", J="M8",Z="4c", A=1, Y="0.75i", S="8/1/2", Vd=dbg2)
 wiggle!("",t3,R="-1/11/0/12", J="M8",Z="4c", A=1, Y="0.75i", S="8/1/2", Vd=dbg2)
