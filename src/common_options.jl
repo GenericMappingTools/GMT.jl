@@ -3011,7 +3011,10 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	# OPT_T holds the psconvert -T option, again when not PS
 	# FNAME is for when using the savefig option
 
-	global current_cpt[1] = GMTcpt()		# Reset to empty when fig is finalized
+	global current_cpt[1] = GMTcpt()			# Reset to empty when fig is finalized
+
+	digests_legend_bag(d)						# Plot the legend if requested
+
 	if (fname == "" && (isdefined(Main, :IJulia) && Main.IJulia.inited) ||
 	                    isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module)
 		opt_T = " -Tg"; fname_ext = "png"		# In Jupyter or Pluto, png only
@@ -3049,7 +3052,7 @@ end
 # Use only to close PS fig and optionally convert/show
 function showfig(; kwargs...)
 	d = KW(kwargs)
-	if (!haskey(d, :show))  d[:show] = true  end		# The default is to show
+	(!haskey(d, :show)) && (d[:show] = true)		# The default is to show
 	finish_PS_module(d, "psxy -R0/1/0/1 -JX0.001c -T -O", "", false, true, true)
 end
 
@@ -3158,8 +3161,6 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		P = gmt(cmd[k], args...)
 	end
 
-	(!IamModern[1]) && digests_legend_bag(d, true)			# Plot the legend if requested
-
 	if (usedConfPar[1])				# Hacky shit to force start over when --PAR options were use
 		usedConfPar[1] = false;		gmt("destroy")
 	end
@@ -3199,13 +3200,21 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 	# So far this fun is only called from plot() and stores line/symbol info in global var LEGEND_TYPE
 	global legend_type
 
+	valLegend = find_in_dict(d, [:legend], false)[1]	# false because we must keep alive till digests_legend_bag()
+	valLabel = find_in_dict(d, [:label])[1]
+	(valLegend === nothing && valLabel === nothing && legend_type === nothing) && return # If neither, nothing else to do here
+	if (valLabel === nothing && isa(valLegend, NamedTuple))		# See if it has a legend=(label="blabla",)
+		key = keys(valLegend)
+		((ind = findfirst(key .== :label)) !== nothing) && (valLabel = valLegend[ind])
+	end
+
 	cmd_ = cmd									# Starts to be just a shallow copy
-	if (isa(arg, Array{<:GMTdataset,1}))		# Multi-segments can have different settings per line
+	if (isa(arg, Vector{<:GMTdataset}))			# Multi-segments can have different settings per line
 		(isa(cmd, String)) ? cmd_ = deepcopy([cmd]) : cmd_ = deepcopy(cmd)
-		lix, penC, penS = break_pen(scan_opt(arg[1].header, "-W"))
+		_, penC, penS = break_pen(scan_opt(arg[1].header, "-W"))
 		penT, penC_, penS_ = break_pen(scan_opt(cmd_[end], "-W"))
-		if (penC == "")  penC = penC_  end
-		if (penS == "")  penS = penS_  end
+		(penC == "") && (penC = penC_)
+		(penS == "") && (penS = penS_)
 		cmd_[end] = "-W" * penT * ',' * penC * ',' * penS * " " * cmd_[end]	# Trick to make the parser find this pen
 		pens = Vector{String}(undef,length(arg)-1)
 		for k = 1:length(arg)-1
@@ -3231,8 +3240,8 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 		else
 			for k = 1:length(arg)  lab[k] = string('y',k)  end
 		end
-	elseif ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)
-		lab = [string(val)]
+	elseif (valLabel !== nothing)
+		lab = [string(valLabel)]
 	elseif (legend_type === nothing)
 		lab = ["y1"]
 	else
@@ -3244,8 +3253,7 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 	end
 
 	if (legend_type === nothing)
-		#legend_type = legend_bag(Vector{String}(undef,1), Vector{String}(undef,1))
-		legend_type = legend_bag((isa(cmd_, String)) ? [cmd_] : cmd_, lab)
+		legend_type = legend_bag((isa(cmd_, String)) ? [cmd_] : lab, cmd_)
 	else
 		isa(cmd_, String) ? append!(legend_type.cmd, [cmd_]) : append!(legend_type.cmd, cmd_)
 		append!(legend_type.label, lab)
@@ -3254,7 +3262,7 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 end
 
 # --------------------------------------------------------------------------------------------------
-function digests_legend_bag(d::Dict, del::Bool=false)
+function digests_legend_bag(d::Dict, del::Bool=true)
 	# Plot a legend if the leg or legend keywords were used. Legend info is stored in LEGEND_TYPE global variable
 	global legend_type
 
@@ -3264,12 +3272,12 @@ function digests_legend_bag(d::Dict, del::Bool=false)
 		fs = 10					# Font size in points
 		symbW = 0.75			# Symbol width. Default to 0.75 cm (good for lines)
 		nl  = length(legend_type.label)
-		leg = Array{String,1}(undef,nl)
-		for k = 1:nl											# Loop over number of entries
+		leg = Vector{String}(undef,nl)
+		for k = 1:nl								# Loop over number of entries
 			if ((symb = scan_opt(legend_type.cmd[k], "-S")) == "")  symb = "-"
 			else                                                    symbW_ = symb[2:end];	symb = symb[1]
 			end
-			if ((fill = scan_opt(legend_type.cmd[k], "-G")) == "")  fill = "-"  end
+			((fill = scan_opt(legend_type.cmd[k], "-G")) == "") && (fill = "-")
 			pen  = scan_opt(legend_type.cmd[k],  "-W");
 			(pen == "" && symb != "-" && fill != "-") ? pen = "-" : (pen == "" ? pen = "0.25p" : pen = pen)
 			if (symb == "-")
@@ -3372,11 +3380,9 @@ end
 
 meshgrid(v::AbstractVector) = meshgrid(v, v)
 function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}) where T
-	m, n = length(vy), length(vx)
-	#vx = reshape(vx, 1, n)
-	#vy = reshape(vy, m, 1)
-	#(repeat(vx, m, 1), repeat(vy, 1, n))
-	(vx' .* ones(m), vy .* ones(n)')
+	X = [x for _ in vy, x in vx]
+	Y = [y for y in vy, _ in vx]
+	X, Y
 end
 
 function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}, vz::AbstractVector{T}) where T
