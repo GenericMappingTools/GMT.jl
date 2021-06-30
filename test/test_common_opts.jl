@@ -171,7 +171,7 @@
 	psxy!([0 0; 1 1.1], Vd=dbg2);
 	psxy!("", [0 0; 1 1.1], Vd=dbg2);
 	GMT.get_marker_name(Dict(:y => "y"), nothing, [:y], false)
-	@test GMT.line_decorated_with_symbol() == " -S~d0.44:+sc0.11+gwhite+p0.75,black"
+	@test GMT.line_decorated_with_symbol(Dict()) == " -S~d0.88:+sc0.11+gwhite+p0.75,black"
 	@test_throws ErrorException("Argument of the *bar* keyword can be only a string or a NamedTuple.") GMT.parse_bar_cmd(Dict(:a => 0), :a, "", "")
 
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((post=1:5,), "p", "x")
