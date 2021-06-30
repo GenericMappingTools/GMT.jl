@@ -1263,50 +1263,79 @@ function mk_styled_line!(d::Dict, code)
 	elseif (startswith(_code, "dash"))        ls = "-";    symbol = (length(_code) == 4)  ? "" : code[5 + is1line : end-inv]
 	elseif (startswith(_code, "dotdotdash"))  ls = "..-";  symbol = (length(_code) == 10) ? "" : code[11+ is1line : end-inv]
 	elseif (startswith(_code, "dot"))         ls = ".";    symbol = (length(_code) == 3)  ? "" : code[4 + is1line : end-inv]
+	elseif (startswith(_code, "front"))       ls = "";     symbol = (length(_code) == 5)  ? "" : _code[6 + is1line : end]
 	else   error("Bad line style. Options are (for example) [Line|DashDot|Dash|Dot]Circ")
 	end
 
 	(symbol == "") && return ls		# It means only the line style was transmitted. Return to allow use as ls="DashDot"
 
 	lc = parse_pen_color(d, [:lc :linecolor], false)
+	(lc == "") && (lc = "black")
 	lw = add_opt(d, "", "", [:lw :linewidth])		# Line width
 	d[:ls] = ls										# The linestyle picked above
 	d[:lw] = (lw != "") ? lw : "0.75"
+	isfront = (_code[1] == 'f')
 
-	if (is1line)									# e.g. line&Circ or line_Triang or line!Square
+	if (is1line || isfront)							# e.g. line&Circ or line_Triang or line!Square
 		if (decor_str)
 			d[:GMTopt] = line_decorated_with_string(symbol)
-		else	
-			d[:GMTopt] = line_decorated_with_symbol(lw=lw, lc=lc, symbol=symbol)
+		else
+			d[:GMTopt] = line_decorated_with_symbol(d, isfront, lw=lw, lc=lc, symbol=symbol)
 		end
 	else											# e.g. lineCirc
 		marca = get_marker_name(Dict(:marker => symbol), nothing, [:marker], false)[1]	# This fun lieves in psxy.jl
 		(marca == "") && error("The selected symbol [$(symbol)] is invalid")
-		if (isletter(code[end]))
-			f = 4									# Multiplying factor for the symbol size
-			d[:ml], d[:mc] = (lc == "") ? d[:lw] : (d[:lw], lc), "white"	# MarkerLine and MarkerColor
-		else										# Invert the above. I.e. white outline and lc fill color
-			d[:ml], d[:mc], f = (d[:lw], "white"), lc, 5
+		noinv_ML = isletter(code[end])				# If false, by default use a white outline and a fill color
+
+		# Fill the symbol with WHITE or line color or :mc if that was used
+		def_fill = (noinv_ML) ? "white" : lc
+		_fill = ((c = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], "")) != "") ? c : def_fill
+
+		# Get the markerline. It can have a color set automatically (white or :lc) or explicitly set by using :ml
+		def_ML = (noinv_ML) ? (lc == "") ? d[:lw] : (d[:lw], lc) : (d[:lw], "white")
+		_ml = ((opt_ML = parse_markerline(d, "", "")[1]) != "") ? opt_ML[4:end] : def_ML
+
+		d[:marker], d[:ml], d[:mc] = marca, _ml, _fill
+		if ((find_in_dict(d, [:ms :markersize :MarkerSize], false)[1]) === nothing)	# If ms explicitly set, takes precedence
+			f = (noinv_ML) ? 4 : 5		# Multiplying factor for the symbol size. But this can be overuled by using :ms
+			d[:ms] = string(round(f * parse(Float64,d[:lw]) * 2.54/72, digits=2))
 		end
-		d[:symbol] = string(marca, round(f * parse(Float64,d[:lw]) * 2.54/72, digits=2))
 	end
 	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
-function line_decorated_with_symbol(; lw=0.75, lc="black", ms=0, symbol="circ", dist=0, fill="white")::String
+function line_decorated_with_symbol(d::Dict, isfront::Bool=false; lw=0.75, lc="black", ms=0, symbol="circ", dist=0, fill="white")::String
 	# Create an Annotated line with few controls. We estimate the symbol size after the line thickness.
 	(lc == "") && (lc = "black")
 	_lw = (lw == "") ? 0.75 : isa(lw, String) ? parse(Float64, lw) : lw		# If last case is not numeric ...
-	ss = (ms != 0) ? ms : round(4 * _lw * 2.54/72, digits=2)
-	_dist = (dist == 0) ? 4ss : dist * ss
-	decorated(dist=_dist, symbol=symbol, size=ss, pen=(_lw,lc), fill=fill, dec2=true)
+	_ss = (ms != 0) ? ms : round(4 * _lw * 2.54/72, digits=2)
+	ss = ((val = find_in_dict(d, [:ms :markersize :MarkerSize])[1]) !== nothing) ? val : _ss	# Let ms be used here
+	_dist = (dist == 0) ? 8_ss : dist * _ss		# Compute dist/gap based on size obtained from line width and not :ms
+	def_fill = (isfront) ? lc : fill
+	_fill = ((c = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], "")) != "") ? c : def_fill
+	_ml = ((opt_ML = parse_markerline(d, "", "")[1]) != "") ? opt_ML[4:end] : lc
+	(isfront) ? line_front(d, _dist, _lw, _ml, _fill, symbol, ss) :
+	            decorated(dist=_dist, symbol=symbol, size=ss, pen=(_lw, _ml), fill=_fill, dec2=true)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function line_front(d::Dict, gap, lw, lc, fill, symbol, ss)::String
+	d[:G] = fill
+	if (symbol[1] == 's')				# Arrows (slips) are tricky
+		ss *= 4;	gap *= 2
+		(!endswith(symbol, "left") && !endswith(symbol, "right")) && (symbol *= "right")	# Must have one of them.
+	end
+	nt = (dist=gap, symbol=symbol, size=ss, pen=(lw,lc))		# Create a NT with args so we can increase it
+	endswith(symbol, "left")  && (nt = merge(nt, (left=1,)))	# in case we need it.
+	endswith(symbol, "right") && (nt = merge(nt, (right=1,)))
+	decorated(; nt...)
 end
 
 # ---------------------------------------------------------------------------------------------------
 function line_decorated_with_string(str::AbstractString; dist=0)::String
 	# Create an Quoted line with few controls.
-	str_len = length(str) * 4 * 2.54/72		# Very rough estimate of line length assuming a font od ~9 pts
+	str_len = length(str) * 4 * 2.54/72		# Very rough estimate of line length assuming a font of ~9 pts
 	_dist = (dist == 0) ? max(3, round(str_len * 3, digits=1)) : dist	# Simple heuristic to estimate dist
 	decorated(dist=_dist, const_label=str, quoted=true, curved=true)
 end
@@ -2443,15 +2472,15 @@ function decorated(;kwargs...)::String
 		else
 			cmd *= "+s" * marca
 			if ((val = find_in_dict(d, [:size :ms :markersize :symbsize :symbolsize])[1]) !== nothing)
-				cmd *= arg2str(val);
+				cmd *= arg2str(val)
 			end
 		end
-		if (haskey(d, :angle))   cmd = string(cmd, "+a", d[:angle])  end
+		if (haskey(d, :angle))   cmd = string(cmd, "+a", d[:angle]) end
 		if (haskey(d, :debug))   cmd *= "+d"  end
-		if (haskey(d, :fill))    cmd *= "+g" * get_color(d[:fill])    end
+		if (haskey(d, :fill))    cmd *= "+g" * get_color(d[:fill])  end
 		if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])   end
 		if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])  end
-		if (optD == "")  optD = "d"  end	# Really need to improve the algo of this
+		(optD == "") && (optD = "d")		# Really need to improve the algo of this
 		opt_S = " -S~"
 	elseif (haskey(d, :quoted))				# -Sq mode (quoted lines).
 		cmd *= ":"
@@ -2459,17 +2488,16 @@ function decorated(;kwargs...)::String
 		if (optD == "")  optD = "d"  end	# Really need to improve the algo of this
 		opt_S = " -Sq"
 	else									# -Sf mode (front lines).
+		((val = find_in_dict(d, [:size])[1]) !== nothing) && (cmd *= "/" * arg2str(val))
 		if     (haskey(d, :left))  cmd *= "+l"
 		elseif (haskey(d, :right)) cmd *= "+r"
 		end
 		if (haskey(d, :symbol))
-			if     (d[:symbol] == "box"      || d[:symbol] == :box)      cmd *= "+b"
-			elseif (d[:symbol] == "circle"   || d[:symbol] == :circle)   cmd *= "+c"
-			elseif (d[:symbol] == "fault"    || d[:symbol] == :fault)    cmd *= "+f"
-			elseif (d[:symbol] == "triangle" || d[:symbol] == :triangle) cmd *= "+t"
-			elseif (d[:symbol] == "slip"     || d[:symbol] == :slip)     cmd *= "+s"
-			elseif (d[:symbol] == "arcuate"  || d[:symbol] == :arcuate)  cmd *= "+S"
-			else   @warn(string("DECORATED: unknown symbol: ", d[:symbol]))
+			symb = string(d[:symbol])[1]
+			if (symb == 'b' || symb == 'c' || symb == 'f' || symb == 't' || symb == 's')
+				cmd *= "+" * symb
+			elseif (symb == 'a')  cmd *= "+S"
+			else                  @warn(string("DECORATED: unknown symbol: ", d[:symbol]))
 			end
 		end
 		if (haskey(d, :offset))  cmd *= "+o" * arg2str(d[:offset]);	delete!(d, :offset)  end
@@ -2984,6 +3012,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 			prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 			(length(dd) > 0) && println("Warning: the following options were not consumed in $prog => ", keys(dd))
 		end
+		(size(legend_type[1].label, 1) != 0) && (legend_type[1].Vd = Vd)	# So that autolegend can also work
 		(Vd == 1) && println("\t", length(cmd) == 1 ? cmd[1] : cmd)
 		(Vd >= 2) && return length(cmd) == 1 ? cmd[1] : cmd
 	end
@@ -3191,26 +3220,36 @@ end
 
 # --------------------------------------------------------------------------------------------------
 mutable struct legend_bag
-	label::Array{String,1}
-	cmd::Array{String,1}
+	label::Vector{String}
+	cmd::Vector{String}
+	cmd2::Vector{String}
+	optsDict::Dict
+	Vd::Int
 end
+legend_bag() = legend_bag(Vector{String}(), Vector{String}(), Vector{String}(), Dict(), 0)
 
 # --------------------------------------------------------------------------------------------------
-function put_in_legend_bag(d::Dict, cmd, arg=nothing)
-	# So far this fun is only called from plot() and stores line/symbol info in global var LEGEND_TYPE
-	global legend_type
+function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false)
+	# So far this fun is only called from plot() and stores line/symbol info in a const global var LEGEND_TYPE
 
 	valLegend = find_in_dict(d, [:legend], false)[1]	# false because we must keep alive till digests_legend_bag()
-	valLabel = find_in_dict(d, [:label])[1]
-	(valLegend === nothing && valLabel === nothing && legend_type === nothing) && return # If neither, nothing else to do here
-	if (valLabel === nothing && isa(valLegend, NamedTuple))		# See if it has a legend=(label="blabla",)
-		key = keys(valLegend)
-		((ind = findfirst(key .== :label)) !== nothing) && (valLabel = valLegend[ind])
+	valLabel  = find_in_dict(d, [:label])[1]
+	(valLegend === nothing && valLabel === nothing && size(legend_type[1].label, 1) == 0) && return # Nothing else to do here
+
+	dd = Dict()
+	if (valLabel === nothing)					# See if it has a legend=(label="blabla",) or legend="label"
+		if (isa(valLegend, NamedTuple))
+			dd = nt2dict(valLegend)
+			valLabel = find_in_dict(dd, [:label], false)[1]
+		elseif (isa(valLegend, String) || isa(valLegend, Symbol))
+			valLabel = valLegend
+			(valLabel == "") && return			# If Label == "" we forget this one
+		end
 	end
 
 	cmd_ = cmd									# Starts to be just a shallow copy
 	if (isa(arg, Vector{<:GMTdataset}))			# Multi-segments can have different settings per line
-		(isa(cmd, String)) ? cmd_ = deepcopy([cmd]) : cmd_ = deepcopy(cmd)
+		cmd_ = deepcopy(cmd)
 		_, penC, penS = break_pen(scan_opt(arg[1].header, "-W"))
 		penT, penC_, penS_ = break_pen(scan_opt(cmd_[end], "-W"))
 		(penC == "") && (penC = penC_)
@@ -3219,10 +3258,10 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 		pens = Vector{String}(undef,length(arg)-1)
 		for k = 1:length(arg)-1
 			t = scan_opt(arg[k+1].header, "-W")
-			if     (t == "")      pens[k] = " -W0."
-			elseif (t[1] == ',')  pens[k] = " -W" * penT * t		# Can't have, e.g., ",,230/159/0" => Crash
+			if     (t == "")          pens[k] = " -W0."
+			elseif (t[1] == ',')      pens[k] = " -W" * penT * t		# Can't have, e.g., ",,230/159/0" => Crash
 			elseif (occursin(",",t))  pens[k] = " -W" * t  
-			else                  pens[k] = " -W" * penT * ',' * t	# Not sure what this case covers now
+			else                      pens[k] = " -W" * penT * ',' * t	# Not sure what this case covers now
 			end
 		end
 		append!(cmd_, pens)			# Append the 'pens' var to the input arg CMD
@@ -3230,7 +3269,7 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 		lab = Vector{String}(undef,length(arg))
 		if ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)		# Have label(s)
 			if (!isa(val, Array))				# One single label, take it as a label prefix
-				for k = 1:length(arg)  lab[k] = string(val,k)  end
+				[lab[k] = string(val,k) for k = 1:length(arg)]
 			else
 				for k = 1:min(length(arg), length(val))  lab[k] = string(val[k],k)  end
 				if (length(val) < length(arg))	# Probably shit, but don't error because of it
@@ -3238,77 +3277,107 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing)
 				end
 			end
 		else
-			for k = 1:length(arg)  lab[k] = string('y',k)  end
+			[lab[k] = string('y',k) for k = 1:length(arg)]
 		end
 	elseif (valLabel !== nothing)
 		lab = [string(valLabel)]
-	elseif (legend_type === nothing)
+	elseif (size(legend_type[1].label, 1) == 0)
 		lab = ["y1"]
 	else
-		lab = ["y$(size(legend_type.label, 1))"]
+		lab = ["y$(size(legend_type[1].label, 1))"]
 	end
 
-	if ((isa(cmd_, Vector{String}) && !occursin("-O", cmd_[1])) || (isa(cmd_, String) && !occursin("-O", cmd_)))
-		legend_type = nothing					# Make sure that we always start with an empty one
-	end
+	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
 
-	if (legend_type === nothing)
-		legend_type = legend_bag((isa(cmd_, String)) ? [cmd_] : lab, cmd_)
+	if (size(legend_type[1].label, 1) == 0)		# First time
+		legend_type[1] = legend_bag(lab, [cmd_[1]], length(cmd_) == 1 ? [""] : [cmd_[2]], dd, 0)
 	else
-		isa(cmd_, String) ? append!(legend_type.cmd, [cmd_]) : append!(legend_type.cmd, cmd_)
-		append!(legend_type.label, lab)
+		append!(legend_type[1].cmd, [cmd_[1]])
+		append!(legend_type[1].cmd2, (length(cmd_) > 1) ? [cmd_[2]] : [""])
+		append!(legend_type[1].label, lab)
 	end
+
 	return nothing
 end
 
 # --------------------------------------------------------------------------------------------------
 function digests_legend_bag(d::Dict, del::Bool=true)
 	# Plot a legend if the leg or legend keywords were used. Legend info is stored in LEGEND_TYPE global variable
-	global legend_type
+	(size(legend_type[1].label, 1) == 0) && return
 
-	if ((val = find_in_dict(d, [:leg :legend], del)[1]) !== nothing)
-		(legend_type === nothing) && @warn("This module does not support automatic legends") && return
+	dd = ((val = find_in_dict(d, [:leg :legend], false)[1]) !== nothing && isa(val, NamedTuple)) ? nt2dict(val) : Dict()
 
-		fs = 10					# Font size in points
-		symbW = 0.75			# Symbol width. Default to 0.75 cm (good for lines)
-		nl  = length(legend_type.label)
-		leg = Vector{String}(undef,nl)
-		for k = 1:nl								# Loop over number of entries
-			if ((symb = scan_opt(legend_type.cmd[k], "-S")) == "")  symb = "-"
-			else                                                    symbW_ = symb[2:end];	symb = symb[1]
+	fs = 10					# Font size in points
+	symbW = 0.75			# Symbol width. Default to 0.75 cm (good for lines)
+	nl  = length(legend_type[1].label)
+	leg = Vector{String}(undef,3nl)
+	kk = 0
+	for k = 1:nl						# Loop over number of entries
+		if ((symb = scan_opt(legend_type[1].cmd[k], "-S")) == "")  symb = "-"
+		else                                                       symbW_ = symb[2:end];#	symb = symb[1]
+		end
+		((fill = scan_opt(legend_type[1].cmd[k], "-G")) == "") && (fill = "-")
+		pen  = scan_opt(legend_type[1].cmd[k], "-W");
+		(pen == "" && symb[1] != '-' && fill != "-") ? pen = "-" : (pen == "" ? pen = "0.25p" : pen = pen)
+		if (symb[1] == '-')
+			leg[kk += 1] = @sprintf("S %.3fc %s %.2fc %s %s %.2fc %s",
+			                symbW/2, symb[1], symbW, fill, pen, symbW+0.14, legend_type[1].label[k])
+			if ((symb2 = scan_opt(legend_type[1].cmd2[k], "-S")) != "")		# A line + a symbol
+				leg[kk += 1] = "G -1l"			# Go back one line before plotting the overlaying symbol
+				xx = split(pen, ',')
+				if (length(xx) == 2)  fill = xx[2]
+				else                  fill = ((c = scan_opt(legend_type[1].cmd2[k], "-G")) != "") ? c : "black"
+				end
+				penS = scan_opt(legend_type[1].cmd2[k], "-W");
+				leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb2[1], symb2[2:end], fill, penS, "")
 			end
-			((fill = scan_opt(legend_type.cmd[k], "-G")) == "") && (fill = "-")
-			pen  = scan_opt(legend_type.cmd[k],  "-W");
-			(pen == "" && symb != "-" && fill != "-") ? pen = "-" : (pen == "" ? pen = "0.25p" : pen = pen)
-			if (symb == "-")
-				leg[k] = @sprintf("S %.3fc %s %.2fc %s %s %.2fc %s",
-				                  symbW/2, symb, symbW, fill, pen, symbW+0.14, legend_type.label[k])
-			else
-				leg[k] = @sprintf("S - %s %s %s %s - %s", symb, symbW_, fill, pen, legend_type.label[k])
-			end
-		end
-
-		lab_width = maximum(length.(legend_type.label[:])) * fs / 72 * 2.54 * 0.55 + 0.15	# Guess label width in cm
-		if ((opt_D = add_opt(d, "", "", [:leg_pos :legend_pos :legend_position],
-			(map_coord="g",plot_coord="x",norm="n",pos="j",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
-			just = (isa(val, String) || isa(val, Symbol)) ? justify(val) : "TR"		# "TR" is the default
-			opt_D = @sprintf("j%s+w%.3f+o0.1", just, symbW*1.2 + lab_width)
+		elseif (symb[1] == '~' || symb[1] == 'q' || symb[1] == 'f')
+			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb, symbW, fill, pen, legend_type[1].label[k])
 		else
-			if (opt_D[1] != 'j' && opt_D[1] != 'g' && opt_D[1] != 'x' && opt_D[1] != 'n')  opt_D = "jTR" * opt_D  end
-			if (!occursin("+w", opt_D))  opt_D = @sprintf("%s+w%.3f", opt_D, symbW*1.2 + lab_width)  end
-			if (!occursin("+o", opt_D))  opt_D *= "+o0.1"  end
+			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb[1], symbW_, fill, pen, legend_type[1].label[k])	# Who is this?
 		end
-
-		if ((opt_F = add_opt(d, "", "", [:box_pos :box_position],
-			(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"))) == "")
-			opt_F = "+p0.5+gwhite"
-		else
-			if (!occursin("+p", opt_F))  opt_F *= "+p0.5"    end
-			if (!occursin("+g", opt_F))  opt_F *= "+gwhite"  end
-		end
-		legend!(text_record(leg), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fs))
-		legend_type = nothing			# Job done, now empty the bag
 	end
+
+	lab_width = maximum(length.(legend_type[1].label[:])) * fs / 72 * 2.54 * 0.55 + 0.15	# Guess label width in cm
+
+	# Because we accept extended settings either from first or last legend() commands we must seek which
+	# one may have the desired keyword. First command is stored in 'legend_type[1].optsDict' and last in 'dd'
+	_d = (haskey(dd, :pos) || haskey(dd, :position)) ? dd :
+	     (haskey(legend_type[1].optsDict, :pos) || haskey(legend_type[1].optsDict, :position)) ?
+		 legend_type[1].optsDict : Dict()
+
+	if ((opt_D = add_opt(_d, "", "", [:pos :position],
+		(map_coord="g",plot_coord="x",norm="n",pos="j",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
+		just = (isa(val, String) || isa(val, Symbol)) ? justify(val, true) : "TR"		# "TR" is the default
+		just = (just == string(val) && length(just) == 2) ? just : "TR"
+		opt_D = @sprintf("j%s+w%.3f+o0.1", just, symbW*1.2 + lab_width)
+	else
+		t = justify(opt_D, true)
+		if (length(t) == 2)
+			opt_D = "j" * t
+		else
+			(opt_D[1] != 'j' && opt_D[1] != 'g' && opt_D[1] != 'x' && opt_D[1] != 'n') && (opt_D = "jTR" * opt_D)
+		end
+		(!occursin("+w", opt_D)) && (opt_D = @sprintf("%s+w%.3f", opt_D, symbW*1.2 + lab_width))
+		(!occursin("+o", opt_D)) && (opt_D *= "+o0.1")
+	end
+
+	_d = haskey(dd, :box) ? dd : haskey(legend_type[1].optsDict, :box) ? legend_type[1].optsDict : Dict()
+	if ((opt_F = add_opt(_d, "", "", [:box],
+		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"), false)) == "")
+		opt_F = "+p0.5+gwhite"
+	else
+		if (opt_F == "none")
+			opt_F = "+gwhite"
+		else
+			(!occursin("+p", opt_F)) && (opt_F *= "+p0.5")
+			(!occursin("+g", opt_F)) && (opt_F *= "+gwhite")
+		end
+	end
+	if (legend_type[1].Vd > 0)  d[:Vd] = legend_type[1].Vd;  dbg_print_cmd(d, leg[1:kk])  end	# Vd=2 wont work
+	legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fs))
+	legend_type[1] = legend_bag()			# Job done, now empty the bag
+
 	return nothing
 end
 
@@ -3333,22 +3402,24 @@ function break_pen(pen::AbstractString)
 end
 
 # --------------------------------------------------------------------------------------------------
-function justify(arg)::String
+function justify(arg, nowarn::Bool=false)::String
 	# Take a string or symbol in ARG and return the two chars justification code.
-	if (isa(arg, Symbol))  arg = string(arg)  end
+	isa(arg, Symbol) && (arg = string(arg))
 	(length(arg) == 2) && return arg		# Assume it's already the 2 chars code (no further checking)
-	arg = lowercase(arg)
-	if     (startswith(arg, "topl"))     out = "TL"
-	elseif (startswith(arg, "middlel"))  out = "ML"
-	elseif (startswith(arg, "bottoml"))  out = "BL"
-	elseif (startswith(arg, "topc"))     out = "TC"
-	elseif (startswith(arg, "middlec"))  out = "MC"
-	elseif (startswith(arg, "bottomc"))  out = "BC"
-	elseif (startswith(arg, "topr"))     out = "TR"
-	elseif (startswith(arg, "middler"))  out = "MR"
-	elseif (startswith(arg, "bottomr"))  out = "BR"
+	_arg = lowercase(arg)
+	if     (startswith(_arg, "topl"))     out = "TL"
+	elseif (startswith(_arg, "middlel"))  out = "ML"
+	elseif (startswith(_arg, "bottoml"))  out = "BL"
+	elseif (startswith(_arg, "topc"))     out = "TC"
+	elseif (startswith(_arg, "middlec"))  out = "MC"
+	elseif (startswith(_arg, "bottomc"))  out = "BC"
+	elseif (startswith(_arg, "topr"))     out = "TR"
+	elseif (startswith(_arg, "middler"))  out = "MR"
+	elseif (startswith(_arg, "bottomr"))  out = "BR"
 	else
-		@warn("Justification code provided ($arg) is not valid. Defaulting to TopRight");	out = "TR"
+		if (nowarn)  out = arg		# Just return unchanged
+		else         @warn("Justification code provided ($arg) is not valid. Defaulting to TopRight");	out = "TR"
+		end
 	end
 	return out
 end
