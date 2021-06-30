@@ -56,11 +56,21 @@ char like `#` or `%` (*e.g.* `"Line&Triang#"`) to plot symbols with a white outl
 line color. If you want to annotate with a text string, wrap whatever text in a pair of those three characters.
 For example `"Line&Silly saying&"`
 
+[Front lines](https://docs.generic-mapping-tools.org/latest/plot.html#id7) can also be drawn with the
+`linestyle` mechanism. For that, use the form: "FrontSymbol[left|right]" where `Symbol` can be any of
+`Circle`, `Box`, `Triangle`, `Slip`, `Fault` (case-insensitive and only first char is parsed). The `Left`
+or `Right` options mean that only half of the symbol will be plotted. Either on the left or right side
+of the line. Example `ls=FrontTriangleLeft` will draw a ``subduction zone`` line.
+
 The above line and symbol at fixed spacing is nice but there are many instances where one wants to have
 a line and symbols only at vertex locations. While that can generally be achieved by using the `marker`,
 `markersize` (`mc`), `markercolor` (`mc`) and `linecolor` (`lc`), `linewidth` (`lw`)
 keywords we can also use a condensed form similar to the annotated lines above. In this case we drop
 the separating char and compose it only with the line style and symbol name, *e.g.* `"LineCirc"`.
+
+The annotated, quoted and front lines short forms presented here use several heuristics to decide
+on symbol size, symbol separation, fill collor, outline pen, etc ... But one can overwrite most of
+those guesses by using the `markersize`, `markecolor`, `markerline` options of the `plot` module.
 
 In addition to these pen settings there are several PostScript settings that can affect the appearance of lines.
 These are controlled via the GMT defaults settings `PS_LINE_CAP`, `PS_LINE_JOIN`, and `PS_MITER_LIMIT`.

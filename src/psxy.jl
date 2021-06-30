@@ -16,6 +16,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
 
 	cmd = "";	sub_module = ""			# Will change to "scatter", etc... if called by sub-modules
 	g_bar_fill = Vector{String}()		# May hold a sequence of colors for gtroup Bar plots
@@ -146,14 +147,14 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	opt_W = add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
-	if ((occursin("+c", opt_W) || occursin("+c", cmd)) && !occursin("-C", cmd))
+	if ((occursin("+c", opt_W)) && !occursin("-C", cmd))
 		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
 	end
 
 	opt_S = add_opt(d, "", 'S', [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
 		marca, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
-		if ((val = find_in_dict(d, [:markersize :MarkerSize :ms :size])[1]) !== nothing)
+		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
 			(marca == "") && (marca = "c")			# If a marker name was not selected, defaults to circle
 			if (isa(val, AbstractArray))
 				(length(val) != size(arg1,1)) &&
@@ -179,15 +180,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	opt_ML = ""
 	if (opt_S != "")
-		if ((val = find_in_dict(d, [:ml :markerline :MarkerLine])[1]) !== nothing)
-			if (isa(val, Tuple))           opt_ML = " -W" * parse_pen(val) # This can hold the pen, not extended atts
-			elseif (isa(val, NamedTuple))  opt_ML = add_opt_pen(nt2dict(val), [:pen], "W")
-			else                           opt_ML = " -W" * arg2str(val)
-			end
-			if (opt_Wmarker != "")
-				@warn("markerline overrides markeredgecolor");		opt_Wmarker = ""
-			end
-		end
+		opt_ML, opt_Wmarker = parse_markerline(d, opt_ML, opt_Wmarker)
 	end
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
@@ -209,7 +202,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 			arg1 = arg1[1].data
 		end
 	end
-	(!IamModern[1]) && put_in_legend_bag(d, _cmd, arg1)
+
+	(!IamModern[1]) && put_in_legend_bag(d, _cmd, arg1, O)
 
 	_cmd = gmt_proggy .* _cmd				# In any case we need this
 	_cmd, K = finish_PS_nested(d, _cmd, K)
@@ -218,6 +212,21 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3)
 	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_markerline(d::Dict, opt_ML::String, opt_Wmarker::String)
+	# Make this code into a function so that it can also be called from mk_styled_line!()
+	if ((val = find_in_dict(d, [:ml :markerline :MarkerLine])[1]) !== nothing)
+		if (isa(val, Tuple))           opt_ML = " -W" * parse_pen(val) # This can hold the pen, not extended atts
+		elseif (isa(val, NamedTuple))  opt_ML = add_opt_pen(nt2dict(val), [:pen], "W")
+		else                           opt_ML = " -W" * arg2str(val)
+		end
+		if (opt_Wmarker != "")
+			@warn("markerline overrides markeredgecolor");		opt_Wmarker = ""
+		end
+	end
+	return opt_ML, opt_Wmarker
 end
 
 # ---------------------------------------------------------------------------------------------------

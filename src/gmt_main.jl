@@ -1356,7 +1356,7 @@ function resetGMT()
 	multi_col[1] = false;	convert_syntax[1] = false;	current_view[1] = "";	show_kwargs[1] = false;
 	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = true;
 	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
-	current_cpt[1]  = GMTcpt();		global legend_type  = nothing;	ressurectGDAL()
+	current_cpt[1]  = GMTcpt();		legend_type[1] = legend_bag();	ressurectGDAL()
 	gmt("destroy")
 	clear_sessions()
 end

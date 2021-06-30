@@ -69,7 +69,6 @@ if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names a
 end
 const GMTver, libgmt, libgdal, libproj, GMT_bindir = _GMTver, _libgmt, _libgdal, _libproj, _GMT_bindir
 
-global legend_type  = nothing
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
 const global current_view   = [""]			# To store the current viewpoint (-p)
@@ -241,6 +240,7 @@ end
 include("imshow.jl")		# Include later because one method depends on knowing about GDAL
 
 const global current_cpt = [GMTcpt()]		# To store the current palette
+const global legend_type = [legend_bag()]	# To store Legends info
 
 function __init__(test::Bool=false)
 	if (GMTver == v"0.0" || test)
