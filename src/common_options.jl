@@ -555,6 +555,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axis :axes :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
+	parse_theme(d)		# Must be first because some themes change def_fig_axes
 	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
 	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3[1]		# def_fig_axes is a global const
 
@@ -705,6 +706,7 @@ function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::Stri
 	cmd, opt_R = parse_R(d, cmd, O, del)
 	cmd, opt_J = parse_J(d, cmd, defaultJ, true, O, del)
 
+	parse_theme(d)		# Must be first because some themes change def_fig_axes
 	def_fig_axes_ = (IamModern[1]) ? "" : def_fig_axes[1]	# def_fig_axes is a global const
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
@@ -999,11 +1001,16 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 			current_view[1] = ""		# Ensure we start empty
 		end
 	end
-	if ((val = find_in_dict(d, [:theme])[1]) !== nothing)
+	return cmd, o
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_theme(d::Dict, del::Bool=true)
+	# This must always be processed before parse_B so it's the first call in that function
+	if ((val = find_in_dict(d, [:theme], del)[1]) !== nothing)
 		isa(val, NamedTuple) && theme(string(val[1]); nt2dict(val)...)
 		(isa(val, String) || isa(val, Symbol)) && theme(string(val))
 	end
-	return cmd, o
 end
 
 # ---------------------------------------------------------------------------------------------------
