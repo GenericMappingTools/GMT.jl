@@ -83,8 +83,10 @@ const global show_kwargs = Vector{Bool}(undef, 1);show_kwargs[1] = false	# To ju
 const global FMT = ["png"]
 const global box_str = [""]
 const def_fig_size  = "14c/9.5c"                   # Default fig size for plot like programs. Approx 16/11
-const global def_fig_axes  = [" -Baf -BWSen"]      # Default fig axes for plot like programs
-const global def_fig_axes3 = [" -Baf -Bza"]        #		"" but for 3D views
+const def_fig_axes_bak     = " -Baf -BWSen"        # Default fig axes for plot like programs
+const def_fig_axes3_bak    = " -Baf -Bza"          # 		"" but for 3D views
+const global def_fig_axes  = [def_fig_axes_bak]    # This one may be be changed by theme()
+const global def_fig_axes3 = [def_fig_axes3_bak]   #		""
 const global CTRL = CTRLstruct(zeros(6), [true], [:clip, :coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing], ["",""], [C_NULL])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])
 
