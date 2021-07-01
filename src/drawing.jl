@@ -19,7 +19,7 @@ const global paper_sizes = Dict(
 	"D"      => (2448, 1584),
 	"E"      => (3168, 2448))
 
-import ..CTRLshapes, ..KW, ..find_in_dict, ..def_fig_axes
+import ..CTRLshapes, ..KW, ..find_in_dict, ..def_fig_axes[1]
 
 export 
 	box, circle, cross, custom, diamond, ellipse, ellipseAz, hexagon, itriangle, letter, minus, pentagon,
@@ -85,7 +85,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 	if (CTRLshapes.first[1])
 		CTRLshapes.fname[1] = joinpath(tempdir(), "GMTjl_tmp.ps")
 		if ((val = find_in_dict(d, [:units])[1]) !== nothing)
-			_cmd, opt_B = GMT.parse_B(d, "", def_fig_axes)
+			_cmd, opt_B = GMT.parse_B(d, "", def_fig_axes[1])
 			cmd *= " --PROJ_LENGTH_UNIT=p"
 			opt_J = " -Jx1"
 			if ((val = find_in_dict(d, [:paper])[1]) !== nothing)
@@ -101,7 +101,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 			(opt_R == "")  && (opt_R = " -R0/21/0/29")
 			(opt_J == " ") && (opt_J = " -Jx1")
 		end
-		(opt_B == def_fig_axes) && (opt_B = "")			# We don't want a default -B here
+		(opt_B == def_fig_axes[1]) && (opt_B = "")			# We don't want a default -B here
 		opt_O, opt_P = "", " -P"
 		out, opt_T, EXT, = GMT.fname_out(d)
 	else

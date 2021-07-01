@@ -61,7 +61,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "grdview", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
-	(!has_opt_B && (isa(arg1, GMTimage) && isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes) &&
+	(!has_opt_B && (isa(arg1, GMTimage) && isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes[1]) &&
 		(cmd = replace(cmd, opt_B => ""))	# Dont plot axes for plain images if that was not required
 
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :f :n :p :t :params], first)

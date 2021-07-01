@@ -671,7 +671,7 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 	end
 
 	if (occursin('3', caller))
-		if (!occursin(" -B", cmd[1]) && !O)  cmd[1] *= def_fig_axes3  end	# For overlays default is no axes
+		if (!occursin(" -B", cmd[1]) && !O)  cmd[1] *= def_fig_axes3[1]  end	# For overlays default is no axes
 	end
 
 	return cmd[1]
