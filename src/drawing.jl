@@ -19,7 +19,7 @@ const global paper_sizes = Dict(
 	"D"      => (2448, 1584),
 	"E"      => (3168, 2448))
 
-import ..CTRLshapes, ..KW, ..find_in_dict, ..def_fig_axes[1]
+import ..CTRLshapes, ..KW, ..find_in_dict, ..def_fig_axes
 
 export 
 	box, circle, cross, custom, diamond, ellipse, ellipseAz, hexagon, itriangle, letter, minus, pentagon,
