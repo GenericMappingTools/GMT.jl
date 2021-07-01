@@ -147,9 +147,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	opt_W = add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
-	if ((occursin("+c", opt_W)) && !occursin("-C", cmd))
+	((occursin("+c", opt_W)) && !occursin("-C", cmd)) &&
 		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
-	end
 
 	opt_S = add_opt(d, "", 'S', [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
@@ -557,39 +556,41 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 					marca[1] = opt * add_opt(t, (custom="", size="/"))
 				end
 			else
-				t = string(t)
-				if     (t == "-" || t == "x-dash")    marca[1] = "-"
-				elseif (t == "+" || t == "plus")      marca[1] = "+"
-				elseif (t == "a" || t == "*" || t == "star")  marca[1] = "a"
-				elseif (t == "k" || t == "custom")    marca[1] = "k"
-				elseif (t == "x" || t == "cross")     marca[1] = "x"
-				elseif (is3D && (t == "u" || t == "cube"))  marca[1] = "u"	# Must come before next line
-				elseif (t[1] == 'c' || t[1] == 'C')   marca[1] = "c"
-				elseif (t == "d" || t == "diamond")   marca[1] = "d"
-				elseif (t == "g" || t == "octagon")   marca[1] = "g"
-				elseif (t == "h" || t == "hexagon")   marca[1] = "h"
-				elseif (t == "i" || t == "v" || t == "inverted_tri")  marca[1] = "i"
-				elseif (t == "l" || t == "letter")    marca[1] = "l"
-				elseif (t == "n" || t == "pentagon")  marca[1] = "n"
-				elseif (t == "p" || t == "." || t == "point")  marca[1] = "p"
-				elseif (t == "s" || t == "square")    marca[1] = "s"
-				elseif (t == "t" || t == "^" || t == "triangle")  marca[1] = "t"
-				elseif (t == "T" || t == "Triangle")  marca[1] = "T"
-				elseif (t == "y" || t == "y-dash")    marca[1] = "y"
+				t1 = string(t)
+				(t1[1] != 'T') && (t1 = lowercase(t1))
+				if     (t1 == "-" || t1 == "x-dash")    marca[1] = "-"
+				elseif (t1 == "+" || t1 == "plus")      marca[1] = "+"
+				elseif (t1 == "a" || t1 == "*" || t1 == "star")  marca[1] = "a"
+				elseif (t1 == "k" || t1 == "custom")    marca[1] = "k"
+				elseif (t1 == "x" || t1 == "cross")     marca[1] = "x"
+				elseif (is3D && (t1 == "u" || t1 == "cube"))  marca[1] = "u"	# Must come before next line
+				elseif (t1[1] == 'c')                   marca[1] = "c"
+				elseif (t1[1] == 'd')                   marca[1] = "d"		# diamond
+				elseif (t1 == "g" || t1 == "octagon")   marca[1] = "g"
+				elseif (t1[1] == 'h')                   marca[1] = "h"		# hexagon
+				elseif (t1 == "i" || t1 == "v" || t1 == "inverted_tri")  marca[1] = "i"
+				elseif (t1[1] == 'l')                   marca[1] = "l"		# letter
+				elseif (t1 == "n" || t1 == "pentagon")  marca[1] = "n"
+				elseif (t1 == "p" || t1 == "." || t1 == "point")  marca[1] = "p"
+				elseif (t1[1] == 's')                   marca[1] = "s"		# square
+				elseif (t1[1] == 't' || t1 == "^")      marca[1] = "t"		# triangle
+				elseif (t1[1] == 'T')                   marca[1] = "T"		# Triangle
+				elseif (t1[1] == 'y')                   marca[1] = "y"		# y-dash
 				end
+				t1 = string(t)		# Repeat conversion for the case it was lower-cased above
 				# Still need to check the simpler forms of these
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["e", "ellipse"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["E", "Ellipse"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["j", "rotrect"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["J", "RotRect"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["m", "matangle"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["M", "Matangle"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["r", "rectangle"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["R", "RRectangle"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["v", "vector"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["V", "Vector"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["w", "pie", "web"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t, ["W", "Pie", "Web"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["e", "ellipse"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["E", "Ellipse"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["j", "rotrect"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["J", "RotRect"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["m", "matangle"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["M", "Matangle"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["r", "rectangle"])   end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["R", "RRectangle"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["v", "vector"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["V", "Vector"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["w", "pie", "web"])  end
+				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["W", "Pie", "Web"])  end
 			end
 			(del) && delete!(d, symb)
 			break

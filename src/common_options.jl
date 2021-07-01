@@ -1297,7 +1297,7 @@ function mk_styled_line!(d::Dict, code)
 
 		d[:marker], d[:ml], d[:mc] = marca, _ml, _fill
 		if ((find_in_dict(d, [:ms :markersize :MarkerSize], false)[1]) === nothing)	# If ms explicitly set, takes precedence
-			f = (noinv_ML) ? 4 : 5		# Multiplying factor for the symbol size. But this can be overuled by using :ms
+			f = (noinv_ML) ? 5 : 6		# Multiplying factor for the symbol size. But this can be overuled by using :ms
 			d[:ms] = string(round(f * parse(Float64,d[:lw]) * 2.54/72, digits=2))
 		end
 	end

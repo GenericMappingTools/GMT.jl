@@ -62,8 +62,8 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 
 	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
-	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes[1]) &&
+	cmd, opt_B, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes) &&
 		(cmd = replace(cmd, opt_B => ""))	# Dont plot axes for plain images if that was not required
 
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
