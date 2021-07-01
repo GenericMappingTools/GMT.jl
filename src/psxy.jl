@@ -75,7 +75,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		ind = collect(findall("/", box_str[1])[2])		# 'box_str' was set in first call
 		opt_R = '/' * box_str[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
 	end
-	cmd, arg1, opt_R, lixo, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
+	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
 	if (N_args == 0 && arg1 !== nothing)  N_args = 1  end
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
 
@@ -246,7 +246,8 @@ function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker,
 		else
 			(opt_Wmarker != "") && (opt_Wmarker = " -W" * opt_Wmarker)		# Set Symbol edge color
 			cmd1 = cmd * opt_W * opt_UVXY
-			cmd2 = replace(cmd, opt_B => "") * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
+			(opt_B != " " && opt_B != "") && (cmd = replace(cmd, opt_B => ""))	# Some themes make opt_B = " "
+			cmd2 = cmd * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
 			(opt_c != "")  && (cmd2 = replace(cmd2, opt_c => ""))  				# Not in scond call (subplots)
 			(opt_ML != "") && (cmd2 = cmd2 * opt_ML)				# If we have a symbol outline pen
 			_cmd = [cmd1; cmd2]
@@ -672,7 +673,7 @@ function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, calle
 	end
 
 	if (occursin('3', caller))
-		if (!occursin(" -B", cmd[1]) && !O)  cmd[1] *= def_fig_axes3  end	# For overlays default is no axes
+		if (!occursin(" -B", cmd[1]) && !O)  cmd[1] *= def_fig_axes3[1]  end	# For overlays default is no axes
 	end
 
 	return cmd[1]

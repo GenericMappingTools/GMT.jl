@@ -555,8 +555,9 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axis :axes :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
-	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes		# def_fig_axes is a global const
-	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3	# def_fig_axes is a global const
+	parse_theme(d)		# Must be first because some themes change def_fig_axes
+	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
+	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3[1]		# def_fig_axes is a global const
 
 	opt_B = [_opt_B]
 
@@ -578,9 +579,9 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 			elseif (startswith(val, "auto"))
 				is3D = false
 				if     (occursin("XYZg", val)) val = " -Bafg -Bzafg -B+" * ((GMTver <= v"6.1") ? "b" : "w");  is3D = true
-				elseif (occursin("XYZ", val))  val = def_fig_axes3;		is3D = true
+				elseif (occursin("XYZ", val))  val = def_fig_axes3[1];		is3D = true
 				elseif (occursin("XYg", val))  val = " -Bafg -BWSen"
-				elseif (occursin("XY", val))   val = def_fig_axes
+				elseif (occursin("XY", val))   val = def_fig_axes[1]
 				elseif (occursin("LB", val))   val = " -Baf -BLB"
 				elseif (occursin("L",  val))   val = " -Baf -BL"
 				elseif (occursin("R",  val))   val = " -Baf -BR"
@@ -589,7 +590,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 				elseif (occursin("X",  val))   val = " -Baf -BwSen"
 				elseif (occursin("Yg", val))   val = " -Bafg -BWsen"
 				elseif (occursin("Y",  val))   val = " -Baf -BWsen"
-				elseif (val == "auto")         val = def_fig_axes		# 2D case
+				elseif (val == "auto")         val = def_fig_axes[1]		# 2D case
 				end
 				cmd = guess_WESN(d, cmd)
 			elseif (length(val) <= 5 && !occursin(" ", val) && occursin(r"[WESNwesnzZ]", val))
@@ -627,7 +628,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 		end
 	end
 
-	if (extra_parse && (opt_B[1] != def_fig_axes && opt_B[1] != def_fig_axes3))
+	if (extra_parse && (opt_B[1] != def_fig_axes[1] && opt_B[1] != def_fig_axes3[1]))
 		# This is old code that takes care to break a string in tokens and prefix with a -B to each token
 		tok = Vector{String}(undef, 10)
 		k = 1;		r = opt_B[1];		found = false
@@ -705,11 +706,12 @@ function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::Stri
 	cmd, opt_R = parse_R(d, cmd, O, del)
 	cmd, opt_J = parse_J(d, cmd, defaultJ, true, O, del)
 
-	def_fig_axes_ = (IamModern[1]) ? "" : def_fig_axes	# def_fig_axes is a global const
+	parse_theme(d)		# Must be first because some themes change def_fig_axes
+	def_fig_axes_ = (IamModern[1]) ? "" : def_fig_axes[1]	# def_fig_axes is a global const
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (occursin("3", caller) || caller == "grdview")
-			def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3
+			def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3[1]
 			cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes3_), del)
 		else
 			xx = (O ? "" : caller != "ternary" ? def_fig_axes_ : string(split(def_fig_axes_)[1]))
@@ -999,11 +1001,16 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 			current_view[1] = ""		# Ensure we start empty
 		end
 	end
-	if ((val = find_in_dict(d, [:theme])[1]) !== nothing)
+	return cmd, o
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_theme(d::Dict, del::Bool=true)
+	# This must always be processed before parse_B so it's the first call in that function
+	if ((val = find_in_dict(d, [:theme], del)[1]) !== nothing)
 		isa(val, NamedTuple) && theme(string(val[1]); nt2dict(val)...)
 		(isa(val, String) || isa(val, Symbol)) && theme(string(val))
 	end
-	return cmd, o
 end
 
 # ---------------------------------------------------------------------------------------------------
