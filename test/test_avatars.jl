@@ -60,6 +60,10 @@
 	lines(x, sin.(x), ls="FrontSlip", legend=true, figname="lixo")
 	lines(x, sin.(x), ls="lineCirc", legend=(label="sin(x)", box=:none), lc=:red, figname="lixo")
 	lines(x, sin.(x), ls="FrontCircLeft", legend=(label="sin(x)"), mc=:red, figname="lixo")
+	lines(x, sin.(x), ls="linediamond", theme=(:A0atg), Vd=dbg2) 
+	lines(x, sin.(x), ls="linediamond", theme=(:A2atg), Vd=dbg2) 
+	lines(x, sin.(x), ls="linediamond", theme=(:A2agITGraph), Vd=dbg2) 
+	theme("modern")		# Must reset otherwise many tests would fail due to different configs
 	scatter!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	scatter!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
 	hlines!([0.2, 0.6], pen=(1, :red))
