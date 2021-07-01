@@ -5,14 +5,14 @@ Offer themes support. NAME is the theme name. So far the three options are:
 
 - `modern`: - This is the default theme (same as GMT modern theme but with thinner FRAME_PEN [0.75p])
 - `classic`: - The GMT classic theme
-- `drak`: - A modern theme variation with dark background.
-- `A0|2[XY|XX|YY][atg][ag][g][H][V][NT|nt][ITit][Graph]` Make a composition of these to select a theme.
+- `dark`: - A modern theme variation with dark background.
+- `A0|2[XY|XX|YY][atg][ag][g][H][V][NT|nt][ITit][Graph][Dark]` Make a composition of these to select a theme.
    The main condition is that it starts with an A (Annotate). Hence `A2` means annotate two axis
    and `A0` means no axes at all. `XY` means to plot only left and bottom axes, `YY` only left and right
    and `XX` bottom and top. `atg` (or `afg`) means annotate, tick and grid lines. `ag` does not tick.
    `H` and `V` means grid lines will only be horizontal or vertical. Note, these require `atg` or `ag`.
-   `NT` stands for not ticks at all and `IT` plots the ticks inside the axes. `Graph` adds a vector
-   to the end of each axis (sets `XY`).
+   `NT` stands for not ticks at all and `IT` plots the ticks inside the axes. `Graph` adds a vector and
+   to the end of each axis (sets `XY`), and `Dark` put the background in dark mode.
    - Example: `A2YYg` -> plot left and right axes (only) and add grid lines.
    - Example: `A2Graph` -> plot left and right axes (only) and adds arrows at the end of them
 
@@ -45,7 +45,7 @@ function theme(name="modern"; kwargs...)
 		theme_classic()
 	else
 		theme_modern()			# All other themes are variations over the GMT_MODERN theme
-		if (_name == "dark")
+		if (_name == "dark" || contains(_name, "Dark"))
 			helper_theme_fonts_colors(font, color, bg_color, true)
 		elseif ((_name != "modern") || (font != "" || color != ""))	# bg_color alone wont trigger next call
 			helper_theme_fonts_colors(font, color, bg_color, false)
