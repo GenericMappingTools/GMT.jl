@@ -635,16 +635,12 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 		while (r != "")
 			tok[k], r = GMT.strtok(r)
 			tok[k] = replace(tok[k], '\U00AF'=>' ')
-			if (!occursin("-B", tok[k])) tok[k] = " -B" * tok[k]
-			else                         tok[k] = " " * tok[k]
-			end
-			k = k + 1
+			tok[k] = (!occursin("-B", tok[k])) ? " -B" * tok[k] : " " * tok[k]
+			k += 1
 		end
 		# Rebuild the B option string
 		opt_B = ""
-		for n = 1:k-1
-			opt_B *= tok[n]
-		end
+		[opt_B *= tok[n] for n = 1:k-1]
 	end
 
 	# We can have one or all of them. Deal separatelly here to allow way code to keep working
@@ -678,7 +674,9 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 
 	if (def_fig_axes[1] != def_fig_axes_bak && opt_B != def_fig_axes[1])
 		# For precaution we'll start by limiting the option consolidation only under themes.
-		opt_B = def_fig_axes[1] * opt_B
+		if (CTRL.proj_linear[1] && !startswith(opt_B, def_fig_axes_) && !(occursin("pxc", opt_B) || occursin("pyc", opt_B)))
+			opt_B = def_fig_axes_ * opt_B		# By using def_fig_axes_ this has no effect in modern mode.
+		end
 		opt_B = consolidate_B(opt_B)
 	end
 	return cmd * opt_B, opt_B
@@ -686,7 +684,11 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function consolidate_B(opt_B::String)::String
+	# Consolidate a multi-pieces opt_B. Tries to join pieces that are joinable in terms of axes
+	# components and interleaving of frame and axes settings that cause GMT parse errors. This is
+	# a very difficult task and this function will likely fail for certain combinations.
 
+	(opt_B == "") && return ""
 	# Detect the presence of 'a', 'f' or 'g' in the first -B axes settings token
 	have_Bpxa, have_Bpya = occursin("Bpxa", opt_B), occursin("Bpya", opt_B)
 	have_Bpxf, have_Bpxg, got_x, have_Bpyf, have_Bpyg, got_y= false, false, false, false, false, false
@@ -701,6 +703,13 @@ function consolidate_B(opt_B::String)::String
 
 	r = (s[1] == "-Bafg") ? " -Ba -Bf -Bg" : (s[1] == "-Baf") ? " -Ba -Bf" : (s[1] == "-Bag") ? " -Ba -Bg" : ""
 	(r != "") && (opt_B = replace(opt_B, s[1] => r))
+	if (occursin("pxc", opt_B) || occursin("pyc", opt_B))
+		# When we have a custom axis, make sure we don't have any automatic -Ba, -Bf or -Bg
+		occursin("-Ba", opt_B) && (opt_B = replace(opt_B, "-Ba" => ""))
+		occursin("-Bf", opt_B) && (opt_B = replace(opt_B, "-Bf" => ""))
+		occursin("-Bg", opt_B) && (opt_B = replace(opt_B, "-Bg" => ""))
+	end
+
 	sdef = split(def_fig_axes[1])
 	occursin("a", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "a", have_Bpxa, have_Bpya))
 	occursin("f", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "f", have_Bpxf, have_Bpyf))
@@ -712,13 +721,17 @@ function consolidate_B(opt_B::String)::String
 	for k = 1:length(s)-1
 		if (startswith(s[k], "-Bpx") && startswith(s[k+1], "-Bpx") && s[k+1][5] != 'c')		# -Bpxc... cannot be glued
 			s[k], s[k+1], got_x = s[k] * s[k+1][5:end], "", true
-		elseif (startswith(s[k], "-Bpy") && startswith(s[k+1], "-Bpy") && s[k+1][5] != 'c')
+		elseif (startswith(s[k], "-Bpy") && startswith(s[k+1], "-Bpy") && s[k+1][5] != 'c')	# But very fragile
 			s[k], s[k+1], got_y = s[k] * s[k+1][5:end], "", true
 		end
 	end
 	if (got_x || got_y)
 		opt_B = " " * s[1]
-		[opt_B *= " " * s[k] for k = 2:length(s)]
+		[opt_B *= " " * s[k] for k = 2:length(s) if s[k] != ""]
+
+	else
+		opt_B = replace(opt_B, "   " => " ")		# Remove double spaces
+		opt_B = replace(opt_B, "  "  => " ")		# Remove double spaces
 	end
 	opt_B
 end
