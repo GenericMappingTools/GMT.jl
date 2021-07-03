@@ -30,14 +30,18 @@ an image is `show`(n) or saved.
 This function can be called alone, e.g. ``theme("dark")`` or as an option in the ``plot()`` module.
 """
 function theme(name="modern"; kwargs...)
-	# Provide the support. 
+	# Provide the support for themes
+	global API
+
+	(!isa(API, Ptr{Nothing}) || API == C_NULL) && (API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR))
+
 	d = KW(kwargs)
 	font = ((val = find_in_dict(d, [:font])[1]) !== nothing) ? string(val) : ""
 	bg_color = ((val = find_in_dict(d, [:bg_color])[1]) !== nothing) ? string(val) : ""
 	color = ((val = find_in_dict(d, [:fg_color])[1]) !== nothing) ? string(val) : ""
 	
 	# Some previous calls may have changed these and a new theme option may be caught with the pens down
-	def_fig_axes[1]  = def_fig_axes_bak		# So, always start with the defaults
+	def_fig_axes[1]  = def_fig_axes_bak		# So that we always start with the defaults
 	def_fig_axes3[1] = def_fig_axes3_bak
 
 	_name = string(name)
@@ -50,7 +54,7 @@ function theme(name="modern"; kwargs...)
 		elseif ((_name != "modern") || (font != "" || color != ""))	# bg_color alone wont trigger next call
 			helper_theme_fonts_colors(font, color, bg_color, false)
 		end
-		parse_theme_names(name)
+		parse_theme_names(_name)
 	end
 
 	(find_in_dict(d, [:noticks :no_ticks])[1] !== nothing) && helper_theme_noticks()		# No ticks
