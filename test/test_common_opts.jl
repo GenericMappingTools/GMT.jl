@@ -159,6 +159,9 @@
 	GMT.helper2_axes("lolo");
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
 
+	@test GMT.consolidate_B(" -Baf -BWSen -BpxaUfg10 -BWSen+taiai -Bpx+lai+sBlaBla -Bpyclixo.txt -Bsxa5f1") ==
+		"  -Bya -Byf -BWSen -BpxaUfg10 -BWSen+taiai -Bpx+lai+sBlaBla -Bpyclixo.txt -Bsxa5f1"
+
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt(d, "", "", [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(10,:red),bot=true), Vd=dbg2);

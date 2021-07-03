@@ -559,7 +559,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
 	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3[1]		# def_fig_axes is a global const
 
-	opt_B = [_opt_B]
+	opt_B = _opt_B
 
 	# These four are aliases
 	extra_parse = true;		have_a_none = false
@@ -597,8 +597,8 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 				val *= " af"		# To prevent that setting B=:WSen removes all annots
 			end
 		end
-		if (isa(val, NamedTuple)) opt_B[1] = axis(val);	extra_parse = false
-		else                      opt_B[1] = string(val)
+		if (isa(val, NamedTuple)) opt_B = axis(val);	extra_parse = false
+		else                      opt_B = string(val)
 		end
 	end
 
@@ -609,29 +609,29 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\U00AF');   delete!(d, :ylabel);	end
 	if (haskey(d, :zlabel))  t *= " z+l" * replace(str_with_blancs(d[:zlabel]),' '=>'\U00AF');   delete!(d, :zlabel);	end
 	if (t != "")
-		if (opt_B[1] == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis :xticks :yticks :zticks], false)[1] === nothing))
-			opt_B[1] = def_fig_axes_
-		elseif (opt_B[1] != "")			# Because  findlast("-B","") Errors!!!!!
-			if !( ((ind = findlast("-B",opt_B[1])) !== nothing || (ind = findlast(" ",opt_B[1])) !== nothing) &&
-				  (occursin(r"[WESNwesntlbu+g+o]",opt_B[1][ind[1]:end])) )
+		if (opt_B == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis :xticks :yticks :zticks], false)[1] === nothing))
+			opt_B = def_fig_axes_
+		elseif (opt_B != "")			# Because  findlast("-B","") Errors!!!!!
+			if !( ((ind = findlast("-B",opt_B)) !== nothing || (ind = findlast(" ",opt_B)) !== nothing) &&
+				  (occursin(r"[WESNwesntlbu+g+o]",opt_B[ind[1]:end])) )
 				t = " " * t;		# Do not glue, for example, -Bg with :title
 			end
 		end
-		opt_B[1] *= t;
+		opt_B *= t;
 		extra_parse = true
 	end
 
 	# These are not and we can have one or all of them. NamedTuples are dealt at the end
 	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2]
 		if (haskey(d, symb) && !isa(d[symb], NamedTuple) && !isa(d[symb], Dict))
-			opt_B[1] = string(d[symb], " ", opt_B[1])
+			opt_B = string(d[symb], " ", opt_B)
 		end
 	end
 
-	if (extra_parse && (opt_B[1] != def_fig_axes[1] && opt_B[1] != def_fig_axes3[1]))
+	if (extra_parse && (opt_B != def_fig_axes[1] && opt_B != def_fig_axes3[1]))
 		# This is old code that takes care to break a string in tokens and prefix with a -B to each token
 		tok = Vector{String}(undef, 10)
-		k = 1;		r = opt_B[1];		found = false
+		k = 1;		r = opt_B;		found = false
 		while (r != "")
 			tok[k], r = GMT.strtok(r)
 			tok[k] = replace(tok[k], '\U00AF'=>' ')
@@ -641,9 +641,9 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 			k = k + 1
 		end
 		# Rebuild the B option string
-		opt_B[1] = ""
+		opt_B = ""
 		for n = 1:k-1
-			opt_B[1] *= tok[n]
+			opt_B *= tok[n]
 		end
 	end
 
@@ -651,7 +651,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	this_opt_B = "";
 	for symb in [:yaxis2 :xaxis2 :axis2 :zaxis :yaxis :xaxis]
 		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict)))
-			if (isa(d[symb], Dict))  d[symb] = dict2nt(d[symb])  end
+			(isa(d[symb], Dict)) && (d[symb] = dict2nt(d[symb]))
 			if     (symb == :axis2)   this_opt_B = axis(d[symb], secondary=true);		delete!(d, symb)
 			elseif (symb == :xaxis)   this_opt_B = axis(d[symb], x=true) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :xaxis2)  this_opt_B = axis(d[symb], x=true, secondary=true) * this_opt_B;	delete!(d, symb)
@@ -671,12 +671,63 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 		end
 	end
 
-	if (opt_B[1] != def_fig_axes_ && opt_B[1] != def_fig_axes3_)  opt_B[1] = this_opt_B * opt_B[1]
-	elseif (this_opt_B != "")  opt_B[1] = this_opt_B
+	if (opt_B != def_fig_axes_ && opt_B != def_fig_axes3_)  opt_B = this_opt_B * opt_B
+	elseif (this_opt_B != "")  opt_B = this_opt_B
 	end
-	(have_a_none) && (opt_B[1] *= " --MAP_FRAME_PEN=0.001,white@100")	# Need to resort to this sad trick
+	(have_a_none) && (opt_B *= " --MAP_FRAME_PEN=0.001,white@100")	# Need to resort to this sad trick
 
-	return cmd * opt_B[1], opt_B[1]
+	if (def_fig_axes[1] != def_fig_axes_bak && opt_B != def_fig_axes[1])
+		# For precaution we'll start by limiting the option consolidation only under themes.
+		opt_B = def_fig_axes[1] * opt_B
+		opt_B = consolidate_B(opt_B)
+	end
+	return cmd * opt_B, opt_B
+end
+
+# ---------------------------------------------------------------------------------------------------
+function consolidate_B(opt_B::String)::String
+
+	# Detect the presence of 'a', 'f' or 'g' in the first -B axes settings token
+	have_Bpxa, have_Bpya = occursin("Bpxa", opt_B), occursin("Bpya", opt_B)
+	have_Bpxf, have_Bpxg, got_x, have_Bpyf, have_Bpyg, got_y= false, false, false, false, false, false
+	s = split(opt_B)
+	for tok in s
+		if (!got_x && startswith(tok, "-Bpx"))
+			have_Bpxf, have_Bpxg, got_x = occursin("f", tok), occursin("g", tok), true;	continue
+		elseif (!got_y && startswith(tok, "-Bpy"))
+			have_Bpyf, have_Bpyg, got_y = occursin("f", tok), occursin("g", tok), true
+		end
+	end
+
+	r = (s[1] == "-Bafg") ? " -Ba -Bf -Bg" : (s[1] == "-Baf") ? " -Ba -Bf" : (s[1] == "-Bag") ? " -Ba -Bg" : ""
+	(r != "") && (opt_B = replace(opt_B, s[1] => r))
+	sdef = split(def_fig_axes[1])
+	occursin("a", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "a", have_Bpxa, have_Bpya))
+	occursin("f", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "f", have_Bpxf, have_Bpyf))
+	occursin("g", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "g", have_Bpxg, have_Bpyg))
+	opt_B = replace(opt_B, "-B " => "")		# Remove singleton "-B"
+
+	s = split(opt_B)
+	got_x, got_y = false, false
+	for k = 1:length(s)-1
+		if (startswith(s[k], "-Bpx") && startswith(s[k+1], "-Bpx") && s[k+1][5] != 'c')		# -Bpxc... cannot be glued
+			s[k], s[k+1], got_x = s[k] * s[k+1][5:end], "", true
+		elseif (startswith(s[k], "-Bpy") && startswith(s[k+1], "-Bpy") && s[k+1][5] != 'c')
+			s[k], s[k+1], got_y = s[k] * s[k+1][5:end], "", true
+		end
+	end
+	if (got_x || got_y)
+		opt_B = " " * s[1]
+		[opt_B *= " " * s[k] for k = 2:length(s)]
+	end
+	opt_B
+end
+function helper_consolidate_B(opt_B::String, flag::String, have_Bpx::Bool, have_Bpy::Bool)::String
+	if (have_Bpx && have_Bpy) opt_B = replace(opt_B, " -B" * flag => " -B")	# Have both, just remove the repeated 'a'
+	elseif (have_Bpx)         opt_B = replace(opt_B, " -B" * flag => " -By" * flag)	# Add 'ya' because 'a' stands for both
+	elseif (have_Bpy)         opt_B = replace(opt_B, " -B" * flag => " -Bx" * flag)
+	else   opt_B
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2084,61 +2135,61 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	if (z)  primo = ""  end							# Z axis have no primary/secondary
 	axe = x ? "x" : (y ? "y" : (z ? "z" : ""))		# Are we dealing with a specific axis?
 
-	opt = [" -B"]
+	opt = " -B"
 	if ((val = find_in_dict(d, [:frame :axes])[1]) !== nothing)
 		if isa(val, Dict)  val = dict2nt(val)  end
-		opt[1] *= helper0_axes(val)
+		opt *= helper0_axes(val)
 	end
 
-	if (haskey(d, :corners)) opt[1] *= string(d[:corners])  end	# 1234
+	if (haskey(d, :corners)) opt *= string(d[:corners])  end	# 1234
 	#if (haskey(d, :fill))    opt *= "+g" * get_color(d[:fill])  end
 	val, symb = find_in_dict(d, [:fill :bg :background], false)
 	if (val !== nothing)
 		tB = "+g" * add_opt_fill(d, [symb])
-		opt[1] *= tB					# Works, but patterns can screw
-		CTRL.pocket_B[2] = tB			# Save this one because we may need to revert it during psclip parsing
+		opt *= tB					# Works, but patterns can screw
+		CTRL.pocket_B[2] = tB		# Save this one because we may need to revert it during psclip parsing
 	end
 	if (GMTver > v"6.1")
-		if ((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing)  opt[1] = add_opt_fill(val, opt[1], "+x")  end
-		if ((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing)  opt[1] = add_opt_fill(val, opt[1], "+y")  end
-		if ((p = add_opt_pen(d, [:wall_outline], "+w")) != "")  opt[1] *= p  end
+		if ((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing)  opt = add_opt_fill(val, opt, "+x")  end
+		if ((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing)  opt = add_opt_fill(val, opt, "+y")  end
+		if ((p = add_opt_pen(d, [:wall_outline], "+w")) != "")  opt *= p  end
 	end
-	if (haskey(d, :cube))    opt[1] *= "+b"  end
-	if (haskey(d, :noframe)) opt[1] *= "+n"  end
-	if (haskey(d, :pole))    opt[1] *= "+o" * arg2str(d[:pole])  end
-	if (haskey(d, :title))   opt[1] *= "+t" * str_with_blancs(arg2str(d[:title]))  end
+	if (haskey(d, :cube))    opt *= "+b"  end
+	if (haskey(d, :noframe)) opt *= "+n"  end
+	if (haskey(d, :pole))    opt *= "+o" * arg2str(d[:pole])  end
+	if (haskey(d, :title))   opt *= "+t" * str_with_blancs(arg2str(d[:title]))  end
 
-	if (opt[1] == " -B")  opt[1] = ""  end	# If nothing, no -B
+	(opt == " -B") && (opt = "")		# If nothing, no -B
 
 	# axes supps
 	ax_sup = ""
-	if (haskey(d, :seclabel))   ax_sup *= "+s" * str_with_blancs(arg2str(d[:seclabel]))   end
+	if (haskey(d, :seclabel))  ax_sup *= "+s" * str_with_blancs(arg2str(d[:seclabel]))   end
 
 	if (haskey(d, :label))
-		opt[1] *= " -B" * primo * axe * "+l"  * str_with_blancs(arg2str(d[:label])) * ax_sup
+		opt *= " -B" * primo * axe * "+l"  * str_with_blancs(arg2str(d[:label])) * ax_sup
 	else
-		if (haskey(d, :xlabel))  opt[1] *= " -B" * primo * "x+l" * str_with_blancs(arg2str(d[:xlabel])) * ax_sup  end
-		if (haskey(d, :zlabel))  opt[1] *= " -B" * primo * "z+l" * str_with_blancs(arg2str(d[:zlabel])) * ax_sup  end
+		if (haskey(d, :xlabel))  opt *= " -B" * primo * "x+l" * str_with_blancs(arg2str(d[:xlabel])) * ax_sup  end
+		if (haskey(d, :zlabel))  opt *= " -B" * primo * "z+l" * str_with_blancs(arg2str(d[:zlabel])) * ax_sup  end
 		if (haskey(d, :ylabel))
-			opt[1] *= " -B" * primo * "y+l" * str_with_blancs(arg2str(d[:ylabel])) * ax_sup
+			opt *= " -B" * primo * "y+l" * str_with_blancs(arg2str(d[:ylabel])) * ax_sup
 		elseif (haskey(d, :Yhlabel))
 			opt_L = (axe != "y") ? "y+L" : "+L"
-			opt[1] *= " -B" * primo * axe * opt_L  * str_with_blancs(arg2str(d[:Yhlabel])) * ax_sup
+			opt *= " -B" * primo * axe * opt_L * str_with_blancs(arg2str(d[:Yhlabel])) * ax_sup
 		end
-		haskey(d, :alabel) && (opt[1] *= " -Ba+l" * str_with_blancs(arg2str(d[:alabel])))	# For Ternary
-		haskey(d, :blabel) && (opt[1] *= " -Bb+l" * str_with_blancs(arg2str(d[:blabel])))
-		haskey(d, :clabel) && (opt[1] *= " -Bc+l" * str_with_blancs(arg2str(d[:clabel])))
+		haskey(d, :alabel) && (opt *= " -Ba+l" * str_with_blancs(arg2str(d[:alabel])))	# For Ternary
+		haskey(d, :blabel) && (opt *= " -Bb+l" * str_with_blancs(arg2str(d[:blabel])))
+		haskey(d, :clabel) && (opt *= " -Bc+l" * str_with_blancs(arg2str(d[:clabel])))
 	end
 
 	# intervals
-	ints = [""]
-	if (haskey(d, :annot))      ints[1] *= "a" * helper1_axes(d[:annot])  end
-	if (haskey(d, :annot_unit)) ints[1] *= helper2_axes(d[:annot_unit])   end
-	if (haskey(d, :ticks))      ints[1] *= "f" * helper1_axes(d[:ticks])  end
-	if (haskey(d, :ticks_unit)) ints[1] *= helper2_axes(d[:ticks_unit])   end
-	if (haskey(d, :grid))       tB = "g" * helper1_axes(d[:grid]); ints[1] *= tB;	CTRL.pocket_B[1] = tB  end
-	if (haskey(d, :prefix))     ints[1] *= "+p" * str_with_blancs(arg2str(d[:prefix]))  end
-	if (haskey(d, :suffix))     ints[1] *= "+u" * str_with_blancs(arg2str(d[:suffix]))  end
+	ints = ""
+	if (haskey(d, :annot))      ints *= "a" * helper1_axes(d[:annot])  end
+	if (haskey(d, :annot_unit)) ints *= helper2_axes(d[:annot_unit])   end
+	if (haskey(d, :ticks))      ints *= "f" * helper1_axes(d[:ticks])  end
+	if (haskey(d, :ticks_unit)) ints *= helper2_axes(d[:ticks_unit])   end
+	if (haskey(d, :grid))       tB = "g" * helper1_axes(d[:grid]); ints *= tB;	CTRL.pocket_B[1] = tB  end
+	if (haskey(d, :prefix))     ints *= "+p" * str_with_blancs(arg2str(d[:prefix]))  end
+	if (haskey(d, :suffix))     ints *= "+u" * str_with_blancs(arg2str(d[:suffix]))  end
 	if (haskey(d, :slanted))
 		s = arg2str(d[:slanted])
 		if (s != "")
@@ -2146,40 +2197,40 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 				s = s[1]
 				(axe == "y" && s != 'p') && error("slanted option: Only 'parallel' is allowed for the y-axis")
 			end
-			ints[1] *= "+a" * s
+			ints *= "+a" * s
 		end
 	end
 	if (haskey(d, :custom))
-		if (isa(d[:custom], String))  ints[1] *= 'c' * d[:custom]
+		if (isa(d[:custom], String))  ints *= 'c' * d[:custom]
 		else
-			if ((r = helper3_axes(d[:custom], primo, axe)) != "")  ints[1] *= 'c' * r  end
+			if ((r = helper3_axes(d[:custom], primo, axe)) != "")  ints *= 'c' * r  end
 		end
 	elseif (haskey(d, :customticks))			# These ticks are custom axis
-		if ((r = ticks(d[:customticks]; axis=axe, primary=primo)) != "")  ints[1] *= 'c' * r  end
+		if ((r = ticks(d[:customticks]; axis=axe, primary=primo)) != "")  ints *= 'c' * r  end
 	elseif (haskey(d, :pi))
 		if (isa(d[:pi], Number))
-			ints[1] = string(ints[1], d[:pi], "pi")		# (n)pi
+			ints = string(ints, d[:pi], "pi")		# (n)pi
 		elseif (isa(d[:pi], Array) || isa(d[:pi], Tuple))
-			ints[1] = string(ints[1], d[:pi][1], "pi", d[:pi][2])	# (n)pi(m)
+			ints = string(ints, d[:pi][1], "pi", d[:pi][2])	# (n)pi(m)
 		end
 	elseif (haskey(d, :scale))
 		s = arg2str(d[:scale])
-		if     (s == "log")  ints[1] *= 'l'
-		elseif (s == "10log" || s == "pow")  ints[1] *= 'p'
-		elseif (s == "exp")  ints[1] *= 'p'
+		if     (s == "log")                  ints *= 'l'
+		elseif (s == "10log" || s == "pow")  ints *= 'p'
+		elseif (s == "exp")                  ints *= 'p'
 		end
 	end
 	if (haskey(d, :phase_add))
-		ints[1] *= "+" * arg2str(d[:phase_add])
+		ints *= "+" * arg2str(d[:phase_add])
 	elseif (haskey(d, :phase_sub))
-		ints[1] *= "-" * arg2str(d[:phase_sub])
+		ints *= "-" * arg2str(d[:phase_sub])
 	end
-	if (ints[1] != "") opt[1] = " -B" * primo * axe * ints[1] * opt[1]  end
+	(ints != "") && (opt = " -B" * primo * axe * ints * opt)
 
 	# Check if ax_sup was requested
-	if (opt[1] == "" && ax_sup != "")  opt[1] = " -B" * primo * axe * ax_sup  end
+	(opt == "" && ax_sup != "") && (opt = " -B" * primo * axe * ax_sup)
 
-	return opt[1]
+	return opt
 end
 
 # ------------------------
@@ -2214,7 +2265,7 @@ end
 function helper1_axes(arg)::String
 	# Used by annot, ticks and grid to accept also 'auto' and "" to mean automatic
 	out = arg2str(arg)
-	if (out != "" && out[1] == 'a')  out = ""  end
+	(out != "" && out[1] == 'a') && (out = "")
 	return out
 end
 # ------------------------
