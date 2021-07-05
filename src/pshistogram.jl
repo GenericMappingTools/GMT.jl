@@ -123,14 +123,14 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			arg1, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
 		else
 			cmd *= opt_Z
-			if (opt_T != "")  cmd *= " -T" * opt_T  end
+			(opt_T != "") && (cmd *= " -T" * opt_T)
 		end
 		cmd = parse_V(d, cmd)
 		return gmt(gmt_proggy * cmd, arg1)
 	end
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "histogram", O, " -JX12c/12c")
-	cmd, opt_JZ = parse_JZ(d, cmd)
+	cmd, _, _, opt_R = parse_BJR(d, cmd, "histogram", O, " -JX14c/14c")
+	cmd = parse_JZ(d, cmd)[1]
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
@@ -172,7 +172,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		do_clip = (isa(arg1[1], UInt16) && (val = find_in_dict(d, [:full_histo])[1]) === nothing) ? true : false
 		do_auto = ((val_auto = find_in_dict(d, [:auto :threshols])[1]) !== nothing) ? true : false	# Automatic bounds detetion
 		do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false	# Automatic zoom to interesting region
-		if (do_zoom && !do_auto)  val_auto = nothing  end	# I.e. 'zoom' sets also the auto mode
+		(do_zoom && !do_auto) && (val_auto = nothing)		# I.e. 'zoom' sets also the auto mode
 		hst, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
 		if (do_clip && (all(hst[3:10,2] .== 0)))  hst[1,2] = 0; hst[2,2] = 0  end
 		if (do_auto || do_zoom)
@@ -205,17 +205,17 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		cmd *= " -T$(arg1.range[5])/$(arg1.range[6])/$inc"
 		arg1 = hst		# We want to send the histogram, not the GMTgrid
 	else
-		if (opt_T != "")  opt_T = " -T" * opt_T  end	# It lacked the -T so that it could be used in loc_histo()
+		(opt_T != "") && (opt_T = " -T" * opt_T)		# It lacked the -T so that it could be used in loc_histo()
 		cmd *= opt_T * opt_Z
 	end
 
 	# The following looks a bit messy but it's needed to auto plotting verical lines with the limits
-	show_ = false;		fmt_ = "ps";		savefig_ = nothing
+	show_ = false;		fmt_ = FMT[1];		savefig_ = nothing
 	if (limit_L !== nothing)
-		if (haskey(d, :show))  show_ = (d[:show] != 0)  end				# Backup the :show val
+		haskey(d, :show) && (show_ = (d[:show] != 0))				# Backup the :show val
 		d[:show] = false
-		if (haskey(d, :fmt))  fmt_ = d[:fmt]; delete!(d, :fmt)  end		# Backup the :show val
-		if ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) savefig_ = val  end
+		haskey(d, :fmt) && (fmt_ = d[:fmt]; delete!(d, :fmt))		# Backup the :fmt val
+		((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) && (savefig_ = val)
 	end
 
 	out2 = nothing;		Vd_ = 0				# Backup values
@@ -281,7 +281,7 @@ function loc_histo(in, cmd::String="", opt_T::String="", opt_Z::String="")
 	pshst_wall!(in, hst, inc, n_bins)
 
 	cmd = (opt_Z == "") ? cmd * " -Z0" : cmd * opt_Z
-	if (!occursin("+w", cmd))  cmd *= "+w"  end		# Pretending to be weighted is crutial for the trick
+	(!occursin("+w", cmd)) && (cmd *= "+w")			# Pretending to be weighted is crutial for the trick
 
 	return hst, cmd * " -T0/$(n_bins * inc)/$inc"
 end
@@ -292,7 +292,7 @@ function pshst_wall!(in, hst, inc, n_bins::Int)
 	# introduces a mysterious type instability and execution times multiply by 3.
 	if (inc == 1)
 		@inbounds for k = 1:length(in)  hst[in[k] + 1, 2] += 1  end
-    	else
+    else
 		@inbounds for k = 1:length(in)  hst[Int(floor(in[k] / inc) + 1), 2] += 1  end
 	end
 	[@inbounds hst[k,1] = inc * (k - 1) for k = 1:n_bins]
