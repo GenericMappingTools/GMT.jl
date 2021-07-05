@@ -381,7 +381,8 @@ function gmt_getpen(API::Ptr{Cvoid}, buffer, P)
 	ccall((:gmt_getpen, libgmt), Cint, (Cstring, Ptr{Cuint}, Ref{GMT_PEN}), GMT_, buffer, P)
 end =#
 
-function gmtlib_setparameter(API::Ptr{Cvoid}, keyword::String, value::String)
+function gmtlib_setparameter(API, keyword::String, value::String)
+	(!isa(API, Ptr{Nothing}) || API == C_NULL) && return UInt32(1)
 	ccall((:gmtlib_setparameter, libgmt), Cuint, (Cstring, Ptr{UInt8}, Ptr{UInt8}, Bool), GMT_Get_Ctrl(API), keyword, value, true)
 end
 
