@@ -141,6 +141,10 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		cmd *= opt_L
 	end
 
+	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
+		cmd = (isa(val, String)) ? cmd * " " * val : cmd * decorated(val)
+	end
+
 	opt_Wmarker = ""
 	if ((val = find_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor])[1]) !== nothing)
 		opt_Wmarker = "0.5p," * arg2str(val)		# 0.25p is too thin?
@@ -183,8 +187,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
-	cmd = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
-
+	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
 	_cmd = build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
 	
 	(got_Zvars && opt_S == "" && opt_W == "" && !occursin(" -G", _cmd[1])) && (_cmd[1] *= " -W0.5")
