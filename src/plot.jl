@@ -662,14 +662,7 @@ Examples:
 """
 function lines(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
-	d = KW(kwargs)
-	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
-		cmd = (isa(val, String)) ? val : decorated(val)
-	else
-		cmd = "lines"
-	end
-
-	common_plot_xyz(cmd0, arg1, cmd, first, false, d...)
+	common_plot_xyz(cmd0, arg1, "lines", first, false, kwargs...)
 end
 lines!(cmd0::String="", arg=nothing; kw...) = lines(cmd0, arg; first=false, kw...)
 
@@ -871,6 +864,7 @@ Other than the above options, the `kwargs` input accepts still the following opt
 """
 function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=false, kwargs...)
 	# A wrapper for psternary
+	(cmd0 == "" && arg1 === nothing) && (arg1 = [0.0 0.0 0.0])	# No data in, just a kind of ternary basemap
 	(cmd0 != "") && (arg1 = gmtread(cmd0))
 	d = init_module(first, kwargs...)[1]
 	opt_J = parse_J(d, "", " -JX" * split(def_fig_size, '/')[1] * "/0", true, false, false)[2]
@@ -907,13 +901,19 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 		del_from_dict(d, [:proj :projection])		# To avoid non-consumed warnings
 		delete!(d, :clockwise)
 	end
-	if ((val = find_in_dict(d, [:par], false)[1]) === nothing)
+	if ((val = find_in_dict(d, [:par :conf], false)[1]) === nothing)
 		d[:par] = (MAP_GRID_PEN_PRIMARY="thinnest,gray",)
 	end
 	if (GMTver <= v"6.2.0" && (val = find_in_dict(d, [:C :color :cmap], false)[1]) !== nothing && isa(val, GMTcpt))
 		_name = joinpath(tempdir(), "GMTjl_tmp.cpt");	gmtwrite(_name, val);	d[:C] = _name	# Workaround a bug in 6.2.0
 	end
-	common_plot_xyz("", arg1, "ternary", first, false, d...)
+	(API === nothing) && gmt("")	# Force having a valid API. We can't afford otherwise here.
+	(GMTver <= v"6.3.0") && gmtlib_setparameter(API, "MAP_FRAME_AXES", "WESNZ")	# Because of a bug in 6.2.0 modern theme
+	r = common_plot_xyz("", arg1, "ternary", first, false, d...)
+	(GMTver <= v"6.3.0") && gmtlib_setparameter(API, "MAP_FRAME_AXES", "auto")
+	# With the following trick we leave the -R history in 0/1/0/1 and so we can append with plot, text, etc
+	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(tempdir(), "lixo.ps"), [0. 0.])
+	return r
 end
 
 function parse_B4ternary!(d::Dict)
@@ -940,7 +940,7 @@ function parse_B4ternary!(d::Dict)
 	end
 end
 
-function tern2cart(abcz::Matrix{<:Real}, reverse::Bool)
+function tern2cart(abcz::Matrix{<:Real}, reverse::Bool=false)
 	# coverts ternary to cartesian units. ABCZ is either a Mx3 (a,b,c) or Mx4 (a,b,c,z) matrix
 	a,b,c = !reverse ? (3,1,2) : (1,2,3)
 	s = view(abcz, :, a) + view(abcz, :, b) + view(abcz, :, c)	# s = (a + b + c)
@@ -959,8 +959,9 @@ function dict_auto_add!(d::Dict)
 end
 
 ternary!(cmd0::String="", arg1=nothing; kw...) = ternary(cmd0, arg1; first=false, kw...)
-ternary(arg1;  kw...)  = ternary("", arg1; first=true, kw...)
-ternary!(arg1; kw...)  = ternary("", arg1; first=false, kw...)
+ternary(arg1;  kw...) = ternary("", arg1; first=true, kw...)
+ternary!(arg1; kw...) = ternary("", arg1; first=false, kw...)
+ternary(kw...) = ternary("", nothing; first=true, kw...)
 const psternary  = ternary            # Aliases
 const psternary! = ternary!           # Aliases
 
