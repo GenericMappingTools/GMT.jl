@@ -616,6 +616,8 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 			if !( ((ind = findlast("-B",opt_B)) !== nothing || (ind = findlast(" ",opt_B)) !== nothing) &&
 				  (occursin(r"[WESNwesntlbu+g+o]",opt_B[ind[1]:end])) )
 				t = " " * t;		# Do not glue, for example, -Bg with :title
+			elseif (startswith(t, "+t") && (endswith(opt_B, "-Bafg") || endswith(opt_B, "-Baf") || endswith(opt_B, "-Ba")))
+				t = " " * t;
 			end
 		end
 		opt_B *= t;
