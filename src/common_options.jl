@@ -555,15 +555,15 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axis :axes :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
-	parse_theme(d)		# Must be first because some themes change def_fig_axes
+	parse_theme(d)			# Must be first because some themes change def_fig_axes
 	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
 	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3[1]		# def_fig_axes is a global const
 
 	opt_B = _opt_B
+	have_Bframe, got_Bstring = false, false		# To know if the axis() function returns a -B<frame> setting
 
-	# These four are aliases
 	extra_parse = true;		have_a_none = false
-	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)
+	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)		# These four are aliases
 		isa(val, Dict) && (val = dict2nt(val))
 		if (isa(val, String) || isa(val, Symbol))
 			val = string(val)					# In case it was a symbol
@@ -597,9 +597,10 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 				val *= " af"		# To prevent that setting B=:WSen removes all annots
 			end
 		end
-		if (isa(val, NamedTuple)) opt_B = axis(val);	extra_parse = false
+		if (isa(val, NamedTuple)) opt_B, have_Bframe = axis(val);	extra_parse = false
 		else                      opt_B = string(val)
 		end
+		(extra_parse && isa(val, String)) && (got_Bstring = true)	# Signal to not try to consolidate with def_fig_axes
 	end
 
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
@@ -646,15 +647,19 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	# We can have one or all of them. Deal separatelly here to allow way code to keep working
 	this_opt_B = "";
 	for symb in [:yaxis2 :xaxis2 :axis2 :zaxis :yaxis :xaxis]
+		add_this, this_Bframe = false, false
 		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict)))
 			(isa(d[symb], Dict)) && (d[symb] = dict2nt(d[symb]))
-			if     (symb == :axis2)   this_opt_B = axis(d[symb], secondary=true);		delete!(d, symb)
-			elseif (symb == :xaxis)   this_opt_B = axis(d[symb], x=true) * this_opt_B;	delete!(d, symb)
-			elseif (symb == :xaxis2)  this_opt_B = axis(d[symb], x=true, secondary=true) * this_opt_B;	delete!(d, symb)
-			elseif (symb == :yaxis)   this_opt_B = axis(d[symb], y=true) * this_opt_B;	delete!(d, symb)
-			elseif (symb == :yaxis2)  this_opt_B = axis(d[symb], y=true, secondary=true) * this_opt_B;	delete!(d, symb)
-			elseif (symb == :zaxis)   this_opt_B = axis(d[symb], z=true) * this_opt_B;	delete!(d, symb)
+			if     (symb == :axis2)   this_B, this_Bframe = axis(d[symb], secondary=true); add_this = true
+			elseif (symb == :xaxis)   this_B, this_Bframe = axis(d[symb], x=true); add_this = true
+			elseif (symb == :xaxis2)  this_B, this_Bframe = axis(d[symb], x=true, secondary=true); add_this = true
+			elseif (symb == :yaxis)   this_B, this_Bframe = axis(d[symb], y=true); add_this = true
+			elseif (symb == :yaxis2)  this_B, this_Bframe = axis(d[symb], y=true, secondary=true); add_this = true
+			elseif (symb == :zaxis)   this_B, this_Bframe = axis(d[symb], z=true); add_this = true
 			end
+			(add_this) && (this_opt_B *= this_B)
+			have_Bframe = have_Bframe || this_Bframe
+			delete!(d, symb)
 		end
 	end
 	# These can come up outside of an ?axis tuple, so need to be sekeed too.
@@ -672,10 +677,10 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	end
 	(have_a_none) && (opt_B *= " --MAP_FRAME_PEN=0.001,white@100")	# Need to resort to this sad trick
 
-	if (def_fig_axes[1] != def_fig_axes_bak && opt_B != def_fig_axes[1])
-		# For precaution we'll start by limiting the option consolidation only under themes.
-		if (CTRL.proj_linear[1] && !startswith(opt_B, def_fig_axes_) && !(occursin("pxc", opt_B) || occursin("pyc", opt_B)))
-			opt_B = def_fig_axes_ * opt_B		# By using def_fig_axes_ this has no effect in modern mode.
+	if (def_fig_axes[1] != def_fig_axes_bak && opt_B != def_fig_axes[1])	# Consolidation only under themes
+		if (!got_Bstring && CTRL.proj_linear[1] && !startswith(opt_B, def_fig_axes_) && !(occursin("pxc", opt_B) || occursin("pyc", opt_B)))
+			# By using def_fig_axes_ this has no effect in modern mode.
+			opt_B = ((have_Bframe) ? split(def_fig_axes_)[1] : def_fig_axes_) * opt_B
 		end
 		opt_B = consolidate_B(opt_B)
 	end
@@ -691,6 +696,8 @@ function consolidate_B(opt_B::String)::String
 	(opt_B == "") && return ""
 	# Detect the presence of 'a', 'f' or 'g' in the first -B axes settings token
 	have_Bpxa, have_Bpya = occursin("Bpxa", opt_B), occursin("Bpya", opt_B)
+	have_Bpa = occursin("Bpa", opt_B)		# Bpa worths Bpxa & Bpya
+	have_Bpxa, have_Bpya = (have_Bpxa || have_Bpa), (have_Bpya || have_Bpa)
 	have_Bpxf, have_Bpxg, got_x, have_Bpyf, have_Bpyg, got_y= false, false, false, false, false, false
 	s = split(opt_B)
 	for tok in s
@@ -744,7 +751,7 @@ function helper_consolidate_B(opt_B::String, flag::String, have_Bpx::Bool, have_
 end
 
 # ---------------------------------------------------------------------------------------------------
-function guess_WESN(d::Dict, cmd::String)
+function guess_WESN(d::Dict, cmd::String)::String
 	# For automatic -B option settings add MAP_FRAME_AXES option such that only the two closest
 	# axes will be annotated. For now this function is only used in 3D modules.
 	if ((val = find_in_dict(d, [:p :view :perspective], false)[1]) !== nothing && (isa(val, Tuple) || isa(val, String)))
@@ -1616,14 +1623,11 @@ function add_opt(d::Dict, cmd::String, opt, symbs, mapa=nothing, del::Bool=true,
 		args[1] = add_opt(val, mapa, arg)
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
 		# Used in recursive calls for options like -I, -N , -W of pscoast. Here we assume that opt != ""
-		args[1] = ""
-		for k = 1:length(val)
-			args[1] *= " -" * opt * add_opt(val[k], mapa, arg)
-		end
-		return cmd * args[1]
+		_args = ""
+		[_args *= " -" * opt * add_opt(val[k], mapa, arg) for k = 1:length(val)]
+		return cmd * _args
 	elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
-		(!isa(val, NamedTuple) && !isa(val, String)) &&
-			error("The option argument must be a NamedTuple, not a simple Tuple")
+		(!isa(val, NamedTuple) && !isa(val, String)) && error("Option argument must be a NamedTuple, not a Tuple")
 		if (isa(val, NamedTuple))
 			args[1] = (mapa[2] == helper_decorated) ? mapa[2](val, true) : args[1] = mapa[2](val)	# 2nd case not yet inv
 		elseif (isa(val, String))  args[1] = val
@@ -1633,7 +1637,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs, mapa=nothing, del::Bool=true,
 		if isa(mapa, NamedTuple)		# Let aa=(bb=true,...) be addressed as aa=:bb
 			s = Symbol(args[1])
 			for k in keys(mapa)
-				if (s != k)  continue  end
+				(s != k) && continue
 				v = mapa[k]
 				if (isa(v, String) && (v[1] == '_'))	# Only the modifier matters
 					args[1] = v[2:end]
@@ -2137,12 +2141,12 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 axis(nt::NamedTuple; x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) = axis(;x=x, y=y, z=z, secondary=secondary, nt...)
-function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::String
+function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Bool}
 	# Build the (terrible) -B option
 	d = KW(kwargs)
 
 	# Before anything else
-	(haskey(d, :none)) && return " -B0"
+	(haskey(d, :none)) && return " -B0", false
 
 	primo = secondary ? "s" : "p"					# Primary or secondary axis
 	if (z)  primo = ""  end							# Z axis have no primary/secondary
@@ -2150,12 +2154,11 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 
 	opt = " -B"
 	if ((val = find_in_dict(d, [:frame :axes])[1]) !== nothing)
-		if isa(val, Dict)  val = dict2nt(val)  end
+		isa(val, Dict) && (val = dict2nt(val))
 		opt *= helper0_axes(val)
 	end
 
-	if (haskey(d, :corners)) opt *= string(d[:corners])  end	# 1234
-	#if (haskey(d, :fill))    opt *= "+g" * get_color(d[:fill])  end
+	haskey(d, :corners) && (opt *= string(d[:corners]))		# 1234
 	val, symb = find_in_dict(d, [:fill :bg :background], false)
 	if (val !== nothing)
 		tB = "+g" * add_opt_fill(d, [symb])
@@ -2165,7 +2168,7 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	if (GMTver > v"6.1")
 		if ((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing)  opt = add_opt_fill(val, opt, "+x")  end
 		if ((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing)  opt = add_opt_fill(val, opt, "+y")  end
-		if ((p = add_opt_pen(d, [:wall_outline], "+w")) != "")  opt *= p  end
+		((p = add_opt_pen(d, [:wall_outline], "+w")) != "") && (opt *= p)
 	end
 	if (haskey(d, :cube))    opt *= "+b"  end
 	if (haskey(d, :noframe)) opt *= "+n"  end
@@ -2173,10 +2176,11 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	if (haskey(d, :title))   opt *= "+t" * str_with_blancs(arg2str(d[:title]))  end
 
 	(opt == " -B") && (opt = "")		# If nothing, no -B
+	have_Bframe = (opt != "")
 
 	# axes supps
 	ax_sup = ""
-	if (haskey(d, :seclabel))  ax_sup *= "+s" * str_with_blancs(arg2str(d[:seclabel]))   end
+	(haskey(d, :seclabel)) && (ax_sup *= "+s" * str_with_blancs(arg2str(d[:seclabel])) )
 
 	if (haskey(d, :label))
 		opt *= " -B" * primo * axe * "+l"  * str_with_blancs(arg2str(d[:label])) * ax_sup
@@ -2243,7 +2247,7 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	# Check if ax_sup was requested
 	(opt == "" && ax_sup != "") && (opt = " -B" * primo * axe * ax_sup)
 
-	return opt
+	return opt, have_Bframe
 end
 
 # ------------------------
@@ -2256,9 +2260,7 @@ function helper0_axes(arg)::String
 	# bottom|bot|b_b(are);  right|r_b(are);  t(op)_b(are);  up_b(are)  => b, r, t, u
 
 	(isa(arg, String) || isa(arg, Symbol)) && return string(arg) # Assume that a WESNwesn was already sent in.
-
-	(!isa(arg, Tuple)) &&
-		error("The 'axes' argument must be a String, Symbol or a Tuple but was ($(typeof(arg)))")
+	!isa(arg, Tuple) && error("'axes' argument must be a String, Symbol or a Tuple but was ($(typeof(arg)))")
 
 	opt = "";	lbrtu = "lbrtu";	WSENZ = "WSENZ";	wsenz = "wsenz";	lbrtu = "lbrtu"
 	for k = 1:length(arg)
@@ -2399,7 +2401,7 @@ end
 function str_with_blancs(str)::String
 	# If the STR string has spaces enclose it with quotes
 	out = string(str)
-	if (occursin(" ", out) && !startswith(out, "\""))  out = string("\"", out, "\"")  end
+	(occursin(" ", out) && !startswith(out, "\"")) && (out = string("\"", out, "\""))
 	return out
 end
 
@@ -2409,7 +2411,7 @@ vector_attrib(t::NamedTuple) = vector_attrib(; t...)
 function vector_attrib(;kwargs...)::String
 	d = KW(kwargs)
 	cmd = add_opt(d, "", "", [:len :length])
-	if (haskey(d, :angle))  cmd = string(cmd, "+a", d[:angle])  end
+	(haskey(d, :angle)) && (cmd = string(cmd, "+a", d[:angle]))
 	if (haskey(d, :middle))
 		cmd *= "+m";
 		if (d[:middle] == "reverse" || d[:middle] == :reverse)	cmd *= "r"  end
@@ -2448,11 +2450,10 @@ function vector_attrib(;kwargs...)::String
 		end
 	end
 
-	if (haskey(d, :norm))  cmd = string(cmd, "+n", d[:norm])  end
-
-	if (haskey(d, :pole))  cmd *= "+o" * arg2str(d[:pole])  end
+	(haskey(d, :norm)) && (cmd = string(cmd, "+n", d[:norm]))
+	(haskey(d, :pole)) && (cmd *= "+o" * arg2str(d[:pole]))
 	if (haskey(d, :pen))
-		if ((p = add_opt_pen(d, [:pen], "")) != "")  cmd *= "+p" * p  end
+		((p = add_opt_pen(d, [:pen], "")) != "") && (cmd *= "+p" * p)
 	end
 
 	if (haskey(d, :shape))
