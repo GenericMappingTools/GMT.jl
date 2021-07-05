@@ -660,10 +660,7 @@ Examples:
           decorated=(quoted=true, const_label=" In Vino Veritas  - In Aqua, Rãs & Toads", font=(25,"Times-Italic"),
                      curved=true, pen=(0.5,:red)), aspect=:equal, fmt=:png, show=true)
 """
-function lines(cmd0::String="", arg1=nothing; first=true, kwargs...)
-	# A lines plotting method of plot
-	common_plot_xyz(cmd0, arg1, "lines", first, false, kwargs...)
-end
+lines(cmd0::String="", arg1=nothing; first=true, kwargs...) = common_plot_xyz(cmd0, arg1, "lines", first, false, kwargs...)
 lines!(cmd0::String="", arg=nothing; kw...) = lines(cmd0, arg; first=false, kw...)
 
 function lines(f::Function, range_x=nothing; first=true, kw...)
@@ -705,19 +702,12 @@ function hlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
 	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
-	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
-		cmd = (isa(val, String)) ? val : decorated(val)
-	else
-		cmd = "lines"
-	end
 	mat = ones(2, length(arg1))
 	[mat[1,k] = mat[2,k] = arg1[k] for k = 1:length(arg1)]
-	if ((opt_R = parse_R(d, "")[2]) != "")  x = vec(opt_R2num(opt_R)[1:2])
-	else                                    x = [-1e50, 1e50];
-	end
+	x = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
 	D = mat2ds(mat, x=x, multi=true)
 
-	common_plot_xyz("", D, cmd, first, false, d...)
+	common_plot_xyz("", D, "lines", first, false, d...)
 end
 hlines!(arg=nothing; kw...) = hlines(arg; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
@@ -745,23 +735,16 @@ function vlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
 	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
-	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
-		cmd = (isa(val, String)) ? val : decorated(val)
-	else
-		cmd = "lines"
-	end
 	mat = ones(2, length(arg1))
 	mat[1,:] = mat[2,:] = arg1
-	if ((opt_R = parse_R(d, "")[2]) != "")  x = vec(opt_R2num(opt_R)[3:4])
-	else                                    x = [-1e50, 1e50];
-	end
+	x = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[3:4]) : [-1e50, 1e50]
 	D = mat2ds(mat, x=x, multi=true)
 	# Now we need tp swapp x / y columns because the vlines case is more complicated to implement.
 	for k = 1:length(arg1)
 		D[k].data[:,1], D[k].data[:,2] = D[k].data[:,2], D[k].data[:,1]
 	end
 
-	common_plot_xyz("", D, cmd, first, false, d...)
+	common_plot_xyz("", D, "lines", first, false, d...)
 end
 vlines!(arg=nothing; kw...) = vlines(arg; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
@@ -908,9 +891,9 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 		_name = joinpath(tempdir(), "GMTjl_tmp.cpt");	gmtwrite(_name, val);	d[:C] = _name	# Workaround a bug in 6.2.0
 	end
 	(API === nothing) && gmt("")	# Force having a valid API. We can't afford otherwise here.
-	(GMTver <= v"6.3.0") && gmtlib_setparameter(API, "MAP_FRAME_AXES", "WESNZ")	# Because of a bug in 6.2.0 modern theme
+	(GMTver <= v"6.2.0") && gmtlib_setparameter(API, "MAP_FRAME_AXES", "WESNZ")	# Because of a bug in 6.2.0 modern theme
 	r = common_plot_xyz("", arg1, "ternary", first, false, d...)
-	(GMTver <= v"6.3.0") && gmtlib_setparameter(API, "MAP_FRAME_AXES", "auto")
+	(GMTver <= v"6.2.0") && gmtlib_setparameter(API, "MAP_FRAME_AXES", "auto")
 	# With the following trick we leave the -R history in 0/1/0/1 and so we can append with plot, text, etc
 	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(tempdir(), "lixo.ps"), [0. 0.])
 	return r
@@ -918,14 +901,13 @@ end
 
 function parse_B4ternary!(d::Dict)
 	# Ternary accepts only a special brand of -B. Try to parse and/or build -B option
-	opt_B = parse_B(d, "", " -Bafg")[2]
-	if ((val = find_in_dict(d, [:labels])[1]) !== nothing)	# This should be the easier way
+	opt_B = parse_B(d, "", " -Bafg -BWSE")[2]
+	if ((val = find_in_dict(d, [:labels])[1]) !== nothing)		# This should be the easier way
 		!(isa(val,Tuple) && length(val) == 3) && error("The `labels` option must be Tuple with 3 elements.")
-		# Here we may have opt_B = " -Bafg" or (for example) = " -Bpag8" and we need to keep only the axis info
 		opt_Bs = split(opt_B)							# This drops the leading ' '
 		x = (opt_Bs[1][3] == 'p') ? opt_Bs[1][4:end] : opt_Bs[1][3:end]
 		d[:B] = " -Ba$(x)+l" * string(val[1]) * " -Bb$(x)+l" * string(val[2]) * " -Bc$(x)+l" * string(val[3])
-		(length(opt_Bs) > 1) && @warn("Option `labels` forced dropping these other options $(opt_Bs[2:end])")
+		[d[:B] *= " " * opt_Bs[k] for k = 2:length(opt_Bs)]		# Append the remains, if any.
 	else		# Ui, try to parse a string like this: " -Bpag8+u\" %\" -Ba+la -Bb+lb -Bc+lc"
 		opt_Bs = split(opt_B, " -B")[2:end]				# 2:end because surprisingly the first is = ""
 		(2 == length(opt_Bs) > 4) && error("Bad frame option. Better stop now than error in GMT")
