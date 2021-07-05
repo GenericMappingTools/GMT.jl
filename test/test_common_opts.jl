@@ -151,7 +151,7 @@
 
 	@test GMT.helper0_axes((:left_full, :bot_full, :right_ticks, :top_bare, :up_bare)) == "WSetu"
 	d=Dict(:xaxis => (axes=:WSen,title=:aiai, label=:ai, annot=:auto, ticks=[], grid=10, annot_unit=:ISOweek,seclabel=:BlaBla), :xaxis2=>(annot=5,ticks=1), :yaxis=>(custom="lixo.txt",), :yaxis2=>(annot=2,));
-	@test GMT.parse_B(d, "")[1] == " -BpxaUfg10 -BWSen+taiai -Bpx+lai+sBlaBla -Bpyclixo.txt -Bsxa5f1 -Bsya2"
+	@test GMT.parse_B(d, "")[1] == " -Bsya2 -Bsxa5f1 -Bpyclixo.txt -BpxaUfg10 -BWSen+taiai -Bpy+lai+sBlaBla"
 	@test GMT.parse_B(Dict(:B=>:same), "")[1] == " -B"
 	@test GMT.parse_B(Dict(:title => :bla), "")[1] == " -Baf -BWSen+tbla"
 	@test GMT.parse_B(Dict(:frame => :auto, :title => :bla), "")[1] == " -Baf -BWSen+tbla"
@@ -232,11 +232,11 @@
 	@test GMT.parse_t(Dict(:t=>20), "")[1]  == " -t20"
 	@test GMT.parse_contour_AGTW(Dict(:A => [1]), "")[1] == " -A1,"
 	GMT.helper2_axes("");
-	@test GMT.axis(ylabel="bla") == " -Bpy+lbla";
-	@test GMT.axis(Yhlabel="bla") == " -Bpy+Lbla";
-	@test GMT.axis(scale="exp") == " -Bpp";
-	@test GMT.axis(phase_add=10) == " -Bp+10";
-	@test GMT.axis(phase_sub=10) == " -Bp-10";
+	@test GMT.axis(ylabel="bla")[1] == " -Bpy+lbla";
+	@test GMT.axis(Yhlabel="bla")[1] == " -Bpy+Lbla";
+	@test GMT.axis(scale="exp")[1] == " -Bpp";
+	@test GMT.axis(phase_add=10)[1] == " -Bp+10";
+	@test GMT.axis(phase_sub=10)[1] == " -Bp-10";
 
 	r,o = GMT.prepare2geotif(Dict(:geotif => :trans), ["pscoast  -Rd -JX12cd/0 -Baf -BWSen -W0.5p -Da"], "", false);
 	@test startswith(r[1],"pscoast  -Rd -JX30cd/0 -W0.5p -Da  -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254")
