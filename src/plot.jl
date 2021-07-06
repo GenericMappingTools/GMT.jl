@@ -901,7 +901,7 @@ end
 
 function parse_B4ternary!(d::Dict)
 	# Ternary accepts only a special brand of -B. Try to parse and/or build -B option
-	opt_B = parse_B(d, "", " -Bafg -BWSE")[2]
+	opt_B = parse_B(d, "", " -Bafg")[2]
 	if ((val = find_in_dict(d, [:labels])[1]) !== nothing)		# This should be the easier way
 		!(isa(val,Tuple) && length(val) == 3) && error("The `labels` option must be Tuple with 3 elements.")
 		opt_Bs = split(opt_B)							# This drops the leading ' '
@@ -910,13 +910,13 @@ function parse_B4ternary!(d::Dict)
 		[d[:B] *= " " * opt_Bs[k] for k = 2:length(opt_Bs)]		# Append the remains, if any.
 	else		# Ui, try to parse a string like this: " -Bpag8+u\" %\" -Ba+la -Bb+lb -Bc+lc"
 		opt_Bs = split(opt_B, " -B")[2:end]				# 2:end because surprisingly the first is = ""
-		(2 == length(opt_Bs) > 4) && error("Bad frame option. Better stop now than error in GMT")
 		if (length(opt_Bs) == 1)  d[:B] = opt_B			# Accept whatever was selected
-		else (3 <= length(opt_Bs) <= 4)					# User may have used frame=(annot=?,grid=?, alabel=?,...)
+		else											# User may have used frame=(annot=?,grid=?, alabel=?,...)
 			if (length(opt_Bs) == 3) d[:B] = opt_B		# OK, silly no annotations,ticks,grid
 			else
 				x = opt_Bs[1][2:end]
 				d[:B] = " -Ba$(x)" * opt_Bs[2][2:end] * " -Bb$(x)" * opt_Bs[3][2:end] * " -Bc$(x)" * opt_Bs[4][2:end]
+				[d[:B] *= " -B" * opt_Bs[k] for k = 5:length(opt_Bs)]		# Append the remains, if any.
 			end
 		end
 	end
