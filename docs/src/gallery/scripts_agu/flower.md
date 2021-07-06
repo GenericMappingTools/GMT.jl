@@ -17,7 +17,6 @@ lines([-0.7 -0.25 0], [-1.5 -0.8 0], # The flower stem
 plot!(x, y,
       fill=(pattern="C:/progs_cygw/GMTdev/gmt5/master/test/psxy/tiling2.jpg",  # Fill pattern file
       dpi=200),                      # The pattern DPI
-      fmt=:png,                      # The image format
       show=true)                     # Show the result
 ```
 
@@ -28,7 +27,7 @@ t=GMT.linspace(0,2pi,360);
 x = cos.(4*t) .* cos.(t);
 y = cos.(4*t) .* sin.(t);
 lines([-0.7 -0.25 0], [-1.5 -0.8 0], limits=(-1,1,-1.5,1), lw=9, lc=:darkgreen, bezier=true, frame=:none, figsize=(14,0))
-plot!(x, y, fill=(pattern="C:/progs_cygw/GMTdev/gmt5/master/test/psxy/tiling2.jpg", dpi=200), fmt=:png, savefig="flower", show=true)
+plot!(x, y, fill=(pattern="C:/progs_cygw/GMTdev/gmt5/master/test/psxy/tiling2.jpg", dpi=200), savefig="flower.png", show=true)
 ```
 
 ```@raw html

@@ -16,7 +16,6 @@ scatter(teta, r,                  # The data
         size=ms,                  # The symbl sizes
         alpha=25,                 # Set transparency to 50%
         title="Polar scatter",    # Fig title
-        fmt=:png,                 # The image format
         show=true)                # Show the result
 ```
 

@@ -21,7 +21,7 @@ As one-liners (to facilitate copy-paste):
 
 ```julia
 G = gmt("grdmath -R0/2/0/2 -I1 X Y R2 NEG EXP X MUL =");
-bar3(G, fill=[0,115,190], lw=:thinnest, figsize=14, fmt=:png, show=true)
+bar3(G, fill=[0,115,190], lw=:thinnest, figsize=14, show=true)
 ```
 
 ```@raw html

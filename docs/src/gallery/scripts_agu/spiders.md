@@ -12,7 +12,7 @@ plot!([2.5 1.75 30 100], marker=(web=true, size=5, radial=15),
       fill=:lightyellow, ml=0.5)
 # But we can also send the Web angle info via marker and use a Tuple as argument.
 plot!([4.5 1.75], marker=(:web, [30 330], (size=5, arc=0.7, radial=15, pen=0.25)),
-      fill=:pink, ml=1, fmt=:png, show=true)
+      fill=:pink, ml=1, show=true)
 ```
 
 ```@raw html

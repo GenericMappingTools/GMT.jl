@@ -21,7 +21,7 @@ arrows!([3 0 45 4], lw=2, fill=:red,
         arrow=(length="18p", stop=true, pen="-", angle=45, justify=:center, shape=0.5))
 arrows!([5 0 45 4], lw=2, fill=:red,
         arrow=(length="18p", stop=true, angle=45, justify=:center, shape=0.5),
-        fmt=:png, show=true)
+        show=true)
 
 ```
 

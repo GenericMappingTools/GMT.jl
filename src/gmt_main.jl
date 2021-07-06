@@ -161,8 +161,6 @@ function gmt(cmd::String, args...)
 	if (g_module == "begin")		# Use this default fig name instead of "gmtsession"
 		if (r == "")  r = "GMTplot " * FMT[1]  end
 		IamModern[1] = true
-	elseif (g_module == "end")
-		#IamModern[1] = false
 	elseif (r == "" && n_argin == 0) # Just requesting usage message, add -? to options
 		r = "-?"
 	elseif (n_argin > 1 && (g_module == "psscale" || g_module == "colorbar"))	# Happens with nested calls like in grdimage
@@ -175,13 +173,7 @@ function gmt(cmd::String, args...)
 	if (!isa(API, Ptr{Nothing}) || API == C_NULL)
 		API = GMT_Create_Session("GMT", pad, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
 		theme_modern()				# Set the MODERN theme
-		(g_module == "") && return	# use gmt("") just to force creating a new API (and load history)
 	end
-
-	#if (g_module == "destroy")
-		#GMT_Destroy_Session(API);	API = nothing
-		#return
-	#end
 
 	# 2. In case this was a clean up call or a begin/end from the modern mode
 	gmt_manage_workflow(API, 0, NULL)		# Force going here to see if we are in middle of a MODERN session
@@ -237,9 +229,7 @@ function gmt(cmd::String, args...)
 
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
 	if (occursin("read", g_module) && occursin("-T", r))
-		#(occursin("-Ti", r)) && GMT_Set_Default(API, "API_PAD", "0")
 		(occursin("-Ti", r) || occursin("-Tg", r)) && GMT_Set_Default(API, "API_PAD", "0")
-		#r, img_mem_layout[1], grd_mem_layout[1] =  parse_mem_layouts(r)	# It was called above
 	end
 
 	# 3. Convert command line arguments to a linked GMT option list
@@ -251,9 +241,10 @@ function gmt(cmd::String, args...)
 	# Here I have an issue that I can't resolve any better. For modules that can have no options (e.g. gmtinfo)
 	# the LinkedList (LL) is actually created in GMT_Encode_Options but I can't get it's contents back when pLL
 	# is a Ref, so I'm forced to use 'pointer', which goes against the documents recommendation.
-	if (LL != NULL)  pLL = Ref([LL], 1)
-	else             pLL = pointer([NULL])
-	end
+	#if (LL != NULL)  pLL = Ref([LL], 1)
+	#else             pLL = pointer([NULL])
+	#end
+	pLL = (LL != NULL) ? Ref([LL], 1) : pointer([NULL])
 
 	n_itemsP = pointer([0])
 	X = GMT_Encode_Options(API, g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
@@ -330,12 +321,7 @@ function gmt(cmd::String, args...)
 	GMT_Destroy_Options(API, pLL)
 
 	#if (IamModern[1])  gmt_put_history(API);	end	# Needed, otherwise history is not updated
-	if (IamModern[1])
-		#GMT_Destroy_Session(API)	# Needed, otherwise history is not updated
-		#API = GMT_Create_Session("GMT", pad, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
-		#theme_modern()				# Set the MODERN theme
-		gmt_restart()		# Needed, otherwise history is not updated
-	end
+	(IamModern[1]) && gmt_restart()		# Needed, otherwise history is not updated
 
 	img_mem_layout[1] = "";		grd_mem_layout[1] = ""		# Reset to not afect next readings
 
@@ -930,7 +916,7 @@ function image_init(API::Ptr{Nothing}, img_box)::Ptr{GMT_IMAGE}
 	end
 
 	!isa(img_box, GMTimage) && error("image_init: input is not a IMAGE container type")
-	return image_init(API, img_box)
+	image_init(API, img_box)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1385,9 +1371,7 @@ function clear_sessions(age::Int=0)
 			n = datetime2unix(now(UTC))
 			for sd in session_dirs
 				fp = joinpath(sp, sd)
-				if (n - mtime(fp) > age) 		# created age seconds before
-					rm(fp, recursive = true)
-				end
+				(n - mtime(fp) > age) && rm(fp, recursive = true)	# created age seconds before
 			end
 		else
 			run(`gmt clear sessions`)

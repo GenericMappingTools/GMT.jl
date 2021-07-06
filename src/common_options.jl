@@ -3405,6 +3405,10 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 				leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb2[1], symb2[2:end], fill, penS, "")
 			end
 		elseif (symb[1] == '~' || symb[1] == 'q' || symb[1] == 'f')
+			if (startswith(symb, "~d"))
+				ind = findfirst(':', symb)
+				symb = string(symb[1],"n1", symb[ind[1]:end])
+			end
 			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb, symbW, fill, pen, legend_type[1].label[k])
 		else
 			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb[1], symbW_, fill, pen, legend_type[1].label[k])	# Who is this?

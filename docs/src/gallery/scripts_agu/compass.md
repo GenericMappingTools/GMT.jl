@@ -10,7 +10,7 @@ basemap(region=(-7,7,-6,6), proj=:Mercator,
                  rose_primary=(0.25,:blue), rose_secondary=0.5, labels="", justify=:CM),
         par=(FONT_ANNOT_PRIMARY=9, FONT_LABEL=14, FONT_TITLE=24, MAP_TITLE_OFFSET="7p",
              MAP_VECTOR_SHAPE=0.5, MAP_TICK_PEN_SECONDARY="thinner,red", MAP_TICK_PEN_PRIMARY="thinner,blue"),
-        figsize=15, fmt=:png, savefig="compass", show=true)
+        figsize=15, savefig="compass.png", show=true)
 ```
 
 ```@raw html
