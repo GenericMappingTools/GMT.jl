@@ -30,7 +30,7 @@ To see this better, let's look at the image's histogram.
 "
 
 # ╔═╡ 32c60de2-6a3a-11eb-1cfd-1b74d0ad957b
-histogram(I, auto=true, bin=2, show=true)
+histogram(I, auto=true, bin=20, show=true)
 
 # ╔═╡ 3a707cb0-6a3a-11eb-3975-b1b091d05e2f
 md"We have used here the option **auto**=*true* that will try to guess where the data in histogram plot starts and ~ ends. It did behave well and we will use those numbers to do an operation that is called *histogram stretch* that consists in picking only part of the histogram and stretch it to [0 255]. And while at it we van visually observe that the limit [6000 24000] seems slightly better than the automatic one. Note that in fact we have data to the 40000 DN (Digital Number) but they are very few and at the end we must choose a balance to show *almos all* DNs and not making the image too dark. Reducing the higher value to 23400 would have made the image sligthy lighter."
