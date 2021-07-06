@@ -152,6 +152,7 @@ d = [0.16 0.331 0.509 9.344; 0.86 0.11  0.027 7.812; 0.25 0.167 0.579 3.766; 0.5
 ternary(d, R="0/100/0/100/0/100", B="afg", contour=(annot=20, cont=10), clockwise=true)
 ternary(d, R="0/100/0/100/0/100", B="afg", contourf=true)
 ternary(d, R="0/100/0/100/0/100", B="afg", image=true, contour=true, Vd=dbg2)
+ternary()
 d = Dict(:a=>"", :frame => (annot=:a, grid=8, alabel=:a, blabel=:b, clabel=:c, suffix=" %"));
 GMT.parse_B4ternary!(d);
 @test d[:B] == " -Baag8+u\" %\"+la -Bbag8+u\" %\"+lb -Bcag8+u\" %\"+lc"

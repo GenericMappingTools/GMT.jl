@@ -23,7 +23,7 @@ Well that is true and has one explanation. Modern satellite data is acquired wit
 To see this better, let's look at the image's histogram.
 
 ```julia
-histogram(I, auto=true, bin=2, show=true)
+histogram(I, auto=true, bin=20, show=true)
 ```
 
 ```@raw html
