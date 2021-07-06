@@ -890,7 +890,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	if (GMTver <= v"6.2.0" && (val = find_in_dict(d, [:C :color :cmap], false)[1]) !== nothing && isa(val, GMTcpt))
 		_name = joinpath(tempdir(), "GMTjl_tmp.cpt");	gmtwrite(_name, val);	d[:C] = _name	# Workaround a bug in 6.2.0
 	end
-	(API === nothing) && gmt("")	# Force having a valid API. We can't afford otherwise here.
+	(API == C_NULL) && gmt_restart()	# Force having a valid API. We can't afford otherwise here.
 	(GMTver <= v"6.2.0") && gmtlib_setparameter(API, "MAP_FRAME_AXES", "WESNZ")	# Because of a bug in 6.2.0 modern theme
 	r = common_plot_xyz("", arg1, "ternary", first, false, d...)
 	(GMTver <= v"6.2.0") && gmtlib_setparameter(API, "MAP_FRAME_AXES", "auto")
