@@ -10,7 +10,7 @@ txt = " In Vino Veritas  - In Aqua, Rãs & Toads"
 lines(x,y, region=(-4,7,-5.5,2.5), lw=2, lc=:sienna,
       decorated=(quoted=true, const_label=txt, font=(25,"Times-Italic"),
                  curved=true, pen=(0.5,:red)),
-      aspect=:equal, fmt=:png, show=true)
+      aspect=:equal, show=true)
 ```
 
 ```@raw html

@@ -11,14 +11,13 @@ scatter(rand(100),rand(100),   # Generate data
         alpha=50,              # Set transparency to 50%
         title="Scatter",       # Fig title
         figsize=12,            # Set fig size of 12 cm
-        fmt=:png,              # The image format
         show=true)             # Show the result
 ```
 
 As a one-liner (to facilitate copy-paste):
 
 ```julia
-scatter(rand(100),rand(100), markersize=rand(100), marker=:c, color=:ocean, zcolor=rand(100), figsize=12, alpha=50, title="Scatter", fmt=:png, show=true)
+scatter(rand(100),rand(100), markersize=rand(100), marker=:c, color=:ocean, zcolor=rand(100), figsize=12, alpha=50, title="Scatter", show=true)
 ```
 
 ```@raw html

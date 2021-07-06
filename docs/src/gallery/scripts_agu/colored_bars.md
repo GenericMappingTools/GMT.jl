@@ -12,7 +12,7 @@ bar(rand(15),              # Generate the dataset
 As a one-liner (to facilitate copy-paste):
 
 ```julia
-bar(rand(15), color=:rainbow, figsize=(14,8), title="Colored bars", fmt=:png, show=true)
+bar(rand(15), color=:rainbow, figsize=(14,8), title="Colored bars", show=true)
 ```
 
 ```@raw html

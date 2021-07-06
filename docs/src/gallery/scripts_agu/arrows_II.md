@@ -11,7 +11,7 @@ T2 = text_record([0 1.5], "   arrow=(len=2,start=:arrow,stop=:tail,shape=0.5),")
 T3 = text_record([0 1.1], "   pen=6, fill=:red");
 pstext!(T1, font=(20,"Times-Italic"), justify=:LB)
 pstext!(T2, font=(20,"Times-Italic"), justify=:LB)
-pstext!(T3, font=(20,"Times-Italic"), justify=:LB, fmt=:png, show=true)
+pstext!(T3, font=(20,"Times-Italic"), justify=:LB, show=true)
 ```
 
 ```@raw html

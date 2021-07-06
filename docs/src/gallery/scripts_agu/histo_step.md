@@ -16,7 +16,6 @@ lines!(D2,                   # Second dataset
 	   close=(bot="",),
 	   fill=(pattern=82,bg=:blue,dpi=100),
 	   title="Stepped patch histogram",
-       fmt=:png,             # The image format
        show=true)            # Show the result
 ```
 
@@ -26,7 +25,7 @@ As one-liners (to facilitate copy-paste):
 D1 = histogram(randn(1000), I=:o, bin=0.1);
 D2 = histogram(randn(500),  I=:o, bin=0.1);
 lines(D1,  steps=(x=true,), close=(bot="",), fill=(pattern=20,bg=:green,dpi=200), figsize=(15,10))
-lines!(D2, steps=(x=true,), close=(bot="",), fill=(pattern=82,bg=:blue,dpi=100), title="Stepped patch histogram", show=true, fmt=:png)
+lines!(D2, steps=(x=true,), close=(bot="",), fill=(pattern=82,bg=:blue,dpi=100), title="Stepped patch histogram", show=true)
 ```
 
 ```@raw html

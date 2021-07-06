@@ -21,7 +21,7 @@ plot!(t, frame=:noannot, marker=:circle, ms=0.5, color=C,
 tt = t[:,1:2]
 plot!(tt, frame=:noannot, marker=:circle, ms=0.5, color=C, mz=[1 2 3 4 5],
       ml=(0.25,:red), error_bars=(x=ones(5,1), pen=1, cline=true),
-      x_off=7.5, fmt=:png, show=true)
+      x_off=7.5, show=true)
 ```
 
 ```@raw html
