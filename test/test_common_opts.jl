@@ -303,5 +303,6 @@
 	nanstd(y,1)
 
 	gmtbegin()
+	GMT.gmt_restart(false)
 	resetGMT()
 end
