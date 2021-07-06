@@ -44,7 +44,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	if (is_ternary)
-		cmd, opt_B = cmd * d[:B], d[:B]			# B option was parsed in plot/ternary
+		cmd, opt_B::String = cmd * d[:B], d[:B]			# B option was parsed in plot/ternary
 		delete!(d, :B)
 		cmd, opt_R = parse_R(d, cmd, O)
 	end
@@ -90,8 +90,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd = add_opt(d, cmd, 'A', [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
 	opt_F = add_opt(d, "", "", [:F :conn :connection],
 	                (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpoint=("r", nothing, 1),  ignore_hdr="_a", single_group="_f", segments="_s", segments_reset="_r", anchor=("", arg2str)))
-	if (opt_F != "" && !occursin("/", opt_F))  opt_F = string(opt_F[1])  end	# Allow con=:net or con=(1,2)
-	if (opt_F != "")  cmd *= " -F" * opt_F  end
+	(opt_F != "" && !occursin("/", opt_F)) && (opt_F = string(opt_F[1]))	# Allow con=:net or con=(1,2)
+	(opt_F != "") && (cmd *= " -F" * opt_F)
 
 	# Error Bars?
 	got_Ebars = false

@@ -30,7 +30,7 @@ function gmtend(arg=nothing; show=false, verbose=nothing)
 	if (arg !== nothing || show != 0)  cmd *= " show"  end
 	if (verbose !== nothing)  cmd *= " -V" * string(verbose)  end
 	gmt(cmd)
-	gmt("destroy")		# Lieve it in a clean state
+	#gmt("destroy")		# Lieve it in a clean state
 	IamModern[1] = false;	FirstModern[1] = false
 	return nothing
 end

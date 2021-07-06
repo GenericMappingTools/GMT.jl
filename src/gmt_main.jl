@@ -126,16 +126,15 @@ GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Vector{String}(), "", Vec
 struct WrapperPluto fname::String end
 
 """
-Call a GMT module. Usage:
+Call a GMT module. This function is not called directly by the users,
+except when using the ``monolithic`` mode. Usage:
 
-    gmt("module_name `options`")
-
-Example. To plot a simple map of Iberia in the postscript file nammed `lixo.ps` do:
-
-    gmt("pscoast -R-10/0/35/45 -B1 -W1 -Gbrown -JM14c -P -V > lixo.ps")
+    gmt("module_name `options`", args...)
 """
 function gmt(cmd::String, args...)
 	global API
+
+	(cmd == "destroy") && return gmt_restart()
 
 	ressurectGDAL()			# Some GMT modules may have called GDALDestroyDriverManager() 
 
@@ -175,15 +174,14 @@ function gmt(cmd::String, args...)
 	pad = 2
 	if (!isa(API, Ptr{Nothing}) || API == C_NULL)
 		API = GMT_Create_Session("GMT", pad, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
-		(API == C_NULL) && error("Failure to create a GMT Session")
 		theme_modern()				# Set the MODERN theme
 		(g_module == "") && return	# use gmt("") just to force creating a new API (and load history)
 	end
 
-	if (g_module == "destroy")
-		GMT_Destroy_Session(API);	API = nothing
-		return
-	end
+	#if (g_module == "destroy")
+		#GMT_Destroy_Session(API);	API = nothing
+		#return
+	#end
 
 	# 2. In case this was a clean up call or a begin/end from the modern mode
 	gmt_manage_workflow(API, 0, NULL)		# Force going here to see if we are in middle of a MODERN session
@@ -286,9 +284,7 @@ function gmt(cmd::String, args...)
 	# 6. Run GMT module; give usage message if errors arise during parsing
 	status = GMT_Call_Module(API, g_module, GMT_MODULE_OPT, LL)
 	if (status != 0)
-		if ((status < 0) || status == GMT_SYNOPSIS || status == Int('?'))
-			return
-		end
+		((status < 0) || status == GMT_SYNOPSIS || status == Int('?')) && return
 		error("Something went wrong when calling the module. GMT error number =")
 	end
 
@@ -335,16 +331,16 @@ function gmt(cmd::String, args...)
 
 	#if (IamModern[1])  gmt_put_history(API);	end	# Needed, otherwise history is not updated
 	if (IamModern[1])
-		GMT_Destroy_Session(API)	# Needed, otherwise history is not updated
-		API = GMT_Create_Session("GMT", pad, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
-		(API == C_NULL) && error("Failure to create a GMT Session")
-		theme_modern()				# Set the MODERN theme
+		#GMT_Destroy_Session(API)	# Needed, otherwise history is not updated
+		#API = GMT_Create_Session("GMT", pad, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
+		#theme_modern()				# Set the MODERN theme
+		gmt_restart()		# Needed, otherwise history is not updated
 	end
 
 	img_mem_layout[1] = "";		grd_mem_layout[1] = ""		# Reset to not afect next readings
 
 	# GMT6.1.0 f up and now we must be very careful to not let the GMT breaking screw us
-	if (need2destroy)  gmt("destroy")  end
+	(need2destroy) && gmt_restart()
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)
@@ -359,6 +355,20 @@ function gmt(cmd::String, args...)
 		return out
 	end
 
+end
+
+# -----------------------------------------------------------------------------------------------
+function gmt_restart(restart::Bool=true)
+	# Destroy the contents of the current API pointer and, by default, recreate a new one.
+	global API
+	GMT_Destroy_Session(API);
+	if (restart)
+		API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
+		theme_modern()				# Set the MODERN theme
+	else
+		API = C_NULL
+	end
+	return nothing
 end
 
 # -----------------------------------------------------------------------------------------------
@@ -1358,7 +1368,7 @@ function resetGMT()
 	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = true;
 	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
 	current_cpt[1]  = GMTcpt();		legend_type[1] = legend_bag();	ressurectGDAL()
-	gmt("destroy")
+	gmt_restart()
 	clear_sessions()
 end
 

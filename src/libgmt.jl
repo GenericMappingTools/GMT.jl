@@ -1,5 +1,7 @@
 function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Cvoid}=C_NULL)
-	ccall((:GMT_Create_Session, libgmt), Ptr{Cvoid}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Cvoid}), tag, pad, mode, print_func)
+	API = ccall((:GMT_Create_Session, libgmt), Ptr{Cvoid}, (Ptr{UInt8}, UInt32, UInt32, Ptr{Cvoid}), tag, pad, mode, print_func)
+	(API == C_NULL) && error("Failure to create a GMT Session")
+	API
 end
 
 function GMT_Create_Data(API::Ptr{Cvoid}, family::Integer, geometry, mode, dim=NULL, wesn=NULL,

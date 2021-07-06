@@ -2072,33 +2072,31 @@ function get_color(val)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function font(d::Dict, symbs)
-	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		font(val)
-	end
+function font(d::Dict, symbs)::String
+	s = ((val = find_in_dict(d, symbs)[1]) !== nothing) ? font(val) : ""
 end
-function font(val)
+function font(val)::String
 	# parse and create a font string.
 	# TODO: either add a NammedTuple option and/or guess if 2nd arg is the font name or the color
 	# And this: Optionally, you may append =pen to the fill value in order to draw the text outline with
 	# the specified pen; if used you may optionally skip the filling of the text by setting fill to -.
-	(isa(val, String) || isa(val, Number)) && return string(val)
+	(isa(val, String) || isa(val, Real)) && return string(val)
 
 	s = ""
 	if (isa(val, Tuple))
 		s = parse_units(val[1])
 		if (length(val) > 1)
 			s = string(s,',',val[2])
-			if (length(val) > 2)  s = string(s, ',', get_color(val[3]))  end
+			(length(val) > 2) && (s = string(s, ',', get_color(val[3])))
 		end
 	end
 	return s
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_units(val)
+function parse_units(val)::String
 	# Parse a units string in the form d|e|f|k|n|M|n|s or expanded
-	(isa(val, String) || isa(val, Symbol) || isa(val, Number)) && return string(val)
+	(isa(val, String) || isa(val, Symbol) || isa(val, Real)) && return string(val)
 
 	!(isa(val, Tuple) && (length(val) == 2)) && error("PARSE_UNITS, got and unsupported data type: $(typeof(val))")
 	return string(val[1], parse_unit_unit(val[2]))
