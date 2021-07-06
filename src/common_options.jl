@@ -2177,8 +2177,8 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	if (haskey(d, :pole))    opt *= "+o" * arg2str(d[:pole])  end
 	if (haskey(d, :title))   opt *= "+t" * str_with_blancs(arg2str(d[:title]))  end
 
-	(opt == " -B") && (opt = "")		# If nothing, no -B
-	have_Bframe = (opt != "")
+	opt_Bframe  = (opt != " -B") ? opt : ""		# Make a copy to append only at the end
+	opt = ""
 
 	# axes supps
 	ax_sup = ""
@@ -2248,8 +2248,9 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 
 	# Check if ax_sup was requested
 	(opt == "" && ax_sup != "") && (opt = " -B" * primo * axe * ax_sup)
+	opt *= opt_Bframe
 
-	return opt, have_Bframe
+	return opt, (opt_Bframe != "")
 end
 
 # ------------------------
