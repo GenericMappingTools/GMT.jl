@@ -63,7 +63,7 @@ A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT*
 [GMT](https://github.com/GenericMappingTools/gmt) program. It's the user responsability to do that.
 
   * Windows64
-      Install the [GMT6 version](https://github.com/GenericMappingTools/gmt/releases/download/6.2.0/gmt-6.2.0-win64.exe)
+      Install the [GMT6 version](http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-6.3-dev-win64.exe)
 
   * Windows32
       [..._win32.exe](https://github.com/GenericMappingTools/gmt/releases/download/6.2.0/GMT-6.2.0-win32.exe)
