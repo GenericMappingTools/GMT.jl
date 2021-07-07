@@ -1,6 +1,6 @@
 # frame
 
-- *B* **|** *frame* **|** *axis* **|** *xaxis* **|** *xaxis2* **|** *yaxis* **|** ...
+- *B* **|** *frame* **|** *axes* **|** *xaxis* **|** *xaxis2* **|** *yaxis* **|** ...
 
 Set map Axes parameters. They are specified by a keyword and a named tuple (but see [1])
 
@@ -177,9 +177,9 @@ The entire parameters collection is displayed in the following table
 
 | keyword       | value          | type            | meaning     |
 | ------------- |:--------------:|:---------------:| -----------:|
-| frame         | false         | Str or Symb   | Do not plot any axis |
-| frame         | noannot\|bare | Str or Symb   | Plot axes but no annot |
-| axes          | left_full     | Str or Symb   | Annot and tick left axis |
+| axes          | false         | Str or Symb   | Do not plot any axis |
+|               | noannot\|bare | Str or Symb   | Plot axes but no annot |
+|               | left_full     | Str or Symb   | Annot and tick left axis |
 |               | left_ticks    | Str or Symb   | Tick left axis |
 |               | left_bare     | Str or Symb   | Just draw left axis |
 |               | bottom_full   | Str or Symb   | Same for bottom axis |
@@ -219,7 +219,7 @@ The entire parameters collection is displayed in the following table
 |               | 10log or pow  | Str or Symb   | Annot as 10 raised to log10 |
 |               | exp           | Str or Symb   | Annot interval in transformed units |
 
-   [1] However, the original GMT compact syntax can also be used. I.e, *axis=:a*, or *frame=:WSen*
+   [1] However, the original GMT compact syntax can also be used. I.e, *axes=:a*, or *frame=:WSen*
    or *frame="a1Of1d WS"* also work.
 
    [`-B GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#b-full)
