@@ -59,8 +59,12 @@ Install
 
     ] add GMT
 
-A word of warning about the installation. The *GMT.jl* Julia wrapper does **NOT** install the
-[GMT](https://github.com/GenericMappingTools/gmt) program. It's the user responsability to do that.
+A word of warning about the installation. It is recommended that you install the [GMT](https://github.com/GenericMappingTools/gmt)
+program in your system as explained bellow. If you do this then the *GMT.jl* wrapper will be able to find it. However, if you don't
+care about disk space usage and some extra >4 GB are no worries for you then on Unix (Mac and Linux) if the wrapper doesn't find GMT,
+it will install one automatically via Conda. On Windows the installation is done with the Windows installer and no such huge waste
+takes place. One may also force the automatic installation by setting the environment variable ``FORCE_INSTALL_GMT``
+
 
   * Windows64
       Install the [GMT6 version](http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-6.3-dev-win64.exe)
