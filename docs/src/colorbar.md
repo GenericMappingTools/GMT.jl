@@ -24,7 +24,7 @@ Required Arguments
 Optional Arguments
 ------------------
 
-- **B** or **axis** or **frame**\
+- **B** or **axes** or **frame**\
     Set annotation, tick, and gridline interval for the colorbar. More at [frame](@ref)
     The x-axis label will plot beneath a horizontal bar (or vertically to the right of a vertical bar), except when using the **move\_annot** modifier of the **pos** option. As an option, use the y-axis label to plot the data unit to the right of a horizontal bar (and above a vertical bar). When using **frame=(annot=:auto,)** or **frame=(annot=:auto,ticks=:auto)** annotation and/or minor tick intervals are chosen automatically. If **frame** is omitted, or no annotation intervals are provided, the default is to annotate every color level based on the numerical entries in the CPT (which may be overridden by ULB flags in the CPT). To specify custom text annotations for intervals, you must append ;\ *annotation* to each z-slice in the CPT.
 

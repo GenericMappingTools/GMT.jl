@@ -589,7 +589,7 @@ function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple{String,String}
+function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{String,String}
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
@@ -597,7 +597,6 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
 	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3[1]		# def_fig_axes is a global const
 
-	opt_B = _opt_B
 	have_Bframe, got_Bstring = false, false		# To know if the axis() function returns a -B<frame> setting
 
 	extra_parse = true;		have_a_none = false

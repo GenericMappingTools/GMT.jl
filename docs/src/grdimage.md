@@ -47,7 +47,7 @@ Optional Arguments
    write a GeoTiff image if the GMT projection syntax translates into a PROJ4 syntax, otherwise a plain tiff
    file is produced. (2) Any vector elements will be lost.
 
-- **B** or **axis** or *frame*\
+- **B** or **axes** or *frame*\
    Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or **color** or **cmap** : -- *color=cpt*\

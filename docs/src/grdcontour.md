@@ -21,7 +21,7 @@ Optional Arguments
   [Default is no annotations]. Use *annot=(disable=true,)* to disable all annotations implied by **cont**.
   Alternatively do *annot=(single=true, int=val)* to plot *val* as a single contour. The optional *labelinfo* controls the specifics of the label formatting and consists of a named tuple with the following control arguments [`Label formatting`](@ref label_format_quot)
 
-- **B** or **axis** or **frame**\
+- **B** or **axes** or **frame**\
   Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or **cont** or **contours** or **levels** : -- *cont=cont\_int*\
@@ -134,7 +134,7 @@ grid and annotate at every other contour line:
 
 ```julia
     G = GMT.peaks();
-    grdcontour(G, cont=1, annot=2, fmt=:png, show=true)
+    grdcontour(G, cont=1, annot=2, show=true)
 ```
 
 For a more elaborated example see [Contour maps](@ref)

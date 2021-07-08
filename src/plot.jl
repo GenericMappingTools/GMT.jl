@@ -884,7 +884,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 		del_from_dict(d, [:proj :projection])		# To avoid non-consumed warnings
 		delete!(d, :clockwise)
 	end
-	if ((val = find_in_dict(d, [:par :conf], false)[1]) === nothing)
+	if ((val = find_in_dict(d, [:par :conf :params], false)[1]) === nothing)
 		d[:par] = (MAP_GRID_PEN_PRIMARY="thinnest,gray",)
 	end
 	if (GMTver <= v"6.2.0" && (val = find_in_dict(d, [:C :color :cmap], false)[1]) !== nothing && isa(val, GMTcpt))

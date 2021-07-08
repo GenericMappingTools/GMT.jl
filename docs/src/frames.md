@@ -2,7 +2,7 @@
 
 ## Geographic basemaps
 
-Geographic base maps may differ from regular plot axis in that some projections support a “fancy”
+Geographic base maps may differ from regular plot axes in that some projections support a “fancy”
 form of axis and is selected by the MAP\_FRAME\_TYPE setting. The annotations will be formatted according
 to the FORMAT\_GEO\_MAP template and MAP_DEGREE_SYMBOL setting. A simple example of part of a base map
 is shown in Figure Geographic map border.
@@ -19,7 +19,7 @@ arrows!(t, arrow=(length="2p",start=true,stop=true,angle=60), lw=0.5,
         fill=:black, noclip=true, y_off=-0.9)
 
 T = text_record([-0.5 0.05; 0.375 0.05; 1.29166666 0.05], ["annotation", "frame", "grid"]);
-text!(T, font=9, justify=:CB, fmt=:png, show=true)
+text!(T, font=9, justify=:CB, show=true)
 ```
 
 !["B_geo_1"](figures/B_geo_1.png)
@@ -52,7 +52,7 @@ arrows!(t, arrow=(length=0.08, start=true, stop=true, justify=:center),
 
 T = text_record([-2.1 0.025; -1.5  0.05; -0.25 0.05; 0.625 0.05],
                 ["10p RM S:", "9p CB annotation", "9p CB frame", "9p CB grid"])
-text!(T, font="", justify="", no_clip=true, fmt=:png, 'show=true)
+text!(T, font="", justify="", no_clip=true, 'show=true)
 ```
 
 !["B_geo_2"](figures/B_geo_2.png)
@@ -75,7 +75,7 @@ t = [0 0 0 4.0; 6.0 0 0 2.0; 9.0 0 0 1.0];
 arrows!(t, arrow=(length="2p",start=true,stop=true,angle=60),
         lw=0.5, fill=:black, y_offset=0.25, no_clip=true)
 T = text_record([2 0.2; 7 0.2; 9.5 0.2], ["annotation", "frame", "grid"]);
-text!(T, font=9, justify=:CB, clearance=(0.025,0.025), fill=:white, fmt=:png, show=true)
+text!(T, font=9, justify=:CB, clearance=(0.025,0.025), fill=:white, show=true)
 ```
 
 !["B_linear"](figures/B_linear.png)
@@ -86,7 +86,7 @@ slanted annotations for the x-axis via the slanted keyword in frame.
 
 ```julia
 basemap(region=(2000,2020,35,45), frame=(axes=:S, annot=2, ticks=:auto, slanted=-30),
-        fmt=:png, show=true)
+        show=true)
 ```
 
 !["B_slanted"](figures/B_slanted.png)
@@ -111,7 +111,7 @@ basemap(region=(1,1000,0,1), proj=:logx, figsize=(8,0.7),
 basemap!(frame=(axes=:S, annot=1, ticks=2, grid=3, scale=:log,
                 xlabel="Axis Label"), y_offset=2.2)
 basemap!(frame=(axes=:S, annot=1, ticks=2, grid=3,
-                xlabel="Axis Label"), y_offset=2.2, fmt=:png, show=true)
+                xlabel="Axis Label"), y_offset=2.2, show=true)
 ```
 
 !["B_log"](figures/B_log.png)
@@ -130,7 +130,7 @@ gmt("set MAP_GRID_PEN_PRIMARY thinnest,.")
 asemap(region=(0,100,0,0.9), proj="powx,0.5", figsize=(10, 0.65),
        frame=(axes=:S, annot=3, ticks=2, grid=1, scale=:pow, xlabel="Axis Label"))
 basemap!(frame=(axes=:S, annot=20, ticks=10, grid=5, xlabel="Axis Label"),
-         y_offset=2.2, fmt=:png, show=true)
+         y_offset=2.2, show=true)
 ```
 
 !["B_pow"](figures/B_pow.png)
@@ -152,7 +152,7 @@ removes leading zeros from calendar items (e.g., 03 becomes 3).
 basemap(region="2000-4-1T/2000-5-25T/0/1", figsize=(12,0.5),
         frame=(axes=:S, annot=7, annot_unit=:day_week, ticks=1, ticks_unit=:day_date),
         axis2=(annot=1, annot_unit=:month),
-        conf=(FORMAT_DATE_MAP="-o", FONT_ANNOT_PRIMARY="+9p"), fmt=:png, show=true)
+        conf=(FORMAT_DATE_MAP="-o", FONT_ANNOT_PRIMARY="+9p"), show=true)
 ```
 
 !["B_time1"](figures/B_time1.png)
@@ -165,7 +165,7 @@ basemap(region="1969-7-21T/1969-7-23T/0/1", figsize=(12,0.5),
         frame=(axes=:S, annot=6, annot_unit=:hour, ticks=1, ticks_unit=:hour2),
         axis2=(annot=1, annot_unit=:ISOweekday))
 basemap!(frame=(axes=:S, annot=6, annot_unit=:H, ticks=1, ticks_unit=:hour2),
-         axis2=(annot=1, annot_unit=:date), y_offset=1.7, fmt=:png, show=true)
+         axis2=(annot=1, annot_unit=:date), y_offset=1.7, show=true)
 ```
 
 The lower example chooses to annotate the weekdays (by specifying a1K) while the upper example
@@ -187,7 +187,7 @@ basemap(region=("1997T","1999T",0,1), figsize=(12,0.25),
         frame=(axes=:S, annot=3, annot_unit=:month, ticks=1, ticks_unit=:month2),
         xaxis2=(annot=1, annot_unit=:Y),
         conf=(FORMAT_DATE_MAP="o", FORMAT_TIME_PRIMARY_MAP="Character", FONT_ANNOT_PRIMARY="+9p"),
-        fmt=:png, show=true)
+        show=true)
 ```
 
 Note that while the year annotation is centered on the 1-year interval, the month annotations must
@@ -205,7 +205,7 @@ ask for a 12-hour clock, and let time go from right to left:
 basemap(region=("0.2t","0.35t",0,1), figsize=(-12,0.25),
         frame=(axes=:S, annot="15m", ticks="5m"), axis2=(annot=1, annot_unit=:hour),
         conf=(FORMAT_CLOCK_MAP="-hham", FONT_ANNOT_PRIMARY="+9p", TIME_UNIT="d"),
-        fmt=:png, show=true)
+        show=true)
 ```
 
 !["B_time4"](figures/B_time4.png)
@@ -222,7 +222,7 @@ basemap(region="1969-7-21T/1969-8-9T/0/1", figsize=(12,0.25),
 basemap!(frame=(axes=:S, annot=3, annot_unit=:ISOweekday, ticks=1, ticks_unit=:weekday),
          axis2=(annot=1, annot_unit=:Gregorian_week),
          conf=(FORMAT_DATE_MAP=:o, TIME_WEEK_START=:Sunday, FORMAT_TIME_SECONDARY_MAP=:Character),
-         y_offset=1.7, fmt=:png, show=true)
+         y_offset=1.7, show=true)
 ```
 
 !["B_time5"](figures/B_time5.png)
@@ -234,7 +234,7 @@ abbreviated, upper case name and 2-digit year. Only the primary axes information
 basemap(region=("1996T","1996-6T",0,1), figsize=(12,0.25),
         frame=(axes=:S, annot=1, annot_unit=:month, ticks=1, ticks_unit=:day_date),
         conf=(FORMAT_DATE_MAP="\"o yy\"", FORMAT_TIME_PRIMARY_MAP="Abbreviated"),
-        fmt=:png, show=true)
+        show=true)
 ```
 
 !["B_time6"](figures/B_time6.png)
@@ -250,7 +250,7 @@ basemap(region=("2000-12-15T","2001-1-15T",0,1), figsize=(12,0.25),
         frame=(axes=:S, annot=5, annot_unit=:date, ticks=1, ticks_unit=:day_date),
         axis2=(annot=1, annot_unit=:year),
         conf=(FORMAT_DATE_MAP="jjj", TIME_INTERVAL_FRACTION=0.05, FONT_ANNOT_PRIMARY="+9p"),
-        fmt=:png, show=true)
+        show=true)
 ```
 
 !["B_time7"](figures/B_time7.png)
@@ -268,7 +268,7 @@ basemap(region=("2000-12-15T","2001-1-15T",0,1), figsize=(12,0.25),
     basemap!(frame=(axes=(:left_full, :bot_full),),
             xaxis2=(custom=(pos=[416.0, 443.7, 488.3, 542],
                             type=["ig Devonian", "ig Silurian", "ig Ordovician", "ig Cambrian"]),),
-            par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), fmt=:png, show=true)
+            par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), show=true)
 ```
 
 !["B_time7"](figures/B_time8.png)

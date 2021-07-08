@@ -12,7 +12,7 @@ controlling parameters are not listed here. For the finest control, user should 
 Parameters
 ----------
 
-- **B** or *axis* or *frame*\
+- **B** or *axes* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
   More at [frame](@ref)
 
@@ -56,30 +56,30 @@ Plot a single arrow with head and tail.
 
 ```julia
     arrows([0 8.2 0 6], limits=(-1,4,7,9), arrow=(len=2,start=:arrow,stop=:tail,shape=0.5),
-           proj=:X, figsize=(12,4), axis=:a, pen="4p", show=true)
+           figsize=(12,4), axes=:a, pen="4p", show=true)
 ```
 
 Let us see the effect of the scale factor in quiver plots (components given in *u,v*). Plot a single vector
-with length 0f 5 cm. Notice that all, vector magnitude, map limits and map size are equal to 5.
+with length 0f ~7 cm (sqrt(50)). Notice that map limits and map size are equal to 5.
 
 ```julia
-   arrows([0.0 0 5 5], limits=(0,5,0,5), proj=:X5, axis=(annot=:a, grid=1),
+   arrows([0.0 0 5 5], limits=(0,5,0,5), figsize=5, frame=(annot=:a, grid=1),
           arrow=(len=0.5,stop=1,uv=1), show=true)
 ```
 
-now, we increase the fig size to 10 cm and because the vector magnitude is half ot it (= 5) we see that the
-vector is now plot from 0 to 2.5 figure units. In fact, the vector has exactly the same size as in previous
+now, we increase the fig size to 10 cm and because the vector magnitude is half ot it (= 7) we see that the
+vector is now plot from 0 to ~3.54 figure units. In fact, the vector has exactly the same size as in previous
 example but the figure is now twice as large.
 
 ```julia
-   arrows([0.0 0 5 5], limits=(0,5,0,5), proj=:X10, axis=(annot=1, ticks=0.5, grid=1),
+   arrows([0.0 0 5 5], limits=(0,5,0,5), figsize=10, frame=(annot=1, ticks=0.5, grid=1),
           arrow=(len=0.5,stop=1,uv=1), show=true)
 ```
 
 and finally we will change the vector size again but this time by applying a factor scale of 0.5. The vector
-is now 1.25 figure units long.
+is now ~1.77 figure units long.
 
 ```julia
-   arrows([0.0 0 5 5], limits=(0,5,0,5), proj=:X10, axis=(annot=0.5, ticks=0.25, grid=0.5),
+   arrows([0.0 0 5 5], limits=(0,5,0,5), figsize=10, frame=(annot=0.5, ticks=0.25, grid=0.5),
           arrow=(len=0.5,stop=1,uv=0.5), show=true)
 ```

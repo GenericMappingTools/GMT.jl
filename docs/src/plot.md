@@ -17,7 +17,7 @@ Parameters
 - **A** or *steps* : -- *steps=true* **|** *steps=:meridian|:parallel|:x|:y*\
    By default, geographic line segments are drawn as great circle arcs. To draw them as straight lines, use the **steps=true**. Alternatively, use **steps=:meridian** to draw the line by first following a meridian, then a parallel. Or append **steps=:parallel** to start following a parallel, then a meridian. (This can be practical to draw a line along parallels, for example). For Cartesian data, points are simply connected, unless you use **steps=:x** or **steps=:y** to draw stair-case curves that whose first move is along *x* or *y*, respectively.
 
-- **B** or *axis* or *frame*\
+- **B** or *axes* or *frame*\
    Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
    More at [frame](@ref)
 
@@ -130,6 +130,6 @@ Decorated curve with blue stars
 
 ```julia
     xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
-    lines(xy, axis=:af, pen=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star,
+    lines(xy, axes=:af, pen=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star,
           symbsize=1, pen=(0.5,:green), fill=:blue, dec2=true), show=true)
 ```

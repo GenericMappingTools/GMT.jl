@@ -4,7 +4,7 @@
 
 ```julia
 using GMT
-plot(1:10, rand(10), lw=1, lc=:blue, fmt=:png, marker=:square,
+plot(1:10, rand(10), lw=1, lc=:blue, marker=:square,
      markeredgecolor=0, size=0.2, markerfacecolor=:red, title="Hello World",
      xlabel="Spoons", ylabel="Forks", show=true)
 ```
@@ -13,8 +13,9 @@ plot(1:10, rand(10), lw=1, lc=:blue, fmt=:png, marker=:square,
 <img src="../figures/hello-world.png" alt="Hello world" width="500" class="center"/>
 ```
 
-A few notes about this example. Because we didn't specify the figure size (with the ``figsize`` keyword) a default value of 12x8 cm (not counting labels and title) was used. The ``fmt=:png`` selected the
-PNG format. The ``show=true`` is needed to show the image at the end.
+A few notes about this example. Because we didn't specify the figure size (with the ``figsize`` keyword)
+a default value of 12x8 cm (not counting labels and title) was used. The ``show=true``
+is needed to show the image at the end.
 
 But now we want an image made up with two layers of data. And we are going to plot on the sphere
 (the Earth). For that we will need to use the ``coast`` program to plot the Earth and append
@@ -27,7 +28,7 @@ x = range(0, stop=2pi, length=180);       seno = sin.(x/0.2)*45;
 coast(region=[0 360 -90 90], proj=(name=:laea, center=(300,30)), frame=:g,
       res=:crude, land=:navy, figsize=6)
 
-plot!(collect(x)*60, seno, lw=0.5, lc=:red, fmt=:png, marker=:circle,
+plot!(collect(x)*60, seno, lw=0.5, lc=:red, marker=:circle,
       markeredgecolor=0, size=0.05, markerfacecolor=:cyan, show=true)
 ```
 
@@ -54,11 +55,11 @@ This example shows uses the *peaks* function to create a classical example. Note
 memory consumption in this example, when creating the plot, is much lower than traditional likewise 
 examples because we will be using only one 2D array instead of 3 3D arrays (ref). In the example
 *cont=1* and *annot=2* means draw contours at every 1 unit of the *G* grid and annotate at every other
-contour line. *axis="a"* means pick a default automatic annotation and labeling for the axis.
+contour line. *axes="a"* means pick a default automatic annotation and labeling for the axes.
 
 ```julia
 G = GMT.peaks();
-grdcontour(G, cont=1, annot=2, fmt=:png, show=true)
+grdcontour(G, cont=1, annot=2, show=true)
 ```
 
 ```@raw html
@@ -72,7 +73,7 @@ are always set separately. Here we will create first a colormap with *makecpt* t
 
 ```julia
 cpt = makecpt(range=(-6,8,1));      # Create the color map
-grdcontour(G, fmt=:png, pen=(colored=true,), show=true)
+grdcontour(G, pen=(colored=true,), show=true)
 ```
 
 ```@raw html
@@ -120,7 +121,7 @@ display it this time as 3D bar plot in a perspective view.
 
 ```julia
 cmap = grd2cpt(G);      # Compute a colormap with the grid's data range
-bar3(G, lw=:thinnest, color=cmap, fmt=:png, show=true)
+bar3(G, lw=:thinnest, color=cmap, show=true)
 ```
 
 ```@raw html
@@ -136,7 +137,7 @@ only shot and so, by default, it has the *show* keyword hardwire to *true*.
 
     imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg",
           frame=:g, region=:d, proj=:Sinusoidal, image_in=:r, show=false)
-    coast!(shore=(1,:white), resolution=:c, figsize=15, fmt=:png, show=true)
+    coast!(shore=(1,:white), resolution=:c, figsize=15, show=true)
 
 ```@raw html
 <img src="http://w3.ualg.pt/~jluis/jessy_.png" alt="SinuJessica" width="600" class="center"/>

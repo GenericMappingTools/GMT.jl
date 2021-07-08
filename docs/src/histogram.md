@@ -24,7 +24,7 @@ Optional Arguments
    When input is a GMTimage of UInt16 type this option will compute the histogram as well as good
    bounds to use in contrast enhancement, which will be plotted as two vertical lines.
 
-- **B** or *axis* or *frame*\
+- **B** or *axes* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
   More at [frame](@ref)
 
