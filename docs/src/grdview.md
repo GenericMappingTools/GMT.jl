@@ -27,7 +27,7 @@ Required Arguments
 Optional Arguments
 ------------------
 
-- **B** or *axis* or *frame*\
+- **B** or *axes* or *frame*\
    Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or *color* or *cmap* : -- *color=cpt*\

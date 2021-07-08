@@ -13,7 +13,6 @@ bar3(G,                 # 'G' is the grid created above
      fill=[0,115,190],  # Fill prisms with this RGB color
      lw=:thinnest,      # Line thickness (0.25 pt)
      figsize=14,        # Set fig width of 14 cm
-     fmt=:png,          # The image format
      show=true)         # Show the result
 ```
 

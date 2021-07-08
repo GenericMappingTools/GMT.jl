@@ -16,7 +16,7 @@ controlling parameters are listed here. For a finer control, user should consult
 Parameters
 ----------
 
-- **B** or *axis* or *frame*\
+- **B** or *axes* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left, bottom and vertical
   axes and just draw left and tp axes. More at [frame](@ref)
 
@@ -81,7 +81,7 @@ View a grid as a 3D bar plot
 ```julia
 G = gmt("grdmath -R-15/15/-15/15 -I0.5 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 cmap = grd2cpt(G);      # Compute a colormap with the grid's data range
-bar3(G, lw=:thinnest, color=cmap, fmt=:png, show=true)
+bar3(G, lw=:thinnest, color=cmap, show=true)
 ```
 
 See also

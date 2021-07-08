@@ -17,7 +17,7 @@ There are no required arguments but
 Optional Arguments
 ------------------
 
-- **B** or *axis* or *frame*\
+- **B** or *axes* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
   Extended at [frame](@ref)
 

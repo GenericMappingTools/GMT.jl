@@ -10,15 +10,15 @@ or separated on a per axes basis by using specific *xaxis*, *yaxis* and *zaxis* 
 as the generic *frame* option. The *xaxis2* and *yaxis2* apply when dealing with secondary axes.
 
 Before the rest, note that several modules have axes default settings (`scatter`, `bar`, etc...) but if
-no axes is desired, just use *axis=:none*. Also useful is the *axis=:same* to repeat the previously set
-(from another call) axis specification.
+no axes is desired, just use *axes=:none*. Also useful is the *axes=:same* to repeat the previously set
+(from another call) axes specification.
 
 By default, all 4 map boundaries (or plot axes) are plotted and two annotated. To customize, use the *axes*
 keyword that takes as value a tuple with a combination of words. Axes are named *left*, *bottom*, *right*,
 *top* and, for the 3D maps, *up*. Next we have three categories of axes: the *annotated and ticked*, the *ticked*
 and those with no annoations and no tick marks. We call them *full*, *ticks* and *bare* and combine with the axes
-name using an underscore to glue them. Hence *left_full* means draw and annotate left axes, whilst *top_bare*
-means draw only top axes. The full combination is *left|bottom|right|top|up_full|ticks|bare*. To not draw a
+name using an underscore to glue them. Hence *left_full* means draw and annotate left axis, whilst *top_bare*
+means draw only top axis. The full combination is *left|bottom|right|top|up_full|ticks|bare*. To not draw a
 boundary, simply omit the name of it in tuple. Note that the short one single char naming used by GMT is also
 valid. E.g. *axes=:WSn* will draw and annotate left and south boundaries and draw but no ticks or annotations
 the top boundary. Two special cases are provided by the *frame=:none* and *frame=:noannot* that do not plot
@@ -50,10 +50,10 @@ GMT uses the notion of *primary* (the default) and *secondary* axes. To set an a
 *secondary=true* (mostly used for time axes annotations).
 
 The *xaxis* *yaxis* and *zaxis* specify which axis you are providing information for. The syntax is the same
-as for the *axis* keyword but allows fine tuning of different options for the 4 (or 5) axes.
+as for the *axes* keyword but allows fine tuning of different options for the 4 (or 5) axes.
 
 To add a label, to an axis use *label="Label text"* if using the *xaxis* etc form, or use the *xlabel*, *ylabel*
-and *zlabel* keywords in the common *axis* tuple of options.
+and *zlabel* keywords in the common *axes* tuple of options.
 
 Use *Yhlabel=true* to force a horizontal label for *y*-axes (useful for very short labels).
 
@@ -171,7 +171,7 @@ These GMT parameters can affect the appearance of the map boundary:
 [MAP\_TICK\_LENGTH\_PRIMARY](http://gmt.soest.hawaii.edu/doc/latest/gmt.conf.html#map-tick-length-primary),
 and [MAP\_TICK\_PEN\_PRIMARY](http://gmt.soest.hawaii.edu/doc/latest/gmt.conf.html#map-tick-pen-primary)
 
-## Axis options table
+## Axes options table
 
 The entire parameters collection is displayed in the following table
 

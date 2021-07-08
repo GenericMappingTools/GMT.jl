@@ -30,7 +30,7 @@ Optional Arguments
 - **A** or **azimuths** : -- *azimuths=true*\
     Angles are given as azimuths; convert them to directions using the current projection. 
 
-- **B** or **axis** or *frame*\
+- **B** or **axes** or *frame*\
    Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **-C** or **clearance** : -- *clearance=true* **|** *clearance=(margin=(dx,dy), round=true, concave=true, comvex=true)*\

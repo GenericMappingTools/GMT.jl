@@ -12,7 +12,7 @@ There are no required arguments but either *sun* or *terminators* must be select
 Optional Arguments
 ------------------
 
-- **B** or *axis* or *frame*\
+- **B** or *axes* or *frame*\
   Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or *format* : *format=true*\
@@ -46,7 +46,7 @@ Optional Arguments
 
 - **N** or *invert* : *invert=true*\
    Invert the sense of what is inside and outside the terminator. Only used with clipping (*G=:c*) and
-   cannot be used together with *axis*.
+   cannot be used together with *axes*.
 
 - **R** or *region* or *limits* : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
    **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more 
@@ -86,7 +86,7 @@ Print current Sun position and Sunrise, Sunset times at:
 Plot the day-night and civil twilight 
 
 ```julia
-    coast(region=:d, shore=0.1, proj="Q0/14c", axis=(annot=:auto, axes="WSen"),
+    coast(region=:d, shore=0.1, proj="Q0/14c", axes=(annot=:auto, axes="WSen"),
           resolution=:low, area=1000)
     solar!(pen=1, terminators="dc", show=true)
 ```
@@ -95,12 +95,12 @@ But it is much nicer if we paint the terminators
 
 ```julia
     coast(region=:d, proj="Ks0/12", resolution=:low, area=5000, borders="1/0.5p,gray",
-          water=(175,210,255), axis=(annot=:a,ticks=:a,grid=:a), shore=0.5) 
+          water=(175,210,255), axes=(annot=:a,ticks=:a,grid=:a), shore=0.5) 
     solar!(terminators=(term=:d, date="2016-02-09T16:00:00"), fill="navy@95")
     solar!(terminators=(term=:c, date="2016-02-09T16:00:00"), fill="navy@85")
     solar!(terminators=(term=:n, date="2016-02-09T16:00:00"), fill="navy@80")
     solar!(terminators=(term=:a, date="2016-02-09T16:00:00"), fill="navy@80",
-    fmt=:png, show=true)
+    show=true)
 ```
 
 See also

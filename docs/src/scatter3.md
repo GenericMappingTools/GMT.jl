@@ -9,9 +9,9 @@ finer control, user should consult the `plot` module.
 Parameters
 ----------
 
-- **B** or *axis* or *frame*\
+- **B** or *axes* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left, bottom and verical
-  axes and just draw left and tp axes. More at [frame](@ref)
+  axes and just draw left and top axes. More at [frame](@ref)
 
 - **J** or *proj* : -- *proj=<parameters>*\
   Select map projection. Default is linear and 14 cm width. More at [proj](@ref)

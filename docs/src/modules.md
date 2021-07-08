@@ -12,7 +12,7 @@ set the output format. Finally *kwargs* are keyword parameters used to set the i
 options. But contrary to the [Monolithic](@ref) usage, the one letter *GMT* option syntax may be
 replaced by more verbose aliases. To make it clear let us look at couple of examples.
 
-    coast(region=:global, proj=(name=:laea, center=[300,30]), figsize=6,, axis="g", land="navy")
+    coast(region=:global, proj=(name=:laea, center=[300,30]), figsize=6,, axes="g", land="navy")
 
 This command creates a map in PotScript file called *GMTjl_tmp.ps* and save it in your system's
 *tmp* directory. For comparison, the same command could have been written, using the classical
@@ -42,7 +42,7 @@ The above example, however, does not use any input data (*coast* knows how to fi
 way of providing it to modules that work on them is to send in a file name with the data to operate on.
 This example
 
-    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:merc, axis=:a, show=true)
+    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:merc, axes=:a, show=true)
 
 reads a the netCDF grid *tut_relief.nc* and displays it as a Mercator projected image. The '@' prefix
 is used by *GMT* to know that the grid file should be downloaded from a server and cached locally. This
@@ -53,10 +53,10 @@ to construct potentially highly complex figures. Next example illustrates a slig
 example
 
     topo = makecpt(color=:rainbow, range=(1000,5000/500), Z=[]);
-    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:merc, axis=:a, color=topo,
+    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:merc, axes=:a, color=topo,
              fmt=:jpg)
     colorbar!(position="jTC+w5i/0.25i+h+o0/-1i", region="@tut_relief.nc", color=topo,
-           axis="y+lm", fmt=:jpg, show=true)
+           axes="y+lm", fmt=:jpg, show=true)
 
 Here we use the *makecpt* command to compute a colormap object and used it as the value of the *color*
 keyword of both *grdimage* and *colorbar* modules. The final image is made up of two layers, the first
@@ -97,7 +97,7 @@ borders with different line colors and thickness. Here we cannot simple state *l
 program wouldn't know which of the shore line or borders this attribute applies to. The solution for
 this is to use tuples as values of corresponding keyword options.
 
-    coast(limits=[-10 0 35 45], proj=:merc, shore=(0.5,"red"), axis=:a,
+    coast(limits=[-10 0 35 45], proj=:merc, shore=(0.5,"red"), axes=:a,
             show=1, borders=(1,(1,"green")))
 
 Here we used tuples to set the pen attributes, where the tuple may have 1 to 3 elements in the form
@@ -123,7 +123,7 @@ So, in summary, a *pen* attribute may be set in three different ways:
 
 ## Specifying the axes
 
-The axes are controlled by the **B** or **frame** or **axis** keywords. The easiest form it can have
+The axes are controlled by the **B** or **frame** or **axes** keywords. The easiest form it can have
 is the *axes=:a*, which means do an automatic annotation of the 4 map boundaries
 -- left, bottom, right and top -- axes. To annotate only the left and bottom boundaries, one
 would do *axes="a WSne"* (note the space between *a* and *WSne*). For a higher level of control the

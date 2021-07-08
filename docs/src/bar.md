@@ -12,7 +12,7 @@ column holds always the coordinates).
 Parameters
 ----------
 
-- **B** or *axis* or *frame*\
+- **B** or *axes* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
   More at [frame](@ref)
 
@@ -75,17 +75,17 @@ A simple bar plot with 10 bars and automatic limits.
 
 A bar group with selected colors and transparency.
 ```julia
-    bar([0. 1 2 3; 1 2 3 4], fillalpha=[0.3 0.5 0.7], show=1,  fmt=:png, fill=["red" "green" "blue"], fmt=:png)
+    bar([0. 1 2 3; 1 2 3 4], fillalpha=[0.3 0.5 0.7], show=1, fill=["red" "green" "blue"])
 ```
 
 A bar group with bars filled with patterns.
 ```julia
-    bar([0 1 2 3; 1 2 3 4], fill=(1,2,3), show=1, fmt=:png)
+    bar([0 1 2 3; 1 2 3 4], fill=(1,2,3), show=1)
 ```
 
 A bar group with error bars
 ```julia
-    bar([0. 1 2 3; 1 2 3 4], error_bars=(y=[0.1 0.2 0.33; 0.2 0.3 0.4],), show=1, fmt=:png)
+    bar([0. 1 2 3; 1 2 3 4], error_bars=(y=[0.1 0.2 0.33; 0.2 0.3 0.4],), show=1)
 ```
 
 See also

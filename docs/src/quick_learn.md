@@ -75,7 +75,7 @@ GMT syntax. Let's, see the example of the `plot` (`psxy`) module
     gmthelp(plot)
     Option: R, or region, or limits => GMTgrid | NamedTuple |Tuple | Array | String
     Option: J, or proj, or projection => NamedTuple | String
-    Option: B, or frame, or axis, or axes, or xaxis, or yaxis, or zaxis, or axis2, or xaxis2, or yaxis2 => NamedTuple | String
+    Option: B, or frame, or axes, or xaxis, or yaxis, or zaxis, or axis2, or xaxis2, or yaxis2 => NamedTuple | String
     Option: a, or e, or f, or g, or l, or p, or t, or params => (Common options)
     Option: D, or shift, or offset => Tuple | String | Number | Bool [Possibly not yet expanded]
     Option: I, or intens => Tuple | String | Number | Bool [Possibly not yet expanded]

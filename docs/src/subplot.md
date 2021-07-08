@@ -52,7 +52,7 @@ Optional Arguments
     - Append **Roman=true** for uppercase Roman numerals [Arabic numerals].
     - Append **vertical=true** to increase tag numbers vertically down columns [horizontally across rows].
 
-- **B** or **axis** or *frame*\
+- **B** or **axes** or *frame*\
    Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or **clearance** : -- *clearance=(left=val, right=val, bott=val, bottom=val, top=val))*\
@@ -123,7 +123,7 @@ selected subplot. There are a few other rules that need to be followed:\
 (1) The subplot machinery expects the first plotting command in a new subplot window
 to take care of plotting the base frame. The particulars of this frame may have been
 specified by the **row|col_axes** option. In either case, should you need to set or override
-frame and axis parameters then you must specify these **axes** options with this first plot
+frame and axes parameters then you must specify these **axes** options with this first plot
 command.\
 (2) The subplot machinery automatically uses the **x_off** and **y_off** options under
 the hood so these options are not available while a subplot is active.

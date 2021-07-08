@@ -32,7 +32,7 @@ Optional Arguments
    [Default is no annotations]. Use *annot=(disable=true,)* to disable all annotations implied by **cont**.
    Alternatively do *annot=(single=true, int=val)* to plot *val* as a single contour. The optional *labelinfo* controls the specifics of the label formatting and consists of a named tuple with the following control arguments [`Label formatting`](@ref label_format_quot)
 
-- **B** or **axis** or **frame**\
+- **B** or **axes** or **frame**\
    Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or **cont** or **contour** or **contours** or **levels** : -- *cont=cont\_int*\
@@ -133,18 +133,18 @@ Using a grid
 	G = GMT.peaks();
 	C = makecpt(T=(-7,9,2));
 
-	contourf(G, fmt=:png, show=1)
-	contourf(G, C=[-2, 0, 2, 5], fmt=:png, show=1)
-	contourf(G, C, contour=[-2, 0, 2, 5], fmt=:png, show=1)
-	contourf(G, C, annot=[-2, 0, 2, 5], fmt=:png, show=1)
-	contourf(G, C, annot=2, fmt=:png, show=1)
-	contourf(G, C, contour=1, annot=[-2, 0, 2, 5], fmt=:png, show=1)
-	contourf(G, C, annot=:none, fmt=:png, show=1)
+	contourf(G, show=1)
+	contourf(G, C=[-2, 0, 2, 5], show=1)
+	contourf(G, C, contour=[-2, 0, 2, 5], show=1)
+	contourf(G, C, annot=[-2, 0, 2, 5], show=1)
+	contourf(G, C, annot=2, show=1)
+	contourf(G, C, contour=1, annot=[-2, 0, 2, 5], show=1)
+	contourf(G, C, annot=:none, show=1)
 ```
 
 Using a table data.
 
 ```julia
 	d = [0 2 5; 1 4 5; 2 0.5 5; 3 3 9; 4 4.5 5; 4.2 1.2 5; 6 3 1; 8 1 5; 9 4.5 5];
-	contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), fmt=:png, show=1)
+	contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), show=1)
 ```

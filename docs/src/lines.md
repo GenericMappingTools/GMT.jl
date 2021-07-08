@@ -16,7 +16,7 @@ controlling parameters are not listed here. For the finest control, user should 
 Parameters
 ----------
 
-- **B** or *axis* or *frame*\
+- **B** or *axes* or *frame*\
   Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
   More at [frame](@ref)
 
@@ -60,6 +60,6 @@ Decorated curve with blue stars
 
 ```julia
     xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
-    lines(xy, axis=:af, pen=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star,
+    lines(xy, axes=:af, pen=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star,
           symbsize=1, pen=(0.5,:green), fill=:blue, dec2=true), show=true)
 ```
