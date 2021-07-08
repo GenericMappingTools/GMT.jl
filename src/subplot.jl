@@ -50,7 +50,8 @@ function subplot(fim=nothing; stop=false, kwargs...)
 
 	# In case :title exists we must use and delete it to avoid double parsing
 	cmd = ((val = find_in_dict(d, [:T :title])[1]) !== nothing) ? " -T\"" * val * "\"" : ""
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "", false, " ")
+	val_grid = find_in_dict(d, [:grid])[1]		# Must fish this one right now because parse_B also looks for (another) :grid
+	cmd, = parse_BJR(d, cmd, "", false, " ")
 	cmd, = parse_common_opts(d, cmd, [:params], true)
 	cmd  = parse_these_opts(cmd, d, [[:M :margin :margins]])
 	cmd  = add_opt(d, cmd, "A", [:A :autolabel],
@@ -78,9 +79,11 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	if (fim !== nothing)
 		t = lowercase(string(fim))
 		if     (t == "end" || t == "stop")  stop = true
-		elseif (t == "show")  stop = true;  do_show = true
+		elseif (t == "show")  stop, do_show = true, true
 		elseif (t == "set")   do_set = true
 		end
+	elseif (haskey(d, :show) && d[:show] != 0)					# Let this form work too
+		do_show, stop = true, true
 	else
 		IamModern[1] = false;	IamSubplot[1] = false			# Make sure we always start a clean session
 		if (!stop && length(kwargs) == 0)  stop = true  end		# To account for the subplot() call case
@@ -88,8 +91,8 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	# ------------------------------ End parsing inputs --------------------------------
 
 	if (!stop && !do_set)
-		((val_ = find_in_dict(d, [:grid])[1]) === nothing) && error("SUBPLOT: 'grid' keyword is mandatory")
-		cmd = arg2str(val_, 'x') * " " * cmd * opt_C			# Also add the eventual global -C clearance option
+		(val_grid === nothing) && error("SUBPLOT: 'grid' keyword is mandatory")
+		cmd = arg2str(val_grid, 'x') * " " * cmd * opt_C			# Also add the eventual global -C clearance option
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 
 		if (!IamModern[1])			# If we are not in modern mode, issue a gmt("begin") first

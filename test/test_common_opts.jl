@@ -239,6 +239,17 @@
 	@test GMT.axis(phase_add=10)[1] == " -Bp+10";
 	@test GMT.axis(phase_sub=10)[1] == " -Bp-10";
 
+	@test GMT.parse_grid(Dict(), (z=25,)) == " -Bzg25"
+	@test GMT.parse_grid(Dict(), ()) == " -Bg"
+	@test GMT.parse_grid(Dict(), (xyz=1,)) == " -Bg -Bzg"
+	@test GMT.parse_grid(Dict(), "x") == " -Bxg"
+	@test GMT.parse_grid(Dict(), "x25") == " -Bxg25"
+	@test GMT.parse_grid(Dict(), "y25") == " -Byg25"
+	@test GMT.parse_grid(Dict(), "xyz") == " -Bg -Bzg"
+	@test GMT.parse_grid(Dict(), :on) == " -Bg"
+	r = coast(region=:global, proj=:Winkel, par=(MAP=1,), grid=(pen=:red,), Vd=2)
+	@test occursin("--MAP=1 --MAP_GRID_PEN_PRIMARY=red", r)
+
 	r,o = GMT.prepare2geotif(Dict(:geotif => :trans), ["pscoast  -Rd -JX12cd/0 -Baf -BWSen -W0.5p -Da"], "", false);
 	@test startswith(r[1],"pscoast  -Rd -JX30cd/0 -W0.5p -Da  -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254")
 	@test o == " -TG -W+g"

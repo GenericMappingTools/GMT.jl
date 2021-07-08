@@ -551,9 +551,47 @@ function guess_proj(lonlim, latlim)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)
+	# Parse the contents of the "grid" option. This option can be used as grid=(pen=:red, x=10), case on
+	# which the parsed result will be appended to def_fig_axes, or as a member of the "frame" option.
+	# In this case def_fig_axes is dropped and only the contents of "frame" will be used. The argument can
+	# be a NamedTuple, which allows setting grid pen and individual axes, or as a string (see ex bellow).
+	pre = (stalone) ? " -B" : ""
+	get_int() = return (tryparse(Float64, o) !== nothing) ? o : ""	# Micro nested-function
+	if (isa(args, NamedTuple))	# grid=(pen=?, x=?, y=?, xyz=?)
+		dd = nt2dict(args)
+		n = length(opt_B)
+		((o = string(get(dd, :x, ""))) !== "") && (opt_B *= pre*"xg" * get_int())
+		((o = string(get(dd, :y, ""))) !== "") && (opt_B *= pre*"yg" * get_int())
+		((o = string(get(dd, :z, ""))) !== "") && (opt_B *= pre*"zg" * get_int())
+		((o = string(get(dd, :xyz, ""))) !== "") && (opt_B *= pre*"g -Bzg")
+		(n == length(opt_B)) && (opt_B *= pre*"g")		# None of the above default to -Bg
+		if (haskey(dd, :pen))
+			p = opt_pen(dd, 'W', [:pen])[4:end]					# Because p = " -W..."
+			# Need to find if we already have a conf and need to append or create one. And we may have [:par :conf :params]
+			symb = (haskey(d, :par)) ? :par : (haskey(d, :conf)) ? :conf : (haskey(d, :params)) ? :params : :n
+			if (symb == :n)  d[:par] = (MAP_GRID_PEN_PRIMARY=p,)
+			else
+				d[symb] = isa(d[symb], NamedTuple) ? (d[symb]..., MAP_GRID_PEN_PRIMARY=p,) : (MAP_GRID_PEN_PRIMARY=p,)
+			end
+		end
+	else
+		# grid=:on => -Bg;	grid=:x => -Bxg;	grid="x10" => -Bxg10; grid=:y ...;  grid=:xyz => " -Bg -Bzg"
+		o = string(args)
+		_x, _y, _xyz = (o[1] == 'x'), (o[1] == 'y'), startswith(o, "xyz")
+		if     (_x && !_xyz)  opt_B *= pre*"xg" * (length(o) > 1 ? o[2:end] : "")		# grid=:x or grid="x10"
+		elseif (_y && !_xyz)  opt_B *= pre*"yg" * (length(o) > 1 ? o[2:end] : "")
+		elseif (_xyz)         opt_B *= pre*"g -Bzg"
+		else                  opt_B *= pre*"g"			# For example: grid=:on
+		end
+	end
+	return opt_B
+end
+
+# ---------------------------------------------------------------------------------------------------
 function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple{String,String}
 
-	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axis :axes :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
+	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
 	parse_theme(d)			# Must be first because some themes change def_fig_axes
 	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
@@ -563,7 +601,7 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 	have_Bframe, got_Bstring = false, false		# To know if the axis() function returns a -B<frame> setting
 
 	extra_parse = true;		have_a_none = false
-	if ((val = find_in_dict(d, [:B :frame :axis :axes], del)[1]) !== nothing)		# These four are aliases
+	if ((val = find_in_dict(d, [:B :frame :axes :axis], del)[1]) !== nothing)		# These four are aliases
 		isa(val, Dict) && (val = dict2nt(val))
 		if (isa(val, String) || isa(val, Symbol))
 			val = string(val)					# In case it was a symbol
@@ -597,11 +635,13 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 				val *= " af"		# To prevent that setting B=:WSen removes all annots
 			end
 		end
-		if (isa(val, NamedTuple)) opt_B, have_Bframe = axis(val);	extra_parse = false
+		if (isa(val, NamedTuple)) opt_B, have_Bframe = axis(val, d);	extra_parse = false
 		else                      opt_B = string(val)
 		end
 		(extra_parse && isa(val, String)) && (got_Bstring = true)	# Signal to not try to consolidate with def_fig_axes
 	end
+
+	((val = find_in_dict(d, [:grid])[1]) !== nothing) && (opt_B = parse_grid(d, val, opt_B))
 
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
 	t = ""		# Use the trick to replace blanks by some utf8 char and undo it in extra_parse
@@ -652,12 +692,12 @@ function parse_B(d::Dict, cmd::String, _opt_B::String="", del::Bool=true)::Tuple
 		add_this, this_Bframe = false, false
 		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict)))
 			(isa(d[symb], Dict)) && (d[symb] = dict2nt(d[symb]))
-			if     (symb == :axis2)   this_B, this_Bframe = axis(d[symb], secondary=true); add_this = true
-			elseif (symb == :xaxis)   this_B, this_Bframe = axis(d[symb], x=true); add_this = true
-			elseif (symb == :xaxis2)  this_B, this_Bframe = axis(d[symb], x=true, secondary=true); add_this = true
-			elseif (symb == :yaxis)   this_B, this_Bframe = axis(d[symb], y=true); add_this = true
-			elseif (symb == :yaxis2)  this_B, this_Bframe = axis(d[symb], y=true, secondary=true); add_this = true
-			elseif (symb == :zaxis)   this_B, this_Bframe = axis(d[symb], z=true); add_this = true
+			if     (symb == :axis2)   this_B, this_Bframe = axis(d[symb], d, secondary=true); add_this = true
+			elseif (symb == :xaxis)   this_B, this_Bframe = axis(d[symb], d, x=true); add_this = true
+			elseif (symb == :xaxis2)  this_B, this_Bframe = axis(d[symb], d, x=true, secondary=true); add_this = true
+			elseif (symb == :yaxis)   this_B, this_Bframe = axis(d[symb], d, y=true); add_this = true
+			elseif (symb == :yaxis2)  this_B, this_Bframe = axis(d[symb], d, y=true, secondary=true); add_this = true
+			elseif (symb == :zaxis)   this_B, this_Bframe = axis(d[symb], d, z=true); add_this = true
 			end
 			(add_this) && (this_opt_B *= this_B)
 			have_Bframe = have_Bframe || this_Bframe
@@ -1236,7 +1276,7 @@ function opt_pen(d::Dict, opt::Char, symbs)::String
 		out = string(" -", opt, pen)
 	else
 		if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-			if (isa(val, String) || isa(val, Number) || isa(val, Symbol))
+			if (isa(val, String) || isa(val, Real) || isa(val, Symbol))
 				out = string(" -", opt, val)
 			elseif (isa(val, Tuple))	# Like this it can hold the pen, not extended atts
 				out = string(" -", opt, parse_pen(val))
@@ -1254,7 +1294,7 @@ function parse_pen(pen::Tuple)::String
 	s = arg2str(pen[1])					# First arg is different because there is no leading ','
 	if (length(pen) > 1)
 		s *= ',' * get_color(pen[2])
-		if (length(pen) > 2)  s *= ',' * arg2str(pen[3])  end
+		(length(pen) > 2) && (s *= ',' * arg2str(pen[3]))
 	end
 	return s
 end
@@ -1263,7 +1303,7 @@ end
 function parse_pen_color(d::Dict, symbs=nothing, del::Bool=false)::String
 	# Need this as a separate fun because it's used from modules
 	lc = ""
-	if (symbs === nothing)  symbs = [:lc :linecolor]  end
+	(symbs === nothing) && (symbs = [:lc :linecolor])
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
 		lc = string(get_color(val))
 	end
@@ -2140,20 +2180,20 @@ function data_type(val)
 end
 
 # ---------------------------------------------------------------------------------------------------
-axis(nt::NamedTuple; x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) = axis(;x=x, y=y, z=z, secondary=secondary, nt...)
-function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Bool}
+axis(nt::NamedTuple, D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) = axis(D;x=x, y=y, z=z, secondary=secondary, nt...)
+function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Bool}
 	# Build the (terrible) -B option
-	d = KW(kwargs)
+	d = KW(kwargs)			# These kwargs always come from the fields of a NamedTuple 
 
 	# Before anything else
 	(haskey(d, :none)) && return " -B0", false
 
 	primo = secondary ? "s" : "p"					# Primary or secondary axis
-	if (z)  primo = ""  end							# Z axis have no primary/secondary
+	(z) && (primo = "")								# Z axis have no primary/secondary
 	axe = x ? "x" : (y ? "y" : (z ? "z" : ""))		# Are we dealing with a specific axis?
 
 	opt = " -B"
-	if ((val = find_in_dict(d, [:frame :axes])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:axes :frame])[1]) !== nothing)		# The :frame here makes no sense, I think.
 		isa(val, Dict) && (val = dict2nt(val))
 		opt *= helper0_axes(val)
 	end
@@ -2175,7 +2215,7 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	if (haskey(d, :pole))    opt *= "+o" * arg2str(d[:pole])  end
 	if (haskey(d, :title))   opt *= "+t" * str_with_blancs(arg2str(d[:title]))  end
 
-	opt_Bframe  = (opt != " -B") ? opt : ""		# Make a copy to append only at the end
+	opt_Bframe = (opt != " -B") ? opt : ""		# Make a copy to append only at the end
 	opt = ""
 
 	# axes supps
@@ -2204,7 +2244,13 @@ function axis(;x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=fals
 	if (haskey(d, :annot_unit)) ints *= helper2_axes(d[:annot_unit])   end
 	if (haskey(d, :ticks))      ints *= "f" * helper1_axes(d[:ticks])  end
 	if (haskey(d, :ticks_unit)) ints *= helper2_axes(d[:ticks_unit])   end
-	if (haskey(d, :grid))       tB = "g" * helper1_axes(d[:grid]); ints *= tB;	CTRL.pocket_B[1] = tB  end
+	if (haskey(d, :grid))
+		if (isa(d[:grid], NamedTuple))  tB = parse_grid(D, d[:grid], "", false)		# Whatever comes out
+		else                            tB = "g" * helper1_axes(d[:grid])
+		end
+		ints *= tB;	CTRL.pocket_B[1] = tB
+	end
+	#if (haskey(d, :grid))       tB = "g" * helper1_axes(d[:grid]); ints *= tB;	CTRL.pocket_B[1] = tB  end
 	if (haskey(d, :prefix))     ints *= "+p" * str_with_blancs(arg2str(d[:prefix]))  end
 	if (haskey(d, :suffix))     ints *= "+u" * str_with_blancs(arg2str(d[:suffix]))  end
 	if (haskey(d, :slanted))
@@ -2438,16 +2484,14 @@ function vector_attrib(;kwargs...)::String
 	end
 
 	if ((val = find_in_dict(d, [:half :half_arrow])[1]) !== nothing)
-		if (val == "left" || val == :left)	cmd *= "+l"
-		else	cmd *= "+r"		# Whatever, gives right half
-		end
+		cmd = (val == "left" || val == :left) ? cmd * "+l" : cmd * "+r"
 	end
 
 	if (haskey(d, :fill))
 		if (d[:fill] == "none" || d[:fill] == :none) cmd *= "+g-"
 		else
 			cmd *= "+g" * get_color(d[:fill])		# MUST GET TESTS TO THIS
-			if (!haskey(d, :pen))  cmd = cmd * "+p"  end 	# Let FILL paint the whole header (contrary to >= GMT6.1)
+			!haskey(d, :pen) && (cmd = cmd * "+p") 	# Let FILL paint the whole header (contrary to >= GMT6.1)
 		end
 	end
 
@@ -2498,13 +2542,12 @@ function vector4_attrib(; kwargs...)::String
 
 	if (haskey(d, :norm))  cmd = string(cmd, "n", d[:norm])  end
 	if ((val = find_in_dict(d, [:head])[1]) !== nothing)
-		if isa(val, Dict)  val = dict2nt(val)  end
-		if (isa(val, NamedTuple))
+		if (isa(val, NamedTuple) || isa(val, Dict))
 			ha = "0.075c";	hl = "0.3c";	hw = "0.25c"
-			dh = nt2dict(val)
-			if (haskey(dh, :arrowwidth))  ha = string(dh[:arrowwidth])  end
-			if (haskey(dh, :headlength))  hl = string(dh[:headlength])  end
-			if (haskey(dh, :headwidth))   hw = string(dh[:headwidth])   end
+			dh = isa(val, NamedTuple) ? nt2dict(val) : val
+			haskey(dh, :arrowwidth) && (ha = string(dh[:arrowwidth]))
+			haskey(dh, :headlength) && (hl = string(dh[:headlength]))
+			haskey(dh, :headwidth)  && (hw = string(dh[:headwidth]))
 			hh = ha * '/' * hl * '/' * hw
 		elseif (isa(val, Tuple) && length(val) == 3)  hh = arg2str(val)
 		elseif (isa(val, String))                     hh = val		# No checking
@@ -2558,7 +2601,7 @@ function decorated(;kwargs...)::String
 	elseif (haskey(d, :quoted))				# -Sq mode (quoted lines).
 		cmd *= ":"
 		cmd = parse_quoted(d, cmd)
-		if (optD == "")  optD = "d"  end	# Really need to improve the algo of this
+		(optD == "") && (optD = "d")		# Really need to improve the algo of this
 		opt_S = " -Sq"
 	else									# -Sf mode (front lines).
 		((val = find_in_dict(d, [:size])[1]) !== nothing) && (cmd *= "/" * arg2str(val))
