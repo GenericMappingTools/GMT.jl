@@ -26,16 +26,15 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 				sub_module = caller[1:ind[1]-1]
 				cmd = caller[ind[1]+1:end]
 				caller = sub_module		# Because of parse_BJR()
-				if (caller == "events")  gmt_proggy = "events "  end
+				(caller == "events") && (gmt_proggy = "events ")
 			else
 				cmd = caller
 				caller = "others"		# It was piggy-backed
 			end
 		else
 			sub_module = caller
-			if (caller == "bar")		# Needs to be processed here to destinguish from the more general 'fill'
-				g_bar_fill = helper_gbar_fill(d)
-			end
+			# Needs to be processed here to destinguish from the more general 'fill'
+			(caller == "bar") && (g_bar_fill = helper_gbar_fill(d))
 		end
 	end
 
@@ -76,7 +75,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		opt_R = '/' * box_str[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
 	end
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
-	if (N_args == 0 && arg1 !== nothing)  N_args = 1  end
+	(N_args == 0 && arg1 !== nothing) && (N_args = 1)
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
 
 	if ((isa(arg1, GMTdataset) && arg1.proj4 != "" || isa(arg1, Vector{<:GMTdataset}) &&
@@ -137,7 +136,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	else
 		opt_L = add_opt(d, "", 'L', [:L :close :polygon],
 		                (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
-		if (length(opt_L) > 3 && !occursin("-G", cmd) && !occursin("+p", cmd))  opt_L *= "+p0.5p"  end
+		(length(opt_L) > 3 && !occursin("-G", cmd) && !occursin("+p", cmd)) && (opt_L *= "+p0.5p")
 		cmd *= opt_L
 	end
 

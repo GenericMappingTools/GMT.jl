@@ -125,7 +125,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
-	gmt("destroy")
+	gmt_restart()
 	return r
 end
 

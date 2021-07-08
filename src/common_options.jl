@@ -687,14 +687,15 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 
 	# We can have one or all of them. Deal separatelly here to allow way code to keep working
 	this_opt_B = "";
+	xax, yax = false, false		# To know if these axis funs (primary) have been called
 	for symb in [:yaxis2 :xaxis2 :axis2 :zaxis :yaxis :xaxis]
 		add_this, this_Bframe = false, false
 		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict)))
 			(isa(d[symb], Dict)) && (d[symb] = dict2nt(d[symb]))
 			if     (symb == :axis2)   this_B, this_Bframe = axis(d[symb], d, secondary=true); add_this = true
-			elseif (symb == :xaxis)   this_B, this_Bframe = axis(d[symb], d, x=true); add_this = true
+			elseif (symb == :xaxis)   this_B, this_Bframe = axis(d[symb], d, x=true); add_this, xax = true, true
 			elseif (symb == :xaxis2)  this_B, this_Bframe = axis(d[symb], d, x=true, secondary=true); add_this = true
-			elseif (symb == :yaxis)   this_B, this_Bframe = axis(d[symb], d, y=true); add_this = true
+			elseif (symb == :yaxis)   this_B, this_Bframe = axis(d[symb], d, y=true); add_this, yax = true, true
 			elseif (symb == :yaxis2)  this_B, this_Bframe = axis(d[symb], d, y=true, secondary=true); add_this = true
 			elseif (symb == :zaxis)   this_B, this_Bframe = axis(d[symb], d, z=true); add_this = true
 			end
@@ -703,6 +704,8 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 			delete!(d, symb)
 		end
 	end
+	(xax && yax) && (opt_B = replace(opt_B, def_fig_axes_ => ""))	# If x&yaxis have been called, remode default
+
 	# These can come up outside of an ?axis tuple, so need to be sekeed too.
 	for symb in [:xticks :yticks :zticks]
 		if (haskey(d, symb))
@@ -719,7 +722,8 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 	(have_a_none) && (opt_B *= " --MAP_FRAME_PEN=0.001,white@100")	# Need to resort to this sad trick
 
 	if (def_fig_axes[1] != def_fig_axes_bak && opt_B != def_fig_axes[1])	# Consolidation only under themes
-		if (!got_Bstring && CTRL.proj_linear[1] && !startswith(opt_B, def_fig_axes_) && !(occursin("pxc", opt_B) || occursin("pyc", opt_B)))
+		if (opt_B != "" && !got_Bstring && CTRL.proj_linear[1] && !occursin(def_fig_axes_, opt_B) &&
+			!(occursin("pxc", opt_B) || occursin("pyc", opt_B)))
 			# By using def_fig_axes_ this has no effect in modern mode.
 			opt_B = ((have_Bframe) ? split(def_fig_axes_)[1] : def_fig_axes_) * opt_B
 		end
@@ -1113,6 +1117,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 			current_view[1] = ""		# Ensure we start empty
 		end
 	end
+	((val = find_in_dict(d, [:pagecolor])[1]) !== nothing) && (cmd *= string(" --PS_PAGE_COLOR=", val))
 	return cmd, o
 end
 
@@ -1947,8 +1952,8 @@ function add_opt_fill(cmd::String, d::Dict, symbs, opt="", del::Bool=true)::Stri
 	# Deal with the area fill attributes option. Normally, -G
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
-	if isa(val, Dict)  val = dict2nt(val)  end
-	if (opt != "")  opt = string(" -", opt)  end
+	isa(val, Dict) && (val = dict2nt(val))
+	(opt != "") && (opt = string(" -", opt))
 	return add_opt_fill(val, cmd, opt)
 end
 
@@ -1962,9 +1967,9 @@ function add_opt_fill(val, cmd::String="",  opt="")::String
 		else   error("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member")
 		end
 
-		if ((val2 = find_in_dict(d2, [:bg :background], false)[1]) !== nothing)  cmd *= "+b" * get_color(val2)  end
-		if ((val2 = find_in_dict(d2, [:fg :foreground], false)[1]) !== nothing)  cmd *= "+f" * get_color(val2)  end
-		if (haskey(d2, :dpi))  cmd = string(cmd, "+r", d2[:dpi])  end
+		((val2 = find_in_dict(d2, [:bg :bgcolor :background], false)[1]) !== nothing) && (cmd *= "+b" * get_color(val2))
+		((val2 = find_in_dict(d2, [:fg :fgcolor :foreground], false)[1]) !== nothing) && (cmd *= "+f" * get_color(val2))
+		(haskey(d2, :dpi)) && (cmd = string(cmd, "+r", d2[:dpi]))
 	else
 		cmd *= string(opt, get_color(val))
 	end
@@ -2198,7 +2203,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	end
 
 	haskey(d, :corners) && (opt *= string(d[:corners]))		# 1234
-	val, symb = find_in_dict(d, [:fill :bg :background], false)
+	val, symb = find_in_dict(d, [:fill :bg :bgcolor :background], false)
 	if (val !== nothing)
 		tB = "+g" * add_opt_fill(d, [symb])
 		opt *= tB					# Works, but patterns can screw
@@ -3166,7 +3171,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	if (opt_T != "")
 		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
 		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
-		gmt("psconvert -A1p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
+		gmt("psconvert -A2p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
 		out = fname_ps[1:end-2] * fname_ext
 		if (fname != "")  out = mv(out, fname, force=true)  end
 	elseif (fname_ps != "")
@@ -3187,7 +3192,10 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 			elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
 			end
 		end
-		(ThemeIsOn[1]) && (theme_modern();	ThemeIsOn[1] = false)
+		if (ThemeIsOn[1])
+			theme_modern();		ThemeIsOn[1] = false
+			def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;
+		end
 	end
 	return nothing
 end
@@ -3306,7 +3314,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	end
 
 	if (usedConfPar[1])				# Hacky shit to force start over when --PAR options were use
-		usedConfPar[1] = false;		gmt("destroy")
+		usedConfPar[1] = false;		gmt_restart()
 	end
 
 	if (!IamModern[1])
