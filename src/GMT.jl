@@ -6,9 +6,9 @@ struct CTRLstruct
 	limits::Vector{Float64}
 	proj_linear::Vector{Bool}		# To know if images sent to GMT need Pad
 	callable::Array{Symbol}			# Modules that can be called inside other modules
-	pocket_call::Vector{Any}		# To temporarilly store data needed by modules sub-calls
-	pocket_B::Vector{String}		# To temporarilly store opt_B grid and fill color to be reworked in psclip
-	gmt_mem_bag::Vector{Ptr{Cvoid}}	# To temporarilly store a GMT owned memory to be freed in gmt()
+	pocket_call::Vector{Any}		# To temporarily store data needed by modules sub-calls
+	pocket_B::Vector{String}		# To temporarily store opt_B grid and fill color to be reworked in psclip
+	gmt_mem_bag::Vector{Ptr{Cvoid}}	# To temporarily store a GMT owned memory to be freed in gmt()
 end
 
 struct CTRLstruct2
