@@ -638,16 +638,27 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 		else                      opt_B = string(val)
 		end
 		(extra_parse && isa(val, String)) && (got_Bstring = true)	# Signal to not try to consolidate with def_fig_axes
+		if (got_Bstring)		# Must check for spaces in titles, like in "ya10g10 +t\"Sector Diagram\""
+			first = false
+			for k in eachindex(opt_B)
+				(opt_B[k] == '"') && (first = !first;	continue)	# Do not change more than once until become true again
+				if (first && opt_B[k] == ' ')		# Replace space after a \" by the invisible ascii Char(127)
+					opt_B = opt_B[1:k-1] * '\x7f' * opt_B[k+1:end]
+					continue
+				end
+			end
+		end
 	end
 
 	((val = find_in_dict(d, [:grid])[1]) !== nothing) && (opt_B = parse_grid(d, val, opt_B))
 
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
-	t = ""		# Use the trick to replace blanks by some utf8 char and undo it in extra_parse
-	if (haskey(d, :title))   t *= "+t"   * replace(str_with_blancs(d[:title]), ' '=>'\U00AF');   delete!(d, :title);	end
-	if (haskey(d, :xlabel))  t *= " x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\U00AF');   delete!(d, :xlabel);	end
-	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\U00AF');   delete!(d, :ylabel);	end
-	if (haskey(d, :zlabel))  t *= " z+l" * replace(str_with_blancs(d[:zlabel]),' '=>'\U00AF');   delete!(d, :zlabel);	end
+	t = ""		# Use the trick to replace blanks by Char(127) (invisible) and undo it in extra_parse
+	# '\U00AF'
+	if (haskey(d, :title))   t *= "+t"   * replace(str_with_blancs(d[:title]), ' '=>'\x7f');   delete!(d, :title);	end
+	if (haskey(d, :xlabel))  t *= " x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\x7f');   delete!(d, :xlabel);	end
+	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\x7f');   delete!(d, :ylabel);	end
+	if (haskey(d, :zlabel))  t *= " z+l" * replace(str_with_blancs(d[:zlabel]),' '=>'\x7f');   delete!(d, :zlabel);	end
 	if (t != "")
 		if (opt_B == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis :xticks :yticks :zticks], false)[1] === nothing))
 			opt_B = def_fig_axes_
@@ -676,7 +687,7 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 		k = 1;		r = opt_B;		found = false
 		while (r != "")
 			tok[k], r = GMT.strtok(r)
-			tok[k] = replace(tok[k], '\U00AF'=>' ')
+			tok[k] = replace(tok[k], '\x7f'=>' ')
 			tok[k] = (!occursin("-B", tok[k])) ? " -B" * tok[k] : " " * tok[k]
 			k += 1
 		end
@@ -719,7 +730,6 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 	if (opt_B != def_fig_axes_ && opt_B != def_fig_axes3_)  opt_B = this_opt_B * opt_B
 	elseif (this_opt_B != "")  opt_B = this_opt_B
 	end
-	(have_a_none) && (opt_B *= " --MAP_FRAME_PEN=0.001,white@100")	# Need to resort to this sad trick
 
 	if (def_fig_axes[1] != def_fig_axes_bak && opt_B != def_fig_axes[1])	# Consolidation only under themes
 		if (opt_B != "" && !got_Bstring && CTRL.proj_linear[1] && !occursin(def_fig_axes_, opt_B) &&
@@ -727,13 +737,52 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 			# By using def_fig_axes_ this has no effect in modern mode.
 			opt_B = ((have_Bframe) ? split(def_fig_axes_)[1] : def_fig_axes_) * opt_B
 		end
-		opt_B = consolidate_B(opt_B)
+		opt_B = consolidate_Bframe(opt_B)
+		opt_B = consolidate_Baxes(opt_B)
+	else
+		opt_B = consolidate_Bframe(opt_B)
 	end
+	(have_a_none) && (opt_B *= " --MAP_FRAME_PEN=0.001,white@100")	# Need to resort to this sad trick
+
 	return cmd * opt_B, opt_B
 end
 
 # ---------------------------------------------------------------------------------------------------
-function consolidate_B(opt_B::String)::String
+function consolidate_Bframe(opt_B::String)::String
+	# Consolidate the 'frame' parte of a multi-pieces -B option and make sure that it comes out at the end
+	#@show(opt_B)
+	s = split(opt_B)
+	nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words (e.g. titles)
+	isBframe = zeros(Bool, length(s))
+	for k = 1:length(s)
+		(occursin(s[k][3], "psxyzafgbc")) && (isBframe[k] = false; continue)	# A FALSE solves the quest imedeately
+		ss = split(s[k], "+");	len = length(ss)
+		isBframe[k] = occursin(r"[WESNZwesnztlbu]", ss[1])	# Search for frame characters in the part before the +flag
+		isBframe[k] && (len = 0)		# Tricky way of avoiding next loop when we already have the answer. 
+		for kk = 2:len					# Start at 2 because first is never a target
+			(occursin(ss[kk][1], "wbgxyzionts")) && (isBframe[k] = true; break)	# Search any of "+w+b+g+x+y+z+i+o+n+t+s"
+		end
+	end
+	#for k = 1:length(s) println(isBframe[k], " ", s[k]) end
+	# Example situation here: ["-Bpx+lx", "-B+gwhite", "-Baf", "-BWSen"] we want to join the 4rth & 2nd. NOT 2nd & 4rth
+	indFrames = findall(isBframe);	len = length(indFrames)
+	if (len > 1)
+		ss = sort(s[indFrames], rev=true)			# OK, now we have them sorted like ["-BWSen" "-B+gwhite"]
+		[ss[1] *= ss[k][3:end] for k = 2:len]		# Remove the first "-B" chars from second and on and join with first
+		s[indFrames] .= ""							# Clear the Bframe elements from the original split
+		opt_B = " " * s[1]
+		[opt_B *= " " * s[k] for k = 2:length(s) if s[k] != ""]		# Glue all the 'axes' members in a string
+		opt_B *= " " * ss[1]						# and finally add also the the 'frame' part
+	elseif (len == 1 && indFrames[1] != length(s))	# Shit, we have only one but it's not the last. Must swapp.
+		s[end], s[indFrames[1]] = s[indFrames[1]], s[end]
+		opt_B = " " * s[1]
+		[opt_B *= " " * s[k] for k = 2:length(s)]	# and rebuild now with the right order.
+	end
+	return opt_B
+end
+
+# ---------------------------------------------------------------------------------------------------
+function consolidate_Baxes(opt_B::String)::String
 	# Consolidate a multi-pieces opt_B. Tries to join pieces that are joinable in terms of axes
 	# components and interleaving of frame and axes settings that cause GMT parse errors. This is
 	# a very difficult task and this function will likely fail for certain combinations.
@@ -745,6 +794,7 @@ function consolidate_B(opt_B::String)::String
 	have_Bpxa, have_Bpya = (have_Bpxa || have_Bpa), (have_Bpya || have_Bpa)
 	have_Bpxf, have_Bpxg, got_x, have_Bpyf, have_Bpyg, got_y= false, false, false, false, false, false
 	s = split(opt_B)
+	nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words sub-options
 	for tok in s
 		if (!got_x && startswith(tok, "-Bpx"))
 			have_Bpxf, have_Bpxg, got_x = occursin("f", tok), occursin("g", tok), true;	continue
@@ -762,7 +812,7 @@ function consolidate_B(opt_B::String)::String
 		occursin("-Bg", opt_B) && (opt_B = replace(opt_B, "-Bg" => ""))
 	end
 
-	sdef = split(def_fig_axes[1])
+	sdef = split(def_fig_axes[1])			# sdef[1] should contain only axes settings
 	occursin("a", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "a", have_Bpxa, have_Bpya))
 	occursin("f", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "f", have_Bpxf, have_Bpyf))
 	occursin("g", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "g", have_Bpxg, have_Bpyg))
@@ -780,7 +830,6 @@ function consolidate_B(opt_B::String)::String
 	if (got_x || got_y)
 		opt_B = " " * s[1]
 		[opt_B *= " " * s[k] for k = 2:length(s) if s[k] != ""]
-
 	else
 		opt_B = replace(opt_B, "   " => " ")		# Remove double spaces
 		opt_B = replace(opt_B, "  "  => " ")		# Remove double spaces
@@ -793,6 +842,26 @@ function helper_consolidate_B(opt_B::String, flag::String, have_Bpx::Bool, have_
 	elseif (have_Bpy)         opt_B = replace(opt_B, " -B" * flag => " -Bx" * flag)
 	else   opt_B
 	end
+end
+
+# ---------------------------------------------------------------------------------------------------
+function nosplit_spaces!(in)
+	# A problem with spliting a B option is that it also splits the text strings with spaces (e.g. titles)
+	# This function finds those cases and join back what were considered BadBreaks
+	function glue()
+		isBB = zeros(Bool, length(in))
+		for k = 2:length(in)
+			if (!startswith(in[k], "-B"))	# Find elements that do not start with a "-B"
+				in[k-1] *= " " * in[k]		# Join them with previous element (and keep the separating space)
+				isBB[k] = true				# Flag elemento die
+				break						# We can only do one at a time, so stop here.
+			end
+		end
+		had_one = any(isBB)
+		(had_one) && deleteat!(in, isBB)	# If we found one remove the now moved piece.
+		had_one
+	end
+	while (glue()) glue() end				# While we had a BadBreak, scan it again.
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2210,14 +2279,19 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 		CTRL.pocket_B[2] = tB		# Save this one because we may need to revert it during psclip parsing
 	end
 	if (GMTver > v"6.1")
-		if ((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing)  opt = add_opt_fill(val, opt, "+x")  end
-		if ((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing)  opt = add_opt_fill(val, opt, "+y")  end
+		((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+x"))
+		((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+y"))
+		((val = find_in_dict(d, [:Zfill :Zbg :Zwall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+z"))
 		((p = add_opt_pen(d, [:wall_outline], "+w")) != "") && (opt *= p)
+		(haskey(d, :internal)) && (opt *= "+i" * arg2str(d[:internal]))
 	end
-	if (haskey(d, :cube))    opt *= "+b"  end
-	if (haskey(d, :noframe)) opt *= "+n"  end
-	if (haskey(d, :pole))    opt *= "+o" * arg2str(d[:pole])  end
-	if (haskey(d, :title))   opt *= "+t" * str_with_blancs(arg2str(d[:title]))  end
+	(haskey(d, :cube))    && (opt *= "+b")
+	(haskey(d, :noframe)) && (opt *= "+n")
+	(haskey(d, :pole))    && (opt *= "+o" * arg2str(d[:pole]))
+	if (haskey(d, :title))
+		opt *= "+t" * str_with_blancs(arg2str(d[:title]))
+		(haskey(d, :subtitle)) && (opt *= "+s" * str_with_blancs(arg2str(d[:subtitle])))
+	end
 
 	opt_Bframe = (opt != " -B") ? opt : ""		# Make a copy to append only at the end
 	opt = ""
@@ -3169,13 +3243,13 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		opt_T = " -Tg"; fname_ext = "png"		# In Jupyter or Pluto, png only
 	end
 	if (opt_T != "")
-		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
-		if ((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing)  opt_T *= string(" -E", val)  end
+		(K) && close_PS_file(fname_ps)			# Close the PS file first
+		((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing) && (opt_T *= string(" -E", val))
 		gmt("psconvert -A2p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
 		out = fname_ps[1:end-2] * fname_ext
-		if (fname != "")  out = mv(out, fname, force=true)  end
+		(fname != "") && (out = mv(out, fname, force=true))
 	elseif (fname_ps != "")
-		if (K) close_PS_file(fname_ps)  end		# Close the PS file first
+		(K) && close_PS_file(fname_ps)			# Close the PS file first
 		out = (fname != "") ? mv(fname_ps, fname, force=true) : fname_ps
 	end
 
@@ -3320,7 +3394,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	if (!IamModern[1])
 		if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
 			P = showfig(d, output, fname_ext, "", K)
-			gmt("destroy")							# Returning a PS screws the session
+			gmt_restart()							# Returning a PS screws the session
 		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "" || opt_T != "")
 			P = showfig(d, output, fname_ext, opt_T, K, fname)		# Return something here for the case we are in Pluto
 			(typeof(P) == Base.Process) && (P = nothing)			# Don't want spurious message on REPL when plotting
