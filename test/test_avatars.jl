@@ -57,7 +57,7 @@
 	lines!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	lines!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
 	x = LinRange(0,2π,50);
-	lines(x, sin.(x), ls="FrontSlip", legend=true, figname="lixo")
+	lines(x, sin.(x), ls="FrontSlip", legend=true, figname="lixo", theme=("A2"))
 	lines(x, sin.(x), ls="lineCirc", legend=(label="sin(x)", box=:none), lc=:red, figname="lixo")
 	lines(x, sin.(x), ls="FrontCircLeft", legend=(label="sin(x)"), mc=:red, figname="lixo")
 	lines(x, sin.(x), ls="linediamond", theme=(:A0atg), Vd=dbg2) 

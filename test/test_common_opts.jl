@@ -155,16 +155,19 @@
 	@test GMT.parse_B(Dict(:B=>:same), "")[1] == " -B"
 	@test GMT.parse_B(Dict(:title => :bla), "")[1] == " -Baf -BWSen+tbla"
 	@test GMT.parse_B(Dict(:frame => :auto, :title => :bla), "")[1] == " -Baf -BWSen+tbla"
-	@test GMT.parse_B(Dict(:B=>:WS), "")[1] == " -BWS -Baf"
+	@test GMT.parse_B(Dict(:B=>:WS), "")[1] == " -Baf -BWS"
 	@test GMT.parse_B(Dict(:title => "bla"), "", " -Baf")[1] == " -Baf -B+tbla"
 	GMT.helper2_axes("lolo");
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
 
-	@test GMT.consolidate_B(" -Baf -BWSen -BpxaUfg10 -BWSen+taiai -Bpx+lai+sBlaBla -Bpyclixo.txt -Bsxa5f1") ==
+	@test GMT.consolidate_Baxes(" -Baf -BWSen -BpxaUfg10 -BWSen+taiai -Bpx+lai+sBlaBla -Bpyclixo.txt -Bsxa5f1") ==
 		" -BWSen -BpxaUfg10 -BWSen+taiai -Bpx+lai+sBlaBla -Bpyclixo.txt -Bsxa5f1"
-	@test GMT.consolidate_B(" -Baf -Bza -BWSrt -Bpxapi2f0.5 -Bpx+lpis -Bpya1 -Bpy+a60") ==
+	@test GMT.consolidate_Baxes(" -Baf -Bza -BWSrt -Bpxapi2f0.5 -Bpx+lpis -Bpya1 -Bpy+a60") ==
 		" -Byf -Bza -BWSrt -Bpxapi2f0.5+lpis -Bpya1+a60"
 	@test GMT.helper_consolidate_B("","a",false,false) == ""
+	@test GMT.consolidate_Bframe(" -Bpx+lx -B+gwhite -Baf -BWSen -By+lx") == " -Bpx+lx -Baf -By+lx -BWSen+gwhite"
+	@test GMT.consolidate_Bframe(" -Bpx+lx -Bpy+lx -BWSrt+gwhite") == " -Bpx+lx -Bpy+lx -BWSrt+gwhite"
+	@test GMT.consolidate_Bframe(" -Bpx+lx -BWSrt+gwhite -Bpy+lx") == " -Bpx+lx -Bpy+lx -BWSrt+gwhite"
 
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt(d, "", "", [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
