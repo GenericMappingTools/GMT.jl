@@ -1024,24 +1024,24 @@ function parse_d(d::Dict, cmd::String, symbs::Array{Symbol}=[:d :nodata])
 end
 parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
 parse_do(d::Dict, cmd::String) = parse_d(d, cmd, [:do :nodata_out])
-parse_e(d::Dict, cmd::String) = parse_helper(cmd, d, [:e :pattern], " -e")
-parse_f(d::Dict, cmd::String) = parse_helper(cmd, d, [:f :colinfo :coltypes], " -f")
-parse_g(d::Dict, cmd::String) = parse_helper(cmd, d, [:g :gap], " -g")
-parse_h(d::Dict, cmd::String) = parse_helper(cmd, d, [:h :header], " -h")
-parse_i(d::Dict, cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i", ',')
-parse_j(d::Dict, cmd::String) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
+parse_e(d::Dict,  cmd::String) = parse_helper(cmd, d, [:e :pattern], " -e")
+parse_f(d::Dict,  cmd::String) = parse_helper(cmd, d, [:f :colinfo :coltypes], " -f")
+parse_g(d::Dict,  cmd::String) = parse_helper(cmd, d, [:g :gap], " -g")
+parse_h(d::Dict,  cmd::String) = parse_helper(cmd, d, [:h :header], " -h")
+parse_i(d::Dict,  cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i", ',')
+parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
 
 # ---------------------------------------------------------------------------------
 function parse_l(d::Dict, cmd::String)
 	cmd_ = add_opt(d, "", 'l', [:l :legend],
-		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), false)
-	# Now make sure blanks in legen text are wrapped in ""
+		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), false)
+	# Now make sure blanks in legend text are wrapped in ""
 	if ((ind = findfirst("+", cmd_)) !== nothing)
 		cmd_ = " -l" * str_with_blancs(cmd_[4:ind[1]-1]) * cmd_[ind[1]:end]
 	elseif (cmd_ != "")
 		cmd_ = " -l" * str_with_blancs(cmd_[4:end])
 	end
-	if (IamModern[1])  cmd *= cmd_  end		# l option is only available in modern mode
+	(IamModern[1]) && (cmd *= cmd_)			# l option is only available in modern mode
 	return cmd, cmd_
 end
 
@@ -3088,7 +3088,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function find_data(d::Dict, cmd0::String, cmd::String, args...)
 	# ...
-	
+
 	(show_kwargs[1]) && return cmd, 0, nothing		# In HELP mode we do nothing here
 
 	got_fname = 0;		data_kw = nothing
@@ -3334,19 +3334,20 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	#while (length(args) > 1 && args[end] === nothing)  pop!(args)  end		# Remove trailing nothings
 
 	output, opt_T, fname_ext, fname, ret_ps = fname_out(d, true)
-	if (ret_ps)  output = ""  end  						# Here we don't want to save to file
+	(ret_ps) && (output = "") 	 						# Here we don't want to save to file
 	cmd, opt_T = prepare2geotif(d, cmd, opt_T, O)		# Settings for the GeoTIFF and KML cases
-	if (finish)  cmd = finish_PS(d, cmd, output, K, O)  end
+	(finish) && (cmd = finish_PS(d, cmd, output, K, O))
 
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return length(r) == 1 ? r[1] : r  end 	# For tests only
 	img_mem_layout[1] = add_opt(d, "", "", [:layout])
 	if (img_mem_layout[1] == "images")  img_mem_layout[1] = "I   "  end	# Special layout for Images.jl
 
-	if (fname_ext != "ps" && !IamModern[1])				# Exptend to a larger paper size (5 x A0)
+	if (fname_ext != "ps" && !IamModern[1] && !O)		# Exptend to a larger paper size (5 x A0)
 		cmd[1] *= " --PS_MEDIA=11920x16850"				# In Modern mode GMT takes care of this.
 	end
 
 	for k = 1:length(cmd)
+		#@show(cmd[k])
 		is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
@@ -3420,13 +3421,14 @@ mutable struct legend_bag
 	label::Vector{String}
 	cmd::Vector{String}
 	cmd2::Vector{String}
+	opt_l::String
 	optsDict::Dict
 	Vd::Int
 end
-legend_bag() = legend_bag(Vector{String}(), Vector{String}(), Vector{String}(), Dict(), 0)
+legend_bag() = legend_bag(Vector{String}(), Vector{String}(), Vector{String}(), "", Dict(), 0)
 
 # --------------------------------------------------------------------------------------------------
-function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false)
+function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::String="")
 	# So far this fun is only called from plot() and stores line/symbol info in a const global var LEGEND_TYPE
 
 	valLegend = find_in_dict(d, [:legend], false)[1]	# false because we must keep alive till digests_legend_bag()
@@ -3487,7 +3489,7 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false)
 	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
 
 	if (size(legend_type[1].label, 1) == 0)		# First time
-		legend_type[1] = legend_bag(lab, [cmd_[1]], length(cmd_) == 1 ? [""] : [cmd_[2]], dd, 0)
+		legend_type[1] = legend_bag(lab, [cmd_[1]], length(cmd_) == 1 ? [""] : [cmd_[2]], opt_l, dd, 0)
 	else
 		append!(legend_type[1].cmd, [cmd_[1]])
 		append!(legend_type[1].cmd2, (length(cmd_) > 1) ? [cmd_[2]] : [""])
@@ -3576,6 +3578,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		end
 	end
 	if (legend_type[1].Vd > 0)  d[:Vd] = legend_type[1].Vd;  dbg_print_cmd(d, leg[1:kk])  end	# Vd=2 wont work
+	gmt_restart()		# Some things with the themes may screw
 	legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fs))
 	legend_type[1] = legend_bag()			# Job done, now empty the bag
 
@@ -3743,11 +3746,7 @@ function gmthelp(opt)
 	else
 		o = string(opt)
 		try
-			if (length(o) <= 2)
-				getfield(GMT, Symbol(string("parse_",o)))(Dict(), "")
-			else
-				getfield(GMT, Symbol(o))(help=1)
-			end
+			(length(o) <= 2) ? getfield(GMT, Symbol(string("parse_",o)))(Dict(), "") : getfield(GMT, Symbol(o))(help=1) 
 		catch err
 			println("   ==>  '$o' is not a valid option/module name, or its help is not yet implemented")
 			println("   LastError ==>  '$err'")

@@ -183,15 +183,15 @@ function GDALopts2vec(opts)::Vector{String}
 
 	ind = helper_opts2vec(_opts)
 	isempty(ind) && return split(_opts)			# Perfect, just a 'simple' options list, split and go
-	_opts = _opts[1:ind[1][1]-1] * replace(_opts[ind[1][1]+1 : ind[2][1]-1], ' ' => '\U00AF') * _opts[ind[2][1]+1 : end]
+	_opts = _opts[1:ind[1][1]-1] * replace(_opts[ind[1][1]+1 : ind[2][1]-1], ' ' => '\x7f') * _opts[ind[2][1]+1 : end]
 
 	while (!isempty(helper_opts2vec(_opts)))	# See if we have more
 		ind = helper_opts2vec(_opts)
-		_opts = _opts[1:ind[1][1]-1] * replace(_opts[ind[1][1]+1 : ind[2][1]-1], ' ' => '\U00AF') * _opts[ind[2][1]+1 : end]
+		_opts = _opts[1:ind[1][1]-1] * replace(_opts[ind[1][1]+1 : ind[2][1]-1], ' ' => '\x7f') * _opts[ind[2][1]+1 : end]
 	end
 
 	v = split(_opts)
-	[v[i] = replace(v[i], '\U00AF' => ' ') for i = 1:length(v)]		# Undo the utf8 char
+	[v[i] = replace(v[i], '\x7f' => ' ') for i = 1:length(v)]		# Undo the Char(127) char
 end
 
 function helper_opts2vec(opts::String)

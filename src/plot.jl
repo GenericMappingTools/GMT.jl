@@ -157,9 +157,9 @@ function plotyy(arg1, arg2; first=true, kw...)
 			# the replacing without inserting extras -B, like the "aa -Bbb" that would otherwise result.
 			t = findall(isequal('"'), opt_B)	# Find indices of the " and hope they came in pairs.
 			if (!isempty(t))					# Have a title and maybe an ylabel (or vice-versa)
-				opt_B = opt_B[1:t[1]] * replace(opt_B[t[1]+1:t[2]-1], ' '=>'\U00AF') * opt_B[t[2]:end]
+				opt_B = opt_B[1:t[1]] * replace(opt_B[t[1]+1:t[2]-1], ' '=>'\x7f') * opt_B[t[2]:end]
 				if (length(t) == 4)				# Have also an ylabel
-					opt_B = opt_B[1:t[3]] * replace(opt_B[t[3]+1:t[4]-1], ' '=>'\U00AF') * opt_B[t[4]:end]
+					opt_B = opt_B[1:t[3]] * replace(opt_B[t[3]+1:t[4]-1], ' '=>'\x7f') * opt_B[t[4]:end]
 				end
 			end
 			d[:B] = replace(opt_B, "-B" => "")
