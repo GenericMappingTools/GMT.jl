@@ -16,7 +16,7 @@ range parameters it will plot the histogram. A cumulative histogram may also be 
 Optional Arguments
 ------------------
 
-- **A** or **horizontal** : -- *horizontal=true*\ 
+- **A** or **horizontal** : -- *horizontal=true*\
    Plot the histogram horizontally from x = 0 [Default is vertically from y = 0]. The plot
    dimensions remain the same, but the two axes are flipped.
 
@@ -55,7 +55,7 @@ Optional Arguments
    **auto** or **thresholds** to work. If, however, that is not wished use **full_histo=true**
 
 - **G** or **fill** : *fill=color*\
-   Select filling of bars [Default is no fill].
+   Select filling of bars [Default is a type of blue].
 
 - **I** or **inquire** or **bins** : -- *inquire=:all* **|** *inquire=:no_zero* **|** *inquire=:bins*\
    Inquire about min/max x and y after binning. The *xmin xmax ymin ymax* is output; no plotting is done. Use **inquire=:no_zero** to output a table of the resulting x,y data instead. **inquire=:all** will output all x,y bin data even when y == 0. **inquire=:bins** outputs the binned array (the histogram).
