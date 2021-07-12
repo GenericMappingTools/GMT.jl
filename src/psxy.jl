@@ -118,10 +118,10 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		N_args = 3
 	end
 
-	mcc = false
-	if (!got_Zvars && !is_ternary)				# Otherwise we don't care about color columns
+	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
+	if ((!got_Zvars && !is_ternary) || bar_ok)	# If "bar" ONLY if not bar-group
 		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
-		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, arg1, arg2)
+		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, g_bar_fill, arg1, arg2)
 	end
 
 	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt somewhere else
@@ -172,7 +172,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 			# If data comes from a file, then no automatic symbol size is added
 			op = lowercase(marca[1])
 			def_size = (op == 'p') ? "2p" : "7p"	# 'p' here stands for symbol points, not units
-			if (!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw"))  opt_S *= def_size  end
+			(!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw")) && (opt_S *= def_size)
 		end
 	else
 		val, symb = find_in_dict(d, [:ms :markersize :MarkerSize :size])
@@ -188,6 +188,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
 	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
+	(mcc && caller == "bar" && !got_usr_R && opt_R != " -R") && (cmd = recompute_R_4bars!(cmd, opt_R, arg1))	# Often needed
 	_cmd = build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
 	
 	(got_Zvars && opt_S == "" && opt_W == "" && !occursin(" -G", _cmd[1])) && (_cmd[1] *= " -W0.5")
@@ -197,7 +198,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	                         sub_module, g_bar_fill, got_Ebars, got_usr_R)
 
 	# Try to limit the damage of this Fker bug in 6.2.0
-	if (mcc || got_Ebars && (GMTver == v"6.2.0" && isGMTdataset(arg1) && occursin(" -i", cmd)) )
+	if ((mcc || got_Ebars) && (GMTver == v"6.2.0" && isGMTdataset(arg1) && occursin(" -i", cmd)) )
 		if (isa(arg1, GMTdataset))	arg1 = arg1.data
 		elseif (isa(arg1, Vector{<:GMTdataset}))
 			(length(arg1) > 1) && @warn("Due to a bug in GMT6.2.0 I'm forced to use only the first segment")
@@ -275,7 +276,7 @@ function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D
 		arg1 = mat2ds(arg1, color=cycle, ls=penS, multi=true)	# Convert to multi-segment GMTdataset
 		D::Vector{<:GMTdataset} = gmt("gmtinfo -C", arg1)		# But now also need to update the -R string
 		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(D[1].data)))
-	elseif (sub_module == "bar" && check_bar_group(arg1))
+	elseif (!mcc && sub_module == "bar" && check_bar_group(arg1))	# !mcc because the bar-groups all have mcc = false
 		_cmd[1], arg1 = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 	end
 	return arg1
@@ -283,7 +284,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function helper_gbar_fill(d::Dict)::Vector{String}
-	# This is in a function to try to hammer an insistence that g_bar_fill is a Any
+	# This is a function that tryies to hammer the insistence that g_bar_fill is a Any
 	# g_bar_fill may hold a sequence of colors for gtroup Bar plots
 	gval = find_in_dict(d, [:fill :fillcolor], false)[1]	# Used for group colors
 	if (isa(gval, Array{String}) && length(gval) > 1)
@@ -303,8 +304,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Check if a group bar request or just bars. Returns TRUE in first case and FALSE in second
-check_bar_group(arg1) = ( isa(arg1, Array{<:Real,2}) || (eltype(arg1) <: GMTdataset &&
-                          (isa(arg1, Vector{<:GMTdataset}) ? size(arg1[1],2) > 2 : size(arg1,2) > 2)) )::Bool
+check_bar_group(arg1) = ( (isa(arg1, Array{<:Real,2}) || eltype(arg1) <: GMTdataset) &&
+                          (isa(arg1, Vector{<:GMTdataset}) ? size(arg1[1],2) > 2 : size(arg1,2) > 2) )::Bool
 
 # ---------------------------------------------------------------------------------------------------
 function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String}, got_Ebars::Bool, got_usr_R::Bool, arg1)
@@ -328,7 +329,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	end
 
 	do_multi = true;	is_stack = false		# True for grouped; false for stacked groups
-	is_hbar = occursin("-SB", cmd)					# An horizontal bar plot
+	is_hbar = occursin("-SB", cmd)				# An horizontal bar plot
 	if ((val = find_in_dict(d, [:stack :stacked])[1]) !== nothing)
 		# Take this (two groups of 3 bars) [0 1 2 3; 1 2 3 4]  and compute this (the same but stacked)
 		# [0 1 0; 0 3 1; 0 6 3; 1 2 0; 1 5 2; 1 9 4]
@@ -361,7 +362,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	# and as many rows in a segment as the number of groups (number of bars if groups had only one bar)
 	alpha = find_in_dict(d, [:alpha :fillalpha :transparency])[1]
 	_argD = mat2ds(_arg; fill=g_bar_fill, multi=do_multi, fillalpha=alpha)
-	if (is_stack)  _argD = ds2ds(_argD[1], fill=g_bar_fill, color_wrap=nl, fillalpha=alpha)  end
+	(is_stack) && (_argD = ds2ds(_argD[1], fill=g_bar_fill, color_wrap=nl, fillalpha=alpha))
 	if (is_hbar && !is_stack)					# Must swap first & second col
 		for k = 1:length(_argD)
 			_argD[k].data = [_argD[k].data[:,2] _argD[k].data[:,1]]
@@ -416,23 +417,49 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, arg1, arg2)
+function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
+	# Recompute the -R for bar plots (non-grouped), taking into account the width embeded in option S
+	opt_S = scan_opt(cmd, "-S")
+	sub_b = ((ind = findfirst("+", opt_S)) !== nothing) ? opt_S[ind[1]:end] : ""	# The +Base modifier
+	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
+	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
+	info = gmt("gmtinfo -C", arg1)
+	dx = (info[1].data[2] - info[1].data[1]) * 0.005 + bw/2;
+	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
+	info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[4] += dy;
+	info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
+	new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info[1].data[1], info[1].data[2], 0, info[1].data[4])
+	cmd = replace(cmd, opt_R => new_opt_R)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_fill, arg1, arg2)
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 	# N_ARGS will be == n_prev+1 when a -Ccpt was used. Otherwise they are equal.
 
 	(arg1 === nothing || isa(arg1, GMT.GMTcpt)) && return cmd, arg1, arg2, N_args, false  # Play safe
 
 	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
-	if (!(N_args > n_prev || len < length(cmd)) && mz === nothing)	# No color request, so return right away
+	if (!(N_args > n_prev || len < length(cmd)) && mz === nothing && isempty(bar_fill))	# No color request, so return right away
 		return cmd, arg1, arg2, N_args, false
 	end
 
 	# Filled polygons with -Z don't need extra col
 	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, arg2, N_args, false
 
-	if (isa(arg1, Array{<:Real}))  n_rows, n_col = size(arg1)
-	elseif (isa(arg1,GMTdataset))  n_rows, n_col = size(arg1.data)
-	else                           n_rows, n_col = size(arg1[1].data)
+	if (isa(arg1,GMTdataset) || isa(arg1, Array))  n_rows, n_col = size(arg1)
+	elseif (isa(arg1, Vector{<:GMTdataset}))       n_rows, n_col = size(arg1[1])
+	end
+
+	if (!isempty(bar_fill))
+		if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1 = hcat(arg1, 1:n_rows)
+		elseif (isa(arg1, Vector{<:GMTdataset}))       arg1[1].data = hcat(arg1[1].data, 1:n_rows)
+		end
+		arg2 = gmt(string("makecpt -T1/$(n_rows+1)/1 -C" * join(bar_fill, ",")))
+		current_cpt[1] = arg2
+		(!occursin(" -C", cmd)) && (cmd *= " -C")	# Need to inform that there is a cpt to use
+		find_in_dict(d, [:G :fill])					# Must delete the :fill. Not used anymore
+		return cmd, arg1, arg2, 2, true
 	end
 
 	warn1 = string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it.")
@@ -442,9 +469,8 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	if (n_col <= 2+is3D)
 		if (mz !== nothing)
 			if (length(mz) != n_rows)  @warn(warn1); @goto noway  end
-			if (isa(arg1, Array))          arg1 = hcat(arg1, mz[:])
-			elseif (isa(arg1,GMTdataset))  arg1.data = hcat(arg1.data, mz[:])
-			else                           arg1[1].data = hcat(arg1[1].data, mz[:])
+			if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1    = hcat(arg1, mz[:])
+			elseif (isa(arg1, Vector{<:GMTdataset}))       arg1[1] = hcat(arg1[1], mz[:]) 
 			end
 		else
 			if (opt_i != "")  @warn(warn2);		@goto noway		end
@@ -456,9 +482,8 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	else
 		if (mz !== nothing)				# Here we must insert the color col right after the coords
 			if (length(mz) != n_rows)  @warn(warn1); @goto noway  end
-			if     (isa(arg1, Array))      arg1 = hcat(arg1[:,1:2+is3D], mz[:], arg1[:,3+is3D:end])
-			elseif (isa(arg1,GMTdataset))  arg1.data = hcat(arg1.data[:,1:2+is3D], mz[:], arg1.data[:,3+is3D:end])
-			else                           arg1[1].data = hcat(arg1[1].data[:,1:2+is3D], mz[:], arg1[1].data[:,3+is3D:end])
+			if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1    = hcat(arg1[:,1:2+is3D], mz[:], arg1[:,3+is3D:end])
+			elseif (isa(arg1, Vector{<:GMTdataset}))       arg1[1] = hcat(arg1[1][:,1:2+is3D], mz[:], arg1[1][:,3+is3D:end])
 			end
 		elseif (got_Ebars)		# The Error bars case is very multi. Don't try to guess then.
 			if (opt_i != "")  @warn(warn2);	@goto noway  end
@@ -467,35 +492,23 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	end
 
 	if (N_args == n_prev)		# No cpt transmitted, so need to compute one
-		if (GMTver >= v"77")		# 7 because this solution is currently still bugged
-			#=
-			if (mz !== nothing)
-				arg2 = gmt("makecpt -E " * cmd[len+2:end], mz[:])
-			else
-				if (isa(arg1, Array))  arg2 = gmt("makecpt -E " * cmd[len+2:end], arg1)
-				else                   arg2 = gmt("makecpt -E " * cmd[len+2:end], arg1.data)
-				end
-			end
-			=#
+		if (mz !== nothing)               mi, ma = extrema(mz)
 		else
-			if (mz !== nothing)               mi, ma = extrema(mz)
-			else
-				if     (isa(arg1, Array))     mi, ma = extrema(view(arg1, :, 2+is3D))
-				elseif (isa(arg1,GMTdataset)) mi, ma = extrema(view(arg1.data, :, 2+is3D))
-				else                          mi, ma = extrema(view(arg1[1].data, :, 2+is3D))
-				end
+			if (isa(arg1,GMTdataset) || isa(arg1, Array))  mi, ma = extrema(view(arg1,    :, 2+is3D))
+			elseif (isa(arg1, Vector{<:GMTdataset}))       mi, ma = extrema(view(arg1[1], :, 2+is3D))
 			end
-			just_C = cmd[len+2:end];	reset_i = ""
-			if ((ind = findfirst(" -i", just_C)) !== nothing)
-				reset_i = just_C[ind[1]:end]
-				just_C  = just_C[1:ind[1]-1]
-			end
-			arg2::GMTcpt = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
-			global current_cpt[1] = arg2
-			if (occursin(" -C", cmd))  cmd = cmd[1:len+3]  end		# Strip the cpt name
-			if (reset_i != "")  cmd *= reset_i  end		# Reset -i, in case it existed
 		end
-		if (!occursin(" -C", cmd))  cmd *= " -C"  end	# Need to inform that there is a cpt to use
+		just_C = cmd[len+2:end];	reset_i = ""
+		if ((ind = findfirst(" -i", just_C)) !== nothing)
+			reset_i = just_C[ind[1]:end]
+			just_C  = just_C[1:ind[1]-1]
+		end
+		arg2::GMTcpt = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
+		global current_cpt[1] = arg2
+		if (occursin(" -C", cmd))  cmd = cmd[1:len+3]  end		# Strip the cpt name
+		if (reset_i != "")  cmd *= reset_i  end		# Reset -i, in case it existed
+
+		(!occursin(" -C", cmd)) && (cmd *= " -C")	# Need to inform that there is a cpt to use
 		N_args = 2
 	end
 
@@ -636,50 +649,48 @@ function helper2_markers(opt::String, alias::Vector{String})::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function check_caller(d::Dict, _cmd::String, opt_S::String, opt_W::String, caller::String, g_bar_fill::Array{String}, O::Bool)::String
+function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller::String, g_bar_fill::Array{String}, O::Bool)::String
 	# Set sensible defaults for the sub-modules "scatter" & "bar"
-	cmd = Vector{String}(undef,1)
-	cmd[1] = _cmd
 	if (caller == "scatter")
-		if (opt_S == "")  cmd[1] *= " -Sc5p"  end
+		if (opt_S == "")  cmd *= " -Sc5p"  end
 	elseif (caller == "scatter3")
-		if (opt_S == "")  cmd[1] *= " -Su2p"  end
+		if (opt_S == "")  cmd *= " -Su2p"  end
 	elseif (caller == "lines")
-		if (!occursin("+p", cmd[1]) && opt_W == "") cmd[1] *= " -W0.25p"  end # Do not leave without a pen specification
+		if (!occursin("+p", cmd) && opt_W == "") cmd *= " -W0.25p"  end # Do not leave without a pen specification
 	elseif (caller == "bar")
 		if (opt_S == "")
 			bar_type = 0
 			if (haskey(d, :bar))
-				cmd[1], bar_opts = parse_bar_cmd(d, :bar, cmd[1], "Sb")
+				cmd, bar_opts = parse_bar_cmd(d, :bar, cmd, "Sb")
 				bar_type = 1;	delete!(d, :bar)
 			elseif (haskey(d, :hbar))
-				cmd[1], bar_opts = parse_bar_cmd(d, :hbar, cmd[1], "SB")
+				cmd, bar_opts = parse_bar_cmd(d, :hbar, cmd, "SB")
 				bar_type = 2;	delete!(d, :hbar)
 			end
 			if (bar_type == 0 || bar_opts == "")	# bar_opts == "" means only bar=true or hbar=true was used
 				opt = (haskey(d, :width)) ? add_opt(d, "", "",  [:width]) : "0.8"	# The default
 				_Stype = (bar_type == 2) ? " -SB" : " -Sb"
-				cmd[1] *= _Stype * opt * "u"
+				cmd *= _Stype * opt * "u"
 
 				optB = (haskey(d, :base)) ? add_opt(d, "", "",  [:base]) : "0"
-				cmd[1] *= "+b" * optB
+				cmd *= "+b" * optB
 			end
 		end
-		(isempty(g_bar_fill) && !occursin(" -G", cmd[1]) && !occursin(" -C", cmd[1])) && (cmd[1] *= " -G0/115/190")	# Default color
+		(isempty(g_bar_fill) && !occursin(" -G", cmd) && !occursin(" -C", cmd)) && (cmd *= " -G0/115/190")	# Default color
 	elseif (caller == "bar3")
-		if (haskey(d, :noshade) && occursin("-So", cmd[1]))
-			cmd[1] = replace(cmd[1], "-So" => "-SO", count=1);
+		if (haskey(d, :noshade) && occursin("-So", cmd))
+			cmd = replace(cmd, "-So" => "-SO", count=1);
 			delete!(d, :noshade)
 		end
-		if (!occursin(" -G", cmd[1]) && !occursin(" -C", cmd[1]))  cmd[1] *= " -G0/115/190"	end
-		if (!occursin(" -J", cmd[1]))  cmd[1] *= " -JX12c/0"  end
+		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd *= " -G0/115/190"	end
+		if (!occursin(" -J", cmd))  cmd *= " -JX12c/0"  end
 	end
 
 	if (occursin('3', caller))
-		if (!occursin(" -B", cmd[1]) && !O)  cmd[1] *= def_fig_axes3[1]  end	# For overlays default is no axes
+		if (!occursin(" -B", cmd) && !O)  cmd *= def_fig_axes3[1]  end	# For overlays default is no axes
 	end
 
-	return cmd[1]
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------

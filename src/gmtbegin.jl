@@ -12,9 +12,9 @@ By default name="GMTplot" and fmt="ps"
 function gmtbegin(name::String=""; fmt=nothing, verbose=nothing)
 	FirstModern[1] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
 	cmd = "begin"       # Default name (GMTplot.ps) is set in gmt_main()
-	if (name != "")  cmd *= " " * get_format(name, fmt)  end
-	if (verbose !== nothing)  cmd *= " -V" * string(verbose)  end
-	gmt("destroy")		# Always start with a clean session
+	(name != "") && (cmd *= " " * get_format(name, fmt))
+	(verbose !== nothing) && (cmd *= " -V" * string(verbose))
+	gmt_restart()		# Always start with a clean session
 	gmt(cmd)
 	return nothing
 end

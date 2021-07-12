@@ -159,7 +159,7 @@ function gmt(cmd::String, args...)
 	g_module, r = strtok(cmd)
 
 	if (g_module == "begin")		# Use this default fig name instead of "gmtsession"
-		if (r == "")  r = "GMTplot " * FMT[1]  end
+		(r == "") && (r = "GMTplot " * FMT[1])
 		IamModern[1] = true
 	elseif (r == "" && n_argin == 0) # Just requesting usage message, add -? to options
 		r = "-?"
@@ -326,7 +326,7 @@ function gmt(cmd::String, args...)
 	img_mem_layout[1] = "";		grd_mem_layout[1] = ""		# Reset to not afect next readings
 
 	# GMT6.1.0 f up and now we must be very careful to not let the GMT breaking screw us
-	(need2destroy) && gmt_restart()
+	(need2destroy && !IamModern[1]) && gmt_restart()
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)
@@ -1212,7 +1212,7 @@ function ps_init(API::Ptr{Nothing}, ps, dir::Integer)::Ptr{GMT_POSTSCRIPT}
 end
 
 # ---------------------------------------------------------------------------------------------------
-# Convenient function to tell if x a GMTdataset (or vector of it) or not
+# Convenient function to tell if x is a GMTdataset (or vector of it) or not
 isGMTdataset(x) = (isa(x, GMTdataset) || isa(x, Vector{<:GMTdataset}))
 
 # ---------------------------------------------------------------------------------------------------
