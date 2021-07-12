@@ -121,7 +121,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
 	if ((!got_Zvars && !is_ternary) || bar_ok)	# If "bar" ONLY if not bar-group
 		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
-		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, g_bar_fill, arg1, arg2)
+		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
 	end
 
 	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt somewhere else
@@ -433,14 +433,14 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_fill, arg1, arg2)
+function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, arg1, arg2)
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 	# N_ARGS will be == n_prev+1 when a -Ccpt was used. Otherwise they are equal.
 
 	(arg1 === nothing || isa(arg1, GMT.GMTcpt)) && return cmd, arg1, arg2, N_args, false  # Play safe
 
 	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
-	if (!(N_args > n_prev || len < length(cmd)) && mz === nothing && isempty(bar_fill))	# No color request, so return right away
+	if ((!(N_args > n_prev || len < length(cmd)) && mz === nothing) && !bar_ok)	# No color request, so return right away
 		return cmd, arg1, arg2, N_args, false
 	end
 
