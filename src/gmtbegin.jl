@@ -27,10 +27,9 @@ Ends a GMT session in modern mode (GMT >= 6) and optionaly shows the figure
 function gmtend(arg=nothing; show=false, verbose=nothing)
 	# To show either do gmtend(whatever) or gmt(show=true)
 	cmd = "end"
-	if (arg !== nothing || show != 0)  cmd *= " show"  end
-	if (verbose !== nothing)  cmd *= " -V" * string(verbose)  end
+	(arg !== nothing || show != 0) && (cmd *= " show")
+	(verbose !== nothing) && (cmd *= " -V" * string(verbose))
 	gmt(cmd)
-	#gmt("destroy")		# Lieve it in a clean state
 	IamModern[1] = false;	FirstModern[1] = false
 	return nothing
 end
@@ -49,7 +48,7 @@ function gmtfig(name::String; fmt=nothing, opts="")
 	cmd = "figure"       # Default name (GMTplot.ps) is set in gmt_main()
 	(name == "") && error("figure name cannot be empty")
 	cmd *= " " * get_format(name, fmt)
-	if (opts != "")  cmd *= " " * opts  end
+	(opts != "") && (cmd *= " " * opts)
 	gmt(cmd)
 	return nothing
 end
@@ -72,11 +71,11 @@ function inset(fim=nothing; stop=false, kwargs...)
 	end
 
 	if (!stop)
-		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
+		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 		gmt("inset begin " * cmd);
 	else
 		gmt("inset end");
-		if (do_show || haskey(d, :show))  gmt("end" * show);  end
+		(do_show || haskey(d, :show)) && gmt("end" * show)
 	end
 end
 
