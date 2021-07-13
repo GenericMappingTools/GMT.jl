@@ -447,15 +447,15 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	# Filled polygons with -Z don't need extra col
 	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, arg2, N_args, false
 
-	if (isa(arg1,GMTdataset) || isa(arg1, Array))  n_rows, n_col = size(arg1)
-	elseif (isa(arg1, Vector{<:GMTdataset}))       n_rows, n_col = size(arg1[1])
+	if     (isa(arg1, Vector{<:GMTdataset}))           n_rows, n_col = size(arg1[1])
+	elseif (isa(arg1,GMTdataset) || isa(arg1, Array))  n_rows, n_col = size(arg1)
 	end
 
 	if (!isempty(bar_fill))
 		if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1 = hcat(arg1, 1:n_rows)
 		elseif (isa(arg1, Vector{<:GMTdataset}))       arg1[1].data = hcat(arg1[1].data, 1:n_rows)
 		end
-		arg2 = gmt(string("makecpt -T1/$(n_rows+1)/1 -C" * join(bar_fill, ",")))
+		arg2::GMTcpt = gmt(string("makecpt -T1/$(n_rows+1)/1 -C" * join(bar_fill, ",")))
 		current_cpt[1] = arg2
 		(!occursin(" -C", cmd)) && (cmd *= " -C")	# Need to inform that there is a cpt to use
 		find_in_dict(d, [:G :fill])					# Must delete the :fill. Not used anymore
@@ -492,10 +492,10 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	end
 
 	if (N_args == n_prev)		# No cpt transmitted, so need to compute one
-		if (mz !== nothing)               mi, ma = extrema(mz)
+		if (mz !== nothing)                                    mi, ma = extrema(mz)
 		else
-			if (isa(arg1,GMTdataset) || isa(arg1, Array))  mi, ma = extrema(view(arg1,    :, 2+is3D))
-			elseif (isa(arg1, Vector{<:GMTdataset}))       mi, ma = extrema(view(arg1[1], :, 2+is3D))
+			if     (isa(arg1, Vector{<:GMTdataset}))           mi, ma = extrema(view(arg1[1], :, 2+is3D))
+			elseif (isa(arg1,GMTdataset) || isa(arg1, Array))  mi, ma = extrema(view(arg1,    :, 2+is3D))
 			end
 		end
 		just_C = cmd[len+2:end];	reset_i = ""
@@ -503,8 +503,8 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 			reset_i = just_C[ind[1]:end]
 			just_C  = just_C[1:ind[1]-1]
 		end
-		arg2::GMTcpt = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C))
-		global current_cpt[1] = arg2
+		arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C) * (IamModern[1] ? " -H" : ""))
+		current_cpt[1] = arg2
 		if (occursin(" -C", cmd))  cmd = cmd[1:len+3]  end		# Strip the cpt name
 		if (reset_i != "")  cmd *= reset_i  end		# Reset -i, in case it existed
 
