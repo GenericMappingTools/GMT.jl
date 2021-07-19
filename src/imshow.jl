@@ -60,8 +60,14 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 	if (is_image)
 		grdimage(G; show=see, kw...)
 	else
-		if (isa(G, String))  grdimage(G; show=see, kw...)		# String when fname is @xxxx
-		else                 imshow(G; kw...)					# Call the specialized method
+		if (isa(G, String))		# Guess also if call grdview or grdimage 
+			if (get(kw, :JZ, 0) != 0 || get(kw, :Jz, 0) != 0 || get(kw, :zscale, 0) != 0 || get(kw, :zsize, 0) != 0)
+				(get(kw, :Q, "") == "" && get(kw, :surf, "") == "" && get(kw, :surftype, "") == "") && (kw = (kw..., Q="s"))
+				grdview(G; show=see, kw...)			# String when fname is @xxxx
+			else
+				grdimage(G; show=see, kw...)
+			end
+		else	imshow(G; kw...)					# Call the specialized method
 		end
 	end
 end
@@ -84,7 +90,7 @@ function imshow(arg1::GMTgrid; kw...)
 		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 8
 		srf = ((val = find_in_dict(d, [:Q :surf :surftype])[1]) !== nothing) ? val : "i100"
 		if (til !== nothing)		# This forces some others
-			srf = zsise = nothing	# These are mutually exclusive
+			srf = zsize = nothing	# These are mutually exclusive
 			opt_p = " -p180/90"
 		end
 		R = grdview("", arg1; show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...)
