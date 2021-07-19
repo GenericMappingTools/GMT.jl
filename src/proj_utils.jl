@@ -97,7 +97,7 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
+    d, az1, az2 = invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
 
 Solve the inverse geodesic problem.
 
@@ -316,7 +316,7 @@ In later case each line segment is descretized at `step` increments,
 - `epsg`  - Same as `proj` but using an EPSG code
 
 ### Returns
-A Mx2 matrix with the on lat of the points along the orthodrome when input is a matrix. A GMT dataset
+A Mx2 matrix with the lon lat of the points along the orthodrome when input is a matrix. A GMT dataset
 or a vector of it (when input is Vector{GMTdataset}).
 
 ## Example: Compute an orthodrome between points (0,0) and (30,50) discretized at 100 km steps.
