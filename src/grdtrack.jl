@@ -16,7 +16,7 @@ Parameters
 - **C** | **equidistant** :: [Type => Str]		`Arg = length/ds[/spacing][+a|+v][l|r]`
 
     Use input line segments to create an equidistant and (optionally) equally-spaced set of crossing
-	profiles along which we sample the grid(s)
+    profiles along which we sample the grid(s)
     ($(GMTdoc)grdtrack.html#c)
 - **D** | **dfile** :: [Type => Str]  
 

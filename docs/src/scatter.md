@@ -29,7 +29,7 @@ Optional Arguments
    Specify the region of interest. Default limits are computed from data extents. Extended at [limits](@ref)
 
 - **G** or *markerfacecolor* or *MarkerFaceColor* or *mc* or *fill*\
-   Select color or pattern for filling of symbols [Default is no fill]. Note that plot will search for *fill*
+   Select color or pattern for filling of symbols [Default is no fill]. Note that `scatter` will search for *fill*
    and *pen* settings in all the segment headers (when passing a GMTdaset or file of a multi-segment dataset)
    and let any values thus found over-ride the command line settings (but those must be provided in the terse GMT
    syntax). See [Setting color](@ref) for extend color selection (including color map generation).
@@ -41,9 +41,9 @@ Optional Arguments
       Where *symb* is one [Symbols](@ref) like `:circle`, *size* is symbol size in cm, unless *unit*
       is specified i.e. `:points`
 
-   In alternative to the ``symbol`` keyword, user can select the symbol name with either ``marker`` or ``shape``
-   and symbol size with ``markersize`` ``ms`` or just ``size`` The value of these keywords can be either numeric
-   (symb meaning size in cm) or string if an unit is appended, *e.g.*  ``markersize="5p"`` This form of symbol
+   In alternative to the `symbol keyword, user can select the symbol name with either `marker or `shape
+   and symbol size with `markersize` or `ms`. The value of these keywords can be either numeric
+   (symb meaning size in cm) or string if an unit is appended, *e.g.*  markersize="5p"` This form of symbol
    selection allows also to specify a variable symbol size. All it's need for this is that the keyword's value
    be an array with the same number of elements as the number of data points. 
 

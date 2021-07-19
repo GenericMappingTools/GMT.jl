@@ -116,8 +116,11 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 		if (isa(I_G, GMTgrid) || !isimgsize(I_G))
 			d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", I_G.range[1], I_G.range[2], I_G.range[3], I_G.range[4])
 		end
-	elseif ((isa(cmd0, String) && cmd0 != "") && (CTRL.limits[1:4] != zeros(4) || snif_GI_set_CTRLlimits(cmd0)) )
+	elseif (val === nothing && (isa(cmd0, String) && cmd0 != "") && (CTRL.limits[1:4] != zeros(4) || snif_GI_set_CTRLlimits(cmd0)) )
 		d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
+	elseif (val !== nothing)
+		d[:R] = val
+		del_from_dict(d, [:region :limits])
 	end
 end
 function isimgsize(I_G)

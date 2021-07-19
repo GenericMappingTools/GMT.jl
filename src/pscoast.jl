@@ -94,11 +94,10 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	maybe_more = false			# If latter set to true, search for lc & lc pen settings
 	cmd = parse_E_coast(d, [:E :DCW :dcw], "")		# Process first to avoid warning about "guess"
 	cmd = add_opt(d, cmd, "M", [:M :dump])
 	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd) && !occursin("-M", cmd))
-		cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, "", O, "guess")
+		cmd, = parse_BJR(d, cmd, "", O, "guess")
 	end
 	cmd, = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution]])
@@ -130,11 +129,18 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	end
 	(!occursin("-D",cmd)) && (cmd *= " -Da")			# Then pick automatic
 	finish = !occursin(" -M",cmd) && !occursin("-E+l", cmd) && !occursin("-E+L", cmd) ? true : false	# Otherwise the dump would be redirected to GMTjl_tmp.ps
+	get_largest = (!finish && occursin(" -E", cmd) && (find_in_dict(d, [:biggest :largest])[1] !== nothing))
 	if (finish)  _cmd, K = finish_PS_nested(d, [gmt_proggy * cmd], K)
 	else	     _cmd = [gmt_proggy * cmd]
 	end
 
-	finish_PS_module(d, _cmd, "", K, O, finish)
+	R = finish_PS_module(d, _cmd, "", K, O, finish)
+	if (get_largest)
+		ind = argmax(size.(R))
+		R = [R[ind]]		# Keep it a vector to be consistent with the other Dump cases
+		R[1].proj4, R[1].geom = "+proj=longlat", wkbPolygon
+	end
+	R
 end
 
 # ---------------------------------------------------------------------------------------------------

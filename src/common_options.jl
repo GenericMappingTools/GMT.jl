@@ -613,6 +613,8 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 				return cmd * " -B0", " -B0"
 			elseif (val == "same")				# User explicitly said "Same as previous -B"
 				return cmd * " -B", " -B"
+			elseif (val == "full")
+				val = " -Baf -BWSEN"
 			elseif (startswith(val, "auto"))
 				is3D = false
 				if     (occursin("XYZg", val)) val = " -Bafg -Bzafg -B+" * ((GMTver <= v"6.1") ? "b" : "w");  is3D = true
