@@ -62,7 +62,7 @@ coast(region="-10/36/-7/41+r", proj=:guess);
 GMT.GMT_Get_Common(GMT.API, 'R');
 @test GMT.parse_dcw("", ((country=:PT, pen=(2,:red), fill=:blue), (country=:ES, pen=(2,:blue)) )) == " -EPT+p2,red+gblue -EES+p2,blue"
 r = coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60), frame=(annot=30, grid=15), res=:crude, area=10000, land=:tan, ocean=:cyan, shore=:thinnest, figsize=10, Vd=dbg2);
-@test startswith(r, "pscoast  -Rg -JF-120/35/60/10 -Bpa30g15 -A10000 -Dcrude -Gtan -Scyan -Wthinnest")
+@test startswith(r, "pscoast  -Rg -JF-120/35/60/10 -Bpa30g15 -BWSen -A10000 -Dcrude -Gtan -Scyan -Wthinnest")
 r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hello Round World", Vd=dbg2);
 @test startswith(r, "pscoast  -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude")
 @test startswith(coast(R=:g, W=(level=1,pen=(2,:green)), Vd=dbg2), "pscoast  -Rg -JN180.0/" * split(GMT.def_fig_size, '/')[1] * " -Baf -BWSen -W1/2,green")

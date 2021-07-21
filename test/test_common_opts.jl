@@ -157,6 +157,11 @@
 	@test GMT.parse_B(Dict(:frame => :auto, :title => :bla), "")[1] == " -Baf -BWSen+tbla"
 	@test GMT.parse_B(Dict(:B=>:WS), "")[1] == " -Baf -BWS"
 	@test GMT.parse_B(Dict(:title => "bla"), "", " -Baf")[1] == " -Baf -B+tbla"
+	@test GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen")[1] == " -Bpa10 -Byg20 -Bxg10 -BWSen+t\"Ai Ai\""
+	@test GMT.parse_B(Dict(:frame => (axes=(:left_full, :bottom_full, :right_full, :top_full), annot=10)), "")[1] == " -Bpa10 -BWSEN"
+	@test GMT.parse_B(Dict(:xaxis => (axes=:full, annot=10)), "")[1] == " -Bpxa10 -BWSEN"
+	@test GMT.parse_B(Dict(:frame => (fill=220,)), "", " -Baf -Bg -BWSne")[1] == " -Baf -Bg -BWSne+g220"
+	@test GMT.parse_B(Dict(:frame => :full), "")[1] == " -Baf -BWSEN"
 	GMT.helper2_axes("lolo");
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
 
