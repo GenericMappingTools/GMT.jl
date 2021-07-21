@@ -108,7 +108,7 @@
 	lines(D, steps=(x=true,), close=(bot=true,))
 	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
 	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=dbg2);
-	@test startswith(r, "psxy  -R0/6.0/-1/0.7 -JX40/8 -BWSen+g220 --PS_MEDIA=A1 -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -W2,sienna")
+	@test startswith(r, "psxy  -R0/6.0/-1/0.7 -JX40/8 -Baf -BWSen+g220 --PS_MEDIA=A1 -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -W2,sienna")
 
 	println("	SCATTER")
 	sizevec = [s for s = 1:10] ./ 10;

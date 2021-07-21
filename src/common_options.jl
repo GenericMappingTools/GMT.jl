@@ -590,6 +590,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{String,String}
+	# opt_B is used to transmit a default value. If not empty the Bframe part must be at the end and only one -B...
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
@@ -614,17 +615,13 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 			elseif (val == "same")				# User explicitly said "Same as previous -B"
 				return cmd * " -B", " -B"
 			elseif (val == "full")
-				val = " -Baf -BWSEN"
+				return cmd * " -Baf -BWSEN", " -Baf -BWSEN"
 			elseif (startswith(val, "auto"))
 				is3D = false
 				if     (occursin("XYZg", val)) val = " -Bafg -Bzafg -B+" * ((GMTver <= v"6.1") ? "b" : "w");  is3D = true
 				elseif (occursin("XYZ", val))  val = def_fig_axes3[1];		is3D = true
 				elseif (occursin("XYg", val))  val = " -Bafg -BWSen"
 				elseif (occursin("XY", val))   val = def_fig_axes[1]
-				elseif (occursin("LB", val))   val = " -Baf -BLB"
-				elseif (occursin("L",  val))   val = " -Baf -BL"
-				elseif (occursin("R",  val))   val = " -Baf -BR"
-				elseif (occursin("B",  val))   val = " -Baf -BB"
 				elseif (occursin("Xg", val))   val = " -Bafg -BwSen"
 				elseif (occursin("X",  val))   val = " -Baf -BwSen"
 				elseif (occursin("Yg", val))   val = " -Bafg -BWsen"
@@ -637,10 +634,12 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 			end
 		end
 		if (isa(val, NamedTuple))
-			_opt_B, have_Bframe = axis(val, d);	extra_parse = false
+			_opt_B, what_B = axis(val, d);	extra_parse = false
+			have_Bframe = what_B[2]
+			def_opt_B_split = split(opt_B)
 			have_axes = any(keys(val) .== :axes)
-			if (!have_axes && opt_B != "" && findlast(" ", opt_B)[1] != 1)
-				def_Bframe = split(opt_B)[2]		# => "-BWSen" when opt_B holds the default " -Baf -BWSen"
+			if (!have_axes && opt_B != "" && findlast(" ", opt_B)[1] != 1)	# If not have frame=(axes=..., ) use the default
+				def_Bframe = def_opt_B_split[end]	# => "-BWSen" when opt_B holds the default " -Baf -BWSen"
 				if (have_Bframe)					# If we already have a Bframe bit must append it to def_Bframe
 					s = split(_opt_B)
 					nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words sub-options
@@ -651,6 +650,10 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 				opt_B = consolidate_Baxes(opt_B)
 			else
 				opt_B = _opt_B
+			end
+			if (!what_B[1] && opt_B != "")		# If user didn't touch the axes part, so we'll keep the default.
+				def_Baxes = join(def_opt_B_split[1:end-1], " ")	# => "-Baf" when opt_B holds the default " -Baf -BWSen"
+				opt_B = " " * def_Baxes * opt_B
 			end
 		else
 			opt_B = string(val)
@@ -672,7 +675,6 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
 	t = ""		# Use the trick to replace blanks by Char(127) (invisible) and undo it in extra_parse
-	# '\U00AF'
 	if (haskey(d, :title))   t *= "+t"   * replace(str_with_blancs(d[:title]), ' '=>'\x7f');   delete!(d, :title);	end
 	if (haskey(d, :xlabel))  t *= " x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\x7f');   delete!(d, :xlabel);	end
 	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\x7f');   delete!(d, :ylabel);	end
@@ -718,19 +720,19 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 	this_opt_B = "";
 	xax, yax = false, false		# To know if these axis funs (primary) have been called
 	for symb in [:yaxis2 :xaxis2 :axis2 :zaxis :yaxis :xaxis]
-		add_this, this_Bframe = false, false
+		add_this, what_B = false, [false, false]
 		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict)))
 			(isa(d[symb], Dict)) && (d[symb] = dict2nt(d[symb]))
 			#(!have_axes) && (have_axes = isa(d[symb], NamedTuple) && any(keys(d[symb]) .== :axes))
-			if     (symb == :axis2)   this_B, this_Bframe = axis(d[symb], d, secondary=true); add_this = true
-			elseif (symb == :xaxis)   this_B, this_Bframe = axis(d[symb], d, x=true); add_this, xax = true, true
-			elseif (symb == :xaxis2)  this_B, this_Bframe = axis(d[symb], d, x=true, secondary=true); add_this = true
-			elseif (symb == :yaxis)   this_B, this_Bframe = axis(d[symb], d, y=true); add_this, yax = true, true
-			elseif (symb == :yaxis2)  this_B, this_Bframe = axis(d[symb], d, y=true, secondary=true); add_this = true
-			elseif (symb == :zaxis)   this_B, this_Bframe = axis(d[symb], d, z=true); add_this = true
+			if     (symb == :axis2)   this_B, what_B = axis(d[symb], d, secondary=true); add_this = true
+			elseif (symb == :xaxis)   this_B, what_B = axis(d[symb], d, x=true); add_this, xax = true, true
+			elseif (symb == :xaxis2)  this_B, what_B = axis(d[symb], d, x=true, secondary=true); add_this = true
+			elseif (symb == :yaxis)   this_B, what_B = axis(d[symb], d, y=true); add_this, yax = true, true
+			elseif (symb == :yaxis2)  this_B, what_B = axis(d[symb], d, y=true, secondary=true); add_this = true
+			elseif (symb == :zaxis)   this_B, what_B = axis(d[symb], d, z=true); add_this = true
 			end
 			(add_this) && (this_opt_B *= this_B)
-			have_Bframe = have_Bframe || this_Bframe
+			have_Bframe = have_Bframe || what_B[2]
 			delete!(d, symb)
 		end
 	end
@@ -747,7 +749,7 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 	end
 
 	if (opt_B != def_fig_axes_ && opt_B != def_fig_axes3_)  opt_B = this_opt_B * opt_B
-	elseif (this_opt_B != "")  opt_B = this_opt_B
+	elseif (this_opt_B != "")                               opt_B = this_opt_B
 	end
 
 	if (def_fig_axes[1] != def_fig_axes_bak && opt_B != def_fig_axes[1])	# Consolidation only under themes
@@ -756,11 +758,9 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 			# By using def_fig_axes_ this has no effect in modern mode.
 			opt_B = ((have_Bframe) ? split(def_fig_axes_)[1] : def_fig_axes_) * opt_B
 		end
-		opt_B = consolidate_Bframe(opt_B)
 		opt_B = consolidate_Baxes(opt_B)
-	else
-		opt_B = consolidate_Bframe(opt_B)
 	end
+	opt_B = consolidate_Bframe(opt_B)
 	(have_a_none) && (opt_B *= " --MAP_FRAME_PEN=0.001,white@100")	# Need to resort to this sad trick
 
 	return cmd * opt_B, opt_B
@@ -769,7 +769,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 function consolidate_Bframe(opt_B::String)::String
 	# Consolidate the 'frame' parte of a multi-pieces -B option and make sure that it comes out at the end
-	#@show(opt_B)
 	s = split(opt_B)
 	nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words (e.g. titles)
 	isBframe = zeros(Bool, length(s))
@@ -2273,12 +2272,12 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 axis(nt::NamedTuple, D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) = axis(D;x=x, y=y, z=z, secondary=secondary, nt...)
-function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Bool}
+function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Vector{Bool}}
 	# Build the (terrible) -B option
 	d = KW(kwargs)			# These kwargs always come from the fields of a NamedTuple 
 
 	# Before anything else
-	(haskey(d, :none)) && return " -B0", false
+	(haskey(d, :none)) && return " -B0", [false, false]
 
 	primo = secondary ? "s" : "p"					# Primary or secondary axis
 	(z) && (primo = "")								# Z axis have no primary/secondary
@@ -2390,9 +2389,10 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 
 	# Check if ax_sup was requested
 	(opt == "" && ax_sup != "") && (opt = " -B" * primo * axe * ax_sup)
+	have_Baxes = (opt != "")
 	opt *= opt_Bframe
 
-	return opt, (opt_Bframe != "")
+	return opt, [have_Baxes, (opt_Bframe != "")]
 end
 
 # ------------------------
