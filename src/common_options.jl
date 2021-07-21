@@ -597,7 +597,7 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
 	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3[1]		# def_fig_axes is a global const
 
-	have_Bframe, got_Bstring = false, false		# To know if the axis() function returns a -B<frame> setting
+	have_Bframe, got_Bstring, have_axes = false, false, false	# To know if the axis() function returns a -B<frame> setting
 
 	extra_parse = true;		have_a_none = false
 	if ((val = find_in_dict(d, [:B :frame :axes :axis], del)[1]) !== nothing)		# These four are aliases
@@ -636,8 +636,24 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 				val *= " af"		# To prevent that setting B=:WSen removes all annots
 			end
 		end
-		if (isa(val, NamedTuple)) opt_B, have_Bframe = axis(val, d);	extra_parse = false
-		else                      opt_B = string(val)
+		if (isa(val, NamedTuple))
+			_opt_B, have_Bframe = axis(val, d);	extra_parse = false
+			have_axes = any(keys(val) .== :axes)
+			if (!have_axes && opt_B != "" && findlast(" ", opt_B)[1] != 1)
+				def_Bframe = split(opt_B)[2]		# => "-BWSen" when opt_B holds the default " -Baf -BWSen"
+				if (have_Bframe)					# If we already have a Bframe bit must append it to def_Bframe
+					s = split(_opt_B)
+					nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words sub-options
+					opt_B = join(s[1:end-1], " ") * " " * def_Bframe * s[end][3:end]
+				else
+					opt_B = _opt_B * " " * def_Bframe
+				end
+				opt_B = consolidate_Baxes(opt_B)
+			else
+				opt_B = _opt_B
+			end
+		else
+			opt_B = string(val)
 		end
 		(extra_parse && isa(val, String)) && (got_Bstring = true)	# Signal to not try to consolidate with def_fig_axes
 		if (got_Bstring)		# Must check for spaces in titles, like in "ya10g10 +t\"Sector Diagram\""
@@ -705,6 +721,7 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 		add_this, this_Bframe = false, false
 		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict)))
 			(isa(d[symb], Dict)) && (d[symb] = dict2nt(d[symb]))
+			#(!have_axes) && (have_axes = isa(d[symb], NamedTuple) && any(keys(d[symb]) .== :axes))
 			if     (symb == :axis2)   this_B, this_Bframe = axis(d[symb], d, secondary=true); add_this = true
 			elseif (symb == :xaxis)   this_B, this_Bframe = axis(d[symb], d, x=true); add_this, xax = true, true
 			elseif (symb == :xaxis2)  this_B, this_Bframe = axis(d[symb], d, x=true, secondary=true); add_this = true
@@ -2270,7 +2287,8 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	opt = " -B"
 	if ((val = find_in_dict(d, [:axes :frame])[1]) !== nothing)		# The :frame here makes no sense, I think.
 		isa(val, Dict) && (val = dict2nt(val))
-		opt *= helper0_axes(val)
+		o = helper0_axes(val)
+		opt = (o == "full") ? opt * "WSEN" : (o == "none") ? opt : opt * o
 	end
 
 	haskey(d, :corners) && (opt *= string(d[:corners]))		# 1234
