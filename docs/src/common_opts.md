@@ -340,10 +340,13 @@ In case the central meridian is an optional parameter and it is being omitted, t
 range given by the *limits* option is used. The default standard parallel is the equator. 
 
 For linear (Cartesian) projections one can use *proj=:linear* but the simplest is just to omit the projection
-setting, which will default to a fig with of 12 cm. To set other fig dimensions, use the *figsize* specification
+setting, which will default to a fig with of 14 cm. To set other fig dimensions, use the *figsize* specification
 with *figsize=(width, height)* (both numeric or string) or just *figsize=width* and the *height* is computed
 automatically from the fig limits aspect ratio. We can also specify the scale separately: *e.g.* *figscale=x*,
-*figscale=1:xxxx*. As mentioned, when no size is provided a default width value of 12 cm is assumed.
+*figscale=1:xxxx*. As mentioned, when no size is provided a default width value of 14 cm is assumed.
+
+For logarithm and power axes use `logx`, `logy` or `loglog` to take log10 of values before scaling, and `powx`
+and/or `powy` to to raise values to _power_ before scaling.
 
 When specifying a *figsize*, the UNIT is cm by default but it can be overridden by appending **i**, or **p** to
 the scale or width values. Append **h**, **+**, or **-** to the given width if you instead want to set map height,
@@ -373,6 +376,8 @@ See [GMT Map Projections](@ref) for a list of projection examples
 | laea, lambertAzimuthal     | ``lon_0lat_0`` | *yes* | *NA*           | **A**``lon_0/lat_0`` | Lambert azimuthal equal area |
 | lcc, lambertConic          | ``lon_0lat_0`` | *NA*  | ``lat_1lat_2`` | **L**``lon_0/lat_0/lat_1/lat_2`` | Lambert conic conformal |
 | lin, Linear     |  | *NA*        | *NA* | **X**[l|pexp|T|t][/height[l|pexp|T|t]][d] | Linear, log_{10}, x^a-y^b, and time |
+| logx, logy, loglog |  |  |  | **X**l | Log |
+| powx, powy         |  |  |  | **X**p exp | Power  |
 | merc, Mercator  | ``[lon_0[lat_0]]`` | *NA* | *NA* | **M**``[lon_0[/lat_0]]`` | Mercator cylindrical |
 | mill, Miller    | ``[lon_0]``    | *NA*     | *NA* | **J**``[lon_0]`` | Miller cylindrical |
 | moll, Molweide  | ``[lon_0]``    | *NA*     | *NA* | **W**``[lon_0]`` | Mollweide |

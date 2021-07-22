@@ -60,14 +60,14 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true)
 	
 	(show_kwargs[1]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
 
-	opt_R = [""]
+	opt_R::String = ""
 	if ((val = find_in_dict(d, [:R :region :limits], del)[1]) !== nothing)
-		opt_R[1] = build_opt_R(val)
+		opt_R = build_opt_R(val)
 	elseif (IamModern[1])
 		return cmd, ""
 	end
 
-	if (opt_R[1] == "")		# See if we got the region as tuples of xlim, ylim [zlim]
+	if (opt_R == "")		# See if we got the region as tuples of xlim, ylim [zlim]
 		R = "";		c = 0
 		if (haskey(d, :xlim) && isa(d[:xlim], Tuple) && length(d[:xlim]) == 2)
 			R = sprintf(" -R%.15g/%.15g", d[:xlim][1], d[:xlim][2])
@@ -83,19 +83,19 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true)
 			end
 			del_from_dict(d, [:xlim])
 		end
-		if (R != "" && c == 4)  opt_R[1] = R  end
+		if (R != "" && c == 4)  opt_R = R  end
 	end
-	if (O && opt_R[1] == "")  opt_R[1] = " -R"  end
-	if (opt_R[1] != "")			# Save limits in numeric
+	if (O && opt_R == "")  opt_R = " -R"  end
+	if (opt_R != "")			# Save limits in numeric
 		try
-			limits = opt_R2num(opt_R[1])
+			limits = opt_R2num(opt_R)
 			CTRL.limits[1:length(limits)] = limits
 		catch
 			CTRL.limits[1] = CTRL.limits[2] = CTRL.limits[3] = CTRL.limits[4] = 0
 		end
 	end
-	cmd = cmd * opt_R[1]
-	return cmd, opt_R[1]
+	cmd = cmd * opt_R
+	return cmd, opt_R
 end
 
 function build_opt_R(Val)::String		# Generic function that deals with all but NamedTuple args
@@ -117,39 +117,39 @@ end
 
 function build_opt_R(arg::NamedTuple)::String
 	# Option -R can also be diabolicly complicated. Try to addres it. Stil misses the Time part.
-	BB = [""]
+	BB::String = ""
 	d = nt2dict(arg)					# Convert to Dict
 	if ((val = find_in_dict(d, [:bb :limits :region :BoundingBox])[1]) !== nothing)
 		if ((isa(val, Array{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 			if (haskey(d, :diag) || haskey(d, :diagonal))		# The diagonal case
-				BB[1] = sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
+				BB = sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
 			else
-				BB[1] = join([@sprintf("%.15g/", Float64(x)) for x in val])
-				BB[1] = rstrip(BB[1], '/')		# and remove last '/'
+				BB = join([@sprintf("%.15g/", Float64(x)) for x in val])
+				BB = rstrip(BB, '/')		# and remove last '/'
 			end
 		elseif (isa(val, String) || isa(val, Symbol))
 			t = string(val)
-			if     (t == "global")     BB[1] = "-180/180/-90/90"
-			elseif (t == "global360")  BB[1] = "0/360/-90/90"
-			else                       BB[1] = string(val) 			# Whatever good stuff or shit it may contain
+			if     (t == "global")     BB = "-180/180/-90/90"
+			elseif (t == "global360")  BB = "0/360/-90/90"
+			else                       BB = string(val) 			# Whatever good stuff or shit it may contain
 			end
 		end
 	elseif ((val = find_in_dict(d, [:bb_diag :limits_diag :region_diag :LLUR])[1]) !== nothing)	# Alternative way of saying "+r"
-		BB[1] = sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
+		BB = sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
 	elseif ((val = find_in_dict(d, [:continent :cont])[1]) !== nothing)
 		val = uppercase(string(val))
-		if     (startswith(val, "AF"))  BB[1] = "=AF"
-		elseif (startswith(val, "AN"))  BB[1] = "=AN"
-		elseif (startswith(val, "AS"))  BB[1] = "=AS"
-		elseif (startswith(val, "EU"))  BB[1] = "=EU"
-		elseif (startswith(val, "OC"))  BB[1] = "=OC"
-		elseif (val[1] == 'N')  BB[1] = "=NA"
-		elseif (val[1] == 'S')  BB[1] = "=SA"
+		if     (startswith(val, "AF"))  BB = "=AF"
+		elseif (startswith(val, "AN"))  BB = "=AN"
+		elseif (startswith(val, "AS"))  BB = "=AS"
+		elseif (startswith(val, "EU"))  BB = "=EU"
+		elseif (startswith(val, "OC"))  BB = "=OC"
+		elseif (val[1] == 'N')  BB = "=NA"
+		elseif (val[1] == 'S')  BB = "=SA"
 		else   error("Unknown continent name")
 		end
 	elseif ((val = find_in_dict(d, [:ISO :iso])[1]) !== nothing)
 		!isa(val, String) && error("argument to the ISO key must be a string with country codes")
-		BB[1] = val
+		BB = val
 	end
 
 	if ((val = find_in_dict(d, [:adjust :pad :extend :expand])[1]) !== nothing)
@@ -160,21 +160,21 @@ function build_opt_R(arg::NamedTuple)::String
 		else
 			error("Increments for limits must be a String, a Number, Array or Tuple")
 		end
-		BB[1] = (haskey(d, :adjust)) ? BB[1] * "+r" * t : BB[1] * "+R" * t
+		BB = (haskey(d, :adjust)) ? BB * "+r" * t : BB * "+R" * t
 	end
 
-	if (haskey(d, :unit))  BB[1] *= "+u" * string(d[:unit])[1]  end	# (e.g., -R-200/200/-300/300+uk)
+	(haskey(d, :unit)) && (BB *= "+u" * string(d[:unit])[1])		# (e.g., -R-200/200/-300/300+uk)
 
-	(BB[1] == "") && error("No, no, no. Nothing useful in the region named tuple arguments")
-	return " -R" * BB[1]
+	(BB == "") && error("No, no, no. Nothing useful in the region named tuple arguments")
+	return " -R" * BB
 end
 
 # ---------------------------------------------------------------------------------------------------
 function opt_R2num(opt_R::String)
 	# Take a -R option string and convert it to numeric
-	if (opt_R == "")  return nothing  end
-	if (endswith(opt_R, "Rg"))  return [0.0, 360., -90., 90.]  end
-	if (endswith(opt_R, "Rd"))  return [-180.0, 180., -90., 90.]  end
+	(opt_R == "") && return nothing
+	(endswith(opt_R, "Rg")) && return [0.0, 360., -90., 90.]
+	(endswith(opt_R, "Rd")) && return [-180.0, 180., -90., 90.]
 	if (findfirst("/", opt_R) !== nothing)
 		isdiag = false
 		if ((ind = findfirst("+r", opt_R)) !== nothing)		# Diagonal mode
@@ -184,9 +184,7 @@ function opt_R2num(opt_R::String)
 		limits = zeros(length(rs))
 		fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
 		limits[1] = parse(Float64, rs[1][fst+1:end])
-		for k = 2:length(rs)
-			limits[k] = parse(Float64, rs[k])
-		end
+		[limits[k] = parse(Float64, rs[k]) for k = 2:length(rs)]
 		if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
 	elseif (opt_R != " -R")		# One of those complicated -R forms. Just ask GMT the limits (but slow. It takes 0.2 s)
 		kml = gmt("gmt2kml " * opt_R, [0 0])[1]
@@ -236,69 +234,65 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:J :proj :projection], "NamedTuple | String"), "")
 
-	opt_J = [""];		mnemo = false
+	opt_J::String = "";		mnemo = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
 		isa(val, Dict) && (val = dict2nt(val))
-		opt_J[1], mnemo = build_opt_J(val)
+		opt_J, mnemo = build_opt_J(val)
 	elseif (IamModern[1] && ((val = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size], del)[1]) === nothing))
 		# Subplots do not rely in the classic default mechanism
 		return cmd, ""
 	end
-	CTRL.proj_linear[1] = (length(opt_J[1]) >= 4 && opt_J[1][4] != 'X' && opt_J[1][4] != 'x' && opt_J[1][4] != 'Q' && opt_J[1][4] != 'q') ? false : true
-	if (!map && opt_J[1] != "")  return cmd * opt_J[1], opt_J[1]  end
+	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
+	(!map && opt_J != "") && return cmd * opt_J, opt_J
 
-	if (O && opt_J[1] == "")  opt_J[1] = " -J"  end
+	(O && opt_J == "") && (opt_J = " -J")
 
 	if (!O)
-		if (default == "guess" && opt_J[1] == "")
-			opt_J[1] = guess_proj(CTRL.limits[1:2], CTRL.limits[3:4]);	mnemo = true	# To force append fig size
+		if (default == "guess" && opt_J == "")
+			opt_J = guess_proj(CTRL.limits[1:2], CTRL.limits[3:4]);	mnemo = true	# To force append fig size
 		end
-		if (opt_J[1] == "")  opt_J[1] = " -JX"  end
+		if (opt_J == "")  opt_J = " -JX"  end
 		# If only the projection but no size, try to get it from the kwargs.
-		if ((s = helper_append_figsize(d, opt_J[1], O)) != "")		# Takes care of both fig scales and fig sizes
-			opt_J[1] = s
-		elseif (default != "" && opt_J[1] == " -JX")
-			opt_J[1] = IamSubplot[1] ? " -JX?" : (default != "guess" ? default : opt_J[1]) 	# -JX was a working default
-		elseif (occursin("+width=", opt_J[1]))		# OK, a proj4 string, don't touch it. Size already in.
-		elseif (occursin("+proj", opt_J[1]))		# A proj4 string but no size info. Use default size
-			opt_J[1] *= "+width=" * split(def_fig_size, '/')[1]
+		if ((s = helper_append_figsize(d, opt_J, O)) != "")		# Takes care of both fig scales and fig sizes
+			opt_J = s
+		elseif (default != "" && opt_J == " -JX")
+			opt_J = IamSubplot[1] ? " -JX?" : (default != "guess" ? default : opt_J) 	# -JX was a working default
+		elseif (occursin("+width=", opt_J))		# OK, a proj4 string, don't touch it. Size already in.
+		elseif (occursin("+proj", opt_J))		# A proj4 string but no size info. Use default size
+			opt_J *= "+width=" * split(def_fig_size, '/')[1]
 		elseif (mnemo)							# Proj name was obtained from a name mnemonic and no size. So use default
-			opt_J[1] = append_figsize(d, opt_J[1])
-		elseif (!isnumeric(opt_J[1][end]) && (length(opt_J[1]) < 6 || (isletter(opt_J[1][5]) && !isnumeric(opt_J[1][6]))) )
+			opt_J = append_figsize(d, opt_J)
+		elseif (!isnumeric(opt_J[end]) && (length(opt_J) < 6 || (isletter(opt_J[5]) && !isnumeric(opt_J[6]))) )
 			if (!IamSubplot[1])
 				if ( ((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
-					opt_J[1] *= split(def_fig_size, '/')[1] * "/0"
+					opt_J *= split(def_fig_size, '/')[1] * "/0"
 				else
-					opt_J[1] = (!startswith(opt_J[1], " -JX")) ? append_figsize(d, opt_J[1]) : opt_J[1] * def_fig_size
+					opt_J = (!startswith(opt_J, " -JX")) ? append_figsize(d, opt_J) : opt_J * def_fig_size
 				end
-			elseif (!occursin("?", opt_J[1]))	# If we dont have one ? for size/scale already
-				opt_J[1] *= "/?"
+			elseif (!occursin("?", opt_J))	# If we dont have one ? for size/scale already
+				opt_J *= "/?"
 			end
-		#elseif (length(opt_J[1]) == 4 || (length(opt_J[1]) >= 5 && isletter(opt_J[1][5])))
-			#if (length(opt_J[1][1]) < 6 || !isnumeric(opt_J[1][6]))
-				#opt_J[1] *= def_fig_size
-			#end
 		end
 	else										# For when a new size is entered in a middle of a script
-		if ((s = helper_append_figsize(d, opt_J[1], O)) != "")  opt_J[1] = s  end
+		((s = helper_append_figsize(d, opt_J, O)) != "") && (opt_J = s)
 	end
-	CTRL.proj_linear[1] = (length(opt_J[1]) >= 4 && opt_J[1][4] != 'X' && opt_J[1][4] != 'x' && opt_J[1][4] != 'Q' && opt_J[1][4] != 'q') ? false : true
-	cmd *= opt_J[1]
-	return cmd, opt_J[1]
+	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
+	cmd *= opt_J
+	return cmd, opt_J
 end
 
 function helper_append_figsize(d::Dict, opt_J::String, O::Bool)::String
 	val_, symb = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])
-	if (val_ === nothing)  return ""  end
+	(val_ === nothing) && return ""
 	val::String = arg2str(val_)
 	if (occursin("scale", arg2str(symb)))		# We have a fig SCALE request
+		(O && opt_J == " -J") && error("In Overlay mode you cannot change a fig scale and NOT repeat the projection")
 		if     (IamSubplot[1] && val == "auto")       val = "?"
 		elseif (IamSubplot[1] && val == "auto,auto")  val = "?/?"
 		end
 		if (opt_J == " -JX")
 			val = check_axesswap(d, val)
-			isletter(val[1]) ? opt_J = " -J" * val : opt_J = " -Jx" * val		# FRAGILE
-		elseif (O && opt_J == " -J")  error("In Overlay mode you cannot change a fig scale and NOT repeat the projection")
+			opt_J = isletter(val[1]) ? " -J" * val : " -Jx" * val		# FRAGILE
 		else                          opt_J = append_figsize(d, opt_J, val, true)
 		end
 	else										# A fig SIZE request
@@ -355,12 +349,10 @@ end
 function check_axesswap(d::Dict, width::AbstractString)
 	# Deal with the case that we want to invert the axis sense
 	# axesswap(x=true, y=true) OR  axesswap("x", :y) OR axesswap(:xy)
-	if (width == "" || (val = find_in_dict(d, [:inverse_axes :axesswap :axes_swap])[1]) === nothing)
-		return width
-	end
+	(width == "" || (val = find_in_dict(d, [:inverse_axes :axesswap :axes_swap])[1]) === nothing) && return width
 
 	swap_x = false;		swap_y = false;
-	if isa(val, Dict)  val = dict2nt(val)  end
+	isa(val, Dict) && (val = dict2nt(val))
 	if (isa(val, NamedTuple))
 		for k in keys(val)
 			if     (k == :x)  swap_x = true
@@ -384,8 +376,8 @@ function check_axesswap(d::Dict, width::AbstractString)
 
 	if (occursin("/", width))
 		sizes = split(width,"/")
-		if (swap_x) sizes[1] = "-" * sizes[1]  end
-		if (swap_y) sizes[2] = "-" * sizes[2]  end
+		(swap_x) && (sizes[1] = "-" * sizes[1])
+		(swap_y) && (sizes[2] = "-" * sizes[2])
 		width = sizes[1] * "/" * sizes[2]
 	else
 		width = "-" * width
@@ -406,7 +398,7 @@ function build_opt_J(Val)::Tuple{String, Bool}
 	elseif (isa(Val, NamedTuple))
 		prj, mnemo = parse_proj(Val)
 		out = " -J" * prj
-	elseif (isa(Val, Number))
+	elseif (isa(Val, Real))
 		if (!(typeof(Val) <: Int) || Val < 2000)
 			error("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (" * string(Val) * ") is clearly an invalid EPSG")
 		end
@@ -419,55 +411,56 @@ end
 
 function parse_proj(p::String)
 	# See "p" if is a string with a projection name. If yes, convert it into the corresponding -J syntax
-	if (p == "")  return p,false  end
+	(p == "") && return p, false
+
 	if (p[1] == '+' || startswith(p, "epsg") || startswith(p, "EPSG") || occursin('/', p) || length(p) < 3)
 		p = replace(p, " " => "")		# Remove the spaces from proj4 strings
 		return p,false
 	end
-	out = [""];
+	out::String = "";
 	s = lowercase(p);		mnemo = true	# True when the projection name used one of the below mnemonics
-	if     (s == "aea"   || s == "albers")                 out[1] = "B0/0"
-	elseif (s == "cea"   || s == "cylindricalequalarea")   out[1] = "Y0/0"
-	elseif (s == "laea"  || s == "lambertazimuthal")       out[1] = "A0/0"
-	elseif (s == "lcc"   || s == "lambertconic")           out[1] = "L0/0"
-	elseif (s == "aeqd"  || s == "azimuthalequidistant")   out[1] = "E0/0"
-	elseif (s == "eqdc"  || s == "conicequidistant")       out[1] = "D0/90"
-	elseif (s == "tmerc" || s == "transversemercator")     out[1] = "T0"
-	elseif (s == "eqc"   || startswith(s, "plat") || startswith(s, "equidist") || startswith(s, "equirect"))  out[1] = "Q"
-	elseif (s == "eck4"  || s == "eckertiv")               out[1] = "Kf"
-	elseif (s == "eck6"  || s == "eckertvi")               out[1] = "Ks"
-	elseif (s == "omerc" || s == "obliquemerc1")           out[1] = "Oa"
-	elseif (s == "omerc2"|| s == "obliquemerc2")           out[1] = "Ob"
-	elseif (s == "omercp"|| s == "obliquemerc3")           out[1] = "Oc"
-	elseif (startswith(s, "cyl_") || startswith(s, "cylindricalster"))  out[1] = "Cyl_stere"
-	elseif (startswith(s, "cass"))   out[1] = "C0/0"
-	elseif (startswith(s, "geo"))    out[1] = "Xd"		# Linear geogs
-	elseif (startswith(s, "gnom"))   out[1] = "F0/0"
-	elseif (startswith(s, "ham"))    out[1] = "H"
-	elseif (startswith(s, "lin"))    out[1] = "X"
-	elseif (startswith(s, "logx"))   out[1] = "Xlx"
-	elseif (startswith(s, "logy"))   out[1] = "Xly"
-	elseif (startswith(s, "loglog")) out[1] = "Xll"
-	elseif (startswith(s, "powx"))   v = split(s, ',');	length(v) == 2 ? out[1] = "Xpx" * v[2] : out[1] = "Xpx"
-	elseif (startswith(s, "powy"))   v = split(s, ',');	length(v) == 2 ? out[1] = "Xpy" * v[2] : out[1] = "Xpy"
-	elseif (startswith(s, "Time"))   out[1] = "XTx"
-	elseif (startswith(s, "time"))   out[1] = "Xtx"
-	elseif (startswith(s, "merc"))   out[1] = "M"
-	elseif (startswith(s, "mil"))    out[1] = "J"
-	elseif (startswith(s, "mol"))    out[1] = "W"
-	elseif (startswith(s, "ortho"))  out[1] = "G0/0"
-	elseif (startswith(s, "poly"))   out[1] = "Poly"
-	elseif (s == "polar")            out[1] = "P"
-	elseif (s == "polar_azim")       out[1] = "Pa"
-	elseif (startswith(s, "robin"))  out[1] = "N"
-	elseif (startswith(s, "stere"))  out[1] = "S0/90"
-	elseif (startswith(s, "sinu"))   out[1] = "I"
-	elseif (startswith(s, "utm"))    out[1] = "U" * s[4:end]
-	elseif (startswith(s, "vand"))   out[1] = "V"
-	elseif (startswith(s, "win"))    out[1] = "R"
-	else   out[1] = p;		mnemo = false
+	if     (s == "aea"   || s == "albers")                 out = "B0/0"
+	elseif (s == "cea"   || s == "cylindricalequalarea")   out = "Y0/0"
+	elseif (s == "laea"  || s == "lambertazimuthal")       out = "A0/0"
+	elseif (s == "lcc"   || s == "lambertconic")           out = "L0/0"
+	elseif (s == "aeqd"  || s == "azimuthalequidistant")   out = "E0/0"
+	elseif (s == "eqdc"  || s == "conicequidistant")       out = "D0/90"
+	elseif (s == "tmerc" || s == "transversemercator")     out = "T0"
+	elseif (s == "eqc"   || startswith(s, "plat") || startswith(s, "equidist") || startswith(s, "equirect"))  out = "Q"
+	elseif (s == "eck4"  || s == "eckertiv")               out = "Kf"
+	elseif (s == "eck6"  || s == "eckertvi")               out = "Ks"
+	elseif (s == "omerc" || s == "obliquemerc1")           out = "Oa"
+	elseif (s == "omerc2"|| s == "obliquemerc2")           out = "Ob"
+	elseif (s == "omercp"|| s == "obliquemerc3")           out = "Oc"
+	elseif (startswith(s, "cyl_") || startswith(s, "cylindricalster"))  out = "Cyl_stere"
+	elseif (startswith(s, "cass"))   out = "C0/0"
+	elseif (startswith(s, "geo"))    out = "Xd"		# Linear geogs
+	elseif (startswith(s, "gnom"))   out = "F0/0"
+	elseif (startswith(s, "ham"))    out = "H"
+	elseif (startswith(s, "lin"))    out = "X"
+	elseif (startswith(s, "logx"))   out = "Xlx"
+	elseif (startswith(s, "logy"))   out = "Xly"
+	elseif (startswith(s, "loglog")) out = "Xll"
+	elseif (startswith(s, "powx"))   v = split(s, ',');	length(v) == 2 ? out = "Xpx" * v[2] : out = "Xpx"
+	elseif (startswith(s, "powy"))   v = split(s, ',');	length(v) == 2 ? out = "Xpy" * v[2] : out = "Xpy"
+	elseif (startswith(s, "Time"))   out = "XTx"
+	elseif (startswith(s, "time"))   out = "Xtx"
+	elseif (startswith(s, "merc"))   out = "M"
+	elseif (startswith(s, "mil"))    out = "J"
+	elseif (startswith(s, "mol"))    out = "W"
+	elseif (startswith(s, "ortho"))  out = "G0/0"
+	elseif (startswith(s, "poly"))   out = "Poly"
+	elseif (s == "polar")            out = "P"
+	elseif (s == "polar_azim")       out = "Pa"
+	elseif (startswith(s, "robin"))  out = "N"
+	elseif (startswith(s, "stere"))  out = "S0/90"
+	elseif (startswith(s, "sinu"))   out = "I"
+	elseif (startswith(s, "utm"))    out = "U" * s[4:end]
+	elseif (startswith(s, "vand"))   out = "V"
+	elseif (startswith(s, "win"))    out = "R"
+	else   out = p;		mnemo = false
 	end
-	return out[1], mnemo
+	return out, mnemo
 end
 
 function parse_proj(p::NamedTuple)
@@ -1294,10 +1287,10 @@ function add_opt_pen(d::Dict, symbs, opt::String="", sub::Bool=true, del::Bool=t
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | String | Number")	# Just print the options
 
 	if (opt != "")  opt = " -" * opt  end	# Will become -W<pen>, for example
-	out = [""]
+	out::String = ""
 	pen = build_pen(d, del)					# Either a full pen string or empty ("") (Seeks for lw (or lt), lc, etc)
 	if (pen != "")
-		out[1] = opt * pen
+		out = opt * pen
 	else
 		if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
 			if isa(val, Dict)  val = dict2nt(val)  end
@@ -1305,55 +1298,55 @@ function add_opt_pen(d::Dict, symbs, opt::String="", sub::Bool=true, del::Bool=t
 				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
 					for v in val
 						d2 = nt2dict(v)			# Decompose the NT and feed it into this-self
-						out[1] *= opt * add_opt_pen(d2, symbs, "", true, false)
+						out *= opt * add_opt_pen(d2, symbs, "", true, false)
 					end
 				else
-					out[1] = opt * parse_pen(val)	# Should be a better function
+					out = opt * parse_pen(val)	# Should be a better function
 				end
 			elseif (isa(val, NamedTuple))		# Make a recursive call. Will screw if used in mix mode
 				# This branch is very convoluted and fragile
 				d2 = nt2dict(val)				# Decompose the NT and feed into this-self
 				t = add_opt_pen(d2, symbs, "", true, false)
 				if (t == "")
-					d, out[1] = nt2dict(val), opt
+					d, out = nt2dict(val), opt
 				else
-					out[1] = opt * t
+					out = opt * t
 					d = Dict{Symbol,Any}()		# Just let it go straight to end. Returning here seems bugged
 				end
 			else
-				out[1] = opt * arg2str(val)
+				out = opt * arg2str(val)
 			end
 		end
 	end
 
 	# All further options prepend or append to an existing pen. So, if empty we are donne here.
-	(out[1] == "") && return out[1]
+	(out == "") && return out
 
 	# -W in ps|grdcontour may have extra flags at the begining but take care to not prepend on a blank
-	if     (out[1][1] != ' ' && haskey(d, :cont) || haskey(d, :contour))  out[1] = "c" * out[1]
-	elseif (out[1][1] != ' ' && haskey(d, :annot))                        out[1] = "a" * out[1]
+	if     (out[1] != ' ' && haskey(d, :cont) || haskey(d, :contour))  out = "c" * out
+	elseif (out[1] != ' ' && haskey(d, :annot))                        out = "a" * out
 	end
 
 	# Some -W take extra options to indicate that color comes from CPT
-	if (haskey(d, :colored))  out[1] *= "+c"
+	if (haskey(d, :colored))  out *= "+c"
 	else
-		if ((val = find_in_dict(d, [:cline :color_line :colot_lines])[1]) !== nothing)  out[1] *= "+cl"  end
-		if ((val = find_in_dict(d, [:ctext :color_text :csymbol :color_symbols :color_symbol])[1]) !== nothing)  out[1] *= "+cf"  end
+		((val = find_in_dict(d, [:cline :color_line :colot_lines])[1]) !== nothing) && (out *= "+cl")
+		((val = find_in_dict(d, [:ctext :color_text :csymbol :color_symbols :color_symbol])[1]) !== nothing) && (out *= "+cf")
 	end
-	if (haskey(d, :bezier))  out[1] *= "+s";  del_from_dict(d, [:bezier])  end
-	if (haskey(d, :offset))  out[1] *= "+o" * arg2str(d[:offset])   end
+	if (haskey(d, :bezier))  out *= "+s";  del_from_dict(d, [:bezier])  end
+	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])   end
 
-	if (out[1] != "")		# Search for eventual vec specs, but only if something above has activated -W
+	if (out != "")		# Search for eventual vec specs, but only if something above has activated -W
 		v = false
 		r = helper_arrows(d)
 		if (r != "")
-			if (haskey(d, :vec_start))  out[1] *= "+vb" * r[2:end];  v = true  end	# r[1] = 'v'
-			if (haskey(d, :vec_stop))   out[1] *= "+ve" * r[2:end];  v = true  end
-			if (!v)  out[1] *= "+" * r  end
+			if (haskey(d, :vec_start))  out *= "+vb" * r[2:end];  v = true  end	# r[1] = 'v'
+			if (haskey(d, :vec_stop))   out *= "+ve" * r[2:end];  v = true  end
+			if (!v)  out *= "+" * r  end
 		end
 	end
 
-	return out[1]
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1695,14 +1688,12 @@ function add_opt_1char(cmd::String, d::Dict, symbs, del::Bool=true)::String
 	# Ex:  GMT.add_opt_1char("", Dict(:N => ("abc", "sw", "x"), :Q=>"datum"), [[:N :geod2aux], [:Q :list]]) == " -Nasx -Qd"
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Str | Symb | Tuple")
 	for opt in symbs
-		if ((val = find_in_dict(d, opt, del)[1]) === nothing)  continue  end
+		((val = find_in_dict(d, opt, del)[1]) === nothing) && continue
 		args = ""
 		if (isa(val, String) || isa(val, Symbol))
-			if ((args = arg2str(val)) != "")  args = args[1]  end
+			((args = arg2str(val)) != "") && (args = args[1])
 		elseif (isa(val, Tuple))
-			for k = 1:length(val)
-				args *= arg2str(val[k])[1]
-			end
+			[args *= arg2str(val[k])[1] for k = 1:length(val)]
 		end
 		cmd = string(cmd, " -", opt[1], args)
 	end
@@ -1722,18 +1713,18 @@ function add_opt(d::Dict, cmd::String, opt, symbs, mapa=nothing, del::Bool=true,
 
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)
 		if (isa(arg, Bool) && isa(mapa, NamedTuple))	# Make each mapa[i] a mapa[i]key=mapa[i]val
-			local cmd_ = [""]
+			local cmd_ = ""
 			for k in keys(mapa)
 				((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue
-				if (isa(mapa[k], Tuple))  cmd_[1] *= mapa[k][1] * mapa[k][2](d, [k])
+				if (isa(mapa[k], Tuple))  cmd_ *= mapa[k][1] * mapa[k][2](d, [k])
 				else
-					if (mapa[k][1] == '_')  cmd_[1] *= mapa[k][2:end]		# Keep omly the flag
-					else                    cmd_[1] *= mapa[k] * arg2str(val_)
+					if (mapa[k][1] == '_')  cmd_ *= mapa[k][2:end]		# Keep omly the flag
+					else                    cmd_ *= mapa[k] * arg2str(val_)
 					end
 				end
 				del_from_dict(d, [k])		# Now we can delete the key
 			end
-			if (cmd_[1] != "")  cmd *= " -" * opt * cmd_[1]  end
+			(cmd_ != "") && (cmd *= " -" * opt * cmd_)
 		end
 		return cmd
 	elseif (isa(arg, String) && isa(mapa, NamedTuple))	# Use the mapa KEYS as possibe values of 'val'
@@ -1821,7 +1812,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	cmd = "";		cmd_hold = Array{String,1}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
 	for k = 1:length(key)				# Loop over the keys of option's tuple
 		!haskey(d, key[k]) && continue
-		if (isa(nt[k], Dict))  nt[k] = dict2nt(nt[k])  end
+		(isa(nt[k], Dict)) && (nt[k] = dict2nt(nt[k]))
 		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(nt[k], NamedTuple))
 				if (d[key[k]][2] == add_opt_fill)
@@ -2170,20 +2161,20 @@ function get_color(val)::String
 	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
 	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return isa(val, Bool) ? "" : string(val)  end
 
-	out = [""]
+	out::String = ""
 	if (isa(val, Tuple))
 		for k = 1:length(val)
 			if (isa(val[k], Tuple) && (length(val[k]) == 3))
 				s = 1
 				if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255  end	# colors in [0 1]
-				out[1] *= @sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
+				out *= @sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
 			elseif (isa(val[k], Symbol) || isa(val[k], String) || isa(val[k], Number))
-				out[1] *= string(val[k],",")
+				out *= string(val[k],",")
 			else
 				error("Color tuples must have only one or three elements")
 			end
 		end
-		out[1] = rstrip(out[1], ',')		# Strip last ','``
+		out = rstrip(out, ',')		# Strip last ','``
 	elseif ((isa(val, Array) && (size(val, 2) == 3)) || (isa(val, Vector) && length(val) == 3))
 		if (isa(val, Vector))  val = val'  end
 		if (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1)
@@ -2191,15 +2182,15 @@ function get_color(val)::String
 		else
 			copia = val
 		end
-		out[1] = @sprintf("%.0f/%.0f/%.0f", copia[1,1], copia[1,2], copia[1,3])
+		out = @sprintf("%.0f/%.0f/%.0f", copia[1,1], copia[1,2], copia[1,3])
 		for k = 2:size(copia, 1)
-			out[1] = @sprintf("%s,%.0f/%.0f/%.0f", out[1], copia[k,1], copia[k,2], copia[k,3])
+			out = @sprintf("%s,%.0f/%.0f/%.0f", out, copia[k,1], copia[k,2], copia[k,3])
 		end
 	else
 		@warn("got this bad data type: $(typeof(val))")	# Need to split because f julia change in 6.1
 		error("GOT_COLOR, got an unsupported data type")
 	end
-	return out[1]
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2252,20 +2243,6 @@ end
 function data_type(val)
 	# Parse data type for using in -b
 	str = string(val)
-#=
-	if     (str == "char" || str =="int8")  out = "c"
-	elseif (str == "uint8")   out = "u"
-	elseif (str == "int16")   out = "h"
-	elseif (str == "uint16")  out = "H"
-	elseif (str == "int32")   out = "i"
-	elseif (str == "uint32")  out = "I"
-	elseif (str == "int64")   out = "l"
-	elseif (str == "uint64")  out = "L"
-	elseif (str == "float" || str == "float")  out = "f"
-	elseif (str == "double")  out = "d"
-	else                      out = "d"
-	end
-=#
 	d = Dict("char" => "c", "int8" => "c", "uint8" => "u", "int16" => "h", "uint16" => "H", "int32" => "i", "uint32" => "I", "int64" => "l", "uint64" => "L", "float" => "f", "single" => "f", "double" => "d")
 	out = haskey(d, str) ? d[str] : "d"
 end
@@ -2720,7 +2697,7 @@ function decorated(;kwargs...)::String
 
 	if (haskey(d, :pen))
 		cmd *= "+p"
-		if (!isempty_(d[:pen])) cmd *= add_opt_pen(d, [:pen])  end
+		(!isempty_(d[:pen])) && (cmd *= add_opt_pen(d, [:pen]))
 	end
 	return opt_S * optD * cmd
 end
@@ -2873,7 +2850,7 @@ function fname_out(d::Dict, del::Bool=false)
 		end
 	end
 
-	if (fname != "")  fname *= "." * EXT  end
+	(fname != "") && (fname *= "." * EXT)
 	def_name = joinpath(tempdir(), "GMTjl_tmp.ps")
 	return def_name, opt_T, EXT, fname, ret_ps
 end
