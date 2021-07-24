@@ -257,24 +257,29 @@ function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vec
 end
 
 # ---------------------------------------------------------------------------------------------------
-function mat2img(mat::Array{UInt16}; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", kw...)
+function mat2img(mat::Array{UInt16}; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", img8=Matrix{UInt8}(undef,0,0), kw...)
 	# Take an array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
 	# If the kw variable 'stretch' is used, we stretch the intervals in 'stretch' to [0 255].
 	# Use this option to stretch the image histogram.
 	# If 'stretch' is a scalar, scale the values > 'stretch' to [0 255]
 	# stretch = [v1 v2] scales all values >= v1 && <= v2 to [0 255]
 	# stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
+	# If the img8 argument is used, it should contain a pre-allocated UInt8 array with the exact same size as MAT.
+	# The 'scale_only' kw option makes it return just the scaled array an no GMTimage creation (useful when img8 is a view).
 	# Use the keyword NOCONV to return GMTimage UInt16 type. I.e., no conversion to UInt8
+
 	d = KW(kw)
 	if ((val = find_in_dict(d, [:noconv])[1]) !== nothing)		# No conversion to UInt8 is wished
 		return mat2img(mat, 1; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, d...)
 	end
-	img = Array{UInt8}(undef,size(mat));
+	#img = Array{UInt8}(undef,size(mat));
+	img = isempty(img8) ? Array{UInt8}(undef, size(mat)) : img8
+	(size(img) != size(mat)) && error("Incoming matrix and image holder have different sizes")
 	if ((vals = find_in_dict(d, [:histo_bounds :stretch], false)[1]) !== nothing)
 		nz = 1
 		isa(mat, Array{UInt16,3}) ? (ny, nx, nz) = size(mat) : (ny, nx) = size(mat)
 
-		(vals == "auto" || vals == :auto || (isa(vals, Bool) && vals) || (isa(vals, Number) && vals == 1)) &&
+		(vals == "auto" || vals == :auto || (isa(vals, Bool) && vals) || (isa(vals, Real) && vals == 1)) &&
 			(vals = [find_histo_limits(mat)...])	# Out is a tuple, convert to vector
 		len = length(vals)
 
@@ -285,21 +290,23 @@ function mat2img(mat::Array{UInt16}; x=Vector{Float64}(), y=Vector{Float64}(), h
 		val = (len == 1) ? convert(UInt16, vals)::UInt16 : convert(Array{UInt16}, vals)::Array{UInt16}
 		if (len == 1)
 			sc = 255 / (65535 - val)
-			@inbounds for k = 1:length(img)
+			@inbounds @simd for k = 1:length(img)
 				img[k] = (mat[k] < val) ? 0 : round(UInt8, (mat[k] - val) * sc)
 			end
 		elseif (len == 2)
 			val = [parse(UInt16, @sprintf("%d", vals[1])) parse(UInt16, @sprintf("%d", vals[2]))]
 			sc = 255 / (val[2] - val[1])
-			@inbounds for k = 1:length(img)
-				img[k] = (mat[k] < val[1]) ? 0 : ((mat[k] > val[2]) ? 255 : UInt8(round((mat[k]-val[1])*sc)))
+			@inbounds @simd for k = 1:length(img)
+				img[k] = (mat[k] < val[1]) ? 0 : ((mat[k] > val[2]) ? 255 : round(UInt8, (mat[k]-val[1])*sc))
 			end
 		else	# len = 6
 			nxy = nx * ny
 			v1 = [1 3 5];	v2 = [2 4 6]
 			sc = [255 / (val[2] - val[1]), 255 / (val[4] - val[3]), 255 / (val[6] - val[5])]
-			@inbounds for n = 1:nz, k = 1+(n-1)*nxy:n*nxy
-				img[k] = (mat[k] < val[v1[n]]) ? 0 : ((mat[k] > val[v2[n]]) ? 255 : round(UInt8, (mat[k]-val[v1[n]])*sc[n]))
+			@inbounds @simd for n = 1:nz
+				@inbounds @simd for k = 1+(n-1)*nxy:n*nxy
+					img[k] = (mat[k] < val[v1[n]]) ? 0 : ((mat[k] > val[v2[n]]) ? 255 : round(UInt8, (mat[k]-val[v1[n]])*sc[n]))
+				end
 			end
 		end
 	else
@@ -308,6 +315,7 @@ function mat2img(mat::Array{UInt16}; x=Vector{Float64}(), y=Vector{Float64}(), h
 			img[k] = round(UInt8, mat[k]*sc)
 		end
 	end
+	(haskey(d, :scale_only)) && return img			# Only the scaled array is needed. Alows it to be a view
 	mat2img(img; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, d...)
 end
 
