@@ -96,9 +96,9 @@ Base.size(P::GMTps) = P.length
 Base.isempty(P::GMTps) = (P.length == 0)
 
 mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
-	data::AbstractArray{T,N}
+	data::Array{T,N}
 	text::Array{String,1}
-	header::AbstractString
+	header::String
 	comment::Array{String,1}
 	proj4::String
 	wkt::String

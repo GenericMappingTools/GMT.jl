@@ -113,7 +113,7 @@ export
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
-	mbimport, mbgetdata, mbsvplist, mblevitus,
+	mbimport, mbgetdata, mbsvplist, mblevitus, truecolor,
 	blendimg!, lonlat2xy, xy2lonlat, mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, theme,
 	tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, varspacegrid, MODIS_L2, 
 
@@ -208,6 +208,7 @@ include("pstext.jl")
 include("psxy.jl")
 include("pswiggle.jl")
 include("sample1d.jl")
+include("satimg_utils.jl")
 include("spectrum1d.jl")
 include("sphdistance.jl")
 include("sphinterpolate.jl")
