@@ -174,4 +174,6 @@
 	roundrect(0,0, 1, 1, 1,Vd=dbg2)
 	ellipse(300,201,0, 200, 50, first=true, units=:points, fill=:purple, pen=1)
 	circle(305,185,56, fill=:black, figname="lixo.ps")
+
+	GMT.truecolor(mat2img(rand(UInt16,128,128)), mat2img(rand(UInt16,128,128)), mat2img(rand(UInt16,128,128)));
 end

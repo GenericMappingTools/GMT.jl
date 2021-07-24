@@ -160,13 +160,14 @@ end
 # ---------------------------------------------------------------------------------
 function guess_T_from_ext(fname::String)::String
 	# Guess the -T option from a couple of known extensions
-	fname, ext = splitext(fname)
+	ext = splitext(fname)[2]
 	(length(ext) > 8 || occursin("?", ext)) && return (occursin("?", ext)) ? " -Tg" : "" # A SUBDATASET encoded fname?
 	ext = lowercase(ext[2:end])
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "png", "tif", "tiff", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
 	elseif (findfirst(isequal(ext), ["shp", "kml", "json", "geojson", "gmt", "gpkg"]) !== nothing)  out = " -To";
+	elseif (ext == "jp2") ressurectGDAL(); out = (findfirst("Type=UInt", gdalinfo(fname)) !== nothing) ? " -Ti" : " -Tg"
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	else

@@ -178,7 +178,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		if (do_clip && (all(hst[3:10,2] .== 0)))  hst[1,2] = 0; hst[2,2] = 0  end
 		if (do_auto || do_getauto || do_zoom)
 			which_auto = (do_auto) ? val_auto : val_getauto
-			limit_L, limit_R = find_histo_limits(arg1, which_auto, 200)
+			limit_L, limit_R = find_histo_limits(arg1, which_auto, 20)
 			(do_getauto) && return [limit_L, limit_R]		# If only want the histogram limits, we are done then.
 			if (do_zoom)
 				mm = extrema(hst, dims=1)		# 1×2 Array{Tuple{UInt16,UInt16},2}
@@ -241,10 +241,10 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function find_histo_limits(In, thresholds=nothing, width=200)
+function find_histo_limits(In, thresholds=nothing, width=20)
 	# Find the histogram limits of a UInt16 GMTimage that allow to better stretch the histogram
 	# THRESHOLDS is an optional Tuple input containing the left and right histo thresholds, in percentage,
-	# between which the histogram values will be retained. Defaults are (0.01, 0.4) percent. Note, this
+	# between which the histogram values will be retained. Defaults are (0.1, 0.4) percent. Note, this
 	# assumes the histogram follows some sort of Gaussian distribution. It it's flat, shit occurs.
 	# WIDTH is bin width used to obtain a rough histogram that is used to compute the limits.
 	if (isa(In, Array{UInt16,3}) || isa(In, Array{UInt8,3}))
