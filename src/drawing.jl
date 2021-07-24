@@ -193,7 +193,7 @@ The `kw...` in the functions arguments are the normal kwargs that one can use in
     circle(305,185,56, fill=:black)
     circle(305,185,36, fill=:gray50)
     circle(400,185,56, fill=:black)
-    circle(400,185,36, fill=:gray50, fmt=:png, show=true)
+    circle(400,185,36, fill=:gray50, show=true)
 """
 Drawing
 
