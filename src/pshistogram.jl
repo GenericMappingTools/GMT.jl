@@ -34,8 +34,8 @@ Parameters
     ($(GMTdoc)histogram.html#e)
 - **binmethod** | *BinMethod** :: [Type => Str]			`Arg = method`
 
-	Binning algorithm: "scott", "fd", "sturges" or "sqrt" for floating point data. "second", "minute", "hour",
-	"day", "week", "month" or "year" for DateTime data.
+    Binning algorithm: "scott", "fd", "sturges" or "sqrt" for floating point data. "second", "minute", "hour",
+    "day", "week", "month" or "year" for DateTime data.
 - **F** | **center** :: [Type => Bool]
 
     Center bin on each value. [Default is left edge].
@@ -75,8 +75,8 @@ Parameters
     ($(GMTdoc)histogram.html#t)
 - **W** | **pen** :: [Type => Str | Tuple]
 
-	Set pen attributes for sector outline or rose plot. [Default is no outline].
-	($(GMTdoc)histogram.html#w)
+    Set pen attributes for sector outline or rose plot. [Default is no outline].
+    ($(GMTdoc)histogram.html#w)
 - **Z** | **kind** :: [Type => Number | Str]
 
     Choose between 6 types of histograms.
@@ -171,12 +171,15 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (isa(arg1, GMTimage))		# If it's an image with no bin option, default to bin=1
 		do_clip = (isa(arg1[1], UInt16) && (val = find_in_dict(d, [:full_histo])[1]) === nothing) ? true : false
 		do_auto = ((val_auto = find_in_dict(d, [:auto :threshols])[1]) !== nothing) ? true : false	# Automatic bounds detetion
+		do_getauto = ((val_getauto = find_in_dict(d, [:getauto :getthreshols])[1]) !== nothing) ? true : false
 		do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false	# Automatic zoom to interesting region
 		(do_zoom && !do_auto) && (val_auto = nothing)		# I.e. 'zoom' sets also the auto mode
 		hst, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
 		if (do_clip && (all(hst[3:10,2] .== 0)))  hst[1,2] = 0; hst[2,2] = 0  end
-		if (do_auto || do_zoom)
-			limit_L, limit_R = find_histo_limits(arg1, val_auto, 200)
+		if (do_auto || do_getauto || do_zoom)
+			which_auto = (do_auto) ? val_auto : val_getauto
+			limit_L, limit_R = find_histo_limits(arg1, which_auto, 200)
+			(do_getauto) && return [limit_L, limit_R]		# If only want the histogram limits, we are done then.
 			if (do_zoom)
 				mm = extrema(hst, dims=1)		# 1×2 Array{Tuple{UInt16,UInt16},2}
 				x_max = min(limit_R * 1.15, hst[end,1])		# 15% to the right but not fall the cliff
@@ -197,7 +200,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 		(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
 		hst = zeros(n_bins, 2)
-		@inbounds for k = 1:length(arg1)  hst[Int(floor((arg1[k] - arg1.range[5]) / inc) + 1), 2] += 1  end
+		@inbounds Threads.@threads for k = 1:length(arg1)  hst[Int(floor((arg1[k] - arg1.range[5]) / inc) + 1), 2] += 1  end
 		[@inbounds hst[k,1] = arg1.range[5] + inc * (k - 1) for k = 1:n_bins]
 
 		cmd = (opt_Z == "") ? cmd * " -Z0" : cmd * opt_Z
@@ -240,8 +243,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function find_histo_limits(In, thresholds=nothing, width=200)
 	# Find the histogram limits of a UInt16 GMTimage that allow to better stretch the histogram
-	# THRESHOLDS is an optional Tuple input containing the left and right thresholds, in percentage,
-	# between which the histogram values will be retained. Defaults are (0,0.5) percent
+	# THRESHOLDS is an optional Tuple input containing the left and right histo thresholds, in percentage,
+	# between which the histogram values will be retained. Defaults are (0.01, 0.4) percent. Note, this
+	# assumes the histogram follows some sort of Gaussian distribution. It it's flat, shit occurs.
 	# WIDTH is bin width used to obtain a rough histogram that is used to compute the limits.
 	if (isa(In, Array{UInt16,3}) || isa(In, Array{UInt8,3}))
 		L1 = find_histo_limits(view(In, :, :, 1), thresholds, width)
@@ -255,7 +259,7 @@ function find_histo_limits(In, thresholds=nothing, width=200)
 	end
 	max_ = maximum(hst, dims=1)[2]
 	(max_ == 0) && error("This histogram had nothing but countings ONLY in first bin. No point to proceed.")
-	thresh_l = 0.0;		thresh_r = 0.005
+	thresh_l = 0.001;		thresh_r = 0.004
 	if (isa(thresholds, Tuple) && length(thresholds) == 2)
 		thresh_l, thresh_r = thresholds[:] ./ 100
 	end
@@ -291,11 +295,11 @@ function pshst_wall!(in, hst, inc, n_bins::Int)
 	# Function barrier for type instability. With the body of this in calling fun the 'inc' var
 	# introduces a mysterious type instability and execution times multiply by 3.
 	if (inc == 1)
-		@inbounds for k = 1:length(in)  hst[in[k] + 1, 2] += 1  end
+		@inbounds Threads.@threads for k = 1:length(in)  hst[in[k] + 1, 2] += 1  end
     else
-		@inbounds for k = 1:length(in)  hst[Int(floor(in[k] / inc) + 1), 2] += 1  end
+		@inbounds Threads.@threads for k = 1:length(in)  hst[Int(floor(in[k] / inc) + 1), 2] += 1  end
 	end
-	[@inbounds hst[k,1] = inc * (k - 1) for k = 1:n_bins]
+	@inbounds Threads.@threads for k = 1:n_bins  hst[k,1] = inc * (k - 1)  end
 	return nothing
 end
 
