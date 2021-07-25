@@ -176,7 +176,7 @@ function opt_R2num(opt_R::String)
 	(endswith(opt_R, "Rg")) && return [0.0, 360., -90., 90.]
 	(endswith(opt_R, "Rd")) && return [-180.0, 180., -90., 90.]
 	if (findfirst("/", opt_R) !== nothing)
-		isdiag = false
+		isdiag = getmeback(false)
 		if ((ind = findfirst("+r", opt_R)) !== nothing)		# Diagonal mode
 			opt_R = opt_R[1:ind[1]-1];	isdiag = true		# Strip the "+r"
 		end
@@ -417,7 +417,7 @@ function parse_proj(p::String)
 		p = replace(p, " " => "")		# Remove the spaces from proj4 strings
 		return p,false
 	end
-	out::String = "";
+	out::String = getmeback("")
 	s = lowercase(p);		mnemo = true	# True when the projection name used one of the below mnemonics
 	if     (s == "aea"   || s == "albers")                 out = "B0/0"
 	elseif (s == "cea"   || s == "cylindricalequalarea")   out = "Y0/0"
@@ -830,7 +830,7 @@ function consolidate_Baxes(opt_B::String)::String
 	opt_B = replace(opt_B, "-B " => "")		# Remove singleton "-B"
 
 	s = split(opt_B)
-	got_x, got_y = false, false
+	got_x, got_y = getmeback(false), getmeback(false)
 	for k = 1:length(s)-1
 		if (startswith(s[k], "-Bpx") && startswith(s[k+1], "-Bpx") && s[k+1][5] != 'c')		# -Bpxc... cannot be glued
 			s[k], s[k+1], got_x = s[k] * s[k+1][5:end], "", true
@@ -2829,7 +2829,7 @@ function fname_out(d::Dict, del::Bool=false)
 		fname, EXT, ret_ps = "", "ps", true
 		(del) && delete!(d, :ps)
 	else
-		ret_ps = false			# To know if we want to return or save PS in mem
+		ret_ps = getmeback(false)			# To know if we want to return or save PS in mem
 	end
 
 	opt_T = "";
@@ -3017,7 +3017,7 @@ function round_wesn(_wesn::Vector{Float64}, geo::Bool=false)::Vector{Float64}
 		end
 	end
 
-	item = 1
+	item = getmeback(1)
 	for side = 1:2
 		set[side] && continue			# Done above */
 		mag = round(log10(range[side])) - 1.0
@@ -3343,8 +3343,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		cmd[1] *= " --PS_MEDIA=11920x16850"				# In Modern mode GMT takes care of this.
 	end
 
+	orig_J = getmeback("")		# To use in the case of a double Cartesian/Geog frame.
 	for k = 1:length(cmd)
-		#@show(cmd[k])
 		is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
@@ -3364,12 +3364,11 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = mm[1][1],mm[2][1],mm[1][2],mm[2][2]
 				opt_R::String = sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
 				o = scan_opt(cmd[1], "-J")
-				if     (o[1] == 'x')  size_ = "+scale=" * o[2:end]
-				elseif (o[1] == 'X')  size_ = "+width=" * o[2:end]
-				else   @warn("Could not find the right fig size used. Result will be wrong");  size_ = ""
-				end
+				size_ = (o[1] == 'x') ? "+scale=" * o[2:end] : (o[1] == 'X') ? "+width=" * o[2:end] : ""
+				(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
 				cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
 				cmd[k] = replace(cmd[k], " -R" => opt_R)
+				orig_J, orig_R = o, scan_opt(cmd[1], "-R")
 			end
 		elseif (k > 1 && !is_psscale && !is_pscoast && !is_basemap && CTRL.pocket_call[1] !== nothing)
 			# For nested calls that need to pass data
@@ -3383,6 +3382,10 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			continue
 		end
 		P = gmt(cmd[k], args...)
+
+		# If we had a double frame to plot Geog on a Cartesian plot we must reset memory to original -J & -R so
+		# that appending other plots to same fig can continue to work and not fail because proj had become Geog.
+		(orig_J != "") && (gmt("psxy -T -J" * orig_J * " -R" * orig_R * " -O -K >> " * output);  orig_J = "")
 	end
 
 	if (usedConfPar[1])				# Hacky shit to force start over when --PAR options were use
@@ -3503,11 +3506,11 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 
 	dd = ((val = find_in_dict(d, [:leg :legend], false)[1]) !== nothing && isa(val, NamedTuple)) ? nt2dict(val) : Dict()
 
-	fs = 10					# Font size in points
-	symbW = 0.75			# Symbol width. Default to 0.75 cm (good for lines)
+	fs = getmeback(10)					# Font size in points
+	symbW = getmeback(0.75)				# Symbol width. Default to 0.75 cm (good for lines)
 	nl  = length(legend_type[1].label)
 	leg = Vector{String}(undef,3nl)
-	kk = 0
+	kk = getmeback(0)
 	for k = 1:nl						# Loop over number of entries
 		if ((symb = scan_opt(legend_type[1].cmd[k], "-S")) == "")  symb = "-"
 		else                                                       symbW_ = symb[2:end];#	symb = symb[1]
@@ -3586,6 +3589,8 @@ end
 function scan_opt(cmd::AbstractString, opt::String)::String
 	# Scan the CMD string for the OPT option. Note OPT mut be a 2 chars -X GMT option.
 	out = ((ind = findfirst(opt, cmd)) !== nothing) ? strtok(cmd[ind[1]+2:end])[1] : ""
+	(out != "" && cmd[ind[1]+2] == ' ') && (out = "")	# Because seeking -R in a " -R -JX" would ret "-JX"
+	return out
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -3624,6 +3629,9 @@ function justify(arg, nowarn::Bool=false)::String
 	end
 	return out
 end
+
+# --------------------------------------------------------------------------------------------------
+getmeback(val) = val	# To f the damn coverage that insist in ignoring settings type var = const
 
 # --------------------------------------------------------------------------------------------------
 function monolitic(prog::String, cmd0::String, args...)
