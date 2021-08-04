@@ -176,7 +176,7 @@ function opt_R2num(opt_R::String)
 	(endswith(opt_R, "Rg")) && return [0.0, 360., -90., 90.]
 	(endswith(opt_R, "Rd")) && return [-180.0, 180., -90., 90.]
 	if (findfirst("/", opt_R) !== nothing)
-		isdiag = getmeback(false)
+		isdiag = false
 		if ((ind = findfirst("+r", opt_R)) !== nothing)		# Diagonal mode
 			opt_R = opt_R[1:ind[1]-1];	isdiag = true		# Strip the "+r"
 		end
@@ -417,7 +417,7 @@ function parse_proj(p::String)
 		p = replace(p, " " => "")		# Remove the spaces from proj4 strings
 		return p,false
 	end
-	out::String = getmeback("")
+	out::String = ""
 	s = lowercase(p);		mnemo = true	# True when the projection name used one of the below mnemonics
 	if     (s == "aea"   || s == "albers")                 out = "B0/0"
 	elseif (s == "cea"   || s == "cylindricalequalarea")   out = "Y0/0"
@@ -830,7 +830,7 @@ function consolidate_Baxes(opt_B::String)::String
 	opt_B = replace(opt_B, "-B " => "")		# Remove singleton "-B"
 
 	s = split(opt_B)
-	got_x, got_y = getmeback(false), getmeback(false)
+	got_x, got_y = false, false
 	for k = 1:length(s)-1
 		if (startswith(s[k], "-Bpx") && startswith(s[k+1], "-Bpx") && s[k+1][5] != 'c')		# -Bpxc... cannot be glued
 			s[k], s[k+1], got_x = s[k] * s[k+1][5:end], "", true
@@ -2829,7 +2829,7 @@ function fname_out(d::Dict, del::Bool=false)
 		fname, EXT, ret_ps = "", "ps", true
 		(del) && delete!(d, :ps)
 	else
-		ret_ps = getmeback(false)			# To know if we want to return or save PS in mem
+		ret_ps = false			# To know if we want to return or save PS in mem
 	end
 
 	opt_T = "";
@@ -3017,7 +3017,7 @@ function round_wesn(_wesn::Vector{Float64}, geo::Bool=false)::Vector{Float64}
 		end
 	end
 
-	item = getmeback(1)
+	item = 1
 	for side = 1:2
 		set[side] && continue			# Done above */
 		mag = round(log10(range[side])) - 1.0
@@ -3343,7 +3343,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		cmd[1] *= " --PS_MEDIA=11920x16850"				# In Modern mode GMT takes care of this.
 	end
 
-	orig_J = getmeback("")		# To use in the case of a double Cartesian/Geog frame.
+	orig_J = ""		# To use in the case of a double Cartesian/Geog frame.
 	for k = 1:length(cmd)
 		is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
@@ -3506,11 +3506,11 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 
 	dd = ((val = find_in_dict(d, [:leg :legend], false)[1]) !== nothing && isa(val, NamedTuple)) ? nt2dict(val) : Dict()
 
-	fs = getmeback(10)					# Font size in points
-	symbW = getmeback(0.75)				# Symbol width. Default to 0.75 cm (good for lines)
+	fs = 10					# Font size in points
+	symbW = 0.75				# Symbol width. Default to 0.75 cm (good for lines)
 	nl  = length(legend_type[1].label)
 	leg = Vector{String}(undef,3nl)
-	kk = getmeback(0)
+	kk = 0
 	for k = 1:nl						# Loop over number of entries
 		if ((symb = scan_opt(legend_type[1].cmd[k], "-S")) == "")  symb = "-"
 		else                                                       symbW_ = symb[2:end];#	symb = symb[1]
@@ -3631,9 +3631,6 @@ function justify(arg, nowarn::Bool=false)::String
 end
 
 # --------------------------------------------------------------------------------------------------
-getmeback(val) = val	# To f the damn coverage that insist in ignoring settings type var = const
-
-# --------------------------------------------------------------------------------------------------
 function monolitic(prog::String, cmd0::String, args...)
 	# Run this module in the monolithic way. e.g. [outs] = gmt("module args",[inputs])
 	return gmt(prog * " " * cmd0, args...)
@@ -3706,10 +3703,24 @@ function extrema_nan(A)
 	end
 end
 function minimum_nan(A)
-	return (eltype(A) <: AbstractFloat) ? minimum(x->isnan(x) ?  Inf : x,A) : minimum(A)
+	#return (eltype(A) <: AbstractFloat) ? minimum(x->isnan(x) ?  Inf : x,A) : minimum(A)
+	if (eltype(A) <: AbstractFloat)
+		mi = typemax(eltype(A))
+		@inbounds for k = 1:length(A) !isnan(A[k]) && (mi = min(mi, A[k])) end
+		mi
+	else
+		minimum(A)
+	end
 end
 function maximum_nan(A)
-	return (eltype(A) <: AbstractFloat) ? maximum(x->isnan(x) ? -Inf : x,A) : maximum(A)
+	#return (eltype(A) <: AbstractFloat) ? maximum(x->isnan(x) ? -Inf : x,A) : maximum(A)
+	if (eltype(A) <: AbstractFloat)
+		ma = typemin(eltype(A))
+		@inbounds for k = 1:length(A) !isnan(A[k]) && (ma = max(ma, A[k])) end
+		ma
+	else
+		maximum(A)
+	end
 end
 nanmean(x)   = mean(filter(!isnan,x))
 nanmean(x,y) = mapslices(nanmean,x,dims=y)

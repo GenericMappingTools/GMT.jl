@@ -558,8 +558,14 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 	gmt_hdr::GMT_GRID_HEADER = unsafe_load(I.header)
 	ny = Int(gmt_hdr.n_rows);		nx = Int(gmt_hdr.n_columns);		nz = Int(gmt_hdr.n_bands)
 
-	X  = collect(range(gmt_hdr.wesn[1], stop=gmt_hdr.wesn[2], length=(nx + gmt_hdr.registration)))
-	Y  = collect(range(gmt_hdr.wesn[3], stop=gmt_hdr.wesn[4], length=(ny + gmt_hdr.registration)))
+	wesn = [gmt_hdr.wesn[1], gmt_hdr.wesn[2], gmt_hdr.wesn[3], gmt_hdr.wesn[4]]
+	if (gmt_hdr.registration == 0)		# For images we always want pixel registration, so fix this
+		wesn[1] -= gmt_hdr.inc[1]/2;	wesn[2] += gmt_hdr.inc[1]/2
+		wesn[3] -= gmt_hdr.inc[2]/2;	wesn[4] += gmt_hdr.inc[2]/2
+		gmt_hdr.registration = 1
+	end
+	X  = collect(range(wesn[1], stop=wesn[2], length=(nx + gmt_hdr.registration)))
+	Y  = collect(range(wesn[3], stop=wesn[4], length=(ny + gmt_hdr.registration)))
 
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	if (occursin("0", img_mem_layout[1]) || occursin("1", img_mem_layout[1]))	# WTF is 0 or 1?
@@ -594,7 +600,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 	if (gmt_hdr.ProjRefWKT   != C_NULL)  out.wkt   = unsafe_string(gmt_hdr.ProjRefWKT)    end
 	if (gmt_hdr.ProjRefEPSG  != 0)       out.epsg  = unsafe_string(gmt_hdr.ProjRefEPSG)   end
 
-	out.range = vec([gmt_hdr.wesn[1] gmt_hdr.wesn[2] gmt_hdr.wesn[3] gmt_hdr.wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
+	out.range = vec([wesn[1] wesn[2] wesn[3] wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
 	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
 	out.registration = gmt_hdr.registration
 	reg = round(Int, (X[end] - X[1]) / gmt_hdr.inc[1]) == (nx - 1)		# Confirm registration

@@ -225,6 +225,7 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
 """
 function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
+	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
 	color_interp = "";		n_colors = 0;
 	if (cmap !== nothing)
 		have_alpha = !all(cmap.alpha .== 0.0)
@@ -236,23 +237,24 @@ function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vec
 				colormap[m + (n-1)*n_colors] = round(Int32, cmap.colormap[m,n] * 255);
 			end
 		end
-		if (have_alpha)			# Have alpha color(s)
+		if (have_alpha)						# Have alpha color(s)
 			[colormap[m + 3*n_colors] = round(Int32, cmap.colormap[m,4] * 255) for m = 1:size(cmap.colormap, 1)]
 			n_colors *= 1000				# Flag that we have alpha colors in an indexed image
 		end
 	else
-		if (size(mat,3) == 1)  color_interp = "Gray"  end
+		(size(mat,3) == 1) && (color_interp = "Gray")
 		colormap = zeros(Clong,3)			# Because we need an array
 	end
 
 	nx = size(mat, 2);		ny = size(mat, 1);
-	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, 1, hdr, x, y)
+	reg = (hdr !== nothing) ? Int(hdr[7]) : (nx == length(x) && ny == length(y)) ? 0 : 1
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y)
 
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
 	d = KW(kw)
-	if ((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing)  mem_layout = string(val)  end
+	((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing) && (mem_layout = string(val))
 
-	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], 1, NaN, color_interp,
+	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], reg, NaN, color_interp,
 	             x,y,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
 end
 
@@ -491,7 +493,7 @@ function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); 
 	if (isa(reg, String) || isa(reg, Symbol))
 		t = lowercase(string(reg))
 		reg_ = (t != "pixel") ? 0 : 1
-	elseif (isa(reg, Number))
+	elseif (isa(reg, Real))
 		reg_ = (reg == 0) ? 0 : 1
 	end
 	if (isempty(x) && !isempty(xx))  x = xx  end
