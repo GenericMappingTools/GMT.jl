@@ -95,7 +95,7 @@ if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optle
 end
 
 export
-	GMTver, FMT, gmt, libgdal,
+	GMTgrid, GMTimage, GMTdataset, GMTver, FMT, gmt, libgdal,
 	arrows, arrows!, bar, bar!, bar3, bar3!, hlines, hlines!, lines, lines!, legend, legend!, vlines, vlines!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
 	colorscale, colorscale!, contour, contour!, contourf, contourf!, events, filter1d, fitcircle, gmt2kml,
@@ -113,9 +113,9 @@ export
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, splitxyz,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
-	mbimport, mbgetdata, mbsvplist, mblevitus, truecolor,
+	mbimport, mbgetdata, mbsvplist, mblevitus,
 	blendimg!, lonlat2xy, xy2lonlat, mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, theme,
-	tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, varspacegrid, MODIS_L2, 
+	tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite,
 
 	getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 	importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
@@ -208,7 +208,7 @@ include("pstext.jl")
 include("psxy.jl")
 include("pswiggle.jl")
 include("sample1d.jl")
-include("satimg_utils.jl")
+#include("satimg_utils.jl")
 include("spectrum1d.jl")
 include("sphdistance.jl")
 include("sphinterpolate.jl")
