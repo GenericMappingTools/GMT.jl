@@ -92,4 +92,16 @@ function grd_min_max!(G::GMTgrid)
 	# The non-nan version is way faster so use it as a proxy of NaNs and recompute if needed.
 	min = minimum(G.z);
 	!isnan(min) ? (G.range[5:6] = [min, maximum(G.z)]) : (G.range[5:6] = [minimum_nan(G.z), maximum_nan(G.z)])
+	#=
+	if !isnan(min)
+		G.range[5:6] = [min, maximum(G.z)]
+	else
+		tic()
+		t = G.layout;	G.layout = "TRBa"
+		info = grdinfo(G, C=:n, L=0, Vd=1)
+		G.range[5:6] = info[1][5:6]
+		G.layout = t
+		toc()
+	end
+	=#
 end

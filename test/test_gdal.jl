@@ -173,8 +173,6 @@ Gdal.GDALDestroyDriverManager()
 
 	GMT.get_FillValue("_FillValue=9999")
 	GMT.helper_gmt2gd_xyz(GMT.GMTdataset(rand(Float32,3,3), String[], "", String[], "", "", 0),3)
-	@test GMT.guess_increment_from_coordvecs([1., 1, 1, 1], [1., 1, 1, 1]) == 1.0
-	@test GMT.helper_find_sds("AA", "xxxxxxxx:AA", findall("\n", @sprintf("aA\nbbbbbnnn\n"))) == "xxx:AA"
 	@test GMT.gd2gmt_helper_scalefac([1  1; 1 1], 2, 0, false, 0) == [2 2; 2 2]
 	@test GMT.gd2gmt_helper_scalefac([1. 1; 1 1], 2, 0, false, 0) == [2. 2.; 2. 2.]
 
