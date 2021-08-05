@@ -2908,11 +2908,11 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 	got_datetime, is_onecol = false, false
 	if (isa(arg, Vector{DateTime}))					# Must convert to numeric
 		min_max = round_datetime(extrema(arg))		# Good numbers for limits
-		arg = Dates.value.(arg) ./ 1000;			cmd *= " --TIME_SYSTEM=dr0001"
+		arg = Dates.value.(arg) ./ 1000;			cmd *= " --TIME_EPOCH=0000-12-31T00:00:00 --TIME_UNIT=s"
 		got_datetime, is_onecol = true, true
 	elseif (isa(arg, Matrix{Any}) && typeof(arg[1]) == DateTime)	# Matrix with DateTime in first col
 		min_max = round_datetime(extrema(view(arg, :, 1)))
-		arg[:,1] = Dates.value.(arg[:,1]) ./ 1000;	cmd *= " --TIME_SYSTEM=dr0001"
+		arg[:,1] = Dates.value.(arg[:,1]) ./ 1000;	cmd *= " --TIME_EPOCH=0000-12-31T00:00:00 --TIME_UNIT=s"
 		t = Array{Float64, 2}(undef, size(arg))
 		[t[k] = arg[k] for k in eachindex(arg)]
 		arg, got_datetime = t, true
