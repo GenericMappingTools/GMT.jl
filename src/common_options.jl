@@ -1013,7 +1013,7 @@ function parse_c(d::Dict, cmd::String)::Tuple{String, String}
 	# Most of the work here is because GMT counts from 0 but here we count from 1, so conversions needed
 	opt_val::String = ""
 	if ((val = find_in_dict(d, [:c :panel])[1]) !== nothing)
-		if (isa(val, Tuple) || isa(val, Array{<:Number}) || isa(val, Integer))
+		if (isa(val, Tuple) || isa(val, Array{<:Real}) || isa(val, Integer))
 			opt_val = arg2str(val .- 1, ',')
 		elseif (isa(val, String) || isa(val, Symbol))
 			_val::String = string(val)		# In case it was a symbol
@@ -1061,7 +1061,7 @@ function parse_n(d::Dict, cmd::String, gmtcompat::Bool=false)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
 	# The GMTCOMPAT arg is used to reverse the default aliasing in GMT, which is ON by default
 	# However, practise has shown that this makes projecting images significantly slower with not clear benefits
-	cmd_ = add_opt(d, "", 'n', [:n :interp :interpol], 
+	cmd_ = add_opt(d, "", 'n', [:n :interp :interpolation], 
 				   (B_spline=("b", nothing, 1), bicubic=("c", nothing, 1), bilinear=("l", nothing, 1), near_neighbor=("n", nothing, 1), aliasing="_+a", antialiasing="_-a", bc="+b", clipz="_+c", threshold="+t"))
 	# Some gymnics to make aliasing de default (contrary to GMT default). Use antialiasing=Any to revert this.
 	if (!gmtcompat)
