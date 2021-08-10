@@ -223,7 +223,7 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
   - stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
   - stretch = :auto | "auto" | true | 1 will do an automatic stretching from values obtained from histogram thresholds
 """
-function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
 	color_interp = "";		n_colors = 0;
@@ -259,7 +259,7 @@ function mat2img(mat::Array{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vec
 end
 
 # ---------------------------------------------------------------------------------------------------
-function mat2img(mat::Array{UInt16}; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", img8=Matrix{UInt8}(undef,0,0), kw...)
+function mat2img(mat::AbstractArray{UInt16}; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", img8=Matrix{UInt8}(undef,0,0), kw...)
 	# Take an array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
 	# If the kw variable 'stretch' is used, we stretch the intervals in 'stretch' to [0 255].
 	# Use this option to stretch the image histogram.
@@ -274,7 +274,6 @@ function mat2img(mat::Array{UInt16}; x=Vector{Float64}(), y=Vector{Float64}(), h
 	if ((val = find_in_dict(d, [:noconv])[1]) !== nothing)		# No conversion to UInt8 is wished
 		return mat2img(mat, 1; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, d...)
 	end
-	#img = Array{UInt8}(undef,size(mat));
 	img = isempty(img8) ? Array{UInt8}(undef, size(mat)) : img8
 	(size(img) != size(mat)) && error("Incoming matrix and image holder have different sizes")
 	if ((vals = find_in_dict(d, [:histo_bounds :stretch], false)[1]) !== nothing)
