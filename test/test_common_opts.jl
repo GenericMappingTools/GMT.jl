@@ -207,7 +207,7 @@
 	img16 = rand(UInt16, 16, 16, 3);
 	I = GMT.mat2img(img16);
 	img16 = rand(UInt16, 4, 4, 3);
-	I = GMT.GMTimage("", "", 0, [1.,4,1,4,0,255], [1., 1], 1, NaN, "", collect(1.:4),collect(1.:4),img16, vec(zeros(Clong,1,3)), 0, Array{UInt8,2}(undef,1,1), "TCBa", 0)
+	I = GMT.GMTimage("", "", 0, [1.,4,1,4,0,255], [1., 1], 1, NaN, "", String[], collect(1.:4),collect(1.:4),zeros(3),img16, vec(zeros(Clong,1,3)), 0, Array{UInt8,2}(undef,1,1), "TCBa", 0)
 	GMT.mat2img(I);
 	GMT.mat2img(img16, histo_bounds=8440);
 	GMT.mat2img(img16, histo_bounds=[8440 13540]);

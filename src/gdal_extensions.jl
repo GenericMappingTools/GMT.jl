@@ -11,7 +11,7 @@ a `GMTdataset` or an `AbstractDataset`.
          type, in which case its referencing system is copied into `type`
 """
 function setproj!(tipo::AbstractArray, proj::String="")
-	(!isa(tipo, GMT.GMTgrid) && !isa(tipo, GMT.GMTimage) && !isa(tipo, GMT.GMTdataset) && !isa(tipo, Vector{GMT.GMTdataset})) &&
+	(!isa(tipo, GMTgrid) && !isa(tipo, GMTimage) && !isa(tipo, GMT.GMTdataset) && !isa(tipo, Vector{GMT.GMTdataset})) &&
 		error("Wrong data type for this function. Must be a grid, image or dataset")
 	(proj == "") && error("the projection string cannot obviously be empty")
 	isproj4 = (startswith(proj, "+proj") !== nothing)
@@ -20,7 +20,7 @@ function setproj!(tipo::AbstractArray, proj::String="")
 	return nothing
 end
 function setproj!(tipo::AbstractArray, ref)
-	(!isa(ref, GMT.GMTgrid) && !isa(ref, GMT.GMTimage) && !isa(ref, GMT.GMTdataset) && !isa(ref, Vector{GMT.GMTdataset})) &&
+	(!isa(ref, GMTgrid) && !isa(ref, GMTimage) && !isa(ref, GMT.GMTdataset) && !isa(ref, Vector{GMT.GMTdataset})) &&
 		error("Wrong REFERENCE data type for this function. Must be a grid, image or dataset")
 	obj = (isa(ref, Vector{GMT.GMTdataset})) ? ref[1] : ref
 	((prj = obj.proj4) == "") && (prj = obj.wkt)

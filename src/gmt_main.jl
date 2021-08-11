@@ -9,6 +9,7 @@ mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	title::String
 	remark::String
 	command::String
+	names::Vector{String}
 	x::Array{Float64,1}
 	y::Array{Float64,1}
 	v::Array{Float64,1}
@@ -27,7 +28,7 @@ Base.setindex!(G::GMTgrid{T,N}, val, inds::Vararg{Int,N}) where {T,N} = G.z[inds
 Base.BroadcastStyle(::Type{<:GMTgrid}) = Broadcast.ArrayStyle{GMTgrid}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTgrid}}, ::Type{ElType}) where ElType
 	G = find4similar(bc.args)		# Scan the inputs for the GMTgrid:
-	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.x, G.y, G.v, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, G.pad)
+	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.names, G.x, G.y, G.v, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, G.pad)
 end
 
 find4similar(bc::Base.Broadcast.Broadcasted) = find4similar(bc.args)
@@ -46,9 +47,10 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	registration::Int
 	nodata::Float64
 	color_interp::String
+	names::Vector{String}
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-#	image::Union{Array{UInt8}, Array{UInt16}}
+	v::Array{Float64,1}
 	image::Array{T,N}
 	colormap::Array{Clong,1}
 	n_colors::Int
@@ -63,7 +65,7 @@ Base.setindex!(I::GMTimage{T,N}, val, inds::Vararg{Int,N}) where {T,N} = I.image
 Base.BroadcastStyle(::Type{<:GMTimage}) = Broadcast.ArrayStyle{GMTimage}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTimage}}, ::Type{ElType}) where ElType
 	I = find4similar(bc.args)		# Scan the inputs for the GMTimage:
-	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.x, I.y, similar(Array{ElType}, axes(bc)), I.colormap, I.n_colors, I.alpha, I.layout, I.pad)
+	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.names, I.x, I.y, I.v, similar(Array{ElType}, axes(bc)), I.colormap, I.n_colors, I.alpha, I.layout, I.pad)
 end
 find4similar(I::GMTimage, rest) = I
 
@@ -161,6 +163,8 @@ function gmt(cmd::String, args...)
 	if (g_module == "begin")		# Use this default fig name instead of "gmtsession"
 		(r == "") && (r = "GMTplot " * FMT[1])
 		IamModern[1] = true
+	elseif (g_module == "end")		# Last command of a MODERN session
+		isempty(r) && (r = "-Vq")	# Cannot have a no-args for this case otherwise it prints help
 	elseif (r == "" && n_argin == 0) # Just requesting usage message, add -? to options
 		r = "-?"
 	elseif (n_argin > 1 && (g_module == "psscale" || g_module == "colorbar"))	# Happens with nested calls like in grdimage
@@ -523,7 +527,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 
 	# Return grids via a float matrix in a struct
 	rng, inc = (gmt_hdr.n_bands > 1) ? (fill(NaN,8), fill(NaN,3)) : (fill(NaN,6), fill(NaN,2))
-	out = GMTgrid("", "", 0, rng, inc, 0, NaN, "", "", "", X, Y, V, z, "", "", "", "", layout, 0)
+	out = GMTgrid("", "", 0, rng, inc, 0, NaN, "", "", "", String[], X, Y, V, z, "", "", "", "", layout, 0)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT != C_NULL)    out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)      end
@@ -590,8 +594,8 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 
 	# Return image via a uint8 matrix in a struct
 	cinterp = (I.color_interp != C_NULL) ? unsafe_string(I.color_interp) : ""
-	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, cinterp, X, Y,
-	               t, colormap, n_colors, Array{UInt8,2}(undef,1,1), layout, 0)
+	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, cinterp, String[], X, Y,
+	               zeros(nz), t, colormap, n_colors, Array{UInt8,2}(undef,1,1), layout, 0)
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)
