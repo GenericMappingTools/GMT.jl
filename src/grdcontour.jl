@@ -100,7 +100,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			N = (N_used > 1) ? 1 : N_used		# Trickery because add_opt_cpt() is not able to deal with 3 argX
 			if (isa(arg1, GMTgrid))
 				cmd, arg2, arg3, = add_opt_cpt(d, cmd, [:N :fill :colorize], 'N', N, arg2, arg3)
-    			else
+    		else
 				cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:N :fill :colorize], 'N', N, arg1, arg2)
 			end
 			got_N_cpt = true

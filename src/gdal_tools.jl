@@ -220,7 +220,7 @@ function get_gdaldataset(data)
 	if isa(data, AbstractString)			# Check also for remote files (those that start with a @). MAY SCREW VIOLENTLY
 		ds = (data[1] == '@') ? Gdal.unsafe_read(gmtwhich(data)[1].text[1]) : Gdal.unsafe_read(data)
 		needclose = true					# For some reason file remains open and we must close it explicitly
-	elseif (isa(data, GMT.GMTgrid) || isa(data, GMT.GMTimage) || GMT.isGMTdataset(data) || isa(data, Matrix{<:Real}))
+	elseif (isa(data, GMTgrid) || isa(data, GMTimage) || GMT.isGMTdataset(data) || isa(data, Matrix{<:Real}))
 		ds = gmt2gd(data)
 	elseif (isa(data, AbstractGeometry))	# VERY UNSATISFACTORY. SHOULD BE ABLE TO GETPARENT (POSSIBLE?)
 		ds = wrapgeom(data)
@@ -246,7 +246,7 @@ function dither(indata, opts=String[]; n_colors::Integer=256, save::String="", g
 	# ...
 	src_ds, needclose = get_gdaldataset(indata)
 	(nraster(src_ds) < 3) && error("Input image must have at least 3 bands")
-	(isa(indata, GMT.GMTimage) && !startswith(indata.layout, "TRB")) &&
+	(isa(indata, GMTimage) && !startswith(indata.layout, "TRB")) &&
 		error("Image memory layout must be `TRB` and not $(indata.layout). Load image with gdaltranslate()")
 	r_band, g_band, b_band = getband(src_ds, 1), getband(src_ds, 2), getband(src_ds, 3)
 

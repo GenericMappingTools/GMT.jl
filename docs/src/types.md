@@ -14,6 +14,7 @@ Grid type
        title::String              # Title (Optional)
        comment::String            # Remark (Optional)
        command::String            # Command used to create the grid (Optional)
+       names::Vector{String}      # To use whith multi-layered and when layers have names (Optional)
        x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates
        y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates
        v::Array{Float64,1}        # [v x n_bands]   vector with VV (vertical for 3D grids) coordinates
@@ -38,8 +39,10 @@ Image type
        registration::Int          # Registration type: 0 -> Grid registration; 1 -> Pixel registration
        nodata::Float64            # The value of nodata
        color_interp::String       # If equal to "Gray" an indexed image with no cmap will get a gray cmap
+       names::Vector{String}      # To use whith multi-band and when bands have names (Optional)
        x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates
        y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates
+       v::Array{Float64,1}        # [v x n_bands]   vector with vertical coords or wavelengths in hypercubes (Optional)
        image::Array{UInt8,3}      # [n_rows x n_columns x n_bands] image array
        colormap::Array{Clong,1}   # 
        alpha::Array{UInt8,2}      # A [n_rows x n_columns] alpha array

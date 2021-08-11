@@ -253,9 +253,10 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
 	d = KW(kw)
 	((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing) && (mem_layout = string(val))
+	_names = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
 
-	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], reg, NaN, color_interp,
-	             x,y,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
+	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], reg, NaN, color_interp, _names,
+	             x,y,zeros(size(mat,3)),mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -337,7 +338,7 @@ end
 # This method creates a new GMTimage but retains all the header data from the IMG object
 function mat2img(mat, I::GMTimage)
 	range = deepcopy(I.range);	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
-	GMTimage(I.proj4, I.wkt, I.epsg, range, deepcopy(I.inc), I.registration, I.nodata, I.color_interp, deepcopy(I.x), deepcopy(I.y), mat, deepcopy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
+	GMTimage(I.proj4, I.wkt, I.epsg, range, deepcopy(I.inc), I.registration, I.nodata, I.color_interp, String[], deepcopy(I.x), deepcopy(I.y), zeros(size(mat,3)), mat, deepcopy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -474,17 +475,17 @@ creates a Float32 GMTgrid.
 
     Example: G = mat2grid("sombrero")
 """
-function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", names::Vector{String}=String[])
 	(hdr === nothing) && error("When creating grid type with no data the 'hdr' arg cannot be missing")
 	(!isa(hdr, Array{Float64})) && (hdr = Float64.(hdr))
 	(!isa(val, AbstractFloat)) && (val = Float32(val))		# We only want floats here
 	if (length(hdr) == 6)
 		hdr = [hdr[1], hdr[2], hdr[3], hdr[4], val, val, reg === nothing ? 0. : 1., hdr[5], hdr[6]]
 	end
-	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
+	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem, cmd="", names=names)
 end
 
-function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="")
+function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[])
 # Take a 2D array of floats and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
@@ -508,17 +509,17 @@ function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); 
 		(fill_val != 0) && fill!(mat, fill_val)
 	end
 
-	G = GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, x, y, [0.], mat, "x", "y", "v", "z", "BCB", 0)
+	GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, names, x, y, [0.], mat, "x", "y", "v", "z", "BCB", 0)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object
 function mat2grid(mat::DenseMatrix, G::GMTgrid)
-	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, deepcopy(G.x), deepcopy(G.y), [0.], mat, G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, G.pad)
+	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, String[], deepcopy(G.x), deepcopy(G.y), [0.], mat, G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, G.pad)
 	grd_min_max!(Go)		# Also take care of NaNs
 	Go
 end
 function mat2grid(mat::DenseMatrix, I::GMTimage)
-	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, "", "", "", I.x, I.y, [0.], mat, "", "", "", "", I.layout, I.pad)
+	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, "", "", "", String[], I.x, I.y, [0.], mat, "", "", "", "", I.layout, I.pad)
 	(length(Go.layout) == 4) && (Go.layout = Go.layout[1:3])	# No space for the a|A
 	grd_min_max!(Go)		# Also take care of NaNs
 	Go
