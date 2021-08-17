@@ -20,8 +20,8 @@ For files with SDS with a scale_factor (e.g. MODIS data), that scale is applyied
 """
 function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int=0, layout::String="")
 
-	(isa(_dataset, GMTgrid) || isa(_dataset, GMTimage) || isGMTdataset(_dataset)) &&
-		error("Input is a $(typeof(_dataset)) instead of a GDAL dataset. Looking for gmt2gd?")
+	(isa(_dataset, GMTgrid) || isa(_dataset, GMTimage) || isGMTdataset(_dataset)) && return _dataset
+		#error("Input is a $(typeof(_dataset)) instead of a GDAL dataset. Looking for gmt2gd?")
 	if (isa(_dataset, AbstractString))	# A subdataset name or the full string "SUBDATASET_X_NAME=...."
 		# For some bloody reason it would print annoying (& false?) warning messages. Have to use brute force
 		Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))

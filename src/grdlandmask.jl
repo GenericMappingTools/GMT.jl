@@ -47,8 +47,8 @@ function grdlandmask(cmd0::String=""; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdlandmask", cmd0, nothing)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:R :V_params :r :x])
-	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :bordervalues], [:I :inc],
+	cmd, = parse_common_opts(d, "", [:I :R :V_params :r :x])
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :bordervalues],
 	                                 [:G :outfile :outgrid], [:N :mask_geog]])
 	return common_grd(d, "grdlandmask " * cmd, nothing)		# Finish build cmd and run it
 end

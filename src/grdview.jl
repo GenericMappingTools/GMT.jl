@@ -93,15 +93,27 @@ end
 function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1, arg2, arg3, arg4, arg5)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
 	if ((val = find_in_dict(d, [:G :drapefile])[1]) !== nothing)
-		if (isa(val, String))				# Uff, simple. Either a file name or a -A type modifier
-			cmd *= " -G" * val
-		elseif (isa(val, GMTgrid))			# A single drape grid (arg1-3 may be used already)
+		function range_it(val)
 			cmd, N_used = put_in_slot(cmd, val, 'G', [arg1, arg2, arg3, arg4])
 			if     (N_used == 1)  arg1 = val
 			elseif (N_used == 2)  arg2 = val
 			elseif (N_used == 3)  arg3 = val
 			elseif (N_used == 4)  arg4 = val
 			end
+			return cmd, arg1, arg2, arg3, arg4
+		end
+
+		if (isa(val, String))				# Uff, simple. Either a file name or a -A type modifier
+			if (guess_T_from_ext(val) != " -Ti")
+				cmd *= " -G" * val
+			else
+				t = split(scan_opt(cmd, "-R"), '/')
+				Iname = cut_with_gdal(val, ["-projwin", t[1], t[4], t[2], t[3]], expand=true)
+				#cmd, arg1, arg2, arg3, arg4 = range_it(I)
+				cmd *= " -G" * Iname
+			end
+		elseif (isa(val, GMTgrid))	# A single drape grid (arg1-3 may be used already)
+			cmd, arg1, arg2, arg3, arg4 = range_it(val)
 		elseif (isa(val, Tuple) && length(val) == 3)
 			cmd, N_used = put_in_slot(cmd, val[1], 'G', [arg1, arg2, arg3, arg4, arg5])
 			cmd *= " -G -G"		# Because the above only set one -G and we need 3

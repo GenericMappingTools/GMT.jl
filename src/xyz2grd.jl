@@ -52,9 +52,8 @@ function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :h :i :r :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:G :outgrid], [:I :inc],
-	                                 [:S :swap], [:Z :flags]])
+	cmd, = parse_common_opts(d, "", [:I :R :J :V_params :bi :di :e :f :h :i :r :yx])
+	cmd  = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:G :outgrid], [:S :swap], [:Z :flags]])
 	common_grd(d, cmd0, cmd, "xyz2grd ", arg1)		# Finish build cmd and run it
 end
 

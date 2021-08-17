@@ -118,7 +118,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 
-	cmd = parse_these_opts(cmd, d, [[:A :fields], [:C :center], [:I :inc], [:W :weights]])
+	cmd, = parse_common_opts(d, cmd, [:I])
+	cmd = parse_these_opts(cmd, d, [[:A :fields], [:C :center], [:W :weights]])
 	opt_G = add_opt(d, "", 'G', [:G :grid :outgrid])
 
 	if (opt_G != "" && !occursin("-A", cmd))

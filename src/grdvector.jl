@@ -64,9 +64,8 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd, = parse_common_opts(d, cmd, [:UVXY :f :p :t :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:A :polar], [:I :inc], [:N :noclip :no_clip], [:S :vec_scale],
-	                                 [:T :sign_scale], [:Z :azimuth]])
+	cmd, = parse_common_opts(d, cmd, [:I :UVXY :f :p :t :params], first)
+	cmd  = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:S :vec_scale], [:T :sign_scale], [:Z :azimuth]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 
