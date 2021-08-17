@@ -48,8 +48,8 @@ function sphinterpolate(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("sphinterpolate ", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:R :V_params :bi :di :e :h :i :r :yx])
-	cmd  = parse_these_opts(cmd, d, [[:D :duplicates], [:G :outgrid], [:I :inc], [:Q :tension], [:T :nodetable], [:Z :scale]])
+	cmd, = parse_common_opts(d, "", [:I :R :V_params :bi :di :e :h :i :r :yx])
+	cmd  = parse_these_opts(cmd, d, [[:D :duplicates], [:G :outgrid], [:Q :tension], [:T :nodetable], [:Z :scale]])
 
 	common_grd(d, cmd0, cmd, "sphinterpolate ", arg1)		# Finish build cmd and run it
 end

@@ -38,6 +38,9 @@ grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
 gmtwrite("lixo.grd", I)
 grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
 grdview(rand(128,128), G="lixo", I=I, J=:X12, JZ=5, Q=:i, view="145/30", Vd=dbg2)
+I = mat2img(rand(UInt8,128,128,3));
+gmtwrite("lixo.tif", I)
+grdview(rand(128,128), G="lixo.tif", J=:X12, JZ=5, Q=:i, view="145/30")
 
 println("	IMSHOW")
 imshow(rand(UInt16, 128,128),show=false)

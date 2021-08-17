@@ -1174,7 +1174,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 		elseif (opt == :yx) cmd, o = parse_swap_xy(d, cmd)
 		elseif (opt == :R)  cmd, o = parse_R(d, cmd)
 		elseif (opt == :F)  cmd  = parse_F(d, cmd)
-		elseif (opt == :I)  cmd  = parse_inc(d, cmd, [:I :inc], 'I')
+		elseif (opt == :I)  cmd  = parse_inc(d, cmd, [:I :inc :increment :spacing], 'I')
 		elseif (opt == :J)  cmd, o = parse_J(d, cmd)
 		elseif (opt == :JZ) cmd, o = parse_JZ(d, cmd)
 		elseif (opt == :UVXY)     cmd = parse_UVXY(d, cmd)
@@ -2062,17 +2062,17 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	global current_cpt
 	cpt_opt_T::String = ""
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage))			# GMT bug, -R will not be stored in gmt.history
-		range = arg1.range
+		range::Vector{Float64} = vec(arg1.range)
 	elseif (cmd0 != "" && cmd0[1] != '@')
-		info::Array{GMT.GMTdataset,1} = grdinfo(cmd0 * " -C");	range = info[1].data
+		info = grdinfo(cmd0 * " -C");	range = vec(info[1].data)
 	end
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || (cmd0 != "" && cmd0[1] != '@'))
 		if (isempty(current_cpt[1]) && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
-			cpt_opt_T = sprintf(" -T%.12g/%.12g/128+n", range[5] - 1e-6, range[6] + 1e-6)
+			cpt_opt_T = @sprintf(" -T%.12g/%.12g/128+n", range[5] - 1e-6, range[6] + 1e-6)
 		end
 		if (opt_R == "" && (!IamModern[1] || (IamModern[1] && FirstModern[1])) )	# No -R ovewrite by accident
-			cmd *= sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
+			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
 		end
 	end
 

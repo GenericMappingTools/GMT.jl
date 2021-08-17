@@ -16,8 +16,8 @@ function gmtgravmag3d(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	
-	cmd = parse_common_opts(d, "", [:R :V_params :bi :f])[1]
-	cmd = parse_these_opts(cmd, d, [[:C :density], [:E :thickness], [:F :track], [:G :grid :outgrid], [:I :inc],
+	cmd = parse_common_opts(d, "", [:I :R :V_params :bi :f])[1]
+	cmd = parse_these_opts(cmd, d, [[:C :density], [:E :thickness], [:F :track], [:G :grid :outgrid],
 	                                [:L :observation_level], [:S :radius], [:Z :reference_level]])
 	cmd = add_opt(d, cmd, 'H', [:H :mag_params], (field_dec="", field_dip="", mag="", mag_dec="", mag_dip=""))
 

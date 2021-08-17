@@ -61,6 +61,18 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 
+	if (arg1 === nothing && haskey(d, :R) && guess_T_from_ext(cmd0) == " -Ti")
+		t = split(d[:R], '/')
+		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
+		I = cut_with_gdal(cmd0, opts)
+		if     (arg1 === nothing) arg1 = I
+		elseif (arg2 === nothing) arg2 = I
+		elseif (arg3 === nothing) arg3 = I
+		else   arg4 = I
+		end
+		cmd0 = ""
+	end
+
 	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
 	cmd, opt_B, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes) &&
