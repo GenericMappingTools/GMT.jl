@@ -51,9 +51,11 @@ Ig = gmtread("/vsicurl/http://landsat-pds.s3.amazonaws.com/c1/L8/037/034/LC08_L1
 Ib = gmtread("/vsicurl/http://landsat-pds.s3.amazonaws.com/c1/L8/037/034/LC08_L1TP_037034_20160712_20170221_01_T1/LC08_L1TP_037034_20160712_20170221_01_T1_B2.TIF");
 ```
 
-and compose a true color image with the function `truecolor()` that will do the auto-stretching automatically for us
+and compose a true color image with the function `truecolor()` from the [RemoteS](https://github.com/GenericMappingTools/RemoteS.jl)
+package that will do the auto-stretching automatically for us
 
 ```julia
+using RemoteS
 Irgb = truecolor(Ir, Ig, Ib);
 ```
 
