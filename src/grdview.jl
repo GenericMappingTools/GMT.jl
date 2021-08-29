@@ -97,7 +97,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::String, arg1, arg2, arg3, arg4, arg5)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
-	if ((val = find_in_dict(d, [:G :drapefile])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:G :drape :drapefile])[1]) !== nothing)
 		function range_it(val)
 			cmd, N_used = put_in_slot(cmd, val, 'G', [arg1, arg2, arg3, arg4])
 			if     (N_used == 1)  arg1 = val
