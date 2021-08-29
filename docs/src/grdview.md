@@ -35,14 +35,22 @@ Optional Arguments
    dynamic CPT [jet] to automatically determine a continuous CPT from the grid's z-range; you may round
    up/down the z-range by adding **+i** *zinc*. Yet another option is to specify ``color="color1,color2[,color3 ,...]"`` or ``color=((r1,g1,b1),(r2,g2,b2),...)`` to build a linear continuous CPT from those colors automatically (see [Setting color](@ref)). When not explicitly set, but a color map is needed, we will either use the current color map, if available (set by a previous call to *makecpt*), or the default *jet* color map. Must be present if you want (1) mesh plot with contours (``surftype=(mesh=true,)``), or (2) shaded/colored perspective image (``surftype=(surface=true,)`` or ``surftype=(img=true,)``). For ``surftype=(surface=true,)`` you can specify that you want to skip a z-slice by setting the red r/g/b component to **-**.
 
-- **G** or *drape* : -- *drape=grid* **|** *drape=(grid\_r, grid\_g, grid\_b)*\
-   Drape the image in drapegrid on top of the relief provided by reliefgrid. [Default determines colors from
-   reliefgrid]. Note that **zsize** and **plane** always refers to the reliefgrid. The drapegrid only provides
-   the information pertaining to colors, which (if drapegrid is a grid) will be looked-up via the CPT (see
+- **G** or *drape* : -- *drape=grid* **|** *drape=(grid\_r, grid\_g, grid\_b)* **|** *drape=image*\
+   Drape the image in _drapegrid_ on top of the relief provided by _reliefgrid_. [Default determines colors from
+   reliefgrid]. Note that **zsize** and **plane** always refers to the reliefgrid. The _drapegrid_ only provides
+   the information pertaining to colors, which (if `drape` is a grid) will be looked-up via the CPT (see
    **color**). Instead, you may give three grid files via separate **drape** options in the specified order.
    These files must contain the red, green, and blue colors directly (in 0-255 range) and no CPT is needed.
-   The drapegrid may be of a different resolution than the reliefgrid. Finally, drapegrid may be an image to
-   be draped over the surface, in which case the **color** option is not required.
+   The _drapegrid_ may be of a different resolution than the _reliefgrid_. Finally, _drapegrid_ may be an image to
+   be draped over the surface, in which case the **color** option is not required. For the drape image case it is
+   important that both _reliefgrid_ and _drapeimage_ carry referencing information. In that case, the _reliefgrid_
+   can be in geograpgic coordinates and _drapeimage_ in any projection system. Otherwise, we try to figure out what
+   to do but things may ofc go wrong.
+
+- **isgeog** : -- *isgeog=true*\
+   When drapping an image that has a projection info, over a grid that is in geographics but does not carry any
+   information about this fact we may need to use this option to help the program finding the common BoundingBox.
+   Used only together with **drape**
 
 - **I** or *shade* or *intensity* : -- *shade=grid* **|** *shade=azim* **|** *shade=(azimuth=az, norm=params, auto=true)*\
    Gives the name of a grid with intensities in the (-1,+1) range, or a constant intensity to apply everywhere
@@ -62,15 +70,15 @@ Optional Arguments
     transformation. Note: pay attention to always use a tuple, even when only one option is used. This is
     correct: *surf=(img=true,)* but this is wrong: *surf=(img=true)*
 
-> - Specify ``mesh=true`` for mesh plot [Default], and optionally set a color (see [Setting color](@ref)), with ``mesh=color``, for a different mesh paint.
+  - Specify ``mesh=true`` for mesh plot [Default], and optionally set a color (see [Setting color](@ref)), with ``mesh=color``, for a different mesh paint.
 
-> - Specify ``waterfall=:rows`` or ``:cols`` for waterfall plots (row or column profiles). Specify fill color or patterns with a second argument. For example ``waterfall=(:rows, :red)``
+  - Specify ``waterfall=:rows`` or ``:cols`` for waterfall plots (row or column profiles). Specify fill color or patterns with a second argument. For example ``waterfall=(:rows, :red)``
 
-> - Specify ``surface=true`` for surface plot, and optionally add *mesh=true* to have mesh lines drawn on top of surface.
+  - Specify ``surface=true`` for surface plot, and optionally add *mesh=true* to have mesh lines drawn on top of surface.
 
-> - Specify ``image=true`` for image plot. Optionally use ``image=dpi`` to set the effective dpi resolution for the rasterization [100].
+  - Specify ``image=true`` for image plot. Optionally use ``image=dpi`` to set the effective dpi resolution for the rasterization [100].
 
-> - Specify ``nan\_alpha=true``, same as ``image=true`` but will make nodes with ``z = NaN`` transparent, using the colormasking feature in PostScript Level 3.
+  - Specify ``nan\_alpha=true``, same as ``image=true`` but will make nodes with ``z = NaN`` transparent, using the colormasking feature in PostScript Level 3.
 
 - **R** or *region* or *limits* : -- *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
    **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more\

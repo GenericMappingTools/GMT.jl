@@ -524,6 +524,9 @@ OGR_F_SetFieldDateTime(a1, a2, a3, a4, a5, a6, a7, a8, a9) =
 	acare(ccall((:OGR_F_SetFieldDateTime, libgdal), Cvoid, (pVoid, Cint, Cint, Cint, Cint, Cint, Cint, Cint, Cint), a1, a2, a3, a4, a5, a6, a7, a8, a9))
 
 OGR_Dr_DeleteDataSource(a1, a2) = acare(ccall((:OGR_Dr_DeleteDataSource, libgdal), Cint, (pVoid, Cstring), a1, a2))
+
+OSRClone(arg1) = acare(ccall((:OSRClone, libgdal), pVoid, (pVoid,), arg1))
+
 GDALDeleteDataset(a1, a2) = acare(ccall((:GDALDeleteDataset, libgdal), Cint, (pVoid, Cstring), a1, a2))
 
 GDALDatasetCreateLayer(a1, a2, a3, a4, a5) =
@@ -938,6 +941,18 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	getfeaturedefn(feature::Feature) = IFeatureDefnView(OGR_F_GetDefnRef(feature.ptr))
 	unsafe_getfeature(layer::AbstractFeatureLayer, i::Integer) = Feature(pVoid(OGR_L_GetFeature(layer.ptr, i)))
 
+	function getspatialref(layer::AbstractFeatureLayer)::ISpatialRef
+		result = OGR_L_GetSpatialRef(layer.ptr)
+		# NOTE(yeesian): we make a clone here so that the spatialref does not depend on the FeatureLayer/Dataset.
+		return (result == C_NULL) ? ISpatialRef() : ISpatialRef(OSRClone(result))
+	end
+
+	function unsafe_getspatialref(layer::AbstractFeatureLayer)::SpatialRef
+		result = OGR_L_GetSpatialRef(layer.ptr)
+		# NOTE(yeesian): we make a clone here so that the spatialref does not depend on the FeatureLayer/Dataset.
+		return (result == C_NULL) ? SpatialRef() : SpatialRef(OSRClone(result))
+	end
+
 	function setparams!(fielddefn::FieldDefn, name::AbstractString, etype::UInt32;
 						nwidth::Integer=0, nprecision::Integer=0, justify::UInt32=UInt32(0))
 		OGR_Fld_Set(fielddefn.ptr, name, etype, nwidth, nprecision, justify)
@@ -1317,6 +1332,19 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	getband(ds::RasterDataset, i::Integer=1) = getband(ds.ds, i)
 	getproj(ds::AbstractDataset) = GDALGetProjectionRef(ds.ptr)
 	getproj(layer::AbstractFeatureLayer) = SpatialRef(OGR_L_GetSpatialRef(layer.ptr))
+	function getproj(name::AbstractString; proj4::Bool=false)
+		ds = unsafe_read(name)
+		prj = getproj(ds)
+		GDALClose(ds.ptr)
+		return (!proj4) ? prj : startswith(prj, "PROJCS") ? toPROJ4(importWKT(prj)) : prj
+	end
+	function _getproj(G_I, proj4::Bool)
+		prj = G_I.proj4
+		(prj == "") && (prj = G_I.wkt)
+		return (!proj4) ? prj : startswith(prj, "PROJCS") ? toPROJ4(importWKT(prj)) : prj
+	end
+	getproj(G::GMT.GMTgrid;  proj4::Bool=false) = _getproj(G, proj4)
+	getproj(I::GMT.GMTimage; proj4::Bool=false) = _getproj(I, proj4)
 
 	getpoint(geom::AbstractGeometry, i::Integer) = getpoint!(geom, i, Ref{Cdouble}(), Ref{Cdouble}(), Ref{Cdouble}())
 	function getpoint!(geom::AbstractGeometry, i::Integer, x, y, z)
@@ -1495,8 +1523,8 @@ end
 		:nextfeature, :pointalongline, :pointonsurface, :polygonfromedges, :polygonize, :read, :sampleoverview, :simplify,
 		:simplifypreservetopology, :symdifference, :union, :update, :readraster,)
 =#
-	# We don't have unsafe_ versions fot most of the above make the list much shorter
-	for gdalfunc in (:read,)
+	# We don't have unsafe_ versions for most of the above make the list much shorter
+	for gdalfunc in (:read, :getspatialref)
 		eval(quote
 			function $(gdalfunc)(f::Function, args...; kwargs...)
 				obj = $(Symbol("unsafe_$gdalfunc"))(args...; kwargs...)
@@ -2291,7 +2319,7 @@ end
 		getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 		gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy,
-		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, toWKT,
+		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
 		convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 		wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
 		wkbGeometryCollection

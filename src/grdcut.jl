@@ -77,44 +77,9 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 	end
 end
 
-function cut_with_gdal(fname::AbstractString, opts::Vector{AbstractString}, outname::String=""; expand::Bool=false)
+function cut_with_gdal(fname::AbstractString, opts::Vector{AbstractString}, outname::String="")
 	if (outname == "")
-		G_I = gdaltranslate(fname, opts)	# Layout is "TRB" so all matrices are contrary to Julia order
-		if (expand)							# This branch is called only by grdview -G<image>
-			W = parse(Float64, opts[2]);	E = parse(Float64, opts[4])
-			S = parse(Float64, opts[5]);	N = parse(Float64, opts[3])
-			dx_W = G_I.range[1] - W;	dx_E = G_I.range[2] - E
-			dy_S = G_I.range[3] - S;	dy_N = G_I.range[4] - N
-			pad_W = ceil(Int, abs(dx_W) / G_I.inc[1]);		pad_E = ceil(Int, abs(dx_E) / G_I.inc[1])
-			pad_S = ceil(Int, abs(dy_S) / G_I.inc[2]);		pad_N = ceil(Int, abs(dy_N) / G_I.inc[2])
-			# Recompute the WESN such that the increments don't change (original -R was in GRID increment multiples)
-			W = G_I.range[1] - pad_W * G_I.inc[1];			E = G_I.range[2] + pad_E * G_I.inc[1]
-			S = G_I.range[3] - pad_S * G_I.inc[2];			N = G_I.range[4] + pad_N * G_I.inc[2]
-			if (pad_W > 0 || pad_E > 0 || pad_S > 0 || pad_N > 0)
-				img_new = (size(G_I, 3) == 1) ? fill(UInt8(255), size(G_I,1)+pad_W+pad_E, size(G_I,2)+pad_S+pad_N) :
-				                                fill(UInt8(255), size(G_I,1)+pad_W+pad_E, size(G_I,2)+pad_S+pad_N, size(G_I,3))
-				n = 0
-				for l = 1:size(img_new,3)
-					@simd for row = pad_N+1:(size(G_I,2)+pad_N)
-						@simd for col = pad_W+1:(size(G_I,1)+pad_W)
-							@inbounds img_new[col,row,l] = G_I.image[n += 1]
-						end
-					end
-				end
-				G_I = mat2img(img_new, G_I)
-				G_I.x = linspace(W, E, size(img_new,1)+G_I.registration)
-				G_I.y = linspace(S, N, size(img_new,2)+G_I.registration)
-				G_I.inc = [G_I.x[2]-G_I.x[1], G_I.y[2]-G_I.y[1]]
-				G_I.range[1:4] = [W, E, S, N]
-
-				#def_name = joinpath(tempdir(), "GMTjl_2grdview.tiff")
-				def_name = "/vsimem/tmp/GMTjl_2grdview.tiff"	# I'm amazed that this works
-				gdalwrite(def_name, G_I)
-				return def_name
-			end
-			return fname			# If we didn't have to touch the image (rare) just return its name
-		end
-		G_I
+		gdaltranslate(fname, opts)	# Layout is "TRB" so all matrices are contrary to Julia order
 	else
 		gdaltranslate(fname, opts; dest=outname)
 		return nothing				# Since it wrote a file so nothing to return
