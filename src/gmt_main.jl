@@ -288,7 +288,7 @@ function gmt(cmd::String, args...)
 	n_out = 0
 	for k = 1:n_items					# Number of GMT containers involved in this module call
 		if (X[k].direction == GMT_IN) continue 	end
-		n_out = n_out + 1
+		n_out += 1
 	end
 
 	(n_out > 0) ? out = Vector{Any}(undef, n_out) : out = nothing
@@ -331,6 +331,8 @@ function gmt(cmd::String, args...)
 
 	# GMT6.1.0 f up and now we must be very careful to not let the GMT breaking screw us
 	(need2destroy && !IamModern[1]) && gmt_restart()
+
+	(occursin("read", g_module) || occursin("write", g_module)) && ressurectGDAL()	# Since GMT may call GDALDestroyDriverManager()
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)
@@ -544,6 +546,8 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 	out.x_unit       = String(UInt8[gmt_hdr.x_unit...])
 	out.y_unit       = String(UInt8[gmt_hdr.y_unit...])
 	out.z_unit       = String(UInt8[gmt_hdr.z_unit...])
+	(out.proj4 == "" && out.wkt == "" && out.epsg == 0 && startswith(out.x_unit, "longitude [degrees_east]")) &&
+		(out.proj4 = "+proj=longlat +datum=WGS84 +units=m +no_defs")
 
 	return out
 end
