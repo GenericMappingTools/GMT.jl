@@ -2137,7 +2137,7 @@ function add_opt_module(d::Dict)::Vector{String}
 					(symb == :hlines) ? hlines!(; nt...) : vlines!(; nt...)
 				end
 			elseif (isa(val, Number) && (val != 0))		# Allow setting coast=true || colorbar=true
-				if     (symb == :coast)    r = coast!(W=0.5, Vd=2)
+				if     (symb == :coast)    r = coast!(W=0.5, A="200/0/2", Vd=2)
 				elseif (symb == :colorbar) r = colorbar!(pos=(anchor="MR",), B="af", Vd=2)
 				elseif (symb == :logo)     r = logo!(Vd=2)
 				end
@@ -2949,6 +2949,13 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 				dx = (info[1].data[2] - info[1].data[1]) * 0.005;	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
 				info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
 				info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
+				if ((info[1].data[3] < -90 || info[1].data[4] > 90) && isdataset(arg))	# Need for the guess_proj case
+					prj = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
+					if (contains(prj, "longlat") || contains(prj, "latlong"))
+						(info[1].data[3] < -90.) && (info[1].data[3] = -90.)
+						(info[1].data[4] >  90.) && (info[1].data[4] =  90.)
+					end
+				end
 			elseif (!is_onecol)
 				t = round_wesn(info[1].data)		# Add a pad
 				[info[1].data[k-1] = t[k-1] for k = 2:length(rs) if (rs[k] == "?")]
@@ -3080,6 +3087,11 @@ end
 function isvector(x)::Bool
 	# Return true if x is a vector in the Matlab sense
 	isa(x, Vector) || (isa(x, Array) && ( ((size(x,1) == 1) && size(x,2) > 1) || ((size(x,1) > 1) && size(x,2) == 1) ))
+end
+
+# ---------------------------------------------------------------------------------------------------
+function isdataset(x)::Bool
+	isa(x, GMTdataset) || isa(x, Vector{GMTdataset})
 end
 
 # ---------------------------------------------------------------------------------------------------
