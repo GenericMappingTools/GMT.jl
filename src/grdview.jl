@@ -91,13 +91,13 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, arg2, arg3, arg4, arg5 = parse_G_grdview(d, [:G :drape :drapefile], cmd0, cmd, arg1, arg2, arg3, arg4, arg5)
 
 	_cmd, K = finish_PS_nested(d, ["grdview " * cmd], K)
-    return finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3, arg4, arg5)
+	finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3, arg4, arg5)
 end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::String, arg1, arg2, arg3, arg4, arg5)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
-	if ((val = find_in_dict(d, [:G :drape :drapefile])[1]) !== nothing)
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		function range_it(val)
 			cmd, N_used = put_in_slot(cmd, val, 'G', [arg1, arg2, arg3, arg4])
 			if     (N_used == 1)  arg1 = val
@@ -185,7 +185,7 @@ function drape_prepare(d::Dict, fname, opts::Vector{AbstractString}, prj::String
 	end
 
 	#def_name = joinpath(tempdir(), "GMTjl_2grdview.tiff")
-	def_name = "/vsimem/tmp/GMTjl_2grdview.tiff"	# I'm amazed that this works
+	def_name = "/vsimem/GMTjl_2grdview.tiff"	# I'm amazed that this works
 	gdalwrite(def_name, G_I)
 	ressurectGDAL()
 	return def_name
