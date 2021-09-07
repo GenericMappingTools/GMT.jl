@@ -520,26 +520,28 @@ function guess_proj(lonlim, latlim)
 		@warn("Numeric values of 'CTRL.limits' not available. Cannot use the 'guess' option (Must specify a projection)")
 		return(" -JX")
 	end
+	mean_x(x) = round(sum(x)/2; digits=3)
+
 	if (latlim == [-90, 90] && (lonlim[2]-lonlim[1]) > 359.99)	# Whole Earth
-		proj = string(" -JN", sum(lonlim)/2)		# Robinson
+		proj = string(" -JN", mean_x(lonlim))		# Robinson
 	elseif (maximum(abs.(latlim)) < 30)
 		proj = string(" -JM")						# Mercator
 	elseif abs(latlim[2]-latlim[1]) <= 90 && abs(sum(latlim)) > 20 && maximum(abs.(latlim)) < 90
 		# doesn't extend to the pole, not straddling equator
 		parallels = latlim .+ diff(latlim) .* [1/6 -1/6]
-		proj = string(" -JD", sum(lonlim)/2, '/', sum(latlim)/2, '/', parallels[1], '/', parallels[2])	# eqdc
+		proj = string(" -JD", mean_x(lonlim), '/', mean_x(latlim), '/', parallels[1], '/', parallels[2])	# eqdc
 	elseif abs(latlim[2]-latlim[1]) < 85 && maximum(abs.(latlim)) < 90	# doesn't extend to the pole, not straddling equator
-		proj = string(" -JI", sum(lonlim)/2)							# Sinusoidal
+		proj = string(" -JI", mean_x(lonlim))							# Sinusoidal
 	elseif (maximum(latlim) == 90 && minimum(latlim) >= 75)
-		proj = string(" -JS", sum(lonlim)/2, "/90")						# General Stereographic - North Pole
+		proj = string(" -JS", mean_x(lonlim), "/90")					# General Stereographic - North Pole
 	elseif (minimum(latlim) == -90 && maximum(latlim) <= -75)
-		proj = string(" -JS", sum(lonlim)/2, "/-90")					# General Stereographic - South Pole
+		proj = string(" -JS", mean_x(lonlim), "/-90")					# General Stereographic - South Pole
 	elseif maximum(abs.(latlim)) == 90 && abs(lonlim[2]-lonlim[1]) < 180
-		proj = string(" -JPoly", sum(lonlim)/2, '/', sum(latlim)/2)		# Polyconic
+		proj = string(" -JPoly", mean_x(lonlim), '/', mean_x(latlim))	# Polyconic
 	elseif maximum(abs.(latlim)) == 90 && abs(latlim[2]-latlim[1]) < 90
-		proj = string(" -JE", sum(lonlim)/2, '/', 90 * sign(latlim[2]))	# azimuthalequidistant
+		proj = string(" -JE", mean_x(lonlim), '/', 90 * sign(latlim[2]))# azimuthalequidistant
 	else
-		proj = string(" -JJ", sum(lonlim)/2)							# Miller
+		proj = string(" -JJ", mean_x(lonlim))							# Miller
 	end
 end
 
@@ -2949,11 +2951,18 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 				dx = (info[1].data[2] - info[1].data[1]) * 0.005;	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
 				info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
 				info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
-				if ((info[1].data[3] < -90 || info[1].data[4] > 90) && isdataset(arg))	# Need for the guess_proj case
-					prj = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
-					if (contains(prj, "longlat") || contains(prj, "latlong"))
-						(info[1].data[3] < -90.) && (info[1].data[3] = -90.)
-						(info[1].data[4] >  90.) && (info[1].data[4] =  90.)
+				if (isdataset(arg))							# Needed for the guess_proj case
+					if ((info[1].data[3] < -90 || info[1].data[4] > 90) || ((info[1].data[2] - info[1].data[1]) > 360))
+						prj = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
+						if (contains(prj, "longlat") || contains(prj, "latlong"))
+							(info[1].data[3] < -90.) && (info[1].data[3] = -90.)
+							(info[1].data[4] >  90.) && (info[1].data[4] =  90.)
+							if ((info[1].data[2] - info[1].data[1]) > 360)
+								if (info[1].data[2] > 180)  info[1].data[1] = 0.;		info[1].data[2] = 360.
+								else                        info[1].data[1] = -180.;	info[1].data[2] = 180.
+								end
+							end
+						end
 					end
 				end
 			elseif (!is_onecol)
@@ -3185,11 +3194,12 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, args...)
-	# This chunk of code is shared by several grdxxx modules, so wrap it in a function
+	# This chunk of code is shared by several grdxxx & other modules, so wrap it in a function
 	if (IamModern[1])  cmd = replace(cmd, " -R " => " ")  end
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
 	R = isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
+	(isdataset(R) && contains(cmd, " -fg") && getproj(R) == "") && (isa(R, GMTdataset) ? R.proj4 = geo_proj4 : R[1].proj4 = geo_proj4)
 	show_non_consumed(d, cmd)
 	return R
 end
