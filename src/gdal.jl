@@ -1347,6 +1347,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	end
 	getproj(G::GMT.GMTgrid;  proj4::Bool=false) = _getproj(G, proj4)
 	getproj(I::GMT.GMTimage; proj4::Bool=false) = _getproj(I, proj4)
+	getproj(D::GMT.GMTdataset; proj4::Bool=false) = _getproj(D, proj4)
+	getproj(D::Vector{GMT.GMTdataset}; proj4::Bool=false) = _getproj(D[1], proj4)
 
 	getpoint(geom::AbstractGeometry, i::Integer) = getpoint!(geom, i, Ref{Cdouble}(), Ref{Cdouble}(), Ref{Cdouble}())
 	function getpoint!(geom::AbstractGeometry, i::Integer, x, y, z)
