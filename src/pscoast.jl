@@ -138,7 +138,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	if (get_largest)
 		ind = argmax(size.(R))
 		R = [R[ind]]		# Keep it a vector to be consistent with the other Dump cases
-		R[1].proj4, R[1].geom = "+proj=longlat", wkbPolygon
+		R[1].proj4, R[1].geom = prj4WGS84, wkbPolygon
 	end
 	R
 end

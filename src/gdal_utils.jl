@@ -1,5 +1,3 @@
-const prj4WGS84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-
 """
     O = gd2gmt(dataset; band=1, bands=[], sds=0, pad=0)
 
@@ -547,10 +545,10 @@ end
 # TODO ==> Input as vector. EPSGs. Test input t_srs
 # ---------------------------------------------------------------------------------------------------
 """
-    lonlat2xy(lonlat::Matrix{<:Real}, t_srs::String; s_srs=::String="+proj=longlat +ellps=WGS84")
+    lonlat2xy(lonlat::Matrix{<:Real}, t_srs::String; s_srs=::String="+proj=longlat +datum=WGS84")
 or
 
-    lonlat2xy(D::GMTdataset, t_srs::String; s_srs=::String="+proj=longlat +ellps=WGS84")
+    lonlat2xy(D::GMTdataset, t_srs::String; s_srs=::String="+proj=longlat +datum=WGS84")
 
 Computes the forward projection from LatLon to XY in the given projection. The input is assumed to be in WGS84.
 If it isn't, pass the appropriate projection info via the `s_srs` option.
@@ -578,10 +576,10 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    xy2lonlat(xy::Matrix{<:Real}, s_srs::String; t_srs=::String="+proj=longlat +ellps=WGS84")
+    xy2lonlat(xy::Matrix{<:Real}, s_srs::String; t_srs=::String="+proj=longlat +datum=WGS84")
 or
 
-    xy2lonlat(D::GMTdataset, s_srs::String; t_srs=::String="+proj=longlat +ellps=WGS84")
+    xy2lonlat(D::GMTdataset, s_srs::String; t_srs=::String="+proj=longlat +datum=WGS84")
 
 Computes the inverse projection from XY to LonLat in the given projection. The output is assumed to be in WGS84.
 If that isn't right, pass the appropriate projection info via the `t_srs` option.
@@ -600,7 +598,7 @@ function xy2lonlat(xy::Matrix{<:Real}, s_srs::String; t_srs::String=prj4WGS84)
 	return D[1].data		# Return only the array because that's what was sent in
 end
 
-xy2lonlat(D::GMTdataset, s_srs::String=""; t_srs::String="+proj=longlat +ellps=WGS84") = xy2lonlat([D], s_srs; t_srs=t_srs)
+xy2lonlat(D::GMTdataset, s_srs::String=""; t_srs::String=prj4WGS84) = xy2lonlat([D], s_srs; t_srs=t_srs)
 function xy2lonlat(D::Vector{<:GMTdataset}, s_srs::String=""; t_srs::String=prj4WGS84)
 	(D[1].proj4 == "" && D[1].wkt == "" && s_srs == "") && error("No projection information whatsoever on the input data.")
 	if (s_srs != "") _s_srs = s_srs
