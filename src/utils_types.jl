@@ -124,7 +124,7 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs.
 	end
 
 	prj = ((proj = find_in_dict(d, [:proj :proj4])[1]) !== nothing) ? proj : ""
-	(prj == "geo" || prj == "geog") && (prj = "+proj=longlat +datum=WGS84 +units=m +no_defs")
+	(prj == "geo" || prj == "geog") && (prj = prj4WGS84)
 	(prj != "" && !startswith(prj, "+proj=")) && (prj = "+proj=" * prj)
 	wkt = ((wk = find_in_dict(d, [:wkt])[1]) !== nothing) ? wk : ""
 

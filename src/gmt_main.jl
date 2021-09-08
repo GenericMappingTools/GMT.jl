@@ -547,7 +547,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 	out.y_unit       = String(UInt8[gmt_hdr.y_unit...])
 	out.z_unit       = String(UInt8[gmt_hdr.z_unit...])
 	(out.proj4 == "" && out.wkt == "" && out.epsg == 0 && startswith(out.x_unit, "longitude [degrees_east]")) &&
-		(out.proj4 = "+proj=longlat +datum=WGS84 +units=m +no_defs")
+		(out.proj4 = prj4WGS84)
 
 	return out
 end
@@ -1224,10 +1224,6 @@ function ps_init(API::Ptr{Nothing}, ps, dir::Integer)::Ptr{GMT_POSTSCRIPT}
 	unsafe_store!(P, P0)
 	return P
 end
-
-# ---------------------------------------------------------------------------------------------------
-# Convenient function to tell if x is a GMTdataset (or vector of it) or not
-isGMTdataset(x) = (isa(x, GMTdataset) || isa(x, Vector{<:GMTdataset}))
 
 # ---------------------------------------------------------------------------------------------------
 function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)

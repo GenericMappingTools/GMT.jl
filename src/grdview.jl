@@ -113,7 +113,7 @@ function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::Str
 				cmd *= " -G" * val
 			else
 				if (cmd0 != "")
-					prj = (startswith(cmd0, "@earth_r")) ? "+proj=longlat +datum=WGS84 +units=m +no_defs" : getproj(cmd0, proj4=true)
+					prj = (startswith(cmd0, "@earth_r")) ? prj4WGS84 : getproj(cmd0, proj4=true)
 				else
 					prj = (isa(arg1, GMTgrid)) ? getproj(arg1) : ""
 				end
@@ -144,7 +144,7 @@ function drape_prepare(d::Dict, fname, opts::Vector{AbstractString}, prj::String
 	prj_img = getproj(fname, proj4=true)
 	(prj_img == "") && return fname			# If drape image has no RefSys just return its name and let it all be used
 
-	(prj == "" && find_in_dict(d, [:isgeog])[1] !== nothing) && (prj = "+proj=longlat +datum=WGS84 +units=m +no_defs")
+	(prj == "" && find_in_dict(d, [:isgeog])[1] !== nothing) && (prj = prj4WGS84)
 
 	# Layout is "TRB" so all matrices are contrary to Julia order. opts=[-projwin xmin ymax xmax ymin]
 	G_I = (prj == "" || prj == prj_img) ? gdaltranslate(fname, opts) :

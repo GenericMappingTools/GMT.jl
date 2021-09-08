@@ -59,13 +59,6 @@ function gmtsplit(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, = parse_common_opts(d, "", [:V_params :bi :bo :di :do :e :f :g :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim_tol], [:C :course_change], [:D :min_dist :min_distance], [:F :filter],
 	                                 [:Q :xyzdh], [:S :dh :dist_head]])
-#=
-    if (arg1 !== nothing && (isdataset(arg1) || isa(arg1, Matrix{<:Real})) )
-	    name = joinpath(tempdir(), "GMTjl_tmp.dat")
-        gmtwrite(name, arg1)
-        cmd0 = name
-    end
-=#
 	common_grd(d, cmd0, cmd, proggy * " ", arg1)	# Finish build cmd and run it
 end
 

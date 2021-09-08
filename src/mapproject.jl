@@ -114,7 +114,7 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	else
 	    #cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
 		R = common_grd(d, cmd0, cmd, "mapproject ", arg1, arg2)
-        (isa(R, Vector{GMTdataset}) && contains(cmd, " -I")) && (R[1].proj4 = "+proj=longlat +datum=WGS84 +units=m +no_defs")
+        (isa(R, Vector{GMTdataset}) && contains(cmd, " -I")) && (R[1].proj4 = prj4WGS84)
         R
 	end
 end

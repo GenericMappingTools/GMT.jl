@@ -2951,7 +2951,7 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 				dx = (info[1].data[2] - info[1].data[1]) * 0.005;	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
 				info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
 				info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
-				if (isdataset(arg))							# Needed for the guess_proj case
+				if (isGMTdataset(arg))							# Needed for the guess_proj case
 					if ((info[1].data[3] < -90 || info[1].data[4] > 90) || ((info[1].data[2] - info[1].data[1]) > 360))
 						prj = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
 						if (contains(prj, "longlat") || contains(prj, "latlong"))
@@ -3099,9 +3099,8 @@ function isvector(x)::Bool
 end
 
 # ---------------------------------------------------------------------------------------------------
-function isdataset(x)::Bool
-	isa(x, GMTdataset) || isa(x, Vector{GMTdataset})
-end
+# Convenient function to tell if x is a GMTdataset (or vector of it) or not
+isGMTdataset(x)::Bool = (isa(x, GMTdataset) || isa(x, Vector{<:GMTdataset}))
 
 # ---------------------------------------------------------------------------------------------------
 function find_data(d::Dict, cmd0::String, cmd::String, args...)
@@ -3199,7 +3198,7 @@ function common_grd(d::Dict, cmd::String, args...)
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
 	R = isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
-	(isdataset(R) && contains(cmd, " -fg") && getproj(R) == "") && (isa(R, GMTdataset) ? R.proj4 = geo_proj4 : R[1].proj4 = geo_proj4)
+	(isGMTdataset(R) && contains(cmd, " -fg") && getproj(R) == "") && (isa(R, GMTdataset) ? R.proj4 = prj4WGS84 : R[1].proj4 = prj4WGS84)
 	show_non_consumed(d, cmd)
 	return R
 end

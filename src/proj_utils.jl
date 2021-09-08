@@ -281,7 +281,7 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 	ind[1], ind[end] = true, true			# Ensure first and last are not removed
 	D[1].data = D[1].data[ind, :]			# Remove all points that are less 1% above the mean
 
-	(proj == "" && epsg == 0) && (D[1].proj4 == "+proj=longlat +datum=WGS84 +no_defs")
+	(proj == "" && epsg == 0) && (D[1].proj4 == prj4WGS84)
 	(proj != "") && (D[1].proj4 = proj)
 	(epsg != 0) && (D[1].proj4 = toPROJ4(importEPSG(epsg)))
 	(tol < 0) && (tol = width * 0.005 / 111111)		# Tolerance as 0.5% of buffer with converted to degrees
@@ -496,7 +496,7 @@ function helper_geod(proj::String, s_srs::String, epsg::Integer)::Tuple{String, 
 	if     (proj  != "")  prj_string = proj
 	elseif (s_srs != "")  prj_string = s_srs
 	elseif (epsg > 0)     prj_string = toPROJ4(importEPSG(epsg))
-	else                  prj_string = "+proj=longlat +datum=WGS84 +no_defs"
+	else                  prj_string = prj4WGS84
 	end
 	(startswith(prj_string, "GEOGC")) && (prj_string = toPROJ4(importWKT(prj_string)))
 	prj_string, proj_create(prj_string), (startswith(prj_string, "+proj=longl") || startswith(prj_string, "+proj=latl") || epsg == 4326)
