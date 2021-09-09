@@ -187,7 +187,6 @@ function parse_dcw(cmd::String, val::Tuple)::String
 	if (isa(val, Tuple) && length(val) == 2)
 		(isa(val[2], Real)) && return string(cmd, " -E", val[1], "+p", val[2])
 		(isa(val[2], String) || isa(val[2], Symbol)) && return string(cmd, " -E", val[1], "+g", string(val[2]))
-		error("Unknown DCW option $val")
 	end
 
 	for k = 1:length(val)
