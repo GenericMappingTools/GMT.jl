@@ -160,6 +160,7 @@ end
 # ---------------------------------------------------------------------------------
 function guess_T_from_ext(fname::String)::String
 	# Guess the -T option from a couple of known extensions
+	(!isfile(fname)) && error("File $fname does not exist.")
 	ext = splitext(fname)[2]
 	(length(ext) > 8 || occursin("?", ext)) && return (occursin("?", ext)) ? " -Tg" : "" # A SUBDATASET encoded fname?
 	ext = lowercase(ext[2:end])
