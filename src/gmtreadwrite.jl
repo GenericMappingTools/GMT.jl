@@ -118,7 +118,7 @@ function gmtread(fname::String; kwargs...)
 
 	if (opt_T == "")
 		((opt_T = guess_T_from_ext(fname)) == "") && error("Must select one input data type (grid, image, dataset, cmap or ps)")
-		if (opt_T == " -Tg" && haskey(d, :ignore_grd))  return nothing  end 	# contourf uses this
+		(opt_T == " -Tg" && haskey(d, :ignore_grd)) && return nothing	# contourf uses this
 	else
 		opt_T = opt_T[1:4]      				# Remove whatever was given as argument to type kwarg
 	end
@@ -160,7 +160,6 @@ end
 # ---------------------------------------------------------------------------------
 function guess_T_from_ext(fname::String)::String
 	# Guess the -T option from a couple of known extensions
-	(!isfile(fname)) && error("File $fname does not exist.")
 	ext = splitext(fname)[2]
 	(length(ext) > 8 || occursin("?", ext)) && return (occursin("?", ext)) ? " -Tg" : "" # A SUBDATASET encoded fname?
 	ext = lowercase(ext[2:end])
@@ -172,6 +171,7 @@ function guess_T_from_ext(fname::String)::String
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	elseif (startswith(ext, "tif"))
+		(!isfile(fname)) && error("File $fname does not exist.")
 		ressurectGDAL();
 		gdinfo = gdalinfo(fname)
 		out = (findfirst("Type=UInt", gdinfo) !== nothing || findfirst("Type=Byte", gdinfo) !== nothing) ? " -Ti" : " -Tg"
