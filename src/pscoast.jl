@@ -32,8 +32,9 @@ Parameters
 
     Select painting or dumping country polygons from the Digital Chart of the World.
     ($(GMTdoc)coast.html#e)
-    + Tuple("code", Str); Tuple("code" [,"fill"], (pen)); Tuple((...),(...),...)
+    + Tuple("code", Str); Tuple(code, number); Tuple("code" [,"fill"], (pen)); Tuple((...),(...),...)
     + ex: ("PT",(0.5,"red","--")); (("PT","gblue",(0.5,"red"),("ES",(0.5,"yellow")))
+    +     DCW=:PT; DCW=(:PT, 1); DCW=("PT", :red)
 - **F** | **box** :: [Type => Str]
 
     Draws a rectangular border around the map scale or rose.
@@ -94,7 +95,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd = parse_E_coast(d, [:E :DCW :dcw], "")		# Process first to avoid warning about "guess"
+	cmd = parse_E_coast(d, [:E, :DCW], "")		# Process first to avoid warning about "guess"
 	cmd = add_opt(d, cmd, "M", [:M :dump])
 	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd) && !occursin("-M", cmd))
 		cmd, = parse_BJR(d, cmd, "", O, "guess")
@@ -161,25 +162,34 @@ function parse_INW_coast(d::Dict, symbs::Array{Array{Symbol,2},1}, cmd::String, 
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_E_coast(d::Dict, symbs::Array{<:Symbol}, cmd::String)
+function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
-		if (isa(val, String) || isa(val, Symbol))
-			cmd = string(cmd, " -E", val)			# Simple case, ex E="PT,+gblue"
+		if (isa(val, String) || isa(val, Symbol))	# Simple case, ex E="PT,+gblue" or E=:PT
+			t = string(" -E", val)
+			!contains(t, "+") && (t *= "+p0.5")		# If only code(s), append pen
+			cmd *= t
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
 			cmd = add_opt(d, cmd, "E", [:DCW :E], (country="", name="", continent="=",
 			                                       pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))
 		elseif (isa(val, Tuple))
 			cmd = parse_dcw(cmd, val)
 		end
-		if (GMTver >= v"6.1")  cmd *= " -Vq"  end		# Suppress annoying warnings regarding filling syntax with +r<dpi>
+		(GMTver >= v"6.1") && (cmd *= " -Vq")		# Suppress annoying warnings regarding filling syntax with +r<dpi>
 		del_from_dict(d, symbs)
 	end
 	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_dcw(cmd::String, val::Tuple)
+function parse_dcw(cmd::String, val::Tuple)::String
+	# First test if (code, pen) or (code, fill) are passed in.
+	if (isa(val, Tuple) && length(val) == 2)
+		(isa(val[2], Real)) && return string(cmd, " -E", val[1], "+p", val[2])
+		(isa(val[2], String) || isa(val[2], Symbol)) && return string(cmd, " -E", val[1], "+g", string(val[2]))
+		error("Unknown DCW option $val")
+	end
+
 	for k = 1:length(val)
 		if (isa(val[k], NamedTuple) || isa(val[k], Dict))
 			if (isa(val[k], Dict))  val[k] = dict2nt(val[k])  end
