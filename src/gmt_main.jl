@@ -280,7 +280,7 @@ function gmt(cmd::String, args...)
 	status = GMT_Call_Module(API, g_module, GMT_MODULE_OPT, LL)
 	if (status != 0)
 		((status < 0) || status == GMT_SYNOPSIS || status == Int('?')) && return
-		error("Something went wrong when calling the module. GMT error number =")
+		error("Something went wrong when calling the module. GMT error number = $status")
 	end
 
 	# 7. Hook up module GMT outputs to Julia array
