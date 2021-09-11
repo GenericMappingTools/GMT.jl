@@ -175,7 +175,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false	# Automatic zoom to interesting region
 		(do_zoom && !do_auto) && (val_auto = nothing)		# I.e. 'zoom' sets also the auto mode
 		hst, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
-		if (do_clip && (all(hst[3:10,2] .== 0)))  hst[1,2] = 0; hst[2,2] = 0  end
+		(do_clip && (all(hst[3:10,2] .== 0)) || hst[1,2] > 100 * mean(hst[2:10,2])) && (hst[1,2] = 0; hst[2,2] = 0)
 		if (do_auto || do_getauto || do_zoom)
 			which_auto = (do_auto) ? val_auto : val_getauto
 			limit_L, limit_R = find_histo_limits(arg1, which_auto, 20)
@@ -254,8 +254,10 @@ function find_histo_limits(In, thresholds=nothing, width=20)
 		return (L1[1], L1[2], L2[1], L2[2], L3[1], L3[2])
 	end
 	hst = loc_histo(In, "", string(width), "")[1]
-	if (size(hst, 1) >= 5)
+	if (size(hst, 1) > 10)
 		all(hst[2:5,2] .== 0) && (hst[1,2] = 0)	# Here we always check for high counts in zero bin
+		# Some processed bands leave garbage on the low DNs and that fouls our detecting algo. So check more
+		((hst[1,2] != 0) && hst[1,2] > 100 * mean(hst[2:10,2])) && (hst[1,2] = 0)	# Ad-hoc numbers
 	end
 	max_ = maximum(hst, dims=1)[2]
 	(max_ == 0) && error("This histogram had nothing but countings ONLY in first bin. No point to proceed.")
