@@ -163,6 +163,7 @@ function guess_T_from_ext(fname::String)::String
 	ext = splitext(fname)[2]
 	(length(ext) > 8 || occursin("?", ext)) && return (occursin("?", ext)) ? " -Tg" : "" # A SUBDATASET encoded fname?
 	ext = lowercase(ext[2:end])
+	((ext == "jp2" || ext == "tif" || ext == "tiff") && !isfile(fname)) && error("File $fname does not exist.")
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "png", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
@@ -171,7 +172,6 @@ function guess_T_from_ext(fname::String)::String
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	elseif (startswith(ext, "tif"))
-		(!isfile(fname)) && error("File $fname does not exist.")
 		ressurectGDAL();
 		gdinfo = gdalinfo(fname)
 		out = (findfirst("Type=UInt", gdinfo) !== nothing || findfirst("Type=Byte", gdinfo) !== nothing) ? " -Ti" : " -Tg"
