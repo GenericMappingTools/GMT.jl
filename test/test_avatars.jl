@@ -104,7 +104,7 @@
 	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
 	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 	D = histogram(randn(100), I=:o, T=0.1);
-	@test_throws ErrorException("Something went wrong when calling the module. GMT error number =") histogram(randn(100), I=:o, V=:q, W=0.1);
+	@test_throws ErrorException("Something went wrong when calling the module. GMT error number = 72") histogram(randn(100), I=:o, V=:q, W=0.1);
 	lines(D, steps=(x=true,), close=(bot=true,))
 	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
 	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=dbg2);
