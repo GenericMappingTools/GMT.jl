@@ -1283,37 +1283,6 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 	return D
 end
 
-#= ---------------------------------------------------------------------------------------------------
-function convert_string(str)
-# Convert a string stored in one of those GMT.Array_XXX_Uint8 types into an ascii string
-	k = 1
-	while (str.(k) != UInt8(0))
-		k = k + 1
-	end
-	out = join([Char(str.(n)) for n=1:k])
-end
-=#
-
-#= ---------------------------------------------------------------------------------------------------
-function get_datatype(var)
-# Get the data type of VAR
-	if (eltype(var) == Float64) return DOUBLE_CLASS	end
-	if (eltype(var) == Float32) return SINGLE_CLASS	end
-	if (eltype(var) == UInt64) 	return UINT64_CLASS	end
-	if (eltype(var) == Int64) 	return INT64_CLASS	end
-	if (eltype(var) == UInt32) 	return UINT32_CLASS	end
-	if (eltype(var) == Int32) 	return INT32_CLASS	end
-	if (eltype(var) == UInt16) 	return UINT16_CLASS	end
-	if (eltype(var) == Int16) 	return INT16_CLASS	end
-	if (eltype(var) == UInt8) 	return UINT8_CLASS	end
-	if (eltype(var) == Int8) 	return INT8_CLASS	end
-	if (var === nothing)		return DOUBLE_CLASS	end		# Motivated by project -G
-
-	println("Unable to discovery this data type - Default to double")
-	return DOUBLE_CLASS
-end
-=#
-
 # ---------------------------------------------------------------------------------------------------
 function strncmp(str1::String, str2::String, num)
 	# Pseudo strncmp
