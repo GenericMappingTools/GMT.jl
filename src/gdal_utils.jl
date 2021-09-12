@@ -209,6 +209,8 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 				geom = Gdal.getgeom(feature, j)
 				_D = gd2gmt(geom, proj)
 				gt = Gdal.getgeomtype(geom)
+				# Maybe when there nlayers > 1 or other cases, starting allocated size is not enough
+				(length(_D) + ds >= length(D)) && append!(D, Vector{GMTdataset}(undef, round(Int, 0.5 * length(D))))
 				for d in _D
 					D[ds] = d
 					D[ds].geom = gt
@@ -217,7 +219,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 			end
 		end
 	end
-	(length(D) != ds-1) && (D = D[1:ds-1])		# Happens with MultiPoints where we allocated D in excess
+	(length(D) != ds-1) && (D = deleteat!(D,ds:length(D)))
 	return D
 end
 
