@@ -116,7 +116,7 @@ export
 	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 	blendimg!, lonlat2xy, xy2lonlat, mat2ds, mat2grid, mat2img, linspace, logspace, contains, fields, tic, toc, theme,
-	tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite,
+	tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, GADM,
 
 	getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 	importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
@@ -144,6 +144,7 @@ include("blocks.jl")
 include("contourf.jl")
 include("filter1d.jl")
 include("fitcircle.jl")
+include("gadm.jl")
 include("gmt2kml.jl")
 include("gmtconnect.jl")
 include("gmtconvert.jl")
@@ -209,7 +210,6 @@ include("pstext.jl")
 include("psxy.jl")
 include("pswiggle.jl")
 include("sample1d.jl")
-#include("satimg_utils.jl")
 include("spectrum1d.jl")
 include("sphdistance.jl")
 include("sphinterpolate.jl")
