@@ -1,49 +1,75 @@
 # Addapted from the original https://github.com/JuliaGeo/GADM.jl (MIT Licensed)
 # and stripped from all of it's dependencies (ArchGDAL repaced by the GMT GDAL functions).
-# Loosing the Tables.jl, however, is a limitation since the `children` output is now
-# difficult to interpret. Must do something about this one of these days.
+# Expanded to also return all subregions of a particular a particular administrative entity.
+# To (partially) replace the role of the Tables.jl interface an option exists to print the
+# names of all subregions of a parent administrative unit.
 
 """
-    GADM(country, subregions...; children=false)
+    gadm(country, subregions...; children=false, names=false, children_raw=false, reportlevels=false)
 
-Returns a GMTdataset for the requested country, or country subregion
+Returns a GMTdataset for the requested country, or country subregion(s)
 
-1. country: ISO 3166 Alpha 3 country code  
-2. subregions: Full official names in hierarchial order (provinces, districts, etc.)  
-3. children: When true, function returns two variables -> parent, children.  
-Eg. when children is set true when querying just the country,
-second return parameter are the states/provinces. WARNING, since the Tables.jl dependency
-was dropped (from the original GADM.jl) this second output is, for now, difficult to interpret
+1. `country`: ISO 3166 Alpha 3 country code  
+2. subregions: Full official names in hierarchial order (provinces, districts, etc.)
+   To know the names of all administrative children of parent, use the option `names`
+3. `children`: When true, function returns all subregions of parent
+4. `children_raw`: When true, function returns two variables -> parent, children, where children is a GDAL object
+   E.g. when children is set to true and when querying just the country,
+   second return parameter are the states/provinces. If `children` we return a Vector of GMTdataset with
+   the polygons. If `children_raw` the second output is a GDAL object much like in GADM.jl (less the Tables.jl) 
+5. `reportlevels`: just report the number of administrative levels (including the country) and exit.
 
 ## Examples  
   
 ```julia
 # data of India's borders
-data = GADM("IND")
-# parent -> state data, children -> all districts inside Uttar Pradesh
-parent, children = GADM("IND", "Uttar Pradesh"; children=true)
+data = gadm("IND")
+
+# uttar -> the limits of the Uttar Pradesh state
+uttar = gadm("IND", "Uttar Pradesh, children=true)
+
+# uttar -> limits of all districts of the  Uttar Pradesh state
+uttar = gadm("IND", "Uttar Pradesh", children=true)
+
+# Names of all states of India
+gadm("IND", names=true)
 ```
 """
-function GADM(country, subregions...; children=false)
+function gadm(country, subregions...; children::Bool=false, names::Bool=false, children_raw::Bool=false, reportlevels::Bool=false)
 	isvalidcode(country) || throw(ArgumentError("please provide standard ISO 3 country codes"))
 	data_pato = country |> _download		# Downloads and extracts dataset of the given country code
 	data = Gdal.read(data_pato)
 	!isnothing(data) ? data : throw(ArgumentError("failed to read data from disk"))
 	nlayers = Gdal.nlayer(data)
+	reportlevels && return nlayers
 
-	function _filterlayer(layer, key, value, all=false)
-		filtered = []
+	function _filterlayer(layer, level, value, all::Bool=false)
+		filtered, key = Vector{GMT.Gdal.Feature}(undef,0), "NAME_$(level)"
 		for row in layer
-			index = Gdal.findfieldindex(row, Symbol(key))
-			field = Gdal.getfield(row, index)
+			field = Gdal.getfield(row, key)
 			if all || occursin(lowercase(value), lowercase(field))
 				push!(filtered, row)
+			end
+		end
+		isempty(filtered) && throw(ArgumentError("could not find required region"))
+		filtered
+	end
+	function _getnames(layer, level, parent)
+		# Get the names of all direct descendents of 'parent'
+		filtered, key, keyP = Vector{String}(undef,0), "NAME_$(level)", "NAME_$(level-1)"
+		for row in layer
+			field  = Gdal.getfield(row, key)
+			if (parent == "")		# Easier, all descendents are what we are looking for
+				push!(filtered, field)
+			else					# Filter only the descendents of a specific parent
+				fieldP = Gdal.getfield(row, keyP)
+				contains(lowercase(fieldP), parent) && push!(filtered, field)
 			end
 		end
 		filtered
 	end
 
-	function _getlayer()
+	function _getlayer(plevel)
 		# Get layer of the desired `level` from the `data`.
 		nlayers = Gdal.nlayer(data)
 		for l = 0:nlayers - 1
@@ -52,28 +78,44 @@ function GADM(country, subregions...; children=false)
 			llevel = last(split(lname, "_"))
 			string(plevel) == llevel && return layer
 		end
-		throw(ArgumentError("asked for level $(plevel), valid levels are 0-$(nlayers - 1)"))
+		error("Asked data for a level ($(plevel+1)) that is lower than lowest data level ($(nlayers))")
+	end
+
+	function _get_polygs(gdfeature)
+		D = gd2gmt(getgeom(gdfeature[1], 0),"")
+		((prj = getproj(Gdal.getlayer(data, 0))) != C_NULL) && (D[1].proj4 = toPROJ4(prj))
+		for n = 2:length(gdfeature)
+			_D = gd2gmt(getgeom(gdfeature[n], 0),"")
+			append!(D, _D)
+		end
+		D
 	end
 
 	# p -> parent, is the requested region
 	plevel = length(subregions)
-	plevel >= nlayers && throw(ArgumentError("more subregions provided than actual")) 
+	plevel >= nlayers && throw(ArgumentError("more subregions required than in data")) 
 	pname = isempty(subregions) ? "" : last(subregions)
-	player = _getlayer()
-	p = _filterlayer(player, "NAME_$(plevel)", pname, iszero(plevel))
-	isempty(p) && throw(ArgumentError("could not find required region"))
-	D = gd2gmt(getgeom(p[1], 0),"")
-	((prj = getproj(Gdal.getlayer(data, 0))) != C_NULL) && (D[1].proj4 = toPROJ4(prj))
+	player = _getlayer(plevel)
 
-	!children && return D
+	if (!children && !children_raw && !names) || (!names && nlayers == plevel + 1)	# Last case is when we have no more levels
+		p = _filterlayer(player, plevel, pname, iszero(plevel))
+		return !children_raw ? _get_polygs(p) : (_get_polygs(p), nothing)
+	end
 
 	# c -> children, is the region 1 level lower than p
 	clevel = plevel + 1
-	clevel == nlayers && return (D, nothing)
-	clayer = _getlayer()
-	c = _filterlayer(clayer, "NAME_$(plevel)", pname, iszero(plevel))
+	clayer = _getlayer(names || children || children_raw ? clevel : plevel)
 
-	return D, c
+	(names) && return _getnames(clayer, clevel, (plevel == 0) ? "" : lowercase(subregions[end]))
+
+	c = _filterlayer(clayer, plevel, pname, iszero(plevel))
+
+	if (children_raw)		# This is close (aside from the GMTdatset vs GDAL features) to the output of the GADM.jl
+		p = _filterlayer(player, plevel, pname, iszero(plevel))
+		return _get_polygs(p), c
+	else
+		return _get_polygs(c)
+	end
 end
 
 # ------------------------------------------------------------------------------------------------------
