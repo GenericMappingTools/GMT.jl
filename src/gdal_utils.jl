@@ -174,7 +174,8 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString)
 		n_pts = Gdal.ngeom(geom)
 		D = Vector{GMTdataset}(undef, n_pts)
-		[D[k] = gd2gmt(Gdal.getgeom(geom,k-1), proj)[1] for k = 1:n_pts]
+		[D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")[1] for k = 1:n_pts]
+		(proj != "") && (D[1].proj4 = proj)
 		return D
 	elseif (gmtype == wkbMultiPoint)
 		n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
