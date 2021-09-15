@@ -9,9 +9,7 @@ Full option list at [`grdblend`]($(GMTdoc)grdblend.html)
 Parameters
 ----------
 
-- **I** | **inc** :: [Type => Str | Number]
-
-    *x_inc* [and optionally *y_inc*] is the grid spacing.
+- $(GMT.opt_I)
     ($(GMTdoc)grdblend.html#i)
 - $(GMT.opt_R)
 - **G** | **outgrid** **outfile** | **save** :: [Type => Str]

@@ -11,9 +11,7 @@ Parameters
 ----------
 
 - $(GMT.opt_R)
-- **I** | **inc** :: [Type => Str | Number]
-
-    *x_inc* [and optionally *y_inc*] is the grid spacing.
+- $(GMT.opt_I)
     ($(GMTdoc)surface.html#i)
 - **A** | **aspect_ratio** :: [Type => Number]
 
@@ -76,6 +74,7 @@ Parameters
 - $(GMT.opt_h)
 - $(GMT.opt_i)
 - $(GMT.opt_r)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function surface(cmd0::String="", arg1=nothing; kwargs...)
@@ -85,7 +84,7 @@ function surface(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing
 	
-	cmd, = parse_common_opts(d, "", [:R :I :V_params :a :bi :di :e :f :h :i :r :yx])
+	cmd, = parse_common_opts(d, "", [:R :I :V_params :a :bi :di :e :f :h :i :r :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:G :grid :outgrid], 
 	                                 [:Ll :lower], [:Lu :upper], [:M :mask], [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension], [:Z :over_relaxation]])
 	cmd, args, n, = add_opt(d, cmd, 'D', [:D :breakline], :data, Array{Any,1}([arg1, arg2]), (zlevel="+z",))

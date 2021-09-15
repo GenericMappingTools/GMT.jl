@@ -27,9 +27,7 @@ Parameters
     Use triangulation to grid the data onto an even grid (specified with R I).
     Append the name of the output grid file.
     ($(GMTdoc)triangulate.html#g)
-- **I** | **inc** :: [Type => Str | Number]
-
-    *x_inc* [and optionally *y_inc*] is the grid spacing.
+- $(GMT.opt_I)
     ($(GMTdoc)triangulate.html#i)
 - $(GMT.opt_J)
 - **M** | **network** :: [Type => Bool]
@@ -65,6 +63,7 @@ Parameters
 - $(GMT.opt_h)
 - $(GMT.opt_i)
 - $(GMT.opt_r)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function triangulate(cmd0::String="", arg1=nothing; kwargs...)
@@ -72,7 +71,7 @@ function triangulate(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("triangulate", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:R :I :V_params :bi :bo :di :e :f :h :i :r :yx])
+	cmd, = parse_common_opts(d, "", [:R :I :V_params :bi :bo :di :e :f :h :i :r :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :slope_grid], [:D :derivatives], [:E :empty], [:G :grid :outgrid], [:M :network],
                                      [:N :ids], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])
 	cmd = parse_Q_tri(d, [:Q :voronoi], cmd)

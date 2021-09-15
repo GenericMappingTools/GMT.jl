@@ -9,9 +9,7 @@ Parameters
 ----------
 
 - $(GMT.opt_R)
-- **I** | **inc** :: [Type => Str | Number]
-
-    *x_inc* [and optionally *y_inc*] is the grid spacing.
+- $(GMT.opt_I)
     ($(GMTdoc)blockmean.html#i)
 - **A** | **fields** :: [Type => Str]
 
@@ -63,6 +61,7 @@ Parameters
 - $(GMT.opt_h)
 - $(GMT.opt_i)
 - $(GMT.opt_r)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function blockmean(cmd0::String="", arg1=nothing; kwargs...)
@@ -126,9 +125,9 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 		cmd = cmd * " -Az"					# So that we can use plain -G to mean write grid 
 	end
 	(length(opt_G) > 3) && (cmd *= opt_G)	# G=true will give " -G", which we'll ignore  (Have to)
-	cmd, = parse_common_opts(d, cmd, [:R :V_params :bi :di :e :f :h :i :o :r :yx])
+	cmd, = parse_common_opts(d, cmd, [:R :V_params :bi :di :e :f :h :i :o :r :w :yx])
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
+	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)
 	common_grd(d, proggy * " " * cmd, arg1)		# Finish build cmd and run it
 end
 

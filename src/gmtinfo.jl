@@ -58,6 +58,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_o)
 - $(GMT.opt_r)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
@@ -66,7 +67,7 @@ function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:V_params :e :f :o :r :yx])
+	cmd, = parse_common_opts(d, "", [:V_params :e :f :o :r :w :yx])
 	(endswith(cmd, "-:")) && (cmd *= "i")    # Need to be -:i not -: to not swap output too
 	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :per_column], [:D :center], [:E :get_record], [:F :counts],
 	                                [:L :common_limits], [:S :for_error_bars]])

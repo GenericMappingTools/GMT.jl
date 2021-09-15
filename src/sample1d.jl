@@ -8,7 +8,7 @@ Full option list at [`sample1d`]($(GMTdoc)sample1d.html)
 Parameters
 ----------
 
-- **A** | **resamp** :: [Type => Str]        ``Arg = f|p|m|r|R``
+- **A** | **resample** :: [Type => Str]        ``Arg = f|p|m|r|R``
 
     For track resampling (if -T…unit is set) we can select how this is to be performed.
     ($(GMTdoc)sample1d.html#a)
@@ -41,6 +41,7 @@ Parameters
 - $(GMT.opt_h)
 - $(GMT.opt_i)
 - $(GMT.opt_o)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function sample1d(cmd0::String="", arg1=nothing; kwargs...)
@@ -48,8 +49,8 @@ function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("sample1d", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])[1]
-	cmd = parse_these_opts(cmd, d, [[:A :resamp], [:F :interp_type], [:N :time_col], [:W :weights_col]])
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :w :yx])[1]
+	cmd = parse_these_opts(cmd, d, [[:A :resample], [:F :interp_type], [:N :time_col], [:W :weights_col]])
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
 
 	common_grd(d, cmd0, cmd, "sample1d ", arg1, isempty(Tvec) ? nothing : Tvec)		# Finish build cmd and run it

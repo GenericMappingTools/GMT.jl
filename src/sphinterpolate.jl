@@ -17,9 +17,7 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = sphinterpolate(....) form.
     ($(GMTdoc)sphinterpolate.html#g)
-- **I** | **inc** :: [Type => Str or Number]
-
-    *x_inc* [and optionally *y_inc*] is the grid spacing.
+- $(GMT.opt_I)
     ($(GMTdoc)sphinterpolate.html#i)
 - **Q** | **tension** :: [Type => Number | Str]     ``Arg = mode[/options]``
 

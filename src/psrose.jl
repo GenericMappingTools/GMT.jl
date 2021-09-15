@@ -80,6 +80,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
@@ -101,7 +102,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c")
-	cmd, = parse_common_opts(d, cmd, [:UVXY :c :e :p :t :params], first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :c :e :p :t :w :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :shift], [:F :no_scale], [:L :labels], [:M :vector_params],
 	                                 [:Q :alpha], [:S :norm :normalize], [:T :orientation], [:Z :scale]])
 	cmd = add_opt(d, cmd, 'A', [:A :sector], (width="", rose="_+r"))

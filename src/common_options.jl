@@ -959,7 +959,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
 	# Parse the global -U, -X, -Y options. Return CMD same as input if no option OPT in args
-	# ALIASES: [:X :x_off :x_offset] (same for Y) or [:U :time_stamp :timestamp]
+	# ALIASES: [:X :xshift :x_offset] (same for Y) or [:U :time_stamp :timestamp]
 	if ((val = find_in_dict(d, aliases, true)[1]) !== nothing)
 		cmd = string(cmd, " -", opt, val)
 	end
@@ -987,8 +987,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_UVXY(d::Dict, cmd::String)
 	cmd = parse_V(d, cmd)
-	cmd = parse_UXY(cmd, d, [:X :xoff :x_off :x_offset :xshift], 'X')
-	cmd = parse_UXY(cmd, d, [:Y :yoff :y_off :y_offset :yshift], 'Y')
+	cmd = parse_UXY(cmd, d, [:X :x_offset :xshift], 'X')
+	cmd = parse_UXY(cmd, d, [:Y :y_offset :yshift], 'Y')
 	cmd = parse_UXY(cmd, d, [:U :time_stamp :timestamp], 'U')
 	return cmd
 end
@@ -1037,12 +1037,12 @@ function parse_d(d::Dict, cmd::String, symbs::Array{Symbol}=[:d :nodata])
 end
 parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
 parse_do(d::Dict, cmd::String) = parse_d(d, cmd, [:do :nodata_out])
-parse_e(d::Dict,  cmd::String) = parse_helper(cmd, d, [:e :pattern], " -e")
+parse_e(d::Dict,  cmd::String) = parse_helper(cmd, d, [:e :pattern :find], " -e")
 parse_f(d::Dict,  cmd::String) = parse_helper(cmd, d, [:f :colinfo :coltypes], " -f")
 parse_g(d::Dict,  cmd::String) = parse_helper(cmd, d, [:g :gap], " -g")
 parse_h(d::Dict,  cmd::String) = parse_helper(cmd, d, [:h :header], " -h")
 parse_i(d::Dict,  cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i", ',')
-parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :spheric_dist :spherical_dist], " -j")
+parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :spherical_dist :spherical], " -j")
 
 # ---------------------------------------------------------------------------------
 function parse_l(d::Dict, cmd::String)
@@ -1088,23 +1088,16 @@ function parse_q(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-# Parse the global -s option. Return CMD same as input if no -s option in args
-parse_s(d::Dict, cmd::String) = parse_helper(cmd, d, [:s :skip_NaN], " -s")
-
-# ---------------------------------------------------------------------------------------------------
 # Parse the global -: option. Return CMD same as input if no -: option in args
 # But because we can't have a variable called ':' we use only the aliases
 parse_swap_xy(d::Dict, cmd::String) = parse_helper(cmd, d, [:yx :swap_xy], " -:")
 
 # ---------------------------------------------------------------------------------------------------
-function parse_r(d::Dict, cmd::String)
-	# Parse the global -r option. Return CMD same as input if no -r option in args
-	parse_helper(cmd, d, [:r :reg :registration], " -r")
-end
-
-# ---------------------------------------------------------------------------------------------------
-# Parse the global -x option. Return CMD same as input if no -x option in args
+# Parse the global -? option. Return CMD same as input if no -? option in args
+parse_s(d::Dict, cmd::String) = parse_helper(cmd, d, [:s :skiprows :skip_NaN], " -s")
+parse_r(d::Dict, cmd::String) = parse_helper(cmd, d, [:r :reg :registration], " -r")
 parse_x(d::Dict, cmd::String) = parse_helper(cmd, d, [:x :cores :n_threads], " -x")
+parse_w(d::Dict, cmd::String) = parse_helper(cmd, d, [:w :wrap :cyclic], " -w")
 
 # ---------------------------------------------------------------------------------------------------
 function parse_t(d::Dict, cmd::String)
@@ -1176,7 +1169,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 		elseif (opt == :yx) cmd, o = parse_swap_xy(d, cmd)
 		elseif (opt == :R)  cmd, o = parse_R(d, cmd)
 		elseif (opt == :F)  cmd  = parse_F(d, cmd)
-		elseif (opt == :I)  cmd  = parse_inc(d, cmd, [:I :inc :increment :spacing], 'I')
+		elseif (opt == :I)  cmd  = parse_I(d, cmd, [:I :inc :increment :spacing], 'I')
 		elseif (opt == :J)  cmd, o = parse_J(d, cmd)
 		elseif (opt == :JZ) cmd, o = parse_JZ(d, cmd)
 		elseif (opt == :UVXY)     cmd = parse_UVXY(d, cmd)
@@ -1223,7 +1216,7 @@ function parse_these_opts(cmd::String, d::Dict, opts, del::Bool=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_inc(d::Dict, cmd::String, symbs, opt, del::Bool=true)::String
+function parse_I(d::Dict, cmd::String, symbs, opt, del::Bool=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)

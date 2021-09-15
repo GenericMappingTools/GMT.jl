@@ -60,6 +60,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
@@ -70,7 +71,7 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd, = parse_common_opts(d, cmd, [:c :e :f :g :p :t :F :UVXY :params], first)
+	cmd, = parse_common_opts(d, cmd, [:c :e :f :g :p :t :w :F :UVXY :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided

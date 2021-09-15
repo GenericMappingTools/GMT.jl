@@ -93,6 +93,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
@@ -131,7 +132,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, _, _, opt_R = parse_BJR(d, cmd, "histogram", O, " -JX14c/14c")
 	cmd = parse_JZ(d, cmd)[1]
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :params], first)[1]
+	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = add_opt(d, cmd, 'D', [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))

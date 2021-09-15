@@ -105,6 +105,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function plot(arg1; first=true, kw...)
@@ -289,6 +290,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_w)
 
 ### Example:
 
@@ -542,7 +544,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		if (opt_base == "")  push!(d, :base => z_min)  end	# Make base = z_min
 		arg1 = gmt("grd2xyz", arg1)[1]			# Now arg1 is a GMTdataset
 	else
-		opt_S = parse_inc(d, "", [:S :width], "So", true)
+		opt_S = parse_I(d, "", [:S :width], "So", true)
 		if (opt_S == "")
 			opt_S = parse_bar_cmd(d, :bar, "", "So", true)[1]
 		end

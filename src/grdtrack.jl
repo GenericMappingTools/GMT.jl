@@ -11,20 +11,25 @@ Parameters
 
 - **A** | **interp_path** :: [Type => Str]		`Arg = f|p|m|r|R[+l]`
 
-    For track resampling (if **C** or **E** are set) we can select how this is to be performed. 
+    For track resampling (if `crossprofile` or `profile` are set) we can select how this is to be performed. 
     ($(GMTdoc)grdtrack.html#a)
-- **C** | **equidistant** :: [Type => Str]		`Arg = length/ds[/spacing][+a|+v][l|r]`
+- **C** | **crossprofile** :: [Type => Str]		`Arg = length/ds[/spacing][+a|+v][l|r]`
 
     Use input line segments to create an equidistant and (optionally) equally-spaced set of crossing
     profiles along which we sample the grid(s)
     ($(GMTdoc)grdtrack.html#c)
 - **D** | **dfile** :: [Type => Str]  
 
-    In concert with **C** we can save the (possibly resampled) original lines to the file dfile
+    In concert with `crossprofile` we can save the (possibly resampled) original lines to the file dfile
     ($(GMTdoc)grdtrack.html#d)
-- **E** | **by_coord** :: [Type => Str]
+- **E** | **profile** :: [Type => Str]
 
     Instead of reading input track coordinates, specify profiles via coordinates and modifiers.
+    ($(GMTdoc)grdtrack.html#e)
+- **F** | **critical** :: [Type => Str]
+
+    Find critical points along each cross-profile as a function of along-track distance. Requires
+    `crossprofile` and a single input grid.
     ($(GMTdoc)grdtrack.html#e)
 - **G** | **grid** :: [Type => Str | GMTgrid | Tuple(GMTgrid's)]
 
@@ -54,6 +59,7 @@ Parameters
 - $(GMT.opt_n)
 - $(GMT.opt_o)
 - $(GMT.opt_s)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 
 When using two numeric inputs and no G option, the order of the x,y and grid is not important.
@@ -65,9 +71,9 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :interp_path], [:C :equidistant], [:D :dfile], [:E :by_coord],
-	                                 [:N :no_skip], [:S :stack], [:T :radius], [:Z :z_only]])
+	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :w :yx])
+	cmd  = parse_these_opts(cmd, d, [[:A :interp_path], [:C :crossprofile :equidistant], [:D :dfile], [:E :profile],
+	                                 [:F :critical], [:N :no_skip], [:S :stack], [:T :radius], [:Z :z_only]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	cmd, grid_tuple, arg1, arg2 = parse_G_grdtrk(d, [:G, :grid], cmd, arg1, arg2)
