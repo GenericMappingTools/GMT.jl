@@ -44,31 +44,23 @@ Parameters
 """
 function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdcut", cmd0, arg1)
+	length(kwargs) == 0 && contains(cmd0, " ") && return monolitic("grdcut", cmd0, arg1)
 
 	arg2 = nothing
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-    cmd, = parse_common_opts(d, "", [:R :V_params :f])
+	cmd, opt_R = parse_R(d, "")
+	(opt_R == "") && error("Must provide the cutting limits (GMT option R)")
+    cmd, = parse_common_opts(d, cmd, [:V_params :f])
     opt_J, = parse_J(d, "")
-    if (!startswith(opt_J, " -JX"))  cmd *= opt_J  end
-	cmd = parse_these_opts(cmd, d, [[:G :outgrid :outfile :save], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
+    (!startswith(opt_J, " -JX")) && (cmd *= opt_J)
+	cmd = parse_these_opts(cmd, d, [[:D], [:G :outgrid :outfile :save], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
 	cmd, args, n, = add_opt(d, cmd, 'F', [:F :clip :cutline], :polygon, Array{Any,1}([arg1, arg2]),
 	                        (crop2cutline="_+c", invert="_+i"))
 	if (n > 0)  arg1, arg2 = args[:]  end
 	(show_kwargs[1]) && return print_kwarg_opts([:img :usegdal], "Any")		# Just print the options
 
-	#if (cmd0 != "" && ((find_in_dict(d, [:img :usegdal])[1]) !== nothing))
-		#(cmd0[1] == '@') && (cmd0 = gmtwhich(cmd0)[1].text[1])	# A remote file
-		#ds = Gdal.read(cmd0)
-		#t = split(scan_opt(cmd, "-R"), '/')
-		#opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
-		#if ((outname = scan_opt(cmd, "-G")) == "")
-			#gd2gmt(gdaltranslate(ds, opts))
-		#else
-			#gdaltranslate(ds, opts; dest=outname)
-			#return nothing				# Since it wrote a file so nothing to return
-		#end
 	if (cmd0 != "" && (guess_T_from_ext(cmd0) == " -Ti" || (find_in_dict(d, [:usegdal])[1]) !== nothing))
+		(dbg_print_cmd(d, cmd) !== nothing) && return "grdcut $cmd0 " * cmd		# Vd=2 cause this return
 		t = split(scan_opt(cmd, "-R"), '/')
 		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
 		cut_with_gdal(cmd0, opts)
