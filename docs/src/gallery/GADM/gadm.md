@@ -35,6 +35,19 @@ To know the provinces names such that we can use them individually for example, 
 ```julia
 gadm("MOZ", names=true)
 ```
+```
+"Cabo Delgado"
+"Gaza"
+"Inhambane"
+"Manica"
+"Maputo"
+"Maputo City"
+"Nampula"
+"Nassa"
+"Sofala"
+"Tete"
+"Zambezia"
+```
 
 Now we can plot only one of those provinces and its children
 
