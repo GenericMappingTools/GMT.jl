@@ -46,7 +46,7 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
 		G = mat2img(arg1; kw...)
-	elseif (isa(arg1, GMTdataset) || isa(arg1, Vector{<:GMTdataset}) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4))
+	elseif (isGMTdataset(arg1) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4))
 		ginfo = gmt("gmtinfo -C", arg1)
 		CTRL.limits[1:4] = ginfo[1].data[1:4]
 		return plot(arg1; show=true, kw...)
