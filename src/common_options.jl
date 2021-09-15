@@ -2954,7 +2954,8 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 				if (isGMTdataset(arg))							# Needed for the guess_proj case
 					if ((info[1].data[3] < -90 || info[1].data[4] > 90) || ((info[1].data[2] - info[1].data[1]) > 360))
 						prj = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
-						if (contains(prj, "longlat") || contains(prj, "latlong"))
+						guessed_J = (prj == "") && !contains(cmd, " -J ") && !contains(cmd, " -JX") && !contains(cmd, " -Jx")
+						if (guessed_J || contains(prj, "longlat") || contains(prj, "latlong"))
 							(info[1].data[3] < -90.) && (info[1].data[3] = -90.)
 							(info[1].data[4] >  90.) && (info[1].data[4] =  90.)
 							if ((info[1].data[2] - info[1].data[1]) > 360)
