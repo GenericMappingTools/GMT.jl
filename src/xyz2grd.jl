@@ -8,9 +8,7 @@ Full option list at [`xyz2grd`]($(GMTdoc)xyz2grd.html)
 Parameters
 ----------
 
-- **I** | **inc** :: [Type => Str | Number]     `Arg = xinc[unit][+e|n][/yinc[unit][+e|n]]`
-
-    *x_inc* [and optionally *y_inc*] is the grid spacing.
+- $(GMT.opt_I)
     ($(GMTdoc)xyz2grd.html#i)
 - $(GMT.opt_R)
 - **A** | **multiple_nodes** :: [Type => Str]      `Arg = [d|f|l|m|n|r|S|s|u|z]`
@@ -44,6 +42,7 @@ Parameters
 - $(GMT.opt_h)
 - $(GMT.opt_i)
 - $(GMT.opt_r)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
@@ -52,7 +51,7 @@ function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:I :R :J :V_params :bi :di :e :f :h :i :r :yx])
+	cmd, = parse_common_opts(d, "", [:I :R :J :V_params :bi :di :e :f :h :i :r :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:G :outgrid], [:S :swap], [:Z :flags]])
 	common_grd(d, cmd0, cmd, "xyz2grd ", arg1)		# Finish build cmd and run it
 end

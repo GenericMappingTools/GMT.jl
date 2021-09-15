@@ -52,6 +52,7 @@ Parameters
 - $(GMT.opt_h)
 - $(GMT.opt_i)
 - $(GMT.opt_o)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function regress(cmd0::String="", arg1=nothing; kwargs...)
@@ -60,7 +61,7 @@ function regress(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :o :yx])
+	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :o :w :yx])
     cmd  = parse_these_opts(cmd, d, [[:A :all_slopes], [:C :confidence_level], [:E :regression_type], [:N :norm],
                                      [:F :column_combination], [:S :restrict], [:T :equi_space], [:W :weighted]])
 

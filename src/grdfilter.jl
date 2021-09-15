@@ -22,9 +22,7 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdfilter(....) form.
     ($(GMTdoc)grdfilter.html#g)
-- **I** | **inc** :: [Type => Str or Number]
-
-    *x_inc* [and optionally *y_inc*] is the grid spacing.
+- $(GMT.opt_I)
     ($(GMTdoc)grdfilter.html#i)
 - **N** | **nans** :: [Type => Str]
 

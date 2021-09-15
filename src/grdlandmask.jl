@@ -10,9 +10,7 @@ Parameters
 ----------
 
 - $(GMT.opt_R)
-- **I** | **inc** :: [Type => Str | Number]
-
-    *x_inc* [and optionally *y_inc*] is the grid spacing.
+- $(GMT.opt_I)
     ($(GMTdoc)grdlandmask.html#i)
 - **A** | **area** :: [Type => Str | Number]
 

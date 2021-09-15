@@ -8,9 +8,7 @@ Full option list at [`psmask`]($(GMTdoc)mask.html)
 Parameters
 ----------
 
-- **I** | **inc** :: [Type => Number | Str]
-
-    Set the grid spacing.
+- $(GMT.opt_I)
     ($(GMTdoc)mask.html#i)
 - $(GMT.opt_R)
 
@@ -67,6 +65,7 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_r)
 - $(GMT.opt_t)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
@@ -77,7 +76,7 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
-	cmd, = parse_common_opts(d, cmd, [:I :UVXY :JZ :c :e :p :r :t :params], first)
+	cmd, = parse_common_opts(d, cmd, [:I :UVXY :JZ :c :e :p :r :t :w :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:C :end_clip_path], [:D :dump], [:F :oriented_polygons],
 	                                 [:L :node_grid], [:N :invert], [:Q :cut_number], [:S :search_radius], [:T :tiles]])
 

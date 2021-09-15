@@ -58,7 +58,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	cmd, opt_JZ = parse_JZ(d, cmd)
-	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :p :t :params], first)
+	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :p :t :w :params], first)
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)

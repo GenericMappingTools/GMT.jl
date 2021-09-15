@@ -15,9 +15,7 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdsample(....) form.
     ($(GMTdoc)grdsample.html#g)
-- **I** | **inc** :: [Type => Str | Number]
-
-    *x_inc* [and optionally *y_inc*] is the grid spacing.
+- $(GMT.opt_I)
     ($(GMTdoc)grdsample.html#i)
 - $(GMT.opt_R)
 - **T** | **toggle** :: [Type => Bool]

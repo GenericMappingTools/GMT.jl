@@ -54,6 +54,7 @@ Parameters
 - $(GMT.opt_di)
 - $(GMT.opt_e)
 - $(GMT.opt_f)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function grdedit(cmd0::String="", arg1=nothing; kwargs...)
@@ -64,7 +65,7 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 	arg2 = nothing
 	(isa(arg1, GMTgrid) && length(kwargs) == 0) && (arg1.range[5:6] .= extrema(arg1); return arg1)  # Update the z_min|max
 
-	cmd, = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :yx])
+	cmd, = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:G :outgrid],
 	                                 [:S :wrap], [:T :toggle]])
 	cmd, args, n, = add_opt(d, cmd, 'N', [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))

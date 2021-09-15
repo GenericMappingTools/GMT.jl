@@ -12,9 +12,7 @@ Full option list at [`nearneighbor`]($(GMTdoc)nearneighbor.html)
 Parameters
 ----------
 
-- **I** | **inc** :: [Type => Str | Number]
-
-    *x_inc* [and optionally *y_inc*] is the grid spacing.
+- $(GMT.opt_I)
     ($(GMTdoc)nearneighbor.html#i)
 - **N** | **sectors** | **nn** | **nearest** :: [Type => Number | Str | Bool (for nn or nearest)]
 
@@ -48,6 +46,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_n)
 - $(GMT.opt_r)
+- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
@@ -55,7 +54,7 @@ function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("nearneighbor", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:R :I :V_params :bi :di :e :f :h :i :n :r :yx])
+	cmd, = parse_common_opts(d, "", [:R :I :V_params :bi :di :e :f :h :i :n :r :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:E :empty], [:G :outgrid], [:S :search_radius], [:Z :weights], [:A]])
 	cmd  = add_opt(d, cmd, 'N', [:N :sectors], (n="", min_sectors="+m"), true)
 	opt  = add_opt(d, "", 'N', [:N :nn :nearest])
