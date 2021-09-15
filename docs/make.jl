@@ -21,9 +21,10 @@ makedocs(
 										"Covid in Portugal" => "gallery/choropleths/choropleth_cv19.md"
 										],
 			"Contourf"              => "gallery/contourf/contourf.md",
+			"GADM Countries"        => "gallery/GADM/gadm.md",
 			"Geodesic buffers"      => "gallery/buffergeo/buffer.md",
 			"Historical collection" => "gallery/historic.md",
-			"Landsat8"              => "gallery/Landsat8/histogram_stretch.md",
+			"Landsat 8"             => "gallery/Landsat8/histogram_stretch.md",
 			"Map projections"       => "gallery/mapprojs.md",
 			"Plotting functions"    => "gallery/plot_funs/plot_funs.md",
 			"Plotyy"                => "gallery/plotyy/plotyy.md",
