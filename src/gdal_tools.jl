@@ -207,10 +207,10 @@ function default_gdopts!(ds, opts::Vector{String})
 	driver = shortname(getdriver(ds))
 	dt = GDALGetRasterDataType(ds.ptr)
 	(dt < 6  && startswith(lowercase(driver), "mem")) && return nothing		# We have no defaults so far for integer data in MEM 
-	(dt == 1 && !any(startswith.(opts, "COMPRESS"))) && append!(opts, ["COMPRESS=DEFLATE", "PREDICTOR=2"])
-	(dt == 1 && !any(startswith.(opts, "TILED"))) && append!(opts, ["TILED=YES"])
+	(dt == 1 && !any(startswith.(opts, "COMPRESS"))) && append!(opts, ["-co", "COMPRESS=DEFLATE", "-co", "PREDICTOR=2"])
+	(dt == 1 && !any(startswith.(opts, "TILED"))) && append!(opts, ["-co", "TILED=YES"])
 	(dt >= 6 && !any(startswith.(opts, "a_nodata"))) && append!(opts, ["-a_nodata","NaN"])
-	(driver == "netCDF") && append!(opts,["FORMAT=NC4", "COMPRESS=DEFLATE", "ZLEVEL=4"]) 
+	(driver == "netCDF") && append!(opts,["-co", "FORMAT=NC4", "-co", "COMPRESS=DEFLATE", "-co", "ZLEVEL=4"]) 
 end
 
 # ---------------------------------------------------------------------------------------------------
