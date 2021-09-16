@@ -95,6 +95,7 @@ if (got_it)					# Otherwise go straight to end
 	gadm("AND", names=true);
 	gadm("AND", "ordino");
 	gadm("AND", children=true);
+	gadm("AND", children_raw=true);
 	@test_throws ErrorException("Asked data for a level (3) that is lower than lowest data level (2)") gadm("AND", "ordino", names=true);
 
 	# Remove garbage

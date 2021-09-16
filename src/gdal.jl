@@ -261,6 +261,7 @@ function GDALCreate(hDriver, a1, a2, a3, a4, a5, a6)
 	acare(ccall((:GDALCreate, libgdal), pVoid, (pVoid, Cstring, Cint, Cint, Cint, UInt32, Ptr{Cstring}), hDriver, a1, a2, a3, a4, a5, a6))
 end
 
+#GDALGetDataTypeName(arg1) = acare(ccall((:GDALGetDataTypeName, libgdal), Cstring, (UInt32,), arg1), false)
 GDALGetDataTypeByName(a1) = acare(ccall((:GDALGetDataTypeByName, libgdal), UInt32, (Cstring,), a1))
 GDALGetRasterBand(a1, a2) = acare(ccall((:GDALGetRasterBand, libgdal), pVoid, (pVoid, Cint), a1, a2))
 
@@ -1663,6 +1664,8 @@ end
 	getgeomtype(featuredefn::AbstractFeatureDefn) = OGR_FD_GetGeomType(featuredefn.ptr)
 	getgeomtype(layer::AbstractFeatureLayer) = OGR_L_GetGeomType(layer.ptr)
 	getgeomtype(geom::AbstractGeometry)  = OGR_G_GetGeometryType(geom.ptr)
+
+	#typename(dt::UInt32)::String = GDALGetDataTypeName(dt)
 
 	gettype(name::AbstractString) = GDALGetDataTypeByName(name)
 	gettype(fielddefn::AbstractFieldDefn) = OGR_Fld_GetType(fielddefn.ptr)
