@@ -339,6 +339,8 @@ GDALSetColorEntry(a1, a2, a3) =
 
 CPLSetConfigOption(a1, a2) = acare(ccall((:CPLSetConfigOption, libgdal), Cvoid, (Cstring, Cstring), a1, a2))
 
+GDALSetDescription(a1, a2) = acare(ccall((:GDALSetDescription, libgdal), Cvoid, (pVoid, Cstring), a1, a2))
+
 OSRDestroySpatialReference(a1) = acare(ccall((:OSRDestroySpatialReference, libgdal), Cvoid, (pVoid,), a1))
 OCTDestroyCoordinateTransformation(a1) = acare(ccall((:OCTDestroyCoordinateTransformation, libgdal), Cvoid, (pVoid,), a1))
 

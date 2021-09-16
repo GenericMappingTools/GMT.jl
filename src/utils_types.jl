@@ -205,14 +205,14 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    I = mat2img(mat::Array{<:Unsigned}; x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+    I = mat2img(mat::Array{<:Unsigned}; x=[], y=[], hdr=nothing, proj4="", wkt="", cmap=nothing, kw...)
 
 Take a 2D 'mat' array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
 and return a GMTimage type.
 Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
 Optionaly, the HDR arg may be ommited and it will computed from 'mat' alone, but then x=1:ncol, y=1:nrow
 When 'mat' is a 3D UInt16 array we automatically compute a UInt8 RGB image. In that case 'cmap' is ignored.
-But if no conversion is wanted use option 'noconv=true'
+But if no conversion is wanted use option `noconv=true`
 
     I = mat2img(mat::Array{UInt16}; x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", kw...)
 
@@ -224,7 +224,7 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
   - stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
   - stretch = :auto | "auto" | true | 1 will do an automatic stretching from values obtained from histogram thresholds
 """
-function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
 	color_interp = "";		n_colors = 0;
@@ -257,11 +257,11 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	_names = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
 
 	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], reg, NaN, color_interp, _names,
-	             x,y,zeros(size(mat,3)),mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
+	             x,y,v,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function mat2img(mat::AbstractArray{UInt16}; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", img8=Matrix{UInt8}(undef,0,0), kw...)
+function mat2img(mat::AbstractArray{UInt16}; x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", img8=Matrix{UInt8}(undef,0,0), kw...)
 	# Take an array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
 	# If the kw variable 'stretch' is used, we stretch the intervals in 'stretch' to [0 255].
 	# Use this option to stretch the image histogram.
@@ -274,7 +274,7 @@ function mat2img(mat::AbstractArray{UInt16}; x=Vector{Float64}(), y=Vector{Float
 
 	d = KW(kw)
 	if ((val = find_in_dict(d, [:noconv])[1]) !== nothing)		# No conversion to UInt8 is wished
-		return mat2img(mat, 1; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, d...)
+		return mat2img(mat, 1; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, d...)
 	end
 	img = isempty(img8) ? Array{UInt8}(undef, size(mat)) : img8
 	(size(img) != size(mat)) && error("Incoming matrix and image holder have different sizes")
@@ -319,7 +319,7 @@ function mat2img(mat::AbstractArray{UInt16}; x=Vector{Float64}(), y=Vector{Float
 		end
 	end
 	(haskey(d, :scale_only)) && return img			# Only the scaled array is needed. Alows it to be a view
-	mat2img(img; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, d...)
+	mat2img(img; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, d...)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -486,7 +486,7 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String=
 	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem, cmd="", names=names)
 end
 
-function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[])
+function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[])
 # Take a 2D array of floats and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
@@ -510,7 +510,7 @@ function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); 
 		(fill_val != 0) && fill!(mat, fill_val)
 	end
 
-	GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, names, x, y, [0.], mat, "x", "y", "v", "z", "BCB", 0)
+	GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, names, x, y, v, mat, "x", "y", "v", "z", "BCB", 0)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object

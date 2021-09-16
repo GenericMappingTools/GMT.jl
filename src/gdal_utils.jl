@@ -1,13 +1,14 @@
 """
-    O = gd2gmt(dataset; band=1, bands=[], sds=0, pad=0)
+    O = gd2gmt(dataset; band=0, bands=[], sds=0, pad=0)
 
 Convert a GDAL raster dataset into either a GMTgrid (if type is Int16 or Float) or a GMTimage type
-Use BAND to select a single band of the dataset. When you know that the dataset contains several
-bands of an image, use the kwarg BANDS with a vector the wished bands (1, 3 or 4 bands only).
+Use `band` to select a single band of the dataset. When you know that the dataset contains several
+bands of an image, use the kwarg `bands` with a vector the wished bands. By default it reads all
+bands of an image and, so far, only one layer of a grid.
 
 When DATASET is a string it may contain the file name or the name of a subdataset. In former case
-you can use the kwarg SDS to selec the subdataset numerically. Alternatively, provide the full SDS name.
-For files with SDS with a scale_factor (e.g. MODIS data), that scale is applyied automaticaly.
+you can use the kwarg `sds` to selec the subdataset numerically. Alternatively, provide the full `sds` name.
+For files with `sds` with a scale_factor (e.g. MODIS data), that scale is applyied automaticaly.
 
     Examples:
        G = gd2gmt("AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc", sds=1);
@@ -19,7 +20,7 @@ For files with SDS with a scale_factor (e.g. MODIS data), that scale is applyied
 function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int=0, layout::String="")
 
 	(isa(_dataset, GMTgrid) || isa(_dataset, GMTimage) || isGMTdataset(_dataset)) && return _dataset
-		#error("Input is a $(typeof(_dataset)) instead of a GDAL dataset. Looking for gmt2gd?")
+
 	if (isa(_dataset, AbstractString))	# A subdataset name or the full string "SUBDATASET_X_NAME=...."
 		# For some bloody reason it would print annoying (& false?) warning messages. Have to use brute force
 		Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
@@ -35,30 +36,31 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	xSize, ySize, nBands = Gdal.width(dataset), Gdal.height(dataset), n_dsbands
 	dType = Gdal.pixeltype(getband(dataset, 1))
 	is_grid = (sizeof(dType) >= 4 || dType == Int16) ? true : false		# Simple (too simple?) heuristic
-	if (is_grid)
+	if (is_grid)						# MUST ALLOW ALSO TO HAVE MULTILAYERS
 		(length(bands) > 1) && error("For grids only one band request is allowed")
 		(band == 0) && (band = 1)		# The default 0 was only to lest us know if any other was selected
 		(!isempty(bands)) && (band = bands[1])
 		in_bands = [band]
 		(band > n_dsbands) && error("Selected band is larger then number of bands in this dataset")
 	else
-		(length(bands) == 2 || length(bands) > 4) && error("For images only 1, 3 or 4 bands are allowed")
-		if     (!isempty(bands))                   in_bands = bands
-		elseif (band == 0 && 3 <= n_dsbands <= 4)  in_bands = collect(1:n_dsbands)
-		else                                       in_bands = (band == 0) ? [1] : [band]
-		end
+		in_bands = (!isempty(bands)) ? bands : ((band == 0) ? collect(1:n_dsbands) : [band])
 		(maximum(in_bands) > n_dsbands) && error("One selected band is larger then number of bands in this dataset")
 	end
 	ncol, nrow = xSize+2pad, ySize+2pad
 	mat = (dataset isa Gdal.AbstractRasterBand) ? zeros(dType, ncol, nrow) : zeros(dType, ncol, nrow, length(in_bands))
 	n_colors = 0
+	desc = Vector{String}(undef,0)
 	if (isa(dataset, Gdal.AbstractRasterBand))
 		Gdal.rasterio!(dataset, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, C_NULL, pad)
 		colormap, n_colors = get_cpt_from_colortable(dataset)
+		append!(desc, [Gdal.GDALGetDescription(dataset.ptr)])
 	else
 		ds = (isa(dataset, Gdal.RasterDataset)) ? dataset.ds : dataset
 		Gdal.rasterio!(ds, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, 0, C_NULL, pad)
 		colormap, n_colors = get_cpt_from_colortable(ds)
+		for bd in in_bands
+			append!(desc, [Gdal.GDALGetDescription(Gdal.GDALGetRasterBand(ds.ptr, bd))])
+		end
 	end
 
 	(!isa(mat, Matrix) && size(mat,3) == 1) && (mat = reshape(mat, size(mat,1), size(mat,2)))	# Fck pain
@@ -92,10 +94,10 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	(prj == "") && (prj = seek_wkt_in_gdalinfo(gdalinfo(dataset)))
 	if (is_grid)
 		(eltype(mat) == Float64) && (mat = Float32.(mat))
-		O = mat2grid(mat; hdr=hdr, proj4=prj)
+		O = mat2grid(mat; hdr=hdr, proj4=prj, names=desc)
 		O.layout = (layout == "") ? "TRB" : layout
 	else
-		O = mat2img(mat; hdr=hdr, proj4=prj, noconv=true)
+		O = mat2img(mat; hdr=hdr, proj4=prj, noconv=true, names=desc)
 		O.layout = (layout == "") ? "TRBa" : layout * "a"
 		if (n_colors > 0)
 			O.colormap = colormap;	O.n_colors = n_colors
@@ -275,9 +277,9 @@ Create GDAL dataset from the contents of GI that can be either a Grid or an Imag
     ds = gmt2gd(D, save="", geometry="")
 
 Create GDAL dataset from the contents of D, which can be a GMTdataset, a vector of GMTdataset ir a MxN array.
-The SAVE keyword instructs GDAL to save the contents as an OGR file. Format is determined by file estension.
-GEOMETRY can be a string with "polygon", where file will be converted to polygon/multipolygon depending
-on D is a single or a multi-segment object, or "point" to convert to a multipoint geometry.
+The `save` keyword instructs GDAL to save the contents as an OGR file. Format is determined by file estension.
+`geometry` can be a string with "polygon", where file will be converted to polygon/multipolygon depending
+on `D` is a single or a multi-segment object, or "point" to convert to a multipoint geometry.
 """
 function gmt2gd(GI)
 	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (size(GI,1), size(GI,2))
@@ -298,6 +300,10 @@ function gmt2gd(GI)
 		end
 		Gdal.write!(ds, indata, isa(GI.image, Array{<:Real, 3}) ? Cint.(collect(1:size(GI,3))) : 1)
 
+		if (!isempty(GI.names))			# Set bands description
+			[Gdal.GDALSetDescription(Gdal.GDALGetRasterBand(ds.ptr, k), GI.names[k]) for k = 1:min(size(GI,3), length(GI.names))]
+		end
+
 		if (GI.n_colors > 0)
 			ct = Gdal.createcolortable(UInt32(1))	# RGB
 			n = 1
@@ -310,8 +316,8 @@ function gmt2gd(GI)
 			Gdal.setcolortable!(Gdal.getband(ds), ct)
 			(!isnan(GI.nodata)) && (setnodatavalue!(Gdal.getband(ds), GI.nodata))
 		end
-
 	end
+
 	x_min, y_max = GI.range[1], GI.range[4]
 	(GI.registration == 0) && (x_min -= GI.inc[1]/2;  y_max += GI.inc[2]/2)
 	setgeotransform!(ds, [x_min, GI.inc[1], 0.0, y_max, 0.0, -GI.inc[2]])
