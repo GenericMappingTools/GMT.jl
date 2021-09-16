@@ -53,7 +53,10 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
     cmd, = parse_common_opts(d, cmd, [:V_params :f])
     opt_J, = parse_J(d, "")
     (!startswith(opt_J, " -JX")) && (cmd *= opt_J)
-	cmd = parse_these_opts(cmd, d, [[:D], [:G :outgrid :outfile :save], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
+	cmd = parse_these_opts(cmd, d, [[:D], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
+	opt_G = add_opt(d, "", "G", [:G :outgrid :outfile :save])
+	outname = (opt_G != "") ? opt_G[4:end] : ""
+	cmd *= opt_G
 	cmd, args, n, = add_opt(d, cmd, 'F', [:F :clip :cutline], :polygon, Array{Any,1}([arg1, arg2]),
 	                        (crop2cutline="_+c", invert="_+i"))
 	if (n > 0)  arg1, arg2 = args[:]  end
@@ -63,7 +66,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 		(dbg_print_cmd(d, cmd) !== nothing) && return "grdcut $cmd0 " * cmd		# Vd=2 cause this return
 		t = split(scan_opt(cmd, "-R"), '/')
 		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
-		cut_with_gdal(cmd0, opts)
+		cut_with_gdal(cmd0, opts, outname)
 	else
 		common_grd(d, cmd0, cmd, "grdcut ", arg1, arg2)	# Finish build cmd and run it
 	end
