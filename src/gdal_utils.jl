@@ -95,7 +95,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 		O = mat2grid(mat; hdr=hdr, proj4=prj)
 		O.layout = (layout == "") ? "TRB" : layout
 	else
-		O = mat2img(mat; hdr=hdr, proj4=prj)
+		O = mat2img(mat; hdr=hdr, proj4=prj, noconv=true)
 		O.layout = (layout == "") ? "TRBa" : layout * "a"
 		if (n_colors > 0)
 			O.colormap = colormap;	O.n_colors = n_colors
