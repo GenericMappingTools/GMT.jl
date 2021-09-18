@@ -223,6 +223,8 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
   - stretch = [v1 v2] scales all values >= v1 && <= v2 to [0 255]
   - stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
   - stretch = :auto | "auto" | true | 1 will do an automatic stretching from values obtained from histogram thresholds
+
+The `kw...` kwargs search for [:layout :mem_layout], [:names] and [:metadata]
 """
 function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
@@ -255,8 +257,9 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	d = KW(kw)
 	((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing) && (mem_layout = string(val))
 	_names = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
+	_meta  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
 
-	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], reg, NaN, color_interp, _names,
+	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], reg, NaN, color_interp, _meta, _names,
 	             x,y,v,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
 end
 
@@ -330,6 +333,7 @@ function mat2img(img::GMTimage; kw...)
 	I.proj4 = img.proj4;	I.wkt = img.wkt;	I.epsg = img.epsg
 	I.range = img.range;	I.inc = img.inc;	I.registration = img.registration
 	I.nodata = img.nodata;	I.color_interp = img.color_interp;
+	I.names = img.names;	I.metadata = img.metadata
 	I.x = img.x;	I.y = img.y;	I.colormap = img.colormap;
 	I.n_colors = img.n_colors;		I.alpha = img.alpha;	I.layout = img.layout;
 	return I
@@ -337,9 +341,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # This method creates a new GMTimage but retains all the header data from the IMG object
-function mat2img(mat, I::GMTimage)
+function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = deepcopy(I.range);	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
-	GMTimage(I.proj4, I.wkt, I.epsg, range, deepcopy(I.inc), I.registration, I.nodata, I.color_interp, String[], deepcopy(I.x), deepcopy(I.y), zeros(size(mat,3)), mat, deepcopy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
+	GMTimage(I.proj4, I.wkt, I.epsg, range, deepcopy(I.inc), I.registration, I.nodata, I.color_interp, metadata, names, deepcopy(I.x), deepcopy(I.y), zeros(size(mat,3)), mat, deepcopy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
 # ---------------------------------------------------------------------------------------------------

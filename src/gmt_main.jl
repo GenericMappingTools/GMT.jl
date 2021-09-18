@@ -47,6 +47,7 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	registration::Int
 	nodata::Float64
 	color_interp::String
+	metadata::Vector{String}
 	names::Vector{String}
 	x::Array{Float64,1}
 	y::Array{Float64,1}
@@ -65,7 +66,7 @@ Base.setindex!(I::GMTimage{T,N}, val, inds::Vararg{Int,N}) where {T,N} = I.image
 Base.BroadcastStyle(::Type{<:GMTimage}) = Broadcast.ArrayStyle{GMTimage}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTimage}}, ::Type{ElType}) where ElType
 	I = find4similar(bc.args)		# Scan the inputs for the GMTimage:
-	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.names, I.x, I.y, I.v, similar(Array{ElType}, axes(bc)), I.colormap, I.n_colors, I.alpha, I.layout, I.pad)
+	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.metadata, I.names, I.x, I.y, I.v, similar(Array{ElType}, axes(bc)), I.colormap, I.n_colors, I.alpha, I.layout, I.pad)
 end
 find4similar(I::GMTimage, rest) = I
 
@@ -598,7 +599,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 
 	# Return image via a uint8 matrix in a struct
 	cinterp = (I.color_interp != C_NULL) ? unsafe_string(I.color_interp) : ""
-	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, cinterp, String[], X, Y,
+	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, cinterp, String[], String[], X, Y,
 	               zeros(nz), t, colormap, n_colors, Array{UInt8,2}(undef,1,1), layout, 0)
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)

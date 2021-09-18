@@ -39,6 +39,7 @@ Image type
        registration::Int          # Registration type: 0 -> Grid registration; 1 -> Pixel registration
        nodata::Float64            # The value of nodata
        color_interp::String       # If equal to "Gray" an indexed image with no cmap will get a gray cmap
+       metadata::Vector{String}   # To store any metadata that can eventually be passed to GDAL (Optional)
        names::Vector{String}      # To use whith multi-band and when bands have names (Optional)
        x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates
        y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates
