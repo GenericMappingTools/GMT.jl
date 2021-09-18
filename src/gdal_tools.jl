@@ -3,15 +3,19 @@
 
 Convert raster data between different formats and other operations also provided by the GDAL
 'gdal_translate' tool. Namely sub-region extraction and resampling.
-The kwargs options accept the GMT region (-R), increment (-I), target SRS (-J), any of the keywords
+The `kwargs` options accept the GMT region (-R), increment (-I), target SRS (-J). Any of the keywords
 `outgrid`, `outfile` or `save` = outputname options to make this function save the result in disk
 in the file 'outputname'. The file format is picked from the 'outputname' file extension.
 When no output file name is provided it returns a GMT object (either a grid or an image, depending
-on the input type). To force the return of a GDAL dataset use the option `gdataset=true`
+on the input type). To force the return of a GDAL dataset use the option `gdataset=true`.
 
-- `indata`: - Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
-- `opts`:   - List of options. The accepted options are the ones of the gdal_translate utility.
-              This list can be in the form of a vector of strings, or joined in a simgle string.
+
+- `indata`: Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
+- `opts`:   List of options. The accepted options are the ones of the gdal_translate utility.
+            This list can be in the form of a vector of strings, or joined in a simgle string.
+- `kwargs`: Besides what was mentioned above one can also use `meta=metadata`, where `metadata`
+            is a string vector with the form "NAME=...." foe each of its elements. This data
+            will be recognized by GDAL as Metadata.
 
 ### Returns
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
@@ -125,6 +129,8 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 
 	dataset, needclose = get_gdaldataset(indata)
 	default_gdopts!(dataset, opts)		# Assign some default options in function of the driver and data type
+	((val = GMT.find_in_dict(d, [:meta])[1]) !== nothing && isa(val,Vector{String})) &&
+		Gdal.GDALSetMetadata(dataset.ptr, val, C_NULL)		# Metadata must in the form NAME=.....
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
@@ -139,9 +145,11 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 			n_bands = (got_GMT_opts && !haskey(d, :gdataset) && isa(o, AbstractRasterBand)) ? 1 : nraster(o)
 			(!haskey(d, :gdataset)) && (o = gd2gmt(o, bands=collect(1:n_bands)))
 		end
+		haskey(d, :gdataset) && delete!(d, :gdataset)
 	end
 	(needclose) && GDALClose(dataset.ptr)
 	CPLPopErrorHandler();
+	(length(d) > 0) && println("Warning: the following options were not consumed in $f => ", keys(d))
 	o
 end
 
