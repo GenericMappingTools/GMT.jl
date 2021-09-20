@@ -185,6 +185,7 @@ Gdal.GDALDestroyDriverManager()
 	grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
 	grdcut("utmsmall.tif", R="442000/445000/3747000/3750000", img=1, save="lixo.tif");
 
+	Gdal.getmetadata("rgbsmall.tif");
 	I = Gdal.dither("rgbsmall.tif");
 	gmt2gd(I);
 	Gdal.dither("rgbsmall.tif", save="lixo.tif");
@@ -210,6 +211,7 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.GDALGetSpatialRef(ds.ptr)
 	Gdal.GDALDatasetGetLayerByName(ds.ptr, "0")
 	Gdal.GDALGetPaletteInterpretation(ds.ptr)
+	Gdal.getmetadata(ds)
 
 	#Gdal.identifydriver("lixo.gmt")
 	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");
