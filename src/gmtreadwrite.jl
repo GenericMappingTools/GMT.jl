@@ -46,11 +46,11 @@ Specify data type (with *type*=true, e.g. `img=true`).  Choose among:
 
 When files are multiband or nc files with 3D or 4D arrays, we access them via these keywords.
 `layer=4` reads the fourth layer (or band) of the file. But the file can be a grid or an image. If it is a
-grid layer can be a scalar (to read 3D arrays) or an array of two elements (to read a 4D array).
+grid, layer can be a scalar (to read 3D arrays) or an array of two elements (to read a 4D array).
 
 If file is an image `layer` can be a 1 or a 1x3 array (to read a RGB image). Not that in this later case
-bands do not need to be contiguous. A `band=[0,5,2]`` composes an RGB out of those bands. See more at
-$(GMTdoc)/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files)
+bands do not need to be contiguous. A `band=[1,5,2]`` composes an RGB out of those bands. See more at
+$(GMTdoc)/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files) but note that we use **1 based** indexing here.
 
 - $(GMT.opt_R)
 - $(GMT.opt_V)
@@ -92,8 +92,8 @@ function gmtread(fname::String; kwargs...)
 		end
 		fname = fname * "?" * arg2str(varname)
 		if ((val = find_in_dict(d, [:layer :band])[1]) !== nothing)
-			if (isa(val, Number))     fname *= @sprintf("[%d]", val)
-			elseif (isa(val, Array))  fname *= @sprintf("[%d,%d]", val[1], val[2])	# A 4D array
+			if (isa(val, Number))     fname *= @sprintf("[%d]", val-1)
+			elseif (isa(val, Array))  fname *= @sprintf("[%d,%d]", val[1]-1, val[2]-1)	# A 4D array
 			end
 		end
 	else									# See if we have a bands request
@@ -103,7 +103,7 @@ function gmtread(fname::String; kwargs...)
 			else
 				fname = fname * "+b"
 				if (isa(val, String) || isa(val, Symbol) || isa(val, Number))
-					fname = string(fname, val)
+					fname = string(fname, parse(Int, string(val))-1)
 				elseif (isa(val, Array) || isa(val, Tuple))
 					if (length(val) == 3)
 						fname = fname * @sprintf("%d,%d,%d", val[1], val[2], val[3])
