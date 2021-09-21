@@ -342,8 +342,30 @@ end
 # ---------------------------------------------------------------------------------------------------
 # This method creates a new GMTimage but retains all the header data from the IMG object
 function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vector{String}=String[])
-	range = deepcopy(I.range);	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
-	GMTimage(I.proj4, I.wkt, I.epsg, range, deepcopy(I.inc), I.registration, I.nodata, I.color_interp, metadata, names, deepcopy(I.x), deepcopy(I.y), zeros(size(mat,3)), mat, deepcopy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
+	range = copy(I.range);	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
+	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, I.color_interp, metadata, names, copy(I.x), copy(I.y), zeros(size(mat,3)), mat, copy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    sliceimg(I::GMTimage, layer::Int)
+
+Take a slice of a multylayer GMTimage. Return the result still as a GMTimage. `layer` is the slice number.
+
+### Example
+Get the fourth layer of the multi-layered 'I' GMTimage object 
+
+```
+I = sliceimg(I, 4)
+```
+"""
+function sliceimg(I::GMTimage, layer::Int)
+	(layer < 1 || layer > size(I,3)) && error("Layer number ($layer) is out of bounds of image size ($size(I,3))")
+	(size(I,3) == 1) && return I		# There is nothing to slice here, but save the user fro the due deserved insult.
+	mat = I.image[:,:,layer]
+	range = copy(I.range);	range[5:6] .= extrema(mat)
+	names = (!isempty(I.names)) ? [I.names[layer]] : I.names
+	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Clong,3), 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
 # ---------------------------------------------------------------------------------------------------

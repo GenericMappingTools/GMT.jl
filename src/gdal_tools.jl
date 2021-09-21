@@ -127,7 +127,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 		end
 	end
 
-	dataset, needclose = get_gdaldataset(indata)
+	dataset, needclose = get_gdaldataset(indata, opts)
 	default_gdopts!(dataset, opts)		# Assign some default options in function of the driver and data type
 	((val = GMT.find_in_dict(d, [:meta])[1]) !== nothing && isa(val,Vector{String})) &&
 		Gdal.GDALSetMetadata(dataset.ptr, val, C_NULL)		# Metadata must in the form NAME=.....
@@ -222,11 +222,24 @@ function default_gdopts!(ds, opts::Vector{String})
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_gdaldataset(data)
+function get_gdaldataset(data, opts)
 	# Get a GDAL dataset from either a file name, a GMT grid or image, or a dataset itself
+	# In case of a file name we must be careful and deal with possible "+b" band requests from GMT.
 	needclose = false
 	if isa(data, AbstractString)			# Check also for remote files (those that start with a @). MAY SCREW VIOLENTLY
-		ds = (data[1] == '@') ? Gdal.unsafe_read(gmtwhich(data)[1].text[1]) : Gdal.unsafe_read(data)
+		name, ext = splitext(data)			# Be carefull, the name may carry a bands request. e.g. "LC08__cube.tiff+b3,2,1"
+		name = ((ind = findfirst("+", ext)) === nothing) ? data : name * ext[1:ind[1]-1]
+		if (ind !== nothing && ext[ind[1]+1] == 'b')	# So we must convert the "+b3,2,1" into GDAL syntax
+			o = split(ext[ind[1]+2:end], ",")			# But we must add 1 because GDAL band count is 1-based and GMT 0-based
+			p = parse.(Int, o) .+ 1
+			o = [string(c) for c in p]
+			if (isa(opts, Vector{String}))
+				[append!(opts, ["-b", o[k]]) for k = 1:length(o)]
+			else
+				opts *= " -b" * join(o, " -b ")
+			end
+		end
+		ds = (name[1] == '@') ? Gdal.unsafe_read(gmtwhich(name)[1].text[1]) : Gdal.unsafe_read(name)
 		needclose = true					# For some reason file remains open and we must close it explicitly
 	elseif (isa(data, GMTgrid) || isa(data, GMTimage) || GMT.isGMTdataset(data) || isa(data, Matrix{<:Real}))
 		ds = gmt2gd(data)
@@ -252,7 +265,7 @@ Convert a 24bit RGB image to 8bit paletted.
 """
 function dither(indata, opts=String[]; n_colors::Integer=256, save::String="", gdataset::Bool=false)
 	# ...
-	src_ds, needclose = get_gdaldataset(indata)
+	src_ds, needclose = get_gdaldataset(indata, "")
 	(nraster(src_ds) < 3) && error("Input image must have at least 3 bands")
 	(isa(indata, GMTimage) && !startswith(indata.layout, "TRB")) &&
 		error("Image memory layout must be `TRB` and not $(indata.layout). Load image with gdaltranslate()")

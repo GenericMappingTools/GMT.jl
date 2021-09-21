@@ -97,7 +97,7 @@ function gmtread(fname::String; kwargs...)
 			end
 		end
 	else									# See if we have a bands request
-		if ((val = find_in_dict(d, [:layer :band])[1]) !== nothing)
+		if ((val = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
 			if ((lix = guess_T_from_ext(fname)) == " -To")		# See if it's a OGR layer request
 				ogr_layer = Int32(val - 1)	# -1 because it's going to be sent to C (zero based)
 			else
@@ -105,11 +105,9 @@ function gmtread(fname::String; kwargs...)
 				if (isa(val, String) || isa(val, Symbol) || isa(val, Number))
 					fname = string(fname, parse(Int, string(val))-1)
 				elseif (isa(val, Array) || isa(val, Tuple))
-					if (length(val) == 3)
-						fname = fname * @sprintf("%d,%d,%d", val[1], val[2], val[3])
-					else
-						error("Number of bands in the 'band' option can only be 1 or 3")
-					end
+					# Replacement for the annoying fact that one cannot do @sprintf(repeat("%d,", n), val...)
+					fname  *= @sprintf("%d", val[1]-1)
+					[fname *= @sprintf(",%d", val[k]-1) for k = 2:length(val)]
 				end
 				(opt_T == "") && (opt_T = " -Ti")
 			end
