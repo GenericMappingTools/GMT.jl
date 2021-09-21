@@ -365,7 +365,7 @@ function sliceimg(I::GMTimage, layer::Int)
 	mat = I.image[:,:,layer]
 	range = copy(I.range);	range[5:6] .= extrema(mat)
 	names = (!isempty(I.names)) ? [I.names[layer]] : I.names
-	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, Int[], 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
+	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Clong,3), 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
 # ---------------------------------------------------------------------------------------------------
