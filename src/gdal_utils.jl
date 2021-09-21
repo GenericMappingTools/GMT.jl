@@ -543,7 +543,7 @@ gdalwrite(fname::AbstractString, data, optsP=String[]; opts=String[], kw...) = g
 function gdalwrite(data, fname::AbstractString, optsP=String[]; opts=String[], kw...)
 	(fname == "") && error("Output file name is missing.")
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
-	ds, = Gdal.get_gdaldataset(data)
+	ds, = Gdal.get_gdaldataset(data, optsP)
 	if (Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(ds))) == C_NULL)
 		gdaltranslate(ds, optsP; dest=fname, kw...)
 	else
