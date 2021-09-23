@@ -3741,6 +3741,17 @@ nanmean(x)   = mean(filter(!isnan,x))
 nanmean(x,y) = mapslices(nanmean,x,dims=y)
 nanstd(x)    = std(filter(!isnan,x))
 nanstd(x,y)  = mapslices(nanstd,x,dims=y)
+
+# --------------------------------------------------------------------------------------------------
+function isnodata(array::AbstractArray, val=0)
+	nrows, ncols = size(array,1), size(array,2)
+	indNaN = fill(false, nrows, ncols)
+	@inbounds Threads.@threads for k = 1:nrows * ncols	# 5x faster than: indNaN = (I.image .== 0)
+		(array[k] == val) && (indNaN[k] = true)
+	end
+	indNaN
+end
+
 # --------------------------------------------------------------------------------------------------
 function help_show_options(d::Dict)
 	if (find_in_dict(d, [:help])[1] !== nothing)  show_kwargs[1] = true  end	# Put in HELP mode
