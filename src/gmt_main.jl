@@ -333,7 +333,7 @@ function gmt(cmd::String, args...)
 	# GMT6.1.0 f up and now we must be very careful to not let the GMT breaking screw us
 	(need2destroy && !IamModern[1]) && gmt_restart()
 
-	(occursin("read", g_module) || occursin("write", g_module)) && ressurectGDAL()	# Since GMT may call GDALDestroyDriverManager()
+	ressurectGDAL()		# Some GMT modules may have called GDALDestroyDriverManager() and some GDAL module may come after us.
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)
@@ -366,7 +366,7 @@ end
 
 # -----------------------------------------------------------------------------------------------
 function ressurectGDAL()	# Because GMT may call GDALDestroyDriverManager()
-	(Gdal.GDALGetDriverCount() == 0) && Gdal.resetdrivers()
+	(Gdal.GDALGetDriverCount() == 0) && (Gdal.GDALDestroyDriverManager(); Gdal.resetdrivers())
 end
 
 #= ---------------------------------------------------------------------------------------------------
