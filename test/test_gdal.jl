@@ -189,7 +189,7 @@ Gdal.GDALDestroyDriverManager()
 	I = Gdal.dither("rgbsmall.tif");
 	gmt2gd(I);
 	Gdal.dither("rgbsmall.tif", save="lixo.tif");
-	Gdal.GDALopts2vec("aa bb 'vv pp' aa \"ad uuu\"");
+	Gdal.gdal_opts2vec("aa bb 'vv pp' aa \"ad uuu\"");
 
 	Gdal.GDALGetDataTypeByName("GTiff");
 	Gdal.IFieldDefnView(C_NULL);
