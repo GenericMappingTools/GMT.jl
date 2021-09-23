@@ -214,7 +214,7 @@
 	GMT.mat2img(img16, histo_bounds=[8440 13540 800 20000 1000 30000]);
 	GMT.mat2img(rand(UInt16,32,32,3),stretch=:auto);
 	I = GMT.mat2img(img16, I)
-	sliceimg(I, 2)
+	slicecube(I, 2)
 
 	D = mat2ds([0 0; 1 1],["a", "b"]);	D.header = "a";
 	GMT.make_zvals_vec(D, ["a", "b"], [1,2]);
@@ -321,6 +321,7 @@
 	y = [NaN 2 3 4;5 6 NaN 8;9 10 11 12];
 	@test nanmean(y,1) == [7.0  6.0  7.0  8.0]
 	nanstd(y,1)
+	isnodata(rand(2,2))
 
 	gmtbegin()
 	GMT.gmt_restart(false)

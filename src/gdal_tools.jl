@@ -64,7 +64,7 @@ Tools to analyze and visualize DEMs.
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
 """
 function gdaldem(indata, method::String, opts=String[]; dest="/vsimem/tmp", kwargs...)
-	opts = GDALopts2vec(opts)		# Guarantied to return a Vector{String}
+	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
 	if (method == "hillshade")		# So far the only method that accept kwarg options
 		d = GMT.KW(kwargs)
 		band = ((val = GMT.find_in_dict(d, [:band])[1]) !== nothing) ? string(val) : "1"
@@ -112,7 +112,8 @@ end
 function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kwargs...)
 	# Helper function to run the GDAL function under 'some protection' and returning obj or saving in file
 
-	opts = GDALopts2vec(opts)		# Guarantied to return a Vector{String}
+	GMT.ressurectGDAL()				# Another black-hole plug attempt.
+	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
 	d, opts, got_GMT_opts = GMT_opts_to_GDAL(opts, kwargs...)
 	((val = GMT.find_in_dict(d, [:Vd])[1]) !== nothing) && println(opts)
 
@@ -182,7 +183,7 @@ function GMT_opts_to_GDAL(opts::Vector{String}, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GDALopts2vec(opts)::Vector{String}
+function gdal_opts2vec(opts)::Vector{String}
 	# Break up a string of options into a vector string as it's needed by GDAL lower level functions
 	(opts == "") && return String[]
 	(isempty(opts) || (isa(opts, Vector{<:AbstractString}) && length(opts) > 1)) && return opts	# if already a vec

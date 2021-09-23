@@ -71,7 +71,8 @@ Parameters
     ($(GMTdoc)histogram.html#s)
 - **T** | **range** | **bin** :: [Type => Str]			`Arg = [min/max/]inc[+n] | file|list]`
 
-    Defines the range of the new CPT by giving the lowest and highest z-value and interval.
+    Make evenly spaced array of bin boundaries from min to max by inc. If min/max are not given then we
+    default to the range in `region`. For constant bin width use `bin=val`..
     ($(GMTdoc)histogram.html#t)
 - **W** | **pen** :: [Type => Str | Tuple]
 
@@ -281,7 +282,7 @@ function loc_histo(in, cmd::String="", opt_T::String="", opt_Z::String="")
 	(!isa(in[1], UInt16) && !isa(in[1], UInt8)) && error("Only UInt8 or UInt16 image types allowed here")
 
 	inc = (opt_T != "") ? Float64(Meta.parse(opt_T)) : 1.0
-	(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
+	(!isa(inc, Real) || inc <= 0) && error("Bin width must be a number > 0 and no min/max")
 
 	n_bins = (isa(in[1], UInt8)) ? 256 : Int(ceil((maximum(in) + 1) / inc))	# For UInt8 use the full [0 255] range
 	hst = zeros(n_bins, 2)
@@ -295,7 +296,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function pshst_wall!(in, hst, inc, n_bins::Int)
-	# Function barrier for type instability. With the body of this in calling fun the 'inc' var
+	# Function barrier for type instability. With the body of this in the calling fun the 'inc' var
 	# introduces a mysterious type instability and execution times multiply by 3.
 	if (inc == 1)
 		@inbounds Threads.@threads for k = 1:length(in)  hst[in[k] + 1, 2] += 1  end

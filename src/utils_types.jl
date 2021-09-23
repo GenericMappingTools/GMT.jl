@@ -359,7 +359,7 @@ Get the fourth layer of the multi-layered 'I' GMTimage object
 I = sliceimg(I, 4)
 ```
 """
-function sliceimg(I::GMTimage, layer::Int)
+function slicecube(I::GMTimage, layer::Int)
 	(layer < 1 || layer > size(I,3)) && error("Layer number ($layer) is out of bounds of image size ($size(I,3))")
 	(size(I,3) == 1) && return I		# There is nothing to slice here, but save the user fro the due deserved insult.
 	mat = I.image[:,:,layer]
