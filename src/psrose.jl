@@ -112,7 +112,7 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (isa(arg1, Array{<:GMTdataset,1}))  arg1 = arg1[1].data  end	# WHY I HAVE TO DO THIS?
 
 	cmd = add_opt(d, cmd, 'E', [:E :vectors])
-	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
+	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_args, arg1, arg2)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= opt_pen(d, 'W', [:W :pen])
 

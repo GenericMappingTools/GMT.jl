@@ -1953,7 +1953,7 @@ end
 function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1=nothing, arg2=nothing,
 	                 store::Bool=false, def::Bool=false, opt_T::String="", in_bag::Bool=false)
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
-	# SYMBS is normally: [:C :color :cmap]
+	# SYMBS is normally: CPTaliases
 	# N_args only applyies to when a GMTcpt was transmitted. Than it's either 0, case in which
 	# the cpt is put in arg1, or 1 and the cpt goes to arg2.
 	# STORE, when true, will save the cpt in the global state
@@ -2062,7 +2062,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		info = grdinfo(cmd0 * " -C");	range = vec(info[1].data)
 	end
 	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || (cmd0 != "" && cmd0[1] != '@'))
-		if (isempty(current_cpt[1]) && (val = find_in_dict(d, [:C :color :cmap], false)[1]) === nothing)
+		if (isempty(current_cpt[1]) && (val = find_in_dict(d, CPTaliases, false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
 			cpt_opt_T = @sprintf(" -T%.12g/%.12g/128+n", range[5] - 1e-6, range[6] + 1e-6)
 		end
@@ -2081,7 +2081,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	elseif (prog == "grdimage")
 		if (!isa(arg1, GMTimage) && (arg3 === nothing && !occursin("-D", cmd)) )
 			get_cpt = true		# This still lives out the case when the r,g,b were sent as a text.
-		elseif (find_in_dict(d, [:C :color :cmap], false)[1] !== nothing)
+		elseif (find_in_dict(d, CPTaliases, false)[1] !== nothing)
 			@warn("You are possibly asking to assign a CPT to an image. That is not allowed by GMT. See function image_cpt!")
 		end
 	elseif (prog == "grdcontour" || prog == "pscontour")	# Here C means Contours but we cheat, so always check if C, color, ... is present
@@ -2089,7 +2089,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		if (prog == "grdcontour" && !occursin("+c", cmd))  in_bag = false  end
 	end
 	if (get_cpt)
-		cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2, true, true, cpt_opt_T, in_bag)
+		cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_used, arg1, arg2, true, true, cpt_opt_T, in_bag)
 		N_used = (arg1 !== nothing) + (arg2 !== nothing)
 	end
 
@@ -3364,7 +3364,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
 		if (k > 1 && is_psscale && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
-			cmd2, arg1, = add_opt_cpt(d, cmd[k], [:C :color :cmap], 'C', 0, nothing, nothing, false, false, "", true)
+			cmd2, arg1, = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)
 			(arg1 === nothing) && (@warn("No cmap found to use in colorbar. Ignoring this command."); continue)
 			P = gmt(cmd[k], arg1)
 			continue
