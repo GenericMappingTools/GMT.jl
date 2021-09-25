@@ -274,6 +274,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			end
 		end
 	else										# For when a new size is entered in a middle of a script
+		(opt_J == " -J") && (println("SEVERE WARN: When appending a new fig with a different size you SHOULD set the `projection`. \n\tAdding `projection=:linear` at your own risk."); opt_J *= "X")
 		((s = helper_append_figsize(d, opt_J, O)) != "") && (opt_J = s)
 	end
 	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
