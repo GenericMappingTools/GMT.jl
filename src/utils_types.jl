@@ -372,8 +372,8 @@ end
 """
     I = image_alpha!(img::GMTimage; alpha_ind::Integer, alpha_vec::Vector{Integer}, alpha_band::UInt8)
 
-Change the alpha transparency of the GMTimage object 'img'. If the image is indexed, one can either
-change just the color index that will be made transparent by uing 'alpha_ind=n' or provide a vector
+Change the alpha transparency of the GMTimage object `img`. If the image is indexed, one can either
+change just the color index that will be made transparent by uing `alpha_ind=n` or provide a vector
 of transaparency values in the range [0 255]; This vector can be shorter than the orginal number of colors.
 Use `alpha_band` to change, or add, the alpha of true color images (RGB).
 
@@ -400,12 +400,12 @@ function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec=nothing, alpha
 		end
 		img.n_colors = n_colors * 1000
 	elseif (alpha_band !== nothing)		# Replace the entire alpha band
-		@assert(isa(alpha_band, Array{<:UInt8, 2}))
+		@assert(eltype(alpha_band) == UInt8)
 		ny1, nx1, = size(img.image)
 		ny2, nx2  = size(alpha_band)
 		(ny1 != ny2 || nx1 != nx2) && error("alpha channel has wrong dimensions")
 		(size(img.image, 3) != 3) ? @warn("Adding alpha band is restricted to true color images (RGB)") :
-		                            img.alpha = alpha_band
+		                            img.alpha = (isa(alpha_band,GMTimage)) ? alpha_band.image : alpha_band
 	end
 	return nothing
 end
@@ -414,6 +414,7 @@ end
 """
     image_cpt!(img::GMTimage, cpt::GMTcpt, clear=false)
 or
+
     image_cpt!(img::GMTimage, cpt::String, clear=false)
 
 Add (or replace) a colormap to a GMTimage object from the colors in the cpt.
