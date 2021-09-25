@@ -70,7 +70,7 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 
 	N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
-	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_used, arg1, arg2)
+	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_used, arg1, arg2)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = parse_Q_grdvec(d, [:Q :vec :vector :arrow], cmd)
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)

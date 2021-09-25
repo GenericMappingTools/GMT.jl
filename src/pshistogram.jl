@@ -146,7 +146,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	is_datetime = isa(arg1, Array{<:DateTime})
 	(opt_R == "" && !isa(arg1, Vector{DateTime})) && (opt_R = " ")	# So it doesn't try to find the -R in next call
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
-	cmd, arg1, arg2,  = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2)
+	cmd, arg1, arg2,  = add_opt_cpt(d, cmd, CPTaliases, 'C', N_args, arg1, arg2)
 
 	# If we still do not know the bin width, either use the GMT6.2 -E or BinMethod in binmethod()
 	if (opt_T == "" && !occursin(" -E", cmd) && (arg1 !== nothing) && !isa(arg1, GMTimage) && !isa(arg1, GMTgrid))
@@ -172,7 +172,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	limit_L = nothing
 	if (isa(arg1, GMTimage))		# If it's an image with no bin option, default to bin=1
 		do_clip = (isa(arg1[1], UInt16) && (val = find_in_dict(d, [:full_histo])[1]) === nothing) ? true : false
-		do_auto = ((val_auto = find_in_dict(d, [:auto :threshols])[1]) !== nothing) ? true : false	# Automatic bounds detetion
+		do_auto = ((val_auto = find_in_dict(d, [:auto :thresholds])[1]) !== nothing) ? true : false	# Automatic bounds detetion
 		do_getauto = ((val_getauto = find_in_dict(d, [:getauto :getthreshols])[1]) !== nothing) ? true : false
 		do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false	# Automatic zoom to interesting region
 		(do_zoom && !do_auto) && (val_auto = nothing)		# I.e. 'zoom' sets also the auto mode

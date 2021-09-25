@@ -486,7 +486,7 @@ A GMT RGB Image
 function gdalshade(fname; kwargs...)
 	d = KW(kwargs)
 	band = ((val = find_in_dict(d, [:band], false)[1]) !== nothing) ? string(val) : "1"
-	cmap = find_in_dict(d, [:C :color :cmap])[1]	# The color cannot be passed to second call to gdaldem
+	cmap = find_in_dict(d, CPTaliases)[1]	# The color cannot be passed to second call to gdaldem
 
 	A = gdaldem(fname, "color-relief", ["-b", band], C=cmap)
 	B = gdaldem(fname, "hillshade"; d...)

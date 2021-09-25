@@ -81,7 +81,7 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 
     # If file name sent in, read it and compute a tight -R if this was not provided 
     cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
-	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg1)
+	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg1)
 	cmd, Tvec = helper_cpt(d, cmd)
 	cmd = parse_E_mkcpt(d, [:E :nlevels], cmd, arg1)
 

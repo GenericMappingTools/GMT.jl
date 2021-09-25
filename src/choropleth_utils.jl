@@ -12,7 +12,7 @@ cpt4dcw(codes::String, vals::Vector{<:Real}; kwargs...) = cpt4dcw(split(codes,",
 function cpt4dcw(codes::Vector{<:AbstractString}, vals::Vector{<:Real}; kwargs...)
 	d = KW(kwargs)
 
-	if ((val = find_in_dict(d, [:C :color :cmap])[1]) !== nothing && isa(val, GMTcpt))
+	if ((val = find_in_dict(d, CPTaliases)[1]) !== nothing && isa(val, GMTcpt))
 		C = val
 	elseif ((val = find_in_dict(d, [:range])[1]) !== nothing && isvector(val) && length(val) >= 2)
 		inc = (length(val) == 2) ? 1 : val[3]

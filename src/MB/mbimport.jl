@@ -52,7 +52,7 @@ function mbimport(cmd0::String=""; kwargs...)
 	cmd = add_opt(d, cmd, 'Z', [:Z :type_plot], (bat="_1", shaded_bat="_2", shaded_amp="_3", amp="_4", sscan="_5"))
 
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
-	cmd, arg1, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, nothing)
+	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, nothing)
 	N_args = (arg1 === nothing) ? 0 : 1
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:N :color_amp], 'N', N_args, arg1, nothing)
 

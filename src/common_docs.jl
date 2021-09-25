@@ -1,6 +1,6 @@
 const GMTdoc = "http://docs.generic-mapping-tools.org/latest/"
 
-const opt_C = "**C** | **color** | **cmap** :: [Type => Str]		``Arg = [cpt |master[+izinc] |color1,color2[,*color3*,…]]``
+const opt_C = "**C** | **color** | **colormap** | **cmap** | **colorscale** :: [Type => Str]	``Arg = [cpt |master[+izinc] |color1,color2[,*color3*,…]]``
 
     Give a CPT name or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those
     colors automatically.

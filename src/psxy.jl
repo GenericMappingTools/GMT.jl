@@ -112,9 +112,9 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 	in_bag = (got_Zvars) ? true : false			# Other cases should add to this list
 	if (N_args < 2)
-		cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', N_args, arg1, arg2, true, true, "", in_bag)
+		cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, CPTaliases, 'C', N_args, arg1, arg2, true, true, "", in_bag)
 	else			# Here we know that both arg1 & arg2 are already occupied, so must use arg3 only
-		cmd, arg3, = add_opt_cpt(d, cmd, [:C :color :cmap], 'C', 0, arg3, nothing, true, true, "", in_bag)
+		cmd, arg3, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg3, nothing, true, true, "", in_bag)
 		N_args = 3
 	end
 
