@@ -62,7 +62,12 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 
 	if (arg1 === nothing && haskey(d, :R) && guess_T_from_ext(cmd0) == " -Ti")
-		t = split(d[:R], '/')
+		_opt_R = d[:R]
+		if (isa(_opt_R, Tuple) || isa(_opt_R, Array{<:Real}))
+			t = ["$(_opt_R[1])", "$(_opt_R[2])", "$(_opt_R[3])", "$(_opt_R[4])"]
+		else
+			t = split(_opt_R, '/')
+		end
 		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
 		I = cut_with_gdal(cmd0, opts)
 		if     (arg1 === nothing) arg1 = I
@@ -74,7 +79,8 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	end
 
 	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
-	cmd, opt_B, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	(startswith(opt_J, " -JX") && !contains(opt_J, "/")) && (cmd = replace(cmd, opt_J => opt_J * "/0")) # When sub-regions
 	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes) &&
 		(cmd = replace(cmd, opt_B => ""))	# Dont plot axes for plain images if that was not required
 

@@ -585,8 +585,9 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 			o = (nz == 1) ? (ny, nx) : (nz, ny, nx)
 		else
 			o = (nz == 1) ? (ny, nx) : (ny, nx, nz)
-			(nz == 1 && layout == "BRBa") && (layout = "BRPa")	# For 1 layer "BRBa" and "BRPa" is actualy the same.
-			(layout != "BRPa") && @warn("Only 'I' for Images.jl and 'BRP' MEM layouts are allowed.")
+			isBRP = startswith(layout, "BRP")
+			(nz == 1 && isBRP) && (layout = "BRPa")	# For 1 layer "BRBa" and "BRPa" is actualy the same.
+			(!isBRP) && @warn("Only 'I' for Images.jl and 'BRP' MEM layouts are allowed.")
 		end
 		t = reshape(unsafe_wrap(Array, data, ny * nx * nz), o)	# Apparently the reshape() creates a copy
 	end
