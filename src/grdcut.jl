@@ -72,7 +72,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 	end
 end
 
-function cut_with_gdal(fname::AbstractString, opts::Vector{AbstractString}, outname::String="")
+function cut_with_gdal(fname::String, opts::Vector{<:AbstractString}, outname::String="")
 	if (outname == "")
 		gdaltranslate(fname, opts)	# Layout is "TRB" so all matrices are contrary to Julia order
 	else
