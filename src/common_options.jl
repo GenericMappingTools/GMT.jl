@@ -598,8 +598,8 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
 	parse_theme(d)			# Must be first because some themes change def_fig_axes
-	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
-	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3[1]		# def_fig_axes is a global const
+	def_fig_axes_ = def_fig_axes[1]  # def_fig_axes is a global const
+	def_fig_axes3_ = def_fig_axes3[1]  # def_fig_axes is a global const
 
 	have_Bframe, got_Bstring, have_axes = false, false, false	# To know if the axis() function returns a -B<frame> setting
 
@@ -758,7 +758,6 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 	if (def_fig_axes[1] != def_fig_axes_bak && opt_B != def_fig_axes[1])	# Consolidation only under themes
 		if (opt_B != "" && !got_Bstring && CTRL.proj_linear[1] && !occursin(def_fig_axes_, opt_B) &&
 			!(occursin("pxc", opt_B) || occursin("pyc", opt_B)))
-			# By using def_fig_axes_ this has no effect in modern mode.
 			opt_B = ((have_Bframe) ? split(def_fig_axes_)[1] : def_fig_axes_) * opt_B
 		end
 		opt_B = consolidate_Baxes(opt_B)
@@ -913,12 +912,11 @@ function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::Stri
 	cmd, opt_J = parse_J(d, cmd, defaultJ, true, O, del)
 
 	parse_theme(d)		# Must be first because some themes change def_fig_axes
-	def_fig_axes_ = (IamModern[1]) ? "" : def_fig_axes[1]	# def_fig_axes is a global const
+	def_fig_axes_ = def_fig_axes[1]  # def_fig_axes is a global const
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (occursin("3", caller) || caller == "grdview")
-			def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3[1]
-			cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes3_), del)
+			cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes3[1]), del)
 		else
 			xx = (O ? "" : caller != "ternary" ? def_fig_axes_ : string(split(def_fig_axes_)[1]))
 			cmd, opt_B = parse_B(d, cmd, xx, del)	# For overlays, default is no axes
