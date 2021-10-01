@@ -2,8 +2,8 @@
 	histogram(cmd0::String="", arg1=nothing; kwargs...)
 
 Examines the first data column to calculate histogram parameters based on the bin-width provided.
-Alternatively, show histograms of GMTimage & GMTgrid objects directly. In the GMTimage case, the
-options 'auto=true' or 'thresholds=(0, 0.1)' will find the histogram bounds of UInt16 images
+Alternatively, show histograms of GMTimage & GMTgrid objects directly. The
+options 'auto=true' or 'thresholds=(0, 0.1)' will find the histogram bounds
 convenient for contrast enhancement (histogram stretch). The values represent the percentage of
 countings used to estimate the boundings. The option 'zoom=true' will set 'auto=true' and show
 histogram only on the region of interest.
@@ -107,6 +107,10 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
+	if (cmd0 != "" && (haskey(d, :auto) || haskey(d, :thresholds)))	# To do auto-limits for stretch we must load data
+		arg1 = gmtread(cmd0);		cmd0 = ""
+	end
+
 	cmd = ""
 	opt_Z = add_opt(d, "", 'Z', [:Z :kind], (counts = "0", count = "0", freq = "1", log_count = "2", log_freq = "3",
 	                                         log10_count = "4", log10_freq = "5", weights = "+w"), true, "")
@@ -149,8 +153,13 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, arg2,  = add_opt_cpt(d, cmd, CPTaliases, 'C', N_args, arg1, arg2)
 
 	# If we still do not know the bin width, either use the GMT6.2 -E or BinMethod in binmethod()
-	if (opt_T == "" && !occursin(" -E", cmd) && (arg1 !== nothing) && !isa(arg1, GMTimage) && !isa(arg1, GMTgrid))
-		opt_T = binmethod(d, cmd, arg1, is_datetime)	# This comes without the " -T"
+	got_min_max = false
+	is_subarray_float = (typeof(arg1) <: SubArray{Float32})		# This is to allow @subviews that can't go into GMTgrid|image
+	is_subarray_uint  = (typeof(arg1) <: SubArray{Unsigned})
+	issub = (is_subarray_float || is_subarray_uint)
+	if (opt_T == "" && !occursin(" -E", cmd) && (arg1 !== nothing) && !isa(arg1, GMTimage) && !isa(arg1, GMTgrid) && !issub)
+		opt_T, min_max = binmethod(d, cmd, arg1, is_datetime)	# This comes without the " -T"
+		got_min_max = true
 		if (is_datetime)
 			t = gmt("pshistogram -I -T" * opt_T, arg1)	# Call with inquire option to know y_min|max
 			h = round_wesn(t[1].data)					# Only h[4] is needed
@@ -170,44 +179,56 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	limit_L = nothing
-	if (isa(arg1, GMTimage))		# If it's an image with no bin option, default to bin=1
+	do_auto = ((val_auto = find_in_dict(d, [:auto :thresholds])[1]) !== nothing) ? true : false	# Automatic bounds detetion
+	do_getauto = ((val_getauto = find_in_dict(d, [:getauto :getthreshols])[1]) !== nothing) ? true : false
+	do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false	# Automatic zoom to interesting region
+
+	function if_zoom()
+		mm = extrema(hst, dims=1)			# 1×2 Array{Tuple{UInt16,UInt16},2}
+		x_max = min(limit_R * 1.15, hst[end,1])		# 15% to the right but not fall the cliff
+		opt_R_ = " -R$(limit_L * 0.85)/$x_max/0/$(mm[2][2] * 1.1) "
+		(opt_R != " ") && @warn("'zoom' option overrides the requested region limits and sets its own")
+		cmd = replace(cmd, opt_R => opt_R_, count=1)
+		return cmd, opt_R_					# opt_R_ will be needed further down in vline
+	end
+
+	if (isa(arg1, GMTimage) || is_subarray_uint)				# If it's an image with no bin option, default to bin=1
 		do_clip = (isa(arg1[1], UInt16) && (val = find_in_dict(d, [:full_histo])[1]) === nothing) ? true : false
-		do_auto = ((val_auto = find_in_dict(d, [:auto :thresholds])[1]) !== nothing) ? true : false	# Automatic bounds detetion
-		do_getauto = ((val_getauto = find_in_dict(d, [:getauto :getthreshols])[1]) !== nothing) ? true : false
-		do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false	# Automatic zoom to interesting region
 		(do_zoom && !do_auto) && (val_auto = nothing)		# I.e. 'zoom' sets also the auto mode
 		hst, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
 		(do_clip && (all(hst[3:10,2] .== 0)) || hst[1,2] > 100 * mean(hst[2:10,2])) && (hst[1,2] = 0; hst[2,2] = 0)
 		if (do_auto || do_getauto || do_zoom)
 			which_auto = (do_auto) ? val_auto : val_getauto
 			limit_L, limit_R = find_histo_limits(arg1, which_auto, 20)
-			(do_getauto) && return [limit_L, limit_R]		# If only want the histogram limits, we are done then.
-			if (do_zoom)
-				mm = extrema(hst, dims=1)		# 1×2 Array{Tuple{UInt16,UInt16},2}
-				x_max = min(limit_R * 1.15, hst[end,1])		# 15% to the right but not fall the cliff
-				opt_R_ = " -R$(limit_L * 0.85)/$x_max/0/$(mm[2][2] * 1.1) "
-				(opt_R != " ") && @warn("'zoom' option overrides the requested region limits and sets its own")
-				cmd = replace(cmd, opt_R => opt_R_, count=1)
-				opt_R = opt_R_					# It will be needed further down in vlines
-			end
+			(do_getauto) && return [Int(limit_L), Int(limit_R)]		# If only want the histogram limits, we are done then.
+			(do_zoom) && (cmd, opt_R = if_zoom())
 		end
 		arg1 = hst		# We want to send the histogram, not the GMTimage
-    elseif (isa(arg1, GMTgrid))
+    elseif (isa(arg1, GMTgrid) || is_subarray_float)
+		_min_max = (isa(arg1, GMTgrid)) ? (arg1.range[5], arg1.range[6]) : (got_min_max ? min_max : Float64.(extrema_nan(arg1))) 
 		if (opt_T != "")
 			inc = parse(Float64, opt_T) + eps()		# + EPS to avoid the extra last bin at right with 1 count only
-			n_bins = Int(ceil((arg1.range[6] - arg1.range[5]) / inc))
+			n_bins = Int(ceil((_min_max[2] - _min_max[1]) / inc))
 		else
-			n_bins = Int(ceil(sqrt(length(arg1.z))))
-			inc = (arg1.range[6] - arg1.range[5]) / n_bins + eps()
+			n_bins = Int(ceil(sqrt(length(arg1))))
+			inc = (_min_max[2] - _min_max[1]) / n_bins + eps()
 		end
 		(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
 		hst = zeros(n_bins, 2)
-		@inbounds Threads.@threads for k = 1:length(arg1)  hst[Int(floor((arg1[k] - arg1.range[5]) / inc) + 1), 2] += 1  end
-		[@inbounds hst[k,1] = arg1.range[5] + inc * (k - 1) for k = 1:n_bins]
+		@inbounds Threads.@threads for k = 1:length(arg1)  hst[Int(floor((arg1[k] - _min_max[1]) / inc) + 1), 2] += 1  end
+		[@inbounds hst[k,1] = _min_max[1] + inc * (k - 1) for k = 1:n_bins]
+
+		if (do_auto || do_getauto || do_zoom)
+			which_auto = (do_auto) ? val_auto : val_getauto
+			limit_L, limit_R = find_histo_limits(arg1, which_auto, inc, hst)
+			(do_getauto) && return [limit_L, limit_R]	# If only want the histogram limits, we are done then.
+			limit_L, limit_R = round(limit_L, digits=4), round(limit_R, digits=4)	# Don't plot an ugly number of decimals
+			(do_zoom) && (cmd, opt_R = if_zoom())
+		end
 
 		cmd = (opt_Z == "") ? cmd * " -Z0" : cmd * opt_Z
 		if (!occursin("+w", cmd))  cmd *= "+w"  end		# Pretending to be weighted is crutial for the trick
-		cmd *= " -T$(arg1.range[5])/$(arg1.range[6])/$inc"
+		cmd *= " -T$(_min_max[1])/$(_min_max[2])/$inc"
 		arg1 = hst		# We want to send the histogram, not the GMTgrid
 	else
 		(opt_T != "") && (opt_T = " -T" * opt_T)		# It lacked the -T so that it could be used in loc_histo()
@@ -225,7 +246,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	out2 = nothing;		Vd_ = 0				# Backup values
 	(haskey(d, :Vd)) && (Vd_ = d[:Vd])
-	
+
 	# Plot the histogram
 	out1 = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
 
@@ -243,7 +264,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function find_histo_limits(In, thresholds=nothing, width=20)
+function find_histo_limits(In, thresholds=nothing, width=20, hst_::Matrix{Float64}=Matrix{Float64}(undef,0,2))
 	# Find the histogram limits of a UInt16 GMTimage that allow to better stretch the histogram
 	# THRESHOLDS is an optional Tuple input containing the left and right histo thresholds, in percentage,
 	# between which the histogram values will be retained. Defaults are (0.1, 0.4) percent. Note, this
@@ -255,7 +276,7 @@ function find_histo_limits(In, thresholds=nothing, width=20)
 		L3 = find_histo_limits(view(In, :, :, 3), thresholds, width)
 		return (L1[1], L1[2], L2[1], L2[2], L3[1], L3[2])
 	end
-	hst = loc_histo(In, "", string(width), "")[1]
+	hst = (isempty(hst_)) ? loc_histo(In, "", string(width), "")[1] : hst_
 	if (size(hst, 1) > 10)
 		all(hst[2:5,2] .== 0) && (hst[1,2] = 0)	# Here we always check for high counts in zero bin
 		# Some processed bands leave garbage on the low DNs and that fouls our detecting algo. So check more
@@ -272,7 +293,8 @@ function find_histo_limits(In, thresholds=nothing, width=20)
 	kl = 1;		kr = size(hst, 1)
 	while (hst[kl,2] == 0 || hst[kl,2] < thresh_l)  kl += 1  end
 	while (hst[kr,2] == 0 || hst[kr,2] < thresh_r)  kr -= 1  end
-	return Int(hst[kl,1]), Int(min(hst[kr,1] + width, hst[end,1]))
+	#return Int(hst[kl,1]), Int(min(hst[kr,1] + width, hst[end,1]))
+	return hst[kl,1], min(hst[kr,1] + width, hst[end,1])
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -311,10 +333,11 @@ end
 function binmethod(d::Dict, cmd::String, X, is_datetime::Bool)
 	# Compute bin width for a series of binning alghoritms or intervals when X (DateTime) comes in seconds
 	val = ((val_ = find_in_dict(d, [:binmethod :BinMethod])[1]) !== nothing) ? lowercase(string(val_)) : ""
+	min_max = (zero(eltype(X)), zero(eltype(X)))
 	(!is_datetime) && (min_max = extrema(X))		# X should already be sorted but don't trust that
 	if (val == "")
 		if (!is_datetime)
-			val = "scott"
+			val = "sqrt"
 		else
 			min_max = extrema(X)		# X should already be sorted but don't trust that
 			rng = (min_max[2] - min_max[1])
@@ -346,7 +369,7 @@ function binmethod(d::Dict, cmd::String, X, is_datetime::Bool)
 	if (bin == 0)
 		bin = (min_max[2] - min_max[1]) / n_bins	# Should be made a "pretty" number?
 	end
-	return sprintf("%.12g", bin)
+	return sprintf("%.12g", bin), min_max
 end
 
 # ---------------------------------------------------------------------------------------------------
