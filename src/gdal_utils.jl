@@ -4,7 +4,7 @@
 Convert a GDAL raster dataset into either a GMTgrid (if type is Int16 or Float) or a GMTimage type
 Use `band` to select a single band of the dataset. When you know that the dataset contains several
 bands of an image, use the kwarg `bands` with a vector the wished bands. By default it reads all
-bands of an image and, so far, only one layer of a grid.
+bands of the image or grid object.
 
 When DATASET is a string it may contain the file name or the name of a subdataset. In former case
 you can use the kwarg `sds` to selec the subdataset numerically. Alternatively, provide the full `sds` name.
@@ -36,16 +36,8 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	xSize, ySize, nBands = Gdal.width(dataset), Gdal.height(dataset), n_dsbands
 	dType = Gdal.pixeltype(getband(dataset, 1))
 	is_grid = (sizeof(dType) >= 4 || dType == Int16) ? true : false		# Simple (too simple?) heuristic
-	if (is_grid)						# MUST ALLOW ALSO TO HAVE MULTILAYERS
-		(length(bands) > 1) && error("For grids only one band request is allowed")
-		(band == 0) && (band = 1)		# The default 0 was only to lest us know if any other was selected
-		(!isempty(bands)) && (band = bands[1])
-		in_bands = [band]
-		(band > n_dsbands) && error("Selected band is larger then number of bands in this dataset")
-	else
-		in_bands = (!isempty(bands)) ? bands : ((band == 0) ? collect(1:n_dsbands) : [band])
-		(maximum(in_bands) > n_dsbands) && error("One selected band is larger then number of bands in this dataset")
-	end
+	in_bands = (!isempty(bands)) ? bands : ((band == 0) ? collect(1:n_dsbands) : [band])
+	(maximum(in_bands) > n_dsbands) && error("One selected band is larger then number of bands in this dataset")
 	ncol, nrow = xSize+2pad, ySize+2pad
 	mat = (dataset isa Gdal.AbstractRasterBand) ? zeros(dType, ncol, nrow) : zeros(dType, ncol, nrow, length(in_bands))
 	n_colors = 0
@@ -283,26 +275,21 @@ on `D` is a single or a multi-segment object, or "point" to convert to a multipo
 """
 function gmt2gd(GI)
 	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (size(GI,1), size(GI,2))
+	ds = Gdal.create("", driver=getdriver("MEM"), width=width, height=height, nbands=size(GI,3), dtype=eltype(GI[1]))
 	if (isa(GI, GMTgrid))
-		ds = Gdal.create("", driver=getdriver("MEM"), width=width, height=height, nbands=1, dtype=eltype(GI.z))
 		if (GI.layout != "" && GI.layout[2] == 'C')
-			(GI.layout[1] == 'B') ? Gdal.write!(ds, collect(reverse(GI.z, dims=1)'), 1) : Gdal.write!(ds, collect(GI.z'), 1)
+			indata = (GI.layout[1] == 'B') ? collect(reverse(GI.z, dims=1)') : collect(GI.z')
 		else
-			Gdal.write!(ds, GI.z, 1)
+			indata = GI.z
 		end
+		Gdal.write!(ds, indata, isa(GI.z, Array{<:Real, 3}) ? Cint.(collect(1:size(GI,3))) : 1)
 	elseif (isa(GI, GMTimage))
-		ds = Gdal.create("", driver=getdriver("MEM"), width=width, height=height, nbands=size(GI,3),
-		              dtype=eltype(GI.image))
 		if (GI.layout != "" && GI.layout[2] == 'C')
 			indata = (GI.layout[1] == 'B') ? collect(reverse(GI.image, dims=1)') : collect(GI.image')
 		else
 			indata = GI.image
 		end
 		Gdal.write!(ds, indata, isa(GI.image, Array{<:Real, 3}) ? Cint.(collect(1:size(GI,3))) : 1)
-
-		if (!isempty(GI.names))			# Set bands description
-			[Gdal.GDALSetDescription(Gdal.GDALGetRasterBand(ds.ptr, k), GI.names[k]) for k = 1:min(size(GI,3), length(GI.names))]
-		end
 
 		if (GI.n_colors > 0)
 			ct = Gdal.createcolortable(UInt32(1))	# RGB
@@ -316,6 +303,10 @@ function gmt2gd(GI)
 			Gdal.setcolortable!(Gdal.getband(ds), ct)
 			(!isnan(GI.nodata)) && (setnodatavalue!(Gdal.getband(ds), GI.nodata))
 		end
+	end
+
+	if (!isempty(GI.names))			# Set bands description
+		[Gdal.GDALSetDescription(Gdal.GDALGetRasterBand(ds.ptr, k), GI.names[k]) for k = 1:min(size(GI,3), length(GI.names))]
 	end
 
 	x_min, y_max = GI.range[1], GI.range[4]
