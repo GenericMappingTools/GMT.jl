@@ -343,7 +343,11 @@ end
 # This method creates a new GMTimage but retains all the header data from the IMG object
 function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(I.range);	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
-	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, I.color_interp, metadata, names, copy(I.x), copy(I.y), zeros(size(mat,3)), mat, copy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
+	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, I.color_interp, metadata, names, copy(I.x), copy(I.y), zeros(size(mat,3)), mat, copy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, 0)
+end
+function mat2img(mat, G::GMTgrid; names::Vector{String}=String[], metadata::Vector{String}=String[])
+	range = copy(G.range);	range[5:6] .= (size(mat,3) == 1) ? extrema(mat) : [0., 255]
+	GMTimage(G.proj4, G.wkt, G.epsg, range, copy(G.inc), G.registration, 0.0, "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Clong,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -513,7 +517,7 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String=
 	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem, cmd="", names=names)
 end
 
-function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[])
+function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[])
 # Take a 2D array of floats and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
@@ -541,12 +545,12 @@ function mat2grid(mat::DenseMatrix, xx=Vector{Float64}(), yy=Vector{Float64}(); 
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object
-function mat2grid(mat::DenseMatrix, G::GMTgrid)
+function mat2grid(mat, G::GMTgrid)
 	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, String[], deepcopy(G.x), deepcopy(G.y), [0.], mat, G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, G.pad)
 	grd_min_max!(Go)		# Also take care of NaNs
 	Go
 end
-function mat2grid(mat::DenseMatrix, I::GMTimage)
+function mat2grid(mat, I::GMTimage)
 	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, "", "", "", String[], I.x, I.y, [0.], mat, "", "", "", "", I.layout, I.pad)
 	(length(Go.layout) == 4) && (Go.layout = Go.layout[1:3])	# No space for the a|A
 	grd_min_max!(Go)		# Also take care of NaNs
