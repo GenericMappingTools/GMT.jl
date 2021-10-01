@@ -40,7 +40,7 @@ grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
 grdview(rand(128,128), G="lixo.grd", I=I, J=:X12, JZ=5, Q=:i, view="145/30", Vd=dbg2)
 I = mat2img(rand(UInt8,90,120,3), proj="+proj=longlat +datum=WGS84 +no_defs");	# 'proj' is ignored
 gmtwrite("lixo.tif", I)
-grdview(rand(90,120), G="lixo.tif", J=:X12, JZ=5, Q=:i, view="145/30")
+#grdview(rand(90,120), G="lixo.tif", J=:X12, JZ=5, Q=:i, view="145/30")
 # If I use proj4 something in the above fcks the memory state and one of next tests would crash. 
 
 println("	IMSHOW")
