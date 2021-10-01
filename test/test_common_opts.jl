@@ -215,6 +215,10 @@
 	GMT.mat2img(rand(UInt16,32,32,3),stretch=:auto);
 	I = GMT.mat2img(img16, I)
 	slicecube(I, 2)
+	@test rescale(1:5,-1,1) == -1.0:0.5:1
+	@test rescale(1:4, type=UInt8) == [0, 85, 170, 255]
+	magic(4)
+	magic(6)
 
 	D = mat2ds([0 0; 1 1],["a", "b"]);	D.header = "a";
 	GMT.make_zvals_vec(D, ["a", "b"], [1,2]);
