@@ -274,7 +274,6 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			end
 		end
 	else										# For when a new size is entered in a middle of a script
-		#((s = helper_append_figsize(d, opt_J, O)) != "") && (opt_J = s)
 		if ((s = helper_append_figsize(d, opt_J, O)) != "")
 			if (opt_J == " -J")
 				println("SEVERE WARNING: When appending a new fig with a different size you SHOULD set the `projection`. \n\tAdding `projection=:linear` at your own risk.");
@@ -3758,6 +3757,100 @@ function isnodata(array::AbstractArray, val=0)
 		(array[k] == val) && (indNaN[k] = true)
 	end
 	indNaN
+end
+
+# --------------------------------------------------------------------------------------------------
+"""
+    R = rescale(A, a=0.0, b=1.0; inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
+
+- `A`: is either a GMTgrid, GMTimage, Matrix{AbstractArray} or a file name. In later case the file is read
+   with a call to `gmtread` that automatically decides how to read it based on the file extension ... not 100% safe.
+- `rescale(A)` rescales all entries of an array `A` to [0,1].
+- `rescale(A,b,c)` rescales all entries of A to the interval [b,c].
+- `rescale(..., inputmin=imin)` sets the lower bound `imin` for the input range. Input values less
+   than `imin` will be replaced with `imin`. The default is min(A).
+- `rescale(..., inputmax=imax)` sets the lower bound `imax` for the input range. Input values greater
+   than `imax` will be replaced with `imax`. The default is max(A).
+- `rescale(..., stretch=true)` automatically determines [inputmin inputmax] via a call to histogram that
+   will (try to) find good limits for histogram stretching. 
+- `type`: Converts the scaled array to this data type. Valid options are all Unsigned types (e.g. `UInt8`).
+   Default returns the same data type as `A` if it's an AbstractFloat, or Flot64 if `A` is an integer.
+
+Returns a GMTgrid if `A` is a GMTgrid of floats, a GMTimage if `A` is a GMTimage and `type` is used or
+an array of Float32|64 otherwise.
+
+"""
+function rescale(A::String, low=0.0, up=1.0; inputmin=nothing, inputmax=nothing, stretch::Bool=false, type=nothing)
+	GI = gmtread(A)
+	rescale(GI, low, up, inputmin=inputmin, inputmax=inputmax, stretch=stretch, type=type)
+end
+function rescale(A::AbstractArray, low=0.0, up=1.0; inputmin=nothing, inputmax=nothing, stretch::Bool=false, type=nothing)
+	(type !== nothing && (!isa(type, DataType) || !(type <: Unsigned))) && error("The 'type' variable must be an Unsigned DataType")
+	((inputmin !== nothing || inputmax !== nothing) && stretch) && @warn("The `stretch` option overrules `inputmin|max`.")
+	if (stretch)
+		inputmin, inputmax = histogram(A, getauto=true)
+	end
+	(inputmin === nothing) && (mi = (isa(A, GMTgrid) || isa(A, GMTimage)) ? A.range[5] : minimum_nan(A))
+	(inputmax === nothing) && (ma = (isa(A, GMTgrid) || isa(A, GMTimage)) ? A.range[6] : maximum_nan(A))
+	_inmin = convert(Float64, (inputmin === nothing) ? mi : inputmin)
+	_inmax = convert(Float64, (inputmax === nothing) ? ma : inputmax)
+	d1 = _inmax - _inmin
+	d2 = up - low
+	sc::Float64 = d2 / d1
+	if (type !== nothing)
+		(low != 0.0 || up != 1.0) && (@warn("When converting to Unsigned must have a=0, b=1"); low=0.0; up=1.0)
+		o = Array{type}(undef, size(A))
+		sc *= typemax(type)
+		low *= typemax(type)
+		if (inputmin === nothing && inputmax === nothing)	# Faster case. No IFs in loop
+			@inbounds Threads.@threads for k = 1:length(A)  o[k] = round(type, low + (A[k] -_inmin) * sc)  end
+		else
+			low_i, up_i = round(type, low), round(type, up*typemax(type))
+			@inbounds Threads.@threads for k = 1:length(A)
+				o[k] = (A[k] < _inmin) ? low_i : ((A[k] > _inmax) ? up_i : round(type, low + (A[k] -_inmin) * sc))
+			end
+		end
+		return (isa(A, GMTgrid) || isa(A, GMTimage)) ? mat2img(o, A) : o
+	else
+		oType = isa(eltype(A), AbstractFloat) ? eltype(A) : Float64
+		o = Array{oType}(undef, size(A))
+		if (inputmin === nothing && inputmax === nothing)	# Faster case. No IFs in loop
+			@inbounds Threads.@threads for k = 1:length(A)  o[k] = low + (A[k] -_inmin) * sc  end
+		else
+			@inbounds Threads.@threads for k = 1:length(A)
+				o[k] = (A[k] < _inmin) ? low : ((A[k] > _inmax) ? up : low + (A[k] -_inmin) * sc)
+			end
+		end
+		return (isa(A, GMTgrid) || isa(A, GMTimage)) ? mat2grid(o, A) : o
+	end
+end
+
+# --------------------------------------------------------------------------------------------------
+function magic(n::Int)
+	# From:  https://gist.github.com/phillipberndt/2db94bf5e0c16161dedc
+	# Had to suffer with Julia painful mtix indexing system to make it work. Gives the same as magic.m
+	if n % 2 == 1
+		p = (1:n)
+		M = n * mod.(p .+ (p' .- div(n+3, 2)), n) .+ mod.(p .+ (2p' .- 2), n) .+ 1
+	elseif n % 4 == 0
+		J = div.((1:n) .% 4, 2)
+		K = J' .== J
+		M = collect(1:n:(n*n)) .+ reshape(0:n-1, 1, n)	# Is it really true that we can't make a 1 row matix?????
+		M[K] .= n^2 .+ 1 .- M[K]
+	else
+		p = div(n, 2)
+		M = magic(p)
+		M = [M M .+ 2p^2; M .+ 3p^2 M .+ p^2]
+		(n == 2) && return M
+		i = (1:p)
+		k = Int((n-2)/4)
+		j = convert(Array{Int}, [(1:k); ((n-k+2):n)])
+		M[[i; i.+p],j] = M[[i.+p; i],j]
+		ii = k+1
+		j = [1; ii]
+		M[[ii; ii+p],j] = M[[ii+p; ii],j]
+	end
+	return M
 end
 
 # --------------------------------------------------------------------------------------------------
