@@ -96,11 +96,11 @@ if (got_it)					# Otherwise go straight to end
 	velo(mat2ds([0. -8 0 0 4 6 0.5; -8 5 3 3 0 0 0.5], ["4x6", "3x3"]), pen=(0.6,:red), fill_wedges=:green, outlines=true, Se="0.2/0.39/18", arrow="0.3c+p1p+e+gred", region=(-15,10,-10,10), Vd=dbg2)
 
 	println("	GADM")
-	#gadm("AND", names=true);
-	#gadm("AND", "ordino");
-	#gadm("AND", children=true);
-	#gadm("AND", children_raw=true);
-	#@test_throws ErrorException("Asked data for a level (3) that is lower than lowest data level (2)") gadm("AND", "ordino", names=true);
+	gadm("AND", names=true);
+	gadm("AND", "ordino");
+	gadm("AND", children=true);
+	gadm("AND", children_raw=true);
+	@test_throws ErrorException("Asked data for a level (3) that is lower than lowest data level (2)") gadm("AND", "ordino", names=true);
 
 	# Remove garbage
 	println("	REMOVE GARBAGE")

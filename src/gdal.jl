@@ -338,6 +338,7 @@ GDALSetColorEntry(a1, a2, a3) =
 	acare(ccall((:GDALSetColorEntry, libgdal), Cvoid, (pVoid, Cint, Ptr{GDALColorEntry}), a1, a2, a3))
 
 CPLSetConfigOption(a1, a2) = acare(ccall((:CPLSetConfigOption, libgdal), Cvoid, (Cstring, Cstring), a1, a2))
+CPLGetConfigOption(a1, a2) = acare(ccall((:CPLGetConfigOption, libgdal), Cstring, (Cstring, Cstring), a1, a2), false)
 
 GDALSetDescription(a1, a2) = acare(ccall((:GDALSetDescription, libgdal), Cvoid, (pVoid, Cstring), a1, a2))
 GDALSetMetadata(a1, a2, a3) = acare(ccall((:GDALSetMetadata, libgdal), UInt32, (pVoid, Ptr{Cstring}, Cstring), a1, a2, a3))
@@ -1467,7 +1468,7 @@ end
 	end
 	gdalinfo(ds::IDataset, opts::Vector{String}=String[]) = gdalinfo(Dataset(ds.ptr), opts)
 	function gdalinfo(fname::AbstractString, opts=String[])
-		CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))	# WTF is this needed?
+		#CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))	# WTF is this needed?
 		o = gdalinfo(unsafe_read(fname; options=opts), opts)
 		CPLPopErrorHandler();
 		return o
@@ -2325,6 +2326,8 @@ end
 		return nothing
 	end
 
+	set_config_option(opt::String, val::String) = CPLSetConfigOption(opt, val)
+
 	include("gdal_extensions.jl")
 	include("gdal_tools.jl")
 
@@ -2340,7 +2343,7 @@ end
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
 		convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 		wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
-		wkbGeometryCollection
+		wkbGeometryCollection, set_config_option
 
 
 	const DRIVER_MANAGER = Ref{DriverManager}()
