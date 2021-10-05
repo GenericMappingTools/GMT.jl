@@ -165,7 +165,9 @@ function guess_T_from_ext(fname::String)::String
 	ext = splitext(fname)[2]
 	(length(ext) > 8 || occursin("?", ext)) && return (occursin("?", ext)) ? " -Tg" : "" # A SUBDATASET encoded fname?
 	ext = lowercase(ext[2:end])
-	((ext == "jp2" || ext == "tif" || ext == "tiff") && !isfile(fname)) && error("File $fname does not exist.")
+	((ext == "jp2" || ext == "tif" || ext == "tiff") && (!isfile(fname) && !startswith(fname, "/vsi") &&
+		!occursin("https:", fname) && !occursin("http:", fname) && !occursin("ftps:", fname) && !occursin("ftp:", fname))) &&
+		error("File $fname does not exist.")
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "png", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
@@ -175,7 +177,8 @@ function guess_T_from_ext(fname::String)::String
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	elseif (startswith(ext, "tif"))
 		ressurectGDAL();
-		gdinfo = gdalinfo(fname)
+		gdinfo = gdalinfo(fname, ["-nogcp", "-noct", "-norat"])
+		(gdinfo === nothing) && error("gdalinfo failed - unable to open $fname")
 		out = (findfirst("Type=UInt", gdinfo) !== nothing || findfirst("Type=Byte", gdinfo) !== nothing) ? " -Ti" : " -Tg"
 	else
 		out = ""
@@ -324,15 +327,21 @@ end
 
 # -----------------------------------------------------------------------------------------------
 function transpcmap!(I::GMTimage, toGMT::Bool=true)
-	# So, the shit is in GMT when making lots it expects the colormap to be column-major (MEX inheritance)
+	# So, the shit is in GMT when making plots it expects the colormap to be column-major (MEX inheritance)
 	# but gdalwrite it expects it to be row-major. So we must do some transpose work here.
+	# Not anymore (GMT6.3), now gdalwrite expects column-mjor. Shit.
 	(ndims(I) != 2 || I.n_colors <= 1 || eltype(I) == UInt16) && return nothing 	# Nothing to do
+
+	n_colors = I.n_colors
+	(n_colors > 2000) && (n_colors = Int(floor(n_colors / 1000)))
 	if (toGMT)
-		I.colormap = vec(collect(reshape(reshape(I.colormap, 4, I.n_colors)', I.n_colors * 4, 1)) )
-		I.n_colors *= 1000		#  Because gmtwrite uses a trick to know if cmap is Mx2 or Mx4
+		n_cols = Int(length(I.colormap) / n_colors)
+		(GMTver <= v"6.2.0") && (I.colormap = vec(collect(reshape(reshape(I.colormap, n_cols, n_colors)', n_colors * n_cols, 1))) )
+		(I.n_colors < 2000 || n_cols == 4) && (I.n_colors *= 1000)	#  Because gmtwrite uses a trick to know if cmap is Mx2 or Mx4
 	else
-		I.n_colors /= 1000		# Revert the trick 
-		I.colormap = vec(collect(reshape(reshape(I.colormap, I.n_colors, 4)', I.n_colors * 4, 1)) )
+		#(I.n_colors > 2000) && (I.n_colors = div(I.n_colors, 1000))		# Revert the trick 
+		n_cols = Int(length(I.colormap) / n_colors)
+		(GMTver <= v"6.2.0") && (I.colormap = vec(collect(reshape(reshape(I.colormap, n_colors, n_cols)', n_colors * n_cols, 1))) )
 	end
 	return nothing
 end
