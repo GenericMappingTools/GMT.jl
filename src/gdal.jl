@@ -338,6 +338,7 @@ GDALSetColorEntry(a1, a2, a3) =
 	acare(ccall((:GDALSetColorEntry, libgdal), Cvoid, (pVoid, Cint, Ptr{GDALColorEntry}), a1, a2, a3))
 
 CPLSetConfigOption(a1, a2) = acare(ccall((:CPLSetConfigOption, libgdal), Cvoid, (Cstring, Cstring), a1, a2))
+CPLGetConfigOption(a1, a2) = acare(ccall((:CPLGetConfigOption, libgdal), Cstring, (Cstring, Cstring), a1, a2), false)
 
 GDALSetDescription(a1, a2) = acare(ccall((:GDALSetDescription, libgdal), Cvoid, (pVoid, Cstring), a1, a2))
 GDALSetMetadata(a1, a2, a3) = acare(ccall((:GDALSetMetadata, libgdal), UInt32, (pVoid, Ptr{Cstring}, Cstring), a1, a2, a3))
@@ -612,6 +613,7 @@ GDALBuildVRTOptionsFree(pOpts) = acare(ccall((:GDALBuildVRTOptionsFree, libgdal)
 	#acare(ccall((:GDALViewshedGenerate, thelib), pVoid, (pVoid, Cstring, Cstring, Ptr{Cstring}, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, UInt32, Cdouble, pVoid, pVoid, UInt32, Ptr{Cstring}), hBand, pDriverName, pTargetName, pCreationOpts, obsX, obsY, obsH, dfTargetHeight, dfVisibleVal, dfInvVal, dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff, eMode, dfMaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts))
 #end
 
+VSICurlClearCache() = acare(ccall((:VSICurlClearCache, libgdal), Cvoid, ()))
 VSIUnlink(pszFilename) = acare(ccall((:VSIUnlink, libgdal), Cint, (Cstring,), pszFilename))
 
 # ------------------------------------------- ArchGDAL stuff ----------------------------------------------------------
@@ -1094,6 +1096,11 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	function read(fname::AbstractString; flags = GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
 		alloweddrivers=Ptr{Cstring}(C_NULL), options=Ptr{Cstring}(C_NULL), siblingfiles=Ptr{Cstring}(C_NULL), I::Bool=true)
+		# The COOKIEFILE (and other options) is crucial for authenticated accesses. The shit is that if we asked once
+		# without the necessary options: "GDAL_DISABLE_READDIR_ON_OPEN","YES"; "CPL_VSIL_CURL_ALLOWED_EXTENSIONS","TIF";
+		# "CPL_VSIL_CURL_USE_HEAD","FALSE"; "GDAL_HTTP_COOKIEFILE", "..."; "GDAL_HTTP_COOKIEJAR","...", big shit follows
+		# Next line is a patch to try to catch that situation by cleaning the vsi cache. Maybe it will backfire, who knows.
+		(startswith(fname, "/vsi") && CPLGetConfigOption("GDAL_HTTP_COOKIEFILE", C_NULL) !== nothing) && VSICurlClearCache()
 		r = GDALOpenEx(fname, Int(flags), alloweddrivers, options, siblingfiles)
 		return (I) ? IDataset(r) : Dataset(r)
 	end
@@ -1467,7 +1474,7 @@ end
 	end
 	gdalinfo(ds::IDataset, opts::Vector{String}=String[]) = gdalinfo(Dataset(ds.ptr), opts)
 	function gdalinfo(fname::AbstractString, opts=String[])
-		CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))	# WTF is this needed?
+		#CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))	# WTF is this needed?
 		o = gdalinfo(unsafe_read(fname; options=opts), opts)
 		CPLPopErrorHandler();
 		return o
@@ -2325,6 +2332,8 @@ end
 		return nothing
 	end
 
+	set_config_option(opt::String, val::String) = CPLSetConfigOption(opt, val)
+
 	include("gdal_extensions.jl")
 	include("gdal_tools.jl")
 
@@ -2340,7 +2349,7 @@ end
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
 		convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 		wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
-		wkbGeometryCollection
+		wkbGeometryCollection, set_config_option
 
 
 	const DRIVER_MANAGER = Ref{DriverManager}()

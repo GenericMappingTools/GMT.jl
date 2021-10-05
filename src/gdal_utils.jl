@@ -122,7 +122,7 @@ function gd2gmt_helper(dataset::AbstractString, sds)
 	scale_factor, add_offset, got_fill_val, fill_val = Float32(1), Float32(0), false, Float32(0)
 	if (sds > 0)					# Must fish the SUBDATASET name in in gdalinfo
 		# Let's fish the SDS 1 name in: SUBDATASET_1_NAME=NETCDF:"AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc":sst
-		info = gdalinfo(dataset)
+		info = gdalinfo(dataset, ["-nogcp", "-noct", "-norat"])
 		ind = findall("SUBDATASET_", info)
 		nn = 0
 		for k = 1:2:length(ind)
@@ -141,7 +141,7 @@ function gd2gmt_helper(dataset::AbstractString, sds)
 	((dataset = Gdal.unsafe_read(sds_name)) == C_NULL) && error("GDAL failed to read " * sds_name)
 
 	# Hmmm, check also for scale_factor, add_offset, _FillValue
-	info = gdalinfo(dataset)
+	info = gdalinfo(dataset, ["-nogcp", "-noct", "-norat"])
 	(info === nothing) && error("GDAL failed to find " * sds_name)
 	if ((ind = findfirst("  Metadata:", info)) !== nothing)
 		info = info[ind[1]+12 : end]			# Restrict the size of the string were to look

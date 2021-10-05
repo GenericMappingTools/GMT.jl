@@ -12,7 +12,7 @@ Parameters
 
     Specify how the range should be reported.
     ($(GMTdoc)gmtinfo.html#a)
-- **C** | **per_column** :: [Type => Bool]
+- **C** | **numeric** :: [Type => Bool]
 
     Report the min/max values per column in separate columns [Default uses <min/max> format].
     ($(GMTdoc)gmtinfo.html#c)
@@ -69,7 +69,7 @@ function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:V_params :e :f :o :r :w :yx])
 	(endswith(cmd, "-:")) && (cmd *= "i")    # Need to be -:i not -: to not swap output too
-	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :per_column], [:D :center], [:E :get_record], [:F :counts],
+	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :numeric :per_column], [:D :center], [:E :get_record], [:F :counts],
 	                                [:L :common_limits], [:S :for_error_bars]])
 	cmd = add_opt(d, cmd, 'I', [:I :inc :increment :spacing],
 	              (exact=("e", nothing, 1), polyg=("b", nothing, 1), surface=("s", nothing, 1), fft=("d", nothing, 1), inc=("", arg2str, 2)), false, true)

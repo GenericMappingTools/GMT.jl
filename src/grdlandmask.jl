@@ -32,7 +32,7 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdlandmask(....) form.
     ($(GMTdoc)grdlandmask.html#g)
-- **N** | **mask_geog** :: [Type => Str | List]    ``Arg = wet/dry or ocean/land/lake/island/pond``
+- **N** | **mask** | **mask_geog** :: [Type => Str | List]    ``Arg = wet/dry or ocean/land/lake/island/pond``
 
     Sets the values that will be assigned to nodes. Values can be any number, including the textstring NaN
     ($(GMTdoc)grdlandmask.html#n)
@@ -47,6 +47,6 @@ function grdlandmask(cmd0::String=""; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:I :R :V_params :r :x])
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :bordervalues],
-	                                 [:G :outfile :outgrid], [:N :mask_geog]])
+	                                 [:G :outfile :outgrid], [:N :mask :mask_geog]])
 	return common_grd(d, "grdlandmask " * cmd, nothing)		# Finish build cmd and run it
 end
