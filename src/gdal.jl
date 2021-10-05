@@ -1096,6 +1096,11 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	function read(fname::AbstractString; flags = GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
 		alloweddrivers=Ptr{Cstring}(C_NULL), options=Ptr{Cstring}(C_NULL), siblingfiles=Ptr{Cstring}(C_NULL), I::Bool=true)
+		# The COOKIEFILE (and other options) is crucial for authenticated accesses. The shit is that if we asked once
+		# without the necessary options: "GDAL_DISABLE_READDIR_ON_OPEN","YES"; "CPL_VSIL_CURL_ALLOWED_EXTENSIONS","TIF";
+		# "CPL_VSIL_CURL_USE_HEAD","FALSE"; "GDAL_HTTP_COOKIEFILE", "..."; "GDAL_HTTP_COOKIEJAR","...", big shit follows
+		# Next line is a patch to try to catch that situation by cleaning the vsi cache. Maybe it will backfire, who knows.
+		(startswith(fname, "/vsi") && CPLGetConfigOption("GDAL_HTTP_COOKIEFILE", C_NULL) !== nothing) && VSICurlClearCache()
 		r = GDALOpenEx(fname, Int(flags), alloweddrivers, options, siblingfiles)
 		return (I) ? IDataset(r) : Dataset(r)
 	end
