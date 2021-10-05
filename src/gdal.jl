@@ -613,6 +613,7 @@ GDALBuildVRTOptionsFree(pOpts) = acare(ccall((:GDALBuildVRTOptionsFree, libgdal)
 	#acare(ccall((:GDALViewshedGenerate, thelib), pVoid, (pVoid, Cstring, Cstring, Ptr{Cstring}, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, UInt32, Cdouble, pVoid, pVoid, UInt32, Ptr{Cstring}), hBand, pDriverName, pTargetName, pCreationOpts, obsX, obsY, obsH, dfTargetHeight, dfVisibleVal, dfInvVal, dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff, eMode, dfMaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts))
 #end
 
+VSICurlClearCache() = acare(ccall((:VSICurlClearCache, libgdal), Cvoid, ()))
 VSIUnlink(pszFilename) = acare(ccall((:VSIUnlink, libgdal), Cint, (Cstring,), pszFilename))
 
 # ------------------------------------------- ArchGDAL stuff ----------------------------------------------------------
