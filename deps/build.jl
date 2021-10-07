@@ -19,7 +19,7 @@ if (doit != "")
 		GMT_bindir = joinpath(Conda.ROOTENV, "bin")
 	end
 
-	libgmt = string(chop(read(`$(joinpath("$(GMT_bindir)", "gmt")) --show-library`, String)))
+	libgmt = abspath(chop(read(`$(joinpath("$(GMT_bindir)", "gmt")) --show-library`, String)))
 
 	@static Sys.iswindows() ? libgdal = "gdal_w64.dll" : (
 		Sys.isapple() ? (libgdal = joinpath(Conda.ROOTENV, "lib", string(split(readlines(pipeline(`otool -L $(libgmt)`, `grep libgdal`))[1])[1])[8:end]) )  : (
