@@ -21,15 +21,10 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 
 	(isa(_dataset, GMTgrid) || isa(_dataset, GMTimage) || isGMTdataset(_dataset)) && return _dataset
 
-	if (isa(_dataset, AbstractString))	# A subdataset name or the full string "SUBDATASET_X_NAME=...."
-		# For some bloody reason it would print annoying (& false?) warning messages. Have to use brute force
-		Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
-		dataset, scale_factor, add_offset, got_fill_val, fill_val = gd2gmt_helper(_dataset, sds)
-		Gdal.CPLPopErrorHandler();
-	else
-		scale_factor, add_offset, got_fill_val, fill_val = Float32(1), Float32(0), false, Float32(0)
-		dataset = _dataset
-	end
+	# For some bloody reason it would print annoying (& false?) warning messages. Have to use brute force
+	#Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
+	dataset, scale_factor, add_offset, got_fill_val, fill_val = gd2gmt_helper(_dataset, sds)
+	#Gdal.CPLPopErrorHandler();
 	(!isa(_dataset, String) && _dataset.ptr == C_NULL) && error("NULL dataset sent in")
 
 	n_dsbands = Gdal.nraster(dataset)
@@ -39,6 +34,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	in_bands = (!isempty(bands)) ? bands : ((band == 0) ? collect(1:n_dsbands) : [band])
 	(maximum(in_bands) > n_dsbands) && error("One selected band is larger then number of bands in this dataset")
 	ncol, nrow = xSize+2pad, ySize+2pad
+	(scale_factor != 1 || add_offset != 0) && (dType = Float32)
 	mat = (dataset isa Gdal.AbstractRasterBand) ? zeros(dType, ncol, nrow) : zeros(dType, ncol, nrow, length(in_bands))
 	n_colors = 0
 	desc = Vector{String}(undef,0)
@@ -104,25 +100,24 @@ end
 # ---------------------------------------------------------------------------------------------------
 function gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val)
 	# Apply a scale + offset
-	(got_fill_val) && (nodata = (mat .== fill_val))
+	(got_fill_val) && (nodata = isnodata(mat, fill_val))
 	if (eltype(mat) <: Integer)
 		mat = mat .* scale_factor .+ add_offset		# Also promotes (and pay) the array to float32
 	else
-		@inbounds @simd for k = 1:length(mat)
-			mat[k] = mat[k] * scale_factor + add_offset
-		end
+		@inbounds Threads.@threads for k = 1:length(mat)  mat[k] = mat[k] * scale_factor + add_offset  end
 	end
 	(got_fill_val) && (mat[nodata] .= NaN32)
 	mat
 end
 
 # ---------------------------------------------------------------------------------------------------
-function gd2gmt_helper(dataset::AbstractString, sds)
-	# Deal with daasets as file names. Extract SUBDATASETS is wished.
+function gd2gmt_helper(input, sds)
+	# Deal with datasets as file names. Extract SUBDATASETS if wished.
+	# But `input` can also be gdal dataset, case in which the `sds` option will probably not work.
 	scale_factor, add_offset, got_fill_val, fill_val = Float32(1), Float32(0), false, Float32(0)
 	if (sds > 0)					# Must fish the SUBDATASET name in in gdalinfo
 		# Let's fish the SDS 1 name in: SUBDATASET_1_NAME=NETCDF:"AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc":sst
-		info = gdalinfo(dataset, ["-nogcp", "-noct", "-norat"])
+		info = gdalinfo(input)
 		ind = findall("SUBDATASET_", info)
 		nn = 0
 		for k = 1:2:length(ind)
@@ -130,21 +125,24 @@ function gd2gmt_helper(dataset::AbstractString, sds)
 			n = tryparse(Int, info[ind[k][end]+1 : ind[k][end]+ind2[1]-1])
 			if (n == sds)			# Ok, found it, but we still need to find the EOL
 				ind3 = findfirst('\n', info[ind[k][1]:end])
-				dataset = info[ind[k][1] : ind[k][1] + ind3[1]-2]
+				input = info[ind[k][1] : ind[k][1] + ind3[1]-2]
 				nn = n
 				break
 			end
 		end
-		(nn == 0) && error("SUBDATASET $(sds) not found in " * dataset)
+		(nn == 0) && error("SUBDATASET $(sds) not found in " * input)
 	end
-	sds_name = trim_SUBDATASET_str(dataset)
-	((dataset = Gdal.unsafe_read(sds_name)) == C_NULL) && error("GDAL failed to read " * sds_name)
+	if (isa(input, AbstractString))
+		sds_name = trim_SUBDATASET_str(input)
+		((dataset = Gdal.unsafe_read(sds_name)) == C_NULL) && error("GDAL failed to read " * sds_name)
+	else
+		dataset = input
+	end
 
 	# Hmmm, check also for scale_factor, add_offset, _FillValue
-	info = gdalinfo(dataset, ["-nogcp", "-noct", "-norat"])
+	info = gdalinfo(dataset)
 	(info === nothing) && error("GDAL failed to find " * sds_name)
-	if ((ind = findfirst("  Metadata:", info)) !== nothing)
-		info = info[ind[1]+12 : end]			# Restrict the size of the string were to look
+	if (occursin("Metadata:", info))
 		if ((ind = findfirst("scale_factor=", info)) !== nothing)	# OK, found one
 			ind2 = findfirst('\n', info[ind[1]:end])
 			scale_factor = tryparse(Float32, info[ind[1]+13 : ind[1] + ind2[1]-2])
@@ -235,7 +233,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function trim_SUBDATASET_str(sds::String)
-	# If present, trim the initial "SUBDATASET_X_NAME=" som a subdataset string name
+	# If present, trim the initial "SUBDATASET_X_NAME=" from a subdataset string name
 	ind = 0
 	(startswith(sds, "SUBDATASET_") && (ind = findfirst('=', sds)) === nothing) && error("Badly formed SUBDATASET string")
 	sds_name = sds[ind+1:end]
@@ -327,7 +325,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	(n_cols < 2) && error("GMTdataset must have at least 2 columns")
 
 	geometry = lowercase(geometry)
-	ismulti  = (length(D) > 1)
+	ismulti  = (length(D) > 1) || (D[1].geom == wkbPoint && size(D[1].data, 1) > 1)
 	ispolyg  = occursin("poly", geometry);
 	isline   = occursin("line", geometry);
 	ispoint  = occursin("point", geometry);
@@ -503,12 +501,13 @@ A GMT grid/image or a GDAL dataset
 function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset=false, kw...)
 	(fname == "") && error("Input file name is missing.")
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
+	ressurectGDAL();
 	ds_t = Gdal.read(fname, I=false)
 	if (Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(ds_t))) == C_NULL)
-		ds = gdaltranslate(ds_t, optsP; kw...)
+		ds = gdaltranslate(ds_t, optsP; gdataset=gdataset, kw...)
 	else
 		optsP = (isempty(optsP)) ? ["-overwrite"] : append!(optsP, "-overwrite")
-		ds = ogr2ogr(ds_t, optsP; kw...)
+		ds = ogr2ogr(ds_t, optsP; gdataset=true, kw...)
 		Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
 	end
 	Gdal.GDALClose(ds_t.ptr)			# WTF it needs explicit close?

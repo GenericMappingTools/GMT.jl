@@ -177,7 +177,7 @@ function guess_T_from_ext(fname::String)::String
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	elseif (startswith(ext, "tif"))
 		ressurectGDAL();
-		gdinfo = gdalinfo(fname, ["-nogcp", "-noct", "-norat"])
+		gdinfo = gdalinfo(fname)
 		(gdinfo === nothing) && error("gdalinfo failed - unable to open $fname")
 		out = (findfirst("Type=UInt", gdinfo) !== nothing || findfirst("Type=Byte", gdinfo) !== nothing) ? " -Ti" : " -Tg"
 	else

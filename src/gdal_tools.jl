@@ -135,7 +135,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
-	o = (method == "") ? f(dataset, opts; dest=dest) : f(dataset, method, opts; dest=dest, colorfile=_cmap)
+	o = (method == "") ? f(dataset, opts; dest=dest, gdataset=true) : f(dataset, method, opts; dest=dest, gdataset=true, colorfile=_cmap)
 	(o !== nothing && o.ptr == C_NULL) && @warn("$(f) returned a NULL pointer.")
 	if (o !== nothing)
 		# If not explicitly stated to return a GDAL datase, return a GMT type
