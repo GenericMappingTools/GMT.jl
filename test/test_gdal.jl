@@ -74,7 +74,7 @@ Gdal.GDALDestroyDriverManager()
 	gdaltranslate(ds_small, [""]);
 	gdaltranslate("utmsmall.tif", R="442000/445000/3747000/3750000");
 	try		# Stupid Macports gdal does not have AAIGrid driver
-	ds_tiny = gdaltranslate(ds_small, ["-of","AAIGrid","-r","cubic","-tr","1200","1200"]) # resample to a 5×5 ascii grid
+	ds_tiny = gdaltranslate(ds_small, ["-of","AAIGrid","-r","cubic","-tr","1200","1200"], gdataset=true) # resample to a 5×5 ascii grid
 	@test Gdal.read(ds_tiny, 1) == [128  171  127   93   83; 126  164  148  114  101;
 									161  175  177  164  140; 185  206  205  172  128;
 									193  205  209  181  122]
@@ -93,7 +93,7 @@ Gdal.GDALDestroyDriverManager()
 	@test Gdal.height(ds_warped) == 91
 
 	ds_point = Gdal.read("point.geojson");
-	ds_grid = gdalgrid(ds_point, ["-of","MEM","-outsize","3", "10","-txe","100","100.3","-tye","0","0.1"]);
+	ds_grid = gdalgrid(ds_point, ["-of","MEM","-outsize","3", "10","-txe","100","100.3","-tye","0","0.1"], gdataset=true);
 	@test getgeotransform(ds_grid) ≈ [100.0,0.1,0.0,0.0,0.0,0.01]
 	ds_point = Gdal.read("point.geojson");
 	layer = Gdal.getlayer(ds_point, 0);
@@ -105,7 +105,7 @@ Gdal.GDALDestroyDriverManager()
 	sprint(print, Gdal.getgeomdefn(feature, 0))
 	sprint(print, ds_point)
 
-	ds_rasterize = gdalrasterize(ds_point, ["-of","MEM","-tr","0.05","0.05"])
+	ds_rasterize = gdalrasterize(ds_point, ["-of","MEM","-tr","0.05","0.05"], gdataset=true)
 	@test getgeotransform(ds_rasterize) ≈ [99.975,0.05,0.0,0.1143,0.0,-0.05]
 
 	ds_csv = gdalvectortranslate(ds_point, ["-f","CSV","-lco", "GEOMETRY=AS_XY"], dest = "point.csv");

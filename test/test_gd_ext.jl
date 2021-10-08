@@ -47,7 +47,7 @@
 	I1 = mat2img(UInt8.([1 2 3; 4 5 6; 7 8 9]));
 	gdalwrite("lixo.png", I1);
 	I2 = gdalread("lixo.png");
-	#@test I == I2'		# Because the layout is different
+	@test I1 == I2'		# Because the layout is different
 
 	function test_method(f::Function, wkt1::AbstractString, wkt2::AbstractString, wkt3::AbstractString)
 		geom1 = Gdal.fromWKT(wkt1)

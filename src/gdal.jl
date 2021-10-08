@@ -1428,7 +1428,7 @@ end
 		end
 	end
 
-	function gdalwarp(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp", save::AbstractString="")
+	function gdalwarp(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp", gdataset=false, save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALWarpAppOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1437,12 +1437,12 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return IDataset(result)
+		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result))
 	end
-	gdalwarp(ds::Dataset, opts=String[]; dest="/vsimem/tmp") = gdalwarp([ds], opts; dest=dest)
-	gdalwarp(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalwarp([Dataset(ds.ptr)], opts; dest=dest)
+	gdalwarp(ds::Dataset, opts=String[]; dest="/vsimem/tmp", gdataset=false) = gdalwarp([ds], opts; dest=dest, gdataset=gdataset)
+	gdalwarp(ds::IDataset, opts=String[]; dest="/vsimem/tmp", gdataset=false) = gdalwarp([Dataset(ds.ptr)], opts; dest=dest, gdataset=gdataset)
 
-	function gdaltranslate(dataset::Dataset, options=String[]; dest="/vsimem/tmp", save::AbstractString="")
+	function gdaltranslate(dataset::Dataset, options=String[]; dest="/vsimem/tmp", gdataset=false, save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALTranslateOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1451,11 +1451,11 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return IDataset(result)
+		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result))
 	end
-	function gdaltranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp", save::AbstractString="")
+	function gdaltranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp", gdataset=false, save::AbstractString="")
 		(save != "") && (dest = save)
-		gdaltranslate(Dataset(ds.ptr), opts; dest=dest)
+		gdaltranslate(Dataset(ds.ptr), opts; dest=dest, gdataset=gdataset)
 	end
 
 	#=
@@ -1480,7 +1480,7 @@ end
 		return o
 	end
 
-	function gdaldem(dataset::Dataset, processing::String, options::Vector{String}=String[]; dest="/vsimem/tmp", colorfile=C_NULL, save::AbstractString="")
+	function gdaldem(dataset::Dataset, processing::String, options::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, colorfile=C_NULL, save::AbstractString="")
 		(save != "") && (dest = save)
 		if processing == "color-relief"
 			@assert colorfile != C_NULL
@@ -1492,11 +1492,12 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return IDataset(result)
+		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result))
 	end
-	gdaldem(ds::IDataset, processing::String, opts::Vector{String}=String[]; dest="/vsimem/tmp", colorfile=C_NULL) = gdaldem(Dataset(ds.ptr), processing, opts; dest=dest, colorfile=colorfile)
+	gdaldem(ds::IDataset, processing::String, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, colorfile=C_NULL) =
+		gdaldem(Dataset(ds.ptr), processing, opts; dest=dest, gdataset=gdataset, colorfile=colorfile)
 
-	function gdalgrid(dataset::Dataset, options::Vector{String}=String[]; dest="/vsimem/tmp", save::AbstractString="")
+	function gdalgrid(dataset::Dataset, options::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALGridOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1505,11 +1506,12 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return IDataset(result)
+		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result))
 	end
-	gdalgrid(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp") = gdalgrid(Dataset(ds.ptr), opts; dest=dest)
+	gdalgrid(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false) =
+		gdalgrid(Dataset(ds.ptr), opts; dest=dest, gdataset=gdataset)
 
-	function gdalrasterize(dataset::AbstractDataset, options::Vector{String}=String[]; dest = "/vsimem/tmp", save::AbstractString="")
+	function gdalrasterize(dataset::AbstractDataset, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALRasterizeOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1518,7 +1520,7 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return IDataset(result)
+		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result))
 	end
 
 	function gdalbuildvrt(datasets::Vector{<:AbstractDataset}, options::Vector{String}=String[]; dest = "/vsimem/tmp", save::AbstractString="")
@@ -1560,7 +1562,7 @@ end
 		end)
 	end
 
-	function gdalvectortranslate(datasets::Vector{Dataset}, options::Vector{String}=String[]; dest="/vsimem/tmp", save::AbstractString="")
+	function gdalvectortranslate(datasets::Vector{Dataset}, options::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALVectorTranslateOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1569,13 +1571,15 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return IDataset(result)
+		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result))
 	end
-	gdalvectortranslate(ds::Dataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([ds], opts; dest=dest, save=save)
-	gdalvectortranslate(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest, save=save)
-	gdalvectortranslate(ds::GMT.GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="") = gdalvectortranslate([ds], opts; dest=dest, save=save)
-	function gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", save="")
-		o = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, save=save)
+	gdalvectortranslate(ds::Dataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="") =
+		gdalvectortranslate([ds], opts; dest=dest, gdataset=gdataset, save=save)
+	gdalvectortranslate(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="") =
+		gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest, gdataset=gdataset, save=save)
+	gdalvectortranslate(ds::GMT.GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="") = 				gdalvectortranslate([ds], opts; dest=dest, gdataset=gdataset, save=save)
+	function gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="")
+		o = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, gdataset=gdataset, save=save)
 		(dest == "/vsimem/tmp") && deletedatasource(o, "/vsimem/tmp")		# WTF do I need to do this?
 		o
 	end
@@ -2328,7 +2332,8 @@ end
 	end
 
 	function resetdrivers()			# Because some GMT functions call GDALDestroyDriverManager() 
-		DRIVER_MANAGER[] = DriverManager()
+		#DRIVER_MANAGER[] = DriverManager()
+		DriverManager()
 		return nothing
 	end
 
