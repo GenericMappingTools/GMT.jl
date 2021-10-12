@@ -89,7 +89,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	end
 
 	(isa(arg1, GMTgrid) || isa(arg2, GMTgrid) && !occursin("-G", cmd)) && (cmd *= " -G")
-	if (cmd0 != "" && !isa(arg1, GMTgrid) && !isa(arg1, Array{GMTgrid}) && !occursin("-G", cmd))
+	if (cmd0 != "" && !isa(arg1, GMTgrid) && !isa(arg1, Vector{GMTgrid}) && !occursin("-G", cmd))
 		cmd = " -G" * cmd
 		(isa(arg1, String)) && (cmd *= " " * arg1)
 	end

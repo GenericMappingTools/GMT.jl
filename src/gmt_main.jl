@@ -19,6 +19,8 @@ mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	v_unit::String
 	z_unit::String
 	layout::String
+	scale::Float32
+	offset::Float32
 	pad::Int
 end
 Base.size(G::GMTgrid) = size(G.z)
@@ -28,7 +30,7 @@ Base.setindex!(G::GMTgrid{T,N}, val, inds::Vararg{Int,N}) where {T,N} = G.z[inds
 Base.BroadcastStyle(::Type{<:GMTgrid}) = Broadcast.ArrayStyle{GMTgrid}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTgrid}}, ::Type{ElType}) where ElType
 	G = find4similar(bc.args)		# Scan the inputs for the GMTgrid:
-	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.names, G.x, G.y, G.v, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, G.pad)
+	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.names, G.x, G.y, G.v, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad)
 end
 
 find4similar(bc::Base.Broadcast.Broadcasted) = find4similar(bc.args)
@@ -530,7 +532,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 
 	# Return grids via a float matrix in a struct
 	rng, inc = (gmt_hdr.n_bands > 1) ? (fill(NaN,8), fill(NaN,3)) : (fill(NaN,6), fill(NaN,2))
-	out = GMTgrid("", "", 0, rng, inc, 0, NaN, "", "", "", String[], X, Y, V, z, "", "", "", "", layout, 0)
+	out = GMTgrid("", "", 0, rng, inc, 0, NaN, "", "", "", String[], X, Y, V, z, "", "", "", "", layout, 1f0, 0f0, 0)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT != C_NULL)    out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)      end
@@ -538,8 +540,8 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 	out.remark  = String([gmt_hdr.remark...])
 	out.command = String([gmt_hdr.command...])
 
-	# The following is uggly is a consequence of the clag.jl translation of fixed sixe arrays
-	out.range[1:end] = (gmt_hdr.n_bands > 1) ? [gmt_hdr.wesn[1:4]..., gmt_hdr.z_min, gmt_hdr.z_max, G.z_range[:]...] :
+	# The following is uggly is a consequence of the clag.jl translation of fixed size arrays
+	out.range[1:end] = (gmt_hdr.n_bands > 1) ? [gmt_hdr.wesn[1:4]..., G.z_range[:]..., gmt_hdr.z_min, gmt_hdr.z_max] :
 	                                           [gmt_hdr.wesn[1:4]..., gmt_hdr.z_min, gmt_hdr.z_max]
 	out.inc[1:end]   = (gmt_hdr.n_bands > 1) ? [gmt_hdr.inc[1], gmt_hdr.inc[2], G.z_inc] : [gmt_hdr.inc[1], gmt_hdr.inc[2]]
 	out.nodata       = gmt_hdr.nan_value
@@ -860,8 +862,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	_cube = (cube || n_bds > 1) ? true : false
 
 	if (_cube)
-		range = [Grid.range[1:4]; Grid.range[7:8]; Grid.range[5:6]]		# G.range has vertical axes range at the end
-		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, range, Grid.inc, UInt32(Grid.registration), pad))
+		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, Grid.range, Grid.inc, UInt32(Grid.registration), pad))
 		X.family, X.geometry = GMT_IS_CUBE, GMT_IS_VOLUME
 	else
 		G = convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, NULL, Grid.range[1:4], Grid.inc[1:2], UInt32(Grid.registration), pad))
@@ -1373,6 +1374,7 @@ function Base.:show(io::IO, G::GMTgrid)
 	println("x_min: ", G.range[1], "\tx_max :", G.range[2], "\tx_inc :", G.inc[1], "\tn_columns :", size(G.z,2))
 	println("y_min: ", G.range[3], "\ty_max :", G.range[4], "\ty_inc :", G.inc[2], "\tn_rows :", size(G.z,1))
 	println("z_min: ", G.range[5], "\tz_max :", G.range[6])
+	(G.scale != 1)  && println("Scale, Offset: ", G.scale, "\t", G.offset)
 	(G.proj4 != "") && println("PROJ: ", G.proj4)
 	(G.wkt   != "") && println("WKT: ", G.wkt)
 	(G.epsg  != 0)  && println("EPSG: ", G.epsg)
