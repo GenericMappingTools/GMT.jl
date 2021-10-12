@@ -12,7 +12,7 @@ Parameters
 - $(GMT.opt_I)
     ($(GMTdoc)grdblend.html#i)
 - $(GMT.opt_R)
-- **G** | **outgrid** **outfile** | **save** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdblend(....) form.
@@ -48,8 +48,8 @@ Parameters
 function grdblend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:I :R :V_params :f :n :r])
-	cmd  = parse_these_opts(cmd, d, [[:C :clobber], [:G :outgrid :outfile :save], [:N :nodata], [:Q :headless], [:W :no_blend], [:Z :scale]])
+	cmd, = parse_common_opts(d, "", [:G :I :R :V_params :f :n :r])
+	cmd  = parse_these_opts(cmd, d, [[:C :clobber], [:N :nodata], [:Q :headless], [:W :no_blend], [:Z :scale]])
 
 	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
 	return common_grd(d, "grdblend " * cmd, arg1, arg2)		# Finish build cmd and run it

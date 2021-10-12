@@ -10,7 +10,7 @@ Full option list at [`grdsample`]($(GMTdoc)grdsample.html)
 Parameters
 ----------
 
-- **G** | **outgrid** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdsample(....) form.
@@ -33,8 +33,8 @@ function grdsample(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdsample", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:I :R :V_params :f :n :r :x])
-	cmd  = parse_these_opts(cmd, d, [[:G :outgrid], [:T :toggle]])
+	cmd, = parse_common_opts(d, "", [:G :I :R :V_params :f :n :r :x])
+	cmd  = parse_these_opts(cmd, d, [[:T :toggle]])
 
 	common_grd(d, cmd0, cmd, "grdsample ", arg1)		# Finish build cmd and run it
 end

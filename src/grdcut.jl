@@ -14,7 +14,7 @@ Parameters
     Specify a closed polygon (either a file or a dataset). All grid nodes outside the
     polygon will be set to NaN (>= GMT6.2).
     ($(GMTdoc)grdcut.html#f)
-- **G** | **outgrid** | **outfile** | **save** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdcut(....) form.
@@ -54,7 +54,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
     opt_J, = parse_J(d, "")
     (!startswith(opt_J, " -JX")) && (cmd *= opt_J)
 	cmd = parse_these_opts(cmd, d, [[:D], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
-	opt_G = add_opt(d, "", "G", [:G :outgrid :outfile :save])
+	opt_G = parse_G(d, "")[1]
 	outname = (opt_G != "") ? opt_G[4:end] : ""
 	cmd *= opt_G
 	cmd, args, n, = add_opt(d, cmd, 'F', [:F :clip :cutline], :polygon, Array{Any,1}([arg1, arg2]),

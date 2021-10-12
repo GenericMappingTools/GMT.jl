@@ -20,7 +20,7 @@ Parameters
 
     Output edges
     ($(GMTdoc)xyz2grd.html#d)
-- **G** | **outgrid** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdclip(....) form.
@@ -51,8 +51,8 @@ function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:I :R :J :V_params :bi :di :e :f :h :i :r :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:G :outgrid], [:S :swap], [:Z :flags]])
+	cmd, = parse_common_opts(d, "", [:G :I :R :J :V_params :bi :di :e :f :h :i :r :w :yx])
+	cmd  = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:S :swap], [:Z :flags]])
 	common_grd(d, cmd0, cmd, "xyz2grd ", arg1)		# Finish build cmd and run it
 end
 

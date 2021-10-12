@@ -162,7 +162,7 @@
 	gmt("gmtwrite lixo.dat", D)
 	gmt("write lixo.tif=gd:GTiff", mat2img(rand(UInt8,32,32,3)))
 	gmt("grdinfo lixo.tif");
-	@test_throws ErrorException("First argument cannot be empty. It must contain the file name to write.") gmtwrite("",[1 2]);
+	@test_throws ErrorException("Output file name cannot be empty.") gmtwrite("",[1 2]);
 
 	# This gdalwrite screws deeply. Nex GMT errors with non-sensic reason and not reproducible in REPL
 	#gdalwrite("lixo1.gmt", fromWKT("POLYGON((0 0, 10 0, 10 10, 0 10, 0 0),(1 1, 1 2, 2 2, 2 1, 1 1))"))

@@ -27,7 +27,7 @@ Parameters
     Use xyz data in the breakline file as a ‘soft breakline’, that is a line whose vertices will be used to
     constrain the nearest grid nodes without any further interpolation.
     ($(GMTdoc)surface.html#d)
-- **G** | **outgrid** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = surface(....) form.
@@ -84,9 +84,9 @@ function surface(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing
 	
-	cmd, = parse_common_opts(d, "", [:R :I :V_params :a :bi :di :e :f :h :i :r :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:G :grid :outgrid], 
-	                                 [:Ll :lower], [:Lu :upper], [:M :mask], [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension], [:Z :over_relaxation]])
+	cmd, = parse_common_opts(d, "", [:G :R :I :V_params :a :bi :di :e :f :h :i :r :w :yx])
+	cmd  = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:Ll :lower], [:Lu :upper], [:M :mask],
+                                     [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension], [:Z :over_relaxation]])
 	cmd, args, n, = add_opt(d, cmd, 'D', [:D :breakline], :data, Array{Any,1}([arg1, arg2]), (zlevel="+z",))
 	if (n > 0)  arg1, arg2 = args[:]  end
 

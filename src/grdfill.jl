@@ -14,7 +14,7 @@ Parameters
     Specify the hole-filling algorithm to use. Choose from c for constant fill and append the constant value,
     n for nearest neighbor (and optionally append a search radius in pixels). 
     ($(GMTdoc)grdfill.html#a)
-- **G** | **outgrid** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdfill(....) form.
@@ -36,8 +36,8 @@ function grdfill(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdfill", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:R :V_params :f])
-	cmd  = parse_these_opts(cmd, d, [[:A :algo], [:G :outgrid], [:L :list], [:N :nodata]])
+	cmd, = parse_common_opts(d, "", [:G :R :V_params :f])
+	cmd  = parse_these_opts(cmd, d, [[:A :algo], [:L :list], [:N :nodata]])
 
 	common_grd(d, cmd0, cmd, "grdfill ", arg1)		# Finish build cmd and run it
 end

@@ -27,7 +27,7 @@ Parameters
 
     Transform the grid in one of six ways and (for l|r|t) interchange the x and y information
     ($(GMTdoc)grdedit.html#e)
-- **G** | **outgrid** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdedit(....) form.
@@ -65,9 +65,8 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 	arg2 = nothing
 	(isa(arg1, GMTgrid) && length(kwargs) == 0) && (arg1.range[5:6] .= extrema(arg1); return arg1)  # Update the z_min|max
 
-	cmd, = parse_common_opts(d, "", [:R :J :V_params :bi :di :e :f :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:G :outgrid],
-	                                 [:S :wrap], [:T :toggle]])
+	cmd, = parse_common_opts(d, "", [:G :R :J :V_params :bi :di :e :f :w :yx])
+	cmd  = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:S :wrap], [:T :toggle]])
 	cmd, args, n, = add_opt(d, cmd, 'N', [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))
     if (n > 0)  arg1, arg2 = args[:]  end
 

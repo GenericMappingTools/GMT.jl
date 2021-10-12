@@ -28,7 +28,7 @@ Parameters
     outputs x,y,z[,w]. See -W for w output. If -Ep is used we assume weights are 1/(sigma squared)
     and s becomes the propagated error of the mean.
     ($(GMTdoc)blockmean.html#e)
-- **G** | **outgrid** :: [Type => Str | []]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Write one or more fields directly to grids on disk; no table data are return. If more than one
     fields are specified via **A** then grdfile must contain the format flag %s so that we can embed the
@@ -119,7 +119,7 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 
 	cmd, = parse_common_opts(d, cmd, [:I])
 	cmd = parse_these_opts(cmd, d, [[:A :fields], [:C :center], [:W :weights]])
-	opt_G = add_opt(d, "", 'G', [:G :grid :outgrid])
+	opt_G = parse_G(d, "")[1]
 
 	if (opt_G != "" && !occursin("-A", cmd))
 		cmd = cmd * " -Az"					# So that we can use plain -G to mean write grid 

@@ -33,7 +33,7 @@ Parameters
     isotropic [r]. Choose between a cosine-tapered band-pass, a Gaussian band-pass filter, or a
     Butterworth band-pass filter.
     ($(GMTdoc)grdfft.html#f)
-- **G** | **outgrid** | **table** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name (or table if **radial_power** is used). Note that this is optional and to
     be used only when saving the result directly on disk. Otherwise, just use the G = grdfft(....) form.
@@ -60,9 +60,9 @@ function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:V_params :f])
+	cmd, = parse_common_opts(d, "", [:G :V_params :f])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :upward], [:D :dfdz], [:E :radial_power], [:F :filter],
-	                                 [:G :outgrid :table], [:I :integrate], [:N :inquire], [:S :scale]])
+	                                 [:I :integrate], [:N :inquire], [:S :scale]])
 
 	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
 	(isa(arg1, Array{<:Number})) && (arg1 = mat2grid(arg1))
