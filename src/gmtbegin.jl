@@ -54,7 +54,6 @@ function gmtfig(name::String; fmt=nothing, opts="")
 end
 
 function inset(fim=nothing; stop=false, kwargs...)
-	if (!IamModern[1])  error("Not in modern mode. Must run 'gmtbegin' first")  end
  
 	d = KW(kwargs)
 	cmd, = parse_common_opts(d, "", [:c :F :V_params], true)
@@ -72,8 +71,10 @@ function inset(fim=nothing; stop=false, kwargs...)
 
 	if (!stop)
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
+		(!IamModern[1]) && error("Not in modern mode. Must run 'gmtbegin' first")
 		gmt("inset begin " * cmd);
 	else
+		(!IamModern[1]) && error("Not in modern mode. Must run 'gmtbegin' first")
 		gmt("inset end");
 		(do_show || haskey(d, :show)) && gmt("end" * show)
 	end

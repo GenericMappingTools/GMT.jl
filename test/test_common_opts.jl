@@ -331,6 +331,9 @@
 	@test date2doy("2021-10-10") == 283
 	@test GMT.yeardecimal("2000") == 2000.0
 
+	GMT.stackgrids(["a","b"], [1,2], mirone=true)
+	rm("automatic_list.txt")
+
 	gmtbegin()
 	GMT.gmt_restart(false)
 	resetGMT()
