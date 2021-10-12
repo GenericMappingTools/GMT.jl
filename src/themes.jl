@@ -34,7 +34,7 @@ function theme(name="modern"; kwargs...)
 	global API
 
 	(GMTver < v"6.2.0") && return nothing
-	(!isa(API, Ptr{Nothing}) || API == C_NULL) && (API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR))
+	(!isa(API, Ptr{Nothing}) || API == C_NULL) && (API = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS))
 
 	d = KW(kwargs)
 	font = ((val = find_in_dict(d, [:font])[1]) !== nothing) ? string(val) : ""

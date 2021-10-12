@@ -142,7 +142,7 @@ function gmtread(fname::String; kwargs...)
 	(dbg_print_cmd(d, cmd) !== nothing) && return "ogrread " * fname * " " * cmd
 	# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
 	(Sys.iswindows()) && run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)
-	API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR);
+	API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_NOGDALCLOSE + GMT_SESSION_COLMAJOR);
 	if (GMTver >= v"6.1")
 		x = opt_R2num(opt_R)		# See if we have a limits request
 		if (GMTver > v"6.1.1")

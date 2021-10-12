@@ -134,7 +134,7 @@ export
 	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
 	orthodrome, proj2wkt, wkt2proj,
 
-	mean, std, nanmean, nanstd				# First two from Statistics. Uterly stupid need-to-do thing 
+	doy2date, date2doy, yeardecimal, mean, std, nanmean, nanstd		# mean & std from Statistics. Uterly stupid need-to-do thing 
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -269,7 +269,7 @@ function __init__(test::Bool=false)
 	end
 
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
-	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
+	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 	theme_modern()				# Set the MODERN theme
 	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
 	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
