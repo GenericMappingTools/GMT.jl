@@ -1176,6 +1176,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 		elseif (opt == :yx) cmd, o = parse_swap_xy(d, cmd)
 		elseif (opt == :R)  cmd, o = parse_R(d, cmd)
 		elseif (opt == :F)  cmd  = parse_F(d, cmd)
+		elseif (opt == :G)  cmd, = parse_G(d, cmd)
 		elseif (opt == :I)  cmd  = parse_I(d, cmd, [:I :inc :increment :spacing], 'I')
 		elseif (opt == :J)  cmd, o = parse_J(d, cmd)
 		elseif (opt == :JZ) cmd, o = parse_JZ(d, cmd)
@@ -1221,6 +1222,10 @@ function parse_these_opts(cmd::String, d::Dict, opts, del::Bool=true)::String
 	end
 	return cmd
 end
+
+# ---------------------------------------------------------------------------------------------------
+# This is not a global option but it repeats at many occasions.
+parse_G(d::Dict, cmd::String) = parse_helper(cmd, d, [:G :save :outgrid :outfile], " -G")
 
 # ---------------------------------------------------------------------------------------------------
 function parse_I(d::Dict, cmd::String, symbs, opt, del::Bool=true)::String
