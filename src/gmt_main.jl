@@ -19,8 +19,8 @@ mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	v_unit::String
 	z_unit::String
 	layout::String
-	scale::Float32
-	offset::Float32
+	scale::Union{Float64, Float32}
+	offset::Union{Float64, Float32}
 	pad::Int
 end
 Base.size(G::GMTgrid) = size(G.z)

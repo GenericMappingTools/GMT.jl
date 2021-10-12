@@ -28,7 +28,7 @@ Parameters
 
     Set the value assigned to empty nodes when G is set [NaN].
     ($(GMTdoc)nearneighbor.html#e)
-- **G** | **outgrid** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = nearneighbor(....) form.
@@ -54,8 +54,8 @@ function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("nearneighbor", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:R :I :V_params :bi :di :e :f :h :i :n :r :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:E :empty], [:G :outgrid], [:S :search_radius], [:Z :weights], [:A]])
+	cmd, = parse_common_opts(d, "", [:G :R :I :V_params :bi :di :e :f :h :i :n :r :w :yx])
+	cmd  = parse_these_opts(cmd, d, [[:E :empty], [:S :search_radius], [:Z :weights], [:A]])
 	cmd  = add_opt(d, cmd, 'N', [:N :sectors], (n="", min_sectors="+m"), true)
 	opt  = add_opt(d, "", 'N', [:N :nn :nearest])
 	if (opt != "")  cmd *= " -Nn"  end

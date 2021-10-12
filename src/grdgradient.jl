@@ -17,7 +17,7 @@ Parameters
 
     Find the direction of the positive (up-slope) gradient of the data.
     ($(GMTdoc)grdgradient.html#d)
-- **G** | **outgrid** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdgradient(....) form.
@@ -49,8 +49,8 @@ function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdgradient", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:R :V_params :f :n])
-	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:G :outgrid], [:S :slopegrid]])
+	cmd, = parse_common_opts(d, "", [:G :R :V_params :f :n])
+	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:S :slopegrid]])
 	cmd  = add_opt(d, cmd, 'E', [:E :lambert], 
 	       (manip=("m", nothing, 1), simple=("s", nothing, 1), peucker=("p", nothing, 1), view=("", arg2str), ambient="+a", difuse="+d", specular="+p", shine="+s") )
 	cmd  = add_opt(d, cmd, 'N', [:N :norm :normalize],

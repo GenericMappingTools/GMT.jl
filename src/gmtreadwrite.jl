@@ -186,12 +186,12 @@ function guess_T_from_ext(fname::String)::String
 end
 
 """
-	gmtwrite(fname::String, data; kwargs...)
+	gmtwrite(fname::AbstractString, data; kwargs...)
 
 Write a GMT object to file. The object is one of "grid" or "grd", "image" or "img",
 "dataset" or "table", "cmap" or "cpt" and "ps" (for postscript).
 
-When saving grids we have a large panoply of formats at our disposal.
+When saving grids we have a panoply of formats at our disposal.
 
 Parameters
 ----------
@@ -232,13 +232,17 @@ Example: write the GMTgrid 'G' object into a nc file called 'lixo.grd'
 
 	gmtwrite("lixo.grd", G);
 """
-function gmtwrite(fname::String, data; kwargs...)
-
-	(fname == "") && error("First argument cannot be empty. It must contain the file name to write.")
+gmtwrite(data, fname::AbstractString=""; kwargs...) = gmtwrite(fname, data; kwargs...)
+function gmtwrite(fname::AbstractString, data; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_R(d, "")
 	cmd = parse_V_params(d, cmd)
+	if (fname == "")
+		opt_G = parse_G(d, "")[1]
+		(opt_G != "") && (fname = opt_G[4:end])	# opt_G comes with the " -G" prefix
+	end
+	(fname == "") && error("Output file name cannot be empty.")
 
 	if (isa(data, GMTgrid))
 		opt_T = " -Tg"
@@ -290,6 +294,7 @@ function gmtwrite(fname::String, data; kwargs...)
 
 	if (dbg_print_cmd(d, cmd) !== nothing)  return "gmtwrite " * fname * cmd  end
 
+	(opt_T == " -Tg" && isa(data, GMTgrid) && (data.scale != 1 || data.offset != 0)) && (fname *= "+s$(data.scale)+o$(data.offset)")
 	gmt("write " * fname * cmd, data)
 	(opt_T == " -Ti") && transpcmap!(data, false)		# Reset original cmap (in case it was changed)
 	return nothing

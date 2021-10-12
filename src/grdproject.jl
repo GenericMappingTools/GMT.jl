@@ -25,7 +25,7 @@ Parameters
 
     Force 1:1 scaling, i.e., output (or input, see -I) data are in actual projected meters [e].
     ($(GMTdoc)grdproject.html#f)
-- **G** | **outgrid** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdproject(....) form.
@@ -49,12 +49,11 @@ function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]	# Also checks if the user wants ONLY the HELP mode
 	cmd = parse_n(d, "", true)[1]			# Here we keep the GMT default to Antialiasing
-	cmd = parse_common_opts(d, cmd, [:R :V_params :r])[1]
+	cmd = parse_common_opts(d, cmd, [:G :R :V_params :r])[1]
 	if ((val = find_in_dict(d, [:J :proj :projection], false)[1]) !== nothing)  # Here we don't want any default value
 		cmd = parse_J(d, cmd, "", false)[1];
 	end
-	cmd = parse_these_opts(cmd, d, [[:C :center], [:D :inc], [:E :dpi], [:F :one2one],
-	                                [:G :outgrid], [:I :inverse], [:M :projected_unit]])
+	cmd = parse_these_opts(cmd, d, [[:C :center], [:D :inc], [:E :dpi], [:F :one2one], [:I :inverse], [:M :projected_unit]])
 
 	common_grd(d, cmd0, cmd, "grdproject ", arg1)		# Finish build cmd and run it
 end

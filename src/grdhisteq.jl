@@ -13,7 +13,7 @@ Parameters
 
     Dump level information to file, or standard output if no file is provided.
     ($(GMTdoc)grdhisteq.html#d)
-- **G** | **outgrid** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdhisteq(....) form.
@@ -34,8 +34,8 @@ function grdhisteq(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("grdhisteq", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:R :V_params])
-	cmd  = parse_these_opts(cmd, d, [[:C :n_cells], [:D :dump], [:G :outgrid], [:N :gaussian], [:Q :quadratic]])
+	cmd, = parse_common_opts(d, "", [:G :R :V_params])
+	cmd  = parse_these_opts(cmd, d, [[:C :n_cells], [:D :dump], [:N :gaussian], [:Q :quadratic]])
 	common_grd(d, cmd0, cmd, "grdhisteq ", arg1)		# Finish build cmd and run it
 end
 
