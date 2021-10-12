@@ -352,7 +352,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    sliceimg(I::GMTimage, layer::Int)
+    slicecube(I::GMTimage, layer::Int)
 
 Take a slice of a multylayer GMTimage. Return the result still as a GMTimage. `layer` is the slice number.
 
@@ -360,7 +360,7 @@ Take a slice of a multylayer GMTimage. Return the result still as a GMTimage. `l
 Get the fourth layer of the multi-layered 'I' GMTimage object 
 
 ```
-I = sliceimg(I, 4)
+I = slicecube(I, 4)
 ```
 """
 function slicecube(I::GMTimage, layer::Int)
@@ -370,6 +370,40 @@ function slicecube(I::GMTimage, layer::Int)
 	range = copy(I.range);	range[5:6] .= extrema(mat)
 	names = (!isempty(I.names)) ? [I.names[layer]] : I.names
 	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Clong,3), 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, save::String="", mirone::Bool=false)
+	(v === nothing && zcoord !== nothing) && (v = zcoord)	# Accept both positional and named var for vertical coordinates
+	#(isa(v, Vector{TimeType})) && (v = datetime2epochms.(v) / 1000.)
+	(isa(v, Vector{TimeType})) && (v = GMT.yeardecimal(v))
+	_v = isa(v, Integer) ? Float64.(v) : ((v === nothing) ? Vector{Float64}() : v)
+	
+	if (mirone)
+		(save == "") && (save = "automatic_list.txt")
+		fid = open(save, "w")
+		if isempty(_v)
+			for name in names  write(fid, name, "\n")  end
+		else
+			for k = 1:length(names)  write(fid, names[k], "\t", string(_v[k]), "\n")  end
+		end
+		close(fid)
+		return nothing
+	end
+
+	(_v !== nothing && !isa(_v, Vector{Float64})) && error("The vertical coordinates must be a vector of Ints or Float64, not $(typeof(v))")
+	G = gdaltranslate(names[1])
+	mat = Array{eltype(G)}(undef, size(G,1), size(G,2), length(names))
+	mat[:,:,1] = G.z
+	for k = 2:length(names)
+		G = gdaltranslate(names[k])
+		mat[:,:,k] = G.z
+	end
+	cube = mat2grid(mat, G)
+	isempty(_v) ? append!(cube.range, [0.0, 1]) : append!(cube.range, [_v[1], _v[end]])
+	cube.names = names;		cube.v = _v
+	(save != "") && gdaltranslate(cube, dest=save)
+	return (save != "") ? nothing : cube
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -507,7 +541,9 @@ creates a Float32 GMTgrid.
 
     Example: G = mat2grid("sombrero")
 """
-function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", names::Vector{String}=String[])
+function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0,
+	tit::String="", rem::String="", names::Vector{String}=String[])
+
 	(hdr === nothing) && error("When creating grid type with no data the 'hdr' arg cannot be missing")
 	(!isa(hdr, Array{Float64})) && (hdr = Float64.(hdr))
 	(!isa(val, AbstractFloat)) && (val = Float32(val))		# We only want floats here
@@ -517,8 +553,10 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String=
 	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem, cmd="", names=names)
 end
 
-function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[])
-# Take a 2D array of floats and turn it into a GMTgrid
+function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(),
+	v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="",
+	cmd::String="", names::Vector{String}=String[])
+	# Take a 2/3D array and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
 	reg_ = 0
@@ -673,9 +711,9 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 """
     make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head=0, upper=false, lower=false)
 
-  - `user_ids` -> is a string vector with the ids (names in header) of the GMTdataset D 
-  - `vals`     -> is a vector with the the numbers to be used in plot -Z to color the polygons.
-  - `sub_head` -> Position in header where field is to be found in the comma separated string.
+- `user_ids` -> is a string vector with the ids (names in header) of the GMTdataset D 
+- `vals`     -> is a vector with the the numbers to be used in plot -Z to color the polygons.
+- `sub_head` -> Position in header where field is to be found in the comma separated string.
 Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
 The elements of ZVALS are made up from the `vals` but it can be larger if there are segments with
 no headers. In that case it replicates the previously known value until it finds a new segment ID.
