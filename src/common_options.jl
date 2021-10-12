@@ -3751,6 +3751,55 @@ nanstd(x)    = std(filter(!isnan,x))
 nanstd(x,y)  = mapslices(nanstd,x,dims=y)
 
 # --------------------------------------------------------------------------------------------------
+"""
+    doy2date(doy[, year]) -> Date
+
+Compute the date from the Day-Of-Year `doy`. If `year` is ommited we take it to mean the current year.
+Both `doy` and `year` can be strings or integers.
+"""
+function doy2date(doy, year=nothing)
+	_year = (year === nothing) ? string(Dates.year(now())) : string(year)
+	n_days = Dates.date2epochdays(Date(_year))
+	_doy = (isa(doy, Integer)) ? doy : parse(Int64, doy)
+	n_days += _doy - 1
+	Dates.epochdays2date(n_days)
+end
+"""
+    date2doy(date) -> Integer
+
+Compute the Day-Of-Year (DOY) from `date` that can be a string or a Date/DateTime type. If ommited,
+returns today's DOY
+"""
+function date2doy(date=nothing)
+	(date === nothing) && return dayofyear(now())
+	(isa(date, TimeType)) && return dayofyear(date)
+	dayofyear(Date(string(date)))
+end
+
+# --------------------------------------------------------------------------------------------------
+"""
+    yeardecimal(date)
+
+Convert a Date or DateTime or a string representation of them to decimal years.
+
+# Example
+
+yeardecimal(now())
+"""
+function yeardecimal(dtm::Union{String, Vector{String}})
+	try
+		yeardecimal(DateTime.(dtm))
+	catch
+		yeardecimal(Date.(dtm))
+	end
+end
+# From https://discourse.julialang.org/t/date-to-float/20094/2
+function yeardecimal(dtm::Union{TimeType, Vector{TimeType}})
+	yfrac(dtm) = (dayofyear.(dtm) .- 1) ./ daysinyear.(dtm)
+	year.(dtm) + yfrac.(dtm)
+end
+
+# --------------------------------------------------------------------------------------------------
 function isnodata(array::AbstractArray, val=0)
 	nrows, ncols = size(array,1), size(array,2)
 	indNaN = fill(false, nrows, ncols)
