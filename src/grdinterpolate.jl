@@ -73,7 +73,7 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 	cmd  = add_opt(d, cmd, 'F', [:F :interp_type],
            (linear="_l", akima="_a", cubic="_c", nearest="_n", first_derivative="+1", second_derivative="+2"))
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
+	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)
 
 	cmd, args, n1, = add_opt(d, cmd, 'E', [:E :crossection], :line, Vector{Any}([arg1, arg2]), (azim="+a", great_circ="_+g", parallel="_+p", inc="+i", length="+l", npoints="+n", middpoint="+o", radius="+r", loxodrome="_+x"))
 	if (n1 > 0)
@@ -101,4 +101,4 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdinterpolate(arg1=nothing, arg2=nothing, arg3=nothing; kw...) = grdinterpolate("", arg1, arg2, arg3; kw...)
+grdinterpolate(arg1, arg2=nothing, arg3=nothing; kw...) = grdinterpolate("", arg1, arg2, arg3; kw...)

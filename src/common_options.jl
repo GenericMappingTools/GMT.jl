@@ -3671,7 +3671,7 @@ function peaks(; N=49, grid=true)
 		y = deepcopy(x)
 		z = Float32.(z)
 		G = GMTgrid("", "", 0, [x[1], x[end], y[1], y[end], minimum(z), maximum(z)], [x[2]-x[1], y[2]-y[1]],
-					0, NaN, "", "", "", String[], x, y, Vector{Float64}(), z, "x", "y", "", "z", "", 0)
+					0, NaN, "", "", "", String[], x, y, Vector{Float64}(), z, "x", "y", "", "z", "", 1f0, 0f0, 0)
 		return G
 	else
 		return x,y,z

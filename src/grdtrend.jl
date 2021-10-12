@@ -64,7 +64,7 @@ function parse_W_grdtrend(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1, ar
 		if (isa(val, String) || isa(val, Symbol))
 			cmd *= " -W" * arg2str(val)
 		else
-			if (isa(val, Tuple) && length(val) == 2 && (isa(val[1], GMTgrid) || isa(val[1], Array{GMTgrid,1})))
+			if (isa(val, Tuple) && length(val) == 2 && (isa(val[1], GMTgrid) || isa(val[1], Vector{GMTgrid})))
 				val = val[1];	cmd *= "+s"
 			end
 			cmd, N_used = put_in_slot(cmd, val, 'W', [arg1, arg2])
