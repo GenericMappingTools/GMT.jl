@@ -99,3 +99,6 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 	end
 
 end
+
+# ---------------------------------------------------------------------------------------------------
+grdinterpolate(arg1=nothing, arg2=nothing, arg3=nothing; kw...) = grdinterpolate("", arg1, arg2, arg3; kw...)
