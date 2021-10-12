@@ -1511,6 +1511,8 @@ end
 	gdalgrid(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false) =
 		gdalgrid(Dataset(ds.ptr), opts; dest=dest, gdataset=gdataset)
 
+	gdalrasterize(dataset::Union{GMTdataset, Vector{GMTdataset}}, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="") =
+		gdalrasterize(gmt2gd(dataset), options; dest=dest, gdataset=gdataset, save=save)
 	function gdalrasterize(dataset::AbstractDataset, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALRasterizeOptionsNew(options, C_NULL)

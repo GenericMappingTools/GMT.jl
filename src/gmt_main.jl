@@ -176,7 +176,7 @@ function gmt(cmd::String, args...)
 
 	pad = 2
 	if (!isa(API, Ptr{Nothing}) || API == C_NULL)
-		API = GMT_Create_Session("GMT", pad, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
+		API = GMT_Create_Session("GMT", pad, GMT_SESSION_BITFLAGS)
 		theme_modern()				# Set the MODERN theme
 	end
 
@@ -356,7 +356,7 @@ function gmt_restart(restart::Bool=true)
 	global API
 	GMT_Destroy_Session(API);
 	if (restart)
-		API = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_COLMAJOR)
+		API = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 		theme_modern()				# Set the MODERN theme
 	else
 		API = C_NULL
@@ -895,6 +895,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	end
 
 	h.z_min, h.z_max = Grid.range[5], Grid.range[6]		# Set the z_min, z_max
+	(_cube) && (h.n_bands = n_bds)
 
 	try
 		h.x_unit = map(UInt8, (Grid.x_unit...,))

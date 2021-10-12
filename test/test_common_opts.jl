@@ -327,6 +327,10 @@
 	nanstd(y,1)
 	isnodata(rand(2,2))
 
+	@test doy2date(283, 2021) == Date("2021-10-10")
+	@test date2doy("2021-10-10") == 283
+	@test GMT.yeardecimal("2000") == 2000.0
+
 	gmtbegin()
 	GMT.gmt_restart(false)
 	resetGMT()
