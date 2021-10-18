@@ -343,6 +343,10 @@ CPLGetConfigOption(a1, a2) = acare(ccall((:CPLGetConfigOption, libgdal), Cstring
 GDALSetDescription(a1, a2) = acare(ccall((:GDALSetDescription, libgdal), Cvoid, (pVoid, Cstring), a1, a2))
 GDALSetMetadata(a1, a2, a3) = acare(ccall((:GDALSetMetadata, libgdal), UInt32, (pVoid, Ptr{Cstring}, Cstring), a1, a2, a3))
 
+GDALGetMetadataItem(a1, a2, a3) = acare(ccall((:GDALGetMetadataItem, libgdal), Cstring, (pVoid, Cstring, Cstring), a1, a2, a3), false)
+GDALSetMetadataItem(a1, a2, a3, a4) =
+    acare(ccall((:GDALSetMetadataItem, libgdal), UInt32, (pVoid, Cstring, Cstring, Cstring), a1, a2, a3, a4))
+
 OSRDestroySpatialReference(a1) = acare(ccall((:OSRDestroySpatialReference, libgdal), Cvoid, (pVoid,), a1))
 OCTDestroyCoordinateTransformation(a1) = acare(ccall((:OCTDestroyCoordinateTransformation, libgdal), Cvoid, (pVoid,), a1))
 
@@ -1094,6 +1098,15 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		height::Integer=0, nbands::Integer=0, dtype::DataType=Any, options=Ptr{Cstring}(C_NULL), I::Bool=false) =
 		create(driver; filename=filename, width=width, height=height, nbands=nbands, dtype=dtype, options=options, I=I)
 
+	copy(dataset::AbstractDataset; filename::AbstractString=string("/vsimem/$(gensym())"), driver::Driver=getdriver(dataset),
+		strict::Bool=false, options=Ptr{Cstring}(C_NULL), progressfunc::Function=GDALDummyProgress, progressdata=C_NULL)::IDataset =
+		IDataset(DALCreateCopy(driver.ptr, filename, dataset.ptr, strict, options, C_NULL, progressdata))
+
+	unsafe_copy(dataset::AbstractDataset; filename::AbstractString=string("/vsimem/$(gensym())"),
+		driver::Driver=getdriver(dataset), strict::Bool=false, options=Ptr{Cstring}(C_NULL),
+		progressfunc::Function=GDALDummyProgress, progress=C_NULL)::Dataset =
+		Dataset(GDALCreateCopy(driver.ptr, filename, dataset.ptr, strict, options, C_NULL, progress))
+
 	function read(fname::AbstractString; flags = GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
 		alloweddrivers=Ptr{Cstring}(C_NULL), options=Ptr{Cstring}(C_NULL), siblingfiles=Ptr{Cstring}(C_NULL), I::Bool=true)
 		# The COOKIEFILE (and other options) is crucial for authenticated accesses. The shit is that if we asked once
@@ -1331,12 +1344,6 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	write(ds::AbstractDataset, fname::AbstractString; kw...) = destroy(unsafe_copy(ds, filename=fname; kw...))
 
-	function unsafe_copy(dataset::AbstractDataset; filename::AbstractString=string("/vsimem/$(gensym())"),
-		driver::Driver=getdriver(dataset), strict::Bool=false, options=Ptr{Cstring}(C_NULL),
-		progressfunc::Function=GDALDummyProgress, progress=C_NULL)
-		Dataset(GDALCreateCopy(driver.ptr, filename, dataset.ptr, strict, options, @cplprogress(progressfunc), progress))
-	end
-
 	getdriver(ds::AbstractDataset) = Driver(GDALGetDatasetDriver(ds.ptr))
 	getdriver(i::Integer) = Driver(GDALGetDriver(i))
 	getdriver(name::AbstractString) = Driver(GDALGetDriverByName(name))
@@ -1345,21 +1352,36 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	getband(ds::RasterDataset, i::Integer=1) = getband(ds.ds, i)
 	getproj(ds::AbstractDataset) = GDALGetProjectionRef(ds.ptr)
 	getproj(layer::AbstractFeatureLayer) = SpatialRef(OGR_L_GetSpatialRef(layer.ptr))
-	function getproj(name::AbstractString; proj4::Bool=false)
+	function getproj(name::AbstractString; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false)
 		ds = unsafe_read(name)
 		prj = getproj(ds)
 		GDALClose(ds.ptr)
 		return (!proj4) ? prj : startswith(prj, "PROJCS") ? toPROJ4(importWKT(prj)) : prj
 	end
-	function _getproj(G_I, proj4::Bool)
-		prj = G_I.proj4
-		(prj == "") && (prj = G_I.wkt)
-		return (!proj4) ? prj : startswith(prj, "PROJCS") ? toPROJ4(importWKT(prj)) : prj
+	function _getproj(G_I, proj4::Bool, wkt::Bool, epsg::Bool)
+		prj, _prj = "", 0
+		if (proj4)
+			(G_I.proj4 != "") && (prj = G_I.proj4)
+			(prj == "" && G_I.wkt  != "") && (prj = toPROJ4(importWKT(G_I.wkt)))
+			(prj == "" && G_I.epsg != 0)  && (prj = toPROJ4(importEPSG(G_I.epsg)))
+		elseif (wkt)
+			(G_I.wkt != "") && (prj = G_I.wkt)
+			(prj == "" && G_I.proj4 != "") && (prj = toWKT(importPROJ4(G_I.proj4)))
+			(prj == "" && G_I.epsg  != 0)  && (prj = toWKT(importEPSG(G_I.epsg)))
+		elseif (epsg)
+			(G_I.epsg != 0) && (_prj = G_I.epsg)
+			(_prj == 0 && G_I.wkt   != "") && (_prj = toEPSG(importWKT(G_I.wkt)))
+			(_prj == 0 && G_I.proj4 != "") && (_prj = toEPSG(importPROJ4(G_I.proj4)))
+		end
+		return (_prj != 0) ? _prj : prj
+		#prj = G_I.proj4
+		#(prj == "") && (prj = G_I.wkt)
+		#return (!proj4) ? prj : startswith(prj, "PROJCS") ? toPROJ4(importWKT(prj)) : prj
 	end
-	getproj(G::GMT.GMTgrid;  proj4::Bool=false) = _getproj(G, proj4)
-	getproj(I::GMT.GMTimage; proj4::Bool=false) = _getproj(I, proj4)
-	getproj(D::GMT.GMTdataset; proj4::Bool=false) = _getproj(D, proj4)
-	getproj(D::Vector{GMT.GMTdataset}; proj4::Bool=false) = _getproj(D[1], proj4)
+	getproj(G::GMT.GMTgrid;  proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(G, proj4, wkt, epsg)
+	getproj(I::GMT.GMTimage; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(I, proj4, wkt, epsg)
+	getproj(D::GMT.GMTdataset; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(D, proj4, wkt, epsg)
+	getproj(D::Vector{GMT.GMTdataset}; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(D[1], proj4, wkt, epsg)
 
 	getmetadata(ds::AbstractDataset) = GDALGetMetadata(ds.ptr, C_NULL)
 	function getmetadata(name::AbstractString)
@@ -1368,6 +1390,14 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		GDALClose(ds.ptr)
 		meta
 	end
+
+	function getmetadataitem(obj, name::AbstractString; domain::AbstractString="")::String
+		item = GDALGetMetadataItem(obj.ptr, name, domain)
+		return item === nothing ? "" : item
+	end
+
+	setmetadataitem(obj, name::AbstractString, value::AbstractString; domain::AbstractString="")::UInt32 =
+		GDALSetMetadataItem(obj.ptr, name, value, domain)
 
 	getpoint(geom::AbstractGeometry, i::Integer) = getpoint!(geom, i, Ref{Cdouble}(), Ref{Cdouble}(), Ref{Cdouble}())
 	function getpoint!(geom::AbstractGeometry, i::Integer, x, y, z)
@@ -1467,10 +1497,16 @@ end
 	=#
 
 	function gdalinfo(ds::Dataset, options::Vector{String}=String[])
-		options = GDALInfoOptionsNew(options, C_NULL)
-		result = GDALInfo(ds.ptr, options)
-		GDALInfoOptionsFree(options)
-		return result
+		#options = GDALInfoOptionsNew(options, C_NULL)
+		#result = GDALInfo(ds.ptr, options)
+		#GDALInfoOptionsFree(options)
+		#return result
+		o = GDALInfoOptionsNew(options, C_NULL)
+		return try
+			GDALInfo(ds.ptr, o)
+		finally
+			GDALInfoOptionsFree(o)
+		end
 	end
 	gdalinfo(ds::IDataset, opts::Vector{String}=String[]) = gdalinfo(Dataset(ds.ptr), opts)
 	function gdalinfo(fname::AbstractString, opts=String[])
