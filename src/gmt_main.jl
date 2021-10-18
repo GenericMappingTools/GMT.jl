@@ -12,7 +12,7 @@ mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	names::Vector{String}
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-	v::Array{Float64,1}
+	v::Union{Vector{<:Real}, Vector{String}}
 	z::Array{T,N}
 	x_unit::String
 	y_unit::String
@@ -129,6 +129,8 @@ GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Vector{String}(), "", Vect
 GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Vector{String}(), "", Vector{String}(), "", "", 0)
 
 struct WrapperPluto fname::String end
+
+const global GItype = Union{GMTgrid, GMTimage}
 
 """
 Call a GMT module. This function is not called directly by the users,

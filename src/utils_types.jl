@@ -373,12 +373,44 @@ function slicecube(I::GMTimage, layer::Int)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, save::String="", mirone::Bool=false)
+"""
+    stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name="time", z_unit="", save="", mirone=false)
+
+Stack a bunch of single grids in a multiband cube like file.
+
+- `names`: A string vector with the names of the grids to stack
+- `v`: A vector with the vertical coordinates. If not provided one with 1:length(names) will be generated.
+  - If `v` is a TimeType use the `z_unit` keyword to select what to store in file (case insensitive).
+    - `decimalyear` or `yeardecimal` converts the DateTime to decimal years (Floa64)
+	- `milliseconds` (or just `mil`) will store the DateTime as milliseconds since 0000-01-01T00:00:00 (Float64)
+	- `seconds` stores the DateTime as seconds since 0000-01-01T00:00:00 (Float64)
+	- `Date` or `DateTime` stores as a string representation of a DateTime.
+- `zdim_name`: The name of the vertical axes (default is "time")
+- `zcoord`: Keyword same as `v` (may use one or the other).
+- `save`: The name of the file to be created.
+- `mirone`: Does not create a cube file but instead a file named "automatic_list.txt" (or whaterver `save=xxx`)
+   to be used in the Mirone `Empilhador` tool.
+"""
+function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name::String="time", z_unit::String="",
+                    save::String="", mirone::Bool=false)
 	(v === nothing && zcoord !== nothing) && (v = zcoord)	# Accept both positional and named var for vertical coordinates
-	#(isa(v, Vector{TimeType})) && (v = datetime2epochms.(v) / 1000.)
-	(isa(v, Vector{TimeType})) && (v = GMT.yeardecimal(v))
-	_v = isa(v, Integer) ? Float64.(v) : ((v === nothing) ? Vector{Float64}() : v)
-	
+
+	if (isa(v, Vector{TimeType}))
+		_z_unit = lowercase(z_unit)
+		(mirone && z_unit == "") && (_z_unit = "decimalyear")		# For Mirone the default is DecimalYear
+		if (_z_unit == "" || _z_unit == "decimalyear" || _z_unit == "yeardecimal")	# Actually, make it default for all and now
+			v = GMT.yeardecimal(v);					z_unit = "Decimal year"
+		elseif (startswith(_z_unit, "mil"))
+			v = Dates.datetime2epochms.(v);	z_unit = "Milliseconds since 0000-01-01T00:00:00"
+		elseif (_z_unit == "seconds")
+			v = Dates.datetime2epochms.(v) / 1000.;	z_unit = "Seconds since 0000-01-01T00:00:00"
+		elseif (_z_unit == "date" || _zunit == "datetime")			# Crashes Mirone
+			v = string.(v);							z_unit = "ISO Date Time"
+		end
+	end
+
+	_v = isa(v, Int64) ? Float64.(v) : ((v === nothing) ? Vector{Float64}() : v)	# Int64 Crashes Mirone
+
 	if (mirone)
 		(save == "") && (save = "automatic_list.txt")
 		fid = open(save, "w")
@@ -391,7 +423,6 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, save::Stri
 		return nothing
 	end
 
-	(_v !== nothing && !isa(_v, Vector{Float64})) && error("The vertical coordinates must be a vector of Ints or Float64, not $(typeof(v))")
 	G = gdaltranslate(names[1])
 	mat = Array{eltype(G)}(undef, size(G,1), size(G,2), length(names))
 	mat[:,:,1] = G.z
@@ -400,9 +431,10 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, save::Stri
 		mat[:,:,k] = G.z
 	end
 	cube = mat2grid(mat, G)
-	isempty(_v) ? append!(cube.range, [0.0, 1]) : append!(cube.range, [_v[1], _v[end]])
+	cube.z_unit = z_unit
+	(isempty(_v) || eltype(_v) == String) ? append!(cube.range, [0., 1.]) : append!(cube.range, [_v[1], _v[end]])
 	cube.names = names;		cube.v = _v
-	(save != "") && gdaltranslate(cube, dest=save)
+	(save != "") && gdalwrite(cube, save, _v, dim_name=zdim_name)
 	return (save != "") ? nothing : cube
 end
 

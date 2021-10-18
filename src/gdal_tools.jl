@@ -63,7 +63,7 @@ Tools to analyze and visualize DEMs.
 ### Returns
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
 """
-function gdaldem(indata, method::String, opts=String[]; dest="/vsimem/tmp", kwargs...)
+function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/vsimem/tmp", kwargs...)
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
 	if (method == "hillshade")		# So far the only method that accept kwarg options
 		d = GMT.KW(kwargs)
@@ -131,7 +131,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	dataset, needclose = get_gdaldataset(indata, opts)
 	default_gdopts!(dataset, opts)		# Assign some default options in function of the driver and data type
 	((val = GMT.find_in_dict(d, [:meta])[1]) !== nothing && isa(val,Vector{String})) &&
-		Gdal.GDALSetMetadata(dataset.ptr, val, C_NULL)		# Metadata must in the form NAME=.....
+		Gdal.GDALSetMetadata(dataset.ptr, val, C_NULL)		# Metadata must be in the form NAME=.....
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)

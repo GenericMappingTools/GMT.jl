@@ -515,6 +515,19 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 end
 
 # ---------------------------------------------------------------------------------------------------
+const ncType = Dict(
+	Int8    => 1,
+	UInt8   => 7,
+	Int16   => 3,
+	UInt16  => 8,
+	Int32   => 4,
+	UInt32  => 9,
+	Int64   => 10,
+	UInt64  => 11,
+	Float32 => 5,
+	Float64 => 6,
+	Char    => 2,
+	String  => 12)
 """
     gdalwrite(data, fname::AbstractString, opts=String[]; kwargs...)
 or
@@ -528,9 +541,21 @@ Write a raster or a vector file to disk
 - `opts`:  List of options. The accepted options are the ones of the gdal_translate or ogr2ogr utility.
            This list can be in the form of a vector of strings, or joined in a simgle string.
 - `kwargs`: This options accept the GMT region (-R) and increment (-I)
+
+or
+
+    gdalwrite(cube, fname::AbstractString, v=nothing; dim_name::String="time", dim_units::String="")
+
+Write a MxNxP `cube` object to disk as a multilayered file.
+
+- `cube`: A GMTgrid or GMTimage cube
+- `fname`: The file name where to save the `cube`
+- `v`: A vector ith the coordinates of the Z layers (if omitted create one as 1:size(cube,3))
+- `dim_name`: The name of the variable of the ``vertical`` dimension.
+- `dim_units`: The units of the `v` vector. If not provided, use the `cube.z_units` if exist (GMTgrid only)
 """
-gdalwrite(fname::AbstractString, data, optsP=String[]; opts=String[], kw...) = gdalwrite(data, fname, optsP; opts, kw...)
-function gdalwrite(data, fname::AbstractString, optsP=String[]; opts=String[], kw...)
+gdalwrite(fname::AbstractString, data, optsP=String[]; opts=String[], kw...) = gdalwrite(data, fname, optsP, true; opts=opts, kw...)
+function gdalwrite(data, fname::AbstractString, optsP=String[], pickme::Bool=true; opts=String[], kw...)
 	(fname == "") && error("Output file name is missing.")
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
 	ds, = Gdal.get_gdaldataset(data, optsP)
@@ -539,6 +564,26 @@ function gdalwrite(data, fname::AbstractString, optsP=String[]; opts=String[], k
 	else
 		ogr2ogr(ds, optsP; dest=fname, kw...)
 	end
+end
+
+function gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::String="time", dim_units::String="")
+	nbands = size(cube,3)
+	(v === nothing && !isempty(cube.v)) && (v = cube.v)
+	_v = (v === nothing) ? "$(collect(1:nbands))" : "$(v)"
+	ds = gmt2gd(cube)
+	Gdal.setmetadataitem(ds, "NETCDF_DIM_EXTRA", dim_name)
+	code = (v === nothing) ? 4 : ncType[eltype(v)]		# Pick the v data type.
+	Gdal.setmetadataitem(ds, "NETCDF_DIM_" * dim_name * "_DEF", "{$(nbands),$(code)}")
+	Gdal.setmetadataitem(ds, "NETCDF_DIM_" * dim_name * "_VALUES", "{" *_v[2:end-1] * "}")
+	Gdal.setmetadataitem(ds, dim_name * "#axis", string(dim_name[1]))
+	#Gdal.setmetadataitem(ds, "Band1#actual_range","{0,50000}")
+	if (dim_units != "")                              Gdal.setmetadataitem(ds, dim_name * "#units", dim_units)
+	elseif (isa(cube, GMTgrid) && cube.z_unit != "")  Gdal.setmetadataitem(ds, dim_name * "#units", cube.z_unit)
+	end
+	crs = Gdal.getproj(cube, wkt=true)
+	(crs != "" ) && Gdal.setproj!(ds, crs)
+	Gdal.unsafe_copy(ds, filename=fname, driver=getdriver("netCDF"), options=["FORMAT=NC4", "COMPRESS=DEFLATE", "ZLEVEL=4"])
+	return nothing
 end
 
 # TODO ==> Input as vector. EPSGs. Test input t_srs
