@@ -901,9 +901,9 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	(_cube) && (h.n_bands = n_bds)
 
 	try
-		h.x_unit = map(UInt8, (Grid.x_unit...,))
-		h.y_unit = map(UInt8, (Grid.y_unit...,))
-		h.z_unit = map(UInt8, (Grid.z_unit...,))
+		h.x_unit = map(UInt8, (string(Grid.x_unit, repeat("\0",80-length(Grid.x_unit)))...,))
+		h.y_unit = map(UInt8, (string(Grid.y_unit, repeat("\0",80-length(Grid.y_unit)))...,))
+		h.z_unit = map(UInt8, (string(Grid.z_unit, repeat("\0",80-length(Grid.z_unit)))...,))
 	catch
 		h.x_unit = map(UInt8, (string("x", repeat("\0",79))...,))
 		h.y_unit = map(UInt8, (string("y", repeat("\0",79))...,))
