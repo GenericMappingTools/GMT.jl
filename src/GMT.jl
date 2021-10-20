@@ -121,7 +121,7 @@ export
 	blendimg!, lonlat2xy, xy2lonlat, mat2ds, mat2grid, mat2img, slicecube, linspace, logspace, fields, tic, toc, theme,
 	tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm,
 	
-	magic, rescale,
+	magic, rescale, stackgrids,
 
 	getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 	importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
