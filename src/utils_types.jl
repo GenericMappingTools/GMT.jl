@@ -395,11 +395,11 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
                     save::String="", mirone::Bool=false)
 	(v === nothing && zcoord !== nothing) && (v = zcoord)	# Accept both positional and named var for vertical coordinates
 
-	if (isa(v, Vector{TimeType}))
+	if (isa(v, Vector{<:TimeType}))
 		_z_unit = lowercase(z_unit)
 		(mirone && z_unit == "") && (_z_unit = "decimalyear")		# For Mirone the default is DecimalYear
 		if (_z_unit == "" || _z_unit == "decimalyear" || _z_unit == "yeardecimal")	# Actually, make it default for all and now
-			v = GMT.yeardecimal(v);					z_unit = "Decimal year"
+			v = GMT.yeardecimal.(v);				z_unit = "Decimal year"
 		elseif (startswith(_z_unit, "mil"))
 			v = Dates.datetime2epochms.(v);	z_unit = "Milliseconds since 0000-01-01T00:00:00"
 		elseif (_z_unit == "seconds")
@@ -415,14 +415,16 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
 		(save == "") && (save = "automatic_list.txt")
 		fid = open(save, "w")
 		if isempty(_v)
-			for name in names  write(fid, name, "\n")  end
+			[write(fid, name, "\n") for name in names]
 		else
-			for k = 1:length(names)  write(fid, names[k], "\t", string(_v[k]), "\n")  end
+			[write(fid, names[k], "\t", string(_v[k]), "\n") for k = 1:length(names)]
 		end
 		close(fid)
 		return nothing
 	end
 
+	G = gmtread(names[1], grid=true)	# reading with GDAL f screws sometimes with the "is not a Latitude/Y dimension."
+	x, y, range, inc = G.x, G.y, G.range, G.inc		# So read first with GMT anf keep only the coords info.
 	G = gdaltranslate(names[1])
 	mat = Array{eltype(G)}(undef, size(G,1), size(G,2), length(names))
 	mat[:,:,1] = G.z
@@ -431,6 +433,7 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
 		mat[:,:,k] = G.z
 	end
 	cube = mat2grid(mat, G)
+	cube.x = x;		cube.y = y;		cube.range = range;		cube.inc = inc
 	cube.z_unit = z_unit
 	(isempty(_v) || eltype(_v) == String) ? append!(cube.range, [0., 1.]) : append!(cube.range, [_v[1], _v[end]])
 	cube.names = names;		cube.v = _v

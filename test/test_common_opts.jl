@@ -331,8 +331,15 @@
 	@test date2doy("2021-10-10") == 283
 	@test GMT.yeardecimal("2000") == 2000.0
 
+	# STACKGRIDS
 	GMT.stackgrids(["a","b"], [1,2], mirone=true)
 	rm("automatic_list.txt")
+	gmtwrite("lixo1.grd", mat2grid(rand(Float32, 16, 16), proj4=GMT.prj4WGS84))
+	gmtwrite("lixo2.grd", mat2grid(rand(Float32, 16, 16), proj4=GMT.prj4WGS84))
+	GMT.stackgrids(["lixo1.grd", "lixo2.grd"], [now(), now()+Dates.Day(1)], save="lixo_cube.nc", z_unit="date")
+	rm("lixo1.grd")
+	rm("lixo2.grd")
+	#rm("lixo_cube.nc")		# can't be deleted because Julia still holds its file handle.
 
 	gmtbegin()
 	GMT.gmt_restart(false)
