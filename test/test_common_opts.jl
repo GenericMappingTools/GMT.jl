@@ -337,8 +337,8 @@
 	gmtwrite("lixo1.grd", mat2grid(rand(Float32, 16, 16), proj4=GMT.prj4WGS84))
 	gmtwrite("lixo2.grd", mat2grid(rand(Float32, 16, 16), proj4=GMT.prj4WGS84))
 	GMT.stackgrids(["lixo1.grd", "lixo2.grd"], [now(), now()+Dates.Day(1)], save="lixo_cube.nc", z_unit="date")
-	rm("lixo1.nc")
-	rm("lixo2.nc")
+	rm("lixo1.grd")
+	rm("lixo2.grd")
 	#rm("lixo_cube.nc")		# can't be deleted because Julia still holds its file handle.
 
 	gmtbegin()
