@@ -129,12 +129,12 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	end
 
 	dataset, needclose = get_gdaldataset(indata, opts)
-	default_gdopts!(dataset, opts)		# Assign some default options in function of the driver and data type
+	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
+	default_gdopts!(dataset, opts, dest)	# Assign some default options in function of the driver and data type
 	((val = GMT.find_in_dict(d, [:meta])[1]) !== nothing && isa(val,Vector{String})) &&
 		Gdal.GDALSetMetadata(dataset.ptr, val, C_NULL)		# Metadata must be in the form NAME=.....
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
-	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
 	o = (method == "") ? f(dataset, opts; dest=dest, gdataset=true) : f(dataset, method, opts; dest=dest, gdataset=true, colorfile=_cmap)
 	(o !== nothing && o.ptr == C_NULL) && @warn("$(f) returned a NULL pointer.")
 	if (o !== nothing)
@@ -187,7 +187,8 @@ function gdal_opts2vec(opts)::Vector{String}
 	# Break up a string of options into a vector string as it's needed by GDAL lower level functions
 	(opts == "") && return String[]
 	(isempty(opts) || (isa(opts, Vector{<:AbstractString}) && length(opts) > 1)) && return opts	# if already a vec
-	(eltype(opts) != Char && eltype(opts) != AbstractString) && error("Options for GDAL must be a string or a vector of one string")
+	(eltype(opts) != Char && !(eltype(opts) <: AbstractString)) &&
+		error("Options for GDAL must be a string or a vector of one string")
 	_opts = (isa(opts, Vector{<:AbstractString})) ? opts[1] : opts
 
 	ind = helper_opts2vec(_opts)
@@ -211,15 +212,23 @@ function helper_opts2vec(opts::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function default_gdopts!(ds, opts::Vector{String})
+function default_gdopts!(ds, opts::Vector{String}, dest::String)
 	# Assign some default options in function of the driver and data type
+	startswith(dest, "/vsimem") && return nothing	# In this case we won't set any defaults
+
 	driver = shortname(getdriver(ds))
 	dt = GDALGetRasterDataType(ds.ptr)
-	(dt < 6  && startswith(lowercase(driver), "mem")) && return nothing		# We have no defaults so far for integer data in MEM 
-	(dt == 1 && !any(startswith.(opts, "COMPRESS"))) && append!(opts, ["-co", "COMPRESS=DEFLATE", "-co", "PREDICTOR=2"])
-	(dt == 1 && !any(startswith.(opts, "TILED"))) && append!(opts, ["-co", "TILED=YES"])
+	# For some reason when MEM driver (only it?) dt comes == 1, even when data is float. So check again.
+	(startswith(lowercase(driver), "mem") && dt == 1 && isa(ds, Gdal.AbstractRasterBand)) && (dt = GDALGetRasterDataType(getband(ds,1).ptr))
+
+	ext = lowercase(splitext(dest)[2])
+	isTiff = (ext == ".tif" || ext == ".tiff")
+	isNC   = (driver == "netCDF" || ext == ".nc"  || ext == ".grd") && (width(ds) > 128 && height(ds > 128))
+	(ext == ".grd") && append!(opts, ["-of", "netCDF"])		# Accept .grd as meaning netcdf and not Surfer ascii (GDAL default)
+	((dt == 1 || isTiff) && !any(startswith.(opts, "COMPRESS"))) && append!(opts, ["-co", "COMPRESS=DEFLATE", "-co", "PREDICTOR=2"])
+	((dt == 1 || isTiff) && !any(startswith.(opts, "TILED"))) && append!(opts, ["-co", "TILED=YES"])
 	(dt >= 6 && !any(startswith.(opts, "a_nodata"))) && append!(opts, ["-a_nodata","NaN"])
-	(driver == "netCDF") && append!(opts,["-co", "FORMAT=NC4", "-co", "COMPRESS=DEFLATE", "-co", "ZLEVEL=4"]) 
+	(isNC) && append!(opts,["-co", "FORMAT=NC4", "-co", "COMPRESS=DEFLATE", "-co", "ZLEVEL=4"]) 
 end
 
 # ---------------------------------------------------------------------------------------------------
