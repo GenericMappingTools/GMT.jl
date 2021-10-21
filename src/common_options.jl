@@ -3798,10 +3798,11 @@ function yeardecimal(dtm::Union{String, Vector{String}})
 		yeardecimal(Date.(dtm))
 	end
 end
-# From https://discourse.julialang.org/t/date-to-float/20094/2
 function yeardecimal(dtm::Union{TimeType, Vector{TimeType}})
-	yfrac(dtm) = (dayofyear.(dtm) .- 1) ./ daysinyear.(dtm)
-	year.(dtm) + yfrac.(dtm)
+	Y = year.(dtm)
+	# FRAC = number_of_milli_sec_in_datetime / number_of_milli_sec_in_that_year
+	frac = (Dates.datetime2epochms.(dtm) .- Dates.datetime2epochms.(DateTime.(Y))) ./ (daysinyear.(dtm) .* 86400000)
+	Y .+ frac
 end
 
 # --------------------------------------------------------------------------------------------------
