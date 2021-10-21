@@ -329,7 +329,8 @@
 
 	@test doy2date(283, 2021) == Date("2021-10-10")
 	@test date2doy("2021-10-10") == 283
-	@test GMT.yeardecimal("2000") == 2000.0
+	@test yeardecimal("2000") == 2000.0
+	@test yeardecimal("2000-01-01T00:00:00") == 2000.0
 
 	# STACKGRIDS
 	GMT.stackgrids(["a","b"], [1,2], mirone=true)
