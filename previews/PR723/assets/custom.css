@@ -1,0 +1,14 @@
+#article#docs img {
+#    width: 80%;
+#}
+
+img[src*="#thumbnail"] {
+   width:150px;
+   height:100px;
+}
+
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
