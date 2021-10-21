@@ -114,6 +114,10 @@ function gmtread(fname::String; kwargs...)
 		end
 	end
 
+	# These are tricky gals, but we know who they are so use that knowledge.
+	(opt_T == "" && (startswith(fname, "@earth_relief") || startswith(fname, "@earth_age") || startswith(fname, "@earth_mask"))) && (opt_T = " -Tg")
+	(opt_T == "" && (startswith(fname, "@earth_day") || startswith(fname, "@earth_night"))) && (opt_T = " -Ti")
+
 	if (opt_T == "")
 		((opt_T = guess_T_from_ext(fname)) == "") && error("Must select one input data type (grid, image, dataset, cmap or ps)")
 		(opt_T == " -Tg" && haskey(d, :ignore_grd)) && return nothing	# contourf uses this
