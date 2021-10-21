@@ -3798,7 +3798,10 @@ function yeardecimal(dtm::Union{String, Vector{String}})
 		yeardecimal(Date.(dtm))
 	end
 end
-function yeardecimal(dtm::Union{TimeType, Vector{TimeType}})
+function yeardecimal(dtm::Union{Date, Vector{Date}})
+	year.(dtm) .+ (dayofyear.(dtm) .- 1) ./ daysinyear.(dtm)
+end
+function yeardecimal(dtm::Union{DateTime, Vector{DateTime}})
 	Y = year.(dtm)
 	# FRAC = number_of_milli_sec_in_datetime / number_of_milli_sec_in_that_year
 	frac = (Dates.datetime2epochms.(dtm) .- Dates.datetime2epochms.(DateTime.(Y))) ./ (daysinyear.(dtm) .* 86400000)
