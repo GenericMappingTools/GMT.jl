@@ -24,6 +24,8 @@ Grid type
        v_units::String            # Units of Vertical axis (Optional)
        z_units::String            # Units of z vlues (Optional)
        layout::String             # A three character string describing the grid memory layout
+       scale::Union{Float64, Float32}  # When saving in file apply `z = z * scale + offset`
+       offset::Union{Float64, Float32}
        pad::Int                   # When != 0 means that the array is placed in a padded array of PAD rows/cols
     end
 
