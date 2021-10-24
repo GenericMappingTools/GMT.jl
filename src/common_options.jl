@@ -1914,7 +1914,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs, need_symb::Symbol, args, nt_o
 	# This version specializes in the case where an option may transmit an array, or read a file, with optional flags.
 	# When optional flags are used we need to use NamedTuples (the NT_OPTS arg). In that case the NEED_SYMB
 	# is the keyword name (a symbol) whose value holds the array. An error is raised if this symbol is missing in D
-	# ARGS is a 1-to-3 array of GMT types with in which some may be NOTHING. The value is an array, it will be
+	# ARGS is a 1-to-3 array of GMT types with in which some may be NOTHING. If tThe value is an array, it will be
 	# stored in first non-empty element of ARGS.
 	# Example where this is used (plot -Z):  Z=(outline=true, data=[1, 4])
 	(show_kwargs[1]) && print_kwarg_opts(symbs)		# Just print the kwargs of this option call
