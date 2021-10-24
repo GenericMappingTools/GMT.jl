@@ -751,7 +751,9 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 					dest = Array{String}(undef, DS.n_rows)
 					n = 0
 					for row = 1:DS.n_rows					# Copy the text rows, but check if they are not all NULL
-						dest[row] = (texts[row] != NULL) ? (unsafe_string(texts[row]); n+=1) : ""
+						if (texts[row] != NULL)  dest[row] = unsafe_string(texts[row]);		n+=1
+						else                     dest[row] = ""
+						end
 					end
 					(n > 0) && (Darr[seg_out].text = dest)	# If they are all empty, no bother to save them.
 				end
