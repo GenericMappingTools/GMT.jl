@@ -1052,6 +1052,22 @@ parse_i(d::Dict,  cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i"
 parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :spherical_dist :spherical], " -j")
 
 # ---------------------------------------------------------------------------------
+function parse_ff(d::Dict, cmd::String)
+	cmd, opt_f = parse_helper(cmd, d, [:f :colinfo :coltypes], " -f")
+	if (startswith(opt_f, " -ft") || startswith(opt_f, " -fT"))
+		opt_J = scan_opt(cmd, "-J")
+		(opt_J == "" || opt_J[1] != 'X' || opt_J[1] != 'x') && return cmd, opt_f
+		parts = split(opt_J, "/")
+		if (parts[1][end] != 'T')
+			parts[1] *= "T"
+			_opt_J = (length(parts) == 1) ? parts[1] : parts[1] * "/" * parts[2]
+			cmd = replace(cmd, opt_J => _opt_J)
+		end
+	end
+	return cmd, opt_f
+end
+
+# ---------------------------------------------------------------------------------
 function parse_l(d::Dict, cmd::String)
 	cmd_ = add_opt(d, "", 'l', [:l :legend],
 		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), false)
