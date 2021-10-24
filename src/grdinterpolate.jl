@@ -99,8 +99,9 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 		R = common_grd(d, "grdinterpolate " * cmd, arg1, arg2, arg3)
 	end
 
-	if (!isa(R, String) && occursin(" -S", cmd) && !occursin(" -o", cmd))	# Here we don't want the default GMT output
-		[R[k].data = R[k].data[:, [4,3]] for k = 1:length(R)]
+	if (!isa(R, String) && occursin(" -S", cmd) && !occursin(" -o", cmd))	# Here I don't want the default GMT output
+		two_cols = (GMTver > v"6.2") ? [3,4] : [4,3]
+		[R[k].data = R[k].data[:, two_cols] for k = 1:length(R)]
 	end
 	R
 end
