@@ -159,6 +159,9 @@ function GMT_Destroy_Options(API::Ptr{Cvoid}, head::Ref{Ptr{GMT_OPTION}})
 	ccall((:GMT_Destroy_Options, libgmt), Cint, (Cstring, Ref{Ptr{GMT_OPTION}}), API, head)
 end
 
+GMT_Create_Cmd(API::Ptr{Cvoid}, head::Ptr{GMT_OPTION}) =
+	ccall( (:GMT_Create_Cmd, libgmt), Ptr{UInt8}, (Ptr{Cvoid}, Ptr{GMT_OPTION}), API, head)
+
 #= 
 function GMT_Make_Option(API::Ptr{Cvoid}, option::UInt8, arg::Ptr{UInt8})
 	ccall((:GMT_Make_Option, libgmt), Ptr{GMT_OPTION}, (Ptr{Cvoid}, UInt8, Ptr{UInt8}), API, option, arg)
@@ -173,9 +176,6 @@ function GMT_Append_Option(API::Ptr{Cvoid}, current::Ptr{GMT_OPTION}, head::Ptr{
 end
 function GMT_Create_Args(API::Ptr{Cvoid}, argc::Ptr{Int}, head::Ptr{GMT_OPTION})
 	ccall( (:GMT_Create_Args, libgmt), Ptr{Ptr{UInt8}}, (Ptr{Cvoid}, Ptr{Cint}, Ptr{GMT_OPTION}), API, argc, head)
-end
-function GMT_Create_Cmd(API::Ptr{Cvoid}, head::Ptr{GMT_OPTION})
-	ccall( (:GMT_Create_Cmd, libgmt), Ptr{UInt8}, (Ptr{Cvoid}, Ptr{GMT_OPTION}), API, head)
 end
 
 function GMT_Destroy_Args(API::Ptr{Cvoid}, argc::Cint, argv::Ptr{Ptr{Ptr{UInt8}}})
