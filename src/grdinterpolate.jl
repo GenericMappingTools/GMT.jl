@@ -1,5 +1,5 @@
 """
-	grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
+	grdinterpolate(cmd0="", arg1=nothing, arg2=nothing; kwargs...)
 
 Interpolate a 3-D cube, 2-D grids or 1-D series from a 3-D data cube or stack of 2-D grids.
 
@@ -27,7 +27,7 @@ Parameters
     Output file name. If `range` only selects a single layer then the data cube collapses to a regular 2-D grid file
     ($(GMTdoc)grdinterpolate.html#g)
 - $(GMT.opt_R)
-- **S** | **stack** :: [Type => Str | Tuple | Dataset]	`Arg = x/y|pointfile[+hheader]`
+- **S** | **track** | **pt** :: [Type => Str | Tuple | Dataset]	`Arg = x/y|pointfile[+hheader]`
 
     Rather than compute gridded output, create tile/spatial series through the stacked grids at the given point (x/y)
     or the list of points in pointfile. 
@@ -76,16 +76,17 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)
 
 	cmd, args, n1, = add_opt(d, cmd, 'E', [:E :crossection], :line, Vector{Any}([arg1, arg2]), (azim="+a", great_circ="_+g", parallel="_+p", inc="+i", length="+l", npoints="+n", middpoint="+o", radius="+r", loxodrome="_+x"))
-	if (n1 > 0)
-		arg1, arg2 = args[:]
-		_Vt = Vector{Any}([arg2, arg3])
-	else
-		_Vt = Vector{Any}([arg1, arg2])
-	end
 
-	cmd, args, n2, = add_opt(d, cmd, 'S', [:S :track], :line, _Vt, (header="+h",))
-	if     (n1 == 0 && n2 > 0)  arg1, arg2 = args[:]
-	elseif (n2 > 0)             arg2, arg3 = args[:]
+	if ((val = find_in_dict(d, [:S :track :pt])[1]) !== nothing)
+		if (isa(val, Tuple) || (isa(val, Array{<:Number}) && length(val) == 2))
+			cmd *= " -S" * arg2str(val)
+		elseif (isa(val, String))
+			cmd *= " -S" * val
+		elseif (isa(val, Matrix) || isGMTdataset(val))
+			(arg1 === nothing) ? arg1 = val : ((arg2 === nothing) ? arg2 = val : arg3 = val)
+			cmd *= " -S"
+		else  error("Bad data type for option `track` $(typeof(val))")
+		end
 	end
 
 	cmd = parse_opt_range(d, cmd, "T")[1]
@@ -93,11 +94,15 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 	#!occursin("-G", cmd) && (cmd *= " -G")
 	if (isa(arg1, Tuple))
 		for k = 1:length(arg1)  cmd *= " ?"  end		# Need as many ? as numel(arg1)
-		common_grd(d, "grdinterpolate " * cmd, arg1..., arg2, arg3)
+		R = common_grd(d, "grdinterpolate " * cmd, arg1..., arg2, arg3)
 	else
-		common_grd(d, "grdinterpolate " * cmd, arg1, arg2, arg3)
+		R = common_grd(d, "grdinterpolate " * cmd, arg1, arg2, arg3)
 	end
 
+	if (!isa(R, String) && occursin(" -S", cmd) && !occursin(" -o", cmd))	# Here we don't want the default GMT output
+		[R[k].data = R[k].data[:, [4,3]] for k = 1:length(R)]
+	end
+	R
 end
 
 # ---------------------------------------------------------------------------------------------------
