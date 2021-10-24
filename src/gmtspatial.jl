@@ -89,7 +89,11 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, args, n, = add_opt(d, cmd, 'T', [:T :truncate], :data, Array{Any,1}([arg1, arg2, arg3, arg4]), (x="",))
 	if (n > 0)  arg1, arg2, arg3, arg4 = args[:]  end
 
-	common_grd(d, cmd0, cmd, "gmtspatial ", arg1, arg2, arg3, arg4)		# Finish build cmd and run it
+    if (isa(arg1,Tuple))
+	    common_grd(d, cmd0, cmd, "gmtspatial ", arg1..., arg2, arg3, arg4)		# Finish build cmd and run it
+    else
+	    common_grd(d, cmd0, cmd, "gmtspatial ", arg1, arg2, arg3, arg4)
+    end
 end
 
 # ---------------------------------------------------------------------------------------------------
