@@ -131,6 +131,7 @@ GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Vector{String}(), "", Vec
 struct WrapperPluto fname::String end
 
 const global GItype = Union{GMTgrid, GMTimage}
+const global GDtype = Union{GMTdataset, Vector{GMTdataset}}
 
 """
 Call a GMT module. This function is not called directly by the users,
@@ -274,6 +275,8 @@ function gmt(cmd::String, args...)
 	gmt_free_mem(API, X)
 	X = XX
 
+	#println(g_module * " " * unsafe_string(GMT_Create_Cmd(API, LL)))	# Uncomment when need to confirm argins
+
 	# 5. Assign input sources (from Julia to GMT) and output destinations (from GMT to Julia)
 	for k = 1:n_items					# Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0) error("GMT: Expects a Matrix for input") end
@@ -382,8 +385,8 @@ function create_cmd(LL)
 	done = false
 	a = IOBuffer()
 	while (!done)
-		print(a, '-', char(LL_up.option))
-		print(a, bytestring(LL_up.arg))
+		print(a, '-', Char(LL_up.option))
+		print(a, unsafe_string(LL_up.arg))
 		if (LL_up.next != C_NULL)
 			print(a, " ")
 			LL_up = unsafe_load(LL_up.next);
@@ -391,7 +394,7 @@ function create_cmd(LL)
 			done = true
 		end
 	end
-	return takebuf_string(a)
+	return String(take!(a))
 end
 =#
 
@@ -746,10 +749,11 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 				texts = unsafe_wrap(Array, DS.text, DS.n_rows)	# n_headers-element Array{Ptr{UInt8},1}
 				if (texts != NULL)
 					dest = Array{String}(undef, DS.n_rows)
-					for row = 1:DS.n_rows					# Copy the text rows
-						if (texts[row] != NULL)  dest[row] = unsafe_string(texts[row])  end
+					n = 0
+					for row = 1:DS.n_rows					# Copy the text rows, but check if they are not all NULL
+						dest[row] = (texts[row] != NULL) ? (unsafe_string(texts[row]); n+=1) : ""
 					end
-					Darr[seg_out].text = dest
+					(n > 0) && (Darr[seg_out].text = dest)	# If they are all empty, no bother to save them.
 				end
 			end
 
@@ -1002,9 +1006,6 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
 	Ib.n_indexed_colors = Img.n_colors
 	if (Img.color_interp != "")    Ib.color_interp = pointer(Img.color_interp)  end
-	#if (size(Img.alpha) != (1,1))  Ib.alpha = pointer(Img.alpha)
-	#else                           Ib.alpha = C_NULL
-	#end
 	Ib.alpha = (size(Img.alpha) != (1,1)) ? pointer(Img.alpha) : C_NULL
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)		# Tell GMT that memory is external
