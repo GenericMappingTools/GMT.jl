@@ -384,6 +384,8 @@ Stack a bunch of single grids in a multiband cube like file.
     - `decimalyear` or `yeardecimal` converts the DateTime to decimal years (Floa64)
 	- `milliseconds` (or just `mil`) will store the DateTime as milliseconds since 0000-01-01T00:00:00 (Float64)
 	- `seconds` stores the DateTime as seconds since 0000-01-01T00:00:00 (Float64)
+	- `unix` stores the DateTime as seconds since 1970-01-01T00:00:00 (Float64)
+	- `rata` stores the DateTime as days since 0000-12-31T00:00:00 (Float64)
 	- `Date` or `DateTime` stores as a string representation of a DateTime.
 - `zdim_name`: The name of the vertical axes (default is "time")
 - `zcoord`: Keyword same as `v` (may use one or the other).
@@ -404,6 +406,10 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
 			v = Dates.datetime2epochms.(v);	z_unit = "Milliseconds since 0000-01-01T00:00:00"
 		elseif (_z_unit == "seconds")
 			v = Dates.datetime2epochms.(v) / 1000.;	z_unit = "Seconds since 0000-01-01T00:00:00"
+		elseif (_z_unit == "unix")
+			v = Dates.datetime2unix.(v);			z_unit = "Seconds since 1970-01-01T00:00:00"
+		elseif (_z_unit == "rata")
+			v = Dates.datetime2rata.(v);			z_unit = "Days since 0000-12-31T00:00:00"
 		elseif (_z_unit == "date" || _zunit == "datetime")			# Crashes Mirone
 			v = string.(v);							z_unit = "ISO Date Time"
 		end
