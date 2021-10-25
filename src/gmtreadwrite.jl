@@ -249,9 +249,24 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 	(fname == "") && error("Output file name cannot be empty.")
 
 	if (isa(data, GMTgrid))
+		#opt_T = " -Tg"
+		#fname *= parse_grd_format(d)			# If we have format requests
+		#cmd, = parse_f(d, cmd)
+		#CTRL.proj_linear[1] = true				# To force pad=0 and julia memory (no dup)
+
+		# GMT doesn't write correct CF nc grids that are referenced but non-geographic. So, use GDAL in those cases
+		fmt = parse_grd_format(d)				# See if we have format requests
+		_, opt_f = parse_f(d, "")
+		ext = lowercase(splitext(fname)[2])
+		if (fmt == "" && opt_f == "" && (ext == ".grd" || ext == ".nc"))
+			prj = getproj(data, proj4=true)
+			if (prj != "" && !contains(prj, "=long") && !contains(prj, "=lat"))
+				return gdaltranslate(data, dest=fname)
+			end
+		end
 		opt_T = " -Tg"
-		fname = fname * parse_grd_format(d)		# If we have format requests
-		cmd, = parse_f(d, cmd)
+		fname *= fmt
+		cmd *= opt_f
 		CTRL.proj_linear[1] = true				# To force pad=0 and julia memory (no dup)
 	elseif (isa(data, GMTimage))
 		opt_T = " -Ti"
