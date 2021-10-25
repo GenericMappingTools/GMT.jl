@@ -1045,7 +1045,6 @@ end
 parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
 parse_do(d::Dict, cmd::String) = parse_d(d, cmd, [:do :nodata_out])
 parse_e(d::Dict,  cmd::String) = parse_helper(cmd, d, [:e :pattern :find], " -e")
-#parse_f(d::Dict,  cmd::String) = parse_helper(cmd, d, [:f :colinfo :coltypes], " -f")
 parse_g(d::Dict,  cmd::String) = parse_helper(cmd, d, [:g :gap], " -g")
 parse_h(d::Dict,  cmd::String) = parse_helper(cmd, d, [:h :header], " -h")
 parse_i(d::Dict,  cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i", ',')
@@ -1056,7 +1055,7 @@ function parse_f(d::Dict, cmd::String)
 	# For plotting time (-ft) in X one must add 'T' to -JX but that is boring and difficult to automatize
 	# GMT6.3 now has it internal but previous versions no. So do that job here.
 	cmd, opt_f = parse_helper(cmd, d, [:f :colinfo :coltypes], " -f")
-	if (startswith(opt_f, " -ft") || startswith(opt_f, " -fT"))		# TODO. Make this dependent on GMT < 6.3
+	if (GMTver < v"6.3" && (startswith(opt_f, " -ft") || startswith(opt_f, " -fT")))	# GMT6.3 does it internally.
 		opt_J = scan_opt(cmd, "-J")
 		(opt_J == "" || (opt_J[1] != 'X' && opt_J[1] != 'x')) && return cmd, opt_f
 		parts = split(opt_J, "/")

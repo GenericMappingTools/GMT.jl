@@ -27,7 +27,7 @@ Parameters
     Output file name. If `range` only selects a single layer then the data cube collapses to a regular 2-D grid file
     ($(GMTdoc)grdinterpolate.html#g)
 - $(GMT.opt_R)
-- **S** | **track** | **pt** :: [Type => Str | Tuple | Dataset]	`Arg = x/y|pointfile[+hheader]`
+- **S** | **pt** | **track** :: [Type => Str | Tuple | Dataset]	`Arg = x/y|pointfile[+hheader]`
 
     Rather than compute gridded output, create tile/spatial series through the stacked grids at the given point (x/y)
     or the list of points in pointfile. 
@@ -57,7 +57,10 @@ Parameters
 - $(GMT.opt_swap_xy)
 
 When using two numeric inputs and no G option, the order of the x,y and grid is not important.
-That is, both of this will work: D = grdinterpolate([0 0], G);  or  D = grdinterpolate(G, [0 0]); 
+That is, both of this will work: D = grdinterpolate([0 0], G);  or  D = grdinterpolate(G, [0 0]);
+
+When using the `pt` or `crossection` options the default is to NOT ouput the redundant horizontal x,y coordinates
+(contrary to the GMT default). If you want to have them, use option `colinfo`, *e.g.* `colinfo="0-3"`
 """
 function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kwargs...)
 
@@ -91,7 +94,9 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 
 	cmd = parse_opt_range(d, cmd, "T")[1]
 
-	#!occursin("-G", cmd) && (cmd *= " -G")
+	out_two_cols = (occursin(" -S", cmd) && !occursin(" -o", cmd))
+	(out_two_cols && GMTver >= v"6.3") && (cmd *= " -o2,3")		# The default is NOT ouput the first two columns (redundant)
+
 	if (isa(arg1, Tuple))
 		for k = 1:length(arg1)  cmd *= " ?"  end		# Need as many ? as numel(arg1)
 		R = common_grd(d, "grdinterpolate " * cmd, arg1..., arg2, arg3)
@@ -99,9 +104,8 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 		R = common_grd(d, "grdinterpolate " * cmd, arg1, arg2, arg3)
 	end
 
-	if (!isa(R, String) && occursin(" -S", cmd) && !occursin(" -o", cmd))	# Here I don't want the default GMT output
-		two_cols = (GMTver > v"6.2") ? [3,4] : [4,3]
-		[R[k].data = R[k].data[:, two_cols] for k = 1:length(R)]
+	if (!isa(R, String) && out_two_cols && GMTver < v"6.3")	# Here I don't want the default GMT output
+		[R[k].data = R[k].data[:, [4,3]] for k = 1:length(R)]
 	end
 	R
 end
