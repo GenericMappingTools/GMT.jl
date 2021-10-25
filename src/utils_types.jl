@@ -400,13 +400,13 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
 	if (isa(v, Vector{<:TimeType}))
 		_z_unit = lowercase(z_unit)
 		(mirone && z_unit == "") && (_z_unit = "decimalyear")		# For Mirone the default is DecimalYear
-		if (_z_unit == "" || _z_unit == "decimalyear" || _z_unit == "yeardecimal")	# Actually, make it default for all and now
+		if (_z_unit == "decimalyear" || _z_unit == "yeardecimal")
 			v = GMT.yeardecimal.(v);				z_unit = "Decimal year"
 		elseif (startswith(_z_unit, "mil"))
 			v = Dates.datetime2epochms.(v);	z_unit = "Milliseconds since 0000-01-01T00:00:00"
 		elseif (_z_unit == "seconds")
 			v = Dates.datetime2epochms.(v) / 1000.;	z_unit = "Seconds since 0000-01-01T00:00:00"
-		elseif (_z_unit == "unix")
+		elseif (_z_unit == "" || _z_unit == "unix")					# Make it default for all and now
 			v = Dates.datetime2unix.(v);			z_unit = "Seconds since 1970-01-01T00:00:00"
 		elseif (_z_unit == "rata")
 			v = Dates.datetime2rata.(v);			z_unit = "Days since 0000-12-31T00:00:00"
