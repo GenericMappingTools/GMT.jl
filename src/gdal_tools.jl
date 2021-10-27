@@ -219,7 +219,8 @@ function default_gdopts!(ds, opts::Vector{String}, dest::String)
 	driver = shortname(getdriver(ds))
 	dt = GDALGetRasterDataType(ds.ptr)
 	# For some reason when MEM driver (only it?) dt comes == 1, even when data is float. So check again.
-	(startswith(lowercase(driver), "mem") && dt == 1 && isa(ds, Gdal.AbstractRasterBand)) && (dt = GDALGetRasterDataType(getband(ds,1).ptr))
+	(startswith(lowercase(driver), "mem") && dt == 1 && isa(ds, Gdal.AbstractDataset)) &&
+		(dt = GDALGetRasterDataType(getband(ds,1).ptr))
 
 	ext = lowercase(splitext(dest)[2])
 	isTiff = (ext == ".tif" || ext == ".tiff")
