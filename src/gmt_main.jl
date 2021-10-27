@@ -1,4 +1,4 @@
-mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
+Base.@kwdef mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	proj4::String
 	wkt::String
 	epsg::Int
@@ -19,9 +19,9 @@ mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	v_unit::String
 	z_unit::String
 	layout::String
-	scale::Union{Float64, Float32}
-	offset::Union{Float64, Float32}
-	pad::Int
+	scale::Union{Float64, Float32}=1f0
+	offset::Union{Float64, Float32}=0f0
+	pad::Int=0
 end
 Base.size(G::GMTgrid) = size(G.z)
 Base.getindex(G::GMTgrid{T,N}, inds::Vararg{Int,N}) where {T,N} = G.z[inds...]
