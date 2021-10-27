@@ -3352,12 +3352,12 @@ function isempty_(arg)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function put_in_slot(cmd::String, val, opt::Char, args)
+function put_in_slot(cmd::String, opt::Char, args...)
 	# Find the first non-empty slot in ARGS and assign it the Val of d[:symb]
 	# Return also the index of that first non-empty slot in ARGS
 	k = 1
 	for arg in args					# Find the first empty slot
-		if (isempty_(arg))
+		if (arg === nothing)
 			cmd = string(cmd, " -", opt)
 			break
 		end
