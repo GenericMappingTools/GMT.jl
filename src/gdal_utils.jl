@@ -141,7 +141,7 @@ function gd2gmt_helper(input, sds)
 
 	# Hmmm, check also for scale_factor, add_offset, _FillValue
 	info = gdalinfo(dataset)
-	(info === nothing) && error("GDAL failed to find " * sds_name)
+	(info === nothing) && error("GDAL failed to read " * (isa(input, AbstractString) ? sds_name : "input dataset"))
 	if (occursin("Metadata:", info))
 		if ((ind = findfirst("scale_factor=", info)) !== nothing)	# OK, found one
 			ind2 = findfirst('\n', info[ind[1]:end])
