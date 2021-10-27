@@ -15,6 +15,7 @@ Parameters
     The grid contain polar (r, theta) components instead of Cartesian (x, y) [Default is Cartesian components].
     ($(GMTdoc)grdvector.html#a)
 - $(GMT.opt_B)
+- $(GMT.opt_C)
 - **G** | **fill** :: [Type => Str | Number]
 
     Sets color or shade for vector interiors [Default is no fill].
@@ -66,6 +67,9 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:I :UVXY :f :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:S :vec_scale], [:T :sign_scale], [:Z :azimuth]])
+
+    # Check case in which the two grids were transmitted by name. 
+    (cmd0 != "" && isa(arg1, String)) && (cmd0 *= " " * arg1; arg1 = nothing)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 
