@@ -44,8 +44,17 @@ const OGRERR_NONE = UInt32(0)
 const GF_Read  = UInt32(0)
 const GF_Write = UInt32(1)
 
-const GDAL_OF_READONLY = 0x00				# Open in read-only mode
-const GDAL_OF_VERBOSE_ERROR = 0x40			# Emit error message in case of failed open
+const GDAL_OF_UPDATE = 0x01		# Open in update mode
+const GDAL_OF_ALL = 0x00		# Allow raster and vector drivers to be used
+const GMF_ALL_VALID = 0x01		# Flag returned by GDALGetMaskFlags() to indicate that all pixels are valid
+const GMF_PER_DATASET = 0x02	# Flag returned by GDALGetMaskFlags() to indicate that the mask band is valid for all bands
+const GMF_ALPHA = 0x04			# Flag returned by GDALGetMaskFlags() to indicate that the mask band is an alpha band
+const GMF_NODATA = 0x08		# Flag returned by GDALGetMaskFlags() to indicate that the mask band is computed from nodata values
+const GDAL_OF_READONLY = 0x00			# Open in read-only mode
+const GDAL_OF_RASTER = 0x02				# "Allow raster drivers to be used"
+const GDAL_OF_VECTOR = 0x04				# "Allow vector drivers to be used"
+const GDAL_OF_VERBOSE_ERROR = 0x40		# Emit error message in case of failed open
+const GDAL_OF_INTERNAL = 0x80			# "Open as internal dataset"
 
 const OAMS_TRADITIONAL_GIS_ORDER = Int32(0)
 
