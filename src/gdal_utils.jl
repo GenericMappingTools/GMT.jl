@@ -194,7 +194,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 
 	D, ds = Vector{GMTdataset}(undef, Gdal.ngeom(dataset)), 1
 	for k = 1:Gdal.nlayer(dataset)
-		layer = getlayer(dataset, 0)
+		layer = getlayer(dataset, k-1)
 		Gdal.resetreading!(layer)
 		proj = ((p = getproj(layer)) != C_NULL) ? toPROJ4(p) : ""
 		while ((feature = Gdal.nextfeature(layer)) !== nothing)
