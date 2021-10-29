@@ -3340,7 +3340,7 @@ function close_PS_file(fname::AbstractString)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function isempty_(arg)
+function isempty_(arg)::Bool
 	# F... F... it's a shame having to do this
 	(arg === nothing) && return true
 	try
