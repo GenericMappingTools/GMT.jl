@@ -81,7 +81,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	if ((isa(arg1, GMTdataset) && arg1.proj4 != "" || isa(arg1, Vector{<:GMTdataset}) &&
 		     arg1[1].proj4 != "") && opt_J == " -JX" * def_fig_size)
-		cmd = replace(cmd, opt_J => "-JX" * split(def_fig_size, '/')[1] * "/0")	# If projected, it's a axis equal for sure
+		cmd = replace(cmd, opt_J => " -JX" * split(def_fig_size, '/')[1] * "/0")	# If projected, it's a axis equal for sure
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd *= " -JZ6c"		# Default -JZ
