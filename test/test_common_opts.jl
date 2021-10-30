@@ -342,6 +342,9 @@
 	rm("lixo2.grd")
 	#rm("lixo_cube.nc")		# can't be deleted because Julia still holds its file handle.
 
+	A = reshape(collect(1:16), 4,4);
+	GMT.delrows!(A, [1,3]);
+
 	gmtbegin()
 	GMT.gmt_restart(false)
 	resetGMT()

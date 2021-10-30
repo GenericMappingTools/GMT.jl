@@ -641,7 +641,9 @@ function mat2grid(mat, I::GMTimage)
 	Go
 end
 
-function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+function mat2grid(f::Function, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+	(isempty(x) && !isempty(xx)) && (x = xx)
+	(isempty(y) && !isempty(yy)) && (y = yy)
 	z = Array{Float32,2}(undef,length(y),length(x))
 	for i = 1:length(x)
 		for j = 1:length(y)
@@ -651,9 +653,11 @@ function mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String=
 	mat2grid(z; reg=reg, x=x, y=y, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
 end
 
-function mat2grid(f::String, x=Vector{Float64}(), y=Vector{Float64}())
+function mat2grid(f::String, xx=Vector{Float64}(), yy=Vector{Float64}(); x=Vector{Float64}(), y=Vector{Float64}())
 	# Something is very wrong here. If I add named vars it annoyingly warns
-	#	WARNING: Method definition f2(Any, Any) in module GMT at C:\Users\joaqu\.julia\dev\GMT\src\gmt_main.jl:1556 overwritten on the same line.
+	# WARNING: Method definition f2(Any, Any) in module GMT at C:\Users\joaqu\.julia\dev\GMT\src\gmt_main.jl:1556 overwritten on the same line.
+	(isempty(x) && !isempty(xx)) && (x = xx)
+	(isempty(y) && !isempty(yy)) && (y = yy)
 	if (startswith(f, "ack"))				# Ackley (inverted) https://en.wikipedia.org/wiki/Ackley_function
 		f_ack(x,y) = 20 * exp(-0.2 * sqrt(0.5 * (x^2 + y^2))) + exp(0.5*(cos(2pi*x) + cos(2pi*y))) - 22.718281828459045
 		if (isempty(x))  x = -5:0.05:5;	y = -5:0.05:5;  end
