@@ -1456,6 +1456,20 @@ function fakedata(sz...)
 	y
 end
 
+# ---------------------------------------------------------------------------------------------------
+function delrows!(A::Matrix, rows)
+	nrows, ncols = size(A)
+	npts = length(A)
+	A = reshape(A, npts)
+	ndr = length(rows)			# Number of rows to delete
+	inds = Vector{Int}(undef, ndr * ncols)
+	for k = 1:ndr
+		inds[(k-1)*ncols+1:k*ncols] = collect(rows[k]:ncols:npts-nrows+rows[k])
+	end
+	inds = sort(inds)
+	reshape(deleteat!(A, inds), nrows-length(rows), ncols)
+end
+
 # EDIPO SECTION
 # ---------------------------------------------------------------------------------------------------
 linspace(start, stop, length=100) = range(start, stop=stop, length=length)
