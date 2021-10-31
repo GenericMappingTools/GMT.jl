@@ -5,7 +5,7 @@ Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMapp
 
 | **Documentation**                       | **Build Status (Julia 1.5)**              | **Discourse Forum**   | **Collaboration** |
 |:---------------------------------------:|:-----------------------------------------:|:---------------------:|:---------------------:|
-| [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][colprac-img]][colprac-url] |
+| [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] | [![][colprac-img]][colprac-url] |
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://genericmappingtools.github.io/GMT.jl/dev
