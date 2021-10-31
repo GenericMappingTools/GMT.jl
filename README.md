@@ -3,9 +3,9 @@ GMT.jl
 
 Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMappingTools/gmt)
 
-| **Documentation**                       | **Build Status (Julia 1.5)**              | **Discourse Forum**   |
-|:---------------------------------------:|:-----------------------------------------:|:---------------------:|
-| [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] |
+| **Documentation**                       | **Build Status (Julia 1.5)**              | **Discourse Forum**   | **Collaboration** |
+|:---------------------------------------:|:-----------------------------------------:|:---------------------:|:---------------------:|
+| [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][colprac-img]][colprac-url] |
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://genericmappingtools.github.io/GMT.jl/dev
@@ -21,6 +21,9 @@ Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMapp
 
 [forum-img]: https://img.shields.io/discourse/status?label=forum&server=https%3A%2F%2Fforum.generic-mapping-tools.org%2F&style=flat-square
 [forum-url]: https://forum.generic-mapping-tools.org
+
+[colprac-img]: https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet%20alt=%22Collaborative%20Practices%20for%20Community%20Packages%22
+[colprac-url]: https://github.com/SciML/ColPrac
 
 The Generic Mapping Tools, **GMT**, is an open source collection of tools for manipulating geographic
 and Cartesian data sets (including filtering, trend fitting, gridding, projecting, etc.) and producing
