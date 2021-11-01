@@ -1464,10 +1464,10 @@ function delrows!(A::Matrix, rows)
 	ndr = length(rows)			# Number of rows to delete
 	inds = Vector{Int}(undef, ndr * ncols)
 	for k = 1:ndr
-		inds[(k-1)*ncols+1:k*ncols] = collect(rows[k]:ncols:npts-nrows+rows[k])
+		inds[(k-1)*ncols+1:k*ncols] = collect(rows[k]:nrows:npts-nrows+rows[k])
 	end
 	inds = sort(inds)
-	reshape(deleteat!(A, inds), nrows-length(rows), ncols)
+	reshape(deleteat!(A, inds), nrows-ndr, ncols)
 end
 
 # EDIPO SECTION

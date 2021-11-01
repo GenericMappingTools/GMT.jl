@@ -22,7 +22,7 @@ Parameters
 
     Set the value assigned to empty nodes when G is set [NaN].
     ($(GMTdoc)triangulate.html#e)
-- **G** | **grid** | **outgrid** :: [Type => Str | []]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Use triangulation to grid the data onto an even grid (specified with R I).
     Append the name of the output grid file.
@@ -71,8 +71,8 @@ function triangulate(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("triangulate", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:R :I :V_params :bi :bo :di :e :f :h :i :r :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:C :slope_grid], [:D :derivatives], [:E :empty], [:G :grid :outgrid], [:M :network],
+	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :bi :bo :di :e :f :h :i :w :yx])
+	cmd  = parse_these_opts(cmd, d, [[:C :slope_grid], [:D :derivatives], [:E :empty], [:M :network],
                                      [:N :ids], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])
 	cmd = parse_Q_tri(d, [:Q :voronoi], cmd)
 	if (occursin("-I", cmd) && occursin("-R", cmd) && !occursin("-G", cmd)) cmd *= " -G"  end

@@ -54,7 +54,7 @@ function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 	length(kwargs) == 0 && return monolitic("nearneighbor", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:G :R :I :V_params :bi :di :e :f :h :i :n :r :w :yx])
+	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :bi :di :e :f :h :i :n :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:E :empty], [:S :search_radius], [:Z :weights], [:A]])
 	cmd  = add_opt(d, cmd, 'N', [:N :sectors], (n="", min_sectors="+m"), true)
 	opt  = add_opt(d, "", 'N', [:N :nn :nearest])

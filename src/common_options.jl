@@ -55,14 +55,28 @@ function GMTsyntax_opt(d::Dict, cmd::String)::String
 	cmd
 end
 
-function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true)
+parse_RIr(d::Dict, cmd::String, O::Bool=false, del::Bool=true) = parse_R(d, cmd, O, del, true)
+function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=false)
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
+	# The RIr option is to assign also the -I and -r when R was given a GMTgrid|image value. This is a
+	# workaround for a GMT bug that ignores this behaviour when from externals.
 	
 	(show_kwargs[1]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
 
 	opt_R::String = ""
 	if ((val = find_in_dict(d, [:R :region :limits], del)[1]) !== nothing)
 		opt_R = build_opt_R(val)
+		if (RIr)
+			if (isa(val, GItype))
+				opt_I = parse_I(d, "", [:I :inc :increment :spacing], 'I')
+				(opt_I == "") && (cmd *= " -I" * arg2str(val.inc))
+				opt_r = parse_r(d, "")[2]
+				(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
+			else				# Here we must parse the -I and -r separately.
+				cmd = parse_I(d, cmd, [:I :inc :increment :spacing], 'I')
+				cmd = parse_r(d, cmd)[1]
+			end
+		end
 	elseif (IamModern[1])
 		return cmd, ""
 	end
@@ -110,7 +124,7 @@ function build_opt_R(Val)::String		# Generic function that deals with all but Na
 		out = arg2str(Val)
 		return " -R" * rstrip(out, '/')		# Remove last '/'
 	elseif (isa(Val, GMTgrid) || isa(Val, GMTimage))
-		return sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
+		return @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
 	end
 	return ""
 end
@@ -1168,7 +1182,16 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 	(show_kwargs[1]) && return (print_kwarg_opts(opts, "(Common options)"),"")	# Just print the options
 	opt_p = nothing;	o = ""
 	for opt in opts
-		if     (opt == :a)  cmd, o = parse_a(d, cmd)
+		if     (opt == :RIr)  cmd, o = parse_RIr(d, cmd)
+		elseif (opt == :R)  cmd, o = parse_R(d, cmd)
+		elseif (opt == :I)  cmd  = parse_I(d, cmd, [:I :inc :increment :spacing], 'I')
+		elseif (opt == :J)  cmd, o = parse_J(d, cmd)
+		elseif (opt == :JZ) cmd, o = parse_JZ(d, cmd)
+		elseif (opt == :G)  cmd, = parse_G(d, cmd)
+		elseif (opt == :F)  cmd  = parse_F(d, cmd)
+		elseif (opt == :UVXY)     cmd = parse_UVXY(d, cmd)
+		elseif (opt == :V_params) cmd = parse_V_params(d, cmd)
+		elseif (opt == :a)  cmd, o = parse_a(d, cmd)
 		elseif (opt == :b)  cmd, o = parse_b(d, cmd)
 		elseif (opt == :c)  cmd, o = parse_c(d, cmd)
 		elseif (opt == :bi) cmd, o = parse_bi(d, cmd)
@@ -1191,14 +1214,6 @@ function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::B
 		elseif (opt == :x)  cmd, o = parse_x(d, cmd)
 		elseif (opt == :t)  cmd, o = parse_t(d, cmd)
 		elseif (opt == :yx) cmd, o = parse_swap_xy(d, cmd)
-		elseif (opt == :R)  cmd, o = parse_R(d, cmd)
-		elseif (opt == :F)  cmd  = parse_F(d, cmd)
-		elseif (opt == :G)  cmd, = parse_G(d, cmd)
-		elseif (opt == :I)  cmd  = parse_I(d, cmd, [:I :inc :increment :spacing], 'I')
-		elseif (opt == :J)  cmd, o = parse_J(d, cmd)
-		elseif (opt == :JZ) cmd, o = parse_JZ(d, cmd)
-		elseif (opt == :UVXY)     cmd = parse_UVXY(d, cmd)
-		elseif (opt == :V_params) cmd = parse_V_params(d, cmd)
 		elseif (opt == :params)   cmd = parse_params(d, cmd)
 		elseif (opt == :write)    cmd = parse_write(d, cmd)
 		elseif (opt == :append)   cmd = parse_append(d, cmd)
