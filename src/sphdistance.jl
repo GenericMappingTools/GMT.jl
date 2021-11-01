@@ -20,7 +20,7 @@ Parameters
 
     Specify the quantity that should be assigned to the grid nodes.
     ($(GMTdoc)sphdistance.html#e)
-- **G** | **grid** | **outgrid** :: [Type => Str]
+- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = sphdistance(....) form.
@@ -56,8 +56,8 @@ function sphdistance(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:I :R :V_params :b :d :e :h :i :r :yx])
-	cmd  = parse_these_opts(cmd, d, [[:C :save_mem], [:D :duplicates], [:E :what_quantity], [:G :grid :outgrid], [:L :dist_unit]])
+	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :b :d :e :h :i :yx])
+	cmd  = parse_these_opts(cmd, d, [[:C :save_mem], [:D :duplicates], [:E :what_quantity], [:L :dist_unit]])
 	cmd, arg1, arg2 = parse_QN_sphdst(d, [[:Q :voronoi], [:N :nodes]], cmd, arg1, arg2)
 
 	common_grd(d, "sphdistance " * cmd, arg1, arg2)
