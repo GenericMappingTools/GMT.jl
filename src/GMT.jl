@@ -27,7 +27,7 @@ function get_GMTver()
 		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
 		ver = readlines(`gmt --version`)[1]
 		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
-		return out, false, "", "", "", ""
+		return out, false, "", "", "", "", ""
 	catch err1;		println(err1)		# If not, install GMT
 		ENV["INSTALL_GMT"] = "1"
 		try
@@ -42,13 +42,13 @@ function get_GMTver()
 			end
 			ver = readlines(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`)[1]
 			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
-			return out, true, _libgmt, _libgdal, _libproj, _GMT_bindir
+			return out, true, _libgmt, _libgdal, _libproj, _libnetcdf, _GMT_bindir
 		catch err2;		println(err2)
-			return out, false, "", "", "", ""
+			return out, false, "", "", "", "", ""
 		end
 	end
 end
-_GMTver, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir = get_GMTver()
+_GMTver, GMTbyConda, _libgmt, _libgdal, _libproj, _libnetcdf, _GMT_bindir = get_GMTver()
 
 if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names already known at this point.
 	_libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
@@ -66,8 +66,15 @@ if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names a
 				error("Don't know how to use PROJ4 in this OS.")
 			)
 		)
+	@static Sys.iswindows() ?
+		(Sys.WORD_SIZE == 64 ? (_libnetcdf = "netcdf4_w64.dll") : (_libnetcdf = "netcdf4_w32.dll")) : (
+			Sys.isapple() ? (_libnetcdf = string(split(readlines(pipeline(`otool -L $(_libnetcd)`, `grep libnetcdf`))[1])[1])) : (
+				Sys.isunix() ? (_libnetcdf = string(split(readlines(pipeline(`ldd $(_libnetcdf)`, `grep libnetcdf`))[1])[3])) :
+				error("Don't know how to use NETCDF in this OS.")
+			)
+		)
 end
-const GMTver, libgmt, libgdal, libproj, GMT_bindir = _GMTver, _libgmt, _libgdal, _libproj, _GMT_bindir
+const GMTver, libgmt, libgdal, libproj, libnetcdf, GMT_bindir = _GMTver, _libgmt, _libgdal, _libproj, _libnetcdf, _GMT_bindir
 
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
@@ -275,6 +282,9 @@ function __init__(test::Bool=false)
 	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 	gmtlib_setparameter(API, "COLOR_NAN", "255")				# Stop those uggly grays
+	ENV["GMT_LIBGDAL"] = libgdal				# Add these so they can be used by the respective wrappers
+	ENV["GMT_LIBPROJ"] = libproj
+	ENV["GMT_LIBNETCDF"] = libnetcdf
 end
 
 include("precompile_GMT_i.jl")

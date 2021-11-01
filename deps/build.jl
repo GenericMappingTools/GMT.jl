@@ -35,11 +35,19 @@ if (doit != "")
 			)
 		)
 
+	@static Sys.iswindows() ? libproj = "netcdf4_w64.dll" : (
+		Sys.isapple() ? (libproj = joinpath(Conda.ROOTENV, "lib", string(split(readlines(pipeline(`otool -L $(libnetcdf)`, `grep libnetcdf`))[1])[1])[8:end]) )  : (
+				Sys.isunix() ? (libproj = string(split(readlines(pipeline(`ldd $(libgdal)`, `grep libnetcdf`))[1])[3])) :
+				@warn("Don't know how to use NETCDF in this OS.")
+			)
+		)
+
 	# Save shared names in file so that GMT.jl can read them at pre-compile time
 	open(depfile, "w") do f
 		println(f, "_GMT_bindir = \"", escape_string(GMT_bindir), '"')
 		println(f, "_libgmt  = \"", escape_string(libgmt), '"')
 		println(f, "_libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
 		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
+		println(f, "_libnetcdf = \"", escape_string(joinpath(GMT_bindir, libnetcdf)), '"')
 	end
 end
