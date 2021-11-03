@@ -4,7 +4,7 @@
     lat_cpt = makecpt(color=&quot;white,blue&quot;, range=(0,1), continuous=true, no_bg=true)
     lon_cpt = makecpt(cmap=:rainbow, range=(-180,180))
     grdimage(Glat, cmap=lat_cpt, frame=:none, interp=:l, proj=:sinu,
-             figsize=16, y_off=18)
+             figsize=16, yshift=18)
     coast!(area=5000, clip=:land)
     grdimage!(Glon, cmap=lon_cpt, interp=:l)
     coast!(clip=:end)
@@ -18,7 +18,7 @@
 
     # Then show example of color patterns and placing a PostScript image
     coast!(area=5000, land=(pattern=86, bg=:yellow, fg=:red, dpi=100),
-           water=(pattern=&quot;@circuit.png&quot;, dpi=100), frame=:none, y_off=-8)
+           water=(pattern=&quot;@circuit.png&quot;, dpi=100), frame=:none, yshift=-8)
     text!(text_record([0 30], &quot;SILLY USES OF&quot;),
           font=(32,&quot;Helvetica-Bold&quot;,&quot;lightgreen=thinner&quot;))
     text!(text_record([0 -30], &quot;COLOR PATTERNS&quot;),
@@ -26,7 +26,7 @@
     psimage!(&quot;@GMT_covertext.eps&quot;, D=&quot;jCM+w3i&quot;)
 
     # Finally repeat 1st plot but exchange the patterns
-    grdimage!(Glon, cmap=lon_cpt, frame=:none, interp=:l, y_off=-8)
+    grdimage!(Glon, cmap=lon_cpt, frame=:none, interp=:l, yshift=-8)
     coast!(area=5000, clip=:land)
     grdimage!(Glat, cmap=lat_cpt, interp=:l)
     coast!(clip=:end)
@@ -36,4 +36,4 @@
     text!(text_record([0 -10], &quot;GMT CONFERENCE&quot;),
           font=(32,&quot;Helvetica-Bold&quot;,&quot;red=thinner&quot;))
     text!(text_record([0 -30], &quot;Honolulu, Hawaii, April 1, 2018&quot;),
-          font=(18,&quot;Helvetica-Bold&quot;,&quot;green=thinner&quot;), show=true)</code></pre><p>See also <a href="https://www.generic-mapping-tools.org/gmt/latest/gallery/ex17.html#example-17"><code>GMT ex17</code></a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ex18/">« Volumes and Spatial Selections</a><a class="docs-footer-nextpage" href="../ex20/">Custom plot symbols »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Wednesday 3 November 2021 00:58">Wednesday 3 November 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+          font=(18,&quot;Helvetica-Bold&quot;,&quot;green=thinner&quot;), show=true)</code></pre><p>See also <a href="https://www.generic-mapping-tools.org/gmt/latest/gallery/ex17.html#example-17"><code>GMT ex17</code></a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ex18/">« Volumes and Spatial Selections</a><a class="docs-footer-nextpage" href="../ex20/">Custom plot symbols »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Wednesday 3 November 2021 18:46">Wednesday 3 November 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

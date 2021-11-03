@@ -23,7 +23,7 @@
 	R = R[1].text[1]
 	plot(sat_pg, region=R, U=&quot;L/-1.75i/-1.25i/\&quot;Example 3a in Cookbook\&quot;&quot;, frame=(axes=:WeSn,
 		xaxis=(annot=500, ticks=100, label=&quot;Distance along great circle&quot;), yaxis=(annot=100, ticks=25,
-        label=&quot;Gravity anomaly (mGal)&quot;)), x_off=5, y_off=3.75, W=:thick, figsize=(20,12.7))
+        label=&quot;Gravity anomaly (mGal)&quot;)), xshift=5, yshift=3.75, W=:thick, figsize=(20,12.7))
 	plot!(ship_pg, S=&quot;p0.03i&quot;, savefig=&quot;example_03a&quot;, show=1)
 
 	# From this plot we see that the ship data have some &quot;spikes&quot; and also greatly
@@ -34,8 +34,8 @@
 	# we resample both data sets at intervals of 1 km.  First we find out how the data are
 	# typically spaced using $AWK to get the delta-p between points and view it with &quot;histogram&quot;.
 
-	histogram(diff(ship_pg, dims=1), W=0.1, G=:black, x_off=5, y_off=3.75, frame=0, title=&quot;Ship&quot;, U=&quot;L/-1.75i/-1.25i/\&quot;Example 3b in Cookbook\&quot;&quot;, figsize=7.5)
-	histogram!(diff(sat_pg, dims=1), W=0.1, G=:black, x_off=12.5, frame=0, title=&quot;Ship&quot;, figsize=7.5)
+	histogram(diff(ship_pg, dims=1), W=0.1, G=:black, xshift=5, yshift=3.75, frame=0, title=&quot;Ship&quot;, U=&quot;L/-1.75i/-1.25i/\&quot;Example 3b in Cookbook\&quot;&quot;, figsize=7.5)
+	histogram!(diff(sat_pg, dims=1), W=0.1, G=:black, xshift=12.5, frame=0, title=&quot;Ship&quot;, figsize=7.5)
 
 	# This experience shows that the satellite values are spaced fairly evenly, with
 	# delta-p between 3.222 and 3.418.  The ship values are spaced quite unevenly, with
@@ -66,7 +66,7 @@
 	# Now we plot them again to see if we have done the right thing:
 	plot(sat_pg, region=R, U=&quot;L/-1.75i/-1.25i/\&quot;Example 3c in Cookbook\&quot;&quot;, frame=(axes=:WeSn,
 		xaxis=(annot=500, ticks=100, label=&quot;Distance along great circle&quot;), yaxis=(annot=100, ticks=25,
-        label=&quot;Gravity anomaly (mGal)&quot;)), x_off=5, y_off=3.75, W=:thick, figsize=(20,12.7))
+        label=&quot;Gravity anomaly (mGal)&quot;)), xshift=5, yshift=3.75, W=:thick, figsize=(20,12.7))
 	plot!(samp_ship_pg, S=&quot;p0.03i&quot;, savefig=&quot;example_03c&quot;, show=1)
 
 	# Now to do the cross-spectra, assuming that the ship is the input and the sat is the output 
@@ -80,11 +80,11 @@
 	# plots. For that purpose we often use -Jx1i and specify positions in inches directly:
 
 	plot(spects[1].data[:,[1,16,17]], region=(1,1000,0,1), frame=(axes=WeSn, bg=(240,255,240), xaxis=(annot=1, ticks=3, p=[], label=&quot;Wavelength (km)&quot;), yaxis=(annot=0.25, ticks=0.05, label=&quot;Coherency@+2@+&quot;)), 
-		x_off=&quot;2.5i&quot;, y_off=&quot;1.5i&quot;, S=&quot;c0.07i&quot;, G=:purple, E=&quot;y/0.5p&quot;, figsize=(&quot;-4il&quot;, &quot;3.75i&quot;))
+		xshift=&quot;2.5i&quot;, yshift=&quot;1.5i&quot;, S=&quot;c0.07i&quot;, G=:purple, E=&quot;y/0.5p&quot;, figsize=(&quot;-4il&quot;, &quot;3.75i&quot;))
 	
 	text!(text_record(&quot;Coherency@+2@+&quot;), F=&quot;+cTR+f18p,Helvetica-Bold&quot;, D=&quot;j0.1i&quot;)
 
-	plot!(spects[1].data[:,1:3], region=(1,1000,0.1,10000), frame=(axes=WeSn, title=&quot;Ship and Satellite Gravity&quot;, bg=(240,255,240), xaxis=(annot=1, ticks=3, p=[]), yaxis=(annot=0.25, ticks=0.05, label=&quot;Power (mGal@+2@+km)&quot;)), G=:red, S=&quot;T0.07i&quot;, y_off=&quot;4.2i&quot;, E=&quot;y/0.5p&quot;, figsize=(&quot;-4il&quot;,&quot;3.75il&quot;))
+	plot!(spects[1].data[:,1:3], region=(1,1000,0.1,10000), frame=(axes=WeSn, title=&quot;Ship and Satellite Gravity&quot;, bg=(240,255,240), xaxis=(annot=1, ticks=3, p=[]), yaxis=(annot=0.25, ticks=0.05, label=&quot;Power (mGal@+2@+km)&quot;)), G=:red, S=&quot;T0.07i&quot;, yshift=&quot;4.2i&quot;, E=&quot;y/0.5p&quot;, figsize=(&quot;-4il&quot;,&quot;3.75il&quot;))
 
 	plot!(spects[1].data[:,[1,4,5]], G=:blue, S=&quot;c0.07i&quot;, E=&quot;y/0.5p&quot;)
 	text!(text_record(&quot;Input Power&quot;), region=(0,4,0,3.75), F=&quot;+cTR+f18p,Helvetica-Bold&quot;, D=&quot;j0.1i&quot;, scale=&quot;1i&quot;)
@@ -101,7 +101,7 @@
 	samp_ship_xw = trend1d(samp_ship_pg, F=:xw, N=&quot;p2+r&quot;)
 	plot(samp_ship_pg, region=R, U=&quot;L/-1.75i/-1.25i/\&quot;Example 3c in Cookbook\&quot;&quot;, frame=(axes=:WeSn,
 		xaxis=(annot=500, ticks=100, label=&quot;Distance along great circle&quot;), yaxis=(annot=100, ticks=25,
-        label=&quot;Gravity anomaly (mGal)&quot;)), x_off=5, y_off=3.75, S=&quot;p0.03i&quot;, figsize=(20.3,10.2))
+        label=&quot;Gravity anomaly (mGal)&quot;)), xshift=5, yshift=3.75, S=&quot;p0.03i&quot;, figsize=(20.3,10.2))
 
 	R = gmtinfo(samp_ship_xw, I=(100,1.1))
-	plot!(samp_ship_xw, region=R[1].text[1], y_off=&quot;4.25i&quot;, frame=(axes=:Wesn, xaxis=(ticks=100,), yaxis=(annot=0.5, ticks=0.1, label=:Weight)), S=&quot;p0.03i&quot;, figsize=(&quot;8i&quot;,&quot;4.25i&quot;), savefig=&quot;example_03d&quot;, show=1)</code></pre><p>See also <a href="https://www.generic-mapping-tools.org/gmt/latest/gallery/ex03.html#example-03"><code>GMT ex03</code></a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ex02/">« Image presentations</a><a class="docs-footer-nextpage" href="../ex04/">A 3-D perspective mesh plot »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Wednesday 3 November 2021 00:58">Wednesday 3 November 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+	plot!(samp_ship_xw, region=R[1].text[1], yshift=&quot;4.25i&quot;, frame=(axes=:Wesn, xaxis=(ticks=100,), yaxis=(annot=0.5, ticks=0.1, label=:Weight)), S=&quot;p0.03i&quot;, figsize=(&quot;8i&quot;,&quot;4.25i&quot;), savefig=&quot;example_03d&quot;, show=1)</code></pre><p>See also <a href="https://www.generic-mapping-tools.org/gmt/latest/gallery/ex03.html#example-03"><code>GMT ex03</code></a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ex02/">« Image presentations</a><a class="docs-footer-nextpage" href="../ex04/">A 3-D perspective mesh plot »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Wednesday 3 November 2021 18:46">Wednesday 3 November 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

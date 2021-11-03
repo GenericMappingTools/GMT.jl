@@ -9,20 +9,20 @@
 
     ship_10m = blockmedian(ship_d, region=R, inc=&quot;10m&quot;)
     Gship = surface(ship_10m, region=R, inc=&quot;10m&quot;)
-    mask!(ship_d, region=R, inc=&quot;10m&quot;, fill=:lightgray, tiles=true, x_off=9.1)
+    mask!(ship_d, region=R, inc=&quot;10m&quot;, fill=:lightgray, tiles=true, xshift=9.1)
     grdcontour!(Gship, cont=250, annot=1000, labels=(dist=5,),
                 range=(-8000,0), frame=:same)
 
-    mask!(ship_10m, region=R, inc=&quot;10m&quot;, x_off=-9.1, y_off=9.5, frame=:same)
+    mask!(ship_10m, region=R, inc=&quot;10m&quot;, xshift=-9.1, yshift=9.5, frame=:same)
     grdcontour!(Gship, cont=250, annot=1000, labels=(dist=5,), range=(-8000,0))
     mask!(end_clip_path=true)   
 
     Gship_clipped = grdclip(Gship, above=&quot;-1/NaN&quot;)
     grdcontour!(Gship_clipped, cont=250, annot=1000, labels=(dist=5,),
-                range=(-8000,0), x_off=9.1)
+                range=(-8000,0), xshift=9.1)
     coast!(land=:gray, shore=:thinnest, frame=:same)
     info = grdinfo(Gship, C=&quot;n&quot;, minmax_pos=true)
     plot!(info, marker=:star, ms=0.4, i=&quot;10,11&quot;, lw=:thick)
     text!(text_record([-0.3 3.6], &quot;Gridding with missing data&quot;), region=(0,3,0,4),
           font=(24,&quot;Helvetica-Bold&quot;), justify=:CB, no_clip=true, figscale=&quot;1i&quot;,
-          proj=:linear, show=1)</code></pre><p>See also <a href="https://www.generic-mapping-tools.org/gmt/latest/gallery/ex15.html#example-15"><code>GMT ex15</code></a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ex14/">« Gridding of data and trend surfaces</a><a class="docs-footer-nextpage" href="../ex16/">Gridding of data, continued »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Wednesday 3 November 2021 00:58">Wednesday 3 November 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+          proj=:linear, show=1)</code></pre><p>See also <a href="https://www.generic-mapping-tools.org/gmt/latest/gallery/ex15.html#example-15"><code>GMT ex15</code></a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ex14/">« Gridding of data and trend surfaces</a><a class="docs-footer-nextpage" href="../ex16/">Gridding of data, continued »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Wednesday 3 November 2021 18:46">Wednesday 3 November 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
