@@ -16,7 +16,7 @@ t = [-1.0 0 0 3.33
       0.25 0 0 0.833
       1.25 0 0 0.28];
 arrows!(t, arrow=(length="2p",start=true,stop=true,angle=60), lw=0.5,
-        fill=:black, noclip=true, y_off=-0.9)
+        fill=:black, noclip=true, yshift=-0.9)
 
 T = text_record([-0.5 0.05; 0.375 0.05; 1.29166666 0.05], ["annotation", "frame", "grid"]);
 text!(T, font=9, justify=:CB, show=true)

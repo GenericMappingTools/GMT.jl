@@ -71,11 +71,11 @@ Optional Arguments
 - **W** or **zscale** : -- *zscale=true*\
     Multiply all *z*-values in the CPT by the provided *scale*. By default the CPT is used as is.
 
-- **X** or **x\_off** or **x\_offset** : -- *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [x_off](@ref)
+- **X** or *xshift* or *x_offset* : *xshift=[] **|** *xshift=x-shift* **|** *xshift=(shift=x-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [xshift](@ref)
 
-- **Y** or **y\_off** or **y\_offset** : -- *y\_off=[]* **|** *y\_off=y-shift* **|** *y\_off=(shift=y-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [y_off](@ref)
+- **Y** or *yshift* or *y_offset* : *yshift=[] **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [yshift](@ref)
 
 - **Z** or **zfile** : *zfile="file"*\
     File with colorbar-width per color entry. By default, width of entry is scaled to color range, i.e., z = 0-100 gives twice the width as z = 100-150 (Also see **equal**).

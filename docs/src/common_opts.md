@@ -1,13 +1,13 @@
 # frame
 
-- *B* **|** *frame* **|** *axes* **|** *xaxis* **|** *xaxis2* **|** *yaxis* **|** ...
+- **B | frame | axes | xaxis | xaxis2 | yaxis |** ...
 
 Set map Axes parameters. They are specified by a keyword and a named tuple (but see [1])
 
     frame=(axes=..., corners=..., xlabel=..., ylabel=..., annot=..., etc)
 
-or separated on a per axes basis by using specific *xaxis*, *yaxis* and *zaxis* that share the same syntax
-as the generic *frame* option. The *xaxis2* and *yaxis2* apply when dealing with secondary axes.
+or separated on a per axes basis by using specific **xaxis**, **yaxis** and **zaxis** that share the same syntax
+as the generic **frame** option. The **xaxis2** and **yaxis2** apply when dealing with secondary axes.
 
 Before the rest, note that several modules have axes default settings (`scatter`, `bar`, etc...) but if
 no axes is desired, just use *axes=:none*. Also useful is the *axes=:same* to repeat the previously set
@@ -49,11 +49,11 @@ the above defaults.
 GMT uses the notion of *primary* (the default) and *secondary* axes. To set an axes as secondary, use
 *secondary=true* (mostly used for time axes annotations).
 
-The *xaxis* *yaxis* and *zaxis* specify which axis you are providing information for. The syntax is the same
+The **xaxis** **yaxis** and **zaxis** specify which axis you are providing information for. The syntax is the same
 as for the *axes* keyword but allows fine tuning of different options for the 4 (or 5) axes.
 
-To add a label, to an axis use *label="Label text"* if using the *xaxis* etc form, or use the *xlabel*, *ylabel*
-and *zlabel* keywords in the common *axes* tuple of options.
+To add a label, to an axis use *label="Label text"* if using the **xaxis** etc form, or use the **xlabel**, **ylabel**
+and **zlabel** keywords in the common **axes** tuple of options.
 
 Use *Yhlabel=true* to force a horizontal label for *y*-axes (useful for very short labels).
 
@@ -274,7 +274,7 @@ basemap(region="-30/30/-20/20", figsize=(12,8),
 
 # limits
 
-- *R* **|** *region* **|** *limits* **|** *xlimits*,*ylimits*
+- **R | region | limits | xlimits,ylimits**
 
    *xmin*, *xmax*, *ymin*, and *ymax* specify the region of interest (aka, BoundingBox). For geographic
    regions, these limits correspond to *west*, *east*, *south*, and *north* and you may specify them in
@@ -308,8 +308,8 @@ basemap(region="-30/30/-20/20", figsize=(12,8),
       convenient when you want to specify a region directly in the projected units (e.g., UTM meters). For
       Cartesian data in radians you can also use [+|-][s]pi[f], for optional integer scales *s* and fractions *f*.
 
-   The *xlimts*, *ylimits* is used to break the specification into two pairs but it won't support all the
-   options of the *limits* functionality.
+   The **xlimts**, **ylimits** is used to break the specification into two pairs but it won't support all the
+   options of the **limits** functionality.
 
    [`-R GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#r-full)
 
@@ -317,10 +317,10 @@ basemap(region="-30/30/-20/20", figsize=(12,8),
 
 # proj
 
-- *J* **|** *proj* : *projection* : *proj=<parameters>*
+- **J | proj | projection** : *proj=<parameters>*
 
 Select map projection. The following table describes the projections available as well as extra parameters
-needed to set a specific projection. If the *proj* argument is a string then it is assumed that it contains
+needed to set a specific projection. If the **proj** argument is a string then it is assumed that it contains
 a full GMT **-J** style specification. Please refer to the GMT manual to learn how that works.
 [`-J GMT doc`](https://www.generic-mapping-tools.org/gmt/latest/gmt.html#j-full)
 In the table, the *center* column indicates if a projection needs to set a projection center or if that is optional
@@ -401,9 +401,9 @@ See [GMT Map Projections](@ref) for a list of projection examples
 
 # timestamp
 
-- *U* **|** *timestamp* **|** *time_stamp* : *timestamp=(just="code", pos=(dx,dy), label="label", com=true)*
+- **U | timestamp | time_stamp** : *timestamp=(just="code", pos=(dx,dy), label="label", com=true)*
 
-   Draw Unix System time stamp on plot. By adding [*just*\ ]\ */dx/dy/*, the
+   Draw Unix System time stamp on plot. By adding [*just* ]*/dx/dy/*, the
    user may specify the justification of the stamp and where the stamp
    should fall on the page relative to lower left corner of the plot.
    For example, BL/0/0 will align the lower left corner of the time
@@ -420,7 +420,7 @@ See [GMT Map Projections](@ref) for a list of projection examples
 
 # verbose
 
-- *V* **|** *verbose* : *verbose=true* **|** *verbose=level*
+- **V | verbose** : *verbose=true* **|** *verbose=level*
 
    Select verbose mode, which will send progress reports to *stderr*.
    Choose among 6 levels of verbosity; each level adds more messages:
@@ -433,29 +433,29 @@ See [GMT Map Projections](@ref) for a list of projection examples
 
 --------------------------
 
-# x_off
+# xshift
 
-- *X* **|** *x_off*  **|** *xoff*  **|** *x_offset* **|** *xshift* : *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*
+- **X | x_offset |** **xshift** : *xshift=[]* **|** *xshift=x-shift* **|** *xshift=(shift=x-shift, mov="a|c|f|r")*
 
-# y_off
+# yshift
 
-- *Y* **|** *y_off* y**|** *xoff*  **|** *y_offset* **|** *yshift* : *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*
+- **Y | y_offset | yshift** : *yshift=[]* **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*
 
    Shift plot origin relative to the current origin by (*x-shift*, *y-shift*) and optionally append the
    length unit (**c**, **i**, or **p**). This second case (with units) implies that *x-shift* must be a
-   string. To make non-default sifts, use the form *x_off=(shift=x-shift, mov="a|c|f|r")* where **a**
+   string. To make non-default sifts, use the form *xshift=(shift=x-shift, mov="a|c|f|r")* where **a**
    shifts the origin back to the original position after plotting; **c** centers the plot on the center of
    the paper (optionally add shift); **f** shifts the origin relative to the fixed lower left corner of the
    page, and **r** [Default] to move the origin relative to its current location. For overlays the default
-   (*x-shift*, *y-shift*) is (r0), otherwise it is (r1i). When *x_off* or *y_off* are used without any
+   (*x-shift*, *y-shift*) is (r0), otherwise it is (r1i). When **xshift** or **yshift** are used without any
    further arguments, the values from the last use of that option in a previous GMT command will be used.
-   Note that *x_off* and *y_off* can also access the previous plot dimensions *w* and *h* and construct
+   Note that **xshift** and **yshift** can also access the previous plot dimensions *w* and *h* and construct
    offsets that involves them. For instance, to move the origin up 2 cm beyond the height of the previous
-   plot, use *y_off="h+2c"*. To move the origin half the width to the right, use *x_off="w/2"*.
+   plot, use *yshift="h+2c"*. To move the origin half the width to the right, use *xshift="w/2"*.
 
 # perspective
 
-- **p** **|** **view** **|** **perspective** : *view=(azim, elev)*\
+- **p | view | perspective** : *view=(azim, elev)*\
    Selects perspective view and sets the azimuth and elevation of the viewpoint (180,90). When **view**
    is used in consort with **Jz** or **JZ**, a third value can be appended which indicates at which
    z-level all 2D material, like the plot frame, is plotted (in perspective). [Default is at the bottom
@@ -465,12 +465,12 @@ See [GMT Map Projections](@ref) for a list of projection examples
 
 # Spherical distance
 
-- **j | spheric_dist** : -- *spheric_dist=:e|:f|:g*\
-    Determine how spherical distances are calculated in modules that support this. By default (**spheric_dist=:g**) we perform great circle distance calculations and parameters such as distance increments or radii will be compared against calculated great circle distances. To simplify and speed up calculations you can select Flat Earth mode (**spheric_dist=:f**) which gives an approximate and fast result. Alternatively, you can select ellipsoidal (**spheric_dist=:e**) or geodesic mode for the highest precision (and slowest calculation time). All spherical distance calculations depends on the current ellipsoid (`PROJ_ELLIPSOID`), the definition of the mean radius (`PROJ_MEAN_RADIUS`), and the specification of latitude type (`PROJ_AUX_LATITUDE`). Geodesic distance calculations is also controlled by method (`PROJ_GEODESIC`).
+- **j | spheric | spheric_dist** : -- *spheric=:e|:f|:g*\
+    Determine how spherical distances are calculated in modules that support this. By default (**spheric=:g**) we perform great circle distance calculations and parameters such as distance increments or radii will be compared against calculated great circle distances. To simplify and speed up calculations you can select Flat Earth mode (**spheric=:f**) which gives an approximate and fast result. Alternatively, you can select ellipsoidal (**spheric=:e**) or geodesic mode for the highest precision (and slowest calculation time). All spherical distance calculations depends on the current ellipsoid (`PROJ_ELLIPSOID`), the definition of the mean radius (`PROJ_MEAN_RADIUS`), and the specification of latitude type (`PROJ_AUX_LATITUDE`). Geodesic distance calculations is also controlled by method (`PROJ_GEODESIC`).
 
 # interp
 
-- **n** **|** *interp* **|** *interpol* : *interp=(B_spline=true, bicubic=true, bilinear=true, near_neighbor=true, aliasing=true, antialiasing=true, bc=?, clipz=true, threshold=?)*\
+- **n | interp | interpol** : *interp=(B_spline=true, bicubic=true, bilinear=true, near_neighbor=true, aliasing=true, antialiasing=true, bc=?, clipz=true, threshold=?)*\
 
    Select grid interpolation mode by adding *B-spline* smoothing, *bicubic* interpolation,
    *bilinear* interpolation, or *near-neighbor* (for example to plot categorical data).

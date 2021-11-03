@@ -56,7 +56,7 @@ Optional Arguments
    Set map boundary frame and axes attributes. More at [frame](@ref)
 
 - **C** or **clearance** : -- *clearance=(left=val, right=val, bott=val, bottom=val, top=val))*\
-    Reserve a space of dimension *val* between the margin and the subplot on the specified side, using *side* values from **left=val**, **right=val**, **bottom=val**, or **top=val**. No *side* means all sides. Can specify more than one side. Such space will be left untouched by the main map plotting but can be accessed by modules that plot scales, bars, text, etc. Settings specified under **begin** directive apply to all subplots, while settings under **set** only apply to the selected (active) subplot.  **Note**: Common options **x_off** and **y_off** are not available during subplots; use **clearance** instead.
+    Reserve a space of dimension *val* between the margin and the subplot on the specified side, using *side* values from **left=val**, **right=val**, **bottom=val**, or **top=val**. No *side* means all sides. Can specify more than one side. Such space will be left untouched by the main map plotting but can be accessed by modules that plot scales, bars, text, etc. Settings specified under **begin** directive apply to all subplots, while settings under **set** only apply to the selected (active) subplot.  **Note**: Common options **xshift** and **yshift** are not available during subplots; use **clearance** instead.
 
 - **J** or **proj** : *proj=<parameters>*\
    Select map projection. More at [proj](@ref)
@@ -125,7 +125,7 @@ to take care of plotting the base frame. The particulars of this frame may have 
 specified by the **row|col_axes** option. In either case, should you need to set or override
 frame and axes parameters then you must specify these **axes** options with this first plot
 command.\
-(2) The subplot machinery automatically uses the **x_off** and **y_off** options under
+(2) The subplot machinery automatically uses the **xshift** and **yshift** options under
 the hood so these options are not available while a subplot is active.
 
 Synopsis (end mode)
@@ -139,11 +139,11 @@ reference to the complete figure dimensions. We also reset the current plot loca
 - **V** or *verbose* : *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)
 
-- **X** or *x_off* or *x_offset* : *x_off=[] **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [x_off](@ref)
+- **X** or *xshift* or *x_offset* : *xshift=[] **|** *xshift=x-shift* **|** *xshift=(shift=x-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [xshift](@ref)
 
-- **Y** or *y_off* or *y_offset* : *y_off=[] **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [y_off](@ref)
+- **Y** or *yshift* or *y_offset* : *yshift=[] **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [yshift](@ref)
 
 Examples
 --------
