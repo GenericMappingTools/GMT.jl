@@ -112,11 +112,11 @@ Optional Arguments
 - **W**  or *shore* : -- *shore=pen* **|** *shore=(level, pen)*\
    Draw shorelines [the Default]. Append pen attributes (see [Pen attributes](@ref)) [Defaults: width = default, color = black,style = solid] which apply to all four levels. To set the pen for each level differently, use the form **shore=(level, pen)**, where **level** is 1-4 and represent coastline, lakeshore, island-in-lake shore, and lake-in-island-in-lake shore. To repeat the **shore** option, use a tuple of tuples. When specific level pens are set, those not listed will not be drawn [Default draws all levels; but see **area**].
 
-- **X** or *x\_off* or *x\_offset* : -- *x\_off=[]* **|** *x\_off=x-shift* **|** *x\_off=(shift=x-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [x_off](@ref)
+- **X** or *xshift* or *x_offset* : *xshift=[] **|** *xshift=x-shift* **|** *xshift=(shift=x-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [xshift](@ref)
 
-- **Y** or *y\_off* or *y\_offset* : -- *y\_off=[]* **|** *y\_off=y-shift* **|** *y\_off=(shift=y-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [y_off](@ref)
+- **Y** or *yshift* or *y_offset* : *yshift=[] **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [yshift](@ref)
 
 - **p** or *view* or *perspective* : -- *view=(azim, elev)*\
    Selects perspective view and sets the azimuth and elevation of the viewpoint. More at [perspective](@ref)

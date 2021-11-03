@@ -16,7 +16,7 @@ arrows!([5 0 45 4], pen=(1,:blue), fill=:red,
 # Now the GMT5 type arrows
 arrows!([1 0 45 4], frame=(annot=0, grid=1, title="GMT5 Vectors"), lw=2, fill=:red,
         arrow=(length="18p", start=true, stop=true, pen=(1,:blue),
-               angle=45, justify=:center, shape=0.5), y_off=7)
+               angle=45, justify=:center, shape=0.5), yshift=7)
 arrows!([3 0 45 4], lw=2, fill=:red,
         arrow=(length="18p", stop=true, pen="-", angle=45, justify=:center, shape=0.5))
 arrows!([5 0 45 4], lw=2, fill=:red,

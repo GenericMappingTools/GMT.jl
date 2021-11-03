@@ -108,11 +108,11 @@ Optional Arguments
 - **W** or **pen** : -- *pen=pen*\
    Draw bar outline (or stair-case curve) using the specified pen thickness. [Default is no outline]. . See [Pen attributes](@ref)
 
-- **X** or **x\_off** or **x\_offset** : -- *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [x_off](@ref)
+- **X** or *xshift* or *x_offset* : *xshift=[] **|** *xshift=x-shift* **|** *xshift=(shift=x-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [xshift](@ref)
 
-- **Y** or **y\_off** or **y\_offset** : -- *y\_off=[]* **|** *y\_off=y-shift* **|** *y\_off=(shift=y-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [y_off](@ref)
+- **Y** or *yshift* or *y_offset* : *yshift=[] **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [yshift](@ref)
 
 - **Z** or **kind** : -- *kind=type* **|** *kind=(counts=, | freq=, | log_count=, | log_freq=, | log10_count=, | log10_freq=, weights=)*\
    Choose between 6 types of histograms:

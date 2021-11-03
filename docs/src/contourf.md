@@ -111,11 +111,11 @@ Optional Arguments
    the pen setting. This option may be repeated, for example to separate contour and annotated contours settings.
    For that the syntax changes to use a Tuple of NamedTuples, *e.g.*  ``pen=((annot=true, contour=true, pen=pen), (annot=true, contour=true, pen=pen))``. If the modifier ``pen=(cline=true,)`` is used then the color of the contour lines are taken from the CPT (see **cont**). If instead ``pen=(ctext=true,)`` is appended then the color from the cpt file is applied to the contour annotations. Select ``pen=(colored=true,)`` for both effects.
 
-- **X** or **x\_off** or **x\_offset** : -- *x\_off=[] **|** *x\_off=x-shift* **|** *x\_off=(shift=x-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [x_off](@ref)
+- **X** or *xshift* or *x_offset* : *xshift=[] **|** *xshift=x-shift* **|** *xshift=(shift=x-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [xshift](@ref)
 
-- **Y** or **y\_off** or **y\_offset** : -- *y\_off=[] **|** *y\_off=y-shift* **|** *y\_off=(shift=y-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [y_off](@ref)
+- **Y** or *yshift* or *y_offset* : *yshift=[] **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [yshift](@ref)
 
 - **p** or **view** or **perspective** : -- *view=(azim, elev)*\
    Selects perspective view and sets the azimuth and elevation of the viewpoint. More at [perspective](@ref)

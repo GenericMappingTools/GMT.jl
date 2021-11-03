@@ -81,11 +81,11 @@ Optional Arguments
 - **W** or **pen** : -- *pen=pen*\
     Sets the pen used to draw a rectangle around the text string (see **clearance**) [Default is width = default, color = black, style = solid].
 
-- **X** or **x_off** or **x_offset** : *x_off=[]* **|** *x_off=x-shift* **|** *x_off=(shift=x-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [x_off](@ref)
+- **X** or *xshift* or *x_offset* : *xshift=[] **|** *xshift=x-shift* **|** *xshift=(shift=x-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [xshift](@ref)
 
-- **Y** or **y_off** or **y_offset** : *y_off=[]* **|** *y_off=y-shift* **|** *y_off=(shift=y-shift, mov="a|c|f|r")*\
-   Shift plot origin. More at [y_off](@ref)
+- **Y** or *yshift* or *y_offset* : *yshift=[] **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*\
+   Shift plot origin. More at [yshift](@ref)
 
 - **Z** or **threeD** : -- *threeD=true*\
     For 3-D projections: expect each item to have its own level given in the 3rd column, and **noclip** is implicitly set. (Not implemented for paragraph mode). 
