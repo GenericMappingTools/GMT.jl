@@ -97,7 +97,9 @@
 	l1 = gmt("project -C22/49 -E-60/-20 -G20 -Q");
 	l2 = gmt("project -C0/-60 -E-60/-30 -G20 -Q");
 	#int = gmt("gmtspatial -Ie -Fl", l1, l2);       # Error returned from GMT API: GMT_ONLY_ONE_ALLOWED (59)
-	int = gmtspatial((l1, l2), I=:e, F="l");
+	if (GMTver > v"6.2")
+		int = gmtspatial((l1, l2), I=:e, F="l");
+	end
 	d = [-300 -3500; -200 -800; 400 -780; 500 -3400; -300 -3500];
 	gmtspatial(d, C=true, R="0/100/-3100/-3000");
 

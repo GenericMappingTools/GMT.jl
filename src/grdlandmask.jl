@@ -1,5 +1,5 @@
 """
-	grdlandmask(cmd0::String="", arg1=nothing, kwargs...)
+	grdlandmask([monolithic::String="";] area=, resolution=, bordervalues=, save=, maskvalues=, registration=, verbose=, cores=)
 
 Create a grid file with set values for land and water.
 
@@ -18,9 +18,8 @@ Parameters
     ($(GMTdoc)grdlandmask.html#i)
 - **A** | **area** :: [Type => Str | Number]
 
-    Features with an area smaller than min_area in km^2 or of
-    hierarchical level that is lower than min_level or higher than
-    max_level will not be plotted.
+    Features with an area smaller than min_area in km^2 or of hierarchical level that is lower than min_level
+    or higher than max_level will not be plotted.
     ($(GMTdoc)grdlandmask.html#a)
 - **D** | **res** | **resolution** :: [Type => Str]
 
@@ -36,7 +35,7 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdlandmask(....) form.
     ($(GMTdoc)grdlandmask.html#g)
-- **N** | **mask** | **maskvalues** :: [Type => Str | List]    ``Arg = wet/dry or ocean/land/lake/island/pond``
+- **N** | **maskvalues** | **mask** :: [Type => Str | List]    ``Arg = wet/dry or ocean/land/lake/island/pond``
 
     Sets the values that will be assigned to nodes. Values can be any number, including the textstring NaN
     ($(GMTdoc)grdlandmask.html#n)

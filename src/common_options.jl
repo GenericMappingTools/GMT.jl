@@ -60,7 +60,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	# The RIr option is to assign also the -I and -r when R was given a GMTgrid|image value. This is a
 	# workaround for a GMT bug that ignores this behaviour when from externals.
-	
+
 	(show_kwargs[1]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
 
 	opt_R::String = ""
@@ -1133,9 +1133,20 @@ parse_swap_xy(d::Dict, cmd::String) = parse_helper(cmd, d, [:yx :swap_xy], " -:"
 # ---------------------------------------------------------------------------------------------------
 # Parse the global -? option. Return CMD same as input if no -? option in args
 parse_s(d::Dict, cmd::String) = parse_helper(cmd, d, [:s :skiprows :skip_NaN], " -s")
-parse_r(d::Dict, cmd::String) = parse_helper(cmd, d, [:r :reg :registration], " -r")
 parse_x(d::Dict, cmd::String) = parse_helper(cmd, d, [:x :cores :n_threads], " -x")
 parse_w(d::Dict, cmd::String) = parse_helper(cmd, d, [:w :wrap :cyclic], " -w")
+
+# ---------------------------------------------------------------------------------------------------
+function parse_r(d::Dict, cmd::String)
+	# Accept both numeric (0 or != 0) and string/symbol arguments
+	opt_val = ""
+	if ((val = find_in_dict(d, [:r :reg :registration])[1]) !== nothing)
+		(isa(val, String) || isa(val, Symbol)) && (opt_val = string(" -r",val)[1:4])
+		(isa(val, Integer)) && (opt_val = (val == 0) ? " -rg" : " -rp")
+		cmd *= opt_val
+	end
+	return cmd, opt_val
+end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_t(d::Dict, cmd::String)
