@@ -50,10 +50,17 @@ function grdmask(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdmask", cmd0, arg1)
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]	    	# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :a :e :f :g :j :n :yx :x :w])
 	cmd  = parse_these_opts(cmd, d, [[:A :steps :straight_lines], [:N :out_edge_in], [:S :search_radius]])
-	return common_grd(d, "grdmask " * cmd, arg1)		# Finish build cmd and run it
+    if (cmd0 != "")
+        try
+            arg1 = gmtread(cmd0)
+        catch err
+            println(err);   error("Failed to automatically read the input data. You must do it manually and pass it as numeric.")
+        end
+    end
+    common_grd(d, "grdmask " * cmd, arg1)           # Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
