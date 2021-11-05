@@ -182,6 +182,7 @@ function gmt(cmd::String, args...)
 	pad = 2
 	if (!isa(API, Ptr{Nothing}) || API == C_NULL)
 		API = GMT_Create_Session("GMT", pad, GMT_SESSION_BITFLAGS)
+		gmtlib_setparameter(API, "COLOR_NAN", "255")	# Stop those ugly grays
 		theme_modern()				# Set the MODERN theme
 	end
 
@@ -364,6 +365,7 @@ function gmt_restart(restart::Bool=true)
 	GMT_Destroy_Session(API);
 	if (restart)
 		API = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
+		gmtlib_setparameter(API, "COLOR_NAN", "255")	# Stop those ugly grays
 		theme_modern()				# Set the MODERN theme
 	else
 		API = C_NULL
