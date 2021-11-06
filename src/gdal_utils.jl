@@ -198,6 +198,9 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 		Gdal.resetreading!(layer)
 		proj = ((p = getproj(layer)) != C_NULL) ? toPROJ4(p) : ""
 		while ((feature = Gdal.nextfeature(layer)) !== nothing)
+			n, hdr = Gdal.nfield(feature), ""
+			#[hdr *= Gdal.getname(Gdal.getfielddefn(feature, i-1)) * "," for i = 1:n]	# Attrubute names
+			[hdr = string(hdr, Gdal.getfield(feature, i-1), ",") for i = 1:n]			# Attrubute values
 			for j = 0:Gdal.ngeom(feature)-1
 				geom = Gdal.getgeom(feature, j)
 				_D = gd2gmt(geom, proj)
@@ -207,6 +210,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 				for d in _D
 					D[ds] = d
 					D[ds].geom = gt
+					(hdr != "") && (D[ds].header = hdr)
 					ds += 1
 				end
 			end
