@@ -146,7 +146,7 @@ function plotyy(arg1, arg2; first=true, kw...)
 	(haskey(d, :xlabel)) ? (xlabel = string(d[:xlabel]);	delete!(d, :xlabel)) : xlabel = ""	# Only to used at the end
 	(haskey(d, :seclabel)) ? (seclabel = string(d[:seclabel]);	delete!(d, :seclabel)) : seclabel = ""
 	((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? (fmt = arg2str(val)) : fmt = FMT[1]
-	((val = find_in_dict(d, [:savefig :name])[1]) !== nothing) ? (savefig = arg2str(val)) : savefig = nothing
+	((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? (savefig = arg2str(val)) : savefig = nothing
 	Vd = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0
 
 	cmd, opt_B = parse_B(d, "", " -Baf -BW")
