@@ -86,7 +86,7 @@ mutable struct GMTcpt
 	model::String				# String with color model rgb, hsv, or cmyk [rgb]
 	comment::Array{String,1}	# Cell array with any comments
 end
-GMTcpt() = GMTcpt(Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), 0, 0.0, Array{Float64,2}(undef,0,0), Vector{String}(), Vector{String}(), string(), Vector{String}())
+GMTcpt() = GMTcpt(Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), 0, 0.0, Array{Float64,2}(undef,0,0), String[], String[], string(), String[])
 Base.size(C::GMTcpt) = size(C.range, 1)
 Base.isempty(C::GMTcpt) = (size(C) == 0)
 
@@ -96,12 +96,15 @@ mutable struct GMTps
 	mode::Int 					# 1 = Has header, 2 = Has trailer, 3 = Has both
 	comment::Array{String,1}	# Cell array with any comments
 end
-GMTps() = GMTps(string(), 0, 0, Vector{String}())
+GMTps() = GMTps(string(), 0, 0, String[])
 Base.size(P::GMTps) = P.length
 Base.isempty(P::GMTps) = (P.length == 0)
 
 mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 	data::Array{T,N}
+	ds_bbox::Vector{Float64}
+	bbox::Vector{Float64}
+	attrib::Dict{String, String}
 	text::Array{String,1}
 	header::String
 	comment::Array{String,1}
@@ -116,17 +119,17 @@ Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int,N}) where {T,N} = D.dat
 Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}}, ::Type{ElType}) where ElType
 	D = find4similar(bc.args)		# Scan the inputs for the GMTdataset:
-	GMTdataset(D.data, D.text, D.header, D.comment, D.proj4, D.wkt, D.geom)
+	GMTdataset(D.data, D.ds_bbox, D.bbox, D.attrib, D.text, D.header, D.comment, D.proj4, D.wkt, D.geom)
 end
 find4similar(D::GMTdataset, rest) = D
 
-GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, text, "", Vector{String}(), "", "", 0)
-GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, [text], "", Vector{String}(), "", "", 0)
-GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Vector{String}(), "", Vector{String}(), "", "", 0)
-GMTdataset(data::Array{Float32,2}, text::Vector{String}) = GMTdataset(data, text, "", Vector{String}(), "", "", 0)
-GMTdataset(data::Array{Float32,2}, text::String) = GMTdataset(data, [text], "", Vector{String}(), "", "", 0)
-GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Vector{String}(), "", Vector{String}(), "", "", 0)
-GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Vector{String}(), "", Vector{String}(), "", "", 0)
+GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), text, "", String[], "", "", 0)
+GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), [text], "", String[], "", "", 0)
+GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], "", String[], "", "", 0)
+GMTdataset(data::Array{Float32,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), text, "", String[], "", "", 0)
+GMTdataset(data::Array{Float32,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), [text], "", String[], "", "", 0)
+GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], "", String[], "", "", 0)
+GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], Dict{String, String}(), String[], "", String[], "", "", 0)
 
 struct WrapperPluto fname::String end
 
@@ -654,7 +657,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 
 	out = GMTcpt(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), zeros(2)*NaN, zeros(3,3), 8, 0.0,
-	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, Vector{String}())
+	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
 
 	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
 		gmt_lut = unsafe_load(C.data, j)
@@ -746,6 +749,8 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 				unsafe_copyto!(pointer(dest, DS.n_rows * (col - 1) + 1), unsafe_load(DS.data, col), DS.n_rows)
 			end
 			Darr[seg_out].data = dest
+			bb = extrema(dest, dims=1)						# A N Tuple.
+			Darr[seg_out].bbox = collect(Float64, Iterators.flatten(bb))
 
 			if (DS.text != C_NULL)
 				texts = unsafe_wrap(Array, DS.text, DS.n_rows)	# n_headers-element Array{Ptr{UInt8},1}
@@ -774,6 +779,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 			seg_out = seg_out + 1
 		end
 	end
+	set_dsBB!(Darr)				# Compute and set the global BoundingBox for this dataset
 
 	return Darr
 end
@@ -1243,6 +1249,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 	OGR_F = unsafe_load(in)
 	n_max = OGR_F.n_rows * OGR_F.n_cols * OGR_F.n_layers
 	n_total_segments = OGR_F.n_filled
+	ds_bbox = OGR_F.BoundingBox
 
 	if (!drop_islands)
 		# First count the number of islands. Need to know the size to put in the D pre-allocation
@@ -1268,15 +1275,19 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		if (OGR_F.np > 0)
 			hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,i))) for i = 1:OGR_F.att_number]) : ""
 			(hdr != "") && (hdr = string(rstrip(hdr, ',')))		# Strip last ','
+			attrib = Dict{String, String}()
+			if (OGR_F.att_number > 0)
+				[attrib[unsafe_string(unsafe_load(OGR_F.att_names,i))] = unsafe_string(unsafe_load(OGR_F.att_values,i)) for i = 1:OGR_F.att_number]
+			end
 			if (OGR_F.n_islands == 0)
 				geom = (OGR_F.type == "Polygon") ? wkbPolygon : ((OGR_F.type == "LineString") ? wkbLineString : wkbPoint)
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-				                   Vector{String}(), hdr, Vector{String}(), proj4, wkt, geom)
+				                  Float64[], Float64[], attrib, String[], hdr, String[], proj4, wkt, geom)
 			else
 				islands = reshape(unsafe_wrap(Array, OGR_F.islands, 2 * (OGR_F.n_islands+1)), OGR_F.n_islands+1, 2) 
 				np_main = islands[1,2]+1		# Number of points of outer ring
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main)],
-				                   Vector{String}(), hdr, Vector{String}(), proj4, wkt, wkbPolygon)
+				                  Float64[], Float64[], attrib, String[], hdr, String[], proj4, wkt, wkbPolygon)
 
 				if (!drop_islands)
 					for k = 2:size(islands,2)		# 2 because first row holds the outer ring indexes 
@@ -1284,13 +1295,16 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 						off = islands[k,1] * 8
 						len = islands[k,2] - islands[k,1] + 1
 						D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x+off, len) unsafe_wrap(Array, OGR_F.y+off, len)],
-						                   Vector{String}(), " -Ph", Vector{String}(), proj4, wkt, wkbPolygon)
+						                  Float64[], Float64[], attrib, String[], " -Ph", String[], proj4, wkt, wkbPolygon)
 					end
 				end
 			end
+			bb = extrema(D[n].data, dims=1)			# Compute the BoundingBox per segment (C version doesn't do it)
+			D[n].bbox = collect(Float64, Iterators.flatten(bb))
 			n = n + 1
 		end
 	end
+	D[1].ds_bbox = collect(ds_bbox)			# It always has 6 elements and last two maybe zero
 	(n_total_segments > (n-1)) && deleteat!(D, n:n_total_segments)
 	return D
 end
@@ -1428,6 +1442,9 @@ function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
 	end
 
 	println("First segment DATA")
+	(~isempty(D[1].attrib))  && println("Attributes: ", D[1].attrib)
+	(~isempty(D[1].ds_bbox)) && println("Global BoundingBox:    ", D[1].ds_bbox)
+	(~isempty(D[1].bbox))    && println("First seg BoundingBox: ", D[1].bbox)
 	display(D[1].data)
 	if (~isempty(D[1].text))
 		println("First segment TEXT")
@@ -1438,6 +1455,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function Base.:show(io::IO, D::GMTdataset)
 	(~isempty(D.comment)) && println("Comment:\t", D.comment)
+	(~isempty(D.attrib))  && println("Attributes:  ", D.attrib)
+	(~isempty(D.bbox))    && println("BoundingBox:  ", D.bbox)
 	(D.proj4  != "") && println("PROJ: ", D.proj4)
 	(D.wkt    != "") && println("WKT: ", D.wkt)
 	(D.header != "") && println("Header:\t", D.header)
