@@ -175,7 +175,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 		[mat[k,1] = Gdal.getx(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts]
 		[mat[k,2] = Gdal.gety(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts]
 		(n_dim == 3) && ([mat[k,2] = Gdal.getz(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts])
-		return [GMTdataset(mat, String[], "", String[], proj, "", gmtype)]
+		return [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], "", String[], proj, "", gmtype)]
 	end
 
 	n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
@@ -184,7 +184,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 	[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
 	[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
 	(n_dim == 3) && ([mat[k,3] = Gdal.getz(geom, k-1) for k = 1:n_pts])
-	[GMTdataset(mat, String[], "", String[], proj, "", gmtype)]
+	[GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], "", String[], proj, "", gmtype)]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -198,9 +198,10 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 		Gdal.resetreading!(layer)
 		proj = ((p = getproj(layer)) != C_NULL) ? toPROJ4(p) : ""
 		while ((feature = Gdal.nextfeature(layer)) !== nothing)
-			n, hdr = Gdal.nfield(feature), ""
-			#[hdr *= Gdal.getname(Gdal.getfielddefn(feature, i-1)) * "," for i = 1:n]	# Attrubute names
-			[hdr = string(hdr, Gdal.getfield(feature, i-1), ",") for i = 1:n]			# Attrubute values
+			n = Gdal.nfield(feature)
+			attrib = Dict{String, String}()
+			[attrib[Gdal.getname(Gdal.getfielddefn(feature, i))] = string(Gdal.getfield(feature, i)) for i = 0:n-1]
+
 			for j = 0:Gdal.ngeom(feature)-1
 				geom = Gdal.getgeom(feature, j)
 				_D = gd2gmt(geom, proj)
@@ -210,13 +211,16 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 				for d in _D
 					D[ds] = d
 					D[ds].geom = gt
-					(hdr != "") && (D[ds].header = hdr)
+					(!isempty(attrib)) && (D[ds].attrib = attrib)
+					bb = extrema(D[ds].data, dims=1)		# A N Tuple.
+					D[ds].bbox = collect(Float64, Iterators.flatten(bb))
 					ds += 1
 				end
 			end
 		end
 	end
 	(length(D) != ds-1) && (D = deleteat!(D,ds:length(D)))
+	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	return D
 end
 

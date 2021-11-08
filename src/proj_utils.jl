@@ -438,7 +438,7 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 			dest[np, 1:2] = (isgeog) ? d : lonlat2xy(d, proj_string)
 		end
 		(dataset) &&		# Return a GMTdataset
-			(dest = GMTdataset(dest, Vector{String}(), "", Vector{String}(), startswith(proj_string, "+proj") ? proj_string : "", "", wkbPolygon))
+			(dest = GMTdataset(dest, Float64[], Float64[], Dict{String, String}(), String[], "", String[], startswith(proj_string, "+proj") ? proj_string : "", "", wkbPolygon))
 		azi = nothing
 	elseif (isvector(azim) && isvector(dist))					# Multi-lines with variable length and/or number of points
 		n_lines = length(azim)							# Number of lines
@@ -461,7 +461,7 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 				dest[np, 1:2] = (isgeog) ? d : lonlat2xy(d, proj_string)
 				dest[np, 3] = azi		# Fck language that makes it a pain to try anything vectorized 
 			end
-			D[nl] = GMTdataset(dest, Vector{String}(), "", Vector{String}(), "", "", wkbLineString)
+			D[nl] = GMTdataset(dest, Float64[], Float64[], Dict{String, String}(), String[], "", String[], "", "", wkbLineString)
 			helper_gdirect_SRS(dest, proj_string, wkbLineString, D[nl])	# Just assign the SRS
 		end
 		return D, nothing		# Here both the point coordinates and the azim are in the GMTdataset
@@ -475,7 +475,7 @@ end
 function helper_gdirect_SRS(mat, proj_string::String, geom, D=GMTdataset())
 	# Convert the output of geod_direct into a GMTdataset and, if possible, assign it a SRS
 	# If a 'D' is sent in, we only (eventually) assign it an SRS
-	isempty(D) && (D = GMTdataset([mat[1] mat[2]], Vector{String}(), "", Vector{String}(), "", "", geom))
+	isempty(D) && (D = GMTdataset([mat[1] mat[2]], Float64[], Float64[], Dict{String, String}(), String[], "", String[], "", "", geom))
 	(startswith(proj_string, "+proj")) && (D.proj4 = proj_string)
 	D
 end
