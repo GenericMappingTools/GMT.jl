@@ -272,6 +272,17 @@ basemap(region="-30/30/-20/20", figsize=(12,8),
 
 --------------------------
 
+# spacing
+
+- **I** or **inc** or **increment** or **spacing** : -- *inc=x_inc* **|** *inc=(x_inc, y_inc)* **|** *inc="xinc[+e|n][/yinc[+e|n]]"*
+   - **Geographical (degrees) coordinates**:\
+       Optionally, append an increment unit. Choose among `m` to indicate arc minutes or `s`  to indicate arc seconds. If one of the units `e`, `f`, `k`, `M`, `n` or `u` is appended instead, the increment is assumed to be given in meter, foot, km, mile, nautical mile or US survey foot, respectively, and will be converted to the equivalent degrees longitude at the middle latitude of the region (the conversion depends on PROJ\_ELLIPSOID). If *y_inc* is given but set to 0 it will be reset equal to *x_inc*; otherwise it will be converted to degrees latitude.
+   - **All coordinates**:\
+       If `+e` is appended then the corresponding max *x* (east) or *y* (north) may be slightly adjusted to fit exactly the given increment [by default the increment may be adjusted slightly to fit the given domain]. Finally, instead of giving an increment you may specify the number of nodes desired by appending `+n` to the supplied integer argument; the increment is then recalculated from the number of nodes, the registration, and the domain. The resulting increment value depends on whether you have selected a gridline-registered or pixel-registered grid; see GMT File Formats for details.
+   Note: If `region=grdfile` or `region=GMTgrid` is used then the grid spacing and the registration have already been
+   initialized; use `spacing` and `registration` to override these values.
+
+
 # limits
 
 - **R | region | limits | xlimits,ylimits**
