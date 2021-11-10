@@ -66,17 +66,6 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	opt_R::String = ""
 	if ((val = find_in_dict(d, [:R :region :limits], del)[1]) !== nothing)
 		opt_R = build_opt_R(val)
-		if (RIr)
-			if (isa(val, GItype))
-				opt_I = parse_I(d, "", [:I :inc :increment :spacing], 'I')
-				(opt_I == "") && (cmd *= " -I" * arg2str(val.inc))
-				opt_r = parse_r(d, "")[2]
-				(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
-			else				# Here we must parse the -I and -r separately.
-				cmd = parse_I(d, cmd, [:I :inc :increment :spacing], 'I')
-				cmd = parse_r(d, cmd)[1]
-			end
-		end
 	elseif (IamModern[1])
 		return cmd, ""
 	end
@@ -99,7 +88,20 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 		end
 		if (R != "" && c == 4)  opt_R = R  end
 	end
-	if (O && opt_R == "")  opt_R = " -R"  end
+
+	if (RIr)
+		if (isa(val, GItype))
+			opt_I = parse_I(d, "", [:I :inc :increment :spacing], 'I')
+			(opt_I == "") && (cmd *= " -I" * arg2str(val.inc))
+			opt_r = parse_r(d, "")[2]
+			(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
+		else				# Here we must parse the -I and -r separately.
+			cmd = parse_I(d, cmd, [:I :inc :increment :spacing], 'I')
+			cmd = parse_r(d, cmd)[1]
+		end
+	end
+
+	(O && opt_R == "") && (opt_R = " -R")
 	if (opt_R != "")			# Save limits in numeric
 		try
 			limits = opt_R2num(opt_R)
@@ -3658,7 +3660,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function scan_opt(cmd::AbstractString, opt::String)::String
-	# Scan the CMD string for the OPT option. Note OPT mut be a 2 chars -X GMT option.
+	# Scan the CMD string for the OPT option. Note OPT must be a 2 chars -X GMT option.
 	out = ((ind = findfirst(opt, cmd)) !== nothing) ? strtok(cmd[ind[1]+2:end])[1] : ""
 	(out != "" && cmd[ind[1]+2] == ' ') && (out = "")	# Because seeking -R in a " -R -JX" would ret "-JX"
 	return out
