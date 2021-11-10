@@ -58,6 +58,9 @@ Dataset type
 
     type GMTdataset
         data::Array{Float64,2}     # Mx2 Matrix with segment data
+        ds_bbox::Vector{Float64}   # Global BoundingBox (for when there are many segments)
+        bbox::Vector{Float64}      # Segment BoundingBox
+        attrib::Dict{String, String} # Dictionary with attributes/values (optional)
         text::Array{Any,1}         # Array with text after data coordinates (mandatory only when plotting Text)
         header::String             # String with segment header (Optional but sometimes very useful)
         comment::Array{Any,1}      # Array with any dataset comments [empty after first segment]
