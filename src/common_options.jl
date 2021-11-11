@@ -2955,6 +2955,15 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 		end
 	elseif (haskey(d, :data))
 		arg = d[:data];		del_from_dict(d, [:data])
+	elseif (arg === nothing)	# OK, last chance of findig the data is in the x=..., y=... kwargs
+		if (haskey(d, :x) && haskey(d, :y))
+			arg = cat_2_arg2(d[:x], d[:y])
+			(haskey(d, :z)) && (arg = hcat(arg, d[:z][:]);	del_from_dict(d, [:z]))
+			del_from_dict(d, [[:x :x], [:y]])		# [:x :x] to satisfy signature ::Vector{Vector{Symbol}} != ::Array{Array{Symbol}}
+		elseif (haskey(d, :x))		# Only this guy. I main that histogram may use this
+			arg = d[:x];		del_from_dict(d, [:x])
+		end
+		(arg === nothing) && @warn("No data was passed into this module. I will hang shortly.")
 	end
 
 	# See if we have DateTime objects
