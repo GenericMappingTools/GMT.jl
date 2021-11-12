@@ -77,9 +77,9 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_used, arg1, arg2)
 	opt_Q = parse_Q_grdvec(d, [:Q :vec :vector :arrow])
 	!occursin(" -G", opt_Q) && (cmd = add_opt_fill(cmd, d, [:G :fill], 'G'))	# If fill not passed in arrow, try from regular option
-	(!occursin(" -W", opt_Q)) && (cmd *= add_opt_pen(d, [:W :pen], "W", true))	# TRUE to also seek (lw,lc,ls)
+	cmd *= add_opt_pen(d, [:W :pen], "W", true)									# TRUE to also seek (lw,lc,ls)
+	(!occursin(" -C", cmd) && !occursin(" -W", cmd) && !occursin(" -W", cmd)) && (cmd *= " -W0.5")	# If still nothing, set -W.
 	(opt_Q != "") && (cmd *= opt_Q)
-	(!occursin(" -W", cmd)) && (cmd *= " -W0.5")		# If still nothing, use a default -W. Must have one but this smels BUG
 
     return finish_PS_module(d, "grdvector " * cmd, "", K, O, true, arg1, arg2)
 end
@@ -93,12 +93,7 @@ function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol})
 		else                   cmd *= " -Q" * vector_attrib(val)
 		end
 		if ((ind = findfirst("+g", cmd)) !== nothing)   # -Q0.4+e+gred+n0.4+pcyan+h0
-			theFill = split(cmd[ind[1]+2:end], "+")[1]
-			cmd *= " -G" * theFill
-		end
-		if ((ind = findfirst("+p", cmd)) !== nothing)
-			thePen = split(cmd[ind[1]+2:end], "+")[1]
-			(thePen != "") && (cmd *= " -W" * thePen)	# For some bloody reason some combinations write ...+p+...
+			cmd *= " -G" * split(cmd[ind[1]+2:end], "+")[1]
 		end
 	end
 	return cmd
