@@ -98,8 +98,7 @@ function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol})
 		end
 		if ((ind = findfirst("+p", cmd)) !== nothing)
 			thePen = split(cmd[ind[1]+2:end], "+")[1]
-			(thePen == "") && (thePen = "0.5")			# For some bloody reason some combinations write ...+p+...
-			cmd *= " -W" * thePen
+			(thePen != "") && (cmd *= " -W" * thePen)	# For some bloody reason some combinations write ...+p+...
 		end
 	end
 	return cmd
