@@ -78,7 +78,7 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 	opt_Q = parse_Q_grdvec(d, [:Q :vec :vector :arrow])
 	!occursin(" -G", opt_Q) && (cmd = add_opt_fill(cmd, d, [:G :fill], 'G'))	# If fill not passed in arrow, try from regular option
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)									# TRUE to also seek (lw,lc,ls)
-	(!occursin(" -C", cmd) && !occursin(" -W", cmd) && !occursin(" -W", cmd)) && (cmd *= " -W0.5")	# If still nothing, set -W.
+	(!occursin(" -C", cmd) && !occursin(" -W", cmd) && !occursin(" -G", opt_Q)) && (cmd *= " -W0.5")	# If still nothing, set -W.
 	(opt_Q != "") && (cmd *= opt_Q)
 
     return finish_PS_module(d, "grdvector " * cmd, "", K, O, true, arg1, arg2)
@@ -93,7 +93,7 @@ function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol})
 		else                   cmd *= " -Q" * vector_attrib(val)
 		end
 		if ((ind = findfirst("+g", cmd)) !== nothing)   # -Q0.4+e+gred+n0.4+pcyan+h0
-			cmd *= " -G" * split(cmd[ind[1]+2:end], "+")[1]
+			cmd *= " -G" * split(cmd[ind[1]+2:end], "+")[1]	# Add a -G (does the same) to have at least one of the -G, -W, -C
 		end
 	end
 	return cmd
