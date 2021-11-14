@@ -140,9 +140,9 @@
 	grdvector(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
 	grdvector!(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), W="1p", S=12, Vd=dbg2)
 	r = grdvector!("",dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65), W="1p", S=12, Vd=dbg2);
-	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.65 -W1p")
+	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -W1p -Q0.25+e+n0.65")
 	r = grdvector!("", 1, 2, I=0.2, vec="0.25+e+n0.66", W=1, S=12, Vd=dbg2);
-	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -Q0.25+e+n0.66 -W1")
+	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -W1 -Q0.25+e+n0.66")
 
 	println("	GRDVOLUME")
 	grdvolume(G);

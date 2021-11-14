@@ -64,9 +64,9 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, opt_B, = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd, = parse_common_opts(d, cmd, [:I :UVXY :f :p :t :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:S :vec_scale], [:T :sign_scale], [:Z :azimuth]])
+	cmd = parse_BJR(d, "", "", O, " -JX12c/0")[1]
+	cmd = parse_common_opts(d, cmd, [:I :UVXY :f :p :t :params], first)[1]
+	cmd = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:S :vec_scale], [:T :sign_scale], [:Z :azimuth]])
 
     # Check case in which the two grids were transmitted by name. 
     (cmd0 != "" && isa(arg1, String)) && (cmd0 *= " " * arg1; arg1 = nothing)
@@ -75,19 +75,25 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 
 	N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_used, arg1, arg2)
-	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = parse_Q_grdvec(d, [:Q :vec :vector :arrow], cmd)
-	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
+	opt_Q = parse_Q_grdvec(d, [:Q :vec :vector :arrow])
+	!occursin(" -G", opt_Q) && (cmd = add_opt_fill(cmd, d, [:G :fill], 'G'))	# If fill not passed in arrow, try from regular option
+	cmd *= add_opt_pen(d, [:W :pen], "W", true)									# TRUE to also seek (lw,lc,ls)
+	(!occursin(" -C", cmd) && !occursin(" -W", cmd) && !occursin(" -G", opt_Q)) && (cmd *= " -W0.5")	# If still nothing, set -W.
+	(opt_Q != "") && (cmd *= opt_Q)
 
     return finish_PS_module(d, "grdvector " * cmd, "", K, O, true, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol}, cmd::String)
+function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol})
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | String")
+	cmd = ""
     if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, String))  cmd *= " -Q" * val		# An hard core GMT string directly with options
 		else                   cmd *= " -Q" * vector_attrib(val)
+		end
+		if ((ind = findfirst("+g", cmd)) !== nothing)   # -Q0.4+e+gred+n0.4+pcyan+h0
+			cmd *= " -G" * split(cmd[ind[1]+2:end], "+")[1]	# Add a -G (does the same) to have at least one of the -G, -W, -C
 		end
 	end
 	return cmd
