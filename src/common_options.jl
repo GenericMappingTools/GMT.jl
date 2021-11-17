@@ -5,15 +5,38 @@ nt2dict(nt::NamedTuple) = nt2dict(; nt...)
 nt2dict(; kw...) = Dict(kw)
 # Need the Symbol.() below in oder to work from PyCall
 # A darker an probably more efficient way is: ((; kw...) -> kw.data)(; d...) but breaks in PyCall
-dict2nt(d::Dict) = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
+dict2nt(d::Dict)::NamedTuple = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
 
-function find_in_dict(d::Dict, symbs::Array{Symbol}, del::Bool=true, help_str::String="")
+function find_in_dict(d::Dict, symbs::VMs, del::Bool=true, help_str::String="")
 	# See if D contains any of the symbols in SYMBS. If yes, return corresponding value
 	(show_kwargs[1] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
+	fGI(val)::GItype = val
+	fGD(val)::GDtype = val
+	fVMr(val)::VMr = val
+	fNT(val)::NamedTuple = val
+	fT(val)::Tuple = val
+	fS(val)::String = val
 	for symb in symbs
 		if (haskey(d, symb))
-			val = d[symb]
-			if (del) delete!(d, symb) end
+			val = d[symb]				# SHIT is that 'val' is always a ANY
+			(del) && delete!(d, symb)
+			#=
+			if (isa(_val, GItype))
+				return fGI(_val)::GItype, Symbol(symb)
+			elseif (isa(_val, GDtype))
+				return fGD(_val)::GDtype, Symbol(symb)
+			elseif (isa(_val, VMr))
+				return fVMr(_val)::VMr, Symbol(symb)
+			elseif (isa(_val, NamedTuple))
+				return fNT(_val)::NamedTuple, Symbol(symb)
+			elseif (isa(_val, Tuple))
+				return fT(_val)::Tuple, Symbol(symb)
+			elseif (isa(_val, String))
+				return fS(_val)::String, Symbol(symb)
+			else
+				return _val, Symbol(symb)
+			end
+			=#
 			return val, Symbol(symb)
 		end
 	end
@@ -151,7 +174,8 @@ function build_opt_R(arg::NamedTuple)::String
 			end
 		end
 	elseif ((val = find_in_dict(d, [:bb_diag :limits_diag :region_diag :LLUR])[1]) !== nothing)	# Alternative way of saying "+r"
-		BB = sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
+		_val = collect(Float64, val)
+		BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])
 	elseif ((val = find_in_dict(d, [:continent :cont])[1]) !== nothing)
 		val = uppercase(string(val))
 		if     (startswith(val, "AF"))  BB = "=AF"
@@ -169,7 +193,7 @@ function build_opt_R(arg::NamedTuple)::String
 	end
 
 	if ((val = find_in_dict(d, [:adjust :pad :extend :expand])[1]) !== nothing)
-		if (isa(val, String) || isa(val, Number))  t = string(val)
+		if (isa(val, String) || isa(val, Real))  t = string(val)
 		elseif (isa(val, Array{<:Real}) || isa(val, Tuple))
 			t = join([@sprintf("%.15g/", Float64(x)) for x in val])
 			t = rstrip(t, '/')		# and remove last '/'
@@ -503,9 +527,9 @@ function parse_proj(p::NamedTuple)
 	center = ""
 	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
 		if     (isa(val, String))  center = val
-		elseif (isa(val, Number))  center = sprintf("%.12g", val)
+		elseif (isa(val, Real))    center = sprintf("%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)
-			if (isa(val, Array))  center = sprintf("%.12g/%.12g", val[1], val[2])
+			if (isa(val, Array))   center = sprintf("%.12g/%.12g", val[1], val[2])
 			else		# Accept also strings in tuple (Needed for movie)
 				center  = (isa(val[1], String)) ? val[1] * "/" : sprintf("%.12g/", val[1])
 				center *= (isa(val[2], String)) ? val[2] : sprintf("%.12g", val[2])
@@ -518,7 +542,7 @@ function parse_proj(p::NamedTuple)
 	parallels = ""
 	if ((val = find_in_dict(d, [:parallel :parallels])[1]) !== nothing)
 		if     (isa(val, String))  parallels = "/" * val
-		elseif (isa(val, Number))  parallels = sprintf("/%.12g", val)
+		elseif (isa(val, Real))    parallels = sprintf("/%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && (length(val) <= 3 || length(val) == 6))
 			parallels = join([@sprintf("/%.12g",x) for x in val])
 		end
@@ -966,7 +990,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 #parse_type_anchor(::String, ::Dict) = parse_type_anchor(Dict(), "", [:a], (a=0,), 'a')
-function parse_type_anchor(d::Dict, cmd::String, symbs::Array{Symbol}, mapa::NamedTuple, def_CS::Char, del::Bool=true)
+function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, def_CS::Char, del::Bool=true)
 	# SYMBS: [:D :pos :position] | ...
 	# MAPA is the NamedTuple of suboptions
 	# def_CS is the default "Coordinate system". Colorbar has 'J', logo has 'g', many have 'j'
@@ -1054,7 +1078,7 @@ function parse_c(d::Dict, cmd::String)::Tuple{String, String}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_d(d::Dict, cmd::String, symbs::Array{Symbol}=[:d :nodata])
+function parse_d(d::Dict, cmd::String, symbs::VMs=[:d :nodata])
 	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "$(symbs[2])=val"),"")
 	parse_helper(cmd, d, [:d :nodata], " -d")
 end
@@ -1179,10 +1203,10 @@ function parse_append(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_helper(cmd::String, d::Dict, symbs, opt::String, sep='/')
+function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')
 	# Helper function to the parse_?() global options.
 	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
-	opt_val = ""
+	opt_val::String = ""
 	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
 		opt_val = opt * arg2str(val, sep)
 		cmd *= opt_val
@@ -1191,7 +1215,7 @@ function parse_helper(cmd::String, d::Dict, symbs, opt::String, sep='/')
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_common_opts(d::Dict, cmd::String, opts::Array{<:Symbol}, first::Bool=true)
+function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 	(show_kwargs[1]) && return (print_kwarg_opts(opts, "(Common options)"),"")	# Just print the options
 	opt_p = nothing;	o = ""
 	for opt in opts
@@ -1332,7 +1356,7 @@ function parse_params(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_pen(d::Dict, symbs, opt::String="", sub::Bool=true, del::Bool=true)::String
+function add_opt_pen(d::Dict, symbs::VMs, opt::String="", sub::Bool=true, del::Bool=true)::String
 	# Build a pen option. Input can be either a full hard core string or spread in lw (or lt), lc, ls, etc or a tuple
 	# If SUB is true (lw, lc, ls) are not seeked because we are parsing a sub-option
 
@@ -1402,7 +1426,7 @@ function add_opt_pen(d::Dict, symbs, opt::String="", sub::Bool=true, del::Bool=t
 end
 
 # ---------------------------------------------------------------------------------------------------
-function opt_pen(d::Dict, opt::Char, symbs)::String
+function opt_pen(d::Dict, opt::Char, symbs::VMs)::String
 	# Create an option string of the type -Wpen
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | String | Number")	# Just print the options
 
@@ -1469,7 +1493,7 @@ function parse_arg_and_pen(arg::Tuple, sep="/", pen::Bool=true, opt="")::String
 	# the ARG tuple has 4, 6, etc elements (arg1,(pen), arg2,(pen), arg3,(pen), ...)
 	# When pen=false we call the get_color function instead
 	# SEP is normally "+g" when this function is used in the "parse_arg_and_color" mode
-	if (isa(arg[1], String) || isa(arg[1], Symbol) || isa(arg[1], Number))  s = string(arg[1])
+	if (isa(arg[1], String) || isa(arg[1], Symbol) || isa(arg[1], Real))  s = string(arg[1])
 	else	error("parse_arg_and_pen: Nonsense first argument")
 	end
 	if (length(arg) > 1)
@@ -1733,7 +1757,7 @@ function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::T
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_1char(cmd::String, d::Dict, symbs, del::Bool=true)::String
+function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}, del::Bool=true)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == true we remove the found key.
 	# The keyword value must be a string, symbol or a tuple of them. We only retain the first character of each item
@@ -1741,9 +1765,9 @@ function add_opt_1char(cmd::String, d::Dict, symbs, del::Bool=true)::String
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Str | Symb | Tuple")
 	for opt in symbs
 		((val = find_in_dict(d, opt, del)[1]) === nothing) && continue
-		args = ""
+		args::String = ""
 		if (isa(val, String) || isa(val, Symbol))
-			((args = arg2str(val)) != "") && (args = args[1])
+			((args = arg2str(val)) != "") && (args = string(args[1]))
 		elseif (isa(val, Tuple))
 			[args *= arg2str(val[k])[1] for k = 1:length(val)]
 		end
@@ -1753,7 +1777,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs, del::Bool=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(d::Dict, cmd::String, opt, symbs, mapa=nothing, del::Bool=true, arg=nothing)::String
+function add_opt(d::Dict, cmd::String, opt, symbs::VMs, mapa=nothing, del::Bool=true, arg=nothing)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
 	# ARG, is a special case to append to a matrix (complicated thing in Julia)
@@ -1765,10 +1789,10 @@ function add_opt(d::Dict, cmd::String, opt, symbs, mapa=nothing, del::Bool=true,
 
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)
 		if (isa(arg, Bool) && isa(mapa, NamedTuple))	# Make each mapa[i] a mapa[i]key=mapa[i]val
-			local cmd_ = ""
+			local cmd_::String = ""
 			for k in keys(mapa)
 				((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue
-				if (isa(mapa[k], Tuple))  cmd_ *= mapa[k][1] * mapa[k][2](d, [k])
+				if (isa(mapa[k], Tuple))    cmd_ *= mapa[k][1] * mapa[k][2](d, [k])
 				else
 					if (mapa[k][1] == '_')  cmd_ *= mapa[k][2:end]		# Keep omly the flag
 					else                    cmd_ *= mapa[k] * arg2str(val_)
@@ -1793,13 +1817,13 @@ function add_opt(d::Dict, cmd::String, opt, symbs, mapa=nothing, del::Bool=true,
 		(cmd_ != "") && return cmd * cmd_	# Otherwise continue to see if the other (NT) form was provided
 	end
 
-	args = Array{String,1}(undef,1)
+	args = Vector{String}(undef,1)
 	if isa(val, Dict)  val = dict2nt(val)  end	# For Py usage
 	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
 		args[1] = add_opt(val, mapa, arg)
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
 		# Used in recursive calls for options like -I, -N , -W of pscoast. Here we assume that opt != ""
-		_args = ""
+		_args::String = ""
 		[_args *= " -" * opt * add_opt(val[k], mapa, arg) for k = 1:length(val)]
 		return cmd * _args
 	elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
@@ -1955,7 +1979,7 @@ function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(d::Dict, cmd::String, opt, symbs, need_symb::Symbol, args, nt_opts::NamedTuple)
+function add_opt(d::Dict, cmd::String, opt, symbs::VMs, need_symb::Symbol, args, nt_opts::NamedTuple)
 	# This version specializes in the case where an option may transmit an array, or read a file, with optional flags.
 	# When optional flags are used we need to use NamedTuples (the NT_OPTS arg). In that case the NEED_SYMB
 	# is the keyword name (a symbol) whose value holds the array. An error is raised if this symbol is missing in D
@@ -1965,27 +1989,27 @@ function add_opt(d::Dict, cmd::String, opt, symbs, need_symb::Symbol, args, nt_o
 	(show_kwargs[1]) && print_kwarg_opts(symbs)		# Just print the kwargs of this option call
 
 	N_used = 0;		got_one = false
-	val,symb = find_in_dict(d, symbs, false)
+	val, symb = find_in_dict(d, symbs, false)
 	if (val !== nothing)
 		to_slot = true
 		if isa(val, Dict)  val = dict2nt(val)  end
 		if (isa(val, Tuple) && length(val) == 2)
 			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
-			val = dict2nt(Dict(need_symb=>val[1], keys(nt_opts)[1]=>val[2]))
-			d[symb] = val		# Need to patch also the input option
+			#val = dict2nt(Dict(need_symb => val[1], keys(nt_opts)[1] => val[2]))
+			d[symb] = dict2nt(Dict(need_symb => val[1], keys(nt_opts)[1] => val[2]))	# Need to patch also the input option
 		end
 		if (isa(val, NamedTuple))
-			di = nt2dict(val)
+			di::Dict = nt2dict(val)
 			((val = find_in_dict(di, [need_symb], false)[1]) === nothing) && error(string(need_symb, " member cannot be missing"))
-			if (isa(val, Number) || isa(val, String))	# So that this (psxy) also works:	Z=(outline=true, data=3)
+			if (isa(val, Real) || isa(val, String))	# So that this (psxy) also works:	Z=(outline=true, data=3)
 				opt::String = string(opt,val)
 				to_slot = false
 			end
 			cmd = add_opt(d, cmd, opt, symbs, nt_opts)
 		elseif (isa(val, Array{<:Real}) || isa(val, GMTdataset) || isa(val, Vector{<:GMTdataset}) || isa(val, GMTcpt) || typeof(val) <: AbstractRange)
 			if (typeof(val) <: AbstractRange)  val = collect(val)  end
-			cmd::String = string(cmd, " -", opt)
-		elseif (isa(val, String) || isa(val, Symbol) || isa(val, Number))
+			cmd = string(cmd, " -", opt)
+		elseif (isa(val, String) || isa(val, Symbol) || isa(val, Real))
 			cmd = string(cmd, " -", opt * arg2str(val))
 			to_slot = false
 		else
@@ -2007,7 +2031,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs, need_symb::Symbol, args, nt_o
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_cpt(d::Dict, cmd::String, symbs, opt::Char, N_args::Int=0, arg1=nothing, arg2=nothing,
+function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0, arg1=nothing, arg2=nothing,
 	                 store::Bool=false, def::Bool=false, opt_T::String="", in_bag::Bool=false)
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	# SYMBS is normally: CPTaliases
@@ -2077,8 +2101,8 @@ end
 function add_opt_fill(d::Dict, opt::String="")
 	add_opt_fill(d, [collect(keys(d))[1]], opt)	# Use ONLY when len(d) == 1
 end
-add_opt_fill(d::Dict, symbs, opt="") = add_opt_fill("", d, symbs, opt)
-function add_opt_fill(cmd::String, d::Dict, symbs, opt="", del::Bool=true)::String
+add_opt_fill(d::Dict, symbs::VMs, opt="") = add_opt_fill("", d, symbs, opt)
+function add_opt_fill(cmd::String, d::Dict, symbs::VMs, opt="", del::Bool=true)::String
 	# Deal with the area fill attributes option. Normally, -G
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
@@ -2090,7 +2114,7 @@ end
 function add_opt_fill(val, cmd::String="",  opt="")::String
 	# This version can be called directy with VAL as a NT or a string
 	if (isa(val, NamedTuple))
-		d2 = nt2dict(val)
+		d2::NamedTuple = nt2dict(val)
 		cmd *= opt
 		if     (haskey(d2, :pattern))     cmd *= 'p' * add_opt(d2, "", "", [:pattern])
 		elseif (haskey(d2, :inv_pattern)) cmd *= 'P' * add_opt(d2, "", "", [:inv_pattern])
@@ -2189,7 +2213,7 @@ function add_opt_module(d::Dict)::Vector{String}
 					(symb == :plot) ? plot!(; nt...) : (symb == :plot3) ? plot3!(; nt...) :
 					(symb == :hlines) ? hlines!(; nt...) : vlines!(; nt...)
 				end
-			elseif (isa(val, Number) && (val != 0))		# Allow setting coast=true || colorbar=true
+			elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
 				if     (symb == :coast)    r = coast!(W=0.5, A="200/0/2", Vd=2)
 				elseif (symb == :colorbar) r = colorbar!(pos=(anchor="MR",), B="af", Vd=2)
 				elseif (symb == :logo)     r = logo!(Vd=2)
@@ -2212,7 +2236,7 @@ end
 function get_color(val)::String
 	# Parse a color input. Always return a string
 	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
-	if (isa(val, String) || isa(val, Symbol) || isa(val, Number))  return isa(val, Bool) ? "" : string(val)  end
+	if (isa(val, String) || isa(val, Symbol) || isa(val, Real))  return isa(val, Bool) ? "" : string(val)  end
 
 	out::String = ""
 	if (isa(val, Tuple))
@@ -2221,7 +2245,7 @@ function get_color(val)::String
 				s = 1
 				if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255  end	# colors in [0 1]
 				out *= @sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
-			elseif (isa(val[k], Symbol) || isa(val[k], String) || isa(val[k], Number))
+			elseif (isa(val[k], Symbol) || isa(val[k], String) || isa(val[k], Real))
 				out *= string(val[k],",")
 			else
 				error("Color tuples must have only one or three elements")
@@ -2398,7 +2422,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	elseif (haskey(d, :customticks))			# These ticks are custom axis
 		if ((r = ticks(d[:customticks]; axis=axe, primary=primo)) != "")  ints *= 'c' * r  end
 	elseif (haskey(d, :pi))
-		if (isa(d[:pi], Number))
+		if (isa(d[:pi], Real))
 			ints = string(ints, d[:pi], "pi")		# (n)pi
 		elseif (isa(d[:pi], Array) || isa(d[:pi], Tuple))
 			ints = string(ints, d[:pi][1], "pi", d[:pi][2])	# (n)pi(m)
@@ -2637,7 +2661,7 @@ function vector_attrib(;kwargs...)::String
 			elseif (t == 'V')  cmd *= "+h2"		# V
 			else	error("Shape string can be only: 'triang', 'arrow' or 'V'")
 			end
-		elseif (isa(d[:shape], Number))
+		elseif (isa(d[:shape], Real))
 			(d[:shape] < -2 || d[:shape] > 2) && error("Numeric shape code must be in the [-2 2] interval.")
 			cmd = string(cmd, "+h", d[:shape])
 		else
@@ -2765,7 +2789,7 @@ function helper_decorated(d::Dict, compose=false)
 	if (val !== nothing)
 		# The String assumes all is already encoded. Number, Array only accept numerics
 		# Tuple accepts numerics and/or strings.
-		if (isa(val, String) || isa(val, Number) || isa(val, Symbol))
+		if (isa(val, String) || isa(val, Real) || isa(val, Symbol))
 			cmd = string(val)
 		elseif (isa(val, Array) || isa(val, Tuple))
 			if (symb == :number)  cmd = "-" * string(val[1], '/', val[2])
@@ -2960,7 +2984,7 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 			arg = cat_2_arg2(d[:x], d[:y])
 			(haskey(d, :z)) && (arg = hcat(arg, d[:z][:]);	del_from_dict(d, [:z]))
 			del_from_dict(d, [[:x :x], [:y]])		# [:x :x] to satisfy signature ::Vector{Vector{Symbol}} != ::Array{Array{Symbol}}
-		elseif (haskey(d, :x))		# Only this guy. I main that histogram may use this
+		elseif (haskey(d, :x) && length(d[:x]) > 1)	# Only this guy. I guess that histogram may use this
 			arg = d[:x];		del_from_dict(d, [:x])
 		end
 		(arg === nothing) && @warn("No data was passed into this module. I will hang shortly.")
@@ -2969,7 +2993,7 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 	# See if we have DateTime objects
 	got_datetime, is_onecol = false, false
 	if (isa(arg, Vector{DateTime}))					# Must convert to numeric
-		min_max = round_datetime(extrema(arg))		# Good numbers for limits
+		min_max::Vector{DateTime} = round_datetime(extrema(arg))		# Good numbers for limits
 		arg = Dates.value.(arg) ./ 1000;			cmd *= " --TIME_EPOCH=0000-12-31T00:00:00 --TIME_UNIT=s"
 		got_datetime, is_onecol = true, true
 	elseif (isa(arg, Matrix{Any}) && typeof(arg[1]) == DateTime)	# Matrix with DateTime in first col
@@ -3008,12 +3032,12 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 		end
 		if (opt_R != " -Rtight")
 			if (!occursin("?", opt_R) && !is_onecol)		# is_onecol is true only for DateTime data
-				dx = (info[1].data[2] - info[1].data[1]) * 0.005;	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
+				dx::Float64 = (info[1].data[2] - info[1].data[1]) * 0.005;	dy::Float64 = (info[1].data[4] - info[1].data[3]) * 0.005;
 				info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
 				info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
 				if (isGMTdataset(arg))							# Needed for the guess_proj case
 					if ((info[1].data[3] < -90 || info[1].data[4] > 90) || ((info[1].data[2] - info[1].data[1]) > 360))
-						prj = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
+						prj::String = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
 						guessed_J = (prj == "") && !contains(cmd, " -J ") && !contains(cmd, " -JX") && !contains(cmd, " -Jx")
 						if (guessed_J || contains(prj, "longlat") || contains(prj, "latlong"))
 							(info[1].data[3] < -90.) && (info[1].data[3] = -90.)
@@ -3036,12 +3060,12 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 		if (got_datetime)
 			opt_R = " -R" * Dates.format(min_max[1], "yyyy-mm-ddTHH:MM:SS.s") * "/" *
 			        Dates.format(min_max[2], "yyyy-mm-ddTHH:MM:SS.s")
-			(!is_onecol) && (opt_R *= sprintf("/%.12g/%.12g", info[1].data[3], info[1].data[4]))
+			(!is_onecol) && (opt_R *= @sprintf("/%.12g/%.12g", info[1].data[3], info[1].data[4]))
 		elseif (is3D)
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
 			                 info[1].data[3], info[1].data[4], info[1].data[5], info[1].data[6])
 		else
-			opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
 			                 info[1].data[3], info[1].data[4])
 		end
 		(!is_onecol) && (cmd *= opt_R)		# The onecol case (for histogram) has an imcomplete -R
@@ -3248,7 +3272,7 @@ function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, args...)
 	elseif (n_args == 2)  cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, args[1], args[2])
 	elseif (n_args == 3)  cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, args[1], args[2], args[3])
 	end
-	if (arg1 !== nothing && isa(arg1, Array{<:Number}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
+	if (arg1 !== nothing && isa(arg1, Array{<:Real}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
 	(n_args <= 1) ? common_grd(d, prog * cmd, arg1) : (n_args == 2) ? common_grd(d, prog * cmd, arg1, arg2) : common_grd(d, prog * cmd, arg1, arg2, arg3)
 end
 
@@ -3972,9 +3996,9 @@ function help_show_options(d::Dict)
 end
 
 # --------------------------------------------------------------------------------------------------
-function print_kwarg_opts(symbs, mapa=nothing)::String
+function print_kwarg_opts(symbs::VMs, mapa=nothing)::String
 	# Print the kwargs options
-	opt = "Option: " * join([@sprintf("%s, or ",x) for x in symbs])[1:end-5]
+	opt::String = "Option: " * join([@sprintf("%s, or ",x) for x in symbs])[1:end-5]
 	if (isa(mapa, NamedTuple))
 		keys_ = keys(mapa)
 		vals = Vector{String}(undef, length(keys_))
