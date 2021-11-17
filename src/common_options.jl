@@ -10,33 +10,10 @@ dict2nt(d::Dict)::NamedTuple = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
 function find_in_dict(d::Dict, symbs::VMs, del::Bool=true, help_str::String="")
 	# See if D contains any of the symbols in SYMBS. If yes, return corresponding value
 	(show_kwargs[1] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
-	fGI(val)::GItype = val
-	fGD(val)::GDtype = val
-	fVMr(val)::VMr = val
-	fNT(val)::NamedTuple = val
-	fT(val)::Tuple = val
-	fS(val)::String = val
 	for symb in symbs
 		if (haskey(d, symb))
 			val = d[symb]				# SHIT is that 'val' is always a ANY
 			(del) && delete!(d, symb)
-			#=
-			if (isa(_val, GItype))
-				return fGI(_val)::GItype, Symbol(symb)
-			elseif (isa(_val, GDtype))
-				return fGD(_val)::GDtype, Symbol(symb)
-			elseif (isa(_val, VMr))
-				return fVMr(_val)::VMr, Symbol(symb)
-			elseif (isa(_val, NamedTuple))
-				return fNT(_val)::NamedTuple, Symbol(symb)
-			elseif (isa(_val, Tuple))
-				return fT(_val)::Tuple, Symbol(symb)
-			elseif (isa(_val, String))
-				return fS(_val)::String, Symbol(symb)
-			else
-				return _val, Symbol(symb)
-			end
-			=#
 			return val, Symbol(symb)
 		end
 	end
@@ -60,6 +37,19 @@ function del_from_dict(d::Dict, symbs::Array{Symbol})
 		end
 	end
 end
+
+#=
+function find_in_kwargs(p::Base.Pairs, symbs::VMs, del::Bool=true, help_str::String="")
+	_k = keys(p)
+	for symb in symbs
+		if ((ind = findfirst(_k .== symb)) !== nothing)
+			val = p[_k[ind]]
+			return val, symb
+		end
+	end
+	return nothing, Symbol()
+end
+=#
 
 function init_module(first::Bool, kwargs...)
 	# All ps modules need these 3 lines
@@ -1462,7 +1452,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_pen_color(d::Dict, symbs=nothing, del::Bool=false)::String
 	# Need this as a separate fun because it's used from modules
-	lc = ""
+	lc::String = ""
 	(symbs === nothing) && (symbs = [:lc :linecolor])
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
 		lc = string(get_color(val))
@@ -1474,11 +1464,11 @@ end
 function build_pen(d::Dict, del::Bool=false)::String
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
-	lw = add_opt(d, "", "", [:lw :linewidth], nothing, del)		# Line width
+	lw::String = add_opt(d, "", "", [:lw :linewidth], nothing, del)		# Line width
 	if (lw == "")  lw = add_opt(d, "", "", [:lt :linethick :linethickness], nothing, del)  end	# Line width
-	ls = add_opt(d, "", "", [:ls :linestyle], nothing, del)		# Line style
-	lc = parse_pen_color(d, [:lc :linecolor], del)
-	out = ""
+	ls::String = add_opt(d, "", "", [:ls :linestyle], nothing, del)		# Line style
+	lc::String = parse_pen_color(d, [:lc :linecolor], del)
+	out::String = ""
 	if (lw != "" || lc != "" || ls != "")
 		out = lw * "," * lc * "," * ls
 		while (out[end] == ',')  out = rstrip(out, ',')  end	# Strip unneeded commas
@@ -2114,7 +2104,7 @@ end
 function add_opt_fill(val, cmd::String="",  opt="")::String
 	# This version can be called directy with VAL as a NT or a string
 	if (isa(val, NamedTuple))
-		d2::NamedTuple = nt2dict(val)
+		d2::Dict = nt2dict(val)
 		cmd *= opt
 		if     (haskey(d2, :pattern))     cmd *= 'p' * add_opt(d2, "", "", [:pattern])
 		elseif (haskey(d2, :inv_pattern)) cmd *= 'P' * add_opt(d2, "", "", [:inv_pattern])
