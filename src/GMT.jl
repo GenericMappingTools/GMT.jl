@@ -91,6 +91,8 @@ const global CTRL = CTRLstruct(zeros(6), [true], [:clip, :coast, :colorbar, :bas
 const global CTRLshapes = CTRLstruct2([true], [true], [""])
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
+const global VMs = Union{Nothing, Vector{Symbol}, Matrix{Symbol}}
+const global VMr = Union{Vector{Real}, Matrix{Real}}
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
 	@eval Base.Experimental.@optlevel 1
