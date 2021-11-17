@@ -22,9 +22,9 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	(isa(_dataset, GMTgrid) || isa(_dataset, GMTimage) || isGMTdataset(_dataset)) && return _dataset
 
 	# For some bloody reason it would print annoying (& false?) warning messages. Have to use brute force
-	#Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
+	Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	dataset, scale_factor, add_offset, got_fill_val, fill_val = gd2gmt_helper(_dataset, sds)
-	#Gdal.CPLPopErrorHandler();
+	Gdal.CPLPopErrorHandler();
 	(!isa(_dataset, String) && _dataset.ptr == C_NULL) && error("NULL dataset sent in")
 
 	n_dsbands = Gdal.nraster(dataset)
@@ -244,7 +244,7 @@ function trim_SUBDATASET_str(sds::String)
 	# If present, trim the initial "SUBDATASET_X_NAME=" from a subdataset string name
 	ind = 0
 	(startswith(sds, "SUBDATASET_") && (ind = findfirst('=', sds)) === nothing) && error("Badly formed SUBDATASET string")
-	sds_name = sds[ind+1:end]
+	return sds[ind+1:end]
 end
 
 # ---------------------------------------------------------------------------------------------------
