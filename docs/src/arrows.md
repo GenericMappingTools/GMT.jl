@@ -7,7 +7,7 @@ four columns, but optionally more, or an Mx2 Array or GMTdatset object with the 
 terms of columns number.
 
 This module is a subset of `plot` to make it simpler to draw arrow plots. So not all (fine)
-controlling parameters are not listed here. For the finest control, user should consult the `plot` module.
+controlling parameters are listed here. For the finest control, user should consult the [plot](@ref) module.
 
 Parameters
 ----------
@@ -82,3 +82,8 @@ is now ~1.77 figure units long.
    arrows([0.0 0 5 5], limits=(0,5,0,5), figsize=10, frame=(annot=0.5, ticks=0.25, grid=0.5),
           arrow=(len=0.5,stop=1,uv=0.5), show=true)
 ```
+
+See Also
+--------
+
+[plot](@ref), [lines](@ref), [scatter](@ref)

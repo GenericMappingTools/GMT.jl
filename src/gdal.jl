@@ -1519,7 +1519,7 @@ end
 	end
 	gdalinfo(ds::IDataset, opts::Vector{String}=String[]) = gdalinfo(Dataset(ds.ptr), opts)
 	function gdalinfo(fname::AbstractString, opts=String[])
-		#CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))	# WTF is this needed?
+		CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))	# WTF is this needed?
 		o = gdalinfo(unsafe_read(fname; options=opts), opts)
 		CPLPopErrorHandler();
 		return o
