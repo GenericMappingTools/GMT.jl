@@ -84,7 +84,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	end
 
 	if (opt_R == "")		# See if we got the region as tuples of xlim, ylim [zlim]
-		R = "";		c = 0
+		R::String = "";		c = 0
 		if (haskey(d, :xlim) && isa(d[:xlim], Tuple) && length(d[:xlim]) == 2)
 			R = sprintf(" -R%.15g/%.15g", d[:xlim][1], d[:xlim][2])
 			c += 2
@@ -129,7 +129,7 @@ end
 
 function build_opt_R(Val)::String		# Generic function that deals with all but NamedTuple args
 	if (isa(Val, String) || isa(Val, Symbol))
-		r = string(Val)
+		r::String = string(Val)
 		if     (r == "global")     return " -Rd"
 		elseif (r == "global360")  return " -Rg"
 		elseif (r == "same")       return " -R"
@@ -167,14 +167,14 @@ function build_opt_R(arg::NamedTuple)::String
 		_val = collect(Float64, val)
 		BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])
 	elseif ((val = find_in_dict(d, [:continent :cont])[1]) !== nothing)
-		val = uppercase(string(val))
-		if     (startswith(val, "AF"))  BB = "=AF"
-		elseif (startswith(val, "AN"))  BB = "=AN"
-		elseif (startswith(val, "AS"))  BB = "=AS"
-		elseif (startswith(val, "EU"))  BB = "=EU"
-		elseif (startswith(val, "OC"))  BB = "=OC"
-		elseif (val[1] == 'N')  BB = "=NA"
-		elseif (val[1] == 'S')  BB = "=SA"
+		val_::String = uppercase(string(val))
+		if     (startswith(val_, "AF"))  BB = "=AF"
+		elseif (startswith(val_, "AN"))  BB = "=AN"
+		elseif (startswith(val_, "AS"))  BB = "=AS"
+		elseif (startswith(val_, "EU"))  BB = "=EU"
+		elseif (startswith(val_, "OC"))  BB = "=OC"
+		elseif (val_[1] == 'N')  BB = "=NA"
+		elseif (val_[1] == 'S')  BB = "=SA"
 		else   error("Unknown continent name")
 		end
 	elseif ((val = find_in_dict(d, [:ISO :iso])[1]) !== nothing)
@@ -237,7 +237,7 @@ end
 function parse_JZ(d::Dict, cmd::String, del::Bool=true)
 	symbs = [:JZ :Jz :zscale :zsize]
 	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "String | Number"), "")
-	opt_J = "";		seek_JZ = true
+	opt_J::String = "";		seek_JZ = true
 	if ((val = find_in_dict(d, [:aspect3])[1]) !== nothing)
 		o = scan_opt(cmd, "-J")
 		(o[1] != 'X' || o[end] == 'd') &&  @warn("aspect3 works only in linear projections (and no geog), ignoring it.") 
@@ -424,7 +424,7 @@ function check_axesswap(d::Dict, width::AbstractString)
 end
 
 function build_opt_J(Val)::Tuple{String, Bool}
-	out = "";		mnemo = false
+	out::String = "";		mnemo = false
 	if (isa(Val, String) || isa(Val, Symbol))
 		if (string(Val) == "guess")
 			out, mnemo = guess_proj(CTRL.limits[1:2], CTRL.limits[3:4]), true
@@ -514,7 +514,7 @@ function parse_proj(p::NamedTuple)
 		error("When projection arguments are in a NamedTuple the projection 'name' keyword is madatory.")
 	end
 
-	center = ""
+	center::String = ""
 	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
 		if     (isa(val, String))  center = val
 		elseif (isa(val, Real))    center = sprintf("%.12g", val)
@@ -529,7 +529,7 @@ function parse_proj(p::NamedTuple)
 
 	if (center != "" && (val = find_in_dict(d, [:horizon])[1]) !== nothing)  center = string(center, '/',val)  end
 
-	parallels = ""
+	parallels::String = ""
 	if ((val = find_in_dict(d, [:parallel :parallels])[1]) !== nothing)
 		if     (isa(val, String))  parallels = "/" * val
 		elseif (isa(val, Real))    parallels = sprintf("/%.12g", val)
@@ -749,7 +749,7 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 	end
 
 	# We can have one or all of them. Deal separatelly here to allow way code to keep working
-	this_opt_B = "";
+	this_opt_B::String = "";
 	xax, yax = false, false		# To know if these axis funs (primary) have been called
 	for symb in [:yaxis2 :xaxis2 :axis2 :zaxis :yaxis :xaxis]
 		add_this, what_B = false, [false, false]
@@ -1166,7 +1166,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_t(d::Dict, cmd::String)
-	opt_val = ""
+	opt_val::String = ""
 	if ((val = find_in_dict(d, [:t :alpha :transparency])[1]) !== nothing)
 		t = (isa(val, String)) ? parse(Float32, val) : val
 		if (t < 1) t *= 100  end
@@ -1207,7 +1207,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 	(show_kwargs[1]) && return (print_kwarg_opts(opts, "(Common options)"),"")	# Just print the options
-	opt_p = nothing;	o = ""
+	opt_p = nothing;	o::String = ""
 	for opt in opts
 		if     (opt == :RIr)  cmd, o = parse_RIr(d, cmd)
 		elseif (opt == :R)  cmd, o = parse_R(d, cmd)
@@ -1293,7 +1293,7 @@ function parse_I(d::Dict, cmd::String, symbs, opt, del::Bool=true)::String
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
 		if isa(val, Dict)  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
-			x = "";	y = "";	u = "";	e = false
+			x::String = "";	y::String = "";	u::String = "";	e = false
 			fn = fieldnames(typeof(val))
 			for k = 1:length(fn)
 				if     (fn[k] == :x)     x  = string(val[k])
@@ -1327,7 +1327,6 @@ function parse_params(d::Dict, cmd::String)::String
 	# Parse the gmt.conf parameters when used from within the modules. Return a --PAR=val string
 	# The input to this kwarg can be a tuple (e.g. (PAR,val)) or a NamedTuple (P1=V1, P2=V2,...)
 
-	_cmd = Array{String,1}(undef,1)		# Otherwise Traceur insists this fun was returning a Any
 	_cmd = [cmd]
 	if ((val = find_in_dict(d, [:conf :par :params], true)[1]) !== nothing)
 		if isa(val, Dict)  val = dict2nt(val)  end
@@ -1420,7 +1419,7 @@ function opt_pen(d::Dict, opt::Char, symbs::VMs)::String
 	# Create an option string of the type -Wpen
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | String | Number")	# Just print the options
 
-	out = ""
+	out::String = ""
 	pen = build_pen(d)						# Either a full pen string or empty ("")
 	if (!isempty(pen))
 		out = string(" -", opt, pen)
@@ -1518,7 +1517,7 @@ function mk_styled_line!(d::Dict, code)
 	# two ways allow sending CODE as a Symbol (e.g. :line!circ). Enclose the "Symbol" in a pair of those markersize
 	# to create an annotated line instead. E.g. ls="Line&Bla Bla Bla&"
 	isa(code, Symbol) && (code = string(code))
-	_code = lowercase(code)
+	_code::String = lowercase(code)
 	inv = !isletter(code[end])					# To know if we want to make white outline and fill = lc
 	is1line = (occursin("&", _code) || occursin("_", _code) || occursin("!", _code))	# e.g. line&Circ
 	decor_str = false
@@ -1539,9 +1538,9 @@ function mk_styled_line!(d::Dict, code)
 
 	(symbol == "") && return ls		# It means only the line style was transmitted. Return to allow use as ls="DashDot"
 
-	lc = parse_pen_color(d, [:lc :linecolor], false)
+	lc::String = parse_pen_color(d, [:lc :linecolor], false)
 	(lc == "") && (lc = "black")
-	lw = add_opt(d, "", "", [:lw :linewidth])		# Line width
+	lw::String = add_opt(d, "", "", [:lw :linewidth])		# Line width
 	d[:ls] = ls										# The linestyle picked above
 	d[:lw] = (lw != "") ? lw : "0.75"
 	isfront = (_code[1] == 'f')
@@ -1848,7 +1847,7 @@ end
 function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)::String
 	d = nt2dict(mapa)
 	(!haskey(d, this_key)) && return		# Should it be a error?
-	out = ""
+	out::String = ""
 	key = keys(user_input)					# user_input = (rows=1, fill=:red)
 	val_namedTup = d[this_key]				# water=(rows="my", cols="mx", fill=add_opt_fill)
 	d = nt2dict(val_namedTup)
@@ -1875,7 +1874,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	# translates to:	"+a1/0.5-b2"
 	key = keys(nt);						# The keys actually used in this call
 	d = nt2dict(mapa)					# The flags mapping as a Dict (all possible flags of the specific option)
-	cmd = "";		cmd_hold = Array{String,1}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
+	cmd::String = "";		cmd_hold = Array{String,1}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
 	for k = 1:length(key)				# Loop over the keys of option's tuple
 		!haskey(d, key[k]) && continue
 		(isa(nt[k], Dict)) && (nt[k] = dict2nt(nt[k]))
@@ -2271,7 +2270,7 @@ function font(val)::String
 	# the specified pen; if used you may optionally skip the filling of the text by setting fill to -.
 	(isa(val, String) || isa(val, Real)) && return string(val)
 
-	s = ""
+	s::String = ""
 	if (isa(val, Tuple))
 		s = parse_units(val[1])
 		if (length(val) > 1)
@@ -2309,7 +2308,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function data_type(val)
 	# Parse data type for using in -b
-	str = string(val)
+	str::String = string(val)
 	d = Dict("char" => "c", "int8" => "c", "uint8" => "u", "int16" => "h", "uint16" => "H", "int32" => "i", "uint32" => "I", "int64" => "l", "uint64" => "L", "float" => "f", "single" => "f", "double" => "d")
 	out = haskey(d, str) ? d[str] : "d"
 end
@@ -2327,7 +2326,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	(z) && (primo = "")								# Z axis have no primary/secondary
 	axe = x ? "x" : (y ? "y" : (z ? "z" : ""))		# Are we dealing with a specific axis?
 
-	opt = " -B"
+	opt::String = " -B"
 	if ((val = find_in_dict(d, [:axes :frame])[1]) !== nothing)		# The :frame here makes no sense, I think.
 		isa(val, Dict) && (val = dict2nt(val))
 		o = helper0_axes(val)
@@ -2360,7 +2359,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	opt = ""
 
 	# axes supps
-	ax_sup = ""
+	ax_sup::String = ""
 	(haskey(d, :seclabel)) && (ax_sup *= "+s" * str_with_blancs(arg2str(d[:seclabel])) )
 
 	if (haskey(d, :label))
@@ -2380,7 +2379,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	end
 
 	# intervals
-	ints = ""
+	ints::String = ""
 	if (haskey(d, :annot))      ints *= "a" * helper1_axes(d[:annot])  end
 	if (haskey(d, :annot_unit)) ints *= helper2_axes(d[:annot_unit])   end
 	if (haskey(d, :ticks))      ints *= "f" * helper1_axes(d[:ticks])  end
@@ -2468,14 +2467,14 @@ end
 # ------------------------
 function helper1_axes(arg)::String
 	# Used by annot, ticks and grid to accept also 'auto' and "" to mean automatic
-	out = arg2str(arg)
+	out::String = arg2str(arg)
 	(out != "" && out[1] == 'a') && (out = "")
 	return out
 end
 # ------------------------
 function helper2_axes(arg)::String
 	# Used by
-	out = arg2str(arg)
+	out::String = arg2str(arg)
 	if (out == "")
 		@warn("Empty units. Ignoring this units request.");		return out
 	end
@@ -2507,7 +2506,7 @@ end
 function helper3_axes(arg, primo::String, axe::String)::String
 	# Parse the custom annotations arg, save result into a tmp file and return its name
 
-	label = ""
+	label = [""]
 	if (isa(arg, AbstractArray))
 		pos, n_annot = arg, length(pos)
 		tipo = fill('a', n_annot)			# Default to annotate
@@ -2527,10 +2526,11 @@ function helper3_axes(arg, primo::String, axe::String)::String
 		end
 
 		if (haskey(d, :label))
+			_label = d[:label]
+			label = isa(_label, Symbol) ? [string(_label)] : (isa(_label, String) ? [_label] : _label)
 			if (length(d[:label]) != n_annot)
 				error("Number of labels in custom annotations must be the same as the 'pos' element")
 			end
-			label = d[:label]
 			tipo = Vector{String}(undef, n_annot)
 			for k = 1:n_annot
 				if (isa(label[k], Symbol) || label[k][1] != '/')
@@ -2557,7 +2557,7 @@ function helper3_axes(arg, primo::String, axe::String)::String
 	if (axe != "") temp *= axe  end
 	fname = joinpath(tempdir(), temp * ".txt")
 	fid = open(fname, "w")
-	if (label != "")
+	if (label != [""])
 		for k = 1:n_annot
 			println(fid, pos[k], ' ', tipo[k], ' ', label[k])
 		end
@@ -2599,7 +2599,7 @@ vector_attrib(d::Dict, lixo=nothing) = vector_attrib(; d...)	# When comming from
 vector_attrib(t::NamedTuple) = vector_attrib(; t...)
 function vector_attrib(;kwargs...)::String
 	d = KW(kwargs)
-	cmd = add_opt(d, "", "", [:len :length])
+	cmd::String = add_opt(d, "", "", [:len :length])
 	(haskey(d, :angle)) && (cmd = string(cmd, "+a", d[:angle]))
 	if (haskey(d, :middle))
 		cmd *= "+m";
@@ -2672,7 +2672,7 @@ vector4_attrib(t::NamedTuple) = vector4_attrib(; t...)
 function vector4_attrib(; kwargs...)::String
 	# Old GMT4 vectors (still supported in GMT6)
 	d = KW(kwargs)
-	cmd = "t"
+	cmd::String = "t"
 	if ((val = find_in_dict(d, [:align :center])[1]) !== nothing)
 		c = string(val)[1]
 		if     (c == 'h' || c == 'b')  cmd = "h"		# Head
@@ -2702,7 +2702,7 @@ end
 # -----------------------------------
 function helper_vec_loc(d::Dict, symb, cmd::String)::String
 	# Helper function to the 'begin', 'middle', 'end' vector attrib function
-	t = string(d[symb])
+	t::String = string(d[symb])
 	if     (t == "line"      )	cmd *= "t"
 	elseif (t == "arrow"     )	cmd *= "a"
 	elseif (t == "circle"    )	cmd *= "c"
@@ -2720,7 +2720,7 @@ end
 decorated(nt::NamedTuple) = decorated(;nt...)
 function decorated(;kwargs...)::String
 	d = KW(kwargs)
-	cmd, optD = helper_decorated(d)
+	cmd::String, optD::String = helper_decorated(d)
 
 	if (haskey(d, :dec2))				# -S~ mode (decorated, with symbols, lines).
 		cmd *= ":"
@@ -2774,7 +2774,7 @@ helper_decorated(nt::NamedTuple, compose=false) = helper_decorated(nt2dict(nt), 
 function helper_decorated(d::Dict, compose=false)
 	# Helper function to deal with the gap and symbol size parameters.
 	# At same time it's also what we need to call to build up the grdcontour -G option.
-	cmd = "";	optD = ""
+	cmd::String = "";	optD::String = ""
 	val, symb = find_in_dict(d, [:dist :distance :distmap :number])
 	if (val !== nothing)
 		# The String assumes all is already encoded. Number, Array only accept numerics
@@ -2838,7 +2838,7 @@ function parse_quoted(d::Dict, opt)::String
 	# This function is isolated from () above to allow calling it seperately from grdcontour
 	# In fact both -A and -G grdcontour options are almost equal to a decorated line in psxy.
 	# So we need a mechanism to call it all at once (psxy) or in two parts (grdcontour).
-	cmd = (isa(opt, String)) ? opt : ""			# Need to do this to prevent from calls that don't set OPT
+	cmd::String = (isa(opt, String)) ? opt : ""			# Need to do this to prevent from calls that don't set OPT
 	if (haskey(d, :angle))   cmd  = string(cmd, "+a", d[:angle])  end
 	if (haskey(d, :debug))   cmd *= "+d"  end
 	if (haskey(d, :clearance ))  cmd *= "+c" * arg2str(d[:clearance]) end
@@ -2880,7 +2880,7 @@ end
 function fname_out(d::Dict, del::Bool=false)
 	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 
-	EXT = FMT[1];	fname = ""
+	EXT = FMT[1];	fname::AbstractString = ""
 	if ((val = find_in_dict(d, [:savefig :figname :name], del)[1]) !== nothing)
 		fname, EXT = splitext(string(val))
 		EXT = (EXT == "") ? FMT[1] : EXT[2:end]
@@ -2977,7 +2977,6 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 		elseif (haskey(d, :x) && length(d[:x]) > 1)	# Only this guy. I guess that histogram may use this
 			arg = d[:x];		del_from_dict(d, [:x])
 		end
-		(arg === nothing) && @warn("No data was passed into this module. I will hang shortly.")
 	end
 
 	# See if we have DateTime objects
@@ -3245,7 +3244,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function write_data(d::Dict, cmd::String)
+function write_data(d::Dict, cmd::String)::String
 	# Check if we need to save to file (redirect stdout)
 	if     ((val = find_in_dict(d, [:|>])[1])     !== nothing)  cmd = string(cmd, " > ", val)
 	elseif ((val = find_in_dict(d, [:write])[1])  !== nothing)  cmd = string(cmd, " > ", val)
@@ -3708,7 +3707,7 @@ function justify(arg, nowarn::Bool=false)::String
 	# Take a string or symbol in ARG and return the two chars justification code.
 	isa(arg, Symbol) && (arg = string(arg))
 	(length(arg) == 2) && return arg		# Assume it's already the 2 chars code (no further checking)
-	_arg = lowercase(arg)
+	_arg::String = lowercase(arg)
 	if     (startswith(_arg, "topl"))     out = "TL"
 	elseif (startswith(_arg, "middlel"))  out = "ML"
 	elseif (startswith(_arg, "bottoml"))  out = "BL"

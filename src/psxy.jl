@@ -18,7 +18,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
 
-	cmd = "";	sub_module = ""			# Will change to "scatter", etc... if called by sub-modules
+	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules
 	g_bar_fill = Vector{String}()		# May hold a sequence of colors for gtroup Bar plots
 	if (caller != "")
 		if (occursin(" -", caller))		# some sub-modues use this piggy-backed call
