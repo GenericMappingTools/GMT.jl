@@ -228,7 +228,7 @@ function gmt(cmd::String, args...)
 				r *= " -Tg"
 			elseif (isa(args[1], GMTimage))
 				r *= " -Ti"
-			elseif (isa(args[1], Array{<:GMTdataset}) || isa(args[1], GMTdataset))
+			elseif (isa(args[1], GDtype))
 				r *= " -Td"
 			elseif (isa(args[1], GMTps))
 				r *= " -Tp"
