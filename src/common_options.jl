@@ -1995,7 +1995,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs::VMs, need_symb::Symbol, args,
 				to_slot = false
 			end
 			cmd = add_opt(d, cmd, opt, symbs, nt_opts)
-		elseif (isa(val, Array{<:Real}) || isa(val, GMTdataset) || isa(val, Vector{<:GMTdataset}) || isa(val, GMTcpt) || typeof(val) <: AbstractRange)
+		elseif (isa(val, Array{<:Real}) || isa(val, GDtype) || isa(val, GMTcpt) || typeof(val) <: AbstractRange)
 			if (typeof(val) <: AbstractRange)  val = collect(val)  end
 			cmd = string(cmd, " -", opt)
 		elseif (isa(val, String) || isa(val, Symbol) || isa(val, Real))
