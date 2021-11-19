@@ -69,6 +69,7 @@ if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names a
 end
 const GMTver, libgmt, libgdal, libproj, GMT_bindir = _GMTver, _libgmt, _libgdal, _libproj, _GMT_bindir
 
+const global G_API = [C_NULL]
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
 const global current_view   = [""]			# To store the current viewpoint (-p)
@@ -271,12 +272,12 @@ function __init__(test::Bool=false)
 	end
 
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
-	global API = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
+	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 	theme_modern()				# Set the MODERN theme
 	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
 	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
-	gmtlib_setparameter(API, "COLOR_NAN", "255")				# Stop those ugly grays
+	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")				# Stop those ugly grays
 end
 
 include("precompile_GMT_i.jl")
