@@ -1370,13 +1370,23 @@ function add_opt_pen(d::Dict, symbs::VMs, opt::String="", sub::Bool=true, del::B
 				end
 			elseif (isa(val, NamedTuple))		# Make a recursive call. Will screw if used in mix mode
 				# This branch is very convoluted and fragile
-				d2 = nt2dict(val)				# Decompose the NT and feed into this-self
-				t = add_opt_pen(d2, symbs, "", true, false)
-				if (t == "")
-					d, out = nt2dict(val), opt
+				# Cases like pen=(width=0.1, color=:red, style=".") were failing. But because we may break other
+				# working cases, just try to catch this case and turn it into a `pen=(0.1, :red. ".")` call.
+				k = keys(val)
+				w::String = ((ind = findfirst(k .== :width)) !== nothing) ? string(val[ind]) : ""
+				c::String = ((ind = findfirst(k .== :color)) !== nothing) ? string(val[ind]) : ""
+				s::String = ((ind = findfirst(k .== :style)) !== nothing) ? string(val[ind]) : ""
+				if (w != "" || c != "" || s != "")
+					out = opt * add_opt_pen(Dict(:pen => (w,c,s)), symbs, "", true, false)
 				else
-					out = opt * t
-					d = Dict{Symbol,Any}()		# Just let it go straight to end. Returning here seems bugged
+					d2 = nt2dict(val)				# Decompose the NT and feed into this-self
+					t = add_opt_pen(d2, symbs, "", true, false)
+					if (t == "")
+						d, out = nt2dict(val), opt
+					else
+						out = opt * t
+						d = Dict{Symbol,Any}()		# Just let it go straight to end. Returning here seems bugged
+					end
 				end
 			else
 				out = opt * arg2str(val)
@@ -2597,7 +2607,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 vector_attrib(d::Dict, lixo=nothing) = vector_attrib(; d...)	# When comming from add_opt()
 vector_attrib(t::NamedTuple) = vector_attrib(; t...)
-function vector_attrib(;kwargs...)::String
+function vector_attrib(; kwargs...)::String
 	d = KW(kwargs)
 	cmd::String = add_opt(d, "", "", [:len :length])
 	(haskey(d, :angle)) && (cmd = string(cmd, "+a", d[:angle]))
@@ -2618,7 +2628,7 @@ function vector_attrib(;kwargs...)::String
 	end
 
 	if (haskey(d, :justify))
-		t = string(d[:justify])[1]
+		t::Char = string(d[:justify])[1]
 		if     (t == 'b')  cmd *= "+jb"	# "begin"
 		elseif (t == 'e')  cmd *= "+je"	# "end"
 		elseif (t == 'c')  cmd *= "+jc"	# "center"
@@ -2674,7 +2684,7 @@ function vector4_attrib(; kwargs...)::String
 	d = KW(kwargs)
 	cmd::String = "t"
 	if ((val = find_in_dict(d, [:align :center])[1]) !== nothing)
-		c = string(val)[1]
+		c::Char = string(val)[1]
 		if     (c == 'h' || c == 'b')  cmd = "h"		# Head
 		elseif (c == 'm' || c == 'c')  cmd = "b"		# Middle
 		elseif (c == 'p')              cmd = "s"		# Point
@@ -2685,12 +2695,12 @@ function vector4_attrib(; kwargs...)::String
 	if (haskey(d, :norm))  cmd = string(cmd, "n", d[:norm])  end
 	if ((val = find_in_dict(d, [:head])[1]) !== nothing)
 		if (isa(val, NamedTuple) || isa(val, Dict))
-			ha = "0.075c";	hl = "0.3c";	hw = "0.25c"
+			ha::String = "0.075c";	hl::String = "0.3c";	hw::String = "0.25c"
 			dh = isa(val, NamedTuple) ? nt2dict(val) : val
 			haskey(dh, :arrowwidth) && (ha = string(dh[:arrowwidth]))
 			haskey(dh, :headlength) && (hl = string(dh[:headlength]))
 			haskey(dh, :headwidth)  && (hw = string(dh[:headwidth]))
-			hh = ha * '/' * hl * '/' * hw
+			hh::String = ha * '/' * hl * '/' * hw
 		elseif (isa(val, Tuple) && length(val) == 3)  hh = arg2str(val)
 		elseif (isa(val, String))                     hh = val		# No checking
 		end
