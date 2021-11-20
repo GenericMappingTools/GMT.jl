@@ -143,7 +143,6 @@ except when using the ``monolithic`` mode. Usage:
     gmt("module_name `options`", args...)
 """
 function gmt(cmd::String, args...)
-	global API
 
 	(cmd == "destroy") && return gmt_restart()
 
@@ -183,17 +182,17 @@ function gmt(cmd::String, args...)
 	end
 
 	pad = 2
-	if (!isa(API, Ptr{Nothing}) || API == C_NULL)
-		API = GMT_Create_Session("GMT", pad, GMT_SESSION_BITFLAGS)
-		gmtlib_setparameter(API, "COLOR_NAN", "255")	# Stop those ugly grays
+	if (!isa(G_API[1], Ptr{Nothing}) || G_API[1] == C_NULL)
+		G_API[1] = GMT_Create_Session("GMT", pad, GMT_SESSION_BITFLAGS)
+		gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")	# Stop those ugly grays
 		theme_modern()				# Set the MODERN theme
 	end
 
 	# 2. In case this was a clean up call or a begin/end from the modern mode
-	gmt_manage_workflow(API, 0, NULL)		# Force going here to see if we are in middle of a MODERN session
+	gmt_manage_workflow(G_API[1], 0, NULL)		# Force going here to see if we are in middle of a MODERN session
 
 	# Make sure this is a valid module
-	if ((status = GMT_Call_Module(API, g_module, GMT_MODULE_EXIST, C_NULL)) != 0)
+	if ((status = GMT_Call_Module(G_API[1], g_module, GMT_MODULE_EXIST, C_NULL)) != 0)
 		error("GMT: No module by that name -- " * g_module * " -- was found.")
 	end
 
@@ -218,7 +217,7 @@ function gmt(cmd::String, args...)
 		(img_mem_layout[1] != "") && (mem_layout = img_mem_layout[1];	mem_kw = "API_IMAGE_LAYOUT")
 		(grd_mem_layout[1] != "") && (mem_layout = grd_mem_layout[1];	mem_kw = "API_GRID_LAYOUT")
 		(img_mem_layout[1] != "" && mem_layout[end] != 'a')  && (mem_layout *= "a")
-		GMT_Set_Default(API, mem_kw, mem_layout);		# Tell module to give us the image/grid with this mem layout
+		GMT_Set_Default(G_API[1], mem_kw, mem_layout);		# Tell module to give us the image/grid with this mem layout
 	end
 
 	# 2++ Add -T to gmtwrite if user did not explicitly give -T. Seek also for MEM layout requests
@@ -243,12 +242,12 @@ function gmt(cmd::String, args...)
 
 	# 2+++ If gmtread -Ti than temporarily set pad to 0 since we don't want padding in image arrays
 	if (occursin("read", g_module) && occursin("-T", r))
-		(occursin("-Ti", r) || occursin("-Tg", r)) && GMT_Set_Default(API, "API_PAD", "0")
+		(occursin("-Ti", r) || occursin("-Tg", r)) && GMT_Set_Default(G_API[1], "API_PAD", "0")
 	end
 
 	# 3. Convert command line arguments to a linked GMT option list
 	LL = NULL
-	LL = GMT_Create_Options(API, 0, r)	# It uses also the fact that GMT parses and check options
+	LL = GMT_Create_Options(G_API[1], 0, r)	# It uses also the fact that GMT parses and check options
 
 	# 4. Preprocess to update GMT option lists and return info array X
 
@@ -261,7 +260,7 @@ function gmt(cmd::String, args...)
 	pLL = (LL != NULL) ? Ref([LL], 1) : pointer([NULL])
 
 	n_itemsP = pointer([0])
-	X = GMT_Encode_Options(API, g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
+	X = GMT_Encode_Options(G_API[1], g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
 	n_items = unsafe_load(n_itemsP)
 	if (X == NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
 		(n_items > 65000) ? n_items = 0 : error("Failure to encode Julia command options") 
@@ -276,20 +275,20 @@ function gmt(cmd::String, args...)
 	for k = 1:n_items
 		XX[k] = unsafe_load(X, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
 	end
-	gmt_free_mem(API, X)
+	gmt_free_mem(G_API[1], X)
 	X = XX
 
-	#println(g_module * " " * unsafe_string(GMT_Create_Cmd(API, LL)))	# Uncomment when need to confirm argins
+	#println(g_module * " " * unsafe_string(GMT_Create_Cmd(G_API[1], LL)))	# Uncomment when need to confirm argins
 
 	# 5. Assign input sources (from Julia to GMT) and output destinations (from GMT to Julia)
 	for k = 1:n_items					# Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0) error("GMT: Expects a Matrix for input") end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : nothing
-		GMTJL_Set_Object(API, X[k], ptr, pad)	# Set object pointer
+		GMTJL_Set_Object(G_API[1], X[k], ptr, pad)	# Set object pointer
 	end
 
 	# 6. Run GMT module; give usage message if errors arise during parsing
-	status = GMT_Call_Module(API, g_module, GMT_MODULE_OPT, LL)
+	status = GMT_Call_Module(G_API[1], g_module, GMT_MODULE_OPT, LL)
 	if (status != 0)
 		((status < 0) || status == GMT_SYNOPSIS || status == Int('?')) && return
 		error("Something went wrong when calling the module. GMT error number = $status")
@@ -307,17 +306,17 @@ function gmt(cmd::String, args...)
 
 	for k = 1:n_items					# Get results from GMT into Julia arrays
 		if (X[k].direction == GMT_IN) continue 	end      # Only looking for stuff coming OUT of GMT here
-		out[X[k].pos+1] = GMTJL_Get_Object(API, X[k])    # Hook object onto rhs list
+		out[X[k].pos+1] = GMTJL_Get_Object(G_API[1], X[k])    # Hook object onto rhs list
 	end
 
 	# 2++- If gmtread -Ti than reset the session's pad value that was temporarily changed above (2+++)
 	if (occursin("read", g_module) && (occursin("-Ti", r) || occursin("-Tg", r)) )
-		GMT_Set_Default(API, "API_PAD", string(pad))
+		GMT_Set_Default(G_API[1], "API_PAD", string(pad))
 	end
 
 	# Due to the damn GMT pad I'm forced to a lot of trickery. One involves shitting on memory ownership
 	if (CTRL.gmt_mem_bag[1] != C_NULL)
-		gmt_free_mem(API, CTRL.gmt_mem_bag[1])		# Free a GMT owned memory that we pretended was ours
+		gmt_free_mem(G_API[1], CTRL.gmt_mem_bag[1])		# Free a GMT owned memory that we pretended was ours
 		CTRL.gmt_mem_bag[1] = C_NULL
 	end
 
@@ -325,8 +324,8 @@ function gmt(cmd::String, args...)
 	for k = 1:n_items
 		ppp = X[k].object
 		name = String([X[k].name...])				# Because X.name is a NTuple
-		(GMT_Close_VirtualFile(API, name) != 0) && error("GMT: Failed to close virtual file")
-		(GMT_Destroy_Data(API, Ref([X[k].object], 1)) != 0) && error("Failed to destroy GMT<->Julia interface object")
+		(GMT_Close_VirtualFile(G_API[1], name) != 0) && error("GMT: Failed to close virtual file")
+		(GMT_Destroy_Data(G_API[1], Ref([X[k].object], 1)) != 0) && error("Failed to destroy GMT<->Julia interface object")
 		# Success, now make sure we dont destroy the same pointer more than once
 		for kk = k+1:n_items
 			if (X[kk].object == ppp) 	X[kk].object = NULL;	end
@@ -334,9 +333,9 @@ function gmt(cmd::String, args...)
 	end
 
 	# 9. Destroy linked option list
-	GMT_Destroy_Options(API, pLL)
+	GMT_Destroy_Options(G_API[1], pLL)
 
-	#if (IamModern[1])  gmt_put_history(API);	end	# Needed, otherwise history is not updated
+	#if (IamModern[1])  gmt_put_history(G_API[1]);	end	# Needed, otherwise history is not updated
 	(IamModern[1]) && gmt_restart()		# Needed, otherwise history is not updated
 
 	img_mem_layout[1] = "";		grd_mem_layout[1] = ""		# Reset to not afect next readings
@@ -364,14 +363,13 @@ end
 # -----------------------------------------------------------------------------------------------
 function gmt_restart(restart::Bool=true)
 	# Destroy the contents of the current API pointer and, by default, recreate a new one.
-	global API
-	GMT_Destroy_Session(API);
+	GMT_Destroy_Session(G_API[1]);
 	if (restart)
-		API = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
-		gmtlib_setparameter(API, "COLOR_NAN", "255")	# Stop those ugly grays
+		G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
+		gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")	# Stop those ugly grays
 		theme_modern()				# Set the MODERN theme
 	else
-		API = C_NULL
+		G_API[1] = C_NULL
 	end
 	return nothing
 end
