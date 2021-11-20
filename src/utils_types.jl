@@ -62,7 +62,7 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs.
 
 	if ((x = find_in_dict(d, [:x])[1]) !== nothing)
 		n_ds = (multi) ? size(mat, 2) : 1
-		xx = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : x
+		xx::Vector{Float64} = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : x
 		(length(xx) != size(mat, 1)) && error("Number of X coordinates and MAT number of rows are not equal")
 	else
 		n_ds = (ndims(mat) == 3) ? size(mat,3) : ((multi) ? size(mat, 2) - 1 : 1)
@@ -70,7 +70,7 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs.
 	end
 
 	if (!isempty(hdr) && isa(hdr, String))	# Accept one only but expand to n_ds with the remaining as blanks
-		bak = hdr;		hdr = Base.fill("", n_ds);	hdr[1] = bak
+		bak = hdr;		hdr::Vector{String} = Base.fill("", n_ds);	hdr[1] = bak
 	elseif (!isempty(hdr) && length(hdr) != n_ds)
 		error("The header vector can only have length = 1 or same number of MAT Y columns")
 	end
@@ -116,19 +116,19 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs.
 	if (!isempty(_fill))				# Paint the polygons (in case of)
 		n_colors = length(_fill)
 		if (isempty(hdr))
-			hdr = Array{String,1}(undef, n_ds)
+			hdr = Vector{String}(undef, n_ds)
 			[hdr[k]  = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
 		else
 			[hdr[k] *= " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
 		end
 	end
 
-	prj = ((proj = find_in_dict(d, [:proj :proj4])[1]) !== nothing) ? proj : ""
+	prj::String = ((proj = find_in_dict(d, [:proj :proj4])[1]) !== nothing) ? proj : ""
 	(prj == "geo" || prj == "geog") && (prj = prj4WGS84)
 	(prj != "" && !startswith(prj, "+proj=")) && (prj = "+proj=" * prj)
-	wkt = ((wk = find_in_dict(d, [:wkt])[1]) !== nothing) ? wk : ""
+	wkt::String = ((wk = find_in_dict(d, [:wkt])[1]) !== nothing) ? wk : ""
 
-	D = Vector{GMTdataset}(undef, n_ds)
+	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
 
 	# By default convert to Doubles, except if instructed to NOT to do it.
 	(find_in_dict(d, [:datatype])[1] === nothing) && (eltype(mat) != Float64) && (mat = Float64.(mat))
@@ -217,8 +217,10 @@ function helper_ds_fill(d::Dict)
 			_alpha = Vector{String}(undef, n_colors)
 			na = min(length(alpha_val), n_colors)
 			[_alpha[k] = join(string('@',alpha_val[k])) for k = 1:na]
-			(na < n_colors) && [_alpha[k] = "" for k = na+1:n_colors]
-			[_fill[k] *= _alpha[k] for k = 1:n_colors]		# And finaly apply the transparency
+			if (na < n_colors)
+				for k = na+1:n_colors  _alpha[k] = ""  end
+			end
+			for k = 1:n_colors  _fill[k] *= _alpha[k]  end	# And finaly apply the transparency
 		end
 	else
 		_fill = Vector{String}()

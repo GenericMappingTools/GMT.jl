@@ -157,7 +157,7 @@ function build_opt_R(arg::NamedTuple)::String
 				BB = rstrip(BB, '/')		# and remove last '/'
 			end
 		elseif (isa(val, String) || isa(val, Symbol))
-			t = string(val)
+			t::String = string(val)
 			if     (t == "global")     BB = "-180/180/-90/90"
 			elseif (t == "global360")  BB = "0/360/-90/90"
 			else                       BB = string(val) 			# Whatever good stuff or shit it may contain
@@ -183,7 +183,8 @@ function build_opt_R(arg::NamedTuple)::String
 	end
 
 	if ((val = find_in_dict(d, [:adjust :pad :extend :expand])[1]) !== nothing)
-		if (isa(val, String) || isa(val, Real))  t = string(val)
+		if (isa(val, String) || isa(val, Real))
+			t = string(val)
 		elseif (isa(val, Array{<:Real}) || isa(val, Tuple))
 			t = join([@sprintf("%.15g/", Float64(x)) for x in val])
 			t = rstrip(t, '/')		# and remove last '/'
@@ -1307,7 +1308,7 @@ function parse_I(d::Dict, cmd::String, symbs, opt, del::Bool=true)::String
 				elseif (fn[k] == :extend) e = true
 				end
 			end
-			if (x == "") error("Need at least the x increment")	end
+			(x == "") && error("Need at least the x increment")
 			cmd = string(cmd, " -", opt, x)
 			if (u != "")
 				u = parse_unit_unit(u)
@@ -1763,13 +1764,15 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}, del:
 		if (isa(val, String) || isa(val, Symbol))
 			((args = arg2str(val)) != "") && (args = string(args[1]))
 		elseif (isa(val, Tuple))
-			[args *= arg2str(val[k])[1] for k = 1:length(val)]
+			for k = 1:length(val)
+				args *= arg2str(val[k])[1]
+			end
 		end
 		cmd = string(cmd, " -", opt[1], args)
 	end
 	return cmd
 end
-
+	
 # ---------------------------------------------------------------------------------------------------
 function add_opt(d::Dict, cmd::String, opt, symbs::VMs, mapa=nothing, del::Bool=true, arg=nothing)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
@@ -2811,7 +2814,7 @@ function helper_decorated(d::Dict, compose=false)
 				end
 			elseif (isa(val, Tuple))
 				if (length(val) == 2 && (isa(val[1], String) || isa(val[1], Symbol)) )
-					t1 = string(val[1]);	t2 = string(val[2])		# t1/t2 can also be 2 char or a LongWord justification
+					t1::String = string(val[1]);	t2::String = string(val[2])	# t1/t2 can also be 2 char or a LongWord justification
 					t1 = startswith(t1, "min") ? "Z-" : justify(t1)
 					t2 = startswith(t2, "max") ? "Z+" : justify(t2)
 					optD = flag * t1 * "/" * t2

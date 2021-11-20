@@ -493,7 +493,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 		V = [0.]
 	else
 		V = zeros(nb);		t = unsafe_wrap(Array, G.z, nb)
-		[V[n] = t[n] for n = 1:nb]
+		for n = 1:nb  V[n] = t[n]  end
 	end
 
 	t = unsafe_wrap(Array, G.data, my * mx * nb)
