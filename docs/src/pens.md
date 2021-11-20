@@ -5,6 +5,8 @@ of an option argument, with commas separating the given attributes, e.g.,
 
 ```
 pen=(width, color, style)
+or
+pen=(width=?, color=?, style=?)
 ```
 
 ### width

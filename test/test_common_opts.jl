@@ -176,6 +176,7 @@
 
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt(d, "", "", [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
+	@test GMT.add_opt_pen(Dict(:pen => (width=0.1, style=".")), [:W :pen]) == "0.1,,."
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(10,:red),bot=true), Vd=dbg2);
 	@test startswith(r,"psxy  -JX" * GMT.def_fig_size * " -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10,red+yb")
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=dbg2);
