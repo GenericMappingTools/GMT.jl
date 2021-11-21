@@ -70,7 +70,7 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs.
 	end
 
 	if (!isempty(hdr) && isa(hdr, String))	# Accept one only but expand to n_ds with the remaining as blanks
-		bak = hdr;		hdr::Vector{String} = Base.fill("", n_ds);	hdr[1] = bak
+		bak = hdr;		hdr = Base.fill("", n_ds);	hdr[1] = bak
 	elseif (!isempty(hdr) && length(hdr) != n_ds)
 		error("The header vector can only have length = 1 or same number of MAT Y columns")
 	end
