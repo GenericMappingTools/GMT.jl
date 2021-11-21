@@ -94,7 +94,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	cmd = add_opt(d, cmd, 'A', [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
-	opt_F = add_opt(d, "", "", [:F :conn :connection],
+	opt_F::String = add_opt(d, "", "", [:F :conn :connection],
 	                (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpoint=("r", nothing, 1),  ignore_hdr="_a", single_group="_f", segments="_s", segments_reset="_r", anchor=("", arg2str)))
 	(opt_F != "" && !occursin("/", opt_F)) && (opt_F = string(opt_F[1]))	# Allow con=:net or con=(1,2)
 	(opt_F != "") && (cmd *= " -F" * opt_F)
@@ -133,7 +133,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt somewhere else
 		cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	end
-	opt_Gsymb = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
+	opt_Gsymb::String = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
 
 	# To track a still existing bug in sessions management at GMT lib level
 	got_pattern = (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb)) ? true : false
@@ -141,7 +141,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if (is_ternary)			# Means we are in the psternary mode
 		cmd = add_opt(d, cmd, 'L', [:L :vertex_labels])
 	else
-		opt_L = add_opt(d, "", 'L', [:L :close :polygon],
+		opt_L::String = add_opt(d, "", 'L', [:L :close :polygon],
 		                (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
 		(length(opt_L) > 3 && !occursin("-G", cmd) && !occursin("+p", cmd)) && (opt_L *= "+p0.5p")
 		cmd *= opt_L
@@ -151,18 +151,18 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		cmd = (isa(val, String)) ? cmd * " " * val : cmd * decorated(val)
 	end
 
-	opt_Wmarker = ""
+	opt_Wmarker::String = ""
 	if ((val = find_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor])[1]) !== nothing)
 		opt_Wmarker = "0.5p," * arg2str(val)		# 0.25p is too thin?
 	end
 
-	opt_W = add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
+	opt_W::String = add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
 	((occursin("+c", opt_W)) && !occursin("-C", cmd)) &&
 		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
 
-	opt_S = add_opt(d, "", 'S', [:S :symbol], (symb="1", size="", unit="1"))
+	opt_S::String = add_opt(d, "", 'S', [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
-		marca, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
+		marca::String, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
 		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
 			(marca == "") && (marca = "c")			# If a marker name was not selected, defaults to circle
 			if (isa(val, AbstractArray))
@@ -187,7 +187,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
 	end
 
-	opt_ML = ""
+	opt_ML::String = ""
 	if (opt_S != "")
 		opt_ML, opt_Wmarker = parse_markerline(d, opt_ML, opt_Wmarker)
 	end
@@ -527,8 +527,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::Bool=true)
-	marca = Array{String,1}(undef,1)
-	marca = [""];		N = 0
+	marca::String = "";		N = 0
 	for symb in symbs
 		if (haskey(d, symb))
 			t = d[symb]
@@ -548,13 +547,13 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 				elseif (o == "w" || o == "pie" || o == "web" || o == "wedge")  opt = "w";  N = 2
 				elseif (o == "W" || o == "Pie" || o == "Web" || o == "Wedge")  opt = "W";  N = 2
 				end
-				if (N > 0)  marca[1], arg1, msg = helper_markers(opt, t[2], arg1, N, cst)  end
+				if (N > 0)  marca, arg1, msg = helper_markers(opt, t[2], arg1, N, cst)  end
 				(msg != "") && error(msg)
 				if (length(t) == 3 && isa(t[3], NamedTuple))
-					if (marca[1] == "w" || marca[1] == "W")	# Ex (spiderweb): marker=(:pie, [...], (inner=1,))
-						marca[1] *= add_opt(t[3], (inner="/", arc="+a", radial="+r", size=("", arg2str, 1), pen=("+p", add_opt_pen)) )
-					elseif (marca[1] == "m" || marca[1] == "M")
-						marca[1] *= vector_attrib(t[3])
+					if (marca == "w" || marca == "W")	# Ex (spiderweb): marker=(:pie, [...], (inner=1,))
+						marca *= add_opt(t[3], (inner="/", arc="+a", radial="+r", size=("", arg2str, 1), pen=("+p", add_opt_pen)) )
+					elseif (marca == "m" || marca == "M")
+						marca *= vector_attrib(t[3])
 					end
 				end
 			elseif (isa(t, NamedTuple))		# e.g. marker=(pie=true, inner=1, ...)
@@ -570,58 +569,58 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 				elseif (key == :m || key == :matang)  opt = "m"
 				end
 				if (opt == "w" || opt == "W")
-					marca[1] = opt * add_opt(t, (size=("", arg2str, 1), inner="/", arc="+a", radial="+r", pen=("+p", add_opt_pen)))
+					marca = opt * add_opt(t, (size=("", arg2str, 1), inner="/", arc="+a", radial="+r", pen=("+p", add_opt_pen)))
 				elseif (opt == "b" || opt == "B")
-					marca[1] = opt * add_opt(t, (size=("", arg2str, 1), base="+b", Base="+B"))
+					marca = opt * add_opt(t, (size=("", arg2str, 1), base="+b", Base="+B"))
 				elseif (opt == "l")
-					marca[1] = opt * add_opt(t, (size=("", arg2str, 1), letter="+t", justify="+j", font=("+f", font)))
+					marca = opt * add_opt(t, (size=("", arg2str, 1), letter="+t", justify="+j", font=("+f", font)))
 				elseif (opt == "m" || opt == "M")
-					marca[1] = opt * add_opt(t, (size=("", arg2str, 1), arrow=("", vector_attrib)))
+					marca = opt * add_opt(t, (size=("", arg2str, 1), arrow=("", vector_attrib)))
 				elseif (opt == "k" || opt == "K")
-					marca[1] = opt * add_opt(t, (custom="", size="/"))
+					marca = opt * add_opt(t, (custom="", size="/"))
 				end
 			else
 				t1 = string(t)
 				(t1[1] != 'T') && (t1 = lowercase(t1))
-				if     (t1 == "-" || t1 == "x-dash")    marca[1] = "-"
-				elseif (t1 == "+" || t1 == "plus")      marca[1] = "+"
-				elseif (t1 == "a" || t1 == "*" || t1 == "star")  marca[1] = "a"
-				elseif (t1 == "k" || t1 == "custom")    marca[1] = "k"
-				elseif (t1 == "x" || t1 == "cross")     marca[1] = "x"
-				elseif (is3D && (t1 == "u" || t1 == "cube"))  marca[1] = "u"	# Must come before next line
-				elseif (t1[1] == 'c')                   marca[1] = "c"
-				elseif (t1[1] == 'd')                   marca[1] = "d"		# diamond
-				elseif (t1 == "g" || t1 == "octagon")   marca[1] = "g"
-				elseif (t1[1] == 'h')                   marca[1] = "h"		# hexagon
-				elseif (t1 == "i" || t1 == "v" || t1 == "inverted_tri")  marca[1] = "i"
-				elseif (t1[1] == 'l')                   marca[1] = "l"		# letter
-				elseif (t1 == "n" || t1 == "pentagon")  marca[1] = "n"
-				elseif (t1 == "p" || t1 == "." || t1 == "point")  marca[1] = "p"
-				elseif (t1[1] == 's')                   marca[1] = "s"		# square
-				elseif (t1[1] == 't' || t1 == "^")      marca[1] = "t"		# triangle
-				elseif (t1[1] == 'T')                   marca[1] = "T"		# Triangle
-				elseif (t1[1] == 'y')                   marca[1] = "y"		# y-dash
+				if     (t1 == "-" || t1 == "x-dash")    marca = "-"
+				elseif (t1 == "+" || t1 == "plus")      marca = "+"
+				elseif (t1 == "a" || t1 == "*" || t1 == "star")  marca = "a"
+				elseif (t1 == "k" || t1 == "custom")    marca = "k"
+				elseif (t1 == "x" || t1 == "cross")     marca = "x"
+				elseif (is3D && (t1 == "u" || t1 == "cube"))  marca = "u"	# Must come before next line
+				elseif (t1[1] == 'c')                   marca = "c"
+				elseif (t1[1] == 'd')                   marca = "d"		# diamond
+				elseif (t1 == "g" || t1 == "octagon")   marca = "g"
+				elseif (t1[1] == 'h')                   marca = "h"		# hexagon
+				elseif (t1 == "i" || t1 == "v" || t1 == "inverted_tri")  marca = "i"
+				elseif (t1[1] == 'l')                   marca = "l"		# letter
+				elseif (t1 == "n" || t1 == "pentagon")  marca = "n"
+				elseif (t1 == "p" || t1 == "." || t1 == "point")  marca = "p"
+				elseif (t1[1] == 's')                   marca = "s"		# square
+				elseif (t1[1] == 't' || t1 == "^")      marca = "t"		# triangle
+				elseif (t1[1] == 'T')                   marca = "T"		# Triangle
+				elseif (t1[1] == 'y')                   marca = "y"		# y-dash
 				end
 				t1 = string(t)		# Repeat conversion for the case it was lower-cased above
 				# Still need to check the simpler forms of these
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["e", "ellipse"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["E", "Ellipse"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["j", "rotrect"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["J", "RotRect"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["m", "matangle"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["M", "Matangle"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["r", "rectangle"])   end
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["R", "RRectangle"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["v", "vector"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["V", "Vector"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["w", "pie", "web"])  end
-				if (marca[1] == "")  marca[1] = helper2_markers(t1, ["W", "Pie", "Web"])  end
+				if (marca == "")  marca = helper2_markers(t1, ["e", "ellipse"])   end
+				if (marca == "")  marca = helper2_markers(t1, ["E", "Ellipse"])   end
+				if (marca == "")  marca = helper2_markers(t1, ["j", "rotrect"])   end
+				if (marca == "")  marca = helper2_markers(t1, ["J", "RotRect"])   end
+				if (marca == "")  marca = helper2_markers(t1, ["m", "matangle"])  end
+				if (marca == "")  marca = helper2_markers(t1, ["M", "Matangle"])  end
+				if (marca == "")  marca = helper2_markers(t1, ["r", "rectangle"])   end
+				if (marca == "")  marca = helper2_markers(t1, ["R", "RRectangle"])  end
+				if (marca == "")  marca = helper2_markers(t1, ["v", "vector"])  end
+				if (marca == "")  marca = helper2_markers(t1, ["V", "Vector"])  end
+				if (marca == "")  marca = helper2_markers(t1, ["w", "pie", "web"])  end
+				if (marca == "")  marca = helper2_markers(t1, ["W", "Pie", "Web"])  end
 			end
 			(del) && delete!(d, symb)
 			break
 		end
 	end
-	return marca[1], arg1, N > 0
+	return marca, arg1, N > 0
 end
 
 function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)

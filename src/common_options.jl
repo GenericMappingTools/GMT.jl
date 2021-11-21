@@ -1668,13 +1668,16 @@ function finish_PS_nested(d::Dict, cmd::Vector{String}, K::Bool=true)::Tuple{Vec
 				ind = findfirst(" -R", cmd[1]);		opt_R::String = strtok(cmd[1][ind[1]:end])[1]
 				ind = findfirst(" -J", cmd[1]);		opt_J::String = strtok(cmd[1][ind[1]:end])[1]
 				extra::String = strtok(cmd2[1])[2] * " "	# When psclip recieved extra arguments
-				t, opt_B, opt_B1 = "psclip " * extra * opt_R * " " * opt_J, "", ""
+				t::String, opt_B::String, opt_B1::String = "psclip " * extra * opt_R * " " * opt_J, "", ""
 				ind = findall(" -B", cmd[1])
 				if (!isempty(ind) && (findfirst("-N", extra) === nothing))
-					[opt_B *= " " * strtok(cmd[1][ind[k][1]:end])[1] for k = 1:length(ind)]
+					#[opt_B *= " " * strtok(cmd[1][ind[k][1]:end])[1] for k = 1:length(ind)]
+					for k = 1:length(ind)
+						opt_B *= " " * strtok(cmd[1][ind[k][1]:end])[1]
+					end
 					# Here we need to reset any -B parts that do NOT include the plotting area and which were clipped.
 					if (CTRL.pocket_B[1] == "" && CTRL.pocket_B[1] == "")
-						opt_B1::String = opt_B * " -R -J"
+						opt_B1 = opt_B * " -R -J"
 					else
 						(CTRL.pocket_B[1] != "") && (opt_B1 = replace(opt_B,  CTRL.pocket_B[1] => ""))	# grid
 						(CTRL.pocket_B[2] != "") && (opt_B1 = replace(opt_B1, CTRL.pocket_B[2] => ""))	# Fill
@@ -2228,7 +2231,7 @@ function add_opt_module(d::Dict)::Vector{String}
 				elseif (symb == :logo)     r = logo!(Vd=2)
 				end
 			elseif (symb == :colorbar && (isa(val, String) || isa(val, Symbol)))
-				t = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
+				t::Char = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
 				anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
 				r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
 			elseif (symb == :clip)
@@ -3008,9 +3011,9 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 	elseif (isa(arg, Matrix{Any}) && typeof(arg[1]) == DateTime)	# Matrix with DateTime in first col
 		min_max = round_datetime(extrema(view(arg, :, 1)))
 		arg[:,1] = Dates.value.(arg[:,1]) ./ 1000;	cmd *= " --TIME_EPOCH=0000-12-31T00:00:00 --TIME_UNIT=s"
-		t = Array{Float64, 2}(undef, size(arg))
-		[t[k] = arg[k] for k in eachindex(arg)]
-		arg, got_datetime = t, true
+		tt = Array{Float64, 2}(undef, size(arg))
+		for k in eachindex(arg)  tt[k] = arg[k]  end
+		arg, got_datetime = tt, true
 	end
 
 	have_info = false
@@ -3061,7 +3064,9 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 				end
 			elseif (!is_onecol)
 				t = round_wesn(info[1].data)		# Add a pad
-				[info[1].data[k-1] = t[k-1] for k = 2:length(rs) if (rs[k] == "?")]
+				for k = 2:length(rs)
+					(rs[k] == "?") && (info[1].data[k-1] = t[k-1])
+				end
 			end
 		else
 			cmd = replace(cmd, " -Rtight" => "")	# Must remove old -R
@@ -3103,7 +3108,7 @@ end
 function round_wesn(_wesn::Vector{Float64}, geo::Bool=false)::Vector{Float64}
 	# Use data range to round to nearest reasonable multiples
 	# If wesn has 6 elements (is3D), last two are not modified.
-	wesn = deepcopy(_wesn)		# To not change the input
+	wesn = copy(_wesn)		# To not change the input
 	set = zeros(Bool, 2)
 	range = [0.0, 0.0]
 	if (wesn[1] == wesn[2])
