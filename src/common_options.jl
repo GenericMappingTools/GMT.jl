@@ -157,7 +157,7 @@ function build_opt_R(arg::NamedTuple)::String
 				BB = rstrip(BB, '/')		# and remove last '/'
 			end
 		elseif (isa(val, String) || isa(val, Symbol))
-			t = string(val)
+			t::String = string(val)
 			if     (t == "global")     BB = "-180/180/-90/90"
 			elseif (t == "global360")  BB = "0/360/-90/90"
 			else                       BB = string(val) 			# Whatever good stuff or shit it may contain
@@ -183,7 +183,8 @@ function build_opt_R(arg::NamedTuple)::String
 	end
 
 	if ((val = find_in_dict(d, [:adjust :pad :extend :expand])[1]) !== nothing)
-		if (isa(val, String) || isa(val, Real))  t = string(val)
+		if (isa(val, String) || isa(val, Real))
+			t = string(val)
 		elseif (isa(val, Array{<:Real}) || isa(val, Tuple))
 			t = join([@sprintf("%.15g/", Float64(x)) for x in val])
 			t = rstrip(t, '/')		# and remove last '/'
@@ -801,12 +802,12 @@ end
 # ---------------------------------------------------------------------------------------------------
 function consolidate_Bframe(opt_B::String)::String
 	# Consolidate the 'frame' parte of a multi-pieces -B option and make sure that it comes out at the end
-	s = split(opt_B)
+	s::Vector{SubString{String}} = split(opt_B)
 	nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words (e.g. titles)
 	isBframe = zeros(Bool, length(s))
 	for k = 1:length(s)
 		(occursin(s[k][3], "psxyzafgbc")) && (isBframe[k] = false; continue)	# A FALSE solves the quest imedeately
-		ss = split(s[k], "+");	len = length(ss)
+		ss::Vector{SubString{String}} = split(s[k], "+");	len = length(ss)
 		isBframe[k] = occursin(r"[WESNZwesnztlbu]", ss[1])	# Search for frame characters in the part before the +flag
 		isBframe[k] && (len = 0)		# Tricky way of avoiding next loop when we already have the answer. 
 		for kk = 2:len					# Start at 2 because first is never a target
@@ -817,16 +818,18 @@ function consolidate_Bframe(opt_B::String)::String
 	# Example situation here: ["-Bpx+lx", "-B+gwhite", "-Baf", "-BWSen"] we want to join the 4rth & 2nd. NOT 2nd & 4rth
 	indFrames = findall(isBframe);	len = length(indFrames)
 	if (len > 1)
-		ss = sort(s[indFrames], rev=true)			# OK, now we have them sorted like ["-BWSen" "-B+gwhite"]
-		[ss[1] *= ss[k][3:end] for k = 2:len]		# Remove the first "-B" chars from second and on and join with first
+		ss_ = sort(s[indFrames], rev=true)			# OK, now we have them sorted like ["-BWSen" "-B+gwhite"]
+		[ss_[1] *= ss_[k][3:end] for k = 2:len]		# Remove the first "-B" chars from second and on and join with first
 		s[indFrames] .= ""							# Clear the Bframe elements from the original split
 		opt_B = " " * s[1]
-		[opt_B *= " " * s[k] for k = 2:length(s) if s[k] != ""]		# Glue all the 'axes' members in a string
-		opt_B *= " " * ss[1]						# and finally add also the the 'frame' part
+		for k = 2:length(s)
+			(s[k] != "") && (opt_B *= " " * s[k])	# Glue all the 'axes' members in a string
+		end
+		opt_B *= " " * ss_[1]						# and finally add also the the 'frame' part
 	elseif (len == 1 && indFrames[1] != length(s))	# Shit, we have only one but it's not the last. Must swapp.
 		s[end], s[indFrames[1]] = s[indFrames[1]], s[end]
 		opt_B = " " * s[1]
-		[opt_B *= " " * s[k] for k = 2:length(s)]	# and rebuild now with the right order.
+		for k = 2:length(s) opt_B *= " " * s[k] end	# and rebuild now with the right order.
 	end
 	return opt_B
 end
@@ -837,12 +840,20 @@ function consolidate_Baxes(opt_B::String)::String
 	# components and interleaving of frame and axes settings that cause GMT parse errors. This is
 	# a very difficult task and this function will likely fail for certain combinations.
 
+	function helper_consolidate_B(opt_B::String, flag::String, have_Bpx::Bool, have_Bpy::Bool)::String
+		if (have_Bpx && have_Bpy) opt_B = replace(opt_B, " -B" * flag => " -B")	# Have both, just remove the repeated 'a'
+		elseif (have_Bpx)         opt_B = replace(opt_B, " -B" * flag => " -By" * flag)	# Add 'ya' because 'a' stands for both
+		elseif (have_Bpy)         opt_B = replace(opt_B, " -B" * flag => " -Bx" * flag)
+		else   opt_B
+		end
+	end
+
 	(opt_B == "") && return ""
 	# Detect the presence of 'a', 'f' or 'g' in the first -B axes settings token
 	have_Bpxa, have_Bpya = occursin("Bpxa", opt_B), occursin("Bpya", opt_B)
 	have_Bpa = occursin("Bpa", opt_B)		# Bpa worths Bpxa & Bpya
 	have_Bpxa, have_Bpya = (have_Bpxa || have_Bpa), (have_Bpya || have_Bpa)
-	have_Bpxf, have_Bpxg, got_x, have_Bpyf, have_Bpyg, got_y= false, false, false, false, false, false
+	have_Bpxf, have_Bpxg, got_x, have_Bpyf, have_Bpyg, got_y = false, false, false, false, false, false
 	s = split(opt_B)
 	nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words sub-options
 	for tok in s
@@ -879,19 +890,14 @@ function consolidate_Baxes(opt_B::String)::String
 	end
 	if (got_x || got_y)
 		opt_B = " " * s[1]
-		[opt_B *= " " * s[k] for k = 2:length(s) if s[k] != ""]
+		for k = 2:length(s)
+			(s[k] != "") && (opt_B *= " " * s[k])	# Glue all the 'axes' members in a string
+		end
 	else
 		opt_B = replace(opt_B, "   " => " ")		# Remove double spaces
 		opt_B = replace(opt_B, "  "  => " ")		# Remove double spaces
 	end
 	opt_B
-end
-function helper_consolidate_B(opt_B::String, flag::String, have_Bpx::Bool, have_Bpy::Bool)::String
-	if (have_Bpx && have_Bpy) opt_B = replace(opt_B, " -B" * flag => " -B")	# Have both, just remove the repeated 'a'
-	elseif (have_Bpx)         opt_B = replace(opt_B, " -B" * flag => " -By" * flag)	# Add 'ya' because 'a' stands for both
-	elseif (have_Bpy)         opt_B = replace(opt_B, " -B" * flag => " -Bx" * flag)
-	else   opt_B
-	end
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1302,7 +1308,7 @@ function parse_I(d::Dict, cmd::String, symbs, opt, del::Bool=true)::String
 				elseif (fn[k] == :extend) e = true
 				end
 			end
-			if (x == "") error("Need at least the x increment")	end
+			(x == "") && error("Need at least the x increment")
 			cmd = string(cmd, " -", opt, x)
 			if (u != "")
 				u = parse_unit_unit(u)
@@ -1768,13 +1774,15 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}, del:
 		if (isa(val, String) || isa(val, Symbol))
 			((args = arg2str(val)) != "") && (args = string(args[1]))
 		elseif (isa(val, Tuple))
-			[args *= arg2str(val[k])[1] for k = 1:length(val)]
+			for k = 1:length(val)
+				args *= arg2str(val[k])[1]
+			end
 		end
 		cmd = string(cmd, " -", opt[1], args)
 	end
 	return cmd
 end
-
+	
 # ---------------------------------------------------------------------------------------------------
 function add_opt(d::Dict, cmd::String, opt, symbs::VMs, mapa=nothing, del::Bool=true, arg=nothing)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
@@ -1823,7 +1831,9 @@ function add_opt(d::Dict, cmd::String, opt, symbs::VMs, mapa=nothing, del::Bool=
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
 		# Used in recursive calls for options like -I, -N , -W of pscoast. Here we assume that opt != ""
 		_args::String = ""
-		[_args *= " -" * opt * add_opt(val[k], mapa, arg) for k = 1:length(val)]
+		for k = 1:length(val)
+			_args *= " -" * opt * add_opt(val[k], mapa, arg)
+		end
 		return cmd * _args
 	elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
 		(!isa(val, NamedTuple) && !isa(val, String)) && error("Option argument must be a NamedTuple, not a Tuple")
@@ -2814,7 +2824,7 @@ function helper_decorated(d::Dict, compose=false)
 				end
 			elseif (isa(val, Tuple))
 				if (length(val) == 2 && (isa(val[1], String) || isa(val[1], Symbol)) )
-					t1 = string(val[1]);	t2 = string(val[2])		# t1/t2 can also be 2 char or a LongWord justification
+					t1::String = string(val[1]);	t2::String = string(val[2])	# t1/t2 can also be 2 char or a LongWord justification
 					t1 = startswith(t1, "min") ? "Z-" : justify(t1)
 					t2 = startswith(t2, "max") ? "Z+" : justify(t2)
 					optD = flag * t1 * "/" * t2

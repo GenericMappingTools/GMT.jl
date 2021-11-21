@@ -169,7 +169,6 @@
 		" -BWSen -BpxaUfg10 -BWSen+taiai -Bpx+lai+sBlaBla -Bpyclixo.txt -Bsxa5f1"
 	@test GMT.consolidate_Baxes(" -Baf -Bza -BWSrt -Bpxapi2f0.5 -Bpx+lpis -Bpya1 -Bpy+a60") ==
 		" -Byf -Bza -BWSrt -Bpxapi2f0.5+lpis -Bpya1+a60"
-	@test GMT.helper_consolidate_B("","a",false,false) == ""
 	@test GMT.consolidate_Bframe(" -Bpx+lx -B+gwhite -Baf -BWSen -By+lx") == " -Bpx+lx -Baf -By+lx -BWSen+gwhite"
 	@test GMT.consolidate_Bframe(" -Bpx+lx -Bpy+lx -BWSrt+gwhite") == " -Bpx+lx -Bpy+lx -BWSrt+gwhite"
 	@test GMT.consolidate_Bframe(" -Bpx+lx -BWSrt+gwhite -Bpy+lx") == " -Bpx+lx -Bpy+lx -BWSrt+gwhite"
