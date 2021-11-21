@@ -7,6 +7,7 @@ function _precompile_()
 	@assert Base.precompile(Tuple{typeof(get_marker_name),Dict{Symbol, Any},Matrix{Float64},Vector{Symbol},Bool,Bool})   # time: 0.0417101
 	@assert Base.precompile(Tuple{typeof(add_opt_cpt),Dict{Symbol, Any},String,Matrix{Symbol},Char,Int64,Matrix{Float64},Nothing,Bool,Bool,String,Bool})   # time: 0.0158795
 	@assert Base.precompile(Tuple{typeof(put_in_legend_bag),Dict{Symbol, Any},Vector{String},Matrix{Float64}})   # time: 0.0101455
+	@assert Base.precompile(Tuple{typeof(add_opt_module),Dict{Symbol, Any}})   # time: 0.365098
 
 	@assert Base.precompile(Tuple{typeof(imshow),GMTgrid{Float32, 2}})   # time: 12.84012
 	@assert Base.precompile(Tuple{typeof(finish_PS_module),Dict{Symbol, Any},Vector{String},String,Bool,Bool,Bool,GMTgrid{Float32, 2},Vararg{Any, N} where N})   # time: 0.1452611
