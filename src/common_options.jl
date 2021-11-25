@@ -38,8 +38,9 @@ function del_from_dict(d::Dict, symbs::Array{Symbol})
 	end
 end
 
-#=
+##
 function find_in_kwargs(p::Base.Pairs, symbs::VMs, del::Bool=true, help_str::String="")
+	# See if P contains any of the symbols in SYMBS. If yes, return corresponding value
 	_k = keys(p)
 	for symb in symbs
 		if ((ind = findfirst(_k .== symb)) !== nothing)
@@ -49,7 +50,7 @@ function find_in_kwargs(p::Base.Pairs, symbs::VMs, del::Bool=true, help_str::Str
 	end
 	return nothing, Symbol()
 end
-=#
+##
 
 function init_module(first::Bool, kwargs...)
 	# All ps modules need these 3 lines
@@ -3568,7 +3569,7 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::Stri
 
 	cmd_ = cmd									# Starts to be just a shallow copy
 	if (isa(arg, Vector{<:GMTdataset}))			# Multi-segments can have different settings per line
-		cmd_ = deepcopy(cmd)
+		cmd_ = copy(cmd)
 		_, penC, penS = break_pen(scan_opt(arg[1].header, "-W"))
 		penT, penC_, penS_ = break_pen(scan_opt(cmd_[end], "-W"))
 		(penC == "") && (penC = penC_)
