@@ -97,7 +97,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
 	cmd = parse_E_coast(d, [:E, :DCW], "")		# Process first to avoid warning about "guess"
 	cmd = add_opt(d, cmd, "M", [:M :dump])
-	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd) && !occursin("-M", cmd))
+	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))
 		cmd, = parse_BJR(d, cmd, "", O, "guess")
 	end
 	cmd, = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
@@ -130,6 +130,11 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	end
 	(!occursin("-D",cmd)) && (cmd *= " -Da")			# Then pick automatic
 	finish = !occursin(" -M",cmd) && !occursin("-E+l", cmd) && !occursin("-E+L", cmd) ? true : false	# Otherwise the dump would be redirected to GMTjl_tmp.ps
+
+	# Just let D = coast(R=:PT, dump=true) work without any furthers shits (plain GMT doesn't let it)
+	(occursin(" -M",cmd) && !occursin("-E", cmd) && !occursin("-I", cmd) && !occursin("-N", cmd) && !occursin("-W", cmd)) &&
+		(cmd *= " -W -A0/1/1")
+
 	get_largest = (!finish && occursin(" -E", cmd) && (find_in_dict(d, [:biggest :largest])[1] !== nothing))
 	if (finish)  _cmd, K = finish_PS_nested(d, [gmt_proggy * cmd], K)
 	else	     _cmd = [gmt_proggy * cmd]

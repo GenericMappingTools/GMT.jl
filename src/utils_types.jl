@@ -797,11 +797,11 @@ Returns a Vector{Float64} with the same length as the number of segments in D. T
 made up after the contents of `vals` but repeated such that each polygon of the same family, i.e.
 with the same `user_ids`, has the same value.
 """
-function make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head::Int=0, case::Int=0)::Vector{Float64}
+function make_zvals_vec(D::GDtype, user_ids::Vector{String}, vals::Array{<:Real}, sub_head::Int=0, case::Int=0)::Vector{Float64}
 
 	n_user_ids = length(user_ids)
 	@assert(n_user_ids == length(vals))
-	data_ids, ind = get_segment_ids(D, case)
+	data_ids, ind = dsget_segment_ids(D, case)
 	(ind[1] != 1) && error("This function requires that first segment has a a header with an id")
 	n_data_ids = length(data_ids)
 	(n_user_ids > n_data_ids) &&
@@ -819,7 +819,6 @@ function make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_he
 			if startswith(data_ids[k], user_ids[m])			# Find first occurence of user_ids[k] in a segment header
 				last = (k < n_data_ids) ? ind[k+1]-1 : n_seg
 				[zvals[j] = vals[m] for j = ind[k]:last]		# Repeat the last VAL for segments with no headers
-				#println("k = ", k, " m = ",m, " pol_id = ", data_ids[k], ";  usr id = ", user_ids[m], " Racio = ", vals[m], " i1 = ", ind[k], " i2 = ",last)
 				n = last + 1					# Prepare for next new VAL
 				break
 			end
@@ -833,7 +832,7 @@ function edit_segment_headers!(D, vals::Array, opt::String)
 	# Add an option OPT to segment headers with a val from VALS. Number of elements of VALS must be
 	# equal to the number of segments in D that have a header. If numel(val) == 1 must encapsulate it in []
 
-	ids, ind = get_segment_ids(D)
+	ids, ind = dsget_segment_ids(D)
 	if (isa(D, Array))
 		[D[ind[k]].header *= string(opt, vals[k])  for k = 1:length(ind)]
 	else
@@ -844,22 +843,22 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    ids, ind = get_segment_ids(D, case=0)::Tuple{Vector{String}, Vector{Int}}
+    ids, ind = dsget_segment_ids(D, case=0)::Tuple{Vector{String}, Vector{Int}}
 
 Where D is a GMTdataset of a vector of them, returns the segment ids (first text after the '>') and
 the idices of those segments.
 """
-function get_segment_ids(D, case::Int=0)::Tuple{Vector{String}, Vector{Int}}
+function dsget_segment_ids(D, case::Int=0)::Tuple{Vector{AbstractString}, Vector{Int}}
 	# Get segment ids (first text after the '>') and the idices of those segments
 	# CASE -> If == 1 force return in LOWER case. If == 2 force upper case. Default (case = 0) dosen't touch
 	if (isa(D, Array))  n = length(D);	d = Dict(k => D[k].header for k = 1:n)
 	else                n = 1;			d = Dict(1 => D.header)
 	end
-	tf = Vector{Bool}(undef,n)					# pre-allocate
+	tf::Vector{Bool} = Vector{Bool}(undef,n)			# pre-allocate
 	[tf[k] = (d[k] !== "" && d[k][1] != ' ') ? true : false for k = 1:n];	# Mask of non-empty headers
-	ind = 1:n
+	ind::Vector{Int} = 1:n
 	ind = ind[tf]			# OK, now we have the indices of the segments with headers != ""
-	ids = Vector{String}(undef,length(ind))		# pre-allocate
+	ids = Vector{AbstractString}(undef,length(ind))		# pre-allocate
 	if (case == 1)
 		[ids[k] = lowercase(d[ind[k]]) for k = 1:length(ind)]	# indices of non-empty segments
 	elseif (case == 2)
@@ -868,4 +867,27 @@ function get_segment_ids(D, case::Int=0)::Tuple{Vector{String}, Vector{Int}}
 		[ids[k] = d[ind[k]] for k = 1:length(ind)]
 	end
 	return ids, ind
+end
+
+# ---------------------------------------------------------------------------------------------------
+function dsget_byattrib(D::Vector{GMTdataset}, ind::Bool; kw...)::Union{Nothing, Vector{Int}}
+	# This method does the work but it's not the one normally used by the public.
+	# It returns the indices of the selected segments.
+	(isempty(D[1].attrib)) &&
+		(@warn("This datset does not have an `attrib` field and is hence unusable here.");	return nothing)
+	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` name.")
+	((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` value.")
+	ky = keys(D[1].attrib)
+	((ind = findfirst(ky .== att)) === nothing) && return nothing
+	tf = fill(false, length(D))
+	for k = 1:length(D)
+		(!isempty(D[k].attrib) && (D[k].attrib[att] == val)) && (tf[k] = true)
+	end
+	ind = findall(tf)
+end
+
+function dsget_byattrib(D::Vector{GMTdataset}; kw...)::Union{Nothing, Vector{GMTdataset}}
+	# This is the intended public method. It returns a subset of the selected segments
+	ind = dsget_byattrib(D, true; kw...)
+	return (ind === nothing) ? ind : D[ind]
 end
