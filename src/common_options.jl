@@ -39,7 +39,7 @@ function del_from_dict(d::Dict, symbs::Array{Symbol})
 end
 
 ##
-function find_in_kwargs(p::Base.Pairs, symbs::VMs, del::Bool=true, help_str::String="")
+function find_in_kwargs(p, symbs::VMs, del::Bool=true, help_str::String="")
 	# See if P contains any of the symbols in SYMBS. If yes, return corresponding value
 	_k = keys(p)
 	for symb in symbs
