@@ -175,7 +175,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 		[mat[k,1] = Gdal.getx(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts]
 		[mat[k,2] = Gdal.gety(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts]
 		(n_dim == 3) && ([mat[k,2] = Gdal.getz(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts])
-		return [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], "", String[], proj, "", gmtype)]
+		return [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", gmtype)]
 	end
 
 	n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
@@ -184,7 +184,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 	[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
 	[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
 	(n_dim == 3) && ([mat[k,3] = Gdal.getz(geom, k-1) for k = 1:n_pts])
-	[GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], "", String[], proj, "", gmtype)]
+	[GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", gmtype)]
 end
 
 # ---------------------------------------------------------------------------------------------------
