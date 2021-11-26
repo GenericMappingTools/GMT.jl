@@ -105,9 +105,10 @@ mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 	ds_bbox::Vector{Float64}
 	bbox::Vector{Float64}
 	attrib::Dict{String, String}
-	text::Array{String,1}
+	colnames::Vector{String}
+	text::Vector{String}
 	header::String
-	comment::Array{String,1}
+	comment::Vector{String}
 	proj4::String
 	wkt::String
 	geom::Integer
@@ -119,17 +120,17 @@ Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int,N}) where {T,N} = D.dat
 Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}}, ::Type{ElType}) where ElType
 	D = find4similar(bc.args)		# Scan the inputs for the GMTdataset:
-	GMTdataset(D.data, D.ds_bbox, D.bbox, D.attrib, D.text, D.header, D.comment, D.proj4, D.wkt, D.geom)
+	GMTdataset(D.data, D.ds_bbox, D.bbox, D.attrib, D.colnames, D.text, D.header, D.comment, D.proj4, D.wkt, D.geom)
 end
 find4similar(D::GMTdataset, rest) = D
 
-GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), text, "", String[], "", "", 0)
-GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), [text], "", String[], "", "", 0)
-GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], "", String[], "", "", 0)
-GMTdataset(data::Array{Float32,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), text, "", String[], "", "", 0)
-GMTdataset(data::Array{Float32,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), [text], "", String[], "", "", 0)
-GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], "", String[], "", "", 0)
-GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], Dict{String, String}(), String[], "", String[], "", "", 0)
+GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0)
+GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
+GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)
+GMTdataset(data::Array{Float32,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0)
+GMTdataset(data::Array{Float32,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
+GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)
+GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)
 
 struct WrapperPluto fname::String end
 
@@ -1081,7 +1082,11 @@ function dataset_init(API::Ptr{Nothing}, Darr, direction::Integer)::Ptr{GMT_DATA
 		Sb = unsafe_load(S)								# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
 		for col = 1:Sb.n_columns						# Copy the data columns
 			#unsafe_store!(Sb.data, pointer(Darr[seg].data[:,col]), col)	# This would allow shared mem
-			unsafe_copyto!(unsafe_load(Sb.data, col), pointer(Darr[seg].data[:,col]), Sb.n_rows)
+			if (isa(Darr[seg].data, Float64))			# They must be Float64 because of the .data type in GMT_DATASEGMENT
+				unsafe_copyto!(unsafe_load(Sb.data, col), pointer(Darr[seg].data[:,col]), Sb.n_rows)
+			else
+				unsafe_copyto!(unsafe_load(Sb.data, col), pointer(Float64.(Darr[seg].data[:,col])), Sb.n_rows)
+			end
 		end
 
 		if (mode == GMT_WITH_STRINGS)	# Add in the trailing strings
@@ -1267,8 +1272,11 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		if (k == 1)
 			proj4 = OGR_F.proj4 != C_NULL ? unsafe_string(OGR_F.proj4) : ""
 			wkt   = OGR_F.wkt != C_NULL ? unsafe_string(OGR_F.wkt) : ""
+			(proj4 == "" && wkt != "") && (proj4 = wkt2proj(wkt))
+			is_geog = (contains(proj4, "=longlat") || contains(proj4, "=latlong")) ? true : false
+			(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
 		else
-			proj4, wkt = "", ""
+			proj4, wkt, coln = "", "", String[]
 		end
 		if (OGR_F.np > 0)
 			hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,i))) for i = 1:OGR_F.att_number]) : ""
@@ -1280,12 +1288,12 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 			if (OGR_F.n_islands == 0)
 				geom = (OGR_F.type == "Polygon") ? wkbPolygon : ((OGR_F.type == "LineString") ? wkbLineString : wkbPoint)
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-				                  Float64[], Float64[], attrib, String[], hdr, String[], proj4, wkt, geom)
+				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, geom)
 			else
 				islands = reshape(unsafe_wrap(Array, OGR_F.islands, 2 * (OGR_F.n_islands+1)), OGR_F.n_islands+1, 2) 
-				np_main = islands[1,2]+1		# Number of points of outer ring
+				np_main = islands[1,2]+1			# Number of points of outer ring
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main)],
-				                  Float64[], Float64[], attrib, String[], hdr, String[], proj4, wkt, wkbPolygon)
+				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, wkbPolygon)
 
 				if (!drop_islands)
 					for k = 2:size(islands,2)		# 2 because first row holds the outer ring indexes 
@@ -1293,7 +1301,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 						off = islands[k,1] * 8
 						len = islands[k,2] - islands[k,1] + 1
 						D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x+off, len) unsafe_wrap(Array, OGR_F.y+off, len)],
-						                  Float64[], Float64[], attrib, String[], " -Ph", String[], proj4, wkt, wkbPolygon)
+						                  Float64[], Float64[], attrib, coln, String[], " -Ph", String[], proj4, wkt, wkbPolygon)
 					end
 				end
 			end

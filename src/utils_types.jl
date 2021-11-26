@@ -6,19 +6,19 @@ function text_record(data, text, hdr=Vector{String}())
 	if (!isa(data, Array{Float64}))  data = Float64.(data)  end
 
 	if (isa(text, String))
-		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), [text], "", Vector{String}(), "", "", 0)
+		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", Vector{String}(), "", "", 0)
 	elseif (isa(text, Array{String}))
 		if (text[1][1] == '>')			# Alternative (but risky) way of setting the header content
-			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), text[2:end], text[1], Vector{String}(), "", "", 0)
+			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text[2:end], text[1], Vector{String}(), "", "", 0)
 		else
-			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), text, (isempty(hdr) ? "" : hdr), Vector{String}(), "", "", 0)
+			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, (isempty(hdr) ? "" : hdr), Vector{String}(), "", "", 0)
 		end
 	elseif (isa(text, Array{Array}) || isa(text, Array{Vector{String}}))
 		nl_t = length(text);	nl_d = length(data)
 		(nl_d > 0 && nl_d != nl_t) && error("Number of data points is not equal to number of text strings.")
 		T = Vector{GMTdataset}(undef,nl_t)
 		for k = 1:nl_t
-			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), Float64[], Float64[], Dict{String, String}(), text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "", 0)
+			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), Float64[], Float64[], Dict{String, String}(), String[], text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "", 0)
 		end
 	else
 		error("Wrong type ($(typeof(text))) for the 'text' argin")
@@ -127,6 +127,21 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs.
 	(prj == "geo" || prj == "geog") && (prj = prj4WGS84)
 	(prj != "" && !startswith(prj, "+proj=")) && (prj = "+proj=" * prj)
 	wkt::String = ((wk = find_in_dict(d, [:wkt])[1]) !== nothing) ? wk : ""
+	(prj == "" && wkt != "") && (prj = wkt2proj(wkt))
+
+	is_geog = false
+	if (prj != "")
+		is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
+	end
+	coln = ((val = find_in_kwargs(d, [:colnames]))[1] === nothing) ? String[] : val
+
+	function fill_colnames(coln::Vector{String}, nc::Int)	# Fill the column names vector
+		if isempty(coln)
+			(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
+			(nc == 1) ? append!(coln, ["Z"]) : append!(coln, ["Z$i" for i=1:nc])
+		end
+		return coln
+	end
 
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
 
@@ -136,17 +151,22 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs.
 	(multi && geom == 0 && size(mat,1) == 1) && (geom = Gdal.wkbPoint)	# One row with many columns and MULTI => Points
 	if (isempty(xx))				# No coordinates transmitted
 		if (ndims(mat) == 3)
-			[D[k] = GMTdataset(view(mat,:,:,k), Float64[], Float64[], Dict{String, String}(), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
+			coln = fill_colnames(coln, size(mat,2)-2)
+			[D[k] = GMTdataset(view(mat,:,:,k), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
 		elseif (!multi)
-			D[1] = GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt, geom)
+			coln = fill_colnames(coln, size(mat,2)-2)
+			D[1] = GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt, geom)
 		else
-			[D[k] = GMTdataset(mat[:,[1,k+1]], Float64[], Float64[], Dict{String, String}(), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
+			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
+			[D[k] = GMTdataset(mat[:,[1,k+1]], Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
 		end
 	else
 		if (!multi)
-			D[1] = GMTdataset(hcat(xx,mat), Float64[], Float64[], Dict{String, String}(), String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt, geom)
+			coln = fill_colnames(coln, size(mat,2)-1)
+			D[1] = GMTdataset(hcat(xx,mat), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(hdr) ? "" : hdr[1]), String[], prj, wkt, geom)
 		else
-			[D[k] = GMTdataset(hcat(xx,mat[:,k]), Float64[], Float64[], Dict{String, String}(), String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
+			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
+			[D[k] = GMTdataset(hcat(xx,mat[:,k]), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(hdr) ? "" : hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
 		end
 	end
 	for k = 1:length(D)			# Compute the BoundingBoxes
@@ -198,9 +218,9 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 
 	Dm = Vector{GMTdataset}(undef, n_ds)
 	for k = 1:n_ds
-		Dm[k] = GMTdataset(D.data[k:k, :], Float64[], Float64[], Dict{String, String}(), String[], (isempty(_fill) ? "" : hdr[k]), String[], "", "", 0)
+		Dm[k] = GMTdataset(D.data[k:k, :], Float64[], Float64[], Dict{String, String}(), String[], String[], (isempty(_fill) ? "" : hdr[k]), String[], "", "", 0)
 	end
-	Dm[1].comment = D.comment;	Dm[1].proj4 = D.proj4;	Dm[1].wkt = D.wkt
+	Dm[1].comment = D.comment;	Dm[1].proj4 = D.proj4;	Dm[1].wkt = D.wkt;	Dm[1].colnames = D.colnames
 	(size(D.text) == n_ds) && [Dm.text[k] = D.text[k] for k = 1:n_ds]
 	Dm
 end

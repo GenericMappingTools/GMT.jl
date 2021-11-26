@@ -99,7 +99,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	if (isa(arg1, Array{<:Number}))
-		arg1 = [GMTdataset(arg1, Float64[], Float64[], Dict{String, String}(), String[], "", String[], "", "", 0)]
+		arg1 = [GMTdataset(arg1, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)]
 	end
 
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1)
@@ -112,7 +112,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	if (!occursin(" -F", cmd))		# Test if the GMTdataset has text or if a numeric column is to be used as such
 		if ((isa(arg1, GMTdataset) && isempty(arg1.text)) || (isa(arg1, Vector{<:GMTdataset}) && isempty(arg1[1].text)) )
-			if (isa(arg1, GMTdataset))  arg1 = [arg1]  end
+			(isa(arg1, GMTdataset)) && (arg1 = [arg1])
 			for n = 1:length(arg1)
 				nr, nc = size(arg1[n].data)
 				(nc < 3) && error("TEXT: input file must have at least three columns")

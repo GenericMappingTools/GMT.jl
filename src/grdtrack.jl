@@ -84,7 +84,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 		(isa(arg1, GMTgrid)) && (arg1_is_grid = true)
 		(isa(arg2, Array) || isa(arg2, GMTdataset)) && (arg2_is_table = true)
 		if (arg2_is_table && arg1_is_grid)			# Swap the arg1, arg2
-			tmp = arg1;		arg1 = arg2;	arg2 = tmp
+			arg1, arg2 = arg2, arg1
 		end
 	end
 
@@ -95,11 +95,18 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	end
 
 	if (isa(grid_tuple, Tuple))
-		return common_grd(d, "grdtrack " * cmd, (got_fname != 0) ? grid_tuple : tuple(arg1, grid_tuple...))
+		R = common_grd(d, "grdtrack " * cmd, (got_fname != 0) ? grid_tuple : tuple(arg1, grid_tuple...))
 	else
-		return common_grd(d, "grdtrack " * cmd, arg1, arg2)
+		R = common_grd(d, "grdtrack " * cmd, arg1, arg2)
 	end
 
+	# Assign column names
+	prj = isa(arg1, GMTgrid) ? arg1.proj4 : (isa(arg2, GMTgrid) ? arg2.proj4 : "")
+	is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
+	(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
+	(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
+	for k = 1:length(R)  R[k].colnames = coln  end
+	R
 end
 
 # ---------------------------------------------------------------------------------------------------
