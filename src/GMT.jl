@@ -1,6 +1,7 @@
 module GMT
 
 using Printf, Dates, Statistics, Pkg
+using Tables: Tables
 
 struct CTRLstruct
 	limits::Vector{Float64}
@@ -225,6 +226,7 @@ include("sphtriangulate.jl")
 include("splitxyz.jl")
 include("surface.jl")
 include("subplot.jl")
+include("tables_gmt.jl")
 include("themes.jl")
 include("triangulate.jl")
 include("trend1d.jl")

@@ -14,6 +14,7 @@
 module Gdal
 
 using GMT, Printf
+using Tables: Tables
 
 #const cacert = joinpath(@__DIR__, "cacert.pem")
 
@@ -2388,6 +2389,7 @@ end
 
 	include("gdal_extensions.jl")
 	include("gdal_tools.jl")
+	include("tables_gdal.jl")
 
 	# ------------ Aliases ------------
 	const ogr2ogr  = gdalvectortranslate
