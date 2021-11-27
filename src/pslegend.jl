@@ -40,14 +40,14 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:F :c :p :t :JZ :UVXY :params], first)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
-	                        (map=("g", nothing, 1), inside=("j", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
+	                        (map=("g", arg2str, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
 	cmd = add_opt(d, cmd, 'C', [:C :clearance])
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
@@ -55,9 +55,20 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	return r
 end
 
+#=
+function mk_legend(codes::Vector{NamedTuple})
+	# code = (Symbol=:circ, size=0.15, dx_left=0.1, fill="p300/12", dx_righ=0.3, text="This circ")
+	for code in codes
+		k = keys(code)
+		lowercase(string(k[1]))
+		code[1]
+	end
+end
+=#
+
 # ---------------------------------------------------------------------------------------------------
-legend!(cmd0::String="", arg1=nothing; kw...) = legend(cmd0, arg1;first=false, kw...)
-legend(arg1; kw...)   = legend("", arg1; first=true, kw...)
+legend!(cmd0::String="", arg1=nothing; kw...) = legend(cmd0, arg1; first=false, kw...)
+legend(arg1; kw...)  = legend("", arg1; first=true, kw...)
 legend!(arg1; kw...) = legend("", arg1; first=false, kw...)
 
 const pslegend  = legend			# Alias

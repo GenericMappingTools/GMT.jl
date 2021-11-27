@@ -60,7 +60,7 @@ function inset(fim=nothing; stop=false, kwargs...)
 	cmd  = parse_these_opts(cmd, d, [[:M :margins], [:N :no_clip]])
 	#cmd  = parse_type_anchor(d, cmd, [[:D :inset :inset_box]])
 	cmd = parse_type_anchor(d, cmd, [:D :inset :inset_box],
-	                        (map=("-g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("-n", arg2str, 1), paper=("-x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str), save="+s", translate="_+t", units="_+u"), 'j')
+	                        (map=("g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str), save="+s", translate="_+t", units="_+u"), 'j')
 
 	do_show = false
 	if (fim !== nothing)
