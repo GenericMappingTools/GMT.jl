@@ -2,12 +2,12 @@ function text_record(data, text, hdr=Vector{String}())
 	# Create a text record to send to pstext. DATA is the Mx2 coordinates array.
 	# TEXT is a string or a cell array
 
-	if (isa(data, Vector))  data = data[:,:]  end 	# Needs to be 2D
-	if (!isa(data, Array{Float64}))  data = Float64.(data)  end
+	(isa(data, Vector)) && (data = data[:,:]) 		# Needs to be 2D
+	(!isa(data, Array{Float64})) && (data = Float64.(data))
 
 	if (isa(text, String))
 		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", Vector{String}(), "", "", 0)
-	elseif (isa(text, Array{String}))
+	elseif (isa(text, Vector{String}))
 		if (text[1][1] == '>')			# Alternative (but risky) way of setting the header content
 			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text[2:end], text[1], Vector{String}(), "", "", 0)
 		else
@@ -26,7 +26,7 @@ function text_record(data, text, hdr=Vector{String}())
 	return T
 end
 text_record(text) = text_record(Array{Float64,2}(undef,0,0), text)
-text_record(text::Array{String}, hdr::String) = text_record(Array{Float64,2}(undef,0,0), text, hdr)
+text_record(text::Vector{String}, hdr::String) = text_record(Array{Float64,2}(undef,0,0), text, hdr)
 
 # ---------------------------------------------------------------------------------------------------
 """

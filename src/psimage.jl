@@ -46,7 +46,7 @@ function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :c :p :t :params], first)[1]
 	cmd = parse_these_opts(cmd, d,  [[:G :bit_color], [:I :invert_1bit], [:M :monochrome]])
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
-	                        (map=("g", nothing, 1), inside=("j", nothing, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), dpi="+r", width=("+w", arg2str), justify="+j", replicate=("+n", arg2str), offset=("+o", arg2str)), 'j')
+	                        (map=("g", nothing, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", nothing, 1), anchor=("", arg2str, 2), dpi="+r", width=("+w", arg2str), justify="+j", replicate=("+n", arg2str), offset=("+o", arg2str)), 'j')
 
 	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 
