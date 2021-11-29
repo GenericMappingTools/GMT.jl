@@ -40,8 +40,8 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `hdr` optional String vector with either one or n_rows multisegment headers.
   - `color` optional array of strings with color names/values. Its length can be smaller than n_rows, case in
      which colors will be cycled.
-  - `linethick`, or `lt` for selecting different line thicknesses. Work alike `color`, but should be 
-     a vector of numbers, or just a single number that is then appl	ied to all lines.
+  - `linethick`, or `lt` for selecting different line thicknesses. Works like `color`, but should be 
+     a vector of numbers, or just a single number that is then applied to all lines.
   - `fill`  Optional string array with color names or array of "patterns"
   - `ls` | `linestyle`  Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
   - `lt` | `linethick`  Line thickness.
@@ -83,8 +83,8 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 	# ---  Here we deal with line colors and line thickness. If not provided we override the GMR defaultb -Wthin ---
 	val = find_in_dict(d, [:lt :linethick :linethickness])[1]
 	_lt = (val === nothing) ? [0.5] : val
-	_lts = Vector{String}(undef, n_ds)
-	n_thick = length(_lt)
+	_lts::Vector{String} = Vector{String}(undef, n_ds)
+	n_thick::Integer = length(_lt)
 	[_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])  for k = 1:n_ds]
 
 	if (color !== nothing)
