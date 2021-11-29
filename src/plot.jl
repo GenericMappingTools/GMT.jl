@@ -704,10 +704,11 @@ function hlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
 	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
-	mat = ones(2, length(arg1))
-	[mat[1,k] = mat[2,k] = arg1[k] for k = 1:length(arg1)]
-	x = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
-	D = mat2ds(mat, x=x, multi=true)
+	len::Int = length(arg1)
+	mat::Matrix{Float64} = ones(2, len)
+	[mat[1,k] = mat[2,k] = arg1[k] for k = 1:len]
+	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
+	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 
 	common_plot_xyz("", D, "lines", first, false, d...)
 end
@@ -737,12 +738,13 @@ function vlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
 	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
-	mat = ones(2, length(arg1))
+	len::Int = length(arg1)
+	mat::Matrix{Float64} = ones(2, len)
 	mat[1,:] = mat[2,:] = arg1
-	x = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[3:4]) : [-1e50, 1e50]
-	D = mat2ds(mat, x=x, multi=true)
+	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[3:4]) : [-1e50, 1e50]
+	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 	# Now we need tp swapp x / y columns because the vlines case is more complicated to implement.
-	for k = 1:length(arg1)
+	for k = 1:len
 		D[k].data[:,1], D[k].data[:,2] = D[k].data[:,2], D[k].data[:,1]
 	end
 

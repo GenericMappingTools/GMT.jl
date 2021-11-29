@@ -497,9 +497,9 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 		for n = 1:nb  V[n] = t[n]  end
 	end
 
-	t = unsafe_wrap(Array, G.data, my * mx * nb)
+	t::Vector{Float32} = unsafe_wrap(Array, G.data, my * mx * nb)
 	if !(nb > 1 && padLeft == 0)			# Otherwise we are in experimental ground (so far only CUBEs)
-		z = (nb == 1) ? Array{Float32}(undef, ny, nx) : Array{Float32}(undef, ny, nx, nb)  
+		z = (nb == 1) ? Array{Float32,2}(undef, ny, nx) : Array{Float32,3}(undef, ny, nx, nb)  
 	end
 
 	if (nb > 1)			# A CUBE
@@ -889,7 +889,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	if (mode == GMT_CONTAINER_AND_DATA)
 		grd = Grid.z
 		n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
-		t = unsafe_wrap(Array, Gb.data, h.size * n_bds)
+		t::Vector{Float32} = unsafe_wrap(Array, Gb.data, h.size * n_bds)
 
 		k = 1
 		for bnd = 1:n_bds

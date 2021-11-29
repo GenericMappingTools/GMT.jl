@@ -30,27 +30,38 @@ end
 
 function del_from_dict(d::Dict, symbs::Array{Symbol})
 	# Delete SYMBS from the D dict where symbs is an array of symbols and elements are aliases
-	for alias in symbs
-		if (haskey(d, alias))
-			delete!(d, alias)
+	for symb in symbs
+		if (haskey(d, symb))
+			delete!(d, symb)
 			return
 		end
 	end
 end
 
-##
-function find_in_kwargs(p, symbs::VMs, del::Bool=true, help_str::String="")
+function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_str::String="")
 	# See if P contains any of the symbols in SYMBS. If yes, return corresponding value
+	(show_kwargs[1] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
 	_k = keys(p)
 	for symb in symbs
 		if ((ind = findfirst(_k .== symb)) !== nothing)
 			val = p[_k[ind]]
+			#(del) && consume(_k, symb, primo)
 			return val, symb
 		end
 	end
 	return nothing, Symbol()
 end
-##
+
+#=
+function consume(ops::Tuple, drop::Symbol, primo::Bool=true)
+	t = ops[findall(ops .!= drop)]
+	primo ? (unused_opts[1] = t) : (unused_subopts[1] = t)
+end
+
+function del_from_nt(p, symbs::Array{Symbol})
+	p = Base.structdiff(p, NamedTuple{(symbs...)})
+end
+=#
 
 function init_module(first::Bool, kwargs...)
 	# All ps modules need these 3 lines
@@ -216,12 +227,12 @@ function opt_R2num(opt_R::String)
 		limits = zeros(length(rs))
 		fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
 		limits[1] = parse(Float64, rs[1][fst+1:end])
-		[limits[k] = parse(Float64, rs[k]) for k = 2:length(rs)]
+		for k = 2:length(rs)  limits[k] = parse(Float64, rs[k])  end
 		if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
 	elseif (opt_R != " -R")		# One of those complicated -R forms. Just ask GMT the limits (but slow. It takes 0.2 s)
 		kml = gmt("gmt2kml " * opt_R, [0 0])[1]
 		limits = zeros(4)
-		t = kml.text[28][12:end];	ind = findfirst("<", t)		# north
+		t::String = kml.text[28][12:end];	ind = findfirst("<", t)		# north
 		limits[4] = parse(Float64, t[1:(ind[1]-1)])
 		t = kml.text[29][12:end];	ind = findfirst("<", t)		# south
 		limits[3] = parse(Float64, t[1:(ind[1]-1)])
@@ -1162,7 +1173,7 @@ parse_w(d::Dict, cmd::String) = parse_helper(cmd, d, [:w :wrap :cyclic], " -w")
 # ---------------------------------------------------------------------------------------------------
 function parse_r(d::Dict, cmd::String)
 	# Accept both numeric (0 or != 0) and string/symbol arguments
-	opt_val = ""
+	opt_val::String = ""
 	if ((val = find_in_dict(d, [:r :reg :registration])[1]) !== nothing)
 		(isa(val, String) || isa(val, Symbol)) && (opt_val = string(" -r",val)[1:4])
 		(isa(val, Integer)) && (opt_val = (val == 0) ? " -rg" : " -rp")
@@ -1869,19 +1880,24 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)::String
-	d = nt2dict(mapa)
-	(!haskey(d, this_key)) && return		# Should it be a error?
+	#d = nt2dict(mapa)
+	#(!haskey(d, this_key)) && return		# Should it be a error?
+	(!haskey(mapa, this_key)) && return		# Should it be a error?
 	out::String = ""
 	key = keys(user_input)					# user_input = (rows=1, fill=:red)
-	val_namedTup = d[this_key]				# water=(rows="my", cols="mx", fill=add_opt_fill)
-	d = nt2dict(val_namedTup)
+	#val_namedTup = d[this_key]				# water=(rows="my", cols="mx", fill=add_opt_fill)
+	val_namedTup = mapa[this_key]				# water=(rows="my", cols="mx", fill=add_opt_fill)
+	#d = nt2dict(val_namedTup)
 	for k = 1:length(user_input)
-		if (haskey(d, key[k]))
-			val = d[key[k]]
+		#if (haskey(d, key[k]))
+		if (haskey(val_namedTup, key[k]))
+			#val = d[key[k]]
+			val = val_namedTup[key[k]]
 			if (isa(val, Function))
 				if (val == add_opt_fill) out *= val(Dict(key[k] => user_input[key[k]]))  end
 			else
-				out *= string(d[key[k]])
+				#out *= string(d[key[k]])
+				out *= string(val_namedTup[key[k]])
 			end
 		end
 	end

@@ -94,6 +94,8 @@ const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used 
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Nothing, Vector{Symbol}, Matrix{Symbol}}
 const global VMr = Union{Vector{Real}, Matrix{Real}}
+#const global unused_opts = [()]					# To track consumed options
+#const global unused_subopts = [()]					# To track consumed options in sub-options
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
 	@eval Base.Experimental.@optlevel 1

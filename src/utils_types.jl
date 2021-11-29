@@ -40,8 +40,8 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `hdr` optional String vector with either one or n_rows multisegment headers.
   - `color` optional array of strings with color names/values. Its length can be smaller than n_rows, case in
      which colors will be cycled.
-  - `linethick`, or `lt` for selecting different line thicknesses. Work alike `color`, but should be 
-     a vector of numbers, or just a single number that is then appl	ied to all lines.
+  - `linethick`, or `lt` for selecting different line thicknesses. Works like `color`, but should be 
+     a vector of numbers, or just a single number that is then applied to all lines.
   - `fill`  Optional string array with color names or array of "patterns"
   - `ls` | `linestyle`  Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
   - `lt` | `linethick`  Line thickness.
@@ -51,7 +51,7 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `proj` or `proj4`  A proj4 string for dataset SRS
   - `wkt`  A WKT SRS
 """
-function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs...)
+function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...)
 	d = KW(kwargs)
 
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
@@ -83,8 +83,8 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs.
 	# ---  Here we deal with line colors and line thickness. If not provided we override the GMR defaultb -Wthin ---
 	val = find_in_dict(d, [:lt :linethick :linethickness])[1]
 	_lt = (val === nothing) ? [0.5] : val
-	_lts = Vector{String}(undef, n_ds)
-	n_thick = length(_lt)
+	_lts::Vector{String} = Vector{String}(undef, n_ds)
+	n_thick::Integer = length(_lt)
 	[_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])  for k = 1:n_ds]
 
 	if (color !== nothing)
@@ -133,7 +133,7 @@ function mat2ds(mat, txt=Vector{String}(); hdr=Vector{String}(), geom=0, kwargs.
 	if (prj != "")
 		is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
 	end
-	coln = ((val = find_in_kwargs(d, [:colnames]))[1] === nothing) ? String[] : val
+	coln::Vector{String} = ((val = find_in_dict(d, [:colnames])[1]) === nothing) ? String[] : val
 
 	function fill_colnames(coln::Vector{String}, nc::Int)	# Fill the column names vector
 		if isempty(coln)
@@ -231,11 +231,11 @@ function helper_ds_fill(d::Dict)
 	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
 		_fill::Array{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? fill_val :
 		                       ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
-		n_colors = length(_fill)
+		n_colors::Integer = length(_fill)
 		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
 			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end
-			_alpha = Vector{String}(undef, n_colors)
-			na = min(length(alpha_val), n_colors)
+			_alpha::Vector{String} = Vector{String}(undef, n_colors)
+			na::Integer = min(length(alpha_val), n_colors)
 			[_alpha[k] = join(string('@',alpha_val[k])) for k = 1:na]
 			if (na < n_colors)
 				for k = na+1:n_colors  _alpha[k] = ""  end
