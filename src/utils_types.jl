@@ -51,7 +51,7 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `proj` or `proj4`  A proj4 string for dataset SRS
   - `wkt`  A WKT SRS
 """
-function mat2ds(mat, txt::Vector{String}=String[]; hdr::Vector{String}=String[], geom=0, kwargs...)
+function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...)
 	d = KW(kwargs)
 
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
