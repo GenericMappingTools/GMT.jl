@@ -111,7 +111,7 @@ mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 	comment::Vector{String}
 	proj4::String
 	wkt::String
-	geom::Integer
+	geom::Int
 end
 Base.size(D::GMTdataset) = size(D.data)
 Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = D.data[inds...]
@@ -1288,12 +1288,12 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 			if (OGR_F.n_islands == 0)
 				geom = (OGR_F.type == "Polygon") ? wkbPolygon : ((OGR_F.type == "LineString") ? wkbLineString : wkbPoint)
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, geom)
+				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, Int(geom))
 			else
 				islands = reshape(unsafe_wrap(Array, OGR_F.islands, 2 * (OGR_F.n_islands+1)), OGR_F.n_islands+1, 2) 
 				np_main = islands[1,2]+1			# Number of points of outer ring
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main)],
-				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, wkbPolygon)
+				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, Int(wkbPolygon))
 
 				if (!drop_islands)
 					for k = 2:size(islands,2)		# 2 because first row holds the outer ring indexes 
@@ -1301,7 +1301,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 						off = islands[k,1] * 8
 						len = islands[k,2] - islands[k,1] + 1
 						D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x+off, len) unsafe_wrap(Array, OGR_F.y+off, len)],
-						                  Float64[], Float64[], attrib, coln, String[], " -Ph", String[], proj4, wkt, wkbPolygon)
+						                  Float64[], Float64[], attrib, coln, String[], " -Ph", String[], proj4, wkt, Int(wkbPolygon))
 					end
 				end
 			end
