@@ -231,11 +231,11 @@ function helper_ds_fill(d::Dict)
 	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
 		_fill::Array{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? fill_val :
 		                       ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
-		n_colors = length(_fill)
+		n_colors::Integer = length(_fill)
 		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
 			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end
-			_alpha = Vector{String}(undef, n_colors)
-			na = min(length(alpha_val), n_colors)
+			_alpha::Vector{String} = Vector{String}(undef, n_colors)
+			na::Integer = min(length(alpha_val), n_colors)
 			[_alpha[k] = join(string('@',alpha_val[k])) for k = 1:na]
 			if (na < n_colors)
 				for k = na+1:n_colors  _alpha[k] = ""  end
