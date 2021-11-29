@@ -55,7 +55,7 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 	end
 
 	d = KW(kw)
-	see = (!haskey(d, :show)) ? true : see = d[:show]			# No explicit 'show' keyword means show=true
+	see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
 
 	if (is_image)
 		grdimage(G; show=see, kw...)
@@ -75,14 +75,14 @@ end
 function imshow(arg1::GMTgrid; kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)
-	see = (!haskey(d, :show)) ? true : see = d[:show]	# No explicit 'show' keyword means show=true
+	see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
 	if ((cont_opts = find_in_dict(d, [:contour])[1]) !== nothing)
 		new_see = see
 		see = false			# because here we know that 'see' has to wait till last command
 	end
 	opt_p, = parse_common_opts(d, "", [:p], true)
 	til = find_in_dict(d, [:T :no_interp :tiles])[1]
-	flat = (find_in_dict(d, [:flat])[1] !== nothing)		# If true, force the use of grdimage
+	flat::Bool = (find_in_dict(d, [:flat])[1] !== nothing)		# If true, force the use of grdimage
 	if (flat || (opt_p == "" && til === nothing))
 		(flat && opt_p != "") && (d[:p] = opt_p[4:end])		# Restore the meanwhile deleted -p option
 		R = grdimage("", arg1; show=see, d...)
@@ -107,7 +107,7 @@ function imshow(arg1::GMTimage; kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	see = (!haskey(kw, :show)) ? true : see = kw[:show]	# No explicit 'show' keyword means show=true
 	if (isa(arg1.image, Array{UInt16}))
-		I = mat2img(arg1; kw...)
+		I::GMTimage = mat2img(arg1; kw...)
 		d = KW(kw)			# Needed because we can't delete from kwargs
 		(haskey(kw, :stretch) || haskey(kw, :histo_bounds)) && del_from_dict(d, [:histo_bounds :stretch])
 		grdimage("", I; D=true, show=see, d...)
