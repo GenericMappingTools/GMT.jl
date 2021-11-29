@@ -34,22 +34,23 @@ text_record(text::Vector{String}, hdr::String) = text_record(Array{Float64,2}(un
 
 Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
-  - `txt`   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
-     can be an array with same size as ``mat``rows or a string (will be reapeated n_rows times.) 
-  - `x`   An optional vector with the xx coordinates
-  - `hdr` optional String vector with either one or n_rows multisegment headers.
-  - `color` optional array of strings with color names/values. Its length can be smaller than n_rows, case in
+  - `txt`:   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
+     can be an array with same size as ``mat`` rows or a string (will be reapeated n_rows times.) 
+  - `x`:   An optional vector with the xx coordinates
+  - `hdr`: optional String vector with either one or n_rows multisegment headers.
+  - `color`: optional array of strings with color names/values. Its length can be smaller than n_rows, case in
      which colors will be cycled.
-  - `linethick`, or `lt` for selecting different line thicknesses. Works like `color`, but should be 
+  - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
-  - `fill`  Optional string array with color names or array of "patterns"
-  - `ls` | `linestyle`  Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
-  - `lt` | `linethick`  Line thickness.
-  - `multi` When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
+  - `fill`:  Optional string array with color names or array of "patterns".
+  - `ls` or `linestyle`:  Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
+  - `lt` or `linethick`:  Line thickness.
+  - `multi`: When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
      first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
-  - `datatype` Keep the original data type of `mat`. Default, converts to Float64
-  - `proj` or `proj4`  A proj4 string for dataset SRS
-  - `wkt`  A WKT SRS
+  - `datatype`: Keep the original data type of `mat`. Default, converts to Float64.
+  - `proj` or `proj4`:  A proj4 string for dataset SRS.
+  - `wkt`:  A WKT SRS.
+  - `colnames`: Optional string vector with names for each column of `mat`.
 """
 function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...)
 	d = KW(kwargs)
@@ -71,18 +72,21 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 
 	if (!isempty(hdr) && isa(hdr, String))	# Accept one only but expand to n_ds with the remaining as blanks
 		bak = hdr;		hdr = Base.fill("", n_ds);	hdr[1] = bak
+		#_hdr::Vector{String} = Base.fill("", n_ds);	_hdr[1] = hdr
 	elseif (!isempty(hdr) && length(hdr) != n_ds)
 		error("The header vector can only have length = 1 or same number of MAT Y columns")
+	#else
+		#_hdr = hdr
 	end
 
 	if ((color = find_in_dict(d, [:color])[1]) !== nothing)
-		_color::Array{String} = isa(color, Array{String}) ? color : ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"]
+		_color::Vector{String} = isa(color, Array{String}) ? vec(color) : ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"]
 	end
 	_fill = helper_ds_fill(d)
 
 	# ---  Here we deal with line colors and line thickness. If not provided we override the GMR defaultb -Wthin ---
 	val = find_in_dict(d, [:lt :linethick :linethickness])[1]
-	_lt = (val === nothing) ? [0.5] : val
+	_lt::Vector{AbstractFloat} = (val === nothing) ? [0.5] : vec(val)
 	_lts::Vector{String} = Vector{String}(undef, n_ds)
 	n_thick::Integer = length(_lt)
 	[_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])  for k = 1:n_ds]
@@ -147,8 +151,8 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 
 	# By default convert to Doubles, except if instructed to NOT to do it.
 	(find_in_dict(d, [:datatype])[1] === nothing) && (eltype(mat) != Float64) && (mat = Float64.(mat))
-	geom = (geom == 0 && (2 <= length(mat) <= 3)) ? Gdal.wkbPoint : (geom == 0 ? Gdal.wkbUnknown : UInt32(geom))	# Guess geom
-	(multi && geom == 0 && size(mat,1) == 1) && (geom = Gdal.wkbPoint)	# One row with many columns and MULTI => Points
+	geom = Int((geom == 0 && (2 <= length(mat) <= 3)) ? Gdal.wkbPoint : (geom == 0 ? Gdal.wkbUnknown : geom))	# Guess geom
+	(multi && geom == 0 && size(mat,1) == 1) && (geom = Int(Gdal.wkbPoint))	# One row with many columns and MULTI => Points
 	if (isempty(xx))				# No coordinates transmitted
 		if (ndims(mat) == 3)
 			coln = fill_colnames(coln, size(mat,2)-2)
@@ -211,7 +215,7 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 
 	n_ds = size(D.data, 1)
 	if (!isempty(_fill))				# Paint the polygons (in case of)
-		hdr = Vector{String}(undef, n_ds)
+		hdr::Vector{String} = Vector{String}(undef, n_ds)
 		[hdr[k] = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
 		if (D.header != "")  hdr[1] = D.header * hdr[1]  end	# Copy eventual contents of first header
 	end
@@ -229,7 +233,7 @@ end
 function helper_ds_fill(d::Dict)
 	# Shared by ds2ds & mat2ds
 	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
-		_fill::Array{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? fill_val :
+		_fill::Vector{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? vec(fill_val) :
 		                       ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
 		n_colors::Integer = length(_fill)
 		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
