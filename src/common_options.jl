@@ -563,7 +563,7 @@ function parse_proj(p::NamedTuple)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function guess_proj(lonlim, latlim)
+function guess_proj(lonlim, latlim)::String
 	# Select a projection based on map limits. Follows closely the Matlab behavior
 
 	if (lonlim[1] == 0.0 && lonlim[2] == 0.0 && latlim[1] == 0.0 && latlim[2] == 0.0)
@@ -612,7 +612,7 @@ function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)
 		((o = string(get(dd, :xyz, ""))) !== "") && (opt_B *= pre*"g -Bzg")
 		(n == length(opt_B)) && (opt_B *= pre*"g")		# None of the above default to -Bg
 		if (haskey(dd, :pen))
-			p = opt_pen(dd, 'W', [:pen])[4:end]					# Because p = " -W..."
+			p::String = opt_pen(dd, 'W', [:pen])[4:end]					# Because p = " -W..."
 			# Need to find if we already have a conf and need to append or create one. And we may have [:par :conf :params]
 			symb = (haskey(d, :par)) ? :par : (haskey(d, :conf)) ? :conf : (haskey(d, :params)) ? :params : :n
 			if (symb == :n)  d[:par] = (MAP_GRID_PEN_PRIMARY=p,)
@@ -622,8 +622,8 @@ function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)
 		end
 	else
 		# grid=:on => -Bg;	grid=:x => -Bxg;	grid="x10" => -Bxg10; grid=:y ...;  grid=:xyz => " -Bg -Bzg"
-		o = string(args)
-		_x, _y, _xyz = (o[1] == 'x'), (o[1] == 'y'), startswith(o, "xyz")
+		o::String = string(args)
+		_x::Bool, _y::Bool, _xyz::Bool = (o[1] == 'x'), (o[1] == 'y'), startswith(o, "xyz")
 		if     (_x && !_xyz)  opt_B *= pre*"xg" * (length(o) > 1 ? o[2:end] : "")		# grid=:x or grid="x10"
 		elseif (_y && !_xyz)  opt_B *= pre*"yg" * (length(o) > 1 ? o[2:end] : "")
 		elseif (_xyz)         opt_B *= pre*"g -Bzg"
@@ -1670,10 +1670,11 @@ function arg2str(arg, sep='/')::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS_nested(d::Dict, cmd::Vector{String}, K::Bool=true)::Tuple{Vector{String}, Bool}
+function finish_PS_nested(d::Dict, cmd::Vector{String})::Vector{String}
 	# Finish the PS creating command, but check also if we have any nested module calls like 'coast', 'colorbar', etc
 	cmd2::Vector{String} = add_opt_module(d)
-	isempty(cmd2) && return cmd, K
+	isempty(cmd2) && return cmd
+
 	if (startswith(cmd2[1], "clip"))		# Deal with the particular psclip case (Tricky)
 		if (isa(CTRL.pocket_call[1], Symbol) || isa(CTRL.pocket_call[1], String))	# Assume it's a clip=end
 			cmd::Vector{String}, CTRL.pocket_call[1] = [cmd; "psclip -C"], nothing
@@ -1705,7 +1706,7 @@ function finish_PS_nested(d::Dict, cmd::Vector{String}, K::Bool=true)::Tuple{Vec
 	else
 		append!(cmd, cmd2)
 	end
-	return cmd, K
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -215,7 +215,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(!IamModern[1]) && put_in_legend_bag(d, _cmd, arg1, O, opt_l)
 
 	_cmd = gmt_proggy .* _cmd				# In any case we need this
-	_cmd, K = finish_PS_nested(d, _cmd, K)
+	_cmd = finish_PS_nested(d, _cmd)
 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3)
