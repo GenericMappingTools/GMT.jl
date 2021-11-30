@@ -960,7 +960,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_bands = size(Img.image, 3)
 	if (Img.layout[2] == 'R')  n_rows, n_cols = n_cols, n_rows  end
 	family = GMT_IS_IMAGE
-	if (GMTver >= v"6.1" && (n_bands == 2 || n_bands == 4))	# Then we want the alpha layer together with data
+	if (n_bands == 2 || n_bands == 4)			# Then we want the alpha layer together with data
 		family = family | GMT_IMAGE_ALPHA_LAYER
 	end
 	pad = (!CTRL.proj_linear[1]) ? 2 : 0
@@ -1376,17 +1376,13 @@ function clear_sessions(age::Int=0)
 	# AGE is in seconds
 	# Windows version of ``gmt clear sessions`` fails in 6.0 and it errors if no sessions dir
 	try		# Becuse the sessions dir may not exist 
-		if (GMTver >= v"6.1")
-			sp = readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1] * "/sessions"
-			dirs = readdir(sp)
-			session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
-			n = datetime2unix(now(UTC))
-			for sd in session_dirs
-				fp = joinpath(sp, sd)
-				(n - mtime(fp) > age) && rm(fp, recursive = true)	# created age seconds before
-			end
-		else
-			run(`gmt clear sessions`)
+		sp = readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1] * "/sessions"
+		dirs = readdir(sp)
+		session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
+		n = datetime2unix(now(UTC))
+		for sd in session_dirs
+			fp = joinpath(sp, sd)
+			(n - mtime(fp) > age) && rm(fp, recursive = true)	# created age seconds before
 		end
 	catch
 	end
