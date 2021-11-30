@@ -56,9 +56,15 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 #=
-function mk_legend(codes::Vector{NamedTuple})
+function mk_legend(codes::Tuple{NamedTuple})
+	# code = (vspace=val)		G -0.1i
+	# code = (header=txt, font=?)		H 24p,Times-Roman My Map Legend
+	# code = (hline=pen, offset=?)	D 0.2i 1p
+	# code = (ncolumns=?)	N 2
+	# code = (vline=pen, offset=?)	V 0 1p
 	# code = (Symbol=:circ, size=0.15, dx_left=0.1, fill="p300/12", dx_righ=0.3, text="This circ")
 	for code in codes
+		find_in_kwargs(code, )
 		k = keys(code)
 		lowercase(string(k[1]))
 		code[1]

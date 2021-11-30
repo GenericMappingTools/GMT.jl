@@ -68,14 +68,14 @@ to read a jpg image with the bands reversed (this example is currently broken in
 function gmtread(fname::String; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, opt_R = parse_R(d, "")
+	cmd::String, opt_R::String = parse_R(d, "")
 	cmd = parse_common_opts(d, cmd, [:V_params :f :i :h])[1]
 	cmd, opt_bi = parse_bi(d, cmd)
 
 	# Process these first so they may take precedence over defaults set below
 	opt_T = add_opt(d, "", "Tg", [:grd :grid])
 	if (opt_T != "")		# Force read via GDAL
-		if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)  fname = fname * "=gd"  end
+		if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)  fname *= "=gd"  end
 	else
 		opt_T = add_opt(d, "", "Ti", [:img :image])
 	end
@@ -90,7 +90,7 @@ function gmtread(fname::String; kwargs...)
 			if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)  fname = fname * "=gd"  end
 			opt_T = " -Tg"
 		end
-		fname = fname * "?" * arg2str(varname)
+		fname *= "?" * arg2str(varname)
 		if ((val = find_in_dict(d, [:layer :band])[1]) !== nothing)
 			if (isa(val, Number))     fname *= @sprintf("[%d]", val-1)
 			elseif (isa(val, Array))  fname *= @sprintf("[%d,%d]", val[1]-1, val[2]-1)	# A 4D array
@@ -147,17 +147,16 @@ function gmtread(fname::String; kwargs...)
 	# Because of the certificates shits on Windows. But for some reason the set in gmtlib_check_url_name() is not visible
 	(Sys.iswindows()) && run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)
 	API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_NOGDALCLOSE + GMT_SESSION_COLMAJOR);
-	if (GMTver >= v"6.1")
-		x = opt_R2num(opt_R)		# See if we have a limits request
-		if (GMTver > v"6.1.1")
-			lims = (x === nothing) ? (0.0, 0.0, 0.0, 0.0, 0.0, 0.0) : tuple(vcat(x,[0.0, 0.0])...)
-			ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
-			O = ogr2GMTdataset(gmt_ogrread(API2, pointer([ctrl])))
-		else
-			O = ogr2GMTdataset(gmt_ogrread(API2, fname, (x === nothing) ? C_NULL : x))
-		end
+
+	x = opt_R2num(opt_R)		# See if we have a limits request
+	if (GMTver > v"6.1.1")
+		lims = (x === nothing) ? (0.0, 0.0, 0.0, 0.0, 0.0, 0.0) : tuple(vcat(x,[0.0, 0.0])...)
+		ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
+		O = ogr2GMTdataset(gmt_ogrread(API2, pointer([ctrl])))
+	else
+		O = ogr2GMTdataset(gmt_ogrread(API2, fname, (x === nothing) ? C_NULL : x))
 	end
-	(GMTver == v"6.0") && (O = ogr2GMTdataset(gmt_ogrread(API2, fname)))
+
 	ressurectGDAL()				# Because GMT called GDALDestroyDriverManager()
 	GMT_Destroy_Session(API2)
 	return O

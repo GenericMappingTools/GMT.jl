@@ -173,7 +173,7 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))	# Simple case, ex E="PT,+gblue" or E=:PT
-			t = string(" -E", val)
+			t::String = string(" -E", val)
 			!contains(t, "+") && (t *= "+p0.5")		# If only code(s), append pen
 			cmd *= t
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
@@ -182,7 +182,7 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 		elseif (isa(val, Tuple))
 			cmd = parse_dcw(cmd, val)
 		end
-		(GMTver >= v"6.1") && (cmd *= " -Vq")		# Suppress annoying warnings regarding filling syntax with +r<dpi>
+		cmd *= " -Vq"				# Suppress annoying warnings regarding filling syntax with +r<dpi>
 		del_from_dict(d, symbs)
 	end
 	return cmd
