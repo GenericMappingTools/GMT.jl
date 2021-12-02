@@ -124,6 +124,18 @@ T = text_record(["P", "T d = [0 0; 1 1; 2 1; 3 0.5; 2 0.25]"]);
 legend(T, R="-3/3/-3/3", J=:X12,  D="g-1.8/2.6+w12c+jTL", F="+p+ggray")
 legend!(T, R="-3/3/-3/3", J=:X12, D="g-1.8/2.6+w12c+jTL", Vd=dbg2)
 legend!("", T, R="-3/3/-3/3", J=:X12, D="g-1.8/2.6+w12c+jTL", Vd=dbg2)
+@test GMT.mk_legend(gap="-0.1i")[1] == "G -0.1i"
+@test GMT.mk_legend(header=(text="My Legend", font=(24,"Times-Roman")))[1] == "H 24,Times-Roman My Legend"
+@test GMT.mk_legend(hline=(pen=1, offset="0.2i"))[1] == "D 0.2i 1"
+@test GMT.mk_legend(ncolumns=2, vline=(pen=1, offset=0)) == ["N 2", "V 0 1"]
+@test GMT.mk_legend(symbol=(marker=:circ, size="0.15i", dx_left="0.1i", fill="p300/12", dx_right="0.3i", text="This circle"))[1] == "S 0.1i c 0.15i p300/12 0.3i This circle"
+@test GMT.mk_legend(hline2=(pen=1, offset="0.2i"), map_scale=(x=5,y=5,length="600+u+f")) == ["D 0.2i 1", "M 5 5 600+u+f"]
+@test GMT.mk_legend(image=(width="3i", fname="@SOEST_block4.png",justify=:CT)) == "I @SOEST_block4.png 3i CT"
+@test GMT.mk_legend(label=(txt="Smith al., @%5%J. 99@%%", justify=:R, font=(9, "Times-Roman"))) == "L 9,Times-Roman R Smith al., @%5%J. 99@%%"
+@test GMT.mk_legend(text1="Let us just try") == "T Let us just try"
+@test GMT.mk_legend(colorbar=(name="tt.cpt", offset=0.5, height=0.5, extra="-B0")) == "B tt.cpt 0.5 0.5 -B0"
+@test GMT.mk_legend(textcolor=:red, fill=(c1=:blue, c2="100/30/200")) == ["C red", "F blue 100/30/200 "]
+@test GMT.mk_legend(paragraph=true, popo=true) == "P "
 
 println("	PSROSE")
 data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
