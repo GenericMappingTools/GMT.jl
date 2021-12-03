@@ -57,7 +57,24 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 #=
-GMT.mk_legend(gap="-0.1i", header=(text="My Map Legend", font=(24,"Times-Roman")), hline=(pen=1, offset="0.2i"), ncolumns=2, vline=(pen=1, offset=0), symbol=(marker=:circ, size="0.15i", dx_left="0.1i", fill="p300/12", dx_right="0.3i", text="This circle is hachured"), Symbol1=(marker=:ellipse, size="0.15i", dx_left="0.1i", fill=:yellow, dx_right="0.3i", text="This ellipse is yellow"), Symbol2=(marker=:wedge, size="0.15i", dx_left="0.1i", fill=:green, dx_right="0.3i", text="This wedge is green"), hline2=(pen=1, offset="0.2i"), ncolumns2=2, map_scale=(x=5,y=5,length="600+u+f"), gap2="0.05i", image=(width="3i", fname="@SOEST_block4.png",justify=:CT), gap3="0.05i", label=(txt="Smith et al., @%5%J. Geophys. Res., 99@%%", justify=:R, font=(9, "Times-Roman")), gap4="0.1i", text1="Let us just try some simple text that can go on a few lines.", text2="There is no easy way to predetermine how many lines may be required")
+GMT.mk_legend(gap="-0.1i", header=(text="My Map Legend", font=(24,"Times-Roman")), hline=(pen=1, offset="0.2i"), ncolumns=2, vline=(pen=1, offset=0), symbol=(marker=:circ, size="0.15i", dx_left="0.1i", fill="p300/12", dx_right="0.3i", text="This circle is hachured"), Symbol1=(marker=:ellipse, size="0.15i", dx_left="0.1i", fill=:yellow, dx_right="0.3i", text="This ellipse is yellow"), Symbol2=(marker=:wedge, size="0.15i", dx_left="0.1i", fill=:green, dx_right="0.3i", text="This wedge is green"), hline2=(pen=1, offset="0.2i"), ncolumns2=2, map_scale=(lon=5,lat=5,length="600+u+f"), gap2="0.05i", image=(width="3i", fname="@SOEST_block4.png",justify=:CT), gap3="0.05i", label=(txt="Smith et al., @%5%J. Geophys. Res., 99@%%", justify=:R, font=(9, "Times-Roman")), gap4="0.1i", text1="Let us just try some simple text that can go on a few lines.", text2="There is no easy way to predetermine how many lines may be required")
+
+println("  header=(text=?(a text) [, font=?(text font)])  (H) --> Plots a centered text string")
+println("  cmap|cpt=?(CPT file name)  (A) --> Symbol or cell color fills may be given indirectly via a z-value")
+println("  colorbar=(name=?(CPT file name), offset=?, height=? [, extra=?(extra opts)])  (B) --> Plot horizontal colorbar")
+println("  textcolor=?(color)  (C) --> Color with which the remaining text is to be printed via z=value")
+println("  hline=(pen=?(pen)[, offset=?])  (D) --> Horizontal line with specified pen across the legend")
+println("  fill=?(color))  --> (F) Fill (color of pattern) for cells")
+println("  gap|vspace=?(amount))  --> (G) Specifies a vertical gap of the given length")
+println("  image=(name=?(img file name), width=?, justify=?(2 char code))  --> (I) Place image justified relative to the current point")
+println("  label=(text=?(a text), justify=?(L|R|C)[, font=?(text font)])  --> (L) Plots a (L)eft, (C)entered, or (R)ight-justified text")
+println("  map_scale=([lon=?,] lat|y=?(lat of scale), length=? [box=?(map panel), region=?, proj=?])  --> (M) Place a map scale")
+println("  ncol[xx]=?(number of columns)  --> (N) Change the number of columns in the legend")
+println("  paragraph=?(Bool or a String)  --> (P) Start a new text paragraph")
+println("  symbol[xx]=([dx_left=?,] marker=?(symbol name), size=?(symbol size), [fill=?(color), pen=?(outline)] [, dx_right=?, label=?(text)])  --> (S) Plots the selected symbol")
+println("  text[xx]=?(the text)  (T) --> One or more of these records with paragraph-text")
+println("  vline=(pen=?(pen)[, offset=?])  (V) --> Draws a vertical line between columns")
+
 =#
 mk_legend(nt::NamedTuple) = mk_legend(; nt...)
 function mk_legend(; kwargs...)
@@ -152,7 +169,7 @@ function mk_legend(; kwargs...)
 			marca::String = get_marker_name(d, nothing, [:symbol, :marker], false, true)[1]
 			f = ((val = find_in_dict(d, [:dx_left])[1]) === nothing) ? "- " : string(val, " ");	dx1 = f
 			f = ((val = find_in_dict(d, [:fill])[1]) === nothing) ? "- " : get_color(val);			fill = f
-			f = add_opt_pen(d, [:pen], "", true);	pen = f		# TRUE to also seek (lw,lc,ls)
+			f = add_opt_pen(d, [:pen], "", true);	pen = (f == "") ? " -" : f		# TRUE to also seek (lw,lc,ls)
 			((val = find_in_dict(d, [:size])[1]) === nothing) && error("Must specify the 'size' in 'symbol'")
 			_size = arg2str(val)
 			f = ((val = find_in_dict(d, [:label :text])[1]) === nothing) ? "" : string(val);	label = f

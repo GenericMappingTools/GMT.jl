@@ -582,7 +582,7 @@ function ind2rgb(img::GMTimage)
 	else
 		imgRGB = zeros(UInt8,size(img.image,1), size(img.image,2), 3)
 		n = 1
-		for k = 1:length(img.image)
+		@inbounds for k = 1:length(img.image)
 			start_c = img.image[k] * 4
 			for c = 1:3
 				imgRGB[n] = img.colormap[start_c+c];	n += 1

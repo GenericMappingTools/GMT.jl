@@ -128,14 +128,14 @@ legend!("", T, R="-3/3/-3/3", J=:X12, D="g-1.8/2.6+w12c+jTL", Vd=dbg2)
 @test GMT.mk_legend(header=(text="My Legend", font=(24,"Times-Roman")))[1] == "H 24,Times-Roman My Legend"
 @test GMT.mk_legend(hline=(pen=1, offset="0.2i"))[1] == "D 0.2i 1"
 @test GMT.mk_legend(ncolumns=2, vline=(pen=1, offset=0)) == ["N 2", "V 0 1"]
-@test GMT.mk_legend(symbol=(marker=:circ, size="0.15i", dx_left="0.1i", fill="p300/12", dx_right="0.3i", text="This circle"))[1] == "S 0.1i c 0.15i p300/12 0.3i This circle"
+@test GMT.mk_legend(symbol=(marker=:circ, size="0.15i", dx_left="0.1i", fill="p300/12", dx_right="0.3i", text="This circle"))[1] == "S 0.1i c 0.15i p300/12 - 0.3i This circle"
 @test GMT.mk_legend(hline2=(pen=1, offset="0.2i"), map_scale=(x=5,y=5,length="600+u+f")) == ["D 0.2i 1", "M 5 5 600+u+f"]
 @test GMT.mk_legend(image=(width="3i", fname="@SOEST_block4.png",justify=:CT))[1] == "I @SOEST_block4.png 3i CT"
 @test GMT.mk_legend(label=(txt="Smith al., @%5%J. 99@%%", justify=:R, font=(9, "Times-Roman")))[1] == "L 9,Times-Roman R Smith al., @%5%J. 99@%%"
 @test GMT.mk_legend(text1="Let us just try")[1] == "T Let us just try"
 @test GMT.mk_legend(colorbar=(name="tt.cpt", offset=0.5, height=0.5, extra="-B0"))[1] == "B tt.cpt 0.5 0.5 -B0"
 @test GMT.mk_legend(textcolor=:red, fill=(c1=:blue, c2="100/30/200")) == ["C red", "F blue 100/30/200 "]
-@test GMT.mk_legend(paragraph=true, popo=true)[1] == "P "
+@test GMT.mk_legend((cmap="lixo", paragraph=true, popo=true)) == ["A lixo", "P "]
 
 
 println("	PSROSE")

@@ -40,6 +40,7 @@ println("	XYZ2GRD")
 D=grd2xyz(G); # Use G of previous test
 xyz2grd(D, R="0/150/0/150", I=1, r=true);
 xyz2grd(D, xlim=(0,150), ylim=(0,150), I=1, r=true);
+xyz2grd(x=[0,1,2], y=[0,1,2], z=[0,1,2], R="0/2/0/2", I=1);
 
 println("	TREND1D")
 D = gmt("gmtmath -T10/110/1 T 50 DIV 2 POW 2 MUL T 60 DIV ADD 4 ADD 0 0.25 NRAND ADD T 25 DIV 2 MUL PI MUL COS 2 MUL 2 ADD ADD");

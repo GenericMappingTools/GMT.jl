@@ -127,7 +127,7 @@ function helper_sub_F(arg, dumb=nothing)::String
 	# dims=(1,2)
 	# dims=(panels=(1,2), frac=((2,3),(3,4,5)))
 	# dims=(width=xx, height=yy, fwidth=(), fheight=(), fill=:red, outline=(3,:red))
-	out = ""
+	out::String = ""
 	if (isa(arg, String))
 		out = arg2str(arg)
 	elseif (isa(arg, NamedTuple) || isa(arg, Dict) || isa(arg, Tuple{Tuple, Tuple}) || isa(arg, Tuple{Tuple, Number}))
