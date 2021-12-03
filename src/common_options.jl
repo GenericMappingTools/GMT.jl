@@ -327,6 +327,8 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		end
 	end
 	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
+
+	(opt_J == " ") && (opt_J = "")		# We use " " when wanting to prevent the default -J
 	cmd *= opt_J
 	return cmd, opt_J
 end
@@ -679,7 +681,7 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 			end
 		end
 		if (isa(val, NamedTuple))
-			_opt_B, what_B = axis(val, d);	extra_parse = false
+			_opt_B::String, what_B::Vector{Bool} = axis(val, d);	extra_parse = false
 			have_Bframe = what_B[2]
 			def_opt_B_split = split(opt_B)
 			have_axes = any(keys(val) .== :axes)
@@ -719,7 +721,7 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 	((val = find_in_dict(d, [:grid])[1]) !== nothing) && (opt_B = parse_grid(d, val, opt_B))
 
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
-	t = ""		# Use the trick to replace blanks by Char(127) (invisible) and undo it in extra_parse
+	t::String = ""		# Use the trick to replace blanks by Char(127) (invisible) and undo it in extra_parse
 	if (haskey(d, :title))   t *= "+t"   * replace(str_with_blancs(d[:title]), ' '=>'\x7f');   delete!(d, :title);	end
 	if (haskey(d, :xlabel))  t *= " x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\x7f');   delete!(d, :xlabel);	end
 	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\x7f');   delete!(d, :ylabel);	end
@@ -2128,7 +2130,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 #add_opt_fill(d::Dict, opt::String="") = add_opt_fill("", d, [d[collect(keys(d))[1]]], opt)	# Use ONLY when len(d) == 1
 function add_opt_fill(d::Dict, opt::String="")
-	add_opt_fill(d, [collect(keys(d))[1]], opt)	# Use ONLY when len(d) == 1
+	add_opt_fill(d, [collect(keys(d))[1]], opt)			# Use ONLY when len(d) == 1
 end
 add_opt_fill(d::Dict, symbs::VMs, opt="") = add_opt_fill("", d, symbs, opt)
 function add_opt_fill(cmd::String, d::Dict, symbs::VMs, opt="", del::Bool=true)::String

@@ -13,11 +13,6 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	else		        gmt_proggy = (IamModern[1]) ? "plot "    : "psxy "
 	end
 
-	#transmutate(arg::GMTdataset)::GMTdataset = arg
-	#transmutate(arg::Vector{GMTdataset})::Vector{GMTdataset} = arg
-	#transmutate(arg::Matrix{<:Real})::Matrix{<:Real} = arg
-	#transmutate(arg=nothing) = arg
-
 	(occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
@@ -84,8 +79,6 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(N_args == 0 && arg1 !== nothing) && (N_args = 1)
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
 
-	#if ((isa(arg1, GMTdataset) && arg1.proj4 != "" || isa(arg1, Vector{<:GMTdataset}) &&
-		     #arg1[1].proj4 != "") && opt_J == " -JX" * def_fig_size)
 	if (isGMTdataset(arg1) && getproj(arg1) == "" && opt_J == " -JX" * def_fig_size) 
 		cmd = replace(cmd, opt_J => " -JX" * split(def_fig_size, '/')[1] * "/0")	# If projected, it's a axis equal for sure
 	end
@@ -224,7 +217,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_markerline(d::Dict, opt_ML::String, opt_Wmarker::String)
+function parse_markerline(d::Dict, opt_ML::String, opt_Wmarker::String)::Tuple{String, String}
 	# Make this code into a function so that it can also be called from mk_styled_line!()
 	if ((val = find_in_dict(d, [:ml :markerline :MarkerLine])[1]) !== nothing)
 		if (isa(val, Tuple))           opt_ML = " -W" * parse_pen(val) # This can hold the pen, not extended atts
@@ -533,7 +526,7 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 			t = d[symb]
 			if (isa(t, Tuple))				# e.g. marker=(:r, [2 3])
 				msg = "";	cst = false
-				o = string(t[1])
+				o::String = string(t[1])
 				if     (startswith(o, "E"))  opt = "E";  N = 3; cst = true
 				elseif (startswith(o, "e"))  opt = "e";  N = 3
 				elseif (o == "J" || startswith(o, "Rot"))  opt = "J";  N = 3; cst = true
@@ -580,7 +573,7 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 					marca = opt * add_opt(t, (custom="", size="/"))
 				end
 			else
-				t1 = string(t)
+				t1::String = string(t)
 				(t1[1] != 'T') && (t1 = lowercase(t1))
 				if     (t1 == "-" || t1 == "x-dash")    marca = "-"
 				elseif (t1 == "+" || t1 == "plus")      marca = "+"

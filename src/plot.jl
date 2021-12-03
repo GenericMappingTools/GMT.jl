@@ -1036,9 +1036,7 @@ cat_1_arg(arg::GMTdataset) = return arg				# Miserable attempts to force type st
 cat_1_arg(arg::Vector{<:GMTdataset}) = return arg
 function cat_1_arg(arg)
 	# Add a first column with 1:n to all args that are not GMTdatasets
-	#(isa(arg, Vector{<:GMTdataset}) || isa(arg, GMTdataset))  &&  return arg
 	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
-		#arg = hcat(collect(1:size(arg,1)), arg)
 		arg = hcat(collect(eltype(arg), 1:size(arg,1)), arg)
 	#elseif (isa(arg, Array) && size(arg,1) == 1)		# Accept also row arrays. CAN'T IT BREAKS plot([1 1])
 		#arg = hcat(collect(eltype(arg), 1:length(arg)), arg')
