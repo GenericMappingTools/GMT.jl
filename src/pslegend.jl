@@ -180,7 +180,6 @@ function mk_legend(; kwargs...)
 	any(c) && (leg = leg[.!c])		# Remove entries corresponding to bad options to not let go undefineds
 	leg
 end
-##
 
 # ---------------------------------------------------------------------------------------------------
 legend!(cmd0::String="", arg1=nothing; kw...) = legend(cmd0, arg1; first=false, kw...)
