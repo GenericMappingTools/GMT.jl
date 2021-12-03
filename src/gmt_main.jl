@@ -1272,7 +1272,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 			n_islands += OGR_F.n_islands
 		end
 		n_total_segments += n_islands
-		(n_islands > 0) && println("\tThis file has $(n_islands) islands (holes in polygons).\n\tUse `gmtread(..., no_islands=true)` to ignore them.")
+		(n_islands > 0) && println("\tThis file has islands (holes in polygons).\n\tUse `gmtread(..., no_islands=true)` to ignore them.")
 	end
 
 	D = Vector{GMTdataset}(undef, n_total_segments)
