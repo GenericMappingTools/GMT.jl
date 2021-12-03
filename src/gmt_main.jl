@@ -1272,6 +1272,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 			n_islands += OGR_F.n_islands
 		end
 		n_total_segments += n_islands
+		(n_islands > 0) && println("\tThis file has islands (holes in polygons).\n\tUse `gmtread(..., no_islands=true)` to ignore them.")
 	end
 
 	D = Vector{GMTdataset}(undef, n_total_segments)
@@ -1315,13 +1316,15 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 					end
 				end
 			end
-			bb = extrema(D[n].data, dims=1)			# Compute the BoundingBox per segment (C version doesn't do it)
-			D[n].bbox = collect(Float64, Iterators.flatten(bb))
 			n = n + 1
 		end
 	end
-	D[1].ds_bbox = collect(ds_bbox)			# It always has 6 elements and last two maybe zero
 	(n_total_segments > (n-1)) && deleteat!(D, n:n_total_segments)
+	for k = 1:length(D)			# Compute the BoundingBoxes per segment (C version doesn't do it)
+		bb = extrema(D[k].data, dims=1)		# A N Tuple.
+		D[k].bbox = collect(Float64, Iterators.flatten(bb))
+	end
+	D[1].ds_bbox = collect(ds_bbox)			# It always has 6 elements and last two maybe zero
 	return D
 end
 
