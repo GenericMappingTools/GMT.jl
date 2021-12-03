@@ -106,6 +106,9 @@
 
 	check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
 	C = makecpt(range=(0,9,1));
+	I = mat2img(check);
+	I.n_colors = 0
+	rgb = GMT.ind2rgb(I);
 	I = mat2img(check, cmap=C);
 	rgb = GMT.ind2rgb(I);
 	image_alpha!(I, alpha_ind=5);
