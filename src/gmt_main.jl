@@ -508,7 +508,12 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 		else
 			for k = 1:nb
 				offset = (k - 1) * gmt_hdr.size + padLeft
-				[z[row,col, k] = t[((ny-row) + padTop) * mx + col + offset] for row = 1:ny, col = 1:nx]
+				#[z[row,col, k] = t[((ny-row) + padTop) * mx + col + offset] for row = 1:ny, col = 1:nx]
+				for col = 1:nx
+					for row = 1:ny
+						z[row,col, k] = t[((ny-row) + padTop) * mx + col + offset]
+					end
+				end
 			end
 			layout = "BCB";
 		end
@@ -534,7 +539,12 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 		layout = grd_mem_layout[1][1:2]*'B';
 	else
 		# Was t[GMT_IJP(row, col, mx, padTop, padLeft)
-		[z[row,col] = t[((row-1) + padTop) * mx + col + padLeft] for row = 1:ny, col = 1:nx]
+		#[z[row,col] = t[((row-1) + padTop) * mx + col + padLeft] for row = 1:ny, col = 1:nx]
+		for row = 1:ny
+			for col = 1:nx
+				z[row,col] = t[((row-1) + padTop) * mx + col + padLeft]
+			end
+		end
 		layout = "TCB";
 	end
 	grd_mem_layout[1] = ""		# Reset because this variable is global
