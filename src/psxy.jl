@@ -585,7 +585,7 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 				elseif (t1[1] == 'd')                   marca = "d"		# diamond
 				elseif (t1 == "g" || t1 == "octagon")   marca = "g"
 				elseif (t1[1] == 'h')                   marca = "h"		# hexagon
-				elseif (t1 == "i" || t1 == "v" || t1 == "inverted_tri")  marca = "i"
+				elseif (t1 == "i" || t1 == "inverted_tri")  marca = "i"
 				elseif (t1[1] == 'l')                   marca = "l"		# letter
 				elseif (t1 == "n" || t1 == "pentagon")  marca = "n"
 				elseif (t1 == "p" || t1 == "." || t1 == "point")  marca = "p"
@@ -593,6 +593,8 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 				elseif (t1[1] == 't' || t1 == "^")      marca = "t"		# triangle
 				elseif (t1[1] == 'T')                   marca = "T"		# Triangle
 				elseif (t1[1] == 'y')                   marca = "y"		# y-dash
+				elseif (t1[1] == 'f')                   marca = "f"		# for Faults in legend
+				elseif (t1[1] == 'q')                   marca = "q"		# for Quoted in legend
 				end
 				t1 = string(t)		# Repeat conversion for the case it was lower-cased above
 				# Still need to check the simpler forms of these
