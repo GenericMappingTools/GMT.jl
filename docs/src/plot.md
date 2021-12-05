@@ -84,7 +84,7 @@ Parameters
    **front**    Draw a front. See [Front lines](@ref)\
    **g** or **octagon**  size is diameter of circumscribing circle.\
    **h** or **hexagon**  size is diameter of circumscribing circle.\
-   **i** or **v** or **inverted\_tri**  size is diameter of circumscribing circle.\
+   **i** or **inverted\_tri**  size is diameter of circumscribing circle.\
    **j** or **rotated\_rec**  Rotated rectangle. Direction (in degrees counter-clockwise from horizontal), x-dimension, and y-dimension must be found in columns 3, 4, and 5.\
    **J** or **Rotated\_rec**  Same as **rotated\_rec**, except azimuth (in degrees east of north) should be given instead of direction. The azimuth will be mapped into an angle based on the chosen map projection (**rotated\_rec** leaves the directions unchanged.) Furthermore, the dimensions must be given in geographical instead of plot-distance units. For a degenerate rectangle (square) with one dimension given, use **J-**. The dimension is excepted to be given in column 3. Alternatively, append the dimension diameter to **J-** and this fixed dimension is used instead. An exception occurs for a linear projection in which we assume the dimensions are given in the same units as **region**. For allowable geographical units, see UNITS.\
    **m** or **matang**  math angle arc, optionally with one or two arrow heads [Default is no arrow heads]. The size is the length of the vector head. Arc width is set by **pen**, with vector head outlines defaulting to half of arc width. The radius of the arc and its start and stop directions (in degrees counter-clockwise from horizontal) must be given in columns 3-5. See [Vector Attributes](@ref) for specifying other attributes.\
