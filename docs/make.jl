@@ -124,6 +124,7 @@ makedocs(
 			"grdgradient.md",
 			"grdview.md",
 			"histogram.md",
+			"legend.md",
 			"lines.md",
 			"makecpt.md",
 			"movie.md",
