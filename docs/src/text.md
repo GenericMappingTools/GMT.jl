@@ -90,6 +90,8 @@ Optional Arguments
 - **Z** or **threeD** : -- *threeD=true*\
     For 3-D projections: expect each item to have its own level given in the 3rd column, and **noclip** is implicitly set. (Not implemented for paragraph mode). 
 
+- **figname** or **savefig** or **name** :: *figname=`name.png`*\
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format
 
 
 Limitations

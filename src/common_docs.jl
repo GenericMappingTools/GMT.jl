@@ -195,3 +195,7 @@ const opt_append = "**append** :: [Type => Str]     ``Arg = fname``
 
     Append result to an existing file named ``fname`` instead of returning to a Julia variable.
     Use the bo option to save as a binary file."
+
+const opt_savefig = "**savefig** | **figname** | **name** :: [Type => Str]
+
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format (e.g. figname=\"name.png\")"

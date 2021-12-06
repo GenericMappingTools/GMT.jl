@@ -73,6 +73,9 @@ Parameters
      - *view=true*\
         To propagate the viewpoint used in a previous module (makes sense only in ``bar3!``)
 
+- **figname** or **savefig** or **name** :: *figname=`name.png`*\
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format
+
 Examples
 --------
 

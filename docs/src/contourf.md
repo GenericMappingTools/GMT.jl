@@ -124,6 +124,9 @@ Optional Arguments
    Set PDF transparency level for an overlay, in (0-100] percent range. [Default is 0, *i.e.*, opaque].
    Works only for the PDF and PNG formats.
 
+- **figname** or **savefig** or **name** :: *figname=`name.png`*\
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format
+
 Examples
 --------
 

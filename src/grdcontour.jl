@@ -73,6 +73,7 @@ Parameters
 - $(GMT.opt_h)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 """
 function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

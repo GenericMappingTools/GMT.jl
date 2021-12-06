@@ -213,6 +213,9 @@ different record types are recognized, and the syntax for each of these records 
    start and stop of a vertical line (so **vline** must follow **hline**).  If no horizontal line is desired simply
    give **-** as `pen` to **hline**.
 
+- **figname** or **savefig** or **name** :: *figname=`name.png`*\
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format
+
 The function `GMT.mk_legend(kwargs...)` can be used to generate the hard core GMT *Legend Codes*, which in turn can be
 written to a file and feed to this module as input. It can also be used in debug to check that the appropriate
 ASCII codes were generated.

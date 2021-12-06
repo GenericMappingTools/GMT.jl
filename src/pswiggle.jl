@@ -62,6 +62,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+- $(GMT.opt_savefig)
 """
 function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

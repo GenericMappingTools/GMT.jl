@@ -107,6 +107,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+- $(GMT.opt_savefig)
 """
 function plot(arg1; first=true, kw...)
 	common_plot_xyz("", cat_1_arg(arg1), "plot", first, false, kw...)
@@ -291,6 +292,7 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 - $(GMT.opt_w)
+- $(GMT.opt_savefig)
 
 ### Example:
 
@@ -372,6 +374,7 @@ Parameters
 
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot.html#w)
+- $(GMT.opt_savefig)
 
 [`Full man page`](https://genericmappingtools.github.io/GMT.jl/latest/scatter/)
 [`GMT man page`]($(GMTdoc)plot.html)
@@ -444,6 +447,7 @@ Reads a file or (x,y) pairs and plots vertical bars extending from base to y.
 - **size** | **width** :: [Type => Str | Num]		``key=value``
 
     The size or width is the bar width. Append u if size is in x-units. When *width* is used the default is plot-distance units.
+- $(GMT.opt_savefig)
 
 Example:
 
@@ -485,6 +489,7 @@ Read a grid file, a grid or a MxN matrix and plots vertical bars extending from 
 
     By default, base = ymin. Use this option to change that value. If base is not appended then we read it.
 - $(GMT.opt_p)
+- $(GMT.opt_savefig)
 
 Example:
 
@@ -599,6 +604,7 @@ The full *arrow* options list can be consulted at [Vector Attributes](@ref)
 
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot.html#w)
+- $(GMT.opt_savefig)
 
 Example:
 
@@ -652,6 +658,7 @@ Reads a file or (x,y) pairs and plots a collection of different line with decora
 
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot.html#w)
+- $(GMT.opt_savefig)
 
 Examples:
 
@@ -835,6 +842,7 @@ Reads (a,b,c[,z]) records from table [or file] and plots image and symbols at th
 - $(GMT.opt_p)
 - $(GMT.opt_q)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 
 Other than the above options, the `kwargs` input accepts still the following options
 - `image`: - Fills the ternary plot with an image computed automatically with `grdimage` from a grid interpolated with `surface`
@@ -1010,6 +1018,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_swap_xy)
+- $(GMT.opt_savefig)
 """
 # ------------------------------------------------------------------------------------------------------
 function events(cmd0::String="", arg1=nothing; kwargs...)

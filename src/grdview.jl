@@ -55,6 +55,7 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
 - $(GMT.opt_n)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 """
 function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

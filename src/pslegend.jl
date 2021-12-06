@@ -44,6 +44,7 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_q)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 """
 function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

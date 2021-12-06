@@ -34,6 +34,7 @@ Parameters
 - $(GMT.opt_Y)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 """
 function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
