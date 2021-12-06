@@ -9,17 +9,21 @@ Makes legends that can be overlaid on maps. It reads specific legend-related inf
 file or from a GMTdatset type.  Unless otherwise noted, annotations will be made using the primary
 annotation font and size in effect (i.e., `FONT_ANNOT_PRIMARY`)
 
+[![](figures/docs/seislegend.png)](figures/docs/seislegend.md)
+
+Example of a map legend, here for seismicity in the Pacific region.
+
 Required Arguments
 ------------------
 
-- **D** or **pos** or **position** : -- *pos=(map=(lon,lat), inside=true, outside=true, norm=(x,y), paper=(x,y), anchor=XX, justify=code, offset=XX)*\
+- **D** or **pos** or **position** : -- *pos=(map=(lon,lat), inside=true, outside=true, norm=(x,y), paper=(x,y), justify=code, offset=XX)*\
 
 Defines the reference point on the map for the legend using one of four coordinate systems:
 
 1. Use `map=(lon,lat)` for map coordinates. Requires both **region** and **proj** to be set.
 
 2. Use `inside=code` or `outside=code` for setting the refpoint via a 2-char justification code that refers to
-     the (invisible) projected map bounding box. Requires both **region** and **proj** to be set.
+   the (invisible) projected map bounding box. Requires both **region** and **proj** to be set.
 
 3. Use `norm=(x,y)` for normalized bounding box coordinates (0-1). Requires both **region** and **proj** to be set.
 
@@ -40,7 +44,7 @@ Optional Arguments
 - **B** or **axes** or *frame*\
    Set map boundary frame and axes attributes. More at [frame](@ref)
 
-- **-C** or **clearance** : -- *clearance=(dx,dy)*\
+- **C** or **clearance** : -- *clearance=(dx,dy)*\
    Sets the clearance between the legend frame and the internal items [4p/4p].
 
 - **F** or **box** : -- *box=(clearance=val, fill=color, inner=true, pen=pen, rounded=true, shaded=XX)*\
@@ -263,9 +267,9 @@ To add an example of a legend to a Mercator plot with the given specifications:
 	       symbol1=(marker=:circ,    size=0.4, dx_left=0.25, fill="p300/12", dx_right=0.75, text="This circle is hachured"),
 	       symbol2=(marker=:ellipse, size=0.4, dx_left=0.25, fill=:yellow,   dx_right=0.75, text="This ellipse is yellow"),
 	       symbol3=(marker=:wedge,   size=0.4, dx_left=0.25, fill=:green, pen=0.25, dx_right=0.75, text="This wedge is green"),
-	       symbol4=(marker="f", size=0.65, dx_left=0.25, fill=:blue, dx_right=0.75, text="This is a fault"),
+	       symbol4=(marker=:fault,   size=0.65, dx_left=0.25, fill=:blue, dx_right=0.75, text="This is a fault"),
 	       symbol5=(marker="-", size=0.4,  dx_left=0.25, pen=(0.25,:dash), dx_right=0.75, text="A contour"),
-	       symbol6=(marker="v", size=0.65, dx_left=0.25, fill=:magenta, pen=0.5, dx_right=0.75, text="This is a vector"),
+	       symbol6=(marker=:vector, size=0.65, dx_left=0.25, fill=:magenta, pen=0.5, dx_right=0.75, text="This is a vector"),
 	       symbol7=(marker="i", size=0.4,  dx_left=0.25, fill=:cyan,    pen=0.25, dx_right=0.75, text="This triangle is boring"),
 	       hline2=(pen=1, offset=0.5),
 	       vline2=(pen=1, offset=0),

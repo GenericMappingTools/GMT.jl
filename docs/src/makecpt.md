@@ -139,7 +139,7 @@ To make an equidistant CPT from z = -2 to 6 using the continuous default turbo r
 To use the GEBCO look-alike CPT with its default range for bathymetry and save the file on disk, run
 
 ```julia
-    makecpt(cmap=:gebco, cptname="my_gebco.cpt")
+    makecpt(cmap=:gebco, write="my_gebco.cpt")
 ```
 
 or simply use -Cgebco directly in the application that needs the color table. To create a 24-level color table suitable

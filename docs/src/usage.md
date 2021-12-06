@@ -16,16 +16,16 @@ between the GMT structures and native Julia structures, which are:
   and CF netCDF conventions. We have designed a native Julia grid structure [Grid type](@ref)
   that holds header information from the GMT grid as well as the data matrix representing the
   gridded values. These structures may be passed to GMT modules that expect grids and are
-  returned from GMT modules that produce such grids. In addition, we supply a function to
-  convert a matrix and some metadata into a grid structure.
+  returned from GMT modules that produce such grids. In addition, we supply the function [mat2grid](@ref)
+  to convert a matrix and some metadata into a grid structure.
 
 - **Images**: The raster image shares many characteristics with the grid structure except the
   bytes representing each node reflect gray shade, color bands (1, 3, or 4 for indexed, RGB and
   RGBA, respectively), and possibly transparency values. We therefore represent images in another
   native structure [Image type](@ref) that among other items contains three components: The image
   matrix, a color map (present for indexed images only), and an alpha matrix (for images specifying
-  transparency on a per-pixel level). As for grids, a wrapper function creating the correct structure
-  is available.
+  transparency on a per-pixel level). As for grids, the wrapper function [mat2img](@ref) for creating
+  the correct structure is available.
 
 - **Segments**: GMT considers point, line, and polygon data to be organized in one or more segments
   in a data table. Modules that return segments uses a native Julia segment structure [Dataset type](@ref)
