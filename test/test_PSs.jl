@@ -136,7 +136,7 @@ legend!("", T, R="-3/3/-3/3", J=:X12, D="g-1.8/2.6+w12c+jTL", Vd=dbg2)
 @test GMT.mk_legend(colorbar=(name="tt.cpt", offset=0.5, height=0.5, extra="-B0"))[1] == "B tt.cpt 0.5 0.5 -B0"
 @test GMT.mk_legend(textcolor=:red, fill=(c1=:blue, c2="100/30/200")) == ["C red", "F blue 100/30/200 "]
 @test GMT.mk_legend((cmap="lixo", paragraph=true, popo=true)) == ["A lixo", "P "]
-
+GMT.legend_help(true)
 
 println("	PSROSE")
 data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];

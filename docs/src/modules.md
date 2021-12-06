@@ -53,8 +53,7 @@ to construct potentially highly complex figures. Next example illustrates a slig
 example
 
     topo = makecpt(color=:rainbow, range=(1000,5000/500), Z=[]);
-    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:merc, axes=:a, color=topo,
-             fmt=:jpg)
+    grdimage("@tut_relief.nc", shade="+ne0.8+a100", proj=:merc, axes=:a, color=topo)
     colorbar!(position="jTC+w5i/0.25i+h+o0/-1i", region="@tut_relief.nc", color=topo,
            axes="y+lm", fmt=:jpg, show=true)
 
