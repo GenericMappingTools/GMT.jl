@@ -80,6 +80,9 @@ Optional Arguments
 - **Z** or **zfile** : *zfile="file"*\
     File with colorbar-width per color entry. By default, width of entry is scaled to color range, i.e., z = 0-100 gives twice the width as z = 100-150 (Also see **equal**).
 
+- **figname** or **savefig** or **name** :: *figname=`name.png`*\
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format
+
 Examples
 --------
 

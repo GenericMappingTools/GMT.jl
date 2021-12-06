@@ -47,6 +47,9 @@ Optional Arguments
    selection allows also to specify a variable symbol size. All it's need for this is that the keyword's value
    be an array with the same number of elements as the number of data points. 
 
+- **figname** or **savefig** or **name** :: *figname=`name.png`*\
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format
+
 
 Examples
 --------

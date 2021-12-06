@@ -87,6 +87,7 @@ Parameters
 - $(GMT.opt_bo)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 """
 function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 

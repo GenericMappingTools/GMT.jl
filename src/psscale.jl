@@ -55,6 +55,7 @@ Full option list at [`psscale`]($(GMTdoc)psscale.html)
 
     File with colorbar-width per color entry.
     ($(GMTdoc)psscale.html#z)
+- $(GMT.opt_savefig)
 """
 function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

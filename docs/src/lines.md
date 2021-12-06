@@ -53,6 +53,9 @@ Parameters
 - **Y** or *yshift* or *y_offset* : *yshift=[] **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [yshift](@ref)
 
+- **figname** or **savefig** or **name** :: *figname=`name.png`*\
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format
+
 Examples
 --------
 

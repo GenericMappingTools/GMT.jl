@@ -34,6 +34,7 @@ Parameters
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 
 - Example, make a GMT Julia logo with circles of 1 cm: logo(GMTjulia=1, show=true)
 """

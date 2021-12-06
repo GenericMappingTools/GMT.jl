@@ -81,6 +81,7 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
+- $(GMT.opt_savefig)
 """
 function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
