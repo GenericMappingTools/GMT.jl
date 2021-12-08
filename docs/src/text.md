@@ -33,7 +33,7 @@ Optional Arguments
 - **B** or **axes** or *frame*\
    Set map boundary frame and axes attributes. More at [frame](@ref)
 
-- **-C** or **clearance** : -- *clearance=true* **|** *clearance=(margin=(dx,dy), round=true, concave=true, convex=true)*\
+- **C** or **clearance** : -- *clearance=true* **|** *clearance=(margin=(dx,dy), round=true, concave=true, convex=true)*\
     Adjust the clearance between the text and the surrounding box [15%]. Only used if **pen** or **fill** are specified. Append the unit you want (**c**\ m, **i**\ nch, or **p**\ oint; if not given we consult
     `PROJ_LENGTH_UNIT`) or % for a percentage of the font size. Optionally, use options *round* (rounded rectangle) or, for **paragraph** mode only, *concave* or *convex* to set the shape of the textbox when using **fill** and/or **pen**. Default gets a straight rectangle.
 
