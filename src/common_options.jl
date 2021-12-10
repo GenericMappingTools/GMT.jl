@@ -490,6 +490,7 @@ function parse_proj(p::String)
 	elseif (startswith(s, "gnom"))   out = "F0/0"
 	elseif (startswith(s, "ham"))    out = "H"
 	elseif (startswith(s, "lin"))    out = "X"
+	elseif (startswith(s, "logxy"))  out = "Xll"
 	elseif (startswith(s, "logx"))   out = "Xlx"
 	elseif (startswith(s, "logy"))   out = "Xly"
 	elseif (startswith(s, "loglog")) out = "Xll"
@@ -987,19 +988,18 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_Td(d::Dict, cmd::String)::String
 	cmd = parse_type_anchor(d, cmd, [:Td :rose],
-							(map=("g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", justify="+j", fancy="+f", labels="+l", label="+l", offset=("+o", arg2str)), 'j')
+							(map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", justify="+j", fancy="+f", labels="+l", label="+l", offset=("+o", arg2str)), 'j')
 end
 function parse_Tm(d::Dict, cmd::String)::String
 	cmd = parse_type_anchor(d, cmd, [:Tm :compass],
-	                        (map=("g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", dec="+d", justify="+j", rose_primary=("+i", add_opt_pen), rose_secondary=("+p", add_opt_pen), labels="+l", label="+l", annot=("+t", arg2str), offset=("+o", arg2str)), 'j')
+	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", dec="+d", justify="+j", rose_primary=("+i", add_opt_pen), rose_secondary=("+p", add_opt_pen), labels="+l", label="+l", annot=("+t", arg2str), offset=("+o", arg2str)), 'j')
 end
 function parse_L(d::Dict, cmd::String)::String
 	cmd = parse_type_anchor(d, cmd, [:L :map_scale],
-	                        (map=("g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), scale_at_lat="+c", length="+w", width="+w", align="+a1", justify="+j", fancy="_+f", label="+l", offset=("+o", arg2str), units="_+u", vertical="_+v"), 'j')
+	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), scale_at_lat="+c", length="+w", width="+w", align="+a1", justify="+j", fancy="_+f", label="+l", offset=("+o", arg2str), units="_+u", vertical="_+v"), 'j')
 end
 
 # ---------------------------------------------------------------------------------------------------
-#parse_type_anchor(::String, ::Dict) = parse_type_anchor(Dict(), "", [:a], (a=0,), 'a')
 function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, def_CS::Char, del::Bool=true)
 	# SYMBS: [:D :pos :position] | ...
 	# MAPA is the NamedTuple of suboptions
@@ -1104,7 +1104,7 @@ parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :spherical_dist :spher
 function parse_f(d::Dict, cmd::String)
 	# For plotting time (-ft) in X one must add 'T' to -JX but that is boring and difficult to automatize
 	# GMT6.3 now has it internal but previous versions no. So do that job here.
-	cmd, opt_f = parse_helper(cmd, d, [:f :colinfo :coltypes], " -f")
+	cmd, opt_f = parse_helper(cmd, d, [:f :colinfo :coltypes :coltype], " -f")
 	if (GMTver < v"6.3" && (startswith(opt_f, " -ft") || startswith(opt_f, " -fT")))	# GMT6.3 does it internally.
 		opt_J = scan_opt(cmd, "-J")
 		(opt_J == "" || (opt_J[1] != 'X' && opt_J[1] != 'x')) && return cmd, opt_f
@@ -1306,7 +1306,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # This is not a global option but it repeats at many occasions.
-parse_G(d::Dict, cmd::String) = parse_helper(cmd, d, [:G :save :outgrid :outfile], " -G")
+parse_G(d::Dict, cmd::String) = parse_helper(cmd, d, [:G :save :write :outgrid :outfile], " -G")
 
 # ---------------------------------------------------------------------------------------------------
 function parse_I(d::Dict, cmd::String, symbs, opt, del::Bool=true)::String
@@ -2769,7 +2769,7 @@ function decorated(;kwargs...)::String
 			cmd = "+sa0.5" * cmd
 		else
 			cmd *= "+s" * marca
-			if ((val = find_in_dict(d, [:size :ms :markersize :symbsize :symbolsize])[1]) !== nothing)
+			if ((val = find_in_dict(d, [:size :ms :markersize :symbolsize])[1]) !== nothing)
 				cmd *= arg2str(val)
 			end
 		end
