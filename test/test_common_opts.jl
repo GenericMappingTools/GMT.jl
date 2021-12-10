@@ -118,9 +118,9 @@
 
 	r = decorated(dist=("0.4i",0.25), symbol=:arcuate, pen=2, offset="10i", right=1);
 	@test r == " -Sf0.4i/0.25+r+S+o10i+p2"
-	r = decorated(dist=("0.8i","0.1i"), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, n_data=20, nudge=1, debug=1, dec2=1);
+	r = decorated(dist=("0.8i","0.1i"), symbol=:star, symbolsize=1, pen=(0.5,:green), fill=:blue, n_data=20, nudge=1, debug=1, dec2=1);
 	@test r == " -S~d0.8i/0.1i:+sa1+d+gblue+n1+w20+p0.5,green"
-	r = decorated(n_symbols=5, symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, quoted=1);
+	r = decorated(n_symbols=5, symbol=:star, symbolsize=1, pen=(0.5,:green), fill=:blue, quoted=1);
 	@test r == " -Sqn5:+p0.5,green"
 	GMT.decorated((symbol="aiai",))		# Trigger a warning
 
