@@ -68,7 +68,7 @@ algorithms.
 
 - *marker=symb* or *symbol=symb*\
    Selects the decorating symbol *symb*. See the [Symbols](@ref) for the list of symbols available.
-- *size=xx* or *markersize* or *ms* or *symbsize* or *symbolsize*\
+- *size=xx* or *markersize* or *ms* or *symbolsize*\
    Use any of these to set the symbol size. Sizes can be scalars, strings or tuples if a unit is used.
 - *angle=xx*\
    For symbols at a fixed angle.

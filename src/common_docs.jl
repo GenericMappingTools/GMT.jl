@@ -100,7 +100,7 @@ const opt_e = "**e** | **pattern** | **find** :: [Type => Str]        ``Arg = [~
     Only accept ASCII data records that contains the specified pattern.
     ($(GMTdoc)gmt.html#e-full)"
 
-const opt_f = "**f** | **colinfo** | **coltypes** :: [Type => Str]        ``Arg = [i|o]colinfo``
+const opt_f = "**f** | **colinfo** | **coltypes** | **coltype** :: [Type => Str]        ``Arg = [i|o]colinfo``
 
     Specify the data types of input and/or output columns (time or geographical data).
     ($(GMTdoc)gmt.html#f-full)"
