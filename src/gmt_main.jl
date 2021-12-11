@@ -630,7 +630,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT   != C_NULL)  out.wkt   = unsafe_string(gmt_hdr.ProjRefWKT)    end
-	if (gmt_hdr.ProjRefEPSG  != 0)       out.epsg  = unsafe_string(gmt_hdr.ProjRefEPSG)   end
+	if (gmt_hdr.ProjRefEPSG  != 0)       out.epsg  = Int(gmt_hdr.ProjRefEPSG)   end
 
 	out.range = vec([wesn[1] wesn[2] wesn[3] wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
 	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
@@ -725,7 +725,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 # proj4:	String with any proj4 information
 # wkt:		String with any WKT information
 
-	(object == C_NULL) && return GMTdataset()		# No output produced - return a null data set
+	(object == C_NULL) && return [GMTdataset()]		# No output produced - return a null data set
 	D::GMT_DATASET = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
 	seg_out = 0;

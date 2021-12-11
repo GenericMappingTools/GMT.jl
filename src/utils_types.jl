@@ -6,12 +6,13 @@ function text_record(data, text, hdr=Vector{String}())
 	(!isa(data, Array{Float64})) && (data = Float64.(data))
 
 	if (isa(text, String))
-		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", Vector{String}(), "", "", 0)
+		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
 	elseif (isa(text, Vector{String}))
 		if (text[1][1] == '>')			# Alternative (but risky) way of setting the header content
-			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text[2:end], text[1], Vector{String}(), "", "", 0)
+			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text[2:end], text[1], String[], "", "", 0)
 		else
-			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, (isempty(hdr) ? "" : hdr), Vector{String}(), "", "", 0)
+			_hdr = isempty(hdr) ? "" : (isa(hdr, Vector{String}) ? hdr[1] : hdr)
+			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, _hdr, String[], "", "", 0)
 		end
 	elseif (isa(text, Array{Array}) || isa(text, Array{Vector{String}}))
 		nl_t = length(text);	nl_d = length(data)
@@ -71,7 +72,6 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 	end
 
 	if (!isempty(hdr) && isa(hdr, String))	# Accept one only but expand to n_ds with the remaining as blanks
-		#bak = hdr;		hdr = Base.fill("", n_ds);	hdr[1] = bak
 		_hdr::Vector{String} = Base.fill("", n_ds);	_hdr[1] = hdr
 	elseif (!isempty(hdr) && length(hdr) != n_ds)
 		error("The header vector can only have length = 1 or same number of MAT Y columns")
@@ -82,38 +82,40 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 	if ((color = find_in_dict(d, [:color])[1]) !== nothing)
 		_color::Vector{String} = isa(color, Array{String}) ? vec(color) : ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"]
 	end
-	_fill = helper_ds_fill(d)
+	_fill::Vector{String} = helper_ds_fill(d)
 
 	# ---  Here we deal with line colors and line thickness. If not provided we override the GMR defaultb -Wthin ---
 	val = find_in_dict(d, [:lt :linethick :linethickness])[1]
 	_lt::Vector{AbstractFloat} = (val === nothing) ? [0.5] : vec(val)
 	_lts::Vector{String} = Vector{String}(undef, n_ds)
 	n_thick::Integer = length(_lt)
-	[_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])  for k = 1:n_ds]
+	for k = 1:n_ds
+		_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])
+	end
 
 	if (color !== nothing)
-		n_colors = length(_color)
+		n_colors::Int = length(_color)
 		if (isempty(_hdr))
 			_hdr = Vector{String}(undef, n_ds)
-			[_hdr[k]  = _lts[k] * string(",", _color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
+			for k = 1:n_ds  _hdr[k] = _lts[k] * string(",", _color[((k % n_colors) != 0) ? k % n_colors : n_colors])  end
 		else
-			[_hdr[k] *= _lts[k] * string(",", _color[((k % n_colors) != 0) ? k % n_colors : n_colors])  for k = 1:n_ds]
+			for k = 1:n_ds  _hdr[k] *= _lts[k] * string(",", _color[((k % n_colors) != 0) ? k % n_colors : n_colors])  end
 		end
 	else						# Here we just overriding the GMT -W default that is too thin.
 		if (isempty(_hdr))
 			_hdr = Vector{String}(undef, n_ds)
-			[_hdr[k]  = _lts[k] for k = 1:n_ds]
+			for k = 1:n_ds  _hdr[k]  = _lts[k]  end
 		else
-			[_hdr[k] *= _lts[k] for k = 1:n_ds]
+			for k = 1:n_ds  _hdr[k] *= _lts[k]  end
 		end
 	end
 	# ----------------------------------------
 
 	if ((ls = find_in_dict(d, [:ls :linestyle])[1]) !== nothing && ls != "")
 		if (isa(ls, AbstractString) || isa(ls, Symbol))
-			[_hdr[k] = string(_hdr[k], ',', ls) for k = 1:n_ds]
+			for k = 1:n_ds  _hdr[k] = string(_hdr[k], ',', ls)  end
 		else
-			[_hdr[k] = string(_hdr[k], ',', ls[k]) for k = 1:n_ds]
+			for k = 1:n_ds  _hdr[k] = string(_hdr[k], ',', ls[k])  end
 		end
 	end
 
@@ -121,9 +123,9 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 		n_colors = length(_fill)
 		if (isempty(_hdr))
 			_hdr = Vector{String}(undef, n_ds)
-			[_hdr[k]  = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
+			for k = 1:n_ds  _hdr[k]  = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  end
 		else
-			[_hdr[k] *= " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
+			for k = 1:n_ds  _hdr[k] *= " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  end
 		end
 	end
 
@@ -133,13 +135,13 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 	wkt::String = ((wk = find_in_dict(d, [:wkt])[1]) !== nothing) ? wk : ""
 	(prj == "" && wkt != "") && (prj = wkt2proj(wkt))
 
-	is_geog = false
+	is_geog::Bool = false
 	if (prj != "")
 		is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
 	end
 	coln::Vector{String} = ((val = find_in_dict(d, [:colnames])[1]) === nothing) ? String[] : val
 
-	function fill_colnames(coln::Vector{String}, nc::Int)	# Fill the column names vector
+	function fill_colnames(coln::Vector{String}, nc::Int, is_geog::Bool)	# Fill the column names vector
 		if isempty(coln)
 			(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
 			(nc == 1) ? append!(coln, ["Z"]) : append!(coln, ["Z$i" for i=1:nc])
@@ -151,26 +153,32 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 
 	# By default convert to Doubles, except if instructed to NOT to do it.
 	(find_in_dict(d, [:datatype])[1] === nothing) && (eltype(mat) != Float64) && (mat = Float64.(mat))
-	geom = Int((geom == 0 && (2 <= length(mat) <= 3)) ? Gdal.wkbPoint : (geom == 0 ? Gdal.wkbUnknown : geom))	# Guess geom
-	(multi && geom == 0 && size(mat,1) == 1) && (geom = Int(Gdal.wkbPoint))	# One row with many columns and MULTI => Points
+	_geom::Int = Int((geom == 0 && (2 <= length(mat) <= 3)) ? Gdal.wkbPoint : (geom == 0 ? Gdal.wkbUnknown : geom))	# Guess geom
+	(multi && _geom == 0 && size(mat,1) == 1) && (_geom = Int(Gdal.wkbPoint))	# One row with many columns and MULTI => Points
 	if (isempty(xx))				# No coordinates transmitted
 		if (ndims(mat) == 3)
-			coln = fill_colnames(coln, size(mat,2)-2)
-			[D[k] = GMTdataset(view(mat,:,:,k), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
+			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
+			for k = 1:n_ds
+				D[k] = GMTdataset(view(mat,:,:,k), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, _geom)
+			end
 		elseif (!multi)
-			coln = fill_colnames(coln, size(mat,2)-2)
-			D[1] = GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, geom)
+			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
+			D[1] = GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, _geom)
 		else
 			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
-			[D[k] = GMTdataset(mat[:,[1,k+1]], Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
+			for k = 1:n_ds
+				D[k] = GMTdataset(mat[:,[1,k+1]], Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, _geom)
+			end
 		end
 	else
 		if (!multi)
-			coln = fill_colnames(coln, size(mat,2)-1)
-			D[1] = GMTdataset(hcat(xx,mat), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, geom)
+			coln = fill_colnames(coln, size(mat,2)-1, is_geog)
+			D[1] = GMTdataset(hcat(xx,mat), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, _geom)
 		else
 			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
-			[D[k] = GMTdataset(hcat(xx,mat[:,k]), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, geom) for k = 1:n_ds]
+			for k = 1:n_ds
+				D[k] = GMTdataset(hcat(xx,mat[:,k]), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, _geom)
+			end
 		end
 	end
 	for k = 1:length(D)			# Compute the BoundingBoxes
@@ -229,8 +237,8 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 	Dm
 end
 
-# ------------------------------
-function helper_ds_fill(d::Dict)
+# ----------------------------------------------
+function helper_ds_fill(d::Dict)::Vector{String}
 	# Shared by ds2ds & mat2ds
 	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
 		_fill::Vector{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? vec(fill_val) :
