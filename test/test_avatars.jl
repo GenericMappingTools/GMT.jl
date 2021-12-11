@@ -103,7 +103,7 @@
 	lines!(1:10,rand(10), W=0.25, Vd=dbg2)
 	lines!("", rand(10), W=0.25, Vd=dbg2)
 	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
-	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
+	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbolsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
 	D = histogram(randn(100), I=:o, T=0.1);
 	@test_throws ErrorException("Something went wrong when calling the module. GMT error number = 72") histogram(randn(100), I=:o, V=:q, W=0.1);
 	lines(D, steps=(x=true,), close=(bot=true,))

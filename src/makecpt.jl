@@ -108,7 +108,7 @@ function helper_cpt(d::Dict, cmd::String)
 	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :color_model], [:G :truncate],
 	                                [:I :inverse :reverse], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :auto], [:W :wrap :categorical], [:Z :continuous]])
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
-	if ((val = find_in_dict(d, [:cptname :cmapname])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:name :write])[1]) !== nothing)
 		(IamModern[1]) && (cmd *= " -H")
 		cmd *=  " > " * string(val)
 	elseif (IamModern[1])  cmd *= " -H"

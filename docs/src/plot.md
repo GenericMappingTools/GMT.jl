@@ -46,8 +46,8 @@ Parameters
    Select map projection. Default is linear and 14 cm width. More at [proj](@ref)
 
 - **Jz** or **JZ** or *zscale* or *zsize* (*for* **plot3d** *only*) : -- *zscale=scale* **|** *zsize=size*\
-   Set z-axis scaling or or z-axis size. ``zsize=size`` sets the size to the fixed value *size*
-   (for example *zsize=10* or *zsize=4i*). ``zscale=scale`` sets the vertical scale to UNIT/z-unit.
+   Set z-axis scaling or or z-axis size. `zsize=size` sets the size to the fixed value *size*
+   (for example *zsize=10* or *zsize=4i*). `zscale=scale` sets the vertical scale to UNIT/z-unit.
 
 - **R** or *region* or *limits* : *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
    **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more \
@@ -72,7 +72,7 @@ Parameters
    Do NOT clip symbols that fall outside map border [Default plots points whose coordinates are strictly inside the map border only]. This option does not apply to lines and polygons which are always clipped to the map region. For periodic (360-longitude) maps we must plot all symbols twice in case they are clipped by the repeating boundary. The **noclip** will turn off clipping and not plot repeating symbols. Use **noclip=:r** to turn off clipping but retain the plotting of such repeating symbols, or use **noclip=:c** to retain clipping but turn off plotting of repeating symbols.
 
 - **S** or *symbol* : -- *symbol=(symb=name, size=val, unit=unity)* or *marker|Marker|shape=name*, *markersize| MarkerSize|ms|size=val*\
-   Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). If present, size is symbol size in the unit set in gmt.conf (unless *c*, *i*, or *p* is appended to **markersize** or synonym or *cm*, *inch*, *point* as unity when using the **symbol=(symb=name,size=val,unitunity)** form). If the symbol name is not given it will be read from the last column in the input data (must come from a file name or a *GMTdataset*); this cannot be used in conjunction with binary input (data from file). Optionally, append c, i,or p to indicate that the size information in the input data is in units of cm, inch, or point, respectively [Default is ``PROJ\_LENGTH\_UNIT``]. Note: if you provide both size and symbol via the input file you must use ``PROJ\_LENGTH\_UNIT`` to indicate the unit used for the symbol size or append the units to the sizes in the file. If symbol sizes are expected via the third data column then you may convert those values to suitable symbol sizes via the **incol** mechanism.\
+   Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). If present, size is symbol size in the unit set in gmt.conf (unless *c*, *i*, or *p* is appended to **markersize** or synonym or *cm*, *inch*, *point* as unity when using the **symbol=(symb=name,size=val,unitunity)** form). If the symbol name is not given it will be read from the last column in the input data (must come from a file name or a *GMTdataset*); this cannot be used in conjunction with binary input (data from file). Optionally, append c, i,or p to indicate that the size information in the input data is in units of cm, inch, or point, respectively [Default is `PROJ_LENGTH_UNIT`]. Note: if you provide both size and symbol via the input file you must use `PROJ_LENGTH_UNIT` to indicate the unit used for the symbol size or append the units to the sizes in the file. If symbol sizes are expected via the third data column then you may convert those values to suitable symbol sizes via the **incol** mechanism.\
    You can change symbols by adding the required -S option to any of your multisegment headers (*GMTdataset* only). Choose between these symbol codes:\
    **-** or **x-dash**  size is the length of a short horizontal (x-dir) line segment.\
    **+** or **plus**    size is diameter of circumscribing circle.\
@@ -84,7 +84,7 @@ Parameters
    **front**    Draw a front. See [Front lines](@ref)\
    **g** or **octagon**  size is diameter of circumscribing circle.\
    **h** or **hexagon**  size is diameter of circumscribing circle.\
-   **i** or **v** or **inverted\_tri**  size is diameter of circumscribing circle.\
+   **i** or **inverted\_tri**  size is diameter of circumscribing circle.\
    **j** or **rotated\_rec**  Rotated rectangle. Direction (in degrees counter-clockwise from horizontal), x-dimension, and y-dimension must be found in columns 3, 4, and 5.\
    **J** or **Rotated\_rec**  Same as **rotated\_rec**, except azimuth (in degrees east of north) should be given instead of direction. The azimuth will be mapped into an angle based on the chosen map projection (**rotated\_rec** leaves the directions unchanged.) Furthermore, the dimensions must be given in geographical instead of plot-distance units. For a degenerate rectangle (square) with one dimension given, use **J-**. The dimension is excepted to be given in column 3. Alternatively, append the dimension diameter to **J-** and this fixed dimension is used instead. An exception occurs for a linear projection in which we assume the dimensions are given in the same units as **region**. For allowable geographical units, see UNITS.\
    **m** or **matang**  math angle arc, optionally with one or two arrow heads [Default is no arrow heads]. The size is the length of the vector head. Arc width is set by **pen**, with vector head outlines defaulting to half of arc width. The radius of the arc and its start and stop directions (in degrees counter-clockwise from horizontal) must be given in columns 3-5. See [Vector Attributes](@ref) for specifying other attributes.\
@@ -117,6 +117,9 @@ Parameters
 
 - **Y** or *yshift* or *y_offset* : *yshift=[] **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [yshift](@ref)
+
+- **figname** or **savefig** or **name** :: *figname=`name.png`*\
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format
 
 Units
 -----

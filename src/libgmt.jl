@@ -315,7 +315,7 @@ function GMT_Duplicate_String(API::Ptr{Cvoid}, str)
 end
 
 function GMT_Open_VirtualFile(API::Ptr{Cvoid}, family::Integer, geometry::Integer, dir::Integer, data, name)
-	if (GMTver >= v"6.1")  dir |= GMT_Get_Enum(API, "GMT_IS_REFERENCE")  end
+	dir |= GMT_Get_Enum(API, "GMT_IS_REFERENCE")
 	ccall((:GMT_Open_VirtualFile, libgmt), Cint, (Cstring, UInt32, UInt32, UInt32, Ptr{Cvoid}, Ptr{UInt8}), API, family, geometry, dir, data, name)
 end
 function GMT_Close_VirtualFile(API::Ptr{Cvoid}, str)
@@ -370,11 +370,7 @@ function GMT_Get_Version(major, minor, patch)
 end
 
 function GMT_Get_Ctrl(API::Ptr{Cvoid})
-	#if (GMTver > v"6.0")  ccall((:gmtlib_get_ctrl, libgmt), Ptr{Cvoid}, (Cstring,), API)
-	#else                  ccall((:GMT_Get_Ctrl, libgmt), Ptr{Cvoid}, (Cstring,), API)
-	#end
-	(GMTver > v"6.0") ? ccall((:gmtlib_get_ctrl, libgmt), Ptr{Cvoid}, (Cstring,), API) :
-	                    ccall((:GMT_Get_Ctrl, libgmt), Ptr{Cvoid}, (Cstring,), API)
+	ccall((:gmtlib_get_ctrl, libgmt), Ptr{Cvoid}, (Cstring,), API)
 end
 
 #= 
@@ -395,9 +391,7 @@ end
 
 function gmt_ogrread(API::Ptr{Cvoid}, fname::String, region=C_NULL)
 	GMT_ = GMT_Get_Ctrl(API)
-	if (GMTver == v"6.0")  ccall((:gmt_ogrread, libgmt), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}), GMT_, fname)
-	else                   ccall((:gmt_ogrread, libgmt), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}, Ptr{Cdouble}), GMT_, fname, region)
-	end
+	ccall((:gmt_ogrread, libgmt), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}, Ptr{Cdouble}), GMT_, fname, region)
 end
 
 function gmt_ogrread(API::Ptr{Cvoid}, X)

@@ -104,19 +104,20 @@
 	#GMT.ogr2GMTdataset(GMT.gmt_ogrread(API, "lixo.gmt"));
 	rm("lixo.gmt")
 
-	if (GMTver >= v"6.1")
-		check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
-		C = makecpt(range=(0,9,1));
-		I = mat2img(check, cmap=C);
-		rgb = GMT.ind2rgb(I);
-		image_alpha!(I, alpha_ind=5);
-		image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
-		image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
-		image_cpt!(I, C)
-		GMT.transpcmap!(I, true)
-		GMT.transpcmap!(I, false)
-		image_cpt!(I, clear=true)
-	end
+	check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
+	C = makecpt(range=(0,9,1));
+	I = mat2img(check);
+	I.n_colors = 0
+	rgb = GMT.ind2rgb(I);
+	I = mat2img(check, cmap=C);
+	rgb = GMT.ind2rgb(I);
+	image_alpha!(I, alpha_ind=5);
+	image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
+	image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
+	image_cpt!(I, C)
+	GMT.transpcmap!(I, true)
+	GMT.transpcmap!(I, false)
+	image_cpt!(I, clear=true)
 
 	GMT.linspace(1,1,100);
 	GMT.logspace(1,5);

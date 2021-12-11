@@ -52,6 +52,7 @@ Parameters
 - $(GMT.opt_n)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 """
 function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; first=true, kwargs...)
 
@@ -104,7 +105,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		end
 	end
 
-	# if (GMTver >= v"6.1" && occursin("earth_relief_", cmd0))  push!(d, :this_cpt => "geo")  end	# Make this the default CPT
+	# if (occursin("earth_relief_", cmd0))  push!(d, :this_cpt => "geo")  end	# Make this the default CPT
 
 	cmd, N_used, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
 	cmd, arg1, arg2, arg3, arg4   = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
@@ -115,14 +116,14 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 
 	do_finish = false
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
-		_cmd, K = finish_PS_nested(d, ["grdimage " * cmd], K)
+		_cmd = finish_PS_nested(d, ["grdimage " * cmd])
 		do_finish = true
 	else
 		_cmd = ["grdimage " * cmd]
 	end
 	(isa(arg1, GMTimage) && GMTver <= v"6.1.1" && !occursin("-A", _cmd[1])) && (arg1 = ind2rgb(arg1))	# Prev to 6.2 indexed imgs lost colors
 
-	_cmd, K = finish_PS_nested(d, _cmd, K)
+	_cmd = finish_PS_nested(d, _cmd)
 	finish_PS_module(d, _cmd, "", K, O, do_finish, arg1, arg2, arg3, arg4)
 end
 

@@ -54,7 +54,8 @@ function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, = parse_common_opts(d, "", [:G :RIr :J :V_params :bi :di :e :f :h :i :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:S :swap], [:Z :flags]])
 	if (cmd0 == "" && arg1 === nothing)
-		(haskey(d, :x) && haskey(d, :y) && haskey(d, :z)) && (arg1 = hcat(d[:x], d[:y], d[z]))
+		(haskey(d, :x) && haskey(d, :y) && haskey(d, :z)) && (arg1 = hcat(d[:x], d[:y], d[:z]))
+        (arg1 !== nothing) && (delete!(d, :x); delete!(d, :y); delete!(d, :z))
 	end
 	common_grd(d, cmd0, cmd, "xyz2grd ", arg1)		# Finish build cmd and run it
 end

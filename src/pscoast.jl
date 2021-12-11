@@ -87,6 +87,7 @@ Parameters
 - $(GMT.opt_bo)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 """
 function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
@@ -136,7 +137,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		(cmd *= " -W -A0/1/1")
 
 	get_largest = (!finish && occursin(" -E", cmd) && (find_in_dict(d, [:biggest :largest])[1] !== nothing))
-	if (finish)  _cmd, K = finish_PS_nested(d, [gmt_proggy * cmd], K)
+	if (finish)  _cmd = finish_PS_nested(d, [gmt_proggy * cmd])
 	else	     _cmd = [gmt_proggy * cmd]
 	end
 
@@ -146,6 +147,8 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		R = [R[ind]]		# Keep it a vector to be consistent with the other Dump cases
 		R[1].proj4, R[1].geom = prj4WGS84, wkbPolygon
 	end
+	isa(R, Vector{GMTdataset}) && (for k = 1:length(R)  R[k].colnames = ["Lon", "Lat"]  end)
+	isa(R, GMTdataset) && (R.colnames = ["Lon", "Lat"])
 	R
 end
 
@@ -171,7 +174,7 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))	# Simple case, ex E="PT,+gblue" or E=:PT
-			t = string(" -E", val)
+			t::String = string(" -E", val)
 			!contains(t, "+") && (t *= "+p0.5")		# If only code(s), append pen
 			cmd *= t
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
@@ -180,7 +183,7 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 		elseif (isa(val, Tuple))
 			cmd = parse_dcw(cmd, val)
 		end
-		(GMTver >= v"6.1") && (cmd *= " -Vq")		# Suppress annoying warnings regarding filling syntax with +r<dpi>
+		cmd *= " -Vq"				# Suppress annoying warnings regarding filling syntax with +r<dpi>
 		del_from_dict(d, symbs)
 	end
 	return cmd

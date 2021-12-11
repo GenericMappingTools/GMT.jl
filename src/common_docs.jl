@@ -100,7 +100,7 @@ const opt_e = "**e** | **pattern** | **find** :: [Type => Str]        ``Arg = [~
     Only accept ASCII data records that contains the specified pattern.
     ($(GMTdoc)gmt.html#e-full)"
 
-const opt_f = "**f** | **colinfo** | **coltypes** :: [Type => Str]        ``Arg = [i|o]colinfo``
+const opt_f = "**f** | **colinfo** | **coltypes** | **coltype** :: [Type => Str]        ``Arg = [i|o]colinfo``
 
     Specify the data types of input and/or output columns (time or geographical data).
     ($(GMTdoc)gmt.html#f-full)"
@@ -195,3 +195,7 @@ const opt_append = "**append** :: [Type => Str]     ``Arg = fname``
 
     Append result to an existing file named ``fname`` instead of returning to a Julia variable.
     Use the bo option to save as a binary file."
+
+const opt_savefig = "**savefig** | **figname** | **name** :: [Type => Str]
+
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format (e.g. figname=\"name.png\")"

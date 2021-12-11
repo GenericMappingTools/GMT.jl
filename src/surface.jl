@@ -62,6 +62,10 @@ Parameters
     Tension factor[s]. These must be between 0 and 1.
     ($(GMTdoc)surface.html#t)
 - $(GMT.opt_V)
+- **W** | **log** :: [Type => Str]
+
+    Write convergence information to a log file [surface_log.txt].
+    ($(GMTdoc)surface.html#w)
 - **Z** | **over_relaxation** :: [Type => Str | GMTgrid]
 
     Over-relaxation factor. This parameter is used to accelerate the convergence; it is a number between 1 and 2.
@@ -86,7 +90,7 @@ function surface(cmd0::String="", arg1=nothing; kwargs...)
 	
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :a :bi :di :e :f :h :i :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:Ll :lower], [:Lu :upper], [:M :mask],
-                                     [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension], [:Z :over_relaxation]])
+                                     [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension], [:W :log], [:Z :over_relaxation]])
 	cmd, args, n, = add_opt(d, cmd, 'D', [:D :breakline], :data, Array{Any,1}([arg1, arg2]), (zlevel="+z",))
 	if (n > 0)  arg1, arg2 = args[:]  end
 

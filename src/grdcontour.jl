@@ -73,6 +73,7 @@ Parameters
 - $(GMT.opt_h)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 """
 function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
@@ -82,14 +83,14 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd::String, _, opt_J::String, opt_R::String = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :c :e :f :h :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
 	cmd  = parse_contour_AGTW(d::Dict, cmd::String)[1]
 	cmd  = add_opt(d, cmd, 'Z', [:Z :scale], (factor = "+s", shift = "+o", periodic = "_+p"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
-	if (isa(arg1, Array{<:Real}))		arg1 = mat2grid(arg1)	end
+	if (isa(arg1, Array{<:Real}))	arg1 = mat2grid(arg1)	end
 
 	# cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
 	cmd, N_used, arg1, arg2, = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
@@ -134,7 +135,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 				isa(arg1, GMTcpt) ? arg2 = arg1 : arg3 = arg2
 			end
 		end
-	elseif (GMTver <= v"6.1" && got_N_cpt && !occursin(" -C", cmd))	# N=cpt and no C. Work around the bug
+	elseif (got_N_cpt && !occursin(" -C", cmd))		# N=cpt and no C. Work around the bug
 		d[:C] = isa(arg1, GMTcpt) ? arg1 : arg2
 	end
 
@@ -143,7 +144,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		opt_extra = "-D";		do_finish = false;	cmd = replace(cmd, opt_J => "")
 	end
 
-	_cmd, K = finish_PS_nested(d, ["grdcontour " * cmd], K)
+	_cmd = finish_PS_nested(d, ["grdcontour " * cmd])
 	finish_PS_module(d, _cmd, opt_extra, K, O, do_finish, arg1, arg2, arg3)
 end
 
@@ -155,7 +156,7 @@ function parse_contour_AGTW(d::Dict, cmd::String)
 		if (!occursin(",", cmd))  cmd *= ","  end
 		del_from_dict(d, [:A :annot])
 	elseif (isa(val, String) || isa(val, Symbol))
-		arg = string(val)
+		arg::String = string(val)
 		cmd *= (arg == "none") ? " -A-" : " -A" * arg
 		del_from_dict(d, [:A :annot])
 	else

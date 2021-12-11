@@ -55,6 +55,7 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
 - $(GMT.opt_n)
 - $(GMT.opt_p)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 """
 function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
@@ -91,7 +92,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdview")
 	cmd, arg1, arg2, arg3, arg4, arg5 = parse_G_grdview(d, [:G :drape :drapefile], cmd0, cmd, arg1, arg2, arg3, arg4, arg5)
 
-	_cmd, K = finish_PS_nested(d, ["grdview " * cmd], K)
+	_cmd = finish_PS_nested(d, ["grdview " * cmd])
 	finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3, arg4, arg5)
 end
 

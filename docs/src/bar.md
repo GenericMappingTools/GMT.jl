@@ -64,6 +64,9 @@ Parameters
 - *stack*\
    Plot a vertically stacked group plot
 
+- **figname** or **savefig** or **name** :: *figname=`name.png`*\
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format
+
 Examples
 --------
 

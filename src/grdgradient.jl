@@ -17,7 +17,7 @@ Parameters
 
     Find the direction of the positive (up-slope) gradient of the data.
     ($(GMTdoc)grdgradient.html#d)
-- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
+- **G** | **save** | **write** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdgradient(....) form.

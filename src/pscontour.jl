@@ -81,6 +81,7 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 - $(GMT.opt_swap_xy)
+- $(GMT.opt_savefig)
 """
 function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
@@ -150,7 +151,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 #		end
 #	end
 
-	_cmd, K = finish_PS_nested(d, [gmt_proggy * cmd], K)
+	_cmd = finish_PS_nested(d, [gmt_proggy * cmd])
 	return finish_PS_module(d, _cmd, "-D", K, O, true, arg1, arg2, arg3)
 end
 

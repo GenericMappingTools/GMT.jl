@@ -111,7 +111,7 @@ mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 	comment::Vector{String}
 	proj4::String
 	wkt::String
-	geom::Integer
+	geom::Int
 end
 Base.size(D::GMTdataset) = size(D.data)
 Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = D.data[inds...]
@@ -497,9 +497,9 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 		for n = 1:nb  V[n] = t[n]  end
 	end
 
-	t = unsafe_wrap(Array, G.data, my * mx * nb)
+	t::Vector{Float32} = unsafe_wrap(Array, G.data, my * mx * nb)
 	if !(nb > 1 && padLeft == 0)			# Otherwise we are in experimental ground (so far only CUBEs)
-		z = (nb == 1) ? Array{Float32}(undef, ny, nx) : Array{Float32}(undef, ny, nx, nb)  
+		z = (nb == 1) ? Array{Float32,2}(undef, ny, nx) : Array{Float32,3}(undef, ny, nx, nb)  
 	end
 
 	if (nb > 1)			# A CUBE
@@ -508,7 +508,12 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 		else
 			for k = 1:nb
 				offset = (k - 1) * gmt_hdr.size + padLeft
-				[z[row,col, k] = t[((ny-row) + padTop) * mx + col + offset] for row = 1:ny, col = 1:nx]
+				#[z[row,col, k] = t[((ny-row) + padTop) * mx + col + offset] for row = 1:ny, col = 1:nx]
+				for col = 1:nx
+					for row = 1:ny
+						z[row,col, k] = t[((ny-row) + padTop) * mx + col + offset]
+					end
+				end
 			end
 			layout = "BCB";
 		end
@@ -534,7 +539,12 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 		layout = grd_mem_layout[1][1:2]*'B';
 	else
 		# Was t[GMT_IJP(row, col, mx, padTop, padLeft)
-		[z[row,col] = t[((row-1) + padTop) * mx + col + padLeft] for row = 1:ny, col = 1:nx]
+		#[z[row,col] = t[((row-1) + padTop) * mx + col + padLeft] for row = 1:ny, col = 1:nx]
+		for row = 1:ny
+			for col = 1:nx
+				z[row,col] = t[((row-1) + padTop) * mx + col + padLeft]
+			end
+		end
 		layout = "TCB";
 	end
 	grd_mem_layout[1] = ""		# Reset because this variable is global
@@ -620,7 +630,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT   != C_NULL)  out.wkt   = unsafe_string(gmt_hdr.ProjRefWKT)    end
-	if (gmt_hdr.ProjRefEPSG  != 0)       out.epsg  = unsafe_string(gmt_hdr.ProjRefEPSG)   end
+	if (gmt_hdr.ProjRefEPSG  != 0)       out.epsg  = Int(gmt_hdr.ProjRefEPSG)   end
 
 	out.range = vec([wesn[1] wesn[2] wesn[3] wesn[4] gmt_hdr.z_min gmt_hdr.z_max])
 	out.inc          = vec([gmt_hdr.inc[1] gmt_hdr.inc[2]])
@@ -715,7 +725,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 # proj4:	String with any proj4 information
 # wkt:		String with any WKT information
 
-	(object == C_NULL) && return GMTdataset()		# No output produced - return a null data set
+	(object == C_NULL) && return [GMTdataset()]		# No output produced - return a null data set
 	D::GMT_DATASET = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
 	seg_out = 0;
@@ -889,7 +899,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	if (mode == GMT_CONTAINER_AND_DATA)
 		grd = Grid.z
 		n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
-		t = unsafe_wrap(Array, Gb.data, h.size * n_bds)
+		t::Vector{Float32} = unsafe_wrap(Array, Gb.data, h.size * n_bds)
 
 		k = 1
 		for bnd = 1:n_bds
@@ -960,7 +970,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_bands = size(Img.image, 3)
 	if (Img.layout[2] == 'R')  n_rows, n_cols = n_cols, n_rows  end
 	family = GMT_IS_IMAGE
-	if (GMTver >= v"6.1" && (n_bands == 2 || n_bands == 4))	# Then we want the alpha layer together with data
+	if (n_bands == 2 || n_bands == 4)			# Then we want the alpha layer together with data
 		family = family | GMT_IMAGE_ALPHA_LAYER
 	end
 	pad = (!CTRL.proj_linear[1]) ? 2 : 0
@@ -1262,6 +1272,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 			n_islands += OGR_F.n_islands
 		end
 		n_total_segments += n_islands
+		(n_islands > 0) && println("\tThis file has islands (holes in polygons).\n\tUse `gmtread(..., no_islands=true)` to ignore them.")
 	end
 
 	D = Vector{GMTdataset}(undef, n_total_segments)
@@ -1288,12 +1299,12 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 			if (OGR_F.n_islands == 0)
 				geom = (OGR_F.type == "Polygon") ? wkbPolygon : ((OGR_F.type == "LineString") ? wkbLineString : wkbPoint)
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, geom)
+				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, Int(geom))
 			else
 				islands = reshape(unsafe_wrap(Array, OGR_F.islands, 2 * (OGR_F.n_islands+1)), OGR_F.n_islands+1, 2) 
 				np_main = islands[1,2]+1			# Number of points of outer ring
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main)],
-				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, wkbPolygon)
+				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, Int(wkbPolygon))
 
 				if (!drop_islands)
 					for k = 2:size(islands,2)		# 2 because first row holds the outer ring indexes 
@@ -1301,17 +1312,19 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 						off = islands[k,1] * 8
 						len = islands[k,2] - islands[k,1] + 1
 						D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x+off, len) unsafe_wrap(Array, OGR_F.y+off, len)],
-						                  Float64[], Float64[], attrib, coln, String[], " -Ph", String[], proj4, wkt, wkbPolygon)
+						                  Float64[], Float64[], attrib, coln, String[], " -Ph", String[], proj4, wkt, Int(wkbPolygon))
 					end
 				end
 			end
-			bb = extrema(D[n].data, dims=1)			# Compute the BoundingBox per segment (C version doesn't do it)
-			D[n].bbox = collect(Float64, Iterators.flatten(bb))
 			n = n + 1
 		end
 	end
-	D[1].ds_bbox = collect(ds_bbox)			# It always has 6 elements and last two maybe zero
 	(n_total_segments > (n-1)) && deleteat!(D, n:n_total_segments)
+	for k = 1:length(D)			# Compute the BoundingBoxes per segment (C version doesn't do it)
+		bb = extrema(D[k].data, dims=1)		# A N Tuple.
+		D[k].bbox = collect(Float64, Iterators.flatten(bb))
+	end
+	D[1].ds_bbox = collect(ds_bbox)			# It always has 6 elements and last two maybe zero
 	return D
 end
 
@@ -1376,17 +1389,13 @@ function clear_sessions(age::Int=0)
 	# AGE is in seconds
 	# Windows version of ``gmt clear sessions`` fails in 6.0 and it errors if no sessions dir
 	try		# Becuse the sessions dir may not exist 
-		if (GMTver >= v"6.1")
-			sp = readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1] * "/sessions"
-			dirs = readdir(sp)
-			session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
-			n = datetime2unix(now(UTC))
-			for sd in session_dirs
-				fp = joinpath(sp, sd)
-				(n - mtime(fp) > age) && rm(fp, recursive = true)	# created age seconds before
-			end
-		else
-			run(`gmt clear sessions`)
+		sp = readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1] * "/sessions"
+		dirs = readdir(sp)
+		session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
+		n = datetime2unix(now(UTC))
+		for sd in session_dirs
+			fp = joinpath(sp, sd)
+			(n - mtime(fp) > age) && rm(fp, recursive = true)	# created age seconds before
 		end
 	catch
 	end

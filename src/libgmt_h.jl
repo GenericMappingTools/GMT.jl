@@ -266,15 +266,12 @@ mutable struct GMT_MATRIX
 	hidden::Ptr{Cvoid}
 end
 
-# Virtual file name length
-VF_LEN = (GMTver < v"6.1") ? 16 : 32
-
 mutable struct GMT_RESOURCE
 	family::UInt32          # GMT data family, i.e., GMT_IS_DATASET, GMT_IS_GRID, etc.
 	geometry::UInt32        # One of the recognized GMT geometries
 	direction::UInt32       # Either GMT_IN or GMT_OUT
 	option::Ptr{GMT_OPTION} # Pointer to the corresponding module option
-	name::NTuple{VF_LEN,UInt8}  # Object ID returned by GMT_Register_IO
+	name::NTuple{32,UInt8}  # Object ID returned by GMT_Register_IO
 	pos::Cint               # Corresponding index into external object in|out arrays
 	mode::Cint              # Either primary (0) or secondary (1) resource
 	object::Ptr{Cvoid}      # Pointer to the actual GMT object
@@ -302,9 +299,9 @@ struct GMTAPI_DATA_OBJECT
 	actual_family::UInt32		# May be GMT_IS_MATRIX|VECTOR when one of the others are created via those
 	method::UInt32              # One of GMT_IS_{FILE,STREAM,FDESC,DUPLICATE,REFERENCE} or sum with enum GMT_enum_via (GMT_VIA_{NONE,VECTOR,MATRIX,OUTPUT}); using unsigned type because sum exceeds enum GMT_enum_method
 	geometry::UInt32			# One of GMT_IS_{POINT|LINE|POLY|PLP|SURFACE|NONE}
-	wesn::NTuple{4,Cdouble}	# Grid domain limits
-	resource::Ptr{Cvoid}			# Points to registered filename, memory location, etc., where data can be obtained from with GMT_Get_Data.
-	data::Ptr{Cvoid}				# Points to GMT object that was read from a resource
+	wesn::NTuple{4,Cdouble}		# Grid domain limits
+	resource::Ptr{Cvoid}		# Points to registered filename, memory location, etc., where data can be obtained from with GMT_Get_Data.
+	data::Ptr{Cvoid}			# Points to GMT object that was read from a resource
 	# FILE *fp;					# Pointer to source/destination stream [For rec-by-rec procession, NULL if memory location]
 	fp::Ptr{Cvoid}				# Pointer to source/destination stream [For rec-by-rec procession, NULL if memory location]
 	filename::Ptr{UInt8}		# Filename, stream, of file handle (otherwise NULL)
@@ -327,53 +324,28 @@ struct Gmt_libinfo
 	handle::Ptr{Cvoid}	# Handle to the shared library, returned by dlopen or dlopen_special */
 end
 
-if (GMTver >= v"6.1")
-	mutable struct OGR_FEATURES
-		n_rows::Cint
-		n_cols::Cint
-		n_layers::Cint
-		n_filled::Cint
-		is3D::Cint
-		np::Cuint
-		att_number::Cint
-		n_islands::Cint				# Number of islands in a polygon
-		name::Ptr{UInt8} 
-		wkt::Ptr{UInt8} 
-		proj4::Ptr{UInt8} 
-		type::Ptr{UInt8}            # Geometry type. E.g. Point, Polygon or LineString
-		att_names::Ptr{Ptr{UInt8}}  # Names of the attributes of a Feature
-		att_values::Ptr{Ptr{UInt8}} # Values of the attributes of a Feature as strings
-		att_types::Ptr{Cint}
-		islands::Ptr{Cint}
-		BoundingBox::NTuple{6,Cdouble}
-		BBgeom::Ptr{Cdouble};       # Not currently assigned (would be the BoundingBox of each individual geometry)
-		x::Ptr{Cdouble}
-		y::Ptr{Cdouble}
-		z::Ptr{Cdouble}
-	end
-else
-	mutable struct OGR_FEATURES
-		n_rows::Cint
-		n_cols::Cint
-		n_layers::Cint
-		n_filled::Cint
-		is3D::Cint
-		np::Cuint
-		att_number::Cint
-		name::Ptr{UInt8} 
-		wkt::Ptr{UInt8} 
-		proj4::Ptr{UInt8} 
-		type::Ptr{UInt8}            # Geometry type. E.g. Point, Polygon or LineString
-		att_names::Ptr{Ptr{UInt8}}  # Names of the attributes of a Feature
-		att_values::Ptr{Ptr{UInt8}} # Values of the attributes of a Feature as strings
-		att_types::Ptr{Cint}
-		islands::Ptr{Cint}
-		BoundingBox::NTuple{6,Cdouble}
-		BBgeom::Ptr{Cdouble};       # Not currently assigned (would be the BoundingBox of each individual geometry)
-		x::Ptr{Cdouble}
-		y::Ptr{Cdouble}
-		z::Ptr{Cdouble}
-	end
+struct OGR_FEATURES
+	n_rows::Cint
+	n_cols::Cint
+	n_layers::Cint
+	n_filled::Cint
+	is3D::Cint
+	np::Cuint
+	att_number::Cint
+	n_islands::Cint				# Number of islands in a polygon
+	name::Ptr{UInt8} 
+	wkt::Ptr{UInt8} 
+	proj4::Ptr{UInt8} 
+	type::Ptr{UInt8}            # Geometry type. E.g. Point, Polygon or LineString
+	att_names::Ptr{Ptr{UInt8}}  # Names of the attributes of a Feature
+	att_values::Ptr{Ptr{UInt8}} # Values of the attributes of a Feature as strings
+	att_types::Ptr{Cint}
+	islands::Ptr{Cint}
+	BoundingBox::NTuple{6,Cdouble}
+	BBgeom::Ptr{Cdouble};       # Not currently assigned (would be the BoundingBox of each individual geometry)
+	x::Ptr{Cdouble}
+	y::Ptr{Cdouble}
+	z::Ptr{Cdouble}
 end
 
 struct OGRREAD_CTRL

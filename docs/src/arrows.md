@@ -12,22 +12,22 @@ controlling parameters are listed here. For the finest control, user should cons
 Parameters
 ----------
 
-- **B** or *axes* or *frame*\
+- **B** or **axes** or **frame**\
   Set map boundary frame and axes attributes. Default is to draw and annotate left and bottom axes.
   More at [frame](@ref)
 
-- **J** or *proj* : *proj=<parameters>*\
+- **J** or **proj** : *proj=<parameters>*\
   Select map projection. Default is linear and 14 cm width. More at [proj](@ref)
 
-- **R** or *region* or *limits* : -- *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
+- **R** or **region** or **limits** : -- *limits=(xmin, xmax, ymin, ymax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax),)*
    **|** *limits=(LLUR=(xmin, xmax, ymin, ymax),units="unit")* **|** ...more \
    Specify the region of interest. Default limits are computed from data extents. More at [limits](@ref)
 
-- **G** or *markerfacecolor* or *MarkerFaceColor* or *mc* or *fill*\
+- **G** or **markerfacecolor** or **MarkerFaceColor** or **mc** or **fill**\
    Select color or pattern for filling of vector heads [Default is no fill]. See [Setting color](@ref)
    for extend color selection (including colormap generation).
 
-- **W** or *pen=pen*\
+- **W** or **pen**=`pen`\
    Set pen attributes for the arrow stem [Defaults: width = default, color = black,
    style = solid]. See [Pen attributes](@ref)
 
@@ -37,16 +37,19 @@ Parameters
    the vector head. Vector stem width is set by *pen*. By default, a vector head of 0.5 cm is set but see
    [Vector Attributes](@ref) for overwriting this default and specifying other attributes.
 
-- **U** or *time_stamp* : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
+- **U** or **time_stamp** : -- *time_stamp=true* **|** *time_stamp=(just="code", pos=(dx,dy), label="label", com=true)*\
 
-- **V** or *verbose* : -- *verbose=true* **|** *verbose=level*\
+- **V** or **verbose** : -- *verbose=true* **|** *verbose=level*\
    Select verbosity level. More at [verbose](@ref)
 
-- **X** or *xshift* or *x_offset* : *xshift=[] **|** *xshift=x-shift* **|** *xshift=(shift=x-shift, mov="a|c|f|r")*\
+- **X** or **xshift** or **x_offset** : *xshift=[] **|** *xshift=x-shift* **|** *xshift=(shift=x-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [xshift](@ref)
 
-- **Y** or *yshift* or *y_offset* : *yshift=[] **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*\
+- **Y** or **yshift** or **y_offset** : *yshift=[] **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [yshift](@ref)
+
+- **figname** or **savefig** or **name** :: *figname=`name.png`*\
+   Save the figure with the `figname=name.ext` where `ext` chooses the figure format
 
 Examples
 --------

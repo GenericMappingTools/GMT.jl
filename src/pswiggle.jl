@@ -62,6 +62,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+- $(GMT.opt_savefig)
 """
 function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
@@ -78,7 +79,7 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 
 	cmd = parse_type_anchor(d, cmd, [:D :scale_bar],
-                            (map=("g", nothing, 1), inside=("j", nothing, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", label_left="_+al", labels="+l", label="+l", offset=("+o", arg2str)), 'j')
+                            (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", label_left="_+al", labels="+l", label="+l", offset=("+o", arg2str)), 'j')
 	cmd *= opt_pen(d, 'T', [:T :track])
 	cmd *= opt_pen(d, 'W', [:W :pen])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')

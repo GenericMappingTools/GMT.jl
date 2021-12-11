@@ -107,6 +107,7 @@ Parameters
 - $(GMT.opt_t)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+- $(GMT.opt_savefig)
 """
 function plot(arg1; first=true, kw...)
 	common_plot_xyz("", cat_1_arg(arg1), "plot", first, false, kw...)
@@ -291,6 +292,7 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 - $(GMT.opt_w)
+- $(GMT.opt_savefig)
 
 ### Example:
 
@@ -372,6 +374,7 @@ Parameters
 
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot.html#w)
+- $(GMT.opt_savefig)
 
 [`Full man page`](https://genericmappingtools.github.io/GMT.jl/latest/scatter/)
 [`GMT man page`]($(GMTdoc)plot.html)
@@ -444,6 +447,7 @@ Reads a file or (x,y) pairs and plots vertical bars extending from base to y.
 - **size** | **width** :: [Type => Str | Num]		``key=value``
 
     The size or width is the bar width. Append u if size is in x-units. When *width* is used the default is plot-distance units.
+- $(GMT.opt_savefig)
 
 Example:
 
@@ -485,6 +489,7 @@ Read a grid file, a grid or a MxN matrix and plots vertical bars extending from 
 
     By default, base = ymin. Use this option to change that value. If base is not appended then we read it.
 - $(GMT.opt_p)
+- $(GMT.opt_savefig)
 
 Example:
 
@@ -599,6 +604,7 @@ The full *arrow* options list can be consulted at [Vector Attributes](@ref)
 
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot.html#w)
+- $(GMT.opt_savefig)
 
 Example:
 
@@ -652,6 +658,7 @@ Reads a file or (x,y) pairs and plots a collection of different line with decora
 
     Set pen attributes for lines or the outline of symbols
     ($(GMTdoc)plot.html#w)
+- $(GMT.opt_savefig)
 
 Examples:
 
@@ -704,10 +711,11 @@ function hlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
 	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
-	mat = ones(2, length(arg1))
-	[mat[1,k] = mat[2,k] = arg1[k] for k = 1:length(arg1)]
-	x = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
-	D = mat2ds(mat, x=x, multi=true)
+	len::Int = length(arg1)
+	mat::Matrix{Float64} = ones(2, len)
+	[mat[1,k] = mat[2,k] = arg1[k] for k = 1:len]
+	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
+	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 
 	common_plot_xyz("", D, "lines", first, false, d...)
 end
@@ -737,12 +745,13 @@ function vlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
 	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
-	mat = ones(2, length(arg1))
+	len::Int = length(arg1)
+	mat::Matrix{Float64} = ones(2, len)
 	mat[1,:] = mat[2,:] = arg1
-	x = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[3:4]) : [-1e50, 1e50]
-	D = mat2ds(mat, x=x, multi=true)
+	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[3:4]) : [-1e50, 1e50]
+	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 	# Now we need tp swapp x / y columns because the vlines case is more complicated to implement.
-	for k = 1:length(arg1)
+	for k = 1:len
 		D[k].data[:,1], D[k].data[:,2] = D[k].data[:,2], D[k].data[:,1]
 	end
 
@@ -833,6 +842,7 @@ Reads (a,b,c[,z]) records from table [or file] and plots image and symbols at th
 - $(GMT.opt_p)
 - $(GMT.opt_q)
 - $(GMT.opt_t)
+- $(GMT.opt_savefig)
 
 Other than the above options, the `kwargs` input accepts still the following options
 - `image`: - Fills the ternary plot with an image computed automatically with `grdimage` from a grid interpolated with `surface`
@@ -1008,6 +1018,7 @@ Parameters
 - $(GMT.opt_i)
 - $(GMT.opt_p)
 - $(GMT.opt_swap_xy)
+- $(GMT.opt_savefig)
 """
 # ------------------------------------------------------------------------------------------------------
 function events(cmd0::String="", arg1=nothing; kwargs...)
@@ -1034,9 +1045,7 @@ cat_1_arg(arg::GMTdataset) = return arg				# Miserable attempts to force type st
 cat_1_arg(arg::Vector{<:GMTdataset}) = return arg
 function cat_1_arg(arg)
 	# Add a first column with 1:n to all args that are not GMTdatasets
-	#(isa(arg, Vector{<:GMTdataset}) || isa(arg, GMTdataset))  &&  return arg
 	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
-		#arg = hcat(collect(1:size(arg,1)), arg)
 		arg = hcat(collect(eltype(arg), 1:size(arg,1)), arg)
 	#elseif (isa(arg, Array) && size(arg,1) == 1)		# Accept also row arrays. CAN'T IT BREAKS plot([1 1])
 		#arg = hcat(collect(eltype(arg), 1:length(arg)), arg')
