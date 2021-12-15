@@ -49,7 +49,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 	if (is_ternary && !first) 	# Either a -J was set and we'll fish it here or no and we'll use the default.
 		def_J = " -JX" * split(def_fig_size, '/')[1]
-		cmd, opt_J = parse_J(d, cmd, def_J)
+		cmd, opt_J::String = parse_J(d, cmd, def_J)
 	else
 		def_J = (is_ternary) ? " -JX" * split(def_fig_size, '/')[1] : ""		# Gives "-JX14c" 
 		if (is_ternary)  cmd, opt_J = parse_J(d, cmd, def_J)
