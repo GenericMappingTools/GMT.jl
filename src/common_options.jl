@@ -2677,7 +2677,7 @@ function vector_attrib(; kwargs...)::String
 		end
 	end
 
-	(haskey(d, :norm)) && (cmd = string(cmd, "+n", d[:norm]))
+	(haskey(d, :norm)) && (cmd = string(cmd, "+n", arg2str(d[:norm])))
 	(haskey(d, :pole)) && (cmd *= "+o" * arg2str(d[:pole]))
 	if (haskey(d, :pen))
 		((p = add_opt_pen(d, [:pen], "")) != "") && (cmd *= "+p" * p)

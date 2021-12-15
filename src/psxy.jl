@@ -287,7 +287,7 @@ function helper_gbar_fill(d::Dict)::Vector{String}
 	# g_bar_fill may hold a sequence of colors for gtroup Bar plots
 	gval = find_in_dict(d, [:fill :fillcolor], false)[1]	# Used for group colors
 	if (isa(gval, Array{String}) && length(gval) > 1)
-		g_bar_fill = Vector{String}()
+		g_bar_fill::Vector{String} = String[]
 		append!(g_bar_fill, gval)
 	elseif ((isa(gval, Array{Int}) || isa(gval, Tuple) && eltype(gval) == Int) && length(gval) > 1)
 		g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
@@ -296,7 +296,7 @@ function helper_gbar_fill(d::Dict)::Vector{String}
 		g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
 		[g_bar_fill[k] = string(gval[k]) for k = 1:length(gval)]
 	else
-		g_bar_fill = Vector{String}()		# To have somthing to return
+		g_bar_fill = String[]		# To have somthing to return
 	end
 	return g_bar_fill
 end
@@ -423,8 +423,8 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
 	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
 	info = gmt("gmtinfo -C", arg1)
-	dx = (info[1].data[2] - info[1].data[1]) * 0.005 + bw/2;
-	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
+	dx::Float64 = (info[1].data[2] - info[1].data[1]) * 0.005 + bw/2;
+	dy::Float64 = (info[1].data[4] - info[1].data[3]) * 0.005;
 	info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[4] += dy;
 	info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
 	new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info[1].data[1], info[1].data[2], 0, info[1].data[4])
@@ -702,7 +702,7 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u::Bo
 	# KEY is either :bar or :hbar
 	# OPTS is either "Sb", "SB" or "So"
 	# NO_U if true means to NOT automatic adding of flag 'u'
-	opt ="";	got_str = false
+	opt::String = "";	got_str = false
 	if (haskey(d, key))
 		if (isa(d[key], String))
 			opt, got_str = d[key], true
