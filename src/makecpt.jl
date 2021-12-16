@@ -120,15 +120,15 @@ end
 function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Vector{Float64}}
 	symbs = [:T :range :inc :bin]
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | Array | String | Number")	# Just print the options
-	Tvec = Vector{Float64}()
+	Tvec::Vector{Float64} = Float64[]
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, Tuple))
 			n = length(val)
-			out = arg2str(val[1:min(n,3)])
+			out::String = arg2str(val[1:min(n,3)])
 			if (n > 3)
 				for k = 4:n			# N should be at most = 5 (e.g. +n+b)
-					_opt = string(val[k])
-					if     (startswith(_opt, "sli") || startswith(_opt, "num"))   out *= "+n"
+					_opt::String = string(val[k])
+					if     (startswith(_opt, "sli") || startswith(_opt, "num"))  out *= "+n"
 					elseif (startswith(_opt, "log2"))  out *= "+b"
 					elseif (startswith(_opt, "log1"))  out *= "+l"
 					else   @warn("Unkown option \"$_opt\" in range option")

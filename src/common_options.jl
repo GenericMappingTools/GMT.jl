@@ -1887,18 +1887,13 @@ function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)::Str
 	(!haskey(mapa, this_key)) && return		# Should it be a error?
 	out::String = ""
 	key = keys(user_input)					# user_input = (rows=1, fill=:red)
-	#val_namedTup = d[this_key]				# water=(rows="my", cols="mx", fill=add_opt_fill)
 	val_namedTup = mapa[this_key]				# water=(rows="my", cols="mx", fill=add_opt_fill)
-	#d = nt2dict(val_namedTup)
 	for k = 1:length(user_input)
-		#if (haskey(d, key[k]))
 		if (haskey(val_namedTup, key[k]))
-			#val = d[key[k]]
 			val = val_namedTup[key[k]]
 			if (isa(val, Function))
 				if (val == add_opt_fill) out *= val(Dict(key[k] => user_input[key[k]]))  end
 			else
-				#out *= string(d[key[k]])
 				out *= string(val_namedTup[key[k]])
 			end
 		end
@@ -2004,7 +1999,7 @@ function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
 	(mat === nothing) && return fun(t1..., t2, del, mat), mat  # psxy error_bars may send mat = nothing
 	n_rows = size(mat, 1)
 	mat = reshape(mat, :)
-	cmd = fun(t1..., t2, del, mat)
+	cmd::String = fun(t1..., t2, del, mat)
 	mat = reshape(mat, n_rows, :)
 	return cmd, mat
 end
@@ -2014,7 +2009,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs::VMs, need_symb::Symbol, args,
 	# This version specializes in the case where an option may transmit an array, or read a file, with optional flags.
 	# When optional flags are used we need to use NamedTuples (the NT_OPTS arg). In that case the NEED_SYMB
 	# is the keyword name (a symbol) whose value holds the array. An error is raised if this symbol is missing in D
-	# ARGS is a 1-to-3 array of GMT types with in which some may be NOTHING. If tThe value is an array, it will be
+	# ARGS is a 1-to-3 array of GMT types with in which some may be NOTHING. If the value is an array, it will be
 	# stored in first non-empty element of ARGS.
 	# Example where this is used (plot -Z):  Z=(outline=true, data=[1, 4])
 	(show_kwargs[1]) && print_kwarg_opts(symbs)		# Just print the kwargs of this option call
@@ -2026,7 +2021,6 @@ function add_opt(d::Dict, cmd::String, opt, symbs::VMs, need_symb::Symbol, args,
 		if isa(val, Dict)  val = dict2nt(val)  end
 		if (isa(val, Tuple) && length(val) == 2)
 			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
-			#val = dict2nt(Dict(need_symb => val[1], keys(nt_opts)[1] => val[2]))
 			d[symb] = dict2nt(Dict(need_symb => val[1], keys(nt_opts)[1] => val[2]))	# Need to patch also the input option
 		end
 		if (isa(val, NamedTuple))
