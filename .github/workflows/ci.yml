@@ -30,16 +30,16 @@ jobs:
           #- 'nightly'
         os:
           #- ubuntu-latest
-          - ubuntu-20.04
-          #- ubuntu-18.04
+          #- ubuntu-20.04
+          - ubuntu-18.04
           - macos-latest
         arch:
           - x64
         include:
           # Linux
           - name: Linux - Compile only
-            #os: ubuntu-18.04
-            os: ubuntu-20.04
+            os: ubuntu-18.04
+            #os: ubuntu-20.04
             #os: ubuntu-latest
             run_in_pr : true
 
