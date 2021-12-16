@@ -24,7 +24,7 @@ set -x -e
 # Following variables can be modified via environment variables
 GMT_INSTALL_DIR=${GMT_INSTALL_DIR:-${HOME}/gmt-install-dir}
 if [ "X$1" = "X" ]; then
-	GMT_GIT_REF=${GMT_GIT_REF:-master}
+	GMT_GIT_REF=${GMT_GIT_REF:-6.3.0}
 else
 	GMT_GIT_REF=$1
 fi
