@@ -48,6 +48,7 @@ function get_GMTver()
 		end
 	end
 end
+ENV["LD_PRELOAD"] = "/home/runner/gmt-install-dir/lib/libgmt.so"
 _GMTver, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir = get_GMTver()
 
 if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names already known at this point.
