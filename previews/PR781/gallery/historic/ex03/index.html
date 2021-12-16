@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Image presentations · GMT</title><script data-outdated-warner src="../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script><link href="../../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../../usage/">GMT</a></span></div><form class="docs-search" action="../../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../../usage/">Introduction</a></li><li><a class="tocitem" href="../../../quick_learn/">Quick Learn</a></li><li><a class="tocitem" href="../../../examples/">Some examples</a></li><li><a class="tocitem" href="../../../rectangles/">Draw rectangles examples</a></li><li><a class="tocitem" href="../../../frames/">Draw frames examples</a></li><li><a class="tocitem" href="../../../proj_examples/">Map projections</a></li><li><span class="tocitem">Gallery</span><ul><li><a class="tocitem" href="../../isc/">Advanced ISC example</a></li><li><a class="tocitem" href="../../tables/">AGU</a></li><li><a class="tocitem" href="../../bars/bars/">Bar plots</a></li><li><a class="tocitem" href="../../color_lines/color_lines/">Color lines</a></li><li><input class="collapse-toggle" id="menuitem-7-5" type="checkbox"/><label class="tocitem" for="menuitem-7-5"><span class="docs-label">Choropleth maps</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../choropleths/choropleth_DCW/">Coutries (DCW)</a></li><li><a class="tocitem" href="../../choropleths/choropleth_cv19/">Covid in Portugal</a></li></ul></li><li><a class="tocitem" href="../../contourf/contourf/">Contourf</a></li><li><a class="tocitem" href="../../GADM/gadm/">GADM Countries</a></li><li><a class="tocitem" href="../../buffergeo/buffer/">Geodesic buffers</a></li><li><a class="tocitem" href="../">Historical collection</a></li><li><a class="tocitem" href="../../Landsat8/histogram_stretch/">Landsat 8</a></li><li><a class="tocitem" href="../../mapprojs/">Map projections</a></li><li><a class="tocitem" href="../../plot_funs/plot_funs/">Plotting functions</a></li><li><a class="tocitem" href="../../plotyy/plotyy/">Plotyy</a></li><li><a class="tocitem" href="../../spirals/spirals/">Spirals</a></li><li><a class="tocitem" href="../../ternary/ternary/">Ternary</a></li><li><a class="tocitem" href="../../UTM_Geog_annot/ex28/">UTM and Geog axes</a></li></ul></li><li class="is-active"><a class="tocitem" href>Image presentations</a></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../../../monolitic/">Monolithic</a></li><li><a class="tocitem" href="../../../modules/">By Modules</a></li><li><a class="tocitem" href="../../../common_opts/">Common options</a></li><li><input class="collapse-toggle" id="menuitem-73-4" type="checkbox"/><label class="tocitem" for="menuitem-73-4"><span class="docs-label">General features</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../arrows_control/">Vector Attributes</a></li><li><a class="tocitem" href="../../../color/">Setting color</a></li><li><a class="tocitem" href="../../../decorated/">Line decorations</a></li><li><a class="tocitem" href="../../../symbols/">Symbols</a></li><li><a class="tocitem" href="../../../themes/">Themes</a></li></ul></li></ul></li><li><span class="tocitem">Modules manuals</span><ul><li><a class="tocitem" href="../../../arrows/">arrows</a></li><li><a class="tocitem" href="../../../bar/">bar</a></li><li><a class="tocitem" href="../../../bar3/">bar3</a></li><li><a class="tocitem" href="../../../blockmean/">blockmean</a></li><li><a class="tocitem" href="../../../blockmedian/">blockmedian</a></li><li><a class="tocitem" href="../../../blockmode/">blockmode</a></li><li><a class="tocitem" href="../../../coast/">coast</a></li><li><a class="tocitem" href="../../../colorbar/">colorbar</a></li><li><a class="tocitem" href="../../../contourf/">contourf</a></li><li><a class="tocitem" href="../../../grdcontour/">grdcontour</a></li><li><a class="tocitem" href="../../../grdimage/">grdimage</a></li><li><a class="tocitem" href="../../../grdgradient/">grdgradient</a></li><li><a class="tocitem" href="../../../grdview/">grdview</a></li><li><a class="tocitem" href="../../../histogram/">histogram</a></li><li><a class="tocitem" href="../../../legend/">legend</a></li><li><a class="tocitem" href="../../../lines/">lines</a></li><li><a class="tocitem" href="../../../makecpt/">makecpt</a></li><li><a class="tocitem" href="../../../movie/">movie</a></li><li><a class="tocitem" href="../../../plot/">plot</a></li><li><a class="tocitem" href="../../../scatter/">scatter</a></li><li><a class="tocitem" href="../../../scatter3/">scatter3</a></li><li><a class="tocitem" href="../../../solar/">solar</a></li><li><a class="tocitem" href="../../../subplot/">subplot</a></li><li><a class="tocitem" href="../../../text/">text</a></li></ul></li><li><a class="tocitem" href="../../../types/">The GMT types</a></li><li><a class="tocitem" href="../../../">Index</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Image presentations</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Image presentations</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/GenericMappingTools/GMT.jl/blob/master/docs/src/gallery/historic/ex03.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Image-presentations"><a class="docs-heading-anchor" href="#Image-presentations">Image presentations</a><a id="Image-presentations-1"></a><a class="docs-heading-anchor-permalink" href="#Image-presentations" title="Permalink"></a></h1><pre><code class="language-julia hljs">	gmt(&quot;gmtset GMT_FFT kiss&quot;)
+	
+	cpos  = fitcircle(&quot;@sat_03.xyg&quot;, L=2, F=:m)
+	cposx = cpos[1].data[1,1];		cposy = cpos[1].data[1,2]
+	ppos  = fitcircle(&quot;@sat_03.xyg&quot;, L=2, F=:n)
+	pposx = ppos[1].data[1,1];		pposy = ppos[1].data[1,2]
+
+	# Now we use &quot;project&quot; to gmt project the data in both sat.xyg and ship.xyg
+	# into data.pg, where g is the same and p is the oblique longitude around
+	# the great circle. We use -Q to get the p distance in kilometers, and -S
+	# to sort the output into increasing p values.
+
+	sat_pg  = gmt(@sprintf(&quot;project @sat_03.xyg -C%f/%f -T%f/%f -S -Fpz -Q&quot;, cposx, cposy, pposx, pposy));
+	ship_pg = gmt(@sprintf(&quot;project @ship_03.xyg -C%f/%f -T%f/%f -S -Fpz -Q&quot;, cposx, cposy, pposx, pposy));
+	sat_pg  = sat_pg[1].data;
+	ship_pg = ship_pg[1].data;
+
+	# The gmtinfo utility will report the minimum and maximum values for all columns. 
+	# We use this information first with a large -I value to find the appropriate -R
+	# to use to plot the .pg data. 
+	R = gmtinfo([sat_pg; ship_pg], I=(100,25))
+	R = R[1].text[1]
+	plot(sat_pg, region=R, U=&quot;L/-1.75i/-1.25i/\&quot;Example 3a in Cookbook\&quot;&quot;, frame=(axes=:WeSn,
+		xaxis=(annot=500, ticks=100, label=&quot;Distance along great circle&quot;), yaxis=(annot=100, ticks=25,
+        label=&quot;Gravity anomaly (mGal)&quot;)), xshift=5, yshift=3.75, W=:thick, figsize=(20,12.7))
+	plot!(ship_pg, S=&quot;p0.03i&quot;, savefig=&quot;example_03a&quot;, show=1)
+
+	# From this plot we see that the ship data have some &quot;spikes&quot; and also greatly
+	# differ from the satellite data at a point about p ~= +250 km, where both of
+	# them show a very large anomaly.
+
+	# To facilitate comparison of the two with a cross-spectral analysis using &quot;spectrum1d&quot;,
+	# we resample both data sets at intervals of 1 km.  First we find out how the data are
+	# typically spaced using $AWK to get the delta-p between points and view it with &quot;histogram&quot;.
+
+	histogram(diff(ship_pg, dims=1), W=0.1, G=:black, xshift=5, yshift=3.75, frame=0, title=&quot;Ship&quot;, U=&quot;L/-1.75i/-1.25i/\&quot;Example 3b in Cookbook\&quot;&quot;, figsize=7.5)
+	histogram!(diff(sat_pg, dims=1), W=0.1, G=:black, xshift=12.5, frame=0, title=&quot;Ship&quot;, figsize=7.5)
+
+	# This experience shows that the satellite values are spaced fairly evenly, with
+	# delta-p between 3.222 and 3.418.  The ship values are spaced quite unevenly, with
+	# delta-p between 0.095 and 9.017.  This means that when we want 1 km even sampling,
+	# we can use &quot;gmt sample1d&quot; to interpolate the sat data, but the same procedure applied
+	# to the ship data could alias information at shorter wavelengths.  So we have to use
+	# &quot;filter1d&quot; to resample the ship data.  Also, since we observed spikes in the ship
+	# data, we use a median filter to clean up the ship values.  We will want to use &quot;paste&quot;
+	# to put the two sampled data sets together, so they must start and end at the same
+	# point, without NaNs.  So we want to get a starting and ending point which works for
+	# both of them.  This is a job for gmt gmtmath UPPER/LOWER.
+
+	sampr1 = gmt(&quot;gmtmath ? -Ca -Sf -o0 UPPER CEIL =&quot;,  [ship_pg[1:1,:]; sat_pg[1:1,:]])
+	sampr2 = gmt(&quot;gmtmath ? -Ca -Sf -o0 LOWER FLOOR =&quot;, [ship_pg[end:end,:]; sat_pg[end:end,:]])
+
+	# Now we can use sampr1|2 in gmt gmtmath to make a sampling points file for gmt sample1d:
+	samp_x = gmt(@sprintf(&quot;gmtmath -T%d/%d/1 -N1/0 T =&quot;, sampr1[1].data[1,1], sampr2[1].data[1,1]))
+
+	# Now we can resample the gmt projected satellite data:
+	samp_sat_pg = sample1d(sat_pg, samp_x, N=true)
+
+	# For reasons above, we use gmt filter1d to pre-treat the ship data.  We also need to sample
+	# it because of the gaps &gt; 1 km we found. So we use gmt filter1d | gmt sample1d.  We also
+	# use the -E on gmt filter1d to use the data all the way out to sampr1/sampr2 :
+	t = gmt(@sprintf(&quot;filter1d -Fm1 -T%d/%d/1 -E&quot;, sampr1[1].data[1], sampr2[1].data[1]), ship_pg)
+	samp_ship_pg = sample1d(t, samp_x, N=true, savefig=&quot;example_03b&quot;, show=1)
+
+	# Now we plot them again to see if we have done the right thing:
+	plot(sat_pg, region=R, U=&quot;L/-1.75i/-1.25i/\&quot;Example 3c in Cookbook\&quot;&quot;, frame=(axes=:WeSn,
+		xaxis=(annot=500, ticks=100, label=&quot;Distance along great circle&quot;), yaxis=(annot=100, ticks=25,
+        label=&quot;Gravity anomaly (mGal)&quot;)), xshift=5, yshift=3.75, W=:thick, figsize=(20,12.7))
+	plot!(samp_ship_pg, S=&quot;p0.03i&quot;, savefig=&quot;example_03c&quot;, show=1)
+
+	# Now to do the cross-spectra, assuming that the ship is the input and the sat is the output 
+	# data, we do this:
+	t = [samp_ship_pg[1].data[:,2] samp_sat_pg[1].data[:,2]]
+	spects = spectrum1d(t, S=256, D=1, W=true, C=true, N=true)
+ 
+	# Now we want to plot the spectra. The following commands will plot the ship and sat 
+	# power in one diagram and the coherency on another diagram, both on the same page.  
+	# Note the extended use of gmt pstext and gmt psxy to put labels and legends directly on the
+	# plots. For that purpose we often use -Jx1i and specify positions in inches directly:
+
+	plot(spects[1].data[:,[1,16,17]], region=(1,1000,0,1), frame=(axes=WeSn, bg=(240,255,240), xaxis=(annot=1, ticks=3, p=[], label=&quot;Wavelength (km)&quot;), yaxis=(annot=0.25, ticks=0.05, label=&quot;Coherency@+2@+&quot;)), 
+		xshift=&quot;2.5i&quot;, yshift=&quot;1.5i&quot;, S=&quot;c0.07i&quot;, G=:purple, E=&quot;y/0.5p&quot;, figsize=(&quot;-4il&quot;, &quot;3.75i&quot;))
+	
+	text!(text_record(&quot;Coherency@+2@+&quot;), F=&quot;+cTR+f18p,Helvetica-Bold&quot;, D=&quot;j0.1i&quot;)
+
+	plot!(spects[1].data[:,1:3], region=(1,1000,0.1,10000), frame=(axes=WeSn, title=&quot;Ship and Satellite Gravity&quot;, bg=(240,255,240), xaxis=(annot=1, ticks=3, p=[]), yaxis=(annot=0.25, ticks=0.05, label=&quot;Power (mGal@+2@+km)&quot;)), G=:red, S=&quot;T0.07i&quot;, yshift=&quot;4.2i&quot;, E=&quot;y/0.5p&quot;, figsize=(&quot;-4il&quot;,&quot;3.75il&quot;))
+
+	plot!(spects[1].data[:,[1,4,5]], G=:blue, S=&quot;c0.07i&quot;, E=&quot;y/0.5p&quot;)
+	text!(text_record(&quot;Input Power&quot;), region=(0,4,0,3.75), F=&quot;+cTR+f18p,Helvetica-Bold&quot;, D=&quot;j0.1i&quot;, scale=&quot;1i&quot;)
+
+	leg = text_record([&quot;S 0.1i T 0.07i red - 0.3i Ship&quot;, &quot;S 0.1i c 0.07i blue - 0.3i Satellite&quot;])
+	legend!(leg, D=&quot;jBL+w1.2i+o0.25i&quot;, F=&quot;+gwhite+pthicker&quot;, par=(FONT_ANNOT_PRIMARY=&quot;14,Helvetica-Bold&quot;,), savefig=&quot;example_03&quot;, show=1)
+
+	# Now we wonder if removing that large feature at 250 km would make any difference.
+	# We could throw away a section of data with $AWK or sed or head and tail, but we
+	# demonstrate the use of &quot;gmt trend1d&quot; to identify outliers instead.  We will fit a
+	# straight line to the samp_ship.pg data by an iteratively-reweighted method and
+	# save the weights on output.  Then we will plot the weights and see how things look:
+
+	samp_ship_xw = trend1d(samp_ship_pg, F=:xw, N=&quot;p2+r&quot;)
+	plot(samp_ship_pg, region=R, U=&quot;L/-1.75i/-1.25i/\&quot;Example 3c in Cookbook\&quot;&quot;, frame=(axes=:WeSn,
+		xaxis=(annot=500, ticks=100, label=&quot;Distance along great circle&quot;), yaxis=(annot=100, ticks=25,
+        label=&quot;Gravity anomaly (mGal)&quot;)), xshift=5, yshift=3.75, S=&quot;p0.03i&quot;, figsize=(20.3,10.2))
+
+	R = gmtinfo(samp_ship_xw, I=(100,1.1))
+	plot!(samp_ship_xw, region=R[1].text[1], yshift=&quot;4.25i&quot;, frame=(axes=:Wesn, xaxis=(ticks=100,), yaxis=(annot=0.5, ticks=0.1, label=:Weight)), S=&quot;p0.03i&quot;, figsize=(&quot;8i&quot;,&quot;4.25i&quot;), savefig=&quot;example_03d&quot;, show=1)</code></pre><p>See also <a href="https://www.generic-mapping-tools.org/gmt/latest/gallery/ex03.html#example-03"><code>GMT ex03</code></a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ex02/">« Image presentations</a><a class="docs-footer-nextpage" href="../ex04/">A 3-D perspective mesh plot »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Thursday 16 December 2021 01:53">Thursday 16 December 2021</span>. Using Julia version 1.7.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
