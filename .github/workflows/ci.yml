@@ -40,6 +40,8 @@ jobs:
             #os: ubuntu-18.04
             os: ubuntu-latest
             run_in_pr : true
+          - name: macOS
+            os: macos-latest
 
     steps:
       - name: Cancel Previous Runs
