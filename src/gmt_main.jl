@@ -662,8 +662,8 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 
 	(C.data == C_NULL) && error("get_palette: programming error, output CPT is empty")
 
-	model = (C.model & GMT_HSV != 0) ? "hsv" : ((C.model & GMT_CMYK != 0) ? "cmyk" : "rgb")
-	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
+	model::String = (C.model & GMT_HSV != 0) ? "hsv" : ((C.model & GMT_CMYK != 0) ? "cmyk" : "rgb")
+	n_colors::UInt32 = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 
 	out = GMTcpt(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), zeros(2)*NaN, zeros(3,3), 8, 0.0,
 	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
@@ -924,9 +924,9 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	(_cube) && (h.n_bands = n_bds)
 
 	try
-		h.x_unit = map(UInt8, (string(Grid.x_unit, repeat("\0",80-length(Grid.x_unit)))...,))
-		h.y_unit = map(UInt8, (string(Grid.y_unit, repeat("\0",80-length(Grid.y_unit)))...,))
-		h.z_unit = map(UInt8, (string(Grid.z_unit, repeat("\0",80-length(Grid.z_unit)))...,))
+		h.x_unit::NTuple{80,UInt8} = map(UInt8, (string(Grid.x_unit, repeat("\0",80-length(Grid.x_unit)))...,))
+		h.y_unit::NTuple{80,UInt8} = map(UInt8, (string(Grid.y_unit, repeat("\0",80-length(Grid.y_unit)))...,))
+		h.z_unit::NTuple{80,UInt8} = map(UInt8, (string(Grid.z_unit, repeat("\0",80-length(Grid.z_unit)))...,))
 	catch
 		h.x_unit = map(UInt8, (string("x", repeat("\0",79))...,))
 		h.y_unit = map(UInt8, (string("y", repeat("\0",79))...,))

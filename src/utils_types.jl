@@ -761,13 +761,13 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Vector{Float64}(), y=Vector{Float64}())
 		x_inc = (x[end] - x[1]) / (nx - one_or_zero)
 		y_inc = (y[end] - y[1]) / (ny - one_or_zero)
 		zmin, zmax = extrema_nan(mat)
-		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
+		hdr = Float64.([x[1], x[end], y[1], y[end], zmin, zmax])
 	elseif (hdr === nothing)
 		zmin, zmax = extrema_nan(mat)
 		if (reg == 0)  x = collect(1.0:nx);		y = collect(1.0:ny)
 		else           x = collect(0.5:nx+0.5);	y = collect(0.5:ny+0.5)
 		end
-		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
+		hdr = Float64.([x[1], x[end], y[1], y[end], zmin, zmax])
 		x_inc = 1.0;	y_inc = 1.0
 	else
 		(length(hdr) != 9) && error("The HDR array must have 9 elements")

@@ -80,7 +80,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	end
 
 	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd::String, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	(startswith(opt_J, " -JX") && !contains(opt_J, "/")) && (cmd = replace(cmd, opt_J => opt_J * "/0")) # When sub-regions
 	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes) &&
 		(cmd = replace(cmd, opt_B => ""))	# Dont plot axes for plain images if that was not required
@@ -107,7 +107,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 
 	# if (occursin("earth_relief_", cmd0))  push!(d, :this_cpt => "geo")  end	# Make this the default CPT
 
-	cmd, N_used, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
+	cmd, _, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
 	cmd, arg1, arg2, arg3, arg4   = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
 
 	if (isa(arg1, GMTimage) && !occursin("-Q", cmd))
@@ -133,10 +133,10 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 	O && return
 	if ((val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(I_G, GMTimage) || isa(I_G, GMTgrid)))
 		if (isa(I_G, GMTgrid) || !isimgsize(I_G))
-			d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", I_G.range[1], I_G.range[2], I_G.range[3], I_G.range[4])
+			d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", I_G.range[1], I_G.range[2], I_G.range[3], I_G.range[4])
 		end
 	elseif (val === nothing && (isa(cmd0, String) && cmd0 != "") && (CTRL.limits[1:4] != zeros(4) || snif_GI_set_CTRLlimits(cmd0)) )
-		d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
+		d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
 	elseif (val !== nothing)
 		d[:R] = val
 		del_from_dict(d, [:region :limits])
@@ -158,7 +158,7 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 			if (isa(val, String) || isa(val, Symbol) || isa(val, Bool))
 				val = arg2str(val)
 				(val == "" || val == "default" || val == "auto") ? cmd *= " -I+a-45+nt1" : cmd *= " -I" * val
-    			else
+    		else
 				cmd = add_opt(d, cmd, 'I', [:I :shading :shade :intensity],
 							  (auto = "_+", azim = "+a", azimuth = "+a", norm = "+n", default = "_+d+a-45+nt1"))
 			end
