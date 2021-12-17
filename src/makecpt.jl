@@ -120,7 +120,7 @@ end
 function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Vector{Float64}}
 	symbs = [:T :range :inc :bin]
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | Array | String | Number")	# Just print the options
-	Tvec::Vector{Float64} = Flot64[]
+	Tvec::Vector{Float64} = Float64[]
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, Tuple))
 			n = length(val)
