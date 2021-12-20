@@ -47,15 +47,20 @@ function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 
 	length(kwargs) == 0 && return monolitic("grdproject", cmd0, arg1)
 
-	d = init_module(false, kwargs...)[1]	# Also checks if the user wants ONLY the HELP mode
-	cmd = parse_n(d, "", true)[1]			# Here we keep the GMT default to Antialiasing
+	d = init_module(false, kwargs...)[1]	        # Also checks if the user wants ONLY the HELP mode
+	cmd::String = parse_n(d, "", true)[1]			# Here we keep the GMT default to Antialiasing
 	cmd = parse_common_opts(d, cmd, [:G :R :V_params :r])[1]
 	if ((val = find_in_dict(d, [:J :proj :projection], false)[1]) !== nothing)  # Here we don't want any default value
 		cmd = parse_J(d, cmd, "", false)[1];
+    else						# See if the grid/image has proj info and use it if we can 
+		prj::String = ""
+		(arg1 !== nothing) && (prj = getproj(arg1, proj4=true))
+		(prj == "" && cmd0 != "") && (prj = getproj(cmd0, proj4=true))
+		(prj != "") && (cmd *= " -J\"" * prj * "\"")
 	end
 	cmd = parse_these_opts(cmd, d, [[:C :center], [:D :inc], [:E :dpi], [:F :one2one], [:I :inverse], [:M :projected_unit]])
 
-	common_grd(d, cmd0, cmd, "grdproject ", arg1)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "grdproject ", arg1)	# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

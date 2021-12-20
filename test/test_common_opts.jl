@@ -220,10 +220,12 @@
 	magic(4)
 	magic(6)
 
-	D = mat2ds([0 0; 1 1],["a", "b"]);	D.header = "a";
-	GMT.make_zvals_vec(D, ["a", "b"], [1,2]);
-	GMT.edit_segment_headers!([D], [1], "0")
-	GMT.edit_segment_headers!(D, [1], "0")
+	D = [mat2ds([0 0; 1 1],["a", "b"])];	D[1].header = "a";
+	GMT.make_zvals_vec(D, ["a"], [1], 1);
+	D[1].attrib = Dict("nome" => "a");
+	GMT.make_zvals_vec(D, ["a", "b"], [1,2], att="nome");
+	GMT.make_zvals_vec(D, ["a", "b"], [1,2], att="nome", nocase=1);
+	GMT.edit_segment_headers!(D, [1], "0");
 
 	@test_throws ErrorException("Bad 'stretch' argument. It must be a 1, 2 or 6 elements array and not 3") GMT.mat2img(img16, histo_bounds=[8440 13540 0]);
 	@test_throws ErrorException("Memory layout option must have 3 characters and not 1") GMT.parse_mem_layouts("-%1")

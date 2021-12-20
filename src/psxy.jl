@@ -106,8 +106,15 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	len = length(cmd);	n_prev = N_args;
 	cmd, args, n, got_Zvars = add_opt(d, cmd, 'Z', [:Z :level], :data, Any[arg1, arg2, arg3], (outline="_+l", fill="_+f"))
 	if (n > 0)
-		arg1, arg2, arg3 = args[:]
-		N_args = n
+		if (GMTver <= v"6.3")					# -Z is f again. Must save data into file to make it work.
+			fname = joinpath(tempdir(), "GMTjl_temp_Z.txt")
+			fid = open(fname, "w")
+			for k = 1:length(args[n])  println(fid, args[n][k])  end;	close(fid)
+			cmd *= fname
+		else
+			arg1, arg2, arg3 = args[:]
+			N_args = n
+		end
 	end
 	in_bag = (got_Zvars) ? true : false			# Other cases should add to this list
 	if (N_args < 2)
