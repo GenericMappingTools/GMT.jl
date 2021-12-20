@@ -1278,6 +1278,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 	D = Vector{GMTdataset}(undef, n_total_segments)
 
 	n = 1
+	attrib = Dict{String, String}();	# For the case there are no attribs at all.
 	for k = 1:n_max
 		OGR_F = unsafe_load(in, k)
 		if (k == 1)
@@ -1292,9 +1293,11 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		if (OGR_F.np > 0)
 			hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,i))) for i = 1:OGR_F.att_number]) : ""
 			(hdr != "") && (hdr = string(rstrip(hdr, ',')))		# Strip last ','
-			attrib = Dict{String, String}()
 			if (OGR_F.att_number > 0)
+				attrib = Dict{String, String}()
 				[attrib[unsafe_string(unsafe_load(OGR_F.att_names,i))] = unsafe_string(unsafe_load(OGR_F.att_values,i)) for i = 1:OGR_F.att_number]
+			else		# use the previous attrib. This is RISKY but gmt_ogrread only stores attribs in 1st geom of each feature
+				(n > 1) && (attrib = D[n-1].attrib)
 			end
 			if (OGR_F.n_islands == 0)
 				geom = (OGR_F.type == "Polygon") ? wkbPolygon : ((OGR_F.type == "LineString") ? wkbLineString : wkbPoint)
