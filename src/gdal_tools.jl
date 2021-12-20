@@ -1,5 +1,5 @@
 """
-    gdaltranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
+    gdaltranslate(indata, options=String[]; dest="/vsimem/tmp", kwargs...)
 
 Convert raster data between different formats and other operations also provided by the GDAL
 'gdal_translate' tool. Namely sub-region extraction and resampling.
@@ -11,7 +11,7 @@ on the input type). To force the return of a GDAL dataset use the option `gdatas
 
 
 - `indata`: Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
-- `opts`:   List of options. The accepted options are the ones of the gdal_translate utility.
+- `options`:   List of options. The accepted options are the ones of the gdal_translate utility.
             This list can be in the form of a vector of strings, or joined in a simgle string.
 - `kwargs`: Besides what was mentioned above one can also use `meta=metadata`, where `metadata`
             is a string vector with the form "NAME=...." foe each of its elements. This data
@@ -26,15 +26,15 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 """
-    gdalwarp(datasets::Vector{Dataset}, options=String[]; dest="/vsimem/tmp", kw...)
+    gdalwarp(indata, options=String[]; dest="/vsimem/tmp", kwargs...)
 
 Image reprojection and warping function.
 
 ### Parameters
-* `datasets` The list of input datasets.
-* `options` List of options (potentially including filename and open
+- `indata`:  Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
+- `options`: List of options (potentially including filename and open
 	options). The accepted options are the ones of the gdalwarp utility.
-* `kw` are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options
+- `kwargs`:  Are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options
 
 ### Returns
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
