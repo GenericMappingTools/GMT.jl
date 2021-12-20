@@ -159,7 +159,7 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 		if (ndims(mat) == 3)
 			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
 			for k = 1:n_ds
-				D[k] = GMTdataset(view(mat,:,:,k), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, _geom)
+				D[k] = GMTdataset(mat[:,:,k], Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, _geom)
 			end
 		elseif (!multi)
 			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
@@ -816,11 +816,18 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 """
-    make_zvals_vec(D, user_ids::Vector{String}, vals::Array{<:Real}, sub_head=0, upper=false, lower=false)
+    make_zvals_vec(D::GDtype, user_ids::Vector{String}, vals::Vector{<:Real}, sub_head=0, case=0; kw...) -> Vector{Float64}
 
 - `user_ids` -> is a string vector with the ids (names in header) of the GMTdataset D 
-- `vals`     -> is a vector with the the numbers to be used in plot -Z to color the polygons.
-- `sub_head` -> Position in header where field is to be found in the comma separated string.
+- `vals`     -> is a vector with the numbers to be used in plot -Z to color the polygons.
+- `attrib` or `att`: keyword to selecect which attribute to use when matching with contents of the `user_ids` strings.
+- `nocase` or `insensitive`: a keyword from `kw`. Perform a case insensitive comparision between the contents of
+               `user_ids` and the attribute specified with `attrib`. Default compares as case sensistive.
+- `sub_head`:  Position in header where field is to be found in the comma separated string.
+               Note: this option is deprecated and may fail in many cases. Use the `attrib` option explained above.
+- `case`: When using the `sub_head` option case = 1 forces comparing against lowercase contents of the header
+          fields, whilst case = 2 compares with uppercase.
+
 Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
 The elements of ZVALS are made up from the `vals` but it can be larger if there are segments with
 no headers. In that case it replicates the previously known value until it finds a new segment ID.
@@ -829,7 +836,41 @@ Returns a Vector{Float64} with the same length as the number of segments in D. T
 made up after the contents of `vals` but repeated such that each polygon of the same family, i.e.
 with the same `user_ids`, has the same value.
 """
-function make_zvals_vec(D::GDtype, user_ids::Vector{String}, vals::Array{<:Real}, sub_head::Int=0, case::Int=0)::Vector{Float64}
+function make_zvals_vec(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::Vector{<:Real}, sub_head=0, case=0; kw...)::Vector{Float64}
+	(length(kw) == 0 && sub_head > 0) && return make_zvals_vec_old(D, user_ids, vals, sub_head, case)	# For bw compat
+	@assert((n_user_ids = length(user_ids)) == length(vals))
+	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
+	nocase = (find_in_kwargs(kw, [:nocase :insensitive])[1] === nothing) ? true : false
+
+	n_seg = (isa(D, Array)) ? length(D) : 1
+	zvals = fill(NaN, n_seg)
+	if (nocase)
+		for m = 1:n_seg
+			isempty(D[m].attrib) && continue
+			for k = 1:n_user_ids
+				if (D[m].attrib[att] == user_ids[k])
+					zvals[m] = vals[k]
+					break
+				end
+			end
+		end
+	else
+		for m = 1:n_seg
+			isempty(D[m].attrib) && continue
+			t = lowercase(D[m].attrib[att])
+			for k = 1:n_user_ids
+				if (t == lowercase(user_ids[k]))
+					zvals[m] = vals[k]
+					break
+				end
+			end
+		end
+	end
+	return zvals
+end
+
+# ---------------------------------------------------------------------------------------------------
+function make_zvals_vec_old(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::Array{<:Real}, sub_head=0, case=0)::Vector{Float64}
 
 	n_user_ids = length(user_ids)
 	@assert(n_user_ids == length(vals))
@@ -850,7 +891,7 @@ function make_zvals_vec(D::GDtype, user_ids::Vector{String}, vals::Array{<:Real}
 		for m = 1:n_user_ids
 			if startswith(data_ids[k], user_ids[m])			# Find first occurence of user_ids[k] in a segment header
 				last = (k < n_data_ids) ? ind[k+1]-1 : n_seg
-				[zvals[j] = vals[m] for j = ind[k]:last]		# Repeat the last VAL for segments with no headers
+				[zvals[j] = vals[m] for j = ind[k]:last]	# Repeat the last VAL for segments with no headers
 				n = last + 1					# Prepare for next new VAL
 				break
 			end
@@ -878,7 +919,7 @@ end
     ids, ind = dsget_segment_ids(D, case=0)::Tuple{Vector{String}, Vector{Int}}
 
 Where D is a GMTdataset of a vector of them, returns the segment ids (first text after the '>') and
-the idices of those segments.
+the indices of those segments.
 """
 function dsget_segment_ids(D, case::Int=0)::Tuple{Vector{AbstractString}, Vector{Int}}
 	# Get segment ids (first text after the '>') and the idices of those segments
@@ -907,8 +948,8 @@ function dsget_byattrib(D::Vector{GMTdataset}, ind::Bool; kw...)::Union{Nothing,
 	# It returns the indices of the selected segments.
 	(isempty(D[1].attrib)) &&
 		(@warn("This datset does not have an `attrib` field and is hence unusable here.");	return nothing)
-	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` name.")
-	((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` value.")
+	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
+	((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` VALUE.")
 	ky = keys(D[1].attrib)
 	((ind = findfirst(ky .== att)) === nothing) && return nothing
 	tf = fill(false, length(D))
