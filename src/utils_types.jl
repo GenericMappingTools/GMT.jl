@@ -181,18 +181,32 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 			end
 		end
 	end
-	for k = 1:length(D)			# Compute the BoundingBoxes
-		bb = extrema(D[k].data, dims=1)		# A N Tuple.
-		D[k].bbox = collect(Float64, Iterators.flatten(bb))
-	end
+	#for k = 1:length(D)			# Compute the BoundingBoxes
+		#bb = extrema(D[k].data, dims=1)		# A N Tuple.
+		#D[k].bbox = collect(Float64, Iterators.flatten(bb))
+	#end
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	return D
 end
 
 # ---------------------------------------------------------------------------------------------------
-function set_dsBB!(D)
-	# Compute and set the global BoundingBox for a Vector{GMTdataset} + the trivial cases.
+function set_dsBB!(D, all_bbs::Bool=true)
+	# Compute and set the global and individual BoundingBox for a Vector{GMTdataset} + the trivial cases.
+	# If ALL_BBS is false then assume individual BBs are already knwon.
 	isempty(D) && return nothing
+
+	if (all_bbs)
+		if isa(D, GMTdataset)
+			D.ds_bbox = D.bbox = collect(Float64, Iterators.flatten(extrema(D.data, dims=1)))
+			return nothing
+		else
+			for k = 1:length(D)
+				bb = extrema(D[k].data, dims=1)		# A N Tuple.
+				D[k].bbox = collect(Float64, Iterators.flatten(bb))
+			end
+		end
+	end
+
 	(isa(D, GMTdataset)) && (D.ds_bbox = D.bbox;	return nothing)
 	(length(D) == 1)     && (D[1].ds_bbox = D[1].bbox;	return nothing)
 	isempty(D[1].bbox)   && return nothing

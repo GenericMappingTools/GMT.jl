@@ -788,7 +788,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 			seg_out = seg_out + 1
 		end
 	end
-	set_dsBB!(Darr)				# Compute and set the global BoundingBox for this dataset
+	set_dsBB!(Darr, false)				# Compute and set the global BoundingBox for this dataset
 
 	return Darr
 end

@@ -1,6 +1,6 @@
 # Addapted from the original https://github.com/JuliaGeo/GADM.jl (MIT Licensed)
 # and stripped from all of it's dependencies (ArchGDAL repaced by the GMT GDAL functions).
-# Expanded to also return all subregions of a particular a particular administrative entity.
+# Expanded to also return all subregions of a particular administrative entity.
 # To (partially) replace the role of the Tables.jl interface an option exists to print the
 # names of all subregions of a parent administrative unit.
 
@@ -89,6 +89,7 @@ function gadm(country, subregions...; children::Bool=false, names::Bool=false, c
 			_D = gd2gmt(getgeom(gdfeature[n], 0),"")
 			append!(D, _D)
 		end
+		set_dsBB!(D, false)		# Compute only the global BB. The other were computed aready
 		D
 	end
 
