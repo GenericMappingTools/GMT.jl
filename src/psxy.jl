@@ -49,7 +49,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 	if (is_ternary && !first) 	# Either a -J was set and we'll fish it here or no and we'll use the default.
 		def_J = " -JX" * split(def_fig_size, '/')[1]
-		cmd, opt_J = parse_J(d, cmd, def_J)
+		cmd, opt_J::String = parse_J(d, cmd, def_J)
 	else
 		def_J = (is_ternary) ? " -JX" * split(def_fig_size, '/')[1] : ""		# Gives "-JX14c" 
 		if (is_ternary)  cmd, opt_J = parse_J(d, cmd, def_J)
@@ -106,8 +106,15 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	len = length(cmd);	n_prev = N_args;
 	cmd, args, n, got_Zvars = add_opt(d, cmd, 'Z', [:Z :level], :data, Any[arg1, arg2, arg3], (outline="_+l", fill="_+f"))
 	if (n > 0)
-		arg1, arg2, arg3 = args[:]
-		N_args = n
+		if (GMTver <= v"6.3")					# -Z is f again. Must save data into file to make it work.
+			fname = joinpath(tempdir(), "GMTjl_temp_Z.txt")
+			fid = open(fname, "w")
+			for k = 1:length(args[n])  println(fid, args[n][k])  end;	close(fid)
+			cmd *= fname
+		else
+			arg1, arg2, arg3 = args[:]
+			N_args = n
+		end
 	end
 	in_bag = (got_Zvars) ? true : false			# Other cases should add to this list
 	if (N_args < 2)
@@ -287,7 +294,7 @@ function helper_gbar_fill(d::Dict)::Vector{String}
 	# g_bar_fill may hold a sequence of colors for gtroup Bar plots
 	gval = find_in_dict(d, [:fill :fillcolor], false)[1]	# Used for group colors
 	if (isa(gval, Array{String}) && length(gval) > 1)
-		g_bar_fill = Vector{String}()
+		g_bar_fill::Vector{String} = String[]
 		append!(g_bar_fill, gval)
 	elseif ((isa(gval, Array{Int}) || isa(gval, Tuple) && eltype(gval) == Int) && length(gval) > 1)
 		g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
@@ -296,7 +303,7 @@ function helper_gbar_fill(d::Dict)::Vector{String}
 		g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
 		[g_bar_fill[k] = string(gval[k]) for k = 1:length(gval)]
 	else
-		g_bar_fill = Vector{String}()		# To have somthing to return
+		g_bar_fill = String[]		# To have somthing to return
 	end
 	return g_bar_fill
 end
@@ -423,8 +430,8 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
 	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
 	info = gmt("gmtinfo -C", arg1)
-	dx = (info[1].data[2] - info[1].data[1]) * 0.005 + bw/2;
-	dy = (info[1].data[4] - info[1].data[3]) * 0.005;
+	dx::Float64 = (info[1].data[2] - info[1].data[1]) * 0.005 + bw/2;
+	dy::Float64 = (info[1].data[4] - info[1].data[3]) * 0.005;
 	info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[4] += dy;
 	info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
 	new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info[1].data[1], info[1].data[2], 0, info[1].data[4])
@@ -702,7 +709,7 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u::Bo
 	# KEY is either :bar or :hbar
 	# OPTS is either "Sb", "SB" or "So"
 	# NO_U if true means to NOT automatic adding of flag 'u'
-	opt ="";	got_str = false
+	opt::String = "";	got_str = false
 	if (haskey(d, key))
 		if (isa(d[key], String))
 			opt, got_str = d[key], true

@@ -662,8 +662,8 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 
 	(C.data == C_NULL) && error("get_palette: programming error, output CPT is empty")
 
-	model = (C.model & GMT_HSV != 0) ? "hsv" : ((C.model & GMT_CMYK != 0) ? "cmyk" : "rgb")
-	n_colors = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
+	model::String = (C.model & GMT_HSV != 0) ? "hsv" : ((C.model & GMT_CMYK != 0) ? "cmyk" : "rgb")
+	n_colors::UInt32 = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 
 	out = GMTcpt(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), zeros(2)*NaN, zeros(3,3), 8, 0.0,
 	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
@@ -788,7 +788,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 			seg_out = seg_out + 1
 		end
 	end
-	set_dsBB!(Darr)				# Compute and set the global BoundingBox for this dataset
+	set_dsBB!(Darr, false)				# Compute and set the global BoundingBox for this dataset
 
 	return Darr
 end
@@ -924,9 +924,9 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	(_cube) && (h.n_bands = n_bds)
 
 	try
-		h.x_unit = map(UInt8, (string(Grid.x_unit, repeat("\0",80-length(Grid.x_unit)))...,))
-		h.y_unit = map(UInt8, (string(Grid.y_unit, repeat("\0",80-length(Grid.y_unit)))...,))
-		h.z_unit = map(UInt8, (string(Grid.z_unit, repeat("\0",80-length(Grid.z_unit)))...,))
+		h.x_unit::NTuple{80,UInt8} = map(UInt8, (string(Grid.x_unit, repeat("\0",80-length(Grid.x_unit)))...,))
+		h.y_unit::NTuple{80,UInt8} = map(UInt8, (string(Grid.y_unit, repeat("\0",80-length(Grid.y_unit)))...,))
+		h.z_unit::NTuple{80,UInt8} = map(UInt8, (string(Grid.z_unit, repeat("\0",80-length(Grid.z_unit)))...,))
 	catch
 		h.x_unit = map(UInt8, (string("x", repeat("\0",79))...,))
 		h.y_unit = map(UInt8, (string("y", repeat("\0",79))...,))
@@ -1278,6 +1278,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 	D = Vector{GMTdataset}(undef, n_total_segments)
 
 	n = 1
+	attrib = Dict{String, String}();	# For the case there are no attribs at all.
 	for k = 1:n_max
 		OGR_F = unsafe_load(in, k)
 		if (k == 1)
@@ -1292,9 +1293,11 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		if (OGR_F.np > 0)
 			hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,i))) for i = 1:OGR_F.att_number]) : ""
 			(hdr != "") && (hdr = string(rstrip(hdr, ',')))		# Strip last ','
-			attrib = Dict{String, String}()
 			if (OGR_F.att_number > 0)
+				attrib = Dict{String, String}()
 				[attrib[unsafe_string(unsafe_load(OGR_F.att_names,i))] = unsafe_string(unsafe_load(OGR_F.att_values,i)) for i = 1:OGR_F.att_number]
+			else		# use the previous attrib. This is RISKY but gmt_ogrread only stores attribs in 1st geom of each feature
+				(n > 1) && (attrib = D[n-1].attrib)
 			end
 			if (OGR_F.n_islands == 0)
 				geom = (OGR_F.type == "Polygon") ? wkbPolygon : ((OGR_F.type == "LineString") ? wkbLineString : wkbPoint)

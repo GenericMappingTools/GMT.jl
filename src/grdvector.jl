@@ -64,7 +64,7 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd = parse_BJR(d, "", "", O, " -JX12c/0")[1]
+	cmd::String = parse_BJR(d, "", "", O, " -JX12c/0")[1]
 	cmd = parse_common_opts(d, cmd, [:I :UVXY :f :p :t :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:S :vec_scale], [:T :sign_scale], [:Z :azimuth]])
 
@@ -85,9 +85,9 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol})
+function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol})::String
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | String")
-	cmd = ""
+	cmd::String = ""
     if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, String))  cmd *= " -Q" * val		# An hard core GMT string directly with options
 		else                   cmd *= " -Q" * vector_attrib(val)
