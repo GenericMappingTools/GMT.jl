@@ -181,10 +181,6 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 			end
 		end
 	end
-	#for k = 1:length(D)			# Compute the BoundingBoxes
-		#bb = extrema(D[k].data, dims=1)		# A N Tuple.
-		#D[k].bbox = collect(Float64, Iterators.flatten(bb))
-	#end
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	return D
 end
@@ -832,8 +828,8 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 """
     make_zvals_vec(D::GDtype, user_ids::Vector{String}, vals::Vector{<:Real}, sub_head=0, case=0; kw...) -> Vector{Float64}
 
-- `user_ids` -> is a string vector with the ids (names in header) of the GMTdataset D 
-- `vals`     -> is a vector with the numbers to be used in plot -Z to color the polygons.
+- `user_ids`:  is a string vector with the ids (names in header) of the GMTdataset D 
+- `vals`:      is a vector with the numbers to be used in plot -Z to color the polygons.
 - `attrib` or `att`: keyword to selecect which attribute to use when matching with contents of the `user_ids` strings.
 - `nocase` or `insensitive`: a keyword from `kw`. Perform a case insensitive comparision between the contents of
                `user_ids` and the attribute specified with `attrib`. Default compares as case sensistive.
@@ -957,24 +953,59 @@ function dsget_segment_ids(D, case::Int=0)::Tuple{Vector{AbstractString}, Vector
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dsget_byattrib(D::Vector{GMTdataset}, ind::Bool; kw...)::Union{Nothing, Vector{Int}}
+"""
+    get_byattrib(D::Vector{<:GMTdataset}[, index::Bool]; kw...)
+
+Take a GMTdataset vector and return only its elememts that match the condition(s) set by the `attrib` keywords.
+Note, this assumes that `D` has its `attrib` fields set with usable information.
+
+### Parameters
+- `attrib` or `att`: keyword with the attribute ``name`` used in selection. It can be a single name as in `att="NAME_2"`
+        or a NamedTuple with the attribname, attribvalue as in `att=(NAME_2="value")`. Use more elements if
+        wishing to do a composite match. E.g. `att=(NAME_1="val1", NAME_2="val2")` in which case oly segments
+        matching the two conditions are returned.
+- `val` or `value`: keyword with the attribute ``value`` used in selection. Use this only when `att` is not a NamedTuple.
+- `index`: Use this ``positional`` argument = `true` to return only the segment indices that match the `att` condition(s).
+
+### Returns
+Either a vector of GMTdataset, or a vector of Int with the indices os the segments that match the quiery condition.
+Or ``nothing`` if the query results in an empty GMTdataset 
+
+## Example:
+
+    D = get_byattrib(D, attrib="NAME_2", val="Porto");
+"""
+function get_byattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	# This method does the work but it's not the one normally used by the public.
 	# It returns the indices of the selected segments.
 	(isempty(D[1].attrib)) &&
-		(@warn("This datset does not have an `attrib` field and is hence unusable here.");	return nothing)
-	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
-	((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` VALUE.")
-	ky = keys(D[1].attrib)
-	((ind = findfirst(ky .== att)) === nothing) && return nothing
-	tf = fill(false, length(D))
-	for k = 1:length(D)
-		(!isempty(D[k].attrib) && (D[k].attrib[att] == val)) && (tf[k] = true)
+		(@warn("This datset does not have an `attrib` field and is hence unusable here.");	return Int[])
+	((_att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
+	if isa(_att, NamedTuple)
+		atts, vals = string.(keys(_att)), string.(values(_att))
+	else
+		atts = (string(_att),)
+		((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` VALUE.")
+		vals = (string(val),)
 	end
-	ind = findall(tf)
+
+	indices::Vector{Int} = Int[]
+	for n = 1:length(atts)
+		ky = keys(D[1].attrib)
+		((ind = findfirst(ky .== atts[n])) === nothing) && return Int[]
+		tf = fill(false, length(D))
+		for k = 1:length(D)
+			(!isempty(D[k].attrib) && (D[k].attrib[atts[n]] == vals[n])) && (tf[k] = true)
+		end
+		if (n == 1)  indices = findall(tf)
+		else         indices = intersect(indices, findall(tf))
+		end
+	end
+	return indices
 end
 
-function dsget_byattrib(D::Vector{GMTdataset}; kw...)::Union{Nothing, Vector{GMTdataset}}
+function get_byattrib(D::Vector{<:GMTdataset}; kw...)::Union{Nothing, Vector{GMTdataset}}
 	# This is the intended public method. It returns a subset of the selected segments
-	ind = dsget_byattrib(D, true; kw...)
-	return (ind === nothing) ? ind : D[ind]
+	ind = get_byattrib(D, true; kw...)
+	return isempty(ind) ? nothing : D[ind]
 end

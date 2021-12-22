@@ -216,8 +216,6 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 					D[ds] = d
 					D[ds].geom = gt
 					(!isempty(attrib)) && (D[ds].attrib = attrib)
-					#bb = extrema(D[ds].data, dims=1)		# A N Tuple.
-					#D[ds].bbox = collect(Float64, Iterators.flatten(bb))
 					ds += 1
 				end
 			end
