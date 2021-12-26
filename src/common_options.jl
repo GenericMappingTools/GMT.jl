@@ -819,7 +819,7 @@ function consolidate_Bframe(opt_B::String)::String
 	# Consolidate the 'frame' parte of a multi-pieces -B option and make sure that it comes out at the end
 	s::Vector{SubString{String}} = split(opt_B)
 	nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words (e.g. titles)
-	isBframe = zeros(Bool, length(s))
+	isBframe::Vector{Bool} = zeros(Bool, length(s))
 	for k = 1:length(s)
 		(occursin(s[k][3], "psxyzafgbc")) && (isBframe[k] = false; continue)	# A FALSE solves the quest imedeately
 		ss::Vector{SubString{String}} = split(s[k], "+");	len = length(ss)
@@ -3056,7 +3056,7 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 				dx::Float64 = (info[1].data[2] - info[1].data[1]) * 0.005;	dy::Float64 = (info[1].data[4] - info[1].data[3]) * 0.005;
 				info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
 				info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
-				if (isGMTdataset(arg))							# Needed for the guess_proj case
+				if (isGMTdataset(arg))						# Needed for the guess_proj case
 					if ((info[1].data[3] < -90 || info[1].data[4] > 90) || ((info[1].data[2] - info[1].data[1]) > 360))
 						prj::String = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
 						guessed_J = (prj == "") && !contains(cmd, " -J ") && !contains(cmd, " -JX") && !contains(cmd, " -Jx")
@@ -3085,11 +3085,11 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 			        Dates.format(min_max[2], "yyyy-mm-ddTHH:MM:SS.s")
 			(!is_onecol) && (opt_R *= @sprintf("/%.12g/%.12g", info[1].data[3], info[1].data[4]))
 		elseif (is3D)
-			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
-			                 info[1].data[3], info[1].data[4], info[1].data[5], info[1].data[6])
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", Float64(info[1].data[1]), Float64(info[1].data[2]),
+				Float64(info[1].data[3]), Float64(info[1].data[4]), Float64(info[1].data[5]), Float64(info[1].data[6]))
 		else
-			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1].data[1], info[1].data[2],
-			                 info[1].data[3], info[1].data[4])
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", Float64(info[1].data[1]), Float64(info[1].data[2]),
+			                 Float64(info[1].data[3]), Float64(info[1].data[4]))
 		end
 		(!is_onecol) && (cmd *= opt_R)		# The onecol case (for histogram) has an imcomplete -R
 	end
@@ -3117,9 +3117,9 @@ end
 function round_wesn(_wesn::Vector{Float64}, geo::Bool=false)::Vector{Float64}
 	# Use data range to round to nearest reasonable multiples
 	# If wesn has 6 elements (is3D), last two are not modified.
-	wesn = copy(_wesn)		# To not change the input
-	set = zeros(Bool, 2)
-	range = [0.0, 0.0]
+	wesn::Vector{Float64} = copy(_wesn)		# To not change the input
+	set::Vector{Bool} = zeros(Bool, 2)
+	range::Vector{Float64} = [0.0, 0.0]
 	if (wesn[1] == wesn[2])
 		wesn[1] -= abs(wesn[1]) * 0.1;	wesn[2] += abs(wesn[2]) * 0.1
 		if (wesn[1] == wesn[2])  wesn[1] = -0.1;	wesn[2] = 0.1;	end		# x was = 0
