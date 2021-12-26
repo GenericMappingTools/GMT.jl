@@ -893,7 +893,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	if (clockwise)
 		endswith(opt_J, "/0") && (opt_J = opt_J[1:end-2])		# Strip the trailing "/0". Very important.
 		d[:J] = "X-" * opt_J[5:end]
-		del_from_dict(d, [:proj :projection])		# To avoid non-consumed warnings
+		del_from_dict(d, [:proj, :projection])		# To avoid non-consumed warnings
 		delete!(d, :clockwise)
 	end
 	if ((val = find_in_dict(d, [:par :conf :params], false)[1]) === nothing)

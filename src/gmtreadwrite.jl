@@ -345,7 +345,7 @@ function parse_grd_format(d::Dict)::String
 		out *= ":" * arg2str(val)
 		((val = find_in_dict(d, [:datatype])[1]) !== nothing) && (out *= "/" * arg2str(val))
 	end
-	del_from_dict(d, [:id :gdal])
+	del_from_dict(d, [:id, :gdal])
 	return out
 end
 

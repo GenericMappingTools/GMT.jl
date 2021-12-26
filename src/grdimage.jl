@@ -139,7 +139,7 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 		d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
 	elseif (val !== nothing)
 		d[:R] = val
-		del_from_dict(d, [:region :limits])
+		del_from_dict(d, [:region, :limits])
 	end
 end
 function isimgsize(I_G)
@@ -172,7 +172,7 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 			elseif (N_used == 4)  arg4 = val	# grdview doesn't have this case but no harm to not test for that
 			end
 		end
-		del_from_dict(d, [:I :shade :shading :intensity])
+		del_from_dict(d, [:I, :shade, :shading, :intensity])
 	end
 	return cmd, arg1, arg2, arg3, arg4
 end
