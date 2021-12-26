@@ -753,7 +753,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 			(DS.n_rows == 0) && continue 					# Skip empty segments
 
 			C = unsafe_wrap(Array, DS.data, DS.n_columns)	# DS.data = Ptr{Ptr{Float64}}; C = Array{Ptr{Float64},1}
-			dest = zeros(Float64, DS.n_rows, DS.n_columns)
+			dest::Matrix{Float64} = zeros(Float64, DS.n_rows, DS.n_columns)
 			for col = 1:DS.n_columns						# Copy the data columns
 				unsafe_copyto!(pointer(dest, DS.n_rows * (col - 1) + 1), unsafe_load(DS.data, col), DS.n_rows)
 			end
@@ -764,14 +764,14 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 			if (DS.text != C_NULL)
 				texts = unsafe_wrap(Array, DS.text, DS.n_rows)	# n_headers-element Array{Ptr{UInt8},1}
 				if (texts != NULL)
-					dest = Array{String}(undef, DS.n_rows)
+					dest_s = Vector{String}(undef, DS.n_rows)
 					n = 0
 					for row = 1:DS.n_rows					# Copy the text rows, but check if they are not all NULL
-						if (texts[row] != NULL)  dest[row] = unsafe_string(texts[row]);		n+=1
-						else                     dest[row] = ""
+						if (texts[row] != NULL)  dest_s[row] = unsafe_string(texts[row]);		n+=1
+						else                     dest_s[row] = ""
 						end
 					end
-					(n > 0) && (Darr[seg_out].text = dest)	# If they are all empty, no bother to save them.
+					(n > 0) && (Darr[seg_out].text = dest_s)	# If they are all empty, no bother to save them.
 				end
 			end
 
@@ -779,11 +779,11 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 			if (seg == 1)
 				#headers = pointer_to_array(DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
 				headers = unsafe_wrap(Array, DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
-				dest = Array{String}(undef, length(headers))
+				dest_s = Vector{String}(undef, length(headers))
 				for k = 1:length(headers)
-					dest[k] = unsafe_string(headers[k])
+					dest_s[k] = unsafe_string(headers[k])
 				end
-				Darr[seg_out].comment = dest
+				Darr[seg_out].comment = dest_s
 			end
 			seg_out = seg_out + 1
 		end
@@ -794,7 +794,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)
+function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RESOURCE
 	# Create the object container and hook as X->object
 	#oo = unsafe_load(X.option)
 	#module_input = (oo.option == GMT.GMT_OPT_INFILE)
