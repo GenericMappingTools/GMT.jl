@@ -153,7 +153,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_INW_coast(d::Dict, symbs::Array{Array{Symbol,2},1}, cmd::String, flags::String)
+function parse_INW_coast(d::Dict, symbs::Vector{Matrix{Symbol}}, cmd::String, flags::String)
 	# This function is also used by pshistogram (opt -N). Must be length(flags) == length(symbs)
 	(length(symbs) != length(flags)) && error("Length of symbs must be equal to number of chars in FLAGS")
 	for k = 1:length(symbs)
@@ -163,7 +163,7 @@ function parse_INW_coast(d::Dict, symbs::Array{Array{Symbol,2},1}, cmd::String, 
 			elseif (isa(val, Tuple))  cmd *= " -" * flags[k] * parse_pen(val)
 			else                      cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
 			end
-			del_from_dict(d, symbs[k])		# Now we can delete the kwarg
+			del_from_dict(d, vec(symbs[k]))		# Now we can delete the kwarg
 		end
 	end
 	return cmd

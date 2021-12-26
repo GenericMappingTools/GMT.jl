@@ -20,15 +20,15 @@ function find_in_dict(d::Dict, symbs::VMs, del::Bool=true, help_str::String="")
 	return nothing, Symbol()
 end
 
-function del_from_dict(d::Dict, symbs::Array{Array{Symbol}})
+function del_from_dict(d::Dict, symbs::Vector{Vector{Symbol}})
 	# Delete SYMBS from the D dict where SYMBS is an array of array os symbols
-	# Example:  del_from_dict(d, [[:a :b], [:c]])
+	# Example:  del_from_dict(d, [[:a, :b], [:c]])
 	for symb in symbs
 		del_from_dict(d, symb)
 	end
 end
 
-function del_from_dict(d::Dict, symbs::Array{Symbol})
+function del_from_dict(d::Dict, symbs::Vector{Symbol})
 	# Delete SYMBS from the D dict where symbs is an array of symbols and elements are aliases
 	for symb in symbs
 		if (haskey(d, symb))
@@ -2047,7 +2047,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs::VMs, need_symb::Symbol, args,
 				end
 			end
 		end
-		del_from_dict(d, symbs)
+		isa(symbs, Matrix{Symbol}) ? del_from_dict(d, vec(symbs)) : del_from_dict(d, symbs)
 		got_one = true
 	end
 	return cmd, args, N_used, got_one
@@ -3005,7 +3005,7 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 		if (haskey(d, :x) && haskey(d, :y))
 			arg = cat_2_arg2(d[:x], d[:y])
 			(haskey(d, :z)) && (arg = hcat(arg, d[:z][:]);	del_from_dict(d, [:z]))
-			del_from_dict(d, [[:x :x], [:y]])		# [:x :x] to satisfy signature ::Vector{Vector{Symbol}} != ::Array{Array{Symbol}}
+			del_from_dict(d, [[:x, :x], [:y]])		# [:x :x] to satisfy signature ::Vector{Vector{Symbol}} != ::Array{Array{Symbol}}
 		elseif (haskey(d, :x) && length(d[:x]) > 1)	# Only this guy. I guess that histogram may use this
 			arg = d[:x];		del_from_dict(d, [:x])
 		end
@@ -3324,11 +3324,11 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 		(Vd <= 0) && return nothing		# Don't let user play tricks
 
 		if (Vd >= 2)	# Delete these first before reporting
-			del_from_dict(d, [[:show], [:leg :legend], [:box_pos], [:leg_pos], [:figname], [:name], [:savefig]])
+			del_from_dict(d, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:figname], [:name], [:savefig]])
 		end
 		if (length(d) > 0)
 			dd = deepcopy(d)		# Make copy so that we can harmlessly delete those below
-			del_from_dict(dd, [[:show], [:leg :legend], [:box_pos], [:leg_pos], [:fmt :savefig :figname :name]])
+			del_from_dict(dd, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:fmt, :savefig, :figname, :name]])
 			prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 			(length(dd) > 0) && println("Warning: the following options were not consumed in $prog => ", keys(dd))
 		end
@@ -3537,7 +3537,7 @@ end
 # --------------------------------------------------------------------------------------------------
 function show_non_consumed(d::Dict, cmd)
 	# First delete some that could not have been delete earlier (from legend for example)
-	del_from_dict(d, [[:fmt], [:show], [:leg :legend], [:box_pos], [:leg_pos], [:P :portrait]])
+	del_from_dict(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait]])
 	if (length(d) > 0)
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))

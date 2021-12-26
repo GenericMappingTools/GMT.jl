@@ -107,7 +107,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			got_N_cpt = true
 		else
 			cmd *= " -N"
-			del_from_dict(d, [:N :fill :colorize])
+			del_from_dict(d, [:N, :fill, :colorize])
 		end
 	end
 
@@ -154,11 +154,11 @@ function parse_contour_AGTW(d::Dict, cmd::String)
 	if ((val = find_in_dict(d, [:A :annot], false)[1]) !== nothing && isa(val, Array{<:Real}))
 		cmd *= " -A" * arg2str(val, ',')
 		if (!occursin(",", cmd))  cmd *= ","  end
-		del_from_dict(d, [:A :annot])
+		del_from_dict(d, [:A, :annot])
 	elseif (isa(val, String) || isa(val, Symbol))
 		arg::String = string(val)
 		cmd *= (arg == "none") ? " -A-" : " -A" * arg
-		del_from_dict(d, [:A :annot])
+		del_from_dict(d, [:A, :annot])
 	else
 		cmd = add_opt(d, cmd, 'A', [:A :annot],
 		              (disable = ("_-", nothing, 1), none = ("_-", nothing, 1), single = ("+", nothing, 1), int = "", interval = "", labels = ("", parse_quoted)) )

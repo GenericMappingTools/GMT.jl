@@ -109,7 +109,7 @@ function imshow(arg1::GMTimage; kw...)
 	if (isa(arg1.image, Array{UInt16}))
 		I::GMTimage = mat2img(arg1; kw...)
 		d = KW(kw)			# Needed because we can't delete from kwargs
-		(haskey(kw, :stretch) || haskey(kw, :histo_bounds)) && del_from_dict(d, [:histo_bounds :stretch])
+		(haskey(kw, :stretch) || haskey(kw, :histo_bounds)) && del_from_dict(d, [:histo_bounds, :stretch])
 		grdimage("", I; D=true, show=see, d...)
 	else
 		grdimage("", arg1; D=true, show=see, kw...)

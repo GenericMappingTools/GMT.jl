@@ -163,7 +163,7 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 			d[:W] = "c";  done = true
 		end
 		grdview(cmd0, arg1; first=first, d...)
-		del_from_dict(d, [[:C :z], [:Q], [:W]])
+		del_from_dict(d, [[:C, :z], [:Q], [:W]])
 		if (done)  return  end
 
 		if (C_int > 0 || C_contours != "" || opt_A !== nothing)
