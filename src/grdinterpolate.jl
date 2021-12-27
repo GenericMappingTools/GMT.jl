@@ -71,14 +71,14 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :q :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:G :outfile :outgrid], [:Z :levels]])
 
-	cmd  = add_opt(d, cmd, 'D', [:D :meta :metadata],
+	cmd  = add_opt(d, cmd, "D", [:D :meta :metadata],
            (xname="+x", yname="+y", zname="+z", dname="+d", scale="+s", offset="+o", nodata="+n", title="+t", remark="+r", varname="+v"))
-	cmd  = add_opt(d, cmd, 'F', [:F :interp_type],
+	cmd  = add_opt(d, cmd, "F", [:F :interp_type],
            (linear="_l", akima="_a", cubic="_c", nearest="_n", first_derivative="+1", second_derivative="+2"))
 
 	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)
 
-	cmd, args, n1, = add_opt(d, cmd, 'E', [:E :crossection], :line, Vector{Any}([arg1, arg2]), (azim="+a", great_circ="_+g", parallel="_+p", inc="+i", length="+l", npoints="+n", middpoint="+o", radius="+r", loxodrome="_+x"))
+	cmd, args, n1, = add_opt(d, cmd, "E", [:E :crossection], :line, Vector{Any}([arg1, arg2]), (azim="+a", great_circ="_+g", parallel="_+p", inc="+i", length="+l", npoints="+n", middpoint="+o", radius="+r", loxodrome="_+x"))
 
 	if ((val = find_in_dict(d, [:S :track :pt])[1]) !== nothing)
 		if (isa(val, Tuple) || (isa(val, Array{<:Number}) && length(val) == 2))

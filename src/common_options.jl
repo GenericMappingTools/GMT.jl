@@ -981,7 +981,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_F(d::Dict, cmd::String)::String
-	cmd = add_opt(d, cmd, 'F', [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
+	cmd = add_opt(d, cmd, "F", [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
 	                                       pen=("+p", add_opt_pen), rounded="+r", shaded=("+s", arg2str)) )
 end
 
@@ -1018,7 +1018,7 @@ function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
 	# Parse the global -U, -X, -Y options. Return CMD same as input if no option OPT in args
 	# ALIASES: [:X :xshift :x_offset] (same for Y) or [:U :time_stamp :timestamp]
 	if ((val = find_in_dict(d, aliases, true)[1]) !== nothing)
-		cmd = string(cmd, " -", opt, val)
+		cmd::String = string(cmd, " -", opt, val)
 	end
 	return cmd
 end
@@ -1059,7 +1059,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_b(d::Dict, cmd::String, symbs::Array{Symbol}=[:b :binary])
 	# Parse the global -b option. Return CMD same as input if no -b option in args
-	cmd_ = add_opt(d, "", symbs[1], symbs, 
+	cmd_ = add_opt(d, "", string(symbs[1]), symbs, 
 	               (ncols=("", arg2str, 1), type=("", data_type, 2), swapp_bytes="_w", little_endian="_+l", big_endian="+b"))
 	return cmd * cmd_, cmd_
 end
@@ -1120,7 +1120,7 @@ end
 
 # ---------------------------------------------------------------------------------
 function parse_l(d::Dict, cmd::String)
-	cmd_ = add_opt(d, "", 'l', [:l :legend],
+	cmd_ = add_opt(d, "", "l", [:l :legend],
 		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), false)
 	# Now make sure blanks in legend text are wrapped in ""
 	if ((ind = findfirst("+", cmd_)) !== nothing)
@@ -1137,7 +1137,7 @@ function parse_n(d::Dict, cmd::String, gmtcompat::Bool=false)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
 	# The GMTCOMPAT arg is used to reverse the default aliasing in GMT, which is ON by default
 	# However, practise has shown that this makes projecting images significantly slower with not clear benefits
-	cmd_ = add_opt(d, "", 'n', [:n :interp :interpolation], 
+	cmd_ = add_opt(d, "", "n", [:n :interp :interpolation], 
 				   (B_spline=("b", nothing, 1), bicubic=("c", nothing, 1), bilinear=("l", nothing, 1), near_neighbor=("n", nothing, 1), aliasing="_+a", antialiasing="_-a", bc="+b", clipz="_+c", threshold="+t"))
 	# Some gymnics to make aliasing de default (contrary to GMT default). Use antialiasing=Any to revert this.
 	if (!gmtcompat)
@@ -1297,7 +1297,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_these_opts(cmd::String, d::Dict, opts, del::Bool=true)::String
 	# Parse a group of options that individualualy would had been parsed as (example):
-	# cmd = add_opt(d, cmd, 'A', [:A :horizontal])
+	# cmd = add_opt(d, cmd, "A", [:A :horizontal])
 	for opt in opts
 		cmd = add_opt(d, cmd, string(opt[1]), opt, nothing, del)
 	end
@@ -1799,15 +1799,15 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}, del:
 	end
 	return cmd
 end
-	
+
 # ---------------------------------------------------------------------------------------------------
-function add_opt(d::Dict, cmd::String, opt, symbs::VMs, mapa=nothing, del::Bool=true, arg=nothing)::String
+function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, del::Bool=true, arg=nothing)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
 	# ARG, is a special case to append to a matrix (complicated thing in Julia)
 	# ARG can also be a Bool, in which case when MAPA is a NT we expand each of its members as sep options
 	# If ARG is a string, then the keys of MAPA can be used as values of SYMB and are replaced by vals of MAPA
-	#    Example (hitogram -Z): add_opt(d, "", 'Z', [:Z :kind], (counts="0", freq="1",...)) Z=freq => -Z1
+	#    Example (hitogram -Z): add_opt(d, "", "Z", [:Z :kind], (counts="0", freq="1",...)) Z=freq => -Z1
 	#  But this only works when sub-options have default values. i.e. they are aliases
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
 
@@ -3080,16 +3080,16 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 		else
 			cmd = replace(cmd, " -Rtight" => "")	# Must remove old -R
 		end
+		_range::Vector{Float64} = info[1].data[:]
 		if (got_datetime)
 			opt_R = " -R" * Dates.format(min_max[1], "yyyy-mm-ddTHH:MM:SS.s") * "/" *
 			        Dates.format(min_max[2], "yyyy-mm-ddTHH:MM:SS.s")
-			(!is_onecol) && (opt_R *= @sprintf("/%.12g/%.12g", info[1].data[3], info[1].data[4]))
+			(!is_onecol) && (opt_R *= @sprintf("/%.12g/%.12g", _range[3], _range[4]))
 		elseif (is3D)
-			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", Float64(info[1].data[1]), Float64(info[1].data[2]),
-				Float64(info[1].data[3]), Float64(info[1].data[4]), Float64(info[1].data[5]), Float64(info[1].data[6]))
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", _range[1], _range[2],
+			                 _range[3], _range[4], _range[5], _range[6])
 		else
-			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", Float64(info[1].data[1]), Float64(info[1].data[2]),
-			                 Float64(info[1].data[3]), Float64(info[1].data[4]))
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", _range[1], _range[2], _range[3], _range[4])
 		end
 		(!is_onecol) && (cmd *= opt_R)		# The onecol case (for histogram) has an imcomplete -R
 	end
@@ -3141,11 +3141,12 @@ function round_wesn(_wesn::Vector{Float64}, geo::Bool=false)::Vector{Float64}
 		end
 	end
 
+	_log10(x) = log(x) / 2.30258509299	# Compute log10 with ln because JET & SnoopCompile acuse it of "failed to optimize"
 	item = 1
 	for side = 1:2
 		set[side] && continue			# Done above */
-		mag = round(log10(range[side])) - 1.0
-		inc = 10.0^mag
+		mag::Float64 = round(_log10(range[side])) - 1.0
+		inc = exp10(mag)
 		if ((range[side] / inc) > 10.0) inc *= 2.0	end	# Factor of 2 in the rounding
 		if ((range[side] / inc) > 10.0) inc *= 2.5	end	# Factor of 5 in the rounding
 		s = 1.0

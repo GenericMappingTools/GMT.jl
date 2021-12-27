@@ -95,9 +95,9 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	# If inquire, no plotting so do it and return
-	cmd = add_opt(d, "", 'I', [:I :inquire])
+	cmd = add_opt(d, "", "I", [:I :inquire])
 	if (cmd != "")
-		cmd = add_opt(d, cmd, 'A', [:A :sector])
+		cmd = add_opt(d, cmd, "A", [:A :sector])
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 		return gmt("psrose " * cmd, arg1)
 	end
@@ -106,13 +106,13 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :e :p :t :w :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :shift], [:F :no_scale], [:L :labels], [:M :vector_params],
 	                                 [:Q :alpha], [:S :norm :normalize], [:T :orientation], [:Z :scale]])
-	cmd = add_opt(d, cmd, 'A', [:A :sector], (width="", rose="_+r"))
+	cmd = add_opt(d, cmd, "A", [:A :sector], (width="", rose="_+r"))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	if (isa(arg1, Array{<:GMTdataset,1}))  arg1 = arg1[1].data  end	# WHY I HAVE TO DO THIS?
 
-	cmd = add_opt(d, cmd, 'E', [:E :vectors])
+	cmd = add_opt(d, cmd, "E", [:E :vectors])
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_args, arg1, arg2)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= opt_pen(d, 'W', [:W :pen])

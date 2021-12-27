@@ -51,9 +51,9 @@ function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :R :V_params :f :n])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:S :slopegrid]])
-	cmd  = add_opt(d, cmd, 'E', [:E :lambert], 
+	cmd  = add_opt(d, cmd, "E", [:E :lambert], 
 	       (manip=("m", nothing, 1), simple=("s", nothing, 1), peucker=("p", nothing, 1), view=("", arg2str), ambient="+a", difuse="+d", specular="+p", shine="+s") )
-	cmd  = add_opt(d, cmd, 'N', [:N :norm :normalize],
+	cmd  = add_opt(d, cmd, "N", [:N :norm :normalize],
            (laplace=("e", nothing, 1), cauchy=("t", nothing, 1), amp="", sigma="+s", offset="+o"))
 	cmd = parse_Q_grdgrad(d, [:Q :save_stats], cmd)
 

@@ -95,7 +95,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, = parse_common_opts(d, cmd, [:c :e :f :p :t :JZ :UVXY :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :azimuths], [:L :list], [:M :paragraph],
 	                                 [:N :no_clip :noclip], [:Q :change_case], [:S :shade], [:T :text_box], [:Z :threeD]])
-	cmd  = add_opt(d, cmd, 'C', [:C :clearance], (margin="#", round="_+tO", concave="_+tc", convex="_+tC"))
+	cmd  = add_opt(d, cmd, "C", [:C :clearance], (margin="#", round="_+tO", concave="_+tc", convex="_+tC"))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
@@ -105,8 +105,8 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1)
 
-	cmd = add_opt(d, cmd, 'D', [:D :offset], (away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)), true)
-	cmd = add_opt(d, cmd, 'F', [:F :attrib],
+	cmd = add_opt(d, cmd, "D", [:D :offset], (away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)), true)
+	cmd = add_opt(d, cmd, "F", [:F :attrib],
 		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="_+r", text="+t", zvalues="_+z"), true, true)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)

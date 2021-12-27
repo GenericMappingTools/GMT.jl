@@ -159,7 +159,7 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 				val = arg2str(val)
 				(val == "" || val == "default" || val == "auto") ? cmd *= " -I+a-45+nt1" : cmd *= " -I" * val
     		else
-				cmd = add_opt(d, cmd, 'I', [:I :shading :shade :intensity],
+				cmd = add_opt(d, cmd, "I", [:I :shading :shade :intensity],
 							  (auto = "_+", azim = "+a", azimuth = "+a", norm = "+n", default = "_+d+a-45+nt1"))
 			end
 		else
