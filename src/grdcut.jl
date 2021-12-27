@@ -57,7 +57,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 	opt_G = parse_G(d, "")[1]
 	outname = (opt_G != "") ? opt_G[4:end] : ""
 	cmd *= opt_G
-	cmd, args, n, = add_opt(d, cmd, 'F', [:F :clip :cutline], :polygon, Array{Any,1}([arg1, arg2]),
+	cmd, args, n, = add_opt(d, cmd, "F", [:F :clip :cutline], :polygon, Array{Any,1}([arg1, arg2]),
 	                        (crop2cutline="_+c", invert="_+i"))
 	if (n > 0)  arg1, arg2 = args[:]  end
 	(show_kwargs[1]) && return print_kwarg_opts([:img :usegdal], "Any")		# Just print the options

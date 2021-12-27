@@ -78,15 +78,15 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 	                                 [:I :intersections], [:Q :area :length]])
 	cmd = add_opt(d, cmd, "S", [:S :polygons :polyg_process], (buffer="b", holes="_h", dateline="_s"))
 
-	cmd, args, n, = add_opt(d, cmd, 'D', [:D :duplicates], :data, Array{Any,1}([arg1, arg2]), (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
+	cmd, args, n, = add_opt(d, cmd, "D", [:D :duplicates], :data, Array{Any,1}([arg1, arg2]), (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
 	if (n > 0)
 		arg1, arg2 = args[:];   cmd *= "+f"
 	end
  
-	cmd, args, n, = add_opt(d, cmd, 'N', [:N :in_polyg], :data, Array{Any,1}([arg1, arg2, arg3]), (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z"))
+	cmd, args, n, = add_opt(d, cmd, "N", [:N :in_polyg], :data, Array{Any,1}([arg1, arg2, arg3]), (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z"))
 	if (n > 0)  arg1, arg2, arg3 = args[:]  end
 
-	cmd, args, n, = add_opt(d, cmd, 'T', [:T :truncate], :data, Array{Any,1}([arg1, arg2, arg3, arg4]), (x="",))
+	cmd, args, n, = add_opt(d, cmd, "T", [:T :truncate], :data, Array{Any,1}([arg1, arg2, arg3, arg4]), (x="",))
 	if (n > 0)  arg1, arg2, arg3, arg4 = args[:]  end
 
     if (isa(arg1,Tuple))

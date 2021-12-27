@@ -72,15 +72,15 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		(cmd = replace(cmd, opt_B => ""))	# Dont plot axes for plain images if that was not required
 
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :f :n :p :t :params], first)
-	cmd  = add_opt(d, cmd, 'S', [:S :smooth])
+	cmd  = add_opt(d, cmd, "S", [:S :smooth])
 	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)
 		cmd *= " -N" * parse_arg_and_pen(val, "+g", false)
 	end
-	cmd = add_opt(d, cmd, 'Q', [:Q :surf :surftype],
+	cmd = add_opt(d, cmd, "Q", [:Q :surf :surftype],
 				  (mesh=("m", add_opt_fill), surface="_s", surf="_s", img=("i",arg2str), image="i", nan_alpha="_c", monochrome="_+m", waterfall=(rows="my", cols="mx", fill=add_opt_fill)))
-	cmd = add_opt(d, cmd, 'W', [:W :pens :pen], (contour=("c", add_opt_pen),
+	cmd = add_opt(d, cmd, "W", [:W :pens :pen], (contour=("c", add_opt_pen),
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
-	cmd = add_opt(d, cmd, 'T', [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)) )
+	cmd = add_opt(d, cmd, "T", [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)) )
 	(!occursin(" -T", cmd)) ? cmd = parse_JZ(d, cmd)[1] : del_from_dict(d, [:JZ])	# Means, even if we had one, ignore silently
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 

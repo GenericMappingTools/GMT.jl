@@ -1032,9 +1032,9 @@ function events(cmd0::String="", arg1=nothing; kwargs...)
 		(intensity=("i", arg2str, 1), size=("s", arg2str, 1), transparency=("t", arg2str, 1), coda="+c"))
 	cmd = add_opt(d, cmd, "L", [:L :duration])
 	cmd = add_opt(d, cmd, "Q", [:Q :save])
-	cmd = add_opt(d, cmd, 'D', [:D :offset],
+	cmd = add_opt(d, cmd, "D", [:D :offset],
 		(away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)))
-	cmd = add_opt(d, cmd, 'F', [:F :attrib],
+	cmd = add_opt(d, cmd, "F", [:F :attrib],
 		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"), false)
 	common_plot_xyz(cmd0, arg1, "events|" * cmd, true, false, d...)
 end

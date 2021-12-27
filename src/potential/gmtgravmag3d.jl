@@ -19,14 +19,14 @@ function gmtgravmag3d(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, "", [:I :R :V_params :bi :f])[1]
 	cmd = parse_these_opts(cmd, d, [[:C :density], [:E :thickness], [:F :track], [:G :grid :outgrid],
 	                                [:L :observation_level], [:S :radius], [:Z :reference_level]])
-	cmd = add_opt(d, cmd, 'H', [:H :mag_params], (field_dec="", field_dip="", mag="", mag_dec="", mag_dip=""))
+	cmd = add_opt(d, cmd, "H", [:H :mag_params], (field_dec="", field_dip="", mag="", mag_dec="", mag_dip=""))
 
 	arg2 = nothing;
 	if ((val = find_in_dict(d, [:Tv :index], true, "GMTdataset | Mx3 array | String")[1]) !== nothing && val != "")  opt = " -Tv"
 	elseif ((val = find_in_dict(d, [:Tr :raw_triang], true, "GMTdataset | Mx3 array | String")[1]) !== nothing && val != "") opt = " -Tr"
 	elseif ((val = find_in_dict(d, [:Ts :stl :STL], true, "String (file name)")[1]) !== nothing && val != "")  opt = " -Ts"
 	elseif ((val = find_in_dict(d, [:M :body], false, "String | NamedTuple")[1]) !== nothing && val != "")
-		cmd = add_opt(d, cmd, 'M', [:M :body], (shape="+s", params=","))
+		cmd = add_opt(d, cmd, "M", [:M :body], (shape="+s", params=","))
 		opt = " -Ts"
 	elseif (show_kwargs[1])  opt = "" 
 	else   error("Missing one of 'index', 'raw_triang' or 'str' data")

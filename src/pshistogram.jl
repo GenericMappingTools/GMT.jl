@@ -113,7 +113,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	cmd = ""
-	opt_Z = add_opt(d, "", 'Z', [:Z :kind], (counts = "0", count = "0", freq = "1", log_count = "2", log_freq = "3",
+	opt_Z = add_opt(d, "", "Z", [:Z :kind], (counts = "0", count = "0", freq = "1", log_count = "2", log_freq = "3",
 	                                         log10_count = "4", log10_freq = "5", weights = "+w"), true, "")
 	opt_T = parse_opt_range(d, "", "")[1]		# [:T :range :inc :bin]
 	(isa(arg1, GMTimage) || isa(arg1, GMTgrid)) && occursin("/", opt_T) && error("here 'bin' must be a scalar")
@@ -141,11 +141,11 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = add_opt(d, cmd, 'D', [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))
+	cmd = add_opt(d, cmd, "D", [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
 	(show_kwargs[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 
-	(GMTver > v"6.1.1") && (cmd = add_opt(d, cmd, 'E', [:E :width], (width = "", off = "+o", offset = "+o")))
+	(GMTver > v"6.1.1") && (cmd = add_opt(d, cmd, "E", [:E :width], (width = "", off = "+o", offset = "+o")))
 	
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	is_datetime = isa(arg1, Array{<:DateTime})
@@ -170,7 +170,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	cmd  = add_opt(d, cmd, 'L', [:L :out_range], (first = "l", last = "h", both = "b"))
+	cmd  = add_opt(d, cmd, "L", [:L :out_range], (first = "l", last = "h", both = "b"))
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)     	# TRUE to also seek (lw|lt,lc,ls)
 	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-S", cmd))
 		cmd *= " -G#0072BD"

@@ -106,7 +106,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_used = (arg1 !== nothing) + (arg2 !== nothing) + (arg3 !== nothing)
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
-		cmd, args, n, = add_opt(d, cmd, 'C', [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
+		cmd, args, n, = add_opt(d, cmd, "C", [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
 		if (n > 0)
 			for k = 3:-1:1
 				(args[k] === nothing) && continue

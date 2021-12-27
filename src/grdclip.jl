@@ -58,7 +58,7 @@ function grdclip(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:G :R :V_params])
-	cmd  = add_opt(d, cmd, 'S', [:S])
+	cmd  = add_opt(d, cmd, "S", [:S])
 	cmd  = opt_S(d, cmd, [:high :above], 'a')
 	cmd  = opt_S(d, cmd, [:low :below], 'b')
 	cmd  = opt_S(d, cmd, [:old :new], 'r')

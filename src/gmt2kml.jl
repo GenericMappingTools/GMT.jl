@@ -100,7 +100,7 @@ function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
 	cmd  = parse_these_opts(cmd, d, [[:A :altitude_mode], [:D :descript], [:E :extrude], [:F :feature_type],
 	                                 [:I :icon], [:K :not_finished], [:L :extended_data], [:N :feature_name], [:O :overlay], [:Qa :wiggles], [:Qs :wiggle_scale], [:S :scale], [:T :title], [:Z :attrib]])
 
-	cmd = add_opt(d, cmd, 'G', [:G :fill])
+	cmd = add_opt(d, cmd, "G", [:G :fill])
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)

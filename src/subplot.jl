@@ -109,7 +109,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		(!IamSubplot[1]) && error("Cannot call subplot(set, ...) before setting dimensions")
 		lix, pane = parse_c(d, cmd)
 		cmd = pane * cmd				# Here we don't want the "-c" part
-		cmd = add_opt(d, cmd, 'A', [:fixedlabel]) * opt_C			# Also add the eventual this panel -C clearance option
+		cmd = add_opt(d, cmd, "A", [:fixedlabel]) * opt_C			# Also add the eventual this panel -C clearance option
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 		gmt("subplot set " * cmd)
 	else

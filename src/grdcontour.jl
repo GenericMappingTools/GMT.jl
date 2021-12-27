@@ -87,7 +87,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :c :e :f :h :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
 	cmd  = parse_contour_AGTW(d::Dict, cmd::String)[1]
-	cmd  = add_opt(d, cmd, 'Z', [:Z :scale], (factor = "+s", shift = "+o", periodic = "_+p"))
+	cmd  = add_opt(d, cmd, "Z", [:Z :scale], (factor = "+s", shift = "+o", periodic = "_+p"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 	if (isa(arg1, Array{<:Real}))	arg1 = mat2grid(arg1)	end
@@ -112,7 +112,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
-		cmd, args, n, = add_opt(d, cmd, 'C', [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x = "",))
+		cmd, args, n, = add_opt(d, cmd, "C", [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x = "",))
 		if (n > 0)
 			for k = 3:-1:1
 				(args[k] === nothing) && continue
@@ -160,11 +160,11 @@ function parse_contour_AGTW(d::Dict, cmd::String)
 		cmd *= (arg == "none") ? " -A-" : " -A" * arg
 		del_from_dict(d, [:A, :annot])
 	else
-		cmd = add_opt(d, cmd, 'A', [:A :annot],
+		cmd = add_opt(d, cmd, "A", [:A :annot],
 		              (disable = ("_-", nothing, 1), none = ("_-", nothing, 1), single = ("+", nothing, 1), int = "", interval = "", labels = ("", parse_quoted)) )
 	end
-	cmd = add_opt(d, cmd, 'G', [:G :labels], ("", helper_decorated))
-	cmd = add_opt(d, cmd, 'T', [:T :ticks], (local_high = ("h", nothing, 1), local_low = ("l", nothing, 1),
+	cmd = add_opt(d, cmd, "G", [:G :labels], ("", helper_decorated))
+	cmd = add_opt(d, cmd, "T", [:T :ticks], (local_high = ("h", nothing, 1), local_low = ("l", nothing, 1),
 	                                         labels = "+l", closed = "_+a", gap = "+d") )
 	opt_W = add_opt_pen(d, [:W :pen], "W", true)    # TRUE to also seek (lw,lc,ls)
 	return cmd * opt_W, opt_W

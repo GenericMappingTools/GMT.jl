@@ -63,7 +63,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)
 	cmd  = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
-	(is_ternary) && (cmd = add_opt(d, cmd, 'M', [:M :dump]))
+	(is_ternary) && (cmd = add_opt(d, cmd, "M", [:M :dump]))
 	opt_UVXY = parse_UVXY(d, "")		# Need it separate to not risk to double include it.
 	cmd, opt_c = parse_c(d, cmd)		# Need opt_c because we may need to remove it from double calls
 
@@ -86,7 +86,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		cmd *= " -JZ6c"		# Default -JZ
 	end
 
-	cmd = add_opt(d, cmd, 'A', [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
+	cmd = add_opt(d, cmd, "A", [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
 	opt_F::String = add_opt(d, "", "", [:F :conn :connection],
 	                (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpoint=("r", nothing, 1),  ignore_hdr="_a", single_group="_f", segments="_s", segments_reset="_r", anchor=("", arg2str)))
 	(opt_F != "" && !occursin("/", opt_F)) && (opt_F = string(opt_F[1]))	# Allow con=:net or con=(1,2)
@@ -96,7 +96,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	got_Ebars = false
 	val, symb = find_in_dict(d, [:E :error :error_bars], false)
 	if (val !== nothing)
-		cmd, arg1 = add_opt(add_opt, (d, cmd, 'E', [symb]),
+		cmd, arg1 = add_opt(add_opt, (d, cmd, "E", [symb]),
                             (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, isa(arg1, GMTdataset) ? arg1.data : (isa(arg1, Vector{<:GMTdataset}) ? arg1[1].data : arg1) )
 		got_Ebars = true
 		del_from_dict(d, [symb])
@@ -104,7 +104,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# Look for color request. Do it after error bars because they may add a column
 	len = length(cmd);	n_prev = N_args;
-	cmd, args, n, got_Zvars = add_opt(d, cmd, 'Z', [:Z :level], :data, Any[arg1, arg2, arg3], (outline="_+l", fill="_+f"))
+	cmd, args, n, got_Zvars = add_opt(d, cmd, "Z", [:Z :level], :data, Any[arg1, arg2, arg3], (outline="_+l", fill="_+f"))
 	if (n > 0)
 		if (GMTver <= v"6.3")					# -Z is f again. Must save data into file to make it work.
 			fname = joinpath(tempdir(), "GMTjl_temp_Z.txt")
@@ -139,9 +139,9 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	got_pattern = (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb)) ? true : false
 
 	if (is_ternary)			# Means we are in the psternary mode
-		cmd = add_opt(d, cmd, 'L', [:L :vertex_labels])
+		cmd = add_opt(d, cmd, "L", [:L :vertex_labels])
 	else
-		opt_L::String = add_opt(d, "", 'L', [:L :close :polygon],
+		opt_L::String = add_opt(d, "", "L", [:L :close :polygon],
 		                (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
 		(length(opt_L) > 3 && !occursin("-G", cmd) && !occursin("+p", cmd)) && (opt_L *= "+p0.5p")
 		cmd *= opt_L
@@ -160,7 +160,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	((occursin("+c", opt_W)) && !occursin("-C", cmd)) &&
 		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
 
-	opt_S::String = add_opt(d, "", 'S', [:S :symbol], (symb="1", size="", unit="1"))
+	opt_S::String = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
 		marca::String, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
 		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
@@ -310,7 +310,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Check if a group bar request or just bars. Returns TRUE in first case and FALSE in second
-check_bar_group(arg1) = ( (isa(arg1, Array{<:Real,2}) || eltype(arg1) <: GMTdataset) &&
+check_bar_group(arg1) = ( (isa(arg1, Matrix{<:Real}) || eltype(arg1) <: GMTdataset) &&
                           (isa(arg1, Vector{<:GMTdataset}) ? size(arg1[1],2) > 2 : size(arg1,2) > 2) )::Bool
 
 # ---------------------------------------------------------------------------------------------------

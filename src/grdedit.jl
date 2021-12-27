@@ -67,7 +67,7 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:G :R :J :V_params :bi :di :e :f :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:S :wrap], [:T :toggle]])
-	cmd, args, n, = add_opt(d, cmd, 'N', [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))
+	cmd, args, n, = add_opt(d, cmd, "N", [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))
     if (n > 0)  arg1, arg2 = args[:]  end
 
 	common_grd(d, cmd0, cmd, "grdedit ", arg1, arg2)		# Finish build cmd and run it

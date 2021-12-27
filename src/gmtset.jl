@@ -26,8 +26,8 @@ function gmtset(cmd0::String=""; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = parse_V(d, "")
-	cmd = add_opt(d, cmd, 'D', [:D :units], nothing, true)
-	cmd = add_opt(d, cmd, 'G', [:G :defaultsfile], nothing, true)
+	cmd = add_opt(d, cmd, "D", [:D :units], nothing, true)
+	cmd = add_opt(d, cmd, "G", [:G :defaultsfile], nothing, true)
  
 	key = collect(keys(d))
 	for k = 1:length(d)

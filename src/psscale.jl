@@ -79,7 +79,7 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	cmd = add_opt(d, cmd, 'L', [:L :equal :equal_size], (range="i", gap=""))	# Aditive
+	cmd = add_opt(d, cmd, "L", [:L :equal :equal_size], (range="i", gap=""))	# Aditive
 	(!occursin(" -D", cmd)) && (cmd *= " -DJMR")			#  So that we can call it with just a CPT
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
