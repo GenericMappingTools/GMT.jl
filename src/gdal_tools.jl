@@ -175,7 +175,7 @@ function GMT_opts_to_GDAL(opts::Vector{String}, kwargs...)
 	d = GMT.init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	((opt_R = GMT.parse_R(d, "")[1]) != "") && append!(opts, ["-projwin", split(opt_R[4:end], '/')[[1,4,2,3]]...])	# Ugly
 	((opt_J = GMT.parse_J(d, "", " ")[1]) != "") && append!(opts, ["-a_srs", opt_J[4:end]])
-	if ((opt_I = GMT.parse_I(d, "", [:I :inc :increment :spacing], 'I')) != "")	# Need the 'I' to not fall into parse_I() exceptions
+	if ((opt_I = GMT.parse_I(d, "", [:I :inc :increment :spacing], "I")) != "")	# Need the 'I' to not fall into parse_I() exceptions
 		t = split(opt_I[4:end], '/')
 		(length(t) == 1) ? append!(opts, ["-tr", t[1], t[1]]) : append!(opts, ["-tr", t[1], t[2]])
 	end

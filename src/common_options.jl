@@ -81,7 +81,7 @@ function GMTsyntax_opt(d::Dict, cmd::String)::String
 end
 
 parse_RIr(d::Dict, cmd::String, O::Bool=false, del::Bool=true) = parse_R(d, cmd, O, del, true)
-function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=false)
+function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=false)::Tuple{String, String}
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	# The RIr option is to assign also the -I and -r when R was given a GMTgrid|image value. This is a
 	# workaround for a GMT bug that ignores this behaviour when from externals.
@@ -116,12 +116,12 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 
 	if (RIr)
 		if (isa(val, GItype))
-			opt_I = parse_I(d, "", [:I :inc :increment :spacing], 'I')
+			opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I")
 			(opt_I == "") && (cmd *= " -I" * arg2str(val.inc))
 			opt_r = parse_r(d, "")[2]
 			(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
 		else				# Here we must parse the -I and -r separately.
-			cmd = parse_I(d, cmd, [:I :inc :increment :spacing], 'I')
+			cmd = parse_I(d, cmd, [:I :inc :increment :spacing], "I")
 			cmd = parse_r(d, cmd)[1]
 		end
 	end
@@ -1231,7 +1231,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 	for opt in opts
 		if     (opt == :RIr)  cmd, o = parse_RIr(d, cmd)
 		elseif (opt == :R)  cmd, o = parse_R(d, cmd)
-		elseif (opt == :I)  cmd  = parse_I(d, cmd, [:I :inc :increment :spacing], 'I')
+		elseif (opt == :I)  cmd  = parse_I(d, cmd, [:I :inc :increment :spacing], "I")
 		elseif (opt == :J)  cmd, o = parse_J(d, cmd)
 		elseif (opt == :JZ) cmd, o = parse_JZ(d, cmd)
 		elseif (opt == :G)  cmd, = parse_G(d, cmd)
@@ -1309,7 +1309,7 @@ end
 parse_G(d::Dict, cmd::String) = parse_helper(cmd, d, [:G :save :write :outgrid :outfile], " -G")
 
 # ---------------------------------------------------------------------------------------------------
-function parse_I(d::Dict, cmd::String, symbs, opt, del::Bool=true)::String
+function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
@@ -2003,11 +2003,11 @@ function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(d::Dict, cmd::String, opt, symbs::VMs, need_symb::Symbol, args, nt_opts::NamedTuple)
+function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbol, args, nt_opts::NamedTuple)
 	# This version specializes in the case where an option may transmit an array, or read a file, with optional flags.
 	# When optional flags are used we need to use NamedTuples (the NT_OPTS arg). In that case the NEED_SYMB
 	# is the keyword name (a symbol) whose value holds the array. An error is raised if this symbol is missing in D
-	# ARGS is a 1-to-3 array of GMT types with in which some may be NOTHING. If the value is an array, it will be
+	# ARGS is a 1-to-3 array of GMT types in which some may be NOTHING. If the value is an array, it will be
 	# stored in first non-empty element of ARGS.
 	# Example where this is used (plot -Z):  Z=(outline=true, data=[1, 4])
 	(show_kwargs[1]) && print_kwarg_opts(symbs)		# Just print the kwargs of this option call
@@ -2025,7 +2025,7 @@ function add_opt(d::Dict, cmd::String, opt, symbs::VMs, need_symb::Symbol, args,
 			di::Dict = nt2dict(val)
 			((val = find_in_dict(di, [need_symb], false)[1]) === nothing) && error(string(need_symb, " member cannot be missing"))
 			if (isa(val, Real) || isa(val, String))	# So that this (psxy) also works:	Z=(outline=true, data=3)
-				opt::String = string(opt,val)
+				opt = string(opt,val)
 				to_slot = false
 			end
 			cmd = add_opt(d, cmd, opt, symbs, nt_opts)
@@ -2960,7 +2960,7 @@ read_data(d::Dict, fname::String, cmd::String, arg::Vector{GMTdataset}, opt_R::S
 
 read_data(d::Dict, fname::String, cmd::String, arg::GMTdataset, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, GMTdataset, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
 
-read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Float64}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Matrix{Float64}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Real}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Matrix{Float64}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
 
 read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Any}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Matrix{Float64}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
 
@@ -3121,11 +3121,11 @@ function round_wesn(_wesn::Vector{Float64}, geo::Bool=false)::Vector{Float64}
 	set::Vector{Bool} = zeros(Bool, 2)
 	range::Vector{Float64} = [0.0, 0.0]
 	if (wesn[1] == wesn[2])
-		wesn[1] -= abs(wesn[1]) * 0.1;	wesn[2] += abs(wesn[2]) * 0.1
+		wesn[1] -= abs(wesn[1]) * 0.05;	wesn[2] += abs(wesn[2]) * 0.05
 		if (wesn[1] == wesn[2])  wesn[1] = -0.1;	wesn[2] = 0.1;	end		# x was = 0
 	end
 	if (wesn[3] == wesn[4])
-		wesn[3] -= abs(wesn[3]) * 0.1;	wesn[4] += abs(wesn[4]) * 0.1
+		wesn[3] -= abs(wesn[3]) * 0.05;	wesn[4] += abs(wesn[4]) * 0.05
 		if (wesn[3] == wesn[4])  wesn[3] = -0.1;	wesn[4] = 0.1;	end		# y was = 0
 	end
 	range[1] = wesn[2] - wesn[1]
@@ -3989,7 +3989,7 @@ end
 # --------------------------------------------------------------------------------------------------
 function magic(n::Int)
 	# From:  https://gist.github.com/phillipberndt/2db94bf5e0c16161dedc
-	# Had to suffer with Julia painful mtix indexing system to make it work. Gives the same as magic.m
+	# Had to suffer with Julia painful matrix indexing system to make it work. Gives the same as magic.m
 	if n % 2 == 1
 		p = (1:n)
 		M = n * mod.(p .+ (p' .- div(n+3, 2)), n) .+ mod.(p .+ (2p' .- 2), n) .+ 1
