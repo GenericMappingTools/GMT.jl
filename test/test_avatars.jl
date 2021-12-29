@@ -32,7 +32,7 @@
 	@test startswith(plot!([1 1], marker="W/5+a30", Vd=dbg2), "psxy  -R -J -SW/5+a30")
 	@test startswith(plot!([1 1], marker=:Web, Vd=dbg2), "psxy  -R -J -SW")
 	@test startswith(plot!([1 1], marker=:W, Vd=dbg2), "psxy  -R -J -SW")
-	@test startswith(plot([5 5], marker=(:E, 500), Vd=dbg2), "psxy  -JX" * GMT.def_fig_size * " -Baf -BWSen -R4.5/5.5/4.5/5.5 -SE-500")
+	@test startswith(plot([5 5], marker=(:E, 500), Vd=dbg2), "psxy  -JX" * GMT.def_fig_size * " -Baf -BWSen -R4.74/5.26/4.74/5.26 -SE-500")
 	@test startswith(plot(region=(0,10,0,10), marker=(letter="blaBla", size="16p"), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sl16p+tblaBla")
 	@test startswith(plot([5 5], region=(0,10,0,10), marker=(bar=true, size=0.5, base=0,), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sb0.5+b0")
 	@test startswith(plot([5 5], region=(0,10,0,10), marker=(custom=:sun, size=0.5), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sksun/0.5")
