@@ -77,6 +77,10 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	cmd, grid_tuple, arg1, arg2 = parse_G_grdtrk(d, [:G, :grid], cmd, arg1, arg2)
+	if (isa(grid_tuple, String) && startswith(grid_tuple, "@earth_") && !contains(cmd, " -R"))
+		opt_R = read_data(d, cmd0, "", arg1)[3]
+		cmd *= opt_R
+	end
 
 	# Because we allow arg1 and arg2 to either exist or not and also contain data & grid in any order
 	if (arg1 !== nothing && arg2 !== nothing)
@@ -101,11 +105,13 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	end
 
 	# Assign column names
-	prj = isa(arg1, GMTgrid) ? arg1.proj4 : (isa(arg2, GMTgrid) ? arg2.proj4 : "")
-	is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
-	(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
-	(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
-	for k = 1:length(R)  R[k].colnames = coln  end
+	if (!isa(R, String))			# It is a string when Vd=2
+		prj = isa(arg1, GMTgrid) ? arg1.proj4 : (isa(arg2, GMTgrid) ? arg2.proj4 : "")
+		is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
+		(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
+		(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
+		for k = 1:length(R)  R[k].colnames = coln  end
+	end
 	R
 end
 
