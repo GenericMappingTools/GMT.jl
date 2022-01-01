@@ -18,7 +18,6 @@
 	@test GMT.build_opt_R((iso="PT,ES",extend=4)) == " -RPT,ES+R4"
 	@test GMT.build_opt_R((iso="PT,ES",extend=[2,3])) == " -RPT,ES+R2/3"
 	@test GMT.build_opt_R((bb=:d,unit=:k)) == " -Rd+uk"			# Idiot but ok
-	@test_throws ErrorException("argument to the ISO key must be a string with country codes") GMT.build_opt_R((iso=:PT,))
 	@test_throws ErrorException("No, no, no. Nothing useful in the region named tuple arguments") GMT.build_opt_R((zz=:x,))
 	@test_throws ErrorException("Unknown continent name") GMT.build_opt_R((continent='a',extend=4))
 	@test_throws ErrorException("Increments for limits must be a String, a Number, Array or Tuple") GMT.build_opt_R((iso="PT",extend='8'))
