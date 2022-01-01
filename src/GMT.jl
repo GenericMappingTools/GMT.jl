@@ -139,7 +139,9 @@ export
 	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
 	orthodrome, proj2wkt, wkt2proj,
 
-	doy2date, date2doy, yeardecimal, mean, std, nanmean, nanstd		# mean & std from Statistics. Uterly stupid need-to-do thing 
+	doy2date, date2doy, yeardecimal, mean, std, nanmean, nanstd,	# mean & std from Statistics. Uterly stupid need-to-do thing 
+
+	wmsinfo, wmstest, wmsread
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -234,6 +236,7 @@ include("trend2d.jl")
 include("xyz2grd.jl")
 include("utils_project.jl")
 include("choropleth_utils.jl")
+include("webmapserver.jl")
 include("seis/psmeca.jl")
 include("geodesy/psvelo.jl")
 include("geodesy/earthtide.jl")
