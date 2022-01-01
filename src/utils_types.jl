@@ -300,7 +300,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	if (cmap !== nothing)
 		have_alpha = !all(cmap.alpha .== 0.0)
 		nc = have_alpha ? 4 : 3
-		colormap = zeros(Clong, 256 * nc)
+		colormap = zeros(Int32, 256 * nc)
 		n_colors = 256;			# Because for GDAL we always send 256 even if they are not all filled
 		@inbounds for n = 1:3	# Write 'colormap' row-wise
 			@inbounds for m = 1:size(cmap.colormap, 1)
@@ -313,7 +313,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 		end
 	else
 		(size(mat,3) == 1) && (color_interp = "Gray")
-		colormap = zeros(Clong,3)			# Because we need an array
+		colormap = zeros(Int32,3)			# Because we need an array
 	end
 
 	nx = size(mat, 2);		ny = size(mat, 1);
@@ -414,7 +414,7 @@ function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vec
 end
 function mat2img(mat, G::GMTgrid; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(G.range);	range[5:6] .= (size(mat,3) == 1) ? extrema(mat) : [0., 255]
-	GMTimage(G.proj4, G.wkt, G.epsg, range, copy(G.inc), G.registration, 0.0, "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Clong,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
+	GMTimage(G.proj4, G.wkt, G.epsg, range, copy(G.inc), G.registration, 0.0, "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -436,7 +436,7 @@ function slicecube(I::GMTimage, layer::Int)
 	mat = I.image[:,:,layer]
 	range = copy(I.range);	range[5:6] .= extrema(mat)
 	names = (!isempty(I.names)) ? [I.names[layer]] : I.names
-	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Clong,3), 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
+	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
 # ---------------------------------------------------------------------------------------------------

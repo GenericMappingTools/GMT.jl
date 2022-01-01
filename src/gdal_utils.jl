@@ -231,9 +231,9 @@ function get_cpt_from_colortable(dataset)
 	# Extract the color info from a GDAL colortable and put it in a row vector for GMTimage.colormap
 	band = (!isa(dataset, Gdal.AbstractRasterBand)) ? Gdal.getband(dataset) : dataset
 	ct = Gdal.getcolortable(band)
-	(ct.ptr == C_NULL) && return Vector{Clong}(), 0
+	(ct.ptr == C_NULL) && return Vector{Int32}(), 0
 	n_colors = Gdal.ncolorentry(ct)
-	cmap, n = Vector{Clong}(undef, 4 * n_colors), 1
+	cmap, n = Vector{Int32}(undef, 4 * n_colors), 1
 	for k = 0:n_colors-1
 		c = Gdal.getcolorentry(ct, k)
 		cmap[n] = c.c1;	n += 1; cmap[n] = c.c2;	n += 1; cmap[n] = c.c3;	n += 1; cmap[n] = c.c4;	n += 1;

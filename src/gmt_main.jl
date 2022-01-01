@@ -617,7 +617,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 		n_colors = Int64(I.n_indexed_colors)
 		colormap::Vector{Int32} = deepcopy(unsafe_wrap(Array, I.colormap, n_colors * 4))
 	else
-		colormap, n_colors = vec(zeros(Clong,1,3)), 0	# Because we need an array
+		colormap, n_colors = vec(zeros(Int32,1,3)), 0	# Because we need an array
 	end
 
 	# Return image via a uint8 matrix in a struct
