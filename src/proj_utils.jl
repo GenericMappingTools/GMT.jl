@@ -555,7 +555,7 @@ end
 function _transform!(src_ptr::Ptr{Cvoid}, dest_ptr::Ptr{Cvoid}, point_count::Integer, point_stride::Integer,
                      x::Ptr{Cdouble}, y::Ptr{Cdouble}, z::Ptr{Cdouble})
 	@assert src_ptr != C_NULL && dest_ptr != C_NULL
-	err = ccall((:pj_transform, libproj), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Clong, Cint, Ptr{Cdouble}, Ptr{Cdouble},
+	err = ccall((:pj_transform, libproj), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Int32, Cint, Ptr{Cdouble}, Ptr{Cdouble},
                 Ptr{Cdouble}), src_ptr, dest_ptr, point_count, point_stride, x, y, z)
 	err != 0 && error("transform error: $(_strerrno(err))")
 end
