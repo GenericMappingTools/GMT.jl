@@ -55,7 +55,7 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	y::Array{Float64,1}
 	v::Array{Float64,1}
 	image::Array{T,N}
-	colormap::Array{Clong,1}
+	colormap::Array{Int32,1}
 	n_colors::Int
 	alpha::Array{UInt8,2}
 	layout::String
