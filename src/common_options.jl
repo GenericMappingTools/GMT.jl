@@ -190,8 +190,8 @@ function build_opt_R(arg::NamedTuple)::String
 		else   error("Unknown continent name")
 		end
 	elseif ((val = find_in_dict(d, [:ISO :iso])[1]) !== nothing)
-		!isa(val, String) && error("argument to the ISO key must be a string with country codes")
-		BB = val
+		(!isa(val, String) && !isa(val, Symbol)) && error("argument to the ISO key must be a string with country codes")
+		BB = string(val)
 	end
 
 	if ((val = find_in_dict(d, [:adjust :pad :extend :expand])[1]) !== nothing)

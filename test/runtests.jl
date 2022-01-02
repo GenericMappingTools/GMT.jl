@@ -35,6 +35,14 @@ if (got_it)					# Otherwise go straight to end
 		rm("lixo1.gmt")
 		rm("lixo2.gmt")
 	end
+
+	println("	WMS")
+	wms = GMT.wmsinfo("http://tiles.maps.eox.at/wms?")
+	wms.layer[1]
+	GMT.wmsinfo(wms, layer="coastline", stronly=true);
+	GMT.wmstest(wms, layer=34, region=(-8,39, 100000), res=100);
+	GMT.wmstest(wms, layer=34, region=(iso="PT"), res=100);
+
 	println("		Entering: test_common_opts.jl")
 	include("test_common_opts.jl")
 	println("		Entering: test_B-GMTs.jl")

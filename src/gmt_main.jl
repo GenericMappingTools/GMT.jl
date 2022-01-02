@@ -55,7 +55,7 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	y::Array{Float64,1}
 	v::Array{Float64,1}
 	image::Array{T,N}
-	colormap::Array{Clong,1}
+	colormap::Array{Int32,1}
 	n_colors::Int
 	alpha::Array{UInt8,2}
 	layout::String
@@ -153,7 +153,7 @@ function gmt(cmd::String, args...)
 	n_argin = length(args)
 	if (n_argin > 0)
 		if (isa(args[1], String))
-			tok, r = strtok(cmd)
+			tok::String, r::String = strtok(cmd)
 			if (r == "")				# User gave 'module' separately from 'options'
 				cmd *= " " * args[1]	# Cat with the progname and so pretend input followed the classic construct
 				args = args[2:end]
@@ -167,7 +167,7 @@ function gmt(cmd::String, args...)
 
 	# 1. Get arguments, if any, and extract the GMT module name
 	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
-	g_module, r = strtok(cmd)
+	g_module::String, r = strtok(cmd)
 
 	if (g_module == "begin")		# Use this default fig name instead of "gmtsession"
 		(r == "") && (r = "GMTplot " * FMT[1])
@@ -615,9 +615,9 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 
 	if (I.colormap != C_NULL)       # Indexed image has a color map (Scanline)
 		n_colors = Int64(I.n_indexed_colors)
-		colormap =  deepcopy(unsafe_wrap(Array, I.colormap, n_colors * 4))
+		colormap::Vector{Int32} = deepcopy(unsafe_wrap(Array, I.colormap, n_colors * 4))
 	else
-		colormap, n_colors = vec(zeros(Clong,1,3)), 0	# Because we need an array
+		colormap, n_colors = vec(zeros(Int32,1,3)), 0	# Because we need an array
 	end
 
 	# Return image via a uint8 matrix in a struct
