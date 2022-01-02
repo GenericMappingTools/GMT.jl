@@ -43,9 +43,9 @@ function wmsinfo(server::String)::WMS
 	w = gdalinfo("WMS:" * server)
 	(w === nothing) && error("unable to open '$(server)'")
 	sds = split(w, "SUBDATASET_")
+	lastguy = collect(2:2:length(sds))[end]
 
-	names = String[]
-	layers = WMSlayer[]
+	names, layers = String[], WMSlayer[]
 
 	onlineRes::String, ver::SubString{String}, req::SubString{String}, name::SubString{String}, srs::SubString{String}, crs::SubString{String}, bbox, fmt::SubString{String}, ts, cnt, res, til, trans = "", "", "", "", "", "", zeros(4), "", 0, 0, 0., false, false
 	for k = 2:2:length(sds)
@@ -71,6 +71,10 @@ function wmsinfo(server::String)::WMS
 		end
 		ind = findfirst("=", sds[k+1])
 		title = (ind !== nothing) ? chomp(rstrip(sds[k+1][ind[1]+1:end])) : ""	# It comes with a damn "...\n  "
+		if (k == lastguy)			# Last one contains trailing trash with fake "Corner Coordinates: ..."
+			ind = findfirst("Corner", title)
+			title = title[1:ind[1]-2]
+		end
 		append!(names, [name])
 		append!(layers, [WMSlayer(name, title, srs, crs, (bbox[1],bbox[3],bbox[2],bbox[4]), fmt, ts, cnt, res, til, trans)])
 		name, srs, crs, bbox, fmt, ts, cnt, res, til, trans = "", "", "", zeros(4), "", 0, 0, 0., false, false
