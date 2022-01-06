@@ -19,7 +19,7 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdcut(....) form.
     ($(GMTdoc)grdcut.html#g)
-- **img** | **usegdal** :: [Type => Any]
+- **img** | **usegdal** | **gdal** :: [Type => Any]
 
     Force the cut operation to be done by GDAL. Works for images where GMT fails or even crash.
 - $(GMT.opt_J)
@@ -60,9 +60,9 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, args, n, = add_opt(d, cmd, "F", [:F :clip :cutline], :polygon, Array{Any,1}([arg1, arg2]),
 	                        (crop2cutline="_+c", invert="_+i"))
 	if (n > 0)  arg1, arg2 = args[:]  end
-	(show_kwargs[1]) && return print_kwarg_opts([:img :usegdal], "Any")		# Just print the options
+	(show_kwargs[1]) && return print_kwarg_opts([:img :usegdal :gdal], "Any")		# Just print the options
 
-	if (cmd0 != "" && (guess_T_from_ext(cmd0) == " -Ti" || (find_in_dict(d, [:usegdal])[1]) !== nothing))
+	if (cmd0 != "" && (guess_T_from_ext(cmd0) == " -Ti" || (find_in_dict(d, [:usegdal :gdal])[1]) !== nothing))
 		(dbg_print_cmd(d, cmd) !== nothing) && return "grdcut $cmd0 " * cmd		# Vd=2 cause this return
 		t = split(scan_opt(cmd, "-R"), '/')
 		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
@@ -83,3 +83,29 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 grdcut(arg1, cmd0::String=""; kw...) = grdcut(cmd0, arg1; kw...)
+
+#= ---------------------------------------------------------------------------------------------------
+function crop(arg::GItype; kw...)
+	d = KW(kw)
+	_, opt_R = parse_R(d, "")
+	(opt_R == "") && error("Must provide the cropping limits")
+	lims = opt_R2num(opt_R)
+	lims[1], lims[2] = max(lims[1], arg.range[1]), min(lims[2], arg.range[2])	# Avoid overflows in Region
+	lims[3], lims[4] = max(lims[3], arg.range[3]), min(lims[4], arg.range[4])
+	slope = (size(arg,2) - 1) / (arg.x[end]  - arg.x[1])
+	pix_x = round.(Int, slope .* (lims[1:2] .- arg.x[1]) .+ 1)
+	slope = (size(arg,1) - 1) / (arg.y[end]  - arg.y[1])
+	pix_y = round.(Int, slope .* (lims[3:4] .- arg.y[1]) .+ 1)
+	cropped = (ndims(arg) == 2) ? arg[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2]] : arg[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2], :]
+	x, y = arg.x[pix_x[1]:pix_x[2]], arg.y[pix_y[1]:pix_y[2]]
+	range = copy(arg.range)
+	range[1:4] = [x[1], x[end], y[1], y[end]]
+	if (eltype(arg) <: AbstractFloat)
+		zmin, zmax = extrema_nan(cropped)
+		range[5:6] = [zmin, zmax]
+	end
+	out = isa(arg, GMTgrid) ?  mat2grid(cropped, arg) : mat2img(cropped, arg)
+	out.x, out.y, out.range = x, y, range
+	out
+end
+=#
