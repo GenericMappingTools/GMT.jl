@@ -313,7 +313,13 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 		end
 	else
 		(size(mat,3) == 1) && (color_interp = "Gray")
-		colormap = zeros(Int32,3)			# Because we need an array
+		if (hdr !== nothing && (hdr[5] == 0 && hdr[6] == 1))	# A mask. Let's create a colormap for it
+			colormap = zeros(Int32, 256 * 3)
+			n_colors = 256;					# Because for GDAL we always send 256 even if they are not all filled
+			colormap[2] = colormap[258] = colormap[514] = 255
+		else
+			colormap = zeros(Int32,3)		# Because we need an array
+		end
 	end
 
 	nx = size(mat, 2);		ny = size(mat, 1);
@@ -326,7 +332,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	_names = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
 	_meta  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
 
-	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], reg, NaN, color_interp, _meta, _names,
+	I = GMTimage(proj4, wkt, 0, hdr[1:6], [x_inc, y_inc], reg, NaN, color_interp, _meta, _names,
 	             x,y,v,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
 end
 

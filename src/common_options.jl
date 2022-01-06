@@ -140,20 +140,24 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 end
 
 function build_opt_R(Val)::String		# Generic function that deals with all but NamedTuple args
+	R::String = ""
 	if (isa(Val, String) || isa(Val, Symbol))
 		r::String = string(Val)
-		if     (r == "global")     return " -Rd"
-		elseif (r == "global360")  return " -Rg"
-		elseif (r == "same")       return " -R"
-		else                       return " -R" * r
+		if     (r == "global")     R = " -Rd"
+		elseif (r == "global360")  R = " -Rg"
+		elseif (r == "same")       R = " -R"
+		else                       R = " -R" * r
 		end
-	elseif ((isa(Val, Array{<:Real}) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
+	elseif ((isa(Val, VMr) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
 		out = arg2str(Val)
-		return " -R" * rstrip(out, '/')		# Remove last '/'
+		R = " -R" * rstrip(out, '/')		# Remove last '/'
 	elseif (isa(Val, GMTgrid) || isa(Val, GMTimage))
-		return @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
+		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
+	elseif (isa(Val, GDtype))
+		bb = (isa(Val, GMTdataset)) ? Val.bbox : Val[1].ds_bbox
+		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[2], bb[3], bb[4])
 	end
-	return ""
+	return R
 end
 
 function build_opt_R(arg::NamedTuple)::String
