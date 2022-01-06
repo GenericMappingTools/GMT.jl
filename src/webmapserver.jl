@@ -225,7 +225,7 @@ function wms_helper(wms::WMS; layer=0, kw...)
 			if (!contains(wms.layer[layer_n].srs, "4326") && !contains(wms.layer[layer_n].crs, ":84"))	# Easy case
 				_res = res
 			else				# Here BB is in degrees and resolution in meters
-				deg_per_m = 360 / 6371000 * 2pi		# Use spherical authalic radius
+				deg_per_m = 360 / (6371000 * 2pi)		# Use spherical authalic radius
 				_res = res * deg_per_m
 			end
 			dim_x, dim_y = getsize(_res, lims)
