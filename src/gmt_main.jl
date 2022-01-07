@@ -1259,7 +1259,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 	(in == NULL)  && return nothing
-	OGR_F = unsafe_load(in)
+	OGR_F::OGR_FEATURES = unsafe_load(in)
 	n_max = OGR_F.n_rows * OGR_F.n_cols * OGR_F.n_layers
 	n_total_segments = OGR_F.n_filled
 	ds_bbox = OGR_F.BoundingBox
@@ -1275,7 +1275,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		(n_islands > 0) && println("\tThis file has islands (holes in polygons).\n\tUse `gmtread(..., no_islands=true)` to ignore them.")
 	end
 
-	D = Vector{GMTdataset}(undef, n_total_segments)
+	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_total_segments)
 
 	n = 1
 	attrib = Dict{String, String}();	# For the case there are no attribs at all.
@@ -1290,6 +1290,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		else
 			proj4, wkt, coln = "", "", String[]
 		end
+
 		if (OGR_F.np > 0)
 			hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,i))) for i = 1:OGR_F.att_number]) : ""
 			(hdr != "") && (hdr = string(rstrip(hdr, ',')))		# Strip last ','
@@ -1299,8 +1300,10 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 			else		# use the previous attrib. This is RISKY but gmt_ogrread only stores attribs in 1st geom of each feature
 				(n > 1) && (attrib = D[n-1].attrib)
 			end
+
 			if (OGR_F.n_islands == 0)
-				geom = (OGR_F.type == "Polygon") ? wkbPolygon : ((OGR_F.type == "LineString") ? wkbLineString : wkbPoint)
+				geom_type = unsafe_string(OGR_F.type)
+				geom = (geom_type == "Polygon") ? wkbPolygon : ((geom_type == "LineString") ? wkbLineString : wkbPoint)
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
 				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, Int(geom))
 			else
