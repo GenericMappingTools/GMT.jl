@@ -92,7 +92,7 @@ end
 """
 d = iso3to2_world()
 
-	Creates a Dictionary that maps WORLD country code names from ISO3166A3 (3 shars) to ISO3166A2 (2 chars)
+	Creates a Dictionary that maps WORLD country code names from ISO3166A3 (3 chars) to ISO3166A2 (2 chars)
 	It has 250 contry names.
 """
 # --------------------------------------------------------------------------------------------------

@@ -293,7 +293,7 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
 
 The `kw...` kwargs search for [:layout :mem_layout], [:names] and [:metadata]
 """
-function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
 	color_interp = "";		n_colors = 0;
@@ -324,7 +324,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 
 	nx = size(mat, 2);		ny = size(mat, 1);
 	reg = (hdr !== nothing) ? Int(hdr[7]) : (nx == length(x) && ny == length(y)) ? 0 : 1
-	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y)
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y, is_transposed)
 
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
 	d = KW(kw)
@@ -674,7 +674,7 @@ end
 
 function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(),
 	v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="",
-	cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0)
+	cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0, is_transposed::Bool=false)
 	# Take a 2/3D array and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
@@ -687,7 +687,7 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, 
 	end
 	if (isempty(x) && !isempty(xx))  x = xx  end
 	if (isempty(y) && !isempty(yy))  y = yy  end
-	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y, is_transposed)
 
 	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
 	# and the MAT must be finally computed.
@@ -758,9 +758,11 @@ function mat2grid(f::String, xx=Vector{Float64}(), yy=Vector{Float64}(); x=Vecto
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdimg_hdr_xy(mat, reg, hdr, x=Vector{Float64}(), y=Vector{Float64}())
+function grdimg_hdr_xy(mat, reg, hdr, x=Vector{Float64}(), y=Vector{Float64}(), is_transposed=false)
 # Generate x,y coords array and compute/update header plus increments for grids/images
-	nx = size(mat, 2);		ny = size(mat, 1);
+# Arrays coming from GDAL are often scanline so they are transposed. In that case is_transposed should be true
+	row_dim, col_dim = (is_transposed) ? (2,1) : (1,2) 
+	nx = size(mat, col_dim);		ny = size(mat, row_dim);
 
 	if (!isempty(x) && !isempty(y))		# But not tested if they are equi-spaced as they MUST be
 		if ((length(x) != (nx+reg) || length(y) != (ny+reg)) && (length(x) != 2 || length(y) != 2))
