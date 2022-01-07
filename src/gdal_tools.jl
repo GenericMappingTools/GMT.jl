@@ -238,6 +238,7 @@ function get_gdaldataset(data, opts)
 	# In case of a file name we must be careful and deal with possible "+b" band requests from GMT.
 	needclose = false
 	if isa(data, AbstractString)			# Check also for remote files (those that start with a @). MAY SCREW VIOLENTLY
+		(data == "") && error("File name is empty.")
 		name, ext = splitext(data)			# Be carefull, the name may carry a bands request. e.g. "LC08__cube.tiff+b3,2,1"
 		name = ((ind = findfirst("+", ext)) === nothing) ? data : name * ext[1:ind[1]-1]
 		if (ind !== nothing && ext[ind[1]+1] == 'b')	# So we must convert the "+b3,2,1" into GDAL syntax
