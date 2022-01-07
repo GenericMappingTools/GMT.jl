@@ -92,12 +92,17 @@ function crop(arg::GItype; kw...)
 	lims = opt_R2num(opt_R)
 	lims[1], lims[2] = max(lims[1], arg.range[1]), min(lims[2], arg.range[2])	# Avoid overflows in Region
 	lims[3], lims[4] = max(lims[3], arg.range[3]), min(lims[4], arg.range[4])
-	slope = (size(arg,2) - 1) / (arg.x[end]  - arg.x[1])
+	row_dim, col_dim = (arg.layout[2] == 'C') ? (1,2) : (2,1)		# If RowMajor the array is transposed 
+	slope = (size(arg, col_dim) - 1) / (arg.x[end]  - arg.x[1])
 	pix_x = round.(Int, slope .* (lims[1:2] .- arg.x[1]) .+ 1)
-	slope = (size(arg,1) - 1) / (arg.y[end]  - arg.y[1])
+	slope = (size(arg, row_dim) - 1) / (arg.y[end]  - arg.y[1])
 	pix_y = round.(Int, slope .* (lims[3:4] .- arg.y[1]) .+ 1)
+
+	x, y = arg.x[pix_x[1]:pix_x[2]+1], arg.y[pix_y[1]:pix_y[2]+1]
+	if (arg.layout[2] == 'R')  pix_x, pix_y = pix_y, pix_x  end
 	cropped = (ndims(arg) == 2) ? arg[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2]] : arg[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2], :]
-	x, y = arg.x[pix_x[1]:pix_x[2]], arg.y[pix_y[1]:pix_y[2]]
+	#cropped = (ndims(arg) == 2) ? arg[pix_x[1]:pix_x[2], pix_y[1]:pix_y[2]] : arg[pix_x[1]:pix_x[2], pix_y[1]:pix_y[2], :]
+	#x, y = arg.x[pix_x[1]:pix_x[2]+1], arg.y[pix_y[1]:pix_y[2]+1]
 	range = copy(arg.range)
 	range[1:4] = [x[1], x[end], y[1], y[end]]
 	if (eltype(arg) <: AbstractFloat)
