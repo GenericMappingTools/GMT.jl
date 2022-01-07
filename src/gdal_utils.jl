@@ -80,12 +80,13 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	prj = getproj(dataset)
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
 	(prj == "") && (prj = seek_wkt_in_gdalinfo(gdalinfo(dataset)))
+	is_tp = (layout == "")				# if == "" array is rowmajor and hence transposed
 	if (is_grid)
 		(eltype(mat) == Float64) && (mat = Float32.(mat))
-		O = mat2grid(mat; hdr=hdr, proj4=prj, names=desc)
+		O = mat2grid(mat; hdr=hdr, proj4=prj, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRB" : layout
 	else
-		O = mat2img(mat; hdr=hdr, proj4=prj, noconv=true, names=desc)
+		O = mat2img(mat; hdr=hdr, proj4=prj, noconv=true, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRBa" : layout * "a"
 		if (n_colors > 0)
 			O.colormap = colormap;	O.n_colors = n_colors
