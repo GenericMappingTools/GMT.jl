@@ -62,6 +62,12 @@
 	G2=grdcut(data="lixo.grd", limits=[3 9 2 8], V=:q);
 	G2=grdcut(data=G, limits=[3 9 2 8]);
 
+	println("	CROP")
+	im = mat2img(UInt8.(GMT.magic(9)))
+	D = mat2ds([1.6 2.6; 1.6 4.4; 4.4 4.4; 4.4 2.6; 1.6 2.6])
+	GMT.crop(im, region=D).image == UInt8.([27 29 40; 28 39 50])
+	colorzones!(D, img=im)		# A bit out of place but it reuses the variables above
+
 	# GRDEDIT
 	grdedit(G, C=true);
 
