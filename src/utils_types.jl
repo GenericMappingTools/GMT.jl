@@ -420,7 +420,7 @@ function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vec
 end
 function mat2img(mat, G::GMTgrid; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(G.range);	range[5:6] .= (size(mat,3) == 1) ? extrema(mat) : [0., 255]
-	GMTimage(G.proj4, G.wkt, G.epsg, range, copy(G.inc), G.registration, zero(eltpe(mat)), "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
+	GMTimage(G.proj4, G.wkt, G.epsg, range, copy(G.inc), G.registration, zero(eltype(mat)), "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
 end
 
 # ---------------------------------------------------------------------------------------------------
