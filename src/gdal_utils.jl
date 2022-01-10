@@ -310,7 +310,7 @@ function gmt2gd(GI)
 				n += 4
 			end
 			Gdal.setcolortable!(Gdal.getband(ds), ct)
-			(!isnan(GI.nodata)) && (setnodatavalue!(Gdal.getband(ds), GI.nodata))
+			(!isnan(GI.nodata)) && (Gdal.setnodatavalue!(Gdal.getband(ds), GI.nodata))
 		end
 	end
 

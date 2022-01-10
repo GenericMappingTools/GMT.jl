@@ -151,7 +151,7 @@ function build_opt_R(Val)::String		# Generic function that deals with all but Na
 	elseif ((isa(Val, VMr) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
 		out = arg2str(Val)
 		R = " -R" * rstrip(out, '/')		# Remove last '/'
-	elseif (isa(Val, GMTgrid) || isa(Val, GMTimage))
+	elseif (isa(Val, GItype))
 		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
 	elseif (isa(Val, GDtype))
 		bb = (isa(Val, GMTdataset)) ? Val.bbox : Val[1].ds_bbox
@@ -2164,12 +2164,12 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	# Use CMD0 = "" to use this function from within non-grd modules
 	global current_cpt
 	cpt_opt_T::String = ""
-	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage))			# GMT bug, -R will not be stored in gmt.history
+	if (isa(arg1, GItype))			# GMT bug, -R will not be stored in gmt.history
 		range::Vector{Float64} = vec(arg1.range)
 	elseif (cmd0 != "" && cmd0[1] != '@')
 		info = grdinfo(cmd0 * " -C");	range = vec(info[1].data)
 	end
-	if (isa(arg1, GMTgrid) || isa(arg1, GMTimage) || (cmd0 != "" && cmd0[1] != '@'))
+	if (isa(arg1, GItype) || (cmd0 != "" && cmd0[1] != '@'))
 		if (isempty(current_cpt[1]) && (val = find_in_dict(d, CPTaliases, false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
 			cpt_opt_T = @sprintf(" -T%.12g/%.12g/128+n", range[5] - 1e-6, range[6] + 1e-6)
@@ -3955,8 +3955,8 @@ function rescale(A::AbstractArray, low=0.0, up=1.0; inputmin=nothing, inputmax=n
 	if (stretch)
 		inputmin, inputmax = histogram(A, getauto=true)
 	end
-	(inputmin === nothing) && (mi = (isa(A, GMTgrid) || isa(A, GMTimage)) ? A.range[5] : minimum_nan(A))
-	(inputmax === nothing) && (ma = (isa(A, GMTgrid) || isa(A, GMTimage)) ? A.range[6] : maximum_nan(A))
+	(inputmin === nothing) && (mi = (isa(A, GItype)) ? A.range[5] : minimum_nan(A))
+	(inputmax === nothing) && (ma = (isa(A, GItype)) ? A.range[6] : maximum_nan(A))
 	_inmin = convert(Float64, (inputmin === nothing) ? mi : inputmin)
 	_inmax = convert(Float64, (inputmax === nothing) ? ma : inputmax)
 	d1 = _inmax - _inmin
@@ -3975,7 +3975,7 @@ function rescale(A::AbstractArray, low=0.0, up=1.0; inputmin=nothing, inputmax=n
 				o[k] = (A[k] < _inmin) ? low_i : ((A[k] > _inmax) ? up_i : round(type, low + (A[k] -_inmin) * sc))
 			end
 		end
-		return (isa(A, GMTgrid) || isa(A, GMTimage)) ? mat2img(o, A) : o
+		return isa(A, GItype) ? mat2img(o, A) : o
 	else
 		oType = isa(eltype(A), AbstractFloat) ? eltype(A) : Float64
 		o = Array{oType}(undef, size(A))
@@ -3986,7 +3986,7 @@ function rescale(A::AbstractArray, low=0.0, up=1.0; inputmin=nothing, inputmax=n
 				o[k] = (A[k] < _inmin) ? low : ((A[k] > _inmax) ? up : low + (A[k] -_inmin) * sc)
 			end
 		end
-		return (isa(A, GMTgrid) || isa(A, GMTimage)) ? mat2grid(o, A) : o
+		return isa(A, GItype) ? mat2grid(o, A) : o
 	end
 end
 

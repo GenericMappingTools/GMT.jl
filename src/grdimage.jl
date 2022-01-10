@@ -131,7 +131,7 @@ end
 function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 	# Set -R in 'd' under several conditions. We may need this to make -J=:guess to work
 	O && return
-	if ((val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(I_G, GMTimage) || isa(I_G, GMTgrid)))
+	if ((val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(I_G, GItype)))
 		if (isa(I_G, GMTgrid) || !isimgsize(I_G))
 			d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", I_G.range[1], I_G.range[2], I_G.range[3], I_G.range[4])
 		end

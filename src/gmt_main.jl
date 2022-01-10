@@ -47,7 +47,7 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
 	registration::Int
-	nodata::Float64
+	nodata::Unsigned
 	color_interp::String
 	metadata::Vector{String}
 	names::Vector{String}
@@ -622,7 +622,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 
 	# Return image via a uint8 matrix in a struct
 	cinterp = (I.color_interp != C_NULL) ? unsafe_string(I.color_interp) : ""
-	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, cinterp, String[], String[], X, Y,
+	out = GMTimage("", "", 0, zeros(6)*NaN, [NaN, NaN], 0, zero(eltype(t)), cinterp, String[], String[], X, Y,
 	               zeros(nz), t, colormap, n_colors, Array{UInt8,2}(undef,1,1), layout, 0)
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
