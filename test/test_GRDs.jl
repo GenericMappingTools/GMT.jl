@@ -65,8 +65,14 @@
 	println("	CROP")
 	im = mat2img(UInt8.(GMT.magic(9)))
 	D = mat2ds([1.6 2.6; 1.6 4.4; 4.4 4.4; 4.4 2.6; 1.6 2.6])
-	GMT.crop(im, region=D).image == UInt8.([27 29 40; 28 39 50])
+	crop(im, region=D)[1].image == UInt8.([27 29 40; 28 39 50])
 	colorzones!(D, img=im)		# A bit out of place but it reuses the variables above
+	G = GMT.peaks();
+	D = mat2ds([-1 -1; 1 1; 1 -1; -1 -1]);
+	GMT.rasterzones!(G, D, mean)
+	I = GMT.mat2img(rand(UInt8, 32, 32, 3));
+	D = mat2ds([10 10; 15 20; 20 10; 10 10]);
+	GMT.rasterzones!(I, D, mean)
 
 	# GRDEDIT
 	grdedit(G, C=true);
