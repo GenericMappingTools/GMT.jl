@@ -332,7 +332,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	_names = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
 	_meta  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
 
-	I = GMTimage(proj4, wkt, 0, hdr[1:6], [x_inc, y_inc], reg, NaN, color_interp, _meta, _names,
+	I = GMTimage(proj4, wkt, 0, hdr[1:6], [x_inc, y_inc], reg, zero(eltype(mat)), color_interp, _meta, _names,
 	             x,y,v,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
 end
 
@@ -420,7 +420,7 @@ function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vec
 end
 function mat2img(mat, G::GMTgrid; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(G.range);	range[5:6] .= (size(mat,3) == 1) ? extrema(mat) : [0., 255]
-	GMTimage(G.proj4, G.wkt, G.epsg, range, copy(G.inc), G.registration, 0.0, "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
+	GMTimage(G.proj4, G.wkt, G.epsg, range, copy(G.inc), G.registration, zero(eltype(mat)), "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -708,7 +708,7 @@ function mat2grid(mat, G::GMTgrid)
 	Go
 end
 function mat2grid(mat, I::GMTimage)
-	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, "", "", "", String[], I.x, I.y, [0.], mat, "", "", "", "", I.layout, 1f0, 0f0, I.pad)
+	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, NaN, "", "", "", String[], I.x, I.y, [0.], mat, "", "", "", "", I.layout, 1f0, 0f0, I.pad)
 	(length(Go.layout) == 4) && (Go.layout = Go.layout[1:3])	# No space for the a|A
 	grd_min_max!(Go)		# Also take care of NaNs
 	Go
