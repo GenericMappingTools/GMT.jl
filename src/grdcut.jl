@@ -1,7 +1,7 @@
 """
 	grdcut(cmd0::String="", arg1=[], kwargs...)
 
-Produce a new outgrid file which is a subregion of ingrid. The subregion is specified with
+Produce a new outgrid which is a subregion of ingrid. The subregion is specified with
 ``limits`` (the -R); the specified range must not exceed the range of ingrid (but see ``extend``).
 
 Full option list at [`grdcut`]($(GMTdoc)grdcut.html)
@@ -85,6 +85,21 @@ end
 grdcut(arg1, cmd0::String=""; kw...) = grdcut(cmd0, arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
+"""
+crop(arg::GItype; kw...)
+
+Crop a subregion of a grid (GMTgrid) or a image (GMTimage). The subregion is specified with the
+``limits`` or ``region`` keyword; the specified range must not exceed the range of the input.
+This function differs from ``grdcut`` in the sense that it doesn't call the GMT lib and works only on
+in-memory array (i.e., no disk files).
+
+### Returns
+A grid or an image, depending on the input type, plus two 1x2 matrices with the indices of the cropped zone.
+
+## Example
+	G = GMT.peaks();
+	crop(G, region=(-2,2,-2,2))
+"""
 function crop(arg::GItype; kw...)
 	d = KW(kw)
 	_, opt_R = parse_R(d, "")
@@ -93,7 +108,7 @@ function crop(arg::GItype; kw...)
 	# Must test that requested cropping limits fit inside array BB
 	lims[1], lims[2] = max(lims[1], arg.range[1]), min(lims[2], arg.range[2])	# Avoid overflows in Region
 	lims[3], lims[4] = max(lims[3], arg.range[3]), min(lims[4], arg.range[4])
-	row_dim, col_dim = (arg.layout[2] == 'C') ? (1,2) : (2,1)		# If RowMajor the array is transposed 
+	row_dim, col_dim = (arg.layout == "" || arg.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
 	slope = (size(arg, col_dim) - 1) / (arg.x[end] - arg.x[1])
 	pix_x = round.(Int, slope .* (lims[1:2] .- arg.x[1]) .+ 1)
 	slope = (size(arg, row_dim) - 1) / (arg.y[end] - arg.y[1])
@@ -107,7 +122,7 @@ function crop(arg::GItype; kw...)
 	end
 
 	x, y = arg.x[pix_x[1]:pix_x[2]+1], arg.y[pix_y[1]:pix_y[2]+1]
-	pix_x, pix_y = rearrange_ranges(pix_x, pix_y)
+	if (arg.layout != "")  pix_x, pix_y = rearrange_ranges(pix_x, pix_y)  end
 	cropped = (ndims(arg) == 2) ? arg[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2]] : arg[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2], :]
 	range = copy(arg.range)
 	range[1:4] = [x[1], x[end], y[1], y[end]]
@@ -117,6 +132,5 @@ function crop(arg::GItype; kw...)
 	end
 	out = isa(arg, GMTgrid) ?  mat2grid(cropped, arg) : mat2img(cropped, arg)
 	out.x, out.y, out.range = x, y, range
-	out
+	out, pix_x, pix_y
 end
-#

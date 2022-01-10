@@ -1556,9 +1556,9 @@ end
 	gdalgrid(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false) =
 		gdalgrid(Dataset(ds.ptr), opts; dest=dest, gdataset=gdataset)
 
-	gdalrasterize(dataset::GMT.GDtype, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="") =
-		gdalrasterize(gmt2gd(dataset), options; dest=dest, gdataset=gdataset, save=save)
-	function gdalrasterize(dataset::AbstractDataset, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="")
+	gdalrasterize(dataset::GMT.GDtype, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="", layout::String="") =
+		gdalrasterize(gmt2gd(dataset), options; dest=dest, gdataset=gdataset, save=save, layout=layout)
+	function gdalrasterize(dataset::AbstractDataset, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="", layout::String="")
 		(save != "") && (dest = save)
 		options = GDALRasterizeOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1567,7 +1567,7 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result))
+		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result), layout=layout)
 	end
 
 	function gdalbuildvrt(datasets::Vector{<:AbstractDataset}, options::Vector{String}=String[]; dest = "/vsimem/tmp", save::AbstractString="")
