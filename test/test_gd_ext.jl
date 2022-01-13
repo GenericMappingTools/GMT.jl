@@ -87,11 +87,31 @@
 
 	@test lonlat2xy([150.0 -27.0], "+proj=utm +zone=56 +south +datum=WGS84 +units=m +no_defs") ≈
 		[202273.912995055 7010024.033113679]  atol=1e-6
-	@test lonlat2xy(mat2ds([150.0 -27.0])[1], "+proj=utm +zone=56 +south +datum=WGS84 +units=m +no_defs")[1].data ≈
-		[202273.912995055 7010024.033113679]  atol=1e-6
-
 	@test xy2lonlat([202273.912995055 7010024.033113679], "+proj=utm +zone=56 +south +datum=WGS84 +units=m +no_defs") ≈
 		[150.0 -27.0] atol=1e-6
-	@test xy2lonlat(mat2ds([202273.912995055 7010024.033113679])[1], "+proj=utm +zone=56 +south +datum=WGS84 +units=m +no_defs")[1].data ≈
-		[150.0 -27.0] atol=1e-6
+
+	@test xy2lonlat([111319.49079327357 110579.96522189621], s_srs="+proj=merc") ≈ [1 1]
+	@test xy2lonlat([111319.49079327357 110579.96522189621], s_srs=3395) ≈ [1 1]
+		
+	@test xy2lonlat(mat2ds([111319.49079327357 110579.96522189621]), s_srs=3395)[1].data ≈ [1 1]
+	@test xy2lonlat(mat2ds([111319.49079327357 110579.96522189621]), s_srs="+proj=merc")[1].data ≈ [1 1]
+		
+	@test xy2lonlat(mat2ds([111319.49079327357 110579.96522189621])[1], s_srs="+proj=merc").data ≈ [1 1]
+	@test xy2lonlat(mat2ds([111319.49079327357 110579.96522189621])[1], s_srs=3395).data ≈ [1 1]
+		
+	@test xy2lonlat([111319.49079327357, 110579.96522189621], s_srs="+proj=merc") ≈ [1, 1]
+	@test xy2lonlat([111319.49079327357, 110579.96522189621], s_srs=3395) ≈ [1, 1]
+	@test xy2lonlat([111319.49079327357, 110579.96522189621], 3395) ≈ [1, 1]
+
+	@test lonlat2xy(mat2ds([1 1]), t_srs="+proj=merc")[1].data ≈ [111319.49079327357 110579.96522189621]
+	@test lonlat2xy(mat2ds([1 1]), t_srs=3395)[1].data ≈ [111319.49079327357 110579.96522189621]
+	@test lonlat2xy(mat2ds([1 1]), 3395)[1].data ≈ [111319.49079327357 110579.96522189621]
+	@test lonlat2xy(mat2ds([1 1])[1], t_srs=3395).data ≈ [111319.49079327357 110579.96522189621]
+
+	@test lonlat2xy([1 1], t_srs="+proj=merc") ≈ [111319.49079327357 110579.96522189621]
+	@test lonlat2xy([1 1], t_srs=3395) ≈ [111319.49079327357 110579.96522189621]
+	@test lonlat2xy([1 1], 3395) ≈ [111319.49079327357 110579.96522189621]
+
+	@test lonlat2xy([1, 1], t_srs="+proj=merc") ≈ [111319.49079327357, 110579.96522189621]
+	@test lonlat2xy([1, 1], t_srs=3395) ≈ [111319.49079327357, 110579.96522189621]
 end

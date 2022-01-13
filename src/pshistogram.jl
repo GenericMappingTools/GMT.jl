@@ -304,10 +304,10 @@ function loc_histo(in, cmd::String="", opt_T::String="", opt_Z::String="")
 	# We put the countings in a Mx2 arrray to trick GMT (pshistogram) to think it's recieving a weighted input.
 	(!isa(in[1], UInt16) && !isa(in[1], UInt8)) && error("Only UInt8 or UInt16 image types allowed here")
 
-	inc = (opt_T != "") ? Float64(Meta.parse(opt_T)) : 1.0
-	(!isa(inc, Real) || inc <= 0) && error("Bin width must be a number > 0 and no min/max")
+	inc::Float64 = (opt_T != "") ? parse(Float64, opt_T) : 1.0
+	(inc <= 0) && error("Bin width must be a number > 0 and no min/max")
 
-	n_bins = (isa(in[1], UInt8)) ? 256 : Int(ceil((maximum(in) + 1) / inc))	# For UInt8 use the full [0 255] range
+	n_bins::Int = (isa(in[1], UInt8)) ? 256 : Int(ceil((maximum(in) + 1) / inc))	# For UInt8 use the full [0 255] range
 	hst = zeros(n_bins, 2)
 	pshst_wall!(in, hst, inc, n_bins)
 
