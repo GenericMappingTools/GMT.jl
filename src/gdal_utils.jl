@@ -597,69 +597,89 @@ function gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::Str
 	return nothing
 end
 
-# TODO ==> Input as vector. EPSGs. Test input t_srs
 # ---------------------------------------------------------------------------------------------------
 """
-    lonlat2xy(lonlat::Matrix{<:Real}, t_srs::String; s_srs=::String="+proj=longlat +datum=WGS84")
+    lonlat2xy(lonlat::Matrix{<:Real}; t_srs, s_srs="+proj=longlat +datum=WGS84")
 or
 
-    lonlat2xy(D::GMTdataset, t_srs::String; s_srs=::String="+proj=longlat +datum=WGS84")
+    lonlat2xy(D::GMTdataset; t_srs, s_srs="+proj=longlat +datum=WGS84")
 
 Computes the forward projection from LatLon to XY in the given projection. The input is assumed to be in WGS84.
-If it isn't, pass the appropriate projection info via the `s_srs` option.
+If it isn't, pass the appropriate projection info via the `s_srs` option (PROJ4, WKT, EPSG).
 
 ### Parameters
 * `lonlat`: The input data. It can be a Matrix, or a GMTdataset (or vector of it)
-* `t_srs`:  The destiny projection system. This can be a PROJ4 or a WKT string
+* `t_srs`:  The destiny projection system. This can be a PROJ4, a WKT string or EPSG code
 
 ### Returns
 A Matrix if input is a Matrix or a GMTdadaset if input had that type
 """
-lonlat2xy(xy::Vector{<:Real}, t_srs::String; s_srs::String=prj4WGS84) = vec(lonlat2xy(reshape(xy[:],1,length(xy)), t_srs; s_srs=s_srs))
-function lonlat2xy(lonlat::Matrix{<:Real}, t_srs::String; s_srs::String=prj4WGS84)
-	D = ogr2ogr(lonlat, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
-	return D[1].data		# Return only the array because that's what was sent in
+function lonlat2xy(xy::Vector{<:Real}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)
+	vec(lonlat2xy(reshape(xy[:],1,length(xy)), t_srs_; t_srs=t_srs, s_srs=s_srs))
 end
 
-lonlat2xy(D::GMTdataset, t_srs::String; s_srs::String=prj4WGS84) = lonlat2xy([D], t_srs; s_srs=s_srs)
-function lonlat2xy(D::Vector{<:GMTdataset}, t_srs::String; s_srs::String=prj4WGS84)
-	(startswith(D[1].proj4, "+proj=longl") || startswith(D[1].proj4, "+proj=latlon")) && (s_srs = D[1].proj4)
-	o = ogr2ogr(D, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
-	(isa(o, Gdal.AbstractDataset)) && (o = gd2gmt(o))
-	o
-end
-
-# ---------------------------------------------------------------------------------------------------
-"""
-    xy2lonlat(xy::Matrix{<:Real}, s_srs::String; t_srs=::String="+proj=longlat +datum=WGS84")
-or
-
-    xy2lonlat(D::GMTdataset, s_srs::String; t_srs=::String="+proj=longlat +datum=WGS84")
-
-Computes the inverse projection from XY to LonLat in the given projection. The output is assumed to be in WGS84.
-If that isn't right, pass the appropriate projection info via the `t_srs` option.
-
-### Parameters
-* `xy`: The input data. It can be a Matrix, or a GMTdataset (or vector of it)
-* `s_srs`:  The data projection system. This can be a PROJ4 or a WKT string
-* `t_srs`:  The target SRS. If the default is not satisfactory, provide a new projection info (PROJ4 or WKT)
-
-### Returns
-A Matrix if input is a Matrix or a GMTdadaset if input had that type
-"""
-xy2lonlat(xy::Vector{<:Real}, s_srs::String; t_srs::String=prj4WGS84) = vec(xy2lonlat(reshape(xy[:],1,length(xy)), s_srs; t_srs=t_srs))
-function xy2lonlat(xy::Matrix{<:Real}, s_srs::String; t_srs::String=prj4WGS84)
+function lonlat2xy(xy::Matrix{<:Real}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)
+	(t_srs_ !== nothing) && (t_srs = t_srs_)
+	isa(s_srs, Int) && (s_srs = epsg2proj(s_srs))
+	isa(t_srs, Int) && (t_srs = epsg2proj(t_srs))
+	(t_srs === nothing) && error("Must specify at least the target referencing system.")
 	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
 	return D[1].data		# Return only the array because that's what was sent in
 end
 
-xy2lonlat(D::GMTdataset, s_srs::String=""; t_srs::String=prj4WGS84) = xy2lonlat([D], s_srs; t_srs=t_srs)
-function xy2lonlat(D::Vector{<:GMTdataset}, s_srs::String=""; t_srs::String=prj4WGS84)
-	(D[1].proj4 == "" && D[1].wkt == "" && s_srs == "") && error("No projection information whatsoever on the input data.")
+lonlat2xy(D::GMTdataset, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84) = lonlat2xy([D], t_srs_; t_srs=t_srs, s_srs=s_srs)[1]
+function lonlat2xy(D::Vector{<:GMTdataset}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)::Vector{<:GMTdataset}
+	(t_srs_ !== nothing) && (t_srs = t_srs_)
+	isa(t_srs, Int) && (t_srs = epsg2proj(t_srs))
+	isa(s_srs, Int) && (s_srs = epsg2proj(s_srs))
+
+	(D[1].proj4 == "" && D[1].wkt == "" && t_srs === nothing) && error("No projection information whatsoever on the input data.")
+	if (t_srs != "") _t_srs = t_srs
+	else             _t_srs = (D[1].proj4 != "") ? D[1].proj4 : D[1].wkt
+	end
+	ogr2ogr(D, ["-s_srs", s_srs, "-t_srs", _t_srs, "-overwrite"])
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    xy2lonlat(xy::Matrix{<:Real}; s_srs, t_srs="+proj=longlat +datum=WGS84")
+or
+
+    xy2lonlat(D::GMTdataset; s_srs, t_srs="+proj=longlat +datum=WGS84")
+
+Computes the inverse projection from XY to LonLat in the given projection. The output is assumed to be in WGS84.
+If that isn't right, pass the appropriate projection info via the `t_srs` option (PROJ4, WKT, EPSG).
+
+### Parameters
+* `xy`: The input data. It can be a Matrix, or a GMTdataset (or vector of it)
+* `s_srs`:  The data projection system. This can be a PROJ4, a WKT string or EPSG code
+* `t_srs`:  The target SRS. If the default is not satisfactory, provide a new projection info (PROJ4, WKT, EPSG)
+
+### Returns
+A Matrix if input is a Matrix or a GMTdadaset if input had that type
+"""
+function xy2lonlat(xy::Vector{<:Real}, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84)
+	vec(xy2lonlat(reshape(xy[:],1,length(xy)), s_srs_; s_srs=s_srs, t_srs=t_srs))
+end
+
+function xy2lonlat(xy::Matrix{<:Real}, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84)
+	(s_srs_ !== nothing) && (s_srs = s_srs_)
+	isa(s_srs, Int) && (s_srs = epsg2proj(s_srs))
+	isa(t_srs, Int) && (t_srs = epsg2proj(t_srs))
+	(s_srs === nothing) && error("Must specify at least the source referencing system.")
+	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
+	return D[1].data		# Return only the array because that's what was sent in
+end
+
+xy2lonlat(D::GMTdataset, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84) = xy2lonlat([D], s_srs_; s_srs=s_srs, t_srs=t_srs)[1]
+function xy2lonlat(D::Vector{<:GMTdataset}, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84)::Vector{<:GMTdataset}
+	(s_srs_ !== nothing) && (s_srs = s_srs_)
+	isa(s_srs, Int) && (s_srs = epsg2proj(s_srs))
+	isa(t_srs, Int) && (t_srs = epsg2proj(t_srs))
+
+	(D[1].proj4 == "" && D[1].wkt == "" && s_srs === nothing) && error("No projection information whatsoever on the input data.")
 	if (s_srs != "") _s_srs = s_srs
 	else             _s_srs = (D[1].proj4 != "") ? D[1].proj4 : D[1].wkt
 	end
-	o = ogr2ogr(D, ["-s_srs", _s_srs, "-t_srs", t_srs, "-overwrite"])
-	(isa(o, Gdal.AbstractDataset)) && (o = gd2gmt(o))
-	o
+	ogr2ogr(D, ["-s_srs", _s_srs, "-t_srs", t_srs, "-overwrite"])
 end

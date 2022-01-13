@@ -33,7 +33,7 @@ Image reprojection and warping function.
 ### Parameters
 - `indata`:  Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
 - `options`: List of options (potentially including filename and open
-	options). The accepted options are the ones of the gdalwarp utility.
+   options). The accepted options are the ones of the gdalwarp utility.
 - `kwargs`:  Are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options
 
 ### Returns
@@ -246,7 +246,8 @@ function get_gdaldataset(data, opts)
 			p = parse.(Int, o) .+ 1
 			o = [string(c) for c in p]
 			if (isa(opts, Vector{String}))
-				[append!(opts, ["-b", o[k]]) for k = 1:length(o)]
+				#[append!(opts, ["-b", o[k]]) for k = 1:length(o)]
+				for k = 1:length(o)  append!(opts, ["-b", o[k]])  end
 			else
 				opts *= " -b" * join(o, " -b ")
 			end

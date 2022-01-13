@@ -281,7 +281,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:J :proj :projection], "NamedTuple | String"), "")
 
-	opt_J::String = "";		mnemo = false
+	opt_J::String = "";		mnemo::Bool = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
 		isa(val, Dict) && (val = dict2nt(val))
 		opt_J, mnemo = build_opt_J(val)
