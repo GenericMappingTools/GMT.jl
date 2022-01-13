@@ -76,10 +76,15 @@ function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kw
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary], [:F :polygon],
+	cmd::String = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :w :yx])[1]
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary],
 	                                 [:G :gridmask], [:I :reverse], [:N :mask], [:Z :in_range]])
 	#cmd = add_opt(d, cmd, "N', [:N :mask], (ocean=("", arg2str, 1), land=("", arg2str, 2)) )
+	if ((val = find_in_dict(d, [:F :polygon])[1]) !== nothing)
+        if isa(val, String)  cmd *= " -F" * val
+        else                 (arg1 === nothing) ? arg1 = val : arg2 = val;  cmd *= " -F"
+        end
+    end
 
 	cmd, args, n, = add_opt(d, cmd, "C", [:C :dist2pt :dist], :pts, Array{Any,1}([arg1, arg2]), (dist="+d",))
 	if (n > 0)  arg1, arg2 = args[:]  end
