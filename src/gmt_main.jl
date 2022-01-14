@@ -968,7 +968,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 # We are given a Julia image and use it to fill the GMT_IMAGE structure
 
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_bands = size(Img.image, 3)
-	if (Img.layout[2] == 'R')  n_rows, n_cols = n_cols, n_rows  end
+	if (Img.layout[2] == 'R' && Img.layout[3] == 'B')  n_rows, n_cols = n_cols, n_rows  end
 	family = GMT_IS_IMAGE
 	if (n_bands == 2 || n_bands == 4)			# Then we want the alpha layer together with data
 		family = family | GMT_IMAGE_ALPHA_LAYER
@@ -983,6 +983,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	h::GMT_GRID_HEADER = unsafe_load(Ib.header)
 
 	mem_owned_by_gmt = true
+	already_converted = false
 	if (pad == 2 && Img.layout[2] != 'R')						# When we need to project
 		img_padded = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
 		mx = n_cols + 2pad
@@ -1000,35 +1001,22 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 		end
 	elseif (pad == 2 && Img.pad == 0 && Img.layout[2] == 'R')	# Also need to project
 		img_padded = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
-		mx, k = n_cols + 2pad, 1
-		for band = 1:n_bands
-			off_band = (band - 1) * h.size
-			for row = 1:n_rows
-				off = pad * mx + (row - 1) * mx + pad + off_band
-				for col = 1:n_cols
-					img_padded[col + off] = Img.image[k];	k += 1
-				end
-			end
-		end
+		toRP_pad(Img, img_padded, n_rows, n_cols, pad)
+		already_converted = true
 	else
 		Ib.data = pointer(Img.image)
 		mem_owned_by_gmt = (pad == 0) ? false : true
 	end
-	
+
 	(mem_owned_by_gmt) && (CTRL.gmt_mem_bag[1] = Ib.data)	# Hold on the GMT owned array to be freed in gmt()
 
-	#if (0 < Img.n_colors <= 256)
-		#append!(Img.colormap, fill(Int32(255), (257 - Img.n_colors) * 4) )
-		#Img.n_colors = 256
-	#end
-	
 	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
 	Ib.n_indexed_colors = Img.n_colors
 	if (Img.color_interp != "")    Ib.color_interp = pointer(Img.color_interp)  end
 	Ib.alpha = (size(Img.alpha) != (1,1)) ? pointer(Img.alpha) : C_NULL
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)		# Tell GMT that memory is external
-	h.z_min = Img.range[5]			# Set the z_min, z_max
+	h.z_min = Img.range[5]						# Set the z_min, z_max
 	h.z_max = Img.range[6]
 	h.mem_layout = map(UInt8, (Img.layout...,))
 	if (Img.proj4 != "")    h.ProjRefPROJ4 = pointer(Img.proj4)  end
@@ -1037,14 +1025,38 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	unsafe_store!(Ib.header, h)
 	unsafe_store!(I, Ib)
 
-	if (!startswith(Img.layout, "BRP"))
-		img = (mem_owned_by_gmt) ? img_padded : deepcopy(Img.image)
+	if (!already_converted && !startswith(Img.layout, "BRP"))
+		img = (mem_owned_by_gmt) ? img_padded : copy(Img.image)
 		GMT_Change_Layout(API, GMT_IS_IMAGE, "BRP", 0, I, img);		# Convert to BRP
 		Ib.data = pointer(img)
 		unsafe_store!(I, Ib)
 	end
 
 	return I
+end
+
+function toRP_pad(img, o, n_rows, n_cols, pad)
+	# Convert to a B(?T)RP padded array. The shit is that TRB images were read by GDAL and are
+	# stored transposed so that we can pass them back to GDAL without any copy. But B(?)RP were
+	# read through GMT and are not transposed. This makes a hell to deal with and not messing. 
+	m, i = (n_cols * pad + pad) * 3, 0
+	if (img.layout[3] == 'B')			# TRB. Read directly by GDAL and sored transposed.
+		@inbounds for n = 1:n_rows
+			r, g, b = view(img.image, :,n,1), view(img.image, :,n,2), view(img.image, :,n,3)
+			@inbounds for k = 1:n_cols
+				o[m+=1], o[m+=1], o[m+=1] = r[k], g[k], b[k]
+			end
+			m += 2pad * 3
+		end
+	else								# B(T?)RP. Read through GMT and NOT stored transposed.
+		@inbounds for n = 1:n_rows
+			@inbounds for k = 1:n_cols
+				o[m+=1], o[m+=1], o[m+=1] = img.image[i+=1], img.image[i+=1], img.image[i+=1]
+			end
+			m += 2pad * 3
+		end
+	end
+	nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
