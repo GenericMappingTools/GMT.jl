@@ -38,9 +38,9 @@ be achieved by previously reading the grid file.
 
 Though not particularly useful nor memory more efficient to read the grid first this example illustrates
 typical usage. That is, use GMT to process and map/plot data resident in Julia memory. GMT modules know
-how to manipulate import/create data stored in `GMTgrid`[Grid type](@ref), `GMTimage`[Image type](@ref),
-`GMTdataset`[Dataset type](@ref), `GMTcpt`[CPT type](@ref) and `GMTps`[Postscript type](@ref) objects.
-The helper functions `mat2grid`, `mat2img` and `mat2ds` exist to allow creating those objects from 2D arrays
+how to manipulate import/create data stored in [`GMTgrid`](@ref), [`GMTimage`](@ref),
+[`GMTdataset`](@ref), [`GMTcpt`](@ref) and [`GMTps`](@ref) objects.
+The helper functions [`mat2grid`](@ref), [`mat2img`](@ref) and [`mat2ds`](@ref) exist to allow creating those objects from 2D arrays
 of floats, uint8, uint16 and MxN matrices respectively.
 
 Example: create three grids with random data, compute their average and display it

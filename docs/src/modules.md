@@ -183,7 +183,7 @@ The issue with this solution, that could be implemented internally without user 
 currently only works on Windows.
 
 Another alternative to a file format is the option to create RGB images with *psconvert* and
-return it to Julia as a [Image type](@ref) type.
+return it to Julia as a [`GMTimage`](@ref) type.
 
     I = psconvert(in_memory=true, adjust=true)
 
@@ -194,7 +194,7 @@ image with the [`Images.jl`](https://github.com/JuliaImages/Images.jl) package.
 
 As referred in the [Monolithic](@ref) section, we have two programs to do read and writing. Their
 module names are *gmtread* and *gmtwrite*. These modules allow to import and export any of the GMT
-data types to and from external files. For instance, to save the grid *G* stored into a GMTgrid type
+data types to and from external files. For instance, to save the grid *G* stored into a [`GMTgrid`](@ref) type
 into the file *relief.nc* we run 
 
     gmtwrite("relief.nc", G)

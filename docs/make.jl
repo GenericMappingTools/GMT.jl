@@ -1,3 +1,7 @@
+using Pkg
+Pkg.activate("$(@__DIR__)")
+Pkg.update()
+
 using Documenter, GMT, GMT.Drawing, GMT.Gdal
 
 makedocs(
