@@ -9,9 +9,9 @@ function _precompile_()
 	@assert Base.precompile(Tuple{typeof(put_in_legend_bag),Dict{Symbol, Any},Vector{String},Matrix{Float64}})   # time: 0.0101455
 	@assert Base.precompile(Tuple{typeof(add_opt_module),Dict{Symbol, Any}})   # time: 0.365098
 
-	@assert Base.precompile(Tuple{typeof(imshow),GMTgrid{Float32, 2}})   # time: 12.84012
-	@assert Base.precompile(Tuple{typeof(finish_PS_module),Dict{Symbol, Any},Vector{String},String,Bool,Bool,Bool,GMTgrid{Float32, 2},Vararg{Any, N} where N})   # time: 0.1452611
-	@assert Base.precompile(Tuple{Core.kwftype(typeof(grdimage)),NamedTuple{(:show,), Tuple{Bool}},typeof(grdimage),String,GMTgrid{Float32, 2}})   # time: 0.043773
-	@assert Base.precompile(Tuple{typeof(common_get_R_cpt),Dict{Symbol, Any},String,String,String,Int64,GMTgrid{Float32, 2},Nothing,Nothing,String})   # time: 0.0355232
-	@assert Base.precompile(Tuple{typeof(common_shade),Dict{Symbol, Any},String,GMTgrid{Float32, 2},GMTcpt,Nothing,Nothing,String})   # time: 0.0226077
+	@assert Base.precompile(Tuple{typeof(imshow),GMTgrid{Array{Float32, 2}}})   # time: 12.84012
+	@assert Base.precompile(Tuple{typeof(finish_PS_module),Dict{Symbol, Any},Vector{String},String,Bool,Bool,Bool,GMTgrid{Array{Float32, 2}},Vararg{Any, N} where N})   # time: 0.1452611
+	@assert Base.precompile(Tuple{Core.kwftype(typeof(grdimage)),NamedTuple{(:show,), Tuple{Bool}},typeof(grdimage),String,GMTgrid{Array{Float32, 2}}})   # time: 0.043773
+	@assert Base.precompile(Tuple{typeof(common_get_R_cpt),Dict{Symbol, Any},String,String,String,Int64,GMTgrid{Array{Float32, 2}},Nothing,Nothing,String})   # time: 0.0355232
+	@assert Base.precompile(Tuple{typeof(common_shade),Dict{Symbol, Any},String,GMTgrid{Array{Float32, 2}},GMTcpt,Nothing,Nothing,String})   # time: 0.0226077
 end

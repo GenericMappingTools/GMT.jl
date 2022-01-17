@@ -20,7 +20,7 @@ Blend two 2D UInt8 or 2 RGB images using transparency.
 ### Returns
 A GMT intensity Image
 """
-function blendimg!(color::GMTimage{UInt8, 3}, shade::GMTimage{UInt8, 2}; new=false)
+function blendimg!(color::GMTimage{AbstractArray{UInt8, 3}}, shade::GMTimage{AbstractArray{UInt8, 2}}; new=false)
 
 	blend = (new) ? Array{UInt8,3}(undef, size(shade,1), size(shade,2), 3) : color.image
 

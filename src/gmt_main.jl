@@ -1,4 +1,36 @@
-Base.@kwdef mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
+"""
+	GMTgrid(fields...)
+
+Construct a GMT grid from data using optional header information.
+
+# Fields
+
+- `proj4::String`              Projection string in PROJ4 syntax (Optional)
+- `wkt::String`                Projection string in WKT syntax (Optional)
+- `epsg::Int`                  EPSG code
+- `range::Array{Float64,1}`    1x6[8] vector with [x_min, x_max, y_min, y_max, z_min, z_max [, v_min, v_max]]
+- `inc::Array{Float64,1}`      1x2[3] vector with [x_inc, y_inc [,v_inc]]
+- `registration::Int`          Registration type: 0 -> Grid registration; 1 -> Pixel registration
+- `nodata::Float64`            The value of nodata
+- `title::String`              Title (Optional)
+- `comment::String`            Remark (Optional)
+- `command::String`            Command used to create the grid (Optional)
+- `names::Vector{String}`      To use whith multi-layered and when layers have names (Optional)
+- `x::Array{Float64,1}`        [1 x n_columns] vector with XX coordinates
+- `y::Array{Float64,1}`        [1 x n_rows]    vector with YY coordinates
+- `v::Array{Float64,1}`        [v x n_bands]   vector with VV (vertical for 3D grids) coordinates
+- `z::Array{Float32,2}`        [n_rows x n_columns] grid array
+- `x_units::String`            Units of XX axis (Optional)
+- `y_units::String`            Units of YY axis (Optional)
+- `v_units::String`            Units of Vertical axis (Optional)
+- `z_units::String`            Units of z vlues (Optional)
+- `layout::String`             A three character string describing the grid memory layout
+- `scale::Union{Float64,Float32}`  When saving in file apply `z = z * scale + offset`
+- `offset::Union{Float64,Float32}`
+- `pad::Int`                   When != 0 means that the array is placed in a padded array of PAD rows/cols
+
+"""
+Base.@kwdef mutable struct GMTgrid{T<:AbstractArray}
 	proj4::String
 	wkt::String
 	epsg::Int
@@ -13,7 +45,7 @@ Base.@kwdef mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	x::Array{Float64,1}
 	y::Array{Float64,1}
 	v::Union{Vector{<:Real}, Vector{String}}
-	z::Array{T,N}
+	z::T
 	x_unit::String
 	y_unit::String
 	v_unit::String
@@ -24,14 +56,14 @@ Base.@kwdef mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	pad::Int=0
 end
 Base.size(G::GMTgrid) = size(G.z)
-Base.getindex(G::GMTgrid{T,N}, inds::Vararg{Int,N}) where {T,N} = G.z[inds...]
-Base.setindex!(G::GMTgrid{T,N}, val, inds::Vararg{Int,N}) where {T,N} = G.z[inds...] = val
+Base.getindex(G::GMTgrid, inds::Vararg{Int,N}) where N = G.z[inds...]
+Base.setindex!(G::GMTgrid, val, inds::Vararg{Int,N}) where N = G.z[inds...] = val
 
-Base.BroadcastStyle(::Type{<:GMTgrid}) = Broadcast.ArrayStyle{GMTgrid}()
-function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTgrid}}, ::Type{ElType}) where ElType
-	G = find4similar(bc.args)		# Scan the inputs for the GMTgrid:
-	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.names, G.x, G.y, G.v, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad)
-end
+#Base.BroadcastStyle(::Type{<:GMTgrid}) = Broadcast.ArrayStyle{GMTgrid}()
+#function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTgrid}}, ::Type{ElType}) where ElType
+#	G = find4similar(bc.args)		# Scan the inputs for the GMTgrid:
+#	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.names, G.x, G.y, G.v, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad)
+#end
 
 find4similar(bc::Base.Broadcast.Broadcasted) = find4similar(bc.args)
 find4similar(args::Tuple) = find4similar(find4similar(args[1]), Base.tail(args))
@@ -40,7 +72,35 @@ find4similar(::Tuple{}) = nothing
 find4similar(G::GMTgrid, rest) = G
 find4similar(::Any, rest) = find4similar(rest)
 
-mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
+"""
+	GMTimage(fields...)
+
+Construct a GMT image from data using optional header information.
+
+# Fields
+
+
+- `proj4::String`              Projection string in PROJ4 syntax (Optional)
+- `wkt::String`                Projection string in WKT syntax (Optional)
+- `epsg::Int`                  EPSG code
+- `range::Array{Float64,1}`    1x6 vector with [x_min x_max y_min y_max z_min z_max]
+- `inc::Array{Float64,1}`      1x2 vector with [x_inc y_inc]
+- `registration::Int`          Registration type: 0 -> Grid registration; 1 -> Pixel registration
+- `nodata::Unsigned`           The value of nodata
+- `color_interp::String`       If equal to "Gray" an indexed image with no cmap will get a gray cmap
+- `metadata::Vector{String}`   To store any metadata that can eventually be passed to GDAL (Optional)
+- `names::Vector{String}`      To use whith multi-band and when bands have names (Optional)
+- `x::Array{Float64,1}`        [1 x n_columns] vector with XX coordinates
+- `y::Array{Float64,1}`        [1 x n_rows]    vector with YY coordinates
+- `v::Array{Float64,1}`        [v x n_bands]   vector with vertical coords or wavelengths in hypercubes (Optional)
+- `image::Array{T,N}`          [n_rows x n_columns x n_bands] image array
+- `colormap::Array{Int32,1}`
+- `alpha::Array{UInt8,2}`      A [n_rows x n_columns] alpha array
+- `layout::String`             A four character string describing the image memory layout
+- `pad::Int`                   When != 0 means that the array is placed in a padded array of PAD rows/cols
+
+"""
+mutable struct GMTimage{T<:AbstractArray{T1} where T1 <: Unsigned}
 	proj4::String
 	wkt::String
 	epsg::Int
@@ -54,7 +114,7 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	x::Array{Float64,1}
 	y::Array{Float64,1}
 	v::Array{Float64,1}
-	image::Array{T,N}
+	image::T
 	colormap::Array{Int32,1}
 	n_colors::Int
 	alpha::Array{UInt8,2}
@@ -62,46 +122,95 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	pad::Int
 end
 Base.size(I::GMTimage) = size(I.image)
-Base.getindex(I::GMTimage{T,N}, inds::Vararg{Int,N}) where {T,N} = I.image[inds...]
-Base.setindex!(I::GMTimage{T,N}, val, inds::Vararg{Int,N}) where {T,N} = I.image[inds...] = val
+Base.getindex(I::GMTimage, inds::Vararg{Int,N}) where N = I.image[inds...]
+Base.setindex!(I::GMTimage, val, inds::Vararg{Int,N}) where N = I.image[inds...] = val
 
-Base.BroadcastStyle(::Type{<:GMTimage}) = Broadcast.ArrayStyle{GMTimage}()
-function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTimage}}, ::Type{ElType}) where ElType
-	I = find4similar(bc.args)		# Scan the inputs for the GMTimage:
-	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.metadata, I.names, I.x, I.y, I.v, similar(Array{ElType}, axes(bc)), I.colormap, I.n_colors, I.alpha, I.layout, I.pad)
-end
+#Base.BroadcastStyle(::Type{<:GMTimage}) = Broadcast.ArrayStyle{GMTimage}()
+#function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTimage}}, ::Type{ElType}) where ElType
+#	I = find4similar(bc.args)		# Scan the inputs for the GMTimage:
+#	GMTimage(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.metadata, I.names, I.x, I.y, I.v, similar(Array{ElType}, axes(bc)), I.colormap, I.n_colors, I.alpha, I.layout, I.pad)
+#end
 find4similar(I::GMTimage, rest) = I
 
+"""
+	GMTcpt(fields...)
+
+Construct a GMT [CPT] from data using optional header information.
+- `colormap::Array{Float64,2}`   Mx3 matrix equal to the first three columns of cpt
+- `alpha::Array{Float64,1}`      Vector of alpha values. One for each color.
+- `range::Array{Float64,2}`      Mx2 matrix with z range for each slice
+- `minmax::Array{Float64,1}`     Two elements Vector with zmin,zmax
+- `bfn::Array{Float64,2}`        A 3x3(4?) matrix with BFN colors (one per row) in [0 1] interval
+- `depth::Cint`                  Color depth 24, 8, 1
+- `hinge::Cdouble`               Z-value at discontinuous color break, or NaN
+- `cpt::Array{Float64,2}`        Mx6 matrix with r1 g1 b1 r2 g2 b2 for z1 z2 of each slice
+- `label::Vector{String}`        Labels of a Categorical CPT
+- `key::Vector{String}`          Keys of a Categorical CPT
+- `model::String`                String with color model rgb, hsv, or cmyk [rgb]
+- `comment::Array{String,1}`     Cell array with any comments
+
+[CPT]: https://docs.generic-mapping-tools.org/latest/cookbook/cpts.html
+
+"""
 mutable struct GMTcpt
-	colormap::Array{Float64,2}	# Mx3 matrix equal to the first three columns of cpt
-	alpha::Array{Float64,1}		# Vector of alpha values. One for each color.
-	range::Array{Float64,2}		# Mx2 matrix with z range for each slice
-	minmax::Array{Float64,1}	# Two elements Vector with zmin,zmax
-	bfn::Array{Float64,2}		# A 3x3(4?) matrix with BFN colors (one per row) in [0 1] interval
-	depth::Cint					# Color depth 24, 8, 1
-	hinge::Cdouble				# Z-value at discontinuous color break, or NaN
-	cpt::Array{Float64,2}		# Mx6 matrix with r1 g1 b1 r2 g2 b2 for z1 z2 of each slice
-	label::Vector{String}		# Labels of a Categorical CPT
-	key::Vector{String}			# Keys of a Categorical CPT
-	model::String				# String with color model rgb, hsv, or cmyk [rgb]
-	comment::Array{String,1}	# Cell array with any comments
+	colormap::Array{Float64,2}
+	alpha::Array{Float64,1}
+	range::Array{Float64,2}
+	minmax::Array{Float64,1}
+	bfn::Array{Float64,2}
+	depth::Cint
+	hinge::Cdouble
+	cpt::Array{Float64,2}
+	label::Vector{String}
+	key::Vector{String}
+	model::String
+	comment::Array{String,1}
 end
 GMTcpt() = GMTcpt(Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), 0, 0.0, Array{Float64,2}(undef,0,0), String[], String[], string(), String[])
 Base.size(C::GMTcpt) = size(C.range, 1)
 Base.isempty(C::GMTcpt) = (size(C) == 0)
 
+"""
+	GMTps(postscript::String, length::Int, mode::Int, comment::Arrray{String,1})
+
+Construct a GMT postscript plot container.
+
+- `postscript`   Actual PS plot (text string)
+- `length`       Byte length of postscript
+- `mode`         1 = Has header, 2 = Has trailer, 3 = Has both
+- `comment`      Cell array with any comments
+
+"""
 mutable struct GMTps
-	postscript::String			# Actual PS plot (text string)
-	length::Int 				# Byte length of postscript
-	mode::Int 					# 1 = Has header, 2 = Has trailer, 3 = Has both
-	comment::Array{String,1}	# Cell array with any comments
+	postscript::String
+	length::Int
+	mode::Int
+	comment::Array{String,1}
 end
 GMTps() = GMTps(string(), 0, 0, String[])
 Base.size(P::GMTps) = P.length
 Base.isempty(P::GMTps) = (P.length == 0)
 
-mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
-	data::Array{T,N}
+"""
+	GMTdataset(fields...)
+
+Construct a GMT dataset from data using optional header information.
+
+- `data::Array{T,N}`             Mx2 Matrix with segment data
+- `ds_bbox::Vector{Float64}`     Global BoundingBox (for when there are many segments)
+- `bbox::Vector{Float64}`        Segment BoundingBox
+- `attrib::Dict{String,String}`  Dictionary with attributes/values (optional)
+- `colnames::Vector{String}`     Column names. Antecipate using this with a future Tables inerface
+- `text::Vector{String}`         Array with text after data coordinates (mandatory only when plotting Text)
+- `header::String`               String with segment header (Optional but sometimes very useful)
+- `comment::Vector{String}`      Array with any dataset comments [empty after first segment]
+- `proj4::String`                Projection string in PROJ4 syntax (Optional)
+- `wkt::String`                  Projection string in WKT syntax (Optional)
+- `geom::Integer`                Geometry type. One of the GDAL's enum (wkbPoint, wkbPolygon, etc...)
+
+"""
+mutable struct GMTdataset{T<:AbstractArray{T1} where T1 <: Real}
+	data::T
 	ds_bbox::Vector{Float64}
 	bbox::Vector{Float64}
 	attrib::Dict{String, String}
@@ -114,22 +223,22 @@ mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 	geom::Int
 end
 Base.size(D::GMTdataset) = size(D.data)
-Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = D.data[inds...]
-Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int,N}) where {T,N} = D.data[inds...] = val
+Base.getindex(D::GMTdataset, inds::Vararg{Int,N}) where N = D.data[inds...]
+Base.setindex!(D::GMTdataset, val, inds::Vararg{Int,N}) where N = D.data[inds...] = val
 
-Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
-function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}}, ::Type{ElType}) where ElType
-	D = find4similar(bc.args)		# Scan the inputs for the GMTdataset:
-	GMTdataset(D.data, D.ds_bbox, D.bbox, D.attrib, D.colnames, D.text, D.header, D.comment, D.proj4, D.wkt, D.geom)
-end
+#Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
+#function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}}, ::Type{ElType}) where ElType
+#	D = find4similar(bc.args)		# Scan the inputs for the GMTdataset:
+#	GMTdataset(D.data, D.ds_bbox, D.bbox, D.attrib, D.colnames, D.text, D.header, D.comment, D.proj4, D.wkt, D.geom)
+#end
 find4similar(D::GMTdataset, rest) = D
 
-GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0)
-GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
-GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)
-GMTdataset(data::Array{Float32,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0)
-GMTdataset(data::Array{Float32,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
-GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)
+GMTdataset(data::AbstractArray{Float64,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0)
+GMTdataset(data::AbstractArray{Float64,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
+GMTdataset(data::AbstractArray{Float64,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)
+GMTdataset(data::AbstractArray{Float32,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0)
+GMTdataset(data::AbstractArray{Float32,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
+GMTdataset(data::AbstractArray{Float32,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)
 GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)
 
 struct WrapperPluto fname::String end
