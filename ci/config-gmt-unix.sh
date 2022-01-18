@@ -13,7 +13,7 @@ set (GMT_USE_THREADS TRUE)
 set (GMT_ENABLE_OPENMP TRUE)
 
 # recommended even for release build
-set (CMAKE_C_FLAGS "-Wall -Wdeclaration-after-statement ${CMAKE_C_FLAGS}")
+set (CMAKE_C_FLAGS "-Wall -Wdeclaration-after-statement -ftls-model=local-dynamic ${CMAKE_C_FLAGS}")
 # extra warnings
 set (CMAKE_C_FLAGS "-Wextra ${CMAKE_C_FLAGS}")
 EOF
