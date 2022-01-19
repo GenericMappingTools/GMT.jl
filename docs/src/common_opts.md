@@ -285,24 +285,27 @@ basemap(region="-30/30/-20/20", figsize=(12,8),
 
 # limits
 
-- **R | region | limits | xlimits,ylimits**
+- **R | region | limits | xlimits,ylimits | region_diag | limits_diag**
 
    *xmin*, *xmax*, *ymin*, and *ymax* specify the region of interest (aka, BoundingBox). For geographic
    regions, these limits correspond to *west*, *east*, *south*, and *north* and you may specify them in
-   decimal degrees or in [+|-]dd:mm[:ss.xxx][W|E|S|N] format.
-   
-   Using the form *region = [xmin xmax ymin ymax]* or the equivalent tuple alternative covers the largest
-   chunk of user cases. However, for fine tunning the limits setting we have an extended syntax that
-   involves the use of Named Tuples. Next needed case is when one want/need to specify the BoundingBox
-   with the *(xmin, ymin, xmax, ymax)* corners. As mentioned, this involves a NamedTuple keyword that
-   can have any of the following members name/value:
+   decimal degrees or in [+|-]dd:mm[:ss.xxx][W|E|S|N] format or pass them in as a string argument. When
+   it's a string the shorthands `region="global"` and `region="global360"` are equivalent to
+   `region=[-180 180 -90 90]` and `region=[0 360 -90 90]` respectively.
 
-   - *R=xx*, *region=xx* or *limits=xx* -- where *xx* is a string is interpreted as a GMT **-R** syntax string.
-   - *bb*, *lmits*, *region* -- a four (or six) elements array or tuple with *xmin, xmax, ymin, ymax [zmin zmax]*
-   - *bb=global* or *bb=:d* -- shorthand for *bb=[-180 180 -90 90]*
-   - *bb=global360* or *bb=:g* -- shorthand for *bb=[0 360 -90 90]*
-   - *bb_diag*, *limits_diag*, *region_diag* or *LLUR* -- a four elements array with *xmin, ymin, xmax, ymax*
-   - *diag=true* -- makes the *bb* mean *bb_diag*
+   Use the *region_diag* or *limits_diag* (or yet *region_llur* or *limits_llur*) to indicate that the
+   limits are to be passed to GMT as *xmin, ymin, xmax, ymax*. This form may be needed when dealing
+   with certain map projections.
+   
+   Using the form *region = [xmin xmax ymin ymax [zmin zmax]]* or the equivalent tuple alternative covers
+   the largest chunk of user cases. However, for fine tunning the limits setting we have an extended syntax
+   that involves the use of Named Tuples. This involves a NamedTuple keyword that can have any
+   of the following members name/value:
+
+   - *region=xx* or *limits=xx* -- where *xx* is a string is interpreted as a GMT **-R** syntax string.
+   - *lmits*, *region* -- a four (or six) elements array or tuple with *xmin, xmax, ymin, ymax [zmin zmax]*
+   - *limits_diag*, *region_diag* -- a four elements array with *xmin, ymin, xmax, ymax*
+   - *diag=true* -- makes the *region* mean *region_diag*
    - *cont* or *continents=continent name* where *continent name* is any of: *Africa*, *Antarctica*,
      *Asia*, *Europe*, *Oceania*,  *North America* or *South America* (or the shorthands: *AF, AN, AS, EU,
       OC, NA, SA*). This sets the geographic limts covered by these continents.

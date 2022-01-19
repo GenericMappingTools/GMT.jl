@@ -142,7 +142,7 @@ export
 
 	colorzones!, rasterzones!, crop, doy2date, date2doy, yeardecimal, median, mean, std, nanmean, nanstd,
 
-	wmsinfo, wmstest, wmsread
+	append2fig, regiongeog, wmsinfo, wmstest, wmsread
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -284,7 +284,7 @@ function __init__(test::Bool=false)
 	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
 	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
-	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")				# Stop those ugly grays
+	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")			# Stop those ugly grays
 end
 
 include("precompile_GMT_i.jl")

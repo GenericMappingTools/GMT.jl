@@ -89,27 +89,25 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	(show_kwargs[1]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
 
 	opt_R::String = ""
-	if ((val = find_in_dict(d, [:R :region :limits], del)[1]) !== nothing)
-		opt_R = build_opt_R(val)
+	val, symb = find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], del)
+	if (val !== nothing)
+		opt_R = build_opt_R(val, symb)
 	elseif (IamModern[1])
 		return cmd, ""
 	end
 
 	if (opt_R == "")		# See if we got the region as tuples of xlim, ylim [zlim]
 		R::String = "";		c = 0
-		if (haskey(d, :xlim) && isa(d[:xlim], Tuple) && length(d[:xlim]) == 2)
-			R = sprintf(" -R%.15g/%.15g", d[:xlim][1], d[:xlim][2])
+		if (((val = find_in_dict(d, [:xlim :xlimits])[1]) !== nothing) && isa(val, Tuple) && length(val) == 2)
+			R = @sprintf(" -R%.15g/%.15g", val[1], val[2])
 			c += 2
-			if (haskey(d, :ylim) && isa(d[:ylim], Tuple) && length(d[:ylim]) == 2)
-				R = @sprintf("%s/%.15g/%.15g", R, d[:ylim][1], d[:ylim][2])
+			if (((val = find_in_dict(d, [:ylim :ylimits])[1]) !== nothing) && isa(val, Tuple) && length(val) == 2)
+				R = @sprintf("%s/%.15g/%.15g", R, val[1], val[2])
 				c += 2
-				if (haskey(d, :zlim) && isa(d[:zlim], Tuple) && length(d[:zlim]) == 2)
-					R = @sprintf("%s/%.15g/%.15g", R, d[:zlim][1], d[:zlim][2])
-					del_from_dict(d, [:zlim])
+				if (((val = find_in_dict(d, [:zlim :zlimits])[1]) !== nothing) && isa(val, Tuple) && length(val) == 2)
+					R = @sprintf("%s/%.15g/%.15g", R, val[1], val[2])
 				end
-				del_from_dict(d, [:ylim])
 			end
-			del_from_dict(d, [:xlim])
 		end
 		if (R != "" && c == 4)  opt_R = R  end
 	end
@@ -139,7 +137,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	return cmd, opt_R
 end
 
-function build_opt_R(Val)::String		# Generic function that deals with all but NamedTuple args
+function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function that deals with all but NamedTuple args
 	R::String = ""
 	if (isa(Val, String) || isa(Val, Symbol))
 		r::String = string(Val)
@@ -149,22 +147,29 @@ function build_opt_R(Val)::String		# Generic function that deals with all but Na
 		else                       R = " -R" * r
 		end
 	elseif ((isa(Val, VMr) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
-		out = arg2str(Val)
-		R = " -R" * rstrip(out, '/')		# Remove last '/'
+		if (any(symb .== [:region_llur :limits_llur :limits_diag :region_diag]))
+			R = " -R" * sprintf("%.15g/%.15g/%.15g/%.15g+r", Val[1], Val[3], Val[2], Val[4])
+		else
+			R = " -R" * rstrip(arg2str(Val), '/')		# Remove last '/'
+		end
 	elseif (isa(Val, GItype))
 		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
 	elseif (isa(Val, GDtype))
 		bb = (isa(Val, GMTdataset)) ? Val.bbox : Val[1].ds_bbox
-		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[2], bb[3], bb[4])
+		if (any(symb .== [:region_llur :limits_llur :limits_diag :region_diag]))
+			R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[3], bb[2], bb[4])
+		else
+			R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[2], bb[3], bb[4])
+		end
 	end
 	return R
 end
 
-function build_opt_R(arg::NamedTuple)::String
+function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 	# Option -R can also be diabolicly complicated. Try to addres it. Stil misses the Time part.
 	BB::String = ""
 	d = nt2dict(arg)					# Convert to Dict
-	if ((val = find_in_dict(d, [:bb :limits :region :BoundingBox])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:limits :region])[1]) !== nothing)
 		if ((isa(val, Array{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 			if (haskey(d, :diag) || haskey(d, :diagonal))		# The diagonal case
 				BB = sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
@@ -173,13 +178,9 @@ function build_opt_R(arg::NamedTuple)::String
 				BB = rstrip(BB, '/')		# and remove last '/'
 			end
 		elseif (isa(val, String) || isa(val, Symbol))
-			t::String = string(val)
-			if     (t == "global")     BB = "-180/180/-90/90"
-			elseif (t == "global360")  BB = "0/360/-90/90"
-			else                       BB = string(val) 			# Whatever good stuff or shit it may contain
-			end
+			BB = string(val) 			# Whatever good stuff or shit it may contain
 		end
-	elseif ((val = find_in_dict(d, [:bb_diag :limits_diag :region_diag :LLUR])[1]) !== nothing)	# Alternative way of saying "+r"
+	elseif ((val = find_in_dict(d, [:limits_diag :region_diag])[1]) !== nothing)	# Alternative way of saying "+r"
 		_val = collect(Float64, val)
 		BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])
 	elseif ((val = find_in_dict(d, [:continent :cont])[1]) !== nothing)
@@ -200,7 +201,7 @@ function build_opt_R(arg::NamedTuple)::String
 
 	if ((val = find_in_dict(d, [:adjust :pad :extend :expand])[1]) !== nothing)
 		if (isa(val, String) || isa(val, Real))
-			t = string(val)
+			t::String = string(val)
 		elseif (isa(val, Array{<:Real}) || isa(val, Tuple))
 			t = join([@sprintf("%.15g/", Float64(x)) for x in val])
 			t = rstrip(t, '/')		# and remove last '/'
@@ -3537,6 +3538,38 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	end
 	show_non_consumed(d, cmd)
 	return P
+end
+
+# --------------------------------------------------------------------------------------------------
+"""
+    regiongeog(GI)::Tuple
+
+Returns a tuple with (lon_min, lon_max, lat_min, lat_max) of the projected `GI` object limits converted
+to geographic coordinates. Returns an empty tuple if `GI` has no registered referencing system.
+`GI` can either a ``GMTgrid``, a ``GMTimage`` or a file name (String) of one those types.
+"""
+function regiongeog(GI::GItype)::Tuple
+	((prj = getproj(GI, wkt=true)) == "") && (@warn("Input grid/image has no projection info"); return ())
+	c = xy2lonlat([GI.range[1] GI.range[3]; GI.range[2] GI.range[4]]; s_srs=prj)
+	tuple(c...)
+end
+function regiongeog(fname::String)::Tuple
+	((prj = getproj(fname, wkt=true)) == "") && (@warn("Input grid/image has no projection info"); return ())
+	info = grdinfo(fname, C=true);		# It should also report the
+	c = xy2lonlat([info[1].data[1] info[1].data[3]; info[1].data[2] info[1].data[4]]; s_srs=prj)
+	tuple(c...)
+end
+
+# --------------------------------------------------------------------------------------------------
+"""
+    append2fig(fname::String)
+
+Move the file `fname` to the default name and location (GMTjl_tmp.ps in tmp). The `fname` should be
+a PS file that has NOT been closed. Posterior calls to plotting methods will append to this file.
+Useful when creating figures that use a common base map that may be heavy (slow) to compute.
+"""
+function append2fig(fname::String)
+	mv(fname, joinpath(tempdir(), "GMTjl_tmp.ps"), force=true); nothing
 end
 
 # --------------------------------------------------------------------------------------------------
