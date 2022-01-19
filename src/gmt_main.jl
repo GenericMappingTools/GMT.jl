@@ -1500,6 +1500,9 @@ end
 # ---------- For Pluto ------------------------------------------------------------------------------
 Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.fname))
 
+# ---------- For fucking stop printing UInts in hexadecinal -----------------------------------------
+Base.show(io::IO, x::T) where {T<:Union{UInt, UInt128, UInt64, UInt32, UInt16, UInt8}} = Base.print(io, x)
+
 # ---------------------------------------------------------------------------------------------------
 function fakedata(sz...)
 	# 'Stolen' from Plots.fakedata()
