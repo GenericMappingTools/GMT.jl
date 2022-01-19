@@ -1506,10 +1506,6 @@ end
 	=#
 
 	function gdalinfo(ds::Dataset, options::Vector{String}=String[])
-		#options = GDALInfoOptionsNew(options, C_NULL)
-		#result = GDALInfo(ds.ptr, options)
-		#GDALInfoOptionsFree(options)
-		#return result
 		o = GDALInfoOptionsNew(options, C_NULL)
 		return try
 			GDALInfo(ds.ptr, o)
