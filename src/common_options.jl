@@ -156,11 +156,9 @@ function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function tha
 		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
 	elseif (isa(Val, GDtype))
 		bb = (isa(Val, GMTdataset)) ? Val.bbox : Val[1].ds_bbox
-		if (any(symb .== [:region_llur :limits_llur :limits_diag :region_diag]))
-			R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[3], bb[2], bb[4])
-		else
-			R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[2], bb[3], bb[4])
-		end
+		R = (any(symb .== [:region_llur :limits_llur :limits_diag :region_diag])) ?
+			@sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[3], bb[2], bb[4]) :
+			@sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[2], bb[3], bb[4])
 	end
 	return R
 end
