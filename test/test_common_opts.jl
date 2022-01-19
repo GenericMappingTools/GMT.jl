@@ -4,20 +4,17 @@
 	GMT.__init__(true);
 	GMT.dict2nt(Dict(:a =>1, :b => 2))
 	@test GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")[1] == " -R1/2/3/4/5/6"
+	@test GMT.parse_R(Dict(:region_llur => (1,2,3,4)), "")[1] == " -R1/3/2/4+r"
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
 	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
 	@test GMT.build_opt_R(:d) == " -Rd"
 	@test GMT.build_opt_R([]) == ""
-	@test GMT.build_opt_R((bb=:global,)) == " -R-180/180/-90/90"
-	@test GMT.build_opt_R((bb=:global360,)) == " -R0/360/-90/90"
-	@test GMT.build_opt_R((bb=(1,2,3,4),)) == " -R1/2/3/4"
-	@test GMT.build_opt_R((bb=(1,2,3,4), diag=1)) == " -R1/3/2/4+r"
-	@test GMT.build_opt_R((bb_diag=(1,2,3,4),)) == " -R1/3/2/4+r"
+	@test GMT.build_opt_R((limits=(1,2,3,4), diag=1)) == " -R1/3/2/4+r"
 	@test GMT.build_opt_R((continent=:s,)) == " -R=SA"
 	@test GMT.build_opt_R((continent=:s,extend=4)) == " -R=SA+R4"
 	@test GMT.build_opt_R((iso="PT,ES",extend=4)) == " -RPT,ES+R4"
 	@test GMT.build_opt_R((iso="PT,ES",extend=[2,3])) == " -RPT,ES+R2/3"
-	@test GMT.build_opt_R((bb=:d,unit=:k)) == " -Rd+uk"			# Idiot but ok
+	@test GMT.build_opt_R((region=:d,unit=:k)) == " -Rd+uk"			# Idiot but ok
 	@test_throws ErrorException("No, no, no. Nothing useful in the region named tuple arguments") GMT.build_opt_R((zz=:x,))
 	@test_throws ErrorException("Unknown continent name") GMT.build_opt_R((continent='a',extend=4))
 	@test_throws ErrorException("Increments for limits must be a String, a Number, Array or Tuple") GMT.build_opt_R((iso="PT",extend='8'))

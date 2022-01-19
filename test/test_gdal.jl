@@ -65,6 +65,7 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.OCTDestroyCoordinateTransformation(C_NULL);
 
 	gdalinfo("utmsmall.tif");
+	GMT.regiongeog("utmsmall.tif")
 	ds_small = Gdal.read("utmsmall.tif");
 	Gdal.getlayer(ds_small, 1);
 	gdalinfo(ds_small, [""]);
@@ -165,6 +166,7 @@ Gdal.GDALDestroyDriverManager()
 	ds = gmt2gd(G)
 	G  = gd2gmt(ds)
 	G = gd2gmt("utmsmall.tif");
+	GMT.regiongeog(G)
 	ds = gmt2gd(G)
 	gdalinfo(ds);
 	D = mat2ds([0 0; 10 0; 10 10; 11 10], geom=4);
