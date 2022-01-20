@@ -70,9 +70,9 @@ Parameters
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
-function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kwargs...)
+function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1, arg2, arg3)
+	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1, arg2, arg3, arg4)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
@@ -81,9 +81,12 @@ function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kw
 	                                 [:G :gridmask], [:I :reverse], [:N :mask], [:Z :in_range]])
 	#cmd = add_opt(d, cmd, "N', [:N :mask], (ocean=("", arg2str, 1), land=("", arg2str, 2)) )
 	if ((val = find_in_dict(d, [:F :polygon])[1]) !== nothing)
-        if isa(val, String)  cmd *= " -F" * val
-        else                 (arg1 === nothing) ? arg1 = val : arg2 = val;  cmd *= " -F"
-        end
+		cmd *= " -F"
+		if (isa(val, Matrix) || (isa(val, GDtype)))
+			_, n = put_in_slot("", ' ', arg1, arg2, arg3, arg4)
+			(n == 1) ? arg1 = val : (n == 2 ? arg2 = val : (n == 3 ? arg3 = val : arg4 = val))
+		elseif (!isa(val, String))  error("`polygon` option must be a String or a Matrix/GMTdataset. It was $(typeof(val))")
+		end
     end
 
 	cmd, args, n, = add_opt(d, cmd, "C", [:C :dist2pt :dist], :pts, Array{Any,1}([arg1, arg2]), (dist="+d",))
@@ -91,7 +94,7 @@ function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kw
 	cmd, args, n, = add_opt(d, cmd, "L", [:L :dist2line], :line, Array{Any,1}([arg1, arg2, arg3]), (dist="+d", ortho="_+p"))
 	if (n > 0)  arg1, arg2, arg3 = args[:]  end
 
-	common_grd(d, cmd0, cmd, "gmtselect ", arg1, arg2, arg3)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "gmtselect ", arg1, arg2, arg3, arg4)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
