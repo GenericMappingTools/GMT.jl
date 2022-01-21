@@ -29,17 +29,17 @@ jobs:
           - '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
           #- 'nightly'
         os:
-          #- ubuntu-latest
+          - ubuntu-latest
           #- ubuntu-18.04
           - macos-latest
         arch:
           - x64
         include:
           # Linux
-          #- name: Linux - Compile only
+          - name: Linux - Compile only
             #os: ubuntu-18.04
-            #os: ubuntu-latest
-            #run_in_pr : true
+            os: ubuntu-latest
+            run_in_pr : true
           - name: macOS
             os: macos-latest
             run_in_pr : true
@@ -110,9 +110,9 @@ jobs:
   
   docs:
     name: Documentation
-    runs-on: ubuntu-latest
+    #runs-on: ubuntu-latest
     #runs-on: ubuntu-18.04
-    #runs-on: macos-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
