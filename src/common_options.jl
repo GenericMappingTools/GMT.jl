@@ -772,7 +772,7 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 	xax, yax = false, false		# To know if these axis funs (primary) have been called
 	for symb in [:yaxis2 :xaxis2 :axis2 :zaxis :yaxis :xaxis]
 		add_this, what_B = false, [false, false]
-		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict)))
+		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict) || isa(d[symb], String)))
 			(isa(d[symb], Dict)) && (d[symb] = dict2nt(d[symb]))
 			#(!have_axes) && (have_axes = isa(d[symb], NamedTuple) && any(keys(d[symb]) .== :axes))
 			if     (symb == :axis2)   this_B, what_B = axis(d[symb], d, secondary=true); add_this = true
@@ -783,6 +783,7 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 			elseif (symb == :zaxis)   this_B, what_B = axis(d[symb], d, z=true); add_this = true
 			end
 			(add_this) && (this_opt_B *= this_B)
+			(isa(d[symb], String)) && (opt_B = "")		# For string input we must clear what's in opt_B
 			have_Bframe = have_Bframe || what_B[2]
 			delete!(d, symb)
 		end
@@ -2471,6 +2472,15 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	opt *= opt_Bframe
 
 	return opt, [have_Baxes, (opt_Bframe != "")]
+end
+
+function axis(opt::String, D::Dict; x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false)::Tuple{String, Vector{Bool}}
+	# Method for axes setting already passed as a string
+	(x && opt[1] != 'x') && (opt = "x" * opt)
+	(y && opt[1] != 'y') && (opt = "y" * opt)
+	(z && opt[1] != 'z') && (opt = "z" * opt)
+	(secondary && !z && opt[1] != 's') && (opt = "s" * opt)
+	return " -B" * opt, [false, false]
 end
 
 # ------------------------
