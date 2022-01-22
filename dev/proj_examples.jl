@@ -27,7 +27,7 @@ coast(region=:g, proj=(name=:laea, center=[280,30]), frame=:g, res=:crude, area=
 
 coast(region=(-30,30,60,72), proj=(name=:Stereographic, center=[0,90], paralles=60),
       frame=:a10g, res=:low, area=250, land=:royalblue, water=:seashell,
-      figscale="1:30000000",  savefig="7")
+      figscale="1:30000000", savefig="7")
 
 coast(region="-25/59/70/72+r", proj=(name=:stereographic, center=(10,90)), frame=:a20g, res=:low,
       area=250, land=:darkbrown, shore=:thinnest, water=:lightgray, figsize=11, savefig="8")
