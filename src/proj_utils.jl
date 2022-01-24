@@ -492,7 +492,7 @@ end
 # -------------------------------------------------------------------------------------------------
 function helper_geod(proj::String, s_srs::String, epsg::Integer)::Tuple{String, Ptr{Nothing}, Bool}
 	# 'proj' and 's_srs' are synonyms.
-	# Return the projection string ans also if the projection is geogs.
+	# Return the projection string and also if the projection is geogs.
 	if     (proj  != "")  prj_string = proj
 	elseif (s_srs != "")  prj_string = s_srs
 	elseif (epsg > 0)     prj_string = toPROJ4(importEPSG(epsg))
@@ -514,14 +514,14 @@ function get_ellipsoid(projPJ_ptr::Ptr{Cvoid})::geod_geodesic
 	#a, ecc2 = pj_get_spheroid_defn(projPJ_ptr)
 	#geod_geodesic(a, 1-sqrt(1-ecc2))
 	a, inv_f, = proj_ellipsoid_get_parameters(C_NULL, projPJ_ptr)
-	geod_geodesic(a, 1/inv_f)
+	f = (inv_f == 0.) ? 0.0 : 1 / inv_f		# Don't know why but for spheres we must set f = 0
+	geod_geodesic(a, f)
 end
 
 # -------------------------------------------------------------------------------------------------
 function proj_create(proj_str::String, ctx=C_NULL)
 	# Returns an Object that must be unreferenced with proj_destroy()
 	# THIS GUY IS VERY EXPENSIVE. TRY TO MINIMIZE ITS USAGE.
-	#projPJ_ptr = ccall((:proj_create, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), ctx, proj_str)
 	projPJ_ptr = ccall((:proj_create, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), ctx, proj2wkt(proj_str))
 	(projPJ_ptr == C_NULL) && error("Could not parse projection: \"$proj_str\"")
 	projPJ_ptr
