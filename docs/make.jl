@@ -143,5 +143,5 @@ makedocs(
 deploydocs(
 	repo   = "github.com/GenericMappingTools/GMT.jl.git",
 	target  = "build",
-	push_preview = true,
+	#push_preview = true,
 )
