@@ -40,7 +40,8 @@ function get_GMTver()
 			else
 				Pkg.build("GMT");		include(depfile)
 			end
-			ver = readlines(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`)[1]
+			#ver = readlines(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`)[1]
+			ver = first(eachline(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`))
 			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 			return out, true, _libgmt, _libgdal, _libproj, _GMT_bindir
 		catch err2;		println(err2)
@@ -75,7 +76,7 @@ const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
 const global current_view   = [""]			# To store the current viewpoint (-p)
 const global multi_col   = Vector{Bool}(undef, 1);multi_col[1] = false	# To allow plottig multiple columns at once (init to false)
 const global IamModern   = Vector{Bool}(undef, 1);IamModern[1] = false		# To know if we are in modern mode
-const global FirstModern = Vector{Bool}(undef, 1);FirstModern[1] = false	# To know 
+const global FirstModern = Vector{Bool}(undef, 1);FirstModern[1] = false	# To know
 const global IamSubplot  = Vector{Bool}(undef, 1);IamSubplot[1]  = false	# To know if we are in subplot mode
 const global usedConfPar = Vector{Bool}(undef, 1);usedConfPar[1] = false	# Hacky solution for the session's memory trouble
 const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false		# To know if we have an active plot theme

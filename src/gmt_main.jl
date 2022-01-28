@@ -430,21 +430,14 @@ function parse_mem_layouts(cmd::AbstractString)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function strtok(args, delim::String=" ")
-# A Matlab like strtok function
-	tok = "";	r = ""
-
-	@label restart
-	ind = findfirst(delim, args)
-	(ind === nothing) && return lstrip(args,collect(delim)), r		# Always clip delimiters at the begining
-	if (startswith(args, delim))
-		args = lstrip(args,collect(delim)) 			# Otherwise delim would be return as a token
-		@goto restart
-	end
-	tok = lstrip(args[1:ind[1]-1], collect(delim))	#		""
-	r = lstrip(args[ind[1]:end], collect(delim))
-
-	return tok,r
+function strtok(str)
+	# A Matlab like strtok function
+	o = split(str, limit=2, keepempty=false)
+	return (length(o) == 2) ? (string(o[1]), string(o[2])) : (string(o[1]), "")
+end
+function strtok(str, delim)
+	o = split(str, delim, limit=2, keepempty=false)
+	return (length(o) == 2) ? (string(o[1]), string(o[2])) : (string(o[1]), "")
 end
 
 #= ---------------------------------------------------------------------------------------------------
