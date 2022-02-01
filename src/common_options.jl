@@ -233,7 +233,7 @@ function opt_R2num(opt_R::String)
 		for k = 2:length(rs)  limits[k] = parse(Float64, rs[k])  end
 		if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
 	elseif (opt_R != " -R")		# One of those complicated -R forms. Just ask GMT the limits (but slow. It takes 0.2 s)
-		kml = gmt("gmt2kml " * opt_R, [0 0])[1]
+		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])[1]
 		limits = zeros(4)
 		t::String = kml.text[28][12:end];	ind = findfirst("<", t)		# north
 		limits[4] = parse(Float64, t[1:(ind[1]-1)])
@@ -417,15 +417,17 @@ function check_axesswap(d::Dict, width::AbstractString)
 		end
 	elseif (isa(val, Tuple))
 		for k in val
-			if     (string(k) == "x")  swap_x = true
-			elseif (string(k) == "y")  swap_y = true
-			elseif (string(k) == "xy") swap_x = true;  swap_y = true
+			t::String = string(k)
+			if     (t == "x")  swap_x = true
+			elseif (t == "y")  swap_y = true
+			elseif (t == "xy") swap_x = true;  swap_y = true
 			end
 		end
 	elseif (isa(val, String) || isa(val, Symbol))
-		if     (string(val) == "x")  swap_x = true
-		elseif (string(val) == "y")  swap_y = true
-		elseif (string(val) == "xy") swap_x = true;  swap_y = true
+		t = string(val)
+		if     (t == "x")  swap_x = true
+		elseif (t == "y")  swap_y = true
+		elseif (t == "xy") swap_x = true;  swap_y = true
 		end
 	end
 
@@ -608,13 +610,13 @@ function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)
 	# In this case def_fig_axes is dropped and only the contents of "frame" will be used. The argument can
 	# be a NamedTuple, which allows setting grid pen and individual axes, or as a string (see ex bellow).
 	pre = (stalone) ? " -B" : ""
-	get_int() = return (tryparse(Float64, o) !== nothing) ? o : ""	# Micro nested-function
+	get_int(oo) = return (tryparse(Float64, oo) !== nothing) ? oo : ""	# Micro nested-function
 	if (isa(args, NamedTuple))	# grid=(pen=?, x=?, y=?, xyz=?)
 		dd = nt2dict(args)
 		n = length(opt_B)
-		((o = string(get(dd, :x, ""))) !== "") && (opt_B *= pre*"xg" * get_int())
-		((o = string(get(dd, :y, ""))) !== "") && (opt_B *= pre*"yg" * get_int())
-		((o = string(get(dd, :z, ""))) !== "") && (opt_B *= pre*"zg" * get_int())
+		((o::String = string(get(dd, :x, ""))) !== "") && (opt_B *= pre*"xg" * get_int(o))
+		((o = string(get(dd, :y, ""))) !== "") && (opt_B *= pre*"yg" * get_int(o))
+		((o = string(get(dd, :z, ""))) !== "") && (opt_B *= pre*"zg" * get_int(o))
 		((o = string(get(dd, :xyz, ""))) !== "") && (opt_B *= pre*"g -Bzg")
 		(n == length(opt_B)) && (opt_B *= pre*"g")		# None of the above default to -Bg
 		if (haskey(dd, :pen))
@@ -628,7 +630,7 @@ function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)
 		end
 	else
 		# grid=:on => -Bg;	grid=:x => -Bxg;	grid="x10" => -Bxg10; grid=:y ...;  grid=:xyz => " -Bg -Bzg"
-		o::String = string(args)
+		o = string(args)
 		_x::Bool, _y::Bool, _xyz::Bool = (o[1] == 'x'), (o[1] == 'y'), startswith(o, "xyz")
 		if     (_x && !_xyz)  opt_B *= pre*"xg" * (length(o) > 1 ? o[2:end] : "")		# grid=:x or grid="x10"
 		elseif (_y && !_xyz)  opt_B *= pre*"yg" * (length(o) > 1 ? o[2:end] : "")
@@ -640,50 +642,53 @@ function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{String,String}
+function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tuple{String,String}
 	# opt_B is used to transmit a default value. If not empty the Bframe part must be at the end and only one -B...
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
+	opt_B::String = opt_B__	# Otherwise opt_B is core Boxed??
 	parse_theme(d)			# Must be first because some themes change def_fig_axes
-	def_fig_axes_  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
-	def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3[1]		# def_fig_axes is a global const
+	def_fig_axes_::String  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
+	def_fig_axes3_::String = (IamModern[1]) ? "" : def_fig_axes3[1]		# def_fig_axes is a global const
 
 	have_Bframe, got_Bstring, have_axes = false, false, false	# To know if the axis() function returns a -B<frame> setting
 
 	extra_parse = true;		have_a_none = false
 	if ((val = find_in_dict(d, [:B :frame :axes :axis], del)[1]) !== nothing)		# These four are aliases
-		isa(val, Dict) && (val = dict2nt(val))
 		if (isa(val, String) || isa(val, Symbol))
-			val = string(val)					# In case it was a symbol
-			if (val == "none")					# User explicitly said NO AXES
-				if     (haskey(d, :xlabel))  val = "-BS";	have_a_none = true		# Unless labels are wanted, but
-				elseif (haskey(d, :ylabel))  val = "-BW";	have_a_none = true		# GMT Bug forces using tricks
+			_val::String = string(val)			# In case it was a symbol
+			if (_val == "none")					# User explicitly said NO AXES
+				if     (haskey(d, :xlabel))  _val = "-BS";	have_a_none = true		# Unless labels are wanted, but
+				elseif (haskey(d, :ylabel))  _val = "-BW";	have_a_none = true		# GMT Bug forces using tricks
 				else   return cmd, ""
 				end
-			elseif (val == "noannot" || val == "bare")
+			elseif (_val == "noannot" || _val == "bare")
 				return cmd * " -B0", " -B0"
-			elseif (val == "same")				# User explicitly said "Same as previous -B"
+			elseif (_val == "same")				# User explicitly said "Same as previous -B"
 				return cmd * " -B", " -B"
-			elseif (val == "full")
+			elseif (_val == "full")
 				return cmd * " -Baf -BWSEN", " -Baf -BWSEN"
-			elseif (startswith(val, "auto"))
+			elseif (startswith(_val, "auto"))
 				is3D = false
-				if     (occursin("XYZg", val)) val = " -Bafg -Bzafg -B+" * ((GMTver <= v"6.1") ? "b" : "w");  is3D = true
-				elseif (occursin("XYZ", val))  val = def_fig_axes3[1];		is3D = true
-				elseif (occursin("XYg", val))  val = " -Bafg -BWSen"
-				elseif (occursin("XY", val))   val = def_fig_axes[1]
-				elseif (occursin("Xg", val))   val = " -Bafg -BwSen"
-				elseif (occursin("X",  val))   val = " -Baf -BwSen"
-				elseif (occursin("Yg", val))   val = " -Bafg -BWsen"
-				elseif (occursin("Y",  val))   val = " -Baf -BWsen"
-				elseif (val == "auto")         val = def_fig_axes[1]		# 2D case
+				if     (occursin("XYZg", _val)) _val = " -Bafg -Bzafg -B+" * ((GMTver <= v"6.1") ? "b" : "w");  is3D = true
+				elseif (occursin("XYZ", _val))  _val = def_fig_axes3[1];		is3D = true
+				elseif (occursin("XYg", _val))  _val = " -Bafg -BWSen"
+				elseif (occursin("XY", _val))   _val = def_fig_axes[1]
+				elseif (occursin("Xg", _val))   _val = " -Bafg -BwSen"
+				elseif (occursin("X",  _val))   _val = " -Baf -BwSen"
+				elseif (occursin("Yg", _val))   _val = " -Bafg -BWsen"
+				elseif (occursin("Y",  _val))   _val = " -Baf -BWsen"
+				elseif (_val == "auto")         _val = def_fig_axes[1]		# 2D case
 				end
 				cmd = guess_WESN(d, cmd)
-			elseif (length(val) <= 5 && !occursin(" ", val) && occursin(r"[WESNwesnzZ]", val))
-				val *= " af"		# To prevent that setting B=:WSen removes all annots
+			elseif (length(_val) <= 5 && !occursin(" ", _val) && occursin(r"[WESNwesnzZ]", _val))
+				_val *= " af"		# To prevent that setting B=:WSen removes all annots
 			end
+		elseif (isa(val, Real))		# for example, B=0
+			_val = string(val)
 		end
+		isa(val, Dict) && (val = dict2nt(val))
 		if (isa(val, NamedTuple))
 			_opt_B::String, what_B::Vector{Bool} = axis(val, d);	extra_parse = false
 			have_Bframe = what_B[2]
@@ -707,9 +712,9 @@ function parse_B(d::Dict, cmd::String, opt_B::String="", del::Bool=true)::Tuple{
 				opt_B = " " * def_Baxes * opt_B
 			end
 		else
-			opt_B = string(val)
+			opt_B = string(_val)
 		end
-		(extra_parse && isa(val, String)) && (got_Bstring = true)	# Signal to not try to consolidate with def_fig_axes
+		(extra_parse && (isa(val, String) || isa(val, Symbol))) && (got_Bstring = true)	# Signal to not try to consolidate with def_fig_axes
 		if (got_Bstring)		# Must check for spaces in titles, like in "ya10g10 +t\"Sector Diagram\""
 			first = false
 			for k in eachindex(opt_B)
@@ -967,14 +972,14 @@ function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::Stri
 	cmd, opt_J = parse_J(d, cmd, defaultJ, true, O, del)
 
 	parse_theme(d)		# Must be first because some themes change def_fig_axes
-	def_fig_axes_ = (IamModern[1]) ? "" : def_fig_axes[1]	# def_fig_axes is a global const
+	def_fig_axes_::String = (IamModern[1]) ? "" : def_fig_axes[1]	# def_fig_axes is a global const
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (occursin("3", caller) || caller == "grdview")
-			def_fig_axes3_ = (IamModern[1]) ? "" : def_fig_axes3[1]
+			def_fig_axes3_::String = (IamModern[1]) ? "" : def_fig_axes3[1]
 			cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes3_), del)
 		else
-			xx = (O ? "" : caller != "ternary" ? def_fig_axes_ : string(split(def_fig_axes_)[1]))
+			xx::String = (O ? "" : caller != "ternary" ? def_fig_axes_ : string(split(def_fig_axes_)[1]))
 			cmd, opt_B = parse_B(d, cmd, xx, del)	# For overlays, default is no axes
 		end
 	else
@@ -1293,8 +1298,8 @@ end
 function parse_theme(d::Dict, del::Bool=true)
 	# This must always be processed before parse_B so it's the first call in that function
 	if ((val = find_in_dict(d, [:theme], del)[1]) !== nothing)
-		isa(val, NamedTuple) && theme(string(val[1]); nt2dict(val)...)
-		(isa(val, String) || isa(val, Symbol)) && theme(string(val))
+		isa(val, NamedTuple) && theme(string(val[1])::String; nt2dict(val)...)
+		(isa(val, String) || isa(val, Symbol)) && theme(string(val)::String)
 	end
 end
 
@@ -2212,7 +2217,7 @@ function add_opt_module(d::Dict)::Vector{String}
 	# 'val' can be a NamedTuple with the module's arguments or a 'true'.
 	out = Vector{String}()
 	for symb in CTRL.callable			# Loop over modules list that can be called inside other modules
-		r = nothing
+		r::String = ""
 		if (haskey(d, symb))
 			val = d[symb]
 			if isa(val, Dict)  val = dict2nt(val)  end
@@ -2254,7 +2259,7 @@ function add_opt_module(d::Dict)::Vector{String}
 			end
 			delete!(d, symb)
 		end
-		(r !== nothing) && append!(out, [r])
+		(r != "") && append!(out, [r])
 	end
 	return out
 end
@@ -3478,6 +3483,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	cmd, opt_T = prepare2geotif(d, cmd, opt_T, O)		# Settings for the GeoTIFF and KML cases
 	(finish) && (cmd = finish_PS(d, cmd, output, K, O))
 
+	have_Vd = haskey(d, :Vd)
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return length(r) == 1 ? r[1] : r  end 	# For tests only
 	img_mem_layout[1] = add_opt(d, "", "", [:layout])
 	if (img_mem_layout[1] == "images")  img_mem_layout[1] = "I   "  end	# Special layout for Images.jl
@@ -3503,20 +3509,20 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				opt_J = replace(proj4, " " => "")
 				lims = args[1].range
 				D::Vector{GMTdataset} = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
-				mm = extrema(D[1].data, dims=1)
-				xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = mm[1][1],mm[2][1],mm[1][2],mm[2][2]
+				xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = D[1].data[1],D[1].data[3],D[1].data[2],D[1].data[4]
 				opt_R::String = sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
 				o = scan_opt(cmd[1], "-J")
 				size_ = (o[1] == 'x') ? "+scale=" * o[2:end] : (o[1] == 'X') ? "+width=" * o[2:end] : ""
 				(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
 				cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
 				cmd[k] = replace(cmd[k], " -R" => opt_R)
+				have_Vd && println("\t",cmd[k])		# Useful to know what command was actaully executed.
 				orig_J, orig_R = o, scan_opt(cmd[1], "-R")
 			end
 		elseif (k > 1 && !is_psscale && !is_pscoast && !is_basemap && CTRL.pocket_call[1] !== nothing)
 			# For nested calls that need to pass data
 			P = gmt(cmd[k], CTRL.pocket_call[1])
-			CTRL.pocket_call[1] = nothing					# Clear it right away
+			CTRL.pocket_call[1] = nothing			# Clear it right away
 			continue
 		elseif (startswith(cmd[k], "psclip"))		# Shitty case. Pure (unique) psclip requires args. Compose cmd not
 			P = (CTRL.pocket_call[1] !== nothing) ? gmt(cmd[k], CTRL.pocket_call[1]) :
