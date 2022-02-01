@@ -291,7 +291,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function helper_gbar_fill(d::Dict)::Vector{String}
 	# This is a function that tryies to hammer the insistence that g_bar_fill is a Any
-	# g_bar_fill may hold a sequence of colors for gtroup Bar plots
+	# g_bar_fill may hold a sequence of colors for group Bar plots
 	gval = find_in_dict(d, [:fill :fillcolor], false)[1]	# Used for group colors
 	if (isa(gval, Array{String}) && length(gval) > 1)
 		g_bar_fill::Vector{String} = String[]
@@ -439,7 +439,7 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, arg1, arg2)
+function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, @nospecialize(arg1), @nospecialize(arg2))
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 	# N_ARGS will be == n_prev+1 when a -Ccpt was used. Otherwise they are equal.
 

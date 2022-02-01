@@ -223,7 +223,7 @@ function default_gdopts!(ds, opts::Vector{String}, dest::String)
 
 	ext = lowercase(splitext(dest)[2])
 	isTiff = (ext == ".tif" || ext == ".tiff")
-	isNC   = (driver == "netCDF" || ext == ".nc"  || ext == ".grd") && (width(ds) > 128 && height(ds > 128))
+	isNC   = (driver == "netCDF" || ext == ".nc"  || ext == ".grd") && (width(ds) > 128 && height(ds) > 128)
 	(ext == ".grd") && append!(opts, ["-of", "netCDF"])		# Accept .grd as meaning netcdf and not Surfer ascii (GDAL default)
 	((dt == 1 || isTiff) && !any(startswith.(opts, "COMPRESS"))) && append!(opts, ["-co", "COMPRESS=DEFLATE", "-co", "PREDICTOR=2"])
 	((dt == 1 || isTiff) && !any(startswith.(opts, "TILED"))) && append!(opts, ["-co", "TILED=YES"])
