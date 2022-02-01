@@ -143,6 +143,7 @@
 	@test GMT.font(("10p","Times", :red)) == "10p,Times,red"
 	r = text(text_record([0 0], "TopLeft"), R="1/10/1/10", J=:X10, F=(region_justify=:MC,font=("10p","Times", :red)), Vd=dbg2);
 	ind = findfirst("-F", r); @test GMT.strtok(r[ind[1]:end])[1] == "-F+cMC+f10p,Times,red"
+	@test GMT.strtok("/aa /bb", '/')[1] == "aa "
 
 	@test GMT.build_pen(Dict(:lw => 1, :lc => [1,2,3])) == "1,1/2/3"
 	@test GMT.parse_pen((0.5, [1 2 3])) == "0.5,1/2/3"
