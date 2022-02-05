@@ -81,7 +81,7 @@ takes place. One may also force the automatic installation by setting the enviro
 
   * Since *GMT* produces PostScript you need a PS interpreter. Windows installer comes with ghostcript but on Mac/Linux you need to:
 
-      Install `Ghostscript` and `ghostview` at <https://www.ghostscript.com/download/gsdnld.html>
+      Install `Ghostscript` and `ghostview` at <https://ghostscript.com/releases/gsdnld.html>
 
 Using
 =====
