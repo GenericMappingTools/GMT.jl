@@ -1,7 +1,7 @@
 """
 	triangulate(cmd0::String="", arg1=nothing; kwargs...)
 
-Reads one or more ASCII [or binary] files (or standard input) containing x,y[,z] and performs Delaunay
+Reads randomly-spaced x,y[,z] (or file) and performs Delaunay
 triangulation, i.e., it find how the points should be connected to give the most equilateral
 triangulation possible. 
 
@@ -75,8 +75,9 @@ function triangulate(cmd0::String="", arg1=nothing; kwargs...)
 	cmd  = parse_these_opts(cmd, d, [[:C :slope_grid], [:D :derivatives], [:E :empty], [:M :network],
                                      [:N :ids], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])
 	cmd = parse_Q_tri(d, [:Q :voronoi], cmd)
-	if (occursin("-I", cmd) && occursin("-R", cmd) && !occursin("-G", cmd)) cmd *= " -G"  end
-	if (!occursin("-G", cmd)) cmd, = parse_J(d, cmd)  end
+	(occursin("-I", cmd) && occursin("-R", cmd) && !occursin("-G", cmd)) && (cmd *= " -G")
+	(occursin("-Q", cmd) && !occursin("-M", cmd)) && (cmd *= " -M")		# Otherwise kills Julia (GMT bug)
+	(!occursin("-G", cmd)) && (cmd = parse_J(d, cmd)[1])
 
 	common_grd(d, cmd0, cmd, "triangulate ", arg1)		# Finish build cmd and run it
 end
@@ -85,11 +86,25 @@ end
 function parse_Q_tri(d::Dict, symbs::Array{Symbol}, cmd::String)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Bool | String")	# Just print the options
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		cmd *= " -Q";   val_ = string(val)
+		cmd *= " -Q";   val_::String = string(val)
 		(startswith(val_, "pol")) && (cmd *= "n")
-    end
-    return cmd
+	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
 triangulate(arg1::Array, cmd0::String=""; kw...) = triangulate(cmd0, arg1; kw...)
+
+#= ---------------------------------------------------------------------------------------------------
+function triplot(in; tol=0.0, onlyedges::Bool=true, noplot::Bool=false, voronoi::Bool=false, kw...)
+	if (voronoi)
+		d = KW(kw)
+		opt_R = parse_R(d, "")[2]
+		(opt_R == "") && (opt_R = read_data(d, "", "", in, "")[3])
+		opt_Q = onlyedges ? "" : "pol"
+	end
+	D = voronoi ? triangulate(in, M=true, Q=opt_Q, R=opt_R[4:end], Vd=1) : delaunay(in, tol, onlyedges)
+	noplot && return D
+	GMT.common_plot_xyz("", D, "plot", true, false, kw...)
+end
+=#
