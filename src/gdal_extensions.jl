@@ -107,7 +107,7 @@ end
 ### Parameters
 * `geom1`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
 * `geom2`: Second geometry. AbstractGeometry if `geom1::AbstractGeometry` or a GMTdataset/Matrix if `geom1` is GMT type 
-* `gdataset`: Returns a GDAL IGeometry even when input are GMTdataset or Matrix
+* `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 
 Returns a new geometry representing the intersection of the geometries, or NULL
 if there is no intersection or an error occurs.
@@ -128,7 +128,7 @@ intersection(D1, D2; gdataset=false) = helper_geoms_run_fun(intersection, D1, D2
 ### Parameters
 * `geom1`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
 * `geom2`: Second geometry. AbstractGeometry if `geom1::AbstractGeometry` or a GMTdataset/Matrix if `geom1` is GMT type 
-* `gdataset`: Returns a GDAL IGeometry even when input are GMTdataset or Matrix
+* `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 
 Computes a new geometry representing the union of the geometries.
 
@@ -145,7 +145,7 @@ polyunion(D1, D2; gdataset=false) = helper_geoms_run_fun(polyunion, D1, D2; gdat
 ### Parameters
 * `geom1`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
 * `geom2`: Second geometry. AbstractGeometry if `geom1::AbstractGeometry` or a GMTdataset/Matrix if `geom1` is GMT type 
-* `gdataset`: Returns a GDAL IGeometry even when input are GMTdataset or Matrix
+* `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 
 Generates a new geometry which is the region of this geometry with the region of the other geometry removed.
 
@@ -162,7 +162,7 @@ difference(D1, D2; gdataset=false) = helper_geoms_run_fun(difference, D1, D2; gd
 ### Parameters
 * `geom1`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
 * `geom2`: Second geometry. AbstractGeometry if `geom1::AbstractGeometry` or a GMTdataset/Matrix if `geom1` is GMT type 
-* `gdataset`: Returns a GDAL IGeometry even when input are GMTdataset or Matrix
+* `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 
 Generates a new geometry representing the symmetric difference of the geometries
 or NULL if the difference is empty or an error occurs.
@@ -244,13 +244,14 @@ envelope3d(D) = helper_geoms_run_fun(envelope3d, D, false)
 
 # ---------------------------------------------------------------------------------------------------
 """
-    simplify(geom::AbstractGeometry, tol::Real)
+    simplify(geom::AbstractGeometry, tol::Real; gdataset=false)
 
 Compute a simplified geometry.
 
 ### Parameters
 * `geom`: the geometry.
 * `tol`: the distance tolerance for the simplification.
+* `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 """
 simplify(geom::AbstractGeometry, tol::Real) = IGeometry(OGR_G_Simplify(geom.ptr, tol))
 function simplify(D, tol::Real; gdataset=false)
@@ -260,18 +261,19 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    delaunay(geom::AbstractGeometry, tol::Real, onlyedges::Bool)
+    delaunay(geom::AbstractGeometry, tol::Real=0, onlyedges::Bool=true; gdataset=false)
 
 ### Parameters
 * `geom`: the geometry.
 * `tol`: optional snapping tolerance to use for improved robustness
 * `onlyedges`: if `true`, will return a MULTILINESTRING, otherwise it
     will return a GEOMETRYCOLLECTION containing triangular POLYGONs.
+* `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 
 Return a Delaunay triangulation of the vertices of the geometry.
 """
 delaunaytriangulation(geom::AbstractGeometry, tol::Real, edges::Bool) = IGeometry(OGR_G_DelaunayTriangulation(geom.ptr, tol, edges))
-function delaunaytriangulation(D, tol::Real, edges::Bool; gdataset=false)
+function delaunaytriangulation(D, tol::Real=0, edges::Bool=true; gdataset=false)
 	geom = helper_1geom(D)
 	ig = delaunaytriangulation(geom, tol, edges)
 	return (gdataset) ? ig : gd2gmt(ig)
@@ -490,7 +492,7 @@ function helper_2geoms(D1, D2)
 end
 
 function helper_1geom(D)
-	(!isa(D, Matrix{<:Real}) && !isa(D, Matrix{<:Real}) && !isa(D, GMT.GMTdataset) && !isa(D, Vector{<:GMT.GMTdataset}) ) && error("Input mut be GMTdatset or Matrix{Real}")
+	(!isa(D, Matrix{<:Real}) && !isa(D, GMT.GMTdataset) && !isa(D, Vector{<:GMT.GMTdataset})) && error("Input mut be GMTdatset or Matrix{Real}")
 	ds = gmt2gd(D)
 	getgeom(unsafe_getfeature(getlayer(ds, 0),0))
 end

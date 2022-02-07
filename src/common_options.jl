@@ -2991,7 +2991,7 @@ read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool
 # ---------------------------------------------------------------------------------------------------
 function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
 	# In case DATA holds a file name, read that data and put it in ARG
-	# Also compute a tight -R if this was not provided
+	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
 
 	(show_kwargs[1]) && return cmd, arg, opt_R, Vector{GMTdataset}(), ""		# In HELP mode we do nothing here
 

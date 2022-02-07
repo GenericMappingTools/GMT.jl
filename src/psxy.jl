@@ -125,9 +125,9 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
-	if ((!got_Zvars && !is_ternary) || bar_ok)	# If "bar" ONLY if not bar-group
+	if ((arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))	# If "bar" ONLY if not bar-group
 		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
-		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
+		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1)
 	end
 
 	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt somewhere else
@@ -196,7 +196,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
 	(mcc && caller == "bar" && !got_usr_R && opt_R != " -R") && (cmd = recompute_R_4bars!(cmd, opt_R, arg1))	# Often needed
 	_cmd = build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
-	
+
 	(got_Zvars && opt_S == "" && opt_W == "" && !occursin(" -G", _cmd[1])) && (_cmd[1] *= " -W0.5")
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
@@ -275,7 +275,7 @@ function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D
 		penC, penS = "", "";	cycle=:cycle;	multi_col[1] = false	# Reset because this is a use-only-once option
 		(haskey(d, :multicol)) && delete!(d, :multicol)
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
-		if (opt_W != "")  penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))
+		if (opt_W != "")  _, penC, penS = break_pen(scan_opt(opt_W, "-W"))
 		else              _cmd[1] *= " -W0.5"
 		end
 		if (penC != "")  cycle = [penC]  end
@@ -320,7 +320,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 
 	if (got_Ebars)
 		opt_E = scan_opt(cmd, "-E")
-		((ind = findfirst("+", opt_E)) !== nothing) && (opt_E = opt_E[1:ind[1]-1])	# Strip eventual modifiers
+		((ind  = findfirst("+", opt_E)) !== nothing) && (opt_E = opt_E[1:ind[1]-1])	# Strip eventual modifiers
 		(((ind = findfirst("X", opt_E)) !== nothing) || ((ind = findfirst("Y", opt_E)) !== nothing)) && return cmd, arg1
 		n_xy_bars = (findfirst("x", opt_E) !== nothing) + (findfirst("y", opt_E) !== nothing)
 		n_cols = size(arg1,2)
@@ -439,26 +439,32 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, @nospecialize(arg1), @nospecialize(arg2))
+function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, @nospecialize(arg1))
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 	# N_ARGS will be == n_prev+1 when a -Ccpt was used. Otherwise they are equal.
 
-	(arg1 === nothing || isa(arg1, GMT.GMTcpt)) && return cmd, arg1, arg2, N_args, false  # Play safe
-
 	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
-	if ((!(N_args > n_prev || len < length(cmd)) && mz === nothing) && !bar_ok)	# No color request, so return right away
-		return cmd, arg1, arg2, N_args, false
+	if ((!(N_args > n_prev || len < length(cmd)) && mz === nothing) && !bar_ok)		# No color request, so return right away
+		return cmd, arg1, nothing, N_args, false
 	end
 
 	# Filled polygons with -Z don't need extra col
-	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, arg2, N_args, false
+	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, nothing, N_args, false
 
 	if     (isa(arg1, Vector{<:GMTdataset}))           n_rows, n_col = size(arg1[1])
 	elseif (isa(arg1,GMTdataset) || isa(arg1, Array))  n_rows, n_col = size(arg1)
 	end
 
+	if ((mz !== nothing && length(mz) != n_rows) || (mz === nothing && opt_i != ""))
+		warn1 = string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it.")
+		warn2 = "Plotting with color table requires adding one more column to the dataset but your -i
+		option didn't do it, so you won't get what you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots"
+		(mz !== nothing) ? @warn(warn1) : @warn(warn2)
+		return cmd, arg1, nothing, N_args, true
+	end
+
 	if (!isempty(bar_fill))
-		if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1 = hcat(arg1, 1:n_rows)
+		if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1         = hcat(arg1, 1:n_rows)
 		elseif (isa(arg1, Vector{<:GMTdataset}))       arg1[1].data = hcat(arg1[1].data, 1:n_rows)
 		end
 		arg2::GMTcpt = gmt(string("makecpt -T1/$(n_rows+1)/1 -C" * join(bar_fill, ",")))
@@ -468,18 +474,12 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 		return cmd, arg1, arg2, 2, true
 	end
 
-	warn1 = string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it.")
-	warn2 = "Plotting with color table requires adding one more column to the dataset but your -i
-	option didn't do it, so you won't get what you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots"
-
 	if (n_col <= 2+is3D)
 		if (mz !== nothing)
-			if (length(mz) != n_rows)  @warn(warn1); @goto noway  end
 			if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1    = hcat(arg1, mz[:])
 			elseif (isa(arg1, Vector{<:GMTdataset}))       arg1[1] = hcat(arg1[1], mz[:]) 
 			end
 		else
-			if (opt_i != "")  @warn(warn2);		@goto noway		end
 			cmd *= " -i0-$(1+is3D),$(1+is3D)"
 			if ((val = find_in_dict(d, [:markersize :ms :size])[1]) !== nothing)
 				cmd *= "-$(2+is3D)"		# Because we know that an extra col will be added later
@@ -487,12 +487,10 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 		end
 	else
 		if (mz !== nothing)				# Here we must insert the color col right after the coords
-			if (length(mz) != n_rows)  @warn(warn1); @goto noway  end
 			if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1    = hcat(arg1[:,1:2+is3D],    mz[:], arg1[:,3+is3D:end])
 			elseif (isa(arg1, Vector{<:GMTdataset}))       arg1[1] = hcat(arg1[1][:,1:2+is3D], mz[:], arg1[1][:,3+is3D:end])
 			end
 		elseif (got_Ebars)				# The Error bars case is very multi. Don't try to guess then.
-			if (opt_i != "")  @warn(warn2);	@goto noway  end
 			cmd *= " -i0-$(1+is3D),$(1+is3D),$(2+is3D)-$(n_col-1)"
 		end
 	end
@@ -518,9 +516,9 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 
 		(!occursin(" -C", cmd)) && (cmd *= " -C")	# Need to inform that there is a cpt to use
 		N_args = 2
+	else
+		arg2 = nothing
 	end
-
-	@label noway
 
 	return cmd, arg1, arg2, N_args, true
 end

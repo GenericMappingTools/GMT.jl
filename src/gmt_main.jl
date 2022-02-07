@@ -135,7 +135,7 @@ GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], Dic
 struct WrapperPluto fname::String end
 
 const global GItype = Union{GMTgrid, GMTimage}
-const global GDtype = Union{GMTdataset, Vector{GMTdataset}}
+const global GDtype = Union{GMTdataset, Vector{<:GMTdataset}}
 
 """
 Call a GMT module. This function is not called directly by the users,

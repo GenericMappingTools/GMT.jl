@@ -164,11 +164,12 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 	gmtype = Gdal.getgeomtype(geom)
 	if (gmtype == Gdal.wkbPolygon)		# getx() doesn't work for polygons
 		geom = Gdal.getgeom(geom,0)
-	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString)
+	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString || gmtype == Gdal.wkbGeometryCollection)
 		n_pts = Gdal.ngeom(geom)
 		D = Vector{GMTdataset}(undef, n_pts)
 		[D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")[1] for k = 1:n_pts]
 		(proj != "") && (D[1].proj4 = proj)
+		set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
 		return D
 	elseif (gmtype == wkbMultiPoint)
 		n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
