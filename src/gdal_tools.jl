@@ -14,7 +14,7 @@ on the input type). To force the return of a GDAL dataset use the option `gdatas
 - `options`:   List of options. The accepted options are the ones of the gdal_translate utility.
             This list can be in the form of a vector of strings, or joined in a simgle string.
 - `kwargs`: Besides what was mentioned above one can also use `meta=metadata`, where `metadata`
-            is a string vector with the form "NAME=...." foe each of its elements. This data
+            is a string vector with the form "NAME=...." for each of its elements. This data
             will be recognized by GDAL as Metadata.
 
 ### Returns
