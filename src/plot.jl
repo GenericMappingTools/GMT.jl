@@ -633,9 +633,9 @@ function helper_arrows(d::Dict, del::Bool=true)
 		end
 		if (isa(val, String))		# An hard core GMT string directly with options
 			cmd = (val[1] != code) ? code * val : val	# In last case the GMT string already has vector flag char
-		elseif (isa(val, Number))  cmd = code * "$val"
+		elseif (isa(val, Real))  cmd = code * "$val"
 		elseif (symb == :arrow4 || symb == :vector4)  cmd = code * vector4_attrib(val)
-		else                       cmd = code * vector_attrib(val)
+		else                     cmd = code * vector_attrib(val)
 		end
 	end
 	return cmd
@@ -710,10 +710,11 @@ Example:
 function hlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
-	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
-	len::Int = length(arg1)
+	(arg1 === nothing && ((arg1_ = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
+	# If I don't do this stupid gymn with arg1 vs arg1_ then arg1 is Core.Boxed F..
+	len::Int = (arg1 !== nothing) ? length(arg1) : length(arg1_)
 	mat::Matrix{Float64} = ones(2, len)
-	[mat[1,k] = mat[2,k] = arg1[k] for k = 1:len]
+	(arg1 !== nothing) ? [mat[1,k] = mat[2,k] = arg1[k] for k = 1:len] : [mat[1,k] = mat[2,k] = arg1_[k] for k = 1:len]
 	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
 	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 
@@ -744,10 +745,12 @@ Example:
 function vlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
-	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
-	len::Int = length(arg1)
+	(arg1 === nothing && ((arg1_ = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
+	# If I don't do this stupid gymn with arg1 vs arg1_ then arg1 is Core.Boxed F..
+	len::Int = (arg1 !== nothing) ? length(arg1) : length(arg1_)
+
 	mat::Matrix{Float64} = ones(2, len)
-	mat[1,:] = mat[2,:] = arg1
+	mat[1,:] = mat[2,:] = (arg1 !== nothing) ? arg1 : arg1_
 	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[3:4]) : [-1e50, 1e50]
 	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 	# Now we need tp swapp x / y columns because the vlines case is more complicated to implement.
