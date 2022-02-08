@@ -6,7 +6,8 @@ function text_record(data, text, hdr=Vector{String}())
 	(!isa(data, Array{Float64})) && (data = Float64.(data))
 
 	if (isa(text, String))
-		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
+		_hdr = isempty(hdr) ? "" : hdr[1]
+		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], _hdr, String[], "", "", 0)
 	elseif (isa(text, Vector{String}))
 		if (text[1][1] == '>')			# Alternative (but risky) way of setting the header content
 			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text[2:end], text[1], String[], "", "", 0)
@@ -26,8 +27,8 @@ function text_record(data, text, hdr=Vector{String}())
 	end
 	return T
 end
-text_record(text) = text_record(Array{Float64,2}(undef,0,0), text)
-text_record(text::Vector{String}, hdr::String) = text_record(Array{Float64,2}(undef,0,0), text, hdr)
+text_record(text::String, hdr::String="") = text_record(fill(NaN,1,2), text, (hdr == "") ? String[] : [hdr])
+text_record(text::Vector{String}, hdr::Union{String,Vector{String}}=String[]) = text_record(fill(NaN,length(text),2), text, hdr)
 
 # ---------------------------------------------------------------------------------------------------
 """
