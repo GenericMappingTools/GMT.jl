@@ -63,7 +63,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	show_kwargs[1] && legend_help()
 	(opt_D == "") && error("The `position` argument is mandatory.")
-	!contains(opt_D, "+w") && error("The `position` argument MUST contain the legend's width specification.")
+	#!contains(opt_D, "+w") && error("The `position` argument MUST contain the legend's width specification.")
 	cmd *= opt_D
 	isa(arg1, NamedTuple) && (arg1 = text_record(mk_legend(arg1)))
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)

@@ -6,7 +6,8 @@ function text_record(data, text, hdr=Vector{String}())
 	(!isa(data, Array{Float64})) && (data = Float64.(data))
 
 	if (isa(text, String))
-		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
+		_hdr = isempty(hdr) ? "" : hdr[1]
+		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], _hdr, String[], "", "", 0)
 	elseif (isa(text, Vector{String}))
 		if (text[1][1] == '>')			# Alternative (but risky) way of setting the header content
 			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text[2:end], text[1], String[], "", "", 0)
@@ -15,19 +16,21 @@ function text_record(data, text, hdr=Vector{String}())
 			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, _hdr, String[], "", "", 0)
 		end
 	elseif (isa(text, Array{Array}) || isa(text, Array{Vector{String}}))
-		nl_t = length(text);	nl_d = length(data)
-		(nl_d > 0 && nl_d != nl_t) && error("Number of data points is not equal to number of text strings.")
+		nl_t = length(text);	nl_d = size(data,1)
+		(nl_d > 0 && nl_d != nl_t) && error("Number of data points ($nl_d) is not equal to number of text strings ($nl_t).")
 		T = Vector{GMTdataset}(undef,nl_t)
 		for k = 1:nl_t
-			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), Float64[], Float64[], Dict{String, String}(), String[], text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "", 0)
+			T[k] = GMTdataset((nl_d == 0 ? fill(NaN, length(text[k]) ,2) : data[k]), Float64[], Float64[], Dict{String, String}(), String[], text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "", 0)
 		end
 	else
 		error("Wrong type ($(typeof(text))) for the 'text' argin")
 	end
 	return T
 end
+text_record(text::String, hdr::String="") = text_record(fill(NaN,1,2), text, (hdr == "") ? String[] : [hdr])
+text_record(text::Vector{String}, hdr::Union{String,Vector{String}}=String[]) = text_record(fill(NaN,length(text),2), text, hdr)
+#text_record(text::AbstractVector, hdr::Vector{String}=String[]) = text_record(Array{Float64,2}(undef,0,0), text, hdr)
 text_record(text) = text_record(Array{Float64,2}(undef,0,0), text)
-text_record(text::Vector{String}, hdr::String) = text_record(Array{Float64,2}(undef,0,0), text, hdr)
 
 # ---------------------------------------------------------------------------------------------------
 """
