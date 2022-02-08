@@ -1129,7 +1129,11 @@ function dataset_init(API::Ptr{Nothing}, Darr, direction::Integer)::Ptr{GMT_DATA
 		unsafe_store!(S, Sb)
 		unsafe_store!(DT.segment, S, seg)
 	end
-	DT.n_records, DS.n_records = n_records, n_records
+	DT.n_records, DS.n_records = n_records, n_records	# They are equal because our GMT_DATASET have only one table
+	Dt = unsafe_load(DS.table)
+	unsafe_store!(Dt, DT)
+	unsafe_store!(DS.table, Dt)
+	unsafe_store!(D, DS)
 
 	return D
 end
