@@ -857,11 +857,12 @@ Returns a Vector{Float64} with the same length as the number of segments in D. I
 made up after the contents of `vals` but may be repeated such that each polygon of the same family, i.e.
 with the same `ids`, has the same value.
 """
-function polygonlevels(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::Vector{<:Real}, sub_head=0, case=0; kw...)::Vector{Float64}
+function polygonlevels(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::Vector{<:Real}; kw...)::Vector{Float64}
 	@assert((n_user_ids = length(user_ids)) == length(vals))
 	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
 	nocase = (find_in_kwargs(kw, [:nocase :insensitive])[1] === nothing) ? true : false
 	repeat = (find_in_kwargs(kw, [:repeat])[1] === nothing) ? false : true
+@show(typeof(user_ids))
 
 	n_seg = length(D)
 	zvals = fill(NaN, n_seg)
