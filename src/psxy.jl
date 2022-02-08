@@ -130,18 +130,20 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1)
 	end
 
-	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt somewhere else
-		cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	opt_G::String = ""
+	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt with somewhere else
+		((opt_G = add_opt_fill("", d, [:G :fill], 'G')) != "") && (cmd *= opt_G)	# Also keep track if -G was set
 	end
 	opt_Gsymb::String = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
 
 	# To track a still existing bug in sessions management at GMT lib level
 	got_pattern = (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb)) ? true : false
 
+	opt_L::String = ""
 	if (is_ternary)			# Means we are in the psternary mode
 		cmd = add_opt(d, cmd, "L", [:L :vertex_labels])
 	else
-		opt_L::String = add_opt(d, "", "L", [:L :close :polygon],
+		opt_L = add_opt(d, "", "L", [:L :close :polygon],
 		                (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
 		(length(opt_L) > 3 && !occursin("-G", cmd) && !occursin("+p", cmd)) && (opt_L *= "+p0.5p")
 		cmd *= opt_L
@@ -156,9 +158,15 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		opt_Wmarker = "0.5p," * arg2str(val)		# 0.25p is too thin?
 	end
 
-	opt_W::String = add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
-	((occursin("+c", opt_W)) && !occursin("-C", cmd)) &&
+	opt_W::String = add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
+	((occursin("+c", opt_W) || occursin("+z", opt_W)) && !occursin("-C", cmd)) &&
 		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
+
+	if (got_Zvars && opt_G == "" && !contains(opt_W, "+z"))		# Default to fill the polygons (-Z) with the level vector
+		!occursin("-C", cmd) && @warn("Used `level` option but no color scale provided. Expect ...")
+		cmd *= " -G+z"
+	end
+	((got_Zvars || opt_G != "") && opt_L == "") && (cmd *= " -L")	# GMT requires -L when -Z or -G
 
 	opt_S::String = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
