@@ -44,11 +44,15 @@ ids = names(incidence)[2:end];
 
 # ╔═╡ ee946f30-77a0-11eb-3b1a-3bcc0ae50f90
 md"
-Because the multi-segment headers have several fields in a comma separated string and the one we care (the one that is common with the names in the **Pt** dataset) is in the seventh position we use argument **7**. Last argument, **2** means to convert all names in the **Pt** headers to upper case so we can compare them with the names in **ids**. The comparison is made inside the next call to the ``make\_zvals\_vec()`` function that takes care to return the numerical vector that we need in *plot's* **level** option
+Each of the `Pt` datasets have attributes (*e.g.*, Pt[1].attrib) and the one that is common with the names in **ids** is the
+``Pt[1].attrib["NAME_2]`` (the *conselho* name). But the names in *data_concelhos_incidencia.csv* (from which the **ids** are derived)
+and the *concelhos.shp* (that we read into ``Pt``) do not use the same case (one is full upper case) so we need to use the
+``nocase=true`` below. The comparison is made inside the next call to the ``polygonlevels()`` function that takes care to
+return the numerical vector that we need in *plot's* **level** option.
 "
 
 # ╔═╡ fd378900-77a0-11eb-304a-65d816ef0bb5
-zvals = GMT.make_zvals_vec(Pt, ids, r, 7, 2);
+zvals = polygonlevels(Pt, ids, r, att="NAME_2", nocase=true);
 
 # ╔═╡ 9364d130-77a1-11eb-2434-cba72ee71c9d
 md"Create a Colormap to paint the polygons
@@ -69,7 +73,7 @@ md"And finaly do the plot
 "
 
 # ╔═╡ c92caeb0-77a5-11eb-0e52-df880fa278b9
-plot(Pt, level=zvals, cmap=C, close=true, fill="+z", pen=0.5, region=(-9.75,-5.9,36.9,42.1), proj=:Mercator, title="Infected / 100.000 habitants " * date)
+plot(Pt, level=zvals, cmap=C, pen=0.5, region=(-9.75,-5.9,36.9,42.1), proj=:Mercator, title="Infected / 100.000 habitants " * date)
 
 # ╔═╡ 3e211d90-77ac-11eb-336a-61a8a2220e7a
 colorbar!(pos=(anchor=:MR,length=(12,0.6), offset=(-2.4,-4)), color=C, axes=(annot=100,), show=true)

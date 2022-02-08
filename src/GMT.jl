@@ -143,7 +143,7 @@ export
 
 	colorzones!, rasterzones!, crop, doy2date, date2doy, yeardecimal, median, mean, std, nanmean, nanstd,
 
-	append2fig, regiongeog, wmsinfo, wmstest, wmsread
+	append2fig, regiongeog, wmsinfo, wmstest, wmsread, polygonlevels
 
 include("common_docs.jl")
 include("libgmt_h.jl")
