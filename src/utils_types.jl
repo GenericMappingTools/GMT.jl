@@ -834,52 +834,53 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 """
-    make_zvals_vec(D::GDtype, user_ids::Vector{String}, vals::Vector{<:Real}, sub_head=0, case=0; kw...) -> Vector{Float64}
+    polygonlevels(D::GDtype, ids::Vector{String}, vals::Vector{<:Real}; kw...) -> Vector{Float64}
+or
 
-- `user_ids`:  is a string vector with the ids (names in header) of the GMTdataset D 
-- `vals`:      is a vector with the numbers to be used in plot -Z to color the polygons.
-- `attrib` or `att`: keyword to selecect which attribute to use when matching with contents of the `user_ids` strings.
+    polygonlevels(D::GDtype, ids::Matrix{String}, vals::Vector{<:Real}; kw...) -> Vector{Float64}
+
+Creates a vector with ZVALS to use in ``plot`` and where length(ZVALS) == length(D)
+The elements of ZVALS are made up from the `vals`.
+
+- `ids`:    is a string Vector or Matrix with the ids (attrinute names) of the GMTdataset D.
+            If a Matrix (2 columns only) then the `att` bellow must also have two names (string vector
+            with two elements) that will be matched against the two eements of each line of `user_ids`.
+            The idea here is to match two conditions: ``att[1] == ids[n,1] && att[2] == ids[n,2]``
+- `vals`:      is a vector with the numbers to be used in plot ``level`` to color the polygons.
+- `attrib` or `att`: keyword to selecect which attribute to use when matching with contents of the `ids` strings.
 - `nocase` or `insensitive`: a keyword from `kw`. Perform a case insensitive comparision between the contents of
-               `user_ids` and the attribute specified with `attrib`. Default compares as case sensistive.
-- `sub_head`:  Position in header where field is to be found in the comma separated string.
-               Note: this option is deprecated and may fail in many cases. Use the `attrib` option explained above.
-- `case`: When using the `sub_head` option case = 1 forces comparing against lowercase contents of the header
-          fields, whilst case = 2 compares with uppercase.
+               `ids` and the attribute specified with `attrib`. Default compares as case sensistive.
+- `repeat`: keyword to replicate the previously known value until it finds a new segment ID for the case
+            when a polygon have no attributes (may happen for the islands of country).
 
-Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
-The elements of ZVALS are made up from the `vals` but it can be larger if there are segments with
-no headers. In that case it replicates the previously known value until it finds a new segment ID.
-
-Returns a Vector{Float64} with the same length as the number of segments in D. The content is
-made up after the contents of `vals` but repeated such that each polygon of the same family, i.e.
-with the same `user_ids`, has the same value.
+Returns a Vector{Float64} with the same length as the number of segments in D. Its content are
+made up after the contents of `vals` but may be repeated such that each polygon of the same family, i.e.
+with the same `ids`, has the same value.
 """
-function make_zvals_vec(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::Vector{<:Real}, sub_head=0, case=0; kw...)::Vector{Float64}
-	(length(kw) == 0 && sub_head > 0) && return make_zvals_vec_old(D, user_ids, vals, sub_head, case)	# For bw compat
+function polygonlevels(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::Vector{<:Real}, sub_head=0, case=0; kw...)::Vector{Float64}
 	@assert((n_user_ids = length(user_ids)) == length(vals))
 	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
 	nocase = (find_in_kwargs(kw, [:nocase :insensitive])[1] === nothing) ? true : false
+	repeat = (find_in_kwargs(kw, [:repeat])[1] === nothing) ? false : true
 
-	n_seg = (isa(D, Array)) ? length(D) : 1
+	n_seg = length(D)
 	zvals = fill(NaN, n_seg)
 	if (nocase)
 		for m = 1:n_seg
-			isempty(D[m].attrib) && continue
+			isempty(D[m].attrib) && (repeat && (zvals[m] = zvals[m-1]); continue)
 			for k = 1:n_user_ids
 				if (D[m].attrib[att] == user_ids[k])
-					zvals[m] = vals[k]
-					break
+					zvals[m] = vals[k];		break
 				end
 			end
 		end
 	else
 		for m = 1:n_seg
-			isempty(D[m].attrib) && continue
+			isempty(D[m].attrib) && (repeat && (zvals[m] = zvals[m-1]); continue)
 			t = lowercase(D[m].attrib[att])
 			for k = 1:n_user_ids
 				if (t == lowercase(user_ids[k]))
-					zvals[m] = vals[k]
-					break
+					zvals[m] = vals[k];		break
 				end
 			end
 		end
@@ -887,31 +888,32 @@ function make_zvals_vec(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals:
 	return zvals
 end
 
-# ---------------------------------------------------------------------------------------------------
-function make_zvals_vec_old(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::Array{<:Real}, sub_head=0, case=0)::Vector{Float64}
+function polygonlevels(D::Vector{<:GMTdataset}, user_ids::Matrix{String}, vals::Vector{<:Real}; kw...)::Vector{Float64}
+	@assert((n_user_ids = size(user_ids,1)) == length(vals))
+	((att = find_in_kwargs(kw, [:att :attrib :attribute])[1]) === nothing) && error("Must provide the `attribute(s)` NAME.")
+	(size(user_ids,2) != length(att)) && error("The `attribute` size must match the number of columns in `user_ids`")
+	nocase = (find_in_kwargs(kw, [:nocase :insensitive])[1] === nothing) ? true : false
+	repeat = (find_in_kwargs(kw, [:repeat])[1] === nothing) ? false : true
 
-	n_user_ids = length(user_ids)
-	@assert(n_user_ids == length(vals))
-	data_ids, ind = dsget_segment_ids(D, case)
-	(ind[1] != 1) && error("This function requires that first segment has a a header with an id")
-	n_data_ids = length(data_ids)
-	(n_user_ids > n_data_ids) &&
-		@warn("Number of segment IDs requested is larger than segments with headers in data")
-
-	if (sub_head != 0)
-		[data_ids[k] = split(data_ids[k],',')[sub_head]  for k = 1:length(ind)]
-	end
- 
-	n_seg = (isa(D, Array)) ? length(D) : 1
+	n_seg = length(D)
 	zvals = fill(NaN, n_seg)
-	n = 1
-	for k = 1:n_data_ids
-		for m = 1:n_user_ids
-			if startswith(data_ids[k], user_ids[m])			# Find first occurence of user_ids[k] in a segment header
-				last = (k < n_data_ids) ? ind[k+1]-1 : n_seg
-				[zvals[j] = vals[m] for j = ind[k]:last]	# Repeat the last VAL for segments with no headers
-				n = last + 1					# Prepare for next new VAL
-				break
+	if (nocase)
+		for m = 1:n_seg
+			isempty(D[m].attrib) && (repeat && (zvals[m] = zvals[m-1]); continue)
+			for k = 1:n_user_ids
+				if (D[m].attrib[att[1]] == user_ids[k,1] && D[m].attrib[att[2]] == user_ids[k,2])
+					zvals[m] = vals[k];		break
+				end
+			end
+		end
+	else
+		for m = 1:n_seg
+			isempty(D[m].attrib) && (repeat && (zvals[m] = zvals[m-1]); continue)
+			tt = [lowercase(D[m].attrib[att[1]]) lowercase(D[m].attrib[att[2]])]
+			for k = 1:n_user_ids
+				if (tt[1] == lowercase(user_ids[k,1]) && tt[2] == lowercase(user_ids[k,2]))
+					zvals[m] = vals[k];		break
+				end
 			end
 		end
 	end
@@ -936,12 +938,11 @@ end
 """
     ids, ind = dsget_segment_ids(D, case=0)::Tuple{Vector{String}, Vector{Int}}
 
-Where D is a GMTdataset of a vector of them, returns the segment ids (first text after the '>') and
+Where D is a GMTdataset or a vector of them, returns the segment ids (first text after the '>') and
 the indices of those segments.
 """
-function dsget_segment_ids(D, case::Int=0)::Tuple{Vector{AbstractString}, Vector{Int}}
-	# Get segment ids (first text after the '>') and the idices of those segments
-	# CASE -> If == 1 force return in LOWER case. If == 2 force upper case. Default (case = 0) dosen't touch
+function dsget_segment_ids(D)::Tuple{Vector{AbstractString}, Vector{Int}}
+	# Get segment ids (first text after the '>') and the indices of those segments
 	if (isa(D, Array))  n = length(D);	d = Dict(k => D[k].header for k = 1:n)
 	else                n = 1;			d = Dict(1 => D.header)
 	end
@@ -950,13 +951,7 @@ function dsget_segment_ids(D, case::Int=0)::Tuple{Vector{AbstractString}, Vector
 	ind::Vector{Int} = 1:n
 	ind = ind[tf]			# OK, now we have the indices of the segments with headers != ""
 	ids = Vector{AbstractString}(undef,length(ind))		# pre-allocate
-	if (case == 1)
-		[ids[k] = lowercase(d[ind[k]]) for k = 1:length(ind)]	# indices of non-empty segments
-	elseif (case == 2)
-		[ids[k] = uppercase(d[ind[k]]) for k = 1:length(ind)]
-	else
-		[ids[k] = d[ind[k]] for k = 1:length(ind)]
-	end
+	[ids[k] = d[ind[k]] for k = 1:length(ind)]
 	return ids, ind
 end
 
@@ -976,7 +971,7 @@ Note, this assumes that `D` has its `attrib` fields set with usable information.
 - `index`: Use this ``positional`` argument = `true` to return only the segment indices that match the `att` condition(s).
 
 ### Returns
-Either a vector of GMTdataset, or a vector of Int with the indices os the segments that match the quiery condition.
+Either a vector of GMTdataset, or a vector of Int with the indices of the segments that match the query condition.
 Or ``nothing`` if the query results in an empty GMTdataset 
 
 ## Example:
