@@ -29,14 +29,14 @@ But the damn polygon names above are all uppercase, Ghrrr. We will have to take 
 ids = names(incidence)[2:end];
 ```
 
-Because the multi-segment headers have several fields in a comma separated string and the one we care
-(the one that is common with the names in the **Pt** dataset) is in the seventh position we use argument **7**.
-Last argument, **2** means to convert all names in the **Pt** headers to upper case so we can compare them with
-the names in **ids**. The comparison is made inside the next call to the ``make\_zvals\_vec()`` function that
-takes care to return the numerical vector that we need in *plot's* **level** option
+Each of the `Pt` datasets have attributes (*e.g.*, Pt[1].attrib) and the one that is common with the names in **ids** is the
+``Pt[1].attrib["NAME_2]`` (the *conselho* name). But the names in *data_concelhos_incidencia.csv* (from which the **ids** are derived)
+and the *concelhos.shp* (that we read into ``Pt``) do not use the same case (one is full upper case) so we need to use the
+``nocase=true`` below. The comparison is made inside the next call to the ``polygonlevels()`` function that takes care to
+return the numerical vector that we need in *plot's* **level** option.
 
 ```julia
-zvals = GMT.make_zvals_vec(Pt, ids, r, 7, 2);
+zvals = polygonlevels(Pt, ids, r, att="NAME_2", nocase=true);
 ```
 
 Create a Colormap to paint the district polygons
@@ -54,7 +54,7 @@ date = incidence[end,1];
 And finaly do the plot
 
 ```julia
-plot(Pt, level=zvals, cmap=C, close=true, fill="+z", pen=0.5, region=(-9.75,-5.9,36.9,42.1), proj=:Mercator, title="Infected / 100.000 habitants " * date)
+plot(Pt, level=zvals, cmap=C, pen=0.5, region=(-9.75,-5.9,36.9,42.1), proj=:Mercator, title="Infected / 100.000 habitants " * date)
 ```
 
 ```julia
