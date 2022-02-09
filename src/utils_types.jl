@@ -865,7 +865,6 @@ function polygonlevels(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::
 	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
 	nocase = (find_in_kwargs(kw, [:nocase :insensitive])[1] === nothing) ? true : false
 	repeat = (find_in_kwargs(kw, [:repeat])[1] === nothing) ? false : true
-@show(typeof(user_ids))
 
 	n_seg = length(D)
 	zvals = fill(NaN, n_seg)
