@@ -2042,6 +2042,9 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 		elseif (isa(val, Array{<:Real}) || isa(val, GDtype) || isa(val, GMTcpt) || typeof(val) <: AbstractRange)
 			if (typeof(val) <: AbstractRange)  val = collect(val)  end
 			cmd = string(cmd, " -", opt)
+		elseif (isa(val, Array{<:Union{Missing, Real}}))	# DataFrames produce these guys
+			val = replace(val, missing => NaN)		# Even if there are no missings it will be converted do Float64
+			cmd = string(cmd, " -", opt)
 		elseif (isa(val, String) || isa(val, Symbol) || isa(val, Real))
 			cmd = string(cmd, " -", opt * arg2str(val))
 			to_slot = false
