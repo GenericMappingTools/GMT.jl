@@ -104,7 +104,12 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# Look for color request. Do it after error bars because they may add a column
 	len = length(cmd);	n_prev = N_args;
-	cmd, args, n, got_Zvars = add_opt(d, cmd, "Z", [:Z :level], :data, Any[arg1, arg2], (outline="_+l", fill="_+f"))
+	opt_Z, args, n, got_Zvars = add_opt(d, "", "Z", [:Z :level :levels], :data, Any[arg1, arg2], (outline="_o", nofill="_f"))
+	(!contains(opt_Z, "f")) ? do_Z_fill = true : (do_Z_fill = false; opt_Z = replace(opt_Z, "f" => ""))
+	(contains(opt_Z, "o")) ? (do_Z_outline = true; opt_Z = replace(opt_Z, "o" => "")) : (do_Z_outline = false)
+	(opt_Z != "") && (cmd *= opt_Z)
+	(!got_Zvars) && (do_Z_fill = do_Z_outline = false)	# Because the mayn have wrongly been set above
+
 	if (n > 0)
 		if (GMTver <= v"6.3")					# -Z is f again. Must save data into file to make it work.
 			fname = joinpath(tempdir(), "GMTjl_temp_Z.txt")
@@ -159,14 +164,13 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	opt_W::String = add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
-	((occursin("+c", opt_W) || occursin("+z", opt_W)) && !occursin("-C", cmd)) &&
-		@warn("Color lines (or fill) from a color scale was selected but no color scale provided. Expect ...")
 
-	if (got_Zvars && opt_G == "" && !contains(opt_W, "+z"))		# Default to fill the polygons (-Z) with the level vector
-		!occursin("-C", cmd) && @warn("Used `level` option but no color scale provided. Expect ...")
-		cmd *= " -G+z"
-	end
-	((got_Zvars || opt_G != "") && opt_L == "") && (cmd *= " -L")	# GMT requires -L when -Z or -G
+	# This bit is for the -Z option. Must consolidate the options.
+	(do_Z_fill && opt_G == "") && (cmd *= " -G+z")
+	(do_Z_outline && !contains(opt_W, "+z")) && (opt_W = (opt_W == "") ? " -W+c" : opt_W * "+z")
+	(got_Zvars && !do_Z_fill && !do_Z_outline && opt_W == "") && (opt_W = " -W0.5+z")	# Nofill and nothing else defaults to -W+z
+	(got_Zvars && (do_Z_fill || opt_G != "") && opt_L == "") && (cmd *= " -L")	# GMT requires -L when -Z fill or -G
+	((do_Z_fill || do_Z_outline) && !occursin("-C", cmd)) && @warn("Used `level` option but no color scale provided. Expect ...")
 
 	opt_S::String = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
