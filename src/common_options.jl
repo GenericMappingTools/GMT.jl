@@ -1434,7 +1434,7 @@ function add_opt_pen(d::Dict, symbs::VMs, opt::String="", sub::Bool=true, del::B
 
 	# Some -W take extra options to indicate that color comes from CPT
 	if (haskey(d, :colored))  out *= "+c"
-	elseif ((val = find_in_dict(d, [:zlevel :zlevels])[1]) !== nothing) && (out *= "+z")
+	elseif (find_in_dict(d, [:zlevel :zlevels])[1] !== nothing) out *= "+z"
 	else
 		((val = find_in_dict(d, [:cline :color_line :color_lines])[1]) !== nothing) && (out *= "+cl")
 		((val = find_in_dict(d, [:ctext :color_text :csymbol :color_symbols :color_symbol])[1]) !== nothing) && (out *= "+cf")

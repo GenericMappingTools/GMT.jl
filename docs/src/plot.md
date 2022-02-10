@@ -127,10 +127,13 @@ Parameters
 - **Y** or **yshift** or **y_offset** : *yshift=[] **|** *yshift=y-shift* **|** *yshift=(shift=y-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [yshift](@ref)
 
-- **Z** or **level** : *level=vec* **|** *level=(data=vec, outline=true)*\
+- **Z** or **level** : *level=vec* **|** *level=(data=vec, outline=true, nofill=true)*\
    Instead of specifying a symbol or polygon fill and outline color via **markercolor** and **pen**, give both a value
    via **level** and a color lookup table via **color**. Alternatively, give a vector with one z-value for each polygon
-   in the input data. To apply it to the pen color, use **level=(data=vec, outline=true)**
+   in the input data. To apply it to the pen color, use **level=(data=vec, outline=true)**. This results in filled
+   polygons and outline color chosen from the `vec` and the active cmap. Use **level=(data=vec, outline=true, nofill=true)**
+   to only paint outlines but not fill. The default is to fill and draw outlines with default color (black). This option
+   is particularly useful to make choropleth maps. Note, options **fill** and **pen** may overlap with this option.
 
 - **figname** or **savefig** or **name** :: *figname=`name.png`*\
    Save the figure with the `figname=name.ext` where `ext` chooses the figure format

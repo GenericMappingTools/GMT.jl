@@ -54,6 +54,20 @@
 	plot(rand(5,2), ls="DashDot", Vd=dbg2)
 	plot(rand(5,2), ls="-.", Vd=dbg2)
 	@test_throws ErrorException("Bad line style. Options are (for example) [Line|DashDot|Dash|Dot]Circ") plot(rand(5,2), ls="Dat")
+
+	D = [mat2ds([0 0; 0 1; 1 1; 1 0.3; 0 0])[1], mat2ds([1 1; 1 2; 2 2; 2 1; 1 1])[1]];
+	C = makecpt(cmap = :hot, range = (0, 5));
+	r = psxy!(D, C=C, Z=[1,4], pen=2, Vd=2)
+	@test contains(r, " -G+z -L -W2 -K")
+	r = psxy!(D, C=C, Z=[1,4], pen=(pen=2, zlevels=true), Vd=2)
+	@test contains(r, " -G+z -L -W2+z -K")
+	r = psxy!(D, C=C, Z=(data=[1,4], outline=true, nofill=true), Vd=2)
+	@test contains(r, " -W+c -K")
+	r = psxy!(D, C=C, Z=(data=[1,4], outline=true), Vd=2)
+	@test contains(r, " -G+z -L -W+c -K")
+	r = psxy!(D, C=C, Z=(data=[1,4], nofill=true), Vd=2)
+	@test contains(r, " -W0.5+z -K")
+
 	bar!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	lines!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	lines!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
