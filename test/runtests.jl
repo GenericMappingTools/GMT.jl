@@ -70,7 +70,7 @@ if (got_it)					# Otherwise go straight to end
 	greenspline(d, R="-2000/25000", I=100, S=:l, D=0, Vd=dbg2)
 
 	println("	MAKECPT")
-	makecpt(rand(10,1), E="", C=:rainbow, cptname="lixo.cpt");
+	makecpt(rand(10,1), E="", C=:rainbow, cmap="lixo.cpt");
 	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
 	println("		MAKECPT - 0")
 	cpt = makecpt(range="-1/1/0.1");
