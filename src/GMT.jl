@@ -286,7 +286,8 @@ function __init__(test::Bool=false)
 	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")			# Stop those ugly grays
-	#(GMTver == v"6.4") && gmtlib_setparameter(G_API[1], "MAP_EMBELLISHMENT", "auto")
+	gmtlib_setparameter(G_API[1], "MAP_DEFAULT_PEN", "0.5p,black")	# Change the default 0.25 pen thickness in -W
+	#(GMTver >= v"6.4") && gmtlib_setparameter(G_API[1], "MAP_EMBELLISHMENT", "auto")
 end
 
 include("precompile_GMT_i.jl")

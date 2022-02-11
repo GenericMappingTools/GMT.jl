@@ -87,13 +87,16 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 	end
 	_fill::Vector{String} = helper_ds_fill(d)
 
-	# ---  Here we deal with line colors and line thickness. If not provided we override the GMR defaultb -Wthin ---
-	val = find_in_dict(d, [:lt :linethick :linethickness])[1]
-	_lt::Vector{AbstractFloat} = (val === nothing) ? [0.5] : vec(val)
-	_lts::Vector{String} = Vector{String}(undef, n_ds)
-	n_thick::Integer = length(_lt)
-	for k = 1:n_ds
-		_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])
+	# ---  Here we deal with line colors and line thickness.
+	if ((val = find_in_dict(d, [:lt :linethick :linethickness])[1]) !== nothing)
+		_lt::Vector{Float64} = vec(Float64.(val))
+		_lts::Vector{String} = Vector{String}(undef, n_ds)
+		n_thick::Integer = length(_lt)
+		for k = 1:n_ds
+			_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])
+		end
+	else
+		_lts = fill("", n_ds)
 	end
 
 	if (color !== nothing)
