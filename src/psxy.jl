@@ -409,7 +409,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 		g_shifts = linspace((-bw + new_bw)/2, (bw - new_bw)/2, n_in_group)
 		col = (is_hbar) ? 2 : 1					# Horizontal and Vertical bars get shits in different columns
 		for k = 1:n_in_group
-			[_argD[k].data[n, col] += g_shifts[k] for n = 1:size(_argD[k].data,1)]
+			for n = 1:size(_argD[k].data,1)  _argD[k].data[n, col] += g_shifts[k]  end
 		end
 	end
 

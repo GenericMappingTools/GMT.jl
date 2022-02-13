@@ -100,16 +100,6 @@ end
 function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::String, arg1, arg2, arg3, arg4, arg5)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		function range_it(val)
-			cmd, N_used = put_in_slot(cmd, 'G', arg1, arg2, arg3, arg4)
-			if     (N_used == 1)  arg1 = val
-			elseif (N_used == 2)  arg2 = val
-			elseif (N_used == 3)  arg3 = val
-			elseif (N_used == 4)  arg4 = val
-			end
-			return cmd, arg1, arg2, arg3, arg4
-		end
-
 		if (isa(val, String) || isa(val, GMTimage))
 			if (isa(val, String) && guess_T_from_ext(val) != " -Ti")
 				cmd *= " -G" * val
@@ -125,7 +115,12 @@ function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::Str
 				(!contains(cmd, " -Qi")) && (cmd *= " -Qi300")	# Otherwise GMT crashes because grdview goes through the "MESH" branch
 			end
 		elseif (isa(val, GMTgrid))			# A single drape grid (arg1-3 may be used already)
-			cmd, arg1, arg2, arg3, arg4 = range_it(val)
+			cmd, N_used = put_in_slot(cmd, 'G', arg1, arg2, arg3, arg4)
+			if     (N_used == 1)  arg1 = val
+			elseif (N_used == 2)  arg2 = val
+			elseif (N_used == 3)  arg3 = val
+			elseif (N_used == 4)  arg4 = val
+			end
 		elseif (isa(val, Tuple) && length(val) == 3)
 			cmd, N_used = put_in_slot(cmd, 'G', arg1, arg2, arg3, arg4, arg5)
 			cmd *= " -G -G"					# Because the above only set one -G and we need 3

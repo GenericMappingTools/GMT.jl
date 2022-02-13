@@ -1301,12 +1301,12 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		end
 
 		if (OGR_F.np > 0)
-			#hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,i))) for i = 1:OGR_F.att_number]) : ""
-			#(hdr != "") && (hdr = string(rstrip(hdr, ',')))		# Strip last ','
 			hdr = ""
 			if (OGR_F.att_number > 0)
 				attrib = Dict{String, String}()
-				[attrib[unsafe_string(unsafe_load(OGR_F.att_names,i))] = unsafe_string(unsafe_load(OGR_F.att_values,i)) for i = 1:OGR_F.att_number]
+				for i = 1:OGR_F.att_number
+					attrib[unsafe_string(unsafe_load(OGR_F.att_names,i))] = unsafe_string(unsafe_load(OGR_F.att_values,i))
+				end
 			else		# use the previous attrib. This is RISKY but gmt_ogrread only stores attribs in 1st geom of each feature
 				(n > 1) && (attrib = D[n-1].attrib)
 			end

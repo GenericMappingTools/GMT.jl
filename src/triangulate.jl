@@ -96,14 +96,14 @@ end
 triangulate(arg1::Array, cmd0::String=""; kw...) = triangulate(cmd0, arg1; kw...)
 
 #= ---------------------------------------------------------------------------------------------------
-function triplot(in; tol=0.0, onlyedges::Bool=true, noplot::Bool=false, voronoi::Bool=false, kw...)
-	if (voronoi)
-		d = KW(kw)
+function triplot(in; tol=0.0, onlyedges::Bool=true, noplot::Bool=false, kw...)
+	d = KW(kw)
+	if ((val = find_in_dict(d, [:voronoi])[1]) !== nothing)
 		opt_R = parse_R(d, "")[2]
 		(opt_R == "") && (opt_R = read_data(d, "", "", in, "")[3])
-		opt_Q = onlyedges ? "" : "pol"
+		opt_Q = onlyedges ? "pol" : "pol"
 	end
-	D = voronoi ? triangulate(in, M=true, Q=opt_Q, R=opt_R[4:end], Vd=1) : delaunay(in, tol, onlyedges)
+	D = (val !== nothing) ? triangulate(in, M=true, Q=opt_Q, R=opt_R[4:end], Vd=1) : delaunay(in, tol, onlyedges)
 	noplot && return D
 	GMT.common_plot_xyz("", D, "plot", true, false, kw...)
 end

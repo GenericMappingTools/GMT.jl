@@ -107,7 +107,7 @@ function gmtread(fname::String; kwargs...)
 				elseif (isa(val, Array) || isa(val, Tuple))
 					# Replacement for the annoying fact that one cannot do @sprintf(repeat("%d,", n), val...)
 					fname  *= @sprintf("%d", val[1]-1)
-					[fname *= @sprintf(",%d", val[k]-1) for k = 2:length(val)]
+					for k = 2:length(val)  fname *= @sprintf(",%d", val[k]-1)  end
 				end
 				(opt_T == "") && (opt_T = " -Ti")
 			end
