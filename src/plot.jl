@@ -714,7 +714,11 @@ function hlines(arg1=nothing; first=true, kwargs...)
 	# If I don't do this stupid gymn with arg1 vs arg1_ then arg1 is Core.Boxed F..
 	len::Int = (arg1 !== nothing) ? length(arg1) : length(arg1_)
 	mat::Matrix{Float64} = ones(2, len)
-	(arg1 !== nothing) ? [mat[1,k] = mat[2,k] = arg1[k] for k = 1:len] : [mat[1,k] = mat[2,k] = arg1_[k] for k = 1:len]
+	if (arg1 !== nothing)
+		for k = 1:len   mat[1,k] = mat[2,k] = arg1[k]   end
+	else
+		for k = 1:len   mat[1,k] = mat[2,k] = arg1_[k]  end
+	end
 	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
 	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 
@@ -950,7 +954,7 @@ function dict_auto_add!(d::Dict)
 	# If the Dict 'd' has a 'backdoor' member that is a NamedTuple, add its contents to the Dict
 	if ((val = find_in_dict(d, [:backdoor])[1]) !== nothing && isa(val, NamedTuple))
 		key = keys(val)
-		[d[key[n]] = val[n] for n = 1:length(val)]
+		for n = 1:length(val)  d[key[n]] = val[n]  end
 		delete!(d, :backdoor)
 	end
 end

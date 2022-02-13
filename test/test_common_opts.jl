@@ -248,7 +248,7 @@
 	@test GMT.parse_i(Dict(:i=>(0,1,2,2)), "")[1] == " -i0,1,2,2"
 	@test GMT.parse_j(Dict(:spherical_dist => "f"), "")[1] == " -jf"
 	@test GMT.parse_t(Dict(:t=>0.2), "")[1] == " -t20.0"
-	@test GMT.parse_t(Dict(:t=>20), "")[1]  == " -t20"
+	@test GMT.parse_t(Dict(:t=>20), "")[1]  == " -t20.0"
 	@test GMT.parse_contour_AGTW(Dict(:A => [1]), "")[1] == " -A1,"
 	GMT.helper2_axes("");
 	@test GMT.axis(ylabel="bla")[1] == " -Bpy+lbla";

@@ -769,7 +769,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 		end
 		# Rebuild the B option string
 		opt_B = ""
-		[opt_B *= tok[n] for n = 1:k-1]
+		for n = 1:k-1  opt_B *= tok[n]  end
 	end
 
 	# We can have one or all of them. Deal separatelly here to allow way code to keep working
@@ -1197,7 +1197,7 @@ end
 function parse_t(d::Dict, cmd::String)
 	opt_val::String = ""
 	if ((val = find_in_dict(d, [:t :alpha :transparency])[1]) !== nothing)
-		t = (isa(val, String)) ? parse(Float32, val) : val
+		t::Float64 = (isa(val, String)) ? parse(Float64, val) : Float64(val)
 		if (t < 1) t *= 100  end
 		opt_val = string(" -t", t)
 		cmd *= opt_val
@@ -2572,7 +2572,7 @@ function helper3_axes(arg, primo::String, axe::String)::String
 		if ((val = find_in_dict(d, [:type])[1]) !== nothing)
 			if (isa(val, Char) || isa(val, String) || isa(val, Symbol))
 				tipo = Vector{String}(undef, n_annot)
-				[tipo[k] = string(val) for k = 1:n_annot]	# Repeat the same 'type' n_annot times
+				for k = 1:n_annot  tipo[k] = string(val)  end	# Repeat the same 'type' n_annot times
 			else
 				tipo = val		# Assume it's a good guy, otherwise ...
 			end
@@ -3653,7 +3653,7 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::Stri
 		lab = Vector{String}(undef,length(arg))
 		if ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)		# Have label(s)
 			if (!isa(val, Array))				# One single label, take it as a label prefix
-				[lab[k] = string(val,k) for k = 1:length(arg)]
+				for k = 1:length(arg)  lab[k] = string(val,k)  end
 			else
 				for k = 1:min(length(arg), length(val))  lab[k] = string(val[k],k)  end
 				if (length(val) < length(arg))	# Probably shit, but don't error because of it
@@ -3661,7 +3661,7 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::Stri
 				end
 			end
 		else
-			[lab[k] = string('y',k) for k = 1:length(arg)]
+			for k = 1:length(arg)  lab[k] = string('y',k)  end
 		end
 	elseif (valLabel !== nothing)
 		lab = [string(valLabel)]

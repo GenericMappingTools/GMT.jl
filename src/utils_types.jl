@@ -240,8 +240,10 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 	n_ds = size(D.data, 1)
 	if (!isempty(_fill))				# Paint the polygons (in case of)
 		_hdr::Vector{String} = Vector{String}(undef, n_ds)
-		[_hdr[k] = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
-		if (D.header != "")  _hdr[1] = D.header * _hdr[1]  end	# Copy eventual contents of first header
+		for k = 1:n_ds
+			_hdr[k] = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]
+		end
+		(D.header != "") && (_hdr[1] = D.header * _hdr[1])	# Copy eventual contents of first header
 	end
 
 	Dm = Vector{GMTdataset}(undef, n_ds)
@@ -264,7 +266,7 @@ function helper_ds_fill(d::Dict)::Vector{String}
 			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end
 			_alpha::Vector{String} = Vector{String}(undef, n_colors)
 			na::Integer = min(length(alpha_val), n_colors)
-			[_alpha[k] = join(string('@',alpha_val[k])) for k = 1:na]
+			for k = 1:na  _alpha[k] = join(string('@',alpha_val[k]))  end
 			if (na < n_colors)
 				for k = na+1:n_colors  _alpha[k] = ""  end
 			end
@@ -314,7 +316,9 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 			end
 		end
 		if (have_alpha)						# Have alpha color(s)
-			[colormap[m + 3*n_colors] = round(Int32, cmap.colormap[m,4] * 255) for m = 1:size(cmap.colormap, 1)]
+			for m = 1:size(cmap.colormap, 1)
+				colormap[m + 3*n_colors] = round(Int32, cmap.colormap[m,4] * 255)
+			end
 			n_colors *= 1000				# Flag that we have alpha colors in an indexed image
 		end
 	else
