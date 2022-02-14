@@ -275,7 +275,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bool=false, del::Bool=true)
 	# Build the option -J string. Make it simply -J if in overlay mode (-O) and no new -J is fished here
-	# Default to 12c if no size is provided.
+	# Default to 14c if no size is provided.
 	# If MAP == false, do not try to append a fig size
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:J :proj :projection], "NamedTuple | String"), "")

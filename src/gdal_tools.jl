@@ -93,7 +93,7 @@ function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/v
 end
 
 """
-    function ogr2ogr(indata, options=String[]; dest="/vsimem/tmp", kwargs...)
+    ogr2ogr(indata, options=String[]; dest="/vsimem/tmp", kwargs...)
 
 ### Parameters
 * `indata` The source dataset.
