@@ -33,6 +33,11 @@ println("	TRIANGULATE")
 G = triangulate(rand(100,3) * 150, R="0/150/0/150", I=1);
 triangulate(rand(5,3), R="0/150/0/150", voronoi=:pol, Vd=dbg2);
 
+println("	TRIPLOT")
+xy = rand(7,2);
+triplot(xy, voronoi=1, lc=:blue, onlyedges=true, region=(0,1,0,1))
+triplot!(xy, lc=:red)
+
 println("	NEARNEIGHBOR")
 G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, S=10, r=true);
 
