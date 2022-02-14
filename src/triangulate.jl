@@ -72,12 +72,13 @@ function triangulate(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :bi :bo :di :e :f :h :i :w :yx])
+	(haskey(d, :Z) && isa(d[:Z], Bool) && !d[:Z]) && delete!(d, :Z)		# Strip Z=false from 'd' (for triplot)
 	cmd  = parse_these_opts(cmd, d, [[:C :slope_grid], [:D :derivatives], [:E :empty], [:M :network],
                                      [:N :ids], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])
 	cmd = parse_Q_tri(d, [:Q :voronoi], cmd)
 	(occursin("-I", cmd) && occursin("-R", cmd) && !occursin("-G", cmd)) && (cmd *= " -G")
 	(occursin("-Q", cmd) && !occursin("-M", cmd)) && (cmd *= " -M")		# Otherwise kills Julia (GMT bug)
-	(!occursin("-G", cmd)) && (cmd = parse_J(d, cmd)[1])
+	(!occursin("-G", cmd)) && (cmd = parse_J(d, cmd, " ")[1])
 
 	common_grd(d, cmd0, cmd, "triangulate ", arg1)		# Finish build cmd and run it
 end
@@ -95,16 +96,44 @@ end
 # ---------------------------------------------------------------------------------------------------
 triangulate(arg1::Array, cmd0::String=""; kw...) = triangulate(cmd0, arg1; kw...)
 
-#= ---------------------------------------------------------------------------------------------------
-function triplot(in; tol=0.0, onlyedges::Bool=true, noplot::Bool=false, kw...)
+# ---------------------------------------------------------------------------------------------------
+"""
+  triplot(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, kw...)
+
+Plots the 2-D triangulation or Voronoi polygons defined by the points in a matrix
+
+- `in`: The input data. Can be either a Mx2 or Mx3 matrix.
+- `noplot`: Return the computed Delaunay or Veronoi data instead of plotting it (the default).
+- `onlyedges`: By default we compute Delaunay tringles or Veronoi cells as polygons. Use this option as
+   `onlyedges=true` to compute multiple line segments.
+- `region`: Sets the data region (xmin,xmax,ymin,ymax) for `voronoi` (required). If not provided we compute it from `in`.
+- `voronoi`: Compute Voronoi cells instead of Delaunay triangles (requires `region`).
+- `kw...`: Are keyword arguments used in the ``plot`` module (ignore if `noplot=true`).
+
+
+### Returns
+A GMTdataset if `noplot=true` or ``nothing`` otherwise.
+
+## Example:
+
+  triplot(rand(5,2), voronoi=true, show=true)
+
+  triplot(rand(5,3), lc=:red, show=true)
+"""
+function triplot(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, first::Bool=true, kw...)
 	d = KW(kw)
-	if ((val = find_in_dict(d, [:voronoi])[1]) !== nothing)
-		opt_R = parse_R(d, "")[2]
+	do_voronoi::Bool = ((val = find_in_dict(d, [:voronoi])[1]) !== nothing)
+	if (do_voronoi)
+		opt_R = parse_R(d, "", false, false)[2]
 		(opt_R == "") && (opt_R = read_data(d, "", "", in, "")[3])
-		opt_Q = onlyedges ? "pol" : "pol"
+		opt_Q = onlyedges ? "" : "pol"
 	end
-	D = (val !== nothing) ? triangulate(in, M=true, Q=opt_Q, R=opt_R[4:end], Vd=1) : delaunay(in, tol, onlyedges)
-	noplot && return D
-	GMT.common_plot_xyz("", D, "plot", true, false, kw...)
+	Vd::Int = get(d, :Vd, 0)
+	doZ = (size(in, 2) > 2)		# If 3 columns, output them too
+	D = (do_voronoi) ? triangulate(in, M=true, voronoi=opt_Q, R=opt_R[4:end], Z=doZ, Vd=Vd) :
+		(onlyedges) ? triangulate(in, M=true, Z=doZ, Vd=Vd) : triangulate(in, S=true, Z=doZ, Vd=Vd)
+	(noplot || Vd > 1) && return D
+	GMT.common_plot_xyz("", D, "plot", first, false, d...)
 end
-=#
+
+triplot!(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, kw...) = triplot(in; onlyedges=onlyedges, noplot=noplot, first=false, kw...)
