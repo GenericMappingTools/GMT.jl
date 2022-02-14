@@ -57,30 +57,30 @@ function logo(cmd0::String=""; first=true, kwargs...)
 	((val_j = find_in_dict(d, [:julia])[1]) !== nothing) && (do_julia = true)
 	((val_G = find_in_dict(d, [:GMTjulia])[1]) !== nothing) && (do_GMTjulia = true)
 	if (do_julia || do_GMTjulia)
-		r = (do_julia) ? val_j : val_G
+		r::Float64 = (do_julia) ? Float64(val_j) : Float64(val_G)
 		c,t,r2 = jlogo(r)			# r2 is the diameter of the inner circle
 		if (!occursin("-R", cmd))  cmd = @sprintf("-R0/%f/0/%f ", 2r, 2r) * cmd  end
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
 		do_show = false
 		if (do_GMTjulia && haskey(d, :show))  delete!(d, :show);  do_show = true  end	# Too soon
-		fmt = ""
+		fmt::AbstractString = ""
 		if (do_GMTjulia)
 			# Too soon to set the format. Need to finish the PS first
 			((val = find_in_dict(d, [:fmt])[1]) !== nothing) && (fmt = arg2str(val))
-			savefig = nothing
+			savefig::AbstractString = ""
 			if ((val = find_in_dict(d, [:savefig :name])[1]) !== nothing)		#  Also too early for savefig
 				savefig = val
 			end
 		end
-		r = finish_PS_module(d, "psxy " * c * cmd, "", K, O, true, t)
-		(r !== nothing && startswith(r, "psxy")) && return r
+		ret::Union{Nothing, String} = finish_PS_module(d, "psxy " * c * cmd, "", K, O, true, t)
+		(ret !== nothing && startswith(ret, "psxy")) && return ret
 		if (do_GMTjulia)
 			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
-			opt_F = @sprintf("+f%d,NewCenturySchlbk-Italic",letter_height)
+			opt_F::String = @sprintf("+f%d,NewCenturySchlbk-Italic",letter_height)
 			if (fmt != "")
-				text!(text_record(t[1:3,1:2], ["M", "T", "G"]), R=[], J=[], F=opt_F, fmt=fmt, name=savefig, show=do_show)
+				text!(text_record(t[1:3,1:2], ["M", "T", "G"]), F=opt_F, fmt=fmt, name=savefig, show=do_show)
 			else
-				text!(text_record(t[1:3,1:2], ["M", "T", "G"]), R=[], J=[], F=opt_F, name=savefig, show=do_show)
+				text!(text_record(t[1:3,1:2], ["M", "T", "G"]), F=opt_F, name=savefig, show=do_show)
 			end
 		end
 	else
@@ -93,15 +93,15 @@ end
 logo!(cmd0::String=""; first=false, kw...) = logo(cmd0; first=first, kw...)
 
 # -------------------------------------------------------------------------
-function jlogo(L=5)
+function jlogo(L::Float64=5.0)
 	# Create the Julia "Terminator" 3 colored circles triangle
 	# L is the length of the equilateral triangl
 	W = 2 * L 					# Region width
 	H = L * sind(60) 			# Triangle height
 	s_size = 0.8 * L 			# Circle diameter
-	l_thick = s_size * 0.06 	# Line thickness
+	#l_thick::Float64 = s_size * 0.06 	# Line thickness
 
-	s1 = s_size					# Outer circle diameter to simulate a line
+	s1 = s_size				# Outer circle diameter to simulate a line
 	s2 = s1 * (1 - 0.06)		# Inner circle diameter. The one that will be filled.
 	t = [L/2 L/2 0 s1; L+L/2 L/2 1 s1; L L/2+H 2 s1; L/2 L/2 3 s2; L+L/2 L/2 4 s2; L L/2+H 5 s2]
 	return " -Sc -C171/43/33,130/83/171,81/143/24,191/101/95,158/122/190,128/171/93 ", t, s2
