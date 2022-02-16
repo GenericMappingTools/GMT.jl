@@ -132,7 +132,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
 	if ((arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))	# If "bar" ONLY if not bar-group
 		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
-		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1)
+		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
 	end
 
 	opt_G::String = ""
@@ -451,13 +451,13 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, @nospecialize(arg1))
+function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, arg1, arg2)
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 	# N_ARGS will be == n_prev+1 when a -Ccpt was used. Otherwise they are equal.
 
 	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
 	if ((!(N_args > n_prev || len < length(cmd)) && mz === nothing) && !bar_ok)		# No color request, so return right away
-		return cmd, arg1, nothing, N_args, false
+		return cmd, arg1, arg2, N_args, false
 	end
 
 	# Filled polygons with -Z don't need extra col
@@ -472,7 +472,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 		warn2 = "Plotting with color table requires adding one more column to the dataset but your -i
 		option didn't do it, so you won't get what you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots"
 		(mz !== nothing) ? @warn(warn1) : @warn(warn2)
-		return cmd, arg1, nothing, N_args, true
+		return cmd, arg1, arg2, N_args, true
 	end
 
 	if (!isempty(bar_fill))
@@ -528,8 +528,6 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 
 		(!occursin(" -C", cmd)) && (cmd *= " -C")	# Need to inform that there is a cpt to use
 		N_args = 2
-	else
-		arg2 = nothing
 	end
 
 	return cmd, arg1, arg2, N_args, true
