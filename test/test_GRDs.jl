@@ -1,9 +1,9 @@
 	println("	GRDINFO")
 	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
 	r=gmt("grdinfo -C", G);
-	@assert(r[1].data[1:1,1:10] == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
+	@assert(r.data[1:1,1:10] == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
 	r2=grdinfo(G, C=true, V=:q);
-	@assert(r[1].data == r2[1].data)
+	@assert(r.data == r2.data)
 	grdinfo(mat2grid(rand(4,4)));				# Test the doubles branch in grid_init
 	grdinfo(mat2grid(rand(Float32,4,4)));		# Test the float branch in grid_init
 	nx = 3; ny = 2; rang = [1, nx, 1, ny, 0.0,1]; x = collect(1.0:nx); y = collect(1.0:ny); inc = [1.0, 1];
@@ -21,7 +21,7 @@
 	gmtwrite("lixo.grd", G)
 	D1=grd2xyz(G);
 	D2=grd2xyz("lixo.grd");
-	@assert(sum(D1[1].data) == sum(D2[1].data))
+	@assert(sum(D1.data) == sum(D2.data))
 
 	println("	GRD2KML")
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");
@@ -39,12 +39,12 @@
 	println("	GRDCONTOUR")
 	G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 	C = grdcontour(G, C="+0.7", D=[]);
-	@assert((size(C[1].data,1) == 21) && abs(-0.6 - C[1].data[1,1]) < 1e-8)
+	@assert((size(C.data,1) == 21) && abs(-0.6 - C.data[1,1]) < 1e-8)
 	# Do the same but write the file on disk first
 	gmt("write lixo.grd", G)
 	GG = gmt("read -Tg lixo.grd");
 	C = grdcontour("lixo.grd", C="+0.7", D=[]);
-	@assert((size(C[1].data,1) == 21) && abs(-0.6 - C[1].data[1,1]) < 1e-8)
+	@assert((size(C.data,1) == 21) && abs(-0.6 - C.data[1,1]) < 1e-8)
 	r = grdcontour("lixo.grd", cont=10, A=(int=50,labels=(font=7,)), G=(dist="4i",), L=(-1000,-1), W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), T=(gap=("0.1i","0.02i"),), Vd=dbg2);
 	@test startswith(r, "grdcontour lixo.grd  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -L-1000/-1 -A50+f7 -Gd4i -T+d0.1i/0.02i -Wcthinnest,- -Wathin,- -R-15/15/-15/15 -C10")
 	r = grdcontour("lixo.grd", A="50+f7p", G="d4i", W=((contour=1,pen="thinnest,-"), (annot=1, pen="thin,-")), Vd=dbg2);
@@ -136,14 +136,14 @@
 	G = gmt("grdmath -R-2/2/-2/2 -I1 1");
 	gmtwrite("lixo.grd", G)
 	D = grdtrack([0 0], G);
-	@assert(D[1].data == [0.0 0 1])
+	@assert(D.data == [0.0 0 1])
 	D = grdtrack([0 0], G="lixo.grd");
-	@assert(D[1].data == [0.0 0 1])
+	@assert(D.data == [0.0 0 1])
 	D = grdtrack("lixo.grd", [0 0]);
 	D = grdtrack(G, [0 0]);
 	D = grdtrack([0 0], G=G);
 	D = grdtrack([0 0], G=(G,G));
-	@assert(D[1].data == [0.0 0 1 1])
+	@assert(D.data == [0.0 0 1 1])
 
 	println("	GRDVECTOR")
 	G = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL");

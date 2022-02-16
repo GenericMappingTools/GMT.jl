@@ -99,7 +99,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
-	if (isa(arg1, Array{<:Number}))
+	if (isa(arg1, Array{<:Real}))
 		arg1 = [GMTdataset(arg1, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)]
 	end
 

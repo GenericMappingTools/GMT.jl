@@ -279,8 +279,13 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 	# line, but at this moment there seems to be an issue in GMT and distances are shorter. However we can
 	# do some cheap statistics to get read of the more inner points a get an almost perfec buffer.
 	Ddist2line = mapproject(D, L=(line=line, unit=:e))		# Find the distance from buffer points to input line
-	d_mean = mean(view(Ddist2line[1].data, :, 3))
-	ind = view(Ddist2line[1].data, :, 3) .>= d_mean
+	if (isa(Ddist2line, GMTdataset))
+		d_mean = mean(view(Ddist2line.data, :, 3))
+		ind = view(Ddist2line.data, :, 3) .>= d_mean
+	else
+		d_mean = mean(view(Ddist2line[1].data, :, 3))
+		ind = view(Ddist2line[1].data, :, 3) .>= d_mean
+	end
 	ind[1], ind[end] = true, true			# Ensure first and last are not removed
 	isa(D, GMTdataset) ? (D.data = D.data[ind, :]) : (D[1].data = D[1].data[ind, :])# Remove all points that are less 1% above the mean
 

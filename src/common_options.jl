@@ -233,7 +233,7 @@ function opt_R2num(opt_R::String)
 		for k = 2:length(rs)  limits[k] = parse(Float64, rs[k])  end
 		if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
 	elseif (opt_R != " -R")		# One of those complicated -R forms. Just ask GMT the limits (but slow. It takes 0.2 s)
-		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])[1]
+		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])
 		limits = zeros(4)
 		t::String = kml.text[28][12:end];	ind = findfirst("<", t)		# north
 		limits[4] = parse(Float64, t[1:(ind[1]-1)])
@@ -2176,7 +2176,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	if (isa(arg1, GItype))			# GMT bug, -R will not be stored in gmt.history
 		range::Vector{Float64} = vec(arg1.range)
 	elseif (cmd0 != "" && cmd0[1] != '@')
-		info = grdinfo(cmd0 * " -C");	range = vec(info[1].data)
+		info = grdinfo(cmd0 * " -C");	range = vec(info.data)
 	end
 	if (isa(arg1, GItype) || (cmd0 != "" && cmd0[1] != '@'))
 		if (isempty(current_cpt[1]) && (val = find_in_dict(d, CPTaliases, false)[1]) === nothing)
@@ -2976,17 +2976,19 @@ function fname_out(d::Dict, del::Bool=false)
 	return def_name, opt_T, EXT, fname, ret_ps
 end
 
+#=
 # These methods are function barriers to stop the type instability to propagate. Unfortunately, a similar
 # solution but at the end of the main function, that would cover all cases, is IRRITATINGLY ignored by Julia
 read_data(d::Dict, fname::String, cmd::String, arg::Vector{GMTdataset}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Vector{GMTdataset}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
 
-read_data(d::Dict, fname::String, cmd::String, arg::GMTdataset, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, GMTdataset, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+read_data(d::Dict, fname::String, cmd::String, arg::GMTdataset, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, GMTdataset, String, GMTdataset, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
 
-read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Real}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Matrix{Float64}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Real}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Matrix{Float64}, String, GMTdataset, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
 
 read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Any}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Matrix{Float64}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
 
-read_data(d::Dict, fname::String, cmd::String, arg::Vector{DateTime}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Vector{Float64}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+read_data(d::Dict, fname::String, cmd::String, arg::Vector{DateTime}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Vector{Float64}, String, GMTdataset, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+=#
 
 # This is the fall-back method. Unfortunately, I've not found a solution that covers the passing in of a file name
 # because we fall in the same situation as with passing the input data via the 'data' kw, and this one can have any type.
@@ -2997,7 +2999,7 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
 
-	(show_kwargs[1]) && return cmd, arg, opt_R, Vector{GMTdataset}(), ""		# In HELP mode we do nothing here
+	(show_kwargs[1]) && return cmd, arg, opt_R, GMTdataset(), ""		# In HELP mode we do nothing here
 
 	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
 	force_get_R = (IamModern[1] && GMTver > v"6") ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
@@ -3050,10 +3052,10 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 	have_info = false
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
 	if (((!IamModern[1] && no_R) || (force_get_R && no_R)) && !convert_syntax[1])
-		info::Vector{GMTdataset} = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)	# Here we are reading from an original GMTdataset or Array
+		info::GMTdataset = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)	# Here we are reading from an original GMTdataset or Array
 		have_info = true
-		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
-			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
+		if (info.data[1] > info.data[2])		# Workaround a bug/feature in GMT when -: is arround
+			info.data[2], info.data[1] = info.data[1], info.data[2]
 		end
 		if (opt_R != "" && opt_R[1] == '/')			# Modify what will be reported as a -R string
 			rs = split(opt_R, '/')
@@ -3063,46 +3065,46 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 					(rs[k] == "") && continue
 					x = parse(Float64, rs[k])
 					if (x == 0.0)
-						info[1].data[k-1] = (info[1].data[k-1] > 0) ? 0 : info[1].data[k-1]
+						info.data[k-1] = (info.data[k-1] > 0) ? 0 : info.data[k-1]
 					end
 				end
 			else
 				# Example: "/1/2/?/?"  Retain x_min = 1 & x_max = 2 and get y_min|max from data. Used by plotyy
 				for k = 2:length(rs)
-					(rs[k] != "?") && (info[1].data[k-1] = parse(Float64, rs[k]))	# Keep value already in previous -R
+					(rs[k] != "?") && (info.data[k-1] = parse(Float64, rs[k]))	# Keep value already in previous -R
 				end
 			end
 		end
 		if (opt_R != " -Rtight")
 			if (!occursin("?", opt_R) && !is_onecol)		# is_onecol is true only for DateTime data
-				dx::Float64 = (info[1].data[2] - info[1].data[1]) * 0.005;	dy::Float64 = (info[1].data[4] - info[1].data[3]) * 0.005;
-				info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
-				info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
+				dx::Float64 = (info.data[2] - info.data[1]) * 0.005;	dy::Float64 = (info.data[4] - info.data[3]) * 0.005;
+				info.data[1] -= dx;	info.data[2] += dx;	info.data[3] -= dy;	info.data[4] += dy;
+				info.data = round_wesn(info.data)		# Add a pad if not-tight
 				if (isGMTdataset(arg))						# Needed for the guess_proj case
-					if ((info[1].data[3] < -90 || info[1].data[4] > 90) || ((info[1].data[2] - info[1].data[1]) > 360))
+					if ((info.data[3] < -90 || info.data[4] > 90) || ((info.data[2] - info.data[1]) > 360))
 						prj::String = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
 						guessed_J = (prj == "") && !contains(cmd, " -J ") && !contains(cmd, " -JX") && !contains(cmd, " -Jx")
 						if (guessed_J || contains(prj, "longlat") || contains(prj, "latlong"))
-							(info[1].data[3] < -90.) && (info[1].data[3] = -90.)
-							(info[1].data[4] >  90.) && (info[1].data[4] =  90.)
-							if ((info[1].data[2] - info[1].data[1]) > 360)
-								if (info[1].data[2] > 180)  info[1].data[1] = 0.;		info[1].data[2] = 360.
-								else                        info[1].data[1] = -180.;	info[1].data[2] = 180.
+							(info.data[3] < -90.) && (info.data[3] = -90.)
+							(info.data[4] >  90.) && (info.data[4] =  90.)
+							if ((info.data[2] - info.data[1]) > 360)
+								if (info.data[2] > 180)  info.data[1] = 0.;		info.data[2] = 360.
+								else                     info.data[1] = -180.;	info.data[2] = 180.
 								end
 							end
 						end
 					end
 				end
 			elseif (!is_onecol)
-				t = round_wesn(info[1].data)		# Add a pad
+				t = round_wesn(info.data)		# Add a pad
 				for k = 2:length(rs)
-					(rs[k] == "?") && (info[1].data[k-1] = t[k-1])
+					(rs[k] == "?") && (info.data[k-1] = t[k-1])
 				end
 			end
 		else
 			cmd = replace(cmd, " -Rtight" => "")	# Must remove old -R
 		end
-		_range::Vector{Float64} = info[1].data[:]
+		_range::Vector{Float64} = info.data[:]
 		if (got_datetime)
 			opt_R = " -R" * Dates.format(min_max[1], "yyyy-mm-ddTHH:MM:SS.s") * "/" *
 			        Dates.format(min_max[2], "yyyy-mm-ddTHH:MM:SS.s")
@@ -3118,11 +3120,11 @@ function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", 
 
 	if (get_info && !have_info && !convert_syntax[1])
 		info = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)
-		if (info[1].data[1] > info[1].data[2])		# Workaround a bug/feature in GMT when -: is arround
-			info[1].data[2], info[1].data[1] = info[1].data[1], info[1].data[2]
+		if (info.data[1] > info.data[2])		# Workaround a bug/feature in GMT when -: is arround
+			info.data[2], info.data[1] = info.data[1], info.data[2]
 		end
 	elseif (!have_info)
-		info = Vector{GMTdataset}()			# Need something to return
+		info = GMTdataset()					# Need something to return
 	end
 
 	return cmd, arg, opt_R, info, opt_i
@@ -3512,8 +3514,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			if ((proj4 != "") && !startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
 				opt_J = replace(proj4, " " => "")
 				lims = args[1].range
-				D::Vector{GMTdataset} = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
-				xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = D[1].data[1],D[1].data[3],D[1].data[2],D[1].data[4]
+				D::GMTdataset = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
+				xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = D.data[1],D.data[3],D.data[2],D.data[4]
 				opt_R::String = sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
 				o = scan_opt(cmd[1], "-J")
 				size_ = (o[1] == 'x') ? "+scale=" * o[2:end] : (o[1] == 'X') ? "+width=" * o[2:end] : ""
@@ -3574,7 +3576,7 @@ end
 function regiongeog(fname::String)::Tuple
 	((prj = getproj(fname, wkt=true)) == "") && (@warn("Input grid/image has no projection info"); return ())
 	info = grdinfo(fname, C=true);		# It should also report the
-	c = xy2lonlat([info[1].data[1] info[1].data[3]; info[1].data[2] info[1].data[4]]; s_srs=prj)
+	c = xy2lonlat([info.data[1] info.data[3]; info.data[2] info.data[4]]; s_srs=prj)
 	tuple(c...)
 end
 

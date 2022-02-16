@@ -71,7 +71,7 @@ function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/v
 		append!(opts, ["-compute_edges", "-b", band])
 		if ((val = GMT.find_in_dict(d, [:scale])[1]) === nothing)
 			if (isa(indata, GMT.GMTgrid) && (occursin("longlat", indata.proj4) || occursin("latlong", indata.proj4)) ||
-											grdinfo(indata, C="n")[1].data[end] == 1)
+											grdinfo(indata, C="n").data[end] == 1)
 				append!(opts, ["-s", "111120"])
 			end
 		else

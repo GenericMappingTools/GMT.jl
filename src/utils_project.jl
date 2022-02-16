@@ -5,7 +5,7 @@ function geodetic2enu(lon, lat, h, lon0, lat0, h0)
 	#
 	D1 = mapproject([lon lat h], geod2ecef=true);
 	D0 = mapproject([lon0 lat0 h0], geod2ecef=true);
-	d  = D1[1].data .- D0[1].data;
+	d  = D1.data .- D0.data;
 	xEast, yNorth, zUp = ecef2enuv(view(d, :, 1), view(d, :, 2), view(d, :, 3), lon0, lat0)
 end
 

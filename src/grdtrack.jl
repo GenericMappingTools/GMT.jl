@@ -109,8 +109,13 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 		prj = isa(arg1, GMTgrid) ? arg1.proj4 : (isa(arg2, GMTgrid) ? arg2.proj4 : "")
 		is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
 		(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
-		(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
-		for k = 1:length(R)  R[k].colnames = coln  end
+		if (isa(R, GMTdataset))
+			(size(R.data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R.data, 2)])
+			R.colnames = coln
+		else
+			(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
+			for k = 1:length(R)  R[k].colnames = coln  end
+		end
 	end
 	R
 end

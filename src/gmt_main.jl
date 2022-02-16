@@ -708,7 +708,8 @@ function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTps
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset}
+#function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset}
+function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 # Given a GMT DATASET D, build an array of segment structure and assign values.
 # Each segment will have 6 items:
 # header:	Text string with the segment header (could be empty)
@@ -718,7 +719,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 # proj4:	String with any proj4 information
 # wkt:		String with any WKT information
 
-	(object == C_NULL) && return [GMTdataset()]		# No output produced - return a null data set
+	(object == C_NULL) && return GMTdataset()		# No output produced - return a null data set
 	D::GMT_DATASET = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
 	seg_out = 0;
@@ -783,7 +784,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 	end
 	set_dsBB!(Darr, false)				# Compute and set the global BoundingBox for this dataset
 
-	return Darr
+	return (length(Darr) == 1) ? Darr[1] : Darr
 end
 
 # ---------------------------------------------------------------------------------------------------

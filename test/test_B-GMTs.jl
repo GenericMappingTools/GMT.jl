@@ -1,9 +1,9 @@
 	println("	GMTINFO")
 	gmt("gmtset -");
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
-	@assert(r[1].data == [5.0 5 5 5 5 5])
+	@assert(r.data == [5.0 5 5 5 5 5])
 	r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
-	@assert(r[1].data == [5.0 5 5 5 5 5])
+	@assert(r.data == [5.0 5 5 5 5 5])
 	#gmtinfo(help=0)
 
 	println("	BLOCK*s")
@@ -90,7 +90,7 @@
 	# GMTSPATIAL
 	# Test  Cartesian centroid and area
 	result = gmt("gmtspatial -Q", [0 0; 1 0; 1 1; 0 1; 0 0]);
-	@assert(isapprox(result[1].data, [0.5 0.5 1]))
+	@assert(isapprox(result.data, [0.5 0.5 1]))
 	# Test Geographic centroid and area
 	result = gmt("gmtspatial -Q -fg", [0 0; 1 0; 1 1; 0 1; 0 0]);
 	# Intersections
@@ -159,7 +159,7 @@
 	gmtwrite("lixo.dat", convert.(UInt8, [1 2 3; 2 3 4]))
 	gmtwrite("lixo.dat", [1 2 10; 3 4 20])
 	D = gmtread("lixo.dat", i="0,1s10", table=true);
-	@test(sum(D[1].data) == 64.0)
+	@test(sum(D.data) == 64.0)
 	gmtwrite("lixo.dat", D)
 	gmt("gmtwrite lixo.cpt", cpt)		# Same but tests other code chunk in gmt_main.jl
 	gmt("gmtwrite lixo.dat", D)

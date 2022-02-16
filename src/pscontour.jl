@@ -134,9 +134,9 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (!occursin(" -W", cmd) && !occursin(" -I", cmd) && !occursin(" -D", cmd))  cmd *= " -W"  end	# Use default pen
 
 	if (occursin("-I", cmd) && !occursin("-C", cmd))
-		r = round_wesn([info[1].data[5], info[1].data[6], info[1].data[5], info[1].data[6]])
-		info[1].data[5], info[1].data[6] = r[1], r[2]
-		opt_T = (isempty(current_cpt[1])) ? @sprintf(" -T%.14g/%.14g/11+n", info[1].data[5], info[1].data[6]) : ""
+		r = round_wesn([info.data[5], info.data[6], info.data[5], info.data[6]])
+		info.data[5], info.data[6] = r[1], r[2]
+		opt_T = (isempty(current_cpt[1])) ? @sprintf(" -T%.14g/%.14g/11+n", info.data[5], info.data[6]) : ""
 		if (N_used <= 1)
 			cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C], 'C', N_used, arg1, arg2, true, true, opt_T, true)
 		else
