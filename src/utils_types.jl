@@ -188,7 +188,7 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 		end
 	end
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
-	return D
+	return (length(D) == 1 && !multi) ? D[1] : D		# Drop the damn Vector singletons
 end
 
 # ---------------------------------------------------------------------------------------------------

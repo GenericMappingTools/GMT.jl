@@ -233,9 +233,11 @@ buffergeo(ds::Gdal.AbstractDataset; width=0, unit=:m, np=120, flatstart=false, f
 	buffergeo(gmt2gd(ds); width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, epsg=epsg, tol=tol)
 
 buffergeo(D::GMTdataset; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=-1.0) =
-	buffergeo(D.data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D.proj4, epsg=epsg, tol=tol)[1]
+	buffergeo(D.data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D.proj4, epsg=epsg, tol=tol)
 
 function buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=-1.0)
+	(length(D) == 1) && return buffergeo(D[1].data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D[1].proj4, epsg=epsg, tol=tol)
+
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
 		_D[k], = buffergeo(D[k].data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend,
@@ -252,6 +254,7 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 	#(line[1, 1:2] == line[end, 1:2]) && (flatstart = flatend = false)		# Polygons can't have start/end flat edges
 	width *= unit_factor(unit)
 	n_seg = length(azim)
+	D, _D = GMTdataset(), GMTdataset()
 	for n = 1:n_seg
 		seg = [geod(line[n,:], azim[n], 0:width/4:dist[n], proj=proj, epsg=epsg)[1]; line[n+1:n+1,:]]
 		n_vert = size(seg,1)
@@ -259,14 +262,14 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 			if (k == 2)
 				c0 = circgeo(seg[1,:], radius=width, np=np, proj=proj, epsg=epsg);	trim_dateline!(c0, seg[1,1])
 				c  = circgeo(seg[2,:], radius=width, np=np, proj=proj, epsg=epsg);	trim_dateline!(c , seg[2,1])
-				global _D = polyunion(c0, c)
+				_D = polyunion(c0, c)
 				continue
 			end
 			c = circgeo(seg[k,:], radius=width, np=np, proj=proj, epsg=epsg)
 			trim_dateline!(c, seg[k,1])
 			_D = polyunion(_D, c)
 		end
-		if (n == 1)  global D = _D
+		if (n == 1)  D = _D
 		else         D = polyunion(_D, D)
 		end
 	end
@@ -279,12 +282,12 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 	d_mean = mean(view(Ddist2line[1].data, :, 3))
 	ind = view(Ddist2line[1].data, :, 3) .>= d_mean
 	ind[1], ind[end] = true, true			# Ensure first and last are not removed
-	D[1].data = D[1].data[ind, :]			# Remove all points that are less 1% above the mean
+	isa(D, GMTdataset) ? (D.data = D.data[ind, :]) : (D[1].data = D[1].data[ind, :])# Remove all points that are less 1% above the mean
 
-	(proj == "" && epsg == 0) && (D[1].proj4 == prj4WGS84)
-	(proj != "") && (D[1].proj4 = proj)
-	(epsg != 0) && (D[1].proj4 = toPROJ4(importEPSG(epsg)))
-	(tol < 0) && (tol = width * 0.005 / 111111)		# Tolerance as 0.5% of buffer with converted to degrees
+	(proj == "" && epsg == 0) && (isa(D, GMTdataset) ? (D.proj4 == prj4WGS84) : (D[1].proj4 == prj4WGS84))
+	(proj != "") && (isa(D, GMTdataset) ? (D.proj4 = proj) : (D[1].proj4 = proj))
+	(epsg != 0) && (t = toPROJ4(importEPSG(epsg)); isa(D, GMTdataset) ? (D.proj4 = t) : (D[1].proj4 = t))
+	(tol < 0) && (tol = width * 0.005 / 111111)		# Tolerance as 0.5% of buffer width converted to degrees
 	return (tol > 0) ? simplify(D, tol) : D			# If TOL > 0 do a DP simplify on final buffer
 end
 

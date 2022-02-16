@@ -159,7 +159,8 @@ function gd2gmt_helper(input, sds)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdataset}
+#function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdataset}
+function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset, Vector{<:GMTdataset}}
 	# Convert a geometry into a single GMTdataset
 	gmtype = Gdal.getgeomtype(geom)
 	if (gmtype == Gdal.wkbPolygon)		# getx() doesn't work for polygons
@@ -167,10 +168,10 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString || gmtype == Gdal.wkbGeometryCollection)
 		n_pts = Gdal.ngeom(geom)
 		D = Vector{GMTdataset}(undef, n_pts)
-		for k = 1:n_pts  D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")[1]  end
+		for k = 1:n_pts  D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")  end
 		(proj != "") && (D[1].proj4 = proj)
 		set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
-		return D
+		return (length(D) == 1) ? D[1] : D
 	elseif (gmtype == wkbMultiPoint)
 		n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
 		mat = Array{Float64,2}(undef, n_pts, n_dim)
@@ -181,7 +182,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 		end
 		D = [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", Int(gmtype))]
 		set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
-		return D
+		return (length(D) == 1) ? D[1] : D
 	end
 
 	n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
@@ -194,7 +195,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 	end
 	D = [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", Int(gmtype))]
 	set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
-	return D
+	return (length(D) == 1) ? D[1] : D
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -217,19 +218,27 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 				_D = gd2gmt(geom, proj)
 				gt = Gdal.getgeomtype(geom)
 				# Maybe when there nlayers > 1 or other cases, starting allocated size is not enough
-				(length(_D) + ds >= length(D)) && append!(D, Vector{GMTdataset}(undef, round(Int, 0.5 * length(D))))
-				for d in _D
-					D[ds] = d
+				len_D = isa(_D, GMTdataset) ? 1 : length(_D)
+				(len_D + ds >= length(D)) && append!(D, Vector{GMTdataset}(undef, round(Int, 0.5 * length(D))))
+				if isa(_D, GMTdataset)
+					D[ds] = _D
 					D[ds].geom = gt
 					(!isempty(attrib)) && (D[ds].attrib = attrib)
 					ds += 1
+				else
+					for d in _D
+						D[ds] = d
+						D[ds].geom = gt
+						(!isempty(attrib)) && (D[ds].attrib = attrib)
+						ds += 1
+					end
 				end
 			end
 		end
 	end
 	(length(D) != ds-1) && (D = deleteat!(D,ds:length(D)))
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
-	return D
+	return (length(D) == 1) ? D[1] : D
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -629,11 +638,11 @@ function lonlat2xy(xy::Matrix{<:Real}, t_srs_=nothing; t_srs=nothing, s_srs=prj4
 	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
 	(t_srs === nothing) && error("Must specify at least the target referencing system.")
 	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
-	return D[1].data		# Return only the array because that's what was sent in
+	return D.data		# Return only the array because that's what was sent in
 end
 
-lonlat2xy(D::GMTdataset, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84) = lonlat2xy([D], t_srs_; t_srs=t_srs, s_srs=s_srs)[1]
-function lonlat2xy(D::Vector{<:GMTdataset}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)::Vector{<:GMTdataset}
+lonlat2xy(D::GMTdataset, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84) = lonlat2xy([D], t_srs_; t_srs=t_srs, s_srs=s_srs)
+function lonlat2xy(D::Vector{<:GMTdataset}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)
 	(t_srs_ !== nothing) && (t_srs = t_srs_)
 	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
 	isa(s_srs, Int) && (s_srs = epsg2wkt(s_srs))
@@ -673,11 +682,11 @@ function xy2lonlat(xy::Matrix{<:Real}, s_srs_=nothing; s_srs=nothing, t_srs=prj4
 	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
 	(s_srs === nothing) && error("Must specify at least the source referencing system.")
 	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
-	return D[1].data		# Return only the array because that's what was sent in
+	return D.data		# Return only the array because that's what was sent in
 end
 
-xy2lonlat(D::GMTdataset, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84) = xy2lonlat([D], s_srs_; s_srs=s_srs, t_srs=t_srs)[1]
-function xy2lonlat(D::Vector{<:GMTdataset}, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84)::Vector{<:GMTdataset}
+xy2lonlat(D::GMTdataset, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84) = xy2lonlat([D], s_srs_; s_srs=s_srs, t_srs=t_srs)
+function xy2lonlat(D::Vector{<:GMTdataset}, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84)
 	(s_srs_ !== nothing) && (s_srs = s_srs_)
 	isa(s_srs, Int) && (s_srs = epsg2wkt(s_srs))
 	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
