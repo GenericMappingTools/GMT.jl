@@ -167,7 +167,6 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString || gmtype == Gdal.wkbGeometryCollection)
 		n_pts = Gdal.ngeom(geom)
 		D = Vector{GMTdataset}(undef, n_pts)
-		#[D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")[1] for k = 1:n_pts]
 		for k = 1:n_pts  D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")[1]  end
 		(proj != "") && (D[1].proj4 = proj)
 		set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
@@ -175,11 +174,8 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 	elseif (gmtype == wkbMultiPoint)
 		n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
 		mat = Array{Float64,2}(undef, n_pts, n_dim)
-		#[mat[k,1] = Gdal.getx(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts]
 		for k = 1:n_pts  mat[k,1] = Gdal.getx(Gdal.getgeom(geom,k-1), 0)  end
-		#[mat[k,2] = Gdal.gety(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts]
 		for k = 1:n_pts  mat[k,2] = Gdal.gety(Gdal.getgeom(geom,k-1), 0)  end
-		#(n_dim == 3) && ([mat[k,3] = Gdal.getz(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts])
 		if (n_dim == 3)
 			for k = 1:n_pts  mat[k,3] = Gdal.getz(Gdal.getgeom(geom,k-1), 0)  end
 		end
@@ -191,11 +187,8 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdatas
 	n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
 	n = (n_dim == 2) ? 2 : 3
 	mat = Array{Float64,2}(undef, n_pts, n)
-	#[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
 	for k = 1:n_pts  mat[k,1] = Gdal.getx(geom, k-1)  end
-	#[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
 	for k = 1:n_pts  mat[k,2] = Gdal.gety(geom, k-1)  end
-	#(n_dim == 3) && ([mat[k,3] = Gdal.getz(geom, k-1) for k = 1:n_pts])
 	if (n_dim == 3)
 		for k = 1:n_pts  mat[k,3] = Gdal.getz(geom, k-1) end
 	end
