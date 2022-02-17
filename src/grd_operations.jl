@@ -99,7 +99,7 @@ function grd_min_max!(G::GMTgrid)
 		tic()
 		t = G.layout;	G.layout = "TRBa"
 		info = grdinfo(G, C=:n, L=0, Vd=1)
-		G.range[5:6] = info[1][5:6]
+		G.range[5:6] = info[5:6]
 		G.layout = t
 		toc()
 	end

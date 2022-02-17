@@ -48,7 +48,7 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		G = mat2img(arg1; kw...)
 	elseif (isGMTdataset(arg1) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4))
 		ginfo = gmt("gmtinfo -C", arg1)
-		CTRL.limits[1:4] = ginfo[1].data[1:4]
+		CTRL.limits[1:4] = ginfo.data[1:4]
 		return plot(arg1; show=true, kw...)
 	else
 		G = mat2grid(arg1, x, y, reg=1)							# For displaying, pixel registration is more appropriate

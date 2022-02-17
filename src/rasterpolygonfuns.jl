@@ -12,7 +12,7 @@ of the GMTdataset `shapes`. The `GI` array is modified in place.
 - `fun`: A unidemensional function name used to compute the contant value for the `GI` elements that fall
    inside each of the polygons of `shapes`.
 
-See also: ``colorzones!``
+See also: ``colorzones``
 
 ### Returns
 It does't return anything but the input `GI` is modified.
@@ -25,7 +25,7 @@ It does't return anything but the input `GI` is modified.
 	rasterzones!(G, D, mean)
 
 """
-function rasterzones!(GI::GItype, shapes::Vector{GMTdataset}, fun::Function)
+function rasterzones!(GI::GItype, shapes::GDtype, fun::Function)
 
 	function within(bbox_p, bbox_R)		# Check if the polygon BB is contained inside the image's region.
 		bbox_p[1] >= bbox_R[1] && bbox_p[2] <= bbox_R[2] && bbox_p[3] >= bbox_R[3] && bbox_p[4] <= bbox_R[4]
@@ -42,6 +42,7 @@ function rasterzones!(GI::GItype, shapes::Vector{GMTdataset}, fun::Function)
 	layout = startswith(GI.layout, "TR") ? "" : (GI.layout == "" ? "BCB" : GI.layout)
 	row_dim, col_dim = (GI.layout == "" || GI.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
 
+	isa(shapes, GMTdataset) && (shapes = [shapes])
 	for k = 1:length(shapes)
 		!within(shapes[k].bbox, GI.range) && continue		# Catch any exterior polygon before it errors
 		_GI, pix_x, pix_y = GMT.crop(GI, region=shapes[k])
@@ -65,7 +66,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    colorzones!(shapes::Vector{GMTdataset}[, fun::Function]; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true)
+    colorzones(shapes::Vector{GMTdataset}[, fun::Function]; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true)
 
 Paint the polygons in the `shapes` with the average color that those polygons ocupy in the `img` image.
 When the `shapes` are plotted the resulting image looks like a choropleth map. Alternatively, instead of
@@ -92,7 +93,7 @@ is large (think Russia size) because even at a moderately resultion it can imply
 - `pixelsize`: Sets the requested cell size in meters [default]. Use a string appended with a 'd'
    (e.g. `resolution="0.001d"`) if the resolution is given in degrees. This way works only when the layer is in geogs.
 - `append`: By default the color assignement to each of the polygons in the `shapes` vector is achieved by
-   appending the fill color to the possibly existing header field. Running the ``colorzones!`` command more than once
+   appending the fill color to the possibly existing header field. Running the ``colorzones`` command more than once
    keeps adding (now ignored, because only the first is used) colors. Setting `append=false` forces rewriting
    the header field at each run and hence the assigned color is always the one used (but the previous header is cleared out).
 
@@ -108,12 +109,12 @@ It does't return anything but the input `shapes` is modified.
     wms = wmsinfo("http://tiles.maps.eox.at/wms?");
     img = wmsread(wms, layer=3, region=(-9.6,-6,36.9,42.2), pixelsize=100);
 	Pt = gmtread("C:\\programs\\compa_libs\\covid19pt\\extra\\mapas\\concelhos\\concelhos.shp");
-	colorzones!(Pt, median, img=img);
+	colorzones(Pt, median, img=img);
 	imshow(Pt, proj=:guess)
 """
-colorzones!(shapes::Vector{GMTdataset}; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true) =
-	colorzones!(shapes, meansqrt; img=img, url=url, layer=layer, pixelsize=pixelsize, append=append)
-function colorzones!(shapes::Vector{GMTdataset}, fun::Function; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true)
+colorzones(shapes::GDtype; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true) =
+	colorzones(shapes, meansqrt; img=img, url=url, layer=layer, pixelsize=pixelsize, append=append)
+function colorzones(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true)
 
 	(img === nothing && url == "") && error("Must either pass a grid/image or a WMS URL.")
 	(img !== nothing && url != "") && error("Make up your mind. Pass ONLY one of grid/image or a WMS URL.")
@@ -129,6 +130,7 @@ function colorzones!(shapes::Vector{GMTdataset}, fun::Function; img::GMTimage=no
 	(img !== nothing && !startswith(img.layout, "TR")) && (layout = img.layout)
 	row_dim, col_dim = (img.layout == "" || img.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
 
+	isa(shapes, GMTdataset) && (shapes = [shapes])
 	for k = 1:length(shapes)
 		!within(k) && continue				# Catch any exterior polygon before it errors
 		_img = (url != "") ? wmsread(wms, layer=layer_n, region=shapes[k], pixelsize=pixelsize) : GMT.crop(img, region=shapes[k])[1]

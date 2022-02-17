@@ -512,7 +512,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		if ((val = find_in_dict(d, [:grd :grid])[1]) !== nothing)
 			arg1 = gmtread(cmd0, grd=true)
 		elseif ((val = find_in_dict(d, [:dataset :table])[1]) !== nothing)
-			arg1 = gmtread(cmd0, dataset=true);		arg1 = arg1[1]
+			arg1 = gmtread(cmd0, dataset=true)
 		else
 			error("BAR3: When first arg is a name, must also state its type. e.g. grd=true or dataset=true")
 		end
@@ -547,7 +547,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 			(length(t) == 6) ? z_min = t[5] : error("For 3D cases, region must have 6 selements")
 		end
 		if (opt_base == "")  push!(d, :base => z_min)  end	# Make base = z_min
-		arg1 = gmt("grd2xyz", arg1)[1]			# Now arg1 is a GMTdataset
+		arg1 = gmt("grd2xyz", arg1)				# Now arg1 is a GMTdataset
 	else
 		opt_S = parse_I(d, "", [:S :width], "So", true)
 		if (opt_S == "")

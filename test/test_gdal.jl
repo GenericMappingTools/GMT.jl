@@ -217,7 +217,7 @@ Gdal.GDALDestroyDriverManager()
 
 	#Gdal.identifydriver("lixo.gmt")
 	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");
-	ds = gmt2gd(D[1])
+	ds = gmt2gd(D)
 	ds = gmt2gd(D, geometry="Polygon")
 	gmt2gd(mat2ds([0 10; 1 11; 0 10], x=[0, 1, 2], multi=true), geometry="line")
 	gmt2gd(mat2ds([0 10; 1 11; 0 10; 0 10], x=[0, 1, 2, 0], multi=true), geometry="polyg")
@@ -227,7 +227,7 @@ Gdal.GDALDestroyDriverManager()
 	ds2=ogr2ogr(ds, ["-t_srs", "+proj=utm +zone=29", "-overwrite"])
 	gd2gmt(ds2)
 	ogr2ogr(D, "-t_srs '+proj=utm +zone=29' -overwrite")	# Returns a GMT datset directly
-	ogr2ogr(D[1], "-t_srs '+proj=utm +zone=29' -overwrite")
+	#ogr2ogr(D[1], "-t_srs '+proj=utm +zone=29' -overwrite")
 
 	D1 = mat2ds([0.0 0.0; 1.0 1.0; 1.0 0.0; 0.0 0.0]);
 	gmt2gd(D1);		gmt2gd(D1, geometry="line");	gmt2gd(D1, geometry="point")

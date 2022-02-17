@@ -142,7 +142,7 @@ export
 	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
 	orthodrome, proj2wkt, wkt2proj,
 
-	colorzones!, rasterzones!, crop, doy2date, date2doy, yeardecimal, median, mean, std, nanmean, nanstd,
+	colorzones, rasterzones!, crop, doy2date, date2doy, yeardecimal, median, mean, std, nanmean, nanstd,
 
 	append2fig, regiongeog, wmsinfo, wmstest, wmsread, polygonlevels
 

@@ -292,8 +292,8 @@ function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D
 		end
 		if (penC != "")  cycle = [penC]  end
 		arg1 = mat2ds(arg1, color=cycle, ls=penS, multi=true)	# Convert to multi-segment GMTdataset
-		D::Vector{<:GMTdataset} = gmt("gmtinfo -C", arg1)		# But now also need to update the -R string
-		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(D[1].data)))
+		D::GMTdataset = gmt("gmtinfo -C", arg1)		# But now also need to update the -R string
+		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(D.data)))
 	elseif (!mcc && sub_module == "bar" && check_bar_group(arg1))	# !mcc because the bar-groups all have mcc = false
 		_cmd[1], arg1 = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 	end
@@ -380,6 +380,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	# and as many rows in a segment as the number of groups (number of bars if groups had only one bar)
 	alpha = find_in_dict(d, [:alpha :fillalpha :transparency])[1]
 	_argD = mat2ds(_arg; fill=g_bar_fill, multi=do_multi, fillalpha=alpha)
+	isa(_argD, GMTdataset) && (_argD = [_argD])	# To simplify the algo (but introduce a type instability?)
 	(is_stack) && (_argD = ds2ds(_argD[1], fill=g_bar_fill, color_wrap=nl, fillalpha=alpha))
 	if (is_hbar && !is_stack)					# Must swap first & second col
 		for k = 1:length(_argD)
@@ -415,20 +416,20 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 
 	if (!got_usr_R)								# Need to recompute -R
 		info = gmt("gmtinfo -C", _argD)
-		(info[1].data[3] > 0) && (info[1].data[3] = 0)		# If not negative then must be 0
+		(info.data[3] > 0) && (info.data[3] = 0)		# If not negative then must be 0
 		if (!is_hbar)
-			dx = (info[1].data[2] - info[1].data[1]) * 0.005 + new_bw/2;
-			dy = (info[1].data[4] - info[1].data[3]) * 0.005;
-			info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[4] += dy;
-			(info[1].data[3] != 0) && (info[1].data[3] -= dy);
+			dx = (info.data[2] - info.data[1]) * 0.005 + new_bw/2;
+			dy = (info.data[4] - info.data[3]) * 0.005;
+			info.data[1] -= dx;	info.data[2] += dx;	info.data[4] += dy;
+			(info.data[3] != 0) && (info.data[3] -= dy);
 		else
-			dx = (info[1].data[2] - info[1].data[1]) * 0.005
-			dy = (info[1].data[4] - info[1].data[3]) * 0.005 + new_bw/2;
-			info[1].data[1] = 0.0;	info[1].data[2] += dx;	info[1].data[3] -= dy;	info[1].data[4] += dy;
-			(info[1].data[1] != 0) && (info[1].data[1] -= dx);
+			dx = (info.data[2] - info.data[1]) * 0.005
+			dy = (info.data[4] - info.data[3]) * 0.005 + new_bw/2;
+			info.data[1] = 0.0;	info.data[2] += dx;	info.data[3] -= dy;	info.data[4] += dy;
+			(info.data[1] != 0) && (info.data[1] -= dx);
 		end
-		info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
-		new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info[1].data[1], info[1].data[2], info[1].data[3], info[1].data[4])
+		info.data = round_wesn(info.data)		# Add a pad if not-tight
+		new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], info.data[3], info.data[4])
 		cmd = replace(cmd, opt_R => new_opt_R)
 	end
 	return cmd, _argD
@@ -442,11 +443,11 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
 	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
 	info = gmt("gmtinfo -C", arg1)
-	dx::Float64 = (info[1].data[2] - info[1].data[1]) * 0.005 + bw/2;
-	dy::Float64 = (info[1].data[4] - info[1].data[3]) * 0.005;
-	info[1].data[1] -= dx;	info[1].data[2] += dx;	info[1].data[4] += dy;
-	info[1].data = round_wesn(info[1].data)		# Add a pad if not-tight
-	new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info[1].data[1], info[1].data[2], 0, info[1].data[4])
+	dx::Float64 = (info.data[2] - info.data[1]) * 0.005 + bw/2;
+	dy::Float64 = (info.data[4] - info.data[3]) * 0.005;
+	info.data[1] -= dx;	info.data[2] += dx;	info.data[4] += dy;
+	info.data = round_wesn(info.data)		# Add a pad if not-tight
+	new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], 0, info.data[4])
 	cmd = replace(cmd, opt_R => new_opt_R)
 end
 
