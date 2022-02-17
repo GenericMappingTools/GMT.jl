@@ -122,7 +122,7 @@ export
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
-	triplot, triplot!,
+	inwhichpolygon, triplot, triplot!,
 
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
