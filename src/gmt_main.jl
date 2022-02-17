@@ -708,7 +708,6 @@ function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTps
 end
 
 # ---------------------------------------------------------------------------------------------------
-#function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset}
 function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 # Given a GMT DATASET D, build an array of segment structure and assign values.
 # Each segment will have 6 items:

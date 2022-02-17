@@ -10,7 +10,7 @@ When DATASET is a string it may contain the file name or the name of a subdatase
 you can use the kwarg `sds` to selec the subdataset numerically. Alternatively, provide the full `sds` name.
 For files with `sds` with a scale_factor (e.g. MODIS data), that scale is applyied automaticaly.
 
-    Examples:
+### Examples:
        G = gd2gmt("AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc", sds=1);
     or
        G = gd2gmt("SUBDATASET_1_NAME=NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
@@ -159,7 +159,6 @@ function gd2gmt_helper(input, sds)
 end
 
 # ---------------------------------------------------------------------------------------------------
-#function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdataset}
 function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset, Vector{<:GMTdataset}}
 	# Convert a geometry into a single GMTdataset
 	gmtype = Gdal.getgeomtype(geom)
