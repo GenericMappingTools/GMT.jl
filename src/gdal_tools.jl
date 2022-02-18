@@ -245,7 +245,6 @@ function get_gdaldataset(data, opts)
 			p = parse.(Int, o) .+ 1
 			o = [string(c) for c in p]
 			if (isa(opts, Vector{String}))
-				#[append!(opts, ["-b", o[k]]) for k = 1:length(o)]
 				for k = 1:length(o)  append!(opts, ["-b", o[k]])  end
 			else
 				opts *= " -b" * join(o, " -b ")
@@ -287,13 +286,10 @@ function dither(indata, opts=String[]; n_colors::Integer=256, save::String="", g
 	if (save != "")
 		fn, ext = splitext(save)
 		ext = lowercase(ext)
-		if     (ext == "" || ext == ".tif" || ext == ".tiff")  drv_name = "GTiff"
-		elseif (ext == ".png") drv_name = "PNG"
-		elseif (ext == ".nc")  drv_name = "netCDF"
-		else
+		drv_name = (ext == "" || ext == ".tif" || ext == ".tiff") ? "GTiff" : (ext == ".png" ? "PNG" : (ext == ".nc" ? "netCDF" : ""))
+		if (drv_name == "")
 			@warn("Format not supported. Only TIF, PNG or netCDF are allowed. Resorting to TIF")
-			drv_name = "GTiff"
-			save = fn * ".tif"
+			drv_name, save = "GTiff", fn * ".tif"
 		end
 		(ext == "") && (save *= ".tif")
 	end
