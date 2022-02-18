@@ -32,7 +32,7 @@ function cpt4dcw(codes::Vector{<:AbstractString}, vals::Vector{<:Real}; kwargs..
 	while(_vals[k] > C.minmax[2] && k > 0)        c[k] = false;  k -= 1  end
 	_codes, _vals = _codes[c], _vals[c]
 
-	P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], C);		# A pointer to a GMT CPT
+	GC.@preserve P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], C);		# A pointer to a GMT CPT
 
 	Ccat::GMTcpt = makecpt(T=join(_codes, ","));
 	rgb = [0.0, 0.0, 0.0];
@@ -40,8 +40,8 @@ function cpt4dcw(codes::Vector{<:AbstractString}, vals::Vector{<:Real}; kwargs..
 	inc = (C.minmax[2] - C.minmax[1]) / size(Ccat.cpt, 1)
 	for k = 1:size(Ccat.cpt, 1)
 		gmt_get_rgb_from_z(G_API[1], P, _vals[k], rgb)
-		[Ccat.colormap[k, n] = rgb[n] for n = 1:3]
-		[Ccat.cpt[k, n+1] = rgb[(n % 3) .+ 1] for n = 0:5]		# cpt = [rgb rgb]
+		[Ccat.colormap[k, n] = copy(rgb[n]) for n = 1:3]
+		[Ccat.cpt[k, n+1] = copy(rgb[(n % 3) + 1]) for n = 0:5]		# cpt = [rgb rgb]
 		Ccat.range[k,1] = C.minmax[1] + (k-1) * inc
 		Ccat.range[k,2] = C.minmax[1] + k * inc
 	end
