@@ -38,9 +38,10 @@ gadm("IND", names=true)
 """
 function gadm(country, subregions...; children::Bool=false, names::Bool=false, children_raw::Bool=false, reportlevels::Bool=false)
 	isvalidcode(country) || throw(ArgumentError("please provide standard ISO 3 country codes"))
-	ressurectGDAL()			# Some previous GMT modules (or other shits) may have called GDALDestroyDriverManager() 
 	data_pato = country |> _download		# Downloads and extracts dataset of the given country code
+	ressurectGDAL()			# Some previous GMT modules (or other shits) may have called GDALDestroyDriverManager() 
 	data = Gdal.read(data_pato)
+	ressurectGDAL()			# Again !!!!!?
 	!isnothing(data) ? data : throw(ArgumentError("failed to read data from disk"))
 	nlayers = Gdal.nlayer(data)
 	reportlevels && return nlayers
