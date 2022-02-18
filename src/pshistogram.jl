@@ -122,9 +122,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	opt_I = add_opt(d, "", "I", [:I :inquire :bins], (all = "_O", no_zero = "_o"))
 	if (opt_I != "")
 		cmd *= opt_I
-		if ((r = dbg_print_cmd(d, cmd)) !== nothing)
-			return (!isa(arg1, GMTimage) && opt_T != "") ? r * " -T" * opt_T : r
-		end
+		((r = dbg_print_cmd(d, cmd)) !== nothing) && return (!isa(arg1, GMTimage) && opt_T != "") ? r * " -T" * opt_T : r
 		if (!isa(arg1, GItype))
 			cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
 		end

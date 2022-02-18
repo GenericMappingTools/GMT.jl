@@ -139,7 +139,7 @@ end
 function drape_prepare(d::Dict, fname, opts::Vector{AbstractString}, prj::String)
 	# Deal with the option of drapping an image, which can be smaller, larger or with fifferent projection.
 	prj_img = getproj(fname, proj4=true)
-	(prj_img == "") && return fname			# If drape image has no RefSys just return its name and let it all be used
+	(prj_img == "" && isa(fname, AbstractString)) && return fname	# If drape image has no RefSys just return its name and let it all be used
 
 	(prj == "" && find_in_dict(d, [:isgeog])[1] !== nothing) && (prj = prj4WGS84)
 

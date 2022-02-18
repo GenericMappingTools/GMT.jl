@@ -74,6 +74,8 @@ Gdal.GDALDestroyDriverManager()
 	gdaldem(ds_small, "hillshade", ["-q"]);
 	gdaltranslate(ds_small, [""]);
 	gdaltranslate("utmsmall.tif", R="442000/445000/3747000/3750000");
+	gdaltranslate("utmsmall.tif+b0");
+	gdaltranslate("utmsmall.tif", ["-b","1"]);
 	try		# Stupid Macports gdal does not have AAIGrid driver
 	ds_tiny = gdaltranslate(ds_small, ["-of","AAIGrid","-r","cubic","-tr","1200","1200"], gdataset=true) # resample to a 5×5 ascii grid
 	@test Gdal.read(ds_tiny, 1) == [128  171  127   93   83; 126  164  148  114  101;
@@ -191,6 +193,7 @@ Gdal.GDALDestroyDriverManager()
 	I = Gdal.dither("rgbsmall.tif");
 	gmt2gd(I);
 	Gdal.dither("rgbsmall.tif", save="lixo.tif");
+	Gdal.dither("rgbsmall.tif", save="lixo.tof");
 	Gdal.gdal_opts2vec("aa bb 'vv pp' aa \"ad uuu\"");
 
 	Gdal.GDALGetDataTypeByName("GTiff");
