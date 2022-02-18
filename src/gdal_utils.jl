@@ -300,14 +300,22 @@ function gmt2gd(GI)
 	ds = Gdal.create("", driver=getdriver("MEM"), width=width, height=height, nbands=size(GI,3), dtype=eltype(GI[1]))
 	if (isa(GI, GMTgrid))
 		if (GI.layout != "" && GI.layout[2] == 'C')
-			indata = (GI.layout[1] == 'B') ? collect(reverse(GI.z, dims=1)') : collect(GI.z')
+			if (ndims(GI.z) == 2)
+				indata = (GI.layout[1] == 'B') ? collect(reverse(GI.z, dims=1)') : collect(GI.z')
+			else
+				indata = (GI.layout[1] == 'B') ? collect(permutedims(reverse(GI.z, dims=1), (2, 1, 3))) : collect(permutedims(GI.z,(2, 1, 3)))
+			end
 		else
 			indata = GI.z
 		end
 		Gdal.write!(ds, indata, isa(GI.z, Array{<:Real, 3}) ? Cint.(collect(1:size(GI,3))) : 1)
 	elseif (isa(GI, GMTimage))
 		if (GI.layout != "" && GI.layout[2] == 'C')
-			indata = (GI.layout[1] == 'B') ? collect(reverse(GI.image, dims=1)') : collect(GI.image')
+			if (ndims(GI.image) == 2)
+				indata = (GI.layout[1] == 'B') ? collect(reverse(GI.image, dims=1)') : collect(GI.image')
+			else
+				indata = (GI.layout[1] == 'B') ? collect(permutedims(reverse(GI.image, dims=1), (2, 1, 3))) : collect(permutedims(GI.image,(2, 1, 3)))
+			end
 		else
 			indata = GI.image
 		end
