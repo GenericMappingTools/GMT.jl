@@ -251,7 +251,7 @@ function get_gdaldataset(data, opts)
 				opts *= " -b" * join(o, " -b ")
 			end
 		end
-		ds = (name[1] == '@') ? Gdal.unsafe_read(gmtwhich(name)[1].text[1]) : Gdal.unsafe_read(name)
+		ds = (name[1] == '@') ? Gdal.unsafe_read(gmtwhich(name).text[1]) : Gdal.unsafe_read(name)
 		needclose = true					# For some reason file remains open and we must close it explicitly
 	elseif (isa(data, GMTgrid) || isa(data, GMTimage) || GMT.isGMTdataset(data) || isa(data, Matrix{<:Real}))
 		ds = gmt2gd(data)

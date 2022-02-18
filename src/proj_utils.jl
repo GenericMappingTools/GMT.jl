@@ -236,12 +236,10 @@ buffergeo(D::GMTdataset; width=0, unit=:m, np=120, flatstart=false, flatend=fals
 	buffergeo(D.data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D.proj4, epsg=epsg, tol=tol)
 
 function buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=-1.0)
-	(length(D) == 1) && return buffergeo(D[1].data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D[1].proj4, epsg=epsg, tol=tol)
-
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
-		_D[k], = buffergeo(D[k].data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend,
-		                   proj=D[1].proj4, epsg=epsg, tol=tol)
+		_D[k] = buffergeo(D[k].data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend,
+		                  proj=D[1].proj4, epsg=epsg, tol=tol)
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
@@ -343,12 +341,12 @@ orthodrome(ds::Gdal.AbstractDataset; step=0, unit=:m, np=0, proj::String="", eps
 function orthodrome(D::Vector{<:GMTdataset}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
-		_D[k] = mat2ds(orthodrome(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj, epsg=epsg))[1]
+		_D[k] = mat2ds(orthodrome(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj, epsg=epsg))
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
 function orthodrome(D::GMTdataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
-	mat2ds(orthodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))[1]
+	mat2ds(orthodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))
 end
 
 function orthodrome(line::Matrix{<:Real}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
@@ -402,7 +400,7 @@ loxodrome(lon1::Real, lat1::Real, lon2::Real, lat2::Real; step=0, unit=:m, np=0,
 	loxodrome([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg)
 
 function loxodrome(D::GMTdataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
-	mat2ds(loxodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))[1]
+	mat2ds(loxodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))
 end
 
 function loxodrome(line::Matrix{<:Real}; step=0, np=0, unit=:m, proj::String="", epsg::Integer=0)

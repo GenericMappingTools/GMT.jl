@@ -65,6 +65,7 @@
 	GMT.GMTdataset(rand(Float32, 2,2))
 	D = mat2ds(GMT.fakedata(4,4), x=:ny, color=:cycle, multi=true)
 	D[1].text = ["lixo", "l", "p", "q"];
+	GMT.set_dsBB!(D[1])
 	GMT.find4similar(D[1],0)
 	getindex(D[1],1);
 	setindex!(D[1], 1,1)

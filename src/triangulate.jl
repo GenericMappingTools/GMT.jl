@@ -164,8 +164,8 @@ Returns either an ``Int`` or a ``Vector{Int}`` depending on the number of input 
     plot!(D[ids[2]], fill=:green)
     plot!(points, marker=:star, ms="12p", fill=:blue, show=true)
 """
-inwhichpolygon(D::Vector{GMTdataset}, x, y) = inwhichpolygon(D, [x y])
-function inwhichpolygon(D::Vector{GMTdataset}, point::VMr)::Union{Int, Vector{Int}}
+inwhichpolygon(D::Vector{<:GMTdataset}, x, y) = inwhichpolygon(D, [x y])
+function inwhichpolygon(D::Vector{<:GMTdataset}, point::VMr)::Union{Int, Vector{Int}}
 	pt::Matrix{<:Real} = isa(point, Vector) ? [point[1] point[2]] : point
 
 	iswithin(bbox, x, y) = (x >= bbox[1] && x <= bbox[2] && y >= bbox[3] && y <= bbox[4])

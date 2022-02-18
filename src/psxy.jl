@@ -182,7 +182,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 					error("The size array must have the same number of elements rows in the data")
 				arg1 = hcat(arg1, val[:])
 			elseif (string(val) != "indata")
-				marca *= arg2str(val);
+				marca *= arg2str(val)
 			end
 			opt_S = " -S" * marca
 		elseif (marca != "")		# User only selected a marker name but no size.
@@ -383,9 +383,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	isa(_argD, GMTdataset) && (_argD = [_argD])	# To simplify the algo (but introduce a type instability?)
 	(is_stack) && (_argD = ds2ds(_argD[1], fill=g_bar_fill, color_wrap=nl, fillalpha=alpha))
 	if (is_hbar && !is_stack)					# Must swap first & second col
-		for k = 1:length(_argD)
-			_argD[k].data = [_argD[k].data[:,2] _argD[k].data[:,1]]
-		end
+		for k = 1:length(_argD)  _argD[k].data = [_argD[k].data[:,2] _argD[k].data[:,1]]  end
 	end
 	(!isempty(g_bar_fill)) && delete!(d, :fill)
 

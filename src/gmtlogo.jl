@@ -96,12 +96,12 @@ logo!(cmd0::String=""; first=false, kw...) = logo(cmd0; first=first, kw...)
 function jlogo(L::Float64=5.0)
 	# Create the Julia "Terminator" 3 colored circles triangle
 	# L is the length of the equilateral triangl
-	W = 2 * L 					# Region width
-	H = L * sind(60) 			# Triangle height
-	s_size = 0.8 * L 			# Circle diameter
+	#W = 2 * L 					# Region width
+	#s_size = 0.8 * L 			# Circle diameter
 	#l_thick::Float64 = s_size * 0.06 	# Line thickness
+	H = L * sind(60) 			# Triangle height
 
-	s1 = s_size				# Outer circle diameter to simulate a line
+	s1 = 0.8 * L				# Outer circle diameter to simulate a line
 	s2 = s1 * (1 - 0.06)		# Inner circle diameter. The one that will be filled.
 	t = [L/2 L/2 0 s1; L+L/2 L/2 1 s1; L L/2+H 2 s1; L/2 L/2 3 s2; L+L/2 L/2 4 s2; L L/2+H 5 s2]
 	return " -Sc -C171/43/33,130/83/171,81/143/24,191/101/95,158/122/190,128/171/93 ", t, s2
