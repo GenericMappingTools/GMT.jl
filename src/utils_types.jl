@@ -991,8 +991,7 @@ Or ``nothing`` if the query results in an empty GMTdataset
 function get_byattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	# This method does the work but it's not the one normally used by the public.
 	# It returns the indices of the selected segments.
-	(isempty(D[1].attrib)) &&
-		(@warn("This datset does not have an `attrib` field and is hence unusable here.");	return Int[])
+	(isempty(D[1].attrib)) && (@warn("This datset does not have an `attrib` field and is hence unusable here."); return Int[])
 	((_att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
 	if isa(_att, NamedTuple)
 		atts, vals = string.(keys(_att)), string.(values(_att))

@@ -125,7 +125,9 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		if ((r = dbg_print_cmd(d, cmd)) !== nothing)
 			return (!isa(arg1, GMTimage) && opt_T != "") ? r * " -T" * opt_T : r
 		end
-		cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
+		if (!isa(arg1, GItype))
+			cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
+		end
 		if (isa(arg1, GMTimage))		# If it's an image with no bin option, default to bin=1
 			arg1, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
 		else
@@ -150,7 +152,9 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	is_datetime = isa(arg1, Array{<:DateTime})
 	(opt_R == "" && !isa(arg1, Vector{DateTime})) && (opt_R = " ")	# So it doesn't try to find the -R in next call
-	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
+	if (!isa(arg1, GItype))
+		cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
+	end
 	cmd, arg1, arg2,  = add_opt_cpt(d, cmd, CPTaliases, 'C', N_args, arg1, arg2)
 
 	# If we still do not know the bin width, either use the GMT6.2 -E or BinMethod in binmethod()
@@ -163,7 +167,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		got_min_max = true
 		if (is_datetime)
 			t = gmt("pshistogram -I -T" * opt_T, arg1)	# Call with inquire option to know y_min|max
-			h = round_wesn(t.data)					# Only h[4] is needed
+			h = round_wesn(t.data)						# Only h[4] is needed
 			opt_R *= sprintf("/0/%.12g", h[4])			# Half -R was computed in read_data()
 			cmd *= opt_R * " -T" * opt_T
 			opt_T = ""		# Clear it because the GMTimage & GMTgrid use a version without "-T" that is added at end

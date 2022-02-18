@@ -137,9 +137,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		(cmd *= " -W -A0/1/1")
 
 	get_largest = (!finish && occursin(" -E", cmd) && (find_in_dict(d, [:biggest :largest])[1] !== nothing))
-	if (finish)  _cmd = finish_PS_nested(d, [gmt_proggy * cmd])
-	else	     _cmd = [gmt_proggy * cmd]
-	end
+	_cmd = (finish) ? finish_PS_nested(d, [gmt_proggy * cmd]) : [gmt_proggy * cmd]
 
 	R = finish_PS_module(d, _cmd, "", K, O, finish)
 	if (get_largest)

@@ -16,6 +16,7 @@
 	@test_throws ErrorException("Bad shape name (a)") circgeo(0.,0, radius=50, shape=:a)
 	circgeo([0 0; 0 2], radius=50, unit=:k)
 	buffergeo(mat2ds([0 0; 5 5]), width=100, unit=:k, tol=0)
+	buffergeo([mat2ds([0 0; 5 5])], width=100, unit=:k, tol=0)
 	buffergeo(mat2ds([178 73; -175 74]), width=100, unit=:k)
 	wkt = epsg2wkt(4326)
 	prj = epsg2proj(4326)
@@ -26,6 +27,7 @@
 	loxo = loxodrome(mat2ds([0 0; 30 50]), step=500, unit=:k);
 	loxo = loxodrome(0, 0, 30, 50, step=500, unit=:k);
 	orto = orthodrome(mat2ds([0 0; 30 50]), step=500, unit=:k);
+	orto = orthodrome([mat2ds([0 0; 30 50])], step=500, unit=:k);
 	orthodrome(mat2ds([0 0; 15 25; 30 50]), step=500, unit=:k)
 	orthodrome(0, 0, 30, 50, step=500, unit=:k);
 	dist, azim = GMT.loxodrome_inverse(0,0,5,5)

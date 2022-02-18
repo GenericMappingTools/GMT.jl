@@ -2988,14 +2988,14 @@ read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Real}, opt_R::String=
 read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Any}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Matrix{Float64}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
 
 read_data(d::Dict, fname::String, cmd::String, arg::Vector{DateTime}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Vector{Float64}, String, GMTdataset, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
-=#
 
 # This is the fall-back method. Unfortunately, I've not found a solution that covers the passing in of a file name
 # because we fall in the same situation as with passing the input data via the 'data' kw, and this one can have any type.
 read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false) = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
+=#
 
 # ---------------------------------------------------------------------------------------------------
-function _read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
+function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)#::Tuple{String, Union{Nothing, Array{<:Real}, GDtype}, String, GMTdataset, String}
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
 
@@ -3495,7 +3495,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	if (img_mem_layout[1] == "images")  img_mem_layout[1] = "I   "  end	# Special layout for Images.jl
 
 	if (fname_ext != "ps" && !IamModern[1] && !O)		# Exptend to a larger paper size (5 x A0)
-		cmd[1] *= " --PS_MEDIA=11920x16850"				# In Modern mode GMT takes care of this.
+		#cmd[1] *= " --PS_MEDIA=11920x16850"			# In Modern mode GMT takes care of this.
+		cmd[1] *= " --PS_MEDIA=32767x32767"				# In Modern mode GMT takes care of this.
 	end
 
 	orig_J = ""		# To use in the case of a double Cartesian/Geog frame.
