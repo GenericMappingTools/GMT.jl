@@ -34,7 +34,7 @@ text_record(text) = text_record(Array{Float64,2}(undef,0,0), text)
 
 # ---------------------------------------------------------------------------------------------------
 """
-    D = mat2ds(mat [,txt]; x=nothing, text=nothing, multi=false, kwargs...)
+    D = mat2ds(mat [,txt]; x=nothing, text=nothing, multi=false, geom=0, kwargs...)
 
 Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
@@ -52,6 +52,7 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `multi`: When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
      first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
   - `datatype`: Keep the original data type of `mat`. Default, converts to Float64.
+  - `geom`: The data geometry. By default we set ``wkbUnknown`` but try to do some basic guess.
   - `proj` or `proj4`:  A proj4 string for dataset SRS.
   - `wkt`:  A WKT SRS.
   - `colnames`: Optional string vector with names for each column of `mat`.
@@ -967,7 +968,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    get_byattrib(D::Vector{<:GMTdataset}[, index::Bool]; kw...)
+    getbyattrib(D::Vector{<:GMTdataset}[, index::Bool]; kw...)
 
 Take a GMTdataset vector and return only its elememts that match the condition(s) set by the `attrib` keywords.
 Note, this assumes that `D` has its `attrib` fields set with usable information.
@@ -986,9 +987,9 @@ Or ``nothing`` if the query results in an empty GMTdataset
 
 ## Example:
 
-    D = get_byattrib(D, attrib="NAME_2", val="Porto");
+    D = getbyattrib(D, attrib="NAME_2", val="Porto");
 """
-function get_byattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
+function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	# This method does the work but it's not the one normally used by the public.
 	# It returns the indices of the selected segments.
 	(isempty(D[1].attrib)) && (@warn("This datset does not have an `attrib` field and is hence unusable here."); return Int[])
@@ -1016,8 +1017,8 @@ function get_byattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	return indices
 end
 
-function get_byattrib(D::Vector{<:GMTdataset}; kw...)::Union{Nothing, Vector{GMTdataset}}
+function getbyattrib(D::Vector{<:GMTdataset}; kw...)::Union{Nothing, Vector{GMTdataset}}
 	# This is the intended public method. It returns a subset of the selected segments
-	ind = get_byattrib(D, true; kw...)
+	ind = getbyattrib(D, true; kw...)
 	return isempty(ind) ? nothing : D[ind]
 end
