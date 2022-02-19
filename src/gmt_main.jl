@@ -1266,7 +1266,7 @@ function ps_init(API::Ptr{Nothing}, ps, dir::Integer)::Ptr{GMT_POSTSCRIPT}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
+function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdataset, Vector{<:GMTdataset}}
 	(in == NULL)  && return nothing
 	OGR_F::OGR_FEATURES = unsafe_load(in)
 	n_max = OGR_F.n_rows * OGR_F.n_cols * OGR_F.n_layers
@@ -1341,7 +1341,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		D[k].bbox = collect(Float64, Iterators.flatten(bb))
 	end
 	D[1].ds_bbox = collect(ds_bbox)			# It always has 6 elements and last two maybe zero
-	return D
+	return (length(D) == 1) ? D[1] : D
 end
 
 # ---------------------------------------------------------------------------------------------------
