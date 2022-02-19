@@ -64,18 +64,11 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 
 	if (arg1 === nothing && haskey(d, :R) && guess_T_from_ext(cmd0) == " -Ti")
 		_opt_R = d[:R]
-		if (isa(_opt_R, Tuple) || isa(_opt_R, Array{<:Real}))
-			t = ["$(_opt_R[1])", "$(_opt_R[2])", "$(_opt_R[3])", "$(_opt_R[4])"]
-		else
-			t = split(_opt_R, '/')
-		end
+		t = (isa(_opt_R, Tuple) || isa(_opt_R, VMr)) ?
+			["$(_opt_R[1])", "$(_opt_R[2])", "$(_opt_R[3])", "$(_opt_R[4])"] : split(_opt_R, '/')
 		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
 		I = cut_with_gdal(cmd0, opts)
-		if     (arg1 === nothing) arg1 = I
-		elseif (arg2 === nothing) arg2 = I
-		elseif (arg3 === nothing) arg3 = I
-		else   arg4 = I
-		end
+		(arg1 === nothing) ? arg1 = I : ((arg2 === nothing) ? arg2 = I : ((arg3 === nothing) ? arg3 = I : arg4 = I))
 		cmd0 = ""
 	end
 
@@ -166,11 +159,7 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 			if (prog == "grdimage")  cmd, N_used = put_in_slot(cmd, 'I', arg1, arg2, arg3, arg4)
 			else                     cmd, N_used = put_in_slot(cmd, 'I', arg1, arg2, arg3)
 			end
-			if (N_used == 1)  arg1 = val
-			elseif (N_used == 2)  arg2 = val
-			elseif (N_used == 3)  arg3 = val
-			elseif (N_used == 4)  arg4 = val	# grdview doesn't have this case but no harm to not test for that
-			end
+			(N_used == 1) ? arg1 = val : ((N_used == 2) ? arg2 = val : ((N_used == 3) ? arg3 = val : arg4 = val))
 		end
 		del_from_dict(d, [:I, :shade, :shading, :intensity])
 	end
