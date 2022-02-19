@@ -160,7 +160,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset, Vector{<:GMTdataset}}
-	# Convert a geometry into a single GMTdataset
+	# Convert a geometry into a GMTdataset/Vector{GMTdadaset}
 	gmtype = Gdal.getgeomtype(geom)
 	if (gmtype == Gdal.wkbPolygon)		# getx() doesn't work for polygons
 		geom = Gdal.getgeom(geom,0)
