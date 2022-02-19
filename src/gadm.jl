@@ -93,18 +93,20 @@ function gadm(country, subregions...; children::Bool=false, names::Bool=false, c
 
 	function _get_polygs(gdfeature)
 		D = gd2gmt(getgeom(gdfeature[1], 0),"")
+		isa(D, GMTdataset) && (D = [D])		# Hopefully not too wasteful but it simplifies a lot the whole algo
 		att = _get_attrib(gdfeature[1])
 		for k = 1:length(D)  D[k].attrib = att;  D[k].colnames = ["Lon", "Lat"]  end
 		D[1].attrib = _get_attrib(gdfeature[1])
 		((prj = getproj(Gdal.getlayer(data, 0))) != C_NULL) && (D[1].proj4 = toPROJ4(prj))
 		for n = 2:length(gdfeature)
 			_D = gd2gmt(getgeom(gdfeature[n], 0),"")
+			isa(_D, GMTdataset) && (_D = [_D])
 			att = _get_attrib(gdfeature[n])
 			for k = 1:length(_D)  _D[k].attrib = att;  _D[k].colnames = ["Lon", "Lat"]  end
 			append!(D, _D)
 		end
 		set_dsBB!(D, false)		# Compute only the global BB. The other were computed aready
-		D
+		return (length(D) == 1) ? D[1] : D
 	end
 
 	# p -> parent, is the requested region
