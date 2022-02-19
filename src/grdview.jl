@@ -86,9 +86,9 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 
-	(isa(arg1, Array{<:Real})) && (arg1 = mat2grid(arg1))
+	(isa(arg1, Matrix{<:Real})) && (arg1 = mat2grid(arg1))
 
-	cmd, N_used, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdview")
+	cmd, _, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdview")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdview")
 	cmd, arg1, arg2, arg3, arg4, arg5 = parse_G_grdview(d, [:G :drape :drapefile], cmd0, cmd, arg1, arg2, arg3, arg4, arg5)
 

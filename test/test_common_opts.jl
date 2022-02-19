@@ -227,8 +227,8 @@
 	GMT.polygonlevels(D, ["a" "aa"; "b" "bb"], [1,2], att=["nome", "nome2"]);
 	GMT.polygonlevels(D, ["a" "aa"; "b" "bb"], [1,2], att=["nome", "nome2"], nocase=1);
 	GMT.edit_segment_headers!(D, [1], "0");
-	GMT.get_byattrib(D, att="nome", val="a");
-	GMT.get_byattrib(D, att=(nome="a", nome2="b"));
+	GMT.getbyattrib(D, att="nome", val="a");
+	GMT.getbyattrib(D, att=(nome="a", nome2="b"));
 
 	@test_throws ErrorException("Bad 'stretch' argument. It must be a 1, 2 or 6 elements array and not 3") GMT.mat2img(img16, histo_bounds=[8440 13540 0]);
 	@test_throws ErrorException("Memory layout option must have 3 characters and not 1") GMT.parse_mem_layouts("-%1")

@@ -3228,7 +3228,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function isvector(x)::Bool
 	# Return true if x is a vector in the Matlab sense
-	isa(x, Vector) || (isa(x, Array) && ( ((size(x,1) == 1) && size(x,2) > 1) || ((size(x,1) > 1) && size(x,2) == 1) ))
+	isa(x, Vector) || (isa(x, Matrix) && ( ((size(x,1) == 1) && size(x,2) > 1) || ((size(x,1) > 1) && size(x,2) == 1) ))
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -3320,7 +3320,7 @@ function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, args...)
 	elseif (n_args == 2)  cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, args[1], args[2])
 	elseif (n_args == 3)  cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, args[1], args[2], args[3])
 	end
-	if (arg1 !== nothing && isa(arg1, Array{<:Real}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
+	if (arg1 !== nothing && isa(arg1, Matrix{<:Real}) && startswith(prog, "grd"))  arg1 = mat2grid(arg1)  end
 	(n_args <= 1) ? common_grd(d, prog * cmd, arg1) : (n_args == 2) ? common_grd(d, prog * cmd, arg1, arg2) : common_grd(d, prog * cmd, arg1, arg2, arg3)
 end
 

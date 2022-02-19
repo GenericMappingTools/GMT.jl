@@ -52,7 +52,7 @@ function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_common_opts(d, cmd, [:G :R :V_params :r])[1]
 	if ((val = find_in_dict(d, [:J :proj :projection], false)[1]) !== nothing)  # Here we don't want any default value
 		cmd = parse_J(d, cmd, "", false)[1];
-    else						# See if the grid/image has proj info and use it if we can 
+	else						# See if the grid/image has proj info and use it if we can 
 		prj::String = ""
 		(arg1 !== nothing) && (prj = getproj(arg1, proj4=true))
 		(prj == "" && cmd0 != "") && (prj = getproj(cmd0, proj4=true))

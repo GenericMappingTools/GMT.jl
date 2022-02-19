@@ -81,11 +81,9 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 	cmd, args, n1, = add_opt(d, cmd, "E", [:E :crossection], :line, Vector{Any}([arg1, arg2]), (azim="+a", great_circ="_+g", parallel="_+p", inc="+i", length="+l", npoints="+n", middpoint="+o", radius="+r", loxodrome="_+x"))
 
 	if ((val = find_in_dict(d, [:S :track :pt])[1]) !== nothing)
-		if (isa(val, Tuple) || (isa(val, Array{<:Number}) && length(val) == 2))
+		if (isa(val, Tuple) || isa(val, String) || (isa(val, VMr) && length(val) == 2))
 			cmd *= " -S" * arg2str(val)
-		elseif (isa(val, String))
-			cmd *= " -S" * val
-		elseif (isa(val, Matrix) || isGMTdataset(val))
+		elseif (isGMTdataset(val))
 			(arg1 === nothing) ? arg1 = val : ((arg2 === nothing) ? arg2 = val : arg3 = val)
 			cmd *= " -S"
 		else  error("Bad data type for option `track` $(typeof(val))")
