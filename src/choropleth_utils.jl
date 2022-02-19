@@ -46,6 +46,7 @@ function cpt4dcw(codes::Vector{<:AbstractString}, vals::Vector{<:Real}; kwargs..
 		Ccat.range[k,2] = C.minmax[1] + k * inc
 	end
 	Ccat.minmax = C.minmax
+	typeof(P)		# Another try to make this alive till here
 	return Ccat
 end
 
