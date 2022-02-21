@@ -63,6 +63,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	haskey(d, :outline) && delete!(d, :outline)	# May come through `pcolor` where it was valid, but not here.
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 
 	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
@@ -189,6 +190,6 @@ function drape_prepare(d::Dict, fname, opts::Vector{AbstractString}, prj::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdview!(cmd0::String="", arg1=nothing; first=false, kw...) = grdview(cmd0, arg1; first=first, kw...)
-grdview(arg1; first=true, kw...) = grdview("", arg1; first=first, kw...)
-grdview!(arg1; first=false, kw...) = grdview("", arg1; first=first, kw...)
+grdview!(cmd0::String="", arg1=nothing; kw...) = grdview(cmd0, arg1; first=false, kw...)
+grdview(arg1; kw...) = grdview("", arg1; first=true, kw...)
+grdview!(arg1; kw...) = grdview("", arg1; first=false, kw...)
