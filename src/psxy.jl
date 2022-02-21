@@ -170,7 +170,15 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(do_Z_outline && !contains(opt_W, "+z")) && (opt_W = (opt_W == "") ? " -W+c" : opt_W * "+z")
 	(got_Zvars && !do_Z_fill && !do_Z_outline && opt_W == "") && (opt_W = " -W0.5+z")	# Nofill and nothing else defaults to -W+z
 	(got_Zvars && (do_Z_fill || opt_G != "") && opt_L == "") && (cmd *= " -L")	# GMT requires -L when -Z fill or -G
-	((do_Z_fill || do_Z_outline) && !occursin("-C", cmd)) && @warn("Used `level` option but no color scale provided. Expect ...")
+
+	if ((do_Z_fill || do_Z_outline) && !occursin("-C", cmd))
+		if (isempty(current_cpt[1]))
+			mima::Tuple{Real, Real} = (N_args == 1) ? extrema(arg1) : extrema(arg2)	# If it's arg3 we're fckd
+			r = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
+			(arg1 === nothing) ? arg1 = r : ((arg2 === nothing) ? arg2 = r : arg3 = r)
+		end
+		cmd *= " -C"
+	end
 
 	opt_S::String = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
