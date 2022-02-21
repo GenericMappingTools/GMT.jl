@@ -232,7 +232,7 @@ function opt_R2num(opt_R::String)
 		limits[1] = parse(Float64, rs[1][fst+1:end])
 		for k = 2:length(rs)  limits[k] = parse(Float64, rs[k])  end
 		if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
-	elseif (opt_R != " -R")		# One of those complicated -R forms. Just ask GMT the limits (but slow. It takes 0.2 s)
+	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
 		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])
 		limits = zeros(4)
 		t::String = kml.text[28][12:end];	ind = findfirst("<", t)		# north
@@ -2092,7 +2092,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 				c = get_color(val)
 				opt_C = " -" * opt * c		# This is pre-made GMT cpt
 				cmd *= opt_C
-				if (store && c != "" && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's number and -Cn is not valid
+				if (store && c != "" && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's a number and -Cn is not valid
 					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
 						r = makecpt(opt_C * " -Vq")
 						global current_cpt[1] = (r !== nothing) ? r : GMTcpt()
@@ -2290,17 +2290,13 @@ function get_color(val)::String
 		out = rstrip(out, ',')		# Strip last ','``
 	elseif ((isa(val, Array) && (size(val, 2) == 3)) || (isa(val, Vector) && length(val) == 3))
 		if (isa(val, Vector))  val = val'  end
-		if (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1)
-			copia = val .* 255		# Do not change the original
-		else
-			copia = val
-		end
+		copia = (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1) ? val .* 255 : val	# Do not change the original
 		out = @sprintf("%.0f/%.0f/%.0f", copia[1,1], copia[1,2], copia[1,3])
 		for k = 2:size(copia, 1)
 			out = @sprintf("%s,%.0f/%.0f/%.0f", out, copia[k,1], copia[k,2], copia[k,3])
 		end
 	else
-		@warn("got this bad data type: $(typeof(val))")	# Need to split because f julia change in 6.1
+		@warn("got this bad data type: $(typeof(val))")		# Need to split because f julia change in 6.1
 		error("GOT_COLOR, got an unsupported data type")
 	end
 	return out
@@ -3825,18 +3821,20 @@ function monolitic(prog::String, cmd0::String, args...)
 end
 
 # --------------------------------------------------------------------------------------------------
-function peaks(; N=49, grid=true)
+function peaks(; N=49, grid::Bool=true, pixreg::Bool=false)
 	x,y = meshgrid(range(-3,stop=3,length=N))
 
-	z =  3 * (1 .- x).^2 .* exp.(-(x.^2) - (y .+ 1).^2) - 10*(x./5 - x.^3 - y.^5) .* exp.(-x.^2 - y.^2)
-	   - 1/3 * exp.(-(x .+ 1).^2 - y.^2)
+	z = 3 * (1 .- x).^2 .* exp.(-(x.^2) - (y .+ 1).^2) - 10*(x./5 - x.^3 - y.^5) .* exp.(-x.^2 - y.^2)
+	    - 1/3 * exp.(-(x .+ 1).^2 - y.^2)
 
 	if (grid)
-		x = collect(range(-3,stop=3,length=N))
-		y = copy(x)
+		inc = y[2]-y[1]
+		_x = (pixreg) ? collect(range(-3-inc/2,stop=3+inc/2,length=N+1)) : collect(range(-3,stop=3,length=N))
+		_y = copy(_x)
 		z = Float32.(z)
-		G = GMTgrid("", "", 0, [x[1], x[end], y[1], y[end], minimum(z), maximum(z)], [x[2]-x[1], y[2]-y[1]],
-					0, NaN, "", "", "", String[], x, y, Vector{Float64}(), z, "x", "y", "", "z", "", 1f0, 0f0, 0)
+		reg = (pixreg) ? 1 : 0
+		G = GMTgrid("", "", 0, [_x[1], _x[end], _y[1], _y[end], minimum(z), maximum(z)], [inc, inc],
+					reg, NaN, "", "", "", String[], _x, _y, Vector{Float64}(), z, "x", "y", "", "z", "", 1f0, 0f0, 0)
 		return G
 	else
 		return x,y,z
