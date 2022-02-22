@@ -151,3 +151,4 @@ end
 # ---------------------------------------------------------------------------------------------------
 # Version to use with the -E option
 makecpt(arg1; kw...) = makecpt("", arg1; kw...)
+makecpt(b, e, inc=nothing; kw...) = makecpt("", nothing; T= (inc === nothing) ? (b,e) : (b,e,inc), kw...)
