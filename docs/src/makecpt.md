@@ -90,7 +90,9 @@ Optional Arguments
     slice boundaries. If *:number* is added as a fourth element then *inc* is meant to indicate the number of
     equidistant coordinates instead. Use *:log2* if we should take log2 of min and max, get their nearest integers,
     build an equidistant log2-array using inc integer increments in log2, then undo the log2 conversion. Same for *:log10*.
-    For details on array creation, see `Generate 1D Array`.
+    For details on array creation, see `Generate 1D Array`. A quick, in the sense of more limited, replacement for this
+    option, however, is to provide the ``start``, ``stop`` and optionally the ``increment`` via input positional
+    arguments. *E.g.* for example ``makecpt(1,5,0.1, kw...)`` or even ``makecpt(1,5, kw...)``.
 
 - **V** or *verbose* : -- *verbose=true* **|** *verbose=level*\
     Select verbosity level. More at [verbose](@ref)

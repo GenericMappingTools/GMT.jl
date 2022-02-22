@@ -73,6 +73,7 @@ if (got_it)					# Otherwise go straight to end
 	makecpt(rand(10,1), E="", C=:rainbow, cmap="lixo.cpt");
 	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
 	cpt = makecpt(range="-1/1/0.1");
+	cpt = makecpt(-1,1,0.1);
 	println("		MAKECPT - 0")
 	if (GMTver > v"6.1.1")
 		C = cpt4dcw("eu");
