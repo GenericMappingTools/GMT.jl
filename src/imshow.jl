@@ -50,6 +50,9 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		ginfo = gmt("gmtinfo -C", arg1)
 		CTRL.limits[1:4] = ginfo.data[1:4]
 		return plot(arg1; show=true, kw...)
+	elseif (isa(arg1, GMTcpt))
+		return (find_in_kwargs(kw, [:D :pos :position])[1] === nothing) ?
+			psscale(arg1; show=true, D="x0/0+w7+h", kw...) : psscale(arg1; show=true, kw...)
 	else
 		G = mat2grid(arg1, x, y, reg=1)							# For displaying, pixel registration is more appropriate
 	end
