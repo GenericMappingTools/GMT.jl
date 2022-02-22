@@ -129,6 +129,7 @@
 	G = GMT.peaks(N=21);
 	pcolor(G, outline=(0.5,:dot), Vd=dbg2)
 	pcolor!("", G, outline=(0.5,:dot), Vd=dbg2)
+	pcolor!(G, T=true, Vd=dbg2)
 	pcolor(G.x, G.y, G.z, Vd=dbg2)
 	G = GMT.peaks(N=21, pixreg=true);
 	pcolor!(G.x, G.y, G.z, R="-3/3/-3/3", Vd=dbg2)

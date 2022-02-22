@@ -72,7 +72,8 @@ I = mat2img(mat, hdr=[0.0 3 0 3 0 255 1 1 1]);
 imshow(I, J=:Merc, show=false)
 I = GMT.GMTimage("", "", 0, [1., 10, 1, 10, 0, 1, 1, 1, 1], [1., 1], 1, zero(UInt16), "gray", String[], String[], collect(1.:11), collect(1.:11), [0.],rand(UInt16,10,10), zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), "TRBa", 0);
 imshow(I,Vd=dbg2)
-imshow(mat2ds([0 0; 10 0; 10 10; 11 10]), Vd=2)
+imshow(mat2ds([0 0; 10 0; 10 10; 11 10]), Vd=dbg2)
+imshow(makecpt(1,5, cmap=:polar), Vd=dbg2)
 GMT.mat2grid("ackley");
 GMT.mat2grid("egg");
 GMT.mat2grid("sombrero");
