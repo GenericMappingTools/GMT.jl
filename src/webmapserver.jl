@@ -54,7 +54,7 @@ function wmsinfo(server::String)::WMS
 			ind = findfirst("=", f[1]); t = f[1][ind[1]+5:end]
 			ind = findfirst("?", t);	onlineRes = t[1:ind[1]]
 		end
-		for n = 2:length(f)			# Loop over the fields od the SUBDATASET_XX_NAME
+		for n = 2:length(f)			# Loop over the fields of the SUBDATASET_XX_NAME
 			if     (startswith(f[n], "VERSION"))  ver = f[n][9:end];  continue
 			elseif (startswith(f[n], "REQUEST"))  req = f[n][9:end];  continue
 			elseif (startswith(f[n], "LAYERS"))   name = f[n][8:end]; continue
@@ -112,17 +112,26 @@ Read the `layer` number provided by the service from which the `wms` type was cr
 - `cellsize | pixelsize | resolution | res`: Sets the requested cell size in meters [default]. Use a string appended with a 'd'
    (e.g. `resolution="0.001d"`) if the resolution is given in degrees. This way works only when the layer is in geogs.
 - `size`: Alternatively to the the `cellsize` use this option, a tuple or array with two elements, to specify
-   the image dimensions. Example, `size=(1200, 100)` to get an image with 1200 rows and 100 columns. 
+   the image dimensions. Example, `size=(1200, 100)` to get an image with 1200 rows and 100 columns.
+- `time`: Some services provide data along time. Use this option to provide a time string as provided by DateTime.
+   For example: `time=string(DateTime(2021,10,29))`
 
 ### Returns
 A GMTimage
 
-## Example
+### Examples
+
+    wms = wmsinfo("http://tiles.maps.eox.at/wms?")
     img = wmsread(wms, layer=3, region=(-10,-5,37,44), pixelsize=500);
+
+    # Retrieve and display a MODIS image
+    wms = wmsinfo("https://gibs-c.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi");
+    img = wmsread(wms, layer="MODIS_Terra_CorrectedReflectance_TrueColor", region=(9,22,32,43), time="2021-10-29T00:00:00", pixelsize=750);
+    imshow(img, proj=:guess)
 """
-function wmsread(wms::WMS; layer=0, kw...)
+function wmsread(wms::WMS; layer=0, time::String="", kw...)
 	layer_n = get_layer_number(wms, layer)
-	str, dim_x, dim_y = wms_helper(wms; layer=layer_n, kw...)
+	str, dim_x, dim_y = wms_helper(wms; layer=layer_n, time=time, kw...)
 	opts = ["-outsize", "$(dim_x)", "$(dim_y)"]
 	gdaltranslate(str, opts)
 end
@@ -242,8 +251,9 @@ function wms_helper(wms::WMS; layer=0, kw...)
 	OVCNT = (wms.layer[layer_n].overviewcount > 0) ? @sprintf("&OVERVIEWCOUNT=%d", wms.layer[layer_n].overviewcount) : ""
 	TILSZ = (wms.layer[layer_n].tilesize > 0) ? @sprintf("&TILESIZE=%d", wms.layer[layer_n].tilesize) : ""
 	FMT   = (wms.layer[layer_n].imgformat != "") ? @sprintf("&FORMAT=%s", wms.layer[layer_n].imgformat) : "&FORMAT=image/png"
+	TIME::String  = ((val = find_in_dict(d, [:time])[1]) !== nothing && isa(val,String)) ? "&time=" * val * "Z" : ""
 	
-	str = @sprintf("WMS:%sSERVICE=WMS&VERSION=%s&REQUEST=GetMap&LAYERS=%s&SRS=%s&BBOX=%s%s%s%s%s%s%s", wms.OnlineResource, wms.version, wms.layer[layer_n].name, wms.layer[layer_n].srs, BB, FMT, TILSZ, OVCNT, MINRES, TILED, TRANS)
+	str = @sprintf("WMS:%sSERVICE=WMS&VERSION=%s&REQUEST=GetMap&LAYERS=%s&SRS=%s&BBOX=%s%s%s%s%s%s%s%s", wms.OnlineResource, wms.version, wms.layer[layer_n].name, wms.layer[layer_n].srs, BB, FMT, TILSZ, OVCNT, MINRES, TILED, TRANS, TIME)
 
 	return str, dim_x, dim_y
 end
