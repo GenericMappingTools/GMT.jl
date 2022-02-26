@@ -1851,7 +1851,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 		(cmd_ != "") && return cmd * cmd_	# Otherwise continue to see if the other (NT) form was provided
 	end
 
-	args = Vector{String}(undef,1)
+	args::Vector{String} = Vector{String}(undef,1)
 	if isa(val, Dict)  val = dict2nt(val)  end	# For Py usage
 	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
 		args[1] = add_opt(val, mapa, arg)
@@ -1875,7 +1875,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 			for k in keys(mapa)
 				(s != k) && continue
 				v = mapa[k]
-				if (isa(v, String) && (v[1] == '_'))	# Only the modifier matters
+				if (isa(v, String) && (v != "") && (v[1] == '_'))	# Only the modifier matters
 					args[1] = v[2:end]
 				elseif (isa(v, Tuple) && length(v) == 3 && v[2] === nothing)	# A ("t", nothing, 1) type
 					args[1] = v[1]
