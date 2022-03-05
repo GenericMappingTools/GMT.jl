@@ -38,7 +38,7 @@ This form takes a grid (or the file name of one) as input an paints it's cell wi
 	XX = 2*X .* Y;	YY = X.^2 .- Y.^2;
 	pcolor(XX,YY, reshape(repeat([1:18; 18:-1:1], 9,1), size(XX)), lc=:black, show=true)
 """
-function pcolor(X::VMr, Y::VMr, C::Matrix{<:Real}; first::Bool=true, kwargs...)
+function pcolor(X::VMr, Y::VMr, C::AbstractMatrix{<:Real}; first::Bool=true, kwargs...)
 	(isvector(X) && !isvector(Y)) && error("X and Y must be both vectors or matrices, not one of each color.")
 	if (isvector(X))
 		gridreg = (length(X) == size(C,2)) && (length(Y) == size(C,1))
@@ -69,10 +69,11 @@ function pcolor(X::VMr, Y::VMr, C::Matrix{<:Real}; first::Bool=true, kwargs...)
 		D[1].ds_bbox = vec([extrema(X)... extrema(Y)...])
 	end
 
+	Z = istransposed(C) ? vec(copy(C)) : vec(C)
 	if (find_in_kwargs(kwargs, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], false)[1] === nothing)
-		plot(D; first=first, Z=vec(C), R=@sprintf("%.12g/%.12g/%.12g/%.12g", D[1].ds_bbox...), kwargs...)
+		plot(D; first=first, Z=Z, R=@sprintf("%.12g/%.12g/%.12g/%.12g", D[1].ds_bbox...), kwargs...)
 	else
-		plot(D; first=first, Z=vec(C), kwargs...)
+		plot(D; first=first, Z=Z, kwargs...)
 	end
 end
 pcolor!(X::VMr, Y::VMr, C::Matrix{<:Real}; kw...) = pcolor(X, Y, C; first=false, kw...)

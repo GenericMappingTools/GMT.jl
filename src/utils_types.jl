@@ -683,6 +683,9 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String=
 	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem, cmd="", names=names)
 end
 
+# This is the way I found to find if a matriz is transposed. There must be better ways but couldn't find them.
+istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
+
 function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(),
 	v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="",
 	cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0, is_transposed::Bool=false)
@@ -709,17 +712,20 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, 
 		(fill_val != 0) && fill!(mat, fill_val)
 	end
 
-	GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, names, x, y, v, mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
+	isT = istransposed(mat)
+	GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, names, x, y, v, isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object
 function mat2grid(mat, G::GMTgrid)
-	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, String[], deepcopy(G.x), deepcopy(G.y), [0.], mat, G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad)
+	isT = istransposed(mat)
+	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, String[], deepcopy(G.x), deepcopy(G.y), [0.], isT ? copy(mat) : mat, G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad)
 	grd_min_max!(Go)		# Also take care of NaNs
 	Go
 end
 function mat2grid(mat, I::GMTimage)
-	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, NaN, "", "", "", String[], I.x, I.y, [0.], mat, "", "", "", "", I.layout, 1f0, 0f0, I.pad)
+	isT = istransposed(mat)
+	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, NaN, "", "", "", String[], I.x, I.y, [0.], isT ? copy(mat) : mat, "", "", "", "", I.layout, 1f0, 0f0, I.pad)
 	(length(Go.layout) == 4) && (Go.layout = Go.layout[1:3])	# No space for the a|A
 	grd_min_max!(Go)		# Also take care of NaNs
 	Go
