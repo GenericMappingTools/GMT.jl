@@ -235,6 +235,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 			end
 		end
 	end
+	(isempty(D)) && (@warn("This dataset has no geometry data. Result is empty."))
 	(length(D) != ds-1) && (D = deleteat!(D,ds:length(D)))
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	return (length(D) == 1) ? D[1] : D
@@ -534,11 +535,12 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 	(fname == "") && error("Input file name is missing.")
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
 	ressurectGDAL();
-	ds_t = Gdal.read(fname, I=false)
-	if (Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(ds_t))) == C_NULL)
+	ds_t = Gdal.read(fname, flags=Gdal.GDAL_OF_RASTER, I=false)
+	if (ds_t.ptr != C_NULL && Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(ds_t))) == C_NULL)
 		ds = gdaltranslate(ds_t, optsP; gdataset=gdataset, kw...)
 	else
-		optsP = (isempty(optsP)) ? ["-overwrite"] : append!(optsP, "-overwrite")
+		(ds_t.ptr == C_NULL) && (ds_t = Gdal.read(fname, flags = Gdal.GDAL_OF_VECTOR | Gdal.GDAL_OF_VERBOSE_ERROR, I=false))
+		optsP = (isempty(optsP)) ? ["-overwrite"] : (isa(optsP, String) ? ["-overwrite " * optsP] : append!(optsP, ["-overwrite"]))
 		ds = ogr2ogr(ds_t, optsP; gdataset=true, kw...)
 		Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
 	end
