@@ -1272,6 +1272,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 	n_max = OGR_F.n_rows * OGR_F.n_cols * OGR_F.n_layers
 	n_total_segments = OGR_F.n_filled
 	ds_bbox = OGR_F.BoundingBox
+	(n_total_segments == 0) && (@warn("Could not read this OGR dataset. A reading error or there is no data in it."); return GMTdataset())
 
 	if (!drop_islands)
 		# First count the number of islands. Need to know the size to put in the D pre-allocation
