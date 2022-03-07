@@ -88,7 +88,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	cmd = add_opt(d, cmd, "A", [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
 	opt_F::String = add_opt(d, "", "", [:F :conn :connection],
-	                (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpoint=("r", nothing, 1),  ignore_hdr="_a", single_group="_f", segments="_s", segments_reset="_r", anchor=("", arg2str)))
+	                (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpoint=("p", nothing, 1),  ignore_hdr="_a", single_group="_f", segments="_s", segments_reset="_r", anchor=("", arg2str)))
 	(opt_F != "" && !occursin("/", opt_F)) && (opt_F = string(opt_F[1]))	# Allow con=:net or con=(1,2)
 	(opt_F != "") && (cmd *= " -F" * opt_F)
 
