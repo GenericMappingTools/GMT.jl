@@ -3244,8 +3244,6 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 		got_fname = 1
 	end
 
-	write_data(d, cmd)			# Check if we need to save to file
-
 	tipo = length(args)
 	if (tipo == 1)
 		# Accepts "input1"; arg1; data=input1;
@@ -3256,7 +3254,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 				cmd = data_kw * " " * cmd
 				return cmd, 1, args[1]			# got_fname = 1 => data is in cmd
 			else
-				return cmd, 0, data_kw 		# got_fname = 0 => data is in arg1
+				return cmd, 0, data_kw 			# got_fname = 0 => data is in arg1
 			end
 		else
 			error("Missing input data to run this module.")
