@@ -45,7 +45,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_R(d, "", O)
-	cmd, = parse_J(d, cmd, "-Jx1", true, O)
+	cmd, = parse_J(d, cmd, " -Jx1", true, O)
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params], first)
 
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
