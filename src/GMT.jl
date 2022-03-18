@@ -121,8 +121,8 @@ export
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
-	earthtide, gmtgravmag3d, grdgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!,
-	velo, velo!, getbyattrib, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
+	earthtide, gravfft, gmtgravmag3d, grdgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!,
+	psvelo, psvelo!, velo, velo!, getbyattrib, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
 
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
@@ -252,6 +252,7 @@ include("MB/mblevitus.jl")
 if (GMTver > v"6.1.1")
 	include("potential/gmtgravmag3d.jl")
 	include("potential/grdgravmag3d.jl")
+	include("potential/gravfft.jl")
 end
 include("drawing.jl")
 
