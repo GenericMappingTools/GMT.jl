@@ -63,11 +63,14 @@
 	println("	GMTCONVERT")
 	gmtconvert([1.1 2; 3 4], o=0)
 
-	println("	GMTGRAVMAG3D")
 	if (GMTver > v"6.1.1")
+		println("	GMTGRAVMAG3D")
 		gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/10/-10/40", Vd=dbg2);
 		@test_throws ErrorException("Missing one of 'index', 'raw_triang' or 'str' data") gmtgravmag3d(I=1.0);
 		@test_throws ErrorException("For grid output MUST specify grid increment ('I' or 'inc')") gmtgravmag3d(Tv=true);
+
+		println("	GRDGRAVMAG3D")
+		grdgravmag3d("@earth_relief_10m", region=(-12.5,-10,35.5,37.5), density=1700, inc=0.05, pad=0.5, z_level=:b, f=:g, Vd=dbg2)
 	end
 
 	println("	GMTREGRESS")
@@ -82,7 +85,7 @@
 	logo(GMTjulia=2, fmt=:PNG)
 	logo!(julia=8, Vd=dbg2)
 	logo!("", julia=8, Vd=dbg2)
-	@test startswith(logo(pos=(anchor=(0,0),justify=:CM, offset=(1.5,0)), Vd=dbg2), "gmtlogo -Jx1 -Dg0/0+jCM+o1.5/0")
+	@test startswith(logo(pos=(anchor=(0,0),justify=:CM, offset=(1.5,0)), Vd=dbg2), "gmtlogo  -Jx1 -Dg0/0+jCM+o1.5/0")
 	logo!(julia=8, Vd=dbg2)
 	logo!("", julia=8, Vd=dbg2)
 

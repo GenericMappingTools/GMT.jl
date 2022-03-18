@@ -88,13 +88,13 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, arg1, arg2, arg3)
 	end
 
-	if (isa(arg1, Array{<:Real}))
-		if (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16}))
+	if (isa(arg1, Matrix{<:Real}))
+		if (isa(arg1, Matrix{UInt8}) || isa(arg1, Matrix{UInt16}))
 			arg1 = mat2img(arg1; d...)
 		else
 			arg1 = mat2grid(arg1)
-			(isa(arg2, Array{<:Real})) && (arg2 = mat2grid(arg2))
-			(isa(arg3, Array{<:Real})) && (arg3 = mat2grid(arg3))
+			(isa(arg2, Matrix{<:Real})) && (arg2 = mat2grid(arg2))
+			(isa(arg3, Matrix{<:Real})) && (arg3 = mat2grid(arg3))
 		end
 	end
 

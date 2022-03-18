@@ -21,8 +21,7 @@ function grdpaste(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
-
-	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
+	cmd, _, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
 	return common_grd(d, "grdpaste " * cmd, arg1, arg2)		# Finish build cmd and run it
 end
 
