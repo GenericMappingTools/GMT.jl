@@ -121,8 +121,8 @@ export
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
-	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
-	getbyattrib, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
+	earthtide, gmtgravmag3d, grdgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!,
+	velo, velo!, getbyattrib, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
 
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
@@ -249,7 +249,10 @@ include("MB/mbimport.jl")
 include("MB/mbgetdata.jl")
 include("MB/mbsvplist.jl")
 include("MB/mblevitus.jl")
-(GMTver > v"6.1.1") && include("potential/gmtgravmag3d.jl")
+if (GMTver > v"6.1.1")
+	include("potential/gmtgravmag3d.jl")
+	include("potential/grdgravmag3d.jl")
+end
 include("drawing.jl")
 
 if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
