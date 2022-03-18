@@ -90,7 +90,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd  = add_opt(d, cmd, "Z", [:Z :scale], (factor = "+s", shift = "+o", periodic = "_+p"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
-	if (isa(arg1, Array{<:Real}))	arg1 = mat2grid(arg1)	end
+	if (isa(arg1, Matrix{<:Real}))	arg1 = mat2grid(arg1)	end
 
 	# cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
 	cmd, N_used, arg1, arg2, = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
