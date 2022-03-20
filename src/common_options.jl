@@ -3470,6 +3470,52 @@ function put_in_slot(cmd::String, opt::Char, args...)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2)
+	# Either put the contents of an option in first empty arg? when it's a GMT type 
+	# or add it to cmd if it's a string (e.g., file name) or a number.
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		cmd *= string(" -", symbs[1])
+		if (isa(val, objtype))
+			_, n = put_in_slot("", ' ', arg1, arg2)
+			(n == 1) ? arg1 = val : arg2 = val
+		elseif (isa(val, String) || isa(val, Real) || isa(val, Symbol))
+			cmd *= string(val)
+		else  error("Wrong data type ($(typeof(val))) for option $(symbs[1])")
+		end
+	end
+	return cmd, arg1, arg2
+end
+
+function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3)
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		cmd *= string(" -", symbs[1])
+		if (isa(val, objtype))
+			_, n = put_in_slot("", ' ', arg1, arg2, arg3)
+			(n == 1) ? arg1 = val : (n == 2 ? arg2 = val : arg3 = val)
+		elseif (isa(val, String) || isa(val, Real) || isa(val, Symbol))
+			cmd *= string(" -", symbs[1], val)
+		else  error("Wrong data type ($(typeof(val))) for option $(symbs[1])")
+		end
+	end
+	return cmd, arg1, arg2, arg3
+end
+
+function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3, arg4)
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		cmd *= string(" -", symbs[1])
+		if (isa(val, objtype))
+			_, n = put_in_slot("", ' ', arg1, arg2, arg3, arg4)
+			(n == 1) ? arg1 = val : (n == 2 ? arg2 = val : (n == 3 ? arg3 = val : arg4 = val))
+		elseif (isa(val, String) || isa(val, Real) || isa(val, Symbol))
+			cmd *= string(" -", symbs[1], val)
+		else  error("Wrong data type ($(typeof(val))) for option $(symbs[1])")
+		end
+	end
+	return cmd, arg1, arg2, arg3, arg4
+end
+# ---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
 finish_PS_module(d::Dict, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =
 	finish_PS_module(d, [cmd], opt_extra, K, O, finish, args...)
 function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
