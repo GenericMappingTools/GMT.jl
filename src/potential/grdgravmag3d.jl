@@ -75,6 +75,8 @@ function grdgravmag3d(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 		end
 	end
 
+	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
+
 	val, symb = find_in_dict(d, [:H :mag_params], false)
 	if (isa(val, GMTgrid))
 		(arg1 === nothing) ? arg1 = val : (arg2 === nothing ? arg2 = val : arg3 = val)

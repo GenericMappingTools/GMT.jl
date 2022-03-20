@@ -118,6 +118,9 @@
 	G2 = grdproject(G, proj="u29/1:1", F=[], C=[]); 		# Use G of previous test
 	G2 = grdproject("-Ju29/1:1 -F -C", G);					# Monolithic
 
+	println("	GRDROTATER")
+	grdrotater(G, rotation="-40.8/32.8/-12.9", Vd=dbg2);
+
 	println("	GRDSAMPLE")
 	G2 = grdsample(G, inc=0.5);		# Use G of previous test
 

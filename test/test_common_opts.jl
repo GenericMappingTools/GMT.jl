@@ -173,6 +173,16 @@
 	@test GMT.consolidate_Bframe(" -Bpx+lx -Bpy+lx -BWSrt+gwhite") == " -Bpx+lx -Bpy+lx -BWSrt+gwhite"
 	@test GMT.consolidate_Bframe(" -Bpx+lx -BWSrt+gwhite -Bpy+lx") == " -Bpx+lx -Bpy+lx -BWSrt+gwhite"
 
+	@test GMT.arg_in_slot(Dict(:A => [1 2]), "", [:A], Matrix, [88], nothing) == (" -A", [88], [1 2])
+	@test GMT.arg_in_slot(Dict(:A => "ai"), "", [:A], Matrix, nothing, nothing) == (" -Aai", nothing, nothing)
+	GMT.arg_in_slot(Dict(:A => "ai"), "", [:A], Matrix, nothing, nothing, nothing)
+	GMT.arg_in_slot(Dict(:A => [1 2]), "", [:A], Matrix, [88], nothing, nothing)
+	GMT.arg_in_slot(Dict(:A => "ai"), "", [:A], Matrix, nothing, nothing, nothing, nothing)
+	GMT.arg_in_slot(Dict(:A => [1 2]), "", [:A], Matrix, [88], nothing, nothing, nothing)
+	@test_throws ErrorException("Wrong data type (UnionAll) for option A") GMT.arg_in_slot(Dict(:A => Complex), "", [:A], Matrix, nothing, nothing)
+	@test_throws ErrorException("Wrong data type (UnionAll) for option A") GMT.arg_in_slot(Dict(:A => Complex), "", [:A], Matrix, nothing, nothing, nothing)
+	@test_throws ErrorException("Wrong data type (UnionAll) for option A") GMT.arg_in_slot(Dict(:A => Complex), "", [:A], Matrix, nothing, nothing, nothing, nothing)
+
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt(d, "", "", [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	@test GMT.add_opt_pen(Dict(:pen => (width=0.1, style=".")), [:W :pen]) == "0.1,,."

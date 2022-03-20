@@ -78,6 +78,7 @@ function gmtgravmag3d(cmd0::String="", arg1=nothing; kwargs...)
 	elseif (show_kwargs[1])  opt = "" 
 	else   error("Missing one of 'index', 'raw_triang' or 'str' data")
 	end
+
 	if (opt != " -Ts")		# The STL format can only be requested via file
 		cmd *= opt
 		if (isa(val, Array{<:Real}) || isa(val, GMTdataset) || isa(val, Vector{<:GMTdataset}))
