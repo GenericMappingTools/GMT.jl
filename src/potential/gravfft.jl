@@ -68,6 +68,8 @@ function gravfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:C :theoretical_admittance], [:E :n_terms], [:I :admittance], [:N :inquire],
 	                                [:Q :flex_topo :flexural_topography], [:S :subplate :subplate_load], [:T :topo_load], [:W :z_obs :observation_level], [:Z :moho_depth]])
 
+	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
+
 	cmd, arg = get_opt_str_or_obj(d, cmd, [:D :density], GMTgrid)
 	(arg !== nothing) && (arg1 === nothing ? arg1 = arg : (arg2 === nothing ? arg2 = arg : arg3 = arg))
 
