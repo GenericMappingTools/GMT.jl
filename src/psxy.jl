@@ -13,8 +13,6 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	else		        gmt_proggy = (IamModern[1]) ? "plot "    : "psxy "
 	end
 
-	(occursin(" -", cmd0)) && return monolitic(gmt_proggy, cmd0, arg1)
-
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
 

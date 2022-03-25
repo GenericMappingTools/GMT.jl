@@ -74,8 +74,6 @@ Full option list at [`makecpt`]($(GMTdoc)makecpt.html)
 """
 function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("makecpt", cmd0, arg1)	# Monolithic mode
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params])
 

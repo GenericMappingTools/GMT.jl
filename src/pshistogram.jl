@@ -104,7 +104,6 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_args = (arg1 === nothing) ? 0 : 1
 
 	gmt_proggy = (IamModern[1]) ? "histogram "  : "pshistogram "
-	(length(kwargs) == 0 && cmd0 != "") && return monolitic(gmt_proggy, cmd0, arg1, arg2)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 

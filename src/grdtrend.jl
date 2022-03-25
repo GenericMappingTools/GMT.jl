@@ -30,8 +30,6 @@ Parameters
 """
 function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdtrend", cmd0, arg1, arg2)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_R(d, "")

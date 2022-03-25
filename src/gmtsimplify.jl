@@ -27,8 +27,6 @@ Parameters
 """
 function gmtsimplify(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtsimplify", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])

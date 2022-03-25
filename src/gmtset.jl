@@ -21,8 +21,6 @@ Parameters
 """
 function gmtset(cmd0::String=""; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtset", cmd0)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = parse_V(d, "")

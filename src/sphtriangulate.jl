@@ -47,8 +47,6 @@ Parameters
 """
 function sphtriangulate(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("sphtriangulate ", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :duplicates :skip], [:L :unit], [:N :nodes], [:Q :voronoi], [:T]])

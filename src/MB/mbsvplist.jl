@@ -26,8 +26,6 @@ Parameters
 """
 function mbsvplist(cmd0::String=""; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("mbsvplist", cmd0)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = parse_common_opts(d, "", [:R :yx :V_params :o])[1]

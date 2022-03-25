@@ -67,8 +67,6 @@ That is, both of this will work: D = grdtrack([0 0], G);  or  D = grdtrack(G, [0
 """
 function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-	length(kwargs) == 0 && arg1 === nothing && return monolitic("grdtrack", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :w :yx])

@@ -48,8 +48,6 @@ Parameters
 """
 function grdmask(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdmask", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]	    	# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :a :e :f :g :j :n :yx :x :w])
 	cmd  = parse_these_opts(cmd, d, [[:A :steps :straight_lines], [:N :out_edge_in], [:S :search_radius]])

@@ -12,8 +12,6 @@ Full option list at [`earthtide`]($(GMTdoc)earthtide.html)
 """
 function earthtide(cmd0::String=""; kwargs...)
 
-	(cmd0 != "") && return monolitic("earthtide", cmd0)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	
 	cmd = "earthtide " * parse_common_opts(d, "", [:R :I :V_params :r])[1]

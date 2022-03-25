@@ -63,8 +63,6 @@ Parameters
 """
 function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtinfo", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:V_params :e :f :o :r :w :yx])

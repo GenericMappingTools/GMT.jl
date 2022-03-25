@@ -46,8 +46,6 @@ Parameters
 """
 function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdgradient", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :R :V_params :f :n])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:S :slopegrid]])

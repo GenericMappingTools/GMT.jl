@@ -64,8 +64,6 @@ When using the `pt` or `crossection` options the default is to NOT ouput the red
 """
 function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kwargs...)
 
-	length(kwargs) == 0 && arg1 === nothing && return monolitic("grdinterpolate", cmd0, arg1, arg2, arg3)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :q :s :yx])

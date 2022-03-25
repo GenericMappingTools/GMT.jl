@@ -35,8 +35,6 @@ Parameters
 """
 function grdvolume(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdvolume", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :f :o])
 	cmd  = parse_these_opts(cmd, d, [[:C :cont :contour], [:L :base_level], [:S :unit], [:T], [:Z :scale]])

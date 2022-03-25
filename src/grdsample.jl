@@ -30,8 +30,6 @@ Parameters
 """
 function grdsample(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdsample", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :f :n :x])
 	cmd  = parse_these_opts(cmd, d, [[:T :toggle]])
