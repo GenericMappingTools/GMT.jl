@@ -52,8 +52,6 @@ Parameters
 """
 function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && !isa(arg1, GMTgrid) && return monolitic("grdinfo", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :f])
 	cmd  = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:G :force_download], [:I :nearest],

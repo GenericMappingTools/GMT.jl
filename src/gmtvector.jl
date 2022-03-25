@@ -48,10 +48,7 @@ Parameters
 """
 function gmtvector(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtvector", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :single_vec], [:C :cartesian], [:E :geod2geoc], [:N :normalize],
 	                                 [:S :secondary_vec], [:T :transform]])

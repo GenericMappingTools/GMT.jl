@@ -72,8 +72,6 @@ Parameters
 """
 function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1, arg2, arg3, arg4)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd::String = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :w :yx])[1]

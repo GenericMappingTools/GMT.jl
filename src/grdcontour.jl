@@ -77,9 +77,7 @@ Parameters
 """
 function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && cmd0 != "" && return monolitic("grdcontour", cmd0, arg1)
 	arg2 = arg3 = nothing
-
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 

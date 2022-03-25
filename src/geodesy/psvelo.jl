@@ -12,7 +12,6 @@ Full option list at [`velo`]($(GMTdoc)velo.html)
 function velo(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
     proggy = (IamModern[1]) ? "velo "  : "psvelo "
-	length(kwargs) == 0 && return monolitic(proggy, cmd0, arg1)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 

@@ -3859,12 +3859,6 @@ function justify(arg, nowarn::Bool=false)::String
 end
 
 # --------------------------------------------------------------------------------------------------
-function monolitic(prog::String, cmd0::String, args...)
-	# Run this module in the monolithic way. e.g. [outs] = gmt("module args",[inputs])
-	gmt(prog * " " * cmd0, args...)
-end
-
-# --------------------------------------------------------------------------------------------------
 function peaks(; N=49, grid::Bool=true, pixreg::Bool=false)
 	x,y = meshgrid(range(-3,stop=3,length=N))
 

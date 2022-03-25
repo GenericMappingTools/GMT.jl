@@ -45,8 +45,6 @@ Parameters
 """
 function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdproject", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]	        # Also checks if the user wants ONLY the HELP mode
 	cmd::String = parse_n(d, "", true)[1]			# Here we keep the GMT default to Antialiasing
 	cmd = parse_common_opts(d, cmd, [:G :R :V_params :r])[1]

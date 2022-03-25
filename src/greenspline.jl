@@ -82,8 +82,6 @@ Parameters
 """
 function greenspline(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("greenspline", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing;     arg3 = nothing
 

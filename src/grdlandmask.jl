@@ -45,8 +45,6 @@ Parameters
 """
 function grdlandmask(cmd0::String=""; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdlandmask", cmd0, nothing)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :x])
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :bordervalues], [:N :mask :maskvalues]])

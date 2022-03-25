@@ -86,7 +86,6 @@ Parameters
 function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
     gmt_proggy = (IamModern[1]) ? "contour "  : "pscontour "
-	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	dict_auto_add!(d)			# The ternary module may send options via another channel

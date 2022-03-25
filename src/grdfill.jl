@@ -33,8 +33,6 @@ Parameters
 """
 function grdfill(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdfill", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :R :V_params :f])
 	cmd  = parse_these_opts(cmd, d, [[:A :algo], [:L :list], [:N :nodata]])

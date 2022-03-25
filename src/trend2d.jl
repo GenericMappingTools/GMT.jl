@@ -43,8 +43,6 @@ Parameters
 """
 function trend2d(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("trend2d", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :condition_number], [:I :confidence_level], [:F :output],

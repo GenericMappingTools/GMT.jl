@@ -40,8 +40,6 @@ Parameters
 """
 function logo(cmd0::String=""; first=true, kwargs...)
 
-	(cmd0 != "" && length(kwargs) == 0) && return monolitic("gmtlogo", cmd0)
-
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_R(d, "", O)

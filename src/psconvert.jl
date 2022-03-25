@@ -78,8 +78,6 @@ Parameters
 """
 function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("psconvert", cmd0, arg1)
-
 	if (!isempty(cmd0)) && (arg1 === nothing)  arg1 = cmd0  end
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode

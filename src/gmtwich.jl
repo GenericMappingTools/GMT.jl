@@ -30,8 +30,6 @@ Parameters
 """
 function gmtwhich(cmd0::String; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmtwhich", cmd0)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = parse_V_params(d, "")

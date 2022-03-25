@@ -35,10 +35,7 @@ Parameters
 """
 function grd2xyz(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grd2xyz", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-
 	cmd, = parse_common_opts(d, "", [:R :V_params :bo :d :f :h :o :s])
     cmd  = parse_these_opts(cmd, d, [[:C :row_col], [:W :weight], [:Z :flags]])
 

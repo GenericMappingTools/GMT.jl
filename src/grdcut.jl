@@ -44,8 +44,6 @@ Parameters
 """
 function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && contains(cmd0, " ") && return monolitic("grdcut", cmd0, arg1)
-
 	arg2 = nothing
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, opt_R = parse_R(d, "")

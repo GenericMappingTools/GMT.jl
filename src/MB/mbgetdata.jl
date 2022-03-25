@@ -32,8 +32,6 @@ Parameters
 """
 function mbgetdata(cmd0::String=""; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("mbgetdata", cmd0)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_R = parse_R(d, "")

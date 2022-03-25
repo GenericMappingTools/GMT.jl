@@ -59,10 +59,9 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
 """
 function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdview", cmd0, arg1)
 	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
-
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+
 	haskey(d, :outline) && delete!(d, :outline)	# May come through `pcolor` where it was valid, but not here.
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 

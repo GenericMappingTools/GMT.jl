@@ -104,7 +104,6 @@
 
 	println("	GRDLANDMASK")
 	G2 = grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
-	G2 = grdlandmask("-R-10/4/37/45 -Dc -I0.1");			# Monolithitc
 
 	println("	GRDMASK")
 	G2 = grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
@@ -116,7 +115,6 @@
 	println("	GRDPROJECT")
 	# GRDPROJECT	-- Works but does not save projection info in header
 	G2 = grdproject(G, proj="u29/1:1", F=[], C=[]); 		# Use G of previous test
-	G2 = grdproject("-Ju29/1:1 -F -C", G);					# Monolithic
 
 	println("	GRDROTATER")
 	grdrotater(G, rotation="-40.8/32.8/-12.9", Vd=dbg2);

@@ -59,8 +59,6 @@ Parameters
 """
 function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdedit", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing
 	(isa(arg1, GMTgrid) && length(kwargs) == 0) && (arg1.range[5:6] .= extrema(arg1); return arg1)  # Update the z_min|max

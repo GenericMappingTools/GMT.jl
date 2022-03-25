@@ -84,8 +84,6 @@ Parameters
 """
 function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("mapproject", cmd0, arg1, arg2)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :j :o :p :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef :ecef], [:I :inverse], [:S :supress], #[:L :dist2line],

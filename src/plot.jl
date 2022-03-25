@@ -881,8 +881,8 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 			contourf(t, R=(0.0,1.0,0,sqrt(3)/2), B=:none, J=opt_J[4:end], backdoor=d[:contourf])
 			delete!(d, :contourf)
 		else
-			G = surface("-R0/1/0/0.865 -I0.005 -T0.5 -Vq", t)
-			Gmask = grdmask("-R0/1/0/0.865 -I0.005 -NNaN/1/1", [0.0 0; 0.5 0.865; 1 0; 0 0])
+			G = gmt("surface -R0/1/0/0.865 -I0.005 -T0.5 -Vq", t)
+			Gmask = gmt("grdmask -R0/1/0/0.865 -I0.005 -NNaN/1/1", [0.0 0; 0.5 0.865; 1 0; 0 0])
 			G *= Gmask
 			if (image)			# grdimage plus eventual contours
 				grdimage(G, B=:none, J=opt_J[4:end])

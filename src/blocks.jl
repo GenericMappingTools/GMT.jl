@@ -74,8 +74,6 @@ Parameters
 """
 function blockmean(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("blockmean", cmd0, arg1)
-
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd = parse_these_opts("", d, [[:S :statistic]])
@@ -101,8 +99,6 @@ Full option list at [`blockmedian`]($(GMTdoc)blockmedian.html)
 """
 function blockmedian(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("blockmedian", cmd0, arg1)
-
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd = parse_these_opts("", d, [[:Q :quick], [:T :quantile]])
@@ -121,8 +117,6 @@ Block average (x,y,z) data tables by mode estimation.
 Full option list at [`blockmode`]($(GMTdoc)blockmode.html)
 """
 function blockmode(cmd0::String="", arg1=nothing; kwargs...)
-
-	length(kwargs) == 0 && return monolitic("blockmode", cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd = parse_these_opts("", d, [[:D :histogram_binning], [:Q :quick]])
