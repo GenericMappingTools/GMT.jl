@@ -133,8 +133,8 @@ function snif_GI_set_CTRLlimits(G_I)::Bool
 	(G_I == "") && return false
 	(isa(G_I, String) && (G_I[1] == '@' || startswith(G_I, "http"))) && return false	# Remote files are very dangerous to sniff in
 	ginfo = grdinfo(G_I, C=:n)
-	if (isa(ginfo, Vector{<:GMTdataset}) && ginfo[1].data[2] != ginfo[1].data[9] && ginfo[1].data[4] != ginfo[1].data[10])
-		CTRL.limits[1:4] = ginfo[1].data[1:4]
+	if (isa(ginfo, GMTdataset) && ginfo.data[2] != ginfo.data[9] && ginfo.data[4] != ginfo.data[10])
+		CTRL.limits[1:4] = ginfo.data[1:4]
 		return true
 	else
 		CTRL.limits[1:6] = zeros(6)

@@ -86,7 +86,7 @@
 	G2=grdfill(G, algo=:n);
 
 	println("	GRDFILTER")
-	G2=grdfilter(G, filter="m600", distflag=4, inc=0.5); # Use G of previous test
+	G2=grdfilter(G, filter="m60", distflag=0, inc=0.5); # Use G of previous test
 
 	println("	GRDGRADIENT")
 	G2=grdgradient(G, azim="0/270", normalize="e0.6");
