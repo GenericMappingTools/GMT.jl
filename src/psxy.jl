@@ -106,7 +106,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(!contains(opt_Z, "f")) ? do_Z_fill = true : (do_Z_fill = false; opt_Z = replace(opt_Z, "f" => ""))
 	(contains(opt_Z, "o")) ? (do_Z_outline = true; opt_Z = replace(opt_Z, "o" => "")) : (do_Z_outline = false)
 	(opt_Z != "") && (cmd *= opt_Z)
-	(!got_Zvars) && (do_Z_fill = do_Z_outline = false)	# Because the mayn have wrongly been set above
+	(!got_Zvars) && (do_Z_fill = do_Z_outline = false)	# Because the may have wrongly been set above
 
 	if (n > 0)
 		if (GMTver <= v"6.3")					# -Z is f again. Must save data into file to make it work.
