@@ -135,6 +135,9 @@
 	pcolor!(G.x, G.y, G.z, R="-3/3/-3/3", Vd=dbg2)
 	X,Y = GMT.meshgrid(-3:6/17:3);	XX = 2*X .* Y;	YY = X.^2 .- Y.^2;
 	pcolor(XX,YY, reshape(repeat([1:18; 18:-1:1], 9,1), size(XX)), lc=:black, Vd=dbg2)
+	pcolor(G.x, G.y, G.z, labels=:y, show=false)
+	pcolor(G.x, G.y, G.z, labels=1)
+	pcolor(G, labels=1, font=(angle=45, font=(5,:red)))
 
 	println("	SCATTER")
 	sizevec = [s for s = 1:10] ./ 10;
