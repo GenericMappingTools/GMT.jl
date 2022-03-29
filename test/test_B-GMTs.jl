@@ -1,9 +1,9 @@
 	println("	GMTINFO")
 	gmt("gmtset -");
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
-	@assert(r[1].data == [5.0 5 5 5 5 5])
+	@assert(r.data == [5.0 5 5 5 5 5])
 	r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
-	@assert(r[1].data == [5.0 5 5 5 5 5])
+	@assert(r.data == [5.0 5 5 5 5 5])
 	#gmtinfo(help=0)
 
 	println("	BLOCK*s")
@@ -63,12 +63,19 @@
 	println("	GMTCONVERT")
 	gmtconvert([1.1 2; 3 4], o=0)
 
-	println("	GMTGRAVMAG3D")
 	if (GMTver > v"6.1.1")
+		println("	GMTGRAVMAG3D")
 		gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/10/-10/40", Vd=dbg2);
 		@test_throws ErrorException("Missing one of 'index', 'raw_triang' or 'str' data") gmtgravmag3d(I=1.0);
 		@test_throws ErrorException("For grid output MUST specify grid increment ('I' or 'inc')") gmtgravmag3d(Tv=true);
+
+		println("	GRDGRAVMAG3D")
+		grdgravmag3d("@earth_relief_10m", region=(-12.5,-10,35.5,37.5), density=1700, inc=0.05, pad=0.5, z_level=:b, f=:g, Vd=dbg2)
 	end
+
+	println("	GRAVFFT")
+	G = grdcut("@earth_relief_10m", region=(-12.5,-10,35.5,37.5));
+	gravfft(G, density=1700, F=(faa=1,slab=1), Vd=dbg2)
 
 	println("	GMTREGRESS")
 	d = [0 5.9 1e3 1; 0.9 5.4 1e3 1.8; 1.8 4.4 5e2 4; 2.6 4.6 8e2 8; 3.3 3.5 2e2 2e1; 4.4 3.7 8e1 2e1; 5.2 2.8 6e1 7e1; 6.1 2.8 2e1 7e1; 6.5 2.4 1.8 1e2; 7.4 1.5 1 5e2];
@@ -82,7 +89,7 @@
 	logo(GMTjulia=2, fmt=:PNG)
 	logo!(julia=8, Vd=dbg2)
 	logo!("", julia=8, Vd=dbg2)
-	@test startswith(logo(pos=(anchor=(0,0),justify=:CM, offset=(1.5,0)), Vd=dbg2), "gmtlogo -Jx1 -Dg0/0+jCM+o1.5/0")
+	@test startswith(logo(pos=(anchor=(0,0),justify=:CM, offset=(1.5,0)), Vd=dbg2), "gmtlogo  -Jx1 -Dg0/0+jCM+o1.5/0")
 	logo!(julia=8, Vd=dbg2)
 	logo!("", julia=8, Vd=dbg2)
 
@@ -90,7 +97,7 @@
 	# GMTSPATIAL
 	# Test  Cartesian centroid and area
 	result = gmt("gmtspatial -Q", [0 0; 1 0; 1 1; 0 1; 0 0]);
-	@assert(isapprox(result[1].data, [0.5 0.5 1]))
+	@assert(isapprox(result.data, [0.5 0.5 1]))
 	# Test Geographic centroid and area
 	result = gmt("gmtspatial -Q -fg", [0 0; 1 0; 1 1; 0 1; 0 0]);
 	# Intersections
@@ -159,7 +166,7 @@
 	gmtwrite("lixo.dat", convert.(UInt8, [1 2 3; 2 3 4]))
 	gmtwrite("lixo.dat", [1 2 10; 3 4 20])
 	D = gmtread("lixo.dat", i="0,1s10", table=true);
-	@test(sum(D[1].data) == 64.0)
+	@test(sum(D.data) == 64.0)
 	gmtwrite("lixo.dat", D)
 	gmt("gmtwrite lixo.cpt", cpt)		# Same but tests other code chunk in gmt_main.jl
 	gmt("gmtwrite lixo.dat", D)

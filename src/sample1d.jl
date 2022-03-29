@@ -46,8 +46,6 @@ Parameters
 """
 function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("sample1d", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :w :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:A :resample], [:F :interp_type], [:N :time_col], [:W :weights_col]])

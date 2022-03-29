@@ -53,7 +53,6 @@ Parameters
 function gmtsplit(cmd0::String="", arg1=nothing; kwargs...)
 
     proggy = (GMTver > v"6.1.1") ? "gmtsplit" : "splitxyz"
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic(proggy, cmd0, arg1)
 
 	d = init_module(false, kwargs...)[1]		    # Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :bi :bo :di :do :e :f :g :h :i :yx])

@@ -512,7 +512,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		if ((val = find_in_dict(d, [:grd :grid])[1]) !== nothing)
 			arg1 = gmtread(cmd0, grd=true)
 		elseif ((val = find_in_dict(d, [:dataset :table])[1]) !== nothing)
-			arg1 = gmtread(cmd0, dataset=true);		arg1 = arg1[1]
+			arg1 = gmtread(cmd0, dataset=true)
 		else
 			error("BAR3: When first arg is a name, must also state its type. e.g. grd=true or dataset=true")
 		end
@@ -547,7 +547,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 			(length(t) == 6) ? z_min = t[5] : error("For 3D cases, region must have 6 selements")
 		end
 		if (opt_base == "")  push!(d, :base => z_min)  end	# Make base = z_min
-		arg1 = gmt("grd2xyz", arg1)[1]			# Now arg1 is a GMTdataset
+		arg1 = gmt("grd2xyz", arg1)				# Now arg1 is a GMTdataset
 	else
 		opt_S = parse_I(d, "", [:S :width], "So", true)
 		if (opt_S == "")
@@ -633,9 +633,9 @@ function helper_arrows(d::Dict, del::Bool=true)
 		end
 		if (isa(val, String))		# An hard core GMT string directly with options
 			cmd = (val[1] != code) ? code * val : val	# In last case the GMT string already has vector flag char
-		elseif (isa(val, Number))  cmd = code * "$val"
+		elseif (isa(val, Real))  cmd = code * "$val"
 		elseif (symb == :arrow4 || symb == :vector4)  cmd = code * vector4_attrib(val)
-		else                       cmd = code * vector_attrib(val)
+		else                     cmd = code * vector_attrib(val)
 		end
 	end
 	return cmd
@@ -710,10 +710,15 @@ Example:
 function hlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
-	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
-	len::Int = length(arg1)
+	(arg1 === nothing && ((arg1_ = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
+	# If I don't do this stupid gymn with arg1 vs arg1_ then arg1 is Core.Boxed F..
+	len::Int = (arg1 !== nothing) ? length(arg1) : length(arg1_)
 	mat::Matrix{Float64} = ones(2, len)
-	[mat[1,k] = mat[2,k] = arg1[k] for k = 1:len]
+	if (arg1 !== nothing)
+		for k = 1:len   mat[1,k] = mat[2,k] = arg1[k]   end
+	else
+		for k = 1:len   mat[1,k] = mat[2,k] = arg1_[k]  end
+	end
 	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
 	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 
@@ -744,10 +749,12 @@ Example:
 function vlines(arg1=nothing; first=true, kwargs...)
 	# A lines plotting method of plot
 	d = KW(kwargs)
-	(arg1 === nothing && ((arg1 = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
-	len::Int = length(arg1)
+	(arg1 === nothing && ((arg1_ = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
+	# If I don't do this stupid gymn with arg1 vs arg1_ then arg1 is Core.Boxed F..
+	len::Int = (arg1 !== nothing) ? length(arg1) : length(arg1_)
+
 	mat::Matrix{Float64} = ones(2, len)
-	mat[1,:] = mat[2,:] = arg1
+	mat[1,:] = mat[2,:] = (arg1 !== nothing) ? arg1 : arg1_
 	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[3:4]) : [-1e50, 1e50]
 	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 	# Now we need tp swapp x / y columns because the vlines case is more complicated to implement.
@@ -874,8 +881,8 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 			contourf(t, R=(0.0,1.0,0,sqrt(3)/2), B=:none, J=opt_J[4:end], backdoor=d[:contourf])
 			delete!(d, :contourf)
 		else
-			G = surface("-R0/1/0/0.865 -I0.005 -T0.5 -Vq", t)
-			Gmask = grdmask("-R0/1/0/0.865 -I0.005 -NNaN/1/1", [0.0 0; 0.5 0.865; 1 0; 0 0])
+			G = gmt("surface -R0/1/0/0.865 -I0.005 -T0.5 -Vq", t)
+			Gmask = gmt("grdmask -R0/1/0/0.865 -I0.005 -NNaN/1/1", [0.0 0; 0.5 0.865; 1 0; 0 0])
 			G *= Gmask
 			if (image)			# grdimage plus eventual contours
 				grdimage(G, B=:none, J=opt_J[4:end])
@@ -893,7 +900,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	if (clockwise)
 		endswith(opt_J, "/0") && (opt_J = opt_J[1:end-2])		# Strip the trailing "/0". Very important.
 		d[:J] = "X-" * opt_J[5:end]
-		del_from_dict(d, [:proj :projection])		# To avoid non-consumed warnings
+		del_from_dict(d, [:proj, :projection])		# To avoid non-consumed warnings
 		delete!(d, :clockwise)
 	end
 	if ((val = find_in_dict(d, [:par :conf :params], false)[1]) === nothing)
@@ -947,7 +954,7 @@ function dict_auto_add!(d::Dict)
 	# If the Dict 'd' has a 'backdoor' member that is a NamedTuple, add its contents to the Dict
 	if ((val = find_in_dict(d, [:backdoor])[1]) !== nothing && isa(val, NamedTuple))
 		key = keys(val)
-		[d[key[n]] = val[n] for n = 1:length(val)]
+		for n = 1:length(val)  d[key[n]] = val[n]  end
 		delete!(d, :backdoor)
 	end
 end
@@ -1032,9 +1039,9 @@ function events(cmd0::String="", arg1=nothing; kwargs...)
 		(intensity=("i", arg2str, 1), size=("s", arg2str, 1), transparency=("t", arg2str, 1), coda="+c"))
 	cmd = add_opt(d, cmd, "L", [:L :duration])
 	cmd = add_opt(d, cmd, "Q", [:Q :save])
-	cmd = add_opt(d, cmd, 'D', [:D :offset],
+	cmd = add_opt(d, cmd, "D", [:D :offset],
 		(away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)))
-	cmd = add_opt(d, cmd, 'F', [:F :attrib],
+	cmd = add_opt(d, cmd, "F", [:F :attrib],
 		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"), false)
 	common_plot_xyz(cmd0, arg1, "events|" * cmd, true, false, d...)
 end

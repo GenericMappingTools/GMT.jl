@@ -60,8 +60,6 @@ Parameters
 """
 function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdvector", cmd0, arg1, arg2)
-
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd::String = parse_BJR(d, "", "", O, " -JX12c/0")[1]

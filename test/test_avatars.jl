@@ -32,7 +32,7 @@
 	@test startswith(plot!([1 1], marker="W/5+a30", Vd=dbg2), "psxy  -R -J -SW/5+a30")
 	@test startswith(plot!([1 1], marker=:Web, Vd=dbg2), "psxy  -R -J -SW")
 	@test startswith(plot!([1 1], marker=:W, Vd=dbg2), "psxy  -R -J -SW")
-	@test startswith(plot([5 5], marker=(:E, 500), Vd=dbg2), "psxy  -JX" * GMT.def_fig_size * " -Baf -BWSen -R4.5/5.5/4.5/5.5 -SE-500")
+	@test startswith(plot([5 5], marker=(:E, 500), Vd=dbg2), "psxy  -JX" * GMT.def_fig_size * " -Baf -BWSen -R4.74/5.26/4.74/5.26 -SE-500")
 	@test startswith(plot(region=(0,10,0,10), marker=(letter="blaBla", size="16p"), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sl16p+tblaBla")
 	@test startswith(plot([5 5], region=(0,10,0,10), marker=(bar=true, size=0.5, base=0,), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sb0.5+b0")
 	@test startswith(plot([5 5], region=(0,10,0,10), marker=(custom=:sun, size=0.5), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sksun/0.5")
@@ -54,6 +54,20 @@
 	plot(rand(5,2), ls="DashDot", Vd=dbg2)
 	plot(rand(5,2), ls="-.", Vd=dbg2)
 	@test_throws ErrorException("Bad line style. Options are (for example) [Line|DashDot|Dash|Dot]Circ") plot(rand(5,2), ls="Dat")
+
+	D = [mat2ds([0 0; 0 1; 1 1; 1 0.3; 0 0])[1], mat2ds([1 1; 1 2; 2 2; 2 1; 1 1])[1]];
+	C = makecpt(cmap = :hot, range = (0, 5));
+	r = psxy!(D, C=C, Z=[1,4], pen=2, Vd=2)
+	@test contains(r, " -G+z -L -W2 -K")
+	r = psxy!(D, C=C, Z=[1,4], pen=(pen=2, zlevels=true), Vd=2)
+	@test contains(r, " -G+z -L -W2+z -K")
+	r = psxy!(D, C=C, Z=(data=[1,4], outline=true, nofill=true), Vd=2)
+	@test contains(r, " -W+c -K")
+	r = psxy!(D, C=C, Z=(data=[1,4], outline=true), Vd=2)
+	@test contains(r, " -G+z -L -W+c -K")
+	r = psxy!(D, C=C, Z=(data=[1,4], nofill=true), Vd=2)
+	@test contains(r, " -W0.5+z -K")
+
 	bar!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	lines!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	lines!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
@@ -110,6 +124,20 @@
 	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
 	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=dbg2);
 	@test startswith(r, "psxy  -R0/6.0/-1/0.7 -JX40/8 -Baf -BWSen+g220 --PS_MEDIA=A1 -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -W2,sienna")
+
+	println("	PCOLOR")
+	G = GMT.peaks(N=21);
+	pcolor(G, outline=(0.5,:dot), Vd=dbg2)
+	pcolor!("", G, outline=(0.5,:dot), Vd=dbg2)
+	pcolor!(G, T=true, Vd=dbg2)
+	pcolor(G.x, G.y, G.z, Vd=dbg2)
+	G = GMT.peaks(N=21, pixreg=true);
+	pcolor!(G.x, G.y, G.z, R="-3/3/-3/3", Vd=dbg2)
+	X,Y = GMT.meshgrid(-3:6/17:3);	XX = 2*X .* Y;	YY = X.^2 .- Y.^2;
+	pcolor(XX,YY, reshape(repeat([1:18; 18:-1:1], 9,1), size(XX)), lc=:black, Vd=dbg2)
+	pcolor(G.x, G.y, G.z, labels=:y, show=false)
+	pcolor(G.x, G.y, G.z, labels=1)
+	pcolor(G, labels=1, font=(angle=45, font=(5,:red)))
 
 	println("	SCATTER")
 	sizevec = [s for s = 1:10] ./ 10;

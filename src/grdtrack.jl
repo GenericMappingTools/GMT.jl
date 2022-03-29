@@ -67,8 +67,6 @@ That is, both of this will work: D = grdtrack([0 0], G);  or  D = grdtrack(G, [0
 """
 function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-	length(kwargs) == 0 && arg1 === nothing && return monolitic("grdtrack", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :w :yx])
@@ -77,6 +75,10 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	cmd, grid_tuple, arg1, arg2 = parse_G_grdtrk(d, [:G, :grid], cmd, arg1, arg2)
+	if (isa(grid_tuple, String) && startswith(grid_tuple, "@earth_") && !contains(cmd, " -R"))
+		opt_R = read_data(d, cmd0, "", arg1)[3]
+		cmd *= opt_R
+	end
 
 	# Because we allow arg1 and arg2 to either exist or not and also contain data & grid in any order
 	if (arg1 !== nothing && arg2 !== nothing)
@@ -101,11 +103,18 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	end
 
 	# Assign column names
-	prj = isa(arg1, GMTgrid) ? arg1.proj4 : (isa(arg2, GMTgrid) ? arg2.proj4 : "")
-	is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
-	(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
-	(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
-	for k = 1:length(R)  R[k].colnames = coln  end
+	if (!isa(R, String))			# It is a string when Vd=2
+		prj = isa(arg1, GMTgrid) ? arg1.proj4 : (isa(arg2, GMTgrid) ? arg2.proj4 : "")
+		is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
+		(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
+		if (isa(R, GMTdataset))
+			(size(R.data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R.data, 2)])
+			R.colnames = coln
+		else
+			(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
+			for k = 1:length(R)  R[k].colnames = coln  end
+		end
+	end
 	R
 end
 

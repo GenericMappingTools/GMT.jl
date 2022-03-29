@@ -59,10 +59,10 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
 """
 function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdview", cmd0, arg1)
 	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
-
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+
+	haskey(d, :outline) && delete!(d, :outline)	# May come through `pcolor` where it was valid, but not here.
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 
 	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
@@ -72,23 +72,23 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		(cmd = replace(cmd, opt_B => ""))	# Dont plot axes for plain images if that was not required
 
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :f :n :p :t :params], first)
-	cmd  = add_opt(d, cmd, 'S', [:S :smooth])
+	cmd  = add_opt(d, cmd, "S", [:S :smooth])
 	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)
 		cmd *= " -N" * parse_arg_and_pen(val, "+g", false)
 	end
-	cmd = add_opt(d, cmd, 'Q', [:Q :surf :surftype],
+	cmd = add_opt(d, cmd, "Q", [:Q :surf :surftype],
 				  (mesh=("m", add_opt_fill), surface="_s", surf="_s", img=("i",arg2str), image="i", nan_alpha="_c", monochrome="_+m", waterfall=(rows="my", cols="mx", fill=add_opt_fill)))
-	cmd = add_opt(d, cmd, 'W', [:W :pens :pen], (contour=("c", add_opt_pen),
+	cmd = add_opt(d, cmd, "W", [:W :pens :pen], (contour=("c", add_opt_pen),
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
-	cmd = add_opt(d, cmd, 'T', [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)) )
+	cmd = add_opt(d, cmd, "T", [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)) )
 	(!occursin(" -T", cmd)) ? cmd = parse_JZ(d, cmd)[1] : del_from_dict(d, [:JZ])	# Means, even if we had one, ignore silently
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 
-	(isa(arg1, Array{<:Real})) && (arg1 = mat2grid(arg1))
+	(isa(arg1, Matrix{<:Real})) && (arg1 = mat2grid(arg1))
 
-	cmd, N_used, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdview")
+	cmd, _, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdview")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdview")
 	cmd, arg1, arg2, arg3, arg4, arg5 = parse_G_grdview(d, [:G :drape :drapefile], cmd0, cmd, arg1, arg2, arg3, arg4, arg5)
 
@@ -100,16 +100,6 @@ end
 function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::String, arg1, arg2, arg3, arg4, arg5)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		function range_it(val)
-			cmd, N_used = put_in_slot(cmd, val, 'G', [arg1, arg2, arg3, arg4])
-			if     (N_used == 1)  arg1 = val
-			elseif (N_used == 2)  arg2 = val
-			elseif (N_used == 3)  arg3 = val
-			elseif (N_used == 4)  arg4 = val
-			end
-			return cmd, arg1, arg2, arg3, arg4
-		end
-
 		if (isa(val, String) || isa(val, GMTimage))
 			if (isa(val, String) && guess_T_from_ext(val) != " -Ti")
 				cmd *= " -G" * val
@@ -125,9 +115,14 @@ function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::Str
 				(!contains(cmd, " -Qi")) && (cmd *= " -Qi300")	# Otherwise GMT crashes because grdview goes through the "MESH" branch
 			end
 		elseif (isa(val, GMTgrid))			# A single drape grid (arg1-3 may be used already)
-			cmd, arg1, arg2, arg3, arg4 = range_it(val)
+			cmd, N_used = put_in_slot(cmd, 'G', arg1, arg2, arg3, arg4)
+			if     (N_used == 1)  arg1 = val
+			elseif (N_used == 2)  arg2 = val
+			elseif (N_used == 3)  arg3 = val
+			elseif (N_used == 4)  arg4 = val
+			end
 		elseif (isa(val, Tuple) && length(val) == 3)
-			cmd, N_used = put_in_slot(cmd, val[1], 'G', [arg1, arg2, arg3, arg4, arg5])
+			cmd, N_used = put_in_slot(cmd, 'G', arg1, arg2, arg3, arg4, arg5)
 			cmd *= " -G -G"					# Because the above only set one -G and we need 3
 			if     (N_used == 1)  arg1 = val[1];	arg2 = val[2];		arg3 = val[3]
 			elseif (N_used == 2)  arg2 = val[1];	arg3 = val[2];		arg4 = val[3]
@@ -144,7 +139,7 @@ end
 function drape_prepare(d::Dict, fname, opts::Vector{AbstractString}, prj::String)
 	# Deal with the option of drapping an image, which can be smaller, larger or with fifferent projection.
 	prj_img = getproj(fname, proj4=true)
-	(prj_img == "") && return fname			# If drape image has no RefSys just return its name and let it all be used
+	(prj_img == "" && isa(fname, AbstractString)) && return fname	# If drape image has no RefSys just return its name and let it all be used
 
 	(prj == "" && find_in_dict(d, [:isgeog])[1] !== nothing) && (prj = prj4WGS84)
 
@@ -194,6 +189,6 @@ function drape_prepare(d::Dict, fname, opts::Vector{AbstractString}, prj::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdview!(cmd0::String="", arg1=nothing; first=false, kw...) = grdview(cmd0, arg1; first=first, kw...)
-grdview(arg1; first=true, kw...) = grdview("", arg1; first=first, kw...)
-grdview!(arg1; first=false, kw...) = grdview("", arg1; first=first, kw...)
+grdview!(cmd0::String="", arg1=nothing; kw...) = grdview(cmd0, arg1; first=false, kw...)
+grdview(arg1; kw...) = grdview("", arg1; first=true, kw...)
+grdview!(arg1; kw...) = grdview("", arg1; first=false, kw...)

@@ -3,7 +3,7 @@
 Grid type
 ---------
 
-    type GMTgrid                  # The type holding a local header and data of a GMT grid
+    type GMTgrid{T<:Real,N} <: AbstractArray{T,N}      # The type holding a local header and data of a GMT grid
        proj4::String              # Projection string in PROJ4 syntax (Optional)
        wkt::String                # Projection string in WKT syntax (Optional)
        epsg::Int                  # EPSG code
@@ -32,22 +32,22 @@ Grid type
 Image type
 ----------
 
-    type GMTimage                 # The type holding a local header and data of a GMT image
+    type GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}   # The type holding a local header and data of a GMT image
        proj4::String              # Projection string in PROJ4 syntax (Optional)
        wkt::String                # Projection string in WKT syntax (Optional)
        epsg::Int                  # EPSG code
        range::Array{Float64,1}    # 1x6 vector with [x_min x_max y_min y_max z_min z_max]
        inc::Array{Float64,1}      # 1x2 vector with [x_inc y_inc]
        registration::Int          # Registration type: 0 -> Grid registration; 1 -> Pixel registration
-       nodata::Float64            # The value of nodata
+       nodata::Unsigned           # The value of nodata
        color_interp::String       # If equal to "Gray" an indexed image with no cmap will get a gray cmap
        metadata::Vector{String}   # To store any metadata that can eventually be passed to GDAL (Optional)
        names::Vector{String}      # To use whith multi-band and when bands have names (Optional)
        x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates
        y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates
        v::Array{Float64,1}        # [v x n_bands]   vector with vertical coords or wavelengths in hypercubes (Optional)
-       image::Array{UInt8,3}      # [n_rows x n_columns x n_bands] image array
-       colormap::Array{Clong,1}   # 
+       image::Array{T,N}          # [n_rows x n_columns x n_bands] image array
+       colormap::Array{Int32,1}   # 
        alpha::Array{UInt8,2}      # A [n_rows x n_columns] alpha array
        layout::String             # A four character string describing the image memory layout
        pad::Int                   # When != 0 means that the array is placed in a padded array of PAD rows/cols
@@ -56,8 +56,8 @@ Image type
 Dataset type
 ------------
 
-    type GMTdataset
-        data::Array{Float64,2}     # Mx2 Matrix with segment data
+    type GMTdataset{T<:Real, N} <: AbstractArray{T,N}
+        data::Array{T,N}           # Mx2 Matrix with segment data
         ds_bbox::Vector{Float64}   # Global BoundingBox (for when there are many segments)
         bbox::Vector{Float64}      # Segment BoundingBox
         attrib::Dict{String, String} # Dictionary with attributes/values (optional)

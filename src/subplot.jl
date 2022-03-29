@@ -68,7 +68,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing || show_kwargs[1])
 		if (isa(val, NamedTuple) && haskey(nt2dict(val), :width))	# Preferred way
 			cmd *= " -F" * helper_sub_F(val)		# VAL = (width=x, height=x, fwidth=(...), fheight=(...))
-			del_from_dict(d, [:F :dims :dimensions :size :sizes])
+			del_from_dict(d, [:F, :dims, :dimensions, :size, :sizes])
 		else
 			cmd = add_opt(d, cmd, "F", [:F :dims :dimensions :size :sizes],
 			              (panels=("-s", helper_sub_F, 1), size=("-f", helper_sub_F, 1), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F), clearance=("+c", arg2str), outine=("+p", add_opt_pen), fill=("+g", add_opt_fill), divlines=("+w", add_opt_pen)))
@@ -109,7 +109,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		(!IamSubplot[1]) && error("Cannot call subplot(set, ...) before setting dimensions")
 		lix, pane = parse_c(d, cmd)
 		cmd = pane * cmd				# Here we don't want the "-c" part
-		cmd = add_opt(d, cmd, 'A', [:fixedlabel]) * opt_C			# Also add the eventual this panel -C clearance option
+		cmd = add_opt(d, cmd, "A", [:fixedlabel]) * opt_C			# Also add the eventual this panel -C clearance option
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 		gmt("subplot set " * cmd)
 	else

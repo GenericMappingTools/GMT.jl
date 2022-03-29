@@ -26,12 +26,10 @@ Parameters
 """
 function mblevitus(cmd0::String=""; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("mblevitus", cmd0)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = parse_common_opts(d, "", [:yx :V_params :o])[1]
-	cmd = add_opt(d, cmd, 'L', [:L :location :R])
+	cmd = add_opt(d, cmd, "L", [:L :location :R])
 	(!occursin("-L", cmd)) && (cmd *= " -L0/0")
 	cmd = parse_these_opts(cmd, d, [[:A :all4], [:O :outfile :output_file], [:H :help], [:z :z_down]])
 	((val = find_in_dict(d, [:z :z_down])[1]) === nothing) && (cmd *= " -z")	# Means here default is Z-up

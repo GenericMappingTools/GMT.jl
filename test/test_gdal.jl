@@ -65,6 +65,7 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.OCTDestroyCoordinateTransformation(C_NULL);
 
 	gdalinfo("utmsmall.tif");
+	GMT.regiongeog("utmsmall.tif")
 	ds_small = Gdal.read("utmsmall.tif");
 	Gdal.getlayer(ds_small, 1);
 	gdalinfo(ds_small, [""]);
@@ -73,6 +74,8 @@ Gdal.GDALDestroyDriverManager()
 	gdaldem(ds_small, "hillshade", ["-q"]);
 	gdaltranslate(ds_small, [""]);
 	gdaltranslate("utmsmall.tif", R="442000/445000/3747000/3750000");
+	gdaltranslate("utmsmall.tif+b0");
+	gdaltranslate("utmsmall.tif", ["-b","1"]);
 	try		# Stupid Macports gdal does not have AAIGrid driver
 	ds_tiny = gdaltranslate(ds_small, ["-of","AAIGrid","-r","cubic","-tr","1200","1200"], gdataset=true) # resample to a 5×5 ascii grid
 	@test Gdal.read(ds_tiny, 1) == [128  171  127   93   83; 126  164  148  114  101;
@@ -165,6 +168,7 @@ Gdal.GDALDestroyDriverManager()
 	ds = gmt2gd(G)
 	G  = gd2gmt(ds)
 	G = gd2gmt("utmsmall.tif");
+	GMT.regiongeog(G)
 	ds = gmt2gd(G)
 	gdalinfo(ds);
 	D = mat2ds([0 0; 10 0; 10 10; 11 10], geom=4);
@@ -189,6 +193,7 @@ Gdal.GDALDestroyDriverManager()
 	I = Gdal.dither("rgbsmall.tif");
 	gmt2gd(I);
 	Gdal.dither("rgbsmall.tif", save="lixo.tif");
+	Gdal.dither("rgbsmall.tif", save="lixo.tof");
 	Gdal.gdal_opts2vec("aa bb 'vv pp' aa \"ad uuu\"");
 
 	Gdal.GDALGetDataTypeByName("GTiff");
@@ -215,7 +220,7 @@ Gdal.GDALDestroyDriverManager()
 
 	#Gdal.identifydriver("lixo.gmt")
 	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");
-	ds = gmt2gd(D[1])
+	ds = gmt2gd(D)
 	ds = gmt2gd(D, geometry="Polygon")
 	gmt2gd(mat2ds([0 10; 1 11; 0 10], x=[0, 1, 2], multi=true), geometry="line")
 	gmt2gd(mat2ds([0 10; 1 11; 0 10; 0 10], x=[0, 1, 2, 0], multi=true), geometry="polyg")
@@ -225,7 +230,7 @@ Gdal.GDALDestroyDriverManager()
 	ds2=ogr2ogr(ds, ["-t_srs", "+proj=utm +zone=29", "-overwrite"])
 	gd2gmt(ds2)
 	ogr2ogr(D, "-t_srs '+proj=utm +zone=29' -overwrite")	# Returns a GMT datset directly
-	ogr2ogr(D[1], "-t_srs '+proj=utm +zone=29' -overwrite")
+	#ogr2ogr(D[1], "-t_srs '+proj=utm +zone=29' -overwrite")
 
 	D1 = mat2ds([0.0 0.0; 1.0 1.0; 1.0 0.0; 0.0 0.0]);
 	gmt2gd(D1);		gmt2gd(D1, geometry="line");	gmt2gd(D1, geometry="point")

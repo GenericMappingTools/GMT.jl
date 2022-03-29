@@ -59,15 +59,13 @@ Parameters
 """
 function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdedit", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing
 	(isa(arg1, GMTgrid) && length(kwargs) == 0) && (arg1.range[5:6] .= extrema(arg1); return arg1)  # Update the z_min|max
 
 	cmd, = parse_common_opts(d, "", [:G :R :J :V_params :bi :di :e :f :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:S :wrap], [:T :toggle]])
-	cmd, args, n, = add_opt(d, cmd, 'N', [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))
+	cmd, args, n, = add_opt(d, cmd, "N", [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))
     if (n > 0)  arg1, arg2 = args[:]  end
 
 	common_grd(d, cmd0, cmd, "grdedit ", arg1, arg2)		# Finish build cmd and run it

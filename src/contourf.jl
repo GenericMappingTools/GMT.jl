@@ -140,7 +140,7 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 		if (CPT === nothing && CPT_arg === nothing)
 			if (cmd0 != "")
 				info = grdinfo(cmd0 * " -C")
-				C_inc, min, max = gen_contour_vals(info[1].data[5:6], C_int)
+				C_inc, min, max = gen_contour_vals(info.data[5:6], C_int)
 			else
 				C_inc, min, max = gen_contour_vals(arg1, C_int)
 			end
@@ -163,7 +163,7 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 			d[:W] = "c";  done = true
 		end
 		grdview(cmd0, arg1; first=first, d...)
-		del_from_dict(d, [[:C :z], [:Q], [:W]])
+		del_from_dict(d, [[:C, :z], [:Q], [:W]])
 		if (done)  return  end
 
 		if (C_int > 0 || C_contours != "" || opt_A !== nothing)
@@ -192,7 +192,7 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 			d[:C] = CPT;
 		else
 			D = gmtinfo(arg1, C=1)
-			C_inc, min, max = gen_contour_vals(D[1].data[5:6], C_int)
+			C_inc, min, max = gen_contour_vals(D.data[5:6], C_int)
 			d[:C] = makecpt(T=(min, max, C_inc))
 		end
 		d[:I] = true

@@ -74,8 +74,6 @@ Parameters
 """
 function blockmean(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("blockmean", cmd0, arg1)
-
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd = parse_these_opts("", d, [[:S :statistic]])
@@ -84,7 +82,7 @@ function blockmean(cmd0::String="", arg1=nothing; kwargs...)
 	elseif (find_in_dict(d, [:sum])[1] !== nothing)          cmd = " -Ss"
 	elseif (find_in_dict(d, [:sum_weights])[1] !== nothing)  cmd = " -Sw"
 	end
-	opt_A = add_opt(d, "", 'A', [:A :field :fields], (mean="_z", std="_s", highest="_h", lowest="_l", weight="_w", weights="_w"))
+	opt_A = add_opt(d, "", "A", [:A :field :fields], (mean="_z", std="_s", highest="_h", lowest="_l", weight="_w", weights="_w"))
 	(!occursin(" -E", cmd) && (occursin("s", opt_A) || occursin("h", opt_A) || occursin("l", opt_A))) && (opt_A *= " -E")
 	cmd *= opt_A
 
@@ -101,12 +99,10 @@ Full option list at [`blockmedian`]($(GMTdoc)blockmedian.html)
 """
 function blockmedian(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("blockmedian", cmd0, arg1)
-
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
 	cmd = parse_these_opts("", d, [[:Q :quick], [:T :quantile]])
-	opt_A = add_opt(d, "", 'A', [:A :field :fields], (median="_z", scale="_s", highest="_h", lowest="_l", weight="_w", weights="_w"))
+	opt_A = add_opt(d, "", "A", [:A :field :fields], (median="_z", scale="_s", highest="_h", lowest="_l", weight="_w", weights="_w"))
 	(!occursin(" -E", cmd) && (occursin("s", opt_A) || occursin("h", opt_A) || occursin("l", opt_A))) && (opt_A *= " -E")
 	cmd *= opt_A
 	common_blocks(cmd0, arg1, d, cmd, "blockmedian", kwargs...)
@@ -122,11 +118,9 @@ Full option list at [`blockmode`]($(GMTdoc)blockmode.html)
 """
 function blockmode(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("blockmode", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd = parse_these_opts("", d, [[:D :histogram_binning], [:Q :quick]])
-	opt_A = add_opt(d, "", 'A', [:A :field :fields], (mode="_z", scale="_s", highest="_h", lowest="_l", weight="_w", weights="_w"))
+	opt_A = add_opt(d, "", "A", [:A :field :fields], (mode="_z", scale="_s", highest="_h", lowest="_l", weight="_w", weights="_w"))
 	(!occursin(" -E", cmd) && (occursin("s", opt_A) || occursin("h", opt_A) || occursin("l", opt_A))) && (opt_A *= " -E")
 	cmd *= opt_A
 

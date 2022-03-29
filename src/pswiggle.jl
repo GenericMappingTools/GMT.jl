@@ -67,7 +67,6 @@ Parameters
 function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
     gmt_proggy = (IamModern[1]) ? "wiggle "  : "pswiggle "
-	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 

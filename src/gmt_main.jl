@@ -47,7 +47,7 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	range::Array{Float64,1}
 	inc::Array{Float64,1}
 	registration::Int
-	nodata::Float64
+	nodata::Unsigned
 	color_interp::String
 	metadata::Vector{String}
 	names::Vector{String}
@@ -55,7 +55,7 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	y::Array{Float64,1}
 	v::Array{Float64,1}
 	image::Array{T,N}
-	colormap::Array{Clong,1}
+	colormap::Array{Int32,1}
 	n_colors::Int
 	alpha::Array{UInt8,2}
 	layout::String
@@ -135,7 +135,7 @@ GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], Dic
 struct WrapperPluto fname::String end
 
 const global GItype = Union{GMTgrid, GMTimage}
-const global GDtype = Union{GMTdataset, Vector{GMTdataset}}
+const global GDtype = Union{GMTdataset, Vector{<:GMTdataset}}
 
 """
 Call a GMT module. This function is not called directly by the users,
@@ -153,7 +153,7 @@ function gmt(cmd::String, args...)
 	n_argin = length(args)
 	if (n_argin > 0)
 		if (isa(args[1], String))
-			tok, r = strtok(cmd)
+			tok::String, r::String = strtok(cmd)
 			if (r == "")				# User gave 'module' separately from 'options'
 				cmd *= " " * args[1]	# Cat with the progname and so pretend input followed the classic construct
 				args = args[2:end]
@@ -167,7 +167,7 @@ function gmt(cmd::String, args...)
 
 	# 1. Get arguments, if any, and extract the GMT module name
 	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
-	g_module, r = strtok(cmd)
+	g_module::String, r = strtok(cmd)
 
 	if (g_module == "begin")		# Use this default fig name instead of "gmtsession"
 		(r == "") && (r = "GMTplot " * FMT[1])
@@ -430,21 +430,14 @@ function parse_mem_layouts(cmd::AbstractString)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function strtok(args, delim::String=" ")
-# A Matlab like strtok function
-	tok = "";	r = ""
-
-	@label restart
-	ind = findfirst(delim, args)
-	(ind === nothing) && return lstrip(args,collect(delim)), r		# Always clip delimiters at the begining
-	if (startswith(args, delim))
-		args = lstrip(args,collect(delim)) 			# Otherwise delim would be return as a token
-		@goto restart
-	end
-	tok = lstrip(args[1:ind[1]-1], collect(delim))	#		""
-	r = lstrip(args[ind[1]:end], collect(delim))
-
-	return tok,r
+function strtok(str)
+	# A Matlab like strtok function
+	o = split(str, limit=2, keepempty=false)
+	return (length(o) == 2) ? (string(o[1]), string(o[2])) : (string(o[1]), "")
+end
+function strtok(str, delim)
+	o = split(str, delim, limit=2, keepempty=false)
+	return (length(o) == 2) ? (string(o[1]), string(o[2])) : (string(o[1]), "")
 end
 
 #= ---------------------------------------------------------------------------------------------------
@@ -615,14 +608,14 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 
 	if (I.colormap != C_NULL)       # Indexed image has a color map (Scanline)
 		n_colors = Int64(I.n_indexed_colors)
-		colormap =  deepcopy(unsafe_wrap(Array, I.colormap, n_colors * 4))
+		colormap::Vector{Int32} = deepcopy(unsafe_wrap(Array, I.colormap, n_colors * 4))
 	else
-		colormap, n_colors = vec(zeros(Clong,1,3)), 0	# Because we need an array
+		colormap, n_colors = vec(zeros(Int32,1,3)), 0	# Because we need an array
 	end
 
 	# Return image via a uint8 matrix in a struct
 	cinterp = (I.color_interp != C_NULL) ? unsafe_string(I.color_interp) : ""
-	out = GMTimage("", "", 0, zeros(6)*NaN, zeros(2)*NaN, 0, NaN, cinterp, String[], String[], X, Y,
+	out = GMTimage("", "", 0, zeros(6)*NaN, [NaN, NaN], 0, zero(eltype(t)), cinterp, String[], String[], X, Y,
 	               zeros(nz), t, colormap, n_colors, Array{UInt8,2}(undef,1,1), layout, 0)
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
@@ -665,7 +658,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	model::String = (C.model & GMT_HSV != 0) ? "hsv" : ((C.model & GMT_CMYK != 0) ? "cmyk" : "rgb")
 	n_colors::UInt32 = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 
-	out = GMTcpt(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), zeros(2)*NaN, zeros(3,3), 8, 0.0,
+	out = GMTcpt(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), [NaN,NaN], zeros(3,3), 8, 0.0,
 	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
 
 	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
@@ -715,7 +708,7 @@ function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTps
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset}
+function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 # Given a GMT DATASET D, build an array of segment structure and assign values.
 # Each segment will have 6 items:
 # header:	Text string with the segment header (could be empty)
@@ -725,7 +718,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 # proj4:	String with any proj4 information
 # wkt:		String with any WKT information
 
-	(object == C_NULL) && return [GMTdataset()]		# No output produced - return a null data set
+	(object == C_NULL) && return GMTdataset()		# No output produced - return a null data set
 	D::GMT_DATASET = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
 	seg_out = 0;
@@ -753,7 +746,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 			(DS.n_rows == 0) && continue 					# Skip empty segments
 
 			C = unsafe_wrap(Array, DS.data, DS.n_columns)	# DS.data = Ptr{Ptr{Float64}}; C = Array{Ptr{Float64},1}
-			dest = zeros(Float64, DS.n_rows, DS.n_columns)
+			dest::Matrix{Float64} = zeros(Float64, DS.n_rows, DS.n_columns)
 			for col = 1:DS.n_columns						# Copy the data columns
 				unsafe_copyto!(pointer(dest, DS.n_rows * (col - 1) + 1), unsafe_load(DS.data, col), DS.n_rows)
 			end
@@ -764,14 +757,14 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 			if (DS.text != C_NULL)
 				texts = unsafe_wrap(Array, DS.text, DS.n_rows)	# n_headers-element Array{Ptr{UInt8},1}
 				if (texts != NULL)
-					dest = Array{String}(undef, DS.n_rows)
+					dest_s = Vector{String}(undef, DS.n_rows)
 					n = 0
 					for row = 1:DS.n_rows					# Copy the text rows, but check if they are not all NULL
-						if (texts[row] != NULL)  dest[row] = unsafe_string(texts[row]);		n+=1
-						else                     dest[row] = ""
+						if (texts[row] != NULL)  dest_s[row] = unsafe_string(texts[row]);		n+=1
+						else                     dest_s[row] = ""
 						end
 					end
-					(n > 0) && (Darr[seg_out].text = dest)	# If they are all empty, no bother to save them.
+					(n > 0) && (Darr[seg_out].text = dest_s)	# If they are all empty, no bother to save them.
 				end
 			end
 
@@ -779,22 +772,22 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::Vector{GMTdataset
 			if (seg == 1)
 				#headers = pointer_to_array(DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
 				headers = unsafe_wrap(Array, DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
-				dest = Array{String}(undef, length(headers))
+				dest_s = Vector{String}(undef, length(headers))
 				for k = 1:length(headers)
-					dest[k] = unsafe_string(headers[k])
+					dest_s[k] = unsafe_string(headers[k])
 				end
-				Darr[seg_out].comment = dest
+				Darr[seg_out].comment = dest_s
 			end
 			seg_out = seg_out + 1
 		end
 	end
 	set_dsBB!(Darr, false)				# Compute and set the global BoundingBox for this dataset
 
-	return Darr
+	return (length(Darr) == 1) ? Darr[1] : Darr
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)
+function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RESOURCE
 	# Create the object container and hook as X->object
 	#oo = unsafe_load(X.option)
 	#module_input = (oo.option == GMT.GMT_OPT_INFILE)
@@ -968,7 +961,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 # We are given a Julia image and use it to fill the GMT_IMAGE structure
 
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_bands = size(Img.image, 3)
-	if (Img.layout[2] == 'R')  n_rows, n_cols = n_cols, n_rows  end
+	if (Img.layout[2] == 'R' && Img.layout[3] == 'B')  n_rows, n_cols = n_cols, n_rows  end
 	family = GMT_IS_IMAGE
 	if (n_bands == 2 || n_bands == 4)			# Then we want the alpha layer together with data
 		family = family | GMT_IMAGE_ALPHA_LAYER
@@ -983,6 +976,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	h::GMT_GRID_HEADER = unsafe_load(Ib.header)
 
 	mem_owned_by_gmt = true
+	already_converted = false
 	if (pad == 2 && Img.layout[2] != 'R')						# When we need to project
 		img_padded = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
 		mx = n_cols + 2pad
@@ -1000,35 +994,22 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 		end
 	elseif (pad == 2 && Img.pad == 0 && Img.layout[2] == 'R')	# Also need to project
 		img_padded = unsafe_wrap(Array, convert(Ptr{UInt8}, Ib.data), h.size * n_bands)
-		mx, k = n_cols + 2pad, 1
-		for band = 1:n_bands
-			off_band = (band - 1) * h.size
-			for row = 1:n_rows
-				off = pad * mx + (row - 1) * mx + pad + off_band
-				for col = 1:n_cols
-					img_padded[col + off] = Img.image[k];	k += 1
-				end
-			end
-		end
+		toRP_pad(Img, img_padded, n_rows, n_cols, pad)
+		already_converted = true
 	else
 		Ib.data = pointer(Img.image)
 		mem_owned_by_gmt = (pad == 0) ? false : true
 	end
-	
+
 	(mem_owned_by_gmt) && (CTRL.gmt_mem_bag[1] = Ib.data)	# Hold on the GMT owned array to be freed in gmt()
 
-	#if (0 < Img.n_colors <= 256)
-		#append!(Img.colormap, fill(Int32(255), (257 - Img.n_colors) * 4) )
-		#Img.n_colors = 256
-	#end
-	
 	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
 	Ib.n_indexed_colors = Img.n_colors
 	if (Img.color_interp != "")    Ib.color_interp = pointer(Img.color_interp)  end
 	Ib.alpha = (size(Img.alpha) != (1,1)) ? pointer(Img.alpha) : C_NULL
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)		# Tell GMT that memory is external
-	h.z_min = Img.range[5]			# Set the z_min, z_max
+	h.z_min = Img.range[5]						# Set the z_min, z_max
 	h.z_max = Img.range[6]
 	h.mem_layout = map(UInt8, (Img.layout...,))
 	if (Img.proj4 != "")    h.ProjRefPROJ4 = pointer(Img.proj4)  end
@@ -1037,14 +1018,38 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	unsafe_store!(Ib.header, h)
 	unsafe_store!(I, Ib)
 
-	if (!startswith(Img.layout, "BRP"))
-		img = (mem_owned_by_gmt) ? img_padded : deepcopy(Img.image)
+	if (!already_converted && !startswith(Img.layout, "BRP"))
+		img = (mem_owned_by_gmt) ? img_padded : copy(Img.image)
 		GMT_Change_Layout(API, GMT_IS_IMAGE, "BRP", 0, I, img);		# Convert to BRP
 		Ib.data = pointer(img)
 		unsafe_store!(I, Ib)
 	end
 
 	return I
+end
+
+function toRP_pad(img, o, n_rows, n_cols, pad)
+	# Convert to a B(?T)RP padded array. The shit is that TRB images were read by GDAL and are
+	# stored transposed so that we can pass them back to GDAL without any copy. But B(?)RP were
+	# read through GMT and are not transposed. This makes a hell to deal with and not messing. 
+	m, i = (n_cols * pad + pad) * 3, 0
+	if (img.layout[3] == 'B')			# TRB. Read directly by GDAL and sored transposed.
+		@inbounds for n = 1:n_rows
+			r, g, b = view(img.image, :,n,1), view(img.image, :,n,2), view(img.image, :,n,3)
+			@inbounds for k = 1:n_cols
+				o[m+=1], o[m+=1], o[m+=1] = r[k], g[k], b[k]
+			end
+			m += 2pad * 3
+		end
+	else								# B(T?)RP. Read through GMT and NOT stored transposed.
+		@inbounds for n = 1:n_rows
+			@inbounds for k = 1:n_cols
+				o[m+=1], o[m+=1], o[m+=1] = img.image[i+=1], img.image[i+=1], img.image[i+=1]
+			end
+			m += 2pad * 3
+		end
+	end
+	nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1124,7 +1129,11 @@ function dataset_init(API::Ptr{Nothing}, Darr, direction::Integer)::Ptr{GMT_DATA
 		unsafe_store!(S, Sb)
 		unsafe_store!(DT.segment, S, seg)
 	end
-	DT.n_records, DS.n_records = n_records, n_records
+	DT.n_records, DS.n_records = n_records, n_records	# They are equal because our GMT_DATASET have only one table
+	Dt = unsafe_load(DS.table)
+	unsafe_store!(Dt, DT)
+	unsafe_store!(DS.table, Dt)
+	unsafe_store!(D, DS)
 
 	return D
 end
@@ -1257,12 +1266,13 @@ function ps_init(API::Ptr{Nothing}, ps, dir::Integer)::Ptr{GMT_POSTSCRIPT}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
+function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdataset, Vector{<:GMTdataset}}
 	(in == NULL)  && return nothing
-	OGR_F = unsafe_load(in)
+	OGR_F::OGR_FEATURES = unsafe_load(in)
 	n_max = OGR_F.n_rows * OGR_F.n_cols * OGR_F.n_layers
 	n_total_segments = OGR_F.n_filled
 	ds_bbox = OGR_F.BoundingBox
+	(n_total_segments == 0) && (@warn("Could not read this OGR dataset. A reading error or there is no data in it."); return GMTdataset())
 
 	if (!drop_islands)
 		# First count the number of islands. Need to know the size to put in the D pre-allocation
@@ -1275,7 +1285,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		(n_islands > 0) && println("\tThis file has islands (holes in polygons).\n\tUse `gmtread(..., no_islands=true)` to ignore them.")
 	end
 
-	D = Vector{GMTdataset}(undef, n_total_segments)
+	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_total_segments)
 
 	n = 1
 	attrib = Dict{String, String}();	# For the case there are no attribs at all.
@@ -1290,17 +1300,21 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		else
 			proj4, wkt, coln = "", "", String[]
 		end
+
 		if (OGR_F.np > 0)
-			hdr = (OGR_F.att_number > 0) ? join([@sprintf("%s,", unsafe_string(unsafe_load(OGR_F.att_values,i))) for i = 1:OGR_F.att_number]) : ""
-			(hdr != "") && (hdr = string(rstrip(hdr, ',')))		# Strip last ','
+			hdr = ""
 			if (OGR_F.att_number > 0)
 				attrib = Dict{String, String}()
-				[attrib[unsafe_string(unsafe_load(OGR_F.att_names,i))] = unsafe_string(unsafe_load(OGR_F.att_values,i)) for i = 1:OGR_F.att_number]
+				for i = 1:OGR_F.att_number
+					attrib[unsafe_string(unsafe_load(OGR_F.att_names,i))] = unsafe_string(unsafe_load(OGR_F.att_values,i))
+				end
 			else		# use the previous attrib. This is RISKY but gmt_ogrread only stores attribs in 1st geom of each feature
 				(n > 1) && (attrib = D[n-1].attrib)
 			end
+
 			if (OGR_F.n_islands == 0)
-				geom = (OGR_F.type == "Polygon") ? wkbPolygon : ((OGR_F.type == "LineString") ? wkbLineString : wkbPoint)
+				geom_type = unsafe_string(OGR_F.type)
+				geom = (geom_type == "Polygon") ? wkbPolygon : ((geom_type == "LineString") ? wkbLineString : wkbPoint)
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
 				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, Int(geom))
 			else
@@ -1328,7 +1342,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)
 		D[k].bbox = collect(Float64, Iterators.flatten(bb))
 	end
 	D[1].ds_bbox = collect(ds_bbox)			# It always has 6 elements and last two maybe zero
-	return D
+	return (length(D) == 1) ? D[1] : D
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1484,6 +1498,9 @@ end
 
 # ---------- For Pluto ------------------------------------------------------------------------------
 Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.fname))
+
+# ---------- For fck stop printing UInts in hexadecinal ---------------------------------------------
+Base.show(io::IO, x::T) where {T<:Union{UInt, UInt128, UInt64, UInt32, UInt16, UInt8}} = Base.print(io, x)
 
 # ---------------------------------------------------------------------------------------------------
 function fakedata(sz...)

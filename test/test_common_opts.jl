@@ -4,21 +4,19 @@
 	GMT.__init__(true);
 	GMT.dict2nt(Dict(:a =>1, :b => 2))
 	@test GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")[1] == " -R1/2/3/4/5/6"
+	@test GMT.parse_R(Dict(:region_llur => (1,2,3,4)), "")[1] == " -R1/3/2/4+r"
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
 	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"
 	@test GMT.build_opt_R(:d) == " -Rd"
 	@test GMT.build_opt_R([]) == ""
-	@test GMT.build_opt_R((bb=:global,)) == " -R-180/180/-90/90"
-	@test GMT.build_opt_R((bb=:global360,)) == " -R0/360/-90/90"
-	@test GMT.build_opt_R((bb=(1,2,3,4),)) == " -R1/2/3/4"
-	@test GMT.build_opt_R((bb=(1,2,3,4), diag=1)) == " -R1/3/2/4+r"
-	@test GMT.build_opt_R((bb_diag=(1,2,3,4),)) == " -R1/3/2/4+r"
+	@test GMT.build_opt_R((limits=(1,2,3,4),)) == " -R1/2/3/4"
+	@test GMT.build_opt_R((limits=(1,2,3,4), diag=1)) == " -R1/3/2/4+r"
+	@test GMT.build_opt_R((limits_diag=(1,2,3,4),)) == " -R1/3/2/4+r"
 	@test GMT.build_opt_R((continent=:s,)) == " -R=SA"
 	@test GMT.build_opt_R((continent=:s,extend=4)) == " -R=SA+R4"
 	@test GMT.build_opt_R((iso="PT,ES",extend=4)) == " -RPT,ES+R4"
 	@test GMT.build_opt_R((iso="PT,ES",extend=[2,3])) == " -RPT,ES+R2/3"
-	@test GMT.build_opt_R((bb=:d,unit=:k)) == " -Rd+uk"			# Idiot but ok
-	@test_throws ErrorException("argument to the ISO key must be a string with country codes") GMT.build_opt_R((iso=:PT,))
+	@test GMT.build_opt_R((region=:d,unit=:k)) == " -Rd+uk"			# Idiot but ok
 	@test_throws ErrorException("No, no, no. Nothing useful in the region named tuple arguments") GMT.build_opt_R((zz=:x,))
 	@test_throws ErrorException("Unknown continent name") GMT.build_opt_R((continent='a',extend=4))
 	@test_throws ErrorException("Increments for limits must be a String, a Number, Array or Tuple") GMT.build_opt_R((iso="PT",extend='8'))
@@ -145,6 +143,7 @@
 	@test GMT.font(("10p","Times", :red)) == "10p,Times,red"
 	r = text(text_record([0 0], "TopLeft"), R="1/10/1/10", J=:X10, F=(region_justify=:MC,font=("10p","Times", :red)), Vd=dbg2);
 	ind = findfirst("-F", r); @test GMT.strtok(r[ind[1]:end])[1] == "-F+cMC+f10p,Times,red"
+	@test GMT.strtok("/aa /bb", '/')[1] == "aa "
 
 	@test GMT.build_pen(Dict(:lw => 1, :lc => [1,2,3])) == "1,1/2/3"
 	@test GMT.parse_pen((0.5, [1 2 3])) == "0.5,1/2/3"
@@ -160,6 +159,7 @@
 	@test GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen")[1] == " -Bpa10 -Byg20 -Bxg10 -BWSen+t\"Ai Ai\""
 	@test GMT.parse_B(Dict(:frame => (axes=(:left_full, :bottom_full, :right_full, :top_full), annot=10)), "")[1] == " -Bpa10 -BWSEN"
 	@test GMT.parse_B(Dict(:xaxis => (axes=:full, annot=10)), "")[1] == " -Bpxa10 -BWSEN"
+	@test GMT.parse_B(Dict(:xaxis => "xg10", :yaxis => "g20"), "")[1] == " -Byg20 -Bxg10"
 	@test GMT.parse_B(Dict(:frame => (fill=220,)), "", " -Baf -Bg -BWSne")[1] == " -Baf -Bg -BWSne+g220"
 	@test GMT.parse_B(Dict(:frame => :full), "")[1] == " -Baf -BWSEN"
 	GMT.helper2_axes("lolo");
@@ -172,6 +172,16 @@
 	@test GMT.consolidate_Bframe(" -Bpx+lx -B+gwhite -Baf -BWSen -By+lx") == " -Bpx+lx -Baf -By+lx -BWSen+gwhite"
 	@test GMT.consolidate_Bframe(" -Bpx+lx -Bpy+lx -BWSrt+gwhite") == " -Bpx+lx -Bpy+lx -BWSrt+gwhite"
 	@test GMT.consolidate_Bframe(" -Bpx+lx -BWSrt+gwhite -Bpy+lx") == " -Bpx+lx -Bpy+lx -BWSrt+gwhite"
+
+	@test GMT.arg_in_slot(Dict(:A => [1 2]), "", [:A], Matrix, [88], nothing) == (" -A", [88], [1 2])
+	@test GMT.arg_in_slot(Dict(:A => "ai"), "", [:A], Matrix, nothing, nothing) == (" -Aai", nothing, nothing)
+	GMT.arg_in_slot(Dict(:A => "ai"), "", [:A], Matrix, nothing, nothing, nothing)
+	GMT.arg_in_slot(Dict(:A => [1 2]), "", [:A], Matrix, [88], nothing, nothing)
+	GMT.arg_in_slot(Dict(:A => "ai"), "", [:A], Matrix, nothing, nothing, nothing, nothing)
+	GMT.arg_in_slot(Dict(:A => [1 2]), "", [:A], Matrix, [88], nothing, nothing, nothing)
+	@test_throws ErrorException("Wrong data type (UnionAll) for option A") GMT.arg_in_slot(Dict(:A => Complex), "", [:A], Matrix, nothing, nothing)
+	@test_throws ErrorException("Wrong data type (UnionAll) for option A") GMT.arg_in_slot(Dict(:A => Complex), "", [:A], Matrix, nothing, nothing, nothing)
+	@test_throws ErrorException("Wrong data type (UnionAll) for option A") GMT.arg_in_slot(Dict(:A => Complex), "", [:A], Matrix, nothing, nothing, nothing, nothing)
 
 	d=Dict(:L => (pen=(lw=10,lc=:red),) );
 	@test GMT.add_opt(d, "", "", [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
@@ -207,7 +217,7 @@
 	img16 = rand(UInt16, 16, 16, 3);
 	I = GMT.mat2img(img16);
 	img16 = rand(UInt16, 4, 4, 3);
-	I = GMT.GMTimage("", "", 0, [1.,4,1,4,0,255], [1., 1], 1, NaN, "", String[], String[], collect(1.:4),collect(1.:4),zeros(3),img16, vec(zeros(Clong,1,3)), 0, Array{UInt8,2}(undef,1,1), "TCBa", 0)
+	I = GMT.GMTimage("", "", 0, [1.,4,1,4,0,255], [1., 1], 1, zero(UInt16), "", String[], String[], collect(1.:4),collect(1.:4),zeros(3),img16, vec(zeros(Int32,1,3)), 0, Array{UInt8,2}(undef,1,1), "TCBa", 0)
 	GMT.mat2img(I);
 	GMT.mat2img(img16, histo_bounds=8440);
 	GMT.mat2img(img16, histo_bounds=[8440 13540]);
@@ -221,11 +231,14 @@
 	magic(6)
 
 	D = [mat2ds([0 0; 1 1],["a", "b"])];	D[1].header = "a";
-	GMT.make_zvals_vec(D, ["a"], [1], 1);
-	D[1].attrib = Dict("nome" => "a");
-	GMT.make_zvals_vec(D, ["a", "b"], [1,2], att="nome");
-	GMT.make_zvals_vec(D, ["a", "b"], [1,2], att="nome", nocase=1);
+	D[1].attrib = Dict("nome" => "a", "nome2" => "b");
+	GMT.polygonlevels(D, ["a", "b"], [1,2], att="nome");
+	GMT.polygonlevels(D, ["a", "b"], [1,2], att="nome", nocase=1);
+	GMT.polygonlevels(D, ["a" "aa"; "b" "bb"], [1,2], att=["nome", "nome2"]);
+	GMT.polygonlevels(D, ["a" "aa"; "b" "bb"], [1,2], att=["nome", "nome2"], nocase=1);
 	GMT.edit_segment_headers!(D, [1], "0");
+	GMT.getbyattrib(D, att="nome", val="a");
+	GMT.getbyattrib(D, att=(nome="a", nome2="b"));
 
 	@test_throws ErrorException("Bad 'stretch' argument. It must be a 1, 2 or 6 elements array and not 3") GMT.mat2img(img16, histo_bounds=[8440 13540 0]);
 	@test_throws ErrorException("Memory layout option must have 3 characters and not 1") GMT.parse_mem_layouts("-%1")
@@ -245,7 +258,7 @@
 	@test GMT.parse_i(Dict(:i=>(0,1,2,2)), "")[1] == " -i0,1,2,2"
 	@test GMT.parse_j(Dict(:spherical_dist => "f"), "")[1] == " -jf"
 	@test GMT.parse_t(Dict(:t=>0.2), "")[1] == " -t20.0"
-	@test GMT.parse_t(Dict(:t=>20), "")[1]  == " -t20"
+	@test GMT.parse_t(Dict(:t=>20), "")[1]  == " -t20.0"
 	@test GMT.parse_contour_AGTW(Dict(:A => [1]), "")[1] == " -A1,"
 	GMT.helper2_axes("");
 	@test GMT.axis(ylabel="bla")[1] == " -Bpy+lbla";
@@ -340,6 +353,7 @@
 	gmtwrite("lixo1.grd", mat2grid(rand(Float32, 16, 16), proj4=GMT.prj4WGS84))
 	gmtwrite("lixo2.grd", mat2grid(rand(Float32, 16, 16), proj4=GMT.prj4WGS84))
 	GMT.stackgrids(["lixo1.grd", "lixo2.grd"], [now(), now()+Dates.Day(1)], save="lixo_cube.nc", z_unit="date")
+	rescale("lixo1.grd", inputmin=0.1, inputmax=0.9)
 	rm("lixo1.grd")
 	rm("lixo2.grd")
 	#rm("lixo_cube.nc")		# can't be deleted because Julia still holds its file handle.

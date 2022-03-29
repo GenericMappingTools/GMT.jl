@@ -54,6 +54,11 @@ Parameters
     Truncate polygons against the specified polygon given, possibly resulting in open polygons.
     ($(GMTdoc)gmtspatial.html#t)
 - $(GMT.opt_V)
+- **W** | **extend** :: [Type => Str | Tuple]     `Arg = <dist>[<unit>][+f|l]`
+
+    Extend all segments with extra first and last points that are <dist> units away from the original
+    end points in the directions implied by the line ends.
+    ($(GMTdoc)gmtspatial.html#w)
 - $(GMT.opt_write)
 - $(GMT.opt_append)
 - $(GMT.opt_b)
@@ -68,25 +73,23 @@ Parameters
 """
 function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("gmtspatial", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing;     arg3 = nothing;     arg4 = nothing
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :nn :nearest_neighbor], [:C :clip], [:E :handedness], [:F :force_polygons],
-	                                 [:I :intersections], [:Q :area :length]])
+	                                 [:I :intersections], [:Q :area :length], [:W :extend]])
 	cmd = add_opt(d, cmd, "S", [:S :polygons :polyg_process], (buffer="b", holes="_h", dateline="_s"))
 
-	cmd, args, n, = add_opt(d, cmd, 'D', [:D :duplicates], :data, Array{Any,1}([arg1, arg2]), (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
+	cmd, args, n, = add_opt(d, cmd, "D", [:D :duplicates], :data, Array{Any,1}([arg1, arg2]), (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
 	if (n > 0)
 		arg1, arg2 = args[:];   cmd *= "+f"
 	end
  
-	cmd, args, n, = add_opt(d, cmd, 'N', [:N :in_polyg], :data, Array{Any,1}([arg1, arg2, arg3]), (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z"))
+	cmd, args, n, = add_opt(d, cmd, "N", [:N :in_polyg], :data, Array{Any,1}([arg1, arg2, arg3]), (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z"))
 	if (n > 0)  arg1, arg2, arg3 = args[:]  end
 
-	cmd, args, n, = add_opt(d, cmd, 'T', [:T :truncate], :data, Array{Any,1}([arg1, arg2, arg3, arg4]), (x="",))
+	cmd, args, n, = add_opt(d, cmd, "T", [:T :truncate], :data, Array{Any,1}([arg1, arg2, arg3, arg4]), (x="",))
 	if (n > 0)  arg1, arg2, arg3, arg4 = args[:]  end
 
     if (isa(arg1,Tuple))

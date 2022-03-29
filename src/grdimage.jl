@@ -56,26 +56,17 @@ Parameters
 """
 function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("grdimage", cmd0, arg1, arg2, arg3)
 	arg4 = nothing		# For the r,g,b + intensity case
-
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 
 	if (arg1 === nothing && haskey(d, :R) && guess_T_from_ext(cmd0) == " -Ti")
 		_opt_R = d[:R]
-		if (isa(_opt_R, Tuple) || isa(_opt_R, Array{<:Real}))
-			t = ["$(_opt_R[1])", "$(_opt_R[2])", "$(_opt_R[3])", "$(_opt_R[4])"]
-		else
-			t = split(_opt_R, '/')
-		end
+		t = (isa(_opt_R, Tuple) || isa(_opt_R, VMr)) ?
+			["$(_opt_R[1])", "$(_opt_R[2])", "$(_opt_R[3])", "$(_opt_R[4])"] : split(_opt_R, '/')
 		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
 		I = cut_with_gdal(cmd0, opts)
-		if     (arg1 === nothing) arg1 = I
-		elseif (arg2 === nothing) arg2 = I
-		elseif (arg3 === nothing) arg3 = I
-		else   arg4 = I
-		end
+		(arg1 === nothing) ? arg1 = I : ((arg2 === nothing) ? arg2 = I : ((arg3 === nothing) ? arg3 = I : arg4 = I))
 		cmd0 = ""
 	end
 
@@ -95,20 +86,20 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, arg1, arg2, arg3)
 	end
 
-	if (isa(arg1, Array{<:Real}))
-		if (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16}))
+	if (isa(arg1, Matrix{<:Real}))
+		if (isa(arg1, Matrix{UInt8}) || isa(arg1, Matrix{UInt16}))
 			arg1 = mat2img(arg1; d...)
 		else
 			arg1 = mat2grid(arg1)
-			(isa(arg2, Array{<:Real})) && (arg2 = mat2grid(arg2))
-			(isa(arg3, Array{<:Real})) && (arg3 = mat2grid(arg3))
+			(isa(arg2, Matrix{<:Real})) && (arg2 = mat2grid(arg2))
+			(isa(arg3, Matrix{<:Real})) && (arg3 = mat2grid(arg3))
 		end
 	end
 
 	# if (occursin("earth_relief_", cmd0))  push!(d, :this_cpt => "geo")  end	# Make this the default CPT
 
 	cmd, _, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
-	cmd, arg1, arg2, arg3, arg4   = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
+	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
 
 	if (isa(arg1, GMTimage) && !occursin("-Q", cmd))
 		if (!occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
@@ -131,7 +122,7 @@ end
 function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 	# Set -R in 'd' under several conditions. We may need this to make -J=:guess to work
 	O && return
-	if ((val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(I_G, GMTimage) || isa(I_G, GMTgrid)))
+	if ((val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(I_G, GItype)))
 		if (isa(I_G, GMTgrid) || !isimgsize(I_G))
 			d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", I_G.range[1], I_G.range[2], I_G.range[3], I_G.range[4])
 		end
@@ -139,7 +130,7 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 		d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
 	elseif (val !== nothing)
 		d[:R] = val
-		del_from_dict(d, [:region :limits])
+		del_from_dict(d, [:region, :limits])
 	end
 end
 function isimgsize(I_G)
@@ -159,20 +150,16 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 				val = arg2str(val)
 				(val == "" || val == "default" || val == "auto") ? cmd *= " -I+a-45+nt1" : cmd *= " -I" * val
     		else
-				cmd = add_opt(d, cmd, 'I', [:I :shading :shade :intensity],
+				cmd = add_opt(d, cmd, "I", [:I :shading :shade :intensity],
 							  (auto = "_+", azim = "+a", azimuth = "+a", norm = "+n", default = "_+d+a-45+nt1"))
 			end
 		else
-			if (prog == "grdimage")  cmd, N_used = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3, arg4])
-			else                     cmd, N_used = put_in_slot(cmd, val, 'I', [arg1, arg2, arg3])
+			if (prog == "grdimage")  cmd, N_used = put_in_slot(cmd, 'I', arg1, arg2, arg3, arg4)
+			else                     cmd, N_used = put_in_slot(cmd, 'I', arg1, arg2, arg3)
 			end
-			if (N_used == 1)  arg1 = val
-			elseif (N_used == 2)  arg2 = val
-			elseif (N_used == 3)  arg3 = val
-			elseif (N_used == 4)  arg4 = val	# grdview doesn't have this case but no harm to not test for that
-			end
+			(N_used == 1) ? arg1 = val : ((N_used == 2) ? arg2 = val : ((N_used == 3) ? arg3 = val : arg4 = val))
 		end
-		del_from_dict(d, [:I :shade :shading :intensity])
+		del_from_dict(d, [:I, :shade, :shading, :intensity])
 	end
 	return cmd, arg1, arg2, arg3, arg4
 end

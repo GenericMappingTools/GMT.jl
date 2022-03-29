@@ -83,15 +83,13 @@ Parameters
 """
 function surface(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("surface", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing
 	
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :a :bi :di :e :f :h :i :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:Ll :lower], [:Lu :upper], [:M :mask],
                                      [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension], [:W :log], [:Z :over_relaxation]])
-	cmd, args, n, = add_opt(d, cmd, 'D', [:D :breakline], :data, Array{Any,1}([arg1, arg2]), (zlevel="+z",))
+	cmd, args, n, = add_opt(d, cmd, "D", [:D :breakline], :data, Array{Any,1}([arg1, arg2]), (zlevel="+z",))
 	if (n > 0)  arg1, arg2 = args[:]  end
 
 	common_grd(d, cmd0, cmd, "surface ", arg1, arg2)		# Finish build cmd and run it

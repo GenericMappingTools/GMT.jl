@@ -104,7 +104,6 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_args = (arg1 === nothing) ? 0 : 1
 
 	gmt_proggy = (IamModern[1]) ? "histogram "  : "pshistogram "
-	(length(kwargs) == 0 && cmd0 != "") && return monolitic(gmt_proggy, cmd0, arg1, arg2)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
@@ -113,19 +112,19 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	cmd = ""
-	opt_Z = add_opt(d, "", 'Z', [:Z :kind], (counts = "0", count = "0", freq = "1", log_count = "2", log_freq = "3",
+	opt_Z = add_opt(d, "", "Z", [:Z :kind], (counts = "0", count = "0", freq = "1", log_count = "2", log_freq = "3",
 	                                         log10_count = "4", log10_freq = "5", weights = "+w"), true, "")
 	opt_T = parse_opt_range(d, "", "")[1]		# [:T :range :inc :bin]
-	(isa(arg1, GMTimage) || isa(arg1, GMTgrid)) && occursin("/", opt_T) && error("here 'bin' must be a scalar")
+	(isa(arg1, GItype)) && occursin("/", opt_T) && error("here 'bin' must be a scalar")
 
 	# If inquire, no plotting so do it and return
 	opt_I = add_opt(d, "", "I", [:I :inquire :bins], (all = "_O", no_zero = "_o"))
 	if (opt_I != "")
 		cmd *= opt_I
-		if ((r = dbg_print_cmd(d, cmd)) !== nothing)
-			return (!isa(arg1, GMTimage) && opt_T != "") ? r * " -T" * opt_T : r
+		((r = dbg_print_cmd(d, cmd)) !== nothing) && return (!isa(arg1, GMTimage) && opt_T != "") ? r * " -T" * opt_T : r
+		if (!isa(arg1, GItype))
+			cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
 		end
-		cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
 		if (isa(arg1, GMTimage))		# If it's an image with no bin option, default to bin=1
 			arg1, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
 		else
@@ -141,16 +140,18 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	cmd = add_opt(d, cmd, 'D', [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))
+	cmd = add_opt(d, cmd, "D", [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
 	(show_kwargs[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 
-	(GMTver > v"6.1.1") && (cmd = add_opt(d, cmd, 'E', [:E :width], (width = "", off = "+o", offset = "+o")))
+	(GMTver > v"6.1.1") && (cmd = add_opt(d, cmd, "E", [:E :width], (width = "", off = "+o", offset = "+o")))
 	
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	is_datetime = isa(arg1, Array{<:DateTime})
 	(opt_R == "" && !isa(arg1, Vector{DateTime})) && (opt_R = " ")	# So it doesn't try to find the -R in next call
-	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
+	if (!isa(arg1, GItype))
+		cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
+	end
 	cmd, arg1, arg2,  = add_opt_cpt(d, cmd, CPTaliases, 'C', N_args, arg1, arg2)
 
 	# If we still do not know the bin width, either use the GMT6.2 -E or BinMethod in binmethod()
@@ -163,14 +164,14 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		got_min_max = true
 		if (is_datetime)
 			t = gmt("pshistogram -I -T" * opt_T, arg1)	# Call with inquire option to know y_min|max
-			h = round_wesn(t[1].data)					# Only h[4] is needed
+			h = round_wesn(t.data)						# Only h[4] is needed
 			opt_R *= sprintf("/0/%.12g", h[4])			# Half -R was computed in read_data()
 			cmd *= opt_R * " -T" * opt_T
 			opt_T = ""		# Clear it because the GMTimage & GMTgrid use a version without "-T" that is added at end
 		end
 	end
 
-	cmd  = add_opt(d, cmd, 'L', [:L :out_range], (first = "l", last = "h", both = "b"))
+	cmd  = add_opt(d, cmd, "L", [:L :out_range], (first = "l", last = "h", both = "b"))
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)     	# TRUE to also seek (lw|lt,lc,ls)
 	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-S", cmd))
 		cmd *= " -G#0072BD"
@@ -304,10 +305,10 @@ function loc_histo(in, cmd::String="", opt_T::String="", opt_Z::String="")
 	# We put the countings in a Mx2 arrray to trick GMT (pshistogram) to think it's recieving a weighted input.
 	(!isa(in[1], UInt16) && !isa(in[1], UInt8)) && error("Only UInt8 or UInt16 image types allowed here")
 
-	inc = (opt_T != "") ? Float64(Meta.parse(opt_T)) : 1.0
-	(!isa(inc, Real) || inc <= 0) && error("Bin width must be a number > 0 and no min/max")
+	inc::Float64 = (opt_T != "") ? parse(Float64, opt_T) : 1.0
+	(inc <= 0) && error("Bin width must be a number > 0 and no min/max")
 
-	n_bins = (isa(in[1], UInt8)) ? 256 : Int(ceil((maximum(in) + 1) / inc))	# For UInt8 use the full [0 255] range
+	n_bins::Int = (isa(in[1], UInt8)) ? 256 : Int(ceil((maximum(in) + 1) / inc))	# For UInt8 use the full [0 255] range
 	hst = zeros(n_bins, 2)
 	pshst_wall!(in, hst, inc, n_bins)
 

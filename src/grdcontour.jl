@@ -77,9 +77,7 @@ Parameters
 """
 function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	length(kwargs) == 0 && cmd0 != "" && return monolitic("grdcontour", cmd0, arg1)
 	arg2 = arg3 = nothing
-
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 
@@ -87,10 +85,10 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :c :e :f :h :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
 	cmd  = parse_contour_AGTW(d::Dict, cmd::String)[1]
-	cmd  = add_opt(d, cmd, 'Z', [:Z :scale], (factor = "+s", shift = "+o", periodic = "_+p"))
+	cmd  = add_opt(d, cmd, "Z", [:Z :scale], (factor = "+s", shift = "+o", periodic = "_+p"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
-	if (isa(arg1, Array{<:Real}))	arg1 = mat2grid(arg1)	end
+	if (isa(arg1, Matrix{<:Real}))	arg1 = mat2grid(arg1)	end
 
 	# cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
 	cmd, N_used, arg1, arg2, = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
@@ -107,12 +105,12 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			got_N_cpt = true
 		else
 			cmd *= " -N"
-			del_from_dict(d, [:N :fill :colorize])
+			del_from_dict(d, [:N, :fill, :colorize])
 		end
 	end
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
-		cmd, args, n, = add_opt(d, cmd, 'C', [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x = "",))
+		cmd, args, n, = add_opt(d, cmd, "C", [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x = "",))
 		if (n > 0)
 			for k = 3:-1:1
 				(args[k] === nothing) && continue
@@ -154,17 +152,17 @@ function parse_contour_AGTW(d::Dict, cmd::String)
 	if ((val = find_in_dict(d, [:A :annot], false)[1]) !== nothing && isa(val, Array{<:Real}))
 		cmd *= " -A" * arg2str(val, ',')
 		if (!occursin(",", cmd))  cmd *= ","  end
-		del_from_dict(d, [:A :annot])
+		del_from_dict(d, [:A, :annot])
 	elseif (isa(val, String) || isa(val, Symbol))
 		arg::String = string(val)
 		cmd *= (arg == "none") ? " -A-" : " -A" * arg
-		del_from_dict(d, [:A :annot])
+		del_from_dict(d, [:A, :annot])
 	else
-		cmd = add_opt(d, cmd, 'A', [:A :annot],
+		cmd = add_opt(d, cmd, "A", [:A :annot],
 		              (disable = ("_-", nothing, 1), none = ("_-", nothing, 1), single = ("+", nothing, 1), int = "", interval = "", labels = ("", parse_quoted)) )
 	end
-	cmd = add_opt(d, cmd, 'G', [:G :labels], ("", helper_decorated))
-	cmd = add_opt(d, cmd, 'T', [:T :ticks], (local_high = ("h", nothing, 1), local_low = ("l", nothing, 1),
+	cmd = add_opt(d, cmd, "G", [:G :labels], ("", helper_decorated))
+	cmd = add_opt(d, cmd, "T", [:T :ticks], (local_high = ("h", nothing, 1), local_low = ("l", nothing, 1),
 	                                         labels = "+l", closed = "_+a", gap = "+d") )
 	opt_W = add_opt_pen(d, [:W :pen], "W", true)    # TRUE to also seek (lw,lc,ls)
 	return cmd * opt_W, opt_W

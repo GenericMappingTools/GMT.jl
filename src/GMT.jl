@@ -41,7 +41,8 @@ function get_GMTver()
 			else
 				Pkg.build("GMT");		include(depfile)
 			end
-			ver = readlines(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`)[1]
+			#ver = readlines(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`)[1]
+			ver = first(eachline(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`))
 			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
 			return out, true, _libgmt, _libgdal, _libproj, _GMT_bindir
 		catch err2;		println(err2)
@@ -76,7 +77,7 @@ const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
 const global current_view   = [""]			# To store the current viewpoint (-p)
 const global multi_col   = Vector{Bool}(undef, 1);multi_col[1] = false	# To allow plottig multiple columns at once (init to false)
 const global IamModern   = Vector{Bool}(undef, 1);IamModern[1] = false		# To know if we are in modern mode
-const global FirstModern = Vector{Bool}(undef, 1);FirstModern[1] = false	# To know 
+const global FirstModern = Vector{Bool}(undef, 1);FirstModern[1] = false	# To know
 const global IamSubplot  = Vector{Bool}(undef, 1);IamSubplot[1]  = false	# To know if we are in subplot mode
 const global usedConfPar = Vector{Bool}(undef, 1);usedConfPar[1] = false	# Hacky solution for the session's memory trouble
 const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false		# To know if we have an active plot theme
@@ -94,7 +95,8 @@ const global CTRLshapes = CTRLstruct2([true], [true], [""])
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Nothing, Vector{Symbol}, Matrix{Symbol}}
-const global VMr = Union{Vector{Real}, Matrix{Real}}
+const global VMr = Union{Vector{<:Real}, Matrix{<:Real}}
+# GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are edeclared in gmt_main
 #const global unused_opts = [()]					# To track consumed options
 #const global unused_subopts = [()]					# To track consumed options in sub-options
 
@@ -120,13 +122,15 @@ export
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
-	earthtide, gmtgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!,
-	
+	earthtide, gravfft, gmtgravmag3d, grdgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!,
+	psvelo, psvelo!, velo, velo!, getbyattrib, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
+	grdrotater,
+
 	mbimport, mbgetdata, mbsvplist, mblevitus,
-	
+
 	blendimg!, lonlat2xy, xy2lonlat, mat2ds, mat2grid, mat2img, slicecube, linspace, logspace, fields, tic, toc, theme,
 	tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm,
-	
+
 	magic, rescale, stackgrids, delrows!,
 
 	getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
@@ -140,7 +144,9 @@ export
 	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
 	orthodrome, proj2wkt, wkt2proj,
 
-	doy2date, date2doy, yeardecimal, mean, std, nanmean, nanstd		# mean & std from Statistics. Uterly stupid need-to-do thing 
+	colorzones, rasterzones!, crop, doy2date, date2doy, yeardecimal, median, mean, std, nanmean, nanstd,
+
+	append2fig, regiongeog, wmsinfo, wmstest, wmsread, polygonlevels
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -203,6 +209,7 @@ include("makecpt.jl")
 include("mapproject.jl")
 include("movie.jl")
 include("nearneighbor.jl")
+include("pcolor.jl")
 include("plot.jl")
 include("project.jl")
 include("psbasemap.jl")
@@ -220,6 +227,7 @@ include("pssolar.jl")
 include("pstext.jl")
 include("psxy.jl")
 include("pswiggle.jl")
+include("rasterpolygonfuns.jl")
 include("sample1d.jl")
 include("spectrum1d.jl")
 include("sphdistance.jl")
@@ -236,6 +244,7 @@ include("trend2d.jl")
 include("xyz2grd.jl")
 include("utils_project.jl")
 include("choropleth_utils.jl")
+include("webmapserver.jl")
 include("seis/psmeca.jl")
 include("geodesy/psvelo.jl")
 include("geodesy/earthtide.jl")
@@ -243,7 +252,12 @@ include("MB/mbimport.jl")
 include("MB/mbgetdata.jl")
 include("MB/mbsvplist.jl")
 include("MB/mblevitus.jl")
-(GMTver > v"6.1.1") && include("potential/gmtgravmag3d.jl")
+if (GMTver > v"6.1.1")
+	include("potential/gmtgravmag3d.jl")
+	include("potential/grdgravmag3d.jl")
+	include("potential/gravfft.jl")
+end
+include("spotter/grdrotater.jl")
 include("drawing.jl")
 
 if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
@@ -281,7 +295,9 @@ function __init__(test::Bool=false)
 	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
 	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
-	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")				# Stop those ugly grays
+	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")			# Stop those ugly grays
+	gmtlib_setparameter(G_API[1], "MAP_DEFAULT_PEN", "0.5p,black")	# Change the default 0.25 pen thickness in -W
+	#(GMTver >= v"6.4") && gmtlib_setparameter(G_API[1], "MAP_EMBELLISHMENT", "auto")
 end
 
 include("precompile_GMT_i.jl")

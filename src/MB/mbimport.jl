@@ -39,8 +39,6 @@ Parameters
 """
 function mbimport(cmd0::String=""; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("mbimport", cmd0)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_R = parse_R(d, "")
@@ -49,7 +47,7 @@ function mbimport(cmd0::String=""; kwargs...)
 
 	cmd  = parse_these_opts(cmd, d, [[:A :footprint], [:D :scaling], [:F :format], [:E :dpi], [:G :shade],
 	                                 [:S :speed], [:T :timegap], [:b :star_time], [:e :end_time]])
-	cmd = add_opt(d, cmd, 'Z', [:Z :type_plot], (bat="_1", shaded_bat="_2", shaded_amp="_3", amp="_4", sscan="_5"))
+	cmd = add_opt(d, cmd, "Z", [:Z :type_plot], (bat="_1", shaded_bat="_2", shaded_amp="_3", amp="_4", sscan="_5"))
 
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, nothing)

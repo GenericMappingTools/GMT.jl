@@ -30,8 +30,6 @@ Parameters
 """
 function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdtrend", cmd0, arg1, arg2)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_R(d, "")
@@ -67,7 +65,7 @@ function parse_W_grdtrend(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1, ar
 			if (isa(val, Tuple) && length(val) == 2 && (isa(val[1], GMTgrid) || isa(val[1], Vector{GMTgrid})))
 				val = val[1];	cmd *= "+s"
 			end
-			cmd, N_used = put_in_slot(cmd, val, 'W', [arg1, arg2])
+			cmd, N_used = put_in_slot(cmd, 'W', arg1, arg2)
 			(N_used == 1) ? arg1 = val : arg2 = val
 		end
 	end

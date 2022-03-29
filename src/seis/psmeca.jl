@@ -86,10 +86,7 @@ The same but add a Label
 function meca(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
     proggy = (IamModern[1]) ? "meca "  : "psmeca "
-	length(kwargs) == 0 && return monolitic(proggy, cmd0, arg1)
-
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-
 	common_mecas(cmd0, arg1, d, proggy, first, K, O)
 end
 
@@ -112,10 +109,7 @@ Essentially the same as **meca** plus **A**. Run `gmthelp(coupe)` to see the lis
 function coupe(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
     proggy = (IamModern[1]) ? "coupe "  : "pscoupe "
-	length(kwargs) == 0 && return monolitic(proggy, cmd0, arg1)
-
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-
 	common_mecas(cmd0, arg1, d, proggy, first, K, O)
 end
 

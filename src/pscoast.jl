@@ -92,8 +92,6 @@ Parameters
 function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
 	gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
-	(length(kwargs) == 0 && clip === nothing) && return monolitic(gmt_proggy, cmd0)
-
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = parse_E_coast(d, [:E, :DCW], "")		# Process first to avoid warning about "guess"
@@ -137,9 +135,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		(cmd *= " -W -A0/1/1")
 
 	get_largest = (!finish && occursin(" -E", cmd) && (find_in_dict(d, [:biggest :largest])[1] !== nothing))
-	if (finish)  _cmd = finish_PS_nested(d, [gmt_proggy * cmd])
-	else	     _cmd = [gmt_proggy * cmd]
-	end
+	_cmd = (finish) ? finish_PS_nested(d, [gmt_proggy * cmd]) : [gmt_proggy * cmd]
 
 	R = finish_PS_module(d, _cmd, "", K, O, finish)
 	if (get_largest)
@@ -153,17 +149,17 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_INW_coast(d::Dict, symbs::Array{Array{Symbol,2},1}, cmd::String, flags::String)
+function parse_INW_coast(d::Dict, symbs::Vector{Matrix{Symbol}}, cmd::String, flags::String)
 	# This function is also used by pshistogram (opt -N). Must be length(flags) == length(symbs)
 	(length(symbs) != length(flags)) && error("Length of symbs must be equal to number of chars in FLAGS")
 	for k = 1:length(symbs)
 		if ((val = find_in_dict(d, symbs[k], false)[1]) !== nothing)
 			if (isa(val, NamedTuple) || isa(val, Dict) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
-				cmd = add_opt(d, cmd, flags[k], symbs[k], (type="/#", level="/#", mode="+p#", pen=("", add_opt_pen)))
+				cmd = add_opt(d, cmd, string(flags[k]), symbs[k], (type="/#", level="/#", mode="+p#", pen=("", add_opt_pen)))
 			elseif (isa(val, Tuple))  cmd *= " -" * flags[k] * parse_pen(val)
 			else                      cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
 			end
-			del_from_dict(d, symbs[k])		# Now we can delete the kwarg
+			del_from_dict(d, vec(symbs[k]))		# Now we can delete the kwarg
 		end
 	end
 	return cmd

@@ -48,8 +48,11 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		G = mat2img(arg1; kw...)
 	elseif (isGMTdataset(arg1) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4))
 		ginfo = gmt("gmtinfo -C", arg1)
-		CTRL.limits[1:4] = ginfo[1].data[1:4]
+		CTRL.limits[1:4] = ginfo.data[1:4]
 		return plot(arg1; show=true, kw...)
+	elseif (isa(arg1, GMTcpt))
+		return (find_in_kwargs(kw, [:D :pos :position])[1] === nothing) ?
+			psscale(arg1; show=true, D="x0/0+w7+h", kw...) : psscale(arg1; show=true, kw...)
 	else
 		G = mat2grid(arg1, x, y, reg=1)							# For displaying, pixel registration is more appropriate
 	end
@@ -109,7 +112,7 @@ function imshow(arg1::GMTimage; kw...)
 	if (isa(arg1.image, Array{UInt16}))
 		I::GMTimage = mat2img(arg1; kw...)
 		d = KW(kw)			# Needed because we can't delete from kwargs
-		(haskey(kw, :stretch) || haskey(kw, :histo_bounds)) && del_from_dict(d, [:histo_bounds :stretch])
+		(haskey(kw, :stretch) || haskey(kw, :histo_bounds)) && del_from_dict(d, [:histo_bounds, :stretch])
 		grdimage("", I; D=true, show=see, d...)
 	else
 		grdimage("", arg1; D=true, show=see, kw...)
@@ -130,8 +133,8 @@ function snif_GI_set_CTRLlimits(G_I)::Bool
 	(G_I == "") && return false
 	(isa(G_I, String) && (G_I[1] == '@' || startswith(G_I, "http"))) && return false	# Remote files are very dangerous to sniff in
 	ginfo = grdinfo(G_I, C=:n)
-	if (isa(ginfo, Vector{<:GMTdataset}) && ginfo[1].data[2] != ginfo[1].data[9] && ginfo[1].data[4] != ginfo[1].data[10])
-		CTRL.limits[1:4] = ginfo[1].data[1:4]
+	if (isa(ginfo, GMTdataset) && ginfo.data[2] != ginfo.data[9] && ginfo.data[4] != ginfo.data[10])
+		CTRL.limits[1:4] = ginfo.data[1:4]
 		return true
 	else
 		CTRL.limits[1:6] = zeros(6)

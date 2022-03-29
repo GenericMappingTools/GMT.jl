@@ -70,23 +70,32 @@ Parameters
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
-function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kwargs...)
-
-	length(kwargs) == 0 && return monolitic("gmtselect", cmd0, arg1, arg2, arg3)
+function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary], [:F :polygon],
+	cmd::String = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :w :yx])[1]
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary],
 	                                 [:G :gridmask], [:I :reverse], [:N :mask], [:Z :in_range]])
-	#cmd = add_opt(d, cmd, 'N', [:N :mask], (ocean=("", arg2str, 1), land=("", arg2str, 2)) )
+	#cmd = add_opt(d, cmd, "N', [:N :mask], (ocean=("", arg2str, 1), land=("", arg2str, 2)) )
+	#=
+	if ((val = find_in_dict(d, [:F :polygon])[1]) !== nothing)
+		cmd *= " -F"
+		if (isa(val, Matrix) || (isa(val, GDtype)))
+			_, n = put_in_slot("", ' ', arg1, arg2, arg3, arg4)
+			(n == 1) ? arg1 = val : (n == 2 ? arg2 = val : (n == 3 ? arg3 = val : arg4 = val))
+		elseif (!isa(val, String))  error("`polygon` option must be a String or a Matrix/GMTdataset. It was $(typeof(val))")
+		end
+	end
+	=#
+	cmd, arg1, arg2, arg3, arg4 = arg_in_slot(d, cmd, [:F :polygon], Union{Matrix, GDtype}, arg1, arg2, arg3, arg4)
 
-	cmd, args, n, = add_opt(d, cmd, 'C', [:C :dist2pt :dist], :pts, Array{Any,1}([arg1, arg2]), (dist="+d",))
+	cmd, args, n, = add_opt(d, cmd, "C", [:C :dist2pt :dist], :pts, Array{Any,1}([arg1, arg2]), (dist="+d",))
 	if (n > 0)  arg1, arg2 = args[:]  end
-	cmd, args, n, = add_opt(d, cmd, 'L', [:L :dist2line], :line, Array{Any,1}([arg1, arg2, arg3]), (dist="+d", ortho="_+p"))
+	cmd, args, n, = add_opt(d, cmd, "L", [:L :dist2line], :line, Array{Any,1}([arg1, arg2, arg3]), (dist="+d", ortho="_+p"))
 	if (n > 0)  arg1, arg2, arg3 = args[:]  end
 
-	common_grd(d, cmd0, cmd, "gmtselect ", arg1, arg2, arg3)		# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "gmtselect ", arg1, arg2, arg3, arg4)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -92,15 +92,13 @@ Parameters
 """
 function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("gmt2kml", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :altitude_mode], [:D :descript], [:E :extrude], [:F :feature_type],
 	                                 [:I :icon], [:K :not_finished], [:L :extended_data], [:N :feature_name], [:O :overlay], [:Qa :wiggles], [:Qs :wiggle_scale], [:S :scale], [:T :title], [:Z :attrib]])
 
-	cmd = add_opt(d, cmd, 'G', [:G :fill])
+	cmd = add_opt(d, cmd, "G", [:G :fill])
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)

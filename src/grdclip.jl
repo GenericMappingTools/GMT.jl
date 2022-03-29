@@ -12,8 +12,7 @@ Parameters
 
 - **cmd0** :: [Type => Str]
 
-    Either the input file name or the full monolitic options string. Do not use this
-    when the grid (a GMTgrid type) is passed via the ``arg1`` argument.
+    The input file name. Do not use this when the grid (a GMTgrid type) is passed via the ``arg1`` argument.
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
@@ -53,12 +52,10 @@ Parameters
 """
 function grdclip(cmd0::String="", arg1=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdclip", cmd0, arg1)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:G :R :V_params])
-	cmd  = add_opt(d, cmd, 'S', [:S])
+	cmd  = add_opt(d, cmd, "S", [:S])
 	cmd  = opt_S(d, cmd, [:high :above], 'a')
 	cmd  = opt_S(d, cmd, [:low :below], 'b')
 	cmd  = opt_S(d, cmd, [:old :new], 'r')

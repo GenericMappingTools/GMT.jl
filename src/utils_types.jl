@@ -6,7 +6,8 @@ function text_record(data, text, hdr=Vector{String}())
 	(!isa(data, Array{Float64})) && (data = Float64.(data))
 
 	if (isa(text, String))
-		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
+		_hdr = isempty(hdr) ? "" : hdr[1]
+		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], _hdr, String[], "", "", 0)
 	elseif (isa(text, Vector{String}))
 		if (text[1][1] == '>')			# Alternative (but risky) way of setting the header content
 			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text[2:end], text[1], String[], "", "", 0)
@@ -15,23 +16,25 @@ function text_record(data, text, hdr=Vector{String}())
 			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, _hdr, String[], "", "", 0)
 		end
 	elseif (isa(text, Array{Array}) || isa(text, Array{Vector{String}}))
-		nl_t = length(text);	nl_d = length(data)
-		(nl_d > 0 && nl_d != nl_t) && error("Number of data points is not equal to number of text strings.")
+		nl_t = length(text);	nl_d = size(data,1)
+		(nl_d > 0 && nl_d != nl_t) && error("Number of data points ($nl_d) is not equal to number of text strings ($nl_t).")
 		T = Vector{GMTdataset}(undef,nl_t)
 		for k = 1:nl_t
-			T[k] = GMTdataset((nl_d == 0 ? data : data[k]), Float64[], Float64[], Dict{String, String}(), String[], text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "", 0)
+			T[k] = GMTdataset((nl_d == 0 ? fill(NaN, length(text[k]) ,2) : data[k]), Float64[], Float64[], Dict{String, String}(), String[], text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "", 0)
 		end
 	else
 		error("Wrong type ($(typeof(text))) for the 'text' argin")
 	end
 	return T
 end
+text_record(text::String, hdr::String="") = text_record(fill(NaN,1,2), text, (hdr == "") ? String[] : [hdr])
+text_record(text::Vector{String}, hdr::Union{String,Vector{String}}=String[]) = text_record(fill(NaN,length(text),2), text, hdr)
+#text_record(text::AbstractVector, hdr::Vector{String}=String[]) = text_record(Array{Float64,2}(undef,0,0), text, hdr)
 text_record(text) = text_record(Array{Float64,2}(undef,0,0), text)
-text_record(text::Vector{String}, hdr::String) = text_record(Array{Float64,2}(undef,0,0), text, hdr)
 
 # ---------------------------------------------------------------------------------------------------
 """
-    D = mat2ds(mat [,txt]; x=nothing, text=nothing, multi=false, kwargs...)
+    D = mat2ds(mat [,txt]; x=nothing, text=nothing, multi=false, geom=0, kwargs...)
 
 Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
@@ -49,6 +52,7 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `multi`: When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
      first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
   - `datatype`: Keep the original data type of `mat`. Default, converts to Float64.
+  - `geom`: The data geometry. By default we set ``wkbUnknown`` but try to do some basic guess.
   - `proj` or `proj4`:  A proj4 string for dataset SRS.
   - `wkt`:  A WKT SRS.
   - `colnames`: Optional string vector with names for each column of `mat`.
@@ -84,13 +88,16 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 	end
 	_fill::Vector{String} = helper_ds_fill(d)
 
-	# ---  Here we deal with line colors and line thickness. If not provided we override the GMR defaultb -Wthin ---
-	val = find_in_dict(d, [:lt :linethick :linethickness])[1]
-	_lt::Vector{AbstractFloat} = (val === nothing) ? [0.5] : vec(val)
-	_lts::Vector{String} = Vector{String}(undef, n_ds)
-	n_thick::Integer = length(_lt)
-	for k = 1:n_ds
-		_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])
+	# ---  Here we deal with line colors and line thickness.
+	if ((val = find_in_dict(d, [:lt :linethick :linethickness])[1]) !== nothing)
+		_lt::Vector{Float64} = vec(Float64.(val))
+		_lts::Vector{String} = Vector{String}(undef, n_ds)
+		n_thick::Integer = length(_lt)
+		for k = 1:n_ds
+			_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])
+		end
+	else
+		_lts = fill("", n_ds)
 	end
 
 	if (color !== nothing)
@@ -181,12 +188,8 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 			end
 		end
 	end
-	#for k = 1:length(D)			# Compute the BoundingBoxes
-		#bb = extrema(D[k].data, dims=1)		# A N Tuple.
-		#D[k].bbox = collect(Float64, Iterators.flatten(bb))
-	#end
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
-	return D
+	return (length(D) == 1 && !multi) ? D[1] : D		# Drop the damn Vector singletons
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -238,8 +241,10 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 	n_ds = size(D.data, 1)
 	if (!isempty(_fill))				# Paint the polygons (in case of)
 		_hdr::Vector{String} = Vector{String}(undef, n_ds)
-		[_hdr[k] = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  for k = 1:n_ds]
-		if (D.header != "")  _hdr[1] = D.header * _hdr[1]  end	# Copy eventual contents of first header
+		for k = 1:n_ds
+			_hdr[k] = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]
+		end
+		(D.header != "") && (_hdr[1] = D.header * _hdr[1])	# Copy eventual contents of first header
 	end
 
 	Dm = Vector{GMTdataset}(undef, n_ds)
@@ -262,7 +267,7 @@ function helper_ds_fill(d::Dict)::Vector{String}
 			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end
 			_alpha::Vector{String} = Vector{String}(undef, n_colors)
 			na::Integer = min(length(alpha_val), n_colors)
-			[_alpha[k] = join(string('@',alpha_val[k])) for k = 1:na]
+			for k = 1:na  _alpha[k] = join(string('@',alpha_val[k]))  end
 			if (na < n_colors)
 				for k = na+1:n_colors  _alpha[k] = ""  end
 			end
@@ -297,14 +302,14 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
 
 The `kw...` kwargs search for [:layout :mem_layout], [:names] and [:metadata]
 """
-function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, kw...)
+function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
 	color_interp = "";		n_colors = 0;
 	if (cmap !== nothing)
 		have_alpha = !all(cmap.alpha .== 0.0)
 		nc = have_alpha ? 4 : 3
-		colormap = zeros(Clong, 256 * nc)
+		colormap = zeros(Int32, 256 * nc)
 		n_colors = 256;			# Because for GDAL we always send 256 even if they are not all filled
 		@inbounds for n = 1:3	# Write 'colormap' row-wise
 			@inbounds for m = 1:size(cmap.colormap, 1)
@@ -312,17 +317,25 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 			end
 		end
 		if (have_alpha)						# Have alpha color(s)
-			[colormap[m + 3*n_colors] = round(Int32, cmap.colormap[m,4] * 255) for m = 1:size(cmap.colormap, 1)]
+			for m = 1:size(cmap.colormap, 1)
+				colormap[m + 3*n_colors] = round(Int32, cmap.colormap[m,4] * 255)
+			end
 			n_colors *= 1000				# Flag that we have alpha colors in an indexed image
 		end
 	else
 		(size(mat,3) == 1) && (color_interp = "Gray")
-		colormap = zeros(Clong,3)			# Because we need an array
+		if (hdr !== nothing && (hdr[5] == 0 && hdr[6] == 1))	# A mask. Let's create a colormap for it
+			colormap = zeros(Int32, 256 * 3)
+			n_colors = 256;					# Because for GDAL we always send 256 even if they are not all filled
+			colormap[2] = colormap[258] = colormap[514] = 255
+		else
+			colormap = zeros(Int32,3)		# Because we need an array
+		end
 	end
 
 	nx = size(mat, 2);		ny = size(mat, 1);
 	reg = (hdr !== nothing) ? Int(hdr[7]) : (nx == length(x) && ny == length(y)) ? 0 : 1
-	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y)
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y, is_transposed)
 
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
 	d = KW(kw)
@@ -330,7 +343,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	_names = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
 	_meta  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
 
-	I = GMTimage(proj4, wkt, 0, hdr[:], [x_inc, y_inc], reg, NaN, color_interp, _meta, _names,
+	I = GMTimage(proj4, wkt, 0, hdr[1:6], [x_inc, y_inc], reg, zero(eltype(mat)), color_interp, _meta, _names,
 	             x,y,v,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
 end
 
@@ -418,7 +431,7 @@ function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vec
 end
 function mat2img(mat, G::GMTgrid; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(G.range);	range[5:6] .= (size(mat,3) == 1) ? extrema(mat) : [0., 255]
-	GMTimage(G.proj4, G.wkt, G.epsg, range, copy(G.inc), G.registration, 0.0, "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Clong,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
+	GMTimage(G.proj4, G.wkt, G.epsg, range, copy(G.inc), G.registration, zero(eltype(mat)), "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -440,7 +453,7 @@ function slicecube(I::GMTimage, layer::Int)
 	mat = I.image[:,:,layer]
 	range = copy(I.range);	range[5:6] .= extrema(mat)
 	names = (!isempty(I.names)) ? [I.names[layer]] : I.names
-	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Clong,3), 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
+	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -670,9 +683,12 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String=
 	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem, cmd="", names=names)
 end
 
+# This is the way I found to find if a matriz is transposed. There must be better ways but couldn't find them.
+istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
+
 function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(),
 	v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="",
-	cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0)
+	cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0, is_transposed::Bool=false)
 	# Take a 2/3D array and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
@@ -685,7 +701,7 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, 
 	end
 	if (isempty(x) && !isempty(xx))  x = xx  end
 	if (isempty(y) && !isempty(yy))  y = yy  end
-	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y)
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y, is_transposed)
 
 	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
 	# and the MAT must be finally computed.
@@ -696,17 +712,20 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, 
 		(fill_val != 0) && fill!(mat, fill_val)
 	end
 
-	GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, names, x, y, v, mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
+	isT = istransposed(mat)
+	GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, names, x, y, v, isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object
 function mat2grid(mat, G::GMTgrid)
-	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, String[], deepcopy(G.x), deepcopy(G.y), [0.], mat, G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad)
+	isT = istransposed(mat)
+	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, String[], deepcopy(G.x), deepcopy(G.y), [0.], isT ? copy(mat) : mat, G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad)
 	grd_min_max!(Go)		# Also take care of NaNs
 	Go
 end
 function mat2grid(mat, I::GMTimage)
-	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, I.nodata, "", "", "", String[], I.x, I.y, [0.], mat, "", "", "", "", I.layout, 1f0, 0f0, I.pad)
+	isT = istransposed(mat)
+	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, NaN, "", "", "", String[], I.x, I.y, [0.], isT ? copy(mat) : mat, "", "", "", "", I.layout, 1f0, 0f0, I.pad)
 	(length(Go.layout) == 4) && (Go.layout = Go.layout[1:3])	# No space for the a|A
 	grd_min_max!(Go)		# Also take care of NaNs
 	Go
@@ -756,9 +775,11 @@ function mat2grid(f::String, xx=Vector{Float64}(), yy=Vector{Float64}(); x=Vecto
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdimg_hdr_xy(mat, reg, hdr, x=Vector{Float64}(), y=Vector{Float64}())
+function grdimg_hdr_xy(mat, reg, hdr, x=Vector{Float64}(), y=Vector{Float64}(), is_transposed=false)
 # Generate x,y coords array and compute/update header plus increments for grids/images
-	nx = size(mat, 2);		ny = size(mat, 1);
+# Arrays coming from GDAL are often scanline so they are transposed. In that case is_transposed should be true
+	row_dim, col_dim = (is_transposed) ? (2,1) : (1,2) 
+	nx = size(mat, col_dim);		ny = size(mat, row_dim);
 
 	if (!isempty(x) && !isempty(y))		# But not tested if they are equi-spaced as they MUST be
 		if ((length(x) != (nx+reg) || length(y) != (ny+reg)) && (length(x) != 2 || length(y) != 2))
@@ -830,52 +851,53 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 """
-    make_zvals_vec(D::GDtype, user_ids::Vector{String}, vals::Vector{<:Real}, sub_head=0, case=0; kw...) -> Vector{Float64}
+    polygonlevels(D::GDtype, ids::Vector{String}, vals::Vector{<:Real}; kw...) -> Vector{Float64}
+or
 
-- `user_ids` -> is a string vector with the ids (names in header) of the GMTdataset D 
-- `vals`     -> is a vector with the numbers to be used in plot -Z to color the polygons.
-- `attrib` or `att`: keyword to selecect which attribute to use when matching with contents of the `user_ids` strings.
+    polygonlevels(D::GDtype, ids::Matrix{String}, vals::Vector{<:Real}; kw...) -> Vector{Float64}
+
+Creates a vector with ZVALS to use in ``plot`` and where length(ZVALS) == length(D)
+The elements of ZVALS are made up from the `vals`.
+
+- `ids`:    is a string Vector or Matrix with the ids (attrinute names) of the GMTdataset D.
+            If a Matrix (2 columns only) then the `att` bellow must also have two names (string vector
+            with two elements) that will be matched against the two eements of each line of `user_ids`.
+            The idea here is to match two conditions: ``att[1] == ids[n,1] && att[2] == ids[n,2]``
+- `vals`:      is a vector with the numbers to be used in plot ``level`` to color the polygons.
+- `attrib` or `att`: keyword to selecect which attribute to use when matching with contents of the `ids` strings.
 - `nocase` or `insensitive`: a keyword from `kw`. Perform a case insensitive comparision between the contents of
-               `user_ids` and the attribute specified with `attrib`. Default compares as case sensistive.
-- `sub_head`:  Position in header where field is to be found in the comma separated string.
-               Note: this option is deprecated and may fail in many cases. Use the `attrib` option explained above.
-- `case`: When using the `sub_head` option case = 1 forces comparing against lowercase contents of the header
-          fields, whilst case = 2 compares with uppercase.
+               `ids` and the attribute specified with `attrib`. Default compares as case sensistive.
+- `repeat`: keyword to replicate the previously known value until it finds a new segment ID for the case
+            when a polygon have no attributes (may happen for the islands of country).
 
-Create a vector with ZVALS to use in plot where length(ZVALS) == length(D)
-The elements of ZVALS are made up from the `vals` but it can be larger if there are segments with
-no headers. In that case it replicates the previously known value until it finds a new segment ID.
-
-Returns a Vector{Float64} with the same length as the number of segments in D. The content is
-made up after the contents of `vals` but repeated such that each polygon of the same family, i.e.
-with the same `user_ids`, has the same value.
+Returns a Vector{Float64} with the same length as the number of segments in D. Its content are
+made up after the contents of `vals` but may be repeated such that each polygon of the same family, i.e.
+with the same `ids`, has the same value.
 """
-function make_zvals_vec(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::Vector{<:Real}, sub_head=0, case=0; kw...)::Vector{Float64}
-	(length(kw) == 0 && sub_head > 0) && return make_zvals_vec_old(D, user_ids, vals, sub_head, case)	# For bw compat
+function polygonlevels(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::Vector{<:Real}; kw...)::Vector{Float64}
 	@assert((n_user_ids = length(user_ids)) == length(vals))
 	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
 	nocase = (find_in_kwargs(kw, [:nocase :insensitive])[1] === nothing) ? true : false
+	repeat = (find_in_kwargs(kw, [:repeat])[1] === nothing) ? false : true
 
-	n_seg = (isa(D, Array)) ? length(D) : 1
+	n_seg = length(D)
 	zvals = fill(NaN, n_seg)
 	if (nocase)
 		for m = 1:n_seg
-			isempty(D[m].attrib) && continue
+			isempty(D[m].attrib) && (repeat && (zvals[m] = zvals[m-1]); continue)
 			for k = 1:n_user_ids
 				if (D[m].attrib[att] == user_ids[k])
-					zvals[m] = vals[k]
-					break
+					zvals[m] = vals[k];		break
 				end
 			end
 		end
 	else
 		for m = 1:n_seg
-			isempty(D[m].attrib) && continue
+			isempty(D[m].attrib) && (repeat && (zvals[m] = zvals[m-1]); continue)
 			t = lowercase(D[m].attrib[att])
 			for k = 1:n_user_ids
 				if (t == lowercase(user_ids[k]))
-					zvals[m] = vals[k]
-					break
+					zvals[m] = vals[k];		break
 				end
 			end
 		end
@@ -883,31 +905,32 @@ function make_zvals_vec(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals:
 	return zvals
 end
 
-# ---------------------------------------------------------------------------------------------------
-function make_zvals_vec_old(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::Array{<:Real}, sub_head=0, case=0)::Vector{Float64}
+function polygonlevels(D::Vector{<:GMTdataset}, user_ids::Matrix{String}, vals::Vector{<:Real}; kw...)::Vector{Float64}
+	@assert((n_user_ids = size(user_ids,1)) == length(vals))
+	((att = find_in_kwargs(kw, [:att :attrib :attribute])[1]) === nothing) && error("Must provide the `attribute(s)` NAME.")
+	(size(user_ids,2) != length(att)) && error("The `attribute` size must match the number of columns in `user_ids`")
+	nocase = (find_in_kwargs(kw, [:nocase :insensitive])[1] === nothing) ? true : false
+	repeat = (find_in_kwargs(kw, [:repeat])[1] === nothing) ? false : true
 
-	n_user_ids = length(user_ids)
-	@assert(n_user_ids == length(vals))
-	data_ids, ind = dsget_segment_ids(D, case)
-	(ind[1] != 1) && error("This function requires that first segment has a a header with an id")
-	n_data_ids = length(data_ids)
-	(n_user_ids > n_data_ids) &&
-		@warn("Number of segment IDs requested is larger than segments with headers in data")
-
-	if (sub_head != 0)
-		[data_ids[k] = split(data_ids[k],',')[sub_head]  for k = 1:length(ind)]
-	end
- 
-	n_seg = (isa(D, Array)) ? length(D) : 1
+	n_seg = length(D)
 	zvals = fill(NaN, n_seg)
-	n = 1
-	for k = 1:n_data_ids
-		for m = 1:n_user_ids
-			if startswith(data_ids[k], user_ids[m])			# Find first occurence of user_ids[k] in a segment header
-				last = (k < n_data_ids) ? ind[k+1]-1 : n_seg
-				[zvals[j] = vals[m] for j = ind[k]:last]	# Repeat the last VAL for segments with no headers
-				n = last + 1					# Prepare for next new VAL
-				break
+	if (nocase)
+		for m = 1:n_seg
+			isempty(D[m].attrib) && (repeat && (zvals[m] = zvals[m-1]); continue)
+			for k = 1:n_user_ids
+				if (D[m].attrib[att[1]] == user_ids[k,1] && D[m].attrib[att[2]] == user_ids[k,2])
+					zvals[m] = vals[k];		break
+				end
+			end
+		end
+	else
+		for m = 1:n_seg
+			isempty(D[m].attrib) && (repeat && (zvals[m] = zvals[m-1]); continue)
+			tt = [lowercase(D[m].attrib[att[1]]) lowercase(D[m].attrib[att[2]])]
+			for k = 1:n_user_ids
+				if (tt[1] == lowercase(user_ids[k,1]) && tt[2] == lowercase(user_ids[k,2]))
+					zvals[m] = vals[k];		break
+				end
 			end
 		end
 	end
@@ -932,12 +955,11 @@ end
 """
     ids, ind = dsget_segment_ids(D, case=0)::Tuple{Vector{String}, Vector{Int}}
 
-Where D is a GMTdataset of a vector of them, returns the segment ids (first text after the '>') and
+Where D is a GMTdataset or a vector of them, returns the segment ids (first text after the '>') and
 the indices of those segments.
 """
-function dsget_segment_ids(D, case::Int=0)::Tuple{Vector{AbstractString}, Vector{Int}}
-	# Get segment ids (first text after the '>') and the idices of those segments
-	# CASE -> If == 1 force return in LOWER case. If == 2 force upper case. Default (case = 0) dosen't touch
+function dsget_segment_ids(D)::Tuple{Vector{AbstractString}, Vector{Int}}
+	# Get segment ids (first text after the '>') and the indices of those segments
 	if (isa(D, Array))  n = length(D);	d = Dict(k => D[k].header for k = 1:n)
 	else                n = 1;			d = Dict(1 => D.header)
 	end
@@ -946,35 +968,63 @@ function dsget_segment_ids(D, case::Int=0)::Tuple{Vector{AbstractString}, Vector
 	ind::Vector{Int} = 1:n
 	ind = ind[tf]			# OK, now we have the indices of the segments with headers != ""
 	ids = Vector{AbstractString}(undef,length(ind))		# pre-allocate
-	if (case == 1)
-		[ids[k] = lowercase(d[ind[k]]) for k = 1:length(ind)]	# indices of non-empty segments
-	elseif (case == 2)
-		[ids[k] = uppercase(d[ind[k]]) for k = 1:length(ind)]
-	else
-		[ids[k] = d[ind[k]] for k = 1:length(ind)]
-	end
+	[ids[k] = d[ind[k]] for k = 1:length(ind)]
 	return ids, ind
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dsget_byattrib(D::Vector{GMTdataset}, ind::Bool; kw...)::Union{Nothing, Vector{Int}}
+"""
+    getbyattrib(D::Vector{<:GMTdataset}[, index::Bool]; kw...)
+
+Take a GMTdataset vector and return only its elememts that match the condition(s) set by the `attrib` keywords.
+Note, this assumes that `D` has its `attrib` fields set with usable information.
+
+### Parameters
+- `attrib` or `att`: keyword with the attribute ``name`` used in selection. It can be a single name as in `att="NAME_2"`
+        or a NamedTuple with the attribname, attribvalue as in `att=(NAME_2="value")`. Use more elements if
+        wishing to do a composite match. E.g. `att=(NAME_1="val1", NAME_2="val2")` in which case oly segments
+        matching the two conditions are returned.
+- `val` or `value`: keyword with the attribute ``value`` used in selection. Use this only when `att` is not a NamedTuple.
+- `index`: Use this ``positional`` argument = `true` to return only the segment indices that match the `att` condition(s).
+
+### Returns
+Either a vector of GMTdataset, or a vector of Int with the indices of the segments that match the query condition.
+Or ``nothing`` if the query results in an empty GMTdataset 
+
+## Example:
+
+    D = getbyattrib(D, attrib="NAME_2", val="Porto");
+"""
+function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	# This method does the work but it's not the one normally used by the public.
 	# It returns the indices of the selected segments.
-	(isempty(D[1].attrib)) &&
-		(@warn("This datset does not have an `attrib` field and is hence unusable here.");	return nothing)
-	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
-	((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` VALUE.")
-	ky = keys(D[1].attrib)
-	((ind = findfirst(ky .== att)) === nothing) && return nothing
-	tf = fill(false, length(D))
-	for k = 1:length(D)
-		(!isempty(D[k].attrib) && (D[k].attrib[att] == val)) && (tf[k] = true)
+	(isempty(D[1].attrib)) && (@warn("This datset does not have an `attrib` field and is hence unusable here."); return Int[])
+	((_att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
+	if isa(_att, NamedTuple)
+		atts, vals = string.(keys(_att)), string.(values(_att))
+	else
+		atts = (string(_att),)
+		((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` VALUE.")
+		vals = (string(val),)
 	end
-	ind = findall(tf)
+
+	indices::Vector{Int} = Int[]
+	for n = 1:length(atts)
+		ky = keys(D[1].attrib)
+		((ind = findfirst(ky .== atts[n])) === nothing) && return Int[]
+		tf = fill(false, length(D))
+		for k = 1:length(D)
+			(!isempty(D[k].attrib) && (D[k].attrib[atts[n]] == vals[n])) && (tf[k] = true)
+		end
+		if (n == 1)  indices = findall(tf)
+		else         indices = intersect(indices, findall(tf))
+		end
+	end
+	return indices
 end
 
-function dsget_byattrib(D::Vector{GMTdataset}; kw...)::Union{Nothing, Vector{GMTdataset}}
+function getbyattrib(D::Vector{<:GMTdataset}; kw...)::Union{Nothing, Vector{GMTdataset}}
 	# This is the intended public method. It returns a subset of the selected segments
-	ind = dsget_byattrib(D, true; kw...)
-	return (ind === nothing) ? ind : D[ind]
+	ind = getbyattrib(D, true; kw...)
+	return isempty(ind) ? nothing : D[ind]
 end

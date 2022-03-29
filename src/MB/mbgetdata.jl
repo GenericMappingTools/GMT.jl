@@ -32,8 +32,6 @@ Parameters
 """
 function mbgetdata(cmd0::String=""; kwargs...)
 
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic("mbgetdata", cmd0)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_R = parse_R(d, "")
@@ -41,7 +39,7 @@ function mbgetdata(cmd0::String=""; kwargs...)
 
 	cmd  = parse_these_opts(cmd, d, [[:A :flagged], [:D :scaling], [:F :format],
 	                                 [:S :speed], [:T :timegap], [:b :star_time], [:e :end_time]])
-	cmd = add_opt(d, cmd, 'C', [:C :datatype :data_type], (sidescan="_0", amplitude="_a"))
+	cmd = add_opt(d, cmd, "C", [:C :datatype :data_type], (sidescan="_0", amplitude="_a"))
 
 	cmd = "mbgetdata -I" * cmd0 * cmd				# In any case we need this
 	finish_PS_module(d, cmd, "", true, false, false)

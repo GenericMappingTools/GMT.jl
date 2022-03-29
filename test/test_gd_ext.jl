@@ -8,9 +8,9 @@
 	@test I.proj4 == "+proj=longlat"
 
 	bf = buffer([0 0], 1)
-	@test bf[1].geom == Gdal.wkbPolygon
+	@test bf.geom == Gdal.wkbPolygon
 	c = centroid(bf)
-	#@test c[1].data ≈ [0. 0.]
+	#@test c.data ≈ [0. 0.]
 	bf2 = buffer([0.5 0], 1);
 	polyunion(bf, bf2);
 	Gdal.difference(bf, bf2);
@@ -31,14 +31,14 @@
 	Gdal.envelope3d(bf);
 	Gdal.boundary(bf);
 	Gdal.convexhull(bf);
-	bf[1].geom = wkbLineString;
+	bf.geom = wkbLineString;
 	Gdal.pointalongline(bf, 0.3);
 	g1 = fromWKT("MULTIPOINT(0 0, 10 0, 10 10, 11 10)");
 	g2 = delaunay(g1,2.0,true);
 	@test toWKT(g2) == "MULTILINESTRING ((0 0,10 10),(0 0,10 0),(10 0,10 10))"
 	D1 = mat2ds([0 0;10 0;10 10;11 10], geom=wkbMultiPoint);
 	g2 = delaunay(D1,2.0,true, gdataset=true);		# Doesn't error but returns MULTILINESTRING EMPTY 
-	@test length(Gdal.simplify([0. 0; 1 1.1; 2.1 2], 0.2)[1]) == 4
+	@test length(Gdal.simplify([0. 0; 1 1.1; 2.1 2], 0.2)) == 4
 	
 	D1 = mat2ds([0 0; 10 0; 10 10; 11 10]);
 	gdalwrite("lixo1.gmt", D1);
@@ -87,11 +87,31 @@
 
 	@test lonlat2xy([150.0 -27.0], "+proj=utm +zone=56 +south +datum=WGS84 +units=m +no_defs") ≈
 		[202273.912995055 7010024.033113679]  atol=1e-6
-	@test lonlat2xy(mat2ds([150.0 -27.0])[1], "+proj=utm +zone=56 +south +datum=WGS84 +units=m +no_defs")[1].data ≈
-		[202273.912995055 7010024.033113679]  atol=1e-6
-
 	@test xy2lonlat([202273.912995055 7010024.033113679], "+proj=utm +zone=56 +south +datum=WGS84 +units=m +no_defs") ≈
 		[150.0 -27.0] atol=1e-6
-	@test xy2lonlat(mat2ds([202273.912995055 7010024.033113679])[1], "+proj=utm +zone=56 +south +datum=WGS84 +units=m +no_defs")[1].data ≈
-		[150.0 -27.0] atol=1e-6
+
+	@test xy2lonlat([111319.49079327357 110579.96522189621], s_srs="+proj=merc") ≈ [1 1]
+	@test xy2lonlat([111319.49079327357 110579.96522189621], s_srs=3395) ≈ [1 1]
+		
+	@test xy2lonlat(mat2ds([111319.49079327357 110579.96522189621]), s_srs=3395).data ≈ [1 1]
+	@test xy2lonlat(mat2ds([111319.49079327357 110579.96522189621]), s_srs="+proj=merc").data ≈ [1 1]
+		
+	@test xy2lonlat(mat2ds([111319.49079327357 110579.96522189621]), s_srs="+proj=merc").data ≈ [1 1]
+	@test xy2lonlat(mat2ds([111319.49079327357 110579.96522189621]), s_srs=3395).data ≈ [1 1]
+		
+	@test xy2lonlat([111319.49079327357, 110579.96522189621], s_srs="+proj=merc") ≈ [1, 1]
+	@test xy2lonlat([111319.49079327357, 110579.96522189621], s_srs=3395) ≈ [1, 1]
+	@test xy2lonlat([111319.49079327357, 110579.96522189621], 3395) ≈ [1, 1]
+
+	@test lonlat2xy(mat2ds([1 1]), t_srs="+proj=merc").data ≈ [111319.49079327357 110579.96522189621]
+	@test lonlat2xy(mat2ds([1 1]), t_srs=3395).data ≈ [111319.49079327357 110579.96522189621]
+	@test lonlat2xy(mat2ds([1 1]), 3395).data ≈ [111319.49079327357 110579.96522189621]
+	@test lonlat2xy(mat2ds([1 1]), t_srs=3395).data ≈ [111319.49079327357 110579.96522189621]
+
+	@test lonlat2xy([1 1], t_srs="+proj=merc") ≈ [111319.49079327357 110579.96522189621]
+	@test lonlat2xy([1 1], t_srs=3395) ≈ [111319.49079327357 110579.96522189621]
+	@test lonlat2xy([1 1], 3395) ≈ [111319.49079327357 110579.96522189621]
+
+	@test lonlat2xy([1, 1], t_srs="+proj=merc") ≈ [111319.49079327357, 110579.96522189621]
+	@test lonlat2xy([1, 1], t_srs=3395) ≈ [111319.49079327357, 110579.96522189621]
 end

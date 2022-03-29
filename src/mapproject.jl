@@ -84,20 +84,18 @@ Parameters
 """
 function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("mapproject", cmd0, arg1, arg2)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :j :o :p :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef :ecef], [:I :inverse], [:S :supress], #[:L :dist2line],
 	                                 [:T :change_datum], [:W :map_size], [:Z :travel_times]])
 	cmd  = add_opt_1char(cmd, d, [[:D :override_units], [:F :one2one], [:Q :list], [:N :geod2aux]])
 
-	cmd = add_opt(d, cmd, 'A', [:A :azim],
+	cmd = add_opt(d, cmd, "A", [:A :azim],
 	              (fixed_pt=("", arg2str), back=("b", nothing, 1), back_geocentric=("B", nothing, 1), forward=("f", nothing, 1), forward_geocentric=("F", nothing, 1), orientation=("o", nothing, 1), orientation_geocentric=("O", nothing, 1), unit="+u1", var_pt="_+v"))
-	cmd = add_opt(d, cmd, 'G', [:G :track_distances],
+	cmd = add_opt(d, cmd, "G", [:G :track_distances],
 	              (fixed_pt=("", arg2str, 1), accumulated="_+a", incremental="_+i", unit="+u1", var_pt="_+v"))
 
-    cmd, args, n, = add_opt(d, cmd, 'L', [:L :dist2line], :line, Array{Any,1}([arg1, arg2]),
+    cmd, args, n, = add_opt(d, cmd, "L", [:L :dist2line], :line, Array{Any,1}([arg1, arg2]),
                             (unit="+u1", cartesian="_+uc", project="_+uC", fractional_pt="_+p"))
 	if (n > 0)
 		arg1, arg2 = args[:]

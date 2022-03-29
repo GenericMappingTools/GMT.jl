@@ -49,18 +49,21 @@ Parameters
 function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
     gmt_proggy = (IamModern[1]) ? "legend "  : "pslegend "
-	length(kwargs) == 0 && occursin(" -", cmd0) && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	cmd, = parse_common_opts(d, cmd, [:F :c :p :q :t :JZ :UVXY :params], first)
 
-	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
-	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
+	opt_D = parse_type_anchor(d, "", [:D :pos :position],
+	                         (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
 	cmd  = parse_these_opts(cmd, d, [[:C :clearance], [:M], [:S :scale], [:T :leg_file]])
 
 	show_kwargs[1] && legend_help()
+	(opt_D == "") && error("The `position` argument is mandatory.")
+	#!contains(opt_D, "+w") && error("The `position` argument MUST contain the legend's width specification.")
+	cmd *= opt_D
 	isa(arg1, NamedTuple) && (arg1 = text_record(mk_legend(arg1)))
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 	gmt("destroy")

@@ -86,7 +86,6 @@ Parameters
 function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
     gmt_proggy = (IamModern[1]) ? "contour "  : "pscontour "
-	length(kwargs) == 0 && return monolitic(gmt_proggy, cmd0, arg1)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	dict_auto_add!(d)			# The ternary module may send options via another channel
@@ -106,7 +105,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_used = (arg1 !== nothing) + (arg2 !== nothing) + (arg3 !== nothing)
 
 	if (!occursin(" -C", cmd))			# Otherwise ignore an eventual :cont because we already have it
-		cmd, args, n, = add_opt(d, cmd, 'C', [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
+		cmd, args, n, = add_opt(d, cmd, "C", [:C :cont :contour :contours :levels], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))
 		if (n > 0)
 			for k = 3:-1:1
 				(args[k] === nothing) && continue
@@ -134,9 +133,9 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (!occursin(" -W", cmd) && !occursin(" -I", cmd) && !occursin(" -D", cmd))  cmd *= " -W"  end	# Use default pen
 
 	if (occursin("-I", cmd) && !occursin("-C", cmd))
-		r = round_wesn([info[1].data[5], info[1].data[6], info[1].data[5], info[1].data[6]])
-		info[1].data[5], info[1].data[6] = r[1], r[2]
-		opt_T = (isempty(current_cpt[1])) ? @sprintf(" -T%.14g/%.14g/11+n", info[1].data[5], info[1].data[6]) : ""
+		r = round_wesn([info.data[5], info.data[6], info.data[5], info.data[6]])
+		info.data[5], info.data[6] = r[1], r[2]
+		opt_T = (isempty(current_cpt[1])) ? @sprintf(" -T%.14g/%.14g/11+n", info.data[5], info.data[6]) : ""
 		if (N_used <= 1)
 			cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C], 'C', N_used, arg1, arg2, true, true, opt_T, true)
 		else

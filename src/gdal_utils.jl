@@ -10,7 +10,7 @@ When DATASET is a string it may contain the file name or the name of a subdatase
 you can use the kwarg `sds` to selec the subdataset numerically. Alternatively, provide the full `sds` name.
 For files with `sds` with a scale_factor (e.g. MODIS data), that scale is applyied automaticaly.
 
-    Examples:
+### Examples:
        G = gd2gmt("AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc", sds=1);
     or
        G = gd2gmt("SUBDATASET_1_NAME=NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
@@ -80,12 +80,13 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	prj = getproj(dataset)
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
 	(prj == "") && (prj = seek_wkt_in_gdalinfo(gdalinfo(dataset)))
+	is_tp = (layout == "")				# if == "" array is rowmajor and hence transposed
 	if (is_grid)
 		(eltype(mat) == Float64) && (mat = Float32.(mat))
-		O = mat2grid(mat; hdr=hdr, proj4=prj, names=desc)
+		O = mat2grid(mat; hdr=hdr, proj4=prj, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRB" : layout
 	else
-		O = mat2img(mat; hdr=hdr, proj4=prj, noconv=true, names=desc)
+		O = mat2img(mat; hdr=hdr, proj4=prj, noconv=true, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRBa" : layout * "a"
 		if (n_colors > 0)
 			O.colormap = colormap;	O.n_colors = n_colors
@@ -158,37 +159,42 @@ function gd2gmt_helper(input, sds)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Vector{<:GMTdataset}
-	# Convert a geometry into a single GMTdataset
+function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset, Vector{<:GMTdataset}}
+	# Convert a geometry into a GMTdataset/Vector{GMTdadaset}
 	gmtype = Gdal.getgeomtype(geom)
 	if (gmtype == Gdal.wkbPolygon)		# getx() doesn't work for polygons
 		geom = Gdal.getgeom(geom,0)
-	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString)
+	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString || gmtype == Gdal.wkbGeometryCollection)
 		n_pts = Gdal.ngeom(geom)
 		D = Vector{GMTdataset}(undef, n_pts)
-		[D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")[1] for k = 1:n_pts]
+		for k = 1:n_pts  D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")  end
 		(proj != "") && (D[1].proj4 = proj)
-		return D
+		set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
+		return (length(D) == 1) ? D[1] : D
 	elseif (gmtype == wkbMultiPoint)
 		n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
 		mat = Array{Float64,2}(undef, n_pts, n_dim)
-		[mat[k,1] = Gdal.getx(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts]
-		[mat[k,2] = Gdal.gety(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts]
-		(n_dim == 3) && ([mat[k,2] = Gdal.getz(Gdal.getgeom(geom,k-1), 0) for k = 1:n_pts])
+		for k = 1:n_pts  mat[k,1] = Gdal.getx(Gdal.getgeom(geom,k-1), 0)  end
+		for k = 1:n_pts  mat[k,2] = Gdal.gety(Gdal.getgeom(geom,k-1), 0)  end
+		if (n_dim == 3)
+			for k = 1:n_pts  mat[k,3] = Gdal.getz(Gdal.getgeom(geom,k-1), 0)  end
+		end
 		D = [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", Int(gmtype))]
 		set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
-		return D
+		return (length(D) == 1) ? D[1] : D
 	end
 
 	n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
 	n = (n_dim == 2) ? 2 : 3
 	mat = Array{Float64,2}(undef, n_pts, n)
-	[mat[k,1] = Gdal.getx(geom, k-1) for k = 1:n_pts]
-	[mat[k,2] = Gdal.gety(geom, k-1) for k = 1:n_pts]
-	(n_dim == 3) && ([mat[k,3] = Gdal.getz(geom, k-1) for k = 1:n_pts])
+	for k = 1:n_pts  mat[k,1] = Gdal.getx(geom, k-1)  end
+	for k = 1:n_pts  mat[k,2] = Gdal.gety(geom, k-1)  end
+	if (n_dim == 3)
+		for k = 1:n_pts  mat[k,3] = Gdal.getz(geom, k-1) end
+	end
 	D = [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", Int(gmtype))]
 	set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
-	return D
+	return (length(D) == 1) ? D[1] : D
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -211,21 +217,28 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 				_D = gd2gmt(geom, proj)
 				gt = Gdal.getgeomtype(geom)
 				# Maybe when there nlayers > 1 or other cases, starting allocated size is not enough
-				(length(_D) + ds >= length(D)) && append!(D, Vector{GMTdataset}(undef, round(Int, 0.5 * length(D))))
-				for d in _D
-					D[ds] = d
+				len_D = isa(_D, GMTdataset) ? 1 : length(_D)
+				(len_D + ds >= length(D)) && append!(D, Vector{GMTdataset}(undef, round(Int, 0.5 * length(D))))
+				if isa(_D, GMTdataset)
+					D[ds] = _D
 					D[ds].geom = gt
 					(!isempty(attrib)) && (D[ds].attrib = attrib)
-					#bb = extrema(D[ds].data, dims=1)		# A N Tuple.
-					#D[ds].bbox = collect(Float64, Iterators.flatten(bb))
 					ds += 1
+				else
+					for d in _D
+						D[ds] = d
+						D[ds].geom = gt
+						(!isempty(attrib)) && (D[ds].attrib = attrib)
+						ds += 1
+					end
 				end
 			end
 		end
 	end
+	(isempty(D)) && (@warn("This dataset has no geometry data. Result is empty."))
 	(length(D) != ds-1) && (D = deleteat!(D,ds:length(D)))
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
-	return D
+	return (length(D) == 1) ? D[1] : D
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -233,9 +246,9 @@ function get_cpt_from_colortable(dataset)
 	# Extract the color info from a GDAL colortable and put it in a row vector for GMTimage.colormap
 	band = (!isa(dataset, Gdal.AbstractRasterBand)) ? Gdal.getband(dataset) : dataset
 	ct = Gdal.getcolortable(band)
-	(ct.ptr == C_NULL) && return Vector{Clong}(), 0
+	(ct.ptr == C_NULL) && return Vector{Int32}(), 0
 	n_colors = Gdal.ncolorentry(ct)
-	cmap, n = Vector{Clong}(undef, 4 * n_colors), 1
+	cmap, n = Vector{Int32}(undef, 4 * n_colors), 1
 	for k = 0:n_colors-1
 		c = Gdal.getcolorentry(ct, k)
 		cmap[n] = c.c1;	n += 1; cmap[n] = c.c2;	n += 1; cmap[n] = c.c3;	n += 1; cmap[n] = c.c4;	n += 1;
@@ -288,14 +301,22 @@ function gmt2gd(GI)
 	ds = Gdal.create("", driver=getdriver("MEM"), width=width, height=height, nbands=size(GI,3), dtype=eltype(GI[1]))
 	if (isa(GI, GMTgrid))
 		if (GI.layout != "" && GI.layout[2] == 'C')
-			indata = (GI.layout[1] == 'B') ? collect(reverse(GI.z, dims=1)') : collect(GI.z')
+			if (ndims(GI.z) == 2)
+				indata = (GI.layout[1] == 'B') ? collect(reverse(GI.z, dims=1)') : collect(GI.z')
+			else
+				indata = (GI.layout[1] == 'B') ? collect(permutedims(reverse(GI.z, dims=1), (2, 1, 3))) : collect(permutedims(GI.z,(2, 1, 3)))
+			end
 		else
 			indata = GI.z
 		end
 		Gdal.write!(ds, indata, isa(GI.z, Array{<:Real, 3}) ? Cint.(collect(1:size(GI,3))) : 1)
 	elseif (isa(GI, GMTimage))
 		if (GI.layout != "" && GI.layout[2] == 'C')
-			indata = (GI.layout[1] == 'B') ? collect(reverse(GI.image, dims=1)') : collect(GI.image')
+			if (ndims(GI.image) == 2)
+				indata = (GI.layout[1] == 'B') ? collect(reverse(GI.image, dims=1)') : collect(GI.image')
+			else
+				indata = (GI.layout[1] == 'B') ? collect(permutedims(reverse(GI.image, dims=1), (2, 1, 3))) : collect(permutedims(GI.image,(2, 1, 3)))
+			end
 		else
 			indata = GI.image
 		end
@@ -311,7 +332,7 @@ function gmt2gd(GI)
 				n += 4
 			end
 			Gdal.setcolortable!(Gdal.getband(ds), ct)
-			(!isnan(GI.nodata)) && (setnodatavalue!(Gdal.getband(ds), GI.nodata))
+			(!isnan(GI.nodata)) && (Gdal.setnodatavalue!(Gdal.getband(ds), GI.nodata))
 		end
 	end
 
@@ -514,11 +535,12 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 	(fname == "") && error("Input file name is missing.")
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
 	ressurectGDAL();
-	ds_t = Gdal.read(fname, I=false)
-	if (Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(ds_t))) == C_NULL)
+	ds_t = Gdal.read(fname, flags=Gdal.GDAL_OF_RASTER, I=false)
+	if (ds_t.ptr != C_NULL && Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(ds_t))) == C_NULL)
 		ds = gdaltranslate(ds_t, optsP; gdataset=gdataset, kw...)
 	else
-		optsP = (isempty(optsP)) ? ["-overwrite"] : append!(optsP, "-overwrite")
+		(ds_t.ptr == C_NULL) && (ds_t = Gdal.read(fname, flags = Gdal.GDAL_OF_VECTOR | Gdal.GDAL_OF_VERBOSE_ERROR, I=false))
+		optsP = (isempty(optsP)) ? ["-overwrite"] : (isa(optsP, String) ? ["-overwrite " * optsP] : append!(optsP, ["-overwrite"]))
 		ds = ogr2ogr(ds_t, optsP; gdataset=true, kw...)
 		Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
 	end
@@ -598,69 +620,89 @@ function gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::Str
 	return nothing
 end
 
-# TODO ==> Input as vector. EPSGs. Test input t_srs
 # ---------------------------------------------------------------------------------------------------
 """
-    lonlat2xy(lonlat::Matrix{<:Real}, t_srs::String; s_srs=::String="+proj=longlat +datum=WGS84")
+    lonlat2xy(lonlat::Matrix{<:Real}; t_srs, s_srs="+proj=longlat +datum=WGS84")
 or
 
-    lonlat2xy(D::GMTdataset, t_srs::String; s_srs=::String="+proj=longlat +datum=WGS84")
+    lonlat2xy(D::GMTdataset; t_srs, s_srs="+proj=longlat +datum=WGS84")
 
 Computes the forward projection from LatLon to XY in the given projection. The input is assumed to be in WGS84.
-If it isn't, pass the appropriate projection info via the `s_srs` option.
+If it isn't, pass the appropriate projection info via the `s_srs` option (PROJ4, WKT, EPSG).
 
 ### Parameters
 * `lonlat`: The input data. It can be a Matrix, or a GMTdataset (or vector of it)
-* `t_srs`:  The destiny projection system. This can be a PROJ4 or a WKT string
+* `t_srs`:  The destiny projection system. This can be a PROJ4, a WKT string or EPSG code
 
 ### Returns
 A Matrix if input is a Matrix or a GMTdadaset if input had that type
 """
-lonlat2xy(xy::Vector{<:Real}, t_srs::String; s_srs::String=prj4WGS84) = vec(lonlat2xy(reshape(xy[:],1,length(xy)), t_srs; s_srs=s_srs))
-function lonlat2xy(lonlat::Matrix{<:Real}, t_srs::String; s_srs::String=prj4WGS84)
-	D = ogr2ogr(lonlat, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
-	return D[1].data		# Return only the array because that's what was sent in
+function lonlat2xy(xy::Vector{<:Real}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)
+	vec(lonlat2xy(reshape(xy[:],1,length(xy)), t_srs_; t_srs=t_srs, s_srs=s_srs))
 end
 
-lonlat2xy(D::GMTdataset, t_srs::String; s_srs::String=prj4WGS84) = lonlat2xy([D], t_srs; s_srs=s_srs)
-function lonlat2xy(D::Vector{<:GMTdataset}, t_srs::String; s_srs::String=prj4WGS84)
-	(startswith(D[1].proj4, "+proj=longl") || startswith(D[1].proj4, "+proj=latlon")) && (s_srs = D[1].proj4)
-	o = ogr2ogr(D, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
-	(isa(o, Gdal.AbstractDataset)) && (o = gd2gmt(o))
-	o
+function lonlat2xy(xy::Matrix{<:Real}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)
+	(t_srs_ !== nothing) && (t_srs = t_srs_)
+	isa(s_srs, Int) && (s_srs = epsg2wkt(s_srs))
+	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
+	(t_srs === nothing) && error("Must specify at least the target referencing system.")
+	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
+	return D.data		# Return only the array because that's what was sent in
+end
+
+lonlat2xy(D::GMTdataset, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84) = lonlat2xy([D], t_srs_; t_srs=t_srs, s_srs=s_srs)
+function lonlat2xy(D::Vector{<:GMTdataset}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)
+	(t_srs_ !== nothing) && (t_srs = t_srs_)
+	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
+	isa(s_srs, Int) && (s_srs = epsg2wkt(s_srs))
+
+	(D[1].proj4 == "" && D[1].wkt == "" && t_srs === nothing) && error("No projection information whatsoever on the input data.")
+	if (t_srs != "") _t_srs = t_srs
+	else             _t_srs = (D[1].proj4 != "") ? D[1].proj4 : D[1].wkt
+	end
+	ogr2ogr(D, ["-s_srs", s_srs, "-t_srs", _t_srs, "-overwrite"])
 end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    xy2lonlat(xy::Matrix{<:Real}, s_srs::String; t_srs=::String="+proj=longlat +datum=WGS84")
+    xy2lonlat(xy::Matrix{<:Real}; s_srs, t_srs="+proj=longlat +datum=WGS84")
 or
 
-    xy2lonlat(D::GMTdataset, s_srs::String; t_srs=::String="+proj=longlat +datum=WGS84")
+    xy2lonlat(D::GMTdataset; s_srs, t_srs="+proj=longlat +datum=WGS84")
 
 Computes the inverse projection from XY to LonLat in the given projection. The output is assumed to be in WGS84.
-If that isn't right, pass the appropriate projection info via the `t_srs` option.
+If that isn't right, pass the appropriate projection info via the `t_srs` option (PROJ4, WKT, EPSG).
 
 ### Parameters
 * `xy`: The input data. It can be a Matrix, or a GMTdataset (or vector of it)
-* `s_srs`:  The data projection system. This can be a PROJ4 or a WKT string
-* `t_srs`:  The target SRS. If the default is not satisfactory, provide a new projection info (PROJ4 or WKT)
+* `s_srs`:  The data projection system. This can be a PROJ4, a WKT string or EPSG code
+* `t_srs`:  The target SRS. If the default is not satisfactory, provide a new projection info (PROJ4, WKT, EPSG)
 
 ### Returns
 A Matrix if input is a Matrix or a GMTdadaset if input had that type
 """
-xy2lonlat(xy::Vector{<:Real}, s_srs::String; t_srs::String=prj4WGS84) = vec(xy2lonlat(reshape(xy[:],1,length(xy)), s_srs; t_srs=t_srs))
-function xy2lonlat(xy::Matrix{<:Real}, s_srs::String; t_srs::String=prj4WGS84)
-	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
-	return D[1].data		# Return only the array because that's what was sent in
+function xy2lonlat(xy::Vector{<:Real}, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84)
+	vec(xy2lonlat(reshape(xy[:],1,length(xy)), s_srs_; s_srs=s_srs, t_srs=t_srs))
 end
 
-xy2lonlat(D::GMTdataset, s_srs::String=""; t_srs::String=prj4WGS84) = xy2lonlat([D], s_srs; t_srs=t_srs)
-function xy2lonlat(D::Vector{<:GMTdataset}, s_srs::String=""; t_srs::String=prj4WGS84)
-	(D[1].proj4 == "" && D[1].wkt == "" && s_srs == "") && error("No projection information whatsoever on the input data.")
+function xy2lonlat(xy::Matrix{<:Real}, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84)
+	(s_srs_ !== nothing) && (s_srs = s_srs_)
+	isa(s_srs, Int) && (s_srs = epsg2wkt(s_srs))
+	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
+	(s_srs === nothing) && error("Must specify at least the source referencing system.")
+	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
+	return D.data		# Return only the array because that's what was sent in
+end
+
+xy2lonlat(D::GMTdataset, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84) = xy2lonlat([D], s_srs_; s_srs=s_srs, t_srs=t_srs)
+function xy2lonlat(D::Vector{<:GMTdataset}, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84)
+	(s_srs_ !== nothing) && (s_srs = s_srs_)
+	isa(s_srs, Int) && (s_srs = epsg2wkt(s_srs))
+	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
+
+	(D[1].proj4 == "" && D[1].wkt == "" && s_srs === nothing) && error("No projection information whatsoever on the input data.")
 	if (s_srs != "") _s_srs = s_srs
 	else             _s_srs = (D[1].proj4 != "") ? D[1].proj4 : D[1].wkt
 	end
-	o = ogr2ogr(D, ["-s_srs", _s_srs, "-t_srs", t_srs, "-overwrite"])
-	(isa(o, Gdal.AbstractDataset)) && (o = gd2gmt(o))
-	o
+	ogr2ogr(D, ["-s_srs", _s_srs, "-t_srs", t_srs, "-overwrite"])
 end

@@ -1391,7 +1391,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	getproj(G::GMT.GMTgrid;  proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(G, proj4, wkt, epsg)
 	getproj(I::GMT.GMTimage; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(I, proj4, wkt, epsg)
 	getproj(D::GMT.GMTdataset; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(D, proj4, wkt, epsg)
-	getproj(D::Vector{GMT.GMTdataset}; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(D[1], proj4, wkt, epsg)
+	getproj(D::Vector{<:GMT.GMTdataset}; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(D[1], proj4, wkt, epsg)
 
 	getmetadata(ds::AbstractDataset) = GDALGetMetadata(ds.ptr, C_NULL)
 	function getmetadata(name::AbstractString)
@@ -1507,10 +1507,6 @@ end
 	=#
 
 	function gdalinfo(ds::Dataset, options::Vector{String}=String[])
-		#options = GDALInfoOptionsNew(options, C_NULL)
-		#result = GDALInfo(ds.ptr, options)
-		#GDALInfoOptionsFree(options)
-		#return result
 		o = GDALInfoOptionsNew(options, C_NULL)
 		return try
 			GDALInfo(ds.ptr, o)
@@ -1557,9 +1553,9 @@ end
 	gdalgrid(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false) =
 		gdalgrid(Dataset(ds.ptr), opts; dest=dest, gdataset=gdataset)
 
-	gdalrasterize(dataset::Union{GMTdataset, Vector{GMTdataset}}, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="") =
-		gdalrasterize(gmt2gd(dataset), options; dest=dest, gdataset=gdataset, save=save)
-	function gdalrasterize(dataset::AbstractDataset, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="")
+	gdalrasterize(dataset::GMT.GDtype, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="", layout::String="") =
+		gdalrasterize(gmt2gd(dataset), options; dest=dest, gdataset=gdataset, save=save, layout=layout)
+	function gdalrasterize(dataset::AbstractDataset, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="", layout::String="")
 		(save != "") && (dest = save)
 		options = GDALRasterizeOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1568,7 +1564,7 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result))
+		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result), layout=layout)
 	end
 
 	function gdalbuildvrt(datasets::Vector{<:AbstractDataset}, options::Vector{String}=String[]; dest = "/vsimem/tmp", save::AbstractString="")
@@ -1628,7 +1624,8 @@ end
 	gdalvectortranslate(ds::GMT.GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="") = 				gdalvectortranslate([ds], opts; dest=dest, gdataset=gdataset, save=save)
 	function gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="")
 		o = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, gdataset=gdataset, save=save)
-		(dest == "/vsimem/tmp") && deletedatasource(o, "/vsimem/tmp")		# WTF do I need to do this?
+		#(!isa(o, Vector{GMT.GMTdataset}) && dest == "/vsimem/tmp") && deletedatasource(o, "/vsimem/tmp")	# WTF do I need to do this?
+		(!isa(o, GMT.GDtype) && dest == "/vsimem/tmp") && deletedatasource(o, "/vsimem/tmp")	# WTF do I need to do this?
 		o
 	end
 

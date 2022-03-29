@@ -233,13 +233,13 @@ buffergeo(ds::Gdal.AbstractDataset; width=0, unit=:m, np=120, flatstart=false, f
 	buffergeo(gmt2gd(ds); width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, epsg=epsg, tol=tol)
 
 buffergeo(D::GMTdataset; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=-1.0) =
-	buffergeo(D.data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D.proj4, epsg=epsg, tol=tol)[1]
+	buffergeo(D.data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D.proj4, epsg=epsg, tol=tol)
 
 function buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=-1.0)
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
-		_D[k], = buffergeo(D[k].data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend,
-		                   proj=D[1].proj4, epsg=epsg, tol=tol)
+		_D[k] = buffergeo(D[k].data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend,
+		                  proj=D[1].proj4, epsg=epsg, tol=tol)
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
@@ -252,6 +252,7 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 	#(line[1, 1:2] == line[end, 1:2]) && (flatstart = flatend = false)		# Polygons can't have start/end flat edges
 	width *= unit_factor(unit)
 	n_seg = length(azim)
+	D, _D = GMTdataset(), GMTdataset()
 	for n = 1:n_seg
 		seg = [geod(line[n,:], azim[n], 0:width/4:dist[n], proj=proj, epsg=epsg)[1]; line[n+1:n+1,:]]
 		n_vert = size(seg,1)
@@ -259,32 +260,37 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 			if (k == 2)
 				c0 = circgeo(seg[1,:], radius=width, np=np, proj=proj, epsg=epsg);	trim_dateline!(c0, seg[1,1])
 				c  = circgeo(seg[2,:], radius=width, np=np, proj=proj, epsg=epsg);	trim_dateline!(c , seg[2,1])
-				global _D = polyunion(c0, c)
+				_D = polyunion(c0, c)
 				continue
 			end
 			c = circgeo(seg[k,:], radius=width, np=np, proj=proj, epsg=epsg)
 			trim_dateline!(c, seg[k,1])
 			_D = polyunion(_D, c)
 		end
-		if (n == 1)  global D = _D
+		if (n == 1)  D = _D
 		else         D = polyunion(_D, D)
 		end
 	end
 
 	# At this point we still have a "wavy" buffer resulting from the union of the circles. Ideally we should
 	# be able to use GMT's mapproject to find only the points that are at the exact 'width' distance from the
-	# line, but at this moment there seems to be an issue in GMT and distances are shorter. However with can
+	# line, but at this moment there seems to be an issue in GMT and distances are shorter. However we can
 	# do some cheap statistics to get read of the more inner points a get an almost perfec buffer.
 	Ddist2line = mapproject(D, L=(line=line, unit=:e))		# Find the distance from buffer points to input line
-	d_mean = mean(view(Ddist2line[1].data, :, 3))
-	ind = view(Ddist2line[1].data, :, 3) .>= d_mean
+	if (isa(Ddist2line, GMTdataset))
+		d_mean = mean(view(Ddist2line.data, :, 3))
+		ind = view(Ddist2line.data, :, 3) .>= d_mean
+	else
+		d_mean = mean(view(Ddist2line[1].data, :, 3))
+		ind = view(Ddist2line[1].data, :, 3) .>= d_mean
+	end
 	ind[1], ind[end] = true, true			# Ensure first and last are not removed
-	D[1].data = D[1].data[ind, :]			# Remove all points that are less 1% above the mean
+	isa(D, GMTdataset) ? (D.data = D.data[ind, :]) : (D[1].data = D[1].data[ind, :])# Remove all points that are less 1% above the mean
 
-	(proj == "" && epsg == 0) && (D[1].proj4 == prj4WGS84)
-	(proj != "") && (D[1].proj4 = proj)
-	(epsg != 0) && (D[1].proj4 = toPROJ4(importEPSG(epsg)))
-	(tol < 0) && (tol = width * 0.005 / 111111)		# Tolerance as 0.5% of buffer with converted to degrees
+	(proj == "" && epsg == 0) && (isa(D, GMTdataset) ? (D.proj4 == prj4WGS84) : (D[1].proj4 == prj4WGS84))
+	(proj != "") && (isa(D, GMTdataset) ? (D.proj4 = proj) : (D[1].proj4 = proj))
+	(epsg != 0) && (t = toPROJ4(importEPSG(epsg)); isa(D, GMTdataset) ? (D.proj4 = t) : (D[1].proj4 = t))
+	(tol < 0) && (tol = width * 0.005 / 111111)		# Tolerance as 0.5% of buffer width converted to degrees
 	return (tol > 0) ? simplify(D, tol) : D			# If TOL > 0 do a DP simplify on final buffer
 end
 
@@ -335,12 +341,12 @@ orthodrome(ds::Gdal.AbstractDataset; step=0, unit=:m, np=0, proj::String="", eps
 function orthodrome(D::Vector{<:GMTdataset}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
-		_D[k] = mat2ds(orthodrome(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj, epsg=epsg))[1]
+		_D[k] = mat2ds(orthodrome(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj, epsg=epsg))
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
 function orthodrome(D::GMTdataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
-	mat2ds(orthodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))[1]
+	mat2ds(orthodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))
 end
 
 function orthodrome(line::Matrix{<:Real}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
@@ -394,7 +400,7 @@ loxodrome(lon1::Real, lat1::Real, lon2::Real, lat2::Real; step=0, unit=:m, np=0,
 	loxodrome([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg)
 
 function loxodrome(D::GMTdataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
-	mat2ds(loxodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))[1]
+	mat2ds(loxodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))
 end
 
 function loxodrome(line::Matrix{<:Real}; step=0, np=0, unit=:m, proj::String="", epsg::Integer=0)
@@ -492,7 +498,7 @@ end
 # -------------------------------------------------------------------------------------------------
 function helper_geod(proj::String, s_srs::String, epsg::Integer)::Tuple{String, Ptr{Nothing}, Bool}
 	# 'proj' and 's_srs' are synonyms.
-	# Return the projection string ans also if the projection is geogs.
+	# Return the projection string and also if the projection is geogs.
 	if     (proj  != "")  prj_string = proj
 	elseif (s_srs != "")  prj_string = s_srs
 	elseif (epsg > 0)     prj_string = toPROJ4(importEPSG(epsg))
@@ -514,14 +520,14 @@ function get_ellipsoid(projPJ_ptr::Ptr{Cvoid})::geod_geodesic
 	#a, ecc2 = pj_get_spheroid_defn(projPJ_ptr)
 	#geod_geodesic(a, 1-sqrt(1-ecc2))
 	a, inv_f, = proj_ellipsoid_get_parameters(C_NULL, projPJ_ptr)
-	geod_geodesic(a, 1/inv_f)
+	f = (inv_f == 0.) ? 0.0 : 1 / inv_f		# Don't know why but for spheres we must set f = 0
+	geod_geodesic(a, f)
 end
 
 # -------------------------------------------------------------------------------------------------
 function proj_create(proj_str::String, ctx=C_NULL)
 	# Returns an Object that must be unreferenced with proj_destroy()
 	# THIS GUY IS VERY EXPENSIVE. TRY TO MINIMIZE ITS USAGE.
-	#projPJ_ptr = ccall((:proj_create, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), ctx, proj_str)
 	projPJ_ptr = ccall((:proj_create, libproj), Ptr{Cvoid}, (Ptr{Cvoid}, Cstring), ctx, proj2wkt(proj_str))
 	(projPJ_ptr == C_NULL) && error("Could not parse projection: \"$proj_str\"")
 	projPJ_ptr
@@ -555,7 +561,7 @@ end
 function _transform!(src_ptr::Ptr{Cvoid}, dest_ptr::Ptr{Cvoid}, point_count::Integer, point_stride::Integer,
                      x::Ptr{Cdouble}, y::Ptr{Cdouble}, z::Ptr{Cdouble})
 	@assert src_ptr != C_NULL && dest_ptr != C_NULL
-	err = ccall((:pj_transform, libproj), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Clong, Cint, Ptr{Cdouble}, Ptr{Cdouble},
+	err = ccall((:pj_transform, libproj), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Int32, Cint, Ptr{Cdouble}, Ptr{Cdouble},
                 Ptr{Cdouble}), src_ptr, dest_ptr, point_count, point_stride, x, y, z)
 	err != 0 && error("transform error: $(_strerrno(err))")
 end

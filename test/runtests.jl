@@ -35,6 +35,17 @@ if (got_it)					# Otherwise go straight to end
 		rm("lixo1.gmt")
 		rm("lixo2.gmt")
 	end
+
+	println("	WMS")
+	wms = GMT.wmsinfo("http://tiles.maps.eox.at/wms?")
+	show(wms)
+	show(wms.layer[1])
+	GMT.wmsinfo(wms, layer="coastline", stronly=true);
+	GMT.wmstest(wms, layer=34, region=(-8,39, 100000), res=100);
+	GMT.wmstest(wms, layer=34, region=(iso="PT"), res=100);
+	GMT.wmstest(wms, layer=38, region=(-8,-7,38,39), res="0.001d")
+	GMT.wmstest(wms, layer=38, region=(-8,-7,38,39), res=100)
+
 	println("		Entering: test_common_opts.jl")
 	include("test_common_opts.jl")
 	println("		Entering: test_B-GMTs.jl")
@@ -59,10 +70,11 @@ if (got_it)					# Otherwise go straight to end
 	greenspline(d, R="-2000/25000", I=100, S=:l, D=0, Vd=dbg2)
 
 	println("	MAKECPT")
-	makecpt(rand(10,1), E="", C=:rainbow, cptname="lixo.cpt");
+	makecpt(rand(10,1), E="", C=:rainbow, cmap="lixo.cpt");
 	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
-	println("		MAKECPT - 0")
 	cpt = makecpt(range="-1/1/0.1");
+	cpt = makecpt(-1,1,0.1);
+	println("		MAKECPT - 0")
 	if (GMTver > v"6.1.1")
 		C = cpt4dcw("eu");
 		C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);

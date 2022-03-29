@@ -56,16 +56,14 @@ Parameters
 """
 function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-	length(kwargs) == 0 && return monolitic("grdfft", cmd0, arg1, arg2)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :upward], [:D :dfdz], [:E :radial_power], [:F :filter],
 	                                 [:I :integrate], [:N :inquire], [:S :scale]])
 
-	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
-	(isa(arg1, Array{<:Number})) && (arg1 = mat2grid(arg1))
+	cmd, _, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
+	(isa(arg1, Matrix{<:Real})) && (arg1 = mat2grid(arg1))
 	if (!occursin(" -E", cmd))          # Simpler case
 		return common_grd(d, "grdfft " * cmd, arg1)		# Finish build cmd and run it
 	else

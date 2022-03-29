@@ -9,15 +9,16 @@
 
 Returns a GMTdataset for the requested country, or country subregion(s)
 
-1. `country`: ISO 3166 Alpha 3 country code  
-2. subregions: Full official names in hierarchial order (provinces, districts, etc.)
-   To know the names of all administrative children of parent, use the option `names`
-3. `children`: When true, function returns all subregions of parent
+1. `country`: ISO 3166 Alpha 3 country code  .
+2. subregions: Full official names in hierarchial order (provinces, districts, etc...).
+   To know the names of all administrative children of parent, use the option `names`.
+3. `children`: When true, function returns all subregions of parent.
 4. `children_raw`: When true, function returns two variables -> parent, children, where children is a GDAL object
    E.g. when children is set to true and when querying just the country,
    second return parameter are the states/provinces. If `children` we return a Vector of GMTdataset with
-   the polygons. If `children_raw` the second output is a GDAL object much like in GADM.jl (less the Tables.jl) 
-5. `reportlevels`: just report the number of administrative levels (including the country) and exit.
+   the polygons. If `children_raw` the second output is a GDAL object much like in GADM.jl (less the Tables.jl)
+5. `names`: Return a string vector with all `children` names. 
+6. `reportlevels`: just report the number of administrative levels (including the country) and exit.
 
 ## Examples  
   
@@ -26,7 +27,7 @@ Returns a GMTdataset for the requested country, or country subregion(s)
 data = gadm("IND")
 
 # uttar -> the limits of the Uttar Pradesh state
-uttar = gadm("IND", "Uttar Pradesh, children=true)
+uttar = gadm("IND", "Uttar Pradesh")
 
 # uttar -> limits of all districts of the  Uttar Pradesh state
 uttar = gadm("IND", "Uttar Pradesh", children=true)
@@ -37,9 +38,10 @@ gadm("IND", names=true)
 """
 function gadm(country, subregions...; children::Bool=false, names::Bool=false, children_raw::Bool=false, reportlevels::Bool=false)
 	isvalidcode(country) || throw(ArgumentError("please provide standard ISO 3 country codes"))
-	ressurectGDAL()			# Some previous GMT modules (or other shits) may have called GDALDestroyDriverManager() 
 	data_pato = country |> _download		# Downloads and extracts dataset of the given country code
+	ressurectGDAL()			# Some previous GMT modules (or other shits) may have called GDALDestroyDriverManager() 
 	data = Gdal.read(data_pato)
+	ressurectGDAL()			# Again !!!!!?
 	!isnothing(data) ? data : throw(ArgumentError("failed to read data from disk"))
 	nlayers = Gdal.nlayer(data)
 	reportlevels && return nlayers
@@ -82,15 +84,29 @@ function gadm(country, subregions...; children::Bool=false, names::Bool=false, c
 		error("Asked data for a level ($(plevel+1)) that is lower than lowest data level ($(nlayers))")
 	end
 
+	function _get_attrib(feature)
+		n = Gdal.nfield(feature)
+		attrib = Dict{String, String}()
+		[attrib[Gdal.getname(Gdal.getfielddefn(feature, i))] = string(Gdal.getfield(feature, i)) for i = 0:n-1]
+		attrib
+	end
+
 	function _get_polygs(gdfeature)
 		D = gd2gmt(getgeom(gdfeature[1], 0),"")
+		isa(D, GMTdataset) && (D = [D])		# Hopefully not too wasteful but it simplifies a lot the whole algo
+		att = _get_attrib(gdfeature[1])
+		for k = 1:length(D)  D[k].attrib = att;  D[k].colnames = ["Lon", "Lat"]  end
+		D[1].attrib = _get_attrib(gdfeature[1])
 		((prj = getproj(Gdal.getlayer(data, 0))) != C_NULL) && (D[1].proj4 = toPROJ4(prj))
 		for n = 2:length(gdfeature)
 			_D = gd2gmt(getgeom(gdfeature[n], 0),"")
+			isa(_D, GMTdataset) && (_D = [_D])
+			att = _get_attrib(gdfeature[n])
+			for k = 1:length(_D)  _D[k].attrib = att;  _D[k].colnames = ["Lon", "Lat"]  end
 			append!(D, _D)
 		end
 		set_dsBB!(D, false)		# Compute only the global BB. The other were computed aready
-		D
+		return (length(D) == 1) ? D[1] : D
 	end
 
 	# p -> parent, is the requested region

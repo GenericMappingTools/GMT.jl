@@ -38,9 +38,10 @@ grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
 gmtwrite("lixo.grd", I)
 grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
 grdview(rand(128,128), G="lixo.grd", I=I, J=:X12, JZ=5, Q=:i, view="145/30", Vd=dbg2)
-I = mat2img(rand(UInt8,90,120,3), proj="+proj=longlat +datum=WGS84 +no_defs");	# 'proj' is ignored
+I = mat2img(rand(UInt8,89,120,3), proj4="+proj=longlat +datum=WGS84 +no_defs");	# 'proj' is ignored
 gmtwrite("lixo.tif", I)
-grdview(rand(90,120), G="lixo.tif", J=:X12, JZ=5, Q=:i, view="145/30")
+grdview(rand(90,120), G="lixo.tif", J=:X12, JZ=5, Q=:i, view="145/30", V=:q)
+grdview(rand(90,120), G=I, J=:X12, JZ=5, Q=:i, view="145/30", V=:q)
 # If I use proj4 something in the above fcks the memory state and one of next tests would crash. 
 
 println("	IMSHOW")
@@ -69,9 +70,10 @@ imshow("lixo", Vd=dbg2);
 mat = reshape(UInt8.([255 0 0 0 0 0 0 0 0 0 0 0 0 255 0 0 0 0 0 0 0 0 0 0 0 0 255]), 3,3,3);
 I = mat2img(mat, hdr=[0.0 3 0 3 0 255 1 1 1]);
 imshow(I, J=:Merc, show=false)
-I = GMT.GMTimage("", "", 0, [1., 10, 1, 10, 0, 1, 1, 1, 1], [1., 1], 1, NaN, "gray", String[], String[], collect(1.:11), collect(1.:11), [0.],rand(UInt16,10,10), zeros(Clong,3), 0, Array{UInt8,2}(undef,1,1), "TRBa", 0);
+I = GMT.GMTimage("", "", 0, [1., 10, 1, 10, 0, 1, 1, 1, 1], [1., 1], 1, zero(UInt16), "gray", String[], String[], collect(1.:11), collect(1.:11), [0.],rand(UInt16,10,10), zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), "TRBa", 0);
 imshow(I,Vd=dbg2)
-imshow(mat2ds([0 0; 10 0; 10 10; 11 10]), Vd=2)
+imshow(mat2ds([0 0; 10 0; 10 10; 11 10]), Vd=dbg2)
+imshow(makecpt(1,5, cmap=:polar), Vd=dbg2)
 GMT.mat2grid("ackley");
 GMT.mat2grid("egg");
 GMT.mat2grid("sombrero");
