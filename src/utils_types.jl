@@ -699,8 +699,8 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, 
 	elseif (isa(reg, Real))
 		reg_ = (reg == 0) ? 0 : 1
 	end
-	if (isempty(x) && !isempty(xx))  x = xx  end
-	if (isempty(y) && !isempty(yy))  y = yy  end
+	if (isempty(x) && !isempty(xx))  x = vec(xx)  end
+	if (isempty(y) && !isempty(yy))  y = vec(yy)  end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y, is_transposed)
 
 	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
