@@ -693,7 +693,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 			_opt_B::String, what_B::Vector{Bool} = axis(val, d);	extra_parse = false
 			have_Bframe = what_B[2]
 			def_opt_B_split = split(opt_B)
-			have_axes = any(keys(val) .== :axes)
+			have_axes = :axes in keys(val)
 			if (!have_axes && opt_B != "" && findlast(" ", opt_B)[1] != 1)	# If not have frame=(axes=..., ) use the default
 				def_Bframe = def_opt_B_split[end]	# => "-BWSen" when opt_B holds the default " -Baf -BWSen"
 				if (have_Bframe)					# If we already have a Bframe bit must append it to def_Bframe
@@ -1403,9 +1403,9 @@ function add_opt_pen(d::Dict, symbs::VMs, opt::String="", sub::Bool=true, del::B
 				# Cases like pen=(width=0.1, color=:red, style=".") were failing. But because we may break other
 				# working cases, just try to catch this case and turn it into a `pen=(0.1, :red. ".")` call.
 				k = keys(val)
-				w::String = ((ind = findfirst(k .== :width)) !== nothing) ? string(val[ind]) : ""
-				c::String = ((ind = findfirst(k .== :color)) !== nothing) ? string(val[ind]) : ""
-				s::String = ((ind = findfirst(k .== :style)) !== nothing) ? string(val[ind]) : ""
+				w::String = (:width in k) ? string(val[:width]) : ""
+				c::String = (:color in k) ? string(val[:color]) : ""
+				s::String = (:style in k) ? string(val[:style]) : ""
 				if (w != "" || c != "" || s != "")
 					out = opt * add_opt_pen(Dict(:pen => (w,c,s)), symbs, "", true, false)
 				else
