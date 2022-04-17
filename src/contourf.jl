@@ -191,7 +191,7 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 		elseif (isa(CPT, GMTcpt))
 			d[:C] = CPT;
 		else
-			D = gmtinfo(arg1, C=1)
+			D = gmtinfo(arg1, C=true)
 			C_inc, min, max = gen_contour_vals(D.data[5:6], C_int)
 			d[:C] = makecpt(T=(min, max, C_inc))
 		end
