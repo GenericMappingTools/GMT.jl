@@ -140,10 +140,10 @@ GMT.legend_help(true)
 
 println("	PSROSE")
 data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
-rose(data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=1, D=1, S=4)
-rose!(data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=dbg2)
-rose!("",data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=1, S=4, Vd=dbg2)
-rose(data, A=20, I=1);		# Broken in GMT5`
+rose(data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=true, D=true, S=4)
+rose!(data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=true, S=4, Vd=dbg2)
+rose!("",data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=true, S=4, Vd=dbg2)
+#rose(data, A=20, I=true);		# Broken in GMT5
 
 println("	PSMASK")
 D = gmtmath("-T-90/90/10 -N2/1 0");
