@@ -1431,7 +1431,9 @@ function Base.:show(io::IO, G::GMTgrid)
 	(G.proj4 != "") && println("PROJ: ", G.proj4)
 	(G.wkt   != "") && println("WKT: ", G.wkt)
 	(G.epsg  != 0)  && println("EPSG: ", G.epsg)
+	display(G.z)		# Convoluted but this prints the numbers
 end
+Base.:display(G::GMTgrid) = show(G)		# Otherwise by default it only displays the numbers
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:show(io::IO, G::GMTimage)
@@ -1442,7 +1444,9 @@ function Base.:show(io::IO, G::GMTimage)
 	(G.proj4 != "") && println("PROJ: ", G.proj4)
 	(G.wkt   != "") && println("WKT: ", G.wkt)
 	(G.epsg  != 0)  && println("EPSG: ", G.epsg)
+	display(G.image)		# Convoluted but this prints the numbers
 end
+Base.:display(G::GMTimage) = show(G)		# Otherwise by default it only displays the numbers
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
@@ -1477,12 +1481,13 @@ function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
 	(~isempty(D[1].attrib))  && println("Attributes: ", D[1].attrib)
 	(~isempty(D[1].ds_bbox)) && println("Global BoundingBox:    ", D[1].ds_bbox)
 	(~isempty(D[1].bbox))    && println("First seg BoundingBox: ", D[1].bbox)
-	display(D[1].data)
+	(~isempty(D[1])) && display(D[1].data)
 	if (~isempty(D[1].text))
 		println("First segment TEXT")
 		display(D[1].text)
 	end
 end
+Base.:display(D::Vector{<:GMTdataset}) = show(D)	# Otherwise the default prints nothig when data == []
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:show(io::IO, D::GMTdataset)
@@ -1492,9 +1497,10 @@ function Base.:show(io::IO, D::GMTdataset)
 	(D.proj4  != "") && println("PROJ: ", D.proj4)
 	(D.wkt    != "") && println("WKT: ", D.wkt)
 	(D.header != "") && println("Header:\t", D.header)
-	display(D.data)
+	(~isempty(D)) && display(D.data)
 	(~isempty(D.text)) && display(D.text)
 end
+Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothig when text only (data == [])
 
 # ---------- For Pluto ------------------------------------------------------------------------------
 Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.fname))

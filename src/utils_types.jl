@@ -629,12 +629,12 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    G = mat2grid(mat; reg=nothing, x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", tit::String="",
+    G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=nothing, proj4::String="", wkt::String="", tit::String="",
                  rem::String="", cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0)
 
-Take a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
-and return a grid GMTgrid type.
-Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
+Take a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor and 
+return a grid GMTgrid type. Alternatively to HDR, provide a pair of vectors, `x` & `y`, with the X and Y coordinates.
+Optionaly add a `v` vector with vertical coordinates if `mat` is a 3D array and one wants to create a ``cube``.
 Optionaly, the HDR arg may be ommited and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
 When HDR is not used, REG == nothing [default] means create a gridline registration grid and REG == 1,
 or REG="pixel" a pixel registered grid.
@@ -686,9 +686,10 @@ end
 # This is the way I found to find if a matriz is transposed. There must be better ways but couldn't find them.
 istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
-function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(),
-	v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="",
-	cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0, is_transposed::Bool=false)
+function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Float64}(); reg=nothing,
+	x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="",
+	epsg::Int=0, tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[], scale::Float32=1f0,
+	offset::Float32=0f0, is_transposed::Bool=false)
 	# Take a 2/3D array and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
@@ -701,6 +702,7 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, 
 	end
 	if (isempty(x) && !isempty(xx))  x = vec(xx)  end
 	if (isempty(y) && !isempty(yy))  y = vec(yy)  end
+	if (isempty(v) && !isempty(zz))  v = vec(zz)  end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y, is_transposed)
 
 	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
@@ -713,7 +715,14 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, 
 	end
 
 	isT = istransposed(mat)
-	GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, names, x, y, v, isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
+	if (ndims(mat) == 2)
+		inc, range = [x_inc, y_inc], hdr[1:6]
+	else
+		if (isempty(v))  inc, range = [x_inc, y_inc, 1.], [vec(hdr[1:6]); [1., size(mat,3)]]
+		else             inc, range = [x_inc, y_inc, v[2] - v[1]], [vec(hdr[1:6]); [v[1], v[end]]]
+		end
+	end
+	GMTgrid(proj4, wkt, epsg, range, inc, reg_, NaN, tit, rem, cmd, names, x, y, v, isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object

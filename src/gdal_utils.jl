@@ -584,7 +584,7 @@ Write a MxNxP `cube` object to disk as a multilayered file.
 
 - `cube`: A GMTgrid or GMTimage cube
 - `fname`: The file name where to save the `cube`
-- `v`: A vector ith the coordinates of the Z layers (if omitted create one as 1:size(cube,3))
+- `v`: A vector with the coordinates of the Z layers (if omitted create one as 1:size(cube,3))
 - `dim_name`: The name of the variable of the ``vertical`` dimension.
 - `dim_units`: The units of the `v` vector. If not provided, use the `cube.z_units` if exist (GMTgrid only)
 """
