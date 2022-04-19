@@ -144,7 +144,18 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 			!(haskey(d, :gdataset) && !d[:gdataset]) && (o = gd2gmt(o))
 		else
 			n_bands = (got_GMT_opts && !haskey(d, :gdataset) && isa(o, AbstractRasterBand)) ? 1 : nraster(o)
-			(!haskey(d, :gdataset)) && (o = gd2gmt(o, bands=collect(1:n_bands)))
+			if (!haskey(d, :gdataset))
+				_o = gd2gmt(o, bands=collect(1:n_bands))
+				if (ndims(_o) == 3)			# If it's 3D maybe it's a cube. Check the metadata
+					meta = Gdal.getmetadata(o)
+					if (!isempty(meta) && (val = Gdal.fetchnamevalue(meta, "NETCDF_DIM_z_VALUES")) != "")
+						_o.v = parse.(Float64, split(val[2:end-1],','))
+						append!(_o.inc, [_o.v[2] - _o.v[1]])
+						append!(_o.range, [_o.v[1],_o.v[end]])
+					end
+				end
+				o = _o
+			end
 		end
 		haskey(d, :gdataset) && delete!(d, :gdataset)
 	end
