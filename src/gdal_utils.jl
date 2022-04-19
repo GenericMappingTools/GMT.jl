@@ -64,10 +64,11 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	# If we found a scale_factor above, apply it
 	(scale_factor != 1) && (mat = gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val))
 
+	local gt
 	try
-		global gt = getgeotransform(dataset)
+		gt = getgeotransform(dataset)
 	catch
-		global gt = [0.5, 1.0, 0.0, ySize+0.5, 0.0, 1.0]	# Resort to no coords
+		gt = [0.5, 1.0, 0.0, ySize+0.5, 0.0, 1.0]	# Resort to no coords
 	end
 
 	x_inc, y_inc = gt[2], abs(gt[6])
@@ -82,7 +83,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	(prj == "") && (prj = seek_wkt_in_gdalinfo(gdalinfo(dataset)))
 	is_tp = (layout == "")				# if == "" array is rowmajor and hence transposed
 	if (is_grid)
-		(eltype(mat) == Float64) && (mat = Float32.(mat))
+		#(eltype(mat) == Float64) && (mat = Float32.(mat))
 		O = mat2grid(mat; hdr=hdr, proj4=prj, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRB" : layout
 	else

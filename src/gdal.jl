@@ -349,6 +349,12 @@ GDALSetColorEntry(a1, a2, a3) =
 CPLSetConfigOption(a1, a2) = acare(ccall((:CPLSetConfigOption, libgdal), Cvoid, (Cstring, Cstring), a1, a2))
 CPLGetConfigOption(a1, a2) = acare(ccall((:CPLGetConfigOption, libgdal), Cstring, (Cstring, Cstring), a1, a2), false)
 
+CSLFetchNameValue(a1, a2) = acare(ccall((:CSLFetchNameValue, libgdal), Cstring, (Ptr{Cstring}, Cstring), a1, a2))
+function fetchnamevalue(strlist::Vector{String}, name::String="")::String
+	item = CSLFetchNameValue(strlist, name)
+	return item == C_NULL ? "" : unsafe_string(item)
+end
+
 GDALSetDescription(a1, a2) = acare(ccall((:GDALSetDescription, libgdal), Cvoid, (pVoid, Cstring), a1, a2))
 GDALSetMetadata(a1, a2, a3) = acare(ccall((:GDALSetMetadata, libgdal), UInt32, (pVoid, Ptr{Cstring}, Cstring), a1, a2, a3))
 
