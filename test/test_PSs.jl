@@ -143,7 +143,7 @@ data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6
 rose(data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=true, D=true, S=4)
 rose!(data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=true, S=4, Vd=dbg2)
 rose!("",data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=true, S=4, Vd=dbg2)
-rose(data, A=20, I=true);		# Broken in GMT5
+#rose(data, A=20, I=true);		# Broken in GMT5
 
 println("	PSMASK")
 D = gmtmath("-T-90/90/10 -N2/1 0");
