@@ -155,7 +155,7 @@ end
 # -----------------------------------------------------------------------------------------------------------
 function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::VMr, sz::VMr, step=0.1, max_vert::Int=10000)
 
-	n_rows::Int, n_cols::Int = size(Ugrd)
+	n_rows::Int, n_cols::Int, n_levels::Int = size(Ugrd)
 	n_allocated::Int = 2000
 
 	x_flow = Vector{Float64}(undef, n_allocated)
@@ -182,10 +182,10 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::V
 
 			dx = Ugrd.x[ind_x+1] - Ugrd.x[ind_x]	# Could be using grid's `inc` but this allows irregular grids
 			dy = Ugrd.y[ind_y+1] - Ugrd.y[ind_y]
-			dz = Wgrd.z[ind_z+1] - Wgrd.z[ind_z]
+			dz = Wgrd.v[ind_z+1] - Wgrd.v[ind_z]
 			x_flow[n_vert] = Ugrd.x[ind_x] + x_frac * dx
 			y_flow[n_vert] = Ugrd.y[ind_y] + y_frac * dy
-			z_flow[n_vert] = Wgrd.z[ind_z] + z_frac * dz
+			z_flow[n_vert] = Wgrd.v[ind_z] + z_frac * dz
 
 			# If it stops we are done
 			(n_vert >= 2 && x_flow[n_vert] == x_flow[n_vert-1] && y_flow[n_vert] == y_flow[n_vert-1] && z_flow[n_vert] == z_flow[n_vert-1]) && break
@@ -217,17 +217,17 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::V
 	if (length(sy) == 1)		# Scalar input
 		x = interp_vec(Ugrd.x, sx[1])
 		y = interp_vec(Vgrd.y, sy[1])
-		z = interp_vec(Wgrd.y, sz[1])
-		t, n_allocated = helper_stream(x, y, z, n_allocated)
-		return !isempty(t) ? set_dsBB!(mat2ds(t)) : nothing
+		v = interp_vec(Wgrd.v, sz[1])
+		t, n_allocated = helper_stream(x, y, v, n_allocated)
+		return !isempty(t) ? mat2ds(t) : nothing
 	else
 		D = Vector{GMTdataset}(undef, length(sy))
 		kk, c = 0, false
 		for k = 1:length(sy)
 			x = interp_vec(Ugrd.x, sx[k])
-			y = interp_vec(Ugrd.y, sy[k])
-			z = interp_vec(Wgrd.y, sz[k])
-			t, n_allocated = helper_stream(x, y, z, n_allocated)
+			y = interp_vec(Vgrd.y, sy[k])
+			v = interp_vec(Wgrd.v, sz[k])
+			t, n_allocated = helper_stream(x, y, v, n_allocated)
 			!isempty(t) ? (D[kk += 1] = mat2ds(t)) : (c = true)
 		end
 		(c) && deleteat!(D, kk+1:length(sy))	# If some were empty we must remove them (they are at the end)
@@ -250,6 +250,15 @@ function bilinear(V, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)	# 3D
 	v2 = V[ind_y+1, ind_x, ind_z+1] + (V[ind_y+1, ind_x+1, ind_z+1] - V[ind_y+1, ind_x, ind_z+1]) * x_frac
 	vxyz2 = v1 + (v2 - v1) * y_frac
 	vxyz1 + (vxyz2 - vxyz1) * z_frac
+end
+# -------------------------
+function interp_vec(x, val)
+	# Returns the positional fraction that `val` ocupies in the `x` vector 
+	(val < x[1] || val > x[end]) && error("Interpolating point is not inside the vector range.")
+	k = 0
+	while(val < x[k+=1]) end
+	frac = (val - x[k]) / (x[k+1] - x[k])
+	return k + frac
 end
 
 # ----------------------------------------------------------------------------------
