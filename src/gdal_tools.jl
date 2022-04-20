@@ -151,7 +151,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 					if (!isempty(meta) && (val = Gdal.fetchnamevalue(meta, "NETCDF_DIM_z_VALUES")) != "")
 						_o.v = parse.(Float64, split(val[2:end-1],','))
 						append!(_o.inc, [_o.v[2] - _o.v[1]])
-						append!(_o.range, [_o.v[1],_o.v[end]])
+						_o.range = [_o.range[1:6]; _o.v[1]; _o.v[end]]
 					end
 				end
 				o = _o
