@@ -20,6 +20,15 @@ Here we auto-generate the starting positions along one of the 4 sides of the gri
 
 This last method let users pass the `x` and `y` vector data coordinates, U and V are matrices with the
 velocity data and the remaining arguments have the same meaning as in the other methods.
+
+### Example
+    x,y = GMT.meshgrid(-10:10);
+	u = 2 .* x .* y;
+	v = y .^2 - x .^ 2;
+	U = mat2grid(u, x[1,:], y[:,1]);
+	V = mat2grid(v, x[1,:], y[:,1]);
+	r, = streamlines(U, V);
+	plot(r, S="~d4c:+skarrow/0.4+gblack", show=1)
 """
 function streamlines(x, y, Ugrd::Matrix, Vgrd::Matrix, sx, sy, step=0.1, max_vert::Int=10000)
 	U = mat2grid(Ugrd, x, y)
@@ -70,23 +79,6 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, sx::VMr, sy::VMr, step=0.1, m
 	x_flow = Vector{Float64}(undef, n_allocated)
 	y_flow = Vector{Float64}(undef, n_allocated)
 
-	# ------------------------------------------------
-	function bilinear(V, ind_x, ind_y, x_frac, y_frac)
-		v1 = V[ind_y, ind_x]   + (V[ind_y, ind_x+1]   - V[ind_y, ind_x])   * x_frac
-		v2 = V[ind_y+1, ind_x] + (V[ind_y+1, ind_x+1] - V[ind_y+1, ind_x]) * x_frac
-		v1 + (v2 - v1) * y_frac
-	end
-
-	# -------------------------
-	function interp_vec(x, val)
-		# Returns the positional fraction that `val` ocupies in the `x` vector 
-		(val < x[1] || val > x[end]) && error("Interpolating point is not inside the vector range.")
-		k = 0
-		while(val < x[k+=1]) end
-		frac = (val - x[k]) / (x[k+1] - x[k])
-		return k + frac
-	end
-
 	# ---------------------------------------
 	function helper_stream(x, y, n_allocated)
 		# x,y -> Streamline starting point
@@ -111,19 +103,17 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, sx::VMr, sy::VMr, step=0.1, m
 			y_flow[n_vert] = Ugrd.y[ind_y] + y_frac * dy
 
 			# If it stops we are done
-			(n_vert >= 2 && x_flow[n_vert] == x_flow[n_vert-1] && y_flow[n_vert] == y_flow[n_vert-1]) && break
+			(n_vert >= 2 && x_flow[n_vert] ≈ x_flow[n_vert-1] && y_flow[n_vert] ≈ y_flow[n_vert-1]) && break
 			n_vert += 1
 
-			u = bilinear(Ugrd, ind_x, ind_y, x_frac, y_frac)
+			u = bilinear(Ugrd, ind_x, ind_y, x_frac, y_frac)	# Interpolate u,v at current position
 			v = bilinear(Vgrd, ind_x, ind_y, x_frac, y_frac)
 
 			(dx != 0) && (u /= dx)			# M/s * 1/M = s^-1
 			(dy != 0) && (v /= dy)
-
 			max_scaled_uv = (abs(u) > abs(v)) ? abs(u) : abs(v)		# s^-1
-			u *= step / max_scaled_uv		# s^-1 * M / s^-1 = M
-			v *= step / max_scaled_uv
-			x += u;		y  += v
+			x += u * step / max_scaled_uv	# s^-1 * M / s^-1 = M
+			y += v * step / max_scaled_uv
 		end
 
 		deleteat!(x_flow, n_vert:length(x_flow))
@@ -188,7 +178,7 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::V
 			z_flow[n_vert] = Wgrd.v[ind_z] + z_frac * dz
 
 			# If it stops we are done
-			(n_vert >= 2 && x_flow[n_vert] == x_flow[n_vert-1] && y_flow[n_vert] == y_flow[n_vert-1] && z_flow[n_vert] == z_flow[n_vert-1]) && break
+			(n_vert >= 2 && x_flow[n_vert] ≈ x_flow[n_vert-1] && y_flow[n_vert] ≈ y_flow[n_vert-1] && z_flow[n_vert] ≈ z_flow[n_vert-1]) && break
 			n_vert += 1
 
 			u = bilinear(Ugrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
@@ -201,10 +191,9 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::V
 
 			max_scaled_uvw = (abs(u) > abs(v)) ? abs(u) : abs(v)		# s^-1
 			(abs(w) > max_scaled_uvw) && (max_scaled_uvw = abs(w))
-			u *= step / max_scaled_uvw		# s^-1 * M / s^-1 = M
-			v *= step / max_scaled_uvw
-			w *= step / max_scaled_uvw
-			x += u;		y  += v;	z += w
+			x += u * step / max_scaled_uvw	# s^-1 * M / s^-1 = M
+			y += v * step / max_scaled_uvw
+			z += w * step / max_scaled_uvw
 		end
 
 		deleteat!(x_flow, n_vert:length(x_flow))
