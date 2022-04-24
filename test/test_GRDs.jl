@@ -99,7 +99,7 @@
 		println("	GRDINTERPOLATE")
 		G = grdinterpolate("cube.nc", T=4)
 		C = grdinterpolate("cube.nc", T="3/4/0.25");
-		grdinfo(C)
+		#grdinfo(C)
 	end
 
 	println("	GRDLANDMASK")
