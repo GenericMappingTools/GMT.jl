@@ -456,6 +456,58 @@ function slicecube(I::GMTimage, layer::Int)
 	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
+function slicecube(G::GMTgrid, slice::Int; axis="z")
+	# Method that slices grid cubes. SLICE is the row|col|layer number. AXIS picks the axis to be sliced
+	(ndims(G) < 3 || size(G,3) < 2) && error("This is not a cube grid.")
+	_axis = lowercase(string(axis))
+
+	dim = (_axis == "z") ? 3 : (_axis == "y" ? 1 : 2)		# First try to pick which dimension to slice
+	if (G.layout[2] == 'R' && dim < 3)  dim = (dim == 1) ? 2 : 1  end	# For RowMajor swap dim from 1 to 2
+	(slice > size(G,dim)) && error("Slice number ($slice) is larger than grid size ($size(G,$dim))")
+
+	if (_axis == "z")
+		G_ = mat2grid(G[:,:,slice], G.x, G.y, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+	elseif (_axis == "y")
+		if (G.layout[2] == 'C')  G_ = mat2grid(G[slice,:,:], G.x, G.v, reg=G.registration)
+		else                     G_ = mat2grid(G[:,slice,:], G.x, G.v, reg=G.registration, is_transposed=true)	# fromGDAL
+		end
+	else
+		if (G.layout[2] == 'C')  G_ = mat2grid(G[:,slice,:], G.y, G.v, reg=G.registration)
+		else                     G_ = mat2grid(G[slice,:,:], G.y, G.v, reg=G.registration, is_transposed=true)	# from GDAL
+		end
+	end
+	G_.layout = G.layout
+	return G_
+end
+
+function slicecube(G::GMTgrid, slice::AbstractFloat; axis="z")
+	# Method that slices grid cubes. SLICE is the x|y|z coordinate where to slice. AXIS picks the axis to be sliced
+	(ndims(G) < 3 || size(G,3) < 2) && error("This is not a cube grid.")
+	_axis = lowercase(string(axis))
+
+	which_coord_vec = (_axis == "z") ? G.v : (_axis == "y" ? G.y : G.x)
+	x = interp_vec(which_coord_vec, slice)
+	layer = trunc(Int, x)
+	frac = x - layer
+	nxy = size(G,1)*size(G,2)
+	if (_axis == "z")
+		mat = [G[k] + (G[k+nxy] - G[k]) * frac for k = (layer-1)*nxy+1 : layer*nxy]
+		G_ = mat2grid(reshape(mat,size(G,1),size(G,2)) , G.x, G.y, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+	elseif (_axis == "y")
+		if (G.layout[2] == 'C')  mat = G[layer,:,:] .+ (G[layer+1,:,:] .- G[layer,:,:]) .* frac
+		else                     mat = G[:,layer,:] .+ (G[:,layer+1,:] .- G[:,layer,:]) .* frac		# from GDAL
+		end
+		G_ = mat2grid(mat, G.x, G.v, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+	else
+		if (G.layout[2] == 'C')  mat = G[:,layer,:] .+ (G[:,layer+1,:] .- G[:,layer,:]) .* frac
+		else                     mat = G[layer,:,:] .+ (G[layer+1,:,:] .- G[layer,:,:]) .* frac		# from GDAL
+		end
+		G_ = mat2grid(mat, G.y, G.v, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+	end
+	G_.layout = G.layout
+	return G_
+end
+
 # ---------------------------------------------------------------------------------------------------
 """
     stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name="time", z_unit="", save="", mirone=false)
