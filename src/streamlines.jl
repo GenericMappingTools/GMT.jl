@@ -30,7 +30,7 @@ velocity data and the remaining arguments have the same meaning as in the other 
 	r, = streamlines(U, V);
 	plot(r, S="~d4c:+skarrow/0.4+gblack", show=1)
 """
-function streamlines(x, y, Ugrd::Matrix, Vgrd::Matrix, sx, sy, step=0.1, max_vert::Int=10000)
+function streamlines(x, y, Ugrd::Matrix, Vgrd::Matrix, sx, sy; step=0.1, max_vert::Int=10000)
 	U = mat2grid(Ugrd, x, y)
 	V = mat2grid(Vgrd, x, y)
 	streamlines(U, V, sx, sy, step, max_vert)
@@ -53,34 +53,38 @@ function streamlines(U::GMTgrid, V::GMTgrid; side::Union{String, Symbol}="", ste
 	else
 		return equistreams(U, V; density=density, max_density=max_density)
 	end
-	streamlines(U, V, sx, sy, step, max_vert)
+	streamlines(U, V, sx, sy, step=step, max_vert=max_vert)
 end
 
-function streamlines(U::GMTgrid, V::GMTgrid, sx, sy, step=0.1, max_vert::Int=10000)
+function streamlines(U::GMTgrid, V::GMTgrid, sx, sy; step=0.1, max_vert::Int=10000)
 	# Method that let one of sx or sy (or both) be a constant.
 	if (isa(sx, Real) && isvector(sy))
-		streamlines(U, V, fill(sx, length(sy)), sy, step, max_vert)
+		streamlines(U, V, fill(sx, length(sy)), sy, step=step, max_vert=max_vert)
 	elseif (isa(sy, Real) && isvector(sx))
-		streamlines(U, V, sx, fill(sx, length(sx)), step, max_vert)
+		streamlines(U, V, sx, fill(sx, length(sx)), step=step, max_vert=max_vert)
 	elseif (isa(sx, Real) && isa(sy, Real))
-		streamlines(U, V, [sx], [sy], step, max_vert)
+		streamlines(U, V, [sx], [sy], step=step, max_vert=max_vert)
 	end
 end
-function streamlines(U::GMTgrid, V::GMTgrid, D::GMTdataset, step=0.1, max_vert::Int=10000)
+function streamlines(U::GMTgrid, V::GMTgrid, D::GMTdataset; step=0.1, max_vert::Int=10000)
 	# Method that sends the initial position in a GMTdataset
 	streamlines(U, V, D.data[:,1], D.data[:,2], step, max_vert)
 end
 
-function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, sx::VMr, sy::VMr, step=0.1, max_vert::Int=10000)
+function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, sx::VMr, sy::VMr; step=0.1, max_vert::Int=10000)
 
-	n_rows::Int, n_cols::Int = size(Ugrd)
 	n_allocated::Int = 2000
+	n_rows::Int, n_cols::Int = size(Ugrd)
+	isT = false
+	if (!isempty(Ugrd.layout) && Ugrd.layout[2] == 'R')
+		n_rows, n_cols, isT = n_cols, n_rows, true
+	end
 
 	x_flow = Vector{Float64}(undef, n_allocated)
 	y_flow = Vector{Float64}(undef, n_allocated)
 
 	# ---------------------------------------
-	function helper_stream(x, y, n_allocated)
+	function helper_stream(x, y, n_rows, n_cols, isT, n_allocated)
 		# x,y -> Streamline starting point
 		n_vert = 1;
 		while(true)
@@ -106,8 +110,14 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, sx::VMr, sy::VMr, step=0.1, m
 			(n_vert >= 2 && x_flow[n_vert] ≈ x_flow[n_vert-1] && y_flow[n_vert] ≈ y_flow[n_vert-1]) && break
 			n_vert += 1
 
-			u = bilinear(Ugrd, ind_x, ind_y, x_frac, y_frac)	# Interpolate u,v at current position
-			v = bilinear(Vgrd, ind_x, ind_y, x_frac, y_frac)
+			if (isT)		# Grids have layout = TRB (read by GDAL) 
+				ind_y, ind_x = ind_x, n_rows-ind_y+1
+				u = bilinearRM(Ugrd, ind_x, ind_y, x_frac, y_frac)	# Interpolate u,v at current position
+				v = bilinearRM(Vgrd, ind_x, ind_y, x_frac, y_frac)
+			else
+				u = bilinearCM(Ugrd, ind_x, ind_y, x_frac, y_frac)	# Interpolate u,v at current position
+				v = bilinearCM(Vgrd, ind_x, ind_y, x_frac, y_frac)
+			end
 
 			(dx != 0) && (u /= dx)			# M/s * 1/M = s^-1
 			(dy != 0) && (v /= dy)
@@ -122,38 +132,83 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, sx::VMr, sy::VMr, step=0.1, m
 		return [x_flow y_flow], n_allocated
 	end
 
-	if (length(sy) == 1)		# Scalar input
-		x = interp_vec(Ugrd.x, sx[1])
-		y = interp_vec(Ugrd.y, sy[1])
-		t, n_allocated = helper_stream(x, y, n_allocated)
+	# Here we need to meshgrid when any of the locations is a vector
+	if (length(sx) > 1 || length(sy) > 1)
+		sx_, sy_ = meshgrid(Float64.(sx), Float64.(sy))
+		_sx, _sy = sx_[:], sy_[:]
+	else
+		_sx, _sy = Float64.(sx[:]), Float64.(sy[:])
+	end
+
+	if (length(_sx) == 1)		# Scalar input
+		x = interp_vec(Ugrd.x, _sx[1])
+		y = interp_vec(Ugrd.y, _sy[1])
+		t, n_allocated = helper_stream(x, y, n_rows, n_cols, isT, n_allocated)
 		return !isempty(t) ? mat2ds(t) : nothing
 	else
-		D = Vector{GMTdataset}(undef, length(sy))
+		D = Vector{GMTdataset}(undef, length(_sx))
 		kk, c = 0, false
-		for k = 1:length(sy)
-			x = interp_vec(Ugrd.x, sx[k])
-			y = interp_vec(Ugrd.y, sy[k])
-			t, n_allocated = helper_stream(x, y, n_allocated)
+		for k = 1:length(_sx)
+			x = interp_vec(Ugrd.x, _sx[k])
+			y = interp_vec(Ugrd.y, _sy[k])
+			t, n_allocated = helper_stream(x, y, n_rows, n_cols, isT, n_allocated)
 			!isempty(t) ? (D[kk += 1] = mat2ds(t)) : (c = true)
 		end
-		(c) && deleteat!(D, kk+1:length(sy))	# If some were empty we must remove them (they are at the end)
+		(c) && deleteat!(D, kk+1:length(_sx))	# If some were empty we must remove them (they are at the end)
 		set_dsBB!(D)							# Compute and set the global BoundingBox for this dataset
 	end
 	return D
 end
 
 # -----------------------------------------------------------------------------------------------------------
-function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::VMr, sz::VMr, step=0.1, max_vert::Int=10000)
+function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid; axis::Bool=false, sx::Union{Nothing, Real}=nothing,
+		sy::Union{Nothing, Real}=nothing, sz::Union{Nothing, Real}=nothing, step=0.1, max_vert::Int=10000)
+	# Method where only one of sx, sy, sz is valid and we do a slice of the cube at that dimension.
+	# Ex: D, = streamlines(U, V, W, sz=5, axis=true);
+	(sx === nothing && sy === nothing && sz === nothing) && error("Must select which dimension to slice.")
 
-	n_rows::Int, n_cols::Int, n_levels::Int = size(Ugrd)
+	if (axis)
+		(sx !== nothing) && (A = slicecube(V, sx, axis="x");	B = slicecube(W, sx, axis="x"))
+		(sy !== nothing) && (A = slicecube(U, sy, axis="y");	B = slicecube(W, sy, axis="y"))
+		(sz !== nothing) && (A = slicecube(U, sz, axis="z");	B = slicecube(V, sz, axis="z"))
+	end
+	s,a = streamlines(A, B, step=step, max_vert=max_vert)
+
+	return s,a
+end
+##
+
+# -----------------------------------------------------------------------------------------------------------
+function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, sx, sy, sz; step=0.1, max_vert::Int=10000)
+	# Method that let sx, sy or sz be a constant or vectors
+	x_len = isvector(sx) ? length(sx) : 1
+	y_len = isvector(sy) ? length(sy) : 1
+	z_len = isvector(sz) ? length(sz) : 1
+	len = max(z_len, max(x_len, y_len))
+	if (len == 1)		# They are all scalars
+		streamlines(U, V, W, [sx], [sy], [sz], step=step, max_vert=max_vert)
+	else
+		streamlines(U, V, W, (x_len == 1) ? [sx] : sx, (y_len == 1) ? [sy] : sy, (z_len == 1) ? [sz] : sz, step=step, max_vert=max_vert)
+	end
+end
+
+# -----------------------------------------------------------------------------------------------------------
+function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::VMr, sz::VMr; step=0.1, max_vert::Int=10000)
+
 	n_allocated::Int = 2000
+	n_rows::Int, n_cols::Int, n_levels::Int = size(Ugrd)
+	isT::Bool = false
+	if (!isempty(Ugrd.layout) && Ugrd.layout[2] == 'R')
+		n_rows, n_cols, isT = n_cols, n_rows, true
+	end
 
 	x_flow = Vector{Float64}(undef, n_allocated)
 	y_flow = Vector{Float64}(undef, n_allocated)
 	z_flow = Vector{Float64}(undef, n_allocated)
+	z_coord::Vector{Float64} = Float64.(Wgrd.v)
 
 	# ------------------------------------------
-	function helper_stream(x, y, z, n_allocated)
+	function helper_stream(x, y, z, n_rows, n_cols, isT, n_allocated)
 		# x,y,z -> Streamline starting point
 		n_vert = 1;
 		while(true)
@@ -172,18 +227,25 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::V
 
 			dx = Ugrd.x[ind_x+1] - Ugrd.x[ind_x]	# Could be using grid's `inc` but this allows irregular grids
 			dy = Ugrd.y[ind_y+1] - Ugrd.y[ind_y]
-			dz = Wgrd.v[ind_z+1] - Wgrd.v[ind_z]
+			dz = z_coord[ind_z+1] - z_coord[ind_z]
 			x_flow[n_vert] = Ugrd.x[ind_x] + x_frac * dx
 			y_flow[n_vert] = Ugrd.y[ind_y] + y_frac * dy
-			z_flow[n_vert] = Wgrd.v[ind_z] + z_frac * dz
+			z_flow[n_vert] = z_coord[ind_z] + z_frac * dz
 
 			# If it stops we are done
 			(n_vert >= 2 && x_flow[n_vert] ≈ x_flow[n_vert-1] && y_flow[n_vert] ≈ y_flow[n_vert-1] && z_flow[n_vert] ≈ z_flow[n_vert-1]) && break
 			n_vert += 1
 
-			u = bilinear(Ugrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
-			v = bilinear(Vgrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
-			w = bilinear(Wgrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+			if (isT)		# Grids have layout = TRB (read by GDAL) 
+				ind_y, ind_x = ind_x, n_rows-ind_y+1
+				u = bilinearRM(Ugrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+				v = bilinearRM(Vgrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+				w = bilinearRM(Wgrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+			else
+				u = bilinearCM(Ugrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+				v = bilinearCM(Vgrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+				w = bilinearCM(Wgrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+			end
 
 			(dx != 0) && (u /= dx)			# M/s * 1/M = s^-1
 			(dy != 0) && (v /= dy)
@@ -203,47 +265,71 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::V
 		return [x_flow y_flow z_flow], n_allocated
 	end
 
-	if (length(sy) == 1)		# Scalar input
-		x = interp_vec(Ugrd.x, sx[1])
-		y = interp_vec(Vgrd.y, sy[1])
-		v = interp_vec(Wgrd.v, sz[1])
-		t, n_allocated = helper_stream(x, y, v, n_allocated)
+	# Here we need to meshgrid when any of the locations is a vector
+	if (length(sx) > 1 || length(sy) > 1 || length(sz) > 1)
+		sx_, sy_, sz_ = meshgrid(Float64.(sx), Float64.(sy), Float64.(sz))
+		_sx, _sy, _sz = sx_[:], sy_[:], sz_[:]
+	else
+		_sx, _sy, _sz = Float64.(sx[:]), Float64.(sy[:]), Float64.(sz[:])
+	end
+
+	if (length(_sx) == 1)		# Scalar input
+		x = interp_vec(Ugrd.x,  _sx[1])
+		y = interp_vec(Vgrd.y,  _sy[1])
+		z = interp_vec(z_coord, _sz[1])
+		t, n_allocated = helper_stream(x, y, z, n_rows, n_cols, isT, n_allocated)
 		return !isempty(t) ? mat2ds(t) : nothing
 	else
-		D = Vector{GMTdataset}(undef, length(sy))
+		D = Vector{GMTdataset}(undef, length(_sx))
 		kk, c = 0, false
-		for k = 1:length(sy)
-			x = interp_vec(Ugrd.x, sx[k])
-			y = interp_vec(Vgrd.y, sy[k])
-			v = interp_vec(Wgrd.v, sz[k])
-			t, n_allocated = helper_stream(x, y, v, n_allocated)
+		for k = 1:length(_sx)
+			x = interp_vec(Ugrd.x,  _sx[k])
+			y = interp_vec(Vgrd.y,  _sy[k])
+			z = interp_vec(z_coord, _sz[k])
+			t, n_allocated = helper_stream(x, y, z, n_rows, n_cols, isT, n_allocated)
 			!isempty(t) ? (D[kk += 1] = mat2ds(t)) : (c = true)
 		end
-		(c) && deleteat!(D, kk+1:length(sy))	# If some were empty we must remove them (they are at the end)
+		(c) && deleteat!(D, kk+1:length(_sx))	# If some were empty we must remove them (they are at the end)
 		set_dsBB!(D)							# Compute and set the global BoundingBox for this dataset
 	end
 	return D
 end
 
 # -----------------------------------------------------------------------------
-function bilinear(V, ind_x, ind_y, x_frac, y_frac)					# 2D
-	v1 = V[ind_y, ind_x]   + (V[ind_y, ind_x+1]   - V[ind_y, ind_x])   * x_frac
+function bilinearCM(V, ind_x, ind_y, x_frac, y_frac)				# 2D
+	# Method for grid with a layout BC, that is ColumnMajor
+	v1 = V[ind_y,   ind_x] + (V[ind_y,   ind_x+1] - V[ind_y,   ind_x]) * x_frac
 	v2 = V[ind_y+1, ind_x] + (V[ind_y+1, ind_x+1] - V[ind_y+1, ind_x]) * x_frac
 	v1 + (v2 - v1) * y_frac
 end
-function bilinear(V, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)	# 3D
-	v1 = V[ind_y, ind_x, ind_z]   + (V[ind_y, ind_x+1, ind_z]   - V[ind_y, ind_x, ind_z])   * x_frac
+function bilinearCM(V, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)	# 3D
+	v1 = V[ind_y,   ind_x, ind_z] + (V[ind_y,   ind_x+1, ind_z] - V[ind_y,   ind_x, ind_z]) * x_frac
 	v2 = V[ind_y+1, ind_x, ind_z] + (V[ind_y+1, ind_x+1, ind_z] - V[ind_y+1, ind_x, ind_z]) * x_frac
 	vxyz1 = v1 + (v2 - v1) * y_frac
-	v1 = V[ind_y, ind_x, ind_z+1]   + (V[ind_y, ind_x+1, ind_z+1]   - V[ind_y, ind_x, ind_z+1])   * x_frac
+	v1 = V[ind_y,   ind_x, ind_z+1] + (V[ind_y,   ind_x+1, ind_z+1] - V[ind_y,   ind_x, ind_z+1]) * x_frac
 	v2 = V[ind_y+1, ind_x, ind_z+1] + (V[ind_y+1, ind_x+1, ind_z+1] - V[ind_y+1, ind_x, ind_z+1]) * x_frac
+	vxyz2 = v1 + (v2 - v1) * y_frac
+	vxyz1 + (vxyz2 - vxyz1) * z_frac
+end
+function bilinearRM(V, ind_x, ind_y, x_frac, y_frac)				# 2D
+	# Method for grid with a layout TR, that is RowMajor (as those recived when reading with GDAL)
+	v1 = V[ind_y,   ind_x] + (V[ind_y+1, ind_x]   - V[ind_y, ind_x])   * x_frac
+	v2 = V[ind_y, ind_x-1] + (V[ind_y+1, ind_x-1] - V[ind_y, ind_x-1]) * x_frac
+	v1 + (v2 - v1) * y_frac
+end
+function bilinearRM(V, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)	# 3D
+	v1 = V[ind_y,   ind_x, ind_z] + (V[ind_y+1, ind_x,   ind_z] - V[ind_y, ind_x,   ind_z]) * x_frac
+	v2 = V[ind_y, ind_x-1, ind_z] + (V[ind_y+1, ind_x-1, ind_z] - V[ind_y, ind_x-1, ind_z]) * x_frac
+	vxyz1 = v1 + (v2 - v1) * y_frac
+	v1 = V[ind_y,   ind_x, ind_z+1] + (V[ind_y+1, ind_x,   ind_z+1] - V[ind_y, ind_x,   ind_z+1]) * x_frac
+	v2 = V[ind_y, ind_x-1, ind_z+1] + (V[ind_y+1, ind_x-1, ind_z+1] - V[ind_y, ind_x-1, ind_z+1]) * x_frac
 	vxyz2 = v1 + (v2 - v1) * y_frac
 	vxyz1 + (vxyz2 - vxyz1) * z_frac
 end
 # -------------------------
 function interp_vec(x, val)
 	# Returns the positional fraction that `val` ocupies in the `x` vector 
-	(val < x[1] || val > x[end]) && error("Interpolating point is not inside the vector range.")
+	(val < x[1] || val > x[end]) && error("Interpolating point ($val) is not inside the vector range [$(x[1]) $(x[end])].")
 	k = 0
 	while(val < x[k+=1]) end
 	frac = (val - x[k]) / (x[k+1] - x[k])
@@ -298,8 +384,8 @@ function equistreams(u::GMTgrid, v::GMTgrid; density=1, max_density=4)
 		startgrid[r,c] = true
 		xstart = xmin + (c-0.5) * inc_x_coarse
 		ystart = ymin + (r-0.5) * inc_y_coarse
-		vertsf::Matrix{Float64} = streamlines(u,  v, xstart, ystart, step, max_vert).data
-		vertsb::Matrix{Float64} = streamlines(-u,-v, xstart, ystart, step, max_vert).data
+		vertsf::Matrix{Float64} = streamlines(u,  v, xstart, ystart; step, max_vert).data
+		vertsb::Matrix{Float64} = streamlines(-u,-v, xstart, ystart; step, max_vert).data
 		(isempty(vertsf) || isempty(vertsb)) && continue	# Maybe we are loosing a good one but it would error below
 
 		for q = 1:2
@@ -327,9 +413,7 @@ function equistreams(u::GMTgrid, v::GMTgrid; density=1, max_density=4)
 				if (cc > n_cols_fine || rr > n_rows_fine)
 					break
 				elseif endgrid[rr,cc]
-					if ~(any(cc == tcc) && any(rr == trr))
-						break
-					end
+					~(any(cc == tcc) && any(rr == trr)) && break
 				else
 					tcc = cc;		trr = rr;
 					endgrid[rr,cc] = true
