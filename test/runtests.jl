@@ -41,10 +41,10 @@ if (got_it)					# Otherwise go straight to end
 	show(wms)
 	show(wms.layer[1])
 	GMT.wmsinfo(wms, layer="coastline", stronly=true);
-	GMT.wmstest(wms, layer=34, region=(-8,39, 100000), res=100);
-	GMT.wmstest(wms, layer=34, region=(iso="PT"), res=100);
-	GMT.wmstest(wms, layer=38, region=(-8,-7,38,39), res="0.001d")
-	GMT.wmstest(wms, layer=38, region=(-8,-7,38,39), res=100)
+	GMT.wmstest(wms, layer=33, region=(-8,39, 100000), res=100);
+	GMT.wmstest(wms, layer=33, region=(iso="PT"), res=100);
+	GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res="0.001d")
+	GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res=100)
 
 	println("		Entering: test_common_opts.jl")
 	include("test_common_opts.jl")

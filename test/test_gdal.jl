@@ -148,7 +148,7 @@ Gdal.GDALDestroyDriverManager()
 	imshow(ds_src, Vd=dbg2)
 
 	rb = Gdal.getband(ds_src, 1)
-	@test Gdal.getnodatavalue(rb) === nothing
+	#@test Gdal.getnodatavalue(rb) === nothing
 	Gdal.setnodatavalue!(rb, -100)
 	@test Gdal.getnodatavalue(rb) ≈ -100
 	Gdal.getcolorinterp(rb)
