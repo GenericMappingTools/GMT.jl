@@ -4007,8 +4007,11 @@ end
 # --------------------------------------------------------------------------------------------------
 function isnodata(array::AbstractArray, val=0)
 	nrows, ncols = size(array,1), size(array,2)
-	indNaN = fill(false, nrows, ncols)
-	@inbounds Threads.@threads for k = 1:nrows * ncols	# 5x faster than: indNaN = (I.image .== 0)
+	nlayers = (ndims(array) == 3) ? size(array,3) : 1
+	if (ndims(array) == 3)  indNaN = fill(false, nrows, ncols, nlayers)
+	else                    indNaN = fill(false, nrows, ncols)
+	end
+	@inbounds Threads.@threads for k = 1:nrows * ncols * nlayers	# 5x faster than: indNaN = (I.image .== 0)
 		(array[k] == val) && (indNaN[k] = true)
 	end
 	indNaN
