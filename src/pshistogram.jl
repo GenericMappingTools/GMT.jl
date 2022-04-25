@@ -165,7 +165,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		if (is_datetime)
 			t = gmt("pshistogram -I -T" * opt_T, arg1)	# Call with inquire option to know y_min|max
 			h = round_wesn(t.data)						# Only h[4] is needed
-			opt_R *= sprintf("/0/%.12g", h[4])			# Half -R was computed in read_data()
+			opt_R *= @sprintf("/0/%.12g", h[4])			# Half -R was computed in read_data()
 			cmd *= opt_R * " -T" * opt_T
 			opt_T = ""		# Clear it because the GMTimage & GMTgrid use a version without "-T" that is added at end
 		end
@@ -371,7 +371,7 @@ function binmethod(d::Dict, cmd::String, X, is_datetime::Bool)
 	if (bin == 0)
 		bin = (min_max[2] - min_max[1]) / n_bins	# Should be made a "pretty" number?
 	end
-	return sprintf("%.12g", bin), min_max
+	return @sprintf("%.12g", bin), min_max
 end
 
 # ---------------------------------------------------------------------------------------------------
