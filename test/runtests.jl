@@ -36,6 +36,9 @@ if (got_it)					# Otherwise go straight to end
 		rm("lixo2.gmt")
 	end
 
+	println("	CUBES")
+	include("test_cube.jl")
+
 	println("	WMS")
 	wms = GMT.wmsinfo("http://tiles.maps.eox.at/wms?")
 	show(wms)
