@@ -3859,6 +3859,16 @@ function justify(arg, nowarn::Bool=false)::String
 end
 
 # --------------------------------------------------------------------------------------------------
+function interp_vec(x, val)
+	# Returns the positional fraction that `val` ocupies in the `x` vector 
+	(val < x[1] || val > x[end]) && error("Interpolating point ($val) is not inside the vector range [$(x[1]) $(x[end])].")
+	k = 0
+	while(val < x[k+=1]) end
+	frac = (val - x[k]) / (x[k+1] - x[k])
+	return k + frac
+end
+
+# --------------------------------------------------------------------------------------------------
 function peaks(; N=49, grid::Bool=true, pixreg::Bool=false)
 	x,y = meshgrid(range(-3,stop=3,length=N))
 
