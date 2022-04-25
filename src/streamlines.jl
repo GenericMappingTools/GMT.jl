@@ -326,15 +326,6 @@ function bilinearRM(V, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)	# 3D
 	vxyz2 = v1 + (v2 - v1) * y_frac
 	vxyz1 + (vxyz2 - vxyz1) * z_frac
 end
-# -------------------------
-function interp_vec(x, val)
-	# Returns the positional fraction that `val` ocupies in the `x` vector 
-	(val < x[1] || val > x[end]) && error("Interpolating point ($val) is not inside the vector range [$(x[1]) $(x[end])].")
-	k = 0
-	while(val < x[k+=1]) end
-	frac = (val - x[k]) / (x[k+1] - x[k])
-	return k + frac
-end
 
 # ----------------------------------------------------------------------------------
 function equistreams(u::GMTgrid, v::GMTgrid; density=1, max_density=4)
