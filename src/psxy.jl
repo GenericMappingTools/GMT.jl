@@ -433,7 +433,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 			(info.data[1] != 0) && (info.data[1] -= dx);
 		end
 		info.data = round_wesn(info.data)		# Add a pad if not-tight
-		new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], info.data[3], info.data[4])
+		new_opt_R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], info.data[3], info.data[4])
 		cmd = replace(cmd, opt_R => new_opt_R)
 	end
 	return cmd, _argD
@@ -451,7 +451,7 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 	dy::Float64 = (info.data[4] - info.data[3]) * 0.005;
 	info.data[1] -= dx;	info.data[2] += dx;	info.data[4] += dy;
 	info.data = round_wesn(info.data)		# Add a pad if not-tight
-	new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], 0, info.data[4])
+	new_opt_R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], 0, info.data[4])
 	cmd = replace(cmd, opt_R => new_opt_R)
 end
 

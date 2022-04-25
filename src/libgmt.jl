@@ -417,6 +417,7 @@ function gmt_free_mem(API::Ptr{Cvoid}, mem)
 	ccall((:gmt_free_func, libgmt), Cvoid, (Cstring, Ptr{Cvoid}, Bool, Cstring), GMT_, mem, true, "Julia")
 end
 
+#=
 function sprintf(format::String, x...)
 	strp = Ref{Ptr{Cchar}}(0)
 	if (length(x) == 1)
@@ -430,6 +431,7 @@ function sprintf(format::String, x...)
 	Libc.free(strp[])
 	return str
 end
+=#
 
 #=
 function get_common_R(API::Ptr{Cvoid})
