@@ -466,7 +466,7 @@ function slicecube(G::GMTgrid, slice::Int; axis="z")
 	(slice > size(G,dim)) && error("Slice number ($slice) is larger than grid size ($size(G,$dim))")
 
 	if (_axis == "z")
-		G_ = mat2grid(G[:,:,slice], G.x, G.y, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+		G_ = mat2grid(G[:,:,slice], G.x, G.y, [G.v[slice]], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
 	elseif (_axis == "y")
 		if (G.layout[2] == 'C')  G_ = mat2grid(G[slice,:,:], G.x, G.v, reg=G.registration)
 		else                     G_ = mat2grid(G[:,slice,:], G.x, G.v, reg=G.registration, is_transposed=true)	# fromGDAL
@@ -492,7 +492,7 @@ function slicecube(G::GMTgrid, slice::AbstractFloat; axis="z")
 	nxy = size(G,1)*size(G,2)
 	if (_axis == "z")
 		mat = [G[k] + (G[k+nxy] - G[k]) * frac for k = (layer-1)*nxy+1 : layer*nxy]
-		G_ = mat2grid(reshape(mat,size(G,1),size(G,2)) , G.x, G.y, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+		G_ = mat2grid(reshape(mat,size(G,1),size(G,2)), G.x, G.y, [Float64(slice)], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
 	elseif (_axis == "y")
 		if (G.layout[2] == 'C')  mat = G[layer,:,:] .+ (G[layer+1,:,:] .- G[layer,:,:]) .* frac
 		else                     mat = G[:,layer,:] .+ (G[:,layer+1,:] .- G[:,layer,:]) .* frac		# from GDAL
