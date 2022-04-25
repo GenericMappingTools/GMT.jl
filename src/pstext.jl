@@ -117,7 +117,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 				(nc < 3) && error("TEXT: input file must have at least three columns")
 				arg1[n].text = Array{String,1}(undef, nr)
 				for k = 1:nr
-					arg1[n].text[k] = sprintf("%.16g", arg1[n].data[k,3])
+					arg1[n].text[k] = @sprintf("%.16g", arg1[n].data[k,3])
 				end
 			end
 		end

@@ -148,7 +148,7 @@ function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function tha
 		end
 	elseif ((isa(Val, VMr) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
 		if (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag))
-			R = " -R" * sprintf("%.15g/%.15g/%.15g/%.15g+r", Val[1], Val[3], Val[2], Val[4])
+			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", Val[1], Val[3], Val[2], Val[4])
 		else
 			R = " -R" * rstrip(arg2str(Val), '/')		# Remove last '/'
 		end
@@ -170,7 +170,7 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 	if ((val = find_in_dict(d, [:limits :region])[1]) !== nothing)
 		if ((isa(val, Array{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 			if (haskey(d, :diag) || haskey(d, :diagonal))		# The diagonal case
-				BB = sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
+				BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
 			else
 				BB = join([@sprintf("%.15g/", Float64(x)) for x in val])
 				BB = rstrip(BB, '/')		# and remove last '/'
@@ -538,12 +538,12 @@ function parse_proj(p::NamedTuple)
 	center::String = ""
 	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
 		if     (isa(val, String))  center = val
-		elseif (isa(val, Real))    center = sprintf("%.12g", val)
+		elseif (isa(val, Real))    center = @sprintf("%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)
-			if (isa(val, Array))   center = sprintf("%.12g/%.12g", val[1], val[2])
+			if (isa(val, Array))   center = @sprintf("%.12g/%.12g", val[1], val[2])
 			else		# Accept also strings in tuple (Needed for movie)
-				center  = (isa(val[1], String)) ? val[1] * "/" : sprintf("%.12g/", val[1])
-				center *= (isa(val[2], String)) ? val[2] : sprintf("%.12g", val[2])
+				center  = (isa(val[1], String)) ? val[1] * "/" : @sprintf("%.12g/", val[1])
+				center *= (isa(val[2], String)) ? val[2] : @sprintf("%.12g", val[2])
 			end
 		end
 	end
@@ -553,7 +553,7 @@ function parse_proj(p::NamedTuple)
 	parallels::String = ""
 	if ((val = find_in_dict(d, [:parallel :parallels])[1]) !== nothing)
 		if     (isa(val, String))  parallels = "/" * val
-		elseif (isa(val, Real))    parallels = sprintf("/%.12g", val)
+		elseif (isa(val, Real))    parallels = @sprintf("/%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && (length(val) <= 3 || length(val) == 6))
 			parallels = join([@sprintf("/%.12g",x) for x in val])
 		end
@@ -3557,7 +3557,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				lims = args[1].range
 				D::GMTdataset = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
 				xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = D.data[1],D.data[3],D.data[2],D.data[4]
-				opt_R::String = sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
+				opt_R::String = @sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
 				o = scan_opt(cmd[1], "-J")
 				size_ = (o[1] == 'x') ? "+scale=" * o[2:end] : (o[1] == 'X') ? "+width=" * o[2:end] : ""
 				(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
