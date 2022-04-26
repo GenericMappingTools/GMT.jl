@@ -30,9 +30,9 @@ velocity data and the remaining arguments have the same meaning as in the other 
 	r, = streamlines(U, V);
 	plot(r, S="~d4c:+skarrow/0.4+gblack", show=1)
 """
-function streamlines(x, y, Ugrd::Matrix, Vgrd::Matrix, sx, sy; step=0.1, max_vert::Int=10000)
-	U = mat2grid(Ugrd, x, y)
-	V = mat2grid(Vgrd, x, y)
+function streamlines(x, y, U::Matrix, V::Matrix, sx, sy; step=0.1, max_vert::Int=10000)
+	U = mat2grid(U, x, y)
+	V = mat2grid(V, x, y)
 	streamlines(U, V, sx, sy, step, max_vert)
 end
 
@@ -71,12 +71,12 @@ function streamlines(U::GMTgrid, V::GMTgrid, D::GMTdataset; step=0.1, max_vert::
 	streamlines(U, V, D.data[:,1], D.data[:,2], step, max_vert)
 end
 
-function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, sx::VMr, sy::VMr; step=0.1, max_vert::Int=10000)
+function streamlines(U::GMTgrid, V::GMTgrid, sx::VMr, sy::VMr; step=0.1, max_vert::Int=10000)
 
 	n_allocated::Int = 2000
-	n_rows::Int, n_cols::Int = size(Ugrd)
+	n_rows::Int, n_cols::Int = size(U)
 	isT = false
-	if (!isempty(Ugrd.layout) && Ugrd.layout[2] == 'R')
+	if (!isempty(U.layout) && U.layout[2] == 'R')
 		n_rows, n_cols, isT = n_cols, n_rows, true
 	end
 
@@ -84,15 +84,15 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, sx::VMr, sy::VMr; step=0.1, m
 	y_flow = Vector{Float64}(undef, n_allocated)
 
 	# ---------------------------------------
-	function helper_stream(x, y, n_rows, n_cols, isT, n_allocated)
-		# x,y -> Streamline starting point
+	function helper_stream(x_pos, y_pos, x_vec, y_vec, n_rows, n_cols, isT, n_allocated)
+		# x_pos,y_pos -> Streamline starting point
 		n_vert = 1;
 		while(true)
-			(x < 1 || x >= n_cols || y < 1 || y >= n_rows || n_vert > max_vert) && break
+			(x_pos < 1 || x_pos >= n_cols || y_pos < 1 || y_pos >= n_rows || n_vert > max_vert) && break
 	
-			ind_x, ind_y = trunc(Int, x), trunc(Int, y)
-			x_frac = x - ind_x;
-			y_frac = y - ind_y;
+			ind_x, ind_y = trunc(Int, x_pos), trunc(Int, y_pos)
+			x_frac = x_pos - ind_x;
+			y_frac = y_pos - ind_y;
 
 			if (n_vert > n_allocated)				# Increase allocated mem by 50 %
 				more_alloc::Int = round(Int, n_allocated * 0.5)
@@ -101,10 +101,10 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, sx::VMr, sy::VMr; step=0.1, m
 				n_allocated += more_alloc
 			end
 
-			dx = Ugrd.x[ind_x+1] - Ugrd.x[ind_x]	# Could be using grid's `inc` but this allows irregular grids
-			dy = Ugrd.y[ind_y+1] - Ugrd.y[ind_y]
-			x_flow[n_vert] = Ugrd.x[ind_x] + x_frac * dx
-			y_flow[n_vert] = Ugrd.y[ind_y] + y_frac * dy
+			dx = x_vec[ind_x+1] - x_vec[ind_x]	# Could be using grid's `inc` but this allows irregular grids
+			dy = y_vec[ind_y+1] - y_vec[ind_y]
+			x_flow[n_vert] = x_vec[ind_x] + x_frac * dx
+			y_flow[n_vert] = y_vec[ind_y] + y_frac * dy
 
 			# If it stops we are done
 			(n_vert >= 2 && x_flow[n_vert] ≈ x_flow[n_vert-1] && y_flow[n_vert] ≈ y_flow[n_vert-1]) && break
@@ -112,18 +112,18 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, sx::VMr, sy::VMr; step=0.1, m
 
 			if (isT)		# Grids have layout = TRB (read by GDAL) 
 				ind_y, ind_x = ind_x, n_rows-ind_y+1
-				u = bilinearRM(Ugrd, ind_x, ind_y, x_frac, y_frac)	# Interpolate u,v at current position
-				v = bilinearRM(Vgrd, ind_x, ind_y, x_frac, y_frac)
+				u = bilinearRM(U, ind_x, ind_y, x_frac, y_frac)	# Interpolate u,v at current position
+				v = bilinearRM(V, ind_x, ind_y, x_frac, y_frac)
 			else
-				u = bilinearCM(Ugrd, ind_x, ind_y, x_frac, y_frac)	# Interpolate u,v at current position
-				v = bilinearCM(Vgrd, ind_x, ind_y, x_frac, y_frac)
+				u = bilinearCM(U, ind_x, ind_y, x_frac, y_frac)	# Interpolate u,v at current position
+				v = bilinearCM(V, ind_x, ind_y, x_frac, y_frac)
 			end
 
 			(dx != 0) && (u /= dx)			# M/s * 1/M = s^-1
 			(dy != 0) && (v /= dy)
 			max_scaled_uv = (abs(u) > abs(v)) ? abs(u) : abs(v)		# s^-1
-			x += u * step / max_scaled_uv	# s^-1 * M / s^-1 = M
-			y += v * step / max_scaled_uv
+			x_pos += u * step / max_scaled_uv	# s^-1 * M / s^-1 = M
+			y_pos += v * step / max_scaled_uv
 		end
 
 		deleteat!(x_flow, n_vert:length(x_flow))
@@ -140,18 +140,23 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, sx::VMr, sy::VMr; step=0.1, m
 		_sx, _sy = Float64.(sx[:]), Float64.(sy[:])
 	end
 
+	if     (length(U.x) == 1)  x_vec = U.y;	y_vec = U.z		# Take into account that they may be cube slices.
+	elseif (length(U.y) == 1)  x_vec = U.x;	y_vec = U.z
+	else                       x_vec = U.x;	y_vec = U.y
+	end
+
 	if (length(_sx) == 1)		# Scalar input
-		x = interp_vec(Ugrd.x, _sx[1])
-		y = interp_vec(Ugrd.y, _sy[1])
-		t, n_allocated = helper_stream(x, y, n_rows, n_cols, isT, n_allocated)
+		x = interp_vec(x_vec, _sx[1])
+		y = interp_vec(y_vec, _sy[1])
+		t, n_allocated = helper_stream(x, y, x_vec, y_vec, n_rows, n_cols, isT, n_allocated)
 		return !isempty(t) ? mat2ds(t) : nothing
 	else
 		D = Vector{GMTdataset}(undef, length(_sx))
 		kk, c = 0, false
 		for k = 1:length(_sx)
-			x = interp_vec(Ugrd.x, _sx[k])
-			y = interp_vec(Ugrd.y, _sy[k])
-			t, n_allocated = helper_stream(x, y, n_rows, n_cols, isT, n_allocated)
+			x = interp_vec(x_vec, _sx[k])
+			y = interp_vec(y_vec, _sy[k])
+			t, n_allocated = helper_stream(x, y, x_vec, y_vec, n_rows, n_cols, isT, n_allocated)
 			!isempty(t) ? (D[kk += 1] = mat2ds(t)) : (c = true)
 		end
 		(c) && deleteat!(D, kk+1:length(_sx))	# If some were empty we must remove them (they are at the end)
@@ -193,19 +198,19 @@ function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, sx, sy, sz; step=0.1, m
 end
 
 # -----------------------------------------------------------------------------------------------------------
-function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::VMr, sz::VMr; step=0.1, max_vert::Int=10000)
+function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, sx::VMr, sy::VMr, sz::VMr; step=0.1, max_vert::Int=10000)
 
 	n_allocated::Int = 2000
-	n_rows::Int, n_cols::Int, n_levels::Int = size(Ugrd)
+	n_rows::Int, n_cols::Int, n_levels::Int = size(U)
 	isT::Bool = false
-	if (!isempty(Ugrd.layout) && Ugrd.layout[2] == 'R')
+	if (!isempty(U.layout) && U.layout[2] == 'R')
 		n_rows, n_cols, isT = n_cols, n_rows, true
 	end
 
 	x_flow = Vector{Float64}(undef, n_allocated)
 	y_flow = Vector{Float64}(undef, n_allocated)
 	z_flow = Vector{Float64}(undef, n_allocated)
-	z_coord::Vector{Float64} = Float64.(Wgrd.v)
+	z_coord::Vector{Float64} = Float64.(W.v)
 
 	# ------------------------------------------
 	function helper_stream(x, y, z, n_rows, n_cols, isT, n_allocated)
@@ -225,11 +230,11 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::V
 				n_allocated += more_alloc
 			end
 
-			dx = Ugrd.x[ind_x+1] - Ugrd.x[ind_x]	# Could be using grid's `inc` but this allows irregular grids
-			dy = Ugrd.y[ind_y+1] - Ugrd.y[ind_y]
+			dx = U.x[ind_x+1] - U.x[ind_x]	# Could be using grid's `inc` but this allows irregular grids
+			dy = U.y[ind_y+1] - U.y[ind_y]
 			dz = z_coord[ind_z+1] - z_coord[ind_z]
-			x_flow[n_vert] = Ugrd.x[ind_x] + x_frac * dx
-			y_flow[n_vert] = Ugrd.y[ind_y] + y_frac * dy
+			x_flow[n_vert] = U.x[ind_x] + x_frac * dx
+			y_flow[n_vert] = U.y[ind_y] + y_frac * dy
 			z_flow[n_vert] = z_coord[ind_z] + z_frac * dz
 
 			# If it stops we are done
@@ -238,13 +243,13 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::V
 
 			if (isT)		# Grids have layout = TRB (read by GDAL) 
 				ind_y, ind_x = ind_x, n_rows-ind_y+1
-				u = bilinearRM(Ugrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
-				v = bilinearRM(Vgrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
-				w = bilinearRM(Wgrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+				u = bilinearRM(U, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+				v = bilinearRM(V, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+				w = bilinearRM(W, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
 			else
-				u = bilinearCM(Ugrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
-				v = bilinearCM(Vgrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
-				w = bilinearCM(Wgrd, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+				u = bilinearCM(U, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+				v = bilinearCM(V, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
+				w = bilinearCM(W, ind_x, ind_y, ind_z, x_frac, y_frac, z_frac)
 			end
 
 			(dx != 0) && (u /= dx)			# M/s * 1/M = s^-1
@@ -274,8 +279,8 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::V
 	end
 
 	if (length(_sx) == 1)		# Scalar input
-		x = interp_vec(Ugrd.x,  _sx[1])
-		y = interp_vec(Vgrd.y,  _sy[1])
+		x = interp_vec(U.x,  _sx[1])
+		y = interp_vec(V.y,  _sy[1])
 		z = interp_vec(z_coord, _sz[1])
 		t, n_allocated = helper_stream(x, y, z, n_rows, n_cols, isT, n_allocated)
 		return !isempty(t) ? mat2ds(t) : nothing
@@ -283,8 +288,8 @@ function streamlines(Ugrd::GMTgrid, Vgrd::GMTgrid, Wgrd::GMTgrid, sx::VMr, sy::V
 		D = Vector{GMTdataset}(undef, length(_sx))
 		kk, c = 0, false
 		for k = 1:length(_sx)
-			x = interp_vec(Ugrd.x,  _sx[k])
-			y = interp_vec(Vgrd.y,  _sy[k])
+			x = interp_vec(U.x,  _sx[k])
+			y = interp_vec(V.y,  _sy[k])
 			z = interp_vec(z_coord, _sz[k])
 			t, n_allocated = helper_stream(x, y, z, n_rows, n_cols, isT, n_allocated)
 			!isempty(t) ? (D[kk += 1] = mat2ds(t)) : (c = true)
@@ -329,7 +334,7 @@ end
 
 # ----------------------------------------------------------------------------------
 function equistreams(u::GMTgrid, v::GMTgrid; density=1, max_density=4)
-	# This function uses a modified version of the Mathworks nicestream() function which is a variant of:
+	# This function uses a modified version of Matlab's nicestream() function which is a variant of:
 	#
 	# Jobard, B., & Lefer, W. (1997). Creating Evenly-Spaced Streamlines of
 	# Arbitrary Density. In W. Lefer & M. Grave (Eds.), Visualization in
@@ -338,7 +343,7 @@ function equistreams(u::GMTgrid, v::GMTgrid; density=1, max_density=4)
 	# Vienna: Springer Vienna. http://doi.org/10.1007/978-3-7091-6876-9_5
 
 	x, y = u.x, u.y
-	
+
 	step = min(0.1, (minimum(size(v))-1)/100)
 	max_vert::Int = Int(min(10000,sum(size(v))*2/step))
 
@@ -350,19 +355,12 @@ function equistreams(u::GMTgrid, v::GMTgrid; density=1, max_density=4)
 	xmin, ymin = minimum(x), minimum(y)
 	x_range = maximum(x) - xmin
 	y_range = maximum(y) - ymin
-	
+
 	inc_x_coarse = x_range/n_cols_coarse
 	inc_y_coarse = y_range/n_rows_coarse
 	inc_x_fine = x_range/n_cols_fine
 	inc_y_fine = y_range/n_rows_fine
 
-	# startgrid and endgrid are used to keep track of the location/density of streamlines.
-	# As new streamlines are created, the values in these matrices will indicate whether a
-	# streamline has passed through each quadrant of the data space. startgrid is coarser grid,
-	# while endgrid is a finer grid. startgrid is used to decide whether to start a new streamline.
-	# If an existing streamline has already passed through a quadrant, we won't start a new streamline.
-	# endgrid is used to limit the density of the final streamlines. New streamlines will stop when
-	# the reach a quandrant that is already occupied by an existing streamline.
 	startgrid = zeros(Bool, n_rows_coarse, n_cols_coarse)
 	endgrid   = zeros(Bool, n_rows_fine, n_cols_fine)
 
@@ -388,17 +386,14 @@ function equistreams(u::GMTgrid, v::GMTgrid; density=1, max_density=4)
 			for j = 1:size(vv,1)
 				xc, yc = vv[j,1], vv[j,2]
 
-				# Calculate indices into startgrid (rr,cc), based on the coordinates of this particular
-				# data point on this streamline. As a streamline passes through coordinates,
-				# mark them off so that we do not start new streamlines in those coordinates.
+				# Find the cell that is crossed by the flowline and flag it so it wont be the locus of
+				# starting a new one.
 				cc::Int = floor(Int, (xc-xmin) / inc_x_coarse ) + 1
 				rr::Int = floor(Int, (yc-ymin) / inc_y_coarse ) + 1
 				(cc <= n_cols_coarse && rr <= n_rows_coarse) && (startgrid[rr,cc] = true)
 
-				# Now calculate rr and cc using a finer mesh so that they are indices into endgrid.
-				# As a streamline passes through coordinates, mark them off so that we do not start
-				# new streamlines in those coordinates. If a new streamline hits an existing streamline,
-				# then the new streamline will be truncated.
+				# Now use the finer grid. All nodes visited by a flowline is flagged sutch it will not
+				# be the locus of starting flowline and if a growing one crosses that cell it will be finished.
 				cc = floor(Int, (xc-xmin) / inc_x_fine) + 1
 				rr = floor(Int, (yc-ymin) / inc_y_fine) + 1
 				if (cc > n_cols_fine || rr > n_rows_fine)
