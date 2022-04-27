@@ -166,16 +166,16 @@ function streamlines(U::GMTgrid, V::GMTgrid, sx::VMr, sy::VMr; step=0.1, max_ver
 end
 
 # -----------------------------------------------------------------------------------------------------------
-function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid; axis::Bool=false, sx::Union{Nothing, Real}=nothing,
-		sy::Union{Nothing, Real}=nothing, sz::Union{Nothing, Real}=nothing, step=0.1, max_vert::Int=10000)
-	# Method where only one of sx, sy, sz is valid and we do a slice of the cube at that dimension.
-	# Ex: D, = streamlines(U, V, W, sz=5, axis=true);
-	(sx === nothing && sy === nothing && sz === nothing) && error("Must select which dimension to slice.")
+function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid; axis::Bool=false, startx::Union{Nothing, Real}=nothing,
+		starty::Union{Nothing, Real}=nothing, startz::Union{Nothing, Real}=nothing, step=0.1, max_vert::Int=10000)
+	# Method where only one of startx, starty, startz is valid and we do a slice of the cube at that dimension.
+	# Ex: D, = streamlines(U, V, W, startz=5, axis=true);
+	(startx === nothing && starty === nothing && startz === nothing) && error("Must select which dimension to slice.")
 
 	if (axis)
-		(sx !== nothing) && (A = slicecube(V, sx, axis="x");	B = slicecube(W, sx, axis="x"))
-		(sy !== nothing) && (A = slicecube(U, sy, axis="y");	B = slicecube(W, sy, axis="y"))
-		(sz !== nothing) && (A = slicecube(U, sz, axis="z");	B = slicecube(V, sz, axis="z"))
+		(startx !== nothing) && (A = slicecube(V, startx, axis="x");	B = slicecube(W, startx, axis="x"))
+		(starty !== nothing) && (A = slicecube(U, starty, axis="y");	B = slicecube(W, starty, axis="y"))
+		(startz !== nothing) && (A = slicecube(U, startz, axis="z");	B = slicecube(V, startz, axis="z"))
 	end
 	s,a = streamlines(A, B, step=step, max_vert=max_vert)
 
@@ -184,16 +184,16 @@ end
 ##
 
 # -----------------------------------------------------------------------------------------------------------
-function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, sx, sy, sz; step=0.1, max_vert::Int=10000)
-	# Method that let sx, sy or sz be a constant or vectors
-	x_len = isvector(sx) ? length(sx) : 1
-	y_len = isvector(sy) ? length(sy) : 1
-	z_len = isvector(sz) ? length(sz) : 1
+function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, startx, starty, startz; step=0.1, max_vert::Int=10000)
+	# Method that let startx, starty or startz be a constant or vectors
+	x_len = isvector(startx) ? length(startx) : 1
+	y_len = isvector(starty) ? length(starty) : 1
+	z_len = isvector(startz) ? length(startz) : 1
 	len = max(z_len, max(x_len, y_len))
 	if (len == 1)		# They are all scalars
-		streamlines(U, V, W, [sx], [sy], [sz], step=step, max_vert=max_vert)
+		streamlines(U, V, W, [startx], [starty], [startz], step=step, max_vert=max_vert)
 	else
-		streamlines(U, V, W, (x_len == 1) ? [sx] : sx, (y_len == 1) ? [sy] : sy, (z_len == 1) ? [sz] : sz, step=step, max_vert=max_vert)
+		streamlines(U, V, W, (x_len == 1) ? [startx] : startx, (y_len == 1) ? [starty] : starty, (z_len == 1) ? [startz] : startz, step=step, max_vert=max_vert)
 	end
 end
 
