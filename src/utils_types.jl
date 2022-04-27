@@ -469,12 +469,14 @@ function slicecube(G::GMTgrid, slice::Int; axis="z")
 		G_ = mat2grid(G[:,:,slice], G.x, G.y, [G.v[slice]], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
 	elseif (_axis == "y")
 		if (G.layout[2] == 'C')  G_ = mat2grid(G[slice,:,:], G.x, G.v, reg=G.registration)
-		else                     G_ = mat2grid(G[:,slice,:], G.x, G.v, reg=G.registration, is_transposed=true)	# fromGDAL
+		else                     G_ = mat2grid(G[:,slice,:], G.x, G.v, reg=G.registration, is_transposed=true)
 		end
+		G_.v = G_.y;	G_.y = [G.y[slice]]		# Shift coords vectors since mat2grid doesn't know how-to.
 	else
 		if (G.layout[2] == 'C')  G_ = mat2grid(G[:,slice,:], G.y, G.v, reg=G.registration)
-		else                     G_ = mat2grid(G[slice,:,:], G.y, G.v, reg=G.registration, is_transposed=true)	# from GDAL
+		else                     G_ = mat2grid(G[slice,:,:], G.y, G.v, reg=G.registration, is_transposed=true)
 		end
+		G_.v = G_.y;	G_.y = G_.x;	G_.x = [G.x[slice]]	
 	end
 	G_.layout = G.layout
 	return G_
@@ -498,11 +500,13 @@ function slicecube(G::GMTgrid, slice::AbstractFloat; axis="z")
 		else                     mat = G[:,layer,:] .+ (G[:,layer+1,:] .- G[:,layer,:]) .* frac		# from GDAL
 		end
 		G_ = mat2grid(mat, G.x, G.v, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+		G_.v = G_.y;	G_.y = [Float64(slice)]		# Shift coords vectors since mat2grid doesn't know how-to.
 	else
 		if (G.layout[2] == 'C')  mat = G[:,layer,:] .+ (G[:,layer+1,:] .- G[:,layer,:]) .* frac
 		else                     mat = G[layer,:,:] .+ (G[layer+1,:,:] .- G[layer,:,:]) .* frac		# from GDAL
 		end
 		G_ = mat2grid(mat, G.y, G.v, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+		G_.v = G_.y;	G_.y = G_.x;	G_.x = [Float64(slice)]	
 	end
 	G_.layout = G.layout
 	return G_
