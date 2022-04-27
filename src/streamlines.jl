@@ -23,12 +23,12 @@ velocity data and the remaining arguments have the same meaning as in the other 
 
 ### Example
     x,y = GMT.meshgrid(-10:10);
-	u = 2 .* x .* y;
-	v = y .^2 - x .^ 2;
-	U = mat2grid(u, x[1,:], y[:,1]);
-	V = mat2grid(v, x[1,:], y[:,1]);
-	r, = streamlines(U, V);
-	plot(r, S="~d4c:+skarrow/0.4+gblack", show=1)
+    u = 2 .* x .* y;
+    v = y .^2 - x .^ 2;
+    U = mat2grid(u, x[1,:], y[:,1]);
+    V = mat2grid(v, x[1,:], y[:,1]);
+    r, = streamlines(U, V);
+    plot(r, S="~d4c:+skarrow/0.4+gblack", show=1)
 """
 function streamlines(x, y, U::Matrix, V::Matrix, sx, sy; step=0.1, max_vert::Int=10000)
 	U = mat2grid(U, x, y)
@@ -72,6 +72,9 @@ function streamlines(U::GMTgrid, V::GMTgrid, D::GMTdataset; step=0.1, max_vert::
 end
 
 function streamlines(U::GMTgrid, V::GMTgrid, sx::VMr, sy::VMr; step=0.1, max_vert::Int=10000)
+	# Method for 2D grids
+	@assert(size(U) == size(V))
+	(ndims(U) > 2) && error("This streamlines method is for 2D grids only. Not cubes.")
 
 	n_allocated::Int = 2000
 	n_rows::Int, n_cols::Int = size(U)
@@ -126,10 +129,7 @@ function streamlines(U::GMTgrid, V::GMTgrid, sx::VMr, sy::VMr; step=0.1, max_ver
 			y_pos += v * step / max_scaled_uv
 		end
 
-		deleteat!(x_flow, n_vert:length(x_flow))
-		deleteat!(y_flow, n_vert:length(y_flow))
-		n_allocated = n_vert-1	# Update this because we may needed in next (eventual) flowline
-		return [x_flow y_flow], n_allocated
+		return [x_flow[1:n_vert-1] y_flow[1:n_vert-1]], n_allocated
 	end
 
 	# Here we need to meshgrid when any of the locations is a vector
@@ -149,7 +149,7 @@ function streamlines(U::GMTgrid, V::GMTgrid, sx::VMr, sy::VMr; step=0.1, max_ver
 		x = interp_vec(x_vec, _sx[1])
 		y = interp_vec(y_vec, _sy[1])
 		t, n_allocated = helper_stream(x, y, x_vec, y_vec, n_rows, n_cols, isT, n_allocated)
-		return !isempty(t) ? mat2ds(t) : nothing
+		return !isempty(t) ? mat2ds(t) : GMTdataset()
 	else
 		D = Vector{GMTdataset}(undef, length(_sx))
 		kk, c = 0, false
@@ -171,6 +171,8 @@ function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid; axis::Bool=false, start
 	# Method where only one of startx, starty, startz is valid and we do a slice of the cube at that dimension.
 	# Ex: D, = streamlines(U, V, W, startz=5, axis=true);
 	(startx === nothing && starty === nothing && startz === nothing) && error("Must select which dimension to slice.")
+	@assert(size(U) == size(V));	@assert(size(V) == size(W))
+	(ndims(U) != 3) && error("This streamlines method is for cubes only.")
 
 	if (axis)
 		(startx !== nothing) && (A = slicecube(V, startx, axis="x");	B = slicecube(W, startx, axis="x"))
@@ -186,6 +188,9 @@ end
 # -----------------------------------------------------------------------------------------------------------
 function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, startx, starty, startz; step=0.1, max_vert::Int=10000)
 	# Method that let startx, starty or startz be a constant or vectors
+	@assert(size(U) == size(V));	@assert(size(V) == size(W))
+	(ndims(U) != 3) && error("This streamlines method is for cubes only.")
+
 	x_len = isvector(startx) ? length(startx) : 1
 	y_len = isvector(starty) ? length(starty) : 1
 	z_len = isvector(startz) ? length(startz) : 1
@@ -263,11 +268,7 @@ function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, sx::VMr, sy::VMr, sz::V
 			z += w * step / max_scaled_uvw
 		end
 
-		deleteat!(x_flow, n_vert:length(x_flow))
-		deleteat!(y_flow, n_vert:length(y_flow))
-		deleteat!(z_flow, n_vert:length(z_flow))
-		n_allocated = n_vert-1	# Update this because we may needed in next (eventual) flowline
-		return [x_flow y_flow z_flow], n_allocated
+		return [x_flow[1:n_vert-1] y_flow[1:n_vert-1] z_flow[1:n_vert-1]], n_allocated
 	end
 
 	# Here we need to meshgrid when any of the locations is a vector
@@ -283,7 +284,7 @@ function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, sx::VMr, sy::VMr, sz::V
 		y = interp_vec(V.y,  _sy[1])
 		z = interp_vec(z_coord, _sz[1])
 		t, n_allocated = helper_stream(x, y, z, n_rows, n_cols, isT, n_allocated)
-		return !isempty(t) ? mat2ds(t) : nothing
+		return !isempty(t) ? mat2ds(t) : GMTdataset()
 	else
 		D = Vector{GMTdataset}(undef, length(_sx))
 		kk, c = 0, false
@@ -373,8 +374,9 @@ function equistreams(u::GMTgrid, v::GMTgrid; density=1, max_density=4)
 		startgrid[r,c] = true
 		xstart = xmin + (c-0.5) * inc_x_coarse
 		ystart = ymin + (r-0.5) * inc_y_coarse
-		vertsf::Matrix{Float64} = streamlines(u,  v, xstart, ystart; step, max_vert).data
-		vertsb::Matrix{Float64} = streamlines(-u,-v, xstart, ystart; step, max_vert).data
+		t = streamlines(u,  v, xstart, ystart; step=step, max_vert=max_vert)
+		vertsf::Matrix{Float64} = streamlines(u,  v, xstart, ystart; step=step, max_vert=max_vert).data
+		vertsb::Matrix{Float64} = streamlines(-u,-v, xstart, ystart; step=step, max_vert=max_vert).data
 		(isempty(vertsf) || isempty(vertsb)) && continue	# Maybe we are loosing a good one but it would error below
 
 		for q = 1:2
