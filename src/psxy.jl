@@ -41,8 +41,11 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	if (is_ternary)
-		cmd, opt_B::String = cmd * d[:B], d[:B]			# B option was parsed in plot/ternary
-		delete!(d, :B)
+		opt_B::String = ""
+		if (haskey(d, :B))		# Not necessarely the case when ternary!
+			cmd, opt_B = cmd * d[:B], d[:B]		# B option was parsed in plot/ternary
+			delete!(d, :B)
+		end
 		cmd, opt_R = parse_R(d, cmd, O)
 	end
 	if (is_ternary && !first) 	# Either a -J was set and we'll fish it here or no and we'll use the default.
