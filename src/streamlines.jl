@@ -33,7 +33,7 @@ velocity data and the remaining arguments have the same meaning as in the other 
 function streamlines(x, y, U::Matrix, V::Matrix, sx, sy; step=0.1, max_vert::Int=10000)
 	U = mat2grid(U, x, y)
 	V = mat2grid(V, x, y)
-	streamlines(U, V, sx, sy, step, max_vert)
+	streamlines(U, V, sx, sy, step=step, max_vert=max_vert)
 end
 
 function streamlines(U::GMTgrid, V::GMTgrid; side::Union{String, Symbol}="", step=0.1, max_vert::Int=10000, density=1, max_density=4)
@@ -125,6 +125,7 @@ function streamlines(U::GMTgrid, V::GMTgrid, sx::VMr, sy::VMr; step=0.1, max_ver
 			(dx != 0) && (u /= dx)			# M/s * 1/M = s^-1
 			(dy != 0) && (v /= dy)
 			max_scaled_uv = (abs(u) > abs(v)) ? abs(u) : abs(v)		# s^-1
+			(max_scaled_uv == 0) && break
 			x_pos += u * step / max_scaled_uv	# s^-1 * M / s^-1 = M
 			y_pos += v * step / max_scaled_uv
 		end
@@ -263,6 +264,7 @@ function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, sx::VMr, sy::VMr, sz::V
 
 			max_scaled_uvw = (abs(u) > abs(v)) ? abs(u) : abs(v)		# s^-1
 			(abs(w) > max_scaled_uvw) && (max_scaled_uvw = abs(w))
+			(max_scaled_uvw == 0) && break
 			x += u * step / max_scaled_uvw	# s^-1 * M / s^-1 = M
 			y += v * step / max_scaled_uvw
 			z += w * step / max_scaled_uvw
