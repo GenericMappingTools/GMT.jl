@@ -12,8 +12,9 @@ u = 2 .* x .* y;
 v = y .^2 - x .^ 2;
 U = mat2grid(u, x[1,:], y[:,1]);
 V = mat2grid(v, x[1,:], y[:,1]);
-r, = streamlines(U, V);
-r, = streamlines(x[1,:], y[:,1], u, v, 0., 0.);
+r = streamlines(x[1,:], y[:,1], u, v, 0., 0.);
+r,a = streamlines(U, V);
+plot(r, decorated=(locations=a, symbol=(custom="arrow", size=0.3), fill=:black, dec2=true), Vd=2);
 
 U = grdinterpolate("U.nc");
 V = grdinterpolate("V.nc");

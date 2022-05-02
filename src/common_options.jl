@@ -146,7 +146,7 @@ function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function tha
 		elseif (r == "same")       R = " -R"
 		else                       R = " -R" * r
 		end
-	elseif ((isa(Val, VMr) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
+	elseif ((isvector(Val) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
 		if (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag))
 			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", Val[1], Val[3], Val[2], Val[4])
 		else
@@ -2778,6 +2778,11 @@ function decorated(;kwargs...)::String
 		if (marca == "")
 			cmd = "+sa0.5" * cmd
 		else
+			if (GMTver < v"6.5.0" && startswith(marca, "karrow/"))
+				cp(joinpath(dirname(pathof(GMT)), "..", "share", "custom", "arrow.def"), "arrow.def", force=true)
+			elseif (startswith(marca, "karrow/"))
+				marca = "k" * joinpath(dirname(pathof(GMT)), "..", "share", "custom", "arrow/")
+			end
 			cmd *= "+s" * marca
 			if ((val = find_in_dict(d, [:size :ms :markersize :symbolsize])[1]) !== nothing)
 				cmd *= arg2str(val)
@@ -2839,8 +2844,15 @@ function helper_decorated(d::Dict, compose=false)
 			error("DECORATED: 'dist' (or 'distance') option. Unknown data type.")
 		end
 		if     (symb == :distmap)  optD = "D"		# Here we know that we are dealing with a -S~ for sure.
-		elseif (symb != :number && compose)  optD = "d"		# I feer the case :number is not parsed anywhere
+		elseif (symb != :number && compose)  optD = "d"		# I fear the case :number is not parsed anywhere
 		end
+	elseif ((val = find_in_dict(d, [:locations])[1]) !== nothing)
+		if (isa(val, AbstractString))  cmd = val
+		elseif (GMTver < v"6.4.0" && (isa(val, Matrix) || isa(val, GDtype)))
+			cmd = joinpath(tempdir(), "GMTjl_decorated_loc.dat")
+			gmtwrite(cmd, val)
+		end
+		optD = "f"
 	end
 	if (cmd == "")
 		val, symb = find_in_dict(d, [:line :Line])
@@ -3456,7 +3468,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function put_in_slot(cmd::String, opt::Char, args...)
-	# Find the first non-empty slot in ARGS and assign it the Val of d[:symb]
+	# Find the first non-empty slot in ARGS and assign it the Val of OPT
 	# Return also the index of that first non-empty slot in ARGS
 	k = 1
 	for arg in args					# Find the first empty slot
@@ -3514,6 +3526,14 @@ function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3
 	return cmd, arg1, arg2, arg3, arg4
 end
 # ---------------------------------------------------------------------------------------------------
+
+function last_non_nothing(args...)
+	# Return the last element of ARGS that is !== nothing
+	k = length(args) + 1
+	while (args[k-=1] === nothing && k > 1) end
+	(k == 1) && @warn("All elements of `args` === nothing. Expect ...")
+	return args[k]
+end
 
 # ---------------------------------------------------------------------------------------------------
 finish_PS_module(d::Dict, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =

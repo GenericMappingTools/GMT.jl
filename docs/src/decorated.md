@@ -36,17 +36,22 @@ with symbols. This second category is still subdivided in two algorithms. They a
 ## Decorated lines
 
 To select this type the *dec2=true* keyword/value must be present in the *decorated* args.
-The required setting controls the placement of labels along the quoted lines. Choose among the controlling
-algorithms.
+The required setting controls the placement of symbols along the quoted lines. Choose among the
+controlling algorithms.
 
 ### [Placement methods:](@id placement_method_dec)
 
 - *dist=xx* or *distance=xx*\
-   Give distances between labels on the plot in your preferred measurement unit.
+   Give distances between symbols on the plot in your preferred measurement unit.
   *xx* may be a scalar or a string. Use strings when appending the units c (cm), i (inch), or p (points).
 - *distmap=xx*\
    Like above but specify distances in map units and append the unit; choose among e (m),
-   k (km), n (nautical mile), and d (arc degree), m (arc minute), or s (arc second)
+   k (km), n (nautical mile), and d (arc degree), m (arc minute), or s (arc second).
+- *locations="fname" or locations=array*\
+   Read the text file "file.txt" and place symbols at locations in the file that matches locations along the
+   decorated lines. Optionally, passa a Mx2 array (or GMTdataset) with the symbols location. Symbols will
+   only be placed if the coordinates match the line coordinates to within a distance of slop (append desired
+   unit or we use PROJ_LENGTH_UNIT). The default slop is zero, meaning only exact coordinate matches will do.
 - *line=xx*\
    Give the coordinates of the end points for one or more straight line segments.
    Symbols will be placed where these lines intersect the decorated lines. *xx* format is a Mx4 array
@@ -95,12 +100,17 @@ lines. Choose among the controlling algorithms.
 ### [Placement methods:](@id placement_method_quot)
 
 - *dist=xx* or *distance=xx*\
-   Give distances between labels on the plot in your preferred measurement unit.
+   Give distances between symbols  on the plot in your preferred measurement unit.
   *xx* may be a scalar or a string. Use strings when appending the units c (cm), i (inch), or p (points).
 - *distmap=xx*\
    Similar to above but specify distances in map units and append the unit; choose among e (m),
    f (foot), k (km), M (mile), n (nautical mile) or u (US survey foot), and d (arc degree), m (arc minute),
    or s (arc second).
+- *locations="fname" or locations=array*\
+   Read the text file "file.txt" and place symbols at locations in the file that matches locations along the
+   decorated lines. Optionally, passa a Mx2 array (or GMTdataset) with the symbols location. Symbols will
+   only be placed if the coordinates match the line coordinates to within a distance of slop (append desired
+   unit or we use PROJ_LENGTH_UNIT). The default slop is zero, meaning only exact coordinate matches will do.
 - *line=xx*\
    Give the coordinates of the end points for one or more straight line segments.
    Symbols will be placed where these lines intersect the quoted lines. *xx* format is a Mx4 array
