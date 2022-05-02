@@ -5,7 +5,7 @@ const psxyz! = plot3d!
 
 # ---------------------------------------------------------------------------------------------------
 function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool, kwargs...)
-	arg2, arg3 = nothing, nothing
+	arg2, arg3, arg4 = nothing, nothing, nothing
 	N_args = (arg1 === nothing) ? 0 : 1
 	is_ternary = (caller == "ternary") ? true : false
 	if     (is3D)       gmt_proggy = (IamModern[1]) ? "plot3d "  : "psxyz "
@@ -77,7 +77,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		opt_R = '/' * box_str[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
 	end
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
-	(N_args == 0 && arg1 !== nothing) && (N_args = 1)
+	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
 
 	if (isGMTdataset(arg1) && getproj(arg1) == "" && opt_J == " -JX" * def_fig_size) 
@@ -157,6 +157,9 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
 		cmd = (isa(val, String)) ? cmd * " " * val : cmd * decorated(val)
+		if (occursin("~f:", cmd) || occursin("qf:", cmd))	# Here we know val is a NT and `locations` was numeric
+			_, arg1, arg2, arg3 = arg_in_slot(nt2dict(val), "", [:locations], Union{Matrix, GDtype}, arg1, arg2, arg3)
+		end
 	end
 
 	opt_Wmarker::String = ""
@@ -174,9 +177,11 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	if ((do_Z_fill || do_Z_outline) && !occursin("-C", cmd))
 		if (isempty(current_cpt[1]))
-			mima::Tuple{Real, Real} = (N_args == 1) ? extrema(arg1) : extrema(arg2)	# If it's arg3 we're fckd
+			#mima::Tuple{Real, Real} = (N_args == 1) ? extrema(arg1) : extrema(arg2)	# If it's arg3 we're fckd
+			mima::Tuple{Real, Real} = extrema(last_non_nothing(arg1, arg2, arg3))
 			r = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
-			(arg1 === nothing) ? arg1 = r : ((arg2 === nothing) ? arg2 = r : arg3 = r)
+			#(arg1 === nothing) ? arg1 = r : ((arg2 === nothing) ? arg2 = r : arg3 = r)
+			(arg1 === nothing) ? arg1 = r : ((arg2 === nothing) ? arg2 = r : (arg3 === nothing ? arg3 = r : arg4 = r))
 		end
 		cmd *= " -C"
 	end
@@ -239,7 +244,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	_cmd = finish_PS_nested(d, _cmd)
 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
-	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3)
+	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
 	return r
 end
@@ -646,7 +651,7 @@ function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)
 	# Example that will land and be processed here:  marker=(:Ellipse, [30 10 15])
 	# N is the number of extra columns
 	marca = "";	 msg = ""
-	if (size(ext,2) == N && arg1 !== nothing)
+	if (size(ext,2) == N && arg1 !== nothing)	# Here ARG1 is supposed to be a matrix that will be extended.
 		S = Symbol(opt)
 		marca, arg1 = add_opt(add_opt, (Dict(S => (par=ext,)), opt, "", [S]), (par="|",), true, arg1)
 	elseif (cst && length(ext) == 1)
