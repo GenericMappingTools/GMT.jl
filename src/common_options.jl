@@ -1814,7 +1814,7 @@ end
 function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, del::Bool=true, arg=nothing)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
-	# ARG, is a special case to append to a matrix (complicated thing in Julia)
+	# ARG, is a special case to append to a matrix (can't realy be done in Julia)
 	# ARG can also be a Bool, in which case when MAPA is a NT we expand each of its members as sep options
 	# If ARG is a string, then the keys of MAPA can be used as values of SYMB and are replaced by vals of MAPA
 	#    Example (hitogram -Z): add_opt(d, "", "Z", [:Z :kind], (counts="0", freq="1",...)) Z=freq => -Z1
@@ -1913,7 +1913,7 @@ end
 function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	# Generic parser of options passed in a NT and whose last element is anther NT with the mapping
 	# between expanded sub-options names and the original GMT flags.
-	# ARG, is a special case to append to a matrix (complicated thing in Julia)
+	# ARG, is a special case to append to a matrix (can't realy be done in Julia)
 	# Example:
 	#	add_opt((a=(1,0.5),b=2), (a="+a",b="-b"))
 	# translates to:	"+a1/0.5-b2"
@@ -1962,7 +1962,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 			if (t != "")  cmd *= t[1]
 			else          cmd *= "1"	# "1" is itself the flag
 			end
-		elseif (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix
+		elseif (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix (here in vector form)
 			if (isa(nt[k], AbstractArray) || isa(nt[k], Tuple))
 				if (isa(nt[k], AbstractArray))  append!(arg, reshape(nt[k], :))
 				else                            append!(arg, reshape(collect(nt[k]), :))
@@ -2778,10 +2778,11 @@ function decorated(;kwargs...)::String
 		if (marca == "")
 			cmd = "+sa0.5" * cmd
 		else
-			if (GMTver < v"6.5.0" && startswith(marca, "karrow/"))
+			if (@static Sys.iswindows() && GMTver < v"6.4.0" && startswith(marca, "karrow/"))
+				# Due to a bug in Windows we have to copy the file to local directory.
 				cp(joinpath(dirname(pathof(GMT)), "..", "share", "custom", "arrow.def"), "arrow.def", force=true)
 			elseif (startswith(marca, "karrow/"))
-				marca = "k" * joinpath(dirname(pathof(GMT)), "..", "share", "custom", "arrow/")
+				marca = "k" * joinpath(dirname(pathof(GMT)), "..", "share", "custom", "arrow/") * marca[8:end]
 			end
 			cmd *= "+s" * marca
 			if ((val = find_in_dict(d, [:size :ms :markersize :symbolsize])[1]) !== nothing)
