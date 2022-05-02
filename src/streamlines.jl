@@ -1,25 +1,40 @@
 """
-  streamlines(U::GMTgrid, V::GMTgrid, startX, startY, step=0.1, max_vert::Int=10000)
+    S = streamlines(U::GMTgrid, V::GMTgrid, startX, startY; step=0.1, max_vert::Int=10000)
 
 Compute 2-D streamlines as a 2-D matrix (in fact, a GMTdataset) of vector fields.
 The inputs `U` and `V` are GMTgrids with the ``x`` and ``y`` velocity components, and `startX` and
 `startY` are the starting positions of the streamlines. `step` is the step size in data units for
 interpolating the vector data and `max_vert` is the maximum number of vertices in a streamline.
-
 `startX` and `startY` can both be scalars, vectors or one a scalar and the other a vector.
+Returns a Vector{GMTdataset} with the streamlines.
 
-  streamlines(U::GMTgrid, V::GMTgrid, D::GMTdataset, step=0.1, max_vert::Int=10000)
+    S = streamlines(U::GMTgrid, V::GMTgrid, D::GMTdataset; step=0.1, max_vert::Int=10000)
 
 In this method the streamlines starting positions are fetch from the 2 columns of the `D` argument.
+Returns a Vector{GMTdataset} with the streamlines.
 
-  streamlines(U::GMTgrid, V::GMTgrid; side::Union{String, Symbol}="left", step=0.1, max_vert::Int=10000)
+    S, A = streamlines(U::GMTgrid, V::GMTgrid; step=0.1, max_vert::Int=10000)
 
-Here we auto-generate the starting positions along one of the 4 sides of the grid.
+Method that computes automatically spaced streamlines from 2D grids U and V. Returns the streamlines
+in the ``S`` Vector{GMTdataset} and ``A`` holds the positions along the streamlines where to plot
+arrow-heads if wished.
 
-  streamlines(x, y, U::Matrix, V::Matrix, sx, sy, step=0.1, max_vert::Int=10000)
+    S = streamlines(U::GMTgrid, V::GMTgrid; side::Union{String, Symbol}="left", step=0.1, max_vert::Int=10000)
 
-This last method let users pass the `x` and `y` vector data coordinates, U and V are matrices with the
-velocity data and the remaining arguments have the same meaning as in the other methods.
+Here we auto-generate the starting positions along one of the 4 sides of the grid. Select the wished side
+with the ``side`` keyword. Returns a Vector{GMTdataset} with the streamlines.
+
+    S = streamlines(x, y, U::Matrix, V::Matrix, sx, sy; step=0.1, max_vert::Int=10000)
+
+This last 2D method let users pass the `x` and `y` vector data coordinates, U and V are matrices with the
+velocity data and the remaining arguments have the same meaning as in the other methods. Returns a
+Vector{GMTdataset} with the streamlines.
+
+    S = streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, startX, startY, startZ; step=0.1, max_vert::Int=10000)
+
+Conpute 3D volume of vector fields with streamline. Here `U`,`V` and `W` are 3D cubes with ``x,y,z``
+velocity components. `startX`, `startY` and `startZ` can be scalar or vector coordinate arrays.
+Returns a Vector{GMTdataset} with the streamlines.
 
 ### Example
     x,y = GMT.meshgrid(-10:10);
@@ -28,7 +43,7 @@ velocity data and the remaining arguments have the same meaning as in the other 
     U = mat2grid(u, x[1,:], y[:,1]);
     V = mat2grid(v, x[1,:], y[:,1]);
     r, = streamlines(U, V);
-    plot(r, S="~d4c:+skarrow/0.4+gblack", show=1)
+    plot(r, decorated=(locations=a, symbol=(custom="arrow", size=0.3), fill=:black, dec2=true), show=1)
 """
 function streamlines(x, y, U::Matrix, V::Matrix, sx, sy; step=0.1, max_vert::Int=10000)
 	U = mat2grid(U, x, y)
@@ -124,8 +139,7 @@ function streamlines(U::GMTgrid, V::GMTgrid, sx::VMr, sy::VMr; step=0.1, max_ver
 
 			(dx != 0) && (u /= dx)			# M/s * 1/M = s^-1
 			(dy != 0) && (v /= dy)
-			max_scaled_uv = (abs(u) > abs(v)) ? abs(u) : abs(v)		# s^-1
-			(max_scaled_uv == 0) && break
+			max_scaled_uv = (abs(u) > abs(v)) ? abs(u) : abs(v)	+ eps()	# s^-1
 			x_pos += u * step / max_scaled_uv	# s^-1 * M / s^-1 = M
 			y_pos += v * step / max_scaled_uv
 		end
@@ -262,9 +276,9 @@ function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, sx::VMr, sy::VMr, sz::V
 			(dy != 0) && (v /= dy)
 			(dz != 0) && (w /= dz)
 
-			max_scaled_uvw = (abs(u) > abs(v)) ? abs(u) : abs(v)		# s^-1
+			max_scaled_uvw = (abs(u) > abs(v)) ? abs(u) : abs(v) + eps()	# s^-1
 			(abs(w) > max_scaled_uvw) && (max_scaled_uvw = abs(w))
-			(max_scaled_uvw == 0) && break
+			#(max_scaled_uvw == 0) && break
 			x += u * step / max_scaled_uvw	# s^-1 * M / s^-1 = M
 			y += v * step / max_scaled_uvw
 			z += w * step / max_scaled_uvw
