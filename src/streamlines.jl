@@ -42,7 +42,7 @@ Returns a Vector{GMTdataset} with the streamlines.
     v = y .^2 - x .^ 2;
     U = mat2grid(u, x[1,:], y[:,1]);
     V = mat2grid(v, x[1,:], y[:,1]);
-    r, = streamlines(U, V);
+    r,a = streamlines(U, V);
     plot(r, decorated=(locations=a, symbol=(custom="arrow", size=0.3), fill=:black, dec2=true), show=1)
 """
 function streamlines(x, y, U::Matrix, V::Matrix, sx, sy; step=0.1, max_vert::Int=10000)

@@ -1825,10 +1825,10 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 		if (isa(arg, Bool) && isa(mapa, NamedTuple))	# Make each mapa[i] a mapa[i]key=mapa[i]val
 			local cmd_::String = ""
 			for k in keys(mapa)
-				((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue
-				if (isa(mapa[k], Tuple))    cmd_ *= mapa[k][1] * mapa[k][2](d, [k])
+				((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue	# This mapa key was not used
+				if (isa(mapa[k], Tuple))    cmd_ *= mapa[k][1] * mapa[k][2](d, [k])	# mapa[k][2] is a function
 				else
-					if (mapa[k][1] == '_')  cmd_ *= mapa[k][2:end]		# Keep omly the flag
+					if (mapa[k][1] == '_')  cmd_ *= mapa[k][2:end]		# Keep only the flag
 					else                    cmd_ *= mapa[k] * arg2str(val_)
 					end
 				end

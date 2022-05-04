@@ -72,28 +72,6 @@ if (got_it)					# Otherwise go straight to end
 	d = [0 6.44; 1820 8.61; 2542 5.24; 2889 5.73; 3460 3.81; 4586 4.05; 6020 2.95; 6841 2.57; 7232 3.37; 10903 3.84; 11098 2.86; 11922 1.22; 12530 1.09; 14065 2.36; 14937 2.24; 16244 2.05; 17632 2.23; 19002 0.42; 20860 0.87; 22471 1.26];
 	greenspline(d, R="-2000/25000", I=100, S=:l, D=0, Vd=dbg2)
 
-	println("	MAKECPT")
-	makecpt(rand(10,1), E="", C=:rainbow, cmap="lixo.cpt");
-	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
-	cpt = makecpt(range="-1/1/0.1");
-	cpt = makecpt(-1,1,0.1);
-	println("		MAKECPT - 0")
-	if (GMTver > v"6.1.1")
-		C = cpt4dcw("eu");
-		C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
-		C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
-	end
-	println("		MAKECPT - 1")
-	@test_throws ErrorException("Unknown continent ue") cpt4dcw("ue")
-	GMT.iso3to2_eu();
-	GMT.iso3to2_af();
-	println("		MAKECPT - 2")
-	GMT.iso3to2_na();
-	GMT.iso3to2_world();
-	GMT.mk_codes_values(["PRT", "ESP", "FRA"], [1.0, 2, 3], region="eu");
-	println("		MAKECPT - 3")
-	@test_throws ErrorException("The region ue is invalid or has not been implemented yet.") GMT.mk_codes_values(["PRT"], [1.0], region="ue")
-
 	println("	MAPPROJECT")
 	mapproject([-10 40], J=:u29, C=true, F=true, V=:q);
 	mapproject(region=(-15,35,30,48), proj=:merc, figsize=5, map_size=true);
@@ -119,6 +97,28 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Asked data for a level (3) that is lower than lowest data level (2)") gadm("AND", "ordino", names=true);
 	catch
 	end
+
+	println("	MAKECPT")
+	makecpt(rand(10,1), E="", C=:rainbow, cmap="lixo.cpt");
+	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
+	cpt = makecpt(range="-1/1/0.1");
+	cpt = makecpt(-1,1,0.1);
+	println("		MAKECPT - 0")
+	if (GMTver > v"6.1.1")
+		C = cpt4dcw("eu");
+		C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
+		C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
+	end
+	println("		MAKECPT - 1")
+	@test_throws ErrorException("Unknown continent ue") cpt4dcw("ue")
+	GMT.iso3to2_eu();
+	GMT.iso3to2_af();
+	println("		MAKECPT - 2")
+	GMT.iso3to2_na();
+	GMT.iso3to2_world();
+	GMT.mk_codes_values(["PRT", "ESP", "FRA"], [1.0, 2, 3], region="eu");
+	println("		MAKECPT - 3")
+	@test_throws ErrorException("The region ue is invalid or has not been implemented yet.") GMT.mk_codes_values(["PRT"], [1.0], region="ue")
 
 	# Remove garbage
 	println("	REMOVE GARBAGE")

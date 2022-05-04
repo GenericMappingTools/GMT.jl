@@ -53,7 +53,7 @@
 	Base.BroadcastStyle(typeof(I))
 	getindex(I,1);
 	setindex!(I, [101 1],1:2)
-	I .+ UInt8(0)
+	I .+ UInt8(0);
 
 	GMT.GMTdataset();
 	isempty(GMT.GMTcpt())
@@ -63,7 +63,7 @@
 	GMT.GMTdataset(rand(Float32, 2,2), ["aiai"])
 	GMT.GMTdataset(rand(Float32, 2,2), "aiai")
 	GMT.GMTdataset(rand(Float32, 2,2))
-	D = mat2ds(GMT.fakedata(4,4), x=:ny, color=:cycle, multi=true)
+	D = mat2ds(GMT.fakedata(4,4), x=:ny, color=:cycle, multi=true);
 	D[1].text = ["lixo", "l", "p", "q"];
 	GMT.set_dsBB!(D[1])
 	GMT.find4similar(D[1],0)
@@ -146,7 +146,7 @@
 
 	G = GMT.peaks();
 	show(GMT.peaks(N=2));
-	show(mat2ds(rand(2,13), multi=true));
+	show(mat2ds(rand(2,3), multi=true));
 	grdcontour(G, cont=1, annot=2, axis="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
 	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
@@ -155,26 +155,26 @@
 	GMT.geodetic2enu(-81.998,42.002,1000,-82,42,200);
 
 	println("	DRAWING")
-	circle(0,0,1,first=true,Vd=dbg2)
-	cross(0,0,1,Vd=dbg2)
-	custom(0,0, "bla", 1,Vd=dbg2)
-	diamond(0,0,1,Vd=dbg2)
-	hexagon(0,0,1,Vd=dbg2)
-	itriangle(0,0,1,Vd=dbg2)
-	letter(0,0, 1, "A", "Helvetica", "CM",Vd=dbg2)
-	minus(0,0,1,Vd=dbg2)
-	pentagon(0,0,1,Vd=dbg2)
-	plus(0,0,1,Vd=dbg2)
-	square(0,0,1,Vd=dbg2)
-	star(0,0,1,Vd=dbg2)
-	triangle(0,0,1,Vd=dbg2)
-	ydash(0,0,1,Vd=dbg2)
-	box(0,0,1,1,Vd=dbg2)
-	rect(0,0,1,1,Vd=dbg2)
-	ellipseAz(0,0, 0, 1, 1,Vd=dbg2)
-	rotrect(0,0, 0, 1, 1,Vd=dbg2)
-	rotrectAz(0,0, 0, 1, 1,Vd=dbg2)
-	roundrect(0,0, 1, 1, 1,Vd=dbg2)
-	ellipse(300,201,0, 200, 50, first=true, units=:points, fill=:purple, pen=1)
-	circle(305,185,56, fill=:black, figname="lixo.ps")
+	circle(0,0,1,first=true,Vd=dbg2);
+	cross(0,0,1,Vd=dbg2);
+	custom(0,0, "bla", 1,Vd=dbg2);
+	diamond(0,0,1,Vd=dbg2);
+	hexagon(0,0,1,Vd=dbg2);
+	itriangle(0,0,1,Vd=dbg2);
+	letter(0,0, 1, "A", "Helvetica", "CM",Vd=dbg2);
+	minus(0,0,1,Vd=dbg2);
+	pentagon(0,0,1,Vd=dbg2);
+	plus(0,0,1,Vd=dbg2);
+	square(0,0,1,Vd=dbg2);
+	star(0,0,1,Vd=dbg2);
+	triangle(0,0,1,Vd=dbg2);
+	ydash(0,0,1,Vd=dbg2);
+	box(0,0,1,1,Vd=dbg2);
+	rect(0,0,1,1,Vd=dbg2);
+	ellipseAz(0,0, 0, 1, 1,Vd=dbg2);
+	rotrect(0,0, 0, 1, 1,Vd=dbg2);
+	rotrectAz(0,0, 0, 1, 1,Vd=dbg2);
+	roundrect(0,0, 1, 1, 1,Vd=dbg2);
+	ellipse(300,201,0, 200, 50, first=true, units=:points, fill=:purple, pen=1, X=0, Y=0);
+	circle(305,185,56, fill=:black, figname="lixo.ps");
 end
