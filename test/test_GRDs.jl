@@ -29,12 +29,12 @@
 
 	println("	GRDBLEND")
 	G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y -Vq");
-	G2=grdblend(G,G3);
+	grdblend(G,G3);
 
 	println("	GRDCLIP")
-	G2=grdclip(G,above="5/6", low=[2 2], between=[3 4.5 4]);	 # Use G of previous test
-	@test_throws ErrorException("Wrong number of elements in S option") G2=grdclip(G,above="5/6", low=[2], between=[3 4 4.5]);
-	@test_throws ErrorException("OPT_S: argument must be a string or a two elements array.") G2=grdclip(G,above=5, low=[2 2]);
+	grdclip(G,above="5/6", low=[2 2], between=[3 4.5 4]);	 # Use G of previous test
+	@test_throws ErrorException("Wrong number of elements in S option") grdclip(G,above="5/6", low=[2], between=[3 4 4.5]);
+	@test_throws ErrorException("OPT_S: argument must be a string or a two elements array.") grdclip(G,above=5, low=[2 2]);
 
 	println("	GRDCONTOUR")
 	G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
@@ -57,10 +57,10 @@
 
 	println("	GRDCUT")
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
-	G2=grdcut(G, limits=[3 9 2 8]);
-	G2=grdcut("lixo.grd", limits=[3 9 2 8], V=:q);	# lixo.grd was written above in the gmtwrite test
-	G2=grdcut(data="lixo.grd", limits=[3 9 2 8], V=:q);
-	G2=grdcut(data=G, limits=[3 9 2 8]);
+	grdcut(G, limits=[3 9 2 8]);
+	grdcut("lixo.grd", limits=[3 9 2 8], V=:q);	# lixo.grd was written above in the gmtwrite test
+	grdcut(data="lixo.grd", limits=[3 9 2 8], V=:q);
+	grdcut(data=G, limits=[3 9 2 8]);
 
 	println("	CROP")
 	im = mat2img(UInt8.(GMT.magic(9)))
@@ -78,22 +78,22 @@
 	grdedit(G, C=true);
 
 	println("	GRDFFT")
-	G2=grdfft(G, upward=800); 	# Use G of previous test
-	G2=grdfft(G, G, E=[]);
+	grdfft(G, upward=800); 	# Use G of previous test
+	grdfft(G, G, E=[]);
 
 	println("	GRDFIL")
-	G1=grdmask([3 3], R="0/6/0/6", I=1, N="10/NaN/NaN", S=0);
-	G2=grdfill(G, algo=:n);
+	grdmask([3 3], R="0/6/0/6", I=1, N="10/NaN/NaN", S=0);
+	grdfill(G, algo=:n);
 
 	println("	GRDFILTER")
-	G2=grdfilter(G, filter="m60", distflag=0, inc=0.5); # Use G of previous test
+	grdfilter(G, filter="m60", distflag=0, inc=0.5); # Use G of previous test
 
 	println("	GRDGRADIENT")
-	G2=grdgradient(G, azim="0/270", normalize="e0.6");
-	G2=grdgradient(G, azim="0/270", normalize="e0.6", Q=:save, Vd=dbg2);
+	grdgradient(G, azim="0/270", normalize="e0.6");
+	grdgradient(G, azim="0/270", normalize="e0.6", Q=:save, Vd=dbg2);
 
 	println("	GRDHISTEQ")
-	G2 = grdhisteq(G, gaussian=[]);	# Use G of previous test
+	grdhisteq(G, gaussian=[]);	# Use G of previous test
 
 	if (GMTver > v"6.1.1")
 		println("	GRDINTERPOLATE")
@@ -103,34 +103,35 @@
 	end
 
 	println("	GRDLANDMASK")
-	G2 = grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
+	grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
 
 	println("	GRDMASK")
-	G2 = grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
+	grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
+	@test_throws ErrorException("Failed to automatically load the input file. You must do it manually and pass it as numeric.") grdmask("aiai");
 
 	println("	GRDPASTE")
 	G3 = grdmath("-R10/20/0/10 -I1 X");
-	G2 = grdpaste(G,G3);
+	grdpaste(G,G3);
 
 	println("	GRDPROJECT")
 	# GRDPROJECT	-- Works but does not save projection info in header
-	G2 = grdproject(G, proj="u29/1:1", F=[], C=[]); 		# Use G of previous test
+	grdproject(G, proj="u29/1:1", F=[], C=[]); 		# Use G of previous test
 
 	println("	GRDROTATER")
 	grdrotater(G, rotation="-40.8/32.8/-12.9", Vd=dbg2);
 
 	println("	GRDSAMPLE")
-	G2 = grdsample(G, inc=0.5);		# Use G of previous test
+	grdsample(G, inc=0.5);		# Use G of previous test
 
 	println("	GRDTREND")
 	G  = gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
-	G2 = grdtrend(G, model=3);
-	W = mat2grid(ones(Float32, size(G.z,1), size(G.z,2)));
+	grdtrend(G, model=3);
+	mat2grid(ones(Float32, size(G.z,1), size(G.z,2)));
 	W = mat2grid(rand(16,16), x=11:26, y=1:16);
 	mat2grid([3 4 5; 1 2 5; 5 5 5], reg=:pixel, x=[1 3], y=[1 3]);
-	G2 = grdtrend(G, model=3, diff=[], trend=true);
-	#G2 = grdtrend(G, model="3+r", W=W);
-	G2 = grdtrend(G, model="3+r", W=(W,0), Vd=dbg2);
+	grdtrend(G, model=3, diff=[], trend=true);
+	#grdtrend(G, model="3+r", W=W);
+	grdtrend(G, model="3+r", W=(W,0), Vd=dbg2);
 
 	println("	GRDTRACK")
 	#G = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
@@ -140,9 +141,9 @@
 	@assert(D.data == [0.0 0 1])
 	D = grdtrack([0 0], G="lixo.grd");
 	@assert(D.data == [0.0 0 1])
-	D = grdtrack("lixo.grd", [0 0]);
-	D = grdtrack(G, [0 0]);
-	D = grdtrack([0 0], G=G);
+	grdtrack("lixo.grd", [0 0]);
+	grdtrack(G, [0 0]);
+	grdtrack([0 0], G=G);
 	D = grdtrack([0 0], G=(G,G));
 	@assert(D.data == [0.0 0 1 1])
 

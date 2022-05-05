@@ -61,8 +61,7 @@ Parameters
 gravfft(arg1, arg2=nothing, cmd0::String=""; kw...) = gravfft(cmd0, arg1, arg2; kw...)
 function gravfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-    (GMTver < v"6.4.0") && (@warn("Sorry but you need at least GMT 6.4 to use this module.
-    Previous version had a bug that prevented Julia wrapper to work."); return nothing)
+    (GMTver < v"6.4.0") && (@warn("Sorry but you need at least GMT 6.4 to use this module. Previous version had a bug that prevented Julia wrapper to work."); return nothing)
 	arg3 = nothing
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 

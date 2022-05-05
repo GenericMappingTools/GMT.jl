@@ -54,8 +54,8 @@ function grdmask(cmd0::String="", arg1=nothing; kwargs...)
 	if (cmd0 != "")
 		try
 			arg1 = gmtread(cmd0)
-		catch err
-			println(err);   error("Failed to automatically read the input data. You must do it manually and pass it as numeric.")
+		catch
+			error("Failed to automatically load the input file. You must do it manually and pass it as numeric.")
 		end
 	end
 	common_grd(d, "grdmask " * cmd, arg1)           # Finish build cmd and run it
