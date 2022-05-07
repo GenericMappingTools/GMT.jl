@@ -57,6 +57,7 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `wkt`:  A WKT SRS.
   - `colnames`: Optional string vector with names for each column of `mat`.
 """
+mat2ds(mat::GDtype) = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...)
 	d = KW(kwargs)
 
@@ -278,6 +279,34 @@ function helper_ds_fill(d::Dict)::Vector{String}
 	end
 	return _fill
 end
+
+# ---------------------------------------------------------------------------------------------------
+function color_gradient_line(D::Matrix{<:Real}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
+	# Reformat a Mx2 (or Mx3) matrix so that it can be used as vectors with no head/tail but varying
+	# color determined by last column and using plot -Sv+s -W+cl
+	(!is3D && size(D,2) < 2) && error("This function requires that the data matrix has at least 2 columns")
+	(is3D && size(D,2)  < 3) && error("This function requires that the data matrix has at least 3 columns")
+	(is3D && color_col == 3) && (color_col = 4)		# Change the default value column number
+	dim_col = (is3D) ? 3 : 2		# Select the last coord column. 2nd for 2D and 3rd for is3D
+
+	r = (first) ? (1:size(D,1)-1) : (2:size(D,1))		# Which rows to use to pick the 'value' column
+	val = (size(D,2) == dim_col) ? collect(1.:size(D,1)-1) : D[r, color_col]
+	[D[1:end-1, 1:dim_col] val D[2:end, 1:dim_col]]
+end
+
+function color_gradient_line(D::GMTdataset; is3D::Bool=false, color_col::Int=3, first::Bool=true)
+	mat = color_gradient_line(D.data, is3D=is3D, color_col=color_col, first=first)
+	mat2ds(mat, proj=D.proj4, wkt=D.wkt, geom=wkbLineString)
+end
+
+function color_gradient_line(Din::Vector{<:GMTdataset}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
+	D = Vector{GMTdataset}(undef, length(Din))
+	for k = 1:length(Din)
+		D[k] = color_gradient_line(Din[k], is3D=is3D, color_col=color_col, first=first)
+	end
+	D
+end
+# ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
 """

@@ -3334,7 +3334,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, args...)
 	# This chunk of code is shared by several grdxxx & other modules, so wrap it in a function
-	if (IamModern[1])  cmd = replace(cmd, " -R " => " ")  end
+	IamModern[1] && (cmd = replace(cmd, " -R " => " "))
+	(haskey(d, :Vd) && d[:Vd] > 2) && show_args_types(args...)
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
 	R = isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
@@ -3367,6 +3368,15 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 		(size(legend_type[1].label, 1) != 0) && (legend_type[1].Vd = Vd)	# So that autolegend can also work
 		(Vd == 1) && println("\t", length(cmd) == 1 ? cmd[1] : cmd)
 		(Vd >= 2) && return length(cmd) == 1 ? cmd[1] : cmd
+	end
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function show_args_types(args...)
+	for k = 1:length(args)
+		args[k] === nothing && break
+		println("arg",k, " = ", typeof(args[k]))
 	end
 	return nothing
 end
@@ -3551,6 +3561,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	(finish) && (cmd = finish_PS(d, cmd, output, K, O))
 
 	have_Vd = haskey(d, :Vd)
+	(have_Vd && d[:Vd] > 2) && show_args_types(args...)
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return length(r) == 1 ? r[1] : r  end 	# For tests only
 	img_mem_layout[1] = add_opt(d, "", "", [:layout])
 	if (img_mem_layout[1] == "images")  img_mem_layout[1] = "I   "  end	# Special layout for Images.jl
@@ -3566,7 +3577,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
 		if (k > 1 && is_psscale && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
-			cmd2, arg1, = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)
+			_, arg1, = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)
 			(arg1 === nothing) && (@warn("No cmap found to use in colorbar. Ignoring this command."); continue)
 			P = gmt(cmd[k], arg1)
 			continue
@@ -4014,9 +4025,8 @@ end
 
 Convert a Date or DateTime or a string representation of them to decimal years.
 
-# Example
-
-yeardecimal(now())
+### Example
+    yeardecimal(now())
 """
 function yeardecimal(dtm::Union{String, Vector{String}})
 	try

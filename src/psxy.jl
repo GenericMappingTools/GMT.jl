@@ -130,8 +130,16 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		N_args = 3
 	end
 
+	# Need to parse -W here because we need to know if the call to make_color_column() MUST be avoided. 
+	opt_W::String = add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
+	got_color_line_grad = false
+	contains(opt_W, ",gradient") && (got_color_line_grad = true; opt_W = replace(opt_W, ",gradient" => "+cl"))
+	contains(opt_W, ",grad")     && (got_color_line_grad = true; opt_W = replace(opt_W, ",grad" => "+cl"))
+	got_color_line_grad && (arg1 = mat2ds(color_gradient_line(arg1, is3D=is3D)))
+
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
-	if ((arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))	# If "bar" ONLY if not bar-group
+	if (!got_color_line_grad && (arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))
+		# If "bar" ONLY if not bar-group
 		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
 		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
 	end
@@ -167,22 +175,24 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		opt_Wmarker = "0.5p," * arg2str(val)		# 0.25p is too thin?
 	end
 
-	opt_W::String = add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
-
 	# This bit is for the -Z option. Must consolidate the options.
 	(do_Z_fill && opt_G == "") && (cmd *= " -G+z")
 	(do_Z_outline && !contains(opt_W, "+z")) && (opt_W = (opt_W == "") ? " -W+c" : opt_W * "+z")
 	(got_Zvars && !do_Z_fill && !do_Z_outline && opt_W == "") && (opt_W = " -W0.5+z")	# Nofill and nothing else defaults to -W+z
 	(got_Zvars && (do_Z_fill || opt_G != "") && opt_L == "") && (cmd *= " -L")	# GMT requires -L when -Z fill or -G
 
-	if ((do_Z_fill || do_Z_outline) && !occursin("-C", cmd))
+	if ((do_Z_fill || do_Z_outline || got_color_line_grad) && !occursin("-C", cmd))
 		if (isempty(current_cpt[1]))
-			#mima::Tuple{Real, Real} = (N_args == 1) ? extrema(arg1) : extrema(arg2)	# If it's arg3 we're fckd
-			mima::Tuple{Real, Real} = extrema(last_non_nothing(arg1, arg2, arg3))
+			if (got_color_line_grad)		# Use the fact that we have min/max already stored
+				mima = (arg1.ds_bbox[5+2*is3D], arg1.ds_bbox[6+2*is3D])
+			else
+				mima = extrema(last_non_nothing(arg1, arg2, arg3))
+			end
 			r = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
-			#(arg1 === nothing) ? arg1 = r : ((arg2 === nothing) ? arg2 = r : arg3 = r)
-			(arg1 === nothing) ? arg1 = r : ((arg2 === nothing) ? arg2 = r : (arg3 === nothing ? arg3 = r : arg4 = r))
+		else
+			r = current_cpt[1]
 		end
+		(arg1 === nothing) ? arg1 = r : ((arg2 === nothing) ? arg2 = r : (arg3 === nothing ? arg3 = r : arg4 = r))
 		cmd *= " -C"
 	end
 
@@ -217,6 +227,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if (opt_S != "")
 		opt_ML, opt_Wmarker = parse_markerline(d, opt_ML, opt_Wmarker)
 	end
+	(got_color_line_grad && opt_S == "") && (cmd *= " -Sv+s")	# No set opt_S because it results in 2 commands
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
 	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
