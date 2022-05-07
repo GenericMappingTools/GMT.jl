@@ -17,7 +17,7 @@ Parameters
 
     ``increment`` is used when series is NOT equidistantly sampled. Then increment will be the abscissae resolution.
     ($(GMTdoc)filter1d.html#d)
-- **E** | **ends** :: [Type => Bool | []]
+- **E** | **end** | **ends** :: [Type => Bool | []]
 
     Include Ends of time series in output. Default loses half the filter-width of data at each end.
     ($(GMTdoc)filter1d.html#e)
@@ -60,7 +60,7 @@ function filter1d(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
-	cmd = parse_these_opts(cmd, d, [[:F :filter_type], [:D :inc], [:E :ends], [:L :gap_width], [:N :time_col],
+	cmd = parse_these_opts(cmd, d, [[:F :filter_type], [:D :inc], [:E :end :ends], [:L :gap_width], [:N :time_col],
 	                       [:Q :quality], [:S :symetry], [:T :equi_space]])
 
 	(isvector(arg1)) && (arg1 = cat_1_arg(arg1))	# Accept vectors (GMT should do that too)
