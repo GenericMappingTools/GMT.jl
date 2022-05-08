@@ -136,6 +136,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	contains(opt_W, ",gradient") && (got_color_line_grad = true; opt_W = replace(opt_W, ",gradient" => "+cl"))
 	contains(opt_W, ",grad")     && (got_color_line_grad = true; opt_W = replace(opt_W, ",grad" => "+cl"))
 	got_color_line_grad && (arg1 = mat2ds(color_gradient_line(arg1, is3D=is3D)))
+	#got_color_line_grad && (arg1 = mat2ds(line2multiseg(arg1, is3D=is3D, auto_color=true)))
 
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
 	if (!got_color_line_grad && (arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))

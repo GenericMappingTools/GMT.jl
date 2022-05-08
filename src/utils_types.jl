@@ -236,7 +236,7 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 	_fill = helper_ds_fill(d)
 
 	if ((val = find_in_dict(d, [:color_wrap])[1]) !== nothing)	# color_wrap is a kind of private option for bar-stack
-		n_colors = Int(val)
+		n_colors::Int = Int(val)
 	end
 
 	n_ds = size(D.data, 1)
@@ -263,11 +263,11 @@ function helper_ds_fill(d::Dict)::Vector{String}
 	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
 		_fill::Vector{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? vec(fill_val) :
 		                       ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
-		n_colors::Integer = length(_fill)
+		n_colors::Int = length(_fill)
 		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
 			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end
 			_alpha::Vector{String} = Vector{String}(undef, n_colors)
-			na::Integer = min(length(alpha_val), n_colors)
+			na::Int = min(length(alpha_val), n_colors)
 			for k = 1:na  _alpha[k] = join(string('@',alpha_val[k]))  end
 			if (na < n_colors)
 				for k = na+1:n_colors  _alpha[k] = ""  end
@@ -305,6 +305,71 @@ function color_gradient_line(Din::Vector{<:GMTdataset}; is3D::Bool=false, color_
 		D[k] = color_gradient_line(Din[k], is3D=is3D, color_col=color_col, first=first)
 	end
 	D
+end
+# ---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
+function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=Vector{Real}(), color_col::Int=0)
+	# Take a 2D or 3D poly-line and break it into an array of DS, one for each line segment
+	n_ds = size(M,1)-1
+	_hdr::Vector{String} = fill("", n_ds)
+	first = true
+	if (!isempty(lt))
+		nth = length(lt)
+		if (nth < size(M,1))
+			if (nth == 2)  th = linspace(lt[1], lt[2], n_ds)		# If we have only 2 thicknesses.
+			else           th = gmt("sample1d -T -o1", [collect(1:nth) lt], collect(linspace(1,nth,n_ds)))
+			end
+			for k = 1:n_ds  _hdr[k] = string(" -W", th[k])  end
+		else
+			for k = 1:n_ds  _hdr[k] = string(" -W", lt[k])  end
+		end
+		first = false
+	end
+
+	(is3D  && color_col == 0) && (color_col = 3)	# Set the color column to default if it wasn't sent in.
+	(!is3D && color_col == 0) && (color_col = 2)
+	if (isempty(color) && auto_color)
+		mima = extrema(view(M, :, color_col))
+		color = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
+	end
+
+	if (!isempty(color))
+		z_col = color_col
+		rgb = [0.0, 0.0, 0.0];
+		P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], color);		# A pointer to a GMT CPT
+		for k = 1:n_ds
+			gmt_get_rgb_from_z(G_API[1], P, M[k, z_col], rgb)
+			t = @sprintf(",%.0f/%.0f/%.0f", rgb[1]*255, rgb[2]*255, rgb[3]*255)
+			_hdr[k] = (first) ? " -W"*t : _hdr[k] * t
+		end
+	end
+
+	Dm = Vector{GMTdataset}(undef, n_ds)
+	for k = 1:n_ds
+		Dm[k] = GMTdataset(M[k:k+1, :], Float64[], Float64[], Dict{String, String}(), String[], String[], _hdr[k], String[], "", "", 2)
+	end
+	Dm
+end
+
+function line2multiseg(D::GMTdataset; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=Vector{Real}(), color_col::Int=0)
+	Dm = line2multiseg(D.data, is3D=is3D, color=color, auto_color=auto_color, lt=lt, color_col=color_col)
+	Dm[1].proj4, Dm[1].wkt, Dm[1].ds_bbox, Dm[1].colnames = D.proj4, D.wkt, D.ds_bbox, D.colnames
+	Dm
+end
+
+function line2multiseg(D::Vector{<:GMTdataset}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=Vector{Real}(), color_col::Int=0)
+	Dm = line2multiseg(D[1], is3D=is3D, color=color, auto_color=auto_color, lt=lt, color_col=color_col)
+	Dm[1].proj4, Dm[1].wkt, Dm[1].colnames = D[1].proj4, D[1].wkt, D[1].colnames
+	bb_min = bb_max = D[1].ds_bbox
+	for k = 2:length(D)
+		Dt = line2multiseg(D[k], is3D=is3D, color=color, auto_color=auto_color, lt=lt, color_col=color_col)
+		append!(Dm, Dt)
+		bb_max = max(bb_max, D[k].ds_bbox)		# To compute the final ds_bbox
+		bb_min = min(bb_min, D[k].ds_bbox)
+	end
+	Dm[1].ds_bbox = [bb_min bb_max]'[:]
+	Dm
 end
 # ---------------------------------------------------------------------------------------------------
 
