@@ -1504,8 +1504,16 @@ end
 function build_pen(d::Dict, del::Bool=false)::String
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
-	lw::String = add_opt(d, "", "", [:lw :linewidth], nothing, del)		# Line width
-	if (lw == "")  lw = add_opt(d, "", "", [:lt :linethick :linethickness], nothing, del)  end	# Line width
+
+	val, symb = find_in_dict(d, [:lw :lt :linewidth :linethick :linethickness], false)
+	if (isa(val, VMr))			# Got a line thickness variation.
+		delete!(d, symb)		# Remove it now because it wasn't in the find_in_dict() call above
+		d[:var_lt] = val		# This particular one is going to be fetch in _helper_psxy_line()
+		lw::String = ""
+	else
+		lw = add_opt(d, "", "", [:lw :lt :linewidth :linethick :linethickness], nothing, del)	# Line width
+	end
+
 	ls::String = add_opt(d, "", "", [:ls :linestyle], nothing, del)		# Line style
 	lc::String = parse_pen_color(d, [:lc :linecolor], del)
 	out::String = ""
@@ -3545,6 +3553,12 @@ function last_non_nothing(args...)
 	while (args[k-=1] === nothing && k > 1) end
 	(k == 1) && @warn("All elements of `args` === nothing. Expect ...")
 	return args[k]
+end
+function get_first_of_this_type(type::DataType, args...)
+	# Return the first in args that is of the requested type, or nothing if not found.
+	k = 0
+	while (!isa(args[k+=1], type) && k <= length(args)) end
+	return (k == length(args) && !isa(args[k], type)) ? nothing : args[k]
 end
 
 # ---------------------------------------------------------------------------------------------------
