@@ -311,9 +311,11 @@ end
 # ---------------------------------------------------------------------------------------------------
 function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=Vector{Real}(), color_col::Int=0)
 	# Take a 2D or 3D poly-line and break it into an array of DS, one for each line segment
+	# AUTO_COLOR -> color from 1:size(M,1)
+	(!isempty(color) && size(M,2) < 3) && error("For a varying color the input data must have at least 3 columns")
 	n_ds = size(M,1)-1
 	_hdr::Vector{String} = fill("", n_ds)
-	first = true
+	first, use_row_number = true, false
 	if (!isempty(lt))
 		nth = length(lt)
 		if (nth < size(M,1))
@@ -327,10 +329,11 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 		first = false
 	end
 
-	(is3D  && color_col == 0) && (color_col = 3)	# Set the color column to default if it wasn't sent in.
-	(!is3D && color_col == 0) && (color_col = 2)
+	(color_col == 0) && (color_col = 3)		# Set the color column to default if it wasn't sent in.
+
 	if (isempty(color) && auto_color)
-		mima = extrema(view(M, :, color_col))
+		mima = (size(M,2) <= 3) ? (1., Float64(size(M,1))) : extrema(view(M, :, color_col))
+		(size(M,2) <= 3) && (use_row_number = true; z4color = 1.:n_ds)
 		color = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 	end
 
@@ -339,15 +342,17 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 		rgb = [0.0, 0.0, 0.0];
 		P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], color);		# A pointer to a GMT CPT
 		for k = 1:n_ds
-			gmt_get_rgb_from_z(G_API[1], P, M[k, z_col], rgb)
+			z = (use_row_number) ? z4color[k] : M[k, z_col]
+			gmt_get_rgb_from_z(G_API[1], P, z, rgb)
 			t = @sprintf(",%.0f/%.0f/%.0f", rgb[1]*255, rgb[2]*255, rgb[3]*255)
 			_hdr[k] = (first) ? " -W"*t : _hdr[k] * t
 		end
 	end
 
 	Dm = Vector{GMTdataset}(undef, n_ds)
+	geom = (is3D) ? Int(wkbLineStringZ) : Int(wkbLineString)
 	for k = 1:n_ds
-		Dm[k] = GMTdataset(M[k:k+1, :], Float64[], Float64[], Dict{String, String}(), String[], String[], _hdr[k], String[], "", "", 2)
+		Dm[k] = GMTdataset(M[k:k+1, :], Float64[], Float64[], Dict{String, String}(), String[], String[], _hdr[k], String[], "", "", geom)
 	end
 	Dm
 end
