@@ -49,7 +49,8 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 	elseif (isGMTdataset(arg1) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4))
 		ginfo = gmt("gmtinfo -C", arg1)
 		CTRL.limits[1:4] = ginfo.data[1:4]
-		return plot(arg1; show=true, kw...)
+		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == Gdal.wkbLineStringZ) || (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == Gdal.wkbLineStringZ)) ? true : false		# Should evolve into a fun that detects the several plot3d cases.
+		return (call_plot3) ? plot3d(arg1; show=true, kw...) : plot(arg1; show=true, kw...)
 	elseif (isa(arg1, GMTcpt))
 		return (find_in_kwargs(kw, [:D :pos :position])[1] === nothing) ?
 			psscale(arg1; show=true, D="x0/0+w7+h", kw...) : psscale(arg1; show=true, kw...)
