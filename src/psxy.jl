@@ -132,11 +132,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# Need to parse -W here because we need to know if the call to make_color_column() MUST be avoided. 
 	opt_W::String = add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
-	got_color_line_grad = false
-	contains(opt_W, ",gradient") && (got_color_line_grad = true; opt_W = replace(opt_W, ",gradient" => "+cl"))
-	contains(opt_W, ",grad")     && (got_color_line_grad = true; opt_W = replace(opt_W, ",grad" => "+cl"))
-	got_color_line_grad && (arg1 = mat2ds(color_gradient_line(arg1, is3D=is3D)))
-	#got_color_line_grad && (arg1 = mat2ds(line2multiseg(arg1, is3D=is3D, auto_color=true)))
+	arg1, opt_W, got_color_line_grad, made_it_vector = _helper_psxy_line(d, arg1, cmd, opt_W, is3D)
 
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
 	if (!got_color_line_grad && (arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))
@@ -182,12 +178,12 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(got_Zvars && !do_Z_fill && !do_Z_outline && opt_W == "") && (opt_W = " -W0.5+z")	# Nofill and nothing else defaults to -W+z
 	(got_Zvars && (do_Z_fill || opt_G != "") && opt_L == "") && (cmd *= " -L")	# GMT requires -L when -Z fill or -G
 
-	if ((do_Z_fill || do_Z_outline || got_color_line_grad) && !occursin("-C", cmd))
+	if ((do_Z_fill || do_Z_outline || (got_color_line_grad && !is3D)) && !occursin("-C", cmd))
 		if (isempty(current_cpt[1]))
 			if (got_color_line_grad)		# Use the fact that we have min/max already stored
 				mima = (arg1.ds_bbox[5+2*is3D], arg1.ds_bbox[6+2*is3D])
 			else
-				mima = extrema(last_non_nothing(arg1, arg2, arg3))
+				mima = extrema(last_non_nothing(arg1, arg2, arg3))	# Why 'last'?
 			end
 			r = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 		else
@@ -228,7 +224,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if (opt_S != "")
 		opt_ML, opt_Wmarker = parse_markerline(d, opt_ML, opt_Wmarker)
 	end
-	(got_color_line_grad && opt_S == "") && (cmd *= " -Sv+s")	# No set opt_S because it results in 2 commands
+	(made_it_vector && opt_S == "") && (cmd *= " -Sv+s")	# No set opt_S because it results in 2 separate commands
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
 	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
@@ -259,6 +255,44 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function _helper_psxy_line(d, arg1, cmd, opt_W, is3D)
+	got_color_line_grad, got_variable_lt, made_it_vector, rep_str = false, false, false, ""
+	(contains(opt_W, ",gradient") || contains(opt_W, ",grad")) && (got_color_line_grad = true)
+
+	if (got_color_line_grad)
+		if (occursin("-C", cmd))
+			cpt = get_first_of_this_type(GMTcpt, args...)
+			#(r === nothing) && pescar o nome do fiche cpt e le-lo
+		elseif (!isempty(current_cpt[1]))
+			cpt = current_cpt[1]
+		else
+			mima = (size(arg1,2) == 2) ? (1,size(arg1,1)) : (arg1.ds_bbox[5+0*is3D], arg1.ds_bbox[6+0*is3D])
+			cpt = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
+		end
+	end
+
+	# If we get a line thickness variation we must always call line2multiseg(). The :var_lt was set in build_pen()
+	((val = find_in_dict(d, [:var_lt])[1]) !== nothing) && (got_variable_lt = true)
+
+	if (got_color_line_grad && !got_variable_lt)
+		if (!is3D)
+			arg1 = mat2ds(color_gradient_line(arg1, is3D=is3D))
+			made_it_vector, rep_str = true, "+cl"
+		else
+			arg1 = line2multiseg(arg1, is3D=true, color=cpt)
+		end
+	elseif (got_variable_lt)	# Otherwise just return without doing anything
+		if (got_color_line_grad)  arg1 = line2multiseg(arg1, is3D=is3D, lt=vec(val), color=cpt)
+		else                      arg1 = line2multiseg(arg1, is3D=is3D, lt=vec(val))
+		end
+	end
+	contains(opt_W, ",gradient") && (opt_W = replace(opt_W, ",gradient" => rep_str))
+	contains(opt_W, ",grad")     && (opt_W = replace(opt_W, ",grad" => rep_str))
+	(opt_W == " -W") && (opt_W = "")	# All -W options are set in dataset headers, so no need for -W
+	return arg1, opt_W, got_color_line_grad, made_it_vector
 end
 
 # ---------------------------------------------------------------------------------------------------
