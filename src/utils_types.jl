@@ -350,7 +350,7 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 	end
 
 	Dm = Vector{GMTdataset}(undef, n_ds)
-	geom = (is3D) ? Int(wkbLineStringZ) : Int(wkbLineString)
+	geom = (is3D) ? Int(Gdal.wkbLineStringZ) : Int(Gdal.wkbLineString)
 	for k = 1:n_ds
 		Dm[k] = GMTdataset(M[k:k+1, :], Float64[], Float64[], Dict{String, String}(), String[], String[], _hdr[k], String[], "", "", geom)
 	end
