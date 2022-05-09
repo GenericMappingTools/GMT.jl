@@ -3557,7 +3557,7 @@ end
 function get_first_of_this_type(type::DataType, args...)
 	# Return the first in args that is of the requested type, or nothing if not found.
 	k = 0
-	while (!isa(args[k+=1], type) && k <= length(args)) end
+	while (!isa(args[k+=1], type) && k < length(args)) end
 	return (k == length(args) && !isa(args[k], type)) ? nothing : args[k]
 end
 

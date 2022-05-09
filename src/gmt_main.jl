@@ -689,6 +689,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	out.minmax[2] = gmt_lut.z_high
 	out.depth = (C.is_bw != 0) ? 1 : ((C.is_gray != 0) ? 8 : 24)
 	out.hinge = (C.has_hinge != 0) ? C.hinge : NaN;
+	typeof(object)		# An attempt to find/fix where is GC shit that causes random crashes
 
 	return out
 end

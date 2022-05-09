@@ -132,7 +132,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# Need to parse -W here because we need to know if the call to make_color_column() MUST be avoided. 
 	opt_W::String = add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
-	arg1, opt_W, got_color_line_grad, made_it_vector = _helper_psxy_line(d, arg1, cmd, opt_W, is3D)
+	arg1, opt_W, got_color_line_grad, made_it_vector = _helper_psxy_line(d, cmd, opt_W, is3D, arg1, arg2, arg3)
 
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
 	if (!got_color_line_grad && (arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))
@@ -258,18 +258,21 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 end
 
 # ---------------------------------------------------------------------------------------------------
-function _helper_psxy_line(d, arg1, cmd, opt_W, is3D)
+function _helper_psxy_line(d, cmd, opt_W, is3D, args...)
 	got_color_line_grad, got_variable_lt, made_it_vector, rep_str = false, false, false, ""
 	(contains(opt_W, ",gradient") || contains(opt_W, ",grad")) && (got_color_line_grad = true)
 
 	if (got_color_line_grad)
 		if (occursin("-C", cmd))
 			cpt = get_first_of_this_type(GMTcpt, args...)
-			#(r === nothing) && pescar o nome do fiche cpt e le-lo
+			if (cpt === nothing)
+				CPTname = scan_opt(cmd, "-C")
+				cpt = gmtread(CPTname, cpt=true)
+			end
 		elseif (!isempty(current_cpt[1]))
 			cpt = current_cpt[1]
 		else
-			mima = (size(arg1,2) == 2) ? (1,size(arg1,1)) : (arg1.ds_bbox[5+0*is3D], arg1.ds_bbox[6+0*is3D])
+			mima = (size(args[1],2) == 2) ? (1,size(args[1],1)) : (args[1].ds_bbox[5+0*is3D], args[1].ds_bbox[6+0*is3D])
 			cpt = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 		end
 	end
@@ -279,15 +282,17 @@ function _helper_psxy_line(d, arg1, cmd, opt_W, is3D)
 
 	if (got_color_line_grad && !got_variable_lt)
 		if (!is3D)
-			arg1 = mat2ds(color_gradient_line(arg1, is3D=is3D))
+			arg1 = mat2ds(color_gradient_line(args[1], is3D=is3D))
 			made_it_vector, rep_str = true, "+cl"
 		else
-			arg1 = line2multiseg(arg1, is3D=true, color=cpt)
+			arg1 = line2multiseg(args[1], is3D=true, color=cpt)
 		end
 	elseif (got_variable_lt)	# Otherwise just return without doing anything
-		if (got_color_line_grad)  arg1 = line2multiseg(arg1, is3D=is3D, lt=vec(val), color=cpt)
-		else                      arg1 = line2multiseg(arg1, is3D=is3D, lt=vec(val))
+		if (got_color_line_grad)  arg1 = line2multiseg(args[1], is3D=is3D, lt=vec(val), color=cpt)
+		else                      arg1 = line2multiseg(args[1], is3D=is3D, lt=vec(val))
 		end
+	else
+		arg1 = args[1]			# Means this function call did nothing
 	end
 	contains(opt_W, ",gradient") && (opt_W = replace(opt_W, ",gradient" => rep_str))
 	contains(opt_W, ",grad")     && (opt_W = replace(opt_W, ",grad" => rep_str))
