@@ -253,7 +253,7 @@ end =#
 GMT_Set_Default(API::Ptr{Cvoid}, keyword, value) =
 	ccall((:GMT_Set_Default, libgmt), Cvoid, (Cstring, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 
-function GMT_blind_change_struct(API::Ptr{Cvoid}, X, what, keyword::String, off::Integer)
+function GMT_blind_change_struct(API::Ptr{Cvoid}, X, what, keyword::String, off)
 	(GMTver > v"6.0") ?		# Use this construct to cheat Coverage
 		ccall((:gmtlib_blind_change_struct, libgmt), Cint, (Cstring, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}, Csize_t), API, X, what, keyword, off) : ccall((:GMT_blind_change_struct, libgmt), Cint, (Cstring, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}, Csize_t), API, X, what, keyword, off)
 end
