@@ -1,7 +1,10 @@
 """
 	makecpt(cmd0::String="", arg1=nothing; kwargs...)
+or
 
-Make static color palette tables (CPTs).
+	makecpt(name::Symbol; kwargs...)
+
+Make static color palette tables (CPTs). The second form accepts a name of one of the GMT CPT defaults.
 
 Full option list at [`makecpt`]($(GMTdoc)makecpt.html)
 
@@ -72,6 +75,7 @@ Full option list at [`makecpt`]($(GMTdoc)makecpt.html)
 - $(GMT.opt_h)
 - $(GMT.opt_i)
 """
+makecpt(cmd0::Symbol; kwargs...) = makecpt(""; C=string(cmd0), kwargs...)	# Ex: makecpt(:gray)
 function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode

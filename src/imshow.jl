@@ -109,7 +109,7 @@ end
 
 function imshow(arg1::GMTimage; kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
-	see = (!haskey(kw, :show)) ? true : see = kw[:show]	# No explicit 'show' keyword means show=true
+	see::Bool = (!haskey(kw, :show)) ? true : kw[:show]		# No explicit 'show' keyword means show=true
 	if (isa(arg1.image, Array{UInt16}))
 		I::GMTimage = mat2img(arg1; kw...)
 		d = KW(kw)			# Needed because we can't delete from kwargs
@@ -118,6 +118,14 @@ function imshow(arg1::GMTimage; kw...)
 	else
 		grdimage("", arg1; D=true, show=see, kw...)
 	end
+end
+
+# Simple method to show CPTs. (May grow)
+# Ex: imshow(C, xlabel="Bla", ylabel="Blu"), or imshow(:gray)
+imshow(arg1::Symbol; horizontal::Bool=false, kw...) = imshow(makecpt(arg1); horizontal=horizontal, kw...) 
+function imshow(arg1::GMTcpt; horizontal::Bool=false, kw...)
+	see::Bool = (!haskey(kw, :show)) ? true : kw[:show]		# No explicit 'show' keyword means show=true
+	horizontal ? psscale(arg1; D="x8c/1c+w12c/0.5c+jTC+h", show=see, kw...) : psscale(arg1; J="X15/0", D="x8c/1c+w12c/0.5c+jBC", show=see, kw...)
 end
 
 if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
