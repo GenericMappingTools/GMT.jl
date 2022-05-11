@@ -651,7 +651,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 # model:	String with color model rgb, hsv, or cmyk [rgb]
 # comment:	Cell array with any comments
 
-	C::GMT_PALETTE = unsafe_load(convert(Ptr{GMT_PALETTE}, object))
+	GC.@preserve C::GMT_PALETTE = unsafe_load(convert(Ptr{GMT_PALETTE}, object))
 
 	(C.data == C_NULL) && error("get_palette: programming error, output CPT is empty")
 
@@ -662,7 +662,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
 
 	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
-		gmt_lut = unsafe_load(C.data, j)
+		GC.@preserve gmt_lut = unsafe_load(C.data, j)
 		for k = 1:3 	out.colormap[j, k] = gmt_lut.rgb_low[k]		end
 		for k = 1:3
 			out.cpt[j, k]   = gmt_lut.rgb_low[k]
@@ -689,7 +689,6 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	out.minmax[2] = gmt_lut.z_high
 	out.depth = (C.is_bw != 0) ? 1 : ((C.is_gray != 0) ? 8 : 24)
 	out.hinge = (C.has_hinge != 0) ? C.hinge : NaN;
-	typeof(object)		# An attempt to find/fix where is GC shit that causes random crashes
 
 	return out
 end

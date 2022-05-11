@@ -15,10 +15,13 @@ Width is by default measured in points (1/72 of an inch). Append *c*, *i*, or *p
 in cm, inch, or points, respectively (but note that this form requires using a string instead of a number).
 Minimum-thickness pens can be achieved by giving zero width. The result is device-dependent but typically
 means that as you zoom in on the feature in a display, the line thickness stays at the minimum.
+For plotting poly-lines `width` can be a vector of thicknesses in which case a line of varible thickness will
+be plotted. Linear interpolation to is applyied to the thickness vector in order to obtain an idividual
+thickness for each of the segments of the poly-line.
 
 ### color
 
-The color can be specified in five different ways:
+The color can be specified in each following ways:
 
 1. Gray. Specify a gray shade in the range 0–255 (linearly going from black [0] to white [255]).
 2. RGB. Specify r/g/b, each ranging from 0–255. Here 0/0/0 is black, 255/255/255 is white, 255/0/0 is red, etc.
@@ -30,8 +33,9 @@ The color can be specified in five different ways:
 5. Name. Specify one of 663 valid color names. See gmtcolors for a list of all valid names.
    A very small yet versatile subset consists of the 29 choices white, black, and [light|dark]
    {red, orange, yellow, green, cyan, blue, magenta, gray|grey, brown}. The color names are case-insensitive,
-   so mixed upper and lower case can be used (like DarkGreen). This can be provided as a String or Symbol. 
-
+   so mixed upper and lower case can be used (like DarkGreen). This can be provided as a String or Symbol.
+6. For 2D or 3D polylines `grad` or `gradient` means each line segment will be colored by consulting a
+   colormap. If that colormap is not provided we create one based on the poly-line number of segments.
 ### line style
 
 The style attribute controls the appearance of the line. Giving `dot` or `.` yields a dotted line,
