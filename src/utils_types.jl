@@ -320,7 +320,7 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 		nth = length(lt)
 		if (nth < size(M,1))
 			if (nth == 2)  th = linspace(lt[1], lt[2], n_ds)		# If we have only 2 thicknesses.
-			else           th::Vector{Float64} = gmt("sample1d -T -o1", [collect(1:nth) lt], collect(linspace(1,nth,n_ds))).data
+			else           th::Vector{Float64} = vec(gmt("sample1d -T -o1", [collect(1:nth) lt], collect(linspace(1,nth,n_ds))).data)
 			end
 			for k = 1:n_ds  _hdr[k] = string(" -W", th[k])  end
 		else
