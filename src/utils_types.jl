@@ -320,7 +320,7 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 		nth = length(lt)
 		if (nth < size(M,1))
 			if (nth == 2)  th = linspace(lt[1], lt[2], n_ds)		# If we have only 2 thicknesses.
-			else           th = gmt("sample1d -T -o1", [collect(1:nth) lt], collect(linspace(1,nth,n_ds)))
+			else           th::Vector{Float64} = gmt("sample1d -T -o1", [collect(1:nth) lt], collect(linspace(1,nth,n_ds))).data
 			end
 			for k = 1:n_ds  _hdr[k] = string(" -W", th[k])  end
 		else
@@ -334,7 +334,7 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 	if (isempty(color) && auto_color)
 		mima = (size(M,2) <= 3) ? (1., Float64(size(M,1))) : extrema(view(M, :, color_col))
 		(size(M,2) <= 3) && (use_row_number = true; z4color = 1.:n_ds)
-		color = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
+		color::GMTcpt = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 	end
 
 	if (!isempty(color))
