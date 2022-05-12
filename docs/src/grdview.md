@@ -104,6 +104,7 @@ Optional Arguments
    Select verbosity level. More at [verbose](@ref)
 
 - **W** or **pen** or **pens**\
+  
   - **pens=(contour=true,)**\
      Draw contour lines on top of surface or mesh (not image). Use ``pens=(contour=true, pen)`` to set pen
      attributes used for the contours. [Default: width = 0.75p, color = black, style = solid].
