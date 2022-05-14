@@ -543,7 +543,7 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 		(ds_t.ptr == C_NULL) && (ds_t = Gdal.read(fname, flags = Gdal.GDAL_OF_VECTOR | Gdal.GDAL_OF_VERBOSE_ERROR, I=false))
 		optsP = (isempty(optsP)) ? ["-overwrite"] : (isa(optsP, String) ? ["-overwrite " * optsP] : append!(optsP, ["-overwrite"]))
 		ds = ogr2ogr(ds_t, optsP; gdataset=true, kw...)
-		Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
+		(ds.ptr != C_NULL) && Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
 	end
 	Gdal.GDALClose(ds_t.ptr)			# WTF it needs explicit close?
 	return (gdataset) ? ds : gd2gmt(ds)
