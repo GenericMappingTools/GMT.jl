@@ -143,7 +143,16 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.write(ds_src, "/vsimem/utmsmall.tif")
 	ds_copy = Gdal.read("/vsimem/utmsmall.tif")
 	@test Gdal.read(ds_src) == Gdal.read(ds_copy)
-	Gdal.metadata(ds_src)
+	@test Gdal.metadata(ds_src) == ["AREA_OR_POINT=Area"]
+	@test Gdal.metadataitem(ds_src, "AREA_OR_POINT") == "Area"
+	@test Gdal.metadata(ds_src, domain = "IMAGE_STRUCTURE") == ["INTERLEAVE=BAND"]
+	@test Gdal.metadatadomainlist(ds_src) == ["IMAGE_STRUCTURE", "", "DERIVED_SUBDATASETS"]
+	@test Gdal.getconfigoption("GDAL_CACHEMAX") == ""
+	Gdal.setconfigoption("GDAL_CACHEMAX", "64")
+	@test Gdal.getconfigoption("GDAL_CACHEMAX") == "64"
+	Gdal.clearconfigoption("GDAL_CACHEMAX")
+	@test Gdal.getconfigoption("GDAL_CACHEMAX", "128") == "128"
+
 	Gdal.GDALGetDescription(ds_src.ptr)
 	imshow(ds_src, Vd=dbg2)
 

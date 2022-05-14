@@ -799,8 +799,7 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Julia or a dummy one to hold GMT output
 		X.object = image_init(API, ptr)
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
-		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
-		actual_family = [GMT_IS_DATASET]		# Default but may change to matrix
+		actual_family = [GMT_IS_DATASET]	# Default but may change to matrix
 		if (ptr !== nothing && !isGMTdataset(ptr))	# Input is matrix, pass data pointers via MATRIX to save memory
 			X.object = dataset_init(API, ptr, actual_family)
 		else
