@@ -3,7 +3,7 @@ function text_record(data, text, hdr=Vector{String}())
 	# TEXT is a string or a cell array
 
 	(isa(data, Vector)) && (data = data[:,:]) 		# Needs to be 2D
-	(!isa(data, Array{Float64})) && (data = Float64.(data))
+	#(!isa(data, Array{Float64})) && (data = Float64.(data))
 
 	if (isa(text, String))
 		_hdr = isempty(hdr) ? "" : hdr[1]
@@ -160,7 +160,7 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
 
 	# By default convert to Doubles, except if instructed to NOT to do it.
-	(find_in_dict(d, [:datatype])[1] === nothing) && (eltype(mat) != Float64) && (mat = Float64.(mat))
+	#(find_in_dict(d, [:datatype])[1] === nothing) && (eltype(mat) != Float64) && (mat = Float64.(mat))
 	_geom::Int = Int((geom == 0 && (2 <= length(mat) <= 3)) ? Gdal.wkbPoint : (geom == 0 ? Gdal.wkbUnknown : geom))	# Guess geom
 	(multi && _geom == 0 && size(mat,1) == 1) && (_geom = Int(Gdal.wkbPoint))	# One row with many columns and MULTI => Points
 	if (isempty(xx))				# No coordinates transmitted
