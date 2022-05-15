@@ -261,9 +261,9 @@ function gmt(cmd::String, args...)
 	pLL = (LL != NULL) ? Ref([LL], 1) : pointer([NULL])
 
 	n_itemsP = pointer([0])
-	X = GMT_Encode_Options(G_API[1], g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
+	XX = GMT_Encode_Options(G_API[1], g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
 	n_items = unsafe_load(n_itemsP)
-	if (X == NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
+	if (XX == NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
 		(n_items > 65000) ? n_items = 0 : error("Failure to encode Julia command options") 
 	end
 
@@ -272,12 +272,11 @@ function gmt(cmd::String, args...)
 		pLL = Ref([LL], 1)		# Need this because GMT_Destroy_Options() wants a Ref
 	end
 
-	XX = Array{GMT_RESOURCE}(undef, 1, n_items)
+	X = Array{GMT_RESOURCE}(undef, 1, n_items)
 	for k = 1:n_items
-		XX[k] = unsafe_load(X, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
+		X[k] = unsafe_load(XX, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
 	end
-	gmt_free_mem(G_API[1], X)
-	X = XX
+	gmt_free_mem(G_API[1], XX)
 
 	#println(g_module * " " * unsafe_string(GMT_Create_Cmd(G_API[1], LL)))	# Uncomment when need to confirm argins
 
