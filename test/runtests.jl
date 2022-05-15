@@ -99,6 +99,7 @@ if (got_it)					# Otherwise go straight to end
 	end
 
 	println("	MAKECPT")
+	C = makecpt(C="categorical", T="0/10/1");
 	makecpt(rand(10,1), E="", C=:rainbow, cmap="lixo.cpt");
 	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
 	cpt = makecpt(range="-1/1/0.1");
