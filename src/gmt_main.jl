@@ -284,6 +284,8 @@ function gmt(cmd::String, args...)
 	for k = 1:n_items					# Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0) error("GMT: Expects a Matrix for input") end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : nothing
+#@show(typeof(ptr))
+#@show(X[k].pos)
 		GMTJL_Set_Object(G_API[1], X[k], ptr, pad)	# Set object pointer
 	end
 
@@ -650,7 +652,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 # model:	String with color model rgb, hsv, or cmyk [rgb]
 # comment:	Cell array with any comments
 
-	GC.@preserve C::GMT_PALETTE = unsafe_load(convert(Ptr{GMT_PALETTE}, object))
+	C::GMT_PALETTE = unsafe_load(convert(Ptr{GMT_PALETTE}, object))
 
 	(C.data == C_NULL) && error("get_palette: programming error, output CPT is empty")
 
@@ -661,7 +663,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
 
 	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
-		GC.@preserve gmt_lut = unsafe_load(C.data, j)
+		gmt_lut = unsafe_load(C.data, j)
 		for k = 1:3 	out.colormap[j, k] = gmt_lut.rgb_low[k]		end
 		for k = 1:3
 			out.cpt[j, k]   = gmt_lut.rgb_low[k]
@@ -799,10 +801,18 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 		X.object = image_init(API, ptr)
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
 		actual_family = [GMT_IS_DATASET]	# Default but may change to matrix
-		if (ptr !== nothing && !isGMTdataset(ptr))	# Input is matrix, pass data pointers via MATRIX to save memory
-			X.object = dataset_init(API, ptr, actual_family)
+		if (ptr !== nothing && isa(ptr, GMTdataset))
+			if (ptr.text == "")  X.object = dataset_init(API, ptr.data, actual_family)
+			else                 X.object = dataset_init(API, [ptr], X.direction)	# When TEXT still need to go here
+			end
+		elseif (isa(ptr, Vector{<:GMTdataset}))
+			X.object = dataset_init(API, ptr, X.direction)
 		else
-			X.object = dataset_init(API, ptr, X.direction)	# Here we accept ptr === nothing if dir == GMT_OUT
+			if (X.direction == GMT_OUT)		# Here we accept ptr === nothing
+				X.object = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
+			else
+				X.object = dataset_init(API, ptr, actual_family)
+			end
 		end
 		X.family = actual_family[1]
 	elseif (X.family == GMT_IS_PALETTE)		# Get a palette from Julia or a dummy one to hold GMT output
@@ -1051,7 +1061,7 @@ function toRP_pad(img, o, n_rows, n_cols, pad)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dataset_init(API::Ptr{Nothing}, Darr, direction::Integer)::Ptr{GMT_DATASET}
+function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::Integer)::Ptr{GMT_DATASET}
 # Create containers to hold or receive data tables:
 # direction == GMT_IN:  Create empty GMT_DATASET container, fill from Julia, and use as GMT input.
 #	Input from Julia may be a structure or a plain matrix
@@ -1059,12 +1069,8 @@ function dataset_init(API::Ptr{Nothing}, Darr, direction::Integer)::Ptr{GMT_DATA
 # If direction is GMT_IN then we are given a Julia struct and can determine dimension.
 # If output then we dont know size so we set dimensions to zero.
 
-	if (direction == GMT_OUT)
-		return convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
-	end
-
 	(Darr == C_NULL) && error("Input is empty where it can't be.")
-	if (isa(Darr, GMTdataset))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
+	#if (isa(Darr, GMTdataset))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
 
 	# We come here if we did not receive a matrix
 	dim = [1, 0, 0, 0]
