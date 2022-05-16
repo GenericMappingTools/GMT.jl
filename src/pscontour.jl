@@ -98,7 +98,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	arg2 = nothing;		arg3 = nothing
-	cmd, arg1, opt_R, info = read_data(d, cmd0, cmd, arg1, opt_R, false, true)
+	cmd, arg1, opt_R, wesn = read_data(d, cmd0, cmd, arg1, opt_R, false, true)
 	if (occursin(" -I", cmd) || occursin("+c", opt_W))			# Only try to load cpt if -I was set
 		cmd, N_used_, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing ? 1 : 0), arg1, arg2, arg3, "pscontour")
 	end
@@ -133,9 +133,9 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (!occursin(" -W", cmd) && !occursin(" -I", cmd) && !occursin(" -D", cmd))  cmd *= " -W"  end	# Use default pen
 
 	if (occursin("-I", cmd) && !occursin("-C", cmd))
-		r = round_wesn([info.data[5], info.data[6], info.data[5], info.data[6]])
-		info.data[5], info.data[6] = r[1], r[2]
-		opt_T = (isempty(current_cpt[1])) ? @sprintf(" -T%.14g/%.14g/11+n", info.data[5], info.data[6]) : ""
+		r = round_wesn([wesn[5], wesn[6], wesn[5], wesn[6]])
+		wesn[5], wesn[6] = r[1], r[2]
+		opt_T = (isempty(current_cpt[1])) ? @sprintf(" -T%.14g/%.14g/11+n", wesn[5], wesn[6]) : ""
 		if (N_used <= 1)
 			cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C], 'C', N_used, arg1, arg2, true, true, opt_T, true)
 		else
