@@ -284,8 +284,6 @@ function gmt(cmd::String, args...)
 	for k = 1:n_items					# Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0) error("GMT: Expects a Matrix for input") end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : nothing
-#@show(typeof(ptr))
-#@show(X[k].pos)
 		GMTJL_Set_Object(G_API[1], X[k], ptr, pad)	# Set object pointer
 	end
 
@@ -1070,7 +1068,6 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 # If output then we dont know size so we set dimensions to zero.
 
 	(Darr == C_NULL) && error("Input is empty where it can't be.")
-	#if (isa(Darr, GMTdataset))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
 
 	# We come here if we did not receive a matrix
 	dim = [1, 0, 0, 0]
@@ -1190,14 +1187,13 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 
 	P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), NULL, NULL, 0, 0, NULL))
 
-	(one != 0) && mutateit(API, P, "is_continuous", one)
-
-	if (cpt.depth == 1)      mutateit(API, P, "is_bw", 1)
-	elseif (cpt.depth == 8)  mutateit(API, P, "is_gray", 1)
-	end
-	!isnan(cpt.hinge) && mutateit(API, P, "has_hinge", 1)
-
 	Pb::GMT_PALETTE = unsafe_load(P)				# We now have a GMT.GMT_PALETTE
+
+	(one != 0) && (Pb.is_continuous = UInt32(1))
+	if (cpt.depth == 1)      Pb.is_bw   = UInt32(1) 
+	elseif (cpt.depth == 8)  Pb.is_gray = UInt32(1)
+	end
+	!isnan(cpt.hinge) && (Pb.has_hinge = UInt32(1))
 
 	if (!isnan(cpt.hinge))			# If we have a hinge pass it in to the GMT owned struct
 		Pb.hinge = cpt.hinge
@@ -1235,9 +1231,9 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_KEY, convert(Ptr{Cvoid}, P), cpt.key);
 		(cpt.label[1] != "") &&
 			GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_LABEL, convert(Ptr{Cvoid}, P), cpt.label);
-		mutateit(API, P, "categorical", 2)
+		Pb.categorical = UInt32(2)
 	elseif (cpt.key[1] != "")
-		mutateit(API, P, "categorical", 2)
+		Pb.categorical = UInt32(2)
 	end
 
 	return P
