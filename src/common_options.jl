@@ -3016,7 +3016,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
 
-	(show_kwargs[1]) && return cmd, arg, opt_R, GMTdataset(), ""		# In HELP mode we do nothing here
+	(show_kwargs[1]) && return cmd, arg, opt_R, [NaN NaN NaN NaN], ""		# In HELP mode we do nothing here
 
 	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
 	force_get_R = (IamModern[1] && GMTver > v"6") ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
