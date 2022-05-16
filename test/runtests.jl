@@ -65,8 +65,6 @@ if (got_it)					# Otherwise go straight to end
 	include("test_modern.jl")
 	println("		Entering: test_P_a_T.jl")
 	include("test_P_a_T.jl")
-	println("		Entering: test_misc.jl")
-	include("test_misc.jl")
 
 	println("	GREENSPLINE")
 	d = [0 6.44; 1820 8.61; 2542 5.24; 2889 5.73; 3460 3.81; 4586 4.05; 6020 2.95; 6841 2.57; 7232 3.37; 10903 3.84; 11098 2.86; 11922 1.22; 12530 1.09; 14065 2.36; 14937 2.24; 16244 2.05; 17632 2.23; 19002 0.42; 20860 0.87; 22471 1.26];
@@ -120,6 +118,9 @@ if (got_it)					# Otherwise go straight to end
 	GMT.mk_codes_values(["PRT", "ESP", "FRA"], [1.0, 2, 3], region="eu");
 	println("		MAKECPT - 3")
 	@test_throws ErrorException("The region ue is invalid or has not been implemented yet.") GMT.mk_codes_values(["PRT"], [1.0], region="ue")
+
+	println("		Entering: test_misc.jl")
+	include("test_misc.jl")
 
 	# Remove garbage
 	println("	REMOVE GARBAGE")
