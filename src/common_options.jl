@@ -3069,82 +3069,83 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	have_info = false
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
 	if (((!IamModern[1] && no_R) || (force_get_R && no_R)) && !convert_syntax[1])
-		info::GMTdataset = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)	# Here we are reading from an original GMTdataset or Array
+		ttt = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)	# Here we are reading from an original GMTdataset or Array
+		wesn_f64::Matrix{Float64} = ttt.data		# Only I found to stop Julia to f insist that the vdata matrix is a Any
 		have_info = true
-		if (info.data[1] > info.data[2])		# Workaround a bug/feature in GMT when -: is arround
-			info.data[2], info.data[1] = info.data[1], info.data[2]
+		if (wesn_f64[1] > wesn_f64[2])				# Workaround a bug/feature in GMT when -: is arround
+			wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]
 		end
 		if (opt_R != "" && opt_R[1] == '/')			# Modify what will be reported as a -R string
 			rs = split(opt_R, '/')
 			if (!occursin("?", opt_R))
-				# Example "///0/" will set y_min=0 if info.data[3] > 0 and no other changes otherwise
+				# Example "///0/" will set y_min=0 if wesn_f64[3] > 0 and no other changes otherwise
 				for k = 2:length(rs)
 					(rs[k] == "") && continue
 					x = parse(Float64, rs[k])
 					if (x == 0.0)
-						info.data[k-1] = (info.data[k-1] > 0) ? 0 : info.data[k-1]
+						wesn_f64[k-1] = (wesn_f64[k-1] > 0) ? 0 : wesn_f64[k-1]
 					end
 				end
 			else
 				# Example: "/1/2/?/?"  Retain x_min = 1 & x_max = 2 and get y_min|max from data. Used by plotyy
 				for k = 2:length(rs)
-					(rs[k] != "?") && (info.data[k-1] = parse(Float64, rs[k]))	# Keep value already in previous -R
+					(rs[k] != "?") && (wesn_f64[k-1] = parse(Float64, rs[k]))	# Keep value already in previous -R
 				end
 			end
 		end
 		if (opt_R != " -Rtight")
 			if (!occursin("?", opt_R) && !is_onecol)		# is_onecol is true only for DateTime data
-				dx::Float64 = (info.data[2] - info.data[1]) * 0.005;	dy::Float64 = (info.data[4] - info.data[3]) * 0.005;
-				info.data[1] -= dx;	info.data[2] += dx;	info.data[3] -= dy;	info.data[4] += dy;
-				info.data = round_wesn(info.data)		# Add a pad if not-tight
+				dx::Float64 = (wesn_f64[2] - wesn_f64[1]) * 0.005;	dy::Float64 = (wesn_f64[4] - wesn_f64[3]) * 0.005;
+				wesn_f64[1] -= dx;	wesn_f64[2] += dx;	wesn_f64[3] -= dy;	wesn_f64[4] += dy;
+				wesn_f64 = round_wesn(wesn_f64)				# Add a pad if not-tight
 				if (isGMTdataset(arg))						# Needed for the guess_proj case
-					if ((info.data[3] < -90 || info.data[4] > 90) || ((info.data[2] - info.data[1]) > 360))
+					if ((wesn_f64[3] < -90 || wesn_f64[4] > 90) || ((wesn_f64[2] - wesn_f64[1]) > 360))
 						prj::String = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
 						guessed_J = (prj == "") && !contains(cmd, " -J ") && !contains(cmd, " -JX") && !contains(cmd, " -Jx")
 						if (guessed_J || contains(prj, "longlat") || contains(prj, "latlong"))
-							(info.data[3] < -90.) && (info.data[3] = -90.)
-							(info.data[4] >  90.) && (info.data[4] =  90.)
-							if ((info.data[2] - info.data[1]) > 360)
-								if (info.data[2] > 180)  info.data[1] = 0.;		info.data[2] = 360.
-								else                     info.data[1] = -180.;	info.data[2] = 180.
+							(wesn_f64[3] < -90.) && (wesn_f64[3] = -90.)
+							(wesn_f64[4] >  90.) && (wesn_f64[4] =  90.)
+							if ((wesn_f64[2] - wesn_f64[1]) > 360)
+								if (wesn_f64[2] > 180)  wesn_f64[1] = 0.;		wesn_f64[2] = 360.
+								else                     wesn_f64[1] = -180.;	wesn_f64[2] = 180.
 								end
 							end
 						end
 					end
 				end
 			elseif (!is_onecol)
-				t = round_wesn(info.data)		# Add a pad
+				t = round_wesn(wesn_f64)		# Add a pad
 				for k = 2:length(rs)
-					(rs[k] == "?") && (info.data[k-1] = t[k-1])
+					(rs[k] == "?") && (wesn_f64[k-1] = t[k-1])
 				end
 			end
 		else
 			cmd = replace(cmd, " -Rtight" => "")	# Must remove old -R
 		end
-		_range::Vector{Float64} = info.data[:]
 		if (got_datetime)
 			opt_R = " -R" * Dates.format(min_max[1], "yyyy-mm-ddTHH:MM:SS.s") * "/" *
 			        Dates.format(min_max[2], "yyyy-mm-ddTHH:MM:SS.s")
-			(!is_onecol) && (opt_R *= @sprintf("/%.12g/%.12g", _range[3], _range[4]))
+			(!is_onecol) && (opt_R *= @sprintf("/%.12g/%.12g", wesn_f64[3], wesn_f64[4]))
 		elseif (is3D)
-			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", _range[1], _range[2],
-			                 _range[3], _range[4], _range[5], _range[6])
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2],
+			                 wesn_f64[3], wesn_f64[4], wesn_f64[5], wesn_f64[6])
 		else
-			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", _range[1], _range[2], _range[3], _range[4])
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])
 		end
 		(!is_onecol) && (cmd *= opt_R)		# The onecol case (for histogram) has an imcomplete -R
 	end
 
 	if (get_info && !have_info && !convert_syntax[1])
-		info = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)
-		if (info.data[1] > info.data[2])		# Workaround a bug/feature in GMT when -: is arround
-			info.data[2], info.data[1] = info.data[1], info.data[2]
+		ttt = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)
+		wesn_f64 = ttt.data		# Only I found to stop Julia to f insist that the vdata matrix is a Any
+		if (wesn_f64[1] > wesn_f64[2])		# Workaround a bug/feature in GMT when -: is arround
+			wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]
 		end
 	elseif (!have_info)
-		info = GMTdataset()					# Need something to return
+		wesn_f64 = [NaN NaN NaN NaN]		# Need something to return
 	end
 
-	return cmd, arg, opt_R, info, opt_i
+	return cmd, arg, opt_R, wesn_f64, opt_i
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -3220,7 +3221,7 @@ end
 Round a Vector or Tuple (2 elements) of DateTime type to a nearest nice number to use in plot limits
 """
 round_datetime(val::Tuple{DateTime, DateTime}) = round_datetime([val[1], val[2]])
-function round_datetime(val::Array{DateTime})
+function round_datetime(val::AbstractVector{DateTime})::Vector{DateTime}
 	r = Dates.value(val[end] - val[1])
 	if (r > 86400000 * 365.25)  rfac = Dates.Year;		add = Dates.Year(1)
 	elseif (r > 86400000 * 31)  rfac = Dates.Month;		add = Dates.Month(1)
