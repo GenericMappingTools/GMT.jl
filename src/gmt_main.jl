@@ -100,7 +100,7 @@ GMTps() = GMTps(string(), 0, 0, String[])
 Base.size(P::GMTps) = P.length
 Base.isempty(P::GMTps) = (P.length == 0)
 
-mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
+mutable struct GMTdataset{T, N} <: AbstractArray{T,N}
 	data::Array{T,N}
 	ds_bbox::Vector{Float64}
 	bbox::Vector{Float64}
