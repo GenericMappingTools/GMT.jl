@@ -95,6 +95,9 @@ const wkbTIN = UInt32(16)
 const wkbTriangle = UInt32(17)
 const wkbNone = UInt32(100)
 const wkbLinearRing = UInt32(101)
+const wkbPointZ = UInt32(1001)
+const wkbLineStringZ = UInt32(1002)
+const wkbMultiLineStringZ = UInt32(1005)
 const wkbCircularStringZ = UInt32(1008)
 const wkbCompoundCurveZ = UInt32(1009)
 const wkbCurvePolygonZ = UInt32(1010)
@@ -283,6 +286,7 @@ GDALGetSpatialRef(a1) = acare(ccall((:GDALGetSpatialRef, libgdal), pVoid, (pVoid
 GDALGetDatasetDriver(a1) = acare(ccall((:GDALGetDatasetDriver, libgdal), pVoid, (pVoid,), a1))
 GDALGetDescription(a1) = acare(ccall((:GDALGetDescription, libgdal), Cstring, (pVoid,), a1), false)
 GDALGetMetadata(a1, a2) = acare(ccall((:GDALGetMetadata, libgdal), Ptr{Cstring}, (pVoid, Cstring), a1, a2))
+GDALGetMetadataDomainList(a1) = acare(ccall((:GDALGetMetadataDomainList, libgdal), Ptr{Cstring}, (pVoid,), a1))
 GDALGetDriver(a1) = acare(ccall((:GDALGetDriver, libgdal), pVoid, (Cint,), a1))
 GDALGetDriverByName(a1) = acare(ccall((:GDALGetDriverByName, libgdal), pVoid, (Cstring,), a1))
 GDALGetDriverShortName(a1) = acare(ccall((:GDALGetDriverShortName, libgdal), Cstring, (pVoid,), a1), false)
@@ -349,6 +353,12 @@ GDALSetColorEntry(a1, a2, a3) =
 
 CPLSetConfigOption(a1, a2) = acare(ccall((:CPLSetConfigOption, libgdal), Cvoid, (Cstring, Cstring), a1, a2))
 CPLGetConfigOption(a1, a2) = acare(ccall((:CPLGetConfigOption, libgdal), Cstring, (Cstring, Cstring), a1, a2), false)
+
+CSLFetchNameValue(a1, a2) = acare(ccall((:CSLFetchNameValue, libgdal), Cstring, (Ptr{Cstring}, Cstring), a1, a2))
+function fetchnamevalue(strlist::Vector{String}, name::String="")::String
+	item = CSLFetchNameValue(strlist, name)
+	return item == C_NULL ? "" : unsafe_string(item)
+end
 
 GDALSetDescription(a1, a2) = acare(ccall((:GDALSetDescription, libgdal), Cvoid, (pVoid, Cstring), a1, a2))
 GDALSetMetadata(a1, a2, a3) = acare(ccall((:GDALSetMetadata, libgdal), UInt32, (pVoid, Ptr{Cstring}, Cstring), a1, a2, a3))
@@ -1773,6 +1783,24 @@ end
 	ncolorentry(ct::ColorTable) = GDALGetColorEntryCount(ct.ptr)
 	getcolorentry(ct::ColorTable, i::Integer) = unsafe_load(GDALGetColorEntry(ct.ptr, i))
 	metadata(obj; domain::AbstractString="") = GDALGetMetadata(obj.ptr, domain)
+	metadatadomainlist(obj)::Vector{String} = GDALGetMetadataDomainList(obj.ptr)
+	function metadataitem(obj, name::AbstractString; domain::AbstractString="",)::String
+		item = GDALGetMetadataItem(obj.ptr, name, domain)
+		return item === nothing ? "" : item
+	end
+
+	function setconfigoption(option::AbstractString, value)::Nothing
+		CPLSetConfigOption(option, value)
+		return nothing
+	end
+	function clearconfigoption(option::AbstractString)::Nothing
+		setconfigoption(option, C_NULL)
+		return nothing
+	end
+	function getconfigoption(option::AbstractString, default=C_NULL)::String
+		result = @gdal(CPLGetConfigOption::Cstring, option::Cstring, default::Cstring)
+		return (result == C_NULL) ? "" : unsafe_string(result)
+	end
 
 	asint(feature::Feature, i::Integer) = OGR_F_GetFieldAsInteger(feature.ptr, i)
 	asint64(feature::Feature, i::Integer) = OGR_F_GetFieldAsInteger64(feature.ptr, i)
@@ -2381,8 +2409,6 @@ end
 		DriverManager()
 		return nothing
 	end
-
-	set_config_option(opt::String, val::String) = CPLSetConfigOption(opt, val)
 
 	include("gdal_extensions.jl")
 	include("gdal_tools.jl")

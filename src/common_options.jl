@@ -146,9 +146,9 @@ function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function tha
 		elseif (r == "same")       R = " -R"
 		else                       R = " -R" * r
 		end
-	elseif ((isa(Val, VMr) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
-		if (any(symb .== [:region_llur :limits_llur :limits_diag :region_diag]))
-			R = " -R" * sprintf("%.15g/%.15g/%.15g/%.15g+r", Val[1], Val[3], Val[2], Val[4])
+	elseif ((isvector(Val) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
+		if (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag))
+			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", Val[1], Val[3], Val[2], Val[4])
 		else
 			R = " -R" * rstrip(arg2str(Val), '/')		# Remove last '/'
 		end
@@ -156,7 +156,7 @@ function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function tha
 		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
 	elseif (isa(Val, GDtype))
 		bb = (isa(Val, GMTdataset)) ? Val.bbox : Val[1].ds_bbox
-		R = (any(symb .== [:region_llur :limits_llur :limits_diag :region_diag])) ?
+		R = (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag)) ?
 			@sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[3], bb[2], bb[4]) :
 			@sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[2], bb[3], bb[4])
 	end
@@ -170,7 +170,7 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 	if ((val = find_in_dict(d, [:limits :region])[1]) !== nothing)
 		if ((isa(val, Array{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 			if (haskey(d, :diag) || haskey(d, :diagonal))		# The diagonal case
-				BB = sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
+				BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
 			else
 				BB = join([@sprintf("%.15g/", Float64(x)) for x in val])
 				BB = rstrip(BB, '/')		# and remove last '/'
@@ -538,12 +538,12 @@ function parse_proj(p::NamedTuple)
 	center::String = ""
 	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
 		if     (isa(val, String))  center = val
-		elseif (isa(val, Real))    center = sprintf("%.12g", val)
+		elseif (isa(val, Real))    center = @sprintf("%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)
-			if (isa(val, Array))   center = sprintf("%.12g/%.12g", val[1], val[2])
+			if (isa(val, Array))   center = @sprintf("%.12g/%.12g", val[1], val[2])
 			else		# Accept also strings in tuple (Needed for movie)
-				center  = (isa(val[1], String)) ? val[1] * "/" : sprintf("%.12g/", val[1])
-				center *= (isa(val[2], String)) ? val[2] : sprintf("%.12g", val[2])
+				center  = (isa(val[1], String)) ? val[1] * "/" : @sprintf("%.12g/", val[1])
+				center *= (isa(val[2], String)) ? val[2] : @sprintf("%.12g", val[2])
 			end
 		end
 	end
@@ -553,7 +553,7 @@ function parse_proj(p::NamedTuple)
 	parallels::String = ""
 	if ((val = find_in_dict(d, [:parallel :parallels])[1]) !== nothing)
 		if     (isa(val, String))  parallels = "/" * val
-		elseif (isa(val, Real))    parallels = sprintf("/%.12g", val)
+		elseif (isa(val, Real))    parallels = @sprintf("/%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && (length(val) <= 3 || length(val) == 6))
 			parallels = join([@sprintf("/%.12g",x) for x in val])
 		end
@@ -693,7 +693,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 			_opt_B::String, what_B::Vector{Bool} = axis(val, d);	extra_parse = false
 			have_Bframe = what_B[2]
 			def_opt_B_split = split(opt_B)
-			have_axes = any(keys(val) .== :axes)
+			have_axes = :axes in keys(val)
 			if (!have_axes && opt_B != "" && findlast(" ", opt_B)[1] != 1)	# If not have frame=(axes=..., ) use the default
 				def_Bframe = def_opt_B_split[end]	# => "-BWSen" when opt_B holds the default " -Baf -BWSen"
 				if (have_Bframe)					# If we already have a Bframe bit must append it to def_Bframe
@@ -1403,9 +1403,9 @@ function add_opt_pen(d::Dict, symbs::VMs, opt::String="", sub::Bool=true, del::B
 				# Cases like pen=(width=0.1, color=:red, style=".") were failing. But because we may break other
 				# working cases, just try to catch this case and turn it into a `pen=(0.1, :red. ".")` call.
 				k = keys(val)
-				w::String = ((ind = findfirst(k .== :width)) !== nothing) ? string(val[ind]) : ""
-				c::String = ((ind = findfirst(k .== :color)) !== nothing) ? string(val[ind]) : ""
-				s::String = ((ind = findfirst(k .== :style)) !== nothing) ? string(val[ind]) : ""
+				w::String = (:width in k) ? string(val[:width]) : ""
+				c::String = (:color in k) ? string(val[:color]) : ""
+				s::String = (:style in k) ? string(val[:style]) : ""
 				if (w != "" || c != "" || s != "")
 					out = opt * add_opt_pen(Dict(:pen => (w,c,s)), symbs, "", true, false)
 				else
@@ -1504,8 +1504,16 @@ end
 function build_pen(d::Dict, del::Bool=false)::String
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
-	lw::String = add_opt(d, "", "", [:lw :linewidth], nothing, del)		# Line width
-	if (lw == "")  lw = add_opt(d, "", "", [:lt :linethick :linethickness], nothing, del)  end	# Line width
+
+	val, symb = find_in_dict(d, [:lw :lt :linewidth :linethick :linethickness], false)
+	if (isa(val, VMr))			# Got a line thickness variation.
+		delete!(d, symb)		# Remove it now because it wasn't in the find_in_dict() call above
+		d[:var_lt] = val		# This particular one is going to be fetch in _helper_psxy_line()
+		lw::String = ""
+	else
+		lw = add_opt(d, "", "", [:lw :lt :linewidth :linethick :linethickness], nothing, del)	# Line width
+	end
+
 	ls::String = add_opt(d, "", "", [:ls :linestyle], nothing, del)		# Line style
 	lc::String = parse_pen_color(d, [:lc :linecolor], del)
 	out::String = ""
@@ -1814,7 +1822,7 @@ end
 function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, del::Bool=true, arg=nothing)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
-	# ARG, is a special case to append to a matrix (complicated thing in Julia)
+	# ARG, is a special case to append to a matrix (can't realy be done in Julia)
 	# ARG can also be a Bool, in which case when MAPA is a NT we expand each of its members as sep options
 	# If ARG is a string, then the keys of MAPA can be used as values of SYMB and are replaced by vals of MAPA
 	#    Example (hitogram -Z): add_opt(d, "", "Z", [:Z :kind], (counts="0", freq="1",...)) Z=freq => -Z1
@@ -1825,10 +1833,10 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 		if (isa(arg, Bool) && isa(mapa, NamedTuple))	# Make each mapa[i] a mapa[i]key=mapa[i]val
 			local cmd_::String = ""
 			for k in keys(mapa)
-				((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue
-				if (isa(mapa[k], Tuple))    cmd_ *= mapa[k][1] * mapa[k][2](d, [k])
+				((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue	# This mapa key was not used
+				if (isa(mapa[k], Tuple))    cmd_ *= mapa[k][1] * mapa[k][2](d, [k])	# mapa[k][2] is a function
 				else
-					if (mapa[k][1] == '_')  cmd_ *= mapa[k][2:end]		# Keep omly the flag
+					if (mapa[k][1] == '_')  cmd_ *= mapa[k][2:end]		# Keep only the flag
 					else                    cmd_ *= mapa[k] * arg2str(val_)
 					end
 				end
@@ -1913,7 +1921,7 @@ end
 function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	# Generic parser of options passed in a NT and whose last element is anther NT with the mapping
 	# between expanded sub-options names and the original GMT flags.
-	# ARG, is a special case to append to a matrix (complicated thing in Julia)
+	# ARG, is a special case to append to a matrix (can't realy be done in Julia)
 	# Example:
 	#	add_opt((a=(1,0.5),b=2), (a="+a",b="-b"))
 	# translates to:	"+a1/0.5-b2"
@@ -1962,7 +1970,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 			if (t != "")  cmd *= t[1]
 			else          cmd *= "1"	# "1" is itself the flag
 			end
-		elseif (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix
+		elseif (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix (here in vector form)
 			if (isa(nt[k], AbstractArray) || isa(nt[k], Tuple))
 				if (isa(nt[k], AbstractArray))  append!(arg, reshape(nt[k], :))
 				else                            append!(arg, reshape(collect(nt[k]), :))
@@ -2778,6 +2786,12 @@ function decorated(;kwargs...)::String
 		if (marca == "")
 			cmd = "+sa0.5" * cmd
 		else
+			if (@static Sys.iswindows() && GMTver < v"6.4.0" && startswith(marca, "karrow/"))
+				# Due to a bug in Windows we have to copy the file to local directory.
+				cp(joinpath(dirname(pathof(GMT)), "..", "share", "custom", "arrow.def"), "arrow.def", force=true)
+			elseif (startswith(marca, "karrow/"))
+				marca = "k" * joinpath(dirname(pathof(GMT)), "..", "share", "custom", "arrow/") * marca[8:end]
+			end
 			cmd *= "+s" * marca
 			if ((val = find_in_dict(d, [:size :ms :markersize :symbolsize])[1]) !== nothing)
 				cmd *= arg2str(val)
@@ -2839,8 +2853,15 @@ function helper_decorated(d::Dict, compose=false)
 			error("DECORATED: 'dist' (or 'distance') option. Unknown data type.")
 		end
 		if     (symb == :distmap)  optD = "D"		# Here we know that we are dealing with a -S~ for sure.
-		elseif (symb != :number && compose)  optD = "d"		# I feer the case :number is not parsed anywhere
+		elseif (symb != :number && compose)  optD = "d"		# I fear the case :number is not parsed anywhere
 		end
+	elseif ((val = find_in_dict(d, [:locations])[1]) !== nothing)
+		if (isa(val, AbstractString))  cmd = val
+		elseif (GMTver < v"6.4.0" && (isa(val, Matrix) || isa(val, GDtype)))
+			cmd = joinpath(tempdir(), "GMTjl_decorated_loc.dat")
+			gmtwrite(cmd, val)
+		end
+		optD = "f"
 	end
 	if (cmd == "")
 		val, symb = find_in_dict(d, [:line :Line])
@@ -2972,54 +2993,49 @@ function fname_out(d::Dict, del::Bool=false)
 	return def_name, opt_T, EXT, fname, ret_ps
 end
 
-#=
-# These methods are function barriers to stop the type instability to propagate. Unfortunately, a similar
-# solution but at the end of the main function, that would cover all cases, is IRRITATINGLY ignored by Julia
-read_data(d::Dict, fname::String, cmd::String, arg::Vector{GMTdataset}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Vector{GMTdataset}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
-
-read_data(d::Dict, fname::String, cmd::String, arg::GMTdataset, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, GMTdataset, String, GMTdataset, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
-
-read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Real}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Matrix{Float64}, String, GMTdataset, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
-
-read_data(d::Dict, fname::String, cmd::String, arg::Matrix{Any}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Matrix{Float64}, String, Vector{GMTdataset}, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
-
-read_data(d::Dict, fname::String, cmd::String, arg::Vector{DateTime}, opt_R::String="", is3D::Bool=false, get_info::Bool=false)::Tuple{String, Vector{Float64}, String, GMTdataset, String} = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
-
-# This is the fall-back method. Unfortunately, I've not found a solution that covers the passing in of a file name
-# because we fall in the same situation as with passing the input data via the 'data' kw, and this one can have any type.
-read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false) = _read_data(d, fname, cmd, arg, opt_R, is3D, get_info)
-=#
-
 # ---------------------------------------------------------------------------------------------------
-function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)#::Tuple{String, Union{Nothing, Array{<:Real}, GDtype}, String, GMTdataset, String}
-	# In case DATA holds a file name, read that data and put it in ARG
-	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
-
-	(show_kwargs[1]) && return cmd, arg, opt_R, GMTdataset(), ""		# In HELP mode we do nothing here
-
-	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
-	force_get_R = (IamModern[1] && GMTver > v"6") ? false : true	# GMT6.0 BUG, modern mode does not auto-compute -R
-	#force_get_R = true		# Due to a GMT6.0 BUG, modern mode does not compute -R automatically and 6.1 is not good too
+function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
+	(fname == "") && return _read_data(d, cmd, arg, opt_R, is3D, get_info)
 
 	cmd, opt_i  = parse_i(d, cmd)		# If data is to be read with some column order
 	cmd, opt_bi = parse_bi(d, cmd)		# If data is to be read as binary
 	cmd, opt_di = parse_di(d, cmd)		# If data missing data other than NaN
 	cmd, opt_h  = parse_h(d, cmd)
 	cmd, opt_yx = parse_swap_xy(d, cmd)
-	(CTRL.proj_linear[1]) && (opt_yx *= " -fc")			# To avoid the lib remembering last eventual geog case
-	if (endswith(opt_yx, "-:"))  opt_yx *= "i"  end		# Need to be -:i not -: to not swap output too
-	if (fname != "")
-		if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])		# Must read file to find -R
-			if (!IamSubplot[1] || GMTver > v"6.1.1")		# Protect against a GMT bug
-				arg = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * fname)
-				# Remove the these options from cmd. Their job is done
-				if (opt_i != "")  cmd = replace(cmd, opt_i => "");	opt_i = ""  end
-				if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
-			end
-		else							# No need to find -R so let the GMT module read the file
-			cmd = fname * " " * cmd
+	(CTRL.proj_linear[1]) && (opt_yx *= " -fc")		# To avoid the lib remembering last eventual geog case
+	endswith(opt_yx, "-:") && (opt_yx *= "i")		# Need to be -:i not -: to not swap output too
+
+	if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])		# Must read file to find -R
+		if (!IamSubplot[1] || GMTver > v"6.1.1")	# Protect against a GMT bug
+			arg::GDtype = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * fname)
+			# Remove the these options from cmd. Their job is done
+			if (opt_i != "")  cmd = replace(cmd, opt_i => "");	opt_i = ""  end
+			if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
 		end
-	elseif (haskey(d, :data))
+	else							# No need to find -R so let the GMT module read the file
+		cmd = fname * " " * cmd
+	end
+
+	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
+	if (!convert_syntax[1] && !IamModern[1] && no_R)
+		wesn_f64::Matrix{Float64} = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx * " " * fname).data	#
+		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])
+		(is3D) && (opt_R = @sprintf("%s/%.12g/%.12g", opt_R, wesn_f64[5], wesn_f64[6]))
+		cmd *= opt_R
+	end
+
+	_read_data(d, cmd, arg, opt_R, is3D, get_info, opt_i, opt_di, opt_yx)
+end
+
+function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false,
+	opt_i::String="", opt_di::String="", opt_yx::String="")::Tuple{String, Union{Nothing, Array{<:Real}, GDtype}, String, Matrix{Float64}, String}
+	# In case DATA holds a file name, read that data and put it in ARG
+	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
+
+	(show_kwargs[1]) && return cmd, arg, opt_R, [NaN NaN NaN NaN], ""		# In HELP mode we do nothing here
+	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
+
+	if (haskey(d, :data))
 		arg = d[:data];		del_from_dict(d, [:data])
 	elseif (arg === nothing)	# OK, last chance of findig the data is in the x=..., y=... kwargs
 		if (haskey(d, :x) && haskey(d, :y))
@@ -3047,83 +3063,84 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 
 	have_info = false
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
-	if (((!IamModern[1] && no_R) || (force_get_R && no_R)) && !convert_syntax[1])
-		info::GMTdataset = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)	# Here we are reading from an original GMTdataset or Array
+	if (!convert_syntax[1] && !IamModern[1] && no_R)	# Here 'arg' can no longer be a file name (string)
+		# Only way I found to stop Julia to fck insist that the data matrix is a Any
+		ttt = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg)
+		wesn_f64::Matrix{Float64} = ttt.data
 		have_info = true
-		if (info.data[1] > info.data[2])		# Workaround a bug/feature in GMT when -: is arround
-			info.data[2], info.data[1] = info.data[1], info.data[2]
+		if (wesn_f64[1] > wesn_f64[2])				# Workaround a bug/feature in GMT when -: is arround
+			wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]
 		end
 		if (opt_R != "" && opt_R[1] == '/')			# Modify what will be reported as a -R string
 			rs = split(opt_R, '/')
 			if (!occursin("?", opt_R))
-				# Example "///0/" will set y_min=0 if info.data[3] > 0 and no other changes otherwise
+				# Example "///0/" will set y_min=0 if wesn_f64[3] > 0 and no other changes otherwise
 				for k = 2:length(rs)
 					(rs[k] == "") && continue
 					x = parse(Float64, rs[k])
 					if (x == 0.0)
-						info.data[k-1] = (info.data[k-1] > 0) ? 0 : info.data[k-1]
+						wesn_f64[k-1] = (wesn_f64[k-1] > 0) ? 0 : wesn_f64[k-1]
 					end
 				end
 			else
 				# Example: "/1/2/?/?"  Retain x_min = 1 & x_max = 2 and get y_min|max from data. Used by plotyy
 				for k = 2:length(rs)
-					(rs[k] != "?") && (info.data[k-1] = parse(Float64, rs[k]))	# Keep value already in previous -R
+					(rs[k] != "?") && (wesn_f64[k-1] = parse(Float64, rs[k]))	# Keep value already in previous -R
 				end
 			end
 		end
 		if (opt_R != " -Rtight")
 			if (!occursin("?", opt_R) && !is_onecol)		# is_onecol is true only for DateTime data
-				dx::Float64 = (info.data[2] - info.data[1]) * 0.005;	dy::Float64 = (info.data[4] - info.data[3]) * 0.005;
-				info.data[1] -= dx;	info.data[2] += dx;	info.data[3] -= dy;	info.data[4] += dy;
-				info.data = round_wesn(info.data)		# Add a pad if not-tight
+				dx::Float64 = (wesn_f64[2] - wesn_f64[1]) * 0.005;	dy::Float64 = (wesn_f64[4] - wesn_f64[3]) * 0.005;
+				wesn_f64[1] -= dx;	wesn_f64[2] += dx;	wesn_f64[3] -= dy;	wesn_f64[4] += dy;
+				wesn_f64 = round_wesn(wesn_f64)				# Add a pad if not-tight
 				if (isGMTdataset(arg))						# Needed for the guess_proj case
-					if ((info.data[3] < -90 || info.data[4] > 90) || ((info.data[2] - info.data[1]) > 360))
+					if ((wesn_f64[3] < -90 || wesn_f64[4] > 90) || ((wesn_f64[2] - wesn_f64[1]) > 360))
 						prj::String = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
 						guessed_J = (prj == "") && !contains(cmd, " -J ") && !contains(cmd, " -JX") && !contains(cmd, " -Jx")
 						if (guessed_J || contains(prj, "longlat") || contains(prj, "latlong"))
-							(info.data[3] < -90.) && (info.data[3] = -90.)
-							(info.data[4] >  90.) && (info.data[4] =  90.)
-							if ((info.data[2] - info.data[1]) > 360)
-								if (info.data[2] > 180)  info.data[1] = 0.;		info.data[2] = 360.
-								else                     info.data[1] = -180.;	info.data[2] = 180.
+							(wesn_f64[3] < -90.) && (wesn_f64[3] = -90.)
+							(wesn_f64[4] >  90.) && (wesn_f64[4] =  90.)
+							if ((wesn_f64[2] - wesn_f64[1]) > 360)
+								if (wesn_f64[2] > 180)  wesn_f64[1] = 0.;		wesn_f64[2] = 360.
+								else                     wesn_f64[1] = -180.;	wesn_f64[2] = 180.
 								end
 							end
 						end
 					end
 				end
 			elseif (!is_onecol)
-				t = round_wesn(info.data)		# Add a pad
+				t = round_wesn(wesn_f64)		# Add a pad
 				for k = 2:length(rs)
-					(rs[k] == "?") && (info.data[k-1] = t[k-1])
+					(rs[k] == "?") && (wesn_f64[k-1] = t[k-1])
 				end
 			end
 		else
 			cmd = replace(cmd, " -Rtight" => "")	# Must remove old -R
 		end
-		_range::Vector{Float64} = info.data[:]
 		if (got_datetime)
 			opt_R = " -R" * Dates.format(min_max[1], "yyyy-mm-ddTHH:MM:SS.s") * "/" *
 			        Dates.format(min_max[2], "yyyy-mm-ddTHH:MM:SS.s")
-			(!is_onecol) && (opt_R *= @sprintf("/%.12g/%.12g", _range[3], _range[4]))
+			(!is_onecol) && (opt_R *= @sprintf("/%.12g/%.12g", wesn_f64[3], wesn_f64[4]))
 		elseif (is3D)
-			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", _range[1], _range[2],
-			                 _range[3], _range[4], _range[5], _range[6])
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2],
+			                 wesn_f64[3], wesn_f64[4], wesn_f64[5], wesn_f64[6])
 		else
-			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", _range[1], _range[2], _range[3], _range[4])
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])
 		end
 		(!is_onecol) && (cmd *= opt_R)		# The onecol case (for histogram) has an imcomplete -R
 	end
 
-	if (get_info && !have_info && !convert_syntax[1])
-		info = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx, arg)
-		if (info.data[1] > info.data[2])		# Workaround a bug/feature in GMT when -: is arround
-			info.data[2], info.data[1] = info.data[1], info.data[2]
+	if (!convert_syntax[1] && get_info && !have_info)
+		wesn_f64 = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg).data
+		if (wesn_f64[1] > wesn_f64[2])		# Workaround a bug/feature in GMT when -: is arround
+			wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]
 		end
 	elseif (!have_info)
-		info = GMTdataset()					# Need something to return
+		wesn_f64 = [NaN NaN NaN NaN]		# Need something to return
 	end
 
-	return cmd, arg, opt_R, info, opt_i
+	return cmd, arg, opt_R, wesn_f64, opt_i
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -3199,7 +3216,7 @@ end
 Round a Vector or Tuple (2 elements) of DateTime type to a nearest nice number to use in plot limits
 """
 round_datetime(val::Tuple{DateTime, DateTime}) = round_datetime([val[1], val[2]])
-function round_datetime(val::Array{DateTime})
+function round_datetime(val::AbstractVector{DateTime})::Vector{DateTime}
 	r = Dates.value(val[end] - val[1])
 	if (r > 86400000 * 365.25)  rfac = Dates.Year;		add = Dates.Year(1)
 	elseif (r > 86400000 * 31)  rfac = Dates.Month;		add = Dates.Month(1)
@@ -3321,7 +3338,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, args...)
 	# This chunk of code is shared by several grdxxx & other modules, so wrap it in a function
-	if (IamModern[1])  cmd = replace(cmd, " -R " => " ")  end
+	IamModern[1] && (cmd = replace(cmd, " -R " => " "))
+	(haskey(d, :Vd) && d[:Vd] > 2) && show_args_types(args...)
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
 	R = isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
@@ -3344,6 +3362,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 
 		if (Vd >= 2)	# Delete these first before reporting
 			del_from_dict(d, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:figname], [:name], [:savefig]])
+			GMT.current_cpt[1] = GMT.GMTcpt()	# Some times an automtic CPT has been generated by the Vd'ed cmd
 		end
 		if (length(d) > 0)
 			dd = deepcopy(d)		# Make copy so that we can harmlessly delete those below
@@ -3354,6 +3373,15 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 		(size(legend_type[1].label, 1) != 0) && (legend_type[1].Vd = Vd)	# So that autolegend can also work
 		(Vd == 1) && println("\t", length(cmd) == 1 ? cmd[1] : cmd)
 		(Vd >= 2) && return length(cmd) == 1 ? cmd[1] : cmd
+	end
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function show_args_types(args...)
+	for k = 1:length(args)
+		args[k] === nothing && break
+		println("arg",k, " = ", typeof(args[k]))
 	end
 	return nothing
 end
@@ -3456,7 +3484,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function put_in_slot(cmd::String, opt::Char, args...)
-	# Find the first non-empty slot in ARGS and assign it the Val of d[:symb]
+	# Find the first non-empty slot in ARGS and assign it the Val of OPT
 	# Return also the index of that first non-empty slot in ARGS
 	k = 1
 	for arg in args					# Find the first empty slot
@@ -3515,6 +3543,20 @@ function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3
 end
 # ---------------------------------------------------------------------------------------------------
 
+function last_non_nothing(args...)
+	# Return the last element of ARGS that is !== nothing
+	k = length(args) + 1
+	while (args[k-=1] === nothing && k > 1) end
+	(k == 1) && @warn("All elements of `args` === nothing. Expect ...")
+	return args[k]
+end
+function get_first_of_this_type(type::DataType, args...)
+	# Return the first in args that is of the requested type, or nothing if not found.
+	k = 0
+	while (!isa(args[k+=1], type) && k < length(args)) end
+	return (k == length(args) && !isa(args[k], type)) ? nothing : args[k]
+end
+
 # ---------------------------------------------------------------------------------------------------
 finish_PS_module(d::Dict, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =
 	finish_PS_module(d, [cmd], opt_extra, K, O, finish, args...)
@@ -3530,6 +3572,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	(finish) && (cmd = finish_PS(d, cmd, output, K, O))
 
 	have_Vd = haskey(d, :Vd)
+	(have_Vd && d[:Vd] > 2) && show_args_types(args...)
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return length(r) == 1 ? r[1] : r  end 	# For tests only
 	img_mem_layout[1] = add_opt(d, "", "", [:layout])
 	if (img_mem_layout[1] == "images")  img_mem_layout[1] = "I   "  end	# Special layout for Images.jl
@@ -3545,7 +3588,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
 		if (k > 1 && is_psscale && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
-			cmd2, arg1, = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)
+			_, arg1, = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)
 			(arg1 === nothing) && (@warn("No cmap found to use in colorbar. Ignoring this command."); continue)
 			P = gmt(cmd[k], arg1)
 			continue
@@ -3557,7 +3600,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				lims = args[1].range
 				D::GMTdataset = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
 				xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = D.data[1],D.data[3],D.data[2],D.data[4]
-				opt_R::String = sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
+				opt_R::String = @sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
 				o = scan_opt(cmd[1], "-J")
 				size_ = (o[1] == 'x') ? "+scale=" * o[2:end] : (o[1] == 'X') ? "+width=" * o[2:end] : ""
 				(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
@@ -3859,6 +3902,16 @@ function justify(arg, nowarn::Bool=false)::String
 end
 
 # --------------------------------------------------------------------------------------------------
+function interp_vec(x, val)
+	# Returns the positional fraction that `val` ocupies in the `x` vector 
+	(val < x[1] || val > x[end]) && error("Interpolating point ($val) is not inside the vector range [$(x[1]) $(x[end])].")
+	k = 0
+	while(val < x[k+=1]) end
+	frac = (val - x[k]) / (x[k+1] - x[k])
+	return k + frac
+end
+
+# --------------------------------------------------------------------------------------------------
 function peaks(; N=49, grid::Bool=true, pixreg::Bool=false)
 	x,y = meshgrid(range(-3,stop=3,length=N))
 
@@ -3983,9 +4036,8 @@ end
 
 Convert a Date or DateTime or a string representation of them to decimal years.
 
-# Example
-
-yeardecimal(now())
+### Example
+    yeardecimal(now())
 """
 function yeardecimal(dtm::Union{String, Vector{String}})
 	try
@@ -4007,8 +4059,11 @@ end
 # --------------------------------------------------------------------------------------------------
 function isnodata(array::AbstractArray, val=0)
 	nrows, ncols = size(array,1), size(array,2)
-	indNaN = fill(false, nrows, ncols)
-	@inbounds Threads.@threads for k = 1:nrows * ncols	# 5x faster than: indNaN = (I.image .== 0)
+	nlayers = (ndims(array) == 3) ? size(array,3) : 1
+	if (ndims(array) == 3)  indNaN = fill(false, nrows, ncols, nlayers)
+	else                    indNaN = fill(false, nrows, ncols)
+	end
+	@inbounds Threads.@threads for k = 1:nrows * ncols * nlayers	# 5x faster than: indNaN = (I.image .== 0)
 		(array[k] == val) && (indNaN[k] = true)
 	end
 	indNaN

@@ -1,14 +1,17 @@
 # makecpt
 
 	makecpt(cmd0::String="", arg1=nothing; kwargs...)
+or
+
+	makecpt(name::Symbol; kwargs...)
 
 Make static color palette tables (CPTs).
 
 Description
 -----------
 
-Make static color palette tables (CPTs). You define an equidistant set of contour intervals or
-pass your own z-table or list, and create a new CPT based on an existing master (dynamic) CPT. The resulting
+Make static color palette tables (CPTs). You define an equidistant set of contour intervals or pass your
+own z-table or list, and create a new CPT based on an existing master (dynamic) CPT. The resulting
 CPT can be reversed relative to the master cpt, and can be made continuous or discrete.
 
 The CPT includes three additional colors beyond the range of z-values. These are the background color (B) assigned
@@ -22,6 +25,11 @@ This default behavior can be overruled using the options **bg**, **overrule_bg**
 The color model (RGB, HSV or CMYK) of the palette created by **makecpt** will be the same as specified in the header of
 the master CPT. When there is no `COLOR_MODEL` entry in the master CPT, the `COLOR_MODEL` specified in the `gmt.conf`
 file or on the command line will be used.
+
+The second form is a quick way of generating CPT objects for use in the ``imshow`` function. Here `name` (as a symbol)
+is the name of any of the GM default paletts. It can also be the name of CPT file lieving in current directory. With it,
+you don't specify the `color=cptname` as it is already implied by the fact that first argin is a symbol. As mentioned,
+its primary usage is to quickly show a CPT with the ``imshow`` command. *e.g* ``imshow(:gray)``
 
 Optional Arguments
 ------------------
@@ -175,6 +183,12 @@ z-units so that we always get a color regardless of the *z* value, try
 
 ```julia
     makecpt(cmap=:jet, range=(0,500), wrap=:w)
+```
+
+To show the ``jet`` color table.
+
+```julia
+    imshow(:jet)
 ```
 
 Bugs

@@ -5,7 +5,7 @@ const psxyz! = plot3d!
 
 # ---------------------------------------------------------------------------------------------------
 function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool, kwargs...)
-	arg2, arg3 = nothing, nothing
+	arg2, arg3, arg4 = nothing, nothing, nothing
 	N_args = (arg1 === nothing) ? 0 : 1
 	is_ternary = (caller == "ternary") ? true : false
 	if     (is3D)       gmt_proggy = (IamModern[1]) ? "plot3d "  : "psxyz "
@@ -41,8 +41,11 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	if (is_ternary)
-		cmd, opt_B::String = cmd * d[:B], d[:B]			# B option was parsed in plot/ternary
-		delete!(d, :B)
+		opt_B::String = ""
+		if (haskey(d, :B))		# Not necessarely the case when ternary!
+			cmd, opt_B = cmd * d[:B], d[:B]		# B option was parsed in plot/ternary
+			delete!(d, :B)
+		end
 		cmd, opt_R = parse_R(d, cmd, O)
 	end
 	if (is_ternary && !first) 	# Either a -J was set and we'll fish it here or no and we'll use the default.
@@ -74,7 +77,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		opt_R = '/' * box_str[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
 	end
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
-	(N_args == 0 && arg1 !== nothing) && (N_args = 1)
+	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
 
 	if (isGMTdataset(arg1) && getproj(arg1) == "" && opt_J == " -JX" * def_fig_size) 
@@ -127,8 +130,13 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		N_args = 3
 	end
 
+	# Need to parse -W here because we need to know if the call to make_color_column() MUST be avoided. 
+	opt_W::String = add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
+	arg1, opt_W, got_color_line_grad, made_it_vector = _helper_psxy_line(d, cmd, opt_W, is3D, arg1, arg2, arg3)
+
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
-	if ((arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))	# If "bar" ONLY if not bar-group
+	if (!got_color_line_grad && (arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))
+		# If "bar" ONLY if not bar-group
 		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
 		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
 	end
@@ -154,6 +162,9 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
 		cmd = (isa(val, String)) ? cmd * " " * val : cmd * decorated(val)
+		if (occursin("~f:", cmd) || occursin("qf:", cmd))	# Here we know val is a NT and `locations` was numeric
+			_, arg1, arg2, arg3 = arg_in_slot(nt2dict(val), "", [:locations], Union{Matrix, GDtype}, arg1, arg2, arg3)
+		end
 	end
 
 	opt_Wmarker::String = ""
@@ -161,20 +172,24 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		opt_Wmarker = "0.5p," * arg2str(val)		# 0.25p is too thin?
 	end
 
-	opt_W::String = add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
-
 	# This bit is for the -Z option. Must consolidate the options.
 	(do_Z_fill && opt_G == "") && (cmd *= " -G+z")
 	(do_Z_outline && !contains(opt_W, "+z")) && (opt_W = (opt_W == "") ? " -W+c" : opt_W * "+z")
 	(got_Zvars && !do_Z_fill && !do_Z_outline && opt_W == "") && (opt_W = " -W0.5+z")	# Nofill and nothing else defaults to -W+z
 	(got_Zvars && (do_Z_fill || opt_G != "") && opt_L == "") && (cmd *= " -L")	# GMT requires -L when -Z fill or -G
 
-	if ((do_Z_fill || do_Z_outline) && !occursin("-C", cmd))
+	if ((do_Z_fill || do_Z_outline || (got_color_line_grad && !is3D)) && !occursin("-C", cmd))
 		if (isempty(current_cpt[1]))
-			mima::Tuple{Real, Real} = (N_args == 1) ? extrema(arg1) : extrema(arg2)	# If it's arg3 we're fckd
+			if (got_color_line_grad)		# Use the fact that we have min/max already stored
+				mima = (arg1.ds_bbox[5+2*is3D], arg1.ds_bbox[6+2*is3D])
+			else
+				mima = extrema(last_non_nothing(arg1, arg2, arg3))	# Why 'last'?
+			end
 			r = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
-			(arg1 === nothing) ? arg1 = r : ((arg2 === nothing) ? arg2 = r : arg3 = r)
+		else
+			r = current_cpt[1]
 		end
+		(arg1 === nothing) ? arg1 = r : ((arg2 === nothing) ? arg2 = r : (arg3 === nothing ? arg3 = r : arg4 = r))
 		cmd *= " -C"
 	end
 
@@ -209,6 +224,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if (opt_S != "")
 		opt_ML, opt_Wmarker = parse_markerline(d, opt_ML, opt_Wmarker)
 	end
+	(made_it_vector && opt_S == "") && (cmd *= " -Sv+s")	# No set opt_S because it results in 2 separate commands
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
 	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
@@ -236,9 +252,52 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	_cmd = finish_PS_nested(d, _cmd)
 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
-	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3)
+	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function _helper_psxy_line(d, cmd, opt_W, is3D, args...)
+	got_color_line_grad, got_variable_lt, made_it_vector, rep_str = false, false, false, ""
+	(contains(opt_W, ",gradient") || contains(opt_W, ",grad")) && (got_color_line_grad = true)
+
+	if (got_color_line_grad)
+		if (occursin("-C", cmd))
+			cpt = get_first_of_this_type(GMTcpt, args...)
+			if (cpt === nothing)
+				CPTname = scan_opt(cmd, "-C")
+				cpt = gmtread(CPTname, cpt=true)
+			end
+		elseif (!isempty(current_cpt[1]))
+			cpt = current_cpt[1]
+		else
+			mima = (size(args[1],2) == 2) ? (1,size(args[1],1)) : (args[1].ds_bbox[5+0*is3D], args[1].ds_bbox[6+0*is3D])
+			cpt = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
+		end
+	end
+
+	# If we get a line thickness variation we must always call line2multiseg(). The :var_lt was set in build_pen()
+	((val = find_in_dict(d, [:var_lt])[1]) !== nothing) && (got_variable_lt = true)
+
+	if (got_color_line_grad && !got_variable_lt)
+		if (!is3D)
+			arg1 = mat2ds(color_gradient_line(args[1], is3D=is3D))
+			made_it_vector, rep_str = true, "+cl"
+		else
+			arg1 = line2multiseg(args[1], is3D=true, color=cpt)
+		end
+	elseif (got_variable_lt)	# Otherwise just return without doing anything
+		if (got_color_line_grad)  arg1 = line2multiseg(args[1], is3D=is3D, lt=vec(val), color=cpt)
+		else                      arg1 = line2multiseg(args[1], is3D=is3D, lt=vec(val))
+		end
+	else
+		arg1 = args[1]			# Means this function call did nothing
+	end
+	contains(opt_W, ",gradient") && (opt_W = replace(opt_W, ",gradient" => rep_str))
+	contains(opt_W, ",grad")     && (opt_W = replace(opt_W, ",grad" => rep_str))
+	(opt_W == " -W") && (opt_W = "")	# All -W options are set in dataset headers, so no need for -W
+	return arg1, opt_W, got_color_line_grad, made_it_vector
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -345,10 +404,10 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 		((n_cols - n_xy_bars) == 2) && return cmd, arg1			# Only one-bar groups
 		(iseven(n_cols)) && error("Wrong number of columns in error bars array (or prog error)")
 		n = Int((n_cols - 1) / 2)
-		_arg = arg1[:, 1:(n+1)]				# No need to care with GMTdatasets because case was dealt in 'got_Ebars'
+		_arg = Float64.(arg1[:, 1:(n+1)])	# No need to care with GMTdatasets because case was dealt in 'got_Ebars'
 		bars_cols = arg1[:,(n + 2):end]		# We'll use this to appent to the multi-segments
 	else
-		_arg = isa(arg1, GMTdataset) ? deepcopy(arg1.data) : (isa(arg1, Vector{<:GMTdataset}) ? deepcopy(arg1[1].data) : deepcopy(arg1))
+		_arg = isa(arg1, GMTdataset) ? Float64.(copy(arg1.data)) : (isa(arg1, Vector{<:GMTdataset}) ? Float64.(copy(arg1[1].data)) : Float64.(copy(arg1)))
 		bars_cols = missing
 	end
 
@@ -433,7 +492,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 			(info.data[1] != 0) && (info.data[1] -= dx);
 		end
 		info.data = round_wesn(info.data)		# Add a pad if not-tight
-		new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], info.data[3], info.data[4])
+		new_opt_R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], info.data[3], info.data[4])
 		cmd = replace(cmd, opt_R => new_opt_R)
 	end
 	return cmd, _argD
@@ -451,7 +510,7 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 	dy::Float64 = (info.data[4] - info.data[3]) * 0.005;
 	info.data[1] -= dx;	info.data[2] += dx;	info.data[4] += dy;
 	info.data = round_wesn(info.data)		# Add a pad if not-tight
-	new_opt_R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], 0, info.data[4])
+	new_opt_R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], 0, info.data[4])
 	cmd = replace(cmd, opt_R => new_opt_R)
 end
 
@@ -643,7 +702,7 @@ function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)
 	# Example that will land and be processed here:  marker=(:Ellipse, [30 10 15])
 	# N is the number of extra columns
 	marca = "";	 msg = ""
-	if (size(ext,2) == N && arg1 !== nothing)
+	if (size(ext,2) == N && arg1 !== nothing)	# Here ARG1 is supposed to be a matrix that will be extended.
 		S = Symbol(opt)
 		marca, arg1 = add_opt(add_opt, (Dict(S => (par=ext,)), opt, "", [S]), (par="|",), true, arg1)
 	elseif (cst && length(ext) == 1)

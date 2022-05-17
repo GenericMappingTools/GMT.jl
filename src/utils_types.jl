@@ -3,7 +3,7 @@ function text_record(data, text, hdr=Vector{String}())
 	# TEXT is a string or a cell array
 
 	(isa(data, Vector)) && (data = data[:,:]) 		# Needs to be 2D
-	(!isa(data, Array{Float64})) && (data = Float64.(data))
+	#(!isa(data, Array{Float64})) && (data = Float64.(data))
 
 	if (isa(text, String))
 		_hdr = isempty(hdr) ? "" : hdr[1]
@@ -57,6 +57,7 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `wkt`:  A WKT SRS.
   - `colnames`: Optional string vector with names for each column of `mat`.
 """
+mat2ds(mat::GDtype) = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...)
 	d = KW(kwargs)
 
@@ -159,7 +160,7 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
 
 	# By default convert to Doubles, except if instructed to NOT to do it.
-	(find_in_dict(d, [:datatype])[1] === nothing) && (eltype(mat) != Float64) && (mat = Float64.(mat))
+	#(find_in_dict(d, [:datatype])[1] === nothing) && (eltype(mat) != Float64) && (mat = Float64.(mat))
 	_geom::Int = Int((geom == 0 && (2 <= length(mat) <= 3)) ? Gdal.wkbPoint : (geom == 0 ? Gdal.wkbUnknown : geom))	# Guess geom
 	(multi && _geom == 0 && size(mat,1) == 1) && (_geom = Int(Gdal.wkbPoint))	# One row with many columns and MULTI => Points
 	if (isempty(xx))				# No coordinates transmitted
@@ -235,7 +236,7 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 	_fill = helper_ds_fill(d)
 
 	if ((val = find_in_dict(d, [:color_wrap])[1]) !== nothing)	# color_wrap is a kind of private option for bar-stack
-		n_colors = Int(val)
+		n_colors::Int = Int(val)
 	end
 
 	n_ds = size(D.data, 1)
@@ -262,11 +263,11 @@ function helper_ds_fill(d::Dict)::Vector{String}
 	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
 		_fill::Vector{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? vec(fill_val) :
 		                       ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
-		n_colors::Integer = length(_fill)
+		n_colors::Int = length(_fill)
 		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
 			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end
 			_alpha::Vector{String} = Vector{String}(undef, n_colors)
-			na::Integer = min(length(alpha_val), n_colors)
+			na::Int = min(length(alpha_val), n_colors)
 			for k = 1:na  _alpha[k] = join(string('@',alpha_val[k]))  end
 			if (na < n_colors)
 				for k = na+1:n_colors  _alpha[k] = ""  end
@@ -278,6 +279,104 @@ function helper_ds_fill(d::Dict)::Vector{String}
 	end
 	return _fill
 end
+
+# ---------------------------------------------------------------------------------------------------
+function color_gradient_line(D::Matrix{<:Real}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
+	# Reformat a Mx2 (or Mx3) matrix so that it can be used as vectors with no head/tail but varying
+	# color determined by last column and using plot -Sv+s -W+cl
+	(!is3D && size(D,2) < 2) && error("This function requires that the data matrix has at least 2 columns")
+	(is3D && size(D,2)  < 3) && error("This function requires that the data matrix has at least 3 columns")
+	(is3D && color_col == 3) && (color_col = 4)		# Change the default value column number
+	dim_col = (is3D) ? 3 : 2		# Select the last coord column. 2nd for 2D and 3rd for is3D
+
+	r = (first) ? (1:size(D,1)-1) : (2:size(D,1))		# Which rows to use to pick the 'value' column
+	val = (size(D,2) == dim_col) ? collect(1.:size(D,1)-1) : D[r, color_col]
+	[D[1:end-1, 1:dim_col] val D[2:end, 1:dim_col]]
+end
+
+function color_gradient_line(D::GMTdataset; is3D::Bool=false, color_col::Int=3, first::Bool=true)
+	mat = color_gradient_line(D.data, is3D=is3D, color_col=color_col, first=first)
+	mat2ds(mat, proj=D.proj4, wkt=D.wkt, geom=wkbLineString)
+end
+
+function color_gradient_line(Din::Vector{<:GMTdataset}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
+	D = Vector{GMTdataset}(undef, length(Din))
+	for k = 1:length(Din)
+		D[k] = color_gradient_line(Din[k], is3D=is3D, color_col=color_col, first=first)
+	end
+	D
+end
+# ---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
+function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=Vector{Real}(), color_col::Int=0)
+	# Take a 2D or 3D poly-line and break it into an array of DS, one for each line segment
+	# AUTO_COLOR -> color from 1:size(M,1)
+	(!isempty(color) && size(M,2) < 3) && error("For a varying color the input data must have at least 3 columns")
+	n_ds = size(M,1)-1
+	_hdr::Vector{String} = fill("", n_ds)
+	first, use_row_number = true, false
+	if (!isempty(lt))
+		nth = length(lt)
+		if (nth < size(M,1))
+			if (nth == 2)  th = linspace(lt[1], lt[2], n_ds)		# If we have only 2 thicknesses.
+			else           th::Vector{Float64} = vec(gmt("sample1d -T -o1", [collect(1:nth) lt], collect(linspace(1,nth,n_ds))).data)
+			end
+			for k = 1:n_ds  _hdr[k] = string(" -W", th[k])  end
+		else
+			for k = 1:n_ds  _hdr[k] = string(" -W", lt[k])  end
+		end
+		first = false
+	end
+
+	(color_col == 0) && (color_col = 3)		# Set the color column to default if it wasn't sent in.
+
+	if (isempty(color) && auto_color)
+		mima = (size(M,2) <= 3) ? (1., Float64(size(M,1))) : extrema(view(M, :, color_col))
+		(size(M,2) <= 3) && (use_row_number = true; z4color = 1.:n_ds)
+		color::GMTcpt = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
+	end
+
+	if (!isempty(color))
+		z_col = color_col
+		rgb = [0.0, 0.0, 0.0];
+		P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], color);		# A pointer to a GMT CPT
+		for k = 1:n_ds
+			z = (use_row_number) ? z4color[k] : M[k, z_col]
+			gmt_get_rgb_from_z(G_API[1], P, z, rgb)
+			t = @sprintf(",%.0f/%.0f/%.0f", rgb[1]*255, rgb[2]*255, rgb[3]*255)
+			_hdr[k] = (first) ? " -W"*t : _hdr[k] * t
+		end
+	end
+
+	Dm = Vector{GMTdataset}(undef, n_ds)
+	geom = (is3D) ? Int(Gdal.wkbLineStringZ) : Int(Gdal.wkbLineString)
+	for k = 1:n_ds
+		Dm[k] = GMTdataset(M[k:k+1, :], Float64[], Float64[], Dict{String, String}(), String[], String[], _hdr[k], String[], "", "", geom)
+	end
+	Dm
+end
+
+function line2multiseg(D::GMTdataset; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=Vector{Real}(), color_col::Int=0)
+	Dm = line2multiseg(D.data, is3D=is3D, color=color, auto_color=auto_color, lt=lt, color_col=color_col)
+	Dm[1].proj4, Dm[1].wkt, Dm[1].ds_bbox, Dm[1].colnames = D.proj4, D.wkt, D.ds_bbox, D.colnames
+	Dm
+end
+
+function line2multiseg(D::Vector{<:GMTdataset}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=Vector{Real}(), color_col::Int=0)
+	Dm = line2multiseg(D[1], is3D=is3D, color=color, auto_color=auto_color, lt=lt, color_col=color_col)
+	Dm[1].proj4, Dm[1].wkt, Dm[1].colnames = D[1].proj4, D[1].wkt, D[1].colnames
+	bb_min = bb_max = D[1].ds_bbox
+	for k = 2:length(D)
+		Dt = line2multiseg(D[k], is3D=is3D, color=color, auto_color=auto_color, lt=lt, color_col=color_col)
+		append!(Dm, Dt)
+		bb_max = max(bb_max, D[k].ds_bbox)		# To compute the final ds_bbox
+		bb_min = min(bb_min, D[k].ds_bbox)
+	end
+	Dm[1].ds_bbox = [bb_min bb_max]'[:]
+	Dm
+end
+# ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
 """
@@ -456,6 +555,62 @@ function slicecube(I::GMTimage, layer::Int)
 	GMTimage(I.proj4, I.wkt, I.epsg, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
+function slicecube(G::GMTgrid, slice::Int; axis="z")
+	# Method that slices grid cubes. SLICE is the row|col|layer number. AXIS picks the axis to be sliced
+	(ndims(G) < 3 || size(G,3) < 2) && error("This is not a cube grid.")
+	_axis = lowercase(string(axis))
+
+	dim = (_axis == "z") ? 3 : (_axis == "y" ? 1 : 2)		# First try to pick which dimension to slice
+	if (G.layout[2] == 'R' && dim < 3)  dim = (dim == 1) ? 2 : 1  end	# For RowMajor swap dim from 1 to 2
+	(slice > size(G,dim)) && error("Slice number ($slice) is larger than grid size ($size(G,$dim))")
+
+	if (_axis == "z")
+		G_ = mat2grid(G[:,:,slice], G.x, G.y, [G.v[slice]], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+	elseif (_axis == "y")
+		if (G.layout[2] == 'C')  G_ = mat2grid(G[slice,:,:], G.x, G.v, reg=G.registration)
+		else                     G_ = mat2grid(G[:,slice,:], G.x, G.v, reg=G.registration, is_transposed=true)
+		end
+		G_.v = G_.y;	G_.y = [G.y[slice]]		# Shift coords vectors since mat2grid doesn't know how-to.
+	else
+		if (G.layout[2] == 'C')  G_ = mat2grid(G[:,slice,:], G.y, G.v, reg=G.registration)
+		else                     G_ = mat2grid(G[slice,:,:], G.y, G.v, reg=G.registration, is_transposed=true)
+		end
+		G_.v = G_.y;	G_.y = G_.x;	G_.x = [G.x[slice]]	
+	end
+	G_.layout = G.layout
+	return G_
+end
+
+function slicecube(G::GMTgrid, slice::AbstractFloat; axis="z")
+	# Method that slices grid cubes. SLICE is the x|y|z coordinate where to slice. AXIS picks the axis to be sliced
+	(ndims(G) < 3 || size(G,3) < 2) && error("This is not a cube grid.")
+	_axis = lowercase(string(axis))
+
+	which_coord_vec = (_axis == "z") ? G.v : (_axis == "y" ? G.y : G.x)
+	x = interp_vec(which_coord_vec, slice)
+	layer = trunc(Int, x)
+	frac = x - layer
+	nxy = size(G,1)*size(G,2)
+	if (_axis == "z")
+		mat = [G[k] + (G[k+nxy] - G[k]) * frac for k = (layer-1)*nxy+1 : layer*nxy]
+		G_ = mat2grid(reshape(mat,size(G,1),size(G,2)), G.x, G.y, [Float64(slice)], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+	elseif (_axis == "y")
+		if (G.layout[2] == 'C')  mat = G[layer,:,:] .+ (G[layer+1,:,:] .- G[layer,:,:]) .* frac
+		else                     mat = G[:,layer,:] .+ (G[:,layer+1,:] .- G[:,layer,:]) .* frac		# from GDAL
+		end
+		G_ = mat2grid(mat, G.x, G.v, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+		G_.v = G_.y;	G_.y = [Float64(slice)]		# Shift coords vectors since mat2grid doesn't know how-to.
+	else
+		if (G.layout[2] == 'C')  mat = G[:,layer,:] .+ (G[:,layer+1,:] .- G[:,layer,:]) .* frac
+		else                     mat = G[layer,:,:] .+ (G[layer+1,:,:] .- G[layer,:,:]) .* frac		# from GDAL
+		end
+		G_ = mat2grid(mat, G.y, G.v, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+		G_.v = G_.y;	G_.y = G_.x;	G_.x = [Float64(slice)]	
+	end
+	G_.layout = G.layout
+	return G_
+end
+
 # ---------------------------------------------------------------------------------------------------
 """
     stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name="time", z_unit="", save="", mirone=false)
@@ -629,12 +784,12 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    G = mat2grid(mat; reg=nothing, x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", tit::String="",
+    G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=nothing, proj4::String="", wkt::String="", tit::String="",
                  rem::String="", cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0)
 
-Take a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
-and return a grid GMTgrid type.
-Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
+Take a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor and 
+return a grid GMTgrid type. Alternatively to HDR, provide a pair of vectors, `x` & `y`, with the X and Y coordinates.
+Optionaly add a `v` vector with vertical coordinates if `mat` is a 3D array and one wants to create a ``cube``.
 Optionaly, the HDR arg may be ommited and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
 When HDR is not used, REG == nothing [default] means create a gridline registration grid and REG == 1,
 or REG="pixel" a pixel registered grid.
@@ -686,9 +841,10 @@ end
 # This is the way I found to find if a matriz is transposed. There must be better ways but couldn't find them.
 istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
-function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(),
-	v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="",
-	cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0, is_transposed::Bool=false)
+function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Float64}(); reg=nothing,
+	x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="",
+	epsg::Int=0, tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[], scale::Float32=1f0,
+	offset::Float32=0f0, is_transposed::Bool=false)
 	# Take a 2/3D array and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
@@ -699,8 +855,9 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, 
 	elseif (isa(reg, Real))
 		reg_ = (reg == 0) ? 0 : 1
 	end
-	if (isempty(x) && !isempty(xx))  x = xx  end
-	if (isempty(y) && !isempty(yy))  y = yy  end
+	if (isempty(x) && !isempty(xx))  x = vec(xx)  end
+	if (isempty(y) && !isempty(yy))  y = vec(yy)  end
+	if (isempty(v) && !isempty(zz))  v = vec(zz)  end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y, is_transposed)
 
 	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
@@ -713,7 +870,14 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, 
 	end
 
 	isT = istransposed(mat)
-	GMTgrid(proj4, wkt, epsg, hdr[1:6], [x_inc, y_inc], reg_, NaN, tit, rem, cmd, names, x, y, v, isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
+	if (ndims(mat) == 2)
+		inc, range = [x_inc, y_inc], hdr[1:6]
+	else
+		if (isempty(v))  inc, range = [x_inc, y_inc, 1.], [vec(hdr[1:6]); [1., size(mat,3)]]
+		else             inc, range = [x_inc, y_inc, v[2] - v[1]], [vec(hdr[1:6]); [v[1], v[end]]]
+		end
+	end
+	GMTgrid(proj4, wkt, epsg, range, inc, reg_, NaN, tit, rem, cmd, names, x, y, v, isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object

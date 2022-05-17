@@ -872,26 +872,26 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	opt_J = parse_J(d, "", " -JX" * split(def_fig_size, '/')[1] * "/0", true, false, false)[2]
 	opt_R = parse_R(d, "")[1]
 	d[:R] = (opt_R ==  "") ? "0/100/0/100/0/100" : opt_R[4:end]
-	parse_B4ternary!(d)
+	parse_B4ternary!(d, first)
 	clockwise = haskey(d, :clockwise)
 	if (image || haskey(d, :contourf) || haskey(d, :contour))
 		t = tern2cart(isa(arg1, GMTdataset) ? arg1.data : isa(arg1, Vector{<:GMTdataset}) ? arg1[1].data : arg1, clockwise)
 		!endswith(opt_J, "/0") && (opt_J *= "/0")			# Need the "/0". Very important.
 		if (haskey(d, :contourf))
-			contourf(t, R=(0.0,1.0,0,sqrt(3)/2), B=:none, J=opt_J[4:end], backdoor=d[:contourf])
+			contourf(t, R=(0.0,1.0,0,sqrt(3)/2), B=:none, J=opt_J[4:end], backdoor=d[:contourf], first=first)
 			delete!(d, :contourf)
 		else
 			G = gmt("surface -R0/1/0/0.865 -I0.005 -T0.5 -Vq", t)
 			Gmask = gmt("grdmask -R0/1/0/0.865 -I0.005 -NNaN/1/1", [0.0 0; 0.5 0.865; 1 0; 0 0])
 			G *= Gmask
 			if (image)			# grdimage plus eventual contours
-				grdimage(G, B=:none, J=opt_J[4:end])
+				grdimage(G, B=:none, J=opt_J[4:end], first=first)
 				if (haskey(d, :contour))
 					grdcontour!(G, backdoor=d[:contour])
 					delete!(d, :contour)
 				end
 			else				# Only contours
-				pscontour(t, R=(0.0,1.0,0,sqrt(3)/2), B=:none, J=opt_J[4:end], backdoor=d[:contour])
+				pscontour(t, R=(0.0,1.0,0,sqrt(3)/2), B=:none, J=opt_J[4:end], backdoor=d[:contour], first=first)
 				delete!(d, :contour)
 			end
 		end
@@ -918,7 +918,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	return r
 end
 
-function parse_B4ternary!(d::Dict)
+function parse_B4ternary!(d::Dict, first::Bool=true)
 	# Ternary accepts only a special brand of -B. Try to parse and/or build -B option
 	opt_B = parse_B(d, "", " -Bafg")[2]
 	if ((val = find_in_dict(d, [:labels])[1]) !== nothing)		# This should be the easier way
@@ -928,6 +928,7 @@ function parse_B4ternary!(d::Dict)
 		d[:B] = " -Ba$(x)+l" * string(val[1]) * " -Bb$(x)+l" * string(val[2]) * " -Bc$(x)+l" * string(val[3])
 		[d[:B] *= " " * opt_Bs[k] for k = 2:length(opt_Bs)]		# Append the remains, if any.
 	else		# Ui, try to parse a string like this: " -Bpag8+u\" %\" -Ba+la -Bb+lb -Bc+lc"
+		(!first && opt_B == " -Bafg") && return			# Do not use the default -B on overlays.
 		opt_Bs = split(opt_B, " -B")[2:end]				# 2:end because surprisingly the first is = ""
 		if (length(opt_Bs) == 1)  d[:B] = opt_B			# Accept whatever was selected
 		else											# User may have used frame=(annot=?,grid=?, alabel=?,...)

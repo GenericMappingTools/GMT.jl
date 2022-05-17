@@ -64,10 +64,11 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	# If we found a scale_factor above, apply it
 	(scale_factor != 1) && (mat = gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val))
 
+	local gt
 	try
-		global gt = getgeotransform(dataset)
+		gt = getgeotransform(dataset)
 	catch
-		global gt = [0.5, 1.0, 0.0, ySize+0.5, 0.0, 1.0]	# Resort to no coords
+		gt = [0.5, 1.0, 0.0, ySize+0.5, 0.0, 1.0]	# Resort to no coords
 	end
 
 	x_inc, y_inc = gt[2], abs(gt[6])
@@ -82,7 +83,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	(prj == "") && (prj = seek_wkt_in_gdalinfo(gdalinfo(dataset)))
 	is_tp = (layout == "")				# if == "" array is rowmajor and hence transposed
 	if (is_grid)
-		(eltype(mat) == Float64) && (mat = Float32.(mat))
+		#(eltype(mat) == Float64) && (mat = Float32.(mat))
 		O = mat2grid(mat; hdr=hdr, proj4=prj, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRB" : layout
 	else
@@ -542,7 +543,7 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 		(ds_t.ptr == C_NULL) && (ds_t = Gdal.read(fname, flags = Gdal.GDAL_OF_VECTOR | Gdal.GDAL_OF_VERBOSE_ERROR, I=false))
 		optsP = (isempty(optsP)) ? ["-overwrite"] : (isa(optsP, String) ? ["-overwrite " * optsP] : append!(optsP, ["-overwrite"]))
 		ds = ogr2ogr(ds_t, optsP; gdataset=true, kw...)
-		Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
+		(ds.ptr != C_NULL) && Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
 	end
 	Gdal.GDALClose(ds_t.ptr)			# WTF it needs explicit close?
 	return (gdataset) ? ds : gd2gmt(ds)
@@ -584,7 +585,7 @@ Write a MxNxP `cube` object to disk as a multilayered file.
 
 - `cube`: A GMTgrid or GMTimage cube
 - `fname`: The file name where to save the `cube`
-- `v`: A vector ith the coordinates of the Z layers (if omitted create one as 1:size(cube,3))
+- `v`: A vector with the coordinates of the Z layers (if omitted create one as 1:size(cube,3))
 - `dim_name`: The name of the variable of the ``vertical`` dimension.
 - `dim_units`: The units of the `v` vector. If not provided, use the `cube.z_units` if exist (GMTgrid only)
 """

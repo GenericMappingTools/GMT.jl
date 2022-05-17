@@ -71,6 +71,7 @@
 
 		println("	GRDGRAVMAG3D")
 		grdgravmag3d("@earth_relief_10m", region=(-12.5,-10,35.5,37.5), density=1700, inc=0.05, pad=0.5, z_level=:b, f=:g, Vd=dbg2)
+		@test_throws ErrorException("Bad data type in option F") grdgravmag3d("@earth_relief_10m", region=(-12,-10,35,37), density=1700, inc=0.05, z_level=:a, F=:a)
 	end
 
 	println("	GRAVFFT")
@@ -150,7 +151,7 @@
 	I = gmtread("lixo.tif", img=true, layout="ICP");
 	I = gmtread("lixo.tif", img=true, band=0);
 	I = gmtread("lixo.tif", img=true, band=[0 1 2]);
-	show(I);
+	show(mat2img(rand(UInt8,4,4)));
 	imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
 	gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
 	@test GMT.parse_grd_format(Dict(:nan => 0)) == "+n0"

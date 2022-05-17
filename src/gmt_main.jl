@@ -100,7 +100,7 @@ GMTps() = GMTps(string(), 0, 0, String[])
 Base.size(P::GMTps) = P.length
 Base.isempty(P::GMTps) = (P.length == 0)
 
-mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
+mutable struct GMTdataset{T, N} <: AbstractArray{T,N}
 	data::Array{T,N}
 	ds_bbox::Vector{Float64}
 	bbox::Vector{Float64}
@@ -261,9 +261,9 @@ function gmt(cmd::String, args...)
 	pLL = (LL != NULL) ? Ref([LL], 1) : pointer([NULL])
 
 	n_itemsP = pointer([0])
-	X = GMT_Encode_Options(G_API[1], g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
+	XX = GMT_Encode_Options(G_API[1], g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
 	n_items = unsafe_load(n_itemsP)
-	if (X == NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
+	if (XX == NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
 		(n_items > 65000) ? n_items = 0 : error("Failure to encode Julia command options") 
 	end
 
@@ -272,12 +272,11 @@ function gmt(cmd::String, args...)
 		pLL = Ref([LL], 1)		# Need this because GMT_Destroy_Options() wants a Ref
 	end
 
-	XX = Array{GMT_RESOURCE}(undef, 1, n_items)
+	X = Array{GMT_RESOURCE}(undef, 1, n_items)
 	for k = 1:n_items
-		XX[k] = unsafe_load(X, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
+		X[k] = unsafe_load(XX, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
 	end
-	gmt_free_mem(G_API[1], X)
-	X = XX
+	gmt_free_mem(G_API[1], XX)
 
 	#println(g_module * " " * unsafe_string(GMT_Create_Cmd(G_API[1], LL)))	# Uncomment when need to confirm argins
 
@@ -799,12 +798,19 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Julia or a dummy one to hold GMT output
 		X.object = image_init(API, ptr)
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
-		# Ostensibly a DATASET, but it might be a TEXTSET passed via a cell array, so we must check
-		actual_family = [GMT_IS_DATASET]		# Default but may change to matrix
-		if (ptr !== nothing && !isGMTdataset(ptr))	# Input is matrix, pass data pointers via MATRIX to save memory
-			X.object = dataset_init(API, ptr, actual_family)
+		actual_family = [GMT_IS_DATASET]	# Default but may change to matrix
+		if (ptr !== nothing && isa(ptr, GMTdataset))
+			if (ptr.text == "")  X.object = dataset_init(API, ptr.data, actual_family)
+			else                 X.object = dataset_init(API, [ptr], X.direction)	# When TEXT still need to go here
+			end
+		elseif (isa(ptr, Vector{<:GMTdataset}))
+			X.object = dataset_init(API, ptr, X.direction)
 		else
-			X.object = dataset_init(API, ptr, X.direction)	# Here we accept ptr === nothing if dir == GMT_OUT
+			if (X.direction == GMT_OUT)		# Here we accept ptr === nothing
+				X.object = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
+			else
+				X.object = dataset_init(API, ptr, actual_family)
+			end
 		end
 		X.family = actual_family[1]
 	elseif (X.family == GMT_IS_PALETTE)		# Get a palette from Julia or a dummy one to hold GMT output
@@ -1053,7 +1059,7 @@ function toRP_pad(img, o, n_rows, n_cols, pad)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dataset_init(API::Ptr{Nothing}, Darr, direction::Integer)::Ptr{GMT_DATASET}
+function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::Integer)::Ptr{GMT_DATASET}
 # Create containers to hold or receive data tables:
 # direction == GMT_IN:  Create empty GMT_DATASET container, fill from Julia, and use as GMT input.
 #	Input from Julia may be a structure or a plain matrix
@@ -1061,12 +1067,7 @@ function dataset_init(API::Ptr{Nothing}, Darr, direction::Integer)::Ptr{GMT_DATA
 # If direction is GMT_IN then we are given a Julia struct and can determine dimension.
 # If output then we dont know size so we set dimensions to zero.
 
-	if (direction == GMT_OUT)
-		return convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
-	end
-
 	(Darr == C_NULL) && error("Input is empty where it can't be.")
-	if (isa(Darr, GMTdataset))	Darr = [Darr]	end 	# So the remaining algorithm works for all cases
 
 	# We come here if we did not receive a matrix
 	dim = [1, 0, 0, 0]
@@ -1186,14 +1187,13 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 
 	P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), NULL, NULL, 0, 0, NULL))
 
-	(one != 0) && mutateit(API, P, "is_continuous", one)
-
-	if (cpt.depth == 1)      mutateit(API, P, "is_bw", 1)
-	elseif (cpt.depth == 8)  mutateit(API, P, "is_gray", 1)
-	end
-	!isnan(cpt.hinge) && mutateit(API, P, "has_hinge", 1)
-
 	Pb::GMT_PALETTE = unsafe_load(P)				# We now have a GMT.GMT_PALETTE
+
+	(one != 0) && (Pb.is_continuous = UInt32(1))
+	if (cpt.depth == 1)      Pb.is_bw   = UInt32(1) 
+	elseif (cpt.depth == 8)  Pb.is_gray = UInt32(1)
+	end
+	!isnan(cpt.hinge) && (Pb.has_hinge = UInt32(1))
 
 	if (!isnan(cpt.hinge))			# If we have a hinge pass it in to the GMT owned struct
 		Pb.hinge = cpt.hinge
@@ -1231,9 +1231,9 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_KEY, convert(Ptr{Cvoid}, P), cpt.key);
 		(cpt.label[1] != "") &&
 			GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_LABEL, convert(Ptr{Cvoid}, P), cpt.label);
-		mutateit(API, P, "categorical", 2)
+		Pb.categorical = UInt32(2)
 	elseif (cpt.key[1] != "")
-		mutateit(API, P, "categorical", 2)
+		Pb.categorical = UInt32(2)
 	end
 
 	return P
@@ -1431,7 +1431,9 @@ function Base.:show(io::IO, G::GMTgrid)
 	(G.proj4 != "") && println("PROJ: ", G.proj4)
 	(G.wkt   != "") && println("WKT: ", G.wkt)
 	(G.epsg  != 0)  && println("EPSG: ", G.epsg)
+	display(G.z)		# Convoluted but this prints the numbers
 end
+Base.:display(G::GMTgrid) = show(G)		# Otherwise by default it only displays the numbers
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:show(io::IO, G::GMTimage)
@@ -1442,7 +1444,9 @@ function Base.:show(io::IO, G::GMTimage)
 	(G.proj4 != "") && println("PROJ: ", G.proj4)
 	(G.wkt   != "") && println("WKT: ", G.wkt)
 	(G.epsg  != 0)  && println("EPSG: ", G.epsg)
+	display(G.image)		# Convoluted but this prints the numbers
 end
+Base.:display(G::GMTimage) = show(G)		# Otherwise by default it only displays the numbers
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
@@ -1477,12 +1481,13 @@ function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
 	(~isempty(D[1].attrib))  && println("Attributes: ", D[1].attrib)
 	(~isempty(D[1].ds_bbox)) && println("Global BoundingBox:    ", D[1].ds_bbox)
 	(~isempty(D[1].bbox))    && println("First seg BoundingBox: ", D[1].bbox)
-	display(D[1].data)
+	(~isempty(D[1])) && display(D[1].data)
 	if (~isempty(D[1].text))
 		println("First segment TEXT")
 		display(D[1].text)
 	end
 end
+Base.:display(D::Vector{<:GMTdataset}) = show(D)	# Otherwise the default prints nothig when data == []
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:show(io::IO, D::GMTdataset)
@@ -1492,15 +1497,16 @@ function Base.:show(io::IO, D::GMTdataset)
 	(D.proj4  != "") && println("PROJ: ", D.proj4)
 	(D.wkt    != "") && println("WKT: ", D.wkt)
 	(D.header != "") && println("Header:\t", D.header)
-	display(D.data)
+	(~isempty(D)) && display(D.data)
 	(~isempty(D.text)) && display(D.text)
 end
+Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothig when text only (data == [])
 
 # ---------- For Pluto ------------------------------------------------------------------------------
 Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.fname))
 
 # ---------- For fck stop printing UInts in hexadecinal ---------------------------------------------
-Base.show(io::IO, x::T) where {T<:Union{UInt, UInt128, UInt64, UInt32, UInt16, UInt8}} = Base.print(io, x)
+#Base.show(io::IO, x::T) where {T<:Union{UInt, UInt128, UInt64, UInt32, UInt16, UInt8}} = Base.print(io, x)
 
 # ---------------------------------------------------------------------------------------------------
 function fakedata(sz...)

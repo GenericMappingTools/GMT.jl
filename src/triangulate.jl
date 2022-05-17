@@ -9,6 +9,10 @@ Full option list at [`triangulate`]($(GMTdoc)triangulate.html)
 
 Parameters
 ----------
+- **A** | **area** :: [Type => Number]
+
+    Compute the area of the Cartesian triangles and append the areas in the output segment headers
+    [no areas calculated]. Requires **triangles** and is not compatible with **voronoi** (GMT >= 6.4).
 - **C** | **slope_grid** :: [Type => Number]
 
     Read a slope grid (in degrees) and compute the propagated uncertainty in the
@@ -30,6 +34,11 @@ Parameters
 - $(GMT.opt_I)
     ($(GMTdoc)triangulate.html#i)
 - $(GMT.opt_J)
+- **L** | **index** :: [Type => Bool]
+
+    Give name of file with previously computed Delaunay information. If the indexfile is binary and can be read
+    the same way as the binary input table then you can append +b to spead up the reading (GMT6.4).
+    ($(GMTdoc)triangulate.html#l)
 - **M** | **network** :: [Type => Bool]
 
     Output triangulation network as multiple line segments separated by a segment header record.
@@ -71,8 +80,8 @@ function triangulate(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :bi :bo :di :e :f :h :i :w :yx])
 	(haskey(d, :Z) && isa(d[:Z], Bool) && !d[:Z]) && delete!(d, :Z)		# Strip Z=false from 'd' (for triplot)
-	cmd  = parse_these_opts(cmd, d, [[:C :slope_grid], [:D :derivatives], [:E :empty], [:M :network],
-                                     [:N :ids], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :slope_grid], [:D :derivatives], [:E :empty], [:L :index],
+	                                 [:M :network], [:N :ids], [:S :triangles], [:T :edges], [:Z :xyz :triplets]])
 	cmd = parse_Q_tri(d, [:Q :voronoi], cmd)
 	(occursin("-I", cmd) && occursin("-R", cmd) && !occursin("-G", cmd)) && (cmd *= " -G")
 	(occursin("-Q", cmd) && !occursin("-M", cmd)) && (cmd *= " -M")		# Otherwise kills Julia (GMT bug)

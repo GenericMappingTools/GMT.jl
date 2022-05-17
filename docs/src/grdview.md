@@ -104,15 +104,16 @@ Optional Arguments
    Select verbosity level. More at [verbose](@ref)
 
 - **W** or **pen** or **pens**\
-> - **pens=(contour=true,)**\
->>   Draw contour lines on top of surface or mesh (not image). Use ``pens=(contour=true, pen)`` to set pen
->>   attributes used for the contours. [Default: width = 0.75p, color = black, style = solid].
+  
+  - **pens=(contour=true,)**\
+     Draw contour lines on top of surface or mesh (not image). Use ``pens=(contour=true, pen)`` to set pen
+     attributes used for the contours. [Default: width = 0.75p, color = black, style = solid].
 
-> - **pens=(mesh=true, pen)**\
->>   Sets the pen attributes used for the mesh. [Default: width = 0.25p, color = black, style = solid]. You must also select ``surftype=(mesh=true,)`` or ``surftype=(surface=true, mesh=true)`` for meshlines to be drawn.
+  - **pens=(mesh=true, pen)**\
+     Sets the pen attributes used for the mesh. [Default: width = 0.25p, color = black, style = solid]. You must also select ``surftype=(mesh=true,)`` or ``surftype=(surface=true, mesh=true)`` for meshlines to be drawn.
 
-> - **pens=(facade=true, pen)**\
->>   Sets the pen attributes used for the facade. [Default: width = 0.25p, color = black, style = solid]. You must also select **plane** for the facade outline to be drawn.
+  - **pens=(facade=true, pen)**\
+     Sets the pen attributes used for the facade. [Default: width = 0.25p, color = black, style = solid]. You must also select **plane** for the facade outline to be drawn.
 
 - **X** or *xshift* or *x_offset* : *xshift=[] **|** *xshift=x-shift* **|** *xshift=(shift=x-shift, mov="a|c|f|r")*\
    Shift plot origin. More at [xshift](@ref)

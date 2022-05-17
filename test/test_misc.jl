@@ -53,7 +53,7 @@
 	Base.BroadcastStyle(typeof(I))
 	getindex(I,1);
 	setindex!(I, [101 1],1:2)
-	I .+ UInt8(0)
+	I .+ UInt8(0);
 
 	GMT.GMTdataset();
 	isempty(GMT.GMTcpt())
@@ -63,7 +63,7 @@
 	GMT.GMTdataset(rand(Float32, 2,2), ["aiai"])
 	GMT.GMTdataset(rand(Float32, 2,2), "aiai")
 	GMT.GMTdataset(rand(Float32, 2,2))
-	D = mat2ds(GMT.fakedata(4,4), x=:ny, color=:cycle, multi=true)
+	D = mat2ds(GMT.fakedata(4,4), x=:ny, color=:cycle, multi=true);
 	D[1].text = ["lixo", "l", "p", "q"];
 	GMT.set_dsBB!(D[1])
 	GMT.find4similar(D[1],0)
@@ -75,6 +75,13 @@
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"], multi=true);
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
+	GMT.color_gradient_line(rand(3,2));
+	GMT.color_gradient_line(mat2ds(rand(3,2)));
+	GMT.color_gradient_line([mat2ds(rand(3,2)), mat2ds(rand(4,2))]);
+	GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2], auto_color=true);
+	GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2,4], auto_color=true);
+	GMT.line2multiseg(mat2ds(rand(3,2)), lt=[1,2,4]);
+	GMT.line2multiseg([mat2ds(rand(3,2)), mat2ds(rand(4,2))], lt=[1,2], auto_color=true);
 
 	GMT.mat2grid(rand(Float32, 10,10), reg=1);
 	GMT.mat2grid(1, hdr=[0. 5 0 5 1 1])
@@ -145,8 +152,8 @@
 	plot!(collect(x)*60, seno, lw=0.5, lc="red", marker="circle", markeredgecolor=0, size=0.05, markerfacecolor="cyan")
 
 	G = GMT.peaks();
-	show(G);
-	show(mat2ds(rand(2,13), multi=true));
+	show(GMT.peaks(N=2));
+	show(mat2ds(rand(2,3), multi=true));
 	grdcontour(G, cont=1, annot=2, axis="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
 	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
@@ -155,26 +162,26 @@
 	GMT.geodetic2enu(-81.998,42.002,1000,-82,42,200);
 
 	println("	DRAWING")
-	circle(0,0,1,first=true,Vd=dbg2)
-	cross(0,0,1,Vd=dbg2)
-	custom(0,0, "bla", 1,Vd=dbg2)
-	diamond(0,0,1,Vd=dbg2)
-	hexagon(0,0,1,Vd=dbg2)
-	itriangle(0,0,1,Vd=dbg2)
-	letter(0,0, 1, "A", "Helvetica", "CM",Vd=dbg2)
-	minus(0,0,1,Vd=dbg2)
-	pentagon(0,0,1,Vd=dbg2)
-	plus(0,0,1,Vd=dbg2)
-	square(0,0,1,Vd=dbg2)
-	star(0,0,1,Vd=dbg2)
-	triangle(0,0,1,Vd=dbg2)
-	ydash(0,0,1,Vd=dbg2)
-	box(0,0,1,1,Vd=dbg2)
-	rect(0,0,1,1,Vd=dbg2)
-	ellipseAz(0,0, 0, 1, 1,Vd=dbg2)
-	rotrect(0,0, 0, 1, 1,Vd=dbg2)
-	rotrectAz(0,0, 0, 1, 1,Vd=dbg2)
-	roundrect(0,0, 1, 1, 1,Vd=dbg2)
-	ellipse(300,201,0, 200, 50, first=true, units=:points, fill=:purple, pen=1)
-	circle(305,185,56, fill=:black, figname="lixo.ps")
+	circle(0,0,1,first=true,Vd=dbg2);
+	cross(0,0,1,Vd=dbg2);
+	custom(0,0, "bla", 1,Vd=dbg2);
+	diamond(0,0,1,Vd=dbg2);
+	hexagon(0,0,1,Vd=dbg2);
+	itriangle(0,0,1,Vd=dbg2);
+	letter(0,0, 1, "A", "Helvetica", "CM",Vd=dbg2);
+	minus(0,0,1,Vd=dbg2);
+	pentagon(0,0,1,Vd=dbg2);
+	plus(0,0,1,Vd=dbg2);
+	square(0,0,1,Vd=dbg2);
+	star(0,0,1,Vd=dbg2);
+	triangle(0,0,1,Vd=dbg2);
+	ydash(0,0,1,Vd=dbg2);
+	box(0,0,1,1,Vd=dbg2);
+	rect(0,0,1,1,Vd=dbg2);
+	ellipseAz(0,0, 0, 1, 1,Vd=dbg2);
+	rotrect(0,0, 0, 1, 1,Vd=dbg2);
+	rotrectAz(0,0, 0, 1, 1,Vd=dbg2);
+	roundrect(0,0, 1, 1, 1,Vd=dbg2);
+	ellipse(300,201,0, 200, 50, first=true, units=:points, fill=:purple, pen=1, X=0, Y=0);
+	circle(305,185,56, fill=:black, figname="lixo.ps");
 end

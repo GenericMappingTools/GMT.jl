@@ -28,6 +28,7 @@ function get_GMTver()
 		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
 		ver = readlines(`gmt --version`)[1]
 		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
+		(out < v"6.1") && error("Need at least GMT6.1. The one you have ($out) is not supported.")
 		return out, false, "", "", "", ""
 	catch err1;		println(err1)		# If not, install GMT
 		ENV["INSTALL_GMT"] = "1"
@@ -95,7 +96,7 @@ const global CTRLshapes = CTRLstruct2([true], [true], [""])
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Nothing, Vector{Symbol}, Matrix{Symbol}}
-const global VMr = Union{Vector{<:Real}, Matrix{<:Real}}
+const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
 # GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are edeclared in gmt_main
 #const global unused_opts = [()]					# To track consumed options
 #const global unused_subopts = [()]					# To track consumed options in sub-options
@@ -146,7 +147,7 @@ export
 
 	colorzones, rasterzones!, crop, doy2date, date2doy, yeardecimal, median, mean, std, nanmean, nanstd,
 
-	append2fig, regiongeog, wmsinfo, wmstest, wmsread, polygonlevels
+	append2fig, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -234,6 +235,7 @@ include("sphdistance.jl")
 include("sphinterpolate.jl")
 include("sphtriangulate.jl")
 include("splitxyz.jl")
+include("streamlines.jl")
 include("surface.jl")
 include("subplot.jl")
 include("tables_gmt.jl")

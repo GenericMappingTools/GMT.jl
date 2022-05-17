@@ -74,6 +74,7 @@ I = GMT.GMTimage("", "", 0, [1., 10, 1, 10, 0, 1, 1, 1, 1], [1., 1], 1, zero(UIn
 imshow(I,Vd=dbg2)
 imshow(mat2ds([0 0; 10 0; 10 10; 11 10]), Vd=dbg2)
 imshow(makecpt(1,5, cmap=:polar), Vd=dbg2)
+imshow(:gray, Vd=dbg2)
 GMT.mat2grid("ackley");
 GMT.mat2grid("egg");
 GMT.mat2grid("sombrero");
