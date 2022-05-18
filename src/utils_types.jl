@@ -838,7 +838,7 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String=
 	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem, cmd="", names=names)
 end
 
-# This is the way I found to find if a matriz is transposed. There must be better ways but couldn't find them.
+# This is the way I found to find if a matrix is transposed. There must be better ways but couldn't find them.
 istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
 function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Float64}(); reg=nothing,
@@ -877,7 +877,7 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Flo
 		else             inc, range = [x_inc, y_inc, v[2] - v[1]], [vec(hdr[1:6]); [v[1], v[end]]]
 		end
 	end
-	GMTgrid(proj4, wkt, epsg, range, inc, reg_, NaN, tit, rem, cmd, names, x, y, v, isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
+	GMTgrid(proj4, wkt, epsg, range, inc, reg_, NaN, tit, rem, cmd, names, vec(x), vec(y), ve(v), isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object
