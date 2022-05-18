@@ -65,13 +65,16 @@
 	GMT.GMTdataset(rand(Float32, 2,2))
 	D = mat2ds(GMT.fakedata(4,4), x=:ny, color=:cycle, multi=true);
 	D[1].text = ["lixo", "l", "p", "q"];
-	GMT.set_dsBB!(D[1])
-	GMT.find4similar(D[1],0)
+	GMT.set_dsBB!(D[1]);
+	GMT.find4similar(D[1],0);
 	getindex(D[1],1);
-	setindex!(D[1], 1,1)
-	Base.BroadcastStyle(typeof(D[1]))
-	display(D);
-	plot(D, legend=true, Vd=dbg2)
+	setindex!(D[1], 1,1);
+	Base.BroadcastStyle(typeof(D[1]));
+	try
+	display(D);		# It seems the pretty tables solution has an Heisenbug.
+	catch
+	end
+	plot(D, legend=true, Vd=dbg2);
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"], multi=true);
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
