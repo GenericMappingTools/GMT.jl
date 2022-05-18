@@ -16,4 +16,5 @@ function _precompile_()
 	@assert Base.precompile(Tuple{Core.kwftype(typeof(grdview)),NamedTuple{(:show,), Tuple{Bool}},typeof(grdview),String,GMTgrid{Float32, 2}})   # time:
 	@assert Base.precompile(Tuple{typeof(common_get_R_cpt),Dict{Symbol, Any},String,String,String,Int64,GMTgrid{Float32, 2},Nothing,Nothing,String})   # time: 0.0355232
 	@assert Base.precompile(Tuple{typeof(common_shade),Dict{Symbol, Any},String,GMTgrid{Float32, 2},GMTcpt,Nothing,Nothing,String})   # time: 0.0226077
+	@assert Base.precompile(Tuple{typeof(show),IOBuffer,GMTdataset{Float64, 2}})
 end
