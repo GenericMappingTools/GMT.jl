@@ -199,7 +199,7 @@
 	bar([0. 1 2 3; 1 2 3 4], stack=true, hbar=true, fill=["red", "green", "blue"])
 	bar(0:3, [2.9, 5, 2.2, 1], fill=["red", "green", "blue", "orange"], Vd=dbg2)
 	D = mat2ds([0 0],["aa"]);
-	sprint(print, D);
+	#sprint(print, D);
 
 	println("	BAR3")
 	G = gmt("grdmath -R-15/15/-15/15 -I1 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
