@@ -2995,7 +2995,6 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
-	(fname == "") && return _read_data(d, cmd, arg, opt_R, is3D, get_info)
 
 	cmd, opt_i  = parse_i(d, cmd)		# If data is to be read with some column order
 	cmd, opt_bi = parse_bi(d, cmd)		# If data is to be read as binary
@@ -3004,6 +3003,8 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	cmd, opt_yx = parse_swap_xy(d, cmd)
 	(CTRL.proj_linear[1]) && (opt_yx *= " -fc")		# To avoid the lib remembering last eventual geog case
 	endswith(opt_yx, "-:") && (opt_yx *= "i")		# Need to be -:i not -: to not swap output too
+
+	(fname == "") && return _read_data(d, cmd, arg, opt_R, is3D, get_info, opt_i, opt_di, opt_yx)
 
 	if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])		# Must read file to find -R
 		if (!IamSubplot[1] || GMTver > v"6.1.1")	# Protect against a GMT bug
