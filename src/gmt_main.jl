@@ -1452,53 +1452,9 @@ Base.:display(G::GMTimage) = show(G)		# Otherwise by default it only displays th
 function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
 	println(typeof(D), " with ", length(D), " segments")
 	(length(D) == 0) && return
-	(~isempty(D[1].comment)) && println("Comment:\t", D[1].comment)
-	(D[1].proj4 != "") && println("PROJ: ", D[1].proj4)
-	(D[1].wkt   != "") && println("WKT: ", D[1].wkt)
-	#for k = 1:length(D)
-		#(D[k].header != "") && println("Header",k, ":\t", D[k].header)
-	#end
 
-	# Do not print all headers as they may be many. But because there can be empty headers the mat complexify
-	n_from_top = k = 1
-	while (n_from_top < min(length(D), 11) && k <= length(D))		# Print the at most first 10 non empty
-		(D[k].header != "") ? (println("Header",k, ":\t", D[k].header); k += 1; n_from_top += 1) : k += 1
-	end
-	if (n_from_top < length(D))		# If we have more segments print the at most last 10
-		n_from_bot = 1
-		for k = length(D):-1:1		# Find the (max) last 10 non empty
-			(D[k].header != "") && (n_from_bot += 1)
-			n_from_bot > 10 && break
-		end
-		println("...")
-		n = max(n_from_top + 1, length(D) - n_from_bot + 1) + 1		# Make sure to print only non yet printed
-		for k = n:length(D)
-			(D[k].header != "") && println("Header",k, ":\t", D[k].header)
-		end
-	end
-
-	println("First segment DATA")
-	(~isempty(D[1].attrib))  && println("Attributes: ", D[1].attrib)
-	(~isempty(D[1].ds_bbox)) && println("Global BoundingBox:    ", D[1].ds_bbox)
-	(~isempty(D[1].bbox))    && println("First seg BoundingBox: ", D[1].bbox)
-	(~isempty(D[1])) && display(D[1].data)
-	if (~isempty(D[1].text))
-		println("First segment TEXT")
-		display(D[1].text)
-	end
-end
-Base.:display(D::Vector{<:GMTdataset}) = show(D)	# Otherwise the default prints nothig when data == []
-
-# ---------------------------------------------------------------------------------------------------
-function Base.:show(io::IO, D::GMTdataset)
-	(~isempty(D.comment)) && println("Comment:\t", D.comment)
-	(~isempty(D.attrib))  && println("Attributes:  ", D.attrib)
-	(~isempty(D.bbox))    && println("BoundingBox:  ", D.bbox)
-	(D.proj4  != "") && println("PROJ: ", D.proj4)
-	(D.wkt    != "") && println("WKT: ", D.wkt)
-	(D.header != "") && println("Header:\t", D.header)
-	(~isempty(D)) && display(D.data)
-	(~isempty(D.text)) && display(D.text)
+	println("Show first segment. To see other segments just type its element number. E.g. D[7]\n")
+	show(D[1])
 end
 Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothig when text only (data == [])
 
