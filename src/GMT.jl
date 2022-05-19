@@ -128,8 +128,8 @@ export
 
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
-	blendimg!, lonlat2xy, xy2lonlat, mat2ds, mat2grid, mat2img, slicecube, linspace, logspace, fields, tic, toc, theme,
-	tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm,
+	blendimg!, lonlat2xy, xy2lonlat, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fields,
+	tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
 
 	magic, rescale, stackgrids, delrows!,
 
@@ -242,6 +242,7 @@ include("triangulate.jl")
 include("trend1d.jl")
 include("trend2d.jl")
 include("xyz2grd.jl")
+include("utils.jl")
 include("utils_project.jl")
 include("choropleth_utils.jl")
 include("webmapserver.jl")
