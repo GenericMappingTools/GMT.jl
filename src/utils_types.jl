@@ -537,7 +537,21 @@ end
 """
     slicecube(I::GMTimage, layer::Int)
 
-Take a slice of a multylayer GMTimage. Return the result still as a GMTimage. `layer` is the slice number.
+Take a slice of a multylayer GMTimage. Return the result still as a GMTimage. `layer` is the z slice number.
+
+    slicecube(G::GMTgrid, slice; axis="z")
+
+Extract a slice from a GMTgrid cube.
+
+  - `slice`: If it is an Int it will return a GMTgrid corresponding to that layer.
+    However, if `slice` is a float this is interpreted to mean: search that dimension (see the `axis` below)
+    coordinates and find the closest layer that has coordinate = `slice`. If the `slice` value is not within
+    10% of the coordinate of closest layer, the returned layer is obtained by linear interpolation of the
+    neighboring layers. For example, `slice=2.5` on a cube were layers are one unit apart will interpolate
+    between layers 2 and 3 where each layer weights 50% in the end result. NOTE: the return type is
+    still a cube but with one layer only (and the corresponding axis coordinate).
+  - `axis`: denotes the dimension being sliced. The default, "z", means the slices are taken from the
+    vertical axis. `axis="x"` means slice along one column, and `axis="y"` slice along a row.
 
 ### Example
 Get the fourth layer of the multi-layered 'I' GMTimage object 
@@ -562,7 +576,8 @@ function slicecube(G::GMTgrid, slice::Int; axis="z")
 
 	dim = (_axis == "z") ? 3 : (_axis == "y" ? 1 : 2)		# First try to pick which dimension to slice
 	if (G.layout[2] == 'R' && dim < 3)  dim = (dim == 1) ? 2 : 1  end	# For RowMajor swap dim from 1 to 2
-	(slice > size(G,dim)) && error("Slice number ($slice) is larger than grid size ($size(G,$dim))")
+	this_size = size(G,dim)
+	(slice > this_size) && error("Slice number ($slice) is larger than grid size ($this_size)")
 
 	if (_axis == "z")
 		G_ = mat2grid(G[:,:,slice], G.x, G.y, [G.v[slice]], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
@@ -589,7 +604,10 @@ function slicecube(G::GMTgrid, slice::AbstractFloat; axis="z")
 	which_coord_vec = (_axis == "z") ? G.v : (_axis == "y" ? G.y : G.x)
 	x = interp_vec(which_coord_vec, slice)
 	layer = trunc(Int, x)
-	frac = x - layer
+	frac = x - layer			# Used for layer interpolation.
+	(frac < 0.1) && return slicecube(G, layer)		# If 'slice' is within 10% of lower or upper layer just
+	(frac > 0.9) && return slicecube(G, layer+1)	# return that layer and do no interpolation between layers.
+
 	nxy = size(G,1)*size(G,2)
 	if (_axis == "z")
 		mat = [G[k] + (G[k+nxy] - G[k]) * frac for k = (layer-1)*nxy+1 : layer*nxy]
@@ -609,6 +627,85 @@ function slicecube(G::GMTgrid, slice::AbstractFloat; axis="z")
 	end
 	G_.layout = G.layout
 	return G_
+end
+const cubeslice = slicecube		# I'm incapable of remembering which one it is.
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    xyzw2cube(fname::AbstractString; datatype::DataType=Float32, proj4::String="", wkt::String="", epsg::Int=0,
+              tit::String="", names::Vector{String}=String[])
+
+Convert data table containing a cube into a GMTgrid cube. The input data must contain a completelly filled
+3D matrix and the data layout is guessed from file analysis (if it fails ... bad chance). 
+
+### Parameters
+  - `fname`: The filename of the cube in text format
+  - `datatype`:  The data type where the data will be stored. The default is Float32.
+  - `tit`:  A title string to describe this cube.
+  - `proj4`:  A proj4 string for dataset SRS.
+  - `wkt`:  Projection given as a WKT SRS.
+  - `epsg`: Same as `proj` but using an EPSG code
+  - `names`: used to give a description for each layer (also saved to file when using a GDAL function).
+
+### Returns
+A GMTgrid cube object.
+"""
+function xyzw2cube(fname::AbstractString="ALL_dRho.dat"; datatype::DataType=Float32, proj4::String="",
+	wkt::String="", epsg::Int=0, tit::String="", names::Vector{String}=String[])
+	# Convert a cube stored in a text file into GMTgrid (cube).
+	function examine_col(fname, col)
+		x = gmtread(fname, T="d", i=col);
+		mima = extrema(x)
+		n = length(x)
+		d = x[2] - x[1]
+		(d != 0) && return mima, d, n, true
+		k = 1
+		while (x[k] == x[k+=1]) end
+		d = x[k] - x[k-1]
+		(d != 0) && return mima, d, n, false
+	end
+
+	mima_X, dx, n, rowmajor = examine_col(fname, 0)
+	n_cols = round(Int, (mima_X[2] - mima_X[1]) / dx) + 1
+	mima_Y, dy, _, colmajor = examine_col(fname, 1)
+	n_rows = round(Int, (mima_Y[2] - mima_Y[1]) / dy) + 1
+
+	w = gmtread(fname, T="d", i=2);
+	t = n / (n_rows * n_cols)
+	frac = getdecimal(t)		# Get the fractional/decimal part of t 
+	(frac != 0.) && error("This file does not have the full 3D elements. Implementation for this is not yet ... implemented.")
+	n_levs = Int(t)
+	v = zeros(n_levs)
+	for k = 1:n_levs-1
+		v[k] = w[k * (n_rows * n_cols)]
+	end
+	v[end] = w[end]		# We didn't compute v[end] in the for loop
+	levmajor = ((w[2] - w[1]) != 0)		#Is it 'level-major'?
+
+	z = gmtread(fname, T="d", i=3);
+	cube = Array{datatype,3}(undef, n_rows, n_cols, n_levs)
+	j = 0
+	if (rowmajor && !levmajor)
+		for k = 1:n_levs, m = 1:n_rows, n = 1:n_cols
+			cube[m,n,k] = z[j+=1]
+		end
+	elseif (colmajor && !levmajor)
+		for k = 1:n_levs, n = 1:n_cols, m = 1:n_rows
+			cube[m,n,k] = z[j+=1]
+		end
+	else			# Must be level-major
+		if (rowmajor)
+			for m = 1:n_rows, n = 1:n_cols, k = 1:n_levs
+				cube[m,n,k] = z[j+=1]
+			end
+		else
+			for n = 1:n_cols, m = 1:n_rows, k = 1:n_levs
+				cube[m,n,k] = z[j+=1]
+			end
+		end
+	end
+
+	mat2grid(cube, linspace(mima_X[1],mima_X[2],n_cols), linspace(mima_Y[1],mima_Y[2],n_rows), v; proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, names=names)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -877,7 +974,7 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Flo
 		else             inc, range = [x_inc, y_inc, v[2] - v[1]], [vec(hdr[1:6]); [v[1], v[end]]]
 		end
 	end
-	GMTgrid(proj4, wkt, epsg, range, inc, reg_, NaN, tit, rem, cmd, names, vec(x), vec(y), ve(v), isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
+	GMTgrid(proj4, wkt, epsg, range, inc, reg_, NaN, tit, rem, cmd, names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object

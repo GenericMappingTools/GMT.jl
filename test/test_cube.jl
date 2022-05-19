@@ -33,3 +33,8 @@ streamlines(Us, Vs, [80,100], 20);
 streamlines(U, V, W, startz=5, axis=true);
 streamlines(U, V, W, 80, 20, 5);
 streamlines(U, V, W, [80], [20], [5., 10.])
+
+xyzw2cube("test_cube_ascii_rowmaj.dat")[:,:,1] == [10.0  10.0  10.0; 10.0  10.0  10.0]
+xyzw2cube("test_cube_ascii_colmaj.dat")[:,:,1] == [10.0  10.0  10.0; 10.0  10.0  10.0]
+xyzw2cube("test_cube_ascii_rowlevmaj.dat")[:,:,2] == [20.0  20.0  20.0; 20.0  20.0  20.0]
+xyzw2cube("test_cube_ascii_collevmaj.dat")[:,:,2] == [20.0  20.0  20.0; 20.0  20.0  20.0]
