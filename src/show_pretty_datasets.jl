@@ -34,7 +34,7 @@ function _show(io::IO,
 
 	# For example a grdinfo(...) or a pure text dataset. In those cases just print the .text & return.
 	if (isempty(D.data))
-		(~isempty(D.comment)) && println("Comment:\t", D.comment)
+		(~all(isempty.(D.comment))) && println("Comment:\t", D.comment)
 		(D.header != "")      && println("Header:\t", D.header)
 		display(D.text)
 		return nothing
@@ -111,7 +111,7 @@ function _show(io::IO,
 		show_row_number = false
 	end
 
-	(~isempty(D.comment)) && println("Comment:\t", D.comment)
+	(~all(isempty.(D.comment))) && println("Comment:\t", D.comment)
 	(~isempty(D.attrib))  && println("Attributes:  ", D.attrib)
 	(~isempty(D.bbox))    && println("BoundingBox: ", D.bbox)
 	(D.proj4  != "")      && println("PROJ: ", D.proj4)
@@ -254,11 +254,7 @@ function _pretty_tables_highlighter_func(data, i::Integer, j::Integer)
         cell = data[i, j]
         return ismissing(cell) || cell === nothing || cell isa GDtype
     catch e
-        if isa(e, UndefRefError)
-            return true
-        else
-            rethrow(e)
-        end
+        isa(e, UndefRefError) ? (return true) : rethrow(e)
     end
 end
 
