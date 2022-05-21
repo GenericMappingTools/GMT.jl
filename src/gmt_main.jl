@@ -1351,7 +1351,7 @@ function strncmp(str1::String, str2::String, num)
 	a = str1[1:min(num,length(str1))] == str2
 end
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function mutateit(API::Ptr{Nothing}, t_type, member::String, val)
 	# Mutate the member 'member' of an immutable struct whose pointer is T_TYPE
 	# VAL is the new value of the MEMBER field.
@@ -1374,6 +1374,7 @@ function mutateit(API::Ptr{Nothing}, t_type, member::String, val)
 	GMT_blind_change_struct(API, p_type, p_val, @sprintf("%s",ft[ind]), fo[ind])
 	typeof(p_type); 	typeof(p_val)		# Just to be sure that GC doesn't kill them before their due time
 end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function num2str(mat)
@@ -1456,6 +1457,7 @@ function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
 	println("Show first segment. To see other segments just type its element number. E.g. D[7]\n")
 	show(D[1])
 end
+Base.:show(io::IO, ::MIME"text/plain", D::GMTdataset) = show(D)
 Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothig when text only (data == [])
 
 # ---------- For Pluto ------------------------------------------------------------------------------
