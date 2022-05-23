@@ -92,7 +92,7 @@ Parameters
     Paint polygons after the level given as a cte or a vector with same size of number of polygons. Needs a color map.
     ($(GMTdoc)plot.html#z)
 
-- **axis** | **aspect** :: [Type => Str]
+- **aspect** :: [Type => Str]
 
     When equal to "equal" makes a square plot.
 - $(GMT.opt_a)
