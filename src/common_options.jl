@@ -311,7 +311,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		elseif (!isnumeric(opt_J[end]) && (length(opt_J) < 6 || (isletter(opt_J[5]) && !isnumeric(opt_J[6]))) )
 			if (!IamSubplot[1])
 				if ( ((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
-					opt_J *= split(def_fig_size, '/')[1] * "/0"
+					opt_J *= set_aspect_ratio(val, "", true, haskey(d, :aspect3))
 				else
 					opt_J = (!startswith(opt_J, " -JX")) ? append_figsize(d, opt_J) : opt_J * def_fig_size
 				end
@@ -369,7 +369,9 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 		width = (width == "auto") ? "?" : "?/?"
 	elseif ( ((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
 		(occursin("/", width)) && @warn("Ignoring the 'aspect' request because fig's Width and Height already provided.")
-		if !occursin("/", width)  width *= "/0"  end
+		if (!occursin("/", width))
+			width = set_aspect_ratio(val, width, false, haskey(d, :aspect3))
+		end
 	end
 
 	slash = "";		de = ""
@@ -399,6 +401,29 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 	opt_J *= slash * width * de
 	if (scale)  opt_J = opt_J[1:3] * lowercase(opt_J[4]) * opt_J[5:end]  end 		# Turn " -JX" to " -Jx"
 	return opt_J
+end
+
+set_aspect_ratio(aspect::Nothing, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String = set_aspect_ratio("", width, def_fig, is_aspect3)
+set_aspect_ratio(aspect::Symbol, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String = set_aspect_ratio(string(aspect), width, def_fig, is_aspect3)
+set_aspect_ratio(aspect::Real, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String = set_aspect_ratio(string(aspect, ":1"), width, def_fig, is_aspect3)
+function set_aspect_ratio(aspect::String, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String
+	# Set the aspect ratio. ASPECT can be "equal", "eq"; "square", "sq" or a ratio in the form "4:3", "16:12", etc.
+	def_fig && (width = split(def_fig_size, '/')[1])
+	if (startswith(aspect, "eq") || is_aspect3)
+		width *= "/0"
+	elseif (startswith(aspect, "sq"))
+		width *= "/" * width
+	elseif (occursin(":", aspect))
+		u = isletter(width[end]) ? width[end] : ' '		# See if we have a unit char
+		w = (u != ' ') ? parse(Float64, width[1:end-1]) : parse(Float64, width)
+		dims = parse.(Float64, split(aspect, ':'))
+		h = w * dims[2] / dims[1]						# Apply the aspect ratio
+		width = string(width, "/", h)
+		(u != ' ') && (width *= u)
+	else
+		error("Non-sense 'aspect' value ($(aspect)) in set_aspect_ratio()")
+	end
+	return width
 end
 
 function check_axesswap(d::Dict, width::AbstractString)
@@ -1513,8 +1538,9 @@ function build_pen(d::Dict, del::Bool=false)::String
 	else
 		lw = add_opt(d, "", "", [:lw :lt :linewidth :linethick :linethickness], nothing, del)	# Line width
 	end
+	(lw == "" && find_in_dict(d, [:line])[1] !== nothing) && (lw = "0.5p")	# Means, accept also line=true
 
-	ls::String = add_opt(d, "", "", [:ls :linestyle], nothing, del)		# Line style
+	ls::String = add_opt(d, "", "", [:ls :linestyle], nothing, del)			# Line style
 	lc::String = parse_pen_color(d, [:lc :linecolor], del)
 	out::String = ""
 	if (lw != "" || lc != "" || ls != "")
@@ -2312,22 +2338,20 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function font(d::Dict, symbs)::String
-	s = ((val = find_in_dict(d, symbs)[1]) !== nothing) ? font(val) : ""
+	((val = find_in_dict(d, symbs)[1]) !== nothing) ? font(val) : ""
 end
-function font(val)::String
+font(val::String)::String = val
+font(val::Real)::String = string(val)
+function font(val::Tuple)::String
 	# parse and create a font string.
 	# TODO: either add a NammedTuple option and/or guess if 2nd arg is the font name or the color
 	# And this: Optionally, you may append =pen to the fill value in order to draw the text outline with
 	# the specified pen; if used you may optionally skip the filling of the text by setting fill to -.
-	(isa(val, String) || isa(val, Real)) && return string(val)
 
-	s::String = ""
-	if (isa(val, Tuple))
-		s = parse_units(val[1])
-		if (length(val) > 1)
-			s = string(s,',',val[2])
-			(length(val) > 2) && (s = string(s, ',', get_color(val[3])))
-		end
+	s::String = parse_units(val[1])
+	if (length(val) > 1)
+		s = string(s,',',val[2])
+		(length(val) > 2) && (s = string(s, ',', get_color(val[3])))
 	end
 	return s
 end
