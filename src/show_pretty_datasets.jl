@@ -55,7 +55,7 @@ function _show(io::IO,
 	# For consistency, if `kwargs` has `compact_printng`, we must use it.
 	compact_printing::Bool = get(kwargs, :compact_printing, get(io, :compact, true))
 
-	num_rows, num_cols = size(D)
+	_, num_cols = size(D)
 
 	# By default, we align the columns to the left unless they are numbers, which is checked in the following.
 	alignment = fill(:l, num_cols)
@@ -67,12 +67,10 @@ function _show(io::IO,
 	alignment_regex_real = [r"\."]
 
 	for i = 1:num_cols
-		type_i = nonmissingtype(types[i])
-
-		if type_i <: Real
+		if types[i] <: Real
 			alignment_anchor_regex[i] = alignment_regex_real
 			alignment[i] = :r
-		elseif type_i <: Number
+		elseif types[i] <: Number
 			alignment[i] = :r
 		end
 	end
@@ -252,7 +250,7 @@ end
 function _pretty_tables_highlighter_func(data, i::Integer, j::Integer)
     try
         cell = data[i, j]
-        return ismissing(cell) || cell === nothing || cell isa GDtype
+        return cell === nothing || cell isa GDtype
     catch e
         isa(e, UndefRefError) ? (return true) : rethrow(e)
     end

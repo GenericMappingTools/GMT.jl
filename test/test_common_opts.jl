@@ -319,6 +319,14 @@
 	GMT.guess_WESN(Dict(:p=>"350/2"), "")
 	GMT.parse_q(Dict(:p=>(350,2)), "")
 
+	@test GMT.set_aspect_ratio(:eq, "10") == "10/0"
+	@test GMT.set_aspect_ratio("equal", "10c") == "10c/0"
+	@test GMT.set_aspect_ratio(2, "", true) == "14c/7.0c"
+	@test GMT.set_aspect_ratio("2:1", "", true) == "14c/7.0c"
+	@test GMT.set_aspect_ratio("2:1", "14c", false) == "14c/7.0c"
+	@test GMT.set_aspect_ratio("square", "", true) == "14c/14c"
+	@test GMT.set_aspect_ratio(nothing, "", true, true) == "14c/0"
+
 	@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(GMT.G_API[1], ' ', [0])
 	@test_throws ErrorException("Wrong type (Int64) for the 'text' argin") GMT.text_record(rand(2,2), 0)
 
