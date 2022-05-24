@@ -100,12 +100,14 @@
 	text_record([["aa", "bb"],["cc", "dd", "ee"]]);
 
 	# TEST THE API DIRECTLY (basically to improve coverage under GMT6)
+	@info "Befor ret PS"
 	PS = plot(rand(3,2), ps=1);
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 	GMT.ps_init(API, PS, 0);
 	gmt("destroy")
 
 	# Test ogr2GMTdataset
+	@info "ogr2GMTdataset"
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 	gmtread("lixo.gmt");		# This "lixo.gmt" was created in test_avatars.jl
 	if (GMTver > v"6.1.1")
@@ -120,18 +122,21 @@
 	rm("lixo.gmt")
 
 	check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
+	@info "before one makecpt"
 	C = makecpt(range=(0,9,1));
 	I = mat2img(check);
 	I.n_colors = 0
 	rgb = GMT.ind2rgb(I);
 	I = mat2img(check, cmap=C);
 	rgb = GMT.ind2rgb(I);
+	@info "before image_alpha!"
 	image_alpha!(I, alpha_ind=5);
 	image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
 	image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
 	image_cpt!(I, C)
 	GMT.transpcmap!(I, true)
 	GMT.transpcmap!(I, false)
+	@info "before image_cpt!"
 	image_cpt!(I, clear=true)
 
 	GMT.linspace(1,1,100);
