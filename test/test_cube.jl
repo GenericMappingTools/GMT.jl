@@ -16,9 +16,15 @@ r = streamlines(x[1,:], y[:,1], u, v, 0., 0.);
 r,a = streamlines(U, V);
 plot(r, decorated=(locations=a, symbol=(custom="arrow", size=0.3), fill=:black, dec2=true), Vd=2);
 
-U = grdinterpolate("U.nc");
-V = grdinterpolate("V.nc");
-W = grdinterpolate("W.nc");
+if (GMTver > v"6.3.0")
+	U = grdinterpolate("U.nc");
+	V = grdinterpolate("V.nc");
+	W = grdinterpolate("W.nc");
+else
+	U = gdaltranslate("U.nc");
+	V = gdaltranslate("V.nc");
+	W = gdaltranslate("W.nc");
+end
 Us = slicecube(U,5); Vs = slicecube(V,5);
 
 streamlines(Us, Vs, side="left");
