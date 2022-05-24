@@ -70,6 +70,7 @@
 	getindex(D[1],1);
 	setindex!(D[1], 1,1);
 	Base.BroadcastStyle(typeof(D[1]));
+	@info "Before display(D)"
 	try
 	display(D);		# It seems the pretty tables solution has an Heisenbug.
 	catch
@@ -78,14 +79,17 @@
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"], multi=true);
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
+	@info "color_gradient"
 	GMT.color_gradient_line(rand(3,2));
 	GMT.color_gradient_line(mat2ds(rand(3,2)));
 	GMT.color_gradient_line([mat2ds(rand(3,2)), mat2ds(rand(4,2))]);
+	@info "line2multiseg"
 	GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2], auto_color=true);
 	GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2,4], auto_color=true);
 	GMT.line2multiseg(mat2ds(rand(3,2)), lt=[1,2,4]);
 	GMT.line2multiseg([mat2ds(rand(3,2)), mat2ds(rand(4,2))], lt=[1,2], auto_color=true);
 
+	@info "mat2grid"
 	GMT.mat2grid(rand(Float32, 10,10), reg=1);
 	GMT.mat2grid(1, hdr=[0. 5 0 5 1 1])
 	GMT.num2str(rand(2,3));
