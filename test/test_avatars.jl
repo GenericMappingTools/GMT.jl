@@ -215,5 +215,7 @@
 	D = grd2xyz(G);
 	bar3(D, width=0.01, Nbands=3, Vd=dbg2)
 	@test_throws ErrorException("BAR3: When first arg is a name, must also state its type. e.g. grd=true or dataset=true") bar3("lixo.grd")
-	gmtwrite("lixo.gmt", D)
-	@test_throws ErrorException("BAR3: When NOT providing *width* data must contain at least 5 columns.") bar3("lixo.gmt", dataset=true)
+	gmtwrite("lixo.xyz", D);
+	grdconvert("lixo.xyz");		# Read it back with GDAL
+	@test_throws ErrorException("BAR3: When NOT providing *width* data must contain at least 5 columns.") bar3("lixo.xyz", dataset=true)
+	rm("lixo.xyz")
