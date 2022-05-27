@@ -82,6 +82,14 @@
 	d = [0 5.9 1e3 1; 0.9 5.4 1e3 1.8; 1.8 4.4 5e2 4; 2.6 4.6 8e2 8; 3.3 3.5 2e2 2e1; 4.4 3.7 8e1 2e1; 5.2 2.8 6e1 7e1; 6.1 2.8 2e1 7e1; 6.5 2.4 1.8 1e2; 7.4 1.5 1 5e2];
 	regress(d, E=:y, F=:xm, N=2, T="-0.5/8.5/2+n");
 
+	println("	GMTBINSTATS")
+	if (GMTver > v"6.3.0")		# Before it was bugged.
+		gmtbinstats("@capitals.gmt", a="2=population", R=:g, I=5, C=:z, S="1000k");
+		gmtbinstats("@capitalas.gmt", aspatial="2=population", R=:g, I=5, C="q10", search_radius="1000k", Vd=dbg2);
+		@test_throws ErrorException("Bad argument for the 'tile' option (vv)") gmtbinstats("lixo", R=:g, I=5, C="vv")
+		@test gmtbinstats("lixo", R=:g, I=5, tiling=:hexagon, stats=:n, Vd=2) == "gmtbinstats lixo  -I5 -Rg -Cn -Th"
+	end
+
 	println("	GMTLOGO")
 	logo(D="x0/0+w2i")
 	logo(julia=8)

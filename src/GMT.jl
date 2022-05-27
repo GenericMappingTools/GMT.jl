@@ -111,6 +111,7 @@ export
 	arrows, arrows!, bar, bar!, bar3, bar3!, hlines, hlines!, lines, lines!, legend, legend!, vlines, vlines!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
 	colorscale, colorscale!, contour, contour!, contourf, contourf!, events, filter1d, fitcircle, gmt2kml,
+	gmtbinstats, binstats,
 	gmtconnect, gmtconvert, gmtinfo, gmtmath, gmtregress, gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial,
 	gmtvector, gmtwrite, gmtwhich, grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdconvert,
 	grdcut, grdedit, grdfft, grdfill, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdinterpolate,
@@ -165,6 +166,7 @@ include("filter1d.jl")
 include("fitcircle.jl")
 include("gadm.jl")
 include("gmt2kml.jl")
+include("gmtbinstats.jl")
 include("gmtconnect.jl")
 include("gmtconvert.jl")
 include("gmtinfo.jl")
