@@ -119,6 +119,7 @@ makedocs(
 			"coast.md",
 			"colorbar.md",
 			"contourf.md",
+			"gmtbinstats.md",
 			"grdcontour.md",
 			"grdimage.md",
 			"grdgradient.md",
