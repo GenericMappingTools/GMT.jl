@@ -128,9 +128,9 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	if (opt_R != "")			# Save limits in numeric
 		try
 			limits = opt_R2num(opt_R)
-			CTRL.limits[1:length(limits)] = limits
+			(opt_R != " -Rtight") && (CTRL.limits[1:length(limits)] = limits)
 		catch
-			CTRL.limits[1] = CTRL.limits[2] = CTRL.limits[3] = CTRL.limits[4] = 0
+			CTRL.limits .= 0.0
 		end
 	end
 	cmd = cmd * opt_R
@@ -332,8 +332,33 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
 
 	(opt_J == " ") && (opt_J = "")		# We use " " when wanting to prevent the default -J
+	fish_size_from_J(opt_J)				# So far we only need this in plot(hexbin)
 	cmd *= opt_J
 	return cmd, opt_J
+end
+
+function fish_size_from_J(opt_J)
+	# There are many ways by which a fig size ends up in the -J string. So lets try here to fish the fig
+	# dimensions, at leas the fig width, from opt_J. Ofc, several things can go wrong.
+	(length(opt_J) < 5 || (opt_J[4] != 'X' && opt_J[4] != 'x')) && return nothing	# Up to " -JX" and only linear
+
+	fact(c::Char) = (c == 'c') ? 1.0 : (c == 'i' ? 2.54 : (c == 'p' ? 2.54/72 : 1.0))
+	ws = opt_J[5:end]
+	dim = split(ws, '/')
+	isscale = occursin(':', ws)				# Compliction. A scale in form 1:xxxx
+	if (!isscale)
+		for k = 1:length(dim)
+			CTRL.figsize[k] = isletter(dim[k][end]) ? parse(Float64, dim[k][1:end-1]) * fact(dim[k][end]) : parse(Float64, dim[k])
+		end
+	end
+	if (!isuppercase(opt_J[4]) || isscale)		# Shit, a scale. Hopefuly, -R was already parsed and CTRL.limits is known
+		if (isscale)
+			t = parse.(Float64, split(dim[1], ':'))
+			CTRL.figsize[1] = t[2] / t[1]
+		end
+		CTRL.figsize[1] *= (CTRL.limits[8] - CTRL.limits[7])	# Prey
+	end
+	return nothing
 end
 
 function helper_append_figsize(d::Dict, opt_J::String, O::Bool)::String
@@ -3233,6 +3258,7 @@ function round_wesn(_wesn::Vector{Float64}, geo::Bool=false)::Vector{Float64}
 			wesn[item] = x - floor((x - wesn[item]) / one_fifth_dec) * one_fifth_dec;	item += 1
 		end
 	end
+	CTRL.limits[7:min(12,6+length(wesn))] = wesn[1:min(6,length(wesn))]	# In plot(), at least, we may need to know the plotting limits.
 	return wesn
 end
 
@@ -3709,7 +3735,7 @@ function show_non_consumed(d::Dict, cmd)
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
 	end
-	CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = true;		# Reset these for safety
+	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
 end
 
 # --------------------------------------------------------------------------------------------------
