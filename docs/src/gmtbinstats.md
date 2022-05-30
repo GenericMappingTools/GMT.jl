@@ -120,3 +120,12 @@ using the remote file @capitals.gmt, and plot the resulting grid using default p
     G = gmtbinstats("@capitalas.gmt", a="2=population", region=:global360, inc=5, stats=:sum, search_radiusS="1000k");
 	imshow(G)
 ```
+
+Make a hexbin plot with random numbers.
+
+```julia
+    xy = rand(100,2) .* [5 3];
+    D = binstats(xy, region=(0,5,0,3), inc=1, tiling=:hex, stats=:number);
+    C = makecpt(1,D.bbox[6]);
+    imshow(D, C=C, hexbin=true, ml=0.5)
+```
