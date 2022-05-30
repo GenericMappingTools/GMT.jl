@@ -341,11 +341,13 @@ function fish_size_from_J(opt_J)
 	# There are many ways by which a fig size ends up in the -J string. So lets try here to fish the fig
 	# dimensions, at leas the fig width, from opt_J. Ofc, several things can go wrong.
 	(length(opt_J) < 5 || (opt_J[4] != 'X' && opt_J[4] != 'x')) && return nothing	# Up to " -JX" and only linear
+	(occursin('d', opt_J) || occursin('p', opt_J)) && return nothing	# if it has a 'd' it means it's a geog. 
 
 	fact(c::Char) = (c == 'c') ? 1.0 : (c == 'i' ? 2.54 : (c == 'p' ? 2.54/72 : 1.0))
 	ws = opt_J[5:end]
 	dim = split(ws, '/')
 	isscale = occursin(':', ws)				# Compliction. A scale in form 1:xxxx
+	try
 	if (!isscale)
 		for k = 1:length(dim)
 			CTRL.figsize[k] = isletter(dim[k][end]) ? parse(Float64, dim[k][1:end-1]) * fact(dim[k][end]) : parse(Float64, dim[k])
@@ -357,6 +359,8 @@ function fish_size_from_J(opt_J)
 			CTRL.figsize[1] = t[2] / t[1]
 		end
 		CTRL.figsize[1] *= (CTRL.limits[8] - CTRL.limits[7])	# Prey
+	end
+	catch
 	end
 	return nothing
 end
