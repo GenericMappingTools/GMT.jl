@@ -88,6 +88,10 @@
 		gmtbinstats("@capitalas.gmt", aspatial="2=population", R=:g, I=5, C="q10", search_radius="1000k", Vd=dbg2);
 		@test_throws ErrorException("Bad argument for the 'tile' option (vv)") gmtbinstats("lixo", R=:g, I=5, C="vv")
 		@test gmtbinstats("lixo", R=:g, I=5, tiling=:hexagon, stats=:n, Vd=2) == "gmtbinstats lixo  -I5 -Rg -Cn -Th"
+		#xy = rand(100,2) .* [5 3];
+    	#D = binstats(xy, region=(0,5,0,3), inc=1, tiling=:hex, stats=:number, f=:c);
+    	#C = makecpt(1,D.bbox[6]);
+    	#plot(D, C=C, hexbin=true, Vd=dbg2)
 	end
 
 	println("	GMTLOGO")

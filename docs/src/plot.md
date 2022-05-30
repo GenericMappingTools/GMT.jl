@@ -56,6 +56,12 @@ Parameters
 - **G** or **markercolor** or **markerfacecolor** or **mc** or **fill**\
    Select color or pattern for filling of symbols or polygons [Default is no fill]. Note that plot will search for *fill* and *pen* settings in all the segment headers (when passing a GMTdaset or file of a multi-segment dataset) and let any values thus found over-ride the command line settings (but those must be provided in the terse GMT syntax). See [Setting color](@ref) for extend color selection (including colormap generation).
 
+- **hexbin** : -- *hexbin=true*\
+   Make a 2D hexagonal binning plot of points _xy_ that have been processed by `binstats(xy, tiling=:hex, stats=...)`.
+   Note thatb for this we rely in keeping a correct trac of the figure size and plot limis, which is not obvious
+   because those are often given as strings and we must parse them back to numeric. In case it fails, it's users
+   responsability to provide a correct size to the ``marker=hexagon, markersize=???`` options.
+
 - **I** or **shade** : -- *shade=intens*\
     Use the supplied *intens* value (nominally in the -1 to +1 range) to modulate the fill color by simulating illumination [none]. If no intensity is provided (*e.g.* **shade=""**) we will instead read *intens* from the first data column after the symbol parameters (if given).
 

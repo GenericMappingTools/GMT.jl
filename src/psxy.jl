@@ -193,32 +193,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		cmd *= " -C"
 	end
 
-	opt_S::String = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
-	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
-		marca::String, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
-		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
-			(marca == "") && (marca = "c")			# If a marker name was not selected, defaults to circle
-			if (isa(val, AbstractArray))
-				(length(val) != size(arg1,1)) &&
-					error("The size array must have the same number of elements rows in the data")
-				arg1 = hcat(arg1, val[:])
-			elseif (string(val) != "indata")
-				marca *= arg2str(val)
-			end
-			opt_S = " -S" * marca
-		elseif (marca != "")		# User only selected a marker name but no size.
-			opt_S = " -S" * marca
-			# If data comes from a file, then no automatic symbol size is added
-			op = lowercase(marca[1])
-			def_size = (op == 'p') ? "2p" : "7p"	# 'p' here stands for symbol points, not units
-			(!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw")) && (opt_S *= def_size)
-		end
-	else
-		val, symb = find_in_dict(d, [:ms :markersize :MarkerSize :size])
-		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
-		val, symb = find_in_dict(d, [:marker :Marker :shape])
-		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
-	end
+	arg1, opt_S = parse_opt_S(d, arg1, is3D)
 
 	opt_ML::String = ""
 	if (opt_S != "")
@@ -298,6 +273,44 @@ function _helper_psxy_line(d, cmd, opt_W, is3D, args...)
 	contains(opt_W, ",grad")     && (opt_W = replace(opt_W, ",grad" => rep_str))
 	(opt_W == " -W") && (opt_W = "")	# All -W options are set in dataset headers, so no need for -W
 	return arg1, opt_W, got_color_line_grad, made_it_vector
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_opt_S(d, arg1, is3D)
+	opt_S::String = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
+	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
+		marca::String, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
+		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
+			(marca == "") && (marca = "c")			# If a marker name was not selected, defaults to circle
+			if (isa(val, AbstractArray))
+				(length(val) != size(arg1,1)) &&
+					error("The size array must have the same number of elements rows in the data")
+				arg1 = hcat(arg1, val[:])
+			elseif (string(val) != "indata")
+				marca *= arg2str(val)
+			end
+			opt_S = " -S" * marca
+		elseif (marca != "")		# User only selected a marker name but no size.
+			opt_S = " -S" * marca
+			# If data comes from a file, then no automatic symbol size is added
+			op = lowercase(marca[1])
+			def_size = (op == 'p') ? "2p" : "7p"	# 'p' here stands for symbol points, not units
+			(!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw")) && (opt_S *= def_size)
+		elseif (haskey(d, :hexbin))
+			inc = parse(Float64, arg1.attrib["hexbin"])
+			r = (CTRL.limits[8] - CTRL.limits[7]) / (arg1[2] - arg1[1]) * inc	# should be = 3, I think
+			(CTRL.figsize[1] == 0) && @warn("Failed to automatically fetch the fig width. Using 14 cm just to show something.")
+			w = (CTRL.figsize[1] != 0) ? CTRL.figsize[1] : 14
+			opt_S = " -Sh$(w / (r * 1.5))"		# Is it always 1.5?
+			delete!(d, :hexbin)
+		end
+	else
+		val, symb = find_in_dict(d, [:ms :markersize :MarkerSize :size])
+		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
+		val, symb = find_in_dict(d, [:marker :Marker :shape])
+		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
+	end
+	return arg1, opt_S
 end
 
 # ---------------------------------------------------------------------------------------------------
