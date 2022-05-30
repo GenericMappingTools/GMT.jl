@@ -1393,7 +1393,7 @@ function resetGMT()
 	# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
 	IamModern[1] = false;	FirstModern[1] = false;		IamSubplot[1] = false;	usedConfPar[1] = false;
 	multi_col[1] = false;	convert_syntax[1] = false;	current_view[1] = "";	show_kwargs[1] = false;
-	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits[1:6] = zeros(6);	CTRL.proj_linear[1] = true;
+	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits .= 0.0;	CTRL.proj_linear[1] = true;
 	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
 	current_cpt[1]  = GMTcpt();		legend_type[1] = legend_bag();	ressurectGDAL()
 	def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;
