@@ -126,6 +126,5 @@ Make a hexbin plot with random numbers.
 ```julia
     xy = rand(100,2) .* [5 3];
     D = binstats(xy, region=(0,5,0,3), inc=1, tiling=:hex, stats=:number);
-    C = makecpt(1,D.bbox[6]);
-    imshow(D, C=C, hexbin=true, ml=0.5)
+    imshow(D, C=C, hexbin=true, ml=0.5, colorbar=true)
 ```
