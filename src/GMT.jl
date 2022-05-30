@@ -5,7 +5,8 @@ using Tables: Tables
 using PrettyTables
 
 struct CTRLstruct
-	limits::Vector{Float64}
+	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits
+	figsize::Vector{Float64}		# To store the current fig size (xsize,ysize[,zsize]). Needed, for example, in hexbin
 	proj_linear::Vector{Bool}		# To know if images sent to GMT need Pad
 	callable::Array{Symbol}			# Modules that can be called inside other modules
 	pocket_call::Vector{Any}		# To temporarily store data needed by modules sub-calls
@@ -92,7 +93,7 @@ const def_fig_axes_bak     = " -Baf -BWSen"        # Default fig axes for plot l
 const def_fig_axes3_bak    = " -Baf -Bza"          # 		"" but for 3D views
 const global def_fig_axes  = [def_fig_axes_bak]    # This one may be be changed by theme()
 const global def_fig_axes3 = [def_fig_axes3_bak]   #		""
-const global CTRL = CTRLstruct(zeros(6), [true], [:clip, :coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing], ["",""], [C_NULL])
+const global CTRL = CTRLstruct(zeros(12), zeros(3), [true], [:clip, :coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing], ["",""], [C_NULL])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
