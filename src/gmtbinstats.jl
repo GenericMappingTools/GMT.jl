@@ -94,7 +94,7 @@ function binstats(cmd0::String="", arg1=nothing; kwargs...)
 	end
 
 	R = common_grd(d, cmd0, cmd, "gmtbinstats ", arg1)		# Finish build cmd and run it
-	if (occursin(" -Th", cmd))
+	if (!isa(R, String) && occursin(" -Th", cmd))
 		opt_I = scan_opt(cmd, "-I")			# CHECK IF inc HAS UNITS?
 		R.attrib = Dict("hexbin" => opt_I)
 	end
