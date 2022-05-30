@@ -93,7 +93,12 @@ function binstats(cmd0::String="", arg1=nothing; kwargs...)
 		cmd = (t == 'r') ? cmd * " -Tr" : (t == 'h' ? cmd * " -Th" : error("Bad method for option 'tiling'")) 
 	end
 
-	common_grd(d, cmd0, cmd, "gmtbinstats ", arg1)		# Finish build cmd and run it
+	R = common_grd(d, cmd0, cmd, "gmtbinstats ", arg1)		# Finish build cmd and run it
+	if (occursin(" -Th", cmd))
+		opt_I = scan_opt(cmd, "-I")			# CHECK IF inc HAS UNITS?
+		R.attrib = Dict("hexbin" => opt_I)
+	end
+	R
 end
 
 # ---------------------------------------------------------------------------------------------------
