@@ -81,7 +81,7 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	(!occursin(" -D", cmd)) && (cmd *= " -DJMR")			#  So that we can call it with just a CPT
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
-	gmt("destroy")      # Probably because of the rasters in cpt
+	(!isa(r,String)) && gmt("destroy")      # Probably because of the rasters in cpt
 	return r
 end
 
