@@ -35,22 +35,22 @@ Optional Arguments
    Choose the statistic that will be computed per node based on the points that are within *radius* distance
    of the node. Select one of:
 
-   - :average        # mean (average)
-   - :mad            # median absolute deviation
-   - :range          # full (max-min) range
-   - :interquartil   # 25-75% interquartile range
-   - :minimum        # minimum (low)
-   - :minimum_pos    # minimum of positive values only
-   - :median         # median
-   - :number         # number of values
-   - :LMS            # LMS scale
-   - :mode           # mode (maximum likelihood)
-   - "quantil[val]"  # selected quantile (append desired quantile in 0-100% range [50], *e.g.* "quantil25")
-   - :rms            # the r.m.s.
-   - :std            # standard deviation
-   - :maximum        # maximum (upper)
-   - :maximum_neg    # maximum of negative values only
-   - :sum            # the sum
+   - average        # mean (average)
+   - mad            # median absolute deviation
+   - range          # full (max-min) range
+   - interquartil   # 25-75% interquartile range
+   - minimum        # minimum (low)
+   - minimum_pos    # minimum of positive values only
+   - median         # median
+   - number         # number of values
+   - LMS            # LMS scale
+   - mode           # mode (maximum likelihood)
+   - quantil[val]   # selected quantile (append desired quantile in 0-100% range [50], *e.g.* "quantil25")
+   - rms            # the r.m.s.
+   - std            # standard deviation
+   - maximum        # maximum (upper)
+   - maximum_neg    # maximum of negative values only
+   - sum            # the sum
 
 - **E** or **empty** : -- *empty=-9999*
     Set the value assigned to empty nodes. By default we use NaN.
@@ -60,16 +60,16 @@ Optional Arguments
 
 - **S** or **search_radius** : -- *search_radius=rad*\
     Sets the `search radius` that determines which data points are considered close to a node.
-	Append the distance unit if wished. Not compatible with **tiling**.
+    Append the distance unit if wished. Not compatible with **tiling**.
 
 - **T** or **tiling** or **bins** : -- *tiling=rectangular* or *tiling=hexagonal*\
     Instead of circular, possibly overlapping areas, select non-overlapping tiling. Choose between `tiling=rectangular`
-	or `tiling=hexagonal` binning. For `rectangular`, set bin sizes via **spacing** and we write the computed statistics
-	to the grid file. For `tiling=hexagonal`, we write a table with the centers of the hexagons and the computed statistics.
-	Here, the **spacing** setting is expected to set the ``y`` increment only and we compute the *x*-increment given the
-	geometry. Because the horizontal spacing between hexagon centers in *x* and *y* have a ratio of ``sqrt(3)``, we will
-	automatically adjust *xmax* in **region** to fit a whole number of hexagons. **Note**: Hexagonal tiling requires
-	Cartesian data.
+    or `tiling=hexagonal` binning. For `rectangular`, set bin sizes via **spacing** and we write the computed statistics
+    to the grid file. For `tiling=hexagonal`, we write a table with the centers of the hexagons and the computed statistics.
+    Here, the **spacing** setting is expected to set the ``y`` increment only and we compute the *x*-increment given the
+    geometry. Because the horizontal spacing between hexagon centers in *x* and *y* have a ratio of ``sqrt(3)``, we will
+    automatically adjust *xmax* in **region** to fit a whole number of hexagons. **Note**: Hexagonal tiling requires
+    Cartesian data.
 
 - **W** or **weights** : -- *weights=true* or *weights="+s"*\
    Input data have an extra column containing observation point weight. If weights are given then weighted
