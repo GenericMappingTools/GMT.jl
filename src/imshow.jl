@@ -48,7 +48,7 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		G = mat2img(arg1; kw...)
 	elseif (isGMTdataset(arg1) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4))
 		ginfo = gmt("gmtinfo -C", arg1)
-		CTRL.limits[1:4] = ginfo.data[1:4]
+		CTRL.limits[1:4] = ginfo.data[1:4];		CTRL.limits[7:10] = ginfo.data[1:4]
 		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == Gdal.wkbLineStringZ) || (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == Gdal.wkbLineStringZ)) ? true : false		# Should evolve into a fun that detects the several plot3d cases.
 		return (call_plot3) ? plot3d(arg1; show=true, kw...) : plot(arg1; show=true, kw...)
 	elseif (isa(arg1, GMTcpt))
@@ -143,10 +143,10 @@ function snif_GI_set_CTRLlimits(G_I)::Bool
 	(isa(G_I, String) && (G_I[1] == '@' || startswith(G_I, "http"))) && return false	# Remote files are very dangerous to sniff in
 	ginfo = grdinfo(G_I, C=:n)
 	if (isa(ginfo, GMTdataset) && ginfo.data[2] != ginfo.data[9] && ginfo.data[4] != ginfo.data[10])
-		CTRL.limits[1:4] = ginfo.data[1:4]
+		CTRL.limits[1:4] = ginfo.data[1:4];		CTRL.limits[7:10] = ginfo.data[1:4]
 		return true
 	else
-		CTRL.limits[1:6] = zeros(6)
+		CTRL.limits .= 0.0
 	end
 	return false
 end
