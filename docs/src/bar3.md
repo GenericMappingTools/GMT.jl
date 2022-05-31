@@ -16,22 +16,21 @@ controlling parameters are listed here. For a finer control, user should consult
 Parameters
 ----------
 
-- **B** or *axes* or *frame*\
+- **B** or **axes** or **frame**\
   Set map boundary frame and axes attributes. Default is to draw and annotate left, bottom and vertical
   axes and just draw left and tp axes. More at [frame](@ref)
 
-- **J** or *proj* : *proj=<parameters>*\
+- **J** or **proj** : *proj=<parameters>*\
   Select map projection. Default is linear and 12 cm width. More at [proj](@ref)
 
-- **R** or *region* or *limits* : -- *limits=(xmin, xmax, ymin, ymax, zmin, zmax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax, zmin, zmax),)*
-   **|** ...more\
+- **R** or **region** or **limits** : -- *limits=(xmin, xmax, ymin, ymax, zmin, zmax)* **|** *limits=(BB=(xmin, xmax, ymin, ymax, zmin, zmax),)* **|** ...more\
    Specify the region of interest. Default limits are computed from data extents. More at [limits](@ref)
 
 - **G** or *markerfacecolor* or *MarkerFaceColor* or *mc* or *fill*\
    Select color or pattern for filling of bars [Default is default color]. See [Setting color](@ref) for extend
    color selection (including color map generation).
 
-- *bar*\
+- **bar**\
    column (3-D) extending from base to *z*. By default, base is 0 and the bar widths are 0.85 of the width in
    x-units. You can change this by using (in alternative):
      - *width=xx*\
@@ -46,7 +45,7 @@ Parameters
        - *width*\
           The bar width in x-units. To specify it in plot units, use the *unit* member with `cm`, `inch` or `point`.
        - *unit*\
-          In case *width* is given in plot units. Valid units are cm`, `inch` or `point`.
+          In case *width* is given in plot units. Valid units are `cm`, `inch` or `point`.
        - *base=xx*\
           where *xx* is the base value.
        - *height*\
@@ -62,9 +61,10 @@ Parameters
    or
      - *bar=(width=xx,unit=xx,base=xx,height=xx,nbands=xx)*  (or *Nbands=xx* for last element)
 
-- **p** or *view*\
+- **p** or **view**\
    Default is viewpoint from an azimuth of 200 and elevation of 30 degrees.\
-   Specify the viewpoint in terms of azimuth and elevation. The azimuth is the horizontal rotation about the z-axis as measured in degrees from the positive y-axis. That is, from North. This option is not yet fully
+   Specify the viewpoint in terms of azimuth and elevation. The azimuth is the horizontal rotation about the z-axis as
+   measured in degrees from the positive y-axis. That is, from North. This option is not yet fully
    expanded. Current alternatives are:
      - *view=??*\
         A full GMT compact string with the full set of options.
@@ -90,4 +90,3 @@ bar3(G, lw=:thinnest, color=cmap, show=true)
 See also
 --------
 
-The [`GMT man page`](https://gmt.soest.hawaii.edu/doc/latest/plot.html)
