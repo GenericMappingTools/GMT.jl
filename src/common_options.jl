@@ -753,7 +753,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 				if (have_Bframe)					# If we already have a Bframe bit must append it to def_Bframe
 					s = split(_opt_B)
 					nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words sub-options
-					opt_B = join(s[1:end-1], " ") * " " * def_Bframe * s[end][3:end]
+					opt_B = " " * join(s[1:end-1], " ") * " " * def_Bframe * s[end][3:end]
 				else
 					opt_B = _opt_B * " " * def_Bframe
 				end
@@ -848,6 +848,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 		end
 	end
 	(xax && yax) && (opt_B = replace(opt_B, def_fig_axes_ => ""))	# If x&yaxis have been called, remode default
+	(!isempty(opt_B) && opt_B[1] == '+') && (opt_B = " -B" * opt_B)	# If above has removed the " -B". Happens when (xaxis, yaxis, title)
 
 	# These can come up outside of an ?axis tuple, so need to be sekeed too.
 	for symb in [:xticks :yticks :zticks]
