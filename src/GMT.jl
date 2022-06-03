@@ -143,7 +143,7 @@ export
 	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
 	convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 	wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
-	wkbGeometryCollection, set_config_option,
+	wkbGeometryCollection,
 
 	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
 	orthodrome, proj2wkt, wkt2proj,

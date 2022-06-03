@@ -2426,7 +2426,7 @@ end
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
 		convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 		wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
-		wkbGeometryCollection, set_config_option
+		wkbGeometryCollection
 
 
 	const DRIVER_MANAGER = Ref{DriverManager}()
