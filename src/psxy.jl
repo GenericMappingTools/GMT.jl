@@ -366,8 +366,8 @@ function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D
 		penC, penS = "", "";	cycle=:cycle;	multi_col[1] = false	# Reset because this is a use-only-once option
 		(haskey(d, :multicol)) && delete!(d, :multicol)
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
-		if (opt_W != "")  _, penC, penS = break_pen(scan_opt(opt_W, "-W"))
-		else              _cmd[1] *= " -W0.5"
+		if     (opt_W != "")                _, penC, penS = break_pen(scan_opt(opt_W, "-W"))
+		elseif (!occursin(" -W", _cmd[1]))  _cmd[1] *= " -W0.5"
 		end
 		if (penC != "")  cycle = [penC]  end
 		arg1 = mat2ds(arg1, color=cycle, ls=penS, multi=true)	# Convert to multi-segment GMTdataset
