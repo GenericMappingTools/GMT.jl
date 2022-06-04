@@ -106,8 +106,12 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	# Look for color request. Do it after error bars because they may add a column
 	len = length(cmd);	n_prev = N_args;
 	opt_Z, args, n, got_Zvars = add_opt(d, "", "Z", [:Z :level :levels], :data, Any[arg1, arg2], (outline="_o", nofill="_f"))
-	(!contains(opt_Z, "f")) ? do_Z_fill = true : (do_Z_fill = false; opt_Z = replace(opt_Z, "f" => ""))
-	(contains(opt_Z, "o")) ? (do_Z_outline = true; opt_Z = replace(opt_Z, "o" => "")) : (do_Z_outline = false)
+	if (contains(opt_Z, "f") && !contains(opt_Z, "o"))	# Short version. If no fill it must outline otherwise nothing
+		do_Z_fill, do_Z_outline = false, true;		opt_Z = replace(opt_Z, "f" => "")
+	else
+		(!contains(opt_Z, "f")) ? do_Z_fill = true : (do_Z_fill = false; opt_Z = replace(opt_Z, "f" => ""))
+		(contains(opt_Z, "o")) ? (do_Z_outline = true; opt_Z = replace(opt_Z, "o" => "")) : (do_Z_outline = false)
+	end
 	(opt_Z != "") && (cmd *= opt_Z)
 	(!got_Zvars) && (do_Z_fill = do_Z_outline = false)	# Because the may have wrongly been set above
 
@@ -175,7 +179,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# This bit is for the -Z option. Must consolidate the options.
 	(do_Z_fill && opt_G == "") && (cmd *= " -G+z")
-	(do_Z_outline && !contains(opt_W, "+z")) && (opt_W = (opt_W == "") ? " -W+c" : opt_W * "+z")
+	(do_Z_outline && !contains(opt_W, "+z")) && (opt_W = (opt_W == "") ? " -W+z" : opt_W * "+z")
 	(got_Zvars && !do_Z_fill && !do_Z_outline && opt_W == "") && (opt_W = " -W0.5+z")	# Nofill and nothing else defaults to -W+z
 	(got_Zvars && (do_Z_fill || opt_G != "") && opt_L == "") && (cmd *= " -L")	# GMT requires -L when -Z fill or -G
 
