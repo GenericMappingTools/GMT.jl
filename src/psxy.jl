@@ -239,6 +239,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function _helper_psxy_line(d, cmd, opt_W, is3D, args...)
+	haskey(d, :multicol) && return args[1], opt_W, false, false	# NOT OBVIOUS IF THIS IS WHAT WE WANT TO DO
 	got_color_line_grad, got_variable_lt, made_it_vector, rep_str = false, false, false, ""
 	(contains(opt_W, ",gradient") || contains(opt_W, ",grad")) && (got_color_line_grad = true)
 
@@ -367,14 +368,15 @@ end
 function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D, multi_col, _cmd, sub_module, g_bar_fill, got_Ebars, got_usr_R)
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
 	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Matrix{<:Real}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)) )
-		penC, penS = "", "";	cycle=:cycle;	multi_col[1] = false	# Reset because this is a use-only-once option
+		penC, penS = "", "";	multi_col[1] = false	# Reset because this is a use-only-once option
 		(haskey(d, :multicol)) && delete!(d, :multicol)
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
-		if     (opt_W != "")                _, penC, penS = break_pen(scan_opt(opt_W, "-W"))
+		penT = ""
+		if     (opt_W != "")                penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))
 		elseif (!occursin(" -W", _cmd[1]))  _cmd[1] *= " -W0.5"
 		end
-		if (penC != "")  cycle = [penC]  end
-		arg1 = mat2ds(arg1, color=cycle, ls=penS, multi=true)	# Convert to multi-segment GMTdataset
+		arg1 = (penT != "") ? mat2ds(arg1, color = (penC != "") ? [penC] : :cycle, lt=penT, ls=penS, multi=true) :
+		                             mat2ds(arg1, color = (penC != "") ? [penC] : :cycle, ls=penS, multi=true)
 		D::GMTdataset = gmt("gmtinfo -C", arg1)		# But now also need to update the -R string
 		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(D.data)))
 	elseif (!mcc && sub_module == "bar" && check_bar_group(arg1))	# !mcc because the bar-groups all have mcc = false
@@ -755,7 +757,7 @@ function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller
 	elseif (caller == "scatter3")
 		if (opt_S == "")  cmd *= " -Su2p"  end
 	elseif (caller == "lines")
-		if (!occursin("+p", cmd) && opt_W == "") cmd *= " -W0.25p"  end # Do not leave without a pen specification
+		if (!occursin("+p", cmd) && opt_W == "") cmd *= " -W0.5p"  end # Do not leave without a pen specification
 	elseif (caller == "bar")
 		if (opt_S == "")
 			bar_type = 0

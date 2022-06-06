@@ -337,6 +337,13 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 	return cmd, opt_J
 end
 
+function size_unit(dim::AbstractString)
+	# Convert a size string appended with a unit char code into numeric. Also accepts dim as a num string
+	fact(c::Char) = (c == 'c') ? 1.0 : (c == 'i' ? 2.54 : (c == 'p' ? 2.54/72 : 1.0))
+	isletter(dim[end]) ? parse(Float64, dim[1:end-1]) * fact(dim[end]) : parse(Float64, dim)
+end
+size_unit(dim::Vector{AbstractString})::Vector{Float64} = [size_unit(t) for t in dim]
+
 function fish_size_from_J(opt_J)
 	# There are many ways by which a fig size ends up in the -J string. So lets try here to fish the fig
 	# dimensions, at leas the fig width, from opt_J. Ofc, several things can go wrong.
@@ -1562,8 +1569,10 @@ function build_pen(d::Dict, del::Bool=false)::String
 
 	val, symb = find_in_dict(d, [:lw :lt :linewidth :linethick :linethickness], false)
 	if (isa(val, VMr))			# Got a line thickness variation.
-		delete!(d, symb)		# Remove it now because it wasn't in the find_in_dict() call above
-		d[:var_lt] = val		# This particular one is going to be fetch in _helper_psxy_line()
+		if (!haskey(d, :multicol))	# 'multicol' is a separate story (till when?)
+			delete!(d, symb)		# Remove it now because it wasn't in the find_in_dict() call above
+			d[:var_lt] = val		# This particular one is going to be fetch in _helper_psxy_line()
+		end
 		lw::String = ""
 	else
 		lw = add_opt(d, "", "", [:lw :lt :linewidth :linethick :linethickness], nothing, del)	# Line width

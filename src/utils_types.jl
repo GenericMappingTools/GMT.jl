@@ -91,14 +91,18 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 
 	# ---  Here we deal with line colors and line thickness.
 	if ((val = find_in_dict(d, [:lt :linethick :linethickness])[1]) !== nothing)
-		_lt::Vector{Float64} = vec(Float64.(val))
+		if     (isa(val, AbstractString))  _lt::Vector{Float64} = [size_unit(val)]
+		elseif (isa(val, Vector{String}))  _lt = size_unit(val)
+		else                               _lt = vec(Float64.(val))
+		end
 		_lts::Vector{String} = Vector{String}(undef, n_ds)
 		n_thick::Integer = length(_lt)
 		for k = 1:n_ds
 			_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])
 		end
 	else
-		_lts = fill("", n_ds)
+		theW = (color !== nothing || haskey(d, :ls) || haskey(d, :linestyle)) ? " -W" : ""
+		_lts = fill(theW, n_ds)		# If no pen setting no need to set -W
 	end
 
 	if (color !== nothing)
