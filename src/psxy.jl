@@ -179,7 +179,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# This bit is for the -Z option. Must consolidate the options.
 	(do_Z_fill && opt_G == "") && (cmd *= " -G+z")
-	(do_Z_outline && !contains(opt_W, "+z")) && (opt_W = (opt_W == "") ? " -W+z" : opt_W * "+z")
+	(do_Z_outline && !contains(opt_W, "+z")) && (opt_W = (opt_W == "") ? " -W0.5+z" : opt_W * "+z")
 	(got_Zvars && !do_Z_fill && !do_Z_outline && opt_W == "") && (opt_W = " -W0.5+z")	# Nofill and nothing else defaults to -W+z
 	(got_Zvars && (do_Z_fill || opt_G != "") && opt_L == "") && (cmd *= " -L")	# GMT requires -L when -Z fill or -G
 

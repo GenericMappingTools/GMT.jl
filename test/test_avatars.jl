@@ -63,9 +63,9 @@
 	r = psxy!(D, C=C, Z=[1,4], pen=(pen=2, zlevels=true), Vd=2)
 	@test contains(r, " -G+z -L -W2+z -K")
 	r = psxy!(D, C=C, Z=(data=[1,4], outline=true, nofill=true), Vd=2)
-	@test contains(r, " -W+c -K")
+	@test contains(r, " -W0.5+z -K")
 	r = psxy!(D, C=C, Z=(data=[1,4], outline=true), Vd=2)
-	@test contains(r, " -G+z -L -W+c -K")
+	@test contains(r, " -G+z -L -W0.5+z -K")
 	r = psxy!(D, C=C, Z=(data=[1,4], nofill=true), Vd=2)
 	@test contains(r, " -W0.5+z -K")
 
