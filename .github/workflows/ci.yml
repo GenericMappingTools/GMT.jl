@@ -110,8 +110,8 @@ jobs:
   
   docs:
     name: Documentation
-    runs-on: ubuntu-latest
-    #runs-on: ubuntu-18.04
+    #runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     #runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
