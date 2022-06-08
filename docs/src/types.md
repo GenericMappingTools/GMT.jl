@@ -17,16 +17,16 @@ Grid type
        names::Vector{String}      # To use whith multi-layered and when layers have names (Optional)
        x::Array{Float64,1}        # [1 x n_columns] vector with XX coordinates
        y::Array{Float64,1}        # [1 x n_rows]    vector with YY coordinates
-       v::Array{Float64,1}        # [v x n_bands]   vector with VV (vertical for 3D grids) coordinates
-       z::Array{Float32,2}        # [n_rows x n_columns] grid array
+       v::Union{Vector{<:Real}, Vector{String}}        # [v x n_bands]   vector with VV (vertical for 3D grids) coordinates
+       z::Array{T,N}              # [n_rows x n_columns] grid array
        x_units::String            # Units of XX axis (Optional)
        y_units::String            # Units of YY axis (Optional)
        v_units::String            # Units of Vertical axis (Optional)
        z_units::String            # Units of z vlues (Optional)
        layout::String             # A three character string describing the grid memory layout
-       scale::Union{Float64, Float32}  # When saving in file apply `z = z * scale + offset`
-       offset::Union{Float64, Float32}
-       pad::Int                   # When != 0 means that the array is placed in a padded array of PAD rows/cols
+       scale::Union{Float64, Float32}=1f0  # When saving in file apply `z = z * scale + offset`
+       offset::Union{Float64, Float32}=0f0
+       pad::Int=0                 # When != 0 means that the array is placed in a padded array of PAD rows/cols
     end
 
 Image type
