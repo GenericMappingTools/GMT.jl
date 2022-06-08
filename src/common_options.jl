@@ -950,7 +950,7 @@ function consolidate_Baxes(opt_B::String)::String
 		end
 	end
 
-	r = (s[1] == "-Bafg") ? " -Ba -Bf -Bg" : (s[1] == "-Baf") ? " -Ba -Bf" : (s[1] == "-Bag") ? " -Ba -Bg" : ""
+	r = (s[1] == "-Bafg") ? " -Ba -Bf -Bg" : ((s[1] == "-Baf") ? " -Ba -Bf" : ((s[1] == "-Bag") ? " -Ba -Bg" : ((s[1] == "-Ba") ? " -Ba" : "")))
 	(r != "") && (opt_B = replace(opt_B, s[1] => r))
 	if (occursin("pxc", opt_B) || occursin("pyc", opt_B))
 		# When we have a custom axis, make sure we don't have any automatic -Ba, -Bf or -Bg
@@ -3485,6 +3485,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
 		((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing) && (opt_T *= string(" -E", val))
 		gmt("psconvert -A2p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
+		reset_theme()
 		out = fname_ps[1:end-2] * fname_ext
 		(fname != "") && (out = mv(out, fname, force=true))
 	elseif (fname_ps != "")
@@ -3505,12 +3506,16 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 			elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
 			end
 		end
-		if (ThemeIsOn[1])
-			theme_modern();		ThemeIsOn[1] = false
-			def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;
-		end
+		reset_theme()
 	end
 	return nothing
+end
+
+function reset_theme()
+	if (ThemeIsOn[1])
+		theme_modern();		ThemeIsOn[1] = false
+		def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------

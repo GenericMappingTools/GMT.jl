@@ -11,7 +11,7 @@ Offer themes support. NAME is the theme name. So far the three options are:
    and `A0` means no axes at all. `XY` means to plot only left and bottom axes, `YY` only left and right
    and `XX` bottom and top. `atg` (or `afg`) means annotate, tick and grid lines. `ag` does not tick.
    `H` and `V` means grid lines will only be horizontal or vertical. Note, these require `atg` or `ag`.
-   `NT` stands for not ticks at all and `IT` plots the ticks inside the axes. `Graph` adds a vector and
+   `NT` stands for no ticks at all and `IT` plots the ticks inside the axes. `Graph` adds a vector
    to the end of each axis (sets `XY`), and `Dark` put the background in dark mode.
    - Example: `A2YYg` -> plot left and right axes (only) and add grid lines.
    - Example: `A2Graph` -> plot left and right axes (only) and adds arrows at the end of them
