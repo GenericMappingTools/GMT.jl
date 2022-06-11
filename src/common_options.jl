@@ -854,8 +854,8 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 			delete!(d, symb)
 		end
 	end
-	(xax && yax) && (opt_B = replace(opt_B, def_fig_axes_ => ""))	# If x&yaxis have been called, remode default
-	(!isempty(opt_B) && opt_B[1] == '+') && (opt_B = " -B" * opt_B)	# If above has removed the " -B". Happens when (xaxis, yaxis, title)
+	(xax && yax) && (opt_B = replace(opt_B, def_fig_axes_ => ""))	# If x&yaxis have been called, remove default
+	(!isempty(opt_B) && (opt_B[1] == '+' || occursin(opt_B[1], "WSENZwsenzlrbtu"))) && (opt_B = " -B" * opt_B)	# If above has removed the " -B". Happens when (xaxis, yaxis, title)
 
 	# These can come up outside of an ?axis tuple, so need to be sekeed too.
 	for symb in [:xticks :yticks :zticks]
@@ -892,7 +892,7 @@ function consolidate_Bframe(opt_B::String)::String
 	nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words (e.g. titles)
 	isBframe::Vector{Bool} = zeros(Bool, length(s))
 	for k = 1:length(s)
-		(occursin(s[k][3], "psxyzafgbc")) && (isBframe[k] = false; continue)	# A FALSE solves the quest imedeately
+		(occursin(s[k][3], "psxyzafgbc")) && (isBframe[k] = false; continue)	# A FALSE solves the quest imediately
 		ss::Vector{SubString{String}} = split(s[k], "+");	len = length(ss)
 		isBframe[k] = occursin(r"[WESNZwesnztlbu]", ss[1])	# Search for frame characters in the part before the +flag
 		isBframe[k] && (len = 0)		# Tricky way of avoiding next loop when we already have the answer. 
