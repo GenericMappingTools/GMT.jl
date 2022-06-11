@@ -172,6 +172,8 @@
 	@test GMT.consolidate_Bframe(" -Bpx+lx -B+gwhite -Baf -BWSen -By+lx") == " -Bpx+lx -Baf -By+lx -BWSen+gwhite"
 	@test GMT.consolidate_Bframe(" -Bpx+lx -Bpy+lx -BWSrt+gwhite") == " -Bpx+lx -Bpy+lx -BWSrt+gwhite"
 	@test GMT.consolidate_Bframe(" -Bpx+lx -BWSrt+gwhite -Bpy+lx") == " -Bpx+lx -Bpy+lx -BWSrt+gwhite"
+	r = basemap(frame=(frame=(:left_full, :bot_full), fill=:lightblue), xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"), yaxis=(custom=(pos=[0 1 2 2.7 3 3.1 4 5 6 6.3], type=["a", "a", "f", "ag e", "f", "ag @~p@~", "f", "f", "f", "ag 2@~p@~"]),), Vd=2);
+	@test contains(r, "-Bpxa25f5g25+u\" Ma\" -BWS+glightblue")
 
 	@test GMT.arg_in_slot(Dict(:A => [1 2]), "", [:A], Matrix, [88], nothing) == (" -A", [88], [1 2])
 	@test GMT.arg_in_slot(Dict(:A => "ai"), "", [:A], Matrix, nothing, nothing) == (" -Aai", nothing, nothing)
