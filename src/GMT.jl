@@ -141,7 +141,7 @@ export
 	importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 	gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy,
 	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
-	convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
+	concavehull, convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 	wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
 	wkbGeometryCollection,
 
