@@ -456,6 +456,7 @@ OGR_G_Centroid(a1, a2) = acare(ccall((:OGR_G_Centroid, libgdal), Cint, (pVoid, p
 OGR_G_Clone(a1) = acare(ccall((:OGR_G_Clone, libgdal), pVoid, (pVoid,), a1))
 OGR_G_Contains(a1, a2) = acare(ccall((:OGR_G_Contains, libgdal), Cint, (pVoid, pVoid), a1, a2))
 OGR_G_ConvexHull(a1) = acare(ccall((:OGR_G_ConvexHull, libgdal), pVoid, (pVoid,), a1))
+OGR_G_ConcaveHull(a1, a2, a3) = acare(ccall((:OGR_G_ConcaveHull, libgdal), pVoid, (pVoid, Cdouble, Bool), a1, a2, a3))
 OGR_G_CreateGeometry(a1) = acare(ccall((:OGR_G_CreateGeometry, libgdal), pVoid, (UInt32,), a1))
 OGR_G_Crosses(a1, a2) = acare(ccall((:OGR_G_Crosses, libgdal), Cint, (pVoid, pVoid), a1, a2))
 OGR_G_DelaunayTriangulation(hThis, tol, edges) = acare(ccall((:OGR_G_DelaunayTriangulation, libgdal), pVoid, (pVoid, Cdouble, Cint), hThis, tol, edges))
@@ -2424,7 +2425,7 @@ end
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 		gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy,
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
-		convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
+		concavehull, convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 		wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
 		wkbGeometryCollection
 
