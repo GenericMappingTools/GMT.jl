@@ -47,7 +47,7 @@ Full option list at [`psscale`]($(GMTdoc)psscale.html)
     Do not separate different color intervals with black grid lines.
 - $(GMT.opt_U)
 - $(GMT.opt_V)
-- **W** | **zscale** :: [Type => Number]
+- **W** | **scale** :: [Type => Number]
 
     Multiply all z-values in the CPT by the provided scale.
     ($(GMTdoc)psscale.html#w)
@@ -66,7 +66,7 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd  = parse_JZ(d, cmd)[1]
 	cmd, = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
-	                                [:Q :log], [:S :nolines], [:W :zscale], [:Z :zfile]])
+	                                [:Q :log], [:S :nolines], [:W :scale], [:Z :zfile]])
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
 							(map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), length=("+w", arg2str), size=("+w", arg2str), justify="+j", triangles="+e", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n", offset=("+o", arg2str)), 'J')
 
