@@ -8,7 +8,7 @@ Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMapp
 | [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] | [![][colprac-img]][colprac-url] |
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://fct-gmt.ualg.pt/GMTjl_doc/
+[docs-latest-url]: https://joa-quim.github.io/GMTjl_doc/
 
 [travis-img]: https://travis-ci.com/GenericMappingTools/GMT.jl.svg?branch=master
 [travis-url]: https://travis-ci.com/GenericMappingTools/GMT.jl
