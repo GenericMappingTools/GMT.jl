@@ -424,6 +424,22 @@ convexhull(D; gdataset=false) = helper_geoms_run_fun(convexhull, D; gdataset=gda
 
 # ---------------------------------------------------------------------------------------------------
 """
+    concavehull(geom, ratio, allow_holes::Bool=true; gdataset=false)
+
+### Parameters
+* `geom`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
+* `ratio`: Ratio of the area of the convex hull and the concave hull. 
+* `allow_holes`: Whether holes are allowed.
+* `gdataset`: Returns a GDAL IGeometry even when input are GMTdataset or Matrix
+
+### Returns
+A GMT dataset when input is a Matrix or a GMT type (except if `gdaset=true`), or a GDAL IGeometry otherwise
+"""
+concavehull(geom::AbstractGeometry, ratio, holes::Bool=true) = IGeometry(OGR_G_ConcaveHull(geom.ptr, Float64(ratio), holes))
+concavehull(D, ratio, holes::Bool=true; gdataset=false) = helper_geoms_run_fun(concavehull, D, Float64(ratio), holes; gdataset=gdataset)
+
+# ---------------------------------------------------------------------------------------------------
+"""
     pointalongline(geom, distance::Real; gdataset=false)
 
 ### Parameters
@@ -479,6 +495,11 @@ function helper_geoms_run_fun(f::Function, D, retds::Bool=true; gdataset=false)
 	ig = f(geom)
 	(gdataset) && (retds = false)
 	return (retds) ? gd2gmt(ig) : ig
+end
+function helper_geoms_run_fun(f::Function, D, ratio::Float64, holes::Bool=true; gdataset=false)
+	geom = helper_1geom(D)
+	ig = f(geom, ratio, holes)
+	return (gdataset) ? ig : gd2gmt(ig)
 end
 
 function helper_2geoms(D1, D2)
