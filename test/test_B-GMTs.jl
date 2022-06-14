@@ -85,7 +85,7 @@
 	println("	GMTBINSTATS")
 	if (GMTver > v"6.3.0")		# Before it was bugged.
 		gmtbinstats("@capitals.gmt", a="2=population", R=:g, I=5, C=:z, S="1000k");
-		gmtbinstats("@capitalas.gmt", aspatial="2=population", R=:g, I=5, C="q10", search_radius="1000k", Vd=dbg2);
+		gmtbinstats("@capitals.gmt", aspatial="2=population", R=:g, I=5, C="q10", search_radius="1000k", Vd=dbg2);
 		@test_throws ErrorException("Bad argument for the 'tile' option (vv)") gmtbinstats("lixo", R=:g, I=5, C="vv")
 		@test gmtbinstats("lixo", R=:g, I=5, tiling=:hexagon, stats=:n, Vd=2) == "gmtbinstats lixo  -I5 -Rg -Cn -Th"
 		gmt("destroy")
