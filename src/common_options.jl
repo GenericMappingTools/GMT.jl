@@ -2877,6 +2877,9 @@ function decorated(;kwargs...)::String
 		((val = find_in_dict(d, [:size])[1]) !== nothing) && (cmd *= "/" * arg2str(val))
 		if     (haskey(d, :left))  cmd *= "+l"
 		elseif (haskey(d, :right)) cmd *= "+r"
+		elseif (haskey(d, :side))
+			c::Char = string(d[:side])[1]
+			(c == 'l' || c == 'r') && (cmd *= "+" * c)	# Otherwise user screwed and we ignore the 'side'
 		end
 		if (haskey(d, :symbol))
 			symb = string(d[:symbol])[1]
@@ -2892,8 +2895,9 @@ function decorated(;kwargs...)::String
 
 	if (haskey(d, :pen))
 		cmd *= "+p"
-		(!isempty_(d[:pen])) && (cmd *= add_opt_pen(d, [:pen]))
+		(!isa(d[:pen], Bool) && !isempty_(d[:pen])) && (cmd *= add_opt_pen(d, [:pen]))
 	end
+	(haskey(d, :noline)) && (cmd *= "+i")
 	return opt_S * optD * cmd
 end
 
