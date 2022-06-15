@@ -722,6 +722,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 			if (_val == "none")					# User explicitly said NO AXES
 				if     (haskey(d, :xlabel))  _val = "-BS";	have_a_none = true		# Unless labels are wanted, but
 				elseif (haskey(d, :ylabel))  _val = "-BW";	have_a_none = true		# GMT Bug forces using tricks
+				elseif (haskey(d, :title))   _val = "";		have_a_none = true
 				else   return cmd, ""
 				end
 			elseif (_val == "noannot" || _val == "bare")
@@ -798,7 +799,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	if (haskey(d, :zlabel))  t *= " z+l" * replace(str_with_blancs(d[:zlabel]),' '=>'\x7f');   delete!(d, :zlabel);	end
 	if (t != "")
 		if (opt_B == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis :xticks :yticks :zticks], false)[1] === nothing))
-			opt_B = def_fig_axes_
+			(!have_a_none) ? (opt_B = def_fig_axes_) : have_a_none = false	# False to not trigger the white@100 trick
 		elseif (opt_B != "")			# Because  findlast("-B","") Errors!!!!!
 			if !( ((ind = findlast("-B",opt_B)) !== nothing || (ind = findlast(" ",opt_B)) !== nothing) &&
 				  (occursin(r"[WESNwesntlbu+g+o]",opt_B[ind[1]:end])) )
