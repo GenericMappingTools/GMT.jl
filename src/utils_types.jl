@@ -49,6 +49,7 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
      a vector of numbers, or just a single number that is then applied to all lines.
   - `fill`:  Optional string array with color names or array of "patterns".
   - `ls` or `linestyle`:  Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
+  - `front`:  Front Line style. A string or an array of strings with ``length = size(mat,1)`` with front line styles.
   - `lt` or `linethick`:  Line thickness.
   - `pen`:  A full pen setting. A string or an array of strings with ``length = size(mat,1)`` with pen settings.
      This differes from `lt` in the sense that `lt` does not directly set the line thickness.
@@ -147,6 +148,14 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 			for k = 1:n_ds  _hdr[k]  = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  end
 		else
 			for k = 1:n_ds  _hdr[k] *= " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]  end
+		end
+	end
+
+	if ((val = find_in_dict(d, [:front])[1]) !== nothing)
+		_lf::Vector{String} = isa(val, Vector{String}) ? val : [string(val)]	# Second case is free to error 
+		n_thick = length(_lf)		# Save to reuse var since data type does not change
+		for k = 1:n_ds
+			_hdr[k] *= " -Sf" * _lf[((k % n_thick) != 0) ? k % n_thick : n_thick]
 		end
 	end
 
