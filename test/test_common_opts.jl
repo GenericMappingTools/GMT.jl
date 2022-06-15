@@ -120,6 +120,8 @@
 	@test r == " -S~d0.8i/0.1i:+sa1+d+gblue+n1+w20+p0.5,green"
 	r = decorated(n_symbols=5, symbol=:star, symbolsize=1, pen=(0.5,:green), fill=:blue, quoted=1);
 	@test r == " -Sqn5:+p0.5,green"
+	@test decorated(dist=(0.5,0.3), symbol=:triang, right=true, offset=0.3, pen="", noline=true) == " -Sf0.5/0.3+r+t+o0.3+p+i"
+	@test decorated(dist=(0.5,0.3), symbol=:triang, side=:right, offset=0.3, pen=true) == " -Sf0.5/0.3+r+t+o0.3+p"
 	GMT.decorated((symbol="aiai",))		# Trigger a warning
 
 	r = decorated(dist=("0.4i",0.25), angle=7, clearance=(2,3), debug=1, delay=1, font=10, color=:red, justify=:TC, const_label=:Ai, pen=(0.5,:red), fill=:blue, nudge=(3,4), rounded=1, unit=:TT, min_rad=0.5, curved=1, n_data=20, prefix="Pre", suffices="a,b", label=(:map_dist,"d"), quoted=1)
