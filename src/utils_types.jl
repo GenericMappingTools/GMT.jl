@@ -43,7 +43,8 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `x`:   An optional vector with the xx coordinates
   - `hdr`: optional String vector with either one or n_rows multisegment headers.
   - `color`: optional array of strings with color names/values. Its length can be smaller than n_rows, case in
-     which colors will be cycled.
+     which colors will be cycled. If `color` is not an array of strings, e.g. `color="yes"`, the colors
+	 cycle trough a pre-defined set of colors (same colors as in Matlab).
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
   - `fill`:  Optional string array with color names or array of "patterns".
@@ -95,7 +96,7 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 	if ((val = find_in_dict(d, [:lt :linethick :linethickness])[1]) !== nothing)
 		if     (isa(val, AbstractString))  _lt::Vector{Float64} = [size_unit(val)]
 		elseif (isa(val, Vector{String}))  _lt = size_unit(val)
-		else                               _lt = vec(Float64.(val))
+		else                               _lt = isa(val, Real) ? [val] : vec(Float64.(val))
 		end
 		_lts::Vector{String} = Vector{String}(undef, n_ds)
 		n_thick::Integer = length(_lt)
