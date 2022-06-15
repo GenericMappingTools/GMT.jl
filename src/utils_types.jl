@@ -43,12 +43,15 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `x`:   An optional vector with the xx coordinates
   - `hdr`: optional String vector with either one or n_rows multisegment headers.
   - `color`: optional array of strings with color names/values. Its length can be smaller than n_rows, case in
-     which colors will be cycled.
+     which colors will be cycled. If `color` is not an array of strings, e.g. `color="yes"`, the colors
+	 cycle trough a pre-defined set of colors (same colors as in Matlab).
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
   - `fill`:  Optional string array with color names or array of "patterns".
   - `ls` or `linestyle`:  Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
   - `lt` or `linethick`:  Line thickness.
+  - `pen`:  A full pen setting. A string or an array of strings with ``length = size(mat,1)`` with pen settings.
+     This differes from `lt` in the sense that `lt` does not directly set the line thickness.
   - `multi`: When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
      first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
   - `datatype`: Keep the original data type of `mat`. Default, converts to Float64.
@@ -69,7 +72,7 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 
 	if ((x = find_in_dict(d, [:x])[1]) !== nothing)
 		n_ds::Int = (multi) ? size(mat, 2) : 1
-		xx::Vector{Float64} = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : x
+		xx::Vector{Float64} = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : vec(x)
 		(length(xx) != size(mat, 1)) && error("Number of X coordinates and MAT number of rows are not equal")
 	else
 		n_ds = (ndims(mat) == 3) ? size(mat,3) : ((multi) ? size(mat, 2) - 1 : 1)
@@ -93,7 +96,7 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 	if ((val = find_in_dict(d, [:lt :linethick :linethickness])[1]) !== nothing)
 		if     (isa(val, AbstractString))  _lt::Vector{Float64} = [size_unit(val)]
 		elseif (isa(val, Vector{String}))  _lt = size_unit(val)
-		else                               _lt = vec(Float64.(val))
+		else                               _lt = isa(val, Real) ? [val] : vec(Float64.(val))
 		end
 		_lts::Vector{String} = Vector{String}(undef, n_ds)
 		n_thick::Integer = length(_lt)
@@ -101,7 +104,7 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 			_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])
 		end
 	else
-		theW = (color !== nothing || haskey(d, :ls) || haskey(d, :linestyle)) ? " -W" : ""
+		theW = (color !== nothing || haskey(d, :ls) || haskey(d, :linestyle) || haskey(d, :pen)) ? " -W" : ""
 		_lts = fill(theW, n_ds)		# If no pen setting no need to set -W
 	end
 
@@ -128,6 +131,12 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 			for k = 1:n_ds  _hdr[k] = string(_hdr[k], ',', ls)  end
 		else
 			for k = 1:n_ds  _hdr[k] = string(_hdr[k], ',', ls[k])  end
+		end
+	elseif ((ls = find_in_dict(d, [:pen])[1]) !== nothing && ls != "")
+		if (isa(ls, AbstractString) || isa(ls, Symbol))
+			for k = 1:n_ds  _hdr[k] = string(_hdr[k], ls)  end
+		else
+			for k = 1:n_ds  _hdr[k] = string(_hdr[k], ls[k])  end
 		end
 	end
 

@@ -162,6 +162,7 @@
 	@test GMT.parse_B(Dict(:xaxis => "xg10", :yaxis => "g20"), "")[1] == " -Byg20 -Bxg10"
 	@test GMT.parse_B(Dict(:frame => (fill=220,)), "", " -Baf -Bg -BWSne")[1] == " -Baf -Bg -BWSne+g220"
 	@test GMT.parse_B(Dict(:frame => :full), "")[1] == " -Baf -BWSEN"
+	@test GMT.parse_B(Dict(:title => "BlaBla", :frame => :none), "")[1] == " -B+tBlaBla"
 	GMT.helper2_axes("lolo");
 	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
 
@@ -231,6 +232,9 @@
 	@test rescale(1:4, type=UInt8) == [0, 85, 170, 255]
 	magic(4)
 	magic(6)
+
+	D = mat2ds([9 8; 9 8], x=[0 7], pen=["5p,black", "4p,white,20p_20p"], multi=true);
+	@test D[1].header == " -W5p,black"
 
 	D = [mat2ds([0 0; 1 1],["a", "b"])];	D[1].header = "a";
 	D[1].attrib = Dict("nome" => "a", "nome2" => "b");
