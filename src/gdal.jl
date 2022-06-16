@@ -448,6 +448,8 @@ OGR_Fld_Set(a1, a2, a3, a4, a5, a6) =
 	acare(ccall((:OGR_Fld_Set, libgdal), Cvoid, (pVoid, Cstring, UInt32, Cint, Cint, UInt32), a1, a2, a3, a4, a5, a6))
 
 OGR_G_Area(a1) = acare(ccall((:OGR_G_Area, libgdal), Cdouble, (pVoid,), a1))
+OGR_G_ApproximateArcAngles(x0, y0, z0, r1, r2, rot, a1, a2, inc) = 
+	acare(ccall((:OGR_G_ApproximateArcAngles, libgdal), pVoid, (Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble), x0,y0,z0,r1,r2,rot,a1,a2,inc))
 OGR_G_AddGeometry(a1, a2) = acare(ccall((:OGR_G_AddGeometry, libgdal), Cint, (pVoid, pVoid), a1, a2))
 OGR_G_AddGeometryDirectly(a1, a2) = acare(ccall((:OGR_G_AddGeometryDirectly, libgdal), Cint, (pVoid, pVoid), a1, a2))
 OGR_G_Boundary(a1) = acare(ccall((:OGR_G_Boundary, libgdal), pVoid, (pVoid,), a1))
@@ -469,6 +471,7 @@ OGR_G_Equals(a1, a2) = acare(ccall((:OGR_G_Equals, libgdal), Cint, (pVoid, pVoid
 OGR_G_SymDifference(a1, a2) = acare(ccall((:OGR_G_SymDifference, libgdal), pVoid, (pVoid, pVoid), a1, a2))
 OGR_G_ExportToWkt(a1, a2) = acare(ccall((:OGR_G_ExportToWkt, libgdal), Cint, (pVoid, Ptr{Cstring}), a1, a2))
 OGR_G_ExportToKML(a1, altMode) = acare(ccall((:OGR_G_ExportToKML, libgdal), Cstring, (pVoid, Cstring), a1, altMode), false)
+OGR_G_FlattenTo2D(a1) = acare(ccall((:OGR_G_FlattenTo2D, libgdal), pVoid, (pVoid,), a1)) 
 OGR_G_ForceTo(hGeom, eTargetType, pOpts) =
 	acare(ccall((:OGR_G_ForceTo, libgdal), pVoid, (pVoid, UInt32, Ptr{Cstring}), hGeom, eTargetType, pOpts))
 OGR_G_ForceToPolygon(a1) = acare(ccall((:OGR_G_ForceToPolygon, libgdal), pVoid, (pVoid,), a1))
@@ -2423,7 +2426,7 @@ end
 	export
 		getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
-		gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy,
+		gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy, arcellipse, arccircle,
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
 		concavehull, convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 		wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
