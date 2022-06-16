@@ -33,6 +33,7 @@
 	Gdal.convexhull(bf);
 	bf.geom = wkbLineString;
 	Gdal.pointalongline(bf, 0.3);
+	Gdal.Gdal.arccircle(0, 0, 1., 0., -90);
 	g1 = fromWKT("MULTIPOINT(0 0, 10 0, 10 10, 11 10)");
 	g2 = delaunay(g1,2.0,true);
 	@test toWKT(g2) == "MULTILINESTRING ((0 0,10 10),(0 0,10 0),(10 0,10 10))"

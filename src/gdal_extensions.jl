@@ -462,6 +462,59 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    arccircle(x0, y0, radius, start_angle, end_angle; z0=0, inc=2, gdataset=false)
+
+### Parameters
+* `x0`: center X
+* `y0`: center Y
+* `radius`: radius of the circle.
+* `start_angle`: angle to first point on arc (clockwise of X-positive) 
+* `end_angle`: angle to last point on arc (clockwise of X-positive) 
+### Keywords
+* `z0`: center Z. Optional, if not provided the output is flat 2D
+* `inc`: the largest step in degrees along the arc. Default is 2 degree
+* `gdataset`: Returns a GDAL IGeometry even when input are GMTdataset or Matrix
+
+### Returns
+A GMT dataset or a GDAL IGeometry
+"""
+arccircle(x0, y0, r, a1, a2; z0=NaN, inc=0.0, gdataset=false) =
+	arcellipse(x0, y0, r, r, a1, a2; rotation=0.0, z0=z0, inc=inc, gdataset=gdataset) 
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    arcellipse(x0, y0, primary_radius, secondary_radius, start_angle, end_angle; rotation=0, z0=0, inc=2, gdataset=false)
+
+### Parameters
+* `x0`: center X
+* `y0`: center Y
+* `primary_radius`: X radius of ellipse.
+* `secondary_radius`: Y radius of ellipse.
+* `start_angle`: angle to first point on arc (clockwise of X-positive) 
+* `end_angle`: angle to last point on arc (clockwise of X-positive) 
+### Keywords
+* `rotation`: rotation of the ellipse clockwise. 
+* `z0`: center Z. Optional, if not provided the output is flat 2D
+* `inc`: the largest step in degrees along the arc. Default is 2 degree
+* `gdataset`: Returns a GDAL IGeometry even when input are GMTdataset or Matrix
+
+### Returns
+A GMT dataset or a GDAL IGeometry
+"""
+function arcellipse(x0, y0, r1, r2, a1, a2; rotation=0.0, z0=NaN, inc=2.0, gdataset=false)
+	_z0 = isnan(z0) ? 0.0 : Float64(inc)
+	ig = IGeometry(OGR_G_ApproximateArcAngles(x0, y0, _z0, r1, r2, rotation, a1, a2, inc))
+	(gdataset) && return ig
+	D = gd2gmt(ig)
+	D.colnames = (isnan(z0)) ? ["x", "y"] : ["x", "y", "z"]
+	if (isnan(z0))		# Drop the z0 = 0 col. It was not asked for.
+		D.data = D.data[:,1:2];	D.bbox = D.bbox[1:4];	D.ds_bbox = D.ds_bbox[1:4];
+	end 
+	D
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
     polygonize(geom; gdataset=false)
 
 ### Parameters
