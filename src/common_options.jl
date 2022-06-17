@@ -1543,6 +1543,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 parse_pen(pen::Real)::String = string(pen)
+parse_pen(pen::String)::String = pen
 function parse_pen(pen::Tuple)::String
 	# Convert an empty to 3 args tuple containing (width[c|i|p]], [color], [style[c|i|p|])
 	s = arg2str(pen[1])					# First arg is different because there is no leading ','
