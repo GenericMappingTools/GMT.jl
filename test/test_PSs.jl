@@ -66,7 +66,7 @@ r = coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60), frame=
 r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hello Round World", Vd=dbg2);
 @test startswith(r, "pscoast  -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude")
 @test startswith(coast(R=:g, W=(level=1,pen=(2,:green)), Vd=dbg2), "pscoast  -Rg -JN180.0/" * split(GMT.def_fig_size, '/')[1] * " -Baf -BWSen -W1/2,green")
-@test startswith(coast(R=:g, W=(2,:green), Vd=dbg2), "pscoast  -Rg -JN180.0/" * split(GMT.def_fig_size, '/')[1] * " -Baf -BWSen -W2,green")
+@test startswith(coast(R=:g, W=(2,:green), Vd=dbg2), "pscoast  -Rg -JN180.0/" * split(GMT.def_fig_size, '/')[1] * " -Baf -BWSen -W2/green")
 r = coast(R=:g, N=((level=1,pen=(2,:green)), (level=3,pen=(4,:blue, "--"))), Vd=dbg2);
 @test startswith(r, "pscoast  -Rg -JN180.0/" * split(GMT.def_fig_size, '/')[1] * " -Baf -BWSen -N1/2,green -N3/4,blue,--")
 r = coast(proj=:Mercator, DCW=((country="GB,IT,FR", fill=:blue, pen=(0.25,:red)), (country="ES,PT,GR", fill=:yellow)), Vd=dbg2);
