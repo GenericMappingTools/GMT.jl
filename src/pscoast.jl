@@ -156,10 +156,15 @@ function parse_INW_coast(d::Dict, symbs::Vector{Matrix{Symbol}}, cmd::String, fl
 		if ((val = find_in_dict(d, symbs[k], false)[1]) !== nothing)
 			if (isa(val, NamedTuple) || isa(val, Dict) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
 				cmd = add_opt(d, cmd, string(flags[k]), symbs[k], (type="/#", level="/#", mode="+p#", pen=("", add_opt_pen)))
-			elseif (isa(val, Tuple))  cmd *= " -" * flags[k] * string(val[1]) * "/" * parse_pen(val[2])
+			elseif (isa(val, Tuple))
+				if (flags[k] == 'W')	# The shore case is ambiguous, this shore=(1,:red) could mean -W1/red or -W1,red 
+					cmd *= " -W" * parse_pen(val)	# We take it to mean pen only. Levels must use the NT form
+				else
+					cmd *= " -" * flags[k] * string(val[1]) * "/" * parse_pen(val[2])
+				end
 			else                      cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
 			end
-			del_from_dict(d, vec(symbs[k]))		# Now we can delete the kwarg
+			del_from_dict(d, vec(symbs[k]))			# Now we can delete the kwarg
 		end
 	end
 	return cmd
