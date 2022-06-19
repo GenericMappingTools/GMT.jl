@@ -114,10 +114,11 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		gmt("subplot set " * cmd)
 	else
 		show = (do_show || haskey(d, :show)) ? " show" : ""
-		try
-			gmt("subplot end");		gmt("end" * show);		catch
-		end
-		IamModern[1] = false;		IamSubplot[1] = false
+		#try
+			#gmt("subplot end");		gmt("end" * show);		catch
+		#end
+		#IamModern[1] = false;		IamSubplot[1] = false
+		helper_showfig4modern(show)
 	end
 	return nothing
 end
@@ -166,7 +167,7 @@ end
 # --------------------------------------------------------------------------
 function mura_arg(arg)::Dict
 	# Barrier function to contain a possible type instability
-	if (isa(arg, Tuple{Tuple, Number}))  arg = (arg[1], (arg[2],))  end	# This looks terribly type instable
+	if (isa(arg, Tuple{Tuple, Real}))  arg = (arg[1], (arg[2],))  end	# This looks terribly type instable
 	# Need first case because for example dims=(panels=((2,4),(2.5,5,1.25)),) shows up here only as
 	# arg = ((2, 4), (2.5, 5, 1.25)) because this function was called from within add_opt()
 	if (isa(arg, Tuple{Tuple, Tuple}))  d = Dict(:panels => arg)
