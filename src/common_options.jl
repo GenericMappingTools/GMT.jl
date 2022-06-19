@@ -3507,8 +3507,8 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 			else             @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
 			end
 		elseif isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
-			return WrapperPluto(out)		# This return must make it all way down to base so that Plut displays it
-		else
+			return WrapperPluto(out)	# This return must make it all way down to base so that Plut displays it
+		elseif (!isFranklin[1])			# !isFranklin is true when building the docs and there we don't want displays.
 			@static if (Sys.iswindows()) out = replace(out, "/" => "\\"); run(ignorestatus(`explorer $out`))
 			elseif (Sys.isapple()) run(`open $(out)`)
 			elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
@@ -3529,9 +3529,23 @@ end
 # ---------------------------------------------------------------------------------------------------
 # Use only to close PS fig and optionally convert/show
 function showfig(; kwargs...)
+	helper_showfig4modern() && return nothing		# If called from modern mode we are done here.
 	d = KW(kwargs)
 	(!haskey(d, :show)) && (d[:show] = true)		# The default is to show
 	finish_PS_module(d, "psxy -R0/1/0/1 -JX0.001c -T -O", "", false, true, true)
+end
+function helper_showfig4modern(show::String="show")::Bool
+	# If called from modern mode, do the equivalent of classic to close and show fig
+	# Use show="" in modern when only wanting to finish plot but NOT display it.
+	if (IamModern[1])
+		try
+			IamSubplot[1] && (gmt("subplot end");	IamSubplot[1] = false);		catch
+		end
+		IamModern[1] = false;
+		isFranklin[1] ? gmt("end") : gmt("end " * show)	# isFranklin is true when building the docs
+		return true
+	end
+	return false
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -3715,9 +3729,11 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			P = showfig(d, output, fname_ext, "", K)
 			gmt_restart()							# Returning a PS screws the session
 		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "" || opt_T != "")
-			P = showfig(d, output, fname_ext, opt_T, K, fname)		# Return something here for the case we are in Pluto
-			(typeof(P) == Base.Process) && (P = nothing)			# Don't want spurious message on REPL when plotting
+			P = showfig(d, output, fname_ext, opt_T, K, fname)	# Return something here for the case we are in Pluto
+			(typeof(P) == Base.Process) && (P = nothing)		# Don't want spurious message on REPL when plotting
 		end
+	elseif  ((haskey(d, :show) && d[:show] != 0))	# Let modern mode also call show=true
+		helper_showfig4modern()
 	end
 	show_non_consumed(d, cmd)
 	return P

@@ -170,7 +170,7 @@ function gmt(cmd::String, args...)
 	g_module::String, r = strtok(cmd)
 
 	if (g_module == "begin")		# Use this default fig name instead of "gmtsession"
-		(r == "") && (r = "GMTplot " * FMT[1])
+		(r == "") && (r = isFranklin[1] ? (joinpath(tempdir(), "GMTjl_tmp png")) : "GMTplot " * FMT[1])
 		IamModern[1] = true
 	elseif (g_module == "end")		# Last command of a MODERN session
 		isempty(r) && (r = "-Vq")	# Cannot have a no-args for this case otherwise it prints help
