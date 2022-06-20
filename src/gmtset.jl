@@ -1,5 +1,5 @@
 """
-    gmtset(cmd0::String="", kwargs...)
+    gmtset(; kwargs...)
 
 Adjust individual GMT defaults settings in the current directory’s gmt.conf file.
 
@@ -15,11 +15,15 @@ Parameters
 - **G** | **defaultsfile** :: [Type => Str]
 
     Name of specific gmt.conf file to read and modify. 
-    ($(GMTdoc)gmtinfo.html#g)
+    ($(GMTdoc)gmtset.html#g)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
+
+### Example:
+
+    gmtset(FONT_ANNOT_PRIMARY="12p,Helvetica", MAP_GRID_CROSS_SIZE_PRIMARY=0.25)
 """
-function gmtset(cmd0::String=""; kwargs...)
+function gmtset(; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
