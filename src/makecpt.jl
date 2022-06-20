@@ -98,7 +98,7 @@ end
 function parse_E_mkcpt(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Number")
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		(arg1 === nothing) && error("E option requires that a data table is provided as well")
+		(arg1 === nothing && cmd[1] == ' ') && error("E option requires that a data table is provided as well")
 		cmd *= " -E" * arg2str(val)
 	end
 	return cmd
