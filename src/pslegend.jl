@@ -53,7 +53,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
-	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
+	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)	# If called from classic without input it hangs here.
 	cmd, = parse_common_opts(d, cmd, [:F :c :p :q :t :JZ :UVXY :params], first)
 
 	opt_D = parse_type_anchor(d, "", [:D :pos :position],
@@ -65,6 +65,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	#!contains(opt_D, "+w") && error("The `position` argument MUST contain the legend's width specification.")
 	cmd *= opt_D
 	isa(arg1, NamedTuple) && (arg1 = text_record(mk_legend(arg1)))
+	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 	gmt("destroy")
 	return r
