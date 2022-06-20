@@ -3100,7 +3100,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 end
 
 function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false,
-	opt_i::String="", opt_di::String="", opt_yx::String="")::Tuple{String, Union{Nothing, Array{<:Real}, GDtype}, String, Matrix{Float64}, String}
+	opt_i::String="", opt_di::String="", opt_yx::String="")::Tuple{String, Union{Nothing, Array{<:Real}, GDtype, NamedTuple}, String, Matrix{Float64}, String}
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
 
