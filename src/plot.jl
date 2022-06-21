@@ -403,8 +403,8 @@ scatter!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "scatt
 scatter3(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "scatter3",  true, true, kw...)
 scatter3!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "scatter3",  false, true, kw...)
 
-scatter3(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "scatte3", true, false, kw...)
-scatter3!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "scatte3", false, false, kw...)
+scatter3(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "scatter3", true, true, kw...)
+scatter3!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "scatter3", false, true, kw...)
 
 function scatter3(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
 	common_plot_xyz("", hcat(arg1, arg2, arg3), "scatter3", true, true, kw...)
