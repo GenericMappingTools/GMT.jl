@@ -2429,6 +2429,7 @@ end
 		gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy, arcellipse, arccircle,
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
 		concavehull, convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
+		boundary, crosses, disjoint, equals, envelope, envelope3d, geomlength, overlaps, touches, within,
 		wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
 		wkbGeometryCollection
 

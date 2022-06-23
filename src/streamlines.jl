@@ -2,7 +2,7 @@
     S = streamlines(U::GMTgrid, V::GMTgrid, startX, startY; step=0.1, max_vert::Int=10000)
 
 Compute 2-D streamlines as a 2-D matrix (in fact, a GMTdataset) of vector fields.
-The inputs `U` and `V` are GMTgrids with the ``x`` and ``y`` velocity components, and `startX` and
+The inputs `U` and `V` are GMTgrids with the `x` and `y` velocity components, and `startX` and
 `startY` are the starting positions of the streamlines. `step` is the step size in data units for
 interpolating the vector data and `max_vert` is the maximum number of vertices in a streamline.
 `startX` and `startY` can both be scalars, vectors or one a scalar and the other a vector.
@@ -16,13 +16,13 @@ Returns a Vector{GMTdataset} with the streamlines.
     S, A = streamlines(U::GMTgrid, V::GMTgrid; step=0.1, max_vert::Int=10000)
 
 Method that computes automatically spaced streamlines from 2D grids U and V. Returns the streamlines
-in the ``S`` Vector{GMTdataset} and ``A`` holds the positions along the streamlines where to plot
+in the `S` Vector{GMTdataset} and `A` holds the positions along the streamlines where to plot
 arrow-heads if wished.
 
     S = streamlines(U::GMTgrid, V::GMTgrid; side::Union{String, Symbol}="left", step=0.1, max_vert::Int=10000)
 
 Here we auto-generate the starting positions along one of the 4 sides of the grid. Select the wished side
-with the ``side`` keyword. Returns a Vector{GMTdataset} with the streamlines.
+with the `side` keyword. Returns a Vector{GMTdataset} with the streamlines.
 
     S = streamlines(x, y, U::Matrix, V::Matrix, sx, sy; step=0.1, max_vert::Int=10000)
 
@@ -32,7 +32,7 @@ Vector{GMTdataset} with the streamlines.
 
     S = streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, startX, startY, startZ; step=0.1, max_vert::Int=10000)
 
-Conpute 3D volume of vector fields with streamline. Here `U`,`V` and `W` are 3D cubes with ``x,y,z``
+Conpute 3D volume of vector fields with streamline. Here `U`,`V` and `W` are 3D cubes with `x,y,z`
 velocity components. `startX`, `startY` and `startZ` can be scalar or vector coordinate arrays.
 Returns a Vector{GMTdataset} with the streamlines.
 

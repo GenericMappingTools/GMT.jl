@@ -1,7 +1,7 @@
 """
     imshow(arg1; kw...)
 
-Is a simple front end to the [`grdimage`](@ref)  [`grdview`](@ref) programs that accepts GMTgrid, GMTimage,
+Is a simple front end to the [`grdimage`](modules/grdimage)  [`grdview`](modules/grdview) programs that accepts GMTgrid, GMTimage,
 2D array of floats or strings with file names of grids or images. The normal options of the *grdimage*
 and *grdview* programs also apply here but some clever guessing of suitable necessary parameters is done
 if they are not provided. Contrary to other image producing modules the "show' keyword is not necessary to
