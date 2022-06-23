@@ -936,17 +936,17 @@ size determined by the sizes of the X & Y vectors.
 
     Example: f(x,y) = x^2 + y^2;  G = mat2grid(f, x = -2:0.05:2, y = -2:0.05:2)
 
-    G = mat2grid(f::String, x=[], y=[])
+    G = mat2grid(f::String)
 
-Whre F is a pre-set function name. Currently available:
+Whre f is a pre-set function name. Currently available:
    - "ackley", "eggbox", "sombrero", "parabola" and "rosenbrock" 
 X,Y are vectors coordinates defining the function's domain, but default values are provided for each function.
 creates a Float32 GMTgrid.
 
     Example: G = mat2grid("sombrero")
 """
-function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String="", wkt::String="", epsg::Int=0,
-	tit::String="", rem::String="", names::Vector{String}=String[])
+function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String="", proj::String="",
+	wkt::String="", epsg::Int=0, tit::String="", rem::String="", names::Vector{String}=String[])
 
 	(hdr === nothing) && error("When creating grid type with no data the 'hdr' arg cannot be missing")
 	(!isa(hdr, Array{Float64})) && (hdr = Float64.(hdr))
@@ -954,6 +954,7 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String=
 	if (length(hdr) == 6)
 		hdr = [hdr[1], hdr[2], hdr[3], hdr[4], val, val, reg === nothing ? 0. : 1., hdr[5], hdr[6]]
 	end
+	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem, cmd="", names=names)
 end
 
@@ -961,12 +962,16 @@ end
 istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
 function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Float64}(); reg=nothing,
-	x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="",
-	epsg::Int=0, tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[], scale::Float32=1f0,
-	offset::Float32=0f0, is_transposed::Bool=false)
+	x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", proj::String="",
+	wkt::String="", epsg::Int=0, tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[],
+	scale::Float32=1f0, offset::Float32=0f0, is_transposed::Bool=false)
 	# Take a 2/3D array and turn it into a GMTgrid
 
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
+	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
+	if (!isempty(proj4) && !startswith(proj4, "+proj=") && !startswith(proj4, "proj="))
+		proj4 = "+proj=" * proj4		# NOW I SHOULD TEST THIS IS A VALID PROJ4 STRING. BUT HOW?
+	end
 	reg_ = 0
 	if (isa(reg, String) || isa(reg, Symbol))
 		t = lowercase(string(reg))
@@ -1014,9 +1019,10 @@ function mat2grid(mat, I::GMTimage)
 	Go
 end
 
-function mat2grid(f::Function, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+function mat2grid(f::Function, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
 	(isempty(x) && !isempty(xx)) && (x = xx)
 	(isempty(y) && !isempty(yy)) && (y = yy)
+	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	z = Array{Float32,2}(undef,length(y),length(x))
 	for i = 1:length(x)
 		for j = 1:length(y)
@@ -1066,6 +1072,8 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Vector{Float64}(), y=Vector{Float64}(), 
 
 	if (!isempty(x) && !isempty(y))		# But not tested if they are equi-spaced as they MUST be
 		if ((length(x) != (nx+reg) || length(y) != (ny+reg)) && (length(x) != 2 || length(y) != 2))
+			(length(x) != (nx+reg)) && @warn("length x = $(length(x))  nx = $nx, registration = $reg")
+			(length(y) != (ny+reg)) && @warn("length y = $(length(y))  ny = $ny, registration = $reg")
 			error("size of x,y vectors incompatible with 2D array size")
 		end
 		one_or_zero = reg == 0 ? 1 : 0
