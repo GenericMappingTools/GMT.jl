@@ -12,7 +12,7 @@ of the GMTdataset `shapes`. The `GI` array is modified in place.
 - `fun`: A unidemensional function name used to compute the contant value for the `GI` elements that fall
    inside each of the polygons of `shapes`.
 
-See also: ``colorzones``
+See also: `colorzones!`
 
 ### Returns
 It does't return anything but the input `GI` is modified.
