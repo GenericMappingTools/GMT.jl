@@ -66,7 +66,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    colorzones(shapes::Vector{GMTdataset}[, fun::Function]; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true)
+    colorzones!(shapes::Vector{GMTdataset}[, fun::Function]; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true)
 
 Paint the polygons in the `shapes` with the average color that those polygons ocupy in the `img` image.
 When the `shapes` are plotted the resulting image looks like a choropleth map. Alternatively, instead of
@@ -77,14 +77,14 @@ is large (think Russia size) because even at a moderately resultion it can imply
 
 ### Parameters
 - `shapes`: A vector of GMTdataset containing the polygons to be painted. This container will be changed
-   in the sense that the ``header`` field of each polygon (a GMTdataset) will be appended with the fill
+   in the sense that the `header` field of each polygon (a GMTdataset) will be appended with the fill
    color (but see also the `append` option that controls how this change takes place.)
 - `fun`: By default the average color is obtained by taking the square root of the average of squares of each
    of the three (RGB) bands (or just one for grayscale images). Give the name of another function to replace
-   this default. For example ``median`` will assign the color by computing the median of each component inside
+   this default. For example `median` will assign the color by computing the median of each component inside
    the polygon area in question.
 - `img`: the image from which the stats (`fun`) of each color for each polygon will be computed.
-- `url`: In case the `img` option is not used, pass the Web Map Server URL (see the ``wmsinfo`` and ``wmsread`` functions)
+- `url`: In case the `img` option is not used, pass the Web Map Server URL (see the `wmsinfo` and `wmsread` functions)
    from where the the images covering the BoundingBox of each polygon will be downloaded. Warning, this is a much slower
    method but potentially usefull when the images to download risk to be very big. 
 - `layer`: When the `url` option is used this one becomes mandatory and represents the layer number or layer name of
@@ -93,11 +93,11 @@ is large (think Russia size) because even at a moderately resultion it can imply
 - `pixelsize`: Sets the requested cell size in meters [default]. Use a string appended with a 'd'
    (e.g. `resolution="0.001d"`) if the resolution is given in degrees. This way works only when the layer is in geogs.
 - `append`: By default the color assignement to each of the polygons in the `shapes` vector is achieved by
-   appending the fill color to the possibly existing header field. Running the ``colorzones`` command more than once
+   appending the fill color to the possibly existing header field. Running the `colorzones` command more than once
    keeps adding (now ignored, because only the first is used) colors. Setting `append=false` forces rewriting
    the header field at each run and hence the assigned color is always the one used (but the previous header is cleared out).
 
-See also: ``rasterzones!``
+See also: `rasterzones!`
 
 ### Returns
 It does't return anything but the input `shapes` is modified.
@@ -109,12 +109,12 @@ It does't return anything but the input `shapes` is modified.
     wms = wmsinfo("http://tiles.maps.eox.at/wms?");
     img = wmsread(wms, layer=3, region=(-9.6,-6,36.9,42.2), pixelsize=100);
 	Pt = gmtread("C:\\programs\\compa_libs\\covid19pt\\extra\\mapas\\concelhos\\concelhos.shp");
-	colorzones(Pt, median, img=img);
+	colorzones!(Pt, median, img=img);
 	imshow(Pt, proj=:guess)
 """
-colorzones(shapes::GDtype; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true) =
-	colorzones(shapes, meansqrt; img=img, url=url, layer=layer, pixelsize=pixelsize, append=append)
-function colorzones(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true)
+colorzones!(shapes::GDtype; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true) =
+	colorzones!(shapes, meansqrt; img=img, url=url, layer=layer, pixelsize=pixelsize, append=append)
+function colorzones!(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true)
 
 	(img === nothing && url == "") && error("Must either pass a grid/image or a WMS URL.")
 	(img !== nothing && url != "") && error("Make up your mind. Pass ONLY one of grid/image or a WMS URL.")

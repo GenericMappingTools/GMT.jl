@@ -39,24 +39,24 @@ text_record(text) = text_record(Array{Float64,2}(undef,0,0), text)
 Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
   - `txt`:   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
-     can be an array with same size as ``mat`` rows or a string (will be reapeated n_rows times.) 
-  - `x`:   An optional vector with the xx coordinates
+     can be an array with same size as `mat` rows or a string (will be reapeated n_rows times.) 
+  - `x`:   An optional vector with the _xx_ coordinates
   - `hdr`: optional String vector with either one or n_rows multisegment headers.
   - `color`: optional array of strings with color names/values. Its length can be smaller than n_rows, case in
      which colors will be cycled. If `color` is not an array of strings, e.g. `color="yes"`, the colors
-	 cycle trough a pre-defined set of colors (same colors as in Matlab).
+     cycle trough a pre-defined set of colors (same colors as in Matlab).
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
   - `fill`:  Optional string array with color names or array of "patterns".
-  - `ls` or `linestyle`:  Line style. A string or an array of strings with ``length = size(mat,1)`` with line styles.
-  - `front`:  Front Line style. A string or an array of strings with ``length = size(mat,1)`` with front line styles.
+  - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = size(mat,1)` with line styles.
+  - `front`:  Front Line style. A string or an array of strings with `length = size(mat,1)` with front line styles.
   - `lt` or `linethick`:  Line thickness.
-  - `pen`:  A full pen setting. A string or an array of strings with ``length = size(mat,1)`` with pen settings.
+  - `pen`:  A full pen setting. A string or an array of strings with `length = size(mat,1)` with pen settings.
      This differes from `lt` in the sense that `lt` does not directly set the line thickness.
   - `multi`: When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
      first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
   - `datatype`: Keep the original data type of `mat`. Default, converts to Float64.
-  - `geom`: The data geometry. By default we set ``wkbUnknown`` but try to do some basic guess.
+  - `geom`: The data geometry. By default we set `wkbUnknown` but try to do some basic guess.
   - `proj` or `proj4`:  A proj4 string for dataset SRS.
   - `wkt`:  A WKT SRS.
   - `colnames`: Optional string vector with names for each column of `mat`.
@@ -654,8 +654,8 @@ const cubeslice = slicecube		# I'm incapable of remembering which one it is.
 
 # ---------------------------------------------------------------------------------------------------
 """
-    xyzw2cube(fname::AbstractString; datatype::DataType=Float32, proj4::String="", wkt::String="", epsg::Int=0,
-              tit::String="", names::Vector{String}=String[])
+    xyzw2cube(fname::AbstractString; datatype::DataType=Float32, proj4::String="", wkt::String="",
+	          epsg::Int=0, tit::String="", names::Vector{String}=String[])
 
 Convert data table containing a cube into a GMTgrid cube. The input data must contain a completelly filled
 3D matrix and the data layout is guessed from file analysis (if it fails ... bad chance). 
@@ -732,7 +732,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name="time", z_unit="", save="", mirone=false)
+    stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name="time",
+	           z_unit="", save="", mirone=false)
 
 Stack a bunch of single grids in a multiband cube like file.
 
@@ -903,8 +904,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=nothing, proj4::String="", wkt::String="", tit::String="",
-                 rem::String="", cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0)
+    G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=nothing, proj4::String="",
+	             wkt::String="", tit::String="", rem::String="", cmd::String="",
+				 names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0)
 
 Take a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor and 
 return a grid GMTgrid type. Alternatively to HDR, provide a pair of vectors, `x` & `y`, with the X and Y coordinates.
@@ -1153,8 +1155,8 @@ The elements of ZVALS are made up from the `vals`.
 - `ids`:    is a string Vector or Matrix with the ids (attrinute names) of the GMTdataset D.
             If a Matrix (2 columns only) then the `att` bellow must also have two names (string vector
             with two elements) that will be matched against the two eements of each line of `user_ids`.
-            The idea here is to match two conditions: ``att[1] == ids[n,1] && att[2] == ids[n,2]``
-- `vals`:      is a vector with the numbers to be used in plot ``level`` to color the polygons.
+            The idea here is to match two conditions: `att[1] == ids[n,1] && att[2] == ids[n,2]`
+- `vals`:      is a vector with the numbers to be used in plot `level` to color the polygons.
 - `attrib` or `att`: keyword to selecect which attribute to use when matching with contents of the `ids` strings.
 - `nocase` or `insensitive`: a keyword from `kw`. Perform a case insensitive comparision between the contents of
                `ids` and the attribute specified with `attrib`. Default compares as case sensistive.
@@ -1271,16 +1273,16 @@ Take a GMTdataset vector and return only its elememts that match the condition(s
 Note, this assumes that `D` has its `attrib` fields set with usable information.
 
 ### Parameters
-- `attrib` or `att`: keyword with the attribute ``name`` used in selection. It can be a single name as in `att="NAME_2"`
+- `attrib` or `att`: keyword with the attribute `name` used in selection. It can be a single name as in `att="NAME_2"`
         or a NamedTuple with the attribname, attribvalue as in `att=(NAME_2="value")`. Use more elements if
         wishing to do a composite match. E.g. `att=(NAME_1="val1", NAME_2="val2")` in which case oly segments
         matching the two conditions are returned.
 - `val` or `value`: keyword with the attribute ``value`` used in selection. Use this only when `att` is not a NamedTuple.
-- `index`: Use this ``positional`` argument = `true` to return only the segment indices that match the `att` condition(s).
+- `index`: Use this `positional` argument = `true` to return only the segment indices that match the `att` condition(s).
 
 ### Returns
 Either a vector of GMTdataset, or a vector of Int with the indices of the segments that match the query condition.
-Or ``nothing`` if the query results in an empty GMTdataset 
+Or `nothing` if the query results in an empty GMTdataset 
 
 ## Example:
 

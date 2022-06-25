@@ -1477,7 +1477,12 @@ function fakedata(sz...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function delrows!(A::Matrix, rows)
+"""
+    delrows!(A::Matrix, rows::VecOrMat)
+
+Delete the rows of Matrix `A` listed in the vector `rows`
+"""
+function delrows!(A::Matrix, rows::VecOrMat)
 	nrows, ncols = size(A)
 	npts = length(A)
 	A = reshape(A, npts)
