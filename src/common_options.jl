@@ -403,7 +403,7 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 		width = (IamSubplot[1]) ? "?" : split(def_fig_size, '/')[1]		# In subplot "?" is auto width
 	elseif (IamSubplot[1] && (width == "auto" || width == "auto,auto"))	# In subplot one can say figsize="auto" or figsize="auto,auto"
 		width = (width == "auto") ? "?" : "?/?"
-	elseif ( ((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
+	elseif (((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
 		(occursin("/", width)) && @warn("Ignoring the 'aspect' request because fig's Width and Height already provided.")
 		if (!occursin("/", width))
 			width = set_aspect_ratio(val, width, false, haskey(d, :aspect3))
@@ -2834,8 +2834,8 @@ function helper_vec_loc(d::Dict, symb, cmd::String)::String
 	elseif (t == "tail"      )	cmd *= "i"
 	elseif (t == "open_arrow")	cmd *= "A"
 	elseif (t == "open_tail" )	cmd *= "I"
-	elseif (t == "left_side" )	cmd *= "l"
-	elseif (t == "right_side")	cmd *= "r"
+	elseif (startswith(t, "left"))	cmd *= "l"
+	elseif (startswith(t, "right"))	cmd *= "r"
 	end
 	return cmd
 end
