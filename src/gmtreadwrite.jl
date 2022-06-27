@@ -6,10 +6,10 @@ Read GMT object from file. The object is one of "grid" or "grd", "image" or "img
 Use a type specificatin to force a certain reading path (e.g. `grd=true` to read grids) or take
 the chance of letting the data type be guessed via the file extension. Known extensions are:
 
-- Grids:      .grd, .nc
-- Images:     .jpg, .png, .tif, .tiff, .bmp, .webp
+- Grids:      .grd, .jp2 .nc
+- Images:     .jpg, .jp2 .png, .tif, .tiff, .bmp, .webp
 - Datasets:   .dat, .txt, .csv
-- Datasets:   .shp, .kml, .json, .geojson, .gmt, .gpkg
+- Datasets:   .shp, .kml, .json, .geojson, .gmt, .gpkg, .gpx, .gml
 - CPT:        .cpt
 - PostScript: .ps, .eps
 
@@ -61,7 +61,7 @@ Example: to read a nc called 'lixo.grd'
 
     G = gmtread("lixo.grd");
 
-to read a jpg image with the bands reversed (this example is currently broken in GMT5. Needs GMT6dev)
+to read a jpg image with the bands reversed
 
     I = gmtread("image.jpg", band=[2,1,0]);
 """
@@ -140,7 +140,21 @@ function gmtread(fname::String; kwargs...)
 	if (opt_T != " -To")			# All others but OGR
 		if (opt_T == " -Td" && opt_bi != "")  cmd *= opt_bi  end		# Read from binary file
 		cmd *= opt_T
-		return (dbg_print_cmd(d, cmd) !== nothing) ? "gmtread " * cmd : gmt("read " * fname * cmd)
+		#return (dbg_print_cmd(d, cmd) !== nothing) ? "gmtread " * cmd : gmt("read " * fname * cmd)
+		(dbg_print_cmd(d, cmd) !== nothing) && return "gmtread " * cmd
+		o = gmt("read " * fname * cmd)
+		# If GMTdataset see if the comment may have the column names
+		if (isa(o, GMTdataset) && isempty(o.colnames) && !isempty(o.comment)) ||
+			(isa(o, Vector{<:GMTdataset}) && isempty(o[1].colnames) && !isempty(o[1].comment))
+			if (isa(o, GMTdataset))
+				hfs, ncs = split(o.comment[1], [' ', '\t', ',']), size(o,2)
+				(length(hfs) == ncs) && (o.colnames = string.(hfs))
+			else
+				hfs, ncs = split(o[1].comment[1], [' ', '\t', ',']), size(o[1],2)
+				(length(hfs) == ncs) && (o[1].colnames = string.(hfs))
+			end
+		end
+		return o
 	end
 
 	(dbg_print_cmd(d, cmd) !== nothing) && return "ogrread " * fname * " " * cmd
