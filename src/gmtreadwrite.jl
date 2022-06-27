@@ -148,11 +148,11 @@ function gmtread(fname::String; kwargs...)
 			(isa(o, Vector{<:GMTdataset}) && isempty(o[1].colnames) && !isempty(o[1].comment))
 			if (isa(o, GMTdataset))
 				hfs, ncs = split(o.comment[1]), size(o,2)
-				(length(hfs) == 1) && (hfs = split(hfs, ','))	# Try also the comma separator
+				(length(hfs) == 1) && (hfs = split(o.comment[1], ','))	# Try also the comma separator
 				(length(hfs) >= ncs) && (o.colnames = string.(hfs)[1:ncs])
 			else
 				hfs, ncs = split(o[1].comment[1]), size(o[1],2)
-				(length(hfs) == 1) && (hfs = split(hfs, ','))	# Try also the comma separator
+				(length(hfs) == 1) && (hfs = split(o[1].comment[1], ','))	# Try also the comma separator
 				(length(hfs) >= ncs) && (o[1].colnames = string.(hfs)[1:ncs])
 			end
 		end

@@ -12,9 +12,13 @@ Parameters
 - $(GMT.opt_R)
 
 - $(GMT.opt_B)
-- **C** | **offset** :: [Type => Bool | Str | GMTcpt]
+- **A** | **offset** :: [Type => Bool | Str | GMTcpt]
 
     Offsets focal mechanisms to the longitude, latitude specified in the last two columns of the input
+    ($(GMTdoc)meca.html#a)
+- **C** | **color** | **cmap** :: [Type => Number | Str | GMTcpt]
+
+    Give a CPT and let compressive part color be determined by the z-value in the third column. 
     ($(GMTdoc)meca.html#c)
 - **D** | **depth_limits** :: [Type => Str | Tuple]
 
@@ -57,10 +61,6 @@ Parameters
 
     Set pen attributes for all lines and the outline of symbols.
     ($(GMTdoc)meca.html#w)
-- **Z** | **color** | **cmap** :: [Type => Number | Str | GMTcpt]
-
-    Give a CPT and let compressive part color be determined by the z-value in the third column. 
-    ($(GMTdoc)meca.html#z)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -130,7 +130,7 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 	if (occursin("meca", proggy))
 		cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
 		cmd, = parse_common_opts(d, cmd, [:UVXY :c :di :e :p :t :params], first)
-		cmd  = parse_these_opts(cmd, d, [[:C :offset], [:D :depth_limits]])
+		cmd  = parse_these_opts(cmd, d, [[:A :C :offset], [:D :depth_limits]])	# :C is old syntax
 	else
 		cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX14c/10c")
 		cmd, = parse_common_opts(d, cmd, [:UVXY :c :di :e :p :t :params], first)
