@@ -89,6 +89,18 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_args = (arg1 === nothing) ? 0 : 1
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
+	if (!isa(arg1, GDtype) && (val = find_in_dict(d, [:text :txt])[1]) !== nothing)
+		((x = find_in_dict(d, [:x])[1]) === nothing) && error("When the 'text' keyword is used, must provide coordinates in either a x matrix or two x,y vectors.")
+		(((y = find_in_dict(d, [:y])[1]) === nothing) && size(x,2) == 1) && error("When Y is not transmitted, X must be a Matrix.")
+		!isa(val, AbstractString) && !isa(val, Symbol) && !isa(val, Vector{<:AbstractString}) &&
+			error("The 'text' option must be a text or a Symbol but was $(typeof(val))")
+		if (isa(val, AbstractString) || isa(val, Symbol))
+			arg1 = (y === nothing) ? text_record(x, [string(val)]) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), [string(val)])
+		else
+			arg1 = (y === nothing) ? text_record(x, val) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), val)
+		end
+	end
+
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:c :e :f :p :t :JZ :UVXY :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :azimuths], [:L :list], [:M :paragraph],
@@ -143,6 +155,15 @@ function text(txt::Vector{String}; x=nothing, y=nothing, first=true, kwargs...)
 	text("", D; first=first, kwargs...)
 end
 text!(txt::Vector{String}; x=nothing, y=nothing, kw...) = text(txt; x=x, y=y, first=false, kw...)
+
+#= ---------------------------------------------------------------------------------------------------
+function text(; text::Union{AbstractString, Vector{AbstractString}}="", x=nothing, y=nothing, first=true, kw...)
+	(isempty(text)) && error("Must provide the plotting text via the 'text' keyword or use another method.")
+	isa(text, String) ? text([text]; x=x, y=y, first=first, kw...) : text(text; x=x, y=y, first=first, kw...)
+end
+text!(; text::Union{AbstractString, Vector{AbstractString}}="", x=nothing, y=nothing, kw...) =
+	text(; text=text, x=x, y=y, first=false, kw...)
+=#
 
 const pstext  = text			# Alias
 const pstext! = text!			# Alias

@@ -1077,8 +1077,12 @@ function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, d
 	# MAPA is the NamedTuple of suboptions
 	# def_CS is the default "Coordinate system". Colorbar has 'J', logo has 'g', many have 'j'
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
+	got_str = false
+	for s in symbs		# Check if arg value is a string. If yes, ignore 'def_CS'
+		(haskey(d, s) && isa(d[s], String)) && (got_str = true; break)
+	end
 	opt::String = add_opt(d, "", "", symbs, mapa, del)
-	if (opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
+	if (!got_str && opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
 		opt = def_CS * opt
 	end
 	if (opt != "")  cmd *= " -" * string(symbs[1]) * opt  end

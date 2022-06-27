@@ -177,6 +177,8 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 	cmd_ = add_opt(d, "", string(symbs[1]), symbs, (scale="", angle="+a", font=("+f", font), justify="+j", offset="+o"))
 	if (length(cmd_) != 0 && (length(cmd_) == 4 || cmd_[5] == '+'))		# If scale not given search for the 'scale' kwarg
 		cmd = ((val = find_in_dict(d, [:scale])[1]) !== nothing) ? cmd * string(cmd_,val) : cmd * cmd_ * "2.5c"
+	else
+		cmd *= cmd_
 	end
 
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:Z :C :color :cmap], 'Z', N_args, arg1, arg2)
