@@ -187,7 +187,9 @@ t = ["\tIt was the best of times, it was the worst of times, it was the age of w
 T = text_record(t,"> 3 5 18p 5i j");
 pstext!(T, F="+f16p,Times-Roman,red+jTC", M=true)
 pstext!(T, font=(16,"Times-Roman",:red), justify=:TC, M=true)
-pstext!(["MERDA"], x=2.0, y=2.0, Vd=2)
+pstext!(["MERDA"], x=2.0, y=2.0, Vd=dbg2)
+text(text="aiai", x=1, y=2.6, Vd=dbg2)
+text(text=["aiai"], x=1, y=2.6, Vd=dbg2)
 @test startswith(GMT.text([1 2 3; 4 5 6], Vd=dbg2), "pstext  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -R0.9/4.1/1.9/5.1")
 @test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=dbg2)
 
