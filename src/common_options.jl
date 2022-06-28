@@ -2312,7 +2312,6 @@ function add_opt_module(d::Dict)::Vector{String}
 				elseif (symb == :colorbar)  r = colorbar!(; nt...)
 				elseif (symb == :basemap)   r = basemap!(; nt...)
 				elseif (symb == :logo)      r = logo!(; nt...)
-				elseif (symb == :text)      r = text!(; nt...)
 				elseif (symb == :clip)		# Need lots of little shits to parse the clip options
 					CTRL.pocket_call[1] = val[1];
 					k,v = keys(nt), values(nt)
@@ -2322,13 +2321,13 @@ function add_opt_module(d::Dict)::Vector{String}
 					r = replace(r, " -R -J" => "")
 					r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'
 				elseif (symb == :arrows || symb == :lines || symb == :scatter || symb == :scatter3 || symb == :plot
-					   || symb == :plot3 || symb == :hlines || symb == :vlines)
+					   || symb == :plot3 || symb == :hlines || symb == :vlines || symb == :text)
 					_d = nt2dict(nt)
 					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; del_from_dict(d, [:data]))
 					r = (symb == :arrows) ? arrows!(; nt...) : (symb == :lines) ? lines!(; nt...) :
 					(symb == :scatter) ? scatter!(; nt...) : (symb == :scatter3) ? scatter3!(; nt...) :
 					(symb == :plot) ? plot!(; nt...) : (symb == :plot3) ? plot3!(; nt...) :
-					(symb == :hlines) ? hlines!(; nt...) : vlines!(; nt...)
+					(symb == :hlines) ? hlines!(; nt...) : (symb == :vlines) ? vlines!(; nt...) : text!(; nt...)
 				end
 			elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
 				if     (symb == :coast)    r = coast!(W=0.5, A="200/0/2", Vd=2)
@@ -3104,7 +3103,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 end
 
 function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false,
-	opt_i::String="", opt_di::String="", opt_yx::String="")::Tuple{String, Union{Nothing, Array{<:Real}, GDtype, NamedTuple}, String, Matrix{Float64}, String}
+	opt_i::String="", opt_di::String="", opt_yx::String="")#::Tuple{String, Union{Nothing, Array{<:Real}, GDtype, NamedTuple}, String, Matrix{Float64}, String}
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
 
