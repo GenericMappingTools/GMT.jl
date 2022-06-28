@@ -89,16 +89,25 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	N_args = (arg1 === nothing) ? 0 : 1
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	if (!isa(arg1, GDtype) && (val = find_in_dict(d, [:text :txt])[1]) !== nothing)
-		((x = find_in_dict(d, [:x])[1]) === nothing) && error("When the 'text' keyword is used, must provide coordinates in either a x matrix or two x,y vectors.")
-		(((y = find_in_dict(d, [:y])[1]) === nothing) && size(x,2) == 1) && error("When Y is not transmitted, X must be a Matrix.")
-		!isa(val, AbstractString) && !isa(val, Symbol) && !isa(val, Vector{<:AbstractString}) &&
-			error("The 'text' option must be a text or a Symbol but was $(typeof(val))")
-		if (isa(val, AbstractString) || isa(val, Symbol))
-			arg1 = (y === nothing) ? text_record(x, [string(val)]) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), [string(val)])
+	function parse_xy(d, arg)
+		# Deal with cases (txt="Bla", x=0.5, y=0.5) or (data="Bla", x=0.5, y=0.5)
+		((x = find_in_dict(d, [:x])[1]) === nothing) &&
+			error("When the 'text' keyword is used, must provide coordinates in either a x matrix or two x,y vectors.")
+		(((y = find_in_dict(d, [:y])[1]) === nothing) && size(x,2) == 1) &&
+			error("When Y is not transmitted, X must be a Matrix.")
+		!isa(arg, AbstractString) && !isa(arg, Symbol) && !isa(arg, Vector{<:AbstractString}) &&
+			error("The 'text' option must be a text or a Symbol but was $(typeof(arg))")
+
+		if (isa(arg, AbstractString) || isa(arg, Symbol))
+			arg1 = (y === nothing) ? text_record(x, [string(arg)]) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), [string(arg)])
 		else
-			arg1 = (y === nothing) ? text_record(x, val) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), val)
+			arg1 = (y === nothing) ? text_record(x, arg) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), arg)
 		end
+		arg1
+	end
+
+	if (!isa(arg1, GDtype) && (val = find_in_dict(d, [:text :txt])[1]) !== nothing)
+		arg1 = parse_xy(d, val)
 	end
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
@@ -109,6 +118,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
+	(isa(arg1, AbstractString) || isa(arg1, Vector{<:AbstractString})) && (arg1 = parse_xy(d, arg1))	# See if x=.., y=..
 	if (isa(arg1, Array{<:Real}))
 		arg1 = [GMTdataset(arg1, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)]
 	end
@@ -136,7 +146,11 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
-	gmt_restart()
+	if (isa(r, String) && startswith(r, gmt_proggy))	# It's a string when called with Vd = 2 and it may be a nested call
+		isa(arg1, GDtype) && (CTRL.pocket_call[1] = arg1)	# No need to call gmt_restart() because pstext was not executed yet
+	else
+		gmt_restart()
+	end
 	return r
 end
 
