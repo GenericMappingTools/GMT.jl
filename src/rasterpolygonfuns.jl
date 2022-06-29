@@ -66,7 +66,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    colorzones!(shapes::Vector{GMTdataset}[, fun::Function]; img::GMTimage=nothing, url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true)
+    colorzones!(shapes::Vector{GMTdataset}[, fun::Function]; img::GMTimage=nothing,
+	            url::AbstractString="", layer=0, pixelsize::Int=0, append::Bool=true)
 
 Paint the polygons in the `shapes` with the average color that those polygons ocupy in the `img` image.
 When the `shapes` are plotted the resulting image looks like a choropleth map. Alternatively, instead of
@@ -108,7 +109,7 @@ It does't return anything but the input `shapes` is modified.
 	
     wms = wmsinfo("http://tiles.maps.eox.at/wms?");
     img = wmsread(wms, layer=3, region=(-9.6,-6,36.9,42.2), pixelsize=100);
-	Pt = gmtread("C:\\programs\\compa_libs\\covid19pt\\extra\\mapas\\concelhos\\concelhos.shp");
+	Pt = gmtread("C:/programs/compa_libs/covid19pt/extra/mapas/concelhos/concelhos.shp");
 	colorzones!(Pt, median, img=img);
 	imshow(Pt, proj=:guess)
 """

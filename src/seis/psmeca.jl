@@ -130,6 +130,8 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 	if (occursin("meca", proggy))
 		cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
 		cmd, = parse_common_opts(d, cmd, [:UVXY :c :di :e :p :t :params], first)
+		(haskey(d, :A) || haskey(d, :offset) && GMTver <= v"6.4.0" && isa(arg1, GDtype)) &&
+			@warn("Due to a GMT bug (fixed in GMT > 6.4.0) plotting with offsets works only when data is in a disk file.")
 		cmd  = parse_these_opts(cmd, d, [[:A :C :offset], [:D :depth_limits]])	# :C is old syntax
 	else
 		cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX14c/10c")
