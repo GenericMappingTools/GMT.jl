@@ -38,6 +38,9 @@ text_record(text) = text_record(Array{Float64,2}(undef,0,0), text)
 
 Take a 2D `mat` array and convert it into a GMTdataset. `x` is an optional coordinates vector (must have the
 same number of elements as rows in `mat`). Use `x=:ny` to generate a coords array 1:n_rows of `mat`.
+Alternatively, if `mat` is a string or vector of strings we return a dataset with NaN's in the place of
+the coordinates. This form is useful to pass to `text` when using the `region_justify` option that
+does not need explicit coordinates to place the text.
   - `txt`:   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
      can be an array with same size as `mat` rows or a string (will be reapeated n_rows times.) 
   - `x`:   An optional vector with the _xx_ coordinates
@@ -62,6 +65,7 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
   - `colnames`: Optional string vector with names for each column of `mat`.
 """
 mat2ds(mat::GDtype) = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
+mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
 function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...)
 	d = KW(kwargs)
 
