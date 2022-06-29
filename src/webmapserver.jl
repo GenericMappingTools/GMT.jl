@@ -25,7 +25,7 @@ end
     wmsinfo(server::String)
 
 Read the xml information from the WebMapServer service and create a WMS data type that holds the information
-necessary to download the data. The ``show`` method will display the contents of the WMS data type.
+necessary to download the data. The `show` method will display the contents of the WMS data type.
 
 - `server`: The server URL address.
 
@@ -100,15 +100,15 @@ end
 Read the `layer` number provided by the service from which the `wms` type was created.
 
 ### Parameters
-- `wms`: A WMS type obtained from the ``wmsinfo`` function.
+- `wms`: A WMS type obtained from the `wmsinfo` function.
 - `layer`: The layer number or layer name of interest from those provided by the WMS service. That is,
    both of these forms are allowed: `layer=3` or `layer="Invented layer name"`
 
 ### `kwargs` is the keywords/values pairs used to set
-- `region | limits`: The region limits. This can be a Tuple or Array with 4 elements defining the ``(xmin, xmax, ymin, ymax)``
+- `region | limits`: The region limits. This can be a Tuple or Array with 4 elements defining the `(xmin, xmax, ymin, ymax)`
    or a string defining the limits in all ways that GMT can recognize. When the layer has the data projected, we can
-   a Tuple or Array with 3 elements ``(lon0, lat0, width)``, where first two set the center of a square in geographical
-   coordinates and the third (``width``) is the width of that box in meters.
+   a Tuple or Array with 3 elements `(lon0, lat0, width)`, where first two set the center of a square in geographical
+   coordinates and the third (`width`) is the width of that box in meters.
 - `cellsize | pixelsize | resolution | res`: Sets the requested cell size in meters [default]. Use a string appended with a 'd'
    (e.g. `resolution="0.001d"`) if the resolution is given in degrees. This way works only when the layer is in geogs.
 - `size`: Alternatively to the the `cellsize` use this option, a tuple or array with two elements, to specify
@@ -145,16 +145,16 @@ given the requested resolution. It is meant to generate first the command that g
 but not running it. Specially usefull to check that the resulting image size is not huge.
 
 ### Parameters
-- `wms`: A WMS type obtained from the ``wmsinfo`` function.
+- `wms`: A WMS type obtained from the `wmsinfo` function.
 - `layer`: The layer number or layer name of interest from those provided by the WMS service. That is,
    both of these forms are allowed: `layer=3` or `layer="Invented layer name"`
-- `size`: If ``false``, returns the GetMap request string, otherwise the image size given the requested resolution.
+- `size`: If `false`, returns the GetMap request string, otherwise the image size given the requested resolution.
 
 ### `kwargs` is the keywords/values pairs used to set
-- `region | limits`: The region limits. This can be a Tuple or Array with 4 elements defining the ``(xmin, xmax, ymin, ymax)``
+- `region | limits`: The region limits. This can be a Tuple or Array with 4 elements defining the `(xmin, xmax, ymin, ymax)`
    or a string defining the limits in all ways that GMT can recognize. When the layer has the data projected, we can
-   a Tuple or Array with 3 elements ``(lon0, lat0, width)``, where first two set the center of a square in geographical
-   coordinates and the third (``width``) is the width of that box in meters.
+   a Tuple or Array with 3 elements `(lon0, lat0, width)`, where first two set the center of a square in geographical
+   coordinates and the third (`width`) is the width of that box in meters.
 - `cellsize | pixelsize | resolution | res`: Sets the requested cell size in meters [default]. Use a string appended with a 'd'
    (e.g. `resolution="0.001d"`) if the resolution is given in degrees. This way works only when the layer is in geogs.
 
