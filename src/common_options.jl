@@ -2856,11 +2856,21 @@ function decorated(;kwargs...)::String
 		if (marca == "")
 			cmd = "+sa0.5" * cmd
 		else
-			if (@static Sys.iswindows() && GMTver < v"6.4.0" && startswith(marca, "karrow/"))
-				# Due to a bug in Windows we have to copy the file to local directory.
-				cp(joinpath(dirname(pathof(GMT)), "..", "share", "custom", "arrow.def"), "arrow.def", force=true)
-			elseif (startswith(marca, "karrow/"))
-				marca = "k" * joinpath(dirname(pathof(GMT)), "..", "share", "custom", "arrow/") * marca[8:end]
+			if (marca[1] == 'k')		# A custom symbol
+				cus_path = joinpath(dirname(pathof(GMT)), "..", "share", "custom")
+				cus = readdir(cus_path)	# Get the list of all custom symbols in this dir.
+				s = split(marca, '/')
+				r = cus[contains.(cus, s[1][2:end])]
+				if (!isempty(r))		# Means that the requested symbol was found in GMT.jl share/custom
+					if (@static Sys.iswindows() && GMTver < v"6.4.0")
+						# Due to bug in Windows we have to copy the file to local directory.
+						cp(joinpath(cus_path, r[1]), r[1], force=true)
+					else
+						mark_ = splitext(r[1])[1]		# Get the marker name but without extension
+						siz_  = split(marca, '/')[2]	# The custom symbol size
+						marca = "k" * joinpath(cus_path, mark_) * "/" * siz_
+					end
+				end
 			end
 			cmd *= "+s" * marca
 			if ((val = find_in_dict(d, [:size :ms :markersize :symbolsize])[1]) !== nothing)
