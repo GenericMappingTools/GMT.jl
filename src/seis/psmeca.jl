@@ -176,7 +176,8 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 	elseif (show_kwargs[1])  symbs = [:Sa :aki :Sc :CMT :gcmt :Sm :mt :Sd :mt_closest :moment_closest :Sz :mt_deviatoric :moment_deviatoric :Sp :partial :Sx :principal :principal_axis :Sy :principal_closest :St :principal_deviatoric]
 	else  error("Must select one convention")
 	end
-	cmd_ = add_opt(d, "", string(symbs[1]), symbs, (scale="", angle="+a", font=("+f", font), justify="+j", offset="+o"))
+	cmd_ = add_opt(d, "", string(symbs[1]), symbs, (scale="", angle="+a", font=("+f", font), justify="+j",
+	               radius_moment="_+l", same_size="_+m", refmag="+s", offset="+o"))
 	if (length(cmd_) != 0 && (length(cmd_) == 4 || cmd_[5] == '+'))		# If scale not given search for the 'scale' kwarg
 		cmd = ((val = find_in_dict(d, [:scale])[1]) !== nothing) ? cmd * string(cmd_,val) : cmd * cmd_ * "2.5c"
 	else

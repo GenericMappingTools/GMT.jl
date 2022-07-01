@@ -8,7 +8,7 @@ Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMapp
 | [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] | [![][colprac-img]][colprac-url] |
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://joa-quim.github.io/GMTjl_doc/
+[docs-latest-url]: https://GenericMappingTools.github.io/GMTjl_doc/
 
 [travis-img]: https://travis-ci.com/GenericMappingTools/GMT.jl.svg?branch=master
 [travis-url]: https://travis-ci.com/GenericMappingTools/GMT.jl
@@ -96,17 +96,11 @@ also makes it harder to read/master.
 To make life easier we provide also a new mechanism that use the **GMT** module name directly and where
 the program's options are set via keyword arguments. While the monolotic way of using this package is
 robust and keeps being updated to latestes **GMT** developments, this *By modules* alternative is a Work
-In Progress (the **GMT supplements** were not ported yet) and some things may not work yet. So all help
-is most than wellcome.
+in Progress (several of the **GMT supplements** were not ported yet) and some things may not work yet.
+So all help is most than wellcome.
 
-Documentation and Examples
-==========================
-
-[Quick Learn](https://genericmappingtools.github.io/GMT.jl/dev/quick_learn)
-
-[GMT.jl docs](https://fct-gmt.ualg.pt/GMTjl_doc/)
-
-[GMT Docs](https://www.generic-mapping-tools.org/gmt/latest/)
+[Documentation and Examples](https://fct-gmt.ualg.pt/GMTjl_doc/)
+================================================================
 
 
 Credits
