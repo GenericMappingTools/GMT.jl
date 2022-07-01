@@ -577,7 +577,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 			end
 		else
 			cmd *= " -i0-$(1+is3D),$(1+is3D)"
-			if ((val = find_in_dict(d, [:markersize :ms :size])[1]) !== nothing)
+			if ((val = find_in_dict(d, [:markersize :ms :size], false)[1]) !== nothing && isa(val, Vector))
 				cmd *= "-$(2+is3D)"		# Because we know that an extra col will be added later
 			end
 		end
