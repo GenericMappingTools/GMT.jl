@@ -2866,7 +2866,7 @@ function decorated(;kwargs...)::String
 			cmd = "+sa0.5" * cmd
 		else
 			marca, marca_name = seek_custom_symb(marca, true)	# 'marca' may have been changed to a full name/size
-			if (!isempty(marca) && @static Sys.iswindows() && GMTver < v"6.4.0")
+			if (!isempty(marca) && GMTver < v"6.4.0")
 				cp(marca, marca_name, force=true)		# On Windows a bug obliges to make a local copy.
 			end
 			cmd *= "+s" * marca
