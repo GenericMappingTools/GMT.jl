@@ -283,9 +283,19 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_opt_S(d, arg1, is3D)
-	opt_S::String = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
+
+	opt_S::String = ""
+	# First see if the requested symbol is a custom one from GMT.jl share/custom
+	if ((symb = is_in_dict(d, [:csymbol :cmarker :custom_symbol :custom_marker])) !== nothing)
+		marca::String = add_opt(d, "", "", [symb], (name="", size="/", unit="1"))
+		marca_fullname, marca_name = seek_custom_symb(marca)
+		(marca_name != "") && (opt_S = " -Sk" * marca_fullname)
+	else
+		opt_S = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
+	end
+
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
-		marca::String, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
+		marca, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
 		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
 			(marca == "") && (marca = "c")			# If a marker name was not selected, defaults to circle
 			if (isa(val, AbstractArray))
@@ -747,6 +757,28 @@ function helper2_markers(opt::String, alias::Vector{String})::String
 	# If we still have found nothing, assume that OPT is a full GMT opt string (e.g. W/5+a30+r45+p2,red)
 	(marca == "" && opt[1] == alias[1][1]) && (marca = opt)
 	return marca
+end
+
+# ---------------------------------------------------------------------------------------------------
+function seek_custom_symb(marca::String, with_k::Bool=false)::Tuple{String, String}
+	# If 'marca' is a custom symbol, seek it first in GMT.jl share/custom dir.
+	# Always return the marker name (modified or not) plus the marker symbol name with extension
+	# (but not its path) in the case the marker name was found in GMT.jl share/custom dir.
+	# The WITH_K arg is to allow calling this fun with a sym name already prefaced with 'k', or not
+	(with_k && marca[1] != 'k') && return marca, ""		# Not a custom symbol, return what we got.
+
+	cus_path = joinpath(dirname(pathof(GMT)), "..", "share", "custom")
+	cus = readdir(cus_path)						# Get the list of all custom symbols in this dir.
+	s = split(marca, '/')
+	ind_s = with_k ? 2 : 1
+	r = cus[contains.(cus, s[1][ind_s:end])]	# If found, returns the symbol name including the extension.
+	if (!isempty(r))							# Means the requested symbol was found in GMT.jl share/custom
+		_mark = splitext(r[1])[1]				# Get the marker name but without extension
+		_siz  = split(marca, '/')[2]			# The custom symbol size
+		_marca = (with_k ? "k" : "")  * joinpath(cus_path, _mark) * "/" * _siz
+		return _marca, r[1]
+	end
+	return marca, ""							# A custom symbol from the official GMT collection.
 end
 
 # ---------------------------------------------------------------------------------------------------

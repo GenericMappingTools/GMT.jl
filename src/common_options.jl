@@ -52,6 +52,15 @@ function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_st
 	return nothing, Symbol()
 end
 
+function is_in_dict(d::Dict, symbs::VMs, help_str::String="")
+	# See if D contains any of the symbols in SYMBS. If yes, return the used smb in symbs
+	(show_kwargs[1] && help_str != "") && return print_kwarg_opts(symbs, help_str)
+	for symb in symbs
+		(haskey(d, symb)) && return symb
+	end
+	return nothing
+end
+
 #=
 function consume(ops::Tuple, drop::Symbol, primo::Bool=true)
 	t = ops[findall(ops .!= drop)]
@@ -2856,26 +2865,12 @@ function decorated(;kwargs...)::String
 		if (marca == "")
 			cmd = "+sa0.5" * cmd
 		else
-			if (marca[1] == 'k')		# A custom symbol
-				cus_path = joinpath(dirname(pathof(GMT)), "..", "share", "custom")
-				cus = readdir(cus_path)	# Get the list of all custom symbols in this dir.
-				s = split(marca, '/')
-				r = cus[contains.(cus, s[1][2:end])]
-				if (!isempty(r))		# Means that the requested symbol was found in GMT.jl share/custom
-					if (@static Sys.iswindows() && GMTver < v"6.4.0")
-						# Due to bug in Windows we have to copy the file to local directory.
-						cp(joinpath(cus_path, r[1]), r[1], force=true)
-					else
-						mark_ = splitext(r[1])[1]		# Get the marker name but without extension
-						siz_  = split(marca, '/')[2]	# The custom symbol size
-						marca = "k" * joinpath(cus_path, mark_) * "/" * siz_
-					end
-				end
+			marca, marca_name = seek_custom_symb(marca, true)	# 'marca' may have been changed to a full name/size
+			if (!isempty(marca) && @static Sys.iswindows() && GMTver < v"6.4.0")
+				cp(marca, marca_name, force=true)		# On Windows a bug obliges to make a local copy.
 			end
 			cmd *= "+s" * marca
-			if ((val = find_in_dict(d, [:size :ms :markersize :symbolsize])[1]) !== nothing)
-				cmd *= arg2str(val)
-			end
+			((val = find_in_dict(d, [:size :ms :markersize :symbolsize])[1]) !== nothing) && (cmd *= arg2str(val))
 		end
 		if (haskey(d, :angle))   cmd = string(cmd, "+a", d[:angle]) end
 		if (haskey(d, :debug))   cmd *= "+d"  end
