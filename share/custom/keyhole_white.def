@@ -1,0 +1,18 @@
+#
+# Definition File for a keyhole with a white hole
+#	The non-hole part will be painted and drawn given the
+#	-G -L -W options on the psxy command line.
+#
+-0.5000	-0.5000	M
+-0.5000	0.5000	D
+0.5000	0.5000	D
+0.5000	-0.5000	D
+-0.5000	-0.5000	D
+
+0.0000	0.2250	0.40	c -Gwhite
+
+-0.1000	0.0500		M	-Gwhite
+-0.2000	-0.425		D
+0.2000	-0.425		D
+0.1000	0.0500		D
+-0.1000	0.0500		D

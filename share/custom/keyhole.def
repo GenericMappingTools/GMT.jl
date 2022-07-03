@@ -1,0 +1,27 @@
+#
+# Definition File for a keyhole with a transparent hole
+#	The symbol will be painted and drawn given the
+#	-G -L -W options on the psxy command line.
+#
+0.000	 0.500	M
+0.000	0.225	0.40	90	225	A
+
+-0.10	0.05	D
+-0.20	-0.425	D
+0.000	-0.425	D
+0.000	-0.500	D
+-0.50	-0.500	D
+-0.50	 0.500	D
+0.000	 0.500	D
+0.000	 0.425	D
+0.10	0.05	M
+
+0.000	0.225	0.40	-45	90	A
+
+0.00	 0.500	D
+0.50	 0.500	D
+0.50	-0.500	D
+0.00	-0.500	D
+0.00	-0.425	D
+0.20	-0.425	D
+
