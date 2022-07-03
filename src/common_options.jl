@@ -779,8 +779,10 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 				opt_B = _opt_B
 			end
 			if (!what_B[1] && opt_B != "")		# If user didn't touch the axes part, so we'll keep the default.
-				def_Baxes = join(def_opt_B_split[1:end-1], " ")	# => "-Baf" when opt_B holds the default " -Baf -BWSen"
-				opt_B = " " * def_Baxes * opt_B
+				if (get(val, :axes, nothing) != :none)	# axes=:none is to be respected.
+					def_Baxes = join(def_opt_B_split[1:end-1], " ")	# => "-Baf" when opt_B holds the default " -Baf -BWSen"
+					opt_B = " " * def_Baxes * opt_B
+				end
 			end
 		else
 			opt_B = string(_val)
