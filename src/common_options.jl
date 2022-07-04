@@ -3554,7 +3554,7 @@ function helper_showfig4modern(show::String="show")::Bool
 		try
 			IamSubplot[1] && (gmt("subplot end");	IamSubplot[1] = false);		catch
 		end
-		IamModern[1] = false;
+		IamModern[1] = false
 		isFranklin[1] ? gmt("end") : gmt("end " * show)	# isFranklin is true when building the docs
 		return true
 	end
