@@ -85,7 +85,6 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	elseif (haskey(d, :show) && d[:show] != 0)					# Let this form work too
 		do_show, stop = true, true
 	else
-		IamModern[1] = false;	IamSubplot[1] = false			# Make sure we always start a clean session
 		if (!stop && length(kwargs) == 0)  stop = true  end		# To account for the subplot() call case
 	end
 	# ------------------------------ End parsing inputs --------------------------------
@@ -102,23 +101,25 @@ function subplot(fim=nothing; stop=false, kwargs...)
 				fname = get_format(string(val_), nothing, d)		# Get the fig name and format.
 			end
 			gmt("begin " * fname)
+			IamModernBySubplot[1] = true	# We need this to know if subplot(:end) should call gmtend() or not
 		end
 		gmt("subplot begin " * cmd);
-		IamSubplot[1] = true
+		IamSubplot[1], IamModern[1] = true, true
 	elseif (do_set)
 		(!IamSubplot[1]) && error("Cannot call subplot(set, ...) before setting dimensions")
-		lix, pane = parse_c(d, cmd)
+		_, pane = parse_c(d, cmd)
 		cmd = pane * cmd				# Here we don't want the "-c" part
 		cmd = add_opt(d, cmd, "A", [:fixedlabel]) * opt_C			# Also add the eventual this panel -C clearance option
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 		gmt("subplot set " * cmd)
 	else
-		show = (do_show || haskey(d, :show)) ? " show" : ""
-		#try
-			#gmt("subplot end");		gmt("end" * show);		catch
-		#end
-		#IamModern[1] = false;		IamSubplot[1] = false
-		helper_showfig4modern(show)
+		if (IamModernBySubplot[1])
+			IamModernBySubplot[1] = false
+			show = (do_show || haskey(d, :show)) ? " show" : ""
+			helper_showfig4modern(show)
+		else
+			gmt("subplot end");	IamSubplot[1] = false
+		end
 	end
 	return nothing
 end
