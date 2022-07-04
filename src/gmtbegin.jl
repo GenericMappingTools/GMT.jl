@@ -15,6 +15,7 @@ function gmtbegin(name::String=""; fmt=nothing, verbose=nothing)
 	(name != "") && (cmd *= " " * get_format(name, fmt))
 	(verbose !== nothing) && (cmd *= " -V" * string(verbose))
 	gmt_restart()		# Always start with a clean session
+	IamModern[1], IamSubplot[1] = false, false
 	gmt(cmd)
 	return nothing
 end

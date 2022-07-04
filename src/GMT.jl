@@ -81,6 +81,7 @@ const global current_view   = [""]			# To store the current viewpoint (-p)
 const global multi_col   = Vector{Bool}(undef, 1);multi_col[1] = false	# To allow plottig multiple columns at once (init to false)
 const global IamModern   = Vector{Bool}(undef, 1);IamModern[1] = false		# To know if we are in modern mode
 const global FirstModern = Vector{Bool}(undef, 1);FirstModern[1] = false	# To know
+const global IamModernBySubplot = Vector{Bool}(undef, 1);	IamModernBySubplot[1] = false	# To know if set in subpot
 const global IamSubplot  = Vector{Bool}(undef, 1);IamSubplot[1]  = false	# To know if we are in subplot mode
 const global usedConfPar = Vector{Bool}(undef, 1);usedConfPar[1] = false	# Hacky solution for the session's memory trouble
 const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false		# To know if we have an active plot theme
