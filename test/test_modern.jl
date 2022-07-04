@@ -14,6 +14,7 @@ subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), name=:png)
 @test_throws ErrorException("'frac' option must be a tuple(tuple, tuple)") subplot(grid=(1,1),  F=(size=(1,2), frac=((2,3))), Vd=dbg2)
 @test_throws ErrorException("SUBPLOT: garbage in DIMS option") GMT.helper_sub_F([1 2 3])
 @test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=dbg2)
+GMT.IamSubplot[1] = false
 @test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=dbg2)
 println("    SUBPLOT2")
 subplot(name="lixo", fmt=:ps, grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
