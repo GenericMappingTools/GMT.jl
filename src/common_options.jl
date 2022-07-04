@@ -629,6 +629,9 @@ function parse_proj(p::NamedTuple)
 		end
 	end
 
+	# Piggy-back `center`. Things can be wrong here is user does stupid things like using zone & parallels
+	((val = find_in_dict(d, [:zone])[1]) !== nothing) && (center = string(val))
+
 	if     (center == "" && parallels != "")  center = "0/0" * parallels
 	elseif (center != "")                     center *= parallels			# even if par == ""
 	else   error("When projection is a named tuple you need to specify also 'center' and|or 'parallels'")
