@@ -115,6 +115,21 @@ mutable struct GMTdataset{T, N} <: AbstractArray{T,N}
 end
 Base.size(D::GMTdataset) = size(D.data)
 Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = D.data[inds...]
+
+function Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Symbol,N}) where {T,N}
+	# If accessed by column names, create a new GMTdataset.
+	# Most of this and more should go into a new mat2ds method.
+	mat = hcat([Tables.getcolumn(D, ind) for ind in inds]...)
+	colnames_inds = [string.(inds)...]		# Because string.(inds) returns a Tuple of strings
+	D2 = mat2ds(mat, colnames=colnames_inds, proj4=D.proj4, wkt=D.wkt)
+	if ((Tc = get(D.attrib, "Timecol", "")) != "")		# If original has one, try to keep it but may need to recalculate
+		Tcn = Tables.columnnames(D)[parse(Int,Tc)]		# The Timecol name in input D
+		i = findfirst(Tables.columnnames(D) .== Tcn)
+		(i !== nothing) && (D2.attrib = Dict("Timecol" => "$i"))
+	end
+	D2
+end
+
 Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int,N}) where {T,N} = D.data[inds...] = val
 
 Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()

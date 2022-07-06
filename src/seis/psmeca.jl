@@ -104,7 +104,7 @@ const psmeca! = meca!			# Alias
 Plot cross-sections of focal mechanisms.
 
 Full option list at [`pscoupe`]($(GMTdoc)coupe.html).
-Essentially the same as **meca** plus **A**. Run `gmthelp(coupe)` to see the list.
+Essentially the same as **meca** plus **A**. Run `gmthelp(coupe)` to see the list of options.
 """
 function coupe(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
