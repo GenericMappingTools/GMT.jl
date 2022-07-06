@@ -104,9 +104,9 @@
 	@test GMT.add_opt_fill("", Dict(:G=>:red), [:G :fill], 'G') == " -Gred"
 	@test_throws ErrorException("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member") GMT.add_opt_fill("", Dict(:G=>(inv_pat=12,fg="white")), [:G], 'G')
 	d = Dict(:offset=>5, :bezier=>true, :cline=>"", :ctext=>true, :pen=>("10p",:red,:dashed));
-	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,dashed+cl+cf+s+o5"
+	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,-+cl+cf+s+o5"
 	d = Dict(:W=>(offset=5, bezier=true, cline="", ctext=true, pen=("10p",:red,:dashed), arrow=(lenght=0.1,)));
-	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,dashed+cl+cf+s+o5+v"
+	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,-+cl+cf+s+o5+v"
 	GMT.add_opt_cpt(Dict(:a=>1), "", [:b], 'A', 0, nothing, nothing, false, true, "-T0/10/1");
 	GMT.add_opt_cpt(Dict(:a=>:red), "", [:a], 'A', 0, nothing, nothing, false, true, "-T0/10/1");
 

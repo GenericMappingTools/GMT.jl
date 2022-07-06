@@ -39,6 +39,9 @@
 	earthtide();
 	earthtide(S="");
 	earthtide(L=(0,0));
+	D = earthtide(range="2018-06-18T/2018-06-19T/1m", location=(-7,37));
+	r = plot(D, Vd=dbg2);		# Tests automatic -fT and Timecol detection.
+	@test startswith(r, "psxy  -JX14c/9.5c -Baf -BWSen -f0T")
 
 	# FILTER1D
 	filter1d([collect((1.0:50)) rand(50)], F="m15");

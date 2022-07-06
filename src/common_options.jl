@@ -238,6 +238,7 @@ function opt_R2num(opt_R::String)
 		rs = split(opt_R, '/')
 		limits = zeros(length(rs))
 		fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
+		#contains(rs[2], "T") || contains(rs[2], "t")
 		limits[1] = parse(Float64, rs[1][fst+1:end])
 		for k = 2:length(rs)  limits[k] = parse(Float64, rs[k])  end
 		if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
@@ -1568,7 +1569,17 @@ function parse_pen(pen::Tuple)::String
 	s = arg2str(pen[1])					# First arg is different because there is no leading ','
 	if (length(pen) > 1)
 		s *= ',' * get_color(pen[2])
-		(length(pen) > 2) && (s *= ',' * arg2str(pen[3]))
+		if (length(pen) > 2)
+			ls = arg2str(pen[3])
+			_ls = lowercase(ls)
+			if     (startswith(_ls, "dashdot"))     ls = "-."
+			elseif (startswith(_ls, "dashdashdot")) ls = "--."
+			elseif (startswith(_ls, "dash"))        ls = "-"
+			elseif (startswith(_ls, "dotdotdash"))  ls = "..-"
+			elseif (startswith(_ls, "dot"))         ls = "."
+			end
+			s *= ',' * ls
+		end
 	end
 	return s
 end
