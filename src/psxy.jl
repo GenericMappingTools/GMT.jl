@@ -61,6 +61,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd, opt_JZ = parse_JZ(d, cmd)
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :p :t :w :params], first)
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
+	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)
 	cmd  = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
@@ -68,8 +69,22 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	opt_UVXY = parse_UVXY(d, "")		# Need it separate to not risk to double include it.
 	cmd, opt_c = parse_c(d, cmd)		# Need opt_c because we may need to remove it from double calls
 
+	# If the input is a GMTdataset and one of its columns is a Time column, automatically set the -fT
+	function set_fT(D::GMTdataset, cmd::String, opt_f::String)
+		if ((Tc = get(D.attrib, "Timecol", "")) != "")
+			tc = parse(Int, Tc) - 1
+			_opt_f = (opt_f == "") ? " -f$(tc)T" : opt_f * ",$(tc)T"
+			return (opt_f == "") ? cmd * _opt_f : replace(cmd, opt_f => _opt_f)
+		end
+		return cmd
+	end
+	if (isa(arg1, GDtype) && !contains(opt_f, "T") && !contains(opt_f, "t") && !contains(opt_R, "T") && !contains(opt_R, "t"))
+		isa(arg1, GMTdataset) && (cmd = set_fT(arg1, cmd, opt_f))
+		isa(arg1, Vector{<:GMTdataset}) && (cmd = set_fT(arg1[1], cmd, opt_f))
+	end
+
 	# If a file name sent in, read it and compute a tight -R if this was not provided
-	got_usr_R = (opt_R != "") ? true : false			# To know if the user set -R or we guessed it from data
+	got_usr_R = (opt_R != "") ? true : false			# To know if the user set -R or we estimated it from data
 	if (opt_R == "" && sub_module == "bar")  opt_R = "/-0.4/0.4/0"  end	# Make sure y_min = 0
 	if (O && caller == "plotyy")
 		cmd = replace(cmd, opt_R => "")					# Must remove old opt_R because a new one will be constructed
@@ -80,7 +95,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
 
-	if (isGMTdataset(arg1) && getproj(arg1) == "" && opt_J == " -JX" * def_fig_size) 
+	if (isGMTdataset(arg1) && !isTimecol_in_pltcols(arg1) && getproj(arg1) == "" && opt_J == " -JX" * def_fig_size)
 		cmd = replace(cmd, opt_J => " -JX" * split(def_fig_size, '/')[1] * "/0")	# If projected, it's a axis equal for sure
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
@@ -235,6 +250,15 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	(got_pattern || occursin("-Sk", opt_S)) && gmt("destroy")  # Apparently patterns are screweing the session
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function isTimecol_in_pltcols(D::GDtype)
+	# See if we have a Timecol in one of the ploting columns
+	(isa(D, GMTdataset) && ((Tc = get(D.attrib, "Timecol", "")) == "")) && return false
+	(isa(D, Vector{<:GMTdataset}) && ((Tc = get(D[1].attrib, "Timecol", "")) == "")) && return false
+	tc = parse(Int, Tc)
+	return (tc <= 2) ? true : false
 end
 
 # ---------------------------------------------------------------------------------------------------
