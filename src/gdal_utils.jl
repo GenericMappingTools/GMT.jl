@@ -180,7 +180,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset,
 		if (n_dim == 3)
 			for k = 1:n_pts  mat[k,3] = Gdal.getz(Gdal.getgeom(geom,k-1), 0)  end
 		end
-		D = [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", Int(gmtype))]
+		D = [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", 0, Int(gmtype))]
 		set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
 		return (length(D) == 1) ? D[1] : D
 	end
@@ -193,7 +193,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset,
 	if (n_dim == 3)
 		for k = 1:n_pts  mat[k,3] = Gdal.getz(geom, k-1) end
 	end
-	D = [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", Int(gmtype))]
+	D = [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", 0, Int(gmtype))]
 	set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
 	return (length(D) == 1) ? D[1] : D
 end
