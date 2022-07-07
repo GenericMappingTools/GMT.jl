@@ -33,6 +33,10 @@
 	G2 = GMT.mat2grid(rand(Int32,4,4));
 	G2 = GMT.mat2grid(rand(4,4));
 	G1 .* G2;
+	G = mat2grid(ones(Float32, 4,4))
+	sqrt(G);
+	log(G);
+	log10(G);
 	getindex(G1,1:2);
 	setindex!(G1, [-1 -1],1:2)
 	size(G1)
