@@ -1014,14 +1014,14 @@ end
 function mat2grid(mat, G::GMTgrid)
 	isT = istransposed(mat)
 	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, String[], deepcopy(G.x), deepcopy(G.y), [0.], isT ? copy(mat) : mat, G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad)
-	grd_min_max!(Go)		# Also take care of NaNs
+	setgrdminmax!(Go)		# Also take care of NaNs
 	Go
 end
 function mat2grid(mat, I::GMTimage)
 	isT = istransposed(mat)
 	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, NaN, "", "", "", String[], I.x, I.y, [0.], isT ? copy(mat) : mat, "", "", "", "", I.layout, 1f0, 0f0, I.pad)
 	(length(Go.layout) == 4) && (Go.layout = Go.layout[1:3])	# No space for the a|A
-	grd_min_max!(Go)		# Also take care of NaNs
+	setgrdminmax!(Go)		# Also take care of NaNs
 	Go
 end
 
