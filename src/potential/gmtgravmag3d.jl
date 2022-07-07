@@ -79,7 +79,7 @@ function gmtgravmag3d(cmd0::String="", arg1=nothing; kwargs...)
 
 	if (opt != " -Ts")		# The STL format can only be requested via file
 		cmd *= opt
-		if (isa(val, Array{<:Real}) || isa(val, GMTdataset) || isa(val, Vector{<:GMTdataset}))
+		if (isa(val, Array{<:Real}) || isa(val, GDtype))
 			(arg1 === nothing) ? arg1 = val : arg2 = val		# Find the free slot
 		else
 			cmd *= arg2str(val)

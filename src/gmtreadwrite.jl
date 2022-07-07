@@ -289,7 +289,7 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 		fname *= parse_grd_format(d)			# If we have format requests
 		CTRL.proj_linear[1] = true				# To force pad=0 and julia memory (no dup) in image_init()
 		transpcmap!(data, true)
-	elseif (isa(data, GMTdataset) || isa(data, Vector{<:GMTdataset}))
+	elseif (isa(data, GDtype))
 		opt_T = " -Td"
 		cmd, = parse_bo(d, cmd)					# Write to binary file
 	elseif (isa(data, GMTcpt))

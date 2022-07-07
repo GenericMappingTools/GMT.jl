@@ -111,6 +111,7 @@ mutable struct GMTdataset{T, N} <: AbstractArray{T,N}
 	comment::Vector{String}
 	proj4::String
 	wkt::String
+	epsg::Int
 	geom::Int
 end
 Base.size(D::GMTdataset) = size(D.data)
@@ -135,17 +136,17 @@ Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int,N}) where {T,N} = D.dat
 Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}}, ::Type{ElType}) where ElType
 	D = find4similar(bc.args)		# Scan the inputs for the GMTdataset:
-	GMTdataset(D.data, D.ds_bbox, D.bbox, D.attrib, D.colnames, D.text, D.header, D.comment, D.proj4, D.wkt, D.geom)
+	GMTdataset(D.data, D.ds_bbox, D.bbox, D.attrib, D.colnames, D.text, D.header, D.comment, D.proj4, D.wkt, D.epsg, D.geom)
 end
 find4similar(D::GMTdataset, rest) = D
 
-GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0)
-GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
-GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)
-GMTdataset(data::Array{Float32,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0)
-GMTdataset(data::Array{Float32,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0)
-GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)
-GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0)
+GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0, 0)
+GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0, 0)
+GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
+GMTdataset(data::Array{Float32,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0, 0)
+GMTdataset(data::Array{Float32,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0, 0)
+GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
+GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
 
 struct WrapperPluto fname::String end
 
@@ -1331,12 +1332,12 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 				geom_type = unsafe_string(OGR_F.type)
 				geom = (geom_type == "Polygon") ? wkbPolygon : ((geom_type == "LineString") ? wkbLineString : wkbPoint)
 				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, Int(geom))
+				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, 0, Int(geom))
 			else
 				islands = reshape(unsafe_wrap(Array, OGR_F.islands, 2 * (OGR_F.n_islands+1)), OGR_F.n_islands+1, 2) 
 				np_main = islands[1,2]+1			# Number of points of outer ring
-				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main)],
-				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, Int(wkbPolygon))
+				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main)], Float64[],
+				                  Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, 0, Int(wkbPolygon))
 
 				if (!drop_islands)
 					for k = 2:size(islands,2)		# 2 because first row holds the outer ring indexes 
@@ -1344,7 +1345,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 						off = islands[k,1] * 8
 						len = islands[k,2] - islands[k,1] + 1
 						D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x+off, len) unsafe_wrap(Array, OGR_F.y+off, len)],
-						                  Float64[], Float64[], attrib, coln, String[], " -Ph", String[], proj4, wkt, Int(wkbPolygon))
+						                  Float64[], Float64[], attrib, coln, String[], " -Ph", String[], proj4, wkt, 0, Int(wkbPolygon))
 					end
 				end
 			end
