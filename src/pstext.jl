@@ -106,8 +106,8 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		arg1
 	end
 
-	if (!isa(arg1, GDtype) && (val = find_in_dict(d, [:text :txt])[1]) !== nothing)
-		arg1 = parse_xy(d, val)
+	if (!isa(arg1, GDtype) && (val = find_in_dict(d, [:text :txt])[1]) !== nothing)		# Accept ([x y], text=...)
+		arg1 = (!haskey(d, :x) && isa(arg1, Matrix) || isvector(arg1)) ? mat2ds(arg1, [string(val)]) : parse_xy(d, val)
 	end
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
