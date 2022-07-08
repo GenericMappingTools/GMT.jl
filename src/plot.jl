@@ -942,8 +942,16 @@ function parse_B4ternary!(d::Dict, first::Bool=true)
 	end
 end
 
+"""
+    tern2cart(abcz::Matrix{<:Real}, reverse::Bool=false)
+
+Converts ternary to cartesian units.
+
+`abcz` is either a Mx3 (a,b,c) or Mx4 (a,b,c,z) matrix
+
+"""
 function tern2cart(abcz::Matrix{<:Real}, reverse::Bool=false)
-	# coverts ternary to cartesian units. ABCZ is either a Mx3 (a,b,c) or Mx4 (a,b,c,z) matrix
+	# converts ternary to cartesian units. ABCZ is either a Mx3 (a,b,c) or Mx4 (a,b,c,z) matrix
 	a,b,c = !reverse ? (3,1,2) : (1,2,3)
 	s = view(abcz, :, a) + view(abcz, :, b) + view(abcz, :, c)	# s = (a + b + c)
 	x = 0.5 .* (2.0 .* view(abcz, :, b) + view(abcz, :, c)) ./ s
