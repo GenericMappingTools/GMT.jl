@@ -14,7 +14,7 @@ Parameters
     ($(GMTdoc)psclip.html#c)
 - $(GMT.opt_J)
 
-- **A** | **inc** :: [Type => Str or []]
+- **A** | **steps** :: [Type => Str or []]
 
     By default, geographic line segments are connected as great circle arcs. To connect them as straight lines, use **A** 
     ($(GMTdoc)psclip.html#a)
@@ -51,9 +51,10 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :g :p :t :yx :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:A :straight_lines], [:C :end_clip_path], [:N :invert], [:T :clip_limits]])
+	cmd  = parse_these_opts(cmd, d, [[:A :steps :straight_lines], [:C :end_clip_path], [:N :invert], [:T :clip_limits]])
+	cmd *= add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R)
