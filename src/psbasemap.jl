@@ -1,5 +1,5 @@
 """
-    basemap(cmd0::String=""; kwargs...)
+    basemap(; kwargs...)
 
 Plot base maps and frames.
 
@@ -48,13 +48,13 @@ Parameters
 - $(GMT.opt_p)
 - $(GMT.opt_t)
 """
-function basemap(cmd0::String="", arg1=nothing; first=true, kwargs...)
+function basemap(; first=true, kwargs...)
 
 	gmt_proggy = (IamModern[1]) ? "basemap "  : "psbasemap "
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd, = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:F :UVXY :JZ :bo :c :f :p :t :params], first)
     cmd  = parse_these_opts(cmd, d, [[:A :polygon]])
 	cmd  = parse_Td(d, cmd)
@@ -65,11 +65,11 @@ function basemap(cmd0::String="", arg1=nothing; first=true, kwargs...)
     (!IamModern[1] && opt_D != "") && (cmd *= opt_D)
     (IamModern[1] && opt_D != "") && @warn("The `inset` option is not available in modern mode. Please use the `inset()` function.")
 	_cmd = finish_PS_nested(d, [gmt_proggy * cmd])
-	finish_PS_module(d, _cmd, "", K, O, true, arg1)
+	finish_PS_module(d, _cmd, "", K, O, true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-basemap!(cmd0::String="", arg1=nothing; kw...) = basemap(cmd0, arg1; first=false, kw...)
+basemap!(; kw...) = basemap(; first=false, kw...)
 
 const psbasemap  = basemap 		# Alias
 const psbasemap! = basemap!		# Alias
