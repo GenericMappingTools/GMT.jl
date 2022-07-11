@@ -12,7 +12,7 @@ Parameters
 
     For track resampling (if -T…unit is set) we can select how this is to be performed.
     ($(GMTdoc)sample1d.html#a)
-- **F** | **interp_type** :: [Type => Str]   ``Arg = l|a|c|n|s<p>[+1|+2]``
+- **F** | **interp** :: [Type => Str]   ``Arg = l|a|c|n|s<p>[+1|+2]``
 
     Choose from l (Linear), a (Akima spline), c (natural cubic spline), and n (no interpolation:
     nearest point) [Default is Akima].
@@ -27,7 +27,7 @@ Parameters
     Evaluate the best-fit regression model at the equidistant points implied by the arguments.
     ($(GMTdoc)sample1d.html#t)
 - $(GMT.opt_V)
-- **W** | **weights_col** :: [Type => Int]     ``Arg = w_col``
+- **W** | **weights** :: [Type => Int]     ``Arg = w_col``
 
     Sets the column number of the weights to be used with a smoothing cubic spline. Requires Fs. (GMT6.1)
     ($(GMTdoc)sample1d.html#w)
@@ -48,8 +48,39 @@ function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :w :yx])[1]
-	cmd = parse_these_opts(cmd, d, [[:A :resample], [:F :interp_type], [:N :time_col], [:W :weights_col]])
+	cmd = parse_these_opts(cmd, d, [[:A :resample], [:N :time_col :timecol], [:W :weights :weights_col]])
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
+	(GMTver >= v"6.4.0") && (cmd = add_opt(d, cmd, "E", [:E :keeptxt]))
+
+	if ((val = find_in_dict(d, [:F :interp :interp_type])[1]) !== nothing)
+		# F=:akima, F="akima", F="sp0.1+d2", F="cubic+d1", F="c+d1"
+		p, deriv = "", ""
+		if (isa(val, String) || isa(val, Symbol))
+			_val::String = string(val)
+			# Extract and strip an eventual "+d?" flag
+			if ((ind = findfirst('+', _val)) !== nothing)
+				deriv = "+d" * _val[end];	_val = _val[1:ind-1]
+			end
+			if _val[1] == 's'
+				((ind = findfirst('p', _val)) === nothing) && error("SAMPLE1D: smoothing type must provide 'p' parameter")
+				opt = "s" * _val[ind:end]
+			else
+				opt = string(_val[1])
+			end
+			opt *= deriv
+		else (isa(val, Tuple) && length(val) <= 3)
+			# F=(:akima, "first"), F=(:smothing, 0.1), F=(:smothing, 0.1, :second)
+			t = string(val[1])[1]
+			if (t == 's')	# Either: F=(:smothing, 0.1) or F=(:smothing, 0.1, :second)
+				p = string("p",val[2])
+				(length(val) == 3) && (deriv = (string(val[3])[1] == 'f') ? "+d1" : "+d2")
+			else							# Must be one of: F=(:akima, "first"), etc
+				deriv = (string(val[2])[1] == 'f') ? "+d1" : "+d2"
+			end
+			opt = t * p * deriv
+		end
+		cmd *= " -F" * opt
+	end
 
 	common_grd(d, cmd0, cmd, "sample1d ", arg1, isempty(Tvec) ? nothing : Tvec)		# Finish build cmd and run it
 end

@@ -16,7 +16,7 @@ Parameters
 
     Only return data coordinates, and append Arg to specify which coordinates you would like.
     ($(GMTdoc)fitcircle.html#f)
-- **S** | **symetry** :: [Type => Number]    `Arg = symmetry_factor`
+- **S** | **small_circle** :: [Type => Number]    `Arg = symmetry_factor`
 
     Attempt to
     ($(GMTdoc)fitcircle.html#s)
@@ -37,9 +37,16 @@ function fitcircle(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :bi :di :e :f :g :h :i :o :yx])
-	cmd  = parse_these_opts(cmd, d, [[:L :norm], [:F :coord :coordinates], [:S :small_circle]])
+	cmd  = parse_these_opts(cmd, d, [[:L :norm], [:S :small_circle]])
+	((val = find_in_dict(d, [:F :coord :coordinates])[1]) !== nothing) && (cmd *= " -F" * arg2str(val)[1])
 
-	common_grd(d, cmd0, cmd, "fitcircle ", arg1)		# Finish build cmd and run it
+	D = common_grd(d, cmd0, cmd, "fitcircle ", arg1)		# Finish build cmd and run it
+	if isa(D, GMTdataset)			# Can be a string if Vd=2 was used.
+		D.colnames = ["lon", "lat"]
+		D.proj4 = "+proj=lonlat"	# Should add that this is spherical, but how to know the Planet?
+		D.geom = (size(D,1) == 1) ? wkbPoint : wkbMultiPoint
+	end
+	D
 end
 
 # ---------------------------------------------------------------------------------------------------

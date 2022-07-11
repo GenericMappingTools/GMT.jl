@@ -4,7 +4,14 @@ project(nothing, C="15/15", T="85/40", G="1/110", L="-20/60");	# bit of cheating
 
 println("	SAMPLE1D")
 d = [-5 74; 38 68; 42 73; 43 76; 44 73];
-sample1d(d, T="2c", A=:r);	
+sample1d(d, T="2c", A=:r);
+@test sample1d([0 0], F=:akima, Vd=2) == "sample1d  -Fa"
+@test sample1d([0 0], F="sp0.1+d2", Vd=2) == "sample1d  -Fsp0.1+d2"
+@test sample1d([0 0], F="smoothp0.1+d2", Vd=2) == "sample1d  -Fsp0.1+d2"
+@test sample1d([0 0], F="cubic+d1", Vd=2) == "sample1d  -Fc+d1"
+@test sample1d([0 0], F=(:akima, "first"), Vd=2) == "sample1d  -Fa+d1"
+@test sample1d([0 0], F=(:smothing, 0.1), Vd=2) == "sample1d  -Fsp0.1"
+@test sample1d([0 0], F=(:smothing, 0.1, :seconf), Vd=2) == "sample1d  -Fsp0.1+d2"
 
 println("	SPECTRUM1D")
 D = gmt("gmtmath -T0/10239/1 T 10240 DIV 360 MUL 400 MUL COSD");
