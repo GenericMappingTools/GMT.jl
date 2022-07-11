@@ -8,27 +8,27 @@ Full option list at [`project`]($(GMTdoc)project.html)
 Parameters
 ----------
 
-- **C** | **origin** | **start_pt** :: [Type => list/tuple]    ``Arg = (x,y)``
+- **C** | **origin** | **center** :: [Type => list/tuple]    ``Arg = (x,y)``
 
     Sets the origin of the projection, in Definition 1 or 2.
     ($(GMTdoc)project.html#c)
-- **A** | **azim** :: [Type => Number]    ``Arg = azimuth``
+- **A** | **azim** | **azimuth** :: [Type => Number]    ``Arg = azimuth``
 
     Defines the azimuth of the projection (Definition 1).
     ($(GMTdoc)project.html#a)
-- **E** | **end_pt** :: [Type => list/tuple]    ``Arg = (bx,by)``
+- **E** | **end_pt** | **endpoint** :: [Type => list/tuple]    ``Arg = (bx,by)``
 
     bx,by defines the end point of the projection path (Definition 2).
     ($(GMTdoc)project.html#e)
-- **F** | **out_flags** :: [Type => Str]    ``Arg = xyzpqrs``
+- **F** | **outvars** :: [Type => Str]    ``Arg = xyzpqrs``
 
     Specify your desired output using any combination of xyzpqrs, in any order [Default is xyzpqrs].
     ($(GMTdoc)project.html#f)
-- **G** | **step** | **small_circle**: [Type => Number or list/tuple--    ``Arg = dist[/colat][+h]``
+- **G** | **step** | **generate** :: [Type => Number or list/tuple--    ``Arg = dist[/colat][+h]``
 
     Generate mode. No input is read. Create (r, s, p) output points every dist units of p. See Q option.
     ($(GMTdoc)project.html#g)
-- **L** | **length_control** :: [Type => Number or list/tuple]    ``Arg = [w|l_{min}/l_{max}]``
+- **L** | **length** :: [Type => Number or list/tuple]    ``Arg = [w|l_{min}/l_{max}]``
 
     Length controls. Project only those points whose p coordinate is within l\\_min < p < l\\_max.
     ($(GMTdoc)project.html#l)
@@ -48,7 +48,7 @@ Parameters
 
     px,py sets the position of the rotation pole of the projection. (Definition 3).
     ($(GMTdoc)project.html#t)
-- **W** | **width_control** :: [Type => list/tuple]    ``Arg = (w_{min},w_{max})``
+- **W** | **width** :: [Type => list/tuple]    ``Arg = (w_{min},w_{max})``
 
     Width controls. Project only those points whose q coordinate is within w\\_min < q < w\\_max.
     ($(GMTdoc)project.html#w)
@@ -77,10 +77,10 @@ function project(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :s :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :origin :start_pt], [:E :end_pt], [:F :out_flags],
-	                                 [:G :step :small_circle :no_input], [:L :length_control], [:N :flat_earth], [:Q :km], [:S :sort], [:T :pole], [:W :width_control], [:Z :ellipse]])
+	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :origin :startpoint :start_pt], [:E :endpoint :end_pt],
+                                     [:F :outvars :out_flags], [:G :step :generate], [:L :length], [:N :flat_earth], [:Q :km], [:S :sort], [:T :pole], [:W :width], [:Z :ellipse]])
 
-	if (!occursin("-G", cmd)) cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
+	if (!occursin("-G", cmd)) cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)
 	else                      cmd = write_data(d, cmd)      # Check if want save to file
 	end
 	common_grd(d, "project " * cmd, arg1)		# Finish build cmd and run it
