@@ -15,7 +15,7 @@ function velo(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :di :e :p :t :params], first)
 
 	if ((val = find_in_dict(d, [:A :arrow])[1]) !== nothing)
