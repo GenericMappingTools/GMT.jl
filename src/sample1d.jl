@@ -53,7 +53,7 @@ function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 	(GMTver >= v"6.4.0") && (cmd = add_opt(d, cmd, "E", [:E :keeptxt]))
 
 	if ((val = find_in_dict(d, [:F :interp :interp_type])[1]) !== nothing)
-		# F=:akima, F="akima", F="sp0.1+d2", F="cubic+d1", F="c+d1"
+		# F=:akima, F="akima", F="s0.1+d2", F="cubic+d1", F="c+d1"
 		p, deriv = "", ""
 		if (isa(val, String) || isa(val, Symbol))
 			_val::String = string(val)
@@ -62,8 +62,10 @@ function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 				deriv = "+d" * _val[end];	_val = _val[1:ind-1]
 			end
 			if _val[1] == 's'
-				((ind = findfirst('p', _val)) === nothing) && error("SAMPLE1D: smoothing type must provide 'p' parameter")
-				opt = "s" * _val[ind:end]
+				(isletter(_val[end])) && error("SAMPLE1D: smoothing type must provide smoothing parameter")
+				n = length(_val) + 1
+				while (!isletter(_val[n-=1]) && n > 0) end
+				opt = "s" * _val[n+1:end]
 			else
 				opt = string(_val[1])
 			end
@@ -72,7 +74,7 @@ function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 			# F=(:akima, "first"), F=(:smothing, 0.1), F=(:smothing, 0.1, :second)
 			t = string(val[1])[1]
 			if (t == 's')	# Either: F=(:smothing, 0.1) or F=(:smothing, 0.1, :second)
-				p = string("p",val[2])
+				p = string(val[2])
 				(length(val) == 3) && (deriv = (string(val[3])[1] == 'f') ? "+d1" : "+d2")
 			else							# Must be one of: F=(:akima, "first"), etc
 				deriv = (string(val[2])[1] == 'f') ? "+d1" : "+d2"
