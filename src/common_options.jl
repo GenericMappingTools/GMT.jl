@@ -294,7 +294,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
 		isa(val, Dict) && (val = dict2nt(val))
 		opt_J, mnemo = build_opt_J(val)
-	elseif (IamModern[1] && ((val = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size], del)[1]) === nothing))
+	elseif (IamModern[1] && ((val = is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])) === nothing))
 		# Subplots do not rely in the classic default mechanism
 		return cmd, ""
 	end
@@ -2753,6 +2753,7 @@ vector_attrib(t::NamedTuple) = vector_attrib(; t...)
 function vector_attrib(; kwargs...)::String
 	d = KW(kwargs)
 	cmd::String = add_opt(d, "", "", [:len :length])
+	!isletter(cmd[end]) && (cmd *= "p")		# There seems to be a bug in GMT that f if no unit is used
 	(haskey(d, :angle)) && (cmd = string(cmd, "+a", d[:angle]))
 	if (haskey(d, :middle))
 		cmd *= "+m";
