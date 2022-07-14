@@ -2753,7 +2753,7 @@ vector_attrib(t::NamedTuple) = vector_attrib(; t...)
 function vector_attrib(; kwargs...)::String
 	d = KW(kwargs)
 	cmd::String = add_opt(d, "", "", [:len :length])
-	!isletter(cmd[end]) && (cmd *= "p")		# There seems to be a bug in GMT that f if no unit is used
+	#(cmd != "" && !isletter(cmd[end])) && (cmd *= "p")		# There seems to be a bug in GMT that f if no unit is used
 	(haskey(d, :angle)) && (cmd = string(cmd, "+a", d[:angle]))
 	if (haskey(d, :middle))
 		cmd *= "+m";
