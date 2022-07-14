@@ -12,7 +12,7 @@ Parameters
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
-- **A** | **azimuths** :: [Type => Bool]
+- **A** | **azimuths** | **azimuth** | **azim** :: [Type => Bool]
 
     Angles are given as azimuths; convert them to directions using the current projection.
     ($(GMTdoc)text.html#a)
@@ -112,7 +112,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:c :e :f :p :t :JZ :UVXY :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:A :azimuths], [:L :list], [:M :paragraph],
+	cmd  = parse_these_opts(cmd, d, [[:A :azimuths :azimuth :azim], [:L :list], [:M :paragraph],
 	                                 [:N :no_clip :noclip], [:Q :change_case], [:S :shade], [:T :text_box], [:Z :threeD]])
 	cmd  = add_opt(d, cmd, "C", [:C :clearance], (margin="#", round="_+tO", concave="_+tc", convex="_+tC"))
 

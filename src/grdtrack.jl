@@ -34,7 +34,7 @@ Parameters
 - **G** | **grid** :: [Type => Str | GMTgrid | Tuple(GMTgrid's)]
 
     ($(GMTdoc)grdtrack.html#g)
-- **N** | **no_skip** :: [Type => Bool]
+- **N** | **no_skip** | **noskip** :: [Type => Bool]
 
     ($(GMTdoc)grdtrack.html#n)
 - $(GMT.opt_R)
@@ -71,7 +71,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :interp_path], [:C :crossprofile :equidistant], [:D :dfile], [:E :profile],
-	                                 [:F :critical], [:N :no_skip], [:S :stack], [:T :radius], [:Z :z_only]])
+	                                 [:F :critical], [:N :no_skip :noskip], [:S :stack], [:T :radius], [:Z :z_only]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	cmd, grid_tuple, arg1, arg2 = parse_G_grdtrk(d, [:G, :grid], cmd, arg1, arg2)

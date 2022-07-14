@@ -8,7 +8,7 @@ Full option list at [`gmtconvert`]($(GMTdoc)gmtconvert.html)
 Parameters
 ----------
 
-- **A** | **h_cat** :: [Type => Str | []]
+- **A** | **hcat** :: [Type => Str | []]
 
     The records from the input files should be pasted horizontally, not appended vertically [Default].
     ($(GMTdoc)gmtconvert.html#a)
@@ -85,7 +85,7 @@ function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:V_params :write :append :a :b :bo :d :e :f :g :h :i :o :s :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :h_cat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
+	cmd  = parse_these_opts(cmd, d, [[:A :hcat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
 	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :select_num], [:S :select_hdr], [:T :suppress :skip], [:W :word2num], [:Z :range]])
 
 	common_grd(d, cmd0, cmd, "gmtconvert ", arg1)		# Finish build cmd and run it
