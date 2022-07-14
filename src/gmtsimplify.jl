@@ -1,5 +1,5 @@
 """
-	gmtsimplify(cmd0::String="", arg1=nothing, kwargs...)
+	gmtsimplify(cmd0::String="", arg1=nothing; kwargs...)
 
 Line reduction using the Douglas-Peucker algorithm.
 

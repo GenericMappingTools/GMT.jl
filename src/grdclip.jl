@@ -1,5 +1,5 @@
 """
-	grdclip(cmd0::String="", arg1=nothing, kwargs...)
+	grdclip(cmd0::String="", arg1=nothing; kwargs...)
 
 Clip the range of grid values. will set values < low to below and/or values > high to above.
 You can also specify one or more intervals where all values should be set to ``between``,
