@@ -44,7 +44,7 @@ Parameters
 
     After solving for the surface, apply a mask so that nodes farther than max_radius away from a data constraint is set to NaN.
     ($(GMTdoc)surface.html#m)
-- **N** | **max_iter** :: [Type => Number]
+- **N** | **max_iter** | **max_iterations** :: [Type => Number]
 
     Number of iterations. Iteration will cease when convergence_limit is reached or when number of
     iterations reaches max_iterations.
@@ -88,7 +88,7 @@ function surface(cmd0::String="", arg1=nothing; kwargs...)
 	
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :a :bi :di :e :f :h :i :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:Ll :lower], [:Lu :upper], [:M :mask],
-                                     [:N :max_iter], [:Q :suggest], [:S :search_radius], [:T :tension], [:W :log], [:Z :over_relaxation]])
+                                     [:N :max_iter :max_iterations], [:Q :suggest], [:S :search_radius], [:T :tension], [:W :log], [:Z :over_relaxation]])
 	cmd, args, n, = add_opt(d, cmd, "D", [:D :breakline], :data, Array{Any,1}([arg1, arg2]), (zlevel="+z",))
 	if (n > 0)  arg1, arg2 = args[:]  end
 
