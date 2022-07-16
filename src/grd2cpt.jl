@@ -35,7 +35,7 @@ Parameters
 
     Reverse the sense of color progression in the master CPT.
     ($(GMTdoc)grd2cpt.html#i)
-- **L** | **range** :: [Type => Str]			`Arg = minlimit/maxlimit`
+- **L** | **datarange** :: [Type => Str]			`Arg = minlimit/maxlimit`
 
     Limit range of CPT to minlimit/maxlimit, and don’t count data outside this range when estimating CDF(Z).
     [Default uses min and max of data.]
@@ -81,7 +81,7 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-    cmd, = parse_common_opts(d, "", [:R :V_params])
+	cmd, = parse_common_opts(d, "", [:R :V_params])
 	cmd = helper_cpt(d, cmd)[1]                 # Still left to be seen how to deal with an eventual Tvec (BUG here then)
 	if ((val = find_in_dict(d, [:E :nlevels])[1]) !== nothing)  cmd *= " -E" * arg2str(val)  end
 
@@ -89,9 +89,10 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_used, arg1)
 
-    r = common_grd(d, "grd2cpt " * cmd, arg1, arg2)
-	current_cpt[1] = (r !== nothing) ? r : GMTcpt()
-    return r
+	r = common_grd(d, "grd2cpt " * cmd, arg1, arg2)		# r may be a tuple if -E+f was used
+	current_cpt[1] = (r !== nothing) ? (isa(r, Tuple) ? r[1] : r) : GMTcpt()
+	isa(r, Tuple) && (r[2].colnames = ["Z", "CDF(Z)"])
+	return r
 end
 
 # ---------------------------------------------------------------------------------------------------
