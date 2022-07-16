@@ -8,7 +8,7 @@ Full option list at [`sphinterpolate`]($(GMTdoc)sphinterpolate .html)
 Parameters
 ----------
 
-- **D** | **duplicates** :: [Type => Bool]
+- **D** | **skipdup** :: [Type => Bool]
 
     Delete any duplicate points [Default assumes there are no duplicates].
     ($(GMTdoc)sphinterpolate.html#d)
@@ -45,7 +45,7 @@ function sphinterpolate(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :bi :di :e :h :i :yx])
-	cmd  = parse_these_opts(cmd, d, [[:D :duplicates], [:Q :tension], [:T :nodetable], [:Z :scale]])
+	cmd  = parse_these_opts(cmd, d, [[:D :skipdup :duplicates], [:Q :tension], [:T :nodetable], [:Z :scale]])
 
 	common_grd(d, cmd0, cmd, "sphinterpolate ", arg1)		# Finish build cmd and run it
 end
