@@ -9,7 +9,7 @@ Parameters
 ----------
 
 - $(GMT.opt_R)
-- **Z** | **scale** :: [Type => Number | Str]
+- **Z** | **ampscale** | **amp_scale** :: [Type => Number | Str]
 
     Gives anomaly scale in data-units/distance-unit.
     ($(GMTdoc)wiggle.html#a)
@@ -70,9 +70,9 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:c :e :f :g :p :t :w :F :UVXY :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :scale]])
+	cmd  = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :ampscale :amp_scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
