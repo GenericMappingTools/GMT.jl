@@ -102,6 +102,8 @@
 	r = GMT.add_opt_fill("", Dict(:G=>(inv_pattern=12,fg="white",bg=[1,2,3], dpi=10) ), [:G :fill], 'G');
 	@test r == " -GP12+b1/2/3+fwhite+r10"
 	@test GMT.add_opt_fill("", Dict(:G=>:red), [:G :fill], 'G') == " -Gred"
+	@test GMT.add_opt_fill(["red+p", "blue+n"], "", "G") == " -Gred+p -Gblue+n"
+	@test GMT.add_opt_fill((("red+p",), ("blue+n",)), "", " -G") == " -Gred+p -Gblue+n"
 	@test_throws ErrorException("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member") GMT.add_opt_fill("", Dict(:G=>(inv_pat=12,fg="white")), [:G], 'G')
 	d = Dict(:offset=>5, :bezier=>true, :cline=>"", :ctext=>true, :pen=>("10p",:red,:dashed));
 	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,-+cl+cf+s+o5"

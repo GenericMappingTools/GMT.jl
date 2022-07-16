@@ -9,7 +9,7 @@ Full option list at [`triangulate`]($(GMTdoc)triangulate.html)
 
 Parameters
 ----------
-- **A** | **area** :: [Type => Number]
+- **A** | **area** :: [Type => Bool]
 
     Compute the area of the Cartesian triangles and append the areas in the output segment headers
     [no areas calculated]. Requires **triangles** and is not compatible with **voronoi** (GMT >= 6.4).
