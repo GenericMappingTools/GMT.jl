@@ -16,7 +16,7 @@ Parameters
 
     For large data sets you can save some memory (at the expense of more processing).
     ($(GMTdoc)sphtriangulate.html#c)
-- **D** | **duplicates** | **skip** :: [Type => Bool]
+- **D** | **skipdup** :: [Type => Bool]
 
     Delete any duplicate points [Default assumes there are no duplicates].
     ($(GMTdoc)sphtriangulate.html#d)
@@ -32,7 +32,7 @@ Parameters
 
     Append d for Delaunay triangles or v for Voronoi polygons [Delaunay].
     ($(GMTdoc)sphtriangulate.html#q)
-- **T** :: [Type => Bool | Str]
+- **T** | **arcs** :: [Type => Bool | Str]
 
     Write the unique arcs of the construction [Default writes fillable triangles or polygons].
     When used with -A we store arc length in the segment header in chosen unit.
@@ -49,7 +49,7 @@ function sphtriangulate(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :h :i :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :duplicates :skip], [:L :unit], [:N :nodes], [:Q :voronoi], [:T]])
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :save_mem], [:D :skipdup :duplicates :skip], [:L :unit], [:N :nodes], [:Q :voronoi], [:T :arcs]])
 	common_grd(d, cmd0, cmd, "sphtriangulate ", arg1)		# Finish build cmd and run it
 end
 

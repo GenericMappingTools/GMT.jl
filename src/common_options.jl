@@ -2255,7 +2255,16 @@ end
 
 function add_opt_fill(val, cmd::String="",  opt="")::String
 	# This version can be called directy with VAL as a NT or a string
-	if (isa(val, NamedTuple))
+	if (isa(val, Tuple) && length(val) == 2 && (isa(val[1], Tuple) || isa(val[1], NamedTuple)))
+		# wiggle, for example, may want to repeat the call to fill (-G). Then we expect a Tuple of -G's
+		cmd = add_opt_fill(val[1], cmd,  opt)
+		cmd = add_opt_fill(val[2], cmd,  opt)
+	elseif (isvector(val) && length(val) == 2 && isa(val[1], String))
+		# The above case works it may b uggly sometimes; e.g. fill=(("red+p",), ("blue+n",))
+		# So accept also a vector of strings and do not try to interpret its contents. Ex: fill(["red+p", "blue+n"]
+		(opt != "" && !startswith(opt, " -")) && (opt = string(" -", opt))
+		cmd = cmd * opt * val[1] * opt * val[2]
+	elseif (isa(val, NamedTuple))
 		d2::Dict = nt2dict(val)
 		cmd *= opt
 		if     (haskey(d2, :pattern))     cmd *= 'p' * add_opt(d2, "", "", [:pattern])
