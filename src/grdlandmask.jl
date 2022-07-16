@@ -25,7 +25,7 @@ Parameters
 
     Selects the resolution of the data set to use ((f)ull, (h)igh, (i)ntermediate, (l)ow, and (c)rude).
     ($(GMTdoc)grdlandmask.html#d)
-- **E** | **bordervalues** :: [Type => Str | List]    ``Arg = cborder/lborder/iborder/pborder or bordervalue``
+- **E** | **border** :: [Type => Str | List]    ``Arg = cborder/lborder/iborder/pborder or bordervalue``
 
     Nodes that fall exactly on a polygon boundary should be considered to be outside the polygon
     [Default considers them to be inside].
@@ -47,6 +47,6 @@ function grdlandmask(cmd0::String=""; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :x])
-	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :bordervalues], [:N :mask :maskvalues]])
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :border], [:N :mask :maskvalues]])
 	return common_grd(d, "grdlandmask " * cmd, nothing)		# Finish build cmd and run it
 end

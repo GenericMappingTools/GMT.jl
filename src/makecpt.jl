@@ -31,11 +31,6 @@ Full option list at [`makecpt`]($(GMTdoc)makecpt.html)
 
     Truncate the incoming CPT so that the lowest and highest z-levels are to zlo and zhi.
     ($(GMTdoc)makecpt.html#g)
-- **H** | **save** :: [Type => Bool]
-
-    Modern mode only: Write the CPT to disk [Default saves the CPT as the session current CPT].
-    Required for scripts used to make animations via movie where we must pass named CPT files.
-    ($(GMTdoc)makecpt.html#h)
 - **I** | **inverse** | **reverse** :: [Type => Str]	`Arg = [c][z]`
 
     Reverse the sense of color progression in the master CPT.
@@ -108,9 +103,9 @@ end
 function helper_cpt(d::Dict, cmd::String)
 	# Common to both make & grd cpt
 	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :color_model], [:G :truncate],
-	                                [:I :inverse :reverse], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :auto], [:W :wrap :categorical], [:Z :continuous]])
+	                                [:I :inverse :reverse], [:L :datarange :limit], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :auto :symetric], [:W :wrap :categorical], [:Z :continuous]])
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
-	if ((val = find_in_dict(d, [:name :write])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:name :save])[1]) !== nothing)
 		(IamModern[1]) && (cmd *= " -H")
 		cmd *=  " > " * string(val)
 	elseif (IamModern[1])  cmd *= " -H"
