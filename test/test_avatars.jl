@@ -172,7 +172,6 @@
 	bar(rand(20),hbar="0.5c+b9",  Vd=dbg2)
 	bar(rand(10), xaxis=(custom=(pos=1:5,type="A"),), Vd=dbg2)
 	bar(rand(10), axis=(custom=(pos=1:5,label=[:a :b :c :d :e]),), Vd=dbg2)
-	@test_throws ErrorException("Number of labels in custom annotations must be the same as the 'pos' element") bar(rand(10), frame=(custom=(pos=1:5,label=[:a :b :c :d]),), axis=:noannot, Vd=dbg2)
 	bar((1,2,3), Vd=dbg2)
 	bar((1,2,3), (1,2,3), Vd=dbg2)
 	bar!((1,2,3), Vd=dbg2)
