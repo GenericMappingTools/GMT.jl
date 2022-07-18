@@ -828,9 +828,16 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	end
 
 	# These are not and we can have one or all of them. NamedTuples are dealt at the end
+	is_still_Bdef = (opt_B == def_fig_axes_ || opt_B == def_fig_axes3_)
 	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2]
 		if (haskey(d, symb) && !isa(d[symb], NamedTuple) && !isa(d[symb], Dict))
-			opt_B = string(d[symb], " ", opt_B)
+			_ax = string(symb);
+			_arg = string(d[symb])
+			a = (_arg[1] != _ax[1]) ? _ax[1] : ""	# This test avoids that :xaxis = "xg10" becomes xxg10
+			_ps = (_ax[end] == '2') ? "s" : "p"
+			opt_B = (is_still_Bdef) ? string(" -B", _ps, a, d[symb]) : string(opt_B, " -B", _ps, a, d[symb])
+			is_still_Bdef, extra_parse = false, false
+			delete!(d, symb)
 		end
 	end
 
@@ -873,19 +880,22 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	(xax && yax) && (opt_B = replace(opt_B, def_fig_axes_ => ""))	# If x&yaxis have been called, remove default
 	(!isempty(opt_B) && (opt_B[1] == '+' || occursin(opt_B[1], "WSENZwsenzlrbtu"))) && (opt_B = " -B" * opt_B)	# If above has removed the " -B". Happens when (xaxis, yaxis, title)
 
-	# These can come up outside of an ?axis tuple, so need to be sekeed too.
+	# These can come up outside of an ?axis tuple, so need to be seeked too.
+	got_ticks = false		# To know if we may need to add -Baf when only x|y|z ticks were requested.
 	for symb in [:xticks :yticks :zticks]
 		if (haskey(d, symb))
 			if     (symb == :xticks)  this_opt_B = " -Bpxc" * xticks(d[symb]) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :yticks)  this_opt_B = " -Bpyc" * yticks(d[symb]) * this_opt_B;	delete!(d, symb)
 			elseif (symb == :zticks)  this_opt_B = " -Bpzc" * zticks(d[symb]) * this_opt_B;	delete!(d, symb)
 			end
+			got_ticks = true
 		end
 	end
 
 	if (opt_B != def_fig_axes_ && opt_B != def_fig_axes3_)  opt_B = this_opt_B * opt_B
 	elseif (this_opt_B != "")                               opt_B = this_opt_B
 	end
+	(got_ticks && opt_B == this_opt_B) && (opt_B *= (contains(opt_B, "-Bpz") ? def_fig_axes3_ : def_fig_axes_))	# When only x|y|z ticks were requested.
 
 	if (def_fig_axes[1] != def_fig_axes_bak && opt_B != def_fig_axes[1])	# Consolidation only under themes
 		if (opt_B != "" && !got_Bstring && CTRL.proj_linear[1] && !occursin(def_fig_axes_, opt_B) &&
@@ -2675,7 +2685,7 @@ function helper3_axes(arg, primo::String, axe::String)::String
 	elseif (isa(arg, NamedTuple) || isa(arg, Dict))
 		if (isa(arg, NamedTuple))  d = nt2dict(arg)  end
 		!haskey(d, :pos) && error("Custom annotations NamedTuple must contain the member 'pos'")
-		pos = d[:pos]
+		pos = isa(d[:pos], Vector{<:AbstractRange}) ? collect(d[:pos][1]) : d[:pos]
 		n_annot = length(pos);		got_tipo = false
 		if ((val = find_in_dict(d, [:type])[1]) !== nothing)
 			if (isa(val, Char) || isa(val, String) || isa(val, Symbol))
@@ -2690,12 +2700,10 @@ function helper3_axes(arg, primo::String, axe::String)::String
 		if (haskey(d, :label))
 			_label = d[:label]
 			label = isa(_label, Symbol) ? [string(_label)] : (isa(_label, String) ? [_label] : _label)
-			if (length(d[:label]) != n_annot)
-				error("Number of labels in custom annotations must be the same as the 'pos' element")
-			end
+			n_annot = min(n_annot, length(d[:label]))
 			tipo = Vector{String}(undef, n_annot)
 			for k = 1:n_annot
-				if (isa(label[k], Symbol) || label[k][1] != '/')
+				if (isa(label[k], Symbol) || label[k] == "" || label[k][1] != '/')
 					tipo[k] = "a"
 				else
 					t = split(label[k])
@@ -2716,7 +2724,7 @@ function helper3_axes(arg, primo::String, axe::String)::String
 	end
 
 	temp = "GMTjl_custom_" * primo
-	if (axe != "") temp *= axe  end
+	(axe != "") && (temp *= axe)
 	fname = joinpath(tempdir(), temp * ".txt")
 	fid = open(fname, "w")
 	if (label != [""])
@@ -2732,15 +2740,19 @@ function helper3_axes(arg, primo::String, axe::String)::String
 	return fname
 end
 
-# ---------------------------------------------------
+# --------------------------------------------------------
 xticks(labels, pos=nothing) = ticks(labels, pos; axis="x")
 yticks(labels, pos=nothing) = ticks(labels, pos; axis="y")
 zticks(labels, pos=nothing) = ticks(labels, pos; axis="z")
 function ticks(labels, pos=nothing; axis="x", primary="p")
 	# Simple plot of custom ticks.
-	# LABELS can be an Array or Tuple of strinfs or symbols with the labels to be plotted at ticks in POS
+	# LABELS can be an Array or Tuple of strings or symbols with the labels to be plotted at ticks in POS
 	if (isa(labels, Tuple) && length(labels) == 2 && isa(labels[1], AbstractArray))
-		r = helper3_axes((pos=labels[1], label=labels[2]), primary, axis)
+		# helper3 wants (Array{Real}, Array{String}) but here we accept both orders, just need to figure out which
+		inds = (eltype(labels[1]) <: AbstractString) ? [2,1] : [1,2]
+		!(isa(labels[inds[1]], AbstractArray) && eltype(labels[inds[1]][1]) <: Real) &&
+			error("Input must be: (Vector{Real}, Vector{String}) (in any order)")
+		r = helper3_axes((pos=labels[inds[1]], label=labels[inds[2]]), primary, axis)
 	else
 		_pos = (pos === nothing) ? (1:length(labels)) : pos
 		r = helper3_axes((pos=_pos, label=labels), primary, axis)
