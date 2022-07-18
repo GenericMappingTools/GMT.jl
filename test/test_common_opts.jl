@@ -163,7 +163,7 @@
 	@test GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen")[1] == " -Bpa10 -Byg20 -Bxg10 -BWSen+t\"Ai Ai\""
 	@test GMT.parse_B(Dict(:frame => (axes=(:left_full, :bottom_full, :right_full, :top_full), annot=10)), "")[1] == " -Bpa10 -BWSEN"
 	@test GMT.parse_B(Dict(:xaxis => (axes=:full, annot=10)), "")[1] == " -Bpxa10 -BWSEN"
-	@test GMT.parse_B(Dict(:xaxis => "xg10", :yaxis => "g20"), "")[1] == " -Bpyg20 -Bpxg10"
+	@test GMT.parse_B(Dict(:xaxis => "xg10", :yaxis => "g20"), "")[1] == " -Bpxg10 -Bpyg20"
 	@test GMT.parse_B(Dict(:frame => (fill=220,)), "", " -Baf -Bg -BWSne")[1] == " -Baf -Bg -BWSne+g220"
 	@test GMT.parse_B(Dict(:frame => :full), "")[1] == " -Baf -BWSEN"
 	@test GMT.parse_B(Dict(:title => "BlaBla", :frame => :none), "")[1] == " -B+tBlaBla"
