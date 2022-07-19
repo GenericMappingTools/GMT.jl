@@ -885,7 +885,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 			Gmask = gmt("grdmask -R0/1/0/0.865 -I0.005 -NNaN/1/1", [0.0 0; 0.5 0.865; 1 0; 0 0])
 			G *= Gmask
 			if (image)			# grdimage plus eventual contours
-				grdimage(G, B=:none, J=opt_J[4:end], first=first)
+				grdimage(G, B=:none, J=opt_J[4:end], Q=true, first=first)
 				if (haskey(d, :contour))
 					grdcontour!(G, backdoor=d[:contour])
 					delete!(d, :contour)
