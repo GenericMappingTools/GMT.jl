@@ -52,11 +52,14 @@ function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_st
 	return nothing, Symbol()
 end
 
-function is_in_dict(d::Dict, symbs::VMs, help_str::String="")
+function is_in_dict(d::Dict, symbs::VMs, help_str::String="", del::Bool=false)
 	# See if D contains any of the symbols in SYMBS. If yes, return the used smb in symbs
 	(show_kwargs[1] && help_str != "") && return print_kwarg_opts(symbs, help_str)
 	for symb in symbs
-		(haskey(d, symb)) && return symb
+		if (haskey(d, symb))
+			del && delete!(d, symb)
+			return symb
+		end
 	end
 	return nothing
 end
@@ -293,7 +296,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 	opt_J::String = "";		mnemo::Bool = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
 		isa(val, Dict) && (val = dict2nt(val))
-		opt_J, mnemo = build_opt_J(val)
+		opt_J, mnemo = build_opt_J(val)		# mnemo = true when the projection name used a mnemonic for the projection
 	elseif (IamModern[1] && ((val = is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])) === nothing))
 		# Subplots do not rely in the classic default mechanism
 		return cmd, ""
@@ -397,7 +400,7 @@ function helper_append_figsize(d::Dict, opt_J::String, O::Bool)::String
 		else                          opt_J = append_figsize(d, opt_J, val, true)
 		end
 	else										# A fig SIZE request
-		if (haskey(d, :units))  val *= d[:units][1]  end
+		(haskey(d, :units)) && (val *= d[:units][1])
 		if (occursin("+proj", opt_J)) opt_J *= "+width=" * val
 		else                          opt_J = append_figsize(d, opt_J, val)
 		end
@@ -445,6 +448,7 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 	end
 	width = check_axesswap(d, width)
 	opt_J *= slash * width * de
+	CTRL.pocket_J[1], CTRL.pocket_J[2] = opt_J, width		# Save these for eventual (in -B) change if flip dims dir
 	if (scale)  opt_J = opt_J[1:3] * lowercase(opt_J[4]) * opt_J[5:end]  end 		# Turn " -JX" to " -Jx"
 	return opt_J
 end
@@ -475,7 +479,7 @@ end
 function check_axesswap(d::Dict, width::AbstractString)
 	# Deal with the case that we want to invert the axis sense
 	# axesswap(x=true, y=true) OR  axesswap("x", :y) OR axesswap(:xy)
-	(width == "" || (val = find_in_dict(d, [:inverse_axes :axesswap :axes_swap])[1]) === nothing) && return width
+	(width == "" || (val = find_in_dict(d, [:flip_axes :axesswap :axes_swap])[1]) === nothing) && return width
 
 	swap_x = false;		swap_y = false;
 	isa(val, Dict) && (val = dict2nt(val))
@@ -510,7 +514,7 @@ function check_axesswap(d::Dict, width::AbstractString)
 	else
 		width = "-" * width
 	end
-	if (occursin("?-", width))  width = replace(width, "?-" => "-?")  end 	# It may, from subplots
+	(occursin("?-", width)) && (width = replace(width, "?-" => "-?"))	# It may, from subplots
 	return width
 end
 
@@ -1817,7 +1821,7 @@ function finish_PS_nested(d::Dict, cmd::Vector{String})::Vector{String}
 					opt_B *= " " * strtok(cmd[1][ind[k][1]:end])[1]
 				end
 				# Here we need to reset any -B parts that do NOT include the plotting area and which were clipped.
-				if (CTRL.pocket_B[1] == "" && CTRL.pocket_B[1] == "")
+				if (CTRL.pocket_B[1] == "" && CTRL.pocket_B[2] == "")
 					opt_B1 = opt_B * " -R -J"
 				else
 					(CTRL.pocket_B[1] != "") && (opt_B1 = replace(opt_B,  CTRL.pocket_B[1] => ""))	# grid
@@ -2553,7 +2557,6 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 		end
 		ints *= tB;	CTRL.pocket_B[1] = tB
 	end
-	#if (haskey(d, :grid))       tB = "g" * helper1_axes(d[:grid]); ints *= tB;	CTRL.pocket_B[1] = tB  end
 	if (haskey(d, :prefix))     ints *= "+p" * str_with_blancs(arg2str(d[:prefix]))  end
 	if (haskey(d, :suffix))     ints *= "+u" * str_with_blancs(arg2str(d[:suffix]))  end
 	if (haskey(d, :slanted))
@@ -2572,10 +2575,10 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 			if ((r = helper3_axes(d[:custom], primo, axe)) != "")  ints *= 'c' * r  end
 		end
 	elseif (haskey(d, :customticks))			# These ticks are custom axis
-		if ((r = ticks(d[:customticks]; axis=axe, primary=primo)) != "")  ints *= 'c' * r  end
+		((r = ticks(d[:customticks]; axis=axe, primary=primo)) != "") && (ints *= 'c' * r)
 	elseif (haskey(d, :pi))
 		if (isa(d[:pi], Real))
-			ints = string(ints, d[:pi], "pi")		# (n)pi
+			ints = string(ints, d[:pi], "pi")				# (n)pi
 		elseif (isa(d[:pi], Array) || isa(d[:pi], Tuple))
 			ints = string(ints, d[:pi][1], "pi", d[:pi][2])	# (n)pi(m)
 		end
@@ -2586,10 +2589,8 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 		elseif (s == "exp")                  ints *= 'p'
 		end
 	end
-	if (haskey(d, :phase_add))
-		ints *= "+" * arg2str(d[:phase_add])
-	elseif (haskey(d, :phase_sub))
-		ints *= "-" * arg2str(d[:phase_sub])
+	if     (haskey(d, :phase_add))  ints *= "+" * arg2str(d[:phase_add])
+	elseif (haskey(d, :phase_sub))  ints *= "-" * arg2str(d[:phase_sub])
 	end
 	(ints != "") && (opt = " -B" * primo * axe * ints * opt)
 
@@ -2597,6 +2598,17 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	(opt == "" && ax_sup != "") && (opt = " -B" * primo * axe * ax_sup)
 	have_Baxes = (opt != "")
 	opt *= opt_Bframe
+
+	#-----------
+	function consume_used(d::Dict, symbs::Vector{Symbol})
+		# Remove symbs from 'd' so that at the end we can check for unused entries (user errors) 
+		for symb in symbs
+			haskey(d, symb) && delete!(d, symb)
+		end
+	end
+	consume_used(d, [:corners, :internal, :cube, :noframe, :pole, :title, :subtitle, :seclabel, :label, :xlabel, :ylabel, :zlabel, :Yhlabel, :alabel, :blabel, :clabel, :annot, :annot_unit, :ticks, :ticks_unit, :prefix, :suffix, :grid, :slanted, :custom, :customticks, :pi, :scale, :phase_add, :phase_sub])
+	(length(d) > 0) && println("Warning: the following sub-options were not consumed in 'frame' => ", keys(d))
+	# -----------
 
 	return opt, [have_Baxes, (opt_Bframe != "")]
 end

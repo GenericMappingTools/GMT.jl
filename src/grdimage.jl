@@ -70,7 +70,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		cmd0 = ""
 	end
 
-	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
+	has_opt_B = (is_in_dict(d, [:B :frame :axis :axes]) !== nothing)
 	cmd::String, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	(startswith(opt_J, " -JX") && !contains(opt_J, "/")) && (cmd = replace(cmd, opt_J => opt_J * "/0")) # When sub-regions
 	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes_bak) &&
