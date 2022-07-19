@@ -81,10 +81,12 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg1)
 	cmd, Tvec = helper_cpt(d, cmd)
 	cmd = parse_E_mkcpt(d, [:E :nlevels], cmd, arg1)
+	got_N = (is_in_dict(d, [:N :no_bg :nobg]) !== nothing)
 
 	cmd = "makecpt " * cmd
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 	r = gmt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
+	got_N && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	current_cpt[1] = (r !== nothing) ? r : GMTcpt()
     return r
 end
@@ -103,7 +105,7 @@ end
 function helper_cpt(d::Dict, cmd::String)
 	# Common to both make & grd cpt
 	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :color_model], [:G :truncate],
-	                                [:I :inverse :reverse], [:L :datarange :limit], [:M :overrule_bg], [:N :no_bg :nobg], [:Q :log], [:S :auto :symetric], [:W :wrap :categorical], [:Z :continuous]])
+	                                [:I :inverse :reverse], [:L :datarange :limit], [:M :overrule_bg], [:Q :log], [:S :auto :symetric], [:W :wrap :categorical], [:Z :continuous]])
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
 	if ((val = find_in_dict(d, [:name :save])[1]) !== nothing)
 		(IamModern[1]) && (cmd *= " -H")
