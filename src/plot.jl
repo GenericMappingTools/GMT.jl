@@ -907,7 +907,8 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 		d[:par] = (MAP_GRID_PEN_PRIMARY="thinnest,gray",)
 	end
 	if (GMTver <= v"6.2.0" && (val = find_in_dict(d, CPTaliases, false)[1]) !== nothing && isa(val, GMTcpt))
-		_name = joinpath(tempdir(), "GMTjl_tmp.cpt");	gmtwrite(_name, val);	d[:C] = _name	# Workaround a bug in 6.2.0
+		_name = joinpath(tempdir(), "GMTjl_tmp.cpt");
+		gmtwrite(_name, val);	d[:C] = _name	# Workaround a bug in 6.2.0
 	end
 	(G_API[1] == C_NULL) && gmt_restart()	# Force having a valid API. We can't afford otherwise here.
 	(GMTver <= v"6.2.0") && gmtlib_setparameter(G_API[1], "MAP_FRAME_AXES", "WESNZ")	# Because of a bug in 6.2.0 modern theme
@@ -953,7 +954,8 @@ Converts ternary to cartesian units.
 function tern2cart(abcz::Matrix{<:Real}, reverse::Bool=false)
 	# converts ternary to cartesian units. ABCZ is either a Mx3 (a,b,c) or Mx4 (a,b,c,z) matrix
 	a,b,c = !reverse ? (3,1,2) : (1,2,3)
-	s = view(abcz, :, a) + view(abcz, :, b) + view(abcz, :, c)	# s = (a + b + c)
+	#s = view(abcz, :, a) + view(abcz, :, b) + view(abcz, :, c)	# s = (a + b + c)
+	s = sum(view(abcz, :, 1:3))
 	x = 0.5 .* (2.0 .* view(abcz, :, b) + view(abcz, :, c)) ./ s
 	y = 0.5 .* sqrt(3.) .* view(abcz, :, c) ./ s
 	return (size(abcz,2) == 3) ? [x y] : [x y abcz[:,4]]
