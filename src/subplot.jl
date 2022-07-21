@@ -56,9 +56,9 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	cmd  = parse_these_opts(cmd, d, [[:M :margin :margins]])
 	cmd  = add_opt(d, cmd, "A", [:A :autolabel],
                   (Anchor=("+J", arg2str), anchor=("+j", arg2str), label="", clearance=("+c", arg2str), fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), offset=("+o", arg2str), roman="_+r", Roman="_+R", vertical="_+v"))
-	cmd = add_opt(d, cmd, "SC", [:SC :col_axes],
+	cmd = add_opt(d, cmd, "SC", [:SC :col_axes :colaxes],
 	              (top=("t", nothing, 1), bott=("b", nothing, 1), bottom=("b", nothing, 1), label="+l", grid=("+w", add_opt_pen)))
-	cmd = add_opt(d, cmd, "SR", [:SR :row_axes],
+	cmd = add_opt(d, cmd, "SR", [:SR :row_axes :rowaxes],
 	              (left=("l", nothing, 1), right=("r", nothing, 1), label="+l", parallel="_+p", row_title="_+t", top_row_title="_+tc", grid=("+w", add_opt_pen)))
 	opt_C = add_opt(d, "", "", [:C :clearance],
 				  (left=(" -Cw", arg2str), right=(" -Ce", arg2str), bott=(" -Cs", arg2str), bottom=(" -Cs", arg2str), top=(" -Cn", arg2str)))
@@ -71,7 +71,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			del_from_dict(d, [:F, :dims, :dimensions, :size, :sizes])
 		else
 			cmd = add_opt(d, cmd, "F", [:F :dims :dimensions :size :sizes],
-			              (panels=("-s", helper_sub_F, 1), size=("-f", helper_sub_F, 1), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F), clearance=("+c", arg2str), outine=("+p", add_opt_pen), fill=("+g", add_opt_fill), divlines=("+w", add_opt_pen)))
+			              (panels=("-s", helper_sub_F, 1), size=("", helper_sub_F, 2), sizes=("", helper_sub_F, 2), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F), clearance=("+c", arg2str), outine=("+p", add_opt_pen), fill=("+g", add_opt_fill), divlines=("+w", add_opt_pen)))
 		end
 	end
 
@@ -103,7 +103,9 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			gmt("begin " * fname)
 			IamModernBySubplot[1] = true	# We need this to know if subplot(:end) should call gmtend() or not
 		end
-		gmt("subplot begin " * cmd);
+		try
+			gmt("subplot begin " * cmd);	catch; resetGMT()
+		end
 		IamSubplot[1], IamModern[1] = true, true
 	elseif (do_set)
 		(!IamSubplot[1]) && error("Cannot call subplot(set, ...) before setting dimensions")
