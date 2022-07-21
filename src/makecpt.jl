@@ -81,7 +81,7 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg1)
 	cmd, Tvec = helper_cpt(d, cmd)
 	cmd = parse_E_mkcpt(d, [:E :nlevels], cmd, arg1)
-	got_N = (is_in_dict(d, [:N :no_bg :nobg]) !== nothing)
+	got_N = (is_in_dict(d, [:N :no_bg :nobg], del=true) !== nothing)
 
 	cmd = "makecpt " * cmd
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
