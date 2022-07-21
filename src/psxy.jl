@@ -100,6 +100,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd *= " -JZ6c"		# Default -JZ
+		CTRL.pocket_J[3] = " -JZ6c"		# Needed for eventual z-axis dir reversal.
 	end
 
 	cmd = add_opt(d, cmd, "A", [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
