@@ -52,7 +52,7 @@ function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_st
 	return nothing, Symbol()
 end
 
-function is_in_dict(d::Dict, symbs::VMs, help_str::String="", del::Bool=false)
+function is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)
 	# See if D contains any of the symbols in SYMBS. If yes, return the used smb in symbs
 	(show_kwargs[1] && help_str != "") && return print_kwarg_opts(symbs, help_str)
 	for symb in symbs
@@ -282,6 +282,7 @@ function parse_JZ(d::Dict, cmd::String, del::Bool=true)
 			cmd *= opt_J
 		end
 	end
+	CTRL.pocket_J[3] = opt_J
 	return cmd, opt_J
 end
 
@@ -323,11 +324,13 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			opt_J = append_figsize(d, opt_J)
 		elseif (!isnumeric(opt_J[end]) && (length(opt_J) < 6 || (isletter(opt_J[5]) && !isnumeric(opt_J[6]))) )
 			if (!IamSubplot[1])
-				if ( ((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
+				if (((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
 					opt_J *= set_aspect_ratio(val, "", true, haskey(d, :aspect3))
 				else
-					opt_J = (!startswith(opt_J, " -JX")) ? append_figsize(d, opt_J) : opt_J * def_fig_size
+					opt_J = (!startswith(opt_J, " -JX")) ? append_figsize(d, opt_J) :
+					         opt_J * def_fig_size; CTRL.pocket_J[2] = def_fig_size
 				end
+				CTRL.pocket_J[1] = opt_J
 			elseif (!occursin("?", opt_J))		# If we dont have one ? for size/scale already
 				opt_J *= "/?"
 			end
@@ -387,7 +390,8 @@ end
 
 function helper_append_figsize(d::Dict, opt_J::String, O::Bool)::String
 	val_, symb = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])
-	(val_ === nothing) && return ""
+	(val_ === nothing && is_in_dict(d, [:flipaxes :flip_axes]) === nothing) && return ""
+	#(val_ === nothing) && return ""
 	val::String = arg2str(val_)
 	if (occursin("scale", arg2str(symb)))		# We have a fig SCALE request
 		(O && opt_J == " -J") && error("In Overlay mode you cannot change a fig scale and NOT repeat the projection")
@@ -395,7 +399,7 @@ function helper_append_figsize(d::Dict, opt_J::String, O::Bool)::String
 		elseif (IamSubplot[1] && val == "auto,auto")  val = "?/?"
 		end
 		if (opt_J == " -JX")
-			val = check_axesswap(d, val)
+			val = check_flipaxes(d, val)
 			opt_J = isletter(val[1]) ? " -J" * val : " -Jx" * val		# FRAGILE
 		else                          opt_J = append_figsize(d, opt_J, val, true)
 		end
@@ -412,6 +416,7 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 	# Appending either a fig width or fig scale depending on what projection.
 	# Sometimes we need to separate with a '/' others not. If WIDTH == "" we
 	# use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
+
 	if (width == "")
 		width = (IamSubplot[1]) ? "?" : split(def_fig_size, '/')[1]		# In subplot "?" is auto width
 	elseif (IamSubplot[1] && (width == "auto" || width == "auto,auto"))	# In subplot one can say figsize="auto" or figsize="auto,auto"
@@ -446,7 +451,7 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 			end
 		end
 	end
-	width = check_axesswap(d, width)
+	width = check_flipaxes(d, width)
 	opt_J *= slash * width * de
 	CTRL.pocket_J[1], CTRL.pocket_J[2] = opt_J, width		# Save these for eventual (in -B) change if flip dims dir
 	if (scale)  opt_J = opt_J[1:3] * lowercase(opt_J[4]) * opt_J[5:end]  end 		# Turn " -JX" to " -Jx"
@@ -473,13 +478,17 @@ function set_aspect_ratio(aspect::String, width::String, def_fig::Bool=false, is
 	else
 		error("Non-sense 'aspect' value ($(aspect)) in set_aspect_ratio()")
 	end
+	CTRL.pocket_J[2] = width		# Save for the case we need to revert the axis dir
 	return width
 end
 
-function check_axesswap(d::Dict, width::AbstractString)
-	# Deal with the case that we want to invert the axis sense
-	# axesswap(x=true, y=true) OR  axesswap("x", :y) OR axesswap(:xy)
-	(width == "" || (val = find_in_dict(d, [:flip_axes :axesswap :axes_swap])[1]) === nothing) && return width
+function check_flipaxes(d::Dict, width::AbstractString)
+	# Deal with the case that we want to invert the axis sense.
+	# flipaxes(x=true, y=true) OR  flipaxes("x", :y) OR flipaxes(:xy)
+	# Note: 'flipaxes' is meant to be used in subplots only, where we are not(?) supposed to change the
+	# figs dimensions directly, but in fact it can be used in normal plots too though the 'flipx', etc...
+	# mechanism is clearer to read (NOT WORKING WELL).
+	(width == "" || (val = find_in_dict(d, [:flipaxes :flip_axes])[1]) === nothing) && return width
 
 	swap_x = false;		swap_y = false;
 	isa(val, Dict) && (val = dict2nt(val))
@@ -2495,6 +2504,20 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	(z) && (primo = "")								# Z axis have no primary/secondary
 	axe = x ? "x" : (y ? "y" : (z ? "z" : ""))		# Are we dealing with a specific axis?
 
+	# See if we have a request for axis direction flipping. If yes, just store that info to be used elsewhere.
+	# But it's so fck irritating that we can't change a string. Have to do this stupid gymnastic.
+	_jx, _jy, _jz = CTRL.pocket_J[4][1], CTRL.pocket_J[4][2], CTRL.pocket_J[4][3]
+	if (axe == "")
+		(is_in_dict(d, [:xflip, :flipx], del=true) !== nothing) && (_jx = 'Y')
+		(is_in_dict(d, [:yflip, :flipy], del=true) !== nothing) && (_jy = 'Y')
+		(is_in_dict(d, [:zflip, :flipz], del=true) !== nothing) && (_jz = 'Y')
+	else
+		(x && (is_in_dict(d, [:flip, :xflip, :flipx], del=true) !== nothing)) && (_jx = 'Y')
+		(y && (is_in_dict(d, [:flip, :yflip, :flipy], del=true) !== nothing)) && (_jy = 'Y')
+		(z && (is_in_dict(d, [:flip, :zflip, :flipz], del=true) !== nothing)) && (_jz = 'Y')
+	end
+	CTRL.pocket_J[4] = _jx * _jy * _jz
+
 	opt::String = " -B"
 	if ((val = find_in_dict(d, [:axes :frame])[1]) !== nothing)		# The :frame here makes no sense, I think.
 		isa(val, Dict) && (val = dict2nt(val))
@@ -3716,6 +3739,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
 	#while (length(args) > 1 && args[end] === nothing)  pop!(args)  end		# Remove trailing nothings
+	
+	reverse_plot_axes!(cmd)		# If CTRL.pocket_J[4] != "   " there is some work to do. Otherwise return unchanged
 
 	output, opt_T, fname_ext, fname, ret_ps = fname_out(d, true)
 	(ret_ps) && (output = "") 	 						# Here we don't want to save to file
@@ -3726,7 +3751,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	(have_Vd && d[:Vd] > 2) && show_args_types(args...)
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return length(r) == 1 ? r[1] : r  end
 	img_mem_layout[1] = add_opt(d, "", "", [:layout])
-	if (img_mem_layout[1] == "images")  img_mem_layout[1] = "I   "  end	# Special layout for Images.jl
+	(img_mem_layout[1] == "images") && (img_mem_layout[1] = "I   ")		# Special layout for Images.jl
 
 	if (fname_ext != "ps" && !IamModern[1] && !O)		# Exptend to a larger paper size (5 x A0)
 		#cmd[1] *= " --PS_MEDIA=11920x16850"			# In Modern mode GMT takes care of this.
@@ -3798,12 +3823,36 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 end
 
 # --------------------------------------------------------------------------------------------------
+function reverse_plot_axes!(cmd::Vector{String})
+	# See if there are requests to change axes directions. If yes we change the -J in the cmd[1] string
+	# CTRL.pocket_J = [opt_J width opt_Jz codes-to-tell-which-axis-to-reverse]
+	(CTRL.pocket_J[4] == "   ") && return
+	s = split(CTRL.pocket_J[2],"/")
+	s1 = (CTRL.pocket_J[4][1] != ' ') ? "-" * s[1] : s[1]
+	s2 = (CTRL.pocket_J[4][2] != ' ' && length(s) == 2) ? "-" * s[2] : (length(s) == 2 ? s[2] : "")
+
+	if (s[1] == '-' || (s2 != "" && s2[1] == '-'))	# It will not be the case if only Z dim flip was requested
+		newsize = (length(s) == 2) ? s1 * "/" * s2 : s1
+		t = replace(CTRL.pocket_J[1], CTRL.pocket_J[2] => newsize)
+		cmd[1] = replace(cmd[1], CTRL.pocket_J[1] => t)
+	end
+	if (CTRL.pocket_J[4][3] != ' ' && CTRL.pocket_J[3] != "")		# OK, here we have to patch the -JZ option
+		t = CTRL.pocket_J[3][1:4] * "-" * CTRL.pocket_J[3][5:end]
+		cmd[1] = replace(cmd[1], CTRL.pocket_J[3] => t)
+		CTRL.pocket_J[3] = ""
+	end
+
+	CTRL.pocket_J[4] = "   "			# It's enough to reset this one only
+	nothing
+end
+
+# --------------------------------------------------------------------------------------------------
 """
     regiongeog(GI)::Tuple
 
 Returns a tuple with (lon_min, lon_max, lat_min, lat_max) of the projected `GI` object limits converted
 to geographic coordinates. Returns an empty tuple if `GI` has no registered referencing system.
-`GI` can either a ``GMTgrid``, a ``GMTimage`` or a file name (String) of one those types.
+`GI` can either a `GMTgrid`, a `GMTimage` or a file name (String) of one those types.
 """
 function regiongeog(GI::GItype)::Tuple
 	((prj = getproj(GI, wkt=true)) == "") && (@warn("Input grid/image has no projection info"); return ())
