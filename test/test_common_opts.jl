@@ -300,11 +300,11 @@
 	@test o == " -TG -W+k+tLolo+nbla+f1/2+uhttp"
 	coast(region=:global, kml=:trans, proj=:merc,Vd=dbg2)
 
-	@test (GMT.check_axesswap(Dict(:axesswap => (y=1,)), "?") == "-?")
-	@test (GMT.check_axesswap(Dict(:axesswap => ("x", :y)), "?/?") == "-?/-?")
-	@test (GMT.check_axesswap(Dict(:axesswap => (xy=1,)), "?/?") == "-?/-?")
-	@test (GMT.check_axesswap(Dict(:axesswap => ("xy")), "?/?") == "-?/-?")
-	@test (GMT.check_axesswap(Dict(:axesswap => ("y")), "?/?") == "?/-?")
+	@test (GMT.check_flipaxes(Dict(:flipaxes => (y=1,)), "?") == "-?")
+	@test (GMT.check_flipaxes(Dict(:flipaxes => ("x", :y)), "?/?") == "-?/-?")
+	@test (GMT.check_flipaxes(Dict(:flipaxes => (xy=1,)), "?/?") == "-?/-?")
+	@test (GMT.check_flipaxes(Dict(:flipaxes => ("xy")), "?/?") == "-?/-?")
+	@test (GMT.check_flipaxes(Dict(:flipaxes => ("y")), "?/?") == "?/-?")
 
 	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:num)), "", "")[1] == "1/2/0.1+n")
 	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:num)), "", "T")[1] == " -T1/2/0.1+n")
