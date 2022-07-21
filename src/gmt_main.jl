@@ -1412,7 +1412,7 @@ function resetGMT()
 	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits .= 0.0;	CTRL.proj_linear[1] = true;
 	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
 	current_cpt[1]  = GMTcpt();		legend_type[1] = legend_bag();	ressurectGDAL()
-	def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;
+	def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;	CTRL.pocket_J[4] = "   ";
 	gmt_restart()
 	clear_sessions()
 end
