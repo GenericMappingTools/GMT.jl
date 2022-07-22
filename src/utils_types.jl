@@ -430,26 +430,13 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
 
 The `kw...` kwargs search for [:layout :mem_layout], [:names] and [:metadata]
 """
-function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
+function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(), y=Vector{Float64}(),
+	             v=Vector{Float64}(), hdr=nothing, proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
 	color_interp = "";		n_colors = 0;
 	if (cmap !== nothing)
-		have_alpha = !all(cmap.alpha .== 0.0)
-		nc = have_alpha ? 4 : 3
-		colormap = zeros(Int32, 256 * nc)
-		n_colors = 256;			# Because for GDAL we always send 256 even if they are not all filled
-		@inbounds for n = 1:3	# Write 'colormap' row-wise
-			@inbounds for m = 1:size(cmap.colormap, 1)
-				colormap[m + (n-1)*n_colors] = round(Int32, cmap.colormap[m,n] * 255);
-			end
-		end
-		if (have_alpha)						# Have alpha color(s)
-			for m = 1:size(cmap.colormap, 1)
-				colormap[m + 3*n_colors] = round(Int32, cmap.colormap[m,4] * 255)
-			end
-			n_colors *= 1000				# Flag that we have alpha colors in an indexed image
-		end
+		colormap, n_colors = cmap2colormap(cmap)
 	else
 		(size(mat,3) == 1) && (color_interp = "Gray")
 		if (hdr !== nothing && (hdr[5] == 0 && hdr[6] == 1))	# A mask. Let's create a colormap for it
@@ -471,8 +458,31 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	_names = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
 	_meta  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
 
-	I = GMTimage(proj4, wkt, 0, hdr[1:6], [x_inc, y_inc], reg, zero(eltype(mat)), color_interp, _meta, _names,
-	             x,y,v,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
+	GMTimage(proj4, wkt, 0, hdr[1:6], [x_inc, y_inc], reg, zero(eltype(mat)), color_interp, _meta, _names,
+	         x,y,v,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function cmap2colormap(cmap::GMTcpt, force_alpha=true)
+	# Convert a GMT CPT into a colormap to be ingested by GDAL
+	have_alpha = !all(cmap.alpha .== 0.0)
+	nc = (have_alpha || force_alpha) ? 4 : 3
+	colormap = zeros(Int32, 256 * nc)
+	n_colors = 256;			# Because for GDAL we always send 256 even if they are not all filled
+	@inbounds for n = 1:3	# Write 'colormap' col-wise
+		@inbounds for m = 1:size(cmap.colormap, 1)
+			colormap[m + (n-1)*n_colors] = round(Int32, cmap.colormap[m,n] * 255);
+		end
+	end
+	if (have_alpha)						# Have alpha color(s)
+		for m = 1:size(cmap.colormap, 1)
+			colormap[m + 3*n_colors] = round(Int32, cmap.colormap[m,4] * 255)
+		end
+		n_colors *= 1000				# Flag that we have alpha colors in an indexed image
+	elseif (force_alpha)
+		colormap[256*3+1:end] = zeros(UInt32, 256)
+	end
+	return colormap, n_colors
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -552,6 +562,58 @@ function mat2img(img::GMTimage; kw...)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing,
+	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=nothing, kw...)
+	# This is the same as Matlab's imagesc() ... plus some extras.
+	mi, ma = extrema(mat)
+	if (isnan(mi))			# Shit, such a memory waste we need to do.
+		mi, ma = extrema_nan(mat)
+		t = isa(mat, GMTgrid) ? Float32.((mat.z .- mi) ./ (ma - mi) .* 255) : Float32.((mat .- mi) ./ (ma - mi) .* 255)
+		for k in CartesianIndices(t)  isnan(t[k]) && (t[k] = 255f0)  end
+		img = round.(UInt8, t)
+	else
+		img = round.(UInt8, (mat .- mi) ./ (ma - mi) .* 255)
+	end
+	(clim[1] >= clim[2]) && error("CLIM values are non-sense (min > max)")
+	if (clim[1] > 0 && clim[1] < 255)
+		for k in eachindex(img)  if (img[k] < clim[1])  img[k] = clim[1]  end  end
+	end
+	if (clim[2] < 255 && clim[2] > 0)
+		for k in eachindex(img)  if (img[k] > clim[2])  img[k] = clim[2]  end  end
+	end
+	if (!isa(mat, GMTgrid) && GI !== nothing)
+		I = mat2img(img, GI)
+		if (cmap !== nothing)  I.colormap, I.n_colors = cmap2colormap(cmap)
+		else                   I.colormap, I.n_colors = zeros(Int32,3), 0	# Do not inherit this from GI
+		end
+	elseif (isa(mat, GMTgrid))
+		I = mat2img(img; x=mat.x, y=mat.y, hdr=hdr, proj4=mat.proj4, wkt=mat.wkt, cmap=cmap, kw...)
+	else
+		I = mat2img(img; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, kw...)
+	end
+	return I
+end
+
+"""
+    imagesc(mat; x=, y=, hdr=, proj4=, wkt=, GI=, clim=, cmap=, kw...)
+
+imagesc takes a Float matrix or a GMTgrid type and scales it (by default) to the [0, 255] interval.
+In the process it creates a GMTimage type. Those types can account for coordinates and projection
+information, hence the optional arguments. Contrary to its Matlab cousin, it doesn't display the
+result (that we easily do with `imshow(mat)`) but return instead a GMTimage object.
+
+  - `clim`: Specify clims as a two-element vector of the form [cmin cmax], where values of the scaled image
+     less than or equal to cmin are assigned that value. The same goes for cmax.
+  - `cmap`: If provided, `cmap` is a GMTcpt and its contents is converted to the `GMTimage` colormp.
+  - `GI`: This can be either a GMTgrid or a GMTimage and its contents is used to set spatial contents
+     (x,y coordinates) and projection info that one may attach to the created image result. This is
+	 a handy alterative to the `x=, y=, proj4=...` options.
+"""
+function imagesc(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing,
+	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=nothing, kw...)
+	mat2img(mat, x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, GI=GI, clim=clim, cmap=cmap, kw...)
+end
+# ---------------------------------------------------------------------------------------------------
 # This method creates a new GMTimage but retains all the header data from the IMG object
 function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(I.range);	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
@@ -580,7 +642,19 @@ Extract a slice from a GMTgrid cube.
     between layers 2 and 3 where each layer weights 50% in the end result. NOTE: the return type is
     still a cube but with one layer only (and the corresponding axis coordinate).
   - `axis`: denotes the dimension being sliced. The default, "z", means the slices are taken from the
-    vertical axis. `axis="x"` means slice along one column, and `axis="y"` slice along a row.
+    vertical axis. `axis="x"` means slice along a column, and `axis="y"` slice along a row.
+
+	slicecube(GI::GItype; slice::Int=0, angle=0.0, axis="x", cmap=GMTcpt())
+
+Take a slice of a GMTgrid or GMTimage in an oblique direction. Take the cube's layer `slice` and rotate it
+by `angle` degrees about the `axis`. This one can only be `axis=:x` or `axis=:y`. Depending on the data
+type of input a different output is produces. If `GI` is a GMTgrid, the output is 2 GMTgrids: one with `z`
+levels and the other with cube's z levels along that plane. On the other hand, if GI isa GMTimage the
+first output is similar to previus case but the second will be a GMTimage. In this case the `cmap` option
+may be used to assign a colortable to the image type.
+
+The value at the slice point, P(x[i,j], y[i,j], z[i, j)), is the interpolated value of the two nearest
+voxels on the same vertical.
 
 ### Example
 Get the fourth layer of the multi-layered 'I' GMTimage object 
@@ -657,8 +731,55 @@ function slicecube(G::GMTgrid, slice::AbstractFloat; axis="z")
 	G_.layout = G.layout
 	return G_
 end
-const cubeslice = slicecube		# I'm incapable of remembering which one it is.
 
+function slicecube(GI::GItype; slice::Int=0, α=0.0, angle=0.0, axis="x", cmap=GMTcpt())
+	# Adapted from function in https://discourse.julialang.org/t/oblique-slices-in-makie/83879/8
+	# Returns a GMTgrid, GMTimage in case GI is an GMTimage, or two GMTgrids otherwise.
+	_axis = lowercase(strig(axis))
+	(_axis != "x" && _axis != "y") && error("rotate only about xaxis or yaxis")
+	(ndims(GI) < 3 || size(GI,3) < 2) && error("This is not a cube grid/image.")
+	r, c, h = size(GI)
+	xl = 0:1:c-1
+	yl = 0:1:r-1
+	(α == 0 && angle != 0) && (α = angle)
+	α = Float32(deg2rad(α))
+	if (_axis == "x")  z = slice / cos(α) .+ yl .* ones(Float32,r,c)   .* tan(α)
+	else               z = slice / cos(α) .- ones(Float32,r, c) .* xl' .* tan(α)  
+	end
+
+	# the value at the slice point, P(x[i,j], y[i,j], z[i, j)), is the
+	# interpolated value of the two nearest voxels on the same vertical
+	if (isa(GI, GMTimage))
+		sc = fill(UInt8(255), r, c)
+		for idx in CartesianIndices(z) 
+			s = floor(Int, z[idx])
+			if 0 <= z[idx] <= h-1
+				t = z[idx] - s
+				tt = (1-t) * GI[idx, s+1] + t * GI[idx, s+2]
+				sc[idx] = tt < 0 ? 0 : (tt > 255 ? 255 : round(UInt8(tt)))
+			end
+		end
+		I = mat2img(sc, GI)
+		if (cmap !== nothing)  I.colormap, I.n_colors = cmap2colormap(cmap)
+		else                   I.colormap, I.n_colors = zeros(Int32,3), 0	# Do not inherit this from GI
+		end
+		return mat2grid(z, GI), I
+	else
+		sc = similar(z) 	#surfacecolor
+		for idx in CartesianIndices(z) 
+			s = floor(Int, z[idx])
+			if 0 <= z[idx] <= h-1
+				t = z[idx] - s
+				sc[idx] = (1-t) * GI[idx, s+1] + t * GI[idx, s+2]
+			else
+				sc[idx] = NaN
+			end
+		end
+		return mat2grid(z, GI), mat2grid(sc, GI)
+	end
+end
+
+const cubeslice = slicecube		# I'm incapable of remembering which one it is.
 # ---------------------------------------------------------------------------------------------------
 """
     xyzw2cube(fname::AbstractString; datatype::DataType=Float32, proj4::String="", wkt::String="",
@@ -748,11 +869,11 @@ Stack a bunch of single grids in a multiband cube like file.
 - `v`: A vector with the vertical coordinates. If not provided one with 1:length(names) will be generated.
   - If `v` is a TimeType use the `z_unit` keyword to select what to store in file (case insensitive).
     - `decimalyear` or `yeardecimal` converts the DateTime to decimal years (Floa64)
-	- `milliseconds` (or just `mil`) will store the DateTime as milliseconds since 0000-01-01T00:00:00 (Float64)
-	- `seconds` stores the DateTime as seconds since 0000-01-01T00:00:00 (Float64)
-	- `unix` stores the DateTime as seconds since 1970-01-01T00:00:00 (Float64)
-	- `rata` stores the DateTime as days since 0000-12-31T00:00:00 (Float64)
-	- `Date` or `DateTime` stores as a string representation of a DateTime.
+    - `milliseconds` (or just `mil`) will store the DateTime as milliseconds since 0000-01-01T00:00:00 (Float64)
+    - `seconds` stores the DateTime as seconds since 0000-01-01T00:00:00 (Float64)
+    - `unix` stores the DateTime as seconds since 1970-01-01T00:00:00 (Float64)
+    - `rata` stores the DateTime as days since 0000-12-31T00:00:00 (Float64)
+    - `Date` or `DateTime` stores as a string representation of a DateTime.
 - `zdim_name`: The name of the vertical axes (default is "time")
 - `zcoord`: Keyword same as `v` (may use one or the other).
 - `save`: The name of the file to be created.
@@ -864,18 +985,12 @@ or
 
 Add (or replace) a colormap to a GMTimage object from the colors in the cpt.
 This should have effect only if IMG is indexed.
-Use `image_cpt!(img, clear=true)` to remove a previously existent `colormap` field in IMG
+Use `image_cpt!(img, clear=true)` to remove a previously existant `colormap` field in IMG
 """
-image_cpt!(img::GMTimage, cpt::String) = image_cpt!(img, gmtread(cpt))
-function image_cpt!(img::GMTimage, cpt::GMTcpt)
+image_cpt!(I::GMTimage, cpt::String) = image_cpt!(I, gmtread(cpt))
+function image_cpt!(I::GMTimage, cpt::GMTcpt)
 	# Insert the cpt info in the img.colormap member
-	n = 1
-	colormap = fill(Int32(255), size(cpt.colormap,1) * 4)
-	for k = 1:size(cpt.colormap,1)
-		colormap[n:n+2] = round.(Int32, cpt.colormap[k,:] .* 255);	n += 4
-	end
-	img.colormap = colormap
-	img.n_colors = size(cpt.colormap,1)
+	I.colormap, I.n_colors = cmap2colormap(cpt)
 	return nothing
 end
 function image_cpt!(img::GMTimage; clear::Bool=true)
@@ -887,26 +1002,31 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    I = ind2rgb(I)
+    I = ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt())
 
-Convert an indexed image I to RGB. It uses the internal colormap to do the conversion.
+Convert an indexed image I to RGB. If `cmap` is not provided, it uses the internal colormap to do the conversion.
+If neither them exists, the layer is replicated 3 times thus resulting in a gray scale image.
 """
-function ind2rgb(img::GMTimage)
-	# ...
-	(size(img.image, 3) >= 3) && return img 	# Image is already RGB(A)
-	if (img.n_colors == 0)				# If no cmap just replicate the first layer.
-		imgRGB = repeat(img.image, 1, 1, 3)
+function ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt())
+	(size(I.image, 3) >= 3) && return I 	# Image is already RGB(A)
+
+	# If the CPT is shorter them maximum in I, reinterpolate the CPT
+	(!isempty(cmap) && (ma = maximum(I)) > size(cmap.colormap,1)) && (cmap = gmt("makecpt -T0/{$ma}/+n{$ma}", cmap))
+	_cmap = (!isempty(cmap)) ? cmap2colormap(cmap::GMTcpt)[1] : I.colormap
+
+	if (I.n_colors == 0 && isempty(cmap))		# If no cmap just replicate the first layer.
+		imgRGB = repeat(I.image, 1, 1, 3)
 	else
-		imgRGB = zeros(UInt8,size(img.image,1), size(img.image,2), 3)
-		n = 1
-		@inbounds for k = 1:length(img.image)
-			start_c = img.image[k] * 4
-			for c = 1:3
-				imgRGB[n] = img.colormap[start_c+c];	n += 1
+		imgRGB = zeros(UInt8,size(I,1), size(I,2), 3)
+		n = 0
+		for c = 1:3
+			start_c = (c - 1) * 256 + 1		# +1 because indices start a 1
+			for k in eachindex(I.image)
+				imgRGB[n+=1] = _cmap[I.image[k] + start_c];
 			end
 		end
 	end
-	mat2img(imgRGB, x=img.x, y=img.y, proj4=img.proj4, wkt=img.wkt, mem_layout=img.layout)
+	mat2img(imgRGB, x=I.x, y=I.y, proj4=I.proj4, wkt=I.wkt, mem_layout=I.layout)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -915,7 +1035,7 @@ end
 	             wkt::String="", tit::String="", rem::String="", cmd::String="",
 				 names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0)
 
-Take a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor and 
+ITake a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor and 
 return a grid GMTgrid type. Alternatively to HDR, provide a pair of vectors, `x` & `y`, with the X and Y coordinates.
 Optionaly add a `v` vector with vertical coordinates if `mat` is a 3D array and one wants to create a ``cube``.
 Optionaly, the HDR arg may be ommited and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
