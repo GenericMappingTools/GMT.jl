@@ -735,7 +735,7 @@ end
 function slicecube(GI::GItype; slice::Int=0, α=0.0, angle=0.0, axis="x", cmap=GMTcpt())
 	# Adapted from function in https://discourse.julialang.org/t/oblique-slices-in-makie/83879/8
 	# Returns a GMTgrid, GMTimage in case GI is an GMTimage, or two GMTgrids otherwise.
-	_axis = lowercase(strig(axis))
+	_axis = lowercase(string(axis))
 	(_axis != "x" && _axis != "y") && error("rotate only about xaxis or yaxis")
 	(ndims(GI) < 3 || size(GI,3) < 2) && error("This is not a cube grid/image.")
 	r, c, h = size(GI)
