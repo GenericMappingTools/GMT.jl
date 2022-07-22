@@ -71,7 +71,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			del_from_dict(d, [:F, :dims, :dimensions, :size, :sizes])
 		else
 			cmd = add_opt(d, cmd, "F", [:F :dims :dimensions :size :sizes],
-			              (panels=("-s", helper_sub_F, 1), size=("", helper_sub_F, 2), sizes=("", helper_sub_F, 2), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F), clearance=("+c", arg2str), outine=("+p", add_opt_pen), fill=("+g", add_opt_fill), divlines=("+w", add_opt_pen)))
+			              (panels=("-s", helper_sub_F, 1), size=("_f", helper_sub_F, 2), sizes=("_f", helper_sub_F, 2), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F), clearance=("+c", arg2str), outine=("+p", add_opt_pen), fill=("+g", add_opt_fill), divlines=("+w", add_opt_pen)))
 		end
 	end
 
