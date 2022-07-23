@@ -232,6 +232,9 @@
 	GMT.mat2img(rand(UInt16,32,32,3),stretch=:auto);
 	I = GMT.mat2img(img16, I)
 	slicecube(I, 2)
+	I = GMT.mat2img(rand(8,8), clim=[50, 200])
+	I = GMT.mat2img(rand(8,8), GI=mat2grid(rand(8,8)))
+	I = GMT.mat2img(rand(8,8), GI=mat2grid(rand(8,8)), cmap=makecpt(T=(0,1),))
 	@test rescale(1:5,-1,1) == -1.0:0.5:1
 	@test rescale(1:4, type=UInt8) == [0, 85, 170, 255]
 	magic(4)
