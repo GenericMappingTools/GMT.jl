@@ -756,7 +756,7 @@ function slicecube(GI::GItype; slice::Int=0, α=0.0, angle=0.0, axis="x", cmap=G
 			if 0 <= z[idx] <= h-1
 				t = z[idx] - s
 				tt = (1-t) * GI[idx, s+1] + t * GI[idx, s+2]
-				sc[idx] = tt < 0 ? 0 : (tt > 255 ? 255 : round(UInt8(tt)))
+				sc[idx] = tt < 0 ? 0 : (tt > 255 ? 255 : round(UInt8,tt))
 			end
 		end
 		I = mat2img(sc, GI)
