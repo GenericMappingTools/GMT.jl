@@ -235,6 +235,8 @@
 	I = GMT.mat2img(rand(8,8), clim=[50, 200])
 	I = GMT.mat2img(rand(8,8), GI=mat2grid(rand(8,8)))
 	I = GMT.mat2img(rand(8,8), GI=mat2grid(rand(8,8)), cmap=makecpt(T=(0,1),))
+	mat = rand(8,8);	mat[10] = NaN
+	imagesc(mat2grid(mat))
 	@test rescale(1:5,-1,1) == -1.0:0.5:1
 	@test rescale(1:4, type=UInt8) == [0, 85, 170, 255]
 	magic(4)
@@ -244,6 +246,8 @@
 	@test D[1].header == " -W5p,black"
 
 	D = [mat2ds([0 0; 1 1],["a", "b"])];	D[1].header = "a";
+	mat2ds(D)
+	mat2ds("blabla")
 	D[1].attrib = Dict("nome" => "a", "nome2" => "b");
 	GMT.polygonlevels(D, ["a", "b"], [1,2], att="nome");
 	GMT.polygonlevels(D, ["a", "b"], [1,2], att="nome", nocase=1);

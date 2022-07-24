@@ -1,13 +1,13 @@
 cube = gdaltranslate("cube.nc");
 
-slicecube(cube, 2.);
-slicecube(cube, 2., axis="y");
-slicecube(cube, 2., axis="x");
+slicecube(cube, 2.5);
+slicecube(cube, 2.5, axis="y");
+slicecube(cube, 2.5, axis="x");
 slicecube(cube, 2);
 slicecube(cube, 2, axis="y");
 slicecube(cube, 2, axis="x");
-slicecube(mat2grid(rand(Float32, 32, 32, 32)), slice=30, angle=20);
-slicecube(mat2img(rand(UInt8, 32, 32, 32)), slice=30, angle=20);
+slicecube(mat2grid(rand(Float32, 32, 32, 32)), slice=25, angle=20);
+slicecube(mat2img(rand(UInt8, 32, 32, 32)), slice=25, angle=20, axis="y");
 
 x,y = GMT.meshgrid(-10:10);
 u = 2 .* x .* y;

@@ -8,7 +8,7 @@ Full option list at [`grdinfo`]($(GMTdoc)grdinfo.html)
 Parameters
 ----------
 
-- **C** | **numeric** :: [Type => Str | Number]
+- **C** | **oneliner** | **numeric** :: [Type => Str | Number]
 
     Formats the report using tab-separated fields on a single line.
     ($(GMTdoc)grdinfo.html#c)
@@ -17,11 +17,14 @@ Parameters
     Divide a single grid’s domain (or the -R domain, if no grid given) into tiles of size
     dx times dy (set via -I).
     ($(GMTdoc)grdinfo.html#d)
-- **F** :: [Type => Bool]
+- **E** | **extrema** | **extreme** :: [Type => Bool]
+
+    Report the extreme values found on a per column (E=:x) or per row (E=:y) basis.
+- **F** | **report_ingeog** :: [Type => Bool]
 
     Report grid domain and x/y-increments in world mapping format.
     ($(GMTdoc)grdinfo.html#f)
-- **G** | **force_download** :: [Type => Bool]
+- **G** | **force** :: [Type => Bool]
 
     Force (possible) download and mosaicing of all tiles of tiled global remote grids in order
     to report the requested information.
@@ -44,18 +47,20 @@ Parameters
     Input files must be data 3-D netCDF data cube. Not compatible with **D**, **E**, **F**, and **Ib** (GMT6.2)
     ($(GMTdoc)grdinfo.html#q)
 - $(GMT.opt_R)
-- **T** | **zmin_max** :: [Type => Number | Str]
+- **T** | **minmax** :: [Type => Number | Str]
     Determine min and max z-value.
     ($(GMTdoc)grdinfo.html#t)
 - $(GMT.opt_V)
 - $(GMT.opt_f)
+- $(GMT.opt_o)
 """
 function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:R :V_params :f])
-	cmd  = parse_these_opts(cmd, d, [[:C :numeric], [:D :tiles], [:F], [:G :force_download], [:I :nearest],
-	                                 [:L :force_scan], [:M :minmax_pos], [:Q :cube], [:T :zmin_max]])
+	cmd, = parse_common_opts(d, "", [:R :V_params :f :o])
+    (is_in_dict(d, [:numeric], del=true) !== nothing) && (cmd *= " -Cn")
+	cmd  = parse_these_opts(cmd, d, [[:C :oneliner], [:D :tiles], [:E :extrema :extreme], [:F :report_ingeog],
+                                     [:G :force :force_download], [:I :nearest], [:L :force_scan], [:M :minmax_pos], [:Q :cube], [:T :minmax :zmin_max]])
     (isa(arg1, GMTgrid) && size(arg1,3) > 1 && !occursin("-Q", cmd)) && (cmd *= " -Q")  # arg1 is a CUBE
 	common_grd(d, cmd0, cmd, "grdinfo ", arg1)		# Finish build cmd and run it
 end
