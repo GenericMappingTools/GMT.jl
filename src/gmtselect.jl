@@ -38,7 +38,7 @@ Parameters
     Pass all locations that are inside the valid data area of the grid gridmask.
     Nodes that are outside are either NaN or zero.
     ($(GMTdoc)gmtselect.html#g)
-- **I** | **reverse** :: [Type => Str | []]    `Arg = [cflrsz]`
+- **I** | **reverse** | **revert** :: [Type => Str | []]    `Arg = [cflrsz]`
 
     Reverses the sense of the test for each of the criteria specified.
     ($(GMTdoc)gmtselect.html#i)
@@ -76,7 +76,7 @@ function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing, ar
 
 	cmd::String = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :w :yx])[1]
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary],
-	                                 [:G :gridmask], [:I :reverse], [:N :mask], [:Z :in_range]])
+	                                 [:G :gridmask], [:I :reverse :revert], [:N :mask], [:Z :in_range]])
 	#cmd = add_opt(d, cmd, "N', [:N :mask], (ocean=("", arg2str, 1), land=("", arg2str, 2)) )
 	#=
 	if ((val = find_in_dict(d, [:F :polygon])[1]) !== nothing)
