@@ -89,6 +89,7 @@ contour([x[:] y[:] z[:]],cont=[-2,0,3], Vd=dbg2)
 println("	PSIMAGE")
 psimage("lixo.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7)
 psimage!("lixo.png", D="x0.5c/0.5c+jBL+w6c", R="0/1/0/1", J=:X7, Vd=dbg2)
+image("@vader1.png", bit_bg=:darkgray, bit_fg=:yellow, Vd=dbg2)
 
 println("	PSSCALE")
 C = makecpt(T="-200/1000/100", C="rainbow");

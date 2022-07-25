@@ -17,6 +17,9 @@ Parameters
 
     Without further options, draws a rectangular border around the image using MAP_FRAME_PEN.
     ($(GMTdoc)image.html#f)
+- **G** | **bit_color** | **bit_bg|fg|alpha**:: [Type => Str]
+
+    Change certain pixel values to another color or make them transparent.
 - **I** | **invert** :: [Type => Str | Number]
 
     Invert 1-bit image before plotting.
@@ -45,13 +48,11 @@ function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")[1]
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :c :p :t :params], first)[1]
 	cmd = parse_these_opts(cmd, d,  [[:I :invert], [:M :monochrome]])
-	if ((val = find_in_dict(d, [:G :bit_color])[1]) !== nothing)
-		if (isa(val, String))  cmd *= string(" -G", val)
-		elseif (isa(val, Tuple) && eltype(val) == String)
-			for v in val  cmd *= " -G" * v  end
-		else  @warn("bit_color syntax not implemented yet")
-		end
-	end
+	((val = find_in_dict(d, [:G :bit_color])[1]) !== nothing && isa(val, String)) && (cmd *= string(" -G", val))
+	((val = find_in_dict(d, [:bit_bg])[1]) !== nothing) && (cmd = add_opt_fill(val, cmd, " -G") * "+b")
+	((val = find_in_dict(d, [:bit_fg])[1]) !== nothing) && (cmd = add_opt_fill(val, cmd, " -G") * "+f")
+	((val = find_in_dict(d, [:bit_alpha])[1]) !== nothing) && (cmd = add_opt_fill(val, cmd, " -G") * "+t")
+
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
 	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), dpi="+r", width=("+w", arg2str), justify="+j", repeat=("+n", arg2str), offset=("+o", arg2str)), 'j')
 
