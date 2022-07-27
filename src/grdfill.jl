@@ -9,7 +9,7 @@ Full option list at [`grdfill`]($(GMTdoc)grdfill.html)
 Parameters
 ----------
 
-- **A** | **algo** :: [Type => Str]		``Arg = mode[arg]``
+- **A** | **mode** :: [Type => Str]		``Arg = mode[arg]``
 
     Specify the hole-filling algorithm to use. Choose from c for constant fill and append the constant value,
     n for nearest neighbor (and optionally append a search radius in pixels). 
@@ -35,7 +35,7 @@ function grdfill(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :R :V_params :f])
-	cmd  = parse_these_opts(cmd, d, [[:A :algo], [:L :list], [:N :nodata]])
+	cmd  = parse_these_opts(cmd, d, [[:A :mode :algo], [:L :list], [:N :nodata]])
 
 	common_grd(d, cmd0, cmd, "grdfill ", arg1)		# Finish build cmd and run it
 end

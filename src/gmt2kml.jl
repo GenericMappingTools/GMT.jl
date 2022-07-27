@@ -36,11 +36,11 @@ Parameters
     Specify the URL to an alternative icon that should be used for the symbol
     [Default is a Google Earth circle].
     ($(GMTdoc)gmt2kml.html#i)
-- **K** | **not_finished** :: [Type => Bool]
+- **K** | **not_over** :: [Type => Bool]
 
     Allow more KML code to be appended to the output later [finalize the KML file].
     ($(GMTdoc)gmt2kml.html#k)
-- **L** | **extended_data** :: [Type => Str]      ``Arg = name1,name2,…``
+- **L** | **extra_data** :: [Type => Str]      ``Arg = name1,name2,…``
 
     Extended data given. Append one or more column names separated by commas.
     ($(GMTdoc)gmt2kml.html#l)
@@ -62,7 +62,7 @@ Parameters
     in z-data units per the user’s units
     ($(GMTdoc)gmt2kml.html#q)
 - $(GMT.opt_R)
-- **S** | **scale** :: [Type => Str]      ``Arg =  c|nscale``
+- **S** | **ilscale** :: [Type => Str]      ``Arg =  c|nscale``
 
     Scale icons or labels. Here, S=:c sets a scale for the symbol icon, whereas S=:n sets
     a scale for the name labels
@@ -96,7 +96,7 @@ function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :altitude_mode], [:D :descript], [:E :extrude], [:F :feature_type],
-	                                 [:I :icon], [:K :not_finished], [:L :extended_data], [:N :feature_name], [:O :overlay], [:Qa :wiggles], [:Qs :wiggle_scale], [:S :scale], [:T :title], [:Z :attrib]])
+	                                 [:I :icon], [:K :not_over], [:L :extra_data], [:N :feature_name], [:O :overlay], [:Qa :wiggles], [:Qi :wiggle_fixedazim], [:Qs :wiggle_scale], [:S :ilscale], [:T :title], [:Z :attrib]])
 
 	cmd = add_opt(d, cmd, "G", [:G :fill])
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)     # TRUE to also seek (lw,lc,ls)
@@ -104,6 +104,7 @@ function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_used, arg1)
+    cmd = write_data(d, cmd)
 	common_grd(d, "gmt2kml " * cmd, arg1, arg2)		# Finish build cmd and run it
 end
 
