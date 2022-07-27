@@ -954,8 +954,7 @@ Converts ternary to cartesian units.
 function tern2cart(abcz::Matrix{<:Real}, reverse::Bool=false)
 	# converts ternary to cartesian units. ABCZ is either a Mx3 (a,b,c) or Mx4 (a,b,c,z) matrix
 	a,b,c = !reverse ? (3,1,2) : (1,2,3)
-	#s = view(abcz, :, a) + view(abcz, :, b) + view(abcz, :, c)	# s = (a + b + c)
-	s = sum(view(abcz, :, 1:3))
+	s = view(abcz, :, a) + view(abcz, :, b) + view(abcz, :, c)	# s = (a + b + c)
 	x = 0.5 .* (2.0 .* view(abcz, :, b) + view(abcz, :, c)) ./ s
 	y = 0.5 .* sqrt(3.) .* view(abcz, :, c) ./ s
 	return (size(abcz,2) == 3) ? [x y] : [x y abcz[:,4]]
