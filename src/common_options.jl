@@ -92,6 +92,38 @@ function GMTsyntax_opt(d::Dict, cmd::String)::String
 	cmd
 end
 
+# ---------------------------------------------------------------------------------------------------
+function parse_paper(d::Dict)
+	# If user set the 'paper' option, move to paper coordinates. By default set a background
+	# canvas of 2x2 m. But for tuning it may be useful to plot a grid. For that use 'paper=:grid'
+	# Other option is to set the units to inches. For it use 'paper=:inch'
+	# If both inches and grid is intended use 'paper=(:inch,:grid)'
+	((val = find_in_dict(d, [:paper])[1]) === nothing) && return nothing
+
+	opt_J, opt_B, opt_R = " -Jx1c", "", " -R0/200/0/200"
+	if (isa(val, Tuple) && string(val[1])[1] == 'i' && string(val[2])[1] == 'g')
+		opt_J, opt_B, opt_R = " -Jx1i", " -Ba1f1g1", " -R0/10/0/10"
+	elseif (isa(val, String) || isa(val, Symbol))
+		c = string(val)[1]
+		(c == 'i') && (opt_J = " -Jx1i")
+		(c == 'g') && (opt_B = " -Ba1f1g1"; opt_R = " -R0/25/0/25")
+	end
+
+	proggy = (IamModern[1]) ? "plot -T" : "psxy -T"
+	t = IamModern[1] ? "" : " -O -K >> " * joinpath(tempdir(), "GMTjl_tmp.ps")
+	gmt(proggy * opt_R * opt_J * opt_B * t)
+	CTRL.IamInPaperMode[1] = true
+	return nothing
+end
+function leave_paper_mode()
+	# Reset the -R -J previous to the paper mode setting
+	t = IamModern[1] ? "" : " -O -K >> " * joinpath(tempdir(), "GMTjl_tmp.ps")
+	CTRL.IamInPaperMode[1] && gmt("psxy -T " * CTRL.pocket_R[1] * CTRL.pocket_J[1] * CTRL.pocket_J[3] * t)
+	CTRL.IamInPaperMode[1] = false
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
 parse_RIr(d::Dict, cmd::String, O::Bool=false, del::Bool=true) = parse_R(d, cmd, O, del, true)
 function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=false)::Tuple{String, String}
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
@@ -144,11 +176,13 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 		catch
 			CTRL.limits .= 0.0
 		end
+		(opt_R != " -R") && (CTRL.pocket_R[1] = opt_R)
 	end
 	cmd = cmd * opt_R
 	return cmd, opt_R
 end
 
+# ---------------------------------------------------------------------------------------------------
 function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function that deals with all but NamedTuple args
 	R::String = ""
 	if (isa(Val, String) || isa(Val, Symbol))
@@ -175,6 +209,7 @@ function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function tha
 	return R
 end
 
+# ---------------------------------------------------------------------------------------------------
 function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 	# Option -R can also be diabolicly complicated. Try to addres it. Stil misses the Time part.
 	BB::String = ""
@@ -3803,6 +3838,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		(orig_J != "") && (gmt("psxy -T -J" * orig_J * " -R" * orig_R * " -O -K >> " * output);  orig_J = "")
 	end
 
+	#leave_paper_mode(IamInPaperMode)		# See if we were in an intermediate state of paper coordinates
 	if (usedConfPar[1])				# Hacky shit to force start over when --PAR options were use
 		usedConfPar[1] = false;		gmt_restart()
 	end
