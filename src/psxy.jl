@@ -40,6 +40,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		d[:p] = "200/30"		# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
 	end
 
+	parse_paper(d)				# See if user asked to temporarily pass into paper mode coordinates
+
 	if (is_ternary)
 		opt_B::String = ""
 		if (haskey(d, :B))		# Not necessarely the case when ternary!

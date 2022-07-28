@@ -106,6 +106,8 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		arg1
 	end
 
+	parse_paper(d)		# See if user asked to temporarily pass into paper mode coordinates
+
 	if (!isa(arg1, GDtype) && (val = find_in_dict(d, [:text :txt])[1]) !== nothing)		# Accept ([x y], text=...)
 		arg1 = (!haskey(d, :x) && isa(arg1, Matrix) || isvector(arg1)) ? mat2ds(arg1, [string(val)]) : parse_xy(d, val)
 	end
