@@ -3,6 +3,7 @@ module GMT
 using Printf, Dates, Statistics, Pkg
 using Tables: Tables
 using PrettyTables
+#using SnoopPrecompile
 
 struct CTRLstruct
 	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits
@@ -12,6 +13,8 @@ struct CTRLstruct
 	pocket_call::Vector{Any}		# To temporarily store data needed by modules sub-calls
 	pocket_B::Vector{String}		# To temporarily store opt_B grid and fill color to be reworked in psclip
 	pocket_J::Vector{String}		# To temporarily store opt_J and fig size to eventualy flip directions (y + down, etc)
+	pocket_R::Vector{String}		# To temporarily store opt_R
+	IamInPaperMode::Vector{Bool}	# To know if we are in a under-the-hood paper mode
 	gmt_mem_bag::Vector{Ptr{Cvoid}}	# To temporarily store a GMT owned memory to be freed in gmt()
 end
 
@@ -96,7 +99,7 @@ const def_fig_axes_bak     = " -Baf -BWSen"        # Default fig axes for plot l
 const def_fig_axes3_bak    = " -Baf -Bza"          # 		"" but for 3D views
 const global def_fig_axes  = [def_fig_axes_bak]    # This one may be be changed by theme()
 const global def_fig_axes3 = [def_fig_axes3_bak]   #		""
-const global CTRL = CTRLstruct(zeros(12), zeros(3), [true], [:clip, :coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing], ["",""], ["","", "", "   "], [C_NULL])
+const global CTRL = CTRLstruct(zeros(12), zeros(3), [true], [:clip, :coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing], ["",""], ["","", "", "   "], [""], [false], [C_NULL])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
@@ -311,6 +314,12 @@ function __init__(test::Bool=false)
 	gmtlib_setparameter(G_API[1], "MAP_DEFAULT_PEN", "0.5p,black")	# Change the default 0.25 pen thickness in -W
 	#(GMTver >= v"6.4") && gmtlib_setparameter(G_API[1], "MAP_EMBELLISHMENT", "auto")
 end
+
+#@precompile_all_calls begin
+	#plot(rand(5,2))
+	#makecpt(T=(0,10))
+	#grdimage(rand(Float32,32,32))
+#end
 
 include("precompile_GMT_i.jl")
 _precompile_()
