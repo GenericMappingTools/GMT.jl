@@ -165,8 +165,10 @@ end
 function theme_modern()
 	# Set the MODERN mode settings
 	(GMTver < v"6.2.0") && return nothing
-	swapmode(G_API[1], classic=false)		# Set GMT->current.setting.run_mode = GMT_MODERN
-	reset_defaults(G_API[1])					# Set the modern mode settings
+	swapmode(G_API[1], classic=false)			# Set GMT->current.setting.run_mode = GMT_MODERN
+	#reset_defaults(G_API[1])					# Set the modern mode settings
+	#extra_sets()
+	resetdefaults(G_API[1])
 	gmtlib_setparameter(G_API[1], "MAP_FRAME_PEN", "0.75")
 	!IamModern[1] && swapmode(G_API[1], classic=true)	# Reset GMT->current.setting.run_mode = GMT_CLASSIC
 	return nothing
@@ -176,7 +178,16 @@ end
 function theme_classic()
 	(GMTver < v"6.2.0") && return nothing
 	swapmode(G_API[1], classic=true)			# Set GMT->current.setting.run_mode = GMT_CLASSIC
-	reset_defaults(G_API[1])					# Set the classic mode settings
+	#reset_defaults(G_API[1])					# Set the classic mode settings
+	#extra_sets()
+	resetdefaults(G_API[1])
+end
+
+# ---------------------------------------------------------------------------------------------------
+function resetdefaults(API::Ptr{Cvoid})
+	# reset_defaults() lieves in libjmt.jl that is loaded very early in the loading stack, hence the need of this
+	reset_defaults(API)							# Set the modern mode settings
+	extra_sets()
 end
 
 # ---------------------------------------------------------------------------------------------------

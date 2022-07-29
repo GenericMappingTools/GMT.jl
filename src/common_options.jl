@@ -102,21 +102,24 @@ function parse_paper(d::Dict)
 
 	opt_J, opt_B, opt_R = " -Jx1c", "", " -R0/200/0/200"
 	if (isa(val, Tuple) && string(val[1])[1] == 'i' && string(val[2])[1] == 'g')
-		opt_J, opt_B, opt_R = " -Jx1i", " -Ba1f1g1", " -R0/10/0/10"
+		opt_J, opt_B, opt_R = " -Jx1i", " -Ba1f1g1", " -R0/12/0/12"
 	elseif (isa(val, String) || isa(val, Symbol))
 		c = string(val)[1]
 		(c == 'i') && (opt_J = " -Jx1i")
-		(c == 'g') && (opt_B = " -Ba1f1g1"; opt_R = " -R0/25/0/25")
+		(c == 'g') && (opt_B = " -Ba1f1g1"; opt_R = " -R0/30/0/30")
 	end
+	o = (CTRL.IamInPaperMode[2]) ? " -X-5c -Y-5c" : ""	# Take care to only offset once
+	(o != "") && (CTRL.IamInPaperMode[2] = false)
 
 	proggy = (IamModern[1]) ? "plot -T" : "psxy -T"
-	t = IamModern[1] ? "" : " -O -K >> " * joinpath(tempdir(), "GMTjl_tmp.ps")
+	t = IamModern[1] ? "" : o * " -O -K >> " * joinpath(tempdir(), "GMTjl_tmp.ps")
 	gmt(proggy * opt_R * opt_J * opt_B * t)
 	CTRL.IamInPaperMode[1] = true
 	return nothing
 end
 function leave_paper_mode()
 	# Reset the -R -J previous to the paper mode setting
+	!CTRL.IamInPaperMode[1] && return nothing
 	t = IamModern[1] ? "" : " -O -K >> " * joinpath(tempdir(), "GMTjl_tmp.ps")
 	CTRL.IamInPaperMode[1] && gmt("psxy -T " * CTRL.pocket_R[1] * CTRL.pocket_J[1] * CTRL.pocket_J[3] * t)
 	CTRL.IamInPaperMode[1] = false
@@ -3838,7 +3841,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		(orig_J != "") && (gmt("psxy -T -J" * orig_J * " -R" * orig_R * " -O -K >> " * output);  orig_J = "")
 	end
 
-	#leave_paper_mode(IamInPaperMode)		# See if we were in an intermediate state of paper coordinates
+	leave_paper_mode()				# See if we were in an intermediate state of paper coordinates
 	if (usedConfPar[1])				# Hacky shit to force start over when --PAR options were use
 		usedConfPar[1] = false;		gmt_restart()
 	end
@@ -3850,6 +3853,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "" || opt_T != "")
 			P = showfig(d, output, fname_ext, opt_T, K, fname)	# Return something here for the case we are in Pluto
 			(typeof(P) == Base.Process) && (P = nothing)		# Don't want spurious message on REPL when plotting
+			CTRL.IamInPaperMode[2] = true		# Means, next time a paper mode is used offset XY only on first call 
 		end
 	elseif  ((haskey(d, :show) && d[:show] != 0))	# Let modern mode also call show=true
 		helper_showfig4modern()

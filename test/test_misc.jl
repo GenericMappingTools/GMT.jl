@@ -108,6 +108,7 @@
 	PS = plot(rand(3,2), ps=1);
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 	GMT.ps_init(API, PS, 0);
+	GMT.gmtlib_getparameter(API, "MAP_ORIGIN_X")
 	gmt("destroy")
 
 	# Test ogr2GMTdataset

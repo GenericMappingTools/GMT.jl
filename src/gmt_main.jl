@@ -201,7 +201,6 @@ function gmt(cmd::String, args...)
 	pad = 2
 	if (!isa(G_API[1], Ptr{Nothing}) || G_API[1] == C_NULL)
 		G_API[1] = GMT_Create_Session("GMT", pad, GMT_SESSION_BITFLAGS)
-		gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")	# Stop those ugly grays
 		theme_modern()				# Set the MODERN theme
 	end
 
@@ -382,12 +381,20 @@ function gmt_restart(restart::Bool=true)
 	GMT_Destroy_Session(G_API[1]);
 	if (restart)
 		G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
-		gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")	# Stop those ugly grays
-		theme_modern()				# Set the MODERN theme
+		theme_modern()				# Set the MODERN theme and calls extra_sets()
 	else
 		G_API[1] = C_NULL
 	end
 	return nothing
+end
+
+# -----------------------------------------------------------------------------------------------
+function extra_sets()
+	gmtlib_setparameter(G_API[1], "MAP_DEFAULT_PEN", "0.5p,black")	# Change the default 0.25 pen thickness in -W
+	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")	# Stop those ugly grays
+	gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "20c")		# Change the origin offset
+	gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "20c")
+	#(GMTver >= v"6.4") && gmtlib_setparameter(G_API[1], "MAP_EMBELLISHMENT", "auto")
 end
 
 # -----------------------------------------------------------------------------------------------
@@ -1413,6 +1420,7 @@ function resetGMT()
 	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
 	current_cpt[1]  = GMTcpt();		legend_type[1] = legend_bag();	ressurectGDAL()
 	def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;	CTRL.pocket_J[4] = "   ";
+	CTRL.IamInPaperMode[:] = [false, true]
 	gmt_restart()
 	clear_sessions()
 end
