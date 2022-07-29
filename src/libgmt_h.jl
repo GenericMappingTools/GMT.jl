@@ -132,6 +132,19 @@ mutable struct GMT_DATASET
 	hidden::Ptr{Cvoid}
 end
 
+mutable struct GMT_IMAGE
+	type::UInt32
+	colormap::Ptr{Cint}
+	n_indexed_colors::Cint
+	header::Ptr{GMT_GRID_HEADER}
+	data::Ptr{Cvoid}
+	alpha::Ptr{Cuchar}
+	color_interp::Ptr{UInt8}
+	x::Ptr{Cdouble}
+	y::Ptr{Cdouble}
+	hidden::Ptr{Cvoid}
+end
+
 struct GMT_FILL
 	rgb::NTuple{4,Cdouble}
 	f_rgb::NTuple{4,Cdouble}
@@ -139,7 +152,10 @@ struct GMT_FILL
 	use_pattern::Bool
 	pattern_no::Int32
 	dpi::UInt32
-	pattern::NTuple{256,UInt8}		# was char pattern[GMT_BUFSIZ];
+	dim::NTuple{3,UInt32}
+	pattern::NTuple{1024,UInt8}		# was char pattern[PATH_MAX];
+	image::Ptr{UInt8}
+	I::Ptr{GMT_IMAGE}
 end
 
 struct GMT_LUT
@@ -185,19 +201,6 @@ mutable struct GMT_PALETTE
 	hinge::Cdouble
 	wrap_length::Cdouble
 	header::Ptr{Ptr{UInt8}}
-	hidden::Ptr{Cvoid}
-end
-
-mutable struct GMT_IMAGE
-	type::UInt32
-	colormap::Ptr{Cint}
-	n_indexed_colors::Cint
-	header::Ptr{GMT_GRID_HEADER}
-	data::Ptr{Cvoid}
-	alpha::Ptr{Cuchar}
-	color_interp::Ptr{UInt8}
-	x::Ptr{Cdouble}
-	y::Ptr{Cdouble}
 	hidden::Ptr{Cvoid}
 end
 
