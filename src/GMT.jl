@@ -14,7 +14,7 @@ struct CTRLstruct
 	pocket_B::Vector{String}		# To temporarily store opt_B grid and fill color to be reworked in psclip
 	pocket_J::Vector{String}		# To temporarily store opt_J and fig size to eventualy flip directions (y + down, etc)
 	pocket_R::Vector{String}		# To temporarily store opt_R
-	IamInPaperMode::Vector{Bool}	# To know if we are in a under-the-hood paper mode
+	IamInPaperMode::Vector{Bool}	# A 2 elem vec to know if we are in under-the-hood paper mode. 2nd traces if first call
 	gmt_mem_bag::Vector{Ptr{Cvoid}}	# To temporarily store a GMT owned memory to be freed in gmt()
 end
 
@@ -99,7 +99,7 @@ const def_fig_axes_bak     = " -Baf -BWSen"        # Default fig axes for plot l
 const def_fig_axes3_bak    = " -Baf -Bza"          # 		"" but for 3D views
 const global def_fig_axes  = [def_fig_axes_bak]    # This one may be be changed by theme()
 const global def_fig_axes3 = [def_fig_axes3_bak]   #		""
-const global CTRL = CTRLstruct(zeros(12), zeros(3), [true], [:clip, :coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing], ["",""], ["","", "", "   "], [""], [false], [C_NULL])
+const global CTRL = CTRLstruct(zeros(12), zeros(3), [true], [:clip, :coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines], [nothing], ["",""], ["","", "", "   "], [""], [false,true], [C_NULL])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
@@ -306,13 +306,11 @@ function __init__(test::Bool=false)
 
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
-	theme_modern()				# Set the MODERN theme
+	(GMTver >= v"6.2.0") && theme_modern()			# Set the MODERN theme and some more gmtlib_setparameter() calls
 	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
 	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
-	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")			# Stop those ugly grays
-	gmtlib_setparameter(G_API[1], "MAP_DEFAULT_PEN", "0.5p,black")	# Change the default 0.25 pen thickness in -W
-	#(GMTver >= v"6.4") && gmtlib_setparameter(G_API[1], "MAP_EMBELLISHMENT", "auto")
+	(GMTver < v"6.2.0") && extra_sets()	# some calls to gmtlib_setparameter()
 end
 
 #@precompile_all_calls begin
