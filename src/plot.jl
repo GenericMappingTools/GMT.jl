@@ -1093,11 +1093,13 @@ end
 # ------------------------------------------------------------------------------------------------------
 function gen_coords4funs(rang=nothing, axis="x"; kw...)
 	# Generate axes coordenates to use when plot functions
+	# If rang === nothing we must either have a two elements x|ylim in kw or otherwise default to (-5,5)
+	# When rang is a scalar we return linspace(-rang, rang)
 
 	if (rang === nothing)
 		symb = (axis == "x") ? [:xlim] : [:ylim]
 		if ((val = find_in_dict(KW(kw), symb)[1]) !== nothing)
-		(!isa(val, Tuple) && !isa(val, Array{<:Real})) && error("$(string(symb[1])) must be a tuple or array, not '$(typeof(val))'")
+			(!isa(val, Tuple) && !isa(val, Array{<:Real})) && error("$(string(symb[1])) must be a tuple or array, not '$(typeof(val))'")
 			(length(val) != 2) && error("$(string(symb[1])) must have 2 elements")
 			rang = linspace(val[1], val[2], 200)
 		else
@@ -1105,6 +1107,8 @@ function gen_coords4funs(rang=nothing, axis="x"; kw...)
 		end
 	elseif (isa(rang, Real))
 		rang = linspace(-rang, rang)
+	elseif (length(rang) == 2 && eltype(rang) <: Real)
+		rang = linspace(rang[1], rang[2])
 	end
 	return rang
 end
