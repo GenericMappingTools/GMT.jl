@@ -11,7 +11,7 @@ Parameters
 - $(GMT.opt_R)
 - $(GMT.opt_J)
 
-- **A** | **origin** :: [Type => Str]    ``Arg = b|B|f|F|o|O[lon0/lat0][+v]``
+- **A** | **azim**  | **azimuth**:: [Type => Str]    ``Arg = b|B|f|F|o|O[lon0/lat0][+v]``
 
     Calculate azimuth along track or to the optional fixed point set with lon0/lat0.
     ($(GMTdoc)mapproject.html#a)
@@ -19,7 +19,7 @@ Parameters
 
     Set center of projected coordinates to be at map projection center [Default is lower left corner].
     ($(GMTdoc)mapproject.html#c)
-- **D** | **override_units** :: [Type => Str]    ``Arg = c|i|p``
+- **D** | **lengthunit** :: [Type => Str]    ``Arg = c|i|p``
 
     Temporarily override PROJ_LENGTH_UNIT and use c (cm), i (inch), or p (points) instead.
     ($(GMTdoc)mapproject.html#d)
@@ -64,7 +64,7 @@ Parameters
 
     Prints map width and height on standard output. No input files are read.
     ($(GMTdoc)mapproject.html#w)
-- **Z** | **travel_times** :: [Type => Str | Number]    ``Arg = [speed][+a][+i][+f][+tepoch]``
+- **Z** | **traveltime** | **travel_times** :: [Type => Str | Number]    ``Arg = [speed][+a][+i][+f][+tepoch]``
 
     Calculate travel times along track as specified with -G.
     ($(GMTdoc)mapproject.html#z)
@@ -87,10 +87,10 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :j :o :p :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef :ecef], [:I :inverse], [:S :supress], #[:L :dist2line],
-	                                 [:T :change_datum], [:W :map_size], [:Z :travel_times]])
-	cmd  = add_opt_1char(cmd, d, [[:D :override_units], [:F :one2one], [:Q :list], [:N :geod2aux]])
+	                                 [:T :change_datum], [:W :map_size], [:Z :traveltime :travel_times]])
+	cmd  = add_opt_1char(cmd, d, [[:D :lengthunit :override_units], [:F :one2one], [:Q :list], [:N :geod2aux]])
 
-	cmd = add_opt(d, cmd, "A", [:A :azim],
+	cmd = add_opt(d, cmd, "A", [:A :azim :azimuth],
 	              (fixed_pt=("", arg2str), back=("b", nothing, 1), back_geocentric=("B", nothing, 1), forward=("f", nothing, 1), forward_geocentric=("F", nothing, 1), orientation=("o", nothing, 1), orientation_geocentric=("O", nothing, 1), unit="+u1", var_pt="_+v"))
 	cmd = add_opt(d, cmd, "G", [:G :track_distances],
 	              (fixed_pt=("", arg2str, 1), accumulated="_+a", incremental="_+i", unit="+u1", var_pt="_+v"))
