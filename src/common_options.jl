@@ -858,18 +858,38 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	((val = find_in_dict(d, [:grid])[1]) !== nothing) && (opt_B = parse_grid(d, val, opt_B))
 
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
+	#t::String = ""		# Use the trick to replace blanks by Char(127) (invisible) and undo it in extra_parse
+	#if (haskey(d, :title))   t *= "+t"   * replace(str_with_blancs(d[:title]), ' '=>'\x7f');   delete!(d, :title);	end
+	#if (haskey(d, :xlabel))  t *= " x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\x7f');   delete!(d, :xlabel);	end
+	#if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\x7f');   delete!(d, :ylabel);	end
+	#if (haskey(d, :zlabel))  t *= " z+l" * replace(str_with_blancs(d[:zlabel]),' '=>'\x7f');   delete!(d, :zlabel);	end
+
+	function titlices(d::Dict, arg, fun::Function)
+		if (haskey(d, Symbol(fun)))
+			if isa(arg, StrSymb)  tt, a_par = replace(str_with_blancs(arg), ' '=>'\x7f'), ""
+			else                  tt, a_par = fun(;arg...)
+			end
+			delete!(d, Symbol(fun));
+			tt, a_par
+		end
+	end
+
+	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
 	t::String = ""		# Use the trick to replace blanks by Char(127) (invisible) and undo it in extra_parse
-	if (haskey(d, :title))   t *= "+t"   * replace(str_with_blancs(d[:title]), ' '=>'\x7f');   delete!(d, :title);	end
-	if (haskey(d, :xlabel))  t *= " x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\x7f');   delete!(d, :xlabel);	end
-	if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\x7f');   delete!(d, :ylabel);	end
-	if (haskey(d, :zlabel))  t *= " z+l" * replace(str_with_blancs(d[:zlabel]),' '=>'\x7f');   delete!(d, :zlabel);	end
+	extra_par = ""
+	if (haskey(d, :title))    tt, extra_par = titlices(d, d[:title], title); t *= "+t" * tt  end
+	if (haskey(d, :subtitle)) tt, ep = titlices(d, d[:subtitle], subtitle);	 t *= "+s" * tt;   extra_par *= ep  end
+	if (haskey(d, :xlabel))   tt, ep = titlices(d, d[:xlabel], xlabel);      t *= " x+l" * tt; extra_par *= ep  end
+	if (haskey(d, :ylabel))   tt, ep = titlices(d, d[:ylabel], ylabel);      t *= " y+l" * tt; extra_par *= ep  end
+	if (haskey(d, :zlabel))   tt, ep = titlices(d, d[:zlabel], zlabel);      t *= " z+l" * tt; extra_par *= ep  end
+
 	if (t != "")
 		if (opt_B == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis :xticks :yticks :zticks], false)[1] === nothing))
 			(!have_a_none) ? (opt_B = def_fig_axes_) : have_a_none = false	# False to not trigger the white@100 trick
 		elseif (opt_B != "")			# Because  findlast("-B","") Errors!!!!!
-			if !( ((ind = findlast("-B",opt_B)) !== nothing || (ind = findlast(" ",opt_B)) !== nothing) &&
-				  (occursin(r"[WESNwesntlbu+g+o]",opt_B[ind[1]:end])) )
-				t = " " * t;		# Do not glue, for example, -Bg with :title
+			if !(((ind = findlast("-B",opt_B)) !== nothing || (ind = findlast(" ",opt_B)) !== nothing) &&
+				 (occursin(r"[WESNwesntlbu+g+o]", opt_B[ind[1]:end])))
+				t = " " * t;			# Do not glue, for example, -Bg with :title
 			elseif (startswith(t, "+t") && (endswith(opt_B, "-Bafg") || endswith(opt_B, "-Baf") || endswith(opt_B, "-Ba")))
 				t = " " * t;
 			end
@@ -959,7 +979,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	opt_B = consolidate_Bframe(opt_B)
 	(have_a_none) && (opt_B *= " --MAP_FRAME_PEN=0.001,white@100")	# Need to resort to this sad trick
 
-	return cmd * opt_B, opt_B
+	return cmd * opt_B * extra_par, opt_B
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -968,7 +988,7 @@ function consolidate_Bframe(opt_B::String)::String
 	s::Vector{SubString{String}} = split(opt_B)
 	nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words (e.g. titles)
 	isBframe::Vector{Bool} = zeros(Bool, length(s))
-	for k = 1:length(s)
+	for k in eachindex(s)
 		(occursin(s[k][3], "psxyzafgbc")) && (isBframe[k] = false; continue)	# A FALSE solves the quest imediately
 		ss::Vector{SubString{String}} = split(s[k], "+");	len = length(ss)
 		isBframe[k] = occursin(r"[WESNZwesnztlbu]", ss[1])	# Search for frame characters in the part before the +flag
@@ -985,14 +1005,14 @@ function consolidate_Bframe(opt_B::String)::String
 		[ss_[1] *= ss_[k][3:end] for k = 2:len]		# Remove the first "-B" chars from second and on and join with first
 		s[indFrames] .= ""							# Clear the Bframe elements from the original split
 		opt_B = " " * s[1]
-		for k = 2:length(s)
+		for k = 2:lastindex(s)
 			(s[k] != "") && (opt_B *= " " * s[k])	# Glue all the 'axes' members in a string
 		end
 		opt_B *= " " * ss_[1]						# and finally add also the the 'frame' part
 	elseif (len == 1 && indFrames[1] != length(s))	# Shit, we have only one but it's not the last. Must swapp.
 		s[end], s[indFrames[1]] = s[indFrames[1]], s[end]
 		opt_B = " " * s[1]
-		for k = 2:length(s) opt_B *= " " * s[k] end	# and rebuild now with the right order.
+		for k = 2:lastindex(s) opt_B *= " " * s[k] end	# and rebuild now with the right order.
 	end
 	return opt_B
 end
@@ -1053,7 +1073,7 @@ function consolidate_Baxes(opt_B::String)::String
 	end
 	if (got_x || got_y)
 		opt_B = " " * s[1]
-		for k = 2:length(s)
+		for k = 2:lastindex(s)
 			(s[k] != "") && (opt_B *= " " * s[k])	# Glue all the 'axes' members in a string
 		end
 	else
@@ -1064,12 +1084,33 @@ function consolidate_Baxes(opt_B::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
+title(; str::AbstractString="",  font=nothing, offset=0) = titles_e_comp(str, font, offset)
+subtitle(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "s")
+xlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "x")
+ylabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "y")
+zlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "z")
+function titles_e_comp(str::AbstractString, fnt, offset, tipo::String="")
+	f = (fnt !== nothing) ? font(fnt) : ""
+	o = (offset != 0) ? string(offset)  : ""
+	if (tipo == "")
+		r2 = (f != "") ? " --FONT_TITLE=" * f : ""
+		(o != "") && (r2 *= " --MAP_TITLE_OFFSET=" * o)
+	elseif (tipo == "s")
+		r2 = (f != "") ? " --FONT_SUBTITLE=" * f : ""
+	else
+		r2 = (f != "") ? " --FONT_LABEL=" * f : ""
+		(o != "") && (r2 *= " --MAP_LABEL_OFFSET=" * o)
+	end
+	replace(str_with_blancs(str), ' '=>'\x7f'), r2
+end
+
+# ---------------------------------------------------------------------------------------------------
 function nosplit_spaces!(in)
 	# A problem with spliting a B option is that it also splits the text strings with spaces (e.g. titles)
 	# This function finds those cases and join back what were considered BadBreaks
 	function glue()
 		isBB = zeros(Bool, length(in))
-		for k = 2:length(in)
+		for k = 2:lastindex(in)
 			if (!startswith(in[k], "-B"))	# Find elements that do not start with a "-B"
 				in[k-1] *= " " * in[k]		# Join them with previous element (and keep the separating space)
 				isBB[k] = true				# Flag elemento die
@@ -2660,7 +2701,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	have_Baxes = (opt != "")
 	opt *= opt_Bframe
 
-	#-----------
+	#----------------------------------------------------
 	function consume_used(d::Dict, symbs::Vector{Symbol})
 		# Remove symbs from 'd' so that at the end we can check for unused entries (user errors) 
 		for symb in symbs
@@ -2669,7 +2710,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	end
 	consume_used(d, [:corners, :internal, :cube, :noframe, :pole, :title, :subtitle, :seclabel, :label, :xlabel, :ylabel, :zlabel, :Yhlabel, :alabel, :blabel, :clabel, :annot, :annot_unit, :ticks, :ticks_unit, :prefix, :suffix, :grid, :slanted, :custom, :customticks, :pi, :scale, :phase_add, :phase_sub])
 	(length(d) > 0) && println("Warning: the following sub-options were not consumed in 'frame' => ", keys(d))
-	# -----------
+	# ----------------------------------------------------
 
 	return opt, [have_Baxes, (opt_Bframe != "")]
 end
