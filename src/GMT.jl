@@ -105,6 +105,7 @@ const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used 
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Nothing, Vector{Symbol}, Matrix{Symbol}}
 const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
+const global StrSymb  = Union{AbstractString, Symbol}
 # GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are edeclared in gmt_main
 #const global unused_opts = [()]					# To track consumed options
 #const global unused_subopts = [()]					# To track consumed options in sub-options
@@ -314,6 +315,7 @@ function __init__(test::Bool=false)
 end
 
 #@precompile_all_calls begin
+	#G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 	#plot(rand(5,2))
 	#makecpt(T=(0,10))
 	#grdimage(rand(Float32,32,32))
