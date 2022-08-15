@@ -55,6 +55,7 @@
 	plot(rand(5,2), ls="-.", Vd=dbg2)
 	@test_throws ErrorException("Bad line style. Options are (for example) [Line|DashDot|Dash|Dot]Circ") plot(rand(5,2), ls="Dat")
 	plot(rand(5,2), pen=(2,:gradient),Vd=3);
+	plot([1. 2; 3 4], title=(str="Bla bla", font=50, offset="-70p"), subtitle=:Bluuu, xlabel="aa", ylabel="bb", zlabel="cc",Vd=dbg2)
 
 	D = [mat2ds([0 0; 0 1; 1 1; 1 0.3; 0 0])[1], mat2ds([1 1; 1 2; 2 2; 2 1; 1 1])[1]];
 	C = makecpt(cmap = :hot, range = (0, 5));
@@ -85,6 +86,10 @@
 	scatter!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
 	hlines!([0.2, 0.6], pen=(1, :red))
 	vlines!([0.2, 0.6], pen=(1, :red))
+	vband([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
+	vband!([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
+	hband([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
+	hband!([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
 
 	plotyy([1 1; 2 2], [1.5 1.5; 3 3], R="0.8/3/0/5", title="Ai", ylabel=:Bla, xlabel=:Ble, seclabel=:Bli, Vd=dbg2);
 
