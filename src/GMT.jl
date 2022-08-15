@@ -116,7 +116,8 @@ end
 
 export
 	GMTgrid, GMTimage, GMTdataset, GMTver, FMT, gmt, libgdal,
-	arrows, arrows!, bar, bar!, bar3, bar3!, hlines, hlines!, lines, lines!, legend, legend!, vlines, vlines!,
+	arrows, arrows!, bar, bar!, bar3, bar3!, hband, hband!, hlines, hlines!, lines, lines!, legend, legend!,
+	vlines, vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
 	colorscale, colorscale!, contour, contour!, contourf, contourf!, events, filter1d, fitcircle, gmt2kml,
 	gmtbinstats, binstats,

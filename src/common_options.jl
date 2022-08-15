@@ -281,7 +281,7 @@ function opt_R2num(opt_R::String)
 		fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
 		#contains(rs[2], "T") || contains(rs[2], "t")
 		limits[1] = parse(Float64, rs[1][fst+1:end])
-		for k = 2:length(rs)  limits[k] = parse(Float64, rs[k])  end
+		for k = 2:lastindex(rs)  limits[k] = parse(Float64, rs[k])  end
 		if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
 	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
 		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])
@@ -857,14 +857,8 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 
 	((val = find_in_dict(d, [:grid])[1]) !== nothing) && (opt_B = parse_grid(d, val, opt_B))
 
-	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
-	#t::String = ""		# Use the trick to replace blanks by Char(127) (invisible) and undo it in extra_parse
-	#if (haskey(d, :title))   t *= "+t"   * replace(str_with_blancs(d[:title]), ' '=>'\x7f');   delete!(d, :title);	end
-	#if (haskey(d, :xlabel))  t *= " x+l" * replace(str_with_blancs(d[:xlabel]),' '=>'\x7f');   delete!(d, :xlabel);	end
-	#if (haskey(d, :ylabel))  t *= " y+l" * replace(str_with_blancs(d[:ylabel]),' '=>'\x7f');   delete!(d, :ylabel);	end
-	#if (haskey(d, :zlabel))  t *= " z+l" * replace(str_with_blancs(d[:zlabel]),' '=>'\x7f');   delete!(d, :zlabel);	end
-
 	function titlices(d::Dict, arg, fun::Function)
+		# Helper function to deal with setting title & cousins while controling also Font & Offset 
 		if (haskey(d, Symbol(fun)))
 			if isa(arg, StrSymb)  tt, a_par = replace(str_with_blancs(arg), ' '=>'\x7f'), ""
 			else                  tt, a_par = fun(;arg...)

@@ -99,11 +99,9 @@ function _show(io::IO,
 		# In this case, if the user does not want to show the row number, then
 		# we must hide the row name column, which is used to display the `rowid`.
 		if !get(kwargs, :show_row_number, true)
-			row_names = nothing
-			vlines = Int[]
+			row_names, vlines = nothing, Int[]
 		else
-			row_names = [string(rowid)]
-			vlines = Int[1]
+			row_names, vlines = [string(rowid)], Int[1]
 		end
 
 		show_row_number = false
@@ -224,8 +222,7 @@ function compacttype(T::Type, maxwidth::Int)
 	# prefixed it with the module name which caused it to be overlong
 	textwidth(sT) ≤ maxwidth + 1 && endswith(sTfull, sT) && return sT
 
-	cumwidth = 0
-	stop = 0
+	cumwidth, stop = 0, 0
 	for (i, c) in enumerate(sT)
 		cumwidth += textwidth(c)
 		if cumwidth ≤ maxwidth
@@ -266,12 +263,11 @@ const _PRETTY_TABLES_HIGHLIGHTER = Highlighter(_pretty_tables_highlighter_func, 
 #     - nothing;
 #     - Cells with types related to DataFrames.jl.
 function _pretty_tables_general_formatter(v, i::Integer, j::Integer)
+	(v === nothing) && return ""
     if typeof(v) <: GMTdataset
         # Here, we must not use `print` or `show`. Otherwise, we will call
         # `_pretty_table` to render the current table leading to a stack overflow.
         return sprint(summary, v)
-    elseif v === nothing
-        return ""
     else
         return v
     end

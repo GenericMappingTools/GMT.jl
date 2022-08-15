@@ -768,6 +768,60 @@ vlines!(arg=nothing; kw...) = vlines(arg; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------
+hband(mat::Matrix{<:Real}; height=false, percent=false, first=true, kw...) =
+	helper_hvband(mat, "h"; height=height, percent=percent, first=first, kw...)
+hband!(mat::Matrix{<:Real}; height=false, percent=false, kw...) =
+	helper_hvband(mat, "h"; height=height, percent=percent, first=false, kw...)
+vband(mat::Matrix{<:Real}; width=false, percent=false, first=true, kw...) =
+	helper_hvband(mat, "v"; width=width, percent=percent, first=first, kw...)
+vband!(mat::Matrix{<:Real}; width=false, percent=false, kw...) =
+	helper_hvband(mat, "v"; width=width, percent=percent, first=false, kw...)
+const vspan  = vband
+const vspan! = vband!
+const hspan  = hband
+const hspan! = hband!
+
+function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false, percent=false, first=true, kwargs...)
+	# This is the main function for the hband and vband functions.
+	d, _, O = init_module(first, kwargs...)
+	cmd, = parse_R(d, "", O, false)
+	all(CTRL.limits .== 0.) && error("Need to know the axes limits in a numeric form.")
+	cmd, = parse_J(d, cmd, "", true, O, false)
+	!CTRL.proj_linear[1] && error("Plotting vbands is only possible with linear projections.")
+	n_ds = size(mat, 1)
+	fill = find_in_dict(d, [:fill :color])[1]
+	colors = (fill === nothing) ? Base.fill("lightblue", n_ds) :
+	         (isa(fill, String) || isa(fill, Symbol)) ? Base.fill(string(fill), n_ds) :
+	         (isa(fill, Array{String}) || isa(fill, Array{Symbol})) ? string.(fill) :
+			 isa(fill, Tuple) && (eltype(fill) == String || eltype(fill) == Symbol) ? string.(fill) :
+			 error("Bad color argument")
+	alpha = find_in_dict(d, [:fillalpha :alpha :transparency])[1]
+	transp = (alpha === nothing) ? Base.fill("@75", n_ds) :
+	         isa(alpha, Real) ? Base.fill(isa(alpha, AbstractFloat) ? string("@",alpha*100) : string("@",alpha), n_ds) :
+			 isvector(alpha) || isa(alpha, Tuple) ? (eltype(alpha) <: AbstractFloat ? string.("@",alpha.*100) : string.("@",alpha)) :
+			 error("Bad transparency (fillapha) argument")
+
+	if (tipo == "v")  ind_w, ind_b, ind_t, thick, bB = 1:2, 3, 4, width  != 0, "b"
+	else              ind_w, ind_b, ind_t, thick, bB = 3:4, 1, 2, height != 0, "B"
+	end
+
+	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
+	for k = 1:n_ds
+		w = (thick) ? mat[k,2] : (percent != 0) ? mat[k,2]*diff(CTRL.limits[ind_w]) : mat[k,2]-mat[k,1]	# bar width
+		i = rem(k, length(colors)); (i == 0) && (i = length(colors))
+		j = rem(k, length(transp)); (j == 0) && (j = length(transp))
+		b = (size(mat,2) > 2 && !isnan(mat[k,3])) ? mat[k,3] : CTRL.limits[ind_b]	# The bar base
+		t = (size(mat,2) > 3 && !isnan(mat[k,4])) ? mat[k,4] : CTRL.limits[ind_t]	# The bar top
+		hdr = string("-S", bB, w, "u+b", b, "0 -G", colors[i], transp[j])
+		c = (thick || percent != 0) ? mat[k,1] : (mat[k,1] + (mat[k,2] - mat[k,1]) / 2)	# Bar center position
+		D[k] = GMTdataset((tipo == "v") ? [c t 0] : [t c 0], Float64[], Float64[], Dict{String, String}(), String[], String[], hdr, String[], "", "", 0, 0)
+	end
+
+	d[:S] = bB		# Add -Sb|B, otherwise headers are not scanned.
+	common_plot_xyz("", D, "", first, false, d...)
+end
+
+# ------------------------------------------------------------------------------------------------------
 """
     ternary(cmd0="", arg1=nothing; image=false, clockwise=false, kwargs...)
 
