@@ -817,6 +817,8 @@ function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false,
 		D[k] = GMTdataset((tipo == "v") ? [c t 0] : [t c 0], Float64[], Float64[], Dict{String, String}(), String[], String[], hdr, String[], "", "", 0, 0)
 	end
 
+	haskey(d, :nested) && (CTRL.pocket_call[1] = D; delete!(d, :nested)) # Happens only when called nested from plot
+
 	d[:S] = bB		# Add -Sb|B, otherwise headers are not scanned.
 	common_plot_xyz("", D, "", first, false, d...)
 end
