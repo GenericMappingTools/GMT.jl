@@ -175,7 +175,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	if (opt_R != "")			# Save limits in numeric
 		try
 			limits = opt_R2num(opt_R)
-			(opt_R != " -Rtight") && (CTRL.limits[1:length(limits)] = limits)
+			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4)) && (CTRL.limits[1:length(limits)] = limits)
 		catch
 			CTRL.limits .= 0.0
 		end
@@ -2451,13 +2451,13 @@ function add_opt_module(d::Dict)::Vector{String}
 					r = replace(r, " -R -J" => "")
 					r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'
 				elseif (symb == :arrows || symb == :lines || symb == :scatter || symb == :scatter3 || symb == :plot
-					   || symb == :plot3 || symb == :hlines || symb == :vlines || symb == :text)
+					   || symb == :plot3 || symb == :hlines || symb == :vlines || symb == :text || symb == :vband)
 					_d = nt2dict(nt)
 					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; del_from_dict(d, [:data]))
 					r = (symb == :arrows) ? arrows!(; nt...) : (symb == :lines) ? lines!(; nt...) :
 					(symb == :scatter) ? scatter!(; nt...) : (symb == :scatter3) ? scatter3!(; nt...) :
 					(symb == :plot) ? plot!(; nt...) : (symb == :plot3) ? plot3!(; nt...) :
-					(symb == :hlines) ? hlines!(; nt...) : (symb == :vlines) ? vlines!(; nt...) : text!(; nt...)
+					(symb == :hlines) ? hlines!(; nt...) : (symb == :vlines) ? vlines!(; nt...) : (symb == :text) ? text!(; nt...) : vband!(CTRL.pocket_call[1]; nested=true, nt...)
 				end
 			elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
 				if     (symb == :coast)    r = coast!(W=0.5, A="200/0/2", Vd=2)
@@ -3670,6 +3670,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		end
 		reset_theme()
 	end
+	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
 	return nothing
 end
 
@@ -3686,6 +3687,7 @@ function showfig(; kwargs...)
 	helper_showfig4modern() && return nothing		# If called from modern mode we are done here.
 	d = KW(kwargs)
 	(!haskey(d, :show)) && (d[:show] = true)		# The default is to show
+	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
 	finish_PS_module(d, "psxy -R0/1/0/1 -JX0.001c -T -O", "", false, true, true)
 end
 function helper_showfig4modern(show::String="show")::Bool
@@ -3961,7 +3963,7 @@ function show_non_consumed(d::Dict, cmd)
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
 	end
-	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
+	#CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
 end
 
 # --------------------------------------------------------------------------------------------------
