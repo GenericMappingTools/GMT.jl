@@ -788,12 +788,16 @@ function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false,
 	all(CTRL.limits .== 0.) && error("Need to know the axes limits in a numeric form.")
 	cmd, = parse_J(d, cmd, "", true, O, false)
 	!CTRL.proj_linear[1] && error("Plotting vbands is only possible with linear projections.")
+	cmd, = parse_B(d, cmd)
 	n_ds = size(mat, 1)
+	got_pattern = false
 	fill = find_in_dict(d, [:fill :color])[1]
 	colors = (fill === nothing) ? Base.fill("lightblue", n_ds) :
 	         (isa(fill, String) || isa(fill, Symbol)) ? Base.fill(string(fill), n_ds) :
 	         (isa(fill, Array{String}) || isa(fill, Array{Symbol})) ? string.(fill) :
 			 isa(fill, Tuple) && (eltype(fill) == String || eltype(fill) == Symbol) ? string.(fill) :
+			 isa(fill, NamedTuple) ? (got_pattern = true; [add_opt_fill(fill)]) :		# Single pattern
+			 isa(fill, Tuple) && isa(fill[1], NamedTuple) ? (got_pattern = true; [add_opt_fill(fi) for fi in fill]) :
 			 error("Bad color argument")
 	alpha = find_in_dict(d, [:fillalpha :alpha :transparency])[1]
 	transp = (alpha === nothing) ? Base.fill("@75", n_ds) :
@@ -819,7 +823,8 @@ function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false,
 
 	haskey(d, :nested) && (CTRL.pocket_call[1] = D; delete!(d, :nested)) # Happens only when called nested from plot
 
-	d[:S] = bB		# Add -Sb|B, otherwise headers are not scanned.
+	d[:S] = bB						# Add -Sb|B, otherwise headers are not scanned.
+	got_pattern && (d[:G] = "p1")	# Patterns fck the session. Use this to inform gmt() that session must be recreated
 	common_plot_xyz("", D, "", first, false, d...)
 end
 

@@ -3840,7 +3840,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	end
 
 	orig_J = ""		# To use in the case of a double Cartesian/Geog frame.
-	for k = 1:length(cmd)
+	for k = 1:lastindex(cmd)
 		is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
