@@ -359,6 +359,7 @@ function gmt(cmd::String, args...)
 	(need2destroy && !IamModern[1]) && gmt_restart()
 
 	ressurectGDAL()		# Some GMT modules may have called GDALDestroyDriverManager() and some GDAL module may come after us.
+	(contains(cmd, " -Gp") || contains(cmd, " -GP")) && gmt_restart()	# Apparently patterns are screwing the session
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)
