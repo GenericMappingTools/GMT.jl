@@ -2431,33 +2431,39 @@ function add_opt_module(d::Dict)::Vector{String}
 	#  SYMBS should contain a module name (e.g. 'coast' or 'colorbar'), and if present in D,
 	# 'val' can be a NamedTuple with the module's arguments or a 'true'.
 	out = Vector{String}()
+
+	symbs_data = [:arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines, :text, :hband, :vband, :vspan, :hspan]
+
 	for symb in CTRL.callable			# Loop over modules list that can be called inside other modules
 		r::String = ""
 		if (haskey(d, symb))
 			val = d[symb]
 			if isa(val, Dict)  val = dict2nt(val)  end
 			if (isa(val, NamedTuple))
-				nt = (val..., Vd=2)
-				if     (symb == :coast)     r = coast!(; nt...)
-				elseif (symb == :colorbar)  r = colorbar!(; nt...)
-				elseif (symb == :basemap)   r = basemap!(; nt...)
-				elseif (symb == :logo)      r = logo!(; nt...)
+				nt::NamedTuple = val
+				if     (symb == :coast)     r = coast!(; Vd=2, nt...)
+				elseif (symb == :colorbar)  r = colorbar!(; Vd=2, nt...)
+				elseif (symb == :basemap)   r = basemap!(; Vd=2, nt...)
+				elseif (symb == :logo)      r = logo!(; Vd=2, nt...)
 				elseif (symb == :clip)		# Need lots of little shits to parse the clip options
 					CTRL.pocket_call[1] = val[1];
 					k,v = keys(nt), values(nt)
 					nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
-					r = clip!(; nt...)
+					r = clip!(; Vd=2, nt...)
 					r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
 					r = replace(r, " -R -J" => "")
 					r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'
-				elseif (symb == :arrows || symb == :lines || symb == :scatter || symb == :scatter3 || symb == :plot
-					   || symb == :plot3 || symb == :hlines || symb == :vlines || symb == :text || symb == :vband)
+				else
+					!(symb in symbs_data) && error("Nested Fun call $symb not in the callable nested functions list")
 					_d = nt2dict(nt)
 					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; del_from_dict(d, [:data]))
-					r = (symb == :arrows) ? arrows!(; nt...) : (symb == :lines) ? lines!(; nt...) :
-					(symb == :scatter) ? scatter!(; nt...) : (symb == :scatter3) ? scatter3!(; nt...) :
-					(symb == :plot) ? plot!(; nt...) : (symb == :plot3) ? plot3!(; nt...) :
-					(symb == :hlines) ? hlines!(; nt...) : (symb == :vlines) ? vlines!(; nt...) : (symb == :text) ? text!(; nt...) : vband!(CTRL.pocket_call[1]; nested=true, nt...)
+					this_symb = symbs_data[findfirst(symb .== symbs_data)]
+					fn = getfield(Main, Symbol(string(this_symb, "!")))
+					if (this_symb in [:vband, :hband, :vspan, :hspan])
+						r = fn(CTRL.pocket_call[1]; nested=true, Vd=2, nt...)
+					else
+						r = fn(; Vd=2, nt...)
+					end
 				end
 			elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
 				if     (symb == :coast)    r = coast!(W=0.5, A="200/0/2", Vd=2)

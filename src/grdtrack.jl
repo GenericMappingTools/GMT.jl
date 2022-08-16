@@ -9,7 +9,7 @@ Full option list at [`grdtrack`]($(GMTdoc)/grdtrack.html)
 Parameters
 ----------
 
-- **A** | **interp_path** :: [Type => Str]		`Arg = f|p|m|r|R[+l]`
+- **A** | **interp_path** | **resample** :: [Type => Str]		`Arg = f|p|m|r|R[+l]`
 
     For track resampling (if `crossprofile` or `profile` are set) we can select how this is to be performed. 
     ($(GMTdoc)grdtrack.html#a)
@@ -70,8 +70,8 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :interp_path], [:C :crossprofile :equidistant], [:D :dfile], [:E :profile],
-	                                 [:F :critical], [:N :no_skip :noskip], [:S :stack], [:T :radius], [:Z :z_only]])
+	cmd  = parse_these_opts(cmd, d, [[:A :interp_path :resample], [:C :crossprofile :equidistant], [:D :dfile],
+	                                 [:E :profile], [:F :critical], [:N :no_skip :noskip], [:S :stack], [:T :radius], [:Z :z_only]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	cmd, grid_tuple, arg1, arg2 = parse_G_grdtrk(d, [:G, :grid], cmd, arg1, arg2)
