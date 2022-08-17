@@ -88,6 +88,8 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	(isa(arg1, Matrix{<:Real})) && (arg1 = mat2grid(arg1))
 
+	set_defcpt!(d, cmd0)	# It dealing with a remote grid assign it a default CPT
+
 	cmd, _, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdview")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdview")
 	cmd, arg1, arg2, arg3, arg4, arg5 = parse_G_grdview(d, [:G :drape :drapefile], cmd0, cmd, arg1, arg2, arg3, arg4, arg5)

@@ -2305,10 +2305,10 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 				end
 			end
 		end
-	elseif (def && opt_T != "")						# Requested the use of the default color map
+	elseif (def && opt_T != "")						# Requested use of the default color map
 		if (IamModern[1])  opt_T *= " -H"  end		# Piggy back this otherwise we get no CPT back in Modern
 		if (haskey(d, :this_cpt) && d[:this_cpt] != "")		# A specific CPT name was requested
-			cpt = makecpt(opt_T * " -C" * d[:this_cpt])
+			cpt = makecpt(opt_T * " -C" * d[:this_cpt]);	delete!(d, :this_cpt)
 		else
 			opt_T *= " -Cturbo"
 			cpt = makecpt(opt_T)
@@ -2392,11 +2392,31 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	if (isa(arg1, GItype) || (cmd0 != "" && cmd0[1] != '@'))
 		if (isempty(current_cpt[1]) && (val = find_in_dict(d, CPTaliases, false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
-			cpt_opt_T = @sprintf(" -T%.12g/%.12g/128+n", range[5] - 1e-6, range[6] + 1e-6)
+			if (isa(arg1, GMTgrid) && ((val = find_in_dict(d, [:percent])[1])) !== nothing)
+				lh = quantile(any(!isfinite, arg1) ? skipnan(vec(arg1)) : vec(arg1), [(100 - val)/200, (1 - (100 - val)/200)])
+				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", lh[1], lh[2])	# Piggyback -D
+			elseif ((val = find_in_dict(d, [:percent])[1]) !== nothing)			# Case of a grid file
+				range = vec(grdinfo(cmd0 * " -C -T+a$(100-val)").data);
+				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", range[5], range[6])
+			elseif ((val = find_in_dict(d, [:clim])[1]) !== nothing)
+				(length(val) != 2) && error("The clim option must have two elements and not $(length(val))")
+				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])	# Piggyback -D
+			else
+				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - 1e-6, range[6] + 1e-6)
+			end
 			(range[5] > 1e100) && (cpt_opt_T = "")	# cmd0 is an image name and now grdinfo does not compute its min/max
 		end
 		if (opt_R == "" && (!IamModern[1] || (IamModern[1] && FirstModern[1])) )	# No -R ovewrite by accident
 			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
+		end
+	elseif (cmd0 != "" && cmd0[1] == '@')		# No reason not to let @grids use clim=[...]
+		if ((val = find_in_dict(d, [:clim])[1]) !== nothing)
+			(length(val) != 2) && error("The clim option must have two elements and not $(length(val))")
+			cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])
+		elseif (any(contains.(cmd0, ["_01d", "_30m", "_20m", "_15m", "_10m", "_06m"])) && (val = find_in_dict(d, [:percent])[1]) !== nothing)
+			infa = grdinfo(cmd0 * " -T+a$(100-val)").text[1]	# Bloody complicated output
+			mima = split(infa[3:end], "/")		# Because the output is like "-T-5384/2729"
+			cpt_opt_T = " -T" * mima[1] * "/" * mima[2] * "/256+n -D"
 		end
 	end
 
@@ -2409,7 +2429,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		end
 	elseif (prog == "grdimage")
 		if (!isa(arg1, GMTimage) && (arg3 === nothing && !occursin("-D", cmd)) )
-			get_cpt = true		# This still lives out the case when the r,g,b were sent as a text.
+			get_cpt = true		# This still leaves out the case when the r,g,b were sent as a text.
 		elseif (find_in_dict(d, CPTaliases, false)[1] !== nothing)
 			@warn("You are possibly asking to assign a CPT to an image. That is not allowed by GMT. See function image_cpt!")
 		end

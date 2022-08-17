@@ -15,6 +15,10 @@ grdimage(rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, rand(Float32,
 grdimage(data=(Gr,Gg,Gb), J=:X10, I=mat2grid(rand(Float32,128,128)), Vd=dbg2)
 grdimage(rand(Float32, 128, 128), shade=(default=30,), coast=(W=1,), Vd=dbg2)
 grdimage(rand(Float32, 128, 128), colorbar=(color=:rainbow, pos=(anchor=:RM,length=8)), Vd=dbg2)
+grdimage(rand(Float32, 128, 128), percent=90, Vd=dbg2)
+grdimage(rand(Float32, 128, 128), clim=[0.1, 0.9], Vd=dbg2)
+grdimage("@earth_relief_01d_g", percent=98, Vd=dbg2)
+grdimage("@earth_relief_01d_g", clim=[-4000 4000], Vd=dbg2)
 grdimage("lixo.grd", coast=true, colorbar=true, logo=true, Vd=dbg2)
 G = gmt("grdmath -Rg -fg -I5 X");
 gmtwrite("lixo.grd", G)

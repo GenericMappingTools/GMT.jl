@@ -96,7 +96,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		end
 	end
 
-	# if (occursin("earth_relief_", cmd0))  push!(d, :this_cpt => "geo")  end	# Make this the default CPT
+	set_defcpt!(d, cmd0)	# It dealing with a remote grid assign it a default CPT
 
 	cmd, _, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
@@ -174,6 +174,21 @@ function common_get_R_cpt(d::Dict, cmd0::String, cmd::String, opt_R::String, got
 		cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, prog)
 	end
 	return cmd, N_used, arg1, arg2, arg3
+end
+
+# ---------------------------------------------------------------------------------------------------
+function set_defcpt!(d::Dict, cmd0::String)
+	# When dealing with remote grids (those that start with a @), assign them a default CPT
+	(cmd0 != "" && cmd0[1] != '@') && return nothing
+
+	cpt_path = joinpath(dirname(pathof(GMT)), "..", "share", "cpt")
+	if (any(occursin.(["earth_relief_", "earth_gebco_", "earth_gebcosi_", "earth_synbath_"], cmd0))) d[:this_cpt] = "geo"
+	elseif (any(occursin.(["earth_mag4km_", "earth_mag_"], cmd0)))  d[:this_cpt] = cpt_path * "/earth_mag"
+	elseif (occursin("earth_wdmam_", cmd0))  d[:this_cpt] = cpt_path * "/earth_wdmam_"
+	elseif (occursin("earth_age_", cmd0))  d[:this_cpt] = cpt_path * "/earth_age"
+	elseif (occursin("earth_faa_", cmd0))  d[:this_cpt] = cpt_path * "/earth_faa"
+	elseif (occursin("earth_vgg_", cmd0))  d[:this_cpt] = cpt_path * "/earth_vgg"
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------
