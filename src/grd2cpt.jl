@@ -35,7 +35,7 @@ Parameters
 
     Reverse the sense of color progression in the master CPT.
     ($(GMTdoc)grd2cpt.html#i)
-- **L** | **datarange** :: [Type => Str]			`Arg = minlimit/maxlimit`
+- **L** | **datarange** | **clim** :: [Type => Str]			`Arg = minlimit/maxlimit`
 
     Limit range of CPT to minlimit/maxlimit, and don’t count data outside this range when estimating CDF(Z).
     [Default uses min and max of data.]

@@ -2282,6 +2282,19 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
 
+	function equalize(d, arg1, cptname)
+		if ((isa(arg1, GMTgrid) || isa(arg1, String)) && (val = find_in_dict(d, [:equalize])[1]) !== nothing)
+			n = convert(Int, val)					# If val is other than Bool or number it will error
+			if (isa(arg1, String))
+				cpt = (n > 1) ? gmt("grd2cpt -E$n+c -C" * cptname * " " * arg1) : gmt("grd2cpt -C" * cptname * " " * arg1)
+			else
+				cpt = (n > 1) ? gmt("grd2cpt -E$n+c -C" * cptname, arg1) : gmt("grd2cpt -C" * cptname, arg1)
+			end
+		else
+			cpt = gmt("makecpt " * opt_T * " -C" * cptname)
+		end
+	end
+
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, GMT.GMTcpt))
 			(N_args > 1) && error("Can't send the CPT data via option AND input array")
@@ -2308,10 +2321,9 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 	elseif (def && opt_T != "")						# Requested use of the default color map
 		if (IamModern[1])  opt_T *= " -H"  end		# Piggy back this otherwise we get no CPT back in Modern
 		if (haskey(d, :this_cpt) && d[:this_cpt] != "")		# A specific CPT name was requested
-			cpt = makecpt(opt_T * " -C" * d[:this_cpt]);	delete!(d, :this_cpt)
+			cpt = equalize(d, arg1, d[:this_cpt]);	delete!(d, :this_cpt)
 		else
-			opt_T *= " -Cturbo"
-			cpt = makecpt(opt_T)
+			cpt = equalize(d, arg1, "turbo")
 			cpt.bfn[3, :] = [1.0 1.0 1.0]	# Some deep bug, in occasions, returns grays on 2nd and on calls
 		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
