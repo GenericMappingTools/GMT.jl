@@ -107,7 +107,7 @@ function gmtread(fname::String; kwargs...)
 				elseif (isa(val, Array) || isa(val, Tuple))
 					# Replacement for the annoying fact that one cannot do @sprintf(repeat("%d,", n), val...)
 					fname  *= @sprintf("%d", val[1]-1)
-					for k = 2:length(val)  fname *= @sprintf(",%d", val[k]-1)  end
+					for k = 2:lastindex(val)  fname *= @sprintf(",%d", val[k]-1)  end
 				end
 				(opt_T == "") && (opt_T = " -Ti")
 			end
@@ -155,6 +155,11 @@ function gmtread(fname::String; kwargs...)
 				(length(hfs) == 1) && (hfs = split(o[1].comment[1], ','))	# Try also the comma separator
 				(length(hfs) >= ncs) && (o[1].colnames = string.(hfs)[1:ncs])
 			end
+		end
+		if (isa(o, GMTgrid))
+			o.hasnans = any(!isfinite, o) ? 2 : 1
+			# Check if we should assign a default CPT to this grid
+			((fname[1] == '@') && (cptname = check_remote_cpt(fname)) != "") && (o.cpt = cptname)
 		end
 		return o
 	end

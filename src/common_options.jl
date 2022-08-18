@@ -2425,14 +2425,16 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	if (prog == "grdview")
 		get_cpt = true
 		if ((val = find_in_dict(d, [:G :drapefile], false)[1]) !== nothing)
-			if (isa(val, Tuple) && length(val) == 3)  get_cpt = false  end	# Playing safe
+			(isa(val, Tuple) && length(val) == 3) && (get_cpt = false)		# Playing safe
 		end
+		(get_cpt && isa(arg1, GMTgrid) && arg1.cpt != "") && (d[:this_cpt] = arg1.cpt)
 	elseif (prog == "grdimage")
 		if (!isa(arg1, GMTimage) && (arg3 === nothing && !occursin("-D", cmd)) )
 			get_cpt = true		# This still leaves out the case when the r,g,b were sent as a text.
 		elseif (find_in_dict(d, CPTaliases, false)[1] !== nothing)
 			@warn("You are possibly asking to assign a CPT to an image. That is not allowed by GMT. See function image_cpt!")
 		end
+		(isa(arg1, GMTgrid) && arg1.cpt != "") && (d[:this_cpt] = arg1.cpt)		# Use the grid's default CPT
 	elseif (prog == "grdcontour" || prog == "pscontour")	# Here C means Contours but we cheat, so always check if C, color, ... is present
 		get_cpt = true;		cpt_opt_T = ""		# This is hell. And what if I want to auto generate a cpt?
 		if (prog == "grdcontour" && !occursin("+c", cmd))  in_bag = false  end
@@ -3633,7 +3635,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function show_args_types(args...)
-	for k = 1:length(args)
+	for k in eachindex(args)
 		args[k] === nothing && break
 		println("arg",k, " = ", typeof(args[k]))
 	end
@@ -3984,12 +3986,12 @@ end
 # --------------------------------------------------------------------------------------------------
 function show_non_consumed(d::Dict, cmd)
 	# First delete some that could not have been delete earlier (from legend for example)
-	del_from_dict(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait]])
+	del_from_dict(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait], [:this_cpt]])
+	!isempty(current_cpt[1]) && del_from_dict(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
 	if (length(d) > 0)
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
 	end
-	#CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -4230,7 +4232,7 @@ function peaks(; N=49, grid::Bool=true, pixreg::Bool=false)
 		z = Float32.(z)
 		reg = (pixreg) ? 1 : 0
 		G = GMTgrid("", "", 0, [_x[1], _x[end], _y[1], _y[end], minimum(z), maximum(z)], [inc, inc],
-					reg, NaN, "", "", "", String[], _x, _y, Vector{Float64}(), z, "x", "y", "", "z", "", 1f0, 0f0, 0)
+					reg, NaN, "", "", "", "", String[], _x, _y, Vector{Float64}(), z, "x", "y", "", "z", "", 1f0, 0f0, 0, 0)
 		return G
 	else
 		return x,y,z

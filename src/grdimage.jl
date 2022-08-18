@@ -96,7 +96,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		end
 	end
 
-	set_defcpt!(d, cmd0)	# It dealing with a remote grid assign it a default CPT
+	set_defcpt!(d, cmd0)	# When dealing with a remote grid assign it a default CPT
 
 	cmd, _, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
@@ -179,16 +179,24 @@ end
 # ---------------------------------------------------------------------------------------------------
 function set_defcpt!(d::Dict, cmd0::String)
 	# When dealing with remote grids (those that start with a @), assign them a default CPT
-	(cmd0 != "" && cmd0[1] != '@') && return nothing
+	cptname = check_remote_cpt(cmd0)
+	cptname != "" && (d[:this_cpt] = cptname)
+	return nothing
+end
 
+# ---------------------------------------------------------------------------------------------------
+function check_remote_cpt(cmd0::String)
+	out = ""
+	(cmd0 != "" && cmd0[1] != '@') && return ""
 	cpt_path = joinpath(dirname(pathof(GMT)), "..", "share", "cpt")
-	if (any(occursin.(["earth_relief_", "earth_gebco_", "earth_gebcosi_", "earth_synbath_"], cmd0))) d[:this_cpt] = "geo"
-	elseif (any(occursin.(["earth_mag4km_", "earth_mag_"], cmd0)))  d[:this_cpt] = cpt_path * "/earth_mag"
-	elseif (occursin("earth_wdmam_", cmd0))  d[:this_cpt] = cpt_path * "/earth_wdmam_"
-	elseif (occursin("earth_age_", cmd0))  d[:this_cpt] = cpt_path * "/earth_age"
-	elseif (occursin("earth_faa_", cmd0))  d[:this_cpt] = cpt_path * "/earth_faa"
-	elseif (occursin("earth_vgg_", cmd0))  d[:this_cpt] = cpt_path * "/earth_vgg"
+	if (any(occursin.(["earth_relief_", "earth_gebco_", "earth_gebcosi_", "earth_synbath_"], cmd0))) out = "geo"
+	elseif (any(occursin.(["earth_mag4km_", "earth_mag_"], cmd0)))  out = cpt_path * "/earth_mag.cpt"
+	elseif (occursin("earth_wdmam_", cmd0))  out = cpt_path * "/earth_wdmam.cpt"
+	elseif (occursin("earth_age_", cmd0))  out = cpt_path * "/earth_age.cpt"
+	elseif (occursin("earth_faa_", cmd0))  out = cpt_path * "/earth_faa.cpt"
+	elseif (occursin("earth_vgg_", cmd0))  out = cpt_path * "/earth_vgg.cpt"
 	end
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
