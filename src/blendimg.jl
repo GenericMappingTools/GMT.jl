@@ -113,7 +113,7 @@ An object of the same type as I
 function intlut(I, lut)
 	@assert eltype(I) == eltype(lut)
 	mat = Array{eltype(I), ndims(I)}(undef, size(I))
-	@inbounds for n = 1:length(I)
+	@inbounds for n in eachindex(I)
 		mat[n] = lut[I[n]+1]
 	end
 	return (isa(I, GMTimage)) ? mat2img(mat, I) : mat

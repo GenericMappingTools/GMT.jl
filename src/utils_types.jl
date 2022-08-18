@@ -1130,19 +1130,22 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Flo
 		else             inc, range = [x_inc, y_inc, v[2] - v[1]], [vec(hdr[1:6]); [v[1], v[end]]]
 		end
 	end
-	GMTgrid(proj4, wkt, epsg, range, inc, reg_, NaN, tit, rem, cmd, names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0)
+	hasnans = any(!isfinite, mat) ? 2 : 1
+	GMTgrid(proj4, wkt, epsg, range, inc, reg_, NaN, tit, rem, cmd, "", names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0, hasnans)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object
 function mat2grid(mat, G::GMTgrid)
 	isT = istransposed(mat)
-	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, String[], deepcopy(G.x), deepcopy(G.y), [0.], isT ? copy(mat) : mat, G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad)
+	hasnans = any(!isfinite, mat) ? 2 : 1
+	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, "", String[], deepcopy(G.x), deepcopy(G.y), [0.], isT ? copy(mat) : mat, G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad, hasnans)
 	setgrdminmax!(Go)		# Also take care of NaNs
 	Go
 end
 function mat2grid(mat, I::GMTimage)
 	isT = istransposed(mat)
-	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, NaN, "", "", "", String[], I.x, I.y, [0.], isT ? copy(mat) : mat, "", "", "", "", I.layout, 1f0, 0f0, I.pad)
+	hasnans = any(!isfinite, mat) ? 2 : 1
+	Go = GMTgrid(I.proj4, I.wkt, I.epsg, I.range, I.inc, I.registration, NaN, "", "", "", "", String[], I.x, I.y, [0.], isT ? copy(mat) : mat, "", "", "", "", I.layout, 1f0, 0f0, I.pad, hasnans)
 	(length(Go.layout) == 4) && (Go.layout = Go.layout[1:3])	# No space for the a|A
 	setgrdminmax!(Go)		# Also take care of NaNs
 	Go
@@ -1153,8 +1156,8 @@ function mat2grid(f::Function, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=n
 	(isempty(y) && !isempty(yy)) && (y = yy)
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	z = Array{Float32,2}(undef,length(y),length(x))
-	for i = 1:length(x)
-		for j = 1:length(y)
+	for i in eachindex(x)
+		for j in eachindex(y)
 			z[j,i] = f(x[i],y[j])
 		end
 	end

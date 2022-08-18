@@ -9,6 +9,7 @@ Base.@kwdef mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	title::String
 	remark::String
 	command::String
+	cpt::String
 	names::Vector{String}
 	x::Array{Float64,1}
 	y::Array{Float64,1}
@@ -22,6 +23,7 @@ Base.@kwdef mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	scale::Union{Float64, Float32}=1f0
 	offset::Union{Float64, Float32}=0f0
 	pad::Int=0
+	hasnans::Int=0
 end
 Base.size(G::GMTgrid) = size(G.z)
 Base.getindex(G::GMTgrid{T,N}, inds::Vararg{Int,N}) where {T,N} = G.z[inds...]
@@ -30,7 +32,7 @@ Base.setindex!(G::GMTgrid{T,N}, val, inds::Vararg{Int,N}) where {T,N} = G.z[inds
 Base.BroadcastStyle(::Type{<:GMTgrid}) = Broadcast.ArrayStyle{GMTgrid}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTgrid}}, ::Type{ElType}) where ElType
 	G = find4similar(bc.args)		# Scan the inputs for the GMTgrid:
-	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.names, G.x, G.y, G.v, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad)
+	GMTgrid(G.proj4, G.wkt, G.epsg, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.cpt, G.names, G.x, G.y, G.v, similar(Array{ElType}, axes(bc)), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad, G.hasnans)
 end
 
 find4similar(bc::Base.Broadcast.Broadcasted) = find4similar(bc.args)
@@ -567,7 +569,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 
 	# Return grids via a float matrix in a struct
 	rng, inc = (gmt_hdr.n_bands > 1) ? (fill(NaN,8), fill(NaN,3)) : (fill(NaN,6), fill(NaN,2))
-	out = GMTgrid("", "", 0, rng, inc, 0, NaN, "", "", "", String[], X, Y, V, z, "", "", "", "", layout, 1f0, 0f0, 0)
+	out = GMTgrid("", "", 0, rng, inc, 0, NaN, "", "", "", "", String[], X, Y, V, z, "", "", "", "", layout, 1f0, 0f0, 0, 0)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT != C_NULL)    out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)      end

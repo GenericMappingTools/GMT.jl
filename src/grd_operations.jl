@@ -9,8 +9,9 @@ function Base.:+(G1::GMTgrid, G2::GMTgrid)
 # Add two grids, element by element. Inherit header parameters from G1 grid
 	(size(G1.z) != size(G2.z)) && error("Grids have different sizes, so they cannot be added.")
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             G1.z .+ G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	hasnans = (G1.hasnans == 0 && G2.hasnans == 0) ? 0 : ((G1.hasnans + G2.hasnans) == 2) ? 1 : 2
+	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             G1.z .+ G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
 	setgrdminmax!(G3)		# Also take care of NaNs
 	return G3
 end
@@ -20,8 +21,8 @@ Base.:+(shift::Real, G1::GMTgrid) = Base.:+(G1::GMTgrid, shift::Real)
 function Base.:+(G1::GMTgrid, shift::Real)
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	_shift = convert(eltype(G1.z), shift)
-	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             G1.z .+ _shift, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             G1.z .+ _shift, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .+= shift
 	return G2
 end
@@ -31,8 +32,9 @@ function Base.:-(G1::GMTgrid, G2::GMTgrid)
 # Subtract two grids, element by element. Inherit header parameters from G1 grid
 	(size(G1.z) != size(G2.z)) && error("Grids have different sizes, so they cannot be subtracted.")
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             G1.z .- G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	hasnans = (G1.hasnans == 0 && G2.hasnans == 0) ? 0 : ((G1.hasnans + G2.hasnans) == 2) ? 1 : 2
+	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             G1.z .- G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
 	setgrdminmax!(G3)		# Also take care of NaNs
 	return G3
 end
@@ -41,8 +43,8 @@ end
 function Base.:-(G1::GMTgrid, shift::Real)
 	_shift = convert(eltype(G1.z), shift)
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             G1.z .- _shift, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             G1.z .- _shift, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .-= shift
 	return G2
 end
@@ -52,8 +54,9 @@ function Base.:*(G1::GMTgrid, G2::GMTgrid)
 # Multiply two grids, element by element. Inherit header parameters from G1 grid
 	(size(G1.z) != size(G2.z)) && error("Grids have different sizes, so they cannot be multiplied.")
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             G1.z .* G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	hasnans = (G1.hasnans == 0 && G2.hasnans == 0) ? 0 : ((G1.hasnans + G2.hasnans) == 2) ? 1 : 2
+	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             G1.z .* G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
 	setgrdminmax!(G3)		# Also take care of NaNs
 	return G3
 end
@@ -64,8 +67,8 @@ Base.:*(scale::Real, G1::GMTgrid) = Base.:*(G1::GMTgrid, scale::Real)
 function Base.:*(G1::GMTgrid, scale::Real)
 	_scale = convert(eltype(G1.z), scale)
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             G1.z .* _scale, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             G1.z .* _scale, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .*= scale
 	return G2
 end
@@ -75,8 +78,8 @@ Base.:^(G1::GMTgrid, scale::Int) = Base.:^(G1::GMTgrid, Float64(scale))
 function Base.:^(G1::GMTgrid, scale::Real)
 	_scale = convert(eltype(G1.z), scale)
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             G1.z.^_scale, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             G1.z.^_scale, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .^= scale
 	return G2
 end
@@ -86,8 +89,9 @@ function Base.:/(G1::GMTgrid, G2::GMTgrid)
 # Divide two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z))  error("Grids have different sizes, so they cannot be divided.")  end
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             G1.z ./ G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	hasnans = (G1.hasnans == 0 && G2.hasnans == 0) ? 0 : ((G1.hasnans + G2.hasnans) == 2) ? 1 : 2
+	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             G1.z ./ G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
 	setgrdminmax!(G3)		# Also take care of NaNs
 	return G3
 end
@@ -96,8 +100,8 @@ end
 function Base.:/(G1::GMTgrid, scale::Real)
 	_scale = convert(eltype(G1.z), scale)
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             G1.z ./ _scale, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             G1.z ./ _scale, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] ./= scale
 	return G2
 end
@@ -105,8 +109,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function Base.:sqrt(G1::GMTgrid)
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             sqrt.(G1.z), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             sqrt.(G1.z), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	setgrdminmax!(G2)
 	return G2
 end
@@ -114,8 +118,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function Base.:log(G1::GMTgrid)
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             log.(G1.z), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             log.(G1.z), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	setgrdminmax!(G2)
 	return G2
 end
@@ -123,8 +127,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function Base.:log10(G1::GMTgrid)
 	epsg, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", G1.names, x, y, v,
-	             log10.(G1.z), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             log10.(G1.z), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	setgrdminmax!(G2)
 	return G2
 end
