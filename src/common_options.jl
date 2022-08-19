@@ -2429,6 +2429,8 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 			infa = grdinfo(cmd0 * " -T+a$(100-val)").text[1]	# Bloody complicated output
 			mima = split(infa[3:end], "/")		# Because the output is like "-T-5384/2729"
 			cpt_opt_T = " -T" * mima[1] * "/" * mima[2] * "/256+n -D"
+		elseif (haskey(d, :equalize))
+			arg1, cpt_opt_T = cmd0, " "			# This is a trick to let add_opt_cpt() compute the equalization
 		end
 	end
 
@@ -3880,6 +3882,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
 		if (k > 1 && is_psscale && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
 			_, arg1, = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)
+			(arg1 === nothing && haskey(d, :this_cpt)) && (arg1 = gmt("makecpt -C" * d[:this_cpt]))	# May bite back.
 			(arg1 === nothing) && (@warn("No cmap found to use in colorbar. Ignoring this command."); continue)
 			P = gmt(cmd[k], arg1)
 			continue

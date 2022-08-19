@@ -26,9 +26,9 @@ Parameters
     ($(GMTdoc)movie.html#t)
 - **pre** :: [Type => Str]
 
-	The optional *backgroundscript* file (a GMT.jl script) can be used one or two purposes: (1) It may create files
-	(such as timefile) that will be needed by mainscript to make the movie, and (2) It may make a static background
-	plot that should form the background for all frames.
+    The optional *backgroundscript* file (a GMT.jl script) can be used one or two purposes: (1) It may create files
+    (such as timefile) that will be needed by mainscript to make the movie, and (2) It may make a static background
+    plot that should form the background for all frames.
     ($(GMTdoc)movie.html#s)
 - **post** :: [Type => Str]
 
@@ -92,8 +92,8 @@ Parameters
     ($(GMTdoc)movie.html#s)
 - **W** | **work_dir** :: [Type => Str]
 
-	By default, all temporary files and frame PNG file are built in the subdirectory prefix set via **name**.
-	You can override that by giving another workdir as a relative or full directory path.
+    By default, all temporary files and frame PNG file are built in the subdirectory prefix set via **name**.
+    You can override that by giving another workdir as a relative or full directory path.
     ($(GMTdoc)movie.html#w)
 - **Z** | **clean** :: [Type => Bool]
 
