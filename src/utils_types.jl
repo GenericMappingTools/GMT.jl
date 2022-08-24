@@ -230,10 +230,11 @@ function set_dsBB!(D, all_bbs::Bool=true)
 
 	if (all_bbs)
 		if isa(D, GMTdataset)
+			(size(D,1) == 1) && return nothing		# Single liners have no BB
 			D.ds_bbox = D.bbox = collect(Float64, Iterators.flatten(extrema(D.data, dims=1)))
 			return nothing
 		else
-			for k = 1:length(D)
+			for k = 1:lastindex(D)
 				bb = extrema(D[k].data, dims=1)		# A N Tuple.
 				D[k].bbox = collect(Float64, Iterators.flatten(bb))
 			end
@@ -244,7 +245,7 @@ function set_dsBB!(D, all_bbs::Bool=true)
 	(length(D) == 1)     && (D[1].ds_bbox = D[1].bbox;	return nothing)
 	isempty(D[1].bbox)   && return nothing
 	bb = copy(D[1].bbox)
-	for k = 2:length(D)
+	for k = 2:lastindex(D)
 		for n = 1:2:length(bb)
 			bb[n]   = min(D[k].bbox[n],   bb[n])
 			bb[n+1] = max(D[k].bbox[n+1], bb[n+1])

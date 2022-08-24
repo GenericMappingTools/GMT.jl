@@ -1164,8 +1164,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_F(d::Dict, cmd::String)::String
-	cmd = add_opt(d, cmd, "F", [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen),
-	                                       rounded="+r", shaded=("+s", arg2str), shade=("+s", arg2str)) )
+	cmd = add_opt(d, cmd, "F", [:F :box :panel], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
+	                                              pen=("+p", add_opt_pen), rounded="+r", shaded=("+s", arg2str), shade=("+s", arg2str)) )
 end
 
 # ---------------------------------------------------------------------------------------------------

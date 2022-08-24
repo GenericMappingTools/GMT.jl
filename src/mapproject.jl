@@ -60,7 +60,7 @@ Parameters
 
     Coordinate conversions between datums from and to using the standard Molodensky transformation.
     ($(GMTdoc)mapproject.html#t)
-- **W** | **map_size** :: [Type => Str | []]    ``Arg = [w|h]``
+- **W** | **map_size** | **mapsize** :: [Type => Str | []]    ``Arg = [w|h]``
 
     Prints map width and height on standard output. No input files are read.
     ($(GMTdoc)mapproject.html#w)
@@ -86,8 +86,8 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :j :o :p :s :yx])
-	cmd  = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef :ecef], [:I :inverse], [:S :supress], #[:L :dist2line],
-	                                 [:T :change_datum], [:W :map_size], [:Z :traveltime :travel_times]])
+	cmd  = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef :ecef], [:I :inverse], [:S :supress],
+	                                 [:T :change_datum], [:W :map_size :mapsize], [:Z :traveltime :travel_times]])
 	cmd  = add_opt_1char(cmd, d, [[:D :lengthunit :override_units], [:F :one2one], [:Q :list], [:N :geod2aux]])
 
 	cmd = add_opt(d, cmd, "A", [:A :azim :azimuth],
@@ -97,6 +97,8 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
     cmd, args, n, = add_opt(d, cmd, "L", [:L :dist2line], :line, Array{Any,1}([arg1, arg2]),
                             (unit="+u1", cartesian="_+uc", project="_+uC", fractional_pt="_+p"))
+	contains(cmd, "-L") && gmtlib_setparameter(G_API[1], "GMT_COMPATIBILITY", "4")  # GMT<=6.4 bug
+
 	if (n > 0)
 		arg1, arg2 = args[:]
 	end

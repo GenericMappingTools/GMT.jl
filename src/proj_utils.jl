@@ -39,9 +39,24 @@ mutable struct geod_geodesic <: _geodesic
 	geod_geodesic() = new()
 end
 
+#= -------------------------------------------------------------------------------------------------
+function gcirc(lonlat1::VMr, lonlat2::VMr; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
+	d, azim, = invgeod(lonlat1, lonlat2)
+	dest1, = geod(lonlat1, azim, 39900, unit=:km)	# Destination of a point before the perimeter
+	dest2, = geod(lonlat1, azim, 40100, unit=:km)	# Destination of a point after the perimeter
+	t = geodesic([dest1[1] dest1[2]; dest2[1] dest2[2]], step=1000)
+	_name = joinpath(tempdir(), "GMTjl_tmp.dat");
+	gmtwrite(_name, t);					# Workaround a bug in <= 6.4.0
+	x = mapproject(lonlat1, L=_name)	# Assume the closest point to start corresponds to the full perimeter.
+	d, = invgeod(dest1, [x[4] x[5]])	# Distance from starting point to the point where the geodesic does a full perimeter.
+	dtot = 39900000 + d					# Total length of this geodesic
+	geod(lonlat1, azim, linspace(0,dtot))[1]
+end
+=#
+
 # -------------------------------------------------------------------------------------------------
 """
-    geod(lonlat, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
+    dest, azim = geod(lonlat, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
 
 Solve the direct geodesic problem.
 
@@ -49,7 +64,7 @@ Args:
 
 - `lonlat`:   - longitude, latitude (degrees). This can be a vector or a matrix with one row only.
 - `azimuth`:  - azimuth (degrees) ∈ [-540, 540)
-- `distance`: - distance to move from (lat,lon); can be negative, Default is meters but see `unit`
+- `distance`: - distance to move from (lat,lon); can be vector and can be negative, Default is meters but see `unit`
 - `proj` or `s_srs`:  - the given projection whose ellipsoid we move along. Can be a proj4 string or an WKT
 - `epsg`:     - Alternative way of specifying the projection [Default is WGS84]
 - `dataset`:  - If true returns a GMTdataset instead of matrix
@@ -60,7 +75,7 @@ a scalar or a Vector.
 
 When `azimuth` is a Vector we always return a GMTdataset with the multiple lines. Use this together with a
 non-scalar `distance` to get lines with multiple points along the line. The number of points along line does
-not even need to be the same. For data, give the `distance` as a Vector{Vector} where each element of `distance`
+not need to be the same. For data, give the `distance` as a Vector{Vector} where each element of `distance`
 is a vector with the distances of the points along a line. In this case the number of `distance` elements
 must be equal to the number of `azimuth`. 
 
@@ -70,7 +85,7 @@ must be equal to the number of `azimuth`.
 
 ## Example: Compute two lines starting at (0,0) with lengths 111100 & 50000, heading at 15 and 45 degrees.
 
-    geod([0., 0], [15., 45], [[0, 10000, 50000, 111100.], [0., 50000]])[1]
+    dest, = geod([0., 0], [15., 45], [[0, 10000, 50000, 111100.], [0., 50000]])[1]
 """
 geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m) =
 	geod([lonlat[1] lonlat[2]], azim, distance; proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit)
@@ -81,6 +96,10 @@ function geod(lonlat::Matrix{<:Real}, azim, distance; proj::String="", s_srs::St
 	proj_string, projPJ_ptr, isgeog = helper_geod(proj, s_srs, epsg)
 	dest, azi = helper_gdirect(projPJ_ptr, lonlat, azim, _dist, proj_string, isgeog, dataset)
 	proj_destroy(projPJ_ptr)
+	if (isa(dest, GDtype))
+		set_dsBB!(dest)				# Compute and set the global BoundingBox for this dataset
+		isa(dest, GMTdataset) ? dest.colnames = ["Lon", "Lat", "Azim"] : [dest[k].colnames = ["Lon", "Lat", "Azim"] for k in eachindex(dest)]
+	end
 	return dest, azi
 end
 
@@ -97,21 +116,22 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    d, az1, az2 = invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
+    dist, az1, az2 = invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
 
 Solve the inverse geodesic problem.
 
 Args:
 
-- `lonlat1`:  - coordinates of point 1 in the given projection
-- `lonlat2`:  - coordinates of point 2 in the given projection
+- `lonlat1`:  - coordinates of point 1 in the given projection (or a matrix with several points)
+- `lonlat2`:  - coordinates of point 2 in the given projection (or a matrix with same size as `lonlat1``)
 - `proj` or `s_srs`:  - the given projection whose ellipsoid we move along. Can be a proj4 string or an WKT
 - `epsg`:     - Alternative way of specifying the projection [Default is WGS84]
 
 ### Returns
-dist - distance between point 1 and point 2 (meters).
-azi1 - azimuth at point 1 (degrees) ∈ [-180, 180)
-azi2 - (forward) azimuth at point 2 (degrees) ∈ [-180, 180)
+dist - A scalar with the distance between point 1 and point 2 (meters). Or a vector when lonlat1|2
+       have more than one pair of points. 
+az1 - azimuth at point 1 (degrees) ∈ [-180, 180)
+az2 - (forward) azimuth at point 2 (degrees) ∈ [-180, 180)
 
 Remarks:
 
@@ -123,7 +143,7 @@ invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs
 function invgeod(lonlat1::Matrix{<:Real}, lonlat2::Matrix{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
 	@assert (size(lonlat1) == size(lonlat2) || size(lonlat2,1) == 1) "Both matrices must have same size or second have one row"
 	proj_string, projPJ_ptr, isgeog = helper_geod(proj, s_srs, epsg)
-	(!isgeog) && (lonlat1 = xy2lonlat(lonlat1, proj_string);	lonlat2 = xy2lonlat(lonlat2, proj_string))	# Convert to geogd first
+	(!isgeog) && (lonlat1 = xy2lonlat(lonlat1, proj_string);	lonlat2 = xy2lonlat(lonlat2, proj_string))	# Convert to geog first
 	d   = Vector{Float64}(undef, size(lonlat1,1))
 	az1 = Vector{Float64}(undef, size(lonlat1,1))
 	az2 = Vector{Float64}(undef, size(lonlat1,1))
@@ -135,7 +155,7 @@ function invgeod(lonlat1::Matrix{<:Real}, lonlat2::Matrix{<:Real}; proj::String=
 		d[k], az1[k], az2[k] = dist[], azi1[], azi2[]
 	end
 	proj_destroy(projPJ_ptr)
-	return d, az1, az2
+	return size(d,1) == 1 ? d[1] : d, az1, az2
 end
 
 # -------------------------------------------------------------------------------------------------
@@ -306,9 +326,9 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    function orthodrome(D; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+    function geodesic(D; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
 
-Generate a orthodrome line(s) (shortest distace) on an ellipsoid. Input data can be two or more points.
+Generate geodesic line(s) (shortest distace) on an ellipsoid. Input data can be two or more points.
 In later case each line segment is descretized at `step` increments,
 
 ### Parameters
@@ -322,34 +342,34 @@ In later case each line segment is descretized at `step` increments,
 - `epsg`  - Same as `proj` but using an EPSG code
 
 ### Returns
-A Mx2 matrix with the lon lat of the points along the orthodrome when input is a matrix. A GMT dataset
+A Mx2 matrix with the lon lat of the points along the geodesic when input is a matrix. A GMT dataset
 or a vector of it (when input is Vector{GMTdataset}).
 
-## Example: Compute an orthodrome between points (0,0) and (30,50) discretized at 100 km steps.
+## Example: Compute an geodesic between points (0,0) and (30,50) discretized at 100 km steps.
 
-    mat = orthodrome([0 0; 30 50], step=100, unit=:k);
+    mat = geodesic([0 0; 30 50], step=100, unit=:k);
 """
-orthodrome(fname::String; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
-	orthodrome(gmtread(fname); step=step, unit=unit, np=np, proj=proj, epsg=epsg)
+geodesic(fname::String; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
+geodesic(gmtread(fname); step=step, unit=unit, np=np, proj=proj, epsg=epsg)
 
-orthodrome(lon1::Real, lat1::Real, lon2::Real, lat2::Real; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
-	orthodrome([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg)
+geodesic(lon1::Real, lat1::Real, lon2::Real, lat2::Real; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
+geodesic([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg)
 
-orthodrome(ds::Gdal.AbstractDataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
-	orthodrome(gmt2gd(ds); step=step, unit=unit, np=np, proj=proj, epsg=epsg)
+geodesic(ds::Gdal.AbstractDataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
+geodesic(gmt2gd(ds); step=step, unit=unit, np=np, proj=proj, epsg=epsg)
 
-function orthodrome(D::Vector{<:GMTdataset}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+function geodesic(D::Vector{<:GMTdataset}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
-		_D[k] = mat2ds(orthodrome(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj, epsg=epsg))
+		_D[k] = mat2ds(geodesic(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj, epsg=epsg))
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
-function orthodrome(D::GMTdataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
-	mat2ds(orthodrome(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))
+function geodesic(D::GMTdataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+	mat2ds(geodesic(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))
 end
 
-function orthodrome(line::Matrix{<:Real}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+function geodesic(line::Matrix{<:Real}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
 	(step == 0 && np == 0) && error("Must provide either a 'step' or a 'np' (number of points).")
 	(size(line, 1) == 1) && error("Lines cannot have a single point.")
 	(np > 0 && size(line, 1) != 2) && error("Number of intermediate points cannot be used with polylines.")
@@ -368,6 +388,7 @@ function orthodrome(line::Matrix{<:Real}; step=0, unit=:m, np=0, proj::String=""
 	end
 	seg
 end
+const orthodrome = geodesic
 
 # -------------------------------------------------------------------------------------------------
 """
@@ -412,7 +433,7 @@ function loxodrome(line::Matrix{<:Real}; step=0, np=0, unit=:m, proj::String="",
 	distances = collect(1:step:dist)
 	((dist - distances[end]) > 1) && append!(distances, dist)	# Make sure we don't loose destiny point
 	loxo = Array{Float64,2}(undef, length(distances), 2)
-	for k = 1:length(distances)
+	for k = 1:lastindex(distances)
 		loxo[k, :] = loxodrome_direct(line[1,1], line[1,2], azim, distances[k])
 	end
 	loxo
@@ -432,14 +453,14 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 		(dataset) && (dest = helper_gdirect_SRS(dest, proj_string, wkbPoint))
 	elseif (isa(azim, Real) && isvector(dist))					# One line only with several points along it
 		dest, azi = Array{Float64}(undef, length(dist), 2), Vector{Float64}(undef, length(dist))
-		for k = 1:length(dist)
+		for k = 1:lastindex(dist)
 			d, azi[k] = _geod_direct!(ggd, copy(lonlat), azim, dist[k])
 			dest[k, :] = (isgeog) ? d : lonlat2xy(d, proj_string)
 		end
 		(dataset) && (dest = helper_gdirect_SRS([dest azi], proj_string, wkbLineString))	# Return a GMTdataset
 	elseif (isvector(azim) && length(dist) == 1)				# A circle (dist has became a vector in 4rth line)
 		dest = Array{Float64}(undef, length(azim), 2)
-		for np = 1:length(azim)
+		for np = 1:lastindex(azim)
 			d = _geod_direct!(ggd, copy(lonlat), azim[np], dist[1])[1]
 			dest[np, 1:2] = (isgeog) ? d : lonlat2xy(d, proj_string)
 		end
@@ -470,7 +491,8 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 			D[nl] = GMTdataset(dest, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, Int(wkbLineString))
 			helper_gdirect_SRS(dest, proj_string, wkbLineString, D[nl])	# Just assign the SRS
 		end
-		return D, nothing		# Here both the point coordinates and the azim are in the GMTdataset
+		r = (n_lines == 1) ? D[1] : D
+		return r, nothing		# Here both the point coordinates and the azim are in the GMTdataset
 	else
 		error("'azimuth' MUST be either a scalar or a 1-dim array, and 'distance' may also be a Vector{Vector}")
 	end

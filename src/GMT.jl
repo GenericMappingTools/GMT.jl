@@ -154,7 +154,7 @@ export
 	wkbGeometryCollection,
 
 	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
-	orthodrome, proj2wkt, wkt2proj,
+	geodesic, orthodrome, proj2wkt, wkt2proj,
 
 	colorzones!, rasterzones!, crop, doy2date, date2doy, yeardecimal, median, mean, quantile, std, nanmean,
 	nanstd, skipnan,
@@ -313,7 +313,7 @@ function __init__(test::Bool=false)
 	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
 	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
-	(GMTver < v"6.2.0") && extra_sets()	# some calls to gmtlib_setparameter()
+	(GMTver < v"6.2.0") && extra_sets()		# some calls to gmtlib_setparameter() (theme_modern already called this)
 end
 
 #@precompile_all_calls begin
