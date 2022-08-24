@@ -18,7 +18,7 @@ Parameters
     Specify a crossectinonal profile via a file or from specified line coordinates and modifiers. If a file,
     it must be contain a single segment with either lon lat or lon lat dist records. These must be equidistant. 
     ($(GMTdoc)grdinterpolate.html#e)
-- **F** | **interp_type** :: [Type => Str]   ``Arg = l|a|c|n[+1|+2]``
+- **F** | **interp_type** | **interpolator** :: [Type => Str]   ``Arg = l|a|c|n[+1|+2]``
 
     Choose from l (Linear), a (Akima spline), c (natural cubic spline), and n (no interpolation:
     nearest point) [Default is Akima].
@@ -71,7 +71,7 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 
 	cmd  = add_opt(d, cmd, "D", [:D :meta :metadata],
            (xname="+x", yname="+y", zname="+z", dname="+d", scale="+s", offset="+o", nodata="+n", title="+t", remark="+r", varname="+v"))
-	cmd  = add_opt(d, cmd, "F", [:F :interp_type],
+	cmd  = add_opt(d, cmd, "F", [:F :interpolator :interp_type],
            (linear="_l", akima="_a", cubic="_c", nearest="_n", first_derivative="+1", second_derivative="+2"))
 
 	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)
