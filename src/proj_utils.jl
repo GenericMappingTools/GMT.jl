@@ -39,20 +39,6 @@ mutable struct geod_geodesic <: _geodesic
 	geod_geodesic() = new()
 end
 
-#= -------------------------------------------------------------------------------------------------
-function gcirc(lonlat1::VMr, lonlat2::VMr; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
-	d, azim, = invgeod(lonlat1, lonlat2)
-	dest1, = geod(lonlat1, azim, 39900, unit=:km)	# Destination of a point before the perimeter
-	dest2, = geod(lonlat1, azim, 40100, unit=:km)	# Destination of a point after the perimeter
-	t = geodesic([dest1[1] dest1[2]; dest2[1] dest2[2]], step=1000)
-	_name = joinpath(tempdir(), "GMTjl_tmp.dat");
-	gmtwrite(_name, t);					# Workaround a bug in <= 6.4.0
-	x = mapproject(lonlat1, L=_name)	# Assume the closest point to start corresponds to the full perimeter.
-	d, = invgeod(dest1, [x[4] x[5]])	# Distance from starting point to the point where the geodesic does a full perimeter.
-	dtot = 39900000 + d					# Total length of this geodesic
-	geod(lonlat1, azim, linspace(0,dtot))[1]
-end
-=#
 
 # -------------------------------------------------------------------------------------------------
 """
@@ -326,7 +312,10 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    function geodesic(D; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+    function geodesic(D; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
+or
+
+    function geodesic(lon1, lat1, lon2, lat2; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
 
 Generate geodesic line(s) (shortest distace) on an ellipsoid. Input data can be two or more points.
 In later case each line segment is descretized at `step` increments,
@@ -335,11 +324,16 @@ In later case each line segment is descretized at `step` increments,
 
 - `D`: - the input points. This can either be a GMTdataset (or vector of it), a Mx2 matrix, the name
          of file that can be read as a GMTdataset by `gmtread()` or a GDAL AbstractDataset object
-- `step`:  - Incremental distance at which the segment line is descretized in meters(the default), but see `unit`
-- `unit`:  - If `step` is not in meters use one of `unit=:km`, or `unit=:Nautical` or `unit=:Miles`
-- `np`:    - Number of intermediate points between poly-line vertices (alternative to `step`)
+- `step`: - Incremental distance at which the segment line is descretized in meters(the default), but see `unit`
+- `unit`: - If `step` is not in meters use one of `unit=:km`, or `unit=:Nautical` or `unit=:Miles`
+- `np`:   - Number of intermediate points between poly-line vertices (alternative to `step`)
 - `proj`  - If line data is in Cartesians but with a known projection pass in a PROJ4 string
 - `epsg`  - Same as `proj` but using an EPSG code
+- `longest` - Compute the longest chunk of the geodesic. That is, going from point A to B taking
+              the longest part. But mind you that geodesics other than meridians and equator are not closed
+              paths (see https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid). This line is obtained by
+              computing the azimuth from A to B, at B, and start the line at B with that azimuth and go around
+              the Earth till we reach, _close_ to A, but not exactly A (except for the simple meridian cases).
 
 ### Returns
 A Mx2 matrix with the lon lat of the points along the geodesic when input is a matrix. A GMT dataset
@@ -349,46 +343,81 @@ or a vector of it (when input is Vector{GMTdataset}).
 
     mat = geodesic([0 0; 30 50], step=100, unit=:k);
 """
-geodesic(fname::String; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
-geodesic(gmtread(fname); step=step, unit=unit, np=np, proj=proj, epsg=epsg)
+geodesic(fname::String; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false) =
+	geodesic(gmtread(fname); step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
 
-geodesic(lon1::Real, lat1::Real, lon2::Real, lat2::Real; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
-geodesic([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg)
+geodesic(ll1::VMr, ll2::VMr; step=0.0, unit=:m, np = 180, proj::String="", epsg::Integer=0, longest::Bool=false) =
+	geodesic([ll1[1] ll1[2]; ll2[1] ll2[2]]; step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
 
-geodesic(ds::Gdal.AbstractDataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0) =
-geodesic(gmt2gd(ds); step=step, unit=unit, np=np, proj=proj, epsg=epsg)
+geodesic(lon1::Real, lat1::Real, lon2::Real, lat2::Real; step=0.0, unit=:m, np=0, proj::String="",
+         epsg::Integer=0, longest::Bool=false) =
+	geodesic([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
 
-function geodesic(D::Vector{<:GMTdataset}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
+geodesic(ds::Gdal.AbstractDataset; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false) =
+	geodesic(gmt2gd(ds); step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
+
+function geodesic(D::Vector{<:GMTdataset}; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
+	              longest::Bool=false)
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
-		_D[k] = mat2ds(geodesic(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj, epsg=epsg))
+		_D[k] = mat2ds(geodesic(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj,
+		               epsg=epsg, longest=longest))
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
-function geodesic(D::GMTdataset; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
-	mat2ds(geodesic(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj, epsg=epsg))
+function geodesic(D::GMTdataset; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
+	mat2ds(geodesic(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj,
+	       epsg=epsg, longest=longest))
 end
 
-function geodesic(line::Matrix{<:Real}; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0)
-	(step == 0 && np == 0) && error("Must provide either a 'step' or a 'np' (number of points).")
+function geodesic(line::Matrix{<:Real}; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
+	(!longest && step == 0 && np == 0) && error("For 'longest' must provide either a 'step' or a 'np' (number of points).")
 	(size(line, 1) == 1) && error("Lines cannot have a single point.")
 	(np > 0 && size(line, 1) != 2) && error("Number of intermediate points cannot be used with polylines.")
 	step *= unit_factor(unit)
 	dist, azim, = invgeod(line[1:end-1, :], line[2:end, :], proj=proj, epsg=epsg)	# dist and azims between the polyline vertices
+	
+	longest && return geodesic_long(line[1,:], line[end,:]; step=step, np=np, proj=proj, epsg=epsg)
+
 	(np > 0) && (step = dist[1] / (np + 1))
 	seg = geod(line[1,:], azim[1], 0:step:dist[1], proj=proj, epsg=epsg)[1]
 	if (size(line, 1) == 2)
-		(hypot((seg[end,:] .- line[2,:])...) > 1) && (seg = [seg; line[2:2, :]])	# If increment does not land exactly in end point
+		(hypot((seg[end,:] .- line[2,:])...) > 1) && (seg = [seg; line[2:2, :]])	# If increment does not land exactly at end point
+		isa(seg, GMTdataset) && (seg.attrib = Dict("Length" => "$(dist)"))
 	else
 		for n = 2:size(line,1)-1
 			_seg = geod(line[n,:], azim[n], 0:step:dist[n], proj=proj, epsg=epsg)[1]
 			(hypot((_seg[end,:] .- line[n,:])...) > 1) && (_seg = [_seg; line[n+1:n+1, :]])
 			seg = [seg; _seg]			# Horrible but we can't know in advance the number of final points
 		end
+		isa(seg, Vector{<:GMTdataset}) && (seg[1].attrib = Dict("Length" => "$(sum(dist))"))	# Is this is right?
 	end
 	seg
 end
 const orthodrome = geodesic
+
+# -------------------------------------------------------------------------------------------------
+function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np = 180, proj::String="", epsg::Integer=0)
+	# This function is not exported. It's normally accessed via the geodesic(..., longest=true) option.
+	dist, azim, az2 = invgeod(lonlat1, lonlat2, proj=proj, epsg=epsg)
+	dest1, = geod(lonlat1, azim, 39900, unit=:km)	# Destination of a point before the perimeter
+	dest2, = geod(lonlat1, azim, 40100, unit=:km)	# Destination of a point after the perimeter
+	t = geodesic([dest1[1] dest1[2]; dest2[1] dest2[2]], step=1000)	# Temp geodesic arround the perimeter point
+	_name = joinpath(tempdir(), "GMTjl_tmp.dat");
+	gmtwrite(_name, t);					# Workaround a bug in <= 6.4.0
+	x = mapproject([lonlat1[1] lonlat1[2]], L=_name)	# Assume the closest point to start corresponds to full perimeter.
+	d, = invgeod(dest1, [x[4] x[5]])	# Distance from starting point to the point where the geodesic does a full perimeter.
+	dtot = 39900000 + d					# Total length of this geodesic in meters
+	(step != 0) && (np = round(Int, dtot / step) + 1)	# Takes precedence over NP because that one has a default value.
+	D = geod(lonlat1, azim, linspace(0,dtot,np))[1]		# Compute the NP distances along the perimeter
+	ds = invgeod(D.data, [lonlat1[1] lonlat1[2]])[1]	# Distances from start to all pts in the geodesic
+	k = 0
+	while (ds[k+=1] < dist)  end
+	D.data = [lonlat2[1] lonlat2[2] az2; D.data[k:end,:]]	# Keep only the longest chunk
+	set_dsBB!(D)						# Update BB
+	D.attrib = Dict("Length" => "$(dtot - dist)")		# Total length of the longest chunk
+	return D
+end
 
 # -------------------------------------------------------------------------------------------------
 """
