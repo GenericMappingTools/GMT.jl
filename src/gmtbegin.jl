@@ -69,16 +69,18 @@ function inset(fim=nothing; stop=false, kwargs...)
 	do_show = false
 	if (fim !== nothing)
 		t = lowercase(string(fim))
-		if (t == "end" || t == "stop" || t == "show")  stop = true  end
-		if (t == "show")  do_show = true  end
+		(t == "end" || t == "stop" || t == "show") && (stop = true)
+		(t == "show") && (do_show = true)
 	end
 
 	if (!stop)
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 		(!IamModern[1]) && error("Not in modern mode. Must run 'gmtbegin' first")
+		IamInset[1] = true
 		gmt("inset begin " * cmd);
 	else
 		(!IamModern[1]) && error("Not in modern mode. Must run 'gmtbegin' first")
+		IamInset[1] = false
 		gmt("inset end");
 		(do_show || haskey(d, :show)) && gmt("end" * show)
 	end

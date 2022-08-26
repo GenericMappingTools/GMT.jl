@@ -435,10 +435,10 @@ function helper_gbar_fill(d::Dict)::Vector{String}
 		append!(g_bar_fill, gval)
 	elseif ((isa(gval, Array{Int}) || isa(gval, Tuple) && eltype(gval) == Int) && length(gval) > 1)
 		g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
-		for k = 1:length(gval)  g_bar_fill[k] = string('p', gval[k])  end
+		for k in eachindex(gval)  g_bar_fill[k] = string('p', gval[k])  end
 	elseif (isa(gval, Tuple) && (eltype(gval) == String || eltype(gval) == Symbol) && length(gval) > 1)
 		g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
-		for k = 1:length(gval)  g_bar_fill[k] = string(gval[k])  end
+		for k in eachindex(gval)  g_bar_fill[k] = string(gval[k])  end
 	else
 		g_bar_fill = String[]		# To have somthing to return
 	end
