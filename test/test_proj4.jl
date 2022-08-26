@@ -30,6 +30,6 @@
 	orto = geodesic([mat2ds([0 0; 30 50])], step=500, unit=:k);
 	geodesic(mat2ds([0 0; 15 25; 30 50]), step=500, unit=:k)
 	orthodrome(0, 0, 30, 50, step=500, unit=:k);
-	geodesic([162.23333 58.61667], [66.66667 25.28333], longuest=true);
+	geodesic([162.23333 58.61667], [66.66667 25.28333], longest=true);
 	dist, azim = GMT.loxodrome_inverse(0,0,5,5)
 end
