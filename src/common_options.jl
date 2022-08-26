@@ -338,6 +338,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		opt_J, mnemo = build_opt_J(val)		# mnemo = true when the projection name used a mnemonic for the projection
 	elseif (IamModern[1] && ((val = is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])) === nothing))
 		# Subplots do not rely in the classic default mechanism
+		(IamInset[1] && !contains(cmd, " -J")) && (cmd *= CTRL.pocket_J[1]) 	# Workaround GMT bug (#7005)
 		return cmd, ""
 	end
 	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
@@ -410,7 +411,7 @@ function fish_size_from_J(opt_J)
 	isscale = occursin(':', ws)				# Compliction. A scale in form 1:xxxx
 	try
 	if (!isscale)
-		for k = 1:length(dim)
+		for k = 1:lastindex(dim)
 			CTRL.figsize[k] = isletter(dim[k][end]) ? parse(Float64, dim[k][1:end-1]) * fact(dim[k][end]) : parse(Float64, dim[k])
 		end
 	end
@@ -3935,7 +3936,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			(typeof(P) == Base.Process) && (P = nothing)		# Don't want spurious message on REPL when plotting
 			CTRL.IamInPaperMode[2] = true		# Means, next time a paper mode is used offset XY only on first call 
 		end
-	elseif  ((haskey(d, :show) && d[:show] != 0))	# Let modern mode also call show=true
+	elseif ((haskey(d, :show) && d[:show] != 0))	# Let modern mode also call show=true
 		helper_showfig4modern()
 	end
 	show_non_consumed(d, cmd)
