@@ -91,7 +91,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 
 	if (!stop && !do_set)
 		(val_grid === nothing) && error("SUBPLOT: 'grid' keyword is mandatory")
-		cmd = arg2str(val_grid, 'x') * " " * cmd * opt_C			# Also add the eventual global -C clearance option
+		cmd = arg2str(val_grid, 'x') * " " * cmd * opt_C		# Also add the eventual global -C clearance option
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 
 		if (!IamModern[1])			# If we are not in modern mode, issue a gmt("begin") first

@@ -36,6 +36,7 @@ function gmtend(arg=nothing; show=false, verbose=nothing)
 	end
 	gmt(cmd)
 	IamModern[1] = false;	FirstModern[1] = false
+	CTRL.pocket_J[1] = ""
 	return nothing
 end
  
@@ -62,9 +63,11 @@ function inset(fim=nothing; stop=false, kwargs...)
  
 	d = KW(kwargs)
 	cmd, = parse_common_opts(d, "", [:c :F :V_params], true)
-	cmd  = parse_these_opts(cmd, d, [[:M :margins], [:N :no_clip]])
-	cmd = parse_type_anchor(d, cmd, [:D :inset :inset_box],
-	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str), save="+s", translate="_+t", units="_+u"), 'j')
+	cmd  = parse_these_opts(cmd, d, [[:M :margins], [:N :no_clip :noclip]])
+	cmd  = parse_type_anchor(d, cmd, [:D :inset :inset_box :insetbox],
+	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str)), 'j')
+	cmd = add_opt(d, cmd, "C", [:C :clearance],
+				  (left=(" -Cw", arg2str), right=(" -Ce", arg2str), bott=(" -Cs", arg2str), bottom=(" -Cs", arg2str), top=(" -Cn", arg2str), lr=(" -Cx", arg2str), tb=(" -Cy", arg2str)))
 
 	do_show = false
 	if (fim !== nothing)
