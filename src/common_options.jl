@@ -338,7 +338,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		opt_J, mnemo = build_opt_J(val)		# mnemo = true when the projection name used a mnemonic for the projection
 	elseif (IamModern[1] && ((val = is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])) === nothing))
 		# Subplots do not rely in the classic default mechanism
-		(IamInset[1] && !contains(cmd, " -J")) && (cmd *= CTRL.pocket_J[1]) 	# Workaround GMT bug (#7005)
+		#(IamInset[1] && !contains(cmd, " -J")) && (cmd *= CTRL.pocket_J[1]) 	# Workaround GMT bug (#7005)
 		return cmd, ""
 	end
 	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
