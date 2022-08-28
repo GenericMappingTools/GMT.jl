@@ -12,7 +12,7 @@ Parameters
 - $(GMT.opt_J)
 - $(GMT.opt_R)
 - $(GMT.opt_B)
-- **A** | **azimuths** | **azimuth** | **azim** :: [Type => Bool]
+- **A** | **azimuth** | **azim** :: [Type => Bool]
 
     Angles are given as azimuths; convert them to directions using the current projection.
     ($(GMTdoc)text.html#a)
@@ -108,8 +108,11 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	parse_paper(d)		# See if user asked to temporarily pass into paper mode coordinates
 
-	if (!isa(arg1, GDtype) && (val = find_in_dict(d, [:text :txt])[1]) !== nothing)		# Accept ([x y], text=...)
-		arg1 = (!haskey(d, :x) && isa(arg1, Matrix) || isvector(arg1)) ? mat2ds(arg1, [string(val)]) : parse_xy(d, val)
+	if (!isa(arg1, GDtype) && (val = find_in_dict(d, [:text :txt], false)[1]) !== nothing)		# Accept ([x y], text=...)
+		if (!haskey(d, :region_justify))	# To accept also text="Bla", region_justify=?? i.e. without x=?, y=?
+			arg1 = (!haskey(d, :x) && isa(arg1, Matrix) || isvector(arg1)) ? mat2ds(arg1, [string(val)]) : parse_xy(d, val)
+			del_from_dict(d, [[:text, :txt], [:region_justify]])
+		end
 	end
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
@@ -136,7 +139,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (!occursin(" -F", cmd))		# Test if the GMTdataset has text or if a numeric column is to be used as such
 		if ((isa(arg1, GMTdataset) && isempty(arg1.text)) || (isa(arg1, Vector{<:GMTdataset}) && isempty(arg1[1].text)) )
 			(isa(arg1, GMTdataset)) && (arg1 = [arg1])
-			for n = 1:length(arg1)
+			for n = 1:lastindex(arg1)
 				nr, nc = size(arg1[n].data)
 				(nc < 3) && error("TEXT: input file must have at least three columns")
 				arg1[n].text = Array{String,1}(undef, nr)
