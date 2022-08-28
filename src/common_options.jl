@@ -29,7 +29,7 @@ function del_from_dict(d::Dict, symbs::Vector{Vector{Symbol}})
 end
 
 function del_from_dict(d::Dict, symbs::Vector{Symbol})
-	# Delete SYMBS from the D dict where symbs is an array of symbols and elements are aliases
+	# Delete SYMBS from the D dict where SYMBS is an array of symbols and elements are aliases
 	for symb in symbs
 		if (haskey(d, symb))
 			delete!(d, symb)
@@ -172,7 +172,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	end
 
 	(O && opt_R == "") && (opt_R = " -R")
-	if (opt_R != "")			# Save limits in numeric
+	if (opt_R != "" && !IamInset[1])			# Save limits in numeric
 		try
 			limits = opt_R2num(opt_R)
 			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4)) && (CTRL.limits[1:length(limits)] = limits)
@@ -338,7 +338,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		opt_J, mnemo = build_opt_J(val)		# mnemo = true when the projection name used a mnemonic for the projection
 	elseif (IamModern[1] && ((val = is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])) === nothing))
 		# Subplots do not rely in the classic default mechanism
-		#(IamInset[1] && !contains(cmd, " -J")) && (cmd *= CTRL.pocket_J[1]) 	# Workaround GMT bug (#7005)
+		(IamInset[1] && !contains(cmd, " -J")) && (cmd *= CTRL.pocket_J[1]) 	# Workaround GMT bug (#7005)
 		return cmd, ""
 	end
 	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
@@ -369,7 +369,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 					opt_J = (!startswith(opt_J, " -JX")) ? append_figsize(d, opt_J) :
 					         opt_J * def_fig_size; CTRL.pocket_J[2] = def_fig_size
 				end
-				CTRL.pocket_J[1] = opt_J
+				#CTRL.pocket_J[1] = opt_J
 			elseif (!occursin("?", opt_J))		# If we dont have one ? for size/scale already
 				opt_J *= "/?"
 			end
@@ -388,6 +388,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 
 	(opt_J == " ") && (opt_J = "")		# We use " " when wanting to prevent the default -J
 	fish_size_from_J(opt_J)				# So far we only need this in plot(hexbin)
+	((length(opt_J) > 4) && !contains(opt_J, "?")) && (CTRL.pocket_J[1] = opt_J)
 	cmd *= opt_J
 	return cmd, opt_J
 end
@@ -1165,8 +1166,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_F(d::Dict, cmd::String)::String
-	cmd = add_opt(d, cmd, "F", [:F :box :panel], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
-	                                              pen=("+p", add_opt_pen), rounded="+r", shaded=("+s", arg2str), shade=("+s", arg2str)) )
+	cmd = add_opt(d, cmd, "F", [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
+	                                       pen=("+p", add_opt_pen), rounded="+r", shaded=("+s", arg2str), shade=("+s", arg2str)) )
 end
 
 # ---------------------------------------------------------------------------------------------------
