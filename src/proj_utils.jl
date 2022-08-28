@@ -400,17 +400,17 @@ const orthodrome = geodesic
 function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np = 180, proj::String="", epsg::Integer=0)
 	# This function is not exported. It's normally accessed via the geodesic(..., longest=true) option.
 	dist, azim, az2 = invgeod(lonlat1, lonlat2, proj=proj, epsg=epsg)
-	dest1, = geod(lonlat1, azim, 39900, unit=:km)	# Destination of a point before the perimeter
-	dest2, = geod(lonlat1, azim, 40100, unit=:km)	# Destination of a point after the perimeter
-	t = geodesic([dest1[1] dest1[2]; dest2[1] dest2[2]], step=1000)	# Temp geodesic arround the perimeter point
+	dest1, = geod(lonlat1, azim, 39900, unit=:km, proj=proj, epsg=epsg)	# Destination of a point before the perimeter
+	dest2, = geod(lonlat1, azim, 40100, unit=:km, proj=proj, epsg=epsg)	# Destination of a point after the perimeter
+	t = geodesic([dest1[1] dest1[2]; dest2[1] dest2[2]], step=1000, proj=proj, epsg=epsg)	# Temp geodesic arround the perimeter point
 	_name = joinpath(tempdir(), "GMTjl_tmp.dat");
 	gmtwrite(_name, t);					# Workaround a bug in <= 6.4.0
 	x = mapproject([lonlat1[1] lonlat1[2]], L=_name)	# Assume the closest point to start corresponds to full perimeter.
-	d, = invgeod(dest1, [x[4] x[5]])	# Distance from starting point to the point where the geodesic does a full perimeter.
+	d, = invgeod(dest1, [x[4] x[5]], proj=proj, epsg=epsg)	# Distance from starting point to the point where the geodesic does a full perimeter.
 	dtot = 39900000 + d					# Total length of this geodesic in meters
 	(step != 0) && (np = round(Int, dtot / step) + 1)	# Takes precedence over NP because that one has a default value.
-	D = geod(lonlat1, azim, linspace(0,dtot,np))[1]		# Compute the NP distances along the perimeter
-	ds = invgeod(D.data, [lonlat1[1] lonlat1[2]])[1]	# Distances from start to all pts in the geodesic
+	D = geod(lonlat1, azim, linspace(0,dtot,np), proj=proj, epsg=epsg)[1]		# Compute the NP distances along the perimeter
+	ds = invgeod(D.data, [lonlat1[1] lonlat1[2]], proj=proj, epsg=epsg)[1]	# Distances from start to all pts in the geodesic
 	k = 0
 	while (ds[k+=1] < dist)  end
 	D.data = [lonlat2[1] lonlat2[2] az2; D.data[k:end,:]]	# Keep only the longest chunk
@@ -556,7 +556,7 @@ function helper_geod(proj::String, s_srs::String, epsg::Integer)::Tuple{String, 
 	else                  prj_string = prj4WGS84
 	end
 	(startswith(prj_string, "GEOGC")) && (prj_string = toPROJ4(importWKT(prj_string)))
-	prj_string, proj_create(prj_string), (startswith(prj_string, "+proj=longl") || startswith(prj_string, "+proj=latl") || epsg == 4326)
+	prj_string, proj_create(prj_string), (startswith(prj_string, "+proj=longl") || startswith(prj_string, "+proj=lonl") || startswith(prj_string, "+proj=latl") || epsg == 4326)
 end
 
 # -------------------------------------------------------------------------------------------------
