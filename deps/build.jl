@@ -36,10 +36,12 @@ if (doit != "")
 		)
 
 	# Save shared names in file so that GMT.jl can read them at pre-compile time
+	if !Sys.isunix()
 	open(depfile, "w") do f
 		println(f, "_GMT_bindir = \"", escape_string(GMT_bindir), '"')
 		println(f, "_libgmt  = \"", escape_string(libgmt), '"')
 		println(f, "_libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
 		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
+	end
 	end
 end
