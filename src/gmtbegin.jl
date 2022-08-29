@@ -36,7 +36,7 @@ function gmtend(arg=nothing; show=false, verbose=nothing)
 	end
 	gmt(cmd)
 	IamModern[1] = false;	FirstModern[1] = false
-	CTRL.pocket_J[1] = ""
+	CTRL.pocket_J[1], CTRL.pocket_J[2] = "", ""
 	return nothing
 end
  
