@@ -797,7 +797,7 @@ function seek_custom_symb(marca::String, with_k::Bool=false)::Tuple{String, Stri
 	# The WITH_K arg is to allow calling this fun with a sym name already prefaced with 'k', or not
 	(with_k && marca[1] != 'k') && return marca, ""		# Not a custom symbol, return what we got.
 
-	cus_path = joinpath(dirname(pathof(GMT)), "..", "share", "custom")
+	cus_path = joinpath(dirname(pathof(GMT))[1:end-4], "share", "custom")
 	cus = readdir(cus_path)						# Get the list of all custom symbols in this dir.
 	s = split(marca, '/')
 	ind_s = with_k ? 2 : 1
@@ -806,6 +806,7 @@ function seek_custom_symb(marca::String, with_k::Bool=false)::Tuple{String, Stri
 		_mark = splitext(r[1])[1]				# Get the marker name but without extension
 		_siz  = split(marca, '/')[2]			# The custom symbol size
 		_marca = (with_k ? "k" : "")  * joinpath(cus_path, _mark) * "/" * _siz
+		(GMTver <= v"6.4" && (length(_marca) - length(_siz) -2) > 62) && warn("Due to a GMT <= 6.4 limitation the length of full (name+path) custom symbol name cannot be longer than 62 bytes.")
 		return _marca, r[1]
 	end
 	return marca, ""							# A custom symbol from the official GMT collection.
