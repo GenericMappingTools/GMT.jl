@@ -1423,7 +1423,8 @@ function resetGMT()
 	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
 	current_cpt[1]  = GMTcpt();		legend_type[1] = legend_bag();	ressurectGDAL()
 	def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;	CTRL.pocket_J[4] = "   ";
-	CTRL.IamInPaperMode[:] = [false, true]
+	CTRL.IamInPaperMode[:] = [false, true];	IamInset[1] = false
+	CTRL.pocket_J[1], CTRL.pocket_J[2] = "", ""
 	gmt_restart()
 	clear_sessions()
 end
