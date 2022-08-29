@@ -85,6 +85,7 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd = "makecpt " * cmd
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
+	GC.gc(false)		# Try this to see if it matters to the crash shit.
 	r = gmt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
 	got_N && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	current_cpt[1] = (r !== nothing) ? r : GMTcpt()

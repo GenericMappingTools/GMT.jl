@@ -3715,6 +3715,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		reset_theme()
 	end
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
+	CTRL.pocket_J[1], CTRL.pocket_J[2] = "", ""
 	return nothing
 end
 
