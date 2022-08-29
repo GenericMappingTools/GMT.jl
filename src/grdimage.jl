@@ -115,6 +115,9 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	(isa(arg1, GMTimage) && GMTver <= v"6.1.1" && !occursin("-A", _cmd[1])) && (arg1 = ind2rgb(arg1))	# Prev to 6.2 indexed imgs lost colors
 
 	_cmd = finish_PS_nested(d, _cmd)
+	if (length(_cmd) > 1 && cmd0 != "")		# In these cases no -R is passed so the nested calls set an unknown -R
+		for k = 2:lastindex(_cmd)  _cmd[k] = replace(_cmd[k], "-R " => "-R" * cmd0 * " ")  end
+	end
 	finish_PS_module(d, _cmd, "", K, O, do_finish, arg1, arg2, arg3, arg4)
 end
 

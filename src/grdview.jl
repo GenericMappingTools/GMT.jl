@@ -95,6 +95,9 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, arg2, arg3, arg4, arg5 = parse_G_grdview(d, [:G :drape :drapefile], cmd0, cmd, arg1, arg2, arg3, arg4, arg5)
 
 	_cmd = finish_PS_nested(d, ["grdview " * cmd])
+	if (length(_cmd) > 1 && cmd0 != "")		# In these cases no -R is passed so the nested calls set an unknown -R
+		for k = 2:lastindex(_cmd)  _cmd[k] = replace(_cmd[k], "-R " => "-R" * cmd0 * " ")  end
+	end
 	finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3, arg4, arg5)
 end
 
