@@ -62,7 +62,13 @@ function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 	cmd  = parse_these_opts(cmd, d, [[:C :oneliner], [:D :tiles], [:E :extrema :extreme], [:F :report_ingeog],
                                      [:G :force :force_download], [:I :nearest], [:L :force_scan], [:M :minmax_pos], [:Q :cube], [:T :minmax :zmin_max]])
     (isa(arg1, GMTgrid) && size(arg1,3) > 1 && !occursin("-Q", cmd)) && (cmd *= " -Q")  # arg1 is a CUBE
-	common_grd(d, cmd0, cmd, "grdinfo ", arg1)		# Finish build cmd and run it
+	R = common_grd(d, cmd0, cmd, "grdinfo ", arg1)		# Finish build cmd and run it
+    if (isa(R, GMTdataset))
+        if (length(R) == 12)
+            #R.colnames = []
+        end
+    end
+    return R
 end
 
 # ---------------------------------------------------------------------------------------------------
