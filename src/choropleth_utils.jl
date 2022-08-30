@@ -16,8 +16,7 @@ function cpt4dcw(codes::Vector{<:AbstractString}, vals::Vector{<:Real}; kwargs..
 		C = val
 	elseif ((val = find_in_dict(d, [:range])[1]) !== nothing && isvector(val) && length(val) >= 2)
 		inc = (length(val) == 2) ? 1 : val[3]
-		C = makecpt(T=(val[1], val[2], inc))
-		#C = gmt("makecpt -T" * arg2str((val[1], val[2], inc)))
+		C = gmt("makecpt -T" * arg2str((val[1], val[2], inc)))
 	else
 		C = gmt("makecpt -T0/255/1")
 	end
@@ -33,9 +32,9 @@ function cpt4dcw(codes::Vector{<:AbstractString}, vals::Vector{<:Real}; kwargs..
 	while(_vals[k] > C.minmax[2] && k > 0)        c[k] = false;  k -= 1  end
 	_codes, _vals = _codes[c], _vals[c]
 
-	P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], C);		# A pointer to a GMT CPT
+	P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], C)			# A pointer to a GMT CPT
 
-	Ccat::GMTcpt = makecpt(T=join(_codes, ","));
+	Ccat::GMTcpt = gmt("makecpt -T"*join(_codes, ","))
 	rgb = [0.0, 0.0, 0.0];
 
 	inc = (C.minmax[2] - C.minmax[1]) / size(Ccat.cpt, 1)
