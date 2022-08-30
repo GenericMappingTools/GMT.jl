@@ -329,11 +329,13 @@ In later case each line segment is descretized at `step` increments,
 - `np`:   - Number of intermediate points between poly-line vertices (alternative to `step`)
 - `proj`  - If line data is in Cartesians but with a known projection pass in a PROJ4 string
 - `epsg`  - Same as `proj` but using an EPSG code
-- `longest` - Compute the longest chunk of the geodesic. That is, going from point A to B taking
-              the longest part. But mind you that geodesics other than meridians and equator are not closed
+- `longest` - Compute the 'long way around' of the geodesic. That is, going from point A to B taking
+              the longest path. But mind you that geodesics other than meridians and equator are not closed
               paths (see https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid). This line is obtained by
               computing the azimuth from A to B, at B, and start the line at B with that azimuth and go around
               the Earth till we reach, _close_ to A, but not exactly A (except for the simple meridian cases).
+- `inverse` - When `longest` is used, compute the 'long way around' leaving at A, with the azimuth from A to B
+              at A, plus 180.
 
 ### Returns
 A Mx2 matrix with the lon lat of the points along the geodesic when input is a matrix. A GMT dataset
@@ -343,41 +345,46 @@ or a vector of it (when input is Vector{GMTdataset}).
 
     mat = geodesic([0 0; 30 50], step=100, unit=:k);
 """
-geodesic(fname::String; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false) =
-	geodesic(gmtread(fname); step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
+geodesic(fname::String; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
+         longest::Bool=false, inverse::Bool=false) =
+	geodesic(gmtread(fname); step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest, inverse=inverse)
 
-geodesic(ll1::VMr, ll2::VMr; step=0.0, unit=:m, np = 180, proj::String="", epsg::Integer=0, longest::Bool=false) =
-	geodesic([ll1[1] ll1[2]; ll2[1] ll2[2]]; step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
+geodesic(ll1::VMr, ll2::VMr; step=0.0, unit=:m, np = 180, proj::String="", epsg::Integer=0,
+         longest::Bool=false, inverse::Bool=false) =
+	geodesic([ll1[1] ll1[2]; ll2[1] ll2[2]]; step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest, inverse=inverse)
 
 geodesic(lon1::Real, lat1::Real, lon2::Real, lat2::Real; step=0.0, unit=:m, np=0, proj::String="",
-         epsg::Integer=0, longest::Bool=false) =
-	geodesic([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
+         epsg::Integer=0, longest::Bool=false, inverse::Bool=false) =
+	geodesic([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest, inverse=inverse)
 
-geodesic(ds::Gdal.AbstractDataset; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false) =
-	geodesic(gmt2gd(ds); step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
+geodesic(ds::Gdal.AbstractDataset; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
+         longest::Bool=false, inverse::Bool=false) =
+	geodesic(gmt2gd(ds); step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest, inverse=inverse)
 
 function geodesic(D::Vector{<:GMTdataset}; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
-	              longest::Bool=false)
+	              longest::Bool=false, inverse::Bool=false)
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
 		_D[k] = mat2ds(geodesic(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj,
-		               epsg=epsg, longest=longest))
+		               epsg=epsg, longest=longest, inverse=inverse))
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
-function geodesic(D::GMTdataset; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
+function geodesic(D::GMTdataset; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
+	              longest::Bool=false, inverse::Bool=false)
 	mat2ds(geodesic(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj,
-	       epsg=epsg, longest=longest))
+	       epsg=epsg, longest=longest, inverse=inverse))
 end
 
-function geodesic(line::Matrix{<:Real}; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
+function geodesic(line::Matrix{<:Real}; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
+                  longest::Bool=false, inverse::Bool=false)
 	(!longest && step == 0 && np == 0) && error("For 'longest' must provide either a 'step' or a 'np' (number of points).")
 	(size(line, 1) == 1) && error("Lines cannot have a single point.")
 	(np > 0 && size(line, 1) != 2) && error("Number of intermediate points cannot be used with polylines.")
 	step *= unit_factor(unit)
 	dist, azim, = invgeod(line[1:end-1, :], line[2:end, :], proj=proj, epsg=epsg)	# dist and azims between the polyline vertices
 	
-	longest && return geodesic_long(line[1,:], line[end,:]; step=step, np=np, proj=proj, epsg=epsg)
+	longest && return geodesic_long(line[1,:], line[end,:]; step=step, np=np, proj=proj, epsg=epsg, inverse=inverse)
 
 	(np > 0) && (step = dist[1] / (np + 1))
 	seg = geod(line[1,:], azim[1], 0:step:dist[1], proj=proj, epsg=epsg)[1]
@@ -397,9 +404,10 @@ end
 const orthodrome = geodesic
 
 # -------------------------------------------------------------------------------------------------
-function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np = 180, proj::String="", epsg::Integer=0)
+function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np = 180, proj::String="", epsg::Integer=0, inverse::Bool=false)
 	# This function is not exported. It's normally accessed via the geodesic(..., longest=true) option.
-	dist, azim, az2 = invgeod(lonlat1, lonlat2, proj=proj, epsg=epsg)
+	dist, azim, az2 = invgeod(lonlat1, lonlat2, proj=proj, epsg=epsg)	# Returns distance, azim at A, azim at B
+	(inverse) && (azim .+= 180)		# Go from A to B from A with azim at A +180
 	dest1, = geod(lonlat1, azim, 39900, unit=:km, proj=proj, epsg=epsg)	# Destination of a point before the perimeter
 	dest2, = geod(lonlat1, azim, 40100, unit=:km, proj=proj, epsg=epsg)	# Destination of a point after the perimeter
 	t = geodesic([dest1[1] dest1[2]; dest2[1] dest2[2]], step=1000, proj=proj, epsg=epsg)	# Temp geodesic arround the perimeter point
@@ -408,12 +416,22 @@ function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np = 180, proj::Str
 	x = mapproject([lonlat1[1] lonlat1[2]], L=_name)	# Assume the closest point to start corresponds to full perimeter.
 	d, = invgeod(dest1, [x[4] x[5]], proj=proj, epsg=epsg)	# Distance from starting point to the point where the geodesic does a full perimeter.
 	dtot = 39900000 + d					# Total length of this geodesic in meters
-	(step != 0) && (np = round(Int, dtot / step) + 1)	# Takes precedence over NP because that one has a default value.
-	D = geod(lonlat1, azim, linspace(0,dtot,np), proj=proj, epsg=epsg)[1]		# Compute the NP distances along the perimeter
+	(step != 0) && (np = round(Int, dtot / step) + 1)	# Takes precedence over npts because that one has a default value.
+	D = geod(lonlat1, azim, linspace(0,dtot,np), proj=proj, epsg=epsg)[1]	# Compute the npts distances along the perimeter
 	ds = invgeod(D.data, [lonlat1[1] lonlat1[2]], proj=proj, epsg=epsg)[1]	# Distances from start to all pts in the geodesic
-	k = 0
-	while (ds[k+=1] < dist)  end
-	D.data = [lonlat2[1] lonlat2[2] az2; D.data[k:end,:]]	# Keep only the longest chunk
+	
+	if (inverse)						# Go from A to B, from A with azim at A + 180
+		gmtwrite(_name, D);				# Workaround a bug in <= 6.4.0
+		x = mapproject([lonlat2[1] lonlat2[2]], L=_name)	# Find closest point from B in the passing by geodesic
+		k = length(ds) + 1
+		while (ds[k-=1] < dist)  end
+		D.data = [D.data[1:k,:]; [x[4] x[5]] D.data[k,3]]	# Repeat the previous azim. Not exactly correct but...
+	else								# Go from B to A, from B with azim at B
+		k = 0
+		while (ds[k+=1] < dist)  end
+		D.data = [lonlat2[1] lonlat2[2] az2; D.data[k:end,:]]	# Keep only the longest chunk
+	end
+
 	set_dsBB!(D)						# Update BB
 	D.attrib = Dict("Length" => "$(dtot - dist)")		# Total length of the longest chunk
 	return D
