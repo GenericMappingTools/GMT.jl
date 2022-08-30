@@ -364,7 +364,7 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 	if (isempty(color) && auto_color)
 		mima = (size(M,2) <= 3) ? (1., Float64(size(M,1))) : extrema(view(M, :, color_col))
 		(size(M,2) <= 3) && (use_row_number = true; z4color = 1.:n_ds)
-		color::GMTcpt = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
+		color::GMTcpt = gmt("makecpt " * @sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 	end
 
 	if (!isempty(color))
