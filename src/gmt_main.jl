@@ -776,8 +776,10 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 				unsafe_copyto!(pointer(dest, DS.n_rows * (col - 1) + 1), unsafe_load(DS.data, col), DS.n_rows)
 			end
 			Darr[seg_out].data = dest
-			bb = extrema(dest, dims=1)						# A N Tuple.
-			Darr[seg_out].bbox = collect(Float64, Iterators.flatten(bb))
+			if (!isvector(dest))							# One-rowers do not have BBs
+				bb = extrema(dest, dims=1)					# A N Tuple.
+				Darr[seg_out].bbox = collect(Float64, Iterators.flatten(bb))
+			end
 
 			if (DS.text != C_NULL)
 				texts = unsafe_wrap(Array, DS.text, DS.n_rows)	# n_headers-element Array{Ptr{UInt8},1}
@@ -1486,7 +1488,7 @@ function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
 	show(D[1])
 end
 Base.:show(io::IO, ::MIME"text/plain", D::GMTdataset) = show(D)
-Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothig when text only (data == [])
+Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothing when text only (data == [])
 
 # ---------- For Pluto ------------------------------------------------------------------------------
 Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.fname))
