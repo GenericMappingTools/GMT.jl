@@ -6,7 +6,10 @@
 	geod([0, 0], 30, [50, 111], unit=:k)
 	geod([0, 0], [30 60], [50, 111], unit=:k)
 	geod([0., 0], [15., 45], [[0, 10000, 50000, 111000.], [0., 50000]])
+	geod([0 0], [30, 190], 50000, backward=true, dataset=true)
 	invgeod([0., 0], [1., 0])
+	invgeod([0., 0], [1., 0], backward=true)
+	invgeod([0. 0; 0 0.5], [1. 0; 1 1], backward=true)
 	@test_throws ErrorException("'azimuth' MUST be either a scalar or a 1-dim array, and 'distance' may also be a Vector{Vector}") geod([0, 0], [30 8; 1 1], [50 111], unit=:k)
 	GMT.proj_info()
 
@@ -31,6 +34,5 @@
 	geodesic(mat2ds([0 0; 15 25; 30 50]), step=500, unit=:k)
 	orthodrome(0, 0, 30, 50, step=500, unit=:k);
 	geodesic([162.23333 58.61667], [66.66667 25.28333], longest=true);
-	geodesic([162.23333 58.61667], [66.66667 25.28333], longest=true, inverse=true);
 	dist, azim = GMT.loxodrome_inverse(0,0,5,5)
 end
