@@ -63,6 +63,7 @@ does not need explicit coordinates to place the text.
   - `proj` or `proj4`:  A proj4 string for dataset SRS.
   - `wkt`:  A WKT SRS.
   - `colnames`: Optional string vector with names for each column of `mat`.
+  - `attrib`: Optional dictionary{String, String} with attributes of this dataset.
 """
 mat2ds(mat::GDtype) = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
@@ -186,6 +187,8 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 		return coln
 	end
 
+	att = ((v = find_in_dict(d, [:attrib])[1]) !== nothing && isa(v, Dict{String, String})) ? v : Dict{String, String}()
+
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
 
 	# By default convert to Doubles, except if instructed to NOT to do it.
@@ -196,25 +199,25 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 		if (ndims(mat) == 3)
 			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
 			for k = 1:n_ds
-				D[k] = GMTdataset(mat[:,:,k], Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
+				D[k] = GMTdataset(mat[:,:,k], Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
 			end
 		elseif (!multi)
 			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
-			D[1] = GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
+			D[1] = GMTdataset(mat, Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
 		else
 			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
 			for k = 1:n_ds
-				D[k] = GMTdataset(mat[:,[1,k+1]], Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
+				D[k] = GMTdataset(mat[:,[1,k+1]], Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
 			end
 		end
 	else
 		if (!multi)
 			coln = fill_colnames(coln, size(mat,2)-1, is_geog)
-			D[1] = GMTdataset(hcat(xx,mat), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
+			D[1] = GMTdataset(hcat(xx,mat), Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
 		else
 			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
 			for k = 1:n_ds
-				D[k] = GMTdataset(hcat(xx,mat[:,k]), Float64[], Float64[], Dict{String, String}(), coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
+				D[k] = GMTdataset(hcat(xx,mat[:,k]), Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
 			end
 		end
 	end
