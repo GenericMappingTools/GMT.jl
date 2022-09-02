@@ -585,7 +585,7 @@ end
 function helper_gdirect_SRS(mat, proj_string::String, geom, D=GMTdataset())
 	# Convert the output of geod_direct into a GMTdataset and, if possible, assign it a SRS
 	# If a 'D' is sent in, we only (eventually) assign it an SRS
-	isempty(D) && (D = GMTdataset([mat[1] mat[2]], Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, Int(geom)))
+	isempty(D) && (D = GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, Int(geom)))
 	(startswith(proj_string, "+proj")) && (D.proj4 = proj_string)
 	D
 end
