@@ -73,9 +73,12 @@ must be equal to the number of `azimuth`.
 
     dest, = geod([0., 0], [15., 45], [[0, 10000, 50000, 111100.], [0., 50000]])[1]
 """
-geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m) =
-	geod([lonlat[1] lonlat[2]], azim, distance; proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit)
-function geod(lonlat::Matrix{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0, dataset=false, unit=:m)
+geod(lonlat::Vector{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0,
+     dataset=false, unit=:m, backward::Bool=false) =
+	geod([lonlat[1] lonlat[2]], azim, distance; proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset,
+	     unit=unit, backward=backward)
+function geod(lonlat::Matrix{<:Real}, azim, distance; proj::String="", s_srs::String="", epsg::Integer=0,
+	          dataset=false, unit=:m, backward::Bool=false)
 	f = unit_factor(unit)
 	_dist = isa(distance, AbstractRange) ? collect(Float64, distance) .* f : distance .* f
 
@@ -85,6 +88,14 @@ function geod(lonlat::Matrix{<:Real}, azim, distance; proj::String="", s_srs::St
 	if (isa(dest, GDtype))
 		set_dsBB!(dest)				# Compute and set the global BoundingBox for this dataset
 		isa(dest, GMTdataset) ? dest.colnames = ["Lon", "Lat", "Azim"] : [dest[k].colnames = ["Lon", "Lat", "Azim"] for k in eachindex(dest)]
+	end
+	if (backward)
+		if (isa(azi, Real))
+			azi += 180;		(azi > 180) && (azi -= 360)
+		else
+			azi .+= 180;	[(azi[k] > 180) && (azi[k] -= 360) for k = 1:lastindex(azi)]
+		end
+		isa(dest, GMTdataset) && (dest[:,3] = azi)
 	end
 	return dest, azi
 end
@@ -124,9 +135,11 @@ Remarks:
 If either point is at a pole, the azimuth is defined by keeping the longitude fixed,
 writing lat = 90 +/- eps, and taking the limit as eps -> 0+.
 """
-invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0) =
-	invgeod([lonlat1[1] lonlat1[2]], [lonlat2[1] lonlat2[2]]; proj=proj, s_srs=s_srs, epsg=epsg)
-function invgeod(lonlat1::Matrix{<:Real}, lonlat2::Matrix{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
+invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="",
+        epsg::Integer=0, backward::Bool=false) =
+	invgeod([lonlat1[1] lonlat1[2]], [lonlat2[1] lonlat2[2]]; proj=proj, s_srs=s_srs, epsg=epsg, backward=backward)
+function invgeod(lonlat1::Matrix{<:Real}, lonlat2::Matrix{<:Real}; proj::String="", s_srs::String="",
+	             epsg::Integer=0, backward::Bool=false)
 	@assert (size(lonlat1) == size(lonlat2) || size(lonlat2,1) == 1) "Both matrices must have same size or second have one row"
 	proj_string, projPJ_ptr, isgeog = helper_geod(proj, s_srs, epsg)
 	(!isgeog) && (lonlat1 = xy2lonlat(lonlat1, proj_string);	lonlat2 = xy2lonlat(lonlat2, proj_string))	# Convert to geog first
@@ -141,7 +154,17 @@ function invgeod(lonlat1::Matrix{<:Real}, lonlat2::Matrix{<:Real}; proj::String=
 		d[k], az1[k], az2[k] = dist[], azi1[], azi2[]
 	end
 	proj_destroy(projPJ_ptr)
-	return size(d,1) == 1 ? d[1] : d, az1, az2
+	if (backward)
+		if (isa(az1, Real))
+			az1 += 180;		(az1 > 180) && (az1 -= 360)
+			az2 += 180;		(az2 > 180) && (az2 -= 360)
+		else
+			az1 .+= 180;	az2 .+= 180
+			[(az1[k] > 180) && (az1[k] -= 360) for k = 1:lastindex(az1)]
+			[(az2[k] > 180) && (az2[k] -= 360) for k = 1:lastindex(az2)]
+		end
+	end
+	return size(d,1) == 1 ? (d[1], az1[1], az2[1]) : (d, az1, az2)
 end
 
 # -------------------------------------------------------------------------------------------------
@@ -181,9 +204,9 @@ function circgeo(lonlat::Matrix{<:Real}; radius::Real=0., proj::String="", s_srs
 	(radius == 0) && error("Must provide circle Radius. Obvious, not?")
 	_shape = lowercase(string(shape))
 	if     (_shape == "")     azim = collect(Float64, linspace(0, 360, np))	# The default (circle)
-	elseif (_shape[1] == 't') azim = [0.,  120, 240, 0]				# Triangle
-	elseif (_shape[1] == 's') azim = [45., 135, 225, 315, 45]		# Square
-	elseif (_shape[1] == 'p') azim = [0.,  72, 144, 216, 288, 360]	# Pentagon
+	elseif (_shape[1] == 't') azim = [0.,  120, 240, 0]					# Triangle
+	elseif (_shape[1] == 's') azim = [45., 135, 225, 315, 45]			# Square
+	elseif (_shape[1] == 'p') azim = [0.,  72, 144, 216, 288, 360]		# Pentagon
 	elseif (_shape[1] == 'h') azim = [0.,  60, 120, 180, 240, 300, 360]	# Hexagon
 	else   error("Bad shape name ($(shape))")
 	end
@@ -334,8 +357,6 @@ In later case each line segment is descretized at `step` increments,
               paths (see https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid). This line is obtained by
               computing the azimuth from A to B, at B, and start the line at B with that azimuth and go around
               the Earth till we reach, _close_ to A, but not exactly A (except for the simple meridian cases).
-- `inverse` - When `longest` is used, compute the 'long way around' leaving at A, with the azimuth from A to B
-              at A, plus 180.
 
 ### Returns
 A Mx2 matrix with the lon lat of the points along the geodesic when input is a matrix. A GMT dataset
@@ -345,46 +366,42 @@ or a vector of it (when input is Vector{GMTdataset}).
 
     mat = geodesic([0 0; 30 50], step=100, unit=:k);
 """
-geodesic(fname::String; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
-         longest::Bool=false, inverse::Bool=false) =
-	geodesic(gmtread(fname); step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest, inverse=inverse)
+geodesic(fname::String; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false) =
+	geodesic(gmtread(fname); step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
 
-geodesic(ll1::VMr, ll2::VMr; step=0.0, unit=:m, np = 180, proj::String="", epsg::Integer=0,
-         longest::Bool=false, inverse::Bool=false) =
-	geodesic([ll1[1] ll1[2]; ll2[1] ll2[2]]; step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest, inverse=inverse)
+geodesic(ll1::VMr, ll2::VMr; step=0.0, unit=:m, np = 180, proj::String="", epsg::Integer=0, longest::Bool=false) =
+	geodesic([ll1[1] ll1[2]; ll2[1] ll2[2]]; step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
 
 geodesic(lon1::Real, lat1::Real, lon2::Real, lat2::Real; step=0.0, unit=:m, np=0, proj::String="",
-         epsg::Integer=0, longest::Bool=false, inverse::Bool=false) =
-	geodesic([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest, inverse=inverse)
+         epsg::Integer=0, longest::Bool=false) =
+	geodesic([lon1 lat1; lon2 lat2]; step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
 
-geodesic(ds::Gdal.AbstractDataset; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
-         longest::Bool=false, inverse::Bool=false) =
-	geodesic(gmt2gd(ds); step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest, inverse=inverse)
+geodesic(ds::Gdal.AbstractDataset; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false) =
+	geodesic(gmt2gd(ds); step=step, unit=unit, np=np, proj=proj, epsg=epsg, longest=longest)
 
 function geodesic(D::Vector{<:GMTdataset}; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
-	              longest::Bool=false, inverse::Bool=false)
+	              longest::Bool=false)
 	_D = Vector{GMTdataset}(undef, length(D))
 	for k = 1:length(D)
 		_D[k] = mat2ds(geodesic(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj,
-		               epsg=epsg, longest=longest, inverse=inverse))
+		               epsg=epsg, longest=longest))
 	end
 	return (length(_D) == 1) ? _D[1] : _D		# Drop the damn Vector singletons
 end
-function geodesic(D::GMTdataset; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
-	              longest::Bool=false, inverse::Bool=false)
+function geodesic(D::GMTdataset; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
 	mat2ds(geodesic(D.data; step=step, unit=unit, np=np, proj = (proj == "") ? D.proj4 : proj,
-	       epsg=epsg, longest=longest, inverse=inverse))
+	       epsg=epsg, longest=longest))
 end
 
-function geodesic(line::Matrix{<:Real}; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
-                  longest::Bool=false, inverse::Bool=false)
+function geodesic(line::Matrix{<:Real}; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
 	(!longest && step == 0 && np == 0) && error("For 'longest' must provide either a 'step' or a 'np' (number of points).")
 	(size(line, 1) == 1) && error("Lines cannot have a single point.")
 	(np > 0 && size(line, 1) != 2) && error("Number of intermediate points cannot be used with polylines.")
 	step *= unit_factor(unit)
-	dist, azim, = invgeod(line[1:end-1, :], line[2:end, :], proj=proj, epsg=epsg)	# dist and azims between the polyline vertices
 	
-	longest && return geodesic_long(line[1,:], line[end,:]; step=step, np=np, proj=proj, epsg=epsg, inverse=inverse)
+	longest && return geodesic_long(line[1,:], line[end,:]; step=step, np=np, proj=proj, epsg=epsg)
+
+	dist, azim, = invgeod(line[1:end-1, :], line[2:end, :], proj=proj, epsg=epsg)	# dist and azims between the polyline vertices
 
 	(np > 0) && (step = dist[1] / (np + 1))
 	seg = geod(line[1,:], azim[1], 0:step:dist[1], proj=proj, epsg=epsg)[1]
@@ -404,36 +421,54 @@ end
 const orthodrome = geodesic
 
 # -------------------------------------------------------------------------------------------------
-function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np = 180, proj::String="", epsg::Integer=0, inverse::Bool=false)
-	# This function is not exported. It's normally accessed via the geodesic(..., longest=true) option.
-	dist, azim, az2 = invgeod(lonlat1, lonlat2, proj=proj, epsg=epsg)	# Returns distance, azim at A, azim at B
-	(inverse) && (azim .+= 180)		# Go from A to B from A with azim at A +180
-	dest1, = geod(lonlat1, azim, 39900, unit=:km, proj=proj, epsg=epsg)	# Destination of a point before the perimeter
-	dest2, = geod(lonlat1, azim, 40100, unit=:km, proj=proj, epsg=epsg)	# Destination of a point after the perimeter
-	t = geodesic([dest1[1] dest1[2]; dest2[1] dest2[2]], step=1000, proj=proj, epsg=epsg)	# Temp geodesic arround the perimeter point
-	_name = joinpath(tempdir(), "GMTjl_tmp.dat");
-	gmtwrite(_name, t);					# Workaround a bug in <= 6.4.0
-	x = mapproject([lonlat1[1] lonlat1[2]], L=_name)	# Assume the closest point to start corresponds to full perimeter.
-	d, = invgeod(dest1, [x[4] x[5]], proj=proj, epsg=epsg)	# Distance from starting point to the point where the geodesic does a full perimeter.
-	dtot = 39900000 + d					# Total length of this geodesic in meters
-	(step != 0) && (np = round(Int, dtot / step) + 1)	# Takes precedence over npts because that one has a default value.
-	D = geod(lonlat1, azim, linspace(0,dtot,np), proj=proj, epsg=epsg)[1]	# Compute the npts distances along the perimeter
-	ds = invgeod(D.data, [lonlat1[1] lonlat1[2]], proj=proj, epsg=epsg)[1]	# Distances from start to all pts in the geodesic
+function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np=180, proj::String="", epsg::Integer=0)
+	# Compute the long way round, complementary of the shortest path between A & B. See GMT forum discussion
+	# https://forum.generic-mapping-tools.org/t/oblique-mercator-for-straight-line-between-points-as-maps-equator
+
+	_name = joinpath(tempdir(), "GMTjl_tmp.dat");	# Because of a bug in mapproject we need to save in a tmp file
 	
-	if (inverse)						# Go from A to B, from A with azim at A + 180
-		gmtwrite(_name, D);				# Workaround a bug in <= 6.4.0
-		x = mapproject([lonlat2[1] lonlat2[2]], L=_name)	# Find closest point from B in the passing by geodesic
-		k = length(ds) + 1
-		while (ds[k-=1] < dist)  end
-		D.data = [D.data[1:k,:]; [x[4] x[5]] D.data[k,3]]	# Repeat the previous azim. Not exactly correct but...
-	else								# Go from B to A, from B with azim at B
-		k = 0
-		while (ds[k+=1] < dist)  end
-		D.data = [lonlat2[1] lonlat2[2] az2; D.data[k:end,:]]	# Keep only the longest chunk
+	distAB, azA, = invgeod(lonlat1, lonlat2, proj=proj, epsg=epsg)		# Distance and azim between the end points 
+	dest1, = geod(lonlat1, azA, 39950, unit=:km, proj=proj, epsg=epsg)	# Destination of a point before the perimeter
+	dest2, = geod(lonlat1, azA, 40050, unit=:km, proj=proj, epsg=epsg)	# Destination of a point after the perimeter
+	t = geodesic([dest1[1] dest1[2]; dest2[1] dest2[2]], step=1000, proj=proj, epsg=epsg)	# Temp geodesic arround the perimeter point
+	gmtwrite(_name, t);				# Workaround a bug in <= 6.4.0
+	x = mapproject([lonlat1[1] lonlat1[2]], L=_name)	# Assume the closest point to A corresponds to full perimeter.
+	d, = invgeod(dest1, [x[4] x[5]], proj=proj, epsg=epsg)	# Distance from dest1 to the point where the geodesic does a full perimeter.
+	dtot = 39950000 + d				# Total length of this geodesic (A bit in excess probably due to geodesics not closing)
+	(step != 0) && (np = round(Int, dtot / step) + 1)	# Takes precedence over 'np' because that one has a default value.
+
+	function get_mindist(az)
+		D = geod(lonlat1, az, linspace(0,dtot,360), proj=proj, epsg=epsg)[1]
+		gmtwrite(_name, D);
+		mapproject([lonlat2[1] lonlat2[2]], L=_name)	# Find closest point to B in the passing by geodesic
 	end
 
-	set_dsBB!(D)						# Update BB
-	D.attrib = Dict("Length" => "$(dtot - dist)")		# Total length of the longest chunk
+	# Using the azimuth computed from the shortest distance between A & B will always give only an aproximation
+	# to find the 'longest way around' and reach B. So we need to refine it, see comment in tis GMT forum post
+	# https://forum.generic-mapping-tools.org/t/oblique-mercator-for-straight-line-between-points-as-maps-equator/3223/17
+	# The following trick seems to work pretty well:
+	# 1. Compute the shortest distance between B and estimate arrival point
+	# 2. Repeat but using now a small perturbation (0.1 deg) to the first azimuth
+	# 3. Use the difference in the two distances to estimate how many (fractional) times we must correct
+	#    the initial azimuth estimate obtained from the shortest path between A & B.
+	az, daz = azA + 180, 0.1
+	d0 = get_mindist(az)[3]
+	dt = get_mindist(az + daz)[3]
+	dd = abs(dt - d0)
+	az = (dt < d0) ? az + (d0 / dd) * daz : az - (d0 / dd) * daz
+
+	d = geod(lonlat1, az, dtot-distAB)[1]				# First estimate of the arrival point
+	D = mapproject(lonlat2, G=(d[1], d[2]))				# Distance between estimation and true point
+	total_len = dtot - distAB - D[end]					# Correct 'dtot' that was estimated in excess.
+	p,a = geod(lonlat1, az, linspace(0,total_len,np))	# Possibly because the path is slightly hellicoidal.
+	prj = (proj != "" && (contains(proj,"=lon") || contains(proj,"=lat"))) ? proj : prj4WGS84
+	D = mat2ds(hcat(p,a), attrib=Dict("Length" => "$(total_len)", "ShortLength" => "$distAB"), colnames=["Lon", "Lat", "azim"], proj=prj)
+	p = (proj != "") ? ", proj="*proj : ""
+	n = (np != 180)  ? ", np=$np" : ""
+	e = (epsg != 0)  ? ", epsg=$epsg" : ""
+	D.comment = ["geodesic($(lonlat1), $(lonlat2), longest=true" * p * n * e]	# Store the command that was run
+	set_dsBB!(D)										# Update BB
+
 	return D
 end
 
@@ -506,14 +541,14 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 		end
 		(dataset) && (dest = helper_gdirect_SRS([dest azi], proj_string, wkbLineString))	# Return a GMTdataset
 	elseif (isvector(azim) && length(dist) == 1)				# A circle (dist has became a vector in 4rth line)
-		dest = Array{Float64}(undef, length(azim), 2)
-		for np = 1:lastindex(azim)
-			d = _geod_direct!(ggd, copy(lonlat), azim[np], dist[1])[1]
-			dest[np, 1:2] = (isgeog) ? d : lonlat2xy(d, proj_string)
+		dest, azi = Array{Float64}(undef, length(azim), 2), Vector{Float64}(undef, length(azim))
+		for k = 1:lastindex(azim)
+			d, azi[k] = _geod_direct!(ggd, copy(lonlat), azim[k], dist[1])
+			dest[k, 1:2] = (isgeog) ? d : lonlat2xy(d, proj_string)
 		end
 		(dataset) &&		# Return a GMTdataset
-			(dest = GMTdataset(dest, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], startswith(proj_string, "+proj") ? proj_string : "", "", 0, Int(wkbPolygon)))
-		azi = nothing
+			(dest = GMTdataset(hcat(dest, azi), Float64[], Float64[], Dict{String, String}(), String[], String[],
+			                   "",String[], startswith(proj_string, "+proj") ? proj_string : "", "", 0, Int(wkbLineString)))
 	elseif (isvector(azim) && isvector(dist))					# Multi-lines with variable length and/or number of points
 		n_lines = length(azim)							# Number of lines
 		(!isa(dist, Vector)) && (dist = vec(dist))
@@ -559,7 +594,7 @@ end
 function _geod_direct!(geod::geod_geodesic, lonlat, azim, distance)
 	p = pointer(lonlat)
 	azi = Ref{Cdouble}()		# the (forward) azimuth at the destination
-	ccall((:geod_direct, libproj), Cvoid, (Ptr{Cvoid},Cdouble,Cdouble,Cdouble,Cdouble,Ptr{Cdouble},Ptr{Cdouble}, Ptr{Cdouble}),
+	ccall((:geod_direct, libproj), Cvoid, (Ptr{Cvoid},Cdouble,Cdouble,Cdouble,Cdouble,Ptr{Cdouble},Ptr{Cdouble},Ptr{Cdouble}),
 		  pointer_from_objref(geod), lonlat[2], lonlat[1], azim, distance, p+sizeof(Cdouble), p, azi)
 	lonlat, azi[]
 end
