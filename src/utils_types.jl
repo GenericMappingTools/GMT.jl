@@ -569,14 +569,15 @@ end
 function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing,
 	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=nothing, kw...)
 	# This is the same as Matlab's imagesc() ... plus some extras.
-	mi, ma = extrema(mat)
+	mi, ma = (isa(mat,GMTgrid)) ? mat.range[5:6] : extrema(mat)
+	(isa(mat,GMTgrid) && mat.hasnans > 1) && (mi = NaN)		# Don't know yet so force checking
 	if (isnan(mi))			# Shit, such a memory waste we need to do.
 		mi, ma = extrema_nan(mat)
 		t = isa(mat, GMTgrid) ? Float32.((mat.z .- mi) ./ (ma - mi) .* 255) : Float32.((mat .- mi) ./ (ma - mi) .* 255)
 		for k in CartesianIndices(t)  isnan(t[k]) && (t[k] = 255f0)  end
 		img = round.(UInt8, t)
 	else
-		img = round.(UInt8, (mat .- mi) ./ (ma - mi) .* 255)
+		img = isa(mat,GMTgrid) ? round.(UInt8, (mat.z .- mi) ./ (ma - mi) .* 255) : round.(UInt8, (mat .- mi) ./ (ma - mi) .* 255) 
 	end
 	(clim[1] >= clim[2]) && error("CLIM values are non-sense (min > max)")
 	if (clim[1] > 0 && clim[1] < 255)
