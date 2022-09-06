@@ -176,6 +176,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 		try
 			limits = opt_R2num(opt_R)
 			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4)) && (CTRL.limits[1:length(limits)] = limits)
+			all(CTRL.limits[7:10] .== 0) && (CTRL.limits[7:10] = CTRL.limits[1:4])	# Then make plot limits == data limits
 		catch
 			CTRL.limits .= 0.0
 		end
@@ -2390,6 +2391,15 @@ function add_opt_fill(val, cmd::String="",  opt="")::String
 	end
 	return cmd
 end
+
+#=
+function add_opt_fill(fun::String, cmd::String="",  opt="")::String
+	I = imagesc(mat2grid(fun))
+	gdalwrite("/vsimem/GMTjl_2grdview.tiff", I)
+	ressurectGDAL()
+	return "p/vsimem/GMTjl_2grdview.tiff"
+end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2=nothing, arg3=nothing, prog::String="")
