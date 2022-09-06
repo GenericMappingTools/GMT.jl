@@ -8,7 +8,7 @@ Full option list at [`psclip`]($(GMTdoc)psclip.html)
 Parameters
 ----------
 
-- **C** | **end_clip_path** :: [Type => Bool]
+- **C** | **endclip** | **end_clip_path** :: [Type => Bool]
 
     Mark end of existing clip path. No input file is needed.
     ($(GMTdoc)psclip.html#c)
@@ -47,13 +47,13 @@ Parameters
 """
 function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	gmt_proggy = (IamModern[1]) ? "clip "  : "psclip "
+	gmt_proggy = (IamModern[1]) ? "clip " : "psclip "
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :g :p :t :yx :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:A :steps :straight_lines], [:C :end_clip_path], [:N :invert], [:T :clip_limits]])
+	cmd  = parse_these_opts(cmd, d, [[:A :steps :straight_lines], [:C :endclip :end_clip_path], [:N :invert], [:T :clip_limits]])
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
