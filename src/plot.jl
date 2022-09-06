@@ -805,8 +805,8 @@ function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false,
 			 isvector(alpha) || isa(alpha, Tuple) ? (eltype(alpha) <: AbstractFloat ? string.("@",alpha.*100) : string.("@",alpha)) :
 			 error("Bad transparency (fillapha) argument")
 
-	if (tipo == "v")  ind_w, ind_b, ind_t, thick, bB = 1:2, 3, 4, width  != 0, "b"
-	else              ind_w, ind_b, ind_t, thick, bB = 3:4, 1, 2, height != 0, "B"
+	if (tipo == "v")  ind_w, ind_b, ind_t, thick, bB = 7:8, 9, 10, width  != 0, "b"
+	else              ind_w, ind_b, ind_t, thick, bB = 9:10, 7, 9, height != 0, "B"
 	end
 
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
