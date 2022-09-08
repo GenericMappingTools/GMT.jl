@@ -91,9 +91,9 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 			if ((val = find_in_dict(d, [:paper])[1]) !== nothing)
 				ps = get(paper_sizes, string(val), (595, 842))
 				opt_R = string(" -R0/",ps[1],"/0/",ps[2])
-				ps_media = string(" --PS_MEDIA=", ps[1], "x", ps[2])
+				ps_media = string(" --PS_MEDIA=", ps[1]+600, "x", ps[2]+600)
 			else
-				opt_R, ps_media = " -R0/594/0/841", " --PS_MEDIA=594x841"
+				opt_R, ps_media = " -R0/594/0/841", " --PS_MEDIA=1194x1441"	# add 600 pt to PS_MEDIA to account 4 the 20 cm
 			end
 			CTRLshapes.points[1] = true
 		else
@@ -124,7 +124,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 
 	if (CTRLshapes.first[1])
 		if (CTRLshapes.points[1])  cmd *= ps_media		# When units are points we always set a specific paper size
-		elseif (EXT != "ps")       cmd *= " --PS_MEDIA=16840x16840"		# Exptend to a larger paper size (5 x A0)
+		elseif (EXT != "ps")       cmd *= " --PS_MEDIA=32767x32767"		# Exptend to a larger paper size
 		end
 	end
 
