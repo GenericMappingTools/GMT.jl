@@ -137,7 +137,7 @@ mutable struct GMT_IMAGE
 	colormap::Ptr{Cint}
 	n_indexed_colors::Cint
 	header::Ptr{GMT_GRID_HEADER}
-	data::Ptr{Cvoid}
+	data::Ptr{Cuchar}
 	alpha::Ptr{Cuchar}
 	color_interp::Ptr{UInt8}
 	x::Ptr{Cdouble}
@@ -287,6 +287,7 @@ struct GMTAPI_DATA_OBJECT
 	n_rows::UInt64              # Number or rows in this array [GMT_DATASET to/from MATRIX/VETOR only]
 	n_columns::UInt64			# Number of columns to process in this dataset [GMT_DATASET only]
 	n_expected_fields::UInt64	# Number of expected columns for this dataset [GMT_DATASET only]
+	delay::UInt64				# Number of leading NaN-records we oculd not write initially before knowning the row dim
 	n_alloc::Csize_t			# Number of items allocated so far if writing to memory
 	ID::UInt32					# Unique identifier which is >= 0
 	alloc_level::UInt32			# Nested module level when object was allocated

@@ -96,6 +96,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		opt_R = '/' * box_str[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
 	end
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
+	(!got_usr_R && opt_R != "") && (CTRL.pocket_R[1] = opt_R)	# Still on time to store it.
 	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
 
@@ -250,12 +251,49 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	_cmd = gmt_proggy .* _cmd				# In any case we need this
 	_cmd = finish_PS_nested(d, _cmd)
+	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
-	#(got_pattern || occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns are screwing the session
 	(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function fish_bg(d::Dict, cmd::Vector{String})
+	# Check if the background image is used and if yes insert a first command that calls grdimage to fill
+	# the canvas with that bg image. The BG image can be a file name, the name of one of the pre-defined
+	# functions, or a GMTgrid/GMTimage object.
+	# By default we use a trimmed gray scale (between ~64 & 240) but if user wants to control the colormap
+	# then the option's argument can be a tuple where the second element is cpt name or a GMTcpt obj.
+	# Ex:  plot(rand(8,2), bg=(:somb, :turbo), show=1)
+	# To revert the sense of the color progression prefix the cpt name or of the pre-def function with a '-'
+	# Ex: plot(rand(8,2), bg="-circ", show=1)
+	((val = find_in_dict(d, [:bg :background])[1]) === nothing) && return cmd
+	arg1, arg2 = isa(val, Tuple) ? val[:] : (val, nothing)
+	(arg2 !== nothing && (!isa(arg2, GMTcpt) && !isa(arg2, StrSymb))) &&error("When a Tuple is used in argument of the background image option, the second element must be a string or a GMTcpt object.")
+	gotfname, fname, opt_I = false, "", ""
+	if (isa(arg1, StrSymb))
+		if (splitext(string(arg1))[2] != "")		# Assumed to be an image file name
+			fname, gotfname = arg1, true
+		else										# A pre-set fun name
+			fun = string(arg1)
+			(fun[1] == '-') && (fun = fun[2:end]; opt_I = " -I")
+			I::GMTimage = imagesc(mat2grid(fun))
+		end
+	elseif (isa(arg1, GMTgrid) || isa(arg1, GMTimage))
+		I = isa(arg1, GMTgrid) ? imagesc(arg1) : val
+	end
+	if (!gotfname)
+		((arg2 !== nothing) && isa(arg2, String) && (arg2[1] == '-')) && (arg2 = arg2[2:end]; opt_I = " -I")
+		C = (arg2 === nothing) ? gmt("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I) :	# The default gray scale here
+		                         isa(arg2, GMTcpt) ? gmt("makecpt -T0/256/1 -C", arg2) :
+								 gmt("makecpt -T0/256/1 -C" * string(arg2) * opt_I)
+		image_cpt!(I, C)
+		CTRL.pocket_call[3] = I					# This signals finish_PS_module() to run _cmd first
+	end
+
+	["grdimage -D " * fname * CTRL.pocket_J[1], cmd...]
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -56,6 +56,11 @@
 	@test_throws ErrorException("Bad line style. Options are (for example) [Line|DashDot|Dash|Dot]Circ") plot(rand(5,2), ls="Dat")
 	plot(rand(5,2), pen=(2,:gradient),Vd=3);
 	plot([1. 2; 3 4], title=(str="Bla bla", font=50, offset="-70p"), subtitle=:Bluuu, xlabel="aa", ylabel="bb", zlabel="cc",Vd=dbg2)
+	plot(rand(8,2), bg="-circ")
+	plot(rand(8,2), bg="x", Vd=dbg2)
+	plot(rand(8,2), bg="blabla.png", Vd=dbg2)
+	plot(rand(8,2), bg=mat2grid(rand(64,64)), Vd=dbg2)
+	plot(rand(8,2), bg=(:somb, :turbo), Vd=dbg2)
 
 	D = [mat2ds([0 0; 0 1; 1 1; 1 0.3; 0 0])[1], mat2ds([1 1; 1 2; 2 2; 2 1; 1 1])[1]];
 	C = makecpt(cmap = :hot, range = (0, 5));
@@ -70,6 +75,7 @@
 	r = psxy!(D, C=C, Z=(data=[1,4], nofill=true), Vd=2)
 	@test contains(r, " -W0.5+z -K")
 
+	println("	LINES")
 	bar!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	lines!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	lines!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
