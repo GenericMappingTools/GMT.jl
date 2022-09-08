@@ -996,11 +996,12 @@ image_cpt!(I::GMTimage, cpt::String) = image_cpt!(I, gmtread(cpt))
 function image_cpt!(I::GMTimage, cpt::GMTcpt)
 	# Insert the cpt info in the img.colormap member
 	I.colormap, I.n_colors = cmap2colormap(cpt)
+	I.color_interp = "Palette"
 	return nothing
 end
 function image_cpt!(img::GMTimage; clear::Bool=true)
 	if (clear)
-		img.colormap, img.n_colors = fill(Int32(0), 3), 0
+		img.colormap, img.n_colors, img.color_interp = fill(Int32(0), 3), 0, "Gray"
 	end
 	return nothing
 end
@@ -1156,15 +1157,15 @@ function mat2grid(mat, I::GMTimage)
 	Go
 end
 
-function mat2grid(f::Function, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(), y=Vector{Float64}(), proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+function mat2grid(f::Function, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(),
+	              y=Vector{Float64}(), proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
 	(isempty(x) && !isempty(xx)) && (x = xx)
 	(isempty(y) && !isempty(yy)) && (y = yy)
+	(isempty(x) || isempty(y)) && error("Must transmit the domain coordinates over which to calculate function.")
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	z = Array{Float32,2}(undef,length(y),length(x))
-	for i in eachindex(x)
-		for j in eachindex(y)
-			z[j,i] = f(x[i],y[j])
-		end
+	for i in eachindex(x), j in eachindex(y)
+		z[j,i] = f(x[i],y[j])
 	end
 	mat2grid(z; reg=reg, x=x, y=y, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
 end
@@ -1182,18 +1183,24 @@ function mat2grid(f::String, xx=Vector{Float64}(), yy=Vector{Float64}(); x=Vecto
 		f_egg(x, y) = (sin(x*10) + cos(y*10)) / 4
 		if (isempty(x))  x = -1:0.01:1;	y = -1:0.01:1;  end
 		mat2grid(f_egg, x, y)
+	elseif (startswith(f, "circ"))
+		if (isempty(x))  x = -1:0.01:1;	y = -1:0.01:1;  end
+		mat2grid((x,y) -> sqrt(x^2 + y^2), x, y)
 	elseif (startswith(f, "para"))
-		f_parab(x,y) = x^2 + y^2
-		if (isempty(x))  x = -2:0.05:2;	y = -2:0.05:2;  end
-		mat2grid(f_parab, x, y)
+		if (isempty(x))  x = -2:0.02:2;	y = -2:0.02:2;  end
+		mat2grid((x,y) -> x^2 + y^2, x, y)
 	elseif (startswith(f, "rosen"))			# rosenbrock
 		f_rosen(x,y) = (1 - x)^2 + 100 * (y - x^2)^2
-		if (isempty(x))  x = -2:0.05:2;	y = -1:0.05:3;  end
+		if (isempty(x))  x = -2:0.02:2;	y = -1:0.02:3;  end
 		mat2grid(f_rosen, x, y)
 	elseif (startswith(f, "somb"))			# sombrero
 		f_somb(x,y) = cos(sqrt(x^2 + y^2) * 2pi / 8) * exp(-sqrt(x^2 + y^2) / 10)
-		if (isempty(x))  x = -15:0.2:15;	y = -15:0.2:15;  end
+		if (isempty(x))  x = -15:0.1:15;	y = -15:0.1:15;  end
 		mat2grid(f_somb, x, y)
+	elseif (f == "x" || f == "y" || f == "x+y" || f == "x*y" || f == "xy")	# X,Y,XY
+		if (isempty(x))  x = -1:0.01:1;	y = -1:0.01:1;  end
+		_f(x,y) = (f == "x") ? x : (f == "y") ? -y : (f == "x+y") ? x-y : -x*y
+		mat2grid(_f, x, y)
 	else
 		@warn("Unknown surface '$f'. Just giving you a parabola.")
 		mat2grid("para")
