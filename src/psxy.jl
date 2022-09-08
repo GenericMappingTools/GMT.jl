@@ -293,7 +293,9 @@ function fish_bg(d::Dict, cmd::Vector{String})
 		CTRL.pocket_call[3] = I					# This signals finish_PS_module() to run _cmd first
 	end
 
-	["grdimage -D " * fname * CTRL.pocket_J[1], cmd...]
+	opt_p = scan_opt(cmd[1], "-p");
+	(opt_p != "") && (opt_p = " -p" * opt_p)
+	["grdimage -D " * fname * CTRL.pocket_J[1] * opt_p, cmd...]
 end
 
 # ---------------------------------------------------------------------------------------------------
