@@ -3875,8 +3875,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	img_mem_layout[1] = add_opt(d, "", "", [:layout])
 	(img_mem_layout[1] == "images") && (img_mem_layout[1] = "I   ")		# Special layout for Images.jl
 
-	if (fname_ext != "ps" && !IamModern[1] && !O)		# Exptend to a larger paper size (5 x A0)
-		#cmd[1] *= " --PS_MEDIA=11920x16850"			# In Modern mode GMT takes care of this.
+	if (fname_ext != "ps" && !IamModern[1] && !O)		# Exptend to a larger paper size
 		cmd[1] *= " --PS_MEDIA=32767x32767"				# In Modern mode GMT takes care of this.
 	end
 
