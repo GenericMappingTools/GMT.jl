@@ -112,8 +112,8 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	cmd = ""
-	opt_Z = add_opt(d, "", "Z", [:Z :kind], (counts = "_0", count = "_0", freq = "_1", log_count = "_2", log_freq = "_3",
-	                                         log10_count = "_4", log10_freq = "_5", weights = "+w"), true, "")
+	opt_Z = add_opt(d, "", "Z", [:Z :kind], (counts = "_0", count = "_0", freq = "_1", frequency = "_1",
+	                                         log_count = "_2", log_freq = "_3", log10_count = "_4", log10_freq = "_5", weights = "+w"), true, "")
 	opt_T = parse_opt_range(d, "", "")[1]		# [:T :range :inc :bin]
 	(isa(arg1, GItype)) && occursin("/", opt_T) && error("here 'bin' must be a scalar")
 
