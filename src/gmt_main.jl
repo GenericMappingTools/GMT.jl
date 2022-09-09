@@ -397,7 +397,7 @@ function extra_sets()
 	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")	# Stop those ugly grays
 	gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "20c")		# Change the origin offset
 	gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "20c")
-	#(GMTver >= v"6.4") && gmtlib_setparameter(G_API[1], "MAP_EMBELLISHMENT", "auto")
+	#(GMTver >= v"6.4") && gmtlib_setparameter(G_API[1], "MAP_EMBELLISHMENT_MODE", "auto")
 end
 
 # -----------------------------------------------------------------------------------------------
