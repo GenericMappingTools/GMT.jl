@@ -286,16 +286,18 @@ function fish_bg(d::Dict, cmd::Vector{String})
 	end
 	if (!gotfname)
 		((arg2 !== nothing) && isa(arg2, String) && (arg2[1] == '-')) && (arg2 = arg2[2:end]; opt_I = " -I")
-		C = (arg2 === nothing) ? gmt("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I) :	# The default gray scale here
-		                         isa(arg2, GMTcpt) ? gmt("makecpt -T0/256/1 -C", arg2) :
-								 gmt("makecpt -T0/256/1 -C" * string(arg2) * opt_I)
+		opt_H = (IamModern[1]) ? " -H" : ""
+		C = (arg2 === nothing) ? gmt("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I*opt_H) :	# The default gray scale here
+		                         isa(arg2, GMTcpt) ? gmt("makecpt -T0/256/1 -C" * opt_H, arg2) :
+								 gmt("makecpt -T0/256/1 -C" * string(arg2) * opt_I * opt_H)
 		image_cpt!(I, C)
 		CTRL.pocket_call[3] = I					# This signals finish_PS_module() to run _cmd first
 	end
 
-	opt_p = scan_opt(cmd[1], "-p");
-	(opt_p != "") && (opt_p = " -p" * opt_p)
-	["grdimage -D " * fname * CTRL.pocket_J[1] * opt_p, cmd...]
+	opt_p = scan_opt(cmd[1], "-p");		(opt_p != "") && (opt_p = " -p" * opt_p)
+	opt_c = scan_opt(cmd[1], "-c");		(opt_c != "") && (opt_c = " -c" * opt_c)
+	opt_D = (IamModern[1]) ? " -Dr " : " -D "	# Found this difference by experience. It might break in future GMTs
+	["grdimage" * opt_D * fname * CTRL.pocket_J[1] * opt_p * opt_c, cmd...]
 end
 
 # ---------------------------------------------------------------------------------------------------
