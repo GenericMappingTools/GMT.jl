@@ -249,8 +249,11 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	out2 = nothing;		Vd_ = 0				# Backup values
 	(haskey(d, :Vd)) && (Vd_ = d[:Vd])
 
+	_cmd = [gmt_proggy * cmd]				# In any case we need this
+	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command" (background img)
+
 	# Plot the histogram
-	out1 = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
+	out1 = finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
 
 	# And if wished, plot the two vertical lines with the limits annotated in them
 	if (limit_L !== nothing)
