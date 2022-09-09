@@ -3877,6 +3877,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 
 	if (fname_ext != "ps" && !IamModern[1] && !O)		# Exptend to a larger paper size
 		cmd[1] *= " --PS_MEDIA=32767x32767"				# In Modern mode GMT takes care of this.
+	elseif (fname_ext == "ps" && !IamModern[1] && !O)
+		cmd[1] *= " --PS_MEDIA=1194x1441"				# add 600 pt to A4 to account for the 20 cm
 	end
 
 	orig_J = ""		# To use in the case of a double Cartesian/Geog frame.
