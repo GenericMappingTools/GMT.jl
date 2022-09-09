@@ -104,7 +104,13 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			IamModernBySubplot[1] = true	# We need this to know if subplot(:end) should call gmtend() or not
 		end
 		try
-			gmt("subplot begin " * cmd);	catch; resetGMT()
+			gmt("subplot begin " * cmd);
+			# This is the most strange. For some reason the annot font of first panel is slightly different from the
+			# others WHEN the first plot does not have the -c option (iplicitly -c0). If it has, then they are equal
+			# but equal to others than first. Oddly, running the gmtset, which should be doing nothing because the
+			# map type is already 'fancy' by default, seems to solve this issue.
+			gmt("gmtset  MAP_FRAME_TYPE fancy")
+		catch; resetGMT()
 		end
 		IamSubplot[1], IamModern[1] = true, true
 	elseif (do_set)
