@@ -2047,8 +2047,8 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 		for k in keys(mapa)
 			if (string(val) == string(k))
 				cmd_ = " -" * opt
-				#(length(mapa[k][1]) == 0) && error("Need alias valu. Cannot be empty")
-				first_ind = (mapa[k][1] == "_") ? 2 : 1
+				#(length(mapa[k][1]) == 0) && error("Need alias value. Cannot be empty")
+				first_ind = (mapa[k][1] == '_') ? 2 : 1
 				cmd_ *= mapa[k][first_ind:end]
 				break
 			end
