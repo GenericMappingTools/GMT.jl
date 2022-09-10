@@ -296,6 +296,7 @@ function fish_bg(d::Dict, cmd::Vector{String})
 
 	opt_p = scan_opt(cmd[1], "-p");		(opt_p != "") && (opt_p = " -p" * opt_p)
 	opt_c = scan_opt(cmd[1], "-c");		(opt_c != "") && (opt_c = " -c" * opt_c)
+	#(opt_c == "" && contains(cmd[1], " -c ")) && (opt_c = " -c")	# Because of a scan_opt() desing error (but causes error)
 	opt_D = (IamModern[1]) ? " -Dr " : " -D "	# Found this difference by experience. It might break in future GMTs
 	["grdimage" * opt_D * fname * CTRL.pocket_J[1] * opt_p * opt_c, cmd...]
 end

@@ -92,6 +92,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	if (!stop && !do_set)
 		(val_grid === nothing) && error("SUBPLOT: 'grid' keyword is mandatory")
 		cmd = arg2str(val_grid, 'x') * " " * cmd * opt_C		# Also add the eventual global -C clearance option
+		cmd = guess_panels_size(cmd, val_grid)					# For limitted grid dims, guess panel sizes if not provided
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 
 		if (!IamModern[1])			# If we are not in modern mode, issue a gmt("begin") first
@@ -130,6 +131,29 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		end
 	end
 	return nothing
+end
+
+# --------------------------------------------------------------------------
+function guess_panels_size(cmd, opt)
+	(contains(cmd, " -F")) && return cmd	# Ok, Ok panel sizes provided
+
+	if (isa(opt, String))
+		((ind = findfirst('x', opt)) === nothing) && error("'grid' option does not have the form NxM (misses the 'x'")
+		n_rows, n_cols = parse(Int, opt[1:ind-1]), parse(Int, opt[ind+1:end])
+	else
+		n_rows, n_cols = opt[1], opt[2]
+	end
+	F = ""
+	if     (n_cols == 3)  F = " -Fs6/6";	M = " -M0.2c/0.2c"
+	elseif (n_cols == 2)  F = " -Fs8/8";	M = " -M0.3c/0.2c"
+	elseif (n_cols == 1)
+		if     (n_rows == 2)  F = " -Fs12/8";	M = " -M0.3c"
+		elseif (n_rows == 3)  F = " -Fs12/6";	M = " -M0.3c"
+		end
+	end
+	(F == "") && error("No panels/fig size provided and the grid panels dimension is not within the subset that we guess for")
+	!contains(cmd, " -M") && (cmd *= M)		# No margins provided. Use our poor guess.
+	cmd *= F
 end
 
 # --------------------------------------------------------------------------

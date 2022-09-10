@@ -16,8 +16,16 @@ subplot(grid=(1,1), limits="0/5/0/5", frame="west", F=([1 2]), name=:png)
 @test_throws ErrorException("SUBPLOT: 'grid' keyword is mandatory") subplot(F=("1i"), Vd=dbg2)
 GMT.IamSubplot[1] = false
 @test_throws ErrorException("Cannot call subplot(set, ...) before setting dimensions") subplot(:set, F=("1i"), Vd=dbg2)
+
 println("    SUBPLOT2")
 subplot(name="lixo", fmt=:ps, grid="1x1", limits="0/5/0/5", frame="west", F="s7/7", title="VERY VERY");subplot(:set, panel=(1,1));plot([0 0; 1 1]);subplot(:end)
+
+# The subplot size guessing routine.
+GMT.guess_panels_size("", "3x3")
+GMT.guess_panels_size("", (1,2))
+GMT.guess_panels_size("", (2,1))
+GMT.guess_panels_size("", (3,1))
+
 gmtbegin("lixo.ps");  gmtend()
 gmtbegin("lixo", fmt=:ps);  gmtend()
 gmtbegin("lixo");  gmtend()
