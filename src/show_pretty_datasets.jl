@@ -8,8 +8,9 @@ Base.show(io::IO, D::GMTdataset;
 		  summary::Bool = true,
 		  eltypes::Bool = true,
 		  truncate::Int = 32,
+		  text_colname::String = "",
 		  kwargs...) =
-	_show(io, D; allrows=allrows, allcols=allcols, rowlabel=rowlabel, summary=summary, eltypes=eltypes, truncate=truncate, kwargs...)
+	_show(io, D; allrows=allrows, allcols=allcols, rowlabel=rowlabel, summary=summary, eltypes=eltypes, truncate=truncate, text_colname=text_colname, kwargs...)
 
 Base.show(D::GMTdataset;
           allrows::Bool = !get(stdout, :limit, true),
@@ -18,8 +19,9 @@ Base.show(D::GMTdataset;
           summary::Bool = true,
           eltypes::Bool = true,
           truncate::Int = 32,
+		  text_colname::String = "",
           kwargs...) =
-    show(stdout, D; allrows=allrows, allcols=allcols, rowlabel=rowlabel, summary=summary, eltypes=eltypes, truncate=truncate, kwargs...)
+    show(stdout, D; allrows=allrows, allcols=allcols, rowlabel=rowlabel, summary=summary, eltypes=eltypes, truncate=truncate, text_colname=text_colname, kwargs...)
 
 function _show(io::IO,
 			   D::GMTdataset;
@@ -30,6 +32,7 @@ function _show(io::IO,
 			   eltypes::Bool = true,
 			   rowid = nothing,
 			   truncate::Int = 32,
+			   text_colname::String = "",
 			   kwargs...)
 
 	# For example a grdinfo(...) or a pure text dataset. In those cases just print the .text & return.
@@ -117,7 +120,7 @@ function _show(io::IO,
 	skipd_rows = 0
 	if (~isempty(D.text))
 		push!(alignment, :r)
-		push!(names_str, "Text")
+		push!(names_str, (text_colname != "" ? text_colname : "Text"))
 		push!(types_str, "String")
 		if (size(D,1) > 10000)	# Since only dataset's begining and end is displayed do not make a potentially big copy
 			Dt = [[D.data[1:50, :]; D.data[end-50:end, :]] [D.text[1:50, :]; D.text[end-50:end, :]]]
@@ -140,7 +143,7 @@ function _show(io::IO,
 				 ellipsis_line_skip          = 3,
 				 formatters                  = (_pretty_tables_general_formatter,),
 				 header                      = (names_str, types_str),
-				 header_alignment            = :l,
+				 header_alignment            = :r,
 				 hlines                      = [:header],
 				 highlighters                = (_PRETTY_TABLES_HIGHLIGHTER,),
 				 maximum_columns_width       = maximum_columns_width,

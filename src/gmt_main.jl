@@ -1490,6 +1490,21 @@ end
 Base.:show(io::IO, ::MIME"text/plain", D::GMTdataset) = show(D)
 Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothing when text only (data == [])
 
+# ---------------------------------------------------------------------------------------------------
+function Base.show(io::IO, C::GMTcpt)
+	mat = (size(C.cpt,1) > 1) ? [round.([C.cpt.*255 C.alpha.*255], digits=0) C.range] : [round.([C.cpt.*255 C.alpha[1].*255], digits=0) C.range]
+	D = mat2ds(mat, colnames=["r1", "g1", "b1", "r2", "g2", "b2", "alpha", "z1", "z2"])
+	D.bbox = Float64[]
+	(!isempty(C.label) && length(C.label) == size(C.cpt,1) && any(C.label .!= "")) && (D.text = C.label)
+	println("Extract of a GMTcpt exposed as a GMTdataset for display. Colors converted to [0-255]")
+	(~all(isempty.(C.comment))) && println("Comment:\t", C.comment)
+	println("Model: ", C.model)
+	println("Color depth: ", C.depth)
+	(!isnan(C.hinge)) && println("Hinge: ", C.hinge)
+	show(D, text_colname="Labels")		# text_colname will not be used if CPT.label is empty (most of times)
+end
+Base.:show(io::IO, ::MIME"text/plain", C::GMTcpt) = show(C)
+
 # ---------- For Pluto ------------------------------------------------------------------------------
 Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.fname))
 

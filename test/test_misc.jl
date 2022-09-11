@@ -178,6 +178,9 @@
 
 	GMT.geodetic2enu(-81.998,42.002,1000,-82,42,200);
 
+	C = makecpt(C=:rainbow);
+	show(C)
+
 	println("	DRAWING")
 	circle(0,0,1,first=true,Vd=dbg2);
 	cross(0,0,1,Vd=dbg2);
