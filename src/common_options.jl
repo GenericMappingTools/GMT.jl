@@ -3767,6 +3767,26 @@ function close_PS_file(fname::AbstractString)
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    add2PSfile(text)
+
+Add commands to the GMT PostScript file while it is not yet finished.
+
+- `text`: is a string, with optional line breaks in it, or a vector of strings.
+
+This option is for PostScript gurus that want/need to mess with the PS plot file in the middle of its construction.
+"""
+function add2PSfile(txt::Union{String, Vector{String}})
+	fid = open(PSname[1], "a")
+	if (isa(txt, String))
+		write(fid, "\n$txt\n")
+	else
+		write(fid, "\n");	[println(fid, txt[t]) for t in eachindex(txt)];		write(fid, "\n")
+	end
+	close(fid)
+end
+
+# ---------------------------------------------------------------------------------------------------
 function isempty_(arg)::Bool
 	# F... F... it's a shame having to do this
 	(arg === nothing) && return true
