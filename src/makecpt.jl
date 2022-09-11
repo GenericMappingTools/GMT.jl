@@ -86,6 +86,7 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = "makecpt " * cmd
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 	GC.gc(false)		# Try this to see if it matters to the crash shit.
+	(arg1 === nothing && !isempty(Tvec)) && (arg1 = Tvec; Tvec = Float64[])
 	r = gmt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
 	got_N && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	current_cpt[1] = (r !== nothing) ? r : GMTcpt()
@@ -135,10 +136,8 @@ function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Ve
 					end
 				end
 			end
-		elseif (isa(val, Vector{<:Real}) || isa(val, Matrix{<:Real}))
-			out = arg2str(val,',')
-			if (length(val) == 1)  out *= ","  end
-			if (length(out) > 1023)  Tvec, out = vec(val), ""  end		# Should be temporary till all that use -T catch up with Vec
+		elseif (isa(val, VMr))
+			Tvec, out = vec(val), ""
 		else
 			out = arg2str(val)		# Everything fits here if given as a string
 		end

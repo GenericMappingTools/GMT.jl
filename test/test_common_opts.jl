@@ -320,7 +320,6 @@
 	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:num)), "", "")[1] == "1/2/0.1+n")
 	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:num)), "", "T")[1] == " -T1/2/0.1+n")
 	@test (GMT.parse_opt_range(Dict(:T => (1,2,0.1,:log1)), "")[1] == "1/2/0.1+l")
-	@test (GMT.parse_opt_range(Dict(:T => [1]), "")[1] == "1,")
 	GMT.parse_opt_range(Dict(:T => (1,2,0.1,:mum,:log2)), "")[1]	# Prints a warning
 	
 	GMT.round_datetime([DateTime(2013,1,1), DateTime(2013,1,1,0,0,1)]);

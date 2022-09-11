@@ -79,10 +79,11 @@ Parameters
 """
 function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]			# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:R :V_params])
-	cmd = helper_cpt(d, cmd)[1]                 # Still left to be seen how to deal with an eventual Tvec (BUG here then)
+	cmd, Tvec = helper_cpt(d, cmd)
+	!isempty(Tvec) && error("grd2cpt does not accept an array argument in the 'range' option")
 	if ((val = find_in_dict(d, [:E :nlevels])[1]) !== nothing)  cmd *= " -E" * arg2str(val)  end
 	got_N = (is_in_dict(d, [:N :no_bg :nobg], del=true) !== nothing)
 
@@ -91,6 +92,7 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_used, arg1)
 
 	r = common_grd(d, "grd2cpt " * cmd, arg1, arg2)		# r may be a tuple if -E+f was used
+	(isa(r, String)) && (return got_N ? r * " -N" : r)	# If it's a String it's beause of a Vd=2
 	got_N && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	current_cpt[1] = (r !== nothing) ? (isa(r, Tuple) ? r[1] : r) : GMTcpt()
 	isa(r, Tuple) && (r[2].colnames = ["Z", "CDF(Z)"])
