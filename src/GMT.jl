@@ -79,6 +79,7 @@ end
 const GMTver, libgmt, libgdal, libproj, GMT_bindir = _GMTver, _libgmt, _libgdal, _libproj, _GMT_bindir
 
 const global G_API = [C_NULL]
+const global PSname = [joinpath(tempdir(), "GMTjl_tmp.ps")]		# The PS file where, in classic mode, all lands.
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
 const global current_view   = [""]			# To store the current viewpoint (-p)
@@ -93,8 +94,8 @@ const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false		# To kno
 const global convert_syntax = Vector{Bool}(undef, 1);convert_syntax[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
 const global show_kwargs = Vector{Bool}(undef, 1);show_kwargs[1] = false	# To just print the kwargs of a option call)
 const global isFranklin  = Vector{Bool}(undef, 1);isFranklin[1] = false		# Only set/unset by the Docs building scripts.
-const global FMT = ["png"]
-const global box_str = [""]
+const global FMT = ["png"]                         # The default plot format
+const global box_str = [""]                        # Used in plotyy to know -R of first call
 const def_fig_size  = "14c/9.5c"                   # Default fig size for plot like programs. Approx 16/11
 const def_fig_axes_bak     = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3_bak    = " -Baf -Bza"          # 		"" but for 3D views
@@ -103,12 +104,13 @@ const global def_fig_axes3 = [def_fig_axes3_bak]   #		""
 const global CTRL = CTRLstruct(zeros(12), zeros(3), [true],
                                [:clip, :coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines, :vband],
 							   [nothing, nothing, nothing], ["",""], ["","", "", "   "], [""], [false,true], [C_NULL])
-const global CTRLshapes = CTRLstruct2([true], [true], [""])
+const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Nothing, Vector{Symbol}, Matrix{Symbol}}
 const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
 const global StrSymb  = Union{AbstractString, Symbol}
+const global GMTuserdir  = [readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1]]
 # GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are edeclared in gmt_main
 #const global unused_opts = [()]					# To track consumed options
 #const global unused_subopts = [()]					# To track consumed options in sub-options
@@ -311,10 +313,10 @@ function __init__(test::Bool=false)
 	end
 
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
-	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
+	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)	# (0.010179 sec)
 	(GMTver >= v"6.2.0") && theme_modern()			# Set the MODERN theme and some more gmtlib_setparameter() calls
 	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
-	f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
+	f = joinpath(GMTuserdir[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 	(GMTver < v"6.2.0") && extra_sets()		# some calls to gmtlib_setparameter() (theme_modern already called this)
 end

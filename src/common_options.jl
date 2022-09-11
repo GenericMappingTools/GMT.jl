@@ -112,7 +112,7 @@ function parse_paper(d::Dict)
 	(o != "") && (CTRL.IamInPaperMode[2] = false)
 
 	proggy = (IamModern[1]) ? "plot -T" : "psxy -T"
-	t = IamModern[1] ? "" : o * " -O -K >> " * joinpath(tempdir(), "GMTjl_tmp.ps")
+	t = IamModern[1] ? "" : o * " -O -K >> " * PSname[1]
 	gmt(proggy * opt_R * opt_J * opt_B * t)
 	CTRL.IamInPaperMode[1] = true
 	return nothing
@@ -120,7 +120,7 @@ end
 function leave_paper_mode()
 	# Reset the -R -J previous to the paper mode setting
 	!CTRL.IamInPaperMode[1] && return nothing
-	t = IamModern[1] ? "" : " -O -K >> " * joinpath(tempdir(), "GMTjl_tmp.ps")
+	t = IamModern[1] ? "" : " -O -K >> " * PSname[1]
 	CTRL.IamInPaperMode[1] && gmt("psxy -T " * CTRL.pocket_R[1] * CTRL.pocket_J[1] * CTRL.pocket_J[3] * t)
 	CTRL.IamInPaperMode[1] = false
 	return nothing
@@ -3259,7 +3259,7 @@ function fname_out(d::Dict, del::Bool=false)
 	end
 
 	(fname != "") && (fname *= "." * EXT)
-	def_name = joinpath(tempdir(), "GMTjl_tmp.ps")
+	def_name = PSname[1]		# "GMTjl_tmp.ps" in TMP dir
 	return def_name, opt_T, EXT, fname, ret_ps
 end
 
@@ -4007,7 +4007,7 @@ a PS file that has NOT been closed. Posterior calls to plotting methods will app
 Useful when creating figures that use a common base map that may be heavy (slow) to compute.
 """
 function append2fig(fname::String)
-	mv(fname, joinpath(tempdir(), "GMTjl_tmp.ps"), force=true); nothing
+	mv(fname, PSname[1], force=true); nothing
 end
 
 # --------------------------------------------------------------------------------------------------

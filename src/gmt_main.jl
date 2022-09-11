@@ -1426,7 +1426,7 @@ function resetGMT()
 	current_cpt[1]  = GMTcpt();		legend_type[1] = legend_bag();	ressurectGDAL()
 	def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;	CTRL.pocket_J[4] = "   ";
 	CTRL.IamInPaperMode[:] = [false, true];	IamInset[1] = false
-	CTRL.pocket_J[1], CTRL.pocket_J[2] = "", ""
+	CTRL.pocket_J[1], CTRL.pocket_J[2] = "", "";	CTRL.pocket_call[1] = CTRL.pocket_call[3] = nothing
 	gmt_restart()
 	clear_sessions()
 end
@@ -1437,8 +1437,9 @@ function clear_sessions(age::Int=0)
 	# AGE is in seconds
 	# Windows version of ``gmt clear sessions`` fails in 6.0 and it errors if no sessions dir
 	try		# Becuse the sessions dir may not exist 
-		sp = readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1] * "/sessions"
+		sp = joinpath(GMTuserdir[1], "sessions")
 		dirs = readdir(sp)
+		isempty(dirs) && return nothing
 		session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
 		n = datetime2unix(now(UTC))
 		for sd in session_dirs
