@@ -716,10 +716,10 @@ function band(cmd0::String="", arg1=nothing; first=true, width=0.0, envelope=fal
 	if (opt_L == "")	# Shit, it means we need to expand the dataset matrices. But only 'width' case is possibe
 		if (isa(arg1, Vector{<:GMTdataset}))
 			if (isa(width, Real))
-				for d in eachindex(arg1)  arg1[k].data = [arg1[k].data repeat([width], size(arg1[k],2))]  end
+				for k in eachindex(arg1)  arg1[k].data = [arg1[k].data repeat([width], size(arg1[k],1))]  end
 				opt_L = "+d"
 			else
-				for d in eachindex(arg1)  arg1[k].data = [arg1[k].data repeat([width[1] width[2]], size(arg1[k],2))]  end
+				for k in eachindex(arg1)  arg1[k].data = [arg1[k].data repeat([width[1] width[2]], size(arg1[k],1))]  end
 				opt_L = "+D"
 			end
 		else

@@ -118,6 +118,8 @@
 	x = -10:0.11:10;
 	band(mat2ds([x sin.(x)./x]), width=0.1, fill="green@80", Vd=dbg2)
 	band!(mat2ds([x sin.(x)./x]), width=(0.1,0.2), fill="green@80", Vd=dbg2)
+	band("",[mat2ds([x sin.(x)./x])], width=0.1, fill="green@80", Vd=dbg2)
+	band!("",[mat2ds([x sin.(x)./x])], width=(0.1,0.2), fill="green@80", Vd=dbg2)
 	band(x, sin.(x)./x, width=0.1, Vd=dbg2)
 	band!(x, sin.(x)./x, width=0.1, Vd=dbg2)
 	band(mat2ds([x sin.(x)./x]), sin.(x)./x, sin.(x)./x, envelope=true, Vd=dbg2)	# Crashes GMT
