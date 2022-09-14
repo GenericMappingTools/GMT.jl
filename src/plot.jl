@@ -732,6 +732,7 @@ function band(cmd0::String="", arg1=nothing; first=true, width=0.0, envelope=fal
 	_L = add_opt(d, "", "", [:L :envelope :polygon],
 	            (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
 	d[:L] = (_L != "") ? _L : opt_L
+	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
 
 	common_plot_xyz("", arg1, "lines", first, false, d...)
 end
