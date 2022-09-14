@@ -3265,7 +3265,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
-
+	# Use 'get_info=true' to force reading the file when fname != ""
 	cmd, opt_i  = parse_i(d, cmd)		# If data is to be read with some column order
 	cmd, opt_bi = parse_bi(d, cmd)		# If data is to be read as binary
 	cmd, opt_di = parse_di(d, cmd)		# If data missing data other than NaN

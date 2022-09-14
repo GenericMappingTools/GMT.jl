@@ -50,6 +50,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		end
 		cmd, opt_R = parse_R(d, cmd, O)
 	end
+
 	if (is_ternary && !first) 	# Either a -J was set and we'll fish it here or no and we'll use the default.
 		def_J = " -JX" * split(def_fig_size, '/')[1]
 		cmd, opt_J::String = parse_J(d, cmd, def_J)
@@ -95,6 +96,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		ind = collect(findall("/", box_str[1])[2])		# 'box_str' was set in first call
 		opt_R = '/' * box_str[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
 	end
+
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
 	(!got_usr_R && opt_R != "") && (CTRL.pocket_R[1] = opt_R)	# Still on time to store it.
 	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above

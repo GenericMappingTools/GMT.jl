@@ -672,16 +672,16 @@ Examples:
 lines(cmd0::String="", arg1=nothing; first=true, kwargs...) = common_plot_xyz(cmd0, arg1, "lines", first, false, kwargs...)
 lines!(cmd0::String="", arg=nothing; kw...) = lines(cmd0, arg; first=false, kw...)
 
-function lines(f::Function, range_x=nothing; first=true, kw...)
-	rang = gen_coords4funs(range_x, "x"; kw...)
+function lines(f::Function, rang=nothing; first=true, kw...)
+	rang = gen_coords4funs(rang, "x"; kw...)
 	lines("", cat_2_arg2(rang, [f(x) for x in rang]); first=first, kw...)
 end
 lines!(f::Function, rang=nothing; kw...) = lines(f, rang; first=false, kw...)
 
-function lines(f1::Function, f2::Function, range_t=nothing; first=true, kw...)	# Parametric version
-	lines("", help_parametric_2f(f1, f2, range_t; is3D=false, kw...); first=first, kw...)
+function lines(f1::Function, f2::Function, rang=nothing; first=true, kw...)	# Parametric version
+	lines("", help_parametric_2f(f1, f2, rang; is3D=false, kw...); first=first, kw...)
 end
-lines!(f1::Function, f2::Function, range_t=nothing; kw...) = lines(f1, f2, range_t; first=false, kw...)
+lines!(f1::Function, f2::Function, rang=nothing; kw...) = lines(f1, f2, rang; first=false, kw...)
 
 lines(arg1, arg2; kw...)  = lines("", cat_2_arg2(arg1, arg2); first=true, kw...)
 lines!(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=false, kw...)
@@ -689,6 +689,71 @@ lines(arg; kw...)  = lines("", cat_1_arg(arg); first=true, kw...)
 lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
+"""
+    band(cmd0::String="", arg1=nothing; width=0.0, envelope=false, kwargs...)
+
+Plot a line with a symmetrical or assymmetrical band around it. If the band is not color filled then,
+by default, only the envelope outline is plotted.
+
+Example: Plot the sinc function with a green band of width 0.1 (above and below the sinc line)
+
+    x = y = -10:0.11:10;
+	band(x, sin.(x)./x, width=0.1, fill="green@80", show=true)
+
+or, the same but using a function
+
+    band(x->sin(x)/x, 10, width=0.1, fill="green@80", show=true)
+"""
+function band(cmd0::String="", arg1=nothing; first=true, width=0.0, envelope=false, kwargs...)
+	(!isa(width, Real) && !isa(width, Tuple{<:Real, <:Real})) && error("The 'width' value must be a scalar or a Tuple of scalars")
+	d = KW(kwargs)
+	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
+	n_cols = (isa(arg1, Vector{<:GMTdataset})) ? size(arg1[1],2) : size(arg1,2)
+	(n_cols < 3 && width == 0 && !envelope) && error("Data table has less than 3 columns and no width specified.")
+
+	opt_L = (n_cols == 3) ? "+d" : ""
+	opt_L = (n_cols == 4) ? (envelope ? "+b" : "+D") : ""
+	if (opt_L == "")	# Shit, it means we need to expand the dataset matrices. But only 'width' case is possibe
+		if (isa(arg1, Vector{<:GMTdataset}))
+			if (isa(width, Real))
+				for d in eachindex(arg1)  arg1[k].data = [arg1[k].data repeat([width], size(arg1[k],2))]  end
+				opt_L = "+d"
+			else
+				for d in eachindex(arg1)  arg1[k].data = [arg1[k].data repeat([width[1] width[2]], size(arg1[k],2))]  end
+				opt_L = "+D"
+			end
+		else
+			ec = isa(width, Real) ? repeat([width], size(arg1,1)) : repeat([width[1] width[2]], size(arg1,1))
+			(isa(arg1, GMTdataset)) ? (arg1.data = [arg1.data ec]) : arg1 = [arg1 ec]
+			opt_L = isa(width, Real) ? "+d" : "+D"
+		end
+	end
+	# Above we made some -L guessings but users may want to apply finer control, so let them access all options
+	_L = add_opt(d, "", "", [:L :envelope :polygon],
+	            (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
+	d[:L] = (_L != "") ? _L : opt_L
+
+	common_plot_xyz("", arg1, "lines", first, false, d...)
+end
+band!(cmd0::String="", arg1=nothing; width=0.0, envelope=false, kw...) =
+	band(cmd0, arg1; first=false, width=width, envelope=envelope, kw...)
+band(arg; width=0.0, envelope=false, kw...)  = band("", cat_1_arg(arg); width=width, envelope=envelope, kw...)
+band!(arg; width=0.0, envelope=false, kw...) = band("", cat_1_arg(arg); first=false, width=width, envelope=envelope, kw...)
+
+band(arg1, arg2; width=0.0, envelope=false, kw...) =
+	band("", cat_2_arg2(arg1, arg2); width=width, envelope=envelope, kw...)
+band!(arg1, arg2; width=0.0, envelope=false, kw...) =
+	band("", cat_2_arg2(arg1, arg2); first=false, width=width, envelope=envelope, kw...)
+band(arg1, arg2, arg3; kw...) = band("", cat_3_arg2(arg1, arg2, arg3); envelope=true, kw...)
+band!(arg1, arg2, arg3; kw...) = band("", cat_3_arg2(arg1, arg2, arg3); first=false, envelope=true, kw...)
+
+function band(f::Function, rang=nothing; first=true, width=0.0, envelope=false, kw...)
+	rang = gen_coords4funs(rang, "x"; kw...)
+	band("", cat_2_arg2(rang, [f(x) for x in rang]); first=first, width=width, envelope=envelope, kw...)
+end
+band!(f::Function, rang=nothing; width=0.0, envelope=false, kw...) = band(f, rang; first=false, width=width, envelope=envelope, kw...)
+
+# ------------------------------------------------------------------------------------------------------
 """
     hlines(arg; decorated=(...), kwargs...)
 
@@ -1150,12 +1215,34 @@ function cat_2_arg2(arg1, arg2)
 	if (size(arg,2) > 2)  global multi_col[1] = true  end
 	return arg
 end
+function cat_2_arg2(arg1::GMTdataset, arg2::VMr)::GMTdataset
+	_arg = (isvector(arg2) && isa(arg2, Matrix)) ? vec(arg2) : arg2		# Converts a one line matrix into a vec
+	arg1.data = hcat(arg1.data, _arg)		# Will error if sizes not compatible
+	append!(arg1.colnames, ["Z$i" for i=length(arg1.colnames)+1:size(arg1,2)])
+	set_dsBB!(arg1)							# Update BB
+	return arg1
+end
+function cat_2_arg2(arg1::VMr, arg2::GMTdataset)::Matrix{<:Real}
+	_arg = (isvector(arg1) && isa(arg1, Matrix)) ? vec(arg1) : arg1		# Converts a one line matrix into a vec
+	_arg = hcat(_arg, arg2.data)			# Will error if sizes not compatible
+	return _arg
+end
+function cat_2_arg2(arg1::GMTdataset, arg2::GMTdataset)::GMTdataset
+	arg1.data = hcat(arg1.data, arg2.data)	# Will error if sizes not compatible
+	append!(arg1.colnames, ["Z$i" for i=length(arg1.colnames)+1:size(arg1,2)])
+	set_dsBB!(arg1)							# Update BB
+	return arg1
+end
+
+# ------------------------------------------------------------------------------------------------------
+cat_3_arg2(arg1::VMr, arg2, arg3)::Matrix{<:Real} = cat_2_arg2(arg1, cat_2_arg2(arg2, arg3))
+cat_3_arg2(arg1::GMTdataset, arg2, arg3)::GMTdataset = cat_2_arg2(arg1, cat_2_arg2(arg2, arg3))
 
 # ------------------------------------------------------------------------------------------------------
 function gen_coords4funs(rang=nothing, axis="x"; kw...)
 	# Generate axes coordenates to use when plot functions
 	# If rang === nothing we must either have a two elements x|ylim in kw or otherwise default to (-5,5)
-	# When rang is a scalar we return linspace(-rang, rang)
+	# When rang is a scalar we return linspace(-rang, rang, 200)
 
 	if (rang === nothing)
 		symb = (axis == "x") ? [:xlim] : [:ylim]
@@ -1164,12 +1251,12 @@ function gen_coords4funs(rang=nothing, axis="x"; kw...)
 			(length(val) != 2) && error("$(string(symb[1])) must have 2 elements")
 			rang = linspace(val[1], val[2], 200)
 		else
-			rang = linspace(-5, 5)
+			rang = linspace(-5, 5, 200)
 		end
 	elseif (isa(rang, Real))
-		rang = linspace(-rang, rang)
+		rang = linspace(-rang, rang, 200)
 	elseif (length(rang) == 2 && eltype(rang) <: Real)
-		rang = linspace(rang[1], rang[2])
+		rang = linspace(rang[1], rang[2], 200)
 	end
 	return rang
 end
