@@ -76,6 +76,21 @@
 	@test contains(r, " -W0.5+z -K")
 
 	println("	LINES")
+	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
+	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af, box_pos="+p0.5", leg_pos=(offset=0.5,), leg=:TL)
+	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", Vd=dbg2)
+	lines(1:10,rand(10), W=0.25, Vd=dbg2)
+	lines!(1:10,rand(10), W=0.25, Vd=dbg2)
+	lines!("", rand(10), W=0.25, Vd=dbg2)
+	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
+	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbolsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
+	D = histogram(randn(100), I=:o, T=0.1);
+	@test_throws ErrorException("Something went wrong when calling the module. GMT error number = 72") histogram(randn(100), I=:o, V=:q, W=0.1);
+	lines(D, steps=(x=true,), close=(bot=true,))
+	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
+	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=dbg2);
+	@test startswith(r, "psxy  -R0/6.0/-1/0.7 -JX40/8 -Baf -BWSen+g220 --PS_MEDIA=A1 -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -W2,sienna")
+
 	bar!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	lines!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	lines!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
@@ -92,10 +107,26 @@
 	scatter!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
 	hlines!([0.2, 0.6], pen=(1, :red))
 	vlines!([0.2, 0.6], pen=(1, :red))
+
+	println("	BAND")
 	vband([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
 	vband!([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
 	hband([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
 	hband!([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
+	band(x->sin(x)/x, 10, width=0.1, fill="green@80", Vd=dbg2)
+	band!(x->sin(x)/x, 10, width=0.1, fill="green@80", Vd=dbg2)
+	x = -10:0.11:10;
+	band(mat2ds([x sin.(x)./x]), width=0.1, fill="green@80", Vd=dbg2)
+	band!(mat2ds([x sin.(x)./x]), width=(0.1,0.2), fill="green@80", Vd=dbg2)
+	band(x, sin.(x)./x, width=0.1, Vd=dbg2)
+	band!(x, sin.(x)./x, width=0.1, Vd=dbg2)
+	band(mat2ds([x sin.(x)./x]), sin.(x)./x, sin.(x)./x, envelope=true, Vd=dbg2)	# Crashes GMT
+	band!(mat2ds([x sin.(x)./x]), sin.(x)./x, sin.(x)./x, envelope=true, Vd=dbg2)
+	GMT.cat_2_arg2(rand(3), mat2ds(rand(3,2)));
+	GMT.cat_2_arg2(mat2ds(rand(3,2)), rand(3));
+	GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
+	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
+	GMT.cat_3_arg2(mat2ds(rand(3,2)),rand(3),rand(3));
 
 	plotyy([1 1; 2 2], [1.5 1.5; 3 3], R="0.8/3/0/5", title="Ai", ylabel=:Bla, xlabel=:Ble, seclabel=:Bli, Vd=dbg2);
 
@@ -123,22 +154,6 @@
 	@test occursin("-SvB4p/18p/7.5p", arrows([1 0 45 4], R="0/6/-1/1", J="x2.5", pen=(1,:blue), arrow4=(align=:mid, head=(arrowwidth="4p", headlength="18p", headwidth="7.5p"), double=true), Vd=dbg2))
 	@test occursin("-SvB4p/18p/7.5p", arrows([1 0 45 4], R="0/6/-1/1", J="x2.5", lw=1, arrow4=(align=:mid, head=("4p","18p", "7.5p"), double=true), Vd=dbg2))
 	@test occursin("-Svs4p/18p/7.5p", arrows([1 0 45 4], R="0/6/-1/1", J="x2.5", lw=1, arrow4=(align=:pt, head="4p/18p/7.5p"), Vd=dbg2))
-
-	println("	LINES")
-	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
-	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af, box_pos="+p0.5", leg_pos=(offset=0.5,), leg=:TL)
-	lines!([-50 40; 50 -40], R="-60/60/-50/50", W=1, offset="0.5i/0.25i", Vd=dbg2)
-	lines(1:10,rand(10), W=0.25, Vd=dbg2)
-	lines!(1:10,rand(10), W=0.25, Vd=dbg2)
-	lines!("", rand(10), W=0.25, Vd=dbg2)
-	xy = gmt("gmtmath -T0/180/1 T SIND 4.5 ADD");
-	lines(xy, R="-5/185/-0.1/6", J="X6i/9i", B=:af, W=(1,:red), decorated=(dist=(2.5,0.25), symbol=:star, symbolsize=1, pen=(0.5,:green), fill=:blue, dec2=1))
-	D = histogram(randn(100), I=:o, T=0.1);
-	@test_throws ErrorException("Something went wrong when calling the module. GMT error number = 72") histogram(randn(100), I=:o, V=:q, W=0.1);
-	lines(D, steps=(x=true,), close=(bot=true,))
-	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
-	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=dbg2);
-	@test startswith(r, "psxy  -R0/6.0/-1/0.7 -JX40/8 -Baf -BWSen+g220 --PS_MEDIA=A1 -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -W2,sienna")
 
 	println("	PCOLOR")
 	G = GMT.peaks(N=21);

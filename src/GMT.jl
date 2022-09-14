@@ -83,7 +83,7 @@ const global PSname = [joinpath(tempdir(), "GMTjl_tmp.ps")]		# The PS file where
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
 const global current_view   = [""]			# To store the current viewpoint (-p)
-const global multi_col   = Vector{Bool}(undef, 1);multi_col[1] = false	# To allow plottig multiple columns at once (init to false)
+const global multi_col   = Vector{Bool}(undef, 1);multi_col[1] = false	# To allow plottig multiple columns at once.
 const global IamModern   = Vector{Bool}(undef, 1);IamModern[1] = false		# To know if we are in modern mode
 const global FirstModern = Vector{Bool}(undef, 1);FirstModern[1] = false	# To know
 const global IamModernBySubplot = Vector{Bool}(undef, 1);	IamModernBySubplot[1] = false	# To know if set in subpot
@@ -121,8 +121,8 @@ end
 
 export
 	GMTgrid, GMTimage, GMTdataset, GMTver, FMT, gmt, libgdal,
-	arrows, arrows!, bar, bar!, bar3, bar3!, hband, hband!, hlines, hlines!, lines, lines!, legend, legend!,
-	vlines, vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
+	arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, hband, hband!, hlines, hlines!, lines, lines!, legend,
+	legend!, vlines, vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
 	colorscale, colorscale!, contour, contour!, contourf, contourf!, events, filter1d, fitcircle, gmt2kml,
 	gmtbinstats, binstats,
