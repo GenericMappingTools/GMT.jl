@@ -692,7 +692,7 @@ lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
 """
     band(cmd0::String="", arg1=nothing; width=0.0, envelope=false, kwargs...)
 
-Plot a line with a symmetrical or assymmetrical band around it. If the band is not color filled then,
+Plot a line with a symmetrical or asymmetrical band around it. If the band is not color filled then,
 by default, only the envelope outline is plotted.
 
 Example: Plot the sinc function with a green band of width 0.1 (above and below the sinc line)
@@ -729,8 +729,7 @@ function band(cmd0::String="", arg1=nothing; first=true, width=0.0, envelope=fal
 		end
 	end
 	# Above we made some -L guessings but users may want to apply finer control, so let them access all options
-	_L = add_opt(d, "", "", [:L :envelope :polygon],
-	            (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
+	_L = add_opt(d, "", "", [:L :polygon], (sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
 	d[:L] = (_L != "") ? _L : opt_L
 	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
 
