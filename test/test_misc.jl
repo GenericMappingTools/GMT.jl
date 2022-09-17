@@ -74,7 +74,6 @@
 	getindex(D[1],1);
 	setindex!(D[1], 1,1);
 	Base.BroadcastStyle(typeof(D[1]));
-	@info "Before display(D)"
 	try
 	display(D);		# It seems the pretty tables solution has an Heisenbug.
 	catch
@@ -104,7 +103,6 @@
 	text_record([["aa", "bb"],["cc", "dd", "ee"]]);
 
 	# TEST THE API DIRECTLY (basically to improve coverage under GMT6)
-	@info "Befor ret PS"
 	PS = plot(rand(3,2), ps=1);
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 	GMT.ps_init(API, PS, 0);
@@ -112,7 +110,6 @@
 	gmt("destroy")
 
 	# Test ogr2GMTdataset
-	@info "ogr2GMTdataset"
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 	gmtread("lixo.gmt");		# This "lixo.gmt" was created in test_avatars.jl
 	if (GMTver > v"6.1.1")
