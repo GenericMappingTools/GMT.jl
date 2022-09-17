@@ -21,13 +21,13 @@ On top of the modern mode variations (so far `dark` only) one can set the follow
 - `noticks` or `no_ticks`: Axes will have annotations but no tick marks
 - `inner_ticks` or `innerticks`: - Ticks will be drawn inside the axes instead of outside.
 - `gray_grid` or `graygrid`: - When drawing grid line use `gray` instead of `black`
-- `save`: - Save the name in the directory printed in shell by ``gmt --show-userdir`` and make it permanent.
+- `save`: - Save the name in the directory printed by `GMT.GMTuserdir[1]` and make it permanent.
 - `reset`: - Remove the saved theme name and return to the default `modern` theme.
 
 Note: Except `save` and `reset`, the changes operated by the `kwargs` are temporary and operate only until
 an image is `show`(n) or saved.
 
-This function can be called alone, e.g. ``theme("dark")`` or as an option in the ``plot()`` module.
+This function can be called alone, e.g. `theme("dark")` or as an option in the `plot()` module.
 """
 function theme(name="modern"; kwargs...)
 	# Provide the support for themes
