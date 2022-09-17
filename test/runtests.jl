@@ -24,6 +24,29 @@ if (got_it)					# Otherwise go straight to end
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
 	GMT.GMT_Get_Ctrl(API);
 
+	println("	MAKECPT")
+	C = makecpt(C="categorical", T="0/10/1");
+	makecpt(rand(10,1), E="", C=:rainbow, cmap="lixo.cpt");
+	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
+	cpt = makecpt(range="-1/1/0.1");
+	cpt = makecpt(-1,1,0.1);
+	println("		MAKECPT - 0")
+	if (GMTver > v"6.1.1")
+		C = cpt4dcw("eu");
+		C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
+		C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
+	end
+	println("		MAKECPT - 1")
+	@test_throws ErrorException("Unknown continent ue") cpt4dcw("ue")
+	GMT.iso3to2_eu();
+	GMT.iso3to2_af();
+	println("		MAKECPT - 2")
+	GMT.iso3to2_na();
+	GMT.iso3to2_world();
+	GMT.mk_codes_values(["PRT", "ESP", "FRA"], [1.0, 2, 3], region="eu");
+	println("		MAKECPT - 3")
+	@test_throws ErrorException("The region ue is invalid or has not been implemented yet.") GMT.mk_codes_values(["PRT"], [1.0], region="ue")
+
 	if (GMTver > v"6.1.1")
 		println("		Entering: test_proj4.jl")
 		include("test_proj4.jl")
@@ -96,28 +119,6 @@ if (got_it)					# Otherwise go straight to end
 	catch
 	end
 
-	println("	MAKECPT")
-	C = makecpt(C="categorical", T="0/10/1");
-	makecpt(rand(10,1), E="", C=:rainbow, cmap="lixo.cpt");
-	@test_throws ErrorException("E option requires that a data table is provided as well") makecpt(E="", C=:rainbow)
-	cpt = makecpt(range="-1/1/0.1");
-	cpt = makecpt(-1,1,0.1);
-	println("		MAKECPT - 0")
-	if (GMTver > v"6.1.1")
-		C = cpt4dcw("eu");
-		C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
-		C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
-	end
-	println("		MAKECPT - 1")
-	@test_throws ErrorException("Unknown continent ue") cpt4dcw("ue")
-	GMT.iso3to2_eu();
-	GMT.iso3to2_af();
-	println("		MAKECPT - 2")
-	GMT.iso3to2_na();
-	GMT.iso3to2_world();
-	GMT.mk_codes_values(["PRT", "ESP", "FRA"], [1.0, 2, 3], region="eu");
-	println("		MAKECPT - 3")
-	@test_throws ErrorException("The region ue is invalid or has not been implemented yet.") GMT.mk_codes_values(["PRT"], [1.0], region="ue")
 
 	println("		Entering: test_misc.jl")
 	include("test_misc.jl")

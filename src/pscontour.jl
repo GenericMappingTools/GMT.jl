@@ -90,7 +90,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	dict_auto_add!(d)			# The ternary module may send options via another channel
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :bo :c :d :do :e :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:I :fill :colorize], [:N :no_clip], [:Q :cut], [:S :skip]])
 	cmd *= add_opt_pen(d, [:L :mesh], "L", true)     # TRUE to also seek (lw,lc,ls)
@@ -100,7 +100,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	arg2 = nothing;		arg3 = nothing
 	cmd, arg1, opt_R, wesn = read_data(d, cmd0, cmd, arg1, opt_R, false, true)
 	if (occursin(" -I", cmd) || occursin("+c", opt_W))			# Only try to load cpt if -I was set
-		cmd, N_used_, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing ? 1 : 0), arg1, arg2, arg3, "pscontour")
+		cmd, _, arg1, arg2, arg3 = get_cpt_set_R(d, "", cmd, opt_R, (arg1 === nothing ? 1 : 0), arg1, arg2, arg3, "pscontour")
 	end
 	N_used = (arg1 !== nothing) + (arg2 !== nothing) + (arg3 !== nothing)
 
