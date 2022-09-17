@@ -129,7 +129,7 @@ function _show(io::IO,
 			Dt = [D.data D.text]
 		end
 	else
-		Dt = D
+		Dt = D.data
 	end
 
 	# Print the table with the selected options.
