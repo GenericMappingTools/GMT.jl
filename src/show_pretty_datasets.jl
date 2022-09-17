@@ -35,10 +35,6 @@ function _show(io::IO,
 			   text_colname::String = "",
 			   kwargs...)
 
-#table = (Tables.columns(D))
-#@show(Tables.columnnames(table))
-#names = collect(Symbol, Tables.columnnames(table))
-#@show(names)
 	# For example a grdinfo(...) or a pure text dataset. In those cases just print the .text & return.
 	if (isempty(D.data))
 		(~all(isempty.(D.comment))) && println("Comment:\t", D.comment)
