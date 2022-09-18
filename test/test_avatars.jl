@@ -62,6 +62,14 @@
 	plot(rand(8,2), bg=mat2grid(rand(64,64)), Vd=dbg2)
 	plot(rand(8,2), bg=(:somb, :turbo), Vd=dbg2)
 
+	D = mat2ds(rand(8,5))
+	plot(D, yvar=:Z1, Vd=dbg2)
+	plot(D, xvar=1, yvar=:Z1, Vd=dbg2)
+	plot(D, xvar=1, yvar=[:Y, :Z1], Vd=dbg2)
+	plot(D, xvar=1, yvar=(:Y, :Z1), Vd=dbg2)
+	plot(D, xvar=1, yvar=[2, 3], Vd=dbg2)
+	plot(D, xvar=1, yvar=(2, 3), Vd=dbg2)
+
 	D = [mat2ds([0 0; 0 1; 1 1; 1 0.3; 0 0])[1], mat2ds([1 1; 1 2; 2 2; 2 1; 1 1])[1]];
 	C = makecpt(cmap = :hot, range = (0, 5));
 	r = psxy!(D, C=C, Z=[1,4], pen=2, Vd=2)
