@@ -9,7 +9,7 @@ Full option list at [`psxy`]($(GMTdoc)plot.html)
 Parameters
 ----------
 
-- **A** | **steps** | **straight_lines** :: [Type => Str] 
+- **A** | **steps** | **stairs** | **straight_lines** :: [Type => Str] 
 
 	By default, geographic line segments are drawn as great circle arcs.
 	To draw them as straight lines, use this option.
@@ -689,6 +689,33 @@ lines(arg; kw...)  = lines("", cat_1_arg(arg); first=true, kw...)
 lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
+"""
+    stairs(cmd0::String="", arg1=nothing; step=:post, kwargs...)
+
+Plot a stair function. The `step`` parameter can take the following values:
+
+`:post` - The default. Lines move first along x for cartesian plots or the parallels for geographic
+          and then along y or the meridians.
+`:pre`  - Lines move first along y for cartesian plots or the meridians for geographic
+          and then along x or the parallels.
+
+Example:
+
+    x = linspace(0, 4*pi, 50);
+	stairs(x, sin.(x), show=true)
+"""
+function stairs(cmd0::String="", arg1=nothing; first=true, step=:post, kwargs...)
+	d = KW(kwargs)
+	d[:stairs_step] = step
+	lines(cmd0, arg1; first=first, d...)
+end
+stairs!(cmd0::String="", arg1=nothing; step=:post, kw...) = stairs(cmd0, arg1; first=false, step=step, kw...)
+stairs(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); step=step, kw...)
+stairs!(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); first=false, step=step, kw...)
+stairs(arg1, arg2; kw...)  = stairs("", cat_2_arg2(arg1, arg2); step=step, kw...)
+stairs!(arg1, arg2; kw...)  = stairs("", cat_2_arg2(arg1, arg2); first=false, step=step, kw...)
+
+# ------------------------------------------------------------------------------------------------------
 """
     band(cmd0::String="", arg1=nothing; width=0.0, envelope=false, kwargs...)
 

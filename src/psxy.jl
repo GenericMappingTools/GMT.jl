@@ -17,6 +17,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
 
 	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules
+	opt_A::String = ""							# For the case the caller was in fact "stairs"
 	g_bar_fill = Vector{String}()				# May hold a sequence of colors for gtroup Bar plots
 	if (caller != "")
 		if (occursin(" -", caller))				# some sub-modues use this piggy-backed call
@@ -33,6 +34,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 			sub_module = caller
 			# Needs to be processed here to destinguish from the more general 'fill'
 			(caller == "bar") && (g_bar_fill = helper_gbar_fill(d))
+			opt_A = (caller == "lines" && ((val = find_in_dict(d, [:stairs_step])[1]) !== nothing)) ? string(val) : ""
 		end
 	end
 
@@ -113,7 +115,14 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		CTRL.pocket_J[3] = " -JZ6c"		# Needed for eventual z-axis dir reversal.
 	end
 
-	cmd = add_opt(d, cmd, "A", [:A :steps :straight_lines], (x="x", y="y", meridian="m", parallel="p"))
+	# Here we check for a direct -A of and indirect via the stairs module.
+	cmd = add_opt(d, cmd, "A", [:A :steps :stairs :straight_lines], (x="x", y="y", meridian="m", parallel="p", r="r", theta="t"))
+	if (!contains(cmd, " -A") && opt_A != "")	# When the caller is "stairs" 
+		if (opt_A == "post")  cmd *= CTRL.proj_linear[1] ? " -Ax" : " -Ap"	# Still leaves out the Polar case
+		else                  cmd *= CTRL.proj_linear[1] ? " -Ay" : " -Am"
+		end
+	end
+
 	opt_F::String = add_opt(d, "", "", [:F :conn :connection],
 	                (continuous=("c", nothing, 1), net=("n", nothing, 1), network=("n", nothing, 1), refpoint=("p", nothing, 1),  ignore_hdr="_a", single_group="_f", segments="_s", segments_reset="_r", anchor=("", arg2str)))
 	(opt_F != "" && !occursin("/", opt_F)) && (opt_F = string(opt_F[1]))	# Allow con=:net or con=(1,2)
