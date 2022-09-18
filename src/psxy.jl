@@ -17,17 +17,17 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
 
 	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules
-	g_bar_fill = Vector{String}()		# May hold a sequence of colors for gtroup Bar plots
+	g_bar_fill = Vector{String}()				# May hold a sequence of colors for gtroup Bar plots
 	if (caller != "")
-		if (occursin(" -", caller))		# some sub-modues use this piggy-backed call
+		if (occursin(" -", caller))				# some sub-modues use this piggy-backed call
 			if ((ind = findfirst("|", caller)) !== nothing)	# A mixed case with "caler|partiall_command"
 				sub_module = caller[1:ind[1]-1]
 				cmd = caller[ind[1]+1:end]
-				caller = sub_module		# Because of parse_BJR()
+				caller = sub_module				# Because of parse_BJR()
 				(caller == "events") && (gmt_proggy = "events ")
 			else
 				cmd = caller
-				caller = "others"		# It was piggy-backed
+				caller = "others"				# It was piggy-backed
 			end
 		else
 			sub_module = caller
@@ -39,6 +39,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if (occursin('3', caller) && !haskey(d, :p) && !haskey(d, :view) && !haskey(d, :perspective))
 		d[:p] = "200/30"		# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
 	end
+	
+	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d::Dict, arg1))	# See if we have a column request based on column names
 
 	parse_paper(d)				# See if user asked to temporarily pass into paper mode coordinates
 
@@ -98,6 +100,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
+	(cmd0 != "" && isa(arg1, GMTdataset)) && (arg1 = with_xyvar(d::Dict, arg1))	# If we read a file, see if requested cols
 	(!got_usr_R && opt_R != "") && (CTRL.pocket_R[1] = opt_R)	# Still on time to store it.
 	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
@@ -174,9 +177,6 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		((opt_G = add_opt_fill("", d, [:G :fill], 'G')) != "") && (cmd *= opt_G)	# Also keep track if -G was set
 	end
 	opt_Gsymb::String = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
-
-	# To track a still existing bug in sessions management at GMT lib level
-	#got_pattern = (occursin("-Gp", cmd) || occursin("-GP", cmd) || occursin("-Gp", opt_Gsymb) || occursin("-GP", opt_Gsymb)) ? true : false
 
 	opt_L::String = ""
 	if (is_ternary)			# Means we are in the psternary mode
@@ -259,6 +259,42 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function with_xyvar(d::Dict, arg1::GMTdataset)
+	# Make a subset of a GMTdataset by selecting which coluns to extract. The selection can be done by
+	# column numbers or column names. 'xvar' selects only the xx col, but 'yvar' can select more than one.
+	((val_y = find_in_dict(d, [:yvar])[1]) === nothing) && return arg1	# No y colname, no business
+	ycv::Vector{Int}, ismulticol = Int[], false
+	if (isa(val_y, Integer) || isa(val_y, String) || isa(val_y, Symbol))
+		yc = isa(val_y, Integer) ? val_y : ((ind = findfirst(string(val_y) .== arg1.colnames)) !== nothing ? ind : 0)
+		(yc < 1 || yc > size(arg1,2)) && error("'yvar' Name not found in GMTdataset col names or exceed col count.")
+		ycv = [yc]
+	elseif (isa(val_y, Array) || isa(val_y, Tuple))
+		if (eltype(val_y) <: Integer)
+			ycv = [val_y...]
+		elseif (eltype(val_y) <: Union{String, Symbol})
+			vs = [string.(val_y)...]
+			ycv = zeros(Int, length(vs))
+			for k = 1:lastindex(vs)
+				((ind = findfirst(vs[k] .== arg1.colnames)) !== nothing) && (ycv[k] = ind)
+			end
+		end
+		isempty(ycv) && error("yvar option is non-sense.")
+		(minimum(ycv) < 1 || maximum(ycv) > size(arg1,2)) && error("Col names not found in GMTdataset col names or exceed col count.")
+		ismulticol = true
+	end
+
+	if ((val_x = find_in_dict(d, [:xvar])[1]) === nothing)		# No xvar, so create one with 1:n_rows
+		out = hcat(collect(1:size(arg1,1)), arg1[:, ycv])
+	else
+		!(isa(val_x, Integer) || isa(val_x, String) || isa(val_x, Symbol)) && error("'xvar' can only be an Int, a String or a Symbol but was a $(typeof(val_x))")
+		xc = isa(val_x, Integer) ? val_x : ((ind = findfirst(string(val_x) .== arg1.colnames)) !== nothing ? ind : 0)
+		(xc < 1 || xc > size(arg1,2)) && error("'xvar' Col name not found in GMTdataset col names or exceed col count.")
+		out = arg1[:, [xc, ycv...]]
+	end
+	return (ismulticol) ? mat2ds(out, multi=true, color=:cycle) : mat2ds(out)		# Return a GMTdataset
 end
 
 # ---------------------------------------------------------------------------------------------------

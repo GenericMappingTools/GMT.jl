@@ -104,7 +104,7 @@ if (got_it)					# Otherwise go straight to end
 	cpt = makecpt(-1,1,0.1);
 	println("		MAKECPT - 0")
 	if (GMTver > v"6.1.1")
-		C = cpt4dcw("eu");
+		#C = cpt4dcw("eu");
 		C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
 		C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
 	end
