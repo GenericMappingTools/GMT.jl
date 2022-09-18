@@ -116,6 +116,13 @@
 	hlines!([0.2, 0.6], pen=(1, :red))
 	vlines!([0.2, 0.6], pen=(1, :red))
 
+	println("	STAIRS")
+	x = linspace(0, 4*pi, 50);
+	stairs(x, sin.(x), Vd=dbg2)
+	stairs!(x, sin.(x), Vd=dbg2)
+	stairs([x sin.(x)], step=:pre, Vd=dbg2)
+	stairs!([x sin.(x)], step=:pre, Vd=dbg2)
+
 	println("	BAND")
 	vband([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
 	vband!([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
