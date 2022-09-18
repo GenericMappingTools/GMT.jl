@@ -56,8 +56,8 @@ does not need explicit coordinates to place the text.
   - `lt` or `linethick`:  Line thickness.
   - `pen`:  A full pen setting. A string or an array of strings with `length = size(mat,1)` with pen settings.
      This differes from `lt` in the sense that `lt` does not directly set the line thickness.
-  - `multi`: When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset with
-     first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
+  - `multi` or `multicol`: When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset
+     with first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
   - `datatype`: Keep the original data type of `mat`. Default, converts to Float64.
   - `geom`: The data geometry. By default we set `wkbUnknown` but try to do some basic guess.
   - `proj` or `proj4`:  A proj4 string for dataset SRS.
