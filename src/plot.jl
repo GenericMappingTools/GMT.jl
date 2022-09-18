@@ -712,8 +712,8 @@ end
 stairs!(cmd0::String="", arg1=nothing; step=:post, kw...) = stairs(cmd0, arg1; first=false, step=step, kw...)
 stairs(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); step=step, kw...)
 stairs!(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); first=false, step=step, kw...)
-stairs(arg1, arg2; kw...)  = stairs("", cat_2_arg2(arg1, arg2); step=step, kw...)
-stairs!(arg1, arg2; kw...)  = stairs("", cat_2_arg2(arg1, arg2); first=false, step=step, kw...)
+stairs(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); step=step, kw...)
+stairs!(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); first=false, step=step, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 """
