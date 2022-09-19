@@ -365,7 +365,7 @@ Parameters
     + **s**, **square**
     + **t**, **^**, **triangle**
     + **x**, **cross**
-	+ **y**, **y_dash**
+    + **y**, **y_dash**
 	
     and select their sizes with the **markersize** or **size** keyword [default is 8p].
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
@@ -376,7 +376,6 @@ Parameters
     ($(GMTdoc)plot.html#w)
 - $(GMT.opt_savefig)
 
-[`Full man page`](https://genericmappingtools.github.io/GMT.jl/latest/scatter/)
 [`GMT man page`]($(GMTdoc)plot.html)
 """
 function scatter(f::Function, range_x=nothing; first=true, kw...)
@@ -398,6 +397,9 @@ scatter!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "scatter", false, fal
 
 scatter(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "scatter", true, false, kw...)
 scatter!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "scatter", false, false, kw...)
+
+bubblechart  = scatter		# Alias that supposedly only plots circles
+bubblechart! = scatter!
 
 # ------------------------------------------------------------------------------------------------------
 scatter3(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "scatter3",  true, true, kw...)
@@ -714,11 +716,6 @@ stairs(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); step=step, kw...)
 stairs!(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); first=false, step=step, kw...)
 stairs(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); step=step, kw...)
 stairs!(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); first=false, step=step, kw...)
-
-# ------------------------------------------------------------------------------------------------------
-#function bubblechart(cmd0::String="", arg1=nothing; first=true, kwargs...)
-	#d = KW(kwargs)
-#end
 
 # ------------------------------------------------------------------------------------------------------
 """

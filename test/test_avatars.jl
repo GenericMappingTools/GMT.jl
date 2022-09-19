@@ -203,6 +203,8 @@
 	scatter!("",rand(5,5), Vd=dbg2)
 	scatter(1:20,rand(20), size=[2,20], Vd=dbg2)
 	scatter(1:20,rand(20), size=(log10, [2,20]), Vd=dbg2)
+	bubblechart(1:20,rand(20), size=(log, [2,20]), Vd=dbg2)
+	bubblechart!(1:20,rand(20), size=(log, [2,20]), Vd=dbg2)
 	scatter3(rand(5,5,3))
 	scatter3!(rand(5,5,3), Vd=dbg2)
 	scatter3("", rand(5,5,3), Vd=dbg2)
