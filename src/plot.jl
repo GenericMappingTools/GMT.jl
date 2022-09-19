@@ -339,7 +339,7 @@ Parameters
 
     Select color or pattern for filling of symbols or polygons.
     ($(GMTdoc)plot.html#g)
-- **N** | **no_clip** :: [Type => Str | []]
+- **N** | **noclip** | **no_clip** :: [Type => Str | []]
 
     Do NOT clip symbols that fall outside map border 
     ($(GMTdoc)plot.html#n)
@@ -390,7 +390,7 @@ function scatter(f1::Function, f2::Function, range_t=nothing; first=true, kw...)
 end
 scatter!(f1::Function, f2::Function, range_t=nothing; kw...) = scatter(f1, f2, range_t; first=false, kw...)
 
-scatter(cmd0::String="", arg1=nothing; first=true, kw...)  = common_plot_xyz(cmd0, arg1, "scatter",  first, false, kw...)
+scatter(cmd0::String="",  arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "scatter",  true, false, kw...)
 scatter!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "scatter",  false, false, kw...)
 
 scatter(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "scatter", true, false, kw...)
@@ -714,6 +714,11 @@ stairs(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); step=step, kw...)
 stairs!(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); first=false, step=step, kw...)
 stairs(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); step=step, kw...)
 stairs!(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); first=false, step=step, kw...)
+
+# ------------------------------------------------------------------------------------------------------
+#function bubblechart(cmd0::String="", arg1=nothing; first=true, kwargs...)
+	#d = KW(kwargs)
+#end
 
 # ------------------------------------------------------------------------------------------------------
 """
