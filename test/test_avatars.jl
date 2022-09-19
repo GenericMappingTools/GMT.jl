@@ -122,6 +122,7 @@
 	stairs!(x, sin.(x), Vd=dbg2)
 	stairs([x sin.(x)], step=:pre, Vd=dbg2)
 	stairs!([x sin.(x)], step=:pre, Vd=dbg2)
+	stairs!("", [x sin.(x)], Vd=dbg2)
 
 	println("	BAND")
 	vband([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
@@ -200,6 +201,8 @@
 	scatter!(rand(5,5), Vd=dbg2)
 	scatter("",rand(5,5), Vd=dbg2)
 	scatter!("",rand(5,5), Vd=dbg2)
+	scatter(1:20,rand(20), size=[2,20], Vd=dbg2)
+	scatter(1:20,rand(20), size=(log10, [2,20]), Vd=dbg2)
 	scatter3(rand(5,5,3))
 	scatter3!(rand(5,5,3), Vd=dbg2)
 	scatter3("", rand(5,5,3), Vd=dbg2)

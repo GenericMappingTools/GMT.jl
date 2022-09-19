@@ -295,14 +295,21 @@ function with_xyvar(d::Dict, arg1::GMTdataset)
 		ismulticol = true
 	end
 
-	if ((val_x = find_in_dict(d, [:xvar])[1]) === nothing)		# No xvar, so create one with 1:n_rows
-		out = hcat(collect(1:size(arg1,1)), arg1[:, ycv])
-	else
-		!(isa(val_x, Integer) || isa(val_x, String) || isa(val_x, Symbol)) && error("'xvar' can only be an Int, a String or a Symbol but was a $(typeof(val_x))")
-		xc = isa(val_x, Integer) ? val_x : ((ind = findfirst(string(val_x) .== arg1.colnames)) !== nothing ? ind : 0)
-		(xc < 1 || xc > size(arg1,2)) && error("'xvar' Col name not found in GMTdataset col names or exceed col count.")
-		out = arg1[:, [xc, ycv...]]
+	function getcolvar(d::Dict, var::VMs)
+		((val = find_in_dict(d::Dict, var)[1]) === nothing) && return nothing
+		!(isa(val, Integer) || isa(val, String) || isa(val, Symbol)) && error("$(var) can only be an Int, a String or a Symbol but was a $(typeof(val))")
+		c = isa(val, Integer) ? val : ((ind = findfirst(string(val) .== arg1.colnames)) !== nothing ? ind : 0)
+		(c < 1 || c > size(arg1,2)) && error("$(var) Col name not found in GMTdataset col names or exceed col count.")
+		c
 	end
+	xc = getcolvar(d, [:xvar])
+	((zc = getcolvar(d, [:zvar])) !== nothing) && (ycv = [ycv..., zc])
+	((sc = getcolvar(d, [:svar :szvar :sizevar])) !== nothing) && (ycv = [ycv..., sc])
+	((cc = getcolvar(d, [:cvar :colorvar])) !== nothing) && (ycv = [ycv..., cc])
+	if (xc === nothing)  out = hcat(collect(1:size(arg1,1)), arg1[:, ycv])
+	else                 out = arg1[:, [xc, ycv...]]
+	end
+
 	return (ismulticol) ? mat2ds(out, multi=true, color=:cycle) : mat2ds(out)		# Return a GMTdataset
 end
 
@@ -417,16 +424,25 @@ function parse_opt_S(d, arg1, is3D)
 	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
 		marca, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
 		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
-			(marca == "") && (marca = "c")			# If a marker name was not selected, defaults to circle
+			(marca == "") && (marca = "c")		# If a marker name was not selected, defaults to circle
 			if (isa(val, AbstractArray))
-				(length(val) != size(arg1,1)) &&
-					error("The size array must have the same number of elements rows in the data")
-				arg1 = hcat(arg1, val[:])
-			elseif (string(val) != "indata")
+				if (length(val) == 2)			# A two elements array in interpreted as [min max]
+					scale = (eltype(val) <: Integer) ? 2.54/72 : 1.0	# In integers, assumes they are points
+					arg1 = hcat(arg1, linspace(val[1], val[2], size(arg1,1)).*scale)
+				else
+					(length(val) != size(arg1,1)) &&
+						error("The size array must have the same number of elements as rows in data")
+					arg1 = hcat(arg1, val[:])
+				end
+			elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], Array{<:Real}))
+				scale = (eltype(val[2]) <: Integer) ? 2.54/72 : 1.0
+				x = funcurve(val[1], val[2].*scale, size(arg1,1))
+				arg1 = hcat(arg1, x)
+			elseif (string(val) != "indata")	# WTF is "indata"?
 				marca *= arg2str(val)
 			end
 			opt_S = " -S" * marca
-		elseif (marca != "")		# User only selected a marker name but no size.
+		elseif (marca != "")					# User only selected a marker name but no size.
 			opt_S = " -S" * marca
 			# If data comes from a file, then no automatic symbol size is added
 			op = lowercase(marca[1])
@@ -435,7 +451,7 @@ function parse_opt_S(d, arg1, is3D)
 		elseif (haskey(d, :hexbin))
 			inc = parse(Float64, arg1.attrib["hexbin"])
 			r = (CTRL.limits[8] - CTRL.limits[7]) / (arg1[2] - arg1[1]) * inc	# should be = 3, I think
-			(CTRL.figsize[1] == 0) && @warn("Failed to automatically fetch the fig width. Using 14 cm just to show something.")
+			(CTRL.figsize[1] == 0) && @warn("Failed to automatically fetch the fig width. Using 14 cm to show something.")
 			w = (CTRL.figsize[1] != 0) ? CTRL.figsize[1] : 14
 			opt_S = " -Sh$(w / (r * 1.5))"		# Is it always 1.5?
 			delete!(d, :hexbin)
