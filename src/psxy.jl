@@ -302,6 +302,7 @@ function with_xyvar(d::Dict, arg1::GMTdataset)
 		(c < 1 || c > size(arg1,2)) && error("$(var) Col name not found in GMTdataset col names or exceed col count.")
 		c
 	end
+
 	xc = getcolvar(d, [:xvar])
 	((zc = getcolvar(d, [:zvar])) !== nothing) && (ycv = [ycv..., zc])
 	((sc = getcolvar(d, [:svar :szvar :sizevar])) !== nothing) && (ycv = [ycv..., sc])
@@ -310,7 +311,12 @@ function with_xyvar(d::Dict, arg1::GMTdataset)
 	else                 out = arg1[:, [xc, ycv...]]
 	end
 
-	return (ismulticol) ? mat2ds(out, multi=true, color=:cycle) : mat2ds(out)		# Return a GMTdataset
+	D = (ismulticol) ? mat2ds(out, multi=true, color=:cycle) : mat2ds(out)		# Return a GMTdataset
+	(xc == 1 && ycv[1] == 2) && (D.proj4=arg1.proj4; D.wkt=arg1.wkt; D.epsg=arg1.epsg)	# Keep CRS if possible
+	if ((Tc = get(arg1.attrib, "Timecol", "")) != "")	# Try to keep also an eventual Timecol
+		((ind = findfirst(ycv, parse(Int, Tc))) !== nothing) && (D.attrib[:Timecol] = (xc !== nothing) ? ind+1 : ind)
+	end
+	return D
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -436,8 +442,8 @@ function parse_opt_S(d, arg1, is3D)
 				end
 			elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], Array{<:Real}))
 				scale = (eltype(val[2]) <: Integer) ? 2.54/72 : 1.0
-				x = funcurve(val[1], val[2].*scale, size(arg1,1))
-				arg1 = hcat(arg1, x)
+				ind = sortperm(funcurve(val[1], val[2].*scale, size(arg1,1)))	# Get the sorting indices
+				arg1 = hcat(arg1, is3D ? view(arg1,:,3)[ind] : view(arg1,:,2)[ind])
 			elseif (string(val) != "indata")	# WTF is "indata"?
 				marca *= arg2str(val)
 			end
