@@ -312,7 +312,7 @@ function with_xyvar(d::Dict, arg1::GMTdataset)
 	end
 
 	D = (ismulticol) ? mat2ds(out, multi=true, color=:cycle) : mat2ds(out)		# Return a GMTdataset
-	(xc == 1 && ycv[1] == 2) && (D.proj4=arg1.proj4; D.wkt=arg1.wkt; D.epsg=arg1.epsg)	# Keep CRS if possible
+	#(xc == 1 && ycv[1] == 2) && (D.proj4=arg1.proj4; D.wkt=arg1.wkt; D.epsg=arg1.epsg)	# Keep CRS if possible
 	if ((Tc = get(arg1.attrib, "Timecol", "")) != "")	# Try to keep also an eventual Timecol
 		((ind = findfirst(ycv, parse(Int, Tc))) !== nothing) && (D.attrib[:Timecol] = (xc !== nothing) ? ind+1 : ind)
 	end
