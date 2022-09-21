@@ -116,14 +116,6 @@
 	hlines!([0.2, 0.6], pen=(1, :red))
 	vlines!([0.2, 0.6], pen=(1, :red))
 
-	println("	STAIRS")
-	x = linspace(0, 4*pi, 50);
-	stairs(x, sin.(x), Vd=dbg2)
-	stairs!(x, sin.(x), Vd=dbg2)
-	stairs([x sin.(x)], step=:pre, Vd=dbg2)
-	stairs!([x sin.(x)], step=:pre, Vd=dbg2)
-	stairs!("", [x sin.(x)], Vd=dbg2)
-
 	println("	BAND")
 	vband([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
 	vband!([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
@@ -145,6 +137,20 @@
 	GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
 	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
 	GMT.cat_3_arg2(mat2ds(rand(3,2)),rand(3),rand(3));
+
+	println("	STAIRS")
+	x = linspace(0, 4*pi, 50);
+	stairs(x, sin.(x), Vd=dbg2)
+	stairs!(x, sin.(x), Vd=dbg2)
+	stairs([x sin.(x)], step=:pre, Vd=dbg2)
+	stairs!([x sin.(x)], step=:pre, Vd=dbg2)
+	stairs!("", [x sin.(x)], Vd=dbg2)
+
+	println("	STEM")
+	Y = linspace(-2*pi,2*pi,50);
+	stem!(Y, Vd=dbg2)
+	stem!("", [Y -Y], Vd=dbg2)
+	stem!(Y,[Y -Y], multicol=1, Vd=dbg2)
 
 	plotyy([1 1; 2 2], [1.5 1.5; 3 3], R="0.8/3/0/5", title="Ai", ylabel=:Bla, xlabel=:Ble, seclabel=:Bli, Vd=dbg2);
 

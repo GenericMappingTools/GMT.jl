@@ -152,7 +152,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
 	if (isa(r, String) && startswith(r, gmt_proggy))	# It's a string when called with Vd = 2 and it may be a nested call
-		isa(arg1, GDtype) && (CTRL.pocket_call[1] = arg1)	# No need to call gmt_restart() because pstext was not executed yet
+		isa(arg1, GDtype) && (CTRL.pocket_call[1] = arg1)	# No need to call gmt_restart() because pstext wasn't executed yet
 	else
 		gmt_restart()
 	end

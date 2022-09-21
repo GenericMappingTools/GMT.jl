@@ -106,7 +106,7 @@ if (got_it)					# Otherwise go straight to end
 	if (GMTver > v"6.1.1")
 		#C = cpt4dcw("eu");
 		C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
-		C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
+		#C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
 	end
 	println("		MAKECPT - 1")
 	@test_throws ErrorException("Unknown continent ue") cpt4dcw("ue")

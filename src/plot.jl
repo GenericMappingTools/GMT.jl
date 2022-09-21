@@ -694,7 +694,7 @@ lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
 """
     stairs(cmd0::String="", arg1=nothing; step=:post, kwargs...)
 
-Plot a stair function. The `step`` parameter can take the following values:
+Plot a stair function. The `step` parameter can take the following values:
 
 `:post` - The default. Lines move first along x for cartesian plots or the parallels for geographic
           and then along y or the meridians.
@@ -716,6 +716,69 @@ stairs(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); step=step, kw...)
 stairs!(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); first=false, step=step, kw...)
 stairs(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); step=step, kw...)
 stairs!(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); first=false, step=step, kw...)
+
+# ------------------------------------------------------------------------------------------------------
+"""
+    stem(cmd0::String="", arg1=nothing; kwargs...)
+
+Example:
+
+    Y = linspace(-2*pi,2*pi,50);
+	stem([Y Y], show=true)
+
+	stem(Y,[Y -Y], multicol=true, fill=true, show=true)
+"""
+function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
+	d = KW(kwargs)
+	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", nothing, false, true)[2])
+	(isa(arg1, Matrix) && size(arg1,2) > 2 && find_in_dict(d, [:multicol])[1] !== nothing) && (arg1 = mat2ds(arg1, multi=true, color="yes"))
+	haveR = (find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag :xlim :xlimits], false)[1] !== nothing)
+	haveVarFill = (haskey(d, :fill) && d[:fill] == true);
+	haveVarFill && delete!(d, :fill)		# Otherwise GMT would error
+	(haveVarFill && !isa(arg1, Vector{<:GMTdataset})) && (@warn("'fill=true' is only usable with multi-segments"); delete!(d, :fill))
+
+	if (isGMTdataset(arg1))
+		isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))	# It's not implemented for GMTdataset vectors
+		# OK, so now we GMTdataset or a vector of them. Must create new ones with extra columns.
+		if (isa(arg1, GMTdataset))
+			arg1.data = [arg1[:,1] zeros(size(arg1,1)) arg1[:,1] arg1[:,2]]
+			(!haveR) && (mimas = arg1.bbox[1:4])
+		else
+			for a in arg1			# Loop to create the new arrays and assign fill color if needed.
+				a.data = [a[:,1] zeros(size(a,1)) a[:,1] a[:,2]]
+				(haveVarFill && (ind = findfirst(" -W,", a.header)) !== nothing) && (a.header *= " -G" * a.header[ind[end]+1:end])
+			end
+			(!haveR) && (mimas = arg1[1].ds_bbox[1:4])
+		end
+	else							# Case of plain matrices
+		if (!haveR)
+			mm = extrema(arg1, dims=1)
+			mimas = [mm[1][1], mm[1][2], mm[2][1], mm[2][2]]
+		end
+		arg1 = [arg1[:,1] zeros(size(arg1,1)) arg1[:,1] arg1[:,2]]
+	end
+	if (!haveR)
+		t = round_wesn(mimas)		# Add a pad
+		d[:R] = @sprintf("%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
+	end
+
+	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val) : "8p"
+	d[:S] = "v$(len)+ec+s"
+
+	_show = false
+	if (!haskey(d, :nobaseline) && haskey(d, :show))	# If baseline we need to use the true show only at hline!()
+		_show = d[:show] != 0;		d[:show]=false		# Backup the :show val
+	end
+
+	out1, out2 = common_plot_xyz(cmd0, arg1, "stem", first, false, d...), nothing
+	((find_in_dict(d, [:nobaseline])[1]) === nothing) && (out2 = hlines!(0.0, show=_show))	# See if we have a no-baseline request
+	(out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
+end
+stem!(cmd0::String="", arg1=nothing; kw...) = stem(cmd0, arg1; first=false, kw...)
+stem(arg; kw...) = stem("", cat_1_arg(arg); kw...)
+stem!(arg; kw...) = stem("", cat_1_arg(arg); first=false, kw...)
+stem(arg1, arg2; kw...)  = stem("", cat_2_arg2(arg1, arg2); kw...)
+stem!(arg1, arg2; kw...) = stem("", cat_2_arg2(arg1, arg2); first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 """
