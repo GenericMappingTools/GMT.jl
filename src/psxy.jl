@@ -20,7 +20,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	opt_A::String = ""							# For the case the caller was in fact "stairs"
 	g_bar_fill = Vector{String}()				# May hold a sequence of colors for gtroup Bar plots
 	if (caller != "")
-		if (occursin(" -", caller))				# some sub-modues use this piggy-backed call
+		if (occursin(" -", caller))				# some sub-modues use this piggy-backed call to send a cmd
 			if ((ind = findfirst("|", caller)) !== nothing)	# A mixed case with "caler|partiall_command"
 				sub_module = caller[1:ind[1]-1]
 				cmd = caller[ind[1]+1:end]
