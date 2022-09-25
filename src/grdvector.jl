@@ -62,7 +62,7 @@ function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwar
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd::String = parse_BJR(d, "", "", O, " -JX12c/0")[1]
+	cmd::String = parse_BJR(d, "", "", O)[1]
 	cmd = parse_common_opts(d, cmd, [:I :UVXY :f :p :t :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:S :vec_scale], [:T :sign_scale], [:Z :azimuth]])
 

@@ -828,8 +828,8 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
 		actual_family = [GMT_IS_DATASET]	# Default but may change to matrix
 		if (ptr !== nothing && isa(ptr, GMTdataset))
-			if (ptr.text == "")  X.object = dataset_init(API, ptr.data, actual_family)
-			else                 X.object = dataset_init(API, [ptr], X.direction)	# When TEXT still need to go here
+			if (isempty(ptr.text))  X.object = dataset_init(API, ptr.data, actual_family)
+			else                    X.object = dataset_init(API, [ptr], X.direction)	# When TEXT still need to go here
 			end
 		elseif (isa(ptr, Vector{<:GMTdataset}))
 			X.object = dataset_init(API, ptr, X.direction)

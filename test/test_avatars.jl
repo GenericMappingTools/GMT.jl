@@ -138,6 +138,17 @@
 	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
 	GMT.cat_3_arg2(mat2ds(rand(3,2)),rand(3),rand(3));
 
+	println("	FEATHER")
+	theta=(-90:10:90)*pi/180; r=2*ones(size(theta)).*theta; t = (0:(length(theta)-1))/24; u,v = GMT.pol2cart(theta,r);
+	feather(t, u, v, N=true, Vd=dbg2)
+	feather(u, v, N=true, Vd=dbg2)
+	feather!(u, v, N=true, Vd=dbg2)
+	feather(t, t, u, v, N=true, Vd=dbg2)
+	feather!(t, t, u, v, N=true, Vd=dbg2)
+	feather!([t u v], N=true, Vd=dbg2)
+	feather(mat2ds([t u v]), N=true, Vd=dbg2)
+	feather!([mat2ds([t u v])], N=true, Vd=dbg2)
+
 	println("	STAIRS")
 	x = linspace(0, 4*pi, 50);
 	stairs(x, sin.(x), Vd=dbg2)

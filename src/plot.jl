@@ -585,19 +585,23 @@ bar3!(arg1; kw...) = bar3("", arg1; first=false, kw...)
 """
     arrows(cmd0::String="", arg1=nothing; arrow=(...), kwargs...)
 
-Plots an arrow field. When the keyword *arrow=(...)* or *vector=(...)* is used, the direction (in degrees
+Plots an arrow field. When the keyword `arrow=(...)` or `vector=(...)` is used, the direction (in degrees
 counter-clockwise from horizontal) and length must be found in columns 3 and 4, and size, if not specified
 on the command-line, should be present in column 5. The size is the length of the vector head. Vector stem
-width is set by option *pen* or *line_attrib*.
+width is set by option `pen` or `line_attrib`.
 
-The *vecmap=(...)* variation is similar to above except azimuth (in degrees east of north) should be
+The `vecmap=(...)` variation is similar to above except azimuth (in degrees east of north) should be
 given instead of direction. The azimuth will be mapped into an angle based on the chosen map projection.
 If length is not in plot units but in arbitrary user units (e.g., a rate in mm/yr) then you can use the
 *input_col* option to scale the corresponding column via the +sscale modifier.
 
-The *geovec=(...)* or *geovector=(...)* keywords plot geovectors. In geovectors azimuth (in degrees east from north) and geographical length must be found in columns 3 and 4. The size is the length of the vector head. Vector width is set by *pen* or *line_attrib*. Note: Geovector stems are drawn as thin filled polygons and hence pen attributes like dashed and dotted are not available. For allowable geographical units, see the *units=()* option.
+The `geovec=(...)` or `geovector=(...)` keywords plot geovectors. In geovectors, azimuth (in degrees east
+from north) and geographical length must be found in columns 3 and 4. The size is the length of the vector
+head. Vector width is set by `pen` or `line_attrib`. Note: Geovector stems are drawn as thin filled polygons
+and hence pen attributes like dashed and dotted are not available. For allowable geographical units, see
+the `units=()` option.
 
-The full *arrow* options list can be consulted at [Vector Attributes](@ref)
+The full `arrow` options list can be consulted at [Vector Attributes](@ref)
 
 - $(GMT.opt_B)
 - $(GMT.opt_J)
@@ -617,7 +621,7 @@ function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d = KW(kwargs)
 	cmd = helper_arrows(d, true)	# Have to delete to avoid double parsing in -W
 	cmd = (cmd == "") ? " -Sv0.5+e+h0.5" : " -S" * cmd
-	GMT.common_plot_xyz(cmd0, arg1, cmd, first, false, d...)
+	common_plot_xyz(cmd0, arg1, cmd, first, false, d...)
 end
 
 function helper_arrows(d::Dict, del::Bool=true)
@@ -635,9 +639,9 @@ function helper_arrows(d::Dict, del::Bool=true)
 		end
 		if (isa(val, String))		# An hard core GMT string directly with options
 			cmd = (val[1] != code) ? code * val : val	# In last case the GMT string already has vector flag char
-		elseif (isa(val, Real))  cmd = code * "$val"
+		elseif (isa(val, Real))                       cmd = code * "$val"
 		elseif (symb == :arrow4 || symb == :vector4)  cmd = code * vector4_attrib(val)
-		else                     cmd = code * vector_attrib(val)
+		else                                          cmd = code * vector_attrib(val)
 		end
 	end
 	return cmd
@@ -718,6 +722,18 @@ stairs(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); step
 stairs!(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); first=false, step=step, kw...)
 
 # ------------------------------------------------------------------------------------------------------
+function helper_input_ds(cmd0::String="", arg1=nothing; kwargs...)
+	d = KW(kwargs)
+	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", nothing, false, true)[2])
+	(isa(arg1, Matrix) && size(arg1,2) > 2 && find_in_dict(d, [:multicol])[1] !== nothing) && (arg1 = mat2ds(arg1, multi=true, color="yes"))
+	haveVarFill = (haskey(d, :fill) && d[:fill] == true);
+	haveVarFill && delete!(d, :fill)		# Otherwise GMT would error
+	(haveVarFill && !isa(arg1, Vector{<:GMTdataset})) && (@warn("'fill=true' is only usable with multi-segments"); delete!(d, :fill))
+	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))	# It's not implemented for GMTdataset vectors
+	return arg1, d, haveVarFill
+end
+
+# ------------------------------------------------------------------------------------------------------
 """
     stem(cmd0::String="", arg1=nothing; kwargs...)
 
@@ -729,17 +745,11 @@ Example:
 	stem(Y,[Y -Y], multicol=true, fill=true, show=true)
 """
 function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
-	d = KW(kwargs)
-	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", nothing, false, true)[2])
-	(isa(arg1, Matrix) && size(arg1,2) > 2 && find_in_dict(d, [:multicol])[1] !== nothing) && (arg1 = mat2ds(arg1, multi=true, color="yes"))
+	arg1, d, haveVarFill = helper_input_ds(cmd0, arg1; kwargs...)
 	haveR = (find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag :xlim :xlimits], false)[1] !== nothing)
-	haveVarFill = (haskey(d, :fill) && d[:fill] == true);
-	haveVarFill && delete!(d, :fill)		# Otherwise GMT would error
-	(haveVarFill && !isa(arg1, Vector{<:GMTdataset})) && (@warn("'fill=true' is only usable with multi-segments"); delete!(d, :fill))
 
 	if (isGMTdataset(arg1))
-		isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))	# It's not implemented for GMTdataset vectors
-		# OK, so now we GMTdataset or a vector of them. Must create new ones with extra columns.
+		# OK, so now we have a GMTdataset or a vector of them. Must create new ones with extra columns.
 		if (isa(arg1, GMTdataset))
 			arg1.data = [arg1[:,1] zeros(size(arg1,1)) arg1[:,1] arg1[:,2]]
 			(!haveR) && (mimas = arg1.bbox[1:4])
@@ -770,7 +780,8 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		_show = d[:show] != 0;		d[:show]=false		# Backup the :show val
 	end
 
-	out1, out2 = common_plot_xyz(cmd0, arg1, "stem", first, false, d...), nothing
+	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
+	out1, out2 = common_plot_xyz("", arg1, "stem", first, false, d...), nothing
 	((find_in_dict(d, [:nobaseline])[1]) === nothing) && (out2 = hlines!(0.0, show=_show))	# See if we have a no-baseline request
 	(out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
 end
@@ -779,6 +790,168 @@ stem(arg; kw...) = stem("", cat_1_arg(arg); kw...)
 stem!(arg; kw...) = stem("", cat_1_arg(arg); first=false, kw...)
 stem(arg1, arg2; kw...)  = stem("", cat_2_arg2(arg1, arg2); kw...)
 stem!(arg1, arg2; kw...) = stem("", cat_2_arg2(arg1, arg2); first=false, kw...)
+
+# ------------------------------------------------------------------------------------------------------
+"""
+    feather(cmd0::String="", arg1=nothing; arrow=(...), kwargs...)
+
+"""
+function feather(cmd0::String="", arg1=nothing; first=true, kwargs...)
+	arg1, d, haveVarFill = helper_input_ds(cmd0, arg1; kwargs...)
+	haveR = (find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag :xlim :xlimits], false)[1] !== nothing)
+
+	function get_minmaxs(D::GMTdataset)
+		# Get x,y minmax from datasets that may have had teir columns rearranged.
+		D.ds_bbox[1:4] + [D.ds_bbox[5], D.ds_bbox[6], D.ds_bbox[7], D.ds_bbox[8]]
+	end
+
+	function expandDS!(D::GMTdataset)
+		# Expand a GMTdatset if its number of columns is 2 or 3. Also update the colnames.
+		((n_cols = size(D, 2)) >= 4) && return D		# Nothing to do
+		(n_cols < 2) && error("This does not have at least 2 columns as required (it has $n_cols).")
+		if (n_cols == 2)
+			D.data = hcat(1:size(D,1), zeros(size(D,1),1), D.data)		# Add x & y
+			D.colnames = ["X", "Y", "U", "V"]
+		else
+			D.data = hcat(D[:,1], zeros(size(D,1),1), D.data[:,2:3])	# Add y
+			D.colnames = [(((Tc = get(D.attrib, "Timecol", "")) == "1") ? "Time" : "X"), "Y", "U", "V"]
+		end
+		set_dsBB!(D)			# Update the BBs
+		return D
+	end
+
+	if (isGMTdataset(arg1))		# Have a GMTdataset or a vector of them. Must create new ones with extra columns.
+		if (isa(arg1, GMTdataset))
+			expandDS!(arg1)
+			(!haveR) && (mimas = get_minmaxs(arg1))
+		else
+			mimas = [Inf -Inf Inf -Inf]
+			for a in arg1			# Loop to create the new arrays and assign fill color if needed.
+				expandDS!(a)
+				(!haveR) && (mm = get_minmaxs(a); mimas = [min(mimas[1],mm[1]), max(mimas[2],mm[2]), min(mimas[3],mm[3]), max(mimas[4],mm[4])])
+				(haveVarFill && (ind = findfirst(" -W,", a.header)) !== nothing) && (a.header *= " -G" * a.header[ind[end]+1:end])
+			end
+		end
+	else						# A plain mtrix
+		n_cols = size(arg1, 2)
+		(2 > n_cols < 4) && error("Neead at least 4 columns but got $n_cols")
+		(n_cols == 2) && (arg1 = hcat(1:size(arg1,1), zeros(size(arg1,1),1), arg1))		# Add x & y
+		(n_cols == 3) && (arg1 = hcat(arg1[:,1], zeros(size(arg1,1),1), arg1[:,2:3]))	# Add y
+		if (!haveR)
+			mm = extrema(arg1, dims=1)
+			mimas = [mm[1][1]+mm[3][1], mm[1][2]+mm[3][2], mm[2][1]+mm[4][1], mm[2][2]+mm[4][2]]
+		end
+	end
+
+	if (!haveR)
+		dx, dy = (mimas[2] - mimas[1]) * 0.01, (mimas[4] - mimas[3]) * 0.01
+		t = round_wesn(mimas + [-dx, dx, -dy, dy])		# Add a pad
+		d[:R] = @sprintf("%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
+		opt_R = " -R" * d[:R]
+	end
+
+	# We have a GMT bug (up till 6.4.0) that screws when vector components are dx,dy or r,theta and
+	# x,y is not isometric or when -Sv+z<scale> (and possibly in other cases). So, between thinking and
+	# dumb trial-and-error I came out with this patch that computes two scale factors, one to be applyied
+	# to the y component and the other that sets a +z<scale> under the hood. 
+	(haveR) && (opt_R = parse_R(d, "", false, false)[2])
+	opt_J = parse_J(d, "", "", true, false, false)[2]
+	Dwh = mapproject(opt_R * opt_J * " -W")		# Compute the fig dimensions in paper coords.
+	aspect_limits = (CTRL.limits[10] - CTRL.limits[9]) / (CTRL.limits[8] - CTRL.limits[7])	# Plot, not data, limits
+	aspect_sizes  = Dwh[2] / Dwh[1]
+	scale_fig     = aspect_sizes / aspect_limits
+
+	def_e, def_h, def_z = "+e", "+h2", "+z$(Dwh[1] / (CTRL.limits[8] - CTRL.limits[7]))i"
+	if ((ahdr = helper_arrows(d, true)) != "")		# Have to use delete to avoid double parsing in -W
+		contains(ahdr, "+e") && (def_e = "")
+		contains(ahdr, "+h") && (def_h = "")
+		contains(ahdr, "+z") && (def_z = "")
+		ahdr = ahdr[2:end]		# Need to drop the code because tat is set below.
+	end
+	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val) : "8p"
+	d[:S] = "v$(len)" * ahdr * def_e * def_h * def_z
+
+	# Need to apply a scale factor that also compensates for the GMT bug.
+	if (isa(arg1, Vector{<:GMTdataset}))
+		for a in arg1
+			for k = 1:size(a,1)  a[k,4] *= scale_fig  end
+		end
+	else
+		for k = 1:size(arg1,1)  arg1[k,4] *= scale_fig  end
+	end
+
+	common_plot_xyz("", arg1, "feather", first, false, d...)
+end
+
+feather!(cmd0::String="", arg1=nothing; kw...) = feather!(cmd0, arg1; first=false, kw...)
+feather(arg1; kw...)  = feather("", arg1; kw...)
+feather!(arg1; kw...) = feather("", arg1; first=false, kw...)
+feather(arg1, arg2; kw...)  = feather("", cat_2_arg2(arg1, arg2); kw...)
+feather!(arg1, arg2; kw...) = feather("", cat_2_arg2(arg1, arg2); first=false, kw...)
+feather(arg1, arg2, arg3; kw...)  = feather("", cat_3_arg2(arg1, arg2, arg3); kw...)
+feather!(arg1, arg2, arg3; kw...) = feather("", cat_3_arg2(arg1, arg2, arg3); first=false, kw...)
+feather(arg1, arg2, arg3, arg4; kw...)  = feather("", cat_2_arg2(arg1, cat_3_arg2(arg2, arg3, arg4)); kw...)
+feather!(arg1, arg2, arg3, arg4; kw...) = feather("", cat_2_arg2(arg1, cat_3_arg2(arg2, arg3, arg4)); first=false, kw...)
+
+#= ------------------------------------------------------------------------------------------------------
+function quiver(cmd0::String="", arg1=nothing; first=true, kwargs...)
+	d = KW(kwargs)
+	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", nothing, false, true)[2])
+	(isa(arg1, Matrix) && size(arg1,2) > 2 && find_in_dict(d, [:multicol])[1] !== nothing) && (arg1 = mat2ds(arg1, multi=true, color="yes"))
+	haveR = (find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag :xlim :xlimits], false)[1] !== nothing)
+	haveVarFill = (haskey(d, :fill) && d[:fill] == true);
+	haveVarFill && delete!(d, :fill)		# Otherwise GMT would error
+	(haveVarFill && !isa(arg1, Vector{<:GMTdataset})) && (@warn("'fill=true' is only usable with multi-segments"); delete!(d, :fill))
+
+	(haveR) && (opt_R = parse_R(d, "", false, false)[2])
+	opt_J = parse_J(d, "", "", true, false, false)[2]
+	Dhw = mapproject(opt_R * opt_J * " -W")
+
+	if (isGMTdataset(arg1))
+		isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))	# It's not implemented for GMTdataset vectors
+		# OK, so now we GMTdataset or a vector of them. Must create new ones with extra columns.
+		if (isa(arg1, GMTdataset))
+		else
+		end
+	else
+		if (!haveR)
+			mm = extrema(arg1, dims=1)
+			mimas = [mm[1][1], mm[1][2], mm[2][1], mm[2][2]]
+		end
+	end
+	if (!haveR)
+		t = round_wesn(mimas)		# Add a pad
+		d[:R] = @sprintf("%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
+	end
+
+	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val) : "8p"
+	d[:S] = "v$(len)+e+s"
+
+	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
+	common_plot_xyz("", arg1, "quiver", first, false, d...)
+end
+function quiver(arg1, arg2, arg3, arg4; first=true, kw...)
+	@assert(length(arg1) == length(arg2) && length(arg2) == length(arg3) && length(arg3) == length(arg4))
+	isvector(arg1) && return quiver("", [vec(arg1) vec(arg2) vec(arg1)+vec(arg3) vec(arg2)+vec(arg4)], first=first, kw...)
+	autos = quiv_autoscale(arg1, arg2, arg3, arg4)
+	quiver("", [arg1[:] arg2[:] arg1[:]+arg3[:].*autos arg2[:]+arg4[:].*autos]; first=first, kw...)	# Hopefully they are 2D matrices
+end
+
+function quiv_autoscale(x,y,u,v)
+	if (isvector(x))  n = sqrt(length(x)); m = n
+	else              m,n = size(x)
+	end
+	delx = diff([extrema(x)...])[1] / n
+	dely = diff([extrema(y)...])[1] / m
+	del = delx^2 + dely^2
+	autoscale, ma = 0.9, -1e100
+	if (del > 0)
+		for k in eachindex(u)  ma = max(ma, u[k]^2 + v[k]^2)  end
+		autoscale /= sqrt(ma/del)
+	end
+	return autoscale
+end
+=#
 
 # ------------------------------------------------------------------------------------------------------
 """

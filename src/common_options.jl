@@ -3029,12 +3029,13 @@ end
 
 # -----------------------------------
 function helper_vec_loc(d::Dict, symb, cmd::String)::String
-	# Helper function to the 'begin', 'middle', 'end' vector attrib function
+	# Helper function for the 'begin', 'middle', 'end' vector attrib function
 	t::String = string(d[symb])
-	if     (t == "line"      )	cmd *= "t"
-	elseif (t == "arrow"     )	cmd *= "a"
-	elseif (t == "circle"    )	cmd *= "c"
-	elseif (t == "tail"      )	cmd *= "i"
+	if     (t[1] == 'l'    )	cmd *= "t"		# line
+	elseif (t[1] == 'a'    )	cmd *= "a"		# arrow
+	elseif (t[1] == 'c'    )	cmd *= "c"		# circle
+	elseif (t[1] == 's'    )	cmd *= "s"		# square
+	elseif (t[1] == 't'    )	cmd *= "i"		# tail
 	elseif (t == "open_arrow")	cmd *= "A"
 	elseif (t == "open_tail" )	cmd *= "I"
 	elseif (startswith(t, "left"))	cmd *= "l"

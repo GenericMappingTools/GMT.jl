@@ -9,7 +9,7 @@ skipnan(itr) = Iterators.filter(el->isfinite(el), itr)
 square(x) = x^2
 
 function funcurve(f::Function, lims::VMr, n=100)
-	# Geneate a corve between lims[1] and lims[2] having the form of function 'f'
+	# Geneate a curve between lims[1] and lims[2] having the form of function 'f'
 	if     (f == exp)    x = log.(lims)
 	elseif (f == log)    x = exp.(lims)
 	elseif (f == log10)  x = exp10.(lims)
@@ -19,4 +19,51 @@ function funcurve(f::Function, lims::VMr, n=100)
 	else   error("Function $f not implemented in funcurve().")
 	end
 	f.(linspace(x[1], x[2], n))
+end
+
+"""
+    x, y = pol2cart2(theta, rho; deg=false)
+
+Transform polar to Cartesian coordinates. Angles are in radians by default.
+Use `deg=true` if angles are in degrees. Input can be scalar, vectors or matrices.
+"""
+function pol2cart(theta, rho; deg::Bool=false)
+	return (deg) ? (rho .* cosd.(theta), rho .* sind.(theta)) : (rho .* cos.(theta), rho .* sin.(theta))
+end
+
+"""
+    theta, rho = cart2pol(x, y; deg=false)
+
+Transform Cartesian to polar coordinates. Angles are returned in radians by default.
+Use `deg=true` to return the angles in degrees. Input can be scalar, vectors or matrices.
+"""
+cart2pol(x, y; deg::Bool=false) = (deg) ? atand.(y,x) : atan.(y,x), hypot.(x,y)
+
+
+"""
+    x, y, z = sph2cart(az, elev, rho; deg=false)
+
+Transform spherical coordinates to Cartesian. Angles are in radians by default.
+Use `deg=true` if angles are in degrees. Input can be scalar, vectors or matrices.
+"""
+function sph2cart(az, elev, rho; deg::Bool=false)
+	z = rho .* ((deg) ? sind.(elev) : sin.(elev))
+	t = rho .* ((deg) ? cosd.(elev) : cos.(elev))
+	x = t   .* ((deg) ? cosd.(az)   : cos.(az))
+	y = t   .* ((deg) ? sind.(az)   : sin.(az))
+	return x,y,z
+end
+
+"""
+    az, elev, rho = cart2sph(x, y, z; deg=false)
+
+Transform Cartesian coordinates to spherical. Angles are returned in radians by default.
+Use `deg=true` to return the angles in degrees. Input can be scalar, vectors or matrices.
+"""
+function cart2sph(x, y, z; deg::Bool=false)
+	h,  = hypot.(x, y)
+	rho = hypot.(h, z)
+	elev = (deg) ? atand.(z, h) : atan.(z, h)
+	az   = (deg) ? atand.(y, x) : atan.(y, x)
+	return az, elev, rho
 end

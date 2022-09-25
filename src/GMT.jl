@@ -121,11 +121,11 @@ end
 
 export
 	GMTgrid, GMTimage, GMTdataset, GMTver, FMT, gmt, libgdal,
-	arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!, hband, hband!, hlines, hlines!,
-	lines, lines!, legend, legend!, stairs, stairs!, stem, stem!,vlines, vlines!, vband, vband!, hspan, hspan!, vspan,
-	vspan!, basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!, colorbar, colorbar!,
-	colorscale, colorscale!, contour, contour!, contourf, contourf!, events, filter1d, fitcircle, gmt2kml,
-	gmtbinstats, binstats,
+	arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!, feather, feather!, hband, hband!,
+	hlines, hlines!, lines, lines!, legend, legend!, stairs, stairs!, stem, stem!,vlines, vlines!, vband, vband!,
+	hspan, hspan!, vspan, vspan!, basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, coast, coast!,
+	colorbar, colorbar!, colorscale, colorscale!, contour, contour!, contourf, contourf!, events, filter1d, fitcircle,
+	gmt2kml, gmtbinstats, binstats,
 	gmtconnect, gmtconvert, gmtinfo, gmtmath, gmtregress, gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial,
 	gmtvector, gmtwrite, gmtwhich, grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdconvert,
 	grdcut, grdedit, grdfft, grdfill, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdinterpolate,
@@ -148,7 +148,7 @@ export
 	blendimg!, lonlat2xy, xy2lonlat, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fields,
 	tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
 
-	magic, rescale, stackgrids, delrows!, setgrdminmax!,
+	magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cat, cart2sph, sph2cart,
 
 	arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT,
 	importPROJ4, importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate,
