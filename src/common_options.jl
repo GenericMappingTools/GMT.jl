@@ -353,7 +353,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		end
 		if (opt_J == "")  opt_J = " -JX"  end
 		# If only the projection but no size, try to get it from the kwargs.
-		if ((s = helper_append_figsize(d, opt_J, O)) != "")		# Takes care of both fig scales and fig sizes
+		if ((s = helper_append_figsize(d, opt_J, O, del)) != "")		# Takes care of both fig scales and fig sizes
 			opt_J = s
 		elseif (default != "" && opt_J == " -JX")
 			opt_J = IamSubplot[1] ? " -JX?" : (default != "guess" ? default : opt_J) 	# -JX was a working default
@@ -376,7 +376,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			end
 		end
 	else										# For when a new size is entered in a middle of a script
-		if ((s = helper_append_figsize(d, opt_J, O)) != "")
+		if ((s = helper_append_figsize(d, opt_J, O, del)) != "")
 			if (opt_J == " -J")
 				println("SEVERE WARNING: When appending a new fig with a different size you SHOULD set the `projection`. \n\tAdding `projection=:linear` at your own risk.");
 				opt_J *= "X" * s[4:end]
@@ -429,10 +429,9 @@ function fish_size_from_J(opt_J)
 	return nothing
 end
 
-function helper_append_figsize(d::Dict, opt_J::String, O::Bool)::String
-	val_, symb = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])
+function helper_append_figsize(d::Dict, opt_J::String, O::Bool, del::Bool=true)::String
+	val_, symb = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size], del)
 	(val_ === nothing && is_in_dict(d, [:flipaxes :flip_axes]) === nothing) && return ""
-	#(val_ === nothing) && return ""
 	val::String = arg2str(val_)
 	if (occursin("scale", arg2str(symb)))		# We have a fig SCALE request
 		(O && opt_J == " -J") && error("In Overlay mode you cannot change a fig scale and NOT repeat the projection")

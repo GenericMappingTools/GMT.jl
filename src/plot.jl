@@ -583,76 +583,6 @@ bar3!(arg1; kw...) = bar3("", arg1; first=false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 """
-    arrows(cmd0::String="", arg1=nothing; arrow=(...), kwargs...)
-
-Plots an arrow field. When the keyword `arrow=(...)` or `vector=(...)` is used, the direction (in degrees
-counter-clockwise from horizontal) and length must be found in columns 3 and 4, and size, if not specified
-on the command-line, should be present in column 5. The size is the length of the vector head. Vector stem
-width is set by option `pen` or `line_attrib`.
-
-The `vecmap=(...)` variation is similar to above except azimuth (in degrees east of north) should be
-given instead of direction. The azimuth will be mapped into an angle based on the chosen map projection.
-If length is not in plot units but in arbitrary user units (e.g., a rate in mm/yr) then you can use the
-*input_col* option to scale the corresponding column via the +sscale modifier.
-
-The `geovec=(...)` or `geovector=(...)` keywords plot geovectors. In geovectors, azimuth (in degrees east
-from north) and geographical length must be found in columns 3 and 4. The size is the length of the vector
-head. Vector width is set by `pen` or `line_attrib`. Note: Geovector stems are drawn as thin filled polygons
-and hence pen attributes like dashed and dotted are not available. For allowable geographical units, see
-the `units=()` option.
-
-The full `arrow` options list can be consulted at [Vector Attributes](@ref)
-
-- $(GMT.opt_B)
-- $(GMT.opt_J)
-- $(GMT.opt_R)
-- **W** | **pen** | **line_attrib** :: [Type => Str]
-
-    Set pen attributes for lines or the outline of symbols
-    ($(GMTdoc)plot.html#w)
-- $(GMT.opt_savefig)
-
-Example:
-
-	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p", show=true)
-"""
-function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
-	# A arrows plotting method of plot
-	d = KW(kwargs)
-	cmd = helper_arrows(d, true)	# Have to delete to avoid double parsing in -W
-	cmd = (cmd == "") ? " -Sv0.5+e+h0.5" : " -S" * cmd
-	common_plot_xyz(cmd0, arg1, cmd, first, false, d...)
-end
-
-function helper_arrows(d::Dict, del::Bool=true)
-	# Helper function to set the vector head attributes
-	(show_kwargs[1]) && return print_kwarg_opts([:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], "NamedTuple | String")
-
-	cmd::String = ""
-	val, symb = find_in_dict(d, [:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], del)
-	if (val !== nothing)
-		code = 'v'
-		if (symb == :geovec || symb == :geovector)
-			code = '='
-		elseif (symb == :vecmap)	# Uses azimuth and plots angles taking projection into account
-			code = 'V'
-		end
-		if (isa(val, String))		# An hard core GMT string directly with options
-			cmd = (val[1] != code) ? code * val : val	# In last case the GMT string already has vector flag char
-		elseif (isa(val, Real))                       cmd = code * "$val"
-		elseif (symb == :arrow4 || symb == :vector4)  cmd = code * vector4_attrib(val)
-		else                                          cmd = code * vector_attrib(val)
-		end
-	end
-	return cmd
-end
-
-arrows!(cmd0::String="", arg1=nothing; kw...) = arrows(cmd0, arg1; first=false, kw...)
-arrows(arg1; kw...)  = arrows("", arg1; first=true, kw...)
-arrows!(arg1; kw...) = arrows("", arg1; first=false, kw...)
-# ------------------------------------------------------------------------------------------------------
-
-"""
     lines(cmd0::String="", arg1=nothing; decorated=(...), kwargs...)
 
 Reads a file or (x,y) pairs and plots a collection of different line with decorations
@@ -723,10 +653,12 @@ stairs!(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); fir
 
 # ------------------------------------------------------------------------------------------------------
 function helper_input_ds(cmd0::String="", arg1=nothing; kwargs...)
+	# Block common to some functions. Read the file if cmd0 != "" and takes care of "select by col"
+	# if arg1 is a GMTdataset (or a vector of them). 
 	d = KW(kwargs)
 	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", nothing, false, true)[2])
 	(isa(arg1, Matrix) && size(arg1,2) > 2 && find_in_dict(d, [:multicol])[1] !== nothing) && (arg1 = mat2ds(arg1, multi=true, color="yes"))
-	haveVarFill = (haskey(d, :fill) && d[:fill] == true);
+	haveVarFill = (haskey(d, :fill) && d[:fill] == true)
 	haveVarFill && delete!(d, :fill)		# Otherwise GMT would error
 	(haveVarFill && !isa(arg1, Vector{<:GMTdataset})) && (@warn("'fill=true' is only usable with multi-segments"); delete!(d, :fill))
 	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))	# It's not implemented for GMTdataset vectors
@@ -793,16 +725,143 @@ stem!(arg1, arg2; kw...) = stem("", cat_2_arg2(arg1, arg2); first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 """
-    feather(cmd0::String="", arg1=nothing; arrow=(...), kwargs...)
+    arrows(cmd0::String="", arg1=nothing; arrow=(...), kwargs...)
 
+Plots an arrow field. When the keyword `arrow=(...)` or `vector=(...)` is used, the direction (in degrees
+counter-clockwise from horizontal) and length must be found in columns 3 and 4, and size, if not specified
+on the command-line, should be present in column 5. The size is the length of the vector head. Vector stem
+width is set by option `pen` or `line_attrib`.
+
+The `vecmap=(...)` variation is similar to above except azimuth (in degrees east of north) should be
+given instead of direction. The azimuth will be mapped into an angle based on the chosen map projection.
+If length is not in plot units but in arbitrary user units (e.g., a rate in mm/yr) then you can use the
+*input_col* option to scale the corresponding column via the +sscale modifier.
+
+The `geovec=(...)` or `geovector=(...)` keywords plot geovectors. In geovectors, azimuth (in degrees east
+from north) and geographical length must be found in columns 3 and 4. The size is the length of the vector
+head. Vector width is set by `pen` or `line_attrib`. Note: Geovector stems are drawn as thin filled polygons
+and hence pen attributes like dashed and dotted are not available. For allowable geographical units, see
+the `units=()` option.
+
+The full `arrow` options list can be consulted at [Vector Attributes](@ref)
+
+- $(GMT.opt_B)
+- $(GMT.opt_J)
+- $(GMT.opt_R)
+- **W** | **pen** | **line_attrib** :: [Type => Str]
+
+    Set pen attributes for lines or the outline of symbols
+    ($(GMTdoc)plot.html#w)
+- $(GMT.opt_savefig)
+
+Example:
+
+	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p", show=true)
 """
-function feather(cmd0::String="", arg1=nothing; first=true, kwargs...)
+#=
+function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
+	# A arrows plotting method of plot
+	d = KW(kwargs)
+	cmd = helper_arrows(d, true)	# Have to delete to avoid double parsing in -W
+	cmd = (cmd == "") ? " -Sv0.5+e+h0.5" : " -S" * cmd
+	common_plot_xyz(cmd0, arg1, cmd, first, false, d...)
+end
+=#
+
+function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
+	# A arrows plotting method of plot
 	arg1, d, haveVarFill = helper_input_ds(cmd0, arg1; kwargs...)
 	haveR = (find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag :xlim :xlimits], false)[1] !== nothing)
 
+	d, arg1 = helper_vecBug(d, arg1, haveR, haveVarFill)	# Deal with GMT nasty bug
+	common_plot_xyz(cmd0, arg1, "", first, false, d...)
+end
+
+function helper_arrows(d::Dict, del::Bool=true)
+	# Helper function to set the vector head attributes
+	(show_kwargs[1]) && return print_kwarg_opts([:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], "NamedTuple | String")
+
+	cmd::String = ""
+	val, symb = find_in_dict(d, [:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], del)
+	if (val !== nothing)
+		code = 'v'
+		if (symb == :geovec || symb == :geovector)
+			code = '='
+		elseif (symb == :vecmap)	# Uses azimuth and plots angles taking projection into account
+			code = 'V'
+		end
+		if (isa(val, String))		# An hard core GMT string directly with options
+			cmd = (val[1] != code) ? code * val : val	# In last case the GMT string already has vector flag char
+		elseif (isa(val, Real))                       cmd = code * "$val"
+		elseif (symb == :arrow4 || symb == :vector4)  cmd = code * vector4_attrib(val)
+		else                                          cmd = code * vector_attrib(val)
+		end
+	end
+	return cmd
+end
+
+arrows!(cmd0::String="", arg1=nothing; kw...) = arrows(cmd0, arg1; first=false, kw...)
+arrows(arg1; kw...)  = arrows("", arg1; first=true, kw...)
+arrows!(arg1; kw...) = arrows("", arg1; first=false, kw...)
+# ------------------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------------------
+function helper_vecZscale!(d::Dict, arg1, opt_R::String="", fancy_arrow::Bool=false)
+	# We have a GMT bug (up till 6.4.0) that screws when vector components are dx,dy or r,theta and
+	# x,y is not isometric or when -Sv+z<scale> (and possibly in other cases). So, between thinking and
+	# dumb trial-and-error I came out with this patch that computes two scale factors, one to be applyied
+	# to the y component and the other that sets a +z<scale> under the hood. 
+
+	(opt_R == "") && (opt_R = parse_R(d, "", false, false)[2])
+	opt_J = parse_J(d, "", "", true, false, false)[2]
+	Dwh = gmt("mapproject -W " * opt_R * opt_J)			# Compute the fig dimensions in paper coords.
+	aspect_limits = (CTRL.limits[10] - CTRL.limits[9]) / (CTRL.limits[8] - CTRL.limits[7])	# Plot, not data, limits
+	aspect_sizes  = Dwh[2] / Dwh[1]
+	scale_fig     = aspect_sizes / aspect_limits
+
+	unit = isa(arg1, Vector{<:GMTdataset}) ? "" : "i"	# To help further the BUG only strikes on matrices, not GMTdatsets
+	def_e, def_z = "+e", "+z$(Dwh[1] / (CTRL.limits[8] - CTRL.limits[7]))" * unit
+	def_h = (fancy_arrow) ? "+h0.5" : "+h2"
+	if ((ahdr = helper_arrows(d, true)) != "")			# Have to use delete to avoid double parsing in -W
+		contains(ahdr, "+e") && (def_e = "")
+		contains(ahdr, "+h") && (def_h = "")
+		if (contains(ahdr, "+z"))
+			ss, def_z = split(ahdr, "+"), ""
+			for s in ss
+				if (s[1] == 'z' && length(s) > 1)
+					def_z = @sprintf("+z%f,%s",parse(Float64,s[2:end]) * (Dwh[1]/(CTRL.limits[8] - CTRL.limits[7])), unit)
+					ahdr = replace(ahdr, "+"*s => "")	# Remove the +z flag because it's in def_z now
+					break
+				end
+			end
+		end
+		ahdr = ahdr[2:end]								# Need to drop the code because that is set elsewhere.
+	end
+	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val) : "8p"
+	(ahdr != "" && ahdr[1] != '+') && (len = "")		# Because a length was set in the arrow(len=?,...) and that takes precedence(?)
+	d[:S] = "v$(len)" * ahdr * def_e * def_h * def_z
+
+	# Need to apply a scale factor that also compensates for the GMT bug.
+	if (isa(arg1, Vector{<:GMTdataset}))
+		for a in arg1
+			(eltype(a.data) <: Integer) && (a.data = convert(Matrix{Float64}, a.data))
+			for k = 1:size(a,1)  a[k,4] *= scale_fig  end
+		end
+	else
+		(eltype(arg1) <: Integer) && (arg1 = convert(Matrix{Float64}, arg1))	# Because it fck errors instead of promoting
+		for k = 1:size(arg1,1)  arg1[k,4] *= scale_fig  end
+	end
+
+	return d
+end
+
+# ------------------------------------------------------------------------------------------------------
+function helper_vecBug(d, arg1, haveR, haveVarFill, isfeather::Bool=false)
+	
 	function get_minmaxs(D::GMTdataset)
 		# Get x,y minmax from datasets that may have had teir columns rearranged.
-		D.ds_bbox[1:4] + [D.ds_bbox[5], D.ds_bbox[6], D.ds_bbox[7], D.ds_bbox[8]]
+		[min(D.ds_bbox[1], D.ds_bbox[1]+D.ds_bbox[5]), max(D.ds_bbox[2], D.ds_bbox[2]+D.ds_bbox[6]),
+		 min(D.ds_bbox[3], D.ds_bbox[3]+D.ds_bbox[7]), max(D.ds_bbox[4], D.ds_bbox[4]+D.ds_bbox[8])]
 	end
 
 	function expandDS!(D::GMTdataset)
@@ -822,27 +881,33 @@ function feather(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	if (isGMTdataset(arg1))		# Have a GMTdataset or a vector of them. Must create new ones with extra columns.
 		if (isa(arg1, GMTdataset))
-			expandDS!(arg1)
+			isfeather && expandDS!(arg1)
 			(!haveR) && (mimas = get_minmaxs(arg1))
 		else
 			mimas = [Inf -Inf Inf -Inf]
 			for a in arg1			# Loop to create the new arrays and assign fill color if needed.
-				expandDS!(a)
+				isfeather && expandDS!(a)
 				(!haveR) && (mm = get_minmaxs(a); mimas = [min(mimas[1],mm[1]), max(mimas[2],mm[2]), min(mimas[3],mm[3]), max(mimas[4],mm[4])])
 				(haveVarFill && (ind = findfirst(" -W,", a.header)) !== nothing) && (a.header *= " -G" * a.header[ind[end]+1:end])
 			end
 		end
 	else						# A plain mtrix
 		n_cols = size(arg1, 2)
-		(2 > n_cols < 4) && error("Neead at least 4 columns but got $n_cols")
-		(n_cols == 2) && (arg1 = hcat(1:size(arg1,1), zeros(size(arg1,1),1), arg1))		# Add x & y
-		(n_cols == 3) && (arg1 = hcat(arg1[:,1], zeros(size(arg1,1),1), arg1[:,2:3]))	# Add y
+		(!isfeather && n_cols < 4) && error("Column data must have at least 4 columns and not $n_cols")
+		if (isfeather)
+			(2 > n_cols < 4) && error("Neead at least 4 columns but got $n_cols")
+			(n_cols == 2) && (arg1 = hcat(1:size(arg1,1), zeros(size(arg1,1),1), arg1))		# Add x & y
+			(n_cols == 3) && (arg1 = hcat(arg1[:,1], zeros(size(arg1,1),1), arg1[:,2:3]))	# Add y
+		end
 		if (!haveR)
 			mm = extrema(arg1, dims=1)
-			mimas = [mm[1][1]+mm[3][1], mm[1][2]+mm[3][2], mm[2][1]+mm[4][1], mm[2][2]+mm[4][2]]
+			mimas = (isfeather) ? [min(mm[1][1], mm[1][1]+mm[3][1]), max(mm[1][2], mm[1][2]+mm[3][2]),
+			                       min(mm[2][1], mm[2][1]+mm[4][1]), max(mm[2][2], mm[2][2]+mm[4][2])] :
+			        [min(mm[1][1],mm[3][1]), max(mm[1][2],mm[3][2]), min(mm[2][1],mm[4][1]), max(mm[2][2],mm[4][2])]
 		end
 	end
 
+	opt_R = ""
 	if (!haveR)
 		dx, dy = (mimas[2] - mimas[1]) * 0.01, (mimas[4] - mimas[3]) * 0.01
 		t = round_wesn(mimas + [-dx, dx, -dy, dy])		# Add a pad
@@ -850,36 +915,20 @@ function feather(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		opt_R = " -R" * d[:R]
 	end
 
-	# We have a GMT bug (up till 6.4.0) that screws when vector components are dx,dy or r,theta and
-	# x,y is not isometric or when -Sv+z<scale> (and possibly in other cases). So, between thinking and
-	# dumb trial-and-error I came out with this patch that computes two scale factors, one to be applyied
-	# to the y component and the other that sets a +z<scale> under the hood. 
-	(haveR) && (opt_R = parse_R(d, "", false, false)[2])
-	opt_J = parse_J(d, "", "", true, false, false)[2]
-	Dwh = mapproject(opt_R * opt_J * " -W")		# Compute the fig dimensions in paper coords.
-	aspect_limits = (CTRL.limits[10] - CTRL.limits[9]) / (CTRL.limits[8] - CTRL.limits[7])	# Plot, not data, limits
-	aspect_sizes  = Dwh[2] / Dwh[1]
-	scale_fig     = aspect_sizes / aspect_limits
+	d = helper_vecZscale!(d, arg1, opt_R, !isfeather)	# Apply a scale factor that also compensates for the GMT bug.
+	return d, arg1
+end
 
-	def_e, def_h, def_z = "+e", "+h2", "+z$(Dwh[1] / (CTRL.limits[8] - CTRL.limits[7]))i"
-	if ((ahdr = helper_arrows(d, true)) != "")		# Have to use delete to avoid double parsing in -W
-		contains(ahdr, "+e") && (def_e = "")
-		contains(ahdr, "+h") && (def_h = "")
-		contains(ahdr, "+z") && (def_z = "")
-		ahdr = ahdr[2:end]		# Need to drop the code because tat is set below.
-	end
-	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val) : "8p"
-	d[:S] = "v$(len)" * ahdr * def_e * def_h * def_z
+# ------------------------------------------------------------------------------------------------------
+"""
+    feather(cmd0::String="", arg1=nothing; arrow=(...), kwargs...)
 
-	# Need to apply a scale factor that also compensates for the GMT bug.
-	if (isa(arg1, Vector{<:GMTdataset}))
-		for a in arg1
-			for k = 1:size(a,1)  a[k,4] *= scale_fig  end
-		end
-	else
-		for k = 1:size(arg1,1)  arg1[k,4] *= scale_fig  end
-	end
+"""
+function feather(cmd0::String="", arg1=nothing; first=true, kwargs...)
+	arg1, d, haveVarFill = helper_input_ds(cmd0, arg1; kwargs...)
+	haveR = (find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag :xlim :xlimits], false)[1] !== nothing)
 
+	d, arg1 = helper_vecBug(d, arg1, haveR, haveVarFill, true)	# Deal with GMT nasty bug
 	common_plot_xyz("", arg1, "feather", first, false, d...)
 end
 
