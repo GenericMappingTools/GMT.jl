@@ -852,7 +852,7 @@ function helper_vecZscale!(d::Dict, arg1, opt_R::String="", fancy_arrow::Bool=fa
 		for k = 1:size(arg1,1)  arg1[k,4] *= scale_fig  end
 	end
 
-	return d
+	return d, arg1
 end
 
 # ------------------------------------------------------------------------------------------------------
@@ -915,7 +915,7 @@ function helper_vecBug(d, arg1, haveR, haveVarFill, isfeather::Bool=false)
 		opt_R = " -R" * d[:R]
 	end
 
-	d = helper_vecZscale!(d, arg1, opt_R, !isfeather)	# Apply a scale factor that also compensates for the GMT bug.
+	d, arg1 = helper_vecZscale!(d, arg1, opt_R, !isfeather)	# Apply a scale factor that also compensates for the GMT bug.
 	return d, arg1
 end
 
