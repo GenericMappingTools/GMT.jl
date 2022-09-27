@@ -809,11 +809,11 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 		unit = isa(arg1, Vector{<:GMTdataset}) ? "q" : "iq"	# The BUG only strikes on matrices, not GMTdatsets
 		def_z = "+z$(Dwh[1] / (CTRL.limits[8] - CTRL.limits[7]))" * unit
 	end
-	def_e = (find_in_dict(d, [:nohead]) !== nothing) ? "" : "+e"
+	def_e = (find_in_dict(d, [:nohead])[1] !== nothing) ? "" : "+e"
 	def_h = (fancy_arrow) ? "+h0.5" : "+h2"
 	
 	isArrowGMT4 = haskey(d, :arrow4) || haskey(d, :vector4)
-	isArrowGMT4 && (unit = replace(unit, "q" => ""); def_z = def_h = "")
+	isArrowGMT4 && (unit = replace(unit, "q" => ""); def_z = def_h = def_e = "")
 
 	if ((ahdr = helper_arrows(d, true)) != "")			# Have to use delete to avoid double parsing in -W
 		contains(ahdr, "+e") && (def_e = "")
