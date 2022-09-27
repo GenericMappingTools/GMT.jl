@@ -2926,11 +2926,10 @@ vector_attrib(t::NamedTuple) = vector_attrib(; t...)
 function vector_attrib(; kwargs...)::String
 	d = KW(kwargs)
 	cmd::String = add_opt(d, "", "", [:len :length])
-	#(cmd != "" && !isletter(cmd[end])) && (cmd *= "p")		# There seems to be a bug in GMT that f if no unit is used
 	(haskey(d, :angle)) && (cmd = string(cmd, "+a", d[:angle]))
 	if (haskey(d, :middle))
 		cmd *= "+m";
-		if (d[:middle] == "reverse" || d[:middle] == :reverse)	cmd *= "r"  end
+		(d[:middle] == "reverse" || d[:middle] == :reverse) && (cmd *= "r")
 		cmd = helper_vec_loc(d, :middle, cmd)
 	else
 		for symb in [:start :stop]
@@ -2946,9 +2945,9 @@ function vector_attrib(; kwargs...)::String
 
 	if (haskey(d, :justify))
 		t::Char = string(d[:justify])[1]
-		if     (t == 'b')  cmd *= "+jb"	# "begin"
-		elseif (t == 'e')  cmd *= "+je"	# "end"
-		elseif (t == 'c')  cmd *= "+jc"	# "center"
+		if     (t == 'b')  cmd *= "+jb"		# "begin"
+		elseif (t == 'e')  cmd *= "+je"		# "end"
+		elseif (t == 'c')  cmd *= "+jc"		# "center"
 		end
 	end
 
@@ -2986,10 +2985,10 @@ function vector_attrib(; kwargs...)::String
 		end
 	end
 
-	if (haskey(d, :trim))  cmd *= "+t" * arg2str(d[:trim])  end
-	if (haskey(d, :ang1_ang2) || haskey(d, :start_stop))  cmd *= "+q"  end
-	if (haskey(d, :endpoint))  cmd *= "+s"  end
-	if (haskey(d, :uv))    cmd *= "+z" * arg2str(d[:uv])  end
+	(haskey(d, :trim)) && (cmd *= "+t" * arg2str(d[:trim]))
+	(haskey(d, :ang1_ang2) || haskey(d, :start_stop)) && (cmd *= "+q")
+	(haskey(d, :endpoint)  || haskey(d, :endpt)) && (cmd *= "+s")
+	(haskey(d, :uv)) && (cmd *= "+z" * arg2str(d[:uv]))
 	return cmd
 end
 
@@ -3007,9 +3006,9 @@ function vector4_attrib(; kwargs...)::String
 		elseif (c == 'p')              cmd = "s"		# Point
 		end
 	end
-	if (haskey(d, :double) || haskey(d, :double_head))  cmd = uppercase(cmd)  end
+	(haskey(d, :double) || haskey(d, :double_head)) && (cmd = uppercase(cmd))
+	(haskey(d, :norm)) && (cmd = string(cmd, "n", d[:norm]))
 
-	if (haskey(d, :norm))  cmd = string(cmd, "n", d[:norm])  end
 	if ((val = find_in_dict(d, [:head])[1]) !== nothing)
 		if (isa(val, NamedTuple) || isa(val, Dict))
 			ha::String = "0.075c";	hl::String = "0.3c";	hw::String = "0.25c"
@@ -3029,6 +3028,7 @@ end
 # -----------------------------------
 function helper_vec_loc(d::Dict, symb, cmd::String)::String
 	# Helper function for the 'begin', 'middle', 'end' vector attrib function
+	(isa(d[symb], Bool) && d[symb]) && return cmd	# We don't want a 'true' becoming a "i"
 	t::String = string(d[symb])
 	if     (t[1] == 'l'    )	cmd *= "t"		# line
 	elseif (t[1] == 'a'    )	cmd *= "a"		# arrow
