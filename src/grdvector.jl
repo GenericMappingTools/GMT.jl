@@ -1,5 +1,5 @@
 """
-	grdvector(cmd0::String="", arg1=nothing, arg2=nothing, kwargs...)
+	grdvector(arg1, arg2, kwargs...)
 
 Takes two 2-D grid files which represents the x- and y-components of a vector field and produces
 a vector field plot by drawing vectors with orientation and length according to the information
@@ -24,6 +24,10 @@ Parameters
 
     Only plot vectors at nodes every x_inc, y_inc apart (must be multiples of original grid spacing).
     ($(GMTdoc)grdvector.html#i)
+- **maxlen** :: [Type => Number]
+
+    Set the maximum length in plot units that an arrow will have. By default it's equal to fig width / 20.
+	This option is ignored if **inc** is set.
 - **N** | **noclip** | **no_clip** :: [Type => Bool]
 
     Do NOT clip symbols that fall outside map border 
@@ -34,7 +38,7 @@ Parameters
     ($(GMTdoc)grdvector.html#q)
 - $(GMT.opt_P)
 - $(GMT.opt_R)
-- **S** | **vec_scale** :: [Type => Str | Number]		``Arg = [i|l]scale[unit]``
+- **S** | **vscale** | **vec_scale** :: [Type => Str | Number]		``Arg = [i|l]scale[unit]``
 
     Sets scale for vector plot length in data units per plot distance measurement unit [1].
     ($(GMTdoc)grdvector.html#s)
@@ -58,28 +62,53 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """
-function grdvector(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
+function grdvector(arg1, arg2; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd::String = parse_BJR(d, "", "", O)[1]
-	cmd = parse_common_opts(d, cmd, [:I :UVXY :f :p :t :params], first)[1]
-	cmd = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:S :vec_scale], [:T :sign_scale], [:Z :azimuth]])
+	def_J = " -JX" * split(def_fig_size, '/')[1] * "/0"
+	cmd, _, opt_J, opt_R = parse_BJR(d, "", "", O, def_J)
+	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params], first)[1]
+	!(contains(cmd, "-V")) && (cmd *= " -Ve")	# Shut up annoying warnings if -S has no units
+	cmd = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:T :sign_scale], [:Z :azimuth]])
+	opt_S = add_opt(d, "", "S", [:S :vscale :vec_scale],
+	                (inverse=("i", nothing, 1), length=("l", arg2str, 1), scale=("",arg2str,2), scale_at_lat="+c", refsize="+s"))
 
-    # Check case in which the two grids were transmitted by name. 
-    (cmd0 != "" && isa(arg1, String)) && (cmd0 *= " " * arg1; arg1 = nothing)
+	#x_min  x_max  y_min  y_max  z_min  z_max  dx  dy  n_cols  n_rows  reg isgeog
+	info  = get_grdinfo(arg1);		n_cols, n_rows = info[9], info[10]
+	info2 = get_grdinfo(arg2)
+	
+	opt_R = (contains(cmd, "-R") && !contains(cmd, " -R ")) ? "" : @sprintf(" -R%.4g/%.14g/%.14g/%.14g", info[1:4]...)
+	w,h = get_figsize(opt_R, opt_J)
+	as = min(max(info[6], info2[6]) * n_rows / h, max(info[6], info2[6]) * n_cols / w)
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
+	opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I")
+	if (opt_I == "")
+		# maxlen is the maximum length that an arrow will take. If not given it defaults to fig_width / 20
+		maxlen::Float64 = ((val = find_in_dict(d, [:maxlen]))[1] !== nothing) ? val : w/20
+		multx = round(Int, n_cols / (w / maxlen))
+		multy = round(Int, n_rows / (h / maxlen))
+		(multx == 0) && (multx == 1);	(multy == 0) && (multy == 1);
+		opt_I = " -Ix$(multx)/$(multy)"
+		as = max(as/multx, as/multy)
+	end
+	if (opt_S == "")
+		opt_S = @sprintf(" -S%.10g", as)
+	elseif (startswith(opt_S, " -S+c") || startswith(opt_S, " -S+s"))
+		opt_S = @sprintf(" -S%.10g%s", as, opt_S[4:end])
+	end
+	cmd *= opt_I * opt_S
 
-	N_used = got_fname == 0 ? 1 : 0		# To know whether a cpt will go to arg1 or arg2
-	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_used, arg1, arg2)
+	cmd, arg3, = add_opt_cpt(d, cmd, CPTaliases, 'C')
+	isa(arg1, String) && (cmd = arg1 * " " * arg2 * cmd; arg1 = arg3; arg2 = arg3 = nothing)
+
 	opt_Q = parse_Q_grdvec(d, [:Q :vec :vector :arrow])
 	!occursin(" -G", opt_Q) && (cmd = add_opt_fill(cmd, d, [:G :fill], 'G'))	# If fill not passed in arrow, try from regular option
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)									# TRUE to also seek (lw,lc,ls)
 	(!occursin(" -C", cmd) && !occursin(" -W", cmd) && !occursin(" -G", opt_Q)) && (cmd *= " -W0.5")	# If still nothing, set -W.
 	(opt_Q != "") && (cmd *= opt_Q)
 
-    return finish_PS_module(d, "grdvector " * cmd, "", K, O, true, arg1, arg2)
+    return finish_PS_module(d, "grdvector " * cmd, "", K, O, true, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -98,6 +127,10 @@ function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol})::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdvector(arg1, arg2=nothing, cmd0::String="";  kw...) = grdvector(cmd0, arg1, arg2; first=true, kw...)
-grdvector!(cmd0::String="", arg1=nothing, arg2=nothing; kw...) = grdvector(cmd0, arg1, arg2; first=false, kw...)
-grdvector!(arg1, arg2=nothing, cmd0::String=""; kw...) = grdvector(cmd0, arg1, arg2; first=false, kw...)
+get_grdinfo(grd::String)  = gmt("grdinfo -C " * grd).data
+get_grdinfo(grd::GMTgrid)::Vector{Float64} = [grd.range..., grd.inc..., size(grd,2), size(grd,1), grd.registration]
+
+# ---------------------------------------------------------------------------------------------------
+grdvector!(arg1, arg2; kw...) = grdvector(arg1, arg2; first=false, kw...)
+grdvector(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}; kw...) = grdvector(mat2grid(arg1), mat2grid(arg2); kw...)
+grdvector!(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}; kw...) = grdvector(mat2grid(arg1), mat2grid(arg2); first=false, kw...)
