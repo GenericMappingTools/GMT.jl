@@ -403,7 +403,7 @@ size_unit(dim::Vector{AbstractString})::Vector{Float64} = [size_unit(t) for t in
 
 function fish_size_from_J(opt_J)
 	# There are many ways by which a fig size ends up in the -J string. So lets try here to fish the fig
-	# dimensions, at leas the fig width, from opt_J. Ofc, several things can go wrong.
+	# dimensions, at least the fig width, from opt_J. Ofc, several things can go wrong.
 	(length(opt_J) < 5 || (opt_J[4] != 'X' && opt_J[4] != 'x')) && return nothing	# Up to " -JX" and only linear
 	(occursin('d', opt_J) || occursin('p', opt_J)) && return nothing	# if it has a 'd' it means it's a geog. 
 
@@ -427,6 +427,15 @@ function fish_size_from_J(opt_J)
 	catch
 	end
 	return nothing
+end
+
+function get_figsize(opt_R::String="", opt_J::String="")
+	# Compute the current fig dimensions in paper coords using the know -R -J
+	(opt_R == "" || opt_R == " -R") && (opt_R = CTRL.pocket_R[1])
+	(opt_J == "" || opt_J == " -J") && (opt_J = CTRL.pocket_J[1])
+	(opt_R == "" || opt_J == "") && error("One or both of 'limits' ($opt_R) or 'proj' ($opt_J) is empty. Cannot compute fig size.")
+	Dwh = gmt("mapproject -W " * opt_R * opt_J)
+	return Dwh[1], Dwh[2]		# Width, Height
 end
 
 function helper_append_figsize(d::Dict, opt_J::String, O::Bool, del::Bool=true)::String
@@ -2985,9 +2994,11 @@ function vector_attrib(; kwargs...)::String
 		end
 	end
 
+	(haskey(d, :magcolor)) && (cmd *= "+c")
 	(haskey(d, :trim)) && (cmd *= "+t" * arg2str(d[:trim]))
 	(haskey(d, :ang1_ang2) || haskey(d, :start_stop)) && (cmd *= "+q")
 	(haskey(d, :endpoint)  || haskey(d, :endpt)) && (cmd *= "+s")
+	(haskey(d, :scale)) && (cmd *= "+v" * arg2str(d[:scale]))
 	(haskey(d, :uv)) && (cmd *= "+z" * arg2str(d[:uv]))
 	return cmd
 end
@@ -3717,7 +3728,8 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		reset_theme()
 	end
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
-	CTRL.pocket_J[1], CTRL.pocket_J[2] = "", ""
+	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
+	CTRL.pocket_R[1] = ""
 	return nothing
 end
 
