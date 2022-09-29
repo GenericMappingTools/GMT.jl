@@ -86,9 +86,8 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	if (opt_I == "")
 		# maxlen is the maximum length that an arrow will take. If not given it defaults to fig_width / 20
 		maxlen::Float64 = ((val = find_in_dict(d, [:maxlen]))[1] !== nothing) ? val : w/20
-		multx = round(Int, n_cols / (w / maxlen))
-		multy = round(Int, n_rows / (h / maxlen))
-		(multx == 0) && (multx == 1);	(multy == 0) && (multy == 1);
+		multx = max(1, round(Int, n_cols / (w / maxlen)))
+		multy = max(1, round(Int, n_rows / (h / maxlen)))
 		opt_I = " -Ix$(multx)/$(multy)"
 		as = max(as/multx, as/multy)
 	end
