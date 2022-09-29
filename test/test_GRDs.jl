@@ -151,12 +151,12 @@
 	G = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL");
 	dzdy = gmt("grdmath ? DDY", G);
 	dzdx = gmt("grdmath ? DDX", G);
-	grdvector(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12, V="q")
-	grdvector!(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), W="1p", S=12, Vd=dbg2)
-	r = grdvector!("",dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65), W="1p", S=12, Vd=dbg2);
-	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -W1p -Q0.25+e+n0.65")
-	r = grdvector!("", 1, 2, I=0.2, vec="0.25+e+n0.66", W=1, S=12, Vd=dbg2);
-	@test startswith(r, "grdvector  -R -J -I0.2 -S12 -W1 -Q0.25+e+n0.66")
+	grdvector(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
+	grdvector!(dzdx, dzdy, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), W="1p", Vd=dbg2)
+	grdvector(dzdx.z, dzdy.z, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), W="1p", Vd=dbg2)
+	grdvector!(dzdx.z, dzdy.z, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), S=(refpoint=1,), Vd=dbg2)
+	r = grdvector!(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65), W="1p", S=12, Vd=dbg2);
+	@test startswith(r, "grdvector  -R -J -Ve -I0.2 -S12 -W1p -Q0.25+e+n0.65")
 
 	println("	GRDVOLUME")
 	grdvolume(G);

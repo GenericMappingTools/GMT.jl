@@ -218,7 +218,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if ((do_Z_fill || do_Z_outline || (got_color_line_grad && !is3D)) && !occursin("-C", cmd))
 		if (isempty(current_cpt[1]))
 			if (got_color_line_grad)		# Use the fact that we have min/max already stored
-				mima = (arg1.ds_bbox[5+2*is3D], arg1.ds_bbox[6+2*is3D])
+				mima::Vector{Float64} = (arg1.ds_bbox[5+2*is3D], arg1.ds_bbox[6+2*is3D])
 			else
 				mima = extrema(last_non_nothing(arg1, arg2, arg3))	# Why 'last'?
 			end
@@ -335,7 +335,7 @@ function fish_bg(d::Dict, cmd::Vector{String})
 	((val = find_in_dict(d, [:bg :background])[1]) === nothing) && return cmd
 	arg1, arg2 = isa(val, Tuple) ? val[:] : (val, nothing)
 	(arg2 !== nothing && (!isa(arg2, GMTcpt) && !isa(arg2, StrSymb))) &&error("When a Tuple is used in argument of the background image option, the second element must be a string or a GMTcpt object.")
-	gotfname, fname, opt_I = false, "", ""
+	gotfname, fname::String, opt_I::String = false, "", ""
 	if (isa(arg1, StrSymb))
 		if (splitext(string(arg1))[2] != "")		# Assumed to be an image file name
 			fname, gotfname = arg1, true
@@ -350,9 +350,9 @@ function fish_bg(d::Dict, cmd::Vector{String})
 	if (!gotfname)
 		((arg2 !== nothing) && isa(arg2, String) && (arg2[1] == '-')) && (arg2 = arg2[2:end]; opt_I = " -I")
 		opt_H = (IamModern[1]) ? " -H" : ""
-		C = (arg2 === nothing) ? gmt("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I*opt_H) :	# The default gray scale here
-		                         isa(arg2, GMTcpt) ? gmt("makecpt -T0/256/1 -C" * opt_H, arg2) :
-								 gmt("makecpt -T0/256/1 -C" * string(arg2) * opt_I * opt_H)
+		C::GMTcpt = (arg2 === nothing) ? gmt("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I*opt_H) :	# The default gray scale
+		                                 isa(arg2, GMTcpt) ? gmt("makecpt -T0/256/1 -C" * opt_H, arg2) :
+							        	 gmt("makecpt -T0/256/1 -C" * string(arg2) * opt_I * opt_H)
 		image_cpt!(I, C)
 		CTRL.pocket_call[3] = I					# This signals finish_PS_module() to run _cmd first
 	end
