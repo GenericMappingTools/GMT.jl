@@ -80,28 +80,34 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	
 	opt_R = (contains(cmd, "-R") && !contains(cmd, " -R ")) ? "" : @sprintf(" -R%.4g/%.14g/%.14g/%.14g", info[1:4]...)
 	w,h = get_figsize(opt_R, opt_J)
-	as = min(max(info[6], info2[6]) * n_rows / h, max(info[6], info2[6]) * n_cols / w)
+	as = 1.05 * min(max(info[6], info2[6]) * n_rows / h, max(info[6], info2[6]) * n_cols / w)	# Autoscale (approx)
 
 	opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I")
+	multx = multy = 1
 	if (opt_I == "")
-		# maxlen is the maximum length that an arrow will take. If not given it defaults to fig_width / 20
+		# To estimate the "jumping" factor, we use a virtual 'maxlen' that is the maximum length that
+		# an arrow will take (times the scale factor). If not given it defaults to fig_width / 20
 		maxlen::Float64 = ((val = find_in_dict(d, [:maxlen]))[1] !== nothing) ? val : w/20
 		multx = max(1, round(Int, n_cols / (w / maxlen)))
 		multy = max(1, round(Int, n_rows / (h / maxlen)))
 		opt_I = " -Ix$(multx)/$(multy)"
 		as = max(as/multx, as/multy)
 	end
+
 	if (opt_S == "")
-		opt_S = @sprintf(" -S%.10g", as)
+		opt_S = @sprintf(" -S%.8g", as)
 	elseif (startswith(opt_S, " -S+c") || startswith(opt_S, " -S+s"))
-		opt_S = @sprintf(" -S%.10g%s", as, opt_S[4:end])
+		opt_S = @sprintf(" -S%.8g%s", as, opt_S[4:end])
 	end
 	cmd *= opt_I * opt_S
 
 	cmd, arg3, = add_opt_cpt(d, cmd, CPTaliases, 'C')
 	isa(arg1, String) && (cmd = arg1 * " " * arg2 * cmd; arg1 = arg3; arg2 = arg3 = nothing)
 
-	opt_Q = parse_Q_grdvec(d, [:Q :vec :vector :arrow])
+	defLen = @sprintf("%.4g",  sqrt((w*h) / ((length(1:multx:n_cols)-1)*(length(1:multy:n_rows)-1))) / 3)
+	defNorm, defHead = @sprintf("%.6g", as/2+1e-7), "yes"
+
+	opt_Q = parse_Q_grdvec(d, [:Q :vec :vector :arrow], defLen, defHead, defNorm)
 	!occursin(" -G", opt_Q) && (cmd = add_opt_fill(cmd, d, [:G :fill], 'G'))	# If fill not passed in arrow, try from regular option
 	cmd *= add_opt_pen(d, [:W :pen], "W", true)									# TRUE to also seek (lw,lc,ls)
 	(!occursin(" -C", cmd) && !occursin(" -W", cmd) && !occursin(" -G", opt_Q)) && (cmd *= " -W0.5")	# If still nothing, set -W.
@@ -111,16 +117,29 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol})::String
+function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol}, len::String="", stop::String="", norm::String="")::String
+	# LEN, STOP & NORM are default values (if != "")
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | String")
 	cmd::String = ""
-    if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		if (isa(val, String))  cmd *= " -Q" * val		# An hard core GMT string directly with options
-		else                   cmd *= " -Q" * vector_attrib(val)
+	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+		if (isa(val, String))
+			(len != "" && !isnumeric(val[1])) && (val = len * val)
+			cmd = " -Q" * val
+		else
+			cmd = (len != "" && (findfirst(:len .== fields(val)) === nothing) && (findfirst(:length .== fields(val)) === nothing)) ? " -Q" * len : " -Q"
+			cmd *= vector_attrib(val)
 		end
-		if ((ind = findfirst("+g", cmd)) !== nothing)   # -Q0.4+e+gred+n0.4+pcyan+h0
-			cmd *= " -G" * split(cmd[ind[1]+2:end], "+")[1]	# Add a -G (does the same) to have at least one of the -G, -W, -C
-		end
+		(stop != "" && !contains(cmd, "+e")) && (cmd *= "+e")
+		(norm != "" && !contains(cmd, "+n")) && (cmd *= "+n"*norm)
+	else
+		(len  != "") && (cmd *= len)
+		(stop != "") && (cmd *= "+e")
+		(norm != "") && (cmd *= "+n"*norm)
+		(cmd  != "") && (cmd = " -Q" * cmd)
+	end
+
+	if ((ind = findfirst("+g", cmd)) !== nothing)   # -Q0.4+e+gred+n0.4+pcyan+h0
+		cmd *= " -G" * split(cmd[ind[1]+2:end], "+")[1]	# Add a -G (does the same) to have at least one of the -G, -W, -C
 	end
 	return cmd
 end
