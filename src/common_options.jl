@@ -3046,6 +3046,7 @@ function helper_vec_loc(d::Dict, symb, cmd::String)::String
 	elseif (t[1] == 'c'    )	cmd *= "c"		# circle
 	elseif (t[1] == 's'    )	cmd *= "s"		# square
 	elseif (t[1] == 't'    )	cmd *= "i"		# tail
+	elseif (t[1] == 'f'    )	cmd = cmd[1:end-2]	# means false and remove the +? flag set before.
 	elseif (t == "open_arrow")	cmd *= "A"
 	elseif (t == "open_tail" )	cmd *= "I"
 	elseif (startswith(t, "left"))	cmd *= "l"
