@@ -66,6 +66,11 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
+	#x_min  x_max  y_min  y_max  z_min  z_max  dx  dy  n_cols  n_rows  reg isgeog
+	info  = get_grdinfo(arg1);		n_cols, n_rows = info[9], info[10]
+	info2 = get_grdinfo(arg2)
+	isa(arg1, String) && (CTRL.limits[1:4] = info[1:4]; CTRL.limits[7:10] = info[1:4])
+
 	def_J = " -JX" * split(def_fig_size, '/')[1] * "/0"
 	cmd, _, opt_J, opt_R = parse_BJR(d, "", "", O, def_J)
 	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params], first)[1]
@@ -73,10 +78,6 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:T :sign_scale], [:Z :azimuth]])
 	opt_S = add_opt(d, "", "S", [:S :vscale :vec_scale],
 	                (inverse=("i", nothing, 1), length=("l", arg2str, 1), scale=("",arg2str,2), scale_at_lat="+c", refsize="+s"))
-
-	#x_min  x_max  y_min  y_max  z_min  z_max  dx  dy  n_cols  n_rows  reg isgeog
-	info  = get_grdinfo(arg1);		n_cols, n_rows = info[9], info[10]
-	info2 = get_grdinfo(arg2)
 	
 	opt_R = (contains(cmd, "-R") && !contains(cmd, " -R ")) ? "" : @sprintf(" -R%.4g/%.14g/%.14g/%.14g", info[1:4]...)
 	w,h = get_figsize(opt_R, opt_J)
@@ -113,7 +114,8 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	(!occursin(" -C", cmd) && !occursin(" -W", cmd) && !occursin(" -G", opt_Q)) && (cmd *= " -W0.5")	# If still nothing, set -W.
 	(opt_Q != "") && (cmd *= opt_Q)
 
-    return finish_PS_module(d, "grdvector " * cmd, "", K, O, true, arg1, arg2, arg3)
+	_cmd = finish_PS_nested(d, ["grdvector " * cmd])
+    return finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -152,3 +154,7 @@ get_grdinfo(grd::GMTgrid)::Vector{Float64} = [grd.range..., grd.inc..., size(grd
 grdvector!(arg1, arg2; kw...) = grdvector(arg1, arg2; first=false, kw...)
 grdvector(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}; kw...) = grdvector(mat2grid(arg1), mat2grid(arg2); kw...)
 grdvector!(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}; kw...) = grdvector(mat2grid(arg1), mat2grid(arg2); first=false, kw...)
+grdvector(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}, arg3::Matrix{<:Real}, arg4::Matrix{<:Real}; kw...) = 
+	grdvector(mat2grid(arg3, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])), mat2grid(arg4, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])); kw...)
+grdvector!(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}, arg3::Matrix{<:Real}, arg4::Matrix{<:Real}; kw...) = 
+	grdvector(mat2grid(arg3, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])), mat2grid(arg4, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])); first=false, kw...)
