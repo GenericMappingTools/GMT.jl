@@ -102,7 +102,7 @@ const def_fig_axes3_bak    = " -Baf -Bza"          # 		"" but for 3D views
 const global def_fig_axes  = [def_fig_axes_bak]    # This one may be be changed by theme()
 const global def_fig_axes3 = [def_fig_axes3_bak]   #		""
 const global CTRL = CTRLstruct(zeros(12), zeros(3), [true],
-                               [:clip, :coast, :colorbar, :basemap, :logo, :text, :arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines, :vband],
+                               [:arrows, :bublechart, :basemap, :band, :clip, :coast, :colorbar, :hband, :hlines, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband],
 							   [nothing, nothing, nothing], ["",""], ["","", "", "   "], [""], [false,true], [C_NULL])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
