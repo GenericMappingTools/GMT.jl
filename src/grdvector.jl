@@ -66,13 +66,19 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	#x_min  x_max  y_min  y_max  z_min  z_max  dx  dy  n_cols  n_rows  reg isgeog
-	info  = get_grdinfo(arg1);		n_cols, n_rows = info[9], info[10]
-	info2 = get_grdinfo(arg2)
+	# Must call parse_R first to get opt_R that is needed in the get_grdinfo() call.
+	cmd, opt_R = parse_R(d, "", O)
+	#x_min  x_max  y_min  y_max  z_min  z_max  dx(7)  dy(8)  n_cols(9) n_rows(10)  reg(11) isgeog(12)
+	info  = get_grdinfo(arg1, opt_R);		n_cols, n_rows = info[9], info[10]
+	info2 = get_grdinfo(arg2, opt_R)
 	isa(arg1, String) && (CTRL.limits[1:4] = info[1:4]; CTRL.limits[7:10] = info[1:4])
 
 	def_J = " -JX" * split(def_fig_size, '/')[1] * "/0"
-	cmd, _, opt_J, opt_R = parse_BJR(d, "", "", O, def_J)
+	cmd, opt_J = parse_J(d, cmd, def_J, true, O)
+	parse_theme(d)		# Must be first because some themes change def_fig_axes
+	def_fig_axes_::String = (IamModern[1]) ? "" : def_fig_axes[1]	# def_fig_axes is a global const
+	cmd = parse_B(d, cmd, (O ? "" : def_fig_axes_))[1]
+
 	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params], first)[1]
 	!(contains(cmd, "-V")) && (cmd *= " -Ve")	# Shut up annoying warnings if -S has no units
 	cmd = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:T :sign_scale], [:Z :azimuth]])
@@ -81,24 +87,49 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	
 	opt_R = (contains(cmd, "-R") && !contains(cmd, " -R ")) ? "" : @sprintf(" -R%.4g/%.14g/%.14g/%.14g", info[1:4]...)
 	w,h = get_figsize(opt_R, opt_J)
-	as = 1.05 * min(max(info[6], info2[6]) * n_rows / h, max(info[6], info2[6]) * n_cols / w)	# Autoscale (approx)
+	max_extrema = max(abs(info[5]), abs(info[6]), abs(info2[5]), abs(info2[6]))	# The max of the absolute extremas
+	as = 1.05 * max_extrema * sqrt((n_rows*n_cols) / (w*h))		# Autoscale (approx). Idealy it should be max magnitude.
 
 	opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I")
 	multx = multy = 1
 	if (opt_I == "")
 		# To estimate the "jumping" factor, we use a virtual 'maxlen' that is the maximum length that
 		# an arrow will take (times the scale factor). If not given it defaults to fig_width / 20
-		maxlen::Float64 = ((val = find_in_dict(d, [:maxlen]))[1] !== nothing) ? val : w/20
+		maxlen::Float64 = ((val = find_in_dict(d, [:maxlen])[1]) !== nothing) ? val : w/20
 		multx = max(1, round(Int, n_cols / (w / maxlen)))
 		multy = max(1, round(Int, n_rows / (h / maxlen)))
 		opt_I = " -Ix$(multx)/$(multy)"
-		as = max(as/multx, as/multy)
+	else					# Parse the opt_I to get the multx,multy
+		ismult = (opt_I[4] == 'x')
+		s = (ismult) ? split(opt_I[5:end], "/") : split(opt_I[4:end], "/")
+		if (ismult)
+			multx = parse(Int, s[1]);	multy = (length(s) > 1) ? parse(Int, s[2]) : multx
+		else
+			incx = (s[1][end] == 'm') ? parse(Float64, s[1][1:end-1]) / 60 :
+			                            (s[1][end] == 's') ? parse(Float64, s[1][1:end-1]) / 3600 : parse(Float64, s[1])
+			incy = incx
+			if (length(s) > 1)
+				incy = (s[2][end] == 'm') ? parse(Float64, s[2][1:end-1]) / 60 :
+			                            (s[2][end] == 's') ? parse(Float64, s[2][1:end-1]) / 3600 : parse(Float64, s[2])
+			end
+			multx = max(1, round(Int, incx/info[7]))
+			multy = max(1, round(Int, incy/info[8]))
+		end
+	end
+	as = max(as/multx, as/multy)
+
+	# Now we check if geographical data is used and if yes autoscale must be recomputed. Estimate is a bit worse
+	km_u, inv_c = CTRL.proj_linear[1] ? ("", "") : ("k", "i")
+	if (!CTRL.proj_linear[1])
+		n_plotint = length(1:multx:n_cols) - 1			# number of vectors to plot along horizontal
+		km_per_plotint = w / n_plotint * multx * 111.1	# km per plot interval (one for each vec)
+		as = km_per_plotint / (max_extrema * 1.05)		# Plus 5% to compensate a bit max_extrema not being max_mag.
 	end
 
 	if (opt_S == "")
-		opt_S = @sprintf(" -S%.8g", as)
-	elseif (startswith(opt_S, " -S+c") || startswith(opt_S, " -S+s"))
-		opt_S = @sprintf(" -S%.8g%s", as, opt_S[4:end])
+		opt_S = @sprintf(" -S%s%.8g%s", inv_c, as, km_u)
+	elseif (startswith(opt_S, " -S+c") || startswith(opt_S, " -S+s"))	# For legends stuff
+		opt_S = @sprintf(" -S%s%.8g%s%s", inv_c, as, km_u, opt_S[4:end])
 	end
 	cmd *= opt_I * opt_S
 
@@ -106,7 +137,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	isa(arg1, String) && (cmd = arg1 * " " * arg2 * cmd; arg1 = arg3; arg2 = arg3 = nothing)
 
 	defLen = @sprintf("%.4g",  sqrt((w*h) / ((length(1:multx:n_cols)-1)*(length(1:multy:n_rows)-1))) / 3)
-	defNorm, defHead = @sprintf("%.6g", as/2+1e-7), "yes"
+	defNorm, defHead = @sprintf("%.6g%s", as/2+1e-7, km_u), "yes"
 
 	opt_Q = parse_Q_grdvec(d, [:Q :vec :vector :arrow], defLen, defHead, defNorm)
 	!occursin(" -G", opt_Q) && (cmd = add_opt_fill(cmd, d, [:G :fill], 'G'))	# If fill not passed in arrow, try from regular option
@@ -147,8 +178,8 @@ function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol}, len::String="", stop::S
 end
 
 # ---------------------------------------------------------------------------------------------------
-get_grdinfo(grd::String)  = gmt("grdinfo -C " * grd).data
-get_grdinfo(grd::GMTgrid)::Vector{Float64} = [grd.range..., grd.inc..., size(grd,2), size(grd,1), grd.registration]
+get_grdinfo(grd::String,  opt_R::String) = gmt("grdinfo -C" * opt_R * " " * grd).data
+get_grdinfo(grd::GMTgrid, opt_R::String) = gmt("grdinfo -C" * opt_R, grd).data
 
 # ---------------------------------------------------------------------------------------------------
 grdvector!(arg1, arg2; kw...) = grdvector(arg1, arg2; first=false, kw...)
@@ -158,3 +189,6 @@ grdvector(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}, arg3::Matrix{<:Real}, arg4
 	grdvector(mat2grid(arg3, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])), mat2grid(arg4, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])); kw...)
 grdvector!(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}, arg3::Matrix{<:Real}, arg4::Matrix{<:Real}; kw...) = 
 	grdvector(mat2grid(arg3, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])), mat2grid(arg4, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])); first=false, kw...)
+
+const quiver  = grdvector		# Aliases
+const quiver! = grdvector!

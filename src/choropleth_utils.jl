@@ -89,13 +89,13 @@ function iso3to2_na()
 	Dict( "CAN"=>"CA", "MEX"=>"MX", "USA"=>"US")
 end
 
+# --------------------------------------------------------------------------------------------------
 """
 d = iso3to2_world()
 
 	Creates a Dictionary that maps WORLD country code names from ISO3166A3 (3 chars) to ISO3166A2 (2 chars)
 	It has 250 contry names.
 """
-# --------------------------------------------------------------------------------------------------
 function iso3to2_world()
 Dict("AFG"=>"AF", "ALA"=>"AX", "ALB"=>"AL", "DZA"=>"DZ", "ASM"=>"AS", "AND"=>"AD", "AGO"=>"AO", "AIA"=>"AI", "ATA"=>"AQ",
 	"ATG"=>"AG", "ARG"=>"AR", "ARM"=>"AM", "ABW"=>"AW", "AUS"=>"AU", "AUT"=>"AT", "AZE"=>"AZ", "BHS"=>"BS", "BHR"=>"BH",
@@ -128,12 +128,25 @@ Dict("AFG"=>"AF", "ALA"=>"AX", "ALB"=>"AL", "DZA"=>"DZ", "ASM"=>"AS", "AND"=>"AD
 end
 
 # --------------------------------------------------------------------------------------------------
-function mk_codes_values(codes::Vector{String}, vals; region::String="world")
-	_region = lowercase(region)
-	if     (_region == "world")  d = iso3to2_world()
-	elseif (_region == "eu")     d = iso3to2_eu()
-	else   error("The region $(region) is invalid or has not been implemented yet.")
-	end
+"""
+    code, vals = mk_codes_values(codes::Vector{String}, vals; region::StrSymb="world")
+
+Take a list of country `codes`` in the ISO alpha-3 country code names, a vector of numeric `vals`
+that will be used in a choropleth and select only those that belong to the region `region`.
+Possible values for region are: "world", "eu", "af" or "na".
+
+Returns `code` in the ISO alpha-2 country code names and corresponding `vals`. This output is then
+usable in cpt2dcw() to create a colormap to use in `plot()` and make a country choropleth map.
+"""
+function mk_codes_values(codes::Vector{String}, vals; region::StrSymb="world")
+	isempty(codes) && error("The country codes 'codes' input argument is empty.")
+	code_len = length(codes[1])
+	(length(codes[1]) != 3) && error("The country codes in this function must follow the 3 char ISO codes. This does not.")
+
+	_reg = lowercase(string(region))
+	!any(_reg .== ["world", "eu", "af", "na"]) && error("The region $(region) is invalid or has not been implemented yet.")
+	d = (_reg == "eu") ? iso3to2_eu() : (_reg == "af") ? iso3to2_af() : (_reg == "na") ? iso3to2_na() : iso3to2_world()
+
 	ky, vl = String[], Float64[]
 	for k = 1:length(codes)
 		r = get(d, codes[k], "")

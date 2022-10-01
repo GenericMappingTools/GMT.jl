@@ -2479,7 +2479,7 @@ function add_opt_module(d::Dict)::Vector{String}
 	# 'val' can be a NamedTuple with the module's arguments or a 'true'.
 	out = Vector{String}()
 
-	symbs_data = [:arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines, :text, :hband, :vband, :vspan, :hspan]
+	#symbs_data = [:arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines, :text, :hband, :vband, :vspan, :hspan]
 
 	for symb in CTRL.callable			# Loop over modules list that can be called inside other modules
 		r::String = ""
@@ -2501,10 +2501,10 @@ function add_opt_module(d::Dict)::Vector{String}
 					r = replace(r, " -R -J" => "")
 					r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'
 				else
-					!(symb in symbs_data) && error("Nested Fun call $symb not in the callable nested functions list")
+					!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
 					_d = nt2dict(nt)
 					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; del_from_dict(d, [:data]))
-					this_symb = symbs_data[findfirst(symb .== symbs_data)]
+					this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
 					fn = getfield(Main, Symbol(string(this_symb, "!")))
 					if (this_symb in [:vband, :hband, :vspan, :hspan])
 						r = fn(CTRL.pocket_call[1]; nested=true, Vd=2, nt...)
