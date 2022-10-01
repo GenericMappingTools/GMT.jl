@@ -153,6 +153,7 @@
 	dzdx = gmt("grdmath ? DDX", G);
 	grdvector(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), G=:black, W="1p", S=12)
 	grdvector!(dzdx, dzdy, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), W="1p", Vd=dbg2)
+	grdvector(dzdx, dzdy, I=0.2, vector="0.3+gred", J=:ortho, Vd=dbg2)
 	grdvector(dzdx, dzdy, I="x1", Vd=dbg2)
 	grdvector(dzdx, dzdy, I="0.2/0.2", Vd=dbg2)
 	grdvector(dzdx.z, dzdy.z, I=0.2, vector=(len=0.25, stop=1, norm=0.65, shape=0.5), W="1p", Vd=dbg2)
