@@ -220,7 +220,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 			if (got_color_line_grad)		# Use the fact that we have min/max already stored
 				mima::Vector{Float64} = (arg1.ds_bbox[5+2*is3D], arg1.ds_bbox[6+2*is3D])
 			else
-				mima = extrema(last_non_nothing(arg1, arg2, arg3))	# Why 'last'?
+				mima = [extrema(last_non_nothing(arg1, arg2, arg3))...]	# Why 'last'?
 			end
 			r = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 		else
