@@ -1296,7 +1296,7 @@ The elements of `zvals` are made up from the `vals`.
 
 - `ids`:    is a string Vector or Matrix with the ids (attribute names) of the GMTdataset D.
             If a Matrix (2 columns only) then the `att` bellow must also have the two names (string vector
-            with two elements) that will be matched against the two elements of each line of `user_ids`.
+            with two elements) that will be matched against the two elements of each line of `ids`.
             The idea here is to match two conditions: `att[1] == ids[n,1] && att[2] == ids[n,2]`
 - `vals`:   is a vector with the numbers to be used in plot `level` to color the polygons.
 - `attrib` or `att`: keyword to select which attribute to use when matching with contents of the `ids` strings.
@@ -1379,7 +1379,7 @@ function edit_segment_headers!(D, vals::Array, opt::String)
 
 	ids, ind = dsget_segment_ids(D)
 	if (isa(D, Array))
-		[D[ind[k]].header *= string(opt, vals[k])  for k = 1:length(ind)]
+		[D[ind[k]].header *= string(opt, vals[k])  for k = 1:lastindex(ind)]
 	else
 		D.header *= string(opt, vals[1])
 	end
@@ -1403,7 +1403,7 @@ function dsget_segment_ids(D)::Tuple{Vector{AbstractString}, Vector{Int}}
 	ind::Vector{Int} = 1:n
 	ind = ind[tf]			# OK, now we have the indices of the segments with headers != ""
 	ids = Vector{AbstractString}(undef,length(ind))		# pre-allocate
-	[ids[k] = d[ind[k]] for k = 1:length(ind)]
+	[ids[k] = d[ind[k]] for k = 1:lastindex(ind)]
 	return ids, ind
 end
 
