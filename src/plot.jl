@@ -804,7 +804,7 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 		Dwh = gmt("mapproject -W " * opt_R * opt_J)			# Compute the fig dimensions in paper coords.
 		aspect_limits = (CTRL.limits[10] - CTRL.limits[9]) / (CTRL.limits[8] - CTRL.limits[7])	# Plot, not data, limits
 		aspect_sizes  = Dwh[2] / Dwh[1]
-		scale_fig     = round(aspect_sizes / aspect_limits, digits=8)
+		scale_fig     = round(aspect_sizes / aspect_limits, digits=8)	# This compensates for the non-isometry
 
 		unit = isa(arg1, Vector{<:GMTdataset}) ? "q" : "iq"	# The BUG only strikes on matrices, not GMTdatsets
 		def_z = "+z$(Dwh[1] / (CTRL.limits[8] - CTRL.limits[7]))" * unit
