@@ -652,6 +652,7 @@ abstract type AbstractSpatialRef end		# needs to have a `ptr::GDALSpatialRef` at
 abstract type AbstractRasterBand{T} end		# needs to have a `ptr::GDALDataset` attribute
 #abstract type AbstractGeometry <: GeoInterface.AbstractGeometry end	# needs to have a `ptr::GDALGeometry` attribute
 abstract type AbstractGeometry  end			# needs to have a `ptr::GDALGeometry` attribute
+abstract type AbstractFeature end			# needs to have a `ptr::GDAL.OGRFeatureH` attribute
 abstract type AbstractFeatureDefn end		# needs to have a `ptr::GDALFeatureDefn` attribute
 abstract type AbstractFeatureLayer end		# needs to have a `ptr::GDALDataset` attribute
 abstract type AbstractFieldDefn end			# needs to have a `ptr::GDALFieldDefn` attribute
@@ -1607,7 +1608,7 @@ end
 		:simplifypreservetopology, :symdifference, :union, :update, :readraster,)
 =#
 	# We don't have unsafe_ versions for most of the above make the list much shorter
-	for gdalfunc in (:read, :getspatialref)
+	for gdalfunc in (:clone, :copy, :createfielddefn, :creategeom, :getfeature, :getlayer, :getspatialref, :read)
 		eval(quote
 			function $(gdalfunc)(f::Function, args...; kwargs...)
 				obj = $(Symbol("unsafe_$gdalfunc"))(args...; kwargs...)
@@ -1737,6 +1738,7 @@ end
 	getname(layer::AbstractFeatureLayer)  = OGR_L_GetName(layer.ptr)
 	#getname(fielddefn::AbstractFieldDefn) = OGR_Fld_GetNameRef(fielddefn.ptr)
 	function getname(fielddefn::AbstractFieldDefn)
+		# Issue reported here https://github.com/JuliaLang/julia/issues/47003 but answer ... don't be rude
 		(VERSION > v"1.8") && println(IOBuffer(maxsize=0), fielddefn.ptr);		# TEMP to avoid 1.9 bug
 		OGR_Fld_GetNameRef(fielddefn.ptr)
 	end
@@ -1760,7 +1762,7 @@ end
 	gettype(name::AbstractString) = GDALGetDataTypeByName(name)
 	#gettype(fielddefn::AbstractFieldDefn) = OGR_Fld_GetType(fielddefn.ptr)
 	function gettype(fielddefn::AbstractFieldDefn)
-		#(VERSION > v"1.8") && println(IOBuffer(maxsize=0), fielddefn.ptr);		# TEMP to avoid 1.9 bug
+		(VERSION > v"1.8") && println(IOBuffer(maxsize=0), fielddefn.ptr);		# TEMP to avoid 1.9 bug
 		OGR_Fld_GetType(fielddefn.ptr)
 	end
 	gettype(geomdefn::AbstractGeomFieldDefn) = OGR_GFld_GetType(geomdefn.ptr)
@@ -1963,7 +1965,7 @@ end
 		end
 	end
 	getfield(feature::Feature, name::Union{AbstractString, Symbol}) = getfield(feature, findfieldindex(feature, name))
-
+	getfield(feature::AbstractFeature, i::Nothing)::Missing = missing
 
 	function setfield!(feature::Feature, i::Integer, value::Cint)
 		OGR_F_SetFieldInteger(feature.ptr, i, value);	return feature
