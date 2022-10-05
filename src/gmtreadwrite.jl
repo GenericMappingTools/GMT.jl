@@ -143,6 +143,7 @@ function gmtread(fname::String; kwargs...)
 		#return (dbg_print_cmd(d, cmd) !== nothing) ? "gmtread " * cmd : gmt("read " * fname * cmd)
 		(dbg_print_cmd(d, cmd) !== nothing) && return "gmtread " * cmd
 		o = gmt("read " * fname * cmd)
+		(isempty(o)) && error("\tFailed to read file \"$fname\"\n")
 		# If GMTdataset see if the comment may have the column names
 		if (isa(o, GMTdataset) && isempty(o.colnames) && !isempty(o.comment)) ||
 			(isa(o, Vector{<:GMTdataset}) && isempty(o[1].colnames) && !isempty(o[1].comment))
@@ -170,13 +171,13 @@ function gmtread(fname::String; kwargs...)
 	API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_NOGDALCLOSE + GMT_SESSION_COLMAJOR);
 
 	drop_islands = ((val = find_in_dict(d, [:no_islands :no_holes])[1]) !== nothing) ? true : false
-	x = opt_R2num(opt_R)		# See if we have a limits request
+	x = (opt_R == "") ? [0.0, 0, 0, 0] : opt_R2num(opt_R)		# See if we have a limits request
 	if (GMTver > v"6.1.1")
-		lims = (x === nothing) ? (0.0, 0.0, 0.0, 0.0, 0.0, 0.0) : tuple(vcat(x,[0.0, 0.0])...)
+		lims = tuple(vcat(x,[0.0, 0.0])...)
 		ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
 		O = ogr2GMTdataset(gmt_ogrread(API2, pointer([ctrl])), drop_islands)
 	else
-		O = ogr2GMTdataset(gmt_ogrread(API2, fname, (x === nothing) ? C_NULL : x), drop_islands)
+		O = ogr2GMTdataset(gmt_ogrread(API2, fname, x), drop_islands)
 	end
 
 	ressurectGDAL()				# Because GMT called GDALDestroyDriverManager()
