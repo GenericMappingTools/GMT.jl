@@ -20,4 +20,8 @@ function _precompile_()
 
 	@assert Base.precompile(Tuple{typeof(mat2ds),String})
 	@assert Base.precompile(Tuple{typeof(mat2ds),Matrix{Float64}})
+
+	@assert Base.precompile(Tuple{typeof(parse_B),Dict{Symbol, Any}, String})
+	@assert Base.precompile(Tuple{typeof(parse_R),Dict{Symbol, Any}, String})
+	@assert Base.precompile(Tuple{typeof(parse_J),Dict{Symbol, Any}, String, String})
 end
