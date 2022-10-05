@@ -25,6 +25,8 @@ if (got_it)					# Otherwise go straight to end
 	GMT.GMT_Get_Ctrl(API);
 
 	if (GMTver > v"6.1.1")
+		#println("		Entering: test_gd_features.jl")
+		#include("test_gd_features.jl")
 		println("		Entering: test_proj4.jl")
 		include("test_proj4.jl")
 		println("		Entering: test_gd_ext.jl")

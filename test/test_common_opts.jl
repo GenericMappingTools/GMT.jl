@@ -257,6 +257,7 @@
 	GMT.polygonlevels(D, ["a", "b"], [1,2], att="nome", nocase=1);
 	GMT.polygonlevels(D, ["a" "aa"; "b" "bb"], [1,2], att=["nome", "nome2"]);
 	GMT.polygonlevels(D, ["a" "aa"; "b" "bb"], [1,2], att=["nome", "nome2"], nocase=1);
+	GMT.polygonlevels(D, ["a", "b", "c"], [1,2,missing], att="nome");
 	GMT.edit_segment_headers!(D, [1], "0");
 	GMT.getbyattrib(D, att="nome", val="a");
 	GMT.getbyattrib(D, att=(nome="a", nome2="b"));
