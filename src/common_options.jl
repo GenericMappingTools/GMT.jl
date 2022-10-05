@@ -38,6 +38,16 @@ function del_from_dict(d::Dict, symbs::Vector{Symbol})
 	end
 end
 
+#=
+function is_in_kwargs(p, symbs::VMs)::Bool
+	# Just check if any of the symbols in SYMBS is present in the P kwargs
+	for symb in symbs
+		(haskey(p, symb)) && return true
+	end
+	return false
+end
+=#
+
 function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_str::String="")
 	# See if P contains any of the symbols in SYMBS. If yes, return corresponding value
 	(show_kwargs[1] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
@@ -269,7 +279,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function opt_R2num(opt_R::String)
 	# Take a -R option string and convert it to numeric
-	(opt_R == "") && return nothing
+	(opt_R == "") && error("opt_R is empty but that shouldn't happen here.")
 	(endswith(opt_R, "Rg")) && return [0.0, 360., -90., 90.]
 	(endswith(opt_R, "Rd")) && return [-180.0, 180., -90., 90.]
 	if (findfirst("/", opt_R) !== nothing && !contains(opt_R, ":"))
@@ -278,7 +288,7 @@ function opt_R2num(opt_R::String)
 			opt_R = opt_R[1:ind[1]-1];	isdiag = true		# Strip the "+r"
 		end
 		rs = split(opt_R, '/')
-		limits = zeros(length(rs))
+		limits::Vector{<:Float64} = zeros(length(rs))
 		fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
 		#contains(rs[2], "T") || contains(rs[2], "t")
 		limits[1] = parse(Float64, rs[1][fst+1:end])
@@ -1897,8 +1907,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function finish_PS_nested(d::Dict, cmd::Vector{String})::Vector{String}
 	# Finish the PS creating command, but check also if we have any nested module calls like 'coast', 'colorbar', etc
+	!has_opt_module(d) && return cmd
 	cmd2::Vector{String} = add_opt_module(d)
-	isempty(cmd2) && return cmd
 
 	if (startswith(cmd2[1], "clip"))		# Deal with the particular psclip case (Tricky)
 		if (isa(CTRL.pocket_call[1], Symbol) || isa(CTRL.pocket_call[1], String))	# Assume it's a clip=end
@@ -1910,7 +1920,7 @@ function finish_PS_nested(d::Dict, cmd::Vector{String})::Vector{String}
 			t::String, opt_B::String, opt_B1::String = "psclip " * extra * opt_R * " " * opt_J, "", ""
 			ind = findall(" -B", cmd[1])
 			if (!isempty(ind) && (findfirst("-N", extra) === nothing))
-				for k = 1:length(ind)
+				for k = 1:lastindex(ind)
 					opt_B *= " " * strtok(cmd[1][ind[k][1]:end])[1]
 				end
 				# Here we need to reset any -B parts that do NOT include the plotting area and which were clipped.
@@ -2474,12 +2484,16 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 end
 
 # ---------------------------------------------------------------------------------------------------
+function has_opt_module(d::Dict)::Bool
+	for symb in CTRL.callable			# Loop over modules list that can be called inside other modules
+		haskey(d, symb) && return true
+	end
+	return false
+end
 function add_opt_module(d::Dict)::Vector{String}
 	#  SYMBS should contain a module name (e.g. 'coast' or 'colorbar'), and if present in D,
 	# 'val' can be a NamedTuple with the module's arguments or a 'true'.
 	out = Vector{String}()
-
-	#symbs_data = [:arrows, :lines, :scatter, :scatter3, :plot, :plot3, :hlines, :vlines, :text, :hband, :vband, :vspan, :hspan]
 
 	for symb in CTRL.callable			# Loop over modules list that can be called inside other modules
 		r::String = ""
