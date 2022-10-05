@@ -295,6 +295,40 @@ include("imshow.jl")		# Include later because one method depends on knowing abou
 const global current_cpt = [GMTcpt()]		# To store the current palette
 const global legend_type = [legend_bag()]	# To store Legends info
 
+#=
+import SnoopPrecompile
+@SnoopPrecompile.precompile_all_calls begin
+	parse_R(Dict(:region => (1,2,3,4)), "")
+	parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")
+	parse_R(Dict(:region_llur => (1,2,3,4)), "")
+	parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen")
+	parse_B(Dict(:frame => :auto, :title => :bla), "")
+	parse_B(Dict(:title => "BlaBla", :frame => :none), "")
+
+	parse_J(Dict(:J => "X5"), "", "", false)
+	parse_J(Dict(:a => ""), "", "", true, true)
+	parse_J(Dict(:J => "X", :figsize => 10), "")
+	parse_J(Dict(:J => "X", :scale => "1:10"), "")
+	parse_J(Dict(:proj => "Ks0/15"), "")
+	parse_J(Dict(:scale=>"1:10"), "")
+	parse_J(Dict(:s=>"1:10"), "", " -JU")
+	parse_J(Dict(:J => "Merc", :figsize => 10), "", "", true, true)
+	parse_J(Dict(:J => (name=:albers, center=[10 20], parallels=[45 65])), "", "", false)
+	parse_J(Dict(:J => "winkel"), "", "", false)
+	parse_J(Dict(:J => (name=:merc,center=10)), "","", false)
+
+	#parse_ls_code!(Dict(:ls => "-"))
+	#parse_ls_code!(Dict(:ls => "LineCirc"))
+
+	#add_opt_module(Dict(:coast => 1))
+
+	#G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
+	#plot(rand(5,2))
+	#makecpt(T=(0,10))
+	#grdimage(rand(Float32,32,32))
+end
+=#
+
 function __init__(test::Bool=false)
 	if (GMTver == v"0.0" || test)
 		println("\n\nYou don't seem to have GMT installed and the automatic installation also failed.\nYou will have to do it yourself.")
@@ -320,13 +354,6 @@ function __init__(test::Bool=false)
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 	(GMTver < v"6.2.0") && extra_sets()		# some calls to gmtlib_setparameter() (theme_modern already called this)
 end
-
-#@precompile_all_calls begin
-	#G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
-	#plot(rand(5,2))
-	#makecpt(T=(0,10))
-	#grdimage(rand(Float32,32,32))
-#end
 
 include("precompile_GMT_i.jl")
 _precompile_()

@@ -136,14 +136,14 @@ function gd2gmt_helper(input, sds)
 	end
 	if (isa(input, AbstractString))
 		sds_name = trim_SUBDATASET_str(input)
-		((dataset = Gdal.unsafe_read(sds_name)) == C_NULL) && error("GDAL failed to read " * sds_name)
+		((dataset = Gdal.unsafe_read(sds_name)) == C_NULL) && error("\tGDAL failed to read " * sds_name * "\n")
 	else
 		dataset = input
 	end
 
 	# Hmmm, check also for scale_factor, add_offset, _FillValue
 	info = gdalinfo(dataset)
-	(info === nothing) && error("GDAL failed to read " * (isa(input, AbstractString) ? sds_name : "input dataset"))
+	(info === nothing) && error("\tGDAL failed to read " * (isa(input, AbstractString) ? sds_name : "input dataset\n"))
 	if (occursin("Metadata:", info))
 		if ((ind = findfirst("scale_factor=", info)) !== nothing)	# OK, found one
 			ind2 = findfirst('\n', info[ind[1]:end])

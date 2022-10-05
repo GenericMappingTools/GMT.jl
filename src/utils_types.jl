@@ -1309,6 +1309,15 @@ Returns a Vector{Float64} with the same length as the number of segments in D. I
 made up from the contents of `vals` but may be repeated such that each polygon of the same family, i.e.
 with the same `ids`, has the same value.
 """
+function polygonlevels(D::Vector{<:GMTdataset}, user_ids::VecOrMat{String}, vals; kw...)
+	# Damn missings are so annoying. And the f types too. Can't restrict it to Vector{Union{Missing, <:Real}}
+	# This method works for both Vector or Matrix 'user_ids'.
+	et = eltype(vals);
+	(et != Union{Missing, Float64} && et != Union{Missing, Float32} && et != Union{Missing, Int}) && @warn("Probable error in data type ($et)")
+	inds, _vals = ismissing.(vals), collect(skipmissing(vals))
+	any(inds) && (user_ids = isa(user_ids, Matrix) ? user_ids[:,.!inds] : user_ids[.!inds])
+	polygonlevels(D, user_ids, _vals; kw...)
+end
 function polygonlevels(D::Vector{<:GMTdataset}, user_ids::Vector{String}, vals::Vector{<:Real}; kw...)::Vector{Float64}
 	@assert((n_user_ids = length(user_ids)) == length(vals))
 	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
