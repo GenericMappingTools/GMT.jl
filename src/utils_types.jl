@@ -41,7 +41,7 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
 Alternatively, if `mat` is a string or vector of strings we return a dataset with NaN's in the place of
 the coordinates. This form is useful to pass to `text` when using the `region_justify` option that
 does not need explicit coordinates to place the text.
-  - `txt`:   Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
+  - `txt`: Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
      can be an array with same size as `mat` rows or a string (will be reapeated n_rows times.) 
   - `x`:   An optional vector with the _xx_ coordinates
   - `hdr`: optional String vector with either one or n_rows multisegment headers.
@@ -223,6 +223,23 @@ function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs.
 	end
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	return (length(D) == 1 && !multi) ? D[1] : D		# Drop the damn Vector singletons
+end
+
+# ---------------------------------------------------------------------------------------------------
+function mat2ds(D::GMTdataset, inds)::GMTdataset
+	# Cut a GMTdataset D with the indices in INDS but updating the colnames and the Timecol info.
+	# Attention, if original had attributes other than 'Timeinfo' there is no guarentie that they remain correct. 
+	(length(inds) != ndims(D)) && error("\tNumber of GMTdataset dimensions and indices components must be the same.\n")
+	_D = mat2ds(D.data[inds...], proj4=D.proj4, wkt=D.wkt, epsg=D.epsg, geom=D.geom, colnames=D.colnames, attrib=D.attrib)
+	(!isempty(D.text)) && (_D.text = D.text[inds[1]])
+	(typeof(inds[2]) == Colon) && return _D		# We are done here
+
+	_D.colnames = D.colnames[inds[2]]
+	i = findall(startswith.(_D.colnames, "Time"))
+	isempty(i) && return _D						# No TIME columns. We are done
+	(length(i) == 1) ? (Tc = "$(i[1])") : _i = i[2:end]
+	D.attrib["Timecol"] = (length(i) == 1) ? Tc : [Tc *= ",$k" for k in _i]
+	return _D
 end
 
 # ---------------------------------------------------------------------------------------------------
