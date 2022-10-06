@@ -81,6 +81,8 @@
 	plot(D, legend=true, Vd=dbg2);
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
 	mat2ds(rand(5,4), x=1:5, hdr=[" -W1" "a" "b" "c"], multi=true);
+	D = mat2ds(rand(5,3), attrib=Dict("Timecol" => "1"), colnames=["Time","a","b"])
+	mat2ds(D, [:,1:2])
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
 	@info "color_gradient"
 	GMT.color_gradient_line(rand(3,2));

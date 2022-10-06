@@ -115,8 +115,11 @@ function gmtread(fname::String; kwargs...)
 	end
 
 	# These are tricky gals, but we know who they are so use that knowledge.
-	(opt_T == "" && (startswith(fname, "@earth_relief") || startswith(fname, "@earth_age") || startswith(fname, "@earth_mask"))) && (opt_T = " -Tg")
-	(opt_T == "" && (startswith(fname, "@earth_day") || startswith(fname, "@earth_night"))) && (opt_T = " -Ti")
+	if (opt_T == "")
+		if (startswith(fname, "@earth_day") || startswith(fname, "@earth_night"))  opt_T = " -Ti"
+		elseif (startswith(fname, "@earth_"))                                      opt_T = " -Tg"
+		end
+	end
 
 	if (opt_T == "")
 		((opt_T = guess_T_from_ext(fname)) == "") && error("Must select one input data type (grid, image, dataset, cmap or ps)")
@@ -157,6 +160,10 @@ function gmtread(fname::String; kwargs...)
 				(length(hfs) >= ncs) && (o[1].colnames = string.(hfs)[1:ncs])
 			end
 		end
+
+		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
+		(opt_bi == ""  && isa(o, GDtype)) && file_has_time!(fname, o)
+
 		if (isa(o, GMTgrid))
 			o.hasnans = any(!isfinite, o) ? 2 : 1
 			# Check if we should assign a default CPT to this grid
@@ -183,6 +190,42 @@ function gmtread(fname::String; kwargs...)
 	ressurectGDAL()				# Because GMT called GDALDestroyDriverManager()
 	GMT_Destroy_Session(API2)
 	return O
+end
+
+# ---------------------------------------------------------------------------------
+function file_has_time!(fname::String, D::GDtype)
+	#line1 = split(collect(Iterators.take(eachline(fname), 1))[1])	# Read first line and cut it in tokens
+	isone = isa(D, GMTdataset) ? true : false
+	names_str = (isone) ? ["col.$i" for i=1:size(D,2)] : ["col.$i" for i=1:size(D[1],2)]
+	isone ? (D.colnames = names_str) : [D[k].colnames = names_str for k = 1:lastindex(D)]	# Default col names
+	n_cols = (isone) ? size(D,2) : size(D[1],2)
+	Tc, f1, n_it = "", 1, 0
+	fid = open(fname)
+	iter = eachline(fid)
+	try
+	for it in iter
+		line1 = split(it)
+		n_it += 1			# Counter to not let this go on infinetely
+		(n_it > 10 || isempty(line1) || contains(">#!%;", line1[1][1])) && continue
+		for k = 1:n_cols
+			# Time cols may come in forms like [-]yyyy-mm-dd[T| [hh:mm:ss.sss]], so to find them we seek for
+			# '-' chars in the middle of strings that we KNOW have been converted to numbers. The shit that is
+			# left to be solved is that we can have TWO strings, 'yyyy-mm-dd hh:mm:ss.sss' to mean a single time.
+			if ((i = findlast("-", line1[k])) !== nothing && i[1] > 1)
+				Tc = (Tc == "") ? "$k" : Tc * ",$k"			# Accept more than one time columns
+				Ts = (f1 == 1) ? "Time" : "Time$(f1+=1)"
+				(isone) ? (D.colnames[k] = Ts) : (D[1].colnames[k] = Ts)
+			end
+		end
+		(Tc != "") && ((isone) ? (D.attrib["Timecol"] = Tc) : (D[1].attrib["Timecol"] = Tc))
+		break
+	end
+	catch err
+		isone ? (D.colnames = String[]) : [D[k].colnames = String[] for k = 1:lastindex(D)]
+		@warn("Failed to parse file $fname for file_has_time!(). Error was: $err")
+	end
+	close(fid)
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------
