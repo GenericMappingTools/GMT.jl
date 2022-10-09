@@ -172,13 +172,13 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 		try
 			limits = opt_R2num(opt_R)
 			# I'm puting the data limts = plot limts below but that's not right. Specialy if data limits is not 0's
-			#(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4)) && (CTRL.limits[1:length(limits)] = limits)
+			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4)) && (CTRL.limits[1:length(limits)] = limits)
 			#all(CTRL.limits[7:10] .== 0) && (CTRL.limits[7:10] = CTRL.limits[1:4])	# Then make plot limits == data limits
 			#CTRL.limits[7:10] = CTRL.limits[1:4]	# Then make plot limits == data limits
 
 			CTRL.limits[7:7+length(limits)-1] = limits		# The plot limits
-			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4) && all(CTRL.limits[1:4] .== 0)) &&
-				(CTRL.limits[1:length(limits)] = limits)	# And this makes data = plot limits, IF data is empty.
+			#(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4) && all(CTRL.limits[1:4] .== 0)) &&
+				#(CTRL.limits[1:length(limits)] = limits)	# And this makes data = plot limits, IF data is empty.
 		catch
 			CTRL.limits .= 0.0
 		end
