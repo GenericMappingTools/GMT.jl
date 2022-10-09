@@ -4,6 +4,7 @@
 	GMT.__init__(true);
 	GMT.dict2nt(Dict(:a =>1, :b => 2))
 	@test GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")[1] == " -R1/2/3/4/5/6"
+	@test GMT.parse_R(Dict(:R => (1,2,3,4), :ylim => (33,44), :zlim => (5,6)), "")[1] == " -R1/2/33/44/5/6"
 	@test GMT.parse_R(Dict(:region_llur => (1,2,3,4)), "")[1] == " -R1/3/2/4+r"
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
 	@test GMT.build_opt_R(G1) == " -R-2/2/-2/2"

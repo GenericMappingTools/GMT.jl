@@ -151,6 +151,8 @@
 	GMT.pol2cart(5,0);
 	GMT.sph2cart([0.7854 0.7854], [0.6155 -0.6155], [1.7321 1.7321]);
 	GMT.cart2sph([1 1], [1 1], [1 -1]);
+	GMT.findmax_nan([1., 3, NaN, 8])
+	GMT.findmin_nan([1., 3, NaN, 8])
 	fields(7);
 	fields(rand(2,2))
 	tic();toc()
