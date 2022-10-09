@@ -1531,15 +1531,17 @@ parse_G(d::Dict, cmd::String) = parse_helper(cmd, d, [:G :save :write :outgrid :
 function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
+	get_that_string(arg)::String = string(arg)		# Function barrier. Shting up JET, etc.
+
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
 		if isa(val, Dict)  val = dict2nt(val)  end
 		if (isa(val, NamedTuple))
 			x::String = "";	y::String = "";	u::String = "";	e = false
 			fn = fieldnames(typeof(val))
 			for k = 1:length(fn)
-				if     (fn[k] == :x)     x  = string(val[k])
-				elseif (fn[k] == :y)     y  = string(val[k])
-				elseif (fn[k] == :unit)  u  = string(val[k])
+				if     (fn[k] == :x)     x  = get_that_string(val[k])
+				elseif (fn[k] == :y)     y  = get_that_string(val[k])
+				elseif (fn[k] == :unit)  u  = get_that_string(val[k])
 				elseif (fn[k] == :extend) e = true
 				end
 			end
@@ -3308,7 +3310,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	cmd, opt_di = parse_di(d, cmd)		# If data missing data other than NaN
 	cmd, opt_h  = parse_h(d, cmd)
 	cmd, opt_yx = parse_swap_xy(d, cmd)
-	(CTRL.proj_linear[1]) && (opt_yx *= " -fc")		# To avoid the lib remembering last eventual geog case
+	#(CTRL.proj_linear[1]) && (opt_yx *= " -fc")	# To avoid the lib remembering last eventual geog case, but it f time
 	endswith(opt_yx, "-:") && (opt_yx *= "i")		# Need to be -:i not -: to not swap output too
 
 	(fname == "") && return _read_data(d, cmd, arg, opt_R, is3D, get_info, opt_i, opt_di, opt_yx)
@@ -3316,6 +3318,8 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])		# Must read file to find -R
 		if (!IamSubplot[1] || GMTver > v"6.1.1")	# Protect against a GMT bug
 			arg::GDtype = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * fname)
+			# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
+			(opt_bi == "") && file_has_time!(fname, arg)
 			# Remove the these options from cmd. Their job is done
 			if (opt_i != "")  cmd = replace(cmd, opt_i => "");	opt_i = ""  end
 			if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end

@@ -656,7 +656,7 @@ function helper_input_ds(cmd0::String="", arg1=nothing; kwargs...)
 	# Block common to some functions. Read the file if cmd0 != "" and takes care of "select by col"
 	# if arg1 is a GMTdataset (or a vector of them). 
 	d = KW(kwargs)
-	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", nothing, false, true)[2])
+	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", nothing, "", false, true)[2])
 	(isa(arg1, Matrix) && size(arg1,2) > 2 && find_in_dict(d, [:multicol])[1] !== nothing) && (arg1 = mat2ds(arg1, multi=true, color="yes"))
 	haveVarFill = (haskey(d, :fill) && d[:fill] == true)
 	haveVarFill && delete!(d, :fill)		# Otherwise GMT would error
@@ -812,20 +812,12 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 		scale_fig     = round(aspect_sizes / aspect_limits, digits=8)	# This compensates for the non-isometry
 		
 		unit = isa(arg1, Vector{<:GMTdataset}) ? "q" : "iq"	# The BUG only strikes on matrices, not GMTdatsets
-		def_z = "+z$(Dwh[1] / (CTRL.limits[8] - CTRL.limits[7]))" * unit
+		def_z = @sprintf("+z%.8g%s", (Dwh[1] / (CTRL.limits[8] - CTRL.limits[7])), unit)
 	end
 	if (Tc)				# Have a time column
 		bb = (isone) ? arg1.bbox : arg1[1].ds_bbox
 		#           2 * max(abs(miny,maxy))     /      (y_plot_max - y_plot_min)     /  max(abs(vmin,vmax))  * H/2
 		facTc = (2*max(abs(bb[8]), abs(bb[7]))) / (CTRL.limits[10] - CTRL.limits[9]) / max(abs.(bb[7:8])...) * Dwh[2] / 2
-
-		# Now this is another mystery. WTF do we need to scale to 1 / sin(theta_of_absmax_y) ????
-		#yy = (isone) ? view(arg1,:,4) : view(arg1[1],:,4)	# See? and what about the other arg1 elements when it's a vec?
-		#ma,ind1 = findmax_nan(yy);		mi,ind2 = findmin_nan(yy)
-		#ind = (abs(ma) > abs(mi)) ? ind1 : ind2
-		#teta = (isone) ? atan(arg1[ind,4], arg1[ind,3]) : atan(arg1[1][ind,4], arg1[1][ind,3])
-		#facTc *= 1 / abs(sin(teta))
-
 		def_z, scale_fig = @sprintf("+z%.8gi", facTc), 1.0
 	end
 	def_e = (find_in_dict(d, [:nohead])[1] !== nothing) ? "" : "+e"
