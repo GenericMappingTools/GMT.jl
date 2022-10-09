@@ -153,21 +153,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 		return cmd, ""
 	end
 
-	if (opt_R == "")		# See if we got the region as tuples of xlim, ylim [zlim]
-		R::String = "";		c = 0
-		if (((val = find_in_dict(d, [:xlim :xlimits])[1]) !== nothing) && isa(val, Tuple) && length(val) == 2)
-			R = @sprintf(" -R%.15g/%.15g", val[1], val[2])
-			c += 2
-			if (((val = find_in_dict(d, [:ylim :ylimits])[1]) !== nothing) && isa(val, Tuple) && length(val) == 2)
-				R = @sprintf("%s/%.15g/%.15g", R, val[1], val[2])
-				c += 2
-				if (((val = find_in_dict(d, [:zlim :zlimits])[1]) !== nothing) && isa(val, Tuple) && length(val) == 2)
-					R = @sprintf("%s/%.15g/%.15g", R, val[1], val[2])
-				end
-			end
-		end
-		if (R != "" && c == 4)  opt_R = R  end
-	end
+	opt_R = merge_R_and_xyzlims(d, opt_R)
 
 	if (RIr)
 		if (isa(val, GItype))
@@ -185,8 +171,14 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	if (opt_R != "" && !IamInset[1])			# Save limits in numeric
 		try
 			limits = opt_R2num(opt_R)
-			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4)) && (CTRL.limits[1:length(limits)] = limits)
-			all(CTRL.limits[7:10] .== 0) && (CTRL.limits[7:10] = CTRL.limits[1:4])	# Then make plot limits == data limits
+			# I'm puting the data limts = plot limts below but that's not right. Specialy if data limits is not 0's
+			#(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4)) && (CTRL.limits[1:length(limits)] = limits)
+			#all(CTRL.limits[7:10] .== 0) && (CTRL.limits[7:10] = CTRL.limits[1:4])	# Then make plot limits == data limits
+			#CTRL.limits[7:10] = CTRL.limits[1:4]	# Then make plot limits == data limits
+
+			CTRL.limits[7:7+length(limits)-1] = limits		# The plot limits
+			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4) && all(CTRL.limits[1:4] .== 0)) &&
+				(CTRL.limits[1:length(limits)] = limits)	# And this makes data = plot limits, IF data is empty.
 		catch
 			CTRL.limits .= 0.0
 		end
@@ -194,6 +186,30 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	end
 	cmd = cmd * opt_R
 	return cmd, opt_R
+end
+
+# ---------------------------------------------------------------------------------------------------
+function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
+	# Let a -R be partially changed by the use of optional xyzlim
+	xlim::String = ((val = find_in_dict(d, [:xlim :xlimits])[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	ylim::String = ((val = find_in_dict(d, [:ylim :ylimits])[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	zlim::String = ((val = find_in_dict(d, [:zlim :zlimits])[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	(xlim == "" && ylim == "" && zlim == "") && return opt_R
+	if (opt_R == "" && xlim != "" && ylim != "")	# Deal with this easy case
+		opt_R = " -R" * xlim * "/" * ylim
+		(zlim != "") && (opt_R *= "/" * zlim)
+		return opt_R
+	end
+	(opt_R == "") && return ""						# Clear this case too. If no -R there is nothing to replace
+	# OK, so here we have some x|y|zlim not empty either an opt_R != ""
+	s = split(opt_R, "/")
+	(xlim != "") && (s[1] = xlim; s[2] = "")		# xlim has both s[1] & s[2] so need to empty second of them
+	(ylim != "") && (s[3] = ylim; s[4] = "")
+	(zlim != "" && length(s) == 6) && (s[6] = zlim; s[5] = "")
+	opt_R = join(s,"/")
+	opt_R = opt_R[1:end-1]							# Need to strip the last char that was a '/'
+	(zlim != "" && length(s) == 4) && (opt_R *= "/" * zlim)		# This case was still left to be handled
+	return opt_R
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -374,7 +390,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			opt_J = append_figsize(d, opt_J)
 		elseif (!isnumeric(opt_J[end]) && (length(opt_J) < 6 || (isletter(opt_J[5]) && !isnumeric(opt_J[6]))) )
 			if (!IamSubplot[1])
-				if (((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
+				if (((val = find_in_dict(d, [:aspect], del)[1]) !== nothing) || haskey(d, :aspect3))
 					opt_J *= set_aspect_ratio(val, "", true, haskey(d, :aspect3))
 				else
 					opt_J = (!startswith(opt_J, " -JX")) ? append_figsize(d, opt_J) :
@@ -4364,7 +4380,7 @@ function minimum_nan(A)
 	#return (eltype(A) <: AbstractFloat) ? minimum(x->isnan(x) ?  Inf : x,A) : minimum(A)
 	if (eltype(A) <: AbstractFloat)
 		mi = typemax(eltype(A))
-		@inbounds for k = 1:length(A) !isnan(A[k]) && (mi = min(mi, A[k])) end
+		@inbounds for k in eachindex(A) !isnan(A[k]) && (mi = min(mi, A[k])) end
 		mi
 	else
 		minimum(A)
@@ -4374,11 +4390,33 @@ function maximum_nan(A)
 	#return (eltype(A) <: AbstractFloat) ? maximum(x->isnan(x) ? -Inf : x,A) : maximum(A)
 	if (eltype(A) <: AbstractFloat)
 		ma = typemin(eltype(A))
-		@inbounds for k = 1:length(A) !isnan(A[k]) && (ma = max(ma, A[k])) end
+		@inbounds for k in eachindex(A) !isnan(A[k]) && (ma = max(ma, A[k])) end
 		ma
 	else
 		maximum(A)
 	end
+end
+function findmax_nan(x::AbstractVector{T}) where T
+	# Since Julia doesn't ignore NaNs and prefer to return wrong results findmax is useless when data
+	# has NaNs. We start by runing findmax() and only if max is NaN we fallback to a slower algorithm.
+	ma, ind = findmax(x)
+	if (isnan(ma))
+		ma, ind = typemin(eltype(x)), 0
+		for k in eachindex(x)
+			!isnan(x[k]) && ((x[k] > ma) && (ma = x[k]; ind = k))
+		end
+	end
+	ma, ind
+end
+function findmin_nan(x::AbstractVector{T}) where T
+	mi, ind = findmin(x)
+	if (isnan(mi))
+		mi, ind = typemax(eltype(x)), 0
+		for k in eachindex(x)
+			!isnan(x[k]) && ((x[k] < mi) && (mi = x[k]; ind = k))
+		end
+	end
+	mi, ind
 end
 nanmean(x)   = mean(filter(!isnan,x))
 nanmean(x,y) = mapslices(nanmean,x,dims=y)
