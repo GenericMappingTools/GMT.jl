@@ -795,25 +795,44 @@ end
 function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::String="", fancy_arrow::Bool=false)
 	# We have a GMT bug (up till 6.4.0) that screws when vector components are dx,dy or r,theta and
 	# x,y is not isometric or when -Sv+z<scale> (and possibly in other cases). So, between thinking and
-	# dumb trial-and-error I came out with this patch that computes two scale factors, one to be applyied
+	# dumb trial-and-error I came out with this patch that computes two scale factors, one to be applied
 	# to the y component and the other that sets a +z<scale> under the hood.
+	#
+	# Though we are trying to accept also Vector{GMTdataset}, not sure if that's reasonable. What to do with them?
 
-	if (typevec < 2)		# typevec = 2 means u,v are in fact the end points and that doesn't need scaling.
+	isone = (isGMTdataset(arg1) && isa(arg1, GMTdataset)) ? true : false
+	Tc = (isGMTdataset(arg1) && (isone ? get(arg1.attrib, "Timecol", "") == "1" :
+	                                     get(arg1[1].attrib, "Timecol", "") == "1")) ? true : false
+	if (typevec < 2 || Tc)		# typevec = 2 means u,v are in fact the end points and that doesn't need scaling.
 		opt_R = (first) ? ((opt_R == "") ? parse_R(d, "", false, false)[2] : opt_R) : CTRL.pocket_R[1]
 		opt_J = (first) ? parse_J(d, "", "", true, false, false)[2] : CTRL.pocket_J[1]
-		Dwh = gmt("mapproject -W " * opt_R * opt_J)			# Compute the fig dimensions in paper coords.
 		aspect_limits = (CTRL.limits[10] - CTRL.limits[9]) / (CTRL.limits[8] - CTRL.limits[7])	# Plot, not data, limits
+		Dwh = gmt("mapproject -W " * opt_R * opt_J)			# Compute the fig dimensions in paper coords.
 		aspect_sizes  = Dwh[2] / Dwh[1]
 		scale_fig     = round(aspect_sizes / aspect_limits, digits=8)	# This compensates for the non-isometry
-
+		
 		unit = isa(arg1, Vector{<:GMTdataset}) ? "q" : "iq"	# The BUG only strikes on matrices, not GMTdatsets
 		def_z = "+z$(Dwh[1] / (CTRL.limits[8] - CTRL.limits[7]))" * unit
+	end
+	if (Tc)				# Have a time column
+		bb = (isone) ? arg1.bbox : arg1[1].ds_bbox
+		#           2 * max(abs(miny,maxy))     /      (y_plot_max - y_plot_min)     /  max(abs(vmin,vmax))  * H/2
+		facTc = (2*max(abs(bb[8]), abs(bb[7]))) / (CTRL.limits[10] - CTRL.limits[9]) / max(abs.(bb[7:8])...) * Dwh[2] / 2
+
+		# Now this is another mystery. WTF do we need to scale to 1 / sin(theta_of_absmax_y) ????
+		#yy = (isone) ? view(arg1,:,4) : view(arg1[1],:,4)	# See? and what about the other arg1 elements when it's a vec?
+		#ma,ind1 = findmax_nan(yy);		mi,ind2 = findmin_nan(yy)
+		#ind = (abs(ma) > abs(mi)) ? ind1 : ind2
+		#teta = (isone) ? atan(arg1[ind,4], arg1[ind,3]) : atan(arg1[1][ind,4], arg1[1][ind,3])
+		#facTc *= 1 / abs(sin(teta))
+
+		def_z, scale_fig = @sprintf("+z%.8gi", facTc), 1.0
 	end
 	def_e = (find_in_dict(d, [:nohead])[1] !== nothing) ? "" : "+e"
 	def_h = (fancy_arrow) ? "+h0.5" : "+h2"
 	
 	isArrowGMT4 = haskey(d, :arrow4) || haskey(d, :vector4)
-	isArrowGMT4 && (unit = replace(unit, "q" => ""); def_z = def_h = def_e = "")
+	isArrowGMT4 && (unit = replace(unit, "q" => ""); def_z = def_h = def_e = "")	# GMT4 arrows stuff only
 
 	if ((ahdr = helper_arrows(d, true)) != "")			# Have to use delete to avoid double parsing in -W
 		contains(ahdr, "+e") && (def_e = "")
@@ -822,7 +841,11 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 			ss, def_z = split(ahdr, "+"), ""
 			for s in ss
 				if (s[1] == 'z' && length(s) > 1)
-					def_z = @sprintf("+z%0.12g%s",parse(Float64,s[2:end]) * (Dwh[1]/(CTRL.limits[8] - CTRL.limits[7])), unit)
+					if (Tc)
+						def_z = @sprintf("+z%0.12gi",parse(Float64,s[2:end]) * facTc)
+					else
+						def_z = @sprintf("+z%0.12g%s",parse(Float64,s[2:end]) * (Dwh[1]/(CTRL.limits[8] - CTRL.limits[7])), unit)
+					end
 					ahdr = replace(ahdr, "+"*s => "")	# Remove the +z flag because it's in def_z now
 					break
 				end
@@ -891,13 +914,19 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 	if (isGMTdataset(arg1))		# Have a GMTdataset or a vector of them. Must create new ones with extra columns.
 		if (isa(arg1, GMTdataset))
 			isfeather && expandDS!(arg1)				# But not expand if not a feather call
-			(!isArrowGMT4 && typevec == 0) && (arg1 = rθ2uv(arg1))
+			if (!isArrowGMT4 && typevec == 0)
+				arg1 = rθ2uv(arg1)
+				arg1.bbox[5:8] = [extrema(view(arg1,:,3))... extrema(view(arg1,:,4))...]
+			end
 			(!haveR) && (mimas = get_minmaxs(arg1))
 		else
 			mimas = [Inf -Inf Inf -Inf]
 			for a in arg1			# Loop to create the new arrays and assign fill color if needed.
 				isfeather && expandDS!(a)				# Same as above
-				(!isArrowGMT4 && typevec == 0) && (a = rθ2uv(a))
+				if (!isArrowGMT4 && typevec == 0)
+					a = rθ2uv(a)
+					a.bbox[5:8] = [extrema(view(a,:,3))... extrema(view(a,:,4))...]
+				end
 				(!haveR) && (mm = get_minmaxs(a); mimas = [min(mimas[1],mm[1]), max(mimas[2],mm[2]), min(mimas[3],mm[3]), max(mimas[4],mm[4])])
 				(haveVarFill && (ind = findfirst(" -W,", a.header)) !== nothing) && (a.header *= " -G" * a.header[ind[end]+1:end])
 			end
@@ -922,9 +951,16 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 	opt_R = ""
 	if (first && !haveR)					# Build a -R from data limits
 		dx, dy = (mimas[2] - mimas[1]) * 0.01, (mimas[4] - mimas[3]) * 0.01
-		t = round_wesn(mimas + [-dx, dx, -dy, dy])		# Add a pad
-		d[:R] = @sprintf("%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
-		opt_R = " -R" * d[:R]
+		t = round_wesn(mimas + [-dx, dx, -dy, dy])		# Add a pad. Also sets the CTRL.limits plot values
+		CTRL.limits[1:4] = mimas			# These are the data limits
+		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
+		_opt_R = merge_R_and_xyzlims(d, opt_R)	# See if a x or ylim is used
+		if (_opt_R != opt_R)				# Yes, it was so need to update the plot limits in CTRL.limits
+			limits = opt_R2num(_opt_R)
+			CTRL.limits[7:10] = limits
+			opt_R = _opt_R
+		end
+		d[:R] = opt_R[4:end]
 	end
 
 	d, arg1 = helper_vecZscale!(d, arg1, first, typevec, opt_R, !isfeather)	# Apply scale factor and compensates GMT bug.
