@@ -122,7 +122,7 @@ function _show(io::IO,
 		push!(alignment, :r)
 		push!(names_str, (text_colname != "" ? text_colname : "Text"))
 		push!(types_str, "String")
-		if (size(D,1) > 10000)	# Since only dataset's begining and end is displayed do not make a potentially big copy
+		if (size(D,1) > 250)	# Since only dataset's begining and end is displayed do not make a potentially big copy
 			Dt = [[D.data[1:50, :]; D.data[end-50:end, :]] [D.text[1:50, :]; D.text[end-50:end, :]]]
 			skipd_rows = size(D,1) - size(Dt,1)
 		else
@@ -130,6 +130,19 @@ function _show(io::IO,
 		end
 	else
 		Dt = D.data
+	end
+
+	if ((Tc = get(D.attrib, "Timecol", "")) != "")
+		Tcn = parse.(Int, split(Tc, ","))
+		if (size(Dt,1) > 250)
+			newTcs = string.(unix2datetime.([Dt[1:50, Tcn]; Dt[end-50:end, Tcn]]))
+			Dt = [D.data[1:50, :]; D.data[end-50:end, :]]
+			(skipd_rows == 0) && (skipd_rows = size(D,1) - size(Dt,1))
+		else
+			newTcs = string.(unix2datetime.(Dt[:, Tcn]))
+		end
+		Dt = (length(Tcn) == 1) ? [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:end]] :
+		                          [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:Tcn[2]-1] newTcs[:,2] Dt[:,Tcn[2]+1:end]]
 	end
 
 	# Print the table with the selected options.
@@ -161,8 +174,7 @@ function _show(io::IO,
 				 vlines                      = vlines,
 				 kwargs...)
 
-	if (skipd_rows > 0)  println("\nTo avoid a large array copy $(skipd_rows) rows have been skipped in the above table.\nThis means that last line should read $(size(D,1)) instead of $(size(Dt,1))")
-	end
+	(skipd_rows > 0) && println("\nTo avoid a large array copy, $(skipd_rows) rows have been skipped in the above table.\nThis means that last line should read $(size(D,1)) instead of $(size(Dt,1))")
 	return nothing
 end
 
