@@ -1500,6 +1500,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 			current_view[1] = ""		# Ensure we start empty
 		end
 	end
+	#cmd   = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
 	((val = find_in_dict(d, [:pagecolor])[1]) !== nothing) && (cmd *= string(" --PS_PAGE_COLOR=", val))
 	return cmd, o
 end
@@ -4443,11 +4444,9 @@ end
 Compute the Day-Of-Year (DOY) from `date` that can be a string or a Date/DateTime type. If ommited,
 returns today's DOY
 """
-function date2doy(date=nothing)
-	(date === nothing) && return dayofyear(now())
-	(isa(date, TimeType)) && return dayofyear(date)
-	dayofyear(Date(string(date)))
-end
+date2doy() = dayofyear(now())
+date2doy(date::TimeType) = dayofyear(date)
+date2doy(date::String) = dayofyear(Date(date))
 
 # --------------------------------------------------------------------------------------------------
 """
