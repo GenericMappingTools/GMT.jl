@@ -194,6 +194,9 @@ end
 
 # ---------------------------------------------------------------------------------
 function file_has_time!(fname::String, D::GDtype)
+	# Try guess if 'fname' file has time columns and if yes leave trace of it in D's metadata.
+	# We do that by scanning the first valid line in file.
+
 	#line1 = split(collect(Iterators.take(eachline(fname), 1))[1])	# Read first line and cut it in tokens
 	isone = isa(D, GMTdataset) ? true : false
 	names_str = (isone) ? ["col.$i" for i=1:size(D,2)] : ["col.$i" for i=1:size(D[1],2)]
@@ -213,7 +216,7 @@ function file_has_time!(fname::String, D::GDtype)
 			# left to be solved is that we can have TWO strings, 'yyyy-mm-dd hh:mm:ss.sss' to mean a single time.
 			if ((i = findlast("-", line1[k])) !== nothing && i[1] > 1)
 				Tc = (Tc == "") ? "$k" : Tc * ",$k"			# Accept more than one time columns
-				Ts = (f1 == 1) ? "Time" : "Time$(f1+=1)"
+				Ts = (f1 == 1) ? "Time" : "Time$(f1)";		f1 += 1
 				(isone) ? (D.colnames[k] = Ts) : (D[1].colnames[k] = Ts)
 			end
 		end
