@@ -700,8 +700,14 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		arg1 = [arg1[:,1] zeros(size(arg1,1)) arg1[:,1] arg1[:,2]]
 	end
 	if (!haveR)
-		t = round_wesn(mimas)		# Add a pad
-		d[:R] = @sprintf("%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
+		t = round_wesn(mimas)		# Add a pad. Also sets the CTRL.limits plot values
+		CTRL.limits[1:4] = mimas				# These are the data limits
+		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
+		_opt_R = merge_R_and_xyzlims(d, opt_R)	# See if a x or ylim is used
+		if (_opt_R != opt_R)					# Yes, it was so need to update the plot limits in CTRL.limits
+			CTRL.limits[7:10], opt_R = opt_R2num(_opt_R), _opt_R
+		end
+		d[:R] = opt_R[4:end]
 	end
 
 	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val) : "8p"
@@ -717,6 +723,7 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	((find_in_dict(d, [:nobaseline])[1]) === nothing) && (out2 = hlines!(0.0, show=_show))	# See if we have a no-baseline request
 	(out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
 end
+
 stem!(cmd0::String="", arg1=nothing; kw...) = stem(cmd0, arg1; first=false, kw...)
 stem(arg; kw...) = stem("", cat_1_arg(arg); kw...)
 stem!(arg; kw...) = stem("", cat_1_arg(arg); first=false, kw...)
@@ -948,9 +955,7 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
 		_opt_R = merge_R_and_xyzlims(d, opt_R)	# See if a x or ylim is used
 		if (_opt_R != opt_R)				# Yes, it was so need to update the plot limits in CTRL.limits
-			limits = opt_R2num(_opt_R)
-			CTRL.limits[7:10] = limits
-			opt_R = _opt_R
+			CTRL.limits[7:10], opt_R = opt_R2num(_opt_R), _opt_R
 		end
 		d[:R] = opt_R[4:end]
 	end
