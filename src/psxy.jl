@@ -281,7 +281,7 @@ function with_xyvar(d::Dict, arg1::GMTdataset)
 		yc = isa(val_y, Integer) ? val_y : ((ind = findfirst(string(val_y) .== arg1.colnames)) !== nothing ? ind : 0)
 		(yc < 1 || yc > size(arg1,2)) && error("'yvar' Name not found in GMTdataset col names or exceed col count.")
 		ycv = [yc]
-	elseif (isa(val_y, Array) || isa(val_y, Tuple))
+	elseif (isvector(val_y) || isa(val_y, Tuple))
 		if (eltype(val_y) <: Integer)
 			ycv = [val_y...]
 		elseif (eltype(val_y) <: Union{String, Symbol})
@@ -318,7 +318,7 @@ function with_xyvar(d::Dict, arg1::GMTdataset)
 		             (D.proj4=arg1.proj4; D.wkt=arg1.wkt; D.epsg=arg1.epsg)
 	end
 	if ((Tc = get(arg1.attrib, "Timecol", "")) != "")	# Try to keep also an eventual Timecol
-		((ind = findfirst(ycv, parse(Int, Tc))) !== nothing) && (D.attrib[:Timecol] = (xc !== nothing) ? ind+1 : ind)
+		((ind = findfirst(parse(Int, Tc) .== ycv)) !== nothing) && (D.attrib[:Timecol] = (xc !== nothing) ? ind+1 : ind)
 	end
 	return D
 end
