@@ -458,6 +458,7 @@ Example:
 function bar(cmd0::String="", arg=nothing; first=true, kw...)
 	d = KW(kw)
 	do_cat = (haskey(d, :stack) || haskey(d, :stacked) && isvector(arg) && length(arg) > 2) ? false : true
+	(cmd0 == "" && haskey(d, :xticks)) && (arg = hcat(1:size(arg,1), arg);	do_cat = false)
 	if (cmd0 == "" && do_cat) arg = cat_1_arg(arg)  end	# If ARG is a vector, prepend it with a 1:N x column
 	GMT.common_plot_xyz(cmd0, arg, "bar", first, false, kw...)
 end
