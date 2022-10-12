@@ -266,6 +266,7 @@
 	bar(1:5, (20, 35, 30, 35, 27), width=0.35, color=:lightblue,limits=(0.5,5.5,0,40),E=(y=(2,3,4,1,2),), Vd=dbg2)
 	bar([0. 1 2 3; 1 2 3 4], stack=true, hbar=true, fill=["red", "green", "blue"])
 	bar(0:3, [2.9, 5, 2.2, 1], fill=["red", "green", "blue", "orange"], Vd=dbg2)
+	bar([2 1 1 NaN 1; 4 NaN NaN 2 NaN; 1 3 4 3 2; NaN 3 NaN NaN NaN], fillalpha=[0.3 0.5 0.7], xticks=(:d1, :d2, :d3, :d4), Vd=dbg2)
 	D = mat2ds([0 0],["aa"]);
 	#sprint(print, D);
 

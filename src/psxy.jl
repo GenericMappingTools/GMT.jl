@@ -620,16 +620,15 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	# Convert to a multi-segment GMTdataset. There will be as many segments as elements in a group
 	# and as many rows in a segment as the number of groups (number of bars if groups had only one bar)
 	alpha = find_in_dict(d, [:alpha :fillalpha :transparency])[1]
-	_argD = mat2ds(_arg; fill=g_bar_fill, multi=do_multi, fillalpha=alpha)
-	isa(_argD, GMTdataset) && (_argD = [_argD])	# To simplify the algo (but introduce a type instability?)
+	_argD::Vector{GMTdataset} = mat2ds(_arg; fill=g_bar_fill, multi=do_multi, fillalpha=alpha, letsingleton=true)
 	(is_stack) && (_argD = ds2ds(_argD[1], fill=g_bar_fill, color_wrap=nl, fillalpha=alpha))
 	if (is_hbar && !is_stack)					# Must swap first & second col
-		for k = 1:length(_argD)  _argD[k].data = [_argD[k].data[:,2] _argD[k].data[:,1]]  end
+		for k = 1:lastindex(_argD)  _argD[k].data = [_argD[k].data[:,2] _argD[k].data[:,1]]  end
 	end
 	(!isempty(g_bar_fill)) && delete!(d, :fill)
 
 	if (bars_cols !== missing)		# Loop over number of bars in each group and append the error bar
-		for k = 1:length(_argD)
+		for k = 1:lastindex(_argD)
 			_argD[k].data = reshape(append!(_argD[k].data[:], bars_cols[:,k]), size(_argD[k].data,1), :)
 		end
 	end
@@ -637,25 +636,55 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	# Must fish-and-break-and-rebuild -S option
 	opt_S = scan_opt(cmd, "-S")
 	sub_b = ((ind = findfirst("+", opt_S)) !== nothing) ? opt_S[ind[1]:end] : ""	# The +Base modifier
-	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
+	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])	# Strip it because we need to (re)find Bar width
 	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
-	n_in_group = length(_argD)					# Number of bars in the group
+	n_in_group = length(_argD)						# Number of bars in the group
 	gap = ((val = find_in_dict(d, [:gap])[1]) !== nothing) ? val/100 : 0	# Gap between bars in a group
 	new_bw = (is_stack) ? bw : bw / n_in_group * (1 - gap)	# 'width' does not change in bar-stack
 	new_opt_S = "-S" * opt_S[1] * "$(new_bw)u"
 	cmd = (is_stack) ? replace(cmd, "-S"*opt_S*sub_b => new_opt_S*"+b") : replace(cmd, "-S"*opt_S => new_opt_S)
 
-	if (!is_stack)								# 'Horizontal stack'
-		g_shifts = linspace((-bw + new_bw)/2, (bw - new_bw)/2, n_in_group)
-		col = (is_hbar) ? 2 : 1					# Horizontal and Vertical bars get shits in different columns
-		for k = 1:n_in_group
-			for n = 1:size(_argD[k].data,1)  _argD[k].data[n, col] += g_shifts[k]  end
+	if (!is_stack)									# 'Horizontal stack'
+		col = (is_hbar) ? 2 : 1						# Horizontal and Vertical bars get shits in different columns
+		n_groups = size(_argD[1].data,1)
+		n_in_each_group = [sum(.!isnan.(_arg[k,:][2:end])) for k = 1:n_groups]		# Vec with n_in_group elements
+		if (sum(n_in_each_group) == n_in_group * n_groups)
+			g_shifts = linspace((-bw + new_bw)/2, (bw - new_bw)/2, n_in_group)
+			for k = 1:n_in_group					# Loop over number of bars in a group
+				for r = 1:n_groups  _argD[k].data[r, col] += g_shifts[k]  end
+			end
+		else
+			ic  = ceil(Int, (size(_arg,2)-1)/2)		# index of the center bar (left from middle if even)
+			g_shifts0 = linspace((-bw + new_bw)/2, (bw - new_bw)/2, n_in_group)
+			for m = 1:n_groups						# Loop over number of groups
+				if (n_in_each_group[m] == n_in_group)	# This group is simple. It has all the bars
+					[_argD[k].data[m, col] += g_shifts0[k] for k = 1:n_in_group]	# Loop over all the bars in this group
+					continue
+				end
+
+				g_shifts = collect(g_shifts0)
+				x     = isnan.(_arg[m,:][2:end])
+				n_low = sum(.!x[1:ic]);		n_high = sum(.!x[ic+1:end])
+				clow  = !all(x[1:ic-1]);	chigh = !all(x[ic+1:end])	# See if both halves want the center pos
+				dx = (clow && chigh) ? new_bw/2 : 0.0
+				[g_shifts[n] += ((ic-n)-sum(.!x[n+1:ic])) * new_bw - dx  for n = 1:ic]	# Lower half
+				[g_shifts[n] -= ((n-ic)-sum(.!x[ic:n-1])+!x[ic]) * new_bw - dx  for n = ic+1:n_in_group]	# Upper half
+
+				# Compensate when bar distribution is not symetric about the center
+				if     (n_high == 0 && n_in_each_group[m] > 1)  g_shifts .+= (n_low-1) * new_bw/2
+				elseif (n_low == 0 && n_in_each_group[m] > 1)   g_shifts .-= (n_high-1) * new_bw/2
+				elseif (n_in_each_group[m] > 1)                 g_shifts .-= (n_high - n_low) * new_bw/2
+				end
+				(iseven(n_in_group)) && (g_shifts .+= new_bw/2)		# Don't get it why I have to do this
+
+				[_argD[k].data[m, col] += g_shifts[k] for k = 1:n_in_group]	# Loop over all the bars in this group
+			end
 		end
 	end
 
-	if (!got_usr_R)								# Need to recompute -R
+	if (!got_usr_R)									# Need to recompute -R
 		info = gmt("gmtinfo -C", _argD)
-		(info.data[3] > 0) && (info.data[3] = 0)		# If not negative then must be 0
+		(info.data[3] > 0) && (info.data[3] = 0)	# If not negative then must be 0
 		if (!is_hbar)
 			dx = (info.data[2] - info.data[1]) * 0.005 + new_bw/2;
 			dy = (info.data[4] - info.data[3]) * 0.005;
