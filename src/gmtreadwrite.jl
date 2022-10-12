@@ -198,6 +198,7 @@ function file_has_time!(fname::String, D::GDtype)
 	# We do that by scanning the first valid line in file.
 
 	#line1 = split(collect(Iterators.take(eachline(fname), 1))[1])	# Read first line and cut it in tokens
+	(fname[1] == '@') && return nothing		# We srill don't sneak in remote files.
 	isone = isa(D, GMTdataset) ? true : false
 	names_str = (isone) ? ["col.$i" for i=1:size(D,2)] : ["col.$i" for i=1:size(D[1],2)]
 	isone ? (D.colnames = names_str) : [D[k].colnames = names_str for k = 1:lastindex(D)]	# Default col names
