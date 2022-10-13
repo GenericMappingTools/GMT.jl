@@ -253,6 +253,7 @@
 	D = [mat2ds([0 0; 1 1],["a", "b"])];	D[1].header = "a";
 	mat2ds(D)
 	mat2ds("blabla")
+	mat2ds([],["bla"]);
 	D[1].attrib = Dict("nome" => "a", "nome2" => "b");
 	GMT.polygonlevels(D, ["a", "b"], [1,2], att="nome");
 	GMT.polygonlevels(D, ["a", "b"], [1,2], att="nome", nocase=1);

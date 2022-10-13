@@ -589,10 +589,10 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 
 	do_multi = true;	is_stack = false		# True for grouped; false for stacked groups
 	is_hbar = occursin("-SB", cmd)				# An horizontal bar plot
-	if ((val = find_in_dict(d, [:stack :stacked])[1]) !== nothing)
+	if (is_in_dict(d, [:stack :stacked], del=true) !== nothing)
 		# Take this (two groups of 3 bars) [0 1 2 3; 1 2 3 4]  and compute this (the same but stacked)
 		# [0 1 0; 0 3 1; 0 6 3; 1 2 0; 1 5 2; 1 9 4]
-		nl = size(_arg,2)-1				# N layers in stack
+		nl::Int = size(_arg,2)-1				# N layers in stack
 		tmp = zeros(size(_arg,1)*nl, 3)
 
 		for m = 1:size(_arg, 1)			# Loop over number of groups
@@ -620,7 +620,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	# Convert to a multi-segment GMTdataset. There will be as many segments as elements in a group
 	# and as many rows in a segment as the number of groups (number of bars if groups had only one bar)
 	alpha = find_in_dict(d, [:alpha :fillalpha :transparency])[1]
-	_argD::Vector{GMTdataset} = mat2ds(_arg; fill=g_bar_fill, multi=do_multi, fillalpha=alpha, letsingleton=true)
+	_argD::Vector{GMTdataset{eltype(_arg), 2}} = mat2ds(_arg; fill=g_bar_fill, multi=do_multi, fillalpha=alpha, letsingleton=true)
 	(is_stack) && (_argD = ds2ds(_argD[1], fill=g_bar_fill, color_wrap=nl, fillalpha=alpha))
 	if (is_hbar && !is_stack)					# Must swap first & second col
 		for k = 1:lastindex(_argD)  _argD[k].data = [_argD[k].data[:,2] _argD[k].data[:,1]]  end
@@ -637,28 +637,29 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	opt_S = scan_opt(cmd, "-S")
 	sub_b = ((ind = findfirst("+", opt_S)) !== nothing) ? opt_S[ind[1]:end] : ""	# The +Base modifier
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])	# Strip it because we need to (re)find Bar width
-	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
+	bw::Float64 = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
 	n_in_group = length(_argD)						# Number of bars in the group
-	gap = ((val = find_in_dict(d, [:gap])[1]) !== nothing) ? val/100 : 0	# Gap between bars in a group
-	new_bw = (is_stack) ? bw : bw / n_in_group * (1 - gap)	# 'width' does not change in bar-stack
+	gap::Float64 = ((val = find_in_dict(d, [:gap])[1]) !== nothing) ? val/100 : 0.0		# Gap between bars in a group
+	new_bw::Float64 = (is_stack) ? bw : bw / n_in_group * (1 - gap)	# 'width' does not change in bar-stack
 	new_opt_S = "-S" * opt_S[1] * "$(new_bw)u"
 	cmd = (is_stack) ? replace(cmd, "-S"*opt_S*sub_b => new_opt_S*"+b") : replace(cmd, "-S"*opt_S => new_opt_S)
 
 	if (!is_stack)									# 'Horizontal stack'
 		col = (is_hbar) ? 2 : 1						# Horizontal and Vertical bars get shits in different columns
 		n_groups = size(_argD[1].data,1)
-		n_in_each_group = [sum(.!isnan.(_arg[k,:][2:end])) for k = 1:n_groups]		# Vec with n_in_group elements
+		n_in_each_group = fill(0, n_groups)			# Vec with n_in_group elements
+		for k = 1:n_groups n_in_each_group[k] = sum(.!isnan.(_arg[k,:][2:end]))  end
 		if (sum(n_in_each_group) == n_in_group * n_groups)
-			g_shifts = linspace((-bw + new_bw)/2, (bw - new_bw)/2, n_in_group)
+			g_shifts_ = linspace((-bw + new_bw)/2, (bw - new_bw)/2, n_in_group)
 			for k = 1:n_in_group					# Loop over number of bars in a group
-				for r = 1:n_groups  _argD[k].data[r, col] += g_shifts[k]  end
+				for r = 1:n_groups  _argD[k].data[r, col] += g_shifts_[k]  end
 			end
 		else
-			ic  = ceil(Int, (size(_arg,2)-1)/2)		# index of the center bar (left from middle if even)
+			ic::Int   = ceil(Int, (size(_arg,2)-1)/2)		# index of the center bar (left from middle if even)
 			g_shifts0 = linspace((-bw + new_bw)/2, (bw - new_bw)/2, n_in_group)
 			for m = 1:n_groups						# Loop over number of groups
 				if (n_in_each_group[m] == n_in_group)	# This group is simple. It has all the bars
-					[_argD[k].data[m, col] += g_shifts0[k] for k = 1:n_in_group]	# Loop over all the bars in this group
+					for k = 1:n_in_group  _argD[k].data[m, col] += g_shifts0[k]  end	# Loop over all the bars in group
 					continue
 				end
 
@@ -667,8 +668,12 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 				n_low = sum(.!x[1:ic]);		n_high = sum(.!x[ic+1:end])
 				clow  = !all(x[1:ic-1]);	chigh = !all(x[ic+1:end])	# See if both halves want the center pos
 				dx = (clow && chigh) ? new_bw/2 : 0.0
-				[g_shifts[n] += ((ic-n)-sum(.!x[n+1:ic])) * new_bw - dx  for n = 1:ic]	# Lower half
-				[g_shifts[n] -= ((n-ic)-sum(.!x[ic:n-1])+!x[ic]) * new_bw - dx  for n = ic+1:n_in_group]	# Upper half
+				for n = 1:ic					# Lower half
+					g_shifts[n] += ((ic-n)-sum(.!x[n+1:ic])) * new_bw - dx
+				end
+				for n = ic+1:n_in_group			# Upper half
+					g_shifts[n] -= ((n-ic)-sum(.!x[ic:n-1])+!x[ic]) * new_bw - dx
+				end
 
 				# Compensate when bar distribution is not symetric about the center
 				if     (n_high == 0 && n_in_each_group[m] > 1)  g_shifts .+= (n_low-1) * new_bw/2
@@ -677,27 +682,28 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 				end
 				(iseven(n_in_group)) && (g_shifts .+= new_bw/2)		# Don't get it why I have to do this
 
-				[_argD[k].data[m, col] += g_shifts[k] for k = 1:n_in_group]	# Loop over all the bars in this group
+				for k = 1:n_in_group  _argD[k].data[m, col] += g_shifts[k]  end		# Loop over all the bars in this group
 			end
 		end
 	end
 
 	if (!got_usr_R)									# Need to recompute -R
-		info = gmt("gmtinfo -C", _argD)
-		(info.data[3] > 0) && (info.data[3] = 0)	# If not negative then must be 0
+		info::GMTdataset = gmt("gmtinfo -C", _argD)
+		data::Matrix{<:Float64} = info.data
+		(data[3] > 0.0) && (data[3] = 0.0)	# If not negative then must be 0
 		if (!is_hbar)
-			dx = (info.data[2] - info.data[1]) * 0.005 + new_bw/2;
-			dy = (info.data[4] - info.data[3]) * 0.005;
-			info.data[1] -= dx;	info.data[2] += dx;	info.data[4] += dy;
-			(info.data[3] != 0) && (info.data[3] -= dy);
+			dx::Float64 = (data[2] - data[1]) * 0.005 + new_bw/2;
+			dy::Float64 = (data[4] - data[3]) * 0.005;
+			data[1] -= dx;	data[2] += dx;	data[4] += dy;
+			(data[3] != 0) && (data[3] -= dy);
 		else
-			dx = (info.data[2] - info.data[1]) * 0.005
-			dy = (info.data[4] - info.data[3]) * 0.005 + new_bw/2;
-			info.data[1] = 0.0;	info.data[2] += dx;	info.data[3] -= dy;	info.data[4] += dy;
-			(info.data[1] != 0) && (info.data[1] -= dx);
+			dx = (data[2] - data[1]) * 0.005
+			dy = (data[4] - data[3]) * 0.005 + new_bw/2;
+			data[1] = 0.0;	data[2] += dx;	data[3] -= dy;	data[4] += dy;
+			(data[1] != 0) && (data[1] -= dx);
 		end
-		info.data = round_wesn(info.data)		# Add a pad if not-tight
-		new_opt_R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], info.data[3], info.data[4])
+		data = round_wesn(data)		# Add a pad if not-tight
+		new_opt_R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", data[1], data[2], data[3], data[4])
 		cmd = replace(cmd, opt_R => new_opt_R)
 	end
 	return cmd, _argD

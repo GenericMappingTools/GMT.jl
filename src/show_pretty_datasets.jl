@@ -30,7 +30,6 @@ function _show(io::IO,
 			   rowlabel::Symbol = :Row,
 			   summary::Bool = true,
 			   eltypes::Bool = true,
-			   rowid = nothing,
 			   truncate::Int = 32,
 			   text_colname::String = "",
 			   kwargs...)
@@ -86,29 +85,12 @@ function _show(io::IO,
 	# being printed. This will be shown using the `title` option of `pretty_table`.
 	title = summary ? Base.summary(D) : ""
 
-	# If `rowid` is not `nothing`, then we are printing a data row. In this
-	# case, we will add this information using the row name column of
-	# PrettyTables.jl. Otherwise, we can just use the row number column.
-	if (rowid === nothing) || (ncol(D) == 0)
-		show_row_number::Bool = get(kwargs, :show_row_number, true)
-		row_names = nothing
+	show_row_number::Bool = get(kwargs, :show_row_number, true)
+	row_names = nothing
 
-		# If the columns with row numbers is not shown, then we should not
-		# display a vertical line after the first column.
-		vlines = fill(1, show_row_number)
-	else
-		(nrow(D) != 1) && throw(ArgumentError("rowid may be passed only with a single row data frame"))
-
-		# In this case, if the user does not want to show the row number, then
-		# we must hide the row name column, which is used to display the `rowid`.
-		if !get(kwargs, :show_row_number, true)
-			row_names, vlines = nothing, Int[]
-		else
-			row_names, vlines = [string(rowid)], Int[1]
-		end
-
-		show_row_number = false
-	end
+	# If the columns with row numbers is not shown, then we should not
+	# display a vertical line after the first column.
+	vlines = fill(1, show_row_number)
 
 	(~all(isempty.(D.comment))) && println("Comment:\t", D.comment)
 	(~isempty(D.attrib))  && println("Attributes:  ", D.attrib)
@@ -216,8 +198,7 @@ function compacttype(T::Type, maxwidth::Int)
 
 	sT = string(T)
 	textwidth(sT) ≤ maxwidth && return sT
-	suffix = ""
-	maxwidth -= 1 # we will add "…" at the end
+	suffix = "";	maxwidth -= 1	# we will add "…" at the end
 
 	# This is only type display shortening so we
 	# are OK with any T whose name starts with CategoricalValue here
@@ -245,6 +226,7 @@ function compacttype(T::Type, maxwidth::Int)
 		else
 			break
 		end
+		#(cumwidth ≤ maxwidth) ? (stop = i) : break
 	end
 	return first(sT, stop) * "…" * suffix
 end
@@ -286,4 +268,5 @@ function _pretty_tables_general_formatter(v, i::Integer, j::Integer)
     else
         return v
     end
+	#return (typeof(v) <: GMTdataset) ? sprint(summary, v) : v
 end
