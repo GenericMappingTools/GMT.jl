@@ -168,7 +168,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	end
 
 	(O && opt_R == "") && (opt_R = " -R")
-	if (opt_R != " -R" && !IamInset[1])			# Save limits in numeric
+	if (opt_R != "" && opt_R != " -R" && !IamInset[1])			# Save limits in numeric
 		try
 			limits = opt_R2num(opt_R)
 			CTRL.limits[7:7+length(limits)-1] = limits		# The plot limits
