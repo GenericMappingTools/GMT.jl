@@ -61,7 +61,7 @@ Parameters
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
-function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)
+function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)::GMTdataset
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
