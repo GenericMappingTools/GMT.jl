@@ -135,7 +135,7 @@ function mk_legend(; kwargs...)
 		elseif (kw_str == "D" || startswith(kw_str, "hline"))	# code = (hline=pen, offset=?)	D 0.2i 1p
 			d = nt2dict(code)
 			f = ((val = find_in_dict(d, [:offset])[1]) === nothing) ? "" : string(val)
-			leg[n] = "D " * f * " " * add_opt_pen(d, [:pen], "", true)
+			leg[n] = "D " * f * " " * add_opt_pen(d, [:pen], "")
 			check_unused(d, kw_str)
 
 		elseif (kw_str == "F" || startswith(kw_str, "fill"))
@@ -189,7 +189,7 @@ function mk_legend(; kwargs...)
 			marca::String = get_marker_name(d, nothing, [:symbol, :marker], false, true)[1]
 			f = ((val = find_in_dict(d, [:dx_left])[1]) === nothing) ? "- " : string(val, " ");	dx1 = f
 			f = ((val = find_in_dict(d, [:fill])[1]) === nothing) ? "- " : get_color(val);			fill = f
-			f = add_opt_pen(d, [:pen], "", true);	pen = (f == "") ? " -" : " " * f		# TRUE to also seek (lw,lc,ls)
+			f = add_opt_pen(d, [:pen], "");	pen = (f == "") ? " -" : " " * f		# TRUE to also seek (lw,lc,ls)
 			((val = find_in_dict(d, [:size])[1]) === nothing) && error("Must specify the 'size' in 'symbol'")
 			_size = arg2str(val)
 			f = ((val = find_in_dict(d, [:label :text])[1]) === nothing) ? "" : string(val);	label = f
@@ -206,7 +206,7 @@ function mk_legend(; kwargs...)
 		elseif (kw_str == "V" || startswith(kw_str, "vline"))		# code = (vline=pen, offset=?)	V 0 1p
 			d = nt2dict(code)
 			f = ((val = find_in_dict(d, [:offset])[1]) === nothing) ? "" : string(val)
-			leg[n] = "V " * f * " " * add_opt_pen(d, [:pen], "", true)
+			leg[n] = "V " * f * " " * add_opt_pen(d, [:pen], "")
 			check_unused(d, kw_str)
 
 		else

@@ -172,7 +172,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	cmd  = add_opt(d, cmd, "L", [:L :out_range], (first = "l", last = "h", both = "b"))
-	cmd *= add_opt_pen(d, [:W :pen], "W", true)     	# TRUE to also seek (lw|lt,lc,ls)
+	cmd *= add_opt_pen(d, [:W :pen], "W")
 	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-S", cmd))
 		cmd *= " -G#0072BD"
 		!occursin("-W", cmd) && (cmd *= " -Wfaint")

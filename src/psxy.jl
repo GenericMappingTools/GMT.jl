@@ -171,7 +171,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	# Need to parse -W here because we need to know if the call to make_color_column() MUST be avoided. 
-	opt_W::String = add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
+	opt_W::String = add_opt_pen(d, [:W :pen], "W")
 	arg1, opt_W, got_color_line_grad, made_it_vector = _helper_psxy_line(d, cmd, opt_W, is3D, arg1, arg2, arg3)
 
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
@@ -1022,7 +1022,7 @@ function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller
 				bar_type = 2;	delete!(d, :hbar)
 			end
 			if (bar_type == 0 || bar_opts == "")	# bar_opts == "" means only bar=true or hbar=true was used
-				gap::Float64 = ((val = find_in_dict(d, [:bargap])[1]) === nothing) ? 0.8 : (val > 1 ? (1.0 - val/100) : val)		# Gap between bars in a group
+				gap::Float64 = ((val = find_in_dict(d, [:bargap])[1]) === nothing) ? 0.8 : (val > 1 ? (1.0 - val/100) : (1-val))		# Gap between bars in a group
 				opt = (haskey(d, :width)) ? add_opt(d, "", "",  [:width]) : "$gap"	# 0.8 is the default
 				_Stype = (bar_type == 2) ? " -SB" : " -Sb"
 				cmd *= _Stype * opt * "u"

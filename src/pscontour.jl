@@ -93,7 +93,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :bo :c :d :do :e :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:I :fill :colorize], [:N :no_clip], [:Q :cut], [:S :skip]])
-	cmd *= add_opt_pen(d, [:L :mesh], "L", true)     # TRUE to also seek (lw,lc,ls)
+	cmd *= add_opt_pen(d, [:L :mesh], "L")
 	cmd, opt_W = parse_contour_AGTW(d, cmd)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
