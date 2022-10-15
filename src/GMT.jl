@@ -10,7 +10,7 @@ struct CTRLstruct
 	figsize::Vector{Float64}		# To store the current fig size (xsize,ysize[,zsize]). Needed, for example, in hexbin
 	proj_linear::Vector{Bool}		# To know if images sent to GMT need Pad
 	callable::Array{Symbol}			# Modules that can be called inside other modules
-	pocket_call::Vector{Any}		# To temporarily store data needed by modules sub-calls
+	pocket_call::Vector{Any}		# To temporarily store data needed by modules sub-calls. Put in [3] for pre-calls
 	pocket_B::Vector{String}		# To temporarily store opt_B grid and fill color to be reworked in psclip
 	pocket_J::Vector{String}		# To temporarily store opt_J and fig size to eventualy flip directions (y + down, etc)
 	pocket_R::Vector{String}		# To temporarily store opt_R
