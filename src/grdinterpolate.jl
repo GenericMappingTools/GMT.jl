@@ -26,7 +26,7 @@ Parameters
 
     Output file name. If `range` only selects a single layer then the data cube collapses to a regular 2-D grid file
     ($(GMTdoc)grdinterpolate.html#g)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **pt** | **track** :: [Type => Str | Tuple | Dataset]	`Arg = x/y|pointfile[+hheader]`
 
     Rather than compute gridded output, create tile/spatial series through the stacked grids at the given point (x/y)

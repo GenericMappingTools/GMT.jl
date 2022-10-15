@@ -25,7 +25,7 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdrotater(....) form.
     ($(GMTdoc)grdrotater.html#g)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **T** | **ages** :: [Type => Str | Tuple]
 
     Sets the desired reconstruction times. For a single time append the desired time.

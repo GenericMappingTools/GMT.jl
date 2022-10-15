@@ -8,7 +8,7 @@ Full option list at [`blockmean`]($(GMTdoc)blockmean.html)
 Parameters
 ----------
 
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_I)
     ($(GMTdoc)blockmean.html#i)
 - **A** | **field** | **fields** :: [Type => Str]

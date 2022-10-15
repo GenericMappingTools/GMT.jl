@@ -26,7 +26,7 @@ Parameters
 
     Quadratic output. Selects quadratic histogram equalization. [Default is linear].
     ($(GMTdoc)grdhisteq.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_V)
 """
 function grdhisteq(cmd0::String="", arg1=nothing; kwargs...)

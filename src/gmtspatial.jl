@@ -44,7 +44,7 @@ Parameters
 
     Measure the area of all polygons or length of line segments.
     ($(GMTdoc)gmtspatial.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **polygons** :: [Type => Str]     `Arg = h|i|j|s|u`
 
     Spatial processing of polygons.

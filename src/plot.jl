@@ -14,9 +14,9 @@ Parameters
 	By default, geographic line segments are drawn as great circle arcs.
 	To draw them as straight lines, use this option.
     ($(GMTdoc)plot.html#a)
-- $(GMT.opt_J)
-- $(GMT.opt_R)
-- $(GMT.opt_B)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
+- $(GMT._opt_B)
 - $(GMT.opt_C)
 - **D** | **shift** | **offset** :: [Type => Str]
 
@@ -206,10 +206,10 @@ Parameters
 - **A** | **steps** | **straight_lines** :: [Type => Str]  
 
     By default, geographic line segments are drawn as great circle arcs. To draw them as straight lines, use this option.
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - $(GMT.opt_Jz)
-- $(GMT.opt_R)
-- $(GMT.opt_B)
+- $(GMT._opt_R)
+- $(GMT._opt_B)
 - **C** | **color** :: [Type => Str]
 
     Give a CPT or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those colors automatically.
@@ -435,9 +435,9 @@ const scatter3d! = scatter3!
 
 Reads a file or (x,y) pairs and plots vertical bars extending from base to y.
 
-- $(GMT.opt_J)
-- $(GMT.opt_R)
-- $(GMT.opt_B)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
+- $(GMT._opt_B)
 - **fill** :: [Type => Str --
 
     Select color or pattern for filling the bars
@@ -494,9 +494,9 @@ bar!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "bar", false, false, kw..
 
 Read a grid file, a grid or a MxN matrix and plots vertical bars extending from base to z.
 
-- $(GMT.opt_J)
-- $(GMT.opt_R)
-- $(GMT.opt_B)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
+- $(GMT._opt_B)
 - **fill** :: [Type => Str]		``key=color``
 
     Select color or pattern for filling the bars
@@ -601,9 +601,9 @@ bar3!(arg1; kw...) = bar3("", arg1; first=false, kw...)
 
 Reads a file or (x,y) pairs and plots a collection of different line with decorations
 
-- $(GMT.opt_B)
-- $(GMT.opt_J)
-- $(GMT.opt_R)
+- $(GMT._opt_B)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
@@ -766,9 +766,9 @@ the `units=()` option.
 
 The full `arrow` options list can be consulted at [Vector Attributes](@ref)
 
-- $(GMT.opt_B)
-- $(GMT.opt_J)
-- $(GMT.opt_R)
+- $(GMT._opt_B)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
@@ -1133,9 +1133,9 @@ band!(f::Function, rang=nothing; width=0.0, envelope=false, kw...) = band(f, ran
 
 Plots one or a collection of horizontal lines with eventual decorations
 
-- $(GMT.opt_B)
-- $(GMT.opt_J)
-- $(GMT.opt_R)
+- $(GMT._opt_B)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for the horizontal lines
@@ -1172,9 +1172,9 @@ hlines!(arg=nothing; kw...) = hlines(arg; first=false, kw...)
 
 Plots one or a collection of vertical lines with eventual decorations
 
-- $(GMT.opt_B)
-- $(GMT.opt_J)
-- $(GMT.opt_R)
+- $(GMT._opt_B)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for the horizontal lines
@@ -1491,7 +1491,7 @@ Parameters
 
     Set the current plot time. If absolute times are used you must also use -fT.
     ($(GMTdoc)events.html#t)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - $(GMT.opt_C)
 - **D** | **shift** | **offset** :: [Type => Str]	``Arg = [j|J]dx[/dy][+v[pen]]``
 
@@ -1505,7 +1505,7 @@ Parameters
 
     Set constant shade or color for all symbols.
     ($(GMTdoc)events.html#g)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **L** | **duration** :: [Type => Bool | Number | Str]		``Arg = [length|t]``
 
     Specify the length (i.e., duration) of the event.
@@ -1518,7 +1518,7 @@ Parameters
 
     Save the intermediate event symbols and labels to permanent files instead of removing them when done.
     ($(GMTdoc)events.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **W** | **pen** | **markeredgecolor** | **mec** :: [Type => Str]
 
     Specify symbol outline pen attributes [Default is no outline].

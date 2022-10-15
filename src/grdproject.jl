@@ -8,7 +8,7 @@ Full option list at [`grdproject`]($(GMTdoc)grdproject.html)
 Parameters
 ----------
 
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **C** | **center** :: [Type => Str | []]      ``Arg = [dx/dy]``
 
     Let projected coordinates be relative to projection center [Default is relative to lower left corner].
@@ -38,7 +38,7 @@ Parameters
 
     Append c, i, or p to indicate that cm, inch, or point should be the projected measure unit.
     ($(GMTdoc)grdproject.html#m)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_n)
 - $(GMT.opt_r)
@@ -51,8 +51,7 @@ function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 	if ((val = find_in_dict(d, [:J :proj :projection], false)[1]) !== nothing)  # Here we don't want any default value
 		cmd = parse_J(d, cmd, "", false)[1];
 	else						# See if the grid/image has proj info and use it if we can 
-		prj::String = ""
-		(arg1 !== nothing) && (prj = getproj(arg1, proj4=true))
+		prj::String = (arg1 !== nothing) ? getproj(arg1, proj4=true) : ""
 		(prj == "" && cmd0 != "") && (prj = getproj(cmd0, proj4=true))
 		(prj != "") && (cmd *= " -J\"" * prj * "\"")
 	end

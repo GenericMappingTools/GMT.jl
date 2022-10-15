@@ -8,14 +8,14 @@ Full option list at [`psbasemap`]($(GMTdoc)basemap.html)
 Parameters
 ----------
 
-- $(GMT.opt_J)
-- $(GMT.opt_R)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
 - **A** | **polygon** :: [Type => Str | []]
 
     No plotting is performed. Instead, we determine the geographical coordinates of the polygon
     outline for the (possibly oblique) rectangular map domain. 
     ($(GMTdoc)basemap.html#a)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - **D** | **inset** | **inset_box** :: [Type => Str]
 
     Draw a simple map insert box on the map. Requires -F.

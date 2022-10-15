@@ -35,7 +35,7 @@ Parameters
 
     Create geometric bodies and compute their grav/mag effect.
     ($(GMTdoc)gmtgravmag3d.html#m)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **radius** :: [Type => Number]
 
     Set search radius in km (valid only in the two grids mode OR when `thickness`) [Default = 30 km].

@@ -27,7 +27,7 @@ Parameters
 
     Sets the node value that identifies a point as a member of a hole [Default is NaN].
     ($(GMTdoc)grdfill.html#n)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """

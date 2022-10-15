@@ -17,7 +17,7 @@ Parameters
     ($(GMTdoc)grdsample.html#g)
 - $(GMT.opt_I)
     ($(GMTdoc)grdsample.html#i)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **T** | **toggle** :: [Type => Bool]
 
     Toggle the node registration for the output grid so as to become the opposite of the input grid

@@ -10,7 +10,7 @@ Parameters
 
 - $(GMT.opt_I)
     ($(GMTdoc)xyz2grd.html#i)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **A** | **multiple_nodes** :: [Type => Str]      `Arg = [d|f|l|m|n|r|S|s|u|z]`
 
     By default we will calculate mean values if multiple entries fall on the same node.
@@ -25,7 +25,7 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdclip(....) form.
     ($(GMTdoc)xyz2grd.html#g)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **S** | **swap** :: [Type => Str | []]        `Arg = [zfile]`
 
     Swap the byte-order of the input only. No grid file is produced.

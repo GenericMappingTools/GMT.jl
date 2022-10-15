@@ -8,8 +8,8 @@ Full option list at [`solar`]($(GMTdoc)solar.html)
 Parameters
 ----------
 
-- $(GMT.opt_J)
-- $(GMT.opt_B)
+- $(GMT._opt_J)
+- $(GMT._opt_B)
 - **C** | **formated** :: [Type => Bool]
 
     ($(GMTdoc)solar.html#c)
@@ -23,7 +23,7 @@ Parameters
 - **M** | **dump** :: [Type => Bool]
 
     ($(GMTdoc)solar.html#m)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **N** | **invert** :: [Type => Bool]
 
     ($(GMTdoc)solar.html#n)

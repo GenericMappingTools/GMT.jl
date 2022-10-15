@@ -10,7 +10,7 @@ Full option list at [`greenspline`]($(GMTdoc)greenspline.html)
 Parameters
 ----------
 
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **I** | **inc** :: [Type => Str | Number]
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.

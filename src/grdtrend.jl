@@ -25,7 +25,7 @@ Parameters
 
     If weight.nc exists, it will be read and used to solve a weighted least-squares problem.
     ($(GMTdoc)grdtrend.html#w)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_V)
 """
 function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)

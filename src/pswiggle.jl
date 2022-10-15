@@ -8,7 +8,7 @@ Full option list at [`pswiggle`]($(GMTdoc)wiggle.html)
 Parameters
 ----------
 
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **Z** | **ampscale** | **amp_scale** :: [Type => Number | Str]
 
     Gives anomaly scale in data-units/distance-unit.
@@ -17,7 +17,7 @@ Parameters
 
     Sets the preferred positive azimuth. Positive wiggles will “gravitate” towards that direction.
     ($(GMTdoc)wiggle.html#a)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - **C** | **center** :: [Type => Number]
 
     Subtract center from the data set before plotting [0].
@@ -38,7 +38,7 @@ Parameters
 
     Set a fixed azimuth projection for wiggles [Default uses track azimuth, but see -A].
     ($(GMTdoc)wiggle.html#i)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - $(GMT.opt_P)
 - **T** | **track** :: [Type => Number or Str | Tuple | []]
 

@@ -21,7 +21,7 @@ Parameters
 - **Z** | **firstiszero** :: [Type => Bool]
 
     Sets the style of the plot.
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_V)
 """
 function mbsvplist(cmd0::String=""; kwargs...)

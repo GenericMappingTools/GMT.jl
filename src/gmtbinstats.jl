@@ -34,7 +34,7 @@ Parameters
 
     Sets the search_radius that determines which data points are considered close to a node. Not compatible with `tiling`
     ($(GMTdoc)gmtbinstats.html#s)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **T** | **tiling** | **bins** :: [Type => String | NamedTuple]
 
     Instead of circular, possibly overlapping areas, select non-overlapping tiling. Choose between

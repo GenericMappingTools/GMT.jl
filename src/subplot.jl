@@ -19,17 +19,17 @@ Parameters
 
     Specify automatic tagging of each subplot. This sets the tag of the first, top-left subplot and others follow sequentially.
     [`-A`](http://docs.generic-mapping-tools.org/latest/subplot.html#a)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - **C** | **clearance** :: [Type => Str | number]
 
     Reserve a space of dimension clearance between the margin and the subplot on the specified side. Settings specified under **begin** directive apply to all panels.
     [`-C`](http://docs.generic-mapping-tools.org/latest/subplot.html#c)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **M** | **margin** | **margins** :: [Type => Str]
 
     The margin space that is added around each subplot beyond the automatic space allocated for tick marks, annotations, and labels.
     [`-M`](http://docs.generic-mapping-tools.org/latest/subplot.html#m)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **SC** | **SR** | **col_axes** | **row_axes** :: [Type => Str | NamedTuple]
 
     Set subplot layout for shared axes. Set separately for rows (SR) and columns (SC).

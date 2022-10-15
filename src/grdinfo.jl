@@ -46,7 +46,7 @@ Parameters
 
     Input files must be data 3-D netCDF data cube. Not compatible with **D**, **E**, **F**, and **Ib** (GMT6.2)
     ($(GMTdoc)grdinfo.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **T** | **minmax** :: [Type => Number | Str]
     Determine min and max z-value.
     ($(GMTdoc)grdinfo.html#t)

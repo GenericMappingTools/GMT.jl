@@ -22,13 +22,13 @@ Parameters
 - **img** | **usegdal** | **gdal** :: [Type => Any]
 
     Force the cut operation to be done by GDAL. Works for images where GMT fails or even crash.
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **N** | **extend** :: [Type => Str or []]
 
     Allow grid to be extended if new region exceeds existing boundaries. Append nodata value
     to initialize nodes outside current region [Default is NaN].
     ($(GMTdoc)grdcut.html#n)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **circ_subregion** :: [Type => Str]    ``Arg = [n]lon/lat/radius[unit]``
 
     Specify an origin and radius; append a distance unit and we determine the corresponding

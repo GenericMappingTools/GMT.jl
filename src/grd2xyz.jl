@@ -8,7 +8,7 @@ Full option list at [`grd2xyz`]($(GMTdoc)grd2xyz.html)
 Parameters
 ----------
 
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **C** | **rcnumbers** | **row_col** :: [Type => Bool]
 
     Replace the x- and y-coordinates on output with the corresponding column and row numbers.
@@ -16,7 +16,7 @@ Parameters
 - **L** | **hvline** :: [Type => String]
 
     Limit the output of records to a single row or column.
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **T** | **stl** | **STL** :: [Type => String]
 
     Compute a STL triangulation for 3-D printing.

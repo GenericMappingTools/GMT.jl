@@ -28,7 +28,7 @@ Parameters
 
     Determine how NaN-values in the input grid affects the filtered output. Values are i|p|r
     ($(GMTdoc)grdfilter.html#n)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **T** | **toggle** :: [Type => Bool]
 
     Toggle the node registration for the output grid so as to become the opposite of the input grid

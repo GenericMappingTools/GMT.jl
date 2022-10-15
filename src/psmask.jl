@@ -10,9 +10,9 @@ Parameters
 
 - $(GMT.opt_I)
     ($(GMTdoc)mask.html#i)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - **C** | **endclip** | **end_clip_path** :: [Type => Bool]
 
     Mark end of existing clip path. No input file is needed.
@@ -30,7 +30,7 @@ Parameters
 
     Set fill shade, color or pattern for positive and/or negative masks [Default is no fill].
     ($(GMTdoc)mask.html#g)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - $(GMT.opt_Jz)
 - **L** | **nodegrid** :: [Type => Str]
 

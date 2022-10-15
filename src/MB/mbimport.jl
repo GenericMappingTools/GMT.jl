@@ -9,7 +9,7 @@ Parameters
 - **A** | **footprint** :: [Type => Str | Tuple]	``Arg = factor/mode/depth``
 
     Determines how the along-track dimension of the beam or pixel footprints is calculated.
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - $(GMT.opt_C)
 - **D** | **scaling** :: [Type => Str | Tuple]	``Arg = mode/scale/min/max``
 
@@ -29,7 +29,7 @@ Parameters
 - **Z** | **type_plot** :: [Type => Str | Number]
 
     Sets the style of the plot.
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

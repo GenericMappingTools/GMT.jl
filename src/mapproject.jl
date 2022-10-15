@@ -8,8 +8,8 @@ Full option list at [`mapproject`]($(GMTdoc)mapproject.html)
 Parameters
 ----------
 
-- $(GMT.opt_R)
-- $(GMT.opt_J)
+- $(GMT._opt_R)
+- $(GMT._opt_J)
 
 - **A** | **azim**  | **azimuth**:: [Type => Str]    ``Arg = b|B|f|F|o|O[lon0/lat0][+v]``
 

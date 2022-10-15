@@ -1549,3 +1549,4 @@ logspace(start, stop, length=100) = exp10.(range(start, stop=stop, length=length
 fields(arg) = fieldnames(typeof(arg))
 fields(arg::Array) = fieldnames(typeof(arg[1]))
 #feval(fn_str, args...) = eval(Symbol(fn_str))(args...)
+const numel = length

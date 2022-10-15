@@ -8,12 +8,12 @@ Full option list at [`psrose`]($(GMTdoc)rose.html)
 Parameters
 ----------
 
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **A** | **sector** :: [Type => Str | Number]
 
 	Gives the sector width in degrees for sector and rose diagram.
 	($(GMTdoc)rose.html#a)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - **C** | **color** :: [Type => Str | GMTcpt]
 
 	Give a CPT. The mid x-value for each bar is used to look-up the bar color.
@@ -51,7 +51,7 @@ Parameters
 
 	Sets the confidence level used to determine if the mean resultant is significant.
 	($(GMTdoc)rose.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **norm** | **normalize** :: [Type => Bool]
 
 	Specifies radius of plotted circle (append a unit from c|i|p).

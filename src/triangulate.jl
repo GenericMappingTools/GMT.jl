@@ -33,7 +33,7 @@ Parameters
     ($(GMTdoc)triangulate.html#g)
 - $(GMT.opt_I)
     ($(GMTdoc)triangulate.html#i)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **L** | **index** :: [Type => Bool]
 
     Give name of file with previously computed Delaunay information. If the indexfile is binary and can be read
@@ -51,7 +51,7 @@ Parameters
 
     Output the edges of the Voronoi cells instead [Default is Delaunay triangle edges]
     ($(GMTdoc)triangulate.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **triangles** :: [Type => Bool]  
 
     Output triangles as polygon segments separated by a segment header record. Requires Delaunay triangulation.

@@ -12,8 +12,8 @@ Parameters
 
     Save an image in a raster format instead of PostScript.
     ($(GMTdoc)grdimage.html#a)
-- $(GMT.opt_J)
-- $(GMT.opt_B)
+- $(GMT._opt_J)
+- $(GMT._opt_B)
 - $(GMT.opt_C)
 - **D** | **img_in** | **image_in** :: [Type => Str]
 
@@ -43,7 +43,7 @@ Parameters
 - **Q** | **alpha_color** | **nan_alpha** :: [Type => Bool | Tuple | Str]	``Q = true | Q = (r,g,b)``
 
 	Make grid nodes with z = NaN transparent, or pick a color for transparency in a image.
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

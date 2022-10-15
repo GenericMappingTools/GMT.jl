@@ -13,13 +13,13 @@ Full option list at [`pshistogram`]($(GMTdoc)histogram.html)
 Parameters
 ----------
 
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **A** | **horizontal** :: [Type => Bool]
 
     Plot the histogram horizontally from x = 0 [Default is vertically from y = 0].
     ($(GMTdoc)histogram.html#a)
 - $(GMT.opt_Jz)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - **C** | **color** | **cmap** :: [Type => Str | GMTcpt]
 
     Give a CPT. The mid x-value for each bar is used to look-up the bar color.

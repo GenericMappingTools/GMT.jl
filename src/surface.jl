@@ -10,7 +10,7 @@ Full option list at [`surface`]($(GMTdoc)surface.html)
 Parameters
 ----------
 
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_I)
     ($(GMTdoc)surface.html#i)
 - **A** | **aspect_ratio** :: [Type => Number]

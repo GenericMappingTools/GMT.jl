@@ -32,13 +32,13 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdedit(....) form.
     ($(GMTdoc)grdedit.html#g)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **N** | **replace** :: [Type => Str | Mx3 array]      ``Arg = replace=fname | replace=Array``
 
     Read the ASCII (or binary) file table and replace the corresponding nodal values in the
     grid with these x,y,z values. Alternatively, provide a Mx3 matrix with values to be changed. 
     ($(GMTdoc)grdedit.html#n)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **wrap** :: [Type => Bool]
 
     For global, geographical grids only. Grid values will be shifted longitudinally according to
