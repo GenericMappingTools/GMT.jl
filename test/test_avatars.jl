@@ -267,6 +267,7 @@
 	bar([0. 1 2 3; 1 2 3 4], stack=true, hbar=true, fill=["red", "green", "blue"])
 	bar(0:3, [2.9, 5, 2.2, 1], fill=["red", "green", "blue", "orange"], Vd=dbg2)
 	bar([2 1 1 NaN 1; 4 NaN NaN 2 NaN; 1 3 4 3 2; NaN 3 NaN NaN NaN], fillalpha=[0.3 0.5 0.7], xticks=(:d1, :d2, :d3, :d4), Vd=dbg2)
+	bar([1 2 3 0 -1 -2 0], stacked=:water, show=true, connector=true, bargap=0.5, fill=(:blue,:green), Vd=dbg2)
 	D = mat2ds([0 0],["aa"]);
 	#sprint(print, D);
 

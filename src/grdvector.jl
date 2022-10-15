@@ -156,7 +156,7 @@ function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol}, len::String="", stop::S
 	cmd::String = ""
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, String))
-			(len != "" && !isnumeric(val[1])) && (val = len * val)
+			(len != "" && !isdigit(val[1])) && (val = len * val)
 			cmd = " -Q" * val
 		else
 			cmd = (len != "" && (findfirst(:len .== fields(val)) === nothing) && (findfirst(:length .== fields(val)) === nothing)) ? " -Q" * len : " -Q"

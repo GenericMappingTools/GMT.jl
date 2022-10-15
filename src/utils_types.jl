@@ -295,7 +295,7 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 		for k = 1:n_ds
 			_hdr[k] = " -G" * _fill[((k % n_colors) != 0) ? k % n_colors : n_colors]
 		end
-		(D.header != "") && (_hdr[1] = D.header * _hdr[1])	# Copy eventual contents of first header
+		(D.header != _hdr[1]) && (_hdr[1] = D.header * _hdr[1])	# Copy eventual contents of first header
 	end
 
 	Dm = Vector{GMTdataset}(undef, n_ds)

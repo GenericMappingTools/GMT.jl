@@ -83,7 +83,7 @@ function binstats(cmd0::String="", arg1=nothing; kwargs...)
 		elseif (startswith(s, "quantil"))  cmd *= " -Cq"
 			(length(s) > 7) && (cmd *= s[8:end])		# In case a stats="quantil75" was transmitted.
 		elseif (length(s) == 1)  cmd *= " -C" * s		# When a C=:a was used
-		elseif (s[1] == 'q' && isnumeric(s[2]))  cmd *= " -C" * s
+		elseif (s[1] == 'q' && isdigit(s[2]))  cmd *= " -C" * s
 		else
 			error("Bad argument for the 'tile' option ($(s))")
 		end
