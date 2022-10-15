@@ -383,7 +383,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			opt_J *= "+width=" * split(def_fig_size, '/')[1]
 		elseif (mnemo)							# Proj name was obtained from a name mnemonic and no size. So use default
 			opt_J = append_figsize(d, opt_J)
-		elseif (!isnumeric(opt_J[end]) && (length(opt_J) < 6 || (isletter(opt_J[5]) && !isnumeric(opt_J[6]))) )
+		elseif (!isdigit(opt_J[end]) && (length(opt_J) < 6 || (isletter(opt_J[5]) && !isdigit(opt_J[6]))) )
 			if (!IamSubplot[1])
 				if (((val = find_in_dict(d, [:aspect], del)[1]) !== nothing) || haskey(d, :aspect3))
 					opt_J *= set_aspect_ratio(val, "", true, haskey(d, :aspect3))
@@ -500,7 +500,7 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 
 	slash = "";		de = ""
 	if (opt_J[end] == 'd')  opt_J = opt_J[1:end-1];		de = "d"  end
-	if (isnumeric(opt_J[end]) && ~startswith(opt_J, " -JXp"))    slash = "/";#opt_J *= "/" * width
+	if (isdigit(opt_J[end]) && ~startswith(opt_J, " -JXp"))    slash = "/";#opt_J *= "/" * width
 	else
 		if (occursin("Cyl_", opt_J) || occursin("Poly", opt_J))  slash = "/";#opt_J *= "/" * width
 		elseif (startswith(opt_J, " -JU") && length(opt_J) > 4)  slash = "/";#opt_J *= "/" * width
@@ -1775,7 +1775,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_ls_code!(d::Dict)
 	if ((val = find_in_dict(d, [:ls :linestyle])[1]) !== nothing)
-		if (isa(val, String) && (val[1] == '-' || val[1] == '.' || isnumeric(val[1])))
+		if (isa(val, String) && (val[1] == '-' || val[1] == '.' || isdigit(val[1])))
 			d[:ls] = val	# Assume it's a "--." or the more complex len_gap_len_gap... form. So reset it and return
 		else
 			o = mk_styled_line!(d, val)
@@ -2739,7 +2739,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	if (haskey(d, :slanted))
 		s = arg2str(d[:slanted])
 		if (s != "")
-			if (!isnumeric(s[1]) && s[1] != '-' && s[1] != '+')
+			if (!isdigit(s[1]) && s[1] != '-' && s[1] != '+')
 				s = s[1]
 				(axe == "y" && s != 'p') && error("slanted option: Only 'parallel' is allowed for the y-axis")
 			end
@@ -3379,7 +3379,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 	if (!convert_syntax[1] && !IamModern[1] && no_R)	# Here 'arg' can no longer be a file name (string)
 		# Only way I found to stop Julia to fck insist that the data matrix is a Any
 		ttt = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg)
-		wesn_f64::Matrix{Float64} = ttt.data
+		wesn_f64::Matrix{<:Float64} = ttt.data
 		have_info = true
 		if (wesn_f64[1] > wesn_f64[2])				# Workaround a bug/feature in GMT when -: is arround
 			wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]
