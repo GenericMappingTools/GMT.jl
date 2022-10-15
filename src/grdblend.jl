@@ -11,7 +11,7 @@ Parameters
 
 - $(GMT.opt_I)
     ($(GMTdoc)grdblend.html#i)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving

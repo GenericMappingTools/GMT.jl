@@ -61,7 +61,7 @@ Parameters
     Required setting for wiggle plots (i.e., it requires F=:w). Sets a wiggle scale
     in z-data units per the user’s units
     ($(GMTdoc)gmt2kml.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **ilscale** :: [Type => Str]      ``Arg =  c|nscale``
 
     Scale icons or labels. Here, S=:c sets a scale for the symbol icon, whereas S=:n sets

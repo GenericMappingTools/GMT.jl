@@ -10,7 +10,7 @@ Full option list at [`grdmask`]($(GMTdoc)grdmask.html)
 Parameters
 ----------
 
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_I)
     ($(GMTdoc)grdmask.html#i)
 - **A** | **steps** :: [Type => Str | Number]		``Arg = m|p|x|y``

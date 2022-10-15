@@ -8,7 +8,7 @@ Full option list at [`gmtselect`]($(GMTdoc)gmtselect.html)
 Parameters
 ----------
 
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **A** | **area** :: [Type => Str | Number]
 
     Features with an area smaller than min_area in km^2 or of hierarchical level that is
@@ -42,7 +42,7 @@ Parameters
 
     Reverses the sense of the test for each of the criteria specified.
     ($(GMTdoc)gmtselect.html#i)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **L** | **dist2line** :: [Type => Str | NamedTuple]    `Arg = linefile+ddist[unit][+p] | (pts=Array, dist=xx, ortho=_)`
 
     Pass all records whose location is within dist of any of the line segments in the ASCII

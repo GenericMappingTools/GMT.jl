@@ -13,7 +13,7 @@ Full option list at [`grdlandmask`]($(GMTdoc)grdlandmask.html)
 Parameters
 ----------
 
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_I)
     ($(GMTdoc)grdlandmask.html#i)
 - **A** | **area** :: [Type => Str | Number]

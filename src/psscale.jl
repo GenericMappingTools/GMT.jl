@@ -9,7 +9,7 @@ Full option list at [`psscale`]($(GMTdoc)psscale.html)
 
     Defines the reference point on the map for the color scale using one of four coordinate systems.
     ($(GMTdoc)psscale.html#d)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - $(GMT.opt_C)
 - **F** | **box** :: [Type => Str]
 
@@ -23,7 +23,7 @@ Full option list at [`psscale`]($(GMTdoc)psscale.html)
 
     Add illumination effects.
     ($(GMTdoc)psscale.html#i)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - $(GMT.opt_Jz)
 - **L** | **equal** | **equal_size** :: [Type => Str | Bool]		`Arg = [i][gap]`
 
@@ -41,7 +41,7 @@ Full option list at [`psscale`]($(GMTdoc)psscale.html)
 
     Selects a logarithmic interpolation scheme [Default is linear].
     ($(GMTdoc)psscale.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **nolines** :: [Type => Bool | []]
 
     Do not separate different color intervals with black grid lines.

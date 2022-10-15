@@ -16,7 +16,7 @@ Parameters
 
     Also add in the volume from the level of the contour down to base [Default base is contour].
     ($(GMTdoc)grdvolume.html#l)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **unit** :: [Type => Str]              ``Arg = e|f|k|M|n|u``
 
     For geographical grids, append a unit from e|f|k|M|n|u [Default is meter (e)].

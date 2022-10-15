@@ -52,7 +52,7 @@ If file is an image `layer` can be a 1 or a 1x3 array (to read a RGB image). Not
 bands do not need to be contiguous. A `band=[1,5,2]`` composes an RGB out of those bands. See more at
 $(GMTdoc)/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files) but note that we use **1 based** indexing here.
 
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_bi)
 - $(GMT.opt_f)
@@ -296,7 +296,7 @@ Parameters
 
     When saving with GDAL we can specify the data type from u8|u16|i16|u32|i32|float32 where ‘i’ and ‘u’ denote
     signed and unsigned integers respectively.
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_bo)
 - $(GMT.opt_f)

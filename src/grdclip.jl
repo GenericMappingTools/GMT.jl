@@ -18,7 +18,7 @@ Parameters
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdclip(....) form.
     ($(GMTdoc)grdclip.html#g)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **above** | **high** :: [Type => Array | Str]
 
     Two elements array with ``high`` and ``above`` or a string with "high/above".

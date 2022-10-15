@@ -53,7 +53,7 @@ Parameters
 
     Selects a logarithmic interpolation scheme [Default is linear].
     ($(GMTdoc)grd2cpt.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **symetric** :: [Type => Str]			`Arg = h|l|m|u`
 
     Force the color table to be symmetric about zero (from -R to +R).

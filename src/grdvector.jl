@@ -14,7 +14,7 @@ Parameters
 
     The grid contain polar (r, theta) components instead of Cartesian (x, y) [Default is Cartesian components].
     ($(GMTdoc)grdvector.html#a)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - $(GMT.opt_C)
 - **G** | **fill** :: [Type => Str | Number]
 
@@ -37,7 +37,7 @@ Parameters
     Modify vector parameters. For vector heads, append vector head size [Default is 0, i.e., stick-plot].
     ($(GMTdoc)grdvector.html#q)
 - $(GMT.opt_P)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **vscale** | **vec_scale** :: [Type => Str | Number]		``Arg = [i|l]scale[unit]``
 
     Sets scale for vector plot length in data units per plot distance measurement unit [1].

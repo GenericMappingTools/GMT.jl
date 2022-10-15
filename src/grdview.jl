@@ -7,10 +7,10 @@ to a raster image.
 
 Full option list at [`grdview`]($(GMTdoc)grdview.html)
 
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - $(GMT.opt_Jz)
-- $(GMT.opt_R)
-- $(GMT.opt_B)
+- $(GMT._opt_R)
+- $(GMT._opt_B)
 - $(GMT.opt_C)
 - **G** | **drape** | **drapefile** :: [Type => Str | GMTgrid | a Tuple with 3 GMTgrid types]
 

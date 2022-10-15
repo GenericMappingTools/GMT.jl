@@ -10,7 +10,7 @@ const opt_I = "**I** | **inc** | **increment** | **spacing** :: [Type => Str]	``
 
     *x_inc* [and optionally *y_inc*] is the grid spacing. Optionally, append an increment unit."
 
-const opt_J = "**J** | **proj** | **projection** :: [Type => String]
+const _opt_J = "**J** | **proj** | **projection** :: [Type => String]
 
     Select map projection. Defaults to 14x9.5 cm with linear (non-projected) maps.
     ($(GMTdoc)gmt.html#j-full)"
@@ -21,12 +21,12 @@ const opt_JZ = "**JZ** | **zsize** :: [Type => String]
     Set z-axis scaling. 
     ($(GMTdoc)gmt.html#jz-full)"
 
-const opt_R = "**R** | **region** | **limits** :: [Type => Str or list or GMTgrid|image]	``Arg = (xmin,xmax,ymin,ymax)``
+const _opt_R = "**R** | **region** | **limits** :: [Type => Str or list or GMTgrid|image]	``Arg = (xmin,xmax,ymin,ymax)``
 
     Specify the region of interest. Set to data minimum BoundinBox if not provided.
     ($(GMTdoc)gmt.html#r-full)"
 
-const opt_B = "**B** | **frame** | **axis** | **xaxis yaxis**:: [Type => Str] 
+const _opt_B = "**B** | **frame** | **axis** | **xaxis yaxis**:: [Type => Str] 
 
     Set map boundary frame and axes attributes.
     ($(GMTdoc)gmt.html#b-full)"

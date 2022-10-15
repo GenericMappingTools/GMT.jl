@@ -25,10 +25,10 @@ Parameters
 - **GMTjulia** :: [Type => Number]
 
     Create the GMT Julia GMT logo. Provide circle diameter in centimeters
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - $(GMT.opt_Jz)
 - $(GMT.opt_P)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

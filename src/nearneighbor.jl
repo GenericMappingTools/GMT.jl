@@ -18,7 +18,7 @@ Parameters
 
     The circular area centered on each node is divided into `sectors` sectors.
     ($(GMTdoc)nearneighbor.html#n)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **search_radius** :: [Type => Number]
 
     Sets the search_radius that determines which data points are considered close to a node.

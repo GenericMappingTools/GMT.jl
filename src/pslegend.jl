@@ -8,9 +8,9 @@ Full option list at [`legend`]($(GMTdoc)legend.html)
 Parameters
 ----------
 
-- $(GMT.opt_B)
-- $(GMT.opt_J)
-- $(GMT.opt_R)
+- $(GMT._opt_B)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
 - **C** | **clearance** :: [Type => Str]
 
     Sets the clearance between the legend frame and the internal items [4p/4p].

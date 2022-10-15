@@ -9,9 +9,9 @@ Full option list at [`pstext`]($(GMTdoc)pstext.html)
 Parameters
 ----------
 
-- $(GMT.opt_J)
-- $(GMT.opt_R)
-- $(GMT.opt_B)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
+- $(GMT._opt_B)
 - **A** | **azimuth** | **azim** :: [Type => Bool]
 
     Angles are given as azimuths; convert them to directions using the current projection.

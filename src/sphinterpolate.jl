@@ -31,7 +31,7 @@ Parameters
 
     Before interpolation, scale data by the maximum data range [no scaling].
     ($(GMTdoc)sphinterpolate.html#z)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_bi)
 - $(GMT.opt_di)

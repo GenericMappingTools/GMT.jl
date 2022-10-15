@@ -12,7 +12,7 @@ Parameters
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
     ($(GMTdoc)contour.html#a)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - **C** | **cont** | **contour** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
     Contours to be drawn may be specified in one of three possible ways.
@@ -26,13 +26,13 @@ Parameters
 
     Controls the placement of labels along the quoted lines.
     ($(GMTdoc)contour.html#g)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - $(GMT.opt_P)
 - **Q** | **cut** :: [Type => Str | Number]         ``Arg = [cut[unit]][+z]]``
 
     Do not draw contours with less than cut number of points.
     ($(GMTdoc)contour.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **skip** :: [Type => Str | []]            ``Arg = [p|t]``
 
     Skip all input xyz points that fall outside the region (Used when input data is a table).

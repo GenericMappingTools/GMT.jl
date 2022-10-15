@@ -40,7 +40,7 @@ Parameters
 
     Append the name of a file with pre-calculated Voronoi polygons.
     ($(GMTdoc)sphdistance.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_b)
 - $(GMT.opt_d)

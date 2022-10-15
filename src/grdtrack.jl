@@ -37,7 +37,7 @@ Parameters
 - **N** | **no_skip** | **noskip** :: [Type => Bool]
 
     ($(GMTdoc)grdtrack.html#n)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **stack** :: [Type => Str]
 
     ($(GMTdoc)grdtrack.html#s)

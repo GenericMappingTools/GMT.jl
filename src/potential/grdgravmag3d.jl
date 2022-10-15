@@ -40,7 +40,7 @@ Parameters
 
     Extend the domain of computation with respect to output `region`.
     ($(GMTdoc)grdgravmag3d.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **radius** :: [Type => Number]
 
     Set search radius in km (valid only in the two grids mode OR when `thickness`) [Default = 30 km].

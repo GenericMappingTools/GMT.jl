@@ -8,10 +8,10 @@ Full option list at [`meca`]($(GMTdoc)meca.html)
 Parameters
 ----------
 
-- $(GMT.opt_J)
-- $(GMT.opt_R)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
 
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - **A** | **offset** :: [Type => Bool | Str | GMTcpt]
 
     Offsets focal mechanisms to the longitude, latitude specified in the last two columns of the input

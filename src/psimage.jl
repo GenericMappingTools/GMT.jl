@@ -8,7 +8,7 @@ Full option list at [`psimage`]($(GMTdoc)image.html)
 Parameters
 ----------
 
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - **D** | **pos** | **position** :: [Type => Str]
 
     Sets reference point on the map for the image using one of four coordinate systems.
@@ -24,13 +24,13 @@ Parameters
 
     Invert 1-bit image before plotting.
     ($(GMTdoc)image.html#i)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - $(GMT.opt_Jz)
 - **M** | **monochrome** :: [Type => Bool]
 
     Convert color image to monochrome grayshades using the (television) YIQ-transformation.
     ($(GMTdoc)image.html#m)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

@@ -11,15 +11,15 @@ Full option list at [`coast`]($(GMTdoc)coast.html)
 Parameters
 ----------
 
-- $(GMT.opt_J)
-- $(GMT.opt_R)
+- $(GMT._opt_J)
+- $(GMT._opt_R)
 - **A** | **area** :: [Type => Str or Number]
 
     Features with an area smaller than min_area in km^2 or of
     hierarchical level that is lower than min_level or higher than
     max_level will not be plotted.
     ($(GMTdoc)coast.html#a)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - **C** | **river_fill** :: [Type => Str]
 
     Set the shade, color, or pattern for lakes and river-lakes.

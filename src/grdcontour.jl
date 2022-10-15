@@ -9,12 +9,12 @@ Full option list at [`grdcontour`]($(GMTdoc)grdcontour.html)
 Parameters
 ----------
 
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 - **A** | **annot** :: [Type => Str or Number]       ``Arg = [-|[+]annot_int][labelinfo]``
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
     ($(GMTdoc)grdcontour.html#a)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - **C** | **cont** | **contour** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
     Contours to be drawn may be specified in one of three possible ways.
@@ -53,7 +53,7 @@ Parameters
 
     Draw tick marks pointing in the downward direction every *gap* along the innermost closed contours.
     ($(GMTdoc)grdcontour.html#t)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - **W** | **pen** :: [Type => Str | Number]

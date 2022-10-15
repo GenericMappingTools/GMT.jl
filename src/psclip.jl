@@ -12,20 +12,20 @@ Parameters
 
     Mark end of existing clip path. No input file is needed.
     ($(GMTdoc)psclip.html#c)
-- $(GMT.opt_J)
+- $(GMT._opt_J)
 
 - **A** | **steps** :: [Type => Str or []]
 
     By default, geographic line segments are connected as great circle arcs. To connect them as straight lines, use **A** 
     ($(GMTdoc)psclip.html#a)
-- $(GMT.opt_B)
+- $(GMT._opt_B)
 - $(GMT.opt_Jz)
 - **N** | **invert** :: [Type => Bool]
 
     Invert the sense of the test, i.e., clip regions where there is data coverage.
     ($(GMTdoc)psclip.html#n)
 - $(GMT.opt_P)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **T** | **clip_limits** :: [Type => Bool]
 
     Rather than read any input files, simply turn on clipping for the current map region.

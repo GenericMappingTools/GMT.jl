@@ -35,12 +35,11 @@ Parameters
 
     Controls how normalization via N is carried out.
     ($(GMTdoc)grdgradient.html#q)
-- $(GMT.opt_R)
+- $(GMT._opt_R)
 - **S** | **slopegrid** :: [Type => Str]
 
     Name of output grid file with scalar magnitudes of gradient vectors. Requires D but makes G optional.
     ($(GMTdoc)grdgradient.html#s)
-- $(GMT.opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_f)
 """
