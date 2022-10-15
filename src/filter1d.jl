@@ -63,16 +63,16 @@ function filter1d(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = parse_these_opts(cmd, d, [[:D :inc :increment], [:E :end :ends], [:L :gap_width],
                                     [:N :time_col :timecol], [:Q :quality], [:S :symetry], [:T :equi_space]])
 
-    if ((symb = is_in_dict(d, [:F :filter :filter_type])) !== nothing && isa(d[symb], Tuple))
-        # Accept either a F=(:gaus, 10, 1) => -Fg10+h
-        _opt_F = " -F" * string(d[symb][1])[1]
-        (length(d[symb]) >= 2) && (_opt_F *= string(d[symb][2]))
-        (length(d[symb]) >= 3) && (_opt_F *= "+h")
-        cmd *= _opt_F
-        delete!(d, symb)
-    else                            # Or a F=(type=:gaussian, width=10, highpass=true) => -Fg10+h
-	    cmd = add_opt(d, cmd, "F", [:F :filter :filter_type], (type="1", width="", highpass="_"))
-    end
+	if ((symb = is_in_dict(d, [:F :filter :filter_type])) !== nothing && isa(d[symb], Tuple))
+		# Accept either a F=(:gaus, 10, 1) => -Fg10+h
+		_opt_F = " -F" * string(d[symb][1])[1]
+		(length(d[symb]) >= 2) && (_opt_F *= string(d[symb][2]))
+		(length(d[symb]) >= 3) && (_opt_F *= "+h")
+		cmd *= _opt_F
+		delete!(d, symb)
+	else                            # Or a F=(type=:gaussian, width=10, highpass=true) => -Fg10+h
+		cmd = add_opt(d, cmd, "F", [:F :filter :filter_type], (type="1", width="", highpass="_"))
+	end
 
 	(isvector(arg1)) && (arg1 = cat_1_arg(arg1))	# Accept vectors (GMT should do that too)
 	common_grd(d, cmd0, cmd, "filter1d ", arg1)		# Finish build cmd and run it

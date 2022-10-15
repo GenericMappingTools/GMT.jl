@@ -141,7 +141,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 
 	opt_Q = parse_Q_grdvec(d, [:Q :vec :vector :arrow], defLen, defHead, defNorm)
 	!occursin(" -G", opt_Q) && (cmd = add_opt_fill(cmd, d, [:G :fill], 'G'))	# If fill not passed in arrow, try from regular option
-	cmd *= add_opt_pen(d, [:W :pen], "W", true)									# TRUE to also seek (lw,lc,ls)
+	cmd *= add_opt_pen(d, [:W :pen], "W")
 	(!occursin(" -C", cmd) && !occursin(" -W", cmd) && !occursin(" -G", opt_Q)) && (cmd *= " -W0.5")	# If still nothing, set -W.
 	(opt_Q != "") && (cmd *= opt_Q)
 

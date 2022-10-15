@@ -1588,9 +1588,8 @@ function parse_params(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_pen(d::Dict, symbs::VMs, opt::String="", sub::Bool=true, del::Bool=true)::String
+function add_opt_pen(d::Dict, symbs::VMs, opt::String="", del::Bool=true)::String
 	# Build a pen option. Input can be either a full hard core string or spread in lw (or lt), lc, ls, etc or a tuple
-	# If SUB is true (lw, lc, ls) are not seeked because we are parsing a sub-option
 
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | String | Number")	# Just print the options
 
@@ -1606,7 +1605,7 @@ function add_opt_pen(d::Dict, symbs::VMs, opt::String="", sub::Bool=true, del::B
 				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
 					for v in val
 						d2 = nt2dict(v)			# Decompose the NT and feed it into this-self
-						out *= opt * add_opt_pen(d2, symbs, "", true, false)
+						out *= opt * add_opt_pen(d2, symbs, "", false)
 					end
 				else
 					out = opt * parse_pen(val)	# Should be a better function
@@ -1620,10 +1619,10 @@ function add_opt_pen(d::Dict, symbs::VMs, opt::String="", sub::Bool=true, del::B
 				c::String = (:color in k) ? string(val[:color]) : ""
 				s::String = (:style in k) ? string(val[:style]) : ""
 				if (w != "" || c != "" || s != "")
-					out = opt * add_opt_pen(Dict(:pen => (w,c,s)), symbs, "", true, false)
+					out = opt * add_opt_pen(Dict(:pen => (w,c,s)), symbs, "", false)
 				else
 					d2 = nt2dict(val)				# Decompose the NT and feed into this-self
-					t = add_opt_pen(d2, symbs, "", true, false)
+					t = add_opt_pen(d2, symbs, "", false)
 					if (t == "")
 						d, out = nt2dict(val), opt
 					else

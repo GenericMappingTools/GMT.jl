@@ -54,7 +54,7 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :g :p :t :yx :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :steps :straight_lines], [:C :endclip :end_clip_path], [:N :invert], [:T :clip_limits]])
-	cmd *= add_opt_pen(d, [:W :pen], "W", true)		# TRUE to also seek (lw,lc,ls)
+	cmd *= add_opt_pen(d, [:W :pen], "W")
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R)
