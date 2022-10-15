@@ -94,7 +94,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
 	got_usr_R = (opt_R != "") ? true : false			# To know if the user set -R or we estimated it from data
-	if (opt_R == "" && sub_module == "bar")  opt_R = "/-0.4/0.4/0"  end	# Make sure y_min = 0
+	(opt_R == "" && sub_module == "bar") && (opt_R = "/-0.4/0.4/0")		# Make sure y_min = 0
 	if (O && caller == "plotyy")
 		cmd = replace(cmd, opt_R => "")					# Must remove old opt_R because a new one will be constructed
 		ind = collect(findall("/", box_str[1])[2])		# 'box_str' was set in first call
@@ -247,8 +247,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(opt_W == "" && caller == "feather") && (_cmd[1] *= " -W0.1")		# feathers are normally many so better they are thin
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
-	arg1 = helper_multi_cols(d, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D, multi_col, _cmd,
-	                         sub_module, g_bar_fill, got_Ebars, got_usr_R)
+	arg1, _cmd = helper_multi_cols(d, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D, multi_col, _cmd,
+	                               sub_module, g_bar_fill, got_Ebars, got_usr_R)
 
 	# Try to limit the damage of this Fker bug in 6.2.0
 	if ((mcc || got_Ebars) && (GMTver == v"6.2.0" && isGMTdataset(arg1) && occursin(" -i", cmd)) )
@@ -536,9 +536,10 @@ function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D
 		D::GMTdataset = gmt("gmtinfo -C", arg1)		# But now also need to update the -R string
 		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(D.data)))
 	elseif (!mcc && sub_module == "bar" && check_bar_group(arg1))	# !mcc because the bar-groups all have mcc = false
-		_cmd[1], arg1 = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
+		_cmd[1], arg1, cmd2 = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
+		(cmd2 != "") && (length(_cmd) == 1 ? (_cmd = [cmd2; _cmd[1]]) : (@warn("Can't plot the connector when 'bar' is already a nested call."); CTRL.pocket_call[3] = nothing))
 	end
-	return arg1
+	return arg1, _cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -571,6 +572,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	# Convert input array into a multi-segment Dataset where each segment is an element of a bar group
 	# Example, plot two groups of 3 bars each: bar([0 1 2 3; 1 2 3 4], xlabel="BlaBla")
 
+	cmd2::String = ""			# Only used in the waterfall case to hold the 'connector' command
 	if (got_Ebars)
 		opt_E = scan_opt(cmd, "-E")
 		((ind  = findfirst("+", opt_E)) !== nothing) && (opt_E = opt_E[1:ind[1]-1])	# Strip eventual modifiers
@@ -588,10 +590,15 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	end
 
 	do_multi = true;	is_stack = false		# True for grouped; false for stacked groups
+	is_waterfall = false
 	is_hbar = occursin("-SB", cmd)				# An horizontal bar plot
-	if (is_in_dict(d, [:stack :stacked], del=true) !== nothing)
+
+	if ((val = find_in_dict(d, [:stack :stacked])[1]) !== nothing)
 		# Take this (two groups of 3 bars) [0 1 2 3; 1 2 3 4]  and compute this (the same but stacked)
 		# [0 1 0; 0 3 1; 0 6 3; 1 2 0; 1 5 2; 1 9 4]
+		# Taking for example the first group, [0 1 0; 0 3 1; 0 6 3] this means:
+		# [|x=0 base=0, y=1|; |x=0 base=1, y=3|; |x=0, base=3, y=6]
+		is_waterfall = startswith(string(val), "water")
 		nl::Int = size(_arg,2)-1				# N layers in stack
 		tmp = zeros(size(_arg,1)*nl, 3)
 
@@ -599,21 +606,52 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 			tmp[(m-1)*nl+1,1] = _arg[m,1];		tmp[(m-1)*nl+1,2] = _arg[m,2];	# 3rd col is zero
 			for n = 2:nl				# Loop over number of layers (n bars in a group)
 				tmp[(m-1)*nl+n,1] = _arg[m,1]
-				if (sign(tmp[(m-1)*nl+n-1,2]) == sign(_arg[m,n+1]))		# Because when we have neg & pos, case is diff
+				if (sign(tmp[(m-1)*nl+n-1,2]) == sign(_arg[m,n+1]))		# When we have neg & pos, case is diff
 					tmp[(m-1)*nl+n,2] = tmp[(m-1)*nl+n-1,2] + _arg[m,n+1]
 					tmp[(m-1)*nl+n,3] = tmp[(m-1)*nl+n-1,2]
 				else
-					tmp[(m-1)*nl+n,2] = _arg[m,n+1]
-					tmp[(m-1)*nl+n,3] = 0
+					if (is_waterfall)
+						tmp[(m-1)*nl+n,3] = tmp[(m-1)*nl+n-1,2]
+						tmp[(m-1)*nl+n,2] = tmp[(m-1)*nl+n,3] + _arg[m,n+1]
+						(tmp[(m-1)*nl+n,2] == tmp[(m-1)*nl+n,3]) && (tmp[(m-1)*nl+n,3] = 0)		# A 'total' column
+					else
+						tmp[(m-1)*nl+n,2] = _arg[m,n+1]
+						tmp[(m-1)*nl+n,3] = 0
+					end
 				end
 			end
 		end
-		(is_hbar) && (tmp = [tmp[:,2] tmp[:,1] tmp[:,3]])	# Horizontal bars must swap 1-2 cols
+		if (is_waterfall)
+			for k = 2:nl  tmp[k] += (k-1)  end			# Set the x coordinates of each bar
+
+			tricol = ["darkgreen", "tomato", "gray70"]	# The default colors when no other were sent in args
+			if (!isempty(g_bar_fill))					# Bar colors sent in as args to this function.
+				tricol[1:2] = string.(g_bar_fill[1:2])	# If < 2 it will error
+				(length(g_bar_fill) > 2) && (tricol[3] = string(g_bar_fill[3]))
+			end
+			g_bar_fill = fill(tricol[1], nl)
+			g_bar_fill[_arg[2:end] .< 0]  .= tricol[2]
+			g_bar_fill[_arg[2:end] .== 0] .= tricol[3]
+
+			if (is_in_dict(d, [:connector]) !== nothing)
+				# Here we need to know the bar width but that info was fetch in check_caller. So fish it from -Sb0.8u+b0
+				bw  = parse(Float64, split(split(split(cmd, "-S")[2])[1], "u+")[1][2:end])
+				bw2 = bw / 2
+				con = fill(NaN, (nl-1)*3, 2)
+				for k = 1:nl-1
+					con[(k-1)*3+1:(k-1)*3+2, :] = [tmp[k]+bw2 tmp[k,2]; tmp[k+1]-bw2 tmp[k+1,3]]
+					(_arg[k+2] == 0) && (con[(k-1)*3+2, 2] = tmp[k+1,2])	# 'total' bars are always 0->top
+				end
+				CTRL.pocket_call[3] = con
+				cmd2 = add_opt_pen(d, [:connector], "W")
+			end
+		end
+		(is_hbar) && (tmp = [tmp[:,2] tmp[:,1] tmp[:,3]])		# Horizontal bars must swap 1-2 cols
 		_arg = tmp
 		do_multi = false;		is_stack = true
 	end
 
-	if (isempty(g_bar_fill) && findfirst("-G0/115/190", cmd) !== nothing)		# Remove the auto color
+	if ((isempty(g_bar_fill) || is_waterfall) && findfirst("-G0/115/190", cmd) !== nothing)		# Remove auto color
 		cmd = replace(cmd, " -G0/115/190" => "")
 	end
 
@@ -639,8 +677,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])	# Strip it because we need to (re)find Bar width
 	bw::Float64 = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
 	n_in_group = length(_argD)						# Number of bars in the group
-	gap::Float64 = ((val = find_in_dict(d, [:gap])[1]) !== nothing) ? val/100 : 0.0		# Gap between bars in a group
-	new_bw::Float64 = (is_stack) ? bw : bw / n_in_group * (1 - gap)	# 'width' does not change in bar-stack
+	new_bw::Float64 = (is_stack) ? bw : bw / n_in_group	# 'width' does not change in bar-stack
 	new_opt_S = "-S" * opt_S[1] * "$(new_bw)u"
 	cmd = (is_stack) ? replace(cmd, "-S"*opt_S*sub_b => new_opt_S*"+b") : replace(cmd, "-S"*opt_S => new_opt_S)
 
@@ -702,11 +739,13 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String
 			data[1] = 0.0;	data[2] += dx;	data[3] -= dy;	data[4] += dy;
 			(data[1] != 0) && (data[1] -= dx);
 		end
-		data = round_wesn(data)		# Add a pad if not-tight
+		data = round_wesn(data)		# Add a pad if not tight
 		new_opt_R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", data[1], data[2], data[3], data[4])
 		cmd = replace(cmd, opt_R => new_opt_R)
+		(is_waterfall) && (cmd2 *= CTRL.pocket_J[1] * new_opt_R)
 	end
-	return cmd, _argD
+	(is_waterfall && got_usr_R) && (cmd2 *= CTRL.pocket_J[1] * CTRL.pocket_R[1])
+	return cmd, _argD, cmd2
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -983,7 +1022,8 @@ function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller
 				bar_type = 2;	delete!(d, :hbar)
 			end
 			if (bar_type == 0 || bar_opts == "")	# bar_opts == "" means only bar=true or hbar=true was used
-				opt = (haskey(d, :width)) ? add_opt(d, "", "",  [:width]) : "0.8"	# The default
+				gap::Float64 = ((val = find_in_dict(d, [:bargap])[1]) === nothing) ? 0.8 : (val > 1 ? (1.0 - val/100) : val)		# Gap between bars in a group
+				opt = (haskey(d, :width)) ? add_opt(d, "", "",  [:width]) : "$gap"	# 0.8 is the default
 				_Stype = (bar_type == 2) ? " -SB" : " -Sb"
 				cmd *= _Stype * opt * "u"
 

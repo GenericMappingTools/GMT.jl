@@ -457,10 +457,23 @@ Example:
 """
 function bar(cmd0::String="", arg=nothing; first=true, kw...)
 	d = KW(kw)
-	do_cat = (haskey(d, :stack) || haskey(d, :stacked) && isvector(arg) && length(arg) > 2) ? false : true
-	(cmd0 == "" && haskey(d, :xticks)) && (arg = hcat(1:size(arg,1), arg);	do_cat = false)
-	if (cmd0 == "" && do_cat) arg = cat_1_arg(arg)  end	# If ARG is a vector, prepend it with a 1:N x column
-	GMT.common_plot_xyz(cmd0, arg, "bar", first, false, kw...)
+	(cmd0 != "" && arg === nothing) && (arg = gmtread(cmd0))
+	isa(arg, GMTdataset) && (arg::Matrix{<:Float64} = arg.data)
+	isa(arg, Vector{<:GMTdataset}) && (arg = arg[1].data; @warn("Multi-segments not allowed in 'bar'. Keeping only first segment."))
+
+	do_cat = ((haskey(d, :stack) || haskey(d, :stacked)) && isvector(arg) && length(arg) > 2) ? false : true
+	is_waterfall = ((val = find_in_kwargs(kw, [:stack :stacked])[1]) !== nothing && startswith(string(val), "water"))
+	if (is_waterfall)
+		isa(arg, Vector) && (arg = reshape(arg, 1, length(arg)))		# Waterfall stacks must be matrices
+		(arg[1] != 0) && (arg = hcat(repeat([1.0],size(arg,1)), arg))	# If first el != 0 assume coord is missing
+		do_cat = false
+	elseif (haskey(d, :xticks))
+		arg = hcat(1:size(arg,1), arg)
+		do_cat = false
+	end
+
+	if (do_cat) arg = Float64.(cat_1_arg(arg))  end		# If ARG is a vector, prepend it with a 1:N x column
+	GMT.common_plot_xyz("", arg, "bar", first, false, kw...)
 end
 bar!(cmd0::String="", arg=nothing; kw...) = bar(cmd0, arg; first=false, kw...)
 
@@ -815,7 +828,7 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 		opt_R = (first) ? ((opt_R == "") ? parse_R(d, "", false, false)[2] : opt_R) : CTRL.pocket_R[1]
 		opt_J = (first) ? parse_J(d, "", "", true, false, false)[2] : CTRL.pocket_J[1]
 		aspect_limits = (CTRL.limits[10] - CTRL.limits[9]) / (CTRL.limits[8] - CTRL.limits[7])	# Plot, not data, limits
-		Dwh = gmt("mapproject -W " * opt_R * opt_J)			# Compute the fig dimensions in paper coords.
+		Dwh::Matrix{<:Float64} = gmt("mapproject -W " * opt_R * opt_J).data		# Fig dimensions in paper coords.
 		aspect_sizes  = Dwh[2] / Dwh[1]
 		scale_fig     = round(aspect_sizes / aspect_limits, digits=8)	# This compensates for the non-isometry
 		
@@ -1213,7 +1226,7 @@ function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false,
 	cmd, = parse_R(d, "", O, false)
 	all(CTRL.limits .== 0.) && error("Need to know the axes limits in a numeric form.")
 	cmd, = parse_J(d, cmd, "", true, O, false)
-	!CTRL.proj_linear[1] && error("Plotting vbands is only possible with linear projections.")
+	!CTRL.proj_linear[1] && error("Plotting bands is only possible with linear projections.")
 	cmd, = parse_B(d, cmd)
 	n_ds = size(mat, 1)
 	got_pattern = false
