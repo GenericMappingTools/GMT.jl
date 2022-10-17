@@ -2318,9 +2318,9 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
 
-	function equalize(d, arg1, cptname)
+	function equalize(d, arg1, cptname)::GMTcpt
 		if ((isa(arg1, GMTgrid) || isa(arg1, String)) && (val = find_in_dict(d, [:equalize])[1]) !== nothing)
-			n = convert(Int, val)					# If val is other than Bool or number it will error
+			n::Int = convert(Int, val)					# If val is other than Bool or number it will error
 			if (isa(arg1, String))
 				cpt = (n > 1) ? gmt("grd2cpt -E$n+c -C" * cptname * " " * arg1) : gmt("grd2cpt -C" * cptname * " " * arg1)
 			else
