@@ -438,17 +438,19 @@ function parse_opt_S(d, arg1, is3D)
 			#val_::VecOrMat{<:Real} = is_this_type(VecOrMat{<:Real}, val) ? val : VecOrMat{<:Real}[]
 			#val_ = isa(val, VMr) ? val : VMr[]
 			if (isa(val, VMr))
-				if (length(val) == 2)			# A two elements array in interpreted as [min max]
-					scale = (eltype(val) <: Integer) ? 2.54/72 : 1.0	# In integers, assumes they are points
-					arg1 = hcat(arg1, linspace(val[1], val[2], size(arg1,1)).*scale)
+				val_::VMr = val
+				if (length(val_) == 2)			# A two elements array in interpreted as [min max]
+					scale = (eltype(val_) <: Integer) ? 2.54/72 : 1.0	# In integers, assumes they are points
+					arg1 = hcat(arg1, linspace(val[1], val_[2], size(arg1,1)).*scale)
 				else
-					(length(val) != size(arg1,1)) &&
+					(length(val_) != size(arg1,1)) &&
 						error("The size array must have the same number of elements as rows in data")
-					arg1 = hcat(arg1, val[:])
+					arg1 = hcat(arg1, val_[:])
 				end
 			elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], VMr))
-				scale = (eltype(val[2]) <: Integer) ? 2.54/72 : 1.0
-				ind = sortperm(funcurve(val[1], val[2].*scale, size(arg1,1)))	# Get the sorting indices
+				val2::Tuple = val
+				scale = (eltype(val2[2]) <: Integer) ? 2.54/72 : 1.0
+				ind = sortperm(funcurve(val2[1], val2[2].*scale, size(arg1,1)))	# Get the sorting indices
 				arg1 = hcat(arg1, is3D ? view(arg1,:,3)[ind] : view(arg1,:,2)[ind])
 			elseif (string(val) != "indata")	# WTF is "indata"?
 				marca *= arg2str(val)
