@@ -26,9 +26,9 @@ r = basemap(L=(anchor=:TR, length=1, align=:top, fancy=0.4), Vd=dbg2);
 @test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -LjTR+w1+at+f")
 @test startswith(basemap(frame=(annot=10, slanted=:p), Vd=dbg2), "psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Bpa10+ap")
 r = basemap(region=(1,1000,0,1), proj=:logx, figsize=(8,0.7), frame=(annot=1, ticks=2, grid=3, scale=:pow), Vd=dbg2);
-@test startswith(r, "psbasemap  -R1.0/1000.0/0.0/1.0 -JX8l/0.7 -Bpa1f2g3p")
+@test startswith(r, "psbasemap  -R1/1000/0/1 -JX8l/0.7 -Bpa1f2g3p")
 r = basemap(region=(1,1000,0,1), proj=:logx, figsize=8, frame=(annot=1, ticks=2, scale=:pow), Vd=dbg2)
-@test startswith(r, "psbasemap  -R1.0/1000.0/0.0/1.0 -JX8l -Bpa1f2p")
+@test startswith(r, "psbasemap  -R1/1000/0/1 -JX8l -Bpa1f2p")
 r = basemap(region=("0.2t","0.35t",0,1), figsize=(-12,0.25), frame=(axes=:S, annot="15m", ticks="5m"), axis2=(annot=1, annot_unit=:hour), conf=(FORMAT_CLOCK_MAP="-hham", FONT_ANNOT_PRIMARY="+9p", TIME_UNIT="d"), Vd=dbg2);
 @test startswith(r, "psbasemap  -R0.2t/0.35t/0/1 -JX-12/0.25 -Bsa1H -Bpa15mf5m -BS --FORMAT_CLOCK_MAP=-hham")
 @test_throws ErrorException("slanted option: Only 'parallel' is allowed for the y-axis") basemap(yaxis=(slanted=:o,), Vd=dbg2)
