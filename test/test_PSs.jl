@@ -26,9 +26,11 @@ r = basemap(L=(anchor=:TR, length=1, align=:top, fancy=0.4), Vd=dbg2);
 @test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -LjTR+w1+at+f")
 @test startswith(basemap(frame=(annot=10, slanted=:p), Vd=dbg2), "psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Bpa10+ap")
 r = basemap(region=(1,1000,0,1), proj=:logx, figsize=(8,0.7), frame=(annot=1, ticks=2, grid=3, scale=:pow), Vd=dbg2);
-@test startswith(r, "psbasemap  -R1/1000/0/1 -JX8l/0.7 -Bpa1f2g3p")
+@test startswith(r, "psbasemap  -R1.0/1000.0/0.0/1.0 -JX8l/0.7 -Bpa1f2g3p")
 r = basemap(region=(1,1000,0,1), proj=:logx, figsize=8, frame=(annot=1, ticks=2, scale=:pow), Vd=dbg2)
-@test startswith(r, "psbasemap  -R1/1000/0/1 -JX8l -Bpa1f2p")
+@test startswith(r, "psbasemap  -R1.0/1000.0/0.0/1.0 -JX8l -Bpa1f2p")
+r = basemap(region=("0.2t","0.35t",0,1), figsize=(-12,0.25), frame=(axes=:S, annot="15m", ticks="5m"), axis2=(annot=1, annot_unit=:hour), conf=(FORMAT_CLOCK_MAP="-hham", FONT_ANNOT_PRIMARY="+9p", TIME_UNIT="d"), Vd=dbg2);
+@test startswith(r, "psbasemap  -R0.2t/0.35t/0/1 -JX-12/0.25 -Bsa1H -Bpa15mf5m -BS --FORMAT_CLOCK_MAP=-hham")
 @test_throws ErrorException("slanted option: Only 'parallel' is allowed for the y-axis") basemap(yaxis=(slanted=:o,), Vd=dbg2)
 
 println("	PSCLIP")
@@ -143,8 +145,7 @@ println("	PSROSE")
 data=[20 5.4 5.4 2.4 1.2; 40 2.2 2.2 0.8 0.7; 60 1.4 1.4 0.7 0.7; 80 1.1 1.1 0.6 0.6; 100 1.2 1.2 0.7 0.7; 120 2.6 2.2 1.2 0.7; 140 8.9 7.6 4.5 0.9; 160 10.6 9.3 5.4 1.1; 180 8.2 6.2 4.2 1.1; 200 4.9 4.1 2.5 1.5; 220 4 3.7 2.2 1.5; 240 3 3 1.7 1.5; 260 2.2 2.2 1.3 1.2; 280 2.1 2.1 1.4 1.3; 300 2.5 2.5 1.4 1.2; 320 5.5 5.3 2.5 1.2; 340 17.3 15 8.8 1.4; 360 25 14.2 7.5 1.3];
 rose(data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10 +t\"Sector Diagram\"", W=1, G="orange", F=true, D=true, S=4)
 rose!(data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=true, S=4, Vd=dbg2)
-rose!("",data, yx=true, A=20, R="0/25/0/360", B="xa10g10 ya10g10", W=1, G="orange", D=true, S=4, Vd=dbg2)
-rose(data, A=20, I=true);		# Broken in GMT5
+rose(data, A=20, I=true);
 
 println("	PSMASK")
 D = gmtmath("-T-90/90/10 -N2/1 0");

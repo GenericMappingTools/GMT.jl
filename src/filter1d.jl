@@ -79,4 +79,4 @@ function filter1d(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-filter1d(arg1, cmd0::String=""; kw...) = filter1d(cmd0, arg1; kw...)
+filter1d(arg1; kw...) = filter1d("", arg1; kw...)

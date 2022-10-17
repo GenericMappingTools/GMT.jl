@@ -88,4 +88,4 @@ function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-sample1d(arg1, cmd0::String=""; kw...) = sample1d(cmd0, arg1; kw...)
+sample1d(arg1; kw...) = sample1d("", arg1; kw...)

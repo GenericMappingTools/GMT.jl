@@ -63,4 +63,4 @@ function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-nearneighbor(arg1, cmd0::String=""; kw...) = nearneighbor(cmd0, arg1; kw...)
+nearneighbor(arg1; kw...) = nearneighbor("", arg1; kw...)

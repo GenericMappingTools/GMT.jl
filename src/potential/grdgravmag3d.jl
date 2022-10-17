@@ -59,7 +59,7 @@ Parameters
 	imshow(G)
 ```
 """
-grdgravmag3d(arg1, arg2=nothing, cmd0::String=""; kw...) = grdgravmag3d(cmd0, arg1, arg2; kw...)
+grdgravmag3d(arg1, arg2=nothing; kw...) = grdgravmag3d("", arg1, arg2; kw...)
 function grdgravmag3d(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	arg3, arg4 = nothing, nothing

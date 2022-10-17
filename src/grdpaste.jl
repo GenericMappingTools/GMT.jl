@@ -26,4 +26,4 @@ function grdpaste(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdpaste(arg1, arg2=nothing, cmd0::String=""; kw...) = grdpaste(cmd0, arg1, arg2; kw...)
+grdpaste(arg1, arg2=nothing; kw...) = grdpaste("", arg1, arg2; kw...)

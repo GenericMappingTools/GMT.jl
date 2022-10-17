@@ -92,8 +92,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 meca!(cmd0::String="", arg1=nothing; kw...) = meca(cmd0, arg1; first=false, kw...)
-meca(arg1,  cmd0::String=""; kw...) = meca(cmd0, arg1; first=true, kw...)
-meca!(arg1, cmd0::String=""; kw...) = meca(cmd0, arg1; first=false, kw...)
+meca(arg1; kw...) = meca("", arg1; first=true, kw...)
+meca!(arg1; kw...) = meca("", arg1; first=false, kw...)
 
 const psmeca  = meca 			# Alias
 const psmeca! = meca!			# Alias
@@ -114,8 +114,8 @@ function coupe(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 coupe!(cmd0::String="", arg1=nothing; kw...) = coupe(cmd0, arg1; first=false, kw...)
-coupe(arg1,  cmd0::String=""; kw...) = coupe(cmd0, arg1; first=true, kw...)
-coupe!(arg1, cmd0::String=""; kw...) = coupe(cmd0, arg1; first=false, kw...)
+coupe(arg1; kw...)  = coupe("", arg1; first=true, kw...)
+coupe!(arg1; kw...) = coupe("", arg1; first=false, kw...)
 
 const pscoupe  = coupe 			# Alias
 const pscoupe! = coupe!			# Alias

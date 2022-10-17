@@ -38,4 +38,4 @@ function grdhisteq(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdhisteq(arg1, cmd0::String=""; kw...) = grdhisteq(cmd0, arg1; kw...)
+grdhisteq(arg1; kw...) = grdhisteq("", arg1; kw...)

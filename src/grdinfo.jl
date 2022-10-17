@@ -82,4 +82,4 @@ function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdinfo(arg1, cmd0::String=""; kw...) = grdinfo(cmd0, arg1; kw...)
+grdinfo(arg1; kw...) = grdinfo("", arg1; kw...)

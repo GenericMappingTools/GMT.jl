@@ -153,8 +153,8 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-blockmean(arg1, cmd0::String=""; kw...) = blockmean(cmd0, arg1; kw...)
+blockmean(arg1; kw...)   = blockmean("", arg1; kw...)
 # ---------------------------------------------------------------------------------------------------
-blockmedian(arg1, cmd0::String=""; kw...) = blockmedian(cmd0, arg1; kw...)
+blockmedian(arg1; kw...) = blockmedian("", arg1; kw...)
 # ---------------------------------------------------------------------------------------------------
-blockmode(arg1, cmd0::String=""; kw...) = blockmode(cmd0, arg1; kw...)
+blockmode(arg1; kw...)   = blockmode("", arg1; kw...)

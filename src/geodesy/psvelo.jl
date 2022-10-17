@@ -45,8 +45,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 velo!(cmd0::String="", arg1=nothing; kw...) = velo(cmd0, arg1; first=false, kw...)
-velo(arg1,  cmd0::String=""; kw...) = velo(cmd0, arg1; first=true, kw...)
-velo!(arg1, cmd0::String=""; kw...) = velo(cmd0, arg1; first=false, kw...)
+velo(arg1; kw...) = velo("", arg1; first=true, kw...)
+velo!(arg1; kw...) = velo("", arg1; first=false, kw...)
 
 const psvelo  = velo 			# Alias
 const psvelo! = velo!			# Alias

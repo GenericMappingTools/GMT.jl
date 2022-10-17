@@ -305,7 +305,7 @@ Example: write the GMTgrid 'G' object into a nc file called 'lixo.grd'
 
 	gmtwrite("lixo.grd", G);
 """
-gmtwrite(data, fname::AbstractString=""; kwargs...) = gmtwrite(fname, data; kwargs...)
+gmtwrite(data; kwargs...) = gmtwrite("", data; kwargs...)
 function gmtwrite(fname::AbstractString, data; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode

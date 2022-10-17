@@ -56,4 +56,4 @@ function grdblend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdblend(arg1, arg2=nothing, cmd0::String=""; kw...) = grdblend(cmd0, arg1, arg2; kw...)
+grdblend(arg1, arg2=nothing; kw...) = grdblend("", arg1, arg2; kw...)

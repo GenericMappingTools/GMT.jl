@@ -102,6 +102,6 @@ function binstats(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-binstats(arg1, cmd0::String=""; kw...) = binstats(cmd0, arg1; kw...)
+binstats(arg1; kw...) = binstats("", arg1; kw...)
 
 const gmtbinstats = binstats			# Alias

@@ -46,4 +46,4 @@ function grdfilter(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdfilter(arg1, cmd0::String=""; kw...) = grdfilter(cmd0, arg1; kw...)
+grdfilter(arg1; kw...) = grdfilter("", arg1; kw...)

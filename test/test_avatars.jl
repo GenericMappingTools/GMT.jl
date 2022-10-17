@@ -33,9 +33,9 @@
 	@test startswith(plot!([1 1], marker=:Web, Vd=dbg2), "psxy  -R -J -SW")
 	@test startswith(plot!([1 1], marker=:W, Vd=dbg2), "psxy  -R -J -SW")
 	@test startswith(plot([5 5], marker=(:E, 500), Vd=dbg2), "psxy  -JX" * GMT.def_fig_size * " -Baf -BWSen -R4.74/5.26/4.74/5.26 -SE-500")
-	@test startswith(plot(region=(0,10,0,10), marker=(letter="blaBla", size="16p"), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sl16p+tblaBla")
-	@test startswith(plot([5 5], region=(0,10,0,10), marker=(bar=true, size=0.5, base=0,), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sb0.5+b0")
-	@test startswith(plot([5 5], region=(0,10,0,10), marker=(custom=:sun, size=0.5), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sksun/0.5")
+	@test startswith(plot(region=(0,10,0,10), marker=(letter="blaBla", size="16p"), Vd=dbg2), "psxy  -R0.0/10.0/0.0/10.0 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sl16p+tblaBla")
+	@test startswith(plot([5 5], region=(0,10,0,10), marker=(bar=true, size=0.5, base=0,), Vd=dbg2), "psxy  -R0.0/10.0/0.0/10.0 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sb0.5+b0")
+	@test startswith(plot([5 5], region=(0,10,0,10), marker=(custom=:sun, size=0.5), Vd=dbg2), "psxy  -R0.0/10.0/0.0/10.0 -JX" * GMT.def_fig_size * " -Baf -BWSen -Sksun/0.5")
 	plot([5 5 0 45], region=(0,10,0,10), marker=(pie=true, arc=15, radial=30), Vd=dbg2)
 	plot([0.5 1 1.75 5 85], region=(0,5,0,5), figsize=12, marker=(matang=true, arrow=(length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=dbg2)
 	plot([2.5 2.5], region=(0,4,0,4), figsize=12, marker=(:matang, [2 50 350], (length=0.75, start=true, stop=true, half=:right)), ml=(0.5,:red), fill=:blue, Vd=dbg2)
@@ -97,7 +97,7 @@
 	lines(D, steps=(x=true,), close=(bot=true,))
 	x = GMT.linspace(0, 2pi);  y = cos.(x)*0.5;
 	r = lines(x,y, limits=(0,6.0,-1,0.7), figsize=(40,8), pen=(lw=2,lc=:sienna), decorated=(quoted=true, n_labels=1, const_label="ai ai", font=60, curved=true, fill=:blue, pen=(0.5,:red)), par=(:PS_MEDIA, :A1), axis=(fill=220,),Vd=dbg2);
-	@test startswith(r, "psxy  -R0/6.0/-1/0.7 -JX40/8 -Baf -BWSen+g220 --PS_MEDIA=A1 -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -W2,sienna")
+	@test startswith(r, "psxy  -R0.0/6.0/-1.0/0.7 -JX40/8 -Baf -BWSen+g220 --PS_MEDIA=A1 -Sqn1:+f60+l\"ai ai\"+v+p0.5,red -W2,sienna")
 
 	bar!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	lines!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)

@@ -121,8 +121,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 rose!(cmd0::String="", arg1=nothing; kw...) = rose(cmd0, arg1; first=false, kw...)
-rose(arg1,  cmd0::String=""; kw...)  = rose(cmd0, arg1; first=true, kw...)
-rose!(arg1, cmd0::String=""; kw...) = rose(cmd0, arg1; first=false, kw...)
+rose(arg1; kw...)  = rose("", arg1; first=true, kw...)
+rose!(arg1; kw...) = rose("", arg1; first=false, kw...)
 
 const psrose  = rose 			# Alias
 const psrose! = rose!			# Alias

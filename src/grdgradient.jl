@@ -69,4 +69,4 @@ function parse_Q_grdgrad(d::Dict, symbs::Array{<:Symbol}, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdgradient(arg1, cmd0::String=""; kw...) = grdgradient(cmd0, arg1; kw...)
+grdgradient(arg1; kw...) = grdgradient("", arg1; kw...)

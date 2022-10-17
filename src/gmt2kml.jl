@@ -109,4 +109,4 @@ function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmt2kml(arg1, cmd0::String=""; kw...) = gmt2kml(cmd0, arg1; kw...)
+gmt2kml(arg1; kw...) = gmt2kml("", arg1; kw...)

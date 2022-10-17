@@ -97,4 +97,4 @@ function greenspline(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-greenspline(arg1, cmd0::String=""; kw...) = greenspline(cmd0, arg1; kw...)
+greenspline(arg1; kw...) = greenspline("", arg1; kw...)

@@ -170,5 +170,5 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 grdcontour!(cmd0::String="", arg1=nothing; kw...) = grdcontour(cmd0, arg1; first=false, kw...)
-grdcontour(arg1, cmd0::String=""; kw...) = grdcontour(cmd0, arg1; first=true, kw...)
-grdcontour!(arg1, cmd0::String=""; kw...) = grdcontour(cmd0, arg1; first=false, kw...)
+grdcontour(arg1; kw...) = grdcontour("", arg1; first=true, kw...)
+grdcontour!(arg1; kw...) = grdcontour("", arg1; first=false, kw...)

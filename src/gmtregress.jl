@@ -66,6 +66,6 @@ function regress(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-regress(arg1, cmd0::String=""; kw...) = regress(cmd0, arg1; kw...)
+regress(arg1; kw...) = regress("", arg1; kw...)
 
 gmtregress = regress 		# Alias

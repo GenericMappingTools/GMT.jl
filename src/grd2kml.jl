@@ -78,4 +78,4 @@ function grd2kml(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grd2kml(arg1, cmd0::String=""; kw...) = grd2kml(cmd0, arg1; kw...)
+grd2kml(arg1; kw...) = grd2kml("", arg1; kw...)

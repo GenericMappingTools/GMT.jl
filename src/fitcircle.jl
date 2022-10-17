@@ -50,4 +50,4 @@ function fitcircle(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-fitcircle(arg1, cmd0::String=""; kw...) = fitcircle(cmd0, arg1; kw...)
+fitcircle(arg1; kw...) = fitcircle("", arg1; kw...)

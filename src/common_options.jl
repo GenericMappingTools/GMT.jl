@@ -219,14 +219,15 @@ function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function tha
 		end
 	elseif ((isvector(Val) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
 		if (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag))
-			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", Val[1], Val[3], Val[2], Val[4])
+			_val::Vector{<:Float64} = vec(Float64.(collect(Val)))
+			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])
 		else
 			R = " -R" * rstrip(arg2str(Val), '/')		# Remove last '/'
 		end
 	elseif (isa(Val, GItype))
 		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
 	elseif (isa(Val, GDtype))
-		bb = (isa(Val, GMTdataset)) ? Val.bbox : Val[1].ds_bbox
+		bb::Vector{<:Float64} = isa(Val, GMTdataset) ? Val.bbox : Val[1].ds_bbox
 		R = (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag)) ?
 			@sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[3], bb[2], bb[4]) :
 			@sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[2], bb[3], bb[4])
@@ -241,17 +242,18 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 	d = nt2dict(arg)					# Convert to Dict
 	if ((val = find_in_dict(d, [:limits :region])[1]) !== nothing)
 		if ((isa(val, Array{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
+			vval::Vector{<:Float64} = vec(Float64.(collect(val)))
 			if (haskey(d, :diag) || haskey(d, :diagonal))		# The diagonal case
-				BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", val[1], val[3], val[2], val[4])
+				BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", vval[1], vval[3], vval[2], vval[4])
 			else
-				BB = join([@sprintf("%.15g/", Float64(x)) for x in val])
+				BB = join([@sprintf("%.15g/", Float64(x)) for x in vval])
 				BB = rstrip(BB, '/')		# and remove last '/'
 			end
 		elseif (isa(val, String) || isa(val, Symbol))
 			BB = string(val) 			# Whatever good stuff or shit it may contain
 		end
 	elseif ((val = find_in_dict(d, [:limits_diag :region_diag])[1]) !== nothing)	# Alternative way of saying "+r"
-		_val = collect(Float64, val)
+		_val::Vector{<:Float64} = collect(Float64, val)
 		BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])
 	elseif ((val = find_in_dict(d, [:continent :cont])[1]) !== nothing)
 		val_::String = uppercase(string(val))
@@ -3915,6 +3917,8 @@ function get_first_of_this_type(type::DataType, args...)
 	while (!isa(args[k+=1], type) && k < length(args)) end
 	return (k == length(args) && !isa(args[k], type)) ? nothing : args[k]
 end
+#is_this_type(type::DataType, arg) = isa(arg, type)
+#validate_VMr(arg)::VMr = return isa(arg, VMr) ? arg : VMr[]
 
 # ---------------------------------------------------------------------------------------------------
 finish_PS_module(d::Dict, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =

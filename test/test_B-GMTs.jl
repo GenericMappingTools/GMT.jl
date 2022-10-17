@@ -56,7 +56,7 @@
 	K = gmt2kml(D, F=:l, W=(1,:red));
 	gmtwrite("lixo.kml", K)
 	kml2gmt("lixo.kml", Z=true);
-	kml2gmt(nothing, "lixo.kml", Z=true);	# yes, cheating
+	#kml2gmt(K, Z=true);	# BUG, this hangs
 	gmtread("lixo.kml", Vd=dbg2);
 	#gmtread("lixo.kml");		# Because Travis CI oldness
 	rm("lixo.kml")

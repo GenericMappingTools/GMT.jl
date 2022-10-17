@@ -54,4 +54,4 @@ function sphtriangulate(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-sphtriangulate(arg1, cmd0::String=""; kw...) = sphtriangulate(cmd0, arg1; kw...)
+sphtriangulate(arg1; kw...) = sphtriangulate("", arg1; kw...)

@@ -58,5 +58,5 @@ function spectrum1d(cmd0::String="", arg1=nothing; kwargs...)
 	common_grd(d, cmd0, cmd, "spectrum1d ", arg1)		# Finish build cmd and run it
 end
 
-#]-------------------------------------------------------------------------------------------------
-spectrum1d(arg1, cmd0::String=""; kw...) = spectrum1d(cmd0, arg1; kw...)
+# -------------------------------------------------------------------------------------------------
+spectrum1d(arg1; kw...) = spectrum1d("", arg1; kw...)

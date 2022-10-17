@@ -52,4 +52,4 @@ function trend2d(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-trend2d(arg1, cmd0::String=""; kw...) = trend2d(cmd0, arg1; kw...)
+trend2d(arg1; kw...) = trend2d("", arg1; kw...)

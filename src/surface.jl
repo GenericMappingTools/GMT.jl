@@ -97,4 +97,4 @@ function surface(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-surface(arg1, cmd0::String=""; kw...) = surface(cmd0, arg1; kw...)
+surface(arg1; kw...) = surface("", arg1; kw...)

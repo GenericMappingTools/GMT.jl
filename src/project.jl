@@ -87,4 +87,4 @@ function project(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-project(arg1, cmd0::String=""; kw...) = project(cmd0, arg1; kw...)
+project(arg1; kw...) = project("", arg1; kw...)

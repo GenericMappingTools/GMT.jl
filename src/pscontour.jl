@@ -156,8 +156,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 contour!(cmd0::String="", arg1=nothing; kw...) = contour(cmd0, arg1; first=false, kw...)
-contour(arg1, cmd0::String=""; kw...) = contour(cmd0, arg1; first=true, kw...)
-contour!(arg1, cmd0::String=""; kw...) = contour(cmd0, arg1; first=false, kw...)
+contour(arg1; kw...) = contour("", arg1; first=true, kw...)
+contour!(arg1; kw...) = contour("", arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 const pscontour  = contour

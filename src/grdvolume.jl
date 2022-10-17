@@ -42,4 +42,4 @@ function grdvolume(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdvolume(arg1, cmd0::String=""; kw...) = grdvolume(cmd0, arg1; kw...)
+grdvolume(arg1; kw...) = grdvolume("", arg1; kw...)
