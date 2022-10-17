@@ -435,7 +435,9 @@ function parse_opt_S(d, arg1, is3D)
 		marca, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
 		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
 			(marca == "") && (marca = "c")		# If a marker name was not selected, defaults to circle
-			if (isa(val, AbstractArray))
+			#val_::VecOrMat{<:Real} = is_this_type(VecOrMat{<:Real}, val) ? val : VecOrMat{<:Real}[]
+			#val_ = isa(val, VMr) ? val : VMr[]
+			if (isa(val, VMr))
 				if (length(val) == 2)			# A two elements array in interpreted as [min max]
 					scale = (eltype(val) <: Integer) ? 2.54/72 : 1.0	# In integers, assumes they are points
 					arg1 = hcat(arg1, linspace(val[1], val[2], size(arg1,1)).*scale)
@@ -444,7 +446,7 @@ function parse_opt_S(d, arg1, is3D)
 						error("The size array must have the same number of elements as rows in data")
 					arg1 = hcat(arg1, val[:])
 				end
-			elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], Array{<:Real}))
+			elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], VMr))
 				scale = (eltype(val[2]) <: Integer) ? 2.54/72 : 1.0
 				ind = sortperm(funcurve(val[1], val[2].*scale, size(arg1,1)))	# Get the sorting indices
 				arg1 = hcat(arg1, is3D ? view(arg1,:,3)[ind] : view(arg1,:,2)[ind])
@@ -459,7 +461,7 @@ function parse_opt_S(d, arg1, is3D)
 			def_size = (op == 'p') ? "2p" : "7p"	# 'p' here stands for symbol points, not units
 			(!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw")) && (opt_S *= def_size)
 		elseif (haskey(d, :hexbin))
-			inc = parse(Float64, arg1.attrib["hexbin"])
+			inc::Float64 = parse(Float64, arg1.attrib["hexbin"])
 			r = (CTRL.limits[8] - CTRL.limits[7]) / (arg1[2] - arg1[1]) * inc	# should be = 3, I think
 			(CTRL.figsize[1] == 0) && @warn("Failed to automatically fetch the fig width. Using 14 cm to show something.")
 			w = (CTRL.figsize[1] != 0) ? CTRL.figsize[1] : 14
@@ -523,7 +525,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D, multi_col, _cmd, sub_module, g_bar_fill, got_Ebars, got_usr_R)
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
-	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Matrix{<:Real}) && size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)) )
+	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Matrix{<:Real}) &&
+		                        size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)))
 		penC, penS = "", "";	multi_col[1] = false	# Reset because this is a use-only-once option
 		(haskey(d, :multicol)) && delete!(d, :multicol)
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
@@ -533,8 +536,8 @@ function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D
 		end
 		arg1 = (penT != "") ? mat2ds(arg1, color = (penC != "") ? [penC] : :cycle, lt=penT, ls=penS, multi=true) :
 		                             mat2ds(arg1, color = (penC != "") ? [penC] : :cycle, ls=penS, multi=true)
-		D::GMTdataset = gmt("gmtinfo -C", arg1)		# But now also need to update the -R string
-		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(D.data)))
+		mat::Matrix{<:Float64} = gmt("gmtinfo -C", arg1).data		# But now also need to update the -R string
+		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(mat)))
 	elseif (!mcc && sub_module == "bar" && check_bar_group(arg1))	# !mcc because the bar-groups all have mcc = false
 		_cmd[1], arg1, cmd2 = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 		(cmd2 != "") && (length(_cmd) == 1 ? (_cmd = [cmd2; _cmd[1]]) : (@warn("Can't plot the connector when 'bar' is already a nested call."); CTRL.pocket_call[3] = nothing))

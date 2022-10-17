@@ -67,7 +67,7 @@ does not need explicit coordinates to place the text.
 """
 mat2ds(mat::GDtype) = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
-function mat2ds(mat, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...)
+function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...) where {T,N}
 	d = KW(kwargs)
 
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
@@ -1158,7 +1158,7 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Flo
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object
-function mat2grid(mat, G::GMTgrid)
+function mat2grid(mat::Array{T,N}, G::GMTgrid) where {T,N}
 	isT = istransposed(mat)
 	hasnans = any(!isfinite, mat) ? 2 : 1
 	Go = GMTgrid(G.proj4, G.wkt, G.epsg, deepcopy(G.range), deepcopy(G.inc), G.registration, G.nodata, G.title, G.remark, G.command, "", String[], deepcopy(G.x), deepcopy(G.y), [0.], isT ? copy(mat) : mat, G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, 1f0, 0f0, G.pad, hasnans)
@@ -1174,20 +1174,21 @@ function mat2grid(mat, I::GMTimage)
 	Go
 end
 
-function mat2grid(f::Function, xx=Vector{Float64}(), yy=Vector{Float64}(); reg=nothing, x=Vector{Float64}(),
-	              y=Vector{Float64}(), proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+function mat2grid(f::Function, xx::AbstractVector{<:Float64}=Vector{Float64}(),
+	              yy::AbstractVector{<:Float64}=Vector{Float64}(); reg=nothing, x::AbstractVector{<:Float64}=Vector{Float64}(), y::AbstractVector{<:Float64}=Vector{Float64}(), proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
 	(isempty(x) && !isempty(xx)) && (x = xx)
 	(isempty(y) && !isempty(yy)) && (y = yy)
 	(isempty(x) || isempty(y)) && error("Must transmit the domain coordinates over which to calculate function.")
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
-	z = Array{Float32,2}(undef,length(y),length(x))
+	z = Array{Float32,2}(undef, length(y), length(x))
 	for i in eachindex(x), j in eachindex(y)
-		z[j,i] = f(x[i],y[j])
+		z[j,i] = f(x[i], y[j])
 	end
 	mat2grid(z; reg=reg, x=x, y=y, proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
 end
 
-function mat2grid(f::String, xx=Vector{Float64}(), yy=Vector{Float64}(); x=Vector{Float64}(), y=Vector{Float64}())
+function mat2grid(f::String, xx::AbstractVector{<:Float64}=Vector{Float64}(),
+	              yy::AbstractVector{<:Float64}=Vector{Float64}(); x::AbstractVector{<:Float64}=Vector{Float64}(), y::AbstractVector{<:Float64}=Vector{Float64}())
 	# Something is very wrong here. If I add named vars it annoyingly warns
 	# WARNING: Method definition f2(Any, Any) in module GMT at C:\Users\joaqu\.julia\dev\GMT\src\gmt_main.jl:1556 overwritten on the same line.
 	(isempty(x) && !isempty(xx)) && (x = xx)

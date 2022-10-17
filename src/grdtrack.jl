@@ -140,4 +140,4 @@ function parse_G_grdtrk(d::Dict, symbs::Vector{<:Symbol}, cmd::String, arg1, arg
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdtrack(arg1, arg2=nothing, cmd0::String=""; kw...) = grdtrack(cmd0, arg1, arg2; kw...)
+grdtrack(arg1, arg2=nothing; kw...) = grdtrack("", arg1, arg2; kw...)

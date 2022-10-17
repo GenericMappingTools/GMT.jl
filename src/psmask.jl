@@ -93,8 +93,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 mask!(cmd0::String="", arg1=nothing; kw...) = mask(cmd0, arg1; first=false, kw...)
-mask(arg1,  cmd0::String=""; kw...)  = mask(cmd0, arg1; first=true, kw...)
-mask!(arg1, cmd0::String=""; kw...) = mask(cmd0, arg1; first=false, kw...)
+mask(arg1; kw...)  = mask("", arg1; first=true, kw...)
+mask!(arg1; kw...) = mask("", arg1; first=false, kw...)
 
 const psmask  = mask			# Alias
 const psmask! = mask!			# Alias

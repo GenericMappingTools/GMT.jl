@@ -38,4 +38,4 @@ function grdsample(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdsample(arg1, cmd0::String=""; kw...) = grdsample(cmd0, arg1; kw...)
+grdsample(arg1; kw...) = grdsample("", arg1; kw...)

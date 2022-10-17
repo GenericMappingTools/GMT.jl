@@ -80,4 +80,4 @@ function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)::GMTdataset
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtinfo(arg1, cmd0::String=""; kw...) = gmtinfo(cmd0, arg1; kw...)
+gmtinfo(arg1; kw...) = gmtinfo("", arg1; kw...)

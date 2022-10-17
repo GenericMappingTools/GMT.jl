@@ -36,4 +36,4 @@ function gmtsimplify(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtsimplify(arg1, cmd0::String=""; kw...) = gmtsimplify(cmd0, arg1; kw...)
+gmtsimplify(arg1; kw...) = gmtsimplify("", arg1; kw...)

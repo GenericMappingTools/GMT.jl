@@ -59,4 +59,4 @@ function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-xyz2grd(arg1, cmd0::String=""; kw...) = xyz2grd(cmd0, arg1; kw...)
+xyz2grd(arg1; kw...) = xyz2grd("", arg1; kw...)

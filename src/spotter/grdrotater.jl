@@ -47,7 +47,7 @@ Gr, tri_rot = grdrotater(G, rotation="-40.8/32.8/-12.9", rot_outline=true, rot_p
 imshow(Gr, plot=(data=tri_rot,))
 ```
 """
-grdrotater(arg1, cmd0::String=""; kw...) = grdrotater(cmd0, arg1; kw...)
+grdrotater(arg1; kw...) = grdrotater("", arg1; kw...)
 function grdrotater(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]			# Also checks if the user wants ONLY the HELP mode

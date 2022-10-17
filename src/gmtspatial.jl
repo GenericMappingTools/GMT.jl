@@ -100,4 +100,4 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtspatial(arg1, cmd0::String=""; kw...) = gmtspatial(cmd0, arg1; kw...)
+gmtspatial(arg1; kw...) = gmtspatial("", arg1; kw...)

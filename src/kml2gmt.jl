@@ -31,4 +31,4 @@ function kml2gmt(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-kml2gmt(arg1, cmd0::String=""; kw...) = kml2gmt(cmd0, arg1; kw...)
+kml2gmt(arg1; kw...) = kml2gmt("", arg1; kw...)

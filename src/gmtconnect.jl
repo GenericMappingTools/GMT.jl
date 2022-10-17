@@ -53,4 +53,4 @@ function gmtconnect(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtconnect(arg1, arg2=nothing, cmd0::String=""; kw...) = gmtconnect(cmd0, arg1, arg2; kw...)
+gmtconnect(arg1, arg2=nothing; kw...) = gmtconnect("", arg1, arg2; kw...)

@@ -65,4 +65,4 @@ function grdmask(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdmask(arg1, cmd0::String=""; kw...) = grdmask(cmd0, arg1; kw...)
+grdmask(arg1; kw...) = grdmask("", arg1; kw...)

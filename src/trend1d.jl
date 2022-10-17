@@ -51,4 +51,4 @@ function trend1d(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-trend1d(arg1, cmd0::String=""; kw...) = trend1d(cmd0, arg1; kw...)
+trend1d(arg1; kw...) = trend1d("", arg1; kw...)

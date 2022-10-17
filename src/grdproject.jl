@@ -61,4 +61,4 @@ function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdproject(arg1, cmd0::String=""; kw...) = grdproject(cmd0, arg1; kw...)
+grdproject(arg1; kw...) = grdproject("", arg1; kw...)

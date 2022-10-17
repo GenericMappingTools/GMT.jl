@@ -73,4 +73,4 @@ function parse_W_grdtrend(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1, ar
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdtrend(arg1, arg2=nothing, cmd0::String=""; kw...) = grdtrend(cmd0, arg1, arg2; kw...)
+grdtrend(arg1, arg2=nothing; kw...) = grdtrend("", arg1, arg2; kw...)

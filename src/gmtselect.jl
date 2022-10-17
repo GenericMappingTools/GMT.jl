@@ -75,8 +75,8 @@ function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing, ar
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd::String = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :w :yx])[1]
-	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary],
-	                                 [:G :gridmask], [:I :reverse :revert], [:N :mask], [:Z :in_range]])
+	cmd = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary],
+	                                [:G :gridmask], [:I :reverse :revert], [:N :mask], [:Z :in_range]])
 	#cmd = add_opt(d, cmd, "N', [:N :mask], (ocean=("", arg2str, 1), land=("", arg2str, 2)) )
 	#=
 	if ((val = find_in_dict(d, [:F :polygon])[1]) !== nothing)
@@ -99,4 +99,4 @@ function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing, ar
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtselect(arg1, cmd0::String=""; kw...) = gmtselect(cmd0, arg1; kw...)
+gmtselect(arg1; kw...) = gmtselect("", arg1; kw...)

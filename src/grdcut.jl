@@ -80,7 +80,7 @@ function cut_with_gdal(fname::String, opts::Vector{<:AbstractString}, outname::S
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdcut(arg1, cmd0::String=""; kw...) = grdcut(cmd0, arg1; kw...)
+grdcut(arg1; kw...) = grdcut("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 """

@@ -65,7 +65,7 @@ function grdclip(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdclip(arg1, cmd0::String=""; kw...) = grdclip(cmd0, arg1; kw...)
+grdclip(arg1; kw...) = grdclip("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 function opt_S(d::Dict, cmd::String, symbs, flag::Char)

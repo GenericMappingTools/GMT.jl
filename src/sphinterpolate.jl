@@ -51,4 +51,4 @@ function sphinterpolate(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-sphinterpolate(arg1, cmd0::String=""; kw...) = sphinterpolate(cmd0, arg1; kw...)
+sphinterpolate(arg1; kw...) = sphinterpolate("", arg1; kw...)

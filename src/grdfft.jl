@@ -75,4 +75,4 @@ function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdfft(arg1, arg2=nothing, cmd0::String=""; kw...) = grdfft(cmd0, arg1, arg2; kw...)
+grdfft(arg1, arg2=nothing; kw...) = grdfft("", arg1, arg2; kw...)

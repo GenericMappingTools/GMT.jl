@@ -88,8 +88,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 wiggle!(cmd0::String="", arg1=nothing; kw...) = wiggle(cmd0, arg1; first=false, kw...)
-wiggle(arg1,  cmd0::String=""; kw...) = wiggle(cmd0, arg1; first=true, kw...)
-wiggle!(arg1, cmd0::String=""; kw...) = wiggle(cmd0, arg1; first=false, kw...)
+wiggle(arg1; kw...)  = wiggle("", arg1; first=true, kw...)
+wiggle!(arg1; kw...) = wiggle("", arg1; first=false, kw...)
 
 const pswiggle  = wiggle			# Alias
 const pswiggle! = wiggle!			# Alias

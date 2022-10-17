@@ -121,6 +121,6 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-mapproject(arg1, arg2=nothing, cmd0::String=""; kw...) = mapproject(cmd0, arg1, arg2; kw...)
+mapproject(arg1, arg2=nothing; kw...) = mapproject("", arg1, arg2; kw...)
 
 #mapproject(, G=(fixed_pt=[1 2], unit=:n,accumulated=1,incremental=1), azim=(fixed_pt=(3,4),forward=1), Vd=2) = "mapproject  -Af3/4 -G1/2+un+a+i"

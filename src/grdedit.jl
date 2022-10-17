@@ -72,4 +72,4 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdedit(arg1, cmd0::String=""; kw...) = grdedit(cmd0, arg1; kw...)
+grdedit(arg1; kw...) = grdedit("", arg1; kw...)
