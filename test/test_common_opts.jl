@@ -142,12 +142,15 @@
 	@test_throws ErrorException("Wrong content for the :label option. Must be only :header or :input") GMT.parse_quoted(Dict(:label => :x), "")
 	@test_throws ErrorException("Wrong content for the :label option. Must be only :plot_dist or :map_dist") GMT.parse_quoted(Dict(:label => (:x,)), "")
 	GMT.parse_quoted(Dict(:label => 1),"")		# Trigger a warning
+	GMT.parse_ls_code!(Dict(:ls => "-"))
 	GMT.helper_arrows(Dict(:geovec => "bla"));
 	GMT.helper_arrows(Dict(:vecmap => "bla"));
 
 	GMT.parse_paper(Dict(:paper => :g))
 	GMT.parse_paper(Dict(:paper => (:i,:g)))
 	GMT.leave_paper_mode()
+
+	GMT.add_opt_module(Dict(:coast => 1))
 
 	@test GMT.font(("10p","Times", :red)) == "10p,Times,red"
 	r = text(text_record([0 0], "TopLeft"), R="1/10/1/10", J=:X10, F=(region_justify=:MC,font=("10p","Times", :red)), Vd=dbg2);

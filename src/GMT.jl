@@ -298,34 +298,10 @@ const global legend_type = [legend_bag()]	# To store Legends info
 #=
 import SnoopPrecompile
 @SnoopPrecompile.precompile_all_calls begin
-	parse_R(Dict(:region => (1,2,3,4)), "")
-	parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")
-	parse_R(Dict(:region_llur => (1,2,3,4)), "")
-	parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen")
-	parse_B(Dict(:frame => :auto, :title => :bla), "")
-	parse_B(Dict(:title => "BlaBla", :frame => :none), "")
-
-	parse_J(Dict(:J => "X5"), "", "", false)
-	parse_J(Dict(:a => ""), "", "", true, true)
-	parse_J(Dict(:J => "X", :figsize => 10), "")
-	parse_J(Dict(:J => "X", :scale => "1:10"), "")
-	parse_J(Dict(:proj => "Ks0/15"), "")
-	parse_J(Dict(:scale=>"1:10"), "")
-	parse_J(Dict(:s=>"1:10"), "", " -JU")
-	parse_J(Dict(:J => "Merc", :figsize => 10), "", "", true, true)
-	parse_J(Dict(:J => (name=:albers, center=[10 20], parallels=[45 65])), "", "", false)
-	parse_J(Dict(:J => "winkel"), "", "", false)
-	parse_J(Dict(:J => (name=:merc,center=10)), "","", false)
-
-	#parse_ls_code!(Dict(:ls => "-"))
-	#parse_ls_code!(Dict(:ls => "LineCirc"))
-
-	#add_opt_module(Dict(:coast => 1))
-
-	#G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
-	#plot(rand(5,2))
-	#makecpt(T=(0,10))
-	#grdimage(rand(Float32,32,32))
+	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
+	plot(rand(5,2))
+	makecpt(T=(0,10))
+	grdimage(rand(Float32,32,32))
 end
 =#
 
