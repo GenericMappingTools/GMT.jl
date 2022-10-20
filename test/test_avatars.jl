@@ -164,6 +164,9 @@
 	stem!("", [Y -Y], Vd=dbg2)
 	stem!(Y,[Y -Y], multicol=1, Vd=dbg2)
 
+	println("	RADAR")
+	radar([10.5 20.5 30.6 40.9 46], axeslimts=[15, 25, 50, 90, 50], labels=["Spoons","Forks","Knifes","Dishes","Oranges"], annotall=true, marker=:circ, fill=true, Vd=dbg2)
+
 	plotyy([1 1; 2 2], [1.5 1.5; 3 3], R="0.8/3/0/5", title="Ai", ylabel=:Bla, xlabel=:Ble, seclabel=:Bli, Vd=dbg2);
 
 	println("	PLOT3D")
