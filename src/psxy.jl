@@ -186,9 +186,10 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		((opt_G = add_opt_fill("", d, [:G :fill], 'G')) != "") && (cmd *= opt_G)	# Also keep track if -G was set
 	end
 	opt_Gsymb::String = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
+	(opt_Gsymb == " -G") && (opt_Gsymb *= "black")	# Means something like 'mc=true' was used, but we need a color
 
 	opt_L::String = ""
-	if (is_ternary)			# Means we are in the psternary mode
+	if (is_ternary)				# Means we are in the psternary mode
 		cmd = add_opt(d, cmd, "L", [:L :vertex_labels])
 	else
 		opt_L = add_opt(d, "", "L", [:L :close :polygon],

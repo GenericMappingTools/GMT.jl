@@ -1064,6 +1064,87 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 """
+    radar(cmd0="", arg1=nothing; axeslimts=Float64[], annotall=false, axeslabels=String[], kwargs...)
+
+Radar plots are a useful way for seeing which variables have similar values or if there are outliers
+amongst each variable. By default we expect a matrix, or a GMTdatset (or a vector of them) with normalized
+values. This is so because a radar plot has multiple axis that each have different limits. So the options are
+to pass normalised variables or set each axis limits via the `axeslimts` option.
+
+- `axeslimts`: A vector with the same size as columns in the input matrix with the max extent of each variable.
+               NOTE that if you don't provide this option we assume input data is normalised.
+- `annotall`: By default only the first axis is annotated, which is all it needs when variables are normalised.
+              However, when using non-normalised variables it may be useful to show the limits of each axis.
+- `axeslabels` or `labels`: String vector with the names of each variable axis. Plots a default "Label?" if
+                            not provided.
+
+By default the polygons are not filled but that is often not so nice. To fill with the default cyclic color
+use just `fill=true`. Other options are to use:
+
+- `fill` or `fillcolor`: A string vector with polygon colors. If number of colors is less then number of
+                         polygons we cycle trhough the number of provided colors.
+- `fillalpha`: The default is to paint polygons with a transparency of 70%. For other transparecy values
+               pass in a vector of transparencies (between [0-1] or ]1-100]) via this option.
+- `lw` or `pen`: Sets the outline pen settings (default is line thickness '= 1 pt' with same color as polygon's)
+
+Examples:
+
+    radar([0.5 0.5 0.6 0.9 0.77; 0.6 0.5 0.8 0.2 0.9], show=true, marker=:circ, fill=true)
+
+	radar([10.5 20.5 30.6 40.9 46], axeslimts=[15, 25, 50, 90, 50], labels=["Spoons","Forks","Knifes","Dishes","Oranges"],
+	      annotall=true, marker=:circ, fill=true, show=1)
+"""
+function radar(cmd0::String="", arg1=nothing; first::Bool=true, axeslimts=Float64[], annotall::Bool=false,
+	           axeslabels::Vector{String}=String[], labels::Vector{String}=String[], kwargs...)
+	d = KW(kwargs)
+	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
+	if (isa(arg1, GMTdataset))                data::Matrix{Float64} = arg1.data
+	elseif (isa(arg1, Vector{<:GMTdataset}))  data = ds2ds(arg1).data
+	elseif (isa(arg1, Vector{<:Real}))        data = reshape(arg, 1, length(arg1))
+	else                                      data = arg1
+	end
+
+	(!isempty(axeslimts) && length(axeslimts) != size(data,2)) &&
+		error("'axeslimits' size must be equal to number of columns in input data.")
+	isnorm = !isempty(axeslimts) ? false : true		# Is input data normalized?
+
+	n_axes = size(data,2)					# Number of axes in this radar plot
+	i_ang = (n_axes == 5) ? 18.0 : 0.		# For pethagons show second axis alingned with YY
+	d_ang = 360 / n_axes					# Angular distance between axis
+
+	if (!isnorm)							# If input data is not normalized ...
+		maxs_round = fill(0.0, 1, n_axes)
+		for k = 1:n_axes  maxs_round[k] = round_wesn([0. 0 0 axeslimts[k]])[4]  end
+	end
+
+	basemap(R= (isnorm) ? "0/1/0/1" : @sprintf("0/%.10g/0/1", maxs_round[1]), J="X12", B="xa S", X=50, p="$i_ang")
+	opt_B = annotall ? "xa S" : "xa s"
+	for k = 2:n_axes
+		basemap!(R= (isnorm) ? "0/1/0/1" : @sprintf("0/%.10g/0/1", maxs_round[k]), p="$((k-1)*d_ang+i_ang)", B=opt_B)
+	end
+
+	ax_angs = collect(i_ang+0.0001:d_ang:360)
+
+	def_fill::Vector{String} = [" "]		# Means, no fill
+	((val = find_in_dict(d, [:fill :fillcolor], false)[1]) !== nothing) && (def_fill = (val == true) ? String[] : string.(val))
+	isempty(def_fill) && (haskey(d, :fill) ? delete!(d, :fill) : delete!(d, :fillcolor))	# Otherwise fill=true boom
+	def_alpha = (def_fill != [" "] && !haskey(d, :fillalpha)) ? fill(0.7, 1, n_axes) : d[:fillalpha]
+
+	D = mat2ds((isnorm) ? collect(data') : collect((data ./ maxs_round)'), x=ax_angs, multi=true, color=:cycle, fill=def_fill, fillalpha=def_alpha)
+
+	!isempty(labels) && (axeslabels = labels)	# Alias that does not involve a F. Any
+	isempty(axeslabels) && (axeslabels = ["Label$k" for k = 1:n_axes])
+	opt_B = isnorm ? "xa0 yg0.2" : "xa0 yag"
+	basemap!(R=(-180,180,0,1), J="P24", p=0, B=opt_B, X=-12, Y=-12, xticks=(ax_angs, axeslabels))	# [0-360] is bugged
+	
+	d[:L] = true		# Make sure line is closed.
+	(is_in_dict(d, [:lw :W :pen]) === nothing) && (d[:lw] = 1)
+	common_plot_xyz("", D, "line", false, false, d...)
+end
+radar(arg1; kwargs...) = radar("", arg1; first=true, kwargs...)
+
+# ------------------------------------------------------------------------------------------------------
+"""
     band(cmd0::String="", arg1=nothing; width=0.0, envelope=false, kwargs...)
 
 Plot a line with a symmetrical or asymmetrical band around it. If the band is not color filled then,

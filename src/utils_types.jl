@@ -51,6 +51,9 @@ does not need explicit coordinates to place the text.
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
   - `fill`:  Optional string array with color names or array of "patterns".
+  - `fillalpha` : When `fill` option is used, we can set the transparency of filled polygons with this
+     option that takes in an array (vec or 1row matrix) with numeric values between [0-1] or ]1-100],
+	 where 100 (or 1) means full transparency.
   - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = size(mat,1)` with line styles.
   - `front`:  Front Line style. A string or an array of strings with `length = size(mat,1)` with front line styles.
   - `lt` or `linethick`:  Line thickness.
@@ -276,6 +279,22 @@ function set_dsBB!(D, all_bbs::Bool=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function ds2ds(D::Vector{<:GMTdataset})::GMTdataset
+	# Take a vector od GS and collapse it into a single GMTdataset DS. Some metadata, proj, colnames
+	# and attributes are copied from first segment. Colors in header and text are lost.
+	tot_rows = sum(size.(D,1))
+	data = zeros(tot_rows, size(D[1],2))
+	s, e = 1, size(D[1],1)
+	data[s:e, :] = D[1].data
+	for k = 2:numel(D)
+		s  = e + 1
+		e += size(D[k],1)
+		data[s:e, :] = D[k].data
+	end
+	mat2ds(data, proj=D[1].proj4, wkt=D[1].wkt, epsg=D[1].epsg, geom=D[1].geom, colnames=D[1].colnames, attrib=D[1].attrib)
+end
+
+# ---------------------------------------------------------------------------------------------------
 function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 	# Take one DS and split it in an array of DS, one for each row and optionally add -G,fill>
 	# So far only for internal use but may grow in function of needs
@@ -324,6 +343,7 @@ function helper_ds_fill(d::Dict)::Vector{String}
 			end
 			for k = 1:n_colors  _fill[k] *= _alpha[k]  end	# And finaly apply the transparency
 		end
+		(_fill[1] == " ") && (_fill = Vector{String}())		# Passing a fill=[" "] is programatically handy to say no fill
 	else
 		_fill = Vector{String}()
 	end
