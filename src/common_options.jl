@@ -2393,6 +2393,7 @@ function add_opt_fill(cmd::String, d::Dict, symbs::VMs, opt="", del::Bool=true):
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
 	isa(val, Dict) && (val = dict2nt(val))
+	(val == true && symbs == [:G :fill]) && (val="#0072BD")		# Let fill=true mean a default color
 	(opt != "") && (opt = string(" -", opt))
 	return add_opt_fill(val, cmd, opt)
 end
@@ -3458,17 +3459,23 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 end
 
 # ---------------------------------------------------------------------------------------------------
-round_wesn(wesn::Array{Int}, geo::Bool=false) = round_wesn(float(wesn), geo)
-function round_wesn(wesn::Array{Float64, 2}, geo::Bool=false)::Array{Float64, 2}
+round_wesn(wesn::Array{Int}, geo::Bool=false, pad=zeros(2)) = round_wesn(float(wesn), geo, pad)
+function round_wesn(wesn::Array{Float64, 2}, geo::Bool=false, pad=zeros(2))::Array{Float64, 2}
 	# When input is an one row matix return an output of same size
 	_wesn = wesn[:]
-	_wesn = round_wesn(_wesn, geo)
+	_wesn = round_wesn(_wesn, geo, pad)
 	reshape(_wesn, 1, length(_wesn))
 end
-function round_wesn(_wesn::Vector{Float64}, geo::Bool=false)::Vector{Float64}
+function round_wesn(_wesn::Vector{Float64}, geo::Bool=false, pad=zeros(2))::Vector{Float64}
 	# Use data range to round to nearest reasonable multiples
 	# If wesn has 6 elements (is3D), last two are not modified.
+	# PAD is an optional 2 elements vector in percentage to extend original limits before rounding
 	wesn::Vector{Float64} = copy(_wesn)		# To not change the input
+	if (pad != zeros(2))
+		dx = (wesn[2] - wesn[1]) * pad[1]
+		dy = (wesn[4] - wesn[3]) * pad[2]
+		wesn[1:4] = [wesn[1]-dx, wesn[2]+dx, wesn[3]-dy, wesn[4]+dy]
+	end
 	set::Vector{Bool} = zeros(Bool, 2)
 	range::Vector{Float64} = [0.0, 0.0]
 	if (wesn[1] == wesn[2])

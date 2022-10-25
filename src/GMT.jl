@@ -165,7 +165,9 @@ export
 	colorzones!, rasterzones!, crop, doy2date, date2doy, yeardecimal, median, mean, quantile, std, nanmean,
 	nanstd, skipnan,
 
-	add2PSfile, append2fig, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels
+	add2PSfile, append2fig, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels,
+
+	density, boxplot, boxplot!, violin
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -259,6 +261,7 @@ include("streamlines.jl")
 include("surface.jl")
 include("subplot.jl")
 include("show_pretty_datasets.jl")
+include("statplots.jl")
 include("tables_gmt.jl")
 include("themes.jl")
 include("triangulate.jl")
