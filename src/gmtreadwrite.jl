@@ -207,23 +207,23 @@ function file_has_time!(fname::String, D::GDtype)
 	fid = open(fname)
 	iter = eachline(fid)
 	try
-	for it in iter
-		line1 = split(it)
-		n_it += 1			# Counter to not let this go on infinetely
-		(n_it > 10 || isempty(line1) || contains(">#!%;", line1[1][1])) && continue
-		for k = 1:n_cols
-			# Time cols may come in forms like [-]yyyy-mm-dd[T| [hh:mm:ss.sss]], so to find them we seek for
-			# '-' chars in the middle of strings that we KNOW have been converted to numbers. The shit that is
-			# left to be solved is that we can have TWO strings, 'yyyy-mm-dd hh:mm:ss.sss' to mean a single time.
-			if ((i = findlast("-", line1[k])) !== nothing && i[1] > 1)
-				Tc = (Tc == "") ? "$k" : Tc * ",$k"			# Accept more than one time columns
-				Ts = (f1 == 1) ? "Time" : "Time$(f1)";		f1 += 1
-				(isone) ? (D.colnames[k] = Ts) : (D[1].colnames[k] = Ts)
+		for it in iter
+			line1 = split(it)
+			n_it += 1			# Counter to not let this go on infinetely
+			(n_it > 10 || isempty(line1) || contains(">#!%;", line1[1][1])) && continue
+			for k = 1:n_cols
+				# Time cols may come in forms like [-]yyyy-mm-dd[T| [hh:mm:ss.sss]], so to find them we seek for
+				# '-' chars in the middle of strings that we KNOW have been converted to numbers. The shit that is
+				# left to be solved is that we can have TWO strings, 'yyyy-mm-dd hh:mm:ss.sss' to mean a single time.
+				if ((i = findlast("-", line1[k])) !== nothing && i[1] > 1 && lowercase(line1[k][i[1]-1]) != 'e')
+					Tc = (Tc == "") ? "$k" : Tc * ",$k"			# Accept more than one time columns
+					Ts = (f1 == 1) ? "Time" : "Time$(f1)";		f1 += 1
+					(isone) ? (D.colnames[k] = Ts) : (D[1].colnames[k] = Ts)
+				end
 			end
+			(Tc != "") && ((isone) ? (D.attrib["Timecol"] = Tc) : (D[1].attrib["Timecol"] = Tc))
+			break
 		end
-		(Tc != "") && ((isone) ? (D.attrib["Timecol"] = Tc) : (D[1].attrib["Timecol"] = Tc))
-		break
-	end
 	catch err
 		isone ? (D.colnames = String[]) : [D[k].colnames = String[] for k = 1:lastindex(D)]
 		@warn("Failed to parse file $fname for file_has_time!(). Error was: $err")
