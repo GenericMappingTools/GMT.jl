@@ -1925,7 +1925,7 @@ function finish_PS_nested(d::Dict, cmd::Vector{String})::Vector{String}
 	!has_opt_module(d) && return cmd
 	cmd2::Vector{String} = add_opt_module(d)
 
-	if (startswith(cmd2[1], "clip"))		# Deal with the particular psclip case (Tricky)
+	if (!isempty(cmd2) && startswith(cmd2[1], "clip"))		# Deal with the particular psclip case (Tricky)
 		if (isa(CTRL.pocket_call[1], Symbol) || isa(CTRL.pocket_call[1], String))	# Assume it's a clip=end
 			cmd::Vector{String}, CTRL.pocket_call[1] = [cmd; "psclip -C"], nothing
 		else
@@ -2394,6 +2394,7 @@ function add_opt_fill(cmd::String, d::Dict, symbs::VMs, opt="", del::Bool=true):
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
 	isa(val, Dict) && (val = dict2nt(val))
 	(val == true && symbs == [:G :fill]) && (val="#0072BD")		# Let fill=true mean a default color
+	(val == "" && symbs == [:G :fill]) && return ""				# Let fill="" mean no fill (handy for proggy reasons)
 	(opt != "") && (opt = string(" -", opt))
 	return add_opt_fill(val, cmd, opt)
 end

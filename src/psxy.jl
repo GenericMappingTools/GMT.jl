@@ -132,8 +132,12 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	got_Ebars = false
 	val, symb = find_in_dict(d, [:E :error :error_bars], false)
 	if (val !== nothing)
-		cmd, arg1 = add_opt(add_opt, (d, cmd, "E", [symb]),
-                            (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, isa(arg1, GMTdataset) ? arg1.data : (isa(arg1, Vector{<:GMTdataset}) ? arg1[1].data : arg1) )
+		if isa(val, String)
+			cmd *= " -E" * val
+		else
+			cmd, arg1 = add_opt(add_opt, (d, cmd, "E", [symb]),
+                                (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", wiskers="|+n",cap="+w",pen=("+p",add_opt_pen)), false, isa(arg1, GMTdataset) ? arg1.data : (isa(arg1, Vector{<:GMTdataset}) ? arg1[1].data : arg1) )
+		end
 		got_Ebars = true
 		del_from_dict(d, [symb])
 	end
