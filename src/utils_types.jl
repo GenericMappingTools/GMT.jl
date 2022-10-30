@@ -97,7 +97,8 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 	end
 
 	if ((color = find_in_dict(d, [:color])[1]) !== nothing)
-		_color::Vector{String} = isa(color, Array{String}) ? vec(color) : ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"]
+		#_color::Vector{String} = isa(color, Array{String}) ? vec(color) : ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"]
+		_color::Vector{String} = isa(color, Array{String}) ? vec(color) : matlab_cycle_colors
 	end
 	_fill::Vector{String} = helper_ds_fill(d)
 
@@ -330,8 +331,7 @@ end
 function helper_ds_fill(d::Dict)::Vector{String}
 	# Shared by ds2ds & mat2ds
 	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
-		_fill::Vector{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? vec(fill_val) :
-		                       ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
+		_fill::Vector{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? vec(fill_val) : matlab_cycle_colors
 		n_colors::Int = length(_fill)
 		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
 			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end
@@ -349,6 +349,13 @@ function helper_ds_fill(d::Dict)::Vector{String}
 	end
 	return _fill
 end
+
+const matlab_cycle_colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F", "0/255/0"]
+# https://en.wikipedia.org/wiki/Help:Distinguishable_colors
+const alphabet_colors = ["#2BCE48", "#4C005C", "#005C31", "#5EF1F2", "#8F7C00", "#9DCC00", "#0075DC", "#94FFB5", "#740AFF", "#993F00", "#00998F", "#003380", "#191919", "#426600", "#808080", "#990000", "#C20088", "#E0FF66", "#F0A3FF", "#FF0010", "#FF5005", "#FFA8BB", "#FFA405", "#FFCC99", "#FFE100", "#FFFF80"]
+# https://sashamaps.net/docs/resources/20-colors/
+const simple_distinct = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080"]
+  
 
 # ---------------------------------------------------------------------------------------------------
 function color_gradient_line(D::Matrix{<:Real}; is3D::Bool=false, color_col::Int=3, first::Bool=true)

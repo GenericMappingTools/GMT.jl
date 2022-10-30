@@ -152,3 +152,33 @@ function setgrdminmax!(G::GMTgrid)
 	end
 	=#
 end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:permutedims(G1::GMTgrid, inds; nodata=nothing)
+	epsg, range, inc, registration, _nodata, x, y, v, pad = dup_G_meta(G1)
+	_range = [range[1:2], range[3:4], range[7:8]]
+	if (isempty(v) && ndims(G1) == 3)
+		v, inc::Vector{<:Float64}  = collect(1.0:size(G1,3)), [inc[:]..., 1.0]
+	end
+	mat = permutedims(G1.z, inds)
+	# 3,2,1  3,1,2, 2,1,3  2,3,1  1,3,2
+	if     (inds == [3,2,1])  x, v, x_unit = v, x, G1.z_unit
+	elseif (inds == [3,1,2])  x, y, v, x_unit = v, x, y, G1.z_unit
+	end
+	if (nodata !== nothing && eltype(G1) <: AbstractFloat && !isnan(nodata))
+		this_NaN = (eltype(G1) == Float32) ? NaN32 : NaN64
+		if (nodata > 0)		# More often than not, nodata !== NaN are stupid float numbers with tons of decimals
+			@inbounds @simd for k = 1:numel(G1)
+				(G1.z[k] >= nodata) && (G1.z[k] = this_NaN)
+			end
+		else
+			@inbounds @simd for k = 1:numel(G1)
+				(G1.z[k] <= nodata) && (G1.z[k] = this_NaN)
+			end
+		end
+		_nodata = this_NaN
+	end
+	range = [_range[inds[1]]..., _range[inds[2]]..., range[5:6]..., _range[inds[3]]...]
+	GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	        mat, G1.z_unit, G1.y_unit, G1.x_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+end
