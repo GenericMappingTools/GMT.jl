@@ -444,7 +444,7 @@ function parse_opt_S(d, arg1, is3D)
 			#val_ = isa(val, VMr) ? val : VMr[]
 			if (isa(val, VMr))
 				val_::VMr = val
-				if (length(val_) == 2)			# A two elements array in interpreted as [min max]
+				if (length(val_) == 2)			# A two elements array is interpreted as [min max]
 					scale = (eltype(val_) <: Integer) ? 2.54/72 : 1.0	# In integers, assumes they are points
 					arg1 = hcat(arg1, linspace(val[1], val_[2], size(arg1,1)).*scale)
 				else

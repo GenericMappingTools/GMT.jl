@@ -40,6 +40,9 @@
 	getindex(G1,1:2);
 	setindex!(G1, [-1 -1],1:2)
 	size(G1)
+	
+	permutedims(mat2grid(rand(Float32,3,10,20)), [3,1,2], nodata=1e30);
+	permutedims(mat2grid(rand(Float32,3,10,20)), [3,1,2], nodata=-1e30);
 
 	GMT.WrapperPluto("aaa")
 	Base.BroadcastStyle(typeof(G1))

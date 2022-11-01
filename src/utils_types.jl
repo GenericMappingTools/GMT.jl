@@ -252,7 +252,7 @@ function set_dsBB!(D, all_bbs::Bool=true)
 	# If ALL_BBS is false then assume individual BBs are already knwon.
 	isempty(D) && return nothing
 
-	if (all_bbs)
+	if (all_bbs)		# Compute all BBs
 		if isa(D, GMTdataset)
 			(size(D,1) == 1) && return nothing		# Single liners have no BB
 			D.ds_bbox = D.bbox = collect(Float64, Iterators.flatten(extrema(D.data, dims=1)))
@@ -260,17 +260,34 @@ function set_dsBB!(D, all_bbs::Bool=true)
 		else
 			for k = 1:lastindex(D)
 				bb = extrema(D[k].data, dims=1)		# A N Tuple.
-				D[k].bbox = collect(Float64, Iterators.flatten(bb))
+				##
+				_bb = collect(Float64, Iterators.flatten(bb))
+				if (any(isnan.(_bb)))				# Shit, we don't have a minimum_nan(A, dims)
+					n = 0
+					for kk = 1:size(D[k].data, 2)
+						t = view(D[k].data, :, kk)
+						isnan(_bb[n+=1]) && (_bb[n] = minimum_nan(t); _bb[n+=1] = maximum_nan(t))
+					end
+					all(isnan.(_bb)) && continue	# Shit, they are all still NaNs
+				end
+				D[k].bbox = _bb
+				##
+				#D[k].bbox = collect(Float64, Iterators.flatten(bb))
 			end
 		end
 	end
 
 	(isa(D, GMTdataset)) && (D.ds_bbox = D.bbox;	return nothing)
 	(length(D) == 1)     && (D[1].ds_bbox = D[1].bbox;	return nothing)
-	isempty(D[1].bbox)   && return nothing
-	bb = copy(D[1].bbox)
-	for k = 2:lastindex(D)
+	#isempty(D[1].bbox)   && return nothing
+	#bb = copy(D[1].bbox)
+	kk = 0
+	while (isempty(D[kk+=1].bbox) && kk <= length(D))  continue  end
+	bb = copy(D[kk].bbox)
+	#for k = 2:lastindex(D)
+	for k = kk+1:lastindex(D)
 		for n = 1:2:length(bb)
+			isempty(D[k].bbox) && continue
 			bb[n]   = min(D[k].bbox[n],   bb[n])
 			bb[n+1] = max(D[k].bbox[n+1], bb[n+1])
 		end
