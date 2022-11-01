@@ -99,23 +99,19 @@ end
 # --------------------------------------------------------------------------------
 function boxplot(data::Vector{<:Real}, x=nothing; first::Bool=true, kwargs...)
 	boxplot(reshape(data,length(data),1), (x === nothing) ? Vector{Real}() : [x]; first=true, kwargs...)
-	#=
-	d = helper1_boxplot(kwargs)
-	q0, q25, q50, q75, q100 = quantile(data, [0.0, 0.25, 0.5, 0.75, 1.0])
-	_x = (x === nothing) ? 1.0 : x
-	(first && (is_in_dict(d, [:R :region :limits]) === nothing)) && (d[:R] = (_x -0.1*abs(_x), _x+0.1*abs(_x), q0, q100))
-	common_plot_xyz("", [_x q50 q0 q25 q75 q100], "line", first, false, d...)
-	=#
 end
 
 function boxplot(data::Matrix{<:Real}, x::Vector{<:Real}=Vector{Real}(); first::Bool=true, kwargs...)
 	(!isempty(x) && length(x) != size(data,2)) && error("Coordinate vector 'x' must have same size as columns in 'data'")
 	d = helper1_boxplot(kwargs)
 	fill_color = ((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : ""
-	D = helper2_boxplot(data, x, 0.0, fill_color)
+	w = ((val = find_in_dict(d, [:weights])[1]) !== nothing) ? Float64.(val) : Float64[]
+	showOL = (find_in_dict(d, [:outliers])[1] !== nothing)
+	D, Dol = helper2_boxplot(data, x, w, 0.0, fill_color, showOL)
 	#(fill_color == "") && colorize_candles_violins(D, 1, 1, 1, 0)		# Assign default colors in D's headers
 	(first && (is_in_dict(d, [:R :region :limits]) === nothing)) &&
 		(d[:R] = round_wesn([D.ds_bbox[1], D.ds_bbox[2], D.ds_bbox[5], D.ds_bbox[12]], false, [0.1,0.1]))
+	!isempty(Dol) && (d[:scatter] = (data=Dol, marker=:star, ms="4p", mc="black"))
 	common_plot_xyz("", D, "line", first, false, d...)
 end
 
@@ -131,8 +127,11 @@ function boxplot(data::Array{<:Real,3}, x::Vector{<:Real}=Vector{Real}(); first:
 	offs = (0:n_in_grp-1) .- ((n_in_grp-1)/2);			# Isto se cada grupo ocupar uma unidade
 	D3::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_in_grp)
 	fill_color = ((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : ""
+	w = ((val = find_in_dict(d, [:weights])[1]) !== nothing) ? Float64.(val) : Float64[]
+	showOL = (find_in_dict(d, [:outliers])[1] !== nothing)
+	Dol::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_in_grp)
 	for nig = 1:n_in_grp								# Loop over each element in the group
-		D3[nig] = helper2_boxplot(view(data,:,:,nig), x, offs[nig]*boxspacing, fill_color)
+		D3[nig], Dol[nig] = helper2_boxplot(view(data,:,:,nig), x, w, offs[nig]*boxspacing, fill_color, showOL)
 	end
 	set_dsBB!(D3)				# Compute and set the global BoundingBox
 
@@ -145,12 +144,13 @@ function boxplot(data::Array{<:Real,3}, x::Vector{<:Real}=Vector{Real}(); first:
 
 	(first && (is_in_dict(d, [:R :region :limits]) === nothing)) &&
 		(d[:R] = round_wesn([D3[1].ds_bbox[1], D3[1].ds_bbox[2], D3[1].ds_bbox[5], D3[1].ds_bbox[12]], false, [0.1,0.1]))
+	showOL && (d[:scatter] = (data=Dol, marker=:star, ms="4p", mc="black"))		# Still, 'Dol' may be a vec of empties
 	common_plot_xyz("", D3, "line", first, false, d...)
 end
 
 boxplot(data::GMTdataset, x=nothing; first::Bool=true, kwargs...) = boxplot(data.data, x; first=first, kwargs...)
-boxplot!(data::Vector{<:Real}, x=nothing; kwargs...) = boxplot(data, x; first=false, kwargs...)
-boxplot!(data::Matrix{<:Real}, x::Vector{<:Real}=Vector{Real}(); kwargs...) = boxplot(data, x; first=false, kwargs...)
+boxplot!(data::Vector{<:Real},  x=nothing; kwargs...) = boxplot(data, x; first=false, kwargs...)
+boxplot!(data::Matrix{<:Real},  x::Vector{<:Real}=Vector{Real}(); kwargs...) = boxplot(data, x; first=false, kwargs...)
 boxplot!(data::Array{<:Real,3}, x::Vector{<:Real}=Vector{Real}(); kwargs...) = boxplot(data, x; first=false, kwargs...)
 
 function helper1_boxplot(kwarg)
@@ -160,15 +160,37 @@ function helper1_boxplot(kwarg)
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function helper2_boxplot(data::AbstractMatrix{<:Real}, x::Vector{<:Real}=Vector{Real}(), off_in_grp::Float64=0.0, cor="")
+function helper2_boxplot(data::AbstractMatrix{<:Real}, x::Vector{<:Real}=Vector{Real}(), w::VMr=Vector{Float64}(),
+                         off_in_grp::Float64=0.0, cor="", outliers::Bool=false)
 	# OFF_IN_GRP is the offset relative to group's center (zero when groups have only one bar)
+	# Returns a Tuple(GMTdataset, GMTdataset)
 	_x = isempty(x) ? collect(1.0:size(data,2)) : x
 	mat = zeros(size(data,2), 6)
+	matOL = Matrix{Float64}[]
+	first = true
 	for k = 1:size(data,2)			# Loop over number of groups (or number of candle sticks if each group has only 1)
-		q0, q25, q50, q75, q100 = quantile(view(data,:,k), [0.0, 0.25, 0.5, 0.75, 1.0])
+		_w = isa(w, Matrix) ? view(w,:,k) : w
+		q0, q25, q50, q75, q100 = _quantile(view(data,:,k), w, [0.0, 0.25, 0.5, 0.75, 1.0])
+		if (outliers)
+			t = view(data,:,k)
+			ind_l = t .< (q25 - 1.5*(q75-q25))
+			ind_h = t .> (q75 + 1.5*(q75-q25))
+			ind = ind_l .|| ind_h
+			if (any(ind))
+				q0, q25, q50, q75, q100 = _quantile(t[.!ind], w, [0.0, 0.25, 0.5, 0.75, 1.0])
+				t_ol = t[ind]
+				matOL = (first) ? [fill(_x[k]+off_in_grp, length(t_ol)) t_ol] :
+				                  [matOL; [fill(_x[k]+off_in_grp, length(t_ol)) t_ol]]
+				first = false
+			end
+		end
 		mat[k, :] = [_x[k]+off_in_grp q50 q0 q25 q75 q100]
 	end
-	mat2ds(mat, color=cor)
+	D = mat2ds(mat, color=cor)
+	Dol = !isempty(matOL) ? mat2ds(matOL) : GMTdataset()
+	(outliers) && (D.ds_bbox[5]  = !isempty(Dol.ds_bbox) ? min(D.ds_bbox[5],  Dol.ds_bbox[3]) : D.ds_bbox[5];
+                   D.ds_bbox[12] = !isempty(Dol.ds_bbox) ? max(D.ds_bbox[12], Dol.ds_bbox[4]) : D.ds_bbox[12])
+	return D, Dol
 end
 
 """
@@ -297,5 +319,62 @@ function colorize_candles_violins(D::Vector{<:GMTdataset}, n::Int, b::Int, e::In
 	else	# Use the alphabet_colors and cycle arround if needed (except in the vc (VariableColor per group case))
 		for k = b:e  kk+=1; D[k].header = " -G" * (vc > 0 ? alphabet_colors[vc] : alphabet_colors[((kk % 26) != 0) ? kk % 26 : 26])  end
 	end
-	D
+	return D
+end
+
+# ----------------------------------------------------------------------------------------------------------
+function _quantile(v::AbstractVector{<:Real}, w::AbstractVector{<:Real}, p::AbstractVector{<:Real})
+	return isempty(w) ? quantile(v, p) : quantile_weights(v, w, p)
+end
+
+function quantile_weights(v::AbstractVector{V}, w::AbstractVector{W}, p::AbstractVector{<:Real}) where {V,W<:Real}
+	# This function comes from StatsBase/weights.jl because we don't want to add that dependency just 4 1 fun
+	isempty(v) && throw(ArgumentError("quantile of an empty array is undefined"))
+	isempty(p) && throw(ArgumentError("empty quantile array"))
+	all(x -> 0 <= x <= 1, p) || throw(ArgumentError("input probability out of [0,1] range"))
+
+	wsum = sum(w)
+	wsum == 0 && throw(ArgumentError("weight vector cannot sum to zero"))
+	length(v) == length(w) || throw(ArgumentError("data and weight vectors must be the same size," *
+		"got $(length(v)) and $(length(w))"))
+	for x in w
+		isnan(x) && throw(ArgumentError("weight vector cannot contain NaN entries"))
+		x < 0 && throw(ArgumentError("weight vector cannot contain negative entries"))
+	end
+
+	# remove zeros weights and sort
+	nz = .!iszero.(w)
+	vw = sort!(collect(zip(view(v, nz), view(w, nz))))
+	N = length(vw)
+
+	# prepare percentiles
+	ppermute = sortperm(p)
+	p = p[ppermute]
+
+	# prepare out vector
+	out = Vector{typeof(zero(V)/1)}(undef, length(p))
+	fill!(out, vw[end][1])
+
+	@inbounds for x in v
+		isnan(x) && return fill!(out, x)
+	end
+
+	# loop on quantiles
+	Sk, Skold = zero(W), zero(W)
+	vk, vkold = zero(V), zero(V)
+	k = 0
+
+	w1 = vw[1][2]
+	for i in 1:length(p)
+		h = p[i] * (wsum - w1) + w1
+		while Sk <= h
+			k += 1
+			(k > N) && return out	# out was initialized with maximum v
+			Skold, vkold = Sk, vk
+			vk, wk = vw[k]
+			Sk += wk
+		end
+		out[ppermute[i]] = vkold + (h - Skold) / (Sk - Skold) * (vk - vkold)
+	end
+	return out
 end

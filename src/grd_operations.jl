@@ -165,6 +165,7 @@ function Base.:permutedims(G1::GMTgrid, inds; nodata=nothing)
 	if     (inds == [3,2,1])  x, v, x_unit = v, x, G1.z_unit
 	elseif (inds == [3,1,2])  x, y, v, x_unit = v, x, y, G1.z_unit
 	end
+	_nodata = G1.nodata
 	if (nodata !== nothing && eltype(G1) <: AbstractFloat && !isnan(nodata))
 		this_NaN = (eltype(G1) == Float32) ? NaN32 : NaN64
 		if (nodata > 0)		# More often than not, nodata !== NaN are stupid float numbers with tons of decimals
@@ -179,6 +180,6 @@ function Base.:permutedims(G1::GMTgrid, inds; nodata=nothing)
 		_nodata = this_NaN
 	end
 	range = [_range[inds[1]]..., _range[inds[2]]..., range[5:6]..., _range[inds[3]]...]
-	GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	GMTgrid(G1.proj4, G1.wkt, epsg, range, inc, registration, _nodata, "", "", "", "", G1.names, x, y, v,
 	        mat, G1.z_unit, G1.y_unit, G1.x_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 end

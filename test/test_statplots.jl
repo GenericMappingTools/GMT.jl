@@ -1,6 +1,7 @@
 @testset "STATPLOTS" begin
 	println("	STATPLOTS")
 	GMT.density(randn(100), kernel=:uniform, Vd=dbg2)
+	GMT._quantile(randn(30), rand(30), [0.25, 0.75])
 
 	y = randn(100,3);
 	violin(y, scatter=true)

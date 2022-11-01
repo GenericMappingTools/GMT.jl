@@ -2570,7 +2570,7 @@ function get_color(val)::String
 
 	out::String = ""
 	if (isa(val, Tuple))
-		for k = 1:length(val)
+		for k = 1:numel(val)
 			if (isa(val[k], Tuple) && (length(val[k]) == 3))
 				s = 1
 				if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255  end	# colors in [0 1]
@@ -4393,6 +4393,7 @@ function minimum_nan(A)
 	if (eltype(A) <: AbstractFloat)
 		mi = typemax(eltype(A))
 		@inbounds for k in eachindex(A) !isnan(A[k]) && (mi = min(mi, A[k])) end
+		mi == typemax(eltype(A)) && (mi = convert(eltype(A), NaN))	# Better to return NaN than +Inf
 		mi
 	else
 		minimum(A)
@@ -4403,6 +4404,7 @@ function maximum_nan(A)
 	if (eltype(A) <: AbstractFloat)
 		ma = typemin(eltype(A))
 		@inbounds for k in eachindex(A) !isnan(A[k]) && (ma = max(ma, A[k])) end
+		ma == typemin(eltype(A)) && (ma = convert(eltype(A), NaN))	# Better to return NaN than -Inf
 		ma
 	else
 		maximum(A)
