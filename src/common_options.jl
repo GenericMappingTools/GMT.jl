@@ -2901,7 +2901,7 @@ function helper3_axes(arg, primo::String, axe::String)::String
 					t = split(label[k])
 					tipo[k] = t[1][2:end]
 					if (length(t) > 1)
-						label[k] = join([t[n] * " " for n =2:length(t)])
+						label[k] = join([t[n] * " " for n =2:numel(t)])
 						label[k] = rstrip(label[k], ' ')		# and remove last ' '
 					else
 						label[k] = ""
