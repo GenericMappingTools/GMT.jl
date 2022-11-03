@@ -87,7 +87,7 @@ function Uniform(x::Vector{<:Real}, a=-1.0, b=1.0)
 	return r
 end
 
-# --------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------
 function density(x, nbins::Integer=200; bins::Vector{<:Real}=Vector{Real}(),
                  bandwidth=nothing, kernel::StrSymb="normal", first::Bool=true, kwargs...)
 	D = kernelDensity(x; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
@@ -96,7 +96,7 @@ end
 
 """
 """
-# --------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------
 function boxplot(data::Vector{<:Real}, x_=nothing; x=nothing, first::Bool=true, kwargs...)
 	(x === nothing) && (x = x_)			# To allow both ways (positional & kword)
 	boxplot(reshape(data,length(data),1), (x === nothing) ? Vector{Real}() : [x]; first=first, kwargs...)
@@ -104,25 +104,30 @@ end
 
 function boxplot(data::Matrix{<:Real}, x_::Vector{<:Real}=Vector{Real}(); x::Vector{<:Real}=Vector{Real}(),
                  first::Bool=true, kwargs...)
-	isempty(x) && (x = x_)			# To allow both ways (positional & kword)
+	isempty(x) && (x = x_)					# To allow both ways (positional & kword)
 	(!isempty(x) && length(x) != size(data,2)) && error("Coordinate vector 'x' must have same size as columns in 'data'")
 	d, isVert = helper1_boxplot(kwargs)
-	fill_color = ((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : ""
+	fill = ((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : ""
 	w = ((val = find_in_dict(d, [:weights])[1]) !== nothing) ? Float64.(val) : Float64[]
 	showOL = (find_in_dict(d, [:outliers])[1] !== nothing)
-	D, Dol = helper2_boxplot(data, x, w, 0.0, fill_color, showOL)
-	#(fill_color == "") && colorize_candles_violins(D, 1, 1, 1, 0)		# Assign default colors in D's headers
+	D, Dol = helper2_boxplot(data, x, w, 0.0, fill, showOL)		# Two GMTdataset's. Second may be empty
+	Dv = (fill == "gray70") ? ds2ds(D, G="gray70") : ds2ds(D)	# Split it so we can assign colors to each candle.
+	if (fill != "" && fill != "gray70")							# Only paint the candles if explicitly requested.
+		custom_colors = helper_ds_fill(d)	# A helper function of mat2ds()
+		colorize_candles_violins(Dv, length(Dv), 1, length(Dv), 0, custom_colors)	# Assign default colors in Dv's headers
+	end
+
 	(first && (is_in_dict(d, [:R :region :limits]) === nothing)) &&
 		(d[:R] = round_wesn([D.ds_bbox[1], D.ds_bbox[2], D.ds_bbox[5], D.ds_bbox[12]], false, [0.1,0.1]))
 	!isempty(Dol) && (d[:scatter] = (data=Dol, marker=:star, ms="4p", mc="black"))
 	if (first)			# Need tis check to not duplicate ticks when called from violin
-		xt = ((val = find_in_dict(d, [:xticks :yticks])[1]) !== nothing) ? val : str4ticks(D[:,1])
+		xt = ((val = find_in_dict(d, [:xticks :yticks])[1]) !== nothing) ? val : num4ticks(D[:,1])
 		(isVert) ? (d[:xticks] = xt) : (d[:yticks] = xt)		# Vertical or Horizontal sticks
 	end
-	common_plot_xyz("", D, "boxplot", first, false, d...)
+	common_plot_xyz("", Dv, "boxplot", first, false, d...)
 end
 
-# ------------ For groups ------------------------------
+# ------------ For groups ----------------------------------------------------------------------------------
 function boxplot(data::Array{<:Real,3}, x_::Vector{<:Real}=Vector{Real}();  x::Vector{<:Real}=Vector{Real}(),
                  first::Bool=true, groupwidth=0.75, varcolor_grp=true, kwargs...)
 	isempty(x) && (x = x_)			# To allow both ways (positional & kword)
@@ -132,21 +137,23 @@ function boxplot(data::Array{<:Real,3}, x_::Vector{<:Real}=Vector{Real}();  x::V
 	n_in_grp = size(data,3)
 	boxspacing = groupwidth / n_in_grp
 	offs = (0:n_in_grp-1) .- ((n_in_grp-1)/2);			# Isto se cada grupo ocupar uma unidade
-	D3::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_in_grp)
-	fill_color = ((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : ""
+	D3 = Vector{GMTdataset}(undef, n_in_grp)
+	fill = ((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : ""
 	w = ((val = find_in_dict(d, [:weights])[1]) !== nothing) ? Float64.(val) : Float64[]
 	showOL = (find_in_dict(d, [:outliers])[1] !== nothing)
 	Dol::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_in_grp)
 	for nig = 1:n_in_grp								# Loop over each element in the group
-		D3[nig], Dol[nig] = helper2_boxplot(view(data,:,:,nig), x, w, offs[nig]*boxspacing, fill_color, showOL)
+		D3[nig], Dol[nig] = helper2_boxplot(view(data,:,:,nig), x, w, offs[nig]*boxspacing, fill, showOL)
 	end
 	set_dsBB!(D3)				# Compute and set the global BoundingBox
 
-	if (fill_color != "")
+	if (fill != "")
+		custom_colors = (fill == "gray70") ? ["gray70"] : String[]
+		!varcolor_grp && (D3 = ds2ds(ds2ds(D3)); set_dsBB!(D3))		# Crazzy op and wasteful but thse Ds are small
 		n_ds = Int(length(D3) / n_in_grp)
 		for m = 1:n_in_grp
 			b = (m - 1) * n_ds + 1;		e = b + n_ds - 1
-			colorize_candles_violins(D3, n_ds, b, e, varcolor_grp ? m : 0)	# Assign default colores in D's headers
+			colorize_candles_violins(D3, n_ds, b, e, varcolor_grp ? m : 0, custom_colors)	# Assign default colors
 		end
 	end
 
@@ -155,7 +162,7 @@ function boxplot(data::Array{<:Real,3}, x_::Vector{<:Real}=Vector{Real}();  x::V
 	showOL && (d[:scatter] = (data=Dol, marker=:star, ms="4p", mc="black"))		# Still, 'Dol' may be a vec of empties
 	if (first)			# Need tis check to not duplicate ticks when called from violin
 		xt = ((val = find_in_dict(d, [:xticks :yticks])[1]) !== nothing) ? val :
-			(isodd(n_in_grp) ? str4ticks(D3[:,ceil(Int,n_in_grp/2)]) : str4ticks(round.((D3[1][:,1]+D3[end][:,1])./2, digits=1)))
+			(isodd(n_in_grp) ? num4ticks(D3[:,ceil(Int,n_in_grp/2)]) : num4ticks(round.((D3[1][:,1]+D3[end][:,1])./2, digits=1)))
 		(isVert) ? (d[:xticks] = xt) : (d[:yticks] = xt)		# Vertical or Horizontal sticks
 	end
 	common_plot_xyz("", D3, "boxplot", first, false, d...)
@@ -188,7 +195,6 @@ function helper2_boxplot(data::AbstractMatrix{<:Real}, x::Vector{<:Real}=Vector{
 	matOL = Matrix{Float64}[]		# To store the eventual outliers
 	first = true
 	for k = 1:size(data,2)			# Loop over number of groups (or number of candle sticks if each group has only 1)
-		_w = isa(w, Matrix) ? view(w,:,k) : w
 		t = view(data,:,k)
 		q0, q25, q50, q75, q100 = _quantile(t, w, [0.0, 0.25, 0.5, 0.75, 1.0])
 		if (outliers)
@@ -212,29 +218,22 @@ function helper2_boxplot(data::AbstractMatrix{<:Real}, x::Vector{<:Real}=Vector{
 	return D, Dol
 end
 
-# --------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------
 # Create a x|y|ztics tuple argument by converting the numbers to strings while dropping unnecessary decimals
-str4ticks(v::Vector{<:Real}) = (v, [@sprintf("%g ", x) for x in v])
+num4ticks(v::Vector{<:Real}) = (v, [@sprintf("%g ", x) for x in v])
 
 """
 """
-# --------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------
 function violin(data::Vector{<:Real}, x_=nothing; x=nothing, nbins::Integer=100, bins::Vector{<:Real}=Vector{Real}(),
                 bandwidth=nothing, kernel::StrSymb="normal", first::Bool=true, kwargs...)
 
 	(x === nothing) && (x = x_)			# To allow both ways (positional & kword)
 	violin(reshape(data,length(data),1), (x === nothing) ? Vector{Real}() : [x]; x=(x === nothing) ? Vector{Real}() : [x],
                    nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, first=first, kwargs...)
-	#=
-	(x === nothing) && (x = x_)			# To allow both ways (positional & kword)
-	D = kernelDensity(data; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
-	xd, d = view(D.data,:,1), view(D.data,:,2)
-	(x !== nothing) && (xd .+= x)
-	_data = [[d; -d[end:-1:1]] [xd; xd[end:-1:1]]]
-	common_plot_xyz("", _data, "line", first, false, kwargs...)
-	=#
 end
 
+# ----------------------------------------------------------------------------------------------------------
 function violin(data::Matrix{<:Real}, x_::Vector{<:Real}=Vector{Real}(); x::Vector{<:Real}=Vector{Real}(),
                 nbins::Integer=100, first::Bool=true, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", groupwidth=0.75, kwargs...)
 
@@ -246,7 +245,7 @@ function violin(data::Matrix{<:Real}, x_::Vector{<:Real}=Vector{Real}(); x::Vect
 	helper2_violin(Dv, Ds, data, x, xc, 1, false, first, kwargs)
 end
 
-# ------------ For groups ------------------------------
+# ------------ For groups ----------------------------------------------------------------------------------
 #groupwidth  - Proportion of the x-axis interval across which each x-group of boxes should be spread.
 #varcolor_grp = true		# If colors varie for each in a group, or are constant inside each group.
 function violin(data::Array{<:Real,3}, x_::Vector{<:Real}=Vector{Real}(); x::Vector{<:Real}=Vector{Real}(),
@@ -259,7 +258,6 @@ function violin(data::Array{<:Real,3}, x_::Vector{<:Real}=Vector{Real}(); x::Vec
 	Ds::Vector{GMTdataset} = (scatter) ? Vector{GMTdataset}(undef, length(D3)) : Vector{GMTdataset}()
 	split = (find_in_kwargs(kwargs, [:split])[1] !== nothing)
 	(split && size(data,3) != 2) && (split=false; @warn("The split method requires groups of two violins only. Ignoring."))
-	(split && scatter) && (scatter=false; @warn("The split method does not implement scattering plot."))
 
 	n, m, n_in_grp = 0, 0, size(data,3)
 	boxspacing = groupwidth / n_in_grp
@@ -270,7 +268,7 @@ function violin(data::Array{<:Real,3}, x_::Vector{<:Real}=Vector{Real}(); x::Vec
 		Dv, _D, xc = helper_violin(view(data,:,:,nig), x, offs[nig]*boxspacing, n_in_grp; groupwidth=groupwidth,
 		                           nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, scatter=scatter, split=_split)
 		for k = 1:size(data,2)  D3[n+=1] = Dv[k]  end	# Loop over number of groups
-		(scatter) && for k = 1:size(data,2)  Ds[m+=1], = _D[k]  end		# Store the scatter pts
+		(scatter) && for k = 1:size(data,2)  Ds[m+=1] = _D[k]  end		# Store the scatter pts
 	end
 	helper2_violin(D3, Ds, data, x, xc, n_in_grp, varcolor_grp, first, kwargs)	# Do some house keeping and call the plot funs
 end
@@ -298,7 +296,9 @@ function helper_violin(data::AbstractMatrix{<:Real}, x::Vector{<:Real}=Vector{Re
 
 		if (scatter)
 			maxDisplacement = sample1d([collect(xd) d], range=data[:,k]).data	# Interpolate them on the 'edge'
-			randOffset = (2*rand(size(data,1))) .- 1;
+			n = size(data,1)
+			randOffset = (split == 0) ? 2*rand(n) .- 1 : (split == 1) ? -rand(n) : rand(n)
+			(split != 0) && (off_in_grp = 0.0)
 			Ds[k] = mat2ds([randOffset .* maxDisplacement[:,2] .+ (_x[k] + off_in_grp) maxDisplacement[:,1]])
 		end
 	end
@@ -306,6 +306,7 @@ function helper_violin(data::AbstractMatrix{<:Real}, x::Vector{<:Real}=Vector{Re
 	return Dv, Ds, _x
 end
 
+# ----------------------------------------------------------------------------------------------------------
 function helper2_violin(D, Ds, data, x, xc, n_in_grp, var_in_grp, first, kwargs)
 	# This piece of code is common to viloin(Matrix2D) and violin(Matrix3D)
 	# Ds is a GMTdataset with the scatter points or an empty one if no scatters.
@@ -313,52 +314,71 @@ function helper2_violin(D, Ds, data, x, xc, n_in_grp, var_in_grp, first, kwargs)
 	# var_in_grp = true		# If colors varie for each in a group, or are constant inside each group.
 
 	d = KW(kwargs)
-	fill_box = (find_in_kwargs(kwargs, [:G :fill])[1] !== nothing) ? "gray70" : ""
-	if (fill_box != "")
+	fill_box = ((val = find_in_kwargs(kwargs, [:G :fill :fillcolor])[1]) !== nothing) ? "gray70" : ""
+	if (fill_box != "")		# In this case we may also have received a color list. Check it
+		custom_colors = helper_ds_fill(d)		# A helper function of mat2ds()
 		n_ds = Int(length(D) / n_in_grp)
 		for m = 1:n_in_grp
 			b = (m - 1) * n_ds + 1;		e = b + n_ds - 1
-			colorize_candles_violins(D, n_ds, b, e, var_in_grp ? m : 0)
+			colorize_candles_violins(D, n_ds, b, e, var_in_grp ? m : 0, custom_colors)
 		end
 	end
 
-	isVert = true
-	xt = ((val = find_in_dict(d, [:xticks :yticks])[1]) !== nothing) ? val : str4ticks(xc)
+	isVert = (find_in_dict(d, [:horizontal :hbar])[1] === nothing) ? true : false
+	xt = ((val = find_in_dict(d, [:xticks :yticks])[1]) !== nothing) ? val : num4ticks(xc)
 	(isVert) ? (d[:xticks] = xt) : (d[:yticks] = xt)				# Vertical or Horizontal violins
 
 	haskey(d, :split) && delete!(d, :split)		# Could not have been deleted before
 
 	if (find_in_kwargs(kwargs, [:boxplot])[1] !== nothing)			# Request to plot the candle sticks too
 		delete!(d, :boxplot)
+		haskey(d, :scatter) && delete!(d, :scatter)
 		do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
-		common_plot_xyz("", D, "line", first, false, d...)			# The violins
+		opt_t = parse_t(d, "", false)[1]		# Seek for transparency opt
+		(opt_t != "") && (opt_t = opt_t[4:end])
+
+		common_plot_xyz("", D, "violin", first, false, d...)		# The violins
+		del_from_dict(d, [[:xticks], [:yticks], [:G, :fill]])		# To no plot them again
 		if (isempty(Ds))
-			boxplot(data, x; first=false, G=fill_box, show=do_show)	# The candle sticks
+			boxplot(data, x; first=false, G=fill_box, t=opt_t, show=do_show)	# The candle sticks
 		else
-			d[:G] = fill_box
-			boxplot(data, x; first=false, d...)						# The candle sticks
+			boxplot(data, x; first=false, G=fill_box, t=opt_t)		# The candle sticks
 			d[:show], d[:G], d[:marker] = do_show, "black", "point"
 			common_plot_xyz("", Ds, "scatter", false, false, d...)	# The scatter plot
 		end
 	else
 		!isempty(Ds) && (do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)) 
-		common_plot_xyz("", D, "line", first, false, d...)			# The violins
+		common_plot_xyz("", D, "violin", first, false, d...)		# The violins
 		if (!isempty(Ds))
+			del_from_dict(d, [[:xticks], [:yticks], [:G, :fill]])
 			d[:show], d[:G], d[:marker] = do_show, "black", "point"
 			common_plot_xyz("", Ds, "scatter", false, false, d...)	# The scatter pts
 		end
 	end
 end
 
-function colorize_candles_violins(D::Vector{<:GMTdataset}, n::Int, b::Int, e::Int, vc::Int=0)
+# ----------------------------------------------------------------------------------------------------------
+function colorize_candles_violins(D::Vector{<:GMTdataset}, ng::Int, b::Int, e::Int, vc::Int=0, colors::Vector{String}=String[])
 	# Assign default colors in D.header field to get an automatic coloring
+	# NG: number of groups that may, or not, be equal to length(D)
+	# VC: = 0 means all in each group have the same color, otherwise they varie within the group
+
 	kk = 0
-	if (n <= 8)
+	if (!isempty(colors))		# If we have a set of pre-deffined colors
+		nc = length(colors)
+		for k = b:e  kk+=1; D[k].header *= " -G" * (vc > 0 ? colors[((vc % nc) != 0) ? vc % nc : nc] :
+			                                                 colors[((kk % nc) != 0) ? kk % nc : nc])
+		end
+		return D
+	end
+
+	if (ng <= 8)
 		for k = b:e  D[k].header *= " -G" * (vc > 0 ? matlab_cycle_colors[vc] : matlab_cycle_colors[kk+=1])  end
-	elseif (n <= 20)
+	elseif (ng <= 20)
 		for k = b:e  D[k].header *= " -G" * (vc > 0 ? simple_distinct[vc] : simple_distinct[kk+=1])  end
 	else	# Use the alphabet_colors and cycle arround if needed (except in the vc (VariableColor per group case))
-		for k = b:e  kk+=1; D[k].header *= " -G" * (vc > 0 ? alphabet_colors[vc] : alphabet_colors[((kk % 26) != 0) ? kk % 26 : 26])  end
+		for k = b:e  kk+=1; D[k].header *= " -G" * (vc > 0 ? alphabet_colors[vc] :
+		                                                     alphabet_colors[((kk % 26) != 0) ? kk % 26 : 26])  end
 	end
 	return D
 end
