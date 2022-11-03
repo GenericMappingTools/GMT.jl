@@ -50,9 +50,10 @@ does not need explicit coordinates to place the text.
      cycle trough a pre-defined set of colors (same colors as in Matlab).
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
-  - `fill`:  Optional string array with color names or array of "patterns".
+  - `fill`:  Optional string array (or a String of comma separated color names, or a Tuple os color names)
+             with color names or array of "patterns".
   - `fillalpha` : When `fill` option is used, we can set the transparency of filled polygons with this
-     option that takes in an array (vec or 1row matrix) with numeric values between [0-1] or ]1-100],
+     option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
 	 where 100 (or 1) means full transparency.
   - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = size(mat,1)` with line styles.
   - `front`:  Front Line style. A string or an array of strings with `length = size(mat,1)` with front line styles.
@@ -260,7 +261,6 @@ function set_dsBB!(D, all_bbs::Bool=true)
 		else
 			for k = 1:lastindex(D)
 				bb = extrema(D[k].data, dims=1)		# A N Tuple.
-				##
 				_bb = collect(Float64, Iterators.flatten(bb))
 				if (any(isnan.(_bb)))				# Shit, we don't have a minimum_nan(A, dims)
 					n = 0
@@ -271,20 +271,15 @@ function set_dsBB!(D, all_bbs::Bool=true)
 					all(isnan.(_bb)) && continue	# Shit, they are all still NaNs
 				end
 				D[k].bbox = _bb
-				##
-				#D[k].bbox = collect(Float64, Iterators.flatten(bb))
 			end
 		end
 	end
 
 	(isa(D, GMTdataset)) && (D.ds_bbox = D.bbox;	return nothing)
 	(length(D) == 1)     && (D[1].ds_bbox = D[1].bbox;	return nothing)
-	#isempty(D[1].bbox)   && return nothing
-	#bb = copy(D[1].bbox)
 	kk = 0
 	while (isempty(D[kk+=1].bbox) && kk <= length(D))  continue  end
 	bb = copy(D[kk].bbox)
-	#for k = 2:lastindex(D)
 	for k = kk+1:lastindex(D)
 		for n = 1:2:length(bb)
 			isempty(D[k].bbox) && continue
@@ -298,7 +293,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function ds2ds(D::Vector{<:GMTdataset})::GMTdataset
-	# Take a vector od GS and collapse it into a single GMTdataset DS. Some metadata, proj, colnames
+	# Take a vector of GS and collapse it into a single GMTdataset DS. Some metadata, proj, colnames
 	# and attributes are copied from first segment. Colors in header and text are lost.
 	tot_rows = sum(size.(D,1))
 	data = zeros(tot_rows, size(D[1],2))
@@ -314,7 +309,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
-	# Take one DS and split it in an array of DS, one for each row and optionally add -G,fill>
+	# Take one DS and split it into an array of DS's, one for each row and optionally add -G<fill>
 	# So far only for internal use but may grow in function of needs
 	d = KW(kwargs)
 
@@ -345,10 +340,16 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 end
 
 # ----------------------------------------------
-function helper_ds_fill(d::Dict)::Vector{String}
-	# Shared by ds2ds & mat2ds
-	if ((fill_val = find_in_dict(d, [:fill :fillcolor])[1]) !== nothing)
-		_fill::Vector{String} = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? vec(fill_val) : matlab_cycle_colors
+function helper_ds_fill(d::Dict, del::Bool=true)::Vector{String}
+	# Shared by ds2ds & mat2ds & statplots
+	if ((fill_val = find_in_dict(d, [:fill :fillcolor], del)[1]) !== nothing)
+		if (isa(fill_val, String) && contains(fill_val, ","))
+			_fill::Vector{String} = collect(split(fill_val, ","))
+		elseif (isa(fill_val, Tuple) && eltype(fill_val) == Symbol)
+			_fill = string.(fill_val)
+		else
+			_fill = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? vec(fill_val) : copy(matlab_cycle_colors)
+		end
 		n_colors::Int = length(_fill)
 		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
 			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end
@@ -583,13 +584,13 @@ function mat2img(mat::AbstractArray{UInt16}; x=Vector{Float64}(), y=Vector{Float
 		val = (len == 1) ? convert(UInt16, vals)::UInt16 : convert(Array{UInt16}, vals)::Array{UInt16}
 		if (len == 1)
 			sc = 255 / (65535 - val)
-			@inbounds @simd for k = 1:length(img)
+			@inbounds @simd for k = 1:numel(img)
 				img[k] = (mat[k] < val) ? 0 : round(UInt8, (mat[k] - val) * sc)
 			end
 		elseif (len == 2)
 			val = [parse(UInt16, @sprintf("%d", vals[1])) parse(UInt16, @sprintf("%d", vals[2]))]
 			sc = 255 / (val[2] - val[1])
-			@inbounds @simd for k = 1:length(img)
+			@inbounds @simd for k = 1:numel(img)
 				img[k] = (mat[k] < val[1]) ? 0 : ((mat[k] > val[2]) ? 255 : round(UInt8, (mat[k]-val[1])*sc))
 			end
 		else	# len = 6
@@ -604,7 +605,7 @@ function mat2img(mat::AbstractArray{UInt16}; x=Vector{Float64}(), y=Vector{Float
 		end
 	else
 		sc = 255/65535
-		@inbounds @simd for k = 1:length(img)
+		@inbounds @simd for k = 1:numel(img)
 			img[k] = round(UInt8, mat[k]*sc)
 		end
 	end
