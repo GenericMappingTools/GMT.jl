@@ -1406,9 +1406,10 @@ function parse_r(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_t(d::Dict, cmd::String)
+function parse_t(d::Dict, cmd::String, del::Bool=true)
 	opt_val::String = ""
-	if ((val = find_in_dict(d, [:t :alpha :transparency])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:t :alpha :transparency], del)[1]) !== nothing)
+		(val == "") && return cmd, ""		# To allow programatically calls were -t is unknown
 		t::Float64 = (isa(val, String)) ? parse(Float64, val) : Float64(val)
 		if (t < 1) t *= 100  end
 		opt_val = string(" -t", t)
@@ -1541,7 +1542,7 @@ function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::Stri
 		if (isa(val, NamedTuple))
 			x::String = "";	y::String = "";	u::String = "";	e = false
 			fn = fieldnames(typeof(val))
-			for k = 1:length(fn)
+			for k = 1:numel(fn)
 				if     (fn[k] == :x)     x  = get_that_string(val[k])
 				elseif (fn[k] == :y)     y  = get_that_string(val[k])
 				elseif (fn[k] == :unit)  u  = get_that_string(val[k])
@@ -1579,7 +1580,7 @@ function parse_params(d::Dict, cmd::String)::String
 	(!isa(val, NamedTuple) && !isa(val, Tuple)) && @warn("BAD usage: Parameter is neither a Tuple or a NamedTuple")
 	if (isa(val, NamedTuple))
 		fn = fieldnames(typeof(val))
-		for k = 1:length(fn)		# Suspect that this is higly inefficient but N is small
+		for k = 1:numel(fn)		# Suspect that this is higly inefficient but N is small
 			_cmd *= " --" * string(fn[k]) * "=" * string(val[k])
 		end
 	elseif (isa(val, Tuple))
@@ -2096,7 +2097,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
 		# Used in recursive calls for options like -I, -N , -W of pscoast. Here we assume that opt != ""
 		_args::String = ""
-		for k = 1:length(val)
+		for k = 1:numel(val)
 			_args *= " -" * opt * add_opt(val[k], mapa, arg)
 		end
 		return cmd * _args
@@ -2158,7 +2159,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	key = keys(nt);						# The keys actually used in this call
 	d = nt2dict(mapa)					# The flags mapping as a Dict (all possible flags of the specific option)
 	cmd::String = "";		cmd_hold = Array{String,1}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
-	for k = 1:length(key)				# Loop over the keys of option's tuple
+	for k = 1:numel(key)				# Loop over the keys of option's tuple
 		!haskey(d, key[k]) && continue
 		(isa(nt[k], Dict)) && (nt[k] = dict2nt(nt[k]))
 		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
@@ -2815,7 +2816,7 @@ function helper0_axes(arg)::String
 	!isa(arg, Tuple) && error("'axes' argument must be a String, Symbol or a Tuple but was ($(typeof(arg)))")
 
 	opt = "";	lbrtu = "lbrtu";	WSENZ = "WSENZ";	wsenz = "wsenz";	lbrtu = "lbrtu"
-	for k = 1:length(arg)
+	for k = 1:numel(arg)
 		t = string(arg[k])		# For the case it was a symbol
 		if (occursin("_f", t))
 			for n = 1:5  (t[1] == lbrtu[n]) && (opt *= WSENZ[n]; continue)  end
@@ -3649,7 +3650,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, args...)
 	n_args = 0
-	for k = 1:length(args) if (args[k] !== nothing)  n_args += 1  end  end	# Drop the nothings
+	for k = 1:numel(args) if (args[k] !== nothing)  n_args += 1  end  end	# Drop the nothings
 	if     (n_args <= 1)  cmd, got_fname, arg1 = find_data(d, cmd0, cmd, args[1])
 	elseif (n_args == 2)  cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, args[1], args[2])
 	elseif (n_args == 3)  cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, args[1], args[2], args[3])
@@ -4170,6 +4171,9 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::Stri
 
 	if (size(legend_type[1].label, 1) == 0)		# First time
 		legend_type[1] = legend_bag(lab, [cmd_[1]], length(cmd_) == 1 ? [""] : [cmd_[2]], opt_l, dd, 0)
+		# Forgot about the logic of the above and it errors when first arg is a GMTdataset vec,
+		# so do this till a decent fix gets invented.
+		(length(lab) > 1) && (legend_type[1] = legend_bag(lab, cmd_, cmd_, opt_l, dd, 0))
 	else
 		append!(legend_type[1].cmd, [cmd_[1]])
 		append!(legend_type[1].cmd2, (length(cmd_) > 1) ? [cmd_[2]] : [""])
