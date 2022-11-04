@@ -6,6 +6,7 @@
 	y = randn(100,3);
 	violin(y, scatter=true)
 	boxplot!(y, Vd=dbg2)
+	boxplot(randn(100,3), outliers=(size="6p",), hbar=true, Vd=dbg2)
 
 	y = randn(100,3,2);
 	violin(y, G=true, split=true)
