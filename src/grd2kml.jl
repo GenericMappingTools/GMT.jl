@@ -59,7 +59,7 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 - $(GMT.opt_n)
 """
 function grd2kml(cmd0::String="", arg1=nothing; kwargs...)

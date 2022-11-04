@@ -52,7 +52,7 @@ Parameters
     Multiply each element by scale in the space domain (after the frequency domain operations).
     ($(GMTdoc)grdfft.html#s)
 - $(GMT.opt_V)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 """
 function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 

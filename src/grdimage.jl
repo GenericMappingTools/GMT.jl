@@ -48,10 +48,10 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 - $(GMT.opt_n)
-- $(GMT.opt_p)
-- $(GMT.opt_t)
+- $(GMT._opt_p)
+- $(GMT._opt_t)
 - $(GMT.opt_savefig)
 """
 function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; first=true, kwargs...)

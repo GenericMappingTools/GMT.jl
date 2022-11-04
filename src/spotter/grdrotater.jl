@@ -33,9 +33,9 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 - $(GMT.opt_g)
-- $(GMT.opt_h)
+- $(GMT._opt_h)
 - $(GMT.opt_n)
 - $(GMT.opt_o)
 

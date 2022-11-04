@@ -51,7 +51,7 @@ Parameters
     Determine min and max z-value.
     ($(GMTdoc)grdinfo.html#t)
 - $(GMT.opt_V)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 - $(GMT.opt_o)
 """
 function grdinfo(cmd0::String="", arg1=nothing; kwargs...)

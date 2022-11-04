@@ -30,7 +30,7 @@ Parameters
 
     Optionally subtract shift before scaling data by fact. [Default is no scaling].
     ($(GMTdoc)grdvolume.html#z)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 - $(GMT.opt_o)
 """
 function grdvolume(cmd0::String="", arg1=nothing; kwargs...)

@@ -35,7 +35,7 @@ Parameters
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - $(GMT.opt_n)
-- $(GMT.opt_t)
+- $(GMT._opt_t)
 """
 function mbimport(cmd0::String=""; kwargs...)
 

@@ -70,16 +70,16 @@ Parameters
 
     Use to subtract shift from the data and multiply the results by factor before contouring starts.
     ($(GMTdoc)contour.html#z)
-- $(GMT.opt_bi)
+- $(GMT._opt_bi)
 - $(GMT.opt_bo)
 - $(GMT.opt_d)
-- $(GMT.opt_di)
+- $(GMT._opt_di)
 - $(GMT.opt_do)
 - $(GMT.opt_e)
-- $(GMT.opt_h)
-- $(GMT.opt_i)
-- $(GMT.opt_p)
-- $(GMT.opt_t)
+- $(GMT._opt_h)
+- $(GMT._opt_i)
+- $(GMT._opt_p)
+- $(GMT._opt_t)
 - $(GMT.opt_swap_xy)
 - $(GMT.opt_savefig)
 """

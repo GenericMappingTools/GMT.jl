@@ -29,7 +29,7 @@ Parameters
     ($(GMTdoc)grdfill.html#n)
 - $(GMT._opt_R)
 - $(GMT.opt_V)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 """
 function grdfill(cmd0::String="", arg1=nothing; kwargs...)
 

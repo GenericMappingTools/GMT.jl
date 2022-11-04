@@ -23,7 +23,7 @@ Parameters
     Toggle the node registration for the output grid so as to become the opposite of the input grid
     ($(GMTdoc)grdsample.html#t)
 - $(GMT.opt_V)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 - $(GMT.opt_n)
 - $(GMT.opt_r)
 - $(GMT.opt_x)

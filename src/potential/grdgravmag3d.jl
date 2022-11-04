@@ -50,7 +50,7 @@ Parameters
     Level of reference plane [Default = 0].
     ($(GMTdoc)grdgravmag3d.html#z)
 - $(GMT.opt_V)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 - $(GMT.opt_x)
 
 ### Example. Compute the gravity effect of the Gorringe bank.

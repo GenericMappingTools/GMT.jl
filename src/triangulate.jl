@@ -64,13 +64,13 @@ Parameters
 - **Z** | **xyz** | **triplets** :: [Type => Bool]
 
     ($(GMTdoc)triangulate.html#z)
-- $(GMT.opt_bi)
+- $(GMT._opt_bi)
 - $(GMT.opt_bo)
-- $(GMT.opt_di)
+- $(GMT._opt_di)
 - $(GMT.opt_e)
-- $(GMT.opt_f)
-- $(GMT.opt_h)
-- $(GMT.opt_i)
+- $(GMT._opt_f)
+- $(GMT._opt_h)
+- $(GMT._opt_i)
 - $(GMT.opt_r)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
