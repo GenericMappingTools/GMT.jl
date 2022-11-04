@@ -34,8 +34,8 @@ Parameters
 - $(GMT.opt_append)
 - $(GMT.opt_bo)
 - $(GMT.opt_d)
-- $(GMT.opt_f)
-- $(GMT.opt_h)
+- $(GMT._opt_f)
+- $(GMT._opt_h)
 - $(GMT.opt_o)
 - $(GMT.opt_s)
 """

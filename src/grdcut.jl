@@ -40,7 +40,7 @@ Parameters
     Determine a new rectangular region so that all nodes outside this region are also outside
     the given z-range.
     ($(GMTdoc)grdcut.html#z)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 """
 function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 

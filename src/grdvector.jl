@@ -60,7 +60,7 @@ Parameters
     The theta grid provided contains azimuths rather than directions (implies -A).
     ($(GMTdoc)grdvector.html#z)
 - $(GMT.opt_V)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 """
 function grdvector(arg1, arg2; first=true, kwargs...)
 

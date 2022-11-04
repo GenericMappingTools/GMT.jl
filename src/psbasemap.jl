@@ -44,9 +44,9 @@ Parameters
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - $(GMT.opt_bo)
-- $(GMT.opt_f)
-- $(GMT.opt_p)
-- $(GMT.opt_t)
+- $(GMT._opt_f)
+- $(GMT._opt_p)
+- $(GMT._opt_t)
 """
 function basemap(; first=true, kwargs...)
 

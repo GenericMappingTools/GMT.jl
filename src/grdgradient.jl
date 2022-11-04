@@ -41,7 +41,7 @@ Parameters
     Name of output grid file with scalar magnitudes of gradient vectors. Requires D but makes G optional.
     ($(GMTdoc)grdgradient.html#s)
 - $(GMT.opt_V)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 """
 function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
 

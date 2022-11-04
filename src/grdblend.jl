@@ -41,7 +41,7 @@ Parameters
     Scale output values by scale before writing to file.
     ($(GMTdoc)grdblend.html#z)
 - $(GMT.opt_V)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 - $(GMT.opt_n)
 - $(GMT.opt_r)
 """

@@ -62,7 +62,7 @@ const opt_b = "**b** | **binary** :: [Type => Str]
 
     ($(GMTdoc)gmt.html#b-full)"
 
-const opt_bi = "**bi** | **binary_in** :: [Type => Str]			``Arg = [ncols][type][w][+L|+B]``
+const _opt_bi = "**bi** | **binary_in** :: [Type => Str]			``Arg = [ncols][type][w][+L|+B]``
 
     Select native binary format for primary input (secondary inputs are always ASCII).
     ($(GMTdoc)gmt.html#bi-full)"
@@ -72,7 +72,7 @@ const opt_bo = "**bo** | **binary_out** :: [Type => Str]			``Arg = [ncols][type]
     Select native binary output.
     ($(GMTdoc)gmt.html#bo-full)"
 
-const opt_c = "**c** | **panel** :: [Type => Tuple | Array | Number | String]	``Arg = row,col``
+const _opt_c = "**c** | **panel** :: [Type => Tuple | Array | Number | String]	``Arg = row,col``
 
     Used to advance to the selected subplot panel. Only allowed when in subplot mode.
     Attention, row,col start counting at 1 (contrary to GMT, where they start at 0)
@@ -83,7 +83,7 @@ const opt_d = "**d** | **nodata** :: [Type => Str or Number]		``Arg = [i|o]nodat
     Control how user-coded missing data values are translated to official NaN values in GMT.
     ($(GMTdoc)gmt.html#d-full)"
 
-const opt_di = "**di** | **nodata_in** :: [Type => Str or Number]      ``Arg = nodata``
+const _opt_di = "**di** | **nodata_in** :: [Type => Str or Number]      ``Arg = nodata``
 
     Examine all input columns and if any item equals nodata we interpret this value as a
     missing data item and substitute the value NaN.
@@ -100,7 +100,7 @@ const opt_e = "**e** | **pattern** | **find** :: [Type => Str]        ``Arg = [~
     Only accept ASCII data records that contains the specified pattern.
     ($(GMTdoc)gmt.html#e-full)"
 
-const opt_f = "**f** | **colinfo** | **coltypes** | **coltype** :: [Type => Str]        ``Arg = [i|o]colinfo``
+const _opt_f = "**f** | **colinfo** | **coltypes** | **coltype** :: [Type => Str]        ``Arg = [i|o]colinfo``
 
     Specify the data types of input and/or output columns (time or geographical data).
     ($(GMTdoc)gmt.html#f-full)"
@@ -110,12 +110,12 @@ const opt_g = "**g** | **gap** :: [Type => Str]           ``Arg = [a]x|y|d|X|Y|D
     Examine the spacing between consecutive data points in order to impose breaks in the line.
     ($(GMTdoc)gmt.html#g-full)"
 
-const opt_h = "**h** | **header** :: [Type => Str]        ``Arg = [i|o][n][+c][+d][+rremark][+ttitle]``
+const _opt_h = "**h** | **header** :: [Type => Str]        ``Arg = [i|o][n][+c][+d][+rremark][+ttitle]``
 
     Primary input file(s) has header record(s).
     ($(GMTdoc)gmt.html#h-full)"
 
-const opt_i = "**i** | **incols** | **incol** :: [Type => Str]      ``Arg = cols[+l][+sscale][+ooffset][,…]``
+const _opt_i = "**i** | **incols** | **incol** :: [Type => Str]      ``Arg = cols[+l][+sscale][+ooffset][,…]``
 
     Select specific data columns for primary input, in arbitrary order.
     ($(GMTdoc)gmt.html#icols-full)"
@@ -125,7 +125,7 @@ const opt_j = "**j** | **spherical_dist** | **spherical** :: [Type => Str]     `
     Determine how spherical distances are calculated in modules that support this.
     ($(GMTdoc)gmt.html#j-full)"
 
-const opt_l = "**l** | **legend** :: [Type => Str]     ``Arg = [label][+dpen][+ffont][+ggap][+hheader][+jjust][+ncols][+ssize][+v[pen]][+wwidth][+xscale``
+const _opt_l = "**l** | **legend** :: [Type => Str]     ``Arg = [label][+dpen][+ffont][+ggap][+hheader][+jjust][+ncols][+ssize][+v[pen]][+wwidth][+xscale``
 
     Add a map legend entry to the session legend information file for the current plot.
     ($(GMTdoc)gmt.html#l-full)"
@@ -141,7 +141,7 @@ const opt_o = "**o** | **outcols** | **outcol** :: [Type => Str]     ``Arg = col
     Select specific data columns for primary output, in arbitrary order.
     ($(GMTdoc)gmt.html#ocols-full)"
 
-const opt_p = "**p** | **view** | **perspective** :: [Type => Str or List]   ``Arg = [x|y|z]azim[/elev[/zlevel]][+wlon0/lat0[/z0]][+vx0/y0]``
+const _opt_p = "**p** | **view** | **perspective** :: [Type => Str or List]   ``Arg = [x|y|z]azim[/elev[/zlevel]][+wlon0/lat0[/z0]][+vx0/y0]``
 
     Selects perspective view and sets the azimuth and elevation of the viewpoint [180/90].
     ($(GMTdoc)gmt.html#perspective-full)"
@@ -166,7 +166,7 @@ const opt_s = "**s** | **skiprows** | **skip_NaN** :: [Type => Str]       ``Arg 
     Suppress output for records whose z-value equals NaN.
     ($(GMTdoc)gmt.html#s-full)"
 
-const opt_t = "**t** | **alpha** | **transparency** :: [Type => Str]   ``Arg = transp``
+const _opt_t = "**t** | **alpha** | **transparency** :: [Type => Str]   ``Arg = transp``
 
     Set PDF transparency level for an overlay, in (0-100] percent range. [Default is 0, i.e., opaque].
     ($(GMTdoc)gmt.html#t-full)"

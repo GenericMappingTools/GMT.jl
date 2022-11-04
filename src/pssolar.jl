@@ -38,10 +38,10 @@ Parameters
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - $(GMT.opt_bo)
-- $(GMT.opt_h)
+- $(GMT._opt_h)
 - $(GMT.opt_o)
-- $(GMT.opt_p)
-- $(GMT.opt_t)
+- $(GMT._opt_p)
+- $(GMT._opt_t)
 - $(GMT.opt_savefig)
 """
 function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)

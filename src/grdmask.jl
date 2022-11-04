@@ -35,13 +35,13 @@ Parameters
 
     Set nodes to inside, on edge, or outside depending on their distance to the nearest data point.
 - $(GMT.opt_V)
-- $(GMT.opt_bi)
-- $(GMT.opt_di)
+- $(GMT._opt_bi)
+- $(GMT._opt_di)
 - $(GMT.opt_e)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 - $(GMT.opt_g)
-- $(GMT.opt_h)
-- $(GMT.opt_i)
+- $(GMT._opt_h)
+- $(GMT._opt_i)
 - $(GMT.opt_j)
 - $(GMT.opt_n)
 - $(GMT.opt_r)

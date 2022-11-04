@@ -65,12 +65,12 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
-- $(GMT.opt_di)
+- $(GMT._opt_di)
 - $(GMT.opt_e)
-- $(GMT.opt_h)
-- $(GMT.opt_i)
-- $(GMT.opt_p)
-- $(GMT.opt_t)
+- $(GMT._opt_h)
+- $(GMT._opt_i)
+- $(GMT._opt_p)
+- $(GMT._opt_t)
 - $(GMT.opt_swap_xy)
 
 Example: Plot a focal mechanism using the Aki & Richards convention 

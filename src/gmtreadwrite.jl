@@ -54,8 +54,8 @@ $(GMTdoc)/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files) but note th
 
 - $(GMT._opt_R)
 - $(GMT.opt_V)
-- $(GMT.opt_bi)
-- $(GMT.opt_f)
+- $(GMT._opt_bi)
+- $(GMT._opt_f)
 
 Example: to read a nc called 'lixo.grd'
 
@@ -299,7 +299,7 @@ Parameters
 - $(GMT._opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_bo)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 
 Example: write the GMTgrid 'G' object into a nc file called 'lixo.grd'
 

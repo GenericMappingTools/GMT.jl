@@ -65,10 +65,10 @@ Full option list at [`makecpt`]($(GMTdoc)makecpt.html)
 
     Creates a continuous CPT [Default is discontinuous, i.e., constant colors for each interval].
     ($(GMTdoc)makecpt.html#z)
-- $(GMT.opt_bi)
-- $(GMT.opt_di)
-- $(GMT.opt_h)
-- $(GMT.opt_i)
+- $(GMT._opt_bi)
+- $(GMT._opt_di)
+- $(GMT._opt_h)
+- $(GMT._opt_i)
 """
 makecpt(cmd0::Symbol; kwargs...) = makecpt(""; C=string(cmd0), kwargs...)	# Ex: makecpt(:gray)
 function makecpt(cmd0::String="", arg1=nothing; kwargs...)

@@ -50,10 +50,10 @@ Parameters
     grid, or vice-versa.
     ($(GMTdoc)grdedit.html#t)
 - $(GMT.opt_V)
-- $(GMT.opt_bi)
-- $(GMT.opt_di)
+- $(GMT._opt_bi)
+- $(GMT._opt_di)
 - $(GMT.opt_e)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """

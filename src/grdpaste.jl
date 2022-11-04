@@ -15,7 +15,7 @@ Parameters
     the result directly on disk. Otherwise, just use the G = grdpaste(....) form.
     ($(GMTdoc)grdpaste.html#g)
 - $(GMT.opt_V)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 """
 function grdpaste(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 

@@ -34,7 +34,7 @@ Parameters
     Toggle the node registration for the output grid so as to become the opposite of the input grid
     ($(GMTdoc)grdfilter.html#t)
 - $(GMT.opt_V)
-- $(GMT.opt_f)
+- $(GMT._opt_f)
 """
 function grdfilter(cmd0::String="", arg1=nothing; kwargs...)
 

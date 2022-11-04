@@ -41,9 +41,9 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
-- $(GMT.opt_p)
+- $(GMT._opt_p)
 - $(GMT.opt_q)
-- $(GMT.opt_t)
+- $(GMT._opt_t)
 - $(GMT.opt_savefig)
 """
 function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)

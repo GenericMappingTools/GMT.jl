@@ -28,7 +28,7 @@ Parameters
 - $(GMT._opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_n)
-- $(GMT.opt_t)
+- $(GMT._opt_t)
 """
 function mbgetdata(cmd0::String=""; kwargs...)
 
