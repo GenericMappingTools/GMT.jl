@@ -386,7 +386,8 @@ function helper2_violin(D, Ds, data, x, xc, n_in_grp, var_in_grp, first, isVert,
 	find_in_dict(d, [:horizontal :hbar])		# Just delete if it's still in 'd'
 	xt = ((val = find_in_dict(d, [:xticks :yticks])[1]) !== nothing) ? val : num4ticks(xc)
 	(isVert) ? (d[:xticks] = xt) : (d[:yticks] = xt)				# Vertical or Horizontal violins
-	showOL = (find_in_dict(d, [:outliers])[1] !== nothing)
+	showOL  = (find_in_dict(d, [:outliers])[1] !== nothing)
+	showSep = ((SEPcmd = find_in_dict(d, [:separator])[1]) !== nothing)
 
 	haskey(d, :split) && delete!(d, :split)		# Could not have been deleted before
 
@@ -401,21 +402,25 @@ function helper2_violin(D, Ds, data, x, xc, n_in_grp, var_in_grp, first, isVert,
 		del_from_dict(d, [[:xticks], [:yticks], [:G, :fill]])			# To no plot them again
 		hz  = !isVert ? true : false			# For the case horizontal violins want candle sticks too
 		otl =  showOL ? true : false			# For the case violins want outliers too
+		this_show = (showSep) ? false : do_show
 		if (isempty(Ds))						# Just the candle sticks
-			boxplot(data, x; first=false, G=fill_box, t=opt_t, hor=hz, otl=otl, byviolin=true, show=do_show)
+			boxplot(data, x; first=false, G=fill_box, t=opt_t, hor=hz, otl=otl, byviolin=true, show=this_show)
 		else									# The candles + the scatter
 			boxplot(data, x; first=false, G=fill_box, t=opt_t, hor=hz, otl=otl, byviolin=true)
-			d[:show], d[:G], d[:marker] = do_show, "black", "point"
+			d[:show], d[:G], d[:marker] = this_show, "black", "point"
 			common_plot_xyz("", Ds, "scatter", false, false, d...)		# The scatter plot
 		end
+		(showSep) && (f = (isVert) ? vlines! : hlines!;	f(xc[1:end-1] .+ diff(xc)/2, show=do_show))
 	else
-		!isempty(Ds) && (do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)) 
+		(!isempty(Ds) || showSep) && (do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)) 
 		common_plot_xyz("", D, "violin", first, false, d...)			# The violins
 		if (!isempty(Ds))
 			del_from_dict(d, [[:xticks], [:yticks], [:G, :fill]])
-			d[:show], d[:G], d[:marker] = do_show, "black", "point"
+			d[:G], d[:marker] = "black", "point"
+			d[:show] = (showSep) ? false : do_show
 			common_plot_xyz("", Ds, "scatter", false, false, d...)		# The scatter pts
 		end
+		(showSep) && (f = (isVert) ? vlines! : hlines!;	f(xc[1:end-1] .+ diff(xc)/2, show=do_show))
 	end
 end
 
