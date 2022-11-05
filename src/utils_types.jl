@@ -263,10 +263,11 @@ function set_dsBB!(D, all_bbs::Bool=true)
 				bb = extrema(D[k].data, dims=1)		# A N Tuple.
 				_bb = collect(Float64, Iterators.flatten(bb))
 				if (any(isnan.(_bb)))				# Shit, we don't have a minimum_nan(A, dims)
-					n = 0
+					n = 1
 					for kk = 1:size(D[k].data, 2)
 						t = view(D[k].data, :, kk)
-						isnan(_bb[n+=1]) && (_bb[n] = minimum_nan(t); _bb[n+=1] = maximum_nan(t))
+						isnan(_bb[n]) && (_bb[n] = minimum_nan(t); _bb[n+1] = maximum_nan(t))
+						n += 2
 					end
 					all(isnan.(_bb)) && continue	# Shit, they are all still NaNs
 				end
