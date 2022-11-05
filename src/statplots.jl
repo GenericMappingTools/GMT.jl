@@ -119,6 +119,12 @@ function boxplot(data::Vector{<:Real}, x_=nothing; x=nothing, first::Bool=true, 
 	boxplot(reshape(data,length(data),1), (x === nothing) ? Vector{Real}() : [x]; first=first, kwargs...)
 end
 
+# ----------------------------------------------------------------------------------------------------------
+function boxplot(data::GMTdataset, x_::Vector{<:Real}=Vector{Real}(); x::Vector{<:Real}=Vector{Real}(),
+                 first::Bool=true, kwargs...)
+	boxplot(data.data, x_; x=x, first=first, kwargs...)
+end
+# ----------------------------------------------------------------------------------------------------------
 function boxplot(data::Matrix{<:Real}, x_::Vector{<:Real}=Vector{Real}(); x::Vector{<:Real}=Vector{Real}(),
                  first::Bool=true, kwargs...)
 	isempty(x) && (x = x_)					# To allow both ways (positional & kword)
@@ -156,6 +162,13 @@ function boxplot(data::Matrix{<:Real}, x_::Vector{<:Real}=Vector{Real}(); x::Vec
 end
 
 # ------------ For groups ----------------------------------------------------------------------------------
+#=
+function boxplot(data::Vector{GMTdataset}, x_::Vector{<:Real}=Vector{Real}(); x::Vector{<:Real}=Vector{Real}(),
+                 first::Bool=true, kwargs...)
+	boxplot(data.data, x_; x=x, first=first, kwargs...)
+end
+=#
+# ----------------------------------------------------------------------------------------------------------
 function boxplot(data::Array{<:Real,3}, x_::Vector{<:Real}=Vector{Real}();  x::Vector{<:Real}=Vector{Real}(),
                  first::Bool=true, groupwidth=0.75, varcolor_grp=true, kwargs...)
 	isempty(x) && (x = x_)			# To allow both ways (positional & kword)
@@ -212,7 +225,6 @@ function boxplot(data::Array{<:Real,3}, x_::Vector{<:Real}=Vector{Real}();  x::V
 	end
 end
 
-boxplot(data::GMTdataset, x=nothing; first::Bool=true, kwargs...) = boxplot(data.data, x; first=first, kwargs...)
 boxplot!(data::Vector{<:Real},  x=nothing; kwargs...) = boxplot(data, x; first=false, kwargs...)
 boxplot!(data::Matrix{<:Real},  x::Vector{<:Real}=Vector{Real}(); kwargs...) = boxplot(data, x; first=false, kwargs...)
 boxplot!(data::Array{<:Real,3}, x::Vector{<:Real}=Vector{Real}(); kwargs...) = boxplot(data, x; first=false, kwargs...)
@@ -250,6 +262,7 @@ function helper1_boxplot(kwargs)
 	end
 	(GMTver >= v"6.5" && find_in_dict(d, [:byviolin])[1] !== nothing) && (str *= "+w7p/0")
 	pen = ((optW::String = add_opt_pen(d, [:W :pen :boxpen])) != "") ? optW : "0.5p"	# GMT BUG. Plain -W is ignored
+	(haskey(d, :byviolin)) && (delete!(d, :byviolin))	# Only consumed by GMT >= 6.5
 	str *= "+p" * pen
 	d[:E] = str
 

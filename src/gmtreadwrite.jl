@@ -310,7 +310,7 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_R(d, "")
-	cmd = parse_V_params(d, cmd)
+	cmd, = parse_common_opts(d, cmd, [:V_params :f])
 	if (fname == "")
 		opt_G = parse_G(d, "")[1]
 		(opt_G != "") && (fname = opt_G[4:end])	# opt_G comes with the " -G" prefix
@@ -329,9 +329,7 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 		ext = lowercase(splitext(fname)[2])
 		if (fmt == "" && opt_f == "" && (ext == ".grd" || ext == ".nc"))
 			prj = getproj(data, proj4=true)
-			if (prj != "" && !contains(prj, "=long") && !contains(prj, "=lat"))
-				return gdaltranslate(data, dest=fname)
-			end
+			(prj != "" && !contains(prj, "=long") && !contains(prj, "=lat")) && return gdaltranslate(data, dest=fname)
 		end
 		opt_T = " -Tg"
 		fname *= fmt
@@ -380,7 +378,7 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 		end
 	end
 
-	if (dbg_print_cmd(d, cmd) !== nothing)  return "gmtwrite " * fname * cmd  end
+	(dbg_print_cmd(d, cmd) !== nothing) && return "gmtwrite " * fname * cmd
 
 	(opt_T == " -Tg" && isa(data, GMTgrid) && (data.scale != 1 || data.offset != 0)) && (fname *= "+s$(data.scale)+o$(data.offset)")
 	gmt("write " * fname * cmd, data)
