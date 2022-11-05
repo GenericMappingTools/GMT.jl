@@ -126,8 +126,9 @@ function boxplot(data::Matrix{<:Real}, x_::Vector{<:Real}=Vector{Real}(); x::Vec
 	d, isVert = helper1_boxplot(kwargs)
 	fill = ((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : ""
 	w = ((val = find_in_dict(d, [:weights])[1]) !== nothing) ? Float64.(val) : Float64[]
-	showOL = ((OLcmd = find_in_dict(d, [:outliers])[1]) !== nothing)
-	(!showOL && (val = find_in_dict(d, [:otl])[1]) == true) && (showOL = true)	# Another violin private opt
+	showOL = ((OLcmd   = find_in_dict(d, [:outliers])[1]) !== nothing)
+	#showSep = ((SEPcmd = find_in_dict(d, [:separator])[1]) !== nothing)
+	(!showOL && (val   = find_in_dict(d, [:otl])[1]) == true) && (showOL = true)	# Another violin private opt
 	D, Dol = helper2_boxplot(data, x, w, 0.0, fill, showOL, isVert)	# Two GMTdataset's. Second may be empty
 	Dv = (fill == "gray70") ? ds2ds(D, G="gray70") : ds2ds(D)		# Split it so we can assign colors to each candle.
 	if (fill != "" && fill != "gray70")								# Only paint the candles if explicitly requested.
