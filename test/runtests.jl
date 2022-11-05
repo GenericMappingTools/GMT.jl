@@ -51,6 +51,8 @@ if (got_it)					# Otherwise go straight to end
 	GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res="0.001d")
 	GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res=100)
 
+	println("		Entering: test_tables.jl")
+	include("test_tables.jl")
 	println("		Entering: test_common_opts.jl")
 	include("test_common_opts.jl")
 	println("		Entering: test_B-GMTs.jl")
