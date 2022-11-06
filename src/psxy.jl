@@ -346,7 +346,7 @@ function fish_bg(d::Dict, cmd::Vector{String})
 		if (splitext(string(arg1))[2] != "")		# Assumed to be an image file name
 			fname, gotfname = arg1, true
 		else										# A pre-set fun name
-			fun = string(arg1)
+			fun::String = string(arg1)
 			(fun[1] == '-') && (fun = fun[2:end]; opt_I = " -I")
 			I::GMTimage = imagesc(mat2grid(fun))
 		end

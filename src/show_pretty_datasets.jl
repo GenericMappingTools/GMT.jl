@@ -57,7 +57,7 @@ function _show(io::IO,
 	# For consistency, if `kwargs` has `compact_printng`, we must use it.
 	compact_printing::Bool = get(kwargs, :compact_printing, get(io, :compact, true))
 
-	_, num_cols = size(D)
+	num_cols = size(D, 2)
 
 	# By default, we align the columns to the left unless they are numbers, which is checked in the following.
 	alignment = fill(:l, num_cols)

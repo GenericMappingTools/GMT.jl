@@ -3,6 +3,8 @@
 	D = mat2ds(rand(3,2));
 	GMT.Tables.getcolumn(D, 1);
 	GMT.Tables.getcolumn(D, :X)
+	@test_throws ErrorException("Column name - XX - not found in this dataset") GMT.Tables.getcolumn(D, :XX)
+	GMT.Tables.columnnames(D)
 	GMT.Tables.schema(D)
 	GMT.Tables.istable(D)
 	GMT.Tables.rowaccess(D)
