@@ -12,8 +12,10 @@
 	boxplot(randn(100), Vd=dbg2)
 	boxplot!(y, fill=true, separator=(:red,), Vd=dbg2)
 	boxplot(randn(100,3), outliers=(size="6p",), hbar=true, Vd=dbg2)
+	boxplot!(randn(100,3,2), separator=true, cap="5p", Vd=dbg2)
 
 	y = randn(100,3,2);
 	violin(y, G=true, split=true)
 	violin(y, G=true, split=true, boxplot=true)
+	violin(y, G=true, scatter=true, boxplot=true)
 end

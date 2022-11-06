@@ -208,6 +208,7 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 			end
 		elseif (!multi)
 			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
+			(size(mat,2) == 1) && (coln = coln[1:1])		# Because it defaulted to two.
 			D[1] = GMTdataset(mat, Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
 		else
 			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])

@@ -399,4 +399,6 @@
 	gmtbegin()
 	GMT.gmt_restart(false)
 	resetGMT()
+
+	skipnan([1 NaN 5])
 end
