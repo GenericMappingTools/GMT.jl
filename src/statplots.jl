@@ -167,7 +167,7 @@ end
 
 # ------------ For groups ----------------------------------------------------------------------------------
 function boxplot(data::Array{T,3}; pos::Vector{<:Real}=Vector{Real}(), first::Bool=true,
-                 groupwidth=0.75, varcolor_in_grp=true, kwargs...) where T
+                 groupwidth=0.75, ccolor=false, kwargs...) where T
 
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(kwargs)
@@ -191,11 +191,11 @@ function boxplot(data::Array{T,3}; pos::Vector{<:Real}=Vector{Real}(), first::Bo
 
 	if (_fill != "")
 		custom_colors = (_fill == "gray70") ? ["gray70"] : String[]
-		!varcolor_in_grp && (D3 = ds2ds(ds2ds(D3)); set_dsBB!(D3))		# Crazzy op and wasteful but these Ds are small
+		ccolor && (D3 = ds2ds(ds2ds(D3)); set_dsBB!(D3))		# Crazzy op and wasteful but these Ds are small
 		n_ds = Int(length(D3) / N_grp)
 		for m = 1:N_grp
 			b = (m - 1) * n_ds + 1;		e = b + n_ds - 1
-			colorize_candles_violins(D3, n_ds, b:e, varcolor_in_grp ? m : 0, custom_colors)	# Assign default colors
+			colorize_candles_violins(D3, n_ds, b:e, !ccolor ? m : 0, custom_colors)	# Assign default colors
 		end
 	end
 
@@ -204,7 +204,7 @@ end
 
 # ----------------------------------------------------------------------------------------------------------
 function boxplot(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Real}(), first::Bool=true,
-                 groupwidth=0.75, varcolor_in_grp=true, kwargs...) where T
+                 groupwidth=0.75, ccolor=false, kwargs...) where T
 
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(kwargs)
@@ -232,7 +232,7 @@ function boxplot(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Rea
 
 	if (_fill != "")
 		custom_colors = (_fill == "gray70") ? ["gray70"] : String[]
-		D3_ = colorize_VecVecVec(D3_, N_grp, N_in_each_grp, varcolor_in_grp, custom_colors, "box")
+		D3_ = colorize_VecVecVec(D3_, N_grp, N_in_each_grp, !ccolor, custom_colors, "box")
 	end
 
 	helper3_boxplot(d, D3_, Dol, first, isVert, showOL, OLcmd, n4t)
@@ -416,14 +416,14 @@ function violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; first::Bool=t
 	isVert  = (find_in_kwargs(kwargs, [:horizontal :hbar])[1] === nothing) ? true : false	# Can't delete here
 	Dv, Ds, xc = helper1_violin(data, pos; groupwidth=groupwidth, nbins=nbins, bins=bins, bandwidth=bandwidth,
                                 kernel=kernel, scatter=scatter, isVert=isVert)
-	helper2_violin(Dv, Ds, data, pos, xc, 1, false, first, isVert, Int[], kwargs)
+	helper2_violin(Dv, Ds, data, pos, xc, 1, true, first, isVert, Int[], kwargs)
 end
 
 # ------------ For groups ----------------------------------------------------------------------------------
 #groupwidth  - Proportion of the x-axis interval across which each x-group of boxes should be spread.
-#varcolor_in_grp = true		# If colors varie for each in a group, or are constant inside each group.
+#ccolor = false		# If colors varie for each in a group, or are constant inside each group.
 function violin(data::Array{<:Real,3}, x::AbstractVector=AbstractVector[]; pos::Vector{<:Real}=Vector{Real}(),
-                nbins::Integer=100, first::Bool=true, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", groupwidth=0.75, varcolor_in_grp=true, kwargs...)
+                nbins::Integer=100, first::Bool=true, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", groupwidth=0.75, ccolor=false, kwargs...)
 
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	scatter = (find_in_kwargs(kwargs, [:scatter])[1] !== nothing)
@@ -444,11 +444,11 @@ function violin(data::Array{<:Real,3}, x::AbstractVector=AbstractVector[]; pos::
 		for k = 1:size(data,2)  D3[n+=1] = Dv[k]  end	# Loop over number of groups
 		(scatter) && for k = 1:size(data,2)  Ds[m+=1] = _D[k]  end		# Store the scatter pts
 	end
-	helper2_violin(D3, Ds, data, pos, xc, N_grp, varcolor_in_grp, first, isVert, Int[], kwargs)	# House keeping and call the plot funs
+	helper2_violin(D3, Ds, data, pos, xc, N_grp, ccolor, first, isVert, Int[], kwargs)	# House keeping and call the plot funs
 end
 
 function violin(data::Vector{Vector{Vector{T}}}, x::AbstractVector=AbstractVector[]; pos::Vector{<:Real}=Vector{Real}(),
-                nbins::Integer=100, first::Bool=true, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", groupwidth=0.75, varcolor_in_grp=true, kwargs...) where T
+                nbins::Integer=100, first::Bool=true, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", groupwidth=0.75, ccolor=false, kwargs...) where T
 
 	(!isempty(pos) && length(pos) != length(data)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	scatter = (find_in_kwargs(kwargs, [:scatter])[1] !== nothing)
@@ -476,7 +476,7 @@ function violin(data::Vector{Vector{Vector{T}}}, x::AbstractVector=AbstractVecto
 		for k = 1:length(data[nig])  D3[n+=1] = Dv[k]  end	# Loop over number of groups
 		(scatter) && for k = 1:length(data[nig])  Ds[m+=1] = _D[k]  end		# Store the scatter pts
 	end
-	helper2_violin(D3, Ds, data, pos, 1:N_grp, N_grp, varcolor_in_grp, first, isVert, N_in_each_grp, kwargs)
+	helper2_violin(D3, Ds, data, pos, 1:N_grp, N_grp, ccolor, first, isVert, N_in_each_grp, kwargs)
 end
 
 # ----------------------------------------------------------------------------------------------------------
@@ -523,11 +523,11 @@ function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Ve
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function helper2_violin(D, Ds, data, x, xc, N_grp, varcolor_in_grp, first, isVert, N_in_each_grp, kwargs)
+function helper2_violin(D, Ds, data, x, xc, N_grp, ccolor, first, isVert, N_in_each_grp, kwargs)
 	# This piece of code is common to viloin(Matrix2D) and violin(Matrix3D)
 	# Ds is a GMTdataset with the scatter points or an empty one if no scatters.
 	# XC vector with the center positions (group centers in case of groups.)
-	# varcolor_in_grp = true		# If colors varie for each in a group, or are constant inside each group.
+	# ccolor = false		# If colors varie for each in a group, or are constant inside each group.
 	# N_in_each_grp is not empty when the caller was the Vector{Vector{Vector}} method
 
 	d = KW(kwargs)
@@ -538,10 +538,10 @@ function helper2_violin(D, Ds, data, x, xc, N_grp, varcolor_in_grp, first, isVer
 			n_ds = Int(length(D) / N_grp)
 			for m = 1:N_grp
 				b = (m - 1) * n_ds + 1;		e = b + n_ds - 1
-				colorize_candles_violins(D, n_ds, b:e, varcolor_in_grp ? m : 0, custom_colors)
+				colorize_candles_violins(D, n_ds, b:e, !ccolor ? m : 0, custom_colors)
 			end
 		else
-			colorize_VecVecVec(D, N_grp, N_in_each_grp, varcolor_in_grp, custom_colors, "violin")
+			colorize_VecVecVec(D, N_grp, N_in_each_grp, !ccolor, custom_colors, "violin")
 		end
 	end
 
@@ -568,9 +568,9 @@ function helper2_violin(D, Ds, data, x, xc, N_grp, varcolor_in_grp, first, isVer
 		otl = (!showOL) ? false : (isa(OLcmd, Bool)) ? true : OLcmd		# For the case violins want outliers too
 		this_show = (showSep) ? false : do_show
 		if (isempty(Ds))			# Just the candle sticks
-			R = boxplot(data; first=false, G=fill_box, t=opt_t, hor=hz, otl=otl, byviolin=true, varcolor_in_grp=false,show=this_show)
+			R = boxplot(data; first=false, G=fill_box, t=opt_t, hor=hz, otl=otl, byviolin=true, ccolor=true, show=this_show)
 		else						# The candles + the scatter
-			boxplot(data; first=false, G=fill_box, t=opt_t, hor=hz, otl=otl, byviolin=true, varcolor_in_grp=false)
+			boxplot(data; first=false, G=fill_box, t=opt_t, hor=hz, otl=otl, byviolin=true, ccolor=true)
 			d[:show], d[:G], d[:marker] = this_show, "black", "point"
 			R = common_plot_xyz("", Ds, "scatter", false, false, d...)		# The scatter plot
 		end
