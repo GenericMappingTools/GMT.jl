@@ -232,7 +232,7 @@ function boxplot(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Rea
 
 	if (_fill != "")
 		custom_colors = (_fill == "gray70") ? ["gray70"] : String[]
-		D3_ = colorize_VecVecVec(D3_, N_grp, N_in_each_grp, !ccolor, custom_colors, "box")
+		D3_ = colorize_VecVecVec(D3_, N_grp, N_in_each_grp, ccolor, custom_colors, "box")
 	end
 
 	helper3_boxplot(d, D3_, Dol, first, isVert, showOL, OLcmd, n4t)
@@ -248,7 +248,7 @@ function helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, n4t)
 
 	if (showOL)
 		mk, ms, mc, mec = parse_candle_outliers_par(OLcmd)
-		d[:scatter] = (data=Dol, marker=mk, ms=ms, mc=mc)		# Still, 'Dol' may be a vec of empties
+		d[:scatter] = (data=Dol, marker=mk, ms=ms, mc=mc, mec=mec)		# Still, 'Dol' may be a vec of empties
 	end
 	if (first)			# Need this check to not duplicate ticks when called from violin
 		xt = ((val = find_in_dict(d, [:xticks :yticks :ticks])[1]) !== nothing) ?  val : n4t
@@ -541,7 +541,7 @@ function helper2_violin(D, Ds, data, x, xc, N_grp, ccolor, first, isVert, N_in_e
 				colorize_candles_violins(D, n_ds, b:e, !ccolor ? m : 0, custom_colors)
 			end
 		else
-			colorize_VecVecVec(D, N_grp, N_in_each_grp, !ccolor, custom_colors, "violin")
+			colorize_VecVecVec(D, N_grp, N_in_each_grp, ccolor, custom_colors, "violin")
 		end
 	end
 
@@ -614,8 +614,8 @@ function colorize_candles_violins(D::Vector{<:GMTdataset}, ng::Int, be::Abstract
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function colorize_VecVecVec(D, N_grp, N_in_each_grp, varcolor_in_grp, custom_colors, type="box")
-	if (varcolor_in_grp)		# This was a diabolic case
+function colorize_VecVecVec(D, N_grp, N_in_each_grp, ccolor, custom_colors, type="box")
+	if (!ccolor)		# This was a diabolic case
 		# Ex: [[[11],[12]], [[21],[22],[23]], [[31],[32]]] ==> [[1,3,6], [2,4,7], [5]]
 		vv = [[1] for _ = 1:N_grp]						# Initialize a Vec{Vec{}} with [[1], [1], [1], ...]
 		vv[1] = cumsum([1, N_in_each_grp[1:end-1]...])	# Fill the first vector from info that we already know.
@@ -632,10 +632,10 @@ function colorize_VecVecVec(D, N_grp, N_in_each_grp, varcolor_in_grp, custom_col
 			D = ds2ds(ds2ds(D)); set_dsBB!(D)	# Crazzy op and wasteful but thse Ds are small
 		end
 		for m = 1:N_grp
-			colorize_candles_violins(D, N_grp, vv[m], varcolor_in_grp ? m : 0, custom_colors)	# Assign default colors
+			colorize_candles_violins(D, N_grp, vv[m], !ccolor ? m : 0, custom_colors)	# Assign default colors
 		end
 	else
-		colorize_candles_violins(D, N_grp, 1:N_grp, varcolor_in_grp ? m : 0, custom_colors)
+		colorize_candles_violins(D, N_grp, 1:N_grp, !ccolor ? m : 0, custom_colors)
 	end
 	return D
 end
