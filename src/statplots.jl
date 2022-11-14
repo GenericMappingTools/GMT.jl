@@ -159,7 +159,7 @@ function boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos::Vector{
 	Dv = (_fill == "gray70") ? ds2ds(D, G="gray70") : ds2ds(D)			# Split it so we can assign colors to each candle.
 	if (_fill != "" && _fill != "gray70")								# Only paint the candles if explicitly requested.
 		custom_colors = helper_ds_fill(d)	# A helper function of mat2ds()
-		colorize_candles_violins(Dv, length(Dv), 1, length(Dv), 0, custom_colors)	# Assign default colors in Dv's headers
+		colorize_candles_violins(Dv, length(Dv), 1:1, 0, custom_colors)	# Assign default colors in Dv's headers
 	end
 
 	helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, num4ticks(D[:, isVert ? 1 : 2]))
@@ -172,7 +172,7 @@ function boxplot(data::Array{T,3}; pos::Vector{<:Real}=Vector{Real}(), first::Bo
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(kwargs)
 
-	N_grp = size(data,3)								# N elements in group
+	N_grp = size(data,3)							# N elements in group
 	boxspacing = groupwidth / N_grp
 	offs = (0:N_grp-1) .- ((N_grp-1)/2);			# Isto se cada grupo ocupar uma unidade
 	D3 = Vector{GMTdataset}(undef, N_grp)			# As many as the number of elements in a group
@@ -183,19 +183,19 @@ function boxplot(data::Array{T,3}; pos::Vector{<:Real}=Vector{Real}(), first::Bo
 		mi, ma = min(mi, D3[nig].ds_bbox[5]), max(ma, D3[nig].ds_bbox[12])
 	end
 	set_dsBB!(D3)				# Compute and set the global BoundingBox
-	D3[1].ds_bbox[5], D3[1].ds_bbox[12] = mi, ma		# Global min/max that includes the outliers
+	D3[1].ds_bbox[5], D3[1].ds_bbox[12] = mi, ma	# Global min/max that includes the outliers
 
 	# Need to compute this now because D3 may be 'remixed'
 	n4t = (isodd(N_grp) ? num4ticks(D3[ceil(Int,N_grp/2)][:, isVert ? 1 : 2]) :
-			                 num4ticks(round.((D3[1][:,isVert ? 1 : 2]+D3[end][:,isVert ? 1 : 2])./2, digits=1)))
+			              num4ticks(round.((D3[1][:,isVert ? 1 : 2]+D3[end][:,isVert ? 1 : 2])./2, digits=1)))
 
 	if (_fill != "")
 		custom_colors = (_fill == "gray70") ? ["gray70"] : String[]
-		!varcolor_in_grp && (D3 = ds2ds(ds2ds(D3)); set_dsBB!(D3))		# Crazzy op and wasteful but thse Ds are small
+		!varcolor_in_grp && (D3 = ds2ds(ds2ds(D3)); set_dsBB!(D3))		# Crazzy op and wasteful but these Ds are small
 		n_ds = Int(length(D3) / N_grp)
 		for m = 1:N_grp
 			b = (m - 1) * n_ds + 1;		e = b + n_ds - 1
-			colorize_candles_violins(D3, n_ds, b, e, varcolor_in_grp ? m : 0, custom_colors)	# Assign default colors
+			colorize_candles_violins(D3, n_ds, b:e, varcolor_in_grp ? m : 0, custom_colors)	# Assign default colors
 		end
 	end
 
@@ -255,7 +255,7 @@ function helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, n4t)
 		(isVert) ? (d[:xticks] = xt) : (d[:yticks] = xt)		# Vertical or Horizontal sticks
 	end
 
-	plotcandles_and_showsep(d, D, first, isVert, true, true)	# See also if a group separator was requested
+	plotcandles_and_showsep(d, D, first, isVert, isa(D, Vector), true)	# See also if a group separator was requested
 end
 
 # ----------------------------------------------------------------------------------------------------------
@@ -374,14 +374,10 @@ function agrupa_from_vec(vec::Vector{<:Real}, grp::AbstractVector)
 	# them into a matrix MxN_groups whe M is the size of the longest chunk. Remainings are filled with NaNs
 	(length(grp) != length(vec)) && error("Categorical group vector must be of same size as the 'data' vector.")
 	g = unique(grp)
-	#ma = 0
-	#for k = 1:numel(g)  ma = max(ma, sum(grp .== g[k]))  end	# Find longest chunk
-	#mat = fill(NaN, ma, numel(g))
 	x = [sum(grp .== g[k]) for k = 1:numel(g)]
 	mat = [zeros(x[k]) for k = 1:length(g)]
 	for k = 1:numel(g)
 		ind = findall(grp .== g[k])
-		#mat[1:length(ind), k] = vec[ind]
 		mat[k] = vec[ind]
 	end
 	mat, g
@@ -442,8 +438,8 @@ function violin(data::Array{<:Real,3}, x::AbstractVector=AbstractVector[]; pos::
 	xc = Float64[]				# Because of the stupid locality of vars inside the for block
 	for nig = 1:N_grp								# Loop over each element in the group
 		_split = (split) ? nig : 0
-		Dv, _D, xc = helper1_violin(view(data,:,:,nig), pos, offs[nig]*boxspacing, N_grp; groupwidth=groupwidth,
-		                            nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, scatter=scatter, split=_split, isVert=isVert)
+		Dv, _D, xc = helper1_violin(view(data,:,:,nig), pos, offs[nig]*boxspacing, N_grp; groupwidth=groupwidth, nbins=nbins,
+		                            bins=bins, bandwidth=bandwidth, kernel=kernel, scatter=scatter, split=_split, isVert=isVert)
 		for k = 1:size(data,2)  D3[n+=1] = Dv[k]  end	# Loop over number of groups
 		(scatter) && for k = 1:size(data,2)  Ds[m+=1] = _D[k]  end		# Store the scatter pts
 	end
@@ -471,24 +467,25 @@ function violin(data::Vector{Vector{Vector{T}}}, x::AbstractVector=AbstractVecto
 		offs = (0:N_in_this_grp-1) .- ((N_in_this_grp-1)/2);
 		_x = fill(_pos[nig], N_in_this_grp) .+ offs*boxspacing	# This case stores the candles by groups.
 
-		_split = (split) ? nig : 0
-		Dv, _D, = helper1_violin(data[nig], _x, 0., N_in_this_grp; groupwidth=groupwidth,
-		                         nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, scatter=scatter, split=_split, isVert=isVert)
+		_split = (length(data[nig]) != 2) ? 0 : (split) ? nig : 0	# Only split if they are two
+		(_split != 0) && (_x = fill(mean(_x), length(_x)))		# Pass in the central position
+
+		Dv, _D, = helper1_violin(data[nig], _x, 0., N_in_this_grp; groupwidth=groupwidth, nbins=nbins, bins=bins,
+		                         bandwidth=bandwidth, kernel=kernel, scatter=scatter, split=_split, isVert=isVert, swing=true)
 		for k = 1:length(data[nig])  D3[n+=1] = Dv[k]  end	# Loop over number of groups
-		(scatter) && for k = 1:size(data,2)  Ds[m+=1] = _D[k]  end		# Store the scatter pts
+		(scatter) && for k = 1:length(data[nig])  Ds[m+=1] = _D[k]  end		# Store the scatter pts
 	end
 	helper2_violin(D3, Ds, data, pos, 1:N_grp, N_grp, varcolor_in_grp, first, isVert, N_in_each_grp, kwargs)
 end
 
 # ----------------------------------------------------------------------------------------------------------
 # Create D's with the violin shapes and optionally fill a second D with the scatter points.
-#function helper1_violin(data::AbstractMatrix{<:Real}, x::Vector{<:Real}=Vector{Real}(), off_in_grp::Float64=0.0,
 function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Vector{<:Real}=Vector{Real}(),
-                        off_in_grp::Float64=0.0, N_grp::Int=1; groupwidth::Float64=0.75, nbins::Integer=100, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", scatter::Bool=false, split::Int=0, isVert::Bool=true) where T
+                        off_in_grp::Float64=0.0, N_grp::Int=1; groupwidth::Float64=0.75, nbins::Integer=100, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", scatter::Bool=false, split::Int=0, isVert::Bool=true, swing::Bool=true) where T
 	# OFF_IN_GRP is the offset relative to group's center (zero when groups have only one violin)
 	# SPLIT is either 0 (no split); 1 store only lefy half; 2 store right half
+	# For the SPLIT case the SWING option is true when called from VecVecVec and means SPLIT will toggle between 1-2
 	
-	#_x = isempty(x) ? collect(1.0:size(data,2)) : Float64.(x)
 	_x = !isempty(x) ? Float64.(x) : isa(data, AbstractMatrix) ? collect(1.0:size(data,2)) : collect(1.0:length(data))
 
 	Dv = kernelDensity(data; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
@@ -496,6 +493,7 @@ function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Ve
 	for k = 1:numel(Dv)
 		xd, d = view(Dv[k].data,:,1), view(Dv[k].data,:,2)
 		d = 1/2N_grp * 0.75 * groupwidth .* d ./ maximum(d)
+		(k == 2 && split != 0 && swing) && (split = (split == 1) ? 2 : 1)	# Not realy sure why we have to do this.
 		if (split == 0)					# Both sides
 			_data = (isVert) ? [[d; -d[end:-1:1]; d[1]] .+ (_x[k] + off_in_grp) [xd; xd[end:-1:1]; xd[1]]] :
 			                   [[xd; xd[end:-1:1]; xd[1]] [d; -d[end:-1:1]; d[1]] .+ (_x[k] + off_in_grp)]
@@ -524,45 +522,6 @@ function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Ve
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function colorize_VecVecVec(D, N_grp, N_in_each_grp, varcolor_in_grp, custom_colors, type="box")
-	if (varcolor_in_grp)		# This was a diabolic case
-		# Ex: [[[11],[12]], [[21],[22],[23]], [[31],[32]]] ==> [[1,3,6], [2,4,7], [5]]
-		vv = [[1] for _ = 1:N_grp]						# Initialize a Vec{Vec{}} with [[1], [1], [1], ...]
-		vv[1] = cumsum([1, N_in_each_grp[1:end-1]...])	# Fill the first vector from info that we already know.
-
-		mask = zeros(Bool, maximum(N_in_each_grp), length(N_in_each_grp))
-		for k = 1:size(mask,2)
-			mask[1:N_in_each_grp[k],k] .= true
-		end
-		for n = 2:maximum(N_in_each_grp)		# Loop over GROUPS
-			#=
-			cols_per_row = N_grp - sum(N_in_each_grp .< n)	# Number of groups that have elements
-			vt, k = zeros(Int, cols_per_row), 0
-			for m = 1:cols_per_row				# Loop over groups that have elements (but still don't know which)
-				j = m
-				if (cols_per_row < N_grp)		# OK, here we know some groups have less elements. Find those elements
-					j = 0;	while (size(D[j+=1],1) < n)  continue  end
-				end
-				vt[k+=1] = vv[n-1][j] + 1		# Linear indices of elements of this row.
-			end
-			=#
-			ind = findall(mask[n,:])
-			_vt = vv[n-1][ind] .+ 1
-			vv[n] = _vt
-		end
-		if (type == "box")						# For use only by boxplots
-			D = ds2ds(ds2ds(D)); set_dsBB!(D)	# Crazzy op and wasteful but thse Ds are small
-		end
-		for m = 1:N_grp
-			colorize_candles_violins(D, N_grp, vv[m], varcolor_in_grp ? m : 0, custom_colors)	# Assign default colors
-		end
-	else
-		colorize_candles_violins(D, N_grp, 1:N_grp, varcolor_in_grp ? m : 0, custom_colors)
-	end
-	return D
-end
-
-# ----------------------------------------------------------------------------------------------------------
 function helper2_violin(D, Ds, data, x, xc, N_grp, varcolor_in_grp, first, isVert, N_in_each_grp, kwargs)
 	# This piece of code is common to viloin(Matrix2D) and violin(Matrix3D)
 	# Ds is a GMTdataset with the scatter points or an empty one if no scatters.
@@ -578,7 +537,7 @@ function helper2_violin(D, Ds, data, x, xc, N_grp, varcolor_in_grp, first, isVer
 			n_ds = Int(length(D) / N_grp)
 			for m = 1:N_grp
 				b = (m - 1) * n_ds + 1;		e = b + n_ds - 1
-				colorize_candles_violins(D, n_ds, b, e, varcolor_in_grp ? m : 0, custom_colors)
+				colorize_candles_violins(D, n_ds, b:e, varcolor_in_grp ? m : 0, custom_colors)
 			end
 		else
 			colorize_VecVecVec(D, N_grp, N_in_each_grp, varcolor_in_grp, custom_colors, "violin")
@@ -630,7 +589,7 @@ function helper2_violin(D, Ds, data, x, xc, N_grp, varcolor_in_grp, first, isVer
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function colorize_candles_violins(D::Vector{<:GMTdataset}, ng::Int, b::Int, e::Int, vc::Int=0, colors::Vector{String}=String[])
+function colorize_candles_violins(D::Vector{<:GMTdataset}, ng::Int, be::AbstractVector{Int}, vc::Int=0, colors::Vector{String}=String[])
 	# Assign default colors in D.header field to get an automatic coloring
 	# NG: number of groups that may, or not, be equal to length(D)
 	# VC: = 0 means all in each group have the same color, otherwise they varie within the group
@@ -638,24 +597,45 @@ function colorize_candles_violins(D::Vector{<:GMTdataset}, ng::Int, b::Int, e::I
 	kk = 0
 	if (!isempty(colors))		# If we have a set of user colors
 		nc = length(colors)
-		for k = b:e  kk+=1; D[k].header *= " -G" * (vc > 0 ? colors[((vc % nc) != 0) ? vc % nc : nc] :
+		for k in be  kk+=1; D[k].header *= " -G" * (vc > 0 ? colors[((vc % nc) != 0) ? vc % nc : nc] :
 			                                                 colors[((kk % nc) != 0) ? kk % nc : nc])
 		end
 		return D
 	end
 
 	if (ng <= 8)
-		for k = b:e  D[k].header *= " -G" * (vc > 0 ? matlab_cycle_colors[vc] : matlab_cycle_colors[kk+=1])  end
+		for k in be  D[k].header *= " -G" * (vc > 0 ? matlab_cycle_colors[vc] : matlab_cycle_colors[kk+=1])  end
 	else	# Use the simple_distinct and cycle arround if needed (except in the vc (VariableColor per group case))
-		for k = b:e  kk+=1; D[k].header *= " -G" * (vc > 0 ? simple_distinct[vc] :
+		for k in be  kk+=1; D[k].header *= " -G" * (vc > 0 ? simple_distinct[vc] :
 		                                                     simple_distinct[((kk % 20) != 0) ? kk % 20 : 20])  end
 	end
 	return D
 end
 
-function colorize_candles_violins(D::Vector{<:GMTdataset}, ng::Int, be::AbstractVector{Int}, vc::Int=0, colors::Vector{String}=String[])
-	kk = 0
-	for k in be  D[k].header *= " -G" * (vc > 0 ? matlab_cycle_colors[vc] : matlab_cycle_colors[kk+=1])  end
+# ----------------------------------------------------------------------------------------------------------
+function colorize_VecVecVec(D, N_grp, N_in_each_grp, varcolor_in_grp, custom_colors, type="box")
+	if (varcolor_in_grp)		# This was a diabolic case
+		# Ex: [[[11],[12]], [[21],[22],[23]], [[31],[32]]] ==> [[1,3,6], [2,4,7], [5]]
+		vv = [[1] for _ = 1:N_grp]						# Initialize a Vec{Vec{}} with [[1], [1], [1], ...]
+		vv[1] = cumsum([1, N_in_each_grp[1:end-1]...])	# Fill the first vector from info that we already know.
+
+		mask = zeros(Bool, maximum(N_in_each_grp), length(N_in_each_grp))
+		for k = 1:size(mask,2)
+			mask[1:N_in_each_grp[k],k] .= true
+		end
+		for n = 2:maximum(N_in_each_grp)		# Loop over GROUPS
+			ind = findall(mask[n,:])
+			vv[n] = vv[n-1][ind] .+ 1
+		end
+		if (type == "box")						# For use only by boxplots
+			D = ds2ds(ds2ds(D)); set_dsBB!(D)	# Crazzy op and wasteful but thse Ds are small
+		end
+		for m = 1:N_grp
+			colorize_candles_violins(D, N_grp, vv[m], varcolor_in_grp ? m : 0, custom_colors)	# Assign default colors
+		end
+	else
+		colorize_candles_violins(D, N_grp, 1:N_grp, varcolor_in_grp ? m : 0, custom_colors)
+	end
 	return D
 end
 
