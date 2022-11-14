@@ -62,9 +62,9 @@ function kernelDensity(mat::Vector{Vector{Vector{T}}}; nbins::Integer=200, bins:
                        bandwidth=nothing, kernel::StrSymb="normal") where T
 	# First index is number of groups, second the number of violins/candles in each group. Third the number of points in each.
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, sum(length.(mat[:])))
-	k = 0
+	k, kk = 0, 0
 	for ng = 1:length(mat)
-		for n = 1:length(mat[k])
+		for n = 1:length(mat[kk+=1])
 			D[k+=1] = kernelDensity(mat[ng][n]; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
 		end
 	end
@@ -255,7 +255,7 @@ function helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, n4t)
 		(isVert) ? (d[:xticks] = xt) : (d[:yticks] = xt)		# Vertical or Horizontal sticks
 	end
 
-	plotcandles_and_showsep(d, D, first, isVert, isa(D, Vector), true)	# See also if a group separator was requested
+	plotcandles_and_showsep(d, D, first, isVert, true)	# See also if a group separator was requested
 end
 
 # ----------------------------------------------------------------------------------------------------------
@@ -264,7 +264,7 @@ boxplot!(data::Matrix{<:Real}; pos::Vector{<:Real}=Vector{Real}(), kwargs...) = 
 boxplot!(data::Array{<:Real,3}; pos::Vector{<:Real}=Vector{Real}(), kwargs...) = boxplot(data; pos=pos, first=false, kwargs...)
 
 # ----------------------------------------------------------------------------------------------------------
-function plotcandles_and_showsep(d, D, first::Bool, isVert::Bool, isgroup::Bool, allvar::Bool=false)
+function plotcandles_and_showsep(d, D, first::Bool, isVert::Bool, allvar::Bool=false)
 	# Plot the candle sticks and deal with the request separator for lines between groups.
 	# The ALLVAR case = true is when the groups may have different number of elements. D is then by group.
 	showSep = ((SEPcmd = find_in_dict(d, [:separator])[1]) !== nothing)
@@ -272,7 +272,8 @@ function plotcandles_and_showsep(d, D, first::Bool, isVert::Bool, isgroup::Bool,
 	(showSep) && (do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0))
 	common_plot_xyz("", D, "boxplot", first, false, d...)
 	if (showSep)
-		if (isgroup)
+		if (isa(D, Vector))
+			#allvar = !all(diff(size.(D[:],1)) .== 0)	# Forgot where allvar was supposed to be set.
 			xc = (allvar) ? [mean(D[k][:,1]) for k=1:numel(D)] : (D[1][:,isVert ? 1 : 2]+D[end][:,isVert ? 1 : 2])./2
 			xs = xc[1:end-1] .+ diff(xc)/2
 		else
