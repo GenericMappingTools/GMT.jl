@@ -162,7 +162,7 @@ function boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos::Vector{
 		colorize_candles_violins(Dv, length(Dv), 1:1, 0, custom_colors)	# Assign default colors in Dv's headers
 	end
 
-	helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, num4ticks(D[:, isVert ? 1 : 2]))
+	helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, num4ticks(D[:, isVert ? 1 : 2]), false, isa(data, Vector))
 end
 
 # ------------ For groups ----------------------------------------------------------------------------------
@@ -199,7 +199,7 @@ function boxplot(data::Array{T,3}; pos::Vector{<:Real}=Vector{Real}(), first::Bo
 		end
 	end
 
-	helper3_boxplot(d, D3, Dol, first, isVert, showOL, OLcmd, n4t)
+	helper3_boxplot(d, D3, Dol, first, isVert, showOL, OLcmd, n4t, true, false)
 end
 
 # ----------------------------------------------------------------------------------------------------------
@@ -235,11 +235,11 @@ function boxplot(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Rea
 		D3_ = colorize_VecVecVec(D3_, N_grp, N_in_each_grp, varcolor_in_grp, custom_colors, "box")
 	end
 
-	helper3_boxplot(d, D3_, Dol, first, isVert, showOL, OLcmd, n4t)
+	helper3_boxplot(d, D3_, Dol, first, isVert, showOL, OLcmd, n4t, true, true)
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, n4t)
+function helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, n4t, isGroup::Bool=false, allvar::Bool=false)
 	i1,i2,i3,i4 = (isVert) ? (1,2,5,12) : (5,12,3,4)
 	(first && (is_in_dict(d, [:R :region :limits]) === nothing)) &&
 		(d[:R] = isa(D, Vector) ? 
@@ -255,7 +255,7 @@ function helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, n4t)
 		(isVert) ? (d[:xticks] = xt) : (d[:yticks] = xt)		# Vertical or Horizontal sticks
 	end
 
-	plotcandles_and_showsep(d, D, first, isVert, true)	# See also if a group separator was requested
+	plotcandles_and_showsep(d, D, first, isVert, n4t, isGroup, allvar)	# See also if a group separator was requested
 end
 
 # ----------------------------------------------------------------------------------------------------------
@@ -264,7 +264,7 @@ boxplot!(data::Matrix{<:Real}; pos::Vector{<:Real}=Vector{Real}(), kwargs...) = 
 boxplot!(data::Array{<:Real,3}; pos::Vector{<:Real}=Vector{Real}(), kwargs...) = boxplot(data; pos=pos, first=false, kwargs...)
 
 # ----------------------------------------------------------------------------------------------------------
-function plotcandles_and_showsep(d, D, first::Bool, isVert::Bool, allvar::Bool=false)
+function plotcandles_and_showsep(d, D, first::Bool, isVert::Bool, n4t, isGroup::Bool, allvar::Bool)
 	# Plot the candle sticks and deal with the request separator for lines between groups.
 	# The ALLVAR case = true is when the groups may have different number of elements. D is then by group.
 	showSep = ((SEPcmd = find_in_dict(d, [:separator])[1]) !== nothing)
@@ -272,9 +272,9 @@ function plotcandles_and_showsep(d, D, first::Bool, isVert::Bool, allvar::Bool=f
 	(showSep) && (do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0))
 	common_plot_xyz("", D, "boxplot", first, false, d...)
 	if (showSep)
-		if (isa(D, Vector))
-			#allvar = !all(diff(size.(D[:],1)) .== 0)	# Forgot where allvar was supposed to be set.
+		if (isGroup)
 			xc = (allvar) ? [mean(D[k][:,1]) for k=1:numel(D)] : (D[1][:,isVert ? 1 : 2]+D[end][:,isVert ? 1 : 2])./2
+			(allvar && size(D[1],1) == 1 && size(D[end],1) == 1) && (xc = n4t[1])	# A trick because the group info was lost
 			xs = xc[1:end-1] .+ diff(xc)/2
 		else
 			xc = D[:, isVert ? 1 : 2];	xs = xc[1:end-1] .+ diff(xc)/2
