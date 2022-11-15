@@ -342,15 +342,20 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 end
 
 # ----------------------------------------------
-function helper_ds_fill(d::Dict, del::Bool=true)::Vector{String}
+function helper_ds_fill(d::Dict, del::Bool=true; nc=0)::Vector{String}
 	# Shared by ds2ds & mat2ds & statplots
+	# The NC parameter is used to select the color schema: <= 8 ==> 'matlab_cycle_colors'; otherwise 'simple_distinct'
 	if ((fill_val = find_in_dict(d, [:fill :fillcolor], del)[1]) !== nothing)
 		if (isa(fill_val, String) && contains(fill_val, ","))
 			_fill::Vector{String} = collect(split(fill_val, ","))
 		elseif (isa(fill_val, Tuple) && eltype(fill_val) == Symbol)
 			_fill = string.(fill_val)
+		elseif (isa(fill_val, Array{String}) && !isempty(fill_val))
+			_fill = vec(fill_val)
+		elseif (isa(fill_val, Tuple) && eltype(fill_val) == Symbol)
+			_fill = vec(arg2str(fill_val, ','))
 		else
-			_fill = (isa(fill_val, Array{String}) && !isempty(fill_val)) ? vec(fill_val) : copy(matlab_cycle_colors)
+			_fill = (nc <= 8) ? copy(matlab_cycle_colors) : copy(simple_distinct)
 		end
 		n_colors::Int = length(_fill)
 		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
