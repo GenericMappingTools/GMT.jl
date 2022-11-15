@@ -211,7 +211,9 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	opt_Wmarker::String = ""
 	if ((val = find_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor])[1]) !== nothing)
-		opt_Wmarker = "0.5p," * arg2str(val)		# 0.25p is too thin?
+		tmec::String = arg2str(val)
+		!contains(tmec, "p,") && (tmec = "0.5p," * tmec)	# If not provided, default to a line thickness of 0.5p
+		opt_Wmarker = tmec
 	end
 
 	# This bit is for the -Z option. Must consolidate the options.

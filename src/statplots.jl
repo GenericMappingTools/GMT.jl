@@ -119,22 +119,35 @@ function density(x, nbins::Integer=200; bins::Vector{<:Real}=Vector{Real}(),
 end
 
 """
-    boxplot(data, x=nothing; x=nothing, kwargs...)
+    boxplot(data, grp=[]; pos=nothing, kwargs...)
 
 - `data`: A vector (plots a single box), a Matrix (plots n columns boxes), a MxNxG (plots `G` groups)
-          of `N` columns boxes
-- `x` or keyword x=??: a coordinate vector (or a single location when `data` is a vector)
-          where to plot the boxes. Default plots them at 1:n_boxes or 1:n_groups.
+          of `N` columns boxes, a Vector{Vector} (plots n clumn boxes but from data of different sizes),
+          a Vector{Vector{Vector}} (plots G groups - length(data) -, where groups may have variable number
+          of elements and each have its own size.)
+- `grp`: Categorical vector (made of integers or text strings) used to break down a the data column vector
+         in cathegories (groups).
+- `pos`: a coordinate vector (or a single location when `data` is a vector) where to plot the boxes.
+          Default plots them at 1:n_boxes or 1:n_groups.
+- `ccolor`: Logical value indicating whether the igroups have constant color (when `fill=true` is used)
+           or have variable color (the default).
+- `boxwidth` or `cap`: Sets the the boxplot width and, optionally, the cap width. Provide info as
+          `boxwidth="10p/3p"` to set the boxwidth different from the cap's. Note, however, that this
+           requires GMT6.5. Previous versions do not destinguish box and cap widths.
+- `notch`: Logical value indicating whether the box should have a notch.
 - `outliers`: If other than a NamedTuple, plots outliers (1.5IQR) with the default black 5pt stars.
-              If argument is a NamedTuple (marker=??, size=??, color=??), where `marker` is one of
-			  the `plots` marker symbols, plots the outliers with those specifications. Any missing
-			  spec default to the above values. i.e `outliers=(size="3p")` plots black 3 pt stars.
-- `fill`:
-- `horizontal` or `hbar`:
-- `weights`:
-- `region` or `limits`:
-- `xticks` or `yticks`:
-- `separator`:
+              If argument is a NamedTuple (marker=??, size=??, color=??, markeredge=??), where `marker`
+              is one of the `plots` marker symbols, plots the outliers with those specifications. Any missing
+              spec default to the above values. i.e `outliers=(size="3p")` plots black 3 pt stars.
+- `fill`: If fill=true paint the boxes with a pre-defined color scheme. Otherwise, give a list of colors
+          to paint the boxes.
+- `horizontal` or `hbar`: plot horizontal instead of vertical boxplots.
+- `weights`: Array giving the weights for the data in `data`. The array must be the same size as `data`.
+- `region` or `limits`: By default we estimate the plotting limits but sometimes that may not be convenient.
+           Give a region=(x_min,x_max,y_min,y_max) tuple if you want to control the plotting limits.
+- `ticks` or `xticks` or `yticks`: A tuple with annotations interval and labels. E.g. xticks=(1:5, ["a", "b", "c", "d"])
+           where first element is an AbstractArray and second an array or tuple of strings or symbols.
+- `separator`: If = true plot a black line separating the groups. Otherwise provide the pen settings of those lines.
 
 """
 # ----------------------------------------------------------------------------------------------------------
@@ -211,8 +224,8 @@ function boxplot(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Rea
 
 	N_in_each_grp = length.(data[:])					# Vec with the N elements in each group
 	N_grp = length(N_in_each_grp)
-	D3_ = Vector{GMTdataset}(undef, N_grp)				# As many as number of groups
 	Dol = Vector{GMTdataset}(undef, N_grp)
+	D3_ = Vector{GMTdataset}(undef, N_grp)				# As many as number of groups
 	_pos = !isempty(pos) ? pos : collect(1.0:N_grp)
 	mi, ma = 1e100, -1e100
 	for ng = 1:N_grp									# Loop over number of groups
@@ -231,11 +244,12 @@ function boxplot(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Rea
 	n4t = num4ticks(round.([mean(D3_[k][:, isVert ? 1 : 2]) for k = 1:numel(D3_)], digits=1))
 
 	if (_fill != "")
-		custom_colors = (_fill == "gray70") ? ["gray70"] : String[]
-		D3_ = colorize_VecVecVec(D3_, N_grp, N_in_each_grp, ccolor, custom_colors, "box")
+		custom_colors::Vector{String} = (_fill == "gray70") ? ["gray70"] : String[]
+		D = colorize_VecVecVec(D3_, N_grp, N_in_each_grp, ccolor, custom_colors, "box")
+		helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, n4t, true, true)
+	else
+		helper3_boxplot(d, D3_, Dol, first, isVert, showOL, OLcmd, n4t, true, true)
 	end
-
-	helper3_boxplot(d, D3_, Dol, first, isVert, showOL, OLcmd, n4t, true, true)
 end
 
 # ----------------------------------------------------------------------------------------------------------
@@ -284,7 +298,7 @@ function plotcandles_and_showsep(d, D, first::Bool, isVert::Bool, n4t, isGroup::
 end
 
 # ----------------------------------------------------------------------------------------------------------
-parse_candle_outliers_par(OLcmd) = "a", "5p", "black", "black"
+parse_candle_outliers_par(OLcmd) = "a", "5p", "black", "0.25p,gray80"
 function parse_candle_outliers_par(OLcmd::NamedTuple)::Tuple{String, String, String, String}
 	# OLcmd=(marker=??, size=??, color=??) that defaults to: "a" (star); "5p", "black"
 	d = nt2dict(OLcmd)
@@ -292,7 +306,7 @@ function parse_candle_outliers_par(OLcmd::NamedTuple)::Tuple{String, String, Str
 	sz = string(get(d, :size, "5p"))
 	color = string(get(d, :color, "black"))
 	mec::String = ((val = find_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor])[1]) !== nothing) ?
-	                      "0.5p," * arg2str(val) : "0.5p,black"
+	                      arg2str(val,',') : "black"		# No line thickness because psxy adds one (0.5p)
 	marker, sz, color, mec
 end
 function parse_stats_separator_pen(d, SEPcmd)
@@ -327,10 +341,10 @@ function helper1_boxplot(kwargs)
 			isa(val, NamedTuple) && (OLcmd = val)
 		end
 	end
-	fill = ((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : ""	# fill should be made a string always
+	_fill = ((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : ""	# fill should be made a string always
 	w = ((val = find_in_dict(d, [:weights])[1]) !== nothing) ? Float64.(val) : Float64[]
 	
-	return d, isVert, fill, showOL, OLcmd, w
+	return d, isVert, _fill, showOL, OLcmd, w
 end
 
 # ----------------------------------------------------------------------------------------------------------
@@ -386,13 +400,62 @@ end
 
 # ----------------------------------------------------------------------------------------------------------
 # Create a x|y|ztics tuple argument by converting the numbers to strings while dropping unnecessary decimals
-num4ticks(v::AbstractVector{<:Real}) = (v, [@sprintf("%g ", x) for x in v])
+num4ticks(v::AbstractVector{<:Real}) = (v, [@sprintf("%g ", x) for x in v])::Tuple{AbstractVector{<:Real}, Vector{String}}
 
 """
+    violin(data, grp=[]; pos=nothing, kwargs...)
+
+- `data`: A vector (plots a single box), a Matrix (plots n columns boxes), a MxNxG (plots `G` groups)
+          of `N` columns boxes, a Vector{Vector} (plots n clumn boxes but from data of different sizes),
+          a Vector{Vector{Vector}} (plots G groups - length(data) -, where groups may have variable number
+          of elements and each have its own size.)
+- `grp`: Categorical vector (made of integers or text strings) used to break down a the data column vector
+         in cathegories (groups).
+- `pos`: a coordinate vector (or a single location when `data` is a vector) where to plot the boxes.
+          Default plots them at 1:n_boxes or 1:n_groups.
+- `fill`: If fill=true, paint the violins with a pre-defined color scheme. Otherwise, give a list of colors
+          to paint them.
+- `boxplot`: Logical value indicating whether to add boxplots on top of the violins. When the violins are color
+          painted, adding boxplots adds them in light gray.
+- `boxwidth` or `cap`: Sets the the boxplot width and, optionally, the cap width. Provide info as
+          `boxwidth="10p/3p"` to set the boxwidth different from the cap's. Note, however, that this
+           requires GMT6.5. Previous versions do not destinguish box and cap widths.
+- `ccolor`: Logical value indicating whether the igroups have constant color (when `fill=true` is used)
+           or have variable color (the default).
+- `horizontal` or `hbar`: plot horizontal instead of vertical boxplots.
+- `notch`: Logical value indicating whether the box should have a notch.
+- `nbins`: points are queried between MIN(X(:)) and MAX(X(:))
+- `bins`: Calculates the density for the query points specified by BINS. The values are used as the
+          query points directly. Default is 100 points.
+- `bandwidth`: uses the 'bandwidth' to calculate the kernel density. It must be a scalar. BINS may be
+             an empty array in order to use the default described above.
+- `kernel`: Uses the kernel function specified by KERNEL to calculate the density.
+          The kernel may be: 'Normal' (default) or 'Uniform'
+- `outliers`: If other than a NamedTuple, plots outliers (1.5IQR) with the default black 5pt stars.
+              If argument is a NamedTuple (marker=??, size=??, color=??, markeredge=??), where `marker`
+              is one of the `plots` marker symbols, plots the outliers with those specifications. Any missing
+              spec default to the above values. i.e `outliers=(size="3p")` plots black 3 pt stars.
+- `scatter`: Logical value indicating whether to add a scatter plot on top of the violins (and boxplots) 
+           If arg is a NamedTuple, take it to mean the same thing as described above for the `outliers`.
+- `weights`: Array giving the weights for the data in `data`. The array must be the same size as `data`.
+- `region` or `limits`: By default we estimate the plotting limits but sometimes that may not be convenient.
+           Give a region=(x_min,x_max,y_min,y_max) tuple if you want to control the plotting limits.
+- `split`: If true, when `data`` come in groups, the  groups that have two elements will be plotted with the
+           left-side of one and the right side of the other. For groups that have other number of elements
+           this option is ignored.
+- `ticks` or `xticks` or `yticks`: A tuple with annotations interval and labels. E.g. xticks=(1:5, ["a", "b", "c", "d"])
+           where first element is an AbstractArray and second an array or tuple of strings or symbols.
+- `separator`: If = true plot a black line separating the groups. Otherwise provide the pen settings of those lines.
+
 
 Example:
   y = randn(200,4,3);
   violin(y, separator=(:red,:dashed), boxplot=true, outliers=true, fill=true, xticks=["A","B","C","D"], show=1)
+
+  violin(randn(100,3,2), outliers=(ms="6p", mc=:black, mec=("0.25p",:yellow)), fill=true, show=1)
+
+  vvv = [[randn(50), randn(30)], [randn(40), randn(48), randn(45)], [randn(35), randn(43)]];
+  violin(vvv, outliers=true, fill=true, separator=:red, split=true, show=1)
 """
 # ----------------------------------------------------------------------------------------------------------
 function violin(data::Vector{<:Real}, grp::AbstractVector=AbstractVector[]; first::Bool=true,
@@ -405,9 +468,7 @@ function violin(data::Vector{<:Real}, grp::AbstractVector=AbstractVector[]; firs
 	       xticks=g, kwargs...)
 end
 
-# ----
-# violin(randn(100,3), fill=true,  show=1)
-# violin([round.(randn(50),digits=1), round.(randn(40),digits=3)], fill=true,  show=1)
+# ----------------------------------------------------------------------------------------------------------
 function violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; first::Bool=true, pos::Vector{<:Real}=Vector{Real}(),
                 nbins::Integer=100, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, groupwidth=0.75, kernel::StrSymb="normal", kwargs...) where T
 
@@ -421,7 +482,6 @@ end
 
 # ------------ For groups ----------------------------------------------------------------------------------
 #groupwidth  - Proportion of the x-axis interval across which each x-group of boxes should be spread.
-#ccolor = false		# If colors varie for each in a group, or are constant inside each group.
 function violin(data::Array{<:Real,3}, x::AbstractVector=AbstractVector[]; pos::Vector{<:Real}=Vector{Real}(),
                 nbins::Integer=100, first::Bool=true, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", groupwidth=0.75, ccolor=false, kwargs...)
 
@@ -447,6 +507,7 @@ function violin(data::Array{<:Real,3}, x::AbstractVector=AbstractVector[]; pos::
 	helper2_violin(D3, Ds, data, pos, xc, N_grp, ccolor, first, isVert, Int[], kwargs)	# House keeping and call the plot funs
 end
 
+# ----------------------------------------------------------------------------------------------------------
 function violin(data::Vector{Vector{Vector{T}}}, x::AbstractVector=AbstractVector[]; pos::Vector{<:Real}=Vector{Real}(),
                 nbins::Integer=100, first::Bool=true, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", groupwidth=0.75, ccolor=false, kwargs...) where T
 
@@ -454,7 +515,6 @@ function violin(data::Vector{Vector{Vector{T}}}, x::AbstractVector=AbstractVecto
 	scatter = (find_in_kwargs(kwargs, [:scatter])[1] !== nothing)
 	isVert  = (find_in_kwargs(kwargs, [:horizontal :hbar])[1] === nothing) ? true : false
 	split   = (find_in_kwargs(kwargs, [:split])[1] !== nothing)
-	#(split && size(data,3) != 2) && (split=false; @warn("The split method requires groups of two violins only. Ignoring."))
 
 	N_in_each_grp = length.(data[:])					# Vec with the N elements in each group
 	N_grp = length(N_in_each_grp)
