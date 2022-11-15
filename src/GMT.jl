@@ -167,7 +167,7 @@ export
 
 	add2PSfile, append2fig, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels,
 
-	density, boxplot, boxplot!, violin
+	density, boxplot, boxplot!, violin, violin!
 
 include("common_docs.jl")
 include("libgmt_h.jl")

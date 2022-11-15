@@ -1,20 +1,24 @@
 @testset "STATPLOTS" begin
 	println("	STATPLOTS")
+	v = randn(50);
 	GMT.density(randn(100), kernel=:uniform, Vd=dbg2)
-	GMT.Normal(randn(50), 0.5)
-	GMT.Normal(randn(50), 0.5, 1.0)
-	GMT.Uniform(randn(50), 0.0, 1.0)
+	GMT.Normal(v, 0.5)
+	GMT.Normal(v, 0.5, 1.0)
+	GMT.Uniform(v, 0.0, 1.0)
 	GMT._quantile(randn(30), rand(30), [0.25, 0.75])
 	GMT.parse_candle_outliers_par("")
 
-	violin(randn(50), Vd=dbg2)
+	violin(v, Vd=dbg2)
+	violin!(v, Vd=dbg2)
 	y = randn(100,3);
 	violin(y, scatter=true)
+	violin!(y, Vd=dbg2)
 	boxplot(randn(100), Vd=dbg2)
+	boxplot!(randn(40), Vd=dbg2)
 	boxplot!(y, fill=true, separator=(:red,), Vd=dbg2)
-	boxplot(randn(100,3), outliers=(size="6p",), hbar=true, Vd=dbg2)
+	boxplot(randn(50,3), outliers=(size="6p",), hbar=true, Vd=dbg2)
 	boxplot!(randn(100,3,2), separator=true, cap="5p", Vd=dbg2)
-	boxplot!(randn(50), Vd=dbg2)
+	boxplot!(y, Vd=dbg2)
 
 	y = randn(100,3,2);
 	violin(y, G=true, split=true)
@@ -26,9 +30,15 @@
 
 	vvv = [[randn(50), randn(30)], [randn(40), randn(48), randn(45)], [randn(35), randn(43)]];
 	GMT.kernelDensity(vvv)
+	boxplot!(vvv, Vd=dbg2)
 	boxplot(mat2ds(randn(20)), Vd=dbg2)
+	boxplot!(mat2ds(randn(20)), Vd=dbg2)
+	violin(mat2ds(randn(20)), Vd=dbg2)
+	violin!(mat2ds(randn(20)), Vd=dbg2)
 	violin(vvv, fill=true, boxplot=true, separator=true, scatter=true)
+	violin!(vvv, Vd=dbg2)
 	boxplot(vvv, fill=true, separator=true)
-	violin(randn(50), rand(1:3,50), Vd=dbg2)
+	violin(randn(30), rand(1:3,30), Vd=dbg2)
+	violin!(randn(20), rand(1:3,20), Vd=dbg2)
 	boxplot(randn(50), rand(1:3,50), Vd=dbg2)
 end
