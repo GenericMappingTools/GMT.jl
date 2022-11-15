@@ -129,28 +129,30 @@ end
          in cathegories (groups).
 - `pos`: a coordinate vector (or a single location when `data` is a vector) where to plot the boxes.
           Default plots them at 1:n_boxes or 1:n_groups.
-- `ccolor`: Logical value indicating whether the igroups have constant color (when `fill=true` is used)
+- `ccolor`: Logical value indicating whether the groups have constant color (when `fill=true` is used)
            or have variable color (the default).
-- `boxwidth` or `cap`: Sets the the boxplot width and, optionally, the cap width. Provide info as
-          `boxwidth="10p/3p"` to set the boxwidth different from the cap's. Note, however, that this
-           requires GMT6.5. Previous versions do not destinguish box and cap widths.
-- `notch`: Logical value indicating whether the box should have a notch.
-- `outliers`: If other than a NamedTuple, plots outliers (1.5IQR) with the default black 5pt stars.
-              If argument is a NamedTuple (marker=??, size=??, color=??, markeredge=??), where `marker`
-              is one of the `plots` marker symbols, plots the outliers with those specifications. Any missing
-              spec default to the above values. i.e `outliers=(size="3p")` plots black 3 pt stars.
 - `fill`: If fill=true paint the boxes with a pre-defined color scheme. Otherwise, give a list of colors
           to paint the boxes.
 - `fillalpha` : When `fill` option is used, we can set the transparency of filled boxes with this
           option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
 	      where 100 (or 1) means full transparency.
+- `boxwidth` or `cap`: Sets the the boxplot width and, optionally, the cap width. Provide info as
+          `boxwidth="10p/3p"` to set the boxwidth different from the cap's. Note, however, that this
+           requires GMT6.5. Previous versions do not destinguish box and cap widths.
+- `groupWidth`: Specify the proportion of the x-axis interval across which each x-group of boxes should
+           be spread. The default is 0.75.
+- `notch`: Logical value indicating whether the box should have a notch.
+- `outliers`: If other than a NamedTuple, plots outliers (1.5IQR) with the default black 5pt stars.
+              If argument is a NamedTuple (marker=??, size=??, color=??, markeredge=??), where `marker`
+              is one of the `plots` marker symbols, plots the outliers with those specifications. Any missing
+              spec default to the above values. i.e `outliers=(size="3p")` plots black 3 pt stars.
 - `horizontal` or `hbar`: plot horizontal instead of vertical boxplots.
 - `weights`: Array giving the weights for the data in `data`. The array must be the same size as `data`.
 - `region` or `limits`: By default we estimate the plotting limits but sometimes that may not be convenient.
            Give a region=(x_min,x_max,y_min,y_max) tuple if you want to control the plotting limits.
+- `separator`: If = true plot a black line separating the groups. Otherwise provide the pen settings of those lines.
 - `ticks` or `xticks` or `yticks`: A tuple with annotations interval and labels. E.g. xticks=(1:5, ["a", "b", "c", "d"])
            where first element is an AbstractArray and second an array or tuple of strings or symbols.
-- `separator`: If = true plot a black line separating the groups. Otherwise provide the pen settings of those lines.
 
 """
 # ----------------------------------------------------------------------------------------------------------
@@ -158,7 +160,7 @@ boxplot(data::GMTdataset; pos::Vector{<:Real}=Vector{Real}(), first::Bool=true, 
 	boxplot(data.data; pos=pos, first=first, kwargs...)
 
 # ----------------------------------------------------------------------------------------------------------
-function boxplot(data::Vector{<:Real}, grp::AbstractVector=AbstractVector[]; pos::Vector{<:Real}=Vector{Real}(),
+function boxplot(data::AbstractVector{<:Real}, grp::AbstractVector=AbstractVector[]; pos::Vector{<:Real}=Vector{Real}(),
                  first::Bool=true, kwargs...)
 
 	isempty(grp) && return boxplot(reshape(data,length(data),1); pos=pos, first=first, kwargs...)
@@ -173,12 +175,15 @@ function boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos::Vector{
 	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(kwargs)
 	D, Dol = helper2_boxplot(data, pos, w, 0.0, _fill, showOL, isVert)	# Two GMTdataset's. Second may be empty
 	Dv = (_fill == "gray70") ? ds2ds(D, G="gray70") : ds2ds(D)			# Split it so we can assign colors to each candle.
+	c = false
 	if (_fill != "" && _fill != "gray70")								# Only paint the candles if explicitly requested.
-		custom_colors = helper_ds_fill(d)	# A helper function of mat2ds()
-		colorize_candles_violins(Dv, length(Dv), 1:1, 0, custom_colors)	# Assign default colors in Dv's headers
+		set_dsBB!(Dv)
+		custom_colors = helper_ds_fill(d, nc=length(Dv))	# A helper function of mat2ds()
+		colorize_candles_violins(Dv, length(Dv), 1:length(Dv), 0, custom_colors)	# Assign default colors in Dv's headers
+		c = true
 	end
 
-	helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, num4ticks(D[:, isVert ? 1 : 2]), false, isa(data, Vector))
+	helper3_boxplot(d, c ? Dv : D, Dol, first, isVert, showOL, OLcmd, num4ticks(D[:, isVert ? 1 : 2]), false, isa(data, Vector))
 end
 
 # ------------ For groups ----------------------------------------------------------------------------------
@@ -289,12 +294,14 @@ function plotcandles_and_showsep(d, D, first::Bool, isVert::Bool, n4t, isGroup::
 	(showSep) && (do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0))
 	common_plot_xyz("", D, "boxplot", first, false, d...)
 	if (showSep)
+		issplit = isa(D, Vector) && all(size.(D[:],1) .=== 1)
 		if (isGroup)
 			xc = (allvar) ? [mean(D[k][:,1]) for k=1:numel(D)] : (D[1][:,isVert ? 1 : 2]+D[end][:,isVert ? 1 : 2])./2
-			(allvar && size(D[1],1) == 1 && size(D[end],1) == 1) && (xc = n4t[1])	# A trick because the group info was lost
+			(allvar && issplit) && (xc = n4t[1])		# A trick because the group info was already lost here
 			xs = xc[1:end-1] .+ diff(xc)/2
 		else
-			xc = D[:, isVert ? 1 : 2];	xs = xc[1:end-1] .+ diff(xc)/2
+			xc = (issplit) ? [mean(D[k][:,1]) for k=1:numel(D)] : D[:, isVert ? 1 : 2];
+			xs = xc[1:end-1] .+ diff(xc)/2
 		end
 		(isVert) ? vlines!(xs, pen=sep_pen, show=do_show) : hlines!(xs, pen=sep_pen, show=do_show)
 	end
@@ -416,6 +423,8 @@ num4ticks(v::AbstractVector{<:Real}) = (v, [@sprintf("%g ", x) for x in v])::Tup
          in cathegories (groups).
 - `pos`: a coordinate vector (or a single location when `data` is a vector) where to plot the boxes.
           Default plots them at 1:n_boxes or 1:n_groups.
+- `ccolor`: Logical value indicating whether the groups have constant color (when `fill=true` is used)
+           or have variable color (the default).
 - `fill`: If fill=true, paint the violins with a pre-defined color scheme. Otherwise, give a list of colors
           to paint them.
 - `fillalpha` : When `fill` option is used, we can set the transparency of filled violins with this
@@ -426,8 +435,8 @@ num4ticks(v::AbstractVector{<:Real}) = (v, [@sprintf("%g ", x) for x in v])::Tup
 - `boxwidth` or `cap`: Sets the the boxplot width and, optionally, the cap width. Provide info as
           `boxwidth="10p/3p"` to set the boxwidth different from the cap's. Note, however, that this
            requires GMT6.5. Previous versions do not destinguish box and cap widths.
-- `ccolor`: Logical value indicating whether the igroups have constant color (when `fill=true` is used)
-           or have variable color (the default).
+- `groupWidth`: Specify the proportion of the x-axis interval across which each x-group of boxes should
+           be spread. The default is 0.75.
 - `horizontal` or `hbar`: plot horizontal instead of vertical boxplots.
 - `notch`: Logical value indicating whether the box should have a notch.
 - `nbins`: points are queried between MIN(X(:)) and MAX(X(:))
@@ -599,7 +608,7 @@ function helper2_violin(D, Ds, data, x, xc, N_grp, ccolor, first, isVert, N_in_e
 	d = KW(kwargs)
 	fill_box = ((val = find_in_kwargs(kwargs, [:G :fill :fillcolor])[1]) !== nothing) ? "gray70" : ""
 	if (fill_box != "")		# In this case we may also have received a color list. Check it
-		custom_colors = helper_ds_fill(d)		# A helper function of mat2ds()
+		custom_colors = helper_ds_fill(d, nc=length(D))		# A helper function of mat2ds()
 		if (isempty(N_in_each_grp))
 			n_ds = Int(length(D) / N_grp)
 			for m = 1:N_grp
