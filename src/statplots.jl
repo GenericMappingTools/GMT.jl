@@ -141,6 +141,9 @@ end
               spec default to the above values. i.e `outliers=(size="3p")` plots black 3 pt stars.
 - `fill`: If fill=true paint the boxes with a pre-defined color scheme. Otherwise, give a list of colors
           to paint the boxes.
+- `fillalpha` : When `fill` option is used, we can set the transparency of filled boxes with this
+          option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
+	      where 100 (or 1) means full transparency.
 - `horizontal` or `hbar`: plot horizontal instead of vertical boxplots.
 - `weights`: Array giving the weights for the data in `data`. The array must be the same size as `data`.
 - `region` or `limits`: By default we estimate the plotting limits but sometimes that may not be convenient.
@@ -415,6 +418,9 @@ num4ticks(v::AbstractVector{<:Real}) = (v, [@sprintf("%g ", x) for x in v])::Tup
           Default plots them at 1:n_boxes or 1:n_groups.
 - `fill`: If fill=true, paint the violins with a pre-defined color scheme. Otherwise, give a list of colors
           to paint them.
+- `fillalpha` : When `fill` option is used, we can set the transparency of filled violins with this
+          option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
+	      where 100 (or 1) means full transparency.
 - `boxplot`: Logical value indicating whether to add boxplots on top of the violins. When the violins are color
           painted, adding boxplots adds them in light gray.
 - `boxwidth` or `cap`: Sets the the boxplot width and, optionally, the cap width. Provide info as
