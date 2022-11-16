@@ -1,19 +1,34 @@
 """
-    D = kernelDensity(x::Vector{<:Real}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
-                      bandwidth=nothing, kernel::StrSymb="normal")
+    D = density(x::Vector{<:Real}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
+                bandwidth=nothing, kernel::StrSymb="normal")
 
-`x`: calculate the kernel density 'd' of a dataset X for query points 'xd' The density, by feault, is
-     estimated using a gaussian kernel with a width obtained with the Silverman's rule.
-`nbins`: points are queried between MIN(X(:)) and MAX(X(:))
-`bins`: Calculates the density for the query points specified by BINS. The values are used as the
-        query points directly. Default is 200 points.
-`bandwidth`: uses the 'bandwidth' to calculate the kernel density. It must be a scalar. BINS may be
-             an empty array in order to use the default described above.
-`kernel`: Uses the kernel function specified by KERNEL to calculate the density.
-          The kernel may be: 'Normal' (default) or 'Uniform'
+- `x`: calculate the kernel density 'd' of a dataset X for query points 'xd' The density, by default, is
+    estimated using a gaussian kernel with a width obtained with the Silverman's rule. `x` may be
+	a vector, a matrix or Vector{Vector{Real}}.
+- `nbins`: points are queried between MIN(Y[:]) and MAX(Y[:]) where Y is the data vector.
+- `bins`: Calculates the density for the query points specified by BINS. The values are used as the
+     query points directly. Default is 200 points.
+- `bandwidth`: uses the 'bandwidth' to calculate the kernel density. It must be a scalar.
+     For the uniform case the bandwidth is set to 15% of the range, otherwise the bandwidth is chosen
+     with the Silverman's rule.
+- `printbw`: Logical value indicating to print the computed value of the `bandwidth`.
+- `kernel`: Uses the kernel function specified by KERNEL name (a string or a symbol) to calculate the density.
+     The kernel may be: 'Normal' (default) or 'Uniform'
+- `extend`: By default the density curve is computed at the `bins` locatins or between data extrema as
+     mentioned above. However, this is not normally enough to go down to zero. Use this option in terms of
+	 number of bandwidth to expand de curve. *e.g.* `extend=2`
 """
-function kernelDensity(x::AbstractVector{<:Real}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
-                       bandwidth=nothing, kernel::StrSymb="normal")
+function density(x; first::Bool=true, nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing,
+                 kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false, extend=0, kwargs...)
+	D = kernelDensity(x, horizontal; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, printbw=printbw, ext=extend)
+	common_plot_xyz("", D, "line", first, false, kwargs...)
+end
+density!(x; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false, extend=0, kw...) = density(x; first=false, nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, printbw=printbw, horizontal=horizontal, extend=extend, kw...)
+
+# ----------------------------------------------------------------------------------------------------------
+# Adapted from the Matlab FEX contribution Licensed under MIT
+function kernelDensity(x::AbstractVector{<:Real}, hz=false; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
+                       bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false, ext=0)
 
 	any(isnan.(x)) && (x = x[.!isnan.(x)])
 	#any(isnan.(x)) && (x = skipnan(x))		# x errors in default_bandwidth because it has no length()
@@ -28,15 +43,16 @@ function kernelDensity(x::AbstractVector{<:Real}; nbins::Integer=200, bins::Vect
 	end
 	#h = ((4*(std(x).^5))/(3*numel(x))).^(1/5)
 	(h == 0.0) && (h = default_bandwidth(x))
+	printbw && println(@sprintf("\t Bandwidth = %g", h))
 
-	xd::Vector{<:Float64} = !isempty(bins) ? sort(bins) : collect(linspace(minimum(x)-0h, maximum(x)+0h, nbins))
+	xd::Vector{<:Float64} = !isempty(bins) ? sort(bins) : collect(linspace(minimum(x)-ext*h, maximum(x)+ext*h, nbins))
 	d = zeros(size(xd))
 	c1::Float64 = numel(x)*h
 	@inbounds for i = 1:numel(xd)
 		d[i] = sum(f((x .- xd[i])/h)) / c1
 	end
 	any(isnan.(d)) && (d[isnan.(d)] .= 0.0)
-	return mat2ds([xd d])
+	return (hz) ? mat2ds([d xd]) : mat2ds([xd d])
 end
 
 function kernelDensity(mat::AbstractMatrix{<:Real}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
@@ -111,13 +127,6 @@ function Uniform(x::Vector{<:Real}, a=-1.0, b=1.0)
 	return r
 end
 
-# ----------------------------------------------------------------------------------------------------------
-function density(x, nbins::Integer=200; bins::Vector{<:Real}=Vector{Real}(),
-                 bandwidth=nothing, kernel::StrSymb="normal", first::Bool=true, kwargs...)
-	D = kernelDensity(x; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
-	common_plot_xyz("", D, "line", first, false, kwargs...)
-end
-
 """
     boxplot(data, grp=[]; pos=nothing, kwargs...)
 
@@ -155,7 +164,6 @@ end
            where first element is an AbstractArray and second an array or tuple of strings or symbols.
 
 """
-# ----------------------------------------------------------------------------------------------------------
 boxplot(data::GMTdataset; pos::Vector{<:Real}=Vector{Real}(), first::Bool=true, kwargs...) =
 	boxplot(data.data; pos=pos, first=first, kwargs...)
 
@@ -333,7 +341,7 @@ function helper1_boxplot(kwargs)
 	isVert = (str == "Y")
 	(isVert && (val = find_in_dict(d, [:hor])[1] == true)) && (isVert=false; str="X")	# A private violins opt
 	(find_in_dict(d, [:notch])[1] !== nothing) && (str *= "+n")
-	if ((val = (find_in_dict(d, [:boxwidth :cap])[1]) !== nothing))
+	if ((val = (find_in_dict(d, [:boxwidth :cap])[1])) !== nothing)
 		str *= string("+w",val)
 		(GMTver >= v"6.5" && !contains(str,"/") && find_in_dict(d, [:byviolin])[1] !== nothing) && (str *= "/0")
 	end
@@ -438,7 +446,7 @@ num4ticks(v::AbstractVector{<:Real}) = (v, [@sprintf("%g ", x) for x in v])::Tup
            be spread. The default is 0.75.
 - `horizontal` or `hbar`: plot horizontal instead of vertical boxplots.
 - `notch`: Logical value indicating whether the box should have a notch.
-- `nbins`: points are queried between MIN(Y[:]) and MAX(Y[:]) where Y is the vector data.
+- `nbins`: points are queried between MIN(Y[:]) and MAX(Y[:]) where Y is the data vector.
 - `bins`: Calculates the density for the query points specified by BINS. The values are used as the
           query points directly. Default is 100 points.
 - `bandwidth`: uses the 'bandwidth' to calculate the kernel density. It must be a scalar. BINS may be
@@ -788,3 +796,35 @@ function quantile_weights(v::AbstractVector{V}, w::AbstractVector{W}, p::Abstrac
 	end
 	return out
 end
+
+#= ----------------------------------------------------------------------------------------------------------
+# From Distributions.jl & Makie
+function qqbuild(x::AbstractVector, y::AbstractVector)
+	n = min(length(x), length(y))
+	grid = [0.0:(1 / (n - 1)):1.0;]
+	qx = quantile(x, grid)
+	qy = quantile(y, grid)
+	return qx, qy
+end
+
+function qqplot(x, y; qqline=:identity, first=true, kwargs...)
+	if !(qqline in (:identity, :fit, :fitrobust, :quantile, :none))
+        msg = "valid values for qqline are :identity, :fit, :fitrobust or :none, but encountered " * repr(qqline)
+		throw(ArgumentError(msg))
+	end
+	qx, qy = qqbuild(x, y)
+	#xs = [extrema(qx)...]
+	xs = collect(extrema(qx))
+	if (qqline === :identity)
+		ys = xs
+	elseif (qqline === :fit)
+		itc, slp = hcat(fill!(similar(qx), 1), qx) \ qy
+		ys = slp .* xs .+ itc
+	else		# if qqline === :quantile || qqline == :fitrobust
+		quantx, quanty = quantile(qx, [0.25, 0.75]), quantile(qy, [0.25, 0.75])
+		slp = diff(quanty) ./ diff(quantx)
+		ys = quanty .+ slp .* (xs .- quantx)
+	end
+	common_plot_xyz("", [xs ys], "scatter", first, false, kwargs...)		# The scatter plot
+end
+=#
