@@ -26,7 +26,7 @@ end
 density!(x; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false, extend=0, kw...) = density(x; first=false, nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, printbw=printbw, horizontal=horizontal, extend=extend, kw...)
 
 # ----------------------------------------------------------------------------------------------------------
-# Adapted from the Matlab FEX contribution Licensed under MIT
+# Adapted from the Matlab FEX contribution 60772 by Christopher Hummersone, Licensed under MIT
 function kernelDensity(x::AbstractVector{<:Real}, hz=false; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
                        bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false, ext=0)
 
@@ -111,16 +111,16 @@ Normal(x, μ)       # Normal distribution with mean μ and unit variance
 Normal(x, μ, σ)    # Normal distribution with mean μ and variance σ^2
 ```
 """
-Normal(x::Vector{<:Real}) = 1/(sqrt(2*pi)) * exp.(-0.5*(x .^2))::Vector{Float64}
-Normal(x::Vector{<:Real}, μ::Float64) = 1/(sqrt(2*pi)) * exp.(-0.5*((x .- μ) .^2))::Vector{Float64}
-Normal(x::Vector{<:Real}, μ::Float64, σ::Float64)::Vector{Float64} = 1/(σ *sqrt(2*pi)) * exp.(-0.5*(((x .- μ)/σ) .^2))
+Normal(x::AbstractVector{<:Real}) = 1/(sqrt(2*pi)) * exp.(-0.5*(x .^2))::Vector{Float64}
+Normal(x::AbstractVector{<:Real}, μ::Float64) = 1/(sqrt(2*pi)) * exp.(-0.5*((x .- μ) .^2))::Vector{Float64}
+Normal(x::AbstractVector{<:Real}, μ::Float64, σ::Float64)::Vector{Float64} = 1/(σ *sqrt(2*pi)) * exp.(-0.5*(((x .- μ)/σ) .^2))
 
 """
 ```julia
 Uniform(x::Vector{<:Real}, a=-1.0, b=1.0)    # Uniform distribution over [a, b]
 ```
 """
-function Uniform(x::Vector{<:Real}, a=-1.0, b=1.0)
+function Uniform(x::AbstractVector{<:Real}, a=-1.0, b=1.0)
 	(a == -1 && b == 1) && return 0.5 * (abs.(x) .<= 1)
 	r = zeros(length(x))
 	r[a .<= x .<= b] .= 1 / (b - a)
@@ -797,8 +797,95 @@ function quantile_weights(v::AbstractVector{V}, w::AbstractVector{W}, p::Abstrac
 	return out
 end
 
-#= ----------------------------------------------------------------------------------------------------------
-# From Distributions.jl & Makie
+# ----------------------------------------------------------------------------------------------------------
+# Parts of this are from Distributions.jl & Makie
+
+"""
+    qqplot(x::AbstractVector{AbstractFloat}, y::AbstractVector{AbstractFloat}; kwargs...)
+
+The qqplot function compares the quantiles of two distributions.
+
+- `qqline`: determines how to compute a fit line for the Q-Q plot. The options are
+    - `identity`: draw the line y = x (the deafult).
+    - `fit`: draw a least squares line fit of the quantile pairs.
+    - `fitrobust ` or `quantile`: draw the line that passes through the first and third quartiles of the distributions.
+    - `none`: do not draw any line.
+
+    Broadly speaking, `qqline=:identity` is useful to see if x and y follow the same distribution, whereas `qqline=:fit` and `qqline=:fitrobust` are useful to see if the distribution of y can be obtained from the distribution of x via an affine transformation.
+- For fine setting of the line and scatter points use the same options as in the `plot` module.
+
+Examples:
+
+    qqplot(randn(100), randn(100), show=true)
+
+    qqplot(randn(100), show=true)
+
+"""
+function qqplot(x, y; qqline=:identity, first=true, kwargs...)
+	if !(qqline in (:identity, :fit, :fitrobust, :quantile, :none))
+        msg = "valid values for qqline are :identity, :fit, :fitrobust or :none, but encountered " * repr(qqline)
+		throw(ArgumentError(msg))
+	end
+	qx, qy = qqbuild(x, y)
+	xs = collect(extrema(qx))
+	plotline = true				# By default we want the fit line plotted
+	if (qqline === :identity)
+		ys = xs
+	elseif (qqline === :fit)
+		itc, slp = hcat(fill!(similar(qx), 1), qx) \ qy
+		ys = slp .* xs .+ itc
+	elseif (qqline === :quantile || qqline == :fitrobust)
+		quantx, quanty = quantile(qx, [0.25, 0.75]), quantile(qy, [0.25, 0.75])
+		slp = diff(quanty) ./ diff(quantx)
+		ys = quanty .+ slp .* (xs .- quantx)
+	else	# no line
+		plotline = false
+	end
+
+	# Because the plot with the points and the line are actually two plots and we have only one "kwargs"
+	# we must do some fishing and conditionaly set some defaults.
+	d = KW(kwargs)
+	(is_in_dict(d, [:aspect]) === nothing) && (d[:aspect] = :equal)
+	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
+
+	if (plotline)						# Normally, we want the line but a 'qqline=:none' avoids it.
+		if (is_in_dict(d, [:R :region :limits]) === nothing)	# Need to pass in the scatter limits, not the line's
+			t::Vector{Float64} = round_wesn([xs..., extrema(qy)...])
+			d[:R] = @sprintf("%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
+		end
+		lines("", [xs ys]; first=first, d...)		# Plot the line
+		is_in_dict(d, [:aspect :xaxis :yaxis :axis2 :xaxis2 :yaxis2 :title :subtitle :xlabel :ylabel :xticks :yticks], del=true)
+		del_from_dict(d, [[:R, :region, :limits], [:W, :pen], [:B, :frame, :axes, :axis]])
+		first = false
+	end
+
+	find_in_dict(d, [:ms :markersize :MarkerSize :size], false)[1] === nothing && (d[:ms] = "4p")
+	if (find_in_dict(d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], false)[1] === nothing)
+		d[:G] = "#0072BD"
+		(find_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor], false)[1] === nothing) && (d[:mec] = "0.25p,black")
+	end
+	d[:show] = do_show
+	common_plot_xyz("", [qx qy], "scatter", first, false, d...)		# The scatter plot
+end
+
+function qqplot(x; qqline=:identity, first=true, kwargs...)
+	p = (.5:length(x)) ./ length(x)
+	y = sqrt(2) .* erfinv(2 .* p .- 1)
+	qqplot(x, y; qqline=qqline, first=first, kwargs...)
+end
+
+qqplot!(x, y; qqline=:identity, kw...) = qqplot(x, y; qqline=qqline, first=false, kw...)
+qqplot!(x; qqline=:identity, kw...) = qqplot(x; qqline=qqline, first=false, kw...)
+
+"""
+    qqnorm(x; qqline=:identity, kwargs...)
+
+The qqnorm is a `qqplot` shorthand for comparing a distribution to the normal distribution. If the
+distributions are similar the points will be on a straight line.
+"""
+qqnorm(x; qqline=:identity, first=true, kw...) = qqplot(x; qqline=qqline, first=first, kw...)
+qqnorm!(x; qqline=:identity, kw...) = qqplot(x; qqline=qqline, first=false, kw...)
+
 function qqbuild(x::AbstractVector, y::AbstractVector)
 	n = min(length(x), length(y))
 	grid = [0.0:(1 / (n - 1)):1.0;]
@@ -807,24 +894,52 @@ function qqbuild(x::AbstractVector, y::AbstractVector)
 	return qx, qy
 end
 
-function qqplot(x, y; qqline=:identity, first=true, kwargs...)
-	if !(qqline in (:identity, :fit, :fitrobust, :quantile, :none))
-        msg = "valid values for qqline are :identity, :fit, :fitrobust or :none, but encountered " * repr(qqline)
-		throw(ArgumentError(msg))
+# This is from SpecialFunctions.jl
+using Base.Math: @horner
+erfinv(x::AbstractFloat) = _erfinv(Float64(x))
+
+function erfinv(x::AbstractVector{<:AbstractFloat})
+	efi = Vector{Float64}(undef, numel(x))
+	for k = 1:numel(x)
+		efi[k] = _erfinv(Float64(x[k]))
 	end
-	qx, qy = qqbuild(x, y)
-	#xs = [extrema(qx)...]
-	xs = collect(extrema(qx))
-	if (qqline === :identity)
-		ys = xs
-	elseif (qqline === :fit)
-		itc, slp = hcat(fill!(similar(qx), 1), qx) \ qy
-		ys = slp .* xs .+ itc
-	else		# if qqline === :quantile || qqline == :fitrobust
-		quantx, quanty = quantile(qx, [0.25, 0.75]), quantile(qy, [0.25, 0.75])
-		slp = diff(quanty) ./ diff(quantx)
-		ys = quanty .+ slp .* (xs .- quantx)
-	end
-	common_plot_xyz("", [xs ys], "scatter", first, false, kwargs...)		# The scatter plot
+	return efi
 end
-=#
+
+function _erfinv(x::Float64)
+	a = abs(x)
+	if a >= 1.0
+		if x == 1.0
+			return Inf
+		elseif x == -1.0
+			return -Inf
+		end
+		throw(DomainError(a, "`abs(x)` cannot be greater than 1."))
+	elseif a <= 0.75 # Table 17 in Blair et al.
+		t = x*x - 0.5625
+		return x * @horner(t, 0.16030_49558_44066_229311e2, -0.90784_95926_29603_26650e2, 0.18644_91486_16209_87391e3,
+							 -0.16900_14273_46423_82420e3, 0.65454_66284_79448_7048e2, -0.86421_30115_87247_794e1,
+							  0.17605_87821_39059_0) /
+				   @horner(t, 0.14780_64707_15138_316110e2, -0.91374_16702_42603_13936e2, 0.21015_79048_62053_17714e3,
+							 -0.22210_25412_18551_32366e3, 0.10760_45391_60551_23830e3, -0.20601_07303_28265_443e2,
+							  0.1e1)
+	elseif a <= 0.9375 # Table 37 in Blair et al.
+		t = x*x - 0.87890625
+		return x * @horner(t, -0.15238_92634_40726_128e-1, 0.34445_56924_13612_5216, -0.29344_39867_25424_78687e1,
+							   0.11763_50570_52178_27302e2, -0.22655_29282_31011_04193e2, 0.19121_33439_65803_30163e2,
+							  -0.54789_27619_59831_8769e1, 0.23751_66890_24448) /
+				   @horner(t, -0.10846_51696_02059_954e-1, 0.26106_28885_84307_8511, -0.24068_31810_43937_57995e1,
+							   0.10695_12997_33870_14469e2, -0.23716_71552_15965_81025e2, 0.24640_15894_39172_84883e2,
+							  -0.10014_37634_97830_70835e2, 0.1e1)
+	else # Table 57 in Blair et al.
+		t = inv(sqrt(-log1p(-a)))
+		return @horner(t, 0.10501_31152_37334_38116e-3, 0.10532_61131_42333_38164_25e-1, 0.26987_80273_62432_83544_516,
+						  0.23268_69578_89196_90806_414e1, 0.71678_54794_91079_96810_001e1, 0.85475_61182_21678_27825_185e1,
+						  0.68738_08807_35438_39802_913e1, 0.36270_02483_09587_08930_02e1, 0.88606_27392_96515_46814_9) /
+			  (copysign(t, x) *
+			   @horner(t, 0.10501_26668_70303_37690e-3, 0.10532_86230_09333_27531_11e-1, 0.27019_86237_37515_54845_553,
+						  0.23501_43639_79702_53259_123e1, 0.76078_02878_58012_77064_351e1, 0.11181_58610_40569_07827_3451e2,
+						  0.11948_78791_84353_96667_8438e2, 0.81922_40974_72699_07893_913e1, 0.40993_87907_63680_15361_45e1,
+						  0.1e1))
+	end
+end

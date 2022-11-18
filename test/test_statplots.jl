@@ -41,4 +41,10 @@
 	violin(randn(30), rand(1:3,30), Vd=dbg2)
 	violin!(randn(20), rand(1:3,20), Vd=dbg2)
 	boxplot(randn(50), rand(1:3,50), Vd=dbg2)
+
+	qqplot(randn(500), randn(50))
+	qqplot(randn(100), randn(50), qqline=:fit)
+	qqplot!(randn(200), qqline=:none, Vd=dbg2)
+	qqnorm(randn(200), qqline=:fitrobust)
+	qqnorm!(randn(200), qqline=:none, Vd=dbg2)
 end
