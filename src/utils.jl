@@ -67,3 +67,37 @@ function cart2sph(x, y, z; deg::Bool=false)
 	az   = (deg) ? atand.(y, x) : atan.(y, x)
 	return az, elev, rho
 end
+
+"""
+    ind = uniqueind(x)
+
+Return the index `ind` such that x[ind] gets the unique values of x. No sorting is done
+"""
+uniqueind(x) = unique(i -> x[i], eachindex(x))
+
+"""
+    u, ind = gunique(x::AbstractVector; sorted=false)
+
+Return an array containing only the unique elements of `x` and the indices `ind` such that `u = x[ind]`.
+If `sorted` is true the output is sorted (default is not)
+"""
+function gunique(x::AbstractVector; sorted::Bool=false)
+
+	function uniquit(x)
+		if sorted
+			_ind = sortperm(x)
+			_x = x[_ind]
+			ind = uniqueind(_x)
+			return _x[ind], _ind[ind]
+		else
+			ind = uniqueind(x)
+			return x[ind], ind
+		end
+	end
+
+	if (eltype(x) <: AbstractFloat && any(isnan.(x)))
+		uniquit(collect(skipnan(x)))
+	else
+		uniquit(x)
+	end
+end

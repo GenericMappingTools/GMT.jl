@@ -47,4 +47,8 @@
 	qqplot!(randn(200), qqline=:none, Vd=dbg2)
 	qqnorm(randn(200), qqline=:fitrobust)
 	qqnorm!(randn(200), qqline=:none, Vd=dbg2)
+
+	GMT.gunique(rand(10))
+	GMT.gunique([NaN, rand(10)...])
+	ecdfplot!(randn(50), Vd=dbg2)
 end

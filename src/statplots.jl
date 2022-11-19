@@ -943,3 +943,36 @@ function _erfinv(x::Float64)
 						  0.1e1))
 	end
 end
+
+# ----------------------------------------------------------------------------------------------------------
+function ecdf(x::AbstractVector{<:Real})
+	# Based on Patrik Forssén (2022). Fast Empirical CDF (https://www.mathworks.com/matlabcentral/fileexchange/114990-fast-empirical-cdf)
+	xF, idx = gunique(x, sorted=true)
+	
+	# Number of occurrences of each unique sample
+	counts = zeros(Int32,maximum(idx))
+	for k in idx  counts[k] = 1  end	# Replicate what this does in Matlab:  counts = accumarray(idx, 1);
+
+	F = cumsum(counts)/numel(x)			# Sum the occurrences to get the CDF 
+	xF0 = xF[1] - 10*eps(xF[1])			# First point (do not want it to be repeated)
+	 
+	F  = [0; F]
+	xF = [xF0; xF]
+	xF, F
+end
+
+# ----------------------------------------------------------------------------------------------------------
+"""
+    ecdfplot(x::AbstractVector{<:Real}; kwargs...)
+
+Plot the empirical cumulative distribution function (ECDF) of `x`.
+The `kwargs` may contain any option used in the `plot` module.
+
+Example:
+    ecdfplot(randn(100), show=true)
+"""
+function ecdfplot(x::AbstractVector{<:Real}; first=true, kwargs...)
+	x, y = ecdf(x)
+	stairs("", [x y]; first=first, kwargs...)
+end
+ecdfplot!(x::AbstractVector{<:Real}; kwargs...) = ecdfplot(x; first=false, kwargs...)
