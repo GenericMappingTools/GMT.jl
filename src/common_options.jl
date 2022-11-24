@@ -3323,6 +3323,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])		# Must read file to find -R
 		if (!IamSubplot[1] || GMTver > v"6.1.1")	# Protect against a GMT bug
 			arg::GDtype = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * fname)
+			helper_set_colnames!(arg)				# Set colnames if file has a comment line supporting it
 			# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
 			(opt_bi == "") && file_has_time!(fname, arg)
 			# Remove the these options from cmd. Their job is done
