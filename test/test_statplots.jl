@@ -55,11 +55,14 @@
 	GMT.gunique([NaN, rand(10)...])
 	ecdfplot!(randn(50), Vd=dbg2)
 
-	erfinv(-1.0)
+	GMT.erfinv(-1.0)
 
 	parallelplot("iris.dat",  groupvar="text", normalize="")
 	parallelplot("iris.dat",  groupvar="text", normalize="zscore")
 	parallelplot("iris.dat",  groupvar="text", normalize="scale")
 	parallelplot("iris.dat",  normalize="")
-	parallelplot("iris.dat",  normalize="scale")
+	#parallelplot!("iris.dat", normalize="scale")
+	D = gmtread("iris.dat");
+	parallelplot!(D, normalize="scale")
+	parallelplot(D, normalize="")
 end
