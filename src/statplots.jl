@@ -909,10 +909,8 @@ end
 function _erfinv(x::Float64)
 	a = abs(x)
 	if a >= 1.0
-		if x == 1.0
-			return Inf
-		elseif x == -1.0
-			return -Inf
+		if     (x == 1.0)   return Inf
+		elseif (x == -1.0)  return -Inf
 		end
 		throw(DomainError(a, "`abs(x)` cannot be greater than 1."))
 	elseif a <= 0.75 # Table 17 in Blair et al.
@@ -946,7 +944,7 @@ end
 
 # ----------------------------------------------------------------------------------------------------------
 function ecdf(x::AbstractVector{<:Real})
-	# Based on Patrik Forssén (2022). Fast Empirical CDF (https://www.mathworks.com/matlabcentral/fileexchange/114990-fast-empirical-cdf)
+	# Adapted from Patrik Forssén (2022). Fast Empirical CDF (https://www.mathworks.com/matlabcentral/fileexchange/114990-fast-empirical-cdf)
 	xF, idx = gunique(x, sorted=true)
 	
 	# Number of occurrences of each unique sample
@@ -976,3 +974,176 @@ function ecdfplot(x::AbstractVector{<:Real}; first=true, kwargs...)
 	stairs("", [x y]; first=first, kwargs...)
 end
 ecdfplot!(x::AbstractVector{<:Real}; kwargs...) = ecdfplot(x; first=false, kwargs...)
+
+
+# ----------------------------------------------------------------------------------------------------------
+"""
+    parallelplot(cmd0="", arg1=nothing; labels|axeslabels=String[], group=Vector{String},
+	             groupvar="", normalize="range", kwargs...)
+
+- `axeslabels` or `labels`: String vector with the names of each variable axis. Plots a default "Label?" if
+     not provided.
+- `group`: A string vector or vector of integers used to group the lines in the plot.
+- `groupvar`: Uses the table variable specified by `groupvar` to group the lines in the plot. When `arg1` is
+     GMTdatset or `cmd0` is the name of a file with one and it has the `text` field filled, use `groupvar="text"`
+	 to use that text field as the grouping vector.
+- `nomalize`: 
+    - `range`: (Default) Display raw data along coordinate rulers that have independent minimum and maximum limits.
+	- `none`: Display raw data along coordinate rulers that have the same minimum and maximum limits.
+	- `zscore`: Display z-scores (with a mean of 0 and a standard deviation of 1) along each coordinate ruler.
+	- `scale`: Display values scaled by standard deviation along each coordinate ruler.
+- For fine the lines settings use the same options as in the `plot` module.
+
+Example:
+
+    parallelplot("iris.dat", groupvar="text", labels=["Sepal Length","Sepal Width","Petal Length","Petal Width","Species"],show=1)
+"""
+function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabels::Vector{String}=String[],
+                      labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kwargs...)
+	d = KW(kwargs)
+	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
+	if     (isa(arg1, Matrix{<:Real}))        data = mat2ds(arg1)
+	elseif (isa(arg1, Vector{<:GMTdataset}))  data = ds2ds(arg1)
+	else                                      data = mat2ds(arg1)
+	end
+	(isempty(group) && groupvar == "text") && (group = data.text)
+	(!isempty(group) && length(group) != size(data,1)) && error("Length of `group` vector and number of rows in input don't match.")
+	set_dsBB!(data)		# Update the min/maxs
+
+	data = with_xyvar(d::Dict, data, true)		# See if we have a column request based on column names
+	_bbox = data.ds_bbox
+
+	!isempty(labels) && (axeslabels = labels)	# Alias that does not involve a F. Any
+	isempty(axeslabels) && (axeslabels = data.colnames[1:size(data,2)])
+
+	n_axes = size(data,2)						# Number of axes in this plot
+	ax_pos = 1:n_axes
+
+	function helper_D(D, _data, gidx, normtype, _bbox, gc)
+		# Common to two IF branches
+		b = 1
+		for k = 1:numel(gidx)
+			nr = length(gidx[k])
+			t = normalizeArray(normtype, _data[gidx[k],:], _bbox)
+			D[b:b+nr-1] = mat2ds(collect(t'), x=ax_pos, multi=true, color=[gc[k]])
+			b += nr
+		end	
+		D
+	end
+	function check_bbox!(_data, _bbox)		# Check that bbox has no NaNs
+		if (any(isnan.(_bbox)))
+			for k = 1:size(_data,2)
+				isnan(_bbox[2k-1]) && (_bbox[2k-1] = minimum_nan(view(_data, :,k))) 
+				isnan(_bbox[2k]) && (_bbox[2k] = maximum_nan(view(_data, :,k))) 
+			end
+		end
+	end
+
+	if (!isempty(group))
+		gidx, gnames = grp2idx(group)
+		D = Vector{GMTdataset}(undef, length(group))
+		gc = (numel(gidx) < 8) ? matlab_cycle_colors : simple_distinct	# Group colors
+		if (normalize == "range" || normalize == "" || normalize == "none")
+			helper_D(D, data.data, gidx, normalize, _bbox, gc)
+		else
+			_data = copy(data.data)
+			for k = 1:numel(gidx)
+				_data[gidx[k],:] = normalizeArray(normalize, _data[gidx[k],:])
+			end
+			_bbox = collect(Iterators.flatten(extrema(_data, dims=1)))
+			check_bbox!(_data, _bbox)		# Ensure _bbox has no NaNs
+			helper_D(D, _data, gidx, "range", _bbox, gc)
+		end
+	else
+		if (normalize == "range" || normalize == "" || normalize == "none")
+			D = mat2ds(collect(data'), x=ax_pos, multi=true, color=[matlab_cycle_colors[1]])
+		else
+			_data = normalizeArray(normalize, copy(data.data))
+			_bbox = collect(Iterators.flatten(extrema(_data, dims=1)))
+			check_bbox!(_data, _bbox)		# Ensure _bbox has no NaNs
+			_data = normalizeArray("range", _data, _bbox)
+			D = mat2ds(collect(_data'), x=ax_pos, multi=true, color=[matlab_cycle_colors[1]])
+		end
+	end
+
+	(is_in_dict(d, [:figsize :fig_size]) === nothing) && (d[:figsize] = def_fig_size)
+	d[:xticks] = (ax_pos, axeslabels)
+	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
+
+	del_from_dict(d, [:R, :region, :limits])		# Clear any eventualy user provided -R
+	if (normalize != "" && normalize != "none")
+		d[:R], d[:B] = @sprintf("1/%d/0/1", n_axes), "xa0 S"
+	else
+		mima = round_wesn([0. 0. extrema(_bbox)...])[3:4]
+		d[:R] = @sprintf("1/%d/%.10g/%.10g", n_axes, mima...)
+	end
+	basemap(; d...)				# <== Start the plot
+
+	is_in_dict(d, [:aspect :xaxis :yaxis :axis2 :xaxis2 :yaxis2 :title :subtitle :xlabel :ylabel :xticks :yticks], del=true)
+	del_from_dict(d, [[:R], [:B, :frame, :axes, :axis], [:J, :proj], [:figsize, :fig_size]])
+
+	if (normalize != "" && normalize != "none")		# Plot the vertical axes
+		for k = 1:n_axes-1
+			basemap!(R= @sprintf("0/%d/%.10g/%.10g", n_axes, _bbox[2*(k-1)+1], _bbox[2k]), X="a$((k-1)*CTRL.figsize[1]/(n_axes-1))", B="W yaf")
+		end
+		basemap!(R= @sprintf("0/%d/%.10g/%.10g", n_axes, _bbox[2*(n_axes-1)+1], _bbox[2n_axes]), B="E yaf")
+		d[:R] = @sprintf("1/%d/0/1", n_axes)		# Reset this because under the hood they are all normalized
+	end
+	
+	(is_in_dict(d, [:lw :W :pen]) === nothing) && (d[:lw] = 0.5)
+	d[:show] = do_show
+	common_plot_xyz("", D, "line", false, false, d...)
+end
+
+parallelplot!(cmd0::String="", arg1=nothing; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot(arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+
+parallelplot(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot("", arg1; first=true, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+
+parallelplot!(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot("", arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+
+# ----------------------------------------------------------------------------------------------------------
+"""
+    gidx, gnames = grp2idx(s::AbstracVector)
+
+Creates an index Vector{Vector} from the grouping variable S. S can be an AbstracVector of elements
+for which the `==` method is defined. It returns a Vector of Vectors with the indices of the elements
+of each group. There will be as many groups as `length(gidx)`. `gnames` is a string vector holding
+the group names.
+"""
+function grp2idx(s)
+	gnames = unique(s)
+	gidx = [findall(s .== gnames[k]) for k = 1:numel(gnames)]
+	gidx, gnames
+end
+
+# ----------------------------------------------------------------------------------------------------------
+function normalizeArray(method, A, bbox=Float64[])
+	# Matrix A should NOT contain NaNs
+	n_cols = size(A,2)
+	if (method == "range")		# rulers (columns) have independent minimum and maximum limits
+		for n = 1:n_cols
+			A[:,n] = ((view(A, :,n) .- bbox[2*(n-1)+1])) ./ (bbox[2n] - bbox[2*(n-1)+1])
+		end
+	elseif (method == "zscore")	# z-scores (mean of 0 and a standard deviation of 1) along each coordinate ruler
+		if (any(isnan.(A)))
+			S, C = zeros(1, n_cols), zeros(1, n_cols)
+			for k = 1:n_cols
+				t = skipnan(view(A, :,k))
+				S[k] = std(t)
+				C[k] = mean(t)
+			end
+		else
+			S, C = std(A, dims=1), mean(A, dims=1)
+		end
+		A = (A .- C) ./ S
+	elseif (method == "scale")	# values scaled by standard deviation along each coordinate ruler
+		if (any(isnan.(A)))
+			S = zeros(1, n_cols)
+			for k = 1:n_cols  S[k] = std(skipnan(view(A, :,k)))  end
+		else
+			S = std(A, dims=1)
+		end
+		A = A ./ S
+	end
+	A
+end

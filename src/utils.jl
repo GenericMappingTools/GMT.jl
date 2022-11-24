@@ -101,3 +101,13 @@ function gunique(x::AbstractVector; sorted::Bool=false)
 		uniquit(x)
 	end
 end
+
+#= ------------------------------------------------------------
+"""
+Delete rows from a matrix where any of its columns has a NaN
+"""
+function del_mat_row_nans(mat)
+	nanrows = any(isnan.(mat), dims=2)
+	return (any(nanrows)) ? mat[vec(.!nanrows),:] : mat
+end
+=#

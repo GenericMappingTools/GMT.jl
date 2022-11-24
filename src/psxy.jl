@@ -279,9 +279,10 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 end
 
 # ---------------------------------------------------------------------------------------------------
-function with_xyvar(d::Dict, arg1::GMTdataset)
+function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)
 	# Make a subset of a GMTdataset by selecting which coluns to extract. The selection can be done by
 	# column numbers or column names. 'xvar' selects only the xx col, but 'yvar' can select more than one.
+	# 'no_x' is for croping some columns and not add a x column and not split in many D's (one per column).
 	((val_y = find_in_dict(d, [:yvar])[1]) === nothing) && return arg1	# No y colname, no business
 	ycv::Vector{Int}, ismulticol = Int[], false
 	if (isa(val_y, Integer) || isa(val_y, String) || isa(val_y, Symbol))
@@ -315,11 +316,14 @@ function with_xyvar(d::Dict, arg1::GMTdataset)
 	((zc = getcolvar(d, [:zvar])) !== nothing) && (ycv = [ycv..., zc])
 	((sc = getcolvar(d, [:svar :szvar :sizevar])) !== nothing) && (ycv = [ycv..., sc])
 	((cc = getcolvar(d, [:cvar :colorvar])) !== nothing) && (ycv = [ycv..., cc])
-	if (xc === nothing)  out = hcat(collect(1:size(arg1,1)), arg1[:, ycv])
-	else                 out = arg1[:, [xc, ycv...]]
+	if (!no_x)
+		if (xc === nothing)  out = hcat(collect(1:size(arg1,1)), arg1[:, ycv])
+		else                 out = arg1[:, [xc, ycv...]]
+		end
+		D = (ismulticol) ? mat2ds(out, multi=true, color=:cycle) : mat2ds(out)		# Return a GMTdataset
+	else
+		D = mat2ds(arg1, (:,ycv))
 	end
-
-	D = (ismulticol) ? mat2ds(out, multi=true, color=:cycle) : mat2ds(out)		# Return a GMTdataset
 	if (xc == 1 && ycv[1] == 2)		# Keep CRS if possible
 		ismulticol ? (D[1].proj4=arg1.proj4; D[1].wkt=arg1.wkt; D[1].epsg=arg1.epsg) :
 		             (D.proj4=arg1.proj4; D.wkt=arg1.wkt; D.epsg=arg1.epsg)

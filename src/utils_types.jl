@@ -47,7 +47,8 @@ does not need explicit coordinates to place the text.
   - `hdr`: optional String vector with either one or n_rows multisegment headers.
   - `color`: optional array of strings with color names/values. Its length can be smaller than n_rows, case in
      which colors will be cycled. If `color` is not an array of strings, e.g. `color="yes"`, the colors
-     cycle trough a pre-defined set of colors (same colors as in Matlab).
+     cycle trough a pre-defined set of colors (same colors as in Matlab). If you want the same color repeated
+     for many lines use pass color as a vector. *e.g,* `color=[color]`
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
   - `fill`:  Optional string array (or a String of comma separated color names, or a Tuple os color names)
@@ -234,6 +235,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function mat2ds(D::GMTdataset, inds)::GMTdataset
 	# Cut a GMTdataset D with the indices in INDS but updating the colnames and the Timecol info.
+	# INDS is a Tuple of 2 with ranges in rows and columns. Ex: (:, 1:3) or (:, [1,4,7]), etc...
 	# Attention, if original had attributes other than 'Timeinfo' there is no guarentie that they remain correct. 
 	(length(inds) != ndims(D)) && error("\tNumber of GMTdataset dimensions and indices components must be the same.\n")
 	_D = mat2ds(D.data[inds...], proj4=D.proj4, wkt=D.wkt, epsg=D.epsg, geom=D.geom, colnames=D.colnames, attrib=D.attrib)

@@ -150,19 +150,11 @@ function gmtread(fname::String; kwargs...)
 		# If GMTdataset see if the comment may have the column names
 		if (isa(o, GMTdataset) && isempty(o.colnames) && !isempty(o.comment)) ||
 			(isa(o, Vector{<:GMTdataset}) && isempty(o[1].colnames) && !isempty(o[1].comment))
-			if (isa(o, GMTdataset))
-				hfs, ncs = split(o.comment[1]), size(o,2)
-				(length(hfs) == 1) && (hfs = split(o.comment[1], ','))	# Try also the comma separator
-				(length(hfs) >= ncs) && (o.colnames = string.(hfs)[1:ncs])
-			else
-				hfs, ncs = split(o[1].comment[1]), size(o[1],2)
-				(length(hfs) == 1) && (hfs = split(o[1].comment[1], ','))	# Try also the comma separator
-				(length(hfs) >= ncs) && (o[1].colnames = string.(hfs)[1:ncs])
-			end
+			helper_set_colnames!(o)		# Set colnames if file has a comment line supporting it
 		end
 
 		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
-		(opt_bi == ""  && isa(o, GDtype)) && file_has_time!(fname, o)
+		(opt_bi == "" && isa(o, GDtype)) && file_has_time!(fname, o)
 
 		if (isa(o, GMTgrid))
 			o.hasnans = any(!isfinite, o) ? 2 : 1
@@ -193,15 +185,34 @@ function gmtread(fname::String; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------
+function helper_set_colnames!(o::GDtype)
+	# This is used both by gmtread() and inside read_data()
+	if (isa(o, GMTdataset))
+		isempty(o.comment) && return nothing
+		ncs = size(o,2)			# Next line checks if the comment is comma separated
+		hfs = (count(i->(i == ','), o.comment[1]) >= ncs) ? split(o.comment[1], ',') : split(o.comment[1])
+		(length(hfs) >= ncs) && (o.colnames = string.(hfs)[1:ncs])
+	else
+		isempty(o[1].comment) && return nothing
+		hfs, ncs = split(o[1].comment[1]), size(o[1],2)
+		(length(hfs) == 1) && (hfs = split(o[1].comment[1], ','))	# Try also the comma separator
+		(length(hfs) >= ncs) && (o[1].colnames = string.(hfs)[1:ncs])
+	end
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------
 function file_has_time!(fname::String, D::GDtype)
 	# Try guess if 'fname' file has time columns and if yes leave trace of it in D's metadata.
 	# We do that by scanning the first valid line in file.
 
 	#line1 = split(collect(Iterators.take(eachline(fname), 1))[1])	# Read first line and cut it in tokens
-	(fname[1] == '@') && return nothing		# We srill don't sneak in remote files.
+	(fname[1] == '@') && return nothing		# We still don't sneak in remote files.
 	isone = isa(D, GMTdataset) ? true : false
-	names_str = (isone) ? ["col.$i" for i=1:size(D,2)] : ["col.$i" for i=1:size(D[1],2)]
-	isone ? (D.colnames = names_str) : [D[k].colnames = names_str for k = 1:lastindex(D)]	# Default col names
+	if (isone && isempty(D.colnames)) || (!isone && isempty(D[1].colnames))		# If no colnames set yet
+		names_str = (isone) ? ["col.$i" for i=1:size(D,2)] : ["col.$i" for i=1:size(D[1],2)]
+		isone ? (D.colnames = names_str) : [D[k].colnames = names_str for k = 1:lastindex(D)]	# Default col names
+	end
 	n_cols = (isone) ? size(D,2) : size(D[1],2)
 	Tc, f1, n_it = "", 1, 0
 	fid = open(fname)
