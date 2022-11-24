@@ -1095,6 +1095,12 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	common_plot_xyz("", D, "line", false, false, d...)
 end
 
+parallelplot!(cmd0::String="", arg1=nothing; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot(arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+
+parallelplot(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot("", arg1; first=true, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+
+parallelplot!(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot("", arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+
 # ----------------------------------------------------------------------------------------------------------
 """
     gidx, gnames = grp2idx(s::AbstracVector)
