@@ -987,11 +987,18 @@ ecdfplot!(x::AbstractVector{<:Real}; kwargs...) = ecdfplot(x; first=false, kwarg
 - `groupvar`: Uses the table variable specified by `groupvar` to group the lines in the plot. When `arg1` is
      GMTdatset or `cmd0` is the name of a file with one and it has the `text` field filled, use `groupvar="text"`
 	 to use that text field as the grouping vector.
+- `yvar`: This can take the form of column names or column numbers. Example `yvar=(2,3)`, or `yvar=[:Y, :Z1, :Z2]`.
 - `nomalize`: 
     - `range`: (Default) Display raw data along coordinate rulers that have independent minimum and maximum limits.
 	- `none`: Display raw data along coordinate rulers that have the same minimum and maximum limits.
 	- `zscore`: Display z-scores (with a mean of 0 and a standard deviation of 1) along each coordinate ruler.
 	- `scale`: Display values scaled by standard deviation along each coordinate ruler.
+- `quantile`: Give a quantile in the [0-1] interval to plot the median +- `quantile` as dashed lines.
+- `band`: If used, instead of the dashed lines referred above, plot a band centered in the median. The band
+     colors are assigned automatically but this can be overriden by the `fill` option.
+- `fill`: When `band` option is used and want to control the bands colors, give a list of colors to paint them.
+- `fillalpha` : When `fill` option is used, we can set the bands transparency with this option that takes in an array
+    (vec or 1-row matrix) with numeric values between [0-1] or ]1-100], where 100 (or 1) means full transparency.
 - For fine the lines settings use the same options as in the `plot` module.
 
 Example:
@@ -1019,17 +1026,40 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	n_axes = size(data,2)						# Number of axes in this plot
 	ax_pos = 1:n_axes
 
+	_quantile::Float64 = ((val = find_in_dict(d, [:quantile])[1]) !== nothing) ? val : 0.0
+	haveband = haskey(d, :band)					# To know if data must be formatted for band() use.
+
 	function helper_D(D, _data, gidx, normtype, _bbox, gc)
 		# Common to two IF branches
-		b = 1
-		for k = 1:numel(gidx)
+		b, n = 1, 0
+		for k = 1:numel(gidx)					# Loop over number of groups
 			nr = length(gidx[k])
 			t = normalizeArray(normtype, _data[gidx[k],:], _bbox)
-			D[b:b+nr-1] = mat2ds(collect(t'), x=ax_pos, multi=true, color=[gc[k]])
+			if (_quantile == 0)
+				D[b:b+nr-1] = mat2ds(collect(t'), x=ax_pos, multi=true, color=[gc[k]])
+			else
+				l, c, h = zeros(size(t,2)), zeros(size(t,2)), zeros(size(t,2))
+				for nc = 1:size(t,2)
+					l[nc], c[nc], h[nc] = quantile(skipnan(view(t, :,nc)), [0.5-_quantile, 0.5, 0.5+_quantile])
+				end
+				# THE SHIT. GMT6.4 is bugged when headers contain the -G<color> field (it screws the polygons)
+				if (haveband)		# Format to use in band()
+					# But we need that -G<color> for latter trickly extract the and use it in the on line command.
+					D[n+=1] = mat2ds(c, x=ax_pos, multi=true, color=[gc[k]], fill=[gc[k]], fillalpha=0.7)[1]
+					D[n].data = [D[n].data c.-l h.-c]
+					D[n].colnames = [D[n].colnames..., "Low", "High"]
+				else
+					D[n+=1] = mat2ds(c, x=ax_pos, multi=true, color=[gc[k]])[1]
+					D[n+=1] = mat2ds(l, x=ax_pos, multi=true, color=[gc[k]], ls=:dash)[1]
+					D[n+=1] = mat2ds(h, x=ax_pos, multi=true, color=[gc[k]], ls=:dash)[1]
+				end
+			end
 			b += nr
 		end	
+		(_quantile != 0) && deleteat!(D, n+1:length(D))		# Because in this case D was allocated in excess.
 		D
 	end
+
 	function check_bbox!(_data, _bbox)		# Check that bbox has no NaNs
 		if (any(isnan.(_bbox)))
 			for k = 1:size(_data,2)
@@ -1042,9 +1072,10 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	if (!isempty(group))
 		gidx, gnames = grp2idx(group)
 		D = Vector{GMTdataset}(undef, length(group))
-		gc = (numel(gidx) < 8) ? matlab_cycle_colors : simple_distinct	# Group colors
+		gc = helper_ds_fill(d; nc=numel(gidx))
+		isempty(gc) && (gc = (numel(gidx) < 8) ? matlab_cycle_colors : simple_distinct)		# Group colors
 		if (normalize == "range" || normalize == "" || normalize == "none")
-			helper_D(D, data.data, gidx, normalize, _bbox, gc)
+			helper_D(D, data.data, gidx, normalize, _bbox, gc)	# Splits D in many D's (one per line)
 		else
 			_data = copy(data.data)
 			for k = 1:numel(gidx)
@@ -1077,6 +1108,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 		mima = round_wesn([0. 0. extrema(_bbox)...])[3:4]
 		d[:R] = @sprintf("1/%d/%.10g/%.10g", n_axes, mima...)
 	end
+	d[:Vd] = 0					# To no warn if basemap unknows options have been used. e.g. -W
 	basemap(; d...)				# <== Start the plot
 
 	is_in_dict(d, [:aspect :xaxis :yaxis :axis2 :xaxis2 :yaxis2 :title :subtitle :xlabel :ylabel :xticks :yticks], del=true)
@@ -1092,14 +1124,27 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	
 	(is_in_dict(d, [:lw :W :pen]) === nothing) && (d[:lw] = 0.5)
 	d[:show] = do_show
-	common_plot_xyz("", D, "line", false, false, d...)
+	#d[:Vd] = 1
+	!haveband ? common_plot_xyz("", D, "line", false, false, d...) : plot_bands_from_vecDS(D, d, do_show)
 end
 
-parallelplot!(cmd0::String="", arg1=nothing; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot(arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+parallelplot!(cmd0::String="", arg1=nothing; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot(cmd0, arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
 
 parallelplot(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot("", arg1; first=true, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
 
 parallelplot!(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot("", arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+
+# ----------------------------------------------------------------------------------------------------------
+function plot_bands_from_vecDS(D::Vector{GMTdataset}, d, do_show)
+	d[:show] = false
+	for k = 1:numel(D)
+		s = split(D[k].header)
+		d[:G] = string(s[2][3:end])
+		D[k].header = string(s[1])
+		(k == numel(D)) && (d[:show] = do_show)		# With the last one show it if has to.
+		band!(D[k]; d...)
+	end
+end
 
 # ----------------------------------------------------------------------------------------------------------
 """
@@ -1137,12 +1182,7 @@ function normalizeArray(method, A, bbox=Float64[])
 		end
 		A = (A .- C) ./ S
 	elseif (method == "scale")	# values scaled by standard deviation along each coordinate ruler
-		if (any(isnan.(A)))
-			S = zeros(1, n_cols)
-			for k = 1:n_cols  S[k] = std(skipnan(view(A, :,k)))  end
-		else
-			S = std(A, dims=1)
-		end
+		S = std_nan(A)
 		A = A ./ S
 	end
 	A
