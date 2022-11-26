@@ -1027,6 +1027,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	ax_pos = 1:n_axes
 
 	_quantile::Float64 = ((val = find_in_dict(d, [:quantile])[1]) !== nothing) ? val : 0.0
+	(_quantile < 0 || _quantile > 0.5) && error("`quantile` must be in the [0,0.5] interval")
 	haveband = haskey(d, :band)					# To know if data must be formatted for band() use.
 
 	function helper_D(D, _data, gidx, normtype, _bbox, gc)
@@ -1069,32 +1070,22 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 		end
 	end
 
-	if (!isempty(group))
-		gidx, gnames = grp2idx(group)
-		D = Vector{GMTdataset}(undef, length(group))
-		gc = helper_ds_fill(d; nc=numel(gidx))
-		isempty(gc) && (gc = (numel(gidx) < 8) ? matlab_cycle_colors : simple_distinct)		# Group colors
-		if (normalize == "range" || normalize == "" || normalize == "none")
-			helper_D(D, data.data, gidx, normalize, _bbox, gc)	# Splits D in many D's (one per line)
-		else
-			_data = copy(data.data)
-			for k = 1:numel(gidx)
-				_data[gidx[k],:] = normalizeArray(normalize, _data[gidx[k],:])
-			end
-			_bbox = collect(Iterators.flatten(extrema(_data, dims=1)))
-			check_bbox!(_data, _bbox)		# Ensure _bbox has no NaNs
-			helper_D(D, _data, gidx, "range", _bbox, gc)
-		end
+	(isempty(group)) && (group = fill(0, size(data,1)))		# Make it a single group to reuse the same code
+
+	gidx, gnames = grp2idx(group)
+	D = Vector{GMTdataset}(undef, length(group))
+	gc = helper_ds_fill(d; nc=numel(gidx))
+	isempty(gc) && (gc = (numel(gidx) < 8) ? matlab_cycle_colors : simple_distinct)		# Group colors
+	if (normalize == "range" || normalize == "" || normalize == "none")
+		helper_D(D, data.data, gidx, normalize, _bbox, gc)	# Splits D in many D's (one per line)
 	else
-		if (normalize == "range" || normalize == "" || normalize == "none")
-			D = mat2ds(collect(data'), x=ax_pos, multi=true, color=[matlab_cycle_colors[1]])
-		else
-			_data = normalizeArray(normalize, copy(data.data))
-			_bbox = collect(Iterators.flatten(extrema(_data, dims=1)))
-			check_bbox!(_data, _bbox)		# Ensure _bbox has no NaNs
-			_data = normalizeArray("range", _data, _bbox)
-			D = mat2ds(collect(_data'), x=ax_pos, multi=true, color=[matlab_cycle_colors[1]])
+		_data = copy(data.data)
+		for k = 1:numel(gidx)
+			_data[gidx[k],:] = normalizeArray(normalize, _data[gidx[k],:])
 		end
+		_bbox = collect(Iterators.flatten(extrema(_data, dims=1)))
+		check_bbox!(_data, _bbox)		# Ensure _bbox has no NaNs
+		helper_D(D, _data, gidx, "range", _bbox, gc)
 	end
 
 	(is_in_dict(d, [:figsize :fig_size]) === nothing) && (d[:figsize] = def_fig_size)
