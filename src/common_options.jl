@@ -2567,34 +2567,36 @@ end
 function get_color(val)::String
 	# Parse a color input. Always return a string
 	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
-	if (isa(val, String) || isa(val, Symbol) || isa(val, Real))  return isa(val, Bool) ? "" : string(val)  end
+	(isa(val, AbstractString) || isa(val, Symbol) || isa(val, Real)) && return isa(val, Bool) ? "" : string(val)
 
+	@warn("got this bad data type: $(typeof(val))")		# Need to split because f julia change in 6.1
+	error("\tGOT_COLOR: got an unsupported data type")
+end
+function get_color(val::Tuple)::String
 	out::String = ""
-	if (isa(val, Tuple))
-		for k = 1:numel(val)
-			if (isa(val[k], Tuple) && (length(val[k]) == 3))
-				s = 1
-				if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255  end	# colors in [0 1]
-				out *= @sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
-			elseif (isa(val[k], Symbol) || isa(val[k], String) || isa(val[k], Real))
-				out *= string(val[k],",")
-			else
-				error("Color tuples must have only one or three elements")
-			end
+	for k = 1:numel(val)
+		if (isa(val[k], Tuple) && (length(val[k]) == 3))
+			s = 1
+			if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255  end	# colors in [0 1]
+			out *= @sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
+		elseif (isa(val[k], Symbol) || isa(val[k], String) || isa(val[k], Real))
+			out *= string(val[k],",")
+		else
+			error("Color tuples must have only one or three elements")
 		end
-		out = rstrip(out, ',')		# Strip last ','``
-	elseif ((isa(val, Array) && (size(val, 2) == 3)) || (isa(val, Vector) && length(val) == 3))
-		if (isa(val, Vector))  val = val'  end
-		copia = (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1) ? val .* 255 : val	# Do not change the original
-		out = @sprintf("%.0f/%.0f/%.0f", copia[1,1], copia[1,2], copia[1,3])
-		for k = 2:size(copia, 1)
-			out = @sprintf("%s,%.0f/%.0f/%.0f", out, copia[k,1], copia[k,2], copia[k,3])
-		end
-	else
-		@warn("got this bad data type: $(typeof(val))")		# Need to split because f julia change in 6.1
-		error("GOT_COLOR, got an unsupported data type")
 	end
-	return out
+	out = rstrip(out, ',')		# Strip last ','
+end
+function get_color(val::Array{<:Real})::String
+	out::String = ""
+	if (isa(val, Vector))  val = val'  end
+	(size(val, 2) != 3) && error("\tGOT_COLOR: Input as Aray must be a Mx3 matrix or 3 elements Vector.")
+	copia = (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1) ? val .* 255 : val	# Do not change the original
+	out = @sprintf("%.0f/%.0f/%.0f", copia[1,1], copia[1,2], copia[1,3])
+	for k = 2:size(copia, 1)
+		out = @sprintf("%s,%.0f/%.0f/%.0f", out, copia[k,1], copia[k,2], copia[k,3])
+	end
+	out
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -3683,7 +3685,8 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 
 	if ( ((Vd = find_in_dict(d, [:Vd])[1]) !== nothing) || convert_syntax[1])
 		(convert_syntax[1]) && return update_cmds_history(cmd)	# For movies mainly.
-		(Vd <= 0) && return nothing		# Don't let user play tricks
+		(Vd <= 0) && (d[:Vd] = 0)		# Later, if Vd == 0, do not print the "not consumed" warnings
+		(Vd <= 0) && return nothing
 
 		if (Vd >= 2)	# Delete these first before reporting
 			del_from_dict(d, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:figname], [:name], [:savefig]])
@@ -4092,7 +4095,7 @@ function show_non_consumed(d::Dict, cmd)
 	# First delete some that could not have been delete earlier (from legend for example)
 	del_from_dict(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait], [:this_cpt]])
 	!isempty(current_cpt[1]) && del_from_dict(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
-	if (length(d) > 0)
+	if (!haskey(d, :Vd) && length(d) > 0)		# Vd, if exists, it must be a Vd=0 to signal no warnings.
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
 	end

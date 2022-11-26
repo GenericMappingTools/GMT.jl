@@ -51,7 +51,7 @@ does not need explicit coordinates to place the text.
      for many lines use pass color as a vector. *e.g,* `color=[color]`
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
-  - `fill`:  Optional string array (or a String of comma separated color names, or a Tuple os color names)
+  - `fill`:  Optional string array (or a String of comma separated color names, or a Tuple of color names)
              with color names or array of "patterns".
   - `fillalpha` : When `fill` option is used, we can set the transparency of filled polygons with this
      option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
@@ -351,7 +351,7 @@ function helper_ds_fill(d::Dict, del::Bool=true; nc=0)::Vector{String}
 		if (isa(fill_val, String) && contains(fill_val, ","))
 			_fill::Vector{String} = collect(split(fill_val, ","))
 		elseif (isa(fill_val, Tuple) && eltype(fill_val) == Symbol)
-			_fill = string.(fill_val)
+			_fill = [string.(fill_val)...]
 		elseif (isa(fill_val, Array{String}) && !isempty(fill_val))
 			_fill = vec(fill_val)
 		elseif (isa(fill_val, Tuple) && eltype(fill_val) == Symbol)

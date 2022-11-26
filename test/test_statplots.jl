@@ -61,8 +61,9 @@
 	parallelplot("iris.dat",  groupvar="text", normalize="zscore")
 	parallelplot("iris.dat",  groupvar="text", normalize="scale")
 	parallelplot("iris.dat",  normalize="")
-	#parallelplot!("iris.dat", normalize="scale")
+	parallelplot!("iris.dat", normalize="scale")
 	D = gmtread("iris.dat");
 	parallelplot!(D, normalize="scale")
+	parallelplot(D, normalize="zscore")
 	parallelplot(D, normalize="")
 end

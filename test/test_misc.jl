@@ -90,13 +90,20 @@
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
 	@info "color_gradient"
 	GMT.color_gradient_line(rand(3,2));
+	GMT.resetGMT()
 	GMT.color_gradient_line(mat2ds(rand(3,2)));
+	GMT.resetGMT()
 	GMT.color_gradient_line([mat2ds(rand(3,2)), mat2ds(rand(4,2))]);
+	GMT.resetGMT()
 	@info "line2multiseg"
 	GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2], auto_color=true);
+	GMT.resetGMT()
 	GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2,4], auto_color=true);
+	GMT.resetGMT()
 	GMT.line2multiseg(mat2ds(rand(3,2)), lt=[1,2,4]);
+	GMT.resetGMT()
 	GMT.line2multiseg([mat2ds(rand(3,2)), mat2ds(rand(4,2))], lt=[1,2], auto_color=true);
+	GMT.resetGMT()
 
 	@info "mat2grid"
 	GMT.mat2grid(rand(Float32, 10,10), reg=1);

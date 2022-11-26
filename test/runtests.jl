@@ -118,10 +118,14 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Unknown continent ue") cpt4dcw("ue")
 	GMT.iso3to2_eu();
 	GMT.iso3to2_af();
+	GMT.resetGMT()
 	println("		MAKECPT - 2")
 	GMT.iso3to2_na();
+	GMT.resetGMT()
 	GMT.iso3to2_world();
+	GMT.resetGMT()
 	GMT.mk_codes_values(["PRT", "ESP", "FRA"], [1.0, 2, 3], region="eu");
+	GMT.resetGMT()
 	@test_throws ErrorException("The region ue is invalid or has not been implemented yet.") GMT.mk_codes_values(["PRT"], [1.0], region="ue")
 
 	println("		Entering: test_misc.jl")

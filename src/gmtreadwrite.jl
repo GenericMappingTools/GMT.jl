@@ -147,6 +147,7 @@ function gmtread(fname::String; kwargs...)
 		(dbg_print_cmd(d, cmd) !== nothing) && return "gmtread " * cmd
 		o = gmt("read " * fname * cmd)
 		(isempty(o)) && error("\tFailed to read file \"$fname\"\n")
+
 		# If GMTdataset see if the comment may have the column names
 		if (isa(o, GMTdataset) && isempty(o.colnames) && !isempty(o.comment)) ||
 			(isa(o, Vector{<:GMTdataset}) && isempty(o[1].colnames) && !isempty(o[1].comment))
@@ -191,12 +192,14 @@ function helper_set_colnames!(o::GDtype)
 		isempty(o.comment) && return nothing
 		ncs = size(o,2)			# Next line checks if the comment is comma separated
 		hfs = (count(i->(i == ','), o.comment[1]) >= ncs) ? split(o.comment[1], ',') : split(o.comment[1])
-		(length(hfs) >= ncs) && (o.colnames = string.(hfs)[1:ncs])
+		#(length(hfs) >= ncs) && (o.colnames = string.(hfs)[1:ncs])
+		o.colnames = string.(hfs)
 	else
 		isempty(o[1].comment) && return nothing
 		hfs, ncs = split(o[1].comment[1]), size(o[1],2)
 		(length(hfs) == 1) && (hfs = split(o[1].comment[1], ','))	# Try also the comma separator
-		(length(hfs) >= ncs) && (o[1].colnames = string.(hfs)[1:ncs])
+		#(length(hfs) >= ncs) && (o[1].colnames = string.(hfs)[1:ncs])
+		o[1].colnames = string.(hfs)
 	end
 	return nothing
 end

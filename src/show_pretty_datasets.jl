@@ -46,6 +46,7 @@ function _show(io::IO,
 	names_len = Int[textwidth(n) for n in names_str]
 	maxwidth = Int[max(9, nl) for nl in names_len]
 	types = Any[eltype(c) for c in eachcol(D)]
+	#(length(types) == length(names_len) - 1) && push!(types, String)
 	types_str = batch_compacttype(types, maxwidth)
 
 	if (allcols && allrows) crop = :none
@@ -101,8 +102,10 @@ function _show(io::IO,
 
 	skipd_rows = 0
 	if (~isempty(D.text))
+		if (length(names_str) == length(types_str))		# Otherwise it keeps adding a "Text" everytime this fun is executed
+			push!(names_str, (text_colname != "" ? text_colname : "Text"))
+		end
 		push!(alignment, :r)
-		push!(names_str, (text_colname != "" ? text_colname : "Text"))
 		push!(types_str, "String")
 		if (size(D,1) > 250)	# Since only dataset's begining and end is displayed do not make a potentially big copy
 			Dt = [[D.data[1:50, :]; D.data[end-50:end, :]] [D.text[1:50, :]; D.text[end-50:end, :]]]
@@ -165,7 +168,8 @@ end
 # representation of a specific column element type only once and then reuse it.
 
 function batch_compacttype(types::Vector{Any}, maxwidths::Vector{Int})
-	@assert length(types) == length(maxwidths)
+	maxwidths = maxwidths[1:length(types)]		# Bloody bug that comes from ether
+	#@assert length(types) == length(maxwidths)
 	cache = Dict{Any, String}()
 	return map(types, maxwidths) do T, maxwidth
 		get!(cache, T) do

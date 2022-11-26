@@ -111,3 +111,19 @@ function del_mat_row_nans(mat)
 	return (any(nanrows)) ? mat[vec(.!nanrows),:] : mat
 end
 =#
+
+# ----------------------------------------------------------------------------------------------------------
+function std_nan(A, dims=1)
+	# Compute std of a matrix or vector accounting for the possibility of NaNs.
+	if (any(isnan.(A)))
+		N = (dims == 1) ? size(A, 2) : size(A, 1)
+		S = zeros(1, N)
+		if (dims == 1)
+			for k = 1:N  S[k] = std(skipnan(view(A, :,k)))  end
+		else
+			for k = 1:N  S[k] = std(skipnan(view(A, k,:)))  end
+		end
+	else
+		S = std(A, dims=dims)
+	end
+end
