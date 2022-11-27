@@ -1755,6 +1755,23 @@ function build_pen(d::Dict, del::Bool=false)::String
 	return out
 end
 
+# ----------------------------------------------------------------------------------------------------------
+function break_pen(pen::String)
+	# Break up a pen string in its three tokens. PEN can be "lw,lc,ls", or "lw,ls", or ",,ls" etc.
+	(pen == "") && return "", "", ""
+	sp = split(pen, ',')
+	lw, lc, ls = sp[1], "", ""
+	(length(sp) == 3) && (ls = string(sp[3]))
+	if (length(sp) > 1)
+		t2 = lowercase(sp[2])
+		(startswith(t2, "da") || startswith(t2, "do")) && (ls = t2)
+		(length(sp) == 2 && ls != "") && return lw, "", ls	# We are done here. Got a pen="linewidth,linestile"
+		# OK, arrived here means `ls` is either in 3 or non-existent so pos 2 must contain `lc` (or empty)
+		lc = t2
+	end
+	return lw, lc, ls
+end
+
 # ---------------------------------------------------------------------------------------------------
 function parse_arg_and_pen(arg::Tuple, sep="/", pen::Bool=true, opt="")::String
 	# Parse an ARG of the type (arg, (pen)) and return a string. These may be used in pscoast -I & -N
@@ -3688,7 +3705,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 		(Vd <= 0) && (d[:Vd] = 0)		# Later, if Vd == 0, do not print the "not consumed" warnings
 		(Vd <= 0) && return nothing
 
-		if (Vd >= 2)	# Delete these first before reporting
+		if (Vd >= 2)					# Delete these first before reporting
 			del_from_dict(d, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:figname], [:name], [:savefig]])
 			CTRL.pocket_call[3] = nothing	# This is mostly for testing purposes, but potentially needed elsewhere.
 			CTRL.limits[1:12] = zeros(12)
@@ -4095,10 +4112,11 @@ function show_non_consumed(d::Dict, cmd)
 	# First delete some that could not have been delete earlier (from legend for example)
 	del_from_dict(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait], [:this_cpt]])
 	!isempty(current_cpt[1]) && del_from_dict(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
-	if (!haskey(d, :Vd) && length(d) > 0)		# Vd, if exists, it must be a Vd=0 to signal no warnings.
+	if (!haskey(d, :Vd) && length(d) > 0)		# Vd, if exists, must be a Vd=0 to signal no warnings.
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
 	end
+	(haskey(d, :Vd) && d[:Vd] == 0) && delete!(d, :Vd)	# It was a "use once only" option.
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -4239,9 +4257,10 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 
 	if ((opt_D = add_opt(_d, "", "", [:pos :position],
 		(map_coord="g",plot_coord="x",norm="n",pos="j",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
-		just = (isa(val, String) || isa(val, Symbol)) ? justify(val, true) : "TR"		# "TR" is the default
-		just = (just == string(val) && length(just) == 2) ? just : "TR"
-		opt_D = @sprintf("j%s+w%.3f+o0.1", just, symbW*1.2 + lab_width)
+		#just = (isa(val, String) || isa(val, Symbol)) ? justify(val, true) : "TR"		# "TR" is the default
+		#just = (just == string(val) && length(just) == 2) ? just : "TR"	# WHAT WAS THIS ALL ABOUT?
+		#opt_D = @sprintf("j%s+w%.3f+o0.1", just, symbW*1.2 + lab_width)
+		opt_D = @sprintf("jTR+w%.3f+o0.1", symbW*1.2 + lab_width)
 	else
 		t = justify(opt_D, true)
 		if (length(t) == 2)
