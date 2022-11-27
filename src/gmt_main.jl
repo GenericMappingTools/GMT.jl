@@ -800,7 +800,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 				#headers = pointer_to_array(DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
 				headers = unsafe_wrap(Array, DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
 				dest_s = Vector{String}(undef, length(headers))
-				for k = 1:length(headers)
+				for k = 1:numel(headers)
 					dest_s[k] = unsafe_string(headers[k])
 				end
 				Darr[seg_out].comment = dest_s
@@ -828,7 +828,7 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
 		actual_family = [GMT_IS_DATASET]	# Default but may change to matrix
 		if (ptr !== nothing && isa(ptr, GMTdataset))
-			if (isempty(ptr.text))  X.object = dataset_init(API, ptr.data, actual_family)
+			if (isempty(ptr.text) && isempty(ptr.header))  X.object = dataset_init(API, ptr.data, actual_family)
 			else                    X.object = dataset_init(API, [ptr], X.direction)	# When TEXT still need to go here
 			end
 		elseif (isa(ptr, Vector{<:GMTdataset}))
