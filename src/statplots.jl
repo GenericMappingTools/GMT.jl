@@ -823,8 +823,7 @@ Examples:
 """
 function qqplot(x, y; qqline=:identity, first=true, kwargs...)
 	if !(qqline in (:identity, :fit, :fitrobust, :quantile, :none))
-        msg = "valid values for qqline are :identity, :fit, :fitrobust or :none, but encountered " * repr(qqline)
-		throw(ArgumentError(msg))
+		throw(ArgumentError("valid values for qqline are :identity, :fit, :fitrobust or :none, but encountered " * repr(qqline)))
 	end
 	qx, qy = qqbuild(x, y)
 	xs = collect(extrema(qx))
@@ -1027,7 +1026,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	ax_pos = 1:n_axes
 
 	_quantile::Float64 = ((val = find_in_dict(d, [:quantile])[1]) !== nothing) ? val : 0.0
-	(_quantile < 0 || _quantile > 0.5) && error("`quantile` must be in the [0,0.5] interval")
+	(_quantile < 0 || _quantile > 0.5) && error("`quantile` must be in the [0, 0.5] interval")
 	haveband = haskey(d, :band)					# To know if data must be formatted for band() use.
 
 	function helper_D(D, _data, gidx, normtype, _bbox, gc)
@@ -1099,24 +1098,22 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 		mima = round_wesn([0. 0. extrema(_bbox)...])[3:4]
 		d[:R] = @sprintf("1/%d/%.10g/%.10g", n_axes, mima...)
 	end
-	d[:Vd] = 0					# To no warn if basemap unknows options have been used. e.g. -W
-	basemap(; d...)				# <== Start the plot
+	!haskey(d, :Vd) && (d[:Vd] = 0)					# To no warn if basemap unknown options have been used. e.g. -W
+	basemap(; d...)						# <== Start the plot
 
-	is_in_dict(d, [:aspect :xaxis :yaxis :axis2 :xaxis2 :yaxis2 :title :subtitle :xlabel :ylabel :xticks :yticks], del=true)
-	del_from_dict(d, [[:R], [:B, :frame, :axes, :axis], [:J, :proj], [:figsize, :fig_size]])
+	del_from_dict(d, [[:R], [:B, :frame, :axes, :axis], [:J, :proj], [:figsize, :fig_size], [:band], [:aspect], [:xaxis], [:yaxis], [:axis2], [:xaxis2], [:yaxis2], [:title], [:subtitle], [:xlabel], [:ylabel], [:xticks], [:yticks]])
 
 	if (normalize != "" && normalize != "none")		# Plot the vertical axes
 		for k = 1:n_axes-1
-			basemap!(R= @sprintf("0/%d/%.10g/%.10g", n_axes, _bbox[2*(k-1)+1], _bbox[2k]), X="a$((k-1)*CTRL.figsize[1]/(n_axes-1))", B="W yaf")
+			basemap!(R= @sprintf("0/%d/%.10g/%.10g", n_axes, _bbox[2*(k-1)+1], _bbox[2k]), X="a$((k-1)*CTRL.figsize[1]/(n_axes-1))", B="W yaf", Vd=d[:Vd])
 		end
-		basemap!(R= @sprintf("0/%d/%.10g/%.10g", n_axes, _bbox[2*(n_axes-1)+1], _bbox[2n_axes]), B="E yaf")
+		basemap!(R= @sprintf("0/%d/%.10g/%.10g", n_axes, _bbox[2*(n_axes-1)+1], _bbox[2n_axes]), B="E yaf", Vd=d[:Vd])
 		d[:R] = @sprintf("1/%d/0/1", n_axes)		# Reset this because under the hood they are all normalized
 	end
 	
-	(is_in_dict(d, [:lw :W :pen]) === nothing) && (d[:lw] = 0.5)
+	d[:W] = build_pen(d, true)
 	d[:show] = do_show
-	#d[:Vd] = 1
-	!haveband ? common_plot_xyz("", D, "line", false, false, d...) : plot_bands_from_vecDS(D, d, do_show)
+	!haveband ? common_plot_xyz("", D, "line", false, false, d...) : plot_bands_from_vecDS(D, d, do_show, d[:W], gnames)
 end
 
 parallelplot!(cmd0::String="", arg1=nothing; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot(cmd0, arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
@@ -1126,11 +1123,17 @@ parallelplot(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=S
 parallelplot!(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot("", arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
 
 # ----------------------------------------------------------------------------------------------------------
-function plot_bands_from_vecDS(D::Vector{GMTdataset}, d, do_show)
+function plot_bands_from_vecDS(D::Vector{GMTdataset}, d, do_show, pen, gnames)
+	# This function is needed because of a GMT bug that screws the polygons when headers have -G
 	d[:show] = false
+	lw, lc, ls = break_pen(pen)
 	for k = 1:numel(D)
 		s = split(D[k].header)
 		d[:G] = string(s[2][3:end])
+		d[:W] = lw * (lc == "" ? s[1][3:end] : ","*lc) * "," * ls
+		if (haskey(d, :legend))
+			(isa(d[:legend], Bool) && d[:legend]) && (d[:legend] = gnames[k])
+		end
 		D[k].header = string(s[1])
 		(k == numel(D)) && (d[:show] = do_show)		# With the last one show it if has to.
 		band!(D[k]; d...)
