@@ -994,7 +994,8 @@ ecdfplot!(x::AbstractVector{<:Real}; kwargs...) = ecdfplot(x; first=false, kwarg
 	- `scale`: Display values scaled by standard deviation along each coordinate ruler.
 - `quantile`: Give a quantile in the [0-1] interval to plot the median +- `quantile` as dashed lines.
 - `band`: If used, instead of the dashed lines referred above, plot a band centered in the median. The band
-     colors are assigned automatically but this can be overriden by the `fill` option.
+     colors are assigned automatically but this can be overriden by the `fill` option. If set and `quantile`
+     not given, set a default of `quantile = 0.25`.``	 
 - `fill`: When `band` option is used and want to control the bands colors, give a list of colors to paint them.
 - `fillalpha` : When `fill` option is used, we can set the bands transparency with this option that takes in an array
     (vec or 1-row matrix) with numeric values between [0-1] or ]1-100], where 100 (or 1) means full transparency.
@@ -1028,6 +1029,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	_quantile::Float64 = ((val = find_in_dict(d, [:quantile])[1]) !== nothing) ? val : 0.0
 	(_quantile < 0 || _quantile > 0.5) && error("`quantile` must be in the [0, 0.5] interval")
 	haveband = haskey(d, :band)					# To know if data must be formatted for band() use.
+	(haveband && _quantile == 0) && (_quantile = 0.25)	# Default to quantile = 0.25 when not given and ask for band
 
 	function helper_D(D, _data, gidx, normtype, _bbox, gc)
 		# Common to two IF branches
@@ -1113,6 +1115,8 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	
 	d[:W] = build_pen(d, true)
 	d[:show] = do_show
+	!haveband && (d[:gindex] = [gidx[k][1] for k=1:numel(gidx)])
+	(!haveband && haskey(d, :legend) && isa(d[:legend], Bool) && d[:legend] && gnames != 0) && (d[:label] = gnames)
 	!haveband ? common_plot_xyz("", D, "line", false, false, d...) : plot_bands_from_vecDS(D, d, do_show, d[:W], gnames)
 end
 
@@ -1125,14 +1129,14 @@ parallelplot!(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=
 # ----------------------------------------------------------------------------------------------------------
 function plot_bands_from_vecDS(D::Vector{GMTdataset}, d, do_show, pen, gnames)
 	# This function is needed because of a GMT bug that screws the polygons when headers have -G
-	d[:show] = false
+	d[:show], isname = false, false
 	lw, lc, ls = break_pen(pen)
 	for k = 1:numel(D)
 		s = split(D[k].header)
 		d[:G] = string(s[2][3:end])
 		d[:W] = lw * (lc == "" ? s[1][3:end] : ","*lc) * "," * ls
 		if (haskey(d, :legend))
-			(isa(d[:legend], Bool) && d[:legend]) && (d[:legend] = gnames[k])
+			(isname || (isa(d[:legend], Bool) && d[:legend])) && (d[:legend] = gnames[k]; isname = true)
 		end
 		D[k].header = string(s[1])
 		(k == numel(D)) && (d[:show] = do_show)		# With the last one show it if has to.
