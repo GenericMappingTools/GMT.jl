@@ -17,7 +17,7 @@
 	boxplot(randn(100), Vd=dbg2)
 	boxplot!(randn(40), Vd=dbg2)
 	boxplot!(y, fill=true, separator=(:red,), Vd=dbg2)
-	boxplot(randn(50,9), fill=true, outliers=(size="6p",), hbar=true, Vd=dbg2)
+	boxplot(randn(50,10), fill=true, outliers=(size="6p",), hbar=true, Vd=dbg2)
 	boxplot!(randn(100,3,2), separator=true, cap="5p", Vd=dbg2)
 	boxplot!(y, Vd=dbg2)
 
@@ -39,6 +39,7 @@
 	violin!(mat2ds(randn(20)), Vd=dbg2)
 	violin(vvv, fill=true, boxplot=true, separator=true, scatter=true)
 	violin!(vvv, ccolor=true, Vd=dbg2)
+	boxplot(vvv, ccolor=true, fill=true, Vd=dbg2)
 	boxplot(vvv, fill=true, separator=true)
 	violin(randn(30), rand(1:3,30), Vd=dbg2)
 	violin!(randn(20), rand(1:3,20), Vd=dbg2)
@@ -60,7 +61,7 @@
 	parallelplot("iris.dat",  groupvar="text", normalize="")
 	parallelplot("iris.dat",  groupvar="text", normalize="zscore")
 	parallelplot("iris.dat",  groupvar="text", normalize="scale", quantile=0.25)
-	parallelplot("iris.dat",  normalize="", quantile=0.25, band=true)
+	parallelplot("iris.dat",  normalize="", quantile=0.25, band=true, legend=true)
 	parallelplot!("iris.dat", normalize="scale")
 	D = gmtread("iris.dat");
 	parallelplot!(D, normalize="scale")

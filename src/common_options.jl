@@ -1756,7 +1756,7 @@ function build_pen(d::Dict, del::Bool=false)::String
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function break_pen(pen::String)
+function break_pen(pen::AbstractString)
 	# Break up a pen string in its three tokens. PEN can be "lw,lc,ls", or "lw,ls", or ",,ls" etc.
 	(pen == "") && return "", "", ""
 	sp = split(pen, ',')
@@ -1764,7 +1764,7 @@ function break_pen(pen::String)
 	(length(sp) == 3) && (ls = string(sp[3]))
 	if (length(sp) > 1)
 		t2 = lowercase(sp[2])
-		(startswith(t2, "da") || startswith(t2, "do")) && (ls = t2)
+		(startswith(t2, "da") || startswith(t2, "do") || contains(t2, "_")) && (ls = t2)	# That "_" is risky.
 		(length(sp) == 2 && ls != "") && return lw, "", ls	# We are done here. Got a pen="linewidth,linestile"
 		# OK, arrived here means `ls` is either in 3 or non-existent so pos 2 must contain `lc` (or empty)
 		lc = t2
@@ -4134,9 +4134,9 @@ legend_bag() = legend_bag(Vector{String}(), Vector{String}(), Vector{String}(), 
 function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::String="")
 	# So far this fun is only called from plot() and stores line/symbol info in a const global var LEGEND_TYPE
 
-	valLegend = find_in_dict(d, [:legend], false)[1]	# false because we must keep alive till digests_legend_bag()
+	valLegend = find_in_dict(d, [:legend], false)[1]	# false because we must keep it alive till digests_legend_bag()
 	valLabel  = find_in_dict(d, [:label])[1]
-	(valLegend === nothing && valLabel === nothing && size(legend_type[1].label, 1) == 0) && return # Nothing else to do here
+	(valLegend === nothing && valLabel === nothing && size(legend_type[1].label, 1) == 0) && return # Nothing to do here
 
 	dd = Dict()
 	if (valLabel === nothing)					# See if it has a legend=(label="blabla",) or legend="label"
@@ -4157,9 +4157,13 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::Stri
 		(penC == "") && (penC = penC_)
 		(penS == "") && (penS = penS_)
 		cmd_[end] = "-W" * penT * ',' * penC * ',' * penS * " " * cmd_[end]	# Trick to make the parser find this pen
-		pens = Vector{String}(undef,length(arg)-1)
-		for k = 1:length(arg)-1
-			t = scan_opt(arg[k+1].header, "-W")
+
+		gindex  = find_in_dict(d, [:gindex])[1]	# For groups, this holds the indices of the group's start
+		nDs::Int = (gindex === nothing) ? length(arg) : length(gindex)	# Number of datasets to sneak in
+		pens = Vector{String}(undef, nDs-1)
+		k_vec = (gindex === nothing) ? (2:nDs) : gindex[2:end]
+		for k = 1:nDs-1
+			t = scan_opt(arg[k_vec[k]].header, "-W")
 			if     (t == "")          pens[k] = " -W0."
 			elseif (t[1] == ',')      pens[k] = " -W" * penT * t		# Can't have, e.g., ",,230/159/0" => Crash
 			elseif (occursin(",",t))  pens[k] = " -W" * t  
@@ -4168,18 +4172,18 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::Stri
 		end
 		append!(cmd_, pens)			# Append the 'pens' var to the input arg CMD
 
-		lab = Vector{String}(undef,length(arg))
-		if ((val = find_in_dict(d, [:lab :label])[1]) !== nothing)		# Have label(s)
-			if (!isa(val, Array))				# One single label, take it as a label prefix
-				for k = 1:length(arg)  lab[k] = string(val,k)  end
+		lab = Vector{String}(undef, nDs)
+		if (valLabel !== nothing)
+			if (!isa(valLabel, Array))				# One single label, take it as a label prefix
+				for k = 1:nDs  lab[k] = string(valLabel,k)  end
 			else
-				for k = 1:min(length(arg), length(val))  lab[k] = string(val[k],k)  end
-				if (length(val) < length(arg))	# Probably shit, but don't error because of it
-					for k = length(val)+1:length(arg)  lab[k] = string(val[end],k)  end
+				for k = 1:min(nDs, length(valLabel))  lab[k] = string(valLabel[k])  end
+				if (length(valLabel) < nDs)	# Probably shit, but don't error because of it
+					for k = length(valLabel)+1:nDs  lab[k] = string(valLabel[end],k)  end
 				end
 			end
 		else
-			for k = 1:length(arg)  lab[k] = string('y',k)  end
+			for k = 1:nDs  lab[k] = string('y',k)  end
 		end
 	elseif (valLabel !== nothing)
 		lab = [string(valLabel)]
@@ -4300,7 +4304,7 @@ function scan_opt(cmd::AbstractString, opt::String)::String
 	return out
 end
 
-# --------------------------------------------------------------------------------------------------
+#= --------------------------------------------------------------------------------------------------
 function break_pen(pen::AbstractString)
 	# Break a pen string in its form thick,color,style into its constituints
 	# Absolutely minimalist. Will fail if -Wwidth,color,style pattern is not followed.
@@ -4313,6 +4317,7 @@ function break_pen(pen::AbstractString)
 	end
 	return penT, penC, penS
 end
+=#
 
 # --------------------------------------------------------------------------------------------------
 function justify(arg, nowarn::Bool=false)::String
