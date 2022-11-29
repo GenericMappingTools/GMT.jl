@@ -983,9 +983,10 @@ ecdfplot!(x::AbstractVector{<:Real}; kwargs...) = ecdfplot(x; first=false, kwarg
 - `axeslabels` or `labels`: String vector with the names of each variable axis. Plots a default "Label?" if
      not provided.
 - `group`: A string vector or vector of integers used to group the lines in the plot.
-- `groupvar`: Uses the table variable specified by `groupvar` to group the lines in the plot. When `arg1` is
-     GMTdatset or `cmd0` is the name of a file with one and it has the `text` field filled, use `groupvar="text"`
-	 to use that text field as the grouping vector.
+- `groupvar`: Uses the table variable specified by `groupvar` to group the lines in the plot. `groupvar` can
+     be a column number, or a column name passed in as a Symbol. *e.g.* `groupvar=:Male` if a column with that
+     name exists.  When `arg1` is GMTdatset or `cmd0` is the name of a file with one and it has the `text` field
+     filled, use `groupvar="text"` to use that text field as the grouping vector.
 - `yvar`: This can take the form of column names or column numbers. Example `yvar=(2,3)`, or `yvar=[:Y, :Z1, :Z2]`.
 - `nomalize`: 
     - `range`: (Default) Display raw data along coordinate rulers that have independent minimum and maximum limits.
@@ -993,6 +994,8 @@ ecdfplot!(x::AbstractVector{<:Real}; kwargs...) = ecdfplot(x; first=false, kwarg
 	- `zscore`: Display z-scores (with a mean of 0 and a standard deviation of 1) along each coordinate ruler.
 	- `scale`: Display values scaled by standard deviation along each coordinate ruler.
 - `quantile`: Give a quantile in the [0-1] interval to plot the median +- `quantile` as dashed lines.
+- `std`: Instead of median plus quantile lines, draw the mean +- one standard deviation. This is achieved with
+     both `std=true` or `std=1`. For other number od standard deviations use, *e.g.* `std=2`, or `std=1.5`.
 - `band`: If used, instead of the dashed lines referred above, plot a band centered in the median. The band
      colors are assigned automatically but this can be overriden by the `fill` option. If set and `quantile`
      not given, set a default of `quantile = 0.25`.``	 
@@ -1003,7 +1006,7 @@ ecdfplot!(x::AbstractVector{<:Real}; kwargs...) = ecdfplot(x; first=false, kwarg
 
 Example:
 
-    parallelplot("iris.dat", groupvar="text", labels=["Sepal Length","Sepal Width","Petal Length","Petal Width","Species"],show=1)
+    parallelplot("iris.dat", groupvar="text", quantile=0.25, legend=true, band=true, show=1)
 """
 function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabels::Vector{String}=String[],
                       labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kwargs...)
@@ -1014,7 +1017,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	else                                      data = mat2ds(arg1)
 	end
 	(isempty(group) && groupvar == "text") && (group = data.text)
-	(!isempty(group) && length(group) != size(data,1)) && error("Length of `group` vector and number of rows in input don't match.")
+	(!isempty(group) && length(group) != size(data,1)) && error("Length of `group` and number of rows in input don't match.")
 	set_dsBB!(data)		# Update the min/maxs
 
 	data = with_xyvar(d::Dict, data, true)		# See if we have a column request based on column names
@@ -1030,6 +1033,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	(_quantile < 0 || _quantile > 0.5) && error("`quantile` must be in the [0, 0.5] interval")
 	haveband = haskey(d, :band)					# To know if data must be formatted for band() use.
 	(haveband && _quantile == 0) && (_quantile = 0.25)	# Default to quantile = 0.25 when not given and ask for band
+	_std::Float64 = ((val = find_in_dict(d, [:std])[1]) === nothing) ? 0.0 : (isa(val, Bool) ? 1.0 : val)
 
 	function helper_D(D, _data, gidx, normtype, _bbox, gc)
 		# Common to two IF branches
@@ -1037,16 +1041,23 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 		for k = 1:numel(gidx)					# Loop over number of groups
 			nr = length(gidx[k])
 			t = normalizeArray(normtype, _data[gidx[k],:], _bbox)
-			if (_quantile == 0)
+			if (_quantile == 0 && _std == 0)	# No envelope lines nor bands
 				D[b:b+nr-1] = mat2ds(collect(t'), x=ax_pos, multi=true, color=[gc[k]])
 			else
 				l, c, h = zeros(size(t,2)), zeros(size(t,2)), zeros(size(t,2))
 				for nc = 1:size(t,2)
-					l[nc], c[nc], h[nc] = quantile(skipnan(view(t, :,nc)), [0.5-_quantile, 0.5, 0.5+_quantile])
+					vc = view(t, :,nc)
+					if (_std == 0)				# Quantiles
+						l[nc], c[nc], h[nc] = quantile(skipnan(vc), [0.5-_quantile, 0.5, 0.5+_quantile])
+					else						# Mean +- STD
+						c[nc] = nanmean(vc)
+						_st = std_nan(vc)[1] * _std
+						l[nc], h[nc] = c[nc] - _st, c[nc] + _st
+					end
 				end
 				# THE SHIT. GMT6.4 is bugged when headers contain the -G<color> field (it screws the polygons)
 				if (haveband)		# Format to use in band()
-					# But we need that -G<color> for latter trickly extract the and use it in the on line command.
+					# But we need that -G<color> for latter trickly extract the and use it in the online command.
 					D[n+=1] = mat2ds(c, x=ax_pos, multi=true, color=[gc[k]], fill=[gc[k]], fillalpha=0.7)[1]
 					D[n].data = [D[n].data c.-l h.-c]
 					D[n].colnames = [D[n].colnames..., "Low", "High"]
@@ -1058,7 +1069,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 			end
 			b += nr
 		end	
-		(_quantile != 0) && deleteat!(D, n+1:length(D))		# Because in this case D was allocated in excess.
+		(_quantile != 0 || _std != 0) && deleteat!(D, n+1:length(D))	# Because in this case D was allocated in excess.
 		D
 	end
 
@@ -1071,9 +1082,11 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 		end
 	end
 
+	(isempty(group) && isa(groupvar, Integer)) && (group = data.data[:, groupvar])
+	(isempty(group) && isa(groupvar, Symbol))  && (group = data.data[groupvar, groupvar][:,2])	# With some risky trickery
 	(isempty(group)) && (group = fill(0, size(data,1)))		# Make it a single group to reuse the same code
-
 	gidx, gnames = grp2idx(group)
+
 	D = Vector{GMTdataset}(undef, length(group))
 	gc = helper_ds_fill(d; nc=numel(gidx))
 	isempty(gc) && (gc = (numel(gidx) < 8) ? matlab_cycle_colors : simple_distinct)		# Group colors
@@ -1115,7 +1128,8 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	
 	d[:W] = build_pen(d, true)
 	d[:show] = do_show
-	!haveband && (d[:gindex] = [gidx[k][1] for k=1:numel(gidx)])
+	!haveband && (d[:gindex] = [gidx[k][1] for k=1:numel(gidx)])	# The `band` case is handled in put_in_legend_bag
+	(_quantile != 0 || _std != 0) && (d[:gindex] = 1:3:length(D))	# But the envelope is a different case
 	(!haveband && haskey(d, :legend) && isa(d[:legend], Bool) && d[:legend] && gnames != 0) && (d[:label] = gnames)
 	!haveband ? common_plot_xyz("", D, "line", false, false, d...) : plot_bands_from_vecDS(D, d, do_show, d[:W], gnames)
 end
@@ -1139,7 +1153,7 @@ function plot_bands_from_vecDS(D::Vector{GMTdataset}, d, do_show, pen, gnames)
 			(isname || (isa(d[:legend], Bool) && d[:legend])) && (d[:legend] = gnames[k]; isname = true)
 		end
 		D[k].header = string(s[1])
-		(k == numel(D)) && (d[:show] = do_show)		# With the last one show it if has to.
+		(k == numel(D)) && (d[:show] = do_show)		# Last one. Show it if has to.
 		band!(D[k]; d...)
 	end
 end

@@ -296,6 +296,7 @@
 	@test GMT.axis(scale="exp")[1] == " -Bpp";
 	@test GMT.axis(phase_add=10)[1] == " -Bp+10";
 	@test GMT.axis(phase_sub=10)[1] == " -Bp-10";
+	@test GMT.axis("zz", Dict())[1] == " -Bzz"
 
 	@test GMT.parse_grid(Dict(), (z=25,)) == " -Bzg25"
 	@test GMT.parse_grid(Dict(), ()) == " -Bg"
@@ -381,6 +382,7 @@
 
 	@test doy2date(283, 2021) == Date("2021-10-10")
 	@test date2doy("2021-10-10") == 283
+	date2doy()
 	@test yeardecimal("2000") == 2000.0
 	@test yeardecimal("2000-01-01T00:00:00") == 2000.0
 
