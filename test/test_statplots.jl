@@ -63,6 +63,8 @@
 	parallelplot("iris.dat",  groupvar="text", normalize="scale", quantile=0.25)
 	parallelplot("iris.dat",  normalize="", quantile=0.25, band=true, legend=true)
 	parallelplot!("iris.dat", normalize="scale")
+	parallelplot("iris.dat", groupvar="text", band=true, quantile=0.25, legend=true)
+	parallelplot("iris.dat", groupvar="text", std=1.0, legend=true)
 	D = gmtread("iris.dat");
 	parallelplot!(D, normalize="scale")
 	parallelplot(D, normalize="zscore")
