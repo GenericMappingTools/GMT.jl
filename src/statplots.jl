@@ -998,7 +998,7 @@ ecdfplot!(x::AbstractVector{<:Real}; kwargs...) = ecdfplot(x; first=false, kwarg
      both `std=true` or `std=1`. For other number od standard deviations use, *e.g.* `std=2`, or `std=1.5`.
 - `band`: If used, instead of the dashed lines referred above, plot a band centered in the median. The band
      colors are assigned automatically but this can be overriden by the `fill` option. If set and `quantile`
-     not given, set a default of `quantile = 0.25`.``	 
+     not given, set a default of `quantile = 0.25`.
 - `fill`: When `band` option is used and want to control the bands colors, give a list of colors to paint them.
 - `fillalpha` : When `fill` option is used, we can set the bands transparency with this option that takes in an array
     (vec or 1-row matrix) with numeric values between [0-1] or ]1-100], where 100 (or 1) means full transparency.
