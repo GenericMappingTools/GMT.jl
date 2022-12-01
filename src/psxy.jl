@@ -283,6 +283,7 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)
 	# Make a subset of a GMTdataset by selecting which coluns to extract. The selection can be done by
 	# column numbers or column names. 'xvar' selects only the xx col, but 'yvar' can select more than one.
 	# 'no_x' is for croping some columns and not add a x column and not split in many D's (one per column).
+	# By default when yvar is a vec we split the columns by default (WHY??). Pass nomulticol=1 in `d` to prevent this.
 	((val_y = find_in_dict(d, [:yvar])[1]) === nothing) && return arg1	# No y colname, no business
 	ycv::Vector{Int}, ismulticol = Int[], false
 	if (isa(val_y, Integer) || isa(val_y, String) || isa(val_y, Symbol))
@@ -298,10 +299,12 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)
 			for k = 1:lastindex(vs)
 				((ind = findfirst(vs[k] .== arg1.colnames)) !== nothing) && (ycv[k] = ind)
 			end
+			any(ycv .== 0) && error("One or more column names does not match with data colnames.")
 		end
 		isempty(ycv) && error("yvar option is non-sense.")
 		(minimum(ycv) < 1 || maximum(ycv) > size(arg1,2)) && error("Col names not found in GMTdataset col names or exceed col count.")
-		ismulticol = true
+		domulticol = ((val = find_in_dict(d::Dict, [:nomulticol])[1]) === nothing) ? true : false
+		(domulticol) && (ismulticol = true)
 	end
 
 	function getcolvar(d::Dict, var::VMs)
@@ -317,19 +320,26 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)
 	((sc = getcolvar(d, [:svar :szvar :sizevar])) !== nothing) && (ycv = [ycv..., sc])
 	((cc = getcolvar(d, [:cvar :colorvar])) !== nothing) && (ycv = [ycv..., cc])
 	if (!no_x)
-		if (xc === nothing)  out = hcat(collect(1:size(arg1,1)), arg1[:, ycv])
-		else                 out = arg1[:, [xc, ycv...]]
+		if (xc === nothing)
+			out = mat2ds(hcat(collect(1:size(arg1,1)), arg1.data[:, ycv]))
+			out.colnames = append!(["X"], arg1.colnames[ycv])
+			if ((Tc = get(arg1.attrib, "Timecol", "")) != "")	# Try to keep also an eventual Timecol
+				((ind = findfirst(parse(Int, Tc) .== ycv)) !== nothing) && (D.attrib[:Timecol] = (xc !== nothing) ? ind+1 : ind)
+			end
+		else
+			out = mat2ds(arg1, (:, [xc, ycv...]))
 		end
-		D = (ismulticol) ? mat2ds(out, multi=true, color=:cycle) : mat2ds(out)		# Return a GMTdataset
+		#D = (ismulticol) ? mat2ds(out, multi=true, color=:cycle) : mat2ds(out)		# Return a GMTdataset
+		if (ismulticol)
+			D = mat2ds(out.data, multi=true, color=:cycle)
+			if ((Tc = get(arg1.attrib, "Timecol", "")) == "1")	# Try to keep an eventual Timecol
+				for k = 1:nemel(D)  D[k].attrib["Timecol"] = "1";	D[k].colnames[1] = "Time";  end
+			end
+		else
+			D = out
+		end
 	else
 		D = mat2ds(arg1, (:,ycv))
-	end
-	if (xc == 1 && ycv[1] == 2)		# Keep CRS if possible
-		ismulticol ? (D[1].proj4=arg1.proj4; D[1].wkt=arg1.wkt; D[1].epsg=arg1.epsg) :
-		             (D.proj4=arg1.proj4; D.wkt=arg1.wkt; D.epsg=arg1.epsg)
-	end
-	if ((Tc = get(arg1.attrib, "Timecol", "")) != "")	# Try to keep also an eventual Timecol
-		((ind = findfirst(parse(Int, Tc) .== ycv)) !== nothing) && (D.attrib[:Timecol] = (xc !== nothing) ? ind+1 : ind)
 	end
 	return D
 end
