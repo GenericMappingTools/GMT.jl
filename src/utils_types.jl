@@ -243,6 +243,9 @@ function mat2ds(D::GMTdataset, inds)::GMTdataset
 	(typeof(inds[2]) == Colon) && return _D		# We are done here
 
 	_D.colnames = D.colnames[inds[2]]
+	if (inds[2][1] != 1 || inds[2][2] != 2)		# If any of the first or second columns has gone we know no more about CRS
+		_D.proj4 = "";	_D.wkt = "";	_D.epsg = 0
+	end
 	i = findall(startswith.(_D.colnames, "Time"))
 	isempty(i) && return _D						# No TIME columns. We are done
 	(length(i) == 1) ? (Tc = "$(i[1])") : _i = i[2:end]
