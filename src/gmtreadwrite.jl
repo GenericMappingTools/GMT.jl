@@ -191,7 +191,7 @@ function helper_set_colnames!(o::GDtype)
 	if (isa(o, GMTdataset))
 		isempty(o.comment) && return nothing
 		ncs = size(o,2)			# Next line checks if the comment is comma separated
-		hfs = (count(i->(i == ','), o.comment[1]) >= ncs) ? split(o.comment[1], ',') : split(o.comment[1])
+		hfs = (count(i->(i == ','), o.comment[1]) >= ncs-1) ? strip.(split(o.comment[1], ',')) : split(o.comment[1])
 		#(length(hfs) >= ncs) && (o.colnames = string.(hfs)[1:ncs])
 		o.colnames = string.(hfs)
 	else
