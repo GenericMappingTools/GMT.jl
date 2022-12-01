@@ -666,10 +666,9 @@ stairs(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); step
 stairs!(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); first=false, step=step, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-function helper_input_ds(cmd0::String="", arg1=nothing; kwargs...)
+function helper_input_ds(d::Dict, cmd0::String="", arg1=nothing)
 	# Block common to some functions. Read the file if cmd0 != "" and takes care of "select by col"
 	# if arg1 is a GMTdataset (or a vector of them). 
-	d = KW(kwargs)
 	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", nothing, "", false, true)[2])
 	(isa(arg1, Matrix) && size(arg1,2) > 2 && find_in_dict(d, [:multicol])[1] !== nothing) && (arg1 = mat2ds(arg1, multi=true, color="yes"))
 	haveVarFill = (haskey(d, :fill) && d[:fill] == true)
@@ -677,7 +676,7 @@ function helper_input_ds(cmd0::String="", arg1=nothing; kwargs...)
 	(haveVarFill && !isa(arg1, Vector{<:GMTdataset})) && (@warn("'fill=true' is only usable with multi-segments"); delete!(d, :fill))
 	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))	# It's not implemented for GMTdataset vectors
 	haveR = (find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag :xlim :xlimits], false)[1] !== nothing)
-	return arg1, d, haveR, haveVarFill
+	return arg1, haveR, haveVarFill
 end
 
 # ------------------------------------------------------------------------------------------------------
@@ -692,7 +691,8 @@ Example:
 	stem(Y,[Y -Y], multicol=true, fill=true, show=true)
 """
 function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
-	arg1, d, haveR, haveVarFill = helper_input_ds(cmd0, arg1; kwargs...)
+	d = KW(kwargs)
+	arg1, haveR, haveVarFill = helper_input_ds(d, cmd0, arg1)
 
 	if (isGMTdataset(arg1))
 		# OK, so now we have a GMTdataset or a vector of them. Must create new ones with extra columns.
@@ -781,7 +781,8 @@ Example:
 """
 function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# A arrows plotting method of plot
-	arg1, d, haveR, haveVarFill = helper_input_ds(cmd0, arg1; kwargs...)	# Read file or read "by-columns"
+	d = KW(kwargs)
+	arg1, haveR, haveVarFill = helper_input_ds(d, cmd0, arg1)		# Read file or read "by-columns"
 
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 	typevec = (find_in_dict(d, [:uv])[1] !== nothing) ? 1 : (find_in_dict(d, [:endpt :endpoint])[1] !== nothing) ? 2 : 0
@@ -984,7 +985,9 @@ end
 
 """
 function feather(cmd0::String="", arg1=nothing; first=true, kwargs...)
-	arg1, d, haveR, haveVarFill = helper_input_ds(cmd0, arg1; kwargs...)
+	d = KW(kwargs)
+	d[:nomulticol] = true		# Prevent that with_xyvar() (called by helper_input_ds()) splits by columns
+	arg1, haveR, haveVarFill = helper_input_ds(d, cmd0, arg1)		# Read file or read "by-columns"
 
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 	typevec = (find_in_dict(d, [:rtheta])[1] !== nothing) ? 0 : (find_in_dict(d, [:endpt :endpoint])[1] !== nothing) ? 2 : 1
