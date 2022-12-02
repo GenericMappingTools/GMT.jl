@@ -732,9 +732,10 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		_show = d[:show] != 0;		d[:show]=false		# Backup the :show val
 	end
 
-	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
+	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function
+	have_baseline = ((find_in_dict(d, [:nobaseline])[1]) === nothing)
 	out1, out2 = common_plot_xyz("", arg1, "stem", first, false, d...), nothing
-	((find_in_dict(d, [:nobaseline])[1]) === nothing) && (out2 = hlines!(0.0, show=_show))	# See if we have a no-baseline request
+	(have_baseline) && (out2 = hlines!(0.0, show=_show))	# See if we have a no-baseline request
 	(out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
 end
 
@@ -1145,6 +1146,9 @@ function radar(cmd0::String="", arg1=nothing; first::Bool=true, axeslimts=Float6
 	common_plot_xyz("", D, "line", false, false, d...)
 end
 radar(arg1; kwargs...) = radar("", arg1; first=true, kwargs...)
+
+radar!(cmd0::String="", arg1=nothing; axeslimts=Float64[], annotall::Bool=false, axeslabels::Vector{String}=String[], labels::Vector{String}=String[], kw...) = radar(cmd0, arg1; axeslimts=axeslimts, annotall=annotall, axeslabels=axeslabels, labels=labels, first=false, kw...)
+radar!(arg1; kwargs...) = radar("", arg1; first=false, kwargs...)
 
 # ------------------------------------------------------------------------------------------------------
 """

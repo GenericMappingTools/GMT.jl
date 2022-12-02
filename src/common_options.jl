@@ -1535,7 +1535,7 @@ parse_G(d::Dict, cmd::String) = parse_helper(cmd, d, [:G :save :write :outgrid :
 function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
-	get_that_string(arg)::String = string(arg)		# Function barrier. Shting up JET, etc.
+	get_that_string(arg)::String = string(arg)		# Function barrier. Shuting up JET, etc.
 
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
 		if isa(val, Dict)  val = dict2nt(val)  end
