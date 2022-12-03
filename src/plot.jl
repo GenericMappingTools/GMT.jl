@@ -1132,7 +1132,7 @@ function radar(cmd0::String="", arg1=nothing; first::Bool=true, axeslimts=Float6
 	def_fill::Vector{String} = [" "]		# Means, no fill
 	((val = find_in_dict(d, [:fill :fillcolor], false)[1]) !== nothing) && (def_fill = (val == true) ? String[] : string.(val))
 	isempty(def_fill) && (haskey(d, :fill) ? delete!(d, :fill) : delete!(d, :fillcolor))	# Otherwise fill=true boom
-	def_alpha = (def_fill != [" "] && !haskey(d, :fillalpha)) ? fill(0.7, 1, n_axes) : d[:fillalpha]
+	def_alpha = (def_fill != [" "] && !haskey(d, :fillalpha)) ? fill(0.7, 1, n_axes) : haskey(d, :fillalpha) ? d[:fillalpha] : [0]
 
 	D = mat2ds((isnorm) ? collect(data') : collect((data ./ maxs_round)'), x=ax_angs, multi=true, color=:cycle, fill=def_fill, fillalpha=def_alpha)
 
