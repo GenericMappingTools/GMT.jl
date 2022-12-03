@@ -20,7 +20,7 @@ Parameters
 
     Sets color or shade for vector interiors [Default is no fill].
     ($(GMTdoc)grdvector.html#g)
-- **I** | **inc** :: [Type => Sytr | Number]	``Arg=[x]dx[/dy]``
+- **I** | **inc** | **increment** | **spacing** :: [Type => Sytr | Number]	``Arg=[x]dx[/dy]``
 
     Only plot vectors at nodes every x_inc, y_inc apart (must be multiples of original grid spacing).
     ($(GMTdoc)grdvector.html#i)
