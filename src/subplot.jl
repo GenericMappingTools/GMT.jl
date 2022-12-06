@@ -145,10 +145,18 @@ function guess_panels_size(cmd, opt)
 	end
 	F = ""
 	if     (n_cols == 3)  F = " -Fs6/6";	M = " -M0.2c/0.2c"
-	elseif (n_cols == 2)  F = " -Fs8/8";	M = " -M0.3c/0.2c"
+	elseif (n_cols > 3 && n_cols == n_rows) F = " -Fs$(n_cols/20)/$(n_cols/20)";	M = " -M0.15c/0.15c"
+	elseif (n_rows == 2 && n_cols == 2)     F = " -Fs8/8";	M = " -M0.3c/0.2c"
+	elseif (n_rows == 1)
+		if     (n_cols == 2)  F = " -Fs8/8";	M = " -M0.3c" 
+		elseif (n_cols == 3)  F = " -Fs6/6";	M = " -M0.3c" 
+		elseif (n_cols == 4)  F = " -Fs5/5";	M = " -M0.2c" 
+		end
 	elseif (n_cols == 1)
 		if     (n_rows == 2)  F = " -Fs12/8";	M = " -M0.3c"
 		elseif (n_rows == 3)  F = " -Fs12/6";	M = " -M0.3c"
+		elseif (n_rows == 4)  F = " -Fs12/5";	M = " -M0.2c"
+		elseif (5 <= n_rows <= 7)  F = " -Fs12/4";	M = " -M0.15c"
 		end
 	end
 	(F == "") && error("No panels/fig size provided and the grid panels dimension is not within the subset that we guess for")
