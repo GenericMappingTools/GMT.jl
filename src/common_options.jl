@@ -2336,16 +2336,16 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
 
-	function equalize(d, arg1, cptname)::GMTcpt
-		if ((isa(arg1, GMTgrid) || isa(arg1, String)) && (val = find_in_dict(d, [:equalize])[1]) !== nothing)
-			n::Int = convert(Int, val)					# If val is other than Bool or number it will error
+	function equalize(d, arg1, cptname, opt_T)::GMTcpt
+		if ((isa(arg1, GMTgrid) || isa(arg1, String)) && (val_eq = find_in_dict(d, [:equalize])[1]) !== nothing)
+			n::Int = convert(Int, val_eq)				# If val is other than Bool or number it will error
 			if (isa(arg1, String))
-				cpt = (n > 1) ? gmt("grd2cpt -E$n+c -C" * cptname * " " * arg1) : gmt("grd2cpt -C" * cptname * " " * arg1)
+				(n > 1) ? gmt("grd2cpt -E$n+c -C" * cptname * " " * arg1) : gmt("grd2cpt -C" * cptname * " " * arg1)
 			else
-				cpt = (n > 1) ? gmt("grd2cpt -E$n+c -C" * cptname, arg1) : gmt("grd2cpt -C" * cptname, arg1)
+				(n > 1) ? gmt("grd2cpt -E$n+c -C" * cptname, arg1) : gmt("grd2cpt -C" * cptname, arg1)
 			end
 		else
-			cpt = gmt("makecpt " * opt_T * " -C" * cptname)
+			gmt("makecpt " * opt_T * " -C" * cptname)
 		end
 	end
 
@@ -2375,9 +2375,9 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 	elseif (def && opt_T != "")						# Requested use of the default color map
 		if (IamModern[1])  opt_T *= " -H"  end		# Piggy back this otherwise we get no CPT back in Modern
 		if (haskey(d, :this_cpt) && d[:this_cpt] != "")		# A specific CPT name was requested
-			cpt = equalize(d, arg1, d[:this_cpt]);	delete!(d, :this_cpt)
+			cpt = equalize(d, arg1, d[:this_cpt], opt_T);	delete!(d, :this_cpt)
 		else
-			cpt = equalize(d, arg1, "turbo")
+			cpt = equalize(d, arg1, "turbo", opt_T)
 			cpt.bfn[3, :] = [1.0 1.0 1.0]	# Some deep bug, in occasions, returns grays on 2nd and on calls
 		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
@@ -3790,7 +3790,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		end
 		reset_theme()
 	end
-	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
+	CTRL.limits .= 0.0;		CTRL.figsize .= 0.0;	CTRL.proj_linear[1] = true;		# Reset these for safety
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.pocket_R[1] = ""
 	return nothing
