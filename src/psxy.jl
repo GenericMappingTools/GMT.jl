@@ -486,7 +486,7 @@ function parse_opt_S(d, arg1, is3D)
 			(!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw")) && (opt_S *= def_size)
 		elseif (haskey(d, :hexbin))
 			inc::Float64 = parse(Float64, arg1.attrib["hexbin"])
-			r = (CTRL.limits[8] - CTRL.limits[7]) / (arg1[2] - arg1[1]) * inc	# should be = 3, I think
+			r = (CTRL.limits[8] - CTRL.limits[7]) / sqrt(3) / inc
 			(CTRL.figsize[1] == 0) && @warn("Failed to automatically fetch the fig width. Using 14 cm to show something.")
 			w = (CTRL.figsize[1] != 0) ? CTRL.figsize[1] : 14
 			opt_S = " -Sh$(w / (r * 1.5))"		# Is it always 1.5?

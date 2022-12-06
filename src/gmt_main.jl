@@ -1427,7 +1427,7 @@ function resetGMT()
 	def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.IamInPaperMode[:] = [false, true];	IamInset[1] = false
-	CTRL.pocket_call[1] = CTRL.pocket_call[3] = nothing;	CTRL.pocket_R[1] = ""
+	CTRL.pocket_call[1] = CTRL.pocket_call[3] = nothing;	CTRL.pocket_R[1] = "";	CTRL.figsize .= 0.0
 	gmt_restart()
 	clear_sessions()
 end
