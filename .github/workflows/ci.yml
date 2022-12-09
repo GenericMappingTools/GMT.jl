@@ -32,7 +32,6 @@ jobs:
           #- ubuntu-latest
           - ubuntu-20.04
           - macos-latest
-          - windows-latest
         arch:
           - x64
         include:
@@ -78,8 +77,6 @@ jobs:
           GMT_INSTALL_DIR=${GMT_INSTALL_DIR:-${HOME}/gmt-install-dir}
           echo "${GMT_INSTALL_DIR}/bin" >> $GITHUB_PATH
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
-
-      - name: Install GMT Windows
 
       - name: Check a few simple commands
         run: |
