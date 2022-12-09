@@ -29,8 +29,8 @@ jobs:
           - '1.7' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
           - 'nightly'
         os:
-          - ubuntu-latest
-          #- ubuntu-18.04
+          #- ubuntu-latest
+          - ubuntu-20.04
           - macos-latest
         arch:
           - x64

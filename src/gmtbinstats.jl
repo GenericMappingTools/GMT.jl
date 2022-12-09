@@ -61,7 +61,6 @@ Parameters
 function binstats(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	#(haskey(d, :Vd) && d[:Vd] == 2)
 	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
 	data = mat2ds(arg1)
 	isa(data, Vector{<:GMTdataset}) && isempty(data[1].ds_bbox) && set_dsBB!(data)
