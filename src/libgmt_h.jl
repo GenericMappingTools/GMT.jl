@@ -372,7 +372,7 @@ struct COMMON_R
 end
 
 #= 
-mutable struct GMTAPI_CTRL
+struct GMTAPI_CTRL
 	# Master controller which holds all GMT API related information at run-time for a single session.
 	# Users can run several GMT sessions concurrently; each session requires its own structure.
 	# Use GMTAPI_Create_Session to initialize a new session and GMTAPI_Destroy_Session to end it.
@@ -389,27 +389,48 @@ mutable struct GMTAPI_CTRL
 	shape::Cint                 # GMT_IS_COL_FORMAT (1) if column-major (MATLAB, Fortran), GMT_IS_ROW_FORMAT (0) if row-major
 	leave_grid_scaled::UInt32	# 1 if we dont want to unpack a grid after we packed it for writing [0]
 	n_cores::UInt32             # Number of available cores on this system
+	n_tmp_headers::Cint         # Number of temporarily held table headers
+	terminal_width::Cint        # Width of the terminal
 	verbose::UInt32             # Used until GMT is set up
 	registered::NTuple{2,Bool}	# true if at least one source/destination has been registered (in and out)
 	io_enabled::NTuple{2,Bool}	# true if access has been allowed (in and out)
 	module_input::Bool          # true when we are about to read inputs to the module (command line) */
+	usage::Bool                 # Flag when 1-liner modern mode modules just want usage
+	allow_reuse::Bool           # Flag when get_region_from_data can read a file and not flag it as "used"
+	is_file::Bool               # True if current rec-by-rec i/o is from a physical file
+	cache::Bool                 # true if we want to read a cache file via GDAL
+	no_history::Bool            # true if we want to disable the gmt.history mechanism
+	got_remote_wesn::Bool       # true if we obtained w/e/sn via a remote grid/image with no resolution given
+	use_gridline_registration::Bool       # true if default remote grid registration should be gridline, not pixel
+	use_gridline_registration_warn::Bool  # true if we should warn about the above
 	n_objects_alloc::Csize_t	# Allocation counter for data objects
 	error::Int32				# Error code from latest API call [GMT_OK]
 	last_error::Int32			# Error code from previous API call [GMT_OK]
 	shelf::Int32				# Place to pass hidden values within API
+	log_level::UInt32           # 0 = stderr, 1 = just this module, 2 = set until unset
 	io_mode::NTuple{2,UInt32}	# 1 if access as set, 0 if record-by-record
-	PPID::Cint                  # The Process ID of the parent (e.g., shell) or the external caller
+	tile_wesn::NTuple{GMTAPI_N_GRID_ARGS,Cdouble}  # Original region used when getting tiles (perhaps result of -Roblique -J)
+	tile_inc::Cdouble           # Remote grid increment in degrees
+	tile_reg::UInt8             # Remote grid registration */
 	#GMT::Ptr{GMT_CTRL}			# Key structure with low-level GMT internal parameters
 	GMT::Ptr{Cvoid}				# Maybe one day. Till than just keep it as Cvoid
 	object::Ptr{Ptr{GMTAPI_DATA_OBJECT}}	# List of registered data objects
 	session_tag::Ptr{UInt8}		# Name tag for this session (or NULL)
+	session_name::Ptr{UInt8}    # Unique name for modern mode session (NULL for classic) */
 	tmp_dir::Ptr{UInt8}         # System tmp_dir (NULL if not found)
+	session_dir::Ptr{UInt8}     # GMT Session dir (NULL if not running in modern mode)
 	gwf_dir::Ptr{UInt8}         # GMT WorkFlow dir (NULL if not running in modern mode)
+	tmp_header::Ptr{Ptr{UInt8}} # Temporary table headers held until we are able to write them to destination */
+	tmp_segmentheader::Ptr{UInt8} # Temporary segment header held until we are able to write it to destination */
+	message::Ptr{UInt8}         # To be allocated by Create_Session and used for messages */
+	error_msg::NTuple{4096,UInt8} # The cached last error message */
 	internal::Bool				# true if session was initiated by gmt.c
 	deep_debug::Bool			# temporary for debugging
+	parker_fft_default::Bool    # Used to alter the default in -N FFT settings */
 	#int (*print_func) (FILE *, const char *);	# Pointer to fprintf function (may be reset by external APIs like MEX)
-	pf::Ptr{Cvoid}				# Don't know what to put here, so ley it be *void
+	pf::Ptr{Cvoid}				# Don't know what to put here, so let it be *void
 	do_not_exit::UInt32			# 0 by default, mieaning it is OK to call exit  (may be reset by external APIs like MEX to call return instead)
 	lib::Ptr{Gmt_libinfo}		# List of shared libs to consider
 	n_shared_libs::UInt32		# How many in lib
-end =#
+end
+=#

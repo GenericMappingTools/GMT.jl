@@ -187,12 +187,12 @@ function gmt(cmd::String, args...)
 	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
 	g_module::String, r = strtok(cmd)
 
-	if (g_module == "begin")		# Use this default fig name instead of "gmtsession"
+	if (g_module == "begin")			# Use this default fig name instead of "gmtsession"
 		(r == "") && (r = isFranklin[1] ? (joinpath(tempdir(), "GMTjl_tmp png")) : "GMTplot " * FMT[1])
 		IamModern[1] = true
-	elseif (g_module == "end")		# Last command of a MODERN session
-		isempty(r) && (r = "-Vq")	# Cannot have a no-args for this case otherwise it prints help
-	elseif (r == "" && n_argin == 0) # Just requesting usage message, add -? to options
+	elseif (g_module == "end")			# Last command of a MODERN session
+		isempty(r) && (r = "-Vq")		# Cannot have a no-args for this case otherwise it prints help
+	elseif (r == "" && n_argin == 0)	# Just requesting usage message, add -? to options
 		r = "-?"
 	elseif (n_argin > 1 && (g_module == "psscale" || g_module == "colorbar"))	# Happens with nested calls like in grdimage
 		if (!isa(args[1], GMTcpt) && isa(args[2], GMTcpt))
@@ -203,7 +203,7 @@ function gmt(cmd::String, args...)
 	pad = 2
 	if (!isa(G_API[1], Ptr{Nothing}) || G_API[1] == C_NULL)
 		G_API[1] = GMT_Create_Session("GMT", pad, GMT_SESSION_BITFLAGS)
-		theme_modern()				# Set the MODERN theme
+		theme_modern()					# Set the MODERN theme
 	end
 
 	# 2. In case this was a clean up call or a begin/end from the modern mode
@@ -235,7 +235,7 @@ function gmt(cmd::String, args...)
 		(img_mem_layout[1] != "") && (mem_layout = img_mem_layout[1];	mem_kw = "API_IMAGE_LAYOUT")
 		(grd_mem_layout[1] != "") && (mem_layout = grd_mem_layout[1];	mem_kw = "API_GRID_LAYOUT")
 		(img_mem_layout[1] != "" && mem_layout[end] != 'a')  && (mem_layout *= "a")
-		GMT_Set_Default(G_API[1], mem_kw, mem_layout);		# Tell module to give us the image/grid with this mem layout
+		GMT_Set_Default(G_API[1], mem_kw, mem_layout);	# Tell module to give us the image/grid with this mem layout
 	end
 
 	# 2++ Add -T to gmtwrite if user did not explicitly give -T. Seek also for MEM layout requests
@@ -265,7 +265,7 @@ function gmt(cmd::String, args...)
 
 	# 3. Convert command line arguments to a linked GMT option list
 	LL = NULL
-	LL = GMT_Create_Options(G_API[1], 0, r)	# It uses also the fact that GMT parses and check options
+	LL = GMT_Create_Options(G_API[1], 0, r)		# It uses also the fact that GMT parses and check options
 
 	# 4. Preprocess to update GMT option lists and return info array X
 
@@ -312,10 +312,10 @@ function gmt(cmd::String, args...)
 	end
 
 	# 7. Hook up module GMT outputs to Julia array
-	# But first cout the number of outputs
+	# But first count the number of outputs
 	n_out = 0
 	for k = 1:n_items					# Number of GMT containers involved in this module call
-		if (X[k].direction == GMT_IN) continue 	end
+		(X[k].direction == GMT_IN) && continue
 		n_out += 1
 	end
 
@@ -331,7 +331,7 @@ function gmt(cmd::String, args...)
 		GMT_Set_Default(G_API[1], "API_PAD", string(pad))
 	end
 
-	# Due to the damn GMT pad I'm forced to a lot of trickery. One involves shitting on memory ownership
+	# Due to the damn GMT pad I'm forced to a lot of trickery. One involves cheating on memory ownership
 	if (CTRL.gmt_mem_bag[1] != C_NULL)
 		gmt_free_mem(G_API[1], CTRL.gmt_mem_bag[1])		# Free a GMT owned memory that we pretended was ours
 		CTRL.gmt_mem_bag[1] = C_NULL
@@ -340,7 +340,7 @@ function gmt(cmd::String, args...)
 	# 8. Free all GMT containers involved in this module call
 	for k = 1:n_items
 		ppp = X[k].object
-		name = String([X[k].name...])				# Because X.name is a NTuple
+		name = String([X[k].name...])					# Because X.name is a NTuple
 		(GMT_Close_VirtualFile(G_API[1], name) != 0) && error("GMT: Failed to close virtual file")
 		(GMT_Destroy_Data(G_API[1], Ref([X[k].object], 1)) != 0) && error("Failed to destroy GMT<->Julia interface object")
 		# Success, now make sure we dont destroy the same pointer more than once

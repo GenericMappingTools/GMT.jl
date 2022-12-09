@@ -1241,11 +1241,7 @@ function hlines(arg1=nothing; first=true, kwargs...)
 	# If I don't do this stupid gymn with arg1 vs arg1_ then arg1 is Core.Boxed F..
 	len::Int = (arg1 !== nothing) ? length(arg1) : length(arg1_)
 	mat::Matrix{Float64} = ones(2, len)
-	if (arg1 !== nothing)
-		for k = 1:len   mat[1,k] = mat[2,k] = arg1[k]   end
-	else
-		for k = 1:len   mat[1,k] = mat[2,k] = arg1_[k]  end
-	end
+	mat[1,:] = mat[2,:] .= (arg1 !== nothing) ? arg1 : arg1_
 	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
 	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 
@@ -1281,7 +1277,7 @@ function vlines(arg1=nothing; first=true, kwargs...)
 	len::Int = (arg1 !== nothing) ? length(arg1) : length(arg1_)
 
 	mat::Matrix{Float64} = ones(2, len)
-	mat[1,:] = mat[2,:] = (arg1 !== nothing) ? arg1 : arg1_
+	mat[1,:] = mat[2,:] .= (arg1 !== nothing) ? arg1 : arg1_
 	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[3:4]) : [-1e50, 1e50]
 	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 	# Now we need tp swapp x / y columns because the vlines case is more complicated to implement.

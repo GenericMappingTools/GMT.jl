@@ -285,7 +285,7 @@ function set_dsBB!(D, all_bbs::Bool=true)
 	(isa(D, GMTdataset)) && (D.ds_bbox = D.bbox;	return nothing)
 	(length(D) == 1)     && (D[1].ds_bbox = D[1].bbox;	return nothing)
 	kk = 0
-	while (isempty(D[kk+=1].bbox) && kk <= length(D))  continue  end
+	while (isempty(D[kk+=1].bbox) && kk < length(D))  continue  end
 	bb = copy(D[kk].bbox)
 	for k = kk+1:lastindex(D)
 		for n = 1:2:length(bb)
