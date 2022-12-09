@@ -32,16 +32,20 @@ jobs:
           #- ubuntu-latest
           - ubuntu-20.04
           - macos-latest
+          - windows-latest
         arch:
           - x64
         include:
           # Linux
           - name: Linux - Compile only
-            #os: ubuntu-18.04
-            os: ubuntu-latest
+            os: ubuntu-20.04
+            #os: ubuntu-latest
             run_in_pr : true
           - name: macOS
             os: macos-latest
+            run_in_pr : true
+          - name: Windows
+            os: windows-latest
             run_in_pr : true
 
     steps:
