@@ -69,4 +69,6 @@
 	parallelplot!(D, normalize="scale")
 	parallelplot(D, normalize="zscore")
 	parallelplot(D, normalize="")
+
+	cornerplot(randn(500,3), truths=[0.25, 0.5, 0.75])
 end
