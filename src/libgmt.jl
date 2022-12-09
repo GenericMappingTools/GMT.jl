@@ -253,12 +253,12 @@ end =#
 GMT_Set_Default(API::Ptr{Cvoid}, keyword, value) =
 	ccall((:GMT_Set_Default, libgmt), Cvoid, (Cstring, Ptr{UInt8}, Ptr{UInt8}), API, keyword, value)
 
+#= 
 function GMT_blind_change_struct(API::Ptr{Cvoid}, X, what, keyword::String, off)
 	(GMTver > v"6.0") ?		# Use this construct to cheat Coverage
 		ccall((:gmtlib_blind_change_struct, libgmt), Cint, (Cstring, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}, Csize_t), API, X, what, keyword, off) : ccall((:GMT_blind_change_struct, libgmt), Cint, (Cstring, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}, Csize_t), API, X, what, keyword, off)
 end
 
-#= 
 function GMT_Convert_Data(API::Ptr{Cvoid}, In::Ptr{Cvoid}, family_in::Integer, out::Ptr{Cvoid}, family_out::Integer, flag)
 	ccall((:GMT_Convert_Data, libgmt), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}, UInt32, Ptr{Cvoid}, UInt32, Ptr{UInt32}), API, In,
 				 family_in, out, family_out, flag)
@@ -377,7 +377,8 @@ end
 function gmt_getpen(API::Ptr{Cvoid}, buffer, P)
 	GMT_ = GMT_Get_Ctrl(API)
 	ccall((:gmt_getpen, libgmt), Cint, (Cstring, Ptr{Cuint}, Ref{GMT_PEN}), GMT_, buffer, P)
-end =#
+end
+=#
 
 function gmtlib_setparameter(API, keyword::String, value::String)
 	(!isa(API, Ptr{Nothing}) || API == C_NULL) && return UInt32(1)
