@@ -32,7 +32,6 @@ jobs:
           #- ubuntu-latest
           - ubuntu-20.04
           - macos-latest
-          - windows-latest
         arch:
           - x64
         include:
