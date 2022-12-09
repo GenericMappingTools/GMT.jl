@@ -109,6 +109,7 @@ function binstats(cmd0::String="", arg1=nothing; kwargs...)
 		mima[4] = mima[3] + ceil((mima[4] - mima[3]) / inc) * inc	# To avoid the annoying warning.
 	end
 	(!contains(cmd, " -R")) && (cmd *= @sprintf(" -R%.10g/%.10g/%.10g/%.10g", mima...))
+@show(cmd)
 
 	R = common_grd(d, cmd0, cmd, "gmtbinstats ", data)		# Finish build cmd and run it
 	if (!isempty(R) && !isa(R, String) && occursin(" -Th", cmd))
