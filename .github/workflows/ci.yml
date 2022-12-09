@@ -44,9 +44,6 @@ jobs:
           - name: macOS
             os: macos-latest
             run_in_pr : true
-          - name: Windows
-            os: windows-latest
-            run_in_pr : true
 
     steps:
       - name: Cancel Previous Runs
@@ -81,6 +78,11 @@ jobs:
           GMT_INSTALL_DIR=${GMT_INSTALL_DIR:-${HOME}/gmt-install-dir}
           echo "${GMT_INSTALL_DIR}/bin" >> $GITHUB_PATH
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
+
+      - name: Install GMT Windows
+        run: choco install ghostscript wget
+        run: wget http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-win64.exe
+        run: cmd /k gmt-win64.exe /S
 
       - name: Check a few simple commands
         run: |
