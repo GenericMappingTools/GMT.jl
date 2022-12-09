@@ -80,7 +80,6 @@ jobs:
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
       - name: Install GMT Windows
-        run: choco install ghostscript wget
 
       - name: Check a few simple commands
         run: |
