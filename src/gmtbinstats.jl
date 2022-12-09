@@ -61,7 +61,12 @@ Parameters
 function binstats(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :a :bi :di :e :f :g :h :i :q :w :yx])
+	#(haskey(d, :Vd) && d[:Vd] == 2)
+	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
+	data = mat2ds(arg1)
+	isa(data, Vector{<:GMTdataset}) && isempty(data[1].ds_bbox) && set_dsBB!(data)
+
+	cmd, = parse_common_opts(d, "", [:G :I :R :V_params :a :bi :di :e :f :g :h :i :q :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:E :empty], [:N :normalize], [:S :search_radius], [:W :weights]])
 	if ((val = find_in_dict(d, [:C :stats :statistic])[1]) !== nothing)
 		s::String = string(val)
@@ -93,7 +98,20 @@ function binstats(cmd0::String="", arg1=nothing; kwargs...)
 		cmd = (t == 'r') ? cmd * " -Tr" : (t == 'h' ? cmd * " -Th" : error("Bad method for option 'tiling'")) 
 	end
 
-	R = common_grd(d, cmd0, cmd, "gmtbinstats ", arg1)		# Finish build cmd and run it
+	mima = isa(data, Vector{<:GMTdataset}) ? data[1].ds_bbox[1:4] : data.ds_bbox[1:4]
+	#mima = round_wesn(data.ds_bbox[1:4])
+	if (contains(cmd, " -Th"))
+		if (!contains(cmd, " -I"))
+			inc = (mima[2] - mima[1]) / 30
+			cmd *= @sprintf(" -I%.8g", inc)
+		else
+			inc = parse(Float64, scan_opt(cmd, "-I"))
+		end
+		mima[4] = mima[3] + ceil((mima[4] - mima[3]) / inc) * inc	# To avoid the annoying warning.
+	end
+	(!contains(cmd, " -R")) && (cmd *= @sprintf(" -R%.10g/%.10g/%.10g/%.10g", mima...))
+
+	R = common_grd(d, cmd0, cmd, "gmtbinstats ", data)		# Finish build cmd and run it
 	if (!isempty(R) && !isa(R, String) && occursin(" -Th", cmd))
 		opt_I = scan_opt(cmd, "-I")			# CHECK IF inc HAS UNITS?
 		R.attrib = Dict("hexbin" => opt_I)
