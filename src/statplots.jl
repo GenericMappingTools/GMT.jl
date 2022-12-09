@@ -1263,5 +1263,5 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 				end
 			end
 		end
-	subplot(:show)
+	subplot(:end)
 end
