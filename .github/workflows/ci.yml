@@ -37,8 +37,8 @@ jobs:
         include:
           # Linux
           - name: Linux - Compile only
-            #os: ubuntu-18.04
-            os: ubuntu-latest
+            os: ubuntu-20.04
+            #os: ubuntu-latest
             run_in_pr : true
           - name: macOS
             os: macos-latest

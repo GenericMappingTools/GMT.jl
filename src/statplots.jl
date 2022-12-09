@@ -1199,3 +1199,69 @@ function normalizeArray(method, A, bbox=Float64[])
 	end
 	A
 end
+
+# ----------------------------------------------------------------------------------------------------------
+cornerplot(fname::String; first::Bool=true, kw...) = cornerplot(gmtread(fname); first=first, kw...)
+function cornerplot(arg1; first::Bool=true, kwargs...)
+	# ...
+	d = KW(kwargs)
+	D = mat2ds(arg1)		# Simplifies life further down (knows min/maxs etc)
+	ndims = size(D,2)
+	(size(D,1) < ndims) && throw(ArgumentError("input array should have less samples than dimensions, try transposing"))
+	CTRL.figsize[1] = (ndims == 2) ? 8 : (ndims == 3 ? 6 : ndims/20)	# Set figsize needed to compute hexagons size
+	subplot(grid="$(ndims)x$(ndims)")
+
+		truths::Vector{Float64} = ((val = find_in_dict(d, [:truths])[1]) !== nothing) ? val : Float64[]
+		(!isempty(truths) && length(truths) != size(D,2)) &&
+			(@warn("The `truths` vector must have same length as n dimensions. Ignoring it."); truths = Float64[])
+		quantiles::Vector{Float64} = ((val = find_in_dict(d, [:quantiles])[1]) !== nothing) ? val : Float64[]
+		for k = 1:ndims		# First plot the diagonal histograms
+			histogram(D[:,k], panel=(k,k))
+			(!isempty(quantiles)) && vlines!(quantile(view(D,:,k), quantiles); ls=:dash)
+			(!isempty(truths))    && vlines!(truths[k]; lw=0.75)
+		end
+		ndims == 1 && return subplot(:show)
+
+		method, d2 = nothing, Dict()
+		simple_scatter, simple_hexbin = false, false
+		if ((val = find_in_dict(d, [:scatter])[1]) !== nothing)
+			if     (val == 1)	simple_scatter = true
+			elseif (isa(val, NamedTuple))  method = plot; d2::Dict{Symbol, Any} = nt2dict(val)
+			end
+		elseif ((val = find_in_dict(d, [:hexbin])[1]) !== nothing)
+			if     (val == 1)	simple_hexbin = true
+			elseif (isa(val, NamedTuple))  method = binstats; d2 = nt2dict(val);	d[:hexbin] = true
+			end
+			(!simple_hexbin && (is_in_dict(d2, [:C :stats :statistic]) === nothing)) && (d2[:C] = "number")
+			(!simple_hexbin && (is_in_dict(d2, [:T :tiling :bins]) === nothing)) && (d2[:tiling] = "hex")
+		elseif ((val = find_in_dict(d, [:binstats])[1]) !== nothing)
+			method = binstats; d2 = nt2dict(val)
+		else
+			(size(D,1) > 1000) ? (simple_hexbin = true) : (simple_scatter = true)	# When > 1k pts def to hexbin
+		end
+		(method !== nothing && isempty(d2)) && error("When using function CallBack, must pass a NamedTuple with its arguments.")
+
+		varnames::Vector{String} = ((val = find_in_dict(d, [:varnames])[1]) !== nothing) ? string.(val) : D.colnames
+		(length(varnames) < length(D.colnames)) && (varnames = D.colnames)		# Quick&dirty for user idiot input
+
+		for c1 = 1:ndims-1				# col
+			for c2 = c1+1:ndims			# row
+				d[:panel] = (c2,c1)
+				d[:xlabel], d[:ylabel] = varnames[c1], varnames[c2]
+				if (simple_scatter)
+					d[:marker] = "p"
+					common_plot_xyz("", D[:,[c1,c2]], "scatter", first, false, d...)
+				elseif (simple_hexbin)
+					d[:hexbin] = true;	d[:ml] = 0.1
+					common_plot_xyz("", gmtbinstats(D[:,[c1,c2]], tiling=:hex, stats=:number), "scatter", first, false, d...)
+				else
+					common_plot_xyz("", method(D[:,[c1,c2]]; d2...), "scatter", first, false, d...)
+				end
+				if (!isempty(truths))
+					hlines!(truths[c2])
+					vlines!(truths[c1])
+				end
+			end
+		end
+	subplot(:end)
+end
