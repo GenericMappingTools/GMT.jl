@@ -1208,19 +1208,35 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 	D = mat2ds(arg1)		# Simplifies life further down (knows min/maxs etc)
 	ndims = size(D,2)
 	(size(D,1) < ndims) && throw(ArgumentError("input array should have less samples than dimensions, try transposing"))
-	CTRL.figsize[1] = (ndims == 2) ? 8 : (ndims == 3 ? 6 : ndims/20)	# Set figsize needed to compute hexagons size
-	subplot(grid="$(ndims)x$(ndims)")
+	CTRL.figsize[1] = (ndims == 2) ? 8 : (ndims == 3 ? 6 : 20/ndims)	# Set figsize needed to compute hexagons size
+	endwith = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0) ? Symbol("show") : Symbol("end")
+	Vd = haskey(d, :Vd) ? d[:Vd] : -1
 
+	subplot(grid="$(ndims)x$(ndims)", SC="b", SR="lx", M="0.05", B="WSrt", Vd=Vd)
 		truths::Vector{Float64} = ((val = find_in_dict(d, [:truths])[1]) !== nothing) ? val : Float64[]
 		(!isempty(truths) && length(truths) != size(D,2)) &&
 			(@warn("The `truths` vector must have same length as n dimensions. Ignoring it."); truths = Float64[])
 		quantiles::Vector{Float64} = ((val = find_in_dict(d, [:quantiles])[1]) !== nothing) ? val : Float64[]
-		for k = 1:ndims		# First plot the diagonal histograms
-			histogram(D[:,k], panel=(k,k))
+
+		# Plot the diagonal histograms. Compute a nice xmin/xmax and create a -Rxmin/xmax/0/0
+		# This has the further beautifull side effect of aligning exactly the x annotations of the other
+		# non diagonal plots because the algorith to auto xlimits is the same.
+		for k = 1:ndims
+			t = D[:,k]
+			mima = round_wesn([extrema(t)...,0,0])
+			opt_R = @sprintf("%.10g/%.10g/0/0", mima[1], mima[2])
+			if (k == 1)
+				histogram(t, panel=(k,k), R=opt_R, Vd=Vd)
+			elseif (k < ndims)
+				histogram(t, conf=(MAP_FRAME_TYPE="inside",), B="Wsrt a", R=opt_R, panel=(k,k), Vd=Vd)
+			else			# Here we want to have annotations both inside and outside, which is not possible. So trick
+				histogram(t, B="lSrt a", R=opt_R, panel=(k,k), fill="", W="0,white", Vd=Vd)	# Used only to plot the bott axis
+				histogram(t, conf=(MAP_FRAME_TYPE="inside",), B="Wbrt a", R=opt_R, Vd=Vd)
+			end
 			(!isempty(quantiles)) && vlines!(quantile(view(D,:,k), quantiles); ls=:dash)
 			(!isempty(truths))    && vlines!(truths[k]; lw=0.75)
 		end
-		ndims == 1 && return subplot(:show)
+		ndims == 1 && return subplot(endwith)
 
 		method, d2 = nothing, Dict()
 		simple_scatter, simple_hexbin = false, false
@@ -1263,5 +1279,5 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 				end
 			end
 		end
-	subplot(:end)
+	subplot(endwith)
 end
