@@ -139,6 +139,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_JZ(d, cmd)[1]
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
+	nofill = ((symb = is_in_dict(d, [:G :fill])) !== nothing && d[symb] == "") ? true : false	# To know if no fill was asked
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = add_opt(d, cmd, "D", [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
@@ -174,7 +175,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd  = add_opt(d, cmd, "L", [:L :out_range], (first = "l", last = "h", both = "b"))
 	cmd *= add_opt_pen(d, [:W :pen], "W")
 	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-S", cmd))
-		cmd *= " -G#0072BD"
+		!nofill && (cmd *= " -G#0072BD")		# Unless specifically set to no, use a default color
 		!occursin("-W", cmd) && (cmd *= " -Wfaint")
     elseif (occursin("-S", cmd) && !occursin("-W", cmd))
 		cmd *= " -Wfaint"
