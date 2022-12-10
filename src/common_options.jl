@@ -2412,7 +2412,7 @@ function add_opt_fill(cmd::String, d::Dict, symbs::VMs, opt="", del::Bool=true):
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
 	isa(val, Dict) && (val = dict2nt(val))
 	(val == true && symbs == [:G :fill]) && (val="#0072BD")		# Let fill=true mean a default color
-	(val == "" && symbs == [:G :fill]) && return ""				# Let fill="" mean no fill (handy for proggy reasons)
+	(val == "" && symbs == [:G :fill]) && return cmd			# Let fill="" mean no fill (handy for proggy reasons)
 	(opt != "") && (opt = string(" -", opt))
 	return add_opt_fill(val, cmd, opt)
 end
