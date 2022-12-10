@@ -56,9 +56,9 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	cmd  = parse_these_opts(cmd, d, [[:M :margin :margins]])
 	cmd  = add_opt(d, cmd, "A", [:A :autolabel],
                   (Anchor=("+J", arg2str), anchor=("+j", arg2str), label="", clearance=("+c", arg2str), fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), offset=("+o", arg2str), roman="_+r", Roman="_+R", vertical="_+v"))
-	cmd = add_opt(d, cmd, "SC", [:SC :col_axes :colaxes :sharex],
+	cmd = add_opt(d, cmd, "SC", [:SC :Sc :col_axes :colaxes :sharex],
 	              (top=("t", nothing, 1), bott=("b", nothing, 1), bottom=("b", nothing, 1), label="+l", grid=("+w", add_opt_pen)))
-	cmd = add_opt(d, cmd, "SR", [:SR :row_axes :rowaxes :sharey],
+	cmd = add_opt(d, cmd, "SR", [:SR :Sr :row_axes :rowaxes :sharey],
 	              (left=("l", nothing, 1), right=("r", nothing, 1), label="+l", parallel="_+p", row_title="_+t", top_row_title="_+tc", grid=("+w", add_opt_pen)))
 	opt_C = add_opt(d, "", "", [:C :clearance],
 				  (left=(" -Cw", arg2str), right=(" -Ce", arg2str), bott=(" -Cs", arg2str), bottom=(" -Cs", arg2str), top=(" -Cn", arg2str)))
@@ -145,7 +145,7 @@ function guess_panels_size(cmd, opt)
 	end
 	F = ""
 	if     (n_cols == 3)  F = " -Fs6/6";	M = " -M0.2c/0.2c"
-	elseif (n_cols > 3 && n_cols == n_rows) F = " -Fs$(n_cols/20)/$(n_cols/20)";	M = " -M0.15c/0.15c"
+	elseif (n_cols > 3 && n_cols == n_rows) F = " -Fs$(20/n_cols)";	M = " -M0.15c/0.15c"
 	elseif (n_rows == 2 && n_cols == 2)     F = " -Fs8/8";	M = " -M0.3c/0.2c"
 	elseif (n_rows == 1)
 		if     (n_cols == 2)  F = " -Fs8/8";	M = " -M0.3c" 
