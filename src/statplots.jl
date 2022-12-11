@@ -1212,10 +1212,17 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 	endwith = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0) ? Symbol("show") : Symbol("end")
 	Vd = haskey(d, :Vd) ? d[:Vd] : -1
 
-	subplot(grid="$(ndims)x$(ndims)", SC="b", SR="lx", M="0.05", B="WSrt", Vd=Vd)
+	(is_in_dict(d, [:SC :Sc :col_axes :colaxes :sharex]) === nothing) && (d[:SC] = "b")
+	(is_in_dict(d, [:SR :Sr :row_axes :rowaxes :sharey]) === nothing) && (d[:SR] = "lx")
+	(is_in_dict(d, [:M :margin :margins]) === nothing) && (d[:M] = "0.05")
+	d[:B] = ((opt_B = parse_B(d, "")[2]) != "") ? replace(opt_B, "-B" => "") : "WSrt"
+	d[:Vd] = Vd
+	d[:grid] = "$(ndims)x$(ndims)"
+
+	subplot(; d...)
+		d = CTRL.pocket_d[1]		# Get back what was not consumemd in subplot
 		truths::Vector{Float64} = ((val = find_in_dict(d, [:truths])[1]) !== nothing) ? val : Float64[]
-		(!isempty(truths) && length(truths) != size(D,2)) &&
-			(@warn("The `truths` vector must have same length as n dimensions. Ignoring it."); truths = Float64[])
+		(!isempty(truths) && length(truths) != size(D,2)) && (@warn("The `truths` vector must have same length as n dimensions. Ignoring it."); truths = Float64[])
 		quantiles::Vector{Float64} = ((val = find_in_dict(d, [:quantiles])[1]) !== nothing) ? val : Float64[]
 
 		# Plot the diagonal histograms. Compute a nice xmin/xmax and create a -Rxmin/xmax/0/0
@@ -1241,9 +1248,7 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 		method, d2 = nothing, Dict()
 		simple_scatter, simple_hexbin = false, false
 		if ((val = find_in_dict(d, [:scatter])[1]) !== nothing)
-			if     (val == 1)	simple_scatter = true
-			elseif (isa(val, NamedTuple))  method = plot; d2::Dict{Symbol, Any} = nt2dict(val)
-			end
+			(val == 1) && (simple_scatter = true)
 		elseif ((val = find_in_dict(d, [:hexbin])[1]) !== nothing)
 			if     (val == 1)	simple_hexbin = true
 			elseif (isa(val, NamedTuple))  method = binstats; d2 = nt2dict(val);	d[:hexbin] = true
@@ -1256,6 +1261,7 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 			(size(D,1) > 1000) ? (simple_hexbin = true) : (simple_scatter = true)	# When > 1k pts def to hexbin
 		end
 		(method !== nothing && isempty(d2)) && error("When using function CallBack, must pass a NamedTuple with its arguments.")
+		(method === nothing && !simple_scatter && !simple_hexbin) && error("Invalid (plot?) method selection")
 
 		varnames::Vector{String} = ((val = find_in_dict(d, [:varnames])[1]) !== nothing) ? string.(val) : D.colnames
 		(length(varnames) < length(D.colnames)) && (varnames = D.colnames)		# Quick&dirty for user idiot input
@@ -1281,3 +1287,5 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 		end
 	subplot(endwith)
 end
+cornerplot!(arg1; kw...) = cornerplot(arg1; first=false, kw...)
+cornerplot!(fname::String; kw...) = cornerplot(gmtread(fname); first=false, kw...)
