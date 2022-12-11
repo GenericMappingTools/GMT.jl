@@ -70,5 +70,12 @@
 	parallelplot(D, normalize="zscore")
 	parallelplot(D, normalize="")
 
+	A = rand(10,2);		A[1] = NaN
+	GMT.normalizeArray("zscore", A);
+	try cornerplot("lixo"); catch end
+	try cornerplot!("lixo"); catch end
+	cornerplot(randn(50,3), scatter=true)
 	cornerplot(randn(500,3), truths=[0.25, 0.5, 0.75])
+	cornerplot(randn(500,3), haxbin=(inc=0.2,))
+	cornerplot!(randn(500,3), haxbin=true)
 end

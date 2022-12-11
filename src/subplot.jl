@@ -130,12 +130,13 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			gmt("subplot end");	IamSubplot[1] = false
 		end
 	end
+	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other modules (e.g., cornerplot)
 	return nothing
 end
 
 # --------------------------------------------------------------------------
 function guess_panels_size(cmd, opt)
-	(contains(cmd, " -F")) && return cmd	# Ok, Ok panel sizes provided
+	(contains(cmd, " -F")) && return cmd	# Ok, panel sizes provided
 
 	if (isa(opt, String))
 		((ind = findfirst('x', opt)) === nothing) && error("'grid' option does not have the form NxM (misses the 'x'")
