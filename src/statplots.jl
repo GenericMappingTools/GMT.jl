@@ -1219,8 +1219,10 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 	d[:Vd] = Vd
 	d[:grid] = "$(ndims)x$(ndims)"
 
-	subplot(; d...)
+	r = subplot(; d...)
 		d = CTRL.pocket_d[1]		# Get back what was not consumemd in subplot
+		(Vd >= 0) && (d[:Vd] = Vd)	# Restore this in case
+		(Vd == 2) && return r		# Almost useless but at least wont error
 		truths::Vector{Float64} = ((val = find_in_dict(d, [:truths])[1]) !== nothing) ? val : Float64[]
 		(!isempty(truths) && length(truths) != size(D,2)) && (@warn("The `truths` vector must have same length as n dimensions. Ignoring it."); truths = Float64[])
 		quantiles::Vector{Float64} = ((val = find_in_dict(d, [:quantiles])[1]) !== nothing) ? val : Float64[]
@@ -1228,56 +1230,50 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 		# Plot the diagonal histograms. Compute a nice xmin/xmax and create a -Rxmin/xmax/0/0
 		# This has the further beautifull side effect of aligning exactly the x annotations of the other
 		# non diagonal plots because the algorith to auto xlimits is the same.
+		hstColor::String = ((val = find_in_dict(d, [:histcolor, :histfill])[1]) !== nothing) ? string(val) : "#0072BD"
 		for k = 1:ndims
 			t = D[:,k]
 			mima = round_wesn([extrema(t)...,0,0])
 			opt_R = @sprintf("%.10g/%.10g/0/0", mima[1], mima[2])
 			if (k == 1)
-				histogram(t, panel=(k,k), R=opt_R, Vd=Vd)
+				histogram(t, panel=(k,k), R=opt_R, G=hstColor, W=0.1, Vd=Vd)
 			elseif (k < ndims)
-				histogram(t, conf=(MAP_FRAME_TYPE="inside",), B="Wsrt a", R=opt_R, panel=(k,k), Vd=Vd)
-			else			# Here we want to have annotations both inside and outside, which is not possible. So trick
+				histogram(t, conf=(MAP_FRAME_TYPE="inside",), B="Wsrt a", R=opt_R, G=hstColor, W=0.1, panel=(k,k), Vd=Vd)
+			else			# Here we want to have annotations both inside and outside, which is not possible. So trickit
 				histogram(t, B="lSrt a", R=opt_R, panel=(k,k), fill="", W="0,white", Vd=Vd)	# Used only to plot the bott axis
-				histogram(t, conf=(MAP_FRAME_TYPE="inside",), B="Wbrt a", R=opt_R, Vd=Vd)
+				histogram(t, conf=(MAP_FRAME_TYPE="inside",), B="Wbrt a", R=opt_R, G=hstColor, W=0.1, Vd=Vd)
 			end
 			(!isempty(quantiles)) && vlines!(quantile(view(D,:,k), quantiles); ls=:dash)
 			(!isempty(truths))    && vlines!(truths[k]; lw=0.75)
 		end
 		ndims == 1 && return subplot(endwith)
 
-		method, d2 = nothing, Dict()
-		simple_scatter, simple_hexbin = false, false
+		d2::Dict{Symbol, Any} = Dict()
+		do_scatter, do_hexbin = false, false
 		if ((val = find_in_dict(d, [:scatter])[1]) !== nothing)
-			(val == 1) && (simple_scatter = true)
+			(val == 1) && (do_scatter = true)
 		elseif ((val = find_in_dict(d, [:hexbin])[1]) !== nothing)
-			if     (val == 1)	simple_hexbin = true
-			elseif (isa(val, NamedTuple))  method = binstats; d2 = nt2dict(val);	d[:hexbin] = true
-			end
-			(!simple_hexbin && (is_in_dict(d2, [:C :stats :statistic]) === nothing)) && (d2[:C] = "number")
-			(!simple_hexbin && (is_in_dict(d2, [:T :tiling :bins]) === nothing)) && (d2[:tiling] = "hex")
-		elseif ((val = find_in_dict(d, [:binstats])[1]) !== nothing)
-			method = binstats; d2 = nt2dict(val)
+			do_hexbin = true
+			(isa(val, NamedTuple)) && (d2 = nt2dict(val))		# To pass a opts to binstats
 		else
-			(size(D,1) > 1000) ? (simple_hexbin = true) : (simple_scatter = true)	# When > 1k pts def to hexbin
+			(size(D,1) > 1000) ? (do_hexbin = true) : (do_scatter = true)	# When > 1k pts def to hexbin
 		end
-		(method !== nothing && isempty(d2)) && error("When using function CallBack, must pass a NamedTuple with its arguments.")
-		(method === nothing && !simple_scatter && !simple_hexbin) && error("Invalid (plot?) method selection")
+		(do_hexbin) && (d[:hexbin] = true;	d2[:C] = "number";	d2[:tiling] = "hex")
 
 		varnames::Vector{String} = ((val = find_in_dict(d, [:varnames])[1]) !== nothing) ? string.(val) : D.colnames
 		(length(varnames) < length(D.colnames)) && (varnames = D.colnames)		# Quick&dirty for user idiot input
 
+		# Plot the other subplots down the columns
 		for c1 = 1:ndims-1				# col
 			for c2 = c1+1:ndims			# row
 				d[:panel] = (c2,c1)
 				d[:xlabel], d[:ylabel] = varnames[c1], varnames[c2]
-				if (simple_scatter)
+				if (do_scatter)
 					d[:marker] = "p"
 					common_plot_xyz("", D[:,[c1,c2]], "scatter", first, false, d...)
-				elseif (simple_hexbin)
-					d[:hexbin] = true;	d[:ml] = 0.1
-					common_plot_xyz("", gmtbinstats(D[:,[c1,c2]], tiling=:hex, stats=:number), "scatter", first, false, d...)
-				else
-					common_plot_xyz("", method(D[:,[c1,c2]]; d2...), "scatter", first, false, d...)
+				else		#if (do_hexbin)
+					d[:ml] = 0.1;
+					common_plot_xyz("", gmtbinstats(D[:,[c1,c2]]; d2...), "scatter", first, false, d...)
 				end
 				if (!isempty(truths))
 					hlines!(truths[c2])

@@ -2440,7 +2440,8 @@ function add_opt_fill(val, cmd::String="",  opt="")::String
 		((val2 = find_in_dict(d2, [:fg :fgcolor :foreground], false)[1]) !== nothing) && (cmd *= "+f" * get_color(val2))
 		(haskey(d2, :dpi)) && (cmd = string(cmd, "+r", d2[:dpi]))
 	else
-		cmd *= string(opt, get_color(val))
+		t = get_color(val)
+		(t != "none") ? (cmd *= string(opt, t)) : (cmd *= opt)
 	end
 	return cmd
 end

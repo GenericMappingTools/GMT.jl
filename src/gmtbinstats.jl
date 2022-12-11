@@ -69,20 +69,20 @@ function binstats(cmd0::String="", arg1=nothing; kwargs...)
 	cmd  = parse_these_opts(cmd, d, [[:E :empty], [:N :normalize], [:S :search_radius], [:W :weights]])
 	if ((val = find_in_dict(d, [:C :stats :statistic])[1]) !== nothing)
 		s::String = string(val)
-		if     (s == "average")  cmd *= " -Ca"
-		elseif (s == "mad")      cmd *= " -Cd"
-		elseif (s == "range")    cmd *= " -Cg"
-		elseif (s == "interquartil")  cmd *= " -Ci"
-		elseif (s == "minimum_pos")   cmd *= " -CL"
-		elseif (s == "minimum")  cmd *= " -Cl"
-		elseif (s == "median")   cmd *= " -Cm"
-		elseif (s == "number")   cmd *= " -Cn"
+		if     (s == "average" || s == "mean")          cmd *= " -Ca"
+		elseif (s == "mad")                             cmd *= " -Cd"
+		elseif (s == "range")                           cmd *= " -Cg"
+		elseif (s == "iq"      || s == "interquartil")  cmd *= " -Ci"
+		elseif (s == "min_pos" || s == "minimum_pos")   cmd *= " -CL"
+		elseif (s == "min"     || s == "minimum")       cmd *= " -Cl"
+		elseif (s == "median")                          cmd *= " -Cm"
+		elseif (s == "number"  || s == "count")         cmd *= " -Cn"
 		elseif (s == "LMS")      cmd *= " -Co"
 		elseif (s == "mode")     cmd *= " -Cp"
 		elseif (s == "rms")      cmd *= " -Cr"
 		elseif (s == "std")      cmd *= " -Cs"
-		elseif (s == "maximum")  cmd *= " -Cu"
-		elseif (s == "maximum_neg") cmd *= " -CU"
+		elseif (s == "max"     || s == "maximum")       cmd *= " -Cu"
+		elseif (s == "max_neg" || s == "maximum_neg")   cmd *= " -CU"
 		elseif (s == "sum")      cmd *= " -Cz"
 		elseif (startswith(s, "quantil"))  cmd *= " -Cq"
 			(length(s) > 7) && (cmd *= s[8:end])		# In case a stats="quantil75" was transmitted.
@@ -109,8 +109,14 @@ function binstats(cmd0::String="", arg1=nothing; kwargs...)
 		mima[4] = mima[3] + ceil((mima[4] - mima[3]) / inc) * inc	# To avoid the annoying warning.
 	end
 	(!contains(cmd, " -R")) && (cmd *= @sprintf(" -R%.10g/%.10g/%.10g/%.10g", mima...))
+	val = find_in_dict(d, [:threshold])[1]
 
 	R = common_grd(d, cmd0, cmd, "gmtbinstats ", data)		# Finish build cmd and run it
+	if (isa(R, GMTdataset) && (val !== nothing))
+		th::Float64 = val		# Don't use the bloody Anys in next comparison.
+		R.data = R[(view(R.data,:,3) .>= th), :]
+		set_dsBB!(R)		# Need to update BBs
+	end
 	if (!isempty(R) && !isa(R, String) && occursin(" -Th", cmd))
 		opt_I = scan_opt(cmd, "-I")			# CHECK IF inc HAS UNITS?
 		R.attrib = Dict("hexbin" => opt_I)
