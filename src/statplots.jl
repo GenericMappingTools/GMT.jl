@@ -822,9 +822,8 @@ Examples:
 
 """
 function qqplot(x, y; qqline=:identity, first=true, kwargs...)
-	if !(qqline in (:identity, :fit, :fitrobust, :quantile, :none))
+	!(qqline in (:identity, :fit, :fitrobust, :quantile, :none)) &&
 		throw(ArgumentError("valid values for qqline are :identity, :fit, :fitrobust or :none, but encountered " * repr(qqline)))
-	end
 	qx, qy = qqbuild(x, y)
 	xs = collect(extrema(qx))
 	plotline = true				# By default we want the fit line plotted
@@ -1020,7 +1019,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	(!isempty(group) && length(group) != size(data,1)) && error("Length of `group` and number of rows in input don't match.")
 	set_dsBB!(data)		# Update the min/maxs
 
-	data = with_xyvar(d::Dict, data, true)		# See if we have a column request based on column names
+	data = with_xyvar(d, data, true)			# See if we have a column request based on column names
 	_bbox = data.ds_bbox
 
 	!isempty(labels) && (axeslabels = labels)	# Alias that does not involve a F. Any
@@ -1201,11 +1200,38 @@ function normalizeArray(method, A, bbox=Float64[])
 end
 
 # ----------------------------------------------------------------------------------------------------------
+"""
+    cornerplot(data; kwargs...)
+
+Takes a nSamples-by-nDimensions array, and makes density plots of every combination of the dimensions.
+Plots as a triangular matrix of subplots showing the correlation among input variables. Input `data`
+can be a MxN matrix, a `GMTdataset` or a file name that upon reading with `gmtread` returns a `GMTdataset`.
+
+The plot consists of histograms of each column along the diagonal and scatter or hexagonal bining plots
+for the inter-variable relations, depending on if the the number of samples is <= 1000. But this can be
+changed with options in `kwargs`.
+
+- `cornerplot(data)`: plots every 2D projection of a multidimensional data set. 
+- `cornerplot(..., varnames)`: prints the names of each dimension. `varnames` is a vector of strings
+   of length nDimensions. If not provided, column names in the `GMTdaset` are used.
+- `cornerplot(..., truths)`: indicates reference values on the plots.
+- `cornerplot(..., quantile)`: list of fractional quantiles to show on the 1-D histograms as vertical dashed lines.
+- `cornerplot(..., hexbin=true)`: Force hexbin plots even when number of points <= 1000.
+- `cornerplot(..., scatter=true)`: Force scatter plots even when number of points > 1000.
+- `cornerplot(..., histcolor|histfill=color)`: To paint diagonal histograms witha selected color (histcolor=:none to no paint).
+
+Several more options in `kwargs` can be used to control plot details (and are passed to the `subplot`,
+`binstats` and `plot` functions.)
+
+Example:
+    cornerplot(randn(2500,3), cmap=:viridis, show=1)
+"""
 cornerplot(fname::String; first::Bool=true, kw...) = cornerplot(gmtread(fname); first=first, kw...)
 function cornerplot(arg1; first::Bool=true, kwargs...)
 	# ...
 	d = KW(kwargs)
-	D = mat2ds(arg1)		# Simplifies life further down (knows min/maxs etc)
+	D = mat2ds(arg1)				# Simplifies life further down (knows min/maxs etc)
+	D = with_xyvar(d, D, true)		# See if we have a column request based on column names
 	ndims = size(D,2)
 	(size(D,1) < ndims) && throw(ArgumentError("input array should have less samples than dimensions, try transposing"))
 	CTRL.figsize[1] = (ndims == 2) ? 8 : (ndims == 3 ? 6 : 20/ndims)	# Set figsize needed to compute hexagons size
@@ -1215,6 +1241,7 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 	(is_in_dict(d, [:SC :Sc :col_axes :colaxes :sharex]) === nothing) && (d[:SC] = "b")
 	(is_in_dict(d, [:SR :Sr :row_axes :rowaxes :sharey]) === nothing) && (d[:SR] = "lx")
 	(is_in_dict(d, [:M :margin :margins]) === nothing) && (d[:M] = "0.05")
+	((val = find_in_dict(d, [:title])[1]) !== nothing) && (d[:T] = val)		# Must check this before parse_B() comes on
 	d[:B] = ((opt_B = parse_B(d, "")[2]) != "") ? replace(opt_B, "-B" => "") : "WSrt"
 	d[:Vd] = Vd
 	d[:grid] = "$(ndims)x$(ndims)"
@@ -1269,7 +1296,7 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 				d[:panel] = (c2,c1)
 				d[:xlabel], d[:ylabel] = varnames[c1], varnames[c2]
 				if (do_scatter)
-					d[:marker] = "p"
+					d[:marker] = ((val = find_in_dict(d, [:marker :Marker :shape])[1]) !== nothing) ? val : "p"
 					common_plot_xyz("", D[:,[c1,c2]], "scatter", first, false, d...)
 				else		#if (do_hexbin)
 					d[:ml] = 0.1;
