@@ -395,10 +395,8 @@ function reset_defaults(API::Ptr{Cvoid})
 	                      ccall((:gmt_conf, libgmt), Cvoid, (Cstring,), GMT_Get_Ctrl(API))
 end
 
-function gmt_ogrread(API::Ptr{Cvoid}, fname::String, region=C_NULL)
-	GMT_ = GMT_Get_Ctrl(API)
-	ccall((:gmt_ogrread, libgmt), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}, Ptr{Cdouble}), GMT_, fname, region)
-end
+gmt_ogrread(API::Ptr{Cvoid}, fname::String, region=C_NULL) =
+	ccall((:gmt_ogrread, libgmt), Ptr{OGR_FEATURES}, (Cstring, Ptr{UInt8}, Ptr{Cdouble}), GMT_Get_Ctrl(API), fname, region)
 
 function gmt_ogrread(API::Ptr{Cvoid}, X)
 	ccall((:gmt_ogrread2, libgmt), Ptr{OGR_FEATURES}, (Cstring, Ptr{Cvoid}), GMT_Get_Ctrl(API), X)

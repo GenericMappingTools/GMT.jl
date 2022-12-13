@@ -92,6 +92,10 @@ if (got_it)					# Otherwise go straight to end
 	@test_throws ErrorException("Specifying cross-section type is mandatory") coupe([0.0 3 0 0 45 90 5 0 0], region=(-1,4,0,6))
 	velo(mat2ds([0. -8 0 0 4 6 0.5; -8 5 3 3 0 0 0.5], ["4x6", "3x3"]), pen=(0.6,:red), fill_wedges=:green, outlines=true, Se="0.2/0.39/18", arrow="0.3c+p1p+e+gred", region=(-15,10,-10,10), Vd=dbg2)
 
+	#G = gmt("grdmath -R-15/15/-15/15 -I1 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
+	#D = grd2xyz(G);
+	#gmtwrite("lixo.gmt", D);
+
 	println("	GADM")
 	try			# Use a try/catch because the GADM service screwes one-every-other time
 	gadm("AND", names=true);
@@ -137,13 +141,16 @@ if (got_it)					# Otherwise go straight to end
 	rm("gmt.conf")
 	rm("lixo.ps")
 	rm("lixo.png")
-	#rm("lixo.grd")
-	rm("lixo.tif")
+	rm("png.png")
+	rm("lixo.grd")
+	#rm("lixo.tif")
 	rm("lixo.cpt")
 	rm("lixo.dat")
 	rm("logo.png")
 	rm("lixo.eps")
 	rm("lixo.jpg")
+	rm("lixo.pdf")
+	#rm("lixo_cube.nc")
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NUL`)  end
 
 end					# End valid testing zone
