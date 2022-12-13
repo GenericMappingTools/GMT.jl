@@ -13,6 +13,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	else		        gmt_proggy = (IamModern[1]) ? "plot "    : "psxy "
 	end
 
+	arg1 = df2ds(arg1)							# If arg1 is a DataFrame, try to convert it into a GMTdataset
+
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
 

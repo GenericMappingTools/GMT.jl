@@ -385,7 +385,22 @@ const matlab_cycle_colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC3
 const alphabet_colors = ["#2BCE48", "#4C005C", "#005C31", "#5EF1F2", "#8F7C00", "#9DCC00", "#0075DC", "#94FFB5", "#740AFF", "#993F00", "#00998F", "#003380", "#191919", "#426600", "#808080", "#990000", "#C20088", "#E0FF66", "#F0A3FF", "#FF0010", "#FF5005", "#FFA8BB", "#FFA405", "#FFCC99", "#FFE100", "#FFFF80"]
 # https://sashamaps.net/docs/resources/20-colors/
 const simple_distinct = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080"]
-  
+ 
+# ---------------------------------------------------------------------------------------------------
+function df2ds(arg)
+	# If arg is a DataFrame, try to convert it into a GMTdataset. Keep all numerical columns and first Text one
+	(arg === nothing || isa(arg, GDtype) || isa(arg, Array)) && return arg
+	fs = fields(arg)		# (:columns, :colindex, :metadata, :colmetadata, :allnotemetadata)
+	(isempty(fs) || fs[1] != :columns || fs[end] != :allnotemetadata) && return arg	# Not a DataFrame
+
+	# OK, arrived here it seems arg is likely a DataFrame so try to convert it into a GMTdataset
+	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: Number]
+	mat = Matrix(coalesce.(arg[!,[colnames...]], NaN))
+	D = mat2ds(mat, colnames=colnames)
+	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: AbstractString]	# Fish first (if any) text column
+	!isempty(colnames) && (D.text = string.(arg[!,colnames[1]]); append!(D.colnames, [colnames[1]]))
+	return D
+end
 
 # ---------------------------------------------------------------------------------------------------
 function color_gradient_line(D::Matrix{<:Real}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
