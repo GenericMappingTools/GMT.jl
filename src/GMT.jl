@@ -147,7 +147,7 @@ export
 
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
-	blendimg!, lonlat2xy, xy2lonlat, mat2ds, df2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fields,
+	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fields,
 	tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
 
 	magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cat, cart2sph, sph2cart,

@@ -391,7 +391,7 @@ function df2ds(arg)
 	# If arg is a DataFrame, try to convert it into a GMTdataset. Keep all numerical columns and first Text one
 	(arg === nothing || isa(arg, GDtype) || isa(arg, Array)) && return arg
 	fs = fields(arg)		# (:columns, :colindex, :metadata, :colmetadata, :allnotemetadata)
-	(fs[1] != :columns || fs[end] != :allnotemetadata) && return arg	# Not a DataFrame
+	(isempty(fs) || fs[1] != :columns || fs[end] != :allnotemetadata) && return arg	# Not a DataFrame
 
 	# OK, arrived here it seems arg is likely a DataFrame so try to convert it into a GMTdataset
 	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: Number]
