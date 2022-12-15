@@ -78,4 +78,8 @@
 	cornerplot(randn(500,3), truths=[0.25, 0.5, 0.75])
 	cornerplot(randn(500,3), hexbin=(inc=0.2, threshold=1.0))
 	cornerplot!(randn(500,3), hexbin=true)
+
+	marginalhist(randn(1000,2), scatter=true, histkw=(annot=true,))
+	marginalhist(randn(1000,2), hexbin=true)
+	marginalhist!(randn(2001,2), aspect=:equal)
 end

@@ -146,6 +146,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	(show_kwargs[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 
 	(GMTver > v"6.1.1") && (cmd = add_opt(d, cmd, "E", [:E :width], (width = "", off = "+o", offset = "+o")))
+	cmd = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
 	
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	is_datetime = isa(arg1, Array{<:DateTime})
@@ -218,7 +219,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 		(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
 		hst = zeros(n_bins, 2)
-		@inbounds Threads.@threads for k = 1:length(arg1)  hst[Int(floor((arg1[k] - _min_max[1]) / inc) + 1), 2] += 1  end
+		@inbounds Threads.@threads for k = 1:numel(arg1)  hst[Int(floor((arg1[k] - _min_max[1]) / inc) + 1), 2] += 1  end
 		[@inbounds hst[k,1] = _min_max[1] + inc * (k - 1) for k = 1:n_bins]
 
 		if (do_auto || do_getauto || do_zoom)
@@ -327,9 +328,9 @@ function pshst_wall!(in, hst, inc, n_bins::Int)
 	# Function barrier for type instability. With the body of this in the calling fun the 'inc' var
 	# introduces a mysterious type instability and execution times multiply by 3.
 	if (inc == 1)
-		@inbounds Threads.@threads for k = 1:length(in)  hst[in[k] + 1, 2] += 1  end
+		@inbounds Threads.@threads for k = 1:numel(in)  hst[in[k] + 1, 2] += 1  end
     else
-		@inbounds Threads.@threads for k = 1:length(in)  hst[Int(floor(in[k] / inc) + 1), 2] += 1  end
+		@inbounds Threads.@threads for k = 1:numel(in)  hst[Int(floor(in[k] / inc) + 1), 2] += 1  end
 	end
 	@inbounds Threads.@threads for k = 1:n_bins  hst[k,1] = inc * (k - 1)  end
 	return nothing
