@@ -1314,10 +1314,36 @@ cornerplot!(arg1; kw...) = cornerplot(arg1; first=false, kw...)
 cornerplot!(fname::String; kw...) = cornerplot(gmtread(fname); first=false, kw...)
 
 # ----------------------------------------------------------------------------------------------------------
-# marginalhist(randn(2000,2), scatter=true, show=true, histkw=(annot=true,))
-# marginalhist(randn(2000,2), scatter=true, show=true, histkw=(frame="none",))
-# marginalhist(randn(2000,2), scatter=true, show=true, histkw=(frame="none", G=:green, W="0@100"), Vd=1)
-# marginalhist(randn(2000,2), scatter=true, density=true, show=true, histkw=(frame=:none, G="red@60"), Vd=1)
+"""
+    marginalhist(data; kwargs...)
+
+Takes a Mx2 array, and make a scatter plot of first vs second column. The default is to do a scatter3
+plot if number of points <= 200 and bihex plot otherwise, but this is configurable.  Input `data`
+can be a MxN matrix, a `GMTdataset` or a file name that upon reading with `gmtread` returns a `GMTdataset`.
+
+- `marginalhist(data)`: Plots a *x,y* scatterplot with marginal histograms for *x* and *y*.
+- `marginalhist(..., frac|fraction=xx)`: Set fractional size of the marginal plots with respect to the
+   figure size. Default is 0.15 (15%).
+- `marginalhist(..., hexbin=true)`: Force hexbin plots even when number of points <= 2000.
+- `marginalhist(..., scatter=true)`: Force scatter plots even when number of points > 2000.
+- `marginalhist(..., density=true)`: Side plots contain data kernel density instead of histograms.
+- `marginalhist(..., gap=xx)`: Set the gap in centimeters between the fig and the marginal plots.
+- `marginalhist(..., histcolor|histfill=color)`: To paint the side histograms/density with
+   a selected color (histcolor=:none to no paint).
+- `marginalhist(..., nocbar=true)`: To not plot the color bar when doing a hexbin plot.
+- `marginalhist(..., histkw=args)`: Where `args` is a NamedTuple with parameters controlling the histogram
+   plot (same options as those that would be passed to the `histogram` module, except `region` and `figsize`).
+
+Several more options in `kwargs` can be used to control plot details (and are passed to the `subplot`,
+`binstats` and `plot` functions.)
+
+Example:
+    marginalhist(randn(2500,2), scatter=true, histkw=(annot=true,), show=true)
+
+    marginalhist(randn(2000,2), histkw=(frame="none", fill=:green, W="0@100"), show=true)
+
+    marginalhist(randn(2500,2), cmap=:magma, density=true, show=1)
+"""
 marginalhist(fname::String; first::Bool=true, kw...) = marginalhist(gmtread(fname); first=first, kw...)
 function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...)
 	d = KW(kwargs)
@@ -1332,7 +1358,7 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 	d[:Vd] = Vd
 	d[:grid] = "2x2"
 
-	gap::Float64 = ((val = find_in_dict(d, [:gap :margin :margins])[1]) === nothing) ? 0.0 : val
+	gap::Float64 = ((val = find_in_dict(d, [:gap :margin :margins])[1]) === nothing) ? 0.0 : val/2
 	gap_total = gap - 0.2
 	d[:M] = "$gap_total"
 
@@ -1355,7 +1381,9 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 		H = W * (D.ds_bbox[4] - D.ds_bbox[3]) / (D.ds_bbox[2] - D.ds_bbox[1])
 		opt_J = "$(W)/$(H)"
 	elseif (opt_J == def_fig_size)		# Here switch of Hexbins. The ELSE case is not taken care (no hexbins if not iso)
-		do_hexbin = false
+		do_hexbin && @warn("The hexagon bins can only be used with figure sizes with an aspect ration of 1.\n For that use the option 'aspect=:equal'")
+		do_hexbin, do_scatter = false, true
+		delete!(d, :hexbin)
 	end
 
 	f::Float64 = ((val = find_in_dict(d, [:frac :fraction])[1]) !== nothing) ? val : 0.15
@@ -1404,7 +1432,13 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 		else		#if (do_hexbin)
 			d[:ml] = 0.1;
 			CTRL.figsize[1] = (CTRL.figsize[1] - gap) * (1 -f)
+			do_cbar = (find_in_dict(d, [:nocbar])[1] === nothing)	# To know if we should plot a colorscale
 			common_plot_xyz("", gmtbinstats(D; d2...), "scatter", first, false, d...)
+			if (do_cbar)
+				l = CTRL.figsize[1] <= 6 ? 3 : CTRL.figsize[1] <= 20 ? CTRL.figsize[1] / 4 : CTRL.figsize[1] * 0.2
+				colorbar(pos=(inside=:TL,length=(l,0.25), horizontal=true, offset=(0.2,0.2)), B=(ylabel=:Count, annot=:a), par=("FONT_ANNOT_PRIMARY","7p"), Vd=Vd)
+			end
+			#gmt("psscale -Bpa -Bpy+lCount -DjTL+w3/0.25+h+o0.2/0.2 -C --FONT_ANNOT_PRIMARY=7p", current_cpt[1])
 		end
 	subplot(endwith)
 end
