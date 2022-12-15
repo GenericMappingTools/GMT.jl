@@ -82,4 +82,6 @@
 	marginalhist(randn(1000,2), scatter=true, histkw=(annot=true,))
 	marginalhist(randn(1000,2), hexbin=true)
 	marginalhist!(randn(2001,2), aspect=:equal)
+	try marginalhist("lixo", Vd=dbg2); catch end
+	try marginalhist!("lixo", Vd=dbg2); catch end
 end

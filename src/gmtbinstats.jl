@@ -58,7 +58,7 @@ Parameters
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
-function binstats(cmd0::String="", arg1=nothing; kwargs...)
+function binstats(cmd0::String="", arg1=nothing; nbins=0, kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
@@ -101,7 +101,11 @@ function binstats(cmd0::String="", arg1=nothing; kwargs...)
 	#mima = round_wesn(data.ds_bbox[1:4])
 	if (contains(cmd, " -Th"))
 		if (!contains(cmd, " -I"))
-			inc = (mima[2] - mima[1]) / 30
+			nb = 50
+			if (nbins == 0 && CTRL.figsize[1] != 0)
+				nb = (CTRL.figsize[1] <= 7) ? 30 : (CTRL.figsize[1] <= 10) ? 45 : 60
+			end
+			inc = (mima[2] - mima[1]) / nb
 			cmd *= @sprintf(" -I%.8g", inc)
 		else
 			inc = parse(Float64, scan_opt(cmd, "-I"))
