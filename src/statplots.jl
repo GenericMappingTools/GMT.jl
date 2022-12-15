@@ -4,19 +4,19 @@
 
 - `x`: calculate the kernel density 'd' of a dataset X for query points 'xd' The density, by default, is
     estimated using a gaussian kernel with a width obtained with the Silverman's rule. `x` may be
-	a vector, a matrix or Vector{Vector{Real}}.
+    a vector, a matrix or Vector{Vector{Real}}.
 - `nbins`: points are queried between MIN(Y[:]) and MAX(Y[:]) where Y is the data vector.
 - `bins`: Calculates the density for the query points specified by BINS. The values are used as the
-     query points directly. Default is 200 points.
+    query points directly. Default is 200 points.
 - `bandwidth`: uses the 'bandwidth' to calculate the kernel density. It must be a scalar.
-     For the uniform case the bandwidth is set to 15% of the range, otherwise the bandwidth is chosen
-     with the Silverman's rule.
+    For the uniform case the bandwidth is set to 15% of the range, otherwise the bandwidth is chosen
+    with the Silverman's rule.
 - `printbw`: Logical value indicating to print the computed value of the `bandwidth`.
 - `kernel`: Uses the kernel function specified by KERNEL name (a string or a symbol) to calculate the density.
-     The kernel may be: 'Normal' (default) or 'Uniform'
+    The kernel may be: 'Normal' (default) or 'Uniform'
 - `extend`: By default the density curve is computed at the `bins` locatins or between data extrema as
-     mentioned above. However, this is not normally enough to go down to zero. Use this option in terms of
-	 number of bandwidth to expand de curve. *e.g.* `extend=2`
+    mentioned above. However, this is not normally enough to go down to zero. Use this option in terms of
+    number of bandwidth to expand de curve. *e.g.* `extend=2`
 """
 function density(x; first::Bool=true, nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing,
                  kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false, extend=0, kwargs...)
@@ -1312,3 +1312,101 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 end
 cornerplot!(arg1; kw...) = cornerplot(arg1; first=false, kw...)
 cornerplot!(fname::String; kw...) = cornerplot(gmtread(fname); first=false, kw...)
+
+# ----------------------------------------------------------------------------------------------------------
+# marginalhist(randn(2000,2), scatter=true, show=true, histkw=(annot=true,))
+# marginalhist(randn(2000,2), scatter=true, show=true, histkw=(frame="none",))
+# marginalhist(randn(2000,2), scatter=true, show=true, histkw=(frame="none", G=:green, W="0@100"), Vd=1)
+# marginalhist(randn(2000,2), scatter=true, density=true, show=true, histkw=(frame=:none, G="red@60"), Vd=1)
+marginalhist(fname::String; first::Bool=true, kw...) = marginalhist(gmtread(fname); first=first, kw...)
+function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...)
+	d = KW(kwargs)
+	D = mat2ds(arg1)				# Simplifies life further down (knows min/maxs etc)
+	D = with_xyvar(d, D, true)		# See if we have a column request based on column names
+	endwith = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0) ? Symbol("show") : Symbol("end")
+	Vd = haskey(d, :Vd) ? d[:Vd] : -1
+
+	#(is_in_dict(d, [:M :margin :margins]) === nothing) && (d[:M] = "-0.20c")
+	((val = find_in_dict(d, [:title])[1]) !== nothing) && (d[:T] = val)		# Must check this before parse_B() comes on
+	d[:B] = ((opt_B = parse_B(d, "")[2]) != "") ? replace(opt_B, "-B" => "") : "WSrt"
+	d[:Vd] = Vd
+	d[:grid] = "2x2"
+
+	gap::Float64 = ((val = find_in_dict(d, [:gap :margin :margins])[1]) === nothing) ? 0.0 : val
+	gap_total = gap - 0.2
+	d[:M] = "$gap_total"
+
+	d2::Dict{Symbol, Any} = Dict()
+	do_scatter, do_hexbin = false, false
+	if ((val = find_in_dict(d, [:scatter])[1]) !== nothing)
+		(val == 1) && (do_scatter = true)
+	elseif ((val = find_in_dict(d, [:hexbin])[1]) !== nothing)
+		do_hexbin = true
+		(isa(val, NamedTuple)) && (d2 = nt2dict(val))		# To pass a opts to binstats
+	else
+		(size(D,1) > 2000) ? (do_hexbin = true) : (do_scatter = true)	# When > 1k pts def to hexbin
+	end
+	(do_hexbin) && (d[:hexbin] = true;	d2[:C] = "number";	d2[:tiling] = "hex")
+
+	opt_J = parse_J(d, "")[2][5:end]	# Drop the initial " -JX"
+	s = split(opt_J, "/")
+	W = size_unit(s[1])
+	if (length(s) > 1 && s[2] == "0" || s[2] == "?")	# In this case, recompute fig size to e isometric
+		H = W * (D.ds_bbox[4] - D.ds_bbox[3]) / (D.ds_bbox[2] - D.ds_bbox[1])
+		opt_J = "$(W)/$(H)"
+	elseif (opt_J == def_fig_size)		# Here switch of Hexbins. The ELSE case is not taken care (no hexbins if not iso)
+		do_hexbin = false
+	end
+
+	f::Float64 = ((val = find_in_dict(d, [:frac :fraction])[1]) !== nothing) ? val : 0.15
+	d[:F] = "f" * opt_J * "/+f" * "$(1/f),1/1,$(1/f)"
+	CTRL.figsize[1] = W					# Set figsize needed to compute hexagons size
+	doDensity = (find_in_dict(d, [:density :Density])[1] !== nothing)	# For now, no control on the density computing params
+
+	r = subplot(; d...)
+		d = CTRL.pocket_d[1]			# Get back what was not consumemd in subplot
+		(Vd >= 0) && (d[:Vd] = Vd)		# Restore this in case
+		(Vd == 2) && return r			# Almost useless but at least wont error
+
+		cmd_hist, annotHst, doBH = "", "", true
+		if ((val = find_in_dict(d, [:histkw :hist_kw :histkwargs :hist_kwargs])[1]) !== nothing && isa(val, NamedTuple))
+			dh::Dict{Symbol, Any} = nt2dict(val);	dh[:Vd] = 2;
+			annotHst = ((val = find_in_dict(dh, [:annot])[1]) !== nothing) ? (val == true ? " -Ba" : arg2str(val)) : ""
+			cmd_hist = histogram(nothing; dh...)[12:end]	# Let the histogram module parse all options (and drop prog name)
+			(((symb = is_in_dict(dh, [:frame :axes])) !== nothing) && (dh[symb] == :none || dh[symb] == "none")) && (doBH = false)
+		end
+		!contains(cmd_hist, "-W") && (cmd_hist *= (doDensity ? " -W0.5" : " -W0.1"))
+		!contains(cmd_hist, "-G") && (cmd_hist *= " -G" * (((val = find_in_dict(d, [:histcolor, :histfill])[1]) !== nothing) ? string(val) : "#0072BD"))
+		contains(cmd_hist, " -R") && @warn("SHOULD NOT have tried to set histogram limits.")
+
+		# Top Histogram
+		t = D[:,1]
+		mima = round_wesn([extrema(t)...,0,0])
+		opt_R = @sprintf("%.10g/%.10g/0/0", mima[1], mima[2])
+		cmd_hist_t = deepcopy(cmd_hist)
+		cmd_hist_t *= (doBH) ? ((annotHst == "") ? " -Blb" : " -BWb" * annotHst) : " -Bb --MAP_FRAME_PEN=0.001,white@100"
+		doDensity ? density(t, GMTopt=cmd_hist_t, panel=(1,1), Vd=Vd) : histogram(t, R=opt_R, GMTopt=cmd_hist_t, panel=(1,1), Vd=Vd)
+
+		# Right Histogram
+		t = D[:,2]
+		mima = round_wesn([extrema(t)...,0,0])
+		opt_R = @sprintf("%.10g/%.10g/0/0", mima[1], mima[2])
+		cmd_hist *= (doBH) ? ((annotHst == "") ? " -Blb" : " -BlS" * annotHst) : " -Bl --MAP_FRAME_PEN=0.001,white@100"
+		doDensity ? density(t, horizontal=true, GMTopt=cmd_hist_t, panel=(2,2), Vd=Vd) : histogram(t, R=opt_R, horizontal=true, GMTopt=cmd_hist, panel=(2,2), Vd=Vd)
+
+		# The scatterogram
+		d[:panel] = (2,1)
+		mima = round_wesn(D.ds_bbox[1:4])
+		d[:R] = @sprintf("%.10g/%.10g/%.10g/%.10g", mima...)
+		if (do_scatter)
+			d[:marker] = ((val = find_in_dict(d, [:marker :Marker :shape])[1]) !== nothing) ? val : "p"
+			common_plot_xyz("", D, "scatter", first, false, d...)
+		else		#if (do_hexbin)
+			d[:ml] = 0.1;
+			CTRL.figsize[1] = (CTRL.figsize[1] - gap) * (1 -f)
+			common_plot_xyz("", gmtbinstats(D; d2...), "scatter", first, false, d...)
+		end
+	subplot(endwith)
+end
+marginalhist!(arg1; kw...) = marginalhist(arg1; first=false, kw...)
+marginalhist!(fname::String; kw...) = marginalhist(fname; first=false, kw...)
