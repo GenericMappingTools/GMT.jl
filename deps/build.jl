@@ -1,3 +1,4 @@
+import Conda
 
 function get_de_libnames()
 	# Use a function for this because I F. CAN'T MAKE ANY SENSE ABOUT GLOBAL-LOCAL SCOPES INSIDE TRY-CATCH
@@ -35,7 +36,6 @@ catch err1;		println(err1)		# If not, install GMT
 			rm(fn, force=true)
 			GMT_bindir = "C:\\programs\\gmt6\\bin"
 		else
-			import Conda
 			Conda.add_channel("conda-forge")
 			Conda.add("gmt")
 			GMT_bindir = joinpath(Conda.ROOTENV, "bin")
