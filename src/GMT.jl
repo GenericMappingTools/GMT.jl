@@ -29,6 +29,7 @@ end
 force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, "$(pathof(GMT))"`) : run(`touch '$(pathof(GMT))'`)
 
 # Need to know what GMT version is available or if none at all to warn users on how to install GMT.
+#=
 function get_GMTver()
 	out = v"0.0"
 	try						# First try to find an existing GMT installation (RECOMENDED WAY)
@@ -59,7 +60,18 @@ function get_GMTver()
 	end
 end
 _GMTver, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir = get_GMTver()
+=#
+function get_GMTver_()
+	depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
+	include(depfile)		# This loads the shared libs names
+	if (Sys.iswindows() && !isfile(_GMT_bindir * "\\gmt.exe"))		# If GMT was removed but depfile still exists
+		Pkg.build("GMT");	include(depfile)
+	end
+	return ver, true, _libgmt, _libgdal, _libproj, _GMT_bindir, userdir
+end
+_GMTver, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir, userdir = get_GMTver_()
 
+#=
 if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names already known at this point.
 	_libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
 	@static Sys.iswindows() ?
@@ -77,6 +89,7 @@ if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names a
 			)
 		)
 end
+=#
 const GMTver, libgmt, libgdal, libproj, GMT_bindir = _GMTver, _libgmt, _libgdal, _libproj, _GMT_bindir
 
 const global G_API = [C_NULL]
@@ -111,7 +124,8 @@ const CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Nothing, Vector{Symbol}, Matrix{Symbol}}
 const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
 const global StrSymb  = Union{AbstractString, Symbol}
-const global GMTuserdir  = [readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1]]
+#const global GMTuserdir  = [readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1]]
+const global GMTuserdir  = [userdir]
 # GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are edeclared in gmt_main
 #const global unused_opts = [()]					# To track consumed options
 #const global unused_subopts = [()]					# To track consumed options in sub-options
