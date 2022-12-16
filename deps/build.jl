@@ -75,7 +75,7 @@ if (!errou)
 		println(f, "_libgmt  = \"", escape_string(libgmt), '"')
 		println(f, "_libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
 		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
-		println(f, "ver = " * ver)
+		println(f, "ver = " * string(ver))
 		println(f, "userdir = \"", escape_string(userdir), '"')
 	end
 end
