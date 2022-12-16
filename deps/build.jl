@@ -1,7 +1,8 @@
-errou = false
-GMT_bindir, libgmt, libgdal, libproj, ver, userdir = "", "", "", "", "", ""
 
-depfile = joinpath(dirname(@__FILE__), "deps.jl")
+function get_de_libnames()
+	# Use a function for this because I F. CAN'T MAKE ANY SENSE ABOUT GLOBAL-LOCAL SCOPES INSIDE TRY-CATCH
+	errou = false
+	GMT_bindir, libgmt, libgdal, libproj, ver, userdir = "", "", "", "", "", ""
 
 try						# First try to find an existing GMT installation (RECOMENDED WAY)
 	(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
@@ -59,17 +60,22 @@ catch err1;		println(err1)		# If not, install GMT
 		errou = true
 	end
 end
+	return errou, ver, libgmt, libgdal, libproj, GMT_bindir
+end
+
+errou, ver, libgmt, libgdal, libproj, GMT_bindir = get_de_libnames()
 
 if (!errou)
-	userdir = [readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1]]
+	userdir = readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1]
 
 	# Save shared names in file so that GMT.jl can read them at pre-compile time
+	depfile = joinpath(dirname(@__FILE__), "deps.jl")
 	open(depfile, "w") do f
 		println(f, "_GMT_bindir = \"", escape_string(GMT_bindir), '"')
 		println(f, "_libgmt  = \"", escape_string(libgmt), '"')
 		println(f, "_libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
 		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
-		println(f, "ver = " * ver)
-		println(f, "userdir = " * userdir)
+		println(f, "ver = \"", escape_string(ver), '"')
+		println(f, "userdir = \"", escape_string(userdir), '"')
 	end
 end
