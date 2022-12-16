@@ -268,16 +268,6 @@ end
 =#
 
 function __init__(test::Bool=false)
-	if (GMTver == v"0.0" || test)
-		println("\n\nYou don't seem to have GMT installed and the automatic installation also failed.\nYou will have to do it yourself.")
-		t = Sys.iswindows() ? "Download and install the official version at (the '..._win64.exe':" *
-		                      "\n\t\t https://github.com/GenericMappingTools/gmt/releases" : (
-		                      Sys.isapple() ? "Install GMT with Homebrew: brew install gmt ghostscript ffmpeg" :
-		                      "https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md#linux")
-		println(t)
-		return
-	end
-
 	if !isfile(libgmt) || ( !Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)) )
 		println("\nDetected a previously working GMT.jl version but something has broken meanwhile.\n" *
 		"(like updating your GMT instalation). Run this command in REPL and restart Julia.\n\n\t\tGMT.force_precompile()\n")
