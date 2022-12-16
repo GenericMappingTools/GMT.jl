@@ -8,9 +8,7 @@ function get_de_libnames()
 	try						# First try to find an existing GMT installation (RECOMENDED WAY)
 		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
 		out = readlines(`gmt --version`)[1]
-@show(out)
 		ver = ((ind = findfirst('_', out)) === nothing) ? VersionNumber(out) : VersionNumber(out[1:ind-1])
-@show(ver)
 		(ver < v"6.1") && error("Need at least GMT6.1. The one you have ($ver) is not supported.")	# GOTO DOWNLOAD
 
 		libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
@@ -62,7 +60,6 @@ function get_de_libnames()
 			errou = true
 		end
 	end
-@show(ver)
 	return errou, ver, libgmt, libgdal, libproj, GMT_bindir
 end
 
@@ -78,7 +75,7 @@ if (!errou)
 		println(f, "_libgmt  = \"", escape_string(libgmt), '"')
 		println(f, "_libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
 		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
-		println(f, "ver = " * string(ver))
+		println(f, "ver = v\"" * string(ver) * "\"")
 		println(f, "userdir = \"", escape_string(userdir), '"')
 	end
 end
