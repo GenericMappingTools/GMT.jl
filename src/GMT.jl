@@ -28,69 +28,13 @@ end
 # Function to change data of GMT.jl and hence force a rebuild in next Julia session
 force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, "$(pathof(GMT))"`) : run(`touch '$(pathof(GMT))'`)
 
-# Need to know what GMT version is available or if none at all to warn users on how to install GMT.
-#=
-function get_GMTver()
-	out = v"0.0"
-	try						# First try to find an existing GMT installation (RECOMENDED WAY)
-		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
-		ver = readlines(`gmt --version`)[1]
-		out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
-		(out < v"6.1") && error("Need at least GMT6.1. The one you have ($out) is not supported.")
-		return out, false, "", "", "", ""
-	catch err1;		println(err1)		# If not, install GMT
-		ENV["INSTALL_GMT"] = "1"
-		try
-			depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
-			if isfile(depfile)
-				include(depfile)		# This loads the shared libs names
-				if (Sys.iswindows() && !isfile(_GMT_bindir * "\\gmt.exe"))		# If GMT was removed but depfile still exists
-					Pkg.build("GMT");	include(depfile)
-				end
-			else
-				Pkg.build("GMT");		include(depfile)
-			end
-			#ver = readlines(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`)[1]
-			ver = first(eachline(`$(joinpath("$(_GMT_bindir)", "gmt")) --version`))
-			out = ((ind = findfirst('_', ver)) === nothing) ? VersionNumber(ver) : VersionNumber(ver[1:ind-1])
-			return out, true, _libgmt, _libgdal, _libproj, _GMT_bindir
-		catch err2;		println(err2)
-			return out, false, "", "", "", ""
-		end
-	end
+depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
+include(depfile)		# This loads the shared libs names
+if (Sys.iswindows() && !isfile(_GMT_bindir * "\\gmt.exe"))		# If GMT was removed but depfile still exists
+	Pkg.build("GMT");	include(depfile)
 end
-_GMTver, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir = get_GMTver()
-=#
-function get_GMTver_()
-	depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
-	include(depfile)		# This loads the shared libs names
-	if (Sys.iswindows() && !isfile(_GMT_bindir * "\\gmt.exe"))		# If GMT was removed but depfile still exists
-		Pkg.build("GMT");	include(depfile)
-	end
-	return ver, true, _libgmt, _libgdal, _libproj, _GMT_bindir, userdir
-end
-_GMTver, GMTbyConda, _libgmt, _libgdal, _libproj, _GMT_bindir, userdir = get_GMTver_()
 
-#=
-if (!GMTbyConda)		# In the other case (the non-existing ELSE branch) lib names already known at this point.
-	_libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
-	@static Sys.iswindows() ?
-		(Sys.WORD_SIZE == 64 ? (_libgdal = "gdal_w64.dll") : (_libgdal = "gdal_w32.dll")) : (
-			Sys.isapple() ? (_libgdal = string(split(readlines(pipeline(`otool -L $(_libgmt)`, `grep libgdal`))[1])[1])) : (
-				Sys.isunix() ? (_libgdal = string(split(readlines(pipeline(`ldd $(_libgmt)`, `grep libgdal`))[1])[3])) :
-				error("Don't know how to install this package in this OS.")
-			)
-		)
-	@static Sys.iswindows() ?
-		(Sys.WORD_SIZE == 64 ? (_libproj = "proj_w64.dll") : (_libproj = "proj_w32.dll")) : (
-			Sys.isapple() ? (_libproj = string(split(readlines(pipeline(`otool -L $(_libgdal)`, `grep libproj`))[1])[1])) : (
-				Sys.isunix() ? (_libproj = string(split(readlines(pipeline(`ldd $(_libgdal)`, `grep libproj`))[1])[3])) :
-				error("Don't know how to use PROJ4 in this OS.")
-			)
-		)
-end
-=#
-const GMTver, libgmt, libgdal, libproj, GMT_bindir = _GMTver, _libgmt, _libgdal, _libproj, _GMT_bindir
+const GMTver, libgmt, libgdal, libproj, GMT_bindir, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, _GMT_bindir, [userdir]
 
 const global G_API = [C_NULL]
 const global PSname = [joinpath(tempdir(), "GMTjl_tmp.ps")]		# The PS file where, in classic mode, all lands.
@@ -124,8 +68,6 @@ const CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Nothing, Vector{Symbol}, Matrix{Symbol}}
 const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
 const global StrSymb  = Union{AbstractString, Symbol}
-#const global GMTuserdir  = [readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1]]
-const global GMTuserdir  = [userdir]
 # GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are edeclared in gmt_main
 #const global unused_opts = [()]					# To track consumed options
 #const global unused_subopts = [()]					# To track consumed options in sub-options
