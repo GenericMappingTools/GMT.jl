@@ -1,5 +1,5 @@
-
 errou = false
+GMT_bindir, libgmt, libgdal, libproj, ver, userdir = "", "", "", "", "", ""
 
 depfile = joinpath(dirname(@__FILE__), "deps.jl")
 
@@ -56,7 +56,7 @@ catch err1;		println(err1)		# If not, install GMT
 				)
 			)
 	catch err2;		println(err2)
-		erro = true
+		errou = true
 	end
 end
 
