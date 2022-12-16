@@ -1,6 +1,5 @@
 
-
-erro = false
+errou = false
 
 depfile = joinpath(dirname(@__FILE__), "deps.jl")
 
@@ -25,6 +24,7 @@ try						# First try to find an existing GMT installation (RECOMENDED WAY)
 				error("Don't know how to use PROJ4 in this OS.")
 			)
 		)
+	GMT_bindir = "C:\\programs\\gmt6\\bin"
 
 catch err1;		println(err1)		# If not, install GMT
 	try
@@ -60,7 +60,7 @@ catch err1;		println(err1)		# If not, install GMT
 	end
 end
 
-if (!erro)
+if (!errou)
 	userdir = [readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1]]
 
 	# Save shared names in file so that GMT.jl can read them at pre-compile time
