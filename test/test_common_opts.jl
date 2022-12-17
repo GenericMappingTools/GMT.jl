@@ -91,7 +91,7 @@
 	@test GMT.get_color(:red) == "red"
 	@test GMT.get_color((:red,:blue)) == "red,blue"
 	@test GMT.get_color((200,300)) == "200,300"
-	@test_throws ErrorException("\tGET_COLOR: Input as Aray must be a Mx3 matrix or 3 elements Vector.") GMT.get_color([1,2])
+	@test_throws ErrorException("\tGET_COLOR: Input as Array must be a Mx3 matrix or 3 elements Vector.") GMT.get_color([1,2])
 	@test_throws ErrorException("\tGET_COLOR: got an unsupported data type") GMT.get_color(1:3)
 	@test_throws ErrorException("Color tuples must have only one or three elements") GMT.get_color(((0.2,0.3),))
 	@test GMT.parse_unit_unit("data") == "u"
