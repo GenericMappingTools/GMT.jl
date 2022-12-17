@@ -2606,7 +2606,7 @@ function get_color(val::Tuple)::String
 	end
 	out = rstrip(out, ',')		# Strip last ','
 end
-function get_color(val::AbstractArray{<:Real})::String
+function get_color(val::Array{<:Real})::String
 	out::String = ""
 	if (isa(val, Vector))  val = val'  end
 	(size(val, 2) != 3) && error("\tGET_COLOR: Input as Array must be a Mx3 matrix or 3 elements Vector.")
