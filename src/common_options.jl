@@ -2589,7 +2589,7 @@ function get_color(val)::String
 	(isa(val, AbstractString) || isa(val, Symbol) || isa(val, Real)) && return isa(val, Bool) ? "" : string(val)
 
 	@warn("got this bad data type: $(typeof(val))")		# Need to split because f julia change in 6.1
-	error("\tGOT_COLOR: got an unsupported data type")
+	error("\tGET_COLOR: got an unsupported data type")
 end
 function get_color(val::Tuple)::String
 	out::String = ""
@@ -2609,7 +2609,7 @@ end
 function get_color(val::Array{<:Real})::String
 	out::String = ""
 	if (isa(val, Vector))  val = val'  end
-	(size(val, 2) != 3) && error("\tGOT_COLOR: Input as Aray must be a Mx3 matrix or 3 elements Vector.")
+	(size(val, 2) != 3) && error("\tGET_COLOR: Input as Array must be a Mx3 matrix or 3 elements Vector.")
 	copia = (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1) ? val .* 255 : val	# Do not change the original
 	out = @sprintf("%.0f/%.0f/%.0f", copia[1,1], copia[1,2], copia[1,3])
 	for k = 2:size(copia, 1)
