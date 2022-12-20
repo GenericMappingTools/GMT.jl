@@ -92,11 +92,18 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, args, n, = add_opt(d, cmd, "T", [:T :truncate], :data, Array{Any,1}([arg1, arg2, arg3, arg4]), (x="",))
 	if (n > 0)  arg1, arg2, arg3, arg4 = args[:]  end
 
-    if (isa(arg1,Tuple))
-	    common_grd(d, cmd0, cmd, "gmtspatial ", arg1..., arg2, arg3, arg4)		# Finish build cmd and run it
-    else
-	    common_grd(d, cmd0, cmd, "gmtspatial ", arg1, arg2, arg3, arg4)
-    end
+	do_sort = (find_in_dict(d, [:sort])[1] !== nothing)
+	if (isa(arg1,Tuple))
+		D = common_grd(d, cmd0, cmd, "gmtspatial ", arg1..., arg2, arg3, arg4)		# Finish build cmd and run it
+	else
+		D = common_grd(d, cmd0, cmd, "gmtspatial ", arg1, arg2, arg3, arg4)
+	end
+	if (do_sort)
+		ind = sortperm(view(D, :, 1))
+		D.data = D.data[ind, :]
+		!isempty(D.text) && (D.text = D.text[ind])
+	end
+	D
 end
 
 # ---------------------------------------------------------------------------------------------------
