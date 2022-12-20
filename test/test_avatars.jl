@@ -156,7 +156,7 @@
 	fill_between!([theta y2 y1], lc=:black, legend=["a","b"])
 	fill_between([theta y1 y2], lw=1, ls=:dot, fill=["blue", "red"], Vd=dbg2)
 	fill_between([theta y1 y2], lw=1, lc=:black, ls=:dot, Vd=dbg2)
-	fill_between([theta y1] [theta y2], lc=:black, ls=:dot, Vd=dbg2)
+	fill_between([theta y1], [theta y2], lc=:black, ls=:dot, Vd=dbg2)
 
 	println("	STAIRS")
 	x = linspace(0, 4*pi, 50);
