@@ -68,6 +68,17 @@ function cart2sph(x, y, z; deg::Bool=false)
 	return az, elev, rho
 end
 
+# ----------------------------------------------------------------------------------------------------------
+"""
+    count_chars(str::AbstractString, c::Char)
+
+Count the number of characters `c` in the AbstracString `str`
+"""
+function count_chars(str::AbstractString, c::Char)::Int
+	count(i->(i == ','), str)
+end
+
+# ----------------------------------------------------------------------------------------------------------
 """
     ind = uniqueind(x)
 

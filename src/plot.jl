@@ -637,8 +637,140 @@ lines(arg1, arg2; kw...)  = lines("", cat_2_arg2(arg1, arg2); first=true, kw...)
 lines!(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=false, kw...)
 lines(arg; kw...)  = lines("", cat_1_arg(arg); first=true, kw...)
 lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
-# ------------------------------------------------------------------------------------------------------
 
+# ------------------------------------------------------------------------------------------------------
+# fill_between(D, fill="blue@70,brown@80", lt=1, ls=:dot, show=1)
+# fill_between(D, fill="blue@70,brown@80", lt=1, ls=:dot, show=1)
+# fill_between(D, lt=1, ls=:dot, lc=:green, show=1)
+"""
+"""
+fill_between(fname::String; first::Bool=true, kw...) = fill_between(gmtread(fname); first=first, kw...)
+function fill_between(arg1, arg2=nothing; first=true, kwargs...)
+
+	function find_the_pos(x, x_int)
+		len_x = length(x)
+		_ind = zeros(Int, length(x_int))
+		n = 0
+		for k = 1:numel(x_int)
+			while(n < len_x && x[n+=1] < x_int[k]) end
+			_ind[k] = n-1
+		end
+		return _ind
+	end
+
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	fc = helper_ds_fill(d)						# Got fill colors?
+	if (!isempty(fc))
+		!any(contains.(fc, "@")) && (fc .*= "@60")			# If no transparency provided default to 60%
+		(length(fc) == 1) && (append!(fc, ["white@100"]))	# May need two fill colors, so generalize it.
+		fill_colors = fc
+	else
+		fill_colors = ["darkgreen@60", "darkred@60"]
+	end
+
+	if ((lc = add_opt_pen(d, [:W, :pen])) != "")			# Actualy a lc, lt, ls but one cal only change lt and ls
+		if !contains(lc, ",")				# Just a line thickness
+			l_colors = [string(lc,",",split(fill_colors[1], "@")[1]), string(lc,",",split(fill_colors[2], "@")[1])]
+		elseif (contains(lc ,",,"))			# A ,,ls or lt,,ls
+			if (startswith(lc ,",,"))		# ,,ls
+				l_colors = [string("0.5,",split(fill_colors[1], "@")[1], ",",lc[3:end]), string("0.5,",split(fill_colors[2], "@")[1], ",",lc[3:end])]
+			else							# lt,,ls
+				l_colors = [string(split(lc, ",")[1], ",", split(fill_colors[1], "@")[1], ",", split(lc,",")[3]), string(split(lc, ",")[1], ",", split(fill_colors[2], "@")[1], ",", split(lc,",")[3])]
+			end
+		elseif ((nc = count_chars(lc, ',')) != 0)
+			if (nc == 1)					# must be lt,lc
+				l_colors = [string(lc, ",", split(fill_colors[1], "@")[1]), string(lc, ",", split(fill_colors[2], "@")[1])]
+			else							# must be nc == 2 => lt,lc,ls.
+				l_colors = [lc, lc]
+			end
+		end					# There should be no ELSE branch
+	else
+		l_colors = [string("0.5,",split(fill_colors[1], "@")[1]), string("0.5,",split(fill_colors[2], "@")[1])]
+	end
+
+	one_array = (arg2 === nothing)
+	D1 = mat2ds(arg1)
+	if (one_array)
+		int = gmtspatial((D1[:,[1,2]], D1[:,[1,3]]), intersections=:e, sort=true)
+		ind = find_the_pos(view(D1, :, 1), view(int, :, 1))		# Indices of the points before the intersections
+		n_crossings = size(ind,1)
+		Dsd = Vector{GMTdataset}(undef, n_crossings+1)
+		ff = (D1[1,2] < D1[1,3]) ? 2 : 1
+		Dsd[1] = mat2ds([D1[1:ind[1], [1,2]]; int[1:1,1:2]; D1[ind[1]:-1:1, [1,3]]], fill=fill_colors[ff])
+		for k = 2:n_crossings
+			s, e = ind[k-1], ind[k]
+			fillColor = (D1[ind[k]+1,2] <= D1[ind[k]+1,3]) ? fill_colors[1] : fill_colors[2]
+			Dsd[k] = mat2ds([int[k-1:k-1,1:2]; D1[s:e, [1,2]]; int[k:k,1:2]; D1[e:-1:s, [1,3]]], fill=fillColor)
+		end
+		k = n_crossings
+		s, e = ind[k], size(D1, 1)
+		fillColor = (D1[ind[k]+1,2] <= D1[ind[k]+1,3]) ? fill_colors[2] : fill_colors[1]
+		Dsd[n_crossings+1] = mat2ds([int[k:k,1:2]; D1[s:e, [1,2]]; D1[e:-1:s, [1,3]]], fill=fillColor)
+	else
+		D2 = mat2ds(arg2)
+		int = gmtspatial((D1, D2), intersections=:e, sort=true)
+		ind1 = find_the_pos(view(D1, :, 1), view(int, :, 1))		# Indices of the points before the intersections at line 1
+		ind2 = find_the_pos(view(D2, :, 1), view(int, :, 1))		# Indices of the points before the intersections at line 2
+		n_crossings = size(int,1)
+		Dsd = Vector{GMTdataset}(undef, n_crossings+1)
+		ff = (D1[1,2] < D2[1,2]) ? 2 : 1
+		Dsd[1] = mat2ds([D1[1:ind1[1], [1,2]]; int[1:1,1:2]; D2[ind2[1]:-1:1, [1,2]]], fill=fill_colors[ff])
+		for k = 2:n_crossings
+			s1, e1, s2, e2 = ind1[k-1], ind1[k], ind2[k-1], ind2[k]
+			fillColor = (D1[ind1[k]+1,2] <= D2[ind2[k]+1,2]) ? fill_colors[1] : fill_colors[2]
+			Dsd[k] = mat2ds([int[k-1:k-1,1:2]; D1[s1:e1, [1,2]]; int[k:k,1:2]; D2[e2:-1:s2, [1,2]]], fill=fillColor)
+		end
+		k = n_crossings
+		s1, e1, s2, e2 = ind1[k], size(D1, 1), ind2[k], size(D2, 1)
+		fillColor = (D1[ind1[k]+1,2] <= D2[ind2[k]+1,2]) ? fill_colors[2] : fill_colors[1]
+		Dsd[n_crossings+1] = mat2ds([int[k:k,1:2]; D1[s1:e1, [1,2]]; D2[e2:-1:s2, [1,2]]], fill=fillColor)
+	end
+	set_dsBB!(Dsd)
+	(get(D1.attrib, "Timecol", "") == "1") && (Dsd[1].attrib["Timecol"] = "1")	# Try to keep an eventual Timecol
+
+	Vd = haskey(d, :Vd) ? d[:Vd] : -1
+	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
+	do_markers = ((val = find_in_dict(d, [:markers])[1]) !== nothing && val != 0)
+	do_stairs = ((val = find_in_dict(d, [:stairs])[1]) !== nothing && val != 0)
+	legs = String[]
+	if ((val = find_in_dict(d, [:legend])[1]) !== nothing)
+		if (isa(val, Bool) && val)
+			legs = one_array ? [D1.colnames[2], D1.colnames[3]] : [D1.colnames[2], D2.colnames[2]]
+		else
+			(length(val) == 1) && (legs = [string(val), one_array ? D1.colnames[3] : D2.colnames[2]])
+			(length(val) >  1) && (legs = [string(val[1]), string(val[2])])
+		end
+	end
+
+	do_stairs && (d[:A] = "y")
+	common_plot_xyz("", Dsd, "", first, false, d...)	# The patches
+	do_stairs && (delete!(d, :A))
+
+	do_stairs && (d[:stairs_step] = :pre)
+	d[:W], d[:Vd] = l_colors[1], Vd
+	do_markers && (d[:marker] = :point; d[:mc] = string(split(fill_colors[1], "@")[1]))
+	!isempty(legs) && (d[:legend] = legs[1])
+	common_plot_xyz("", D1, "lines", false, false, d...)
+
+	do_stairs && (d[:stairs_step] = :post)
+	d[:W], d[:Vd] = l_colors[2], Vd
+	do_markers && (d[:marker] = :point; d[:mc] = string(split(fill_colors[2], "@")[1]))
+	!isempty(legs) && (d[:legend] = legs[2])
+	d[:show] = do_show
+	common_plot_xyz("", one_array ? D1[:,[1,3]] : D2, "lines", false, false, d...)
+
+	#=
+	d[:marker] = "c"
+	d[:ms] = "1p"
+	d[:mc] = :black
+	d[:Vd] = Vd
+	common_plot_xyz("", int, "", false, false, d...)
+	=#
+end
+
+fill_between!(arg1, arg2=nothing; kw...) = fill_between(arg1, arg2; first=false, kw...)
+
+# ------------------------------------------------------------------------------------------------------
 """
     stairs(cmd0::String="", arg1=nothing; step=:post, kwargs...)
 

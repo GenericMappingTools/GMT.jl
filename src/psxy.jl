@@ -336,7 +336,7 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)
 		if (ismulticol)
 			D = mat2ds(out.data, multi=true, color=:cycle)
 			if ((Tc = get(arg1.attrib, "Timecol", "")) == "1")	# Try to keep an eventual Timecol
-				for k = 1:nemel(D)  D[k].attrib["Timecol"] = "1";	D[k].colnames[1] = "Time";  end
+				for k = 1:numel(D)  D[k].attrib["Timecol"] = "1";	D[k].colnames[1] = "Time";  end
 			end
 		else
 			D = out
