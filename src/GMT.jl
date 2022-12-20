@@ -168,8 +168,8 @@ export
 
 	add2PSfile, append2fig, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels,
 
-	density, density!, boxplot, boxplot!, cornerplot, cornerplot!, ecdfplot, ecdfplot!, marginalhist, marginalhist!,
-	parallelplot, parallelplot!, qqplot, qqplot!, qqnorm, qqnorm!, violin, violin!
+	density, density!, boxplot, boxplot!, cornerplot, cornerplot!, ecdfplot, ecdfplot!, fill_between, fill_between!,
+	marginalhist, marginalhist!, parallelplot, parallelplot!, qqplot, qqplot!, qqnorm, qqnorm!, violin, violin!
 
 include("common_docs.jl")
 include("libgmt_h.jl")
