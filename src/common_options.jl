@@ -4254,7 +4254,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		end
 	end
 
-	lab_width = maximum(length.(legend_type[1].label[:])) * fs / 72 * 2.54 * 0.55 + 0.15	# Guess label width in cm
+	lab_width = maximum(length.(legend_type[1].label[:])) * fs / 72 * 2.54 * 0.55 + 0.25	# Guess label width in cm
 
 	# Because we accept extended settings either from first or last legend() commands we must seek which
 	# one may have the desired keyword. First command is stored in 'legend_type[1].optsDict' and last in 'dd'
@@ -4279,7 +4279,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		(!occursin("+o", opt_D)) && (opt_D *= "+o0.1")
 	end
 
-	_d = haskey(dd, :box) ? dd : haskey(legend_type[1].optsDict, :box) ? legend_type[1].optsDict : Dict()
+	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(legend_type[1].optsDict, :box) ? legend_type[1].optsDict : Dict()
 	if ((opt_F = add_opt(_d, "", "", [:box],
 		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"), false)) == "")
 		opt_F = "+p0.5+gwhite"
