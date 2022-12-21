@@ -156,7 +156,12 @@
 	fill_between!([theta y2 y1], lc=:black, legend=["a","b"])
 	fill_between([theta y1 y2], lw=1, ls=:dot, fill=["blue", "red"], Vd=dbg2)
 	fill_between([theta y1 y2], lw=1, lc=:black, ls=:dot, Vd=dbg2)
+	fill_between([theta y1 y2], lw=1, Vd=dbg2)
+	fill_between([theta y1 y2], ls=:dot, Vd=dbg2)
 	fill_between([theta y1], [theta y2], lc=:black, ls=:dot, Vd=dbg2)
+	fill_between([theta y1], [theta y2], legend=(labels=(:Aa,:Vv), pos=:TL, box=:none), white=true, Vd=dbg2)
+	fill_between([theta y1], -0.3, Vd=dbg2)
+	fill_between([theta y1], [theta y2.+1], Vd=dbg2)
 
 	println("	STAIRS")
 	x = linspace(0, 4*pi, 50);
@@ -168,8 +173,10 @@
 
 	println("	STEM")
 	Y = linspace(-2*pi,2*pi,50);
+	stem(Y, Vd=dbg2, show=false)
 	stem!(Y, Vd=dbg2)
 	stem!("", [Y -Y], Vd=dbg2)
+	stem(Y,[Y -Y], multicol=1, Vd=dbg2)
 	stem!(Y,[Y -Y], multicol=1, Vd=dbg2)
 
 	println("	RADAR")
