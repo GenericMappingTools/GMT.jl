@@ -153,7 +153,7 @@
 	println("	FILL_BETWEEN")
 	theta = linspace(-2*pi,2*pi,150); y1 = sin.(theta) ./ theta; y2 = sin.(2*theta) ./ theta;
 	fill_between([theta y1 y2], fill=["blue", "red"], legend=true)
-	fill_between!([theta y2 y1], lc=:black, legend=["a","b"])
+	fill_between!([theta y2 y1], lc=:black, legend=["a","b"], Vd=dbg2)
 	fill_between([theta y1 y2], lw=1, ls=:dot, fill=["blue", "red"], Vd=dbg2)
 	fill_between([theta y1 y2], lw=1, lc=:black, ls=:dot, Vd=dbg2)
 	fill_between([theta y1 y2], lw=1, Vd=dbg2)
