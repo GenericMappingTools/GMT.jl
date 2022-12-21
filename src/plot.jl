@@ -655,7 +655,7 @@ and the polygons are constructed from the intersections of curves `D1` and `D2`.
 
 - `fill_between(..., fill=colors)`: Give a list with two colors to paint the 'up' and 'down' polygons.
 - `fill_between(..., fillalpha=[alpha1,alpha2])`: Sets the transparency of the two sets of polygons (default 60%).
-- `fill_between(..., pen=...)`: Sets pen specifications from the two curves. Easiest is to use the shortcuts
+- `fill_between(..., pen=...)`: Sets pen specifications for the two curves. Easiest is to use the shortcuts
    `lt`, `lc` and `ls` for the line thickness, color and style like it is used in the `plot()` module.
 - `fill_between(..., stairs=true)`: Plot stairs curves instead.
 - `fill_between(..., markers=true)`: Add marker points at the data locations.
@@ -772,7 +772,7 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 		Dsd[1] = mat2ds([D1[1:ind1[1], [1,2]]; int[1:1,1:2]; D2[ind2[1]:-1:1, [1,2]]], fill=fill_colors[ff])
 		for k = 2:n_crossings
 			s1, e1, s2, e2 = ind1[k-1], ind1[k], ind2[k-1], ind2[k]
-			fillColor = (D1[ind1[k]-1,2] >= D2[ind2[k]-1,2]) ? fill_colors[1] : fill_colors[2]
+			fillColor = (D1[ind1[k]-1,2] >= D2[max(1,ind2[k]-1),2]) ? fill_colors[1] : fill_colors[2]
 			Dsd[k] = mat2ds([int[k-1:k-1,1:2]; D1[s1:e1, [1,2]]; int[k:k,1:2]; D2[e2:-1:s2, [1,2]]], fill=fillColor)
 		end
 		k = n_crossings
@@ -811,6 +811,7 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 	do_stairs && (d[:A] = "y")
 	common_plot_xyz("", Dsd, "", first, false, d...)	# The patches
 	do_stairs && (delete!(d, :A))
+	del_from_dict(d, [[:theme], [:figsize], [:frame], [:xaxis], [:yaxis]])	# To not repeat -B -J
 
 	_D2 = one_array ? mat2ds(D1, (:,[1,3])) : D2		# Put second line in a unique var
 
