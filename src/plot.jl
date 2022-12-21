@@ -761,8 +761,7 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 	legs, lab_pos::String, lab_box = String[], "", nothing
 	((val = find_in_dict(d, [:labels])[1]) !== nothing) && (legs = fish_labels(val, legs, one_array, D1, D2))
 	if (isempty(legs) && (val = find_in_dict(d, [:leg :legend])[1]) !== nothing)	# OK, so this likely means a legend location
-		(isa(val, Bool) && val) && (legs = one_array ? [D1.colnames[2], D1.colnames[3]] : [D1.colnames[2], D2.colnames[2]])
-		(isempty(legs) && isa(val, Tuple) || isa(val, Array) && length(val) > 1) && (legs = [string(val[1]), string(val[2])])
+		legs = fish_labels(val, legs, one_array, D1, D2)
 		if (isempty(legs) && isa(val, NamedTuple))		# Must break & complicate because here a setting applies to 2 lines
 			dd = nt2dict(val)
 			lab_pos = ((val = find_in_dict(dd, [:pos :position])[1]) !== nothing) ? string(val) : ""	# Legend position
