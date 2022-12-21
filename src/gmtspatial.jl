@@ -98,7 +98,7 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 	else
 		D = common_grd(d, cmd0, cmd, "gmtspatial ", arg1, arg2, arg3, arg4)
 	end
-	if (do_sort)
+	if (do_sort && !isempty(D))
 		ind = sortperm(view(D, :, 1))
 		D.data = D.data[ind, :]
 		!isempty(D.text) && (D.text = D.text[ind])
