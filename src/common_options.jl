@@ -402,7 +402,8 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 	else										# For when a new size is entered in a middle of a script
 		if ((s = helper_append_figsize(d, opt_J, O, del)) != "")
 			if (opt_J == " -J")
-				println("SEVERE WARNING: When appending a new fig with a different size you SHOULD set the `projection`. \n\tAdding `projection=:linear` at your own risk.");
+				(CTRL.pocket_J[1] != s) &&		# Composed funs (ex: fill_between) would trigger this warning
+					println("SEVERE WARNING: When appending a new fig with a different size you SHOULD set the `projection`. \n\tAdding `projection=:linear` at your own risk.");
 				opt_J *= "X" * s[4:end]
 			else
 				opt_J = s
