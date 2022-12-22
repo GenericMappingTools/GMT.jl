@@ -807,15 +807,19 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 		border = (_lt == "") ? 1.5 : size_unit(_lt)+1.0
 	end
 
-	# ---------------------- Plot the patches ---------------------------------------
+	# ---------------------------------- Plot the patches ---------------------------------------
 	do_stairs && (d[:A] = "y")
 	common_plot_xyz("", Dsd, "", first, false, d...)	# The patches
 	do_stairs && (delete!(d, :A))
 	del_from_dict(d, [[:theme], [:figsize], [:frame], [:xaxis], [:yaxis]])	# To not repeat -B -J
+	# -------------------------------------------------------------------------------------------
 
 	_D2 = one_array ? mat2ds(D1, (:,[1,3])) : D2		# Put second line in a unique var
 
-	(border > 0) && common_plot_xyz("", [D1, _D2], "lines", false, false, Dict(:W => "$(border),white")...)	# Plot a white border
+	if (border > 0)										# Plot a white border
+		one_array ? common_plot_xyz("", [mat2ds(D1, (:,[1,2])), _D2], "lines", false, false, Dict(:W => "$(border),white", :Vd => Vd)...) :
+		            common_plot_xyz("", [D1, _D2], "lines", false, false, Dict(:W => "$(border),white", :Vd => Vd)...)
+	end
 
 	do_stairs && (d[:stairs_step] = :pre)
 	d[:W], d[:Vd] = l_colors[1], Vd
