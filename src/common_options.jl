@@ -3780,16 +3780,11 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 
 	if (haskey(d, :show) && d[:show] != 0)
 		if (isdefined(Main, :IJulia) && Main.IJulia.inited)		# From Jupyter?
-			if (fname == "") display("image/png", read(out))
-			else             @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
-			end
+			(fname == "") ? display("image/png", read(out)) : @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
 		elseif isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
 			return WrapperPluto(out)	# This return must make it all way down to base so that Plut displays it
 		elseif (!isFranklin[1])			# !isFranklin is true when building the docs and there we don't want displays.
-			@static if (Sys.iswindows()) out = replace(out, "/" => "\\"); run(ignorestatus(`explorer $out`))
-			elseif (Sys.isapple()) run(`open $(out)`)
-			elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
-			end
+			display_file(out)
 		end
 		reset_theme()
 	end
@@ -3797,6 +3792,13 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.pocket_R[1] = ""
 	return nothing
+end
+
+function display_file(out)
+	@static if (Sys.iswindows()) out = replace(out, "/" => "\\"); run(ignorestatus(`explorer $out`))
+	elseif (Sys.isapple()) run(`open $(out)`)
+	elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
+	end
 end
 
 function reset_theme()
@@ -4385,4 +4387,19 @@ function gmthelp(opt)
 	end
 	show_kwargs[1] = false
 	return nothing
+end
+
+# --------------------------------------------------------------------------------------------------
+macro var"?"(name)
+	# Macro to open module manuals that have individual html pages.
+	# For other functions that are exported but do not have individual pages we get a 404
+	quote
+		try
+			getfield(Main, Symbol($name))
+			s = string("https://www.generic-mapping-tools.org/GMTjl_doc/documentation/modules/", $name,"/")
+			display_file(s)
+		catch err
+			println(err)
+		end
+	end
 end
