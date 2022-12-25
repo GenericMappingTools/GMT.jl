@@ -147,6 +147,8 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 	elseif ((ls = find_in_dict(d, [:pen])[1]) !== nothing && ls != "")
 		if (isa(ls, AbstractString) || isa(ls, Symbol))
 			for k = 1:n_ds  _hdr[k] = string(_hdr[k], ls)  end
+		elseif (isa(ls, Tuple))
+			for k = 1:n_ds  _hdr[k] = string(_hdr[k], parse_pen(ls))  end
 		else
 			for k = 1:n_ds  _hdr[k] = string(_hdr[k], ls[k])  end
 		end
@@ -347,12 +349,17 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 end
 
 # ----------------------------------------------
-function helper_ds_fill(d::Dict, del::Bool=true; nc=0)::Vector{String}
+function helper_ds_fill(d::Dict, del::Bool=true; symbs=[:fill :fillcolor], nc=0)::Vector{String}
 	# Shared by ds2ds & mat2ds & statplots
 	# The NC parameter is used to select the color schema: <= 8 ==> 'matlab_cycle_colors'; otherwise 'simple_distinct'
-	if ((fill_val = find_in_dict(d, [:fill :fillcolor], del)[1]) !== nothing)
-		if (isa(fill_val, String) && contains(fill_val, ","))
-			_fill::Vector{String} = collect(split(fill_val, ","))
+	# By using a non-default SYMBS we can use this function for other than selecting fill colors.
+	if ((fill_val = find_in_dict(d, symbs, del)[1]) !== nothing)
+		#if (isa(fill_val, String) && contains(fill_val, ","))
+			#_fill::Vector{String} = collect(split(fill_val, ","))
+		if (isa(fill_val, String))
+			if contains(fill_val, ",")  _fill::Vector{String} = collect(split(fill_val, ","))
+			else                        _fill = [fill_val]
+			end
 		elseif (isa(fill_val, Tuple) && eltype(fill_val) == Symbol)
 			_fill = [string.(fill_val)...]
 		elseif (isa(fill_val, Array{String}) && !isempty(fill_val))
@@ -364,7 +371,7 @@ function helper_ds_fill(d::Dict, del::Bool=true; nc=0)::Vector{String}
 		end
 		n_colors::Int = length(_fill)
 		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
-			if (eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1)  alpha_val = collect(alpha_val) .* 100  end
+			(eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1) && (alpha_val = collect(alpha_val) .* 100)
 			_alpha::Vector{String} = Vector{String}(undef, n_colors)
 			na::Int = min(length(alpha_val), n_colors)
 			for k = 1:na  _alpha[k] = join(string('@',alpha_val[k]))  end

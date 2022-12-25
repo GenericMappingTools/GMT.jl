@@ -150,6 +150,19 @@
 	feather(mat2ds([t u v]), N=true, Vd=dbg2)
 	feather!([mat2ds([t u v])], arrow=(uv=0.5,), N=true, Vd=dbg2)
 
+	println("	FILL_BETWEEN")
+	theta = linspace(-2*pi,2*pi,150); y1 = sin.(theta) ./ theta; y2 = sin.(2*theta) ./ theta;
+	fill_between([theta y1 y2], fill=["blue", "red"], legend=true)
+	fill_between!([theta y2 y1], lc=:black, legend=["a","b"], Vd=dbg2)
+	fill_between([theta y1 y2], lw=1, ls=:dot, fill=["blue", "red"], Vd=dbg2)
+	fill_between([theta y1 y2], lw=1, lc=:black, ls=:dot, Vd=dbg2)
+	fill_between([theta y1 y2], lw=1, Vd=dbg2)
+	fill_between([theta y1 y2], ls=:dot, Vd=dbg2)
+	fill_between([theta y1], [theta y2], lc=:black, ls=:dot, Vd=dbg2)
+	fill_between([theta y1], [theta y2], legend=(labels=(:Aa,:Vv), pos=:TL, box=:none), white=true, Vd=dbg2)
+	fill_between([theta y1], -0.3, Vd=dbg2)
+	fill_between([theta y1], [theta y2.+1], Vd=dbg2)
+
 	println("	STAIRS")
 	x = linspace(0, 4*pi, 50);
 	stairs(x, sin.(x), Vd=dbg2)
@@ -160,8 +173,10 @@
 
 	println("	STEM")
 	Y = linspace(-2*pi,2*pi,50);
+	stem(Y, Vd=dbg2, show=false)
 	stem!(Y, Vd=dbg2)
 	stem!("", [Y -Y], Vd=dbg2)
+	stem(Y,[Y -Y], multicol=1, Vd=dbg2)
 	stem!(Y,[Y -Y], multicol=1, Vd=dbg2)
 
 	println("	RADAR")

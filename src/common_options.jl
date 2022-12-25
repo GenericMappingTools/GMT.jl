@@ -402,7 +402,8 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 	else										# For when a new size is entered in a middle of a script
 		if ((s = helper_append_figsize(d, opt_J, O, del)) != "")
 			if (opt_J == " -J")
-				println("SEVERE WARNING: When appending a new fig with a different size you SHOULD set the `projection`. \n\tAdding `projection=:linear` at your own risk.");
+				(CTRL.pocket_J[1] != s) &&		# Composed funs (ex: fill_between) would trigger this warning
+					println("SEVERE WARNING: When appending a new fig with a different size you SHOULD set the `projection`. \n\tAdding `projection=:linear` at your own risk.");
 				opt_J *= "X" * s[4:end]
 			else
 				opt_J = s
@@ -2589,7 +2590,7 @@ function get_color(val)::String
 	(isa(val, AbstractString) || isa(val, Symbol) || isa(val, Real)) && return isa(val, Bool) ? "" : string(val)
 
 	@warn("got this bad data type: $(typeof(val))")		# Need to split because f julia change in 6.1
-	error("\tGOT_COLOR: got an unsupported data type")
+	error("\tGET_COLOR: got an unsupported data type")
 end
 function get_color(val::Tuple)::String
 	out::String = ""
@@ -2609,7 +2610,7 @@ end
 function get_color(val::Array{<:Real})::String
 	out::String = ""
 	if (isa(val, Vector))  val = val'  end
-	(size(val, 2) != 3) && error("\tGOT_COLOR: Input as Aray must be a Mx3 matrix or 3 elements Vector.")
+	(size(val, 2) != 3) && error("\tGET_COLOR: Input as Array must be a Mx3 matrix or 3 elements Vector.")
 	copia = (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1) ? val .* 255 : val	# Do not change the original
 	out = @sprintf("%.0f/%.0f/%.0f", copia[1,1], copia[1,2], copia[1,3])
 	for k = 2:size(copia, 1)
@@ -3779,16 +3780,11 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 
 	if (haskey(d, :show) && d[:show] != 0)
 		if (isdefined(Main, :IJulia) && Main.IJulia.inited)		# From Jupyter?
-			if (fname == "") display("image/png", read(out))
-			else             @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
-			end
+			(fname == "") ? display("image/png", read(out)) : @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
 		elseif isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
 			return WrapperPluto(out)	# This return must make it all way down to base so that Plut displays it
 		elseif (!isFranklin[1])			# !isFranklin is true when building the docs and there we don't want displays.
-			@static if (Sys.iswindows()) out = replace(out, "/" => "\\"); run(ignorestatus(`explorer $out`))
-			elseif (Sys.isapple()) run(`open $(out)`)
-			elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
-			end
+			display_file(out)
 		end
 		reset_theme()
 	end
@@ -3796,6 +3792,13 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.pocket_R[1] = ""
 	return nothing
+end
+
+function display_file(out)
+	@static if (Sys.iswindows()) out = replace(out, "/" => "\\"); run(ignorestatus(`explorer $out`))
+	elseif (Sys.isapple()) run(`open $(out)`)
+	elseif (Sys.islinux() || Sys.isbsd()) run(`xdg-open $(out)`)
+	end
 end
 
 function reset_theme()
@@ -4254,7 +4257,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		end
 	end
 
-	lab_width = maximum(length.(legend_type[1].label[:])) * fs / 72 * 2.54 * 0.55 + 0.15	# Guess label width in cm
+	lab_width = maximum(length.(legend_type[1].label[:])) * fs / 72 * 2.54 * 0.55 + 0.25	# Guess label width in cm
 
 	# Because we accept extended settings either from first or last legend() commands we must seek which
 	# one may have the desired keyword. First command is stored in 'legend_type[1].optsDict' and last in 'dd'
@@ -4279,7 +4282,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		(!occursin("+o", opt_D)) && (opt_D *= "+o0.1")
 	end
 
-	_d = haskey(dd, :box) ? dd : haskey(legend_type[1].optsDict, :box) ? legend_type[1].optsDict : Dict()
+	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(legend_type[1].optsDict, :box) ? legend_type[1].optsDict : Dict()
 	if ((opt_F = add_opt(_d, "", "", [:box],
 		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"), false)) == "")
 		opt_F = "+p0.5+gwhite"
@@ -4384,4 +4387,19 @@ function gmthelp(opt)
 	end
 	show_kwargs[1] = false
 	return nothing
+end
+
+# --------------------------------------------------------------------------------------------------
+macro var"?"(name)
+	# Macro to open module manuals that have individual html pages.
+	# For other functions that are exported but do not have individual pages we get a 404
+	quote
+		try
+			getfield(Main, Symbol($name))
+			s = string("https://www.generic-mapping-tools.org/GMTjl_doc/documentation/modules/", $name,"/")
+			display_file(s)
+		catch err
+			println(err)
+		end
+	end
 end

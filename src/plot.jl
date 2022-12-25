@@ -637,8 +637,216 @@ lines(arg1, arg2; kw...)  = lines("", cat_2_arg2(arg1, arg2); first=true, kw...)
 lines!(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=false, kw...)
 lines(arg; kw...)  = lines("", cat_1_arg(arg); first=true, kw...)
 lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
-# ------------------------------------------------------------------------------------------------------
 
+# ------------------------------------------------------------------------------------------------------
+# fill_between(D, fill="blue@70,brown@80", lt=1, ls=:dot, show=1)
+# fill_between(D, fill="blue@70,brown@80", lt=1, ls=:dot, show=1)
+# fill_between(D, lt=1, ls=:dot, lc=:green, show=1)
+# fill_between([theta y1], [theta y2], legend=(labels=(:Aa,:Vv), pos=:TL, box=:none), show=1)
+# fill_between([theta y1], [theta y2], white=true, show=1)
+"""
+    fill_between(D1 [,D2]; kwargs...)
+
+Fill the area between two horizontal curves.
+
+The curves are defined by the points (x, y1, y2) in matrix or GMTdataset `D1`. This creates one or
+multiple polygons describing the filled area. Alternatively, give a second matrix, `D2` (or a scalar y=cte)
+and the polygons are constructed from the intersections of curves `D1` and `D2`.
+
+- `fill_between(..., fill=colors)`: Give a list with two colors to paint the 'up' and 'down' polygons.
+- `fill_between(..., fillalpha=[alpha1,alpha2])`: Sets the transparency of the two sets of polygons (default 60%).
+- `fill_between(..., pen=...)`: Sets pen specifications for the two curves. Easiest is to use the shortcuts
+   `lt`, `lc` and `ls` for the line thickness, color and style like it is used in the `plot()` module.
+- `fill_between(..., stairs=true)`: Plot stairs curves instead.
+- `fill_between(..., markers=true)`: Add marker points at the data locations.
+- `fill_between(..., white=true)`: Draw a thin white border between the curves and the fills.
+- `fill_between(..., labels=...)`: Pass labels to use in a legend.
+   - `labels=true` wil use the column names in `D1` and `D2`. 
+   - `labels="Lab1,Lab2"` or `labels=["Lab1","Lab2"]` (this one can be a Tuple too) use the text in `Lab1`, `Lab2`.
+- `fill_between(..., legend=...)`: If used as the above `labels` it behaves like wise, but its argument can
+   also be a named tuple with `legend=(labels="Lab1,Lab2", position=poscode, box=(...))`.
+
+Example:
+
+    theta = linspace(-2π, 2π, 150);
+    y1 = sin.(theta) ./ theta;
+    y2 = sin.(2*theta) ./ theta;
+    fill_between([theta y1], [theta y2], white=true, legend="Sinc1,Sinc2", show=1)
+"""
+fill_between(fname::String; first::Bool=true, kw...) = fill_between(gmtread(fname); first=first, kw...)
+function fill_between(arg1, arg2=nothing; first=true, kwargs...)
+
+	function find_the_pos(x, x_int)
+		len_x = length(x)
+		_ind = zeros(Int, length(x_int))
+		n = 0
+		for k = 1:numel(x_int)
+			while(n < len_x && x[n+=1] < x_int[k]) end
+			_ind[k] = n-1
+		end
+		return _ind
+	end
+	function fish_labels(bal, legs, one_array, D1, D2)
+		# See if we have labels to use in legend or asked to use column names.
+		if (isa(bal, Bool) && bal) legs = one_array ? [D1.colnames[2], D1.colnames[3]] : [D1.colnames[2], D2.colnames[2]]
+		elseif (isempty(legs) && isa(bal, String) && contains(bal,",")) legs = [string.(split(bal,","))...]
+		elseif (isempty(legs) && isa(bal, Tuple) || isa(bal, Array) && length(bal) > 1) legs = [string(bal[1]), string(bal[2])]
+		end
+		return legs
+	end
+
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	fc = helper_ds_fill(d)						# Got fill colors?
+	if (!isempty(fc))
+		!any(contains.(fc, "@")) && (fc .*= "@60")			# If no transparency provided default to 60%
+		(length(fc) == 1) && (append!(fc, ["white@100"]))	# May need two fill colors, so generalize it.
+		fill_colors = fc
+	else
+		fill_colors = ["darkgreen@60", "darkred@60"]
+	end
+
+	# Deal with pen line specifications
+	if ((lc = add_opt_pen(d, [:W, :pen])) != "")			# Actualy a lc, lt, ls but one cal only change lt and ls
+		if !contains(lc, ",")				# Just a line thickness
+			l_colors = [string(lc,",",split(fill_colors[1], "@")[1]), string(lc,",",split(fill_colors[2], "@")[1])]
+		elseif (contains(lc ,",,"))			# A ,,ls or lt,,ls
+			if (startswith(lc ,",,"))		# ,,ls
+				l_colors = [string("0.5,",split(fill_colors[1], "@")[1], ",",lc[3:end]), string("0.5,",split(fill_colors[2], "@")[1], ",",lc[3:end])]
+			else							# lt,,ls
+				l_colors = [string(split(lc, ",")[1], ",", split(fill_colors[1], "@")[1], ",", split(lc,",")[3]), string(split(lc, ",")[1], ",", split(fill_colors[2], "@")[1], ",", split(lc,",")[3])]
+			end
+		elseif ((nc = count_chars(lc, ',')) != 0)
+			if (nc == 1)					# must be a ,lc or a lt,lc
+				if (lc[1] == ',')			# a ,lc
+					l_colors = [lc, lc]
+				else
+					l_colors = [string(lc, ",", split(fill_colors[1], "@")[1]), string(lc, ",", split(fill_colors[2], "@")[1])]
+				end
+			else							# must be nc == 2 => lt,lc,ls.
+				l_colors = [lc, lc]
+			end
+		end					# There should be no ELSE branch
+	else
+		l_colors = [string("0.5,",split(fill_colors[1], "@")[1]), string("0.5,",split(fill_colors[2], "@")[1])]
+	end
+
+	one_array = (arg2 === nothing)
+	D1 = mat2ds(arg1)
+	if (isa(arg2, Real))  D2 = mat2ds([D1.data[1] arg2; D1.data[end,1] arg2]); set_dsBB!(D2)	# 2nd line is y = arg2
+	else                  D2 = (!one_array) ? mat2ds(arg2) : GMTdataset()
+	end
+
+	if (one_array)
+		int = gmtspatial((D1[:,[1,2]], D1[:,[1,3]]), intersections=:e, sort=true)
+		if (isempty(int))				# Hmm so lines do not cross. Just create the polygon and we are done.
+			ff = (D1.ds_bbox[6] > D1.ds_bbox[4]) ? 2 : 1		# If second curve is above first, swapp fill color
+			Dsd = mat2ds([D1[:,[1,2]]; D1[end:-1:1, [1:3]]], fill=fill_colors[ff])
+			@goto no_crossings			# What a delicious relict from past
+		end
+		ind = find_the_pos(view(D1, :, 1), view(int, :, 1))		# Indices of the points before the intersections
+		n_crossings = size(ind,1)
+		Dsd = Vector{GMTdataset}(undef, n_crossings+1)
+		ff = (D1[1,2] < D1[1,3]) ? 2 : 1
+		Dsd[1] = mat2ds([D1[1:ind[1], [1,2]]; int[1:1,1:2]; D1[ind[1]:-1:1, [1,3]]], fill=fill_colors[ff])
+		for k = 2:n_crossings
+			s, e = ind[k-1], ind[k]
+			fillColor = (D1[ind[k]-1,2] >= D1[ind[k]-1,3]) ? fill_colors[1] : fill_colors[2]
+			Dsd[k] = mat2ds([int[k-1:k-1,1:2]; D1[s:e, [1,2]]; int[k:k,1:2]; D1[e:-1:s, [1,3]]], fill=fillColor)
+		end
+		k = n_crossings
+		s, e = ind[k], size(D1, 1)
+		fillColor = (D1[end,2] >= D1[end,3]) ? fill_colors[1] : fill_colors[2]
+		Dsd[n_crossings+1] = mat2ds([int[k:k,1:2]; D1[s:e, [1,2]]; D1[e:-1:s, [1,3]]], fill=fillColor)
+	else
+		int = gmtspatial((D1, D2), intersections=:e, sort=true)
+		if (isempty(int))				# Hmm so lines do not cross. Just create the polygon and we are done.
+			ff = (D2.ds_bbox[4] > D1.ds_bbox[4]) ? 2 : 1			# If second curve is above first, swapp fill color
+			Dsd = mat2ds([D1.data; D2.data[end:-1:1, :]], fill=fill_colors[ff])
+			@goto no_crossings			# What a delicious relict from past
+		end
+		ind1 = find_the_pos(view(D1, :, 1), view(int, :, 1))		# Indices of the points before the intersections at line 1
+		ind2 = find_the_pos(view(D2, :, 1), view(int, :, 1))		# Indices of the points before the intersections at line 2
+		n_crossings = size(int,1)
+		Dsd = Vector{GMTdataset}(undef, n_crossings+1)
+		ff = (D1[1,2] < D2[1,2]) ? 2 : 1
+		Dsd[1] = mat2ds([D1[1:ind1[1], [1,2]]; int[1:1,1:2]; D2[ind2[1]:-1:1, [1,2]]], fill=fill_colors[ff])
+		for k = 2:n_crossings
+			s1, e1, s2, e2 = ind1[k-1], ind1[k], ind2[k-1], ind2[k]
+			fillColor = (D1[ind1[k]-1,2] >= D2[max(1,ind2[k]-1),2]) ? fill_colors[1] : fill_colors[2]
+			Dsd[k] = mat2ds([int[k-1:k-1,1:2]; D1[s1:e1, [1,2]]; int[k:k,1:2]; D2[e2:-1:s2, [1,2]]], fill=fillColor)
+		end
+		k = n_crossings
+		s1, e1, s2, e2 = ind1[k], size(D1, 1), ind2[k], size(D2, 1)
+		fillColor = (D1[end,2] >= D2[end,2]) ? fill_colors[1] : fill_colors[2]
+		Dsd[n_crossings+1] = mat2ds([int[k:k,1:2]; D1[s1:e1, [1,2]]; D2[e2:-1:s2, [1,2]]], fill=fillColor)
+	end
+	@label no_crossings
+	set_dsBB!(Dsd)
+	(get(D1.attrib, "Timecol", "") == "1") && (Dsd[1].attrib["Timecol"] = "1")	# Try to keep an eventual Timecol
+
+	Vd = haskey(d, :Vd) ? d[:Vd] : -1
+	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
+	do_markers = ((val = find_in_dict(d, [:markers])[1]) !== nothing && val != 0)
+	do_stairs = ((val = find_in_dict(d, [:stairs])[1]) !== nothing && val != 0)
+
+	legs, lab_pos::String, lab_box = String[], "", nothing
+	((val = find_in_dict(d, [:labels])[1]) !== nothing) && (legs = fish_labels(val, legs, one_array, D1, D2))
+	if (isempty(legs) && (val = find_in_dict(d, [:leg :legend])[1]) !== nothing)	# OK, so this likely means a legend location
+		legs = fish_labels(val, legs, one_array, D1, D2)
+		if (isempty(legs) && isa(val, NamedTuple))		# Must break & complicate because here a setting applies to 2 lines
+			dd = nt2dict(val)
+			lab_pos = ((val = find_in_dict(dd, [:pos :position])[1]) !== nothing) ? string(val) : ""	# Legend position
+			((val = find_in_dict(dd, [:label :labels])[1]) !== nothing) && (legs = fish_labels(val, legs, one_array, D1, D2))
+			((val = find_in_dict(dd, [:box])[1]) !== nothing) && (lab_box = val)
+		end
+	end
+
+	border = 0.0
+	if (find_in_dict(d, [:white :witeborder])[1] !== nothing)
+		_lt = break_pen(scan_opt(l_colors[1], "-W"))[1]
+		border = (_lt == "") ? 1.5 : size_unit(_lt)+1.0
+	end
+
+	# ---------------------------------- Plot the patches ---------------------------------------
+	do_stairs && (d[:A] = "y")
+	common_plot_xyz("", Dsd, "", first, false, d...)	# The patches
+	do_stairs && (delete!(d, :A))
+	del_from_dict(d, [[:theme], [:figsize], [:frame], [:xaxis], [:yaxis]])	# To not repeat -B -J
+	# -------------------------------------------------------------------------------------------
+
+	_D2 = one_array ? mat2ds(D1, (:,[1,3])) : D2		# Put second line in a unique var
+
+	if (border > 0)										# Plot a white border
+		one_array ? common_plot_xyz("", [mat2ds(D1, (:,[1,2])), _D2], "lines", false, false, Dict(:W => "$(border),white", :Vd => Vd)...) :
+		            common_plot_xyz("", [D1, _D2], "lines", false, false, Dict(:W => "$(border),white", :Vd => Vd)...)
+	end
+
+	do_stairs && (d[:stairs_step] = :pre)
+	d[:W], d[:Vd] = l_colors[1], Vd
+	do_markers && (d[:marker] = :point; d[:mc] = string(split(fill_colors[1], "@")[1]))
+	!isempty(legs) && (d[:legend] = legs[1])
+	common_plot_xyz("", D1, "lines", false, false, d...)
+
+	do_stairs && (d[:stairs_step] = :post)
+	d[:W], d[:Vd] = l_colors[2], Vd
+	do_markers && (d[:marker] = :point; d[:mc] = string(split(fill_colors[2], "@")[1]))
+	!isempty(legs) && (d[:legend] = (lab_pos == "") ? legs[2] : (label=legs[2], pos=lab_pos, box=lab_box))
+	d[:show] = do_show
+	common_plot_xyz("", _D2, "lines", false, false, d...)
+
+	#=
+	d[:marker] = "c"
+	d[:ms] = "1p"
+	d[:mc] = :black
+	d[:Vd] = Vd
+	d[:show] = do_show
+	common_plot_xyz("", int, "", false, false, d...)
+	=#
+end
+
+fill_between!(arg1, arg2=nothing; kw...) = fill_between(arg1, arg2; first=false, kw...)
+
+# ------------------------------------------------------------------------------------------------------
 """
     stairs(cmd0::String="", arg1=nothing; step=:post, kwargs...)
 

@@ -336,7 +336,7 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)
 		if (ismulticol)
 			D = mat2ds(out.data, multi=true, color=:cycle)
 			if ((Tc = get(arg1.attrib, "Timecol", "")) == "1")	# Try to keep an eventual Timecol
-				for k = 1:nemel(D)  D[k].attrib["Timecol"] = "1";	D[k].colnames[1] = "Time";  end
+				for k = 1:numel(D)  D[k].attrib["Timecol"] = "1";	D[k].colnames[1] = "Time";  end
 			end
 		else
 			D = out
@@ -810,8 +810,10 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	elseif (isa(arg1,GMTdataset) || isa(arg1, Array))  n_rows, n_col = size(arg1)
 	end
 
+	(isa(mz, Bool) && mz) && (mz = 1:n_rows)
+
 	if ((mz !== nothing && length(mz) != n_rows) || (mz === nothing && opt_i != ""))
-		warn1 = string("Probably color column in ", the_kw, " has incorrect dims. Ignoring it.")
+		warn1 = string("Probably color column in '", the_kw, "' has incorrect dims. Ignoring it.")
 		warn2 = "Plotting with color table requires adding one more column to the dataset but your -i
 		option didn't do it, so you won't get what you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots"
 		(mz !== nothing) ? @warn(warn1) : @warn(warn2)
