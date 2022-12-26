@@ -56,6 +56,9 @@ function get_de_libnames()
 						error("Don't know how to use PROJ4 in this OS.")
 					)
 				)
+			out = readlines(`gmt --version`)[1]
+			ver = ((ind = findfirst('_', out)) === nothing) ? VersionNumber(out) : VersionNumber(out[1:ind-1])
+
 		catch err2;		println(err2)
 			errou = true
 		end
