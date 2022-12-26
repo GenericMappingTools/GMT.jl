@@ -907,10 +907,10 @@ end
 function _erfinv(x::Float64)
 	a = abs(x)
 	if a >= 1.0
-		if     (x == 1.0)   return Inf
-		elseif (x == -1.0)  return -Inf
-		end
-		throw(DomainError(a, "`abs(x)` cannot be greater than 1."))
+		#if     (x == 1.0)   return Inf
+		#elseif (x == -1.0)  return -Inf
+		#end
+		(x == 1.0) ? (return Inf) : (x == -1.0) ? (return -Inf) : throw(DomainError(a, "`abs(x)` cannot be greater than 1."))
 	elseif a <= 0.75 # Table 17 in Blair et al.
 		t = x*x - 0.5625
 		return x * @horner(t, 0.16030_49558_44066_229311e2, -0.90784_95926_29603_26650e2, 0.18644_91486_16209_87391e3,

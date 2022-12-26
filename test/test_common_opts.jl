@@ -1,7 +1,5 @@
 @testset "COMMON OPTS" begin
 	# -------------------- Test common_options ----------------------------------------
-	@test GMT.get_GMTver()[1] >= v"6.0"
-	GMT.__init__(true);
 	GMT.dict2nt(Dict(:a =>1, :b => 2))
 	@test GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")[1] == " -R1/2/3/4/5/6"
 	@test GMT.parse_R(Dict(:R => (1.0,2.0,3.0,4.0), :ylim => (33,44), :zlim => (5,6)), "")[1] == " -R1.0/2.0/33/44/5/6"
