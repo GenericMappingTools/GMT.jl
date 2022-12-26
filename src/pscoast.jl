@@ -198,7 +198,7 @@ function parse_dcw(cmd::String, val::Tuple)::String
 		(isa(val[2], String) || isa(val[2], Symbol)) && return string(cmd, " -E", val[1], "+g", string(val[2]))
 	end
 
-	for k = 1:length(val)
+	for k = 1:numel(val)
 		if (isa(val[k], NamedTuple) || isa(val[k], Dict))
 			if (isa(val[k], Dict))  val[k] = dict2nt(val[k])  end
 			cmd *= add_opt(Dict(:DCW => val[k]), "", "E", [:DCW],
