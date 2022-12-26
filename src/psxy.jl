@@ -311,9 +311,9 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)
 	end
 
 	function getcolvar(d::Dict, var::VMs)
-		((val = find_in_dict(d::Dict, var)[1]) === nothing) && return nothing
-		!(isa(val, Integer) || isa(val, String) || isa(val, Symbol)) && error("$(var) can only be an Int, a String or a Symbol but was a $(typeof(val))")
-		c = isa(val, Integer) ? val : ((ind = findfirst(string(val) .== arg1.colnames)) !== nothing ? ind : 0)
+		((_val = find_in_dict(d::Dict, var)[1]) === nothing) && return nothing
+		!(isa(_val, Integer) || isa(_val, String) || isa(_val, Symbol)) && error("$(var) can only be an Int, a String or a Symbol but was a $(typeof(_val))")
+		c = isa(_val, Integer) ? _val : ((_ind = findfirst(string(_val) .== arg1.colnames)) !== nothing ? _ind : 0)
 		(c < 1 || c > size(arg1,2)) && error("$(var) Col name not found in GMTdataset col names or exceed col count.")
 		c
 	end

@@ -373,7 +373,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 
 	if (!O)
 		if (default == "guess" && opt_J == "")
-			opt_J = guess_proj(CTRL.limits[1:2], CTRL.limits[3:4]);	mnemo = true	# To force append fig size
+			opt_J = guess_proj(CTRL.limits[7:8], CTRL.limits[9:10]);	mnemo = true	# To force append fig size
 		end
 		if (opt_J == "")  opt_J = " -JX"  end
 		# If only the projection but no size, try to get it from the kwargs.
@@ -605,7 +605,7 @@ function build_opt_J(Val)::Tuple{String, Bool}
 	out::String = "";		mnemo = false
 	if (isa(Val, String) || isa(Val, Symbol))
 		if (string(Val) == "guess")
-			out, mnemo = guess_proj(CTRL.limits[1:2], CTRL.limits[3:4]), true
+			out, mnemo = guess_proj(CTRL.limits[7:8], CTRL.limits[9:10]), true
 		else
 			prj, mnemo = parse_proj(string(Val))
 			out = " -J" * prj
@@ -896,11 +896,11 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	function titlices(d::Dict, arg, fun::Function)
 		# Helper function to deal with setting title & cousins while controling also Font & Offset 
 		if (haskey(d, Symbol(fun)))
-			if isa(arg, StrSymb)  tt, a_par = replace(str_with_blancs(arg), ' '=>'\x7f'), ""
-			else                  tt, a_par = fun(;arg...)
+			if isa(arg, StrSymb)  _tt, a_par = replace(str_with_blancs(arg), ' '=>'\x7f'), ""
+			else                  _tt, a_par = fun(;arg...)
 			end
 			delete!(d, Symbol(fun));
-			tt, a_par
+			_tt, a_par
 		end
 	end
 
@@ -2059,7 +2059,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}, del:
 		if (isa(val, String) || isa(val, Symbol))
 			((args = arg2str(val)) != "") && (args = string(args[1]))
 		elseif (isa(val, Tuple))
-			for k = 1:length(val)
+			for k = 1:numel(val)
 				args *= arg2str(val[k])[1]
 			end
 		end
@@ -2310,7 +2310,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 			error("Bad argument type ($(typeof(val))) to option $opt")
 		end
 		if (to_slot)
-			for k = 1:length(args)
+			for k = 1:numel(args)
 				if (args[k] === nothing)
 					args[k] = val
 					N_used = k

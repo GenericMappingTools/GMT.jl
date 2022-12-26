@@ -265,6 +265,10 @@ import SnoopPrecompile
 	plot(rand(5,2))
 	makecpt(T=(0,10))
 	grdimage(rand(Float32,32,32))
+	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)))
+	GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen")
+	GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")
+	GMT.build_opt_J(:X5)
 end
 =#
 
