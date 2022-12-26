@@ -1494,7 +1494,7 @@ Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothing w
 
 # ---------------------------------------------------------------------------------------------------
 function Base.show(io::IO, C::GMTcpt)
-	mat = (size(C.cpt,1) > 1) ? [round.([C.cpt.*255 C.alpha.*255], digits=0) C.range] : [round.([C.cpt.*255 C.alpha[1].*255], digits=0) C.range]
+	mat = (size(C.cpt,1) > 1) ? [round.([C.cpt.*255 C.alpha[1:size(C.cpt,1)].*255], digits=0) C.range] : [round.([C.cpt.*255 C.alpha[1].*255], digits=0) C.range]
 	D = mat2ds(mat, colnames=["r1", "g1", "b1", "r2", "g2", "b2", "alpha", "z1", "z2"])
 	D.bbox = Float64[]
 	(!isempty(C.label) && length(C.label) == size(C.cpt,1) && any(C.label .!= "")) && (D.text = C.label)
