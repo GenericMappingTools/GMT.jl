@@ -58,7 +58,7 @@ function get_de_libnames()
 				)
 
 			t = joinpath(GMT_bindir, "gmt")
-			out = readlines(`t --version`)[1]
+			out = readlines(`$t --version`)[1]
 			ver = ((ind = findfirst('_', out)) === nothing) ? VersionNumber(out) : VersionNumber(out[1:ind-1])
 
 		catch err2;		println(err2)
