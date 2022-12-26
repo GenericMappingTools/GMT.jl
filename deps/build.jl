@@ -7,7 +7,8 @@ function get_de_libnames()
 
 	try						# First try to find an existing GMT installation (RECOMENDED WAY)
 		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
-		out = readlines(`gmt --version`)[1]
+		t = joinpath(GMT_bindir, "gmt")
+		out = readlines(`$t --version`)[1]
 		ver = ((ind = findfirst('_', out)) === nothing) ? VersionNumber(out) : VersionNumber(out[1:ind-1])
 		(ver < v"6.1") && error("Need at least GMT6.1. The one you have ($ver) is not supported.")	# GOTO DOWNLOAD
 
