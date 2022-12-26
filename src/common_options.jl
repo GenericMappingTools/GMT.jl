@@ -2059,7 +2059,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}, del:
 		if (isa(val, String) || isa(val, Symbol))
 			((args = arg2str(val)) != "") && (args = string(args[1]))
 		elseif (isa(val, Tuple))
-			for k = 1:length(val)
+			for k = 1:numel(val)
 				args *= arg2str(val[k])[1]
 			end
 		end
@@ -2310,7 +2310,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 			error("Bad argument type ($(typeof(val))) to option $opt")
 		end
 		if (to_slot)
-			for k = 1:length(args)
+			for k = 1:numel(args)
 				if (args[k] === nothing)
 					args[k] = val
 					N_used = k
