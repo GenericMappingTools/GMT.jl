@@ -58,7 +58,7 @@ Parameters
 
 - **hexbin** : -- *hexbin=true*\
    Make a 2D hexagonal binning plot of points _xy_ that have been processed by `binstats(xy, tiling=:hex, stats=...)`.
-   Note thatb for this we rely in keeping a correct trac of the figure size and plot limis, which is not obvious
+   Note that for this we rely in keeping a correct trac of the figure size and plot limis, which is not obvious
    because those are often given as strings and we must parse them back to numeric. In case it fails, it's users
    responsability to provide a correct size to the ``marker=hexagon, markersize=???`` options.
 
