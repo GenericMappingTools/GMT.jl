@@ -1280,14 +1280,14 @@ function parse_a(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_b(d::Dict, cmd::String, symbs::Array{Symbol}=[:b :binary])
+function parse_b(d::Dict, cmd::String, symbs::Array{Symbol}=[:b :binary], io::String="")
 	# Parse the global -b option. Return CMD same as input if no -b option in args
-	cmd_ = add_opt(d, "", string(symbs[1]), symbs, 
+	cmd_ = add_opt(d, "", string(symbs[1])*io, symbs, 
 	               (ncols=("", arg2str, 1), type=("", data_type, 2), swapp_bytes="_w", little_endian="_+l", big_endian="+b"))
 	return cmd * cmd_, cmd_
 end
-parse_bi(d::Dict, cmd::String) = parse_b(d, cmd, [:bi :binary_in])
-parse_bo(d::Dict, cmd::String) = parse_b(d, cmd, [:bo :binary_out])
+parse_bi(d::Dict, cmd::String) = parse_b(d, cmd, [:b :bi :binary_in],  "i")
+parse_bo(d::Dict, cmd::String) = parse_b(d, cmd, [:b :bo :binary_out], "o")
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
