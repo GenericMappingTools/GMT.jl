@@ -141,7 +141,6 @@ function gmtread(fname::String; kwargs...)
 	end
 
 	if (opt_T != " -To")			# All others but OGR
-		if (opt_T == " -Td" && opt_bi != "")  cmd *= opt_bi  end		# Read from binary file
 		cmd *= opt_T
 		#return (dbg_print_cmd(d, cmd) !== nothing) ? "gmtread " * cmd : gmt("read " * fname * cmd)
 		(dbg_print_cmd(d, cmd) !== nothing) && return "gmtread " * cmd
