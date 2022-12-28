@@ -254,6 +254,7 @@
 	@test D[1].header == " -W5p,black"
 
 	D = [mat2ds([0 0; 1 1],["a", "b"])];	D[1].header = "a";
+	GMT.setfld!(D, geom=3)
 	mat2ds(D)
 	mat2ds("blabla")
 	mat2ds([],["bla"]);

@@ -708,7 +708,7 @@ result (that we easily do with `imshow(mat)`) but return instead a GMTimage obje
   - `cmap`: If provided, `cmap` is a GMTcpt and its contents is converted to the `GMTimage` colormp.
   - `GI`: This can be either a GMTgrid or a GMTimage and its contents is used to set spatial contents
      (x,y coordinates) and projection info that one may attach to the created image result. This is
-	 a handy alterative to the `x=, y=, proj4=...` options.
+     a handy alterative to the `x=, y=, proj4=...` options.
 """
 function imagesc(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Vector{Float64}(), y=Vector{Float64}(), hdr=nothing,
 	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=nothing, kw...)
