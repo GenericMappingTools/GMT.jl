@@ -22,7 +22,7 @@ function funcurve(f::Function, lims::VMr, n=100)
 end
 
 """
-    x, y = pol2cart2(theta, rho; deg=false)
+    x, y = pol2cart(theta, rho; deg=false)
 
 Transform polar to Cartesian coordinates. Angles are in radians by default.
 Use `deg=true` if angles are in degrees. Input can be scalar, vectors or matrices.
@@ -441,6 +441,26 @@ function magic(n::Int)
 		M[[ii; ii+p],j] = M[[ii+p; ii],j]
 	end
 	return M
+end
+
+"""
+    setfld!(D, kwargs...)
+
+Sets fields of GMTdataset (or a vector of it), GMTgrid and GMTimage. Field names and field
+values are transmitted via `kwargs`
+
+Example:
+    setfld!(D, geom=wkbPolygon)
+"""
+function setfld!(D::Union{GMTgrid, GMTimage, GMTdataset}; kwargs...)
+	for key in keys(kwargs) 
+		setfield!(D, key, kwargs[key])
+	end
+end
+function setfld!(D::Vector{<:GMTdataset}; kwargs...)
+	for d in D
+		setfld!(d; kwargs...)
+	end
 end
 
 # EDIPO SECTION
