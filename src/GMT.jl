@@ -117,7 +117,7 @@ export
 	wkbGeometryCollection,
 
 	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
-	geodesic, orthodrome, proj2wkt, wkt2proj,
+	geodesic, orthodrome, proj2wkt, setfld!, wkt2proj,
 
 	colorzones!, rasterzones!, crop, doy2date, date2doy, yeardecimal, median, mean, quantile, std, nanmean,
 	nanstd, skipnan,

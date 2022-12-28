@@ -114,7 +114,7 @@ mutable struct GMTdataset{T, N} <: AbstractArray{T,N}
 	proj4::String
 	wkt::String
 	epsg::Int
-	geom::Int
+	geom::Union{UInt32, Int}
 end
 Base.size(D::GMTdataset) = size(D.data)
 Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = D.data[inds...]

@@ -4043,13 +4043,14 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	if (!IamModern[1])
 		if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
 			P = showfig(d, output, fname_ext, "", K)
+			CTRL.limits .= 0.0
 			gmt_restart()							# Returning a PS screws the session
 		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "" || opt_T != "")
 			P = showfig(d, output, fname_ext, opt_T, K, fname)	# Return something here for the case we are in Pluto
 			(typeof(P) == Base.Process) && (P = nothing)		# Don't want spurious message on REPL when plotting
 			CTRL.IamInPaperMode[2] = true			# Means, next time a paper mode is used offset XY only on first call 
+			CTRL.limits .= 0.0
 		end
-		CTRL.limits .= 0.0
 	elseif ((haskey(d, :show) && d[:show] != 0))	# Let modern mode also call show=true
 		helper_showfig4modern()
 		CTRL.limits .= 0.0
