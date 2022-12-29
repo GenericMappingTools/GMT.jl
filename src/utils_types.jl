@@ -692,6 +692,7 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Vector{Float64}(
 	else
 		I = mat2img(img; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, kw...)
 	end
+	isa(mat,GMTgrid) && (I.layout = mat.layout[1:3] * "a")
 	return I
 end
 
