@@ -79,7 +79,7 @@
 	end
 
 	println("	GRAVFFT")
-	G = grdcut("@earth_relief_10m", region=(-12.5,-10,35.5,37.5));
+	G = grdcut("@earth_relief_10m", region=(-12.5,-10,35.5,37.5), V=:q);
 	gravfft(G, density=1700, F=(faa=1,slab=1), Vd=dbg2)
 
 	println("	GMTREGRESS")

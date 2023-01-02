@@ -262,13 +262,16 @@ const global legend_type = [legend_bag()]	# To store Legends info
 import SnoopPrecompile
 @SnoopPrecompile.precompile_all_calls begin
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
-	plot(rand(5,2))
-	makecpt(T=(0,10))
-	grdimage(rand(Float32,32,32))
-	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)))
 	GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen")
 	GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")
 	GMT.build_opt_J(:X5)
+	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1, colorscale=:jet)
+	violin(rand(50))
+	boxplot(rand(50))
+	makecpt(T=(0,10))
+	grdimage(rand(Float32,32,32))
+	grdview(rand(Float32,32,32))
+	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)))
 end
 =#
 
