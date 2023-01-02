@@ -400,7 +400,7 @@ function isTimecol_in_pltcols(D::GDtype)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function _helper_psxy_line(d, cmd, opt_W, is3D, args...)
+function _helper_psxy_line(d::Dict, cmd::String, opt_W::String, is3D::Bool, args...)
 	haskey(d, :multicol) && return args[1], opt_W, false, false	# NOT OBVIOUS IF THIS IS WHAT WE WANT TO DO
 	got_color_line_grad, got_variable_lt, made_it_vector, rep_str = false, false, false, ""
 	(contains(opt_W, ",gradient") || contains(opt_W, ",grad")) && (got_color_line_grad = true)
@@ -444,7 +444,7 @@ function _helper_psxy_line(d, cmd, opt_W, is3D, args...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_opt_S(d, arg1, is3D)
+function parse_opt_S(d::Dict, arg1, is3D::Bool)
 
 	opt_S::String = ""
 	# First see if the requested symbol is a custom one from GMT.jl share/custom
@@ -598,7 +598,7 @@ check_bar_group(arg1) = ( (isa(arg1, Matrix{<:Real}) || eltype(arg1) <: GMTdatas
                           (isa(arg1, Vector{<:GMTdataset}) ? size(arg1[1],2) > 2 : size(arg1,2) > 2) )::Bool
 
 # ---------------------------------------------------------------------------------------------------
-function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Array{String}, got_Ebars::Bool, got_usr_R::Bool, arg1)
+function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{String}, got_Ebars::Bool, got_usr_R::Bool, arg1)
 	# Convert input array into a multi-segment Dataset where each segment is an element of a bar group
 	# Example, plot two groups of 3 bars each: bar([0 1 2 3; 1 2 3 4], xlabel="BlaBla")
 
@@ -795,6 +795,15 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function get_sizes(arg)
+	(!isGMTdataset(arg) && isa(arg, Matrix{Real})) && error("Input can only be a GMTdataset(s) or a Matrix, not $(typeof(arg))")
+	if     (isa(arg, Vector{<:GMTdataset}))  n_rows, n_col = size(arg[1])
+	else                                     n_rows, n_col = size(arg)
+	end
+	return n_rows, n_col
+end
+
+# ---------------------------------------------------------------------------------------------------
 function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, arg1, arg2)
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 	# N_ARGS will be == n_prev+1 when a -Ccpt was used. Otherwise they are equal.
@@ -807,10 +816,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	# Filled polygons with -Z don't need extra col
 	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, nothing, N_args, false
 
-	if     (isa(arg1, Vector{<:GMTdataset}))           n_rows, n_col = size(arg1[1])
-	elseif (isa(arg1,GMTdataset) || isa(arg1, Array))  n_rows, n_col = size(arg1)
-	end
-
+	n_rows, n_col = get_sizes(arg1)
 	(isa(mz, Bool) && mz) && (mz = 1:n_rows)
 
 	if ((mz !== nothing && length(mz) != n_rows) || (mz === nothing && opt_i != ""))
@@ -822,8 +828,8 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	end
 
 	if (!isempty(bar_fill))
-		if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1         = hcat(arg1, 1:n_rows)
-		elseif (isa(arg1, Vector{<:GMTdataset}))       arg1[1].data = hcat(arg1[1].data, 1:n_rows)
+		if (isa(arg1,GMTdataset) || isa(arg1, Matrix{Real}))  arg1         = hcat(arg1, 1:n_rows)
+		elseif (isa(arg1, Vector{<:GMTdataset}))              arg1[1].data = hcat(arg1[1].data, 1:n_rows)
 		end
 		arg2::GMTcpt = gmt(string("makecpt -T1/$(n_rows+1)/1 -C" * join(bar_fill, ",")))
 		current_cpt[1] = arg2
@@ -832,6 +838,12 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 		return cmd, arg1, arg2, 2, true
 	end
 
+	make_color_column_(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, bar_ok, bar_fill, arg1, arg2, mz, n_rows, n_col)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function make_color_column_(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, arg1, arg2, mz, n_rows, n_col)
+	# Broke this out of make_color_column() to try to limit effect of invalidations but with questionable results.
 	if (n_col <= 2+is3D)
 		if (mz !== nothing)
 			if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1    = hcat(arg1, mz[:])
@@ -1035,7 +1047,7 @@ function seek_custom_symb(marca::String, with_k::Bool=false)::Tuple{String, Stri
 end
 
 # ---------------------------------------------------------------------------------------------------
-function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller::String, g_bar_fill::Array{String}, O::Bool)::String
+function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller::String, g_bar_fill::Vector{String}, O::Bool)::String
 	# Set sensible defaults for the sub-modules "scatter" & "bar"
 	if (caller == "scatter")
 		if (opt_S == "")  cmd *= " -Sc5p"  end
